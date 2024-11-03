@@ -30,40 +30,29 @@ struct silofs_prange {
 	loff_t cur_pos;
 };
 
-struct silofs_pranges {
-	struct silofs_prange meta;
-	struct silofs_prange data;
+struct silofs_pstate {
+	struct silofs_prange    meta;
+	struct silofs_prange    data;
 };
 
 struct silofs_pstore {
 	struct silofs_repo     *repo;
 	struct silofs_alloc    *alloc;
 	struct silofs_bcache    bcache;
-	struct silofs_pranges    pranges;
+	struct silofs_pstate    pstate;
 };
 
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_prange_assign(struct silofs_prange *prange,
-                          const struct silofs_prange *other);
+void silofs_pstate_assign(struct silofs_pstate *pstate,
+                          const struct silofs_pstate *other);
 
-void silofs_prange64b_htox(struct silofs_prange64b *prange64,
-                           const struct silofs_prange *prange);
+void silofs_pstate128b_htox(struct silofs_pstate128b *pstate128,
+                            const struct silofs_pstate *pstate);
 
-void silofs_prange64b_xtoh(const struct silofs_prange64b *prange64,
-                           struct silofs_prange *prange);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-void silofs_pranges_assign(struct silofs_pranges *pranges,
-                           const struct silofs_pranges *other);
-
-void silofs_pranges128b_htox(struct silofs_pranges128b *pranges128,
-                             const struct silofs_pranges *pranges);
-
-void silofs_pranges128b_xtoh(const struct silofs_pranges128b *pranges128,
-                             struct silofs_pranges *pranges);
+void silofs_pstate128b_xtoh(const struct silofs_pstate128b *pstate128,
+                            struct silofs_pstate *pstate);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -75,6 +64,9 @@ void silofs_pstore_fini(struct silofs_pstore *pstore);
 int silofs_pstore_dropall(struct silofs_pstore *pstore);
 
 int silofs_pstore_format(struct silofs_pstore *pstore);
+
+int silofs_pstore_open(struct silofs_pstore *pstore,
+                       const struct silofs_pstate *pstate);
 
 int silofs_pstore_flush_dirty(struct silofs_pstore *pstore);
 

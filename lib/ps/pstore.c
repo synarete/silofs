@@ -34,7 +34,7 @@ static void prange_fini(struct silofs_prange *prange)
 	prange->cur_pos = 0;
 }
 
-void silofs_prange_assign(struct silofs_prange *prange,
+static void prange_assign(struct silofs_prange *prange,
                           const struct silofs_prange *other)
 {
 	silofs_psid_assign(&prange->psid, &other->psid);
@@ -64,7 +64,7 @@ static void prange_carve(struct silofs_prange *prange,
 	prange_advance_by(prange, out_paddr);
 }
 
-void silofs_prange64b_htox(struct silofs_prange64b *prange64,
+static void prange64b_htox(struct silofs_prange64b *prange64,
                            const struct silofs_prange *prange)
 {
 	memset(prange64, 0, sizeof(*prange64));
@@ -73,7 +73,7 @@ void silofs_prange64b_htox(struct silofs_prange64b *prange64,
 	prange64->nsegs = silofs_cpu_to_le32((uint32_t)prange->nsegs);
 }
 
-void silofs_prange64b_xtoh(const struct silofs_prange64b *prange64,
+static void prange64b_xtoh(const struct silofs_prange64b *prange64,
                            struct silofs_prange *prange)
 {
 	silofs_psid32b_xtoh(&prange64->psid, &prange->psid);
@@ -83,63 +83,63 @@ void silofs_prange64b_xtoh(const struct silofs_prange64b *prange64,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void pranges_init(struct silofs_pranges *pranges)
+static void pstate_init(struct silofs_pstate *pstate)
 {
-	prange_init(&pranges->data);
-	prange_init(&pranges->meta);
+	prange_init(&pstate->data);
+	prange_init(&pstate->meta);
 }
 
-static void pranges_fini(struct silofs_pranges *pranges)
+static void pstate_fini(struct silofs_pstate *pstate)
 {
-	prange_fini(&pranges->data);
-	prange_fini(&pranges->meta);
+	prange_fini(&pstate->data);
+	prange_fini(&pstate->meta);
 }
 
-void silofs_pranges_assign(struct silofs_pranges *pranges,
-                           const struct silofs_pranges *other)
+void silofs_pstate_assign(struct silofs_pstate *pstate,
+                          const struct silofs_pstate *other)
 {
-	silofs_prange_assign(&pranges->meta, &other->meta);
-	silofs_prange_assign(&pranges->data, &other->data);
+	prange_assign(&pstate->meta, &other->meta);
+	prange_assign(&pstate->data, &other->data);
 }
 
 static struct silofs_prange *
-pranges_sub(struct silofs_pranges *pranges, bool meta)
+pstate_sub(struct silofs_pstate *pstate, bool meta)
 {
-	return meta ? &pranges->meta : &pranges->data;
+	return meta ? &pstate->meta : &pstate->data;
 }
 
-static void pranges_next_psu(struct silofs_pranges *pranges, bool meta,
-                             struct silofs_paddr *out_paddr)
+static void pstate_next_psu(struct silofs_pstate *pstate, bool meta,
+                            struct silofs_paddr *out_paddr)
 {
-	struct silofs_prange *prange = pranges_sub(pranges, meta);
+	struct silofs_prange *prange = pstate_sub(pstate, meta);
 
 	silofs_assert_eq(prange->cur_pos, 0);
 
 	prange_carve(prange, SILOFS_PTYPE_UBER, out_paddr);
 }
 
-static void pranges_next_btn(struct silofs_pranges *pranges,
-                             struct silofs_paddr *out_paddr)
+static void pstate_next_btn(struct silofs_pstate *pstate,
+                            struct silofs_paddr *out_paddr)
 {
-	struct silofs_prange *prange = pranges_sub(pranges, true);
+	struct silofs_prange *prange = pstate_sub(pstate, true);
 
 	silofs_assert_gt(prange->cur_pos, 0);
 
 	prange_carve(prange, SILOFS_PTYPE_BTNODE, out_paddr);
 }
 
-void silofs_pranges128b_htox(struct silofs_pranges128b *pranges128,
-                             const struct silofs_pranges *pranges)
+void silofs_pstate128b_htox(struct silofs_pstate128b *pstate128,
+                            const struct silofs_pstate *pstate)
 {
-	silofs_prange64b_htox(&pranges128->meta, &pranges->meta);
-	silofs_prange64b_htox(&pranges128->data, &pranges->data);
+	prange64b_htox(&pstate128->meta, &pstate->meta);
+	prange64b_htox(&pstate128->data, &pstate->data);
 }
 
-void silofs_pranges128b_xtoh(const struct silofs_pranges128b *pranges128,
-                             struct silofs_pranges *pranges)
+void silofs_pstate128b_xtoh(const struct silofs_pstate128b *pstate128,
+                            struct silofs_pstate *pstate)
 {
-	silofs_prange64b_xtoh(&pranges128->meta, &pranges->meta);
-	silofs_prange64b_xtoh(&pranges128->data, &pranges->data);
+	prange64b_xtoh(&pstate128->meta, &pstate->meta);
+	prange64b_xtoh(&pstate128->data, &pstate->data);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -147,7 +147,7 @@ void silofs_pranges128b_xtoh(const struct silofs_pranges128b *pranges128,
 int silofs_pstore_init(struct silofs_pstore *pstore,
                        struct silofs_repo *repo)
 {
-	pranges_init(&pstore->pranges);
+	pstate_init(&pstore->pstate);
 	pstore->repo = repo;
 	pstore->alloc = repo->re.alloc;
 	return silofs_bcache_init(&pstore->bcache, pstore->alloc);
@@ -157,7 +157,7 @@ void silofs_pstore_fini(struct silofs_pstore *pstore)
 {
 	silofs_bcache_drop(&pstore->bcache);
 	silofs_bcache_fini(&pstore->bcache);
-	pranges_fini(&pstore->pranges);
+	pstate_fini(&pstore->pstate);
 	pstore->alloc = NULL;
 	pstore->repo = NULL;
 }
@@ -293,7 +293,7 @@ static int pstore_format_btree_root(struct silofs_pstore *pstore)
 	struct silofs_paddr paddr;
 	int err;
 
-	pranges_next_btn(&pstore->pranges, &paddr);
+	pstate_next_btn(&pstore->pstate, &paddr);
 	err = pstore_require_pseg_of(pstore, &paddr);
 	if (err) {
 		return err;
@@ -311,7 +311,7 @@ static int pstore_format_meta_pseg(struct silofs_pstore *pstore)
 	struct silofs_puber_info *pui = NULL;
 	int err;
 
-	pranges_next_psu(&pstore->pranges, true, &paddr);
+	pstate_next_psu(&pstore->pstate, true, &paddr);
 	err = pstore_format_pseg_at(pstore, &paddr, &pui);
 	if (err) {
 		return err;
@@ -326,7 +326,7 @@ static int pstore_format_data_pseg(struct silofs_pstore *pstore)
 	struct silofs_puber_info *pui = NULL;
 	int err;
 
-	pranges_next_psu(&pstore->pranges, false, &paddr);
+	pstate_next_psu(&pstore->pstate, false, &paddr);
 	err = pstore_format_pseg_at(pstore, &paddr, &pui);
 	if (err) {
 		return err;

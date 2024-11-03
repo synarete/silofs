@@ -1031,10 +1031,10 @@ static void generate_main_ivkey(const struct silofs_fsenv *fsenv,
 	xrandom_ivkey(fsenv, &brec->main_ivkey);
 }
 
-static void update_pranges(const struct silofs_fsenv *fsenv,
-                           struct silofs_bootrec *brec)
+static void update_pstate(const struct silofs_fsenv *fsenv,
+                          struct silofs_bootrec *brec)
 {
-	silofs_bootrec_set_pranges(brec, &fsenv->fse.pstore->pranges);
+	silofs_bootrec_set_pstate(brec, &fsenv->fse.pstore->pstate);
 }
 
 static int check_superblock(const struct silofs_fsenv *fsenv)
@@ -1524,22 +1524,6 @@ static int reload_bootrec(struct silofs_fsenv *fsenv,
 	return 0;
 }
 
-static int unlink_bootrec_of(const struct silofs_fsenv *fsenv,
-                             const struct silofs_caddr *caddr)
-{
-	int err;
-
-	err = silofs_stat_bootrec(fsenv, caddr);
-	if (err) {
-		return err;
-	}
-	err = silofs_unlink_bootrec(fsenv, caddr);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
 static int update_by_bootrec(struct silofs_fsenv *fsenv,
                              const struct silofs_bootrec *brec)
 {
@@ -1588,7 +1572,7 @@ static int format_bootrec(const struct silofs_fsenv *fsenv,
 {
 	silofs_bootrec_setup(brec);
 	generate_main_ivkey(fsenv, brec);
-	update_pranges(fsenv, brec);
+	update_pstate(fsenv, brec);
 	return 0;
 }
 
@@ -1656,8 +1640,8 @@ static int reload_root_lseg(struct silofs_fsenv *fsenv,
 	return silofs_fsenv_reload_sb_lseg(fsenv);
 }
 
-static int boot_fs(struct silofs_fsenv *fsenv,
-                   const struct silofs_caddr *caddr)
+static int do_open_fs(struct silofs_fsenv *fsenv,
+                      const struct silofs_caddr *caddr)
 {
 	struct silofs_bootrec brec;
 	int err;
@@ -1667,18 +1651,6 @@ static int boot_fs(struct silofs_fsenv *fsenv,
 		return err;
 	}
 	err = reload_root_lseg(fsenv, &brec);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
-static int do_open_fs(struct silofs_fsenv *fsenv,
-                      const struct silofs_caddr *caddr)
-{
-	int err;
-
-	err = boot_fs(fsenv, caddr);
 	if (err) {
 		return err;
 	}
@@ -1822,6 +1794,22 @@ static int exec_unref_fs(struct silofs_fsenv *fsenv)
 	}
 	err = silofs_fs_unrefs(&task);
 	return term_task(&task, err);
+}
+
+static int unlink_bootrec_of(const struct silofs_fsenv *fsenv,
+                             const struct silofs_caddr *caddr)
+{
+	int err;
+
+	err = silofs_stat_bootrec(fsenv, caddr);
+	if (err) {
+		return err;
+	}
+	err = silofs_unlink_bootrec(fsenv, caddr);
+	if (err) {
+		return err;
+	}
+	return 0;
 }
 
 int silofs_unref_fs(struct silofs_fsenv *fsenv,

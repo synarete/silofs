@@ -564,7 +564,7 @@ struct silofs_prange64b {
 
 
 /* persistent volume sub-ranges pair*/
-struct silofs_pranges128b {
+struct silofs_pstate128b {
 	struct silofs_prange64b         meta;
 	struct silofs_prange64b         data;
 }  silofs_packed_aligned64;
@@ -648,7 +648,7 @@ struct silofs_bootrec1k {
 	struct silofs_iv                br_sb_riv;
 	struct silofs_uaddr64b          br_sb_uaddr;
 	uint8_t                         br_reserved2[64];
-	struct silofs_pranges128b       br_pranges;
+	struct silofs_pstate128b        br_pstate;
 	uint8_t                         br_reserved3[608];
 	struct silofs_hash256           br_hash;
 } silofs_packed_aligned64;

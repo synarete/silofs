@@ -555,12 +555,19 @@ struct silofs_psid32b {
 
 
 /* persistent volume sub-range */
-struct silofs_prange48b {
+struct silofs_prange64b {
 	struct silofs_psid32b           psid;
 	int64_t                         cur;
 	uint32_t                        nsegs;
-	uint8_t                         pad[4];
-}  silofs_packed_aligned16;
+	uint8_t                         pad[20];
+}  silofs_packed_aligned64;
+
+
+/* persistent volume sub-ranges pair*/
+struct silofs_pranges128b {
+	struct silofs_prange64b         meta;
+	struct silofs_prange64b         data;
+}  silofs_packed_aligned64;
 
 
 /* persistent object address */
@@ -640,8 +647,9 @@ struct silofs_bootrec1k {
 	struct silofs_iv                br_main_iv;
 	struct silofs_iv                br_sb_riv;
 	struct silofs_uaddr64b          br_sb_uaddr;
-	struct silofs_prange48b         br_meta_prange;
-	uint8_t                         br_reserved4[752];
+	uint8_t                         br_reserved2[64];
+	struct silofs_pranges128b       br_pranges;
+	uint8_t                         br_reserved3[608];
 	struct silofs_hash256           br_hash;
 } silofs_packed_aligned64;
 

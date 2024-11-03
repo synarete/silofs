@@ -30,7 +30,7 @@ struct silofs_prange {
 	loff_t cur_pos;
 };
 
-struct silofs_pstate {
+struct silofs_pranges {
 	struct silofs_prange meta;
 	struct silofs_prange data;
 };
@@ -39,7 +39,7 @@ struct silofs_pstore {
 	struct silofs_repo     *repo;
 	struct silofs_alloc    *alloc;
 	struct silofs_bcache    bcache;
-	struct silofs_pstate    pstate;
+	struct silofs_pranges    pranges;
 };
 
 
@@ -48,11 +48,22 @@ struct silofs_pstore {
 void silofs_prange_assign(struct silofs_prange *prange,
                           const struct silofs_prange *other);
 
-void silofs_prange48b_htox(struct silofs_prange48b *prange48,
+void silofs_prange64b_htox(struct silofs_prange64b *prange64,
                            const struct silofs_prange *prange);
 
-void silofs_prange48b_xtoh(const struct silofs_prange48b *prange48,
+void silofs_prange64b_xtoh(const struct silofs_prange64b *prange64,
                            struct silofs_prange *prange);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_pranges_assign(struct silofs_pranges *pranges,
+                           const struct silofs_pranges *other);
+
+void silofs_pranges128b_htox(struct silofs_pranges128b *pranges128,
+                             const struct silofs_pranges *pranges);
+
+void silofs_pranges128b_xtoh(const struct silofs_pranges128b *pranges128,
+                             struct silofs_pranges *pranges);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

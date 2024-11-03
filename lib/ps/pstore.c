@@ -23,33 +23,22 @@
 
 static void prange_init(struct silofs_prange *prange)
 {
-	silofs_pvid_generate(&prange->pvid);
-	prange->beg_index = 1;
-	prange->cur_index = 1;
+	silofs_psid_generate(&prange->psid);
+	prange->nsegs = 1;
 	prange->cur_pos = 0;
 }
 
 static void prange_fini(struct silofs_prange *prange)
 {
-	prange->beg_index = 0;
-	prange->cur_index = 0;
-	prange->cur_pos = -1;
-}
-
-static void prange_cur_psid(const struct silofs_prange *prange,
-                            struct silofs_psid *out_psid)
-{
-	silofs_psid_init(out_psid, &prange->pvid, prange->cur_index);
+	prange->nsegs = 0;
+	prange->cur_pos = 0;
 }
 
 static void prange_cur_paddr(struct silofs_prange *prange,
                              enum silofs_ptype ptype,
                              struct silofs_paddr *out_paddr)
 {
-	struct silofs_psid psid;
-
-	prange_cur_psid(prange, &psid);
-	silofs_paddr_init(out_paddr, &psid, ptype,
+	silofs_paddr_init(out_paddr, &prange->psid, ptype,
 	                  prange->cur_pos, silofs_ptype_size(ptype));
 }
 

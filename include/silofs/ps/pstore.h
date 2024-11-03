@@ -25,10 +25,9 @@
 
 
 struct silofs_prange {
-	struct silofs_pvid pvid;
-	uint32_t beg_index;
-	uint32_t cur_index;
-	loff_t   cur_pos;
+	struct silofs_psid psid;
+	size_t nsegs;
+	loff_t cur_pos;
 };
 
 struct silofs_pstate {

@@ -1031,12 +1031,12 @@ static void generate_main_ivkey(const struct silofs_fsenv *fsenv,
 	xrandom_ivkey(fsenv, &brec->main_ivkey);
 }
 
-static void update_meta_pvid(const struct silofs_fsenv *fsenv,
+static void update_meta_psid(const struct silofs_fsenv *fsenv,
                              struct silofs_bootrec *brec)
 {
 	const struct silofs_pstore *pstore = fsenv->fse.pstore;
 
-	silofs_bootrec_set_meta_pvid(brec, &pstore->pstate.meta.pvid);
+	silofs_bootrec_set_meta_psid(brec, &pstore->pstate.meta.psid);
 }
 
 static void format_bootrec(const struct silofs_fsenv *fsenv,
@@ -1044,7 +1044,7 @@ static void format_bootrec(const struct silofs_fsenv *fsenv,
 {
 	silofs_bootrec_setup(brec);
 	generate_main_ivkey(fsenv, brec);
-	update_meta_pvid(fsenv, brec);
+	update_meta_psid(fsenv, brec);
 }
 
 static int check_superblock(const struct silofs_fsenv *fsenv)

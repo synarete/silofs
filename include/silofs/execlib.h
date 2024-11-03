@@ -39,8 +39,6 @@ int silofs_open_repo(struct silofs_fsenv *fsenv);
 int silofs_close_repo(struct silofs_fsenv *fsenv);
 
 
-int silofs_format_ps(struct silofs_fsenv *fsenv);
-
 int silofs_format_fs(struct silofs_fsenv *fsenv,
                      struct silofs_caddr *out_caddr);
 

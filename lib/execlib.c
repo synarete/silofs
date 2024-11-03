@@ -1039,14 +1039,6 @@ static void update_meta_psid(const struct silofs_fsenv *fsenv,
 	silofs_bootrec_set_meta_psid(brec, &pstore->pstate.meta.psid);
 }
 
-static void format_bootrec(const struct silofs_fsenv *fsenv,
-                           struct silofs_bootrec *brec)
-{
-	silofs_bootrec_setup(brec);
-	generate_main_ivkey(fsenv, brec);
-	update_meta_psid(fsenv, brec);
-}
-
 static int check_superblock(const struct silofs_fsenv *fsenv)
 {
 	const struct silofs_sb_info *sbi = fsenv->fse_sbi;
@@ -1500,16 +1492,6 @@ int silofs_open_repo(struct silofs_fsenv *fsenv)
 	return ret;
 }
 
-int silofs_format_ps(struct silofs_fsenv *fsenv)
-{
-	int ret;
-
-	silofs_fsenv_lock(fsenv);
-	ret = silofs_pstore_format(fsenv->fse.pstore);
-	silofs_fsenv_unlock(fsenv);
-	return ret;
-}
-
 static int reload_bootrec_of(const struct silofs_fsenv *fsenv,
                              const struct silofs_caddr *caddr,
                              struct silofs_bootrec *out_brec)
@@ -1598,13 +1580,34 @@ static void resolve_bootrec_caddr(const struct silofs_fsenv *fsenv,
 	caddr_assign(out_caddr, &fsenv->fse_boot.caddr);
 }
 
+static int format_ps(struct silofs_fsenv *fsenv)
+{
+	return silofs_pstore_format(fsenv->fse.pstore);
+}
+
+static int format_bootrec(const struct silofs_fsenv *fsenv,
+                          struct silofs_bootrec *brec)
+{
+	silofs_bootrec_setup(brec);
+	generate_main_ivkey(fsenv, brec);
+	update_meta_psid(fsenv, brec);
+	return 0;
+}
+
 static int do_format_fs(struct silofs_fsenv *fsenv,
                         struct silofs_caddr *out_caddr)
 {
 	struct silofs_bootrec brec;
 	int err;
 
-	format_bootrec(fsenv, &brec);
+	err = format_ps(fsenv);
+	if (err) {
+		return err;
+	}
+	err = format_bootrec(fsenv, &brec);
+	if (err) {
+		return err;
+	}
 	err = update_by_bootrec(fsenv, &brec);
 	if (err) {
 		return err;

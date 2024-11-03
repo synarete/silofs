@@ -508,8 +508,6 @@ void ut_reload_fs_at(struct ut_env *ute, ino_t ino);
 /* top-level exec ops */
 void ut_format_repo(struct ut_env *ute);
 
-void ut_format_ps(struct ut_env *ute);
-
 void ut_format_fs(struct ut_env *ute);
 
 void ut_close_fs(struct ut_env *ute);

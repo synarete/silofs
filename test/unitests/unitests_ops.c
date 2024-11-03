@@ -1971,14 +1971,6 @@ void ut_close_repo(struct ut_env *ute)
 	ut_expect_ok(err);
 }
 
-void ut_format_ps(struct ut_env *ute)
-{
-	int err;
-
-	err = silofs_format_ps(ute->fsenv);
-	ut_expect_ok(err);
-}
-
 void ut_format_fs(struct ut_env *ute)
 {
 	int err;

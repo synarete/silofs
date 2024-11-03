@@ -204,11 +204,6 @@ static void cmd_mkfs_close_repo(const struct cmd_mkfs_ctx *ctx)
 	cmd_close_repo(ctx->fsenv);
 }
 
-static void cmd_mkfs_format_ps(struct cmd_mkfs_ctx *ctx)
-{
-	cmd_format_ps(ctx->fsenv);
-}
-
 static void cmd_mkfs_format_fs(struct cmd_mkfs_ctx *ctx)
 {
 	cmd_format_fs(ctx->fsenv, &ctx->fs_args.bref);
@@ -262,9 +257,6 @@ void cmd_execute_mkfs(void)
 
 	/* Open repository */
 	cmd_mkfs_open_repo(&ctx);
-
-	/* Format persistent-store layer */
-	cmd_mkfs_format_ps(&ctx);
 
 	/* Format file-system layer */
 	cmd_mkfs_format_fs(&ctx);

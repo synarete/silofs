@@ -42,6 +42,15 @@ struct silofs_pstore {
 	struct silofs_pstate    pstate;
 };
 
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_prange48b_htox(struct silofs_prange48b *prange48,
+                           const struct silofs_prange *prange);
+
+void silofs_prange48b_xtoh(const struct silofs_prange48b *prange48,
+                           struct silofs_prange *prange);
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_pstore_init(struct silofs_pstore *pstore,

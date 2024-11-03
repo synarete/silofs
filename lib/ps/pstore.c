@@ -56,6 +56,23 @@ static void prange_carve(struct silofs_prange *prange,
 	prange_advance_by(prange, out_paddr);
 }
 
+void silofs_prange48b_htox(struct silofs_prange48b *prange48,
+                           const struct silofs_prange *prange)
+{
+	memset(prange48, 0, sizeof(*prange48));
+	silofs_psid32b_htox(&prange48->psid, &prange->psid);
+	prange48->cur = silofs_cpu_to_off(prange->cur_pos);
+	prange48->nsegs = silofs_cpu_to_le32((uint32_t)prange->nsegs);
+}
+
+void silofs_prange48b_xtoh(const struct silofs_prange48b *prange48,
+                           struct silofs_prange *prange)
+{
+	silofs_psid32b_xtoh(&prange48->psid, &prange->psid);
+	prange->cur_pos = silofs_off_to_cpu(prange48->cur);
+	prange->nsegs = silofs_le32_to_cpu(prange48->nsegs);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void pstate_init(struct silofs_pstate *pstate)

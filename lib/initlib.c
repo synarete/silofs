@@ -147,6 +147,7 @@ static void validate_persistent_types_size1(void)
 	REQUIRE_SIZEOF(struct silofs_name, SILOFS_NAME_MAX + 1);
 	REQUIRE_SIZEOF(struct silofs_header, SILOFS_HEADER_SIZE);
 	REQUIRE_SIZEOF(struct silofs_psid32b, 32);
+	REQUIRE_SIZEOF(struct silofs_prange48b, 48);
 	REQUIRE_SIZEOF(struct silofs_paddr48b, 48);
 	REQUIRE_SIZEOF(struct silofs_caddr64b, 64);
 	REQUIRE_SIZEOF(struct silofs_pseg_uber, SILOFS_PSEG_UBER_SIZE);

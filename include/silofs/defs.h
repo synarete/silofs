@@ -554,6 +554,15 @@ struct silofs_psid32b {
 } silofs_packed_aligned16;
 
 
+/* persistent volume sub-range */
+struct silofs_prange48b {
+	struct silofs_psid32b           psid;
+	int64_t                         cur;
+	uint32_t                        nsegs;
+	uint8_t                         pad[4];
+}  silofs_packed_aligned16;
+
+
 /* persistent object address */
 struct silofs_paddr48b {
 	struct silofs_psid32b           psid;

@@ -34,6 +34,14 @@ static void prange_fini(struct silofs_prange *prange)
 	prange->cur_pos = 0;
 }
 
+void silofs_prange_assign(struct silofs_prange *prange,
+                          const struct silofs_prange *other)
+{
+	silofs_psid_assign(&prange->psid, &other->psid);
+	prange->nsegs = other->nsegs;
+	prange->cur_pos = other->cur_pos;
+}
+
 static void prange_cur_paddr(struct silofs_prange *prange,
                              enum silofs_ptype ptype,
                              struct silofs_paddr *out_paddr)

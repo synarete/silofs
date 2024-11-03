@@ -1036,7 +1036,7 @@ static void update_meta_psid(const struct silofs_fsenv *fsenv,
 {
 	const struct silofs_pstore *pstore = fsenv->fse.pstore;
 
-	silofs_bootrec_set_meta_psid(brec, &pstore->pstate.meta.psid);
+	silofs_bootrec_set_meta_prange(brec, &pstore->pstate.meta);
 }
 
 static int check_superblock(const struct silofs_fsenv *fsenv)

@@ -638,12 +638,10 @@ struct silofs_bootrec1k {
 	uint8_t                         br_reserved1[16];
 	struct silofs_key               br_main_key;
 	struct silofs_iv                br_main_iv;
-	uint8_t                         br_reserved2[16];
-	struct silofs_psid32b           br_meta_psid;
-	uint8_t                         br_reserved3[32];
-	struct silofs_uaddr64b          br_sb_uaddr;
 	struct silofs_iv                br_sb_riv;
-	uint8_t                         br_reserved4[720];
+	struct silofs_uaddr64b          br_sb_uaddr;
+	struct silofs_prange48b         br_meta_prange;
+	uint8_t                         br_reserved4[752];
 	struct silofs_hash256           br_hash;
 } silofs_packed_aligned64;
 

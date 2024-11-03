@@ -45,6 +45,9 @@ struct silofs_pstore {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+void silofs_prange_assign(struct silofs_prange *prange,
+                          const struct silofs_prange *other);
+
 void silofs_prange48b_htox(struct silofs_prange48b *prange48,
                            const struct silofs_prange *prange);
 

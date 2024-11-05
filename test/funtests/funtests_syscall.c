@@ -21,9 +21,9 @@
 #include <time.h>
 
 #define ft_expect_sys_ok(err_, fl_, ln_) \
-	ft_do_expect_sys_ok(err_, syscall_name(__func__), fl_, ln_)
+        ft_do_expect_sys_ok(err_, syscall_name(__func__), fl_, ln_)
 #define ft_expect_sys_err(err_, exp_, fl_, ln_) \
-	ft_do_expect_sys_err(err_, exp_, syscall_name(__func__), fl_, ln_)
+        ft_do_expect_sys_err(err_, exp_, syscall_name(__func__), fl_, ln_)
 
 
 static const char *syscall_name(const char *fn)

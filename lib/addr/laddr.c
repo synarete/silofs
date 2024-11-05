@@ -595,7 +595,7 @@ int silofs_laddr_from_ascii(struct silofs_laddr *laddr,
 union silofs_laddr_repr_u {
 	struct silofs_laddr48b laddr48;
 	uint8_t d[48];
-} silofs_packed_aligned16;
+} silofs_aligned16;
 
 void silofs_laddr_to_base64(const struct silofs_laddr *laddr,
                             struct silofs_strbuf *sbuf)

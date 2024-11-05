@@ -24,27 +24,27 @@
 
 
 #define XATTR_DATA_MAX \
-	(SILOFS_NAME_MAX + 1 + SILOFS_XATTR_VALUE_MAX)
+        (SILOFS_NAME_MAX + 1 + SILOFS_XATTR_VALUE_MAX)
 
 #define XATTRF_DISABLE  (0x01)
 #define XATTRF_ACL      (0x02)
 
 #define XATTR_PREFIX_(p_, n_, f_) \
-	{ .prefix = (p_), .ns = (n_), .flags = (f_) }
+        { .prefix = (p_), .ns = (n_), .flags = (f_) }
 
 #define XATTR_PREFIX_NORMAL(p_, n_) \
-	XATTR_PREFIX_(p_, n_, 0)
+        XATTR_PREFIX_(p_, n_, 0)
 
 #define XATTR_PREFIX_ACL(p_, n_) \
-	XATTR_PREFIX_(p_, n_, XATTRF_ACL)
+        XATTR_PREFIX_(p_, n_, XATTRF_ACL)
 
 #define XATTR_PREFIX_DISABLED(p_, n_) \
-	XATTR_PREFIX_(p_, n_, XATTRF_DISABLE)
+        XATTR_PREFIX_(p_, n_, XATTRF_DISABLE)
 
 struct silofs_xentry_view {
 	struct silofs_xattr_entry xe;
 	uint8_t  xe_data[XATTR_DATA_MAX];
-} silofs_packed_aligned8;
+} silofs_aligned8;
 
 
 struct silofs_xattr_prefix {

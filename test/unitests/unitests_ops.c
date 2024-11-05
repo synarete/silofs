@@ -736,7 +736,7 @@ static int ut_do_timedout(struct ut_env *ute)
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 #define ut_expect_status(err_, status_) \
-	ut_expect_eq(err_, -abs(status_))
+        ut_expect_eq(err_, -abs(status_))
 
 void ut_access(struct ut_env *ute, ino_t ino, int mode)
 {

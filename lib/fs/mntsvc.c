@@ -121,7 +121,7 @@ struct silofs_ms_env_obj {
 #define OVERLAYFS_SUPER_MAGIC   0x794C7630
 
 #define MKFSINFO(t_, n_, a_, i_) \
-	{ .vfstype = (t_), .name = (n_), .allowed = (a_), .isfuse = (i_) }
+        { .vfstype = (t_), .name = (n_), .allowed = (a_), .isfuse = (i_) }
 
 
 static const struct silofs_fsinfo fsinfo_allowed[] = {

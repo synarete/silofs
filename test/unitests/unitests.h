@@ -37,16 +37,16 @@
 
 
 #define UT_MKRANGE0(pos_) \
-	{ .off = (pos_), .len = 0 }
+        { .off = (pos_), .len = 0 }
 
 #define UT_MKRANGE1(pos_, cnt_) \
-	{ .off = (pos_), .len = (cnt_) }
+        { .off = (pos_), .len = (cnt_) }
 
 #define UT_MKRANGE2(pos1_, pos2_, cnt_) \
-	{ .off1 = (pos1_), .off2 = (pos2_), .len = (cnt_) }
+        { .off1 = (pos1_), .off2 = (pos2_), .len = (cnt_) }
 
 #define UT_MKRANGE1S(a_) \
-	{ .arr = (a_), .cnt = UT_ARRAY_SIZE(a_) }
+        { .arr = (a_), .cnt = UT_ARRAY_SIZE(a_) }
 
 /* tests control-flags */
 #define UT_F_NORMAL     (0)
@@ -545,7 +545,7 @@ bool ut_not_dot_or_dotdot(const char *s);
 
 /* execution */
 #define ut_exec_with_ranges(ute_, fn_, args_) \
-	ut_exec_with_ranges_(ute_, fn_, args_, UT_ARRAY_SIZE(args_))
+        ut_exec_with_ranges_(ute_, fn_, args_, UT_ARRAY_SIZE(args_))
 
 void ut_exec_with_ranges_(struct ut_env *ute,
                           void (*fn)(struct ut_env *, loff_t, size_t),
@@ -560,31 +560,31 @@ void ut_expect_statvfs(const struct statvfs *stv1, const struct statvfs *stv2);
 
 /* except-alias */
 #define ut_expect(cond) \
-	silofs_expect_true_((bool)(cond), SILOFS_FL_LN_)
+        silofs_expect_true_((bool)(cond), SILOFS_FL_LN_)
 #define ut_expect_lt(a, b) \
-	silofs_expect_lt_((long)(a), (long)(b), SILOFS_FL_LN_)
+        silofs_expect_lt_((long)(a), (long)(b), SILOFS_FL_LN_)
 #define ut_expect_le(a, b) \
-	silofs_expect_le_((long)(a), (long)(b), SILOFS_FL_LN_)
+        silofs_expect_le_((long)(a), (long)(b), SILOFS_FL_LN_)
 #define ut_expect_gt(a, b) \
-	silofs_expect_gt_((long)(a), (long)(b), SILOFS_FL_LN_)
+        silofs_expect_gt_((long)(a), (long)(b), SILOFS_FL_LN_)
 #define ut_expect_ge(a, b) \
-	silofs_expect_ge_((long)(a), (long)(b), SILOFS_FL_LN_)
+        silofs_expect_ge_((long)(a), (long)(b), SILOFS_FL_LN_)
 #define ut_expect_eq(a, b) \
-	silofs_expect_eq_((long)(a), (long)(b), SILOFS_FL_LN_)
+        silofs_expect_eq_((long)(a), (long)(b), SILOFS_FL_LN_)
 #define ut_expect_ne(a, b) \
-	silofs_expect_ne_((long)(a), (long)(b), SILOFS_FL_LN_)
+        silofs_expect_ne_((long)(a), (long)(b), SILOFS_FL_LN_)
 #define ut_expect_ok(err) \
-	silofs_expect_ok_((int)(err), SILOFS_FL_LN_)
+        silofs_expect_ok_((int)(err), SILOFS_FL_LN_)
 #define ut_expect_err(err, exp) \
-	silofs_expect_err_((int)(err), (int)(exp), SILOFS_FL_LN_)
+        silofs_expect_err_((int)(err), (int)(exp), SILOFS_FL_LN_)
 #define ut_expect_null(ptr) \
-	silofs_expect_null_(ptr, SILOFS_FL_LN_)
+        silofs_expect_null_(ptr, SILOFS_FL_LN_)
 #define ut_expect_not_null(ptr) \
-	silofs_expect_not_null_(ptr, SILOFS_FL_LN_)
+        silofs_expect_not_null_(ptr, SILOFS_FL_LN_)
 #define ut_expect_eqs(a, b) \
-	silofs_expect_eqs_(a, b, SILOFS_FL_LN_)
+        silofs_expect_eqs_(a, b, SILOFS_FL_LN_)
 #define ut_expect_eqm(a, b, n) \
-	silofs_expect_eqm_(a, b, n, SILOFS_FL_LN_)
+        silofs_expect_eqm_(a, b, n, SILOFS_FL_LN_)
 
 /* aliases */
 #define UT_1K                   SILOFS_KILO
@@ -611,20 +611,20 @@ void ut_expect_statvfs(const struct statvfs *stv1, const struct statvfs *stv2);
 #define ut_unused(x)            silofs_unused(x)
 
 #define ut_container_of(ptr_, type_, member_) \
-	silofs_container_of(ptr_, type_, member_)
+        silofs_container_of(ptr_, type_, member_)
 
 #define ut_container_of2(ptr_, type_, member_) \
-	silofs_container_of2(ptr_, type_, member_)
+        silofs_container_of2(ptr_, type_, member_)
 
 #define UT_DEFTESTF(fn_, flags_) \
-	{ .hook = fn_, .name = SILOFS_STR(fn_), .flags = flags_ }
+        { .hook = fn_, .name = SILOFS_STR(fn_), .flags = flags_ }
 
 #define UT_DEFTEST(fn_)         UT_DEFTESTF(fn_, 0)
 #define UT_DEFTEST1(fn_)        UT_DEFTESTF(fn_, UT_F_QUICK)
 #define UT_DEFTEST2(fn_)        UT_DEFTESTF(fn_, UT_F_FTYPE2)
 #define UT_DEFTEST3(fn_)        UT_DEFTESTF(fn_, UT_F_QUICK | UT_F_FTYPE2)
 #define UT_MKTESTS(arr_) \
-	{ arr_, SILOFS_ARRAY_SIZE(arr_) }
+        { arr_, SILOFS_ARRAY_SIZE(arr_) }
 
 /* inlines */
 static inline loff_t ut_off_aligned(loff_t off, loff_t align)

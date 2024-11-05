@@ -109,7 +109,7 @@ endif
 
 # Developer's (pedantic) compilation flags
 CFLAGS += -pedantic -Werror -Wall -Wextra -Winit-self -Winline
-CFLAGS += -Wunused -Wunused-parameter -Wunused-result
+CFLAGS += -Wpacked -Wunused -Wunused-parameter -Wunused-result
 CFLAGS += -Wunused-local-typedefs -Wunused-label
 CFLAGS += -Wshadow -Wfloat-equal -Wwrite-strings -Wpointer-arith
 CFLAGS += -Wcast-align -Wsign-compare -Wredundant-decls -Wformat
@@ -161,7 +161,7 @@ endif
 
 # Compiler specific flags
 ifeq ($(CC), gcc)
-CFLAGS += -Wstack-usage=4096 -Wlogical-op
+CFLAGS += -Wpacked-not-aligned  -Wstack-usage=4096 -Wlogical-op
 CFLAGS += -Wmultistatement-macros -Wunused-const-variable=2
 CFLAGS += -Wswitch-unreachable -Wmaybe-uninitialized -Wtrampolines
 CFLAGS += -Wl,-z,nodlopen -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now

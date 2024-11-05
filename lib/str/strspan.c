@@ -23,16 +23,16 @@
 #include <limits.h>
 
 #define strspan_out_of_range(ss_, pos_) \
-	silofs_panic("strspan out-of-range: pos=%ld len=%ld n=%ld ss=%p", \
-	             (long)(pos_), (long)((ss_)->v.len), \
-	             (long)((ss_)->n), (ss_))
+        silofs_panic("strspan out-of-range: pos=%ld len=%ld n=%ld ss=%p", \
+                     (long)(pos_), (long)((ss_)->v.len), \
+                     (long)((ss_)->n), (ss_))
 
 #define strspan_check_range(ss_, pos_) \
-	do { \
-		if ((pos_) > (ss_)->n) { \
-			strspan_out_of_range(ss_, pos_); \
-		} \
-	} while (0)
+        do { \
+                if ((pos_) > (ss_)->n) { \
+                        strspan_out_of_range(ss_, pos_); \
+                } \
+        } while (0)
 
 
 size_t silofs_strspan_max_size(void)

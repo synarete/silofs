@@ -31,81 +31,81 @@
 #define BITS_SIZE(a)    (CHAR_BIT * sizeof(a))
 
 #define MEMBER_SIZE(type, member) \
-	sizeof(((const type *)NULL)->member)
+        sizeof(((const type *)NULL)->member)
 
 #define MEMBER_NELEMS(type, member) \
-	SILOFS_ARRAY_SIZE(((const type *)NULL)->member)
+        SILOFS_ARRAY_SIZE(((const type *)NULL)->member)
 
 #define MEMBER_NBITS(type, member) \
-	BITS_SIZE(((const type *)NULL)->member)
+        BITS_SIZE(((const type *)NULL)->member)
 
 #define SWORD(a) ((long)(a))
 
 #define REQUIRE_EQ(a, b) \
-	SILOFS_STATICASSERT_EQ(SWORD(a), SWORD(b))
+        SILOFS_STATICASSERT_EQ(SWORD(a), SWORD(b))
 
 #define REQUIRE_LE(a, b) \
-	SILOFS_STATICASSERT_LE(SWORD(a), SWORD(b))
+        SILOFS_STATICASSERT_LE(SWORD(a), SWORD(b))
 
 #define REQUIRE_LT(a, b) \
-	SILOFS_STATICASSERT_LT(SWORD(a), SWORD(b))
+        SILOFS_STATICASSERT_LT(SWORD(a), SWORD(b))
 
 #define REQUIRE_GT(a, b) \
-	SILOFS_STATICASSERT_GT(SWORD(a), SWORD(b))
+        SILOFS_STATICASSERT_GT(SWORD(a), SWORD(b))
 
 #define REQUIRE_GE(a, b) \
-	SILOFS_STATICASSERT_GE(SWORD(a), SWORD(b))
+        SILOFS_STATICASSERT_GE(SWORD(a), SWORD(b))
 
 #define REQUIRE_SIZEOF(type, size) \
-	REQUIRE_EQ(sizeof(type), size)
+        REQUIRE_EQ(sizeof(type), size)
 
 #define REQUIRE_SIZEOF_LE(type, size) \
-	REQUIRE_LE(sizeof(type), size)
+        REQUIRE_LE(sizeof(type), size)
 
 #define REQUIRE_SIZEOF_NK(type, nk) \
-	REQUIRE_SIZEOF(type, (nk) * SILOFS_KILO)
+        REQUIRE_SIZEOF(type, (nk) * SILOFS_KILO)
 
 #define REQUIRE_SIZEOF_1K(type) \
-	REQUIRE_SIZEOF_NK(type, 1)
+        REQUIRE_SIZEOF_NK(type, 1)
 
 #define REQUIRE_SIZEOF_4K(type) \
-	REQUIRE_SIZEOF_NK(type, 4)
+        REQUIRE_SIZEOF_NK(type, 4)
 
 #define REQUIRE_SIZEOF_8K(type) \
-	REQUIRE_SIZEOF_NK(type, 8)
+        REQUIRE_SIZEOF_NK(type, 8)
 
 #define REQUIRE_SIZEOF_32K(type) \
-	REQUIRE_SIZEOF_NK(type, 32)
+        REQUIRE_SIZEOF_NK(type, 32)
 
 #define REQUIRE_SIZEOF_64K(type) \
-	REQUIRE_SIZEOF_NK(type, 64)
+        REQUIRE_SIZEOF_NK(type, 64)
 
 #define REQUIRE_MEMBER_SIZE(type, f, size) \
-	REQUIRE_EQ(MEMBER_SIZE(type, f), size)
+        REQUIRE_EQ(MEMBER_SIZE(type, f), size)
 
 #define REQUIRE_NELEMS(type, f, nelems) \
-	REQUIRE_EQ(MEMBER_NELEMS(type, f), nelems)
+        REQUIRE_EQ(MEMBER_NELEMS(type, f), nelems)
 
 #define REQUIRE_NBITS(type, f, nbits) \
-	REQUIRE_EQ(MEMBER_NBITS(type, f), nbits)
+        REQUIRE_EQ(MEMBER_NBITS(type, f), nbits)
 
 #define ISALIGNED32(off) \
-	(((off) % 4) == 0)
+        (((off) % 4) == 0)
 
 #define ISALIGNED64(off) \
-	(((off) % 8) == 0)
+        (((off) % 8) == 0)
 
 #define ISOFFSET(type, member, off) \
-	(offsetof(type, member) == (off))
+        (offsetof(type, member) == (off))
 
 #define REQUIRE_OFFSETXX(type, member, off) \
-	SILOFS_STATICASSERT(ISOFFSET(type, member, off))
+        SILOFS_STATICASSERT(ISOFFSET(type, member, off))
 
 #define REQUIRE_OFFSET32(type, member, off) \
-	SILOFS_STATICASSERT(ISOFFSET(type, member, off) && ISALIGNED32(off))
+        SILOFS_STATICASSERT(ISOFFSET(type, member, off) && ISALIGNED32(off))
 
 #define REQUIRE_OFFSET64(type, member, off) \
-	SILOFS_STATICASSERT(ISOFFSET(type, member, off) && ISALIGNED64(off))
+        SILOFS_STATICASSERT(ISOFFSET(type, member, off) && ISALIGNED64(off))
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

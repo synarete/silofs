@@ -27,10 +27,10 @@
 #define status_ok(err_) ((err_) == 0)
 
 #define ok_or_goto_out(err_) \
-	do { if (!status_ok(err_)) goto out; } while (0)
+        do { if (!status_ok(err_)) goto out; } while (0)
 
 #define ok_or_goto_out_ok(err_) \
-	do { if (!status_ok(err_)) goto out_ok; } while (0)
+        do { if (!status_ok(err_)) goto out_ok; } while (0)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

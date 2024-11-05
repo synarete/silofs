@@ -20,7 +20,7 @@
 #include <silofs/fs-private.h>
 
 #define check_ok_or_bailout(err_) \
-	do { if (err_) return (err_); } while (0)
+        do { if (err_) return (err_); } while (0)
 
 
 struct silofs_walk_ctx {

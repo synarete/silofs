@@ -57,9 +57,9 @@
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 #define SILOFS_CMD_TAIL_MAX \
-	(SILOFS_IO_SIZE_MAX - sizeof(struct fuse_in_header))
+        (SILOFS_IO_SIZE_MAX - sizeof(struct fuse_in_header))
 #define SILOFS_CMD_FORGET_ONE_MAX \
-	(SILOFS_CMD_TAIL_MAX / sizeof(struct fuse_forget_one))
+        (SILOFS_CMD_TAIL_MAX / sizeof(struct fuse_forget_one))
 
 /*
  * Currently, there is limitation to output-size of FUSE_COPY_FILE_RANGE: the
@@ -792,14 +792,14 @@ static int fqd_reply_create_ok(struct silofs_fuseq_dispatcher *fqd,
                                const struct silofs_task *task,
                                const struct silofs_stat *st)
 {
-	struct fuseq_create_out {
-		struct fuse_entry_out ent;
-		struct fuse_open_out  open;
-	} silofs_packed_aligned16 arg;
+	struct fuse_entry_out arg1;
+	struct fuse_open_out  arg2;
 
-	fill_fuse_entry(&arg.ent, st);
-	fill_fuse_open(&arg.open, 0, 0);
-	return fqd_reply_arg(fqd, task, &arg, sizeof(arg));
+	fill_fuse_entry(&arg1, st);
+	fill_fuse_open(&arg2, 0, 0);
+	return fqd_reply_arg2(fqd, task,
+	                      &arg1, sizeof(arg1),
+	                      &arg2, sizeof(arg2));
 }
 
 static int fqd_reply_attr_ok(struct silofs_fuseq_dispatcher *fqd,
@@ -1800,18 +1800,18 @@ static int do_exec_op(const struct silofs_fuseq_cmd_ctx *fcc)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 #define FATTR_MASK \
-	(FATTR_MODE | FATTR_UID | FATTR_GID | FATTR_SIZE | \
-	 FATTR_ATIME | FATTR_MTIME | FATTR_FH | FATTR_ATIME_NOW | \
-	 FATTR_MTIME_NOW | FATTR_LOCKOWNER | FATTR_CTIME)
+        (FATTR_MODE | FATTR_UID | FATTR_GID | FATTR_SIZE | \
+         FATTR_ATIME | FATTR_MTIME | FATTR_FH | FATTR_ATIME_NOW | \
+         FATTR_MTIME_NOW | FATTR_LOCKOWNER | FATTR_CTIME)
 
 #define FATTR_AMTIME_NOW \
-	(FATTR_ATIME_NOW | FATTR_MTIME_NOW)
+        (FATTR_ATIME_NOW | FATTR_MTIME_NOW)
 
 #define FATTR_AMCTIME \
-	(FATTR_ATIME | FATTR_MTIME | FATTR_CTIME)
+        (FATTR_ATIME | FATTR_MTIME | FATTR_CTIME)
 
 #define FATTR_NONTIME \
-	(FATTR_MODE | FATTR_UID | FATTR_GID | FATTR_SIZE)
+        (FATTR_MODE | FATTR_UID | FATTR_GID | FATTR_SIZE)
 
 
 static int
@@ -3050,7 +3050,7 @@ static bool fqt_completed(const struct silofs_fuseq_thread *fqt)
 #define FUSEQ_CMD_MAX   (64)
 
 #define FUSEQ_CMD(opcode_, hook_, rtime_) \
-	[opcode_] = { hook_, SILOFS_STR(opcode_), opcode_, rtime_ }
+        [opcode_] = { hook_, SILOFS_STR(opcode_), opcode_, rtime_ }
 
 static const struct silofs_fuseq_cmd_desc fuseq_cmd_tbl[FUSEQ_CMD_MAX] = {
 	FUSEQ_CMD(FUSE_LOOKUP, do_lookup, 0),
@@ -5503,13 +5503,13 @@ static int exec_op(struct silofs_task *task, struct silofs_oper_args *args)
 #define FUSEQ_HDR_IN_SIZE       (40)
 
 #define REQUIRE_SIZEOF(type, size) \
-	SILOFS_STATICASSERT(((sizeof(type) == size)) && ((size % 8) == 0))
+        SILOFS_STATICASSERT(((sizeof(type) == size)) && ((size % 8) == 0))
 
 #define REQUIRE_OFFSET(type, member, offset) \
-	SILOFS_STATICASSERT_EQ(offsetof(type, member), offset)
+        SILOFS_STATICASSERT_EQ(offsetof(type, member), offset)
 
 #define REQUIRE_BASEOF(type, member) \
-	REQUIRE_OFFSET(type, member, FUSEQ_HDR_IN_SIZE)
+        REQUIRE_OFFSET(type, member, FUSEQ_HDR_IN_SIZE)
 
 void silofs_guarantee_fuse_proto(void)
 {

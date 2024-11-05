@@ -24,23 +24,23 @@ struct ft_copy_range_args {
 };
 
 #define COPYARGS1(a_, b_) \
-	{ .off_src = (a_), .len_src = (b_) }
+        { .off_src = (a_), .len_src = (b_) }
 
 #define COPYARGS2(a_, b_, c_, d_) \
-	{ .off_src = (a_), .len_src = (b_), .off_dst = (c_), .len_dst = (d_) }
+        { .off_src = (a_), .len_src = (b_), .off_dst = (c_), .len_dst = (d_) }
 
 #define COPYARGS3(a_, b_, c_) \
-	{ .off_src = (a_), .len_src = (c_), .off_dst = (b_), .len_dst = (c_) }
+        { .off_src = (a_), .len_src = (c_), .off_dst = (b_), .len_dst = (c_) }
 
 
 #define ft_copy_range1(fte_, fn_, args_) \
-	ft_copy_range1_(fte_, fn_, args_, FT_ARRAY_SIZE(args_))
+        ft_copy_range1_(fte_, fn_, args_, FT_ARRAY_SIZE(args_))
 
 #define ft_copy_range2(fte_, fn_, args_) \
-	ft_copy_range2_(fte_, fn_, args_, FT_ARRAY_SIZE(args_))
+        ft_copy_range2_(fte_, fn_, args_, FT_ARRAY_SIZE(args_))
 
 #define ft_copy_range3(fte_, fn_, args_) \
-	ft_copy_range3_(fte_, fn_, args_, FT_ARRAY_SIZE(args_))
+        ft_copy_range3_(fte_, fn_, args_, FT_ARRAY_SIZE(args_))
 
 static void ft_copy_range1_(struct ft_env *fte,
                             void (*fn)(struct ft_env *, loff_t, size_t),

@@ -44,19 +44,19 @@ struct silofs_log_params {
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 #define silofs_log_debug(fmt, ...) \
-	silofs_logf(SILOFS_LOG_DEBUG, __FILE__, __LINE__, fmt, __VA_ARGS__)
+        silofs_logf(SILOFS_LOG_DEBUG, __FILE__, __LINE__, fmt, __VA_ARGS__)
 
 #define silofs_log_info(fmt, ...) \
-	silofs_logf(SILOFS_LOG_INFO, __FILE__, __LINE__, fmt, __VA_ARGS__)
+        silofs_logf(SILOFS_LOG_INFO, __FILE__, __LINE__, fmt, __VA_ARGS__)
 
 #define silofs_log_warn(fmt, ...) \
-	silofs_logf(SILOFS_LOG_WARN, __FILE__, __LINE__, fmt, __VA_ARGS__)
+        silofs_logf(SILOFS_LOG_WARN, __FILE__, __LINE__, fmt, __VA_ARGS__)
 
 #define silofs_log_error(fmt, ...) \
-	silofs_logf(SILOFS_LOG_ERROR, __FILE__, __LINE__, fmt, __VA_ARGS__)
+        silofs_logf(SILOFS_LOG_ERROR, __FILE__, __LINE__, fmt, __VA_ARGS__)
 
 #define silofs_log_crit(fmt, ...) \
-	silofs_logf(SILOFS_LOG_CRIT, __FILE__, __LINE__, fmt, __VA_ARGS__)
+        silofs_logf(SILOFS_LOG_CRIT, __FILE__, __LINE__, fmt, __VA_ARGS__)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

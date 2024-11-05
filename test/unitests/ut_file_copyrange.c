@@ -24,16 +24,16 @@ struct ut_copy_range_args {
 };
 
 #define COPYARGS1(a_, b_) \
-	COPYARGS2(a_, b_, 0, 0)
+        COPYARGS2(a_, b_, 0, 0)
 
 #define COPYARGS2(a_, b_, c_, d_) \
-	{ .off_src = (a_), .len_src = (b_), .off_dst = (c_), .len_dst = (d_) }
+        { .off_src = (a_), .len_src = (b_), .off_dst = (c_), .len_dst = (d_) }
 
 #define ut_copy_range1(ute_, fn_, args_) \
-	ut_copy_range1_(ute_, fn_, args_, UT_ARRAY_SIZE(args_))
+        ut_copy_range1_(ute_, fn_, args_, UT_ARRAY_SIZE(args_))
 
 #define ut_copy_range2(ute_, fn_, args_) \
-	ut_copy_range2_(ute_, fn_, args_, UT_ARRAY_SIZE(args_))
+        ut_copy_range2_(ute_, fn_, args_, UT_ARRAY_SIZE(args_))
 
 static void
 ut_copy_range1_(struct ut_env *ute,

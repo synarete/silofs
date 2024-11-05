@@ -27,7 +27,7 @@
 #define BASE64_ENCODE_LEN(inlen)        ((((inlen) + 2) / 3) * 4)
 #define BASE64_DECODE_ADD               64
 #define BASE64_DECODE_ENT(ch, v) \
-	[(ch)] = ((short)(v) + BASE64_DECODE_ADD)
+        [(ch)] = ((short)(v) + BASE64_DECODE_ADD)
 
 static const char base64_encode_tbl[64] =
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";

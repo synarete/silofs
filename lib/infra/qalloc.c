@@ -58,7 +58,7 @@ struct silofs_slab_seg {
 union silofs_qpage {
 	struct silofs_slab_seg seg[QALLOC_PAGE_NSEGS];
 	uint8_t data[QALLOC_PAGE_SIZE];
-} silofs_packed_aligned64;
+} silofs_aligned64;
 
 
 struct silofs_qpage_info {
@@ -75,7 +75,7 @@ struct silofs_qpage_info {
 } __attribute__((__aligned__(SILOFS_CACHELINE_SIZE_DFL)));
 
 
-/* global qpool's unique id (per process) */
+/* global qpool's unique id */
 static long g_qpool_id;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -303,7 +303,7 @@ static bool qpool_nofail_mode(const struct silofs_qpool *qpool)
 }
 
 #define qpool_error(qpool_, fmt_, ...) \
-	qpool_errorf(qpool_, __FILE__, __LINE__, fmt_, __VA_ARGS__)
+        qpool_errorf(qpool_, __FILE__, __LINE__, fmt_, __VA_ARGS__)
 
 static void qpool_errorf(const struct silofs_qpool *qpool,
                          const char *file, int line, const char *fmt, ...)
@@ -843,7 +843,7 @@ static void *qpool_base_of(const struct silofs_qpool *qpool,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 #define slab_error(slab_, fmt_, ...) \
-	slab_errorf(slab_, __FILE__, __LINE__, fmt_, __VA_ARGS__)
+        slab_errorf(slab_, __FILE__, __LINE__, fmt_, __VA_ARGS__)
 
 static void slab_errorf(const struct silofs_slab *slab,
                         const char *file, int line, const char *fmt, ...)

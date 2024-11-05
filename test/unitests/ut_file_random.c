@@ -25,7 +25,7 @@ struct ut_ioparams {
 };
 
 #define MKPARAMS(o_, l_, s_, c_) \
-	{ .offset = (o_), .length = (l_), .nskip = (s_), .count = (c_) }
+        { .offset = (o_), .length = (l_), .nskip = (s_), .count = (c_) }
 
 
 static struct ut_dvec **new_dvecs(struct ut_env *ute,
@@ -149,7 +149,7 @@ static void ut_file_random_arr_(struct ut_env *ute,
 }
 
 #define ut_file_random_arr(ctx_, arr_) \
-	ut_file_random_arr_(ctx_, arr_, UT_ARRAY_SIZE(arr_))
+        ut_file_random_arr_(ctx_, arr_, UT_ARRAY_SIZE(arr_))
 
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

@@ -29,11 +29,11 @@
 
 
 #define SILOFS_LOG_LEVEL_DEFAULT \
-	(SILOFS_LOG_ERROR)
+        (SILOFS_LOG_ERROR)
 
 #define SILOFS_LOG_FLAGS_DEFAULT \
-	(SILOFS_LOGF_STDOUT | SILOFS_LOGF_SYSLOG | \
-	 SILOFS_LOGF_PROGNAME | SILOFS_LOGF_FILINE)
+        (SILOFS_LOGF_STDOUT | SILOFS_LOGF_SYSLOG | \
+         SILOFS_LOGF_PROGNAME | SILOFS_LOGF_FILINE)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

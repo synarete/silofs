@@ -23,15 +23,15 @@
 #include <limits.h>
 
 #define strview_out_of_range(sv_, pos_) \
-	silofs_panic("strview out-of-range: pos=%ld len=%ld sv=%p", \
-	             (long)(pos_), (long)((sv_)->len), (sv_))
+        silofs_panic("strview out-of-range: pos=%ld len=%ld sv=%p", \
+                     (long)(pos_), (long)((sv_)->len), (sv_))
 
 #define strview_check_range(sv_, pos_) \
-	do { \
-		if ((pos_) >= (sv_)->len) { \
-			strview_out_of_range(sv_, pos_); \
-		} \
-	} while (0)
+        do { \
+                if ((pos_) >= (sv_)->len) { \
+                        strview_out_of_range(sv_, pos_); \
+                } \
+        } while (0)
 
 
 static bool chr_eq(char c1, char c2)

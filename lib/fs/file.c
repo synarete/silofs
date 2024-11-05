@@ -3614,11 +3614,11 @@ int silofs_do_lseek(struct silofs_task *task,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 #define FALLOC_FL_MODE_MASK \
-	(FALLOC_FL_PUNCH_HOLE | \
-	 FALLOC_FL_COLLAPSE_RANGE | \
-	 FALLOC_FL_ZERO_RANGE | \
-	 FALLOC_FL_INSERT_RANGE | \
-	 FALLOC_FL_UNSHARE_RANGE)
+        (FALLOC_FL_PUNCH_HOLE | \
+         FALLOC_FL_COLLAPSE_RANGE | \
+         FALLOC_FL_ZERO_RANGE | \
+         FALLOC_FL_INSERT_RANGE | \
+         FALLOC_FL_UNSHARE_RANGE)
 
 /*
  * TODO-0012: Proper hanfling for FALLOC_FL_KEEP_SIZE beyond file size

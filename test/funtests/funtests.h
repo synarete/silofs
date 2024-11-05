@@ -214,7 +214,7 @@ size_t ft_page_size(void);
 
 /* test-and-relax over array of ranges */
 #define ft_exec_with_ranges(fte_, fn_, args_) \
-	ft_exec_with_ranges_(fte_, fn_, args_, FT_ARRAY_SIZE(args_))
+        ft_exec_with_ranges_(fte_, fn_, args_, FT_ARRAY_SIZE(args_))
 
 void ft_exec_with_ranges_(struct ft_env *fte,
                           void (*fn)(struct ft_env *, loff_t, size_t),
@@ -265,20 +265,20 @@ extern const struct ft_tests ft_stress_rw;
 
 /* test-define helper macros */
 #define FT_DEFTESTF(fn_, fl_) \
-	{ .hook = (fn_), .name = FT_STR(fn_), .flags = (fl_) }
+        { .hook = (fn_), .name = FT_STR(fn_), .flags = (fl_) }
 
 #define FT_DEFTEST(fn_) \
-	FT_DEFTESTF(fn_, FT_F_NORMAL)
+        FT_DEFTESTF(fn_, FT_F_NORMAL)
 
 #define FT_DEFTESTS(a_) \
-	{ .arr = (a_), .len = FT_ARRAY_SIZE(a_) }
+        { .arr = (a_), .len = FT_ARRAY_SIZE(a_) }
 
 
 #define FT_MKRANGE0(off_) \
-	{ .off = off_, .len = 0 }
+        { .off = off_, .len = 0 }
 
 #define FT_MKRANGE(off_, len_) \
-	{ .off = off_, .len = len_ }
+        { .off = off_, .len = len_ }
 
 /* common inline utility functions */
 #include "funtests_inline.h"

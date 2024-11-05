@@ -1,5 +1,7 @@
 -include $(top_builddir)/common.mk
 
+AM_CFLAGS = $(WARN_CFLAGS)
+
 bin_PROGRAMS = silofs-funtests
 silofs_funtests_CPPFLAGS = $(NULL)
 silofs_funtests_CPPFLAGS += -I$(top_srcdir)/include

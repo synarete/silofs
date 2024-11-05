@@ -1,6 +1,8 @@
 -include $(top_builddir)/sedsub.mk
 SUBDIRS = completions sbinutils
 
+AM_CFLAGS = $(WARN_CFLAGS)
+
 bin_PROGRAMS = silofs
 silofs_CPPFLAGS = -I$(top_srcdir)/include
 silofs_LDFLAGS = $(NULL)

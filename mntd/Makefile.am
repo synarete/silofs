@@ -1,6 +1,8 @@
 -include $(top_builddir)/sedsub.mk
 SUBDIRS = systemd
 
+AM_CFLAGS = $(WARN_CFLAGS)
+
 sbin_PROGRAMS = silofs-mountd
 silofs_mountd_CPPFLAGS = -I$(top_srcdir)/include
 silofs_mountd_LDFLAGS = $(NULL)

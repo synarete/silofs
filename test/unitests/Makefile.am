@@ -1,5 +1,7 @@
 -include $(top_builddir)/common.mk
 
+AM_CFLAGS = $(WARN_CFLAGS)
+
 bin_PROGRAMS = silofs-unitests
 silofs_unitests_CPPFLAGS = $(NULL)
 silofs_unitests_CPPFLAGS += -I$(top_srcdir)/include

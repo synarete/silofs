@@ -1,5 +1,7 @@
 -include $(top_builddir)/common.mk
 
+AM_CFLAGS = $(WARN_CFLAGS)
+
 libsilofsdir = $(libdir)
 libsilofs_LTLIBRARIES = libsilofs.la
 libsilofs_la_LDFLAGS = $(NULL)

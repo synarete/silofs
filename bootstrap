@@ -46,10 +46,9 @@ do_autogen() {
   run libtoolize --automake --copy --install --force
   run aclocal -I m4 --warnings=all
   run autoheader --warnings=all
-  run automake --add-missing --copy -Woverride --warnings=all
   run autoconf --warnings=all
-  export LIBTOOLIZE=true
-  run autoreconf --install -I m4 --warnings=all
+  run automake --add-missing --copy -Woverride --warnings=all
+  run env LIBTOOLIZE=true autoreconf --install -I m4 --warnings=all
 }
 
 do_autoclean() {

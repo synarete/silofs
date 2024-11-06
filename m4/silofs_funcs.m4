@@ -32,7 +32,6 @@ AC_DEFUN([AX_SILOFS_NEED_FUNCS2],
   AX_SILOFS_CHECK_FUNCS([getgrnam_r])
   AX_SILOFS_CHECK_FUNCS([getgrouplist])
   AX_SILOFS_CHECK_FUNCS([getgroups])
-  AX_SILOFS_CHECK_FUNCS([getline])
   AX_SILOFS_CHECK_FUNCS([getloadavg])
   AX_SILOFS_CHECK_FUNCS([getlogin])
   AX_SILOFS_CHECK_FUNCS([getlogin_r])

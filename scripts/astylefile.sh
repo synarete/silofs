@@ -16,7 +16,6 @@ for f in "${@}"; do
     --pad-header \
     --unpad-paren \
     --min-conditional-indent=0 \
-    --indent-preprocessor \
     --add-braces \
     --add-one-line-braces \
     --break-after-logical \

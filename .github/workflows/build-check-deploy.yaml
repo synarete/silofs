@@ -215,7 +215,7 @@ jobs:
       - name: Build and install
         run: |
           ./bootstrap
-          ./configure --sysconfdir=/etc
+          ./configure --sysconfdir=/etc --enable-compile-warnings=error
           make
           sudo make install
       - name: Verify installation

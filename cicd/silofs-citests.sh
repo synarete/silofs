@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -o errexit
 set -o nounset
 set -o pipefail
@@ -6,12 +6,14 @@ export LC_ALL=C
 unset CDPATH
 
 self=$(basename "${BASH_SOURCE[0]}")
+selfdir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
 msg() { echo "$self: $*" >&2; }
 die() { msg "$*"; exit 1; }
 try() { ( "$@" ) || die "failed: $*"; }
 run() { echo "$self: $*" >&2; try "$@"; }
 
-selfdir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
+###
+if [ "$#" -ne 1 ]; then die "illegal number of args"; fi
 dist_name="$1"
 archive_tgz="${dist_name}.tar.gz"
 workdir="${selfdir}/${dist_name}"

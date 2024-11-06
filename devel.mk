@@ -121,6 +121,7 @@ CFLAGS += -Wvla -Waddress -Woverlength-strings -Wconversion -Wsign-conversion
 CFLAGS += -Wunreachable-code -Wwrite-strings -Wmissing-field-initializers
 CFLAGS += -Wstrict-aliasing=2 -Warray-bounds -Winline -Wcast-qual
 CFLAGS += -Wmissing-noreturn -Wimplicit-fallthrough
+CFLAGS += -Wduplicated-branches -Wduplicated-cond
 CFLAGS += -fwrapv -fstrict-aliasing -fsigned-char
 CFLAGS += -fstack-protector-all -fstack-protector-strong
 CFLAGS += -fstack-clash-protection

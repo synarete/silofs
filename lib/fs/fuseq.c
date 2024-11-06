@@ -687,35 +687,35 @@ static int fqd_reply_arg(struct silofs_fuseq_dispatcher *fqd,
 {
 	struct fuse_out_header hdr;
 	struct iovec iov[2];
-	size_t cnt = 1;
+
+	silofs_assert_gt(argsz, 0);
+	silofs_assert_lt(argsz, 2 * SILOFS_MEGA);
 
 	iov[0].iov_base = &hdr;
 	iov[0].iov_len = sizeof(hdr);
-	if (argsz) {
-		iov[1].iov_base = unconst(arg);
-		iov[1].iov_len = argsz;
-		cnt = 2;
-	}
+	iov[1].iov_base = unconst(arg);
+	iov[1].iov_len = argsz;
+
 	fill_out_header_ok(&hdr, task, argsz);
-	return fqd_send_msg(fqd, iov, cnt);
+	return fqd_send_msg(fqd, iov, 2);
 }
 
 static int fqd_reply_arg2(struct silofs_fuseq_dispatcher *fqd,
                           const struct silofs_task *task,
-                          const void *arg, size_t argsz,
-                          const void *buf, size_t bufsz)
+                          const void *arg1, size_t argsz1,
+                          const void *arg2, size_t argsz2)
 {
 	struct fuse_out_header hdr;
 	struct iovec iov[3];
 
 	iov[0].iov_base = &hdr;
 	iov[0].iov_len = sizeof(hdr);
-	iov[1].iov_base = unconst(arg);
-	iov[1].iov_len = argsz;
-	iov[2].iov_base = unconst(buf);
-	iov[2].iov_len = bufsz;
+	iov[1].iov_base = unconst(arg1);
+	iov[1].iov_len = argsz1;
+	iov[2].iov_base = unconst(arg2);
+	iov[2].iov_len = argsz2;
 
-	fill_out_header_ok(&hdr, task, argsz + bufsz);
+	fill_out_header_ok(&hdr, task, argsz1 + argsz2);
 	return fqd_send_msg(fqd, iov, 3);
 }
 
@@ -723,7 +723,19 @@ static int fqd_reply_buf(struct silofs_fuseq_dispatcher *fqd,
                          const struct silofs_task *task,
                          const void *buf, size_t bsz)
 {
-	return fqd_reply_arg(fqd, task, buf, bsz);
+	struct fuse_out_header hdr;
+	struct iovec iov[2];
+	size_t cnt = 1;
+
+	iov[0].iov_base = &hdr;
+	iov[0].iov_len = sizeof(hdr);
+	if (bsz) {
+		iov[1].iov_base = unconst(buf);
+		iov[1].iov_len = bsz;
+		cnt = 2;
+	}
+	fill_out_header_ok(&hdr, task, bsz);
+	return fqd_send_msg(fqd, iov, cnt);
 }
 
 static int fqd_reply_err(struct silofs_fuseq_dispatcher *fqd,
@@ -810,18 +822,12 @@ static int fqd_reply_statfs_ok(struct silofs_fuseq_dispatcher *fqd,
 	return fqd_reply_arg(fqd, task, &arg, sizeof(arg));
 }
 
-static int fqd_reply_buf_ok(struct silofs_fuseq_dispatcher *fqd,
-                            const struct silofs_task *task,
-                            const char *buf, size_t bsz)
-{
-	return fqd_reply_arg(fqd, task, buf, bsz);
-}
 
 static int fqd_reply_readlink_ok(struct silofs_fuseq_dispatcher *fqd,
                                  const struct silofs_task *task,
                                  const char *lnk, size_t len)
 {
-	return fqd_reply_buf_ok(fqd, task, lnk, len);
+	return fqd_reply_buf(fqd, task, lnk, len);
 }
 
 static int fqd_reply_open_ok(struct silofs_fuseq_dispatcher *fqd,
@@ -1183,7 +1189,7 @@ static int fqd_reply_read_buf(struct silofs_fuseq_dispatcher *fqd,
 	} else if (unlikely(err)) {
 		ret = fqd_reply_err(fqd, task, err);
 	} else {
-		ret = fqd_reply_buf_ok(fqd, task, dat, len);
+		ret = fqd_reply_buf(fqd, task, dat, len);
 	}
 	return ret;
 }
@@ -1269,7 +1275,7 @@ static int fqd_reply_read_data(struct silofs_fuseq_dispatcher *fqd,
                                const struct silofs_task *task, size_t nrd,
                                const struct silofs_iovec *iovec)
 {
-	return fqd_reply_arg(fqd, task, iovec->iov.iov_base, nrd);
+	return fqd_reply_buf(fqd, task, iovec->iov.iov_base, nrd);
 }
 
 static int fq_rdi_reply_read_iov(struct silofs_fuseq_rd_iter *fq_rdi)

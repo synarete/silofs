@@ -201,9 +201,7 @@ static bool lsid_rw_mode(const struct silofs_fsenv *fsenv,
 	const struct silofs_sb_info *sbi = fsenv->fse_sbi;
 	bool rw_mode;
 
-	if (unlikely(sbi == NULL)) {
-		rw_mode = true;
-	} else if (silofs_sbi_ismutable_lsid(sbi, lsid)) {
+	if (unlikely(sbi == NULL) || silofs_sbi_ismutable_lsid(sbi, lsid)) {
 		rw_mode = true;
 	} else {
 		/*
@@ -214,7 +212,7 @@ static bool lsid_rw_mode(const struct silofs_fsenv *fsenv,
 		 * logic has an issue with (off-line) snapshots, thus forcing
 		 * read-write mode.
 		 */
-		rw_mode = true;
+		rw_mode = likely(fsenv != NULL) ? true : false;
 	}
 	return rw_mode;
 }

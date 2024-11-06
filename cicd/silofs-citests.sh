@@ -76,7 +76,8 @@ msg "run heap checker to detect memory leaks"
 run ./bootstrap
 run mkdir -p "${workdir}/build/local/tmp"
 cd "${workdir}/build"
-run ../configure --prefix="${workdir}/build/local" --with-tcmalloc
+run ../configure --prefix="${workdir}/build/local" \
+  --enable-compile-warnings=error --with-tcmalloc
 run make install
 run env HEAPCHECK=normal HEAP_CHECK_TEST_POINTER_ALIGNMENT=1 \
   "${workdir}/build/local/bin/silofs-unitests" \

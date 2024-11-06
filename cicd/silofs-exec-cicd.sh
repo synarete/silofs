@@ -38,7 +38,9 @@ disttgz="${distname}.tar.gz"
 run mkdir -p "${autotoolsdir}"
 cd "${autotoolsdir}"
 run "${basedir}"/bootstrap
-run "${basedir}"/configure "--enable-unitests=0"
+run "${basedir}"/configure \
+  "--enable-unitests=0" \
+  "--enable-compile-warnings=error"
 run make dist
 run stat "${autotoolsdir}/${disttgz}"
 

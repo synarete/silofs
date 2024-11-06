@@ -108,35 +108,86 @@ endif
 
 
 # Developer's (pedantic) compilation flags
-CFLAGS += -pedantic -Werror -Wall -Wextra -Winit-self -Winline
-CFLAGS += -Wpacked -Wunused -Wunused-parameter -Wunused-result
-CFLAGS += -Wunused-local-typedefs -Wunused-label
-CFLAGS += -Wshadow -Wfloat-equal -Wwrite-strings -Wpointer-arith
-CFLAGS += -Wcast-align -Wsign-compare -Wredundant-decls -Wformat
-CFLAGS += -Wmissing-include-dirs -Wmissing-declarations -Wswitch -Wswitch-enum
-CFLAGS += -Wswitch-default -Wcomment -Wparentheses -Wsequence-point
-CFLAGS += -Wpointer-arith -Wdisabled-optimization -Wmain -Wundef
-CFLAGS += -Wunknown-pragmas -Wunused-macros -Wendif-labels
-CFLAGS += -Wvla -Waddress -Woverlength-strings -Wconversion -Wsign-conversion
-CFLAGS += -Wunreachable-code -Wwrite-strings -Wmissing-field-initializers
-CFLAGS += -Wstrict-aliasing=2 -Warray-bounds -Winline -Wcast-qual
-CFLAGS += -Wmissing-noreturn -Wimplicit-fallthrough
-CFLAGS += -Wduplicated-branches -Wduplicated-cond
-CFLAGS += -fwrapv -fstrict-aliasing -fsigned-char
-CFLAGS += -fstack-protector-all -fstack-protector-strong
+CFLAGS += -pedantic
+CFLAGS += -Waddress
+CFLAGS += -Wall
+CFLAGS += -Walloc-zero
+CFLAGS += -Walloca
+CFLAGS += -Warray-bounds
+CFLAGS += -Wcast-align
+CFLAGS += -Wcast-qual
+CFLAGS += -Wcomment
+CFLAGS += -Wconversion
+CFLAGS += -Wdisabled-optimization
+CFLAGS += -Wduplicated-branches
+CFLAGS += -Wduplicated-cond
+CFLAGS += -Wendif-labels
+CFLAGS += -Werror
+CFLAGS += -Wextra
+CFLAGS += -Wfloat-equal
+CFLAGS += -Wformat
+CFLAGS += -Wimplicit-fallthrough
+CFLAGS += -Winit-self
+CFLAGS += -Winline
+CFLAGS += -Wmain
+CFLAGS += -Wmissing-declarations
+CFLAGS += -Wmissing-field-initializers
+CFLAGS += -Wmissing-include-dirs
+CFLAGS += -Wmissing-noreturn
+CFLAGS += -Woverlength-strings
+CFLAGS += -Wpacked
+CFLAGS += -Wparentheses
+CFLAGS += -Wpointer-arith
+CFLAGS += -Wredundant-decls
+CFLAGS += -Wsequence-point
+CFLAGS += -Wshadow
+CFLAGS += -Wsign-compare
+CFLAGS += -Wsign-conversion
+CFLAGS += -Wstrict-aliasing=2
+CFLAGS += -Wsuggest-attribute=const
+CFLAGS += -Wswitch
+CFLAGS += -Wswitch-default
+CFLAGS += -Wswitch-enum
+CFLAGS += -Wundef
+CFLAGS += -Wunknown-pragmas
+CFLAGS += -Wunreachable-code
+CFLAGS += -Wunused
+CFLAGS += -Wunused-label
+CFLAGS += -Wunused-local-typedefs
+CFLAGS += -Wunused-macros
+CFLAGS += -Wunused-parameter
+CFLAGS += -Wunused-result
+CFLAGS += -Wvla
+CFLAGS += -Wwrite-strings
+CFLAGS += -fasynchronous-unwind-tables
+CFLAGS += -fcf-protection=full
+CFLAGS += -fPIC
+CFLAGS += -fPIE
+CFLAGS += -fsigned-char
 CFLAGS += -fstack-clash-protection
-CFLAGS += -fasynchronous-unwind-tables -fcf-protection=full
-CFLAGS += -fPIE -fPIC
+CFLAGS += -fstack-protector-all
+CFLAGS += -fstack-protector-strong
+CFLAGS += -fstrict-aliasing
+CFLAGS += -fwrapv
+
 ifeq ($(SANITIZER), 0)
-CFLAGS += -Wframe-larger-than=4096 -Wlarger-than=4096
+CFLAGS += -Wframe-larger-than=4096
+CFLAGS += -Wlarger-than=4096
 endif
-# CFLAGS += -Wsuggest-attribute=const -Wpadded
 
 # C-Dialect compilation flags
-CFLAGS2 += -Wbad-function-cast -Wmissing-prototypes -Waggregate-return
-CFLAGS2 += -Wdeclaration-after-statement -Wnested-externs -Wstrict-prototypes
-CFLAGS2 += -Wold-style-definition -Wpointer-sign -Winit-self -std=gnu11
-CFLAGS2 += -Wfree-nonheap-object -Wuninitialized
+CFLAGS2 += -std=gnu11
+CFLAGS2 += -Waggregate-return
+CFLAGS2 += -Wbad-function-cast
+CFLAGS2 += -Wdeclaration-after-statement
+CFLAGS2 += -Wfree-nonheap-object
+CFLAGS2 += -Winit-self
+CFLAGS2 += -Wmissing-prototypes
+CFLAGS2 += -Wnested-externs
+CFLAGS2 += -Wold-style-definition
+CFLAGS2 += -Wpointer-sign
+CFLAGS2 += -Wstrict-prototypes
+CFLAGS2 += -Wuninitialized
 
 # Debug flags
 CFLAGS += -DDEBUG=$(D)
@@ -162,26 +213,41 @@ endif
 
 # Compiler specific flags
 ifeq ($(CC), gcc)
-CFLAGS += -Wpacked-not-aligned  -Wstack-usage=4096 -Wlogical-op
-CFLAGS += -Wmultistatement-macros -Wunused-const-variable=2
-CFLAGS += -Wswitch-unreachable -Wmaybe-uninitialized -Wtrampolines
-CFLAGS += -Wl,-z,nodlopen -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now
 CFLAGS += -pie
-# CFLAGS += -Wstringop-truncation -Wstringop-overread -Wstringop-overflow
-# CFLAGS += -Wstring-compare
-CFLAGS2 += -Wjump-misses-init -Wunsuffixed-float-constants
+CFLAGS += -Wlogical-op
+CFLAGS += -Wl,-z,nodlopen
+CFLAGS += -Wl,-z,noexecstack
+CFLAGS += -Wl,-z,now
+CFLAGS += -Wl,-z,relro
+CFLAGS += -Wmaybe-uninitialized
+CFLAGS += -Wmultistatement-macros
+CFLAGS += -Wpacked-not-aligned
+CFLAGS += -Wstack-usage=4096
+CFLAGS += -Wstring-compare
+CFLAGS += -Wstringop-overflow
+CFLAGS += -Wstringop-overread
+CFLAGS += -Wstringop-truncation
+CFLAGS += -Wswitch-unreachable
+CFLAGS += -Wtrampolines
+CFLAGS += -Wunused-const-variable=2
+
+CFLAGS2 += -Wjump-misses-init
 CFLAGS2 += -Wold-style-declaration
+CFLAGS2 += -Wunsuffixed-float-constants
 ifeq ($(O), 0)
-CFLAGS += -Wunsafe-loop-optimizations -funsafe-loop-optimizations
-CFLAGS += -fasynchronous-unwind-tables -fstack-clash-protection
+CFLAGS += -Wunsafe-loop-optimizations
+CFLAGS += -fasynchronous-unwind-tables
 CFLAGS += -fshort-enums
+CFLAGS += -fstack-clash-protection
+CFLAGS += -funsafe-loop-optimizations
 endif
 endif
 
 # Analyzer flags
 ifeq ($(ANALYZER), 1)
 ifeq ($(CC), gcc)
-CFLAGS += -fanalyzer -Wno-analyzer-malloc-leak
+CFLAGS += -Wno-analyzer-malloc-leak
+CFLAGS += -fanalyzer
 endif
 endif
 
@@ -190,24 +256,15 @@ endif
 ifeq ($(SANITIZER), 1)
 ifeq ($(CC), gcc)
 CFLAGS += -fsanitize=address
-CFLAGS += -fsanitize=undefined
 CFLAGS += -fsanitize=leak
+CFLAGS += -fsanitize=undefined
 #LDFLAGS += -static-libasan
 endif
 ifeq ($(CC), clang)
-CFLAGS += -fsanitize=leak
 CFLAGS += -fsanitize=address
+CFLAGS += -fsanitize=leak
 endif
 endif
-
-# C++ flags
-CXXFLAGS += $(CFLAGS)
-CXXFLAGS += -Wctor-dtor-privacy -Wnoexcept -Wold-style-cast
-CXXFLAGS += -Woverloaded-virtual -Wredundant-decls -Wstrict-null-sentinel
-CXXFLAGS += -Winit-self -Wlogical-op -std=c++1z -Wsized-deallocation
-CXXFLAGS += -Wsuggest-final-types -Wsuggest-final-methods -Wsuggest-override
-CXXFLAGS += -Wuseless-cast -Weffc++ -Wzero-as-null-pointer-constant
-CXXFLAGS += -D_GLIBCXX_ASSERTIONS
 
 # Helper functions: report action & sub-execute make in build directory
 define report
@@ -216,10 +273,7 @@ endef
 
 define submakeat
 	@+$(MAKE) $(MAKE_OPTS) V=$(V) \
-	  CFLAGS="$(CFLAGS) $(CFLAGS2)" \
-	  CXXFLAGS="$(CXXFLAGS)" \
-	  LDFLAGS="$(LDFLAGS)" \
-	  -C $(1) $(2)
+	  CFLAGS="$(CFLAGS) $(CFLAGS2)" LDFLAGS="$(LDFLAGS)" -C $(1) $(2)
 endef
 
 define submake

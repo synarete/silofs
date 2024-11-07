@@ -49,7 +49,8 @@ run "${basedir}"/bootstrap
 # Autotools build
 run mkdir -p "${autotoolsdir}"
 cd "${autotoolsdir}"
-run "${basedir}"/configure "--enable-unitests=1"
+run "${basedir}"/configure \
+    "--enable-unitests=1" "--enable-compile-warnings=error"
 run make distcheck
 
 # Pre rpmbuild
@@ -69,12 +70,12 @@ run mkdir -p "${rpmbuilddir}"/SRPMS
 
 # Generate spec
 run sed \
-  -e "s,[@]PACKAGE_NAME[@],${name},g" \
-  -e "s,[@]PACKAGE_VERSION[@],${version},g" \
-  -e "s,[@]PACKAGE_RELEASE[@],${release},g" \
-  -e "s,[@]PACKAGE_REVISION[@],${revision},g" \
-  -e "s,[@]RPMDATE[@],${rpmdate},g" \
-  "${rpmspec_in}" > "${rpmspec_out}"
+    -e "s,[@]PACKAGE_NAME[@],${name},g" \
+    -e "s,[@]PACKAGE_VERSION[@],${version},g" \
+    -e "s,[@]PACKAGE_RELEASE[@],${release},g" \
+    -e "s,[@]PACKAGE_REVISION[@],${revision},g" \
+    -e "s,[@]RPMDATE[@],${rpmdate},g" \
+    "${rpmspec_in}" > "${rpmspec_out}"
 
 # Copy dist archive
 run cp "${autotoolsdir}/${archive_tgz}" "${rpmbuilddir}/SOURCES"
@@ -82,28 +83,25 @@ run cp "${autotoolsdir}/${archive_tgz}" "${rpmbuilddir}/SOURCES"
 # Execute rpmbuild
 cd "${rpmbuilddir}"
 run rpmbuild -ba \
-  --define "_topdir ${rpmbuilddir}" \
-  --define "_var ${rpmvardir}" \
-  "${rpmspec_out}"
+    --define "_topdir ${rpmbuilddir}" \
+    --define "_var ${rpmvardir}" \
+    "${rpmspec_out}"
 
 # Copy rpms to dist-dir
 cd "${basedir}"
 run mkdir -p "${rpmdistdir}"
 run find \
-  "${rpmbuilddir}"/RPMS/ \
-  -type f -name ${name}'*.rpm' \
-  -exec cp {} "${rpmdistdir}" \;
+    "${rpmbuilddir}"/RPMS/ \
+    -type f -name ${name}'*.rpm' \
+    -exec cp {} "${rpmdistdir}" \;
 
 # Cleanup build staging area
 # run rm -rf "${rpmhomedir}"
 
 # Show result rpm files
 run find "${rpmdistdir}" \
-  -depth -maxdepth 1 \
-  -type f -name ${name}'*.rpm' -exec basename {} \;
+    -depth -maxdepth 1 \
+    -type f -name ${name}'*.rpm' -exec basename {} \;
 
 # Bye ;)
 exit 0
-
-
-

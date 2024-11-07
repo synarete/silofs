@@ -50,7 +50,8 @@ run "${basedir}"/bootstrap
 # Autotools build
 run mkdir -p "${autotoolsdir}"
 cd "${autotoolsdir}"
-run "${basedir}"/configure "--enable-unitests=1"
+run "${basedir}"/configure \
+    "--enable-unitests=1" "--enable-compile-warnings=error"
 run make
 run make distcheck
 
@@ -80,11 +81,11 @@ run cp "${debsourcedir}"/rules "${debbuild_debiandir}"
 
 # Generate changelog
 run sed \
-  -e "s,[@]PACKAGE_NAME[@],${name},g" \
-  -e "s,[@]PACKAGE_VERSION[@],${version},g" \
-  -e "s,[@]PACKAGE_RELEASE[@],${release},g" \
-  -e "s,[@]PACKAGE_REVISION[@],${revision},g" \
-  "${debsourcedir}"/changelog.in > "${debbuild_debiandir}"/changelog
+    -e "s,[@]PACKAGE_NAME[@],${name},g" \
+    -e "s,[@]PACKAGE_VERSION[@],${version},g" \
+    -e "s,[@]PACKAGE_RELEASE[@],${release},g" \
+    -e "s,[@]PACKAGE_REVISION[@],${revision},g" \
+    "${debsourcedir}"/changelog.in > "${debbuild_debiandir}"/changelog
 
 # Build deb package
 cd "${debbuild_distdir}"
@@ -93,8 +94,8 @@ run dpkg-buildpackage -us -uc
 # Copy debs to root of build-dir
 run mkdir -p "${debdistdir}"
 run find "${debbuilddir}/" \
-  -type f -name "${name}_${version}"'*.deb' \
-  -exec cp {} "${debdistdir}" \;
+    -type f -name "${name}_${version}"'*.deb' \
+    -exec cp {} "${debdistdir}" \;
 
 # Cleanup build staging area
 cd "${basedir}"
@@ -105,4 +106,3 @@ run find "${debdistdir}" -type f -name ${name}'*.deb' -exec basename {} \;
 
 # Bye ;)
 exit 0
-

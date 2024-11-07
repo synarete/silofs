@@ -101,7 +101,7 @@ static void ut_setup_tracing(void)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-__attribute__((__noreturn__))
+silofs_attr_noreturn
 static void ut_show_help_and_exit(void)
 {
 	printf("%s <testdir> \n\n", program_invocation_short_name);
@@ -113,7 +113,7 @@ static void ut_show_help_and_exit(void)
 	exit(EXIT_SUCCESS);
 }
 
-__attribute__((__noreturn__))
+silofs_attr_noreturn
 static void ut_show_version_and_exit(void)
 {
 	printf("%s %s\n", ut_globals.program, silofs_version.string);

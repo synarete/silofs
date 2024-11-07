@@ -113,7 +113,7 @@ struct idsconf_ctx {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-__attribute__((__noreturn__))
+silofs_attr_noreturn
 static void cmd_die_by(const struct idsconf_ctx *ctx, const char *msg)
 {
 	if (ctx && ctx->line_no && ctx->path) {

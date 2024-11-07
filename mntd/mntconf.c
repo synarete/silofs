@@ -83,7 +83,7 @@ static void mntc_update_next_line(struct mntconf_ctx *mntc,
 	mntc->line_no++;
 }
 
-__attribute__((__noreturn__))
+silofs_attr_noreturn
 static void mntc_die_bad_conf(const struct mntconf_ctx *mntc,
                               const struct silofs_strview *val,
                               const char *msg)
@@ -98,7 +98,7 @@ static void mntc_die_bad_conf(const struct mntconf_ctx *mntc,
 	}
 }
 
-__attribute__((__noreturn__))
+silofs_attr_noreturn
 static void mntc_die_bad_val(const struct mntconf_ctx *mntc,
                              const struct silofs_strview *val, const char *tag)
 {

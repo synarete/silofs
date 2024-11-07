@@ -203,7 +203,7 @@ static void cmd_restore_poke_archive(struct cmd_restore_ctx *ctx)
 
 static void cmd_restore_execute(struct cmd_restore_ctx *ctx)
 {
-	struct silofs_caddr caddr;
+	struct silofs_caddr caddr = { .ctype = SILOFS_CTYPE_NONE };
 
 	cmd_restore_fs(ctx->fsenv, &caddr);
 	cmd_bootref_resave(&ctx->fs_args.bref, &caddr, ctx->in_args.name);

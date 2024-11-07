@@ -190,7 +190,7 @@ struct silofs_fatal_msg {
 	struct silofs_fileline fl;
 };
 
-__attribute__((format(gnu_printf, 2, 3)))
+silofs_attr_printf(2, 3)
 static void fmtmsg(struct silofs_fatal_msg *msg, const char *fmt, ...)
 {
 	va_list ap;
@@ -205,7 +205,7 @@ static void fmtmsg(struct silofs_fatal_msg *msg, const char *fmt, ...)
 	msg->str[len] = '\0';
 }
 
-__attribute__((__noreturn__))
+silofs_attr_noreturn
 static void silofs_abort(void)
 {
 	fflush(stdout);
@@ -214,20 +214,20 @@ static void silofs_abort(void)
 	silofs_unreachable();
 }
 
-__attribute__((__noreturn__))
+silofs_attr_noreturn
 static void silofs_fatal_at_(const char *msg, const struct silofs_fileline *fl)
 {
 	silofs_panicf(fl->file, fl->line, "fatal: '%s'", msg);
 	silofs_unreachable();
 }
 
-__attribute__((__noreturn__))
+silofs_attr_noreturn
 static void silofs_fatal_by_(const struct silofs_fatal_msg *fm)
 {
 	silofs_fatal_at_(fm->str, &fm->fl);
 }
 
-__attribute__((__noreturn__))
+silofs_attr_noreturn
 static void silofs_fatal_op(long a, const char *op, long b,
                             const struct silofs_fileline *fl)
 {
@@ -414,7 +414,7 @@ static size_t find_first_not_eq(const uint8_t *p, const uint8_t *q, size_t n)
 	return n;
 }
 
-__attribute__((__noreturn__))
+silofs_attr_noreturn
 static void silofs_die_not_eqm(const uint8_t *p, const uint8_t *q,
                                size_t n, const char *file, int line)
 {
@@ -468,8 +468,8 @@ static void silofs_dump_panic_msg(const char *file, int line,
 	silofs_log_crit("%s", es);
 }
 
-__attribute__((__noreturn__))
-__attribute__((format(gnu_printf, 3, 4)))
+silofs_attr_printf(3, 4)
+silofs_attr_noreturn
 void silofs_panicf(const char *file, int line, const char *fmt, ...)
 {
 	char msg[256] = "";
@@ -488,8 +488,8 @@ void silofs_panicf(const char *file, int line, const char *fmt, ...)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-__attribute__((__noreturn__))
-__attribute__((format(gnu_printf, 2, 3)))
+silofs_attr_printf(2, 3)
+silofs_attr_noreturn
 void silofs_die(int errnum, const char *fmt, ...)
 {
 	char msg[1024] = "";
@@ -504,8 +504,8 @@ void silofs_die(int errnum, const char *fmt, ...)
 	silofs_abort();
 }
 
-__attribute__((__noreturn__))
-__attribute__((format(gnu_printf, 4, 5)))
+silofs_attr_printf(4, 5)
+silofs_attr_noreturn
 void silofs_die_at(int errnum, const char *fl, int ln, const char *fmt, ...)
 {
 	char msg[1024] = "";

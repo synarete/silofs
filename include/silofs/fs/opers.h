@@ -365,7 +365,7 @@ union silofs_oper_args_in {
 	struct silofs_op_query_in               query;
 	struct silofs_op_clone_in               clone;
 	struct silofs_op_tune_in                tune;
-} silofs_aligned64;
+} silofs_attr_aligned64;
 
 union silofs_oper_args_out {
 	struct silofs_op_lookup_out             lookup;
@@ -385,13 +385,13 @@ union silofs_oper_args_out {
 	struct silofs_op_write_out              write;
 	struct silofs_op_query_out              query;
 	struct silofs_op_clone_out              clone;
-} silofs_aligned64;
+} silofs_attr_aligned64;
 
 struct silofs_oper_args {
 	union silofs_oper_args_in               in;
 	union silofs_oper_args_out              out;
 	long ioc_cmd;
-} silofs_aligned64;
+} silofs_attr_aligned64;
 
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

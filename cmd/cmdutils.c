@@ -42,8 +42,6 @@ static int cmd_errnum_of(int err)
 	return (abs_err < SILOFS_ERRBASE) ? abs_err : 0;
 }
 
-__attribute__((__noreturn__))
-__attribute__((format(gnu_printf, 2, 3)))
 void cmd_die(int err, const char *restrict fmt, ...)
 {
 	char msg[2048] = "";
@@ -462,7 +460,7 @@ long cmd_parse_str_as_size(const char *str)
 		goto illegal_value;
 	}
 	modfl(val, &iz);
-	if ((iz < 0.0F) || isnan(iz)) {
+	if ((iz < 0.0L) || isnan(iz)) {
 		goto illegal_value;
 	}
 	return (long)(val * (long double)mul);
@@ -828,7 +826,6 @@ static void cmd_show_help_descs(FILE *fp, const char *name,
 	fflush(fp);
 }
 
-__attribute__((__noreturn__))
 void cmd_print_help_and_exit(const char **help_strings)
 {
 	const char *prefix = cmd_globals.name;

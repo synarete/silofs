@@ -184,7 +184,7 @@ static const struct cmd_info *cmd_info_of(const char *cmd_name)
 	return NULL;
 }
 
-__attribute__((__noreturn__))
+silofs_attr_noreturn
 static void show_main_help_and_exit(int exit_code)
 {
 	printf("%s <command> [options]\n\n", cmd_globals.name);

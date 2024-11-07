@@ -56,7 +56,7 @@ struct silofs_mntmsg {
 struct silofs_cmsg_buf {
 	long cms[CMSG_SPACE(sizeof(int)) / sizeof(long)];
 	long pad;
-} silofs_aligned8;
+} silofs_attr_aligned8;
 
 struct silofs_mntparams {
 	const char *path;

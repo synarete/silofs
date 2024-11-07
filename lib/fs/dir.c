@@ -1236,7 +1236,7 @@ union silofs_utf32_name_buf {
 	char dat[4 * (SILOFS_NAME_MAX + 1)];
 	uint32_t utf32[SILOFS_NAME_MAX + 1];
 	uint64_t n;
-} silofs_aligned64;
+} silofs_attr_aligned64;
 
 
 static iconv_t iconv_by(const struct silofs_inode_info *dir_ii)

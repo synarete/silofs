@@ -146,6 +146,7 @@ COMPILER_PRIVATE = """
     __extension__
     __typeof__
     __clang__
+    __const__
     __aligned__
     __packed__
     __pure__
@@ -187,6 +188,8 @@ COMPILER_PRIVATE = """
     __atomic_store_n
     __atomic_add_fetch
     __atomic_sub_fetch
+    __format__
+    __printf__
     """
 
 SYS_PRIVATE = """

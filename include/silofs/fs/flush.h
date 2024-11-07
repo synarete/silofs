@@ -35,7 +35,7 @@ struct silofs_flusher {
 	struct silofs_inode_info       *ii;
 	uint32_t                        tx_count;
 	int                             flags;
-} silofs_aligned64;
+} silofs_attr_aligned64;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

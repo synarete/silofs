@@ -17,6 +17,8 @@
 #ifndef SILOFS_LOGGING_H_
 #define SILOFS_LOGGING_H_
 
+#include <silofs/ccattr.h>
+
 /* log-levels (rfc-5424) */
 enum silofs_log_level {
 	SILOFS_LOG_CRIT  = 2,
@@ -63,7 +65,7 @@ struct silofs_log_params {
 
 void silofs_set_global_log_params(const struct silofs_log_params *logp);
 
-__attribute__((format(gnu_printf, 4, 5)))
+silofs_attr_printf(4, 5)
 int silofs_logf(enum silofs_log_level log_level,
                 const char *file, int line, const char *fmt, ...);
 

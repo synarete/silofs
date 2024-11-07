@@ -44,7 +44,7 @@
 struct silofs_xentry_view {
 	struct silofs_xattr_entry xe;
 	uint8_t  xe_data[XATTR_DATA_MAX];
-} silofs_aligned8;
+} silofs_attr_aligned8;
 
 
 struct silofs_xattr_prefix {

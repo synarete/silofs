@@ -110,35 +110,38 @@ endif
 CFLAGS += -pedantic
 CFLAGS += -Waddress
 CFLAGS += -Wall
-CFLAGS += -Walloc-zero
 CFLAGS += -Walloca
 CFLAGS += -Warray-bounds
 CFLAGS += -Wcast-align
 CFLAGS += -Wcast-qual
 CFLAGS += -Wcomment
 CFLAGS += -Wconversion
+CFLAGS += -Wdeclaration-after-statement
 CFLAGS += -Wdisabled-optimization
-CFLAGS += -Wduplicated-branches
-CFLAGS += -Wduplicated-cond
+CFLAGS += -Wdouble-promotion
 CFLAGS += -Wendif-labels
 CFLAGS += -Werror
 CFLAGS += -Wextra
 CFLAGS += -Wfloat-equal
-CFLAGS += -Wformat
+CFLAGS += -Wformat=2
 CFLAGS += -Wimplicit-fallthrough
 CFLAGS += -Winit-self
 CFLAGS += -Winline
 CFLAGS += -Wmain
 CFLAGS += -Wmissing-declarations
 CFLAGS += -Wmissing-field-initializers
+CFLAGS += -Wmissing-format-attribute
 CFLAGS += -Wmissing-include-dirs
 CFLAGS += -Wmissing-noreturn
+CFLAGS += -Wmissing-prototypes
+CFLAGS += -Wnested-externs
 CFLAGS += -Wnull-dereference
 CFLAGS += -Woverlength-strings
 CFLAGS += -Wpacked
 CFLAGS += -Wparentheses
 CFLAGS += -Wpointer-arith
 CFLAGS += -Wredundant-decls
+CFLAGS += -Wreturn-type
 CFLAGS += -Wsequence-point
 CFLAGS += -Wshadow
 CFLAGS += -Wsign-compare
@@ -152,6 +155,7 @@ CFLAGS += -Wundef
 CFLAGS += -Wunknown-pragmas
 CFLAGS += -Wunreachable-code
 CFLAGS += -Wunused
+CFLAGS += -Wunused-but-set-variable
 CFLAGS += -Wunused-label
 CFLAGS += -Wunused-local-typedefs
 CFLAGS += -Wunused-macros
@@ -176,7 +180,7 @@ CFLAGS += -Wlarger-than=4096
 endif
 
 # C-Dialect compilation flags
-CFLAGS2 += -std=gnu11
+CFLAGS2 += -std=gnu17
 CFLAGS2 += -Waggregate-return
 CFLAGS2 += -Wbad-function-cast
 CFLAGS2 += -Wdeclaration-after-statement
@@ -214,6 +218,9 @@ endif
 # Compiler specific flags
 ifeq ($(CC), gcc)
 CFLAGS += -pie
+CFLAGS += -Walloc-zero
+CFLAGS += -Wduplicated-branches
+CFLAGS += -Wduplicated-cond
 CFLAGS += -Wlogical-op
 CFLAGS += -Wl,-z,nodlopen
 CFLAGS += -Wl,-z,noexecstack
@@ -222,6 +229,7 @@ CFLAGS += -Wl,-z,relro
 CFLAGS += -Wmaybe-uninitialized
 CFLAGS += -Wmultistatement-macros
 CFLAGS += -Wpacked-not-aligned
+CFLAGS += -Wrestrict
 CFLAGS += -Wstack-usage=4096
 CFLAGS += -Wstring-compare
 CFLAGS += -Wstringop-overflow

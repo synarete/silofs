@@ -154,7 +154,8 @@ void cmd_require_arg(const char *arg_name, const void *arg_val);
 void cmd_require_arg_size(const char *arg_name, long val);
 
 /* fatal-error handling */
-__attribute__((__noreturn__))
+silofs_attr_printf(2, 3)
+silofs_attr_noreturn
 void cmd_die(int errnum, const char *restrict fmt, ...);
 
 /* common utilities */
@@ -237,11 +238,10 @@ char *cmd_strndup(const char *s, size_t n);
 
 char *cmd_struuid(const uint8_t uu[16]);
 
-__attribute__((format(gnu_printf, 1, 2)))
+silofs_attr_printf(1, 2)
 char *cmd_mkpathf(const char *fmt, ...);
 
-__attribute__((__noreturn__))
-void cmd_print_help_and_exit(const char **help_strings);
+void cmd_print_help_and_exit(const char **help_strings) silofs_attr_noreturn;
 
 /* parse helpers */
 long cmd_parse_str_as_size(const char *str);

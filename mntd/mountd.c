@@ -266,7 +266,7 @@ static void mountd_sigaction_halt_handler(int signum)
 	}
 }
 
-__attribute__((__noreturn__))
+silofs_attr_noreturn
 static void mountd_sigaction_term_handler(int signum)
 {
 	struct mountd_ctx *ctx = mountd_ctx;
@@ -279,7 +279,7 @@ static void mountd_sigaction_term_handler(int signum)
 	exit(EXIT_FAILURE);
 }
 
-__attribute__((__noreturn__))
+silofs_attr_noreturn
 static void mountd_sigaction_abort_handler(int signum)
 {
 	struct mountd_ctx *ctx = mountd_ctx;
@@ -386,20 +386,20 @@ static const char mountd_usage[] =
         "  -L, --loglevel=LEVEL         Logging level (rfc5424)\n"\
         "  -v, --version                Show version and exit\n";
 
-__attribute__((__noreturn__))
+silofs_attr_noreturn
 static void mountd_goodbye(void)
 {
 	exit(EXIT_SUCCESS);
 }
 
-__attribute__((__noreturn__))
+silofs_attr_noreturn
 static void mountd_show_usage(void)
 {
 	printf("%s\n", mountd_usage);
 	mountd_goodbye();
 }
 
-__attribute__((__noreturn__))
+silofs_attr_noreturn
 static void mountd_show_version(void)
 {
 	printf("%s: %s\n", program_invocation_short_name,

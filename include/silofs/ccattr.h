@@ -17,18 +17,48 @@
 #ifndef SILOFS_CCATTR_H_
 #define SILOFS_CCATTR_H_
 
-#define silofs_aligned          __attribute__ ((__aligned__))
-#define silofs_aligned8         __attribute__ ((__aligned__(8)))
-#define silofs_aligned16        __attribute__ ((__aligned__(16)))
-#define silofs_aligned32        __attribute__ ((__aligned__(32)))
-#define silofs_aligned64        __attribute__ ((__aligned__(64)))
-#define silofs_packed           __attribute__ ((__packed__))
-#define silofs_packed_aligned   __attribute__ ((__packed__, __aligned__))
-#define silofs_packed_aligned4  __attribute__ ((__packed__, __aligned__(4)))
-#define silofs_packed_aligned8  __attribute__ ((__packed__, __aligned__(8)))
-#define silofs_packed_aligned16 __attribute__ ((__packed__, __aligned__(16)))
-#define silofs_packed_aligned32 __attribute__ ((__packed__, __aligned__(32)))
-#define silofs_packed_aligned64 __attribute__ ((__packed__, __aligned__(64)))
+#if __has_attribute(__aligned__)
+#define silofs_attr_aligned     __attribute__ ((__aligned__))
+#define silofs_attr_alignedx(x) __attribute__ ((__aligned__(x)))
+#define silofs_attr_aligned8    silofs_attr_alignedx(8)
+#define silofs_attr_aligned16   silofs_attr_alignedx(16)
+#define silofs_attr_aligned32   silofs_attr_alignedx(32)
+#define silofs_attr_aligned64   silofs_attr_alignedx(64)
+#else
+#error "missing '__attribute__ ((__aligned__))'"
+#endif
+
+#if __has_attribute(__packed__)
+#define silofs_attr_packed      __attribute__ ((__packed__))
+#else
+#error "missing '__attribute__ ((__packed__))'"
+#endif
+
+#if __has_attribute(__noreturn__)
+#define silofs_attr_noreturn    __attribute__ ((__noreturn__))
+#else
+#error "missing '__attribute__ ((__noreturn__))'"
+#endif
+
+#if __has_attribute(__const__)
+#define silofs_attr_const       __attribute__ ((__const__))
+#else
+#define silofs_attr_const
+#endif
+
+#if __has_attribute(__format__)
+#if defined(__clang__)
+#define silofs_attr_printf(x_, y_) \
+        __attribute__((__format__(__printf__ , x_, y_)))
+#elif defined(__GNUC__)
+#define silofs_attr_printf(x_, y_) \
+        __attribute__((__format__(gnu_printf, x_, y_)))
+#else
+#define silofs_attr_printf(x_, y_)
+#endif
+#else
+#define silofs_attr_printf(x_, y_)
+#endif
 
 #if __has_attribute(__fallthrough__)
 # define silofs_fallthrough     __attribute__((__fallthrough__))

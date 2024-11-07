@@ -21,13 +21,13 @@
 #include "cmd.h"
 
 
-__attribute__((__noreturn__))
+silofs_attr_noreturn
 static void cmd_fatal_missing_arg(const char *s)
 {
 	cmd_die(0, "missing argument: '%s'", s);
 }
 
-__attribute__((__noreturn__))
+silofs_attr_noreturn
 static void cmd_fatal_redundant_arg(const char *s)
 {
 	cmd_die(0, "redundant argument: '%s'", s);
@@ -163,7 +163,7 @@ static const char *cmd_optargs_curr(const struct cmd_optargs *opa)
 	return opt;
 }
 
-__attribute__((__noreturn__))
+silofs_attr_noreturn
 static void cmd_optargs_die_unrecognized(const struct cmd_optargs *opa)
 {
 	const char *opt = cmd_optargs_by_ind(opa);
@@ -171,7 +171,7 @@ static void cmd_optargs_die_unrecognized(const struct cmd_optargs *opa)
 	cmd_die(0, "unrecognized option: '%s'", opt ? opt : "");
 }
 
-__attribute__((__noreturn__))
+silofs_attr_noreturn
 static void cmd_optargs_die_missing(const struct cmd_optargs *opa)
 {
 	const char *opt = cmd_optargs_by_ind(opa);

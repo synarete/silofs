@@ -28,8 +28,8 @@ static const char *basename_of(const char *path)
 	return (name == NULL) ? path : (name + 1);
 }
 
-__attribute__((__noreturn__))
-__attribute__((format(gnu_printf, 3, 4)))
+silofs_attr_printf(3, 4)
+silofs_attr_noreturn
 static void do_error_at_line(const char *fl, int ln, const char *fmt, ...)
 {
 	char msg[512] = "";

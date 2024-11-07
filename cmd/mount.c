@@ -426,20 +426,19 @@ static void cmd_mount_close_fs(struct cmd_mount_ctx *ctx)
  * Better user modern inotify interface on mount-directory instead of this
  * naive busy-loop.
  */
-__attribute__((__noreturn__))
+silofs_attr_noreturn
 static void cmd_mount_finish_parent(struct cmd_mount_ctx *ctx)
 {
 	struct stat st = { .st_ino = 0 };
-	int err = -1;
+	int retry = 20;
+	bool ready = false;
 
-	for (size_t retry = 0; (retry < 20); ++retry) {
+	while ((retry-- > 0) && !ready) {
 		cmd_stat_dir(ctx->in_args.mntpoint_real, &st);
-		if (st.st_ino == SILOFS_INO_ROOT) {
-			exit(EXIT_SUCCESS);
-		}
+		ready = (st.st_ino == SILOFS_INO_ROOT);
 		sleep(1);
 	}
-	exit(err);
+	exit(ready ? EXIT_SUCCESS : EXIT_FAILURE);
 }
 
 static void cmd_mount_wait_child_pid(struct cmd_mount_ctx *ctx)

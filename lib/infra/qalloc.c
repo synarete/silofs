@@ -52,13 +52,13 @@
 
 struct silofs_slab_seg {
 	struct silofs_list_head link;
-} silofs_aligned16;
+} silofs_attr_aligned16;
 
 
 union silofs_qpage {
 	struct silofs_slab_seg seg[QALLOC_PAGE_NSEGS];
 	uint8_t data[QALLOC_PAGE_SIZE];
-} silofs_aligned64;
+} silofs_attr_aligned64;
 
 
 struct silofs_qpage_info {
@@ -305,7 +305,7 @@ static bool qpool_nofail_mode(const struct silofs_qpool *qpool)
 #define qpool_error(qpool_, fmt_, ...) \
         qpool_errorf(qpool_, __FILE__, __LINE__, fmt_, __VA_ARGS__)
 
-__attribute__((format(gnu_printf, 4, 5)))
+silofs_attr_printf(4, 5)
 static void qpool_errorf(const struct silofs_qpool *qpool,
                          const char *file, int line, const char *fmt, ...)
 {
@@ -846,7 +846,7 @@ static void *qpool_base_of(const struct silofs_qpool *qpool,
 #define slab_error(slab_, fmt_, ...) \
         slab_errorf(slab_, __FILE__, __LINE__, fmt_, __VA_ARGS__)
 
-__attribute__((format(gnu_printf, 4, 5)))
+silofs_attr_printf(4, 5)
 static void slab_errorf(const struct silofs_slab *slab,
                         const char *file, int line, const char *fmt, ...)
 {

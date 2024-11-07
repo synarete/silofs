@@ -257,14 +257,14 @@ static const char *const ft_usage =
         " -l, --list                List tests names\n"
         " -v, --version             Show version info\n";
 
-__attribute__((__noreturn__))
+silofs_attr_noreturn
 static void show_help_and_exit(void)
 {
 	printf("%s %s\n", program_invocation_short_name, ft_usage);
 	exit(EXIT_SUCCESS);
 }
 
-__attribute__((__noreturn__))
+silofs_attr_noreturn
 static void show_version_and_exit(void)
 {
 	ft_show_program_version();

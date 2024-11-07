@@ -17,6 +17,8 @@
 #ifndef SILOFS_PANIC_H_
 #define SILOFS_PANIC_H_
 
+#include <silofs/ccattr.h>
+
 /*
  * TODO-0052: Define and use bug_on macros
  *
@@ -130,14 +132,14 @@ void silofs_expect_noop_(long a, long b);
 #define silofs_panic(fmt, ...) \
         silofs_panicf(__FILE__, __LINE__, fmt, __VA_ARGS__)
 
-__attribute__((__noreturn__))
+silofs_attr_noreturn
 void silofs_panicf(const char *file, int line, const char *fmt, ...);
 
 /* die */
-__attribute__((__noreturn__))
+silofs_attr_noreturn
 void silofs_die(int errnum, const char *fmt, ...);
 
-__attribute__((__noreturn__))
+silofs_attr_noreturn
 void silofs_die_at(int errnum, const char *fl, int ln, const char *fmt, ...);
 
 /* backtrace */

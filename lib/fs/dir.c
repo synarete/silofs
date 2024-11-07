@@ -2790,7 +2790,7 @@ static int dinode_verify_hashfn(const struct silofs_inode *inode)
 		ret = 0;
 		break;
 	default:
-		log_err("illegal dir hashfn: ino=%lu dhfn=%ld",
+		log_err("illegal dir hashfn: ino=%lu dhfn=%d",
 		        ino_of(inode), dhfn);
 		ret = -SILOFS_EFSCORRUPTED;
 		break;

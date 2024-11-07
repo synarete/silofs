@@ -19,6 +19,7 @@
 
 #include <stdlib.h>
 
+__attribute__((const))
 size_t silofs_base64_encode_len(size_t inlen);
 
 int silofs_base64_encode(const void *in, size_t inlen,

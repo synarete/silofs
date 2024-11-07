@@ -19,6 +19,7 @@
 #include <silofs/syscall.h>
 #include <silofs/infra/panic.h>
 #include <silofs/infra/time.h>
+#include <sys/stat.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
@@ -82,6 +83,12 @@ time_t silofs_time_now_monotonic(void)
 
 	silofs_mclock_now(&ts);
 	return ts.tv_sec;
+}
+
+void silofs_ts_omit(struct timespec *ts)
+{
+	ts->tv_sec = UTIME_OMIT;
+	ts->tv_nsec = UTIME_OMIT;
 }
 
 void silofs_ts_copy(struct timespec *dst, const struct timespec *src)

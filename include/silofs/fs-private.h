@@ -204,12 +204,6 @@ silofs_ii_sbi(const struct silofs_inode_info *ii)
 	return silofs_vni_sbi(silofs_ii_to_vni(ii));
 }
 
-static inline struct silofs_fsenv *
-silofs_ii_fsenv(const struct silofs_inode_info *ii)
-{
-	return ii->i_vni.vn_lni.ln_fsenv;
-}
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static inline struct silofs_fsenv *

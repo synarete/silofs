@@ -3933,7 +3933,7 @@ static int fqd_open_piper(struct silofs_fuseq_dispatcher *fqd,
 	err = silofs_piper_try_grow(piper, pipe_size_want);
 	if (err) {
 		fuseq_log_warn("failed to grow pipe size: "
-		               "pipe_size_curr=%zu pipe_size_want=%zu err=%d",
+		               "pipe_size_curr=%d pipe_size_want=%zu err=%d",
 		               piper->pipe.size, pipe_size_want, err);
 		return err;
 	}
@@ -4822,14 +4822,13 @@ int silofs_fuseq_mount(struct silofs_fuseq *fq,
 
 static int fuseq_start_workers(struct silofs_fuseq *fq)
 {
-	struct silofs_fuseq_worker *fqw = NULL;
+	const size_t nworkers_lim = fq->fq_ws.fq_nworkers_lim;
 	int err;
 
-	fuseq_log_dbg("start workers: lim=%zu", fq->fq_ws.fq_nworkers_lim);
+	fuseq_log_dbg("start workers: lim=%zu", nworkers_lim);
 	fq->fq_ws.fq_nworkers_run = 0;
-	for (size_t i = 0; i < fq->fq_ws.fq_nworkers_lim; ++i) {
-		fqw = &fq->fq_ws.fq_workers[i];
-		err = fqw_exec_thread(fqw);
+	for (size_t i = 0; i < nworkers_lim; ++i) {
+		err = fqw_exec_thread(&fq->fq_ws.fq_workers[i]);
 		if (err) {
 			return err;
 		}
@@ -4877,14 +4876,13 @@ static void fuseq_finish_workers(struct silofs_fuseq *fq)
 
 static int fuseq_start_dispatchers(struct silofs_fuseq *fq)
 {
-	struct silofs_fuseq_dispatcher *fqd = NULL;
+	const size_t ndisptch_lim = fq->fq_ds.fq_ndisptch_lim;
 	int err;
 
-	fuseq_log_dbg("start dispatchers: lim=%zu", fq->fq_ds.fq_ndisptch_lim);
+	fuseq_log_dbg("start dispatchers: lim=%zu", ndisptch_lim);
 	fq->fq_ds.fq_ndisptch_run = 0;
-	for (size_t i = 0; i < fq->fq_ds.fq_ndisptch_lim; ++i) {
-		fqd = &fq->fq_ds.fq_disptchs[i];
-		err = fqd_exec_thread(fqd);
+	for (size_t i = 0; i < ndisptch_lim; ++i) {
+		err = fqd_exec_thread(&fq->fq_ds.fq_disptchs[i]);
 		if (err) {
 			return err;
 		}

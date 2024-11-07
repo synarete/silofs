@@ -636,7 +636,7 @@ static int sb_verify_height(const struct silofs_super_block *sb)
 	const enum silofs_height height = sb_height(sb);
 
 	if (height != SILOFS_HEIGHT_SUPER) {
-		log_err("illegal sb height: height=%lu", height);
+		log_err("illegal sb height: height=%d", height);
 		return -SILOFS_EFSCORRUPTED;
 	}
 	return 0;

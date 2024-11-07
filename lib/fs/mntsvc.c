@@ -915,7 +915,7 @@ static int mntsvc_do_mount(struct silofs_mntsvc *msvc,
 
 	err = do_mount_fuse_fs(mntp, &msvc->ms_fuse_fd);
 	log_info("mount: '%s' flags=0x%lx uid=%d gid=%d rootmode=0%o "
-	         "max_read=%u fuse_fd=%d peer=%s err=%d",
+	         "max_read=%zu fuse_fd=%d peer=%s err=%d",
 	         mntp->path, mntp->flags, mntp->user_id, mntp->group_id,
 	         mntp->root_mode, mntp->max_read, msvc->ms_fuse_fd,
 	         msvc->ms_peer_ids, err);

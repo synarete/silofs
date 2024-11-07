@@ -20,8 +20,10 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+__attribute__((const))
 char silofs_nibble_to_ascii(int n);
 
+__attribute__((const))
 int silofs_ascii_to_nibble(char a);
 
 

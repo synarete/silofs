@@ -80,6 +80,7 @@ struct silofs_avl_node *silofs_avl_begin(const struct silofs_avl *avl);
 
 struct silofs_avl_node *silofs_avl_rbegin(const struct silofs_avl *avl);
 
+__attribute__((const))
 const struct silofs_avl_node *silofs_avl_end(const struct silofs_avl *avl);
 
 struct silofs_avl_node *

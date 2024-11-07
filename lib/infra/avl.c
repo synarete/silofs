@@ -107,6 +107,10 @@ avl_node_unconst(const struct silofs_avl_node *x)
 
 static void avl_node_verify(const struct silofs_avl_node *x)
 {
+	if (silofs_unlikely(x == NULL)) {
+		silofs_panic("illegal null avl-node: %p", x);
+	}
+
 	if ((x->magic != AVL_MAGIC) ||
 	    silofs_unlikely((x->balance) > 1) ||
 	    silofs_unlikely((x->balance) < -1)) {

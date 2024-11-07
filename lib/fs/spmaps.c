@@ -1878,26 +1878,26 @@ int silofs_verify_spmap_node(const struct silofs_spmap_node *sn)
 	height = spnode_heigth(sn);
 	err = verify_spnode_height(height);
 	if (err) {
-		log_err("bad spnode height: height=%lu", height);
+		log_err("bad spnode height: height=%d", height);
 		return err;
 	}
 	spnode_vrange(sn, &vrange);
 	vrange_len = off_len(vrange.beg, vrange.end);
 	height_len = silofs_height_to_space_span(height);
 	if (vrange_len != height_len) {
-		log_err("bad spmap-node vrange: height=%lu "
+		log_err("bad spmap-node vrange: height=%d "
 		        "beg=0x%lx end=0x%lx", height, vrange.beg, vrange.end);
 		return -SILOFS_EFSCORRUPTED;
 	}
 	err = verify_spmap_node_self(sn);
 	if (err) {
-		log_err("illegal spmap-node self: height=%lu "
+		log_err("illegal spmap-node self: height=%d "
 		        "beg=0x%lx end=0x%lx", height, vrange.beg, vrange.end);
 		return err;
 	}
 	err = verify_spmap_node_parent(sn);
 	if (err) {
-		log_err("illegal spmap-node parent: height=%lu "
+		log_err("illegal spmap-node parent: height=%d "
 		        "beg=0x%lx end=0x%lx", height, vrange.beg, vrange.end);
 		return err;
 	}

@@ -190,6 +190,7 @@ struct silofs_fatal_msg {
 	struct silofs_fileline fl;
 };
 
+__attribute__((format(gnu_printf, 2, 3)))
 static void fmtmsg(struct silofs_fatal_msg *msg, const char *fmt, ...)
 {
 	va_list ap;
@@ -468,6 +469,7 @@ static void silofs_dump_panic_msg(const char *file, int line,
 }
 
 __attribute__((__noreturn__))
+__attribute__((format(gnu_printf, 3, 4)))
 void silofs_panicf(const char *file, int line, const char *fmt, ...)
 {
 	char msg[256] = "";
@@ -487,6 +489,7 @@ void silofs_panicf(const char *file, int line, const char *fmt, ...)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 __attribute__((__noreturn__))
+__attribute__((format(gnu_printf, 2, 3)))
 void silofs_die(int errnum, const char *fmt, ...)
 {
 	char msg[1024] = "";
@@ -502,6 +505,7 @@ void silofs_die(int errnum, const char *fmt, ...)
 }
 
 __attribute__((__noreturn__))
+__attribute__((format(gnu_printf, 4, 5)))
 void silofs_die_at(int errnum, const char *fl, int ln, const char *fmt, ...)
 {
 	char msg[1024] = "";

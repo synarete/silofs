@@ -361,6 +361,14 @@ static void iattr_setup_now(struct silofs_iattr *iattr, ino_t ino)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+struct silofs_fsenv *silofs_ii_fsenv(const struct silofs_inode_info *ii)
+{
+	silofs_assert_not_null(ii);
+	silofs_assert_not_null(ii->i_vni.vn_lni.ln_fsenv);
+
+	return ii->i_vni.vn_lni.ln_fsenv;
+}
+
 void silofs_ii_set_ino(struct silofs_inode_info *ii, ino_t ino)
 {
 	silofs_assert_not_null(ii->i_vni.vn_lni.ln_view);
@@ -799,8 +807,8 @@ static int do_chmod(struct silofs_task *task,
                     struct silofs_inode_info *ii, mode_t mode,
                     const struct silofs_itimes *itimes)
 {
-	int err;
 	struct silofs_iattr iattr = { .ia_flags = 0 };
+	int err;
 
 	err = check_chmod(task, ii, mode);
 	if (err) {
@@ -1370,10 +1378,12 @@ void silofs_ii_undirtify_vnis(struct silofs_inode_info *ii)
 	struct silofs_vnode_info *vni;
 	struct silofs_dirtyq *dq = &ii->i_dq_vnis;
 
-	while (dq->dq.sz > 0) {
-		dqe = silofs_dirtyq_front(dq);
+	dqe = silofs_dirtyq_front(dq);
+	while (dqe != NULL) {
+		silofs_assert_gt(dq->dq.sz, 0);
 		vni = silofs_vni_from_dqe(dqe);
 		silofs_vni_undirtify(vni);
+		dqe = silofs_dirtyq_front(dq);
 	}
 }
 

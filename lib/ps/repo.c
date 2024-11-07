@@ -134,7 +134,7 @@ static int rmeta_check(const struct silofs_repo_meta *rm)
 	}
 	version = rmeta_version(rm);
 	if (version != SILOFS_REPO_VERSION) {
-		log_dbg("bad repo meta: version=%lx", version);
+		log_dbg("bad repo meta: version=%x", version);
 		return -SILOFS_EFSCORRUPTED;
 	}
 	return 0;

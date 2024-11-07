@@ -50,12 +50,16 @@ struct silofs_socket {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+__attribute__((const))
 uint16_t silofs_htons(uint16_t n);
 
+__attribute__((const))
 uint32_t silofs_htonl(uint32_t n);
 
+__attribute__((const))
 uint16_t silofs_ntohs(uint16_t n);
 
+__attribute__((const))
 uint32_t silofs_ntohl(uint32_t n);
 
 void silofs_ucred_self(struct ucred *uc);
@@ -69,10 +73,13 @@ struct cmsghdr *silofs_cmsg_firsthdr(struct msghdr *mh);
 
 struct cmsghdr *silofs_cmsg_nexthdr(struct msghdr *mh, struct cmsghdr *cmh);
 
+__attribute__((const))
 size_t silofs_cmsg_align(size_t length);
 
+__attribute__((const))
 size_t silofs_cmsg_space(size_t length);
 
+__attribute__((const))
 size_t silofs_cmsg_len(size_t length);
 
 void silofs_cmsg_pack_fd(struct cmsghdr *cmh, int fd);
@@ -81,6 +88,7 @@ int silofs_cmsg_unpack_fd(const struct cmsghdr *cmh, int *out_fd);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+__attribute__((const))
 int silofs_check_portnum(int portnum);
 
 int silofs_check_unixsock(const char *upath);
@@ -180,4 +188,3 @@ void silofs_streamsock_initu(struct silofs_socket *sock);
 
 
 #endif /* SILOFS_SOCKET_H_ */
-

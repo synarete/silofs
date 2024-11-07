@@ -116,7 +116,8 @@ static void stat_to_itimes(const struct stat *times,
 	silofs_ts_copy(&itimes->atime, &times->st_atim);
 	silofs_ts_copy(&itimes->mtime, &times->st_mtim);
 	silofs_ts_copy(&itimes->ctime, &times->st_ctim);
-	/* Birth _must_not_ be set from outside */
+	/* birth _must_not_ be set from outside */
+	silofs_ts_omit(&itimes->btime);
 }
 
 static int symval_to_str(const char *symval, struct silofs_strview *out_sv)

@@ -39,6 +39,9 @@ bool silofs_user_cap_fowner(const struct silofs_cred *cred);
 bool silofs_user_cap_sys_admin(const struct silofs_cred *cred);
 
 
+struct silofs_fsenv *
+silofs_ii_fsenv(const struct silofs_inode_info *ii);
+
 void silofs_ii_set_ino(struct silofs_inode_info *ii, ino_t ino);
 
 void silofs_ii_set_loose(struct silofs_inode_info *ii);

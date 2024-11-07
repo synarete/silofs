@@ -2614,20 +2614,33 @@ static int try_forget_cached_ii(const struct silofs_task *task,
 	return 0;
 }
 
-int silofs_do_forget(struct silofs_task *task,
+static int do_forget(struct silofs_task *task,
                      struct silofs_inode_info *ii, size_t nlookup)
 {
-	int err;
+	int ret;
 
 	ii_sub_nlookup(ii, (long)nlookup);
+
 	if (ii_ispinned(ii)) {
 		/* case of prune special files created by MKNOD */
 		ii_unpin(ii);
-		err = try_prune_inode(task, ii, false);
+		ret = try_prune_inode(task, ii, false);
 	} else {
-		err = try_forget_cached_ii(task, ii);
+		ret = try_forget_cached_ii(task, ii);
 	}
-	return err;
+	return ret;
+}
+
+int silofs_do_forget(struct silofs_task *task,
+                     struct silofs_inode_info *ii, size_t nlookup)
+{
+	int ret = 0;
+
+	if (likely(ii != NULL)) {
+		/* make gcc -Werror=null-dereference happy */
+		ret = do_forget(task, ii, nlookup);
+	}
+	return ret;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

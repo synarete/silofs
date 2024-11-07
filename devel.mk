@@ -55,7 +55,6 @@ CXXFLAGS =
 LDFLAGS =
 MAKE_OPTS =
 CONFIGURE_OPTS =
-CONFIGURE_RE =
 
 # Vars setup
 ifneq ($(CC), $(CCS))
@@ -92,7 +91,7 @@ endif
 CONFIGURE_OPTS += --prefix=$(PREFIX)
 CONFIGURE_OPTS += --disable-shared
 CONFIGURE_OPTS += --enable-unitests=2
-CONFIGURE_OPTS += --enable-compile-warnings=yes
+CONFIGURE_OPTS += --enable-compile-warnings=error
 ifeq ($(D), 2)
 CONFIGURE_OPTS += --enable-debug=profile
 else ifeq ($(D), 1)
@@ -103,7 +102,6 @@ endif
 
 # Make options
 ifeq ($(V), 0)
-CONFIGURE_RE = > /dev/null
 MAKE_OPTS += --silent --no-print-directory
 endif
 
@@ -135,6 +133,7 @@ CFLAGS += -Wmissing-declarations
 CFLAGS += -Wmissing-field-initializers
 CFLAGS += -Wmissing-include-dirs
 CFLAGS += -Wmissing-noreturn
+CFLAGS += -Wnull-dereference
 CFLAGS += -Woverlength-strings
 CFLAGS += -Wpacked
 CFLAGS += -Wparentheses
@@ -145,7 +144,7 @@ CFLAGS += -Wshadow
 CFLAGS += -Wsign-compare
 CFLAGS += -Wsign-conversion
 CFLAGS += -Wstrict-aliasing=2
-CFLAGS += -Wsuggest-attribute=const
+#CFLAGS += -Wsuggest-attribute=const
 CFLAGS += -Wswitch
 CFLAGS += -Wswitch-default
 CFLAGS += -Wswitch-enum
@@ -231,7 +230,6 @@ CFLAGS += -Wstringop-truncation
 CFLAGS += -Wswitch-unreachable
 CFLAGS += -Wtrampolines
 CFLAGS += -Wunused-const-variable=2
-
 CFLAGS2 += -Wjump-misses-init
 CFLAGS2 += -Wold-style-declaration
 CFLAGS2 += -Wunsuffixed-float-constants
@@ -311,8 +309,8 @@ dist: check
 configure: bootstrap
 	$(call report, $@, $(CONFIGURE_OPTS))
 	@if [ ! -e $(BUILDDIR)/config.status ]; then \
-	    cd $(BUILDDIR) && \
-	    $(TOP)/configure $(CONFIGURE_OPTS) $(CONFIGURE_RE); fi
+	    cd $(BUILDDIR) && $(TOP)/configure $(CONFIGURE_OPTS); \
+	fi
 
 bootstrap:
 	$(call report, $@, $(BUILDDIR))

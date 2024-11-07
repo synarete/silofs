@@ -95,26 +95,13 @@ int main(int argc, char *argv[])
 	return 0;
 }
 
-__attribute__((__noreturn__))
-static void mountd_dief(int errnum, const char *restrict fmt, ...)
-{
-	char msg[2048] = "";
-	va_list ap;
-
-	va_start(ap, fmt);
-	vsnprintf(msg, sizeof(msg) - 1, fmt, ap);
-	va_end(ap);
-	error(EXIT_FAILURE, abs(errnum), "%s", msg);
-	_exit(EXIT_FAILURE); /* never gets here, but makes clang-scan happy */
-}
-
 static void mountd_init_process(struct mountd_ctx *ctx)
 {
 	int err;
 
 	err = silofs_init_lib();
 	if (err) {
-		mountd_dief(err, "unable to init lib");
+		silofs_die(err, "unable to init lib");
 	}
 	silofs_set_global_log_params(&ctx->log_params);
 }
@@ -126,7 +113,7 @@ static void mountd_setrlimit_nocore(void)
 
 	err = silofs_sys_setrlimit(RLIMIT_CORE, &rlim);
 	if (err) {
-		mountd_dief(err, "failed to disable core-dupms");
+		silofs_die(err, "failed to disable core-dumps");
 	}
 }
 
@@ -136,7 +123,7 @@ static void mountd_set_dumpable(unsigned int state)
 
 	err = silofs_sys_prctl(PR_SET_DUMPABLE, state, 0, 0, 0);
 	if (err) {
-		mountd_dief(err, "failed to prctl dumpable: state=%u", state);
+		silofs_die(err, "failed to prctl dumpable: state=%u", state);
 	}
 }
 
@@ -162,16 +149,16 @@ static void mountd_require_cap_sys_admin(const struct mountd_ctx *ctx)
 	errno = 0;
 	cap = cap_get_pid(getpid());
 	if (cap == NULL) {
-		mountd_dief(errno, "failed to get cap");
+		silofs_die(errno, "failed to get cap");
 	}
 	err = cap_get_flag(cap, value, CAP_EFFECTIVE, &flag);
 	if (err) {
-		mountd_dief(errno, "failed to get capability: %d", value);
+		silofs_die(errno, "failed to get capability: %d", value);
 	}
 	cap_free(cap);
 
 	if (flag != CAP_SET) {
-		mountd_dief(0, "does not have CAP_SYS_ADMIN capability");
+		silofs_die(0, "does not have CAP_SYS_ADMIN capability");
 	}
 	silofs_unused(ctx);
 }
@@ -186,7 +173,7 @@ static void mountd_setup_env(struct mountd_ctx *ctx)
 
 	err = silofs_mse_new(&ms_args, &ctx->mse);
 	if (err) {
-		mountd_dief(err, "failed to create instance");
+		silofs_die(err, "failed to create instance");
 	}
 }
 
@@ -250,7 +237,7 @@ static void mound_execute_ms(struct mountd_ctx *ctx)
 
 	err = silofs_mse_serve(ctx->mse, ctx->mntrules);
 	if (err) {
-		mountd_dief(err, "mount-service error");
+		silofs_die(err, "mount-service error");
 	}
 }
 
@@ -331,7 +318,7 @@ static void register_sigaction(int signum, const struct sigaction *sa)
 
 	err = silofs_sys_sigaction(signum, sa, NULL);
 	if (err) {
-		mountd_dief(err, "sigaction error: signum=%d", signum);
+		silofs_die(err, "sigaction error: signum=%d", signum);
 	}
 }
 
@@ -450,14 +437,13 @@ static void mountd_getopt(struct mountd_ctx *ctx)
 		} else if (opt_chr == 'h') {
 			mountd_show_usage();
 		} else if (opt_chr > 0) {
-			mountd_dief(0, "unsupported option: %s", optarg);
+			silofs_die(0, "unsupported option: %s", optarg);
 		}
 	}
 	if (optind < argc) {
-		mountd_dief(0, "redundant argument: %s", argv[optind]);
+		silofs_die(0, "redundant argument: %s", argv[optind]);
 	}
 	if (ctx->args.confpath == NULL) {
-		mountd_dief(0, "missing argument: %s", "conf");
+		silofs_die(0, "missing argument: %s", "conf");
 	}
 }
-

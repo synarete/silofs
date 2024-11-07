@@ -24,12 +24,11 @@ struct ut_readdir_ctx *ut_new_readdir_ctx(struct ut_env *ute)
 	return readdir_ctx;
 }
 
-
 static const struct ut_dirent_info *
 ut_find_not_dot(const struct ut_dirent_info *deis, size_t n, size_t start_pos)
 {
-	size_t pos = start_pos;
 	const struct ut_dirent_info *dei = NULL;
+	size_t pos = start_pos;
 
 	for (size_t i = 0; i < n; ++i) {
 		if (pos >= n) {
@@ -43,6 +42,10 @@ ut_find_not_dot(const struct ut_dirent_info *deis, size_t n, size_t start_pos)
 		dei = NULL;
 	}
 	ut_expect_not_null(dei);
+	if (dei == NULL) {
+		silofs_panic("failed to find real de: n=%zu statr_pos=%zu",
+		             n, start_pos);
+	}
 	return dei;
 }
 

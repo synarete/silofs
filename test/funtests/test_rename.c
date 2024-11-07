@@ -358,7 +358,7 @@ static void test_rename_child_(struct ft_env *fte, size_t nsibs)
 
 	ft_mkdir(path0, 0700);
 	for (size_t i = 0; i < nsibs; ++i) {
-		path3 = ft_new_pathf(fte, path0, "%08x", i);
+		path3 = ft_new_pathf(fte, path0, "%08zx", i);
 		ft_creat(path3, 0600, &fd);
 		ft_close(fd);
 	}
@@ -367,7 +367,7 @@ static void test_rename_child_(struct ft_env *fte, size_t nsibs)
 	ft_rename(path1, path2);
 	ft_unlink(path2);
 	for (size_t i = 0; i < nsibs; ++i) {
-		path3 = ft_new_pathf(fte, path0, "%08x", i);
+		path3 = ft_new_pathf(fte, path0, "%08zx", i);
 		ft_unlink(path3);
 	}
 	ft_rmdir(path0);
@@ -393,14 +393,14 @@ static void test_rename_replace_(struct ft_env *fte, size_t nsibs)
 
 	ft_mkdir(path0, 0700);
 	for (size_t i = 0; i < nsibs; ++i) {
-		path1 = ft_new_pathf(fte, path0, "%08x", i);
+		path1 = ft_new_pathf(fte, path0, "%08zx", i);
 		ft_creat(path1, 0600, &fd);
 		ft_close(fd);
 	}
 	ft_creat(path2, 0600, &fd);
 	ft_close(fd);
 	for (size_t i = 0; i < nsibs; ++i) {
-		path1 = ft_new_pathf(fte, path0, "%08x", i);
+		path1 = ft_new_pathf(fte, path0, "%08zx", i);
 		ft_rename(path2, path1);
 		path2 = path1;
 	}
@@ -431,17 +431,17 @@ static void test_rename_move_(struct ft_env *fte, size_t cnt)
 	ft_mkdir(src_path0, 0700);
 	ft_mkdir(tgt_path0, 0700);
 	for (size_t i = 0; i < cnt; ++i) {
-		src_path1 = ft_new_pathf(fte, src_path0, "s%08x", i);
+		src_path1 = ft_new_pathf(fte, src_path0, "s%08zx", i);
 		ft_creat(src_path1, 0600, &fd);
 		ft_close(fd);
 	}
 	for (size_t i = 0; i < cnt; ++i) {
-		src_path1 = ft_new_pathf(fte, src_path0, "s%08x", i);
-		tgt_path1 = ft_new_pathf(fte, tgt_path0, "t%08x", i);
+		src_path1 = ft_new_pathf(fte, src_path0, "s%08zx", i);
+		tgt_path1 = ft_new_pathf(fte, tgt_path0, "t%08zx", i);
 		ft_rename(src_path1, tgt_path1);
 	}
 	for (size_t i = 0; i < cnt; ++i) {
-		tgt_path1 = ft_new_pathf(fte, tgt_path0, "t%08x", i);
+		tgt_path1 = ft_new_pathf(fte, tgt_path0, "t%08zx", i);
 		ft_unlink(tgt_path1);
 	}
 	ft_rmdir(src_path0);
@@ -473,8 +473,8 @@ static void test_rename_override_(struct ft_env *fte, size_t cnt, size_t bsz)
 	ft_mkdir(src_path0, 0700);
 	ft_mkdir(tgt_path0, 0700);
 	for (size_t i = 0; i < cnt; ++i) {
-		src_path1 = ft_new_pathf(fte, src_path0, "s%08x", i);
-		tgt_path1 = ft_new_pathf(fte, tgt_path0, "t%08x", i);
+		src_path1 = ft_new_pathf(fte, src_path0, "s%08zx", i);
+		tgt_path1 = ft_new_pathf(fte, tgt_path0, "t%08zx", i);
 		ft_creat(src_path1, 0600, &fd);
 		ft_close(fd);
 		ft_creat(tgt_path1, 0600, &fd);
@@ -482,12 +482,12 @@ static void test_rename_override_(struct ft_env *fte, size_t cnt, size_t bsz)
 		ft_close(fd);
 	}
 	for (size_t i = 0; i < cnt; ++i) {
-		src_path1 = ft_new_pathf(fte, src_path0, "s%08x", i);
-		tgt_path1 = ft_new_pathf(fte, tgt_path0, "t%08x", i);
+		src_path1 = ft_new_pathf(fte, src_path0, "s%08zx", i);
+		tgt_path1 = ft_new_pathf(fte, tgt_path0, "t%08zx", i);
 		ft_rename(src_path1, tgt_path1);
 	}
 	for (size_t i = 0; i < cnt; ++i) {
-		tgt_path1 = ft_new_pathf(fte, tgt_path0, "t%08x", i);
+		tgt_path1 = ft_new_pathf(fte, tgt_path0, "t%08zx", i);
 		ft_unlink(tgt_path1);
 	}
 	ft_rmdir(src_path0);

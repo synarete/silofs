@@ -71,14 +71,14 @@ static void test_fsync_dir_(struct ft_env *fte, size_t cnt)
 	ft_mkdir(path1, 0700);
 	ft_open(path1, O_DIRECTORY | O_RDONLY, 0, &dfd);
 	for (size_t i = 0; i < cnt; ++i) {
-		path2 = ft_new_pathf(fte, path1, "%08x", i + 1);
+		path2 = ft_new_pathf(fte, path1, "%08zx", i + 1);
 		ft_creat(path2, 0640, &fd);
 		ft_fsync(dfd);
 		ft_close(fd);
 		ft_fsync(dfd);
 	}
 	for (size_t j = 0; j < cnt; ++j) {
-		path2 = ft_new_pathf(fte, path1, "%08x", j + 1);
+		path2 = ft_new_pathf(fte, path1, "%08zx", j + 1);
 		ft_unlink(path2);
 		ft_fsync(dfd);
 	}
@@ -116,8 +116,8 @@ static void test_fsync_dir_io_(struct ft_env *fte, loff_t off_base, size_t cnt)
 	ft_mkdir(path, 0700);
 	ft_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);
 	for (size_t i = 0; i < cnt; ++i) {
-		name1 = ft_new_namef(fte, "1-%08x", i + 1);
-		name2 = ft_new_namef(fte, "2-%08x", i + 1);
+		name1 = ft_new_namef(fte, "1-%08zx", i + 1);
+		name2 = ft_new_namef(fte, "2-%08zx", i + 1);
 		ft_openat(dfd, name1, O_CREAT | O_RDWR, 0600, &fd);
 		ft_fsync(dfd);
 		len = ft_strlen(name1);
@@ -128,8 +128,8 @@ static void test_fsync_dir_io_(struct ft_env *fte, loff_t off_base, size_t cnt)
 		ft_renameat(dfd, name1, dfd, name2);
 	}
 	for (size_t j = 0; j < cnt; ++j) {
-		name1 = ft_new_namef(fte, "1-%08x", j + 1);
-		name2 = ft_new_namef(fte, "2-%08x", j + 1);
+		name1 = ft_new_namef(fte, "1-%08zx", j + 1);
+		name2 = ft_new_namef(fte, "2-%08zx", j + 1);
 		ft_fstatat(dfd, name2, &st, 0);
 		ft_expect_st_reg(&st);
 		ft_openat(dfd, name2, O_RDONLY, 0600, &fd);

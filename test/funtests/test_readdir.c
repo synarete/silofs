@@ -95,7 +95,7 @@ static void test_readdir_basic_(struct ft_env *fte, size_t lim)
 	ft_mkdir(path0, 0755);
 	ft_open(path0, O_DIRECTORY | O_RDONLY, 0, &dfd);
 	for (size_t i = 0; i < lim; ++i) {
-		path1 = ft_new_pathf(fte, path0, "%08x", i);
+		path1 = ft_new_pathf(fte, path0, "%08zx", i);
 		ft_creat(path1, 0600, &fd);
 		ft_close(fd);
 		ft_fstat(dfd, &st);
@@ -118,7 +118,7 @@ static void test_readdir_basic_(struct ft_env *fte, size_t lim)
 	for (size_t j = 0; j < lim; ++j) {
 		ft_fstat(dfd, &st);
 		ft_expect_ge(st.st_size, lim - j);
-		path1 = ft_new_pathf(fte, path0, "%08x", j);
+		path1 = ft_new_pathf(fte, path0, "%08zx", j);
 		ft_stat(path1, &st);
 		ft_unlink(path1);
 		ft_stat_noent(path1);

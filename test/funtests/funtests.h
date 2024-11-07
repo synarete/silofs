@@ -150,6 +150,7 @@ char *ft_strdup(struct ft_env *fte, const char *str);
 
 char *ft_strcat(struct ft_env *fte, const char *str1, const char *str2);
 
+__attribute__((format(gnu_printf, 2, 3)))
 char *ft_strfmt(struct ft_env *fte, const char *fmt, ...);
 
 char *ft_make_ulong_name(struct ft_env *fte, unsigned long key);
@@ -169,8 +170,10 @@ char *ft_new_path_name(struct ft_env *fte, const char *name);
 char *ft_new_path_nested(struct ft_env *fte,
                          const char *base, const char *name);
 
+__attribute__((format(gnu_printf, 2, 3)))
 char *ft_new_namef(struct ft_env *fte, const char *fmt, ...);
 
+__attribute__((format(gnu_printf, 3, 4)))
 char *ft_new_pathf(struct ft_env *fte, const char *p, const char *fmt, ...);
 
 void *ft_new_buf_zeros(struct ft_env *fte, size_t bsz);

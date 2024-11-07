@@ -29,6 +29,7 @@ static const char *basename_of(const char *path)
 }
 
 __attribute__((__noreturn__))
+__attribute__((format(gnu_printf, 3, 4)))
 static void do_error_at_line(const char *fl, int ln, const char *fmt, ...)
 {
 	char msg[512] = "";

@@ -43,6 +43,7 @@ static int cmd_errnum_of(int err)
 }
 
 __attribute__((__noreturn__))
+__attribute__((format(gnu_printf, 2, 3)))
 void cmd_die(int err, const char *restrict fmt, ...)
 {
 	char msg[2048] = "";

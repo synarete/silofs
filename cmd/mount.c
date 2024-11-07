@@ -528,7 +528,7 @@ static void cmd_mount_trace_start(const struct cmd_mount_ctx *ctx)
 
 	silofs_log_meta_banner(cmd_globals.name, 1);
 	silofs_log_info("executable: %s", cmd_globals.prog);
-	silofs_log_info("nprocs: %u", silofs_sc_nproc_onln());
+	silofs_log_info("nprocs: %ld", silofs_sc_nproc_onln());
 	silofs_log_iarg("mountpoint=%s", ctx->in_args.mntpoint_real);
 	silofs_log_iarg("repodir=%s", ctx->in_args.repodir_real);
 	silofs_log_iarg("rdonly=%d", cflags->rdonly);

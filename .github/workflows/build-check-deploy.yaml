@@ -15,7 +15,7 @@ on:
 jobs:
   prepare:
     name: Start workflow
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - run: echo "repo ${{ github.repository }} "
@@ -33,7 +33,7 @@ jobs:
         run: apt --version
   gitlint:
     name: Lint commit message
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: prepare
     steps:
       - uses: actions/checkout@v4
@@ -45,7 +45,7 @@ jobs:
         run: gitlint --config .gitlint.conf --target ./ lint
   codelint:
     name: Lint code style
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: prepare
     steps:
       - uses: actions/checkout@v4
@@ -63,7 +63,7 @@ jobs:
       - prepare
       - codelint
       - gitlint
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - name: Update
@@ -88,7 +88,7 @@ jobs:
       - prepare
       - codelint
       - gitlint
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - name: Update
@@ -105,7 +105,7 @@ jobs:
         run: make check
   check-py-code:
     name: Check python code
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs:
       - prepare
       - codelint
@@ -123,7 +123,7 @@ jobs:
         run: ./py/pycheck.sh ./py/qatests
   build-rpm-package:
     name: Build rpm package
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs:
       - build-check
       - build-devel
@@ -140,7 +140,7 @@ jobs:
         run: ./dist/rpm/packagize-rpm.sh
   build-install-deb-package:
     name: Build and install deb package
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs:
       - build-check
       - build-devel
@@ -183,7 +183,7 @@ jobs:
         run: rm -rf ./build/repo
   build-install-by-autotools:
     name: Build and install by autotools
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs:
       - build-check
       - build-devel
@@ -242,7 +242,7 @@ jobs:
           make clean
   static-code-analysis:
     name: Run static-code analysis
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs:
       - prepare
       - codelint
@@ -257,7 +257,7 @@ jobs:
         run: ./scripts/clangscanbuild.sh
   done:
     name: End workflow
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs:
       - build-rpm-package
       - build-install-deb-package

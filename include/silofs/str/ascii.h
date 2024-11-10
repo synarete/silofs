@@ -17,13 +17,14 @@
 #ifndef SILOFS_ASCII_H_
 #define SILOFS_ASCII_H_
 
+#include <silofs/ccattr.h>
 #include <stdlib.h>
 #include <stdint.h>
 
-__attribute__((const))
+silofs_attr_const
 char silofs_nibble_to_ascii(int n);
 
-__attribute__((const))
+silofs_attr_const
 int silofs_ascii_to_nibble(char a);
 
 

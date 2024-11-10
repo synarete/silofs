@@ -16,6 +16,7 @@
  */
 #include <silofs/configs.h>
 #include <silofs/syscall.h>
+#include <silofs/ccattr.h>
 #include <silofs/infra/utility.h>
 #include <silofs/infra/socket.h>
 #include <sys/types.h>
@@ -700,6 +701,3 @@ void silofs_streamsock_initu(struct silofs_socket *sock)
 {
 	socket_init(sock, AF_UNIX, SOCK_STREAM, IPPROTO_IP);
 }
-
-
-

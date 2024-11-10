@@ -17,6 +17,7 @@
 #ifndef SILOFS_HASH_H_
 #define SILOFS_HASH_H_
 
+#include <silofs/ccattr.h>
 #include <stdlib.h>
 #include <stdint.h>
 
@@ -26,7 +27,7 @@ uint32_t silofs_hash_xxh32(const void *buf, size_t len, uint32_t seed);
 
 uint64_t silofs_hash_xxh64(const void *buf, size_t len, uint64_t seed);
 
-__attribute__((const))
+silofs_attr_const
 uint64_t silofs_twang_mix64(uint64_t n);
 
 #endif /* SILOFS_HASH_H_ */

@@ -17,6 +17,7 @@
 #ifndef SILOFS_STRCHR_H_
 #define SILOFS_STRCHR_H_
 
+#include <silofs/ccattr.h>
 #include <stddef.h>
 #include <stdbool.h>
 
@@ -116,7 +117,7 @@ size_t silofs_str_common_suffix(const char *s1, const char *s2, size_t n);
  * Returns the number of of characters from the first n1 elements of s1 that
  * overlaps any of the characters of the first n2 elements of s2.
  */
-__attribute__((const))
+silofs_attr_const
 size_t silofs_str_overlaps(const char *s1, size_t n1,
                            const char *s2, size_t n2);
 

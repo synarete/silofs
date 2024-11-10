@@ -17,9 +17,10 @@
 #ifndef SILOFS_BASE64_H_
 #define SILOFS_BASE64_H_
 
+#include <silofs/ccattr.h>
 #include <stdlib.h>
 
-__attribute__((const))
+silofs_attr_const
 size_t silofs_base64_encode_len(size_t inlen);
 
 int silofs_base64_encode(const void *in, size_t inlen,

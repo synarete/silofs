@@ -867,6 +867,7 @@ static bool avl_insert(struct silofs_avl *avl,
 
 void silofs_avl_insert(struct silofs_avl *avl, struct silofs_avl_node *z)
 {
+	avl_node_verify(z);
 	avl_insert(avl, z, false);
 }
 
@@ -1286,6 +1287,7 @@ silofs_avl_insert_replace(struct silofs_avl *avl, struct silofs_avl_node *z)
 {
 	struct silofs_avl_node *y;
 
+	avl_node_verify(z);
 	y = silofs_avl_find(avl, avl_keyof(avl, z));
 	if (y == NULL) {
 		silofs_avl_insert(avl, z);

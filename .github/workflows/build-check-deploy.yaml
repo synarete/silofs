@@ -103,21 +103,6 @@ jobs:
         run: make
       - name: Check
         run: make check
-  static-analyze:
-    name: Run static-code analysis
-    runs-on: ubuntu-latest
-    needs:
-      - prepare
-      - codelint
-      - gitlint
-    steps:
-      - uses: actions/checkout@v4
-      - name: Update
-        run: sudo apt-get update
-      - name: Install deps
-        run: sudo ./dist/deb/install-deb-deps.sh
-      - name: Run clang static-analyzer
-        run: ./scripts/clangscanbuild.sh
   check-py-code:
     name: Check python code
     runs-on: ubuntu-latest
@@ -142,7 +127,6 @@ jobs:
     needs:
       - build-check
       - build-devel
-      - static-analyze
       - check-py-code
     steps:
       - uses: actions/checkout@v4
@@ -160,7 +144,6 @@ jobs:
     needs:
       - build-check
       - build-devel
-      - static-analyze
       - check-py-code
     steps:
       - uses: actions/checkout@v4
@@ -204,7 +187,6 @@ jobs:
     needs:
       - build-check
       - build-devel
-      - static-analyze
       - check-py-code
     steps:
       - uses: actions/checkout@v4
@@ -258,6 +240,21 @@ jobs:
           sleep 1
           sudo make uninstall
           make clean
+  static-code-analysis:
+    name: Run static-code analysis
+    runs-on: ubuntu-latest
+    needs:
+      - prepare
+      - codelint
+      - gitlint
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update
+        run: sudo apt-get update
+      - name: Install deps
+        run: sudo ./dist/deb/install-deb-deps.sh
+      - name: Run clang static-analyzer
+        run: ./scripts/clangscanbuild.sh
   done:
     name: End workflow
     runs-on: ubuntu-latest
@@ -265,6 +262,7 @@ jobs:
       - build-rpm-package
       - build-install-deb-package
       - build-install-by-autotools
+      - static-code-analysis
     steps:
       - name: Done
         run: date

@@ -63,6 +63,7 @@ zrecord_new(struct ut_env *ute, long num)
 	zr->ute = ute;
 	zr->key = num;
 	zr->magic = ZMAGIC;
+	silofs_avl_node_init(&zr->avl_node);
 
 	return zr;
 }

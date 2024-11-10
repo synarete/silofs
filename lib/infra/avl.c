@@ -58,8 +58,31 @@ struct silofs_avl_pos {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static void avl_node_verify0(const struct silofs_avl_node *x, bool full)
+{
+	if (silofs_unlikely(x == NULL)) {
+		silofs_panic("null avl-node: %p", x);
+	}
+	if (full) {
+		if (silofs_unlikely(x->magic != AVL_MAGIC)) {
+			silofs_panic("bad avl-node: %p magic=%x", x, x->magic);
+		}
+		if (silofs_unlikely((x->balance) > 1) ||
+		    silofs_unlikely((x->balance) < -1)) {
+			silofs_panic("illegal avl-node: %p balance=%d",
+			             x, (int)x->balance);
+		}
+	}
+}
+
+static void avl_node_verify(const struct silofs_avl_node *x)
+{
+	avl_node_verify0(x, true);
+}
+
 static void avl_node_init(struct silofs_avl_node *x)
 {
+	avl_node_verify0(x, false);
 	x->left = NULL;
 	x->right = NULL;
 	x->parent = NULL;
@@ -69,6 +92,7 @@ static void avl_node_init(struct silofs_avl_node *x)
 
 static void avl_node_reset(struct silofs_avl_node *x)
 {
+	avl_node_verify0(x, false);
 	x->left = NULL;
 	x->parent = NULL;
 	x->right = NULL;
@@ -78,15 +102,21 @@ static void avl_node_reset(struct silofs_avl_node *x)
 
 static void avl_node_destroy(struct silofs_avl_node *x)
 {
-	avl_node_reset(x);
+	avl_node_verify(x);
+	x->left = NULL;
+	x->parent = NULL;
+	x->right = NULL;
 	x->balance = -333;
-	x->magic = -666;
+	x->magic = 666;
 }
 
 static void avl_node_swap_balance(struct silofs_avl_node *x,
                                   struct silofs_avl_node *y)
 {
 	int balance;
+
+	avl_node_verify(x);
+	avl_node_verify(y);
 
 	balance = x->balance;
 	x->balance = y->balance;
@@ -103,20 +133,6 @@ avl_node_unconst(const struct silofs_avl_node *x)
 		.y = x
 	};
 	return uu.p;
-}
-
-static void avl_node_verify(const struct silofs_avl_node *x)
-{
-	if (silofs_unlikely(x == NULL)) {
-		silofs_panic("illegal null avl-node: %p", x);
-	}
-
-	if ((x->magic != AVL_MAGIC) ||
-	    silofs_unlikely((x->balance) > 1) ||
-	    silofs_unlikely((x->balance) < -1)) {
-		silofs_panic("illegal avl-node: %p balance=%d magic=0x%x",
-		             x, (int)x->balance, (int)x->magic);
-	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

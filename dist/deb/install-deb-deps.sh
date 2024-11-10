@@ -3,12 +3,14 @@
 base_deps=(
   attr-dev
   automake
+  build-essential
   cdbs
   clang
   clang-tools
   debhelper
   dpkg-dev
   gcc
+  g++
   libcap-dev
   libgcrypt-dev
   libtool

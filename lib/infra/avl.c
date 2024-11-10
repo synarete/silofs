@@ -60,17 +60,19 @@ struct silofs_avl_pos {
 
 static void avl_node_verify0(const struct silofs_avl_node *x, bool full)
 {
-	if (silofs_unlikely(x == NULL)) {
-		silofs_panic("null avl-node: %p", x);
+	const void *p = x;
+
+	if (silofs_unlikely(p == NULL)) {
+		silofs_panic("null avl-node: %p", p);
 	}
 	if (full) {
 		if (silofs_unlikely(x->magic != AVL_MAGIC)) {
-			silofs_panic("bad avl-node: %p magic=%x", x, x->magic);
+			silofs_panic("bad avl-node: %p magic=%x", p, x->magic);
 		}
 		if (silofs_unlikely((x->balance) > 1) ||
 		    silofs_unlikely((x->balance) < -1)) {
 			silofs_panic("illegal avl-node: %p balance=%d",
-			             x, (int)x->balance);
+			             p, (int)x->balance);
 		}
 	}
 }

@@ -288,7 +288,8 @@ static void uni_verify(const struct silofs_unode_info *uni)
 	silofs_assert_not_null(uni->un_lni.ln_view);
 
 	if (unlikely(uni->un_magic != UI_MAGIC)) {
-		silofs_panic("bad unode: uni=%p magic=%x", uni, uni->un_magic);
+		silofs_panic("bad unode: uni=%p magic=%lx",
+		             (const void *)uni, uni->un_magic);
 	}
 }
 
@@ -413,7 +414,8 @@ vni_unconst(const struct silofs_vnode_info *vni)
 static void vni_verify(const struct silofs_vnode_info *vni)
 {
 	if (unlikely(vni->vn_magic != VI_MAGIC)) {
-		silofs_panic("bad vnode: vni=%p magic=%x", vni, vni->vn_magic);
+		silofs_panic("bad vnode: vni=%p magic=%lx",
+		             (const void *)vni, vni->vn_magic);
 	}
 }
 

@@ -274,7 +274,8 @@ static void hmqe_sanitize(const struct silofs_hmapq_elem *hmqe)
 	    unlikely(hmqe->hme_refcnt < 0)) {
 		silofs_panic("corrupted: hmqe=%p hme_key.type=%d "
 		             "hme_refcnt=%d hme_mapped=%d "
-		             "hme_forgot=%d hme_magic=0x%x", hmqe,
+		             "hme_forgot=%d hme_magic=0x%x",
+		             (const void *)hmqe,
 		             (int)hmqe->hme_key.type,
 		             hmqe->hme_refcnt,
 		             (int)hmqe->hme_mapped,
@@ -378,7 +379,9 @@ static void hmqe_sanitize_mapped(const struct silofs_hmapq_elem *hmqe)
 	if (unlikely(!hmqe->hme_mapped)) {
 		silofs_panic("unexpected non-mapped state: "
 		             "hmqe=%p hme_key=%d hme_refcnt=%d",
-		             hmqe, (int)hmqe->hme_key.type, hmqe->hme_refcnt);
+		             (const void *)hmqe,
+		             (int)hmqe->hme_key.type,
+		             hmqe->hme_refcnt);
 	}
 }
 

@@ -24,7 +24,7 @@
 
 #define strview_out_of_range(sv_, pos_) \
         silofs_panic("strview out-of-range: pos=%ld len=%ld sv=%p", \
-                     (long)(pos_), (long)((sv_)->len), (sv_))
+                (long)(pos_), (long)((sv_)->len), ((const void *)sv_))
 
 #define strview_check_range(sv_, pos_) \
         do { \

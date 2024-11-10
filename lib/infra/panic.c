@@ -468,8 +468,6 @@ static void silofs_dump_panic_msg(const char *file, int line,
 	silofs_log_crit("%s", es);
 }
 
-silofs_attr_printf(3, 4)
-silofs_attr_noreturn
 void silofs_panicf(const char *file, int line, const char *fmt, ...)
 {
 	char msg[256] = "";
@@ -488,8 +486,6 @@ void silofs_panicf(const char *file, int line, const char *fmt, ...)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-silofs_attr_printf(2, 3)
-silofs_attr_noreturn
 void silofs_die(int errnum, const char *fmt, ...)
 {
 	char msg[1024] = "";
@@ -504,8 +500,6 @@ void silofs_die(int errnum, const char *fmt, ...)
 	silofs_abort();
 }
 
-silofs_attr_printf(4, 5)
-silofs_attr_noreturn
 void silofs_die_at(int errnum, const char *fl, int ln, const char *fmt, ...)
 {
 	char msg[1024] = "";

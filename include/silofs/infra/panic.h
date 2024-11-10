@@ -133,13 +133,16 @@ void silofs_expect_noop_(long a, long b);
         silofs_panicf(__FILE__, __LINE__, fmt, __VA_ARGS__)
 
 silofs_attr_noreturn
+silofs_attr_printf(3, 4)
 void silofs_panicf(const char *file, int line, const char *fmt, ...);
 
 /* die */
 silofs_attr_noreturn
+silofs_attr_printf(2, 3)
 void silofs_die(int errnum, const char *fmt, ...);
 
 silofs_attr_noreturn
+silofs_attr_printf(4, 5)
 void silofs_die_at(int errnum, const char *fl, int ln, const char *fmt, ...);
 
 /* backtrace */

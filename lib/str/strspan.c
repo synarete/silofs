@@ -25,7 +25,7 @@
 #define strspan_out_of_range(ss_, pos_) \
         silofs_panic("strspan out-of-range: pos=%ld len=%ld n=%ld ss=%p", \
                      (long)(pos_), (long)((ss_)->v.len), \
-                     (long)((ss_)->n), (ss_))
+                (long)((ss_)->n), ((const void *)ss_))
 
 #define strspan_check_range(ss_, pos_) \
         do { \

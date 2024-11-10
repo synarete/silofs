@@ -91,7 +91,7 @@ static void mntc_die_bad_conf(const struct mntconf_ctx *mntc,
 	if (val != NULL) {
 		silofs_die_at(EINVAL, mntc->file.str, mntc->line_no,
 		              "bad mntconf: %s: '%.*s'",
-		              msg, val->len, val->str);
+		              msg, (int)val->len, val->str);
 	} else {
 		silofs_die_at(EINVAL, mntc->file.str, mntc->line_no,
 		              "bad mntconf: %s", msg);
@@ -104,7 +104,7 @@ static void mntc_die_bad_val(const struct mntconf_ctx *mntc,
 {
 	silofs_die_at(EINVAL, mntc->file.str, mntc->line_no,
 	              "illegal mntconf %s value: '%.*s'",
-	              tag, val->len, val->str);
+	              tag, (int)val->len, val->str);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

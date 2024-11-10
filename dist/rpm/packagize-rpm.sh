@@ -33,6 +33,10 @@ rpmdate=$(date +"%a %b %d %Y")
 rpmspec_in=${rpmsourcedir}/${name}.spec.in
 rpmspec_out=${rpmbuilddir}/SPECS/${name}.spec
 
+# System info
+run uname --all
+run gcc --version
+
 # Prerequisites checks
 run command -v aclocal
 run command -v automake

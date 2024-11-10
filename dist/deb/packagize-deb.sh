@@ -32,6 +32,9 @@ debrelease_archive=${name}_${version}-${release}.debian.tar.gz
 debbuild_distdir=${debbuilddir}/${name}-${version}
 debbuild_debiandir=${debbuild_distdir}/debian
 
+# System info
+run uname --all
+run gcc --version
 
 # Prerequisites checks
 run command -v aclocal

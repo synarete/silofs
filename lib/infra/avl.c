@@ -58,33 +58,40 @@ struct silofs_avl_pos {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void avl_node_verify0(const struct silofs_avl_node *x, bool full)
-{
-	const void *p = x;
+#define avl_node_verify_non_null(x_) \
+        do { \
+                if (silofs_unlikely((x_) == NULL)) \
+                        silofs_panic("null avl-node: %p", \
+                                (const void *)(x_)); \
+        } while (0)
 
-	if (silofs_unlikely(p == NULL)) {
-		silofs_panic("null avl-node: %p", p);
-	}
-	if (full) {
-		if (silofs_unlikely(x->magic != AVL_MAGIC)) {
-			silofs_panic("bad avl-node: %p magic=%x", p, x->magic);
-		}
-		if (silofs_unlikely((x->balance) > 1) ||
-		    silofs_unlikely((x->balance) < -1)) {
-			silofs_panic("illegal avl-node: %p balance=%d",
-			             p, (int)x->balance);
-		}
-	}
-}
+#define avl_node_verify_magic(x_) \
+        do { \
+                if (silofs_unlikely((x_)->magic != AVL_MAGIC)) \
+                        silofs_panic("bad avl-node: %p magic=%x", \
+                                     (const void *)(x_), (x_)->magic); \
+        } while (0)
 
-static void avl_node_verify(const struct silofs_avl_node *x)
-{
-	avl_node_verify0(x, true);
-}
+#define avl_node_verify_balance(x_) \
+        do { \
+                if (silofs_unlikely(((x_)->balance) > 1) || \
+                        silofs_unlikely(((x_)->balance) < -1))  \
+                        silofs_panic("illegal avl-node: %p balance=%d", \
+                                        (const void *)(x_), (x_)->balance); \
+        } while (0)
+
+#define avl_node_verify(x_) \
+        do { \
+                avl_node_verify_non_null(x_); \
+                avl_node_verify_magic(x_); \
+                avl_node_verify_balance(x_); \
+        } while (0)
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void avl_node_init(struct silofs_avl_node *x)
 {
-	avl_node_verify0(x, false);
+	avl_node_verify_non_null(x);
 	x->left = NULL;
 	x->right = NULL;
 	x->parent = NULL;
@@ -94,7 +101,7 @@ static void avl_node_init(struct silofs_avl_node *x)
 
 static void avl_node_reset(struct silofs_avl_node *x)
 {
-	avl_node_verify0(x, false);
+	avl_node_verify_non_null(x);
 	x->left = NULL;
 	x->parent = NULL;
 	x->right = NULL;

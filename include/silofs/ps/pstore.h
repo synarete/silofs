@@ -26,8 +26,9 @@
 
 struct silofs_prange {
 	struct silofs_psid psid;
-	size_t nsegs;
+	uint32_t nsegs;
 	loff_t cur_pos;
+	bool data;
 };
 
 struct silofs_pstate {
@@ -65,8 +66,8 @@ int silofs_pstore_dropall(struct silofs_pstore *pstore);
 
 int silofs_pstore_format(struct silofs_pstore *pstore);
 
-int silofs_pstore_open(struct silofs_pstore *pstore,
-                       const struct silofs_pstate *pstate);
+int silofs_pstore_reload(struct silofs_pstore *pstore,
+                         const struct silofs_pstate *pstate);
 
 int silofs_pstore_flush_dirty(struct silofs_pstore *pstore);
 

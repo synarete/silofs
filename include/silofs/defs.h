@@ -356,6 +356,13 @@ enum silofs_bootf {
 	SILOFS_BOOTF_NONE       = 0x00,
 };
 
+/* common-header flags */
+enum silofs_hdrf {
+	SILOFS_HDRF_CSUM        = 0x01,
+	SILOFS_HDRF_PTYPE       = 0x02,
+	SILOFS_HDRF_LTYPE       = 0x04,
+};
+
 /* format endianness */
 enum silofs_endianness {
 	SILOFS_ENDIANNESS_LE    = 1,
@@ -368,6 +375,24 @@ enum silofs_ctype {
 	SILOFS_CTYPE_BOOTREC    = 1,
 	SILOFS_CTYPE_PACKIDX    = 2,
 	SILOFS_CTYPE_ENCSEG     = 3,
+};
+
+/* persistent-elements types */
+enum silofs_ptype {
+	SILOFS_PTYPE_NONE       = 0,
+	SILOFS_PTYPE_UBER       = 1,
+	SILOFS_PTYPE_BTNODE     = 2,
+	SILOFS_PTYPE_BTLEAF     = 3,
+	SILOFS_PTYPE_DATA       = 4,
+	SILOFS_PTYPE_LAST, /* keep last */
+};
+
+/* persistent nodes' flags */
+enum silofs_pnodef {
+	SILOFS_PNODEF_NONE      = 0x00,
+	SILOFS_PNODEF_META      = 0x01,
+	SILOFS_PNODEF_DATA      = 0x02,
+	SILOFS_PNODEF_BTROOT    = 0x04,
 };
 
 /* logical-elements types */
@@ -400,13 +425,6 @@ enum silofs_height {
 	SILOFS_HEIGHT_SUPER     = 7,
 	SILOFS_HEIGHT_BOOT      = 8,
 	SILOFS_HEIGHT_LAST, /* keep last */
-};
-
-/* common-header flags */
-enum silofs_hdrf {
-	SILOFS_HDRF_CSUM        = 0x01,
-	SILOFS_HDRF_PTYPE       = 0x02,
-	SILOFS_HDRF_LTYPE       = 0x04,
 };
 
 /* super-block flags */
@@ -1019,6 +1037,7 @@ union silofs_view_u {
 	struct silofs_lblock            lbk;
 } silofs_attr_aligned64;
 
+
 struct silofs_view {
 	union silofs_view_u u;
 } silofs_attr_aligned64;
@@ -1037,25 +1056,6 @@ struct silofs_repo_meta {
 
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-
-/* persistent objects sub-types */
-enum silofs_ptype {
-	SILOFS_PTYPE_NONE       = 0,
-	SILOFS_PTYPE_UBER       = 1,
-	SILOFS_PTYPE_BTNODE     = 2,
-	SILOFS_PTYPE_BTLEAF     = 3,
-	SILOFS_PTYPE_DATA       = 4,
-	SILOFS_PTYPE_LAST, /* keep last */
-};
-
-/* persistent nodes' flags */
-enum silofs_pnodef {
-	SILOFS_PNODEF_NONE      = 0x00,
-	SILOFS_PNODEF_META      = 0x01,
-	SILOFS_PNODEF_DATA      = 0x02,
-	SILOFS_PNODEF_BTROOT    = 0x04,
-};
-
 
 /* persistent volume-segment uber node */
 struct silofs_pseg_uber {

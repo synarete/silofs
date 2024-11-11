@@ -39,6 +39,26 @@ uint32_t silofs_ptype_size(enum silofs_ptype ptype)
 	return 0;
 }
 
+static bool ptype_isdata(enum silofs_ptype ptype)
+{
+	bool ret;
+
+	switch (ptype) {
+	case SILOFS_PTYPE_DATA:
+		ret = true;
+		break;
+	case SILOFS_PTYPE_UBER:
+	case SILOFS_PTYPE_BTNODE:
+	case SILOFS_PTYPE_BTLEAF:
+	case SILOFS_PTYPE_NONE:
+	case SILOFS_PTYPE_LAST:
+	default:
+		ret = false;
+		break;
+	}
+	return ret;
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_pvid_generate(struct silofs_pvid *pvid)
@@ -243,6 +263,11 @@ void silofs_paddr_assign(struct silofs_paddr *paddr,
 	paddr->off = other->off;
 	paddr->len = other->len;
 	paddr->ptype = other->ptype;
+}
+
+bool silofs_paddr_isdata(const struct silofs_paddr *paddr)
+{
+	return ptype_isdata(paddr->ptype);
 }
 
 long silofs_paddr_compare(const struct silofs_paddr *paddr1,

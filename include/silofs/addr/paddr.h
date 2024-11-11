@@ -107,6 +107,8 @@ void silofs_paddr_fini(struct silofs_paddr *paddr);
 void silofs_paddr_assign(struct silofs_paddr *paddr,
                          const struct silofs_paddr *other);
 
+bool silofs_paddr_isdata(const struct silofs_paddr *paddr);
+
 long silofs_paddr_compare(const struct silofs_paddr *paddr1,
                           const struct silofs_paddr *paddr2);
 

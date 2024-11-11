@@ -19,13 +19,31 @@
 #include <silofs/ps.h>
 
 
+static bool paddr_is_uber(const struct silofs_paddr *paddr)
+{
+	return paddr->ptype == SILOFS_PTYPE_UBER;
+}
+
+static bool paddr_is_data(const struct silofs_paddr *paddr)
+{
+	return paddr->ptype == SILOFS_PTYPE_DATA;
+}
+
+static void paddr_of_uber(const struct silofs_psid *psid,
+                          struct silofs_paddr *out_paddr)
+{
+	silofs_paddr_init(out_paddr, psid, SILOFS_PTYPE_UBER,
+	                  0, SILOFS_PSEG_UBER_SIZE);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void prange_init(struct silofs_prange *prange)
+static void prange_init(struct silofs_prange *prange, bool data)
 {
 	silofs_psid_generate(&prange->psid);
 	prange->nsegs = 1;
 	prange->cur_pos = 0;
+	prange->data = data;
 }
 
 static void prange_fini(struct silofs_prange *prange)
@@ -40,6 +58,7 @@ static void prange_assign(struct silofs_prange *prange,
 	silofs_psid_assign(&prange->psid, &other->psid);
 	prange->nsegs = other->nsegs;
 	prange->cur_pos = other->cur_pos;
+	prange->data = other->data;
 }
 
 static void prange_cur_paddr(struct silofs_prange *prange,
@@ -64,6 +83,35 @@ static void prange_carve(struct silofs_prange *prange,
 	prange_advance_by(prange, out_paddr);
 }
 
+static bool prange_has_pvid(const struct silofs_prange *prange,
+                            const struct silofs_pvid *pvid)
+{
+	return silofs_pvid_isequal(&prange->psid.pvid, pvid);
+}
+
+static bool prange_has_index(const struct silofs_prange *prange, uint32_t idx)
+{
+	const uint32_t idx_beg = prange->psid.index;
+	const uint32_t idx_end = idx_beg + prange->nsegs;
+
+	return (idx >= idx_beg) && (idx < idx_end);
+}
+
+static bool prange_has_paddr(const struct silofs_prange *prange,
+                             const struct silofs_paddr *paddr)
+{
+	if (!prange_has_pvid(prange, &paddr->psid.pvid)) {
+		return false;
+	}
+	if (!prange_has_index(prange, paddr->psid.index)) {
+		return false;
+	}
+	if (prange->data != silofs_paddr_isdata(paddr)) {
+		return false;
+	}
+	return true;
+}
+
 static void prange64b_htox(struct silofs_prange64b *prange64,
                            const struct silofs_prange *prange)
 {
@@ -85,8 +133,8 @@ static void prange64b_xtoh(const struct silofs_prange64b *prange64,
 
 static void pstate_init(struct silofs_pstate *pstate)
 {
-	prange_init(&pstate->data);
-	prange_init(&pstate->meta);
+	prange_init(&pstate->data, true);
+	prange_init(&pstate->meta, false);
 }
 
 static void pstate_fini(struct silofs_pstate *pstate)
@@ -108,8 +156,14 @@ pstate_sub(struct silofs_pstate *pstate, bool meta)
 	return meta ? &pstate->meta : &pstate->data;
 }
 
-static void pstate_next_psu(struct silofs_pstate *pstate, bool meta,
-                            struct silofs_paddr *out_paddr)
+static const struct silofs_prange *
+pstate_sub2(const struct silofs_pstate *pstate, bool meta)
+{
+	return meta ? &pstate->meta : &pstate->data;
+}
+
+static void pstate_next_uber(struct silofs_pstate *pstate, bool meta,
+                             struct silofs_paddr *out_paddr)
 {
 	struct silofs_prange *prange = pstate_sub(pstate, meta);
 
@@ -118,14 +172,30 @@ static void pstate_next_psu(struct silofs_pstate *pstate, bool meta,
 	prange_carve(prange, SILOFS_PTYPE_UBER, out_paddr);
 }
 
-static void pstate_next_btn(struct silofs_pstate *pstate,
-                            struct silofs_paddr *out_paddr)
+static void pstate_next_btnode(struct silofs_pstate *pstate,
+                               struct silofs_paddr *out_paddr)
 {
 	struct silofs_prange *prange = pstate_sub(pstate, true);
 
 	silofs_assert_gt(prange->cur_pos, 0);
 
 	prange_carve(prange, SILOFS_PTYPE_BTNODE, out_paddr);
+}
+
+static bool pstate_has_paddr(const struct silofs_pstate *pstate,
+                             const struct silofs_paddr *paddr)
+{
+	bool ret;
+
+	if (paddr_is_uber(paddr)) {
+		ret = prange_has_paddr(&pstate->data, paddr) ||
+		      prange_has_paddr(&pstate->meta, paddr);
+	} else if (paddr_is_data(paddr)) {
+		ret = prange_has_paddr(&pstate->data, paddr);
+	} else {
+		ret = prange_has_paddr(&pstate->meta, paddr);
+	}
+	return ret;
 }
 
 void silofs_pstate128b_htox(struct silofs_pstate128b *pstate128,
@@ -170,6 +240,13 @@ static void pstore_bind_pni(struct silofs_pstore *pstore,
 	pni->pn_pstore = pstore;
 }
 
+static int pstore_validate_paddr(const struct silofs_pstore *pstore,
+                                 const struct silofs_paddr *paddr)
+{
+	return pstate_has_paddr(&pstore->pstate, paddr) ? 0 : -SILOFS_EINVAL;
+}
+
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct silofs_paddr *
@@ -178,9 +255,51 @@ pui_paddr(const struct silofs_puber_info *pui)
 	return &pui->pu_pni.pn_paddr;
 }
 
-static int pstore_spawn_cached_pui(struct silofs_pstore *pstore,
-                                   const struct silofs_paddr *paddr,
-                                   struct silofs_puber_info **out_pui)
+static int pstore_save_puber(const struct silofs_pstore *pstore,
+                             const struct silofs_puber_info *pui)
+{
+	const struct silofs_rovec rov = {
+		.rov_base = pui->pu,
+		.rov_len = sizeof(*pui->pu),
+	};
+
+	return silofs_repo_save_pobj(pstore->repo, pui_paddr(pui), &rov);
+}
+
+static int pstore_load_puber(const struct silofs_pstore *pstore,
+                             const struct silofs_puber_info *pui)
+{
+	const struct silofs_rwvec rwv = {
+		.rwv_base = pui->pu,
+		.rwv_len = sizeof(*pui->pu),
+	};
+
+	return silofs_repo_load_pobj(pstore->repo, pui_paddr(pui), &rwv);
+}
+
+
+static int pstore_commit_puber(const struct silofs_pstore *pstore,
+                               struct silofs_puber_info *pui)
+{
+	int err;
+
+	err = pstore_save_puber(pstore, pui);
+	if (err) {
+		return err;
+	}
+	silofs_pui_undirtify(pui);
+	return 0;
+}
+
+static int pstore_stage_puber(const struct silofs_pstore *pstore,
+                              const struct silofs_puber_info *pui)
+{
+	return pstore_load_puber(pstore, pui);
+}
+
+static int pstore_create_cached_pui(struct silofs_pstore *pstore,
+                                    const struct silofs_paddr *paddr,
+                                    struct silofs_puber_info **out_pui)
 {
 	struct silofs_puber_info *pui;
 
@@ -193,7 +312,7 @@ static int pstore_spawn_cached_pui(struct silofs_pstore *pstore,
 	return 0;
 }
 
-static int pstore_format_pseg_at(struct silofs_pstore *pstore,
+static int pstore_format_pseg_of(struct silofs_pstore *pstore,
                                  const struct silofs_paddr *paddr,
                                  struct silofs_puber_info **out_pui)
 {
@@ -203,30 +322,69 @@ static int pstore_format_pseg_at(struct silofs_pstore *pstore,
 	if (err) {
 		return err;
 	}
-	err = pstore_spawn_cached_pui(pstore, paddr, out_pui);
+	err = pstore_create_cached_pui(pstore, paddr, out_pui);
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-static int pstore_commit_puber(const struct silofs_pstore *pstore,
-                               struct silofs_puber_info *pui)
+static void pstore_evict_cached_pui(struct silofs_pstore *pstore,
+                                    struct silofs_puber_info *pui)
 {
-	const struct silofs_rovec rov = {
-		.rov_base = pui->pu,
-		.rov_len = sizeof(*pui->pu),
-	};
+	silofs_bcache_evict_pui(&pstore->bcache, pui);
+}
+
+static int pstore_stage_puber_at(struct silofs_pstore *pstore,
+                                 const struct silofs_paddr *paddr,
+                                 struct silofs_puber_info **out_pui)
+{
+	struct silofs_puber_info *pui = NULL;
 	int err;
 
-	err = silofs_repo_save_pobj(pstore->repo, pui_paddr(pui), &rov);
+	err = pstore_validate_paddr(pstore, paddr);
 	if (err) {
 		return err;
 	}
-	silofs_pui_undirtify(pui);
+	err = pstore_create_cached_pui(pstore, paddr, &pui);
+	if (err) {
+		return err;
+	}
+	err = pstore_stage_puber(pstore, pui);
+	if (err) {
+		pstore_evict_cached_pui(pstore, pui);
+		return err;
+	}
+	*out_pui = pui;
 	return 0;
 }
 
+static int pstore_stage_puber_of(struct silofs_pstore *pstore,
+                                 const struct silofs_psid *psid,
+                                 struct silofs_puber_info **out_pui)
+{
+	struct silofs_paddr paddr;
+
+	paddr_of_uber(psid, &paddr);
+	return pstore_stage_puber_at(pstore, &paddr, out_pui);
+}
+
+static int pstore_stage_pseg_of(struct silofs_pstore *pstore,
+                                const struct silofs_psid *psid)
+{
+	struct silofs_puber_info *pui = NULL;
+	int err;
+
+	err = silofs_repo_stage_pseg(pstore->repo, psid);
+	if (err) {
+		return err;
+	}
+	err = pstore_stage_puber_of(pstore, psid, &pui);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -234,6 +392,43 @@ static const struct silofs_paddr *
 bti_paddr(const struct silofs_btnode_info *bti)
 {
 	return &bti->bn_pni.pn_paddr;
+}
+
+static int pstore_save_btnode(const struct silofs_pstore *pstore,
+                              const struct silofs_btnode_info *bti)
+{
+	const struct silofs_rovec rov = {
+		.rov_base = bti->bn,
+		.rov_len = sizeof(*bti->bn),
+	};
+
+	return silofs_repo_save_pobj(pstore->repo, bti_paddr(bti), &rov);
+}
+
+#if 0
+static int pstore_load_btnode(const struct silofs_pstore *pstore,
+                              const struct silofs_btnode_info *bti)
+{
+	const struct silofs_rwvec rwv = {
+		.rwv_base = bti->bn,
+		.rwv_len = sizeof(*bti->bn),
+	};
+
+	return silofs_repo_load_pobj(pstore->repo, bti_paddr(bti), &rwv);
+}
+#endif
+
+static int pstore_commit_btnode(const struct silofs_pstore *pstore,
+                                struct silofs_btnode_info *bti)
+{
+	int err;
+
+	err = pstore_save_btnode(pstore, bti);
+	if (err) {
+		return err;
+	}
+	silofs_bti_undirtify(bti);
+	return 0;
 }
 
 static int pstore_create_cached_bti(struct silofs_pstore *pstore,
@@ -248,23 +443,6 @@ static int pstore_create_cached_bti(struct silofs_pstore *pstore,
 	}
 	pstore_bind_pni(pstore, &bti->bn_pni);
 	*out_bti = bti;
-	return 0;
-}
-
-static int pstore_commit_btnode(const struct silofs_pstore *pstore,
-                                struct silofs_btnode_info *bti)
-{
-	const struct silofs_rovec rov = {
-		.rov_base = bti->bn,
-		.rov_len = sizeof(*bti->bn),
-	};
-	int err;
-
-	err = silofs_repo_save_pobj(pstore->repo, bti_paddr(bti), &rov);
-	if (err) {
-		return err;
-	}
-	silofs_bti_undirtify(bti);
 	return 0;
 }
 
@@ -293,7 +471,7 @@ static int pstore_format_btree_root(struct silofs_pstore *pstore)
 	struct silofs_paddr paddr;
 	int err;
 
-	pstate_next_btn(&pstore->pstate, &paddr);
+	pstate_next_btnode(&pstore->pstate, &paddr);
 	err = pstore_require_pseg_of(pstore, &paddr);
 	if (err) {
 		return err;
@@ -311,8 +489,8 @@ static int pstore_format_meta_pseg(struct silofs_pstore *pstore)
 	struct silofs_puber_info *pui = NULL;
 	int err;
 
-	pstate_next_psu(&pstore->pstate, true, &paddr);
-	err = pstore_format_pseg_at(pstore, &paddr, &pui);
+	pstate_next_uber(&pstore->pstate, true, &paddr);
+	err = pstore_format_pseg_of(pstore, &paddr, &pui);
 	if (err) {
 		return err;
 	}
@@ -326,8 +504,8 @@ static int pstore_format_data_pseg(struct silofs_pstore *pstore)
 	struct silofs_puber_info *pui = NULL;
 	int err;
 
-	pstate_next_psu(&pstore->pstate, false, &paddr);
-	err = pstore_format_pseg_at(pstore, &paddr, &pui);
+	pstate_next_uber(&pstore->pstate, false, &paddr);
+	err = pstore_format_pseg_of(pstore, &paddr, &pui);
 	if (err) {
 		return err;
 	}
@@ -355,6 +533,52 @@ int silofs_pstore_format(struct silofs_pstore *pstore)
 	if (err) {
 		return err;
 	}
+	return 0;
+}
+
+static int pstore_stage_meta_pseg(struct silofs_pstore *pstore)
+{
+	const struct silofs_prange *prange;
+
+	prange = pstate_sub2(&pstore->pstate, true);
+	return pstore_stage_pseg_of(pstore, &prange->psid);
+}
+
+static int pstore_stage_data_pseg(struct silofs_pstore *pstore)
+{
+	const struct silofs_prange *prange;
+
+	prange = pstate_sub2(&pstore->pstate, false);
+	return pstore_stage_pseg_of(pstore, &prange->psid);
+}
+
+static int pstore_assign_pstate(struct silofs_pstore *pstore,
+                                const struct silofs_pstate *pstate)
+{
+	/* TODO: check validity */
+	silofs_pstate_assign(&pstore->pstate, pstate);
+	return 0;
+}
+
+int silofs_pstore_reload(struct silofs_pstore *pstore,
+                         const struct silofs_pstate *pstate)
+{
+	int err;
+
+	err = pstore_assign_pstate(pstore, pstate);
+	if (err) {
+		return err;
+	}
+	err = pstore_stage_meta_pseg(pstore);
+	if (err) {
+		return err;
+	}
+	err = pstore_stage_data_pseg(pstore);
+	if (err) {
+		return err;
+	}
+
+	/* TODO: Complete me */
 	return 0;
 }
 

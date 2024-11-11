@@ -1562,7 +1562,7 @@ static void resolve_bootrec_caddr(const struct silofs_fsenv *fsenv,
 	caddr_assign(out_caddr, &fsenv->fse_boot.caddr);
 }
 
-static int format_ps(struct silofs_fsenv *fsenv)
+static int format_pstore(struct silofs_fsenv *fsenv)
 {
 	return silofs_pstore_format(fsenv->fse.pstore);
 }
@@ -1582,7 +1582,7 @@ static int do_format_fs(struct silofs_fsenv *fsenv,
 	struct silofs_bootrec brec;
 	int err;
 
-	err = format_ps(fsenv);
+	err = format_pstore(fsenv);
 	if (err) {
 		return err;
 	}
@@ -1640,13 +1640,23 @@ static int reload_root_lseg(struct silofs_fsenv *fsenv,
 	return silofs_fsenv_reload_sb_lseg(fsenv);
 }
 
+static int reload_pstore(struct silofs_fsenv *fsenv,
+                         const struct silofs_bootrec *brec)
+{
+	return silofs_pstore_reload(fsenv->fse.pstore, &brec->pstate);
+}
+
 static int do_open_fs(struct silofs_fsenv *fsenv,
                       const struct silofs_caddr *caddr)
 {
-	struct silofs_bootrec brec;
+	struct silofs_bootrec brec = { .flags = SILOFS_BOOTF_NONE };
 	int err;
 
 	err = reload_bootrec(fsenv, caddr, &brec);
+	if (err) {
+		return err;
+	}
+	err = reload_pstore(fsenv, &brec);
 	if (err) {
 		return err;
 	}

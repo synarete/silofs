@@ -26,8 +26,8 @@
 
 #define pni_ptype(pni)                  silofs_pni_ptype(pni)
 
-#define pui_dirtify(pui)                silofs_pui_dirtify(pui)
-#define pui_undirtify(pui)              silofs_pui_undirtify(pui)
+#define ubi_dirtify(ubi)                silofs_ubi_dirtify(ubi)
+#define ubi_undirtify(ubi)              silofs_ubi_undirtify(ubi)
 
 #define bti_dirtify(bti)                silofs_bti_dirtify(bti)
 #define bti_undirtify(bti)              silofs_bti_undirtify(bti)

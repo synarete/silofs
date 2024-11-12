@@ -44,16 +44,16 @@ struct silofs_pnode_info *
 silofs_bcache_dq_front(const struct silofs_bcache *bcache);
 
 
-struct silofs_puber_info *
-silofs_bcache_lookup_pui(struct silofs_bcache *bcache,
+struct silofs_uber_info *
+silofs_bcache_lookup_ubi(struct silofs_bcache *bcache,
                          const struct silofs_paddr *paddr);
 
-struct silofs_puber_info *
-silofs_bcache_create_pui(struct silofs_bcache *bcache,
+struct silofs_uber_info *
+silofs_bcache_create_ubi(struct silofs_bcache *bcache,
                          const struct silofs_paddr *paddr);
 
-void silofs_bcache_evict_pui(struct silofs_bcache *bcache,
-                             struct silofs_puber_info *pui);
+void silofs_bcache_evict_ubi(struct silofs_bcache *bcache,
+                             struct silofs_uber_info *ubi);
 
 
 struct silofs_btnode_info *

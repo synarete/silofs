@@ -147,24 +147,24 @@ static void bcache_remove(struct silofs_bcache *bcache,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct silofs_puber_info *
-bcache_new_pui(const struct silofs_bcache *bcache,
+static struct silofs_uber_info *
+bcache_new_ubi(const struct silofs_bcache *bcache,
                const struct silofs_paddr *paddr)
 {
 	silofs_assert_eq(paddr->ptype, SILOFS_PTYPE_UBER);
 	silofs_assert_eq(paddr->off, 0);
 
-	return silofs_pui_new(paddr, bcache->bc_alloc);
+	return silofs_ubi_new(paddr, bcache->bc_alloc);
 }
 
-static void bcache_del_pui(const struct silofs_bcache *bcache,
-                           struct silofs_puber_info *pui)
+static void bcache_del_ubi(const struct silofs_bcache *bcache,
+                           struct silofs_uber_info *ubi)
 {
-	silofs_pui_del(pui, bcache->bc_alloc);
+	silofs_ubi_del(ubi, bcache->bc_alloc);
 }
 
-struct silofs_puber_info *
-silofs_bcache_lookup_pui(struct silofs_bcache *bcache,
+struct silofs_uber_info *
+silofs_bcache_lookup_ubi(struct silofs_bcache *bcache,
                          const struct silofs_paddr *paddr)
 {
 	struct silofs_pnode_info *pni;
@@ -172,69 +172,69 @@ silofs_bcache_lookup_pui(struct silofs_bcache *bcache,
 	silofs_assert_eq(paddr->ptype, SILOFS_PTYPE_UBER);
 
 	pni = bcache_lookup(bcache, paddr);
-	return silofs_pui_from_pni(pni);
+	return silofs_ubi_from_pni(pni);
 }
 
-static struct silofs_puber_info *
-bcache_require_pui(struct silofs_bcache *bcache,
+static struct silofs_uber_info *
+bcache_require_ubi(struct silofs_bcache *bcache,
                    const struct silofs_paddr *paddr)
 {
-	struct silofs_puber_info *pui = NULL;
+	struct silofs_uber_info *ubi = NULL;
 
 	for (size_t i = 0; i < RETRY_MAX; ++i) {
-		pui = bcache_new_pui(bcache, paddr);
-		if (pui != NULL) {
+		ubi = bcache_new_ubi(bcache, paddr);
+		if (ubi != NULL) {
 			break;
 		}
 		bcache_evict_some(bcache, i + 1, false);
 	}
-	return pui;
+	return ubi;
 }
 
-static void bcache_bind_pui_dq(struct silofs_bcache *bcache,
-                               struct silofs_puber_info *pui)
+static void bcache_bind_ubi_dq(struct silofs_bcache *bcache,
+                               struct silofs_uber_info *ubi)
 {
-	silofs_pui_set_dq(pui, &bcache->bc_dirtyq);
+	silofs_ubi_set_dq(ubi, &bcache->bc_dirtyq);
 }
 
-static void bcache_store_pui(struct silofs_bcache *bcache,
-                             struct silofs_puber_info *pui)
+static void bcache_store_ubi(struct silofs_bcache *bcache,
+                             struct silofs_uber_info *ubi)
 {
-	bcache_store(bcache, &pui->pu_pni);
+	bcache_store(bcache, &ubi->ub_pni);
 }
 
-struct silofs_puber_info *
-silofs_bcache_create_pui(struct silofs_bcache *bcache,
+struct silofs_uber_info *
+silofs_bcache_create_ubi(struct silofs_bcache *bcache,
                          const struct silofs_paddr *paddr)
 {
-	struct silofs_puber_info *pui;
+	struct silofs_uber_info *ubi;
 
-	pui = bcache_require_pui(bcache, paddr);
-	if (pui != NULL) {
-		bcache_bind_pui_dq(bcache, pui);
-		bcache_store_pui(bcache, pui);
+	ubi = bcache_require_ubi(bcache, paddr);
+	if (ubi != NULL) {
+		bcache_bind_ubi_dq(bcache, ubi);
+		bcache_store_ubi(bcache, ubi);
 	}
-	return pui;
+	return ubi;
 }
 
-static void bcache_remove_pui(struct silofs_bcache *bcache,
-                              struct silofs_puber_info *pui)
+static void bcache_remove_ubi(struct silofs_bcache *bcache,
+                              struct silofs_uber_info *ubi)
 {
-	bcache_remove(bcache, &pui->pu_pni);
+	bcache_remove(bcache, &ubi->ub_pni);
 }
 
-static void bcache_forget_pui(struct silofs_bcache *bcache,
-                              struct silofs_puber_info *pui)
+static void bcache_forget_ubi(struct silofs_bcache *bcache,
+                              struct silofs_uber_info *ubi)
 {
-	pui_undirtify(pui);
-	bcache_remove_pui(bcache, pui);
+	ubi_undirtify(ubi);
+	bcache_remove_ubi(bcache, ubi);
 }
 
-void silofs_bcache_evict_pui(struct silofs_bcache *bcache,
-                             struct silofs_puber_info *pui)
+void silofs_bcache_evict_ubi(struct silofs_bcache *bcache,
+                             struct silofs_uber_info *ubi)
 {
-	bcache_forget_pui(bcache, pui);
-	bcache_del_pui(bcache, pui);
+	bcache_forget_ubi(bcache, ubi);
+	bcache_del_ubi(bcache, ubi);
 }
 
 
@@ -433,7 +433,7 @@ static void bcache_evict_by(struct silofs_bcache *bcache,
 
 	switch (ptype) {
 	case SILOFS_PTYPE_UBER:
-		silofs_bcache_evict_pui(bcache, silofs_pui_from_pni(pni));
+		silofs_bcache_evict_ubi(bcache, silofs_ubi_from_pni(pni));
 		break;
 	case SILOFS_PTYPE_BTNODE:
 		silofs_bcache_evict_bti(bcache, silofs_bti_from_pni(pni));

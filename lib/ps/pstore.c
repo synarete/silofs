@@ -250,71 +250,71 @@ static int pstore_validate_paddr(const struct silofs_pstore *pstore,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct silofs_paddr *
-pui_paddr(const struct silofs_puber_info *pui)
+ubi_paddr(const struct silofs_uber_info *ubi)
 {
-	return &pui->pu_pni.pn_paddr;
+	return &ubi->ub_pni.pn_paddr;
 }
 
-static int pstore_save_puber(const struct silofs_pstore *pstore,
-                             const struct silofs_puber_info *pui)
+static int pstore_save_uber(const struct silofs_pstore *pstore,
+                            const struct silofs_uber_info *ubi)
 {
 	const struct silofs_rovec rov = {
-		.rov_base = pui->pu,
-		.rov_len = sizeof(*pui->pu),
+		.rov_base = ubi->ub,
+		.rov_len = sizeof(*ubi->ub),
 	};
 
-	return silofs_repo_save_pobj(pstore->repo, pui_paddr(pui), &rov);
+	return silofs_repo_save_pobj(pstore->repo, ubi_paddr(ubi), &rov);
 }
 
-static int pstore_load_puber(const struct silofs_pstore *pstore,
-                             const struct silofs_puber_info *pui)
+static int pstore_load_uber(const struct silofs_pstore *pstore,
+                            const struct silofs_uber_info *ubi)
 {
 	const struct silofs_rwvec rwv = {
-		.rwv_base = pui->pu,
-		.rwv_len = sizeof(*pui->pu),
+		.rwv_base = ubi->ub,
+		.rwv_len = sizeof(*ubi->ub),
 	};
 
-	return silofs_repo_load_pobj(pstore->repo, pui_paddr(pui), &rwv);
+	return silofs_repo_load_pobj(pstore->repo, ubi_paddr(ubi), &rwv);
 }
 
 
-static int pstore_commit_puber(const struct silofs_pstore *pstore,
-                               struct silofs_puber_info *pui)
+static int pstore_commit_uber(const struct silofs_pstore *pstore,
+                              struct silofs_uber_info *ubi)
 {
 	int err;
 
-	err = pstore_save_puber(pstore, pui);
+	err = pstore_save_uber(pstore, ubi);
 	if (err) {
 		return err;
 	}
-	silofs_pui_undirtify(pui);
+	silofs_ubi_undirtify(ubi);
 	return 0;
 }
 
-static int pstore_stage_puber(const struct silofs_pstore *pstore,
-                              const struct silofs_puber_info *pui)
+static int pstore_stage_uber(const struct silofs_pstore *pstore,
+                             const struct silofs_uber_info *ubi)
 {
-	return pstore_load_puber(pstore, pui);
+	return pstore_load_uber(pstore, ubi);
 }
 
-static int pstore_create_cached_pui(struct silofs_pstore *pstore,
+static int pstore_create_cached_ubi(struct silofs_pstore *pstore,
                                     const struct silofs_paddr *paddr,
-                                    struct silofs_puber_info **out_pui)
+                                    struct silofs_uber_info **out_ubi)
 {
-	struct silofs_puber_info *pui;
+	struct silofs_uber_info *ubi;
 
-	pui = silofs_bcache_create_pui(&pstore->bcache, paddr);
-	if (pui == NULL) {
+	ubi = silofs_bcache_create_ubi(&pstore->bcache, paddr);
+	if (ubi == NULL) {
 		return -SILOFS_ENOMEM;
 	}
-	pstore_bind_pni(pstore, &pui->pu_pni);
-	*out_pui = pui;
+	pstore_bind_pni(pstore, &ubi->ub_pni);
+	*out_ubi = ubi;
 	return 0;
 }
 
 static int pstore_format_pseg_of(struct silofs_pstore *pstore,
                                  const struct silofs_paddr *paddr,
-                                 struct silofs_puber_info **out_pui)
+                                 struct silofs_uber_info **out_ubi)
 {
 	int err;
 
@@ -322,64 +322,64 @@ static int pstore_format_pseg_of(struct silofs_pstore *pstore,
 	if (err) {
 		return err;
 	}
-	err = pstore_create_cached_pui(pstore, paddr, out_pui);
+	err = pstore_create_cached_ubi(pstore, paddr, out_ubi);
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-static void pstore_evict_cached_pui(struct silofs_pstore *pstore,
-                                    struct silofs_puber_info *pui)
+static void pstore_evict_cached_ubi(struct silofs_pstore *pstore,
+                                    struct silofs_uber_info *ubi)
 {
-	silofs_bcache_evict_pui(&pstore->bcache, pui);
+	silofs_bcache_evict_ubi(&pstore->bcache, ubi);
 }
 
-static int pstore_stage_puber_at(struct silofs_pstore *pstore,
-                                 const struct silofs_paddr *paddr,
-                                 struct silofs_puber_info **out_pui)
+static int pstore_stage_uber_at(struct silofs_pstore *pstore,
+                                const struct silofs_paddr *paddr,
+                                struct silofs_uber_info **out_ubi)
 {
-	struct silofs_puber_info *pui = NULL;
+	struct silofs_uber_info *ubi = NULL;
 	int err;
 
 	err = pstore_validate_paddr(pstore, paddr);
 	if (err) {
 		return err;
 	}
-	err = pstore_create_cached_pui(pstore, paddr, &pui);
+	err = pstore_create_cached_ubi(pstore, paddr, &ubi);
 	if (err) {
 		return err;
 	}
-	err = pstore_stage_puber(pstore, pui);
+	err = pstore_stage_uber(pstore, ubi);
 	if (err) {
-		pstore_evict_cached_pui(pstore, pui);
+		pstore_evict_cached_ubi(pstore, ubi);
 		return err;
 	}
-	*out_pui = pui;
+	*out_ubi = ubi;
 	return 0;
 }
 
-static int pstore_stage_puber_of(struct silofs_pstore *pstore,
-                                 const struct silofs_psid *psid,
-                                 struct silofs_puber_info **out_pui)
+static int pstore_stage_uber_of(struct silofs_pstore *pstore,
+                                const struct silofs_psid *psid,
+                                struct silofs_uber_info **out_ubi)
 {
 	struct silofs_paddr paddr;
 
 	paddr_of_uber(psid, &paddr);
-	return pstore_stage_puber_at(pstore, &paddr, out_pui);
+	return pstore_stage_uber_at(pstore, &paddr, out_ubi);
 }
 
 static int pstore_stage_pseg_of(struct silofs_pstore *pstore,
                                 const struct silofs_psid *psid)
 {
-	struct silofs_puber_info *pui = NULL;
+	struct silofs_uber_info *ubi = NULL;
 	int err;
 
 	err = silofs_repo_stage_pseg(pstore->repo, psid);
 	if (err) {
 		return err;
 	}
-	err = pstore_stage_puber_of(pstore, psid, &pui);
+	err = pstore_stage_uber_of(pstore, psid, &ubi);
 	if (err) {
 		return err;
 	}
@@ -486,30 +486,30 @@ static int pstore_format_btree_root(struct silofs_pstore *pstore)
 static int pstore_format_meta_pseg(struct silofs_pstore *pstore)
 {
 	struct silofs_paddr paddr;
-	struct silofs_puber_info *pui = NULL;
+	struct silofs_uber_info *ubi = NULL;
 	int err;
 
 	pstate_next_uber(&pstore->pstate, true, &paddr);
-	err = pstore_format_pseg_of(pstore, &paddr, &pui);
+	err = pstore_format_pseg_of(pstore, &paddr, &ubi);
 	if (err) {
 		return err;
 	}
-	silofs_pui_mark_meta(pui);
+	silofs_ubi_mark_meta(ubi);
 	return 0;
 }
 
 static int pstore_format_data_pseg(struct silofs_pstore *pstore)
 {
 	struct silofs_paddr paddr;
-	struct silofs_puber_info *pui = NULL;
+	struct silofs_uber_info *ubi = NULL;
 	int err;
 
 	pstate_next_uber(&pstore->pstate, false, &paddr);
-	err = pstore_format_pseg_of(pstore, &paddr, &pui);
+	err = pstore_format_pseg_of(pstore, &paddr, &ubi);
 	if (err) {
 		return err;
 	}
-	silofs_pui_mark_data(pui);
+	silofs_ubi_mark_data(ubi);
 	return 0;
 }
 
@@ -592,7 +592,7 @@ static int pstore_commit_pnode(struct silofs_pstore *pstore,
 
 	switch (ptype) {
 	case SILOFS_PTYPE_UBER:
-		ret = pstore_commit_puber(pstore, silofs_pui_from_pni(pni));
+		ret = pstore_commit_uber(pstore, silofs_ubi_from_pni(pni));
 		break;
 	case SILOFS_PTYPE_BTNODE:
 		ret = pstore_commit_btnode(pstore, silofs_bti_from_pni(pni));

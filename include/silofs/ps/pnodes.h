@@ -32,9 +32,9 @@ struct silofs_pnode_info {
 };
 
 /* pseg uber-node */
-struct silofs_puber_info {
-	struct silofs_pnode_info        pu_pni;
-	struct silofs_pseg_uber        *pu;
+struct silofs_uber_info {
+	struct silofs_pnode_info        ub_pni;
+	struct silofs_pseg_uber        *ub;
 };
 
 /* btree-node */
@@ -58,26 +58,26 @@ void silofs_pni_undirtify(struct silofs_pnode_info *pni);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-struct silofs_puber_info *
-silofs_pui_new(const struct silofs_paddr *paddr,
+struct silofs_uber_info *
+silofs_ubi_new(const struct silofs_paddr *paddr,
                struct silofs_alloc *alloc);
 
-void silofs_pui_del(struct silofs_puber_info *pui,
+void silofs_ubi_del(struct silofs_uber_info *ubi,
                     struct silofs_alloc *alloc);
 
-struct silofs_puber_info *
-silofs_pui_from_pni(const struct silofs_pnode_info *pni);
+struct silofs_uber_info *
+silofs_ubi_from_pni(const struct silofs_pnode_info *pni);
 
-void silofs_pui_set_dq(struct silofs_puber_info *pui,
+void silofs_ubi_set_dq(struct silofs_uber_info *ubi,
                        struct silofs_dirtyq *dq);
 
-void silofs_pui_mark_meta(struct silofs_puber_info *pui);
+void silofs_ubi_mark_meta(struct silofs_uber_info *ubi);
 
-void silofs_pui_mark_data(struct silofs_puber_info *pui);
+void silofs_ubi_mark_data(struct silofs_uber_info *ubi);
 
-void silofs_pui_dirtify(struct silofs_puber_info *pui);
+void silofs_ubi_dirtify(struct silofs_uber_info *ubi);
 
-void silofs_pui_undirtify(struct silofs_puber_info *pui);
+void silofs_ubi_undirtify(struct silofs_uber_info *ubi);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

@@ -173,6 +173,47 @@ static void test_open_trunc(struct ft_env *fte)
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+/*
+ * Expects open(3p) with O_APPEND to set the file offset to the end prior to
+ * each write.
+ */
+static void test_open_append_(struct ft_env *fte, loff_t off, size_t len)
+{
+	struct stat st = { .st_size = -1 };
+	void *buf = ft_new_buf_zeros(fte, len);
+	const char *path = ft_new_path_unique(fte);
+	ssize_t sz = -1;
+	int fd = -1;
+
+	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
+	ft_ftruncate(fd, off);
+	ft_close(fd);
+	ft_open(path, O_APPEND | O_RDWR, 0600, &fd);
+	for (size_t i = 1; i <= 10; ++i) {
+		ft_writen(fd, buf, len);
+		sz = off + (ssize_t)(i * len);
+		ft_fstat(fd, &st);
+		ft_expect_eq(st.st_size, sz);
+		ft_expect_gt(st.st_blocks, 0);
+	}
+	ft_close(fd);
+	ft_unlink(path);
+}
+
+static void test_open_append(struct ft_env *fte)
+{
+	const struct ft_range ranges[] = {
+		FT_MKRANGE(0, FT_1K),
+		FT_MKRANGE(FT_1K, FT_4K),
+		FT_MKRANGE(FT_1M, FT_64K),
+		FT_MKRANGE(FT_1G - 7, 7 * FT_4K),
+		FT_MKRANGE(FT_1T - 11, FT_1M + 111),
+	};
+
+	ft_exec_with_ranges(fte, test_open_append_, ranges);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ft_tdef ft_local_tests[] = {
 	FT_DEFTEST(test_open_atime),
@@ -180,6 +221,7 @@ static const struct ft_tdef ft_local_tests[] = {
 	FT_DEFTEST(test_open_loop),
 	FT_DEFTEST(test_open_isdir),
 	FT_DEFTEST(test_open_trunc),
+	FT_DEFTEST(test_open_append),
 };
 
 const struct ft_tests ft_test_open = FT_DEFTESTS(ft_local_tests);

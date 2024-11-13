@@ -550,12 +550,10 @@ lcache_get_lru_vni(struct silofs_lcache *lcache)
 static bool lcache_evict_or_relru_vni(struct silofs_lcache *lcache,
                                       struct silofs_vnode_info *vni, int flags)
 {
-	int allocf;
 	bool evicted;
 
 	if (test_evictable_vni(vni)) {
-		allocf = (flags & SILOFS_F_IDLE) ? SILOFS_ALLOCF_TRYPUNCH : 0;
-		lcache_evict_vni(lcache, vni, allocf);
+		lcache_evict_vni(lcache, vni, flags_to_allocf(flags));
 		evicted = true;
 	} else {
 		lcache_promote_vni(lcache, vni, true);
@@ -769,20 +767,20 @@ static size_t lcache_calc_niter(const struct silofs_lcache *lcache, int flags)
 	size_t niter = 0;
 
 	if (mempress_percentage > 60) {
-		niter += mempress_percentage / 10;
+		niter += 10;
 	} else if (mempress_percentage > 20) {
-		if (flags & SILOFS_F_OPSTART) {
-			niter += mempress_percentage / 40;
-		}
 		if (flags & SILOFS_F_INTERN) {
-			niter += mempress_percentage / 20;
+			niter += 5;
 		}
-	}
-	if (!niter && (mempress > 0) && (flags & SILOFS_F_IDLE)) {
-		niter += 2 + mempress_percentage / 10;
+		if (flags & SILOFS_F_OPSTART) {
+			niter += 1;
+		}
 	}
 	if (flags & SILOFS_F_NOW) {
-		niter += 2;
+		niter += 2 + min(mempress_percentage, 5);
+	}
+	if (!niter && (flags & SILOFS_F_IDLE)) {
+		niter += 2 + min(mempress_percentage, 3);
 	}
 	return niter;
 }

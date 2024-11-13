@@ -701,30 +701,28 @@ static int qpool_check_by_page(const struct silofs_qpool *qpool,
 	return 0;
 }
 
-static void qpool_punch_hole_at(const struct silofs_qpool *qpool,
+static bool qpool_punch_hole_at(const struct silofs_qpool *qpool,
                                 struct silofs_qpage_info *qpgi, size_t npgs)
 {
-	loff_t off;
-	ssize_t len;
-	int mode;
-	int fd;
+	const loff_t off = npgs_to_nbytes(qpgi->qpg_index);
+	const ssize_t len = npgs_to_nbytes(npgs);
+	const int mode = FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE;
+	const int fd = qpool->data.fd;
 	int err;
 
-	off = npgs_to_nbytes(qpgi->qpg_index);
-	len = npgs_to_nbytes(npgs);
-	mode = FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE;
-	fd = qpool->data.fd;
+	/* actual memory reclaim to system via fallocate punch-hole */
 	err = silofs_sys_fallocate(fd, mode, off, len);
 	if (err) {
 		silofs_panic("failed to fallocate punch-hole in memory: "
 		             "fd=%d off=%ld len=%ld mode=0x%x err=%d",
 		             fd, off, len, mode, err);
 	}
+	return (err == 0);
 }
 
-static bool
-qpool_update_released(const struct silofs_qpool *qpool,
-                      struct silofs_qpage_info *qpgi, size_t npgs, int flags)
+static bool qpool_may_punch_hole_at(const struct silofs_qpool *qpool,
+                                    const struct silofs_qpage_info *qpgi,
+                                    size_t npgs, int flags)
 {
 	size_t npgs_punch_hole_threshold;
 
@@ -733,21 +731,35 @@ qpool_update_released(const struct silofs_qpool *qpool,
 		return false;
 	}
 
-	if (flags & SILOFS_ALLOCF_TRYPUNCH) {
-		/* when asked to try-punch, require at least 1M hole size */
+	if ((qpgi->qpg_index % 16) == 0) {
+		/* use low threshold for 1M aligned pages */
 		npgs_punch_hole_threshold = 16;
+	} else if (flags & SILOFS_ALLOCF_TRYPUNCH) {
+		/* otherwise, require at least 2M hole size */
+		npgs_punch_hole_threshold = 32;
 	} else {
 		/* by default, require 8M hole size */
 		npgs_punch_hole_threshold = 128;
 	}
+
 	if (npgs < npgs_punch_hole_threshold) {
 		/* avoid redundant syscalls when below threshold */
 		return false;
 	}
-
-	/* actual memory reclaim to system via fallocate punch-hole */
-	qpool_punch_hole_at(qpool, qpgi, npgs);
+	silofs_unused(qpool);
 	return true;
+}
+
+static bool qpool_update_released(const struct silofs_qpool *qpool,
+                                  struct silofs_qpage_info *qpgi,
+                                  size_t npgs, int flags)
+{
+	bool ret = false;
+
+	if (qpool_may_punch_hole_at(qpool, qpgi, npgs, flags)) {
+		ret = qpool_punch_hole_at(qpool, qpgi, npgs);
+	}
+	return ret;
 }
 
 static int

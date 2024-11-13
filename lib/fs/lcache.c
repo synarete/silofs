@@ -206,14 +206,19 @@ lcache_get_lru_uni(struct silofs_lcache *lcache)
 	return (hmqe != NULL) ? uni_from_hmqe(hmqe) : NULL;
 }
 
+static enum silofs_allocf flags_to_allocf(int flags)
+{
+	return (flags & SILOFS_F_IDLE) ?
+	       SILOFS_ALLOCF_TRYPUNCH : SILOFS_ALLOCF_NONE;
+}
+
 static bool lcache_evict_or_relru_uni(struct silofs_lcache *lcache,
                                       struct silofs_unode_info *uni, int flags)
 {
-	const int alf = (flags & SILOFS_F_IDLE) ? SILOFS_ALLOCF_TRYPUNCH : 0;
 	bool evicted;
 
 	if (silofs_uni_isevictable(uni)) {
-		lcache_evict_uni(lcache, uni, alf);
+		lcache_evict_uni(lcache, uni, flags_to_allocf(flags));
 		evicted = true;
 	} else {
 		lcache_promote_uni(lcache, uni, true);

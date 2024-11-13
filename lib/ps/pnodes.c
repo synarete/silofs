@@ -19,6 +19,18 @@
 #include <silofs/ps.h>
 
 
+static void *pnode_memalloc(struct silofs_alloc *alloc, size_t size)
+{
+	return silofs_memalloc(alloc, size, SILOFS_ALLOCF_BZERO);
+}
+
+static void pnode_memfree(struct silofs_alloc *alloc, void *ptr, size_t size)
+{
+	silofs_memfree(alloc, ptr, size, SILOFS_ALLOCF_TRYPUNCH);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 static void psu_setup_hdr(struct silofs_pseg_uber *psu)
 {
 	silofs_hdr_setup(&psu->psu_hdr, SILOFS_PTYPE_UBER,
@@ -70,13 +82,13 @@ static struct silofs_pseg_uber *psu_malloc(struct silofs_alloc *alloc)
 {
 	struct silofs_pseg_uber *psu;
 
-	psu = silofs_memalloc(alloc, sizeof(*psu), SILOFS_ALLOCF_BZERO);
+	psu = pnode_memalloc(alloc, sizeof(*psu));
 	return psu;
 }
 
 static void psu_free(struct silofs_pseg_uber *psu, struct silofs_alloc *alloc)
 {
-	silofs_memfree(alloc, psu, sizeof(*psu), 0);
+	pnode_memfree(alloc, psu, sizeof(*psu));
 }
 
 static struct silofs_pseg_uber *
@@ -300,13 +312,13 @@ static struct silofs_btree_node *btn_malloc(struct silofs_alloc *alloc)
 {
 	struct silofs_btree_node *btn;
 
-	btn = silofs_memalloc(alloc, sizeof(*btn), SILOFS_ALLOCF_BZERO);
+	btn = pnode_memalloc(alloc, sizeof(*btn));
 	return btn;
 }
 
 static void btn_free(struct silofs_btree_node *btn, struct silofs_alloc *alloc)
 {
-	silofs_memfree(alloc, btn, sizeof(*btn), 0);
+	pnode_memfree(alloc, btn, sizeof(*btn));
 }
 
 static struct silofs_btree_node *btn_new(struct silofs_alloc *alloc)
@@ -506,13 +518,13 @@ static struct silofs_btree_leaf *btl_malloc(struct silofs_alloc *alloc)
 {
 	struct silofs_btree_leaf *btl;
 
-	btl = silofs_memalloc(alloc, sizeof(*btl), SILOFS_ALLOCF_BZERO);
+	btl = pnode_memalloc(alloc, sizeof(*btl));
 	return btl;
 }
 
 static void btl_free(struct silofs_btree_leaf *btl, struct silofs_alloc *alloc)
 {
-	silofs_memfree(alloc, btl, sizeof(*btl), 0);
+	pnode_memfree(alloc, btl, sizeof(*btl));
 }
 
 static struct silofs_btree_leaf *btl_new(struct silofs_alloc *alloc)

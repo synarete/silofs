@@ -115,10 +115,8 @@ static bool is_slab_size(size_t size)
 
 static void apply_allocf(void *ptr, size_t size, int flags)
 {
-	if (likely(ptr != NULL)) {
-		if (flags & SILOFS_ALLOCF_BZERO) {
-			memset(ptr, 0, size);
-		}
+	if (likely(ptr != NULL) && (flags & SILOFS_ALLOCF_BZERO)) {
+		memset(ptr, 0, size);
 	}
 }
 

@@ -219,8 +219,7 @@ int silofs_pstore_init(struct silofs_pstore *pstore,
 {
 	pstate_init(&pstore->pstate);
 	pstore->repo = repo;
-	pstore->alloc = repo->re.alloc;
-	return silofs_bcache_init(&pstore->bcache, pstore->alloc);
+	return silofs_bcache_init(&pstore->bcache, repo->re.alloc);
 }
 
 void silofs_pstore_fini(struct silofs_pstore *pstore)
@@ -228,7 +227,6 @@ void silofs_pstore_fini(struct silofs_pstore *pstore)
 	silofs_bcache_drop(&pstore->bcache);
 	silofs_bcache_fini(&pstore->bcache);
 	pstate_fini(&pstore->pstate);
-	pstore->alloc = NULL;
 	pstore->repo = NULL;
 }
 

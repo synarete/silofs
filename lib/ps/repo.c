@@ -1501,11 +1501,13 @@ static void repo_try_evict_overpop(struct silofs_repo *repo)
 	}
 }
 
-void silofs_repo_relax(struct silofs_repo *repo)
+void silofs_repo_relax(struct silofs_repo *repo, int flags)
 {
-	repo_lock(repo);
-	repo_evict_some(repo, 1);
-	repo_unlock(repo);
+	if (flags & SILOFS_F_IDLE) {
+		repo_lock(repo);
+		repo_evict_some(repo, 1);
+		repo_unlock(repo);
+	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

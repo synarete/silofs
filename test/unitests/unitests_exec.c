@@ -349,7 +349,7 @@ static void ut_post_test(struct ut_env *ute)
 	int err;
 
 	ut_setup_task(ute, &task);
-	err = silofs_fs_undust(&task, SILOFS_F_NOW);
+	err = silofs_fs_maintain(&task, SILOFS_F_NOW);
 	ut_release_task(ute, &task);
 	silofs_assert_ok(err);
 }

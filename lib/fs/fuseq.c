@@ -4203,28 +4203,28 @@ static void fqw_setup_self_task(const struct silofs_fuseq_worker *fqw,
 	task->t_exclusive = false;
 }
 
-static int fqw_do_exec_undust(struct silofs_fuseq_worker *fqw,
-                              struct silofs_task *task, int flags)
+static int fqw_do_exec_maintain(struct silofs_fuseq_worker *fqw,
+                                struct silofs_task *task, int flags)
 {
 	int err1 = 0;
 	int err2 = 0;
 
 	fqw_setup_self_task(fqw, task);
 	silofs_task_rwlock_fs(task);
-	err1 = silofs_fs_undust(task, flags);
+	err1 = silofs_fs_maintain(task, flags);
 	err2 = task_submit(task);
 	silofs_task_rwunlock_fs(task);
 
 	return err1 ? err1 : err2;
 }
 
-static int fqw_exec_undust(struct silofs_fuseq_worker *fqw, int flags)
+static int fqw_exec_maintain(struct silofs_fuseq_worker *fqw, int flags)
 {
 	struct silofs_task task;
 	int err;
 
 	task_init_by(&task, fqw_fuseq2(fqw));
-	err = fqw_do_exec_undust(fqw, &task, flags);
+	err = fqw_do_exec_maintain(fqw, &task, flags);
 	task_fini(&task);
 	return err;
 }
@@ -4239,10 +4239,10 @@ static int fqw_exec_once(struct silofs_fuseq_worker *fqw)
 		silofs_sys_sched_yield();
 	} else if (fuseq_is_nexecs_idle(fq)) {
 		/* do flush-and-relax in idle mode */
-		ret = fqw_exec_undust(fqw, SILOFS_F_IDLE);
+		ret = fqw_exec_maintain(fqw, SILOFS_F_IDLE);
 	} else {
 		/* do flush-and-relax along-side dispatcher threads */
-		ret = fqw_exec_undust(fqw, SILOFS_F_INTERN);
+		ret = fqw_exec_maintain(fqw, SILOFS_F_INTERN);
 	}
 	return ret;
 }

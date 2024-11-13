@@ -69,7 +69,7 @@ int silofs_repo_fsync_all(struct silofs_repo *repo);
 
 void silofs_repo_drop_some(struct silofs_repo *repo);
 
-void silofs_repo_relax(struct silofs_repo *repo);
+void silofs_repo_relax(struct silofs_repo *repo, int flags);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

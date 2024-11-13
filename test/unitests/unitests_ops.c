@@ -728,7 +728,7 @@ static int ut_do_timedout(struct ut_env *ute)
 	int ret;
 
 	ut_setup_task(ute, &task);
-	ret = silofs_fs_undust(&task, SILOFS_F_IDLE);
+	ret = silofs_fs_maintain(&task, SILOFS_F_IDLE);
 	ut_release_task(ute, &task);
 	return sanitize_status(ret);
 }

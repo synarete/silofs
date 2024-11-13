@@ -38,7 +38,6 @@ struct silofs_pstate {
 
 struct silofs_pstore {
 	struct silofs_repo     *repo;
-	struct silofs_alloc    *alloc;
 	struct silofs_bcache    bcache;
 	struct silofs_pstate    pstate;
 };

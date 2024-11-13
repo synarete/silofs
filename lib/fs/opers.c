@@ -1634,14 +1634,14 @@ int silofs_fs_rdwr_post(const struct silofs_task *task, int wr_mode,
 	return silofs_do_rdwr_post(task, wr_mode, iov, cnt);
 }
 
-int silofs_fs_undust(struct silofs_task *task, int flags)
+int silofs_fs_maintain(struct silofs_task *task, int flags)
 {
 	int err;
 
 	err = op_start(task);
 	ok_or_goto_out(err);
 
-	err = silofs_do_undust(task, flags | SILOFS_F_OPSTART);
+	err = silofs_do_maintain(task, flags | SILOFS_F_OPSTART);
 	ok_or_goto_out(err);
 out:
 	return op_finish(task, err);

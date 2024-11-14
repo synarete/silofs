@@ -542,7 +542,7 @@ static void sbi_make_clone(struct silofs_sb_info *sbi_new,
 	sbi_account_super_of(sbi_new);
 }
 
-int silofs_fsenv_shut(struct silofs_fsenv *fsenv)
+static int fsenv_shut_sb(struct silofs_fsenv *fsenv)
 {
 	int err;
 
@@ -552,6 +552,26 @@ int silofs_fsenv_shut(struct silofs_fsenv *fsenv)
 	}
 	fsenv_bind_sbi(fsenv, NULL);
 	fsenv_bind_sb_lsid(fsenv, NULL);
+	return 0;
+}
+
+static int fsenv_shut_pstore(struct silofs_fsenv *fsenv)
+{
+	return silofs_pstore_close(fsenv->fse.pstore);
+}
+
+int silofs_fsenv_shut(struct silofs_fsenv *fsenv)
+{
+	int err;
+
+	err = fsenv_shut_sb(fsenv);
+	if (err) {
+		return err;
+	}
+	err = fsenv_shut_pstore(fsenv);
+	if (err) {
+		return err;
+	}
 	return 0;
 }
 

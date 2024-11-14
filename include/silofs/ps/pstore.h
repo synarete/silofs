@@ -65,8 +65,10 @@ int silofs_pstore_dropall(struct silofs_pstore *pstore);
 
 int silofs_pstore_format(struct silofs_pstore *pstore);
 
-int silofs_pstore_reload(struct silofs_pstore *pstore,
-                         const struct silofs_pstate *pstate);
+int silofs_pstore_open(struct silofs_pstore *pstore,
+                       const struct silofs_pstate *pstate);
+
+int silofs_pstore_close(struct silofs_pstore *pstore);
 
 int silofs_pstore_flush_dirty(struct silofs_pstore *pstore);
 

@@ -558,8 +558,8 @@ static int pstore_assign_pstate(struct silofs_pstore *pstore,
 	return 0;
 }
 
-int silofs_pstore_reload(struct silofs_pstore *pstore,
-                         const struct silofs_pstate *pstate)
+int silofs_pstore_open(struct silofs_pstore *pstore,
+                       const struct silofs_pstate *pstate)
 {
 	int err;
 
@@ -577,6 +577,18 @@ int silofs_pstore_reload(struct silofs_pstore *pstore,
 	}
 
 	/* TODO: Complete me */
+	return 0;
+}
+
+int silofs_pstore_close(struct silofs_pstore *pstore)
+{
+	int err;
+
+	err = silofs_pstore_flush_dirty(pstore);
+	if (err) {
+		return err;
+	}
+	silofs_bcache_drop(&pstore->bcache);
 	return 0;
 }
 

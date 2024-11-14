@@ -895,11 +895,6 @@ static int shutdown_fs(struct silofs_fsenv *fsenv)
 	return silofs_fsenv_shut(fsenv);
 }
 
-static int shutdown_ps(struct silofs_fsenv *fsenv)
-{
-	return silofs_pstore_flush_dirty(fsenv->fse.pstore);
-}
-
 int silofs_close_repo(struct silofs_fsenv *fsenv)
 {
 	int ret;
@@ -1640,10 +1635,10 @@ static int reload_root_lseg(struct silofs_fsenv *fsenv,
 	return silofs_fsenv_reload_sb_lseg(fsenv);
 }
 
-static int reload_pstore(struct silofs_fsenv *fsenv,
-                         const struct silofs_bootrec *brec)
+static int open_pstore(struct silofs_fsenv *fsenv,
+                       const struct silofs_bootrec *brec)
 {
-	return silofs_pstore_reload(fsenv->fse.pstore, &brec->pstate);
+	return silofs_pstore_open(fsenv->fse.pstore, &brec->pstate);
 }
 
 static int do_open_fs(struct silofs_fsenv *fsenv,
@@ -1656,7 +1651,7 @@ static int do_open_fs(struct silofs_fsenv *fsenv,
 	if (err) {
 		return err;
 	}
-	err = reload_pstore(fsenv, &brec);
+	err = open_pstore(fsenv, &brec);
 	if (err) {
 		return err;
 	}
@@ -1707,10 +1702,6 @@ static int do_close_fs(struct silofs_fsenv *fsenv)
 		return err;
 	}
 	err = shutdown_fs(fsenv);
-	if (err) {
-		return err;
-	}
-	err = shutdown_ps(fsenv);
 	if (err) {
 		return err;
 	}

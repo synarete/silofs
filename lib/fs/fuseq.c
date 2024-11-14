@@ -3705,7 +3705,7 @@ static void *iob_new(struct silofs_alloc *alloc, size_t len)
 
 static void iob_del(struct silofs_alloc *alloc, void *iob, size_t len)
 {
-	silofs_memfree(alloc, iob, len, 0);
+	silofs_memfree(alloc, iob, len, SILOFS_ALLOCF_TRYPUNCH);
 }
 
 static struct silofs_fuseq_inb *inb_new(struct silofs_alloc *alloc)

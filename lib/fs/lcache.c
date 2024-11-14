@@ -436,7 +436,7 @@ void silofs_lcache_drop_uamap(struct silofs_lcache *lcache)
 static int lcache_init_vni_hmapq(struct silofs_lcache *lcache)
 {
 	struct silofs_alloc *alloc = lcache->lc_alloc;
-	const size_t nslots = silofs_hmapq_nslots_by(alloc, 7);
+	const size_t nslots = silofs_hmapq_nslots_by(alloc, 3);
 
 	return silofs_hmapq_init(&lcache->lc_vni_hmapq, alloc, nslots);
 }

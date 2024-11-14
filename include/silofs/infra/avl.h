@@ -17,6 +17,7 @@
 #ifndef SILOFS_AVL_H_
 #define SILOFS_AVL_H_
 
+#include <silofs/ccattr.h>
 #include <stdlib.h>
 #include <stdbool.h>
 
@@ -43,7 +44,7 @@ struct silofs_avl_node {
 	struct silofs_avl_node *right;
 	int32_t balance;
 	int32_t magic;
-};
+} silofs_attr_aligned32;
 
 /* "Iterators" range a-la STL pair */
 struct silofs_avl_range {

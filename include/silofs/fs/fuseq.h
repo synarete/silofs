@@ -64,21 +64,18 @@ struct silofs_fuseq_dispatcher {
 	bool                            fqd_init_ok;
 } silofs_attr_aligned64;
 
-struct silofs_fuseq_wset {
+struct silofs_fuseq_subx {
 	struct silofs_fuseq_worker     *fq_workers;
+	struct silofs_fuseq_dispatcher *fq_disptchs;
 	uint32_t                        fq_nworkers_lim;
 	uint32_t                        fq_nworkers_run;
-};
-
-struct silofs_fuseq_dset {
-	struct silofs_fuseq_dispatcher *fq_disptchs;
 	uint32_t                        fq_ndisptch_lim;
 	uint32_t                        fq_ndisptch_run;
+
 };
 
 struct silofs_fuseq {
-	struct silofs_fuseq_wset        fq_ws;
-	struct silofs_fuseq_dset        fq_ds;
+	struct silofs_fuseq_subx        fq_subx;
 	struct silofs_fuseq_conn_info   fq_coni;
 	struct silofs_mutex             fq_ch_lock;
 	struct silofs_mutex             fq_op_lock;

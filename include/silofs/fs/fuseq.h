@@ -71,7 +71,6 @@ struct silofs_fuseq_subx {
 	uint32_t                        fq_nworkers_run;
 	uint32_t                        fq_ndisptch_lim;
 	uint32_t                        fq_ndisptch_run;
-
 };
 
 struct silofs_fuseq {
@@ -84,6 +83,7 @@ struct silofs_fuseq {
 	struct silofs_fsenv            *fq_fsenv;
 	struct silofs_alloc            *fq_alloc;
 	struct silofs_listq             fq_curr_opers;
+	size_t                          fq_selfsize;
 	size_t                          fq_pagesize;
 	int64_t                         fq_nexecs;
 	int64_t                         fq_nopers;
@@ -102,9 +102,10 @@ struct silofs_fuseq {
 } silofs_attr_aligned64;
 
 
-int silofs_fuseq_init(struct silofs_fuseq *fq, struct silofs_alloc *alloc);
+int silofs_fuseq_new(struct silofs_alloc *alloc, struct silofs_fuseq **out_fq);
 
-void silofs_fuseq_fini(struct silofs_fuseq *fq);
+void silofs_fuseq_del(struct silofs_fuseq *fq, struct silofs_alloc *alloc);
+
 
 int silofs_fuseq_update(struct silofs_fuseq *fq);
 

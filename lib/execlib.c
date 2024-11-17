@@ -43,11 +43,6 @@ union silofs_fs_core_u {
 	uint8_t dat[ROUND_TO_4K(sizeof(struct silofs_fs_core))];
 };
 
-union silofs_fuseq_page {
-	struct silofs_fuseq     fuseq;
-	uint8_t page[SILOFS_PAGE_SIZE_MIN];
-};
-
 struct silofs_fs_inst {
 	union silofs_fs_core_u  fs_core;
 };
@@ -458,16 +453,6 @@ static void fs_ctx_destroy_fsenv(struct silofs_fs_ctx *fs_ctx)
 	}
 }
 
-static union silofs_fuseq_page *fuseq_to_page(struct silofs_fuseq *fuseq)
-{
-	const union silofs_fuseq_page *fqp = NULL;
-
-	STATICASSERT_EQ(sizeof(*fqp), SILOFS_PAGE_SIZE_MIN);
-
-	fqp = container_of(fuseq, union silofs_fuseq_page, fuseq);
-	return unconst(fqp);
-}
-
 static bool has_with_fuse(const struct silofs_fsenv *fsenv)
 {
 	const enum silofs_env_flags mask = SILOFS_ENVF_WITHFUSE;
@@ -507,41 +492,26 @@ static void fs_ctx_bind_fuseq(struct silofs_fs_ctx *fs_ctx,
 
 static int fs_ctx_setup_fuseq(struct silofs_fs_ctx *fs_ctx)
 {
-	union silofs_fuseq_page *fqp = NULL;
-	const size_t fuseq_pg_size = sizeof(*fqp);
-	void *mem = NULL;
+	struct silofs_fuseq *fq = NULL;
 	int err;
 
 	if (!has_with_fuse(fs_ctx->fsenv)) {
 		return 0;
 	}
-	mem = silofs_memalloc(fs_ctx->alloc, fuseq_pg_size, 0);
-	if (mem == NULL) {
-		log_warn("failed to allocate fuseq: size=%lu", fuseq_pg_size);
-		return -SILOFS_ENOMEM;
-	}
-	fqp = mem;
-	err = silofs_fuseq_init(&fqp->fuseq, fs_ctx->alloc);
+	err = silofs_fuseq_new(fs_ctx->alloc, &fq);
 	if (err) {
-		silofs_memfree(fs_ctx->alloc, mem, fuseq_pg_size, 0);
 		return err;
 	}
-	fs_ctx_bind_fuseq(fs_ctx, &fqp->fuseq);
+	fs_ctx_bind_fuseq(fs_ctx, fq);
 	return 0;
 }
 
 static void fs_ctx_destroy_fuseq(struct silofs_fs_ctx *fs_ctx)
 {
-	union silofs_fuseq_page *fuseq_pg = NULL;
 
 	if (fs_ctx->fuseq != NULL) {
-		fuseq_pg = fuseq_to_page(fs_ctx->fuseq);
-
-		silofs_fuseq_fini(fs_ctx->fuseq);
+		silofs_fuseq_del(fs_ctx->fuseq, fs_ctx->alloc);
 		fs_ctx_bind_fuseq(fs_ctx, NULL);
-
-		silofs_memfree(fs_ctx->alloc, fuseq_pg,
-		               sizeof(*fuseq_pg), 0);
 	}
 }
 

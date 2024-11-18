@@ -63,8 +63,8 @@ static uint64_t htbl_nslots_by_memsize(const struct silofs_alloc *alloc)
 	/* derive slots (buckets) factor based on available memory size */
 	nslots_factor = silofs_clamp_u64(memsize_ngigs, 1, 64);
 
-	/* 4K hash-buckets for each available 1G of memory */
-	return (1UL << 12) * nslots_factor;
+	/* 1K hash-buckets for each available 1G of memory */
+	return (1UL << 10) * nslots_factor;
 }
 
 static size_t htbl_calc_nslots(const struct silofs_alloc *alloc, uint8_t fac)

@@ -3319,7 +3319,7 @@ static int fqd_call_oper(struct silofs_fuseq_dispatcher *fqd,
 		.fq = fqd_fuseq2(fqd),
 		.fqd = fqd,
 		.task = task,
-		.args = fqd->fqd_args,
+		.args = &fqd->fqd_args,
 		.in = in,
 		.ino = in->u.hdr.hdr.nodeid,
 	};
@@ -3850,26 +3850,17 @@ static void fqd_fini_rwi(struct silofs_fuseq_dispatcher *fqd)
 
 static int fqd_init_op_args(struct silofs_fuseq_dispatcher *fqd)
 {
-	struct silofs_oper_args *op_args = NULL;
+	struct silofs_oper_args *op_args = &fqd->fqd_args;
 
-	op_args = silofs_memalloc(fqd_alloc(fqd), sizeof(*op_args), 0);
-	if (op_args == NULL) {
-		return -SILOFS_ENOMEM;
-	}
 	silofs_memzero(op_args, sizeof(*op_args));
-	fqd->fqd_args = op_args;
 	return 0;
 }
 
 static void fqd_fini_op_args(struct silofs_fuseq_dispatcher *fqd)
 {
-	struct silofs_oper_args *op_args = fqd->fqd_args;
+	struct silofs_oper_args *op_args = &fqd->fqd_args;
 
-	if (op_args != NULL) {
-		silofs_memffff(op_args, sizeof(*op_args));
-		silofs_memfree(fqd_alloc(fqd), op_args, sizeof(*op_args), 0);
-		fqd->fqd_args = NULL;
-	}
+	silofs_memffff(op_args, sizeof(*op_args));
 }
 
 static int fqd_init(struct silofs_fuseq_dispatcher *fqd,
@@ -3877,7 +3868,7 @@ static int fqd_init(struct silofs_fuseq_dispatcher *fqd,
 {
 	int err;
 
-	STATICASSERT_LE(sizeof(*fqd), 256);
+	STATICASSERT_LE(sizeof(*fqd), 4096);
 
 	silofs_memzero(fqd, sizeof(*fqd));
 	fqt_init(&fqd->fqd_th, fq, idx);
@@ -4254,10 +4245,10 @@ static void fqw_post_exec(const struct silofs_fuseq_worker *fqw)
 
 	if (fuseq_has_memory_pressure(fq)) {
 		/* has memory-pressure */
-		ts.tv_nsec = 1000;
+		ts.tv_nsec = 10000;
 	} else if (!fuseq_is_nexecs_idle(fq)) {
 		/* active mode */
-		ts.tv_nsec = 100000;
+		ts.tv_nsec = 1000000;
 	} else {
 		/* idle mode */
 		ts.tv_sec = 1;

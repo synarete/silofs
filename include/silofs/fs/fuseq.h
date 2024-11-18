@@ -52,12 +52,12 @@ struct silofs_fuseq_worker {
 } silofs_attr_aligned64;
 
 struct silofs_fuseq_dispatcher {
+	struct silofs_oper_args         fqd_args;
 	struct silofs_fuseq_thread      fqd_th;
 	struct silofs_list_head         fqd_lh;
 	struct silofs_fuseq_inb        *fqd_inb;
 	struct silofs_fuseq_outb       *fqd_outb;
 	struct silofs_fuseq_rw_iter    *fqd_rwi;
-	struct silofs_oper_args        *fqd_args;
 	struct silofs_piper             fqd_piper;
 	time_t                          fqd_time_stamp;
 	volatile uint64_t               fqd_req_count;

@@ -1544,7 +1544,7 @@ static int format_bootrec(const struct silofs_fsenv *fsenv,
 static int do_format_fs(struct silofs_fsenv *fsenv,
                         struct silofs_caddr *out_caddr)
 {
-	struct silofs_bootrec brec;
+	struct silofs_bootrec brec = { .flags = SILOFS_BOOTF_NONE };
 	int err;
 
 	err = format_pstore(fsenv);
@@ -1786,7 +1786,7 @@ static int unlink_bootrec_of(const struct silofs_fsenv *fsenv,
 int silofs_unref_fs(struct silofs_fsenv *fsenv,
                     const struct silofs_caddr *caddr)
 {
-	struct silofs_bootrec brec;
+	struct silofs_bootrec brec = { .flags = SILOFS_BOOTF_NONE };
 	int err;
 
 	err = reload_bootrec(fsenv, caddr, &brec);

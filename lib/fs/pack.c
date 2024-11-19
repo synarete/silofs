@@ -770,7 +770,7 @@ static int pac_load_bootrec(const struct silofs_par_ctx *pa_ctx,
                             const struct silofs_caddr *caddr,
                             struct silofs_bootrec1k *out_brec1k)
 {
-	struct silofs_bootrec brec = { .flags = 0 };
+	struct silofs_bootrec brec = { .flags = SILOFS_BOOTF_NONE };
 	int err;
 
 	err = silofs_load_bootrec(pa_ctx->pac_fsenv, caddr, &brec);
@@ -790,7 +790,7 @@ static int pac_save_bootrec(const struct silofs_par_ctx *pa_ctx,
                             const struct silofs_caddr *caddr,
                             struct silofs_bootrec1k *brec1k)
 {
-	struct silofs_bootrec brec = { .flags = 0 };
+	struct silofs_bootrec brec = { .flags = SILOFS_BOOTF_NONE };
 	struct silofs_caddr caddr2;
 	int err;
 

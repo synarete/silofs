@@ -19,14 +19,14 @@
 
 #include <silofs/infra.h>
 
-/* in-memory short lifo of previously-allocated now-free space */
+/* short lifo of previously-allocated now-free space-addresses */
 struct silofs_spalifo {
-	loff_t sal_lifo[512];
-	unsigned int sal_size;
-	unsigned int sal_ulen;
+	loff_t sal_lifo[63];
+	uint32_t sal_size;
+	uint32_t sal_ulen;
 };
 
-/* in-memory map of previously-allocated now-free space */
+/* map of previously-allocated now-free space (in-memory only) */
 struct silofs_spamap {
 	struct silofs_spalifo   spa_lifo;
 	struct silofs_alloc    *spa_alloc;
@@ -36,7 +36,7 @@ struct silofs_spamap {
 	enum silofs_ltype       spa_ltype;
 };
 
-/* in-mempry map of previously-allocated now-free space byte ltype */
+/* map of previously-allocated now-free space-addresses by ltype */
 struct silofs_spamaps {
 	struct silofs_spamap    spa_data1k;
 	struct silofs_spamap    spa_data4k;

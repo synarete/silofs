@@ -110,8 +110,8 @@
 #define SILOFS_HEADER_SIZE              (16)
 
 
-/* on-disk size of persistent segment uber node */
-#define SILOFS_PSEG_UBER_SIZE           (4096)
+/* on-disk size of persistent segment chkpt node */
+#define SILOFS_PSEG_CHKPT_SIZE           (4096)
 
 /* number of pointers btree mapping-node */
 #define SILOFS_BTREE_NODE_NCHILDS       (42)
@@ -380,7 +380,7 @@ enum silofs_ctype {
 /* persistent-elements types */
 enum silofs_ptype {
 	SILOFS_PTYPE_NONE       = 0,
-	SILOFS_PTYPE_UBER       = 1,
+	SILOFS_PTYPE_CHKPT      = 1,
 	SILOFS_PTYPE_BTNODE     = 2,
 	SILOFS_PTYPE_BTLEAF     = 3,
 	SILOFS_PTYPE_DATA       = 4,
@@ -1057,13 +1057,13 @@ struct silofs_repo_meta {
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-/* persistent volume-segment uber node */
-struct silofs_pseg_uber {
-	struct silofs_header            psu_hdr;
-	uint32_t                        psu_flags;
-	uint8_t                         psu_reserved1[12];
-	struct silofs_psid32b           psu_id;
-	uint8_t                         psu_reserved2[4032];
+/* persistent volume segment check-point node */
+struct silofs_chkpt_node {
+	struct silofs_header            cpn_hdr;
+	uint32_t                        cpn_flags;
+	uint8_t                         cpn_reserved1[12];
+	struct silofs_psid32b           cpn_id;
+	uint8_t                         cpn_reserved2[4032];
 } silofs_attr_aligned64;
 
 

@@ -150,7 +150,7 @@ static void validate_persistent_types_size1(void)
 	REQUIRE_SIZEOF(struct silofs_prange64b, 64);
 	REQUIRE_SIZEOF(struct silofs_paddr48b, 48);
 	REQUIRE_SIZEOF(struct silofs_caddr64b, 64);
-	REQUIRE_SIZEOF(struct silofs_pseg_uber, SILOFS_PSEG_UBER_SIZE);
+	REQUIRE_SIZEOF(struct silofs_chkpt_node, SILOFS_PSEG_CHKPT_SIZE);
 	REQUIRE_SIZEOF(struct silofs_btree_ltop, 96);
 	REQUIRE_SIZEOF(struct silofs_btree_node, SILOFS_BTREE_NODE_SIZE);
 	REQUIRE_SIZEOF(struct silofs_btree_leaf, SILOFS_BTREE_LEAF_SIZE);

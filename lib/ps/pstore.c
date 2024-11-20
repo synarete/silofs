@@ -19,9 +19,9 @@
 #include <silofs/ps.h>
 
 
-static bool paddr_is_uber(const struct silofs_paddr *paddr)
+static bool paddr_is_chkpt(const struct silofs_paddr *paddr)
 {
-	return paddr->ptype == SILOFS_PTYPE_UBER;
+	return paddr->ptype == SILOFS_PTYPE_CHKPT;
 }
 
 static bool paddr_is_data(const struct silofs_paddr *paddr)
@@ -29,11 +29,11 @@ static bool paddr_is_data(const struct silofs_paddr *paddr)
 	return paddr->ptype == SILOFS_PTYPE_DATA;
 }
 
-static void paddr_of_uber(const struct silofs_psid *psid,
-                          struct silofs_paddr *out_paddr)
+static void paddr_of_chkpt(const struct silofs_psid *psid,
+                           struct silofs_paddr *out_paddr)
 {
-	silofs_paddr_init(out_paddr, psid, SILOFS_PTYPE_UBER,
-	                  0, SILOFS_PSEG_UBER_SIZE);
+	silofs_paddr_init(out_paddr, psid, SILOFS_PTYPE_CHKPT,
+	                  0, SILOFS_PSEG_CHKPT_SIZE);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -162,14 +162,14 @@ pstate_sub2(const struct silofs_pstate *pstate, bool meta)
 	return meta ? &pstate->meta : &pstate->data;
 }
 
-static void pstate_next_uber(struct silofs_pstate *pstate, bool meta,
-                             struct silofs_paddr *out_paddr)
+static void pstate_next_chkpt(struct silofs_pstate *pstate, bool meta,
+                              struct silofs_paddr *out_paddr)
 {
 	struct silofs_prange *prange = pstate_sub(pstate, meta);
 
 	silofs_assert_eq(prange->cur_pos, 0);
 
-	prange_carve(prange, SILOFS_PTYPE_UBER, out_paddr);
+	prange_carve(prange, SILOFS_PTYPE_CHKPT, out_paddr);
 }
 
 static void pstate_next_btnode(struct silofs_pstate *pstate,
@@ -187,7 +187,7 @@ static bool pstate_has_paddr(const struct silofs_pstate *pstate,
 {
 	bool ret;
 
-	if (paddr_is_uber(paddr)) {
+	if (paddr_is_chkpt(paddr)) {
 		ret = prange_has_paddr(&pstate->data, paddr) ||
 		      prange_has_paddr(&pstate->meta, paddr);
 	} else if (paddr_is_data(paddr)) {
@@ -248,71 +248,71 @@ static int pstore_validate_paddr(const struct silofs_pstore *pstore,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct silofs_paddr *
-ubi_paddr(const struct silofs_uber_info *ubi)
+cpi_paddr(const struct silofs_chkpt_info *cpi)
 {
-	return &ubi->ub_pni.pn_paddr;
+	return &cpi->ub_pni.pn_paddr;
 }
 
-static int pstore_save_uber(const struct silofs_pstore *pstore,
-                            const struct silofs_uber_info *ubi)
+static int pstore_save_chkpt(const struct silofs_pstore *pstore,
+                             const struct silofs_chkpt_info *cpi)
 {
 	const struct silofs_rovec rov = {
-		.rov_base = ubi->ub,
-		.rov_len = sizeof(*ubi->ub),
+		.rov_base = cpi->ub,
+		.rov_len = sizeof(*cpi->ub),
 	};
 
-	return silofs_repo_save_pobj(pstore->repo, ubi_paddr(ubi), &rov);
+	return silofs_repo_save_pobj(pstore->repo, cpi_paddr(cpi), &rov);
 }
 
-static int pstore_load_uber(const struct silofs_pstore *pstore,
-                            const struct silofs_uber_info *ubi)
+static int pstore_load_chkpt(const struct silofs_pstore *pstore,
+                             const struct silofs_chkpt_info *cpi)
 {
 	const struct silofs_rwvec rwv = {
-		.rwv_base = ubi->ub,
-		.rwv_len = sizeof(*ubi->ub),
+		.rwv_base = cpi->ub,
+		.rwv_len = sizeof(*cpi->ub),
 	};
 
-	return silofs_repo_load_pobj(pstore->repo, ubi_paddr(ubi), &rwv);
+	return silofs_repo_load_pobj(pstore->repo, cpi_paddr(cpi), &rwv);
 }
 
 
-static int pstore_commit_uber(const struct silofs_pstore *pstore,
-                              struct silofs_uber_info *ubi)
+static int pstore_commit_chkpt(const struct silofs_pstore *pstore,
+                               struct silofs_chkpt_info *cpi)
 {
 	int err;
 
-	err = pstore_save_uber(pstore, ubi);
+	err = pstore_save_chkpt(pstore, cpi);
 	if (err) {
 		return err;
 	}
-	silofs_ubi_undirtify(ubi);
+	silofs_cpi_undirtify(cpi);
 	return 0;
 }
 
-static int pstore_stage_uber(const struct silofs_pstore *pstore,
-                             const struct silofs_uber_info *ubi)
+static int pstore_stage_chkpt(const struct silofs_pstore *pstore,
+                              const struct silofs_chkpt_info *cpi)
 {
-	return pstore_load_uber(pstore, ubi);
+	return pstore_load_chkpt(pstore, cpi);
 }
 
-static int pstore_create_cached_ubi(struct silofs_pstore *pstore,
+static int pstore_create_cached_cpi(struct silofs_pstore *pstore,
                                     const struct silofs_paddr *paddr,
-                                    struct silofs_uber_info **out_ubi)
+                                    struct silofs_chkpt_info **out_cpi)
 {
-	struct silofs_uber_info *ubi;
+	struct silofs_chkpt_info *cpi;
 
-	ubi = silofs_bcache_create_ubi(&pstore->bcache, paddr);
-	if (ubi == NULL) {
+	cpi = silofs_bcache_create_cpi(&pstore->bcache, paddr);
+	if (cpi == NULL) {
 		return -SILOFS_ENOMEM;
 	}
-	pstore_bind_pni(pstore, &ubi->ub_pni);
-	*out_ubi = ubi;
+	pstore_bind_pni(pstore, &cpi->ub_pni);
+	*out_cpi = cpi;
 	return 0;
 }
 
 static int pstore_format_pseg_of(struct silofs_pstore *pstore,
                                  const struct silofs_paddr *paddr,
-                                 struct silofs_uber_info **out_ubi)
+                                 struct silofs_chkpt_info **out_cpi)
 {
 	int err;
 
@@ -320,64 +320,64 @@ static int pstore_format_pseg_of(struct silofs_pstore *pstore,
 	if (err) {
 		return err;
 	}
-	err = pstore_create_cached_ubi(pstore, paddr, out_ubi);
+	err = pstore_create_cached_cpi(pstore, paddr, out_cpi);
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-static void pstore_evict_cached_ubi(struct silofs_pstore *pstore,
-                                    struct silofs_uber_info *ubi)
+static void pstore_evict_cached_cpi(struct silofs_pstore *pstore,
+                                    struct silofs_chkpt_info *cpi)
 {
-	silofs_bcache_evict_ubi(&pstore->bcache, ubi);
+	silofs_bcache_evict_cpi(&pstore->bcache, cpi);
 }
 
-static int pstore_stage_uber_at(struct silofs_pstore *pstore,
-                                const struct silofs_paddr *paddr,
-                                struct silofs_uber_info **out_ubi)
+static int pstore_stage_chkpt_at(struct silofs_pstore *pstore,
+                                 const struct silofs_paddr *paddr,
+                                 struct silofs_chkpt_info **out_cpi)
 {
-	struct silofs_uber_info *ubi = NULL;
+	struct silofs_chkpt_info *cpi = NULL;
 	int err;
 
 	err = pstore_validate_paddr(pstore, paddr);
 	if (err) {
 		return err;
 	}
-	err = pstore_create_cached_ubi(pstore, paddr, &ubi);
+	err = pstore_create_cached_cpi(pstore, paddr, &cpi);
 	if (err) {
 		return err;
 	}
-	err = pstore_stage_uber(pstore, ubi);
+	err = pstore_stage_chkpt(pstore, cpi);
 	if (err) {
-		pstore_evict_cached_ubi(pstore, ubi);
+		pstore_evict_cached_cpi(pstore, cpi);
 		return err;
 	}
-	*out_ubi = ubi;
+	*out_cpi = cpi;
 	return 0;
 }
 
-static int pstore_stage_uber_of(struct silofs_pstore *pstore,
-                                const struct silofs_psid *psid,
-                                struct silofs_uber_info **out_ubi)
+static int pstore_stage_chkpt_of(struct silofs_pstore *pstore,
+                                 const struct silofs_psid *psid,
+                                 struct silofs_chkpt_info **out_cpi)
 {
 	struct silofs_paddr paddr;
 
-	paddr_of_uber(psid, &paddr);
-	return pstore_stage_uber_at(pstore, &paddr, out_ubi);
+	paddr_of_chkpt(psid, &paddr);
+	return pstore_stage_chkpt_at(pstore, &paddr, out_cpi);
 }
 
 static int pstore_stage_pseg_of(struct silofs_pstore *pstore,
                                 const struct silofs_psid *psid)
 {
-	struct silofs_uber_info *ubi = NULL;
+	struct silofs_chkpt_info *cpi = NULL;
 	int err;
 
 	err = silofs_repo_stage_pseg(pstore->repo, psid);
 	if (err) {
 		return err;
 	}
-	err = pstore_stage_uber_of(pstore, psid, &ubi);
+	err = pstore_stage_chkpt_of(pstore, psid, &cpi);
 	if (err) {
 		return err;
 	}
@@ -484,30 +484,30 @@ static int pstore_format_btree_root(struct silofs_pstore *pstore)
 static int pstore_format_meta_pseg(struct silofs_pstore *pstore)
 {
 	struct silofs_paddr paddr;
-	struct silofs_uber_info *ubi = NULL;
+	struct silofs_chkpt_info *cpi = NULL;
 	int err;
 
-	pstate_next_uber(&pstore->pstate, true, &paddr);
-	err = pstore_format_pseg_of(pstore, &paddr, &ubi);
+	pstate_next_chkpt(&pstore->pstate, true, &paddr);
+	err = pstore_format_pseg_of(pstore, &paddr, &cpi);
 	if (err) {
 		return err;
 	}
-	silofs_ubi_mark_meta(ubi);
+	silofs_cpi_mark_meta(cpi);
 	return 0;
 }
 
 static int pstore_format_data_pseg(struct silofs_pstore *pstore)
 {
 	struct silofs_paddr paddr;
-	struct silofs_uber_info *ubi = NULL;
+	struct silofs_chkpt_info *cpi = NULL;
 	int err;
 
-	pstate_next_uber(&pstore->pstate, false, &paddr);
-	err = pstore_format_pseg_of(pstore, &paddr, &ubi);
+	pstate_next_chkpt(&pstore->pstate, false, &paddr);
+	err = pstore_format_pseg_of(pstore, &paddr, &cpi);
 	if (err) {
 		return err;
 	}
-	silofs_ubi_mark_data(ubi);
+	silofs_cpi_mark_data(cpi);
 	return 0;
 }
 
@@ -601,8 +601,8 @@ static int pstore_commit_pnode(struct silofs_pstore *pstore,
 	int ret = -SILOFS_EINVAL;
 
 	switch (ptype) {
-	case SILOFS_PTYPE_UBER:
-		ret = pstore_commit_uber(pstore, silofs_ubi_from_pni(pni));
+	case SILOFS_PTYPE_CHKPT:
+		ret = pstore_commit_chkpt(pstore, silofs_cpi_from_pni(pni));
 		break;
 	case SILOFS_PTYPE_BTNODE:
 		ret = pstore_commit_btnode(pstore, silofs_bti_from_pni(pni));

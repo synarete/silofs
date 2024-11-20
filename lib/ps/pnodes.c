@@ -31,82 +31,82 @@ static void pnode_memfree(struct silofs_alloc *alloc, void *ptr, size_t size)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void psu_setup_hdr(struct silofs_pseg_uber *psu)
+static void cpn_setup_hdr(struct silofs_chkpt_node *cpn)
 {
-	silofs_hdr_setup(&psu->psu_hdr, SILOFS_PTYPE_UBER,
-	                 sizeof(*psu), SILOFS_HDRF_PTYPE);
+	silofs_hdr_setup(&cpn->cpn_hdr, SILOFS_PTYPE_CHKPT,
+	                 sizeof(*cpn), SILOFS_HDRF_PTYPE);
 }
 
-static void psu_set_id(struct silofs_pseg_uber *psu,
+static void cpn_set_id(struct silofs_chkpt_node *cpn,
                        const struct silofs_psid *psid)
 {
-	silofs_psid32b_htox(&psu->psu_id, psid);
+	silofs_psid32b_htox(&cpn->cpn_id, psid);
 }
 
-static void psu_reset_id(struct silofs_pseg_uber *psu)
+static void cpn_reset_id(struct silofs_chkpt_node *cpn)
 {
-	silofs_memffff(&psu->psu_id, sizeof(psu->psu_id));
+	silofs_memffff(&cpn->cpn_id, sizeof(cpn->cpn_id));
 }
 
-static enum silofs_pnodef psu_flags(const struct silofs_pseg_uber *psu)
+static enum silofs_pnodef cpn_flags(const struct silofs_chkpt_node *cpn)
 {
-	const uint32_t f = silofs_le32_to_cpu(psu->psu_flags);
+	const uint32_t f = silofs_le32_to_cpu(cpn->cpn_flags);
 
 	return (enum silofs_pnodef)f;
 }
 
-static void psu_set_flags(struct silofs_pseg_uber *psu, enum silofs_pnodef f)
+static void cpn_set_flags(struct silofs_chkpt_node *cpn, enum silofs_pnodef f)
 {
-	psu->psu_flags = silofs_cpu_to_le32((uint32_t)f);
+	cpn->cpn_flags = silofs_cpu_to_le32((uint32_t)f);
 }
 
-static void psu_add_flags(struct silofs_pseg_uber *psu, enum silofs_pnodef f)
+static void cpn_add_flags(struct silofs_chkpt_node *cpn, enum silofs_pnodef f)
 {
-	psu_set_flags(psu, f | psu_flags(psu));
+	cpn_set_flags(cpn, f | cpn_flags(cpn));
 }
 
-static void psu_init(struct silofs_pseg_uber *psu,
+static void cpn_init(struct silofs_chkpt_node *cpn,
                      const struct silofs_psid *psid)
 {
-	psu_setup_hdr(psu);
-	psu_set_id(psu, psid);
-	psu_set_flags(psu, SILOFS_PNODEF_NONE);
+	cpn_setup_hdr(cpn);
+	cpn_set_id(cpn, psid);
+	cpn_set_flags(cpn, SILOFS_PNODEF_NONE);
 }
 
-static void psu_fini(struct silofs_pseg_uber *psu)
+static void cpn_fini(struct silofs_chkpt_node *cpn)
 {
-	psu_reset_id(psu);
+	cpn_reset_id(cpn);
 }
 
-static struct silofs_pseg_uber *psu_malloc(struct silofs_alloc *alloc)
+static struct silofs_chkpt_node *cpn_malloc(struct silofs_alloc *alloc)
 {
-	struct silofs_pseg_uber *psu;
+	struct silofs_chkpt_node *cpn;
 
-	psu = pnode_memalloc(alloc, sizeof(*psu));
-	return psu;
+	cpn = pnode_memalloc(alloc, sizeof(*cpn));
+	return cpn;
 }
 
-static void psu_free(struct silofs_pseg_uber *psu, struct silofs_alloc *alloc)
+static void cpn_free(struct silofs_chkpt_node *cpn, struct silofs_alloc *alloc)
 {
-	pnode_memfree(alloc, psu, sizeof(*psu));
+	pnode_memfree(alloc, cpn, sizeof(*cpn));
 }
 
-static struct silofs_pseg_uber *
-psu_new(struct silofs_alloc *alloc, const struct silofs_psid *psid)
+static struct silofs_chkpt_node *
+cpn_new(struct silofs_alloc *alloc, const struct silofs_psid *psid)
 {
-	struct silofs_pseg_uber *psu;
+	struct silofs_chkpt_node *cpn;
 
-	psu = psu_malloc(alloc);
-	if (psu != NULL) {
-		psu_init(psu, psid);
+	cpn = cpn_malloc(alloc);
+	if (cpn != NULL) {
+		cpn_init(cpn, psid);
 	}
-	return psu;
+	return cpn;
 }
 
-static void psu_del(struct silofs_pseg_uber *psu, struct silofs_alloc *alloc)
+static void cpn_del(struct silofs_chkpt_node *cpn, struct silofs_alloc *alloc)
 {
-	psu_fini(psu);
-	psu_free(psu, alloc);
+	cpn_fini(cpn);
+	cpn_free(cpn, alloc);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -605,117 +605,117 @@ void silofs_pni_undirtify(struct silofs_pnode_info *pni)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct silofs_uber_info *ubi_malloc(struct silofs_alloc *alloc)
+static struct silofs_chkpt_info *cpi_malloc(struct silofs_alloc *alloc)
 {
-	struct silofs_uber_info *ubi = NULL;
+	struct silofs_chkpt_info *cpi = NULL;
 
-	ubi = silofs_memalloc(alloc, sizeof(*ubi), 0);
-	return ubi;
+	cpi = silofs_memalloc(alloc, sizeof(*cpi), 0);
+	return cpi;
 }
 
-static void ubi_free(struct silofs_uber_info *ubi,
+static void cpi_free(struct silofs_chkpt_info *cpi,
                      struct silofs_alloc *alloc)
 {
-	silofs_memfree(alloc, ubi, sizeof(*ubi), 0);
+	silofs_memfree(alloc, cpi, sizeof(*cpi), 0);
 }
 
-static void ubi_init(struct silofs_uber_info *ubi,
+static void cpi_init(struct silofs_chkpt_info *cpi,
                      const struct silofs_paddr *paddr)
 {
 	silofs_assert(!silofs_paddr_isnull(paddr));
-	silofs_assert_eq(paddr->ptype, SILOFS_PTYPE_UBER);
+	silofs_assert_eq(paddr->ptype, SILOFS_PTYPE_CHKPT);
 
-	pni_init(&ubi->ub_pni, paddr);
-	ubi->ub = NULL;
+	pni_init(&cpi->ub_pni, paddr);
+	cpi->ub = NULL;
 }
 
-static void ubi_fini(struct silofs_uber_info *ubi)
+static void cpi_fini(struct silofs_chkpt_info *cpi)
 {
-	pni_fini(&ubi->ub_pni);
-	ubi->ub = NULL;
+	pni_fini(&cpi->ub_pni);
+	cpi->ub = NULL;
 }
 
-struct silofs_uber_info *
-silofs_ubi_new(const struct silofs_paddr *paddr,
+struct silofs_chkpt_info *
+silofs_cpi_new(const struct silofs_paddr *paddr,
                struct silofs_alloc *alloc)
 {
-	struct silofs_pseg_uber *psu = NULL;
-	struct silofs_uber_info *ubi = NULL;
+	struct silofs_chkpt_node *cpn = NULL;
+	struct silofs_chkpt_info *cpi = NULL;
 
-	psu = psu_new(alloc, &paddr->psid);
-	if (psu == NULL) {
+	cpn = cpn_new(alloc, &paddr->psid);
+	if (cpn == NULL) {
 		return NULL;
 	}
-	ubi = ubi_malloc(alloc);
-	if (ubi == NULL) {
-		psu_del(psu, alloc);
+	cpi = cpi_malloc(alloc);
+	if (cpi == NULL) {
+		cpn_del(cpn, alloc);
 		return NULL;
 	}
-	ubi_init(ubi, paddr);
-	ubi->ub = psu;
-	return ubi;
+	cpi_init(cpi, paddr);
+	cpi->ub = cpn;
+	return cpi;
 }
 
-void silofs_ubi_del(struct silofs_uber_info *ubi,
+void silofs_cpi_del(struct silofs_chkpt_info *cpi,
                     struct silofs_alloc *alloc)
 {
-	struct silofs_pseg_uber *psu = ubi->ub;
+	struct silofs_chkpt_node *cpn = cpi->ub;
 
-	ubi_fini(ubi);
-	ubi_free(ubi, alloc);
-	psu_del(psu, alloc);
+	cpi_fini(cpi);
+	cpi_free(cpi, alloc);
+	cpn_del(cpn, alloc);
 }
 
-static struct silofs_uber_info *
-ubi_unconst(const struct silofs_uber_info *p)
+static struct silofs_chkpt_info *
+cpi_unconst(const struct silofs_chkpt_info *p)
 {
 	union {
-		const struct silofs_uber_info *p;
-		struct silofs_uber_info *q;
+		const struct silofs_chkpt_info *p;
+		struct silofs_chkpt_info *q;
 	} u = {
 		.p = p
 	};
 	return u.q;
 }
 
-struct silofs_uber_info *
-silofs_ubi_from_pni(const struct silofs_pnode_info *pni)
+struct silofs_chkpt_info *
+silofs_cpi_from_pni(const struct silofs_pnode_info *pni)
 {
-	const struct silofs_uber_info *ubi;
+	const struct silofs_chkpt_info *cpi;
 
 	silofs_assert_not_null(pni);
-	silofs_assert_eq(pni->pn_paddr.ptype, SILOFS_PTYPE_UBER);
+	silofs_assert_eq(pni->pn_paddr.ptype, SILOFS_PTYPE_CHKPT);
 
-	ubi = container_of2(pni, struct silofs_uber_info, ub_pni);
-	return ubi_unconst(ubi);
+	cpi = container_of2(pni, struct silofs_chkpt_info, ub_pni);
+	return cpi_unconst(cpi);
 }
 
-void silofs_ubi_set_dq(struct silofs_uber_info *ubi,
+void silofs_cpi_set_dq(struct silofs_chkpt_info *cpi,
                        struct silofs_dirtyq *dq)
 {
-	pni_set_dq(&ubi->ub_pni, dq);
+	pni_set_dq(&cpi->ub_pni, dq);
 }
 
-void silofs_ubi_mark_meta(struct silofs_uber_info *ubi)
+void silofs_cpi_mark_meta(struct silofs_chkpt_info *cpi)
 {
-	psu_add_flags(ubi->ub, SILOFS_PNODEF_META);
-	silofs_ubi_dirtify(ubi);
+	cpn_add_flags(cpi->ub, SILOFS_PNODEF_META);
+	silofs_cpi_dirtify(cpi);
 }
 
-void silofs_ubi_mark_data(struct silofs_uber_info *ubi)
+void silofs_cpi_mark_data(struct silofs_chkpt_info *cpi)
 {
-	psu_add_flags(ubi->ub, SILOFS_PNODEF_DATA);
-	silofs_ubi_dirtify(ubi);
+	cpn_add_flags(cpi->ub, SILOFS_PNODEF_DATA);
+	silofs_cpi_dirtify(cpi);
 }
 
-void silofs_ubi_dirtify(struct silofs_uber_info *ubi)
+void silofs_cpi_dirtify(struct silofs_chkpt_info *cpi)
 {
-	silofs_pni_dirtify(&ubi->ub_pni);
+	silofs_pni_dirtify(&cpi->ub_pni);
 }
 
-void silofs_ubi_undirtify(struct silofs_uber_info *ubi)
+void silofs_cpi_undirtify(struct silofs_chkpt_info *cpi)
 {
-	silofs_pni_undirtify(&ubi->ub_pni);
+	silofs_pni_undirtify(&cpi->ub_pni);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

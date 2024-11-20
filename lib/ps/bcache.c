@@ -147,94 +147,94 @@ static void bcache_remove(struct silofs_bcache *bcache,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct silofs_uber_info *
-bcache_new_ubi(const struct silofs_bcache *bcache,
+static struct silofs_chkpt_info *
+bcache_new_cpi(const struct silofs_bcache *bcache,
                const struct silofs_paddr *paddr)
 {
-	silofs_assert_eq(paddr->ptype, SILOFS_PTYPE_UBER);
+	silofs_assert_eq(paddr->ptype, SILOFS_PTYPE_CHKPT);
 	silofs_assert_eq(paddr->off, 0);
 
-	return silofs_ubi_new(paddr, bcache->bc_alloc);
+	return silofs_cpi_new(paddr, bcache->bc_alloc);
 }
 
-static void bcache_del_ubi(const struct silofs_bcache *bcache,
-                           struct silofs_uber_info *ubi)
+static void bcache_del_cpi(const struct silofs_bcache *bcache,
+                           struct silofs_chkpt_info *cpi)
 {
-	silofs_ubi_del(ubi, bcache->bc_alloc);
+	silofs_cpi_del(cpi, bcache->bc_alloc);
 }
 
-struct silofs_uber_info *
-silofs_bcache_lookup_ubi(struct silofs_bcache *bcache,
+struct silofs_chkpt_info *
+silofs_bcache_lookup_cpi(struct silofs_bcache *bcache,
                          const struct silofs_paddr *paddr)
 {
 	struct silofs_pnode_info *pni;
 
-	silofs_assert_eq(paddr->ptype, SILOFS_PTYPE_UBER);
+	silofs_assert_eq(paddr->ptype, SILOFS_PTYPE_CHKPT);
 
 	pni = bcache_lookup(bcache, paddr);
-	return silofs_ubi_from_pni(pni);
+	return silofs_cpi_from_pni(pni);
 }
 
-static struct silofs_uber_info *
-bcache_require_ubi(struct silofs_bcache *bcache,
+static struct silofs_chkpt_info *
+bcache_require_cpi(struct silofs_bcache *bcache,
                    const struct silofs_paddr *paddr)
 {
-	struct silofs_uber_info *ubi = NULL;
+	struct silofs_chkpt_info *cpi = NULL;
 
 	for (size_t i = 0; i < RETRY_MAX; ++i) {
-		ubi = bcache_new_ubi(bcache, paddr);
-		if (ubi != NULL) {
+		cpi = bcache_new_cpi(bcache, paddr);
+		if (cpi != NULL) {
 			break;
 		}
 		bcache_evict_some(bcache, i + 1, false);
 	}
-	return ubi;
+	return cpi;
 }
 
-static void bcache_bind_ubi_dq(struct silofs_bcache *bcache,
-                               struct silofs_uber_info *ubi)
+static void bcache_bind_cpi_dq(struct silofs_bcache *bcache,
+                               struct silofs_chkpt_info *cpi)
 {
-	silofs_ubi_set_dq(ubi, &bcache->bc_dirtyq);
+	silofs_cpi_set_dq(cpi, &bcache->bc_dirtyq);
 }
 
-static void bcache_store_ubi(struct silofs_bcache *bcache,
-                             struct silofs_uber_info *ubi)
+static void bcache_store_cpi(struct silofs_bcache *bcache,
+                             struct silofs_chkpt_info *cpi)
 {
-	bcache_store(bcache, &ubi->ub_pni);
+	bcache_store(bcache, &cpi->ub_pni);
 }
 
-struct silofs_uber_info *
-silofs_bcache_create_ubi(struct silofs_bcache *bcache,
+struct silofs_chkpt_info *
+silofs_bcache_create_cpi(struct silofs_bcache *bcache,
                          const struct silofs_paddr *paddr)
 {
-	struct silofs_uber_info *ubi;
+	struct silofs_chkpt_info *cpi;
 
-	ubi = bcache_require_ubi(bcache, paddr);
-	if (ubi != NULL) {
-		bcache_bind_ubi_dq(bcache, ubi);
-		bcache_store_ubi(bcache, ubi);
+	cpi = bcache_require_cpi(bcache, paddr);
+	if (cpi != NULL) {
+		bcache_bind_cpi_dq(bcache, cpi);
+		bcache_store_cpi(bcache, cpi);
 	}
-	return ubi;
+	return cpi;
 }
 
-static void bcache_remove_ubi(struct silofs_bcache *bcache,
-                              struct silofs_uber_info *ubi)
+static void bcache_remove_cpi(struct silofs_bcache *bcache,
+                              struct silofs_chkpt_info *cpi)
 {
-	bcache_remove(bcache, &ubi->ub_pni);
+	bcache_remove(bcache, &cpi->ub_pni);
 }
 
-static void bcache_forget_ubi(struct silofs_bcache *bcache,
-                              struct silofs_uber_info *ubi)
+static void bcache_forget_cpi(struct silofs_bcache *bcache,
+                              struct silofs_chkpt_info *cpi)
 {
-	ubi_undirtify(ubi);
-	bcache_remove_ubi(bcache, ubi);
+	cpi_undirtify(cpi);
+	bcache_remove_cpi(bcache, cpi);
 }
 
-void silofs_bcache_evict_ubi(struct silofs_bcache *bcache,
-                             struct silofs_uber_info *ubi)
+void silofs_bcache_evict_cpi(struct silofs_bcache *bcache,
+                             struct silofs_chkpt_info *cpi)
 {
-	bcache_forget_ubi(bcache, ubi);
-	bcache_del_ubi(bcache, ubi);
+	bcache_forget_cpi(bcache, cpi);
+	bcache_del_cpi(bcache, cpi);
 }
 
 
@@ -432,8 +432,8 @@ static void bcache_evict_by(struct silofs_bcache *bcache,
 	const enum silofs_ptype ptype = pni_ptype(pni);
 
 	switch (ptype) {
-	case SILOFS_PTYPE_UBER:
-		silofs_bcache_evict_ubi(bcache, silofs_ubi_from_pni(pni));
+	case SILOFS_PTYPE_CHKPT:
+		silofs_bcache_evict_cpi(bcache, silofs_cpi_from_pni(pni));
 		break;
 	case SILOFS_PTYPE_BTNODE:
 		silofs_bcache_evict_bti(bcache, silofs_bti_from_pni(pni));

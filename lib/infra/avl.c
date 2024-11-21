@@ -58,12 +58,7 @@ struct silofs_avl_pos {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-#define avl_node_verify_non_null(x_) \
-        do { \
-                if (silofs_unlikely((x_) == NULL)) \
-                        silofs_panic("null avl-node: %p", \
-                                (const void *)(x_)); \
-        } while (0)
+#define avl_node_verify_non_null(x_) silofs_panic_if_null(x_)
 
 #define avl_node_verify_magic(x_) \
         do { \

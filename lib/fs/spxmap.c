@@ -826,6 +826,7 @@ uamap_find(const struct silofs_uamap *uamap, const struct silofs_uakey *uakey)
 	lst = uamap_list_of(uamap, uakey);
 	itr = lst->next;
 	while (itr != lst) {
+		silofs_panic_if_null(itr);
 		uae = uaent_from_htb_lh(itr);
 		if (uaent_has_mapping(uae, uakey)) {
 			return uaent_unconst(uae);

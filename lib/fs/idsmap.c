@@ -544,6 +544,7 @@ static void idsmap_clear_gmap_at(struct silofs_idsmap *idsm, size_t slot)
 	lst = idsmap_ghtof_bin_at(idsm, slot);
 	itr = lst->next;
 	while (itr != lst) {
+		silofs_panic_if_null(itr);
 		silofs_assert_gt(idsm->idm_gsize, 0);
 
 		gme = gme_by_htof_lh(itr);
@@ -575,6 +576,7 @@ idsmap_lookup_ghtof(const struct silofs_idsmap *idsm, gid_t host_gid)
 	lst = idsmap_ghtof_bin_of(idsm, host_gid);
 	itr = lst->next;
 	while (itr != lst) {
+		silofs_panic_if_null(itr);
 		silofs_assert_gt(idsm->idm_gsize, 0);
 
 		gme = gme_by_htof_lh(itr);
@@ -596,6 +598,7 @@ idsmap_lookup_gftoh(const struct silofs_idsmap *idsm, gid_t fs_gid)
 	lst = idsmap_gftoh_bin_of(idsm, fs_gid);
 	itr = lst->next;
 	while (itr != lst) {
+		silofs_panic_if_null(itr);
 		silofs_assert_gt(idsm->idm_gsize, 0);
 
 		gme = gme_by_ftoh_lh(itr);

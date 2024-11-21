@@ -129,8 +129,15 @@ void silofs_expect_noop_(long a, long b);
 #endif
 
 /* panic */
-#define silofs_panic(fmt, ...) \
-        silofs_panicf(__FILE__, __LINE__, fmt, __VA_ARGS__)
+#define silofs_panic(fmt_, ...) \
+        silofs_panicf(__FILE__, __LINE__, fmt_, __VA_ARGS__)
+
+#define silofs_panic_if_null(ptr_) \
+        do { \
+                if (silofs_unlikely(ptr_ == NULL)) { \
+                        silofs_panic("NULL pointer: %s", SILOFS_STR(ptr_)); \
+                } \
+        } while(0)
 
 silofs_attr_noreturn
 silofs_attr_printf(3, 4)

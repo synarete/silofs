@@ -29,7 +29,7 @@
 
 #include <silofs/fs/types.h>
 #include <silofs/fs/uidgid.h>
-#include <silofs/fs/idmap.h>
+#include <silofs/fs/idsmap.h>
 #include <silofs/fs/boot.h>
 #include <silofs/fs/spxmap.h>
 #include <silofs/fs/lnodes.h>

@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_IDMAP_H_
-#define SILOFS_IDMAP_H_
+#ifndef SILOFS_IDSMAP_H_
+#define SILOFS_IDSMAP_H_
 
 #include <unistd.h>
 #include <stdbool.h>
@@ -89,4 +89,4 @@ int silofs_idsmap_rmap_uidgid(const struct silofs_idsmap *idsm,
                               uid_t fs_uid, gid_t fs_gid,
                               uid_t *out_fs_uid, gid_t *out_fs_gid);
 
-#endif /* SILOFS_IDMAP_H_ */
+#endif /* SILOFS_IDSMAP_H_ */

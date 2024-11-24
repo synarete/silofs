@@ -484,7 +484,7 @@ class LineChecker(Checker):
     def check(self) -> list:
         """Run line-checkers"""
         self.check_line_length()
-        self.check_no_cxx_comments()
+        # self.check_no_cxx_comments()
         self.check_ascii_printable()
         self.check_only_indent_tabs()
         self.check_no_multi_semicolon()

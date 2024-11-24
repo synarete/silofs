@@ -2,9 +2,16 @@
 AlignAfterOpenBracket: Align
 AlignConsecutiveAssignments: false
 AlignConsecutiveDeclarations: false
+AlignConsecutiveMacros:
+    Enabled: true
+    AcrossEmptyLines: false
+    AcrossComments: false
 AlignEscapedNewlines: Left
 AlignOperands: true
-AlignTrailingComments: false
+AlignTrailingComments:
+    Kind: Always
+    OverEmptyLines: 2
+AllowAllArgumentsOnNextLine: false
 AllowAllParametersOfDeclarationOnNextLine: false
 AllowShortBlocksOnASingleLine: false
 AllowShortCaseLabelsOnASingleLine: false
@@ -15,9 +22,10 @@ AlwaysBreakAfterDefinitionReturnType: None
 AlwaysBreakAfterReturnType: None
 AlwaysBreakBeforeMultilineStrings: false
 BasedOnStyle: LLVM
-BinPackArguments: false
-BinPackParameters: false
+BinPackArguments: true
+BinPackParameters: true
 BraceWrapping:
+    AfterCaseLabel: false
     AfterControlStatement: false
     AfterEnum: false
     AfterFunction: true
@@ -67,5 +75,5 @@ SpacesInParentheses: false
 SpacesInSquareBrackets: false
 SortIncludes: false
 TabWidth: 8
-UseTab: Always
+UseTab: ForContinuationAndIndentation
 ...

@@ -85,7 +85,7 @@ do_autoclean() {
   run find "${basedir}" -type d -name __pycache__ -exec rm -rf {} +
   run find "${basedir}" -type d -name .mypy_cache -exec rm -rf {} +
   run find "${basedir}" -type d -name .deps -exec rm -rf {} +
-  run find "${builddir}" -depth -mindepth 1 -exec rm -rf {} +
+  run find "${builddir}/" -depth -mindepth 1 -exec rm -rf {} +
 }
 
 do_autoregen() {

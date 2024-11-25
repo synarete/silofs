@@ -199,6 +199,7 @@ class CmdSilofs(CmdExec):
             rep = f"{gsize}G"
         return rep
 
+    # pylint: disable=R0917
     def mount(
         self,
         repodir_name: Path,

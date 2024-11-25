@@ -36,26 +36,25 @@
 #include <signal.h>
 #include <limits.h>
 
-
 /* global context */
 struct mountd_args {
-	int     argc;
-	char  **argv;
-	char   *mntpoint;
-	char   *mntpoint_real;
-	char   *confpath;
-	bool    long_listing;
-	bool    allow_coredump;
-	bool    dumpable;
+	int argc;
+	char **argv;
+	char *mntpoint;
+	char *mntpoint_real;
+	char *confpath;
+	bool long_listing;
+	bool allow_coredump;
+	bool dumpable;
 };
 
 struct mountd_ctx {
-	struct mountd_args       args;
-	struct silofs_ms_env    *mse;
-	struct silofs_mntrules  *mntrules;
+	struct mountd_args args;
+	struct silofs_ms_env *mse;
+	struct silofs_mntrules *mntrules;
 	struct silofs_log_params log_params;
-	int     sig_halt;
-	int     sig_fatal;
+	int sig_halt;
+	int sig_fatal;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

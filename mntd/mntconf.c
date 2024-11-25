@@ -16,7 +16,6 @@
  */
 #include "mountd.h"
 
-
 static void *zalloc(size_t nbytes)
 {
 	int err;
@@ -61,8 +60,8 @@ struct mntconf_ctx {
 	int line_no;
 };
 
-static void mntc_setup(struct mntconf_ctx *mntc,
-                       const char *file, const char *conf)
+static void
+mntc_setup(struct mntconf_ctx *mntc, const char *file, const char *conf)
 {
 	silofs_strview_init(&mntc->file, file);
 	silofs_strview_init(&mntc->conf, conf);
@@ -70,47 +69,46 @@ static void mntc_setup(struct mntconf_ctx *mntc,
 	mntc->line_no = 0;
 }
 
-static void mntc_update_line(struct mntconf_ctx *mntc,
-                             const struct silofs_strview *line)
+static void
+mntc_update_line(struct mntconf_ctx *mntc, const struct silofs_strview *line)
 {
 	silofs_strview_init_by(&mntc->line, line);
 }
 
 static void mntc_update_next_line(struct mntconf_ctx *mntc,
-                                  const struct silofs_strview *line)
+				  const struct silofs_strview *line)
 {
 	mntc_update_line(mntc, line);
 	mntc->line_no++;
 }
 
-silofs_attr_noreturn
-static void mntc_die_bad_conf(const struct mntconf_ctx *mntc,
-                              const struct silofs_strview *val,
-                              const char *msg)
+silofs_attr_noreturn static void
+mntc_die_bad_conf(const struct mntconf_ctx *mntc,
+		  const struct silofs_strview *val, const char *msg)
 {
 	if (val != NULL) {
 		silofs_die_at(EINVAL, mntc->file.str, mntc->line_no,
-		              "bad mntconf: %s: '%.*s'",
-		              msg, (int)val->len, val->str);
+			      "bad mntconf: %s: '%.*s'", msg, (int)val->len,
+			      val->str);
 	} else {
 		silofs_die_at(EINVAL, mntc->file.str, mntc->line_no,
-		              "bad mntconf: %s", msg);
+			      "bad mntconf: %s", msg);
 	}
 }
 
-silofs_attr_noreturn
-static void mntc_die_bad_val(const struct mntconf_ctx *mntc,
-                             const struct silofs_strview *val, const char *tag)
+silofs_attr_noreturn static void
+mntc_die_bad_val(const struct mntconf_ctx *mntc,
+		 const struct silofs_strview *val, const char *tag)
 {
 	silofs_die_at(EINVAL, mntc->file.str, mntc->line_no,
-	              "illegal mntconf %s value: '%.*s'",
-	              tag, (int)val->len, val->str);
+		      "illegal mntconf %s value: '%.*s'", tag, (int)val->len,
+		      val->str);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static bool mntc_parse_bool(const struct mntconf_ctx *mntc,
-                            const struct silofs_strview *sv)
+			    const struct silofs_strview *sv)
 {
 	if (silofs_strview_isequal(sv, "1") ||
 	    silofs_strview_isequal(sv, "true")) {
@@ -125,7 +123,7 @@ static bool mntc_parse_bool(const struct mntconf_ctx *mntc,
 }
 
 static long mntc_parse_long(const struct mntconf_ctx *mntc,
-                            const struct silofs_strview *sv)
+			    const struct silofs_strview *sv)
 {
 	char str[80] = "";
 	char *endptr = NULL;
@@ -147,8 +145,8 @@ static long mntc_parse_long(const struct mntconf_ctx *mntc,
 	return val;
 }
 
-static int mntc_parse_int(const struct mntconf_ctx *mntc,
-                          const struct silofs_strview *sv)
+static int
+mntc_parse_int(const struct mntconf_ctx *mntc, const struct silofs_strview *sv)
 
 {
 	long num;
@@ -160,8 +158,8 @@ static int mntc_parse_int(const struct mntconf_ctx *mntc,
 	return (int)num;
 }
 
-static uid_t mntc_parse_uid(const struct mntconf_ctx *mntc,
-                            const struct silofs_strview *sv)
+static uid_t
+mntc_parse_uid(const struct mntconf_ctx *mntc, const struct silofs_strview *sv)
 {
 	int val;
 
@@ -175,8 +173,8 @@ static uid_t mntc_parse_uid(const struct mntconf_ctx *mntc,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void mntc_parse_rule_args(const struct mntconf_ctx *mntc,
-                                 const struct silofs_strview *args,
-                                 struct silofs_mntrule *mntrule)
+				 const struct silofs_strview *args,
+				 struct silofs_mntrule *mntrule)
 {
 	struct silofs_strview_pair key_val;
 	struct silofs_strview_pair ss_pair;
@@ -209,9 +207,9 @@ static void mntc_parse_rule_args(const struct mntconf_ctx *mntc,
 }
 
 static void mntc_parse_rule(const struct mntconf_ctx *mntc,
-                            const struct silofs_strview *path,
-                            const struct silofs_strview *args,
-                            struct silofs_mntrules *mrules)
+			    const struct silofs_strview *path,
+			    const struct silofs_strview *args,
+			    struct silofs_mntrules *mrules)
 {
 	const size_t max_rules = SILOFS_ARRAY_SIZE(mrules->rules);
 	struct silofs_mntrule *mntrule = NULL;
@@ -225,8 +223,8 @@ static void mntc_parse_rule(const struct mntconf_ctx *mntc,
 	}
 }
 
-static void mntc_parse_line(const struct mntconf_ctx *mntc,
-                            struct silofs_mntrules *mrules)
+static void
+mntc_parse_line(const struct mntconf_ctx *mntc, struct silofs_mntrules *mrules)
 {
 	struct silofs_strview sline;
 	struct silofs_strview_pair svp;
@@ -240,8 +238,8 @@ static void mntc_parse_line(const struct mntconf_ctx *mntc,
 	}
 }
 
-static void mntc_parse_rules(struct mntconf_ctx *mntc,
-                             struct silofs_mntrules *mrules)
+static void
+mntc_parse_rules(struct mntconf_ctx *mntc, struct silofs_mntrules *mrules)
 {
 	struct silofs_strview_pair svp;
 	const struct silofs_strview *line = &svp.first;
@@ -259,7 +257,7 @@ static void mntc_parse_rules(struct mntconf_ctx *mntc,
 }
 
 static void parse_mntrules(const char *path, const char *conf,
-                           struct silofs_mntrules *mrules)
+			   struct silofs_mntrules *mrules)
 {
 	struct mntconf_ctx mntc;
 

@@ -16,7 +16,6 @@
  */
 #include "mountd.h"
 
-
 /* local functions */
 static void mountd_start(struct mountd_ctx *ctx);
 static void mountd_getopt(struct mountd_ctx *ctx);
@@ -165,10 +164,8 @@ static void mountd_require_cap_sys_admin(const struct mountd_ctx *ctx)
 
 static void mountd_setup_env(struct mountd_ctx *ctx)
 {
-	struct silofs_ms_args ms_args = {
-		.runstatedir = SILOFS_RUNSTATEDIR,
-		.use_abstract = true
-	};
+	struct silofs_ms_args ms_args = { .runstatedir = SILOFS_RUNSTATEDIR,
+					  .use_abstract = true };
 	int err;
 
 	err = silofs_mse_new(&ms_args, &ctx->mse);
@@ -266,8 +263,7 @@ static void mountd_sigaction_halt_handler(int signum)
 	}
 }
 
-silofs_attr_noreturn
-static void mountd_sigaction_term_handler(int signum)
+silofs_attr_noreturn static void mountd_sigaction_term_handler(int signum)
 {
 	struct mountd_ctx *ctx = mountd_ctx;
 
@@ -279,8 +275,7 @@ static void mountd_sigaction_term_handler(int signum)
 	exit(EXIT_FAILURE);
 }
 
-silofs_attr_noreturn
-static void mountd_sigaction_abort_handler(int signum)
+silofs_attr_noreturn static void mountd_sigaction_abort_handler(int signum)
 {
 	struct mountd_ctx *ctx = mountd_ctx;
 
@@ -379,28 +374,25 @@ static void mountd_enable_signals(const struct mountd_ctx *ctx)
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static const char mountd_usage[] =
-        "[options] [-f conf]\n"\
-        "\n"\
-        "options:\n"\
-        "  -f, --conf=CONF              Mount-rules config file\n"\
-        "  -L, --loglevel=LEVEL         Logging level (rfc5424)\n"\
-        "  -v, --version                Show version and exit\n";
+	"[options] [-f conf]\n"
+	"\n"
+	"options:\n"
+	"  -f, --conf=CONF              Mount-rules config file\n"
+	"  -L, --loglevel=LEVEL         Logging level (rfc5424)\n"
+	"  -v, --version                Show version and exit\n";
 
-silofs_attr_noreturn
-static void mountd_goodbye(void)
+silofs_attr_noreturn static void mountd_goodbye(void)
 {
 	exit(EXIT_SUCCESS);
 }
 
-silofs_attr_noreturn
-static void mountd_show_usage(void)
+silofs_attr_noreturn static void mountd_show_usage(void)
 {
 	printf("%s\n", mountd_usage);
 	mountd_goodbye();
 }
 
-silofs_attr_noreturn
-static void mountd_show_version(void)
+silofs_attr_noreturn static void mountd_show_version(void)
 {
 	printf("%s: %s\n", program_invocation_short_name,
 	       silofs_version.string);
@@ -431,7 +423,7 @@ static void mountd_getopt(struct mountd_ctx *ctx)
 			ctx->args.confpath = optarg;
 		} else if (opt_chr == 'L') {
 			ctx->log_params.level =
-			        silofs_log_level_by_rfc5424(optarg);
+				silofs_log_level_by_rfc5424(optarg);
 		} else if (opt_chr == 'v') {
 			mountd_show_version();
 		} else if (opt_chr == 'h') {

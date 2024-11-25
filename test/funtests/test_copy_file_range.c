@@ -23,28 +23,26 @@ struct ft_copy_range_args {
 	size_t len_dst;
 };
 
-#define COPYARGS1(a_, b_) \
-        { .off_src = (a_), .len_src = (b_) }
+#define COPYARGS1(a_, b_) { .off_src = (a_), .len_src = (b_) }
 
 #define COPYARGS2(a_, b_, c_, d_) \
-        { .off_src = (a_), .len_src = (b_), .off_dst = (c_), .len_dst = (d_) }
+	{ .off_src = (a_), .len_src = (b_), .off_dst = (c_), .len_dst = (d_) }
 
 #define COPYARGS3(a_, b_, c_) \
-        { .off_src = (a_), .len_src = (c_), .off_dst = (b_), .len_dst = (c_) }
-
+	{ .off_src = (a_), .len_src = (c_), .off_dst = (b_), .len_dst = (c_) }
 
 #define ft_copy_range1(fte_, fn_, args_) \
-        ft_copy_range1_(fte_, fn_, args_, FT_ARRAY_SIZE(args_))
+	ft_copy_range1_(fte_, fn_, args_, FT_ARRAY_SIZE(args_))
 
 #define ft_copy_range2(fte_, fn_, args_) \
-        ft_copy_range2_(fte_, fn_, args_, FT_ARRAY_SIZE(args_))
+	ft_copy_range2_(fte_, fn_, args_, FT_ARRAY_SIZE(args_))
 
 #define ft_copy_range3(fte_, fn_, args_) \
-        ft_copy_range3_(fte_, fn_, args_, FT_ARRAY_SIZE(args_))
+	ft_copy_range3_(fte_, fn_, args_, FT_ARRAY_SIZE(args_))
 
 static void ft_copy_range1_(struct ft_env *fte,
-                            void (*fn)(struct ft_env *, loff_t, size_t),
-                            const struct ft_copy_range_args *args, size_t na)
+			    void (*fn)(struct ft_env *, loff_t, size_t),
+			    const struct ft_copy_range_args *args, size_t na)
 {
 	for (size_t i = 0; i < na; ++i) {
 		fn(fte, args[i].off_src, args[i].len_src);
@@ -54,20 +52,20 @@ static void ft_copy_range1_(struct ft_env *fte,
 
 static void
 ft_copy_range2_(struct ft_env *fte,
-                void (*fn)(struct ft_env *, loff_t, size_t, loff_t, size_t),
-                const struct ft_copy_range_args *args, size_t na)
+		void (*fn)(struct ft_env *, loff_t, size_t, loff_t, size_t),
+		const struct ft_copy_range_args *args, size_t na)
 {
 	for (size_t i = 0; i < na; ++i) {
-		fn(fte, args[i].off_src, args[i].len_src,
-		   args[i].off_dst, args[i].len_dst);
+		fn(fte, args[i].off_src, args[i].len_src, args[i].off_dst,
+		   args[i].len_dst);
 		ft_relax_mem(fte);
 	}
 }
 
 static void
 ft_copy_range3_(struct ft_env *fte,
-                void (*fn)(struct ft_env *, size_t, loff_t, loff_t),
-                const struct ft_copy_range_args *args, size_t na)
+		void (*fn)(struct ft_env *, size_t, loff_t, loff_t),
+		const struct ft_copy_range_args *args, size_t na)
 {
 	for (size_t i = 0; i < na; ++i) {
 		fn(fte, args[i].len_src, args[i].off_src, args[i].off_dst);
@@ -76,7 +74,7 @@ ft_copy_range3_(struct ft_env *fte,
 }
 
 static void ft_copy_file_rangen(int fd_src, loff_t off_in, int fd_dst,
-                                loff_t off_out, size_t len)
+				loff_t off_out, size_t len)
 {
 	size_t ncp = 0;
 	size_t ncp_want = 0;
@@ -86,8 +84,8 @@ static void ft_copy_file_rangen(int fd_src, loff_t off_in, int fd_dst,
 
 	while (ncp_total < len) {
 		ncp_want = len - ncp_total;
-		ft_copy_file_range(fd_src, &off_src,
-		                   fd_dst, &off_dst, ncp_want, &ncp);
+		ft_copy_file_range(fd_src, &off_src, fd_dst, &off_dst,
+				   ncp_want, &ncp);
 		ft_expect_gt(ncp, 0);
 		ft_expect_le(ncp, ncp_want);
 		ncp_total += ncp;
@@ -99,9 +97,9 @@ static void ft_copy_file_rangen(int fd_src, loff_t off_in, int fd_dst,
  * Expects copy_file_range(2) to successfully reflink-copy partial file range
  * between two files.
  */
-static void test_copy_file_range_(struct ft_env *fte,
-                                  loff_t off_src, size_t len_src,
-                                  loff_t off_dst, size_t len_dst)
+static void
+test_copy_file_range_(struct ft_env *fte, loff_t off_src, size_t len_src,
+		      loff_t off_dst, size_t len_dst)
 {
 	const char *path_src = ft_new_path_unique(fte);
 	const char *path_dst = ft_new_path_unique(fte);
@@ -175,8 +173,7 @@ static void test_copy_file_range_unaligned(struct ft_env *fte)
 		COPYARGS2(1, FT_64K + 11, 11, FT_64K + 1),
 		COPYARGS2(FT_64K + 11, 11 * FT_64K, FT_64K + 1, FT_64K - 11),
 		COPYARGS2(FT_1M - 1, FT_64K - 2, 1, FT_64K - 3),
-		COPYARGS2(FT_1M + 11, FT_1M,
-		          FT_1G + 111, FT_1M + 1111),
+		COPYARGS2(FT_1M + 11, FT_1M, FT_1G + 111, FT_1M + 1111),
 		COPYARGS2(FT_1T + 111, FT_1M + 333, FT_1M - 111, 11111),
 		COPYARGS2(FT_1T - 1111, 111111, 1, FT_1M + 1111),
 	};
@@ -189,9 +186,9 @@ static void test_copy_file_range_unaligned(struct ft_env *fte)
  * Expects copy_file_range(2) to successfully reflink-copy partial file range
  * between regions within same file.
  */
-static void test_copy_file_range_self_(struct ft_env *fte,
-                                       loff_t off_src, size_t len_src,
-                                       loff_t off_dst, size_t len_dst)
+static void
+test_copy_file_range_self_(struct ft_env *fte, loff_t off_src, size_t len_src,
+			   loff_t off_dst, size_t len_dst)
 {
 	const char *path = ft_new_path_unique(fte);
 	const size_t len = ft_max(len_src, len_dst);
@@ -221,9 +218,8 @@ static void test_copy_file_range_self_(struct ft_env *fte,
 	ft_unlink(path);
 }
 
-static void
-test_copy_file_range_self2_(struct ft_env *fte,
-                            loff_t off1, size_t len1, loff_t off2, size_t len2)
+static void test_copy_file_range_self2_(struct ft_env *fte, loff_t off1,
+					size_t len1, loff_t off2, size_t len2)
 {
 	test_copy_file_range_self_(fte, off1, len1, off2, len2);
 	test_copy_file_range_self_(fte, off2, len2, off1, len1);
@@ -256,9 +252,8 @@ static void test_copy_file_range_self(struct ft_env *fte)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void
-test_copy_file_range_between_(struct ft_env *fte,
-                              loff_t off_src, size_t len_src,
-                              loff_t off_dst, size_t len_dst)
+test_copy_file_range_between_(struct ft_env *fte, loff_t off_src,
+			      size_t len_src, loff_t off_dst, size_t len_dst)
 {
 	const char *path_src = ft_new_path_unique(fte);
 	const char *path_dst = ft_new_path_unique(fte);
@@ -281,7 +276,7 @@ test_copy_file_range_between_(struct ft_env *fte,
 	ft_preadn(fd_dst, buf_dst, len_min, off_dst);
 	ft_expect_eqm(buf_src, buf_dst, len_min);
 	ft_preadn(fd_dst, buf_alt, len_dst - len_min,
-	          ft_off_end(off_dst, len_min));
+		  ft_off_end(off_dst, len_min));
 	ft_expect_eqm(buf_alt, buf_zeros, len_dst - len_min);
 	ft_close(fd_src);
 	ft_close(fd_dst);
@@ -546,7 +541,7 @@ static void test_copy_file_range_nfiles(struct ft_env *fte)
  * successful completion.
  */
 static void test_copy_file_range_mtime_(struct ft_env *fte, size_t len,
-                                        loff_t off_src, loff_t off_dst)
+					loff_t off_src, loff_t off_dst)
 {
 	struct stat st[3];
 	void *buf_src = ft_new_buf_rands(fte, len);
@@ -791,8 +786,7 @@ static void test_copy_file_range_sparser(struct ft_env *fte)
 /*
  * Expects copy_file_range(2) over large empty file to yield all-zeros file.
  */
-static void
-test_copy_file_range_empty_(struct ft_env *fte, ssize_t len)
+static void test_copy_file_range_empty_(struct ft_env *fte, ssize_t len)
 {
 	const char *path_src = ft_new_path_unique(fte);
 	const char *path_dst = ft_new_path_unique(fte);
@@ -817,14 +811,8 @@ test_copy_file_range_empty_(struct ft_env *fte, ssize_t len)
 static void test_copy_file_range_empty(struct ft_env *fte)
 {
 	const loff_t len[] = {
-		FT_1M,
-		FT_1G,
-		4 * FT_1G,
-		64 * FT_1G,
-		FT_1T,
-		11 * FT_1M - 11,
-		111 * FT_1G - 111,
-		FT_1T + 111111,
+		FT_1M, FT_1G,           4 * FT_1G,         64 * FT_1G,
+		FT_1T, 11 * FT_1M - 11, 111 * FT_1G - 111, FT_1T + 111111,
 	};
 
 	for (size_t i = 0; i < FT_ARRAY_SIZE(len); ++i) {
@@ -850,5 +838,4 @@ static const struct ft_tdef ft_local_tests[] = {
 	FT_DEFTEST(test_copy_file_range_empty),
 };
 
-const struct ft_tests
-ft_test_copy_file_range = FT_DEFTESTS(ft_local_tests);
+const struct ft_tests ft_test_copy_file_range = FT_DEFTESTS(ft_local_tests);

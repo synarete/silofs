@@ -16,7 +16,6 @@
  */
 #include "funtests.h"
 
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 /*
  * Expects valid lseek(3p) with whence as SEEK_SET, SEEK_CUR and SEEK_END
@@ -232,12 +231,9 @@ static void test_lseek_hole_sparse(struct ft_env *fte)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ft_tdef ft_local_tests[] = {
-	FT_DEFTEST(test_lseek_simple),
-	FT_DEFTEST(test_lseek_data),
-	FT_DEFTEST(test_lseek_hole),
-	FT_DEFTEST(test_lseek_data_sparse),
+	FT_DEFTEST(test_lseek_simple),      FT_DEFTEST(test_lseek_data),
+	FT_DEFTEST(test_lseek_hole),        FT_DEFTEST(test_lseek_data_sparse),
 	FT_DEFTEST(test_lseek_hole_sparse),
 };
 
 const struct ft_tests ft_test_lseek = FT_DEFTESTS(ft_local_tests);
-

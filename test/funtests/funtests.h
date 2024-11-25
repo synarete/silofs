@@ -37,18 +37,17 @@
 #include <limits.h>
 #include <dirent.h>
 
-
 /* re-mapped macros */
-#define FT_1K                   SILOFS_KILO
-#define FT_2K                   (2 * SILOFS_KILO)
-#define FT_4K                   (4 * SILOFS_KILO)
-#define FT_8K                   (8 * SILOFS_KILO)
-#define FT_64K                  (64 * SILOFS_KILO)
-#define FT_1M                   SILOFS_MEGA
-#define FT_2M                   (2 * SILOFS_MEGA)
-#define FT_4M                   (4 * SILOFS_MEGA)
-#define FT_1G                   SILOFS_GIGA
-#define FT_1T                   SILOFS_TERA
+#define FT_1K  SILOFS_KILO
+#define FT_2K  (2 * SILOFS_KILO)
+#define FT_4K  (4 * SILOFS_KILO)
+#define FT_8K  (8 * SILOFS_KILO)
+#define FT_64K (64 * SILOFS_KILO)
+#define FT_1M  SILOFS_MEGA
+#define FT_2M  (2 * SILOFS_MEGA)
+#define FT_4M  (4 * SILOFS_MEGA)
+#define FT_1G  SILOFS_GIGA
+#define FT_1T  SILOFS_TERA
 
 #define FT_FRGSIZE              (512) /* Fragment size (see stat(2)) */
 #define FT_BK_SIZE              SILOFS_LBK_SIZE
@@ -57,20 +56,19 @@
 #define FT_FILESIZE_MAX         SILOFS_FILE_SIZE_MAX
 #define FT_FILESIZE_ALIGNED_MAX ((FT_FILESIZE_MAX / FT_BK_SIZE) * FT_BK_SIZE)
 
-#define FT_STR(x_)              SILOFS_STR(x_)
-#define FT_ARRAY_SIZE(x_)       SILOFS_ARRAY_SIZE(x_)
+#define FT_STR(x_)        SILOFS_STR(x_)
+#define FT_ARRAY_SIZE(x_) SILOFS_ARRAY_SIZE(x_)
 
-#define FT_FL_LN_               SILOFS_FL_LN_
-
+#define FT_FL_LN_ SILOFS_FL_LN_
 
 /* tests' control flags */
 enum ft_flags {
-	FT_F_NORMAL     = (1 << 1),
-	FT_F_IGNORE     = (1 << 2),
-	FT_F_STATVFS    = (1 << 3),
-	FT_F_TMPFILE    = (1 << 4),
-	FT_F_RANDOM     = (1 << 5),
-	FT_F_FLAKY      = (1 << 6),
+	FT_F_NORMAL = (1 << 1),
+	FT_F_IGNORE = (1 << 2),
+	FT_F_STATVFS = (1 << 3),
+	FT_F_TMPFILE = (1 << 4),
+	FT_F_RANDOM = (1 << 5),
+	FT_F_FLAKY = (1 << 6),
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -105,22 +103,22 @@ struct ft_params {
 
 /* tests execution environment context */
 struct ft_env {
-	struct silofs_mutex     mutex;
-	struct silofs_prandgen  prng;
-	struct ft_params        params;
-	const struct ft_tdef   *currtest;
-	struct statvfs          stvfs;
-	struct timespec         ts_start;
-	struct timespec         ts_finish;
+	struct silofs_mutex mutex;
+	struct silofs_prandgen prng;
+	struct ft_params params;
+	const struct ft_tdef *currtest;
+	struct statvfs stvfs;
+	struct timespec ts_start;
+	struct timespec ts_finish;
 	uint64_t seqn;
-	time_t  start;
-	pid_t   pid;
-	uid_t   uid;
-	gid_t   gid;
-	mode_t  umsk;
-	size_t  nbytes_alloc;
+	time_t start;
+	pid_t pid;
+	uid_t uid;
+	gid_t gid;
+	mode_t umsk;
+	size_t nbytes_alloc;
 	struct ft_mchunk *malloc_list;
-	struct ft_tests   tests;
+	struct ft_tests tests;
 };
 
 /* I/O range to test */
@@ -150,8 +148,8 @@ char *ft_strdup(struct ft_env *fte, const char *str);
 
 char *ft_strcat(struct ft_env *fte, const char *str1, const char *str2);
 
-silofs_attr_printf(2, 3)
-char *ft_strfmt(struct ft_env *fte, const char *fmt, ...);
+silofs_attr_printf(2, 3) char *ft_strfmt(struct ft_env *fte, const char *fmt,
+					 ...);
 
 char *ft_make_ulong_name(struct ft_env *fte, unsigned long key);
 
@@ -167,14 +165,14 @@ char *ft_new_path_under(struct ft_env *fte, const char *base);
 
 char *ft_new_path_name(struct ft_env *fte, const char *name);
 
-char *ft_new_path_nested(struct ft_env *fte,
-                         const char *base, const char *name);
+char *
+ft_new_path_nested(struct ft_env *fte, const char *base, const char *name);
 
-silofs_attr_printf(2, 3)
-char *ft_new_namef(struct ft_env *fte, const char *fmt, ...);
+silofs_attr_printf(2, 3) char *ft_new_namef(struct ft_env *fte,
+					    const char *fmt, ...);
 
-silofs_attr_printf(3, 4)
-char *ft_new_pathf(struct ft_env *fte, const char *p, const char *fmt, ...);
+silofs_attr_printf(3, 4) char *ft_new_pathf(struct ft_env *fte, const char *p,
+					    const char *fmt, ...);
 
 void *ft_new_buf_zeros(struct ft_env *fte, size_t bsz);
 
@@ -189,7 +187,7 @@ long ft_lrand(struct ft_env *fte);
 long ft_timespec_diff(const struct timespec *ts1, const struct timespec *ts2);
 
 long ft_xtimestamp_diff(const struct statx_timestamp *ts1,
-                        const struct statx_timestamp *ts2);
+			const struct statx_timestamp *ts2);
 
 const char *ft_curr_test_name(const struct ft_env *fte);
 
@@ -217,11 +215,11 @@ size_t ft_page_size(void);
 
 /* test-and-relax over array of ranges */
 #define ft_exec_with_ranges(fte_, fn_, args_) \
-        ft_exec_with_ranges_(fte_, fn_, args_, FT_ARRAY_SIZE(args_))
+	ft_exec_with_ranges_(fte_, fn_, args_, FT_ARRAY_SIZE(args_))
 
 void ft_exec_with_ranges_(struct ft_env *fte,
-                          void (*fn)(struct ft_env *, loff_t, size_t),
-                          const struct ft_range *range, size_t na);
+			  void (*fn)(struct ft_env *, loff_t, size_t),
+			  const struct ft_range *range, size_t na);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -268,20 +266,15 @@ extern const struct ft_tests ft_stress_rw;
 
 /* test-define helper macros */
 #define FT_DEFTESTF(fn_, fl_) \
-        { .hook = (fn_), .name = FT_STR(fn_), .flags = (fl_) }
+	{ .hook = (fn_), .name = FT_STR(fn_), .flags = (fl_) }
 
-#define FT_DEFTEST(fn_) \
-        FT_DEFTESTF(fn_, FT_F_NORMAL)
+#define FT_DEFTEST(fn_) FT_DEFTESTF(fn_, FT_F_NORMAL)
 
-#define FT_DEFTESTS(a_) \
-        { .arr = (a_), .len = FT_ARRAY_SIZE(a_) }
+#define FT_DEFTESTS(a_) { .arr = (a_), .len = FT_ARRAY_SIZE(a_) }
 
+#define FT_MKRANGE0(off_) { .off = off_, .len = 0 }
 
-#define FT_MKRANGE0(off_) \
-        { .off = off_, .len = 0 }
-
-#define FT_MKRANGE(off_, len_) \
-        { .off = off_, .len = len_ }
+#define FT_MKRANGE(off_, len_) { .off = off_, .len = len_ }
 
 /* common inline utility functions */
 #include "funtests_inline.h"

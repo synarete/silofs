@@ -26,7 +26,7 @@ struct ft_rw_large_args {
  * Expects read-write data-consistency upon n-gigbytes write in chunks of 1M
  */
 static void test_rw_ngiga_by_(struct ft_env *fte, int fd,
-                              const struct ft_rw_large_args *args)
+			      const struct ft_rw_large_args *args)
 {
 	const loff_t off_base = args->off_base;
 	const size_t nskip = args->nskip;
@@ -53,8 +53,8 @@ static void test_rw_ngiga_by_(struct ft_env *fte, int fd,
 	}
 }
 
-static void test_rw_ngiga_(struct ft_env *fte,
-                           const struct ft_rw_large_args *args)
+static void
+test_rw_ngiga_(struct ft_env *fte, const struct ft_rw_large_args *args)
 {
 	const char *path = ft_new_path_unique(fte);
 	int fd = -1;
@@ -66,7 +66,7 @@ static void test_rw_ngiga_(struct ft_env *fte,
 }
 
 static void test_rw_ngiga_unlinked_(struct ft_env *fte,
-                                    const struct ft_rw_large_args *args)
+				    const struct ft_rw_large_args *args)
 {
 	const char *path = ft_new_path_unique(fte);
 	int fd = -1;

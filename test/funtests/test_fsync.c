@@ -20,8 +20,8 @@
 /*
  * Expects fsync(3p) to return 0 after regular file write/read operation.
  */
-static void test_fsync_reg_(struct ft_env *fte, loff_t base_off,
-                            size_t bsz, loff_t step, size_t cnt)
+static void test_fsync_reg_(struct ft_env *fte, loff_t base_off, size_t bsz,
+			    loff_t step, size_t cnt)
 {
 	const char *path = ft_new_path_unique(fte);
 	void *buf1 = ft_new_buf_rands(fte, bsz);
@@ -31,7 +31,7 @@ static void test_fsync_reg_(struct ft_env *fte, loff_t base_off,
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	for (size_t i = 0; i < cnt; ++i) {
-		off = base_off + ((loff_t)i  * step);
+		off = base_off + ((loff_t)i * step);
 		ft_pwriten(fd, buf1, bsz, off);
 		ft_fsync(fd);
 		ft_preadn(fd, buf2, bsz, off);

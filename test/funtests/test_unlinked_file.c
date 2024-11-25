@@ -55,12 +55,7 @@ static void test_unlinked_simple_(struct ft_env *fte, size_t len)
 static void test_unlinked_simple(struct ft_env *fte)
 {
 	const size_t len[] = {
-		1,
-		FT_1K,
-		FT_4K,
-		FT_64K,
-		FT_64K - 1,
-		3 * FT_64K + 3,
+		1, FT_1K, FT_4K, FT_64K, FT_64K - 1, 3 * FT_64K + 3,
 	};
 
 	for (size_t i = 0; i < FT_ARRAY_SIZE(len); ++i) {
@@ -341,12 +336,9 @@ static void test_unlinked_same_path(struct ft_env *fte)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ft_tdef ft_local_tests[] = {
-	FT_DEFTEST(test_unlinked_simple),
-	FT_DEFTEST(test_unlinked_complex),
-	FT_DEFTEST(test_unlinked_segs),
-	FT_DEFTEST(test_unlinked_nfiles),
-	FT_DEFTEST(test_unlinked_rename),
-	FT_DEFTEST(test_unlinked_same_path),
+	FT_DEFTEST(test_unlinked_simple), FT_DEFTEST(test_unlinked_complex),
+	FT_DEFTEST(test_unlinked_segs),   FT_DEFTEST(test_unlinked_nfiles),
+	FT_DEFTEST(test_unlinked_rename), FT_DEFTEST(test_unlinked_same_path),
 };
 
 const struct ft_tests ft_test_unlinked_file = FT_DEFTESTS(ft_local_tests);

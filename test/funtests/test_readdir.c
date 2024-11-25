@@ -24,8 +24,7 @@ struct ft_getdents_ctx {
 	size_t ndents;
 };
 
-static struct ft_getdents_ctx *
-ft_new_getdents_ctx(struct ft_env *fte)
+static struct ft_getdents_ctx *ft_new_getdents_ctx(struct ft_env *fte)
 {
 	struct ft_getdents_ctx *gd_ctx;
 
@@ -33,8 +32,8 @@ ft_new_getdents_ctx(struct ft_env *fte)
 	return gd_ctx;
 }
 
-static void ft_verify_getdents_ctx(struct ft_env *fte,
-                                   struct ft_getdents_ctx *gd_ctx)
+static void
+ft_verify_getdents_ctx(struct ft_env *fte, struct ft_getdents_ctx *gd_ctx)
 {
 	loff_t off_curr;
 	loff_t off_prev = -1;
@@ -58,14 +57,14 @@ static void ft_getdents2(int fd, struct ft_getdents_ctx *gd_ctx)
 	size_t ndents = 0;
 	const size_t ndents_max = FT_ARRAY_SIZE(gd_ctx->dents);
 
-	ft_getdents(fd, gd_ctx->buf, sizeof(gd_ctx->buf),
-	            gd_ctx->dents, ndents_max, &ndents);
+	ft_getdents(fd, gd_ctx->buf, sizeof(gd_ctx->buf), gd_ctx->dents,
+		    ndents_max, &ndents);
 	ft_expect_le(ndents, ndents_max);
 	gd_ctx->ndents = ndents;
 }
 
 static void ft_getdents_from(struct ft_env *fte, int fd, loff_t off,
-                             struct ft_getdents_ctx *gd_ctx)
+			     struct ft_getdents_ctx *gd_ctx)
 {
 	loff_t pos = -1;
 
@@ -333,11 +332,8 @@ static void test_readdir_counted_(struct ft_env *fte, size_t lim)
 
 static void test_readdir_counted(struct ft_env *fte)
 {
-	const size_t lim[] = {
-		10,
-		100,
-		silofs_min(SILOFS_LINK_MAX - 2, 100000)
-	};
+	const size_t lim[] = { 10, 100,
+			       silofs_min(SILOFS_LINK_MAX - 2, 100000) };
 
 	for (size_t i = 0; i < FT_ARRAY_SIZE(lim); ++i) {
 		test_readdir_counted_(fte, lim[i]);
@@ -477,9 +473,8 @@ static void test_readdir_nox(struct ft_env *fte)
  * Expects Linux getdents(2) to iterate on all entries from various directory
  * stream positions, while unlinking entries.
  */
-static void
-test_readdir_unlink_names_arr_(struct ft_env *fte,
-                               const char *names[], size_t cnt)
+static void test_readdir_unlink_names_arr_(struct ft_env *fte,
+					   const char *names[], size_t cnt)
 {
 	struct ft_getdents_ctx *gd_ctx = ft_new_getdents_ctx(fte);
 	const char *path = ft_new_path_unique(fte);

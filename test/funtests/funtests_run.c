@@ -20,10 +20,9 @@
 #include <errno.h>
 #include <time.h>
 
-
 #define FT_METATEST(t_) (&(t_))
 
-static const struct ft_tests *const ft_testsbl[]  = {
+static const struct ft_tests *const ft_testsbl[] = {
 	FT_METATEST(ft_test_access),
 	FT_METATEST(ft_test_stat),
 	FT_METATEST(ft_test_statx),
@@ -67,8 +66,8 @@ static const struct ft_tests *const ft_testsbl[]  = {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void statvfs_of(const struct ft_env *fte,
-                       struct statvfs *stvfs, bool finish)
+static void
+statvfs_of(const struct ft_env *fte, struct statvfs *stvfs, bool finish)
 {
 	const char *testdir = fte->params.testdir;
 	int dfd = -1;
@@ -110,14 +109,14 @@ static void ft_finish_test(struct ft_env *fte)
 
 	silofs_mclock_dif(&fte->ts_start, &fte->ts_finish, &dif);
 	silofs_log_info("%-40s OK (%ld.%03lds)", fte->currtest->name,
-	                dif.tv_sec, dif.tv_nsec / 1000000L);
+			dif.tv_sec, dif.tv_nsec / 1000000L);
 	umask(fte->umsk);
 	fte->currtest = NULL;
 	ft_freeall(fte);
 }
 
 static void verify_consistent_statvfs(const struct statvfs *stv_beg,
-                                      const struct statvfs *stv_end)
+				      const struct statvfs *stv_end)
 {
 	fsblkcnt_t bfree_dif;
 
@@ -146,14 +145,14 @@ static bool ft_without_statvfs(const struct ft_env *fte)
 	return ((fte->params.tests_xmask & FT_F_STATVFS) > 0);
 }
 
-static bool ft_ignore_statvfs_check(const struct ft_env *fte,
-                                    const struct ft_tdef *tdef)
+static bool
+ft_ignore_statvfs_check(const struct ft_env *fte, const struct ft_tdef *tdef)
 {
 	return ft_without_statvfs(fte) || ((tdef->flags & FT_F_STATVFS) > 0);
 }
 
-static void ft_verify_fsstat(const struct ft_env *fte,
-                             const struct ft_tdef *tdef)
+static void
+ft_verify_fsstat(const struct ft_env *fte, const struct ft_tdef *tdef)
 {
 	struct statvfs stvfs_end;
 
@@ -221,8 +220,7 @@ static void ft_run_tests(struct ft_env *fte)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void copy_testdef(struct ft_tdef *dst,
-                         const struct ft_tdef *src)
+static void copy_testdef(struct ft_tdef *dst, const struct ft_tdef *src)
 {
 	memcpy(dst, src, sizeof(*dst));
 }
@@ -314,7 +312,7 @@ static void fte_meta(const struct ft_env *fte, int start)
 {
 	if (!fte->params.listtests) {
 		silofs_log_info("%s: %s", start ? "start" : "done",
-		                silofs_version.string);
+				silofs_version.string);
 	}
 }
 
@@ -332,8 +330,8 @@ void fte_run(struct ft_env *fte)
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 void ft_exec_with_ranges_(struct ft_env *fte,
-                          void (*fn)(struct ft_env *, loff_t, size_t),
-                          const struct ft_range *range, size_t na)
+			  void (*fn)(struct ft_env *, loff_t, size_t),
+			  const struct ft_range *range, size_t na)
 {
 	for (size_t i = 0; i < na; ++i) {
 		fn(fte, range[i].off, range[i].len);

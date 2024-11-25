@@ -58,7 +58,7 @@ static void test_xattr_by_fd(struct ft_env *fte)
 	const size_t valsz1 = ft_strlen(value1);
 	const char *name2 = "user.ascii_letters";
 	const char *value2 =
-	        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+		"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 	const size_t valsz2 = ft_strlen(value2);
 	size_t sz = 0;
 	int dfd = -1;
@@ -322,15 +322,13 @@ static void test_xattr_any_large(struct ft_env *fte)
 
 static void test_xattr_any_edges(struct ft_env *fte)
 {
-	const size_t valsz[] = {
-		1,
-		2,
-		247,
-		248,
-		249,
-		SILOFS_XATTR_VALUE_MAX - 1,
-		SILOFS_XATTR_VALUE_MAX
-	};
+	const size_t valsz[] = { 1,
+				 2,
+				 247,
+				 248,
+				 249,
+				 SILOFS_XATTR_VALUE_MAX - 1,
+				 SILOFS_XATTR_VALUE_MAX };
 
 	for (size_t i = 0; i < FT_ARRAY_SIZE(valsz); ++i) {
 		test_xattr_any_(fte, valsz[i]);
@@ -341,16 +339,11 @@ static void test_xattr_any_edges(struct ft_env *fte)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ft_tdef ft_local_tests[] = {
-	FT_DEFTEST(test_xattr_simple),
-	FT_DEFTEST(test_xattr_by_fd),
-	FT_DEFTEST(test_xattr_inode),
-	FT_DEFTEST(test_xattr_ctime),
-	FT_DEFTEST(test_xattr_replace),
-	FT_DEFTEST(test_xattr_list),
-	FT_DEFTEST(test_xattr_any_small),
-	FT_DEFTEST(test_xattr_any_large),
+	FT_DEFTEST(test_xattr_simple),    FT_DEFTEST(test_xattr_by_fd),
+	FT_DEFTEST(test_xattr_inode),     FT_DEFTEST(test_xattr_ctime),
+	FT_DEFTEST(test_xattr_replace),   FT_DEFTEST(test_xattr_list),
+	FT_DEFTEST(test_xattr_any_small), FT_DEFTEST(test_xattr_any_large),
 	FT_DEFTEST(test_xattr_any_edges),
 };
 
 const struct ft_tests ft_test_xattr = FT_DEFTESTS(ft_local_tests);
-

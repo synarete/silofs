@@ -40,5 +40,4 @@ static inline long ft_lmax(long a, long b)
 	return (a > b) ? a : b;
 }
 
-
 #endif /* SILOFS_FUNTESTS_INLINE_H_ */

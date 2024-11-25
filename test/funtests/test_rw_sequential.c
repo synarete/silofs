@@ -20,8 +20,8 @@
 /*
  * Tests data-consistency of sequential writes followed by sequential reads.
  */
-static void test_rw_sequencial_(struct ft_env *fte, loff_t from,
-                                size_t len, size_t cnt, int rewrite)
+static void test_rw_sequencial_(struct ft_env *fte, loff_t from, size_t len,
+				size_t cnt, int rewrite)
 {
 	void *buf2 = ft_new_buf_zeros(fte, len);
 	char *path = ft_new_path_unique(fte);
@@ -137,7 +137,6 @@ static void test_rw_sequencial_unaligned_64k(struct ft_env *fte)
 	}
 }
 
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void test_rw_sequencial_unaligned_1m(struct ft_env *fte)
@@ -209,8 +208,8 @@ static void test_rw_sequencial_unaligned_some(struct ft_env *fte)
  * Tests data-consistency of sequential writes followed by sequential reads
  * of variable length strings
  */
-static void test_sequencial_strings_(struct ft_env *fte,
-                                     loff_t start_off, size_t cnt)
+static void
+test_sequencial_strings_(struct ft_env *fte, loff_t start_off, size_t cnt)
 {
 	char buf1[128] = "";
 	char buf2[128] = "";
@@ -287,4 +286,3 @@ static const struct ft_tdef ft_local_tests[] = {
 };
 
 const struct ft_tests ft_test_rw_sequencial = FT_DEFTESTS(ft_local_tests);
-

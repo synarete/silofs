@@ -174,7 +174,7 @@ static void test_rw_basic_space(struct ft_env *fte)
 	int fd = -1;
 
 	for (size_t i = 0; i < 256; ++i) {
-		off  = (loff_t)i;
+		off = (loff_t)i;
 		buf1 = ft_new_buf_rands(fte, bsz);
 		buf2 = ft_new_buf_rands(fte, bsz);
 		ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
@@ -278,8 +278,8 @@ static void test_rw_basic_overlap(struct ft_env *fte)
 /*
  * Expects read-write data-consistency when I/O in complex patterns
  */
-static void test_rw_basic_steps_(struct ft_env *fte,
-                                 loff_t pos, loff_t lim, loff_t step)
+static void
+test_rw_basic_steps_(struct ft_env *fte, loff_t pos, loff_t lim, loff_t step)
 {
 	size_t bsz = FT_64K;
 	void *buf1 = NULL;
@@ -300,7 +300,6 @@ static void test_rw_basic_steps_(struct ft_env *fte,
 	ft_close(fd);
 	ft_unlink(path);
 }
-
 
 static void test_rw_basic_aligned_steps(struct ft_env *fte)
 {
@@ -406,16 +405,11 @@ test_rw_basic_backward_byte_(struct ft_env *fte, loff_t off, size_t len)
 static void test_rw_basic_backward_byte(struct ft_env *fte)
 {
 	const struct ft_range ranges[] = {
-		FT_MKRANGE(0, 11),
-		FT_MKRANGE(0, 111),
-		FT_MKRANGE(0, 1111),
-		FT_MKRANGE(0, 11111),
-		FT_MKRANGE(FT_1M, 1111),
-		FT_MKRANGE(FT_1M + 11, 1111),
-		FT_MKRANGE(FT_1G, 1111),
-		FT_MKRANGE(FT_1G + 11, 1111),
-		FT_MKRANGE(FT_1T, 1111),
-		FT_MKRANGE(FT_1T + 11, 1111),
+		FT_MKRANGE(0, 11),       FT_MKRANGE(0, 111),
+		FT_MKRANGE(0, 1111),     FT_MKRANGE(0, 11111),
+		FT_MKRANGE(FT_1M, 1111), FT_MKRANGE(FT_1M + 11, 1111),
+		FT_MKRANGE(FT_1G, 1111), FT_MKRANGE(FT_1G + 11, 1111),
+		FT_MKRANGE(FT_1T, 1111), FT_MKRANGE(FT_1T + 11, 1111),
 	};
 
 	ft_exec_with_ranges(fte, test_rw_basic_backward_byte_, ranges);

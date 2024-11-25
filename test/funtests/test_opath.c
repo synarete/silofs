@@ -16,7 +16,6 @@
  */
 #include "funtests.h"
 
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 /*
  * Expects open(3p) with O_PATH on regular file to have valid semantics.
@@ -237,7 +236,7 @@ static void test_opath_unlinked(struct ft_env *fte)
 	const char *name = ft_new_name_unique(fte);
 	int dfd = -1;
 	int fd1 = -1;
-	int fd2 = -1;   /* need 2nd fd due to issue with FUSE+O_PATH */
+	int fd2 = -1; /* need 2nd fd due to issue with FUSE+O_PATH */
 
 	ft_mkdir(path, 0700);
 	ft_openat(AT_FDCWD, path, O_DIRECTORY | O_RDONLY | O_PATH, 0, &dfd);
@@ -269,12 +268,9 @@ static void test_opath_unlinked(struct ft_env *fte)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ft_tdef ft_local_tests[] = {
-	FT_DEFTEST(test_opath_reg),
-	FT_DEFTEST(test_opath_symlnk),
-	FT_DEFTEST(test_opath_dir),
-	FT_DEFTEST(test_opath_renameat),
-	FT_DEFTEST(test_opath_fstatat),
-	FT_DEFTEST(test_opath_unlinked),
+	FT_DEFTEST(test_opath_reg),     FT_DEFTEST(test_opath_symlnk),
+	FT_DEFTEST(test_opath_dir),     FT_DEFTEST(test_opath_renameat),
+	FT_DEFTEST(test_opath_fstatat), FT_DEFTEST(test_opath_unlinked),
 };
 
 const struct ft_tests ft_test_opath = FT_DEFTESTS(ft_local_tests);

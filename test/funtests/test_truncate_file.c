@@ -64,7 +64,7 @@ static void test_truncate_basic(struct ft_env *fte)
  * Expects truncate(3p) to create zeros at the truncated tail-range.
  */
 static void test_truncate_tail_(struct ft_env *fte, loff_t base_off,
-                                size_t data_sz, size_t tail_sz)
+				size_t data_sz, size_t tail_sz)
 {
 	struct stat st = { .st_size = -1 };
 	void *buf1 = ft_new_buf_rands(fte, data_sz);
@@ -95,10 +95,8 @@ static void test_truncate_tail(struct ft_env *fte)
 	test_truncate_tail_(fte, 0, FT_1M, 11);
 	test_truncate_tail_(fte, 1, FT_1M + 111, (7 * FT_BK_SIZE) - 7);
 	test_truncate_tail_(fte, FT_1M - 1, FT_1M + 2, FT_1M / 2);
-	test_truncate_tail_(fte, FT_1G - 11,
-	                    FT_1M + 111, FT_1M / 3);
-	test_truncate_tail_(fte, FT_FILESIZE_MAX / 3,
-	                    FT_1M + 3, FT_1M / 3);
+	test_truncate_tail_(fte, FT_1G - 11, FT_1M + 111, FT_1M / 3);
+	test_truncate_tail_(fte, FT_FILESIZE_MAX / 3, FT_1M + 3, FT_1M / 3);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -196,5 +194,4 @@ static const struct ft_tdef ft_local_tests[] = {
 	FT_DEFTEST(test_truncate_zeros),
 };
 
-const struct ft_tests ft_test_truncate_io =
-        FT_DEFTESTS(ft_local_tests);
+const struct ft_tests ft_test_truncate_io = FT_DEFTESTS(ft_local_tests);

@@ -18,7 +18,6 @@
 #include <linux/fs.h>
 #include <linux/fiemap.h>
 
-
 static struct fiemap *new_fiemap(struct ft_env *fte, size_t cnt)
 {
 	size_t sz;

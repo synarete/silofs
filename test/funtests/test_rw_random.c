@@ -21,8 +21,8 @@
  * Tests read-write data-consistency for a sequence of IOs at pseudo random
  * offsets.
  */
-static void test_rw_random_(struct ft_env *fte,
-                            loff_t from, size_t len, size_t cnt, int unlinked)
+static void test_rw_random_(struct ft_env *fte, loff_t from, size_t len,
+			    size_t cnt, int unlinked)
 {
 	const char *path = ft_new_path_unique(fte);
 	const long *pseq = ft_new_buf_randseq(fte, cnt, 0);

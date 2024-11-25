@@ -165,7 +165,6 @@ static void test_statvfs_ffree(struct ft_env *fte)
 	ft_rmdir(dpath);
 }
 
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 /*
  * Expects statvfs(3p) to change statvfs.f_ffree upon sequence of creates

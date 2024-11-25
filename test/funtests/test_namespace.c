@@ -25,32 +25,29 @@ struct ft_ns_ctx {
 	size_t files_per_level;
 };
 
-
-static char *make_path(const struct ft_ns_ctx *ns_ctx,
-                       const char *parent_dir, const char *prefix,
-                       size_t depth, size_t idx)
+static char *make_path(const struct ft_ns_ctx *ns_ctx, const char *parent_dir,
+		       const char *prefix, size_t depth, size_t idx)
 {
-	const char *name =
-	        ft_strfmt(ns_ctx->fte, "%s_%lu_%lu",
-	                  prefix, depth + 1, idx + 1);
+	const char *name = ft_strfmt(ns_ctx->fte, "%s_%lu_%lu", prefix,
+				     depth + 1, idx + 1);
 
 	return ft_new_path_nested(ns_ctx->fte, parent_dir, name);
 }
 
 static char *make_dirpath(const struct ft_ns_ctx *ns_ctx,
-                          const char *parent_dir, size_t depth, size_t idx)
+			  const char *parent_dir, size_t depth, size_t idx)
 {
 	return make_path(ns_ctx, parent_dir, "dir", depth, idx);
 }
 
 static char *make_filepath(const struct ft_ns_ctx *ns_ctx,
-                           const char *parent_dir, size_t depth, size_t idx)
+			   const char *parent_dir, size_t depth, size_t idx)
 {
 	return make_path(ns_ctx, parent_dir, "file", depth, idx);
 }
 
 static void test_mktree_recursive(const struct ft_ns_ctx *ns_ctx,
-                                  const char *parent_dir, size_t depth)
+				  const char *parent_dir, size_t depth)
 {
 	int fd;
 	char *path;
@@ -71,7 +68,7 @@ static void test_mktree_recursive(const struct ft_ns_ctx *ns_ctx,
 }
 
 static void test_rmtree_recursive(const struct ft_ns_ctx *ns_ctx,
-                                  const char *parent_dir, size_t depth)
+				  const char *parent_dir, size_t depth)
 {
 	char *path;
 
@@ -101,39 +98,32 @@ static void test_namespace_(struct ft_ns_ctx *ns_ctx)
 	ft_rmdir(path);
 }
 
-
 static void test_namespace_simple(struct ft_env *fte)
 {
-	struct ft_ns_ctx ns_ctx = {
-		.fte = fte,
-		.depth_max = 4,
-		.dirs_per_level = 4,
-		.files_per_level = 4
-	};
+	struct ft_ns_ctx ns_ctx = { .fte = fte,
+				    .depth_max = 4,
+				    .dirs_per_level = 4,
+				    .files_per_level = 4 };
 
 	test_namespace_(&ns_ctx);
 }
 
 static void test_namespace_deep(struct ft_env *fte)
 {
-	struct ft_ns_ctx ns_ctx = {
-		.fte = fte,
-		.depth_max = 12,
-		.dirs_per_level = 2,
-		.files_per_level = 4
-	};
+	struct ft_ns_ctx ns_ctx = { .fte = fte,
+				    .depth_max = 12,
+				    .dirs_per_level = 2,
+				    .files_per_level = 4 };
 
 	test_namespace_(&ns_ctx);
 }
 
 static void test_namespace_wide(struct ft_env *fte)
 {
-	struct ft_ns_ctx ns_ctx = {
-		.fte = fte,
-		.depth_max = 2,
-		.dirs_per_level = 128,
-		.files_per_level = 16
-	};
+	struct ft_ns_ctx ns_ctx = { .fte = fte,
+				    .depth_max = 2,
+				    .dirs_per_level = 128,
+				    .files_per_level = 16 };
 
 	test_namespace_(&ns_ctx);
 }
@@ -147,4 +137,3 @@ static const struct ft_tdef ft_local_tests[] = {
 };
 
 const struct ft_tests ft_test_namespace = FT_DEFTESTS(ft_local_tests);
-

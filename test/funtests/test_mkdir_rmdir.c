@@ -22,8 +22,8 @@
  * only to apply on last. Expects all other non-empty directories to return
  * -ENOTEMPTY upon rmdir(3p).
  */
-static void test_rmdir_notempty(struct ft_env *fte,
-                                char const **pathi, size_t count)
+static void
+test_rmdir_notempty(struct ft_env *fte, char const **pathi, size_t count)
 {
 	for (size_t i = 0; i < count; ++i) {
 		ft_rmdir_err(pathi[i], -ENOTEMPTY);
@@ -68,7 +68,7 @@ static void test_mkdir_umask(struct ft_env *fte)
 	const char *path0 = ft_new_path_unique(fte);
 	const char *path1 = ft_new_path_under(fte, path0);
 
-	umsk  = umask(0020);
+	umsk = umask(0020);
 	ft_mkdir(path0, 0755);
 	ft_stat(path0, &st[0]);
 	ft_expect_st_dir(&st[0]);
@@ -244,15 +244,13 @@ static void test_mkdir_nested(struct ft_env *fte)
 /*
  * Create recursively directory tree structure
  */
-static const char *makename(struct ft_env *fte,
-                            const char *prefix, size_t depth, size_t id)
+static const char *
+makename(struct ft_env *fte, const char *prefix, size_t depth, size_t id)
 {
-	return ft_strfmt(fte, "%s%03x-%03x",
-	                 prefix, (int)depth, (int)id);
+	return ft_strfmt(fte, "%s%03x-%03x", prefix, (int)depth, (int)id);
 }
 
-static void test_walktree_recursive(struct ft_env *fte,
-                                    const char *base)
+static void test_walktree_recursive(struct ft_env *fte, const char *base)
 {
 	int fd = -1;
 	loff_t pos = -1;
@@ -280,11 +278,9 @@ static void test_walktree_recursive(struct ft_env *fte,
 	ft_close(fd);
 }
 
-
-static void test_mktree_recursive(struct ft_env *fte,
-                                  const char *parent,
-                                  size_t id, size_t nchilds,
-                                  size_t depth, size_t depth_max)
+static void
+test_mktree_recursive(struct ft_env *fte, const char *parent, size_t id,
+		      size_t nchilds, size_t depth, size_t depth_max)
 {
 	int fd = -1;
 	const char *path = NULL;
@@ -296,7 +292,7 @@ static void test_mktree_recursive(struct ft_env *fte,
 		ft_mkdir(path, 0700);
 		for (size_t i = 0; i < nchilds; ++i) {
 			test_mktree_recursive(fte, path, i + 1, nchilds,
-			                      depth + 1, depth_max);
+					      depth + 1, depth_max);
 		}
 	} else {
 		name = makename(fte, "f", depth, id);
@@ -306,10 +302,9 @@ static void test_mktree_recursive(struct ft_env *fte,
 	}
 }
 
-static void test_rmtree_recursive(struct ft_env *fte,
-                                  const char *parent,
-                                  size_t id, size_t nchilds,
-                                  size_t depth, size_t depth_max)
+static void
+test_rmtree_recursive(struct ft_env *fte, const char *parent, size_t id,
+		      size_t nchilds, size_t depth, size_t depth_max)
 {
 	const char *path = NULL;
 	const char *name = NULL;
@@ -319,7 +314,7 @@ static void test_rmtree_recursive(struct ft_env *fte,
 		path = ft_new_path_nested(fte, parent, name);
 		for (size_t i = 0; i < nchilds; ++i) {
 			test_rmtree_recursive(fte, path, i + 1, nchilds,
-			                      depth + 1, depth_max);
+					      depth + 1, depth_max);
 		}
 		ft_rmdir(path);
 	} else {
@@ -329,20 +324,18 @@ static void test_rmtree_recursive(struct ft_env *fte,
 	}
 }
 
-static void test_mkdir_tree_(struct ft_env *fte,
-                             size_t nchilds, size_t depth_max)
+static void
+test_mkdir_tree_(struct ft_env *fte, size_t nchilds, size_t depth_max)
 {
 	const char *path = ft_new_path_unique(fte);
 
 	ft_mkdir(path, 0700);
 	for (size_t i = 0; i < nchilds; ++i) {
-		test_mktree_recursive(fte, path, i + 1,
-		                      nchilds, 1, depth_max);
+		test_mktree_recursive(fte, path, i + 1, nchilds, 1, depth_max);
 	}
 	test_walktree_recursive(fte, path);
 	for (size_t j = 0; j < nchilds; ++j) {
-		test_rmtree_recursive(fte, path, j + 1,
-		                      nchilds, 1, depth_max);
+		test_rmtree_recursive(fte, path, j + 1, nchilds, 1, depth_max);
 	}
 	ft_rmdir(path);
 }
@@ -435,7 +428,6 @@ static void test_mkdirat_nested(struct ft_env *fte)
 	ft_rmdir(path);
 }
 
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 /*
  * Expects mkdirat(2) to work with multiple nested dirs/files and I/O
@@ -463,8 +455,8 @@ static void test_mkdirat_nested_io_(struct ft_env *fte, size_t cnt)
 		name = ft_new_namef(fte, "%s%lu/%lu/%lu", curr, i, i, i);
 		ft_mkdirat(dfd, name, 0700);
 		for (size_t j = 0; j < cnt_inner; ++j) {
-			name = ft_new_namef(fte, "%s%lu/%lu/%lu/%s%lu",
-			                    curr, i, i, i, curr, j);
+			name = ft_new_namef(fte, "%s%lu/%lu/%lu/%s%lu", curr,
+					    i, i, i, curr, j);
 			ft_openat(dfd, name, O_CREAT | O_RDWR, 0600, &fd);
 			off = (ssize_t)(i * len + j);
 			ft_pwriten(fd, buf1, len, off);
@@ -475,8 +467,8 @@ static void test_mkdirat_nested_io_(struct ft_env *fte, size_t cnt)
 	ft_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);
 	for (size_t i = 0; i < cnt; ++i) {
 		for (size_t j = 0; j < cnt_inner; ++j) {
-			name = ft_new_namef(fte, "%s%lu/%lu/%lu/%s%lu",
-			                    curr, i, i, i, curr, j);
+			name = ft_new_namef(fte, "%s%lu/%lu/%lu/%s%lu", curr,
+					    i, i, i, curr, j);
 			ft_openat(dfd, name, O_RDONLY, 0600, &fd);
 			off = (ssize_t)(i * len + j);
 			ft_preadn(fd, buf2, len, off);
@@ -561,7 +553,6 @@ static void test_rmdir_openat(struct ft_env *fte)
 	ft_close(dfd2);
 }
 
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 /*
  * Expects successful getdents(2) after rmdir(3p) on empty directory while
@@ -618,22 +609,14 @@ static void test_rmdir_getdents(struct ft_env *fte)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ft_tdef ft_local_tests[] = {
-	FT_DEFTEST(test_mkdir_rmdir),
-	FT_DEFTEST(test_mkdir_umask),
-	FT_DEFTEST(test_mkdir_chmod),
-	FT_DEFTEST(test_mkdir_loop),
-	FT_DEFTEST(test_mkdir_nested),
-	FT_DEFTEST(test_mkdir_many),
-	FT_DEFTEST(test_mkdir_many_more),
-	FT_DEFTEST(test_mkdir_tree_wide),
-	FT_DEFTEST(test_mkdir_tree_deep),
-	FT_DEFTEST(test_mkdir_setgid),
-	FT_DEFTEST(test_mkdirat_simple),
-	FT_DEFTEST(test_mkdirat_nested),
-	FT_DEFTEST(test_mkdirat_nested_io),
-	FT_DEFTEST(test_rmdir_mctime),
-	FT_DEFTEST(test_rmdir_openat),
-	FT_DEFTEST(test_rmdir_getdents),
+	FT_DEFTEST(test_mkdir_rmdir),       FT_DEFTEST(test_mkdir_umask),
+	FT_DEFTEST(test_mkdir_chmod),       FT_DEFTEST(test_mkdir_loop),
+	FT_DEFTEST(test_mkdir_nested),      FT_DEFTEST(test_mkdir_many),
+	FT_DEFTEST(test_mkdir_many_more),   FT_DEFTEST(test_mkdir_tree_wide),
+	FT_DEFTEST(test_mkdir_tree_deep),   FT_DEFTEST(test_mkdir_setgid),
+	FT_DEFTEST(test_mkdirat_simple),    FT_DEFTEST(test_mkdirat_nested),
+	FT_DEFTEST(test_mkdirat_nested_io), FT_DEFTEST(test_rmdir_mctime),
+	FT_DEFTEST(test_rmdir_openat),      FT_DEFTEST(test_rmdir_getdents),
 };
 
 const struct ft_tests ft_test_mkdir = FT_DEFTESTS(ft_local_tests);

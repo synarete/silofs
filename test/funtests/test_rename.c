@@ -725,8 +725,7 @@ static void test_renameat_exchange(struct ft_env *fte)
 /*
  * Test renameat2(2) back and forth within same dir
  */
-static char *make_lname(struct ft_env *fte,
-                        const char *prefix, size_t idx)
+static char *make_lname(struct ft_env *fte, const char *prefix, size_t idx)
 {
 	char name[SILOFS_NAME_MAX + 1] = "";
 

@@ -72,10 +72,8 @@ static void test_fallocate_(struct ft_env *fte, loff_t off, size_t ulen)
 static void test_fallocate_aligned(struct ft_env *fte)
 {
 	const struct ft_range ranges[] = {
-		FT_MKRANGE(0, FT_64K),
-		FT_MKRANGE(0, FT_1M),
-		FT_MKRANGE(FT_1M, FT_64K),
-		FT_MKRANGE(FT_1G, FT_1M),
+		FT_MKRANGE(0, FT_64K),     FT_MKRANGE(0, FT_1M),
+		FT_MKRANGE(FT_1M, FT_64K), FT_MKRANGE(FT_1G, FT_1M),
 		FT_MKRANGE(FT_1T, FT_1M),
 	};
 
@@ -289,11 +287,11 @@ static void test_fallocate_beyond(struct ft_env *fte)
 /*
  * Expects fallocate(2) with FALLOC_FL_PUNCH_HOLE to return zeros on hole
  */
-static void test_fallocate_punch_hole_(struct ft_env *fte,
-                                       loff_t data_off, size_t data_len,
-                                       loff_t hole_off, size_t hole_len)
+static void
+test_fallocate_punch_hole_(struct ft_env *fte, loff_t data_off,
+			   size_t data_len, loff_t hole_off, size_t hole_len)
 {
-	const void *buf =  ft_new_buf_rands(fte, data_len);
+	const void *buf = ft_new_buf_rands(fte, data_len);
 	const char *path = ft_new_path_unique(fte);
 	const int mode = FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE;
 	loff_t pos = 0;
@@ -317,8 +315,8 @@ static void test_fallocate_punch_hole(struct ft_env *fte)
 	test_fallocate_punch_hole_(fte, 0, FT_1K, 0, FT_1K / 2);
 	test_fallocate_punch_hole_(fte, 0, FT_64K, 0, 32);
 	test_fallocate_punch_hole_(fte, 0, FT_64K, 1, 17);
-	test_fallocate_punch_hole_(fte, FT_64K, FT_64K,
-	                           FT_64K + 1, FT_64K - 2);
+	test_fallocate_punch_hole_(fte, FT_64K, FT_64K, FT_64K + 1,
+				   FT_64K - 2);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -368,10 +366,15 @@ test_fallocate_punch_into_hole_(struct ft_env *fte, loff_t base_off)
 
 static void test_fallocate_punch_into_hole(struct ft_env *fte)
 {
-	const loff_t off[] = {
-		0, FT_1M, FT_1M - 1, FT_1G, FT_1G + 1, FT_1T, FT_1T - 1,
-		FT_FILESIZE_MAX / 2, (FT_FILESIZE_MAX / 2) + 1
-	};
+	const loff_t off[] = { 0,
+			       FT_1M,
+			       FT_1M - 1,
+			       FT_1G,
+			       FT_1G + 1,
+			       FT_1T,
+			       FT_1T - 1,
+			       FT_FILESIZE_MAX / 2,
+			       (FT_FILESIZE_MAX / 2) + 1 };
 
 	for (size_t i = 0; i < FT_ARRAY_SIZE(off); ++i) {
 		test_fallocate_punch_into_hole_(fte, off[i]);
@@ -413,8 +416,8 @@ static void test_fallocate_punch_into_allocated(struct ft_env *fte)
  * Tests fallocate(2) with FALLOC_FL_ZERO_RANGE on with/without data,
  * with/without FALLOC_FL_KEEP_SIZE.
  */
-static void test_fallocate_zero_range_(struct ft_env *fte,
-                                       loff_t off, size_t len)
+static void
+test_fallocate_zero_range_(struct ft_env *fte, loff_t off, size_t len)
 {
 	struct stat st[2];
 	const char *path = ft_new_path_unique(fte);
@@ -527,8 +530,8 @@ static void test_fallocate_zero_range(struct ft_env *fte)
  * Expects fallocate(2) on sparse file change size and blocks count. Expects
  * write-on-fallocated to change none.
  */
-static void test_fallocate_sparse_(struct ft_env *fte,
-                                   loff_t base_off, size_t step_size)
+static void
+test_fallocate_sparse_(struct ft_env *fte, loff_t base_off, size_t step_size)
 {
 	struct stat st;
 	const char *path = ft_new_path_unique(fte);
@@ -577,7 +580,7 @@ static void test_fallocate_sparse(struct ft_env *fte)
 		FT_MKRANGE(11 * FT_1M + 1, FT_1G),
 		FT_MKRANGE(FT_1T - 111, FT_1G),
 		FT_MKRANGE(FT_FILESIZE_MAX / 2, FT_1G),
-		FT_MKRANGE((FT_FILESIZE_MAX / 2) - 7,  FT_1G + 77),
+		FT_MKRANGE((FT_FILESIZE_MAX / 2) - 7, FT_1G + 77),
 	};
 
 	ft_exec_with_ranges(fte, test_fallocate_sparse_, ranges);

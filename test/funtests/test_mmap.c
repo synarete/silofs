@@ -45,12 +45,9 @@ static void test_mmap_basic_(struct ft_env *fte, loff_t off, size_t len)
 static void test_mmap_basic(struct ft_env *fte)
 {
 	const struct ft_range ranges[] = {
-		FT_MKRANGE(0, FT_4K),
-		FT_MKRANGE(0, FT_8K),
-		FT_MKRANGE(0, FT_64K),
-		FT_MKRANGE(FT_64K, FT_1M),
-		FT_MKRANGE(FT_1G, 2 * FT_1M),
-		FT_MKRANGE(FT_1T, FT_1M),
+		FT_MKRANGE(0, FT_4K),         FT_MKRANGE(0, FT_8K),
+		FT_MKRANGE(0, FT_64K),        FT_MKRANGE(FT_64K, FT_1M),
+		FT_MKRANGE(FT_1G, 2 * FT_1M), FT_MKRANGE(FT_1T, FT_1M),
 	};
 
 	ft_exec_with_ranges(fte, test_mmap_basic_, ranges);
@@ -169,10 +166,8 @@ static void test_mmap_fallocate_(struct ft_env *fte, loff_t off, size_t len)
 static void test_mmap_fallocate(struct ft_env *fte)
 {
 	const struct ft_range ranges[] = {
-		FT_MKRANGE(0, FT_64K),
-		FT_MKRANGE(0, FT_1M),
-		FT_MKRANGE(FT_64K, FT_1M),
-		FT_MKRANGE(FT_1G, FT_1M),
+		FT_MKRANGE(0, FT_64K),     FT_MKRANGE(0, FT_1M),
+		FT_MKRANGE(FT_64K, FT_1M), FT_MKRANGE(FT_1G, FT_1M),
 		FT_MKRANGE(FT_1T, FT_1M),
 	};
 
@@ -233,7 +228,6 @@ static void test_mmap_sparse_(struct ft_env *fte, loff_t off, size_t len)
 	long *ptr = NULL;
 	void *addr = NULL;
 	int fd = -1;
-
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_fallocate(fd, 0, off, (loff_t)len);
@@ -355,7 +349,7 @@ static void test_mmap_unlinked(struct ft_env *fte)
 static void test_mmap_twice_(struct ft_env *fte, loff_t off, size_t len)
 {
 	long *dat = NULL;
-	const size_t cnt  = len / sizeof(*dat);
+	const size_t cnt = len / sizeof(*dat);
 	const char *path = ft_new_path_unique(fte);
 	void *addr = NULL;
 	int fd = -1;

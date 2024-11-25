@@ -18,16 +18,16 @@
 
 struct ft_mmap_mt_ctx {
 	struct silofs_thread th;
-	struct ft_env  *fte;
-	uint8_t        *addr;
-	size_t          size;
-	size_t          sgsz;
-	size_t          indx;
-	int             fd;
+	struct ft_env *fte;
+	uint8_t *addr;
+	size_t size;
+	size_t sgsz;
+	size_t indx;
+	int fd;
 };
 
-static void ft_mmtc_exec_thread(struct ft_mmap_mt_ctx *mmtc,
-                                silofs_execute_fn exec)
+static void
+ft_mmtc_exec_thread(struct ft_mmap_mt_ctx *mmtc, silofs_execute_fn exec)
 {
 	int err;
 
@@ -83,8 +83,8 @@ static int start_test_mmap_mt_seq(struct silofs_thread *th)
 	return 0;
 }
 
-static void test_mmap_mt_seq_(struct ft_env *fte, loff_t off,
-                              size_t msz, size_t sgsz)
+static void
+test_mmap_mt_seq_(struct ft_env *fte, loff_t off, size_t msz, size_t sgsz)
 {
 	struct ft_mmap_mt_ctx mmt_ctx[16];
 	const char *path = ft_new_path_unique(fte);
@@ -129,4 +129,3 @@ static const struct ft_tdef ft_local_tests[] = {
 };
 
 const struct ft_tests ft_test_mmap_mt = FT_DEFTESTS(ft_local_tests);
-

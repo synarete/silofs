@@ -249,4 +249,3 @@ static const struct ft_tdef ft_local_tests[] = {
 };
 
 const struct ft_tests ft_test_mkfifo = FT_DEFTESTS(ft_local_tests);
-

@@ -16,7 +16,6 @@
  */
 #include "funtests.h"
 
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 /*
  * Expects read-write data-consistency, sequential writes of single block.
@@ -29,8 +28,8 @@ static void test_tmpfile_simple(struct ft_env *fte)
 	size_t nwr = 0;
 	size_t nrd = 0;
 	struct stat st;
-	const size_t bsz  = FT_BK_SIZE;
-	void *buf  = ft_new_buf_zeros(fte, bsz);
+	const size_t bsz = FT_BK_SIZE;
+	void *buf = ft_new_buf_zeros(fte, bsz);
 	char *path = ft_new_path_unique(fte);
 
 	ft_mkdir(path, 0700);

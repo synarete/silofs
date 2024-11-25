@@ -173,17 +173,8 @@ static void test_write_lseek_read_(struct ft_env *fte, size_t len)
 static void test_write_lseek_read(struct ft_env *fte)
 {
 	const size_t len[] = {
-		1,
-		11,
-		FT_1K,
-		FT_1K + 1,
-		FT_4K,
-		FT_4K + 1,
-		FT_64K,
-		FT_64K + 1,
-		FT_1M / 2,
-		FT_1M,
-		FT_1M + 1,
+		1,      11,         FT_1K,     FT_1K + 1, FT_4K,     FT_4K + 1,
+		FT_64K, FT_64K + 1, FT_1M / 2, FT_1M,     FT_1M + 1,
 	};
 
 	for (size_t i = 0; i < FT_ARRAY_SIZE(len); ++i) {
@@ -258,8 +249,7 @@ static void test_write_mctimes(struct ft_env *fte)
 /*
  * Expects successful pwrite(3p) to clear SUID bit, pread(3p) to not change
  */
-static void test_write_read_suid_(struct ft_env *fte,
-                                  loff_t off, size_t bsz)
+static void test_write_read_suid_(struct ft_env *fte, loff_t off, size_t bsz)
 {
 	struct stat st = { .st_size = -1 };
 	const char *path = ft_new_path_unique(fte);
@@ -298,7 +288,7 @@ static void test_write_read_suid(struct ft_env *fte)
 		FT_MKRANGE(0, FT_64K),
 		FT_MKRANGE(0, FT_1M),
 		FT_MKRANGE(1, FT_1K),
-		FT_MKRANGE(11, 11 * FT_1K  + 1),
+		FT_MKRANGE(11, 11 * FT_1K + 1),
 		FT_MKRANGE(FT_1G - 1, FT_64K),
 		FT_MKRANGE(FT_1T, FT_1M),
 		FT_MKRANGE(FT_1T - 1, FT_1M + 3),
@@ -363,15 +353,10 @@ static void test_write_read_sgid(struct ft_env *fte)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ft_tdef ft_local_tests[] = {
-	FT_DEFTEST(test_write_only),
-	FT_DEFTEST(test_write_unlinked),
-	FT_DEFTEST(test_write_espipe),
-	FT_DEFTEST(test_write_mctimes),
-	FT_DEFTEST(test_write_lseek_read),
-	FT_DEFTEST(test_write_read_suid),
+	FT_DEFTEST(test_write_only),       FT_DEFTEST(test_write_unlinked),
+	FT_DEFTEST(test_write_espipe),     FT_DEFTEST(test_write_mctimes),
+	FT_DEFTEST(test_write_lseek_read), FT_DEFTEST(test_write_read_suid),
 	FT_DEFTEST(test_write_read_sgid),
 };
 
 const struct ft_tests ft_test_write = FT_DEFTESTS(ft_local_tests);
-
-

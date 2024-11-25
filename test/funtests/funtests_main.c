@@ -25,20 +25,20 @@
 
 struct ft_global_settings {
 	struct silofs_log_params log_params;
-	int     argc;
-	char  **argv;
-	char   *curr_workdir;
-	char   *testdir_path;
-	char   *testdir_real;
-	char   *test_name;
-	long    repeat_count;
-	int     tests_mask;
-	int     tests_xmask;
-	bool    quiet_mode;
-	bool    without_statvfs;
-	bool    without_flaky;
-	bool    random_order;
-	bool    list_tests;
+	int argc;
+	char **argv;
+	char *curr_workdir;
+	char *testdir_path;
+	char *testdir_real;
+	char *test_name;
+	long repeat_count;
+	int tests_mask;
+	int tests_xmask;
+	bool quiet_mode;
+	bool without_statvfs;
+	bool without_flaky;
+	bool random_order;
+	bool list_tests;
 };
 
 /* Global settings */
@@ -59,7 +59,6 @@ static void ft_post_execute(void);
 static void ft_execute_all(void);
 static void ft_register_sigactions(void);
 static void ft_show_program_version(void);
-
 
 /*
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -123,8 +122,8 @@ static void ft_setup_globals(int argc, char *argv[])
 	ft_globals.argv = argv;
 	ft_globals.repeat_count = 1;
 	ft_globals.log_params.level = SILOFS_LOG_INFO;
-	ft_globals.log_params.flags =
-	        SILOFS_LOGF_STDOUT | SILOFS_LOGF_PROGNAME;
+	ft_globals.log_params.flags = SILOFS_LOGF_STDOUT |
+				      SILOFS_LOGF_PROGNAME;
 	silofs_set_global_log_params(&ft_globals.log_params);
 }
 
@@ -159,8 +158,8 @@ static void ft_pre_execute(void)
 
 	ft_g_env = (struct ft_env *)malloc(sizeof(*ft_g_env));
 	if (ft_g_env == NULL) {
-		error(EXIT_FAILURE, errno,
-		      "malloc %lu failed", sizeof(*ft_g_env));
+		error(EXIT_FAILURE, errno, "malloc %lu failed",
+		      sizeof(*ft_g_env));
 	}
 
 	if (ft_globals.quiet_mode) {
@@ -182,15 +181,13 @@ static void ft_post_execute(void)
 
 static void ft_execute_all(void)
 {
-	struct ft_params params = {
-		.progname = program_invocation_short_name,
-		.testdir = ft_globals.testdir_real,
-		.testname = ft_globals.test_name,
-		.tests_mask = ft_globals.tests_mask,
-		.tests_xmask = ft_globals.tests_xmask,
-		.repeatn = ft_globals.repeat_count,
-		.listtests = ft_globals.list_tests
-	};
+	struct ft_params params = { .progname = program_invocation_short_name,
+				    .testdir = ft_globals.testdir_real,
+				    .testname = ft_globals.test_name,
+				    .tests_mask = ft_globals.tests_mask,
+				    .tests_xmask = ft_globals.tests_xmask,
+				    .repeatn = ft_globals.repeat_count,
+				    .listtests = ft_globals.list_tests };
 
 	fte_init(ft_g_env, &params);
 	fte_run(ft_g_env);
@@ -245,27 +242,25 @@ static void ft_register_sigactions(void)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const char *const ft_usage =
-        "[options] <test-dirpath>\n\n" \
-        "options: \n" \
-        " -t, --test=<name>         Run tests which contains name\n" \
-        " -n, --repeat=<count>      Execute tests count times\n" \
-        " -e, --extra               Use extra tests\n" \
-        " -r, --random              Run tests in random order\n" \
-        " -C, --nostatvfs           Do not check statvfs between tests\n" \
-        " -F, --noflaky             Ignore non-stable tests\n" \
-        " -Q, --quiet               Print only errors\n"
-        " -l, --list                List tests names\n"
-        " -v, --version             Show version info\n";
+	"[options] <test-dirpath>\n\n"
+	"options: \n"
+	" -t, --test=<name>         Run tests which contains name\n"
+	" -n, --repeat=<count>      Execute tests count times\n"
+	" -e, --extra               Use extra tests\n"
+	" -r, --random              Run tests in random order\n"
+	" -C, --nostatvfs           Do not check statvfs between tests\n"
+	" -F, --noflaky             Ignore non-stable tests\n"
+	" -Q, --quiet               Print only errors\n"
+	" -l, --list                List tests names\n"
+	" -v, --version             Show version info\n";
 
-silofs_attr_noreturn
-static void show_help_and_exit(void)
+silofs_attr_noreturn static void show_help_and_exit(void)
 {
 	printf("%s %s\n", program_invocation_short_name, ft_usage);
 	exit(EXIT_SUCCESS);
 }
 
-silofs_attr_noreturn
-static void show_version_and_exit(void)
+silofs_attr_noreturn static void show_version_and_exit(void)
 {
 	ft_show_program_version();
 	exit(EXIT_SUCCESS);
@@ -304,7 +299,7 @@ static void ft_parse_args(void)
 	while (opt_chr > 0) {
 		opt_index = 0;
 		opt_chr = getopt_long(ft_globals.argc, ft_globals.argv,
-		                      "t:n:erQCFlvh", long_opts, &opt_index);
+				      "t:n:erQCFlvh", long_opts, &opt_index);
 		if (opt_chr == 't') {
 			ft_globals.test_name = optarg;
 		} else if (opt_chr == 'n') {

@@ -170,12 +170,9 @@ static void test_unlinkat_io_(struct ft_env *fte, loff_t off, size_t len)
 static void test_unlinkat_io_simple(struct ft_env *fte)
 {
 	const struct ft_range ranges[] = {
-		FT_MKRANGE(0, FT_1K),
-		FT_MKRANGE(0, FT_1M),
-		FT_MKRANGE(0, FT_4K),
-		FT_MKRANGE(0, FT_64K),
-		FT_MKRANGE(FT_64K, FT_64K),
-		FT_MKRANGE(FT_1G, FT_1M),
+		FT_MKRANGE(0, FT_1K),       FT_MKRANGE(0, FT_1M),
+		FT_MKRANGE(0, FT_4K),       FT_MKRANGE(0, FT_64K),
+		FT_MKRANGE(FT_64K, FT_64K), FT_MKRANGE(FT_1G, FT_1M),
 	};
 
 	ft_exec_with_ranges(fte, test_unlinkat_io_, ranges);
@@ -258,4 +255,3 @@ static const struct ft_tdef ft_local_tests[] = {
 };
 
 const struct ft_tests ft_test_unlink = FT_DEFTESTS(ft_local_tests);
-

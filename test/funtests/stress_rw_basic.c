@@ -26,13 +26,13 @@
 
 struct ft_stress_executor {
 	struct silofs_thread th;
-	struct ft_env  *fte;
-	const char     *path;
-	size_t          niter;
-	loff_t          off;
-	size_t          len;
-	loff_t          end;
-	int             keep_run;
+	struct ft_env *fte;
+	const char *path;
+	size_t niter;
+	loff_t off;
+	size_t len;
+	loff_t end;
+	int keep_run;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -65,8 +65,8 @@ static void ste_run(struct ft_stress_executor *ste, silofs_execute_fn exec)
 	ft_expect_ok(err);
 }
 
-static void ste_nrun(struct ft_stress_executor *ste_arr,
-                     size_t n, silofs_execute_fn exec)
+static void
+ste_nrun(struct ft_stress_executor *ste_arr, size_t n, silofs_execute_fn exec)
 {
 	for (size_t i = 0; i < n; ++i) {
 		ste_run(&ste_arr[i], exec);
@@ -132,7 +132,7 @@ static void ste_nunlink(struct ft_stress_executor *ste, size_t n)
 }
 
 static void ste_setup(struct ft_stress_executor *ste, struct ft_env *fte,
-                      const char *path, size_t niter, loff_t off, size_t len)
+		      const char *path, size_t niter, loff_t off, size_t len)
 {
 	silofs_memzero(ste, sizeof(*ste));
 	ste->fte = fte;
@@ -145,14 +145,14 @@ static void ste_setup(struct ft_stress_executor *ste, struct ft_env *fte,
 }
 
 static void ste_setup_uniq(struct ft_stress_executor *ste, struct ft_env *fte,
-                           size_t niter, loff_t off, size_t len)
+			   size_t niter, loff_t off, size_t len)
 {
 	ste_setup(ste, fte, ft_new_path_unique(fte), niter, off, len);
 }
 
-static void ste_nsetup_uniq(struct ft_stress_executor *ste_arr, size_t n,
-                            struct ft_env *fte, size_t niter,
-                            loff_t off, size_t len)
+static void
+ste_nsetup_uniq(struct ft_stress_executor *ste_arr, size_t n,
+		struct ft_env *fte, size_t niter, loff_t off, size_t len)
 {
 	for (size_t i = 0; i < n; ++i) {
 		ste_setup_uniq(&ste_arr[i], fte, niter, off, len);
@@ -397,4 +397,3 @@ static const struct ft_tdef ft_local_tests[] = {
 };
 
 const struct ft_tests ft_stress_rw = FT_DEFTESTS(ft_local_tests);
-

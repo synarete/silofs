@@ -25,8 +25,8 @@
 
 struct ft_mchunk {
 	struct ft_mchunk *next;
-	uint8_t      *data;
-	size_t        size;
+	uint8_t *data;
+	size_t size;
 	unsigned long magic;
 };
 
@@ -89,7 +89,7 @@ static struct ft_mchunk *ft_malloc_chunk(struct ft_env *fte, size_t nbytes)
 	mchunk->data = malloc_ok(nbytes);
 	mchunk->size = nbytes + sizeof(*mchunk);
 	mchunk->next = fte->malloc_list;
-	mchunk->magic  = MCHUNK_MAGIC;
+	mchunk->magic = MCHUNK_MAGIC;
 
 	fte->malloc_list = mchunk;
 	fte->nbytes_alloc += mchunk->size;
@@ -151,8 +151,8 @@ char *ft_strdup(struct ft_env *fte, const char *str)
 	return dup;
 }
 
-static char *ft_do_strcat(struct ft_env *fte,
-                          const char *str1, const char *str2)
+static char *
+ft_do_strcat(struct ft_env *fte, const char *str1, const char *str2)
 {
 	char *str;
 	const size_t len1 = ft_strlen(str1);
@@ -250,8 +250,8 @@ static char *ft_do_joinpath(struct ft_env *fte, const char *s1, const char *s2)
 	return path;
 }
 
-char *ft_new_path_nested(struct ft_env *fte,
-                         const char *base, const char *name)
+char *
+ft_new_path_nested(struct ft_env *fte, const char *base, const char *name)
 {
 	char *ret;
 
@@ -420,7 +420,6 @@ char *ft_make_ulong_name(struct ft_env *fte, unsigned long key)
 	return ft_strfmt(fte, "%08lx", key);
 }
 
-
 static void ft_force_alnum(char *str, size_t len)
 {
 	const char *alt = "_0123456789abcdefghijklmnopqrstuvwxyz";
@@ -464,8 +463,8 @@ const char *ft_curr_test_name(const struct ft_env *fte)
 	return fte->currtest->name;
 }
 
-char *ft_make_xname_unique(struct ft_env *fte, size_t nlen,
-                           char *buf, size_t bsz)
+char *
+ft_make_xname_unique(struct ft_env *fte, size_t nlen, char *buf, size_t bsz)
 {
 	const uint32_t seq = (uint32_t)ft_next_seqn(fte);
 	const uint32_t rnd = (uint32_t)ft_lrand(fte);
@@ -473,8 +472,8 @@ char *ft_make_xname_unique(struct ft_env *fte, size_t nlen,
 	ssize_t len;
 
 	if ((bsz > 0) && (nlen < bsz)) {
-		len = snprintf(buf, bsz, "%s_%08x",
-		               ft_curr_test_name(fte), val);
+		len = snprintf(buf, bsz, "%s_%08x", ft_curr_test_name(fte),
+			       val);
 		if ((size_t)len < bsz) {
 			memset(buf + len, 'x', bsz - (size_t)len);
 		}
@@ -502,7 +501,7 @@ long ft_timespec_diff(const struct timespec *ts1, const struct timespec *ts2)
 }
 
 long ft_xtimestamp_diff(const struct statx_timestamp *ts1,
-                        const struct statx_timestamp *ts2)
+			const struct statx_timestamp *ts2)
 {
 	const long n = 1000000000L;
 	const long d_sec = ts2->tv_sec - ts1->tv_sec;

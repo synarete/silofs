@@ -16,7 +16,6 @@
  */
 #include "funtests.h"
 
-
 /* Maximum hard-links per file */
 static size_t get_link_max(void)
 {
@@ -122,7 +121,7 @@ static void test_link_notdir(struct ft_env *fte)
 static void test_link_rename_(struct ft_env *fte, int cnt)
 {
 	struct stat st = { .st_size = -1 };
-	const char *name  = ft_new_name_unique(fte);
+	const char *name = ft_new_name_unique(fte);
 	const char *path0 = ft_new_path_unique(fte);
 	const char *path1 = ft_new_path_under(fte, path0);
 	const char *path2 = NULL;
@@ -170,7 +169,7 @@ static void test_link_max(struct ft_env *fte)
 {
 	struct stat st = { .st_size = -1 };
 	const size_t link_max = get_link_max();
-	const char *name  = ft_new_name_unique(fte);
+	const char *name = ft_new_name_unique(fte);
 	const char *path0 = ft_new_path_unique(fte);
 	const char *path1 = ft_new_path_under(fte, path0);
 	const char *path2 = NULL;
@@ -219,7 +218,7 @@ static void test_link_similar_names(struct ft_env *fte)
 	const char *path0 = ft_new_path_unique(fte);
 	const char *rpath = ft_new_path_under(fte, path0);
 	const char *abc =
-	        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+		"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 	const size_t abc_len = ft_strlen(abc);
 	const size_t name_max = SILOFS_NAME_MAX;
 	int fd = -1;
@@ -416,14 +415,10 @@ static void test_linkat_with_io(struct ft_env *fte)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ft_tdef ft_local_tests[] = {
-	FT_DEFTEST(test_link_exists),
-	FT_DEFTEST(test_link_noent),
-	FT_DEFTEST(test_link_notdir),
-	FT_DEFTEST(test_link_rename),
-	FT_DEFTEST(test_link_max),
-	FT_DEFTEST(test_link_similar_names),
-	FT_DEFTEST(test_linkat_same_dir),
-	FT_DEFTEST(test_linkat_diff_dir),
+	FT_DEFTEST(test_link_exists),     FT_DEFTEST(test_link_noent),
+	FT_DEFTEST(test_link_notdir),     FT_DEFTEST(test_link_rename),
+	FT_DEFTEST(test_link_max),        FT_DEFTEST(test_link_similar_names),
+	FT_DEFTEST(test_linkat_same_dir), FT_DEFTEST(test_linkat_diff_dir),
 	FT_DEFTEST(test_linkat_with_io),
 };
 

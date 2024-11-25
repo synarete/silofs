@@ -16,15 +16,12 @@
  */
 #include "unitests.h"
 
-
 struct silofs_kv_sizes {
 	size_t name_len;
 	size_t value_size;
 };
 
-
-static struct ut_keyval *
-kv_new(struct ut_env *ute, size_t nlen, size_t size)
+static struct ut_keyval *kv_new(struct ut_env *ute, size_t nlen, size_t size)
 {
 	struct ut_keyval *kv;
 
@@ -56,16 +53,15 @@ static void kvl_append(struct ut_kvl *kvl, size_t nlen, size_t value_sz)
 	kvl->list[kvl->count++] = kv_new(kvl->ute, nlen, value_sz);
 }
 
-static void kvl_appendn(struct ut_kvl *kvl,
-                        const struct silofs_kv_sizes *arr, size_t arr_len)
+static void kvl_appendn(struct ut_kvl *kvl, const struct silofs_kv_sizes *arr,
+			size_t arr_len)
 {
 	for (size_t i = 0; i < arr_len; ++i) {
 		kvl_append(kvl, arr[i].name_len, arr[i].value_size);
 	}
 }
 
-static void kvl_populate(struct ut_kvl *kvl,
-                         size_t name_len, size_t value_sz)
+static void kvl_populate(struct ut_kvl *kvl, size_t name_len, size_t value_sz)
 {
 	for (size_t i = kvl->count; i < kvl->limit; ++i) {
 		kvl_append(kvl, name_len, value_sz);
@@ -117,8 +113,8 @@ static void kvl_random_shuffle(struct ut_kvl *kvl)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_xattr_simple_(struct ut_env *ute,
-                             size_t name_len, size_t value_size)
+static void
+ut_xattr_simple_(struct ut_env *ute, size_t name_len, size_t value_size)
 {
 	ino_t ino = 0;
 	ino_t dino = 0;
@@ -216,8 +212,7 @@ static void ut_xattr_long_names(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void fill_short_kv(struct ut_env *ute,
-                          struct ut_keyval *kv, size_t idx)
+static void fill_short_kv(struct ut_env *ute, struct ut_keyval *kv, size_t idx)
 {
 	const char *str;
 
@@ -265,8 +260,8 @@ static void ut_xattr_shorts(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void fill_novalue_kv(struct ut_env *ute,
-                            struct ut_keyval *kv, size_t idx)
+static void
+fill_novalue_kv(struct ut_env *ute, struct ut_keyval *kv, size_t idx)
 {
 	size_t len = 0;
 	char *str = NULL;
@@ -464,8 +459,7 @@ static void ut_xattr_replace_multi(struct ut_env *ute)
 			kvl->list[i]->size = j - 1;
 			ut_setxattr_replace(ute, ino, kvl->list[i]);
 			kvl->list[i]->size = j - 2;
-			ut_setxattr_rereplace(ute, ino,
-			                      kvl->list[i]);
+			ut_setxattr_rereplace(ute, ino, kvl->list[i]);
 		}
 	}
 	for (size_t i = 0; i < kvl->count; ++i) {
@@ -475,11 +469,10 @@ static void ut_xattr_replace_multi(struct ut_env *ute)
 	ut_rmdir(ute, root_ino, dname);
 }
 
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void ut_xattr_with_io_(struct ut_env *ute, loff_t base_off,
-                              size_t name_len, size_t value_size)
+			      size_t name_len, size_t value_size)
 {
 	ino_t ino = 0;
 	ino_t dino = 0;
@@ -518,16 +511,11 @@ static void ut_xattr_with_io(struct ut_env *ute)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ut_testdef ut_local_tests[] = {
-	UT_DEFTEST1(ut_xattr_simple),
-	UT_DEFTEST(ut_xattr_any_value),
-	UT_DEFTEST(ut_xattr_short_names),
-	UT_DEFTEST(ut_xattr_long_names),
-	UT_DEFTEST(ut_xattr_shorts),
-	UT_DEFTEST(ut_xattr_no_value),
-	UT_DEFTEST(ut_xattr_multi),
-	UT_DEFTEST(ut_xattr_lookup_random),
-	UT_DEFTEST(ut_xattr_replace),
-	UT_DEFTEST(ut_xattr_replace_multi),
+	UT_DEFTEST1(ut_xattr_simple),     UT_DEFTEST(ut_xattr_any_value),
+	UT_DEFTEST(ut_xattr_short_names), UT_DEFTEST(ut_xattr_long_names),
+	UT_DEFTEST(ut_xattr_shorts),      UT_DEFTEST(ut_xattr_no_value),
+	UT_DEFTEST(ut_xattr_multi),       UT_DEFTEST(ut_xattr_lookup_random),
+	UT_DEFTEST(ut_xattr_replace),     UT_DEFTEST(ut_xattr_replace_multi),
 	UT_DEFTEST(ut_xattr_with_io),
 };
 

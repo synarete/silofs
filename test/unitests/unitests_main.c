@@ -101,8 +101,7 @@ static void ut_setup_tracing(void)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-silofs_attr_noreturn
-static void ut_show_help_and_exit(void)
+silofs_attr_noreturn static void ut_show_help_and_exit(void)
 {
 	printf("%s <testdir> \n\n", program_invocation_short_name);
 	puts("options:");
@@ -113,8 +112,7 @@ static void ut_show_help_and_exit(void)
 	exit(EXIT_SUCCESS);
 }
 
-silofs_attr_noreturn
-static void ut_show_version_and_exit(void)
+silofs_attr_noreturn static void ut_show_version_and_exit(void)
 {
 	printf("%s %s\n", ut_globals.program, silofs_version.string);
 	exit(EXIT_SUCCESS);
@@ -149,7 +147,7 @@ static void ut_parse_args(void)
 	while (opt_chr > 0) {
 		opt_index = 0;
 		opt_chr = getopt_long(ut_globals.argc, ut_globals.argv,
-		                      "l:Mpvh", long_opts, &opt_index);
+				      "l:Mpvh", long_opts, &opt_index);
 		if (opt_chr == 'l') {
 			ut_set_run_level(optarg);
 		} else if (opt_chr == 'M') {
@@ -170,8 +168,8 @@ static void ut_parse_args(void)
 	}
 	ut_globals.test_dir = ut_globals.argv[optind++];
 	if (optind < ut_globals.argc) {
-		error(EXIT_FAILURE, 0,
-		      "redundant: %s", ut_globals.argv[optind]);
+		error(EXIT_FAILURE, 0, "redundant: %s",
+		      ut_globals.argv[optind]);
 	}
 }
 
@@ -201,22 +199,22 @@ static void ut_setup_args(void)
 
 	ut_globals.test_dir_real = realpath(ut_globals.test_dir, NULL);
 	if (ut_globals.test_dir_real == NULL) {
-		error(EXIT_FAILURE, errno,
-		      "no realpath: %s", ut_globals.test_dir);
+		error(EXIT_FAILURE, errno, "no realpath: %s",
+		      ut_globals.test_dir);
 	}
 	err = silofs_sys_stat(ut_globals.test_dir_real, &st);
 	if (err) {
-		error(EXIT_FAILURE, errno,
-		      "stat failure: %s", ut_globals.test_dir_real);
+		error(EXIT_FAILURE, errno, "stat failure: %s",
+		      ut_globals.test_dir_real);
 	}
 	if (!S_ISDIR(st.st_mode)) {
-		error(EXIT_FAILURE, ENOTDIR,
-		      "invalid: %s", ut_globals.test_dir_real);
+		error(EXIT_FAILURE, ENOTDIR, "invalid: %s",
+		      ut_globals.test_dir_real);
 	}
 	err = silofs_sys_access(ut_globals.test_dir_real, R_OK | W_OK | X_OK);
 	if (err) {
-		error(EXIT_FAILURE, -err,
-		      "no access: %s", ut_globals.test_dir_real);
+		error(EXIT_FAILURE, -err, "no access: %s",
+		      ut_globals.test_dir_real);
 	}
 	ut_globals.test_dir_repo = ut_join(ut_globals.test_dir_real, "repo");
 }

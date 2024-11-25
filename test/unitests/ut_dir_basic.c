@@ -36,7 +36,6 @@ static const char *make_name(struct ut_env *ute, long idx, size_t len)
 	return ut_strdup(ute, name);
 }
 
-
 static const char *make_ulong_name(struct ut_env *ute, unsigned long key)
 {
 	char name[UT_NAME_MAX + 1] = "";
@@ -48,8 +47,7 @@ static const char *make_ulong_name(struct ut_env *ute, unsigned long key)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct ut_namesarr *
-new_namesarr(struct ut_env *ute, size_t cnt)
+static struct ut_namesarr *new_namesarr(struct ut_env *ute, size_t cnt)
 {
 	size_t sz;
 	struct ut_namesarr *na;
@@ -72,26 +70,23 @@ make_names_with_len(struct ut_env *ute, size_t cnt, size_t len)
 	return na;
 }
 
-static struct ut_namesarr *
-make_names(struct ut_env *ute, size_t cnt)
+static struct ut_namesarr *make_names(struct ut_env *ute, size_t cnt)
 {
 	return make_names_with_len(ute, cnt, 0);
 }
 
-static struct ut_namesarr *
-make_names_max_len(struct ut_env *ute, size_t cnt)
+static struct ut_namesarr *make_names_max_len(struct ut_env *ute, size_t cnt)
 {
 	return make_names_with_len(ute, cnt, UT_NAME_MAX);
 }
 
-static struct ut_namesarr *
-make_names_any_len(struct ut_env *ute, size_t cnt)
+static struct ut_namesarr *make_names_any_len(struct ut_env *ute, size_t cnt)
 {
 	struct ut_namesarr *na = new_namesarr(ute, cnt);
 
 	for (size_t i = 0; i < na->cnt; ++i) {
-		size_t len = silofs_clamp_u64(i % UT_NAME_MAX,
-		                              17, UT_NAME_MAX);
+		size_t len =
+			silofs_clamp_u64(i % UT_NAME_MAX, 17, UT_NAME_MAX);
 
 		na->arr[i] = make_name(ute, (long)i + 1, len);
 	}

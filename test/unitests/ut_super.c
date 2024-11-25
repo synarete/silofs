@@ -16,7 +16,6 @@
  */
 #include "unitests.h"
 
-
 static void ut_rootd_getattr(struct ut_env *ute)
 {
 	struct stat st = { .st_size = -1 };

@@ -16,16 +16,16 @@
  */
 #include "unitests.h"
 
-#define MAGIC   0xDEADBEEF
+#define MAGIC 0xDEADBEEF
 
 struct ut_mrecord {
-	long    magic;
+	long magic;
 	struct silofs_qalloc *qal;
 	struct silofs_list_head link;
-	void  *mem;
+	void *mem;
 	size_t len;
 	size_t dat_len;
-	char   dat[8];
+	char dat[8];
 };
 
 static void mrecord_setup(struct ut_mrecord *mr, void *mem, size_t len)
@@ -55,22 +55,18 @@ static void mrecord_check(const struct ut_mrecord *mr)
 	ut_expect_not_null(mr->mem);
 }
 
-static struct ut_mrecord *
-link_to_mrecord(const struct silofs_list_head *link)
+static struct ut_mrecord *link_to_mrecord(const struct silofs_list_head *link)
 {
 	const struct ut_mrecord *mr =
-	        ut_container_of2(link, struct ut_mrecord, link);
+		ut_container_of2(link, struct ut_mrecord, link);
 
 	mrecord_check(mr);
 	return silofs_unconst(mr);
 }
 
-static struct ut_mrecord *
-mrecord_new(struct silofs_qalloc *qal, size_t msz)
+static struct ut_mrecord *mrecord_new(struct silofs_qalloc *qal, size_t msz)
 {
-	struct silofs_iovec iovec = {
-		.iov_fd = -1
-	};
+	struct silofs_iovec iovec = { .iov_fd = -1 };
 	struct ut_mrecord *mr = NULL;
 	void *mem = NULL;
 	int err = 0;
@@ -113,8 +109,7 @@ static void link_mrecord_del(struct silofs_list_head *link)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct silofs_qalloc *
-ut_new_qalloc(struct ut_env *ute, size_t sz)
+static struct silofs_qalloc *ut_new_qalloc(struct ut_env *ute, size_t sz)
 {
 	struct silofs_qalloc *qal = NULL;
 	enum silofs_qallocf qaf;
@@ -218,13 +213,8 @@ static void ut_qalloc_nbks_simple(struct ut_env *ute)
 	struct silofs_list_head lst;
 	struct silofs_qalloc *qal;
 	struct ut_mrecord *mr = NULL;
-	const size_t sizes[] = {
-		UT_64K - 1,
-		UT_64K,
-		UT_64K + 1,
-		2 * UT_64K,
-		8 * UT_64K - 1
-	};
+	const size_t sizes[] = { UT_64K - 1, UT_64K, UT_64K + 1, 2 * UT_64K,
+				 8 * UT_64K - 1 };
 
 	silofs_list_init(&lst);
 	qal = ut_new_qalloc(ute, 32 * UT_1M);
@@ -251,7 +241,7 @@ static void ut_qalloc_free_nbks(struct ut_env *ute)
 	struct silofs_list_head lst;
 	struct silofs_qalloc *qal = NULL;
 	struct ut_mrecord *mr = NULL;
-	const size_t bk_size =  UT_BK_SIZE;
+	const size_t bk_size = UT_BK_SIZE;
 	size_t total = 0;
 	size_t msz = 0;
 	size_t rem = 0;
@@ -392,8 +382,8 @@ static void ut_qalloc_small_sizes(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct iovec *random_iovecs(struct ut_env *ute,
-                                   size_t cnt, size_t len_min, size_t len_max)
+static struct iovec *
+random_iovecs(struct ut_env *ute, size_t cnt, size_t len_min, size_t len_max)
 {
 	struct iovec *iov = NULL;
 	const size_t msz = sizeof(*iov) * cnt;
@@ -474,14 +464,10 @@ static void ut_qalloc_random(struct ut_env *ute)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ut_testdef ut_local_tests[] = {
-	UT_DEFTEST1(ut_qalloc_simple),
-	UT_DEFTEST1(ut_qalloc_simple3),
-	UT_DEFTEST1(ut_qalloc_nbks_simple),
-	UT_DEFTEST(ut_qalloc_free_nbks),
-	UT_DEFTEST(ut_qalloc_small_elems),
-	UT_DEFTEST(ut_qalloc_mixed),
-	UT_DEFTEST(ut_qalloc_small_sizes),
-	UT_DEFTEST(ut_qalloc_random),
+	UT_DEFTEST1(ut_qalloc_simple),      UT_DEFTEST1(ut_qalloc_simple3),
+	UT_DEFTEST1(ut_qalloc_nbks_simple), UT_DEFTEST(ut_qalloc_free_nbks),
+	UT_DEFTEST(ut_qalloc_small_elems),  UT_DEFTEST(ut_qalloc_mixed),
+	UT_DEFTEST(ut_qalloc_small_sizes),  UT_DEFTEST(ut_qalloc_random),
 };
 
 const struct ut_testdefs ut_tdefs_qalloc = UT_MKTESTS(ut_local_tests);

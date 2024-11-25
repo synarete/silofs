@@ -32,7 +32,6 @@ struct ut_dirlist {
 	struct ut_direlem *list;
 };
 
-
 static struct ut_direlem *
 new_direlem(struct ut_env *ute, const struct ut_dirent_info *dei)
 {
@@ -43,8 +42,7 @@ new_direlem(struct ut_env *ute, const struct ut_dirent_info *dei)
 	return de;
 }
 
-static struct ut_dirlist *
-new_dirlist(struct ut_env *ute, ino_t dino)
+static struct ut_dirlist *new_dirlist(struct ut_env *ute, ino_t dino)
 {
 	struct ut_dirlist *dl = ut_zerobuf(ute, sizeof(*dl));
 
@@ -55,8 +53,7 @@ new_dirlist(struct ut_env *ute, ino_t dino)
 	return dl;
 }
 
-static void push_direlem(struct ut_dirlist *dl,
-                         struct ut_direlem *de)
+static void push_direlem(struct ut_dirlist *dl, struct ut_direlem *de)
 {
 	de->next = dl->list;
 	dl->list = de;
@@ -111,15 +108,14 @@ static struct ut_dirlist *dir_list_all(struct ut_env *ute, ino_t dino)
 	return dir_list(ute, dino, UINT_MAX);
 }
 
-static struct ut_dirlist *dir_list_some(struct ut_env *ute, ino_t dino,
-                                        loff_t off, size_t max_nents)
+static struct ut_dirlist *
+dir_list_some(struct ut_env *ute, ino_t dino, loff_t off, size_t max_nents)
 {
 	bool keep_iter = true;
 	loff_t doff = off;
 	const struct ut_dirent_info *dei;
 	struct ut_dirlist *dl = new_dirlist(ute, dino);
-	struct ut_readdir_ctx *rd_ctx =
-	        ut_new_readdir_ctx(ute);
+	struct ut_readdir_ctx *rd_ctx = ut_new_readdir_ctx(ute);
 
 	ut_opendir(ute, dino);
 	while (keep_iter) {
@@ -167,8 +163,8 @@ static void dir_unlink_all(struct ut_dirlist *dl)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_create_nfiles(struct ut_env *ute, ino_t dino,
-                             const char *dname, size_t count)
+static void ut_create_nfiles(struct ut_env *ute, ino_t dino, const char *dname,
+			     size_t count)
 {
 	const char *name = NULL;
 	ino_t ino = 0;
@@ -180,7 +176,7 @@ static void ut_create_nfiles(struct ut_env *ute, ino_t dino,
 }
 
 static void ut_create_ninodes(struct ut_env *ute, ino_t dino,
-                              const char *dname, size_t count)
+			      const char *dname, size_t count)
 {
 	char s[256] = "";
 	struct stat st;
@@ -201,7 +197,6 @@ static void ut_create_ninodes(struct ut_env *ute, ino_t dino,
 	ut_getattr(ute, dino, &st);
 	ut_expect_ge(st.st_size, count);
 }
-
 
 static void ut_dir_list_simple_(struct ut_env *ute, size_t cnt)
 {
@@ -231,8 +226,8 @@ static void ut_dir_list_simple(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_dir_list_repeated_(struct ut_env *ute,
-                                  size_t count, size_t niter)
+static void
+ut_dir_list_repeated_(struct ut_env *ute, size_t count, size_t niter)
 {
 	struct ut_dirlist *dl;
 	const char *prefix = NULL;
@@ -268,7 +263,7 @@ static void ut_dir_list_repeated(struct ut_env *ute)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void create_nfiles_sparse(struct ut_env *ute, ino_t dino,
-                                 const char *prefix, size_t count)
+				 const char *prefix, size_t count)
 {
 	const char *name = NULL;
 	ino_t ino = 0;

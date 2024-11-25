@@ -36,8 +36,7 @@ static const struct ut_base64_vector ut_base64_rfc4648_vecs[] = {
 static const struct ut_base64_vector ut_base64_ascii_vecs[] = {
 	MKVEC("abcdef-abcdef-abcdef-abcdef-abcdef",
 	      "YWJjZGVmLWFiY2RlZi1hYmNkZWYtYWJjZGVmLWFiY2RlZg=="),
-	MKVEC("abcdefghijblmnopq",
-	      "YWJjZGVmZ2hpamJsbW5vcHE="),
+	MKVEC("abcdefghijblmnopq", "YWJjZGVmZ2hpamJsbW5vcHE="),
 	MKVEC("ABCDEFGHIJKLMNOPQRSTUVWXYZ",
 	      "QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVo="),
 	MKVEC("0123456789 abcdefghijklmnop _-+%* ",
@@ -55,8 +54,8 @@ static const struct ut_base64_vector ut_base64_common_vecs[] = {
 
 };
 
-static void ut_base64_encdec(struct ut_env *ute,
-                             const char *dat, const char *exp)
+static void
+ut_base64_encdec(struct ut_env *ute, const char *dat, const char *exp)
 {
 	int err;
 	size_t len;
@@ -87,7 +86,7 @@ static void ut_base64_encdec(struct ut_env *ute,
 }
 
 static void ut_base64_with(struct ut_env *ute,
-                           const struct ut_base64_vector *vec, size_t nvecs)
+			   const struct ut_base64_vector *vec, size_t nvecs)
 {
 	for (size_t i = 0; i < nvecs; ++i) {
 		ut_base64_encdec(ute, vec[i].dat, vec[i].exp);
@@ -97,19 +96,19 @@ static void ut_base64_with(struct ut_env *ute,
 static void ut_base64_rfc4648(struct ut_env *ute)
 {
 	ut_base64_with(ute, ut_base64_rfc4648_vecs,
-	               UT_ARRAY_SIZE(ut_base64_rfc4648_vecs));
+		       UT_ARRAY_SIZE(ut_base64_rfc4648_vecs));
 }
 
 static void ut_base64_ascii(struct ut_env *ute)
 {
 	ut_base64_with(ute, ut_base64_ascii_vecs,
-	               UT_ARRAY_SIZE(ut_base64_ascii_vecs));
+		       UT_ARRAY_SIZE(ut_base64_ascii_vecs));
 }
 
 static void ut_base64_common(struct ut_env *ute)
 {
 	ut_base64_with(ute, ut_base64_common_vecs,
-	               UT_ARRAY_SIZE(ut_base64_common_vecs));
+		       UT_ARRAY_SIZE(ut_base64_common_vecs));
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -154,5 +153,3 @@ static const struct ut_testdef ut_local_tests[] = {
 };
 
 const struct ut_testdefs ut_tdefs_base64 = UT_MKTESTS(ut_local_tests);
-
-

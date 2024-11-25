@@ -16,7 +16,7 @@
  */
 #include "unitests.h"
 
-#define ZMAGIC  0xA334CDE661L
+#define ZMAGIC 0xA334CDE661L
 
 struct ut_zrecord {
 	struct ut_env *ute;
@@ -25,8 +25,7 @@ struct ut_zrecord {
 	long magic;
 };
 
-static struct ut_zrecord *
-avl_node_to_zrecord(const struct silofs_avl_node *an)
+static struct ut_zrecord *avl_node_to_zrecord(const struct silofs_avl_node *an)
 {
 	const struct ut_zrecord *zr;
 
@@ -54,8 +53,7 @@ static long zrecord_keycmp(const void *x, const void *y)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct ut_zrecord *
-zrecord_new(struct ut_env *ute, long num)
+static struct ut_zrecord *zrecord_new(struct ut_env *ute, long num)
 {
 	struct ut_zrecord *zr;
 
@@ -112,10 +110,8 @@ static void verify_node(struct silofs_avl_node *x, void *p)
 	ut_expect_null(p);
 }
 
-static const struct silofs_avl_node_functor node_functor = {
-	.fn = verify_node,
-	.ctx = NULL
-};
+static const struct silofs_avl_node_functor node_functor = { .fn = verify_node,
+							     .ctx = NULL };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -145,8 +141,8 @@ static struct ut_env *avl_ute(const struct silofs_avl *avl)
 	return avl->userp;
 }
 
-static void avl_insert_unique_(struct silofs_avl *avl,
-                               struct silofs_avl_node *an)
+static void
+avl_insert_unique_(struct silofs_avl *avl, struct silofs_avl_node *an)
 {
 	int ret;
 
@@ -283,10 +279,10 @@ static long avl_min_key(const struct silofs_avl *avl)
 	return zr->key;
 }
 
-static void avl_iterate_range(const struct silofs_avl *avl,
-                              struct silofs_avl_node *beg,
-                              const struct silofs_avl_node *end,
-                              size_t expected_cnt, long key_beg, long step)
+static void
+avl_iterate_range(const struct silofs_avl *avl, struct silofs_avl_node *beg,
+		  const struct silofs_avl_node *end, size_t expected_cnt,
+		  long key_beg, long step)
 {
 	size_t cnt;
 	long key = key_beg;
@@ -311,11 +307,11 @@ static void avl_iterate_range(const struct silofs_avl *avl,
 	ut_expect_eq(cnt, 0);
 }
 
-static void avl_iterate_all(const struct silofs_avl *avl,
-                            long key_beg, long step)
+static void
+avl_iterate_all(const struct silofs_avl *avl, long key_beg, long step)
 {
-	avl_iterate_range(avl, avl_begin(avl), avl_end(avl),
-	                  avl_size(avl), key_beg, step);
+	avl_iterate_range(avl, avl_begin(avl), avl_end(avl), avl_size(avl),
+			  key_beg, step);
 }
 
 static void avl_iterate_seq(const struct silofs_avl *avl)
@@ -325,8 +321,8 @@ static void avl_iterate_seq(const struct silofs_avl *avl)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_avl_simple_(struct ut_env *ute,
-                           size_t cnt, long key_base, long step)
+static void
+ut_avl_simple_(struct ut_env *ute, size_t cnt, long key_base, long step)
 {
 	long key;
 	struct silofs_avl *avl;
@@ -365,11 +361,10 @@ static void ut_avl_simple(struct ut_env *ute)
 	ut_avl_simple_(ute, 1111, 111, 11);
 }
 
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_avl_mixed_(struct ut_env *ute,
-                          size_t cnt, long key_base, long step)
+static void
+ut_avl_mixed_(struct ut_env *ute, size_t cnt, long key_base, long step)
 {
 	long key;
 	struct silofs_avl *avl;
@@ -448,8 +443,8 @@ static void ut_avl_random(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void avl_populate_keys(struct silofs_avl *avl,
-                              const long *keys, size_t cnt)
+static void
+avl_populate_keys(struct silofs_avl *avl, const long *keys, size_t cnt)
 {
 	for (size_t i = 0; i < cnt; ++i) {
 		avl_insert_unique(avl, keys[i]);

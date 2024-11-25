@@ -23,22 +23,20 @@ struct ut_copy_range_args {
 	size_t len_dst;
 };
 
-#define COPYARGS1(a_, b_) \
-        COPYARGS2(a_, b_, 0, 0)
+#define COPYARGS1(a_, b_) COPYARGS2(a_, b_, 0, 0)
 
 #define COPYARGS2(a_, b_, c_, d_) \
-        { .off_src = (a_), .len_src = (b_), .off_dst = (c_), .len_dst = (d_) }
+	{ .off_src = (a_), .len_src = (b_), .off_dst = (c_), .len_dst = (d_) }
 
 #define ut_copy_range1(ute_, fn_, args_) \
-        ut_copy_range1_(ute_, fn_, args_, UT_ARRAY_SIZE(args_))
+	ut_copy_range1_(ute_, fn_, args_, UT_ARRAY_SIZE(args_))
 
 #define ut_copy_range2(ute_, fn_, args_) \
-        ut_copy_range2_(ute_, fn_, args_, UT_ARRAY_SIZE(args_))
+	ut_copy_range2_(ute_, fn_, args_, UT_ARRAY_SIZE(args_))
 
-static void
-ut_copy_range1_(struct ut_env *ute,
-                void (*fn)(struct ut_env *, loff_t, size_t),
-                const struct ut_copy_range_args *args, size_t na)
+static void ut_copy_range1_(struct ut_env *ute,
+			    void (*fn)(struct ut_env *, loff_t, size_t),
+			    const struct ut_copy_range_args *args, size_t na)
 {
 	for (size_t i = 0; i < na; ++i) {
 		fn(ute, args[i].off_src, args[i].len_src);
@@ -48,12 +46,12 @@ ut_copy_range1_(struct ut_env *ute,
 
 static void
 ut_copy_range2_(struct ut_env *ute,
-                void (*fn)(struct ut_env *, loff_t, size_t, loff_t, size_t),
-                const struct ut_copy_range_args *args, size_t na)
+		void (*fn)(struct ut_env *, loff_t, size_t, loff_t, size_t),
+		const struct ut_copy_range_args *args, size_t na)
 {
 	for (size_t i = 0; i < na; ++i) {
-		fn(ute, args[i].off_src, args[i].len_src,
-		   args[i].off_dst, args[i].len_dst);
+		fn(ute, args[i].off_src, args[i].len_src, args[i].off_dst,
+		   args[i].len_dst);
 		ut_relax_mem(ute);
 	}
 }
@@ -79,8 +77,8 @@ static void ut_expect_gt_mtime(const struct stat *st1, const struct stat *st0)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_file_copy_range_simple_(struct ut_env *ute,
-                                       loff_t off, size_t len)
+static void
+ut_file_copy_range_simple_(struct ut_env *ute, loff_t off, size_t len)
 {
 	const char *name = UT_NAME;
 	const char *name_src = UT_NAME_AT;
@@ -144,9 +142,9 @@ static void ut_file_copy_range_simple_unaligned(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_file_copy_range_between_(struct ut_env *ute,
-                                        loff_t off_src, size_t len_src,
-                                        loff_t off_dst, size_t len_dst)
+static void
+ut_file_copy_range_between_(struct ut_env *ute, loff_t off_src, size_t len_src,
+			    loff_t off_dst, size_t len_dst)
 {
 	const char *name = UT_NAME;
 	const char *name_src = UT_NAME_AT;
@@ -165,16 +163,14 @@ static void ut_file_copy_range_between_(struct ut_env *ute,
 	ut_trunacate_file(ute, ino_src, ut_off_end(off_src, len_max));
 	ut_trunacate_file(ute, ino_dst, ut_off_end(off_dst, len_max));
 	ut_write_read(ute, ino_src, buf_src, len_src, off_src);
-	ut_copy_file_range(ute, ino_src, off_src,
-	                   ino_dst, off_dst, len_dst);
+	ut_copy_file_range(ute, ino_src, off_src, ino_dst, off_dst, len_dst);
 	ut_read_verify(ute, ino_dst, buf_src, len_min, off_dst);
 	ut_read_zeros(ute, ino_dst, ut_off_end(off_dst, len_min),
-	              len_dst - len_min);
+		      len_dst - len_min);
 	ut_write_read(ute, ino_dst, buf_dst, len_dst, off_dst);
 	ut_trunacate_file(ute, ino_src, off_src);
 	ut_trunacate_file(ute, ino_src, ut_off_end(off_src, len_max));
-	ut_copy_file_range(ute, ino_src, off_src,
-	                   ino_dst, off_dst, len_dst);
+	ut_copy_file_range(ute, ino_src, off_src, ino_dst, off_dst, len_dst);
 	ut_read_zeros(ute, ino_dst, off_dst, len_min);
 	ut_remove_file(ute, dino, name_dst, ino_dst);
 	ut_remove_file(ute, dino, name_src, ino_src);
@@ -233,9 +229,9 @@ static void ut_file_copy_range_between_unaligned(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_file_copy_range_self_(struct ut_env *ute,
-                                     loff_t off_src, size_t len_src,
-                                     loff_t off_dst, size_t len_dst)
+static void
+ut_file_copy_range_self_(struct ut_env *ute, loff_t off_src, size_t len_src,
+			 loff_t off_dst, size_t len_dst)
 {
 	const char *name = UT_NAME;
 	const size_t len_max = ut_max(len_src, len_dst);
@@ -267,9 +263,8 @@ static void ut_file_copy_range_self_(struct ut_env *ute,
 	ut_rmdir_at_root(ute, name);
 }
 
-static void
-ut_file_copy_range_self2_(struct ut_env *ute,
-                          loff_t off1, size_t len1, loff_t off2, size_t len2)
+static void ut_file_copy_range_self2_(struct ut_env *ute, loff_t off1,
+				      size_t len1, loff_t off2, size_t len2)
 {
 	ut_file_copy_range_self_(ute, off1, len1, off2, len2);
 	ut_file_copy_range_self_(ute, off2, len2, off1, len1);
@@ -478,16 +473,11 @@ ut_file_copy_range_nfiles_(struct ut_env *ute, loff_t off, size_t len)
 static void ut_file_copy_range_nfiles_aligned(struct ut_env *ute)
 {
 	const struct ut_copy_range_args args[] = {
-		COPYARGS1(0, UT_1K),
-		COPYARGS1(0, UT_4K),
-		COPYARGS1(UT_1K, UT_4K),
-		COPYARGS1(0, UT_64K),
-		COPYARGS1(UT_64K, UT_64K),
-		COPYARGS1(2 * UT_64K, 4 * UT_64K),
-		COPYARGS1(0, UT_1M / 4),
-		COPYARGS1(UT_1M, UT_1M / 8),
-		COPYARGS1(UT_1G, UT_64K),
-		COPYARGS1(UT_1T, UT_4K),
+		COPYARGS1(0, UT_1K),       COPYARGS1(0, UT_4K),
+		COPYARGS1(UT_1K, UT_4K),   COPYARGS1(0, UT_64K),
+		COPYARGS1(UT_64K, UT_64K), COPYARGS1(2 * UT_64K, 4 * UT_64K),
+		COPYARGS1(0, UT_1M / 4),   COPYARGS1(UT_1M, UT_1M / 8),
+		COPYARGS1(UT_1G, UT_64K),  COPYARGS1(UT_1T, UT_4K),
 	};
 
 	ut_copy_range1(ute, ut_file_copy_range_nfiles_, args);
@@ -510,9 +500,8 @@ static void ut_file_copy_range_nfiles_unaligned(struct ut_env *ute)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void
-ut_file_copy_range_from_hole_(struct ut_env *ute,
-                              loff_t off_src, size_t len_src,
-                              loff_t off_dst, size_t len_dst)
+ut_file_copy_range_from_hole_(struct ut_env *ute, loff_t off_src,
+			      size_t len_src, loff_t off_dst, size_t len_dst)
 {
 	const char *name = UT_NAME;
 	const char *name_src = UT_NAME_AT;
@@ -572,9 +561,8 @@ static void ut_file_copy_range_from_hole(struct ut_env *ute)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void
-ut_file_copy_range_into_hole_(struct ut_env *ute,
-                              loff_t off_src, size_t len_src,
-                              loff_t off_dst, size_t len_dst)
+ut_file_copy_range_into_hole_(struct ut_env *ute, loff_t off_src,
+			      size_t len_src, loff_t off_dst, size_t len_dst)
 {
 	const char *name = UT_NAME;
 	const char *name_src = UT_NAME_AT;
@@ -626,9 +614,8 @@ static void ut_file_copy_range_into_hole(struct ut_env *ute)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void
-ut_file_copy_range_mtime_(struct ut_env *ute,
-                          loff_t off_src, size_t len_src,
-                          loff_t off_dst, size_t len_dst)
+ut_file_copy_range_mtime_(struct ut_env *ute, loff_t off_src, size_t len_src,
+			  loff_t off_dst, size_t len_dst)
 {
 	struct stat st[3];
 	const char *name = UT_NAME;

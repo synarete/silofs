@@ -16,7 +16,6 @@
  */
 #include "unitests.h"
 
-
 struct ut_ioparams {
 	loff_t offset;
 	size_t length;
@@ -25,11 +24,10 @@ struct ut_ioparams {
 };
 
 #define MKPARAMS(o_, l_, s_, c_) \
-        { .offset = (o_), .length = (l_), .nskip = (s_), .count = (c_) }
+	{ .offset = (o_), .length = (l_), .nskip = (s_), .count = (c_) }
 
-
-static struct ut_dvec **new_dvecs(struct ut_env *ute,
-                                  const struct ut_ioparams *params)
+static struct ut_dvec **
+new_dvecs(struct ut_env *ute, const struct ut_ioparams *params)
 {
 	loff_t off;
 	struct ut_dvec **list;
@@ -51,7 +49,7 @@ static unsigned long *random_indices(struct ut_env *ute, size_t cnt)
 }
 
 static void ut_file_random_io_(struct ut_env *ute, ino_t ino,
-                               const struct ut_ioparams *params)
+			       const struct ut_ioparams *params)
 {
 	size_t *idx = NULL;
 	struct ut_dvec *dvec = NULL;
@@ -87,7 +85,7 @@ static void ut_file_random_io_(struct ut_env *ute, ino_t ino,
 }
 
 static void ut_file_random_io2_(struct ut_env *ute, ino_t ino,
-                                const struct ut_ioparams *params)
+				const struct ut_ioparams *params)
 {
 	size_t *idx = NULL;
 	struct ut_dvec *dvec = NULL;
@@ -124,8 +122,8 @@ static void ut_file_random_io2_(struct ut_env *ute, ino_t ino,
 	}
 }
 
-static void ut_file_random_(struct ut_env *ute,
-                            const struct ut_ioparams *params)
+static void
+ut_file_random_(struct ut_env *ute, const struct ut_ioparams *params)
 {
 	const char *name = UT_NAME;
 	ino_t dino = 0;
@@ -140,7 +138,7 @@ static void ut_file_random_(struct ut_env *ute,
 }
 
 static void ut_file_random_arr_(struct ut_env *ute,
-                                const struct ut_ioparams *arr, size_t nelems)
+				const struct ut_ioparams *arr, size_t nelems)
 {
 	for (size_t i = 0; i < nelems; ++i) {
 		ut_file_random_(ute, &arr[i]);
@@ -149,8 +147,7 @@ static void ut_file_random_arr_(struct ut_env *ute,
 }
 
 #define ut_file_random_arr(ctx_, arr_) \
-        ut_file_random_arr_(ctx_, arr_, UT_ARRAY_SIZE(arr_))
-
+	ut_file_random_arr_(ctx_, arr_, UT_ARRAY_SIZE(arr_))
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

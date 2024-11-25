@@ -33,7 +33,7 @@ static void ut_archive_simple(struct ut_env *ute)
 
 static void ut_archive_data(struct ut_env *ute)
 {
-	struct stat st = {.st_ino = 0};
+	struct stat st = { .st_ino = 0 };
 	const char *name = UT_NAME;
 	const size_t len = UT_1M;
 	const loff_t off = 1;
@@ -63,7 +63,7 @@ static void ut_archive_data(struct ut_env *ute)
 
 static void ut_archive_nfiles(struct ut_env *ute)
 {
-	struct stat st = {.st_ino = 0};
+	struct stat st = { .st_ino = 0 };
 	const ino_t root_ino = SILOFS_INO_ROOT;
 	const char *pref = UT_NAME;
 	const char *name = NULL;

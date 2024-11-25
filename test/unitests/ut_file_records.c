@@ -16,11 +16,10 @@
  */
 #include "unitests.h"
 
-
 struct ut_record {
-	void    *data;
-	size_t   size;
-	uint8_t  seed[16];
+	void *data;
+	size_t size;
+	uint8_t seed[16];
 	uint64_t hash;
 	uint64_t index;
 };
@@ -109,7 +108,7 @@ static void record_stamp_encode(struct ut_record *rec, size_t index)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void ut_write_record(struct ut_env *ute, ino_t ino,
-                            const struct ut_record *rec, loff_t off)
+			    const struct ut_record *rec, loff_t off)
 {
 	const size_t bsz = record_size(rec, rec->size);
 
@@ -117,7 +116,7 @@ static void ut_write_record(struct ut_env *ute, ino_t ino,
 }
 
 static void ut_read_record(struct ut_env *ute, ino_t ino,
-                           const struct ut_record *rec, loff_t off)
+			   const struct ut_record *rec, loff_t off)
 {
 	const size_t bsz = record_size(rec, rec->size);
 
@@ -125,7 +124,7 @@ static void ut_read_record(struct ut_env *ute, ino_t ino,
 }
 
 static void ut_read_record_verify(struct ut_env *ute, ino_t ino,
-                                  struct ut_record *rec, loff_t off)
+				  struct ut_record *rec, loff_t off)
 {
 	int err;
 
@@ -137,16 +136,16 @@ static void ut_read_record_verify(struct ut_env *ute, ino_t ino,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static loff_t offset_of(const struct ut_record *rec, size_t index,
-                        loff_t base_off)
+static loff_t
+offset_of(const struct ut_record *rec, size_t index, loff_t base_off)
 {
 	const size_t rec_size = record_size(rec, rec->size);
 
 	return base_off + (loff_t)(index * rec_size);
 }
 
-static void ut_file_records_seq_(struct ut_env *ute,
-                                 loff_t off, size_t len, size_t cnt)
+static void
+ut_file_records_seq_(struct ut_env *ute, loff_t off, size_t len, size_t cnt)
 {
 	const char *name = UT_NAME;
 	struct ut_record *rec = NULL;
@@ -191,8 +190,8 @@ static void ut_file_records_seq(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static loff_t resolve_offset(const struct ut_record *rec, long pos,
-                             loff_t base)
+static loff_t
+resolve_offset(const struct ut_record *rec, long pos, loff_t base)
 {
 	const size_t factor = 11;
 	const size_t recsize = record_size(rec, rec->size);
@@ -200,8 +199,8 @@ static loff_t resolve_offset(const struct ut_record *rec, long pos,
 	return base + pos * (loff_t)(factor * recsize);
 }
 
-static void ut_file_records_rand_(struct ut_env *ute,
-                                  loff_t off, size_t len, size_t cnt)
+static void
+ut_file_records_rand_(struct ut_env *ute, loff_t off, size_t len, size_t cnt)
 {
 	const size_t niter = 2;
 	struct ut_record *rec = NULL;
@@ -233,7 +232,6 @@ static void ut_file_records_rand_(struct ut_env *ute,
 	ut_rmdir_at_root(ute, name);
 }
 
-
 static void ut_file_records_rand_aligned(struct ut_env *ute)
 {
 	const loff_t off[] = { 0, UT_64K, UT_1M, UT_1G, UT_1T };
@@ -264,9 +262,7 @@ static void ut_file_records_rand_unaligned1(struct ut_env *ute)
 
 static void ut_file_records_rand_unaligned2(struct ut_env *ute)
 {
-	const loff_t off[] = {
-		UT_64K - 2, UT_1M - 2, UT_1G - 2, UT_1T - 2
-	};
+	const loff_t off[] = { UT_64K - 2, UT_1M - 2, UT_1G - 2, UT_1T - 2 };
 	const size_t size_rec = record_base_size(NULL);
 	const size_t size_max = UT_IOSIZE_MAX - size_rec;
 

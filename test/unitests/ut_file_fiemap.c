@@ -16,7 +16,6 @@
  */
 #include "unitests.h"
 
-
 static struct fiemap *new_fiemap(struct ut_env *ute, size_t cnt)
 {
 	struct fiemap *fm = NULL;
@@ -31,12 +30,10 @@ static struct fiemap *new_fiemap(struct ut_env *ute, size_t cnt)
 static struct fiemap *
 ut_fiemap_of(struct ut_env *ute, ino_t ino, loff_t off, size_t len)
 {
-	struct fiemap fm0 = {
-		.fm_start = (uint64_t)off,
-		.fm_length = len,
-		.fm_flags = 0,
-		.fm_extent_count = 0
-	};
+	struct fiemap fm0 = { .fm_start = (uint64_t)off,
+			      .fm_length = len,
+			      .fm_flags = 0,
+			      .fm_extent_count = 0 };
 	const uint32_t magic = SILOFS_FSID_MAGIC;
 	struct fiemap *fm = NULL;
 	const struct fiemap_extent *fm_ext = NULL;
@@ -70,8 +67,7 @@ ut_fiemap_of(struct ut_env *ute, ino_t ino, loff_t off, size_t len)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_file_fiemap_simple_(struct ut_env *ute,
-                                   loff_t off, size_t len)
+static void ut_file_fiemap_simple_(struct ut_env *ute, loff_t off, size_t len)
 {
 	const char *name = UT_NAME;
 	void *buf = ut_randbuf(ute, len);
@@ -118,8 +114,8 @@ static void ut_file_fiemap_simple(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_file_fiemap_twoext_(struct ut_env *ute,
-                                   loff_t off1, loff_t off2)
+static void
+ut_file_fiemap_twoext_(struct ut_env *ute, loff_t off1, loff_t off2)
 {
 	const struct fiemap *fm = NULL;
 	const char *name = UT_NAME;
@@ -162,8 +158,8 @@ static void ut_file_fiemap_twoext(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_file_fiemap_sparse_(struct ut_env *ute,
-                                   loff_t off_base, loff_t step, size_t cnt)
+static void ut_file_fiemap_sparse_(struct ut_env *ute, loff_t off_base,
+				   loff_t step, size_t cnt)
 {
 	ino_t ino;
 	ino_t dino;

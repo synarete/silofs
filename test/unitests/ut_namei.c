@@ -16,7 +16,6 @@
  */
 #include "unitests.h"
 
-
 static const char *
 ut_mkname(struct ut_env *ute, const char *prefix, unsigned long i)
 {
@@ -68,9 +67,8 @@ static void ut_create_unlink_simple(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void
-ut_create_write_release(struct ut_env *ute, ino_t dino,
-                        const char *name, size_t bsz, loff_t off)
+static void ut_create_write_release(struct ut_env *ute, ino_t dino,
+				    const char *name, size_t bsz, loff_t off)
 {
 	ino_t ino;
 	void *buf = ut_randbuf(ute, bsz);
@@ -81,7 +79,7 @@ ut_create_write_release(struct ut_env *ute, ino_t dino,
 }
 
 static void ut_create_unlink_random_(struct ut_env *ute, size_t nfiles,
-                                     size_t bsz, loff_t off)
+				     size_t bsz, loff_t off)
 {
 	ino_t dino;
 	const char *name = UT_NAME;
@@ -182,8 +180,7 @@ static void ut_link_max(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static const char *
-make_repeated_name(struct ut_env *ute, char c, size_t len)
+static const char *make_repeated_name(struct ut_env *ute, char c, size_t len)
 {
 	size_t nlen;
 	char name[UT_NAME_MAX + 1] = "";
@@ -200,8 +197,8 @@ static void ut_link_similar_names(struct ut_env *ute)
 	struct stat st;
 	const char *name = UT_NAME;
 	const char *lname;
-	const char *abc = "abcdefghijklmnopqrstuvwxyz" \
-	                  "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+	const char *abc = "abcdefghijklmnopqrstuvwxyz"
+			  "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 	const size_t abc_len = strlen(abc);
 	const size_t name_max = UT_NAME_MAX;
 
@@ -294,7 +291,7 @@ static void ut_inode_special(struct ut_env *ute)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void ut_expect_eq_tsx(const struct statx_timestamp *stx_ts,
-                             const struct timespec *st_ts)
+			     const struct timespec *st_ts)
 {
 	ut_expect_eq(stx_ts->tv_sec, st_ts->tv_sec);
 	ut_expect_eq(stx_ts->tv_nsec, st_ts->tv_nsec);

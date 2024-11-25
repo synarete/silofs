@@ -16,7 +16,6 @@
  */
 #include "unitests.h"
 
-
 struct ut_dvecs {
 	struct ut_dvec *dvec[64];
 	size_t count;
@@ -32,7 +31,7 @@ static struct ut_dvecs *new_dvecs(struct ut_env *ute)
 }
 
 static void assign(struct ut_env *ute, struct ut_dvecs *dvecs,
-                   const struct ut_ranges *rngs)
+		   const struct ut_ranges *rngs)
 {
 	loff_t off;
 	size_t len;
@@ -97,8 +96,8 @@ rzigzag(struct ut_env *ute, const struct ut_ranges *ranges)
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-static void ut_write_read_n(struct ut_env *ute,
-                            const struct ut_dvecs *dvecs, ino_t ino)
+static void
+ut_write_read_n(struct ut_env *ute, const struct ut_dvecs *dvecs, ino_t ino)
 {
 	const struct ut_dvec *dvec = NULL;
 	void *buf = NULL;
@@ -122,9 +121,7 @@ static void ut_write_read_n(struct ut_env *ute,
 	}
 }
 
-
-static void ut_rdwr_file1(struct ut_env *ute,
-                          const struct ut_dvecs *drefs)
+static void ut_rdwr_file1(struct ut_env *ute, const struct ut_dvecs *drefs)
 {
 	const char *name = UT_NAME;
 	ino_t dino = 0;
@@ -138,9 +135,8 @@ static void ut_rdwr_file1(struct ut_env *ute,
 	ut_rmdir_at_root(ute, name);
 }
 
-static void ut_rdwr_file2(struct ut_env *ute,
-                          const struct ut_dvecs *drefs1,
-                          const struct ut_dvecs *drefs2)
+static void ut_rdwr_file2(struct ut_env *ute, const struct ut_dvecs *drefs1,
+			  const struct ut_dvecs *drefs2)
 {
 	const char *name = UT_NAME;
 	ino_t dino = 0;
@@ -158,18 +154,13 @@ static void ut_rdwr_file2(struct ut_env *ute,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ut_range s_ut_ranges1[] = {
-	UT_MKRANGE1(1, 1),
-	UT_MKRANGE1(3, 4),
-	UT_MKRANGE1(8, 16),
-	UT_MKRANGE1(29, 31),
-	UT_MKRANGE1(127, 111),
+	UT_MKRANGE1(1, 1),   UT_MKRANGE1(3, 4),     UT_MKRANGE1(8, 16),
+	UT_MKRANGE1(29, 31), UT_MKRANGE1(127, 111),
 };
 
 static const struct ut_range s_ut_ranges2[] = {
-	UT_MKRANGE1(UT_BK_SIZE, UT_BK_SIZE),
-	UT_MKRANGE1(UT_1M, UT_BK_SIZE),
-	UT_MKRANGE1(UT_1G, UT_BK_SIZE),
-	UT_MKRANGE1(UT_1T, UT_BK_SIZE)
+	UT_MKRANGE1(UT_BK_SIZE, UT_BK_SIZE), UT_MKRANGE1(UT_1M, UT_BK_SIZE),
+	UT_MKRANGE1(UT_1G, UT_BK_SIZE), UT_MKRANGE1(UT_1T, UT_BK_SIZE)
 };
 
 static const struct ut_range s_ut_ranges3[] = {
@@ -206,17 +197,12 @@ static const struct ut_range s_ut_ranges6[] = {
 };
 
 static const struct ut_ranges s_ranges_defs[] = {
-	UT_MKRANGE1S(s_ut_ranges1),
-	UT_MKRANGE1S(s_ut_ranges2),
-	UT_MKRANGE1S(s_ut_ranges3),
-	UT_MKRANGE1S(s_ut_ranges4),
-	UT_MKRANGE1S(s_ut_ranges5),
-	UT_MKRANGE1S(s_ut_ranges6),
+	UT_MKRANGE1S(s_ut_ranges1), UT_MKRANGE1S(s_ut_ranges2),
+	UT_MKRANGE1S(s_ut_ranges3), UT_MKRANGE1S(s_ut_ranges4),
+	UT_MKRANGE1S(s_ut_ranges5), UT_MKRANGE1S(s_ut_ranges6),
 };
 
-
-static void ut_file_ranges_(struct ut_env *ute,
-                            const struct ut_ranges *ranges)
+static void ut_file_ranges_(struct ut_env *ute, const struct ut_ranges *ranges)
 {
 	ut_rdwr_file1(ute, simple(ute, ranges));
 	ut_relax_mem(ute);
@@ -235,9 +221,8 @@ static void ut_file_ranges(struct ut_env *ute)
 	}
 }
 
-static void ut_file_xranges_(struct ut_env *ute,
-                             const struct ut_ranges *r1,
-                             const struct ut_ranges *r2)
+static void ut_file_xranges_(struct ut_env *ute, const struct ut_ranges *r1,
+			     const struct ut_ranges *r2)
 {
 	ut_rdwr_file2(ute, simple(ute, r1), simple(ute, r2));
 	ut_relax_mem(ute);

@@ -92,8 +92,8 @@ static struct silofs_ioc_query *ut_new_ioc_query(struct ut_env *ute)
 	return ioc_qry;
 }
 
-static void ut_query_proc(struct ut_env *ute, ino_t ino,
-                          struct silofs_ioc_query *ioc_qry)
+static void
+ut_query_proc(struct ut_env *ute, ino_t ino, struct silofs_ioc_query *ioc_qry)
 {
 	ut_query(ute, ino, SILOFS_QUERY_PROC, ioc_qry);
 }

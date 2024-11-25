@@ -16,7 +16,6 @@
  */
 #include "unitests.h"
 
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void ut_inspect_simple(struct ut_env *ute)

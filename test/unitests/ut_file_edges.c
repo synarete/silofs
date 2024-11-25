@@ -16,9 +16,9 @@
  */
 #include "unitests.h"
 
-#define FIMAP_SZ        (UT_FILEMAP_NCHILDS * UT_BK_SIZE)
-#define FIMAP_SZ2       (FIMAP_SZ * UT_FILEMAP_NCHILDS)
-#define FIMAP_SZ_MAX    (UT_FILESIZE_MAX)
+#define FIMAP_SZ     (UT_FILEMAP_NCHILDS * UT_BK_SIZE)
+#define FIMAP_SZ2    (FIMAP_SZ * UT_FILEMAP_NCHILDS)
+#define FIMAP_SZ_MAX (UT_FILESIZE_MAX)
 
 static uint8_t dvec_first_byte(const struct ut_dvec *dvec)
 {
@@ -37,8 +37,8 @@ static loff_t dvec_last_off(const struct ut_dvec *dvec)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_rw_plus_minus_1_(struct ut_env *ute,
-                                ino_t ino, loff_t off, size_t len)
+static void
+ut_rw_plus_minus_1_(struct ut_env *ute, ino_t ino, loff_t off, size_t len)
 {
 	uint8_t byte;
 	struct ut_dvec *dv1;
@@ -132,8 +132,8 @@ static void ut_file_edges_special(struct ut_env *ute)
 
 /* Test I/O on file-mapping boundaries, where each operation falls on two
  * distinguished file mappings */
-static void ut_file_edges_fmapping_(struct ut_env *ute,
-                                    const loff_t *off_arr, size_t cnt)
+static void
+ut_file_edges_fmapping_(struct ut_env *ute, const loff_t *off_arr, size_t cnt)
 {
 	const size_t bsz = 512;
 	uint8_t *buf = ut_randbuf(ute, bsz);
@@ -172,23 +172,22 @@ static void ut_file_edges_fmapping_(struct ut_env *ute,
 
 static void ut_file_edges_fmapping(struct ut_env *ute)
 {
-	long off_arr[] = {
-		UT_1K,
-		2 * UT_1K,
-		UT_4K,
-		UT_8K,
-		2 * UT_8K,
-		4 * UT_8K,
-		UT_BK_SIZE,
-		2 * UT_BK_SIZE,
-		UT_BK_SIZE * UT_FILEMAP_NCHILDS,
-		UT_BK_SIZE *(UT_FILEMAP_NCHILDS + 1),
-		UT_BK_SIZE * 2 * UT_FILEMAP_NCHILDS,
-		UT_BK_SIZE *((2 * UT_FILEMAP_NCHILDS) + 1),
-		UT_BK_SIZE *UT_FILEMAP_NCHILDS * UT_FILEMAP_NCHILDS,
-		UT_FILESIZE_MAX / 2,
-		UT_FILESIZE_MAX - UT_BK_SIZE
-	};
+	long off_arr[] = { UT_1K,
+			   2 * UT_1K,
+			   UT_4K,
+			   UT_8K,
+			   2 * UT_8K,
+			   4 * UT_8K,
+			   UT_BK_SIZE,
+			   2 * UT_BK_SIZE,
+			   UT_BK_SIZE * UT_FILEMAP_NCHILDS,
+			   UT_BK_SIZE * (UT_FILEMAP_NCHILDS + 1),
+			   UT_BK_SIZE * 2 * UT_FILEMAP_NCHILDS,
+			   UT_BK_SIZE * ((2 * UT_FILEMAP_NCHILDS) + 1),
+			   UT_BK_SIZE * UT_FILEMAP_NCHILDS *
+				   UT_FILEMAP_NCHILDS,
+			   UT_FILESIZE_MAX / 2,
+			   UT_FILESIZE_MAX - UT_BK_SIZE };
 	const size_t off_arr_len = UT_ARRAY_SIZE(off_arr);
 
 	for (size_t i = 0; i < 8; ++i) {

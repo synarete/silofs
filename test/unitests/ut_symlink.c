@@ -16,7 +16,6 @@
  */
 #include "unitests.h"
 
-
 static const char *ut_make_symname(struct ut_env *ute, size_t idx)
 {
 	return ut_make_name(ute, "symlink", idx);
@@ -108,7 +107,7 @@ static void ut_symlink_nested(struct ut_env *ute)
 		ut_mkdir2(ute, dino[i - 1], dname, &dino[i]);
 		sname[i] = ut_make_symname(ute, 8 * i);
 		ut_symlink(ute, dino[i], sname[i],
-		           ut_make_symval_with(ute, 'z', i), &sino);
+			   ut_make_symval_with(ute, 'z', i), &sino);
 		ut_rmdir_err(ute, dino[i - 1], dname, -ENOTEMPTY);
 	}
 	for (size_t j = UT_ARRAY_SIZE(dino); j > 1; --j) {
@@ -336,12 +335,9 @@ static void ut_symlink_stat(struct ut_env *ute)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ut_testdef ut_local_tests[] = {
-	UT_DEFTEST1(ut_symlink_simple),
-	UT_DEFTEST(ut_symlink_length),
-	UT_DEFTEST(ut_symlink_nested),
-	UT_DEFTEST(ut_symlink_to_reg),
-	UT_DEFTEST(ut_symlink_and_io),
-	UT_DEFTEST(ut_symlink_and_io2),
+	UT_DEFTEST1(ut_symlink_simple), UT_DEFTEST(ut_symlink_length),
+	UT_DEFTEST(ut_symlink_nested),  UT_DEFTEST(ut_symlink_to_reg),
+	UT_DEFTEST(ut_symlink_and_io),  UT_DEFTEST(ut_symlink_and_io2),
 	UT_DEFTEST(ut_symlink_stat),
 };
 

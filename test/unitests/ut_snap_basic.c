@@ -179,12 +179,9 @@ static void ut_snap_reload_other(struct ut_env *ute)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ut_testdef ut_local_tests[] = {
-	UT_DEFTEST(ut_snap_mkdir_rmdir),
-	UT_DEFTEST(ut_snap_create_remove),
-	UT_DEFTEST(ut_snap_write_read),
-	UT_DEFTEST(ut_snap_write_post),
-	UT_DEFTEST(ut_snap_overwrite),
-	UT_DEFTEST(ut_snap_reload),
+	UT_DEFTEST(ut_snap_mkdir_rmdir),  UT_DEFTEST(ut_snap_create_remove),
+	UT_DEFTEST(ut_snap_write_read),   UT_DEFTEST(ut_snap_write_post),
+	UT_DEFTEST(ut_snap_overwrite),    UT_DEFTEST(ut_snap_reload),
 	UT_DEFTEST(ut_snap_reload_other),
 };
 

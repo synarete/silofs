@@ -160,8 +160,7 @@ static void ut_reload_io(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_reload_unlinked_(struct ut_env *ute,
-                                size_t nfiles, size_t step)
+static void ut_reload_unlinked_(struct ut_env *ute, size_t nfiles, size_t step)
 {
 	ino_t fino;
 	ino_t dino;
@@ -238,12 +237,9 @@ static void ut_reload_xattr(struct ut_env *ute)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ut_testdef ut_local_tests[] = {
-	UT_DEFTEST(ut_reload_simple),
-	UT_DEFTEST(ut_reload_nfiles),
-	UT_DEFTEST(ut_reload_mixed),
-	UT_DEFTEST(ut_reload_io),
-	UT_DEFTEST(ut_reload_unlinked),
-	UT_DEFTEST(ut_reload_xattr),
+	UT_DEFTEST(ut_reload_simple),   UT_DEFTEST(ut_reload_nfiles),
+	UT_DEFTEST(ut_reload_mixed),    UT_DEFTEST(ut_reload_io),
+	UT_DEFTEST(ut_reload_unlinked), UT_DEFTEST(ut_reload_xattr),
 };
 
 const struct ut_testdefs ut_tdefs_reload = UT_MKTESTS(ut_local_tests);

@@ -16,7 +16,6 @@
  */
 #include "unitests.h"
 
-
 static void ut_rename_within_same_dir(struct ut_env *ute)
 {
 	ino_t ino = 0;
@@ -61,8 +60,7 @@ static void ut_rename_toggle_between_dirs(struct ut_env *ute)
 		newname = ut_randstr(ute, i + 1);
 		src_dino = (i & 1) ? dino1 : dino2;
 		dst_dino = (i & 1) ? dino2 : dino1;
-		ut_rename_move(ute, src_dino,
-		               name, dst_dino, newname);
+		ut_rename_move(ute, src_dino, name, dst_dino, newname);
 		ut_getattr(ute, ino, &st);
 		ut_expect_eq(st.st_nlink, 1);
 
@@ -211,8 +209,7 @@ static void ut_rename_move_multi(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_rename_onto_link_(struct ut_env *ute,
-                                 size_t niter, size_t cnt)
+static void ut_rename_onto_link_(struct ut_env *ute, size_t niter, size_t cnt)
 {
 	ino_t ino = 0;
 	ino_t dino = 0;
@@ -233,8 +230,7 @@ static void ut_rename_onto_link_(struct ut_env *ute,
 		}
 		for (size_t j = 0; j < cnt; ++j) {
 			name = ut_make_name(ute, tname, j);
-			ut_rename_replace(ute, dino,
-			                  tname, dino, name);
+			ut_rename_replace(ute, dino, tname, dino, name);
 			ut_rename_move(ute, dino, name, dino, tname);
 		}
 		ut_unlink(ute, dino, tname);
@@ -254,8 +250,8 @@ static void ut_rename_onto_link(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_rename_exchange_aux_(struct ut_env *ute,
-                                    ino_t dino1, ino_t dino2, size_t cnt)
+static void ut_rename_exchange_aux_(struct ut_env *ute, ino_t dino1,
+				    ino_t dino2, size_t cnt)
 {
 	const char *name1 = NULL;
 	const char *name2 = NULL;
@@ -326,7 +322,7 @@ static void ut_rename_exchange_same(struct ut_env *ute)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void ut_rename_override_(struct ut_env *ute, size_t cnt,
-                                loff_t off_base, size_t bsz)
+				loff_t off_base, size_t bsz)
 {
 	void *buf1 = ut_randbuf(ute, bsz);
 	void *buf2 = ut_randbuf(ute, bsz);
@@ -418,7 +414,7 @@ static void ut_getxattr_ino(struct ut_env *ute, ino_t ino)
 }
 
 static void ut_rename_with_xattr_(struct ut_env *ute, size_t cnt,
-                                  loff_t off_base, size_t bsz)
+				  loff_t off_base, size_t bsz)
 {
 	void *buf1 = ut_randbuf(ute, bsz);
 	void *buf2 = ut_randbuf(ute, bsz);

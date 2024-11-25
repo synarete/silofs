@@ -16,7 +16,6 @@
  */
 #include "unitests.h"
 
-
 static void ut_file_trunc_data_(struct ut_env *ute, loff_t off, size_t len)
 {
 	struct stat st = { .st_ino = 0 };
@@ -52,10 +51,8 @@ static void ut_file_trunc_data_(struct ut_env *ute, loff_t off, size_t len)
 static void ut_file_trunc_simple(struct ut_env *ute)
 {
 	const struct ut_range ranges[] = {
-		UT_MKRANGE1(0, UT_64K),
-		UT_MKRANGE1(UT_64K, UT_64K),
-		UT_MKRANGE1(UT_1M, UT_64K),
-		UT_MKRANGE1(UT_1G, UT_64K),
+		UT_MKRANGE1(0, UT_64K),     UT_MKRANGE1(UT_64K, UT_64K),
+		UT_MKRANGE1(UT_1M, UT_64K), UT_MKRANGE1(UT_1G, UT_64K),
 		UT_MKRANGE1(UT_1T, UT_64K),
 	};
 
@@ -142,8 +139,8 @@ static void ut_file_trunc_mixed(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_file_trunc_hole_(struct ut_env *ute,
-                                loff_t off1, loff_t off2, size_t len)
+static void
+ut_file_trunc_hole_(struct ut_env *ute, loff_t off1, loff_t off2, size_t len)
 {
 	const char *name = UT_NAME;
 	void *buf1 = NULL;
@@ -195,16 +192,15 @@ static void ut_file_trunc_hole(struct ut_env *ute)
 	};
 
 	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
-		ut_file_trunc_hole_(ute, range[i].off1,
-		                    range[i].off2, range[i].len);
+		ut_file_trunc_hole_(ute, range[i].off1, range[i].off2,
+				    range[i].len);
 		ut_relax_mem(ute);
 	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void
-ut_read_zero_byte(struct ut_env *ute, ino_t ino, loff_t off)
+static void ut_read_zero_byte(struct ut_env *ute, ino_t ino, loff_t off)
 {
 	const uint8_t zero[1] = { 0 };
 
@@ -214,7 +210,7 @@ ut_read_zero_byte(struct ut_env *ute, ino_t ino, loff_t off)
 }
 
 static void ut_file_trunc_single_byte_(struct ut_env *ute,
-                                       const loff_t *off_arr, size_t cnt)
+				       const loff_t *off_arr, size_t cnt)
 {
 	const char *name = UT_NAME;
 	const uint8_t one[1] = { 1 };
@@ -245,15 +241,10 @@ static void ut_file_trunc_single_byte_(struct ut_env *ute,
 
 static void ut_file_trunc_single_byte(struct ut_env *ute)
 {
-	const loff_t off1[] = {
-		0, UT_BK_SIZE, UT_1M, UT_1G, UT_1T
-	};
-	const loff_t off2[] = {
-		1, UT_BK_SIZE + 1, UT_1M + 1, UT_1G + 1, UT_1T + 1
-	};
-	const loff_t off3[] = {
-		77, 777, 7777, 77777, 777777, 7777777
-	};
+	const loff_t off1[] = { 0, UT_BK_SIZE, UT_1M, UT_1G, UT_1T };
+	const loff_t off2[] = { 1, UT_BK_SIZE + 1, UT_1M + 1, UT_1G + 1,
+				UT_1T + 1 };
+	const loff_t off3[] = { 77, 777, 7777, 77777, 777777, 7777777 };
 
 	ut_file_trunc_single_byte_(ute, off1, UT_ARRAY_SIZE(off1));
 	ut_relax_mem(ute);
@@ -265,8 +256,7 @@ static void ut_file_trunc_single_byte(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_file_trunc_tail_(struct ut_env *ute,
-                                loff_t off, size_t ulen)
+static void ut_file_trunc_tail_(struct ut_env *ute, loff_t off, size_t ulen)
 {
 	const char *name = UT_NAME;
 	void *buf = ut_randbuf(ute, ulen);
@@ -347,8 +337,8 @@ static void ut_file_trunc_void(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_file_trunc_zero_size_(struct ut_env *ute,
-                                     loff_t off, size_t len)
+static void
+ut_file_trunc_zero_size_(struct ut_env *ute, loff_t off, size_t len)
 {
 	struct stat st[3];
 	struct statvfs stv[3];
@@ -389,7 +379,7 @@ static void ut_file_trunc_zero_size(struct ut_env *ute)
 		UT_MKRANGE1(UT_1T, UT_1M),
 		UT_MKRANGE1(UT_1T + 1111111, UT_1M - 1),
 		UT_MKRANGE1(UT_FILESIZE_MAX - UT_1M, UT_1M),
-		UT_MKRANGE1(UT_FILESIZE_MAX - UT_1M - 1,  UT_1M + 1),
+		UT_MKRANGE1(UT_FILESIZE_MAX - UT_1M - 1, UT_1M + 1),
 	};
 
 	ut_exec_with_ranges(ute, ut_file_trunc_zero_size_, ranges);
@@ -397,8 +387,8 @@ static void ut_file_trunc_zero_size(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_file_trunc_null_data_(struct ut_env *ute,
-                                     loff_t off, size_t unused_len)
+static void
+ut_file_trunc_null_data_(struct ut_env *ute, loff_t off, size_t unused_len)
 {
 	uint8_t rnd[256];
 	uint8_t dat[1] = { 0xC7 };

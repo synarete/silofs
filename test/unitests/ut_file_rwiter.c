@@ -16,7 +16,6 @@
  */
 #include "unitests.h"
 
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void ut_file_write_iter_(struct ut_env *ute, loff_t off, size_t len)
@@ -82,8 +81,8 @@ static void ut_file_write_iter_unaligned(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_file_write_iter_sparse_(struct ut_env *ute,
-                                       const loff_t *offs, size_t cnt)
+static void
+ut_file_write_iter_sparse_(struct ut_env *ute, const loff_t *offs, size_t cnt)
 {
 	const char *name = UT_NAME;
 	uint64_t val = 0;
@@ -120,8 +119,14 @@ static void ut_file_write_iter_sparse_(struct ut_env *ute,
 static void ut_file_write_iter_sparse(struct ut_env *ute)
 {
 	const loff_t offs[] = {
-		8 * UT_BK_SIZE, UT_1G / 5 - 5, UT_BK_SIZE - 1,
-		UT_1T / 7 - 7, 0, UT_1M / 3 - 3, 4 * UT_1M, UT_1K - 1,
+		8 * UT_BK_SIZE,
+		UT_1G / 5 - 5,
+		UT_BK_SIZE - 1,
+		UT_1T / 7 - 7,
+		0,
+		UT_1M / 3 - 3,
+		4 * UT_1M,
+		UT_1K - 1,
 	};
 
 	ut_file_write_iter_sparse_(ute, offs, UT_ARRAY_SIZE(offs));

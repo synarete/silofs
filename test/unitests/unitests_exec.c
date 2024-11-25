@@ -19,8 +19,7 @@
 #include <ctype.h>
 #include <limits.h>
 
-#define UT_DEFTGRP(t_) \
-        { .tests = &(t_), .name = SILOFS_STR(t_) }
+#define UT_DEFTGRP(t_) { .tests = &(t_), .name = SILOFS_STR(t_) }
 
 static struct ut_tgroup const g_ut_tgroups[] = {
 	/* infra */
@@ -167,8 +166,8 @@ static void ute_del(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_track_test(struct ut_env *ute,
-                          const struct ut_testdef *td, bool pre_execute)
+static void ut_track_test(struct ut_env *ute, const struct ut_testdef *td,
+			  bool pre_execute)
 {
 	struct timespec dur;
 
@@ -177,8 +176,8 @@ static void ut_track_test(struct ut_env *ute,
 		silofs_mclock_now(&ute->ts_start);
 	} else {
 		silofs_mclock_dur(&ute->ts_start, &dur);
-		printf("OK (%ld.%03lds)\n",
-		       dur.tv_sec, dur.tv_nsec / 1000000L);
+		printf("OK (%ld.%03lds)\n", dur.tv_sec,
+		       dur.tv_nsec / 1000000L);
 	}
 	fflush(stdout);
 }
@@ -191,8 +190,8 @@ static void ut_check_valid_statvfs(const struct statvfs *stv)
 	ut_expect_le(stv->f_favail, stv->f_files);
 }
 
-static void ut_check_statvfs(const struct statvfs *stv1,
-                             const struct statvfs *stv2)
+static void
+ut_check_statvfs(const struct statvfs *stv1, const struct statvfs *stv2)
 {
 	ut_check_valid_statvfs(stv1);
 	ut_check_valid_statvfs(stv2);
@@ -216,12 +215,12 @@ static void ut_check_valid_spacecounts(const struct silofs_spacegauges *spc)
 }
 
 static void ut_expect_spacestats(const struct silofs_spacestats *spst1,
-                                 const struct silofs_spacestats *spst2)
+				 const struct silofs_spacestats *spst2)
 {
-	ut_expect_le(spst1->lsegs.nsuper,  spst2->lsegs.nsuper);
+	ut_expect_le(spst1->lsegs.nsuper, spst2->lsegs.nsuper);
 	ut_expect_le(spst1->lsegs.nspnode, spst2->lsegs.nspnode);
 	ut_expect_le(spst1->lsegs.nspleaf, spst2->lsegs.nspleaf);
-	ut_expect_le(spst1->lsegs.ninode,  spst2->lsegs.ninode);
+	ut_expect_le(spst1->lsegs.ninode, spst2->lsegs.ninode);
 	ut_expect_le(spst1->lsegs.nxanode, spst2->lsegs.nxanode);
 	ut_expect_le(spst1->lsegs.ndtnode, spst2->lsegs.ndtnode);
 	ut_expect_le(spst1->lsegs.nsymval, spst2->lsegs.nsymval);
@@ -230,10 +229,10 @@ static void ut_expect_spacestats(const struct silofs_spacestats *spst1,
 	ut_expect_le(spst1->lsegs.ndata4k, spst2->lsegs.ndata4k);
 	ut_expect_le(spst1->lsegs.ndatabk, spst2->lsegs.ndatabk);
 
-	ut_expect_le(spst1->bks.nsuper,  spst2->bks.nsuper);
+	ut_expect_le(spst1->bks.nsuper, spst2->bks.nsuper);
 	ut_expect_le(spst1->bks.nspnode, spst2->bks.nspnode);
 	ut_expect_le(spst1->bks.nspleaf, spst2->bks.nspleaf);
-	ut_expect_le(spst1->bks.ninode,  spst2->bks.ninode);
+	ut_expect_le(spst1->bks.ninode, spst2->bks.ninode);
 	ut_expect_le(spst1->bks.nxanode, spst2->bks.nxanode);
 	ut_expect_le(spst1->bks.ndtnode, spst2->bks.ndtnode);
 	ut_expect_le(spst1->bks.nsymval, spst2->bks.nsymval);
@@ -242,10 +241,10 @@ static void ut_expect_spacestats(const struct silofs_spacestats *spst1,
 	ut_expect_le(spst1->bks.ndata4k, spst2->bks.ndata4k);
 	ut_expect_le(spst1->bks.ndatabk, spst2->bks.ndatabk);
 
-	ut_expect_le(spst1->objs.nsuper,  spst2->objs.nsuper);
+	ut_expect_le(spst1->objs.nsuper, spst2->objs.nsuper);
 	ut_expect_le(spst1->objs.nspnode, spst2->objs.nspnode);
 	ut_expect_le(spst1->objs.nspleaf, spst2->objs.nspleaf);
-	ut_expect_eq(spst1->objs.ninode,  spst2->objs.ninode);
+	ut_expect_eq(spst1->objs.ninode, spst2->objs.ninode);
 	ut_expect_eq(spst1->objs.nxanode, spst2->objs.nxanode);
 	ut_expect_eq(spst1->objs.ndtnode, spst2->objs.ndtnode);
 	ut_expect_eq(spst1->objs.nsymval, spst2->objs.nsymval);
@@ -256,7 +255,7 @@ static void ut_expect_spacestats(const struct silofs_spacestats *spst1,
 }
 
 static void ut_check_spacestats(const struct silofs_spacestats *spst1,
-                                const struct silofs_spacestats *spst2)
+				const struct silofs_spacestats *spst2)
 {
 	ut_expect_le(spst1->btime, spst2->btime);
 	ut_expect_le(spst1->ctime, spst2->ctime);
@@ -299,7 +298,7 @@ static void ut_probe_stats(struct ut_env *ute, bool pre_execute)
 		ualloc_now = ualloc_nbytes_now(ute);
 		ut_expect_ge(ualloc_now, ute->ualloc_start);
 		ualloc_dif = ualloc_now - ute->ualloc_start;
-		ut_expect_le(ualloc_dif,  2 * UT_BK_SIZE);
+		ut_expect_le(ualloc_dif, 2 * UT_BK_SIZE);
 	}
 }
 
@@ -514,8 +513,7 @@ ut_malloc_chunk(struct ut_env *ute, size_t nbytes)
 	return mchunk;
 }
 
-static void ut_do_free(struct ut_env *ute,
-                       struct ut_malloc_chunk *mchunk)
+static void ut_do_free(struct ut_env *ute, struct ut_malloc_chunk *mchunk)
 {
 	silofs_assert_ge(ute->nbytes_alloc, mchunk->size + sizeof(*mchunk));
 
@@ -548,8 +546,7 @@ char *ut_strdup(struct ut_env *ute, const char *str)
 	return ut_strndup(ute, str, strlen(str));
 }
 
-char *ut_strndup(struct ut_env *ute, const char *str,
-                 size_t len)
+char *ut_strndup(struct ut_env *ute, const char *str, size_t len)
 {
 	char *str2;
 
@@ -790,8 +787,8 @@ bool ut_not_dot_or_dotdot(const char *s)
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 void ut_exec_with_ranges_(struct ut_env *ute,
-                          void (*fn)(struct ut_env *, loff_t, size_t),
-                          const struct ut_range *range, size_t na)
+			  void (*fn)(struct ut_env *, loff_t, size_t),
+			  const struct ut_range *range, size_t na)
 {
 	for (size_t i = 0; i < na; ++i) {
 		fn(ute, range[i].off, range[i].len);

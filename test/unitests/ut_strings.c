@@ -16,7 +16,6 @@
  */
 #include "unitests.h"
 
-
 static struct silofs_strview *ut_new_strview(struct ut_env *ute)
 {
 	struct silofs_strview *sv = NULL;
@@ -155,16 +154,16 @@ static void ut_strview_sub(struct ut_env *ute)
 
 	silofs_strview_initn(sv, abc, 10); /* "abcdefghij" */
 	silofs_strview_sub(sv, 2, 4, &sub);
-	eq  = silofs_strview_isequal(&sub, "cdef");
+	eq = silofs_strview_isequal(&sub, "cdef");
 	ut_expect(eq);
 	silofs_strview_rsub(sv, 3, &sub);
-	eq  = silofs_strview_isequal(&sub, "hij");
+	eq = silofs_strview_isequal(&sub, "hij");
 	ut_expect(eq);
 	silofs_strview_chop(sv, 8, &sub);
-	eq  = silofs_strview_isequal(&sub, "ab");
+	eq = silofs_strview_isequal(&sub, "ab");
 	ut_expect(eq);
 	silofs_strview_init_by(&sub, sv);
-	eq  = silofs_strview_nisequal(&sub, sv->str, sv->len);
+	eq = silofs_strview_nisequal(&sub, sv->str, sv->len);
 	ut_expect(eq);
 	silofs_strview_fini(sv);
 }
@@ -279,13 +278,13 @@ static void ut_strview_chop(struct ut_env *ute)
 	eq = silofs_strview_isequal(&sub, "1");
 	ut_expect(eq);
 	silofs_strview_chop_chr(sv, '.', &sub);
-	eq  = silofs_strview_isequal(&sub, "123");
+	eq = silofs_strview_isequal(&sub, "123");
 	ut_expect(eq);
 	silofs_strview_chop_if(sv, silofs_chr_ispunct, &sub);
-	eq  = silofs_strview_isequal(&sub, "123");
+	eq = silofs_strview_isequal(&sub, "123");
 	ut_expect(eq);
 	silofs_strview_chop_if(sv, silofs_chr_isprint, &sub);
-	eq  = silofs_strview_size(&sub) == 0;
+	eq = silofs_strview_size(&sub) == 0;
 	ut_expect(eq);
 	silofs_strview_fini(sv);
 }
@@ -301,7 +300,7 @@ static void ut_strview_strip(struct ut_env *ute)
 
 	silofs_strview_init(sv, ".....#XYZ#.........");
 	silofs_strview_strip_any_of(sv, "-._#", &sub);
-	eq  = silofs_strview_isequal(&sub, "XYZ");
+	eq = silofs_strview_isequal(&sub, "XYZ");
 	ut_expect(eq);
 	silofs_strview_strip_chr(sv, '.', &sub);
 	eq = silofs_strview_isequal(&sub, "#XYZ#");
@@ -338,19 +337,19 @@ static void ut_strview_find_token(struct ut_env *ute)
 
 	silofs_strview_init(sv, " A BB \t  CCC    DDDD  \n");
 	silofs_strview_find_token(sv, seps, &tok);
-	eq  = silofs_strview_isequal(&tok, "A");
+	eq = silofs_strview_isequal(&tok, "A");
 	ut_expect(eq);
 	silofs_strview_find_next_token(sv, &tok, seps, &tok);
-	eq  = silofs_strview_isequal(&tok, "BB");
+	eq = silofs_strview_isequal(&tok, "BB");
 	ut_expect(eq);
 	silofs_strview_find_next_token(sv, &tok, seps, &tok);
-	eq  = silofs_strview_isequal(&tok, "CCC");
+	eq = silofs_strview_isequal(&tok, "CCC");
 	ut_expect(eq);
 	silofs_strview_find_next_token(sv, &tok, seps, &tok);
-	eq  = silofs_strview_isequal(&tok, "DDDD");
+	eq = silofs_strview_isequal(&tok, "DDDD");
 	ut_expect(eq);
 	silofs_strview_find_next_token(sv, &tok, seps, &tok);
-	eq  = silofs_strview_isequal(&tok, "");
+	eq = silofs_strview_isequal(&tok, "");
 	ut_expect(eq);
 	silofs_strview_fini(sv);
 }
@@ -359,9 +358,9 @@ static void ut_strview_tokenize(struct ut_env *ute)
 {
 	struct silofs_strview *sv = ut_new_strview(ute);
 	struct silofs_strview toks_list[7];
-	const char *seps = " /:;.| " ;
+	const char *seps = " /:;.| ";
 	const char *line =
-	        "    /Ant:::Bee;:Cat:Dog;...Elephant.../Frog:/Giraffe///    ";
+		"    /Ant:::Bee;:Cat:Dog;...Elephant.../Frog:/Giraffe///    ";
 	size_t n_toks = 0;
 	int err = 0;
 	bool eq;
@@ -370,11 +369,11 @@ static void ut_strview_tokenize(struct ut_env *ute)
 	err = silofs_strview_tokenize(sv, seps, toks_list, 7, &n_toks);
 	ut_expect_eq(err, 0);
 	ut_expect_eq(n_toks, 7);
-	eq  = silofs_strview_isequal(&toks_list[0], "Ant");
+	eq = silofs_strview_isequal(&toks_list[0], "Ant");
 	ut_expect(eq);
-	eq  = silofs_strview_isequal(&toks_list[4], "Elephant");
+	eq = silofs_strview_isequal(&toks_list[4], "Elephant");
 	ut_expect(eq);
-	eq  = silofs_strview_isequal(&toks_list[6], "Giraffe");
+	eq = silofs_strview_isequal(&toks_list[6], "Giraffe");
 	ut_expect(eq);
 	silofs_strview_fini(sv);
 }
@@ -571,7 +570,7 @@ static void ut_strspan_replace(struct ut_env *ute)
 	ut_expect(eq);
 	sz = silofs_strspan_size(ss);
 	silofs_strspan_nreplace(ss, 4, 80, silofs_strspan_data(ss), sz);
-	eq = silofs_strview_isequal(&ss->v, ".A.A.A.AAA");  /* Truncated */
+	eq = silofs_strview_isequal(&ss->v, ".A.A.A.AAA"); /* Truncated */
 	ut_expect(eq);
 	silofs_strspan_fini(ss);
 }

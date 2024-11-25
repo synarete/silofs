@@ -16,7 +16,6 @@
  */
 #include "unitests.h"
 
-
 static void ut_file_lseek_simple_(struct ut_env *ute, loff_t off)
 {
 	struct stat st = { .st_size = -1 };
@@ -49,8 +48,8 @@ static void ut_file_lseek_simple_(struct ut_env *ute, loff_t off)
 static void ut_file_lseek_simple(struct ut_env *ute)
 {
 	const loff_t off[] = {
-		0, UT_64K, UT_1M, UT_1G, UT_1T, 1,
-		UT_64K + 1, UT_1M + 111, UT_1G - 1111, UT_1T + 11111,
+		0, UT_64K,     UT_1M,       UT_1G,        UT_1T,
+		1, UT_64K + 1, UT_1M + 111, UT_1G - 1111, UT_1T + 11111,
 	};
 
 	for (size_t i = 0; i < UT_ARRAY_SIZE(off); ++i) {
@@ -93,7 +92,6 @@ static void ut_file_lseek_holes_(struct ut_env *ute, loff_t off)
 	ut_remove_file(ute, dino, name, ino);
 	ut_rmdir_at_root(ute, name);
 }
-
 
 static void ut_file_lseek_holes(struct ut_env *ute)
 {

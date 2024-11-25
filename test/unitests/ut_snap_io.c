@@ -16,11 +16,10 @@
  */
 #include "unitests.h"
 
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_snap_write_sparse_(struct ut_env *ute,
-                                  const loff_t *offs, size_t cnt, size_t bsz)
+static void ut_snap_write_sparse_(struct ut_env *ute, const loff_t *offs,
+				  size_t cnt, size_t bsz)
 {
 	ino_t ino = 0;
 	ino_t dino = 0;
@@ -48,13 +47,8 @@ static void ut_snap_write_sparse_(struct ut_env *ute,
 static void ut_snap_write_sparse(struct ut_env *ute)
 {
 	const loff_t offs[] = {
-		1,
-		2 * UT_1K - 1,
-		8 * UT_1K - 1,
-		UT_BK_SIZE - 1,
-		UT_1M - 1,
-		UT_1G - 1,
-		UT_1T - 1
+		1,         2 * UT_1K - 1, 8 * UT_1K - 1, UT_BK_SIZE - 1,
+		UT_1M - 1, UT_1G - 1,     UT_1T - 1
 	};
 
 	ut_snap_write_sparse_(ute, offs, UT_ARRAY_SIZE(offs), UT_1K);

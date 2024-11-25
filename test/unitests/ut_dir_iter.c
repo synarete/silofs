@@ -43,8 +43,8 @@ ut_find_not_dot(const struct ut_dirent_info *deis, size_t n, size_t start_pos)
 	}
 	ut_expect_not_null(dei);
 	if (dei == NULL) {
-		silofs_panic("failed to find real de: n=%zu statr_pos=%zu",
-		             n, start_pos);
+		silofs_panic("failed to find real de: n=%zu statr_pos=%zu", n,
+			     start_pos);
 	}
 	return dei;
 }
@@ -61,8 +61,8 @@ ut_find_any_not_dot(const struct ut_dirent_info *dei, size_t n)
 	return ut_find_not_dot(dei, n, n / 2);
 }
 
-static void ut_expect_name_exists(const struct ut_dirent_info *dei,
-                                  size_t n, const char *name)
+static void ut_expect_name_exists(const struct ut_dirent_info *dei, size_t n,
+				  const char *name)
 {
 	bool name_exists = false;
 
@@ -95,7 +95,7 @@ static void ut_dir_open_release(struct ut_env *ute)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void ut_verify_iter_simple(struct ut_env *ute, const char *pre,
-                                  const struct ut_readdir_ctx *rd_ctx)
+				  const struct ut_readdir_ctx *rd_ctx)
 {
 	const char *name = NULL;
 	const struct ut_dirent_info *dei = rd_ctx->dei;
@@ -145,8 +145,8 @@ static void ut_dir_iter_simple(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_dir_iter_names_(struct ut_env *ute,
-                               const char *names[], size_t nnames)
+static void
+ut_dir_iter_names_(struct ut_env *ute, const char *names[], size_t nnames)
 {
 	ino_t ino;
 	ino_t dino;
@@ -193,17 +193,12 @@ static void ut_dir_iter_names_(struct ut_env *ute,
 
 static void ut_dir_iter_fixed_names(struct ut_env *ute)
 {
-	const char *dig_names[] = {
-		"1",
-		"22",
-		"333",
-		"4444",
-		"55555"
-		"666666"
-		"7777777"
-		"88888888"
-		"999999999"
-	};
+	const char *dig_names[] = { "1", "22", "333", "4444",
+				    "55555"
+				    "666666"
+				    "7777777"
+				    "88888888"
+				    "999999999" };
 	const char *abc_names[] = {
 		"a",
 		"bb",

@@ -17,7 +17,7 @@
 #include "unitests.h"
 
 struct ut_thread_args {
-	ino_t  dino;
+	ino_t dino;
 	loff_t off;
 	size_t len;
 	size_t cnt;
@@ -49,7 +49,7 @@ static int do_start(struct silofs_thread *th)
 
 static void
 ut_create_threads(struct ut_env *ute, struct silofs_thread *th_arr, size_t nth,
-                  ut_th_exec_fn exec, const struct ut_thread_args *args)
+		  ut_th_exec_fn exec, const struct ut_thread_args *args)
 {
 	struct ut_thread_xargs *xargs = NULL;
 	int err;
@@ -79,8 +79,8 @@ ut_join_threads(struct ut_env *ute, struct silofs_thread *th_arr, size_t nth)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_file_mt_exec(struct ut_env *ute,
-                            const struct ut_thread_args *args)
+static void
+ut_file_mt_exec(struct ut_env *ute, const struct ut_thread_args *args)
 {
 	const ino_t dino = args->dino;
 	const size_t bsz = args->len;
@@ -103,8 +103,8 @@ static void ut_file_mt_exec(struct ut_env *ute,
 	ut_remove_file(ute, dino, name, ino);
 }
 
-static void ut_file_mt_simple_(struct ut_env *ute, size_t nth,
-                               loff_t off, size_t len)
+static void
+ut_file_mt_simple_(struct ut_env *ute, size_t nth, loff_t off, size_t len)
 {
 	const char *name = UT_NAME;
 	struct silofs_thread *th_arr = ute_malloc_threads(ute, nth);
@@ -140,8 +140,8 @@ static void ut_file_mt_simple(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_file_mt_many_(struct ut_env *ute, size_t nth,
-                             loff_t off, size_t len)
+static void
+ut_file_mt_many_(struct ut_env *ute, size_t nth, loff_t off, size_t len)
 {
 	const char *name = UT_NAME;
 	struct silofs_thread *th_arr = ute_malloc_threads(ute, nth);

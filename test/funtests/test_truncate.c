@@ -25,10 +25,12 @@ static void test_truncate_simple(struct ft_env *fte)
 	int fd = -1;
 	loff_t off;
 	struct stat st;
-	const loff_t offs[] = { 0,         1,          FT_BK_SIZE,
-				FT_1M,     FT_1M + 1,  FT_1G,
-				FT_1G - 1, 11 * FT_1G, 111 * FT_1G - 111,
-				FT_1T,     FT_1T - 11, FT_FILESIZE_MAX };
+	const loff_t offs[] = {
+		0,         1,          FT_BK_SIZE,
+		FT_1M,     FT_1M + 1,  FT_1G,
+		FT_1G - 1, 11 * FT_1G, 111 * FT_1G - 111,
+		FT_1T,     FT_1T - 11, FT_FILESIZE_MAX,
+	};
 	const char *path = ft_new_path_unique(fte);
 
 	ft_creat(path, 0600, &fd);
@@ -105,8 +107,9 @@ static void test_truncate_zero(struct ft_env *fte)
 	loff_t off = 0;
 	size_t bsz = FT_BK_SIZE;
 	struct stat st;
-	const loff_t offs[] = { FT_1M,     FT_1G,     FT_1T,
-				FT_1M - 1, FT_1G - 1, FT_1T - 1 };
+	const loff_t offs[] = {
+		FT_1M, FT_1G, FT_1T, FT_1M - 1, FT_1G - 1, FT_1T - 1,
+	};
 	const void *buf = ft_new_buf_rands(fte, bsz);
 	const char *path = ft_new_path_unique(fte);
 

@@ -308,9 +308,12 @@ static void test_utimensat_io(struct ft_env *fte)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ft_tdef ft_local_tests[] = {
-	FT_DEFTEST(test_utime_file),     FT_DEFTEST(test_utime_now),
-	FT_DEFTEST(test_utimes_file),    FT_DEFTEST(test_utimensat_file),
-	FT_DEFTEST(test_futimens_ctime), FT_DEFTEST(test_utimensat_io),
+	FT_DEFTEST(test_utime_file),     //
+	FT_DEFTEST(test_utime_now),      //
+	FT_DEFTEST(test_utimes_file),    //
+	FT_DEFTEST(test_utimensat_file), //
+	FT_DEFTEST(test_futimens_ctime), //
+	FT_DEFTEST(test_utimensat_io),   //
 };
 
 const struct ft_tests ft_test_utimes = FT_DEFTESTS(ft_local_tests);

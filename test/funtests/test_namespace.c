@@ -100,30 +100,36 @@ static void test_namespace_(struct ft_ns_ctx *ns_ctx)
 
 static void test_namespace_simple(struct ft_env *fte)
 {
-	struct ft_ns_ctx ns_ctx = { .fte = fte,
-				    .depth_max = 4,
-				    .dirs_per_level = 4,
-				    .files_per_level = 4 };
+	struct ft_ns_ctx ns_ctx = {
+		.fte = fte,
+		.depth_max = 4,
+		.dirs_per_level = 4,
+		.files_per_level = 4,
+	};
 
 	test_namespace_(&ns_ctx);
 }
 
 static void test_namespace_deep(struct ft_env *fte)
 {
-	struct ft_ns_ctx ns_ctx = { .fte = fte,
-				    .depth_max = 12,
-				    .dirs_per_level = 2,
-				    .files_per_level = 4 };
+	struct ft_ns_ctx ns_ctx = {
+		.fte = fte,
+		.depth_max = 12,
+		.dirs_per_level = 2,
+		.files_per_level = 4,
+	};
 
 	test_namespace_(&ns_ctx);
 }
 
 static void test_namespace_wide(struct ft_env *fte)
 {
-	struct ft_ns_ctx ns_ctx = { .fte = fte,
-				    .depth_max = 2,
-				    .dirs_per_level = 128,
-				    .files_per_level = 16 };
+	struct ft_ns_ctx ns_ctx = {
+		.fte = fte,
+		.depth_max = 2,
+		.dirs_per_level = 128,
+		.files_per_level = 16,
+	};
 
 	test_namespace_(&ns_ctx);
 }

@@ -336,9 +336,12 @@ static void test_unlinked_same_path(struct ft_env *fte)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ft_tdef ft_local_tests[] = {
-	FT_DEFTEST(test_unlinked_simple), FT_DEFTEST(test_unlinked_complex),
-	FT_DEFTEST(test_unlinked_segs),   FT_DEFTEST(test_unlinked_nfiles),
-	FT_DEFTEST(test_unlinked_rename), FT_DEFTEST(test_unlinked_same_path),
+	FT_DEFTEST(test_unlinked_simple),    //
+	FT_DEFTEST(test_unlinked_complex),   //
+	FT_DEFTEST(test_unlinked_segs),      //
+	FT_DEFTEST(test_unlinked_nfiles),    //
+	FT_DEFTEST(test_unlinked_rename),    //
+	FT_DEFTEST(test_unlinked_same_path), //
 };
 
 const struct ft_tests ft_test_unlinked_file = FT_DEFTESTS(ft_local_tests);

@@ -181,13 +181,15 @@ static void ft_post_execute(void)
 
 static void ft_execute_all(void)
 {
-	struct ft_params params = { .progname = program_invocation_short_name,
-				    .testdir = ft_globals.testdir_real,
-				    .testname = ft_globals.test_name,
-				    .tests_mask = ft_globals.tests_mask,
-				    .tests_xmask = ft_globals.tests_xmask,
-				    .repeatn = ft_globals.repeat_count,
-				    .listtests = ft_globals.list_tests };
+	struct ft_params params = {
+		.progname = program_invocation_short_name,
+		.testdir = ft_globals.testdir_real,
+		.testname = ft_globals.test_name,
+		.tests_mask = ft_globals.tests_mask,
+		.tests_xmask = ft_globals.tests_xmask,
+		.repeatn = ft_globals.repeat_count,
+		.listtests = ft_globals.list_tests,
+	};
 
 	fte_init(ft_g_env, &params);
 	fte_run(ft_g_env);

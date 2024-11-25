@@ -353,10 +353,13 @@ static void test_write_read_sgid(struct ft_env *fte)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ft_tdef ft_local_tests[] = {
-	FT_DEFTEST(test_write_only),       FT_DEFTEST(test_write_unlinked),
-	FT_DEFTEST(test_write_espipe),     FT_DEFTEST(test_write_mctimes),
-	FT_DEFTEST(test_write_lseek_read), FT_DEFTEST(test_write_read_suid),
-	FT_DEFTEST(test_write_read_sgid),
+	FT_DEFTEST(test_write_only),       //
+	FT_DEFTEST(test_write_unlinked),   //
+	FT_DEFTEST(test_write_espipe),     //
+	FT_DEFTEST(test_write_mctimes),    //
+	FT_DEFTEST(test_write_lseek_read), //
+	FT_DEFTEST(test_write_read_suid),  //
+	FT_DEFTEST(test_write_read_sgid),  //
 };
 
 const struct ft_tests ft_test_write = FT_DEFTESTS(ft_local_tests);

@@ -114,9 +114,10 @@ static void test_rw_sparse_overwrite_(struct ft_env *fte, loff_t base_off)
 	uint8_t *buf2 = ft_new_buf_rands(fte, len2);
 	uint8_t *buf3 = ft_new_buf_rands(fte, len1 + len2);
 	char *path = ft_new_path_unique(fte);
-	const loff_t offs[] = { 737717,  280411, 10007,   31033, 42043, 53113,
-				161881,  375533, 86767,   97171, 75353, 611999,
-				1108007, 64601,  1272211, 20323 };
+	const loff_t offs[] = {
+		737717, 280411, 10007, 31033,  42043,   53113, 161881,  375533,
+		86767,  97171,  75353, 611999, 1108007, 64601, 1272211, 20323,
+	};
 	const size_t noffs = FT_ARRAY_SIZE(offs);
 	loff_t off = -1;
 	uint8_t byte = 0;

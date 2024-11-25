@@ -366,15 +366,17 @@ test_fallocate_punch_into_hole_(struct ft_env *fte, loff_t base_off)
 
 static void test_fallocate_punch_into_hole(struct ft_env *fte)
 {
-	const loff_t off[] = { 0,
-			       FT_1M,
-			       FT_1M - 1,
-			       FT_1G,
-			       FT_1G + 1,
-			       FT_1T,
-			       FT_1T - 1,
-			       FT_FILESIZE_MAX / 2,
-			       (FT_FILESIZE_MAX / 2) + 1 };
+	const loff_t off[] = {
+		0,
+		FT_1M,
+		FT_1M - 1,
+		FT_1G,
+		FT_1G + 1,
+		FT_1T,
+		FT_1T - 1,
+		FT_FILESIZE_MAX / 2,
+		(FT_FILESIZE_MAX / 2) + 1,
+	};
 
 	for (size_t i = 0; i < FT_ARRAY_SIZE(off); ++i) {
 		test_fallocate_punch_into_hole_(fte, off[i]);

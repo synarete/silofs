@@ -332,8 +332,11 @@ static void test_readdir_counted_(struct ft_env *fte, size_t lim)
 
 static void test_readdir_counted(struct ft_env *fte)
 {
-	const size_t lim[] = { 10, 100,
-			       silofs_min(SILOFS_LINK_MAX - 2, 100000) };
+	const size_t lim[] = {
+		10,
+		100,
+		silofs_min(SILOFS_LINK_MAX - 2, 100000),
+	};
 
 	for (size_t i = 0; i < FT_ARRAY_SIZE(lim); ++i) {
 		test_readdir_counted_(fte, lim[i]);

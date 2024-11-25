@@ -52,7 +52,7 @@ jobs:
       - name: Update
         run: sudo apt-get update
       - name: Install deps
-        run: sudo apt-get install -y astyle python3
+        run: sudo apt-get install -y clang-format python3
       - name: Verify code style
         run: ./cstylefmt.sh
       - name: Require clean code

@@ -30,7 +30,7 @@ void silofs_iovec_reset(struct silofs_iovec *iov)
 }
 
 void silofs_iovec_assign(struct silofs_iovec *iov,
-                         const struct silofs_iovec *other)
+			 const struct silofs_iovec *other)
 {
 	iov->iov.iov_base = other->iov.iov_base;
 	iov->iov.iov_len = other->iov.iov_len;
@@ -47,8 +47,8 @@ int silofs_iovec_copy_into(const struct silofs_iovec *iov, void *buf)
 		memcpy(buf, iov->iov.iov_base, iov->iov.iov_len);
 		err = 0;
 	} else if (iov->iov_fd > 0) {
-		err = silofs_sys_preadn(iov->iov_fd, buf,
-		                        iov->iov.iov_len, iov->iov_off);
+		err = silofs_sys_preadn(iov->iov_fd, buf, iov->iov.iov_len,
+					iov->iov_off);
 	} else {
 		err = -SILOFS_EIO;
 	}
@@ -62,8 +62,8 @@ int silofs_iovec_copy_from(const struct silofs_iovec *iov, const void *buf)
 	if (iov->iov.iov_base != NULL) {
 		memcpy(iov->iov.iov_base, buf, iov->iov.iov_len);
 	} else if (iov->iov_fd > 0) {
-		err = silofs_sys_pwriten(iov->iov_fd, buf,
-		                         iov->iov.iov_len, iov->iov_off);
+		err = silofs_sys_pwriten(iov->iov_fd, buf, iov->iov.iov_len,
+					 iov->iov_off);
 	} else {
 		err = -SILOFS_EIO;
 	}
@@ -71,7 +71,7 @@ int silofs_iovec_copy_from(const struct silofs_iovec *iov, const void *buf)
 }
 
 int silofs_iovec_copy_mem(const struct silofs_iovec *iov_src,
-                          const struct silofs_iovec *iov_dst, size_t len)
+			  const struct silofs_iovec *iov_dst, size_t len)
 {
 	memcpy(iov_dst->iov.iov_base, iov_src->iov.iov_base, len);
 	return 0;

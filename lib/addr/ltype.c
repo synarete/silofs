@@ -18,7 +18,6 @@
 #include <silofs/infra.h>
 #include <silofs/addr.h>
 
-
 static bool ltype_isequal(enum silofs_ltype st1, enum silofs_ltype st2)
 {
 	return (st1 == st2);

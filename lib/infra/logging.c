@@ -27,18 +27,15 @@
 #include <errno.h>
 #include <time.h>
 
+#define SILOFS_LOG_LEVEL_DEFAULT (SILOFS_LOG_ERROR)
 
-#define SILOFS_LOG_LEVEL_DEFAULT \
-        (SILOFS_LOG_ERROR)
-
-#define SILOFS_LOG_FLAGS_DEFAULT \
-        (SILOFS_LOGF_STDOUT | SILOFS_LOGF_SYSLOG | \
-         SILOFS_LOGF_PROGNAME | SILOFS_LOGF_FILINE)
+#define SILOFS_LOG_FLAGS_DEFAULT                                          \
+	(SILOFS_LOGF_STDOUT | SILOFS_LOGF_SYSLOG | SILOFS_LOGF_PROGNAME | \
+	 SILOFS_LOGF_FILINE)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct silofs_log_params *silofs_global_log_params = NULL;
-
 
 static const char *basename_of(const char *path)
 {
@@ -56,12 +53,12 @@ static const char *log_progname(void)
 {
 	const struct silofs_log_params *params = silofs_global_log_params;
 
-	return (params && params->progname) ?
-	       params->progname : program_invocation_short_name;
+	return (params && params->progname) ? params->progname :
+					      program_invocation_short_name;
 }
 
-static void log_to_stdout(enum silofs_log_flags log_flags,
-                          const char *msg, const char *file, int line)
+static void log_to_stdout(enum silofs_log_flags log_flags, const char *msg,
+			  const char *file, int line)
 {
 	FILE *fp = stdout;
 
@@ -95,8 +92,8 @@ static int syslog_level(enum silofs_log_level log_level)
 	return sl_level;
 }
 
-static void log_to_syslog(enum silofs_log_level log_level,
-                          const char *msg, const char *file, int line)
+static void log_to_syslog(enum silofs_log_level log_level, const char *msg,
+			  const char *file, int line)
 {
 	const int level = syslog_level(log_level);
 
@@ -109,9 +106,9 @@ static void log_to_syslog(enum silofs_log_level log_level,
 	}
 }
 
-static void log_msg(enum silofs_log_level log_level,
-                    enum silofs_log_flags log_flags,
-                    const char *msg, const char *file, int line)
+static void
+log_msg(enum silofs_log_level log_level, enum silofs_log_flags log_flags,
+	const char *msg, const char *file, int line)
 {
 	if (log_flags & SILOFS_LOGF_STDOUT) {
 		log_to_stdout(log_flags, msg, file, line);
@@ -125,7 +122,7 @@ static enum silofs_log_flags log_ctrl_flags(void)
 {
 	const struct silofs_log_params *params = silofs_global_log_params;
 	const enum silofs_log_flags log_flags =
-	        (params != NULL) ? params->flags : SILOFS_LOG_FLAGS_DEFAULT;
+		(params != NULL) ? params->flags : SILOFS_LOG_FLAGS_DEFAULT;
 
 	return log_flags;
 }
@@ -133,7 +130,7 @@ static enum silofs_log_flags log_ctrl_flags(void)
 static bool log_output_enabled(void)
 {
 	const enum silofs_log_flags log_mask =
-	        (SILOFS_LOGF_STDOUT | SILOFS_LOGF_SYSLOG);
+		(SILOFS_LOGF_STDOUT | SILOFS_LOGF_SYSLOG);
 
 	return (log_ctrl_flags() & log_mask) > 0;
 }
@@ -148,7 +145,7 @@ static bool log_level_enabled(enum silofs_log_level log_level)
 {
 	const struct silofs_log_params *params = silofs_global_log_params;
 	const enum silofs_log_level log_level_want =
-	        (params != NULL) ? params->level : SILOFS_LOG_LEVEL_DEFAULT;
+		(params != NULL) ? params->level : SILOFS_LOG_LEVEL_DEFAULT;
 
 	return (log_level <= log_level_want);
 }
@@ -158,8 +155,8 @@ static bool log_enabled_with(enum silofs_log_level log_level)
 	return log_output_enabled() && log_level_enabled(log_level);
 }
 
-int silofs_logf(enum silofs_log_level log_level,
-                const char *file, int line, const char *fmt, ...)
+int silofs_logf(enum silofs_log_level log_level, const char *file, int line,
+		const char *fmt, ...)
 {
 	char msg[512];
 	va_list ap;

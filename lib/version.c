@@ -46,8 +46,7 @@
 #endif
 
 #define SILOFS_VERSION_STRING_FULL \
-        SILOFS_VERSION_STRING "-" SILOFS_RELEASE "." SILOFS_REVISION
-
+	SILOFS_VERSION_STRING "-" SILOFS_RELEASE "." SILOFS_REVISION
 
 const struct silofs_version silofs_version = {
 	.string = SILOFS_VERSION_STRING_FULL,
@@ -55,4 +54,3 @@ const struct silofs_version silofs_version = {
 	.minor = SILOFS_VERSION_MINOR,
 	.sublevel = SILOFS_VERSION_SUBLEVEL
 };
-

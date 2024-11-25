@@ -18,7 +18,6 @@
 #include <silofs/infra.h>
 #include <silofs/hmdq/dirtyq.h>
 
-
 void silofs_dirtyq_init(struct silofs_dirtyq *dq)
 {
 	listq_init(&dq->dq);
@@ -31,16 +30,16 @@ void silofs_dirtyq_fini(struct silofs_dirtyq *dq)
 	dq->dq_accum = 0;
 }
 
-static void silofs_dirtyq_append(struct silofs_dirtyq *dq,
-                                 struct silofs_dq_elem *dqe)
+static void
+silofs_dirtyq_append(struct silofs_dirtyq *dq, struct silofs_dq_elem *dqe)
 {
 	listq_push_back(&dq->dq, &dqe->lh);
 	dq->dq_accum += dqe->sz;
 	dqe->inq = true;
 }
 
-static void silofs_dirtyq_remove(struct silofs_dirtyq *dq,
-                                 struct silofs_dq_elem *dqe)
+static void
+silofs_dirtyq_remove(struct silofs_dirtyq *dq, struct silofs_dq_elem *dqe)
 {
 	silofs_assert(dqe->inq);
 	silofs_assert_ge(dq->dq_accum, dqe->sz);
@@ -60,8 +59,7 @@ static struct silofs_dq_elem *dqe_from_lh(struct silofs_list_head *lh)
 	return dqe;
 }
 
-struct silofs_dq_elem *
-silofs_dirtyq_front(const struct silofs_dirtyq *dq)
+struct silofs_dq_elem *silofs_dirtyq_front(const struct silofs_dirtyq *dq)
 {
 	struct silofs_list_head *lh;
 
@@ -69,9 +67,8 @@ silofs_dirtyq_front(const struct silofs_dirtyq *dq)
 	return dqe_from_lh(lh);
 }
 
-struct silofs_dq_elem *
-silofs_dirtyq_next_of(const struct silofs_dirtyq *dq,
-                      const struct silofs_dq_elem *dqe)
+struct silofs_dq_elem *silofs_dirtyq_next_of(const struct silofs_dirtyq *dq,
+					     const struct silofs_dq_elem *dqe)
 {
 	struct silofs_list_head *lh = NULL;
 

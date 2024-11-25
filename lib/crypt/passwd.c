@@ -22,7 +22,6 @@
 #include <silofs/crypt/ivkey.h>
 #include <sys/sysinfo.h>
 
-
 int silofs_password_setup(struct silofs_password *pw, const char *pass)
 {
 	struct silofs_strview sv;
@@ -37,8 +36,8 @@ int silofs_password_setup(struct silofs_password *pw, const char *pass)
 	return 0;
 }
 
-int silofs_password_setup2(struct silofs_password *pw,
-                           const void *pass, size_t len)
+int silofs_password_setup2(struct silofs_password *pw, const void *pass,
+			   size_t len)
 {
 	silofs_password_reset(pw);
 	if (len >= sizeof(pw->pass)) {
@@ -48,7 +47,6 @@ int silofs_password_setup2(struct silofs_password *pw,
 	pw->passlen = len;
 	return 0;
 }
-
 
 void silofs_password_reset(struct silofs_password *pw)
 {

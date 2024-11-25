@@ -19,11 +19,10 @@
 #include <silofs/fs.h>
 #include <silofs/fs-private.h>
 
-
 static void resolve_ivkey_of(const struct silofs_fsenv *fsenv,
-                             const struct silofs_laddr *laddr,
-                             const struct silofs_iv *seediv,
-                             struct silofs_ivkey *out_ivkey)
+			     const struct silofs_laddr *laddr,
+			     const struct silofs_iv *seediv,
+			     struct silofs_ivkey *out_ivkey)
 {
 	struct silofs_iv laddriv;
 	const struct silofs_ivkey *ivkey = &fsenv->fse_boot.brec.main_ivkey;
@@ -33,19 +32,19 @@ static void resolve_ivkey_of(const struct silofs_fsenv *fsenv,
 	silofs_iv_xor_with2(&out_ivkey->iv, &laddriv, seediv);
 }
 
-static int encrypt_view_with(const struct silofs_fsenv *fsenv,
-                             const struct silofs_ivkey *ivkey,
-                             const struct silofs_view *view,
-                             void *ptr, size_t len)
+static int
+encrypt_view_with(const struct silofs_fsenv *fsenv,
+		  const struct silofs_ivkey *ivkey,
+		  const struct silofs_view *view, void *ptr, size_t len)
 {
-	return silofs_encrypt_buf(&fsenv->fse_enc_cipher,
-	                          ivkey, view, ptr, len);
+	return silofs_encrypt_buf(&fsenv->fse_enc_cipher, ivkey, view, ptr,
+				  len);
 }
 
 int silofs_encrypt_view(const struct silofs_fsenv *fsenv,
-                        const struct silofs_laddr *laddr,
-                        const struct silofs_iv *seediv,
-                        const struct silofs_view *view, void *ptr)
+			const struct silofs_laddr *laddr,
+			const struct silofs_iv *seediv,
+			const struct silofs_view *view, void *ptr)
 {
 	struct silofs_ivkey ivkey;
 
@@ -53,18 +52,18 @@ int silofs_encrypt_view(const struct silofs_fsenv *fsenv,
 	return encrypt_view_with(fsenv, &ivkey, view, ptr, laddr->len);
 }
 
-static int decrypt_view_with(const struct silofs_fsenv *fsenv,
-                             const struct silofs_ivkey *ivkey,
-                             const struct silofs_view *view,
-                             void *ptr, size_t len)
+static int
+decrypt_view_with(const struct silofs_fsenv *fsenv,
+		  const struct silofs_ivkey *ivkey,
+		  const struct silofs_view *view, void *ptr, size_t len)
 {
-	return silofs_decrypt_buf(&fsenv->fse_dec_cipher,
-	                          ivkey, view, ptr, len);
+	return silofs_decrypt_buf(&fsenv->fse_dec_cipher, ivkey, view, ptr,
+				  len);
 }
 
 static int decrypt_view(const struct silofs_fsenv *fsenv,
-                        const struct silofs_llink *llink,
-                        const struct silofs_view *view, void *ptr)
+			const struct silofs_llink *llink,
+			const struct silofs_view *view, void *ptr)
 {
 	struct silofs_ivkey ivkey;
 	int ret;
@@ -76,8 +75,8 @@ static int decrypt_view(const struct silofs_fsenv *fsenv,
 }
 
 static int decrypt_view_inplace(const struct silofs_fsenv *fsenv,
-                                const struct silofs_llink *llink,
-                                struct silofs_view *view)
+				const struct silofs_llink *llink,
+				struct silofs_view *view)
 {
 	return decrypt_view(fsenv, llink, view, view);
 }
@@ -85,7 +84,7 @@ static int decrypt_view_inplace(const struct silofs_fsenv *fsenv,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_decrypt_uni_view(const struct silofs_fsenv *fsenv,
-                            struct silofs_unode_info *uni)
+			    struct silofs_unode_info *uni)
 {
 	struct silofs_llink llink;
 
@@ -94,7 +93,7 @@ int silofs_decrypt_uni_view(const struct silofs_fsenv *fsenv,
 }
 
 int silofs_decrypt_vni_view(const struct silofs_fsenv *fsenv,
-                            struct silofs_vnode_info *vni)
+			    struct silofs_vnode_info *vni)
 {
 	const struct silofs_llink *llink = &vni->vn_llink;
 

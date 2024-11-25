@@ -22,7 +22,6 @@
 #include <ctype.h>
 #include <limits.h>
 
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void chr_assign(char *c1, char c2)
@@ -66,13 +65,12 @@ int silofs_str_compare(const char *s1, const char *s2, size_t n)
 	return (s1 == s2) ? 0 : memcmp(s1, s2, n);
 }
 
-int silofs_str_ncompare(const char *s1, size_t n1,
-                        const char *s2, size_t n2)
+int silofs_str_ncompare(const char *s1, size_t n1, const char *s2, size_t n2)
 {
 	int res;
 	size_t n;
 
-	n   = silofs_min(n1, n2);
+	n = silofs_min(n1, n2);
 	res = silofs_str_compare(s1, s2, n);
 
 	if (res == 0) {
@@ -87,8 +85,8 @@ const char *silofs_str_find_chr(const char *s, size_t n, char a)
 	return (const char *)(memchr(s, a, n));
 }
 
-const char *silofs_str_find(const char *s1, size_t n1,
-                            const char *s2, size_t n2)
+const char *
+silofs_str_find(const char *s1, size_t n1, const char *s2, size_t n2)
 {
 	const char *q;
 
@@ -104,8 +102,8 @@ const char *silofs_str_find(const char *s1, size_t n1,
 	return NULL;
 }
 
-const char *silofs_str_rfind(const char *s1, size_t n1,
-                             const char *s2, size_t n2)
+const char *
+silofs_str_rfind(const char *s1, size_t n1, const char *s2, size_t n2)
 {
 	if (!n2 || (n1 < n2)) {
 		return NULL;
@@ -128,8 +126,8 @@ const char *silofs_str_rfind_chr(const char *s, size_t n, char c)
 	return NULL;
 }
 
-const char *silofs_str_find_first_of(const char *s1, size_t n1,
-                                     const char *s2, size_t n2)
+const char *
+silofs_str_find_first_of(const char *s1, size_t n1, const char *s2, size_t n2)
 {
 	const char *q = s1 + n1;
 
@@ -141,9 +139,8 @@ const char *silofs_str_find_first_of(const char *s1, size_t n1,
 	return NULL;
 }
 
-const char *
-silofs_str_find_first_not_of(const char *s1, size_t n1,
-                             const char *s2, size_t n2)
+const char *silofs_str_find_first_not_of(const char *s1, size_t n1,
+					 const char *s2, size_t n2)
 {
 	const char *q = s1 + n1;
 
@@ -168,8 +165,7 @@ const char *silofs_str_find_first_not_eq(const char *s, size_t n, char c)
 }
 
 const char *
-silofs_str_find_last_of(const char *s1, size_t n1,
-                        const char *s2, size_t n2)
+silofs_str_find_last_of(const char *s1, size_t n1, const char *s2, size_t n2)
 {
 	const char *q = s1 + n1;
 
@@ -181,9 +177,8 @@ silofs_str_find_last_of(const char *s1, size_t n1,
 	return NULL;
 }
 
-const char *
-silofs_str_find_last_not_of(const char *s1, size_t n1,
-                            const char *s2, size_t n2)
+const char *silofs_str_find_last_not_of(const char *s1, size_t n1,
+					const char *s2, size_t n2)
 {
 	const char *q = s1 + n1;
 
@@ -225,8 +220,8 @@ size_t silofs_str_common_prefix(const char *s1, const char *s2, size_t n)
 size_t silofs_str_common_suffix(const char *s1, const char *s2, size_t n)
 {
 	size_t k = 0;
-	const char *p  = s1 + n;
-	const char *q  = s2 + n;
+	const char *p = s1 + n;
+	const char *q = s2 + n;
 
 	while (k != n) {
 		--p;
@@ -239,8 +234,8 @@ size_t silofs_str_common_suffix(const char *s1, const char *s2, size_t n)
 	return k;
 }
 
-size_t silofs_str_overlaps(const char *s1, size_t n1,
-                           const char *s2, size_t n2)
+size_t
+silofs_str_overlaps(const char *s1, size_t n1, const char *s2, size_t n2)
 {
 	size_t d;
 	size_t k;
@@ -312,8 +307,7 @@ void silofs_str_reverse(char *s, size_t n)
  * forward, and then inserts s to the beginning of buffer.
  */
 static size_t
-str_insert_no_overlap(char *p, size_t sz, size_t n1,
-                      const char *s, size_t n2)
+str_insert_no_overlap(char *p, size_t sz, size_t n1, const char *s, size_t n2)
 {
 	const size_t k = silofs_min(n2, sz);
 	const size_t m = silofs_min(n1, sz - k);
@@ -328,9 +322,8 @@ str_insert_no_overlap(char *p, size_t sz, size_t n1,
  * Insert where source and destination may overlap. Using local buffer for
  * safe copy -- avoid dynamic allocation, even at the price of performance
  */
-static size_t
-str_insert_with_overlap(char *p, size_t sz, size_t n1,
-                        const char *s, size_t n2)
+static size_t str_insert_with_overlap(char *p, size_t sz, size_t n1,
+				      const char *s, size_t n2)
 {
 	size_t n;
 	size_t k;
@@ -350,8 +343,8 @@ str_insert_with_overlap(char *p, size_t sz, size_t n1,
 	return n;
 }
 
-size_t silofs_str_insert(char *p, size_t sz, size_t n1,
-                         const char *s, size_t n2)
+size_t
+silofs_str_insert(char *p, size_t sz, size_t n1, const char *s, size_t n2)
 {
 	size_t k;
 	size_t n = 0;
@@ -390,8 +383,7 @@ size_t silofs_str_insert(char *p, size_t sz, size_t n1,
  * Returns the number of characters in p after insertion (always less or equal
  * to sz).
  */
-size_t silofs_str_insert_chr(char *p, size_t sz, size_t n1,
-                             size_t n2, char c)
+size_t silofs_str_insert_chr(char *p, size_t sz, size_t n1, size_t n2, char c)
 {
 	size_t m;
 	const size_t k = silofs_min(n2, sz);
@@ -406,7 +398,7 @@ size_t silofs_str_insert_chr(char *p, size_t sz, size_t n1,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 size_t silofs_str_replace(char *p, size_t sz, size_t len, size_t n1,
-                          const char *s, size_t n2)
+			  const char *s, size_t n2)
 {
 	size_t k;
 	size_t m;
@@ -418,14 +410,14 @@ size_t silofs_str_replace(char *p, size_t sz, size_t len, size_t n1,
 		 */
 		if (s < p) {
 			k = n1;
-			m = silofs_str_insert(p + k, sz - k,
-			                      len - k, s + k, n2 - k);
+			m = silofs_str_insert(p + k, sz - k, len - k, s + k,
+					      n2 - k);
 			silofs_str_copy(p, s, k);
 		} else {
 			k = n1;
 			silofs_str_copy(p, s, n1);
-			m = silofs_str_insert(p + k, sz - k,
-			                      len - k, s + k, n2 - k);
+			m = silofs_str_insert(p + k, sz - k, len - k, s + k,
+					      n2 - k);
 		}
 	} else {
 		/*
@@ -445,8 +437,8 @@ size_t silofs_str_replace(char *p, size_t sz, size_t len, size_t n1,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-size_t silofs_str_replace_chr(char *p, size_t sz, size_t len,
-                              size_t n1, size_t n2, char c)
+size_t silofs_str_replace_chr(char *p, size_t sz, size_t len, size_t n1,
+			      size_t n2, char c)
 {
 	size_t k;
 	size_t m;

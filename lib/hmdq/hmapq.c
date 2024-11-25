@@ -20,19 +20,21 @@
 #include <silofs/hmdq/hmapq.h>
 #include <limits.h>
 
-#define HMQE_MAGIC      (0xDECAFE)
+#define HMQE_MAGIC (0xDECAFE)
 
 /* prime-value for hash-table of n-elements */
 static const unsigned int htbl_primes[] = {
-	13, 53, 97, 167, 193, 283, 389, 509, 1021, 2557, 3041, 3581, 3583,
-	4093, 5107, 5119, 6143, 7159, 8191, 9209, 10141, 11257, 11261, 12281,
-	13309, 14699, 15359, 16381, 17401, 18427, 20479, 24571, 27529, 28669,
-	36857, 45053, 49207, 53233, 65521, 73727, 77291, 81919, 85237, 94207,
-	106693, 131071, 160423, 172031, 203789, 241663, 245759, 253951, 266239,
-	294911, 356351, 364289, 364543, 401407, 438271, 442367, 479231, 487423,
-	499711, 524287, 528383, 565247, 585727, 602111, 626687, 671743, 675839,
-	724991, 737279, 745471, 770047, 774143, 786431, 847871, 917503, 929791,
-	942079, 954367, 991961, 995327, 1203793, 1572869, 1667321, 3704053,
+	13,      53,     97,     167,    193,     283,     389,     509,
+	1021,    2557,   3041,   3581,   3583,    4093,    5107,    5119,
+	6143,    7159,   8191,   9209,   10141,   11257,   11261,   12281,
+	13309,   14699,  15359,  16381,  17401,   18427,   20479,   24571,
+	27529,   28669,  36857,  45053,  49207,   53233,   65521,   73727,
+	77291,   81919,  85237,  94207,  106693,  131071,  160423,  172031,
+	203789,  241663, 245759, 253951, 266239,  294911,  356351,  364289,
+	364543,  401407, 438271, 442367, 479231,  487423,  499711,  524287,
+	528383,  565247, 585727, 602111, 626687,  671743,  675839,  724991,
+	737279,  745471, 770047, 774143, 786431,  847871,  917503,  929791,
+	942079,  954367, 991961, 995327, 1203793, 1572869, 1667321, 3704053,
 	4792057,
 
 };
@@ -125,9 +127,8 @@ static uint64_t hash_of_vaddr(const struct silofs_vaddr *vaddr)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void hkey_setup(struct silofs_hkey *hkey,
-                       enum silofs_hkey_type type,
-                       const void *key, uint64_t hash)
+static void hkey_setup(struct silofs_hkey *hkey, enum silofs_hkey_type type,
+		       const void *key, uint64_t hash)
 {
 	hkey->keyu.key = key;
 	hkey->hash = hash;
@@ -142,31 +143,31 @@ static void hkey_reset(struct silofs_hkey *hkey)
 }
 
 static long hkey_compare_as_blobid(const struct silofs_hkey *hkey1,
-                                   const struct silofs_hkey *hkey2)
+				   const struct silofs_hkey *hkey2)
 {
 	return silofs_blobid_compare(hkey1->keyu.blobid, hkey2->keyu.blobid);
 }
 
 static long hkey_compare_as_paddr(const struct silofs_hkey *hkey1,
-                                  const struct silofs_hkey *hkey2)
+				  const struct silofs_hkey *hkey2)
 {
 	return silofs_paddr_compare(hkey1->keyu.paddr, hkey2->keyu.paddr);
 }
 
 static long hkey_compare_as_uaddr(const struct silofs_hkey *hkey1,
-                                  const struct silofs_hkey *hkey2)
+				  const struct silofs_hkey *hkey2)
 {
 	return silofs_uaddr_compare(hkey1->keyu.uaddr, hkey2->keyu.uaddr);
 }
 
 static long hkey_compare_as_vaddr(const struct silofs_hkey *hkey1,
-                                  const struct silofs_hkey *hkey2)
+				  const struct silofs_hkey *hkey2)
 {
 	return silofs_vaddr_compare(hkey1->keyu.vaddr, hkey2->keyu.vaddr);
 }
 
 static long hkey_compare_as(const struct silofs_hkey *hkey1,
-                            const struct silofs_hkey *hkey2)
+			    const struct silofs_hkey *hkey2)
 {
 	long cmp;
 
@@ -192,7 +193,7 @@ static long hkey_compare_as(const struct silofs_hkey *hkey1,
 }
 
 long silofs_hkey_compare(const struct silofs_hkey *hkey1,
-                         const struct silofs_hkey *hkey2)
+			 const struct silofs_hkey *hkey2)
 {
 	long cmp;
 
@@ -203,11 +204,10 @@ long silofs_hkey_compare(const struct silofs_hkey *hkey1,
 	return cmp;
 }
 
-static bool hkey_isequal(const struct silofs_hkey *hkey1,
-                         const struct silofs_hkey *hkey2)
+static bool
+hkey_isequal(const struct silofs_hkey *hkey1, const struct silofs_hkey *hkey2)
 {
-	return (hkey1->type == hkey2->type) &&
-	       (hkey1->hash == hkey2->hash) &&
+	return (hkey1->type == hkey2->type) && (hkey1->hash == hkey2->hash) &&
 	       !silofs_hkey_compare(hkey1, hkey2);
 }
 
@@ -236,32 +236,32 @@ static uint64_t hkey_hash_of(enum silofs_hkey_type type, const void *key)
 	return hash;
 }
 
-static void hkey_setup_by(struct silofs_hkey *hkey,
-                          enum silofs_hkey_type type, const void *key)
+static void hkey_setup_by(struct silofs_hkey *hkey, enum silofs_hkey_type type,
+			  const void *key)
 {
 	hkey_setup(hkey, type, key, hkey_hash_of(type, key));
 }
 
 void silofs_hkey_by_blobid(struct silofs_hkey *hkey,
-                           const struct silofs_blobid *blobid)
+			   const struct silofs_blobid *blobid)
 {
 	hkey_setup_by(hkey, SILOFS_HKEY_BLOBID, blobid);
 }
 
 void silofs_hkey_by_paddr(struct silofs_hkey *hkey,
-                          const struct silofs_paddr *paddr)
+			  const struct silofs_paddr *paddr)
 {
 	hkey_setup_by(hkey, SILOFS_HKEY_PADDR, paddr);
 }
 
 void silofs_hkey_by_uaddr(struct silofs_hkey *hkey,
-                          const struct silofs_uaddr *uaddr)
+			  const struct silofs_uaddr *uaddr)
 {
 	hkey_setup_by(hkey, SILOFS_HKEY_UADDR, uaddr);
 }
 
 void silofs_hkey_by_vaddr(struct silofs_hkey *hkey,
-                          const struct silofs_vaddr *vaddr)
+			  const struct silofs_vaddr *vaddr)
 {
 	hkey_setup_by(hkey, SILOFS_HKEY_VADDR, vaddr);
 }
@@ -273,14 +273,11 @@ static void hmqe_sanitize(const struct silofs_hmapq_elem *hmqe)
 	if (unlikely(hmqe->hme_magic != HMQE_MAGIC) ||
 	    unlikely(hmqe->hme_refcnt < 0)) {
 		silofs_panic("corrupted: hmqe=%p hme_key.type=%d "
-		             "hme_refcnt=%d hme_mapped=%d "
-		             "hme_forgot=%d hme_magic=0x%x",
-		             (const void *)hmqe,
-		             (int)hmqe->hme_key.type,
-		             hmqe->hme_refcnt,
-		             (int)hmqe->hme_mapped,
-		             (int)hmqe->hme_forgot,
-		             hmqe->hme_magic);
+			     "hme_refcnt=%d hme_mapped=%d "
+			     "hme_forgot=%d hme_magic=0x%x",
+			     (const void *)hmqe, (int)hmqe->hme_key.type,
+			     hmqe->hme_refcnt, (int)hmqe->hme_mapped,
+			     (int)hmqe->hme_forgot, hmqe->hme_magic);
 	}
 }
 
@@ -290,9 +287,7 @@ hmqe_unconst(const struct silofs_hmapq_elem *hmqe)
 	union {
 		const void *p;
 		void *q;
-	} u = {
-		.p = hmqe
-	};
+	} u = { .p = hmqe };
 	return u.q;
 }
 
@@ -345,8 +340,8 @@ void silofs_hmqe_fini(struct silofs_hmapq_elem *hmqe)
 	hmqe->hme_magic = INT32_MIN;
 }
 
-static void hmqe_hmap(struct silofs_hmapq_elem *hmqe,
-                      struct silofs_list_head *hlst)
+static void
+hmqe_hmap(struct silofs_hmapq_elem *hmqe, struct silofs_list_head *hlst)
 {
 	list_push_front(hlst, &hmqe->hme_htb_lh);
 	hmqe->hme_mapped = true;
@@ -359,7 +354,7 @@ static void hmqe_hunmap(struct silofs_hmapq_elem *hmqe)
 }
 
 static bool hmqe_need_promote_hmap(const struct silofs_hmapq_elem *hmqe,
-                                   const struct silofs_list_head *hlst)
+				   const struct silofs_list_head *hlst)
 {
 	const struct silofs_list_head *hlnk = &hmqe->hme_htb_lh;
 	const struct silofs_list_head *next = hlst->next;
@@ -378,15 +373,14 @@ static void hmqe_sanitize_mapped(const struct silofs_hmapq_elem *hmqe)
 	hmqe_sanitize(hmqe);
 	if (unlikely(!hmqe->hme_mapped)) {
 		silofs_panic("unexpected non-mapped state: "
-		             "hmqe=%p hme_key=%d hme_refcnt=%d",
-		             (const void *)hmqe,
-		             (int)hmqe->hme_key.type,
-		             hmqe->hme_refcnt);
+			     "hmqe=%p hme_key=%d hme_refcnt=%d",
+			     (const void *)hmqe, (int)hmqe->hme_key.type,
+			     hmqe->hme_refcnt);
 	}
 }
 
 static void hmqe_promote_hmap(struct silofs_hmapq_elem *hmqe,
-                              struct silofs_list_head *hlst)
+			      struct silofs_list_head *hlst)
 {
 	struct silofs_list_head *hlnk = &hmqe->hme_htb_lh;
 
@@ -396,8 +390,7 @@ static void hmqe_promote_hmap(struct silofs_hmapq_elem *hmqe,
 	list_push_front(hlst, hlnk);
 }
 
-static struct silofs_list_head *
-hmqe_lru_link(struct silofs_hmapq_elem *hmqe)
+static struct silofs_list_head *hmqe_lru_link(struct silofs_hmapq_elem *hmqe)
 {
 	return &hmqe->hme_lru_lh;
 }
@@ -408,20 +401,19 @@ hmqe_lru_link2(const struct silofs_hmapq_elem *hmqe)
 	return &hmqe->hme_lru_lh;
 }
 
-static void hmqe_lru(struct silofs_hmapq_elem *hmqe,
-                     struct silofs_listq *lru)
+static void hmqe_lru(struct silofs_hmapq_elem *hmqe, struct silofs_listq *lru)
 {
 	listq_push_front(lru, hmqe_lru_link(hmqe));
 }
 
-static void hmqe_unlru(struct silofs_hmapq_elem *hmqe,
-                       struct silofs_listq *lru)
+static void
+hmqe_unlru(struct silofs_hmapq_elem *hmqe, struct silofs_listq *lru)
 {
 	listq_remove(lru, hmqe_lru_link(hmqe));
 }
 
 static bool hmqe_is_lru_front(const struct silofs_hmapq_elem *hmqe,
-                              const struct silofs_listq *lru)
+			      const struct silofs_listq *lru)
 {
 	const struct silofs_list_head *lru_front = listq_front(lru);
 	const struct silofs_list_head *lme_lru_lnk = hmqe_lru_link2(hmqe);
@@ -430,7 +422,7 @@ static bool hmqe_is_lru_front(const struct silofs_hmapq_elem *hmqe,
 }
 
 static bool hmqe_need_relru(const struct silofs_hmapq_elem *hmqe,
-                            const struct silofs_listq *lru)
+			    const struct silofs_listq *lru)
 {
 	const struct silofs_list_head *lru_front = listq_front(lru);
 	const struct silofs_list_head *lme_lru_lnk = hmqe_lru_link2(hmqe);
@@ -453,8 +445,8 @@ static bool hmqe_need_relru(const struct silofs_hmapq_elem *hmqe,
 	return true;
 }
 
-static void hmqe_relru(struct silofs_hmapq_elem *hmqe,
-                       struct silofs_listq *lru)
+static void
+hmqe_relru(struct silofs_hmapq_elem *hmqe, struct silofs_listq *lru)
 {
 	hmqe_sanitize(hmqe);
 	hmqe_unlru(hmqe, lru);
@@ -528,8 +520,8 @@ size_t silofs_hmapq_nslots_by(const struct silofs_alloc *alloc, uint8_t fac)
 	return htbl_calc_nslots(alloc, fac);
 }
 
-int silofs_hmapq_init(struct silofs_hmapq *hmapq,
-                      struct silofs_alloc *alloc, size_t nslots)
+int silofs_hmapq_init(struct silofs_hmapq *hmapq, struct silofs_alloc *alloc,
+		      size_t nslots)
 {
 	struct silofs_list_head *htbl = NULL;
 
@@ -563,7 +555,7 @@ size_t silofs_hmapq_usage(const struct silofs_hmapq *hmapq)
 }
 
 static size_t hmapq_key_to_slot(const struct silofs_hmapq *hmapq,
-                                const struct silofs_hkey *hkey)
+				const struct silofs_hkey *hkey)
 {
 	const uint64_t hval = hkey->hash ^ (hkey->hash >> 32);
 
@@ -572,7 +564,7 @@ static size_t hmapq_key_to_slot(const struct silofs_hmapq *hmapq,
 
 static struct silofs_list_head *
 hmapq_hlist_of(const struct silofs_hmapq *hmapq,
-               const struct silofs_hkey *hkey)
+	       const struct silofs_hkey *hkey)
 {
 	const size_t slot = hmapq_key_to_slot(hmapq, hkey);
 
@@ -580,7 +572,7 @@ hmapq_hlist_of(const struct silofs_hmapq *hmapq,
 }
 
 void silofs_hmapq_store(struct silofs_hmapq *hmapq,
-                        struct silofs_hmapq_elem *hmqe)
+			struct silofs_hmapq_elem *hmqe)
 {
 	struct silofs_listq *lru = &hmapq->hmq_lru;
 	struct silofs_list_head *hlst = hmapq_hlist_of(hmapq, &hmqe->hme_key);
@@ -609,9 +601,8 @@ hmapq_find(const struct silofs_hmapq *hmapq, const struct silofs_hkey *hkey)
 	return NULL;
 }
 
-struct silofs_hmapq_elem *
-silofs_hmapq_lookup(const struct silofs_hmapq *hmapq,
-                    const struct silofs_hkey *hkey)
+struct silofs_hmapq_elem *silofs_hmapq_lookup(const struct silofs_hmapq *hmapq,
+					      const struct silofs_hkey *hkey)
 {
 	const struct silofs_hmapq_elem *hmqe;
 
@@ -622,21 +613,21 @@ silofs_hmapq_lookup(const struct silofs_hmapq *hmapq,
 	return hmqe_unconst(hmqe);
 }
 
-static void hmapq_unmap(struct silofs_hmapq *hmapq,
-                        struct silofs_hmapq_elem *hmqe)
+static void
+hmapq_unmap(struct silofs_hmapq *hmapq, struct silofs_hmapq_elem *hmqe)
 {
 	hmqe_hunmap(hmqe);
 	hmapq->hmq_htbl_size -= 1;
 }
 
-static void hmapq_unlru(struct silofs_hmapq *hmapq,
-                        struct silofs_hmapq_elem *hmqe)
+static void
+hmapq_unlru(struct silofs_hmapq *hmapq, struct silofs_hmapq_elem *hmqe)
 {
 	hmqe_unlru(hmqe, &hmapq->hmq_lru);
 }
 
 void silofs_hmapq_unmap(struct silofs_hmapq *hmapq,
-                        struct silofs_hmapq_elem *hmqe)
+			struct silofs_hmapq_elem *hmqe)
 {
 	if (hmqe->hme_mapped) {
 		hmapq_unmap(hmapq, hmqe);
@@ -644,7 +635,7 @@ void silofs_hmapq_unmap(struct silofs_hmapq *hmapq,
 }
 
 void silofs_hmapq_remove(struct silofs_hmapq *hmapq,
-                         struct silofs_hmapq_elem *hmqe)
+			 struct silofs_hmapq_elem *hmqe)
 {
 	if (hmqe->hme_mapped) {
 		hmapq_unmap(hmapq, hmqe);
@@ -653,7 +644,7 @@ void silofs_hmapq_remove(struct silofs_hmapq *hmapq,
 }
 
 static void hmapq_promote_lru(struct silofs_hmapq *hmapq,
-                              struct silofs_hmapq_elem *hmqe, bool now)
+			      struct silofs_hmapq_elem *hmqe, bool now)
 {
 	struct silofs_listq *lru = &hmapq->hmq_lru;
 	const bool first = hmqe_is_lru_front(hmqe, lru);
@@ -665,8 +656,8 @@ static void hmapq_promote_lru(struct silofs_hmapq *hmapq,
 	}
 }
 
-static void hmapq_promote_hlnk(struct silofs_hmapq *hmapq,
-                               struct silofs_hmapq_elem *hmqe)
+static void
+hmapq_promote_hlnk(struct silofs_hmapq *hmapq, struct silofs_hmapq_elem *hmqe)
 {
 	struct silofs_list_head *hlst = hmapq_hlist_of(hmapq, &hmqe->hme_key);
 
@@ -677,7 +668,7 @@ static void hmapq_promote_hlnk(struct silofs_hmapq *hmapq,
 }
 
 void silofs_hmapq_promote(struct silofs_hmapq *hmapq,
-                          struct silofs_hmapq_elem *hmqe, bool now)
+			  struct silofs_hmapq_elem *hmqe, bool now)
 {
 	hmapq_promote_lru(hmapq, hmqe, now);
 	if (hmqe->hme_mapped) {
@@ -699,7 +690,7 @@ silofs_hmapq_get_lru(const struct silofs_hmapq *hmapq)
 typedef int (*silofs_hmapq_elem_fn)(struct silofs_hmapq_elem *, void *);
 
 void silofs_hmapq_riterate(struct silofs_hmapq *hmapq, size_t limit,
-                           silofs_hmapq_elem_fn cb, void *arg)
+			   silofs_hmapq_elem_fn cb, void *arg)
 {
 	struct silofs_list_head *itr = NULL;
 	struct silofs_hmapq_elem *hmqe = NULL;

@@ -20,7 +20,6 @@
 #include <silofs/addr.h>
 #include <uuid/uuid.h>
 
-
 uint32_t silofs_squash_to_u32(const void *ptr, size_t len)
 {
 	const uint8_t *ba = ptr;
@@ -46,8 +45,7 @@ uint32_t silofs_squash_to_u32(const void *ptr, size_t len)
 		      ((uint32_t)(ba[pos + 2]));
 		break;
 	case 2:
-		lei = ((uint32_t)(ba[pos]) << 8) |
-		      ((uint32_t)(ba[pos + 1]));
+		lei = ((uint32_t)(ba[pos]) << 8) | ((uint32_t)(ba[pos + 1]));
 		break;
 	case 1:
 		lei = ((uint32_t)(ba[pos]));
@@ -99,7 +97,7 @@ void silofs_uuid_generate(struct silofs_uuid *uu)
 }
 
 void silofs_uuid_assign(struct silofs_uuid *uu,
-                        const struct silofs_uuid *other)
+			const struct silofs_uuid *other)
 {
 	silofs_uuid_assign2(uu, other->uu);
 }
@@ -115,20 +113,19 @@ void silofs_uuid_copyto(const struct silofs_uuid *uu, uint8_t u[16])
 }
 
 long silofs_uuid_compare(const struct silofs_uuid *uu1,
-                         const struct silofs_uuid *uu2)
+			 const struct silofs_uuid *uu2)
 {
 	return uuid_compare(uu1->uu, uu2->uu);
 }
 
 void silofs_uuid_unparse(const struct silofs_uuid *uu,
-                         struct silofs_strbuf *sbuf)
+			 struct silofs_strbuf *sbuf)
 {
 	silofs_strbuf_reset(sbuf);
 	uuid_unparse_lower(uu->uu, sbuf->str);
 }
 
-int silofs_uuid_parse(struct silofs_uuid *uu,
-                      const struct silofs_strview *sv)
+int silofs_uuid_parse(struct silofs_uuid *uu, const struct silofs_strview *sv)
 {
 	struct silofs_strview sv2;
 	int ret = -EINVAL;
@@ -136,7 +133,7 @@ int silofs_uuid_parse(struct silofs_uuid *uu,
 	silofs_strview_strip_ws(sv, &sv2);
 	if (sv2.len == 36) {
 		ret = uuid_parse_range(silofs_strview_begin(&sv2),
-		                       silofs_strview_end(&sv2), uu->uu);
+				       silofs_strview_end(&sv2), uu->uu);
 	}
 	return ret;
 }
@@ -217,8 +214,8 @@ static void hdr_add_flags(struct silofs_header *hdr, enum silofs_hdrf flags)
 	hdr_set_flags(hdr, flags | hdr_flags(hdr));
 }
 
-static bool hdr_has_flags(const struct silofs_header *hdr,
-                          enum silofs_hdrf flags)
+static bool
+hdr_has_flags(const struct silofs_header *hdr, enum silofs_hdrf flags)
 {
 	return (hdr_flags(hdr) & flags) > 0;
 }
@@ -244,8 +241,8 @@ static const void *hdr_payload(const struct silofs_header *hdr)
 	return hdr + 1;
 }
 
-void silofs_hdr_setup(struct silofs_header *hdr,
-                      uint8_t type, size_t size, enum silofs_hdrf flags)
+void silofs_hdr_setup(struct silofs_header *hdr, uint8_t type, size_t size,
+		      enum silofs_hdrf flags)
 {
 	hdr_set_magic(hdr, SILOFS_META_MAGIC);
 	hdr_set_size(hdr, size);
@@ -256,8 +253,8 @@ void silofs_hdr_setup(struct silofs_header *hdr,
 	hdr->h_reserved = 0;
 }
 
-static int hdr_verify_base(const struct silofs_header *hdr,
-                           uint8_t type, size_t size, enum silofs_hdrf flags)
+static int hdr_verify_base(const struct silofs_header *hdr, uint8_t type,
+			   size_t size, enum silofs_hdrf flags)
 {
 	if (hdr_magic(hdr) != SILOFS_META_MAGIC) {
 		return -SILOFS_EFSCORRUPTED;
@@ -303,8 +300,8 @@ static int hdr_verify_checksum(const struct silofs_header *hdr)
 	return 0;
 }
 
-int silofs_hdr_verify(const struct silofs_header *hdr,
-                      uint8_t type, size_t size, enum silofs_hdrf flags)
+int silofs_hdr_verify(const struct silofs_header *hdr, uint8_t type,
+		      size_t size, enum silofs_hdrf flags)
 {
 	int err;
 
@@ -329,13 +326,13 @@ bool silofs_hash256_isnil(const struct silofs_hash256 *hash)
 }
 
 bool silofs_hash256_isequal(const struct silofs_hash256 *hash,
-                            const struct silofs_hash256 *other)
+			    const struct silofs_hash256 *other)
 {
 	return (memcmp(hash->hash, other->hash, sizeof(hash->hash)) == 0);
 }
 
 void silofs_hash256_assign(struct silofs_hash256 *hash,
-                           const struct silofs_hash256 *other)
+			   const struct silofs_hash256 *other)
 {
 	memcpy(hash->hash, other->hash, sizeof(hash->hash));
 }
@@ -365,26 +362,26 @@ void silofs_hash256_from_u64s(struct silofs_hash256 *hash, const uint64_t u[4])
 }
 
 size_t silofs_hash256_to_name(const struct silofs_hash256 *hash,
-                              struct silofs_strbuf *out_name)
+			      struct silofs_strbuf *out_name)
 {
 	size_t cnt = 0;
 
 	silofs_strbuf_reset(out_name);
-	silofs_mem_to_ascii(hash->hash, sizeof(hash->hash),
-	                    out_name->str, sizeof(out_name->str) - 1, &cnt);
+	silofs_mem_to_ascii(hash->hash, sizeof(hash->hash), out_name->str,
+			    sizeof(out_name->str) - 1, &cnt);
 	return cnt;
 }
 
 int silofs_hash256_by_name(struct silofs_hash256 *hash,
-                           const struct silofs_strbuf *name)
+			   const struct silofs_strbuf *name)
 {
 	struct silofs_strview sv;
 	size_t cnt = 0;
 	int err;
 
 	silofs_strbuf_as_sv(name, &sv);
-	err = silofs_ascii_to_mem(hash->hash, sizeof(hash->hash),
-	                          sv.str, sv.len, &cnt);
+	err = silofs_ascii_to_mem(hash->hash, sizeof(hash->hash), sv.str,
+				  sv.len, &cnt);
 	if (err) {
 		return err;
 	}

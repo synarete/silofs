@@ -18,7 +18,6 @@
 #include <silofs/str/ascii.h>
 #include <ctype.h>
 
-
 char silofs_nibble_to_ascii(int n)
 {
 	const int a = n & 0xF;
@@ -59,7 +58,7 @@ char silofs_nibble_to_ascii(int n)
 	default:
 		break;
 	}
-	return (char) -1;
+	return (char)-1;
 }
 
 int silofs_ascii_to_nibble(char a)
@@ -166,8 +165,8 @@ int silofs_ascii_to_uint64(const char *a, uint64_t *out_u)
 	return 0;
 }
 
-void silofs_mem_to_ascii(const void *mem, size_t msz,
-                         char *asb, size_t asz, size_t *out_cnt)
+void silofs_mem_to_ascii(const void *mem, size_t msz, char *asb, size_t asz,
+			 size_t *out_cnt)
 {
 	const uint8_t *b = mem;
 	size_t cnt = 0;
@@ -182,8 +181,8 @@ void silofs_mem_to_ascii(const void *mem, size_t msz,
 	*out_cnt = cnt;
 }
 
-int silofs_ascii_to_mem(void *mem, size_t msz,
-                        const char *asb, size_t asz, size_t *out_cnt)
+int silofs_ascii_to_mem(void *mem, size_t msz, const char *asb, size_t asz,
+			size_t *out_cnt)
 {
 	uint8_t *b = mem;
 	size_t cnt = 0;

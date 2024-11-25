@@ -23,8 +23,8 @@
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void uni_set_fsenv(struct silofs_unode_info *uni,
-                          struct silofs_fsenv *fsenv)
+static void
+uni_set_fsenv(struct silofs_unode_info *uni, struct silofs_fsenv *fsenv)
 {
 	uni->un_lni.ln_fsenv = fsenv;
 }
@@ -36,20 +36,20 @@ static int uni_verify_view(struct silofs_unode_info *uni)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void sbi_set_fsenv(struct silofs_sb_info *sbi,
-                          struct silofs_fsenv *fsenv)
+static void
+sbi_set_fsenv(struct silofs_sb_info *sbi, struct silofs_fsenv *fsenv)
 {
 	uni_set_fsenv(&sbi->sb_uni, fsenv);
 }
 
-static void sni_set_fsenv(struct silofs_spnode_info *sni,
-                          struct silofs_fsenv *fsenv)
+static void
+sni_set_fsenv(struct silofs_spnode_info *sni, struct silofs_fsenv *fsenv)
 {
 	uni_set_fsenv(&sni->sn_uni, fsenv);
 }
 
-static void sli_set_fsenv(struct silofs_spleaf_info *sli,
-                          struct silofs_fsenv *fsenv)
+static void
+sli_set_fsenv(struct silofs_spleaf_info *sli, struct silofs_fsenv *fsenv)
 {
 	uni_set_fsenv(&sli->sl_uni, fsenv);
 }
@@ -149,22 +149,22 @@ static void sli_set_spawned(struct silofs_spleaf_info *sli)
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static int fetch_cached_uni(const struct silofs_fsenv *fsenv,
-                            const struct silofs_uaddr *uaddr,
-                            struct silofs_unode_info **out_uni)
+			    const struct silofs_uaddr *uaddr,
+			    struct silofs_unode_info **out_uni)
 {
 	*out_uni = silofs_lcache_lookup_uni(fsenv->fse.lcache, uaddr);
 	return (*out_uni == NULL) ? -SILOFS_ENOENT : 0;
 }
 
-static void bind_spawned_uni(struct silofs_fsenv *fsenv,
-                             struct silofs_unode_info *uni)
+static void
+bind_spawned_uni(struct silofs_fsenv *fsenv, struct silofs_unode_info *uni)
 {
 	uni->un_lni.ln_fsenv = fsenv;
 }
 
-static int create_cached_uni(struct silofs_fsenv *fsenv,
-                             const struct silofs_ulink *ulink,
-                             struct silofs_unode_info **out_uni)
+static int
+create_cached_uni(struct silofs_fsenv *fsenv, const struct silofs_ulink *ulink,
+		  struct silofs_unode_info **out_uni)
 {
 	*out_uni = silofs_lcache_create_uni(fsenv->fse.lcache, ulink);
 	if (*out_uni == NULL) {
@@ -175,8 +175,8 @@ static int create_cached_uni(struct silofs_fsenv *fsenv,
 }
 
 static int require_cached_uni(struct silofs_fsenv *fsenv,
-                              const struct silofs_ulink *ulink,
-                              struct silofs_unode_info **out_uni)
+			      const struct silofs_ulink *ulink,
+			      struct silofs_unode_info **out_uni)
 {
 	int ret;
 
@@ -188,15 +188,15 @@ static int require_cached_uni(struct silofs_fsenv *fsenv,
 }
 
 static void forget_cached_uni(const struct silofs_fsenv *fsenv,
-                              struct silofs_unode_info *uni)
+			      struct silofs_unode_info *uni)
 {
 	silofs_lcache_forget_uni(fsenv->fse.lcache, uni);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static bool lsid_rw_mode(const struct silofs_fsenv *fsenv,
-                         const struct silofs_lsid *lsid)
+static bool
+lsid_rw_mode(const struct silofs_fsenv *fsenv, const struct silofs_lsid *lsid)
 {
 	const struct silofs_sb_info *sbi = fsenv->fse_sbi;
 	bool rw_mode;
@@ -217,16 +217,16 @@ static bool lsid_rw_mode(const struct silofs_fsenv *fsenv,
 	return rw_mode;
 }
 
-static int lookup_lseg(const struct silofs_fsenv *fsenv,
-                       const struct silofs_lsid *lsid)
+static int
+lookup_lseg(const struct silofs_fsenv *fsenv, const struct silofs_lsid *lsid)
 {
 	struct stat st;
 
 	return silofs_repo_stat_lseg(fsenv->fse.repo, lsid, true, &st);
 }
 
-static int stage_lseg(const struct silofs_fsenv *fsenv,
-                      const struct silofs_lsid *lsid)
+static int
+stage_lseg(const struct silofs_fsenv *fsenv, const struct silofs_lsid *lsid)
 {
 	int err;
 	const bool rw = lsid_rw_mode(fsenv, lsid);
@@ -238,8 +238,8 @@ static int stage_lseg(const struct silofs_fsenv *fsenv,
 	return err;
 }
 
-static int spawn_lseg(const struct silofs_fsenv *fsenv,
-                      const struct silofs_lsid *lsid)
+static int
+spawn_lseg(const struct silofs_fsenv *fsenv, const struct silofs_lsid *lsid)
 {
 	int err;
 
@@ -250,8 +250,8 @@ static int spawn_lseg(const struct silofs_fsenv *fsenv,
 	return err;
 }
 
-static int require_lseg(const struct silofs_fsenv *fsenv,
-                        const struct silofs_lsid *lsid)
+static int
+require_lseg(const struct silofs_fsenv *fsenv, const struct silofs_lsid *lsid)
 {
 	int err;
 
@@ -265,21 +265,21 @@ static int require_lseg(const struct silofs_fsenv *fsenv,
 }
 
 static int require_lseg_by(const struct silofs_fsenv *fsenv,
-                           const struct silofs_ulink *ulink)
+			   const struct silofs_ulink *ulink)
 {
 	return require_lseg(fsenv, &ulink->uaddr.laddr.lsid);
 }
 
-static int load_view_at(const struct silofs_fsenv *fsenv,
-                        const struct silofs_laddr *laddr,
-                        struct silofs_view *view)
+static int
+load_view_at(const struct silofs_fsenv *fsenv,
+	     const struct silofs_laddr *laddr, struct silofs_view *view)
 {
 	return silofs_repo_read_at(fsenv->fse.repo, laddr, view);
 }
 
-static int stage_load_view(const struct silofs_fsenv *fsenv,
-                           const struct silofs_laddr *laddr,
-                           struct silofs_view *view)
+static int
+stage_load_view(const struct silofs_fsenv *fsenv,
+		const struct silofs_laddr *laddr, struct silofs_view *view)
 {
 	int err;
 
@@ -297,15 +297,15 @@ static int stage_load_view(const struct silofs_fsenv *fsenv,
 }
 
 static int decrypt_uni_view(const struct silofs_fsenv *fsenv,
-                            struct silofs_unode_info *uni)
+			    struct silofs_unode_info *uni)
 {
 	return silofs_decrypt_uni_view(fsenv, uni);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void forget_cached_sbi(const struct silofs_fsenv *fsenv,
-                              struct silofs_sb_info *sbi)
+static void
+forget_cached_sbi(const struct silofs_fsenv *fsenv, struct silofs_sb_info *sbi)
 {
 	if (sbi != NULL) {
 		forget_cached_uni(fsenv, &sbi->sb_uni);
@@ -313,8 +313,8 @@ static void forget_cached_sbi(const struct silofs_fsenv *fsenv,
 }
 
 static int require_cached_sbi(struct silofs_fsenv *fsenv,
-                              const struct silofs_ulink *ulink,
-                              struct silofs_sb_info **out_sbi)
+			      const struct silofs_ulink *ulink,
+			      struct silofs_sb_info **out_sbi)
 {
 	struct silofs_unode_info *uni = NULL;
 	int err;
@@ -328,9 +328,9 @@ static int require_cached_sbi(struct silofs_fsenv *fsenv,
 	return 0;
 }
 
-static int spawn_super_at(struct silofs_fsenv *fsenv,
-                          const struct silofs_ulink *ulink,
-                          struct silofs_sb_info **out_sbi)
+static int
+spawn_super_at(struct silofs_fsenv *fsenv, const struct silofs_ulink *ulink,
+	       struct silofs_sb_info **out_sbi)
 {
 	struct silofs_sb_info *sbi = NULL;
 	int err;
@@ -354,28 +354,28 @@ out_err:
 }
 
 int silofs_spawn_super(struct silofs_fsenv *fsenv,
-                       const struct silofs_ulink *ulink,
-                       struct silofs_sb_info **out_sbi)
+		       const struct silofs_ulink *ulink,
+		       struct silofs_sb_info **out_sbi)
 {
 	return spawn_super_at(fsenv, ulink, out_sbi);
 }
 
 static int decrypt_view_of_sbi(const struct silofs_fsenv *fsenv,
-                               struct silofs_sb_info *sbi)
+			       struct silofs_sb_info *sbi)
 {
 	return decrypt_uni_view(fsenv, &sbi->sb_uni);
 }
 
-static int load_view_of_sbi(const struct silofs_fsenv *fsenv,
-                            struct silofs_sb_info *sbi)
+static int
+load_view_of_sbi(const struct silofs_fsenv *fsenv, struct silofs_sb_info *sbi)
 {
 	return stage_load_view(fsenv, sbi_laddr(sbi),
-	                       sbi->sb_uni.un_lni.ln_view);
+			       sbi->sb_uni.un_lni.ln_view);
 }
 
-static int stage_super_at(struct silofs_fsenv *fsenv,
-                          const struct silofs_ulink *ulink,
-                          struct silofs_sb_info **out_sbi)
+static int
+stage_super_at(struct silofs_fsenv *fsenv, const struct silofs_ulink *ulink,
+	       struct silofs_sb_info **out_sbi)
 {
 	struct silofs_sb_info *sbi = NULL;
 	int err;
@@ -414,8 +414,8 @@ out_err:
 }
 
 int silofs_stage_super(struct silofs_fsenv *fsenv,
-                       const struct silofs_ulink *ulink,
-                       struct silofs_sb_info **out_sbi)
+		       const struct silofs_ulink *ulink,
+		       struct silofs_sb_info **out_sbi)
 {
 	return stage_super_at(fsenv, ulink, out_sbi);
 }
@@ -423,7 +423,7 @@ int silofs_stage_super(struct silofs_fsenv *fsenv,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void forget_cached_sni(const struct silofs_fsenv *fsenv,
-                              struct silofs_spnode_info *sni)
+			      struct silofs_spnode_info *sni)
 {
 	if (sni != NULL) {
 		forget_cached_uni(fsenv, &sni->sn_uni);
@@ -431,8 +431,8 @@ static void forget_cached_sni(const struct silofs_fsenv *fsenv,
 }
 
 static int require_cached_sni(struct silofs_fsenv *fsenv,
-                              const struct silofs_ulink *ulink,
-                              struct silofs_spnode_info **out_sni)
+			      const struct silofs_ulink *ulink,
+			      struct silofs_spnode_info **out_sni)
 {
 	struct silofs_unode_info *uni = NULL;
 	int err;
@@ -446,9 +446,9 @@ static int require_cached_sni(struct silofs_fsenv *fsenv,
 	return 0;
 }
 
-static int spawn_spnode_at(struct silofs_fsenv *fsenv,
-                           const struct silofs_ulink *ulink,
-                           struct silofs_spnode_info **out_sni)
+static int
+spawn_spnode_at(struct silofs_fsenv *fsenv, const struct silofs_ulink *ulink,
+		struct silofs_spnode_info **out_sni)
 {
 	struct silofs_spnode_info *sni = NULL;
 	int err;
@@ -475,28 +475,28 @@ out_err:
 }
 
 int silofs_spawn_spnode(struct silofs_fsenv *fsenv,
-                        const struct silofs_ulink *ulink,
-                        struct silofs_spnode_info **out_sni)
+			const struct silofs_ulink *ulink,
+			struct silofs_spnode_info **out_sni)
 {
 	return spawn_spnode_at(fsenv, ulink, out_sni);
 }
 
 static int decrypt_view_of_sni(const struct silofs_fsenv *fsenv,
-                               struct silofs_spnode_info *sni)
+			       struct silofs_spnode_info *sni)
 {
 	return decrypt_uni_view(fsenv, &sni->sn_uni);
 }
 
 static int load_view_of_sni(const struct silofs_fsenv *fsenv,
-                            struct silofs_spnode_info *sni)
+			    struct silofs_spnode_info *sni)
 {
 	return stage_load_view(fsenv, sni_laddr(sni),
-	                       sni->sn_uni.un_lni.ln_view);
+			       sni->sn_uni.un_lni.ln_view);
 }
 
-static int stage_spnode_at(struct silofs_fsenv *fsenv,
-                           const struct silofs_ulink *ulink,
-                           struct silofs_spnode_info **out_sni)
+static int
+stage_spnode_at(struct silofs_fsenv *fsenv, const struct silofs_ulink *ulink,
+		struct silofs_spnode_info **out_sni)
 {
 	struct silofs_spnode_info *sni = NULL;
 	int err;
@@ -535,8 +535,8 @@ out_err:
 }
 
 int silofs_stage_spnode(struct silofs_fsenv *fsenv,
-                        const struct silofs_ulink *ulink,
-                        struct silofs_spnode_info **out_sni)
+			const struct silofs_ulink *ulink,
+			struct silofs_spnode_info **out_sni)
 {
 	return stage_spnode_at(fsenv, ulink, out_sni);
 }
@@ -544,7 +544,7 @@ int silofs_stage_spnode(struct silofs_fsenv *fsenv,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void forget_cached_sli(const struct silofs_fsenv *fsenv,
-                              struct silofs_spleaf_info *sli)
+			      struct silofs_spleaf_info *sli)
 {
 	if (sli != NULL) {
 		forget_cached_uni(fsenv, &sli->sl_uni);
@@ -552,8 +552,8 @@ static void forget_cached_sli(const struct silofs_fsenv *fsenv,
 }
 
 static int require_cached_sli(struct silofs_fsenv *fsenv,
-                              const struct silofs_ulink *ulink,
-                              struct silofs_spleaf_info **out_sli)
+			      const struct silofs_ulink *ulink,
+			      struct silofs_spleaf_info **out_sli)
 {
 	struct silofs_unode_info *uni = NULL;
 	int err;
@@ -567,9 +567,9 @@ static int require_cached_sli(struct silofs_fsenv *fsenv,
 	return 0;
 }
 
-static int spawn_spleaf_at(struct silofs_fsenv *fsenv,
-                           const struct silofs_ulink *ulink,
-                           struct silofs_spleaf_info **out_sli)
+static int
+spawn_spleaf_at(struct silofs_fsenv *fsenv, const struct silofs_ulink *ulink,
+		struct silofs_spleaf_info **out_sli)
 {
 	struct silofs_spleaf_info *sli = NULL;
 	int err;
@@ -596,28 +596,28 @@ out_err:
 }
 
 int silofs_spawn_spleaf(struct silofs_fsenv *fsenv,
-                        const struct silofs_ulink *ulink,
-                        struct silofs_spleaf_info **out_sli)
+			const struct silofs_ulink *ulink,
+			struct silofs_spleaf_info **out_sli)
 {
 	return spawn_spleaf_at(fsenv, ulink, out_sli);
 }
 
 static int decrypt_view_of_sli(const struct silofs_fsenv *fsenv,
-                               struct silofs_spleaf_info *sli)
+			       struct silofs_spleaf_info *sli)
 {
 	return decrypt_uni_view(fsenv, &sli->sl_uni);
 }
 
 static int load_view_of_sli(const struct silofs_fsenv *fsenv,
-                            struct silofs_spleaf_info *sli)
+			    struct silofs_spleaf_info *sli)
 {
 	return stage_load_view(fsenv, sli_laddr(sli),
-	                       sli->sl_uni.un_lni.ln_view);
+			       sli->sl_uni.un_lni.ln_view);
 }
 
-static int stage_spleaf_at(struct silofs_fsenv *fsenv,
-                           const struct silofs_ulink *ulink,
-                           struct silofs_spleaf_info **out_sli)
+static int
+stage_spleaf_at(struct silofs_fsenv *fsenv, const struct silofs_ulink *ulink,
+		struct silofs_spleaf_info **out_sli)
 {
 	struct silofs_spleaf_info *sli = NULL;
 	int err;
@@ -656,8 +656,8 @@ out_err:
 }
 
 int silofs_stage_spleaf(struct silofs_fsenv *fsenv,
-                        const struct silofs_ulink *ulink,
-                        struct silofs_spleaf_info **out_sli)
+			const struct silofs_ulink *ulink,
+			struct silofs_spleaf_info **out_sli)
 {
 	return stage_spleaf_at(fsenv, ulink, out_sli);
 }
@@ -665,7 +665,7 @@ int silofs_stage_spleaf(struct silofs_fsenv *fsenv,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int require_no_lseg(const struct silofs_fsenv *fsenv,
-                           const struct silofs_lsid *lsid)
+			   const struct silofs_lsid *lsid)
 {
 	int err;
 
@@ -680,7 +680,7 @@ static int require_no_lseg(const struct silofs_fsenv *fsenv,
 }
 
 int silofs_spawn_lseg(struct silofs_fsenv *fsenv,
-                      const struct silofs_lsid *lsid)
+		      const struct silofs_lsid *lsid)
 {
 	int err;
 
@@ -696,7 +696,7 @@ int silofs_spawn_lseg(struct silofs_fsenv *fsenv,
 }
 
 int silofs_stage_lseg(struct silofs_fsenv *fsenv,
-                      const struct silofs_lsid *lsid)
+		      const struct silofs_lsid *lsid)
 {
 	int err;
 

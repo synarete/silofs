@@ -27,85 +27,65 @@
 #define LINK_MAX 127
 #endif
 
+#define BITS_SIZE(a) (CHAR_BIT * sizeof(a))
 
-#define BITS_SIZE(a)    (CHAR_BIT * sizeof(a))
-
-#define MEMBER_SIZE(type, member) \
-        sizeof(((const type *)NULL)->member)
+#define MEMBER_SIZE(type, member) sizeof(((const type *)NULL)->member)
 
 #define MEMBER_NELEMS(type, member) \
-        SILOFS_ARRAY_SIZE(((const type *)NULL)->member)
+	SILOFS_ARRAY_SIZE(((const type *)NULL)->member)
 
-#define MEMBER_NBITS(type, member) \
-        BITS_SIZE(((const type *)NULL)->member)
+#define MEMBER_NBITS(type, member) BITS_SIZE(((const type *)NULL)->member)
 
 #define SWORD(a) ((long)(a))
 
-#define REQUIRE_EQ(a, b) \
-        SILOFS_STATICASSERT_EQ(SWORD(a), SWORD(b))
+#define REQUIRE_EQ(a, b) SILOFS_STATICASSERT_EQ(SWORD(a), SWORD(b))
 
-#define REQUIRE_LE(a, b) \
-        SILOFS_STATICASSERT_LE(SWORD(a), SWORD(b))
+#define REQUIRE_LE(a, b) SILOFS_STATICASSERT_LE(SWORD(a), SWORD(b))
 
-#define REQUIRE_LT(a, b) \
-        SILOFS_STATICASSERT_LT(SWORD(a), SWORD(b))
+#define REQUIRE_LT(a, b) SILOFS_STATICASSERT_LT(SWORD(a), SWORD(b))
 
-#define REQUIRE_GT(a, b) \
-        SILOFS_STATICASSERT_GT(SWORD(a), SWORD(b))
+#define REQUIRE_GT(a, b) SILOFS_STATICASSERT_GT(SWORD(a), SWORD(b))
 
-#define REQUIRE_GE(a, b) \
-        SILOFS_STATICASSERT_GE(SWORD(a), SWORD(b))
+#define REQUIRE_GE(a, b) SILOFS_STATICASSERT_GE(SWORD(a), SWORD(b))
 
-#define REQUIRE_SIZEOF(type, size) \
-        REQUIRE_EQ(sizeof(type), size)
+#define REQUIRE_SIZEOF(type, size) REQUIRE_EQ(sizeof(type), size)
 
-#define REQUIRE_SIZEOF_LE(type, size) \
-        REQUIRE_LE(sizeof(type), size)
+#define REQUIRE_SIZEOF_LE(type, size) REQUIRE_LE(sizeof(type), size)
 
-#define REQUIRE_SIZEOF_NK(type, nk) \
-        REQUIRE_SIZEOF(type, (nk) * SILOFS_KILO)
+#define REQUIRE_SIZEOF_NK(type, nk) REQUIRE_SIZEOF(type, (nk) * SILOFS_KILO)
 
-#define REQUIRE_SIZEOF_1K(type) \
-        REQUIRE_SIZEOF_NK(type, 1)
+#define REQUIRE_SIZEOF_1K(type) REQUIRE_SIZEOF_NK(type, 1)
 
-#define REQUIRE_SIZEOF_4K(type) \
-        REQUIRE_SIZEOF_NK(type, 4)
+#define REQUIRE_SIZEOF_4K(type) REQUIRE_SIZEOF_NK(type, 4)
 
-#define REQUIRE_SIZEOF_8K(type) \
-        REQUIRE_SIZEOF_NK(type, 8)
+#define REQUIRE_SIZEOF_8K(type) REQUIRE_SIZEOF_NK(type, 8)
 
-#define REQUIRE_SIZEOF_32K(type) \
-        REQUIRE_SIZEOF_NK(type, 32)
+#define REQUIRE_SIZEOF_32K(type) REQUIRE_SIZEOF_NK(type, 32)
 
-#define REQUIRE_SIZEOF_64K(type) \
-        REQUIRE_SIZEOF_NK(type, 64)
+#define REQUIRE_SIZEOF_64K(type) REQUIRE_SIZEOF_NK(type, 64)
 
 #define REQUIRE_MEMBER_SIZE(type, f, size) \
-        REQUIRE_EQ(MEMBER_SIZE(type, f), size)
+	REQUIRE_EQ(MEMBER_SIZE(type, f), size)
 
 #define REQUIRE_NELEMS(type, f, nelems) \
-        REQUIRE_EQ(MEMBER_NELEMS(type, f), nelems)
+	REQUIRE_EQ(MEMBER_NELEMS(type, f), nelems)
 
-#define REQUIRE_NBITS(type, f, nbits) \
-        REQUIRE_EQ(MEMBER_NBITS(type, f), nbits)
+#define REQUIRE_NBITS(type, f, nbits) REQUIRE_EQ(MEMBER_NBITS(type, f), nbits)
 
-#define ISALIGNED32(off) \
-        (((off) % 4) == 0)
+#define ISALIGNED32(off) (((off) % 4) == 0)
 
-#define ISALIGNED64(off) \
-        (((off) % 8) == 0)
+#define ISALIGNED64(off) (((off) % 8) == 0)
 
-#define ISOFFSET(type, member, off) \
-        (offsetof(type, member) == (off))
+#define ISOFFSET(type, member, off) (offsetof(type, member) == (off))
 
 #define REQUIRE_OFFSETXX(type, member, off) \
-        SILOFS_STATICASSERT(ISOFFSET(type, member, off))
+	SILOFS_STATICASSERT(ISOFFSET(type, member, off))
 
 #define REQUIRE_OFFSET32(type, member, off) \
-        SILOFS_STATICASSERT(ISOFFSET(type, member, off) && ISALIGNED32(off))
+	SILOFS_STATICASSERT(ISOFFSET(type, member, off) && ISALIGNED32(off))
 
 #define REQUIRE_OFFSET64(type, member, off) \
-        SILOFS_STATICASSERT(ISOFFSET(type, member, off) && ISALIGNED64(off))
+	SILOFS_STATICASSERT(ISOFFSET(type, member, off) && ISALIGNED64(off))
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -215,11 +195,11 @@ static void validate_persistent_types_members(void)
 	REQUIRE_NBITS(struct silofs_bk_ref, bkr_allocated, SILOFS_NKB_IN_LBK);
 	REQUIRE_NBITS(struct silofs_bk_ref, bkr_unwritten, SILOFS_NKB_IN_LBK);
 	REQUIRE_MEMBER_SIZE(struct silofs_bk_ref, bkr_dbkref, 8);
-	REQUIRE_NELEMS(struct silofs_ftree_node,
-	               fn_child, SILOFS_FILE_NODE_NCHILDS);
+	REQUIRE_NELEMS(struct silofs_ftree_node, fn_child,
+		       SILOFS_FILE_NODE_NCHILDS);
 	REQUIRE_NELEMS(union silofs_dtree_data, de, SILOFS_DIR_NODE_NENTS);
-	REQUIRE_NELEMS(struct silofs_dtree_node,
-	               dn_child, SILOFS_DIR_NODE_NCHILDS);
+	REQUIRE_NELEMS(struct silofs_dtree_node, dn_child,
+		       SILOFS_DIR_NODE_NCHILDS);
 }
 
 static void validate_persistent_types_alignment1(void)
@@ -356,17 +336,18 @@ static void validate_defs_consistency(void)
 	REQUIRE_EQ(SILOFS_FILE_SIZE_MAX, 64 * SILOFS_PETA - 1);
 	REQUIRE_EQ(SILOFS_LSEG_SIZE_MAX, 16 * SILOFS_MEGA);
 	REQUIRE_EQ(SILOFS_LBK_SIZE * SILOFS_SPMAP_NCHILDS,
-	           SILOFS_LSEG_SIZE_MAX);
+		   SILOFS_LSEG_SIZE_MAX);
 	REQUIRE_EQ(SILOFS_CAPACITY_SIZE_MIN, 2 * SILOFS_GIGA);
 	REQUIRE_EQ(SILOFS_CAPACITY_SIZE_MAX, 64 * SILOFS_TERA);
 	REQUIRE_LT(SILOFS_CAPACITY_SIZE_MAX, SILOFS_VSPACE_SIZE_MAX / 2);
 	REQUIRE_EQ(SILOFS_VSPACE_SIZE_MAX, 256 * SILOFS_PETA);
 
 	REQUIRE_EQ(SILOFS_FILE_HEAD1_LEAF_SIZE * SILOFS_FILE_HEAD1_NLEAF,
-	           SILOFS_FILE_HEAD2_LEAF_SIZE);
+		   SILOFS_FILE_HEAD2_LEAF_SIZE);
 	REQUIRE_EQ((SILOFS_FILE_HEAD1_LEAF_SIZE * SILOFS_FILE_HEAD1_NLEAF) +
-	           (SILOFS_FILE_HEAD2_LEAF_SIZE * SILOFS_FILE_HEAD2_NLEAF),
-	           SILOFS_FILE_TREE_LEAF_SIZE);
+			   (SILOFS_FILE_HEAD2_LEAF_SIZE *
+			    SILOFS_FILE_HEAD2_NLEAF),
+		   SILOFS_FILE_TREE_LEAF_SIZE);
 }
 
 static void validate_external_constants(void)
@@ -403,10 +384,9 @@ static void validate_defs(void)
 	validate_external_constants();
 }
 
-
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-#define SILOFS_NOFILES_MIN      (512)
+#define SILOFS_NOFILES_MIN (512)
 
 static int errno_or_errnum(int errnum)
 {

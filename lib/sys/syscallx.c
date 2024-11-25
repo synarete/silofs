@@ -33,9 +33,7 @@ static void *buffer_at(const void *buf, size_t step)
 	union {
 		const void *p;
 		void *q;
-	} u = {
-		.p = (const uint8_t *)buf + step
-	};
+	} u = { .p = (const uint8_t *)buf + step };
 
 	return u.q;
 }
@@ -177,8 +175,8 @@ static void iov_advance(struct iovec **p_iov, size_t len)
 	*p_iov = iov;
 }
 
-static int do_sys_pwritevn(int fd, struct iovec *iov, int cnt,
-                           loff_t off, loff_t *out_off)
+static int do_sys_pwritevn(int fd, struct iovec *iov, int cnt, loff_t off,
+			   loff_t *out_off)
 {
 	size_t nwr_cur;
 	size_t nwr = 0;
@@ -234,8 +232,8 @@ int silofs_sys_opendir(const char *path, int *out_fd)
 
 int silofs_sys_opendirat(int dfd, const char *pathname, int *out_fd)
 {
-	return silofs_sys_openat(dfd, pathname,
-	                         O_DIRECTORY | O_RDONLY, 0, out_fd);
+	return silofs_sys_openat(dfd, pathname, O_DIRECTORY | O_RDONLY, 0,
+				 out_fd);
 }
 
 int silofs_sys_closefd(int *pfd)
@@ -323,8 +321,8 @@ int silofs_sys_pollin_rfd(int fd, int timeout)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int sys_readfile(int dfd, const char *filename,
-                        void *buf, size_t bsz, int flags, size_t *nrd)
+static int sys_readfile(int dfd, const char *filename, void *buf, size_t bsz,
+			int flags, size_t *nrd)
 {
 	int err;
 	int fd = -1;
@@ -345,8 +343,8 @@ static int sys_readfile(int dfd, const char *filename,
 	return 0;
 }
 
-static int sys_readproc(const char *procdir, const char *filename,
-                        void *buf, size_t bsz, size_t *nrd)
+static int sys_readproc(const char *procdir, const char *filename, void *buf,
+			size_t bsz, size_t *nrd)
 {
 	int err;
 	int dfd = -1;

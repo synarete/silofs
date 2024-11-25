@@ -19,11 +19,11 @@
 #include <silofs/crypt.h>
 #include <gcrypt.h>
 
-
 static void randomize_by_gcry(void *ptr, size_t len, bool very_strong)
 {
-	gcry_randomize(ptr, len, very_strong ?
-	               GCRY_VERY_STRONG_RANDOM : GCRY_STRONG_RANDOM);
+	gcry_randomize(ptr, len,
+		       very_strong ? GCRY_VERY_STRONG_RANDOM :
+				     GCRY_STRONG_RANDOM);
 }
 
 /* add pseudo-randomness as protection from poor gcry_randomize */
@@ -77,13 +77,13 @@ void silofs_iv_assign(struct silofs_iv *iv, const struct silofs_iv *iv_other)
 }
 
 bool silofs_iv_isequal(const struct silofs_iv *iv,
-                       const struct silofs_iv *iv_other)
+		       const struct silofs_iv *iv_other)
 {
 	return silofs_iv_compare(iv, iv_other) == 0;
 }
 
 long silofs_iv_compare(const struct silofs_iv *iv,
-                       const struct silofs_iv *iv_other)
+		       const struct silofs_iv *iv_other)
 {
 	return memcmp(iv->iv, iv_other->iv, sizeof(iv->iv));
 }
@@ -105,9 +105,8 @@ void silofs_iv_xor_with1(struct silofs_iv *iv, const struct silofs_iv *iv1)
 	}
 }
 
-void silofs_iv_xor_with2(struct silofs_iv *iv,
-                         const struct silofs_iv *iv1,
-                         const struct silofs_iv *iv2)
+void silofs_iv_xor_with2(struct silofs_iv *iv, const struct silofs_iv *iv1,
+			 const struct silofs_iv *iv2)
 {
 	for (size_t i = 0; i < ARRAY_SIZE(iv->iv); ++i) {
 		iv->iv[i] ^= (iv1->iv[i] ^ iv2->iv[i]);
@@ -152,7 +151,7 @@ void silofs_key_xor_with(struct silofs_key *key, const void *buf, size_t len)
 }
 
 void silofs_key_xor_with1(struct silofs_key *key,
-                          const struct silofs_key *key1)
+			  const struct silofs_key *key1)
 {
 	for (size_t i = 0; i < ARRAY_SIZE(key->key); ++i) {
 		key->key[i] ^= key1->key[i];
@@ -178,21 +177,21 @@ void silofs_ivkey_mkrand(struct silofs_ivkey *ivkey)
 }
 
 void silofs_ivkey_setup(struct silofs_ivkey *ivkey,
-                        const struct silofs_key *key,
-                        const struct silofs_iv *iv)
+			const struct silofs_key *key,
+			const struct silofs_iv *iv)
 {
 	silofs_key_assign(&ivkey->key, key);
 	silofs_iv_assign(&ivkey->iv, iv);
 }
 
 void silofs_ivkey_assign(struct silofs_ivkey *ivkey,
-                         const struct silofs_ivkey *other)
+			 const struct silofs_ivkey *other)
 {
 	silofs_ivkey_setup(ivkey, &other->key, &other->iv);
 }
 
 void silofs_ivkey_xor_with(struct silofs_ivkey *ivkey,
-                           const struct silofs_ivkey *other)
+			   const struct silofs_ivkey *other)
 {
 	silofs_key_xor_with1(&ivkey->key, &other->key);
 	silofs_iv_xor_with1(&ivkey->iv, &other->iv);

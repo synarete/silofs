@@ -60,27 +60,27 @@ struct silofs_avl_pos {
 
 #define avl_node_verify_non_null(x_) silofs_panic_if_null(x_)
 
-#define avl_node_verify_magic(x_) \
-        do { \
-                if (silofs_unlikely((x_)->magic != AVL_MAGIC)) \
-                        silofs_panic("bad avl-node: %p magic=%x", \
-                                     (const void *)(x_), (x_)->magic); \
-        } while (0)
+#define avl_node_verify_magic(x_)                                      \
+	do {                                                           \
+		if (silofs_unlikely((x_)->magic != AVL_MAGIC))         \
+			silofs_panic("bad avl-node: %p magic=%x",      \
+				     (const void *)(x_), (x_)->magic); \
+	} while (0)
 
-#define avl_node_verify_balance(x_) \
-        do { \
-                if (silofs_unlikely(((x_)->balance) > 1) || \
-                        silofs_unlikely(((x_)->balance) < -1))  \
-                        silofs_panic("illegal avl-node: %p balance=%d", \
-                                        (const void *)(x_), (x_)->balance); \
-        } while (0)
+#define avl_node_verify_balance(x_)                                      \
+	do {                                                             \
+		if (silofs_unlikely(((x_)->balance) > 1) ||              \
+		    silofs_unlikely(((x_)->balance) < -1))               \
+			silofs_panic("illegal avl-node: %p balance=%d",  \
+				     (const void *)(x_), (x_)->balance); \
+	} while (0)
 
-#define avl_node_verify(x_) \
-        do { \
-                avl_node_verify_non_null(x_); \
-                avl_node_verify_magic(x_); \
-                avl_node_verify_balance(x_); \
-        } while (0)
+#define avl_node_verify(x_)                   \
+	do {                                  \
+		avl_node_verify_non_null(x_); \
+		avl_node_verify_magic(x_);    \
+		avl_node_verify_balance(x_);  \
+	} while (0)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -114,8 +114,8 @@ static void avl_node_destroy(struct silofs_avl_node *x)
 	x->magic = 666;
 }
 
-static void avl_node_swap_balance(struct silofs_avl_node *x,
-                                  struct silofs_avl_node *y)
+static void
+avl_node_swap_balance(struct silofs_avl_node *x, struct silofs_avl_node *y)
 {
 	int balance;
 
@@ -133,9 +133,7 @@ avl_node_unconst(const struct silofs_avl_node *x)
 	union _avl_unconst {
 		void *p;
 		const struct silofs_avl_node *y;
-	} uu = {
-		.y = x
-	};
+	} uu = { .y = x };
 	return uu.p;
 }
 
@@ -159,8 +157,7 @@ bst_maximum(const struct silofs_avl_node *x)
 	return x;
 }
 
-static struct silofs_avl_node *
-bst_successor(const struct silofs_avl_node *x)
+static struct silofs_avl_node *bst_successor(const struct silofs_avl_node *x)
 {
 	const struct silofs_avl_node *y;
 
@@ -176,8 +173,7 @@ bst_successor(const struct silofs_avl_node *x)
 	return avl_node_unconst(y);
 }
 
-static struct silofs_avl_node *
-bst_predecessor(const struct silofs_avl_node *x)
+static struct silofs_avl_node *bst_predecessor(const struct silofs_avl_node *x)
 {
 	const struct silofs_avl_node *y;
 
@@ -270,8 +266,8 @@ bst_rotate_left_right(struct silofs_avl_node *a, struct silofs_avl_node **root)
 	}
 }
 
-static void bst_rotate_right_left(struct silofs_avl_node *a,
-                                  struct silofs_avl_node **root)
+static void
+bst_rotate_right_left(struct silofs_avl_node *a, struct silofs_avl_node **root)
 {
 	struct silofs_avl_node *b = a->right;
 	struct silofs_avl_node *c = b->left;
@@ -326,8 +322,7 @@ static struct silofs_avl_node **avl_rightmost_p(const struct silofs_avl *avl)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void avl_rotate_left(struct silofs_avl *avl,
-                            struct silofs_avl_node *x)
+static void avl_rotate_left(struct silofs_avl *avl, struct silofs_avl_node *x)
 {
 	struct silofs_avl_node **root = avl_root_p(avl);
 	struct silofs_avl_node *y = x->right;
@@ -346,8 +341,7 @@ static void avl_rotate_left(struct silofs_avl *avl,
 	}
 }
 
-static void avl_rotate_right(struct silofs_avl *avl,
-                             struct silofs_avl_node *x)
+static void avl_rotate_right(struct silofs_avl *avl, struct silofs_avl_node *x)
 {
 	struct silofs_avl_node **root = avl_root_p(avl);
 	struct silofs_avl_node *y = x->left;
@@ -366,8 +360,8 @@ static void avl_rotate_right(struct silofs_avl *avl,
 	}
 }
 
-static void avl_rotate_left_right(struct silofs_avl *avl,
-                                  struct silofs_avl_node *a)
+static void
+avl_rotate_left_right(struct silofs_avl *avl, struct silofs_avl_node *a)
 {
 	struct silofs_avl_node **root = avl_root_p(avl);
 	struct silofs_avl_node *b = a->left;
@@ -384,8 +378,8 @@ static void avl_rotate_left_right(struct silofs_avl *avl,
 	c->balance = 0;
 }
 
-static void avl_rotate_right_left(struct silofs_avl *avl,
-                                  struct silofs_avl_node *a)
+static void
+avl_rotate_right_left(struct silofs_avl *avl, struct silofs_avl_node *a)
 {
 	struct silofs_avl_node **root = avl_root_p(avl);
 	struct silofs_avl_node *b = a->right;
@@ -403,19 +397,18 @@ static void avl_rotate_right_left(struct silofs_avl *avl,
 }
 
 static bool left_child(const struct silofs_avl_node *x_parent,
-                       const struct silofs_avl_node *x)
+		       const struct silofs_avl_node *x)
 {
 	return (x_parent->left == x);
 }
 
 static bool right_child(const struct silofs_avl_node *x_parent,
-                        const struct silofs_avl_node *x)
+			const struct silofs_avl_node *x)
 {
 	return (x_parent->right == x);
 }
 
-static void avl_insert_fixup(struct silofs_avl *avl,
-                             struct silofs_avl_node *x)
+static void avl_insert_fixup(struct silofs_avl *avl, struct silofs_avl_node *x)
 {
 	struct silofs_avl_node **root = avl_root_p(avl);
 	struct silofs_avl_node *x_parent;
@@ -453,9 +446,8 @@ static void avl_insert_fixup(struct silofs_avl *avl,
 	}
 }
 
-static void avl_delete_fixup(struct silofs_avl *avl,
-                             struct silofs_avl_node *x,
-                             struct silofs_avl_node *x_parent)
+static void avl_delete_fixup(struct silofs_avl *avl, struct silofs_avl_node *x,
+			     struct silofs_avl_node *x_parent)
 {
 	struct silofs_avl_node **root = avl_root_p(avl);
 	struct silofs_avl_node *y = NULL;
@@ -513,8 +505,7 @@ static void avl_delete_fixup(struct silofs_avl *avl,
 	}
 }
 
-static void avl_delete(struct silofs_avl *avl,
-                       struct silofs_avl_node *z)
+static void avl_delete(struct silofs_avl *avl, struct silofs_avl_node *z)
 {
 	struct silofs_avl_node **root = avl_root_p(avl);
 	struct silofs_avl_node *x = NULL;
@@ -684,45 +675,45 @@ avl_insert_root(struct silofs_avl *avl, struct silofs_avl_node *x)
 	return x;
 }
 
-static const void *avl_keyof(const struct silofs_avl *avl,
-                             const struct silofs_avl_node *x)
+static const void *
+avl_keyof(const struct silofs_avl *avl, const struct silofs_avl_node *x)
 {
 	return avl->getkey(x);
 }
 
-static long avl_keycmp(const struct silofs_avl *avl,
-                       const void *kx, const void *ky)
+static long
+avl_keycmp(const struct silofs_avl *avl, const void *kx, const void *ky)
 {
 	return avl->keycmp(kx, ky);
 }
 
 static bool avl_less_than(const struct silofs_avl *avl,
-                          const struct silofs_avl_node *x, const void *k)
+			  const struct silofs_avl_node *x, const void *k)
 {
 	return avl_keycmp(avl, avl_keyof(avl, x), k) > 0;
 }
 
-static bool avl_less_than2(const struct silofs_avl *avl,
-                           const void *k, const struct silofs_avl_node *x)
+static bool avl_less_than2(const struct silofs_avl *avl, const void *k,
+			   const struct silofs_avl_node *x)
 {
 	return avl_keycmp(avl, k, avl_keyof(avl, x)) > 0;
 }
 
 static long avl_compare_to(const struct silofs_avl *avl,
-                           const struct silofs_avl_node *x, const void *k)
+			   const struct silofs_avl_node *x, const void *k)
 {
 	return avl_keycmp(avl, avl_keyof(avl, x), k);
 }
 
-static long avl_compare(const struct silofs_avl *avl,
-                        const struct silofs_avl_node *x,
-                        const struct silofs_avl_node *y)
+static long
+avl_compare(const struct silofs_avl *avl, const struct silofs_avl_node *x,
+	    const struct silofs_avl_node *y)
 {
 	return avl_compare_to(avl, x, avl_keyof(avl, y));
 }
 
 static void avl_pos_setup(struct silofs_avl_pos *pos,
-                          struct silofs_avl_node *p, bool isleft)
+			  struct silofs_avl_node *p, bool isleft)
 {
 	if (p == NULL) {
 		pos->parent = NULL;
@@ -736,9 +727,9 @@ static void avl_pos_setup(struct silofs_avl_pos *pos,
 	}
 }
 
-static int avl_search_uniq_ipos(struct silofs_avl *avl,
-                                const struct silofs_avl_node *z,
-                                struct silofs_avl_pos *out_pos)
+static int
+avl_search_uniq_ipos(struct silofs_avl *avl, const struct silofs_avl_node *z,
+		     struct silofs_avl_pos *out_pos)
 {
 	struct silofs_avl_node *p = NULL;
 	struct silofs_avl_node *x = *avl_root_p(avl);
@@ -763,9 +754,9 @@ static int avl_search_uniq_ipos(struct silofs_avl *avl,
 	return 0;
 }
 
-static int avl_search_leaf_ipos(struct silofs_avl *avl,
-                                const struct silofs_avl_node *z,
-                                struct silofs_avl_pos *out_pos)
+static int
+avl_search_leaf_ipos(struct silofs_avl *avl, const struct silofs_avl_node *z,
+		     struct silofs_avl_pos *out_pos)
 {
 	struct silofs_avl_node *p = NULL;
 	struct silofs_avl_node *x = *avl_root_p(avl);
@@ -788,9 +779,9 @@ static int avl_search_leaf_ipos(struct silofs_avl *avl,
 	return 0;
 }
 
-static int avl_search_insert_pos(struct silofs_avl *avl,
-                                 const struct silofs_avl_node *x, bool unique,
-                                 struct silofs_avl_pos *out_pos)
+static int
+avl_search_insert_pos(struct silofs_avl *avl, const struct silofs_avl_node *x,
+		      bool unique, struct silofs_avl_pos *out_pos)
 {
 	int ret;
 
@@ -804,7 +795,7 @@ static int avl_search_insert_pos(struct silofs_avl *avl,
 
 static struct silofs_avl_node *
 avl_insert_leaf_at(struct silofs_avl *avl, struct silofs_avl_node *x,
-                   const struct silofs_avl_pos *pos)
+		   const struct silofs_avl_pos *pos)
 {
 	x->parent = pos->parent;
 	*pos->pnode = x;
@@ -840,7 +831,7 @@ avl_insert_leaf(struct silofs_avl *avl, struct silofs_avl_node *x, int unique)
 
 	err = avl_search_insert_pos(avl, x, unique, &pos);
 	if (err) {
-		return NULL; /* not unique */
+		return NULL;           /* not unique */
 	}
 	if (pos.parent && pos.pnode) { /* make gcc-analyzer happy */
 		avl_node_init(x);
@@ -850,8 +841,8 @@ avl_insert_leaf(struct silofs_avl *avl, struct silofs_avl_node *x, int unique)
 	return x;
 }
 
-static bool avl_insert(struct silofs_avl *avl,
-                       struct silofs_avl_node *x, bool unique)
+static bool
+avl_insert(struct silofs_avl *avl, struct silofs_avl_node *x, bool unique)
 {
 	struct silofs_avl_node *y = NULL;
 
@@ -884,15 +875,14 @@ static void avl_reset(struct silofs_avl *avl)
 	avl->size = 0;
 }
 
-static void avl_remove_last(struct silofs_avl *avl,
-                            struct silofs_avl_node *x)
+static void avl_remove_last(struct silofs_avl *avl, struct silofs_avl_node *x)
 {
 	avl_reset(avl);
 	avl_node_reset(x);
 }
 
-static void avl_remove_rebalance(struct silofs_avl *avl,
-                                 struct silofs_avl_node *x)
+static void
+avl_remove_rebalance(struct silofs_avl *avl, struct silofs_avl_node *x)
 {
 	struct silofs_avl_node **pmin = NULL;
 	struct silofs_avl_node **pmax = NULL;
@@ -925,8 +915,7 @@ void silofs_avl_remove(struct silofs_avl *avl, struct silofs_avl_node *x)
 	avl_node_reset(x);
 }
 
-static struct silofs_avl_node *
-avl_unlinkall(struct silofs_avl *avl)
+static struct silofs_avl_node *avl_unlinkall(struct silofs_avl *avl)
 {
 	struct silofs_avl_node *x = NULL;
 	struct silofs_avl_node *y = NULL;
@@ -973,7 +962,7 @@ static const struct silofs_avl_node_functor avl_noop_functor = {
 };
 
 static void avl_foreach_unlinked(struct silofs_avl_node *lst,
-                                 const struct silofs_avl_node_functor *fn)
+				 const struct silofs_avl_node_functor *fn)
 {
 	struct silofs_avl_node *nxt = NULL;
 	struct silofs_avl_node *itr = lst;
@@ -987,7 +976,7 @@ static void avl_foreach_unlinked(struct silofs_avl_node *lst,
 
 static void
 avl_apply_foreach_unlinked(struct silofs_avl *avl,
-                           const struct silofs_avl_node_functor *fn)
+			   const struct silofs_avl_node_functor *fn)
 {
 	if (fn != NULL) {
 		avl_foreach_unlinked(avl_unlinkall(avl), fn);
@@ -995,16 +984,16 @@ avl_apply_foreach_unlinked(struct silofs_avl *avl,
 }
 
 void silofs_avl_clear(struct silofs_avl *avl,
-                      const struct silofs_avl_node_functor *fn)
+		      const struct silofs_avl_node_functor *fn)
 {
 	avl_apply_foreach_unlinked(avl, fn);
 	avl_reset(avl);
 }
 
-static void avl_remove_range(struct silofs_avl *avl,
-                             struct silofs_avl_node *first,
-                             const struct silofs_avl_node *last,
-                             const struct silofs_avl_node_functor *fn)
+static void
+avl_remove_range(struct silofs_avl *avl, struct silofs_avl_node *first,
+		 const struct silofs_avl_node *last,
+		 const struct silofs_avl_node_functor *fn)
 {
 	struct silofs_avl_node *nxt;
 	struct silofs_avl_node *itr = first;
@@ -1020,9 +1009,9 @@ static void avl_remove_range(struct silofs_avl *avl,
 }
 
 void silofs_avl_remove_range(struct silofs_avl *avl,
-                             struct silofs_avl_node *first,
-                             const struct silofs_avl_node *last,
-                             const struct silofs_avl_node_functor *fn)
+			     struct silofs_avl_node *first,
+			     const struct silofs_avl_node *last,
+			     const struct silofs_avl_node_functor *fn)
 {
 	avl_remove_range(avl, first, last, fn ? fn : &avl_noop_functor);
 }
@@ -1035,18 +1024,18 @@ avl_iterator(const struct silofs_avl *avl, const struct silofs_avl_node *x)
 	return (x != NULL) ? avl_node_unconst(x) : avl_end(avl);
 }
 
-static void avl_range_setup(const struct silofs_avl *avl,
-                            struct silofs_avl_range *r,
-                            const struct silofs_avl_node *x,
-                            const struct silofs_avl_node *y)
+static void
+avl_range_setup(const struct silofs_avl *avl, struct silofs_avl_range *r,
+		const struct silofs_avl_node *x,
+		const struct silofs_avl_node *y)
 {
 	r->first = avl_iterator(avl, x);
 	r->second = avl_iterator(avl, y);
 }
 
-static size_t avl_distance(const struct silofs_avl *avl,
-                           const struct silofs_avl_node *x,
-                           const struct silofs_avl_node *y)
+static size_t
+avl_distance(const struct silofs_avl *avl, const struct silofs_avl_node *x,
+	     const struct silofs_avl_node *y)
 {
 	size_t n = 0;
 
@@ -1059,9 +1048,8 @@ static size_t avl_distance(const struct silofs_avl *avl,
 
 /* Find the first element whose key is not less than k (greater or equal-to) */
 static const struct silofs_avl_node *
-avl_lower_bound(const struct silofs_avl *avl,
-                const struct silofs_avl_node *x,
-                const struct silofs_avl_node *y, const void *k)
+avl_lower_bound(const struct silofs_avl *avl, const struct silofs_avl_node *x,
+		const struct silofs_avl_node *y, const void *k)
 {
 	while (x != NULL) {
 		if (!avl_less_than(avl, x, k)) { /* !(x < k) */
@@ -1076,10 +1064,8 @@ avl_lower_bound(const struct silofs_avl *avl,
 
 /* Find the first element whose key is greater than k */
 static const struct silofs_avl_node *
-avl_upper_bound(const struct silofs_avl *avl,
-                const struct silofs_avl_node *x,
-                const struct silofs_avl_node *y,
-                const void *k)
+avl_upper_bound(const struct silofs_avl *avl, const struct silofs_avl_node *x,
+		const struct silofs_avl_node *y, const void *k)
 {
 	while (x != NULL) {
 		if (avl_less_than2(avl, k, x)) { /* k < x */
@@ -1092,10 +1078,10 @@ avl_upper_bound(const struct silofs_avl *avl,
 	return y;
 }
 
-static void avl_equal_range(const struct silofs_avl *avl,
-                            const struct silofs_avl_node *x,
-                            const struct silofs_avl_node *y,
-                            const void *k, struct silofs_avl_range *out_r)
+static void
+avl_equal_range(const struct silofs_avl *avl, const struct silofs_avl_node *x,
+		const struct silofs_avl_node *y, const void *k,
+		struct silofs_avl_range *out_r)
 {
 	long cmp;
 	const struct silofs_avl_node *xu = NULL;
@@ -1222,7 +1208,7 @@ silofs_avl_upper_bound(const struct silofs_avl *avl, const void *k)
 }
 
 void silofs_avl_equal_range(const struct silofs_avl *avl, const void *k,
-                            struct silofs_avl_range *out_r)
+			    struct silofs_avl_range *out_r)
 {
 	if (avl->size > 0) {
 		avl_equal_range(avl, *avl_root_p(avl), NULL, k, out_r);
@@ -1231,9 +1217,9 @@ void silofs_avl_equal_range(const struct silofs_avl *avl, const void *k,
 	}
 }
 
-static void avl_replace_fixup(struct silofs_avl *avl,
-                              struct silofs_avl_node *y,
-                              struct silofs_avl_node *z)
+static void
+avl_replace_fixup(struct silofs_avl *avl, struct silofs_avl_node *y,
+		  struct silofs_avl_node *z)
 {
 	struct silofs_avl_node **root = avl_root_p(avl);
 	struct silofs_avl_node **pmin = avl_leftmost_p(avl);
@@ -1250,8 +1236,8 @@ static void avl_replace_fixup(struct silofs_avl *avl,
 	}
 }
 
-static void avl_node_exchange(struct silofs_avl_node *y,
-                              struct silofs_avl_node *z)
+static void
+avl_node_exchange(struct silofs_avl_node *y, struct silofs_avl_node *z)
 {
 	z->parent = y->parent;
 	z->left = y->left;
@@ -1273,9 +1259,9 @@ static void avl_node_exchange(struct silofs_avl_node *y,
 	}
 }
 
-static void avl_replace_exists(struct silofs_avl *avl,
-                               struct silofs_avl_node *y,
-                               struct silofs_avl_node *z)
+static void
+avl_replace_exists(struct silofs_avl *avl, struct silofs_avl_node *y,
+		   struct silofs_avl_node *z)
 {
 	avl_node_verify(y);
 	avl_node_init(z);
@@ -1314,7 +1300,7 @@ void silofs_avl_node_fini(struct silofs_avl_node *x)
 }
 
 void silofs_avl_init(struct silofs_avl *avl, silofs_avl_getkey_fn getkey,
-                     silofs_avl_keycmp_fn keycmp, void *userp)
+		     silofs_avl_keycmp_fn keycmp, void *userp)
 {
 	avl_node_reset(&avl->head);
 	avl->getkey = getkey;

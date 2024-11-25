@@ -21,7 +21,6 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-
 void silofs_strbuf_init(struct silofs_strbuf *sbuf)
 {
 	sbuf->str[0] = '\0';
@@ -33,13 +32,13 @@ void silofs_strbuf_fini(struct silofs_strbuf *sbuf)
 }
 
 void silofs_strbuf_as_sv(const struct silofs_strbuf *sbuf,
-                         struct silofs_strview *out_sv)
+			 struct silofs_strview *out_sv)
 {
 	silofs_strview_init(out_sv, sbuf->str);
 }
 
 void silofs_strbuf_as_ss(struct silofs_strbuf *sbuf,
-                         struct silofs_strspan *out_ss)
+			 struct silofs_strspan *out_ss)
 {
 	const size_t len = silofs_str_length(sbuf->str);
 
@@ -57,7 +56,7 @@ void silofs_strbuf_bzero(struct silofs_strbuf *sbuf, size_t n)
 }
 
 void silofs_strbuf_assign(struct silofs_strbuf *sbuf,
-                          const struct silofs_strbuf *other)
+			  const struct silofs_strbuf *other)
 {
 	struct silofs_strview sv;
 	struct silofs_strspan ss;
@@ -69,7 +68,7 @@ void silofs_strbuf_assign(struct silofs_strbuf *sbuf,
 }
 
 void silofs_strbuf_setup(struct silofs_strbuf *sbuf,
-                         const struct silofs_strview *sv)
+			 const struct silofs_strview *sv)
 {
 	struct silofs_strspan ss;
 
@@ -87,8 +86,8 @@ void silofs_strbuf_setup_by(struct silofs_strbuf *sbuf, const char *s)
 	silofs_strbuf_setup(sbuf, &sv);
 }
 
-void silofs_strbuf_setup_by2(struct silofs_strbuf *sbuf,
-                             const char *s, size_t n)
+void silofs_strbuf_setup_by2(struct silofs_strbuf *sbuf, const char *s,
+			     size_t n)
 {
 	struct silofs_strview sv;
 

@@ -101,8 +101,8 @@ static void prandgen_rotate_some(struct silofs_prandgen *prng, size_t nslots)
 	}
 }
 
-static size_t prandgen_take_some(struct silofs_prandgen *prng,
-                                 void *buf, size_t len)
+static size_t
+prandgen_take_some(struct silofs_prandgen *prng, void *buf, size_t len)
 {
 	const size_t nbytes = silofs_min(prandgen_avail_bytes(prng), len);
 	const size_t nslots = prandgen_nslots_of(prng, nbytes);
@@ -124,7 +124,6 @@ static uint64_t prandgen_take_uint64(struct silofs_prandgen *prng)
 	prng->take_cycle++;
 	return ret;
 }
-
 
 static void prandgen_prepare(struct silofs_prandgen *prng)
 {

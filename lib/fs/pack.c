@@ -19,41 +19,38 @@
 #include <silofs/ps.h>
 #include <silofs/fs.h>
 
-
 struct silofs_par_desc {
-	struct silofs_caddr             caddr;
-	struct silofs_laddr             laddr;
+	struct silofs_caddr caddr;
+	struct silofs_laddr laddr;
 };
 
 struct silofs_par_desc_info {
-	struct silofs_list_head         lh;
-	struct silofs_par_desc          pd;
+	struct silofs_list_head lh;
+	struct silofs_par_desc pd;
 };
 
 struct silofs_par_index_view {
-	struct silofs_par_hdr1k        *hdr;
-	struct silofs_par_desc256b     *descs;
+	struct silofs_par_hdr1k *hdr;
+	struct silofs_par_desc256b *descs;
 	size_t ndescs_max;
 	size_t ndescs;
 };
 
 struct silofs_par_index {
-	struct silofs_mdigest           mdigest;
-	struct silofs_listq             descq;
-	struct silofs_alloc            *alloc;
+	struct silofs_mdigest mdigest;
+	struct silofs_listq descq;
+	struct silofs_alloc *alloc;
 };
 
 struct silofs_par_ctx {
-	struct silofs_par_index         pac_pindex;
-	struct silofs_task             *pac_task;
-	struct silofs_fsenv            *pac_fsenv;
-	struct silofs_alloc            *pac_alloc;
-	struct silofs_repo             *pac_repo;
+	struct silofs_par_index pac_pindex;
+	struct silofs_task *pac_task;
+	struct silofs_fsenv *pac_fsenv;
+	struct silofs_alloc *pac_alloc;
+	struct silofs_repo *pac_repo;
 };
 
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 
 static uint64_t parhdr1k_magic(const struct silofs_par_hdr1k *ph1k)
 {
@@ -70,14 +67,12 @@ static uint32_t parhdr1k_version(const struct silofs_par_hdr1k *ph1k)
 	return silofs_le32_to_cpu(ph1k->ph_version);
 }
 
-static void parhdr1k_set_version(struct silofs_par_hdr1k *ph1k,
-                                 uint32_t vers)
+static void parhdr1k_set_version(struct silofs_par_hdr1k *ph1k, uint32_t vers)
 {
 	ph1k->ph_version = silofs_cpu_to_le32(vers);
 }
 
-static void parhdr1k_set_flags(struct silofs_par_hdr1k *ph1k,
-                               uint32_t flags)
+static void parhdr1k_set_flags(struct silofs_par_hdr1k *ph1k, uint32_t flags)
 {
 	ph1k->ph_flags = silofs_cpu_to_le32(flags);
 }
@@ -87,8 +82,7 @@ static size_t parhdr1k_ndescs(const struct silofs_par_hdr1k *ph1k)
 	return silofs_le64_to_cpu(ph1k->ph_ndescs);
 }
 
-static void parhdr1k_set_ndescs(struct silofs_par_hdr1k *ph1k,
-                                size_t ndescs)
+static void parhdr1k_set_ndescs(struct silofs_par_hdr1k *ph1k, size_t ndescs)
 {
 	ph1k->ph_ndescs = silofs_cpu_to_le64(ndescs);
 }
@@ -127,8 +121,8 @@ static void parhdr1k_init(struct silofs_par_hdr1k *ph1k)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void pd_init(struct silofs_par_desc *pd,
-                    const struct silofs_laddr *laddr)
+static void
+pd_init(struct silofs_par_desc *pd, const struct silofs_laddr *laddr)
 {
 	silofs_memzero(pd, sizeof(*pd));
 	silofs_laddr_assign(&pd->laddr, laddr);
@@ -139,21 +133,21 @@ static void pd_fini(struct silofs_par_desc *pd)
 	silofs_laddr_reset(&pd->laddr);
 }
 
-static void pd_caddr(const struct silofs_par_desc *pd,
-                     struct silofs_caddr *out_caddr)
+static void
+pd_caddr(const struct silofs_par_desc *pd, struct silofs_caddr *out_caddr)
 {
 	caddr_assign(out_caddr, &pd->caddr);
 }
 
-static void pd_update_caddr(struct silofs_par_desc *pd,
-                            const struct silofs_caddr *caddr)
+static void
+pd_update_caddr(struct silofs_par_desc *pd, const struct silofs_caddr *caddr)
 {
 	caddr_assign(&pd->caddr, caddr);
 }
 
-static void pd_update_caddr_by(struct silofs_par_desc *pd,
-                               const struct silofs_mdigest *md,
-                               const struct silofs_rovec *rov)
+static void
+pd_update_caddr_by(struct silofs_par_desc *pd, const struct silofs_mdigest *md,
+		   const struct silofs_rovec *rov)
 {
 	struct silofs_caddr caddr;
 	const struct iovec iov = {
@@ -171,7 +165,7 @@ static void pardsc256b_reset(struct silofs_par_desc256b *pd256)
 }
 
 static void pardsc256b_htox(struct silofs_par_desc256b *pd256,
-                            const struct silofs_par_desc *ard)
+			    const struct silofs_par_desc *ard)
 {
 	pardsc256b_reset(pd256);
 	silofs_caddr64b_htox(&pd256->pd_caddr, &ard->caddr);
@@ -179,7 +173,7 @@ static void pardsc256b_htox(struct silofs_par_desc256b *pd256,
 }
 
 static void pardsc256b_xtoh(const struct silofs_par_desc256b *pd256,
-                            struct silofs_par_desc *ard)
+			    struct silofs_par_desc *ard)
 {
 	silofs_caddr64b_xtoh(&pd256->pd_caddr, &ard->caddr);
 	silofs_laddr48b_xtoh(&pd256->pd_laddr, &ard->laddr);
@@ -206,14 +200,14 @@ static struct silofs_par_desc_info *pdi_malloc(struct silofs_alloc *alloc)
 	return pdi;
 }
 
-static void pdi_free(struct silofs_par_desc_info *pdi,
-                     struct silofs_alloc *alloc)
+static void
+pdi_free(struct silofs_par_desc_info *pdi, struct silofs_alloc *alloc)
 {
 	silofs_memfree(alloc, pdi, sizeof(*pdi), 0);
 }
 
-static void pdi_init(struct silofs_par_desc_info *pdi,
-                     const struct silofs_laddr *laddr)
+static void
+pdi_init(struct silofs_par_desc_info *pdi, const struct silofs_laddr *laddr)
 {
 	silofs_list_head_init(&pdi->lh);
 	pd_init(&pdi->pd, laddr);
@@ -237,8 +231,8 @@ pdi_new(const struct silofs_laddr *laddr, struct silofs_alloc *alloc)
 	return pdi;
 }
 
-static void pdi_del(struct silofs_par_desc_info *pdi,
-                    struct silofs_alloc *alloc)
+static void
+pdi_del(struct silofs_par_desc_info *pdi, struct silofs_alloc *alloc)
 {
 	if (pdi != NULL) {
 		pdi_fini(pdi);
@@ -247,13 +241,13 @@ static void pdi_del(struct silofs_par_desc_info *pdi,
 }
 
 static void pdi_caddr(const struct silofs_par_desc_info *pdi,
-                      struct silofs_caddr *out_caddr)
+		      struct silofs_caddr *out_caddr)
 {
 	pd_caddr(&pdi->pd, out_caddr);
 }
 
 static void pdi_update_caddr(struct silofs_par_desc_info *pdi,
-                             const struct silofs_caddr *caddr)
+			     const struct silofs_caddr *caddr)
 {
 	pd_update_caddr(&pdi->pd, caddr);
 }
@@ -268,7 +262,9 @@ static bool pdi_isbootrec(const struct silofs_par_desc_info *pdi)
 static int check_archive_pindex_size(size_t sz)
 {
 	return ((sz >= SILOFS_PAR_INDEX_SIZE_MIN) &&
-	        (sz <= SILOFS_PAR_INDEX_SIZE_MAX)) ? 0 : -SILOFS_EINVAL;
+		(sz <= SILOFS_PAR_INDEX_SIZE_MAX)) ?
+		       0 :
+		       -SILOFS_EINVAL;
 }
 
 static void *data_at(void *base, size_t pos)
@@ -278,8 +274,8 @@ static void *data_at(void *base, size_t pos)
 	return &dat[pos];
 }
 
-static int piview_setup(struct silofs_par_index_view *piv,
-                        void *dat, size_t sz)
+static int
+piview_setup(struct silofs_par_index_view *piv, void *dat, size_t sz)
 {
 	const size_t hdr_size = sizeof(struct silofs_par_hdr1k);
 	const size_t dsc_size = sizeof(struct silofs_par_desc256b);
@@ -296,14 +292,13 @@ static int piview_setup(struct silofs_par_index_view *piv,
 	return 0;
 }
 
-static int piview_setup2(struct silofs_par_index_view *piv,
-                         const void *dat, size_t sz)
+static int
+piview_setup2(struct silofs_par_index_view *piv, const void *dat, size_t sz)
 {
 	return piview_setup(piv, unconst(dat), sz);
 }
 
-static uint64_t
-piview_calc_descs_csum(const struct silofs_par_index_view *piv)
+static uint64_t piview_calc_descs_csum(const struct silofs_par_index_view *piv)
 {
 	const uint64_t seed = SILOFS_PAR_INDEX_MAGIC;
 	const struct silofs_par_desc256b *descs = piv->descs;
@@ -312,8 +307,7 @@ piview_calc_descs_csum(const struct silofs_par_index_view *piv)
 	return silofs_hash_xxh64(descs, len, seed);
 }
 
-static uint64_t
-piview_calc_hdr_csum(const struct silofs_par_index_view *piv)
+static uint64_t piview_calc_hdr_csum(const struct silofs_par_index_view *piv)
 {
 	const uint64_t seed = SILOFS_PAR_INDEX_MAGIC;
 	const struct silofs_par_hdr1k *ph1k = piv->hdr;
@@ -362,8 +356,8 @@ static int piview_check_hdr(const struct silofs_par_index_view *piv)
 }
 
 static void piview_calc_caddr(const struct silofs_par_index_view *piv,
-                              const struct silofs_mdigest *md,
-                              struct silofs_caddr *out_caddr)
+			      const struct silofs_mdigest *md,
+			      struct silofs_caddr *out_caddr)
 {
 	const struct silofs_par_desc256b *descs = piv->descs;
 	const struct silofs_par_hdr1k *ph1k = piv->hdr;
@@ -380,7 +374,7 @@ static void piview_calc_caddr(const struct silofs_par_index_view *piv,
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static void paridx_link_desc(struct silofs_par_index *paridx,
-                             struct silofs_par_desc_info *pdi, bool front)
+			     struct silofs_par_desc_info *pdi, bool front)
 {
 	if (front) {
 		silofs_listq_push_front(&paridx->descq, &pdi->lh);
@@ -390,14 +384,14 @@ static void paridx_link_desc(struct silofs_par_index *paridx,
 }
 
 static void paridx_unlink_desc(struct silofs_par_index *paridx,
-                               struct silofs_par_desc_info *pdi)
+			       struct silofs_par_desc_info *pdi)
 {
 	silofs_listq_remove(&paridx->descq, &pdi->lh);
 }
 
 static struct silofs_par_desc_info *
 paridx_add_desc(struct silofs_par_index *paridx,
-                const struct silofs_laddr *laddr, bool front)
+		const struct silofs_laddr *laddr, bool front)
 {
 	struct silofs_par_desc_info *pdi;
 
@@ -409,7 +403,7 @@ paridx_add_desc(struct silofs_par_index *paridx,
 }
 
 static void paridx_rm_desc(struct silofs_par_index *paridx,
-                           struct silofs_par_desc_info *pdi)
+			   struct silofs_par_desc_info *pdi)
 {
 	paridx_unlink_desc(paridx, pdi);
 	pdi_del(pdi, paridx->alloc);
@@ -430,7 +424,7 @@ pindex_pop_desc(struct silofs_par_index *pindex)
 
 static const struct silofs_par_desc_info *
 pindex_next_desc(const struct silofs_par_index *pindex,
-                 const struct silofs_par_desc_info *curr)
+		 const struct silofs_par_desc_info *curr)
 {
 	const struct silofs_list_head *lh;
 
@@ -469,8 +463,8 @@ static size_t pindex_size_of(size_t ndesc)
 	return silofs_div_round_up(enc_total_size, align) * align;
 }
 
-static int pindex_init(struct silofs_par_index *pindex,
-                       struct silofs_alloc *alloc)
+static int
+pindex_init(struct silofs_par_index *pindex, struct silofs_alloc *alloc)
 {
 	silofs_listq_init(&pindex->descq);
 	pindex->alloc = alloc;
@@ -491,7 +485,7 @@ static size_t pindex_encsize(const struct silofs_par_index *pindex)
 }
 
 static int pindex_encode_descs(const struct silofs_par_index *pindex,
-                               struct silofs_par_index_view *piview)
+			       struct silofs_par_index_view *piview)
 {
 	const struct silofs_list_head *itr = NULL;
 	const struct silofs_par_desc_info *pdi = NULL;
@@ -513,7 +507,7 @@ static int pindex_encode_descs(const struct silofs_par_index *pindex,
 }
 
 static int pindex_decode_descs(struct silofs_par_index *pindex,
-                               const struct silofs_par_index_view *piview)
+			       const struct silofs_par_index_view *piview)
 {
 	struct silofs_par_desc_info *pdi = NULL;
 	const struct silofs_par_desc256b *pd256 = NULL;
@@ -529,16 +523,15 @@ static int pindex_decode_descs(struct silofs_par_index *pindex,
 	return 0;
 }
 
-
 static void pindex_encode_meta(const struct silofs_par_index *pindex,
-                               struct silofs_par_index_view *piview)
+			       struct silofs_par_index_view *piview)
 {
 	silofs_unused(pindex);
 	piview_encode_hdr(piview);
 }
 
 static int pindex_decode_meta(struct silofs_par_index *pindex,
-                              struct silofs_par_index_view *piview)
+			      struct silofs_par_index_view *piview)
 {
 	int err;
 
@@ -552,15 +545,15 @@ static int pindex_decode_meta(struct silofs_par_index *pindex,
 }
 
 static void pindex_calc_caddr_of(const struct silofs_par_index *pindex,
-                                 const struct silofs_par_index_view *piview,
-                                 struct silofs_caddr *out_caddr)
+				 const struct silofs_par_index_view *piview,
+				 struct silofs_caddr *out_caddr)
 {
 	piview_calc_caddr(piview, &pindex->mdigest, out_caddr);
 }
 
-static int pindex_encode(struct silofs_par_index *pindex,
-                         struct silofs_rwvec *rwv,
-                         struct silofs_caddr *out_caddr)
+static int
+pindex_encode(struct silofs_par_index *pindex, struct silofs_rwvec *rwv,
+	      struct silofs_caddr *out_caddr)
 {
 	struct silofs_par_index_view piview = { .hdr = NULL, .descs = NULL };
 	const size_t esz = pindex_encsize(pindex);
@@ -583,8 +576,8 @@ static int pindex_encode(struct silofs_par_index *pindex,
 }
 
 static int pindex_check_caddr(const struct silofs_par_index *pindex,
-                              const struct silofs_caddr *caddr,
-                              const struct silofs_par_index_view *piview)
+			      const struct silofs_caddr *caddr,
+			      const struct silofs_par_index_view *piview)
 {
 	struct silofs_caddr caddr_calc;
 
@@ -592,9 +585,9 @@ static int pindex_check_caddr(const struct silofs_par_index *pindex,
 	return caddr_isequal(caddr, &caddr_calc) ? 0 : -SILOFS_ECSUM;
 }
 
-static int pindex_decode(struct silofs_par_index *pindex,
-                         const struct silofs_caddr *caddr,
-                         const struct silofs_rovec *rov)
+static int
+pindex_decode(struct silofs_par_index *pindex,
+	      const struct silofs_caddr *caddr, const struct silofs_rovec *rov)
 {
 	struct silofs_par_index_view piview = { .hdr = NULL, .descs = NULL };
 	int err;
@@ -625,7 +618,7 @@ static int pindex_decode(struct silofs_par_index *pindex,
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static int pac_acquire_buf(const struct silofs_par_ctx *pa_ctx, size_t len,
-                           struct silofs_bytebuf *out_bbuf)
+			   struct silofs_bytebuf *out_bbuf)
 {
 	void *dat;
 
@@ -638,7 +631,7 @@ static int pac_acquire_buf(const struct silofs_par_ctx *pa_ctx, size_t len,
 }
 
 static void pac_release_buf(const struct silofs_par_ctx *pa_ctx,
-                            struct silofs_bytebuf *bbuf)
+			    struct silofs_bytebuf *bbuf)
 {
 	if (bbuf && bbuf->cap) {
 		silofs_memfree(pa_ctx->pac_alloc, bbuf->ptr, bbuf->cap, 0);
@@ -646,8 +639,7 @@ static void pac_release_buf(const struct silofs_par_ctx *pa_ctx,
 	}
 }
 
-static int pac_init(struct silofs_par_ctx *pa_ctx,
-                    struct silofs_task *task)
+static int pac_init(struct silofs_par_ctx *pa_ctx, struct silofs_task *task)
 {
 	struct silofs_fsenv *fsenv = task->t_fsenv;
 
@@ -668,9 +660,8 @@ static void pac_fini(struct silofs_par_ctx *pa_ctx)
 	pa_ctx->pac_repo = NULL;
 }
 
-static int
-pac_stat_pack(const struct silofs_par_ctx *pa_ctx,
-              const struct silofs_caddr *caddr, size_t *out_sz)
+static int pac_stat_pack(const struct silofs_par_ctx *pa_ctx,
+			 const struct silofs_caddr *caddr, size_t *out_sz)
 {
 	ssize_t sz = -1;
 	int err;
@@ -684,27 +675,24 @@ pac_stat_pack(const struct silofs_par_ctx *pa_ctx,
 }
 
 static int pac_send_to_repo(const struct silofs_par_ctx *pa_ctx,
-                            const struct silofs_caddr *caddr,
-                            const struct silofs_rovec *rov)
+			    const struct silofs_caddr *caddr,
+			    const struct silofs_rovec *rov)
 {
 	return silofs_repo_save_pack(pa_ctx->pac_repo, caddr, rov);
 }
 
 static int pac_recv_from_repo(const struct silofs_par_ctx *pa_ctx,
-                              const struct silofs_caddr *caddr,
-                              const struct silofs_rwvec *rwv)
+			      const struct silofs_caddr *caddr,
+			      const struct silofs_rwvec *rwv)
 {
 	return silofs_repo_load_pack(pa_ctx->pac_repo, caddr, rwv);
 }
 
-static int pac_send_pack(const struct silofs_par_ctx *pa_ctx,
-                         const struct silofs_caddr *caddr,
-                         const void *dat, size_t len)
+static int
+pac_send_pack(const struct silofs_par_ctx *pa_ctx,
+	      const struct silofs_caddr *caddr, const void *dat, size_t len)
 {
-	const struct silofs_rovec rov = {
-		.rov_base = dat,
-		.rov_len = len
-	};
+	const struct silofs_rovec rov = { .rov_base = dat, .rov_len = len };
 	size_t sz = 0;
 	int err;
 
@@ -715,33 +703,30 @@ static int pac_send_pack(const struct silofs_par_ctx *pa_ctx,
 	return err;
 }
 
-static int pac_recv_pack(const struct silofs_par_ctx *pa_ctx,
-                         const struct silofs_caddr *caddr,
-                         void *dat, size_t len)
+static int
+pac_recv_pack(const struct silofs_par_ctx *pa_ctx,
+	      const struct silofs_caddr *caddr, void *dat, size_t len)
 {
-	const struct silofs_rwvec rwv = {
-		.rwv_base = dat,
-		.rwv_len = len
-	};
+	const struct silofs_rwvec rwv = { .rwv_base = dat, .rwv_len = len };
 
 	return pac_recv_from_repo(pa_ctx, caddr, &rwv);
 }
 
 static int pac_load_seg(const struct silofs_par_ctx *pa_ctx,
-                        const struct silofs_laddr *laddr, void *seg)
+			const struct silofs_laddr *laddr, void *seg)
 {
 	int err;
 
 	err = silofs_repo_read_at(pa_ctx->pac_repo, laddr, seg);
 	if (err) {
 		log_err("failed to read: ltype=%d len=%zu err=%d",
-		        laddr_ltype(laddr), laddr->len, err);
+			laddr_ltype(laddr), laddr->len, err);
 	}
 	return err;
 }
 
 static int pac_save_seg(const struct silofs_par_ctx *pa_ctx,
-                        const struct silofs_laddr *laddr, void *seg)
+			const struct silofs_laddr *laddr, void *seg)
 {
 	const enum silofs_ltype ltype = laddr_ltype(laddr);
 	int err;
@@ -754,21 +739,21 @@ static int pac_save_seg(const struct silofs_par_ctx *pa_ctx,
 	err = silofs_repo_require_laddr(pa_ctx->pac_repo, laddr);
 	if (err) {
 		log_err("failed to require laddr: ltype=%d len=%zu err=%d",
-		        (int)ltype, laddr->len, err);
+			(int)ltype, laddr->len, err);
 		return err;
 	}
 	err = silofs_repo_write_at(pa_ctx->pac_repo, laddr, seg);
 	if (err) {
-		log_err("failed to write: ltype=%d len=%zu err=%d",
-		        (int)ltype, laddr->len, err);
+		log_err("failed to write: ltype=%d len=%zu err=%d", (int)ltype,
+			laddr->len, err);
 		return err;
 	}
 	return 0;
 }
 
 static int pac_load_bootrec(const struct silofs_par_ctx *pa_ctx,
-                            const struct silofs_caddr *caddr,
-                            struct silofs_bootrec1k *out_brec1k)
+			    const struct silofs_caddr *caddr,
+			    struct silofs_bootrec1k *out_brec1k)
 {
 	struct silofs_bootrec brec = { .flags = SILOFS_BOOTF_NONE };
 	int err;
@@ -787,8 +772,8 @@ static int pac_load_bootrec(const struct silofs_par_ctx *pa_ctx,
 }
 
 static int pac_save_bootrec(const struct silofs_par_ctx *pa_ctx,
-                            const struct silofs_caddr *caddr,
-                            struct silofs_bootrec1k *brec1k)
+			    const struct silofs_caddr *caddr,
+			    struct silofs_bootrec1k *brec1k)
 {
 	struct silofs_bootrec brec = { .flags = SILOFS_BOOTF_NONE };
 	struct silofs_caddr caddr2;
@@ -811,12 +796,10 @@ static int pac_save_bootrec(const struct silofs_par_ctx *pa_ctx,
 
 static int
 pac_update_hash_of(const struct silofs_par_ctx *pa_ctx,
-                   struct silofs_par_desc_info *pdi, const void *dat)
+		   struct silofs_par_desc_info *pdi, const void *dat)
 {
-	const struct silofs_rovec rov = {
-		.rov_base = dat,
-		.rov_len = pdi->pd.laddr.len
-	};
+	const struct silofs_rovec rov = { .rov_base = dat,
+					  .rov_len = pdi->pd.laddr.len };
 	const struct silofs_mdigest *md = &pa_ctx->pac_pindex.mdigest;
 
 	pd_update_caddr_by(&pdi->pd, md, &rov);
@@ -824,7 +807,7 @@ pac_update_hash_of(const struct silofs_par_ctx *pa_ctx,
 }
 
 static int pac_export_segdata(const struct silofs_par_ctx *pa_ctx,
-                              struct silofs_par_desc_info *pdi)
+			      struct silofs_par_desc_info *pdi)
 {
 	const struct silofs_laddr *laddr = &pdi->pd.laddr;
 	const size_t len = laddr->len;
@@ -853,7 +836,7 @@ out:
 }
 
 static int pac_import_segdata(const struct silofs_par_ctx *pa_ctx,
-                              const struct silofs_par_desc_info *pdi)
+			      const struct silofs_par_desc_info *pdi)
 {
 	const struct silofs_laddr *laddr = &pdi->pd.laddr;
 	const size_t len = laddr->len;
@@ -889,7 +872,7 @@ pac_fs_bootrec_caddr(const struct silofs_par_ctx *pa_ctx)
 }
 
 static int pac_export_bootrec(const struct silofs_par_ctx *pa_ctx,
-                              struct silofs_par_desc_info *pdi)
+			      struct silofs_par_desc_info *pdi)
 {
 	struct silofs_bootrec1k brec1k = { .br_magic = 0xff };
 	const struct silofs_caddr *boot_caddr = NULL;
@@ -910,7 +893,7 @@ static int pac_export_bootrec(const struct silofs_par_ctx *pa_ctx,
 }
 
 static int pac_import_bootrec(const struct silofs_par_ctx *pa_ctx,
-                              const struct silofs_par_desc_info *pdi)
+			      const struct silofs_par_desc_info *pdi)
 {
 	struct silofs_bootrec1k brec1k = { .br_magic = 0xff };
 	const struct silofs_caddr *caddr = &pdi->pd.caddr;
@@ -928,7 +911,7 @@ static int pac_import_bootrec(const struct silofs_par_ctx *pa_ctx,
 }
 
 static int pac_export_by_desc(struct silofs_par_ctx *pa_ctx,
-                              struct silofs_par_desc_info *pdi)
+			      struct silofs_par_desc_info *pdi)
 {
 	int err;
 
@@ -941,7 +924,7 @@ static int pac_export_by_desc(struct silofs_par_ctx *pa_ctx,
 }
 
 static int pac_export_by_laddr(struct silofs_par_ctx *pa_ctx,
-                               const struct silofs_laddr *laddr)
+			       const struct silofs_laddr *laddr)
 {
 	struct silofs_par_desc_info *pdi = NULL;
 	int err;
@@ -971,17 +954,11 @@ static int pac_export_fs(struct silofs_par_ctx *pa_ctx)
 }
 
 static int pac_encode_save_pindex(struct silofs_par_ctx *pa_ctx,
-                                  struct silofs_bytebuf *bb,
-                                  struct silofs_caddr *out_caddr)
+				  struct silofs_bytebuf *bb,
+				  struct silofs_caddr *out_caddr)
 {
-	struct silofs_rwvec rwv = {
-		.rwv_base = bb->ptr,
-		.rwv_len = bb->len
-	};
-	struct silofs_rovec rov = {
-		.rov_base = bb->ptr,
-		.rov_len = bb->len
-	};
+	struct silofs_rwvec rwv = { .rwv_base = bb->ptr, .rwv_len = bb->len };
+	struct silofs_rovec rov = { .rov_base = bb->ptr, .rov_len = bb->len };
 	int err;
 
 	err = pindex_encode(&pa_ctx->pac_pindex, &rwv, out_caddr);
@@ -996,7 +973,7 @@ static int pac_encode_save_pindex(struct silofs_par_ctx *pa_ctx,
 }
 
 static int pac_acquire_enc_buf(const struct silofs_par_ctx *pa_ctx,
-                               struct silofs_bytebuf *out_bbuf)
+			       struct silofs_bytebuf *out_bbuf)
 {
 	const size_t bsz = pindex_encsize(&pa_ctx->pac_pindex);
 	int err;
@@ -1009,7 +986,7 @@ static int pac_acquire_enc_buf(const struct silofs_par_ctx *pa_ctx,
 }
 
 static int pac_export_pindex(struct silofs_par_ctx *pa_ctx,
-                             struct silofs_caddr *out_caddr)
+			     struct silofs_caddr *out_caddr)
 {
 	struct silofs_bytebuf bb = { .ptr = NULL, .cap = 0 };
 	int err;
@@ -1028,14 +1005,14 @@ out:
 }
 
 static int pac_export_post(struct silofs_par_ctx *pa_ctx,
-                           const struct silofs_caddr *caddr)
+			   const struct silofs_caddr *caddr)
 {
 	silofs_fsenv_set_pack_caddr(pa_ctx->pac_fsenv, caddr);
 	return 0;
 }
 
-static int pac_do_export(struct silofs_par_ctx *pa_ctx,
-                         struct silofs_caddr *out_caddr)
+static int
+pac_do_export(struct silofs_par_ctx *pa_ctx, struct silofs_caddr *out_caddr)
 {
 	int err;
 
@@ -1054,8 +1031,7 @@ static int pac_do_export(struct silofs_par_ctx *pa_ctx,
 	return 0;
 }
 
-int silofs_fs_pack(struct silofs_task *task,
-                   struct silofs_caddr *out_caddr)
+int silofs_fs_pack(struct silofs_task *task, struct silofs_caddr *out_caddr)
 {
 	struct silofs_par_ctx pa_ctx;
 	int err;
@@ -1074,23 +1050,17 @@ out:
 }
 
 static int pac_acquire_dec_buf(const struct silofs_par_ctx *pa_ctx, size_t sz,
-                               struct silofs_bytebuf *out_bbuf)
+			       struct silofs_bytebuf *out_bbuf)
 {
 	return pac_acquire_buf(pa_ctx, sz, out_bbuf);
 }
 
 static int pac_load_decode_pindex(struct silofs_par_ctx *pa_ctx,
-                                  const struct silofs_caddr *caddr,
-                                  struct silofs_bytebuf *bb)
+				  const struct silofs_caddr *caddr,
+				  struct silofs_bytebuf *bb)
 {
-	struct silofs_rwvec rwv = {
-		.rwv_base = bb->ptr,
-		.rwv_len = bb->len
-	};
-	struct silofs_rovec rov = {
-		.rov_base = bb->ptr,
-		.rov_len = bb->len
-	};
+	struct silofs_rwvec rwv = { .rwv_base = bb->ptr, .rwv_len = bb->len };
+	struct silofs_rovec rov = { .rov_base = bb->ptr, .rov_len = bb->len };
 	int err;
 
 	err = pac_recv_from_repo(pa_ctx, caddr, &rwv);
@@ -1105,7 +1075,7 @@ static int pac_load_decode_pindex(struct silofs_par_ctx *pa_ctx,
 }
 
 static int pac_stat_pindex(const struct silofs_par_ctx *pa_ctx,
-                           const struct silofs_caddr *caddr, size_t *out_sz)
+			   const struct silofs_caddr *caddr, size_t *out_sz)
 {
 	int err;
 
@@ -1157,7 +1127,7 @@ out:
 }
 
 static int pac_import_by_desc(const struct silofs_par_ctx *pa_ctx,
-                              const struct silofs_par_desc_info *pdi)
+			      const struct silofs_par_desc_info *pdi)
 {
 	int err;
 
@@ -1185,8 +1155,8 @@ static int pac_import_fs(struct silofs_par_ctx *pa_ctx)
 	return 0;
 }
 
-static int pac_import_post(struct silofs_par_ctx *pa_ctx,
-                           struct silofs_caddr *out_caddr)
+static int
+pac_import_post(struct silofs_par_ctx *pa_ctx, struct silofs_caddr *out_caddr)
 {
 	const struct silofs_par_desc_info *pdi = NULL;
 	size_t nbootrecs = 0;
@@ -1206,8 +1176,8 @@ static int pac_import_post(struct silofs_par_ctx *pa_ctx,
 	return 0;
 }
 
-static int pac_do_import(struct silofs_par_ctx *pa_ctx,
-                         struct silofs_caddr *out_caddr)
+static int
+pac_do_import(struct silofs_par_ctx *pa_ctx, struct silofs_caddr *out_caddr)
 {
 	int err;
 
@@ -1226,8 +1196,7 @@ static int pac_do_import(struct silofs_par_ctx *pa_ctx,
 	return 0;
 }
 
-int silofs_fs_unpack(struct silofs_task *task,
-                     struct silofs_caddr *out_caddr)
+int silofs_fs_unpack(struct silofs_task *task, struct silofs_caddr *out_caddr)
 {
 	struct silofs_par_ctx pa_ctx;
 	int err;

@@ -20,8 +20,7 @@
 #include <silofs/crypt.h>
 #include <gcrypt.h>
 
-
-#define SILOFS_SECMEM_SIZE      (64L * SILOFS_KILO)
+#define SILOFS_SECMEM_SIZE (64L * SILOFS_KILO)
 
 int silofs_init_gcrypt(void)
 {

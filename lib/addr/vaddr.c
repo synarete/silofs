@@ -78,7 +78,7 @@ static uint64_t cpu_to_voff_ltype(loff_t voff, enum silofs_ltype ltype)
 }
 
 static void voff_ltype_to_cpu(uint64_t voff_ltype, loff_t *out_voff,
-                              enum silofs_ltype *out_ltype)
+			      enum silofs_ltype *out_ltype)
 {
 	const uint64_t mask = 0xFF;
 	const uint64_t uoff = voff_ltype & ~mask;
@@ -105,8 +105,8 @@ static uint64_t cpu_to_len_height(size_t len, enum silofs_height height)
 	return silofs_cpu_to_le64(val);
 }
 
-static void len_height_to_cpu(uint64_t len_height,
-                              size_t *out_len, enum silofs_height *out_height)
+static void len_height_to_cpu(uint64_t len_height, size_t *out_len,
+			      enum silofs_height *out_height)
 {
 	const uint64_t val = silofs_le64_to_cpu(len_height);
 
@@ -132,7 +132,7 @@ const struct silofs_vaddr *silofs_vaddr_none(void)
 }
 
 long silofs_vaddr_compare(const struct silofs_vaddr *vaddr1,
-                          const struct silofs_vaddr *vaddr2)
+			  const struct silofs_vaddr *vaddr2)
 {
 	long cmp;
 
@@ -152,27 +152,27 @@ long silofs_vaddr_compare(const struct silofs_vaddr *vaddr1,
 }
 
 bool silofs_vaddr_isequal(const struct silofs_vaddr *vaddr1,
-                          const struct silofs_vaddr *vaddr2)
+			  const struct silofs_vaddr *vaddr2)
 {
 	return (silofs_vaddr_compare(vaddr1, vaddr2) == 0);
 }
 
-void silofs_vaddr_setup(struct silofs_vaddr *vaddr,
-                        enum silofs_ltype ltype, loff_t voff)
+void silofs_vaddr_setup(struct silofs_vaddr *vaddr, enum silofs_ltype ltype,
+			loff_t voff)
 {
 	vaddr->ltype = ltype;
 	vaddr->off = voff;
 	vaddr->len = (unsigned int)ltype_size(ltype);
 }
 
-void silofs_vaddr_setup2(struct silofs_vaddr *vaddr,
-                         enum silofs_ltype ltype, silofs_lba_t lba)
+void silofs_vaddr_setup2(struct silofs_vaddr *vaddr, enum silofs_ltype ltype,
+			 silofs_lba_t lba)
 {
 	silofs_vaddr_setup(vaddr, ltype, silofs_lba_to_off(lba));
 }
 
 void silofs_vaddr_assign(struct silofs_vaddr *vaddr,
-                         const struct silofs_vaddr *other)
+			 const struct silofs_vaddr *other)
 {
 	vaddr->ltype = other->ltype;
 	vaddr->off = other->off;
@@ -218,8 +218,8 @@ static silofs_lba_t lba_plus(silofs_lba_t lba, size_t nlbk)
 }
 
 void silofs_vaddr_by_spleaf(struct silofs_vaddr *vaddr,
-                            enum silofs_ltype ltype,
-                            loff_t voff_base, size_t bn, size_t kbn)
+			    enum silofs_ltype ltype, loff_t voff_base,
+			    size_t bn, size_t kbn)
 {
 	const silofs_lba_t lba_base = off_to_lba(voff_base);
 	const silofs_lba_t lba = lba_plus(lba_base, bn);
@@ -274,13 +274,13 @@ void silofs_vaddr56_xtoh(const struct silofs_vaddr56 *vadr, loff_t *out_off)
 }
 
 void silofs_vaddr64_htox(struct silofs_vaddr64 *vadr,
-                         const struct silofs_vaddr *vaddr)
+			 const struct silofs_vaddr *vaddr)
 {
 	vadr->voff_ltype = cpu_to_voff_ltype(vaddr->off, vaddr->ltype);
 }
 
 void silofs_vaddr64_xtoh(const struct silofs_vaddr64 *vadr,
-                         struct silofs_vaddr *vaddr)
+			 struct silofs_vaddr *vaddr)
 {
 	loff_t voff;
 	enum silofs_ltype ltype;
@@ -297,7 +297,7 @@ bool silofs_vrange_within(const struct silofs_vrange *vrange, loff_t off)
 }
 
 void silofs_vrange_setup(struct silofs_vrange *vrange,
-                         enum silofs_height height, loff_t beg, loff_t end)
+			 enum silofs_height height, loff_t beg, loff_t end)
 {
 	vrange->beg = beg;
 	vrange->end = end;
@@ -306,13 +306,13 @@ void silofs_vrange_setup(struct silofs_vrange *vrange,
 }
 
 void silofs_vrange_setup_sub(struct silofs_vrange *vrange,
-                             const struct silofs_vrange *other, loff_t beg)
+			     const struct silofs_vrange *other, loff_t beg)
 {
 	silofs_vrange_setup(vrange, other->height, beg, other->end);
 }
 
 void silofs_vrange_of_space(struct silofs_vrange *vrange,
-                            enum silofs_height height, loff_t voff_base)
+			    enum silofs_height height, loff_t voff_base)
 {
 	const ssize_t span = silofs_height_to_space_span(height);
 	const loff_t beg = off_align(voff_base, span);
@@ -321,7 +321,7 @@ void silofs_vrange_of_space(struct silofs_vrange *vrange,
 }
 
 void silofs_vrange_of_spmap(struct silofs_vrange *vrange,
-                            enum silofs_height height, loff_t voff_base)
+			    enum silofs_height height, loff_t voff_base)
 {
 	const ssize_t span = silofs_height_to_space_span(height);
 	const loff_t beg = off_align(voff_base, span);
@@ -361,7 +361,6 @@ loff_t silofs_vrange_next(const struct silofs_vrange *vrange, loff_t voff)
 	return vnxt;
 }
 
-
 void silofs_vrange128_reset(struct silofs_vrange128 *vrng)
 {
 	struct silofs_vrange vrange = {
@@ -374,14 +373,14 @@ void silofs_vrange128_reset(struct silofs_vrange128 *vrng)
 }
 
 void silofs_vrange128_htox(struct silofs_vrange128 *vrng,
-                           const struct silofs_vrange *vrange)
+			   const struct silofs_vrange *vrange)
 {
 	vrng->beg = silofs_cpu_to_off(vrange->beg);
 	vrng->len_height = cpu_to_len_height(vrange->len, vrange->height);
 }
 
 void silofs_vrange128_xtoh(const struct silofs_vrange128 *vrng,
-                           struct silofs_vrange *vrange)
+			   struct silofs_vrange *vrange)
 {
 	loff_t beg;
 	size_t len;

@@ -25,8 +25,8 @@
 #define ZCOMP_ZSTD_DEFAULT_CLEVEL (3)
 #endif
 
-#define ZCOMP_ZSTD_CCTX         (1)
-#define ZCOMP_ZSTD_DCTX         (2)
+#define ZCOMP_ZSTD_CCTX (1)
+#define ZCOMP_ZSTD_DCTX (2)
 
 const char *silofs_zstd_version(void)
 {
@@ -95,12 +95,13 @@ static int compress_level_of(int cl_in)
 	const int cl_max = ZSTD_maxCLevel();
 
 	return ((cl_in >= cl_min) && (cl_in <= cl_max)) ?
-	       cl_in : ZCOMP_ZSTD_DEFAULT_CLEVEL;
+		       cl_in :
+		       ZCOMP_ZSTD_DEFAULT_CLEVEL;
 }
 
-int silofs_zcmpr_compress(const struct silofs_zcmpr *zc,
-                          void *dst, size_t dst_cap, const void *src,
-                          size_t src_size, int cl_in, size_t *out_sz)
+int silofs_zcmpr_compress(const struct silofs_zcmpr *zc, void *dst,
+			  size_t dst_cap, const void *src, size_t src_size,
+			  int cl_in, size_t *out_sz)
 {
 	size_t ret;
 	int cl;
@@ -117,9 +118,9 @@ int silofs_zcmpr_compress(const struct silofs_zcmpr *zc,
 	return 0;
 }
 
-int silofs_zcmpr_decompress(const struct silofs_zcmpr *zc,
-                            void *dst, size_t dst_cap, const void *src,
-                            size_t src_size, size_t *out_sz)
+int silofs_zcmpr_decompress(const struct silofs_zcmpr *zc, void *dst,
+			    size_t dst_cap, const void *src, size_t src_size,
+			    size_t *out_sz)
 {
 	size_t ret;
 

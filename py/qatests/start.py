@@ -122,7 +122,7 @@ def run_silofs_qatests(prog_info: ProgInfo = ProgInfo()) -> None:
     except ArgsException as aex:
         print(f"{prog_info.title}: {aex}")
         sys.exit(1)
-    except Exception as ex:
-        print(f"{prog_info.title}: {ex}")
+    except (OSError, RuntimeError) as err:
+        print(f"{prog_info.title}: {err}")
         traceback.print_exc()
         sys.exit(2)

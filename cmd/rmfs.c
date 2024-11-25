@@ -18,28 +18,26 @@
 #include "cmd.h"
 
 static const char *cmd_rmfs_help_desc[] = {
-	"rmfs <repodir/name>",
-	"",
-	"options:",
-	"  -L, --loglevel=level         Logging level (rfc5424)",
+	"rmfs <repodir/name>", "",
+	"options:", "  -L, --loglevel=level         Logging level (rfc5424)",
 	NULL
 };
 
 struct cmd_rmfs_in_args {
-	char   *repodir_name;
-	char   *repodir;
-	char   *repodir_real;
-	char   *name;
-	char   *password;
-	bool    no_prompt;
+	char *repodir_name;
+	char *repodir;
+	char *repodir_real;
+	char *name;
+	char *password;
+	bool no_prompt;
 };
 
 struct cmd_rmfs_ctx {
-	struct silofs_ioc_query   ioc_qry;
-	long                      pad;
-	struct cmd_rmfs_in_args   in_args;
-	struct silofs_fs_args     fs_args;
-	struct silofs_fsenv      *fsenv;
+	struct silofs_ioc_query ioc_qry;
+	long pad;
+	struct cmd_rmfs_in_args in_args;
+	struct silofs_fs_args fs_args;
+	struct silofs_fsenv *fsenv;
 	bool has_lockfile;
 };
 
@@ -49,13 +47,11 @@ static struct cmd_rmfs_ctx *cmd_rmfs_ctx;
 
 static void cmd_rmfs_parse_optargs(struct cmd_rmfs_ctx *ctx)
 {
-	const struct cmd_optdesc ods[] = {
-		{ "password", 'p', 1 },
-		{ "no-prompt", 'P', 0 },
-		{ "loglevel", 'L', 1 },
-		{ "help", 'h', 0 },
-		{ NULL, 0, 0 }
-	};
+	const struct cmd_optdesc ods[] = { { "password", 'p', 1 },
+					   { "no-prompt", 'P', 0 },
+					   { "loglevel", 'L', 1 },
+					   { "help", 'h', 0 },
+					   { NULL, 0, 0 } };
 	struct cmd_optargs opa;
 	int opt_chr = 1;
 
@@ -91,8 +87,8 @@ static void cmd_rmfs_parse_optargs(struct cmd_rmfs_ctx *ctx)
 static void cmd_rmfs_prepare(struct cmd_rmfs_ctx *ctx)
 {
 	cmd_check_isreg(ctx->in_args.repodir_name);
-	cmd_split_path(ctx->in_args.repodir_name,
-	               &ctx->in_args.repodir, &ctx->in_args.name);
+	cmd_split_path(ctx->in_args.repodir_name, &ctx->in_args.repodir,
+		       &ctx->in_args.name);
 	cmd_realpath_dir(ctx->in_args.repodir, &ctx->in_args.repodir_real);
 	cmd_check_repodir_fsname(ctx->in_args.repodir_real, ctx->in_args.name);
 }
@@ -101,12 +97,12 @@ static void cmd_rmfs_getpass(struct cmd_rmfs_ctx *ctx)
 {
 	if (ctx->in_args.password == NULL) {
 		cmd_getpass_simple(ctx->in_args.no_prompt,
-		                   &ctx->in_args.password);
+				   &ctx->in_args.password);
 	}
 }
 
 static void cmd_rmfs_check_nomnt_at(struct cmd_rmfs_ctx *ctx,
-                                    const struct cmd_proc_mntinfo *mi)
+				    const struct cmd_proc_mntinfo *mi)
 {
 	struct stat st[2];
 	char *path[2] = { NULL, NULL };
@@ -150,8 +146,7 @@ static void cmd_rmfs_check_nomnt_at(struct cmd_rmfs_ctx *ctx,
 		goto out;
 	}
 
-	if ((st[0].st_ino == st[1].st_ino) &&
-	    (st[0].st_dev == st[1].st_dev)) {
+	if ((st[0].st_ino == st[1].st_ino) && (st[0].st_dev == st[1].st_dev)) {
 		cmd_die(EBUSY, "currently mounted at: %s", mi->mntdir);
 	}
 out:
@@ -279,9 +274,7 @@ static void cmd_rmfs_enable_signals(void)
 
 void cmd_execute_rmfs(void)
 {
-	struct cmd_rmfs_ctx ctx = {
-		.ioc_qry.qtype = -1
-	};
+	struct cmd_rmfs_ctx ctx = { .ioc_qry.qtype = -1 };
 
 	/* Do all cleanups upon exits */
 	cmd_rmfs_start(&ctx);

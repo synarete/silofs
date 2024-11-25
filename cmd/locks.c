@@ -24,9 +24,9 @@ struct cmd_lockfile_ctx {
 	char data[256];
 	const char *repodir;
 	const char *name;
-	time_t  now;
-	pid_t   pid;
-	int     dfd;
+	time_t now;
+	pid_t pid;
+	int dfd;
 };
 
 static int do_fstatat(int dirfd, const char *pathname, struct stat *st)
@@ -40,7 +40,7 @@ static void cmd_lockfile_closedir(struct cmd_lockfile_ctx *lf_ctx)
 }
 
 static void cmd_lockfile_init(struct cmd_lockfile_ctx *lf_ctx,
-                              const char *repodir, const char *name)
+			      const char *repodir, const char *name)
 {
 	memset(lf_ctx, 0, sizeof(*lf_ctx));
 	lf_ctx->repodir = repodir;
@@ -58,10 +58,10 @@ static void cmd_lockfile_fini(struct cmd_lockfile_ctx *lf_ctx)
 
 static void cmd_lockfile_mknames(struct cmd_lockfile_ctx *lf_ctx)
 {
-	snprintf(lf_ctx->lockname, sizeof(lf_ctx->lockname) - 1,
-	         ".%s.lock", lf_ctx->name);
+	snprintf(lf_ctx->lockname, sizeof(lf_ctx->lockname) - 1, ".%s.lock",
+		 lf_ctx->name);
 	snprintf(lf_ctx->tempname, sizeof(lf_ctx->tempname) - 1,
-	         ".%s_%08x.lock~", lf_ctx->name, (int)lf_ctx->now);
+		 ".%s_%08x.lock~", lf_ctx->name, (int)lf_ctx->now);
 }
 
 static void cmd_lockfile_mkdata(struct cmd_lockfile_ctx *lf_ctx)
@@ -80,7 +80,7 @@ static void cmd_lockfile_opendir(struct cmd_lockfile_ctx *lf_ctx)
 }
 
 static void cmd_lockfile_setup(struct cmd_lockfile_ctx *lf_ctx,
-                               const char *repodir, const char *name)
+			       const char *repodir, const char *name)
 {
 	cmd_lockfile_init(lf_ctx, repodir, name);
 	cmd_lockfile_mknames(lf_ctx);
@@ -120,11 +120,11 @@ cmd_lockfile_wait_noent(const struct cmd_lockfile_ctx *lf_ctx, int retry_max)
 	}
 
 	if (!err) {
-		cmd_die(-EEXIST, "lock-file exists: %s/%s",
-		        lf_ctx->repodir, lf_ctx->lockname);
+		cmd_die(-EEXIST, "lock-file exists: %s/%s", lf_ctx->repodir,
+			lf_ctx->lockname);
 	} else if (err != -ENOENT) {
-		cmd_die(err, "fail to stat lock-file: %s/%s",
-		        lf_ctx->repodir, lf_ctx->lockname);
+		cmd_die(err, "fail to stat lock-file: %s/%s", lf_ctx->repodir,
+			lf_ctx->lockname);
 	}
 }
 
@@ -134,16 +134,16 @@ static void cmd_lockfile_mktemp(const struct cmd_lockfile_ctx *lf_ctx)
 	int err;
 
 	err = silofs_sys_openat(lf_ctx->dfd, lf_ctx->tempname,
-	                        O_CREAT | O_RDWR, 0600, &fd);
+				O_CREAT | O_RDWR, 0600, &fd);
 	if (err) {
 		cmd_die(err, "failed to create temp lock-file: %s/%s",
-		        lf_ctx->repodir, lf_ctx->tempname);
+			lf_ctx->repodir, lf_ctx->tempname);
 	}
 	err = silofs_sys_writen(fd, lf_ctx->data, strlen(lf_ctx->data));
 	if (err) {
 		silofs_sys_unlinkat(lf_ctx->dfd, lf_ctx->tempname, 0);
 		cmd_die(err, "failed to write temp lock-file: %s/%s",
-		        lf_ctx->repodir, lf_ctx->tempname);
+			lf_ctx->repodir, lf_ctx->tempname);
 	}
 	silofs_sys_closefd(&fd);
 }
@@ -152,13 +152,12 @@ static void cmd_lockfile_mklock(const struct cmd_lockfile_ctx *lf_ctx)
 {
 	int err = 0;
 
-	err = silofs_sys_renameat2(lf_ctx->dfd, lf_ctx->tempname,
-	                           lf_ctx->dfd, lf_ctx->lockname,
-	                           RENAME_NOREPLACE);
+	err = silofs_sys_renameat2(lf_ctx->dfd, lf_ctx->tempname, lf_ctx->dfd,
+				   lf_ctx->lockname, RENAME_NOREPLACE);
 	if (err) {
 		silofs_sys_unlinkat(lf_ctx->dfd, lf_ctx->tempname, 0);
 		cmd_die(err, "failed to rename lock-file: %s/%s --> %s",
-		        lf_ctx->repodir, lf_ctx->tempname, lf_ctx->lockname);
+			lf_ctx->repodir, lf_ctx->tempname, lf_ctx->lockname);
 	}
 }
 

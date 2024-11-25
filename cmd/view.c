@@ -18,27 +18,25 @@
 #include "cmd.h"
 
 static const char *cmd_view_help_desc[] = {
-	"view <repodir/name>",
-	"",
-	"options:",
-	"  -L, --loglevel=level         Logging level (rfc5424)",
+	"view <repodir/name>", "",
+	"options:", "  -L, --loglevel=level         Logging level (rfc5424)",
 	NULL
 };
 
 struct cmd_view_in_args {
-	char   *repodir_name;
-	char   *repodir;
-	char   *repodir_real;
-	char   *name;
-	char   *password;
-	char   *outfile;
-	bool    no_prompt;
+	char *repodir_name;
+	char *repodir;
+	char *repodir_real;
+	char *name;
+	char *password;
+	char *outfile;
+	bool no_prompt;
 };
 
 struct cmd_view_ctx {
 	struct cmd_view_in_args in_args;
-	struct silofs_fs_args   fs_args;
-	struct silofs_fsenv    *fsenv;
+	struct silofs_fs_args fs_args;
+	struct silofs_fsenv *fsenv;
 	FILE *out_fp;
 	bool has_lockfile;
 };
@@ -50,10 +48,8 @@ static struct cmd_view_ctx *cmd_view_ctx;
 static void cmd_view_parse_optargs(struct cmd_view_ctx *ctx)
 {
 	const struct cmd_optdesc ods[] = {
-		{ "password", 'p', 1 },
-		{ "no-prompt", 'P', 0 },
-		{ "loglevel", 'L', 1 },
-		{ "help", 'h', 0 },
+		{ "password", 'p', 1 }, { "no-prompt", 'P', 0 },
+		{ "loglevel", 'L', 1 }, { "help", 'h', 0 },
 		{ NULL, 0, 0 },
 	};
 	struct cmd_optargs opa;
@@ -145,8 +141,8 @@ static void cmd_view_prepare(struct cmd_view_ctx *ctx)
 {
 	cmd_check_exists(ctx->in_args.repodir_name);
 	cmd_check_isreg(ctx->in_args.repodir_name);
-	cmd_split_path(ctx->in_args.repodir_name,
-	               &ctx->in_args.repodir, &ctx->in_args.name);
+	cmd_split_path(ctx->in_args.repodir_name, &ctx->in_args.repodir,
+		       &ctx->in_args.name);
 	cmd_realpath_rdir(ctx->in_args.repodir, &ctx->in_args.repodir_real);
 	cmd_check_repodir_fsname(ctx->in_args.repodir_real, ctx->in_args.name);
 }
@@ -155,7 +151,7 @@ static void cmd_view_getpass(struct cmd_view_ctx *ctx)
 {
 	if (ctx->in_args.password == NULL) {
 		cmd_getpass_simple(ctx->in_args.no_prompt,
-		                   &ctx->in_args.password);
+				   &ctx->in_args.password);
 	}
 }
 
@@ -210,7 +206,7 @@ static void cmd_view_close_fs(struct cmd_view_ctx *ctx)
 }
 
 static void cmd_view_show_laddr(const struct cmd_view_ctx *ctx,
-                                const struct silofs_laddr *laddr)
+				const struct silofs_laddr *laddr)
 {
 	struct silofs_strbuf sbuf;
 	FILE *fp = ctx->out_fp;

@@ -18,26 +18,24 @@
 #include "cmd.h"
 
 static const char *cmd_fsck_help_desc[] = {
-	"fsck <repodir/name>",
-	"",
-	"options:",
-	"  -L, --loglevel=level         Logging level (rfc5424)",
+	"fsck <repodir/name>", "",
+	"options:", "  -L, --loglevel=level         Logging level (rfc5424)",
 	NULL
 };
 
 struct cmd_fsck_in_args {
-	char   *repodir_name;
-	char   *repodir;
-	char   *repodir_real;
-	char   *name;
-	char   *password;
-	bool    no_prompt;
+	char *repodir_name;
+	char *repodir;
+	char *repodir_real;
+	char *name;
+	char *password;
+	bool no_prompt;
 };
 
 struct cmd_fsck_ctx {
 	struct cmd_fsck_in_args in_args;
-	struct silofs_fs_args   fs_args;
-	struct silofs_fsenv    *fsenv;
+	struct silofs_fs_args fs_args;
+	struct silofs_fsenv *fsenv;
 	bool has_lockfile;
 };
 
@@ -133,8 +131,8 @@ static void cmd_fsck_prepare(struct cmd_fsck_ctx *ctx)
 {
 	cmd_check_exists(ctx->in_args.repodir_name);
 	cmd_check_isreg(ctx->in_args.repodir_name);
-	cmd_split_path(ctx->in_args.repodir_name,
-	               &ctx->in_args.repodir, &ctx->in_args.name);
+	cmd_split_path(ctx->in_args.repodir_name, &ctx->in_args.repodir,
+		       &ctx->in_args.name);
 	cmd_realpath_dir(ctx->in_args.repodir, &ctx->in_args.repodir_real);
 	cmd_check_repodir_fsname(ctx->in_args.repodir_real, ctx->in_args.name);
 }
@@ -143,7 +141,7 @@ static void cmd_fsck_getpass(struct cmd_fsck_ctx *ctx)
 {
 	if (ctx->in_args.password == NULL) {
 		cmd_getpass_simple(ctx->in_args.no_prompt,
-		                   &ctx->in_args.password);
+				   &ctx->in_args.password);
 	}
 }
 

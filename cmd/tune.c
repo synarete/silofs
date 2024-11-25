@@ -27,16 +27,16 @@ static const char *cmd_tune_help_desc[] = {
 };
 
 struct cmd_tune_in_args {
-	char   *dirpath;
-	char   *dirpath_real;
+	char *dirpath;
+	char *dirpath_real;
 	unsigned int ftype;
 };
 
 struct cmd_tune_ctx {
 	struct cmd_tune_in_args in_args;
-	union silofs_ioc_u     *ioc;
-	enum silofs_inodef      iflags_want;
-	enum silofs_inodef      iflags_dont;
+	union silofs_ioc_u *ioc;
+	enum silofs_inodef iflags_want;
+	enum silofs_inodef iflags_dont;
 };
 
 static struct cmd_tune_ctx *cmd_tune_ctx;
@@ -60,7 +60,7 @@ static void cmd_tune_parse_optargs(struct cmd_tune_ctx *ctx)
 		switch (opt_chr) {
 		case 't':
 			ctx->in_args.ftype =
-			        cmd_optargs_curr_as_u32v(&opa, 1, 2);
+				cmd_optargs_curr_as_u32v(&opa, 1, 2);
 			break;
 		case 'L':
 			cmd_optargs_set_loglevel(&opa);

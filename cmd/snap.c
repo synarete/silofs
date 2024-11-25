@@ -31,25 +31,25 @@ static const char *cmd_snap_help_desc[] = {
 };
 
 struct cmd_snap_in_args {
-	char   *repodir_name;
-	char   *repodir;
-	char   *repodir_real;
-	char   *name;
-	char   *snapname;
-	char   *dirpath;
-	char   *dirpath_real;
-	char   *password;
-	bool    offline;
-	bool    no_prompt;
+	char *repodir_name;
+	char *repodir;
+	char *repodir_real;
+	char *name;
+	char *snapname;
+	char *dirpath;
+	char *dirpath_real;
+	char *password;
+	bool offline;
+	bool no_prompt;
 };
 
 struct cmd_snap_ctx {
-	struct cmd_snap_in_args  in_args;
-	struct silofs_fs_args    fs_args;
-	struct silofs_fsenv     *fsenv;
-	union silofs_ioc_u      *ioc;
-	struct silofs_caddr      boot_new;
-	struct silofs_caddr      boot_alt;
+	struct cmd_snap_in_args in_args;
+	struct silofs_fs_args fs_args;
+	struct silofs_fsenv *fsenv;
+	union silofs_ioc_u *ioc;
+	struct silofs_caddr boot_new;
+	struct silofs_caddr boot_alt;
 };
 
 static struct cmd_snap_ctx *cmd_snap_ctx;
@@ -63,12 +63,9 @@ cmd_snap_ioctl_query(const char *path, struct silofs_ioc_query *qry);
 static void cmd_snap_parse_optargs(struct cmd_snap_ctx *ctx)
 {
 	const struct cmd_optdesc ods[] = {
-		{ "name", 'n', 1 },
-		{ "offline", 'X', 0 },
-		{ "no-prompt", 'P', 0 },
-		{ "password", 'p', 1 },
-		{ "loglevel", 'L', 1 },
-		{ "help", 'h', 0 },
+		{ "name", 'n', 1 },      { "offline", 'X', 0 },
+		{ "no-prompt", 'P', 0 }, { "password", 'p', 1 },
+		{ "loglevel", 'L', 1 },  { "help", 'h', 0 },
 		{ NULL, 0, 0 },
 	};
 	struct cmd_optargs opa;
@@ -80,7 +77,7 @@ static void cmd_snap_parse_optargs(struct cmd_snap_ctx *ctx)
 		switch (opt_chr) {
 		case 'n':
 			ctx->in_args.snapname =
-			        cmd_optarg_dupoptarg(&opa, "name");
+				cmd_optarg_dupoptarg(&opa, "name");
 			break;
 		case 'X':
 			ctx->in_args.offline = true;
@@ -106,7 +103,7 @@ static void cmd_snap_parse_optargs(struct cmd_snap_ctx *ctx)
 
 	if (ctx->in_args.offline) {
 		ctx->in_args.repodir_name =
-		        cmd_optargs_getarg(&opa, "repodir/name");
+			cmd_optargs_getarg(&opa, "repodir/name");
 	} else {
 		ctx->in_args.dirpath = cmd_optargs_getarg(&opa, "pathname");
 	}
@@ -181,8 +178,8 @@ static void cmd_snap_prepare_online(struct cmd_snap_ctx *ctx)
 static void cmd_snap_prepare_offline(struct cmd_snap_ctx *ctx)
 {
 	cmd_check_isreg(ctx->in_args.repodir_name);
-	cmd_split_path(ctx->in_args.repodir_name,
-	               &ctx->in_args.repodir, &ctx->in_args.name);
+	cmd_split_path(ctx->in_args.repodir_name, &ctx->in_args.repodir,
+		       &ctx->in_args.name);
 	cmd_check_nonemptydir(ctx->in_args.repodir, true);
 	cmd_realpath_dir(ctx->in_args.repodir, &ctx->in_args.repodir_real);
 	cmd_check_repodir_fsname(ctx->in_args.repodir_real, ctx->in_args.name);
@@ -203,7 +200,7 @@ static void cmd_snap_getpass(struct cmd_snap_ctx *ctx)
 {
 	if (ctx->in_args.password == NULL) {
 		cmd_getpass_simple(ctx->in_args.no_prompt,
-		                   &ctx->in_args.password);
+				   &ctx->in_args.password);
 	}
 }
 
@@ -246,8 +243,7 @@ static void cmd_snap_do_ioctl_clone(struct cmd_snap_ctx *ctx)
 	if (err == -ENOTTY) {
 		cmd_die(err, "ioctl error: %s", dirpath);
 	} else if (err) {
-		cmd_die(err, "failed to snap: %s",
-		        ctx->in_args.repodir_name);
+		cmd_die(err, "failed to snap: %s", ctx->in_args.repodir_name);
 	}
 
 	silofs_strbuf_setup_by(&name, cl->boot_new);

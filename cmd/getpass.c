@@ -272,7 +272,6 @@ void cmd_getpass_simple(bool no_prompt, char **out_pass)
 	cmd_getpass(NULL, !no_prompt, out_pass);
 }
 
-
 char *cmd_duppass(const char *pass)
 {
 	return parse_dup_password(pass, strlen(pass));

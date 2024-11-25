@@ -75,12 +75,11 @@ static void cmd_error_print_progname(void)
 {
 	FILE *fp = stderr;
 
-	if ((cmd_globals.cmdi == NULL) ||
-	    (cmd_globals.cmdi->name == NULL)) {
+	if ((cmd_globals.cmdi == NULL) || (cmd_globals.cmdi->name == NULL)) {
 		fprintf(fp, "%s: ", cmd_globals.name);
 	} else {
 		fprintf(fp, "%s %s: ", cmd_globals.name,
-		        cmd_globals.cmdi->name);
+			cmd_globals.cmdi->name);
 	}
 	fflush(fp);
 }
@@ -141,24 +140,13 @@ static void cmd_clean_postexec(void)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-#define DEFCMD(cmd_)    { #cmd_, cmd_execute_##cmd_ }
+#define DEFCMD(cmd_) { #cmd_, cmd_execute_##cmd_ }
 
 static const struct cmd_info g_cmd_info[] = {
-	DEFCMD(init),
-	DEFCMD(mkfs),
-	DEFCMD(mount),
-	DEFCMD(umount),
-	DEFCMD(lsmnt),
-	DEFCMD(show),
-	DEFCMD(snap),
-	DEFCMD(sync),
-	DEFCMD(tune),
-	DEFCMD(rmfs),
-	DEFCMD(prune),
-	DEFCMD(fsck),
-	DEFCMD(view),
-	DEFCMD(archive),
-	DEFCMD(restore),
+	DEFCMD(init),  DEFCMD(mkfs),    DEFCMD(mount),   DEFCMD(umount),
+	DEFCMD(lsmnt), DEFCMD(show),    DEFCMD(snap),    DEFCMD(sync),
+	DEFCMD(tune),  DEFCMD(rmfs),    DEFCMD(prune),   DEFCMD(fsck),
+	DEFCMD(view),  DEFCMD(archive), DEFCMD(restore),
 };
 
 static bool equals(const char *s1, const char *s2)
@@ -184,8 +172,7 @@ static const struct cmd_info *cmd_info_of(const char *cmd_name)
 	return NULL;
 }
 
-silofs_attr_noreturn
-static void show_main_help_and_exit(int exit_code)
+silofs_attr_noreturn static void show_main_help_and_exit(int exit_code)
 {
 	printf("%s <command> [options]\n\n", cmd_globals.name);
 	printf("main commands: \n");
@@ -195,15 +182,14 @@ static void show_main_help_and_exit(int exit_code)
 	exit(exit_code);
 }
 
-__attribute__((__noreturn__))
-static void cmd_print_version_and_exit(void)
+__attribute__((__noreturn__)) static void cmd_print_version_and_exit(void)
 {
 	printf("%s %s\n", cmd_globals.name, cmd_globals.version);
 	exit(0);
 }
 
-static bool cmd_has_subname(const char *cmd_name,
-                            const char *name1, const char *name2)
+static bool
+cmd_has_subname(const char *cmd_name, const char *name1, const char *name2)
 {
 	return equals2(cmd_name, name1, name2);
 }

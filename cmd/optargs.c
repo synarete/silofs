@@ -20,15 +20,12 @@
 #include <getopt.h>
 #include "cmd.h"
 
-
-silofs_attr_noreturn
-static void cmd_fatal_missing_arg(const char *s)
+silofs_attr_noreturn static void cmd_fatal_missing_arg(const char *s)
 {
 	cmd_die(0, "missing argument: '%s'", s);
 }
 
-silofs_attr_noreturn
-static void cmd_fatal_redundant_arg(const char *s)
+silofs_attr_noreturn static void cmd_fatal_redundant_arg(const char *s)
 {
 	cmd_die(0, "redundant argument: '%s'", s);
 }
@@ -55,8 +52,8 @@ static void getopti_pre_add(const struct cmd_getopt_info *goi)
 	}
 }
 
-static void getopti_add(struct cmd_getopt_info *goi,
-                        const struct cmd_optdesc *od)
+static void
+getopti_add(struct cmd_getopt_info *goi, const struct cmd_optdesc *od)
 {
 	struct option *lopt = goi->lopts + goi->nopts;
 	char *sopt = goi->sopts + silofs_str_length(goi->sopts);
@@ -77,8 +74,8 @@ static void getopti_add(struct cmd_getopt_info *goi,
 	goi->nopts++;
 }
 
-static void getopti_init(struct cmd_getopt_info *goi,
-                         const struct cmd_optdesc *ods)
+static void
+getopti_init(struct cmd_getopt_info *goi, const struct cmd_optdesc *ods)
 {
 	const struct cmd_optdesc *od = ods;
 
@@ -149,7 +146,6 @@ static const char *cmd_optargs_by_ind(const struct cmd_optargs *opa)
 	return opt;
 }
 
-
 static const char *cmd_optargs_curr(const struct cmd_optargs *opa)
 {
 	const char *opt = NULL;
@@ -157,22 +153,22 @@ static const char *cmd_optargs_curr(const struct cmd_optargs *opa)
 	if (opa->opa_optarg != NULL) {
 		opt = opa->opa_optarg;
 	} else if ((opa->opa_optind > 0) &&
-	           (opa->opa_optind <= opa->opa_cmd_argc)) {
+		   (opa->opa_optind <= opa->opa_cmd_argc)) {
 		opt = opa->opa_cmd_argv[opa->opa_optind - 1];
 	}
 	return opt;
 }
 
-silofs_attr_noreturn
-static void cmd_optargs_die_unrecognized(const struct cmd_optargs *opa)
+silofs_attr_noreturn static void
+cmd_optargs_die_unrecognized(const struct cmd_optargs *opa)
 {
 	const char *opt = cmd_optargs_by_ind(opa);
 
 	cmd_die(0, "unrecognized option: '%s'", opt ? opt : "");
 }
 
-silofs_attr_noreturn
-static void cmd_optargs_die_missing(const struct cmd_optargs *opa)
+silofs_attr_noreturn static void
+cmd_optargs_die_missing(const struct cmd_optargs *opa)
 {
 	const char *opt = cmd_optargs_by_ind(opa);
 
@@ -183,11 +179,9 @@ int cmd_optargs_parse(struct cmd_optargs *opa)
 {
 	int ret;
 
-	ret = getopt_long(opa->opa_cmd_argc,
-	                  opa->opa_cmd_argv,
-	                  opa->opa_goi->sopts,
-	                  opa->opa_goi->lopts,
-	                  &opa->opa_optidx);
+	ret = getopt_long(opa->opa_cmd_argc, opa->opa_cmd_argv,
+			  opa->opa_goi->sopts, opa->opa_goi->lopts,
+			  &opa->opa_optidx);
 
 	cmd_optargs_update(opa);
 	if (ret == '?') {
@@ -229,8 +223,8 @@ char *cmd_optargs_getarg(struct cmd_optargs *opa, const char *arg_name)
 	return cmd_strdup(arg);
 }
 
-char *cmd_optargs_getarg2(struct cmd_optargs *opa,
-                          const char *arg_name, const char *default_val)
+char *cmd_optargs_getarg2(struct cmd_optargs *opa, const char *arg_name,
+			  const char *default_val)
 {
 	const char *arg = NULL;
 
@@ -278,8 +272,8 @@ long cmd_optargs_curr_as_size(const struct cmd_optargs *opa)
 	return cmd_parse_str_as_size(opa->opa_optarg);
 }
 
-uint32_t cmd_optargs_curr_as_u32v(const struct cmd_optargs *opa,
-                                  uint32_t vmin, uint32_t vmax)
+uint32_t cmd_optargs_curr_as_u32v(const struct cmd_optargs *opa, uint32_t vmin,
+				  uint32_t vmax)
 {
 	return cmd_parse_str_as_u32v(opa->opa_optarg, vmin, vmax);
 }

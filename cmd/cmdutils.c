@@ -218,8 +218,7 @@ void cmd_check_not_same(const char *path, const char *other)
 
 	cmd_stat_ok(path, &st);
 	cmd_stat_ok(other, &st_other);
-	if ((st.st_ino == st_other.st_ino) &&
-	    (st.st_dev == st_other.st_dev)) {
+	if ((st.st_ino == st_other.st_ino) && (st.st_dev == st_other.st_dev)) {
 		if (S_ISDIR(st.st_mode)) {
 			cmd_die(0, "not different directory: %s", path);
 		} else if (S_ISREG(st.st_mode)) {
@@ -243,8 +242,10 @@ void cmd_check_mntsrv_conn(void)
 
 	err = silofs_mntrpc_handshake(uid, gid);
 	if (err) {
-		cmd_die(err, "failed to handshake with mountd: "
-		        "sock=@%s", cmd_mntsock_name());
+		cmd_die(err,
+			"failed to handshake with mountd: "
+			"sock=@%s",
+			cmd_mntsock_name());
 	}
 }
 
@@ -337,8 +338,8 @@ static void cmd_access_ok(const char *path)
 		cmd_die(err, "no such path: %s", path);
 	}
 	if (err) {
-		cmd_die(err, "no access: %s uid=%d gid=%d",
-		        path, getuid(), getgid());
+		cmd_die(err, "no access: %s uid=%d gid=%d", path, getuid(),
+			getgid());
 	}
 }
 
@@ -370,16 +371,22 @@ void cmd_check_mntdir(const char *path, bool mount)
 		fstype = (long)stfs.f_type;
 		fsi = silofs_fsinfo_by_vfstype(fstype);
 		if (fsi == NULL) {
-			cmd_die(0, "unknown fstype at: "
-			        "%s fstype=0x%lx", path, fstype);
+			cmd_die(0,
+				"unknown fstype at: "
+				"%s fstype=0x%lx",
+				path, fstype);
 		}
 		if (fsi->isfuse) {
-			cmd_die(0, "can not mount over FUSE file-system: "
-			        "%s fstype=0x%lx", path, fstype);
+			cmd_die(0,
+				"can not mount over FUSE file-system: "
+				"%s fstype=0x%lx",
+				path, fstype);
 		}
 		if (!fsi->allowed) {
-			cmd_die(0, "not allowed to mount over: "
-			        "%s fstype=0x%lx", path, fstype);
+			cmd_die(0,
+				"not allowed to mount over: "
+				"%s fstype=0x%lx",
+				path, fstype);
 		}
 		cmd_check_emptydir(path, true);
 	} else {
@@ -387,8 +394,10 @@ void cmd_check_mntdir(const char *path, bool mount)
 		fstype = (long)stfs.f_type;
 		fsi = silofs_fsinfo_by_vfstype(fstype);
 		if (fsi == NULL) {
-			cmd_die(0, "unknown fstype at: "
-			        "%s fstype=0x%lx", path, fstype);
+			cmd_die(0,
+				"unknown fstype at: "
+				"%s fstype=0x%lx",
+				path, fstype);
 		}
 		if (!fsi->isfuse) {
 			cmd_die(0, "not a FUSE file-system: %s", path);
@@ -497,14 +506,13 @@ uint32_t cmd_parse_str_as_u32(const char *str)
 	return (uint32_t)val;
 }
 
-uint32_t cmd_parse_str_as_u32v(const char *str,  uint32_t vmin, uint32_t vmax)
+uint32_t cmd_parse_str_as_u32v(const char *str, uint32_t vmin, uint32_t vmax)
 {
 	uint32_t val;
 
 	val = cmd_parse_str_as_u32(str);
 	if ((val < vmin) || (val > vmax)) {
-		cmd_die(0, "%s is not within range [%u..%u]",
-		        str, vmin, vmax);
+		cmd_die(0, "%s is not within range [%u..%u]", str, vmin, vmax);
 	}
 	return val;
 }
@@ -598,7 +606,7 @@ void cmd_close_syslog(void)
 		closelog();
 		log_flags &= ~SILOFS_LOGF_SYSLOG;
 		cmd_globals.log_params.flags =
-		        (enum silofs_log_flags)log_flags;
+			(enum silofs_log_flags)log_flags;
 	}
 }
 
@@ -629,9 +637,10 @@ void cmd_setup_coredump_mode(bool enable_coredump)
 	}
 	err = silofs_sys_setrlimit(RLIMIT_CORE, &rlim);
 	if (err) {
-		cmd_die(err, "failed to setrlimit RLIMIT_CORE: "
-		        "rlim_cur=%zu rlim_max=%zu",
-		        rlim.rlim_cur, rlim.rlim_max);
+		cmd_die(err,
+			"failed to setrlimit RLIMIT_CORE: "
+			"rlim_cur=%zu rlim_max=%zu",
+			rlim.rlim_cur, rlim.rlim_max);
 	}
 	if (enable_coredump) {
 		cmd_setup_dumpable();
@@ -690,8 +699,8 @@ void cmd_split_path(const char *path, char **out_head, char **out_tail)
 	}
 }
 
-void cmd_remake_path(const char *path, const char *suffix,
-                     char **out_head, char **out_tail)
+void cmd_remake_path(const char *path, const char *suffix, char **out_head,
+		     char **out_tail)
 {
 	char *tail = NULL;
 
@@ -700,8 +709,8 @@ void cmd_remake_path(const char *path, const char *suffix,
 	cmd_pstrfree(&tail);
 }
 
-void cmd_remake_path2(const char *path, const char *suffix,
-                      char **out_head, char **out_tail)
+void cmd_remake_path2(const char *path, const char *suffix, char **out_head,
+		      char **out_tail)
 {
 	char *spos = NULL;
 
@@ -803,8 +812,8 @@ char *cmd_mkpathf(const char *fmt, ...)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void cmd_show_help_descs(FILE *fp, const char *name,
-                                const char **help_strings)
+static void
+cmd_show_help_descs(FILE *fp, const char *name, const char **help_strings)
 {
 	size_t idx = 0;
 	const char *help_string = NULL;
@@ -921,7 +930,7 @@ static char *cmd_read_proc_mountinfo(void)
 }
 
 static void cmd_parse_field(const struct silofs_strview *line, size_t idx,
-                            struct silofs_strview *out_field)
+			    struct silofs_strview *out_field)
 {
 	struct silofs_strview_pair pair;
 	struct silofs_strview *word = &pair.first;
@@ -941,8 +950,8 @@ static void cmd_parse_field(const struct silofs_strview *line, size_t idx,
 }
 
 static void cmd_parse_mountinfo_line(const struct silofs_strview *line,
-                                     struct silofs_strview *out_mntdir,
-                                     struct silofs_strview *out_mntargs)
+				     struct silofs_strview *out_mntdir,
+				     struct silofs_strview *out_mntargs)
 {
 	struct silofs_strview_pair pair;
 	struct silofs_strview *head = &pair.first;
@@ -972,7 +981,7 @@ static void *memory_at(void *mem, size_t pos)
 
 static struct cmd_proc_mntinfo *
 cmd_new_mntinfo(const struct silofs_strview *mntdir,
-                const struct silofs_strview *mntargs)
+		const struct silofs_strview *mntargs)
 {
 	struct cmd_proc_mntinfo *mi = NULL;
 	void *mem = NULL;
@@ -1014,7 +1023,7 @@ cmd_new_mntinfo_of(const struct silofs_strview *line)
 }
 
 static void cmd_parse_mountinfo_into(struct cmd_proc_mntinfo **pmi_list,
-                                     const char *mount_info_text)
+				     const char *mount_info_text)
 {
 	struct silofs_strview info;
 	struct silofs_strview_pair pair;
@@ -1065,7 +1074,7 @@ union silofs_ioc_u *cmd_new_ioc(void)
 	union silofs_ioc_u *ioc = NULL;
 
 	ioc = cmd_zalloc(sizeof(*ioc));
-	return  ioc;
+	return ioc;
 }
 
 void cmd_del_iocp(union silofs_ioc_u **pioc)

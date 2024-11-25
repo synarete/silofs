@@ -45,30 +45,30 @@ static const char *cmd_mount_help_desc[] = {
 };
 
 struct cmd_mount_in_args {
-	char   *repodir_name;
-	char   *repodir;
-	char   *repodir_real;
-	char   *name;
-	char   *mntpoint;
-	char   *mntpoint_real;
-	char   *uhelper;
-	char   *password;
-	struct silofs_fs_cflags  flags;
-	bool    explicit_log_level;
-	bool    systemd_run;
-	bool    no_prompt;
+	char *repodir_name;
+	char *repodir;
+	char *repodir_real;
+	char *name;
+	char *mntpoint;
+	char *mntpoint_real;
+	char *uhelper;
+	char *password;
+	struct silofs_fs_cflags flags;
+	bool explicit_log_level;
+	bool systemd_run;
+	bool no_prompt;
 };
 
 struct cmd_mount_ctx {
 	struct cmd_mount_in_args in_args;
-	struct silofs_fs_args   fs_args;
-	struct silofs_fsenv    *fsenv;
-	pid_t                   child_pid;
-	time_t                  start_time;
-	int                     halt_signal;
-	int                     post_exec_status;
-	bool                    has_lockfile;
-	bool                    with_progname; /* XXX: TODO: allow set */
+	struct silofs_fs_args fs_args;
+	struct silofs_fsenv *fsenv;
+	pid_t child_pid;
+	time_t start_time;
+	int halt_signal;
+	int post_exec_status;
+	bool has_lockfile;
+	bool with_progname; /* XXX: TODO: allow set */
 };
 
 static struct cmd_mount_ctx *cmd_mount_ctx;
@@ -101,19 +101,17 @@ static void cmd_mount_getsubopts(struct cmd_mount_ctx *ctx)
 	char tok_noexec[] = "noexec";
 	char tok_hostids[] = "hostids";
 	char tok_passwd[] = "passwd";
-	char *const toks[] = {
-		[CMD_MOUNT_OPT_RO] = tok_ro,
-		[CMD_MOUNT_OPT_RW] = tok_rw,
-		[CMD_MOUNT_OPT_DEV] = tok_dev,
-		[CMD_MOUNT_OPT_NODEV] = tok_nodev,
-		[CMD_MOUNT_OPT_SUID] = tok_suid,
-		[CMD_MOUNT_OPT_NOSUID] = tok_nosuid,
-		[CMD_MOUNT_OPT_EXEC] = tok_exec,
-		[CMD_MOUNT_OPT_NOEXEC] = tok_noexec,
-		[CMD_MOUNT_OPT_HOSTIDS] = tok_hostids,
-		[CMD_MOUNT_OPT_PASSWD] = tok_passwd,
-		NULL
-	};
+	char *const toks[] = { [CMD_MOUNT_OPT_RO] = tok_ro,
+			       [CMD_MOUNT_OPT_RW] = tok_rw,
+			       [CMD_MOUNT_OPT_DEV] = tok_dev,
+			       [CMD_MOUNT_OPT_NODEV] = tok_nodev,
+			       [CMD_MOUNT_OPT_SUID] = tok_suid,
+			       [CMD_MOUNT_OPT_NOSUID] = tok_nosuid,
+			       [CMD_MOUNT_OPT_EXEC] = tok_exec,
+			       [CMD_MOUNT_OPT_NOEXEC] = tok_noexec,
+			       [CMD_MOUNT_OPT_HOSTIDS] = tok_hostids,
+			       [CMD_MOUNT_OPT_PASSWD] = tok_passwd,
+			       NULL };
 	char *sopt = NULL;
 	char *sval = NULL;
 	int skey = 0;
@@ -195,7 +193,7 @@ static void cmd_mount_parse_optargs(struct cmd_mount_ctx *ctx)
 			break;
 		case 'W':
 			ctx->in_args.flags.writeback_cache =
-			        cmd_optargs_curr_as_bool(&opa);
+				cmd_optargs_curr_as_bool(&opa);
 			break;
 		case 'B':
 			ctx->in_args.flags.may_splice = false;
@@ -208,7 +206,7 @@ static void cmd_mount_parse_optargs(struct cmd_mount_ctx *ctx)
 			break;
 		case 'a':
 			ctx->in_args.flags.asyncwr =
-			        cmd_optargs_curr_as_bool(&opa);
+				cmd_optargs_curr_as_bool(&opa);
 			break;
 		case 'M':
 			ctx->in_args.flags.stdalloc = true;
@@ -291,7 +289,6 @@ static void cmd_mount_enable_signals(void)
 	cmd_register_sigactions(cmd_mount_halt_by_signal);
 }
 
-
 static void cmd_mount_acquire_lockfile(struct cmd_mount_ctx *ctx)
 {
 	if (!ctx->has_lockfile) {
@@ -372,8 +369,8 @@ static void cmd_mount_prepare_mntpoint(struct cmd_mount_ctx *ctx)
 static void cmd_mount_prepare_repo(struct cmd_mount_ctx *ctx)
 {
 	cmd_check_isreg(ctx->in_args.repodir_name);
-	cmd_split_path(ctx->in_args.repodir_name,
-	               &ctx->in_args.repodir, &ctx->in_args.name);
+	cmd_split_path(ctx->in_args.repodir_name, &ctx->in_args.repodir,
+		       &ctx->in_args.name);
 	cmd_realpath_rdir(ctx->in_args.repodir, &ctx->in_args.repodir_real);
 	cmd_check_repodir_fsname(ctx->in_args.repodir_real, ctx->in_args.name);
 }
@@ -382,7 +379,7 @@ static void cmd_mount_getpass(struct cmd_mount_ctx *ctx)
 {
 	if (ctx->in_args.password == NULL) {
 		cmd_getpass_simple(ctx->in_args.no_prompt,
-		                   &ctx->in_args.password);
+				   &ctx->in_args.password);
 	}
 }
 
@@ -426,8 +423,8 @@ static void cmd_mount_close_fs(struct cmd_mount_ctx *ctx)
  * Better user modern inotify interface on mount-directory instead of this
  * naive busy-loop.
  */
-silofs_attr_noreturn
-static void cmd_mount_finish_parent(struct cmd_mount_ctx *ctx)
+silofs_attr_noreturn static void
+cmd_mount_finish_parent(struct cmd_mount_ctx *ctx)
 {
 	struct stat st = { .st_ino = 0 };
 	int retry = 20;
@@ -566,10 +563,10 @@ static void cmd_mount_post_exec_cleanup(const struct cmd_mount_ctx *ctx)
 
 	if ((ctx->halt_signal > 0) && (ctx->post_exec_status != 0)) {
 		err = silofs_mntrpc_umount(ctx->in_args.mntpoint_real,
-		                           getuid(), getgid(), MNT_DETACH);
+					   getuid(), getgid(), MNT_DETACH);
 		if (err) {
 			silofs_log_info("failed to umount lazily: %s err=%d",
-			                ctx->in_args.mntpoint_real, err);
+					ctx->in_args.mntpoint_real, err);
 		}
 	}
 }
@@ -653,7 +650,6 @@ static void cmd_mount_exec_phase2(struct cmd_mount_ctx *ctx)
 	/* Destroy main environment instance */
 	cmd_mount_destroy_fsenv(ctx);
 }
-
 
 void cmd_execute_mount(void)
 {

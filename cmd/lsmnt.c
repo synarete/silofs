@@ -18,22 +18,19 @@
 #include "cmd.h"
 
 static const char *cmd_lsmnt_help_desc[] = {
-	"lsmnt [options]",
-	"",
-	"options:",
-	"  -l, --long                   Long listing format",
-	NULL
+	"lsmnt [options]", "",
+	"options:", "  -l, --long                   Long listing format", NULL
 };
 
 struct cmd_lsmnt_in_args {
-	char   *mntpoint;
-	char   *mntpoint_real;
-	bool    long_listing;
+	char *mntpoint;
+	char *mntpoint_real;
+	bool long_listing;
 };
 
 struct cmd_lsmnt_ctx {
 	struct cmd_lsmnt_in_args in_args;
-	struct silofs_ioc_query  ioc_qry;
+	struct silofs_ioc_query ioc_qry;
 	FILE *out_fp;
 };
 
@@ -97,13 +94,13 @@ static void cmd_lsmnt_prepare(struct cmd_lsmnt_ctx *ctx)
 }
 
 static void cmd_lsmnt_short(const struct cmd_lsmnt_ctx *ctx,
-                            const struct cmd_proc_mntinfo *mi)
+			    const struct cmd_proc_mntinfo *mi)
 {
 	fprintf(ctx->out_fp, "%s\n", mi->mntdir);
 }
 
-static void cmd_lsmnt_long(struct cmd_lsmnt_ctx *ctx,
-                           const struct cmd_proc_mntinfo *mi)
+static void
+cmd_lsmnt_long(struct cmd_lsmnt_ctx *ctx, const struct cmd_proc_mntinfo *mi)
 {
 	struct silofs_ioc_query *qry = &ctx->ioc_qry;
 	char *mntd_path = NULL;
@@ -139,8 +136,8 @@ static void cmd_lsmnt_long(struct cmd_lsmnt_ctx *ctx,
 	boot_addr = cmd_strdup(qry->u.boot.addr);
 	fs_uuid = cmd_struuid(qry->u.boot.fs_uuid);
 
-	fprintf(ctx->out_fp, "%s %s/%s %s %s",
-	        mntd_path, repo_path, boot_name, boot_addr, fs_uuid);
+	fprintf(ctx->out_fp, "%s %s/%s %s %s", mntd_path, repo_path, boot_name,
+		boot_addr, fs_uuid);
 out:
 	fputs("\n", ctx->out_fp);
 	fflush(ctx->out_fp);

@@ -29,18 +29,17 @@ static const char *cmd_init_help_desc[] = {
 };
 
 struct cmd_init_in_args {
-	char   *repodir;
-	char   *repodir_real;
-	char   *username;
-	bool    with_sup_groups;
-	bool    with_root_user;
-
+	char *repodir;
+	char *repodir_real;
+	char *username;
+	bool with_sup_groups;
+	bool with_root_user;
 };
 
 struct cmd_init_ctx {
 	struct cmd_init_in_args in_args;
-	struct silofs_fs_args   fs_args;
-	struct silofs_fsenv    *fsenv;
+	struct silofs_fs_args fs_args;
+	struct silofs_fsenv *fsenv;
 };
 
 static struct cmd_init_ctx *cmd_init_ctx;
@@ -50,12 +49,9 @@ static struct cmd_init_ctx *cmd_init_ctx;
 static void cmd_init_parse_optargs(struct cmd_init_ctx *ctx)
 {
 	const struct cmd_optdesc ods[] = {
-		{ "user", 'u', 1 },
-		{ "sup-groups", 'G', 0 },
-		{ "allow-root", 'R', 0 },
-		{ "loglevel", 'L', 1 },
-		{ "help", 'h', 0 },
-		{ NULL, 0, 0 },
+		{ "user", 'u', 1 },       { "sup-groups", 'G', 0 },
+		{ "allow-root", 'R', 0 }, { "loglevel", 'L', 1 },
+		{ "help", 'h', 0 },       { NULL, 0, 0 },
 	};
 	struct cmd_optargs opa;
 	int opt_chr = 1;
@@ -66,7 +62,7 @@ static void cmd_init_parse_optargs(struct cmd_init_ctx *ctx)
 		switch (opt_chr) {
 		case 'u':
 			ctx->in_args.username =
-			        cmd_optarg_dupoptarg(&opa, "user");
+				cmd_optarg_dupoptarg(&opa, "user");
 			break;
 		case 'G':
 			ctx->in_args.with_sup_groups = true;

@@ -32,15 +32,15 @@ static const char *cmd_show_help_desc[] = {
 };
 
 struct cmd_show_in_args {
-	char   *pathname;
-	char   *pathname_real;
-	char   *subcmd;
+	char *pathname;
+	char *pathname_real;
+	char *subcmd;
 };
 
 struct cmd_show_ctx {
 	struct cmd_show_in_args in_args;
-	union silofs_ioc_u     *ioc;
-	enum silofs_query_type  qtype;
+	union silofs_ioc_u *ioc;
+	enum silofs_query_type qtype;
 	FILE *out_fp;
 };
 
@@ -79,12 +79,9 @@ static void cmd_show_parse_optargs(struct cmd_show_ctx *ctx)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const char *cmd_show_subcommands[] = {
-	[SILOFS_QUERY_VERSION]  = "version",
-	[SILOFS_QUERY_REPO]     = "repo",
-	[SILOFS_QUERY_BOOT]     = "boot",
-	[SILOFS_QUERY_PROC]     = "proc",
-	[SILOFS_QUERY_SPSTATS]  = "spstats",
-	[SILOFS_QUERY_STATX]    = "statx",
+	[SILOFS_QUERY_VERSION] = "version", [SILOFS_QUERY_REPO] = "repo",
+	[SILOFS_QUERY_BOOT] = "boot",       [SILOFS_QUERY_PROC] = "proc",
+	[SILOFS_QUERY_SPSTATS] = "spstats", [SILOFS_QUERY_STATX] = "statx",
 };
 
 static enum silofs_query_type cmd_show_qtype_by_subcmd(const char *subcmd)
@@ -153,8 +150,7 @@ static void cmd_show_do_ioctl_query(struct cmd_show_ctx *ctx)
 
 	err = silofs_sys_open(ctx->in_args.pathname_real, O_RDONLY, 0, &fd);
 	if (err) {
-		cmd_die(err, "failed to open: %s",
-		        ctx->in_args.pathname_real);
+		cmd_die(err, "failed to open: %s", ctx->in_args.pathname_real);
 	}
 	err = silofs_sys_ioctlp(fd, SILOFS_IOC_QUERY, &ctx->ioc->query);
 	if (err) {
@@ -203,12 +199,9 @@ static void msflags_str(unsigned long msflags, char *buf, size_t bsz)
 	const char *end = buf + bsz;
 	const struct silofs_msflag_name *ms_name = NULL;
 	const struct silofs_msflag_name ms_names[] = {
-		{ MS_RDONLY,    "rdonly" },
-		{ MS_NODEV,     "nodev" },
-		{ MS_NOSUID,    "nosuid" },
-		{ MS_NOEXEC,    "noexec" },
-		{ MS_MANDLOCK,  "mandlock" },
-		{ MS_NOATIME,   "noatime" },
+		{ MS_RDONLY, "rdonly" },     { MS_NODEV, "nodev" },
+		{ MS_NOSUID, "nosuid" },     { MS_NOEXEC, "noexec" },
+		{ MS_MANDLOCK, "mandlock" }, { MS_NOATIME, "noatime" },
 	};
 	size_t len = 0;
 	bool first = true;
@@ -232,8 +225,8 @@ static void msflags_str(unsigned long msflags, char *buf, size_t bsz)
 	}
 }
 
-static void cmd_show_msflags(const struct cmd_show_ctx *ctx,
-                             unsigned long msflags)
+static void
+cmd_show_msflags(const struct cmd_show_ctx *ctx, unsigned long msflags)
 {
 	char mntfstr[128] = "";
 
@@ -241,20 +234,20 @@ static void cmd_show_msflags(const struct cmd_show_ctx *ctx,
 	fprintf(ctx->out_fp, "mount-flags: %s\n", mntfstr);
 }
 
-static void cmd_show_pid(const struct cmd_show_ctx *ctx,
-                         const char *name, pid_t pid)
+static void
+cmd_show_pid(const struct cmd_show_ctx *ctx, const char *name, pid_t pid)
 {
 	fprintf(ctx->out_fp, "%s: %ld\n", name, (long)pid);
 }
 
-static void cmd_show_time(const struct cmd_show_ctx *ctx,
-                          const char *name, time_t tm)
+static void
+cmd_show_time(const struct cmd_show_ctx *ctx, const char *name, time_t tm)
 {
 	fprintf(ctx->out_fp, "%s: %ld\n", name, tm);
 }
 
 static void cmd_show_counter(const struct cmd_show_ctx *ctx,
-                             const char *prefix, const char *name, ssize_t val)
+			     const char *prefix, const char *name, ssize_t val)
 {
 	if (prefix && strlen(prefix)) {
 		fprintf(ctx->out_fp, "%s.%s: %ld\n", prefix, name, val);
@@ -263,8 +256,8 @@ static void cmd_show_counter(const struct cmd_show_ctx *ctx,
 	}
 }
 
-static void cmd_show_ucounter(const struct cmd_show_ctx *ctx,
-                              const char *name, size_t val)
+static void
+cmd_show_ucounter(const struct cmd_show_ctx *ctx, const char *name, size_t val)
 {
 	fprintf(ctx->out_fp, "%s: %lu\n", name, val);
 }
@@ -285,7 +278,7 @@ static void cmd_show_proc(struct cmd_show_ctx *ctx)
 }
 
 static void cmd_show_spacestats(const struct cmd_show_ctx *ctx,
-                                const struct silofs_spacestats *spst)
+				const struct silofs_spacestats *spst)
 {
 	const char *prefix = "";
 
@@ -347,15 +340,15 @@ static void cmd_show_statx(struct cmd_show_ctx *ctx)
 
 	cmd_show_do_ioctl_query(ctx);
 	fprintf(ctx->out_fp, "blksize: %ld\n", (long)stx->stx_blksize);
-	fprintf(ctx->out_fp, "nlink: %u\n",  stx->stx_nlink);
-	fprintf(ctx->out_fp, "uid: %u\n",  stx->stx_uid);
-	fprintf(ctx->out_fp, "gid: %u\n",  stx->stx_gid);
-	fprintf(ctx->out_fp, "mode: 0%o\n",  stx->stx_mode);
+	fprintf(ctx->out_fp, "nlink: %u\n", stx->stx_nlink);
+	fprintf(ctx->out_fp, "uid: %u\n", stx->stx_uid);
+	fprintf(ctx->out_fp, "gid: %u\n", stx->stx_gid);
+	fprintf(ctx->out_fp, "mode: 0%o\n", stx->stx_mode);
 	fprintf(ctx->out_fp, "ino: %ld\n", (long)stx->stx_ino);
 	fprintf(ctx->out_fp, "size: %ld\n", (long)stx->stx_size);
 	fprintf(ctx->out_fp, "blocks: %ld\n", (long)stx->stx_blocks);
-	fprintf(ctx->out_fp, "iflags: %x\n",  qstatx->iflags);
-	fprintf(ctx->out_fp, "dirflags: %x\n",  qstatx->dirflags);
+	fprintf(ctx->out_fp, "iflags: %x\n", qstatx->iflags);
+	fprintf(ctx->out_fp, "dirflags: %x\n", qstatx->dirflags);
 }
 
 static void cmd_show_execute(struct cmd_show_ctx *ctx)

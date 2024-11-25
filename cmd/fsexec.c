@@ -18,7 +18,7 @@
 #include "cmd.h"
 
 void cmd_new_fsenv(const struct silofs_fs_args *fs_args,
-                   struct silofs_fsenv **p_fsenv)
+		   struct silofs_fsenv **p_fsenv)
 {
 	int err;
 
@@ -48,7 +48,7 @@ static char *cmd_repodir_name(const struct silofs_fsenv *fsenv)
 }
 
 static void cmd_report_err_and_die(const struct silofs_fsenv *fsenv,
-                                   int status, const char *msg)
+				   int status, const char *msg)
 {
 	char *rname = NULL;
 	const char *xmsg = msg ? msg : "";
@@ -130,8 +130,8 @@ static void cmd_report_err_and_die(const struct silofs_fsenv *fsenv,
 	cmd_pstrfree(&rname);
 }
 
-static void cmd_require_ok(const struct silofs_fsenv *fsenv,
-                           int status, const char *msg)
+static void
+cmd_require_ok(const struct silofs_fsenv *fsenv, int status, const char *msg)
 {
 	if (status != 0) {
 		cmd_report_err_and_die(fsenv, status, msg);
@@ -162,8 +162,7 @@ void cmd_close_repo(struct silofs_fsenv *fsenv)
 	cmd_require_ok(fsenv, err, "failed to close repo");
 }
 
-void cmd_poke_fs(struct silofs_fsenv *fsenv,
-                 const struct silofs_fs_bref *bref)
+void cmd_poke_fs(struct silofs_fsenv *fsenv, const struct silofs_fs_bref *bref)
 {
 	int err;
 
@@ -172,7 +171,7 @@ void cmd_poke_fs(struct silofs_fsenv *fsenv,
 }
 
 void cmd_poke_archive(struct silofs_fsenv *fsenv,
-                      const struct silofs_fs_bref *bref)
+		      const struct silofs_fs_bref *bref)
 {
 	int err;
 
@@ -196,8 +195,7 @@ void cmd_close_fs(struct silofs_fsenv *fsenv)
 	cmd_require_ok(fsenv, err, "failed to close fs");
 }
 
-void cmd_open_fs(struct silofs_fsenv *fsenv,
-                 const struct silofs_fs_bref *bref)
+void cmd_open_fs(struct silofs_fsenv *fsenv, const struct silofs_fs_bref *bref)
 {
 	int err;
 
@@ -213,8 +211,8 @@ void cmd_exec_fs(struct silofs_fsenv *fsenv)
 	cmd_require_ok(fsenv, err, "failed to exec fs");
 }
 
-void cmd_fork_fs(struct silofs_fsenv *fsenv,
-                 struct silofs_caddr *out_new, struct silofs_caddr *out_alt)
+void cmd_fork_fs(struct silofs_fsenv *fsenv, struct silofs_caddr *out_new,
+		 struct silofs_caddr *out_alt)
 {
 	int err;
 
@@ -223,7 +221,7 @@ void cmd_fork_fs(struct silofs_fsenv *fsenv,
 }
 
 void cmd_unref_fs(struct silofs_fsenv *fsenv,
-                  const struct silofs_fs_bref *bref)
+		  const struct silofs_fs_bref *bref)
 {
 	int err;
 
@@ -231,8 +229,8 @@ void cmd_unref_fs(struct silofs_fsenv *fsenv,
 	cmd_require_ok(fsenv, err, "unref-fs error");
 }
 
-void cmd_inspect_fs(struct silofs_fsenv *fsenv,
-                    silofs_visit_laddr_fn cb, void *user_ctx)
+void cmd_inspect_fs(struct silofs_fsenv *fsenv, silofs_visit_laddr_fn cb,
+		    void *user_ctx)
 {
 	int err;
 
@@ -270,7 +268,7 @@ void cmd_fs_args_init(struct silofs_fs_args *fs_args)
 }
 
 void cmd_fs_args_init2(struct silofs_fs_args *fs_args,
-                       const struct silofs_fs_cflags *fs_cflags)
+		       const struct silofs_fs_cflags *fs_cflags)
 {
 	cmd_fs_args_init(fs_args);
 	memcpy(&fs_args->cflags, fs_cflags, sizeof(fs_args->cflags));

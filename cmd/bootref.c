@@ -23,7 +23,6 @@
 #include <grp.h>
 #include "cmd.h"
 
-
 static void cmd_load_bref_file(const char *pathname, char **out_txt)
 {
 	struct stat st = { .st_mode = 0 };
@@ -77,7 +76,7 @@ static void cmd_save_bref_file(const char *pathname, const char *txt)
 
 	tmp = cmd_bref_tmp_pathname(pathname);
 	err = silofs_sys_open(tmp, O_CREAT | O_RDWR | O_TRUNC,
-	                      S_IRUSR | S_IWUSR, &fd);
+			      S_IRUSR | S_IWUSR, &fd);
 	if (err) {
 		cmd_die(err, "failed to create boot-ref: %s", tmp);
 	}
@@ -147,8 +146,8 @@ static void cmd_bootref_reload(struct silofs_fs_bref *bref)
 	cmd_pstrfree(&path);
 }
 
-static void cmd_bootref_verify(const struct silofs_fs_bref *bref,
-                               enum silofs_ctype ctype)
+static void
+cmd_bootref_verify(const struct silofs_fs_bref *bref, enum silofs_ctype ctype)
 {
 	if (bref->caddr.ctype != ctype) {
 		if (ctype == SILOFS_CTYPE_BOOTREC) {
@@ -185,8 +184,7 @@ void cmd_bootref_save(const struct silofs_fs_bref *bref)
 }
 
 void cmd_bootref_resave(const struct silofs_fs_bref *bref,
-                        const struct silofs_caddr *caddr,
-                        const char *newname)
+			const struct silofs_caddr *caddr, const char *newname)
 {
 	struct silofs_fs_bref bref_alt;
 

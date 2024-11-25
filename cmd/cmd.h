@@ -40,13 +40,13 @@ struct cmd_getopt_info;
 /* sub-command options and arguments */
 struct cmd_optargs {
 	struct cmd_getopt_info *opa_goi;
-	char      **opa_cmd_argv;
-	int         opa_cmd_argc;
-	int         opa_optind;
-	int         opa_optidx;
-	int         opa_opterr;
-	char       *opa_optarg;
-	bool        opa_done;
+	char **opa_cmd_argv;
+	int opa_cmd_argc;
+	int opa_optind;
+	int opa_optidx;
+	int opa_opterr;
+	char *opa_optarg;
+	bool opa_done;
 };
 
 /* global settings */
@@ -59,28 +59,28 @@ struct cmd_globals {
 	const char *prog;
 
 	/* program arguments */
-	int     argc;
-	char  **argv;
+	int argc;
+	char **argv;
 
 	/* logging */
 	struct silofs_log_params log_params;
 
 	/* process ids */
-	pid_t   pid;
-	uid_t   uid;
-	gid_t   gid;
-	mode_t  umsk;
+	pid_t pid;
+	uid_t uid;
+	gid_t gid;
+	mode_t umsk;
 
 	/* common process settings */
-	bool    dont_daemonize;
-	bool    allow_coredump;
+	bool dont_daemonize;
+	bool allow_coredump;
 
 	/* capability */
-	bool    cap_sys_admin;
+	bool cap_sys_admin;
 
 	/* signals info */
-	int     sig_halt;
-	int     sig_fatal;
+	int sig_halt;
+	int sig_fatal;
 
 	/* sub-command execution hook */
 	const struct cmd_info *cmdi;
@@ -132,8 +132,8 @@ char *cmd_optarg_dupoptarg(const struct cmd_optargs *opa, const char *id);
 
 char *cmd_optargs_getarg(struct cmd_optargs *opa, const char *arg_name);
 
-char *cmd_optargs_getarg2(struct cmd_optargs *opa,
-                          const char *arg_name, const char *default_val);
+char *cmd_optargs_getarg2(struct cmd_optargs *opa, const char *arg_name,
+			  const char *default_val);
 
 char *cmd_optargs_getpass(const struct cmd_optargs *opa);
 
@@ -141,22 +141,20 @@ bool cmd_optargs_curr_as_bool(const struct cmd_optargs *opa);
 
 long cmd_optargs_curr_as_size(const struct cmd_optargs *opa);
 
-uint32_t cmd_optargs_curr_as_u32v(const struct cmd_optargs *opa,
-                                  uint32_t vmin, uint32_t vmax);
+uint32_t cmd_optargs_curr_as_u32v(const struct cmd_optargs *opa, uint32_t vmin,
+				  uint32_t vmax);
 
 void cmd_optargs_endargs(const struct cmd_optargs *opa);
 
 void cmd_optargs_set_loglevel(const struct cmd_optargs *opa);
-
 
 void cmd_require_arg(const char *arg_name, const void *arg_val);
 
 void cmd_require_arg_size(const char *arg_name, long val);
 
 /* fatal-error handling */
-silofs_attr_printf(2, 3)
-silofs_attr_noreturn
-void cmd_die(int errnum, const char *restrict fmt, ...);
+silofs_attr_printf(2, 3) silofs_attr_noreturn
+	void cmd_die(int errnum, const char *restrict fmt, ...);
 
 /* common utilities */
 
@@ -208,11 +206,11 @@ void cmd_stat_dir(const char *path, struct stat *st);
 
 void cmd_split_path(const char *path, char **out_head, char **out_tail);
 
-void cmd_remake_path(const char *path, const char *suffix,
-                     char **out_head, char **out_tail);
+void cmd_remake_path(const char *path, const char *suffix, char **out_head,
+		     char **out_tail);
 
-void cmd_remake_path2(const char *path, const char *suffix,
-                      char **out_head, char **out_tail);
+void cmd_remake_path2(const char *path, const char *suffix, char **out_head,
+		      char **out_tail);
 
 void cmd_join_path(const char *dirpath, const char *name, char **out_path);
 
@@ -238,8 +236,7 @@ char *cmd_strndup(const char *s, size_t n);
 
 char *cmd_struuid(const uint8_t uu[16]);
 
-silofs_attr_printf(1, 2)
-char *cmd_mkpathf(const char *fmt, ...);
+silofs_attr_printf(1, 2) char *cmd_mkpathf(const char *fmt, ...);
 
 void cmd_print_help_and_exit(const char **help_strings) silofs_attr_noreturn;
 
@@ -261,7 +258,6 @@ void cmd_lock_fs(const char *repodir, const char *name);
 
 void cmd_unlock_fs(const char *repodir, const char *name);
 
-
 void cmd_wrlock_repo(const char *repodir, int *pfd);
 
 void cmd_rdlock_repo(const char *repodir, int *pfd);
@@ -280,30 +276,30 @@ void cmd_format_fs(struct silofs_fsenv *fsenv, struct silofs_fs_bref *bref);
 void cmd_close_fs(struct silofs_fsenv *fsenv);
 
 void cmd_poke_fs(struct silofs_fsenv *fsenv,
-                 const struct silofs_fs_bref *bref);
+		 const struct silofs_fs_bref *bref);
 
 void cmd_poke_archive(struct silofs_fsenv *fsenv,
-                      const struct silofs_fs_bref *bref);
+		      const struct silofs_fs_bref *bref);
 
 void cmd_open_fs(struct silofs_fsenv *fsenv,
-                 const struct silofs_fs_bref *bref);
+		 const struct silofs_fs_bref *bref);
 
 void cmd_exec_fs(struct silofs_fsenv *fsenv);
 
-void cmd_fork_fs(struct silofs_fsenv *fsenv,
-                 struct silofs_caddr *out_new, struct silofs_caddr *out_alt);
+void cmd_fork_fs(struct silofs_fsenv *fsenv, struct silofs_caddr *out_new,
+		 struct silofs_caddr *out_alt);
 
 void cmd_unref_fs(struct silofs_fsenv *fsenv,
-                  const struct silofs_fs_bref *bconf);
+		  const struct silofs_fs_bref *bconf);
 
-void cmd_inspect_fs(struct silofs_fsenv *fsenv,
-                    silofs_visit_laddr_fn cb, void *user_ctx);
+void cmd_inspect_fs(struct silofs_fsenv *fsenv, silofs_visit_laddr_fn cb,
+		    void *user_ctx);
 
 void cmd_archive_fs(struct silofs_fsenv *fsenv,
-                    struct silofs_caddr *out_caddr);
+		    struct silofs_caddr *out_caddr);
 
 void cmd_restore_fs(struct silofs_fsenv *fsenv,
-                    struct silofs_caddr *out_caddr);
+		    struct silofs_caddr *out_caddr);
 
 /* mount-info */
 struct cmd_proc_mntinfo {
@@ -326,7 +322,7 @@ void cmd_reset_ioc(union silofs_ioc_u *ioc);
 
 /* file-system environment */
 void cmd_new_fsenv(const struct silofs_fs_args *fs_args,
-                   struct silofs_fsenv **p_fsenv);
+		   struct silofs_fsenv **p_fsenv);
 
 void cmd_del_fsenv(struct silofs_fsenv **p_fsenv);
 
@@ -352,8 +348,7 @@ void cmd_bootref_load_ar(struct silofs_fs_bref *bref);
 void cmd_bootref_save(const struct silofs_fs_bref *bref);
 
 void cmd_bootref_resave(const struct silofs_fs_bref *bref,
-                        const struct silofs_caddr *caddr,
-                        const char *newname);
+			const struct silofs_caddr *caddr, const char *newname);
 
 void cmd_bootref_unlink(const struct silofs_fs_bref *bref);
 
@@ -361,7 +356,7 @@ void cmd_bootref_unlink(const struct silofs_fs_bref *bref);
 void cmd_fs_args_init(struct silofs_fs_args *fs_args);
 
 void cmd_fs_args_init2(struct silofs_fs_args *fs_args,
-                       const struct silofs_fs_cflags *fs_cflags);
+		       const struct silofs_fs_cflags *fs_cflags);
 
 void cmd_fini_fs_args(struct silofs_fs_args *fs_args);
 
@@ -373,7 +368,7 @@ void cmd_fs_ids_init(struct silofs_fs_ids *ids);
 void cmd_fs_ids_fini(struct silofs_fs_ids *ids);
 
 void cmd_fs_ids_assign(struct silofs_fs_ids *ids,
-                       const struct silofs_fs_ids *other);
+		       const struct silofs_fs_ids *other);
 
 void cmd_fs_ids_reset(struct silofs_fs_ids *ids);
 
@@ -381,8 +376,8 @@ void cmd_fs_ids_load(struct silofs_fs_ids *ids, const char *basedir);
 
 void cmd_fs_ids_save(const struct silofs_fs_ids *ids, const char *basedir);
 
-void cmd_fs_ids_add_user(struct silofs_fs_ids *ids,
-                         const char *user, bool with_sup_groups);
+void cmd_fs_ids_add_user(struct silofs_fs_ids *ids, const char *user,
+			 bool with_sup_groups);
 
 /* users/groups */
 char *cmd_getpwuid(uid_t uid);
@@ -391,8 +386,8 @@ char *cmd_getusername(void);
 
 void cmd_resolve_uidgid(const char *name, uid_t *out_uid, gid_t *out_gid);
 
-void cmd_require_uidgid(const struct silofs_fs_ids *ids,
-                        const char *name, uid_t *out_uid, gid_t *out_gid);
+void cmd_require_uidgid(const struct silofs_fs_ids *ids, const char *name,
+			uid_t *out_uid, gid_t *out_gid);
 
 /* misc */
 void cmd_trace_versions(void);

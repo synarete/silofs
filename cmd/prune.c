@@ -17,20 +17,17 @@
 #define _GNU_SOURCE 1
 #include "cmd.h"
 
-static const char *cmd_prune_help_desc[] = {
-	"prune [options] <repodir>",
-	"",
-	NULL
-};
+static const char *cmd_prune_help_desc[] = { "prune [options] <repodir>", "",
+					     NULL };
 
 struct cmd_prune_in_args {
-	char   *repodir;
-	char   *repodir_real;
+	char *repodir;
+	char *repodir_real;
 };
 
 struct cmd_prune_ctx {
 	struct cmd_prune_in_args in_args;
-	struct silofs_fsenv     *fsenv;
+	struct silofs_fsenv *fsenv;
 };
 
 static struct cmd_prune_ctx *cmd_prune_ctx;
@@ -99,7 +96,6 @@ static void cmd_prune_prepare(struct cmd_prune_ctx *ctx)
  *
  * Prune repository under full locking.
  */
-
 
 void cmd_execute_prune(void)
 {

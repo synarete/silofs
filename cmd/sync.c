@@ -18,21 +18,19 @@
 #include "cmd.h"
 
 static const char *cmd_sync_help_desc[] = {
-	"sync [<pathname>]",
-	"",
-	"options:",
-	"  -L, --loglevel=level         Logging level (rfc5424)",
+	"sync [<pathname>]", "",
+	"options:", "  -L, --loglevel=level         Logging level (rfc5424)",
 	NULL
 };
 
 struct cmd_sync_in_args {
-	char   *pathname;
-	char   *pathname_real;
+	char *pathname;
+	char *pathname_real;
 };
 
 struct cmd_sync_ctx {
 	struct cmd_sync_in_args in_args;
-	union silofs_ioc_u     *ioc;
+	union silofs_ioc_u *ioc;
 };
 
 static struct cmd_sync_ctx *cmd_sync_ctx;

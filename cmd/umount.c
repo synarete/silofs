@@ -30,15 +30,15 @@ static const char *cmd_umount_help_desc[] = {
 };
 
 struct cmd_umount_in_args {
-	char   *mntpoint;
-	char   *mntpoint_real;
-	int     force;
-	int     lazy;
+	char *mntpoint;
+	char *mntpoint_real;
+	int force;
+	int lazy;
 };
 
 struct cmd_umount_ctx {
 	struct cmd_umount_in_args in_args;
-	struct silofs_ioc_query   query;
+	struct silofs_ioc_query query;
 	pid_t server_pid;
 	bool notconn;
 };
@@ -111,8 +111,7 @@ static void cmd_umount_probe_proc(struct cmd_umount_ctx *ctx)
 
 	err = silofs_sys_open(ctx->in_args.mntpoint_real, O_RDONLY, 0, &fd);
 	if (err) {
-		cmd_die(err, "failed to open: %s",
-		        ctx->in_args.mntpoint_real);
+		cmd_die(err, "failed to open: %s", ctx->in_args.mntpoint_real);
 	}
 	ctx->query.qtype = SILOFS_QUERY_PROC;
 	err = silofs_sys_ioctlp(fd, SILOFS_IOC_QUERY, &ctx->query);
@@ -132,7 +131,7 @@ static void cmd_umount_prepare(struct cmd_umount_ctx *ctx)
 	err = silofs_sys_statfs(ctx->in_args.mntpoint, &stfs);
 	if ((err == -ENOTCONN) && ctx->in_args.force) {
 		silofs_log_debug("transport endpoint not connected: %s",
-		                 ctx->in_args.mntpoint);
+				 ctx->in_args.mntpoint);
 		ctx->notconn = true;
 		return;
 	}
@@ -145,7 +144,8 @@ static void cmd_umount_prepare(struct cmd_umount_ctx *ctx)
 static const char *cmd_umount_dirpath(const struct cmd_umount_ctx *ctx)
 {
 	return (ctx->in_args.mntpoint_real != NULL) ?
-	       ctx->in_args.mntpoint_real : ctx->in_args.mntpoint;
+		       ctx->in_args.mntpoint_real :
+		       ctx->in_args.mntpoint;
 }
 
 static uint32_t cmd_umount_mnt_flags(const struct cmd_umount_ctx *ctx)
@@ -174,8 +174,8 @@ static void cmd_umount_send_recv(const struct cmd_umount_ctx *ctx)
 	if (err == -SILOFS_EUMOUNT) {
 		cmd_die(err, "umount not permitted by caller: %s", mntpath);
 	} else if (err) {
-		cmd_die(err, "umount failed: %s lazy=%d force=%d",
-		        mntpath, ctx->in_args.lazy, ctx->in_args.force);
+		cmd_die(err, "umount failed: %s lazy=%d force=%d", mntpath,
+			ctx->in_args.lazy, ctx->in_args.force);
 	}
 }
 
@@ -216,8 +216,8 @@ static void cmd_umount_wait_nopid(const struct cmd_umount_ctx *ctx)
 	int retry = 0;
 	int err = 0;
 
-	snprintf(procfs_path, sizeof(procfs_path) - 1,
-	         "/proc/%ld/fdinfo", (long)(ctx->server_pid));
+	snprintf(procfs_path, sizeof(procfs_path) - 1, "/proc/%ld/fdinfo",
+		 (long)(ctx->server_pid));
 
 	while ((retry++ < retry_max) && !err) {
 		if (ctx->notconn || !ctx->server_pid) {

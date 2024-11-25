@@ -19,7 +19,6 @@
 #include <signal.h>
 #include "cmd.h"
 
-
 /*
  * TODO-0057: Use 'signalfd' system API
  *
@@ -47,8 +46,7 @@ static void sigaction_halt_handler(int signum)
 	}
 }
 
-silofs_attr_noreturn
-static void sigaction_term_handler(int signum)
+silofs_attr_noreturn static void sigaction_term_handler(int signum)
 {
 	silofs_backtrace();
 	silofs_log_crit("term-signal: %d", signum);
@@ -57,8 +55,7 @@ static void sigaction_term_handler(int signum)
 	exit(EXIT_FAILURE);
 }
 
-silofs_attr_noreturn
-static void sigaction_abort_handler(int signum)
+silofs_attr_noreturn static void sigaction_abort_handler(int signum)
 {
 	if (cmd_globals.sig_fatal) {
 		_exit(EXIT_FAILURE);

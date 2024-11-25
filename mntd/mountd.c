@@ -164,8 +164,10 @@ static void mountd_require_cap_sys_admin(const struct mountd_ctx *ctx)
 
 static void mountd_setup_env(struct mountd_ctx *ctx)
 {
-	struct silofs_ms_args ms_args = { .runstatedir = SILOFS_RUNSTATEDIR,
-					  .use_abstract = true };
+	struct silofs_ms_args ms_args = {
+		.runstatedir = SILOFS_RUNSTATEDIR,
+		.use_abstract = true,
+	};
 	int err;
 
 	err = silofs_mse_new(&ms_args, &ctx->mse);

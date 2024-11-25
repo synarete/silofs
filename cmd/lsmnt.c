@@ -17,10 +17,11 @@
 #define _GNU_SOURCE 1
 #include "cmd.h"
 
-static const char *cmd_lsmnt_help_desc[] = {
-	"lsmnt [options]", "",
-	"options:", "  -l, --long                   Long listing format", NULL
-};
+static const char *cmd_lsmnt_help_desc =
+	"lsmnt [options]                                                 \n"
+	"                                                                \n"
+	"options:                                                        \n"
+	"  -l, --long                   Long listing format              \n";
 
 struct cmd_lsmnt_in_args {
 	char *mntpoint;

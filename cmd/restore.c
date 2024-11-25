@@ -17,14 +17,12 @@
 #define _GNU_SOURCE 1
 #include "cmd.h"
 
-static const char *cmd_restore_help_desc[] = {
-	"restore <repodir/name> --from=<arname>",
-	"",
-	"options:",
-	"  -n, --from=arname            Source archive name",
-	"  -L, --loglevel=level         Logging level (rfc5424)",
-	NULL
-};
+static const char *cmd_restore_help_desc =
+	"restore <repodir/name> --from=<arname>                          \n"
+	"                                                                \n"
+	"options:                                                        \n"
+	"  -n, --from=arname            Source archive name              \n"
+	"  -L, --loglevel=level         Logging level (rfc5424)          \n";
 
 struct cmd_restore_in_args {
 	char *repodir_name;

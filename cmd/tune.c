@@ -17,14 +17,12 @@
 #define _GNU_SOURCE 1
 #include "cmd.h"
 
-static const char *cmd_tune_help_desc[] = {
-	"tune --ftype=1|2 <dirpath>",
-	"",
-	"options:",
-	"  -t, --ftype=1|2              Sub-type to assign to child files",
-	"  -L, --loglevel=level         Logging level (rfc5424)",
-	NULL
-};
+static const char *cmd_tune_help_desc =
+	"tune --ftype=1|2 <dirpath>                                      \n"
+	"                                                                \n"
+	"options:                                                        \n"
+	"  -t, --ftype=1|2              Sub-type to assign to child files\n"
+	"  -L, --loglevel=level         Logging level (rfc5424)          \n";
 
 struct cmd_tune_in_args {
 	char *dirpath;

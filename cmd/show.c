@@ -18,18 +18,16 @@
 #include <sys/mount.h>
 #include "cmd.h"
 
-static const char *cmd_show_help_desc[] = {
-	"show <subcmd> <pathname>",
-	"",
-	"sub commands:",
-	"  version      Show mounted file-system's version",
-	"  repo         Show back-end repository dir-path",
-	"  boot         Show file-system name and id",
-	"  proc         Show state of active mount daemon",
-	"  spstats      Show space-allocations stats",
-	"  statx        Show extended file stats",
-	NULL
-};
+static const char *cmd_show_help_desc =
+	"show <subcmd> <pathname>                                        \n"
+	"                                                                \n"
+	"sub commands:                                                   \n"
+	"  version      Show mounted file-system's version               \n"
+	"  repo         Show back-end repository dir-path                \n"
+	"  boot         Show file-system name and id                     \n"
+	"  proc         Show state of active mount daemon                \n"
+	"  spstats      Show space-allocations stats                     \n"
+	"  statx        Show extended file stats                         \n";
 
 struct cmd_show_in_args {
 	char *pathname;

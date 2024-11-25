@@ -812,34 +812,17 @@ char *cmd_mkpathf(const char *fmt, ...)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void
-cmd_show_help_descs(FILE *fp, const char *name, const char **help_strings)
+void cmd_print_help_and_exit(const char *help_string)
 {
-	size_t idx = 0;
-	const char *help_string = NULL;
-	bool with_name = (name != NULL) && strlen(name);
+	FILE *fp = stdout;
+	const char *name = cmd_globals.name;
 
-	help_string = help_strings[idx++];
-	while (help_string != NULL) {
-		if (with_name && !strlen(help_string)) {
-			with_name = false;
-		}
-		if (with_name) {
-			fprintf(fp, "%s %s\n", name, help_string);
-		} else {
-			fprintf(fp, "%s\n", help_string);
-		}
-		help_string = help_strings[idx++];
+	if (silofs_str_length(name)) {
+		fprintf(fp, "%s %s\n", name, help_string);
+	} else {
+		fprintf(fp, "%s\n", help_string);
 	}
-	fputs("\n", fp);
 	fflush(fp);
-}
-
-void cmd_print_help_and_exit(const char **help_strings)
-{
-	const char *prefix = cmd_globals.name;
-
-	cmd_show_help_descs(stdout, prefix, help_strings);
 	exit(EXIT_SUCCESS);
 }
 

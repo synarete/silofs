@@ -19,16 +19,14 @@
 #include <sys/ioctl.h>
 #include "cmd.h"
 
-static const char *cmd_snap_help_desc[] = {
-	"snap -n <snapname> [<pathname>]",
-	"snap -n <snapname> --offline <repodir/name>",
-	"",
-	"options:",
-	"  -n, --name=snapname          Result snapshot name",
-	"  -X, --offline                Operate on non-mounted file-system",
-	"  -L, --loglevel=level         Logging level (rfc5424)",
-	NULL
-};
+static const char *cmd_snap_help_desc =
+	"snap -n <snapname> [<pathname>]                                 \n"
+	"snap -n <snapname> --offline <repodir/name>                     \n"
+	"                                                                \n"
+	"options:                                                        \n"
+	"  -n, --name=snapname          Result snapshot name             \n"
+	"  -X, --offline                Operate on non-mounted fs        \n"
+	"  -L, --loglevel=level         Logging level (rfc5424)          \n";
 
 struct cmd_snap_in_args {
 	char *repodir_name;
@@ -63,10 +61,13 @@ cmd_snap_ioctl_query(const char *path, struct silofs_ioc_query *qry);
 static void cmd_snap_parse_optargs(struct cmd_snap_ctx *ctx)
 {
 	const struct cmd_optdesc ods[] = {
-		{ "name", 'n', 1 },      { "offline", 'X', 0 },
-		{ "no-prompt", 'P', 0 }, { "password", 'p', 1 },
-		{ "loglevel", 'L', 1 },  { "help", 'h', 0 },
-		{ NULL, 0, 0 },
+		{ "name", 'n', 1 },      //
+		{ "offline", 'X', 0 },   //
+		{ "no-prompt", 'P', 0 }, //
+		{ "password", 'p', 1 },  //
+		{ "loglevel", 'L', 1 },  //
+		{ "help", 'h', 0 },      //
+		{ NULL, 0, 0 },          //
 	};
 	struct cmd_optargs opa;
 	int opt_chr = 1;

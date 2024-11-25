@@ -17,14 +17,12 @@
 #define _GNU_SOURCE 1
 #include "cmd.h"
 
-static const char *cmd_archive_help_desc[] = {
-	"archive <repodir/name> --into=<arname>",
-	"",
-	"options:",
-	"  -n, --into=archivename       Result archive name",
-	"  -L, --loglevel=level         Logging level (rfc5424)",
-	NULL
-};
+static const char *cmd_archive_help_desc =
+	"archive <repodir/name> --into=<arname>                          \n"
+	"                                                                \n"
+	"options:                                                        \n"
+	"  -n, --into=archivename       Result archive name              \n"
+	"  -L, --loglevel=level         Logging level (rfc5424)          \n";
 
 struct cmd_archive_in_args {
 	char *repodir_name;

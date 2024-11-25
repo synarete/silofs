@@ -17,11 +17,11 @@
 #define _GNU_SOURCE 1
 #include "cmd.h"
 
-static const char *cmd_view_help_desc[] = {
-	"view <repodir/name>", "",
-	"options:", "  -L, --loglevel=level         Logging level (rfc5424)",
-	NULL
-};
+static const char *cmd_view_help_desc =
+	"view <repodir/name>                                             \n"
+	"                                                                \n"
+	"options:                                                        \n"
+	"  -L, --loglevel=level         Logging level (rfc5424)          \n";
 
 struct cmd_view_in_args {
 	char *repodir_name;

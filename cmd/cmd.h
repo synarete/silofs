@@ -238,7 +238,7 @@ char *cmd_struuid(const uint8_t uu[16]);
 
 silofs_attr_printf(1, 2) char *cmd_mkpathf(const char *fmt, ...);
 
-void cmd_print_help_and_exit(const char **help_strings) silofs_attr_noreturn;
+silofs_attr_noreturn void cmd_print_help_and_exit(const char *help_strings);
 
 /* parse helpers */
 long cmd_parse_str_as_size(const char *str);

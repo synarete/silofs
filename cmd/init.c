@@ -17,16 +17,14 @@
 #define _GNU_SOURCE 1
 #include "cmd.h"
 
-static const char *cmd_init_help_desc[] = {
-	"init [--user=<username>] [<repodir>]",
-	"",
-	"options:",
-	"  -u, --user=username          Primary fs-owner user-name",
-	"  -G, --sup-groups             Allow owner's supplementary groups",
-	"  -R, --allow-root             Allow root user and group",
-	"  -L, --loglevel=level         Logging level (rfc5424)",
-	NULL
-};
+static const char *cmd_init_help_desc =
+	"init [--user=<username>] [<repodir>]                            \n"
+	"                                                                \n"
+	"options:                                                        \n"
+	"  -u, --user=username        Primary fs-owner user-name         \n"
+	"  -G, --sup-groups           Allow owner's supplementary groups \n"
+	"  -R, --allow-root           Allow root user and group          \n"
+	"  -L, --loglevel=level       Logging level (rfc5424)            \n";
 
 struct cmd_init_in_args {
 	char *repodir;

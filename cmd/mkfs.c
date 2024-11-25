@@ -17,15 +17,13 @@
 #define _GNU_SOURCE 1
 #include "cmd.h"
 
-static const char *cmd_mkfs_help_desc[] = {
-	"mkfs --size=nbytes [options] <repodir/name>",
-	"",
-	"options:",
-	"  -s, --size=nbytes            Capacity size limit",
-	"  -u, --user=username          Make username the owner of root-dir",
-	"  -L, --loglevel=level         Logging level (rfc5424)",
-	NULL
-};
+static const char *cmd_mkfs_help_desc =
+	"mkfs --size=nbytes [options] <repodir/name>                     \n"
+	"                                                                \n"
+	"options:                                                        \n"
+	"  -s, --size=nbytes            Capacity size limit              \n"
+	"  -u, --user=username          Set username owner of root-dir   \n"
+	"  -L, --loglevel=level         Logging level (rfc5424)          \n";
 
 struct cmd_mkfs_in_args {
 	char *repodir_name;

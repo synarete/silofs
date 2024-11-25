@@ -143,10 +143,21 @@ static void cmd_clean_postexec(void)
 #define DEFCMD(cmd_) { #cmd_, cmd_execute_##cmd_ }
 
 static const struct cmd_info g_cmd_info[] = {
-	DEFCMD(init),  DEFCMD(mkfs),    DEFCMD(mount),   DEFCMD(umount),
-	DEFCMD(lsmnt), DEFCMD(show),    DEFCMD(snap),    DEFCMD(sync),
-	DEFCMD(tune),  DEFCMD(rmfs),    DEFCMD(prune),   DEFCMD(fsck),
-	DEFCMD(view),  DEFCMD(archive), DEFCMD(restore),
+	DEFCMD(init),    //
+	DEFCMD(mkfs),    //
+	DEFCMD(mount),   //
+	DEFCMD(umount),  //
+	DEFCMD(lsmnt),   //
+	DEFCMD(show),    //
+	DEFCMD(snap),    //
+	DEFCMD(sync),    //
+	DEFCMD(tune),    //
+	DEFCMD(rmfs),    //
+	DEFCMD(prune),   //
+	DEFCMD(fsck),    //
+	DEFCMD(view),    //
+	DEFCMD(archive), //
+	DEFCMD(restore),
 };
 
 static bool equals(const char *s1, const char *s2)
@@ -174,17 +185,23 @@ static const struct cmd_info *cmd_info_of(const char *cmd_name)
 
 silofs_attr_noreturn static void show_main_help_and_exit(int exit_code)
 {
-	printf("%s <command> [options]\n\n", cmd_globals.name);
-	printf("main commands: \n");
+	FILE *fp = stdout;
+
+	fprintf(fp, "%s <command> [options]\n\n", cmd_globals.name);
+	fputs("main commands: \n", fp);
 	for (size_t i = 0; i < SILOFS_ARRAY_SIZE(g_cmd_info); ++i) {
-		printf("  %s\n", g_cmd_info[i].name);
+		fprintf(fp, "  %s\n", g_cmd_info[i].name);
 	}
+	fflush(fp);
 	exit(exit_code);
 }
 
-__attribute__((__noreturn__)) static void cmd_print_version_and_exit(void)
+silofs_attr_noreturn static void cmd_print_version_and_exit(void)
 {
-	printf("%s %s\n", cmd_globals.name, cmd_globals.version);
+	FILE *fp = stdout;
+
+	fprintf(fp, "%s %s\n", cmd_globals.name, cmd_globals.version);
+	fflush(fp);
 	exit(0);
 }
 

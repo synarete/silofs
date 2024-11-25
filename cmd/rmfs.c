@@ -17,10 +17,11 @@
 #define _GNU_SOURCE 1
 #include "cmd.h"
 
-static const char *cmd_rmfs_help_desc[] = {
-	"rmfs <repodir/name>", "",
-	"options:", "  -L, --loglevel=level         Logging level (rfc5424)",
-	NULL
+static const char *cmd_rmfs_help_desc = {
+	"rmfs <repodir/name>                                             \n"
+	"                                                                \n"
+	"options:                                                        \n"
+	"  -L, --loglevel=level         Logging level (rfc5424)          \n"
 };
 
 struct cmd_rmfs_in_args {
@@ -47,11 +48,13 @@ static struct cmd_rmfs_ctx *cmd_rmfs_ctx;
 
 static void cmd_rmfs_parse_optargs(struct cmd_rmfs_ctx *ctx)
 {
-	const struct cmd_optdesc ods[] = { { "password", 'p', 1 },
-					   { "no-prompt", 'P', 0 },
-					   { "loglevel", 'L', 1 },
-					   { "help", 'h', 0 },
-					   { NULL, 0, 0 } };
+	const struct cmd_optdesc ods[] = {
+		{ "password", 'p', 1 },  //
+		{ "no-prompt", 'P', 0 }, //
+		{ "loglevel", 'L', 1 },  //
+		{ "help", 'h', 0 },      //
+		{ NULL, 0, 0 },          //
+	};
 	struct cmd_optargs opa;
 	int opt_chr = 1;
 

@@ -24,25 +24,23 @@
 #include <sys/mount.h>
 #include "cmd.h"
 
-static const char *cmd_mount_help_desc[] = {
-	"mount [options] <repodir/name> <mountpoint>",
-	"",
-	"options:",
-	"  -o, --opts=subopts           Comma-separated sub-options",
-	"  -r, --rdonly                 Mount in read-only mode",
-	"  -X, --noexec                 Do not allow programs execution",
-	"  -S, --nosuid                 Do not honor special bits",
-	"  -i  --allow-hostids          Use local host uid/gid",
-	"  -E  --allow-xattr-acl        Enable ACL via extended attributes",
-	"  -A  --no-allow-other         Do not allow other users",
-	"  -W  --writeback-cache=0|1    Write-back cache mode",
-	"  -B  --buffer-copy-mode       Set FUSE with copy-to-buffer mode",
-	"  -D, --nodaemon               Do not run as daemon process",
-	"  -C, --coredump               Allow core-dumps upon fatal errors",
-	"  -M, --stdalloc               Use standard C allocator",
-	"  -L, --loglevel=level         Logging level (rfc5424)",
-	NULL
-};
+static const char *cmd_mount_help_desc =
+	"mount [options] <repodir/name> <mountpoint>                       \n"
+	"                                                                  \n"
+	"options:                                                          \n"
+	"  -o, --opts=subopts           Comma-separated sub-options        \n"
+	"  -r, --rdonly                 Mount in read-only mode            \n"
+	"  -X, --noexec                 Do not allow programs execution    \n"
+	"  -S, --nosuid                 Do not honor special bits          \n"
+	"  -i  --allow-hostids          Use local host uid/gid             \n"
+	"  -E  --allow-xattr-acl        ACLs via extended attributes       \n"
+	"  -A  --no-allow-other         Do not allow other users           \n"
+	"  -W  --writeback-cache=0|1    Write-back cache mode              \n"
+	"  -B  --buffer-copy-mode       Set FUSE with copy-to-buffer mode  \n"
+	"  -D, --nodaemon               Do not run as daemon process       \n"
+	"  -C, --coredump               Allow core-dumps upon fatal errors \n"
+	"  -M, --stdalloc               Use standard C malloc/free         \n"
+	"  -L, --loglevel=level         Logging level (rfc5424)            \n";
 
 struct cmd_mount_in_args {
 	char *repodir_name;

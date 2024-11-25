@@ -20,14 +20,12 @@
 #include <sys/mount.h>
 #include "cmd.h"
 
-static const char *cmd_umount_help_desc[] = {
-	"umount [options] <mountpoint>",
-	"",
-	"options:",
-	"  -l, --lazy                   Detach mode",
-	"  -f, --force                  Forced mode",
-	NULL
-};
+static const char *cmd_umount_help_desc =
+	"umount [options] <mountpoint>                                   \n"
+	"                                                                \n"
+	"options:                                                        \n"
+	"  -l, --lazy                   Detach mode                      \n"
+	"  -f, --force                  Forced mode                      \n";
 
 struct cmd_umount_in_args {
 	char *mntpoint;

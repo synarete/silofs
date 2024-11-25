@@ -17,8 +17,9 @@
 #define _GNU_SOURCE 1
 #include "cmd.h"
 
-static const char *cmd_prune_help_desc[] = { "prune [options] <repodir>", "",
-					     NULL };
+static const char *cmd_prune_help_desc =
+	"prune [options] <repodir>                                       \n"
+	"                                                                \n";
 
 struct cmd_prune_in_args {
 	char *repodir;

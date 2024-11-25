@@ -17,11 +17,11 @@
 #define _GNU_SOURCE 1
 #include "cmd.h"
 
-static const char *cmd_sync_help_desc[] = {
-	"sync [<pathname>]", "",
-	"options:", "  -L, --loglevel=level         Logging level (rfc5424)",
-	NULL
-};
+static const char *cmd_sync_help_desc =
+	"sync [<pathname>]                                               \n"
+	"                                                                \n"
+	"options:                                                        \n"
+	"  -L, --loglevel=level         Logging level (rfc5424)          \n";
 
 struct cmd_sync_in_args {
 	char *pathname;

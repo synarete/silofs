@@ -193,12 +193,10 @@ ut_dir_iter_names_(struct ut_env *ute, const char *names[], size_t nnames)
 
 static void ut_dir_iter_fixed_names(struct ut_env *ute)
 {
-	const char *dig_names[] = { "1", "22", "333", "4444",
-				    "55555"
-				    "666666"
-				    "7777777"
-				    "88888888"
-				    "999999999" };
+	const char *dig_names[] = {
+		"1",      "22",      "333",      "4444",      "55555",
+		"666666", "7777777", "88888888", "999999999",
+	};
 	const char *abc_names[] = {
 		"a",
 		"bb",

@@ -172,22 +172,23 @@ ut_file_edges_fmapping_(struct ut_env *ute, const loff_t *off_arr, size_t cnt)
 
 static void ut_file_edges_fmapping(struct ut_env *ute)
 {
-	long off_arr[] = { UT_1K,
-			   2 * UT_1K,
-			   UT_4K,
-			   UT_8K,
-			   2 * UT_8K,
-			   4 * UT_8K,
-			   UT_BK_SIZE,
-			   2 * UT_BK_SIZE,
-			   UT_BK_SIZE * UT_FILEMAP_NCHILDS,
-			   UT_BK_SIZE * (UT_FILEMAP_NCHILDS + 1),
-			   UT_BK_SIZE * 2 * UT_FILEMAP_NCHILDS,
-			   UT_BK_SIZE * ((2 * UT_FILEMAP_NCHILDS) + 1),
-			   UT_BK_SIZE * UT_FILEMAP_NCHILDS *
-				   UT_FILEMAP_NCHILDS,
-			   UT_FILESIZE_MAX / 2,
-			   UT_FILESIZE_MAX - UT_BK_SIZE };
+	long off_arr[] = {
+		UT_1K,
+		2 * UT_1K,
+		UT_4K,
+		UT_8K,
+		2 * UT_8K,
+		4 * UT_8K,
+		UT_BK_SIZE,
+		2 * UT_BK_SIZE,
+		UT_BK_SIZE * UT_FILEMAP_NCHILDS,
+		UT_BK_SIZE * (UT_FILEMAP_NCHILDS + 1),
+		UT_BK_SIZE * 2 * UT_FILEMAP_NCHILDS,
+		UT_BK_SIZE * ((2 * UT_FILEMAP_NCHILDS) + 1),
+		UT_BK_SIZE * UT_FILEMAP_NCHILDS * UT_FILEMAP_NCHILDS,
+		UT_FILESIZE_MAX / 2,
+		UT_FILESIZE_MAX - UT_BK_SIZE,
+	};
 	const size_t off_arr_len = UT_ARRAY_SIZE(off_arr);
 
 	for (size_t i = 0; i < 8; ++i) {

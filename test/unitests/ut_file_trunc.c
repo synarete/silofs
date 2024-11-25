@@ -51,9 +51,11 @@ static void ut_file_trunc_data_(struct ut_env *ute, loff_t off, size_t len)
 static void ut_file_trunc_simple(struct ut_env *ute)
 {
 	const struct ut_range ranges[] = {
-		UT_MKRANGE1(0, UT_64K),     UT_MKRANGE1(UT_64K, UT_64K),
-		UT_MKRANGE1(UT_1M, UT_64K), UT_MKRANGE1(UT_1G, UT_64K),
-		UT_MKRANGE1(UT_1T, UT_64K),
+		UT_MKRANGE1(0, UT_64K),      //
+		UT_MKRANGE1(UT_64K, UT_64K), //
+		UT_MKRANGE1(UT_1M, UT_64K),  //
+		UT_MKRANGE1(UT_1G, UT_64K),  //
+		UT_MKRANGE1(UT_1T, UT_64K),  //
 	};
 
 	ut_exec_with_ranges(ute, ut_file_trunc_data_, ranges);
@@ -241,10 +243,15 @@ static void ut_file_trunc_single_byte_(struct ut_env *ute,
 
 static void ut_file_trunc_single_byte(struct ut_env *ute)
 {
-	const loff_t off1[] = { 0, UT_BK_SIZE, UT_1M, UT_1G, UT_1T };
-	const loff_t off2[] = { 1, UT_BK_SIZE + 1, UT_1M + 1, UT_1G + 1,
-				UT_1T + 1 };
-	const loff_t off3[] = { 77, 777, 7777, 77777, 777777, 7777777 };
+	const loff_t off1[] = {
+		0, UT_BK_SIZE, UT_1M, UT_1G, UT_1T,
+	};
+	const loff_t off2[] = {
+		1, UT_BK_SIZE + 1, UT_1M + 1, UT_1G + 1, UT_1T + 1,
+	};
+	const loff_t off3[] = {
+		77, 777, 7777, 77777, 777777, 7777777,
+	};
 
 	ut_file_trunc_single_byte_(ute, off1, UT_ARRAY_SIZE(off1));
 	ut_relax_mem(ute);

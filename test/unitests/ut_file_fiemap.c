@@ -30,10 +30,12 @@ static struct fiemap *new_fiemap(struct ut_env *ute, size_t cnt)
 static struct fiemap *
 ut_fiemap_of(struct ut_env *ute, ino_t ino, loff_t off, size_t len)
 {
-	struct fiemap fm0 = { .fm_start = (uint64_t)off,
-			      .fm_length = len,
-			      .fm_flags = 0,
-			      .fm_extent_count = 0 };
+	struct fiemap fm0 = {
+		.fm_start = (uint64_t)off,
+		.fm_length = len,
+		.fm_flags = 0,
+		.fm_extent_count = 0,
+	};
 	const uint32_t magic = SILOFS_FSID_MAGIC;
 	struct fiemap *fm = NULL;
 	const struct fiemap_extent *fm_ext = NULL;

@@ -135,7 +135,7 @@ static const struct silofs_fsinfo fsinfo_allowed[] = {
 	MKFSINFO(F2FS_SUPER_MAGIC, "F2FS", 1, 0),
 	MKFSINFO(NFS_SUPER_MAGIC, "NFS", 1, 0),
 	MKFSINFO(NTFS_SB_MAGIC, "NTFS", 1, 0),
-	MKFSINFO(OVERLAYFS_SUPER_MAGIC, "OVERLAYFS", 0, 0)
+	MKFSINFO(OVERLAYFS_SUPER_MAGIC, "OVERLAYFS", 0, 0),
 };
 
 const struct silofs_fsinfo *silofs_fsinfo_by_vfstype(long vfstype)
@@ -587,16 +587,22 @@ static void do_pack_fd(struct msghdr *msg, int fd)
 static int mntmsg_send(const struct silofs_mntmsg *mmsg,
 		       const struct silofs_socket *sock, int fd)
 {
-	struct silofs_cmsg_buf cb = { .pad = 0 };
-	struct iovec iov = { .iov_base = unconst(mmsg),
-			     .iov_len = sizeof(*mmsg) };
-	struct msghdr msg = { .msg_name = NULL,
-			      .msg_namelen = 0,
-			      .msg_iov = &iov,
-			      .msg_iovlen = 1,
-			      .msg_control = cb.cms,
-			      .msg_controllen = (fd > 0) ? sizeof(cb.cms) : 0,
-			      .msg_flags = 0 };
+	struct silofs_cmsg_buf cb = {
+		.pad = 0,
+	};
+	struct iovec iov = {
+		.iov_base = unconst(mmsg),
+		.iov_len = sizeof(*mmsg),
+	};
+	struct msghdr msg = {
+		.msg_name = NULL,
+		.msg_namelen = 0,
+		.msg_iov = &iov,
+		.msg_iovlen = 1,
+		.msg_control = cb.cms,
+		.msg_controllen = (fd > 0) ? sizeof(cb.cms) : 0,
+		.msg_flags = 0,
+	};
 
 	do_pack_fd(&msg, fd);
 	return do_sendmsg(sock, &msg);
@@ -641,16 +647,22 @@ static int do_unpack_fd(struct msghdr *msg, int *out_fd)
 static int mntmsg_recv(const struct silofs_mntmsg *mmsg,
 		       const struct silofs_socket *sock, int *out_fd)
 {
-	struct silofs_cmsg_buf cb = { .pad = 0 };
-	struct iovec iov = { .iov_base = unconst(mmsg),
-			     .iov_len = sizeof(*mmsg) };
-	struct msghdr msg = { .msg_name = NULL,
-			      .msg_namelen = 0,
-			      .msg_iov = &iov,
-			      .msg_iovlen = 1,
-			      .msg_control = cb.cms,
-			      .msg_controllen = sizeof(cb.cms),
-			      .msg_flags = 0 };
+	struct silofs_cmsg_buf cb = {
+		.pad = 0,
+	};
+	struct iovec iov = {
+		.iov_base = unconst(mmsg),
+		.iov_len = sizeof(*mmsg),
+	};
+	struct msghdr msg = {
+		.msg_name = NULL,
+		.msg_namelen = 0,
+		.msg_iov = &iov,
+		.msg_iovlen = 1,
+		.msg_control = cb.cms,
+		.msg_controllen = sizeof(cb.cms),
+		.msg_flags = 0,
+	};
 	int err;
 
 	*out_fd = -1;

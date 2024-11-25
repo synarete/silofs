@@ -2079,12 +2079,14 @@ dirc_emit(struct silofs_dir_ctx *d_ctx, const char *name, size_t nlen,
 	  ino_t ino, mode_t dt, const struct stat *attr)
 {
 	struct silofs_readdir_ctx *rd_ctx = d_ctx->rd_ctx;
-	struct silofs_readdir_info rdi = { .attr.st.st_ino = ino,
-					   .name = name,
-					   .namelen = nlen,
-					   .ino = ino,
-					   .dt = dt,
-					   .off = rd_ctx->pos };
+	struct silofs_readdir_info rdi = {
+		.attr.st.st_ino = ino,
+		.name = name,
+		.namelen = nlen,
+		.ino = ino,
+		.dt = dt,
+		.off = rd_ctx->pos,
+	};
 	int err;
 
 	if ((attr != NULL) && d_ctx->readdir_plus) {

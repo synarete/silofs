@@ -229,8 +229,10 @@ silofs_attr_noreturn static void
 silofs_fatal_op(long a, const char *op, long b,
 		const struct silofs_fileline *fl)
 {
-	struct silofs_fatal_msg fm = { .fl.file = fl->file,
-				       .fl.line = fl->line };
+	struct silofs_fatal_msg fm = {
+		.fl.file = fl->file,
+		.fl.line = fl->line,
+	};
 
 	fmtmsg(&fm, "%ld %s %ld", a, op, b);
 	silofs_fatal_by_(&fm);
@@ -239,8 +241,10 @@ silofs_fatal_op(long a, const char *op, long b,
 void silofs_expect_cond_(int cond, const char *str, const char *file, int line)
 {
 	if (silofs_unlikely(!cond)) {
-		const struct silofs_fileline fl = { .file = file,
-						    .line = line };
+		const struct silofs_fileline fl = {
+			.file = file,
+			.line = line,
+		};
 
 		silofs_fatal_at_(str, &fl);
 	}
@@ -262,8 +266,10 @@ void silofs_expect_true_(int cond, const char *file, int line)
 void silofs_expect_eq_(long a, long b, const char *file, int line)
 {
 	if (silofs_unlikely(a != b)) {
-		const struct silofs_fileline fl = { .file = file,
-						    .line = line };
+		const struct silofs_fileline fl = {
+			.file = file,
+			.line = line,
+		};
 
 		silofs_fatal_op(a, "!=", b, &fl);
 	}
@@ -272,8 +278,10 @@ void silofs_expect_eq_(long a, long b, const char *file, int line)
 void silofs_expect_ne_(long a, long b, const char *file, int line)
 {
 	if (silofs_unlikely(a == b)) {
-		const struct silofs_fileline fl = { .file = file,
-						    .line = line };
+		const struct silofs_fileline fl = {
+			.file = file,
+			.line = line,
+		};
 
 		silofs_fatal_op(a, "==", b, &fl);
 	}
@@ -282,8 +290,10 @@ void silofs_expect_ne_(long a, long b, const char *file, int line)
 void silofs_expect_lt_(long a, long b, const char *file, int line)
 {
 	if (silofs_unlikely(a >= b)) {
-		const struct silofs_fileline fl = { .file = file,
-						    .line = line };
+		const struct silofs_fileline fl = {
+			.file = file,
+			.line = line,
+		};
 
 		silofs_fatal_op(a, ">=", b, &fl);
 	}
@@ -292,8 +302,10 @@ void silofs_expect_lt_(long a, long b, const char *file, int line)
 void silofs_expect_le_(long a, long b, const char *file, int line)
 {
 	if (silofs_unlikely(a > b)) {
-		const struct silofs_fileline fl = { .file = file,
-						    .line = line };
+		const struct silofs_fileline fl = {
+			.file = file,
+			.line = line,
+		};
 
 		silofs_fatal_op(a, ">", b, &fl);
 	}
@@ -302,8 +314,10 @@ void silofs_expect_le_(long a, long b, const char *file, int line)
 void silofs_expect_gt_(long a, long b, const char *file, int line)
 {
 	if (silofs_unlikely(a <= b)) {
-		const struct silofs_fileline fl = { .file = file,
-						    .line = line };
+		const struct silofs_fileline fl = {
+			.file = file,
+			.line = line,
+		};
 
 		silofs_fatal_op(a, "<=", b, &fl);
 	}
@@ -312,8 +326,10 @@ void silofs_expect_gt_(long a, long b, const char *file, int line)
 void silofs_expect_ge_(long a, long b, const char *file, int line)
 {
 	if (silofs_unlikely(a < b)) {
-		const struct silofs_fileline fl = { .file = file,
-						    .line = line };
+		const struct silofs_fileline fl = {
+			.file = file,
+			.line = line,
+		};
 
 		silofs_fatal_op(a, "<", b, &fl);
 	}
@@ -322,8 +338,10 @@ void silofs_expect_ge_(long a, long b, const char *file, int line)
 void silofs_expect_ok_(int err, const char *file, int line)
 {
 	if (silofs_unlikely(err != 0)) {
-		struct silofs_fatal_msg fm = { .fl.file = file,
-					       .fl.line = line };
+		struct silofs_fatal_msg fm = {
+			.fl.file = file,
+			.fl.line = line,
+		};
 
 		fmtmsg(&fm, "err=%d", err);
 		silofs_fatal_by_(&fm);
@@ -333,8 +351,10 @@ void silofs_expect_ok_(int err, const char *file, int line)
 void silofs_expect_err_(int err, int exp, const char *file, int line)
 {
 	if (silofs_unlikely(err != exp)) {
-		struct silofs_fatal_msg fm = { .fl.file = file,
-					       .fl.line = line };
+		struct silofs_fatal_msg fm = {
+			.fl.file = file,
+			.fl.line = line,
+		};
 
 		fmtmsg(&fm, "err=%d exp=%d", err, exp);
 		silofs_fatal_by_(&fm);
@@ -344,8 +364,10 @@ void silofs_expect_err_(int err, int exp, const char *file, int line)
 void silofs_expect_not_null_(const void *ptr, const char *file, int line)
 {
 	if (silofs_unlikely(ptr == NULL)) {
-		const struct silofs_fileline fl = { .file = file,
-						    .line = line };
+		const struct silofs_fileline fl = {
+			.file = file,
+			.line = line,
+		};
 
 		silofs_fatal_at_("NULL pointer", &fl);
 	}
@@ -354,8 +376,10 @@ void silofs_expect_not_null_(const void *ptr, const char *file, int line)
 void silofs_expect_null_(const void *ptr, const char *file, int line)
 {
 	if (silofs_unlikely(ptr != NULL)) {
-		struct silofs_fatal_msg fm = { .fl.file = file,
-					       .fl.line = line };
+		struct silofs_fatal_msg fm = {
+			.fl.file = file,
+			.fl.line = line,
+		};
 
 		fmtmsg(&fm, "not NULL ptr=%p", ptr);
 		silofs_fatal_by_(&fm);
@@ -368,8 +392,10 @@ void silofs_expect_eqs_(const char *s, const char *z, const char *file,
 	const int cmp = strcmp(s, z);
 
 	if (silofs_unlikely(cmp != 0)) {
-		struct silofs_fatal_msg fm = { .fl.file = file,
-					       .fl.line = line };
+		struct silofs_fatal_msg fm = {
+			.fl.file = file,
+			.fl.line = line,
+		};
 
 		fmtmsg(&fm, "str-not-equal: '%s' != '%s'", s, z);
 		silofs_fatal_by_(&fm);

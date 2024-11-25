@@ -264,8 +264,8 @@ int silofs_sys_munmapp(void **p_addr, size_t length)
 
 int silofs_sys_llseek_data(int fd, loff_t off, loff_t *out_data_off)
 {
-	int err;
 	loff_t pos = 0;
+	int err;
 
 	err = silofs_sys_llseek(fd, off, SEEK_SET, &pos);
 	if (err) {

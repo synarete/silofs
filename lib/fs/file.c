@@ -2888,12 +2888,14 @@ int silofs_do_write(struct silofs_task *task, struct silofs_inode_info *ii,
 		    const void *buf, size_t len, loff_t off, int o_flags,
 		    size_t *out_len)
 {
-	struct silofs_write_iter wri = { .rwi.actor = write_iter_actor,
-					 .rwi.len = len,
-					 .rwi.off = off,
-					 .dat = buf,
-					 .dat_len = 0,
-					 .dat_max = len };
+	struct silofs_write_iter wri = {
+		.rwi.actor = write_iter_actor,
+		.rwi.len = len,
+		.rwi.off = off,
+		.dat = buf,
+		.dat_len = 0,
+		.dat_max = len,
+	};
 	struct silofs_file_ctx f_ctx = {
 		.task = task,
 		.fsenv = task->t_fsenv,

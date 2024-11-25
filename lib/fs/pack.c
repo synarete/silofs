@@ -798,8 +798,10 @@ static int
 pac_update_hash_of(const struct silofs_par_ctx *pa_ctx,
 		   struct silofs_par_desc_info *pdi, const void *dat)
 {
-	const struct silofs_rovec rov = { .rov_base = dat,
-					  .rov_len = pdi->pd.laddr.len };
+	const struct silofs_rovec rov = {
+		.rov_base = dat,
+		.rov_len = pdi->pd.laddr.len,
+	};
 	const struct silofs_mdigest *md = &pa_ctx->pac_pindex.mdigest;
 
 	pd_update_caddr_by(&pdi->pd, md, &rov);

@@ -1390,9 +1390,9 @@ static int
 emit_direntonly(void *buf, size_t bsz, const char *name, size_t nlen,
 		ino_t ino, mode_t dt, loff_t off, size_t *out_sz)
 {
+	struct fuse_dirent *fde = buf;
 	size_t entlen;
 	size_t entlen_padded;
-	struct fuse_dirent *fde = buf;
 
 	entlen = FUSE_NAME_OFFSET + nlen;
 	entlen_padded = FUSE_DIRENT_ALIGN(entlen);
@@ -1415,10 +1415,10 @@ static int
 emit_direntplus(void *buf, size_t bsz, const char *name, size_t nlen,
 		const struct silofs_stat *st, loff_t off, size_t *out_sz)
 {
-	size_t entlen;
-	size_t entlen_padded;
 	struct fuse_direntplus *fdp = buf;
 	struct fuse_dirent *fde = &fdp->dirent;
+	size_t entlen;
+	size_t entlen_padded;
 
 	entlen = FUSE_NAME_OFFSET_DIRENTPLUS + nlen;
 	entlen_padded = FUSE_DIRENT_ALIGN(entlen);

@@ -67,16 +67,13 @@ int silofs_str_compare(const char *s1, const char *s2, size_t n)
 
 int silofs_str_ncompare(const char *s1, size_t n1, const char *s2, size_t n2)
 {
+	const size_t n = silofs_min(n1, n2);
 	int res;
-	size_t n;
 
-	n = silofs_min(n1, n2);
 	res = silofs_str_compare(s1, s2, n);
-
 	if (res == 0) {
 		res = (n1 > n2) - (n1 < n2);
 	}
-
 	return res;
 }
 
@@ -325,11 +322,11 @@ str_insert_no_overlap(char *p, size_t sz, size_t n1, const char *s, size_t n2)
 static size_t str_insert_with_overlap(char *p, size_t sz, size_t n1,
 				      const char *s, size_t n2)
 {
+	char buf[512];
+	const char *q;
 	size_t n;
 	size_t k;
 	size_t d;
-	const char *q;
-	char buf[512];
 
 	n = n1;
 	q = s + silofs_min(n2, sz);

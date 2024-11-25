@@ -631,8 +631,10 @@ static void calc_bootrec1k_caddr(const struct silofs_fsenv *fsenv,
 				 const struct silofs_bootrec1k *brec1k,
 				 struct silofs_caddr *out_caddr)
 {
-	const struct iovec iov = { .iov_base = unconst(brec1k),
-				   .iov_len = sizeof(*brec1k) };
+	const struct iovec iov = {
+		.iov_base = unconst(brec1k),
+		.iov_len = sizeof(*brec1k),
+	};
 
 	silofs_calc_caddr_of(&iov, 1, SILOFS_CTYPE_BOOTREC,
 			     &fsenv->fse_mdigest, out_caddr);
@@ -673,8 +675,10 @@ int silofs_save_bootrec(const struct silofs_fsenv *fsenv,
 	struct silofs_bootrec1k brec1k_enc = {
 		.br_magic = 1,
 	};
-	const struct silofs_rovec rovec = { .rov_base = &brec1k_enc,
-					    .rov_len = sizeof(brec1k_enc) };
+	const struct silofs_rovec rovec = {
+		.rov_base = &brec1k_enc,
+		.rov_len = sizeof(brec1k_enc),
+	};
 	struct silofs_caddr caddr;
 	int err;
 
@@ -703,8 +707,10 @@ int silofs_load_bootrec(const struct silofs_fsenv *fsenv,
 			struct silofs_bootrec *out_brec)
 {
 	struct silofs_bootrec1k brec1k_enc = { .br_magic = 0 };
-	struct silofs_rwvec rwvec = { .rwv_base = &brec1k_enc,
-				      .rwv_len = sizeof(brec1k_enc) };
+	struct silofs_rwvec rwvec = {
+		.rwv_base = &brec1k_enc,
+		.rwv_len = sizeof(brec1k_enc),
+	};
 	int err;
 
 	err = silofs_repo_lookup_ref(fsenv->fse.repo, caddr);

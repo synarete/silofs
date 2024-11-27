@@ -55,6 +55,8 @@ jobs:
         run: sudo apt-get install -y clang-format python3
       - name: Verify code style
         run: ./cstylefmt.sh
+      - name: View any code-format changes
+        run: git diff
       - name: Require clean code
         run: git diff-index --quiet HEAD
   build-devel:

@@ -55,7 +55,6 @@ qatests_deps=(
 )
 
 extra_deps=(
-  astyle
   clang
   clang-analyzer
   clang-libs

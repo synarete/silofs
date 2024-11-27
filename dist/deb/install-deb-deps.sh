@@ -61,8 +61,9 @@ qatests_deps=(
 )
 
 extra_deps=(
-  astyle
   black
+  clang
+  clang-tools
   flake8
   gdb
   git

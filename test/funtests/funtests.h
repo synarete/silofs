@@ -63,12 +63,12 @@
 
 /* tests' control flags */
 enum ft_flags {
-	FT_F_NORMAL = (1 << 1),
-	FT_F_IGNORE = (1 << 2),
+	FT_F_NORMAL  = (1 << 1),
+	FT_F_IGNORE  = (1 << 2),
 	FT_F_STATVFS = (1 << 3),
 	FT_F_TMPFILE = (1 << 4),
-	FT_F_RANDOM = (1 << 5),
-	FT_F_FLAKY = (1 << 6),
+	FT_F_RANDOM  = (1 << 5),
+	FT_F_FLAKY   = (1 << 6),
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -80,14 +80,14 @@ struct ft_mchunk;
 struct ft_tdef {
 	void (*hook)(struct ft_env *);
 	const char *name;
-	int flags;
-	int pad;
+	int         flags;
+	int         pad;
 };
 
 /* tests-array define */
 struct ft_tests {
 	const struct ft_tdef *arr;
-	size_t len;
+	size_t                len;
 };
 
 /* tests execution parameters */
@@ -95,30 +95,30 @@ struct ft_params {
 	const char *progname;
 	const char *testdir;
 	const char *testname;
-	long repeatn;
-	int tests_mask;
-	int tests_xmask;
-	int listtests;
+	long        repeatn;
+	int         tests_mask;
+	int         tests_xmask;
+	int         listtests;
 };
 
 /* tests execution environment context */
 struct ft_env {
-	struct silofs_mutex mutex;
+	struct silofs_mutex    mutex;
 	struct silofs_prandgen prng;
-	struct ft_params params;
-	const struct ft_tdef *currtest;
-	struct statvfs stvfs;
-	struct timespec ts_start;
-	struct timespec ts_finish;
-	uint64_t seqn;
-	time_t start;
-	pid_t pid;
-	uid_t uid;
-	gid_t gid;
-	mode_t umsk;
-	size_t nbytes_alloc;
-	struct ft_mchunk *malloc_list;
-	struct ft_tests tests;
+	struct ft_params       params;
+	const struct ft_tdef  *currtest;
+	struct statvfs         stvfs;
+	struct timespec        ts_start;
+	struct timespec        ts_finish;
+	uint64_t               seqn;
+	time_t                 start;
+	pid_t                  pid;
+	uid_t                  uid;
+	gid_t                  gid;
+	mode_t                 umsk;
+	size_t                 nbytes_alloc;
+	struct ft_mchunk      *malloc_list;
+	struct ft_tests        tests;
 };
 
 /* I/O range to test */
@@ -155,7 +155,8 @@ char *ft_make_ulong_name(struct ft_env *fte, unsigned long key);
 
 char *ft_make_rand_name(struct ft_env *fte, size_t name_len);
 
-char *ft_make_xname_unique(struct ft_env *fte, size_t nlen, char *p, size_t n);
+char *
+ft_make_xname_unique(struct ft_env *fte, size_t nlen, char *p, size_t n);
 
 char *ft_new_name_unique(struct ft_env *fte);
 
@@ -169,7 +170,7 @@ char *
 ft_new_path_nested(struct ft_env *fte, const char *base, const char *name);
 
 silofs_attr_printf(2, 3) char *ft_new_namef(struct ft_env *fte,
-					    const char *fmt, ...);
+					    const char    *fmt, ...);
 
 silofs_attr_printf(3, 4) char *ft_new_pathf(struct ft_env *fte, const char *p,
 					    const char *fmt, ...);

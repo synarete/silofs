@@ -26,16 +26,14 @@ struct silofs_prandgen {
 	uint64_t rands[127];
 };
 
-
 void silofs_getentropy(void *buf, size_t len);
-
 
 void silofs_prandgen_init(struct silofs_prandgen *prng);
 
-void silofs_prandgen_take(struct silofs_prandgen *prng, void *buf, size_t bsz);
+void silofs_prandgen_take(struct silofs_prandgen *prng, void *buf,
+			  size_t bsz);
 
 void silofs_prandgen_take_u64(struct silofs_prandgen *prng, uint64_t *out);
-
 
 void silofs_prandgen_ascii(struct silofs_prandgen *prng, char *str, size_t n);
 

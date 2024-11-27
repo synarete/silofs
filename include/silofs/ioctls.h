@@ -28,23 +28,22 @@
 #include <silofs/defs.h>
 
 /* maximal size of ioctl input argument */
-#define SILOFS_IOC_SIZE_MAX     (2048)
+#define SILOFS_IOC_SIZE_MAX (2048)
 
 /* supported ioctl commands */
-#define SILOFS_IOC_QUERY        _IOWR('S', 1, struct silofs_ioc_query)
-#define SILOFS_IOC_CLONE        _IOWR('S', 2, struct silofs_ioc_clone)
-#define SILOFS_IOC_SYNCFS       _IOW('S', 3, struct silofs_ioc_syncfs)
-#define SILOFS_IOC_TUNE         _IOW('S', 4, struct silofs_ioc_tune)
-
+#define SILOFS_IOC_QUERY  _IOWR('S', 1, struct silofs_ioc_query)
+#define SILOFS_IOC_CLONE  _IOWR('S', 2, struct silofs_ioc_clone)
+#define SILOFS_IOC_SYNCFS _IOW('S', 3, struct silofs_ioc_syncfs)
+#define SILOFS_IOC_TUNE   _IOW('S', 4, struct silofs_ioc_tune)
 
 enum silofs_query_type {
-	SILOFS_QUERY_NONE       = 0,
-	SILOFS_QUERY_VERSION    = 1,
-	SILOFS_QUERY_REPO       = 2,
-	SILOFS_QUERY_BOOT       = 3,
-	SILOFS_QUERY_PROC       = 4,
-	SILOFS_QUERY_SPSTATS    = 5,
-	SILOFS_QUERY_STATX      = 6,
+	SILOFS_QUERY_NONE    = 0,
+	SILOFS_QUERY_VERSION = 1,
+	SILOFS_QUERY_REPO    = 2,
+	SILOFS_QUERY_BOOT    = 3,
+	SILOFS_QUERY_PROC    = 4,
+	SILOFS_QUERY_SPSTATS = 5,
+	SILOFS_QUERY_STATX   = 6,
 };
 
 struct silofs_query_version {
@@ -55,7 +54,7 @@ struct silofs_query_version {
 };
 
 struct silofs_query_repo {
-	char    path[SILOFS_REPOPATH_MAX];
+	char path[SILOFS_REPOPATH_MAX];
 };
 
 struct silofs_query_boot {
@@ -69,8 +68,8 @@ struct silofs_query_proc {
 	int64_t  pid;
 	uint32_t uid;
 	uint32_t gid;
-	int64_t  uptime;      /* current up-time in seconds */
-	uint64_t msflags;     /* mount flags */
+	int64_t  uptime;  /* current up-time in seconds */
+	uint64_t msflags; /* mount flags */
 	uint64_t memsz_max;
 	uint64_t memsz_cur;
 	uint64_t bopen_cur;
@@ -85,23 +84,23 @@ struct silofs_query_spstats {
 
 struct silofs_query_statx {
 	struct statx stx;
-	uint32_t iflags;
-	uint32_t dirflags;
+	uint32_t     iflags;
+	uint32_t     dirflags;
 };
 
 union silofs_query_u {
-	struct silofs_query_version     version;
-	struct silofs_query_repo        repo;
-	struct silofs_query_boot        boot;
-	struct silofs_query_proc        proc;
-	struct silofs_query_spstats     spstats;
-	struct silofs_query_statx       statx;
-	uint8_t pad[1984];
+	struct silofs_query_version version;
+	struct silofs_query_repo    repo;
+	struct silofs_query_boot    boot;
+	struct silofs_query_proc    proc;
+	struct silofs_query_spstats spstats;
+	struct silofs_query_statx   statx;
+	uint8_t                     pad[1984];
 };
 
 struct silofs_ioc_query {
-	int32_t  qtype;
-	uint32_t reserved[15];
+	int32_t              qtype;
+	uint32_t             reserved[15];
 	union silofs_query_u u;
 };
 
@@ -122,11 +121,11 @@ struct silofs_ioc_tune {
 };
 
 union silofs_ioc_u {
-	uint8_t buf[SILOFS_IOC_SIZE_MAX];
-	struct silofs_ioc_query         query;
-	struct silofs_ioc_clone         clone;
-	struct silofs_ioc_syncfs        syncfs;
-	struct silofs_ioc_tune          tune;
+	uint8_t                  buf[SILOFS_IOC_SIZE_MAX];
+	struct silofs_ioc_query  query;
+	struct silofs_ioc_clone  clone;
+	struct silofs_ioc_syncfs syncfs;
+	struct silofs_ioc_tune   tune;
 };
 
 #endif /* SILOFS_IOCTLS_H_ */

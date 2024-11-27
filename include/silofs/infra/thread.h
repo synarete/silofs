@@ -26,25 +26,25 @@ struct silofs_thread;
 typedef int (*silofs_execute_fn)(struct silofs_thread *);
 
 struct silofs_thread {
-	pthread_t               pth;
-	silofs_execute_fn       exec;
-	void                   *arg;
-	time_t                  start_time;
-	time_t                  finish_time;
-	int                     status;
-	char                    name[84];
+	pthread_t         pth;
+	silofs_execute_fn exec;
+	void             *arg;
+	time_t            start_time;
+	time_t            finish_time;
+	int               status;
+	char              name[84];
 };
 
 struct silofs_mutex {
-	pthread_mutex_t         mutex;
+	pthread_mutex_t mutex;
 };
 
 struct silofs_cond {
-	pthread_cond_t          cond;
+	pthread_cond_t cond;
 };
 
 struct silofs_rwlock {
-	pthread_rwlock_t        rwlock;
+	pthread_rwlock_t rwlock;
 };
 
 struct silofs_sem {
@@ -56,7 +56,7 @@ struct silofs_sem {
 int silofs_thread_sigblock_common(void);
 
 int silofs_thread_create(struct silofs_thread *th, silofs_execute_fn exec,
-                         void *arg, const char *name);
+			 void *arg, const char *name);
 
 int silofs_thread_join(struct silofs_thread *th);
 
@@ -70,8 +70,8 @@ void silofs_mutex_lock(struct silofs_mutex *mutex);
 
 bool silofs_mutex_trylock(struct silofs_mutex *mutex);
 
-bool silofs_mutex_timedlock(struct silofs_mutex *mutex,
-                            const struct timespec *abstime);
+bool silofs_mutex_timedlock(struct silofs_mutex   *mutex,
+			    const struct timespec *abstime);
 
 void silofs_mutex_unlock(struct silofs_mutex *mutex);
 
@@ -81,14 +81,14 @@ int silofs_cond_init(struct silofs_cond *cond);
 
 void silofs_cond_fini(struct silofs_cond *cond);
 
-void silofs_cond_wait(struct silofs_cond *cond,
-                      struct silofs_mutex *mutex);
+void silofs_cond_wait(struct silofs_cond *cond, struct silofs_mutex *mutex);
 
-int silofs_cond_timedwait(struct silofs_cond *cond, struct silofs_mutex *mutex,
-                          const struct timespec *ts);
+int silofs_cond_timedwait(struct silofs_cond    *cond,
+			  struct silofs_mutex   *mutex,
+			  const struct timespec *ts);
 
-int silofs_cond_ntimedwait(struct silofs_cond *cond,
-                           struct silofs_mutex *mutex, time_t nsec);
+int silofs_cond_ntimedwait(struct silofs_cond  *cond,
+			   struct silofs_mutex *mutex, time_t nsec);
 
 void silofs_cond_signal(struct silofs_cond *cond);
 

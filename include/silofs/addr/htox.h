@@ -83,5 +83,4 @@ static inline time_t silofs_time_to_cpu(uint64_t tm)
 	return (time_t)silofs_le64_to_cpu(tm);
 }
 
-
 #endif /* SILOFS_HTOX_H_ */

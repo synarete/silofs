@@ -25,10 +25,10 @@
 struct silofs_ms_env;
 
 struct silofs_fsinfo {
-	long vfstype;
+	long        vfstype;
 	const char *name;
-	bool allowed;
-	bool isfuse;
+	bool        allowed;
+	bool        isfuse;
 };
 
 struct silofs_mntrule {
@@ -38,35 +38,33 @@ struct silofs_mntrule {
 };
 
 struct silofs_mntrules {
-	size_t nrules;
+	size_t                nrules;
 	struct silofs_mntrule rules[SILOFS_MNTRULE_MAX];
 };
 
 struct silofs_ms_args {
 	const char *runstatedir;
-	bool use_abstract;
+	bool        use_abstract;
 };
 
-
 int silofs_mse_new(const struct silofs_ms_args *ms_args,
-                   struct silofs_ms_env **out_mse);
+		   struct silofs_ms_env       **out_mse);
 
 void silofs_mse_del(struct silofs_ms_env *mse);
 
-int silofs_mse_serve(struct silofs_ms_env *mse,
-                     const struct silofs_mntrules *mrules);
+int silofs_mse_serve(struct silofs_ms_env         *mse,
+		     const struct silofs_mntrules *mrules);
 
 void silofs_mse_halt(struct silofs_ms_env *mse, int signum);
-
 
 int silofs_mntrpc_handshake(uid_t uid, gid_t gid);
 
 int silofs_mntrpc_mount(const char *mountpoint, uid_t uid, gid_t gid,
-                        size_t max_read, unsigned long ms_flags,
-                        bool allow_other, bool check_only, int *out_fd);
+			size_t max_read, unsigned long ms_flags,
+			bool allow_other, bool check_only, int *out_fd);
 
-int silofs_mntrpc_umount(const char *mountpoint,  uid_t uid, gid_t gid,
-                         unsigned int mnt_flags);
+int silofs_mntrpc_umount(const char *mountpoint, uid_t uid, gid_t gid,
+			 unsigned int mnt_flags);
 
 bool silofs_is_fuse_fstype(long fstype);
 

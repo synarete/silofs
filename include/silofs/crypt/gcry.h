@@ -20,7 +20,6 @@
 #include <silofs/infra.h>
 #include <gcrypt.h>
 
-
 const char *silofs_gcrypt_version(void);
 
 int silofs_init_gcrypt(void);

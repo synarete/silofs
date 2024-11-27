@@ -22,15 +22,15 @@
 #include <silofs/hmdq.h>
 
 struct silofs_bcache {
-	struct silofs_hmapq     bc_hmapq;
-	struct silofs_dirtyq    bc_dirtyq;
-	struct silofs_alloc    *bc_alloc;
+	struct silofs_hmapq  bc_hmapq;
+	struct silofs_dirtyq bc_dirtyq;
+	struct silofs_alloc *bc_alloc;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_bcache_init(struct silofs_bcache *bcache,
-                       struct silofs_alloc *alloc);
+		       struct silofs_alloc  *alloc);
 
 void silofs_bcache_fini(struct silofs_bcache *bcache);
 
@@ -43,39 +43,37 @@ void silofs_bcache_relax(struct silofs_bcache *bcache, int flags);
 struct silofs_pnode_info *
 silofs_bcache_dq_front(const struct silofs_bcache *bcache);
 
+struct silofs_chkpt_info *
+silofs_bcache_lookup_cpi(struct silofs_bcache      *bcache,
+			 const struct silofs_paddr *paddr);
 
 struct silofs_chkpt_info *
-silofs_bcache_lookup_cpi(struct silofs_bcache *bcache,
-                         const struct silofs_paddr *paddr);
+silofs_bcache_create_cpi(struct silofs_bcache      *bcache,
+			 const struct silofs_paddr *paddr);
 
-struct silofs_chkpt_info *
-silofs_bcache_create_cpi(struct silofs_bcache *bcache,
-                         const struct silofs_paddr *paddr);
-
-void silofs_bcache_evict_cpi(struct silofs_bcache *bcache,
-                             struct silofs_chkpt_info *cpi);
-
+void silofs_bcache_evict_cpi(struct silofs_bcache     *bcache,
+			     struct silofs_chkpt_info *cpi);
 
 struct silofs_btnode_info *
-silofs_bcache_lookup_bti(struct silofs_bcache *bcache,
-                         const struct silofs_paddr *paddr);
+silofs_bcache_lookup_bti(struct silofs_bcache      *bcache,
+			 const struct silofs_paddr *paddr);
 
 struct silofs_btnode_info *
-silofs_bcache_create_bti(struct silofs_bcache *bcache,
-                         const struct silofs_paddr *paddr);
+silofs_bcache_create_bti(struct silofs_bcache      *bcache,
+			 const struct silofs_paddr *paddr);
 
-void silofs_bcache_evict_bti(struct silofs_bcache *bcache,
-                             struct silofs_btnode_info *bti);
-
-struct silofs_btleaf_info *
-silofs_bcache_lookup_bli(struct silofs_bcache *bcache,
-                         const struct silofs_paddr *paddr);
+void silofs_bcache_evict_bti(struct silofs_bcache      *bcache,
+			     struct silofs_btnode_info *bti);
 
 struct silofs_btleaf_info *
-silofs_bcache_create_bli(struct silofs_bcache *bcache,
-                         const struct silofs_paddr *paddr);
+silofs_bcache_lookup_bli(struct silofs_bcache      *bcache,
+			 const struct silofs_paddr *paddr);
 
-void silofs_bcache_evict_bli(struct silofs_bcache *bcache,
-                             struct silofs_btleaf_info *bli);
+struct silofs_btleaf_info *
+silofs_bcache_create_bli(struct silofs_bcache      *bcache,
+			 const struct silofs_paddr *paddr);
+
+void silofs_bcache_evict_bli(struct silofs_bcache      *bcache,
+			     struct silofs_btleaf_info *bli);
 
 #endif /* SILOFS_BCACHE_H_ */

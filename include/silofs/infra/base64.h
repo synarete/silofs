@@ -20,14 +20,13 @@
 #include <silofs/ccattr.h>
 #include <stdlib.h>
 
-silofs_attr_const
-size_t silofs_base64_encode_len(size_t inlen);
+silofs_attr_const size_t silofs_base64_encode_len(size_t inlen);
 
-int silofs_base64_encode(const void *in, size_t inlen,
-                         char *out, size_t outlen_max, size_t *out_len);
+int silofs_base64_encode(const void *in, size_t inlen, char *out,
+			 size_t outlen_max, size_t *out_len);
 
-int silofs_base64_decode(const char *in, size_t inlen,
-                         void *out, size_t outlen_max,
-                         size_t *out_len, size_t *out_inrd);
+int silofs_base64_decode(const char *in, size_t inlen, void *out,
+			 size_t outlen_max, size_t *out_len,
+			 size_t *out_inrd);
 
 #endif /* SILOFS_BASE64_H_ */

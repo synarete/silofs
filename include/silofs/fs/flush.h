@@ -21,33 +21,33 @@
 #include <silofs/fs/task.h>
 
 struct silofs_dset {
-	struct silofs_lnode_info       *ds_preq;
-	struct silofs_lnode_info       *ds_postq;
-	struct silofs_avl               ds_avl;
+	struct silofs_lnode_info *ds_preq;
+	struct silofs_lnode_info *ds_postq;
+	struct silofs_avl         ds_avl;
 };
 
 struct silofs_flusher {
-	struct silofs_submit_ref        sref[SILOFS_SQENT_NREFS_MAX];
-	struct silofs_dset              dset[3];
-	struct silofs_listq             txq;
-	struct silofs_submitq          *submitq;
-	struct silofs_task             *task;
-	struct silofs_inode_info       *ii;
-	uint32_t                        tx_count;
-	int                             flags;
+	struct silofs_submit_ref  sref[SILOFS_SQENT_NREFS_MAX];
+	struct silofs_dset        dset[3];
+	struct silofs_listq       txq;
+	struct silofs_submitq    *submitq;
+	struct silofs_task       *task;
+	struct silofs_inode_info *ii;
+	uint32_t                  tx_count;
+	int                       flags;
 } silofs_attr_aligned64;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_flusher_init(struct silofs_flusher *flusher,
-                        struct silofs_submitq *submitq);
+			struct silofs_submitq *submitq);
 
 void silofs_flusher_fini(struct silofs_flusher *flusher);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_flush_dirty(struct silofs_task *task,
-                       struct silofs_inode_info *ii, int flags);
+int silofs_flush_dirty(struct silofs_task *task, struct silofs_inode_info *ii,
+		       int flags);
 
 int silofs_flush_dirty_now(struct silofs_task *task);
 

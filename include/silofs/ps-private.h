@@ -24,15 +24,15 @@
 #include <silofs/infra.h>
 #include <silofs/defs.h>
 
-#define pni_ptype(pni)                  silofs_pni_ptype(pni)
+#define pni_ptype(pni) silofs_pni_ptype(pni)
 
-#define cpi_dirtify(cpi)                silofs_cpi_dirtify(cpi)
-#define cpi_undirtify(cpi)              silofs_cpi_undirtify(cpi)
+#define cpi_dirtify(cpi)   silofs_cpi_dirtify(cpi)
+#define cpi_undirtify(cpi) silofs_cpi_undirtify(cpi)
 
-#define bti_dirtify(bti)                silofs_bti_dirtify(bti)
-#define bti_undirtify(bti)              silofs_bti_undirtify(bti)
+#define bti_dirtify(bti)   silofs_bti_dirtify(bti)
+#define bti_undirtify(bti) silofs_bti_undirtify(bti)
 
-#define bli_dirtify(bli)                silofs_bli_dirtify(bli)
-#define bli_undirtify(bli)              silofs_bli_undirtify(bli)
+#define bli_dirtify(bli)   silofs_bli_dirtify(bli)
+#define bli_undirtify(bli) silofs_bli_undirtify(bli)
 
 #endif /* SILOFS_PS_PRIVATE_H_ */

@@ -23,10 +23,10 @@ struct silofs_iovec;
 
 /* allocation flags */
 enum silofs_allocf {
-	SILOFS_ALLOCF_NONE      = 0x00,
-	SILOFS_ALLOCF_BZERO     = 0x01,
-	SILOFS_ALLOCF_TRYPUNCH  = 0x02,
-	SILOFS_ALLOCF_NOPUNCH   = 0x04,
+	SILOFS_ALLOCF_NONE     = 0x00,
+	SILOFS_ALLOCF_BZERO    = 0x01,
+	SILOFS_ALLOCF_TRYPUNCH = 0x02,
+	SILOFS_ALLOCF_NOPUNCH  = 0x04,
 };
 
 /* allocator stats */
@@ -38,24 +38,25 @@ struct silofs_alloc_stat {
 
 /* allocator interface */
 struct silofs_alloc {
-	void *(*malloc_fn)(struct silofs_alloc *alloc, size_t size, int flags);
-	void (*free_fn)(struct silofs_alloc *alloc,
-	                void *ptr, size_t size, int flags);
+	void *(*malloc_fn)(struct silofs_alloc *alloc, size_t size,
+			   int flags);
+	void (*free_fn)(struct silofs_alloc *alloc, void *ptr, size_t size,
+			int flags);
 	void (*stat_fn)(const struct silofs_alloc *alloc,
-	                struct silofs_alloc_stat *out_stat);
+			struct silofs_alloc_stat  *out_stat);
 };
 
 /* quick memory allocator */
 enum silofs_qallocf {
-	SILOFS_QALLOCF_NONE     = 0x0,
-	SILOFS_QALLOCF_DEMASK   = 0x1,
-	SILOFS_QALLOCF_NOFAIL   = 0x2,
+	SILOFS_QALLOCF_NONE   = 0x0,
+	SILOFS_QALLOCF_DEMASK = 0x1,
+	SILOFS_QALLOCF_NOFAIL = 0x2,
 };
 
 struct silofs_memfd {
-	void   *mem;
-	size_t  msz;
-	int     fd;
+	void  *mem;
+	size_t msz;
+	int    fd;
 };
 
 struct silofs_qpool {
@@ -80,29 +81,28 @@ struct silofs_slab {
 };
 
 struct silofs_qalloc {
-	struct silofs_slab      slabs[12];
-	struct silofs_qpool     qpool;
-	struct silofs_alloc     alloc;
-	size_t                  nbytes_use;
-	int64_t                 magic;
+	struct silofs_slab  slabs[12];
+	struct silofs_qpool qpool;
+	struct silofs_alloc alloc;
+	size_t              nbytes_use;
+	int64_t             magic;
 };
 
 /* allocator via standard C malloc/free */
 struct silofs_calloc {
-	struct silofs_alloc     alloc;
-	unsigned long           nbytes_max;
-	unsigned long           nbytes_use;
-
+	struct silofs_alloc alloc;
+	unsigned long       nbytes_max;
+	unsigned long       nbytes_use;
 };
 
 /* memory allocation convenience wrappers */
 void *silofs_memalloc(struct silofs_alloc *alloc, size_t size, int flags);
 
-void silofs_memfree(struct silofs_alloc *alloc,
-                    void *ptr, size_t size, int flags);
+void silofs_memfree(struct silofs_alloc *alloc, void *ptr, size_t size,
+		    int flags);
 
 void silofs_memstat(const struct silofs_alloc *alloc,
-                    struct silofs_alloc_stat *out_stat);
+		    struct silofs_alloc_stat  *out_stat);
 
 /* standard C allocator */
 int silofs_calloc_init(struct silofs_calloc *cal, size_t memsize);
@@ -110,26 +110,25 @@ int silofs_calloc_init(struct silofs_calloc *cal, size_t memsize);
 int silofs_calloc_fini(struct silofs_calloc *cal);
 
 /* quick allocator */
-int silofs_qalloc_init(struct silofs_qalloc *qal,
-                       size_t memsize, enum silofs_qallocf flags);
+int silofs_qalloc_init(struct silofs_qalloc *qal, size_t memsize,
+		       enum silofs_qallocf flags);
 
 int silofs_qalloc_fini(struct silofs_qalloc *qal);
 
-void *silofs_qalloc_malloc(struct silofs_qalloc *qal,
-                           size_t nbytes, int flags);
+void *
+silofs_qalloc_malloc(struct silofs_qalloc *qal, size_t nbytes, int flags);
 
-void silofs_qalloc_free(struct silofs_qalloc *qal,
-                        void *ptr, size_t nbytes, int flags);
+void silofs_qalloc_free(struct silofs_qalloc *qal, void *ptr, size_t nbytes,
+			int flags);
 
 void silofs_qalloc_stat(const struct silofs_qalloc *qal,
-                        struct silofs_alloc_stat *out_stat);
+			struct silofs_alloc_stat   *out_stat);
 
-int silofs_qalloc_resolve(const struct silofs_qalloc *qal,
-                          void *ptr, size_t len, struct silofs_iovec *iov);
+int silofs_qalloc_resolve(const struct silofs_qalloc *qal, void *ptr,
+			  size_t len, struct silofs_iovec *iov);
 
-int silofs_qalloc_mcheck(const struct silofs_qalloc *qal,
-                         const void *ptr, size_t nbytes);
-
+int silofs_qalloc_mcheck(const struct silofs_qalloc *qal, const void *ptr,
+			 size_t nbytes);
 
 /* extra memory utilities */
 void silofs_memzero(void *s, size_t n);
@@ -141,6 +140,5 @@ int silofs_zmalloc(size_t sz, void **out_mem);
 void silofs_zfree(void *mem, size_t sz);
 
 int silofs_memory_limits(size_t *out_phy, size_t *out_as);
-
 
 #endif /* SILOFS_QALLOC_H_ */

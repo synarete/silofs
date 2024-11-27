@@ -17,24 +17,23 @@
 #ifndef SILOFS_BLOBID_H_
 #define SILOFS_BLOBID_H_
 
-#define SILOFS_BOLBID_LEN_MAX   (40)
-
+#define SILOFS_BOLBID_LEN_MAX (40)
 
 struct silofs_blobid {
-	uint32_t        id_len;
-	uint8_t         id[SILOFS_BOLBID_LEN_MAX];
+	uint32_t id_len;
+	uint8_t  id[SILOFS_BOLBID_LEN_MAX];
 };
 
-void silofs_blobid_setup(struct silofs_blobid *blobid,
-                         const void *id, size_t id_len);
+void silofs_blobid_setup(struct silofs_blobid *blobid, const void *id,
+			 size_t id_len);
 
-void silofs_blobid_assign(struct silofs_blobid *blobid,
-                          const struct silofs_blobid *other);
+void silofs_blobid_assign(struct silofs_blobid       *blobid,
+			  const struct silofs_blobid *other);
 
 void silofs_blobid_reset(struct silofs_blobid *blobid);
 
 long silofs_blobid_compare(const struct silofs_blobid *blobid1,
-                           const struct silofs_blobid *blobid2);
+			   const struct silofs_blobid *blobid2);
 
 uint64_t silofs_blobid_hash64(const struct silofs_blobid *blobid);
 

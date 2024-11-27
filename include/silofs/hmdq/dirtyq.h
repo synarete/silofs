@@ -20,13 +20,11 @@
 #include <silofs/infra.h>
 #include <silofs/addr.h>
 
-
 /* dirty-queue of cached-elements */
 struct silofs_dirtyq {
-	struct silofs_listq     dq;
-	size_t                  dq_accum;
+	struct silofs_listq dq;
+	size_t              dq_accum;
 };
-
 
 /* dirty-queue element (type-safe) */
 struct silofs_dq_elem {
@@ -35,7 +33,6 @@ struct silofs_dq_elem {
 	uint32_t                sz;
 	bool                    inq;
 };
-
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -57,12 +54,10 @@ void silofs_dirtyq_init(struct silofs_dirtyq *dq);
 
 void silofs_dirtyq_fini(struct silofs_dirtyq *dq);
 
-struct silofs_dq_elem *
-silofs_dirtyq_front(const struct silofs_dirtyq *dq);
+struct silofs_dq_elem *silofs_dirtyq_front(const struct silofs_dirtyq *dq);
 
 struct silofs_dq_elem *
-silofs_dirtyq_next_of(const struct silofs_dirtyq *dq,
-                      const struct silofs_dq_elem *dqe);
-
+silofs_dirtyq_next_of(const struct silofs_dirtyq  *dq,
+		      const struct silofs_dq_elem *dqe);
 
 #endif /* SILOFS_DIRTYQ_H_ */

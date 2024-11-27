@@ -17,7 +17,6 @@
 #ifndef SILOFS_VERSION_H_
 #define SILOFS_VERSION_H_
 
-
 struct silofs_version {
 	const char  *string;
 	unsigned int major;
@@ -28,7 +27,3 @@ struct silofs_version {
 extern const struct silofs_version silofs_version;
 
 #endif /* SILOFS_VERSION_H_ */
-
-
-
-

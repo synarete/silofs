@@ -34,7 +34,7 @@ void silofs_mclock_now(struct timespec *ts);
 void silofs_mclock_dur(const struct timespec *start, struct timespec *dur);
 
 void silofs_mclock_dif(const struct timespec *start,
-                       const struct timespec *finish, struct timespec *dif);
+		       const struct timespec *finish, struct timespec *dif);
 
 void silofs_ts_omit(struct timespec *ts);
 

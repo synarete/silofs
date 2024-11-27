@@ -22,7 +22,6 @@
 
 typedef loff_t silofs_lba_t;
 
-
 bool silofs_off_isnull(loff_t off);
 
 loff_t silofs_off_min(loff_t off1, loff_t off2);
@@ -52,7 +51,6 @@ loff_t silofs_off_next_lbk(loff_t off);
 loff_t silofs_off_remainder(loff_t off, size_t len);
 
 int silofs_verify_off(loff_t off);
-
 
 bool silofs_lba_isnull(silofs_lba_t lba);
 

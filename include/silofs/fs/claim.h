@@ -17,20 +17,19 @@
 #ifndef SILOFS_SPCLAIM_H_
 #define SILOFS_SPCLAIM_H_
 
-
-
 int silofs_claim_vspace(struct silofs_task *task, enum silofs_ltype ltype,
-                        struct silofs_vaddr *out_vaddr);
+			struct silofs_vaddr *out_vaddr);
 
-int silofs_reclaim_vspace(struct silofs_task *task,
-                          const struct silofs_vaddr *vaddr);
+int silofs_reclaim_vspace(struct silofs_task        *task,
+			  const struct silofs_vaddr *vaddr);
 
-int silofs_claim_ispace(struct silofs_task *task,
-                        struct silofs_vaddr *out_vaddr);
+int silofs_claim_ispace(struct silofs_task  *task,
+			struct silofs_vaddr *out_vaddr);
 
-int silofs_addref_vspace(struct silofs_task *task,
-                         const struct silofs_vaddr *vaddr);
+int silofs_addref_vspace(struct silofs_task        *task,
+			 const struct silofs_vaddr *vaddr);
 
-int silofs_rescan_vspace_of(struct silofs_task *task, enum silofs_ltype ltype);
+int silofs_rescan_vspace_of(struct silofs_task *task,
+			    enum silofs_ltype   ltype);
 
 #endif /* SILOFS_SPCLAIM_H_ */

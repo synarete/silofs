@@ -21,28 +21,22 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-silofs_attr_const
-char silofs_nibble_to_ascii(int n);
+silofs_attr_const char silofs_nibble_to_ascii(int n);
 
-silofs_attr_const
-int silofs_ascii_to_nibble(char a);
-
+silofs_attr_const int silofs_ascii_to_nibble(char a);
 
 void silofs_uint64_to_ascii(uint64_t u, char *a);
 
 int silofs_ascii_to_uint64(const char *a, uint64_t *out_u);
 
-
 void silofs_byte_to_ascii(uint8_t b, char *a);
 
 int silofs_ascii_to_byte(const char *a, uint8_t *b);
 
+void silofs_mem_to_ascii(const void *mem, size_t msz, char *asb, size_t asz,
+			 size_t *out_cnt);
 
-void silofs_mem_to_ascii(const void *mem, size_t msz,
-                         char *asb, size_t asz, size_t *out_cnt);
-
-int silofs_ascii_to_mem(void *mem, size_t msz,
-                        const char *asb, size_t asz, size_t *out_cnt);
-
+int silofs_ascii_to_mem(void *mem, size_t msz, const char *asb, size_t asz,
+			size_t *out_cnt);
 
 #endif /* SILOFS_ASCII_H_ */

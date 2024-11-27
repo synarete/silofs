@@ -30,45 +30,43 @@ enum silofs_log_level {
 
 /* logging control flags */
 enum silofs_log_flags {
-	SILOFS_LOGF_STDOUT      = 0x01,
-	SILOFS_LOGF_SYSLOG      = 0x02,
-	SILOFS_LOGF_FILINE      = 0x04,
-	SILOFS_LOGF_PROGNAME    = 0x08,
-	SILOFS_LOGF_DEFAULT     = SILOFS_LOGF_STDOUT | SILOFS_LOGF_PROGNAME,
+	SILOFS_LOGF_STDOUT   = 0x01,
+	SILOFS_LOGF_SYSLOG   = 0x02,
+	SILOFS_LOGF_FILINE   = 0x04,
+	SILOFS_LOGF_PROGNAME = 0x08,
+	SILOFS_LOGF_DEFAULT  = SILOFS_LOGF_STDOUT | SILOFS_LOGF_PROGNAME,
 };
 
 struct silofs_log_params {
-	const char             *progname;
-	enum silofs_log_level   level;
-	enum silofs_log_flags   flags;
+	const char           *progname;
+	enum silofs_log_level level;
+	enum silofs_log_flags flags;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 #define silofs_log_debug(fmt, ...) \
-        silofs_logf(SILOFS_LOG_DEBUG, __FILE__, __LINE__, fmt, __VA_ARGS__)
+	silofs_logf(SILOFS_LOG_DEBUG, __FILE__, __LINE__, fmt, __VA_ARGS__)
 
 #define silofs_log_info(fmt, ...) \
-        silofs_logf(SILOFS_LOG_INFO, __FILE__, __LINE__, fmt, __VA_ARGS__)
+	silofs_logf(SILOFS_LOG_INFO, __FILE__, __LINE__, fmt, __VA_ARGS__)
 
 #define silofs_log_warn(fmt, ...) \
-        silofs_logf(SILOFS_LOG_WARN, __FILE__, __LINE__, fmt, __VA_ARGS__)
+	silofs_logf(SILOFS_LOG_WARN, __FILE__, __LINE__, fmt, __VA_ARGS__)
 
 #define silofs_log_error(fmt, ...) \
-        silofs_logf(SILOFS_LOG_ERROR, __FILE__, __LINE__, fmt, __VA_ARGS__)
+	silofs_logf(SILOFS_LOG_ERROR, __FILE__, __LINE__, fmt, __VA_ARGS__)
 
 #define silofs_log_crit(fmt, ...) \
-        silofs_logf(SILOFS_LOG_CRIT, __FILE__, __LINE__, fmt, __VA_ARGS__)
+	silofs_logf(SILOFS_LOG_CRIT, __FILE__, __LINE__, fmt, __VA_ARGS__)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-
 void silofs_set_global_log_params(const struct silofs_log_params *logp);
 
-silofs_attr_printf(4, 5)
-int silofs_logf(enum silofs_log_level log_level,
-                const char *file, int line, const char *fmt, ...);
-
+silofs_attr_printf(4, 5) int silofs_logf(enum silofs_log_level log_level,
+					 const char *file, int line,
+					 const char *fmt, ...);
 
 enum silofs_log_level silofs_log_level_by_rfc5424(const char *s);
 

@@ -22,7 +22,7 @@
 /* read-only I/O vector: pointer to immutable data and length */
 struct silofs_rovec {
 	const void *rov_base;
-	size_t rov_len;
+	size_t      rov_len;
 };
 
 /* read-write I/O vector: pointer to mutable data and length */
@@ -35,21 +35,21 @@ struct silofs_rwvec {
  * file-descriptor and back-reference. */
 struct silofs_iovec {
 	struct iovec iov;
-	void  *iov_backref;
-	loff_t iov_off;
-	int    iov_fd;
+	void        *iov_backref;
+	loff_t       iov_off;
+	int          iov_fd;
 };
 
 void silofs_iovec_reset(struct silofs_iovec *iov);
 
-void silofs_iovec_assign(struct silofs_iovec *iov,
-                         const struct silofs_iovec *other);
+void silofs_iovec_assign(struct silofs_iovec       *iov,
+			 const struct silofs_iovec *other);
 
 int silofs_iovec_copy_into(const struct silofs_iovec *iov, void *buf);
 
 int silofs_iovec_copy_from(const struct silofs_iovec *iov, const void *buf);
 
 int silofs_iovec_copy_mem(const struct silofs_iovec *iov_src,
-                          const struct silofs_iovec *iov_dst, size_t len);
+			  const struct silofs_iovec *iov_dst, size_t len);
 
 #endif /* SILOFS_IOVEC_H_ */

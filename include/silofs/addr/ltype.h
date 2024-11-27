@@ -58,5 +58,4 @@ ssize_t silofs_ltype_ssize(enum silofs_ltype ltype);
 
 size_t silofs_ltype_nkbs(enum silofs_ltype ltype);
 
-
 #endif /* SILOFS_LTYPE_H_ */

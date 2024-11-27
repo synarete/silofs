@@ -23,41 +23,39 @@
 #include <silofs/ps/repo.h>
 #include <silofs/ps/bcache.h>
 
-
 struct silofs_prange {
 	struct silofs_psid psid;
-	uint32_t nsegs;
-	loff_t cur_pos;
-	bool data;
+	uint32_t           nsegs;
+	loff_t             cur_pos;
+	bool               data;
 };
 
 struct silofs_pstate {
-	struct silofs_prange    meta;
-	struct silofs_prange    data;
+	struct silofs_prange meta;
+	struct silofs_prange data;
 };
 
 struct silofs_pstore {
-	struct silofs_repo     *repo;
-	struct silofs_bcache    bcache;
-	struct silofs_pstate    pstate;
+	struct silofs_repo  *repo;
+	struct silofs_bcache bcache;
+	struct silofs_pstate pstate;
 };
-
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_pstate_assign(struct silofs_pstate *pstate,
-                          const struct silofs_pstate *other);
+void silofs_pstate_assign(struct silofs_pstate       *pstate,
+			  const struct silofs_pstate *other);
 
-void silofs_pstate128b_htox(struct silofs_pstate128b *pstate128,
-                            const struct silofs_pstate *pstate);
+void silofs_pstate128b_htox(struct silofs_pstate128b   *pstate128,
+			    const struct silofs_pstate *pstate);
 
 void silofs_pstate128b_xtoh(const struct silofs_pstate128b *pstate128,
-                            struct silofs_pstate *pstate);
+			    struct silofs_pstate           *pstate);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_pstore_init(struct silofs_pstore *pstore,
-                       struct silofs_repo *repo);
+		       struct silofs_repo   *repo);
 
 void silofs_pstore_fini(struct silofs_pstore *pstore);
 
@@ -65,12 +63,11 @@ int silofs_pstore_dropall(struct silofs_pstore *pstore);
 
 int silofs_pstore_format(struct silofs_pstore *pstore);
 
-int silofs_pstore_open(struct silofs_pstore *pstore,
-                       const struct silofs_pstate *pstate);
+int silofs_pstore_open(struct silofs_pstore       *pstore,
+		       const struct silofs_pstate *pstate);
 
 int silofs_pstore_close(struct silofs_pstore *pstore);
 
 int silofs_pstore_flush_dirty(struct silofs_pstore *pstore);
-
 
 #endif /* SILOFS_PSTORE_H_ */

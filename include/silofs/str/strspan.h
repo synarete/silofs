@@ -27,14 +27,13 @@
  */
 struct silofs_strspan {
 	struct silofs_strview v;
-	char  *s;
-	size_t n;
+	char                 *s;
+	size_t                n;
 };
 
 struct silofs_strspan_pair {
 	struct silofs_strspan first, second;
 };
-
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -44,7 +43,6 @@ size_t silofs_strspan_max_size(void);
 /* "Not-a-pos" (synonym to silofs_strspan_max_size()) */
 size_t silofs_strspan_npos(void);
 
-
 /* Constructor: reference null-terminated mutable string */
 void silofs_strspan_init(struct silofs_strspan *ss, char *s);
 
@@ -52,15 +50,15 @@ void silofs_strspan_init(struct silofs_strspan *ss, char *s);
 void silofs_strspan_initn(struct silofs_strspan *ss, char *s, size_t n);
 
 /* Constructor: reference n-mutable characters with initial length of k */
-void silofs_strspan_initk(struct silofs_strspan *ss,
-                          char *s, size_t k, size_t n);
+void silofs_strspan_initk(struct silofs_strspan *ss, char *s, size_t k,
+			  size_t n);
 
 /* Constructor: reference zero-length characters array */
 void silofs_strspan_initz(struct silofs_strspan *ss);
 
 /* Copy constructor (shallow, references only) */
-void silofs_strspan_init_by(struct silofs_strspan *ss,
-                            const struct silofs_strspan *other);
+void silofs_strspan_init_by(struct silofs_strspan       *ss,
+			    const struct silofs_strspan *other);
 
 /* Destructor: reset all */
 void silofs_strspan_fini(struct silofs_strspan *ss);
@@ -79,7 +77,7 @@ silofs_strspan_view(const struct silofs_strspan *ss);
 
 /* Create a copy of ss->v internal view */
 void silofs_strspan_mkview(const struct silofs_strspan *ss,
-                           struct silofs_strview *out_sv);
+			   struct silofs_strview       *out_sv);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 /*
@@ -88,24 +86,23 @@ void silofs_strspan_mkview(const struct silofs_strspan *ss,
  * characters after position i, the result will refer only to the elements
  * which are members of source.
  */
-void silofs_strspan_sub(const struct silofs_strspan *ss,
-                        size_t i, size_t n,  struct silofs_strspan *out_ss);
+void silofs_strspan_sub(const struct silofs_strspan *ss, size_t i, size_t n,
+			struct silofs_strspan *out_ss);
 
 /*
  * Creates a string-reference which refers to the last n chararacters. The
  * result will not refer to currently valid elements.
  */
-void silofs_strspan_rsub(const struct silofs_strspan *ss,
-                         size_t n, struct silofs_strspan *out_ss);
+void silofs_strspan_rsub(const struct silofs_strspan *ss, size_t n,
+			 struct silofs_strspan *out_ss);
 
 /*
  * Creates a string-reference which refers to the intersection of string-view
  * with current characters array.
  */
 void silofs_strspan_vsub(const struct silofs_strspan *ss,
-                         const struct silofs_strview *sv,
-                         struct silofs_strspan *out_ss);
-
+			 const struct silofs_strview *sv,
+			 struct silofs_strspan       *out_ss);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -115,19 +112,18 @@ char *silofs_strspan_data(const struct silofs_strspan *ss);
 /* Assigns s, truncates result in case of insufficient room. Return the number
    of added cheracters */
 size_t silofs_strspan_assign(struct silofs_strspan *ss, const char *s);
-size_t silofs_strspan_nassign(struct silofs_strspan *ss,
-                              const char *s, size_t len);
-size_t silofs_strspan_vassign(struct silofs_strspan *ss,
-                              const struct silofs_strview *sv);
-
+size_t
+silofs_strspan_nassign(struct silofs_strspan *ss, const char *s, size_t len);
+size_t silofs_strspan_vassign(struct silofs_strspan       *ss,
+			      const struct silofs_strview *sv);
 
 /* Assigns n copies of c. Return the number of added cheracters */
 size_t silofs_strspan_assign_chr(struct silofs_strspan *ss, size_t n, char c);
 
 /* Appends s. Return the number of added cheracters */
 size_t silofs_strspan_append(struct silofs_strspan *ss, const char *s);
-size_t silofs_strspan_nappend(struct silofs_strspan *ss,
-                              const char *s, size_t len);
+size_t
+silofs_strspan_nappend(struct silofs_strspan *ss, const char *s, size_t len);
 
 /* Appends n copies of c. */
 size_t silofs_strspan_append_chr(struct silofs_strspan *ss, size_t n, char c);
@@ -136,27 +132,27 @@ size_t silofs_strspan_append_chr(struct silofs_strspan *ss, size_t n, char c);
 size_t silofs_strspan_push_back(struct silofs_strspan *ss, char c);
 
 /* Inserts s before position pos. Returns the number of added characters */
-size_t silofs_strspan_insert(struct silofs_strspan *ss,
-                             size_t pos, const char *s);
+size_t
+silofs_strspan_insert(struct silofs_strspan *ss, size_t pos, const char *s);
 
-size_t silofs_strspan_ninsert(struct silofs_strspan *ss,
-                              size_t pos, const char *s, size_t len);
+size_t silofs_strspan_ninsert(struct silofs_strspan *ss, size_t pos,
+			      const char *s, size_t len);
 
 /* Inserts n copies of c before position pos. Returns the number of added
    characters */
-size_t silofs_strspan_insert_chr(struct silofs_strspan *ss,
-                                 size_t pos, size_t n, char c);
+size_t silofs_strspan_insert_chr(struct silofs_strspan *ss, size_t pos,
+				 size_t n, char c);
 
 /* Replaces a part of sub-string with the string s. Returns the number of added
    characters */
-size_t silofs_strspan_replace(struct silofs_strspan *ss,
-                              size_t pos, size_t n, const char *s);
+size_t silofs_strspan_replace(struct silofs_strspan *ss, size_t pos, size_t n,
+			      const char *s);
 size_t silofs_strspan_nreplace(struct silofs_strspan *ss, size_t pos,
-                               size_t n, const char *s, size_t len);
+			       size_t n, const char *s, size_t len);
 
 /* Replaces part of sub-string with n2 copies of c */
-size_t silofs_strspan_replace_chr(struct silofs_strspan *ss,
-                                  size_t pos, size_t n1, size_t n2, char c);
+size_t silofs_strspan_replace_chr(struct silofs_strspan *ss, size_t pos,
+				  size_t n1, size_t n2, char c);
 
 /* Erases part of sub-string */
 void silofs_strspan_erase(struct silofs_strspan *ss, size_t pos, size_t n);
@@ -171,7 +167,7 @@ void silofs_strspan_reverse(struct silofs_strspan *ss);
 
 /* Apply fn for every element within mutable range */
 void silofs_strspan_foreach(struct silofs_strspan *ss,
-                            silofs_chr_modify_fn fn);
+			    silofs_chr_modify_fn   fn);
 
 /* Case sensitive operations */
 void silofs_strspan_toupper(struct silofs_strspan *ss);

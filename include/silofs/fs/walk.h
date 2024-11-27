@@ -27,21 +27,21 @@ struct silofs_walk_iter;
 struct silofs_sb_info;
 struct silofs_spnode_info;
 
-typedef int (*silofs_visit_fn)(struct silofs_visitor *vis,
-                               const struct silofs_walk_iter *wit);
+typedef int (*silofs_visit_fn)(struct silofs_visitor         *vis,
+			       const struct silofs_walk_iter *wit);
 
 typedef int (*silofs_visit_laddr_fn)(void *, const struct silofs_laddr *);
 
 struct silofs_walk_iter {
-	struct silofs_sb_info      *sbi;
-	struct silofs_spnode_info  *sni4;
-	struct silofs_spnode_info  *sni3;
-	struct silofs_spnode_info  *sni2;
-	struct silofs_spnode_info  *sni1;
-	struct silofs_spleaf_info  *sli;
-	enum silofs_height          height;
-	enum silofs_ltype           vspace;
-	loff_t                      voff;
+	struct silofs_sb_info     *sbi;
+	struct silofs_spnode_info *sni4;
+	struct silofs_spnode_info *sni3;
+	struct silofs_spnode_info *sni2;
+	struct silofs_spnode_info *sni1;
+	struct silofs_spleaf_info *sli;
+	enum silofs_height         height;
+	enum silofs_ltype          vspace;
+	loff_t                     voff;
 };
 
 struct silofs_visitor {
@@ -51,17 +51,17 @@ struct silofs_visitor {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_walk_space_tree(struct silofs_task *task,
-                           struct silofs_sb_info *sbi,
-                           struct silofs_visitor *vis);
+int silofs_walk_space_tree(struct silofs_task    *task,
+			   struct silofs_sb_info *sbi,
+			   struct silofs_visitor *vis);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_walk_inspect_fs(struct silofs_task *task,
-                           struct silofs_sb_info *sbi,
-                           silofs_visit_laddr_fn cb, void *user_ctx);
+int silofs_walk_inspect_fs(struct silofs_task    *task,
+			   struct silofs_sb_info *sbi,
+			   silofs_visit_laddr_fn cb, void *user_ctx);
 
-int silofs_walk_unref_fs(struct silofs_task *task,
-                         struct silofs_sb_info *sbi);
+int silofs_walk_unref_fs(struct silofs_task    *task,
+			 struct silofs_sb_info *sbi);
 
 #endif /* SILOFS_WALK_H_ */

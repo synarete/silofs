@@ -183,12 +183,13 @@ lcache_remove_uni(struct silofs_lcache *lcache, struct silofs_unode_info *uni)
 	silofs_lni_remove_from(&uni->un_lni, &lcache->lc_uni_hmapq);
 }
 
-static void lcache_evict_uni(struct silofs_lcache *lcache,
-			     struct silofs_unode_info *uni, int flags)
+static void
+lcache_evict_uni(struct silofs_lcache *lcache, struct silofs_unode_info *uni,
+		 enum silofs_allocf flags)
 {
 	silofs_uni_undirtify(uni);
 	lcache_remove_uni(lcache, uni);
-	silofs_del_unode(uni, lcache->lc_alloc, flags);
+	silofs_del_unode(uni, lcache->lc_alloc, (int)flags);
 }
 
 static void lcache_store_uni_hmapq(struct silofs_lcache *lcache,
@@ -391,7 +392,7 @@ static void
 lcache_forget_uni(struct silofs_lcache *lcache, struct silofs_unode_info *uni)
 {
 	lcache_forget_uaddr(lcache, uni_uaddr(uni));
-	lcache_evict_uni(lcache, uni, 0);
+	lcache_evict_uni(lcache, uni, SILOFS_ALLOCF_NONE);
 }
 
 void silofs_lcache_forget_uni(struct silofs_lcache *lcache,
@@ -516,11 +517,12 @@ lcache_remove_vni(struct silofs_lcache *lcache, struct silofs_vnode_info *vni)
 	vni->vn_lni.ln_hmqe.hme_forgot = false;
 }
 
-static void lcache_evict_vni(struct silofs_lcache *lcache,
-			     struct silofs_vnode_info *vni, int flags)
+static void
+lcache_evict_vni(struct silofs_lcache *lcache, struct silofs_vnode_info *vni,
+		 enum silofs_allocf flags)
 {
 	lcache_remove_vni(lcache, vni);
-	silofs_del_vnode(vni, lcache->lc_alloc, flags);
+	silofs_del_vnode(vni, lcache->lc_alloc, (int)flags);
 }
 
 static void lcache_store_vni_hmapq(struct silofs_lcache *lcache,
@@ -650,7 +652,7 @@ lcache_forget_vni(struct silofs_lcache *lcache, struct silofs_vnode_info *vni)
 		lcache_unmap_vni(lcache, vni);
 		vni->vn_lni.ln_hmqe.hme_forgot = true;
 	} else {
-		lcache_evict_vni(lcache, vni, 0);
+		lcache_evict_vni(lcache, vni, SILOFS_ALLOCF_NONE);
 	}
 }
 
@@ -729,12 +731,12 @@ static void lcache_evict_some(struct silofs_lcache *lcache)
 
 	vni = lcache_find_evictable_vni(lcache);
 	if ((vni != NULL) && test_evictable_vni(vni)) {
-		lcache_evict_vni(lcache, vni, 0);
+		lcache_evict_vni(lcache, vni, SILOFS_ALLOCF_NONE);
 		evicted = true;
 	}
 	uni = lcache_find_evictable_uni(lcache);
 	if ((uni != NULL) && silofs_uni_isevictable(uni)) {
-		lcache_evict_uni(lcache, uni, 0);
+		lcache_evict_uni(lcache, uni, SILOFS_ALLOCF_NONE);
 		evicted = true;
 	}
 	if (!evicted) {

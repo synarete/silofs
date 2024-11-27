@@ -6,45 +6,57 @@ export LC_ALL=C
 unset CDPATH
 
 self=$(basename "${BASH_SOURCE[0]}")
-selfdir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
 msg() { echo "$self: $*" >&2; }
 die() { msg "$*"; exit 1; }
 try() { ( "$@" ) || die "failed: $*"; }
 run() { echo "$self: $*" >&2; try "$@"; }
+cdx() { echo "$self: cd $*" >&2; cd "$@" || die "failed: cd $*"; }
 
 ###
-if [ "$#" -ne 1 ]; then die "illegal number of args"; fi
-dist_name="$1"
+if [ "$#" -ne 2 ]; then die "usage: '$self <archive-file> <citests-dir>'"; fi
+archive_file="$(realpath "$1")"
+citests_dir="$(realpath "$2")"
+currdir="$(pwd)"
+
+###
+msg "checking input: $*"
+cdx "${currdir}"
+run test -f "${archive_file}"
+run mkdir -p "${citests_dir}"
+run ls "${citests_dir}"
+
+###
+msg "prepare workdir: $*"
+dist_name="$(basename -s .tar.gz "${archive_file}")"
 archive_tgz="${dist_name}.tar.gz"
-workdir="${selfdir}/${dist_name}"
+workdir="${citests_dir}/${dist_name}"
 unitestsdir="${workdir}/build/test/unitests/"
-
-###
-msg "cheching input: ${archive_tgz}"
-cd "${selfdir}"
+run mkdir -p "${workdir}"
 run rm -rf "${workdir}"
-run stat "${archive_tgz}"
 
 ###
-msg "build from source: ${archive_tgz}"
-cd "${selfdir}"
+msg "build from source: ${archive_file}"
+cdx "${currdir}"
+run cp "${archive_file}" "${citests_dir}"
+cdx "${citests_dir}"
 run tar xfz "${archive_tgz}"
-cd "${workdir}"
+cdx "${workdir}"
 msg "check build at: $(pwd)"
 run ./cstylefmt.sh
 run ./configure
 run make
 run make distcheck
 run make clean
-cd "${selfdir}"
+cdx "${currdir}"
 run rm -rf "${workdir}"
-
 
 ###
 msg "run developer's checks"
-cd "${selfdir}"
+cdx "${currdir}"
+run cp "${archive_file}" "${citests_dir}"
+cdx "${citests_dir}"
 run tar xfz "${archive_tgz}"
-cd "${workdir}"
+cdx "${workdir}"
 msg "build default mode"
 run make -f devel.mk
 run make -f devel.mk reset
@@ -73,32 +85,34 @@ run valgrind --tool=memcheck --error-exitcode=1 \
 run make -f devel.mk reset
 
 ###
-cd "${workdir}"
+cdx "${workdir}"
 msg "run heap checker to detect memory leaks"
 run ./bootstrap
 run mkdir -p "${workdir}/build/local/tmp"
-cd "${workdir}/build"
+cdx "${workdir}/build"
 run ../configure --prefix="${workdir}/build/local" \
   --enable-compile-warnings=error --with-tcmalloc
 run make install
 run env HEAPCHECK=normal HEAP_CHECK_TEST_POINTER_ALIGNMENT=1 \
   "${workdir}/build/local/bin/silofs-unitests" \
   -M -l2 "${workdir}/build/local/tmp"
-cd "${selfdir}"
+cdx "${currdir}"
 run rm -rf "${workdir}"
 
 ###
 msg "build dist-package"
-cd "${selfdir}"
+cdx "${currdir}"
+run cp "${archive_file}" "${citests_dir}"
+cdx "${citests_dir}"
 run tar xfz "${archive_tgz}"
-cd "${workdir}"
+cdx "${workdir}"
 run ./dist/packagize.sh
 
 # Post-op cleanup
 msg "post-op cleanup: ${workdir}"
-cd "${selfdir}"
+cdx "${currdir}"
 run sleep 2
 run rm -rf "${workdir}"
 
 ###
-msg "passed all checks: ${dist_name} "
+msg "passed all checks for: $* "

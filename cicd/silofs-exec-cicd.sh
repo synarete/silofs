@@ -72,7 +72,7 @@ run podman run --rm \
   --volume="/etc/shadow:/etc/shadow:ro" \
   --volume="${scratchdir}:/scratch:rw" \
   --workdir="/scratch" \
-  "${imagename}" "./silofs-citests.sh" "${distname}"
+  "${imagename}" "./silofs-citests.sh" "${disttgz}" "/scratch/cicd"
 
 # Remove test image
 run podman rmi "${imagename}"

@@ -1,6 +1,5 @@
 EXTRA_DIST = $(NULL)
 EXTRA_DIST += checkcstyle.py
-EXTRA_DIST += clangformat.sh
 EXTRA_DIST += clangscanbuild.sh
 EXTRA_DIST += clangtidy.sh
 EXTRA_DIST += ddreadwrite.sh

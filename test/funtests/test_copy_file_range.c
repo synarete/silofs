@@ -23,13 +23,27 @@ struct ft_copy_range_args {
 	size_t len_dst;
 };
 
-#define COPYARGS1(a_, b_) { .off_src = (a_), .len_src = (b_) }
+#define COPYARGS1(a_, b_)        \
+	{                        \
+		.off_src = (a_), \
+		.len_src = (b_), \
+	}
 
 #define COPYARGS2(a_, b_, c_, d_) \
-	{ .off_src = (a_), .len_src = (b_), .off_dst = (c_), .len_dst = (d_) }
+	{                         \
+		.off_src = (a_),  \
+		.len_src = (b_),  \
+		.off_dst = (c_),  \
+		.len_dst = (d_),  \
+	}
 
-#define COPYARGS3(a_, b_, c_) \
-	{ .off_src = (a_), .len_src = (c_), .off_dst = (b_), .len_dst = (c_) }
+#define COPYARGS3(a_, b_, c_)    \
+	{                        \
+		.off_src = (a_), \
+		.len_src = (c_), \
+		.off_dst = (b_), \
+		.len_dst = (c_), \
+	}
 
 #define ft_copy_range1(fte_, fn_, args_) \
 	ft_copy_range1_(fte_, fn_, args_, FT_ARRAY_SIZE(args_))

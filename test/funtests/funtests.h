@@ -266,16 +266,32 @@ extern const struct ft_tests ft_test_namespace;
 extern const struct ft_tests ft_stress_rw;
 
 /* test-define helper macros */
-#define FT_DEFTESTF(fn_, fl_) \
-	{ .hook = (fn_), .name = FT_STR(fn_), .flags = (fl_) }
+#define FT_DEFTESTF(fn_, fl_)         \
+	{                             \
+		.hook  = (fn_),       \
+		.name  = FT_STR(fn_), \
+		.flags = (fl_),       \
+	}
 
 #define FT_DEFTEST(fn_) FT_DEFTESTF(fn_, FT_F_NORMAL)
 
-#define FT_DEFTESTS(a_) { .arr = (a_), .len = FT_ARRAY_SIZE(a_) }
+#define FT_DEFTESTS(a_)                   \
+	{                                 \
+		.arr = (a_),              \
+		.len = FT_ARRAY_SIZE(a_), \
+	}
 
-#define FT_MKRANGE0(off_) { .off = off_, .len = 0 }
+#define FT_MKRANGE0(off_)    \
+	{                    \
+		.off = off_, \
+		.len = 0,    \
+	}
 
-#define FT_MKRANGE(off_, len_) { .off = off_, .len = len_ }
+#define FT_MKRANGE(off_, len_) \
+	{                      \
+		.off = off_,   \
+		.len = len_,   \
+	}
 
 /* common inline utility functions */
 #include "funtests_inline.h"

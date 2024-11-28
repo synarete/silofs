@@ -41,7 +41,7 @@ void silofs_expect_not_null_(const void *ptr, const char *fl, int ln);
 void silofs_expect_null_(const void *ptr, const char *fl, int ln);
 void silofs_expect_eqs_(const char *s, const char *z, const char *fl, int ln);
 void silofs_expect_eqm_(const void *p, const void *q, size_t n, const char *fl,
-			int ln);
+                        int ln);
 void silofs_expect_noop_(long a, long b);
 
 #define silofs_expect(cond) \
@@ -126,13 +126,13 @@ void silofs_expect_noop_(long a, long b);
 	silofs_attr_noreturn silofs_attr_printf(x_, y_)
 
 silofs_attr_dief(3, 4) void silofs_panicf(const char *file, int line,
-					  const char *restrict fmt, ...);
+                                          const char *restrict fmt, ...);
 
 /* die */
 silofs_attr_dief(2, 3) void silofs_die(int er, const char *restrict fmt, ...);
 
 silofs_attr_dief(4, 5) void silofs_die_at(int er, const char *fl, int ln,
-					  const char *restrict fmt, ...);
+                                          const char *restrict fmt, ...);
 
 /* backtrace */
 void silofs_backtrace(void);

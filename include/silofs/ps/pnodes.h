@@ -65,7 +65,7 @@ struct silofs_chkpt_info *
 silofs_cpi_from_pni(const struct silofs_pnode_info *pni);
 
 void silofs_cpi_set_dq(struct silofs_chkpt_info *cpi,
-		       struct silofs_dirtyq     *dq);
+                       struct silofs_dirtyq     *dq);
 
 void silofs_cpi_mark_meta(struct silofs_chkpt_info *cpi);
 
@@ -81,23 +81,23 @@ struct silofs_btnode_info *
 silofs_bti_new(const struct silofs_paddr *paddr, struct silofs_alloc *alloc);
 
 void silofs_bti_del(struct silofs_btnode_info *bti,
-		    struct silofs_alloc       *alloc);
+                    struct silofs_alloc       *alloc);
 
 void silofs_bti_set_dq(struct silofs_btnode_info *bti,
-		       struct silofs_dirtyq      *dq);
+                       struct silofs_dirtyq      *dq);
 
 void silofs_bti_mark_root(struct silofs_btnode_info *bti);
 
 int silofs_bti_resolve(const struct silofs_btnode_info *bti,
-		       const struct silofs_laddr       *laddr,
-		       struct silofs_paddr             *out_paddr);
+                       const struct silofs_laddr       *laddr,
+                       struct silofs_paddr             *out_paddr);
 
 int silofs_bti_expand(struct silofs_btnode_info *bti,
-		      const struct silofs_laddr *laddr,
-		      const struct silofs_paddr *paddr);
+                      const struct silofs_laddr *laddr,
+                      const struct silofs_paddr *paddr);
 
 void silofs_bti_setapex(struct silofs_btnode_info *bti,
-			const struct silofs_paddr *paddr);
+                        const struct silofs_paddr *paddr);
 
 void silofs_bti_dirtify(struct silofs_btnode_info *bti);
 
@@ -112,22 +112,22 @@ struct silofs_btleaf_info *
 silofs_bli_new(const struct silofs_paddr *paddr, struct silofs_alloc *alloc);
 
 void silofs_bli_del(struct silofs_btleaf_info *bli,
-		    struct silofs_alloc       *alloc);
+                    struct silofs_alloc       *alloc);
 
 void silofs_bli_set_dq(struct silofs_btleaf_info *bli,
-		       struct silofs_dirtyq      *dq);
+                       struct silofs_dirtyq      *dq);
 
 void silofs_bli_dirtify(struct silofs_btleaf_info *bli);
 
 void silofs_bli_undirtify(struct silofs_btleaf_info *bli);
 
 int silofs_bli_resolve(const struct silofs_btleaf_info *bli,
-		       const struct silofs_laddr       *laddr,
-		       struct silofs_paddr             *out_paddr);
+                       const struct silofs_laddr       *laddr,
+                       struct silofs_paddr             *out_paddr);
 
 int silofs_bli_extend(struct silofs_btleaf_info *bli,
-		      const struct silofs_laddr *laddr,
-		      const struct silofs_paddr *paddr);
+                      const struct silofs_laddr *laddr,
+                      const struct silofs_paddr *paddr);
 
 struct silofs_btleaf_info *
 silofs_bli_from_pni(const struct silofs_pnode_info *pni);

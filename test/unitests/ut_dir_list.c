@@ -164,7 +164,7 @@ static void dir_unlink_all(struct ut_dirlist *dl)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void ut_create_nfiles(struct ut_env *ute, ino_t dino, const char *dname,
-			     size_t count)
+                             size_t count)
 {
 	const char *name = NULL;
 	ino_t ino = 0;
@@ -176,7 +176,7 @@ static void ut_create_nfiles(struct ut_env *ute, ino_t dino, const char *dname,
 }
 
 static void ut_create_ninodes(struct ut_env *ute, ino_t dino,
-			      const char *dname, size_t count)
+                              const char *dname, size_t count)
 {
 	char s[256] = "";
 	struct stat st;
@@ -263,7 +263,7 @@ static void ut_dir_list_repeated(struct ut_env *ute)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void create_nfiles_sparse(struct ut_env *ute, ino_t dino,
-				 const char *prefix, size_t count)
+                                 const char *prefix, size_t count)
 {
 	const char *name = NULL;
 	ino_t ino = 0;

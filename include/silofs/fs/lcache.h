@@ -44,7 +44,7 @@ struct silofs_lcache {
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_lcache_init(struct silofs_lcache *lcache,
-		       struct silofs_alloc  *alloc);
+                       struct silofs_alloc  *alloc);
 
 void silofs_lcache_fini(struct silofs_lcache *lcache);
 
@@ -54,33 +54,33 @@ void silofs_lcache_drop(struct silofs_lcache *lcache);
 
 struct silofs_unode_info *
 silofs_lcache_lookup_uni(struct silofs_lcache      *lcache,
-			 const struct silofs_uaddr *uaddr);
+                         const struct silofs_uaddr *uaddr);
 
 struct silofs_unode_info *
 silofs_lcache_create_uni(struct silofs_lcache      *lcache,
-			 const struct silofs_ulink *ulink);
+                         const struct silofs_ulink *ulink);
 
 void silofs_lcache_forget_uni(struct silofs_lcache     *lcache,
-			      struct silofs_unode_info *uni);
+                              struct silofs_unode_info *uni);
 
 struct silofs_unode_info *
 silofs_lcache_find_uni_by(struct silofs_lcache      *lcache,
-			  const struct silofs_uakey *uakey);
+                          const struct silofs_uakey *uakey);
 
 void silofs_lcache_drop_uamap(struct silofs_lcache *lcache);
 
 struct silofs_vnode_info *
 silofs_lcache_lookup_vni(struct silofs_lcache      *lcache,
-			 const struct silofs_vaddr *vaddr);
+                         const struct silofs_vaddr *vaddr);
 
 struct silofs_vnode_info *
 silofs_lcache_create_vni(struct silofs_lcache      *lcache,
-			 const struct silofs_vaddr *vaddr);
+                         const struct silofs_vaddr *vaddr);
 
 void silofs_lcache_forget_vni(struct silofs_lcache     *lcache,
-			      struct silofs_vnode_info *vni);
+                              struct silofs_vnode_info *vni);
 
 void silofs_lcache_reditify_vni(struct silofs_lcache     *lcache,
-				struct silofs_vnode_info *vni);
+                                struct silofs_vnode_info *vni);
 
 #endif /* SILOFS_LCACHE_H_ */

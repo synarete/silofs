@@ -195,7 +195,7 @@ static void ut_file_trunc_hole(struct ut_env *ute)
 
 	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
 		ut_file_trunc_hole_(ute, range[i].off1, range[i].off2,
-				    range[i].len);
+		                    range[i].len);
 		ut_relax_mem(ute);
 	}
 }
@@ -212,7 +212,7 @@ static void ut_read_zero_byte(struct ut_env *ute, ino_t ino, loff_t off)
 }
 
 static void ut_file_trunc_single_byte_(struct ut_env *ute,
-				       const loff_t *off_arr, size_t cnt)
+                                       const loff_t *off_arr, size_t cnt)
 {
 	const char *name = UT_NAME;
 	const uint8_t one[1] = { 1 };

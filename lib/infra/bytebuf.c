@@ -90,7 +90,7 @@ silofs_bytebuf_append(struct silofs_bytebuf *bb, const void *p, size_t len)
 }
 
 size_t silofs_bytebuf_append2(struct silofs_bytebuf *bb,
-			      const struct silofs_bytebuf *other)
+                              const struct silofs_bytebuf *other)
 {
 	return silofs_bytebuf_append(bb, other->ptr, other->len);
 }
@@ -102,7 +102,7 @@ bytebuf_insert_cnt(const struct silofs_bytebuf *bb, size_t pos, size_t len)
 }
 
 size_t silofs_bytebuf_insert(struct silofs_bytebuf *bb, size_t pos,
-			     const void *p, size_t len)
+                             const void *p, size_t len)
 {
 	const size_t cnt = bytebuf_insert_cnt(bb, pos, len);
 	const size_t end = pos + cnt;

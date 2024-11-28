@@ -67,26 +67,26 @@ struct silofs_fs_ids {
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_idsmap_init(struct silofs_idsmap *idsm, struct silofs_alloc *alloc,
-		       bool allow_hostids);
+                       bool allow_hostids);
 
 void silofs_idsmap_fini(struct silofs_idsmap *idsm);
 
 void silofs_idsmap_clear(struct silofs_idsmap *idsm);
 
 int silofs_idsmap_populate_uids(struct silofs_idsmap       *idsm,
-				const struct silofs_fs_ids *ids);
+                                const struct silofs_fs_ids *ids);
 
 int silofs_idsmap_populate_gids(struct silofs_idsmap       *idsm,
-				const struct silofs_fs_ids *ids);
+                                const struct silofs_fs_ids *ids);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_idsmap_map_uidgid(const struct silofs_idsmap *idsm, uid_t host_uid,
-			     gid_t host_gid, uid_t *out_fs_uid,
-			     gid_t *out_fs_gid);
+                             gid_t host_gid, uid_t *out_fs_uid,
+                             gid_t *out_fs_gid);
 
 int silofs_idsmap_rmap_uidgid(const struct silofs_idsmap *idsm, uid_t fs_uid,
-			      gid_t fs_gid, uid_t *out_fs_uid,
-			      gid_t *out_fs_gid);
+                              gid_t fs_gid, uid_t *out_fs_uid,
+                              gid_t *out_fs_gid);
 
 #endif /* SILOFS_IDSMAP_H_ */

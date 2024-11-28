@@ -41,10 +41,10 @@ void silofs_list_init(struct silofs_list_head *lst);
 void silofs_list_fini(struct silofs_list_head *lst);
 
 void silofs_list_push_front(struct silofs_list_head *lst,
-			    struct silofs_list_head *lnk);
+                            struct silofs_list_head *lnk);
 
 void silofs_list_push_back(struct silofs_list_head *lst,
-			   struct silofs_list_head *lnk);
+                           struct silofs_list_head *lnk);
 
 struct silofs_list_head *silofs_list_front(const struct silofs_list_head *lst);
 
@@ -69,13 +69,13 @@ size_t silofs_listq_size(const struct silofs_listq *lsq);
 bool silofs_listq_isempty(const struct silofs_listq *lsq);
 
 void silofs_listq_remove(struct silofs_listq     *lsq,
-			 struct silofs_list_head *lnk);
+                         struct silofs_list_head *lnk);
 
 void silofs_listq_push_front(struct silofs_listq     *lsq,
-			     struct silofs_list_head *lnk);
+                             struct silofs_list_head *lnk);
 
 void silofs_listq_push_back(struct silofs_listq     *lsq,
-			    struct silofs_list_head *lnk);
+                            struct silofs_list_head *lnk);
 
 struct silofs_list_head *silofs_listq_pop_front(struct silofs_listq *lsq);
 
@@ -86,10 +86,10 @@ struct silofs_list_head *silofs_listq_front(const struct silofs_listq *lsq);
 struct silofs_list_head *silofs_listq_back(const struct silofs_listq *lsq);
 
 struct silofs_list_head *silofs_listq_next(const struct silofs_listq     *lsq,
-					   const struct silofs_list_head *lnk);
+                                           const struct silofs_list_head *lnk);
 
 struct silofs_list_head *silofs_listq_prev(const struct silofs_listq     *lsq,
-					   const struct silofs_list_head *lnk);
+                                           const struct silofs_list_head *lnk);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -101,15 +101,15 @@ void silofs_list_head_finin(struct silofs_list_head *lh_arr, size_t cnt);
 
 static inline void
 silofs_list_head_set(struct silofs_list_head *lh, struct silofs_list_head *prv,
-		     struct silofs_list_head *nxt)
+                     struct silofs_list_head *nxt)
 {
 	lh->next = nxt;
 	lh->prev = prv;
 }
 
 static inline void silofs_list_head_insert(struct silofs_list_head *lh,
-					   struct silofs_list_head *prv,
-					   struct silofs_list_head *nxt)
+                                           struct silofs_list_head *prv,
+                                           struct silofs_list_head *nxt)
 {
 	silofs_list_head_set(lh, prv, nxt);
 	nxt->prev = lh;
@@ -118,14 +118,14 @@ static inline void silofs_list_head_insert(struct silofs_list_head *lh,
 
 static inline void
 silofs_list_head_insert_after(struct silofs_list_head *prev_lh,
-			      struct silofs_list_head *lh)
+                              struct silofs_list_head *lh)
 {
 	silofs_list_head_insert(lh, prev_lh, prev_lh->next);
 }
 
 static inline void
 silofs_list_head_insert_before(struct silofs_list_head *lh,
-			       struct silofs_list_head *next_lh)
+                               struct silofs_list_head *next_lh)
 {
 	silofs_list_head_insert(lh, next_lh->prev, next_lh);
 }
@@ -156,6 +156,6 @@ struct silofs_list_head *
 silofs_lista_new(struct silofs_alloc *alloc, size_t nelems);
 
 void silofs_lista_del(struct silofs_list_head *lista, size_t nelems,
-		      struct silofs_alloc *alloc);
+                      struct silofs_alloc *alloc);
 
 #endif /* SILOFS_LIST_H_ */

@@ -55,17 +55,17 @@ int silofs_cipher_reinit(struct silofs_cipher *ci, int algo, int mode);
 void silofs_cipher_fini(struct silofs_cipher *ci);
 
 int silofs_encrypt_buf(const struct silofs_cipher *ci,
-		       const struct silofs_ivkey *ivkey, const void *in_dat,
-		       void *out_dat, size_t dat_len);
+                       const struct silofs_ivkey *ivkey, const void *in_dat,
+                       void *out_dat, size_t dat_len);
 
 int silofs_decrypt_buf(const struct silofs_cipher *ci,
-		       const struct silofs_ivkey *ivkey, const void *in_dat,
-		       void *out_dat, size_t dat_len);
+                       const struct silofs_ivkey *ivkey, const void *in_dat,
+                       void *out_dat, size_t dat_len);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_derive_boot_ivkey(const struct silofs_mdigest  *md,
-			     const struct silofs_password *pw,
-			     struct silofs_ivkey          *out_ivkey);
+                             const struct silofs_password *pw,
+                             struct silofs_ivkey          *out_ivkey);
 
 #endif /* SILOFS_CIPHER_H_ */

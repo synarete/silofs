@@ -32,11 +32,11 @@ int silofs_zcmpr_init(struct silofs_zcmpr *zc, bool de);
 void silofs_zcmpr_fini(struct silofs_zcmpr *zc);
 
 int silofs_zcmpr_compress(const struct silofs_zcmpr *zc, void *dst,
-			  size_t dst_cap, const void *src, size_t src_size,
-			  int cl_in, size_t *out_sz);
+                          size_t dst_cap, const void *src, size_t src_size,
+                          int cl_in, size_t *out_sz);
 
 int silofs_zcmpr_decompress(const struct silofs_zcmpr *zc, void *dst,
-			    size_t dst_cap, const void *src, size_t src_size,
-			    size_t *out_sz);
+                            size_t dst_cap, const void *src, size_t src_size,
+                            size_t *out_sz);
 
 #endif /* SILOFS_ZCMPR_H_ */

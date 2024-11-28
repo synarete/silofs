@@ -92,13 +92,13 @@ struct silofs_fsenv {
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_fsenv_init(struct silofs_fsenv            *fsenv,
-		      const struct silofs_fs_args    *args,
-		      const struct silofs_fsenv_base *base);
+                      const struct silofs_fs_args    *args,
+                      const struct silofs_fsenv_base *base);
 
 void silofs_fsenv_fini(struct silofs_fsenv *fsenv);
 
 int silofs_fsenv_setup(struct silofs_fsenv          *fsenv,
-		       const struct silofs_password *pw);
+                       const struct silofs_password *pw);
 
 void silofs_fsenv_lock(struct silofs_fsenv *fsenv);
 
@@ -117,28 +117,28 @@ int silofs_fsenv_reload_super(struct silofs_fsenv *fsenv);
 int silofs_fsenv_reload_sb_lseg(struct silofs_fsenv *fsenv);
 
 int silofs_fsenv_forkfs(struct silofs_fsenv    *fsenv,
-			struct silofs_bootrecs *out_brecs);
+                        struct silofs_bootrecs *out_brecs);
 
 void silofs_fsenv_relax_caches(const struct silofs_fsenv *fsenv, int flags);
 
 void silofs_fsenv_uptime(const struct silofs_fsenv *fsenv, time_t *out_uptime);
 
 void silofs_fsenv_allocstat(const struct silofs_fsenv *fsenv,
-			    struct silofs_alloc_stat  *out_alst);
+                            struct silofs_alloc_stat  *out_alst);
 
 void silofs_fsenv_bootpath(const struct silofs_fsenv *fsenv,
-			   struct silofs_bootpath    *out_bootpath);
+                           struct silofs_bootpath    *out_bootpath);
 
 int silofs_fsenv_update_by(struct silofs_fsenv         *fsenv,
-			   const struct silofs_bootrec *brec);
+                           const struct silofs_bootrec *brec);
 
 void silofs_fsenv_set_boot_caddr(struct silofs_fsenv       *fsenv,
-				 const struct silofs_caddr *caddr);
+                                 const struct silofs_caddr *caddr);
 
 void silofs_fsenv_set_pack_caddr(struct silofs_fsenv       *fsenv,
-				 const struct silofs_caddr *caddr);
+                                 const struct silofs_caddr *caddr);
 
 void silofs_fsenv_set_sb_ulink(struct silofs_fsenv       *fsenv,
-			       const struct silofs_ulink *ulink);
+                               const struct silofs_ulink *ulink);
 
 #endif /* SILOFS_FSENV_H_ */

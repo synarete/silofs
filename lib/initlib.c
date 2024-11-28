@@ -196,10 +196,10 @@ static void validate_persistent_types_members(void)
 	REQUIRE_NBITS(struct silofs_bk_ref, bkr_unwritten, SILOFS_NKB_IN_LBK);
 	REQUIRE_MEMBER_SIZE(struct silofs_bk_ref, bkr_dbkref, 8);
 	REQUIRE_NELEMS(struct silofs_ftree_node, fn_child,
-		       SILOFS_FILE_NODE_NCHILDS);
+	               SILOFS_FILE_NODE_NCHILDS);
 	REQUIRE_NELEMS(union silofs_dtree_data, de, SILOFS_DIR_NODE_NENTS);
 	REQUIRE_NELEMS(struct silofs_dtree_node, dn_child,
-		       SILOFS_DIR_NODE_NCHILDS);
+	               SILOFS_DIR_NODE_NCHILDS);
 }
 
 static void validate_persistent_types_alignment1(void)
@@ -336,18 +336,18 @@ static void validate_defs_consistency(void)
 	REQUIRE_EQ(SILOFS_FILE_SIZE_MAX, 64 * SILOFS_PETA - 1);
 	REQUIRE_EQ(SILOFS_LSEG_SIZE_MAX, 16 * SILOFS_MEGA);
 	REQUIRE_EQ(SILOFS_LBK_SIZE * SILOFS_SPMAP_NCHILDS,
-		   SILOFS_LSEG_SIZE_MAX);
+	           SILOFS_LSEG_SIZE_MAX);
 	REQUIRE_EQ(SILOFS_CAPACITY_SIZE_MIN, 2 * SILOFS_GIGA);
 	REQUIRE_EQ(SILOFS_CAPACITY_SIZE_MAX, 64 * SILOFS_TERA);
 	REQUIRE_LT(SILOFS_CAPACITY_SIZE_MAX, SILOFS_VSPACE_SIZE_MAX / 2);
 	REQUIRE_EQ(SILOFS_VSPACE_SIZE_MAX, 256 * SILOFS_PETA);
 
 	REQUIRE_EQ(SILOFS_FILE_HEAD1_LEAF_SIZE * SILOFS_FILE_HEAD1_NLEAF,
-		   SILOFS_FILE_HEAD2_LEAF_SIZE);
+	           SILOFS_FILE_HEAD2_LEAF_SIZE);
 	REQUIRE_EQ((SILOFS_FILE_HEAD1_LEAF_SIZE * SILOFS_FILE_HEAD1_NLEAF) +
-			   (SILOFS_FILE_HEAD2_LEAF_SIZE *
-			    SILOFS_FILE_HEAD2_NLEAF),
-		   SILOFS_FILE_TREE_LEAF_SIZE);
+	                   (SILOFS_FILE_HEAD2_LEAF_SIZE *
+	                    SILOFS_FILE_HEAD2_NLEAF),
+	           SILOFS_FILE_TREE_LEAF_SIZE);
 }
 
 static void validate_external_constants(void)

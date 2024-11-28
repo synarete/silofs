@@ -65,8 +65,8 @@ struct silofs_log_params {
 void silofs_set_global_log_params(const struct silofs_log_params *logp);
 
 silofs_attr_printf(4, 5) int silofs_logf(enum silofs_log_level log_level,
-					 const char *file, int line,
-					 const char *fmt, ...);
+                                         const char *file, int line,
+                                         const char *fmt, ...);
 
 enum silofs_log_level silofs_log_level_by_rfc5424(const char *s);
 

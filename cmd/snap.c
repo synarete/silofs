@@ -180,7 +180,7 @@ static void cmd_snap_prepare_offline(struct cmd_snap_ctx *ctx)
 {
 	cmd_check_isreg(ctx->in_args.repodir_name);
 	cmd_split_path(ctx->in_args.repodir_name, &ctx->in_args.repodir,
-		       &ctx->in_args.name);
+	               &ctx->in_args.name);
 	cmd_check_nonemptydir(ctx->in_args.repodir, true);
 	cmd_realpath_dir(ctx->in_args.repodir, &ctx->in_args.repodir_real);
 	cmd_check_repodir_fsname(ctx->in_args.repodir_real, ctx->in_args.name);
@@ -201,7 +201,7 @@ static void cmd_snap_getpass(struct cmd_snap_ctx *ctx)
 {
 	if (ctx->in_args.password == NULL) {
 		cmd_getpass_simple(ctx->in_args.no_prompt,
-				   &ctx->in_args.password);
+		                   &ctx->in_args.password);
 	}
 }
 

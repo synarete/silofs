@@ -95,7 +95,7 @@ static void cmd_lsmnt_prepare(struct cmd_lsmnt_ctx *ctx)
 }
 
 static void cmd_lsmnt_short(const struct cmd_lsmnt_ctx *ctx,
-			    const struct cmd_proc_mntinfo *mi)
+                            const struct cmd_proc_mntinfo *mi)
 {
 	fprintf(ctx->out_fp, "%s\n", mi->mntdir);
 }
@@ -138,7 +138,7 @@ cmd_lsmnt_long(struct cmd_lsmnt_ctx *ctx, const struct cmd_proc_mntinfo *mi)
 	fs_uuid = cmd_struuid(qry->u.boot.fs_uuid);
 
 	fprintf(ctx->out_fp, "%s %s/%s %s %s", mntd_path, repo_path, boot_name,
-		boot_addr, fs_uuid);
+	        boot_addr, fs_uuid);
 out:
 	fputs("\n", ctx->out_fp);
 	fflush(ctx->out_fp);

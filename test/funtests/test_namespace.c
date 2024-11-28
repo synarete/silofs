@@ -26,28 +26,28 @@ struct ft_ns_ctx {
 };
 
 static char *make_path(const struct ft_ns_ctx *ns_ctx, const char *parent_dir,
-		       const char *prefix, size_t depth, size_t idx)
+                       const char *prefix, size_t depth, size_t idx)
 {
 	const char *name = ft_strfmt(ns_ctx->fte, "%s_%lu_%lu", prefix,
-				     depth + 1, idx + 1);
+	                             depth + 1, idx + 1);
 
 	return ft_new_path_nested(ns_ctx->fte, parent_dir, name);
 }
 
 static char *make_dirpath(const struct ft_ns_ctx *ns_ctx,
-			  const char *parent_dir, size_t depth, size_t idx)
+                          const char *parent_dir, size_t depth, size_t idx)
 {
 	return make_path(ns_ctx, parent_dir, "dir", depth, idx);
 }
 
 static char *make_filepath(const struct ft_ns_ctx *ns_ctx,
-			   const char *parent_dir, size_t depth, size_t idx)
+                           const char *parent_dir, size_t depth, size_t idx)
 {
 	return make_path(ns_ctx, parent_dir, "file", depth, idx);
 }
 
 static void test_mktree_recursive(const struct ft_ns_ctx *ns_ctx,
-				  const char *parent_dir, size_t depth)
+                                  const char *parent_dir, size_t depth)
 {
 	int fd;
 	char *path;
@@ -68,7 +68,7 @@ static void test_mktree_recursive(const struct ft_ns_ctx *ns_ctx,
 }
 
 static void test_rmtree_recursive(const struct ft_ns_ctx *ns_ctx,
-				  const char *parent_dir, size_t depth)
+                                  const char *parent_dir, size_t depth)
 {
 	char *path;
 

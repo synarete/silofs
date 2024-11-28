@@ -44,13 +44,13 @@ void silofs_list_fini(struct silofs_list_head *lst)
 }
 
 void silofs_list_push_front(struct silofs_list_head *lst,
-			    struct silofs_list_head *lnk)
+                            struct silofs_list_head *lnk)
 {
 	silofs_list_head_insert_after(lst, lnk);
 }
 
 void silofs_list_push_back(struct silofs_list_head *lst,
-			   struct silofs_list_head *lnk)
+                           struct silofs_list_head *lnk)
 {
 	silofs_list_head_insert_before(lnk, lst);
 }
@@ -135,21 +135,21 @@ bool silofs_listq_isempty(const struct silofs_listq *lsq)
 }
 
 void silofs_listq_remove(struct silofs_listq *lsq,
-			 struct silofs_list_head *lnk)
+                         struct silofs_list_head *lnk)
 {
 	silofs_list_head_remove(lnk);
 	lsq->sz--;
 }
 
 void silofs_listq_push_front(struct silofs_listq *lsq,
-			     struct silofs_list_head *lnk)
+                             struct silofs_list_head *lnk)
 {
 	silofs_list_push_front(&lsq->ls, lnk);
 	lsq->sz++;
 }
 
 void silofs_listq_push_back(struct silofs_listq *lsq,
-			    struct silofs_list_head *lnk)
+                            struct silofs_list_head *lnk)
 {
 	silofs_list_push_back(&lsq->ls, lnk);
 	lsq->sz++;
@@ -198,7 +198,7 @@ struct silofs_list_head *silofs_listq_back(const struct silofs_listq *lsq)
 }
 
 struct silofs_list_head *silofs_listq_next(const struct silofs_listq *lsq,
-					   const struct silofs_list_head *lnk)
+                                           const struct silofs_list_head *lnk)
 {
 	struct silofs_list_head *nxt = NULL;
 
@@ -209,7 +209,7 @@ struct silofs_list_head *silofs_listq_next(const struct silofs_listq *lsq,
 }
 
 struct silofs_list_head *silofs_listq_prev(const struct silofs_listq *lsq,
-					   const struct silofs_list_head *lnk)
+                                           const struct silofs_list_head *lnk)
 {
 	struct silofs_list_head *prv = NULL;
 
@@ -234,7 +234,7 @@ silofs_lista_new(struct silofs_alloc *alloc, size_t nelems)
 }
 
 void silofs_lista_del(struct silofs_list_head *lista, size_t nelems,
-		      struct silofs_alloc *alloc)
+                      struct silofs_alloc *alloc)
 {
 	silofs_list_head_finin(lista, nelems);
 	silofs_memfree(alloc, lista, sizeof(*lista) * nelems, 0);

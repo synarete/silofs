@@ -54,7 +54,7 @@ static void kvl_append(struct ut_kvl *kvl, size_t nlen, size_t value_sz)
 }
 
 static void kvl_appendn(struct ut_kvl *kvl, const struct silofs_kv_sizes *arr,
-			size_t arr_len)
+                        size_t arr_len)
 {
 	for (size_t i = 0; i < arr_len; ++i) {
 		kvl_append(kvl, arr[i].name_len, arr[i].value_size);
@@ -472,7 +472,7 @@ static void ut_xattr_replace_multi(struct ut_env *ute)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void ut_xattr_with_io_(struct ut_env *ute, loff_t base_off,
-			      size_t name_len, size_t value_size)
+                              size_t name_len, size_t value_size)
 {
 	ino_t ino = 0;
 	ino_t dino = 0;

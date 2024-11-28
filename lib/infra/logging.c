@@ -54,11 +54,11 @@ static const char *log_progname(void)
 	const struct silofs_log_params *params = silofs_global_log_params;
 
 	return (params && params->progname) ? params->progname :
-					      program_invocation_short_name;
+	                                      program_invocation_short_name;
 }
 
 static void log_to_stdout(enum silofs_log_flags log_flags, const char *msg,
-			  const char *file, int line)
+                          const char *file, int line)
 {
 	FILE *fp = stdout;
 
@@ -93,7 +93,7 @@ static int syslog_level(enum silofs_log_level log_level)
 }
 
 static void log_to_syslog(enum silofs_log_level log_level, const char *msg,
-			  const char *file, int line)
+                          const char *file, int line)
 {
 	const int level = syslog_level(log_level);
 
@@ -108,7 +108,7 @@ static void log_to_syslog(enum silofs_log_level log_level, const char *msg,
 
 static void
 log_msg(enum silofs_log_level log_level, enum silofs_log_flags log_flags,
-	const char *msg, const char *file, int line)
+        const char *msg, const char *file, int line)
 {
 	if (log_flags & SILOFS_LOGF_STDOUT) {
 		log_to_stdout(log_flags, msg, file, line);
@@ -156,7 +156,7 @@ static bool log_enabled_with(enum silofs_log_level log_level)
 }
 
 int silofs_logf(enum silofs_log_level log_level, const char *file, int line,
-		const char *fmt, ...)
+                const char *fmt, ...)
 {
 	char msg[512];
 	va_list ap;

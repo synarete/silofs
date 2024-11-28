@@ -44,7 +44,7 @@ static void view_init_by(struct silofs_view *view, enum silofs_ltype ltype)
 		size = ltype_size(ltype);
 		silofs_memzero(view, size);
 		silofs_hdr_setup(&view->u.hdr, (uint8_t)ltype, size,
-				 SILOFS_HDRF_LTYPE);
+		                 SILOFS_HDRF_LTYPE);
 	}
 }
 
@@ -74,7 +74,7 @@ view_new_by_vaddr(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 }
 
 static void view_del(struct silofs_view *view, enum silofs_ltype ltype,
-		     struct silofs_alloc *alloc, int flags)
+                     struct silofs_alloc *alloc, int flags)
 {
 	const size_t size = ltype_size(ltype);
 
@@ -88,7 +88,7 @@ static void view_del(struct silofs_view *view, enum silofs_ltype ltype,
 }
 
 static void view_del_by(struct silofs_view *view, enum silofs_ltype ltype,
-			struct silofs_alloc *alloc, int flags)
+                        struct silofs_alloc *alloc, int flags)
 {
 	if (likely(view != NULL)) {
 		view_del(view, ltype, alloc, flags);
@@ -97,14 +97,14 @@ static void view_del_by(struct silofs_view *view, enum silofs_ltype ltype,
 
 static void
 view_del_by_ulink(struct silofs_view *view, const struct silofs_ulink *ulink,
-		  struct silofs_alloc *alloc, int flags)
+                  struct silofs_alloc *alloc, int flags)
 {
 	view_del_by(view, uaddr_ltype(&ulink->uaddr), alloc, flags);
 }
 
 static void
 view_del_by_vaddr(struct silofs_view *view, const struct silofs_vaddr *vaddr,
-		  struct silofs_alloc *alloc, int flags)
+                  struct silofs_alloc *alloc, int flags)
 {
 	view_del_by(view, vaddr->ltype, alloc, flags);
 }
@@ -122,7 +122,7 @@ lni_unconst(const struct silofs_lnode_info *lni)
 }
 
 static void lni_init(struct silofs_lnode_info *lni, enum silofs_ltype ltype,
-		     struct silofs_view *view)
+                     struct silofs_view *view)
 {
 	silofs_hmqe_init(&lni->ln_hmqe, ltype_size(ltype));
 	silofs_avl_node_init(&lni->ln_ds_avl_node);
@@ -226,7 +226,7 @@ void silofs_lni_decref(struct silofs_lnode_info *lni)
 }
 
 void silofs_lni_remove_from(struct silofs_lnode_info *lni,
-			    struct silofs_hmapq *hmapq)
+                            struct silofs_hmapq *hmapq)
 {
 	silofs_hmapq_remove(hmapq, silofs_lni_to_hmqe(lni));
 }
@@ -285,13 +285,13 @@ static void uni_verify(const struct silofs_unode_info *uni)
 
 	if (unlikely(uni->un_magic != UI_MAGIC)) {
 		silofs_panic("bad unode: uni=%p magic=%lx", (const void *)uni,
-			     uni->un_magic);
+		             uni->un_magic);
 	}
 }
 
 static void
 uni_init(struct silofs_unode_info *uni, const struct silofs_ulink *ulink,
-	 struct silofs_view *view)
+         struct silofs_view *view)
 {
 	lni_init(&uni->un_lni, ltype_of(ulink), view);
 	ulink_assign(&uni->un_ulink, ulink);
@@ -340,7 +340,7 @@ void silofs_uni_seal_view(struct silofs_unode_info *uni)
 }
 
 static void uni_del_view(struct silofs_unode_info *uni,
-			 struct silofs_alloc *alloc, int flags)
+                         struct silofs_alloc *alloc, int flags)
 {
 	view_del_by_ulink(uni->un_lni.ln_view, uni_ulink(uni), alloc, flags);
 	uni->un_lni.ln_view = NULL;
@@ -409,13 +409,13 @@ static void vni_verify(const struct silofs_vnode_info *vni)
 {
 	if (unlikely(vni->vn_magic != VI_MAGIC)) {
 		silofs_panic("bad vnode: vni=%p magic=%lx", (const void *)vni,
-			     vni->vn_magic);
+		             vni->vn_magic);
 	}
 }
 
 static void
 vni_init(struct silofs_vnode_info *vni, const struct silofs_vaddr *vaddr,
-	 struct silofs_view *view)
+         struct silofs_view *view)
 {
 	lni_init(&vni->vn_lni, vaddr->ltype, view);
 	vaddr_assign(&vni->vn_vaddr, vaddr);
@@ -474,7 +474,7 @@ vni_update_dq_by(struct silofs_vnode_info *vni, struct silofs_inode_info *ii)
 }
 
 void silofs_vni_dirtify(struct silofs_vnode_info *vni,
-			struct silofs_inode_info *ii)
+                        struct silofs_inode_info *ii)
 {
 	silofs_assert_not_null(vni);
 
@@ -525,7 +525,7 @@ vni_has_ltype(const struct silofs_vnode_info *vni, enum silofs_ltype ltype)
 }
 
 static void vni_del_view(struct silofs_vnode_info *vni,
-			 struct silofs_alloc *alloc, int flags)
+                         struct silofs_alloc *alloc, int flags)
 {
 	view_del_by_vaddr(vni->vn_lni.ln_view, vni_vaddr(vni), alloc, flags);
 	vni->vn_lni.ln_view = NULL;
@@ -565,7 +565,7 @@ static struct silofs_sb_info *sbi_from_uni(struct silofs_unode_info *uni)
 }
 
 static int sbi_init(struct silofs_sb_info *sbi,
-		    const struct silofs_ulink *ulink, struct silofs_view *view)
+                    const struct silofs_ulink *ulink, struct silofs_view *view)
 {
 	uni_init(&sbi->sb_uni, ulink, view);
 	sbi->sb = &view->u.sb;
@@ -648,7 +648,7 @@ static struct silofs_spnode_info *sni_from_uni(struct silofs_unode_info *uni)
 
 static void
 sni_init(struct silofs_spnode_info *sni, const struct silofs_ulink *ulink,
-	 struct silofs_view *view)
+         struct silofs_view *view)
 {
 	uni_init(&sni->sn_uni, ulink, view);
 	sni->sn = &view->u.sn;
@@ -727,7 +727,7 @@ static struct silofs_spleaf_info *sli_from_uni(struct silofs_unode_info *uni)
 
 static void
 sli_init(struct silofs_spleaf_info *sli, const struct silofs_ulink *ulink,
-	 struct silofs_view *view)
+         struct silofs_view *view)
 {
 	uni_init(&sli->sl_uni, ulink, view);
 	sli->sl = &view->u.sl;
@@ -799,7 +799,7 @@ static struct silofs_inode_info *ii_from_vni(struct silofs_vnode_info *vni)
 }
 
 static void ii_init(struct silofs_inode_info *ii,
-		    const struct silofs_vaddr *vaddr, struct silofs_view *view)
+                    const struct silofs_vaddr *vaddr, struct silofs_view *view)
 {
 	vni_init(&ii->i_vni, vaddr, view);
 	silofs_dirtyq_init(&ii->i_dq_vnis);
@@ -904,7 +904,7 @@ static struct silofs_xanode_info *xai_from_vni(struct silofs_vnode_info *vni)
 
 static void
 xai_init(struct silofs_xanode_info *xai, const struct silofs_vaddr *vaddr,
-	 struct silofs_view *view)
+         struct silofs_view *view)
 {
 	vni_init(&xai->xan_vni, vaddr, view);
 	xai->xan = &view->u.xan;
@@ -980,7 +980,7 @@ static struct silofs_symval_info *syi_from_vni(struct silofs_vnode_info *vni)
 
 static void
 syi_init(struct silofs_symval_info *syi, const struct silofs_vaddr *vaddr,
-	 struct silofs_view *view)
+         struct silofs_view *view)
 {
 	vni_init(&syi->sy_vni, vaddr, view);
 	syi->syv = &view->u.syv;
@@ -1059,7 +1059,7 @@ static struct silofs_dnode_info *dni_from_vni(struct silofs_vnode_info *vni)
 
 static void
 dni_init(struct silofs_dnode_info *dni, const struct silofs_vaddr *vaddr,
-	 struct silofs_view *view)
+         struct silofs_view *view)
 {
 	vni_init(&dni->dn_vni, vaddr, view);
 	dni->dtn = &view->u.dtn;
@@ -1136,7 +1136,7 @@ static struct silofs_finode_info *fni_from_vni(struct silofs_vnode_info *vni)
 
 static void
 fni_init(struct silofs_finode_info *fni, const struct silofs_vaddr *vaddr,
-	 struct silofs_view *view)
+         struct silofs_view *view)
 {
 	vni_init(&fni->fn_vni, vaddr, view);
 	fni->ftn = &view->u.ftn;
@@ -1212,7 +1212,7 @@ static struct silofs_fileaf_info *fli_from_vni(struct silofs_vnode_info *vni)
 
 static void
 fli_init(struct silofs_fileaf_info *fli, const struct silofs_vaddr *vaddr,
-	 struct silofs_view *view)
+         struct silofs_view *view)
 {
 	vni_init(&fli->fl_vni, vaddr, view);
 
@@ -1286,7 +1286,7 @@ view_verify_by_hdr(const struct silofs_view *view, enum silofs_ltype ltype)
 	const struct silofs_header *hdr = &view->u.hdr;
 
 	return silofs_hdr_verify(hdr, (uint8_t)ltype, ltype_size(ltype),
-				 SILOFS_HDRF_CSUM | SILOFS_HDRF_LTYPE);
+	                         SILOFS_HDRF_CSUM | SILOFS_HDRF_LTYPE);
 }
 
 static int
@@ -1380,7 +1380,7 @@ silofs_new_unode(struct silofs_alloc *alloc, const struct silofs_ulink *ulink)
 }
 
 void silofs_del_unode(struct silofs_unode_info *uni,
-		      struct silofs_alloc *alloc, int flags)
+                      struct silofs_alloc *alloc, int flags)
 {
 	const enum silofs_ltype ltype = uni_ltype(uni);
 
@@ -1454,7 +1454,7 @@ silofs_new_vnode(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 }
 
 void silofs_del_vnode(struct silofs_vnode_info *vni,
-		      struct silofs_alloc *alloc, int flags)
+                      struct silofs_alloc *alloc, int flags)
 {
 	const enum silofs_ltype ltype = vni_ltype(vni);
 

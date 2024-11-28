@@ -58,13 +58,13 @@ static void ft_getdents2(int fd, struct ft_getdents_ctx *gd_ctx)
 	const size_t ndents_max = FT_ARRAY_SIZE(gd_ctx->dents);
 
 	ft_getdents(fd, gd_ctx->buf, sizeof(gd_ctx->buf), gd_ctx->dents,
-		    ndents_max, &ndents);
+	            ndents_max, &ndents);
 	ft_expect_le(ndents, ndents_max);
 	gd_ctx->ndents = ndents;
 }
 
 static void ft_getdents_from(struct ft_env *fte, int fd, loff_t off,
-			     struct ft_getdents_ctx *gd_ctx)
+                             struct ft_getdents_ctx *gd_ctx)
 {
 	loff_t pos = -1;
 
@@ -477,7 +477,7 @@ static void test_readdir_nox(struct ft_env *fte)
  * stream positions, while unlinking entries.
  */
 static void test_readdir_unlink_names_arr_(struct ft_env *fte,
-					   const char *names[], size_t cnt)
+                                           const char *names[], size_t cnt)
 {
 	struct ft_getdents_ctx *gd_ctx = ft_new_getdents_ctx(fte);
 	const char *path = ft_new_path_unique(fte);

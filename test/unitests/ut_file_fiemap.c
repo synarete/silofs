@@ -161,7 +161,7 @@ static void ut_file_fiemap_twoext(struct ut_env *ute)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void ut_file_fiemap_sparse_(struct ut_env *ute, loff_t off_base,
-				   loff_t step, size_t cnt)
+                                   loff_t step, size_t cnt)
 {
 	ino_t ino;
 	ino_t dino;

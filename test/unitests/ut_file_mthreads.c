@@ -49,7 +49,7 @@ static int do_start(struct silofs_thread *th)
 
 static void
 ut_create_threads(struct ut_env *ute, struct silofs_thread *th_arr, size_t nth,
-		  ut_th_exec_fn exec, const struct ut_thread_args *args)
+                  ut_th_exec_fn exec, const struct ut_thread_args *args)
 {
 	struct ut_thread_xargs *xargs = NULL;
 	int err;

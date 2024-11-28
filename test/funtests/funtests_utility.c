@@ -473,7 +473,7 @@ ft_make_xname_unique(struct ft_env *fte, size_t nlen, char *buf, size_t bsz)
 
 	if ((bsz > 0) && (nlen < bsz)) {
 		len = snprintf(buf, bsz, "%s_%08x", ft_curr_test_name(fte),
-			       val);
+		               val);
 		if ((size_t)len < bsz) {
 			memset(buf + len, 'x', bsz - (size_t)len);
 		}
@@ -501,7 +501,7 @@ long ft_timespec_diff(const struct timespec *ts1, const struct timespec *ts2)
 }
 
 long ft_xtimestamp_diff(const struct statx_timestamp *ts1,
-			const struct statx_timestamp *ts2)
+                        const struct statx_timestamp *ts2)
 {
 	const long n = 1000000000L;
 	const long d_sec = ts2->tv_sec - ts1->tv_sec;

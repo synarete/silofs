@@ -65,7 +65,7 @@ silofs_str_find_first_of(const char *s1, size_t n1, const char *s2, size_t n2);
  * Returns the first occurrence of any of the char of s2 which is not in s1.
  */
 const char *silofs_str_find_first_not_of(const char *s1, size_t n1,
-					 const char *s2, size_t n2);
+                                         const char *s2, size_t n2);
 
 /*
  * Returns the first character in s which is not equal to c.
@@ -84,7 +84,7 @@ silofs_str_find_last_of(const char *s1, size_t n1, const char *s2, size_t n2);
  * the first n1 characters of s1.
  */
 const char *silofs_str_find_last_not_of(const char *s1, size_t n1,
-					const char *s2, size_t n2);
+                                        const char *s2, size_t n2);
 
 /*
  * Returns the last character within the first n characters of s which is not
@@ -109,7 +109,7 @@ size_t silofs_str_common_suffix(const char *s1, const char *s2, size_t n);
  * overlaps any of the characters of the first n2 elements of s2.
  */
 silofs_attr_const size_t silofs_str_overlaps(const char *s1, size_t n1,
-					     const char *s2, size_t n2);
+                                             const char *s2, size_t n2);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -184,7 +184,7 @@ size_t silofs_str_insert_chr(char *p, size_t sz, size_t n1, size_t n2, char c);
  * equal to sz).
  */
 size_t silofs_str_replace(char *p, size_t sz, size_t len, size_t n1,
-			  const char *s, size_t n2);
+                          const char *s, size_t n2);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 /*
@@ -194,7 +194,7 @@ size_t silofs_str_replace(char *p, size_t sz, size_t len, size_t n1,
  * equal to sz).
  */
 size_t silofs_str_replace_chr(char *p, size_t sz, size_t len, size_t n1,
-			      size_t n2, char c);
+                              size_t n2, char c);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 /*

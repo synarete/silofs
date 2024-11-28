@@ -147,7 +147,7 @@ static void cmd_archive_prepare(struct cmd_archive_ctx *ctx)
 	cmd_check_fsname(ctx->in_args.arname);
 	cmd_check_isreg(ctx->in_args.repodir_name);
 	cmd_split_path(ctx->in_args.repodir_name, &ctx->in_args.repodir,
-		       &ctx->in_args.name);
+	               &ctx->in_args.name);
 	cmd_realpath_rdir(ctx->in_args.repodir, &ctx->in_args.repodir_real);
 	cmd_check_repodir_fsname(ctx->in_args.repodir_real, ctx->in_args.name);
 	cmd_check_notexists2(ctx->in_args.repodir_real, ctx->in_args.arname);
@@ -157,7 +157,7 @@ static void cmd_archive_getpass(struct cmd_archive_ctx *ctx)
 {
 	if (ctx->in_args.password == NULL) {
 		cmd_getpass_simple(ctx->in_args.no_prompt,
-				   &ctx->in_args.password);
+		                   &ctx->in_args.password);
 	}
 }
 

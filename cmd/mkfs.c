@@ -143,7 +143,7 @@ static void cmd_mkfs_prepare(struct cmd_mkfs_ctx *ctx)
 	cmd_check_notdir(ctx->in_args.repodir_name);
 	cmd_check_notexists(ctx->in_args.repodir_name);
 	cmd_split_path(ctx->in_args.repodir_name, &ctx->in_args.repodir,
-		       &ctx->in_args.name);
+	               &ctx->in_args.name);
 	cmd_realpath_dir(ctx->in_args.repodir, &ctx->in_args.repodir_real);
 	cmd_check_repodir(ctx->in_args.repodir_real);
 	cmd_check_fsname(ctx->in_args.name);

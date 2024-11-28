@@ -21,7 +21,7 @@
  * Expects fsync(3p) to return 0 after regular file write/read operation.
  */
 static void test_fsync_reg_(struct ft_env *fte, loff_t base_off, size_t bsz,
-			    loff_t step, size_t cnt)
+                            loff_t step, size_t cnt)
 {
 	const char *path = ft_new_path_unique(fte);
 	void *buf1 = ft_new_buf_rands(fte, bsz);

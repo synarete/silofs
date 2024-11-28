@@ -280,7 +280,7 @@ static void test_walktree_recursive(struct ft_env *fte, const char *base)
 
 static void
 test_mktree_recursive(struct ft_env *fte, const char *parent, size_t id,
-		      size_t nchilds, size_t depth, size_t depth_max)
+                      size_t nchilds, size_t depth, size_t depth_max)
 {
 	int fd = -1;
 	const char *path = NULL;
@@ -292,7 +292,7 @@ test_mktree_recursive(struct ft_env *fte, const char *parent, size_t id,
 		ft_mkdir(path, 0700);
 		for (size_t i = 0; i < nchilds; ++i) {
 			test_mktree_recursive(fte, path, i + 1, nchilds,
-					      depth + 1, depth_max);
+			                      depth + 1, depth_max);
 		}
 	} else {
 		name = makename(fte, "f", depth, id);
@@ -304,7 +304,7 @@ test_mktree_recursive(struct ft_env *fte, const char *parent, size_t id,
 
 static void
 test_rmtree_recursive(struct ft_env *fte, const char *parent, size_t id,
-		      size_t nchilds, size_t depth, size_t depth_max)
+                      size_t nchilds, size_t depth, size_t depth_max)
 {
 	const char *path = NULL;
 	const char *name = NULL;
@@ -314,7 +314,7 @@ test_rmtree_recursive(struct ft_env *fte, const char *parent, size_t id,
 		path = ft_new_path_nested(fte, parent, name);
 		for (size_t i = 0; i < nchilds; ++i) {
 			test_rmtree_recursive(fte, path, i + 1, nchilds,
-					      depth + 1, depth_max);
+			                      depth + 1, depth_max);
 		}
 		ft_rmdir(path);
 	} else {
@@ -456,7 +456,7 @@ static void test_mkdirat_nested_io_(struct ft_env *fte, size_t cnt)
 		ft_mkdirat(dfd, name, 0700);
 		for (size_t j = 0; j < cnt_inner; ++j) {
 			name = ft_new_namef(fte, "%s%lu/%lu/%lu/%s%lu", curr,
-					    i, i, i, curr, j);
+			                    i, i, i, curr, j);
 			ft_openat(dfd, name, O_CREAT | O_RDWR, 0600, &fd);
 			off = (ssize_t)(i * len + j);
 			ft_pwriten(fd, buf1, len, off);
@@ -468,7 +468,7 @@ static void test_mkdirat_nested_io_(struct ft_env *fte, size_t cnt)
 	for (size_t i = 0; i < cnt; ++i) {
 		for (size_t j = 0; j < cnt_inner; ++j) {
 			name = ft_new_namef(fte, "%s%lu/%lu/%lu/%s%lu", curr,
-					    i, i, i, curr, j);
+			                    i, i, i, curr, j);
 			ft_openat(dfd, name, O_RDONLY, 0600, &fd);
 			off = (ssize_t)(i * len + j);
 			ft_preadn(fd, buf2, len, off);

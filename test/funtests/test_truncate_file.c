@@ -64,7 +64,7 @@ static void test_truncate_basic(struct ft_env *fte)
  * Expects truncate(3p) to create zeros at the truncated tail-range.
  */
 static void test_truncate_tail_(struct ft_env *fte, loff_t base_off,
-				size_t data_sz, size_t tail_sz)
+                                size_t data_sz, size_t tail_sz)
 {
 	struct stat st = { .st_size = -1 };
 	void *buf1 = ft_new_buf_rands(fte, data_sz);

@@ -39,25 +39,25 @@ static bool strview_isempty(const struct silofs_strview *sv)
 }
 
 static void strview_split_by(const struct silofs_strview *sv, char sep,
-			     struct silofs_strview_pair *out_sv_pair)
+                             struct silofs_strview_pair *out_sv_pair)
 {
 	silofs_strview_split_chr(sv, sep, out_sv_pair);
 }
 
 static void strview_split_by_nl(const struct silofs_strview *sv,
-				struct silofs_strview_pair *out_sv_pair)
+                                struct silofs_strview_pair *out_sv_pair)
 {
 	strview_split_by(sv, '\n', out_sv_pair);
 }
 
 static void strview_strip_ws(const struct silofs_strview *sv,
-			     struct silofs_strview *out_sv)
+                             struct silofs_strview *out_sv)
 {
 	silofs_strview_strip_ws(sv, out_sv);
 }
 
 static void strview_strip_any(const struct silofs_strview *sv, const char *set,
-			      struct silofs_strview *out_sv)
+                              struct silofs_strview *out_sv)
 {
 	silofs_strview_strip_any_of(sv, set, out_sv);
 }
@@ -124,7 +124,7 @@ cmd_die_by(const struct idsconf_ctx *ctx, const char *msg)
 
 static void
 cmd_parse_uid_by_value(const struct idsconf_ctx *ctx,
-		       const struct silofs_strview *ss, uid_t *out_uid)
+                       const struct silofs_strview *ss, uid_t *out_uid)
 {
 	char str[64] = "";
 
@@ -137,7 +137,7 @@ cmd_parse_uid_by_value(const struct idsconf_ctx *ctx,
 
 static void
 cmd_parse_gid_by_value(const struct idsconf_ctx *ctx,
-		       const struct silofs_strview *ss, gid_t *out_gid)
+                       const struct silofs_strview *ss, gid_t *out_gid)
 {
 	char str[64] = "";
 
@@ -292,7 +292,7 @@ static void cmd_pfree_uids(struct silofs_uids **puids, size_t *pnuids)
 }
 
 static void cmd_copy_uids(struct silofs_uids *uids_dst,
-			  const struct silofs_uids *uids_src, size_t nuids)
+                          const struct silofs_uids *uids_src, size_t nuids)
 {
 	if (uids_src && nuids) {
 		memcpy(uids_dst, uids_src, nuids * sizeof(uids_dst[0]));
@@ -313,7 +313,7 @@ cmd_extend_uids(struct silofs_uids **puids, size_t *pnuids, size_t cnt)
 }
 
 static void cmd_append_uids1(struct silofs_uids **puids, size_t *pnuids,
-			     const struct silofs_uids *uids)
+                             const struct silofs_uids *uids)
 {
 	cmd_extend_uids(puids, pnuids, 1);
 	cmd_copy_uids(&(*puids)[*pnuids - 1], uids, 1);
@@ -344,7 +344,7 @@ static void cmd_pfree_gids(struct silofs_gids **pgids, size_t *pngids)
 }
 
 static void cmd_copy_gids(struct silofs_gids *gids_dst,
-			  const struct silofs_gids *gids_src, size_t ngids)
+                          const struct silofs_gids *gids_src, size_t ngids)
 {
 	if (gids_src && ngids) {
 		memcpy(gids_dst, gids_src, ngids * sizeof(gids_dst[0]));
@@ -365,7 +365,7 @@ cmd_extend_gids(struct silofs_gids **pgids, size_t *pngids, size_t cnt)
 }
 
 static void cmd_append_gids1(struct silofs_gids **pgids, size_t *pngids,
-			     const struct silofs_gids *gids)
+                             const struct silofs_gids *gids)
 {
 	cmd_extend_gids(pgids, pngids, 1);
 	cmd_copy_gids(&(*pgids)[*pngids - 1], gids, 1);
@@ -375,7 +375,7 @@ static void cmd_append_gids1(struct silofs_gids **pgids, size_t *pngids,
 
 static void
 cmd_parse_uid_by_name(const struct idsconf_ctx *ctx,
-		      const struct silofs_strview *name, uid_t *out_uid)
+                      const struct silofs_strview *name, uid_t *out_uid)
 {
 	char buf[NAME_MAX + 1] = "";
 
@@ -388,7 +388,7 @@ cmd_parse_uid_by_name(const struct idsconf_ctx *ctx,
 
 static void
 cmd_parse_gid_by_name(const struct idsconf_ctx *ctx,
-		      const struct silofs_strview *name, gid_t *out_gid)
+                      const struct silofs_strview *name, gid_t *out_gid)
 {
 	char buf[NAME_MAX + 1] = "";
 
@@ -401,8 +401,8 @@ cmd_parse_gid_by_name(const struct idsconf_ctx *ctx,
 
 static void
 cmd_parse_uids(const struct idsconf_ctx *ctx,
-	       const struct silofs_strview *name,
-	       const struct silofs_strview *suid, struct silofs_uids *out_uids)
+               const struct silofs_strview *name,
+               const struct silofs_strview *suid, struct silofs_uids *out_uids)
 {
 	cmd_parse_uid_by_name(ctx, name, &out_uids->fs_uid);
 	cmd_parse_uid_by_value(ctx, suid, &out_uids->host_uid);
@@ -410,15 +410,15 @@ cmd_parse_uids(const struct idsconf_ctx *ctx,
 
 static void
 cmd_parse_gids(const struct idsconf_ctx *ctx,
-	       const struct silofs_strview *name,
-	       const struct silofs_strview *sgid, struct silofs_gids *out_gids)
+               const struct silofs_strview *name,
+               const struct silofs_strview *sgid, struct silofs_gids *out_gids)
 {
 	cmd_parse_gid_by_name(ctx, name, &out_gids->host_gid);
 	cmd_parse_gid_by_value(ctx, sgid, &out_gids->fs_gid);
 }
 
 static void cmd_parse_user_conf(const struct idsconf_ctx *ctx,
-				struct silofs_uids **uids, size_t *nuids)
+                                struct silofs_uids **uids, size_t *nuids)
 {
 	struct silofs_strview_pair ssp;
 	struct silofs_strview name;
@@ -437,7 +437,7 @@ static void cmd_parse_user_conf(const struct idsconf_ctx *ctx,
 }
 
 static void cmd_parse_group_conf(const struct idsconf_ctx *ctx,
-				 struct silofs_gids **gids, size_t *ngids)
+                                 struct silofs_gids **gids, size_t *ngids)
 {
 	struct silofs_strview_pair ssp;
 	struct silofs_strview name;
@@ -563,7 +563,7 @@ static void cmd_save_idsconf_file(const char *pathname, const char *txt)
 	int err;
 
 	err = silofs_sys_open(pathname, O_CREAT | O_RDWR | O_TRUNC,
-			      S_IRUSR | S_IWUSR | S_IRGRP, &fd);
+	                      S_IRUSR | S_IWUSR | S_IRGRP, &fd);
 	if (err) {
 		cmd_die(err, "failed to create ids-config: %s", pathname);
 	}
@@ -603,13 +603,13 @@ static enum idsconf_sec idsconf_sec_by_name(const struct silofs_strview *sv)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void fs_ids_parse_user_conf(struct silofs_fs_ids *ids,
-				   const struct idsconf_ctx *ctx)
+                                   const struct idsconf_ctx *ctx)
 {
 	cmd_parse_user_conf(ctx, &ids->users.uids, &ids->users.nuids);
 }
 
 static void fs_ids_parse_group_conf(struct silofs_fs_ids *ids,
-				    const struct idsconf_ctx *ctx)
+                                    const struct idsconf_ctx *ctx)
 {
 	cmd_parse_group_conf(ctx, &ids->groups.gids, &ids->groups.ngids);
 }
@@ -761,7 +761,7 @@ static void fs_ids_add_supgr(struct silofs_fs_ids *ids, const char *user)
 }
 
 void cmd_fs_ids_add_user(struct silofs_fs_ids *ids, const char *user,
-			 bool with_sup_groups)
+                         bool with_sup_groups)
 {
 	struct silofs_uids uids;
 	struct silofs_gids gids;
@@ -796,7 +796,7 @@ void cmd_fs_ids_fini(struct silofs_fs_ids *ids)
 }
 
 void cmd_fs_ids_assign(struct silofs_fs_ids *ids,
-		       const struct silofs_fs_ids *other)
+                       const struct silofs_fs_ids *other)
 {
 	cmd_fs_ids_reset(ids);
 	for (size_t i = 0; i < other->users.nuids; ++i) {
@@ -866,7 +866,7 @@ void cmd_resolve_uidgid(const char *name, uid_t *out_uid, gid_t *out_gid)
 }
 
 void cmd_require_uidgid(const struct silofs_fs_ids *ids, const char *name,
-			uid_t *out_uid, gid_t *out_gid)
+                        uid_t *out_uid, gid_t *out_gid)
 {
 	cmd_resolve_uidgid(name, out_uid, out_gid);
 	if (!fs_ids_has_host_uid(ids, *out_uid)) {

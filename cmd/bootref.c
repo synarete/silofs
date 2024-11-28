@@ -76,7 +76,7 @@ static void cmd_save_bref_file(const char *pathname, const char *txt)
 
 	tmp = cmd_bref_tmp_pathname(pathname);
 	err = silofs_sys_open(tmp, O_CREAT | O_RDWR | O_TRUNC,
-			      S_IRUSR | S_IWUSR, &fd);
+	                      S_IRUSR | S_IWUSR, &fd);
 	if (err) {
 		cmd_die(err, "failed to create boot-ref: %s", tmp);
 	}
@@ -184,7 +184,7 @@ void cmd_bootref_save(const struct silofs_fs_bref *bref)
 }
 
 void cmd_bootref_resave(const struct silofs_fs_bref *bref,
-			const struct silofs_caddr *caddr, const char *newname)
+                        const struct silofs_caddr *caddr, const char *newname)
 {
 	struct silofs_fs_bref bref_alt;
 

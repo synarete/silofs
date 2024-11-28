@@ -245,7 +245,7 @@ cmd_show_time(const struct cmd_show_ctx *ctx, const char *name, time_t tm)
 }
 
 static void cmd_show_counter(const struct cmd_show_ctx *ctx,
-			     const char *prefix, const char *name, ssize_t val)
+                             const char *prefix, const char *name, ssize_t val)
 {
 	if (prefix && strlen(prefix)) {
 		fprintf(ctx->out_fp, "%s.%s: %ld\n", prefix, name, val);
@@ -276,7 +276,7 @@ static void cmd_show_proc(struct cmd_show_ctx *ctx)
 }
 
 static void cmd_show_spacestats(const struct cmd_show_ctx *ctx,
-				const struct silofs_spacestats *spst)
+                                const struct silofs_spacestats *spst)
 {
 	const char *prefix = "";
 

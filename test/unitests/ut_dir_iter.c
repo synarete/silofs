@@ -44,7 +44,7 @@ ut_find_not_dot(const struct ut_dirent_info *deis, size_t n, size_t start_pos)
 	ut_expect_not_null(dei);
 	if (dei == NULL) {
 		silofs_panic("failed to find real de: n=%zu statr_pos=%zu", n,
-			     start_pos);
+		             start_pos);
 	}
 	return dei;
 }
@@ -62,7 +62,7 @@ ut_find_any_not_dot(const struct ut_dirent_info *dei, size_t n)
 }
 
 static void ut_expect_name_exists(const struct ut_dirent_info *dei, size_t n,
-				  const char *name)
+                                  const char *name)
 {
 	bool name_exists = false;
 
@@ -95,7 +95,7 @@ static void ut_dir_open_release(struct ut_env *ute)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void ut_verify_iter_simple(struct ut_env *ute, const char *pre,
-				  const struct ut_readdir_ctx *rd_ctx)
+                                  const struct ut_readdir_ctx *rd_ctx)
 {
 	const char *name = NULL;
 	const struct ut_dirent_info *dei = rd_ctx->dei;

@@ -243,9 +243,9 @@ void cmd_check_mntsrv_conn(void)
 	err = silofs_mntrpc_handshake(uid, gid);
 	if (err) {
 		cmd_die(err,
-			"failed to handshake with mountd: "
-			"sock=@%s",
-			cmd_mntsock_name());
+		        "failed to handshake with mountd: "
+		        "sock=@%s",
+		        cmd_mntsock_name());
 	}
 }
 
@@ -339,7 +339,7 @@ static void cmd_access_ok(const char *path)
 	}
 	if (err) {
 		cmd_die(err, "no access: %s uid=%d gid=%d", path, getuid(),
-			getgid());
+		        getgid());
 	}
 }
 
@@ -372,21 +372,21 @@ void cmd_check_mntdir(const char *path, bool mount)
 		fsi = silofs_fsinfo_by_vfstype(fstype);
 		if (fsi == NULL) {
 			cmd_die(0,
-				"unknown fstype at: "
-				"%s fstype=0x%lx",
-				path, fstype);
+			        "unknown fstype at: "
+			        "%s fstype=0x%lx",
+			        path, fstype);
 		}
 		if (fsi->isfuse) {
 			cmd_die(0,
-				"can not mount over FUSE file-system: "
-				"%s fstype=0x%lx",
-				path, fstype);
+			        "can not mount over FUSE file-system: "
+			        "%s fstype=0x%lx",
+			        path, fstype);
 		}
 		if (!fsi->allowed) {
 			cmd_die(0,
-				"not allowed to mount over: "
-				"%s fstype=0x%lx",
-				path, fstype);
+			        "not allowed to mount over: "
+			        "%s fstype=0x%lx",
+			        path, fstype);
 		}
 		cmd_check_emptydir(path, true);
 	} else {
@@ -395,9 +395,9 @@ void cmd_check_mntdir(const char *path, bool mount)
 		fsi = silofs_fsinfo_by_vfstype(fstype);
 		if (fsi == NULL) {
 			cmd_die(0,
-				"unknown fstype at: "
-				"%s fstype=0x%lx",
-				path, fstype);
+			        "unknown fstype at: "
+			        "%s fstype=0x%lx",
+			        path, fstype);
 		}
 		if (!fsi->isfuse) {
 			cmd_die(0, "not a FUSE file-system: %s", path);
@@ -638,9 +638,9 @@ void cmd_setup_coredump_mode(bool enable_coredump)
 	err = silofs_sys_setrlimit(RLIMIT_CORE, &rlim);
 	if (err) {
 		cmd_die(err,
-			"failed to setrlimit RLIMIT_CORE: "
-			"rlim_cur=%zu rlim_max=%zu",
-			rlim.rlim_cur, rlim.rlim_max);
+		        "failed to setrlimit RLIMIT_CORE: "
+		        "rlim_cur=%zu rlim_max=%zu",
+		        rlim.rlim_cur, rlim.rlim_max);
 	}
 	if (enable_coredump) {
 		cmd_setup_dumpable();
@@ -700,7 +700,7 @@ void cmd_split_path(const char *path, char **out_head, char **out_tail)
 }
 
 void cmd_remake_path(const char *path, const char *suffix, char **out_head,
-		     char **out_tail)
+                     char **out_tail)
 {
 	char *tail = NULL;
 
@@ -710,7 +710,7 @@ void cmd_remake_path(const char *path, const char *suffix, char **out_head,
 }
 
 void cmd_remake_path2(const char *path, const char *suffix, char **out_head,
-		      char **out_tail)
+                      char **out_tail)
 {
 	char *spos = NULL;
 
@@ -913,7 +913,7 @@ static char *cmd_read_proc_mountinfo(void)
 }
 
 static void cmd_parse_field(const struct silofs_strview *line, size_t idx,
-			    struct silofs_strview *out_field)
+                            struct silofs_strview *out_field)
 {
 	struct silofs_strview_pair pair;
 	struct silofs_strview *word = &pair.first;
@@ -933,8 +933,8 @@ static void cmd_parse_field(const struct silofs_strview *line, size_t idx,
 }
 
 static void cmd_parse_mountinfo_line(const struct silofs_strview *line,
-				     struct silofs_strview *out_mntdir,
-				     struct silofs_strview *out_mntargs)
+                                     struct silofs_strview *out_mntdir,
+                                     struct silofs_strview *out_mntargs)
 {
 	struct silofs_strview_pair pair;
 	struct silofs_strview *head = &pair.first;
@@ -964,7 +964,7 @@ static void *memory_at(void *mem, size_t pos)
 
 static struct cmd_proc_mntinfo *
 cmd_new_mntinfo(const struct silofs_strview *mntdir,
-		const struct silofs_strview *mntargs)
+                const struct silofs_strview *mntargs)
 {
 	struct cmd_proc_mntinfo *mi = NULL;
 	void *mem = NULL;
@@ -1006,7 +1006,7 @@ cmd_new_mntinfo_of(const struct silofs_strview *line)
 }
 
 static void cmd_parse_mountinfo_into(struct cmd_proc_mntinfo **pmi_list,
-				     const char *mount_info_text)
+                                     const char *mount_info_text)
 {
 	struct silofs_strview info;
 	struct silofs_strview_pair pair;

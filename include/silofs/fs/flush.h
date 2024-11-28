@@ -40,14 +40,14 @@ struct silofs_flusher {
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_flusher_init(struct silofs_flusher *flusher,
-			struct silofs_submitq *submitq);
+                        struct silofs_submitq *submitq);
 
 void silofs_flusher_fini(struct silofs_flusher *flusher);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_flush_dirty(struct silofs_task *task, struct silofs_inode_info *ii,
-		       int flags);
+                       int flags);
 
 int silofs_flush_dirty_now(struct silofs_task *task);
 

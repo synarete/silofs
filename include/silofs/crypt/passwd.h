@@ -29,7 +29,7 @@ struct silofs_password {
 int silofs_password_setup(struct silofs_password *pw, const char *pass);
 
 int silofs_password_setup2(struct silofs_password *pw, const void *pass,
-			   size_t len);
+                           size_t len);
 
 void silofs_password_mkrand(struct silofs_password *pw);
 

@@ -289,7 +289,7 @@ static void test_fallocate_beyond(struct ft_env *fte)
  */
 static void
 test_fallocate_punch_hole_(struct ft_env *fte, loff_t data_off,
-			   size_t data_len, loff_t hole_off, size_t hole_len)
+                           size_t data_len, loff_t hole_off, size_t hole_len)
 {
 	const void *buf = ft_new_buf_rands(fte, data_len);
 	const char *path = ft_new_path_unique(fte);
@@ -316,7 +316,7 @@ static void test_fallocate_punch_hole(struct ft_env *fte)
 	test_fallocate_punch_hole_(fte, 0, FT_64K, 0, 32);
 	test_fallocate_punch_hole_(fte, 0, FT_64K, 1, 17);
 	test_fallocate_punch_hole_(fte, FT_64K, FT_64K, FT_64K + 1,
-				   FT_64K - 2);
+	                           FT_64K - 2);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

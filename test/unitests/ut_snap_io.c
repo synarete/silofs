@@ -19,7 +19,7 @@
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void ut_snap_write_sparse_(struct ut_env *ute, const loff_t *offs,
-				  size_t cnt, size_t bsz)
+                                  size_t cnt, size_t bsz)
 {
 	ino_t ino = 0;
 	ino_t dino = 0;

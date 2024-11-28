@@ -109,14 +109,14 @@ static void ft_finish_test(struct ft_env *fte)
 
 	silofs_mclock_dif(&fte->ts_start, &fte->ts_finish, &dif);
 	silofs_log_info("%-40s OK (%ld.%03lds)", fte->currtest->name,
-			dif.tv_sec, dif.tv_nsec / 1000000L);
+	                dif.tv_sec, dif.tv_nsec / 1000000L);
 	umask(fte->umsk);
 	fte->currtest = NULL;
 	ft_freeall(fte);
 }
 
 static void verify_consistent_statvfs(const struct statvfs *stv_beg,
-				      const struct statvfs *stv_end)
+                                      const struct statvfs *stv_end)
 {
 	fsblkcnt_t bfree_dif;
 
@@ -312,7 +312,7 @@ static void fte_meta(const struct ft_env *fte, int start)
 {
 	if (!fte->params.listtests) {
 		silofs_log_info("%s: %s", start ? "start" : "done",
-				silofs_version.string);
+		                silofs_version.string);
 	}
 }
 
@@ -330,8 +330,8 @@ void fte_run(struct ft_env *fte)
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 void ft_exec_with_ranges_(struct ft_env *fte,
-			  void (*fn)(struct ft_env *, loff_t, size_t),
-			  const struct ft_range *range, size_t na)
+                          void (*fn)(struct ft_env *, loff_t, size_t),
+                          const struct ft_range *range, size_t na)
 {
 	for (size_t i = 0; i < na; ++i) {
 		fn(fte, range[i].off, range[i].len);

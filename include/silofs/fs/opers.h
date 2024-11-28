@@ -397,133 +397,133 @@ struct silofs_oper_args {
 int silofs_fs_forget(struct silofs_task *task, ino_t ino, size_t nlookup);
 
 int silofs_fs_statfs(struct silofs_task *task, ino_t ino,
-		     struct statvfs *stvfs);
+                     struct statvfs *stvfs);
 
 int silofs_fs_lookup(struct silofs_task *task, ino_t parent, const char *name,
-		     struct silofs_stat *out_stat);
+                     struct silofs_stat *out_stat);
 
 int silofs_fs_getattr(struct silofs_task *task, ino_t ino,
-		      struct silofs_stat *out_stat);
+                      struct silofs_stat *out_stat);
 
 int silofs_fs_mkdir(struct silofs_task *task, ino_t parent, const char *name,
-		    mode_t mode, struct silofs_stat *out_stat);
+                    mode_t mode, struct silofs_stat *out_stat);
 
 int silofs_fs_rmdir(struct silofs_task *task, ino_t parent, const char *name);
 
 int silofs_fs_access(struct silofs_task *task, ino_t ino, int mode);
 
 int silofs_fs_chmod(struct silofs_task *task, ino_t ino, mode_t mode,
-		    const struct stat *st, struct silofs_stat *out_stat);
+                    const struct stat *st, struct silofs_stat *out_stat);
 
 int silofs_fs_chown(struct silofs_task *task, ino_t ino, uid_t uid, gid_t gid,
-		    const struct stat *st, struct silofs_stat *out_stat);
+                    const struct stat *st, struct silofs_stat *out_stat);
 
 int silofs_fs_truncate(struct silofs_task *task, ino_t ino, loff_t len,
-		       struct silofs_stat *out_stat);
+                       struct silofs_stat *out_stat);
 
 int silofs_fs_utimens(struct silofs_task *task, ino_t ino,
-		      const struct stat *times, struct silofs_stat *out_stat);
+                      const struct stat *times, struct silofs_stat *out_stat);
 
 int silofs_fs_symlink(struct silofs_task *task, ino_t parent, const char *name,
-		      const char *symval, struct silofs_stat *out_stat);
+                      const char *symval, struct silofs_stat *out_stat);
 
 int silofs_fs_readlink(struct silofs_task *task, ino_t ino, char *ptr,
-		       size_t lim, size_t *out_len);
+                       size_t lim, size_t *out_len);
 
 int silofs_fs_unlink(struct silofs_task *task, ino_t parent, const char *name);
 
 int silofs_fs_link(struct silofs_task *task, ino_t ino, ino_t parent,
-		   const char *name, struct silofs_stat *out_stat);
+                   const char *name, struct silofs_stat *out_stat);
 
 int silofs_fs_rename(struct silofs_task *task, ino_t parent, const char *name,
-		     ino_t newparent, const char *newname, int flags);
+                     ino_t newparent, const char *newname, int flags);
 
 int silofs_fs_opendir(struct silofs_task *task, ino_t ino, int o_flags);
 
 int silofs_fs_releasedir(struct silofs_task *task, ino_t ino, int o_flags);
 
 int silofs_fs_readdir(struct silofs_task *task, ino_t ino,
-		      struct silofs_readdir_ctx *rd_ctx);
+                      struct silofs_readdir_ctx *rd_ctx);
 
 int silofs_fs_readdirplus(struct silofs_task *task, ino_t ino,
-			  struct silofs_readdir_ctx *rd_ctx);
+                          struct silofs_readdir_ctx *rd_ctx);
 
 int silofs_fs_fsyncdir(struct silofs_task *task, ino_t ino, bool datasync);
 
 int silofs_fs_create(struct silofs_task *task, ino_t parent, const char *name,
-		     int o_flags, mode_t mode, struct silofs_stat *out_stat);
+                     int o_flags, mode_t mode, struct silofs_stat *out_stat);
 
 int silofs_fs_open(struct silofs_task *task, ino_t ino, int o_flags);
 
 int silofs_fs_mknod(struct silofs_task *task, ino_t parent, const char *name,
-		    mode_t mode, dev_t rdev, struct silofs_stat *out_stat);
+                    mode_t mode, dev_t rdev, struct silofs_stat *out_stat);
 
 int silofs_fs_release(struct silofs_task *task, ino_t ino, int o_flags,
-		      bool flush);
+                      bool flush);
 
 int silofs_fs_flush(struct silofs_task *task, ino_t ino, bool now);
 
 int silofs_fs_fsync(struct silofs_task *task, ino_t ino, bool datasync);
 
 int silofs_fs_getxattr(struct silofs_task *task, ino_t ino, const char *name,
-		       void *buf, size_t size, size_t *out_size);
+                       void *buf, size_t size, size_t *out_size);
 
 int silofs_fs_setxattr(struct silofs_task *task, ino_t ino, const char *name,
-		       const void *value, size_t size, int flags,
-		       bool kill_sgid);
+                       const void *value, size_t size, int flags,
+                       bool kill_sgid);
 
 int silofs_fs_listxattr(struct silofs_task *task, ino_t ino,
-			struct silofs_listxattr_ctx *lxa_ctx);
+                        struct silofs_listxattr_ctx *lxa_ctx);
 
 int silofs_fs_removexattr(struct silofs_task *task, ino_t ino,
-			  const char *name);
+                          const char *name);
 
 int silofs_fs_fallocate(struct silofs_task *task, ino_t ino, int mode,
-			loff_t offset, loff_t length);
+                        loff_t offset, loff_t length);
 
 int silofs_fs_lseek(struct silofs_task *task, ino_t ino, loff_t off,
-		    int whence, loff_t *out_off);
+                    int whence, loff_t *out_off);
 
 int silofs_fs_copy_file_range(struct silofs_task *task, ino_t ino_in,
-			      loff_t off_in, ino_t ino_out, loff_t off_out,
-			      size_t len, int flags, size_t *out_ncp);
+                              loff_t off_in, ino_t ino_out, loff_t off_out,
+                              size_t len, int flags, size_t *out_ncp);
 
 int silofs_fs_read(struct silofs_task *task, ino_t ino, void *buf, size_t len,
-		   loff_t off, int o_flags, size_t *out_len);
+                   loff_t off, int o_flags, size_t *out_len);
 
 int silofs_fs_read_iter(struct silofs_task *task, ino_t ino, int o_flags,
-			struct silofs_rwiter_ctx *rwi_ctx);
+                        struct silofs_rwiter_ctx *rwi_ctx);
 
 int silofs_fs_write(struct silofs_task *task, ino_t ino, const void *buf,
-		    size_t len, loff_t off, int o_flags, size_t *out_len);
+                    size_t len, loff_t off, int o_flags, size_t *out_len);
 
 int silofs_fs_write_iter(struct silofs_task *task, ino_t ino, int o_flags,
-			 struct silofs_rwiter_ctx *rwi_ctx);
+                         struct silofs_rwiter_ctx *rwi_ctx);
 
 int silofs_fs_statx(struct silofs_task *task, ino_t ino,
-		    unsigned int request_mask, struct statx *out_stx);
+                    unsigned int request_mask, struct statx *out_stx);
 
 int silofs_fs_fiemap(struct silofs_task *task, ino_t ino, struct fiemap *fm);
 
 int silofs_fs_syncfs(struct silofs_task *task, ino_t ino, int flags);
 
 int silofs_fs_query(struct silofs_task *task, ino_t ino,
-		    enum silofs_query_type   qtype,
-		    struct silofs_ioc_query *out_qry);
+                    enum silofs_query_type   qtype,
+                    struct silofs_ioc_query *out_qry);
 
 int silofs_fs_clone(struct silofs_task *task, ino_t ino, int flags,
-		    struct silofs_bootrecs *out_brecs);
+                    struct silofs_bootrecs *out_brecs);
 
 int silofs_fs_tune(struct silofs_task *task, ino_t ino, int iflags_want,
-		   int iflags_dont);
+                   int iflags_dont);
 
 int silofs_fs_rdwr_post(const struct silofs_task *task, int wr_mode,
-			const struct silofs_iovec *iov, size_t cnt);
+                        const struct silofs_iovec *iov, size_t cnt);
 
 int silofs_fs_maintain(struct silofs_task *task, int flags);
 
 int silofs_fs_inspect(struct silofs_task *task, silofs_visit_laddr_fn cb,
-		      void *user_ctx);
+                      void *user_ctx);
 
 int silofs_fs_unrefs(struct silofs_task *task);
 

@@ -108,7 +108,7 @@ void ft_do_lstat_err(const char *path, int err, const char *fl, int ln)
 }
 
 void ft_do_fstatat(int dirfd, const char *name, struct stat *st, int flags,
-		   const char *fl, int ln)
+                   const char *fl, int ln)
 {
 	int res;
 
@@ -117,7 +117,7 @@ void ft_do_fstatat(int dirfd, const char *name, struct stat *st, int flags,
 }
 
 void ft_do_fstatat_err(int dirfd, const char *name, int flags, int err,
-		       const char *fl, int ln)
+                       const char *fl, int ln)
 {
 	struct stat st = { .st_size = -1 };
 	int res;
@@ -127,7 +127,7 @@ void ft_do_fstatat_err(int dirfd, const char *name, int flags, int err,
 }
 
 void ft_do_statx(int dirfd, const char *name, int flags, unsigned int mask,
-		 struct statx *stx, const char *fl, int ln)
+                 struct statx *stx, const char *fl, int ln)
 {
 	int res;
 
@@ -136,7 +136,7 @@ void ft_do_statx(int dirfd, const char *name, int flags, unsigned int mask,
 }
 
 void ft_do_statvfs(const char *path, struct statvfs *stv, const char *fl,
-		   int ln)
+                   int ln)
 {
 	int res;
 
@@ -162,7 +162,7 @@ void ft_do_fstatvfs(int fd, struct statvfs *stvfs, const char *fl, int ln)
 }
 
 void ft_do_utime(const char *path, const struct utimbuf *tm, const char *fl,
-		 int ln)
+                 int ln)
 {
 	int res;
 
@@ -171,7 +171,7 @@ void ft_do_utime(const char *path, const struct utimbuf *tm, const char *fl,
 }
 
 void ft_do_utimes(const char *path, const struct timeval tm[2], const char *fl,
-		  int ln)
+                  int ln)
 {
 	int res;
 
@@ -180,7 +180,7 @@ void ft_do_utimes(const char *path, const struct timeval tm[2], const char *fl,
 }
 
 void ft_do_utimensat(int dirfd, const char *name, const struct timespec tm[2],
-		     int flags, const char *fl, int ln)
+                     int flags, const char *fl, int ln)
 {
 	int res;
 
@@ -189,7 +189,7 @@ void ft_do_utimensat(int dirfd, const char *name, const struct timespec tm[2],
 }
 
 void ft_do_futimens(int fd, const struct timespec tm[2], const char *fl,
-		    int ln)
+                    int ln)
 {
 	int res;
 
@@ -206,7 +206,7 @@ void ft_do_mkdir(const char *path, mode_t mode, const char *fl, int ln)
 }
 
 void ft_do_mkdir_err(const char *path, mode_t mode, int err, const char *fl,
-		     int ln)
+                     int ln)
 {
 	int res;
 
@@ -215,7 +215,7 @@ void ft_do_mkdir_err(const char *path, mode_t mode, int err, const char *fl,
 }
 
 void ft_do_mkdirat(int dirfd, const char *name, mode_t mode, const char *fl,
-		   int ln)
+                   int ln)
 {
 	int res;
 
@@ -261,7 +261,7 @@ void ft_do_unlink_noent(const char *path, const char *fl, int ln)
 }
 
 void ft_do_unlinkat(int dirfd, const char *name, int flags, const char *fl,
-		    int ln)
+                    int ln)
 {
 	int res;
 
@@ -270,7 +270,7 @@ void ft_do_unlinkat(int dirfd, const char *name, int flags, const char *fl,
 }
 
 static void ft_do_unlinkat_err(int dirfd, const char *name, int flags, int err,
-			       const char *fl, int ln)
+                               const char *fl, int ln)
 {
 	int res;
 
@@ -284,7 +284,7 @@ void ft_do_unlinkat_noent(int dirfd, const char *name, const char *fl, int ln)
 }
 
 void ft_do_open(const char *path, int flags, mode_t mode, int *out_fd,
-		const char *fl, int ln)
+                const char *fl, int ln)
 {
 	int res;
 
@@ -293,7 +293,7 @@ void ft_do_open(const char *path, int flags, mode_t mode, int *out_fd,
 }
 
 void ft_do_open_err(const char *path, int flags, mode_t mode, int err,
-		    const char *fl, int ln)
+                    const char *fl, int ln)
 {
 	int fd = -1;
 	int res;
@@ -303,7 +303,7 @@ void ft_do_open_err(const char *path, int flags, mode_t mode, int err,
 }
 
 void ft_do_openat(int dirfd, const char *name, int flags, mode_t mode,
-		  int *out_fd, const char *fl, int ln)
+                  int *out_fd, const char *fl, int ln)
 {
 	int res;
 
@@ -312,7 +312,7 @@ void ft_do_openat(int dirfd, const char *name, int flags, mode_t mode,
 }
 
 void ft_do_openat_err(int dirfd, const char *name, int flags, mode_t mode,
-		      int err, const char *fl, int ln)
+                      int err, const char *fl, int ln)
 {
 	int fd = -1;
 	int res;
@@ -322,7 +322,7 @@ void ft_do_openat_err(int dirfd, const char *name, int flags, mode_t mode,
 }
 
 void ft_do_creat(const char *path, mode_t mode, int *out_fd, const char *fl,
-		 int ln)
+                 int ln)
 {
 	int res;
 
@@ -355,7 +355,7 @@ void ft_do_ftruncate(int fd, loff_t len, const char *fl, int ln)
 }
 
 void ft_do_llseek(int fd, loff_t off, int whence, loff_t *out_pos,
-		  const char *fl, int ln)
+                  const char *fl, int ln)
 {
 	int res;
 
@@ -364,7 +364,7 @@ void ft_do_llseek(int fd, loff_t off, int whence, loff_t *out_pos,
 }
 
 void ft_do_llseek_err(int fd, loff_t off, int whence, int err, const char *fl,
-		      int ln)
+                      int ln)
 {
 	loff_t pos = -1;
 	int res;
@@ -374,7 +374,7 @@ void ft_do_llseek_err(int fd, loff_t off, int whence, int err, const char *fl,
 }
 
 void ft_do_write(int fd, const void *buf, size_t cnt, size_t *out_nwr,
-		 const char *fl, int ln)
+                 const char *fl, int ln)
 {
 	int res;
 
@@ -383,7 +383,7 @@ void ft_do_write(int fd, const void *buf, size_t cnt, size_t *out_nwr,
 }
 
 void ft_do_write_err(int fd, const void *buf, size_t cnt, int err,
-		     const char *fl, int ln)
+                     const char *fl, int ln)
 {
 	size_t nwr = 0;
 	int res;
@@ -393,7 +393,7 @@ void ft_do_write_err(int fd, const void *buf, size_t cnt, int err,
 }
 
 void ft_do_pwrite(int fd, const void *buf, size_t cnt, loff_t off,
-		  size_t *out_nwr, const char *fl, int ln)
+                  size_t *out_nwr, const char *fl, int ln)
 {
 	int res;
 
@@ -402,7 +402,7 @@ void ft_do_pwrite(int fd, const void *buf, size_t cnt, loff_t off,
 }
 
 void ft_do_pwrite_err(int fd, const void *buf, size_t cnt, loff_t off, int err,
-		      const char *fl, int ln)
+                      const char *fl, int ln)
 {
 	size_t nwr = 0;
 	int res;
@@ -412,7 +412,7 @@ void ft_do_pwrite_err(int fd, const void *buf, size_t cnt, loff_t off, int err,
 }
 
 void ft_do_read(int fd, void *buf, size_t cnt, size_t *out_nrd, const char *fl,
-		int ln)
+                int ln)
 {
 	int res;
 
@@ -421,7 +421,7 @@ void ft_do_read(int fd, void *buf, size_t cnt, size_t *out_nrd, const char *fl,
 }
 
 void ft_do_read_err(int fd, void *buf, size_t cnt, int err, const char *fl,
-		    int ln)
+                    int ln)
 {
 	size_t nrd = 0;
 	int res;
@@ -431,7 +431,7 @@ void ft_do_read_err(int fd, void *buf, size_t cnt, int err, const char *fl,
 }
 
 void ft_do_pread(int fd, void *buf, size_t cnt, loff_t off, size_t *out_nrd,
-		 const char *fl, int ln)
+                 const char *fl, int ln)
 {
 	int res;
 
@@ -440,7 +440,7 @@ void ft_do_pread(int fd, void *buf, size_t cnt, loff_t off, size_t *out_nrd,
 }
 
 void ft_do_fallocate(int fd, int mode, loff_t off, loff_t len, const char *fl,
-		     int ln)
+                     int ln)
 {
 	int res;
 
@@ -449,7 +449,7 @@ void ft_do_fallocate(int fd, int mode, loff_t off, loff_t len, const char *fl,
 }
 
 void ft_do_fallocate_err(int fd, int mode, loff_t off, loff_t len, int err,
-			 const char *fl, int ln)
+                         const char *fl, int ln)
 {
 	int res;
 
@@ -474,7 +474,7 @@ void ft_do_mkfifo(const char *path, mode_t mode, const char *fl, int ln)
 }
 
 void ft_do_mkfifoat(int dirfd, const char *name, mode_t mode, const char *fl,
-		    int ln)
+                    int ln)
 {
 	int res;
 
@@ -483,7 +483,7 @@ void ft_do_mkfifoat(int dirfd, const char *name, mode_t mode, const char *fl,
 }
 
 void ft_do_mknod(const char *path, mode_t mode, dev_t dev, const char *fl,
-		 int ln)
+                 int ln)
 {
 	int res;
 
@@ -492,7 +492,7 @@ void ft_do_mknod(const char *path, mode_t mode, dev_t dev, const char *fl,
 }
 
 void ft_do_mknodat(int dirfd, const char *name, mode_t mode, dev_t dev,
-		   const char *fl, int ln)
+                   const char *fl, int ln)
 {
 	int res;
 
@@ -501,7 +501,7 @@ void ft_do_mknodat(int dirfd, const char *name, mode_t mode, dev_t dev,
 }
 
 void ft_do_symlink(const char *oldpath, const char *newpath, const char *fl,
-		   int ln)
+                   int ln)
 {
 	int res;
 
@@ -510,7 +510,7 @@ void ft_do_symlink(const char *oldpath, const char *newpath, const char *fl,
 }
 
 void ft_do_symlinkat(const char *target, int dirfd, const char *linkpath,
-		     const char *fl, int ln)
+                     const char *fl, int ln)
 {
 	int res;
 
@@ -519,7 +519,7 @@ void ft_do_symlinkat(const char *target, int dirfd, const char *linkpath,
 }
 
 void ft_do_readlink(const char *path, char *buf, size_t bsz, size_t *out_cnt,
-		    const char *fl, int ln)
+                    const char *fl, int ln)
 {
 	int res;
 
@@ -528,7 +528,7 @@ void ft_do_readlink(const char *path, char *buf, size_t bsz, size_t *out_cnt,
 }
 
 void ft_do_readlink_err(const char *path, char *buf, size_t bsz, int err,
-			const char *fl, int ln)
+                        const char *fl, int ln)
 {
 	size_t cnt = 0;
 	int res;
@@ -538,7 +538,7 @@ void ft_do_readlink_err(const char *path, char *buf, size_t bsz, int err,
 }
 
 void ft_do_readlinkat(int dirfd, const char *name, char *buf, size_t bsz,
-		      size_t *out_cnt, const char *fl, int ln)
+                      size_t *out_cnt, const char *fl, int ln)
 {
 	int res;
 
@@ -547,7 +547,7 @@ void ft_do_readlinkat(int dirfd, const char *name, char *buf, size_t bsz,
 }
 
 void ft_do_rename(const char *oldpath, const char *newpath, const char *fl,
-		  int ln)
+                  int ln)
 {
 	int res;
 
@@ -556,7 +556,7 @@ void ft_do_rename(const char *oldpath, const char *newpath, const char *fl,
 }
 
 void ft_do_rename_err(const char *oldpath, const char *newpath, int err,
-		      const char *fl, int ln)
+                      const char *fl, int ln)
 {
 	int res;
 
@@ -565,7 +565,7 @@ void ft_do_rename_err(const char *oldpath, const char *newpath, int err,
 }
 
 void ft_do_renameat(int olddirfd, const char *oldpath, int newdirfd,
-		    const char *newpath, const char *fl, int ln)
+                    const char *newpath, const char *fl, int ln)
 {
 	int res;
 
@@ -574,18 +574,18 @@ void ft_do_renameat(int olddirfd, const char *oldpath, int newdirfd,
 }
 
 void ft_do_renameat2(int olddirfd, const char *oldpath, int newdirfd,
-		     const char *newpath, unsigned int flags, const char *fl,
-		     int ln)
+                     const char *newpath, unsigned int flags, const char *fl,
+                     int ln)
 {
 	int res;
 
 	res = silofs_sys_renameat2(olddirfd, oldpath, newdirfd, newpath,
-				   flags);
+	                           flags);
 	ft_expect_sys_ok(res, fl, ln);
 }
 
 void ft_do_link(const char *oldpath, const char *newpath, const char *fl,
-		int ln)
+                int ln)
 {
 	int res;
 
@@ -594,7 +594,7 @@ void ft_do_link(const char *oldpath, const char *newpath, const char *fl,
 }
 
 void ft_do_link_err(const char *oldpath, const char *newpath, int err,
-		    const char *fl, int ln)
+                    const char *fl, int ln)
 {
 	int res;
 
@@ -603,7 +603,7 @@ void ft_do_link_err(const char *oldpath, const char *newpath, int err,
 }
 
 void ft_do_linkat(int olddirfd, const char *oldpath, int newdirfd,
-		  const char *newpath, int flags, const char *fl, int ln)
+                  const char *newpath, int flags, const char *fl, int ln)
 {
 	int res;
 
@@ -612,8 +612,8 @@ void ft_do_linkat(int olddirfd, const char *oldpath, int newdirfd,
 }
 
 void ft_do_linkat_err(int olddirfd, const char *oldpath, int newdirfd,
-		      const char *newpath, int flags, int err, const char *fl,
-		      int ln)
+                      const char *newpath, int flags, int err, const char *fl,
+                      int ln)
 {
 	int res;
 
@@ -646,7 +646,7 @@ void ft_do_fchmod_err(int fd, mode_t mode, int err, const char *fl, int ln)
 }
 
 void ft_do_chown(const char *path, uid_t uid, gid_t gid, const char *fl,
-		 int ln)
+                 int ln)
 {
 	int res;
 
@@ -671,7 +671,7 @@ void ft_do_access(const char *path, int mode, const char *fl, int ln)
 }
 
 void ft_do_access_err(const char *path, int mode, int err, const char *fl,
-		      int ln)
+                      int ln)
 {
 	int res;
 
@@ -680,7 +680,7 @@ void ft_do_access_err(const char *path, int mode, int err, const char *fl,
 }
 
 void ft_do_mmap(void *addr, size_t len, int prot, int flags, int fd,
-		loff_t offset, void **out, const char *fl, int ln)
+                loff_t offset, void **out, const char *fl, int ln)
 {
 	int res;
 
@@ -713,7 +713,7 @@ void ft_do_madvise(void *addr, size_t len, int advice, const char *fl, int ln)
 }
 
 void ft_do_setxattr(const char *path, const char *name, const void *value,
-		    size_t size, int flags, const char *fl, int ln)
+                    size_t size, int flags, const char *fl, int ln)
 {
 	int res;
 
@@ -722,7 +722,7 @@ void ft_do_setxattr(const char *path, const char *name, const void *value,
 }
 
 void ft_do_lsetxattr(const char *path, const char *name, const void *value,
-		     size_t size, int flags, const char *fl, int ln)
+                     size_t size, int flags, const char *fl, int ln)
 {
 	int res;
 
@@ -731,7 +731,7 @@ void ft_do_lsetxattr(const char *path, const char *name, const void *value,
 }
 
 void ft_do_fsetxattr(int fd, const char *name, const void *value, size_t size,
-		     int flags, const char *fl, int ln)
+                     int flags, const char *fl, int ln)
 {
 	int res;
 
@@ -740,7 +740,7 @@ void ft_do_fsetxattr(int fd, const char *name, const void *value, size_t size,
 }
 
 void ft_do_getxattr(const char *path, const char *name, void *value,
-		    size_t size, size_t *out_cnt, const char *fl, int ln)
+                    size_t size, size_t *out_cnt, const char *fl, int ln)
 {
 	int res;
 
@@ -749,7 +749,7 @@ void ft_do_getxattr(const char *path, const char *name, void *value,
 }
 
 void ft_do_getxattr_err(const char *path, const char *name, int err,
-			const char *fl, int ln)
+                        const char *fl, int ln)
 {
 	size_t cnt = 0;
 	int res;
@@ -759,7 +759,7 @@ void ft_do_getxattr_err(const char *path, const char *name, int err,
 }
 
 void ft_do_lgetxattr(const char *path, const char *name, void *value,
-		     size_t size, size_t *out_cnt, const char *fl, int ln)
+                     size_t size, size_t *out_cnt, const char *fl, int ln)
 {
 	int res;
 
@@ -768,7 +768,7 @@ void ft_do_lgetxattr(const char *path, const char *name, void *value,
 }
 
 void ft_do_fgetxattr(int fd, const char *name, void *value, size_t size,
-		     size_t *out_cnt, const char *fl, int ln)
+                     size_t *out_cnt, const char *fl, int ln)
 {
 	int res;
 
@@ -777,7 +777,7 @@ void ft_do_fgetxattr(int fd, const char *name, void *value, size_t size,
 }
 
 void ft_do_fgetxattr_err(int fd, const char *name, int err, const char *fl,
-			 int ln)
+                         int ln)
 {
 	size_t cnt = 0;
 	int res;
@@ -787,7 +787,7 @@ void ft_do_fgetxattr_err(int fd, const char *name, int err, const char *fl,
 }
 
 void ft_do_removexattr(const char *path, const char *name, const char *fl,
-		       int ln)
+                       int ln)
 {
 	int res;
 
@@ -796,7 +796,7 @@ void ft_do_removexattr(const char *path, const char *name, const char *fl,
 }
 
 void ft_do_lremovexattr(const char *path, const char *name, const char *fl,
-			int ln)
+                        int ln)
 {
 	int res;
 
@@ -813,7 +813,7 @@ void ft_do_fremovexattr(int fd, const char *name, const char *fl, int ln)
 }
 
 void ft_do_fremovexattr_err(int fd, const char *name, int err, const char *fl,
-			    int ln)
+                            int ln)
 {
 	int res;
 
@@ -822,7 +822,7 @@ void ft_do_fremovexattr_err(int fd, const char *name, int err, const char *fl,
 }
 
 void ft_do_listxattr(const char *path, char *list, size_t size, size_t *out,
-		     const char *fl, int ln)
+                     const char *fl, int ln)
 {
 	int res;
 
@@ -831,7 +831,7 @@ void ft_do_listxattr(const char *path, char *list, size_t size, size_t *out,
 }
 
 void ft_do_llistxattr(const char *path, char *list, size_t size, size_t *out,
-		      const char *fl, int ln)
+                      const char *fl, int ln)
 {
 	int res;
 
@@ -840,7 +840,7 @@ void ft_do_llistxattr(const char *path, char *list, size_t size, size_t *out,
 }
 
 void ft_do_flistxattr(int fd, char *list, size_t size, size_t *out,
-		      const char *fl, int ln)
+                      const char *fl, int ln)
 {
 	int res;
 
@@ -849,7 +849,7 @@ void ft_do_flistxattr(int fd, char *list, size_t size, size_t *out,
 }
 
 void ft_do_flistxattr_err(int fd, char *list, size_t size, int err,
-			  const char *fl, int ln)
+                          const char *fl, int ln)
 {
 	size_t len = 0;
 	int res;
@@ -859,13 +859,13 @@ void ft_do_flistxattr_err(int fd, char *list, size_t size, int err,
 }
 
 void ft_do_copy_file_range(int fd_in, loff_t *off_in, int fd_out,
-			   loff_t *off_out, size_t len, size_t *out_ncp,
-			   const char *fl, int ln)
+                           loff_t *off_out, size_t len, size_t *out_ncp,
+                           const char *fl, int ln)
 {
 	int res;
 
 	res = silofs_sys_copy_file_range(fd_in, off_in, fd_out, off_out, len,
-					 0, out_ncp);
+	                                 0, out_ncp);
 	ft_expect_sys_ok(res, fl, ln);
 }
 
@@ -878,7 +878,7 @@ void ft_do_fiemap(int fd, struct fiemap *fm, const char *fl, int ln)
 }
 
 void ft_do_getdents(int fd, void *buf, size_t bsz, struct dirent64 *des,
-		    size_t ndes, size_t *out_ndes, const char *fl, int ln)
+                    size_t ndes, size_t *out_ndes, const char *fl, int ln)
 {
 	int res;
 
@@ -915,7 +915,7 @@ void ft_do_readn(int fd, void *buf, size_t cnt, const char *fl, int ln)
 }
 
 void ft_do_preadn(int fd, void *buf, size_t cnt, loff_t off, const char *fl,
-		  int ln)
+                  int ln)
 {
 	uint8_t *ptr = NULL;
 	loff_t pos = 0;
@@ -954,7 +954,7 @@ void ft_do_writen(int fd, const void *buf, size_t cnt, const char *fl, int ln)
 }
 
 void ft_do_pwriten(int fd, const void *buf, size_t cnt, loff_t off,
-		   const char *fl, int ln)
+                   const char *fl, int ln)
 {
 	const uint8_t *ptr = NULL;
 	loff_t pos = 0;

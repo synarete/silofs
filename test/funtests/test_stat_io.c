@@ -27,7 +27,7 @@ static blkcnt_t calc_nfrgs_of(loff_t off, loff_t len, blksize_t blksz)
 }
 
 static void ft_calc_stat_blkcnt(loff_t off, size_t nbytes, blkcnt_t *out_min,
-				blkcnt_t *out_max)
+                                blkcnt_t *out_max)
 {
 	*out_min = calc_nfrgs_of(off, (loff_t)nbytes, 512);
 	*out_max = calc_nfrgs_of(off, (loff_t)nbytes, 65536);

@@ -108,7 +108,7 @@ void ft_do_expect_gt(intmax_t a, intmax_t b, const char *fl, int ln);
 void ft_do_expect_ge(intmax_t a, intmax_t b, const char *fl, int ln);
 
 void ft_do_expect_eqm(const void *p, const void *q, size_t n, const char *fl,
-		      int ln);
+                      int ln);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -121,25 +121,25 @@ void ft_do_expect_st_lnk(const struct stat *st, const char *fl, int ln);
 void ft_do_expect_st_fifo(const struct stat *st, const char *fl, int ln);
 
 void ft_do_expect_st_mtime_eq(const struct stat *st1, const struct stat *st2,
-			      const char *fl, int ln);
+                              const char *fl, int ln);
 
 void ft_do_expect_st_mtime_gt(const struct stat *st1, const struct stat *st2,
-			      const char *fl, int ln);
+                              const char *fl, int ln);
 
 void ft_do_expect_st_ctime_eq(const struct stat *st1, const struct stat *st2,
-			      const char *fl, int ln);
+                              const char *fl, int ln);
 
 void ft_do_expect_st_ctime_gt(const struct stat *st1, const struct stat *st2,
-			      const char *fl, int ln);
+                              const char *fl, int ln);
 
 void ft_do_expect_st_ctime_ge(const struct stat *st1, const struct stat *st2,
-			      const char *fl, int ln);
+                              const char *fl, int ln);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void ft_do_expect_sys_ok(int err, const char *sc, const char *fl, int ln);
 
 void ft_do_expect_sys_err(int err, int exp, const char *sc, const char *fl,
-			  int ln);
+                          int ln);
 
 #endif /* SILOFS_FUNTESTS_EXPECT_H_ */

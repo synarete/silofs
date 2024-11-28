@@ -43,13 +43,13 @@ struct silofs_iovec {
 void silofs_iovec_reset(struct silofs_iovec *iov);
 
 void silofs_iovec_assign(struct silofs_iovec       *iov,
-			 const struct silofs_iovec *other);
+                         const struct silofs_iovec *other);
 
 int silofs_iovec_copy_into(const struct silofs_iovec *iov, void *buf);
 
 int silofs_iovec_copy_from(const struct silofs_iovec *iov, const void *buf);
 
 int silofs_iovec_copy_mem(const struct silofs_iovec *iov_src,
-			  const struct silofs_iovec *iov_dst, size_t len);
+                          const struct silofs_iovec *iov_dst, size_t len);
 
 #endif /* SILOFS_IOVEC_H_ */

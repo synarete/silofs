@@ -108,7 +108,7 @@ static void record_stamp_encode(struct ut_record *rec, size_t index)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void ut_write_record(struct ut_env *ute, ino_t ino,
-			    const struct ut_record *rec, loff_t off)
+                            const struct ut_record *rec, loff_t off)
 {
 	const size_t bsz = record_size(rec, rec->size);
 
@@ -116,7 +116,7 @@ static void ut_write_record(struct ut_env *ute, ino_t ino,
 }
 
 static void ut_read_record(struct ut_env *ute, ino_t ino,
-			   const struct ut_record *rec, loff_t off)
+                           const struct ut_record *rec, loff_t off)
 {
 	const size_t bsz = record_size(rec, rec->size);
 
@@ -124,7 +124,7 @@ static void ut_read_record(struct ut_env *ute, ino_t ino,
 }
 
 static void ut_read_record_verify(struct ut_env *ute, ino_t ino,
-				  struct ut_record *rec, loff_t off)
+                                  struct ut_record *rec, loff_t off)
 {
 	int err;
 

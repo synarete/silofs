@@ -82,5 +82,5 @@ SpacesInParentheses: false
 SpacesInSquareBrackets: false
 SortIncludes: false
 TabWidth: 8
-UseTab: ForContinuationAndIndentation
+UseTab: AlignWithSpaces
 ...

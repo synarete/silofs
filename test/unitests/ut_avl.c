@@ -111,7 +111,7 @@ static void verify_node(struct silofs_avl_node *x, void *p)
 }
 
 static const struct silofs_avl_node_functor node_functor = { .fn = verify_node,
-							     .ctx = NULL };
+	                                                     .ctx = NULL };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -281,8 +281,8 @@ static long avl_min_key(const struct silofs_avl *avl)
 
 static void
 avl_iterate_range(const struct silofs_avl *avl, struct silofs_avl_node *beg,
-		  const struct silofs_avl_node *end, size_t expected_cnt,
-		  long key_beg, long step)
+                  const struct silofs_avl_node *end, size_t expected_cnt,
+                  long key_beg, long step)
 {
 	size_t cnt;
 	long key = key_beg;
@@ -311,7 +311,7 @@ static void
 avl_iterate_all(const struct silofs_avl *avl, long key_beg, long step)
 {
 	avl_iterate_range(avl, avl_begin(avl), avl_end(avl), avl_size(avl),
-			  key_beg, step);
+	                  key_beg, step);
 }
 
 static void avl_iterate_seq(const struct silofs_avl *avl)

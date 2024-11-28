@@ -68,7 +68,7 @@ struct silofs_dq_elem *silofs_dirtyq_front(const struct silofs_dirtyq *dq)
 }
 
 struct silofs_dq_elem *silofs_dirtyq_next_of(const struct silofs_dirtyq *dq,
-					     const struct silofs_dq_elem *dqe)
+                                             const struct silofs_dq_elem *dqe)
 {
 	struct silofs_list_head *lh = NULL;
 

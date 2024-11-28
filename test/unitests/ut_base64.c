@@ -90,7 +90,7 @@ ut_base64_encdec(struct ut_env *ute, const char *dat, const char *exp)
 }
 
 static void ut_base64_with(struct ut_env *ute,
-			   const struct ut_base64_vector *vec, size_t nvecs)
+                           const struct ut_base64_vector *vec, size_t nvecs)
 {
 	for (size_t i = 0; i < nvecs; ++i) {
 		ut_base64_encdec(ute, vec[i].dat, vec[i].exp);
@@ -100,19 +100,19 @@ static void ut_base64_with(struct ut_env *ute,
 static void ut_base64_rfc4648(struct ut_env *ute)
 {
 	ut_base64_with(ute, ut_base64_rfc4648_vecs,
-		       UT_ARRAY_SIZE(ut_base64_rfc4648_vecs));
+	               UT_ARRAY_SIZE(ut_base64_rfc4648_vecs));
 }
 
 static void ut_base64_ascii(struct ut_env *ute)
 {
 	ut_base64_with(ute, ut_base64_ascii_vecs,
-		       UT_ARRAY_SIZE(ut_base64_ascii_vecs));
+	               UT_ARRAY_SIZE(ut_base64_ascii_vecs));
 }
 
 static void ut_base64_common(struct ut_env *ute)
 {
 	ut_base64_with(ute, ut_base64_common_vecs,
-		       UT_ARRAY_SIZE(ut_base64_common_vecs));
+	               UT_ARRAY_SIZE(ut_base64_common_vecs));
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

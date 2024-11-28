@@ -46,7 +46,7 @@ loff_t silofs_off_end(loff_t off, size_t len)
 silofs_lba_t silofs_off_to_lba(loff_t off)
 {
 	return !silofs_off_isnull(off) ? (off / SILOFS_LBK_SIZE) :
-					 SILOFS_LBA_NULL;
+	                                 SILOFS_LBA_NULL;
 }
 
 loff_t silofs_off_in_lbk(loff_t off)
@@ -114,5 +114,5 @@ bool silofs_lba_isnull(silofs_lba_t lba)
 loff_t silofs_lba_to_off(silofs_lba_t lba)
 {
 	return !silofs_lba_isnull(lba) ? (lba * SILOFS_LBK_SIZE) :
-					 SILOFS_OFF_NULL;
+	                                 SILOFS_OFF_NULL;
 }

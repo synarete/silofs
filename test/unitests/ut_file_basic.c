@@ -197,7 +197,7 @@ static void ut_file_iosize_max(struct ut_env *ute)
 		UT_MKRANGE1(UT_1T, UT_IOSIZE_MAX),
 		UT_MKRANGE1(UT_1T - 1, UT_IOSIZE_MAX),
 		UT_MKRANGE1(UT_FILESIZE_MAX - UT_IOSIZE_MAX - 1,
-			    UT_IOSIZE_MAX),
+		            UT_IOSIZE_MAX),
 		UT_MKRANGE1(UT_FILESIZE_MAX - UT_IOSIZE_MAX, UT_IOSIZE_MAX),
 	};
 
@@ -245,7 +245,7 @@ static void ut_file_unlinked(struct ut_env *ute)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void ut_file_multi_(struct ut_env *ute, size_t bsz, loff_t off1,
-			   loff_t off2, loff_t off3, loff_t off4)
+                           loff_t off2, loff_t off3, loff_t off4)
 {
 	const char *name = UT_NAME;
 	void *buf1 = ut_randbuf(ute, bsz);
@@ -349,7 +349,7 @@ static void ut_file_overwrite_simple(struct ut_env *ute)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void ut_file_overwrite_complex_(struct ut_env *ute, loff_t off1,
-				       loff_t off2, size_t len)
+                                       loff_t off2, size_t len)
 {
 	uint8_t *buf1 = ut_randbuf(ute, len);
 	uint8_t *buf2 = ut_randbuf(ute, len);
@@ -395,7 +395,7 @@ static void ut_file_overwrite_complex(struct ut_env *ute)
 
 	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
 		ut_file_overwrite_complex_(ute, range[i].off1, range[i].off2,
-					   range[i].len);
+		                           range[i].len);
 		ut_relax_mem(ute);
 	}
 }
@@ -721,7 +721,7 @@ static void ut_file_with_hole(struct ut_env *ute)
 		UT_MKRANGE2(1, UT_1G - 1, UT_1M),
 		UT_MKRANGE2(2, 2 * UT_1G - 2, UT_IOSIZE_MAX),
 		UT_MKRANGE2(UT_1G + 1, UT_1G + UT_IOSIZE_MAX + 2,
-			    UT_IOSIZE_MAX),
+		            UT_IOSIZE_MAX),
 		UT_MKRANGE2(0, UT_1T, UT_1M),
 		UT_MKRANGE2(1, UT_1T - 1, UT_1M),
 		UT_MKRANGE2(2, 2 * UT_1T - 2, UT_1M),
@@ -730,7 +730,7 @@ static void ut_file_with_hole(struct ut_env *ute)
 
 	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
 		ut_file_with_hole_(ute, range[i].off1, range[i].off2,
-				   range[i].len);
+		                   range[i].len);
 		ut_relax_mem(ute);
 	}
 }

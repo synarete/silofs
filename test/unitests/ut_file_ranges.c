@@ -31,7 +31,7 @@ static struct ut_dvecs *new_dvecs(struct ut_env *ute)
 }
 
 static void assign(struct ut_env *ute, struct ut_dvecs *dvecs,
-		   const struct ut_ranges *rngs)
+                   const struct ut_ranges *rngs)
 {
 	loff_t off;
 	size_t len;
@@ -136,7 +136,7 @@ static void ut_rdwr_file1(struct ut_env *ute, const struct ut_dvecs *drefs)
 }
 
 static void ut_rdwr_file2(struct ut_env *ute, const struct ut_dvecs *drefs1,
-			  const struct ut_dvecs *drefs2)
+                          const struct ut_dvecs *drefs2)
 {
 	const char *name = UT_NAME;
 	ino_t dino = 0;
@@ -222,7 +222,7 @@ static void ut_file_ranges(struct ut_env *ute)
 }
 
 static void ut_file_xranges_(struct ut_env *ute, const struct ut_ranges *r1,
-			     const struct ut_ranges *r2)
+                             const struct ut_ranges *r2)
 {
 	ut_rdwr_file2(ute, simple(ute, r1), simple(ute, r2));
 	ut_relax_mem(ute);

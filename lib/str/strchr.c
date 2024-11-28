@@ -137,7 +137,7 @@ silofs_str_find_first_of(const char *s1, size_t n1, const char *s2, size_t n2)
 }
 
 const char *silofs_str_find_first_not_of(const char *s1, size_t n1,
-					 const char *s2, size_t n2)
+                                         const char *s2, size_t n2)
 {
 	const char *q = s1 + n1;
 
@@ -175,7 +175,7 @@ silofs_str_find_last_of(const char *s1, size_t n1, const char *s2, size_t n2)
 }
 
 const char *silofs_str_find_last_not_of(const char *s1, size_t n1,
-					const char *s2, size_t n2)
+                                        const char *s2, size_t n2)
 {
 	const char *q = s1 + n1;
 
@@ -320,7 +320,7 @@ str_insert_no_overlap(char *p, size_t sz, size_t n1, const char *s, size_t n2)
  * safe copy -- avoid dynamic allocation, even at the price of performance
  */
 static size_t str_insert_with_overlap(char *p, size_t sz, size_t n1,
-				      const char *s, size_t n2)
+                                      const char *s, size_t n2)
 {
 	char buf[512];
 	const char *q;
@@ -395,7 +395,7 @@ size_t silofs_str_insert_chr(char *p, size_t sz, size_t n1, size_t n2, char c)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 size_t silofs_str_replace(char *p, size_t sz, size_t len, size_t n1,
-			  const char *s, size_t n2)
+                          const char *s, size_t n2)
 {
 	size_t k;
 	size_t m;
@@ -408,13 +408,13 @@ size_t silofs_str_replace(char *p, size_t sz, size_t len, size_t n1,
 		if (s < p) {
 			k = n1;
 			m = silofs_str_insert(p + k, sz - k, len - k, s + k,
-					      n2 - k);
+			                      n2 - k);
 			silofs_str_copy(p, s, k);
 		} else {
 			k = n1;
 			silofs_str_copy(p, s, n1);
 			m = silofs_str_insert(p + k, sz - k, len - k, s + k,
-					      n2 - k);
+			                      n2 - k);
 		}
 	} else {
 		/*
@@ -435,7 +435,7 @@ size_t silofs_str_replace(char *p, size_t sz, size_t len, size_t n1,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 size_t silofs_str_replace_chr(char *p, size_t sz, size_t len, size_t n1,
-			      size_t n2, char c)
+                              size_t n2, char c)
 {
 	size_t k;
 	size_t m;

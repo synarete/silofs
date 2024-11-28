@@ -171,7 +171,7 @@ static void ute_del(struct ut_env *ute)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void ut_track_test(struct ut_env *ute, const struct ut_testdef *td,
-			  bool pre_execute)
+                          bool pre_execute)
 {
 	struct timespec dur;
 
@@ -219,7 +219,7 @@ static void ut_check_valid_spacecounts(const struct silofs_spacegauges *spc)
 }
 
 static void ut_expect_spacestats(const struct silofs_spacestats *spst1,
-				 const struct silofs_spacestats *spst2)
+                                 const struct silofs_spacestats *spst2)
 {
 	ut_expect_le(spst1->lsegs.nsuper, spst2->lsegs.nsuper);
 	ut_expect_le(spst1->lsegs.nspnode, spst2->lsegs.nspnode);
@@ -259,7 +259,7 @@ static void ut_expect_spacestats(const struct silofs_spacestats *spst1,
 }
 
 static void ut_check_spacestats(const struct silofs_spacestats *spst1,
-				const struct silofs_spacestats *spst2)
+                                const struct silofs_spacestats *spst2)
 {
 	ut_expect_le(spst1->btime, spst2->btime);
 	ut_expect_le(spst1->ctime, spst2->ctime);
@@ -791,8 +791,8 @@ bool ut_not_dot_or_dotdot(const char *s)
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 void ut_exec_with_ranges_(struct ut_env *ute,
-			  void (*fn)(struct ut_env *, loff_t, size_t),
-			  const struct ut_range *range, size_t na)
+                          void (*fn)(struct ut_env *, loff_t, size_t),
+                          const struct ut_range *range, size_t na)
 {
 	for (size_t i = 0; i < na; ++i) {
 		fn(ute, range[i].off, range[i].len);

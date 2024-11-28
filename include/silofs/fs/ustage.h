@@ -18,33 +18,33 @@
 #define SILOFS_USTAGE_H_
 
 int silofs_spawn_super(struct silofs_fsenv       *fsenv,
-		       const struct silofs_ulink *ulink,
-		       struct silofs_sb_info    **out_sbi);
+                       const struct silofs_ulink *ulink,
+                       struct silofs_sb_info    **out_sbi);
 
 int silofs_stage_super(struct silofs_fsenv       *fsenv,
-		       const struct silofs_ulink *ulink,
-		       struct silofs_sb_info    **out_sbi);
+                       const struct silofs_ulink *ulink,
+                       struct silofs_sb_info    **out_sbi);
 
 int silofs_spawn_spnode(struct silofs_fsenv        *fsenv,
-			const struct silofs_ulink  *ulink,
-			struct silofs_spnode_info **out_sni);
+                        const struct silofs_ulink  *ulink,
+                        struct silofs_spnode_info **out_sni);
 
 int silofs_stage_spnode(struct silofs_fsenv        *fsenv,
-			const struct silofs_ulink  *ulink,
-			struct silofs_spnode_info **out_sni);
+                        const struct silofs_ulink  *ulink,
+                        struct silofs_spnode_info **out_sni);
 
 int silofs_spawn_spleaf(struct silofs_fsenv        *fsenv,
-			const struct silofs_ulink  *ulink,
-			struct silofs_spleaf_info **out_sli);
+                        const struct silofs_ulink  *ulink,
+                        struct silofs_spleaf_info **out_sli);
 
 int silofs_stage_spleaf(struct silofs_fsenv        *fsenv,
-			const struct silofs_ulink  *ulink,
-			struct silofs_spleaf_info **out_sli);
+                        const struct silofs_ulink  *ulink,
+                        struct silofs_spleaf_info **out_sli);
 
 int silofs_spawn_lseg(struct silofs_fsenv      *fsenv,
-		      const struct silofs_lsid *lsid);
+                      const struct silofs_lsid *lsid);
 
 int silofs_stage_lseg(struct silofs_fsenv      *fsenv,
-		      const struct silofs_lsid *lsid);
+                      const struct silofs_lsid *lsid);
 
 #endif /* SILOFS_USTAGE_H_ */

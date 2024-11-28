@@ -228,7 +228,7 @@ int silofs_sockaddr_pton(struct silofs_sockaddr *sa, const char *str)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_msghdr_set_addr(struct msghdr *mh,
-			    const struct silofs_sockaddr *sa)
+                            const struct silofs_sockaddr *sa)
 {
 	mh->msg_namelen = sockaddr_length(sa);
 	mh->msg_name = silofs_unconst(sa);
@@ -299,7 +299,7 @@ socket_init(struct silofs_socket *sock, short family, short type, short proto)
 }
 
 static void socket_assign(struct silofs_socket *sock, int fd, short family,
-			  short type, short proto)
+                          short type, short proto)
 {
 	sock->fd = fd;
 	sock->family = family;
@@ -325,7 +325,7 @@ static int socket_checkopen(const struct silofs_socket *sock)
 }
 
 static int socket_checkaddr(const struct silofs_socket *sock,
-			    const struct silofs_sockaddr *sa)
+                            const struct silofs_sockaddr *sa)
 {
 	const sa_family_t family = sockaddr_family(sa);
 
@@ -338,7 +338,7 @@ int silofs_socket_open(struct silofs_socket *sock)
 
 	if (!socket_isopen(sock)) {
 		err = silofs_sys_socket(sock->family, sock->type, sock->proto,
-					&sock->fd);
+		                        &sock->fd);
 	}
 	return err;
 }
@@ -363,7 +363,7 @@ void silofs_socket_fini(struct silofs_socket *sock)
 }
 
 int silofs_socket_rselect(const struct silofs_socket *sock,
-			  const struct timespec *ts)
+                          const struct timespec *ts)
 {
 	int err = -EBADF;
 
@@ -374,7 +374,7 @@ int silofs_socket_rselect(const struct silofs_socket *sock,
 }
 
 int silofs_socket_bind(struct silofs_socket *sock,
-		       const struct silofs_sockaddr *sa)
+                       const struct silofs_sockaddr *sa)
 {
 	int err;
 
@@ -409,8 +409,8 @@ int silofs_socket_listen(const struct silofs_socket *sock, int backlog)
 }
 
 int silofs_socket_accept(const struct silofs_socket *sock,
-			 struct silofs_socket *acsock,
-			 struct silofs_sockaddr *peer)
+                         struct silofs_socket *acsock,
+                         struct silofs_sockaddr *peer)
 {
 	int err;
 	int fd = -1;
@@ -430,7 +430,7 @@ int silofs_socket_accept(const struct silofs_socket *sock,
 }
 
 int silofs_socket_connect(const struct silofs_socket *sock,
-			  const struct silofs_sockaddr *sa)
+                          const struct silofs_sockaddr *sa)
 {
 	int err;
 
@@ -470,7 +470,7 @@ int silofs_socket_shutdown_rdwr(const struct silofs_socket *sock)
 }
 
 static int socket_setsockopt(const struct silofs_socket *sock, int level,
-			     int optname, const void *optval, socklen_t len)
+                             int optname, const void *optval, socklen_t len)
 {
 	int err;
 
@@ -490,7 +490,7 @@ int silofs_socket_setnodelay(const struct silofs_socket *sock)
 	int nodelay = 1;
 
 	return socket_setsockopt(sock, sock->proto, TCP_NODELAY, &nodelay,
-				 sizeof(nodelay));
+	                         sizeof(nodelay));
 }
 
 int silofs_socket_setkeepalive(const struct silofs_socket *sock)
@@ -498,7 +498,7 @@ int silofs_socket_setkeepalive(const struct silofs_socket *sock)
 	int keepalive = 1;
 
 	return socket_setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, &keepalive,
-				 sizeof(keepalive));
+	                         sizeof(keepalive));
 }
 
 int silofs_socket_setreuseaddr(const struct silofs_socket *sock)
@@ -506,7 +506,7 @@ int silofs_socket_setreuseaddr(const struct silofs_socket *sock)
 	int reuseaddr = 1;
 
 	return socket_setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &reuseaddr,
-				 sizeof(reuseaddr));
+	                         sizeof(reuseaddr));
 }
 
 int silofs_socket_setnonblock(const struct silofs_socket *sock)
@@ -530,13 +530,13 @@ int silofs_socket_setnonblock(const struct silofs_socket *sock)
 }
 
 static int socket_getsockopt(const struct silofs_socket *sock, int level,
-			     int optname, void *optval, socklen_t *optlen)
+                             int optname, void *optval, socklen_t *optlen)
 {
 	return silofs_sys_getsockopt(sock->fd, level, optname, optval, optlen);
 }
 
 int silofs_socket_getpeercred(const struct silofs_socket *sock,
-			      struct ucred *cred)
+                              struct ucred *cred)
 {
 	int err;
 	socklen_t len = sizeof(*cred);
@@ -575,7 +575,7 @@ int silofs_socket_getsockerror(const struct silofs_socket *sock, int *out_err)
 }
 
 int silofs_socket_send(const struct silofs_socket *sock, const void *buf,
-		       size_t len, size_t *out_sent)
+                       size_t len, size_t *out_sent)
 {
 	int err;
 
@@ -591,8 +591,8 @@ int silofs_socket_send(const struct silofs_socket *sock, const void *buf,
 }
 
 int silofs_socket_sendto(const struct silofs_socket *sock, const void *buf,
-			 size_t bsz, const struct silofs_sockaddr *spaddr,
-			 size_t *out_sent)
+                         size_t bsz, const struct silofs_sockaddr *spaddr,
+                         size_t *out_sent)
 {
 	socklen_t len;
 	const int fd = sock->fd;
@@ -611,14 +611,14 @@ int silofs_socket_sendto(const struct silofs_socket *sock, const void *buf,
 }
 
 int silofs_socket_sendmsg(const struct silofs_socket *sock,
-			  const struct msghdr *msgh, int flags,
-			  size_t *out_sent)
+                          const struct msghdr *msgh, int flags,
+                          size_t *out_sent)
 {
 	return silofs_sys_sendmsg(sock->fd, msgh, flags, out_sent);
 }
 
 int silofs_socket_recv(const struct silofs_socket *sock, void *buf, size_t len,
-		       size_t *out_recv)
+                       size_t *out_recv)
 {
 	int err;
 
@@ -634,8 +634,8 @@ int silofs_socket_recv(const struct silofs_socket *sock, void *buf, size_t len,
 }
 
 int silofs_socket_recvfrom(const struct silofs_socket *sock, void *buf,
-			   size_t bsz, struct silofs_sockaddr *sa,
-			   size_t *out_recv)
+                           size_t bsz, struct silofs_sockaddr *sa,
+                           size_t *out_recv)
 {
 	socklen_t len = sizeof(*sa);
 	const int fd = sock->fd;
@@ -654,7 +654,7 @@ int silofs_socket_recvfrom(const struct silofs_socket *sock, void *buf,
 }
 
 int silofs_socket_recvmsg(const struct silofs_socket *sock,
-			  struct msghdr *msgh, int flags, size_t *out_recv)
+                          struct msghdr *msgh, int flags, size_t *out_recv)
 {
 	int err;
 

@@ -107,7 +107,7 @@ static void ut_symlink_nested(struct ut_env *ute)
 		ut_mkdir2(ute, dino[i - 1], dname, &dino[i]);
 		sname[i] = ut_make_symname(ute, 8 * i);
 		ut_symlink(ute, dino[i], sname[i],
-			   ut_make_symval_with(ute, 'z', i), &sino);
+		           ut_make_symval_with(ute, 'z', i), &sino);
 		ut_rmdir_err(ute, dino[i - 1], dname, -ENOTEMPTY);
 	}
 	for (size_t j = UT_ARRAY_SIZE(dino); j > 1; --j) {

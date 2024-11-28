@@ -28,7 +28,7 @@ struct silofs_sb_info;
 struct silofs_spnode_info;
 
 typedef int (*silofs_visit_fn)(struct silofs_visitor         *vis,
-			       const struct silofs_walk_iter *wit);
+                               const struct silofs_walk_iter *wit);
 
 typedef int (*silofs_visit_laddr_fn)(void *, const struct silofs_laddr *);
 
@@ -52,14 +52,14 @@ struct silofs_visitor {
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_walk_space_tree(struct silofs_task    *task,
-			   struct silofs_sb_info *sbi,
-			   struct silofs_visitor *vis);
+                           struct silofs_sb_info *sbi,
+                           struct silofs_visitor *vis);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_walk_inspect_fs(struct silofs_task    *task,
-			   struct silofs_sb_info *sbi,
-			   silofs_visit_laddr_fn cb, void *user_ctx);
+                           struct silofs_sb_info *sbi,
+                           silofs_visit_laddr_fn cb, void *user_ctx);
 
 int silofs_walk_unref_fs(struct silofs_task *task, struct silofs_sb_info *sbi);
 

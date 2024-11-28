@@ -40,9 +40,9 @@ struct silofs_alloc_stat {
 struct silofs_alloc {
 	void *(*malloc_fn)(struct silofs_alloc *alloc, size_t size, int flags);
 	void (*free_fn)(struct silofs_alloc *alloc, void *ptr, size_t size,
-			int flags);
+	                int flags);
 	void (*stat_fn)(const struct silofs_alloc *alloc,
-			struct silofs_alloc_stat  *out_stat);
+	                struct silofs_alloc_stat  *out_stat);
 };
 
 /* quick memory allocator */
@@ -98,10 +98,10 @@ struct silofs_calloc {
 void *silofs_memalloc(struct silofs_alloc *alloc, size_t size, int flags);
 
 void silofs_memfree(struct silofs_alloc *alloc, void *ptr, size_t size,
-		    int flags);
+                    int flags);
 
 void silofs_memstat(const struct silofs_alloc *alloc,
-		    struct silofs_alloc_stat  *out_stat);
+                    struct silofs_alloc_stat  *out_stat);
 
 /* standard C allocator */
 int silofs_calloc_init(struct silofs_calloc *cal, size_t memsize);
@@ -110,7 +110,7 @@ int silofs_calloc_fini(struct silofs_calloc *cal);
 
 /* quick allocator */
 int silofs_qalloc_init(struct silofs_qalloc *qal, size_t memsize,
-		       enum silofs_qallocf flags);
+                       enum silofs_qallocf flags);
 
 int silofs_qalloc_fini(struct silofs_qalloc *qal);
 
@@ -118,16 +118,16 @@ void *
 silofs_qalloc_malloc(struct silofs_qalloc *qal, size_t nbytes, int flags);
 
 void silofs_qalloc_free(struct silofs_qalloc *qal, void *ptr, size_t nbytes,
-			int flags);
+                        int flags);
 
 void silofs_qalloc_stat(const struct silofs_qalloc *qal,
-			struct silofs_alloc_stat   *out_stat);
+                        struct silofs_alloc_stat   *out_stat);
 
 int silofs_qalloc_resolve(const struct silofs_qalloc *qal, void *ptr,
-			  size_t len, struct silofs_iovec *iov);
+                          size_t len, struct silofs_iovec *iov);
 
 int silofs_qalloc_mcheck(const struct silofs_qalloc *qal, const void *ptr,
-			 size_t nbytes);
+                         size_t nbytes);
 
 /* extra memory utilities */
 void silofs_memzero(void *s, size_t n);

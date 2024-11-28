@@ -100,16 +100,16 @@ static void cmd_mount_getsubopts(struct cmd_mount_ctx *ctx)
 	char tok_hostids[] = "hostids";
 	char tok_passwd[] = "passwd";
 	char *const toks[] = { [CMD_MOUNT_OPT_RO] = tok_ro,
-			       [CMD_MOUNT_OPT_RW] = tok_rw,
-			       [CMD_MOUNT_OPT_DEV] = tok_dev,
-			       [CMD_MOUNT_OPT_NODEV] = tok_nodev,
-			       [CMD_MOUNT_OPT_SUID] = tok_suid,
-			       [CMD_MOUNT_OPT_NOSUID] = tok_nosuid,
-			       [CMD_MOUNT_OPT_EXEC] = tok_exec,
-			       [CMD_MOUNT_OPT_NOEXEC] = tok_noexec,
-			       [CMD_MOUNT_OPT_HOSTIDS] = tok_hostids,
-			       [CMD_MOUNT_OPT_PASSWD] = tok_passwd,
-			       NULL };
+		               [CMD_MOUNT_OPT_RW] = tok_rw,
+		               [CMD_MOUNT_OPT_DEV] = tok_dev,
+		               [CMD_MOUNT_OPT_NODEV] = tok_nodev,
+		               [CMD_MOUNT_OPT_SUID] = tok_suid,
+		               [CMD_MOUNT_OPT_NOSUID] = tok_nosuid,
+		               [CMD_MOUNT_OPT_EXEC] = tok_exec,
+		               [CMD_MOUNT_OPT_NOEXEC] = tok_noexec,
+		               [CMD_MOUNT_OPT_HOSTIDS] = tok_hostids,
+		               [CMD_MOUNT_OPT_PASSWD] = tok_passwd,
+		               NULL };
 	char *sopt = NULL;
 	char *sval = NULL;
 	int skey = 0;
@@ -368,7 +368,7 @@ static void cmd_mount_prepare_repo(struct cmd_mount_ctx *ctx)
 {
 	cmd_check_isreg(ctx->in_args.repodir_name);
 	cmd_split_path(ctx->in_args.repodir_name, &ctx->in_args.repodir,
-		       &ctx->in_args.name);
+	               &ctx->in_args.name);
 	cmd_realpath_rdir(ctx->in_args.repodir, &ctx->in_args.repodir_real);
 	cmd_check_repodir_fsname(ctx->in_args.repodir_real, ctx->in_args.name);
 }
@@ -377,7 +377,7 @@ static void cmd_mount_getpass(struct cmd_mount_ctx *ctx)
 {
 	if (ctx->in_args.password == NULL) {
 		cmd_getpass_simple(ctx->in_args.no_prompt,
-				   &ctx->in_args.password);
+		                   &ctx->in_args.password);
 	}
 }
 
@@ -561,10 +561,10 @@ static void cmd_mount_post_exec_cleanup(const struct cmd_mount_ctx *ctx)
 
 	if ((ctx->halt_signal > 0) && (ctx->post_exec_status != 0)) {
 		err = silofs_mntrpc_umount(ctx->in_args.mntpoint_real,
-					   getuid(), getgid(), MNT_DETACH);
+		                           getuid(), getgid(), MNT_DETACH);
 		if (err) {
 			silofs_log_info("failed to umount lazily: %s err=%d",
-					ctx->in_args.mntpoint_real, err);
+			                ctx->in_args.mntpoint_real, err);
 		}
 	}
 }

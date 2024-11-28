@@ -30,7 +30,7 @@ static const char *basename_of(const char *path)
 
 silofs_attr_printf(3, 4) silofs_attr_noreturn
 	static void do_error_at_line(const char *fl, int ln, const char *fmt,
-				     ...)
+                                     ...)
 {
 	char msg[512] = "";
 	va_list ap;
@@ -40,7 +40,7 @@ silofs_attr_printf(3, 4) silofs_attr_noreturn
 	va_end(ap);
 
 	error_at_line(EXIT_FAILURE, 0, basename_of(fl), (uint32_t)ln,
-		      "failed: %s", msg);
+	              "failed: %s", msg);
 	abort();
 }
 
@@ -114,7 +114,7 @@ static size_t ft_memdif_at(const uint8_t *p, const uint8_t *q, size_t n)
 }
 
 void ft_do_expect_eqm(const void *p, const void *q, size_t n, const char *fl,
-		      int ln)
+                      int ln)
 {
 	const int cmp = ft_memcmp(p, q, n);
 
@@ -122,7 +122,7 @@ void ft_do_expect_eqm(const void *p, const void *q, size_t n, const char *fl,
 		const size_t pos = ft_memdif_at(p, q, n);
 
 		do_error_at_line(fl, ln, "not equal mem: cmp=%d pos=%zu", cmp,
-				 pos);
+		                 pos);
 	}
 }
 
@@ -165,7 +165,7 @@ void ft_do_expect_st_fifo(const struct stat *st, const char *fl, int ln)
 }
 
 void ft_do_expect_st_mtime_eq(const struct stat *st1, const struct stat *st2,
-			      const char *fl, int ln)
+                              const char *fl, int ln)
 {
 	const long dif = ft_timespec_diff(&st1->st_mtim, &st2->st_mtim);
 
@@ -175,7 +175,7 @@ void ft_do_expect_st_mtime_eq(const struct stat *st1, const struct stat *st2,
 }
 
 void ft_do_expect_st_mtime_gt(const struct stat *st1, const struct stat *st2,
-			      const char *fl, int ln)
+                              const char *fl, int ln)
 {
 	const long dif = ft_timespec_diff(&st1->st_mtim, &st2->st_mtim);
 
@@ -185,7 +185,7 @@ void ft_do_expect_st_mtime_gt(const struct stat *st1, const struct stat *st2,
 }
 
 void ft_do_expect_st_ctime_eq(const struct stat *st1, const struct stat *st2,
-			      const char *fl, int ln)
+                              const char *fl, int ln)
 {
 	const long dif = ft_timespec_diff(&st1->st_ctim, &st2->st_ctim);
 
@@ -195,7 +195,7 @@ void ft_do_expect_st_ctime_eq(const struct stat *st1, const struct stat *st2,
 }
 
 void ft_do_expect_st_ctime_gt(const struct stat *st1, const struct stat *st2,
-			      const char *fl, int ln)
+                              const char *fl, int ln)
 {
 	const long dif = ft_timespec_diff(&st1->st_ctim, &st2->st_ctim);
 
@@ -205,15 +205,15 @@ void ft_do_expect_st_ctime_gt(const struct stat *st1, const struct stat *st2,
 }
 
 void ft_do_expect_st_ctime_ge(const struct stat *st1, const struct stat *st2,
-			      const char *fl, int ln)
+                              const char *fl, int ln)
 {
 	const long dif = ft_timespec_diff(&st1->st_ctim, &st2->st_ctim);
 
 	if (dif < 0) {
 		do_error_at_line(fl, ln,
-				 "ctime not greater-or-equal: "
-				 "dif=%ld",
-				 dif);
+		                 "ctime not greater-or-equal: "
+		                 "dif=%ld",
+		                 dif);
 	}
 }
 
@@ -227,12 +227,12 @@ void ft_do_expect_sys_ok(int err, const char *sc, const char *fl, int ln)
 }
 
 void ft_do_expect_sys_err(int err, int exp, const char *sc, const char *fl,
-			  int ln)
+                          int ln)
 {
 	if (err != exp) {
 		do_error_at_line(fl, ln,
-				 "unexpected status-code: "
-				 "%s ==> %d (!%d)",
-				 sc, err, exp);
+		                 "unexpected status-code: "
+		                 "%s ==> %d (!%d)",
+		                 sc, err, exp);
 	}
 }

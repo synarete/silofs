@@ -149,7 +149,7 @@ void silofs_lni_dirtify(struct silofs_lnode_info *lni);
 void silofs_lni_undirtify(struct silofs_lnode_info *lni);
 
 void silofs_lni_remove_from(struct silofs_lnode_info *lni,
-			    struct silofs_hmapq      *hmapq);
+                            struct silofs_hmapq      *hmapq);
 
 bool silofs_lni_isevictable(const struct silofs_lnode_info *lni);
 
@@ -186,7 +186,7 @@ void silofs_uni_seal_view(struct silofs_unode_info *uni);
 enum silofs_ltype silofs_uni_ltype(const struct silofs_unode_info *uni);
 
 void silofs_uni_set_dq(struct silofs_unode_info *uni,
-		       struct silofs_dirtyq     *dq);
+                       struct silofs_dirtyq     *dq);
 
 struct silofs_unode_info *
 silofs_uni_from_lni(const struct silofs_lnode_info *lni);
@@ -202,7 +202,7 @@ void silofs_vni_decref(struct silofs_vnode_info *vni);
 bool silofs_vni_isdirty(const struct silofs_vnode_info *vni);
 
 void silofs_vni_dirtify(struct silofs_vnode_info *vni,
-			struct silofs_inode_info *ii);
+                        struct silofs_inode_info *ii);
 
 void silofs_vni_undirtify(struct silofs_vnode_info *vni);
 
@@ -211,7 +211,7 @@ bool silofs_vni_isevictable(const struct silofs_vnode_info *vni);
 void silofs_vni_seal_view(struct silofs_vnode_info *vni);
 
 void silofs_vni_set_dq(struct silofs_vnode_info *vni,
-		       struct silofs_dirtyq     *dq);
+                       struct silofs_dirtyq     *dq);
 
 bool silofs_vni_need_recheck(const struct silofs_vnode_info *vni);
 
@@ -256,12 +256,12 @@ struct silofs_unode_info *
 silofs_new_unode(struct silofs_alloc *alloc, const struct silofs_ulink *ulink);
 
 void silofs_del_unode(struct silofs_unode_info *uni,
-		      struct silofs_alloc *alloc, int flags);
+                      struct silofs_alloc *alloc, int flags);
 
 struct silofs_vnode_info *
 silofs_new_vnode(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr);
 
 void silofs_del_vnode(struct silofs_vnode_info *vni,
-		      struct silofs_alloc *alloc, int flags);
+                      struct silofs_alloc *alloc, int flags);
 
 #endif /* SILOFS_LNODES_H_ */

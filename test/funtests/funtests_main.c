@@ -123,7 +123,7 @@ static void ft_setup_globals(int argc, char *argv[])
 	ft_globals.repeat_count = 1;
 	ft_globals.log_params.level = SILOFS_LOG_INFO;
 	ft_globals.log_params.flags = SILOFS_LOGF_STDOUT |
-				      SILOFS_LOGF_PROGNAME;
+	                              SILOFS_LOGF_PROGNAME;
 	silofs_set_global_log_params(&ft_globals.log_params);
 }
 
@@ -301,7 +301,7 @@ static void ft_parse_args(void)
 	while (opt_chr > 0) {
 		opt_index = 0;
 		opt_chr = getopt_long(ft_globals.argc, ft_globals.argv,
-				      "t:n:erQCFlvh", long_opts, &opt_index);
+		                      "t:n:erQCFlvh", long_opts, &opt_index);
 		if (opt_chr == 't') {
 			ft_globals.test_name = optarg;
 		} else if (opt_chr == 'n') {

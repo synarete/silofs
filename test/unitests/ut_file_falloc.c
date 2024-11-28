@@ -265,7 +265,7 @@ static void ut_file_fallocate_punch_hole1(struct ut_env *ute)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void ut_file_fallocate_punch_hole2_(struct ut_env *ute, loff_t off1,
-					   loff_t off2, size_t len)
+                                           loff_t off2, size_t len)
 {
 	uint8_t *buf = ut_randbuf(ute, len);
 	const char *name = UT_NAME;
@@ -309,7 +309,7 @@ static void ut_file_fallocate_punch_hole2(struct ut_env *ute)
 
 	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
 		ut_file_fallocate_punch_hole2_(ute, range[i].off1,
-					       range[i].off2, range[i].len);
+		                               range[i].off2, range[i].len);
 		ut_relax_mem(ute);
 	}
 }
@@ -318,7 +318,7 @@ static void ut_file_fallocate_punch_hole2(struct ut_env *ute)
 
 static void
 ut_file_fallocate_punch_hole_sparse_(struct ut_env *ute, loff_t off_base,
-				     loff_t step, size_t cnt)
+                                     loff_t step, size_t cnt)
 {
 	const char *name = UT_NAME;
 	const loff_t bk_size = UT_BK_SIZE;
@@ -446,7 +446,7 @@ static blkcnt_t blocks_count_of(loff_t off, loff_t len)
 }
 
 static void ut_file_fallocate_stat_(struct ut_env *ute, loff_t base_off,
-				    loff_t len, loff_t step_size)
+                                    loff_t len, loff_t step_size)
 {
 	struct stat st[2];
 	const char *name = UT_NAME;
@@ -507,7 +507,7 @@ static void ut_file_fallocate_stat(struct ut_env *ute)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void ut_file_fallocate_sparse_(struct ut_env *ute, loff_t base_off,
-				      loff_t step_size)
+                                      loff_t step_size)
 {
 	struct stat st = { .st_size = -1 };
 	const char *name = UT_NAME;

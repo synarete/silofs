@@ -59,7 +59,7 @@ void silofs_strspan_initn(struct silofs_strspan *ss, char *s, size_t n)
 }
 
 void silofs_strspan_initk(struct silofs_strspan *ss, char *s, size_t k,
-			  size_t n)
+                          size_t n)
 {
 	silofs_strview_initn(&ss->v, s, silofs_min(n, k));
 	ss->s = s;
@@ -74,7 +74,7 @@ void silofs_strspan_initz(struct silofs_strspan *ss)
 }
 
 void silofs_strspan_init_by(struct silofs_strspan *ss,
-			    const struct silofs_strspan *other)
+                            const struct silofs_strspan *other)
 {
 	silofs_strview_init_by(&ss->v, &other->v);
 	ss->s = other->s;
@@ -105,7 +105,7 @@ silofs_strspan_view(const struct silofs_strspan *ss)
 }
 
 void silofs_strspan_mkview(const struct silofs_strspan *ss,
-			   struct silofs_strview *out_sv)
+                           struct silofs_strview *out_sv)
 {
 	silofs_strview_init_by(out_sv, &ss->v);
 }
@@ -113,7 +113,7 @@ void silofs_strspan_mkview(const struct silofs_strspan *ss,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_strspan_sub(const struct silofs_strspan *ss, size_t i, size_t n,
-			struct silofs_strspan *out_ss)
+                        struct silofs_strspan *out_ss)
 {
 	const size_t sz = ss->v.len;
 	const size_t j = silofs_min(i, sz);
@@ -126,7 +126,7 @@ void silofs_strspan_sub(const struct silofs_strspan *ss, size_t i, size_t n,
 }
 
 void silofs_strspan_rsub(const struct silofs_strspan *ss, size_t n,
-			 struct silofs_strspan *out_ss)
+                         struct silofs_strspan *out_ss)
 {
 	const size_t sz = ss->v.len;
 	const size_t n1 = silofs_min(n, sz);
@@ -139,8 +139,8 @@ void silofs_strspan_rsub(const struct silofs_strspan *ss, size_t n,
 }
 
 void silofs_strspan_vsub(const struct silofs_strspan *ss,
-			 const struct silofs_strview *sv,
-			 struct silofs_strspan *out_ss)
+                         const struct silofs_strview *sv,
+                         struct silofs_strspan *out_ss)
 {
 	const size_t i = silofs_strview_offset(&ss->v, sv->str);
 	const size_t n = (i < ss->v.len) ? sv->len : 0;
@@ -219,7 +219,7 @@ strspan_insert_fill(struct silofs_strspan *ss, size_t pos, size_t n, char c)
 
 /* Replaces a sub-string with a copy of s. */
 static size_t strspan_replace(struct silofs_strspan *ss, size_t pos, size_t n1,
-			      const char *s, size_t n)
+                              const char *s, size_t n)
 {
 	/* pos beyond end-of-string is append */
 	const size_t sz = ss->v.len;
@@ -245,7 +245,7 @@ static size_t strspan_replace(struct silofs_strspan *ss, size_t pos, size_t n1,
 
 /* Replaces a strspaning of *this with n2 copies of c. */
 static size_t strspan_replace_fill(struct silofs_strspan *ss, size_t pos,
-				   size_t n1, size_t n2, char c)
+                                   size_t n1, size_t n2, char c)
 {
 	/* pos beyond end-of-string is append */
 	const size_t sz = ss->v.len;
@@ -284,7 +284,7 @@ silofs_strspan_nassign(struct silofs_strspan *ss, const char *s, size_t len)
 }
 
 size_t silofs_strspan_vassign(struct silofs_strspan *ss,
-			      const struct silofs_strview *sv)
+                              const struct silofs_strview *sv)
 {
 	return silofs_strspan_nassign(ss, sv->str, sv->len);
 }
@@ -326,7 +326,7 @@ silofs_strspan_insert(struct silofs_strspan *ss, size_t pos, const char *s)
 }
 
 size_t silofs_strspan_ninsert(struct silofs_strspan *ss, size_t pos,
-			      const char *s, size_t len)
+                              const char *s, size_t len)
 {
 	size_t ni = 0;
 
@@ -338,7 +338,7 @@ size_t silofs_strspan_ninsert(struct silofs_strspan *ss, size_t pos,
 }
 
 size_t silofs_strspan_insert_chr(struct silofs_strspan *ss, size_t pos,
-				 size_t n, char c)
+                                 size_t n, char c)
 {
 	size_t ni = 0;
 
@@ -352,13 +352,13 @@ size_t silofs_strspan_insert_chr(struct silofs_strspan *ss, size_t pos,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 size_t silofs_strspan_replace(struct silofs_strspan *ss, size_t pos, size_t n,
-			      const char *s)
+                              const char *s)
 {
 	return silofs_strspan_nreplace(ss, pos, n, s, silofs_str_length(s));
 }
 
 size_t silofs_strspan_nreplace(struct silofs_strspan *ss, size_t pos, size_t n,
-			       const char *s, size_t len)
+                               const char *s, size_t len)
 {
 	size_t nr = 0;
 
@@ -372,7 +372,7 @@ size_t silofs_strspan_nreplace(struct silofs_strspan *ss, size_t pos, size_t n,
 }
 
 size_t silofs_strspan_replace_chr(struct silofs_strspan *ss, size_t pos,
-				  size_t n1, size_t n2, char c)
+                                  size_t n1, size_t n2, char c)
 {
 	size_t nr = 0;
 

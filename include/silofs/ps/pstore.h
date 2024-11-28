@@ -44,13 +44,13 @@ struct silofs_pstore {
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_pstate_assign(struct silofs_pstate       *pstate,
-			  const struct silofs_pstate *other);
+                          const struct silofs_pstate *other);
 
 void silofs_pstate128b_htox(struct silofs_pstate128b   *pstate128,
-			    const struct silofs_pstate *pstate);
+                            const struct silofs_pstate *pstate);
 
 void silofs_pstate128b_xtoh(const struct silofs_pstate128b *pstate128,
-			    struct silofs_pstate           *pstate);
+                            struct silofs_pstate           *pstate);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -63,7 +63,7 @@ int silofs_pstore_dropall(struct silofs_pstore *pstore);
 int silofs_pstore_format(struct silofs_pstore *pstore);
 
 int silofs_pstore_open(struct silofs_pstore       *pstore,
-		       const struct silofs_pstate *pstate);
+                       const struct silofs_pstate *pstate);
 
 int silofs_pstore_close(struct silofs_pstore *pstore);
 

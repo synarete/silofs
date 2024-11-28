@@ -79,7 +79,7 @@ static void cmd_error_print_progname(void)
 		fprintf(fp, "%s: ", cmd_globals.name);
 	} else {
 		fprintf(fp, "%s %s: ", cmd_globals.name,
-			cmd_globals.cmdi->name);
+		        cmd_globals.cmdi->name);
 	}
 	fflush(fp);
 }

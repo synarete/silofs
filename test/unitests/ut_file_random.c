@@ -54,7 +54,7 @@ static unsigned long *random_indices(struct ut_env *ute, size_t cnt)
 }
 
 static void ut_file_random_io_(struct ut_env *ute, ino_t ino,
-			       const struct ut_ioparams *params)
+                               const struct ut_ioparams *params)
 {
 	size_t *idx = NULL;
 	struct ut_dvec *dvec = NULL;
@@ -90,7 +90,7 @@ static void ut_file_random_io_(struct ut_env *ute, ino_t ino,
 }
 
 static void ut_file_random_io2_(struct ut_env *ute, ino_t ino,
-				const struct ut_ioparams *params)
+                                const struct ut_ioparams *params)
 {
 	size_t *idx = NULL;
 	struct ut_dvec *dvec = NULL;
@@ -143,7 +143,7 @@ ut_file_random_(struct ut_env *ute, const struct ut_ioparams *params)
 }
 
 static void ut_file_random_arr_(struct ut_env *ute,
-				const struct ut_ioparams *arr, size_t nelems)
+                                const struct ut_ioparams *arr, size_t nelems)
 {
 	for (size_t i = 0; i < nelems; ++i) {
 		ut_file_random_(ute, &arr[i]);

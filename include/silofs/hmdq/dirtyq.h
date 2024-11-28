@@ -57,6 +57,6 @@ void silofs_dirtyq_fini(struct silofs_dirtyq *dq);
 struct silofs_dq_elem *silofs_dirtyq_front(const struct silofs_dirtyq *dq);
 
 struct silofs_dq_elem *silofs_dirtyq_next_of(const struct silofs_dirtyq  *dq,
-					     const struct silofs_dq_elem *dqe);
+                                             const struct silofs_dq_elem *dqe);
 
 #endif /* SILOFS_DIRTYQ_H_ */

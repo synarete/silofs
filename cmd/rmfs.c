@@ -91,7 +91,7 @@ static void cmd_rmfs_prepare(struct cmd_rmfs_ctx *ctx)
 {
 	cmd_check_isreg(ctx->in_args.repodir_name);
 	cmd_split_path(ctx->in_args.repodir_name, &ctx->in_args.repodir,
-		       &ctx->in_args.name);
+	               &ctx->in_args.name);
 	cmd_realpath_dir(ctx->in_args.repodir, &ctx->in_args.repodir_real);
 	cmd_check_repodir_fsname(ctx->in_args.repodir_real, ctx->in_args.name);
 }
@@ -100,12 +100,12 @@ static void cmd_rmfs_getpass(struct cmd_rmfs_ctx *ctx)
 {
 	if (ctx->in_args.password == NULL) {
 		cmd_getpass_simple(ctx->in_args.no_prompt,
-				   &ctx->in_args.password);
+		                   &ctx->in_args.password);
 	}
 }
 
 static void cmd_rmfs_check_nomnt_at(struct cmd_rmfs_ctx *ctx,
-				    const struct cmd_proc_mntinfo *mi)
+                                    const struct cmd_proc_mntinfo *mi)
 {
 	struct stat st[2];
 	char *path[2] = { NULL, NULL };

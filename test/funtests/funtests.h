@@ -149,7 +149,7 @@ char *ft_strdup(struct ft_env *fte, const char *str);
 char *ft_strcat(struct ft_env *fte, const char *str1, const char *str2);
 
 silofs_attr_printf(2, 3) char *ft_strfmt(struct ft_env *fte, const char *fmt,
-					 ...);
+                                         ...);
 
 char *ft_make_ulong_name(struct ft_env *fte, unsigned long key);
 
@@ -169,10 +169,10 @@ char *
 ft_new_path_nested(struct ft_env *fte, const char *base, const char *name);
 
 silofs_attr_printf(2, 3) char *ft_new_namef(struct ft_env *fte,
-					    const char    *fmt, ...);
+                                            const char    *fmt, ...);
 
 silofs_attr_printf(3, 4) char *ft_new_pathf(struct ft_env *fte, const char *p,
-					    const char *fmt, ...);
+                                            const char *fmt, ...);
 
 void *ft_new_buf_zeros(struct ft_env *fte, size_t bsz);
 
@@ -187,7 +187,7 @@ long ft_lrand(struct ft_env *fte);
 long ft_timespec_diff(const struct timespec *ts1, const struct timespec *ts2);
 
 long ft_xtimestamp_diff(const struct statx_timestamp *ts1,
-			const struct statx_timestamp *ts2);
+                        const struct statx_timestamp *ts2);
 
 const char *ft_curr_test_name(const struct ft_env *fte);
 
@@ -218,8 +218,8 @@ size_t ft_page_size(void);
 	ft_exec_with_ranges_(fte_, fn_, args_, FT_ARRAY_SIZE(args_))
 
 void ft_exec_with_ranges_(struct ft_env *fte,
-			  void (*fn)(struct ft_env *, loff_t, size_t),
-			  const struct ft_range *range, size_t na);
+                          void (*fn)(struct ft_env *, loff_t, size_t),
+                          const struct ft_range *range, size_t na);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

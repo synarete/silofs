@@ -63,7 +63,7 @@ enum silofs_iattr_flags {
 	SILOFS_IATTR_NOW       = SILOFS_BIT(15),
 	SILOFS_IATTR_MCTIME    = SILOFS_IATTR_MTIME | SILOFS_IATTR_CTIME,
 	SILOFS_IATTR_TIMES     = SILOFS_IATTR_BTIME | SILOFS_IATTR_ATIME |
-			     SILOFS_IATTR_MTIME | SILOFS_IATTR_CTIME
+	                     SILOFS_IATTR_MTIME | SILOFS_IATTR_CTIME
 };
 
 /* name-string: a pair of string-view and (optional) 64-bits hash */

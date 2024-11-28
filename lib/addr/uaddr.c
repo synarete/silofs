@@ -37,8 +37,8 @@ bool silofs_uaddr_isnull(const struct silofs_uaddr *uaddr)
 }
 
 void silofs_uaddr_setup(struct silofs_uaddr *uaddr,
-			const struct silofs_lsid *lsid, loff_t pos,
-			loff_t voff)
+                        const struct silofs_lsid *lsid, loff_t pos,
+                        loff_t voff)
 {
 	const size_t lsz = ltype_size(lsid->ltype);
 
@@ -53,14 +53,14 @@ void silofs_uaddr_reset(struct silofs_uaddr *uaddr)
 }
 
 void silofs_uaddr_assign(struct silofs_uaddr *uaddr,
-			 const struct silofs_uaddr *other)
+                         const struct silofs_uaddr *other)
 {
 	silofs_laddr_assign(&uaddr->laddr, &other->laddr);
 	uaddr->voff = other->voff;
 }
 
 long silofs_uaddr_compare(const struct silofs_uaddr *uaddr1,
-			  const struct silofs_uaddr *uaddr2)
+                          const struct silofs_uaddr *uaddr2)
 {
 	long cmp;
 
@@ -76,7 +76,7 @@ long silofs_uaddr_compare(const struct silofs_uaddr *uaddr1,
 }
 
 bool silofs_uaddr_isequal(const struct silofs_uaddr *uaddr1,
-			  const struct silofs_uaddr *uaddr2)
+                          const struct silofs_uaddr *uaddr2)
 {
 	return (silofs_uaddr_compare(uaddr1, uaddr2) == 0);
 }
@@ -108,14 +108,14 @@ void silofs_uaddr64b_reset(struct silofs_uaddr64b *uaddr64)
 }
 
 void silofs_uaddr64b_htox(struct silofs_uaddr64b *uaddr64,
-			  const struct silofs_uaddr *uaddr)
+                          const struct silofs_uaddr *uaddr)
 {
 	silofs_laddr48b_htox(&uaddr64->laddr, &uaddr->laddr);
 	uaddr64->voff = silofs_cpu_to_off(uaddr->voff);
 }
 
 void silofs_uaddr64b_xtoh(const struct silofs_uaddr64b *uaddr64,
-			  struct silofs_uaddr *uaddr)
+                          struct silofs_uaddr *uaddr)
 {
 	silofs_laddr48b_xtoh(&uaddr64->laddr, &uaddr->laddr);
 	uaddr->voff = silofs_off_to_cpu(uaddr64->voff);
@@ -124,14 +124,14 @@ void silofs_uaddr64b_xtoh(const struct silofs_uaddr64b *uaddr64,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_ulink_assign(struct silofs_ulink *ulink,
-			 const struct silofs_ulink *other)
+                         const struct silofs_ulink *other)
 {
 	silofs_ulink_assign2(ulink, &other->uaddr, &other->riv);
 }
 
 void silofs_ulink_assign2(struct silofs_ulink *ulink,
-			  const struct silofs_uaddr *uaddr,
-			  const struct silofs_iv *iv)
+                          const struct silofs_uaddr *uaddr,
+                          const struct silofs_iv *iv)
 {
 	silofs_uaddr_assign(&ulink->uaddr, uaddr);
 	silofs_iv_assign(&ulink->riv, iv);
@@ -144,7 +144,7 @@ void silofs_ulink_reset(struct silofs_ulink *ulink)
 }
 
 void silofs_ulink_as_llink(const struct silofs_ulink *ulink,
-			   struct silofs_llink *out_llink)
+                           struct silofs_llink *out_llink)
 {
 	silofs_llink_setup(out_llink, &ulink->uaddr.laddr, &ulink->riv);
 }

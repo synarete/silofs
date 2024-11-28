@@ -65,20 +65,20 @@ test_boundaries_arr_(struct ft_env *fte, const loff_t *arr, size_t cnt)
 static void test_boundaries_write_read(struct ft_env *fte)
 {
 	const loff_t offs[] = { 0,
-				FT_1K,
-				FT_2K,
-				FT_4K,
-				FT_8K,
-				FT_64K,
-				FT_1M,
-				FT_2M + 1,
-				FT_1G,
-				7 * FT_1G - 7,
-				FT_1T,
-				FT_1T / 2 - 1,
-				FT_FILESIZE_MAX / 2,
-				FT_FILESIZE_MAX / 2 + 1,
-				FT_FILESIZE_MAX };
+		                FT_1K,
+		                FT_2K,
+		                FT_4K,
+		                FT_8K,
+		                FT_64K,
+		                FT_1M,
+		                FT_2M + 1,
+		                FT_1G,
+		                7 * FT_1G - 7,
+		                FT_1T,
+		                FT_1T / 2 - 1,
+		                FT_FILESIZE_MAX / 2,
+		                FT_FILESIZE_MAX / 2 + 1,
+		                FT_FILESIZE_MAX };
 
 	test_boundaries_arr_(fte, offs, FT_ARRAY_SIZE(offs));
 }

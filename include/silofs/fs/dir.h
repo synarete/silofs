@@ -26,7 +26,7 @@ struct silofs_readdir_info;
 
 /* call-back context for read-dir operations */
 typedef int (*silofs_filldir_fn)(struct silofs_readdir_ctx        *rd_ctx,
-				 const struct silofs_readdir_info *rdi);
+                                 const struct silofs_readdir_info *rdi);
 
 struct silofs_readdir_info {
 	struct silofs_stat attr;
@@ -47,46 +47,46 @@ struct silofs_readdir_ctx {
 enum silofs_dirf silofs_dir_flags(const struct silofs_inode_info *dir_ii);
 
 void silofs_setup_dir(struct silofs_inode_info *dir_ii, mode_t parent_mode,
-		      nlink_t nlink);
+                      nlink_t nlink);
 
 int silofs_lookup_dentry(struct silofs_task          *task,
-			 struct silofs_inode_info    *dir_ii,
-			 const struct silofs_namestr *name,
-			 struct silofs_ino_dt        *out_idt);
+                         struct silofs_inode_info    *dir_ii,
+                         const struct silofs_namestr *name,
+                         struct silofs_ino_dt        *out_idt);
 
 int silofs_add_dentry(struct silofs_task          *task,
-		      struct silofs_inode_info    *dir_ii,
-		      const struct silofs_namestr *name,
-		      struct silofs_inode_info    *ii);
+                      struct silofs_inode_info    *dir_ii,
+                      const struct silofs_namestr *name,
+                      struct silofs_inode_info    *ii);
 
 int silofs_remove_dentry(struct silofs_task          *task,
-			 struct silofs_inode_info    *dir_ii,
-			 const struct silofs_namestr *name);
+                         struct silofs_inode_info    *dir_ii,
+                         const struct silofs_namestr *name);
 
 int silofs_do_readdir(struct silofs_task        *task,
-		      struct silofs_inode_info  *dir_ii,
-		      struct silofs_readdir_ctx *rd_ctx);
+                      struct silofs_inode_info  *dir_ii,
+                      struct silofs_readdir_ctx *rd_ctx);
 
 int silofs_do_readdirplus(struct silofs_task        *task,
-			  struct silofs_inode_info  *dir_ii,
-			  struct silofs_readdir_ctx *rd_ctx);
+                          struct silofs_inode_info  *dir_ii,
+                          struct silofs_readdir_ctx *rd_ctx);
 
 int silofs_drop_dir(struct silofs_task       *task,
-		    struct silofs_inode_info *dir_ii);
+                    struct silofs_inode_info *dir_ii);
 
 bool silofs_dir_isempty(const struct silofs_inode_info *dir_ii);
 
 bool silofs_dir_may_add(const struct silofs_inode_info *dir_ii);
 
 bool silofs_dir_has_flags(const struct silofs_inode_info *dir_ii,
-			  enum silofs_dirf                mask);
+                          enum silofs_dirf                mask);
 
 int silofs_dir_check_name(const struct silofs_inode_info *dir_ii,
-			  const struct silofs_namestr    *nstr);
+                          const struct silofs_namestr    *nstr);
 
 int silofs_dir_make_hname(const struct silofs_inode_info *dir_ii,
-			  const struct silofs_namestr    *nstr,
-			  struct silofs_namestr          *out_nstr);
+                          const struct silofs_namestr    *nstr,
+                          struct silofs_namestr          *out_nstr);
 
 int silofs_verify_dir_inode(const struct silofs_inode *inode);
 

@@ -67,7 +67,7 @@ static bool pni_isevictable(const struct silofs_pnode_info *pni)
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 int silofs_bcache_init(struct silofs_bcache *bcache,
-		       struct silofs_alloc *alloc)
+                       struct silofs_alloc *alloc)
 {
 	const size_t nslots = silofs_hmapq_nslots_by(alloc, 1);
 	int err;
@@ -91,7 +91,7 @@ void silofs_bcache_fini(struct silofs_bcache *bcache)
 
 static struct silofs_pnode_info *
 bcache_search(const struct silofs_bcache *bcache,
-	      const struct silofs_paddr *paddr)
+              const struct silofs_paddr *paddr)
 {
 	struct silofs_hkey hkey;
 	struct silofs_hmapq_elem *hmqe;
@@ -109,7 +109,7 @@ bcache_promote(struct silofs_bcache *bcache, struct silofs_pnode_info *pni)
 
 static struct silofs_pnode_info *
 bcache_search_and_relru(struct silofs_bcache *bcache,
-			const struct silofs_paddr *paddr)
+                        const struct silofs_paddr *paddr)
 {
 	struct silofs_pnode_info *pni;
 
@@ -142,7 +142,7 @@ bcache_remove(struct silofs_bcache *bcache, struct silofs_pnode_info *pni)
 
 static struct silofs_chkpt_info *
 bcache_new_cpi(const struct silofs_bcache *bcache,
-	       const struct silofs_paddr *paddr)
+               const struct silofs_paddr *paddr)
 {
 	silofs_assert_eq(paddr->ptype, SILOFS_PTYPE_CHKPT);
 	silofs_assert_eq(paddr->off, 0);
@@ -151,14 +151,14 @@ bcache_new_cpi(const struct silofs_bcache *bcache,
 }
 
 static void bcache_del_cpi(const struct silofs_bcache *bcache,
-			   struct silofs_chkpt_info *cpi)
+                           struct silofs_chkpt_info *cpi)
 {
 	silofs_cpi_del(cpi, bcache->bc_alloc);
 }
 
 struct silofs_chkpt_info *
 silofs_bcache_lookup_cpi(struct silofs_bcache *bcache,
-			 const struct silofs_paddr *paddr)
+                         const struct silofs_paddr *paddr)
 {
 	struct silofs_pnode_info *pni;
 
@@ -170,7 +170,7 @@ silofs_bcache_lookup_cpi(struct silofs_bcache *bcache,
 
 static struct silofs_chkpt_info *
 bcache_require_cpi(struct silofs_bcache *bcache,
-		   const struct silofs_paddr *paddr)
+                   const struct silofs_paddr *paddr)
 {
 	struct silofs_chkpt_info *cpi = NULL;
 
@@ -198,7 +198,7 @@ bcache_store_cpi(struct silofs_bcache *bcache, struct silofs_chkpt_info *cpi)
 
 struct silofs_chkpt_info *
 silofs_bcache_create_cpi(struct silofs_bcache *bcache,
-			 const struct silofs_paddr *paddr)
+                         const struct silofs_paddr *paddr)
 {
 	struct silofs_chkpt_info *cpi;
 
@@ -224,7 +224,7 @@ bcache_forget_cpi(struct silofs_bcache *bcache, struct silofs_chkpt_info *cpi)
 }
 
 void silofs_bcache_evict_cpi(struct silofs_bcache *bcache,
-			     struct silofs_chkpt_info *cpi)
+                             struct silofs_chkpt_info *cpi)
 {
 	bcache_forget_cpi(bcache, cpi);
 	bcache_del_cpi(bcache, cpi);
@@ -234,7 +234,7 @@ void silofs_bcache_evict_cpi(struct silofs_bcache *bcache,
 
 static struct silofs_btnode_info *
 bcache_new_bti(const struct silofs_bcache *bcache,
-	       const struct silofs_paddr *paddr)
+               const struct silofs_paddr *paddr)
 {
 	silofs_assert_eq(paddr->ptype, SILOFS_PTYPE_BTNODE);
 
@@ -242,7 +242,7 @@ bcache_new_bti(const struct silofs_bcache *bcache,
 }
 
 static void bcache_del_bti(const struct silofs_bcache *bcache,
-			   struct silofs_btnode_info *bti)
+                           struct silofs_btnode_info *bti)
 {
 	silofs_assert_eq(bti->bn_pni.pn_paddr.ptype, SILOFS_PTYPE_BTNODE);
 
@@ -251,7 +251,7 @@ static void bcache_del_bti(const struct silofs_bcache *bcache,
 
 struct silofs_btnode_info *
 silofs_bcache_lookup_bti(struct silofs_bcache *bcache,
-			 const struct silofs_paddr *paddr)
+                         const struct silofs_paddr *paddr)
 {
 	struct silofs_pnode_info *pni;
 
@@ -263,7 +263,7 @@ silofs_bcache_lookup_bti(struct silofs_bcache *bcache,
 
 static struct silofs_btnode_info *
 bcache_require_bti(struct silofs_bcache *bcache,
-		   const struct silofs_paddr *paddr)
+                   const struct silofs_paddr *paddr)
 {
 	struct silofs_btnode_info *bti = NULL;
 
@@ -278,7 +278,7 @@ bcache_require_bti(struct silofs_bcache *bcache,
 }
 
 static void bcache_bind_bti_dq(struct silofs_bcache *bcache,
-			       struct silofs_btnode_info *bti)
+                               struct silofs_btnode_info *bti)
 {
 	silofs_bti_set_dq(bti, &bcache->bc_dirtyq);
 }
@@ -291,7 +291,7 @@ bcache_store_bti(struct silofs_bcache *bcache, struct silofs_btnode_info *bti)
 
 struct silofs_btnode_info *
 silofs_bcache_create_bti(struct silofs_bcache *bcache,
-			 const struct silofs_paddr *paddr)
+                         const struct silofs_paddr *paddr)
 {
 	struct silofs_btnode_info *bti;
 
@@ -317,7 +317,7 @@ bcache_forget_bti(struct silofs_bcache *bcache, struct silofs_btnode_info *bti)
 }
 
 void silofs_bcache_evict_bti(struct silofs_bcache *bcache,
-			     struct silofs_btnode_info *bti)
+                             struct silofs_btnode_info *bti)
 {
 	bcache_forget_bti(bcache, bti);
 	bcache_del_bti(bcache, bti);
@@ -327,7 +327,7 @@ void silofs_bcache_evict_bti(struct silofs_bcache *bcache,
 
 static struct silofs_btleaf_info *
 bcache_new_bli(const struct silofs_bcache *bcache,
-	       const struct silofs_paddr *paddr)
+               const struct silofs_paddr *paddr)
 {
 	silofs_assert_eq(paddr->ptype, SILOFS_PTYPE_BTLEAF);
 
@@ -335,7 +335,7 @@ bcache_new_bli(const struct silofs_bcache *bcache,
 }
 
 static void bcache_del_bli(const struct silofs_bcache *bcache,
-			   struct silofs_btleaf_info *bli)
+                           struct silofs_btleaf_info *bli)
 {
 	silofs_assert_eq(bli->bl_pni.pn_paddr.ptype, SILOFS_PTYPE_BTLEAF);
 
@@ -344,7 +344,7 @@ static void bcache_del_bli(const struct silofs_bcache *bcache,
 
 struct silofs_btleaf_info *
 silofs_bcache_lookup_bli(struct silofs_bcache *bcache,
-			 const struct silofs_paddr *paddr)
+                         const struct silofs_paddr *paddr)
 {
 	struct silofs_pnode_info *pni;
 
@@ -355,7 +355,7 @@ silofs_bcache_lookup_bli(struct silofs_bcache *bcache,
 }
 
 static void bcache_bind_bli_dq(struct silofs_bcache *bcache,
-			       struct silofs_btleaf_info *bli)
+                               struct silofs_btleaf_info *bli)
 {
 	silofs_bli_set_dq(bli, &bcache->bc_dirtyq);
 }
@@ -368,7 +368,7 @@ bcache_store_bli(struct silofs_bcache *bcache, struct silofs_btleaf_info *bli)
 
 static struct silofs_btleaf_info *
 bcache_require_bli(struct silofs_bcache *bcache,
-		   const struct silofs_paddr *paddr)
+                   const struct silofs_paddr *paddr)
 {
 	struct silofs_btleaf_info *bli = NULL;
 
@@ -384,7 +384,7 @@ bcache_require_bli(struct silofs_bcache *bcache,
 
 struct silofs_btleaf_info *
 silofs_bcache_create_bli(struct silofs_bcache *bcache,
-			 const struct silofs_paddr *paddr)
+                         const struct silofs_paddr *paddr)
 {
 	struct silofs_btleaf_info *bli;
 
@@ -410,7 +410,7 @@ bcache_forget_bli(struct silofs_bcache *bcache, struct silofs_btleaf_info *bli)
 }
 
 void silofs_bcache_evict_bli(struct silofs_bcache *bcache,
-			     struct silofs_btleaf_info *bli)
+                             struct silofs_btleaf_info *bli)
 {
 	bcache_forget_bli(bcache, bli);
 	bcache_del_bli(bcache, bli);
@@ -462,7 +462,7 @@ bcache_find_evictable(struct silofs_bcache *bcache, bool iterall)
 	const size_t limit = iterall ? SILOFS_HMAPQ_ITERALL : 10;
 
 	silofs_hmapq_riterate(&bcache->bc_hmapq, limit, visit_evictable_pni,
-			      &pni);
+	                      &pni);
 	return pni;
 }
 
@@ -516,7 +516,7 @@ static size_t bcache_memory_pressure(const struct silofs_bcache *bcache)
 }
 
 static void bcache_relax_args(const struct silofs_bcache *bcache, int flags,
-			      size_t *out_niter, bool *out_iterall)
+                              size_t *out_niter, bool *out_iterall)
 {
 	size_t mem_pres;
 

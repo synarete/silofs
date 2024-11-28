@@ -132,7 +132,7 @@ static void ste_nunlink(struct ft_stress_executor *ste, size_t n)
 }
 
 static void ste_setup(struct ft_stress_executor *ste, struct ft_env *fte,
-		      const char *path, size_t niter, loff_t off, size_t len)
+                      const char *path, size_t niter, loff_t off, size_t len)
 {
 	silofs_memzero(ste, sizeof(*ste));
 	ste->fte = fte;
@@ -145,14 +145,14 @@ static void ste_setup(struct ft_stress_executor *ste, struct ft_env *fte,
 }
 
 static void ste_setup_uniq(struct ft_stress_executor *ste, struct ft_env *fte,
-			   size_t niter, loff_t off, size_t len)
+                           size_t niter, loff_t off, size_t len)
 {
 	ste_setup(ste, fte, ft_new_path_unique(fte), niter, off, len);
 }
 
 static void
 ste_nsetup_uniq(struct ft_stress_executor *ste_arr, size_t n,
-		struct ft_env *fte, size_t niter, loff_t off, size_t len)
+                struct ft_env *fte, size_t niter, loff_t off, size_t len)
 {
 	for (size_t i = 0; i < n; ++i) {
 		ste_setup_uniq(&ste_arr[i], fte, niter, off, len);

@@ -75,19 +75,19 @@ typedef int (*silofs_hmapq_elem_fn)(struct silofs_hmapq_elem *, void *);
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_hkey_by_blobid(struct silofs_hkey         *hkey,
-			   const struct silofs_blobid *blobid);
+                           const struct silofs_blobid *blobid);
 
 void silofs_hkey_by_paddr(struct silofs_hkey        *hkey,
-			  const struct silofs_paddr *paddr);
+                          const struct silofs_paddr *paddr);
 
 void silofs_hkey_by_uaddr(struct silofs_hkey        *hkey,
-			  const struct silofs_uaddr *uaddr);
+                          const struct silofs_uaddr *uaddr);
 
 void silofs_hkey_by_vaddr(struct silofs_hkey        *hkey,
-			  const struct silofs_vaddr *vaddr);
+                          const struct silofs_vaddr *vaddr);
 
 long silofs_hkey_compare(const struct silofs_hkey *hkey1,
-			 const struct silofs_hkey *hkey2);
+                         const struct silofs_hkey *hkey2);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -111,30 +111,30 @@ silofs_hmqe_from_dqe(const struct silofs_dq_elem *dqe);
 size_t silofs_hmapq_nslots_by(const struct silofs_alloc *alloc, uint8_t fac);
 
 int silofs_hmapq_init(struct silofs_hmapq *hmapq, struct silofs_alloc *alloc,
-		      size_t nslots);
+                      size_t nslots);
 
 void silofs_hmapq_fini(struct silofs_hmapq *hmapq, struct silofs_alloc *alloc);
 
 struct silofs_hmapq_elem *silofs_hmapq_lookup(const struct silofs_hmapq *hmapq,
-					      const struct silofs_hkey  *hkey);
+                                              const struct silofs_hkey  *hkey);
 
 void silofs_hmapq_store(struct silofs_hmapq      *hmapq,
-			struct silofs_hmapq_elem *hmqe);
+                        struct silofs_hmapq_elem *hmqe);
 
 void silofs_hmapq_promote(struct silofs_hmapq      *hmapq,
-			  struct silofs_hmapq_elem *hmqe, bool now);
+                          struct silofs_hmapq_elem *hmqe, bool now);
 
 void silofs_hmapq_unmap(struct silofs_hmapq      *hmapq,
-			struct silofs_hmapq_elem *hmqe);
+                        struct silofs_hmapq_elem *hmqe);
 
 void silofs_hmapq_remove(struct silofs_hmapq      *hmapq,
-			 struct silofs_hmapq_elem *hmqe);
+                         struct silofs_hmapq_elem *hmqe);
 
 struct silofs_hmapq_elem *
 silofs_hmapq_get_lru(const struct silofs_hmapq *hmapq);
 
 void silofs_hmapq_riterate(struct silofs_hmapq *hmapq, size_t limit,
-			   silofs_hmapq_elem_fn cb, void *arg);
+                           silofs_hmapq_elem_fn cb, void *arg);
 
 size_t silofs_hmapq_overpop(const struct silofs_hmapq *hmapq);
 

@@ -153,7 +153,7 @@ static const char *cmd_optargs_curr(const struct cmd_optargs *opa)
 	if (opa->opa_optarg != NULL) {
 		opt = opa->opa_optarg;
 	} else if ((opa->opa_optind > 0) &&
-		   (opa->opa_optind <= opa->opa_cmd_argc)) {
+	           (opa->opa_optind <= opa->opa_cmd_argc)) {
 		opt = opa->opa_cmd_argv[opa->opa_optind - 1];
 	}
 	return opt;
@@ -180,8 +180,8 @@ int cmd_optargs_parse(struct cmd_optargs *opa)
 	int ret;
 
 	ret = getopt_long(opa->opa_cmd_argc, opa->opa_cmd_argv,
-			  opa->opa_goi->sopts, opa->opa_goi->lopts,
-			  &opa->opa_optidx);
+	                  opa->opa_goi->sopts, opa->opa_goi->lopts,
+	                  &opa->opa_optidx);
 
 	cmd_optargs_update(opa);
 	if (ret == '?') {
@@ -224,7 +224,7 @@ char *cmd_optargs_getarg(struct cmd_optargs *opa, const char *arg_name)
 }
 
 char *cmd_optargs_getarg2(struct cmd_optargs *opa, const char *arg_name,
-			  const char *default_val)
+                          const char *default_val)
 {
 	const char *arg = NULL;
 
@@ -273,7 +273,7 @@ long cmd_optargs_curr_as_size(const struct cmd_optargs *opa)
 }
 
 uint32_t cmd_optargs_curr_as_u32v(const struct cmd_optargs *opa, uint32_t vmin,
-				  uint32_t vmax)
+                                  uint32_t vmax)
 {
 	return cmd_parse_str_as_u32v(opa->opa_optarg, vmin, vmax);
 }

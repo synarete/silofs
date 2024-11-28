@@ -63,7 +63,7 @@ void silofs_ucred_self(struct ucred *uc);
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_msghdr_set_addr(struct msghdr                *mh,
-			    const struct silofs_sockaddr *sa);
+                            const struct silofs_sockaddr *sa);
 
 struct cmsghdr *silofs_cmsg_firsthdr(struct msghdr *mh);
 
@@ -110,19 +110,19 @@ void silofs_socket_close(struct silofs_socket *sock);
 void silofs_socket_fini(struct silofs_socket *sock);
 
 int silofs_socket_rselect(const struct silofs_socket *sock,
-			  const struct timespec      *ts);
+                          const struct timespec      *ts);
 
 int silofs_socket_bind(struct silofs_socket         *sock,
-		       const struct silofs_sockaddr *sa);
+                       const struct silofs_sockaddr *sa);
 
 int silofs_socket_listen(const struct silofs_socket *sock, int backlog);
 
 int silofs_socket_accept(const struct silofs_socket *sock,
-			 struct silofs_socket       *acsock,
-			 struct silofs_sockaddr     *peer);
+                         struct silofs_socket       *acsock,
+                         struct silofs_sockaddr     *peer);
 
 int silofs_socket_connect(const struct silofs_socket   *sock,
-			  const struct silofs_sockaddr *sa);
+                          const struct silofs_sockaddr *sa);
 
 int silofs_socket_shutdown(const struct silofs_socket *sock, int how);
 
@@ -137,30 +137,30 @@ int silofs_socket_setreuseaddr(const struct silofs_socket *sock);
 int silofs_socket_setnonblock(const struct silofs_socket *sock);
 
 int silofs_socket_getpeercred(const struct silofs_socket *sock,
-			      struct ucred               *cred);
+                              struct ucred               *cred);
 
 int silofs_socket_getsockerror(const struct silofs_socket *sock, int *out_err);
 
 int silofs_socket_send(const struct silofs_socket *sock, const void *buf,
-		       size_t len, size_t *out_sent);
+                       size_t len, size_t *out_sent);
 
 int silofs_socket_sendto(const struct silofs_socket *sock, const void *buf,
-			 size_t bsz, const struct silofs_sockaddr *sladdr,
-			 size_t *out_sent);
+                         size_t bsz, const struct silofs_sockaddr *sladdr,
+                         size_t *out_sent);
 
 int silofs_socket_sendmsg(const struct silofs_socket *sock,
-			  const struct msghdr *msgh, int flags,
-			  size_t *out_sent);
+                          const struct msghdr *msgh, int flags,
+                          size_t *out_sent);
 
 int silofs_socket_recv(const struct silofs_socket *sock, void *buf, size_t len,
-		       size_t *out_recv);
+                       size_t *out_recv);
 
 int silofs_socket_recvfrom(const struct silofs_socket *sock, void *buf,
-			   size_t bsz, struct silofs_sockaddr *sa,
-			   size_t *out_recv);
+                           size_t bsz, struct silofs_sockaddr *sa,
+                           size_t *out_recv);
 
 int silofs_socket_recvmsg(const struct silofs_socket *sock,
-			  struct msghdr *msgh, int flags, size_t *out_recv);
+                          struct msghdr *msgh, int flags, size_t *out_recv);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

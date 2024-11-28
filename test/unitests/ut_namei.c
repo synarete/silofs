@@ -68,7 +68,7 @@ static void ut_create_unlink_simple(struct ut_env *ute)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void ut_create_write_release(struct ut_env *ute, ino_t dino,
-				    const char *name, size_t bsz, loff_t off)
+                                    const char *name, size_t bsz, loff_t off)
 {
 	ino_t ino;
 	void *buf = ut_randbuf(ute, bsz);
@@ -79,7 +79,7 @@ static void ut_create_write_release(struct ut_env *ute, ino_t dino,
 }
 
 static void ut_create_unlink_random_(struct ut_env *ute, size_t nfiles,
-				     size_t bsz, loff_t off)
+                                     size_t bsz, loff_t off)
 {
 	ino_t dino;
 	const char *name = UT_NAME;
@@ -291,7 +291,7 @@ static void ut_inode_special(struct ut_env *ute)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void ut_expect_eq_tsx(const struct statx_timestamp *stx_ts,
-			     const struct timespec *st_ts)
+                             const struct timespec *st_ts)
 {
 	ut_expect_eq(stx_ts->tv_sec, st_ts->tv_sec);
 	ut_expect_eq(stx_ts->tv_nsec, st_ts->tv_nsec);

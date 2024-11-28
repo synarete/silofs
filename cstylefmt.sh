@@ -11,9 +11,9 @@ cd "${root}"
 # require 'clang-format' utility
 command -v clang-format > /dev/null
 
-# define C source/header configuration files
-c_conf="${root}/.clang-format-c"
-h_conf="${root}/.clang-format-h"
+# define C source/header configuration YAML files
+c_conf="${root}/.clang-format.yaml"
+h_conf="${root}/.clang-format-h.yaml"
 
 # find relevant source & header files
 c_srcs=$(find "${root}/"{lib,cmd,mntd,test} -type f -name "*.c")

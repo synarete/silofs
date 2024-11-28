@@ -14,8 +14,8 @@ EXTRA_DIST += devel.mk
 EXTRA_DIST += common.mk.in
 EXTRA_DIST += sedsub.mk.in
 EXTRA_DIST += build-aux/autom4te.cfg.in
-EXTRA_DIST += .clang-format-c
-EXTRA_DIST += .clang-format-h
+EXTRA_DIST += .clang-format.yaml
+EXTRA_DIST += .clang-format-h.yaml
 
 BUILT_SOURCES = REVISION
 CLEANFILES = REVISION

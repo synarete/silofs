@@ -1,13 +1,7 @@
-# https://clang.llvm.org/docs/ClangFormatStyleOptions.html
+---
 AlignAfterOpenBracket: Align
-AlignConsecutiveAssignments:
-  Enabled: true
-  AcrossEmptyLines: false
-  AcrossComments: false
-AlignConsecutiveDeclarations:
-  Enabled: true
-  AcrossEmptyLines: false
-  AcrossComments: true
+AlignConsecutiveAssignments: false
+AlignConsecutiveDeclarations: false
 AlignConsecutiveMacros:
     Enabled: true
     AcrossEmptyLines: false
@@ -49,7 +43,7 @@ BreakConstructorInitializersBeforeComma: false
 BreakConstructorInitializers: BeforeComma
 BreakAfterJavaFieldAnnotations: false
 BreakStringLiterals: false
-ColumnLimit: 78
+ColumnLimit: 79
 ContinuationIndentWidth: 8
 Cpp11BracedListStyle: false
 IndentCaseLabels: false

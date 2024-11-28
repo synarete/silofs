@@ -55,16 +55,14 @@ int silofs_do_read(struct silofs_task *task, struct silofs_inode_info *ii,
 		   void *buf, size_t len, loff_t off, int o_flags,
 		   size_t *out_len);
 
-int silofs_do_read_iter(struct silofs_task       *task,
-			struct silofs_inode_info *ii, int o_flags,
-			struct silofs_rwiter_ctx *rwi_ctx);
+int silofs_do_read_iter(struct silofs_task *task, struct silofs_inode_info *ii,
+			int o_flags, struct silofs_rwiter_ctx *rwi_ctx);
 
 int silofs_do_lseek(struct silofs_task *task, struct silofs_inode_info *ii,
 		    loff_t off, int whence, loff_t *out_off);
 
-int silofs_do_fallocate(struct silofs_task       *task,
-			struct silofs_inode_info *ii, int mode, loff_t off,
-			loff_t length);
+int silofs_do_fallocate(struct silofs_task *task, struct silofs_inode_info *ii,
+			int mode, loff_t off, loff_t length);
 
 int silofs_do_truncate(struct silofs_task *task, struct silofs_inode_info *ii,
 		       loff_t off);

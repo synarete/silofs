@@ -252,14 +252,14 @@ struct silofs_fileaf_info *silofs_fli_from_vni(struct silofs_vnode_info *vni);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-struct silofs_unode_info *silofs_new_unode(struct silofs_alloc       *alloc,
-					   const struct silofs_ulink *ulink);
+struct silofs_unode_info *
+silofs_new_unode(struct silofs_alloc *alloc, const struct silofs_ulink *ulink);
 
 void silofs_del_unode(struct silofs_unode_info *uni,
 		      struct silofs_alloc *alloc, int flags);
 
-struct silofs_vnode_info *silofs_new_vnode(struct silofs_alloc       *alloc,
-					   const struct silofs_vaddr *vaddr);
+struct silofs_vnode_info *
+silofs_new_vnode(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr);
 
 void silofs_del_vnode(struct silofs_vnode_info *vni,
 		      struct silofs_alloc *alloc, int flags);

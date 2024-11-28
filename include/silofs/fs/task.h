@@ -113,8 +113,7 @@ struct silofs_lcache *silofs_task_lcache(const struct silofs_task *task);
 
 struct silofs_repo *silofs_task_repo(const struct silofs_task *task);
 
-const struct silofs_idsmap *
-silofs_task_idsmap(const struct silofs_task *task);
+const struct silofs_idsmap *silofs_task_idsmap(const struct silofs_task *task);
 
 const struct silofs_creds *silofs_task_creds(const struct silofs_task *task);
 

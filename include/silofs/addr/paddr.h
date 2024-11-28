@@ -60,8 +60,8 @@ int silofs_pvid_from_str(struct silofs_lvid          *pvid,
 
 const struct silofs_psid *silofs_psid_none(void);
 
-void silofs_psid_init(struct silofs_psid       *psid,
-		      const struct silofs_pvid *pvid, uint32_t idx);
+void silofs_psid_init(struct silofs_psid *psid, const struct silofs_pvid *pvid,
+		      uint32_t idx);
 
 void silofs_psid_fini(struct silofs_psid *psid);
 
@@ -98,8 +98,8 @@ const struct silofs_paddr *silofs_paddr_none(void);
 bool silofs_paddr_isnull(const struct silofs_paddr *paddr);
 
 void silofs_paddr_init(struct silofs_paddr      *paddr,
-		       const struct silofs_psid *psid,
-		       enum silofs_ptype ptype, loff_t off, size_t len);
+		       const struct silofs_psid *psid, enum silofs_ptype ptype,
+		       loff_t off, size_t len);
 
 void silofs_paddr_fini(struct silofs_paddr *paddr);
 

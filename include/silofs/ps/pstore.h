@@ -54,8 +54,7 @@ void silofs_pstate128b_xtoh(const struct silofs_pstate128b *pstate128,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_pstore_init(struct silofs_pstore *pstore,
-		       struct silofs_repo   *repo);
+int silofs_pstore_init(struct silofs_pstore *pstore, struct silofs_repo *repo);
 
 void silofs_pstore_fini(struct silofs_pstore *pstore);
 

@@ -83,8 +83,7 @@ void silofs_cond_fini(struct silofs_cond *cond);
 
 void silofs_cond_wait(struct silofs_cond *cond, struct silofs_mutex *mutex);
 
-int silofs_cond_timedwait(struct silofs_cond    *cond,
-			  struct silofs_mutex   *mutex,
+int silofs_cond_timedwait(struct silofs_cond *cond, struct silofs_mutex *mutex,
 			  const struct timespec *ts);
 
 int silofs_cond_ntimedwait(struct silofs_cond  *cond,

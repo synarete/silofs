@@ -210,9 +210,8 @@ void silofs_strview_nsplit(const struct silofs_strview *sv, const char *seps,
 void silofs_strview_split_chr(const struct silofs_strview *sv, char sep,
 			      struct silofs_strview_pair *out_sv_pair);
 
-void silofs_strview_split_str(const struct silofs_strview *sv,
-			      const char                  *str,
-			      struct silofs_strview_pair  *out_sv_pair);
+void silofs_strview_split_str(const struct silofs_strview *sv, const char *str,
+			      struct silofs_strview_pair *out_sv_pair);
 
 /*
  * Creates a pair of strview, which are divided by any of the first n
@@ -224,8 +223,7 @@ void silofs_strview_rsplit(const struct silofs_strview *sv, const char *seps,
 			   struct silofs_strview_pair *out_sv_pair);
 
 void silofs_strview_nrsplit(const struct silofs_strview *sv, const char *seps,
-			    size_t                      n,
-			    struct silofs_strview_pair *out_sv_pair);
+			    size_t n, struct silofs_strview_pair *out_sv_pair);
 
 void silofs_strview_rsplit_chr(const struct silofs_strview *sv, char sep,
 			       struct silofs_strview_pair *out_sv_pair);
@@ -327,12 +325,11 @@ void silofs_strview_find_next_token_chr(const struct silofs_strview *ss,
  * space. The number of parsed tokens is assigned into out_ntok.
  */
 int silofs_strview_tokenize(const struct silofs_strview *sv, const char *seps,
-			    struct silofs_strview tok_list[],
-			    size_t list_size, size_t *out_ntok);
+			    struct silofs_strview tok_list[], size_t list_size,
+			    size_t *out_ntok);
 
-int silofs_strview_ntokenize(const struct silofs_strview *sv,
-			     const char *seps, size_t n,
-			     struct silofs_strview tok_list[],
+int silofs_strview_ntokenize(const struct silofs_strview *sv, const char *seps,
+			     size_t n, struct silofs_strview tok_list[],
 			     size_t list_size, size_t *out_ntok);
 
 int silofs_strview_tokenize_chr(const struct silofs_strview *sv, char sep,

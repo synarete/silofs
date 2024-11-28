@@ -155,8 +155,7 @@ char *ft_make_ulong_name(struct ft_env *fte, unsigned long key);
 
 char *ft_make_rand_name(struct ft_env *fte, size_t name_len);
 
-char *
-ft_make_xname_unique(struct ft_env *fte, size_t nlen, char *p, size_t n);
+char *ft_make_xname_unique(struct ft_env *fte, size_t nlen, char *p, size_t n);
 
 char *ft_new_name_unique(struct ft_env *fte);
 

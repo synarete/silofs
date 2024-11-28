@@ -59,8 +59,7 @@ void silofs_pni_undirtify(struct silofs_pnode_info *pni);
 struct silofs_chkpt_info *
 silofs_cpi_new(const struct silofs_paddr *paddr, struct silofs_alloc *alloc);
 
-void silofs_cpi_del(struct silofs_chkpt_info *cpi,
-		    struct silofs_alloc      *alloc);
+void silofs_cpi_del(struct silofs_chkpt_info *cpi, struct silofs_alloc *alloc);
 
 struct silofs_chkpt_info *
 silofs_cpi_from_pni(const struct silofs_pnode_info *pni);

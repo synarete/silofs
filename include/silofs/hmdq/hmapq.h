@@ -113,12 +113,10 @@ size_t silofs_hmapq_nslots_by(const struct silofs_alloc *alloc, uint8_t fac);
 int silofs_hmapq_init(struct silofs_hmapq *hmapq, struct silofs_alloc *alloc,
 		      size_t nslots);
 
-void silofs_hmapq_fini(struct silofs_hmapq *hmapq,
-		       struct silofs_alloc *alloc);
+void silofs_hmapq_fini(struct silofs_hmapq *hmapq, struct silofs_alloc *alloc);
 
-struct silofs_hmapq_elem *
-silofs_hmapq_lookup(const struct silofs_hmapq *hmapq,
-		    const struct silofs_hkey  *hkey);
+struct silofs_hmapq_elem *silofs_hmapq_lookup(const struct silofs_hmapq *hmapq,
+					      const struct silofs_hkey  *hkey);
 
 void silofs_hmapq_store(struct silofs_hmapq      *hmapq,
 			struct silofs_hmapq_elem *hmqe);

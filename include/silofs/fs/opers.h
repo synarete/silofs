@@ -424,15 +424,13 @@ int silofs_fs_truncate(struct silofs_task *task, ino_t ino, loff_t len,
 int silofs_fs_utimens(struct silofs_task *task, ino_t ino,
 		      const struct stat *times, struct silofs_stat *out_stat);
 
-int silofs_fs_symlink(struct silofs_task *task, ino_t parent,
-		      const char *name, const char *symval,
-		      struct silofs_stat *out_stat);
+int silofs_fs_symlink(struct silofs_task *task, ino_t parent, const char *name,
+		      const char *symval, struct silofs_stat *out_stat);
 
 int silofs_fs_readlink(struct silofs_task *task, ino_t ino, char *ptr,
 		       size_t lim, size_t *out_len);
 
-int silofs_fs_unlink(struct silofs_task *task, ino_t parent,
-		     const char *name);
+int silofs_fs_unlink(struct silofs_task *task, ino_t parent, const char *name);
 
 int silofs_fs_link(struct silofs_task *task, ino_t ino, ino_t parent,
 		   const char *name, struct silofs_stat *out_stat);

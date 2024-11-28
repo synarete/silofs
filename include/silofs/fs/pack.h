@@ -22,7 +22,6 @@ struct silofs_task;
 
 int silofs_fs_pack(struct silofs_task *task, struct silofs_caddr *out_caddr);
 
-int silofs_fs_unpack(struct silofs_task  *task,
-		     struct silofs_caddr *out_caddr);
+int silofs_fs_unpack(struct silofs_task *task, struct silofs_caddr *out_caddr);
 
 #endif /* SILOFS_PACK_H_ */

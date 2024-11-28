@@ -27,8 +27,8 @@ void ft_do_fsync_err(int fd, int err, const char *fl, int ln);
 void ft_do_utime(const char *path, const struct utimbuf *tm, const char *fl,
 		 int ln);
 
-void ft_do_utimes(const char *path, const struct timeval tm[2],
-		  const char *fl, int ln);
+void ft_do_utimes(const char *path, const struct timeval tm[2], const char *fl,
+		  int ln);
 
 void ft_do_utimensat(int dirfd, const char *name, const struct timespec tm[2],
 		     int flags, const char *fl, int ln);
@@ -85,8 +85,7 @@ void ft_do_unlink_noent(const char *path, const char *fl, int ln);
 void ft_do_unlinkat(int dirfd, const char *name, int flags, const char *fl,
 		    int ln);
 
-void ft_do_unlinkat_noent(int dirfd, const char *name, const char *fl,
-			  int ln);
+void ft_do_unlinkat_noent(int dirfd, const char *name, const char *fl, int ln);
 
 void ft_do_open(const char *path, int flags, mode_t mode, int *out_fd,
 		const char *fl, int ln);
@@ -124,11 +123,11 @@ void ft_do_write_err(int fd, const void *buf, size_t cnt, int err,
 void ft_do_pwrite(int fd, const void *buf, size_t cnt, loff_t off,
 		  size_t *out_nwr, const char *fl, int ln);
 
-void ft_do_pwrite_err(int fd, const void *buf, size_t cnt, loff_t off,
-		      int err, const char *fl, int ln);
+void ft_do_pwrite_err(int fd, const void *buf, size_t cnt, loff_t off, int err,
+		      const char *fl, int ln);
 
-void ft_do_read(int fd, void *buf, size_t cnt, size_t *out_nrd,
-		const char *fl, int ln);
+void ft_do_read(int fd, void *buf, size_t cnt, size_t *out_nrd, const char *fl,
+		int ln);
 
 void ft_do_read_err(int fd, void *buf, size_t cnt, int err, const char *fl,
 		    int ln);
@@ -219,8 +218,7 @@ void ft_do_munmap(void *addr, size_t len, const char *fl, int ln);
 
 void ft_do_msync(void *addr, size_t len, int flags, const char *fl, int ln);
 
-void ft_do_madvise(void *addr, size_t len, int advice, const char *fl,
-		   int ln);
+void ft_do_madvise(void *addr, size_t len, int advice, const char *fl, int ln);
 
 void ft_do_setxattr(const char *path, const char *name, const void *value,
 		    size_t size, int flags, const char *fl, int ln);
@@ -286,8 +284,7 @@ void ft_do_readn(int fd, void *buf, size_t cnt, const char *fl, int ln);
 void ft_do_preadn(int fd, void *buf, size_t cnt, loff_t off, const char *fl,
 		  int ln);
 
-void ft_do_writen(int fd, const void *buf, size_t cnt, const char *fl,
-		  int ln);
+void ft_do_writen(int fd, const void *buf, size_t cnt, const char *fl, int ln);
 
 void ft_do_pwriten(int fd, const void *buf, size_t cnt, loff_t off,
 		   const char *fl, int ln);

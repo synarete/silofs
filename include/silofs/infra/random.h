@@ -30,8 +30,7 @@ void silofs_getentropy(void *buf, size_t len);
 
 void silofs_prandgen_init(struct silofs_prandgen *prng);
 
-void silofs_prandgen_take(struct silofs_prandgen *prng, void *buf,
-			  size_t bsz);
+void silofs_prandgen_take(struct silofs_prandgen *prng, void *buf, size_t bsz);
 
 void silofs_prandgen_take_u64(struct silofs_prandgen *prng, uint64_t *out);
 

@@ -103,8 +103,7 @@ void silofs_bootref_assign(struct silofs_fs_bref       *bref,
 			   const struct silofs_fs_bref *other);
 
 void silofs_bootref_update(struct silofs_fs_bref     *bref,
-			   const struct silofs_caddr *caddr,
-			   const char                *name);
+			   const struct silofs_caddr *caddr, const char *name);
 
 int silofs_bootref_import(struct silofs_fs_bref       *bref,
 			  const struct silofs_strview *sv);

@@ -67,14 +67,14 @@ void silofs_sni_main_lseg(const struct silofs_spnode_info *sni,
 void silofs_sni_bind_main_lseg(struct silofs_spnode_info *sni,
 			       const struct silofs_lsid  *lsid);
 
-void silofs_sni_resolve_main(const struct silofs_spnode_info *sni,
-			     loff_t voff, struct silofs_ulink *out_ulink);
+void silofs_sni_resolve_main(const struct silofs_spnode_info *sni, loff_t voff,
+			     struct silofs_ulink *out_ulink);
 
 void silofs_sni_bind_child(struct silofs_spnode_info *sni, loff_t voff,
 			   const struct silofs_ulink *ulink);
 
-int silofs_sni_resolve_child(const struct silofs_spnode_info *sni,
-			     loff_t voff, struct silofs_ulink *out_ulink);
+int silofs_sni_resolve_child(const struct silofs_spnode_info *sni, loff_t voff,
+			     struct silofs_ulink *out_ulink);
 
 void silofs_sni_resolve_lmap(const struct silofs_spnode_info *sni,
 			     struct silofs_spmap_lmap        *out_lmap);
@@ -154,8 +154,8 @@ void silofs_sli_resolve_main_lbk(const struct silofs_spleaf_info *sli,
 void silofs_sli_bind_child(struct silofs_spleaf_info *sli, loff_t voff,
 			   const struct silofs_llink *llink);
 
-int silofs_sli_resolve_child(const struct silofs_spleaf_info *sli,
-			     loff_t voff, struct silofs_llink *out_llink);
+int silofs_sli_resolve_child(const struct silofs_spleaf_info *sli, loff_t voff,
+			     struct silofs_llink *out_llink);
 
 void silofs_sli_resolve_lmap(const struct silofs_spleaf_info *sli,
 			     struct silofs_spmap_lmap        *out_lmaps);

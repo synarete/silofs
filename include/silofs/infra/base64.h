@@ -26,7 +26,6 @@ int silofs_base64_encode(const void *in, size_t inlen, char *out,
 			 size_t outlen_max, size_t *out_len);
 
 int silofs_base64_decode(const char *in, size_t inlen, void *out,
-			 size_t outlen_max, size_t *out_len,
-			 size_t *out_inrd);
+			 size_t outlen_max, size_t *out_len, size_t *out_inrd);
 
 #endif /* SILOFS_BASE64_H_ */

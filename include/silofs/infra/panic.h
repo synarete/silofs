@@ -40,8 +40,8 @@ void silofs_expect_err_(int err, int exp, const char *fl, int ln);
 void silofs_expect_not_null_(const void *ptr, const char *fl, int ln);
 void silofs_expect_null_(const void *ptr, const char *fl, int ln);
 void silofs_expect_eqs_(const char *s, const char *z, const char *fl, int ln);
-void silofs_expect_eqm_(const void *p, const void *q, size_t n,
-			const char *fl, int ln);
+void silofs_expect_eqm_(const void *p, const void *q, size_t n, const char *fl,
+			int ln);
 void silofs_expect_noop_(long a, long b);
 
 #define silofs_expect(cond) \

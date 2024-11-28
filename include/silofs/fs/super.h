@@ -62,8 +62,7 @@ int silofs_sbi_resolve_child(const struct silofs_sb_info *sbi,
 			     enum silofs_ltype            ltype,
 			     struct silofs_ulink         *out_ulink);
 
-void silofs_sbi_bind_child(struct silofs_sb_info     *sbi,
-			   enum silofs_ltype          ltype,
+void silofs_sbi_bind_child(struct silofs_sb_info *sbi, enum silofs_ltype ltype,
 			   const struct silofs_ulink *ulink);
 
 void silofs_sbi_clone_from(struct silofs_sb_info       *sbi,
@@ -123,7 +122,6 @@ int silofs_test_last_allocated(struct silofs_task        *task,
 			       bool                      *out_res);
 
 int silofs_test_shared_dbkref(struct silofs_task        *task,
-			      const struct silofs_vaddr *vaddr,
-			      bool                      *out_res);
+			      const struct silofs_vaddr *vaddr, bool *out_res);
 
 #endif /* SILOFS_SUPER_H_ */

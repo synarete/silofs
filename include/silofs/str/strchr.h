@@ -58,8 +58,8 @@ const char *silofs_str_rfind_chr(const char *s, size_t n, char c);
 /*
  * Returns the first occurrence of any of the characters of s2 in s1.
  */
-const char *silofs_str_find_first_of(const char *s1, size_t n1,
-				     const char *s2, size_t n2);
+const char *
+silofs_str_find_first_of(const char *s1, size_t n1, const char *s2, size_t n2);
 
 /*
  * Returns the first occurrence of any of the char of s2 which is not in s1.
@@ -167,8 +167,7 @@ silofs_str_insert(char *p, size_t sz, size_t n1, const char *s, size_t n2);
  * Returns the number of characters in p after insertion (always less or equal
  * to sz).
  */
-size_t
-silofs_str_insert_chr(char *p, size_t sz, size_t n1, size_t n2, char c);
+size_t silofs_str_insert_chr(char *p, size_t sz, size_t n1, size_t n2, char c);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 /*

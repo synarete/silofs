@@ -38,8 +38,7 @@ struct silofs_alloc_stat {
 
 /* allocator interface */
 struct silofs_alloc {
-	void *(*malloc_fn)(struct silofs_alloc *alloc, size_t size,
-			   int flags);
+	void *(*malloc_fn)(struct silofs_alloc *alloc, size_t size, int flags);
 	void (*free_fn)(struct silofs_alloc *alloc, void *ptr, size_t size,
 			int flags);
 	void (*stat_fn)(const struct silofs_alloc *alloc,

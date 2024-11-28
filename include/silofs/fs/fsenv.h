@@ -121,8 +121,7 @@ int silofs_fsenv_forkfs(struct silofs_fsenv    *fsenv,
 
 void silofs_fsenv_relax_caches(const struct silofs_fsenv *fsenv, int flags);
 
-void silofs_fsenv_uptime(const struct silofs_fsenv *fsenv,
-			 time_t                    *out_uptime);
+void silofs_fsenv_uptime(const struct silofs_fsenv *fsenv, time_t *out_uptime);
 
 void silofs_fsenv_allocstat(const struct silofs_fsenv *fsenv,
 			    struct silofs_alloc_stat  *out_alst);

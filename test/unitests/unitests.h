@@ -318,13 +318,11 @@ void ut_mkdir2(struct ut_env *ute, ino_t parent, const char *name,
 
 void ut_mkdir_at_root(struct ut_env *ute, const char *name, ino_t *out_ino);
 
-void ut_mkdir_err(struct ut_env *ute, ino_t parent, const char *name,
-		  int err);
+void ut_mkdir_err(struct ut_env *ute, ino_t parent, const char *name, int err);
 
 void ut_rmdir(struct ut_env *ute, ino_t parent, const char *name);
 
-void ut_rmdir_err(struct ut_env *ute, ino_t parent, const char *name,
-		  int err);
+void ut_rmdir_err(struct ut_env *ute, ino_t parent, const char *name, int err);
 
 void ut_rmdir_at_root(struct ut_env *ute, const char *name);
 
@@ -347,8 +345,8 @@ void ut_readdirplus(struct ut_env *ute, ino_t ino, loff_t doff,
 void ut_link(struct ut_env *ute, ino_t ino, ino_t parent, const char *name,
 	     struct stat *out_st);
 
-void ut_link_err(struct ut_env *ute, ino_t ino, ino_t parent,
-		 const char *name, int err);
+void ut_link_err(struct ut_env *ute, ino_t ino, ino_t parent, const char *name,
+		 int err);
 
 void ut_unlink(struct ut_env *ute, ino_t parent, const char *name);
 
@@ -371,8 +369,8 @@ void ut_symlink(struct ut_env *ute, ino_t parent, const char *name,
 
 void ut_readlink_expect(struct ut_env *ute, ino_t ino, const char *value);
 
-void ut_create(struct ut_env *ute, ino_t parent, const char *name,
-	       mode_t mode, struct stat *out_st);
+void ut_create(struct ut_env *ute, ino_t parent, const char *name, mode_t mode,
+	       struct stat *out_st);
 
 void ut_create_file(struct ut_env *ute, ino_t parent, const char *name,
 		    ino_t *out_ino);
@@ -390,8 +388,7 @@ void ut_release_file(struct ut_env *ute, ino_t ino);
 
 void ut_fsync(struct ut_env *ute, ino_t ino, bool datasync);
 
-void ut_remove_file(struct ut_env *ute, ino_t parent, const char *,
-		    ino_t ino);
+void ut_remove_file(struct ut_env *ute, ino_t parent, const char *, ino_t ino);
 
 void ut_create_only(struct ut_env *ute, ino_t parent, const char *name,
 		    ino_t *out_ino);
@@ -410,8 +407,8 @@ void ut_write(struct ut_env *ute, ino_t ino, const void *buf, size_t bsz,
 void ut_write_iter(struct ut_env *ute, ino_t ino, const void *buf, size_t bsz,
 		   off_t off);
 
-void ut_write_nospc(struct ut_env *ute, ino_t ino, const void *buf,
-		    size_t bsz, loff_t off, size_t *out_nwr);
+void ut_write_nospc(struct ut_env *ute, ino_t ino, const void *buf, size_t bsz,
+		    loff_t off, size_t *out_nwr);
 
 void ut_write_read(struct ut_env *ute, ino_t ino, const void *buf, size_t bsz,
 		   loff_t off);
@@ -421,8 +418,8 @@ void ut_write_read1(struct ut_env *ute, ino_t ino, loff_t off);
 void ut_write_read_str(struct ut_env *ute, ino_t ino, const char *str,
 		       loff_t off);
 
-void ut_read_verify(struct ut_env *ute, ino_t ino, const void *buf,
-		    size_t bsz, loff_t off);
+void ut_read_verify(struct ut_env *ute, ino_t ino, const void *buf, size_t bsz,
+		    loff_t off);
 
 void ut_read_verify_str(struct ut_env *ute, ino_t ino, const char *str,
 			loff_t off);
@@ -431,8 +428,7 @@ void ut_read_zero(struct ut_env *ute, ino_t ino, loff_t off);
 
 void ut_read_zeros(struct ut_env *ute, ino_t ino, loff_t off, size_t len);
 
-void ut_read(struct ut_env *ute, ino_t ino, void *buf, size_t bsz,
-	     loff_t off);
+void ut_read(struct ut_env *ute, ino_t ino, void *buf, size_t bsz, loff_t off);
 
 void ut_trunacate_file(struct ut_env *ute, ino_t ino, loff_t off);
 
@@ -485,11 +481,9 @@ void ut_snap(struct ut_env *ute, ino_t ino);
 
 void ut_fiemap(struct ut_env *ute, ino_t ino, struct fiemap *fm);
 
-void ut_lseek_data(struct ut_env *ute, ino_t ino, loff_t off,
-		   loff_t *out_off);
+void ut_lseek_data(struct ut_env *ute, ino_t ino, loff_t off, loff_t *out_off);
 
-void ut_lseek_hole(struct ut_env *ute, ino_t ino, loff_t off,
-		   loff_t *out_off);
+void ut_lseek_hole(struct ut_env *ute, ino_t ino, loff_t off, loff_t *out_off);
 
 void ut_lseek_nodata(struct ut_env *ute, ino_t ino, loff_t off);
 
@@ -563,8 +557,7 @@ void ut_expect_eq_ts(const struct timespec *ts1, const struct timespec *ts2);
 
 void ut_expect_eq_stat(const struct stat *st1, const struct stat *st2);
 
-void ut_expect_statvfs(const struct statvfs *stv1,
-		       const struct statvfs *stv2);
+void ut_expect_statvfs(const struct statvfs *stv1, const struct statvfs *stv2);
 
 /* except-alias */
 #define ut_expect(cond) silofs_expect_true_((bool)(cond), SILOFS_FL_LN_)

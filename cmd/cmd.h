@@ -141,8 +141,8 @@ bool cmd_optargs_curr_as_bool(const struct cmd_optargs *opa);
 
 long cmd_optargs_curr_as_size(const struct cmd_optargs *opa);
 
-uint32_t cmd_optargs_curr_as_u32v(const struct cmd_optargs *opa,
-				  uint32_t vmin, uint32_t vmax);
+uint32_t cmd_optargs_curr_as_u32v(const struct cmd_optargs *opa, uint32_t vmin,
+				  uint32_t vmax);
 
 void cmd_optargs_endargs(const struct cmd_optargs *opa);
 
@@ -153,8 +153,7 @@ void cmd_require_arg(const char *arg_name, const void *arg_val);
 void cmd_require_arg_size(const char *arg_name, long val);
 
 /* fatal-error handling */
-silofs_attr_dief(2, 3) void cmd_die(int errnum, const char *restrict fmt,
-				    ...);
+silofs_attr_dief(2, 3) void cmd_die(int errnum, const char *restrict fmt, ...);
 
 /* common utilities */
 
@@ -348,8 +347,7 @@ void cmd_bootref_load_ar(struct silofs_fs_bref *bref);
 void cmd_bootref_save(const struct silofs_fs_bref *bref);
 
 void cmd_bootref_resave(const struct silofs_fs_bref *bref,
-			const struct silofs_caddr   *caddr,
-			const char                  *newname);
+			const struct silofs_caddr *caddr, const char *newname);
 
 void cmd_bootref_unlink(const struct silofs_fs_bref *bref);
 

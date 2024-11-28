@@ -58,8 +58,7 @@ void silofs_gen_random_ivs(struct silofs_iv *ivs, size_t nivs);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_key_assign(struct silofs_key       *key,
-		       const struct silofs_key *other);
+void silofs_key_assign(struct silofs_key *key, const struct silofs_key *other);
 
 void silofs_key_mkrand(struct silofs_key *key);
 

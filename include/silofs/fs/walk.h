@@ -61,7 +61,6 @@ int silofs_walk_inspect_fs(struct silofs_task    *task,
 			   struct silofs_sb_info *sbi,
 			   silofs_visit_laddr_fn cb, void *user_ctx);
 
-int silofs_walk_unref_fs(struct silofs_task    *task,
-			 struct silofs_sb_info *sbi);
+int silofs_walk_unref_fs(struct silofs_task *task, struct silofs_sb_info *sbi);
 
 #endif /* SILOFS_WALK_H_ */

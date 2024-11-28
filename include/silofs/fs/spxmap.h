@@ -73,9 +73,8 @@ void silofs_spamaps_fini(struct silofs_spamaps *spam);
 
 void silofs_spamaps_drop(struct silofs_spamaps *spam);
 
-int silofs_spamaps_trypop(struct silofs_spamaps *spam,
-			  enum silofs_ltype ltype, size_t len,
-			  loff_t *out_voff);
+int silofs_spamaps_trypop(struct silofs_spamaps *spam, enum silofs_ltype ltype,
+			  size_t len, loff_t *out_voff);
 
 int silofs_spamaps_store(struct silofs_spamaps *spam, enum silofs_ltype ltype,
 			 loff_t voff, size_t len);

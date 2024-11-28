@@ -101,8 +101,7 @@ struct silofs_fuseq {
 	bool                          fq_may_splice;
 } silofs_attr_aligned64;
 
-int silofs_fuseq_new(struct silofs_alloc  *alloc,
-		     struct silofs_fuseq **out_fq);
+int silofs_fuseq_new(struct silofs_alloc *alloc, struct silofs_fuseq **out_fq);
 
 void silofs_fuseq_del(struct silofs_fuseq *fq, struct silofs_alloc *alloc);
 

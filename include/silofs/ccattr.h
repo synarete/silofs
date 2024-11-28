@@ -68,4 +68,5 @@
 	} while (0) /* fallthrough */
 #endif
 
+/* */
 #endif /* SILOFS_CCATTR_H_ */

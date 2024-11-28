@@ -84,11 +84,11 @@ struct silofs_avl_node *silofs_avl_rbegin(const struct silofs_avl *avl);
 silofs_attr_const const struct silofs_avl_node *
 silofs_avl_end(const struct silofs_avl *avl);
 
-struct silofs_avl_node *silofs_avl_next(const struct silofs_avl      *avl,
-					const struct silofs_avl_node *x);
+struct silofs_avl_node *
+silofs_avl_next(const struct silofs_avl *avl, const struct silofs_avl_node *x);
 
-struct silofs_avl_node *silofs_avl_prev(const struct silofs_avl      *avl,
-					const struct silofs_avl_node *x);
+struct silofs_avl_node *
+silofs_avl_prev(const struct silofs_avl *avl, const struct silofs_avl_node *x);
 
 struct silofs_avl_node *
 silofs_avl_find(const struct silofs_avl *avl, const void *k);

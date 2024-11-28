@@ -36,8 +36,7 @@ int silofs_do_forget(struct silofs_task *task, struct silofs_inode_info *ii,
 		     size_t nlookup);
 
 int silofs_do_statvfs(const struct silofs_task *task,
-		      struct silofs_inode_info *ii,
-		      struct statvfs           *out_stvfs);
+		      struct silofs_inode_info *ii, struct statvfs *out_stvfs);
 
 int silofs_do_access(const struct silofs_task *task,
 		     struct silofs_inode_info *ii, int mode);
@@ -48,13 +47,11 @@ int silofs_do_open(struct silofs_task *task, struct silofs_inode_info *ii,
 int silofs_do_release(struct silofs_task *task, struct silofs_inode_info *ii,
 		      bool flush);
 
-int silofs_do_mkdir(struct silofs_task          *task,
-		    struct silofs_inode_info    *dir_ii,
+int silofs_do_mkdir(struct silofs_task *task, struct silofs_inode_info *dir_ii,
 		    const struct silofs_namestr *name, mode_t mode,
 		    struct silofs_inode_info **out_ii);
 
-int silofs_do_rmdir(struct silofs_task          *task,
-		    struct silofs_inode_info    *dir_ii,
+int silofs_do_rmdir(struct silofs_task *task, struct silofs_inode_info *dir_ii,
 		    const struct silofs_namestr *name);
 
 int silofs_do_rename(struct silofs_task          *task,
@@ -82,8 +79,7 @@ int silofs_do_create(struct silofs_task          *task,
 		     const struct silofs_namestr *name, mode_t mode,
 		     struct silofs_inode_info **out_ii);
 
-int silofs_do_mknod(struct silofs_task          *task,
-		    struct silofs_inode_info    *dir_ii,
+int silofs_do_mknod(struct silofs_task *task, struct silofs_inode_info *dir_ii,
 		    const struct silofs_namestr *name, mode_t mode, dev_t dev,
 		    struct silofs_inode_info **out_ii);
 
@@ -112,9 +108,8 @@ int silofs_do_query(struct silofs_task *task, struct silofs_inode_info *ii,
 		    enum silofs_query_type   qtype,
 		    struct silofs_ioc_query *out_qry);
 
-int silofs_do_clone(struct silofs_task       *task,
-		    struct silofs_inode_info *dir_ii, int flags,
-		    struct silofs_bootrecs *out_brecs);
+int silofs_do_clone(struct silofs_task *task, struct silofs_inode_info *dir_ii,
+		    int flags, struct silofs_bootrecs *out_brecs);
 
 int silofs_do_tune(struct silofs_task *task, struct silofs_inode_info *dir_ii,
 		   int iflags_want, int iflags_dont);

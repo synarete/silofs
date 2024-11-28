@@ -139,8 +139,7 @@ int silofs_socket_setnonblock(const struct silofs_socket *sock);
 int silofs_socket_getpeercred(const struct silofs_socket *sock,
 			      struct ucred               *cred);
 
-int silofs_socket_getsockerror(const struct silofs_socket *sock,
-			       int                        *out_err);
+int silofs_socket_getsockerror(const struct silofs_socket *sock, int *out_err);
 
 int silofs_socket_send(const struct silofs_socket *sock, const void *buf,
 		       size_t len, size_t *out_sent);
@@ -153,8 +152,8 @@ int silofs_socket_sendmsg(const struct silofs_socket *sock,
 			  const struct msghdr *msgh, int flags,
 			  size_t *out_sent);
 
-int silofs_socket_recv(const struct silofs_socket *sock, void *buf,
-		       size_t len, size_t *out_recv);
+int silofs_socket_recv(const struct silofs_socket *sock, void *buf, size_t len,
+		       size_t *out_recv);
 
 int silofs_socket_recvfrom(const struct silofs_socket *sock, void *buf,
 			   size_t bsz, struct silofs_sockaddr *sa,

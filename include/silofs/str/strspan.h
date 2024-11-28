@@ -147,8 +147,8 @@ size_t silofs_strspan_insert_chr(struct silofs_strspan *ss, size_t pos,
    characters */
 size_t silofs_strspan_replace(struct silofs_strspan *ss, size_t pos, size_t n,
 			      const char *s);
-size_t silofs_strspan_nreplace(struct silofs_strspan *ss, size_t pos,
-			       size_t n, const char *s, size_t len);
+size_t silofs_strspan_nreplace(struct silofs_strspan *ss, size_t pos, size_t n,
+			       const char *s, size_t len);
 
 /* Replaces part of sub-string with n2 copies of c */
 size_t silofs_strspan_replace_chr(struct silofs_strspan *ss, size_t pos,

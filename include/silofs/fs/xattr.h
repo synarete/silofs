@@ -46,8 +46,7 @@ int silofs_do_removexattr(struct silofs_task          *task,
 			  struct silofs_inode_info    *ii,
 			  const struct silofs_namestr *name);
 
-int silofs_do_listxattr(struct silofs_task          *task,
-			struct silofs_inode_info    *ii,
+int silofs_do_listxattr(struct silofs_task *task, struct silofs_inode_info *ii,
 			struct silofs_listxattr_ctx *lxa_ctx);
 
 int silofs_drop_xattr(struct silofs_task *task, struct silofs_inode_info *ii);

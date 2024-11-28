@@ -126,8 +126,7 @@ int silofs_repo_unlink_cobj(struct silofs_repo        *repo,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_repo_stat_pseg(struct silofs_repo       *repo,
-			  const struct silofs_psid *psid,
-			  struct stat              *out_st);
+			  const struct silofs_psid *psid, struct stat *out_st);
 
 int silofs_repo_create_pseg(struct silofs_repo       *repo,
 			    const struct silofs_psid *psid);

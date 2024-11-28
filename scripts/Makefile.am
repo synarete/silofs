@@ -10,6 +10,7 @@ EXTRA_DIST += gitarchive.sh
 EXTRA_DIST += requiredeps.sh
 EXTRA_DIST += silofs-gdb-bt.sh
 EXTRA_DIST += silofs-journalctl.sh
+EXTRA_DIST += sourcedigest.sh
 EXTRA_DIST += todolist.sh
 EXTRA_DIST += torturefs.sh
 EXTRA_DIST += valgrind-memcheck.sh

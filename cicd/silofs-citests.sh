@@ -41,8 +41,13 @@ run cp "${archive_file}" "${citests_dir}"
 cdx "${citests_dir}"
 run tar xfz "${archive_tgz}"
 cdx "${workdir}"
-msg "check build at: $(pwd)"
+msg "check C-style: $(pwd)"
+run ./scripts/sourcedigest.sh > ./srcdigest-pre-fmt
 run ./cstylefmt.sh
+run ./scripts/sourcedigest.sh > ./srcdigest-post-fmt
+run diff -q ./srcdigest-pre-fmt ./srcdigest-post-fmt
+run rm -f ./srcdigest-pre-fmt ./srcdigest-post-fmt
+msg "check build at: $(pwd)"
 run ./configure
 run make
 run make distcheck

@@ -27,7 +27,12 @@
 #define XATTRF_DISABLE (0x01)
 #define XATTRF_ACL     (0x02)
 
-#define XATTR_PREFIX_(p_, n_, f_) { .prefix = (p_), .ns = (n_), .flags = (f_) }
+#define XATTR_PREFIX_(p_, n_, f_) \
+	{                         \
+		.prefix = (p_),   \
+		.ns = (n_),       \
+		.flags = (f_),    \
+	}
 
 #define XATTR_PREFIX_NORMAL(p_, n_) XATTR_PREFIX_(p_, n_, 0)
 

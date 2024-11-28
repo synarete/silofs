@@ -61,6 +61,7 @@ PenaltyExcessCharacter: 100
 PenaltyReturnTypeOnItsOwnLine: 5
 PointerAlignment: Right
 ReflowComments: false
+SkipMacroDefinitionBody: true
 SpaceAfterCStyleCast: false
 SpaceAfterTemplateKeyword: true
 SpaceBeforeAssignmentOperators: true

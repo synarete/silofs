@@ -268,9 +268,12 @@ static void test_opath_unlinked(struct ft_env *fte)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ft_tdef ft_local_tests[] = {
-	FT_DEFTEST(test_opath_reg),     FT_DEFTEST(test_opath_symlnk),
-	FT_DEFTEST(test_opath_dir),     FT_DEFTEST(test_opath_renameat),
-	FT_DEFTEST(test_opath_fstatat), FT_DEFTEST(test_opath_unlinked),
+	FT_DEFTEST(test_opath_reg),      //
+	FT_DEFTEST(test_opath_symlnk),   //
+	FT_DEFTEST(test_opath_dir),      //
+	FT_DEFTEST(test_opath_renameat), //
+	FT_DEFTEST(test_opath_fstatat),  //
+	FT_DEFTEST(test_opath_unlinked), //
 };
 
 const struct ft_tests ft_test_opath = FT_DEFTESTS(ft_local_tests);

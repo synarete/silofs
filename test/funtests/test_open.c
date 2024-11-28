@@ -216,9 +216,12 @@ static void test_open_append(struct ft_env *fte)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ft_tdef ft_local_tests[] = {
-	FT_DEFTEST(test_open_atime), FT_DEFTEST(test_open_mctime),
-	FT_DEFTEST(test_open_loop),  FT_DEFTEST(test_open_isdir),
-	FT_DEFTEST(test_open_trunc), FT_DEFTEST(test_open_append),
+	FT_DEFTEST(test_open_atime),  //
+	FT_DEFTEST(test_open_mctime), //
+	FT_DEFTEST(test_open_loop),   //
+	FT_DEFTEST(test_open_isdir),  //
+	FT_DEFTEST(test_open_trunc),  //
+	FT_DEFTEST(test_open_append), //
 };
 
 const struct ft_tests ft_test_open = FT_DEFTESTS(ft_local_tests);

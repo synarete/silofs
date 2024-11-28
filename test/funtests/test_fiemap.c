@@ -20,10 +20,9 @@
 
 static struct fiemap *new_fiemap(struct ft_env *fte, size_t cnt)
 {
-	size_t sz;
 	struct fiemap *fm = NULL;
+	const size_t sz = sizeof(*fm) + (cnt * sizeof(fm->fm_extents[0]));
 
-	sz = sizeof(*fm) + (cnt * sizeof(fm->fm_extents[0]));
 	fm = ft_new_buf_zeros(fte, sz);
 	fm->fm_extent_count = (uint32_t)cnt;
 

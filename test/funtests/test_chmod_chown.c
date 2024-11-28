@@ -274,10 +274,14 @@ static void test_chown_suid_sgid(struct ft_env *fte)
 /* TODO: Check fchmodat */
 
 static const struct ft_tdef ft_local_tests[] = {
-	FT_DEFTEST(test_chmod_basic),     FT_DEFTEST(test_chmod_ctime),
-	FT_DEFTEST(test_chmod_fchmod),    FT_DEFTEST(test_chmod_unlinked),
-	FT_DEFTEST(test_chmod_suid_sgid), FT_DEFTEST(test_chown_ctime),
-	FT_DEFTEST(test_chown_unlinked),  FT_DEFTEST(test_chown_suid_sgid),
+	FT_DEFTEST(test_chmod_basic),     //
+	FT_DEFTEST(test_chmod_ctime),     //
+	FT_DEFTEST(test_chmod_fchmod),    //
+	FT_DEFTEST(test_chmod_unlinked),  //
+	FT_DEFTEST(test_chmod_suid_sgid), //
+	FT_DEFTEST(test_chown_ctime),     //
+	FT_DEFTEST(test_chown_unlinked),  //
+	FT_DEFTEST(test_chown_suid_sgid), //
 };
 
 const struct ft_tests ft_test_chmod = FT_DEFTESTS(ft_local_tests);

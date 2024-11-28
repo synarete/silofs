@@ -68,13 +68,13 @@ static void test_lseek_simple(struct ft_env *fte)
  */
 static void test_lseek_data_(struct ft_env *fte, size_t bsz)
 {
-	int fd = -1;
+	const char *path = ft_new_path_unique(fte);
+	uint8_t *buf1 = ft_new_buf_rands(fte, bsz);
+	const loff_t off = (loff_t)(bsz * 2);
 	loff_t from = 0;
 	loff_t pos = 0;
 	uint8_t byte = 0;
-	const loff_t off = (loff_t)(bsz * 2);
-	uint8_t *buf1 = ft_new_buf_rands(fte, bsz);
-	const char *path = ft_new_path_unique(fte);
+	int fd = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_pwriten(fd, buf1, bsz, off);
@@ -231,9 +231,11 @@ static void test_lseek_hole_sparse(struct ft_env *fte)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ft_tdef ft_local_tests[] = {
-	FT_DEFTEST(test_lseek_simple),      FT_DEFTEST(test_lseek_data),
-	FT_DEFTEST(test_lseek_hole),        FT_DEFTEST(test_lseek_data_sparse),
-	FT_DEFTEST(test_lseek_hole_sparse),
+	FT_DEFTEST(test_lseek_simple),      //
+	FT_DEFTEST(test_lseek_data),        //
+	FT_DEFTEST(test_lseek_hole),        //
+	FT_DEFTEST(test_lseek_data_sparse), //
+	FT_DEFTEST(test_lseek_hole_sparse), //
 };
 
 const struct ft_tests ft_test_lseek = FT_DEFTESTS(ft_local_tests);

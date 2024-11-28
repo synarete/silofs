@@ -103,7 +103,9 @@ static void test_access_prefix(struct ft_env *fte)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ft_tdef ft_local_tests[] = {
-	FT_DEFTEST(test_access_rootdir), FT_DEFTEST(test_access_noent),
-	FT_DEFTEST(test_access_inval), FT_DEFTEST(test_access_prefix)
+	FT_DEFTEST(test_access_rootdir),
+	FT_DEFTEST(test_access_noent),
+	FT_DEFTEST(test_access_inval),
+	FT_DEFTEST(test_access_prefix),
 };
 const struct ft_tests ft_test_access = FT_DEFTESTS(ft_local_tests);

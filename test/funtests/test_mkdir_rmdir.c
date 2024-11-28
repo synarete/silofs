@@ -609,14 +609,22 @@ static void test_rmdir_getdents(struct ft_env *fte)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ft_tdef ft_local_tests[] = {
-	FT_DEFTEST(test_mkdir_rmdir),       FT_DEFTEST(test_mkdir_umask),
-	FT_DEFTEST(test_mkdir_chmod),       FT_DEFTEST(test_mkdir_loop),
-	FT_DEFTEST(test_mkdir_nested),      FT_DEFTEST(test_mkdir_many),
-	FT_DEFTEST(test_mkdir_many_more),   FT_DEFTEST(test_mkdir_tree_wide),
-	FT_DEFTEST(test_mkdir_tree_deep),   FT_DEFTEST(test_mkdir_setgid),
-	FT_DEFTEST(test_mkdirat_simple),    FT_DEFTEST(test_mkdirat_nested),
-	FT_DEFTEST(test_mkdirat_nested_io), FT_DEFTEST(test_rmdir_mctime),
-	FT_DEFTEST(test_rmdir_openat),      FT_DEFTEST(test_rmdir_getdents),
+	FT_DEFTEST(test_mkdir_rmdir),       //
+	FT_DEFTEST(test_mkdir_umask),       //
+	FT_DEFTEST(test_mkdir_chmod),       //
+	FT_DEFTEST(test_mkdir_loop),        //
+	FT_DEFTEST(test_mkdir_nested),      //
+	FT_DEFTEST(test_mkdir_many),        //
+	FT_DEFTEST(test_mkdir_many_more),   //
+	FT_DEFTEST(test_mkdir_tree_wide),   //
+	FT_DEFTEST(test_mkdir_tree_deep),   //
+	FT_DEFTEST(test_mkdir_setgid),      //
+	FT_DEFTEST(test_mkdirat_simple),    //
+	FT_DEFTEST(test_mkdirat_nested),    //
+	FT_DEFTEST(test_mkdirat_nested_io), //
+	FT_DEFTEST(test_rmdir_mctime),      //
+	FT_DEFTEST(test_rmdir_openat),      //
+	FT_DEFTEST(test_rmdir_getdents),    //
 };
 
 const struct ft_tests ft_test_mkdir = FT_DEFTESTS(ft_local_tests);

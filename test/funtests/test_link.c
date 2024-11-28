@@ -415,11 +415,15 @@ static void test_linkat_with_io(struct ft_env *fte)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ft_tdef ft_local_tests[] = {
-	FT_DEFTEST(test_link_exists),     FT_DEFTEST(test_link_noent),
-	FT_DEFTEST(test_link_notdir),     FT_DEFTEST(test_link_rename),
-	FT_DEFTEST(test_link_max),        FT_DEFTEST(test_link_similar_names),
-	FT_DEFTEST(test_linkat_same_dir), FT_DEFTEST(test_linkat_diff_dir),
-	FT_DEFTEST(test_linkat_with_io),
+	FT_DEFTEST(test_link_exists),        //
+	FT_DEFTEST(test_link_noent),         //
+	FT_DEFTEST(test_link_notdir),        //
+	FT_DEFTEST(test_link_rename),        //
+	FT_DEFTEST(test_link_max),           //
+	FT_DEFTEST(test_link_similar_names), //
+	FT_DEFTEST(test_linkat_same_dir),    //
+	FT_DEFTEST(test_linkat_diff_dir),    //
+	FT_DEFTEST(test_linkat_with_io),     //
 };
 
 const struct ft_tests ft_test_link = FT_DEFTESTS(ft_local_tests);

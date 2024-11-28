@@ -140,7 +140,11 @@ static void cmd_clean_postexec(void)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-#define DEFCMD(cmd_) { #cmd_, cmd_execute_##cmd_ }
+#define DEFCMD(cmd_)                               \
+	{                                          \
+		.name = #cmd_,                     \
+		.action_hook = cmd_execute_##cmd_, \
+	}
 
 static const struct cmd_info g_cmd_info[] = {
 	DEFCMD(init),    //

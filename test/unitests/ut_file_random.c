@@ -24,7 +24,12 @@ struct ut_ioparams {
 };
 
 #define MKPARAMS(o_, l_, s_, c_) \
-	{ .offset = (o_), .length = (l_), .nskip = (s_), .count = (c_) }
+	{                        \
+		.offset = (o_),  \
+		.length = (l_),  \
+		.nskip = (s_),   \
+		.count = (c_),   \
+	}
 
 static struct ut_dvec **
 new_dvecs(struct ut_env *ute, const struct ut_ioparams *params)

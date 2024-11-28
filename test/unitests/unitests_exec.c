@@ -19,7 +19,11 @@
 #include <ctype.h>
 #include <limits.h>
 
-#define UT_DEFTGRP(t_) { .tests = &(t_), .name = SILOFS_STR(t_) }
+#define UT_DEFTGRP(t_)                  \
+	{                               \
+		.tests = &(t_),         \
+		.name = SILOFS_STR(t_), \
+	}
 
 static struct ut_tgroup const g_ut_tgroups[] = {
 	/* infra */

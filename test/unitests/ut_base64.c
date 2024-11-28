@@ -16,7 +16,11 @@
  */
 #include "unitests.h"
 
-#define MKVEC(d_, e_) { .dat = (d_), .exp = (e_) }
+#define MKVEC(d_, e_)        \
+	{                    \
+		.dat = (d_), \
+		.exp = (e_), \
+	}
 
 struct ut_base64_vector {
 	const char *dat;

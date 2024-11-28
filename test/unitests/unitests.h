@@ -35,14 +35,30 @@
 #error "this header must not be included out-side of unitests"
 #endif
 
-#define UT_MKRANGE0(pos_) { .off = (pos_), .len = 0 }
+#define UT_MKRANGE0(pos_)      \
+	{                      \
+		.off = (pos_), \
+		.len = 0,      \
+	}
 
-#define UT_MKRANGE1(pos_, cnt_) { .off = (pos_), .len = (cnt_) }
+#define UT_MKRANGE1(pos_, cnt_) \
+	{                       \
+		.off = (pos_),  \
+		.len = (cnt_),  \
+	}
 
 #define UT_MKRANGE2(pos1_, pos2_, cnt_) \
-	{ .off1 = (pos1_), .off2 = (pos2_), .len = (cnt_) }
+	{                               \
+		.off1 = (pos1_),        \
+		.off2 = (pos2_),        \
+		.len  = (cnt_),         \
+	}
 
-#define UT_MKRANGE1S(a_) { .arr = (a_), .cnt = UT_ARRAY_SIZE(a_) }
+#define UT_MKRANGE1S(a_)                  \
+	{                                 \
+		.arr = (a_),              \
+		.cnt = UT_ARRAY_SIZE(a_), \
+	}
 
 /* tests control-flags */
 #define UT_F_NORMAL (0)
@@ -602,14 +618,22 @@ void ut_expect_statvfs(const struct statvfs *stv1,
 #define ut_container_of2(ptr_, type_, member_) \
 	silofs_container_of2(ptr_, type_, member_)
 
-#define UT_DEFTESTF(fn_, flags_) \
-	{ .hook = fn_, .name = SILOFS_STR(fn_), .flags = flags_ }
+#define UT_DEFTESTF(fn_, flags_)          \
+	{                                 \
+		.hook  = fn_,             \
+		.name  = SILOFS_STR(fn_), \
+		.flags = flags_,          \
+	}
 
 #define UT_DEFTEST(fn_)  UT_DEFTESTF(fn_, 0)
 #define UT_DEFTEST1(fn_) UT_DEFTESTF(fn_, UT_F_QUICK)
 #define UT_DEFTEST2(fn_) UT_DEFTESTF(fn_, UT_F_FTYPE2)
 #define UT_DEFTEST3(fn_) UT_DEFTESTF(fn_, UT_F_QUICK | UT_F_FTYPE2)
-#define UT_MKTESTS(arr_) { arr_, SILOFS_ARRAY_SIZE(arr_) }
+#define UT_MKTESTS(arr_)                        \
+	{                                       \
+		.arr = (arr_),                  \
+		.len = SILOFS_ARRAY_SIZE(arr_), \
+	}
 
 /* inlines */
 static inline loff_t ut_off_aligned(loff_t off, loff_t align)

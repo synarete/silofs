@@ -468,8 +468,7 @@ void ft_do_ioctl_syncfs(int fd, const char *fl, int ln);
 	ft_do_linkat(olddirfd_, oldpath_, newdirfd_, newpath_, flags_, \
 		     FT_FL_LN_)
 
-#define ft_linkat_err(olddirfd_, oldpath_, newdirfd_, newpath_, flags_,    \
-		      err_)                                                \
+#define ft_linkat_err(olddirfd_, oldpath_, newdirfd_, newpath_, flags_, err_) \
 	ft_do_linkat_err(olddirfd_, oldpath_, newdirfd_, newpath_, flags_, \
 			 err_, FT_FL_LN_)
 
@@ -547,8 +546,7 @@ void ft_do_ioctl_syncfs(int fd, const char *fl, int ln);
 #define ft_flistxattr_err(fd_, list_, size_, err_) \
 	ft_do_flistxattr_err(fd_, list_, size_, err_, FT_FL_LN_)
 
-#define ft_copy_file_range(fd_in_, off_in_, fd_out_, off_out_, len_,    \
-			   out_nc_)                                     \
+#define ft_copy_file_range(fd_in_, off_in_, fd_out_, off_out_, len_, out_nc_) \
 	ft_do_copy_file_range(fd_in_, off_in_, fd_out_, off_out_, len_, \
 			      out_nc_, FT_FL_LN_)
 

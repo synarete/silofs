@@ -6,6 +6,8 @@ from pathlib import Path
 
 from . import run
 from . import utils
+from .cmd import CmdError
+from .expect import ExpectException
 
 
 class ArgsException(Exception):
@@ -120,9 +122,15 @@ def run_silofs_qatests(prog_info: ProgInfo = ProgInfo()) -> None:
             prog_info.update_config()
             prog_info.start_run()
     except ArgsException as aex:
-        print(f"{prog_info.title}: {aex}")
+        print(f"{prog_info.title}: args error: {aex}")
         sys.exit(1)
+    except CmdError as cer:
+        print(f"{prog_info.title}: cmd error: {cer}")
+        sys.exit(2)
+    except ExpectException as eer:
+        print(f"{prog_info.title}: expect error: {eer}")
+        sys.exit(3)
     except (OSError, RuntimeError) as err:
         print(f"{prog_info.title}: {err}")
         traceback.print_exc()
-        sys.exit(2)
+        sys.exit(4)

@@ -2,8 +2,8 @@
 
 from pathlib import Path
 
-from . import cmd
 from . import log
+from . import subcmd
 from . import utils
 from .ctx import TestEnv
 
@@ -75,9 +75,9 @@ class FioOutput:
         self.wr_lat_mean = float(fields[81])
 
 
-class FioExec(cmd.CmdExec):
+class FioExec(subcmd.SubcmdExec):
     def __init__(self, base: Path):
-        cmd.CmdExec.__init__(self, "fio")
+        subcmd.SubcmdExec.__init__(self, "fio")
         self.base = base
         self.timeout = 180.0
 

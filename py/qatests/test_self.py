@@ -14,13 +14,13 @@ def test_unitests(env: TestEnv) -> None:
     tds.do_write()
     ut_dname = "unitests"
     ut_root = env.create_fstree(ut_dname)
-    env.cmd.unitests.version()
-    env.cmd.unitests.run(ut_root, level=2)
+    env.subcmd.unitests.version()
+    env.subcmd.unitests.run(ut_root, level=2)
     env.remove_fstree(ut_dname)
     ut_dname = "unitests-malloc"
     ut_root = env.create_fstree(ut_dname)
-    env.cmd.unitests.version()
-    env.cmd.unitests.run(ut_root, level=2, malloc=True)
+    env.subcmd.unitests.version()
+    env.subcmd.unitests.run(ut_root, level=2, malloc=True)
     env.remove_fstree(ut_dname)
     tds.do_read()
     tds.do_unlink()
@@ -37,11 +37,11 @@ def test_funtests(env: TestEnv) -> None:
     tds.do_makedirs()
     tds.do_write()
     ff_root = env.create_fstree(ff_dname)
-    env.cmd.funtests.version()
-    env.cmd.funtests.run(ff_root, rand=False)
+    env.subcmd.funtests.version()
+    env.subcmd.funtests.run(ff_root, rand=False)
     env.exec_snap(ff_snap_name)
     tds.do_read()
-    env.cmd.funtests.run(ff_root, rand=True)
+    env.subcmd.funtests.run(ff_root, rand=True)
     tds.do_read()
     tds.do_unlink()
     env.exec_rmfs(ff_snap_name)
@@ -61,7 +61,7 @@ def test_funtests_nosplice(env: TestEnv) -> None:
     tds.do_unlink()
     tds.do_rmdirs()
     ff_root = env.create_fstree(ff_dname)
-    env.cmd.funtests.run(ff_root)
+    env.subcmd.funtests.run(ff_root)
     env.remove_fstree(ff_dname)
     env.exec_teardown_fs()
 
@@ -79,14 +79,14 @@ def test_funtests_tune2(env: TestEnv) -> None:
     tds.do_rmdirs()
     ff_root = env.create_fstree(ff_dname)
     env.exec_tune2([ff_root])
-    env.cmd.funtests.version()
-    env.cmd.funtests.run(ff_root)
+    env.subcmd.funtests.version()
+    env.subcmd.funtests.run(ff_root)
     env.remove_fstree(ff_dname)
     env.exec_teardown_fs()
 
 
 def _run_funtests(env: TestEnv, base: Path) -> None:
-    env.cmd.funtests.run(base, rand=True, nostatvfs=True, noflaky=True)
+    env.subcmd.funtests.run(base, rand=True, nostatvfs=True, noflaky=True)
 
 
 def test_funtests_mt(env: TestEnv) -> None:
@@ -139,7 +139,7 @@ def _test_cicd(env: TestEnv) -> None:
     name = env.uniq_name()
     env.exec_setup_fs(60)
     base = env.create_fstree(name)
-    ret = env.cmd.git.clone(url, base, branch="next")
+    ret = env.subcmd.git.clone(url, base, branch="next")
     ok = utils.has_executables(["podman"])
     if ok and ret == 0:
         _test_cicd_at(env, base)
@@ -149,4 +149,4 @@ def _test_cicd(env: TestEnv) -> None:
 
 def _test_cicd_at(env: TestEnv, base: Path) -> None:
     cicd_dir = base / "cicd"
-    env.cmd.sh.run_ok("./run-local-cicd.sh", cicd_dir)
+    env.subcmd.sh.run_ok("./run-local-cicd.sh", cicd_dir)

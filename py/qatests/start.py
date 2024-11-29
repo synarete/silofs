@@ -4,10 +4,10 @@ import sys
 import traceback
 from pathlib import Path
 
+from . import expect
 from . import run
+from . import subcmd
 from . import utils
-from .cmd import CmdError
-from .expect import ExpectException
 
 
 class ArgsException(Exception):
@@ -124,10 +124,10 @@ def run_silofs_qatests(prog_info: ProgInfo = ProgInfo()) -> None:
     except ArgsException as aex:
         print(f"{prog_info.title}: args error: {aex}")
         sys.exit(1)
-    except CmdError as cer:
-        print(f"{prog_info.title}: cmd error: {cer}")
+    except subcmd.SubcmdError as cer:
+        print(f"{prog_info.title}: subcmd error: {cer}")
         sys.exit(2)
-    except ExpectException as eer:
+    except expect.ExpectException as eer:
         print(f"{prog_info.title}: expect error: {eer}")
         sys.exit(3)
     except (OSError, RuntimeError) as err:

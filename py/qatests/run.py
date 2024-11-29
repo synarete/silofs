@@ -6,10 +6,10 @@ import sys
 import traceback
 from pathlib import Path
 
-from . import cmd
 from . import conf
 from . import expect
 from . import log
+from . import subcmd
 from . import test_all
 from . import utils
 from .ctx import TestDef, TestEnv
@@ -46,18 +46,18 @@ def _report_host(_: RunArgs) -> None:
 
 
 def _report_prog(args: RunArgs) -> None:
-    cmds = cmd.Cmds()
-    prog = cmds.silofs.xbin
+    subcmds = subcmd.Subcmds()
+    prog = subcmds.silofs.xbin
     log.println(f"PROG: {prog}")
-    vers = cmds.silofs.version()
+    vers = subcmds.silofs.version()
     log.println(f"VERS: {vers}")
     log.println(f"START: {args.start_time}")
 
 
 def _report_done(args: RunArgs) -> None:
-    cmds = cmd.Cmds()
-    prog = cmds.silofs.xbin
-    vers = cmds.silofs.version()
+    subcmds = subcmd.Subcmds()
+    prog = subcmds.silofs.xbin
+    vers = subcmds.silofs.version()
     log.println(f"DONE: {prog} {vers}")
     durs = args.exec_duration()
     log.println(f"DURATION: {durs}")
@@ -101,7 +101,7 @@ def _do_run_tests(args: RunArgs) -> None:
 def run_tests(args: RunArgs) -> None:
     try:
         _do_run_tests(args)
-    except cmd.CmdError as cex:
+    except subcmd.SubcmdError as cex:
         log.println(f"FATAL: {cex} {cex.retcode}")
         log.println(f"FATAL: {cex.output}")
         traceback.print_exc()

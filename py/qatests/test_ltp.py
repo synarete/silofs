@@ -28,26 +28,26 @@ class LtpFsstressArgs:
         self.unlink = 0
         self.write = 0
 
-    def make_cmd(self, fsstress: Path, testdir: Path) -> str:
-        cmd = f"{fsstress} -r -d {testdir} "
-        cmd = cmd + f"-n {self.count} -p {self.procs} "
-        cmd = cmd + f"-f creat={self.creat} "
-        cmd = cmd + f"-f fdatasync={self.fdatasync} "
-        cmd = cmd + f"-f fsync={self.fsync} "
-        cmd = cmd + f"-f getdents={self.getdents} "
-        cmd = cmd + f"-f link={self.link} "
-        cmd = cmd + f"-f mkdir={self.mkdir} "
-        cmd = cmd + f"-f read={self.read} "
-        cmd = cmd + f"-f readlink={self.readlink} "
-        cmd = cmd + f"-f rename={self.rename} "
-        cmd = cmd + f"-f rmdir={self.rmdir} "
-        cmd = cmd + f"-f stat={self.stat} "
-        cmd = cmd + f"-f symlink={self.symlink} "
-        cmd = cmd + f"-f sync={self.sync} "
-        cmd = cmd + f"-f truncate={self.truncate} "
-        cmd = cmd + f"-f unlink={self.unlink} "
-        cmd = cmd + f"-f write={self.write} "
-        return cmd
+    def make_cmdline(self, fsstress: Path, testdir: Path) -> str:
+        cmdline = f"{fsstress} -r -d {testdir} "
+        cmdline = cmdline + f"-n {self.count} -p {self.procs} "
+        cmdline = cmdline + f"-f creat={self.creat} "
+        cmdline = cmdline + f"-f fdatasync={self.fdatasync} "
+        cmdline = cmdline + f"-f fsync={self.fsync} "
+        cmdline = cmdline + f"-f getdents={self.getdents} "
+        cmdline = cmdline + f"-f link={self.link} "
+        cmdline = cmdline + f"-f mkdir={self.mkdir} "
+        cmdline = cmdline + f"-f read={self.read} "
+        cmdline = cmdline + f"-f readlink={self.readlink} "
+        cmdline = cmdline + f"-f rename={self.rename} "
+        cmdline = cmdline + f"-f rmdir={self.rmdir} "
+        cmdline = cmdline + f"-f stat={self.stat} "
+        cmdline = cmdline + f"-f symlink={self.symlink} "
+        cmdline = cmdline + f"-f sync={self.sync} "
+        cmdline = cmdline + f"-f truncate={self.truncate} "
+        cmdline = cmdline + f"-f unlink={self.unlink} "
+        cmdline = cmdline + f"-f write={self.write} "
+        return cmdline
 
 
 class LtpConfig:
@@ -89,7 +89,7 @@ def test_ltp(env: TestEnv) -> None:
     base = env.create_fstree(name)
     config = LtpConfig(base)
     config.makedirs()
-    ret = env.cmd.git.clone(url, config.srcdir)
+    ret = env.subcmd.git.clone(url, config.srcdir)
     if ret == 0:
         _install_ltp(env, config)
         _runltp_base_tests(env, config)
@@ -100,13 +100,13 @@ def test_ltp(env: TestEnv) -> None:
 
 
 def _install_ltp(env: TestEnv, config: LtpConfig) -> None:
-    env.cmd.sh.run_ok("make autotools", config.srcdir)
-    env.cmd.sh.run_ok(
+    env.subcmd.sh.run_ok("make autotools", config.srcdir)
+    env.subcmd.sh.run_ok(
         f"./configure --disable-metadata --prefix={config.prefix}",
         config.srcdir,
     )
-    env.cmd.sh.run_ok("make", config.srcdir)
-    env.cmd.sh.run_ok("make install", config.srcdir)
+    env.subcmd.sh.run_ok("make", config.srcdir)
+    env.subcmd.sh.run_ok("make install", config.srcdir)
 
 
 def _runltp_base_tests(env: TestEnv, config: LtpConfig) -> None:
@@ -123,7 +123,7 @@ def _runltp_tests_by(
     for test in tests:
         test_path = config.testcases_bin() / test
         if test_path.is_file():
-            env.cmd.sh.run_ok(str(test_path), config.base, config.mkenv())
+            env.subcmd.sh.run_ok(str(test_path), config.base, config.mkenv())
 
 
 def _runltp_fsstress(env: TestEnv, config: LtpConfig) -> None:
@@ -154,8 +154,8 @@ def _runltp_fsstress_with(
 ) -> None:
     fsstress_path = config.testcases_bin() / "fsstress"
     if fsstress_path.is_file():
-        cmd = args.make_cmd(fsstress_path, config.tmpdir)
-        env.cmd.sh.run_ok(cmd, config.base, config.mkenv())
+        subcmd = args.make_cmdline(fsstress_path, config.tmpdir)
+        env.subcmd.sh.run_ok(subcmd, config.base, config.mkenv())
 
 
 _LTP_TESTS = [

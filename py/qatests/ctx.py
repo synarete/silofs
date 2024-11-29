@@ -6,9 +6,9 @@ import typing
 from concurrent import futures
 from pathlib import Path
 
-from . import cmd
 from . import conf
 from . import expect
+from . import subcmd
 from . import utils
 
 
@@ -94,7 +94,9 @@ class TestEnv:
         self.cfg = copy.copy(cfg)
         self.expect = expect.Expect(name)
         self.executor = futures.ThreadPoolExecutor()
-        self.cmd = cmd.Cmds(cfg.params.use_stdalloc, cfg.params.allow_coredump)
+        self.subcmd = subcmd.Subcmds(
+            cfg.params.use_stdalloc, cfg.params.allow_coredump
+        )
         self.fsids = conf.FsIdsConf()
 
     @staticmethod
@@ -167,7 +169,7 @@ class TestEnv:
     def exec_init(
         self, sup_groups: bool = False, allow_root: bool = False
     ) -> None:
-        self.cmd.silofs.init(self.repodir(), sup_groups, allow_root)
+        self.subcmd.silofs.init(self.repodir(), sup_groups, allow_root)
         self._update_fsids()
 
     def exec_mkfs(
@@ -176,7 +178,7 @@ class TestEnv:
         name: str = "",
     ):
         gibi = 2**30
-        self.cmd.silofs.mkfs(
+        self.subcmd.silofs.mkfs(
             repodir_name=self._repodir_name(name),
             size=gsize * gibi,
             password=self._passwd(),
@@ -194,7 +196,7 @@ class TestEnv:
     ) -> None:
         self._require_bref(name)
         repodir_name = self._repodir_name(name)
-        self.cmd.silofs.mount(
+        self.subcmd.silofs.mount(
             repodir_name=repodir_name,
             mntpoint=self.cfg.mntdir,
             password=self._passwd(),
@@ -205,7 +207,7 @@ class TestEnv:
         )
 
     def exec_umount(self) -> None:
-        self.cmd.silofs.umount(self.mntpoint())
+        self.subcmd.silofs.umount(self.mntpoint())
 
     def exec_setup_fs(
         self,
@@ -226,49 +228,49 @@ class TestEnv:
         self.exec_rmfs()
 
     def exec_snap(self, name: str) -> None:
-        self.cmd.silofs.snap(name, self.mntpoint(), self._passwd())
+        self.subcmd.silofs.snap(name, self.mntpoint(), self._passwd())
         self._require_bref(name)
 
     def exec_snap_offline(self, mainname: str, snapname: str) -> None:
-        self.cmd.silofs.snap_offline(
+        self.subcmd.silofs.snap_offline(
             snapname, self._repodir_name(mainname), self._passwd()
         )
         self._require_bref(snapname)
 
     def exec_tune(self, path: Path, ftype: int = 2) -> None:
-        self.cmd.silofs.tune(path, ftype)
+        self.subcmd.silofs.tune(path, ftype)
 
     def exec_tune2(self, path_list: list[Path]) -> None:
         for path in path_list:
-            self.cmd.silofs.tune(path, 2)
+            self.subcmd.silofs.tune(path, 2)
 
     def exec_rmfs(self, name: str = "") -> None:
         self._require_bref(name)
         repodir_name = self._repodir_name(name)
-        self.cmd.silofs.rmfs(repodir_name, self._passwd())
+        self.subcmd.silofs.rmfs(repodir_name, self._passwd())
 
     def exec_fsck(self, name: str = "") -> None:
         self._require_bref(name)
         repodir_name = self._repodir_name(name)
-        self.cmd.silofs.fsck(repodir_name, self._passwd())
+        self.subcmd.silofs.fsck(repodir_name, self._passwd())
 
     def exec_view(self, name: str = "") -> list[str]:
         self._require_bref(name)
         repodir_name = self._repodir_name(name)
-        return list(self.cmd.silofs.view(repodir_name, self._passwd()))
+        return list(self.subcmd.silofs.view(repodir_name, self._passwd()))
 
     def exec_archive(self, arname: str, name: str = "") -> None:
         self._require_bref(name)
         repodir_name = self._repodir_name(name)
-        self.cmd.silofs.archive(repodir_name, arname, self._passwd())
+        self.subcmd.silofs.archive(repodir_name, arname, self._passwd())
 
     def exec_restore(self, arname: str, name: str = "") -> None:
         repodir_name = self._repodir_name(name)
-        self.cmd.silofs.restore(repodir_name, arname, self._passwd())
+        self.subcmd.silofs.restore(repodir_name, arname, self._passwd())
 
     def exec_lsmnt(self) -> None:
         mntp = self.cfg.mntdir
-        mnts = self.cmd.silofs.lsmnt()
+        mnts = self.subcmd.silofs.lsmnt()
         self.expect.within(mntp, mnts)
 
     def _update_fsids(self) -> None:

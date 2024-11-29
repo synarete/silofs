@@ -12,7 +12,7 @@ def test_postgresql(env: TestEnv) -> None:
     name = env.uniq_name()
     env.exec_setup_fs(20)
     base = env.create_fstree(name)
-    ret = env.cmd.git.clone(url, base)
+    ret = env.subcmd.git.clone(url, base)
     if ret == 0:
         _test_postgresql_at(env, base)
     env.remove_fstree(name)
@@ -20,10 +20,10 @@ def test_postgresql(env: TestEnv) -> None:
 
 
 def _test_postgresql_at(env: TestEnv, base: Path) -> None:
-    env.cmd.sh.run_ok("./configure", base)
-    env.cmd.sh.run_ok("make", base)
-    env.cmd.sh.run_ok("make check", base)
-    env.cmd.sh.run_ok("make clean", base)
+    env.subcmd.sh.run_ok("./configure", base)
+    env.subcmd.sh.run_ok("make", base)
+    env.subcmd.sh.run_ok("make check", base)
+    env.subcmd.sh.run_ok("make clean", base)
 
 
 def test_rsync(env: TestEnv) -> None:
@@ -40,7 +40,7 @@ def test_rsync(env: TestEnv) -> None:
     )
     env.exec_lsmnt()
     base = env.create_fstree(name)
-    ret = env.cmd.git.clone(url, base)
+    ret = env.subcmd.git.clone(url, base)
     if ret == 0:
         _test_rsync_at(env, base)
     env.remove_fstree(name)
@@ -48,10 +48,10 @@ def test_rsync(env: TestEnv) -> None:
 
 
 def _test_rsync_at(env: TestEnv, base: Path) -> None:
-    env.cmd.sh.run_ok("./configure --disable-md2man", base)
-    env.cmd.sh.run_ok("make", base)
-    env.cmd.sh.run_ok("make check", base)
-    env.cmd.sh.run_ok("make clean", base)
+    env.subcmd.sh.run_ok("./configure --disable-md2man", base)
+    env.subcmd.sh.run_ok("make", base)
+    env.subcmd.sh.run_ok("make check", base)
+    env.subcmd.sh.run_ok("make clean", base)
 
 
 def test_findutils(env: TestEnv) -> None:
@@ -68,7 +68,7 @@ def test_findutils(env: TestEnv) -> None:
     )
     env.exec_lsmnt()
     base = env.create_fstree(name)
-    ret = env.cmd.git.clone(url, base)
+    ret = env.subcmd.git.clone(url, base)
     if ret == 0:
         _test_findutils_at(env, base)
     env.remove_fstree(name)
@@ -76,11 +76,11 @@ def test_findutils(env: TestEnv) -> None:
 
 
 def _test_findutils_at(env: TestEnv, base: Path) -> None:
-    env.cmd.sh.run_ok("./bootstrap", base)
-    env.cmd.sh.run_ok("./configure", base)
-    env.cmd.sh.run_ok("make", base)
-    env.cmd.sh.run_ok("make check", base)
-    env.cmd.sh.run_ok("make clean", base)
+    env.subcmd.sh.run_ok("./bootstrap", base)
+    env.subcmd.sh.run_ok("./configure", base)
+    env.subcmd.sh.run_ok("make", base)
+    env.subcmd.sh.run_ok("make check", base)
+    env.subcmd.sh.run_ok("make clean", base)
 
 
 def test_gitscm(env: TestEnv) -> None:
@@ -90,7 +90,7 @@ def test_gitscm(env: TestEnv) -> None:
     name = env.uniq_name()
     env.exec_setup_fs(8)
     base = env.create_fstree(name)
-    ret = env.cmd.git.clone(url, base)
+    ret = env.subcmd.git.clone(url, base)
     if ret == 0:
         _test_gitscm_at(env, base)
     env.remove_fstree(name)
@@ -98,11 +98,11 @@ def test_gitscm(env: TestEnv) -> None:
 
 
 def _test_gitscm_at(env: TestEnv, base: Path) -> None:
-    env.cmd.sh.run_ok("make configure", base)
-    env.cmd.sh.run_ok("./configure", base)
-    env.cmd.sh.run_ok("make", base)
-    env.cmd.sh.run_ok("make test", base)
-    env.cmd.sh.run_ok("make clean", base)
+    env.subcmd.sh.run_ok("make configure", base)
+    env.subcmd.sh.run_ok("./configure", base)
+    env.subcmd.sh.run_ok("make", base)
+    env.subcmd.sh.run_ok("make test", base)
+    env.subcmd.sh.run_ok("make clean", base)
 
 
 def test_git_archive_untar(env: TestEnv) -> None:
@@ -112,7 +112,7 @@ def test_git_archive_untar(env: TestEnv) -> None:
     name = env.uniq_name()
     env.exec_setup_fs(60)
     base = env.create_fstree(name)
-    ret = env.cmd.git.clone(url, base)
+    ret = env.subcmd.git.clone(url, base)
     if ret == 0:
         _test_git_archive_untar_at(env, base)
     env.remove_fstree(name)
@@ -124,10 +124,12 @@ def _test_git_archive_untar_at(env: TestEnv, base: Path) -> None:
     tarname = "archive-head.tar.gz"
     out = base / tarname
     fmt = "tar.gz"
-    cmd = f"git archive --output={out} --prefix={prefix} --format={fmt} HEAD"
-    env.cmd.sh.run_ok(cmd, base)
-    cmd = f"tar xvf {tarname}"
-    env.cmd.sh.run_ok(cmd, base)
+    subcmd = (
+        f"git archive --output={out} --prefix={prefix} --format={fmt} HEAD"
+    )
+    env.subcmd.sh.run_ok(subcmd, base)
+    subcmd = f"tar xvf {tarname}"
+    env.subcmd.sh.run_ok(subcmd, base)
 
 
 def test_rpmbuild(env: TestEnv) -> None:
@@ -137,7 +139,7 @@ def test_rpmbuild(env: TestEnv) -> None:
     name = env.uniq_name()
     env.exec_setup_fs(20)
     base = env.create_fstree(name)
-    ret = env.cmd.git.clone(url, base)
+    ret = env.subcmd.git.clone(url, base)
     ok = utils.has_executables(["make", "rpmbuild"])
     if ok and ret == 0:
         _test_rpmbuild_at(env, base)
@@ -146,5 +148,5 @@ def test_rpmbuild(env: TestEnv) -> None:
 
 
 def _test_rpmbuild_at(env: TestEnv, base: Path) -> None:
-    env.cmd.sh.run_ok("make -f devel.mk rpm", base)
-    env.cmd.sh.run_ok("make -f devel.mk reset", base)
+    env.subcmd.sh.run_ok("make -f devel.mk rpm", base)
+    env.subcmd.sh.run_ok("make -f devel.mk reset", base)

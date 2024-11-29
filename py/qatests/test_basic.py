@@ -4,7 +4,7 @@ from .ctx import TestEnv
 
 
 def test_version(env: TestEnv) -> None:
-    version = env.cmd.silofs.version()
+    version = env.subcmd.silofs.version()
     env.expect.gt(len(version), 0)
 
 
@@ -71,20 +71,20 @@ def test_show(env: TestEnv) -> None:
     env.exec_setup_fs()
     base = env.make_basepath()
     base.mkdir()
-    vers1 = env.cmd.silofs.version()
+    vers1 = env.subcmd.silofs.version()
     env.expect.eq(len(vers1.split()), 2)
-    vers2 = env.cmd.silofs.show_version(base)
+    vers2 = env.subcmd.silofs.show_version(base)
     env.expect.gt(len(vers2), 1)
     env.expect.eq(vers2, vers1.split()[1])
-    repo = env.cmd.silofs.show_repo(base)
+    repo = env.subcmd.silofs.show_repo(base)
     env.expect.eq(repo, env.repodir())
-    boot_name, _, _ = env.cmd.silofs.show_boot(base)
+    boot_name, _, _ = env.subcmd.silofs.show_boot(base)
     env.expect.eq(boot_name, env.name)
-    prst = env.cmd.silofs.show_proc(base)
+    prst = env.subcmd.silofs.show_proc(base)
     env.expect.gt(len(prst), 1)
-    spst = env.cmd.silofs.show_spstats(base)
+    spst = env.subcmd.silofs.show_spstats(base)
     env.expect.gt(len(spst), 1)
-    stx = env.cmd.silofs.show_statx(base)
+    stx = env.subcmd.silofs.show_statx(base)
     env.expect.gt(len(stx), 1)
     base.rmdir()
     env.exec_teardown_fs()

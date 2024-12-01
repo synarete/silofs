@@ -41,7 +41,7 @@ run cp "${archive_file}" "${citests_dir}"
 cdx "${citests_dir}"
 run tar xfz "${archive_tgz}"
 cdx "${workdir}"
-msg "check C-style: $(pwd)"
+msg "check code style: $(pwd)"
 run ./scripts/checkcodefmt.sh
 msg "check build at: $(pwd)"
 run ./configure

@@ -42,11 +42,7 @@ cdx "${citests_dir}"
 run tar xfz "${archive_tgz}"
 cdx "${workdir}"
 msg "check C-style: $(pwd)"
-run ./scripts/sourcedigest.sh > ./srcdigest-pre-fmt
-run ./cstylefmt.sh
-run ./scripts/sourcedigest.sh > ./srcdigest-post-fmt
-run diff -q ./srcdigest-pre-fmt ./srcdigest-post-fmt
-run rm -f ./srcdigest-pre-fmt ./srcdigest-post-fmt
+run ./scripts/checkcodefmt.sh
 msg "check build at: $(pwd)"
 run ./configure
 run make

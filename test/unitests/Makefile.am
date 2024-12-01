@@ -1,5 +1,6 @@
 -include $(top_builddir)/common.mk
 
+EXTRA_DIST = lsan_suppressions.txt
 AM_CFLAGS = $(WARN_CFLAGS)
 
 bin_PROGRAMS = silofs-unitests

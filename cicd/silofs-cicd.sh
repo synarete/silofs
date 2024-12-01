@@ -75,6 +75,7 @@ run make -f devel.mk reset
 msg "run sanitizer check"
 run make -f devel.mk O=1 SANITIZER=1
 run env ASAN_OPTIONS=detect_leaks=1 \
+  LSAN_OPTIONS=suppressions="${workdir}/test/unitests/lsan_suppressions.txt" \
   "${unitestsdir}/silofs-unitests" "${unitestsdir}/ut" -M -l1
 run make -f devel.mk reset
 

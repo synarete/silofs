@@ -1,73 +1,73 @@
 #!/usr/bin/env bash
-self=$(basename "${BASH_SOURCE[0]}")
-selfdir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
-basedir=$(realpath "${selfdir}")
-
-_msg() { echo "$self: $*" >&2; }
-_die() { _msg "$*"; exit 1; }
-_try() { ( "$@" ) || _die "failed: $*"; }
-_run() { if [ "${VERBOSE:-1}" == "1" ]; then _msg "$@" ; fi; _try "$@"; }
-
+set -o nounset
+set -o pipefail
 export LC_ALL=C
 unset CDPATH
 
+self=$(basename "${BASH_SOURCE[0]}")
+selfdir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
+basedir=$(realpath "${selfdir}")
+verbose="${VERBOSE:-1}"
 
-_run_command() {
-  command -v "$1" > /dev/null && _run "$@"
+msg() { echo "$self: $*" >&2; }
+die() { msg "$*"; kill -s 2 $$; }
+exe() { ( "$@" ) || die "failed: $*"; }
+log() { if [ "${verbose}" == "1" ]; then msg "$@" ; fi; }
+run() { log "$@" ; exe "$@"; }
+cdx() { log "cd $*"; cd "$@" || die "failed: cd $*"; }
+
+run_command() {
+  command -v "$1" > /dev/null && run "$@"
 }
 
-_run_black() {
+run_black() {
   local srcdir="${1}"
 
-  cd "${srcdir}" || exit 1
-  _run_command black -q -l 79 "${srcdir}"
+  cdx "${srcdir}"
+  run_command black -q -l 79 "${srcdir}"
 }
 
-_run_flake8() {
+run_flake8() {
   local srcdir="${1}"
 
-  cd "${srcdir}/../" || exit 1
-  _run_command flake8 "${srcdir}"
+  cdx "${srcdir}/../"
+  run_command flake8 "${srcdir}"
 }
 
-_run_mypy() {
+run_mypy() {
   local srcdir="${1}"
 
-  cd "${srcdir}" || exit 1
-  _run_command mypy --no-color-output "${srcdir}" | grep -v "Success: "
+  cdx "${srcdir}"
+  run_command mypy --no-color-output "${srcdir}" | grep -v "Success: "
 }
 
-_run_pylint() {
+run_pylint() {
   local srcdir="${1}"
 
-  cd "${srcdir}" || exit 1
+  cdx "${srcdir}"
   export PYLINTHOME="${basedir}"
-  _run_command pylint --rcfile="${basedir}/pylintrc" "${srcdir}"
+  run_command pylint --rcfile="${basedir}/pylintrc" "${srcdir}"
 }
 
-_run_pychecks() {
-  local srcdir
-
-  cd "${basedir}" || exit 1
-  _run_black "${1}"
-  _run_flake8 "${1}"
-  _run_mypy "${1}"
-  _run_pylint "${1}"
+run_pychecks() {
+  cdx "${basedir}"
+  run_black "${1}"
+  run_flake8 "${1}"
+  run_mypy "${1}"
+  run_pylint "${1}"
 }
 
-_main() {
+main() {
   local srcdir
   local curdir
 
   curdir="$(pwd)"
   for arg in "$@"; do
-    cd "${curdir}"
     srcdir="$(realpath "$(readlink -f "${arg}")")"
-    _try cd "${srcdir}"
-
-    _run_pychecks "${srcdir}"
+    run_pychecks "${srcdir}"
+    cdx "${curdir}"
   done
 }
 
-_main "$@"
+main "$@"
 exit 0

@@ -43,7 +43,7 @@ TESTS = [
     test_self.test_funtests_nosplice,
     test_self.test_funtests_tune2,
     test_self.test_funtests_mt,
-    test_self.test_cicd,
+    test_self.test_local_cicd,
     test_fio.test_fio_simple,
     test_fio.test_fio_njobs,
     test_xprogs.test_postgresql,

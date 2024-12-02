@@ -127,26 +127,24 @@ def _is_active_url(url: str) -> bool:
     return True
 
 
-def test_cicd(env: TestEnv) -> None:
-    url1 = env.cfg.remotes.silofs_repo_url
-    url2 = env.cfg.remotes.fedora_registry_url
-    if _is_active_url(url1) and _is_active_url(url2):
-        _test_cicd(env)
+def test_local_cicd(env: TestEnv) -> None:
+    url = env.cfg.remotes.silofs_repo_url
+    if _is_active_url(url):
+        _test_local_cicd(env)
 
 
-def _test_cicd(env: TestEnv) -> None:
+def _test_local_cicd(env: TestEnv) -> None:
     url = env.cfg.remotes.silofs_repo_url
     name = env.uniq_name()
     env.exec_setup_fs(60)
     base = env.create_fstree(name)
     ret = env.subcmd.git.clone(url, base, branch="next")
-    ok = utils.has_executables(["podman"])
-    if ok and ret == 0:
-        _test_cicd_at(env, base)
+    if ret == 0:
+        _test_local_cicd_at(env, base)
     env.remove_fstree(name)
     env.exec_teardown_fs()
 
 
-def _test_cicd_at(env: TestEnv, base: Path) -> None:
+def _test_local_cicd_at(env: TestEnv, base: Path) -> None:
     cicd_dir = base / "cicd"
     env.subcmd.sh.run_ok("./run-local-cicd.sh", cicd_dir)

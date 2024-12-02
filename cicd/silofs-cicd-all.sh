@@ -8,8 +8,8 @@ unset CDPATH
 self=$(basename "${BASH_SOURCE[0]}")
 msg() { echo "$self: $*" >&2; }
 die() { msg "$*"; exit 1; }
-try() { ( "$@" ) || die "failed: $*"; }
-run() { echo "$self: $*" >&2; try "$@"; }
+exe() { ( "$@" ) || die "failed: $*"; }
+run() { echo "$self: $*" >&2; exe "$@"; }
 cdx() { echo "$self: cd $*" >&2; cd "$@" || die "failed: cd $*"; }
 
 ###

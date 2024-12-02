@@ -8,9 +8,9 @@ unset CDPATH
 self=$(basename "${BASH_SOURCE[0]}")
 msg() { echo "$self: $*" >&2; }
 die() { msg "$*"; exit 1; }
-try() { ( "$@" ) || die "failed: $*"; }
-run() { echo "$self: $*" >&2; try "$@"; }
-
+exe() { ( "$@" ) || die "failed: $*"; }
+run() { echo "$self: $*" >&2; exe "$@"; }
+cdx() { echo "$self: cd $*" >&2; cd "$@" || die "failed: cd $*"; }
 
 basedir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
 macrodir="${basedir}/m4"
@@ -22,7 +22,7 @@ autom4te_cachedir="${buildaux}/autom4te.cache"
 
 
 do_requirebin() {
-  try command -v "$@" > /dev/null
+  run command -v "$@"
 }
 
 do_prerequisite() {
@@ -40,7 +40,7 @@ do_autom4te_cfg() {
 }
 
 do_autogen() {
-  cd "${basedir}" || die "can not cd into ${basedir}"
+  cdx "${basedir}"
   run mkdir -p "${builddir}"
   do_autom4te_cfg
   run libtoolize --automake --copy --install --force
@@ -52,8 +52,8 @@ do_autogen() {
 }
 
 do_autoclean() {
-  cd "${basedir}" || die "can not cd into ${basedir}"
-  try mkdir -p "${builddir}"
+  cdx "${basedir}"
+  run mkdir -p "${builddir}"
   run rm -f "${autom4te_cfg}"
   run rm -rf "${autom4te_cachedir}"
   run rm -rf "${basedir}/.cache"

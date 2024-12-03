@@ -3,6 +3,5 @@ WORKDIR /scratch
 RUN dnf update -y --enablerepo=crb
 RUN dnf install -y --enablerepo=crb epel-release epel-next-release
 COPY install-rpm-deps.sh .
-RUN ./install-rpm-deps.sh --all
+RUN ./install-rpm-deps.sh --base
 RUN rm -f /scratch/*
-

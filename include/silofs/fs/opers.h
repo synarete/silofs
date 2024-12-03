@@ -55,6 +55,15 @@ struct silofs_op_getattr_out {
 	struct silofs_stat st;
 };
 
+struct silofs_op_statx_in {
+	ino_t    ino;
+	uint32_t sx_mask;
+};
+
+struct silofs_op_statx_out {
+	struct silofs_stat st;
+};
+
 struct silofs_op_setattr_in {
 	struct stat tims;
 	ino_t       ino;
@@ -331,6 +340,7 @@ union silofs_oper_args_in {
 	struct silofs_op_forget_in          forget;
 	struct silofs_op_batch_forget_in    batch_forget;
 	struct silofs_op_getattr_in         getattr;
+	struct silofs_op_statx_in           statx;
 	struct silofs_op_setattr_in         setattr;
 	struct silofs_op_readlink_in        readlink;
 	struct silofs_op_symlink_in         symlink;
@@ -369,6 +379,7 @@ union silofs_oper_args_in {
 union silofs_oper_args_out {
 	struct silofs_op_lookup_out          lookup;
 	struct silofs_op_getattr_out         getattr;
+	struct silofs_op_statx_out           statx;
 	struct silofs_op_setattr_out         setattr;
 	struct silofs_op_readlink_out        readlink;
 	struct silofs_op_symlink_out         symlink;

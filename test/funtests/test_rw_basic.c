@@ -405,11 +405,16 @@ test_rw_basic_backward_byte_(struct ft_env *fte, loff_t off, size_t len)
 static void test_rw_basic_backward_byte(struct ft_env *fte)
 {
 	const struct ft_range ranges[] = {
-		FT_MKRANGE(0, 11),       FT_MKRANGE(0, 111),
-		FT_MKRANGE(0, 1111),     FT_MKRANGE(0, 11111),
-		FT_MKRANGE(FT_1M, 1111), FT_MKRANGE(FT_1M + 11, 1111),
-		FT_MKRANGE(FT_1G, 1111), FT_MKRANGE(FT_1G + 11, 1111),
-		FT_MKRANGE(FT_1T, 1111), FT_MKRANGE(FT_1T + 11, 1111),
+		FT_MKRANGE(0, 11),            //
+		FT_MKRANGE(0, 111),           //
+		FT_MKRANGE(0, 1111),          //
+		FT_MKRANGE(0, 11111),         //
+		FT_MKRANGE(FT_1M, 1111),      //
+		FT_MKRANGE(FT_1M + 11, 1111), //
+		FT_MKRANGE(FT_1G, 1111),      //
+		FT_MKRANGE(FT_1G + 11, 1111), //
+		FT_MKRANGE(FT_1T, 1111),      //
+		FT_MKRANGE(FT_1T + 11, 1111), //
 	};
 
 	ft_exec_with_ranges(fte, test_rw_basic_backward_byte_, ranges);

@@ -69,6 +69,7 @@ static struct ut_tgroup const g_ut_tgroups[] = {
 	UT_DEFTGRP(ut_tdefs_archive),
 	UT_DEFTGRP(ut_tdefs_file_stat),
 	UT_DEFTGRP(ut_tdefs_dir_iter),
+	UT_DEFTGRP(ut_tdefs_super),
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

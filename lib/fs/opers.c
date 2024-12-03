@@ -249,21 +249,16 @@ static int op_map_creds(struct silofs_task *task)
 
 static int op_rmap_stat(const struct silofs_task *task, struct silofs_stat *st)
 {
+	const uid_t uid_in = st->st.st_uid;
+	const gid_t gid_in = st->st.st_gid;
+	uid_t uid_out = (uid_t)(-1);
+	gid_t gid_out = (gid_t)(-1);
 	int ret;
 
-	ret = silofs_idsmap_rmap_uidgid(task_idsmap(task), st->st.st_uid,
-	                                st->st.st_gid, &st->st.st_uid,
-	                                &st->st.st_gid);
-	return (ret == -SILOFS_ENOENT) ? 0 : ret;
-}
-
-static int op_rmap_statx(const struct silofs_task *task, struct statx *stx)
-{
-	int ret;
-
-	ret = silofs_idsmap_rmap_uidgid(task_idsmap(task), stx->stx_uid,
-	                                stx->stx_gid, &stx->stx_uid,
-	                                &stx->stx_gid);
+	ret = silofs_idsmap_rmap_uidgid(task_idsmap(task), uid_in, gid_in,
+	                                &uid_out, &gid_out);
+	st->st.st_uid = st->stx.stx_uid = uid_out;
+	st->st.st_gid = st->stx.stx_gid = gid_out;
 	return (ret == -SILOFS_ENOENT) ? 0 : ret;
 }
 
@@ -419,7 +414,7 @@ out:
 }
 
 int silofs_fs_getattr(struct silofs_task *task, ino_t ino,
-                      struct silofs_stat *out_stat)
+                      struct silofs_stat *out_st)
 {
 	struct silofs_inode_info *ii = NULL;
 	int err;
@@ -436,10 +431,10 @@ int silofs_fs_getattr(struct silofs_task *task, ino_t ino,
 	err = op_stage_cur_inode(task, ino, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_getattr(task, ii, out_stat);
+	err = silofs_do_getattr(task, ii, out_st);
 	ok_or_goto_out(err);
 
-	err = op_rmap_stat(task, out_stat);
+	err = op_rmap_stat(task, out_st);
 	ok_or_goto_out(err);
 out:
 	return op_finish(task, err);
@@ -1471,8 +1466,8 @@ out:
 	return op_finish(task, err);
 }
 
-int silofs_fs_statx(struct silofs_task *task, ino_t ino,
-                    unsigned int request_mask, struct statx *out_stx)
+int silofs_fs_statx(struct silofs_task *task, ino_t ino, uint32_t sx_want_mask,
+                    struct silofs_stat *out_st)
 {
 	struct silofs_inode_info *ii = NULL;
 	int err;
@@ -1489,10 +1484,10 @@ int silofs_fs_statx(struct silofs_task *task, ino_t ino,
 	err = op_stage_cur_inode(task, ino, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_statx(task, ii, request_mask, out_stx);
+	err = silofs_do_statx(task, ii, sx_want_mask, out_st);
 	ok_or_goto_out(err);
 
-	err = op_rmap_statx(task, out_stx);
+	err = op_rmap_stat(task, out_st);
 	ok_or_goto_out(err);
 out:
 	return op_finish(task, err);

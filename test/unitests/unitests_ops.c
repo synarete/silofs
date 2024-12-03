@@ -66,6 +66,20 @@ void ut_release_task(struct ut_env *ute, struct silofs_task *task)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static void assign_stat(struct stat *st, const struct silofs_stat *sst)
+{
+	if (st != NULL) {
+		memcpy(st, &sst->st, sizeof(*st));
+	}
+}
+
+static void assign_statx(struct statx *stx, const struct silofs_stat *sst)
+{
+	if (stx != NULL) {
+		memcpy(stx, &sst->stx, sizeof(*stx));
+	}
+}
+
 static int ut_do_statfs(struct ut_env *ute, ino_t ino, struct statvfs *st)
 {
 	struct silofs_task task;
@@ -77,15 +91,17 @@ static int ut_do_statfs(struct ut_env *ute, ino_t ino, struct statvfs *st)
 	return sanitize_status(ret);
 }
 
-static int ut_do_statx(struct ut_env *ute, ino_t ino,
-                       unsigned int request_mask, struct statx *stx)
+static int ut_do_statx(struct ut_env *ute, ino_t ino, uint32_t sx_want_mask,
+                       struct statx *stx)
 {
 	struct silofs_task task;
+	struct silofs_stat st;
 	int ret;
 
 	ut_setup_task(ute, &task);
-	ret = silofs_fs_statx(&task, ino, request_mask, stx);
+	ret = silofs_fs_statx(&task, ino, sx_want_mask, &st);
 	ut_release_task(ute, &task);
+	assign_statx(stx, &st);
 	return sanitize_status(ret);
 }
 
@@ -98,13 +114,6 @@ static int ut_do_access(struct ut_env *ute, ino_t ino, int mode)
 	ret = silofs_fs_access(&task, ino, mode);
 	ut_release_task(ute, &task);
 	return sanitize_status(ret);
-}
-
-static void assign_stat(struct stat *st, const struct silofs_stat *sst)
-{
-	if (st != NULL) {
-		memcpy(st, &sst->st, sizeof(*st));
-	}
 }
 
 static int ut_do_getattr(struct ut_env *ute, ino_t ino, struct stat *out_st)

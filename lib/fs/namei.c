@@ -2180,15 +2180,16 @@ static int
 do_query_statx(struct silofs_task *task, struct silofs_inode_info *ii,
                struct silofs_ioc_query *query)
 {
-	const unsigned int req_mask = STATX_ALL | STATX_BTIME;
+	struct silofs_stat st = { .gen = 0 };
 	const enum silofs_inodef iflags = ii_flags(ii);
 	enum silofs_dirf dflags;
 	int err;
 
-	err = silofs_do_statx(task, ii, req_mask, &query->u.statx.stx);
+	err = silofs_do_statx(task, ii, STATX_ALL | STATX_BTIME, &st);
 	if (err) {
 		return err;
 	}
+	memcpy(&query->u.statx.stx, &st.stx, sizeof(query->u.statx.stx));
 	query->u.statx.iflags = (uint32_t)iflags;
 	if (ii_isdir(ii)) {
 		dflags = silofs_dir_flags(ii);

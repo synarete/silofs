@@ -247,12 +247,12 @@ inode_has_flags(struct silofs_inode *inode, enum silofs_inodef mask)
 	return (inode_flags(inode) & mask) == mask;
 }
 
-static unsigned int inode_rdev_major(const struct silofs_inode *inode)
+static uint32_t inode_rdev_major(const struct silofs_inode *inode)
 {
 	return silofs_le32_to_cpu(inode->i_rdev_major);
 }
 
-static unsigned int inode_rdev_minor(const struct silofs_inode *inode)
+static uint32_t inode_rdev_minor(const struct silofs_inode *inode)
 {
 	return silofs_le32_to_cpu(inode->i_rdev_minor);
 }
@@ -431,21 +431,19 @@ uint64_t silofs_ii_generation(const struct silofs_inode_info *ii)
 	return inode_generation(ii->inode);
 }
 
-static dev_t ii_rdev(const struct silofs_inode_info *ii)
-{
-	const struct silofs_inode *inode = ii->inode;
-
-	return makedev(inode_rdev_major(inode), inode_rdev_minor(inode));
-}
-
-static unsigned int i_rdev_major_of(const struct silofs_inode_info *ii)
+static uint32_t ii_rdev_major(const struct silofs_inode_info *ii)
 {
 	return inode_rdev_major(ii->inode);
 }
 
-static unsigned int i_rdev_minor_of(const struct silofs_inode_info *ii)
+static uint32_t ii_rdev_minor(const struct silofs_inode_info *ii)
 {
 	return inode_rdev_minor(ii->inode);
+}
+
+static dev_t ii_rdev(const struct silofs_inode_info *ii)
+{
+	return makedev(ii_rdev_major(ii), ii_rdev_minor(ii));
 }
 
 bool silofs_ii_isdir(const struct silofs_inode_info *ii)
@@ -1037,7 +1035,7 @@ static int check_parent_dir_ii(struct silofs_task *task,
  * 'getdents' system call. Unfortunately, currently FUSE chops readdir
  * into single page iterations.
  */
-static blksize_t stat_blksize_of(const struct silofs_inode_info *ii)
+static blksize_t ii_stat_blksize(const struct silofs_inode_info *ii)
 {
 	blksize_t bsz = SILOFS_LBK_SIZE;
 
@@ -1047,7 +1045,7 @@ static blksize_t stat_blksize_of(const struct silofs_inode_info *ii)
 	return bsz;
 }
 
-static blkcnt_t stat_blocks_of(const struct silofs_inode_info *ii)
+static blkcnt_t ii_stat_blocks(const struct silofs_inode_info *ii)
 {
 	const size_t frg_size = 512;
 	const ssize_t kb_size = SILOFS_KB_SIZE;
@@ -1057,12 +1055,73 @@ static blkcnt_t stat_blocks_of(const struct silofs_inode_info *ii)
 	return (blkcnt_t)div_round_up(nbytes, frg_size);
 }
 
-void silofs_ii_statof(const struct silofs_inode_info *ii,
-                      struct silofs_stat *st)
+static void silofs_ii_statx_of(const struct silofs_inode_info *ii,
+                               uint32_t sx_want_mask, struct statx *stx)
+{
+	struct silofs_itimes tms;
+	const mode_t ifmt = S_IFMT;
+	const uint32_t statx_times = STATX_ATIME | STATX_BTIME | STATX_CTIME |
+	                             STATX_MTIME;
+
+	silofs_memzero(stx, sizeof(*stx));
+	if (sx_want_mask & STATX_NLINK) {
+		stx->stx_nlink = (uint32_t)ii_nlink(ii);
+		stx->stx_mask |= STATX_NLINK;
+	}
+	if (sx_want_mask & STATX_UID) {
+		stx->stx_uid = ii_uid(ii);
+		stx->stx_mask |= STATX_UID;
+	}
+	if (sx_want_mask & STATX_GID) {
+		stx->stx_gid = ii_gid(ii);
+		stx->stx_mask |= STATX_GID;
+	}
+	if (sx_want_mask & STATX_TYPE) {
+		stx->stx_mode |= (uint16_t)(ii_mode(ii) & ifmt);
+		stx->stx_mask |= STATX_TYPE;
+	}
+	if (sx_want_mask & STATX_MODE) {
+		stx->stx_mode |= (uint16_t)(ii_mode(ii) & ~ifmt);
+		stx->stx_mask |= STATX_MODE;
+	}
+	if (sx_want_mask & STATX_INO) {
+		stx->stx_ino = ii_xino(ii);
+		stx->stx_mask |= STATX_INO;
+	}
+	if (sx_want_mask & STATX_SIZE) {
+		stx->stx_size = (uint64_t)ii_size(ii);
+		stx->stx_mask |= STATX_SIZE;
+	}
+	if (sx_want_mask & STATX_BLOCKS) {
+		stx->stx_blocks = (uint64_t)ii_stat_blocks(ii);
+		stx->stx_mask |= STATX_BLOCKS;
+	}
+
+	stx->stx_blksize = (uint32_t)ii_stat_blksize(ii);
+	stx->stx_rdev_minor = ii_rdev_minor(ii);
+	stx->stx_rdev_major = ii_rdev_major(ii);
+
+	stx->stx_attributes_mask = STATX_ATTR_ENCRYPTED;
+	stx->stx_attributes = STATX_ATTR_ENCRYPTED;
+
+	if (sx_want_mask & statx_times) {
+		silofs_ii_times(ii, &tms);
+		assign_xts(&stx->stx_atime, &ii->i_atime_lazy);
+		assign_xts(&stx->stx_btime, &tms.btime);
+		assign_xts(&stx->stx_ctime, &tms.ctime);
+		assign_xts(&stx->stx_mtime, &tms.mtime);
+		stx->stx_mask |= statx_times;
+	}
+}
+
+void silofs_ii_stat_of(const struct silofs_inode_info *ii,
+                       uint32_t sx_want_mask, struct silofs_stat *st)
 {
 	struct silofs_itimes tms;
 
+	silofs_ii_times(ii, &tms);
 	silofs_memzero(st, sizeof(*st));
+
 	st->st.st_ino = ii_xino(ii);
 	st->st.st_mode = ii_mode(ii);
 	st->st.st_nlink = ii_nlink(ii);
@@ -1070,71 +1129,15 @@ void silofs_ii_statof(const struct silofs_inode_info *ii,
 	st->st.st_gid = ii_gid(ii);
 	st->st.st_rdev = ii_rdev(ii);
 	st->st.st_size = ii_size(ii);
-	st->st.st_blocks = stat_blocks_of(ii);
-	st->st.st_blksize = stat_blksize_of(ii);
-	st->gen = ii_generation(ii);
-	silofs_ii_times(ii, &tms);
+	st->st.st_blocks = ii_stat_blocks(ii);
+	st->st.st_blksize = ii_stat_blksize(ii);
 	assign_ts(&st->st.st_atim, &ii->i_atime_lazy);
 	assign_ts(&st->st.st_ctim, &tms.ctime);
 	assign_ts(&st->st.st_mtim, &tms.mtime);
-}
+	st->gen = ii_generation(ii);
 
-static void silofs_statx_of(const struct silofs_inode_info *ii,
-                            unsigned int request_mask, struct statx *stx)
-{
-	struct silofs_itimes tms;
-	const mode_t ifmt = S_IFMT;
-	const unsigned int statx_times = STATX_ATIME | STATX_BTIME |
-	                                 STATX_CTIME | STATX_MTIME;
-
-	silofs_memzero(stx, sizeof(*stx));
-	if (request_mask & STATX_NLINK) {
-		stx->stx_nlink = (uint32_t)ii_nlink(ii);
-		stx->stx_mask |= STATX_NLINK;
-	}
-	if (request_mask & STATX_UID) {
-		stx->stx_uid = ii_uid(ii);
-		stx->stx_mask |= STATX_UID;
-	}
-	if (request_mask & STATX_GID) {
-		stx->stx_gid = ii_gid(ii);
-		stx->stx_mask |= STATX_GID;
-	}
-	if (request_mask & STATX_TYPE) {
-		stx->stx_mode |= (uint16_t)(ii_mode(ii) & ifmt);
-		stx->stx_mask |= STATX_TYPE;
-	}
-	if (request_mask & STATX_MODE) {
-		stx->stx_mode |= (uint16_t)(ii_mode(ii) & ~ifmt);
-		stx->stx_mask |= STATX_MODE;
-	}
-	if (request_mask & STATX_INO) {
-		stx->stx_ino = ii_xino(ii);
-		stx->stx_mask |= STATX_INO;
-	}
-	if (request_mask & STATX_SIZE) {
-		stx->stx_size = (uint64_t)ii_size(ii);
-		stx->stx_mask |= STATX_SIZE;
-	}
-	if (request_mask & STATX_BLOCKS) {
-		stx->stx_blocks = (uint64_t)stat_blocks_of(ii);
-		stx->stx_mask |= STATX_BLOCKS;
-	}
-
-	stx->stx_blksize = (uint32_t)stat_blksize_of(ii);
-	stx->stx_rdev_minor = i_rdev_minor_of(ii);
-	stx->stx_rdev_major = i_rdev_major_of(ii);
-
-	stx->stx_attributes_mask = STATX_ATTR_ENCRYPTED;
-	stx->stx_attributes = STATX_ATTR_ENCRYPTED;
-
-	if (request_mask & statx_times) {
-		silofs_ii_times(ii, &tms);
-		assign_xts(&stx->stx_atime, &ii->i_atime_lazy);
-		assign_xts(&stx->stx_btime, &tms.btime);
-		assign_xts(&stx->stx_ctime, &tms.ctime);
-		assign_xts(&stx->stx_mtime, &tms.mtime);
-		stx->stx_mask |= statx_times;
+	if (sx_want_mask) {
+		silofs_ii_statx_of(ii, sx_want_mask, &st->stx);
 	}
 }
 
@@ -1159,7 +1162,7 @@ do_getattr(struct silofs_task *task, const struct silofs_inode_info *ii,
 	if (err) {
 		return err;
 	}
-	silofs_ii_statof(ii, out_st);
+	silofs_ii_stat_of(ii, 0, out_st);
 	return 0;
 }
 
@@ -1176,7 +1179,7 @@ int silofs_do_getattr(struct silofs_task *task, struct silofs_inode_info *ii,
 
 static int
 do_statx(struct silofs_task *task, const struct silofs_inode_info *ii,
-         unsigned int request_mask, struct statx *out_stx)
+         uint32_t sx_want_mask, struct silofs_stat *out_st)
 {
 	int err;
 
@@ -1184,17 +1187,17 @@ do_statx(struct silofs_task *task, const struct silofs_inode_info *ii,
 	if (err) {
 		return err;
 	}
-	silofs_statx_of(ii, request_mask, out_stx);
+	silofs_ii_stat_of(ii, sx_want_mask, out_st);
 	return 0;
 }
 
 int silofs_do_statx(struct silofs_task *task, struct silofs_inode_info *ii,
-                    unsigned int request_mask, struct statx *out_stx)
+                    uint32_t sx_want_mask, struct silofs_stat *out_st)
 {
 	int err;
 
 	ii_incref(ii);
-	err = do_statx(task, ii, request_mask, out_stx);
+	err = do_statx(task, ii, sx_want_mask, out_st);
 	ii_decref(ii);
 	return err;
 }

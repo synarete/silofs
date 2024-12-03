@@ -106,8 +106,8 @@ void silofs_ii_set_generation(struct silofs_inode_info *ii, uint64_t gen);
 void silofs_ii_setup_by(struct silofs_inode_info        *ii,
                         const struct silofs_inew_params *args);
 
-void silofs_ii_statof(const struct silofs_inode_info *ii,
-                      struct silofs_stat             *st);
+void silofs_ii_stat_of(const struct silofs_inode_info *ii,
+                       uint32_t sx_want_mask, struct silofs_stat *st);
 
 void silofs_ii_mkiattr(const struct silofs_inode_info *ii,
                        struct silofs_iattr            *out_iattr);
@@ -138,7 +138,7 @@ int silofs_do_getattr(struct silofs_task *task, struct silofs_inode_info *ii,
                       struct silofs_stat *out_st);
 
 int silofs_do_statx(struct silofs_task *task, struct silofs_inode_info *ii,
-                    unsigned int request_mask, struct statx *out_stx);
+                    uint32_t sx_want_mask, struct silofs_stat *out_st);
 
 int silofs_do_chmod(struct silofs_task *task, struct silofs_inode_info *ii,
                     mode_t mode, const struct silofs_itimes *itimes);

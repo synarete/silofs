@@ -95,8 +95,9 @@ struct silofs_creds {
 
 /* extended inode stat */
 struct silofs_stat {
-	struct stat st;
-	uint64_t    gen;
+	struct stat  st;
+	struct statx stx;
+	uint64_t     gen;
 };
 
 /* inode's time-stamps (birth, access, modify, change) */

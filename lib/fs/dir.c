@@ -2110,7 +2110,7 @@ static bool dirc_emit_dirent(struct silofs_dir_ctx *d_ctx,
 	const struct stat *attr = NULL;
 
 	if (ii != NULL) {
-		silofs_ii_statof(ii, &st);
+		silofs_ii_stat_of(ii, 0, &st);
 		attr = &st.st;
 	}
 
@@ -2126,7 +2126,7 @@ static bool dirc_emit_ii(struct silofs_dir_ctx *d_ctx, const char *name,
 	const mode_t mode = ii_mode(ii);
 	const struct stat *attr = &st.st;
 
-	silofs_ii_statof(ii, &st);
+	silofs_ii_stat_of(ii, 0, &st);
 	return dirc_emit(d_ctx, name, nlen, xino, IFTODT(mode), attr);
 }
 

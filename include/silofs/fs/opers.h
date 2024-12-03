@@ -403,7 +403,7 @@ int silofs_fs_lookup(struct silofs_task *task, ino_t parent, const char *name,
                      struct silofs_stat *out_stat);
 
 int silofs_fs_getattr(struct silofs_task *task, ino_t ino,
-                      struct silofs_stat *out_stat);
+                      struct silofs_stat *out_st);
 
 int silofs_fs_mkdir(struct silofs_task *task, ino_t parent, const char *name,
                     mode_t mode, struct silofs_stat *out_stat);
@@ -500,8 +500,8 @@ int silofs_fs_write(struct silofs_task *task, ino_t ino, const void *buf,
 int silofs_fs_write_iter(struct silofs_task *task, ino_t ino, int o_flags,
                          struct silofs_rwiter_ctx *rwi_ctx);
 
-int silofs_fs_statx(struct silofs_task *task, ino_t ino,
-                    unsigned int request_mask, struct statx *out_stx);
+int silofs_fs_statx(struct silofs_task *task, ino_t ino, uint32_t sx_want_mask,
+                    struct silofs_stat *out_st);
 
 int silofs_fs_fiemap(struct silofs_task *task, ino_t ino, struct fiemap *fm);
 

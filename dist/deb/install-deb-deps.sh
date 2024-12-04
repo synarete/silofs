@@ -47,12 +47,14 @@ qatests_deps=(
   libasan8
   libattr1-dev
   libcap-dev
+  libexpat1-dev
   libicu-dev
-  libunwind-dev
+  liblz4-dev
   libreadline-dev
   libssl-dev
-  libexpat1-dev
   libtool
+  libunwind-dev
+  lz4
   make
   python3-pydantic
   python3-setproctitle

@@ -24,9 +24,10 @@
 #include <silofs/ps/bcache.h>
 
 struct silofs_prange {
-	struct silofs_psid psid;
-	uint32_t           nsegs;
-	loff_t             cur_pos;
+	struct silofs_pvid pvid;
+	uint32_t           base_index;
+	uint32_t           curr_index;
+	loff_t             pos_in_curr;
 	bool               data;
 };
 

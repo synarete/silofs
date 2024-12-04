@@ -536,10 +536,11 @@ struct silofs_psid32b {
 
 /* persistent volume sub-range */
 struct silofs_prange64b {
-	struct silofs_psid32b psid;
-	int64_t               cur;
-	uint32_t              nsegs;
-	uint8_t               pad[20];
+	struct silofs_pvid pvid;
+	uint32_t           base_index;
+	uint32_t           curr_index;
+	int64_t            pos_in_curr;
+	uint8_t            pad[32];
 } silofs_attr_aligned64;
 
 /* persistent volume sub-ranges pair*/

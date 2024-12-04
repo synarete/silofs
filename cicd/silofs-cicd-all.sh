@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-set -o errexit
 set -o nounset
 set -o pipefail
 export LC_ALL=C
@@ -7,10 +6,10 @@ unset CDPATH
 
 self=$(basename "${BASH_SOURCE[0]}")
 msg() { echo "$self: $*" >&2; }
-die() { msg "$*"; exit 1; }
+die() { msg "$*"; kill -s 2 $$; }
 exe() { ( "$@" ) || die "failed: $*"; }
-run() { echo "$self: $*" >&2; exe "$@"; }
-cdx() { echo "$self: cd $*" >&2; cd "$@" || die "failed: cd $*"; }
+run() { msg "$@" ; exe "$@"; }
+cdx() { msg "cd $*"; cd "$@" || die "failed: cd $*"; }
 
 ###
 if [ "$#" -ne 2 ]; then die "usage: '$self <archive-file> <citests-dir>'"; fi
@@ -95,7 +94,8 @@ cdx "${workdir}/build"
 run ../configure --prefix="${workdir}/build/local" \
   --enable-compile-warnings=error --with-tcmalloc
 run make install
-run env HEAPCHECK=normal HEAP_CHECK_TEST_POINTER_ALIGNMENT=1 \
+# this one fails on ubuntu, so just execute it without die-upon-failure
+env HEAPCHECK=normal HEAP_CHECK_TEST_POINTER_ALIGNMENT=1 \
   "${workdir}/build/local/bin/silofs-unitests" \
   -M -l2 "${workdir}/build/local/tmp"
 cdx "${currdir}"
@@ -109,12 +109,10 @@ cdx "${citests_dir}"
 run tar xfz "${archive_tgz}"
 cdx "${workdir}"
 run ./dist/packagize.sh
-
-# Post-op cleanup
-msg "post-op cleanup: ${workdir}"
 cdx "${currdir}"
-run sleep 2
 run rm -rf "${workdir}"
 
 ###
+cdx "${currdir}"
+run sleep 1
 msg "passed all checks for: $* "

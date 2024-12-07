@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -o errexit
 set -o nounset
 set -o pipefail
 export LC_ALL=C
@@ -10,51 +11,47 @@ basedir=$(realpath "${selfdir}")
 verbose="${VERBOSE:-1}"
 
 msg() { echo "$self: $*" >&2; }
-die() { msg "$*"; kill -s 2 $$; }
+die() { msg "$*"; exit 1; }
 exe() { ( "$@" ) || die "failed: $*"; }
 log() { if [ "${verbose}" == "1" ]; then msg "$@" ; fi; }
 run() { log "$@" ; exe "$@"; }
 cdx() { log "cd $*"; cd "$@" || die "failed: cd $*"; }
 
-run_command() {
-  command -v "$1" > /dev/null && run "$@"
-}
-
 run_black() {
-  local srcdir="${1}"
-
-  cdx "${srcdir}"
-  run_command black -q -l 79 "${srcdir}"
+  if command -v black &> /dev/null ; then
+    cdx "${1}"
+    run black -q -l 79 "${1}"
+  fi
 }
 
 run_flake8() {
-  local srcdir="${1}"
-
-  cdx "${srcdir}/../"
-  run_command flake8 "${srcdir}"
-}
-
-run_mypy() {
-  local srcdir="${1}"
-
-  cdx "${srcdir}"
-  run_command mypy --no-color-output "${srcdir}" | grep -v "Success: "
+  if command -v flake8 &> /dev/null ; then
+    cdx "${1}/../"
+    run flake8 "${1}"
+  fi
 }
 
 run_pylint() {
-  local srcdir="${1}"
+  if command -v pylint &> /dev/null ; then
+    cdx "${1}"
+    export PYLINTHOME="${basedir}"
+    run pylint --rcfile="${basedir}/pylintrc" "${1}"
+  fi
+}
 
-  cdx "${srcdir}"
-  export PYLINTHOME="${basedir}"
-  run_command pylint --rcfile="${basedir}/pylintrc" "${srcdir}"
+run_mypy() {
+  if command -v mypy &> /dev/null ; then
+    cdx "${1}"
+    run mypy --no-color-output "${1}"
+  fi
 }
 
 run_pychecks() {
   cdx "${basedir}"
   run_black "${1}"
   run_flake8 "${1}"
-  run_mypy "${1}"
   run_pylint "${1}"
+  run_mypy "${1}"
 }
 
 main() {

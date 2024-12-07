@@ -38,7 +38,7 @@ class Config(pydantic.BaseModel):
 
 
 class FsBootRef(pydantic.BaseModel):
-    bref: str = pydantic.Field(str, min_length=64, max_length=128)
+    bref: str
 
 
 class FsIdsConf(pydantic.BaseModel):

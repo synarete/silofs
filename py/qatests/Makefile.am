@@ -38,7 +38,7 @@ pycheck_verbose_ = $(pycheck_verbose_@AM_DEFAULT_V@)
 pycheck_verbose_0 = $(AM_V)echo "  PYCHECK  $@";
 
 pycheck-qatests: $(silofs_qatests_PYTHON)
-	$(pycheck_verbose)VERBOSE=1 "$(pycheck)" "$(srcdir)" > "$@" ;
+	$(pycheck_verbose)VERBOSE=0 "$(pycheck)" "$(srcdir)" > "$@" ;
 
 silofs-%: silofs-%.in
 	$(silofs_sedsub) "$<" > "$@"

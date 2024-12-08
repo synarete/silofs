@@ -9,6 +9,7 @@ self=$(basename "${BASH_SOURCE[0]}")
 selfdir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
 basedir=$(realpath "${selfdir}")
 verbose="${VERBOSE:-1}"
+with_mypy="${WITH_MYPY:-1}"
 
 msg() { echo "$self: $*" >&2; }
 die() { msg "$*"; exit 1; }
@@ -51,7 +52,9 @@ run_pychecks() {
   run_black "${1}"
   run_flake8 "${1}"
   run_pylint "${1}"
-  run_mypy "${1}"
+  if [ "${with_mypy}" == "1" ]; then
+    run_mypy "${1}"
+  fi
 }
 
 main() {

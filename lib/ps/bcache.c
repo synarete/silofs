@@ -145,7 +145,7 @@ bcache_new_cpi(const struct silofs_bcache *bcache,
                const struct silofs_paddr *paddr)
 {
 	silofs_assert_eq(paddr->ptype, SILOFS_PTYPE_CHKPT);
-	silofs_assert_eq(paddr->off, 0);
+	silofs_assert_eq(paddr->off % SILOFS_PSEG_CHKPT_SIZE, 0);
 
 	return silofs_cpi_new(paddr, bcache->bc_alloc);
 }

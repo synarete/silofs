@@ -28,7 +28,7 @@ struct silofs_prange {
 	uint32_t           base_index;
 	uint32_t           curr_index;
 	loff_t             pos_in_curr;
-	bool               data;
+	bool               metadata_only;
 };
 
 struct silofs_pstate {

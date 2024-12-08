@@ -1,0 +1,7 @@
+#!/usr/bin/env python3
+from silofs.qatests import ProgInfo, main
+
+__version__ = "@PACKAGE_VERSION@"
+__release__ = "@PACKAGE_RELEASE@"
+__revision__ = "@PACKAGE_REVISION@"
+main(ProgInfo(__version__, __release__, __revision__))

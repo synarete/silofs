@@ -33,10 +33,12 @@ class ProgArgs(run.RunArgs):
 
 # pylint: disable=R0902
 class ProgInfo:
-    def __init__(self) -> None:
-        self.version = "0.0.0"
-        self.release = "0"
-        self.revision = "0"
+    def __init__(
+        self, version: str = "0.0.0", release: str = "0", revision: str = "0"
+    ) -> None:
+        self.version = version
+        self.release = release
+        self.revision = revision
         self.title = "silofs-qatests"
         self.version_mode = False
         self.config = ""

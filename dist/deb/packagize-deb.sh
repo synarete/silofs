@@ -92,7 +92,7 @@ run sed \
 
 # Build deb package
 cd "${debbuild_distdir}"
-run dpkg-buildpackage -us -uc
+run env WITH_MYPY=0 dpkg-buildpackage -us -uc
 
 # Copy debs to root of build-dir
 run mkdir -p "${debdistdir}"

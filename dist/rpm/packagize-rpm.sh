@@ -86,7 +86,7 @@ run cp "${autotoolsdir}/${archive_tgz}" "${rpmbuilddir}/SOURCES"
 
 # Execute rpmbuild
 cd "${rpmbuilddir}"
-run rpmbuild -ba \
+run env WITH_MYPY=0 rpmbuild -ba \
     --define "_topdir ${rpmbuilddir}" \
     --define "_var ${rpmvardir}" \
     "${rpmspec_out}"

@@ -193,7 +193,7 @@ bcache_bind_cpi_dq(struct silofs_bcache *bcache, struct silofs_chkpt_info *cpi)
 static void
 bcache_store_cpi(struct silofs_bcache *bcache, struct silofs_chkpt_info *cpi)
 {
-	bcache_store(bcache, &cpi->ub_pni);
+	bcache_store(bcache, &cpi->cp_pni);
 }
 
 struct silofs_chkpt_info *
@@ -213,7 +213,7 @@ silofs_bcache_create_cpi(struct silofs_bcache *bcache,
 static void
 bcache_remove_cpi(struct silofs_bcache *bcache, struct silofs_chkpt_info *cpi)
 {
-	bcache_remove(bcache, &cpi->ub_pni);
+	bcache_remove(bcache, &cpi->cp_pni);
 }
 
 static void

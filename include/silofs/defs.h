@@ -982,11 +982,13 @@ struct silofs_repo_meta {
 
 /* persistent volume segment check-point node */
 struct silofs_chkpt_node {
-	struct silofs_header  cpn_hdr;
-	uint32_t              cpn_flags;
-	uint8_t               cpn_reserved1[12];
-	struct silofs_psid32b cpn_id;
-	uint8_t               cpn_reserved2[4032];
+	struct silofs_header   cpn_hdr;
+	uint32_t               cpn_flags;
+	uint8_t                cpn_reserved1[44];
+	struct silofs_paddr48b cpn_self_paddr;
+	uint8_t                cpn_reserved2[16];
+	struct silofs_paddr48b cpn_btree_root;
+	uint8_t                cpn_reserved3[3920];
 } silofs_attr_aligned64;
 
 /* b+tree node of persistent volume mapping */

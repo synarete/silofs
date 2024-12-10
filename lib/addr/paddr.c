@@ -254,6 +254,11 @@ void silofs_paddr_fini(struct silofs_paddr *paddr)
 	paddr->ptype = SILOFS_PTYPE_NONE;
 }
 
+void silofs_paddr_reset(struct silofs_paddr *paddr)
+{
+	silofs_paddr_fini(paddr);
+}
+
 void silofs_paddr_assign(struct silofs_paddr *paddr,
                          const struct silofs_paddr *other)
 {

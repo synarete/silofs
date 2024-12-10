@@ -305,6 +305,10 @@ static void validate_persistent_types_alignment3(void)
 
 static void validate_persistent_types_alignment4(void)
 {
+	REQUIRE_OFFSET64(struct silofs_chkpt_node, cpn_hdr, 0);
+	REQUIRE_OFFSET64(struct silofs_chkpt_node, cpn_flags, 16);
+	REQUIRE_OFFSET64(struct silofs_chkpt_node, cpn_self_paddr, 64);
+	REQUIRE_OFFSET64(struct silofs_chkpt_node, cpn_btree_root, 128);
 	REQUIRE_OFFSET64(struct silofs_btree_node, btn_hdr, 0);
 	REQUIRE_OFFSET64(struct silofs_btree_node, btn_flags, 16);
 	REQUIRE_OFFSET32(struct silofs_btree_node, btn_nkeys, 20);

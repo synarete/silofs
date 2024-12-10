@@ -30,10 +30,10 @@ struct silofs_pnode_info {
 	struct silofs_pstore    *pn_pstore;
 };
 
-/* pseg chkpt-node */
+/* check-point node */
 struct silofs_chkpt_info {
-	struct silofs_pnode_info  ub_pni;
-	struct silofs_chkpt_node *ub;
+	struct silofs_pnode_info  cp_pni;
+	struct silofs_chkpt_node *cp;
 };
 
 /* btree-node */

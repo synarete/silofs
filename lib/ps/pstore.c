@@ -237,6 +237,7 @@ void silofs_pstate128b_xtoh(const struct silofs_pstate128b *pstate128,
 int silofs_pstore_init(struct silofs_pstore *pstore, struct silofs_repo *repo)
 {
 	pstate_init(&pstore->pstate);
+	paddr_reset(&pstore->btree_root);
 	pstore->repo = repo;
 	return silofs_bcache_init(&pstore->bcache, repo->re.alloc);
 }
@@ -246,6 +247,7 @@ void silofs_pstore_fini(struct silofs_pstore *pstore)
 	silofs_bcache_drop(&pstore->bcache);
 	silofs_bcache_fini(&pstore->bcache);
 	pstate_fini(&pstore->pstate);
+	paddr_reset(&pstore->btree_root);
 	pstore->repo = NULL;
 }
 
@@ -268,15 +270,15 @@ static int pstore_validate_paddr(const struct silofs_pstore *pstore,
 static const struct silofs_paddr *
 cpi_paddr(const struct silofs_chkpt_info *cpi)
 {
-	return &cpi->ub_pni.pn_paddr;
+	return &cpi->cp_pni.pn_paddr;
 }
 
 static int pstore_save_chkpt(const struct silofs_pstore *pstore,
                              const struct silofs_chkpt_info *cpi)
 {
 	const struct silofs_rovec rov = {
-		.rov_base = cpi->ub,
-		.rov_len = sizeof(*cpi->ub),
+		.rov_base = cpi->cp,
+		.rov_len = sizeof(*cpi->cp),
 	};
 
 	return silofs_repo_save_pobj(pstore->repo, cpi_paddr(cpi), &rov);
@@ -286,8 +288,8 @@ static int pstore_load_chkpt(const struct silofs_pstore *pstore,
                              const struct silofs_chkpt_info *cpi)
 {
 	const struct silofs_rwvec rwv = {
-		.rwv_base = cpi->ub,
-		.rwv_len = sizeof(*cpi->ub),
+		.rwv_base = cpi->cp,
+		.rwv_len = sizeof(*cpi->cp),
 	};
 
 	return silofs_repo_load_pobj(pstore->repo, cpi_paddr(cpi), &rwv);
@@ -322,7 +324,7 @@ static int pstore_create_cached_cpi(struct silofs_pstore *pstore,
 	if (cpi == NULL) {
 		return -SILOFS_ENOMEM;
 	}
-	pstore_bind_pni(pstore, &cpi->ub_pni);
+	pstore_bind_pni(pstore, &cpi->cp_pni);
 	*out_cpi = cpi;
 	return 0;
 }
@@ -471,6 +473,14 @@ static int pstore_create_btree_root_at(struct silofs_pstore *pstore,
 	return 0;
 }
 
+static void pstore_update_btree_root(struct silofs_pstore *pstore,
+                                     const struct silofs_paddr *paddr)
+{
+	silofs_assert_eq(paddr->ptype, SILOFS_PTYPE_BTNODE);
+
+	paddr_assign(&pstore->btree_root, paddr);
+}
+
 static int pstore_format_btree_root(struct silofs_pstore *pstore)
 {
 	struct silofs_paddr paddr;
@@ -485,6 +495,7 @@ static int pstore_format_btree_root(struct silofs_pstore *pstore)
 	if (err) {
 		return err;
 	}
+	pstore_update_btree_root(pstore, &paddr);
 	return 0;
 }
 

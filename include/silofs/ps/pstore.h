@@ -40,6 +40,7 @@ struct silofs_pstore {
 	struct silofs_repo  *repo;
 	struct silofs_bcache bcache;
 	struct silofs_pstate pstate;
+	struct silofs_paddr  btree_root;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

@@ -1,12 +1,15 @@
 [Unit]
 After=syslog.target
-Description=silofs mount-daemon service
+Description=silofs mounting service
 
 [Install]
 WantedBy=multi-user.target
 
 [Service]
 CapabilityBoundingSet=CAP_SYS_ADMIN
+DeviceAllow=/dev/fuse rw
+DeviceAllow=/dev/null rw
+DeviceAllow=/dev/urandom r
 ExecStart=silofs-mountd -f @SYSCONFDIR@/silofs/mountd.conf
 LimitNPROC=1
 LimitFSIZE=0

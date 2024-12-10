@@ -28,31 +28,29 @@ struct silofs_prange {
 	uint32_t           base_index;
 	uint32_t           curr_index;
 	loff_t             pos_in_curr;
-	bool               metadata_only;
 };
 
 struct silofs_pstate {
-	struct silofs_prange meta;
-	struct silofs_prange data;
+	struct silofs_prange prange;
+	struct silofs_paddr  btree_root;
 };
 
 struct silofs_pstore {
 	struct silofs_repo  *repo;
 	struct silofs_bcache bcache;
 	struct silofs_pstate pstate;
-	struct silofs_paddr  btree_root;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_pstate_assign(struct silofs_pstate       *pstate,
-                          const struct silofs_pstate *other);
+void silofs_prange_assign(struct silofs_prange       *prange,
+                          const struct silofs_prange *other);
 
-void silofs_pstate128b_htox(struct silofs_pstate128b   *pstate128,
-                            const struct silofs_pstate *pstate);
+void silofs_prange64b_htox(struct silofs_prange64b    *prange64,
+                           const struct silofs_prange *prange);
 
-void silofs_pstate128b_xtoh(const struct silofs_pstate128b *pstate128,
-                            struct silofs_pstate           *pstate);
+void silofs_prange64b_xtoh(const struct silofs_prange64b *prange64,
+                           struct silofs_prange          *prange);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -65,10 +63,13 @@ int silofs_pstore_dropall(struct silofs_pstore *pstore);
 int silofs_pstore_format(struct silofs_pstore *pstore);
 
 int silofs_pstore_open(struct silofs_pstore       *pstore,
-                       const struct silofs_pstate *pstate);
+                       const struct silofs_prange *prange);
 
 int silofs_pstore_close(struct silofs_pstore *pstore);
 
 int silofs_pstore_flush_dirty(struct silofs_pstore *pstore);
+
+void silofs_pstore_curr_prange(const struct silofs_pstore *pstore,
+                               struct silofs_prange       *out_prange);
 
 #endif /* SILOFS_PSTORE_H_ */

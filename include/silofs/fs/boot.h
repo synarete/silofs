@@ -36,7 +36,7 @@ struct silofs_bootrec {
 	struct silofs_uuid   uuid;
 	struct silofs_ivkey  main_ivkey;
 	struct silofs_ulink  sb_ulink;
-	struct silofs_pstate pstate;
+	struct silofs_prange prange;
 	enum silofs_bootf    flags;
 	int32_t              cipher_algo;
 	int32_t              cipher_mode;
@@ -147,11 +147,11 @@ void silofs_bootrec_set_ivkey(struct silofs_bootrec     *brec,
 
 void silofs_bootrec_gen_ivkey(struct silofs_bootrec *brec);
 
-void silofs_bootrec_pstate(const struct silofs_bootrec *brec,
-                           struct silofs_pstate        *out_pstate);
+void silofs_bootrec_prange(const struct silofs_bootrec *brec,
+                           struct silofs_prange        *out_prange);
 
-void silofs_bootrec_set_pstate(struct silofs_bootrec      *brec,
-                               const struct silofs_pstate *pstate);
+void silofs_bootrec_set_prange(struct silofs_bootrec      *brec,
+                               const struct silofs_prange *prange);
 
 void silofs_bootrec_sb_ulink(const struct silofs_bootrec *brec,
                              struct silofs_ulink         *out_ulink);

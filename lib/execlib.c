@@ -997,9 +997,12 @@ static void generate_main_ivkey(const struct silofs_fsenv *fsenv,
 }
 
 static void
-update_pstate(const struct silofs_fsenv *fsenv, struct silofs_bootrec *brec)
+update_prange(const struct silofs_fsenv *fsenv, struct silofs_bootrec *brec)
 {
-	silofs_bootrec_set_pstate(brec, &fsenv->fse.pstore->pstate);
+	struct silofs_prange prange;
+
+	silofs_pstore_curr_prange(fsenv->fse.pstore, &prange);
+	silofs_bootrec_set_prange(brec, &prange);
 }
 
 static int check_superblock(const struct silofs_fsenv *fsenv)
@@ -1540,7 +1543,7 @@ format_bootrec(const struct silofs_fsenv *fsenv, struct silofs_bootrec *brec)
 {
 	silofs_bootrec_setup(brec);
 	generate_main_ivkey(fsenv, brec);
-	update_pstate(fsenv, brec);
+	update_prange(fsenv, brec);
 	return 0;
 }
 
@@ -1611,7 +1614,7 @@ reload_root_lseg(struct silofs_fsenv *fsenv, const struct silofs_bootrec *brec)
 static int
 open_pstore(struct silofs_fsenv *fsenv, const struct silofs_bootrec *brec)
 {
-	return silofs_pstore_open(fsenv->fse.pstore, &brec->pstate);
+	return silofs_pstore_open(fsenv->fse.pstore, &brec->prange);
 }
 
 static int

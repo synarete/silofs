@@ -265,7 +265,7 @@ static bool equal_mntpath(const char *path1, const char *path2)
 
 static bool equal_path_by_stat(const char *path1, const struct stat *st2)
 {
-	struct stat st1;
+	struct stat st1 = { .st_size = -1 };
 	int err;
 
 	err = silofs_sys_stat(path1, &st1);
@@ -339,7 +339,7 @@ static int check_umount_path(const char *path, uid_t caller_uid, bool force)
 
 static int check_fuse_dev(const char *devname)
 {
-	struct stat st;
+	struct stat st = { .st_size = -1 };
 	int err;
 
 	err = silofs_sys_stat(devname, &st);
@@ -374,7 +374,7 @@ static int open_fuse_dev(const char *devname, int *out_fd)
 static int format_mount_data(const struct silofs_mntparams *mntp, int fd,
                              char *dat, int dat_size)
 {
-	size_t len;
+	size_t len = 0;
 	int ret;
 
 	ret = snprintf(dat, (size_t)dat_size,
@@ -392,13 +392,19 @@ static int format_mount_data(const struct silofs_mntparams *mntp, int fd,
 	return 0;
 }
 
+/*
+ * TODO-0059: Switch to modern Linux APIs
+ *
+ * Use fd-base mount syscalls (open_tree, mount_setattr etc.). See example code
+ * in 'man (2) mount_setattr'.
+ */
 static int do_mount_fuse_fs(const struct silofs_mntparams *mntp, int *out_fd)
 {
-	int err;
+	char data[256] = "";
 	const char *dev = "/dev/fuse";
 	const char *src = "silofs";
 	const char *fst = "fuse.silofs";
-	char data[256] = "";
+	int err;
 
 	err = open_fuse_dev(dev, out_fd);
 	if (err) {
@@ -636,8 +642,8 @@ static int do_recvmsg(const struct silofs_socket *sock, struct msghdr *msg)
 
 static int do_unpack_fd(struct msghdr *msg, int *out_fd)
 {
-	int err;
 	struct cmsghdr *cmsg;
+	int err;
 
 	cmsg = silofs_cmsg_firsthdr(msg);
 	if (cmsg != NULL) {
@@ -685,8 +691,8 @@ static int mntmsg_recv(const struct silofs_mntmsg *mmsg,
 static int mntmsg_recv2(const struct silofs_mntmsg *mmsg,
                         const struct silofs_socket *sock)
 {
-	int err;
 	int dummy_fd = -1;
+	int err;
 
 	err = mntmsg_recv(mmsg, sock, &dummy_fd);
 	close_fd(&dummy_fd);
@@ -790,7 +796,7 @@ mntsvc_recv_request(struct silofs_mntsvc *msvc, struct silofs_mntmsg *mmsg)
 static int mntsvc_check_mount_mntrule(const struct silofs_mntsvc *msvc,
                                       const struct silofs_mntparams *mntp)
 {
-	struct stat st;
+	struct stat st = { .st_size = -1 };
 	const struct silofs_mntrule *mrule = NULL;
 	const struct silofs_mntrules *mrules = NULL;
 	const uid_t uid_none = (uid_t)(-1);
@@ -870,7 +876,7 @@ static int mntsvc_check_mount(const struct silofs_mntsvc *msvc,
                               const struct silofs_mntparams *mntp)
 {
 	const struct ucred *peer_cred = &msvc->ms_peer_ucred;
-	const unsigned long sup_mnt_mask =
+	const uint64_t sup_mnt_mask =
 		(MS_LAZYTIME | MS_NOEXEC | MS_NOSUID | MS_NODEV | MS_RDONLY);
 	int err;
 
@@ -1013,7 +1019,7 @@ static int mntsvc_exec_handshake(struct silofs_mntsvc *msvc,
 static void
 mntsvc_exec_request(struct silofs_mntsvc *msvc, struct silofs_mntmsg *mmsg)
 {
-	struct silofs_mntparams mntp;
+	struct silofs_mntparams mntp = { .flags = 0 };
 	const enum silofs_mntcmd cmd = mntmsg_cmd(mmsg);
 	int err = 0;
 
@@ -1116,8 +1122,8 @@ static int mntsrv_setrules(struct silofs_mntsrv *msrv,
 
 static int mntsrv_open(struct silofs_mntsrv *msrv)
 {
-	int err;
 	struct silofs_socket *sock = &msrv->ms_lsock;
+	int err;
 
 	err = silofs_socket_open(sock);
 	if (err) {

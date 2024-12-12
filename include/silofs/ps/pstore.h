@@ -21,7 +21,7 @@
 #include <silofs/str.h>
 #include <silofs/addr.h>
 #include <silofs/ps/repo.h>
-#include <silofs/ps/bcache.h>
+#include <silofs/ps/pcache.h>
 
 struct silofs_prange {
 	struct silofs_pvid pvid;
@@ -37,7 +37,7 @@ struct silofs_pstate {
 
 struct silofs_pstore {
 	struct silofs_repo  *repo;
-	struct silofs_bcache bcache;
+	struct silofs_pcache pcache;
 	struct silofs_pstate pstate;
 };
 

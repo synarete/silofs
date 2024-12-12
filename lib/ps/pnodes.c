@@ -44,6 +44,12 @@ static void cpn_set_self_paddr(struct silofs_chkpt_node *cpn,
 	silofs_paddr48b_htox(&cpn->cpn_self_paddr, paddr);
 }
 
+static void cpn_btree_root(const struct silofs_chkpt_node *cpn,
+                           struct silofs_paddr *out_paddr)
+{
+	silofs_paddr48b_xtoh(&cpn->cpn_btree_root, out_paddr);
+}
+
 static void cpn_set_btree_root(struct silofs_chkpt_node *cpn,
                                const struct silofs_paddr *paddr)
 {
@@ -79,6 +85,7 @@ cpn_init(struct silofs_chkpt_node *cpn, const struct silofs_paddr *paddr)
 	cpn_set_self_paddr(cpn, paddr);
 	cpn_reset_btree_root(cpn);
 	cpn_set_flags(cpn, SILOFS_PNODEF_NONE);
+	cpn_add_flags(cpn, SILOFS_PNODEF_META);
 }
 
 static void cpn_fini(struct silofs_chkpt_node *cpn)
@@ -696,18 +703,6 @@ void silofs_cpi_set_dq(struct silofs_chkpt_info *cpi, struct silofs_dirtyq *dq)
 	pni_set_dq(&cpi->cp_pni, dq);
 }
 
-void silofs_cpi_mark_meta(struct silofs_chkpt_info *cpi)
-{
-	cpn_add_flags(cpi->cp, SILOFS_PNODEF_META);
-	silofs_cpi_dirtify(cpi);
-}
-
-void silofs_cpi_mark_data(struct silofs_chkpt_info *cpi)
-{
-	cpn_add_flags(cpi->cp, SILOFS_PNODEF_DATA);
-	silofs_cpi_dirtify(cpi);
-}
-
 void silofs_cpi_dirtify(struct silofs_chkpt_info *cpi)
 {
 	silofs_pni_dirtify(&cpi->cp_pni);
@@ -716,6 +711,19 @@ void silofs_cpi_dirtify(struct silofs_chkpt_info *cpi)
 void silofs_cpi_undirtify(struct silofs_chkpt_info *cpi)
 {
 	silofs_pni_undirtify(&cpi->cp_pni);
+}
+
+void silofs_cpi_btree_root(const struct silofs_chkpt_info *cpi,
+                           struct silofs_paddr *out_paddr)
+{
+	cpn_btree_root(cpi->cp, out_paddr);
+}
+
+void silofs_cpi_set_btree_root(struct silofs_chkpt_info *cpi,
+                               const struct silofs_paddr *paddr)
+{
+	cpn_set_btree_root(cpi->cp, paddr);
+	silofs_cpi_dirtify(cpi);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

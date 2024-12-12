@@ -365,8 +365,7 @@ enum silofs_ptype {
 enum silofs_pnodef {
 	SILOFS_PNODEF_NONE   = 0x00,
 	SILOFS_PNODEF_META   = 0x01,
-	SILOFS_PNODEF_DATA   = 0x02,
-	SILOFS_PNODEF_BTROOT = 0x04,
+	SILOFS_PNODEF_BTROOT = 0x02,
 };
 
 /* logical-elements types */

@@ -67,13 +67,15 @@ silofs_cpi_from_pni(const struct silofs_pnode_info *pni);
 void silofs_cpi_set_dq(struct silofs_chkpt_info *cpi,
                        struct silofs_dirtyq     *dq);
 
-void silofs_cpi_mark_meta(struct silofs_chkpt_info *cpi);
-
-void silofs_cpi_mark_data(struct silofs_chkpt_info *cpi);
-
 void silofs_cpi_dirtify(struct silofs_chkpt_info *cpi);
 
 void silofs_cpi_undirtify(struct silofs_chkpt_info *cpi);
+
+void silofs_cpi_btree_root(const struct silofs_chkpt_info *cpi,
+                           struct silofs_paddr            *out_paddr);
+
+void silofs_cpi_set_btree_root(struct silofs_chkpt_info  *cpi,
+                               const struct silofs_paddr *paddr);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

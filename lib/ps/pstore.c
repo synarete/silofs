@@ -176,11 +176,13 @@ static int pstate_assign_prange(struct silofs_pstate *pstate,
 static void
 pstate_next_chkpt(struct silofs_pstate *pstate, struct silofs_paddr *out_paddr)
 {
-	struct silofs_prange *prange = &pstate->prange;
+	prange_carve(&pstate->prange, SILOFS_PTYPE_CHKPT, out_paddr);
+}
 
-	silofs_assert_eq(prange->pos_in_curr, 0);
-
-	prange_carve(prange, SILOFS_PTYPE_CHKPT, out_paddr);
+static void pstate_last_chkpt(const struct silofs_pstate *pstate,
+                              struct silofs_paddr *out_paddr)
+{
+	prange_last_paddr(&pstate->prange, SILOFS_PTYPE_CHKPT, out_paddr);
 }
 
 static void pstate_next_btnode(struct silofs_pstate *pstate,
@@ -202,6 +204,12 @@ static bool pstate_has_paddr(const struct silofs_pstate *pstate,
 		ret = prange_has_paddr(&pstate->prange, paddr);
 	}
 	return ret;
+}
+
+static void pstate_btree_root(const struct silofs_pstate *pstate,
+                              struct silofs_paddr *out_paddr)
+{
+	paddr_assign(out_paddr, &pstate->btree_root);
 }
 
 static void pstate_update_btree_root(struct silofs_pstate *pstate,
@@ -286,12 +294,6 @@ static int pstore_commit_chkpt(const struct silofs_pstore *pstore,
 	return 0;
 }
 
-static int pstore_stage_chkpt(const struct silofs_pstore *pstore,
-                              const struct silofs_chkpt_info *cpi)
-{
-	return pstore_load_chkpt(pstore, cpi);
-}
-
 static int pstore_create_cached_cpi(struct silofs_pstore *pstore,
                                     const struct silofs_paddr *paddr,
                                     struct silofs_chkpt_info **out_cpi)
@@ -307,13 +309,42 @@ static int pstore_create_cached_cpi(struct silofs_pstore *pstore,
 	return 0;
 }
 
-static int pstore_format_pseg_of(struct silofs_pstore *pstore,
-                                 const struct silofs_paddr *paddr,
-                                 struct silofs_chkpt_info **out_cpi)
+static int pstore_require_pseg(struct silofs_pstore *pstore, bool create,
+                               const struct silofs_psid *psid)
+
 {
 	int err;
 
-	err = silofs_repo_create_pseg(pstore->repo, &paddr->psid);
+	if (create) {
+		err = silofs_repo_create_pseg(pstore->repo, psid);
+	} else {
+		err = silofs_repo_stage_pseg(pstore->repo, psid);
+	}
+	return err;
+}
+
+static int pstore_require_pseg_of(struct silofs_pstore *pstore, bool create,
+                                  const struct silofs_paddr *paddr)
+{
+	return pstore_require_pseg(pstore, create, &paddr->psid);
+}
+
+static void pstore_update_chkpt(const struct silofs_pstore *pstore,
+                                struct silofs_chkpt_info *cpi)
+{
+	struct silofs_paddr btree_root;
+
+	pstate_btree_root(&pstore->pstate, &btree_root);
+	silofs_cpi_set_btree_root(cpi, &btree_root);
+}
+
+static int pstore_spawn_chkpt(struct silofs_pstore *pstore, bool create,
+                              const struct silofs_paddr *paddr,
+                              struct silofs_chkpt_info **out_cpi)
+{
+	int err;
+
+	err = pstore_require_pseg_of(pstore, create, paddr);
 	if (err) {
 		return err;
 	}
@@ -321,6 +352,7 @@ static int pstore_format_pseg_of(struct silofs_pstore *pstore,
 	if (err) {
 		return err;
 	}
+	pstore_update_chkpt(pstore, *out_cpi);
 	return 0;
 }
 
@@ -330,9 +362,9 @@ static void pstore_evict_cached_cpi(struct silofs_pstore *pstore,
 	silofs_bcache_evict_cpi(&pstore->bcache, cpi);
 }
 
-static int pstore_stage_chkpt_at(struct silofs_pstore *pstore,
-                                 const struct silofs_paddr *paddr,
-                                 struct silofs_chkpt_info **out_cpi)
+static int pstore_stage_chkpt(struct silofs_pstore *pstore,
+                              const struct silofs_paddr *paddr,
+                              struct silofs_chkpt_info **out_cpi)
 {
 	struct silofs_chkpt_info *cpi = NULL;
 	int err;
@@ -341,33 +373,20 @@ static int pstore_stage_chkpt_at(struct silofs_pstore *pstore,
 	if (err) {
 		return err;
 	}
+	err = pstore_require_pseg_of(pstore, false, paddr);
+	if (err) {
+		return err;
+	}
 	err = pstore_create_cached_cpi(pstore, paddr, &cpi);
 	if (err) {
 		return err;
 	}
-	err = pstore_stage_chkpt(pstore, cpi);
+	err = pstore_load_chkpt(pstore, cpi);
 	if (err) {
 		pstore_evict_cached_cpi(pstore, cpi);
 		return err;
 	}
 	*out_cpi = cpi;
-	return 0;
-}
-
-static int pstore_stage_pseg_of(struct silofs_pstore *pstore,
-                                const struct silofs_paddr *paddr)
-{
-	struct silofs_chkpt_info *cpi = NULL;
-	int err;
-
-	err = silofs_repo_stage_pseg(pstore->repo, &paddr->psid);
-	if (err) {
-		return err;
-	}
-	err = pstore_stage_chkpt_at(pstore, paddr, &cpi);
-	if (err) {
-		return err;
-	}
 	return 0;
 }
 
@@ -390,9 +409,8 @@ static int pstore_save_btnode(const struct silofs_pstore *pstore,
 	return silofs_repo_save_pobj(pstore->repo, bti_paddr(bti), &rov);
 }
 
-#if 0
 static int pstore_load_btnode(const struct silofs_pstore *pstore,
-			      const struct silofs_btnode_info *bti)
+                              const struct silofs_btnode_info *bti)
 {
 	const struct silofs_rwvec rwv = {
 		.rwv_base = bti->bn,
@@ -401,7 +419,6 @@ static int pstore_load_btnode(const struct silofs_pstore *pstore,
 
 	return silofs_repo_load_pobj(pstore->repo, bti_paddr(bti), &rwv);
 }
-#endif
 
 static int pstore_commit_btnode(const struct silofs_pstore *pstore,
                                 struct silofs_btnode_info *bti)
@@ -431,12 +448,6 @@ static int pstore_create_cached_bti(struct silofs_pstore *pstore,
 	return 0;
 }
 
-static int pstore_require_pseg_of(struct silofs_pstore *pstore,
-                                  const struct silofs_paddr *paddr)
-{
-	return silofs_repo_stage_pseg(pstore->repo, &paddr->psid);
-}
-
 static int pstore_create_btree_root_at(struct silofs_pstore *pstore,
                                        const struct silofs_paddr *paddr)
 {
@@ -451,13 +462,13 @@ static int pstore_create_btree_root_at(struct silofs_pstore *pstore,
 	return 0;
 }
 
-static int pstore_format_btree_root(struct silofs_pstore *pstore)
+static int pstore_spawn_btree_root(struct silofs_pstore *pstore)
 {
 	struct silofs_paddr paddr;
 	int err;
 
 	pstate_next_btnode(&pstore->pstate, &paddr);
-	err = pstore_require_pseg_of(pstore, &paddr);
+	err = pstore_require_pseg_of(pstore, false, &paddr);
 	if (err) {
 		return err;
 	}
@@ -469,30 +480,64 @@ static int pstore_format_btree_root(struct silofs_pstore *pstore)
 	return 0;
 }
 
-static int pstore_format_pseg(struct silofs_pstore *pstore)
+static void pstore_evict_cached_bti(struct silofs_pstore *pstore,
+                                    struct silofs_btnode_info *bti)
 {
-	struct silofs_paddr paddr;
-	struct silofs_chkpt_info *cpi = NULL;
+	silofs_bcache_evict_bti(&pstore->bcache, bti);
+}
+
+static int pstore_stage_btnode(struct silofs_pstore *pstore,
+                               const struct silofs_paddr *paddr,
+                               struct silofs_btnode_info **out_bti)
+{
+	struct silofs_btnode_info *bti = NULL;
 	int err;
 
-	pstate_next_chkpt(&pstore->pstate, &paddr);
-	err = pstore_format_pseg_of(pstore, &paddr, &cpi);
+	err = pstore_validate_paddr(pstore, paddr);
 	if (err) {
 		return err;
 	}
-	silofs_cpi_mark_meta(cpi);
+	err = pstore_require_pseg_of(pstore, false, paddr);
+	if (err) {
+		return err;
+	}
+	err = pstore_create_cached_bti(pstore, paddr, &bti);
+	if (err) {
+		return err;
+	}
+	err = pstore_load_btnode(pstore, bti);
+	if (err) {
+		pstore_evict_cached_bti(pstore, bti);
+		return err;
+	}
+	*out_bti = bti;
 	return 0;
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static int pstore_spawn_next_chkpt(struct silofs_pstore *pstore)
+{
+	struct silofs_paddr paddr;
+	struct silofs_chkpt_info *cpi = NULL;
+
+	pstate_next_chkpt(&pstore->pstate, &paddr);
+	return pstore_spawn_chkpt(pstore, paddr.off == 0, &paddr, &cpi);
 }
 
 int silofs_pstore_format(struct silofs_pstore *pstore)
 {
 	int err;
 
-	err = pstore_format_pseg(pstore);
+	err = pstore_spawn_next_chkpt(pstore);
 	if (err) {
 		return err;
 	}
-	err = pstore_format_btree_root(pstore);
+	err = pstore_spawn_btree_root(pstore);
+	if (err) {
+		return err;
+	}
+	err = pstore_spawn_next_chkpt(pstore);
 	if (err) {
 		return err;
 	}
@@ -503,22 +548,49 @@ int silofs_pstore_format(struct silofs_pstore *pstore)
 	return 0;
 }
 
-static int pstore_stage_meta_pseg(struct silofs_pstore *pstore)
+static int pstore_update_btree_root_by(struct silofs_pstore *pstore,
+                                       const struct silofs_chkpt_info *cpi)
 {
-	struct silofs_paddr paddr;
-	const struct silofs_prange *prange = &pstore->pstate.prange;
+	struct silofs_paddr btree_root;
 
-	prange_last_paddr(prange, SILOFS_PTYPE_CHKPT, &paddr);
-	return pstore_stage_pseg_of(pstore, &paddr);
+	silofs_cpi_btree_root(cpi, &btree_root);
+	if (btree_root.ptype != SILOFS_PTYPE_BTNODE) {
+		return -SILOFS_EFSCORRUPTED;
+	}
+	pstate_update_btree_root(&pstore->pstate, &btree_root);
+	return 0;
 }
 
-static int pstore_stage_data_pseg(struct silofs_pstore *pstore)
+static int pstore_stage_last_chkpt(struct silofs_pstore *pstore)
 {
 	struct silofs_paddr paddr;
-	const struct silofs_prange *prange = &pstore->pstate.prange;
+	struct silofs_chkpt_info *cpi = NULL;
+	int err;
 
-	prange_last_paddr(prange, SILOFS_PTYPE_CHKPT, &paddr);
-	return pstore_stage_pseg_of(pstore, &paddr);
+	pstate_last_chkpt(&pstore->pstate, &paddr);
+	err = pstore_stage_chkpt(pstore, &paddr, &cpi);
+	if (err) {
+		return err;
+	}
+	err = pstore_update_btree_root_by(pstore, cpi);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+static int pstore_stage_btree_root(struct silofs_pstore *pstore)
+{
+	struct silofs_paddr paddr;
+	struct silofs_btnode_info *bti = NULL;
+	int err;
+
+	pstate_btree_root(&pstore->pstate, &paddr);
+	err = pstore_stage_btnode(pstore, &paddr, &bti);
+	if (err) {
+		return err;
+	}
+	return 0;
 }
 
 int silofs_pstore_open(struct silofs_pstore *pstore,
@@ -530,16 +602,14 @@ int silofs_pstore_open(struct silofs_pstore *pstore,
 	if (err) {
 		return err;
 	}
-	err = pstore_stage_meta_pseg(pstore);
+	err = pstore_stage_last_chkpt(pstore);
 	if (err) {
 		return err;
 	}
-	err = pstore_stage_data_pseg(pstore);
+	err = pstore_stage_btree_root(pstore);
 	if (err) {
 		return err;
 	}
-
-	/* TODO: Complete me */
 	return 0;
 }
 

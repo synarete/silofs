@@ -288,8 +288,8 @@ static void validate_persistent_types_alignment3(void)
 	REQUIRE_OFFSET64(struct silofs_inode_dir, d_seed, 8);
 	REQUIRE_OFFSET64(struct silofs_inode_dir, d_ndents, 16);
 	REQUIRE_OFFSET64(struct silofs_dir_entry, de_ino, 0);
-	REQUIRE_OFFSET64(struct silofs_dir_entry, de_name_hash_lo, 8);
-	REQUIRE_OFFSET32(struct silofs_dir_entry, de_name_len_dt, 12);
+	REQUIRE_OFFSET64(struct silofs_dir_entry, de_name_hash_dt, 8);
+	REQUIRE_OFFSET32(struct silofs_dir_entry, de_name_len, 12);
 	REQUIRE_OFFSETXX(struct silofs_dir_entry, de_name_pos, 14);
 	REQUIRE_OFFSET64(struct silofs_dtree_node, dn_hdr, 0);
 	REQUIRE_OFFSET64(struct silofs_dtree_node, dn_child, 64);

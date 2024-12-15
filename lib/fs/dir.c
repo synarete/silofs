@@ -253,6 +253,9 @@ static ssize_t dtn_index_to_isize(silofs_dtn_index_t dtn_index_last)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+#define DE_NAME_HASH_SHIFT 24
+#define DE_NAME_HASH_MASK ((1U << DE_NAME_HASH_SHIFT) - 1)
+
 static struct silofs_dir_entry *de_unconst(const struct silofs_dir_entry *de)
 {
 	union {
@@ -272,40 +275,39 @@ static void de_set_ino(struct silofs_dir_entry *de, ino_t ino)
 	de->de_ino = silofs_cpu_to_ino(ino);
 }
 
-static uint32_t de_name_hash_lo(const struct silofs_dir_entry *de)
+static uint32_t de_name_hash(const struct silofs_dir_entry *de)
 {
-	return silofs_le32_to_cpu(de->de_name_hash_lo);
-}
+	const uint32_t name_hash_dt = silofs_le32_to_cpu(de->de_name_hash_dt);
 
-static void de_set_name_hash_lo(struct silofs_dir_entry *de, uint32_t hash)
-{
-	de->de_name_hash_lo = silofs_cpu_to_le32(hash);
+	return name_hash_dt & DE_NAME_HASH_MASK;
 }
 
 static mode_t de_dt(const struct silofs_dir_entry *de)
 {
-	const uint64_t name_len_dt = silofs_le16_to_cpu(de->de_name_len_dt);
+	const uint32_t name_hash_dt = silofs_le32_to_cpu(de->de_name_hash_dt);
 
-	return (mode_t)(name_len_dt & 0x3F);
+	return (mode_t)(name_hash_dt >> DE_NAME_HASH_SHIFT);
+}
+
+static void
+de_set_name_hash_dt(struct silofs_dir_entry *de, uint32_t hash, mode_t dt)
+{
+	const uint32_t dt_shifted = (uint32_t)dt << DE_NAME_HASH_SHIFT;
+	const uint32_t name_hash_dt = dt_shifted | (hash & DE_NAME_HASH_MASK);
+
+	de->de_name_hash_dt = silofs_cpu_to_le32(name_hash_dt);
 }
 
 static size_t de_name_len(const struct silofs_dir_entry *de)
 {
-	const uint64_t name_len_dt = silofs_le16_to_cpu(de->de_name_len_dt);
-
-	return (size_t)(name_len_dt >> 6);
+	return silofs_le16_to_cpu(de->de_name_len);
 }
 
-static void
-de_set_name_len_dt(struct silofs_dir_entry *de, size_t name_len, mode_t dt)
+static void de_set_name_len(struct silofs_dir_entry *de, size_t name_len)
 {
-	uint32_t name_len_dt;
-
 	silofs_assert_le(name_len, SILOFS_NAME_MAX);
-	silofs_assert_lt(dt, 0xF);
 
-	name_len_dt = ((uint32_t)name_len << 4) | ((uint32_t)dt & 0xF);
-	de->de_name_len_dt = silofs_cpu_to_le16((uint16_t)name_len_dt);
+	de->de_name_len = silofs_cpu_to_le16((uint16_t)name_len);
 }
 
 static size_t de_name_pos(const struct silofs_dir_entry *de)
@@ -326,9 +328,10 @@ static bool de_has_name_len(const struct silofs_dir_entry *de, size_t nlen)
 static bool
 de_has_name_hash_lo(const struct silofs_dir_entry *de, uint64_t name_hash)
 {
-	const uint32_t name_hash_lo = de_name_hash_lo(de);
+	const uint32_t nhash = de_name_hash(de);
+	const uint32_t nhash_lo = (uint32_t)name_hash & DE_NAME_HASH_MASK;
 
-	return (name_hash_lo == (uint32_t)name_hash);
+	return (nhash == nhash_lo);
 }
 
 static size_t de_data_size_of(const struct silofs_dir_entry *de, size_t nlen)
@@ -340,8 +343,8 @@ static void de_assign_meta(struct silofs_dir_entry *de, ino_t ino, mode_t dt,
                            uint64_t hash, size_t name_len, size_t name_pos)
 {
 	de_set_ino(de, ino);
-	de_set_name_hash_lo(de, (uint32_t)hash);
-	de_set_name_len_dt(de, name_len, dt);
+	de_set_name_hash_dt(de, (uint32_t)hash, dt);
+	de_set_name_len(de, name_len);
 	de_set_name_pos(de, name_pos);
 }
 
@@ -353,7 +356,8 @@ static bool de_isactive(const struct silofs_dir_entry *de)
 static void de_deactivate(struct silofs_dir_entry *de)
 {
 	de_set_ino(de, SILOFS_INO_NULL);
-	de_set_name_len_dt(de, 0, 0);
+	de_set_name_hash_dt(de, 0, 0);
+	de_set_name_len(de, 0);
 	de_set_name_pos(de, 0);
 }
 

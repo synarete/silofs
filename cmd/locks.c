@@ -16,11 +16,12 @@
  */
 #define _GNU_SOURCE 1
 #include <fcntl.h>
+#include <limits.h>
 #include "cmd.h"
 
 struct cmd_lockfile_ctx {
-	char lockname[SILOFS_NAME_MAX + 1];
-	char tempname[SILOFS_NAME_MAX + 1];
+	char lockname[NAME_MAX + 1];
+	char tempname[NAME_MAX + 1];
 	char data[256];
 	const char *repodir;
 	const char *name;

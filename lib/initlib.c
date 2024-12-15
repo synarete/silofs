@@ -231,7 +231,6 @@ static void validate_persistent_types_alignment2(void)
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_version, 24);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_sw_version, 64);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_fs_uuid, 128);
-	REQUIRE_OFFSET64(struct silofs_super_block, sb_name, 256);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_fs_birth_tm, 512);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_lv_birth_tm, 576);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_self_uaddr, 640);
@@ -243,6 +242,7 @@ static void validate_persistent_types_alignment2(void)
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_rootivs, 3072);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_space_stats_curr, 4096);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_space_stats_base, 5120);
+	REQUIRE_OFFSET64(struct silofs_super_block, sb_name, 7680);
 	REQUIRE_OFFSET64(struct silofs_space_stats, sp_btime, 0);
 	REQUIRE_OFFSET64(struct silofs_space_stats, sp_ctime, 8);
 	REQUIRE_OFFSET64(struct silofs_space_stats, sp_capacity, 16);
@@ -324,7 +324,7 @@ static void validate_persistent_types_alignment4(void)
 static void validate_ioctl_types_size(void)
 {
 	REQUIRE_SIZEOF(struct silofs_ioc_query, 2048);
-	REQUIRE_SIZEOF(struct silofs_ioc_clone, 512);
+	REQUIRE_SIZEOF(struct silofs_ioc_clone, 1024);
 	REQUIRE_SIZEOF_LE(struct silofs_ioc_query, SILOFS_IOC_SIZE_MAX);
 	REQUIRE_SIZEOF_LE(struct silofs_ioc_clone, SILOFS_IOC_SIZE_MAX);
 }
@@ -356,7 +356,7 @@ static void validate_defs_consistency(void)
 
 static void validate_external_constants(void)
 {
-	REQUIRE_EQ(SILOFS_NAME_MAX, NAME_MAX);
+	REQUIRE_GE(SILOFS_NAME_MAX, NAME_MAX);
 	REQUIRE_EQ(SILOFS_PATH_MAX, PATH_MAX);
 	REQUIRE_GE(SILOFS_LINK_MAX, LINK_MAX);
 	REQUIRE_GE(SILOFS_NAME_MAX, XATTR_NAME_MAX);

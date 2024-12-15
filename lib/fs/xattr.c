@@ -21,6 +21,7 @@
 #include <sys/types.h>
 #include <sys/xattr.h>
 #include <linux/xattr.h>
+#include <limits.h>
 
 #define XATTR_DATA_MAX (SILOFS_NAME_MAX + 1 + SILOFS_XATTR_VALUE_MAX)
 
@@ -642,11 +643,12 @@ xac_check_xattr_name(const struct silofs_xattr_ctx *xa_ctx, int w_mode)
 {
 	const struct silofs_namestr *name = xa_ctx->name;
 	const struct silofs_xattr_prefix *xap = NULL;
+	const size_t namelen_max = min(SILOFS_NAME_MAX, NAME_MAX);
 
 	if (!name) {
 		return 0;
 	}
-	if (name->sv.len > SILOFS_NAME_MAX) {
+	if (name->sv.len > namelen_max) {
 		return -SILOFS_ENAMETOOLONG;
 	}
 	xap = search_prefix(name);

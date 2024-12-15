@@ -51,7 +51,7 @@
 #define SILOFS_PASSWORD_MAX (255)
 
 /* max size for names (not including null terminator) */
-#define SILOFS_NAME_MAX (255)
+#define SILOFS_NAME_MAX (511)
 
 /* max size for file-system names (not including null terminator) */
 #define SILOFS_FSNAME_MAX (127)
@@ -707,8 +707,7 @@ struct silofs_super_block {
 	uint8_t                   sb_reserved2[23];
 	uint8_t                   sb_sw_version[64];
 	struct silofs_uuid        sb_fs_uuid;
-	uint8_t                   sb_reserved3[112];
-	struct silofs_name        sb_name;
+	uint8_t                   sb_reserved3[368];
 	/* 512..1K */
 	struct silofs_tm64b       sb_fs_birth_tm;
 	struct silofs_tm64b       sb_lv_birth_tm;
@@ -727,8 +726,9 @@ struct silofs_super_block {
 	/* 4K..6K */
 	struct silofs_space_stats sb_space_stats_curr;
 	struct silofs_space_stats sb_space_stats_base;
-	/* 7K..8K */
-	uint8_t                   sb_reserved6[2048];
+	/* 6K..8K */
+	uint8_t                   sb_reserved6[1536];
+	struct silofs_name        sb_name;
 } silofs_attr_aligned64;
 
 struct silofs_spmap_ref {

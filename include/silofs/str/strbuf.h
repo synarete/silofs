@@ -23,7 +23,7 @@
 
 /* fixed-size string-buffer (typically, for names) */
 struct silofs_strbuf {
-	char str[256];
+	char str[512];
 };
 
 void silofs_strbuf_init(struct silofs_strbuf *sbuf);

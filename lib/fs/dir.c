@@ -299,9 +299,12 @@ static size_t de_name_len(const struct silofs_dir_entry *de)
 static void
 de_set_name_len_dt(struct silofs_dir_entry *de, size_t name_len, mode_t dt)
 {
-	const uint64_t name_len_dt = ((uint64_t)name_len << 6) |
-	                             ((uint64_t)dt & 0x3F);
+	uint32_t name_len_dt;
 
+	silofs_assert_le(name_len, SILOFS_NAME_MAX);
+	silofs_assert_lt(dt, 0xF);
+
+	name_len_dt = ((uint32_t)name_len << 4) | ((uint32_t)dt & 0xF);
 	de->de_name_len_dt = silofs_cpu_to_le16((uint16_t)name_len_dt);
 }
 
@@ -356,10 +359,10 @@ static void de_deactivate(struct silofs_dir_entry *de)
 
 static bool de_isvalid(const struct silofs_dir_entry *de)
 {
-	ino_t ino;
-	mode_t dt;
 	size_t name_len;
 	size_t name_pos;
+	ino_t ino;
+	mode_t dt;
 
 	ino = de_ino(de);
 	if (!ino_isvalid(ino)) {
@@ -1011,7 +1014,13 @@ static void dei_ino_dt(const struct silofs_dir_entry_info *dei,
 
 static mode_t ii_dtype_of(const struct silofs_inode_info *ii)
 {
-	return IFTODT(ii_mode(ii));
+	const mode_t mode = ii_mode(ii);
+	const mode_t dtype = IFTODT(mode);
+
+	silofs_assert_gt(dtype, 0);
+	silofs_assert_lt(dtype, 16);
+
+	return dtype;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1262,7 +1271,9 @@ static int dir_check_utf8_name(const struct silofs_inode_info *dir_ii,
 int silofs_dir_check_name(const struct silofs_inode_info *dir_ii,
                           const struct silofs_namestr *nstr)
 {
-	if (nstr->sv.len > SILOFS_NAME_MAX) {
+	const size_t namelen_max = min(SILOFS_NAME_MAX, NAME_MAX);
+
+	if (nstr->sv.len > namelen_max) {
 		return -SILOFS_ENAMETOOLONG;
 	}
 	if (!silofs_dir_has_flags(dir_ii, SILOFS_DIRF_NAME_UTF8)) {
@@ -1714,13 +1725,15 @@ static int dirc_lookup_by_name(const struct silofs_dir_ctx *d_ctx,
 
 static int dirc_check_self_and_name(const struct silofs_dir_ctx *d_ctx)
 {
+	const size_t namelen_max = min(SILOFS_NAME_MAX, NAME_MAX);
+
 	if (!ii_isdir(d_ctx->dir_ii)) {
 		return -SILOFS_ENOTDIR;
 	}
 	if (d_ctx->name->sv.len == 0) {
 		return -SILOFS_EINVAL;
 	}
-	if (d_ctx->name->sv.len > SILOFS_NAME_MAX) {
+	if (d_ctx->name->sv.len > namelen_max) {
 		return -SILOFS_ENAMETOOLONG;
 	}
 	return 0;

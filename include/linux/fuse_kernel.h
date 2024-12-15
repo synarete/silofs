@@ -72,7 +72,7 @@
  *
  * 7.8:
  *  - add lock_owner and flags fields to fuse_release_in
- *  - add FUSE_BMAP message
+ *  - add FUSE_ MAP message
  *  - add FUSE_DESTROY message
  *
  * 7.9:

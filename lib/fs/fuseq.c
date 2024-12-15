@@ -188,13 +188,13 @@ struct silofs_fuseq_fsync_in {
 struct silofs_fuseq_setxattr1_in {
 	struct fuse_in_header hdr;
 	struct fuse_setxattr1_in arg;
-	char name_value[SILOFS_NAME_MAX + 1 + SILOFS_SYMLNK_MAX];
+	char name_value[SILOFS_NAME_MAX + 1 + SILOFS_XATTR_VALUE_MAX];
 };
 
 struct silofs_fuseq_setxattr_in {
 	struct fuse_in_header hdr;
 	struct fuse_setxattr_in arg;
-	char name_value[SILOFS_NAME_MAX + 1 + SILOFS_SYMLNK_MAX];
+	char name_value[SILOFS_NAME_MAX + 1 + SILOFS_XATTR_VALUE_MAX];
 };
 
 struct silofs_fuseq_getxattr_in {
@@ -350,7 +350,7 @@ struct silofs_fuseq_in {
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 struct silofs_fuseq_diter {
-	char buf[8 * SILOFS_UKILO];
+	uint8_t buf[8192];
 	struct silofs_strbuf de_name;
 	struct silofs_readdir_ctx rd_ctx;
 	struct silofs_stat de_attr;
@@ -1512,7 +1512,7 @@ emit_direntplus(void *buf, size_t bsz, const char *name, size_t nlen,
 
 static int emit_dirent(struct silofs_fuseq_diter *di, loff_t off)
 {
-	char *buf = di->buf + di->len;
+	uint8_t *buf = di->buf + di->len;
 	const size_t rem = di->bsz - di->len;
 	const ino_t ino = di->de_ino;
 	const size_t nlen = di->de_nlen;
@@ -5543,27 +5543,27 @@ void silofs_guarantee_fuse_proto(void)
 	REQUIRE_BASEOF(struct silofs_fuseq_init_in, arg);
 	REQUIRE_SIZEOF(struct silofs_fuseq_setattr_in, 128);
 	REQUIRE_BASEOF(struct silofs_fuseq_setattr_in, arg);
-	REQUIRE_SIZEOF(struct silofs_fuseq_lookup_in, 296);
+	REQUIRE_SIZEOF(struct silofs_fuseq_lookup_in, 552);
 	REQUIRE_BASEOF(struct silofs_fuseq_lookup_in, name);
 	REQUIRE_SIZEOF(struct silofs_fuseq_forget_in, 48);
 	REQUIRE_BASEOF(struct silofs_fuseq_forget_in, arg);
 	REQUIRE_SIZEOF(struct silofs_fuseq_getattr_in, 56);
 	REQUIRE_BASEOF(struct silofs_fuseq_getattr_in, arg);
-	REQUIRE_SIZEOF(struct silofs_fuseq_symlink_in, 4392);
+	REQUIRE_SIZEOF(struct silofs_fuseq_symlink_in, 4648);
 	REQUIRE_BASEOF(struct silofs_fuseq_symlink_in, name_target);
-	REQUIRE_SIZEOF(struct silofs_fuseq_mknod_in, 312);
+	REQUIRE_SIZEOF(struct silofs_fuseq_mknod_in, 568);
 	REQUIRE_BASEOF(struct silofs_fuseq_mknod_in, arg);
-	REQUIRE_SIZEOF(struct silofs_fuseq_mkdir_in, 304);
+	REQUIRE_SIZEOF(struct silofs_fuseq_mkdir_in, 560);
 	REQUIRE_BASEOF(struct silofs_fuseq_mkdir_in, arg);
 	REQUIRE_OFFSET(struct silofs_fuseq_mkdir_in, name, 48);
-	REQUIRE_SIZEOF(struct silofs_fuseq_unlink_in, 296);
+	REQUIRE_SIZEOF(struct silofs_fuseq_unlink_in, 552);
 	REQUIRE_BASEOF(struct silofs_fuseq_unlink_in, name);
-	REQUIRE_SIZEOF(struct silofs_fuseq_rmdir_in, 296);
+	REQUIRE_SIZEOF(struct silofs_fuseq_rmdir_in, 552);
 	REQUIRE_BASEOF(struct silofs_fuseq_rmdir_in, name);
-	REQUIRE_SIZEOF(struct silofs_fuseq_rename_in, 560);
+	REQUIRE_SIZEOF(struct silofs_fuseq_rename_in, 1072);
 	REQUIRE_BASEOF(struct silofs_fuseq_rename_in, arg);
 	REQUIRE_OFFSET(struct silofs_fuseq_rename_in, name_newname, 48);
-	REQUIRE_SIZEOF(struct silofs_fuseq_link_in, 304);
+	REQUIRE_SIZEOF(struct silofs_fuseq_link_in, 560);
 	REQUIRE_BASEOF(struct silofs_fuseq_link_in, arg);
 	REQUIRE_OFFSET(struct silofs_fuseq_link_in, name, 48);
 	REQUIRE_SIZEOF(struct silofs_fuseq_open_in, 48);
@@ -5574,18 +5574,18 @@ void silofs_guarantee_fuse_proto(void)
 	REQUIRE_BASEOF(struct silofs_fuseq_fsync_in, arg);
 	REQUIRE_SIZEOF(struct silofs_fuseq_fsync_in, 56);
 	REQUIRE_BASEOF(struct silofs_fuseq_fsync_in, arg);
-	REQUIRE_SIZEOF(struct silofs_fuseq_setxattr1_in, 4400);
+	REQUIRE_SIZEOF(struct silofs_fuseq_setxattr1_in, 2608);
 	REQUIRE_BASEOF(struct silofs_fuseq_setxattr1_in, arg);
 	REQUIRE_OFFSET(struct silofs_fuseq_setxattr1_in, name_value, 48);
-	REQUIRE_SIZEOF(struct silofs_fuseq_setxattr_in, 4408);
+	REQUIRE_SIZEOF(struct silofs_fuseq_setxattr_in, 2616);
 	REQUIRE_BASEOF(struct silofs_fuseq_setxattr_in, arg);
 	REQUIRE_OFFSET(struct silofs_fuseq_setxattr_in, name_value, 56);
-	REQUIRE_SIZEOF(struct silofs_fuseq_getxattr_in, 304);
+	REQUIRE_SIZEOF(struct silofs_fuseq_getxattr_in, 560);
 	REQUIRE_BASEOF(struct silofs_fuseq_getxattr_in, arg);
 	REQUIRE_OFFSET(struct silofs_fuseq_getxattr_in, name, 48);
 	REQUIRE_SIZEOF(struct silofs_fuseq_listxattr_in, 48);
 	REQUIRE_BASEOF(struct silofs_fuseq_listxattr_in, arg);
-	REQUIRE_SIZEOF(struct silofs_fuseq_removexattr_in, 296);
+	REQUIRE_SIZEOF(struct silofs_fuseq_removexattr_in, 552);
 	REQUIRE_BASEOF(struct silofs_fuseq_removexattr_in, name);
 	REQUIRE_SIZEOF(struct silofs_fuseq_flush_in, 64);
 	REQUIRE_BASEOF(struct silofs_fuseq_flush_in, arg);
@@ -5599,7 +5599,7 @@ void silofs_guarantee_fuse_proto(void)
 	REQUIRE_BASEOF(struct silofs_fuseq_fsyncdir_in, arg);
 	REQUIRE_SIZEOF(struct silofs_fuseq_access_in, 48);
 	REQUIRE_BASEOF(struct silofs_fuseq_access_in, arg);
-	REQUIRE_SIZEOF(struct silofs_fuseq_create_in, 312);
+	REQUIRE_SIZEOF(struct silofs_fuseq_create_in, 568);
 	REQUIRE_BASEOF(struct silofs_fuseq_create_in, arg);
 	REQUIRE_OFFSET(struct silofs_fuseq_create_in, name, 56);
 	REQUIRE_SIZEOF(struct silofs_fuseq_interrupt_in, 48);
@@ -5609,7 +5609,7 @@ void silofs_guarantee_fuse_proto(void)
 	REQUIRE_SIZEOF(struct silofs_fuseq_ioctl_in, 4168);
 	REQUIRE_BASEOF(struct silofs_fuseq_ioctl_in, arg);
 	REQUIRE_OFFSET(struct silofs_fuseq_ioctl_in, buf, 72);
-	REQUIRE_SIZEOF(struct silofs_fuseq_rename2_in, 568);
+	REQUIRE_SIZEOF(struct silofs_fuseq_rename2_in, 1080);
 	REQUIRE_BASEOF(struct silofs_fuseq_rename2_in, arg);
 	REQUIRE_OFFSET(struct silofs_fuseq_rename2_in, name_newname, 56);
 	REQUIRE_SIZEOF(struct silofs_fuseq_lseek_in, 64);

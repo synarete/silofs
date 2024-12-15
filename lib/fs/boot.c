@@ -18,6 +18,7 @@
 #include <silofs/infra.h>
 #include <silofs/fs.h>
 #include <silofs/fs-private.h>
+#include <limits.h>
 
 static int check_ascii_fs_name(const struct silofs_namestr *nstr)
 {
@@ -50,10 +51,12 @@ static int check_ascii_fs_name(const struct silofs_namestr *nstr)
 
 static int check_name_len(const struct silofs_namestr *nstr)
 {
+	const size_t namelen_max = min(SILOFS_NAME_MAX, NAME_MAX);
+
 	if (nstr->sv.len == 0) {
 		return -SILOFS_EILLSTR;
 	}
-	if (nstr->sv.len > SILOFS_NAME_MAX) {
+	if (nstr->sv.len > namelen_max) {
 		return -SILOFS_ENAMETOOLONG;
 	}
 	return 0;

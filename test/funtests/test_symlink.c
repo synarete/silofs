@@ -181,7 +181,7 @@ static void fill_name(char *name, size_t lim, size_t idx)
 
 static void test_symlink_with_io_(struct ft_env *fte, size_t cnt)
 {
-	char name[SILOFS_NAME_MAX + 1] = "";
+	char name[NAME_MAX + 1] = "";
 	struct stat st = { .st_size = -1 };
 	char *symval = NULL;
 	char *buf = ft_new_buf_zeros(fte, 2 * cnt);

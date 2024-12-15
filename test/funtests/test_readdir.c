@@ -528,7 +528,7 @@ static void test_readdir_unlink_names_(struct ft_env *fte, size_t nlen)
 
 static void test_readdir_unlink_names(struct ft_env *fte)
 {
-	const size_t nlen[] = { SILOFS_NAME_MAX / 5, SILOFS_NAME_MAX };
+	const size_t nlen[] = { NAME_MAX / 5, NAME_MAX };
 
 	for (size_t i = 0; i < FT_ARRAY_SIZE(nlen); ++i) {
 		test_readdir_unlink_names_(fte, nlen[i]);

@@ -202,7 +202,7 @@ static void test_link_max(struct ft_env *fte)
  */
 static const char *make_name(struct ft_env *fte, char c, size_t len)
 {
-	char name[SILOFS_NAME_MAX + 1] = "";
+	char name[NAME_MAX + 1] = "";
 	size_t nlen;
 
 	nlen = (len < sizeof(name)) ? len : (sizeof(name) - 1);
@@ -220,7 +220,7 @@ static void test_link_similar_names(struct ft_env *fte)
 	const char *abc =
 		"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 	const size_t abc_len = ft_strlen(abc);
-	const size_t name_max = SILOFS_NAME_MAX;
+	const size_t name_max = NAME_MAX;
 	int fd = -1;
 
 	ft_mkdir(path0, 0750);

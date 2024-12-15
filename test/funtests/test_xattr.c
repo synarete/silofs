@@ -271,7 +271,7 @@ static void test_xattr_list(struct ft_env *fte)
  */
 static void test_xattr_any_(struct ft_env *fte, size_t valsz)
 {
-	char buf[SILOFS_NAME_MAX + 1] = "";
+	char buf[NAME_MAX + 1] = "";
 	void *vbuf = ft_new_buf_rands(fte, valsz + 1);
 	const void *value = ft_new_buf_rands(fte, valsz);
 	const char *path0 = ft_new_path_unique(fte);

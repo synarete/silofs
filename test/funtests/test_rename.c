@@ -508,8 +508,8 @@ static void test_rename_override(struct ft_env *fte)
  */
 static const char *make_name(struct ft_env *fte, size_t len, char ch)
 {
+	char str[NAME_MAX + 1] = "";
 	size_t nn;
-	char str[SILOFS_NAME_MAX + 1] = "";
 
 	nn = (len < sizeof(str)) ? len : (sizeof(str) - 1);
 	memset(str, ch, nn);
@@ -525,13 +525,13 @@ static const char *dup_name(struct ft_env *fte, const char *str)
 
 static void test_renameat_inplace(struct ft_env *fte)
 {
-	int fd = -1;
-	int dfd = -1;
-	const char ch = 'A';
 	const char *name1 = NULL;
 	const char *name2 = NULL;
 	const char *path = ft_new_path_unique(fte);
-	size_t count = SILOFS_NAME_MAX;
+	size_t count = NAME_MAX;
+	int fd = -1;
+	int dfd = -1;
+	const char ch = 'A';
 
 	ft_mkdir(path, 0700);
 	ft_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);
@@ -604,7 +604,7 @@ static void test_renameat_inplace_rw_(struct ft_env *fte, size_t cnt)
 static void test_renameat_inplace_rw(struct ft_env *fte)
 {
 	test_renameat_inplace_rw_(fte, 10);
-	test_renameat_inplace_rw_(fte, SILOFS_NAME_MAX);
+	test_renameat_inplace_rw_(fte, NAME_MAX);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -655,7 +655,7 @@ static void test_renameat_move_(struct ft_env *fte, size_t cnt)
 static void test_renameat_move(struct ft_env *fte)
 {
 	test_renameat_move_(fte, 11);
-	test_renameat_move_(fte, SILOFS_NAME_MAX);
+	test_renameat_move_(fte, NAME_MAX);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -727,7 +727,7 @@ static void test_renameat_exchange(struct ft_env *fte)
  */
 static char *make_lname(struct ft_env *fte, const char *prefix, size_t idx)
 {
-	char name[SILOFS_NAME_MAX + 1] = "";
+	char name[NAME_MAX + 1] = "";
 
 	snprintf(name, sizeof(name) - 1, "%s-%08lu", prefix, idx);
 	return ft_strdup(fte, name);

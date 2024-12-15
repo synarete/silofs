@@ -23,7 +23,7 @@ static void ut_rename_within_same_dir(struct ut_env *ute)
 	struct stat st = { .st_size = -1 };
 	const char *dname = UT_NAME;
 	const char *newname = NULL;
-	const size_t name_max = UT_NAME_MAX;
+	const size_t name_max = NAME_MAX;
 	const char *name = ut_randstr(ute, name_max);
 
 	ut_mkdir_at_root(ute, dname, &dino);
@@ -49,14 +49,14 @@ static void ut_rename_toggle_between_dirs(struct ut_env *ute)
 	ino_t src_dino = 0;
 	ino_t dst_dino = 0;
 	const char *dname = UT_NAME;
-	const char *name = ut_randstr(ute, UT_NAME_MAX);
+	const char *name = ut_randstr(ute, NAME_MAX);
 	const char *newname = NULL;
 	struct stat st = { .st_ino = 0 };
 
 	ut_mkdir_at_root(ute, dname, &dino1);
 	ut_mkdir2(ute, dino1, dname, &dino2);
 	ut_create_file(ute, dino2, name, &ino);
-	for (size_t i = 0; i < UT_NAME_MAX; ++i) {
+	for (size_t i = 0; i < NAME_MAX; ++i) {
 		newname = ut_randstr(ute, i + 1);
 		src_dino = (i & 1) ? dino1 : dino2;
 		dst_dino = (i & 1) ? dino2 : dino1;
@@ -78,7 +78,7 @@ static void ut_rename_replace_without_data(struct ut_env *ute)
 	ino_t dino1 = 0;
 	ino_t dino2 = 0;
 	ino_t base_dino = 0;
-	const size_t name_max = UT_NAME_MAX;
+	const size_t name_max = NAME_MAX;
 	const char *base_dname = UT_NAME;
 	const char *dname1 = ut_randstr(ute, name_max);
 	const char *dname2 = ut_randstr(ute, name_max);
@@ -122,7 +122,7 @@ static void ut_rename_replace_with_data(struct ut_env *ute)
 	void *buf1 = NULL;
 	void *buf2 = NULL;
 	const char *base_dname = UT_NAME;
-	const size_t name_max = UT_NAME_MAX;
+	const size_t name_max = NAME_MAX;
 
 	dname1 = ut_randstr(ute, name_max);
 	dname2 = ut_randstr(ute, name_max);
@@ -164,8 +164,8 @@ static void ut_rename_move_multi_(struct ut_env *ute, size_t cnt)
 	const char *base_dname = UT_NAME;
 	const char *name1 = NULL;
 	const char *name2 = NULL;
-	const char *dname1 = ut_randstr(ute, UT_NAME_MAX);
-	const char *dname2 = ut_randstr(ute, UT_NAME_MAX);
+	const char *dname1 = ut_randstr(ute, NAME_MAX);
+	const char *dname2 = ut_randstr(ute, NAME_MAX);
 	const ino_t root_ino = UT_ROOT_INO;
 
 	ut_getattr_dirsize(ute, root_ino, 0);

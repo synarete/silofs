@@ -595,7 +595,6 @@ void ut_expect_statvfs(const struct statvfs *stv1, const struct statvfs *stv2);
 #define UT_IOSIZE_MAX      SILOFS_IO_SIZE_MAX
 #define UT_FILEMAP_NCHILDS SILOFS_FILE_NODE_NCHILDS
 #define UT_ROOT_INO        SILOFS_INO_ROOT
-#define UT_NAME_MAX        SILOFS_NAME_MAX
 #define UT_NAME            __func__
 #define UT_NAME_AT         SILOFS_STR(__LINE__)
 #define UT_ARRAY_SIZE(x)   SILOFS_ARRAY_SIZE(x)

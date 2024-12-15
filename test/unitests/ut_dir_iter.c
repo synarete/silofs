@@ -246,7 +246,7 @@ static void ut_dir_iter_rand_names_(struct ut_env *ute, size_t name_len)
 
 static void ut_dir_iter_rand_names(struct ut_env *ute)
 {
-	const size_t name_len[] = { 10, 50, UT_NAME_MAX };
+	const size_t name_len[] = { 10, 50, NAME_MAX };
 
 	for (size_t i = 0; i < UT_ARRAY_SIZE(name_len); ++i) {
 		ut_dir_iter_rand_names_(ute, name_len[i]);

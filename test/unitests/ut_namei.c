@@ -183,7 +183,7 @@ static void ut_link_max(struct ut_env *ute)
 static const char *make_repeated_name(struct ut_env *ute, char c, size_t len)
 {
 	size_t nlen;
-	char name[UT_NAME_MAX + 1] = "";
+	char name[NAME_MAX + 1] = "";
 
 	nlen = (len < sizeof(name)) ? len : (sizeof(name) - 1);
 	memset(name, c, nlen);
@@ -200,7 +200,7 @@ static void ut_link_similar_names(struct ut_env *ute)
 	const char *abc = "abcdefghijklmnopqrstuvwxyz"
 			  "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 	const size_t abc_len = strlen(abc);
-	const size_t name_max = UT_NAME_MAX;
+	const size_t name_max = NAME_MAX;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -231,7 +231,7 @@ static void ut_link_rand_names(struct ut_env *ute)
 	struct stat st;
 	const char *name = UT_NAME;
 	const size_t nlinks = 8 * 1024; /* XXX check with large */
-	const size_t name_max = UT_NAME_MAX;
+	const size_t name_max = NAME_MAX;
 	char *lname = NULL;
 	char **links = NULL;
 

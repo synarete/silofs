@@ -70,7 +70,7 @@ static void kvl_populate(struct ut_kvl *kvl, size_t name_len, size_t value_sz)
 
 static void kvl_populate_max(struct ut_kvl *kvl)
 {
-	const size_t name_len = UT_NAME_MAX;
+	const size_t name_len = NAME_MAX;
 	const size_t value_sz = SILOFS_XATTR_VALUE_MAX;
 
 	for (size_t i = kvl->count; i < kvl->limit; ++i) {
@@ -146,15 +146,15 @@ ut_xattr_simple_(struct ut_env *ute, size_t name_len, size_t value_size)
 static void ut_xattr_simple(struct ut_env *ute)
 {
 	ut_xattr_simple_(ute, 1, 1);
-	ut_xattr_simple_(ute, SILOFS_NAME_MAX, 1);
+	ut_xattr_simple_(ute, NAME_MAX, 1);
 	ut_xattr_simple_(ute, 1, SILOFS_XATTR_VALUE_MAX);
-	ut_xattr_simple_(ute, SILOFS_NAME_MAX, SILOFS_XATTR_VALUE_MAX);
+	ut_xattr_simple_(ute, NAME_MAX, SILOFS_XATTR_VALUE_MAX);
 }
 
 static void ut_xattr_any_value(struct ut_env *ute)
 {
 	for (size_t i = 1; i <= SILOFS_XATTR_VALUE_MAX; ++i) {
-		ut_xattr_simple_(ute, SILOFS_NAME_MAX, i);
+		ut_xattr_simple_(ute, NAME_MAX, i);
 	}
 }
 
@@ -199,7 +199,7 @@ static void ut_xattr_long_names(struct ut_env *ute)
 	struct ut_kvl *kvl = NULL;
 
 	kvl = kvl_new(ute, 4);
-	kvl_populate(kvl, UT_NAME_MAX, SILOFS_XATTR_VALUE_MAX);
+	kvl_populate(kvl, NAME_MAX, SILOFS_XATTR_VALUE_MAX);
 
 	ut_create_file(ute, root_ino, name, &ino);
 	ut_setxattr_all(ute, ino, kvl);
@@ -270,8 +270,8 @@ fill_novalue_kv(struct ut_env *ute, struct ut_keyval *kv, size_t idx)
 	len = strlen(str);
 	if ((idx > 7) && (idx < len)) {
 		str[idx] = '\0';
-	} else if (len > UT_NAME_MAX) {
-		str[UT_NAME_MAX] = '\0';
+	} else if (len > NAME_MAX) {
+		str[NAME_MAX] = '\0';
 	}
 	kv->name = str;
 	kv->value = NULL;
@@ -324,11 +324,11 @@ static void ut_xattr_multi(struct ut_env *ute)
 	struct ut_kvl *kvl = NULL;
 	const struct silofs_kv_sizes kv_sizes_arr[] = {
 		{ 1, 1 },
-		{ UT_NAME_MAX / 2, 2 },
+		{ NAME_MAX / 2, 2 },
 		{ 2, SILOFS_XATTR_VALUE_MAX / 2 },
-		{ UT_NAME_MAX / 16, 16 },
+		{ NAME_MAX / 16, 16 },
 		{ 32, SILOFS_XATTR_VALUE_MAX / 32 },
-		{ UT_NAME_MAX, 128 },
+		{ NAME_MAX, 128 },
 		{ 64, SILOFS_XATTR_VALUE_MAX },
 	};
 	const size_t nkv_sizes = UT_ARRAY_SIZE(kv_sizes_arr);
@@ -412,7 +412,7 @@ static void ut_xattr_replace(struct ut_env *ute)
 	const char *fname = UT_NAME;
 	struct ut_kvl *kvl = kvl_new(ute, 5);
 
-	kvl_populate(kvl, UT_NAME_MAX / 2, SILOFS_XATTR_VALUE_MAX / 2);
+	kvl_populate(kvl, NAME_MAX / 2, SILOFS_XATTR_VALUE_MAX / 2);
 
 	ut_mkdir2(ute, root_ino, dname, &dino);
 	ut_create_file(ute, dino, fname, &ino);
@@ -447,7 +447,7 @@ static void ut_xattr_replace_multi(struct ut_env *ute)
 	struct ut_kvl *kvl = kvl_new(ute, 3);
 
 	value_size = SILOFS_XATTR_VALUE_MAX;
-	kvl_populate(kvl, UT_NAME_MAX / 2, value_size);
+	kvl_populate(kvl, NAME_MAX / 2, value_size);
 
 	ut_mkdir2(ute, root_ino, dname, &dino);
 	ut_create_file(ute, dino, fname, &ino);
@@ -502,21 +502,26 @@ static void ut_xattr_with_io_(struct ut_env *ute, loff_t base_off,
 
 static void ut_xattr_with_io(struct ut_env *ute)
 {
-	ut_xattr_with_io_(ute, 0, SILOFS_NAME_MAX, UT_1K / 4);
-	ut_xattr_with_io_(ute, UT_1K, SILOFS_NAME_MAX / 2, UT_1K / 2);
-	ut_xattr_with_io_(ute, UT_1M, SILOFS_NAME_MAX / 4, UT_1K);
-	ut_xattr_with_io_(ute, UT_1T, SILOFS_NAME_MAX / 8, 2 * UT_1K);
+	ut_xattr_with_io_(ute, 0, NAME_MAX, UT_1K / 4);
+	ut_xattr_with_io_(ute, UT_1K, NAME_MAX / 2, UT_1K / 2);
+	ut_xattr_with_io_(ute, UT_1M, NAME_MAX / 4, UT_1K);
+	ut_xattr_with_io_(ute, UT_1T, NAME_MAX / 8, 2 * UT_1K);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ut_testdef ut_local_tests[] = {
-	UT_DEFTEST1(ut_xattr_simple),     UT_DEFTEST(ut_xattr_any_value),
-	UT_DEFTEST(ut_xattr_short_names), UT_DEFTEST(ut_xattr_long_names),
-	UT_DEFTEST(ut_xattr_shorts),      UT_DEFTEST(ut_xattr_no_value),
-	UT_DEFTEST(ut_xattr_multi),       UT_DEFTEST(ut_xattr_lookup_random),
-	UT_DEFTEST(ut_xattr_replace),     UT_DEFTEST(ut_xattr_replace_multi),
-	UT_DEFTEST(ut_xattr_with_io),
+	UT_DEFTEST1(ut_xattr_simple),       //
+	UT_DEFTEST(ut_xattr_any_value),     //
+	UT_DEFTEST(ut_xattr_short_names),   //
+	UT_DEFTEST(ut_xattr_long_names),    //
+	UT_DEFTEST(ut_xattr_shorts),        //
+	UT_DEFTEST(ut_xattr_no_value),      //
+	UT_DEFTEST(ut_xattr_multi),         //
+	UT_DEFTEST(ut_xattr_lookup_random), //
+	UT_DEFTEST(ut_xattr_replace),       //
+	UT_DEFTEST(ut_xattr_replace_multi), //
+	UT_DEFTEST(ut_xattr_with_io),       //
 };
 
 const struct ut_testdefs ut_tdefs_xattr = UT_MKTESTS(ut_local_tests);

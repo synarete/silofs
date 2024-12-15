@@ -23,7 +23,7 @@ struct ut_namesarr {
 
 static const char *make_name(struct ut_env *ute, long idx, size_t len)
 {
-	char name[UT_NAME_MAX + 1] = "";
+	char name[NAME_MAX + 1] = "";
 	const size_t name_max = sizeof(name) - 1;
 
 	ut_expect_lt(len, sizeof(name));
@@ -38,7 +38,7 @@ static const char *make_name(struct ut_env *ute, long idx, size_t len)
 
 static const char *make_ulong_name(struct ut_env *ute, unsigned long key)
 {
-	char name[UT_NAME_MAX + 1] = "";
+	char name[NAME_MAX + 1] = "";
 	const size_t name_max = sizeof(name) - 1;
 
 	snprintf(name, name_max, "%lu", key);
@@ -77,7 +77,7 @@ static struct ut_namesarr *make_names(struct ut_env *ute, size_t cnt)
 
 static struct ut_namesarr *make_names_max_len(struct ut_env *ute, size_t cnt)
 {
-	return make_names_with_len(ute, cnt, UT_NAME_MAX);
+	return make_names_with_len(ute, cnt, NAME_MAX);
 }
 
 static struct ut_namesarr *make_names_any_len(struct ut_env *ute, size_t cnt)
@@ -85,8 +85,7 @@ static struct ut_namesarr *make_names_any_len(struct ut_env *ute, size_t cnt)
 	struct ut_namesarr *na = new_namesarr(ute, cnt);
 
 	for (size_t i = 0; i < na->cnt; ++i) {
-		size_t len =
-			silofs_clamp_u64(i % UT_NAME_MAX, 17, UT_NAME_MAX);
+		size_t len = silofs_clamp_u64(i % NAME_MAX, 17, NAME_MAX);
 
 		na->arr[i] = make_name(ute, (long)i + 1, len);
 	}
@@ -417,7 +416,7 @@ static void ut_dir_link_long_names(struct ut_env *ute)
 
 static const char *make_lname(struct ut_env *ute, size_t len, int tag)
 {
-	char name[UT_NAME_MAX + 1] = "";
+	char name[NAME_MAX + 1] = "";
 	const size_t name_max = sizeof(name) - 1;
 	const char ch = tag ? 'A' : 'B';
 
@@ -474,7 +473,7 @@ static void ut_dir_link_unlink_mixed_(struct ut_env *ute, size_t nfiles)
 
 static void ut_dir_link_unlink_mixed(struct ut_env *ute)
 {
-	const size_t nfiles[] = { 10, 100, UT_NAME_MAX };
+	const size_t nfiles[] = { 10, 100, NAME_MAX };
 
 	for (size_t i = 0; i < UT_ARRAY_SIZE(nfiles); ++i) {
 		ut_dir_link_unlink_mixed_(ute, nfiles[i]);

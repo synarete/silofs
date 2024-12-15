@@ -24,7 +24,7 @@ static const char *ut_make_symname(struct ut_env *ute, size_t idx)
 static char *ut_make_symval_with(struct ut_env *ute, char c, size_t len)
 {
 	const size_t vsz = SILOFS_PATH_MAX;
-	const size_t name_max = UT_NAME_MAX;
+	const size_t name_max = NAME_MAX;
 	char *val = NULL;
 
 	ut_expect_le(len, vsz);

@@ -3178,17 +3178,42 @@ static const struct silofs_fuseq_cmd_desc *cmd_desc_of(uint32_t opc)
 	return cmd;
 }
 
-static bool is_exclusive_cmd(const struct silofs_fuseq_in *in)
+static struct silofs_fuseq_in *fqd_in_of(struct silofs_fuseq_dispatcher *fqd)
 {
-	long ioc_cmd;
-	bool ret = false;
+	return &fqd->fqd_inb->u.in;
+}
 
-	if (in->u.hdr.hdr.opcode == FUSE_IOCTL) {
-		ioc_cmd = (long)(in->u.ioctl.arg.cmd);
-		ret = (ioc_cmd == SILOFS_IOC_CLONE) ||
-		      (ioc_cmd == SILOFS_IOC_SYNCFS);
+static const struct silofs_fuseq_in *
+fqd_in_of2(const struct silofs_fuseq_dispatcher *fqd)
+{
+	return &fqd->fqd_inb->u.in;
+}
+
+static uint32_t fqd_in_opcode(const struct silofs_fuseq_dispatcher *fqd)
+{
+	const struct silofs_fuseq_in *in = fqd_in_of2(fqd);
+
+	return in->u.hdr.hdr.opcode;
+}
+
+static uint64_t fqd_in_ioctl_cmd(const struct silofs_fuseq_dispatcher *fqd)
+{
+	const struct silofs_fuseq_in *in = fqd_in_of2(fqd);
+	uint64_t ioc_cmd = 0;
+	uint32_t opcode;
+
+	opcode = fqd_in_opcode(fqd);
+	if (opcode == FUSE_IOCTL) {
+		ioc_cmd = in->u.ioctl.arg.cmd;
 	}
-	return ret;
+	return ioc_cmd;
+}
+
+static bool fqd_has_exclusive_cmd(const struct silofs_fuseq_dispatcher *fqd)
+{
+	const uint64_t ioc_cmd = fqd_in_ioctl_cmd(fqd);
+
+	return (ioc_cmd == SILOFS_IOC_CLONE) || (ioc_cmd == SILOFS_IOC_SYNCFS);
 }
 
 static int
@@ -3239,14 +3264,6 @@ static int fqd_check_perm(const struct silofs_fuseq_dispatcher *fqd,
 	return -EACCES;
 }
 
-static struct silofs_fuseq_in *
-fqd_in_of(const struct silofs_fuseq_dispatcher *fqd)
-{
-	const struct silofs_fuseq_in *in = &fqd->fqd_inb->u.in;
-
-	return unconst(in);
-}
-
 static bool is_large_io(loff_t off, size_t size)
 {
 	loff_t end;
@@ -3263,12 +3280,13 @@ static bool is_large_io(loff_t off, size_t size)
 
 static bool fqd_has_large_write_in(const struct silofs_fuseq_dispatcher *fqd)
 {
-	const struct silofs_fuseq_in *in = fqd_in_of(fqd);
-	const int opc = (int)in->u.hdr.hdr.opcode;
+	const struct silofs_fuseq_in *in = NULL;
+	const uint32_t opcode = fqd_in_opcode(fqd);
 	loff_t off = 0;
 	bool ret = false;
 
-	if (opc == FUSE_WRITE) {
+	if (opcode == FUSE_WRITE) {
+		in = fqd_in_of2(fqd);
 		off = (loff_t)in->u.write.arg.offset;
 		ret = is_large_io(off, in->u.write.arg.size);
 	}
@@ -3277,12 +3295,13 @@ static bool fqd_has_large_write_in(const struct silofs_fuseq_dispatcher *fqd)
 
 static bool fqd_has_large_read_in(const struct silofs_fuseq_dispatcher *fqd)
 {
-	const struct silofs_fuseq_in *in = fqd_in_of(fqd);
-	const int opc = (int)in->u.hdr.hdr.opcode;
+	const struct silofs_fuseq_in *in = NULL;
+	const uint32_t opcode = fqd_in_opcode(fqd);
 	loff_t off = 0;
 	bool ret = false;
 
-	if (opc == FUSE_READ) {
+	if (opcode == FUSE_READ) {
+		in = fqd_in_of2(fqd);
 		off = (loff_t)in->u.read.arg.offset;
 		ret = is_large_io(off, in->u.read.arg.size);
 	}
@@ -3292,14 +3311,14 @@ static bool fqd_has_large_read_in(const struct silofs_fuseq_dispatcher *fqd)
 static void fqd_update_task(const struct silofs_fuseq_dispatcher *fqd,
                             struct silofs_task *task)
 {
-	const struct silofs_fuseq_in *in = fqd_in_of(fqd);
+	const struct silofs_fuseq_in *in = fqd_in_of2(fqd);
 	const struct fuse_in_header *hdr = &in->u.hdr.hdr;
 
 	silofs_task_set_creds(task, hdr->uid, hdr->gid, 0);
 	task->t_oper.op_pid = (pid_t)hdr->pid;
 	task->t_oper.op_unique = hdr->unique;
-	task->t_oper.op_code = hdr->opcode;
-	task->t_exclusive = is_exclusive_cmd(in);
+	task->t_oper.op_code = fqd_in_opcode(fqd);
+	task->t_exclusive = fqd_has_exclusive_cmd(fqd);
 }
 
 static int fqd_check_task(struct silofs_fuseq_dispatcher *fqd,
@@ -3442,7 +3461,7 @@ static void fqd_reset_inhdr(struct silofs_fuseq_dispatcher *fqd)
 static size_t fqd_max_inlen(const struct silofs_fuseq_dispatcher *fqd)
 {
 	const struct silofs_fuseq *fq = fqd_fuseq(fqd);
-	const struct silofs_fuseq_in *in = fqd_in_of(fqd);
+	const struct silofs_fuseq_in *in = fqd_in_of2(fqd);
 	const size_t len_max = fq->fq_coni.buffsize;
 
 	silofs_assert_gt(len_max, FUSE_BUFFER_HEADER_SIZE);
@@ -3455,12 +3474,11 @@ static size_t fqd_max_inlen(const struct silofs_fuseq_dispatcher *fqd)
 static int fqd_check_inhdr(const struct silofs_fuseq_dispatcher *fqd,
                            size_t nrd, bool full)
 {
-	const struct silofs_fuseq_in *in = fqd_in_of(fqd);
+	const struct silofs_fuseq_in *in = fqd_in_of2(fqd);
 	const struct silofs_fuseq_hdr_in *hdr = &in->u.hdr;
 	const size_t len = hdr->hdr.len;
 	const size_t len_min = sizeof(*hdr);
 	const size_t len_max = fqd_max_inlen(fqd);
-	const int opc = (int)hdr->hdr.opcode;
 
 	if (unlikely(nrd < len_min)) {
 		fuseq_log_err("illegal in-length: "
@@ -3469,14 +3487,14 @@ static int fqd_check_inhdr(const struct silofs_fuseq_dispatcher *fqd,
 		return -SILOFS_EPROTO;
 	}
 	if (unlikely(len > len_max)) {
-		fuseq_log_err("illegal header: opc=%d len=%lu len_max=%lu",
-		              opc, len, len_max);
+		fuseq_log_err("illegal header: opcode=%d len=%lu len_max=%lu",
+		              fqd_in_opcode(fqd), len, len_max);
 		return -SILOFS_EPROTO;
 	}
 	if (unlikely(full && (len != nrd))) {
 		fuseq_log_err("header length mismatch: "
-		              "opc=%d nrd=%lu len=%lu ",
-		              opc, nrd, len);
+		              "opcode=%d nrd=%lu len=%lu ",
+		              fqd_in_opcode(fqd), nrd, len);
 		return -SILOFS_EIO;
 	}
 	return 0;
@@ -4007,7 +4025,7 @@ static void fqd_close_piper(struct silofs_fuseq_dispatcher *fqd)
 
 static int fqd_check_input(const struct silofs_fuseq_dispatcher *fqd)
 {
-	const struct silofs_fuseq_in *in = fqd_in_of(fqd);
+	const struct silofs_fuseq_in *in = fqd_in_of2(fqd);
 	const uint32_t in_len = in->u.hdr.hdr.len;
 	const uint32_t opcode = in->u.hdr.hdr.opcode;
 

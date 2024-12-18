@@ -5536,8 +5536,11 @@ void silofs_fuseq_del(struct silofs_fuseq *fq, struct silofs_alloc *alloc)
 
 void silofs_guarantee_fuse_proto(void)
 {
+	REQUIRE_SIZEOF(struct fuse_in_header, 40);
+	REQUIRE_SIZEOF(struct fuse_rename_in, 8);
+	REQUIRE_SIZEOF(struct fuse_rename2_in, 16);
 	REQUIRE_SIZEOF(struct fuse_setxattr1_in, FUSE_COMPAT_SETXATTR_IN_SIZE);
-	REQUIRE_SIZEOF(struct silofs_fuseq_hdr_in, 40);
+	REQUIRE_SIZEOF(struct silofs_fuseq_hdr_in, FUSEQ_HDR_IN_SIZE);
 	REQUIRE_OFFSET(struct silofs_fuseq_hdr_in, hdr, 0);
 	REQUIRE_SIZEOF(struct silofs_fuseq_init_in, 104);
 	REQUIRE_BASEOF(struct silofs_fuseq_init_in, arg);

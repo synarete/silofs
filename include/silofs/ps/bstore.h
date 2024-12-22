@@ -65,8 +65,8 @@ int silofs_bstore_dropall(struct silofs_bstore *bstore);
 
 int silofs_bstore_format(struct silofs_bstore *bstore);
 
-int silofs_bstore_open(struct silofs_bstore       *bstore,
-                       const struct silofs_prange *prange);
+int silofs_bstore_reload(struct silofs_bstore       *bstore,
+                         const struct silofs_prange *prange);
 
 int silofs_bstore_close(struct silofs_bstore *bstore);
 

@@ -90,6 +90,13 @@ void silofs_bti_set_dq(struct silofs_btnode_info *bti,
 
 void silofs_bti_mark_root(struct silofs_btnode_info *bti);
 
+size_t silofs_bti_nkeys(const struct silofs_btnode_info *bti);
+
+size_t silofs_bti_nchilds(const struct silofs_btnode_info *bti);
+
+void silofs_bti_child_at(const struct silofs_btnode_info *bti, size_t slot,
+                         struct silofs_paddr *out_paddr);
+
 int silofs_bti_resolve(const struct silofs_btnode_info *bti,
                        const struct silofs_laddr       *laddr,
                        struct silofs_paddr             *out_paddr);

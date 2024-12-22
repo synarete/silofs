@@ -149,6 +149,11 @@ static void btn_add_flags(struct silofs_btree_node *btn, enum silofs_pnodef f)
 	btn_set_flags(btn, f | btn_flags(btn));
 }
 
+static size_t btn_nchilds(struct silofs_btree_node *btn)
+{
+	return silofs_le16_to_cpu(btn->btn_nchilds);
+}
+
 static void btn_set_nchilds(struct silofs_btree_node *btn, size_t nchilds)
 {
 	silofs_assert_le(nchilds, ARRAY_SIZE(btn->btn_child));
@@ -797,6 +802,30 @@ void silofs_bti_mark_root(struct silofs_btnode_info *bti)
 {
 	btn_add_flags(bti->bn, SILOFS_PNODEF_META | SILOFS_PNODEF_BTROOT);
 	silofs_bti_dirtify(bti);
+}
+
+size_t silofs_bti_nkeys(const struct silofs_btnode_info *bti)
+{
+	return btn_nkeys(bti->bn);
+}
+
+size_t silofs_bti_nchilds(const struct silofs_btnode_info *bti)
+{
+	return btn_nchilds(bti->bn);
+}
+
+static bool bti_has_child_at(const struct silofs_btnode_info *bti, size_t slot)
+{
+	return (slot < silofs_bti_nchilds(bti));
+}
+
+void silofs_bti_child_at(const struct silofs_btnode_info *bti, size_t slot,
+                         struct silofs_paddr *out_paddr)
+{
+	silofs_paddr_reset(out_paddr);
+	if (bti_has_child_at(bti, slot)) {
+		btn_child_at(bti->bn, slot, out_paddr);
+	}
 }
 
 int silofs_bti_resolve(const struct silofs_btnode_info *bti,

@@ -18,6 +18,18 @@
 #include <silofs/infra.h>
 #include <silofs/ps.h>
 
+static bool paddr_isbtnode(const struct silofs_paddr *paddr)
+{
+	return !paddr_isnull(paddr) && (paddr->ptype == SILOFS_PTYPE_BTNODE);
+}
+
+static bool paddr_isbtleaf(const struct silofs_paddr *paddr)
+{
+	return !paddr_isnull(paddr) && (paddr->ptype == SILOFS_PTYPE_BTLEAF);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 static void prange_init(struct silofs_prange *prange)
 {
 	silofs_pvid_generate(&prange->pvid);
@@ -516,6 +528,74 @@ static int bstore_stage_btnode(struct silofs_bstore *bstore,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static const struct silofs_paddr *
+bli_paddr(const struct silofs_btleaf_info *bli)
+{
+	return &bli->bl_pni.pn_paddr;
+}
+
+static int bstore_load_btleaf(const struct silofs_bstore *bstore,
+                              const struct silofs_btleaf_info *bli)
+{
+	const struct silofs_rwvec rwv = {
+		.rwv_base = bli->bl,
+		.rwv_len = sizeof(*bli->bl),
+	};
+
+	return silofs_repo_load_pobj(bstore->repo, bli_paddr(bli), &rwv);
+}
+
+static int bstore_create_cached_bli(struct silofs_bstore *bstore,
+                                    const struct silofs_paddr *paddr,
+                                    struct silofs_btleaf_info **out_bli)
+{
+	struct silofs_btleaf_info *bli;
+
+	bli = silofs_pcache_create_bli(&bstore->pcache, paddr);
+	if (bli == NULL) {
+		return -SILOFS_ENOMEM;
+	}
+	bstore_bind_pni(bstore, &bli->bl_pni);
+	*out_bli = bli;
+	return 0;
+}
+
+static void bstore_evict_cached_bli(struct silofs_bstore *bstore,
+                                    struct silofs_btleaf_info *bli)
+{
+	silofs_pcache_evict_bli(&bstore->pcache, bli);
+}
+
+static int bstore_stage_btleaf(struct silofs_bstore *bstore,
+                               const struct silofs_paddr *paddr,
+                               struct silofs_btleaf_info **out_bli)
+{
+	struct silofs_btleaf_info *bli = NULL;
+	int err;
+
+	err = bstore_validate_paddr(bstore, paddr);
+	if (err) {
+		return err;
+	}
+	err = bstore_require_pseg_of(bstore, false, paddr);
+	if (err) {
+		return err;
+	}
+	err = bstore_create_cached_bli(bstore, paddr, &bli);
+	if (err) {
+		return err;
+	}
+	err = bstore_load_btleaf(bstore, bli);
+	if (err) {
+		bstore_evict_cached_bli(bstore, bli);
+		return err;
+	}
+	*out_bli = bli;
+	return 0;
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 static int bstore_spawn_next_chkpt(struct silofs_bstore *bstore)
 {
 	struct silofs_paddr paddr;
@@ -579,6 +659,43 @@ static int bstore_stage_last_chkpt(struct silofs_bstore *bstore)
 	return 0;
 }
 
+static int bstore_stage_btnode_at(struct silofs_bstore *bstore,
+                                  const struct silofs_paddr *paddr)
+{
+	struct silofs_btnode_info *bti = NULL;
+
+	return bstore_stage_btnode(bstore, paddr, &bti);
+}
+
+static int bstore_stage_btleaf_at(struct silofs_bstore *bstore,
+                                  const struct silofs_paddr *paddr)
+{
+	struct silofs_btleaf_info *bli = NULL;
+
+	return bstore_stage_btleaf(bstore, paddr, &bli);
+}
+
+static int bstore_stage_btnode_childs(struct silofs_bstore *bstore,
+                                      const struct silofs_btnode_info *bti)
+{
+	struct silofs_paddr paddr;
+	size_t nchilds;
+	int err = 0;
+
+	nchilds = silofs_bti_nchilds(bti);
+	for (size_t slot = 0; (slot < nchilds) && !err; ++slot) {
+		silofs_bti_child_at(bti, slot, &paddr);
+		if (paddr_isbtnode(&paddr)) {
+			err = bstore_stage_btnode_at(bstore, &paddr);
+		} else if (paddr_isbtleaf(&paddr)) {
+			err = bstore_stage_btleaf_at(bstore, &paddr);
+		} else {
+			err = -SILOFS_EFSCORRUPTED;
+		}
+	}
+	return err;
+}
+
 static int bstore_stage_btree_root(struct silofs_bstore *bstore)
 {
 	struct silofs_paddr paddr;
@@ -590,11 +707,15 @@ static int bstore_stage_btree_root(struct silofs_bstore *bstore)
 	if (err) {
 		return err;
 	}
+	err = bstore_stage_btnode_childs(bstore, bti);
+	if (err) {
+		return err;
+	}
 	return 0;
 }
 
-int silofs_bstore_open(struct silofs_bstore *bstore,
-                       const struct silofs_prange *prange)
+int silofs_bstore_reload(struct silofs_bstore *bstore,
+                         const struct silofs_prange *prange)
 {
 	int err;
 

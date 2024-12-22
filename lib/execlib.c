@@ -1612,9 +1612,9 @@ reload_root_lseg(struct silofs_fsenv *fsenv, const struct silofs_bootrec *brec)
 }
 
 static int
-open_bstore(struct silofs_fsenv *fsenv, const struct silofs_bootrec *brec)
+reload_bstore(struct silofs_fsenv *fsenv, const struct silofs_bootrec *brec)
 {
-	return silofs_bstore_open(fsenv->fse.bstore, &brec->prange);
+	return silofs_bstore_reload(fsenv->fse.bstore, &brec->prange);
 }
 
 static int
@@ -1627,7 +1627,7 @@ do_open_fs(struct silofs_fsenv *fsenv, const struct silofs_caddr *caddr)
 	if (err) {
 		return err;
 	}
-	err = open_bstore(fsenv, &brec);
+	err = reload_bstore(fsenv, &brec);
 	if (err) {
 		return err;
 	}

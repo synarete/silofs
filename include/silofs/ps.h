@@ -26,7 +26,7 @@
 #include <silofs/ps/repo.h>
 #include <silofs/ps/pnodes.h>
 #include <silofs/ps/pcache.h>
-#include <silofs/ps/pstore.h>
+#include <silofs/ps/bstore.h>
 
 #ifdef SILOFS_HAVE_PRIVATE
 #include <silofs/ps-private.h>

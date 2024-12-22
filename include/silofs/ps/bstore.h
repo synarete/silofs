@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_PSTORE_H_
-#define SILOFS_PSTORE_H_
+#ifndef SILOFS_BSTORE_H_
+#define SILOFS_BSTORE_H_
 
 #include <silofs/infra.h>
 #include <silofs/str.h>
@@ -23,6 +23,7 @@
 #include <silofs/ps/repo.h>
 #include <silofs/ps/pcache.h>
 
+/* persistent storage's current active range */
 struct silofs_prange {
 	struct silofs_pvid pvid;
 	uint32_t           base_index;
@@ -30,15 +31,17 @@ struct silofs_prange {
 	loff_t             pos_in_curr;
 };
 
-struct silofs_pstate {
+/* blobs storage state: a pair of active range and mapping tree root */
+struct silofs_bstate {
 	struct silofs_prange prange;
 	struct silofs_paddr  btree_root;
 };
 
-struct silofs_pstore {
+/* blobs-storage control object */
+struct silofs_bstore {
 	struct silofs_repo  *repo;
 	struct silofs_pcache pcache;
-	struct silofs_pstate pstate;
+	struct silofs_bstate bstate;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -54,22 +57,22 @@ void silofs_prange64b_xtoh(const struct silofs_prange64b *prange64,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_pstore_init(struct silofs_pstore *pstore, struct silofs_repo *repo);
+int silofs_bstore_init(struct silofs_bstore *bstore, struct silofs_repo *repo);
 
-void silofs_pstore_fini(struct silofs_pstore *pstore);
+void silofs_bstore_fini(struct silofs_bstore *bstore);
 
-int silofs_pstore_dropall(struct silofs_pstore *pstore);
+int silofs_bstore_dropall(struct silofs_bstore *bstore);
 
-int silofs_pstore_format(struct silofs_pstore *pstore);
+int silofs_bstore_format(struct silofs_bstore *bstore);
 
-int silofs_pstore_open(struct silofs_pstore       *pstore,
+int silofs_bstore_open(struct silofs_bstore       *bstore,
                        const struct silofs_prange *prange);
 
-int silofs_pstore_close(struct silofs_pstore *pstore);
+int silofs_bstore_close(struct silofs_bstore *bstore);
 
-int silofs_pstore_flush_dirty(struct silofs_pstore *pstore);
+int silofs_bstore_flush_dirty(struct silofs_bstore *bstore);
 
-void silofs_pstore_curr_prange(const struct silofs_pstore *pstore,
+void silofs_bstore_curr_prange(const struct silofs_bstore *bstore,
                                struct silofs_prange       *out_prange);
 
-#endif /* SILOFS_PSTORE_H_ */
+#endif /* SILOFS_BSTORE_H_ */

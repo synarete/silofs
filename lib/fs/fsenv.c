@@ -554,9 +554,9 @@ static int fsenv_shut_sb(struct silofs_fsenv *fsenv)
 	return 0;
 }
 
-static int fsenv_shut_pstore(struct silofs_fsenv *fsenv)
+static int fsenv_shut_bstore(struct silofs_fsenv *fsenv)
 {
-	return silofs_pstore_close(fsenv->fse.pstore);
+	return silofs_bstore_close(fsenv->fse.bstore);
 }
 
 int silofs_fsenv_shut(struct silofs_fsenv *fsenv)
@@ -567,7 +567,7 @@ int silofs_fsenv_shut(struct silofs_fsenv *fsenv)
 	if (err) {
 		return err;
 	}
-	err = fsenv_shut_pstore(fsenv);
+	err = fsenv_shut_bstore(fsenv);
 	if (err) {
 		return err;
 	}
@@ -647,7 +647,7 @@ int silofs_fsenv_forkfs(struct silofs_fsenv *fsenv,
 
 void silofs_fsenv_relax_caches(const struct silofs_fsenv *fsenv, int flags)
 {
-	silofs_pcache_relax(&fsenv->fse.pstore->pcache, flags);
+	silofs_pcache_relax(&fsenv->fse.bstore->pcache, flags);
 	silofs_lcache_relax(fsenv->fse.lcache, flags);
 	silofs_repo_relax(fsenv->fse.repo, flags);
 }

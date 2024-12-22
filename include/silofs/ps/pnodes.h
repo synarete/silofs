@@ -21,13 +21,13 @@
 #include <silofs/addr.h>
 #include <silofs/hmdq.h>
 
-struct silofs_pstore;
+struct silofs_bstore;
 
 /* base of all persistent-segment nodes */
 struct silofs_pnode_info {
 	struct silofs_paddr      pn_paddr;
 	struct silofs_hmapq_elem pn_hmqe;
-	struct silofs_pstore    *pn_pstore;
+	struct silofs_bstore    *pn_bstore;
 };
 
 /* check-point node */

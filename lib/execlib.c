@@ -33,7 +33,7 @@ struct silofs_fs_core {
 	struct silofs_repo repo;
 	struct silofs_submitq submitq;
 	struct silofs_idsmap idsmap;
-	struct silofs_pstore pstore;
+	struct silofs_bstore bstore;
 	struct silofs_fsenv fsenv;
 	struct silofs_flusher flusher;
 };
@@ -57,7 +57,7 @@ struct silofs_fs_ctx {
 	struct silofs_submitq *submitq;
 	struct silofs_flusher *flusher;
 	struct silofs_idsmap *idsmap;
-	struct silofs_pstore *pstore;
+	struct silofs_bstore *bstore;
 	struct silofs_fsenv *fsenv;
 	struct silofs_fuseq *fuseq;
 };
@@ -395,25 +395,25 @@ static void fs_ctx_destroy_idsmap(struct silofs_fs_ctx *fs_ctx)
 	}
 }
 
-static int fs_ctx_setup_pstore(struct silofs_fs_ctx *fs_ctx)
+static int fs_ctx_setup_bstore(struct silofs_fs_ctx *fs_ctx)
 {
-	struct silofs_pstore *pstore;
+	struct silofs_bstore *bstore;
 	int err;
 
-	pstore = &fs_ctx->inst->fs_core.c.pstore;
-	err = silofs_pstore_init(pstore, fs_ctx->repo);
+	bstore = &fs_ctx->inst->fs_core.c.bstore;
+	err = silofs_bstore_init(bstore, fs_ctx->repo);
 	if (err) {
 		return err;
 	}
-	fs_ctx->pstore = pstore;
+	fs_ctx->bstore = bstore;
 	return 0;
 }
 
-static void fs_ctx_destroy_pstore(struct silofs_fs_ctx *fs_ctx)
+static void fs_ctx_destroy_bstore(struct silofs_fs_ctx *fs_ctx)
 {
-	if (fs_ctx->pstore != NULL) {
-		silofs_pstore_fini(fs_ctx->pstore);
-		fs_ctx->pstore = NULL;
+	if (fs_ctx->bstore != NULL) {
+		silofs_bstore_fini(fs_ctx->bstore);
+		fs_ctx->bstore = NULL;
 	}
 }
 
@@ -426,7 +426,7 @@ static int fs_ctx_setup_fsenv(struct silofs_fs_ctx *fs_ctx)
 		.submitq = fs_ctx->submitq,
 		.flusher = fs_ctx->flusher,
 		.idsmap = fs_ctx->idsmap,
-		.pstore = fs_ctx->pstore,
+		.bstore = fs_ctx->bstore,
 		.fuseq = NULL,
 	};
 	struct silofs_fsenv *fsenv;
@@ -541,7 +541,7 @@ static void fs_ctx_destroy(struct silofs_fs_ctx *fs_ctx)
 {
 	fs_ctx_destroy_fuseq(fs_ctx);
 	fs_ctx_destroy_fsenv(fs_ctx);
-	fs_ctx_destroy_pstore(fs_ctx);
+	fs_ctx_destroy_bstore(fs_ctx);
 	fs_ctx_destroy_idsmap(fs_ctx);
 	fs_ctx_destroy_flusher(fs_ctx);
 	fs_ctx_destroy_submitq(fs_ctx);
@@ -583,7 +583,7 @@ static int fs_ctx_setup(struct silofs_fs_ctx *fs_ctx)
 	if (err) {
 		goto out_err;
 	}
-	err = fs_ctx_setup_pstore(fs_ctx);
+	err = fs_ctx_setup_bstore(fs_ctx);
 	if (err) {
 		goto out_err;
 	}
@@ -623,7 +623,7 @@ fs_ctx_init_from(struct silofs_fs_ctx *fs_ctx, struct silofs_fs_inst *fs_inst)
 	fs_ctx->submitq = fsenv->fse.submitq;
 	fs_ctx->flusher = fsenv->fse.flusher;
 	fs_ctx->idsmap = fsenv->fse.idsmap;
-	fs_ctx->pstore = fsenv->fse.pstore;
+	fs_ctx->bstore = fsenv->fse.bstore;
 	fs_ctx->fsenv = fsenv;
 	fs_ctx->fuseq = fsenv->fse.fuseq;
 }
@@ -1001,7 +1001,7 @@ update_prange(const struct silofs_fsenv *fsenv, struct silofs_bootrec *brec)
 {
 	struct silofs_prange prange;
 
-	silofs_pstore_curr_prange(fsenv->fse.pstore, &prange);
+	silofs_bstore_curr_prange(fsenv->fse.bstore, &prange);
 	silofs_bootrec_set_prange(brec, &prange);
 }
 
@@ -1533,9 +1533,9 @@ static void resolve_bootrec_caddr(const struct silofs_fsenv *fsenv,
 	caddr_assign(out_caddr, &fsenv->fse_boot.caddr);
 }
 
-static int format_pstore(struct silofs_fsenv *fsenv)
+static int format_bstore(struct silofs_fsenv *fsenv)
 {
-	return silofs_pstore_format(fsenv->fse.pstore);
+	return silofs_bstore_format(fsenv->fse.bstore);
 }
 
 static int
@@ -1553,7 +1553,7 @@ do_format_fs(struct silofs_fsenv *fsenv, struct silofs_caddr *out_caddr)
 	struct silofs_bootrec brec = { .flags = SILOFS_BOOTF_NONE };
 	int err;
 
-	err = format_pstore(fsenv);
+	err = format_bstore(fsenv);
 	if (err) {
 		return err;
 	}
@@ -1612,9 +1612,9 @@ reload_root_lseg(struct silofs_fsenv *fsenv, const struct silofs_bootrec *brec)
 }
 
 static int
-open_pstore(struct silofs_fsenv *fsenv, const struct silofs_bootrec *brec)
+open_bstore(struct silofs_fsenv *fsenv, const struct silofs_bootrec *brec)
 {
-	return silofs_pstore_open(fsenv->fse.pstore, &brec->prange);
+	return silofs_bstore_open(fsenv->fse.bstore, &brec->prange);
 }
 
 static int
@@ -1627,7 +1627,7 @@ do_open_fs(struct silofs_fsenv *fsenv, const struct silofs_caddr *caddr)
 	if (err) {
 		return err;
 	}
-	err = open_pstore(fsenv, &brec);
+	err = open_bstore(fsenv, &brec);
 	if (err) {
 		return err;
 	}

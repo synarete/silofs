@@ -50,7 +50,7 @@ struct silofs_fsenv_base {
 	struct silofs_submitq *submitq;
 	struct silofs_flusher *flusher;
 	struct silofs_idsmap  *idsmap;
-	struct silofs_pstore  *pstore;
+	struct silofs_bstore  *bstore;
 	struct silofs_fuseq   *fuseq;
 };
 

@@ -567,14 +567,14 @@ pni_init(struct silofs_pnode_info *pni, const struct silofs_paddr *paddr)
 	silofs_paddr_assign(&pni->pn_paddr, paddr);
 	silofs_hmqe_init(&pni->pn_hmqe, ptype_size(paddr->ptype));
 	silofs_hkey_by_paddr(&pni->pn_hmqe.hme_key, &pni->pn_paddr);
-	pni->pn_pstore = NULL;
+	pni->pn_bstore = NULL;
 }
 
 static void pni_fini(struct silofs_pnode_info *pni)
 {
 	silofs_paddr_fini(&pni->pn_paddr);
 	silofs_hmqe_fini(&pni->pn_hmqe);
-	pni->pn_pstore = NULL;
+	pni->pn_bstore = NULL;
 }
 
 enum silofs_ptype silofs_pni_ptype(const struct silofs_pnode_info *pni)

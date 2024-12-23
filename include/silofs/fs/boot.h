@@ -19,7 +19,6 @@
 
 #include <silofs/infra.h>
 #include <silofs/addr.h>
-#include <silofs/ps.h>
 #include <silofs/fs/types.h>
 #include <silofs/fs/idsmap.h>
 

@@ -16,7 +16,8 @@
  */
 #include <silofs/configs.h>
 #include <silofs/infra.h>
-#include <silofs/ps.h>
+#include <silofs/addr.h>
+#include <silofs/fs.h>
 
 #define RETRY_MAX (4)
 

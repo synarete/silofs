@@ -41,7 +41,7 @@
 #include <silofs/infra/utility.h>
 #include <silofs/infra/zcmpr.h>
 
-#ifdef SILOFS_HAVE_PRIVATE
+#ifdef SILOFS_USE_PRIVATE
 #include <silofs/infra-private.h>
 #endif
 

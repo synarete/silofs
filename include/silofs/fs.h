@@ -25,7 +25,11 @@
 #include <silofs/str.h>
 #include <silofs/crypt.h>
 #include <silofs/addr.h>
-#include <silofs/ps.h>
+
+#include <silofs/fs/repo.h>
+#include <silofs/fs/pnodes.h>
+#include <silofs/fs/pcache.h>
+#include <silofs/fs/bstore.h>
 
 #include <silofs/fs/types.h>
 #include <silofs/fs/uidgid.h>
@@ -55,7 +59,7 @@
 #include <silofs/fs/mntsvc.h>
 #include <silofs/fs/pack.h>
 
-#ifdef SILOFS_HAVE_PRIVATE
+#ifdef SILOFS_USE_PRIVATE
 #include <silofs/fs-private.h>
 #endif
 

@@ -18,7 +18,6 @@
 #include <silofs/infra.h>
 #include <silofs/fs.h>
 
-
 #define check_ok_or_bailout(err_)      \
 	do {                           \
 		if (err_)              \
@@ -83,7 +82,7 @@ static void wit_decrefs(const struct silofs_walk_iter *witr)
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static void wac_setup_space_iter(const struct silofs_walk_ctx *wa_ctx,
-				 struct silofs_walk_iter *witr)
+                                 struct silofs_walk_iter *witr)
 {
 	silofs_memzero(witr, sizeof(*witr));
 	witr->sbi = wa_ctx->sbi;
@@ -127,7 +126,7 @@ static void wac_pop_height(struct silofs_walk_ctx *wa_ctx)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int wac_do_visit_exec_at(const struct silofs_walk_ctx *wa_ctx,
-				const struct silofs_walk_iter *witr)
+                                const struct silofs_walk_iter *witr)
 {
 	struct silofs_visitor *vis = wa_ctx->vis;
 	int ret = 0;
@@ -140,7 +139,7 @@ static int wac_do_visit_exec_at(const struct silofs_walk_ctx *wa_ctx,
 }
 
 static int wac_visit_exec_at(const struct silofs_walk_ctx *wa_ctx,
-			     struct silofs_walk_iter *witr)
+                             struct silofs_walk_iter *witr)
 {
 	int err;
 
@@ -151,7 +150,7 @@ static int wac_visit_exec_at(const struct silofs_walk_ctx *wa_ctx,
 }
 
 static int wac_do_visit_post_at(const struct silofs_walk_ctx *wa_ctx,
-				const struct silofs_walk_iter *witr)
+                                const struct silofs_walk_iter *witr)
 {
 	struct silofs_visitor *vis = wa_ctx->vis;
 	int ret = 0;
@@ -164,7 +163,7 @@ static int wac_do_visit_post_at(const struct silofs_walk_ctx *wa_ctx,
 }
 
 static int wac_visit_post_at(const struct silofs_walk_ctx *wa_ctx,
-			     struct silofs_walk_iter *witr)
+                             struct silofs_walk_iter *witr)
 {
 	int err;
 
@@ -193,15 +192,15 @@ static int wac_visit_post_at_unode(const struct silofs_walk_ctx *wa_ctx)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int wac_stage_spnode_at(const struct silofs_walk_ctx *wa_ctx,
-			       const struct silofs_ulink *ulink,
-			       struct silofs_spnode_info **out_sni)
+                               const struct silofs_ulink *ulink,
+                               struct silofs_spnode_info **out_sni)
 {
 	return silofs_stage_spnode(wa_ctx->fsenv, ulink, out_sni);
 }
 
 static int wac_stage_spleaf_at(const struct silofs_walk_ctx *wa_ctx,
-			       const struct silofs_ulink *ulink,
-			       struct silofs_spleaf_info **out_sli)
+                               const struct silofs_ulink *ulink,
+                               struct silofs_spleaf_info **out_sli)
 {
 	return silofs_stage_spleaf(wa_ctx->fsenv, ulink, out_sli);
 }
@@ -664,7 +663,7 @@ static int wac_traverse_sptree(struct silofs_walk_ctx *wa_ctx)
 }
 
 static int wac_traverse_sptree_of(struct silofs_walk_ctx *wa_ctx,
-				  enum silofs_ltype vspace)
+                                  enum silofs_ltype vspace)
 {
 	int err;
 
@@ -693,8 +692,8 @@ static int wac_traverse_spaces(struct silofs_walk_ctx *wa_ctx)
 }
 
 int silofs_walk_space_tree(struct silofs_task *task,
-			   struct silofs_sb_info *sbi,
-			   struct silofs_visitor *vis)
+                           struct silofs_sb_info *sbi,
+                           struct silofs_visitor *vis)
 {
 	struct silofs_walk_ctx wa_ctx = {
 		.task = task,

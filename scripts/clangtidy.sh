@@ -22,7 +22,7 @@ _clang_tidy_check() {
   srcs=$(find "${basedir}" -type f -name '*.c')
   chks=$(_clang_tidy_check_list | tr " " ",")
   idefs="-I${basedir}/include -I${basedir}/lib -I${basedir}/build/include"
-  xdefs="-DSILOFS_HAVE_PRIVATE=1 -DSILOFS_UNITEST=1"
+  xdefs="-DSILOFS_USE_PRIVATE=1 -DSILOFS_UNITEST=1"
 
   clang-tidy ${srcs} -checks='-*',${chks} -- "${idefs}" "${xdefs}"
 }

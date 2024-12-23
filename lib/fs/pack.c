@@ -16,7 +16,6 @@
  */
 #include <silofs/configs.h>
 #include <silofs/infra.h>
-#include <silofs/ps.h>
 #include <silofs/fs.h>
 
 struct silofs_par_desc {

@@ -16,7 +16,8 @@
  */
 #include <silofs/configs.h>
 #include <silofs/infra.h>
-#include <silofs/ps.h>
+#include <silofs/addr.h>
+#include <silofs/fs/pnodes.h>
 
 static void *pnode_memalloc(struct silofs_alloc *alloc, size_t size)
 {

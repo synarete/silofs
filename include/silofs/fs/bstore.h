@@ -20,8 +20,8 @@
 #include <silofs/infra.h>
 #include <silofs/str.h>
 #include <silofs/addr.h>
-#include <silofs/ps/repo.h>
-#include <silofs/ps/pcache.h>
+#include <silofs/fs/repo.h>
+#include <silofs/fs/pcache.h>
 
 /* persistent storage's current active range */
 struct silofs_prange {

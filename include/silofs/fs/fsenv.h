@@ -17,7 +17,6 @@
 #ifndef SILOFS_FSENV_H_
 #define SILOFS_FSENV_H_
 
-#include <silofs/ps.h>
 #include <silofs/fs/types.h>
 #include <silofs/fs/boot.h>
 

@@ -19,7 +19,6 @@
 
 #include <silofs/defs.h>
 #include <silofs/errors.h>
-#include <silofs/flags.h>
 #include <silofs/addr/offlba.h>
 #include <silofs/addr/htox.h>
 #include <silofs/addr/meta.h>
@@ -31,7 +30,7 @@
 #include <silofs/addr/vaddr.h>
 #include <silofs/addr/caddr.h>
 
-#ifdef SILOFS_HAVE_PRIVATE
+#ifdef SILOFS_USE_PRIVATE
 #include <silofs/addr-private.h>
 #endif
 

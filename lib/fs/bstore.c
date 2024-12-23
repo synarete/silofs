@@ -16,7 +16,11 @@
  */
 #include <silofs/configs.h>
 #include <silofs/infra.h>
-#include <silofs/ps.h>
+#include <silofs/addr.h>
+#include <silofs/fs/repo.h>
+#include <silofs/fs/pnodes.h>
+#include <silofs/fs/pcache.h>
+#include <silofs/fs/bstore.h>
 
 static bool paddr_isbtnode(const struct silofs_paddr *paddr)
 {

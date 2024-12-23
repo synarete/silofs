@@ -17,7 +17,7 @@
 #ifndef SILOFS_ADDR_PRIVATE_H_
 #define SILOFS_ADDR_PRIVATE_H_
 
-#ifndef SILOFS_HAVE_PRIVATE
+#ifndef SILOFS_USE_PRIVATE
 #error "internal library header -- do not include!"
 #endif
 

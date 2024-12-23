@@ -17,13 +17,12 @@
 #ifndef SILOFS_FS_PRIVATE_H_
 #define SILOFS_FS_PRIVATE_H_
 
-#ifndef SILOFS_HAVE_PRIVATE
+#ifndef SILOFS_USE_PRIVATE
 #error "internal library header -- do not include!"
 #endif
 
 #include <silofs/defs.h>
 #include <silofs/infra.h>
-#include <silofs/ps.h>
 #include <silofs/fs/types.h>
 #include <silofs/fs/lnodes.h>
 

@@ -1003,7 +1003,7 @@ struct fuse_dirent {
 	uint64_t	off;
 	uint32_t	namelen;
 	uint32_t	type;
-#ifdef SILOFS_HAVE_PRIVATE
+#ifdef SILOFS_USE_PRIVATE
 	char name[8];
 #else
 	char name[];

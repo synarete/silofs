@@ -46,7 +46,7 @@ static void prange_fini(struct silofs_prange *prange)
 }
 
 void silofs_prange_assign(struct silofs_prange *prange,
-                          const struct silofs_prange *other)
+			  const struct silofs_prange *other)
 {
 	silofs_pvid_assign(&prange->pvid, &other->pvid);
 	prange->base_index = other->base_index;
@@ -55,14 +55,14 @@ void silofs_prange_assign(struct silofs_prange *prange,
 }
 
 static void prange_curr_psid(const struct silofs_prange *prange,
-                             struct silofs_psid *out_psid)
+			     struct silofs_psid *out_psid)
 {
 	silofs_psid_init(out_psid, &prange->pvid, prange->curr_index);
 }
 
 static void
 prange_curr_paddr_at(const struct silofs_prange *prange, loff_t pos,
-                     enum silofs_ptype ptype, struct silofs_paddr *out_paddr)
+		     enum silofs_ptype ptype, struct silofs_paddr *out_paddr)
 {
 	struct silofs_psid psid;
 	const size_t len = silofs_ptype_size(ptype);
@@ -73,14 +73,14 @@ prange_curr_paddr_at(const struct silofs_prange *prange, loff_t pos,
 
 static void
 prange_curr_paddr(const struct silofs_prange *prange, enum silofs_ptype ptype,
-                  struct silofs_paddr *out_paddr)
+		  struct silofs_paddr *out_paddr)
 {
 	prange_curr_paddr_at(prange, prange->pos_in_curr, ptype, out_paddr);
 }
 
 static void
 prange_last_paddr(const struct silofs_prange *prange, enum silofs_ptype ptype,
-                  struct silofs_paddr *out_paddr)
+		  struct silofs_paddr *out_paddr)
 {
 	const loff_t off = prange->pos_in_curr;
 	const ssize_t len = (ssize_t)silofs_ptype_size(ptype);
@@ -90,20 +90,20 @@ prange_last_paddr(const struct silofs_prange *prange, enum silofs_ptype ptype,
 }
 
 static void prange_advance_by(struct silofs_prange *prange,
-                              const struct silofs_paddr *paddr)
+			      const struct silofs_paddr *paddr)
 {
 	prange->pos_in_curr = off_end(paddr->off, paddr->len);
 }
 
 static void prange_carve(struct silofs_prange *prange, enum silofs_ptype ptype,
-                         struct silofs_paddr *out_paddr)
+			 struct silofs_paddr *out_paddr)
 {
 	prange_curr_paddr(prange, ptype, out_paddr);
 	prange_advance_by(prange, out_paddr);
 }
 
 static bool prange_has_pvid(const struct silofs_prange *prange,
-                            const struct silofs_pvid *pvid)
+			    const struct silofs_pvid *pvid)
 {
 	return silofs_pvid_isequal(&prange->pvid, pvid);
 }
@@ -114,7 +114,7 @@ static bool prange_has_index(const struct silofs_prange *prange, uint32_t idx)
 }
 
 static bool prange_has_paddr(const struct silofs_prange *prange,
-                             const struct silofs_paddr *paddr)
+			     const struct silofs_paddr *paddr)
 {
 	if (!prange_has_pvid(prange, &paddr->psid.pvid)) {
 		return false;
@@ -140,7 +140,7 @@ static int prange_check_valid(const struct silofs_prange *prange)
 }
 
 void silofs_prange64b_htox(struct silofs_prange64b *prange64,
-                           const struct silofs_prange *prange)
+			   const struct silofs_prange *prange)
 {
 	memset(prange64, 0, sizeof(*prange64));
 	silofs_pvid_assign(&prange64->pvid, &prange->pvid);
@@ -150,7 +150,7 @@ void silofs_prange64b_htox(struct silofs_prange64b *prange64,
 }
 
 void silofs_prange64b_xtoh(const struct silofs_prange64b *prange64,
-                           struct silofs_prange *prange)
+			   struct silofs_prange *prange)
 {
 	silofs_pvid_assign(&prange->pvid, &prange64->pvid);
 	prange->base_index = silofs_le32_to_cpu(prange64->base_index);
@@ -173,7 +173,7 @@ static void bstate_fini(struct silofs_bstate *bstate)
 }
 
 static int bstate_assign_prange(struct silofs_bstate *bstate,
-                                const struct silofs_prange *prange)
+				const struct silofs_prange *prange)
 {
 	int err;
 
@@ -192,13 +192,13 @@ bstate_next_chkpt(struct silofs_bstate *bstate, struct silofs_paddr *out_paddr)
 }
 
 static void bstate_last_chkpt(const struct silofs_bstate *bstate,
-                              struct silofs_paddr *out_paddr)
+			      struct silofs_paddr *out_paddr)
 {
 	prange_last_paddr(&bstate->prange, SILOFS_PTYPE_CHKPT, out_paddr);
 }
 
 static void bstate_next_btnode(struct silofs_bstate *bstate,
-                               struct silofs_paddr *out_paddr)
+			       struct silofs_paddr *out_paddr)
 {
 	struct silofs_prange *prange = &bstate->prange;
 
@@ -208,7 +208,7 @@ static void bstate_next_btnode(struct silofs_bstate *bstate,
 }
 
 static bool bstate_has_paddr(const struct silofs_bstate *bstate,
-                             const struct silofs_paddr *paddr)
+			     const struct silofs_paddr *paddr)
 {
 	bool ret = false;
 
@@ -219,13 +219,13 @@ static bool bstate_has_paddr(const struct silofs_bstate *bstate,
 }
 
 static void bstate_btree_root(const struct silofs_bstate *bstate,
-                              struct silofs_paddr *out_paddr)
+			      struct silofs_paddr *out_paddr)
 {
 	paddr_assign(out_paddr, &bstate->btree_root);
 }
 
 static void bstate_update_btree_root(struct silofs_bstate *bstate,
-                                     const struct silofs_paddr *paddr)
+				     const struct silofs_paddr *paddr)
 {
 	silofs_assert_eq(paddr->ptype, SILOFS_PTYPE_BTNODE);
 
@@ -258,7 +258,7 @@ bstore_bind_pni(struct silofs_bstore *bstore, struct silofs_pnode_info *pni)
 }
 
 static int bstore_validate_paddr(const struct silofs_bstore *bstore,
-                                 const struct silofs_paddr *paddr)
+				 const struct silofs_paddr *paddr)
 {
 	return bstate_has_paddr(&bstore->bstate, paddr) ? 0 : -SILOFS_EINVAL;
 }
@@ -272,7 +272,7 @@ cpi_paddr(const struct silofs_chkpt_info *cpi)
 }
 
 static int bstore_save_chkpt(const struct silofs_bstore *bstore,
-                             const struct silofs_chkpt_info *cpi)
+			     const struct silofs_chkpt_info *cpi)
 {
 	const struct silofs_rovec rov = {
 		.rov_base = cpi->cp,
@@ -283,7 +283,7 @@ static int bstore_save_chkpt(const struct silofs_bstore *bstore,
 }
 
 static int bstore_load_chkpt(const struct silofs_bstore *bstore,
-                             const struct silofs_chkpt_info *cpi)
+			     const struct silofs_chkpt_info *cpi)
 {
 	const struct silofs_rwvec rwv = {
 		.rwv_base = cpi->cp,
@@ -294,7 +294,7 @@ static int bstore_load_chkpt(const struct silofs_bstore *bstore,
 }
 
 static int bstore_commit_chkpt(const struct silofs_bstore *bstore,
-                               struct silofs_chkpt_info *cpi)
+			       struct silofs_chkpt_info *cpi)
 {
 	int err;
 
@@ -307,8 +307,8 @@ static int bstore_commit_chkpt(const struct silofs_bstore *bstore,
 }
 
 static int bstore_create_cached_cpi(struct silofs_bstore *bstore,
-                                    const struct silofs_paddr *paddr,
-                                    struct silofs_chkpt_info **out_cpi)
+				    const struct silofs_paddr *paddr,
+				    struct silofs_chkpt_info **out_cpi)
 {
 	struct silofs_chkpt_info *cpi;
 
@@ -322,7 +322,7 @@ static int bstore_create_cached_cpi(struct silofs_bstore *bstore,
 }
 
 static int bstore_require_pseg(struct silofs_bstore *bstore, bool create,
-                               const struct silofs_psid *psid)
+			       const struct silofs_psid *psid)
 
 {
 	int err;
@@ -336,13 +336,13 @@ static int bstore_require_pseg(struct silofs_bstore *bstore, bool create,
 }
 
 static int bstore_require_pseg_of(struct silofs_bstore *bstore, bool create,
-                                  const struct silofs_paddr *paddr)
+				  const struct silofs_paddr *paddr)
 {
 	return bstore_require_pseg(bstore, create, &paddr->psid);
 }
 
 static void bstore_update_chkpt(const struct silofs_bstore *bstore,
-                                struct silofs_chkpt_info *cpi)
+				struct silofs_chkpt_info *cpi)
 {
 	struct silofs_paddr btree_root;
 
@@ -351,8 +351,8 @@ static void bstore_update_chkpt(const struct silofs_bstore *bstore,
 }
 
 static int bstore_spawn_chkpt(struct silofs_bstore *bstore, bool create,
-                              const struct silofs_paddr *paddr,
-                              struct silofs_chkpt_info **out_cpi)
+			      const struct silofs_paddr *paddr,
+			      struct silofs_chkpt_info **out_cpi)
 {
 	int err;
 
@@ -369,14 +369,14 @@ static int bstore_spawn_chkpt(struct silofs_bstore *bstore, bool create,
 }
 
 static void bstore_evict_cached_cpi(struct silofs_bstore *bstore,
-                                    struct silofs_chkpt_info *cpi)
+				    struct silofs_chkpt_info *cpi)
 {
 	silofs_pcache_evict_cpi(&bstore->pcache, cpi);
 }
 
 static int bstore_stage_chkpt(struct silofs_bstore *bstore,
-                              const struct silofs_paddr *paddr,
-                              struct silofs_chkpt_info **out_cpi)
+			      const struct silofs_paddr *paddr,
+			      struct silofs_chkpt_info **out_cpi)
 {
 	struct silofs_chkpt_info *cpi = NULL;
 	int err;
@@ -411,7 +411,7 @@ bti_paddr(const struct silofs_btnode_info *bti)
 }
 
 static int bstore_save_btnode(const struct silofs_bstore *bstore,
-                              const struct silofs_btnode_info *bti)
+			      const struct silofs_btnode_info *bti)
 {
 	const struct silofs_rovec rov = {
 		.rov_base = bti->bn,
@@ -422,7 +422,7 @@ static int bstore_save_btnode(const struct silofs_bstore *bstore,
 }
 
 static int bstore_load_btnode(const struct silofs_bstore *bstore,
-                              const struct silofs_btnode_info *bti)
+			      const struct silofs_btnode_info *bti)
 {
 	const struct silofs_rwvec rwv = {
 		.rwv_base = bti->bn,
@@ -433,7 +433,7 @@ static int bstore_load_btnode(const struct silofs_bstore *bstore,
 }
 
 static int bstore_commit_btnode(const struct silofs_bstore *bstore,
-                                struct silofs_btnode_info *bti)
+				struct silofs_btnode_info *bti)
 {
 	int err;
 
@@ -446,8 +446,8 @@ static int bstore_commit_btnode(const struct silofs_bstore *bstore,
 }
 
 static int bstore_create_cached_bti(struct silofs_bstore *bstore,
-                                    const struct silofs_paddr *paddr,
-                                    struct silofs_btnode_info **out_bti)
+				    const struct silofs_paddr *paddr,
+				    struct silofs_btnode_info **out_bti)
 {
 	struct silofs_btnode_info *bti;
 
@@ -461,7 +461,7 @@ static int bstore_create_cached_bti(struct silofs_bstore *bstore,
 }
 
 static int bstore_create_btree_root_at(struct silofs_bstore *bstore,
-                                       const struct silofs_paddr *paddr)
+				       const struct silofs_paddr *paddr)
 {
 	struct silofs_btnode_info *bti = NULL;
 	int err;
@@ -493,14 +493,14 @@ static int bstore_spawn_btree_root(struct silofs_bstore *bstore)
 }
 
 static void bstore_evict_cached_bti(struct silofs_bstore *bstore,
-                                    struct silofs_btnode_info *bti)
+				    struct silofs_btnode_info *bti)
 {
 	silofs_pcache_evict_bti(&bstore->pcache, bti);
 }
 
 static int bstore_stage_btnode(struct silofs_bstore *bstore,
-                               const struct silofs_paddr *paddr,
-                               struct silofs_btnode_info **out_bti)
+			       const struct silofs_paddr *paddr,
+			       struct silofs_btnode_info **out_bti)
 {
 	struct silofs_btnode_info *bti = NULL;
 	int err;
@@ -535,7 +535,7 @@ bli_paddr(const struct silofs_btleaf_info *bli)
 }
 
 static int bstore_save_btleaf(const struct silofs_bstore *bstore,
-                              const struct silofs_btleaf_info *bli)
+			      const struct silofs_btleaf_info *bli)
 {
 	const struct silofs_rovec rov = {
 		.rov_base = bli->bl,
@@ -546,7 +546,7 @@ static int bstore_save_btleaf(const struct silofs_bstore *bstore,
 }
 
 static int bstore_load_btleaf(const struct silofs_bstore *bstore,
-                              const struct silofs_btleaf_info *bli)
+			      const struct silofs_btleaf_info *bli)
 {
 	const struct silofs_rwvec rwv = {
 		.rwv_base = bli->bl,
@@ -557,7 +557,7 @@ static int bstore_load_btleaf(const struct silofs_bstore *bstore,
 }
 
 static int bstore_commit_btleaf(const struct silofs_bstore *bstore,
-                                struct silofs_btleaf_info *bli)
+				struct silofs_btleaf_info *bli)
 {
 	int err;
 
@@ -570,8 +570,8 @@ static int bstore_commit_btleaf(const struct silofs_bstore *bstore,
 }
 
 static int bstore_create_cached_bli(struct silofs_bstore *bstore,
-                                    const struct silofs_paddr *paddr,
-                                    struct silofs_btleaf_info **out_bli)
+				    const struct silofs_paddr *paddr,
+				    struct silofs_btleaf_info **out_bli)
 {
 	struct silofs_btleaf_info *bli;
 
@@ -585,14 +585,14 @@ static int bstore_create_cached_bli(struct silofs_bstore *bstore,
 }
 
 static void bstore_evict_cached_bli(struct silofs_bstore *bstore,
-                                    struct silofs_btleaf_info *bli)
+				    struct silofs_btleaf_info *bli)
 {
 	silofs_pcache_evict_bli(&bstore->pcache, bli);
 }
 
 static int bstore_stage_btleaf(struct silofs_bstore *bstore,
-                               const struct silofs_paddr *paddr,
-                               struct silofs_btleaf_info **out_bli)
+			       const struct silofs_paddr *paddr,
+			       struct silofs_btleaf_info **out_bli)
 {
 	struct silofs_btleaf_info *bli = NULL;
 	int err;
@@ -653,7 +653,7 @@ int silofs_bstore_format(struct silofs_bstore *bstore)
 }
 
 static int bstore_update_btree_root_by(struct silofs_bstore *bstore,
-                                       const struct silofs_chkpt_info *cpi)
+				       const struct silofs_chkpt_info *cpi)
 {
 	struct silofs_paddr btree_root;
 
@@ -684,7 +684,7 @@ static int bstore_stage_last_chkpt(struct silofs_bstore *bstore)
 }
 
 static int bstore_stage_btnode_at(struct silofs_bstore *bstore,
-                                  const struct silofs_paddr *paddr)
+				  const struct silofs_paddr *paddr)
 {
 	struct silofs_btnode_info *bti = NULL;
 
@@ -692,7 +692,7 @@ static int bstore_stage_btnode_at(struct silofs_bstore *bstore,
 }
 
 static int bstore_stage_btleaf_at(struct silofs_bstore *bstore,
-                                  const struct silofs_paddr *paddr)
+				  const struct silofs_paddr *paddr)
 {
 	struct silofs_btleaf_info *bli = NULL;
 
@@ -700,7 +700,7 @@ static int bstore_stage_btleaf_at(struct silofs_bstore *bstore,
 }
 
 static int bstore_stage_btnode_childs(struct silofs_bstore *bstore,
-                                      const struct silofs_btnode_info *bti)
+				      const struct silofs_btnode_info *bti)
 {
 	struct silofs_paddr paddr;
 	size_t nchilds;
@@ -739,7 +739,7 @@ static int bstore_stage_btree_root(struct silofs_bstore *bstore)
 }
 
 int silofs_bstore_reload(struct silofs_bstore *bstore,
-                         const struct silofs_prange *prange)
+			 const struct silofs_prange *prange)
 {
 	int err;
 
@@ -773,9 +773,9 @@ int silofs_bstore_close(struct silofs_bstore *bstore)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int bstore_commit_pnode(struct silofs_bstore *bstore,
-                               struct silofs_pnode_info *pni)
+			       struct silofs_pnode_info *pni)
 {
-	const enum silofs_ptype ptype = pni_ptype(pni);
+	const enum silofs_ptype ptype = silofs_pni_ptype(pni);
 	int ret = -SILOFS_EINVAL;
 
 	switch (ptype) {
@@ -839,7 +839,7 @@ int silofs_bstore_dropall(struct silofs_bstore *bstore)
 }
 
 void silofs_bstore_curr_prange(const struct silofs_bstore *bstore,
-                               struct silofs_prange *out_prange)
+			       struct silofs_prange *out_prange)
 {
 	silofs_prange_assign(out_prange, &bstore->bstate.prange);
 }

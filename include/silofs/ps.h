@@ -28,8 +28,4 @@
 #include <silofs/ps/pcache.h>
 #include <silofs/ps/bstore.h>
 
-#ifdef SILOFS_HAVE_PRIVATE
-#include <silofs/ps-private.h>
-#endif
-
 #endif /* SILOFS_PS_H_ */

@@ -649,7 +649,9 @@ void silofs_fsenv_relax_caches(const struct silofs_fsenv *fsenv, int flags)
 {
 	silofs_pcache_relax(&fsenv->fse.bstore->pcache, flags);
 	silofs_lcache_relax(fsenv->fse.lcache, flags);
-	silofs_repo_relax(fsenv->fse.repo, flags);
+	if (flags & SILOFS_F_IDLE) {
+		silofs_repo_relax(fsenv->fse.repo);
+	}
 }
 
 void silofs_fsenv_uptime(const struct silofs_fsenv *fsenv, time_t *out_uptime)

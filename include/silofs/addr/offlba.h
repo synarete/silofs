@@ -18,6 +18,7 @@
 #define SILOFS_OFFLBA_H_
 
 #include <sys/types.h>
+#include <stdbool.h>
 #include <unistd.h>
 
 typedef loff_t silofs_lba_t;

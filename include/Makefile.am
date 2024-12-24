@@ -7,6 +7,7 @@ noinst_HEADERS += silofs/configs.h
 noinst_HEADERS += linux/fuse_kernel.h
 
 nobase_include_HEADERS = $(NULL)
+nobase_include_HEADERS += silofs.h
 nobase_include_HEADERS += silofs/ccattr.h
 nobase_include_HEADERS += silofs/consts.h
 nobase_include_HEADERS += silofs/defs.h
@@ -16,7 +17,6 @@ nobase_include_HEADERS += silofs/ioctls.h
 nobase_include_HEADERS += silofs/macros.h
 nobase_include_HEADERS += silofs/syscall.h
 nobase_include_HEADERS += silofs/version.h
-nobase_include_HEADERS += silofs/libsilofs.h
 nobase_include_HEADERS += silofs/infra/atomic.h
 nobase_include_HEADERS += silofs/infra/avl.h
 nobase_include_HEADERS += silofs/infra/base64.h

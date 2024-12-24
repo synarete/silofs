@@ -18,7 +18,7 @@
 #define SILOFS_MOUNTD_H_
 
 #include <silofs/configs.h>
-#include <silofs/libsilofs.h>
+#include <silofs.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/resource.h>

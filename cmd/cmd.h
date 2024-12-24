@@ -17,7 +17,7 @@
 #ifndef SILOFS_CMD_H_
 #define SILOFS_CMD_H_
 
-#include <silofs/libsilofs.h>
+#include <silofs.h>
 
 typedef void (*silofs_exec_fn)(void);
 

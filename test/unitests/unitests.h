@@ -18,7 +18,7 @@
 #define SILOFS_UNITESTS_H_
 
 #include <silofs/configs.h>
-#include <silofs/libsilofs.h>
+#include <silofs.h>
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <sys/stat.h>

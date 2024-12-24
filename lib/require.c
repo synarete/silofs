@@ -20,8 +20,6 @@
 #include <silofs/execlib.h>
 #include <linux/limits.h>
 #include <sys/types.h>
-#include <sys/resource.h>
-#include <errno.h>
 #include <limits.h>
 #include <endian.h>
 
@@ -91,7 +89,7 @@
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void validate_fundamental_types_size(void)
+static void require_fundamental_types_size(void)
 {
 	REQUIRE_SIZEOF(uint8_t, 1);
 	REQUIRE_SIZEOF(uint16_t, 2);
@@ -106,7 +104,7 @@ static void validate_fundamental_types_size(void)
 	REQUIRE_SIZEOF(ino_t, 8);
 }
 
-static void validate_persistent_types_nk(void)
+static void require_persistent_types_nk(void)
 {
 	REQUIRE_SIZEOF_4K(struct silofs_btree_node);
 	REQUIRE_SIZEOF_8K(struct silofs_btree_leaf);
@@ -124,7 +122,7 @@ static void validate_persistent_types_nk(void)
 	REQUIRE_SIZEOF_1K(struct silofs_par_hdr1k);
 }
 
-static void validate_persistent_types_size1(void)
+static void require_persistent_types_size1(void)
 {
 	REQUIRE_SIZEOF(struct silofs_name, SILOFS_NAME_MAX + 1);
 	REQUIRE_SIZEOF(struct silofs_header, SILOFS_HEADER_SIZE);
@@ -139,7 +137,7 @@ static void validate_persistent_types_size1(void)
 	REQUIRE_SIZEOF(struct silofs_par_desc256b, 256);
 }
 
-static void validate_persistent_types_size2(void)
+static void require_persistent_types_size2(void)
 {
 	REQUIRE_SIZEOF(struct silofs_tm64b, 64);
 	REQUIRE_SIZEOF(struct silofs_timespec, 16);
@@ -191,7 +189,7 @@ static void validate_persistent_types_size2(void)
 	REQUIRE_SIZEOF(struct silofs_repo_meta, SILOFS_REPO_METAFILE_SIZE);
 }
 
-static void validate_persistent_types_members(void)
+static void require_persistent_types_members(void)
 {
 	REQUIRE_NBITS(struct silofs_header, h_type, 8);
 	REQUIRE_NBITS(struct silofs_bk_ref, bkr_allocated, SILOFS_NKB_IN_LBK);
@@ -204,7 +202,7 @@ static void validate_persistent_types_members(void)
 		       SILOFS_DIR_NODE_NCHILDS);
 }
 
-static void validate_persistent_types_alignment1(void)
+static void require_persistent_types_alignment1(void)
 {
 	REQUIRE_OFFSET64(struct silofs_spmap_ref, sr_uaddr, 0);
 	REQUIRE_OFFSET64(struct silofs_bk_ref, bkr_uref, 0);
@@ -213,7 +211,7 @@ static void validate_persistent_types_alignment1(void)
 	REQUIRE_OFFSET64(struct silofs_bk_ref, bkr_dbkref, 64);
 }
 
-static void validate_persistent_types_alignment2(void)
+static void require_persistent_types_alignment2(void)
 {
 	REQUIRE_OFFSET64(struct silofs_bootrec1k, br_magic, 0);
 	REQUIRE_OFFSET64(struct silofs_bootrec1k, br_version, 8);
@@ -269,7 +267,7 @@ static void validate_persistent_types_alignment2(void)
 	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_rivs, 28672);
 }
 
-static void validate_persistent_types_alignment3(void)
+static void require_persistent_types_alignment3(void)
 {
 	REQUIRE_OFFSET64(struct silofs_inode, i_hdr, 0);
 	REQUIRE_OFFSET64(struct silofs_inode, i_ino, 16);
@@ -305,7 +303,7 @@ static void validate_persistent_types_alignment3(void)
 	REQUIRE_OFFSET64(struct silofs_symlnk_value, sy_value, 64);
 }
 
-static void validate_persistent_types_alignment4(void)
+static void require_persistent_types_alignment4(void)
 {
 	REQUIRE_OFFSET64(struct silofs_chkpt_node, cpn_hdr, 0);
 	REQUIRE_OFFSET64(struct silofs_chkpt_node, cpn_flags, 16);
@@ -323,7 +321,7 @@ static void validate_persistent_types_alignment4(void)
 	REQUIRE_OFFSET64(struct silofs_btree_leaf, btl_ltop, 128);
 }
 
-static void validate_ioctl_types_size(void)
+static void require_ioctl_types_size(void)
 {
 	REQUIRE_SIZEOF(struct silofs_ioc_query, 2048);
 	REQUIRE_SIZEOF(struct silofs_ioc_clone, 1024);
@@ -331,7 +329,7 @@ static void validate_ioctl_types_size(void)
 	REQUIRE_SIZEOF_LE(struct silofs_ioc_clone, SILOFS_IOC_SIZE_MAX);
 }
 
-static void validate_defs_consistency(void)
+static void require_defs_consistency(void)
 {
 	REQUIRE_EQ(CHAR_BIT, 8);
 	REQUIRE_EQ(SILOFS_NSPMAP_IN_LBK * SILOFS_SPMAP_SIZE, SILOFS_LBK_SIZE);
@@ -356,7 +354,7 @@ static void validate_defs_consistency(void)
 		   SILOFS_FILE_TREE_LEAF_SIZE);
 }
 
-static void validate_external_constants(void)
+static void require_external_constants(void)
 {
 	REQUIRE_GE(SILOFS_NAME_MAX, NAME_MAX);
 	REQUIRE_EQ(SILOFS_PATH_MAX, PATH_MAX);
@@ -374,211 +372,18 @@ static void validate_external_constants(void)
 	REQUIRE_EQ(SILOFS_KDF_SCRYPT, GCRY_KDF_SCRYPT);
 }
 
-static void validate_defs(void)
+void silofs_require_proper_defs(void)
 {
-	validate_fundamental_types_size();
-	validate_persistent_types_nk();
-	validate_persistent_types_size1();
-	validate_persistent_types_size2();
-	validate_persistent_types_members();
-	validate_persistent_types_alignment1();
-	validate_persistent_types_alignment2();
-	validate_persistent_types_alignment3();
-	validate_persistent_types_alignment4();
-	validate_ioctl_types_size();
-	validate_defs_consistency();
-	validate_external_constants();
-}
-
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-
-#define SILOFS_NOFILES_MIN (512)
-
-static int errno_or_errnum(int errnum)
-{
-	return (errno > 0) ? -errno : -abs(errnum);
-}
-
-static int check_endianess32(uint32_t val, const char *str)
-{
-	char buf[16] = "";
-	const uint32_t val_le = htole32(val);
-
-	for (size_t i = 0; i < 4; ++i) {
-		buf[i] = (char)(val_le >> (i * 8));
-	}
-	return !strcmp(buf, str) ? 0 : -EBADE;
-}
-
-static int check_endianess64(uint64_t val, const char *str)
-{
-	char buf[16] = "";
-	const uint64_t val_le = htole64(val);
-
-	for (size_t i = 0; i < 8; ++i) {
-		buf[i] = (char)(val_le >> (i * 8));
-	}
-	return !strcmp(buf, str) ? 0 : -EBADE;
-}
-
-static int check_endianess(void)
-{
-	int err;
-
-	err = check_endianess64(SILOFS_REPO_META_MAGIC, "#SILOFS#");
-	if (err) {
-		return err;
-	}
-	err = check_endianess64(SILOFS_BOOT_RECORD_MAGIC, "@SILOFS@");
-	if (err) {
-		return err;
-	}
-	err = check_endianess64(SILOFS_PAR_INDEX_MAGIC, "%silofs%");
-	if (err) {
-		return err;
-	}
-	err = check_endianess64(SILOFS_SUPER_MAGIC, "@silofs@");
-	if (err) {
-		return err;
-	}
-	err = check_endianess32(SILOFS_FSID_MAGIC, "SILO");
-	if (err) {
-		return err;
-	}
-	err = check_endianess32(SILOFS_META_MAGIC, "silo");
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
-static int check_sysconf(void)
-{
-	long val;
-	long page_shift = 0;
-	const long page_size_min = SILOFS_PAGE_SIZE_MIN;
-	const long page_shift_min = SILOFS_PAGE_SHIFT_MIN;
-	const long page_shift_max = SILOFS_PAGE_SHIFT_MAX;
-	const long cl_size_min = SILOFS_CACHELINE_SIZE_MIN;
-	const long cl_size_max = SILOFS_CACHELINE_SIZE_MAX;
-
-	errno = 0;
-	val = silofs_sc_phys_pages();
-	if (val <= 0) {
-		return errno_or_errnum(SILOFS_ENOMEM);
-	}
-	val = silofs_sc_avphys_pages();
-	if (val <= 0) {
-		return errno_or_errnum(SILOFS_ENOMEM);
-	}
-	val = silofs_sc_l1_dcache_linesize();
-	if ((val < cl_size_min) || (val > cl_size_max)) {
-		return errno_or_errnum(SILOFS_EOPNOTSUPP);
-	}
-	val = silofs_sc_page_size();
-	if ((val < page_size_min) || (val % page_size_min)) {
-		return errno_or_errnum(SILOFS_EOPNOTSUPP);
-	}
-	for (long shift = page_shift_min; shift <= page_shift_max; ++shift) {
-		if (val == (1L << shift)) {
-			page_shift = val;
-			break;
-		}
-	}
-	if (page_shift == 0) {
-		return errno_or_errnum(SILOFS_EOPNOTSUPP);
-	}
-	val = silofs_sc_nproc_onln();
-	if (val <= 0) {
-		return errno_or_errnum(SILOFS_ENOMEDIUM);
-	}
-	val = silofs_sc_iov_max();
-	if (val < SILOFS_IOV_MAX) {
-		return errno_or_errnum(SILOFS_EOPNOTSUPP);
-	}
-	return 0;
-}
-
-static int check_system_page_size(void)
-{
-	long page_size;
-	const size_t page_shift[] = { 12, 13, 14, 16 };
-
-	page_size = silofs_sc_page_size();
-	if (page_size > SILOFS_LBK_SIZE) {
-		return -SILOFS_EOPNOTSUPP;
-	}
-	for (size_t i = 0; i < SILOFS_ARRAY_SIZE(page_shift); ++i) {
-		if (page_size == (1L << page_shift[i])) {
-			return 0;
-		}
-	}
-	return -SILOFS_EOPNOTSUPP;
-}
-
-static int check_proc_rlimits(void)
-{
-	struct rlimit rlim;
-	int err;
-
-	err = silofs_sys_getrlimit(RLIMIT_AS, &rlim);
-	if (err) {
-		return err;
-	}
-	if (rlim.rlim_cur < SILOFS_MEGA) {
-		return -SILOFS_ENOMEM;
-	}
-	err = silofs_sys_getrlimit(RLIMIT_NOFILE, &rlim);
-	if (err) {
-		return err;
-	}
-	if (rlim.rlim_cur < SILOFS_NOFILES_MIN) {
-		return -SILOFS_ENFILE;
-	}
-	return 0;
-}
-
-static int init_libsilofs(void)
-{
-	int err;
-
-	err = silofs_init_time();
-	if (err) {
-		return err;
-	}
-	err = check_endianess();
-	if (err) {
-		return err;
-	}
-	err = check_sysconf();
-	if (err) {
-		return err;
-	}
-	err = check_system_page_size();
-	if (err) {
-		return err;
-	}
-	err = check_proc_rlimits();
-	if (err) {
-		return err;
-	}
-	err = silofs_init_gcrypt();
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
-static bool g_libsilofs_init;
-
-int silofs_init_lib(void)
-{
-	int ret = 0;
-
-	if (!g_libsilofs_init) {
-		validate_defs();
-		ret = init_libsilofs();
-		g_libsilofs_init = (ret == 0);
-	}
-	return ret;
+	require_fundamental_types_size();
+	require_persistent_types_nk();
+	require_persistent_types_size1();
+	require_persistent_types_size2();
+	require_persistent_types_members();
+	require_persistent_types_alignment1();
+	require_persistent_types_alignment2();
+	require_persistent_types_alignment3();
+	require_persistent_types_alignment4();
+	require_ioctl_types_size();
+	require_defs_consistency();
+	require_external_constants();
 }

@@ -79,7 +79,7 @@ static void cmd_error_print_progname(void)
 		fprintf(fp, "%s: ", cmd_globals.name);
 	} else {
 		fprintf(fp, "%s %s: ", cmd_globals.name,
-		        cmd_globals.cmdi->name);
+			cmd_globals.cmdi->name);
 	}
 	fflush(fp);
 }
@@ -112,7 +112,7 @@ static void cmd_init_libsilofs(void)
 {
 	int err;
 
-	err = silofs_init_lib();
+	err = silofs_initlib_once();
 	if (err) {
 		cmd_die(err, "unable to init libsilofs");
 	}

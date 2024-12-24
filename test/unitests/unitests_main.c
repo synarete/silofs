@@ -147,7 +147,7 @@ static void ut_parse_args(void)
 	while (opt_chr > 0) {
 		opt_index = 0;
 		opt_chr = getopt_long(ut_globals.argc, ut_globals.argv,
-		                      "l:Mpvh", long_opts, &opt_index);
+				      "l:Mpvh", long_opts, &opt_index);
 		if (opt_chr == 'l') {
 			ut_set_run_level(optarg);
 		} else if (opt_chr == 'M') {
@@ -234,7 +234,7 @@ static void ut_init_lib(void)
 {
 	int err;
 
-	err = silofs_init_lib();
+	err = silofs_initlib_once();
 	if (err) {
 		error(EXIT_FAILURE, -err, "failed to init libsilofs");
 	}

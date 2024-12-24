@@ -15,7 +15,7 @@ import numpy as np
 
 __author__ = "Shachar Sharon"
 __license__ = "GPL-3.0"
-__copyright__ = "Copyright (C) 2024 Shachar Sharon"
+__copyright__ = "Copyright (C) 2025 Shachar Sharon"
 
 
 # pylint: disable=R0903

@@ -5,7 +5,7 @@
    :description: Documentations for silofs
    :language: en-US
    :keywords: restructuredtext
-   :copyright: Shachar Sharon, 2022-2024
+   :copyright: Shachar Sharon, 2022-2025
 
 ======================
  The Silo File-System

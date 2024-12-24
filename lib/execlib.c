@@ -16,7 +16,7 @@
  */
 #include <silofs/configs.h>
 #include <silofs/fs.h>
-#include <silofs/fs/fuseq.h>
+#include <silofs/fuseq.h>
 #include <silofs/execlib.h>
 
 #define ROUND_TO_4K(n) SILOFS_ROUND_TO(n, (4 * SILOFS_KILO))

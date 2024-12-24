@@ -19,9 +19,9 @@
 
 #include <silofs/infra.h>
 #include <silofs/addr.h>
-#include <silofs/fs/boot.h>
-#include <silofs/fs/stats.h>
-#include <silofs/fs/walk.h>
+#include <silofs/boot.h>
+#include <silofs/stats.h>
+#include <silofs/walk.h>
 
 int silofs_init_lib(void);
 

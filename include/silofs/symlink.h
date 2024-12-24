@@ -19,8 +19,10 @@
 
 #include <silofs/infra.h>
 #include <silofs/str.h>
-#include <silofs/fs/types.h>
-#include <silofs/fs/task.h>
+
+struct silofs_task;
+struct silofs_inode_info;
+struct silofs_symlnk_value;
 
 void silofs_setup_symlnk(struct silofs_inode_info *lnk_ii);
 

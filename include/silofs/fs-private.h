@@ -23,8 +23,8 @@
 
 #include <silofs/defs.h>
 #include <silofs/infra.h>
-#include <silofs/fs/types.h>
-#include <silofs/fs/lnodes.h>
+#include <silofs/types.h>
+#include <silofs/lnodes.h>
 
 #define task_sbi(t)    silofs_task_sbi(t)
 #define task_lcache(t) silofs_task_lcache(t)

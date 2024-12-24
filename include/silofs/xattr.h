@@ -19,8 +19,8 @@
 
 #include <silofs/infra.h>
 #include <silofs/str.h>
-#include <silofs/fs/types.h>
-#include <silofs/fs/task.h>
+#include <silofs/types.h>
+#include <silofs/task.h>
 
 /* call-back context for list extended-attributes operations */
 typedef int (*silofs_fillxattr_fn)(struct silofs_listxattr_ctx *lxa_ctx,

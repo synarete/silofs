@@ -19,8 +19,8 @@
 
 #include <silofs/infra.h>
 #include <silofs/addr.h>
-#include <silofs/fs/types.h>
-#include <silofs/fs/idsmap.h>
+#include <silofs/types.h>
+#include <silofs/idsmap.h>
 
 struct silofs_fsenv;
 

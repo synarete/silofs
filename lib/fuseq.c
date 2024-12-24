@@ -18,7 +18,7 @@
 #include <silofs/infra.h>
 #include <silofs/ioctls.h>
 #include <silofs/fs.h>
-#include <silofs/fs/fuseq.h>
+#include <silofs/fuseq.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>

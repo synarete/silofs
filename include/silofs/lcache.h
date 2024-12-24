@@ -20,8 +20,8 @@
 #include <silofs/infra.h>
 #include <silofs/addr.h>
 #include <silofs/hmdq.h>
-#include <silofs/fs/spxmap.h>
-#include <silofs/fs/lnodes.h>
+#include <silofs/spxmap.h>
+#include <silofs/lnodes.h>
 
 /* dirty-queues of cached-elements by owner */
 struct silofs_dirtyqs {

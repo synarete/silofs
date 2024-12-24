@@ -17,8 +17,9 @@
 #ifndef SILOFS_FSENV_H_
 #define SILOFS_FSENV_H_
 
-#include <silofs/fs/types.h>
-#include <silofs/fs/boot.h>
+#include <silofs/macros.h>
+#include <silofs/types.h>
+#include <silofs/boot.h>
 
 /* fs-env control flags */
 enum silofs_env_flags {

@@ -153,16 +153,6 @@ static void iov_clone(const struct iovec *iov, struct iovec *other, int cnt)
 	memcpy(other, iov, (size_t)cnt * sizeof(*other));
 }
 
-static size_t iov_length(const struct iovec *iov, int cnt)
-{
-	size_t len = 0;
-
-	for (int i = 0; i < cnt; ++i) {
-		len += iov[i].iov_len;
-	}
-	return len;
-}
-
 static void iov_advance(struct iovec **p_iov, size_t len)
 {
 	struct iovec *iov = *p_iov;
@@ -180,9 +170,10 @@ static int do_sys_pwritevn(int fd, struct iovec *iov, int cnt, loff_t off,
 {
 	size_t nwr_cur;
 	size_t nwr = 0;
-	const size_t len = iov_length(iov, cnt);
+	size_t len;
 	int err = 0;
 
+	len = silofs_iov_length(iov, (size_t)cnt);
 	while (nwr < len) {
 		err = silofs_sys_pwritev(fd, iov, cnt, off, &nwr_cur);
 		if (err == -EINTR) {
@@ -220,7 +211,12 @@ int silofs_sys_pwritevn(int fd, const struct iovec *iov, int cnt, loff_t off)
 
 size_t silofs_iov_length(const struct iovec *iov, size_t cnt)
 {
-	return iov_length(iov, (int)cnt);
+	size_t len = 0;
+
+	for (size_t i = 0; i < cnt; ++i) {
+		len += iov[i].iov_len;
+	}
+	return len;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

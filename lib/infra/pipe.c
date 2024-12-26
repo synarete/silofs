@@ -97,16 +97,6 @@ size_t silofs_pipe_size_of(size_t pipe_size_want)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static size_t iov_length(const struct iovec *iov, size_t niov)
-{
-	size_t len = 0;
-
-	for (size_t i = 0; i < niov; ++i) {
-		len += iov[i].iov_len;
-	}
-	return len;
-}
-
 static size_t
 iov_count_ceil(const struct iovec *iov, size_t niov, size_t len_max)
 {
@@ -333,7 +323,7 @@ int silofs_pipe_vmsplice_to_iov(struct silofs_pipe *pipe,
 	}
 
 	cnt = iov_count_ceil(iov, niov, (size_t)(pipe->pend));
-	len = iov_length(iov, cnt);
+	len = silofs_iov_length(iov, cnt);
 	err = silofs_sys_vmsplice(fd, iov, cnt, flags, &nsp);
 	if (err) {
 		silofs_log_error("vmsplice-error: fd=%d cnt=%zu "

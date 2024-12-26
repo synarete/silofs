@@ -75,4 +75,8 @@ int silofs_bstore_flush_dirty(struct silofs_bstore *bstore);
 void silofs_bstore_curr_prange(const struct silofs_bstore *bstore,
                                struct silofs_prange       *out_prange);
 
+int silofs_bstore_resolve(const struct silofs_bstore *bstore,
+                          const struct silofs_laddr  *laddr,
+                          struct silofs_paddr        *out_paddr);
+
 #endif /* SILOFS_BSTORE_H_ */

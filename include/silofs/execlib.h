@@ -28,7 +28,7 @@ int silofs_initlib_once(void);
 void silofs_require_proper_defs(void);
 
 int silofs_new_fsenv(const struct silofs_fs_args *args,
-		     struct silofs_fsenv        **out_fsenv);
+                     struct silofs_fsenv        **out_fsenv);
 
 void silofs_del_fsenv(struct silofs_fsenv *fsenv);
 
@@ -39,13 +39,13 @@ int silofs_open_repo(struct silofs_fsenv *fsenv);
 int silofs_close_repo(struct silofs_fsenv *fsenv);
 
 int silofs_format_fs(struct silofs_fsenv *fsenv,
-		     struct silofs_caddr *out_caddr);
+                     struct silofs_caddr *out_caddr);
 
 int silofs_poke_fs(struct silofs_fsenv       *fsenv,
-		   const struct silofs_caddr *caddr);
+                   const struct silofs_caddr *caddr);
 
 int silofs_open_fs(struct silofs_fsenv       *fsenv,
-		   const struct silofs_caddr *caddr);
+                   const struct silofs_caddr *caddr);
 
 int silofs_close_fs(struct silofs_fsenv *fsenv);
 
@@ -54,29 +54,29 @@ int silofs_exec_fs(struct silofs_fsenv *fsenv);
 int silofs_post_exec_fs(struct silofs_fsenv *fsenv);
 
 int silofs_fork_fs(struct silofs_fsenv *fsenv,
-		   struct silofs_caddr *out_boot_new,
-		   struct silofs_caddr *out_boot_alt);
+                   struct silofs_caddr *out_boot_new,
+                   struct silofs_caddr *out_boot_alt);
 
 int silofs_unref_fs(struct silofs_fsenv       *fsenv,
-		    const struct silofs_caddr *caddr);
+                    const struct silofs_caddr *caddr);
 
 void silofs_halt_fs(struct silofs_fsenv *fsenv);
 
 int silofs_sync_fs(struct silofs_fsenv *fsenv, bool drop);
 
 void silofs_stat_fs(const struct silofs_fsenv *fsenv,
-		    struct silofs_cachestats  *cst);
+                    struct silofs_cachestats  *cst);
 
 int silofs_inspect_fs(struct silofs_fsenv *fsenv, silofs_visit_laddr_fn cb,
-		      void *user_ctx);
+                      void *user_ctx);
 
 int silofs_archive_fs(struct silofs_fsenv *fsenv,
-		      struct silofs_caddr *out_caddr);
+                      struct silofs_caddr *out_caddr);
 
 int silofs_restore_fs(struct silofs_fsenv *fsenv,
-		      struct silofs_caddr *out_caddr);
+                      struct silofs_caddr *out_caddr);
 
 int silofs_poke_archive(struct silofs_fsenv       *fsenv,
-			const struct silofs_caddr *caddr);
+                        const struct silofs_caddr *caddr);
 
 #endif /* SILOFS_EXECLIB_H_ */

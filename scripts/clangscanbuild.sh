@@ -58,7 +58,7 @@ _clang_scan_build() {
   _run scan-build \
     --use-cc="${CCC_CC}" \
     --use-c++="${CCC_CXX}" \
-    ../configure CFLAGS='-O2 -pthread'
+    "${topdir}/configure" CFLAGS='-O2 -pthread'
 
   _run scan-build \
     --use-cc="${CCC_CC}" \
@@ -82,4 +82,3 @@ _clang_scan_build "${rootdir}"
 # expect scan-build to remove all outputs
 exit_code=$(find "${outdir}" -mindepth 1 -type d | wc -l)
 exit "${exit_code}"
-

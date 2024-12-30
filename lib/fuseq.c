@@ -591,12 +591,13 @@ static void
 fill_fuse_open_out(struct fuse_open_out *open, int noflush, int isdir)
 {
 	memset(open, 0, sizeof(*open));
-	open->open_flags = FOPEN_KEEP_CACHE;
-	if (noflush) {
-		open->open_flags |= FOPEN_NOFLUSH;
-	}
 	if (isdir) {
 		open->open_flags = FOPEN_CACHE_DIR;
+	} else {
+		open->open_flags = FOPEN_KEEP_CACHE;
+		if (noflush) {
+			open->open_flags |= FOPEN_NOFLUSH;
+		}
 	}
 }
 
@@ -1666,10 +1667,11 @@ static void do_init_capabilities(const struct silofs_fuseq_cmd_ctx *fcc)
 {
 	struct silofs_fuseq_conn_info *coni = &fcc->fq->fq_coni;
 	const uint32_t in_flags = fcc->in->u.init.arg.flags;
-	const int writeback_cache = fcc->fq->fq_writeback_cache;
+	const bool writeback_cache = fcc->fq->fq_writeback_cache;
 
 	coni->kern_cap = in_flags;
 	coni->want_cap |= FUSE_BIG_WRITES; /* same as in libfuse */
+	update_cap_want(coni, FUSE_ASYNC_READ);
 	update_cap_want(coni, FUSE_ATOMIC_O_TRUNC);
 	update_cap_want(coni, FUSE_EXPORT_SUPPORT);
 	update_cap_want(coni, FUSE_SPLICE_WRITE);
@@ -1679,8 +1681,12 @@ static void do_init_capabilities(const struct silofs_fuseq_cmd_ctx *fcc)
 	update_cap_want(coni, FUSE_MAX_PAGES);
 	update_cap_want(coni, FUSE_CACHE_SYMLINKS);
 	update_cap_want(coni, FUSE_DO_READDIRPLUS);
+	update_cap_want(coni, FUSE_READDIRPLUS_AUTO);
+	update_cap_want(coni, FUSE_ASYNC_DIO);
+
 	update_cap_want(coni, FUSE_SETXATTR_EXT);
 	if (writeback_cache) {
+		update_cap_want(coni, FUSE_AUTO_INVAL_DATA);
 		update_cap_want(coni, FUSE_WRITEBACK_CACHE);
 	}
 }

@@ -108,8 +108,11 @@ class SubcmdExec:
         self, prefix: str, cmd: str, wdir: typing.Optional[Path] = None
     ) -> None:
         """Log out execution sub-command."""
-        wd = self._getcwd_of(wdir)
-        log.printsl(f"{prefix}: '{cmd}' (wd: {wd})")
+        suffix = ""
+        if wdir:
+            wd = self._getcwd_of(wdir)
+            suffix = f" (wd: {wd})"
+        log.printsl(f"{prefix}: {cmd}{suffix}")
 
 
 class SubcmdShell(SubcmdExec):

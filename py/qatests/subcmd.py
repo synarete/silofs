@@ -35,27 +35,30 @@ class SubcmdExec:
             self.xbin = xbin
         else:
             self.xbin = _require_executable(prog)
-        self.cwd = "/"
+        self.cwd = Path("/")
 
     def execute_sub(
-        self, args, wdir: str = "", indat: str = "", timeout: float = 5.0
+        self,
+        args,
+        wdir: typing.Optional[Path] = None,
+        indat: str = "",
+        timeout: float = 5.0,
     ) -> str:
         """Execute command via subprocess.
 
         Execute command as sub-process and return its output. Raises CmdError
         upon failure.
         """
-        subcmd = self._make_cmdline(args)
-        cwd = self._make_cwd(wdir)
         txt = ""
         exp = False
-        log.printsl(f"EXEC: {subcmd}")
+        cmd = self._make_cmdline(args)
+        self.logcmd("EXEC", cmd, wdir)
         with subprocess.Popen(
-            shlex.split(subcmd),
+            shlex.split(cmd),
             stdin=subprocess.PIPE if indat else None,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            cwd=cwd,
+            cwd=self._getcwd_of(wdir),
             shell=False,
             env=os.environ.copy(),
             universal_newlines=True,
@@ -71,25 +74,26 @@ class SubcmdExec:
                 exp = True
             ret = proc.returncode
             if exp:
-                raise SubcmdError("timedout: " + subcmd, txt, ret)
+                raise SubcmdError("timedout: " + cmd, txt, ret)
             if ret != 0:
-                raise SubcmdError("failed: " + subcmd, txt, ret)
+                raise SubcmdError("failed: " + cmd, txt, ret)
         return txt
 
-    def execute_run(self, args, wdir: str = "", indat: str = "") -> None:
+    def execute_run(
+        self, args, wdir: typing.Optional[Path] = None, indat: str = ""
+    ) -> None:
         """Run command as sub-process without output, raise upon failure"""
-        subcmd = self._make_cmdline(args)
-        cwd = self._make_cwd(wdir)
-        log.printsl(f"EXEC: {subcmd}")
+        cmd = self._make_cmdline(args)
+        self.logcmd("EXEC", cmd, wdir)
         ret = subprocess.run(
-            shlex.split(subcmd),
+            shlex.split(cmd),
             check=True,
-            cwd=cwd,
+            cwd=self._getcwd_of(wdir),
             input=indat,
             encoding="utf-8",
         ).returncode
         if ret != 0:
-            raise SubcmdError("failed: " + subcmd, ret=ret)
+            raise SubcmdError("failed: " + cmd, ret=ret)
 
     def _make_cmdline(self, args: typing.Iterable[typing.Any]) -> str:
         cmdline_xbin = str(self.xbin)
@@ -97,14 +101,22 @@ class SubcmdExec:
         cmdline = cmdline_xbin + " " + " ".join(cmdline_args)
         return cmdline.strip()
 
-    def _make_cwd(self, wdir: str = "") -> str:
-        return wdir if len(wdir) > 0 else self.cwd
+    def _getcwd_of(self, wdir: typing.Optional[Path] = None) -> Path:
+        return wdir if wdir else self.cwd
+
+    def logcmd(
+        self, prefix: str, cmd: str, wdir: typing.Optional[Path] = None
+    ) -> None:
+        """Log out execution sub-command."""
+        wd = self._getcwd_of(wdir)
+        log.printsl(f"{prefix}: '{cmd}' (wd: {wd})")
 
 
 class SubcmdShell(SubcmdExec):
-    """Wrapper over execution via shell command"""
+    """Wrapper over execution via shell command."""
 
     def __init__(self) -> None:
+        """Execute command as sub shell."""
         SubcmdExec.__init__(self, "sh")
         self.env = os.environ.copy()
 
@@ -128,14 +140,14 @@ class SubcmdShell(SubcmdExec):
 
     def run_ok(
         self,
-        subcmd: str,
+        cmd: str,
         wdir: typing.Optional[Path] = None,
         xenv: typing.Optional[typing.Mapping[str, str]] = None,
     ) -> None:
-        log.printsl(f"SH: {subcmd} (wd={wdir})")
-        ret = self.run(subcmd, wdir, xenv)
+        self.logcmd("SH", cmd, wdir)
+        ret = self.run(cmd, wdir, xenv)
         if ret != 0:
-            raise SubcmdError("failed: " + subcmd, ret=ret)
+            raise SubcmdError("failed: " + cmd, ret=ret)
 
     def _mkenv(
         self, xenv: typing.Optional[typing.Mapping[str, str]]
@@ -329,7 +341,7 @@ class SubcmdFuntests(SubcmdExec):
             args.append("--nostatvfs")
         if noflaky:
             args.append("--noflaky")
-        self.execute_sub(args, wdir="/", timeout=2400)
+        self.execute_sub(args, wdir=Path("/"), timeout=2400)
 
 
 class SubcmdGit(SubcmdExec):

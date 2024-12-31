@@ -83,8 +83,7 @@ class FioExec(subcmd.SubcmdExec):
 
     def execute_with(self, fio_in: FioInput) -> FioOutput:
         argv = fio_in.to_argv()
-        wdir = str(self.base)
-        fio_res = self.execute_sub(argv, wdir=wdir, timeout=self.timeout)
+        fio_res = self.execute_sub(argv, wdir=self.base, timeout=self.timeout)
         fio_out = FioOutput(fio_res)
         return fio_out
 

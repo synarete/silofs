@@ -7,6 +7,7 @@ bin_PROGRAMS = silofs-unitests
 silofs_unitests_CPPFLAGS = $(NULL)
 silofs_unitests_CPPFLAGS += -I$(top_srcdir)/include
 silofs_unitests_CPPFLAGS += -DSILOFS_UNITEST=1
+silofs_unitests_CPPFLAGS += $(LIBGCRYPT_CFLAGS)
 silofs_unitests_LDFLAGS = $(NULL)
 silofs_unitests_LDFLAGS += $(PTHREAD_CFLAGS) $(PTHREAD_DEF)
 silofs_unitests_LDFLAGS += -L$(top_builddir)/lib

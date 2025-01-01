@@ -4,7 +4,9 @@ SUBDIRS = systemd
 AM_CFLAGS = $(WARN_CFLAGS)
 
 sbin_PROGRAMS = silofs-mountd
-silofs_mountd_CPPFLAGS = -I$(top_srcdir)/include
+silofs_mountd_CPPFLAGS = $(NULL)
+silofs_mountd_CPPFLAGS += -I$(top_srcdir)/include
+silofs_mountd_CPPFLAGS += $(LIBGCRYPT_CFLAGS)
 silofs_mountd_LDFLAGS = $(NULL)
 silofs_mountd_LDFLAGS += $(PTHREAD_CFLAGS) $(PTHREAD_DEF)
 silofs_mountd_LDFLAGS += -L$(builddir)

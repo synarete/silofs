@@ -4,7 +4,9 @@ SUBDIRS = completions sbinutils
 AM_CFLAGS = $(WARN_CFLAGS)
 
 bin_PROGRAMS = silofs
-silofs_CPPFLAGS = -I$(top_srcdir)/include
+silofs_CPPFLAGS = $(NULL)
+silofs_CPPFLAGS += -I$(top_srcdir)/include
+silofs_CPPFLAGS += $(LIBGCRYPT_CFLAGS)
 silofs_LDFLAGS = $(NULL)
 silofs_LDFLAGS += $(PTHREAD_CFLAGS) $(PTHREAD_DEF)
 silofs_LDFLAGS += -L$(builddir)

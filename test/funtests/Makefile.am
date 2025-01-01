@@ -5,6 +5,7 @@ AM_CFLAGS = $(WARN_CFLAGS)
 bin_PROGRAMS = silofs-funtests
 silofs_funtests_CPPFLAGS = $(NULL)
 silofs_funtests_CPPFLAGS += -I$(top_srcdir)/include
+silofs_funtests_CPPFLAGS += $(LIBGCRYPT_CFLAGS)
 silofs_funtests_LDFLAGS = $(NULL)
 silofs_funtests_LDFLAGS += -L$(top_builddir)/lib
 silofs_funtests_LDFLAGS += -static

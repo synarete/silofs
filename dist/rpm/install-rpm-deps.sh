@@ -37,6 +37,7 @@ qatests_deps=(
   libasan
   libattr-devel
   libcap-devel
+  libcurl-devel
   libicu-devel
   libtool
   libunwind-devel

@@ -588,16 +588,15 @@ fill_fuse_statx_out(struct fuse_statx_out *attr, const struct silofs_stat *st)
 }
 
 static void
-fill_fuse_open_out(struct fuse_open_out *open, int noflush, int isdir)
+fill_fuse_open_out(struct fuse_open_out *open, bool noflush, bool isdir)
 {
 	memset(open, 0, sizeof(*open));
+	open->open_flags = FOPEN_KEEP_CACHE;
+	if (noflush) {
+		open->open_flags |= FOPEN_NOFLUSH;
+	}
 	if (isdir) {
-		open->open_flags = FOPEN_CACHE_DIR;
-	} else {
-		open->open_flags = FOPEN_KEEP_CACHE;
-		if (noflush) {
-			open->open_flags |= FOPEN_NOFLUSH;
-		}
+		open->open_flags |= FOPEN_CACHE_DIR;
 	}
 }
 
@@ -836,7 +835,7 @@ static int fqd_reply_create_ok(struct silofs_fuseq_dispatcher *fqd,
 	struct fuse_open_out arg2;
 
 	fill_fuse_entry_out(&arg1, st);
-	fill_fuse_open_out(&arg2, 0, 0);
+	fill_fuse_open_out(&arg2, false, false);
 	return fqd_reply_arg2(fqd, task, &arg1, sizeof(arg1), &arg2,
 	                      sizeof(arg2));
 }
@@ -880,7 +879,7 @@ static int fqd_reply_readlink_ok(struct silofs_fuseq_dispatcher *fqd,
 
 static int
 fqd_reply_open_ok(struct silofs_fuseq_dispatcher *fqd,
-                  const struct silofs_task *task, int noflush, int isdir)
+                  const struct silofs_task *task, bool noflush, bool isdir)
 {
 	struct fuse_open_out arg;
 
@@ -891,7 +890,7 @@ fqd_reply_open_ok(struct silofs_fuseq_dispatcher *fqd,
 static int fqd_reply_opendir_ok(struct silofs_fuseq_dispatcher *fqd,
                                 const struct silofs_task *task)
 {
-	return fqd_reply_open_ok(fqd, task, 0, 1);
+	return fqd_reply_open_ok(fqd, task, false, true);
 }
 
 static int fqd_reply_write_ok(struct silofs_fuseq_dispatcher *fqd,
@@ -1086,8 +1085,9 @@ static int fqd_reply_statfs(struct silofs_fuseq_dispatcher *fqd,
 	return ret;
 }
 
-static int fqd_reply_open(struct silofs_fuseq_dispatcher *fqd,
-                          const struct silofs_task *task, int noflush, int err)
+static int
+fqd_reply_open(struct silofs_fuseq_dispatcher *fqd,
+               const struct silofs_task *task, bool noflush, int err)
 {
 	int ret;
 
@@ -1096,7 +1096,7 @@ static int fqd_reply_open(struct silofs_fuseq_dispatcher *fqd,
 	} else if (unlikely(err)) {
 		ret = fqd_reply_err(fqd, task, err);
 	} else {
-		ret = fqd_reply_open_ok(fqd, task, noflush, 0);
+		ret = fqd_reply_open_ok(fqd, task, noflush, false);
 	}
 	return ret;
 }
@@ -2106,15 +2106,15 @@ static int do_link(const struct silofs_fuseq_cmd_ctx *fcc)
 
 static int do_open(const struct silofs_fuseq_cmd_ctx *fcc)
 {
+	int noflush;
 	int err;
 
 	fcc->args->in.open.ino = fcc->ino;
 	fcc->args->in.open.o_flags = (int)(fcc->in->u.open.arg.flags);
-	fcc->args->in.open.noflush =
-		(fcc->args->in.open.o_flags & O_ACCMODE) == O_RDONLY;
+	noflush = (fcc->args->in.open.o_flags & O_ACCMODE) == O_RDONLY;
+	fcc->args->in.open.noflush = noflush;
 	err = do_exec_op(fcc);
-	return fqd_reply_open(fcc->fqd, fcc->task, fcc->args->in.open.noflush,
-	                      err);
+	return fqd_reply_open(fcc->fqd, fcc->task, noflush > 0, err);
 }
 
 static int do_statfs(const struct silofs_fuseq_cmd_ctx *fcc)

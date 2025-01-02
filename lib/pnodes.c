@@ -856,6 +856,13 @@ void silofs_bti_mark_root(struct silofs_btnode_info *bti)
 	silofs_bti_dirtify(bti);
 }
 
+bool silofs_bti_marked_root(const struct silofs_btnode_info *bti)
+{
+	const enum silofs_pnodef flgs = btn_flags(bti->bn);
+
+	return ((flgs & SILOFS_PNODEF_BTROOT) > 0);
+}
+
 void silofs_bti_parent(const struct silofs_btnode_info *bti,
                        struct silofs_paddr *out_paddr)
 {

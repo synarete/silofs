@@ -79,4 +79,8 @@ int silofs_bstore_resolve(struct silofs_bstore      *bstore,
                           const struct silofs_laddr *laddr,
                           struct silofs_paddr       *out_paddr);
 
+int silofs_bstore_remap(struct silofs_bstore      *bstore,
+                        const struct silofs_laddr *laddr,
+                        const struct silofs_paddr *paddr);
+
 #endif /* SILOFS_BSTORE_H_ */

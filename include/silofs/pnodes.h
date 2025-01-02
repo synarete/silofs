@@ -94,6 +94,8 @@ void silofs_bti_undirtify(struct silofs_btnode_info *bti);
 
 void silofs_bti_mark_root(struct silofs_btnode_info *bti);
 
+bool silofs_bti_marked_root(const struct silofs_btnode_info *bti);
+
 void silofs_bti_parent(const struct silofs_btnode_info *bti,
                        struct silofs_paddr             *out_paddr);
 

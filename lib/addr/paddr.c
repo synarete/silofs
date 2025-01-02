@@ -297,6 +297,12 @@ long silofs_paddr_compare(const struct silofs_paddr *paddr1,
 	return 0;
 }
 
+bool silofs_paddr_isequal(const struct silofs_paddr *paddr1,
+                          const struct silofs_paddr *paddr2)
+{
+	return (silofs_paddr_compare(paddr1, paddr2) == 0);
+}
+
 void silofs_paddr48b_reset(struct silofs_paddr48b *paddr48)
 {
 	memset(paddr48, 0, sizeof(*paddr48));

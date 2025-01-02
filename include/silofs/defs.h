@@ -111,7 +111,7 @@
 #define SILOFS_PSEG_CHKPT_SIZE (4096)
 
 /* number of pointers btree mapping-node */
-#define SILOFS_BTREE_NODE_NCHILDS (42)
+#define SILOFS_BTREE_NODE_NCHILDS (41)
 
 /* number of keys in btree mapping-node */
 #define SILOFS_BTREE_NODE_NKEYS (SILOFS_BTREE_NODE_NCHILDS - 1)
@@ -990,10 +990,14 @@ struct silofs_btree_node {
 	uint32_t               btn_flags;
 	uint16_t               btn_nkeys;
 	uint16_t               btn_nchilds;
-	uint8_t                btn_reserved1[40];
+	uint16_t               btn_height;
+	uint8_t                btn_reserved1[38];
+	struct silofs_paddr48b btn_parent;
+	uint8_t                btn_reserved2[16];
 	struct silofs_paddr48b btn_child[SILOFS_BTREE_NODE_NCHILDS];
+	uint8_t                btn_reserved3[16];
 	struct silofs_laddr48b btn_key[SILOFS_BTREE_NODE_NKEYS];
-	uint8_t                btn_reserved3[48];
+	uint8_t                btn_reserved4[64];
 } silofs_attr_aligned64;
 
 /* laddr-to-paddr mapping entry */
@@ -1007,7 +1011,9 @@ struct silofs_btree_leaf {
 	struct silofs_header     btl_hdr;
 	uint32_t                 btl_flags;
 	uint16_t                 btl_nltops;
-	uint8_t                  btl_reserved1[106];
+	uint8_t                  btl_reserved1[42];
+	struct silofs_paddr48b   btl_parent;
+	uint8_t                  btl_reserved2[16];
 	struct silofs_btree_ltop btl_ltop[SILOFS_BTREE_LEAF_NENTS];
 } silofs_attr_aligned64;
 

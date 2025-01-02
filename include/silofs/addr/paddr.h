@@ -113,6 +113,9 @@ bool silofs_paddr_isdata(const struct silofs_paddr *paddr);
 long silofs_paddr_compare(const struct silofs_paddr *paddr1,
                           const struct silofs_paddr *paddr2);
 
+bool silofs_paddr_isequal(const struct silofs_paddr *paddr1,
+                          const struct silofs_paddr *paddr2);
+
 void silofs_paddr48b_reset(struct silofs_paddr48b *paddr48);
 
 void silofs_paddr48b_htox(struct silofs_paddr48b    *paddr48,

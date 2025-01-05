@@ -23,7 +23,6 @@
 struct silofs_vaddr {
 	loff_t            off;
 	enum silofs_ltype ltype;
-	unsigned int      len;
 };
 
 /* set of addresses within single vblock */
@@ -43,6 +42,8 @@ struct silofs_vrange {
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 const struct silofs_vaddr *silofs_vaddr_none(void);
+
+size_t silofs_vaddr_length(const struct silofs_vaddr *vaddr);
 
 long silofs_vaddr_compare(const struct silofs_vaddr *vaddr1,
                           const struct silofs_vaddr *vaddr2);

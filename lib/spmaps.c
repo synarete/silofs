@@ -1254,11 +1254,12 @@ int silofs_sli_find_free_space(const struct silofs_spleaf_info *sli,
 void silofs_sli_mark_allocated_space(struct silofs_spleaf_info *sli,
                                      const struct silofs_vaddr *vaddr)
 {
-	silofs_assert_lt(sli->sl_nused_bytes, SILOFS_LSEG_SIZE_MAX);
-	silofs_assert_le(sli->sl_nused_bytes + vaddr->len,
-	                 SILOFS_LSEG_SIZE_MAX);
+	const size_t len = vaddr_len(vaddr);
 
-	sli->sl_nused_bytes += vaddr->len;
+	silofs_assert_lt(sli->sl_nused_bytes, SILOFS_LSEG_SIZE_MAX);
+	silofs_assert_le(sli->sl_nused_bytes + len, SILOFS_LSEG_SIZE_MAX);
+
+	sli->sl_nused_bytes += len;
 
 	spleaf_ref_allocated_at(sli->sl, vaddr);
 	if (vaddr_isdata(vaddr)) {
@@ -1282,17 +1283,17 @@ void silofs_sli_unref_allocated_space(struct silofs_spleaf_info *sli,
                                       const struct silofs_vaddr *vaddr)
 {
 	struct silofs_spmap_leaf *sl = sli->sl;
-	const loff_t voff = vaddr->off;
+	const size_t len = vaddr_len(vaddr);
 	const bool last = spleaf_is_last_allocated(sl, vaddr);
 
 	spleaf_unref_allocated_at(sl, vaddr);
 	if (!spleaf_is_allocated_at(sl, vaddr)) {
-		silofs_assert_ge(sli->sl_nused_bytes, vaddr->len);
-		sli->sl_nused_bytes -= vaddr->len;
+		silofs_assert_ge(sli->sl_nused_bytes, len);
+		sli->sl_nused_bytes -= len;
 	}
 	if (last) {
 		spleaf_renew_bk_at(sl, vaddr);
-		spleaf_renew_riv_of(sl, voff);
+		spleaf_renew_riv_of(sl, vaddr->off);
 	}
 	sli_dirtify(sli);
 }

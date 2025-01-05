@@ -123,12 +123,16 @@ static void len_height_to_cpu(uint64_t len_height, size_t *out_len,
 static const struct silofs_vaddr s_vaddr_none = {
 	.off = SILOFS_OFF_NULL,
 	.ltype = SILOFS_LTYPE_NONE,
-	.len = 0,
 };
 
 const struct silofs_vaddr *silofs_vaddr_none(void)
 {
 	return &s_vaddr_none;
+}
+
+size_t silofs_vaddr_length(const struct silofs_vaddr *vaddr)
+{
+	return (size_t)ltype_size(vaddr->ltype);
 }
 
 long silofs_vaddr_compare(const struct silofs_vaddr *vaddr1,
@@ -141,10 +145,6 @@ long silofs_vaddr_compare(const struct silofs_vaddr *vaddr1,
 		return cmp;
 	}
 	cmp = vaddr1->off - vaddr2->off;
-	if (cmp) {
-		return cmp;
-	}
-	cmp = (long)vaddr1->len - (long)vaddr2->len;
 	if (cmp) {
 		return cmp;
 	}
@@ -162,7 +162,6 @@ void silofs_vaddr_setup(struct silofs_vaddr *vaddr, enum silofs_ltype ltype,
 {
 	vaddr->ltype = ltype;
 	vaddr->off = voff;
-	vaddr->len = (unsigned int)ltype_size(ltype);
 }
 
 void silofs_vaddr_setup2(struct silofs_vaddr *vaddr, enum silofs_ltype ltype,
@@ -176,20 +175,17 @@ void silofs_vaddr_assign(struct silofs_vaddr *vaddr,
 {
 	vaddr->ltype = other->ltype;
 	vaddr->off = other->off;
-	vaddr->len = other->len;
 }
 
 void silofs_vaddr_reset(struct silofs_vaddr *vaddr)
 {
 	vaddr->ltype = SILOFS_LTYPE_NONE;
 	vaddr->off = SILOFS_OFF_NULL;
-	vaddr->len = 0;
 }
 
 bool silofs_vaddr_isnull(const struct silofs_vaddr *vaddr)
 {
-	return !vaddr->len || off_isnull(vaddr->off) ||
-	       ltype_isnone(vaddr->ltype);
+	return off_isnull(vaddr->off) || ltype_isnone(vaddr->ltype);
 }
 
 bool silofs_vaddr_isdata(const struct silofs_vaddr *vaddr)

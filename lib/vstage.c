@@ -1844,6 +1844,7 @@ static int vstgc_resolve_llink_of(const struct silofs_vstage_ctx *vstg_ctx,
 	struct silofs_llink llink_lbk;
 	struct silofs_laddr laddr;
 	const struct silofs_vaddr *vaddr = vstg_ctx->vaddr;
+	const size_t len = vaddr_len(vaddr);
 	int err;
 
 	err = vstgc_resolve_spleaf_child(vstg_ctx, vstg_ctx->sli, &llink_lbk);
@@ -1852,8 +1853,7 @@ static int vstgc_resolve_llink_of(const struct silofs_vstage_ctx *vstg_ctx,
 	}
 	silofs_assert_eq(llink_lbk.laddr.lsid.ltype, vaddr->ltype);
 
-	silofs_laddr_setup(&laddr, &llink_lbk.laddr.lsid, vaddr->off,
-	                   vaddr->len);
+	silofs_laddr_setup(&laddr, &llink_lbk.laddr.lsid, vaddr->off, len);
 	silofs_llink_setup(out_llink, &laddr, &llink_lbk.riv);
 	return 0;
 }

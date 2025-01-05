@@ -1491,7 +1491,7 @@ static int filc_zero_data_leaf_range(const struct silofs_file_ctx *f_ctx,
 static int filc_zero_data_leaf_at(const struct silofs_file_ctx *f_ctx,
                                   const struct silofs_vaddr *vaddr)
 {
-	return filc_zero_data_leaf_range(f_ctx, vaddr, 0, vaddr->len);
+	return filc_zero_data_leaf_range(f_ctx, vaddr, 0, vaddr_len(vaddr));
 }
 
 static int filc_recheck_fni(const struct silofs_file_ctx *f_ctx,
@@ -3862,7 +3862,7 @@ static bool filc_emit_fiemap_ext(struct silofs_file_ctx *f_ctx,
 	struct fiemap_extent *fm_ext;
 	struct fiemap *fm = f_ctx->fm;
 
-	end = off_min(off_end(f_ctx->off, vaddr->len), f_ctx->end);
+	end = off_min(off_end(f_ctx->off, vaddr_len(vaddr)), f_ctx->end);
 	len = len_of_data(f_ctx->off, end, vaddr->ltype);
 	if (len == 0) {
 		return false;
@@ -4219,10 +4219,10 @@ filc_copy_data_leaf_by(const struct silofs_file_ctx *f_ctx_src,
 	}
 	fli_incref(fli_dst);
 
-	all = (len == flref_src->vaddr.len);
+	all = (len == vaddr_len(&flref_src->vaddr));
 	filc_iovec_by_fileaf(f_ctx_src, fli_src, all, &iov_src);
 
-	all = (len == flref_dst->vaddr.len);
+	all = (len == vaddr_len(&flref_dst->vaddr));
 	filc_iovec_by_fileaf(f_ctx_dst, fli_dst, all, &iov_dst);
 
 	err = silofs_iovec_copy_mem(&iov_src, &iov_dst, len);
@@ -4291,7 +4291,7 @@ static int filc_unshare_leaf_by(const struct silofs_file_ctx *f_ctx,
 	if (err) {
 		return err;
 	}
-	len = flref->vaddr.len;
+	len = vaddr_len(&flref->vaddr);
 	err = filc_copy_data_leaf_by(f_ctx, flref, f_ctx, &flref_new, len);
 	if (err) {
 		filc_reclaim_data_space(f_ctx, &flref_new.vaddr);

@@ -101,6 +101,7 @@
 #define vaddr_setup(va, st, o)  silofs_vaddr_setup(va, st, o)
 #define vaddr_compare(va1, va2) silofs_vaddr_compare(va1, va2)
 #define vaddr_isequal(va1, va2) silofs_vaddr_isequal(va1, va2)
+#define vaddr_len(va)           silofs_vaddr_length(va)
 
 #define caddr_isnone(ca)       silofs_caddr_isnone(ca)
 #define caddr_isequal(ca, oth) silofs_caddr_isequal(ca, oth)

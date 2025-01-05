@@ -2024,11 +2024,10 @@ vstgc_load_view_at(const struct silofs_vstage_ctx *vstg_ctx,
 {
 	struct silofs_repo *repo = vstg_ctx->fsenv->fse.repo;
 	const enum silofs_ltype ltype = laddr_ltype(laddr);
+	enum silofs_stg_mode stg_mode = vstg_ctx->stg_mode;
 	int ret = 0;
-	bool raw;
 
-	raw = (vstg_ctx->stg_mode & SILOFS_STG_RAW) > 0;
-	if (!raw) {
+	if ((stg_mode & SILOFS_STG_RAW) != SILOFS_STG_RAW) {
 		/* Normal mode: load encrypted from stable storage */
 		ret = silofs_repo_read_at(repo, laddr, view);
 	} else if (ltype_isdata(ltype)) {
@@ -2201,14 +2200,14 @@ static int vstgc_pre_clone_stage_at(const struct silofs_vstage_ctx *vstg_ctx,
                                     const struct silofs_vaddr *vaddr,
                                     struct silofs_vnode_info **out_vni)
 {
-	const int raw = (vstg_ctx->stg_mode & SILOFS_STG_RAW) > 0;
+	const enum silofs_stg_mode stg_mode = vstg_ctx->stg_mode;
 	int ret = 0;
 
 	if (vaddr->off == 0) {
 		/* ignore off=0 which is allocated-as-numb once upon format */
 		*out_vni = NULL;
 	} else if (vstgc_has_vaddr(vstg_ctx, vaddr) &&
-	           (raw || vaddr_isdatabk(vaddr))) {
+	           ((stg_mode & SILOFS_STG_RAW) || vaddr_isdatabk(vaddr))) {
 		/* ignore current data-block */
 		*out_vni = NULL;
 	} else if (vaddr_isinode(vaddr)) {

@@ -109,11 +109,11 @@ void silofs_bti_child_at(const struct silofs_btnode_info *bti, size_t slot,
                          struct silofs_paddr *out_paddr);
 
 int silofs_bti_resolve(const struct silofs_btnode_info *bti,
-                       const struct silofs_laddr       *laddr,
+                       const struct silofs_vaddr       *vaddr,
                        struct silofs_paddr             *out_paddr);
 
 int silofs_bti_expand(struct silofs_btnode_info *bti,
-                      const struct silofs_laddr *laddr,
+                      const struct silofs_vaddr *vaddr,
                       const struct silofs_paddr *paddr);
 
 void silofs_bti_setapex(struct silofs_btnode_info *bti,
@@ -141,11 +141,11 @@ void silofs_bli_parent(const struct silofs_btleaf_info *bli,
                        struct silofs_paddr             *out_paddr);
 
 int silofs_bli_resolve(const struct silofs_btleaf_info *bli,
-                       const struct silofs_laddr       *laddr,
+                       const struct silofs_vaddr       *vaddr,
                        struct silofs_paddr             *out_paddr);
 
 int silofs_bli_extend(struct silofs_btleaf_info *bli,
-                      const struct silofs_laddr *laddr,
+                      const struct silofs_vaddr *vaddr,
                       const struct silofs_paddr *paddr);
 
 struct silofs_btleaf_info *

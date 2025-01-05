@@ -76,11 +76,11 @@ void silofs_bstore_curr_prange(const struct silofs_bstore *bstore,
                                struct silofs_prange       *out_prange);
 
 int silofs_bstore_resolve(struct silofs_bstore      *bstore,
-                          const struct silofs_laddr *laddr,
+                          const struct silofs_vaddr *vaddr,
                           struct silofs_paddr       *out_paddr);
 
 int silofs_bstore_remap(struct silofs_bstore      *bstore,
-                        const struct silofs_laddr *laddr,
+                        const struct silofs_vaddr *vaddr,
                         const struct silofs_paddr *paddr);
 
 #endif /* SILOFS_BSTORE_H_ */

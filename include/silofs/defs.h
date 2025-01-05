@@ -111,19 +111,19 @@
 #define SILOFS_PSEG_CHKPT_SIZE (4096)
 
 /* number of pointers btree mapping-node */
-#define SILOFS_BTREE_NODE_NCHILDS (41)
+#define SILOFS_BTREE_NODE_NCHILDS (71)
 
 /* number of keys in btree mapping-node */
 #define SILOFS_BTREE_NODE_NKEYS (SILOFS_BTREE_NODE_NCHILDS - 1)
 
 /* number of entries in btree mapping-leaf */
-#define SILOFS_BTREE_LEAF_NENTS (84)
+#define SILOFS_BTREE_LEAF_NENTS (62)
 
 /* on-disk size of btree node */
 #define SILOFS_BTREE_NODE_SIZE (4096)
 
 /* on-disk size of btree leaf */
-#define SILOFS_BTREE_LEAF_SIZE (8192)
+#define SILOFS_BTREE_LEAF_SIZE (4096)
 
 /* minimal file-system capacity, in bytes (2G) */
 #define SILOFS_CAPACITY_SIZE_MIN (2L * SILOFS_GIGA)
@@ -987,33 +987,36 @@ struct silofs_chkpt_node {
 /* b+tree node of persistent volume mapping */
 struct silofs_btree_node {
 	struct silofs_header   btn_hdr;
+	uint8_t                btn_ltype;
+	uint8_t                btn_nkeys;
+	uint8_t                btn_nchilds;
+	uint8_t                btn_height;
+	uint8_t                btn_reserved1[4];
 	uint32_t               btn_flags;
-	uint16_t               btn_nkeys;
-	uint16_t               btn_nchilds;
-	uint16_t               btn_height;
-	uint8_t                btn_reserved1[38];
+	uint8_t                btn_reserved2[36];
 	struct silofs_paddr48b btn_parent;
-	uint8_t                btn_reserved2[16];
-	struct silofs_paddr48b btn_child[SILOFS_BTREE_NODE_NCHILDS];
 	uint8_t                btn_reserved3[16];
-	struct silofs_laddr48b btn_key[SILOFS_BTREE_NODE_NKEYS];
-	uint8_t                btn_reserved4[64];
+	struct silofs_paddr48b btn_child[SILOFS_BTREE_NODE_NCHILDS];
+	int64_t                btn_key[SILOFS_BTREE_NODE_NKEYS];
 } silofs_attr_aligned64;
 
 /* laddr-to-paddr mapping entry */
 struct silofs_btree_ltop {
-	struct silofs_laddr48b laddr;
+	int64_t                off;
+	uint8_t                reserved2[8];
 	struct silofs_paddr48b paddr;
 } silofs_attr_aligned16;
 
 /*  b+tree leaf of persistent volume mapping */
 struct silofs_btree_leaf {
 	struct silofs_header     btl_hdr;
+	uint8_t                  btl_ltype;
+	uint8_t                  btl_nltops;
+	uint8_t                  btl_reserved1[6];
 	uint32_t                 btl_flags;
-	uint16_t                 btl_nltops;
-	uint8_t                  btl_reserved1[42];
+	uint8_t                  btl_reserved2[36];
 	struct silofs_paddr48b   btl_parent;
-	uint8_t                  btl_reserved2[16];
+	uint8_t                  btl_reserved3[16];
 	struct silofs_btree_ltop btl_ltop[SILOFS_BTREE_LEAF_NENTS];
 } silofs_attr_aligned64;
 

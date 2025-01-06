@@ -496,8 +496,8 @@ static int bstore_spawn_btnode(struct silofs_bstore *bstore, bool create,
 	return 0;
 }
 
-static int bstore_create_btree_root_at(struct silofs_bstore *bstore,
-                                       const struct silofs_paddr *paddr)
+static int bstore_create_btroot_at(struct silofs_bstore *bstore,
+                                   const struct silofs_paddr *paddr)
 {
 	struct silofs_btnode_info *bti = NULL;
 	int err;
@@ -510,13 +510,13 @@ static int bstore_create_btree_root_at(struct silofs_bstore *bstore,
 	return 0;
 }
 
-static int bstore_spawn_btree_root(struct silofs_bstore *bstore)
+static int bstore_spawn_btroot(struct silofs_bstore *bstore)
 {
 	struct silofs_paddr paddr;
 	int err;
 
 	bstate_next_btnode(&bstore->bstate, &paddr);
-	err = bstore_create_btree_root_at(bstore, &paddr);
+	err = bstore_create_btroot_at(bstore, &paddr);
 	if (err) {
 		return err;
 	}
@@ -685,7 +685,7 @@ int silofs_bstore_format(struct silofs_bstore *bstore)
 	if (err) {
 		return err;
 	}
-	err = bstore_spawn_btree_root(bstore);
+	err = bstore_spawn_btroot(bstore);
 	if (err) {
 		return err;
 	}

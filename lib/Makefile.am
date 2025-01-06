@@ -55,6 +55,7 @@ libsilofs_la_SOURCES += hmdq/dirtyq.c
 libsilofs_la_SOURCES += hmdq/hmapq.c
 libsilofs_la_SOURCES += boot.c
 libsilofs_la_SOURCES += bstore.c
+libsilofs_la_SOURCES += btree.c
 libsilofs_la_SOURCES += claim.c
 libsilofs_la_SOURCES += delfs.c
 libsilofs_la_SOURCES += dir.c

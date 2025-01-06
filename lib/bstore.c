@@ -240,25 +240,25 @@ static void bstate_update_btree_root(struct silofs_bstate *bstate,
 
 int silofs_bstore_init(struct silofs_bstore *bstore, struct silofs_repo *repo)
 {
+	int err;
+
 	bstate_init(&bstore->bstate);
+	err = silofs_pcache_init(&bstore->pcache, repo->re.alloc);
+	if (err) {
+		return err;
+	}
+	silofs_btree_init(&bstore->btree, &bstore->pcache, repo);
 	bstore->repo = repo;
-	return silofs_pcache_init(&bstore->pcache, repo->re.alloc);
+	return 0;
 }
 
 void silofs_bstore_fini(struct silofs_bstore *bstore)
 {
+	silofs_btree_fini(&bstore->btree);
 	silofs_pcache_drop(&bstore->pcache);
 	silofs_pcache_fini(&bstore->pcache);
 	bstate_fini(&bstore->bstate);
 	bstore->repo = NULL;
-}
-
-static void
-bstore_bind_pni(struct silofs_bstore *bstore, struct silofs_pnode_info *pni)
-{
-	silofs_assert_null(pni->pn_bstore);
-
-	pni->pn_bstore = bstore;
 }
 
 static int bstore_validate_paddr(const struct silofs_bstore *bstore,
@@ -320,7 +320,6 @@ static int bstore_create_cached_cpi(struct silofs_bstore *bstore,
 	if (cpi == NULL) {
 		return -SILOFS_ENOMEM;
 	}
-	bstore_bind_pni(bstore, &cpi->cp_pni);
 	*out_cpi = cpi;
 	return 0;
 }
@@ -471,7 +470,6 @@ static int bstore_create_cached_bti(struct silofs_bstore *bstore,
 	if (bti == NULL) {
 		return -SILOFS_ENOMEM;
 	}
-	bstore_bind_pni(bstore, &bti->bn_pni);
 	*out_bti = bti;
 	return 0;
 }
@@ -625,7 +623,6 @@ static int bstore_create_cached_bli(struct silofs_bstore *bstore,
 	if (bli == NULL) {
 		return -SILOFS_ENOMEM;
 	}
-	bstore_bind_pni(bstore, &bli->bl_pni);
 	*out_bli = bli;
 	return 0;
 }

@@ -27,7 +27,6 @@ struct silofs_bstore;
 struct silofs_pnode_info {
 	struct silofs_paddr      pn_paddr;
 	struct silofs_hmapq_elem pn_hmqe;
-	struct silofs_bstore    *pn_bstore;
 };
 
 /* check-point node */

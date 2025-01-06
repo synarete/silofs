@@ -15,7 +15,6 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/infra.h>
 #include <silofs/fs.h>
 #include <errno.h>
 

@@ -18,10 +18,10 @@
 #define SILOFS_BSTORE_H_
 
 #include <silofs/infra.h>
-#include <silofs/str.h>
 #include <silofs/addr.h>
 #include <silofs/repo.h>
 #include <silofs/pcache.h>
+#include <silofs/btree.h>
 
 /* persistent storage's current active range */
 struct silofs_prange {
@@ -42,6 +42,7 @@ struct silofs_bstore {
 	struct silofs_repo  *repo;
 	struct silofs_pcache pcache;
 	struct silofs_bstate bstate;
+	struct silofs_btree  btree;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

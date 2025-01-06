@@ -22,6 +22,7 @@ nobase_include_HEADERS += silofs/addr/uaddr.h
 nobase_include_HEADERS += silofs/addr/vaddr.h
 nobase_include_HEADERS += silofs/boot.h
 nobase_include_HEADERS += silofs/bstore.h
+nobase_include_HEADERS += silofs/btree.h
 nobase_include_HEADERS += silofs/ccattr.h
 nobase_include_HEADERS += silofs/claim.h
 nobase_include_HEADERS += silofs/consts.h

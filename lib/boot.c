@@ -236,16 +236,16 @@ static void bootrec1k_set_main_ivkey(struct silofs_bootrec1k *brec1k,
 	silofs_iv_assign(&brec1k->br_main_iv, &ivkey->iv);
 }
 
-static void bootrec1k_prange(const struct silofs_bootrec1k *brec1k,
-                             struct silofs_prange *out_prange)
+static void bootrec1k_pvrange(const struct silofs_bootrec1k *brec1k,
+                              struct silofs_pvrange *out_pvrange)
 {
-	silofs_prange64b_xtoh(&brec1k->br_prange, out_prange);
+	silofs_pvrange64b_xtoh(&brec1k->br_pvrange, out_pvrange);
 }
 
-static void bootrec1k_set_prange(struct silofs_bootrec1k *brec1k,
-                                 const struct silofs_prange *prange)
+static void bootrec1k_set_pvrange(struct silofs_bootrec1k *brec1k,
+                                  const struct silofs_pvrange *pvrange)
 {
-	silofs_prange64b_htox(&brec1k->br_prange, prange);
+	silofs_pvrange64b_htox(&brec1k->br_pvrange, pvrange);
 }
 
 static int bootrec1k_check_base(const struct silofs_bootrec1k *brec1k)
@@ -394,7 +394,7 @@ void silofs_bootrec1k_xtoh(const struct silofs_bootrec1k *brec1k,
 	brec->flags = bootrec1k_flags(brec1k);
 	bootrec1k_uuid(brec1k, &brec->uuid);
 	bootrec1k_main_ivkey(brec1k, &brec->main_ivkey);
-	bootrec1k_prange(brec1k, &brec->prange);
+	bootrec1k_pvrange(brec1k, &brec->pvrange);
 	brec->cipher_algo = (int32_t)bootrec1k_chiper_algo(brec1k);
 	brec->cipher_mode = (int32_t)bootrec1k_chiper_mode(brec1k);
 }
@@ -408,7 +408,7 @@ void silofs_bootrec1k_htox(struct silofs_bootrec1k *brec1k,
 	bootrec1k_set_flags(brec1k, brec->flags);
 	bootrec1k_set_uuid(brec1k, &brec->uuid);
 	bootrec1k_set_main_ivkey(brec1k, &brec->main_ivkey);
-	bootrec1k_set_prange(brec1k, &brec->prange);
+	bootrec1k_set_pvrange(brec1k, &brec->pvrange);
 	bootrec1k_set_cipher(brec1k, brec->cipher_algo, brec->cipher_mode);
 }
 
@@ -439,7 +439,7 @@ void silofs_bootrec_assign(struct silofs_bootrec *brec,
 {
 	silofs_uuid_assign(&brec->uuid, &other->uuid);
 	silofs_ivkey_assign(&brec->main_ivkey, &other->main_ivkey);
-	silofs_prange_assign(&brec->prange, &other->prange);
+	silofs_pvrange_assign(&brec->pvrange, &other->pvrange);
 	silofs_ulink_assign(&brec->sb_ulink, &other->sb_ulink);
 	brec->flags = other->flags;
 	brec->cipher_algo = other->cipher_algo;
@@ -465,16 +465,16 @@ void silofs_bootrec_gen_ivkey(struct silofs_bootrec *brec)
 	silofs_bootrec_set_ivkey(brec, &ivkey);
 }
 
-void silofs_bootrec_prange(const struct silofs_bootrec *brec,
-                           struct silofs_prange *out_prange)
+void silofs_bootrec_pvrange(const struct silofs_bootrec *brec,
+                            struct silofs_pvrange *out_pvrange)
 {
-	silofs_prange_assign(out_prange, &brec->prange);
+	silofs_pvrange_assign(out_pvrange, &brec->pvrange);
 }
 
-void silofs_bootrec_set_prange(struct silofs_bootrec *brec,
-                               const struct silofs_prange *prange)
+void silofs_bootrec_set_pvrange(struct silofs_bootrec *brec,
+                                const struct silofs_pvrange *pvrange)
 {
-	silofs_prange_assign(&brec->prange, prange);
+	silofs_pvrange_assign(&brec->pvrange, pvrange);
 }
 
 void silofs_bootrec_sb_ulink(const struct silofs_bootrec *brec,

@@ -23,38 +23,32 @@
 #include <silofs/pcache.h>
 #include <silofs/btree.h>
 
-/* persistent storage's current active range */
-struct silofs_prange {
+/* persistent volume range (current address-space state) */
+struct silofs_pvrange {
 	struct silofs_pvid pvid;
 	uint32_t           base_index;
 	uint32_t           curr_index;
-	loff_t             pos_in_curr;
-};
-
-/* blobs storage state: a pair of active range and mapping tree root */
-struct silofs_bstate {
-	struct silofs_prange prange;
-	struct silofs_paddr  btree_root;
+	loff_t             curr_pos;
 };
 
 /* blobs-storage control object */
 struct silofs_bstore {
-	struct silofs_repo  *repo;
-	struct silofs_pcache pcache;
-	struct silofs_bstate bstate;
-	struct silofs_btree  btree;
+	struct silofs_pvrange pvrange;
+	struct silofs_pcache  pcache;
+	struct silofs_btree   btree;
+	struct silofs_repo   *repo;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_prange_assign(struct silofs_prange       *prange,
-                          const struct silofs_prange *other);
+void silofs_pvrange_assign(struct silofs_pvrange       *pvrange,
+                           const struct silofs_pvrange *other);
 
-void silofs_prange64b_htox(struct silofs_prange64b    *prange64,
-                           const struct silofs_prange *prange);
+void silofs_pvrange64b_htox(struct silofs_pvrange64b    *pvrange64,
+                            const struct silofs_pvrange *pvrange);
 
-void silofs_prange64b_xtoh(const struct silofs_prange64b *prange64,
-                           struct silofs_prange          *prange);
+void silofs_pvrange64b_xtoh(const struct silofs_pvrange64b *pvrange64,
+                            struct silofs_pvrange          *pvrange);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -66,15 +60,15 @@ int silofs_bstore_dropall(struct silofs_bstore *bstore);
 
 int silofs_bstore_format(struct silofs_bstore *bstore);
 
-int silofs_bstore_reload(struct silofs_bstore       *bstore,
-                         const struct silofs_prange *prange);
+int silofs_bstore_reload(struct silofs_bstore        *bstore,
+                         const struct silofs_pvrange *pvrange);
 
 int silofs_bstore_close(struct silofs_bstore *bstore);
 
 int silofs_bstore_flush_dirty(struct silofs_bstore *bstore);
 
-void silofs_bstore_curr_prange(const struct silofs_bstore *bstore,
-                               struct silofs_prange       *out_prange);
+void silofs_bstore_curr_pvrange(const struct silofs_bstore *bstore,
+                                struct silofs_pvrange      *out_pvrange);
 
 int silofs_bstore_resolve(struct silofs_bstore      *bstore,
                           const struct silofs_vaddr *vaddr,

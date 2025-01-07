@@ -34,206 +34,157 @@ static bool paddr_isbtleaf(const struct silofs_paddr *paddr)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void prange_init(struct silofs_prange *prange)
+static void pvrange_init(struct silofs_pvrange *pvrange)
 {
-	silofs_pvid_generate(&prange->pvid);
-	prange->base_index = 1;
-	prange->curr_index = 1;
-	prange->pos_in_curr = 0;
+	silofs_pvid_generate(&pvrange->pvid);
+	pvrange->base_index = 1;
+	pvrange->curr_index = 1;
+	pvrange->curr_pos = 0;
 }
 
-static void prange_fini(struct silofs_prange *prange)
+static void pvrange_fini(struct silofs_pvrange *pvrange)
 {
-	prange->base_index = 0;
-	prange->curr_index = 0;
-	prange->pos_in_curr = -1;
+	pvrange->base_index = 0;
+	pvrange->curr_index = 0;
+	pvrange->curr_pos = -1;
 }
 
-void silofs_prange_assign(struct silofs_prange *prange,
-                          const struct silofs_prange *other)
+void silofs_pvrange_assign(struct silofs_pvrange *pvrange,
+                           const struct silofs_pvrange *other)
 {
-	silofs_pvid_assign(&prange->pvid, &other->pvid);
-	prange->base_index = other->base_index;
-	prange->curr_index = other->curr_index;
-	prange->pos_in_curr = other->pos_in_curr;
+	silofs_pvid_assign(&pvrange->pvid, &other->pvid);
+	pvrange->base_index = other->base_index;
+	pvrange->curr_index = other->curr_index;
+	pvrange->curr_pos = other->curr_pos;
 }
 
-static void prange_curr_psid(const struct silofs_prange *prange,
-                             struct silofs_psid *out_psid)
+static void pvrange_curr_psid(const struct silofs_pvrange *pvrange,
+                              struct silofs_psid *out_psid)
 {
-	silofs_psid_init(out_psid, &prange->pvid, prange->curr_index);
+	silofs_psid_init(out_psid, &pvrange->pvid, pvrange->curr_index);
 }
 
 static void
-prange_curr_paddr_at(const struct silofs_prange *prange, loff_t pos,
-                     enum silofs_ptype ptype, struct silofs_paddr *out_paddr)
+pvrange_curr_paddr_at(const struct silofs_pvrange *pvrange, loff_t pos,
+                      enum silofs_ptype ptype, struct silofs_paddr *out_paddr)
 {
 	struct silofs_psid psid;
 	const size_t len = silofs_ptype_size(ptype);
 
-	prange_curr_psid(prange, &psid);
+	pvrange_curr_psid(pvrange, &psid);
 	silofs_paddr_init(out_paddr, &psid, ptype, pos, len);
 }
 
 static void
-prange_curr_paddr(const struct silofs_prange *prange, enum silofs_ptype ptype,
-                  struct silofs_paddr *out_paddr)
+pvrange_curr_paddr(const struct silofs_pvrange *pvrange,
+                   enum silofs_ptype ptype, struct silofs_paddr *out_paddr)
 {
-	prange_curr_paddr_at(prange, prange->pos_in_curr, ptype, out_paddr);
+	pvrange_curr_paddr_at(pvrange, pvrange->curr_pos, ptype, out_paddr);
 }
 
 static void
-prange_last_paddr(const struct silofs_prange *prange, enum silofs_ptype ptype,
-                  struct silofs_paddr *out_paddr)
+pvrange_last_paddr(const struct silofs_pvrange *pvrange,
+                   enum silofs_ptype ptype, struct silofs_paddr *out_paddr)
 {
-	const loff_t off = prange->pos_in_curr;
+	const loff_t off = pvrange->curr_pos;
 	const ssize_t len = (ssize_t)silofs_ptype_size(ptype);
 	const loff_t pos = (off > len) ? (off - len) : 0;
 
-	prange_curr_paddr_at(prange, pos, ptype, out_paddr);
+	pvrange_curr_paddr_at(pvrange, pos, ptype, out_paddr);
 }
 
-static void prange_advance_by(struct silofs_prange *prange,
+static void pvrange_advance_by(struct silofs_pvrange *pvrange,
+                               const struct silofs_paddr *paddr)
+{
+	pvrange->curr_pos = off_end(paddr->off, paddr->len);
+}
+
+static void
+pvrange_carve(struct silofs_pvrange *pvrange, enum silofs_ptype ptype,
+              struct silofs_paddr *out_paddr)
+{
+	pvrange_curr_paddr(pvrange, ptype, out_paddr);
+	pvrange_advance_by(pvrange, out_paddr);
+}
+
+static bool pvrange_has_pvid(const struct silofs_pvrange *pvrange,
+                             const struct silofs_pvid *pvid)
+{
+	return silofs_pvid_isequal(&pvrange->pvid, pvid);
+}
+
+static bool
+pvrange_has_index(const struct silofs_pvrange *pvrange, uint32_t idx)
+{
+	return (idx >= pvrange->base_index) && (idx <= pvrange->curr_index);
+}
+
+static bool pvrange_has_paddr(const struct silofs_pvrange *pvrange,
                               const struct silofs_paddr *paddr)
 {
-	prange->pos_in_curr = off_end(paddr->off, paddr->len);
-}
-
-static void prange_carve(struct silofs_prange *prange, enum silofs_ptype ptype,
-                         struct silofs_paddr *out_paddr)
-{
-	prange_curr_paddr(prange, ptype, out_paddr);
-	prange_advance_by(prange, out_paddr);
-}
-
-static bool prange_has_pvid(const struct silofs_prange *prange,
-                            const struct silofs_pvid *pvid)
-{
-	return silofs_pvid_isequal(&prange->pvid, pvid);
-}
-
-static bool prange_has_index(const struct silofs_prange *prange, uint32_t idx)
-{
-	return (idx >= prange->base_index) && (idx <= prange->curr_index);
-}
-
-static bool prange_has_paddr(const struct silofs_prange *prange,
-                             const struct silofs_paddr *paddr)
-{
-	if (!prange_has_pvid(prange, &paddr->psid.pvid)) {
+	if (paddr_isnull(paddr)) {
 		return false;
 	}
-	if (!prange_has_index(prange, paddr->psid.index)) {
+	if (!pvrange_has_pvid(pvrange, &paddr->psid.pvid)) {
+		return false;
+	}
+	if (!pvrange_has_index(pvrange, paddr->psid.index)) {
 		return false;
 	}
 	return true;
 }
 
-static int prange_check_valid(const struct silofs_prange *prange)
+static int pvrange_check_valid(const struct silofs_pvrange *pvrange)
 {
-	if (prange->base_index > prange->curr_index) {
+	if (pvrange->base_index > pvrange->curr_index) {
 		return -SILOFS_EINVAL;
 	}
-	if (prange->base_index > (UINT32_MAX / 2)) {
+	if (pvrange->base_index > (UINT32_MAX / 2)) {
 		return -SILOFS_EINVAL;
 	}
-	if (off_isnull(prange->pos_in_curr)) {
+	if (off_isnull(pvrange->curr_pos)) {
 		return -SILOFS_EINVAL;
 	}
 	return 0;
 }
 
-void silofs_prange64b_htox(struct silofs_prange64b *prange64,
-                           const struct silofs_prange *prange)
-{
-	memset(prange64, 0, sizeof(*prange64));
-	silofs_pvid_assign(&prange64->pvid, &prange->pvid);
-	prange64->base_index = silofs_cpu_to_le32(prange->base_index);
-	prange64->curr_index = silofs_cpu_to_le32(prange->curr_index);
-	prange64->pos_in_curr = silofs_cpu_to_off(prange->pos_in_curr);
-}
-
-void silofs_prange64b_xtoh(const struct silofs_prange64b *prange64,
-                           struct silofs_prange *prange)
-{
-	silofs_pvid_assign(&prange->pvid, &prange64->pvid);
-	prange->base_index = silofs_le32_to_cpu(prange64->base_index);
-	prange->curr_index = silofs_le32_to_cpu(prange64->curr_index);
-	prange->pos_in_curr = silofs_off_to_cpu(prange64->pos_in_curr);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static void bstate_init(struct silofs_bstate *bstate)
-{
-	prange_init(&bstate->prange);
-	paddr_reset(&bstate->btree_root);
-}
-
-static void bstate_fini(struct silofs_bstate *bstate)
-{
-	prange_fini(&bstate->prange);
-	paddr_reset(&bstate->btree_root);
-}
-
-static int bstate_assign_prange(struct silofs_bstate *bstate,
-                                const struct silofs_prange *prange)
-{
-	int err;
-
-	err = prange_check_valid(prange);
-	if (err) {
-		return err;
-	}
-	silofs_prange_assign(&bstate->prange, prange);
-	return 0;
-}
-
-static void
-bstate_next_chkpt(struct silofs_bstate *bstate, struct silofs_paddr *out_paddr)
-{
-	prange_carve(&bstate->prange, SILOFS_PTYPE_CHKPT, out_paddr);
-}
-
-static void bstate_last_chkpt(const struct silofs_bstate *bstate,
-                              struct silofs_paddr *out_paddr)
-{
-	prange_last_paddr(&bstate->prange, SILOFS_PTYPE_CHKPT, out_paddr);
-}
-
-static void bstate_next_btnode(struct silofs_bstate *bstate,
+static void pvrange_next_chkpt(struct silofs_pvrange *pvrange,
                                struct silofs_paddr *out_paddr)
 {
-	struct silofs_prange *prange = &bstate->prange;
-
-	silofs_assert_gt(prange->pos_in_curr, 0);
-
-	prange_carve(prange, SILOFS_PTYPE_BTNODE, out_paddr);
+	pvrange_carve(pvrange, SILOFS_PTYPE_CHKPT, out_paddr);
 }
 
-static bool bstate_has_paddr(const struct silofs_bstate *bstate,
-                             const struct silofs_paddr *paddr)
+static void pvrange_last_chkpt(const struct silofs_pvrange *pvrange,
+                               struct silofs_paddr *out_paddr)
 {
-	bool ret = false;
-
-	if (!paddr_isnull(paddr)) {
-		ret = prange_has_paddr(&bstate->prange, paddr);
-	}
-	return ret;
+	pvrange_last_paddr(pvrange, SILOFS_PTYPE_CHKPT, out_paddr);
 }
 
-static void bstate_btree_root(const struct silofs_bstate *bstate,
-                              struct silofs_paddr *out_paddr)
+static void pvrange_next_btnode(struct silofs_pvrange *pvrange,
+                                struct silofs_paddr *out_paddr)
 {
-	paddr_assign(out_paddr, &bstate->btree_root);
+	silofs_assert_gt(pvrange->curr_pos, 0);
+
+	pvrange_carve(pvrange, SILOFS_PTYPE_BTNODE, out_paddr);
 }
 
-static void bstate_update_btree_root(struct silofs_bstate *bstate,
-                                     const struct silofs_paddr *paddr)
+void silofs_pvrange64b_htox(struct silofs_pvrange64b *pvrange64,
+                            const struct silofs_pvrange *pvrange)
 {
-	silofs_assert_eq(paddr->ptype, SILOFS_PTYPE_BTNODE);
+	memset(pvrange64, 0, sizeof(*pvrange64));
+	silofs_pvid_assign(&pvrange64->pvid, &pvrange->pvid);
+	pvrange64->base_index = silofs_cpu_to_le32(pvrange->base_index);
+	pvrange64->curr_index = silofs_cpu_to_le32(pvrange->curr_index);
+	pvrange64->curr_pos = silofs_cpu_to_off(pvrange->curr_pos);
+}
 
-	paddr_assign(&bstate->btree_root, paddr);
+void silofs_pvrange64b_xtoh(const struct silofs_pvrange64b *pvrange64,
+                            struct silofs_pvrange *pvrange)
+{
+	silofs_pvid_assign(&pvrange->pvid, &pvrange64->pvid);
+	pvrange->base_index = silofs_le32_to_cpu(pvrange64->base_index);
+	pvrange->curr_index = silofs_le32_to_cpu(pvrange64->curr_index);
+	pvrange->curr_pos = silofs_off_to_cpu(pvrange64->curr_pos);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -242,7 +193,7 @@ int silofs_bstore_init(struct silofs_bstore *bstore, struct silofs_repo *repo)
 {
 	int err;
 
-	bstate_init(&bstore->bstate);
+	pvrange_init(&bstore->pvrange);
 	err = silofs_pcache_init(&bstore->pcache, repo->re.alloc);
 	if (err) {
 		return err;
@@ -257,14 +208,14 @@ void silofs_bstore_fini(struct silofs_bstore *bstore)
 	silofs_btree_fini(&bstore->btree);
 	silofs_pcache_drop(&bstore->pcache);
 	silofs_pcache_fini(&bstore->pcache);
-	bstate_fini(&bstore->bstate);
+	pvrange_fini(&bstore->pvrange);
 	bstore->repo = NULL;
 }
 
 static int bstore_validate_paddr(const struct silofs_bstore *bstore,
                                  const struct silofs_paddr *paddr)
 {
-	return bstate_has_paddr(&bstore->bstate, paddr) ? 0 : -SILOFS_EINVAL;
+	return pvrange_has_paddr(&bstore->pvrange, paddr) ? 0 : -SILOFS_EINVAL;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -347,10 +298,9 @@ static int bstore_require_pseg_of(struct silofs_bstore *bstore, bool create,
 static void bstore_update_chkpt(const struct silofs_bstore *bstore,
                                 struct silofs_chkpt_info *cpi)
 {
-	struct silofs_paddr btree_root;
+	const struct silofs_btree *btree = &bstore->btree;
 
-	bstate_btree_root(&bstore->bstate, &btree_root);
-	silofs_cpi_set_btree_root(cpi, &btree_root);
+	silofs_cpi_set_btree_root(cpi, &btree->bt_root);
 }
 
 static int bstore_spawn_chkpt(struct silofs_bstore *bstore, bool create,
@@ -513,12 +463,12 @@ static int bstore_spawn_btroot(struct silofs_bstore *bstore)
 	struct silofs_paddr paddr;
 	int err;
 
-	bstate_next_btnode(&bstore->bstate, &paddr);
+	pvrange_next_btnode(&bstore->pvrange, &paddr);
 	err = bstore_create_btroot_at(bstore, &paddr);
 	if (err) {
 		return err;
 	}
-	bstate_update_btree_root(&bstore->bstate, &paddr);
+
 	return 0;
 }
 
@@ -670,7 +620,7 @@ static int bstore_spawn_next_chkpt(struct silofs_bstore *bstore)
 	struct silofs_paddr paddr;
 	struct silofs_chkpt_info *cpi = NULL;
 
-	bstate_next_chkpt(&bstore->bstate, &paddr);
+	pvrange_next_chkpt(&bstore->pvrange, &paddr);
 	return bstore_spawn_chkpt(bstore, paddr.off == 0, &paddr, &cpi);
 }
 
@@ -706,7 +656,7 @@ static int bstore_update_btree_root_by(struct silofs_bstore *bstore,
 	if (btree_root.ptype != SILOFS_PTYPE_BTNODE) {
 		return -SILOFS_EFSCORRUPTED;
 	}
-	bstate_update_btree_root(&bstore->bstate, &btree_root);
+	(void)bstore;
 	return 0;
 }
 
@@ -716,7 +666,7 @@ static int bstore_stage_last_chkpt(struct silofs_bstore *bstore)
 	struct silofs_chkpt_info *cpi = NULL;
 	int err;
 
-	bstate_last_chkpt(&bstore->bstate, &paddr);
+	pvrange_last_chkpt(&bstore->pvrange, &paddr);
 	err = bstore_stage_chkpt(bstore, &paddr, &cpi);
 	if (err) {
 		return err;
@@ -777,11 +727,10 @@ static int validate_btroot(const struct silofs_btnode_info *bni)
 static int bstore_stage_btroot(struct silofs_bstore *bstore,
                                struct silofs_btnode_info **out_bni)
 {
-	struct silofs_paddr paddr;
+	struct silofs_paddr paddr = { .off = -1 };
 	struct silofs_btnode_info *bni = NULL;
 	int err;
 
-	bstate_btree_root(&bstore->bstate, &paddr);
 	err = bstore_stage_btnode_at(bstore, &paddr, &bni);
 	if (err) {
 		return err;
@@ -810,12 +759,25 @@ static int bstore_reload_btree_root(struct silofs_bstore *bstore)
 	return 0;
 }
 
-int silofs_bstore_reload(struct silofs_bstore *bstore,
-                         const struct silofs_prange *prange)
+static int bstore_assign_pvrange(struct silofs_bstore *bstore,
+                                 const struct silofs_pvrange *pvrange)
 {
 	int err;
 
-	err = bstate_assign_prange(&bstore->bstate, prange);
+	err = pvrange_check_valid(pvrange);
+	if (err) {
+		return err;
+	}
+	silofs_pvrange_assign(&bstore->pvrange, pvrange);
+	return 0;
+}
+
+int silofs_bstore_reload(struct silofs_bstore *bstore,
+                         const struct silofs_pvrange *pvrange)
+{
+	int err;
+
+	err = bstore_assign_pvrange(bstore, pvrange);
 	if (err) {
 		return err;
 	}
@@ -910,10 +872,10 @@ int silofs_bstore_dropall(struct silofs_bstore *bstore)
 	return 0;
 }
 
-void silofs_bstore_curr_prange(const struct silofs_bstore *bstore,
-                               struct silofs_prange *out_prange)
+void silofs_bstore_curr_pvrange(const struct silofs_bstore *bstore,
+                                struct silofs_pvrange *out_pvrange)
 {
-	silofs_prange_assign(out_prange, &bstore->bstate.prange);
+	silofs_pvrange_assign(out_pvrange, &bstore->pvrange);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

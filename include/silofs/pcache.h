@@ -55,15 +55,15 @@ void silofs_pcache_evict_cpi(struct silofs_pcache     *pcache,
                              struct silofs_chkpt_info *cpi);
 
 struct silofs_btnode_info *
-silofs_pcache_lookup_bti(struct silofs_pcache      *pcache,
+silofs_pcache_lookup_bni(struct silofs_pcache      *pcache,
                          const struct silofs_paddr *paddr);
 
 struct silofs_btnode_info *
-silofs_pcache_create_bti(struct silofs_pcache      *pcache,
+silofs_pcache_create_bni(struct silofs_pcache      *pcache,
                          const struct silofs_paddr *paddr);
 
-void silofs_pcache_evict_bti(struct silofs_pcache      *pcache,
-                             struct silofs_btnode_info *bti);
+void silofs_pcache_evict_bni(struct silofs_pcache      *pcache,
+                             struct silofs_btnode_info *bni);
 
 struct silofs_btleaf_info *
 silofs_pcache_lookup_bli(struct silofs_pcache      *pcache,

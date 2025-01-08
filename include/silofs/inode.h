@@ -22,6 +22,23 @@
 
 struct silofs_task;
 
+/* inode's attributes */
+struct silofs_iattr {
+	enum silofs_iattr_flags ia_flags;
+	mode_t                  ia_mode;
+	ino_t                   ia_ino;
+	ino_t                   ia_parent;
+	nlink_t                 ia_nlink;
+	uid_t                   ia_uid;
+	gid_t                   ia_gid;
+	dev_t                   ia_rdev;
+	ssize_t                 ia_size;
+	ssize_t                 ia_span;
+	blkcnt_t                ia_blocks;
+	struct silofs_itimes    ia_t;
+};
+
+/* new-inode's create parameters */
 struct silofs_inew_params {
 	struct silofs_creds creds;
 	mode_t              mode;

@@ -76,6 +76,7 @@ libsilofs_la_SOURCES += opers.c
 libsilofs_la_SOURCES += pack.c
 libsilofs_la_SOURCES += pcache.c
 libsilofs_la_SOURCES += pnodes.c
+libsilofs_la_SOURCES += pvlogs.c
 libsilofs_la_SOURCES += repo.c
 libsilofs_la_SOURCES += require.c
 libsilofs_la_SOURCES += spmaps.c

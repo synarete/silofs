@@ -32,168 +32,13 @@ static bool paddr_isbtleaf(const struct silofs_paddr *paddr)
 	return !paddr_isnull(paddr) && (paddr->ptype == SILOFS_PTYPE_BTLEAF);
 }
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static void pvrange_init(struct silofs_pvrange *pvrange)
-{
-	silofs_pvid_generate(&pvrange->pvid);
-	pvrange->base_index = 1;
-	pvrange->curr_index = 1;
-	pvrange->curr_pos = 0;
-}
-
-static void pvrange_fini(struct silofs_pvrange *pvrange)
-{
-	pvrange->base_index = 0;
-	pvrange->curr_index = 0;
-	pvrange->curr_pos = -1;
-}
-
-void silofs_pvrange_assign(struct silofs_pvrange *pvrange,
-                           const struct silofs_pvrange *other)
-{
-	silofs_pvid_assign(&pvrange->pvid, &other->pvid);
-	pvrange->base_index = other->base_index;
-	pvrange->curr_index = other->curr_index;
-	pvrange->curr_pos = other->curr_pos;
-}
-
-static void pvrange_curr_psid(const struct silofs_pvrange *pvrange,
-                              struct silofs_psid *out_psid)
-{
-	silofs_psid_init(out_psid, &pvrange->pvid, pvrange->curr_index);
-}
-
-static void
-pvrange_curr_paddr_at(const struct silofs_pvrange *pvrange, loff_t pos,
-                      enum silofs_ptype ptype, struct silofs_paddr *out_paddr)
-{
-	struct silofs_psid psid;
-	const size_t len = silofs_ptype_size(ptype);
-
-	pvrange_curr_psid(pvrange, &psid);
-	silofs_paddr_init(out_paddr, &psid, ptype, pos, len);
-}
-
-static void
-pvrange_curr_paddr(const struct silofs_pvrange *pvrange,
-                   enum silofs_ptype ptype, struct silofs_paddr *out_paddr)
-{
-	pvrange_curr_paddr_at(pvrange, pvrange->curr_pos, ptype, out_paddr);
-}
-
-static void
-pvrange_last_paddr(const struct silofs_pvrange *pvrange,
-                   enum silofs_ptype ptype, struct silofs_paddr *out_paddr)
-{
-	const loff_t off = pvrange->curr_pos;
-	const ssize_t len = (ssize_t)silofs_ptype_size(ptype);
-	const loff_t pos = (off > len) ? (off - len) : 0;
-
-	pvrange_curr_paddr_at(pvrange, pos, ptype, out_paddr);
-}
-
-static void pvrange_advance_by(struct silofs_pvrange *pvrange,
-                               const struct silofs_paddr *paddr)
-{
-	pvrange->curr_pos = off_end(paddr->off, paddr->len);
-}
-
-static void
-pvrange_carve(struct silofs_pvrange *pvrange, enum silofs_ptype ptype,
-              struct silofs_paddr *out_paddr)
-{
-	pvrange_curr_paddr(pvrange, ptype, out_paddr);
-	pvrange_advance_by(pvrange, out_paddr);
-}
-
-static bool pvrange_has_pvid(const struct silofs_pvrange *pvrange,
-                             const struct silofs_pvid *pvid)
-{
-	return silofs_pvid_isequal(&pvrange->pvid, pvid);
-}
-
-static bool
-pvrange_has_index(const struct silofs_pvrange *pvrange, uint32_t idx)
-{
-	return (idx >= pvrange->base_index) && (idx <= pvrange->curr_index);
-}
-
-static bool pvrange_has_paddr(const struct silofs_pvrange *pvrange,
-                              const struct silofs_paddr *paddr)
-{
-	if (paddr_isnull(paddr)) {
-		return false;
-	}
-	if (!pvrange_has_pvid(pvrange, &paddr->psid.pvid)) {
-		return false;
-	}
-	if (!pvrange_has_index(pvrange, paddr->psid.index)) {
-		return false;
-	}
-	return true;
-}
-
-static int pvrange_check_valid(const struct silofs_pvrange *pvrange)
-{
-	if (pvrange->base_index > pvrange->curr_index) {
-		return -SILOFS_EINVAL;
-	}
-	if (pvrange->base_index > (UINT32_MAX / 2)) {
-		return -SILOFS_EINVAL;
-	}
-	if (off_isnull(pvrange->curr_pos)) {
-		return -SILOFS_EINVAL;
-	}
-	return 0;
-}
-
-static void pvrange_next_chkpt(struct silofs_pvrange *pvrange,
-                               struct silofs_paddr *out_paddr)
-{
-	pvrange_carve(pvrange, SILOFS_PTYPE_CHKPT, out_paddr);
-}
-
-static void pvrange_last_chkpt(const struct silofs_pvrange *pvrange,
-                               struct silofs_paddr *out_paddr)
-{
-	pvrange_last_paddr(pvrange, SILOFS_PTYPE_CHKPT, out_paddr);
-}
-
-static void pvrange_next_btnode(struct silofs_pvrange *pvrange,
-                                struct silofs_paddr *out_paddr)
-{
-	silofs_assert_gt(pvrange->curr_pos, 0);
-
-	pvrange_carve(pvrange, SILOFS_PTYPE_BTNODE, out_paddr);
-}
-
-void silofs_pvrange64b_htox(struct silofs_pvrange64b *pvrange64,
-                            const struct silofs_pvrange *pvrange)
-{
-	memset(pvrange64, 0, sizeof(*pvrange64));
-	silofs_pvid_assign(&pvrange64->pvid, &pvrange->pvid);
-	pvrange64->base_index = silofs_cpu_to_le32(pvrange->base_index);
-	pvrange64->curr_index = silofs_cpu_to_le32(pvrange->curr_index);
-	pvrange64->curr_pos = silofs_cpu_to_off(pvrange->curr_pos);
-}
-
-void silofs_pvrange64b_xtoh(const struct silofs_pvrange64b *pvrange64,
-                            struct silofs_pvrange *pvrange)
-{
-	silofs_pvid_assign(&pvrange->pvid, &pvrange64->pvid);
-	pvrange->base_index = silofs_le32_to_cpu(pvrange64->base_index);
-	pvrange->curr_index = silofs_le32_to_cpu(pvrange64->curr_index);
-	pvrange->curr_pos = silofs_off_to_cpu(pvrange64->curr_pos);
-}
-
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 int silofs_bstore_init(struct silofs_bstore *bstore, struct silofs_repo *repo)
 {
 	int err;
 
-	pvrange_init(&bstore->pvrange);
+	silofs_pvasd_init(&bstore->pvasd);
 	err = silofs_pcache_init(&bstore->pcache, repo->re.alloc);
 	if (err) {
 		return err;
@@ -208,14 +53,16 @@ void silofs_bstore_fini(struct silofs_bstore *bstore)
 	silofs_btree_fini(&bstore->btree);
 	silofs_pcache_drop(&bstore->pcache);
 	silofs_pcache_fini(&bstore->pcache);
-	pvrange_fini(&bstore->pvrange);
+	silofs_pvasd_fini(&bstore->pvasd);
 	bstore->repo = NULL;
 }
 
 static int bstore_validate_paddr(const struct silofs_bstore *bstore,
                                  const struct silofs_paddr *paddr)
 {
-	return pvrange_has_paddr(&bstore->pvrange, paddr) ? 0 : -SILOFS_EINVAL;
+	const struct silofs_pvasd *pvasd = &bstore->pvasd;
+
+	return silofs_pvasd_has_paddr(pvasd, paddr) ? 0 : -SILOFS_EINVAL;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -463,7 +310,7 @@ static int bstore_spawn_btroot(struct silofs_bstore *bstore)
 	struct silofs_paddr paddr;
 	int err;
 
-	pvrange_next_btnode(&bstore->pvrange, &paddr);
+	silofs_pvasd_next_btnode(&bstore->pvasd, &paddr);
 	err = bstore_create_btroot_at(bstore, &paddr);
 	if (err) {
 		return err;
@@ -620,7 +467,7 @@ static int bstore_spawn_next_chkpt(struct silofs_bstore *bstore)
 	struct silofs_paddr paddr;
 	struct silofs_chkpt_info *cpi = NULL;
 
-	pvrange_next_chkpt(&bstore->pvrange, &paddr);
+	silofs_pvasd_next_chkpt(&bstore->pvasd, &paddr);
 	return bstore_spawn_chkpt(bstore, paddr.off == 0, &paddr, &cpi);
 }
 
@@ -666,7 +513,7 @@ static int bstore_stage_last_chkpt(struct silofs_bstore *bstore)
 	struct silofs_chkpt_info *cpi = NULL;
 	int err;
 
-	pvrange_last_chkpt(&bstore->pvrange, &paddr);
+	silofs_pvasd_last_chkpt(&bstore->pvasd, &paddr);
 	err = bstore_stage_chkpt(bstore, &paddr, &cpi);
 	if (err) {
 		return err;
@@ -759,25 +606,25 @@ static int bstore_reload_btree_root(struct silofs_bstore *bstore)
 	return 0;
 }
 
-static int bstore_assign_pvrange(struct silofs_bstore *bstore,
-                                 const struct silofs_pvrange *pvrange)
+static int bstore_assign_pvasd(struct silofs_bstore *bstore,
+                                 const struct silofs_pvasd *pvasd)
 {
 	int err;
 
-	err = pvrange_check_valid(pvrange);
+	err = silofs_pvasd_validate(pvasd);
 	if (err) {
 		return err;
 	}
-	silofs_pvrange_assign(&bstore->pvrange, pvrange);
+	silofs_pvasd_assign(&bstore->pvasd, pvasd);
 	return 0;
 }
 
 int silofs_bstore_reload(struct silofs_bstore *bstore,
-                         const struct silofs_pvrange *pvrange)
+                         const struct silofs_pvasd *pvasd)
 {
 	int err;
 
-	err = bstore_assign_pvrange(bstore, pvrange);
+	err = bstore_assign_pvasd(bstore, pvasd);
 	if (err) {
 		return err;
 	}
@@ -872,10 +719,10 @@ int silofs_bstore_dropall(struct silofs_bstore *bstore)
 	return 0;
 }
 
-void silofs_bstore_curr_pvrange(const struct silofs_bstore *bstore,
-                                struct silofs_pvrange *out_pvrange)
+void silofs_bstore_curr_pvasd(const struct silofs_bstore *bstore,
+                                struct silofs_pvasd *out_pvasd)
 {
-	silofs_pvrange_assign(out_pvrange, &bstore->pvrange);
+	silofs_pvasd_assign(out_pvasd, &bstore->pvasd);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

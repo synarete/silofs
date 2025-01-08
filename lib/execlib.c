@@ -998,12 +998,12 @@ static void generate_main_ivkey(const struct silofs_fsenv *fsenv,
 }
 
 static void
-update_pvrange(const struct silofs_fsenv *fsenv, struct silofs_bootrec *brec)
+update_pvasd(const struct silofs_fsenv *fsenv, struct silofs_bootrec *brec)
 {
-	struct silofs_pvrange pvrange;
+	struct silofs_pvasd pvasd;
 
-	silofs_bstore_curr_pvrange(fsenv->fse.bstore, &pvrange);
-	silofs_bootrec_set_pvrange(brec, &pvrange);
+	silofs_bstore_curr_pvasd(fsenv->fse.bstore, &pvasd);
+	silofs_bootrec_set_pvasd(brec, &pvasd);
 }
 
 static int check_superblock(const struct silofs_fsenv *fsenv)
@@ -1544,7 +1544,7 @@ format_bootrec(const struct silofs_fsenv *fsenv, struct silofs_bootrec *brec)
 {
 	silofs_bootrec_setup(brec);
 	generate_main_ivkey(fsenv, brec);
-	update_pvrange(fsenv, brec);
+	update_pvasd(fsenv, brec);
 	return 0;
 }
 
@@ -1615,7 +1615,7 @@ reload_root_lseg(struct silofs_fsenv *fsenv, const struct silofs_bootrec *brec)
 static int
 reload_bstore(struct silofs_fsenv *fsenv, const struct silofs_bootrec *brec)
 {
-	return silofs_bstore_reload(fsenv->fse.bstore, &brec->pvrange);
+	return silofs_bstore_reload(fsenv->fse.bstore, &brec->pvasd);
 }
 
 static int

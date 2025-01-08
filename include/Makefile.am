@@ -77,6 +77,7 @@ nobase_include_HEADERS += silofs/opers.h
 nobase_include_HEADERS += silofs/pack.h
 nobase_include_HEADERS += silofs/pcache.h
 nobase_include_HEADERS += silofs/pnodes.h
+nobase_include_HEADERS += silofs/pvlogs.h
 nobase_include_HEADERS += silofs/repo.h
 nobase_include_HEADERS += silofs/spmaps.h
 nobase_include_HEADERS += silofs/spxmap.h

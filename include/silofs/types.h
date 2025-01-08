@@ -119,28 +119,4 @@ struct silofs_itimes {
 	struct timespec ctime;
 };
 
-/* inode's attributes */
-struct silofs_iattr {
-	enum silofs_iattr_flags ia_flags;
-	mode_t                  ia_mode;
-	ino_t                   ia_ino;
-	ino_t                   ia_parent;
-	nlink_t                 ia_nlink;
-	uid_t                   ia_uid;
-	gid_t                   ia_gid;
-	dev_t                   ia_rdev;
-	ssize_t                 ia_size;
-	ssize_t                 ia_span;
-	blkcnt_t                ia_blocks;
-	struct silofs_itimes    ia_t;
-};
-
-/* in-memory mapping from ino to voff */
-struct silofs_inoent {
-	struct silofs_list_head htb_lh;
-	struct silofs_list_head lru_lh;
-	ino_t                   ino;
-	loff_t                  voff;
-};
-
 #endif /* SILOFS_TYPES_H_ */

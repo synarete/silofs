@@ -26,10 +26,11 @@
 #include <silofs/crypt.h>
 #include <silofs/addr.h>
 
+#include <silofs/repo.h>
+#include <silofs/pvlogs.h>
 #include <silofs/pnodes.h>
 #include <silofs/pcache.h>
 #include <silofs/btree.h>
-#include <silofs/repo.h>
 #include <silofs/bstore.h>
 
 #include <silofs/types.h>

@@ -534,7 +534,7 @@ struct silofs_psid32b {
 } silofs_attr_aligned16;
 
 /* persistent volume sub-range */
-struct silofs_pvrange64b {
+struct silofs_pvasd64b {
 	struct silofs_pvid pvid;
 	uint32_t           base_index;
 	uint32_t           curr_index;
@@ -614,7 +614,7 @@ struct silofs_bootrec1k {
 	struct silofs_iv         br_sb_riv;
 	struct silofs_uaddr64b   br_sb_uaddr;
 	uint8_t                  br_reserved2[64];
-	struct silofs_pvrange64b br_pvrange;
+	struct silofs_pvasd64b br_pvasd;
 	uint8_t                  br_reserved3[672];
 	struct silofs_hash256    br_hash;
 } silofs_attr_aligned64;

@@ -29,9 +29,9 @@
 
 static bool has_nlookup_mode(const struct silofs_inode_info *ii)
 {
-	const struct silofs_fsenv *fsenv = ii_fsenv(ii);
+	const struct silofs_env *env = ii_env(ii);
 
-	return ((fsenv->fse_ctl_flags & SILOFS_ENVF_NLOOKUP) > 0);
+	return ((env->fse_ctl_flags & SILOFS_ENVF_NLOOKUP) > 0);
 }
 
 static void ii_sub_nlookup(struct silofs_inode_info *ii, long n)
@@ -118,11 +118,11 @@ static int check_reg_or_fifo(const struct silofs_inode_info *ii)
 
 static int check_open_limit(const struct silofs_inode_info *ii)
 {
-	const struct silofs_fsenv *fsenv = ii_fsenv(ii);
-	const size_t total_iopen_max = fsenv->fse_op_stat.op_iopen_max;
+	const struct silofs_env *env = ii_env(ii);
+	const size_t total_iopen_max = env->fse_op_stat.op_iopen_max;
 	const size_t iopen_max = total_iopen_max / 2;
 
-	if (fsenv->fse_op_stat.op_iopen >= total_iopen_max) {
+	if (env->fse_op_stat.op_iopen >= total_iopen_max) {
 		return -SILOFS_EMFILE;
 	}
 	if (ii->i_nopen >= (long)iopen_max) {
@@ -133,15 +133,15 @@ static int check_open_limit(const struct silofs_inode_info *ii)
 
 static void update_nopen(struct silofs_inode_info *ii, int n)
 {
-	struct silofs_fsenv *fsenv = ii_fsenv(ii);
+	struct silofs_env *env = ii_env(ii);
 
 	silofs_assert_ge(ii->i_nopen + n, 0);
 	silofs_assert_lt(ii->i_nopen + n, INT_MAX);
 
 	if ((n > 0) && (ii->i_nopen == 0)) {
-		fsenv->fse_op_stat.op_iopen++;
+		env->fse_op_stat.op_iopen++;
 	} else if ((n < 0) && (ii->i_nopen == 1)) {
-		fsenv->fse_op_stat.op_iopen--;
+		env->fse_op_stat.op_iopen--;
 	}
 	ii->i_nopen += n;
 }
@@ -689,7 +689,7 @@ check_mknod(struct silofs_task *task, struct silofs_inode_info *dir_ii,
 		if (rdev == 0) {
 			return -SILOFS_EINVAL;
 		}
-		if (task->t_fsenv->fse_ms_flags & MS_NODEV) {
+		if (task->t_env->fse_ms_flags & MS_NODEV) {
 			return -SILOFS_EOPNOTSUPP;
 		}
 	} else {
@@ -2067,25 +2067,25 @@ static void fill_spstats(const struct silofs_sb_info *sbi,
 }
 
 static void
-fill_proc(const struct silofs_fsenv *fsenv, struct silofs_query_proc *qpr)
+fill_proc(const struct silofs_env *env, struct silofs_query_proc *qpr)
 {
 	struct silofs_alloc_stat alst;
 	time_t uptime;
 
-	silofs_fsenv_uptime(fsenv, &uptime);
-	silofs_fsenv_allocstat(fsenv, &alst);
+	silofs_env_uptime(env, &uptime);
+	silofs_env_allocstat(env, &alst);
 
 	silofs_memzero(qpr, sizeof(*qpr));
-	qpr->uid = fsenv->fse_owner.uid;
-	qpr->gid = fsenv->fse_owner.gid;
-	qpr->pid = fsenv->fse_args.pid;
-	qpr->msflags = fsenv->fse_ms_flags;
+	qpr->uid = env->fse_owner.uid;
+	qpr->gid = env->fse_owner.gid;
+	qpr->pid = env->fse_args.pid;
+	qpr->msflags = env->fse_ms_flags;
 	qpr->uptime = uptime;
-	qpr->iopen_max = fsenv->fse_op_stat.op_iopen_max;
-	qpr->iopen_cur = fsenv->fse_op_stat.op_iopen;
+	qpr->iopen_max = env->fse_op_stat.op_iopen_max;
+	qpr->iopen_cur = env->fse_op_stat.op_iopen;
 	qpr->memsz_max = alst.nbytes_max;
 	qpr->memsz_cur = alst.nbytes_use;
-	qpr->bopen_cur = fsenv->fse.repo->re_htbl.rh_size;
+	qpr->bopen_cur = env->fse.repo->re_htbl.rh_size;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -2134,11 +2134,11 @@ static void fill_query_version(const struct silofs_inode_info *ii,
 static void fill_query_repo(const struct silofs_inode_info *ii,
                             struct silofs_ioc_query *query)
 {
-	const struct silofs_fsenv *fsenv = ii_fsenv(ii);
+	const struct silofs_env *env = ii_env(ii);
 	struct silofs_bootpath bootpath;
 	size_t bsz;
 
-	silofs_fsenv_bootpath(fsenv, &bootpath);
+	silofs_env_bootpath(env, &bootpath);
 	bsz = sizeof(query->u.repo.path);
 	str_to_buf(&bootpath.repodir, query->u.repo.path, bsz);
 }
@@ -2146,27 +2146,27 @@ static void fill_query_repo(const struct silofs_inode_info *ii,
 static void fill_query_boot(const struct silofs_inode_info *ii,
                             struct silofs_ioc_query *query)
 {
-	const struct silofs_fsenv *fsenv = ii_fsenv(ii);
+	const struct silofs_env *env = ii_env(ii);
 	struct silofs_bootpath bootpath = { .repodir.len = 0 };
 	struct silofs_uuid fs_uuid;
 	struct silofs_lvid lvid;
 	const size_t bsz = sizeof(query->u.boot.name);
 
-	silofs_fsenv_bootpath(fsenv, &bootpath);
+	silofs_env_bootpath(env, &bootpath);
 	str_to_buf(&bootpath.name.sv, query->u.boot.name, bsz);
-	silofs_caddr_to_name2(&fsenv->fse_boot.caddr, query->u.boot.addr);
+	silofs_caddr_to_name2(&env->fse_boot.caddr, query->u.boot.addr);
 
-	silofs_sbi_fs_uuid(fsenv->fse_sbi, &fs_uuid);
+	silofs_sbi_fs_uuid(env->fse_sbi, &fs_uuid);
 	silofs_uuid_copyto(&fs_uuid, query->u.boot.fs_uuid);
 
-	silofs_sbi_get_lvid(fsenv->fse_sbi, &lvid);
+	silofs_sbi_get_lvid(env->fse_sbi, &lvid);
 	silofs_uuid_copyto(&lvid.uuid, query->u.boot.lv_uuid);
 }
 
 static void fill_query_proc(const struct silofs_inode_info *ii,
                             struct silofs_ioc_query *query)
 {
-	fill_proc(ii_fsenv(ii), &query->u.proc);
+	fill_proc(ii_env(ii), &query->u.proc);
 }
 
 static void fill_query_spstats(const struct silofs_inode_info *ii,
@@ -2266,7 +2266,7 @@ int silofs_do_query(struct silofs_task *task, struct silofs_inode_info *ii,
 static int check_fsowner(const struct silofs_task *task)
 {
 	const struct silofs_creds *creds = creds_of(task);
-	const uid_t owner_uid = task->t_fsenv->fse_owner.uid;
+	const uid_t owner_uid = task->t_env->fse_owner.uid;
 
 	return uid_eq(creds->host_cred.uid, owner_uid) ? 0 : -SILOFS_EPERM;
 }
@@ -2313,7 +2313,7 @@ static int update_save_bootrec(const struct silofs_task *task,
 	struct silofs_uaddr uaddr = { .voff = -1 };
 
 	silofs_bootrec_self_uaddr(brec, &uaddr);
-	return silofs_save_bootrec(task->t_fsenv, brec, out_caddr);
+	return silofs_save_bootrec(task->t_env, brec, out_caddr);
 }
 
 static int do_post_clone_updates(const struct silofs_task *task,
@@ -2329,7 +2329,7 @@ static int do_post_clone_updates(const struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	err = silofs_fsenv_update_by(task->t_fsenv, &brecs->brec_new);
+	err = silofs_env_update_by(task->t_env, &brecs->brec_new);
 	if (err) {
 		return err;
 	}
@@ -2344,7 +2344,7 @@ static int flush_and_sync(struct silofs_task *task)
 	if (err) {
 		return err;
 	}
-	err = silofs_repo_fsync_all(task->t_fsenv->fse.repo);
+	err = silofs_repo_fsync_all(task->t_env->fse.repo);
 	if (err) {
 		return err;
 	}
@@ -2354,7 +2354,7 @@ static int flush_and_sync(struct silofs_task *task)
 static int do_clone(struct silofs_task *task, struct silofs_inode_info *dir_ii,
                     int flags, struct silofs_bootrecs *out_brecs)
 {
-	struct silofs_fsenv *fsenv = task->t_fsenv;
+	struct silofs_env *env = task->t_env;
 	int err;
 
 	err = check_clone(task, dir_ii, flags);
@@ -2365,7 +2365,7 @@ static int do_clone(struct silofs_task *task, struct silofs_inode_info *dir_ii,
 	if (err) {
 		return err;
 	}
-	err = silofs_fsenv_forkfs(fsenv, out_brecs);
+	err = silofs_env_forkfs(env, out_brecs);
 	if (err) {
 		return err;
 	}
@@ -2558,7 +2558,7 @@ int silofs_do_syncfs(struct silofs_task *task, struct silofs_inode_info *ii,
 
 int silofs_do_maintain(struct silofs_task *task, int flags)
 {
-	silofs_fsenv_relax_caches(task->t_fsenv, flags);
+	silofs_env_relax_caches(task->t_env, flags);
 	return silofs_flush_dirty(task, NULL, flags);
 }
 

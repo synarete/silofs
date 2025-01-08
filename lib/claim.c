@@ -21,7 +21,7 @@
 /* space-allocation context */
 struct silofs_spalloc_ctx {
 	struct silofs_task *task;
-	struct silofs_fsenv *fsenv;
+	struct silofs_env *env;
 	struct silofs_sb_info *sbi;
 	struct silofs_spnode_info *sni;
 	struct silofs_spleaf_info *sli;
@@ -52,7 +52,7 @@ static loff_t off_to_spleaf_next(loff_t voff)
 static struct silofs_lcache *
 spac_lcache(const struct silofs_spalloc_ctx *spa_ctx)
 {
-	return spa_ctx->fsenv->fse.lcache;
+	return spa_ctx->env->fse.lcache;
 }
 
 static struct silofs_spamaps *
@@ -129,7 +129,7 @@ static void spac_setup(struct silofs_spalloc_ctx *spa_ctx,
 {
 	silofs_memzero(spa_ctx, sizeof(*spa_ctx));
 	spa_ctx->task = task;
-	spa_ctx->fsenv = task->t_fsenv;
+	spa_ctx->env = task->t_env;
 	spa_ctx->sbi = task_sbi(task);
 	spa_ctx->ltype = ltype;
 }
@@ -485,7 +485,7 @@ static int spac_try_reclaim_vlseg(const struct silofs_spalloc_ctx *spa_ctx)
 	if (!spac_ismutable_laddr(spa_ctx, &laddr)) {
 		return 0; /* not a mutable lseg */
 	}
-	err = silofs_repo_punch_lseg(spa_ctx->fsenv->fse.repo, &laddr.lsid);
+	err = silofs_repo_punch_lseg(spa_ctx->env->fse.repo, &laddr.lsid);
 	if (err && (err != -ENOTSUP)) {
 		log_err("failed to punch lseg: err=%d", err);
 		return err;

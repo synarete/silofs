@@ -237,13 +237,13 @@ static void bootrec1k_set_main_ivkey(struct silofs_bootrec1k *brec1k,
 }
 
 static void bootrec1k_pvasd(const struct silofs_bootrec1k *brec1k,
-                              struct silofs_pvasd *out_pvasd)
+                            struct silofs_pvasd *out_pvasd)
 {
 	silofs_pvasd64b_xtoh(&brec1k->br_pvasd, out_pvasd);
 }
 
 static void bootrec1k_set_pvasd(struct silofs_bootrec1k *brec1k,
-                                  const struct silofs_pvasd *pvasd)
+                                const struct silofs_pvasd *pvasd)
 {
 	silofs_pvasd64b_htox(&brec1k->br_pvasd, pvasd);
 }
@@ -466,13 +466,13 @@ void silofs_bootrec_gen_ivkey(struct silofs_bootrec *brec)
 }
 
 void silofs_bootrec_pvasd(const struct silofs_bootrec *brec,
-                            struct silofs_pvasd *out_pvasd)
+                          struct silofs_pvasd *out_pvasd)
 {
 	silofs_pvasd_assign(out_pvasd, &brec->pvasd);
 }
 
 void silofs_bootrec_set_pvasd(struct silofs_bootrec *brec,
-                                const struct silofs_pvasd *pvasd)
+                              const struct silofs_pvasd *pvasd)
 {
 	silofs_pvasd_assign(&brec->pvasd, pvasd);
 }
@@ -607,29 +607,29 @@ void silofs_calc_key_hash(const struct silofs_key *key,
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-int silofs_encode_bootrec(const struct silofs_fsenv *fsenv,
+int silofs_encode_bootrec(const struct silofs_env *env,
                           const struct silofs_bootrec *brec,
                           struct silofs_bootrec1k *out_brec1k)
 {
-	const struct silofs_mdigest *mdigest = &fsenv->fse_mdigest;
-	const struct silofs_cipher *cipher = &fsenv->fse_boot.cipher;
-	const struct silofs_ivkey *ivkey = &fsenv->fse_boot.ivkey;
+	const struct silofs_mdigest *mdigest = &env->fse_mdigest;
+	const struct silofs_cipher *cipher = &env->fse_boot.cipher;
+	const struct silofs_ivkey *ivkey = &env->fse_boot.ivkey;
 
 	return bootrec_encode(brec, mdigest, cipher, ivkey, out_brec1k);
 }
 
-int silofs_decode_bootrec(const struct silofs_fsenv *fsenv,
+int silofs_decode_bootrec(const struct silofs_env *env,
                           const struct silofs_bootrec1k *brec1k_enc,
                           struct silofs_bootrec *out_brec)
 {
-	const struct silofs_mdigest *mdigest = &fsenv->fse_mdigest;
-	const struct silofs_cipher *cipher = &fsenv->fse_boot.cipher;
-	const struct silofs_ivkey *ivkey = &fsenv->fse_boot.ivkey;
+	const struct silofs_mdigest *mdigest = &env->fse_mdigest;
+	const struct silofs_cipher *cipher = &env->fse_boot.cipher;
+	const struct silofs_ivkey *ivkey = &env->fse_boot.ivkey;
 
 	return bootrec_decode(out_brec, mdigest, cipher, ivkey, brec1k_enc);
 }
 
-static void calc_bootrec1k_caddr(const struct silofs_fsenv *fsenv,
+static void calc_bootrec1k_caddr(const struct silofs_env *env,
                                  const struct silofs_bootrec1k *brec1k,
                                  struct silofs_caddr *out_caddr)
 {
@@ -638,21 +638,21 @@ static void calc_bootrec1k_caddr(const struct silofs_fsenv *fsenv,
 		.iov_len = sizeof(*brec1k),
 	};
 
-	silofs_calc_caddr_of(&iov, 1, SILOFS_CTYPE_BOOTREC,
-	                     &fsenv->fse_mdigest, out_caddr);
+	silofs_calc_caddr_of(&iov, 1, SILOFS_CTYPE_BOOTREC, &env->fse_mdigest,
+	                     out_caddr);
 }
 
-static int verify_bootrec1k_caddr(const struct silofs_fsenv *fsenv,
+static int verify_bootrec1k_caddr(const struct silofs_env *env,
                                   const struct silofs_bootrec1k *brec1k,
                                   const struct silofs_caddr *caddr)
 {
 	struct silofs_caddr caddr2;
 
-	calc_bootrec1k_caddr(fsenv, brec1k, &caddr2);
+	calc_bootrec1k_caddr(env, brec1k, &caddr2);
 	return caddr_isequal(caddr, &caddr2) ? 0 : -SILOFS_EBADBOOT;
 }
 
-int silofs_calc_bootrec_caddr(const struct silofs_fsenv *fsenv,
+int silofs_calc_bootrec_caddr(const struct silofs_env *env,
                               const struct silofs_bootrec *brec,
                               struct silofs_caddr *out_caddr)
 {
@@ -661,16 +661,16 @@ int silofs_calc_bootrec_caddr(const struct silofs_fsenv *fsenv,
 	};
 	int err;
 
-	err = silofs_encode_bootrec(fsenv, brec, &brec1k_enc);
+	err = silofs_encode_bootrec(env, brec, &brec1k_enc);
 	if (err) {
 		log_err("failed to encode bootrec: err=%d", err);
 		return err;
 	}
-	calc_bootrec1k_caddr(fsenv, &brec1k_enc, out_caddr);
+	calc_bootrec1k_caddr(env, &brec1k_enc, out_caddr);
 	return 0;
 }
 
-int silofs_save_bootrec(const struct silofs_fsenv *fsenv,
+int silofs_save_bootrec(const struct silofs_env *env,
                         const struct silofs_bootrec *brec,
                         struct silofs_caddr *out_caddr)
 {
@@ -684,18 +684,18 @@ int silofs_save_bootrec(const struct silofs_fsenv *fsenv,
 	struct silofs_caddr caddr;
 	int err;
 
-	err = silofs_encode_bootrec(fsenv, brec, &brec1k_enc);
+	err = silofs_encode_bootrec(env, brec, &brec1k_enc);
 	if (err) {
 		log_err("failed to encode bootrec: err=%d", err);
 		return err;
 	}
-	calc_bootrec1k_caddr(fsenv, &brec1k_enc, &caddr);
-	err = silofs_repo_save_cobj(fsenv->fse.repo, &caddr, &rovec);
+	calc_bootrec1k_caddr(env, &brec1k_enc, &caddr);
+	err = silofs_repo_save_cobj(env->fse.repo, &caddr, &rovec);
 	if (err) {
 		log_err("failed to save bootrec: err=%d", err);
 		return err;
 	}
-	err = silofs_repo_create_ref(fsenv->fse.repo, &caddr);
+	err = silofs_repo_create_ref(env->fse.repo, &caddr);
 	if (err) {
 		log_err("failed to create ref: err=%d", err);
 		return err;
@@ -704,7 +704,7 @@ int silofs_save_bootrec(const struct silofs_fsenv *fsenv,
 	return 0;
 }
 
-int silofs_load_bootrec(const struct silofs_fsenv *fsenv,
+int silofs_load_bootrec(const struct silofs_env *env,
                         const struct silofs_caddr *caddr,
                         struct silofs_bootrec *out_brec)
 {
@@ -715,22 +715,22 @@ int silofs_load_bootrec(const struct silofs_fsenv *fsenv,
 	};
 	int err;
 
-	err = silofs_repo_lookup_ref(fsenv->fse.repo, caddr);
+	err = silofs_repo_lookup_ref(env->fse.repo, caddr);
 	if (err) {
 		log_dbg("failed to lookup ref: err=%d", err);
 		return (err == -ENOENT) ? -SILOFS_ENOREF : err;
 	}
-	err = silofs_repo_load_cobj(fsenv->fse.repo, caddr, &rwvec);
+	err = silofs_repo_load_cobj(env->fse.repo, caddr, &rwvec);
 	if (err) {
 		log_dbg("failed to load bootrec: err=%d", err);
 		return (err == -ENOENT) ? -SILOFS_ENOBOOT : err;
 	}
-	err = verify_bootrec1k_caddr(fsenv, &brec1k_enc, caddr);
+	err = verify_bootrec1k_caddr(env, &brec1k_enc, caddr);
 	if (err) {
 		log_dbg("failed to verify bootrec: err=%d", err);
 		return err;
 	}
-	err = silofs_decode_bootrec(fsenv, &brec1k_enc, out_brec);
+	err = silofs_decode_bootrec(env, &brec1k_enc, out_brec);
 	if (err) {
 		log_dbg("failed to decode bootrec: err=%d", err);
 		return err;
@@ -738,18 +738,18 @@ int silofs_load_bootrec(const struct silofs_fsenv *fsenv,
 	return 0;
 }
 
-int silofs_stat_bootrec(const struct silofs_fsenv *fsenv,
+int silofs_stat_bootrec(const struct silofs_env *env,
                         const struct silofs_caddr *caddr)
 {
 	size_t sz = 0;
 	int err;
 
-	err = silofs_repo_lookup_ref(fsenv->fse.repo, caddr);
+	err = silofs_repo_lookup_ref(env->fse.repo, caddr);
 	if (err) {
 		log_err("failed to lookup ref: err=%d", err);
 		return err;
 	}
-	err = silofs_repo_stat_cobj(fsenv->fse.repo, caddr, &sz);
+	err = silofs_repo_stat_cobj(env->fse.repo, caddr, &sz);
 	if (err) {
 		log_err("failed to stat bootrec: err=%d", err);
 		return err;
@@ -761,17 +761,17 @@ int silofs_stat_bootrec(const struct silofs_fsenv *fsenv,
 	return 0;
 }
 
-int silofs_unlink_bootrec(const struct silofs_fsenv *fsenv,
+int silofs_unlink_bootrec(const struct silofs_env *env,
                           const struct silofs_caddr *caddr)
 {
 	int err;
 
-	err = silofs_repo_unlink_cobj(fsenv->fse.repo, caddr);
+	err = silofs_repo_unlink_cobj(env->fse.repo, caddr);
 	if (err) {
 		log_err("failed to unlink bootrec: err=%d", err);
 		return err;
 	}
-	err = silofs_repo_remove_ref(fsenv->fse.repo, caddr);
+	err = silofs_repo_remove_ref(env->fse.repo, caddr);
 	if (err) {
 		log_err("failed to unlink ref: err=%d", err);
 		return err;

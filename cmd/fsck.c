@@ -35,7 +35,7 @@ struct cmd_fsck_in_args {
 struct cmd_fsck_ctx {
 	struct cmd_fsck_in_args in_args;
 	struct silofs_fs_args fs_args;
-	struct silofs_fsenv *fsenv;
+	struct silofs_env *env;
 	bool has_lockfile;
 };
 
@@ -80,14 +80,14 @@ static void cmd_fsck_parse_optargs(struct cmd_fsck_ctx *ctx)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void cmd_fsck_destroy_fsenv(struct cmd_fsck_ctx *ctx)
+static void cmd_fsck_destroy_env(struct cmd_fsck_ctx *ctx)
 {
-	cmd_del_fsenv(&ctx->fsenv);
+	cmd_del_env(&ctx->env);
 }
 
 static void cmd_fsck_finalize(struct cmd_fsck_ctx *ctx)
 {
-	cmd_del_fsenv(&ctx->fsenv);
+	cmd_del_env(&ctx->env);
 	cmd_pstrfree(&ctx->in_args.repodir_name);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
@@ -165,39 +165,39 @@ static void cmd_fsck_load_bref(struct cmd_fsck_ctx *ctx)
 	cmd_bootref_load(&ctx->fs_args.bref);
 }
 
-static void cmd_fsck_setup_fsenv(struct cmd_fsck_ctx *ctx)
+static void cmd_fsck_setup_env(struct cmd_fsck_ctx *ctx)
 {
-	cmd_new_fsenv(&ctx->fs_args, &ctx->fsenv);
+	cmd_new_env(&ctx->fs_args, &ctx->env);
 }
 
 static void cmd_fsck_open_repo(struct cmd_fsck_ctx *ctx)
 {
-	cmd_open_repo(ctx->fsenv);
+	cmd_open_repo(ctx->env);
 }
 
 static void cmd_fsck_poke_fs(struct cmd_fsck_ctx *ctx)
 {
-	cmd_poke_fs(ctx->fsenv, &ctx->fs_args.bref);
+	cmd_poke_fs(ctx->env, &ctx->fs_args.bref);
 }
 
 static void cmd_fsck_open_fs(struct cmd_fsck_ctx *ctx)
 {
-	cmd_open_fs(ctx->fsenv, &ctx->fs_args.bref);
+	cmd_open_fs(ctx->env, &ctx->fs_args.bref);
 }
 
 static void cmd_fsck_close_fs(struct cmd_fsck_ctx *ctx)
 {
-	cmd_close_fs(ctx->fsenv);
+	cmd_close_fs(ctx->env);
 }
 
 static void cmd_fsck_execute(struct cmd_fsck_ctx *ctx)
 {
-	cmd_inspect_fs(ctx->fsenv, NULL, NULL);
+	cmd_inspect_fs(ctx->env, NULL, NULL);
 }
 
 static void cmd_fsck_close_repo(struct cmd_fsck_ctx *ctx)
 {
-	cmd_close_repo(ctx->fsenv);
+	cmd_close_repo(ctx->env);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -205,7 +205,7 @@ static void cmd_fsck_close_repo(struct cmd_fsck_ctx *ctx)
 void cmd_execute_fsck(void)
 {
 	struct cmd_fsck_ctx ctx = {
-		.fsenv = NULL,
+		.env = NULL,
 	};
 
 	/* Do all cleanups upon exits */
@@ -230,7 +230,7 @@ void cmd_execute_fsck(void)
 	cmd_fsck_load_bref(&ctx);
 
 	/* Setup execution environment */
-	cmd_fsck_setup_fsenv(&ctx);
+	cmd_fsck_setup_env(&ctx);
 
 	/* Acquire lock */
 	cmd_fsck_acquire_lockfile(&ctx);
@@ -257,7 +257,7 @@ void cmd_execute_fsck(void)
 	cmd_fsck_release_lockfile(&ctx);
 
 	/* Destroy environment instance */
-	cmd_fsck_destroy_fsenv(&ctx);
+	cmd_fsck_destroy_env(&ctx);
 
 	/* Post execution cleanups */
 	cmd_fsck_finalize(&ctx);

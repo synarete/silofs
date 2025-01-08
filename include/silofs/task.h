@@ -33,7 +33,7 @@ struct silofs_oper {
 
 /* execution-context task per file-system operation */
 struct silofs_task {
-	struct silofs_fsenv      *t_fsenv;
+	struct silofs_env        *t_env;
 	struct silofs_submitq    *t_submitq;
 	struct silofs_inode_info *t_looseq;
 	struct silofs_oper        t_oper;
@@ -58,7 +58,7 @@ struct silofs_submitq_ent {
 	struct iovec              iov[SILOFS_SQENT_NREFS_MAX];
 	struct silofs_lnode_info *lni[SILOFS_SQENT_NREFS_MAX];
 	struct silofs_list_head   qlh;
-	struct silofs_fsenv      *fsenv;
+	struct silofs_env        *env;
 	struct silofs_alloc      *alloc;
 	struct silofs_laddr       laddr;
 	uint64_t                  uniq_id;
@@ -91,7 +91,7 @@ int silofs_sqe_assign_iovs(struct silofs_submitq_ent      *sqe,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_task_init(struct silofs_task *task, struct silofs_fsenv *fsenv);
+void silofs_task_init(struct silofs_task *task, struct silofs_env *env);
 
 void silofs_task_fini(struct silofs_task *task);
 

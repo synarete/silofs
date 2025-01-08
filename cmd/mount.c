@@ -60,7 +60,7 @@ struct cmd_mount_in_args {
 struct cmd_mount_ctx {
 	struct cmd_mount_in_args in_args;
 	struct silofs_fs_args fs_args;
-	struct silofs_fsenv *fsenv;
+	struct silofs_env *env;
 	pid_t child_pid;
 	time_t start_time;
 	int halt_signal;
@@ -261,14 +261,14 @@ static void cmd_mount_load_bref(struct cmd_mount_ctx *ctx)
 	cmd_bootref_load(&ctx->fs_args.bref);
 }
 
-static void cmd_mount_setup_fsenv(struct cmd_mount_ctx *ctx)
+static void cmd_mount_setup_env(struct cmd_mount_ctx *ctx)
 {
-	cmd_new_fsenv(&ctx->fs_args, &ctx->fsenv);
+	cmd_new_env(&ctx->fs_args, &ctx->env);
 }
 
-static void cmd_mount_destroy_fsenv(struct cmd_mount_ctx *ctx)
+static void cmd_mount_destroy_env(struct cmd_mount_ctx *ctx)
 {
-	cmd_del_fsenv(&ctx->fsenv);
+	cmd_del_env(&ctx->env);
 }
 
 static void cmd_mount_halt_by_signal(int signum)
@@ -276,8 +276,8 @@ static void cmd_mount_halt_by_signal(int signum)
 	struct cmd_mount_ctx *ctx;
 
 	ctx = cmd_mount_ctx;
-	if (ctx && ctx->fsenv) {
-		silofs_halt_fs(ctx->fsenv);
+	if (ctx && ctx->env) {
+		silofs_halt_fs(ctx->env);
 		ctx->halt_signal = signum;
 	}
 }
@@ -305,7 +305,7 @@ static void cmd_mount_release_lockfile(struct cmd_mount_ctx *ctx)
 
 static void cmd_mount_finalize(struct cmd_mount_ctx *ctx)
 {
-	cmd_mount_destroy_fsenv(ctx);
+	cmd_mount_destroy_env(ctx);
 	cmd_pstrfree(&ctx->in_args.repodir_name);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
@@ -383,34 +383,34 @@ static void cmd_mount_getpass(struct cmd_mount_ctx *ctx)
 
 static void cmd_mount_open_repo(struct cmd_mount_ctx *ctx)
 {
-	cmd_open_repo(ctx->fsenv);
+	cmd_open_repo(ctx->env);
 }
 
 static void cmd_mount_close_repo(struct cmd_mount_ctx *ctx)
 {
-	cmd_close_repo(ctx->fsenv);
+	cmd_close_repo(ctx->env);
 }
 
 static void cmd_mount_poke_fs(struct cmd_mount_ctx *ctx)
 {
-	cmd_poke_fs(ctx->fsenv, &ctx->fs_args.bref);
+	cmd_poke_fs(ctx->env, &ctx->fs_args.bref);
 }
 
 static void cmd_mount_open_fs(struct cmd_mount_ctx *ctx)
 {
-	cmd_open_fs(ctx->fsenv, &ctx->fs_args.bref);
+	cmd_open_fs(ctx->env, &ctx->fs_args.bref);
 }
 
 static void cmd_mount_execute_fs(struct cmd_mount_ctx *ctx)
 {
 	ctx->start_time = silofs_time_now();
-	cmd_exec_fs(ctx->fsenv);
-	ctx->post_exec_status = silofs_post_exec_fs(ctx->fsenv);
+	cmd_exec_fs(ctx->env);
+	ctx->post_exec_status = silofs_post_exec_fs(ctx->env);
 }
 
 static void cmd_mount_close_fs(struct cmd_mount_ctx *ctx)
 {
-	cmd_close_fs(ctx->fsenv);
+	cmd_close_fs(ctx->env);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -574,7 +574,7 @@ static void cmd_mount_post_exec_cleanup(const struct cmd_mount_ctx *ctx)
 static void cmd_mount_exec_phase1(struct cmd_mount_ctx *ctx)
 {
 	/* Setup boot environment instance */
-	cmd_mount_setup_fsenv(ctx);
+	cmd_mount_setup_env(ctx);
 
 	/* Acquire lock */
 	cmd_mount_acquire_lockfile(ctx);
@@ -598,7 +598,7 @@ static void cmd_mount_exec_phase1(struct cmd_mount_ctx *ctx)
 	cmd_mount_release_lockfile(ctx);
 
 	/* Destroy boot environment instance */
-	cmd_mount_destroy_fsenv(ctx);
+	cmd_mount_destroy_env(ctx);
 }
 
 static void cmd_mount_exec_phase2(struct cmd_mount_ctx *ctx)
@@ -610,7 +610,7 @@ static void cmd_mount_exec_phase2(struct cmd_mount_ctx *ctx)
 	cmd_mount_update_log_params(ctx);
 
 	/* Setup main environment instance */
-	cmd_mount_setup_fsenv(ctx);
+	cmd_mount_setup_env(ctx);
 
 	/* Re-acquire lock */
 	cmd_mount_acquire_lockfile(ctx);
@@ -646,13 +646,13 @@ static void cmd_mount_exec_phase2(struct cmd_mount_ctx *ctx)
 	cmd_mount_trace_finish(ctx);
 
 	/* Destroy main environment instance */
-	cmd_mount_destroy_fsenv(ctx);
+	cmd_mount_destroy_env(ctx);
 }
 
 void cmd_execute_mount(void)
 {
 	struct cmd_mount_ctx ctx = {
-		.fsenv = NULL,
+		.env = NULL,
 		.halt_signal = -1,
 		.post_exec_status = 0,
 	};

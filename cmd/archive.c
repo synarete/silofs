@@ -37,7 +37,7 @@ struct cmd_archive_in_args {
 struct cmd_archive_ctx {
 	struct cmd_archive_in_args in_args;
 	struct silofs_fs_args fs_args;
-	struct silofs_fsenv *fsenv;
+	struct silofs_env *env;
 	bool has_lockfile;
 };
 
@@ -105,14 +105,14 @@ static void cmd_archive_release_lockfile(struct cmd_archive_ctx *ctx)
 	}
 }
 
-static void cmd_archive_destroy_fsenv(struct cmd_archive_ctx *ctx)
+static void cmd_archive_destroy_env(struct cmd_archive_ctx *ctx)
 {
-	cmd_del_fsenv(&ctx->fsenv);
+	cmd_del_env(&ctx->env);
 }
 
 static void cmd_archive_finalize(struct cmd_archive_ctx *ctx)
 {
-	cmd_del_fsenv(&ctx->fsenv);
+	cmd_del_env(&ctx->env);
 	cmd_pstrfree(&ctx->in_args.repodir_name);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
@@ -181,41 +181,41 @@ static void cmd_archive_load_bref(struct cmd_archive_ctx *ctx)
 	cmd_bootref_load(&ctx->fs_args.bref);
 }
 
-static void cmd_archive_setup_fsenv(struct cmd_archive_ctx *ctx)
+static void cmd_archive_setup_env(struct cmd_archive_ctx *ctx)
 {
-	cmd_new_fsenv(&ctx->fs_args, &ctx->fsenv);
+	cmd_new_env(&ctx->fs_args, &ctx->env);
 }
 
 static void cmd_archive_open_repo(struct cmd_archive_ctx *ctx)
 {
-	cmd_open_repo(ctx->fsenv);
+	cmd_open_repo(ctx->env);
 }
 
 static void cmd_archive_close_repo(struct cmd_archive_ctx *ctx)
 {
-	cmd_close_repo(ctx->fsenv);
+	cmd_close_repo(ctx->env);
 }
 
 static void cmd_archive_poke_fs(struct cmd_archive_ctx *ctx)
 {
-	cmd_poke_fs(ctx->fsenv, &ctx->fs_args.bref);
+	cmd_poke_fs(ctx->env, &ctx->fs_args.bref);
 }
 
 static void cmd_archive_open_fs(struct cmd_archive_ctx *ctx)
 {
-	cmd_open_fs(ctx->fsenv, &ctx->fs_args.bref);
+	cmd_open_fs(ctx->env, &ctx->fs_args.bref);
 }
 
 static void cmd_archive_close_fs(struct cmd_archive_ctx *ctx)
 {
-	cmd_close_fs(ctx->fsenv);
+	cmd_close_fs(ctx->env);
 }
 
 static void cmd_archive_execute(struct cmd_archive_ctx *ctx)
 {
 	struct silofs_caddr caddr;
 
-	cmd_archive_fs(ctx->fsenv, &caddr);
+	cmd_archive_fs(ctx->env, &caddr);
 	cmd_bootref_resave(&ctx->fs_args.bref, &caddr, ctx->in_args.arname);
 }
 
@@ -224,7 +224,7 @@ static void cmd_archive_execute(struct cmd_archive_ctx *ctx)
 void cmd_execute_archive(void)
 {
 	struct cmd_archive_ctx ctx = {
-		.fsenv = NULL,
+		.env = NULL,
 	};
 
 	/* Do all cleanups upon exits */
@@ -252,7 +252,7 @@ void cmd_execute_archive(void)
 	cmd_archive_load_bref(&ctx);
 
 	/* Setup execution environment */
-	cmd_archive_setup_fsenv(&ctx);
+	cmd_archive_setup_env(&ctx);
 
 	/* Acquire lock */
 	cmd_archive_acquire_lockfile(&ctx);
@@ -279,7 +279,7 @@ void cmd_execute_archive(void)
 	cmd_archive_release_lockfile(&ctx);
 
 	/* Destroy environment instance */
-	cmd_archive_destroy_fsenv(&ctx);
+	cmd_archive_destroy_env(&ctx);
 
 	/* Post execution cleanups */
 	cmd_archive_finalize(&ctx);

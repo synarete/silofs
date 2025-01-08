@@ -38,7 +38,7 @@ struct cmd_rmfs_ctx {
 	long pad;
 	struct cmd_rmfs_in_args in_args;
 	struct silofs_fs_args fs_args;
-	struct silofs_fsenv *fsenv;
+	struct silofs_env *env;
 	bool has_lockfile;
 };
 
@@ -192,29 +192,29 @@ static void cmd_rmfs_load_bref(struct cmd_rmfs_ctx *ctx)
 	cmd_bootref_load(&ctx->fs_args.bref);
 }
 
-static void cmd_rmfs_setup_fsenv(struct cmd_rmfs_ctx *ctx)
+static void cmd_rmfs_setup_env(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_new_fsenv(&ctx->fs_args, &ctx->fsenv);
+	cmd_new_env(&ctx->fs_args, &ctx->env);
 }
 
 static void cmd_rmfs_open_repo(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_open_repo(ctx->fsenv);
+	cmd_open_repo(ctx->env);
 }
 
 static void cmd_rmfs_close_repo(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_close_repo(ctx->fsenv);
+	cmd_close_repo(ctx->env);
 }
 
 static void cmd_rmfs_poke_fs(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_poke_fs(ctx->fsenv, &ctx->fs_args.bref);
+	cmd_poke_fs(ctx->env, &ctx->fs_args.bref);
 }
 
 static void cmd_rmfs_execute(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_unref_fs(ctx->fsenv, &ctx->fs_args.bref);
+	cmd_unref_fs(ctx->env, &ctx->fs_args.bref);
 }
 
 static void cmd_rmfs_unlink_bref(struct cmd_rmfs_ctx *ctx)
@@ -222,9 +222,9 @@ static void cmd_rmfs_unlink_bref(struct cmd_rmfs_ctx *ctx)
 	cmd_bootref_unlink(&ctx->fs_args.bref);
 }
 
-static void cmd_rmfs_destroy_fsenv(struct cmd_rmfs_ctx *ctx)
+static void cmd_rmfs_destroy_env(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_del_fsenv(&ctx->fsenv);
+	cmd_del_env(&ctx->env);
 }
 
 static void cmd_rmfs_acquire_lockfile(struct cmd_rmfs_ctx *ctx)
@@ -245,7 +245,7 @@ static void cmd_rmfs_release_lockfile(struct cmd_rmfs_ctx *ctx)
 
 static void cmd_rmfs_finalize(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_rmfs_destroy_fsenv(ctx);
+	cmd_rmfs_destroy_env(ctx);
 	cmd_delpass(&ctx->in_args.password);
 	cmd_pstrfree(&ctx->in_args.repodir_name);
 	cmd_pstrfree(&ctx->in_args.repodir);
@@ -307,7 +307,7 @@ void cmd_execute_rmfs(void)
 	cmd_rmfs_load_bref(&ctx);
 
 	/* Setup execution context */
-	cmd_rmfs_setup_fsenv(&ctx);
+	cmd_rmfs_setup_env(&ctx);
 
 	/* Acquire lock */
 	cmd_rmfs_acquire_lockfile(&ctx);

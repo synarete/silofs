@@ -44,7 +44,7 @@ struct cmd_snap_in_args {
 struct cmd_snap_ctx {
 	struct cmd_snap_in_args in_args;
 	struct silofs_fs_args fs_args;
-	struct silofs_fsenv *fsenv;
+	struct silofs_env *env;
 	union silofs_ioc_u *ioc;
 	struct silofs_caddr boot_new;
 	struct silofs_caddr boot_alt;
@@ -116,7 +116,7 @@ static void cmd_snap_parse_optargs(struct cmd_snap_ctx *ctx)
 
 static void cmd_snap_destroy_env(struct cmd_snap_ctx *ctx)
 {
-	cmd_del_fsenv(&ctx->fsenv);
+	cmd_del_env(&ctx->env);
 }
 
 static void cmd_snap_finalize(struct cmd_snap_ctx *ctx)
@@ -294,39 +294,39 @@ static void cmd_snap_load_bref(struct cmd_snap_ctx *ctx)
 	cmd_bootref_load(&ctx->fs_args.bref);
 }
 
-static void cmd_snap_setup_fsenv(struct cmd_snap_ctx *ctx)
+static void cmd_snap_setup_env(struct cmd_snap_ctx *ctx)
 {
-	cmd_new_fsenv(&ctx->fs_args, &ctx->fsenv);
+	cmd_new_env(&ctx->fs_args, &ctx->env);
 }
 
 static void cmd_snap_open_repo(struct cmd_snap_ctx *ctx)
 {
-	cmd_open_repo(ctx->fsenv);
+	cmd_open_repo(ctx->env);
 }
 
 static void cmd_snap_close_repo(struct cmd_snap_ctx *ctx)
 {
-	cmd_close_repo(ctx->fsenv);
+	cmd_close_repo(ctx->env);
 }
 
 static void cmd_snap_poke_fs(struct cmd_snap_ctx *ctx)
 {
-	cmd_poke_fs(ctx->fsenv, &ctx->fs_args.bref);
+	cmd_poke_fs(ctx->env, &ctx->fs_args.bref);
 }
 
 static void cmd_snap_open_fs(struct cmd_snap_ctx *ctx)
 {
-	cmd_open_fs(ctx->fsenv, &ctx->fs_args.bref);
+	cmd_open_fs(ctx->env, &ctx->fs_args.bref);
 }
 
 static void cmd_snap_fork_fs(struct cmd_snap_ctx *ctx)
 {
-	cmd_fork_fs(ctx->fsenv, &ctx->boot_new, &ctx->boot_alt);
+	cmd_fork_fs(ctx->env, &ctx->boot_new, &ctx->boot_alt);
 }
 
 static void cmd_snap_close_fs(struct cmd_snap_ctx *ctx)
 {
-	cmd_close_fs(ctx->fsenv);
+	cmd_close_fs(ctx->env);
 }
 
 static void cmd_snap_save_snap_bref(struct cmd_snap_ctx *ctx)
@@ -390,7 +390,7 @@ static void cmd_snap_execute(struct cmd_snap_ctx *ctx)
 void cmd_execute_snap(void)
 {
 	struct cmd_snap_ctx ctx = {
-		.fsenv = NULL,
+		.env = NULL,
 		.ioc = NULL,
 	};
 
@@ -416,7 +416,7 @@ void cmd_execute_snap(void)
 	cmd_snap_setup_fs_ids(&ctx);
 
 	/* Setup execution environment */
-	cmd_snap_setup_fsenv(&ctx);
+	cmd_snap_setup_env(&ctx);
 
 	/* Open repository */
 	cmd_snap_open_repo(&ctx);

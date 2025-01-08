@@ -264,41 +264,36 @@ void cmd_rdlock_repo(const char *repodir, int *pfd);
 void cmd_unlock_repo(const char *repodir, int *pfd);
 
 /* complex fs operations */
-void cmd_format_repo(struct silofs_fsenv *fsenv);
+void cmd_format_repo(struct silofs_env *env);
 
-void cmd_open_repo(struct silofs_fsenv *fsenv);
+void cmd_open_repo(struct silofs_env *env);
 
-void cmd_close_repo(struct silofs_fsenv *fsenv);
+void cmd_close_repo(struct silofs_env *env);
 
-void cmd_format_fs(struct silofs_fsenv *fsenv, struct silofs_fs_bref *bref);
+void cmd_format_fs(struct silofs_env *env, struct silofs_fs_bref *bref);
 
-void cmd_close_fs(struct silofs_fsenv *fsenv);
+void cmd_close_fs(struct silofs_env *env);
 
-void cmd_poke_fs(struct silofs_fsenv         *fsenv,
-                 const struct silofs_fs_bref *bref);
+void cmd_poke_fs(struct silofs_env *env, const struct silofs_fs_bref *bref);
 
-void cmd_poke_archive(struct silofs_fsenv         *fsenv,
+void cmd_poke_archive(struct silofs_env           *env,
                       const struct silofs_fs_bref *bref);
 
-void cmd_open_fs(struct silofs_fsenv         *fsenv,
-                 const struct silofs_fs_bref *bref);
+void cmd_open_fs(struct silofs_env *env, const struct silofs_fs_bref *bref);
 
-void cmd_exec_fs(struct silofs_fsenv *fsenv);
+void cmd_exec_fs(struct silofs_env *env);
 
-void cmd_fork_fs(struct silofs_fsenv *fsenv, struct silofs_caddr *out_new,
+void cmd_fork_fs(struct silofs_env *env, struct silofs_caddr *out_new,
                  struct silofs_caddr *out_alt);
 
-void cmd_unref_fs(struct silofs_fsenv         *fsenv,
-                  const struct silofs_fs_bref *bconf);
+void cmd_unref_fs(struct silofs_env *env, const struct silofs_fs_bref *bconf);
 
-void cmd_inspect_fs(struct silofs_fsenv *fsenv, silofs_visit_laddr_fn cb,
+void cmd_inspect_fs(struct silofs_env *env, silofs_visit_laddr_fn cb,
                     void *user_ctx);
 
-void cmd_archive_fs(struct silofs_fsenv *fsenv,
-                    struct silofs_caddr *out_caddr);
+void cmd_archive_fs(struct silofs_env *env, struct silofs_caddr *out_caddr);
 
-void cmd_restore_fs(struct silofs_fsenv *fsenv,
-                    struct silofs_caddr *out_caddr);
+void cmd_restore_fs(struct silofs_env *env, struct silofs_caddr *out_caddr);
 
 /* mount-info */
 struct cmd_proc_mntinfo {
@@ -320,10 +315,10 @@ void cmd_del_iocp(union silofs_ioc_u **pioc);
 void cmd_reset_ioc(union silofs_ioc_u *ioc);
 
 /* file-system environment */
-void cmd_new_fsenv(const struct silofs_fs_args *fs_args,
-                   struct silofs_fsenv        **p_fsenv);
+void cmd_new_env(const struct silofs_fs_args *fs_args,
+                 struct silofs_env          **p_env);
 
-void cmd_del_fsenv(struct silofs_fsenv **p_fsenv);
+void cmd_del_env(struct silofs_env **p_env);
 
 /* signals handling */
 void cmd_register_sigactions(void (*sig_hook_fn)(int));

@@ -37,7 +37,7 @@ struct cmd_restore_in_args {
 struct cmd_restore_ctx {
 	struct cmd_restore_in_args in_args;
 	struct silofs_fs_args fs_args;
-	struct silofs_fsenv *fsenv;
+	struct silofs_env *env;
 	bool has_lockfile;
 };
 
@@ -104,14 +104,14 @@ static void cmd_restore_release_lockfile(struct cmd_restore_ctx *ctx)
 	}
 }
 
-static void cmd_restore_destroy_fsenv(struct cmd_restore_ctx *ctx)
+static void cmd_restore_destroy_env(struct cmd_restore_ctx *ctx)
 {
-	cmd_del_fsenv(&ctx->fsenv);
+	cmd_del_env(&ctx->env);
 }
 
 static void cmd_restore_finalize(struct cmd_restore_ctx *ctx)
 {
-	cmd_del_fsenv(&ctx->fsenv);
+	cmd_del_env(&ctx->env);
 	cmd_pstrfree(&ctx->in_args.repodir_name);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
@@ -176,31 +176,31 @@ static void cmd_restore_load_bref(struct cmd_restore_ctx *ctx)
 	cmd_bootref_load_ar(&ctx->fs_args.bref);
 }
 
-static void cmd_restore_setup_fsenv(struct cmd_restore_ctx *ctx)
+static void cmd_restore_setup_env(struct cmd_restore_ctx *ctx)
 {
-	cmd_new_fsenv(&ctx->fs_args, &ctx->fsenv);
+	cmd_new_env(&ctx->fs_args, &ctx->env);
 }
 
 static void cmd_restore_open_repo(struct cmd_restore_ctx *ctx)
 {
-	cmd_open_repo(ctx->fsenv);
+	cmd_open_repo(ctx->env);
 }
 
 static void cmd_restore_close_repo(struct cmd_restore_ctx *ctx)
 {
-	cmd_close_repo(ctx->fsenv);
+	cmd_close_repo(ctx->env);
 }
 
 static void cmd_restore_poke_archive(struct cmd_restore_ctx *ctx)
 {
-	cmd_poke_archive(ctx->fsenv, &ctx->fs_args.bref);
+	cmd_poke_archive(ctx->env, &ctx->fs_args.bref);
 }
 
 static void cmd_restore_execute(struct cmd_restore_ctx *ctx)
 {
 	struct silofs_caddr caddr = { .ctype = SILOFS_CTYPE_NONE };
 
-	cmd_restore_fs(ctx->fsenv, &caddr);
+	cmd_restore_fs(ctx->env, &caddr);
 	cmd_bootref_resave(&ctx->fs_args.bref, &caddr, ctx->in_args.name);
 }
 
@@ -209,7 +209,7 @@ static void cmd_restore_execute(struct cmd_restore_ctx *ctx)
 void cmd_execute_restore(void)
 {
 	struct cmd_restore_ctx ctx = {
-		.fsenv = NULL,
+		.env = NULL,
 	};
 
 	/* Do all cleanups upon exits */
@@ -234,7 +234,7 @@ void cmd_execute_restore(void)
 	cmd_restore_load_bref(&ctx);
 
 	/* Setup execution environment */
-	cmd_restore_setup_fsenv(&ctx);
+	cmd_restore_setup_env(&ctx);
 
 	/* Acquire lock */
 	cmd_restore_acquire_lockfile(&ctx);
@@ -255,7 +255,7 @@ void cmd_execute_restore(void)
 	cmd_restore_release_lockfile(&ctx);
 
 	/* Destroy environment instance */
-	cmd_restore_destroy_fsenv(&ctx);
+	cmd_restore_destroy_env(&ctx);
 
 	/* Post execution cleanups */
 	cmd_restore_finalize(&ctx);

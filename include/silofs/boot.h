@@ -22,7 +22,7 @@
 #include <silofs/types.h>
 #include <silofs/idsmap.h>
 
-struct silofs_fsenv;
+struct silofs_env;
 
 /* boot pathname: a pair of repo-directory & boot-record name (optional) */
 struct silofs_bootpath {
@@ -32,13 +32,13 @@ struct silofs_bootpath {
 
 /* boot-record representation (in-memory) */
 struct silofs_bootrec {
-	struct silofs_uuid    uuid;
-	struct silofs_ivkey   main_ivkey;
-	struct silofs_ulink   sb_ulink;
+	struct silofs_uuid  uuid;
+	struct silofs_ivkey main_ivkey;
+	struct silofs_ulink sb_ulink;
 	struct silofs_pvasd pvasd;
-	enum silofs_bootf     flags;
-	int32_t               cipher_algo;
-	int32_t               cipher_mode;
+	enum silofs_bootf   flags;
+	int32_t             cipher_algo;
+	int32_t             cipher_mode;
 };
 
 /* boot-records pair after fork-fs with their content-addresses */
@@ -147,10 +147,10 @@ void silofs_bootrec_set_ivkey(struct silofs_bootrec     *brec,
 void silofs_bootrec_gen_ivkey(struct silofs_bootrec *brec);
 
 void silofs_bootrec_pvasd(const struct silofs_bootrec *brec,
-                            struct silofs_pvasd       *out_pvasd);
+                          struct silofs_pvasd         *out_pvasd);
 
-void silofs_bootrec_set_pvasd(struct silofs_bootrec       *brec,
-                                const struct silofs_pvasd *pvasd);
+void silofs_bootrec_set_pvasd(struct silofs_bootrec     *brec,
+                              const struct silofs_pvasd *pvasd);
 
 void silofs_bootrec_sb_ulink(const struct silofs_bootrec *brec,
                              struct silofs_ulink         *out_ulink);
@@ -188,29 +188,29 @@ void silofs_calc_key_hash(const struct silofs_key     *key,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_encode_bootrec(const struct silofs_fsenv   *fsenv,
+int silofs_encode_bootrec(const struct silofs_env     *env,
                           const struct silofs_bootrec *brec,
                           struct silofs_bootrec1k     *out_brec1k_enc);
 
-int silofs_decode_bootrec(const struct silofs_fsenv     *fsenv,
+int silofs_decode_bootrec(const struct silofs_env       *env,
                           const struct silofs_bootrec1k *brec1k_enc,
                           struct silofs_bootrec         *out_brec);
 
-int silofs_save_bootrec(const struct silofs_fsenv   *fsenv,
+int silofs_save_bootrec(const struct silofs_env     *env,
                         const struct silofs_bootrec *brec,
                         struct silofs_caddr         *out_caddr);
 
-int silofs_load_bootrec(const struct silofs_fsenv *fsenv,
+int silofs_load_bootrec(const struct silofs_env   *env,
                         const struct silofs_caddr *caddr,
                         struct silofs_bootrec     *out_brec);
 
-int silofs_stat_bootrec(const struct silofs_fsenv *fsenv,
+int silofs_stat_bootrec(const struct silofs_env   *env,
                         const struct silofs_caddr *caddr);
 
-int silofs_unlink_bootrec(const struct silofs_fsenv *fsenv,
+int silofs_unlink_bootrec(const struct silofs_env   *env,
                           const struct silofs_caddr *caddr);
 
-int silofs_calc_bootrec_caddr(const struct silofs_fsenv   *fsenv,
+int silofs_calc_bootrec_caddr(const struct silofs_env     *env,
                               const struct silofs_bootrec *brec,
                               struct silofs_caddr         *out_caddr);
 

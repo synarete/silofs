@@ -37,7 +37,7 @@ struct cmd_init_in_args {
 struct cmd_init_ctx {
 	struct cmd_init_in_args in_args;
 	struct silofs_fs_args fs_args;
-	struct silofs_fsenv *fsenv;
+	struct silofs_env *env;
 };
 
 static struct cmd_init_ctx *cmd_init_ctx;
@@ -88,7 +88,7 @@ static void cmd_init_parse_optargs(struct cmd_init_ctx *ctx)
 
 static void cmd_init_finalize(struct cmd_init_ctx *ctx)
 {
-	cmd_del_fsenv(&ctx->fsenv);
+	cmd_del_env(&ctx->env);
 	cmd_fs_ids_fini(&ctx->fs_args.ids);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
 	cmd_pstrfree(&ctx->in_args.repodir);
@@ -163,19 +163,19 @@ static void cmd_init_setup_fs_ids(struct cmd_init_ctx *ctx)
 	cmd_pstrfree(&rootname);
 }
 
-static void cmd_init_setup_fsenv(struct cmd_init_ctx *ctx)
+static void cmd_init_setup_env(struct cmd_init_ctx *ctx)
 {
-	cmd_new_fsenv(&ctx->fs_args, &ctx->fsenv);
+	cmd_new_env(&ctx->fs_args, &ctx->env);
 }
 
 static void cmd_init_format_repo(const struct cmd_init_ctx *ctx)
 {
-	cmd_format_repo(ctx->fsenv);
+	cmd_format_repo(ctx->env);
 }
 
 static void cmd_init_close_repo(const struct cmd_init_ctx *ctx)
 {
-	cmd_close_repo(ctx->fsenv);
+	cmd_close_repo(ctx->env);
 }
 
 static void cmd_init_save_idsconf(const struct cmd_init_ctx *ctx)
@@ -187,7 +187,7 @@ static void cmd_init_save_idsconf(const struct cmd_init_ctx *ctx)
 
 void cmd_execute_init(void)
 {
-	struct cmd_init_ctx ctx = { .fsenv = NULL };
+	struct cmd_init_ctx ctx = { .env = NULL };
 
 	/* Do all cleanups upon exits */
 	cmd_init_start(&ctx);
@@ -208,7 +208,7 @@ void cmd_execute_init(void)
 	cmd_init_setup_fs_ids(&ctx);
 
 	/* Prepare environment */
-	cmd_init_setup_fsenv(&ctx);
+	cmd_init_setup_env(&ctx);
 
 	/* Format repository layout */
 	cmd_init_format_repo(&ctx);

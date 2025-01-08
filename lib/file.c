@@ -37,7 +37,7 @@
 
 struct silofs_file_ctx {
 	struct silofs_task *task;
-	struct silofs_fsenv *fsenv;
+	struct silofs_env *env;
 	struct silofs_sb_info *sbi;
 	struct silofs_inode_info *ii;
 	struct silofs_rwiter_ctx *rwi_ctx;
@@ -367,9 +367,9 @@ fli_len_within(const struct silofs_fileaf_info *fli, loff_t off, loff_t end)
 
 static bool fli_asyncwr(const struct silofs_fileaf_info *fli)
 {
-	const struct silofs_fsenv *fsenv = vni_fsenv(&fli->fl_vni);
+	const struct silofs_env *env = vni_env(&fli->fl_vni);
 
-	return (fsenv->fse_ctl_flags & SILOFS_ENVF_ASYNCWR) > 0;
+	return (env->fse_ctl_flags & SILOFS_ENVF_ASYNCWR) > 0;
 }
 
 static void fli_pre_io(struct silofs_fileaf_info *fli, int wr_mode)
@@ -884,7 +884,7 @@ static void filc_decref(const struct silofs_file_ctx *f_ctx)
 
 static void *filc_nil_block(const struct silofs_file_ctx *f_ctx)
 {
-	struct silofs_lblock *nil_bk = f_ctx->fsenv->fse.lcache->lc_nil_lbk;
+	struct silofs_lblock *nil_bk = f_ctx->env->fse.lcache->lc_nil_lbk;
 
 	return nil_bk->u.bk;
 }
@@ -2106,7 +2106,7 @@ int silofs_do_read_iter(struct silofs_task *task, struct silofs_inode_info *ii,
 {
 	struct silofs_file_ctx f_ctx = {
 		.task = task,
-		.fsenv = task->t_fsenv,
+		.env = task->t_env,
 		.sbi = task_sbi(task),
 		.ii = ii,
 		.op_mask = OP_READ,
@@ -2137,7 +2137,7 @@ int silofs_do_read(struct silofs_task *task, struct silofs_inode_info *ii,
 	};
 	struct silofs_file_ctx f_ctx = {
 		.task = task,
-		.fsenv = task->t_fsenv,
+		.env = task->t_env,
 		.sbi = task_sbi(task),
 		.ii = ii,
 		.op_mask = OP_READ,
@@ -2865,7 +2865,7 @@ int silofs_do_write_iter(struct silofs_task *task,
 {
 	struct silofs_file_ctx f_ctx = {
 		.task = task,
-		.fsenv = task->t_fsenv,
+		.env = task->t_env,
 		.sbi = task_sbi(task),
 		.ii = ii,
 		.op_mask = OP_WRITE,
@@ -2897,7 +2897,7 @@ int silofs_do_write(struct silofs_task *task, struct silofs_inode_info *ii,
 	};
 	struct silofs_file_ctx f_ctx = {
 		.task = task,
-		.fsenv = task->t_fsenv,
+		.env = task->t_env,
 		.sbi = task_sbi(task),
 		.ii = ii,
 		.op_mask = OP_WRITE,
@@ -3179,7 +3179,7 @@ int silofs_drop_reg(struct silofs_task *task, struct silofs_inode_info *ii)
 {
 	struct silofs_file_ctx f_ctx = {
 		.task = task,
-		.fsenv = task->t_fsenv,
+		.env = task->t_env,
 		.sbi = task_sbi(task),
 		.ii = ii,
 		.stg_mode = SILOFS_STG_COW,
@@ -3455,7 +3455,7 @@ int silofs_do_truncate(struct silofs_task *task, struct silofs_inode_info *ii,
 	const size_t len = (off < isp) ? off_ulen(off, isp) : 0;
 	struct silofs_file_ctx f_ctx = {
 		.task = task,
-		.fsenv = task->t_fsenv,
+		.env = task->t_env,
 		.sbi = task_sbi(task),
 		.ii = ii,
 		.len = len,
@@ -3569,7 +3569,7 @@ int silofs_do_lseek(struct silofs_task *task, struct silofs_inode_info *ii,
 {
 	struct silofs_file_ctx f_ctx = {
 		.task = task,
-		.fsenv = task->t_fsenv,
+		.env = task->t_env,
 		.sbi = task_sbi(task),
 		.ii = ii,
 		.len = 0,
@@ -3833,7 +3833,7 @@ int silofs_do_fallocate(struct silofs_task *task, struct silofs_inode_info *ii,
 {
 	struct silofs_file_ctx f_ctx = {
 		.task = task,
-		.fsenv = task->t_fsenv,
+		.env = task->t_env,
 		.sbi = task_sbi(task),
 		.ii = ii,
 		.len = (size_t)len,
@@ -4024,7 +4024,7 @@ int silofs_do_fiemap(struct silofs_task *task, struct silofs_inode_info *ii,
 	const size_t len = (size_t)fm->fm_length;
 	struct silofs_file_ctx f_ctx = {
 		.task = task,
-		.fsenv = task->t_fsenv,
+		.env = task->t_env,
 		.sbi = task_sbi(task),
 		.ii = ii,
 		.len = len,
@@ -4578,7 +4578,7 @@ filc_lseek_data_pos(const struct silofs_file_ctx *f_ctx, loff_t *out_off)
 	};
 	struct silofs_file_ctx f_ctx_alt = {
 		.task = f_ctx->task,
-		.fsenv = f_ctx->fsenv,
+		.env = f_ctx->env,
 		.sbi = f_ctx->sbi,
 		.ii = f_ctx->ii,
 		.len = 0,
@@ -4680,7 +4680,7 @@ int silofs_do_copy_file_range(struct silofs_task *task,
 {
 	struct silofs_file_ctx f_ctx_src = {
 		.task = task,
-		.fsenv = task->t_fsenv,
+		.env = task->t_env,
 		.sbi = task_sbi(task),
 		.ii = ii_in,
 		.len = len,
@@ -4694,7 +4694,7 @@ int silofs_do_copy_file_range(struct silofs_task *task,
 	};
 	struct silofs_file_ctx f_ctx_dst = {
 		.task = task,
-		.fsenv = task->t_fsenv,
+		.env = task->t_env,
 		.sbi = task_sbi(task),
 		.ii = ii_out,
 		.len = len,

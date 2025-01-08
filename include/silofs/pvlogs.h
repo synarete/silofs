@@ -37,24 +37,24 @@ void silofs_pvasd_fini(struct silofs_pvasd *pvasd);
 int silofs_pvasd_validate(const struct silofs_pvasd *pvasd);
 
 void silofs_pvasd_assign(struct silofs_pvasd       *pvasd,
-			   const struct silofs_pvasd *other);
+                         const struct silofs_pvasd *other);
 
 bool silofs_pvasd_has_paddr(const struct silofs_pvasd *pvasd,
-			      const struct silofs_paddr   *paddr);
+                            const struct silofs_paddr *paddr);
 
 void silofs_pvasd_next_chkpt(struct silofs_pvasd *pvasd,
-			       struct silofs_paddr   *out_paddr);
+                             struct silofs_paddr *out_paddr);
 
 void silofs_pvasd_last_chkpt(const struct silofs_pvasd *pvasd,
-			       struct silofs_paddr         *out_paddr);
+                             struct silofs_paddr       *out_paddr);
 
 void silofs_pvasd_next_btnode(struct silofs_pvasd *pvasd,
-				struct silofs_paddr   *out_paddr);
+                              struct silofs_paddr *out_paddr);
 
 void silofs_pvasd64b_htox(struct silofs_pvasd64b    *pvasd64,
-			    const struct silofs_pvasd *pvasd);
+                          const struct silofs_pvasd *pvasd);
 
 void silofs_pvasd64b_xtoh(const struct silofs_pvasd64b *pvasd64,
-			    struct silofs_pvasd          *pvasd);
+                          struct silofs_pvasd          *pvasd);
 
 #endif /* SILOFS_PVLOGS_H_ */

@@ -55,7 +55,7 @@
 #include <silofs/vstage.h>
 #include <silofs/spmaps.h>
 #include <silofs/claim.h>
-#include <silofs/fsenv.h>
+#include <silofs/env.h>
 #include <silofs/ustage.h>
 #include <silofs/flush.h>
 #include <silofs/mntsvc.h>

@@ -80,7 +80,7 @@ struct silofs_fuseq {
 	struct silofs_mutex           fq_op_lock;
 	struct silofs_mutex           fq_ctl_lock;
 	struct silofs_sem             fq_sem;
-	struct silofs_fsenv          *fq_fsenv;
+	struct silofs_env            *fq_env;
 	struct silofs_alloc          *fq_alloc;
 	struct silofs_listq           fq_curr_opers;
 	size_t                        fq_selfsize;
@@ -107,7 +107,7 @@ void silofs_fuseq_del(struct silofs_fuseq *fq, struct silofs_alloc *alloc);
 
 int silofs_fuseq_update(struct silofs_fuseq *fq);
 
-int silofs_fuseq_mount(struct silofs_fuseq *fq, struct silofs_fsenv *fsenv,
+int silofs_fuseq_mount(struct silofs_fuseq *fq, struct silofs_env *env,
                        const char *path);
 
 int silofs_fuseq_exec(struct silofs_fuseq *fq);

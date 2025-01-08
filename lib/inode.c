@@ -359,12 +359,12 @@ static void iattr_setup_now(struct silofs_iattr *iattr, ino_t ino)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-struct silofs_fsenv *silofs_ii_fsenv(const struct silofs_inode_info *ii)
+struct silofs_env *silofs_ii_env(const struct silofs_inode_info *ii)
 {
 	silofs_assert_not_null(ii);
-	silofs_assert_not_null(ii->i_vni.vn_lni.ln_fsenv);
+	silofs_assert_not_null(ii->i_vni.vn_lni.ln_env);
 
-	return ii->i_vni.vn_lni.ln_fsenv;
+	return ii->i_vni.vn_lni.ln_env;
 }
 
 void silofs_ii_set_ino(struct silofs_inode_info *ii, ino_t ino)

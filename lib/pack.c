@@ -44,7 +44,7 @@ struct silofs_par_index {
 struct silofs_par_ctx {
 	struct silofs_par_index pac_pindex;
 	struct silofs_task *pac_task;
-	struct silofs_fsenv *pac_fsenv;
+	struct silofs_env *pac_env;
 	struct silofs_alloc *pac_alloc;
 	struct silofs_repo *pac_repo;
 };
@@ -640,13 +640,13 @@ static void pac_release_buf(const struct silofs_par_ctx *pa_ctx,
 
 static int pac_init(struct silofs_par_ctx *pa_ctx, struct silofs_task *task)
 {
-	struct silofs_fsenv *fsenv = task->t_fsenv;
+	struct silofs_env *env = task->t_env;
 
 	silofs_memzero(pa_ctx, sizeof(*pa_ctx));
 	pa_ctx->pac_task = task;
-	pa_ctx->pac_fsenv = fsenv;
-	pa_ctx->pac_alloc = fsenv->fse.alloc;
-	pa_ctx->pac_repo = fsenv->fse.repo;
+	pa_ctx->pac_env = env;
+	pa_ctx->pac_alloc = env->fse.alloc;
+	pa_ctx->pac_repo = env->fse.repo;
 	return pindex_init(&pa_ctx->pac_pindex, pa_ctx->pac_alloc);
 }
 
@@ -654,7 +654,7 @@ static void pac_fini(struct silofs_par_ctx *pa_ctx)
 {
 	pindex_fini(&pa_ctx->pac_pindex);
 	pa_ctx->pac_task = NULL;
-	pa_ctx->pac_fsenv = NULL;
+	pa_ctx->pac_env = NULL;
 	pa_ctx->pac_alloc = NULL;
 	pa_ctx->pac_repo = NULL;
 }
@@ -757,12 +757,12 @@ static int pac_load_bootrec(const struct silofs_par_ctx *pa_ctx,
 	struct silofs_bootrec brec = { .flags = SILOFS_BOOTF_NONE };
 	int err;
 
-	err = silofs_load_bootrec(pa_ctx->pac_fsenv, caddr, &brec);
+	err = silofs_load_bootrec(pa_ctx->pac_env, caddr, &brec);
 	if (err) {
 		log_err("failed to load bootrec: err=%d", err);
 		return err;
 	}
-	err = silofs_encode_bootrec(pa_ctx->pac_fsenv, &brec, out_brec1k);
+	err = silofs_encode_bootrec(pa_ctx->pac_env, &brec, out_brec1k);
 	if (err) {
 		log_err("failed to encode bootrec: err=%d", err);
 		return err;
@@ -778,12 +778,12 @@ static int pac_save_bootrec(const struct silofs_par_ctx *pa_ctx,
 	struct silofs_caddr caddr2;
 	int err;
 
-	err = silofs_decode_bootrec(pa_ctx->pac_fsenv, brec1k, &brec);
+	err = silofs_decode_bootrec(pa_ctx->pac_env, brec1k, &brec);
 	if (err) {
 		return err;
 	}
 	/* TODO: check proper caddr before save */
-	err = silofs_save_bootrec(pa_ctx->pac_fsenv, &brec, &caddr2);
+	err = silofs_save_bootrec(pa_ctx->pac_env, &brec, &caddr2);
 	if (err) {
 		return err;
 	}
@@ -865,8 +865,8 @@ out:
 static const struct silofs_caddr *
 pac_fs_bootrec_caddr(const struct silofs_par_ctx *pa_ctx)
 {
-	const struct silofs_fsenv *fsenv = pa_ctx->pac_fsenv;
-	const struct silofs_caddr *caddr = &fsenv->fse_boot.caddr;
+	const struct silofs_env *env = pa_ctx->pac_env;
+	const struct silofs_caddr *caddr = &env->fse_boot.caddr;
 
 	silofs_assert_eq(caddr->ctype, SILOFS_CTYPE_BOOTREC);
 	return caddr;
@@ -1008,7 +1008,7 @@ out:
 static int pac_export_post(struct silofs_par_ctx *pa_ctx,
                            const struct silofs_caddr *caddr)
 {
-	silofs_fsenv_set_pack_caddr(pa_ctx->pac_fsenv, caddr);
+	silofs_env_set_pack_caddr(pa_ctx->pac_env, caddr);
 	return 0;
 }
 
@@ -1095,8 +1095,8 @@ static int pac_stat_pindex(const struct silofs_par_ctx *pa_ctx,
 static const struct silofs_caddr *
 pac_ar_packidx_caddr(const struct silofs_par_ctx *pa_ctx)
 {
-	const struct silofs_fsenv *fsenv = pa_ctx->pac_fsenv;
-	const struct silofs_caddr *caddr = &fsenv->fse_pack_caddr;
+	const struct silofs_env *env = pa_ctx->pac_env;
+	const struct silofs_caddr *caddr = &env->fse_pack_caddr;
 
 	silofs_assert_eq(caddr->ctype, SILOFS_CTYPE_PACKIDX);
 	return caddr;
@@ -1173,7 +1173,7 @@ pac_import_post(struct silofs_par_ctx *pa_ctx, struct silofs_caddr *out_caddr)
 	if (nbootrecs != 1) {
 		return -SILOFS_EBADPACK;
 	}
-	silofs_fsenv_set_boot_caddr(pa_ctx->pac_fsenv, out_caddr);
+	silofs_env_set_boot_caddr(pa_ctx->pac_env, out_caddr);
 	return 0;
 }
 

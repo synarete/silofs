@@ -605,7 +605,7 @@ fill_fuse_open_out(struct fuse_open_out *open, bool noflush, bool isdir)
 static void
 task_init_by(struct silofs_task *task, const struct silofs_fuseq *fq)
 {
-	silofs_task_init(task, fq->fq_fsenv);
+	silofs_task_init(task, fq->fq_env);
 }
 
 static void task_fini(struct silofs_task *task)
@@ -2684,7 +2684,7 @@ static bool fqd_asyncwr_mode(const struct silofs_fuseq_dispatcher *fqd)
 	const struct silofs_fuseq *fq = fqd_fuseq(fqd);
 	const enum silofs_env_flags mask = SILOFS_ENVF_ASYNCWR;
 
-	return (fq->fq_fsenv->fse_ctl_flags & mask) == mask;
+	return (fq->fq_env->fse_ctl_flags & mask) == mask;
 }
 
 static void
@@ -4276,8 +4276,8 @@ static void fqw_setup_self_task(const struct silofs_fuseq_worker *fqw,
                                 struct silofs_task *task)
 {
 	const struct silofs_fuseq *fq = fqw_fuseq(fqw);
-	const struct silofs_fsenv *fsenv = fq->fq_fsenv;
-	const struct silofs_fs_args *args = &fsenv->fse_args;
+	const struct silofs_env *env = fq->fq_env;
+	const struct silofs_fs_args *args = &env->fse_args;
 
 	silofs_task_set_creds(task, args->uid, args->gid, args->umask);
 	silofs_task_set_ts(task, false);
@@ -4518,7 +4518,7 @@ fuseq_init_common(struct silofs_fuseq *fq, struct silofs_alloc *alloc,
 	fq->fq_subx.fq_nworkers_run = 0;
 	fq->fq_subx.fq_ndisptch_run = 0;
 	listq_init(&fq->fq_curr_opers);
-	fq->fq_fsenv = NULL;
+	fq->fq_env = NULL;
 	fq->fq_pagesize = (size_t)silofs_sc_page_size();
 	fq->fq_alloc = alloc;
 	fq->fq_nopers = 0;
@@ -4755,7 +4755,7 @@ static void fuseq_fini(struct silofs_fuseq *fq)
 	fuseq_fini_locks(fq);
 	listq_fini(&fq->fq_curr_opers);
 	fq->fq_alloc = NULL;
-	fq->fq_fsenv = NULL;
+	fq->fq_env = NULL;
 }
 
 int silofs_fuseq_update(struct silofs_fuseq *fq)
@@ -4785,14 +4785,14 @@ int silofs_fuseq_update(struct silofs_fuseq *fq)
 	return 0;
 }
 
-static bool has_allow_other_mode(const struct silofs_fsenv *fsenv)
+static bool has_allow_other_mode(const struct silofs_env *env)
 {
 	const enum silofs_env_flags mask = SILOFS_ENVF_ALLOWOTHER;
 
-	return (fsenv->fse_ctl_flags & mask) == mask;
+	return (env->fse_ctl_flags & mask) == mask;
 }
 
-int silofs_fuseq_mount(struct silofs_fuseq *fq, struct silofs_fsenv *fsenv,
+int silofs_fuseq_mount(struct silofs_fuseq *fq, struct silofs_env *env,
                        const char *path)
 {
 	const size_t max_read = fq->fq_coni.max_read;
@@ -4804,10 +4804,10 @@ int silofs_fuseq_mount(struct silofs_fuseq *fq, struct silofs_fsenv *fsenv,
 	int err;
 	bool allow_other;
 
-	uid = fsenv->fse_owner.uid;
-	gid = fsenv->fse_owner.gid;
-	ms_flags = fsenv->fse_ms_flags;
-	allow_other = has_allow_other_mode(fsenv);
+	uid = env->fse_owner.uid;
+	gid = env->fse_owner.gid;
+	ms_flags = env->fse_ms_flags;
+	allow_other = has_allow_other_mode(env);
 
 	err = silofs_mntrpc_handshake(uid, gid);
 	if (err) {
@@ -4825,10 +4825,10 @@ int silofs_fuseq_mount(struct silofs_fuseq *fq, struct silofs_fsenv *fsenv,
 		return err;
 	}
 
-	fq->fq_fs_owner = fsenv->fse_owner.uid;
+	fq->fq_fs_owner = env->fse_owner.uid;
 	fq->fq_fuse_fd = fd;
 	fq->fq_mount = true;
-	fq->fq_fsenv = fsenv;
+	fq->fq_env = env;
 
 	/* TODO: Looks like kernel needs time. why? */
 	silofs_suspend_secs(1);
@@ -5003,7 +5003,7 @@ int silofs_fuseq_exec(struct silofs_fuseq *fq)
 void silofs_fuseq_term(struct silofs_fuseq *fq)
 {
 	fuseq_fini_fuse_fd(fq);
-	fq->fq_fsenv = NULL;
+	fq->fq_env = NULL;
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

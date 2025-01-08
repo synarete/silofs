@@ -28,7 +28,7 @@ struct cmd_prune_in_args {
 
 struct cmd_prune_ctx {
 	struct cmd_prune_in_args in_args;
-	struct silofs_fsenv *fsenv;
+	struct silofs_env *env;
 };
 
 static struct cmd_prune_ctx *cmd_prune_ctx;
@@ -65,7 +65,7 @@ static void cmd_prune_parse_optargs(struct cmd_prune_ctx *ctx)
 
 static void cmd_prune_finalize(struct cmd_prune_ctx *ctx)
 {
-	cmd_del_fsenv(&ctx->fsenv);
+	cmd_del_env(&ctx->env);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_prune_ctx = NULL;
@@ -101,7 +101,7 @@ static void cmd_prune_prepare(struct cmd_prune_ctx *ctx)
 void cmd_execute_prune(void)
 {
 	struct cmd_prune_ctx ctx = {
-		.fsenv = NULL,
+		.env = NULL,
 	};
 
 	/* Do all cleanups upon exits */

@@ -27,56 +27,49 @@ int silofs_initlib_once(void);
 
 void silofs_require_proper_defs(void);
 
-int silofs_new_fsenv(const struct silofs_fs_args *args,
-                     struct silofs_fsenv        **out_fsenv);
+int silofs_new_env(const struct silofs_fs_args *args,
+                   struct silofs_env          **out_env);
 
-void silofs_del_fsenv(struct silofs_fsenv *fsenv);
+void silofs_del_env(struct silofs_env *env);
 
-int silofs_format_repo(struct silofs_fsenv *fsenv);
+int silofs_format_repo(struct silofs_env *env);
 
-int silofs_open_repo(struct silofs_fsenv *fsenv);
+int silofs_open_repo(struct silofs_env *env);
 
-int silofs_close_repo(struct silofs_fsenv *fsenv);
+int silofs_close_repo(struct silofs_env *env);
 
-int silofs_format_fs(struct silofs_fsenv *fsenv,
-                     struct silofs_caddr *out_caddr);
+int silofs_format_fs(struct silofs_env *env, struct silofs_caddr *out_caddr);
 
-int silofs_poke_fs(struct silofs_fsenv       *fsenv,
-                   const struct silofs_caddr *caddr);
+int silofs_poke_fs(struct silofs_env *env, const struct silofs_caddr *caddr);
 
-int silofs_open_fs(struct silofs_fsenv       *fsenv,
-                   const struct silofs_caddr *caddr);
+int silofs_open_fs(struct silofs_env *env, const struct silofs_caddr *caddr);
 
-int silofs_close_fs(struct silofs_fsenv *fsenv);
+int silofs_close_fs(struct silofs_env *env);
 
-int silofs_exec_fs(struct silofs_fsenv *fsenv);
+int silofs_exec_fs(struct silofs_env *env);
 
-int silofs_post_exec_fs(struct silofs_fsenv *fsenv);
+int silofs_post_exec_fs(struct silofs_env *env);
 
-int silofs_fork_fs(struct silofs_fsenv *fsenv,
-                   struct silofs_caddr *out_boot_new,
+int silofs_fork_fs(struct silofs_env *env, struct silofs_caddr *out_boot_new,
                    struct silofs_caddr *out_boot_alt);
 
-int silofs_unref_fs(struct silofs_fsenv       *fsenv,
-                    const struct silofs_caddr *caddr);
+int silofs_unref_fs(struct silofs_env *env, const struct silofs_caddr *caddr);
 
-void silofs_halt_fs(struct silofs_fsenv *fsenv);
+void silofs_halt_fs(struct silofs_env *env);
 
-int silofs_sync_fs(struct silofs_fsenv *fsenv, bool drop);
+int silofs_sync_fs(struct silofs_env *env, bool drop);
 
-void silofs_stat_fs(const struct silofs_fsenv *fsenv,
-                    struct silofs_cachestats  *cst);
+void silofs_stat_fs(const struct silofs_env  *env,
+                    struct silofs_cachestats *cst);
 
-int silofs_inspect_fs(struct silofs_fsenv *fsenv, silofs_visit_laddr_fn cb,
+int silofs_inspect_fs(struct silofs_env *env, silofs_visit_laddr_fn cb,
                       void *user_ctx);
 
-int silofs_archive_fs(struct silofs_fsenv *fsenv,
-                      struct silofs_caddr *out_caddr);
+int silofs_archive_fs(struct silofs_env *env, struct silofs_caddr *out_caddr);
 
-int silofs_restore_fs(struct silofs_fsenv *fsenv,
-                      struct silofs_caddr *out_caddr);
+int silofs_restore_fs(struct silofs_env *env, struct silofs_caddr *out_caddr);
 
-int silofs_poke_archive(struct silofs_fsenv       *fsenv,
+int silofs_poke_archive(struct silofs_env         *env,
                         const struct silofs_caddr *caddr);
 
 #endif /* SILOFS_EXECLIB_H_ */

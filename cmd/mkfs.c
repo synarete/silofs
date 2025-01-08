@@ -38,7 +38,7 @@ struct cmd_mkfs_in_args {
 struct cmd_mkfs_ctx {
 	struct cmd_mkfs_in_args in_args;
 	struct silofs_fs_args fs_args;
-	struct silofs_fsenv *fsenv;
+	struct silofs_env *env;
 	bool has_lockfile;
 };
 
@@ -90,14 +90,14 @@ static void cmd_mkfs_parse_optargs(struct cmd_mkfs_ctx *ctx)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void cmd_mkfs_destroy_fsenv(struct cmd_mkfs_ctx *ctx)
+static void cmd_mkfs_destroy_env(struct cmd_mkfs_ctx *ctx)
 {
-	cmd_del_fsenv(&ctx->fsenv);
+	cmd_del_env(&ctx->env);
 }
 
 static void cmd_mkfs_finalize(struct cmd_mkfs_ctx *ctx)
 {
-	cmd_mkfs_destroy_fsenv(ctx);
+	cmd_mkfs_destroy_env(ctx);
 	cmd_pstrfree(&ctx->in_args.name);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_name);
@@ -184,24 +184,24 @@ static void cmd_mkfs_setup_fs_ids(struct cmd_mkfs_ctx *ctx)
 	cmd_require_uidgid(ids, username, &fs_args->uid, &fs_args->gid);
 }
 
-static void cmd_mkfs_setup_fsenv(struct cmd_mkfs_ctx *ctx)
+static void cmd_mkfs_setup_env(struct cmd_mkfs_ctx *ctx)
 {
-	cmd_new_fsenv(&ctx->fs_args, &ctx->fsenv);
+	cmd_new_env(&ctx->fs_args, &ctx->env);
 }
 
 static void cmd_mkfs_open_repo(const struct cmd_mkfs_ctx *ctx)
 {
-	cmd_open_repo(ctx->fsenv);
+	cmd_open_repo(ctx->env);
 }
 
 static void cmd_mkfs_close_repo(const struct cmd_mkfs_ctx *ctx)
 {
-	cmd_close_repo(ctx->fsenv);
+	cmd_close_repo(ctx->env);
 }
 
 static void cmd_mkfs_format_fs(struct cmd_mkfs_ctx *ctx)
 {
-	cmd_format_fs(ctx->fsenv, &ctx->fs_args.bref);
+	cmd_format_fs(ctx->env, &ctx->fs_args.bref);
 }
 
 static void cmd_mkfs_save_bref(struct cmd_mkfs_ctx *ctx)
@@ -211,7 +211,7 @@ static void cmd_mkfs_save_bref(struct cmd_mkfs_ctx *ctx)
 
 static void cmd_mkfs_close_fs(struct cmd_mkfs_ctx *ctx)
 {
-	cmd_close_fs(ctx->fsenv);
+	cmd_close_fs(ctx->env);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -220,7 +220,7 @@ void cmd_execute_mkfs(void)
 {
 	struct cmd_mkfs_ctx ctx = {
 		.in_args = { .fs_size = -1, },
-		.fsenv = NULL,
+		.env = NULL,
 	};
 
 	/* Do all cleanups upon exits */
@@ -245,7 +245,7 @@ void cmd_execute_mkfs(void)
 	cmd_mkfs_setup_fs_ids(&ctx);
 
 	/* Prepare environment */
-	cmd_mkfs_setup_fsenv(&ctx);
+	cmd_mkfs_setup_env(&ctx);
 
 	/* Acquire lock */
 	cmd_mkfs_acquire_lockfile(&ctx);

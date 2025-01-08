@@ -607,7 +607,7 @@ static int bstore_reload_btree_root(struct silofs_bstore *bstore)
 }
 
 static int bstore_assign_pvasd(struct silofs_bstore *bstore,
-                                 const struct silofs_pvasd *pvasd)
+                               const struct silofs_pvasd *pvasd)
 {
 	int err;
 
@@ -720,7 +720,7 @@ int silofs_bstore_dropall(struct silofs_bstore *bstore)
 }
 
 void silofs_bstore_curr_pvasd(const struct silofs_bstore *bstore,
-                                struct silofs_pvasd *out_pvasd)
+                              struct silofs_pvasd *out_pvasd)
 {
 	silofs_pvasd_assign(out_pvasd, &bstore->pvasd);
 }

@@ -20,7 +20,7 @@
 
 struct silofs_delfs_ctx {
 	struct silofs_visitor vis;
-	struct silofs_fsenv *fsenv;
+	struct silofs_env *env;
 	struct silofs_repo *repo;
 	struct silofs_uaddr sb_uaddr;
 };
@@ -224,15 +224,15 @@ delfc_init(struct silofs_delfs_ctx *delf_ctx, const struct silofs_sb_info *sbi)
 	silofs_memzero(delf_ctx, sizeof(*delf_ctx));
 	delf_ctx->vis.exec_hook = delfc_visit_exec_hook;
 	delf_ctx->vis.post_hook = delfc_visit_post_hook;
-	delf_ctx->fsenv = sbi_fsenv(sbi);
-	delf_ctx->repo = delf_ctx->fsenv->fse.repo;
+	delf_ctx->env = sbi_env(sbi);
+	delf_ctx->repo = delf_ctx->env->fse.repo;
 	uaddr_assign(&delf_ctx->sb_uaddr, uaddr);
 }
 
 static void delfc_fini(struct silofs_delfs_ctx *delf_ctx)
 {
 	silofs_memffff(delf_ctx, sizeof(*delf_ctx));
-	delf_ctx->fsenv = NULL;
+	delf_ctx->env = NULL;
 	delf_ctx->repo = NULL;
 }
 

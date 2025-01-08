@@ -20,19 +20,19 @@
 #include <silofs/infra.h>
 #include <silofs/addr.h>
 
-struct silofs_fsenv;
+struct silofs_env;
 struct silofs_unode_info;
 struct silofs_vnode_info;
 
-int silofs_encrypt_view(const struct silofs_fsenv *fsenv,
+int silofs_encrypt_view(const struct silofs_env   *env,
                         const struct silofs_laddr *laddr,
                         const struct silofs_iv    *seediv,
                         const struct silofs_view *view, void *ptr);
 
-int silofs_decrypt_uni_view(const struct silofs_fsenv *fsenv,
-                            struct silofs_unode_info  *uni);
+int silofs_decrypt_uni_view(const struct silofs_env  *env,
+                            struct silofs_unode_info *uni);
 
-int silofs_decrypt_vni_view(const struct silofs_fsenv *fsenv,
-                            struct silofs_vnode_info  *vni);
+int silofs_decrypt_vni_view(const struct silofs_env  *env,
+                            struct silofs_vnode_info *vni);
 
 #endif /* SILOFS_ENCDEC_H_ */

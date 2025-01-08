@@ -127,9 +127,8 @@ static int sqe_encrypted_iovs(struct silofs_submitq_ent *sqe,
 	for (size_t i = 0; i < sqe->cnt; ++i) {
 		ref = &refs_arr[i];
 		llink = &ref->llink;
-		err = silofs_encrypt_view(sqe->fsenv, &llink->laddr,
-		                          &llink->riv, ref->view,
-		                          sqe->iov[i].iov_base);
+		err = silofs_encrypt_view(sqe->env, &llink->laddr, &llink->riv,
+		                          ref->view, sqe->iov[i].iov_base);
 		if (err) {
 			return err;
 		}
@@ -158,8 +157,8 @@ out_err:
 
 static int sqe_do_write(const struct silofs_submitq_ent *sqe)
 {
-	return silofs_repo_writev_at(sqe->fsenv->fse.repo, &sqe->laddr,
-	                             sqe->iov, sqe->cnt);
+	return silofs_repo_writev_at(sqe->env->fse.repo, &sqe->laddr, sqe->iov,
+	                             sqe->cnt);
 }
 
 void silofs_sqe_increfs(struct silofs_submitq_ent *sqe)
@@ -189,7 +188,7 @@ static void sqe_init(struct silofs_submitq_ent *sqe,
 	list_head_init(&sqe->qlh);
 	laddr_reset(&sqe->laddr);
 	sqe->alloc = alloc;
-	sqe->fsenv = NULL;
+	sqe->env = NULL;
 	sqe->uniq_id = uniq_id;
 	sqe->cnt = 0;
 	sqe->hold_refs = 0;
@@ -421,22 +420,22 @@ static int task_apply(const struct silofs_task *task, bool all)
 
 struct silofs_sb_info *silofs_task_sbi(const struct silofs_task *task)
 {
-	return task->t_fsenv->fse_sbi;
+	return task->t_env->fse_sbi;
 }
 
 struct silofs_lcache *silofs_task_lcache(const struct silofs_task *task)
 {
-	return task->t_fsenv->fse.lcache;
+	return task->t_env->fse.lcache;
 }
 
 struct silofs_repo *silofs_task_repo(const struct silofs_task *task)
 {
-	return task->t_fsenv->fse.repo;
+	return task->t_env->fse.repo;
 }
 
 const struct silofs_idsmap *silofs_task_idsmap(const struct silofs_task *task)
 {
-	return task->t_fsenv->fse.idsmap;
+	return task->t_env->fse.idsmap;
 }
 
 const struct silofs_creds *silofs_task_creds(const struct silofs_task *task)
@@ -444,13 +443,13 @@ const struct silofs_creds *silofs_task_creds(const struct silofs_task *task)
 	return &task->t_oper.op_creds;
 }
 
-void silofs_task_init(struct silofs_task *task, struct silofs_fsenv *fsenv)
+void silofs_task_init(struct silofs_task *task, struct silofs_env *env)
 {
 	memset(task, 0, sizeof(*task));
 	cred_init(&task->t_oper.op_creds.fs_cred);
 	cred_init(&task->t_oper.op_creds.host_cred);
-	task->t_fsenv = fsenv;
-	task->t_submitq = fsenv->fse.submitq;
+	task->t_env = env;
+	task->t_submitq = env->fse.submitq;
 	task->t_looseq = NULL;
 	task->t_apex_id = 0;
 	task->t_interrupt = 0;
@@ -466,7 +465,7 @@ void silofs_task_fini(struct silofs_task *task)
 	silofs_assert_null(task->t_looseq);
 	silofs_assert_eq(task->t_fs_locked, false);
 
-	task->t_fsenv = NULL;
+	task->t_env = NULL;
 	task->t_submitq = NULL;
 }
 
@@ -535,7 +534,7 @@ static void task_purge(struct silofs_task *task)
 void silofs_task_lock_fs(struct silofs_task *task)
 {
 	if (!task->t_fs_locked && !task->t_uber_op) {
-		silofs_fsenv_lock(task->t_fsenv);
+		silofs_env_lock(task->t_env);
 		task->t_fs_locked = true;
 	}
 }
@@ -543,7 +542,7 @@ void silofs_task_lock_fs(struct silofs_task *task)
 void silofs_task_unlock_fs(struct silofs_task *task)
 {
 	if (task->t_fs_locked && !task->t_uber_op) {
-		silofs_fsenv_unlock(task->t_fsenv);
+		silofs_env_unlock(task->t_env);
 		task->t_fs_locked = false;
 	}
 }
@@ -551,7 +550,7 @@ void silofs_task_unlock_fs(struct silofs_task *task)
 void silofs_task_rwlock_fs(struct silofs_task *task)
 {
 	if (!task->t_ex_locked) {
-		silofs_fsenv_rwlock(task->t_fsenv, task->t_exclusive);
+		silofs_env_rwlock(task->t_env, task->t_exclusive);
 		task->t_ex_locked = true;
 	}
 }
@@ -559,7 +558,7 @@ void silofs_task_rwlock_fs(struct silofs_task *task)
 void silofs_task_rwunlock_fs(struct silofs_task *task)
 {
 	if (task->t_ex_locked) {
-		silofs_fsenv_rwunlock(task->t_fsenv);
+		silofs_env_rwunlock(task->t_env);
 		task->t_ex_locked = false;
 	}
 }

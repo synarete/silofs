@@ -41,7 +41,7 @@
 #define uni_ltype(uni)   silofs_uni_ltype(uni)
 #define uni_riv(uni)     silofs_uni_riv(uni)
 
-#define sbi_fsenv(sbi)   silofs_sbi_fsenv(sbi)
+#define sbi_env(sbi)   silofs_sbi_env(sbi)
 #define sbi_cache(sbi)   silofs_sbi_cache(sbi)
 #define sbi_ulink(sbi)   silofs_sbi_ulink(sbi)
 #define sbi_uaddr(sbi)   silofs_sbi_uaddr(sbi)
@@ -69,7 +69,7 @@
 
 #define vni_ltype(vni)         silofs_vni_ltype(vni)
 #define vni_vaddr(vni)         silofs_vni_vaddr(vni)
-#define vni_fsenv(vni)         silofs_vni_fsenv(vni)
+#define vni_env(vni)         silofs_vni_env(vni)
 #define vni_sbi(vni)           silofs_vni_sbi(vni)
 #define vni_refcnt(vni)        silofs_vni_refcnt(vni)
 #define vni_incref(vni)        silofs_vni_incref(vni)
@@ -83,7 +83,7 @@
 #define ii_ino(ii)                  silofs_ii_ino(ii)
 #define ii_vaddr(ii)                silofs_ii_vaddr(ii)
 #define ii_sbi(ii)                  silofs_ii_sbi(ii)
-#define ii_fsenv(ii)                silofs_ii_fsenv(ii)
+#define ii_env(ii)                silofs_ii_env(ii)
 #define ii_cache(ii)                silofs_ii_cache(ii)
 #define ii_refcnt(ii)               silofs_ii_refcnt(ii)
 #define ii_incref(ii)               silofs_ii_incref(ii)
@@ -154,16 +154,16 @@ silofs_vni_vaddr(const struct silofs_vnode_info *vni)
 	return &vni->vn_vaddr;
 }
 
-static inline struct silofs_fsenv *
-silofs_vni_fsenv(const struct silofs_vnode_info *vni)
+static inline struct silofs_env *
+silofs_vni_env(const struct silofs_vnode_info *vni)
 {
-	return vni->vn_lni.ln_fsenv;
+	return vni->vn_lni.ln_env;
 }
 
 static inline struct silofs_sb_info *
 silofs_vni_sbi(const struct silofs_vnode_info *vni)
 {
-	return vni->vn_lni.ln_fsenv->fse_sbi;
+	return vni->vn_lni.ln_env->fse_sbi;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -203,10 +203,10 @@ silofs_ii_sbi(const struct silofs_inode_info *ii)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static inline struct silofs_fsenv *
-silofs_sbi_fsenv(const struct silofs_sb_info *sbi)
+static inline struct silofs_env *
+silofs_sbi_env(const struct silofs_sb_info *sbi)
 {
-	return sbi->sb_uni.un_lni.ln_fsenv;
+	return sbi->sb_uni.un_lni.ln_env;
 }
 
 static inline const struct silofs_ulink *

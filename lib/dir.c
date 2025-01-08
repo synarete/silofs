@@ -1244,9 +1244,9 @@ union silofs_utf32_name_buf {
 
 static iconv_t iconv_by(const struct silofs_inode_info *dir_ii)
 {
-	const struct silofs_fsenv *fsenv = ii_fsenv(dir_ii);
+	const struct silofs_env *env = ii_env(dir_ii);
 
-	return fsenv->fse_iconv;
+	return env->fse_iconv;
 }
 
 static int dir_check_utf8_name(const struct silofs_inode_info *dir_ii,
@@ -1298,9 +1298,9 @@ bool silofs_dir_has_flags(const struct silofs_inode_info *dir_ii,
 static const struct silofs_mdigest *
 mdigest_of(const struct silofs_inode_info *dii)
 {
-	const struct silofs_fsenv *fsenv = ii_fsenv(dii);
+	const struct silofs_env *env = ii_env(dii);
 
-	return &fsenv->fse_mdigest;
+	return &env->fse_mdigest;
 }
 
 static uint64_t hash256_to_u64(const struct silofs_hash256 *hash)

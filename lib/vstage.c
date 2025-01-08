@@ -20,7 +20,7 @@
 
 struct silofs_vstage_ctx {
 	struct silofs_task *task;
-	struct silofs_fsenv *fsenv;
+	struct silofs_env *env;
 	struct silofs_sb_info *sbi;
 	struct silofs_spnode_info *sni4;
 	struct silofs_spnode_info *sni3;
@@ -93,27 +93,26 @@ static ino_t vaddr_to_ino(const struct silofs_vaddr *vaddr)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static bool
-ismutable(const struct silofs_fsenv *fsenv, const struct silofs_laddr *laddr)
+ismutable(const struct silofs_env *env, const struct silofs_laddr *laddr)
 {
 	bool ret = false;
 
 	if (!laddr_isnull(laddr)) {
-		ret = silofs_sbi_ismutable_laddr(fsenv->fse_sbi, laddr);
+		ret = silofs_sbi_ismutable_laddr(env->fse_sbi, laddr);
 	}
 	return ret;
 }
 
 static bool vni_has_mutable_laddr(const struct silofs_vnode_info *vni)
 {
-	return ismutable(vni_fsenv(vni), &vni->vn_llink.laddr);
+	return ismutable(vni_env(vni), &vni->vn_llink.laddr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void
-vni_bind_to(struct silofs_vnode_info *vni, struct silofs_fsenv *fsenv)
+static void vni_bind_to(struct silofs_vnode_info *vni, struct silofs_env *env)
 {
-	vni->vn_lni.ln_fsenv = fsenv;
+	vni->vn_lni.ln_env = env;
 }
 
 static void vni_update_llink(struct silofs_vnode_info *vni,
@@ -172,7 +171,7 @@ static bool sni_has_main_lseg(const struct silofs_spnode_info *sni)
 static struct silofs_lcache *
 vstgc_lcache(const struct silofs_vstage_ctx *vstg_ctx)
 {
-	return vstg_ctx->fsenv->fse.lcache;
+	return vstg_ctx->env->fse.lcache;
 }
 
 static void vstgc_log_cache_stat(const struct silofs_vstage_ctx *vstg_ctx)
@@ -218,7 +217,7 @@ static int vstgc_flush_dirty_now(const struct silofs_vstage_ctx *vstg_ctx)
 
 static void vstgc_relax_caches_now(const struct silofs_vstage_ctx *vstg_ctx)
 {
-	silofs_fsenv_relax_caches(vstg_ctx->fsenv, SILOFS_F_NOW);
+	silofs_env_relax_caches(vstg_ctx->env, SILOFS_F_NOW);
 }
 
 static int vstgc_try_evict_some(const struct silofs_vstage_ctx *vstg_ctx,
@@ -261,7 +260,7 @@ static int vstgc_do_stage_lseg(const struct silofs_vstage_ctx *vstg_ctx,
 	int err = -SILOFS_ENOMEM;
 
 	for (size_t i = 0; i < vstg_ctx->retry; ++i) {
-		err = silofs_stage_lseg(vstg_ctx->fsenv, lsid);
+		err = silofs_stage_lseg(vstg_ctx->env, lsid);
 		if (!is_low_resource_error(err)) {
 			break;
 		}
@@ -288,7 +287,7 @@ static int vstgc_spawn_vni_at(const struct silofs_vstage_ctx *vstg_ctx,
 	if (err) {
 		return err;
 	}
-	vni_bind_to(*out_vni, vstg_ctx->fsenv);
+	vni_bind_to(*out_vni, vstg_ctx->env);
 	vni_update_llink(*out_vni, llink);
 	return err;
 }
@@ -305,7 +304,7 @@ static int vstgc_update_view_of(const struct silofs_vstage_ctx *vstg_ctx,
 	if (err) {
 		return err;
 	}
-	err = silofs_decrypt_vni_view(vstg_ctx->fsenv, vni);
+	err = silofs_decrypt_vni_view(vstg_ctx->env, vni);
 	if (err) {
 		return err;
 	}
@@ -395,8 +394,8 @@ vstgc_setup(struct silofs_vstage_ctx *vstg_ctx, struct silofs_task *task,
 {
 	memset(vstg_ctx, 0, sizeof(*vstg_ctx));
 	vstg_ctx->task = task;
-	vstg_ctx->fsenv = task->t_fsenv;
-	vstg_ctx->sbi = task->t_fsenv->fse_sbi;
+	vstg_ctx->env = task->t_env;
+	vstg_ctx->sbi = task->t_env->fse_sbi;
 	vstg_ctx->vaddr = vaddr;
 	vstg_ctx->stg_mode = stg_mode;
 	vstg_ctx->vspace = vaddr->ltype;
@@ -407,7 +406,7 @@ vstgc_setup(struct silofs_vstage_ctx *vstg_ctx, struct silofs_task *task,
 static int vstgc_do_spawn_lseg(const struct silofs_vstage_ctx *vstg_ctx,
                                const struct silofs_lsid *lsid)
 {
-	return silofs_spawn_lseg(vstg_ctx->fsenv, lsid);
+	return silofs_spawn_lseg(vstg_ctx->env, lsid);
 }
 
 static int vstgc_spawn_lseg(const struct silofs_vstage_ctx *vstg_ctx,
@@ -711,7 +710,7 @@ static int vstgc_do_stage_spnode_at(const struct silofs_vstage_ctx *vstg_ctx,
 	int err = -SILOFS_ENOMEM;
 
 	for (size_t i = 0; i < vstg_ctx->retry; ++i) {
-		err = silofs_stage_spnode(vstg_ctx->fsenv, ulink, out_sni);
+		err = silofs_stage_spnode(vstg_ctx->env, ulink, out_sni);
 		if (!is_low_resource_error(err)) {
 			break;
 		}
@@ -734,7 +733,7 @@ static int vstgc_do_spawn_spnode_at(const struct silofs_vstage_ctx *vstg_ctx,
 	int err = -SILOFS_ENOMEM;
 
 	for (size_t i = 0; i < vstg_ctx->retry; ++i) {
-		err = silofs_spawn_spnode(vstg_ctx->fsenv, ulink, out_sni);
+		err = silofs_spawn_spnode(vstg_ctx->env, ulink, out_sni);
 		if (!is_low_resource_error(err)) {
 			break;
 		}
@@ -757,7 +756,7 @@ static int vstgc_do_stage_spleaf_at(const struct silofs_vstage_ctx *vstg_ctx,
 	int err = -SILOFS_ENOMEM;
 
 	for (size_t i = 0; i < vstg_ctx->retry; ++i) {
-		err = silofs_stage_spleaf(vstg_ctx->fsenv, ulink, out_sli);
+		err = silofs_stage_spleaf(vstg_ctx->env, ulink, out_sli);
 		if (!is_low_resource_error(err)) {
 			break;
 		}
@@ -780,7 +779,7 @@ static int vstgc_do_spawn_spleaf_at(const struct silofs_vstage_ctx *vstg_ctx,
 	int err = -SILOFS_ENOMEM;
 
 	for (size_t i = 0; i < vstg_ctx->retry; ++i) {
-		err = silofs_spawn_spleaf(vstg_ctx->fsenv, ulink, out_sli);
+		err = silofs_spawn_spleaf(vstg_ctx->env, ulink, out_sli);
 		if (!is_low_resource_error(err)) {
 			break;
 		}
@@ -2022,7 +2021,7 @@ static int
 vstgc_load_view_at(const struct silofs_vstage_ctx *vstg_ctx,
                    const struct silofs_laddr *laddr, struct silofs_view *view)
 {
-	struct silofs_repo *repo = vstg_ctx->fsenv->fse.repo;
+	struct silofs_repo *repo = vstg_ctx->env->fse.repo;
 	const enum silofs_ltype ltype = laddr_ltype(laddr);
 	enum silofs_stg_mode stg_mode = vstg_ctx->stg_mode;
 	int ret = 0;
@@ -2040,7 +2039,7 @@ vstgc_load_view_at(const struct silofs_vstage_ctx *vstg_ctx,
 static int vstgc_require_laddr(const struct silofs_vstage_ctx *vstg_ctx,
                                const struct silofs_laddr *laddr)
 {
-	struct silofs_repo *repo = vstg_ctx->fsenv->fse.repo;
+	struct silofs_repo *repo = vstg_ctx->env->fse.repo;
 	int err;
 
 	err = silofs_repo_require_lseg(repo, &laddr->lsid);

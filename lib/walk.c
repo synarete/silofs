@@ -27,7 +27,7 @@
 struct silofs_walk_ctx {
 	struct silofs_task *task;
 	struct silofs_visitor *vis;
-	struct silofs_fsenv *fsenv;
+	struct silofs_env *env;
 	struct silofs_sb_info *sbi;
 	struct silofs_spnode_info *sni4;
 	struct silofs_spnode_info *sni3;
@@ -110,7 +110,7 @@ wac_resetup(struct silofs_walk_ctx *wa_ctx, enum silofs_ltype vspace)
 
 static void wac_relax_cache(const struct silofs_walk_ctx *wa_ctx)
 {
-	silofs_fsenv_relax_caches(wa_ctx->fsenv, SILOFS_F_OPSTART);
+	silofs_env_relax_caches(wa_ctx->env, SILOFS_F_OPSTART);
 }
 
 static void wac_push_height(struct silofs_walk_ctx *wa_ctx)
@@ -195,14 +195,14 @@ static int wac_stage_spnode_at(const struct silofs_walk_ctx *wa_ctx,
                                const struct silofs_ulink *ulink,
                                struct silofs_spnode_info **out_sni)
 {
-	return silofs_stage_spnode(wa_ctx->fsenv, ulink, out_sni);
+	return silofs_stage_spnode(wa_ctx->env, ulink, out_sni);
 }
 
 static int wac_stage_spleaf_at(const struct silofs_walk_ctx *wa_ctx,
                                const struct silofs_ulink *ulink,
                                struct silofs_spleaf_info **out_sli)
 {
-	return silofs_stage_spleaf(wa_ctx->fsenv, ulink, out_sli);
+	return silofs_stage_spleaf(wa_ctx->env, ulink, out_sli);
 }
 
 static int wac_stage_spnode4(struct silofs_walk_ctx *wa_ctx)
@@ -698,7 +698,7 @@ int silofs_walk_space_tree(struct silofs_task *task,
 	struct silofs_walk_ctx wa_ctx = {
 		.task = task,
 		.vis = vis,
-		.fsenv = task->t_fsenv,
+		.env = task->t_env,
 		.sbi = sbi,
 		.height = SILOFS_HEIGHT_SUPER,
 	};

@@ -38,18 +38,16 @@ bni_paddr(const struct silofs_btnode_info *bni)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_btree_init(struct silofs_btree *btree,
-                       struct silofs_pcache *pcache, struct silofs_repo *repo)
+                       const struct silofs_btree_base *base)
 {
+	memcpy(&btree->bt_base, base, sizeof(btree->bt_base));
 	paddr_reset(&btree->bt_root);
-	btree->bt_pcache = pcache;
-	btree->bt_repo = repo;
 }
 
 void silofs_btree_fini(struct silofs_btree *btree)
 {
+	memset(&btree->bt_base, 0, sizeof(btree->bt_base));
 	paddr_reset(&btree->bt_root);
-	btree->bt_pcache = NULL;
-	btree->bt_repo = NULL;
 }
 
 static const struct silofs_paddr *btree_root(const struct silofs_btree *btree)
@@ -70,35 +68,38 @@ void silofs_btree_update_root(struct silofs_btree *btree,
 static int btree_load_btleaf(const struct silofs_btree *btree,
                              const struct silofs_btleaf_info *bli)
 {
+	struct silofs_repo *repo = btree->bt_base.repo;
 	const struct silofs_rwvec rwv = {
 		.rwv_base = bli->bl,
 		.rwv_len = sizeof(*bli->bl),
 	};
 
-	return silofs_repo_load_pobj(btree->bt_repo, bli_paddr(bli), &rwv);
+	return silofs_repo_load_pobj(repo, bli_paddr(bli), &rwv);
 }
 
 static int btree_load_btnode(const struct silofs_btree *btree,
                              const struct silofs_btnode_info *bni)
 {
+	struct silofs_repo *repo = btree->bt_base.repo;
 	const struct silofs_rwvec rwv = {
 		.rwv_base = bni->bn,
 		.rwv_len = sizeof(*bni->bn),
 	};
 
-	return silofs_repo_load_pobj(btree->bt_repo, bni_paddr(bni), &rwv);
+	return silofs_repo_load_pobj(repo, bni_paddr(bni), &rwv);
 }
 
 static int btree_require_pvseg(const struct silofs_btree *btree,
                                const struct silofs_pvsid *pvsid, bool create)
 
 {
+	struct silofs_repo *repo = btree->bt_base.repo;
 	int err;
 
 	if (create) {
-		err = silofs_repo_create_pvseg(btree->bt_repo, pvsid);
+		err = silofs_repo_create_pvseg(repo, pvsid);
 	} else {
-		err = silofs_repo_stage_pvseg(btree->bt_repo, pvsid);
+		err = silofs_repo_stage_pvseg(repo, pvsid);
 	}
 	return err;
 }
@@ -181,21 +182,21 @@ static int btree_create_cached_bli(const struct silofs_btree *btree,
                                    const struct silofs_paddr *paddr,
                                    struct silofs_btleaf_info **out_bli)
 {
-	*out_bli = silofs_pcache_create_bli(btree->bt_pcache, paddr);
+	*out_bli = silofs_pcache_create_bli(btree->bt_base.pcache, paddr);
 	return (*out_bli != NULL) ? 0 : -SILOFS_ENOMEM;
 }
 
 static void btree_evict_cached_bli(const struct silofs_btree *btree,
                                    struct silofs_btleaf_info *bli)
 {
-	silofs_pcache_evict_bli(btree->bt_pcache, bli);
+	silofs_pcache_evict_bli(btree->bt_base.pcache, bli);
 }
 
 static int btree_lookup_cached_bli(const struct silofs_btree *btree,
                                    const struct silofs_paddr *paddr,
                                    struct silofs_btleaf_info **out_bli)
 {
-	*out_bli = silofs_pcache_lookup_bli(btree->bt_pcache, paddr);
+	*out_bli = silofs_pcache_lookup_bli(btree->bt_base.pcache, paddr);
 	return (*out_bli == NULL) ? -SILOFS_ENOENT : 0;
 }
 
@@ -253,21 +254,21 @@ static int btree_create_cached_bni(const struct silofs_btree *btree,
                                    const struct silofs_paddr *paddr,
                                    struct silofs_btnode_info **out_bni)
 {
-	*out_bni = silofs_pcache_create_bni(btree->bt_pcache, paddr);
+	*out_bni = silofs_pcache_create_bni(btree->bt_base.pcache, paddr);
 	return (*out_bni != NULL) ? 0 : -SILOFS_ENOMEM;
 }
 
 static void btree_evict_cached_bni(const struct silofs_btree *btree,
                                    struct silofs_btnode_info *bni)
 {
-	silofs_pcache_evict_bni(btree->bt_pcache, bni);
+	silofs_pcache_evict_bni(btree->bt_base.pcache, bni);
 }
 
 static int btree_lookup_cached_bni(const struct silofs_btree *btree,
                                    const struct silofs_paddr *paddr,
                                    struct silofs_btnode_info **out_bni)
 {
-	*out_bni = silofs_pcache_lookup_bni(btree->bt_pcache, paddr);
+	*out_bni = silofs_pcache_lookup_bni(btree->bt_base.pcache, paddr);
 	return (*out_bni == NULL) ? -SILOFS_ENOENT : 0;
 }
 

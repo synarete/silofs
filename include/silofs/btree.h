@@ -23,15 +23,21 @@
 struct silofs_pcache;
 struct silofs_repo;
 
-/* b+tree in-memory control object */
-struct silofs_btree {
-	struct silofs_pcache *bt_pcache;
-	struct silofs_repo   *bt_repo;
-	struct silofs_paddr   bt_root;
+/* b+tree base refs  */
+struct silofs_btree_base {
+	struct silofs_pvsegr *pvsegr;
+	struct silofs_pcache *pcache;
+	struct silofs_repo   *repo;
 };
 
-void silofs_btree_init(struct silofs_btree  *btree,
-                       struct silofs_pcache *pcache, struct silofs_repo *repo);
+/* b+tree in-memory control object */
+struct silofs_btree {
+	struct silofs_btree_base bt_base;
+	struct silofs_paddr      bt_root;
+};
+
+void silofs_btree_init(struct silofs_btree            *btree,
+                       const struct silofs_btree_base *base);
 
 void silofs_btree_fini(struct silofs_btree *btree);
 

@@ -37,8 +37,14 @@ static bool paddr_isbtleaf(const struct silofs_paddr *paddr)
 int silofs_bstore_init(struct silofs_bstore *bstore,
                        struct silofs_pcache *pcache, struct silofs_repo *repo)
 {
+	const struct silofs_btree_base base = {
+		.pvsegr = &bstore->pvsegr,
+		.pcache = pcache,
+		.repo = repo,
+	};
+
 	silofs_pvsegr_init(&bstore->pvsegr);
-	silofs_btree_init(&bstore->btree, bstore->pcache, repo);
+	silofs_btree_init(&bstore->btree, &base);
 	bstore->repo = repo;
 	bstore->pcache = pcache;
 	return 0;

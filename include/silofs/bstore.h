@@ -53,12 +53,4 @@ int silofs_bstore_flush_dirty(struct silofs_bstore *bstore);
 void silofs_bstore_curr_pvsegr(const struct silofs_bstore *bstore,
                                struct silofs_pvsegr       *out_pvsegr);
 
-int silofs_bstore_resolve(struct silofs_bstore      *bstore,
-                          const struct silofs_vaddr *vaddr,
-                          struct silofs_paddr       *out_paddr);
-
-int silofs_bstore_remap(struct silofs_bstore      *bstore,
-                        const struct silofs_vaddr *vaddr,
-                        const struct silofs_paddr *paddr);
-
 #endif /* SILOFS_BSTORE_H_ */

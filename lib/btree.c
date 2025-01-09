@@ -23,6 +23,19 @@
 #include <silofs/pcache.h>
 #include <silofs/btree.h>
 
+struct silofs_btree_path {
+	struct silofs_btree *btree;
+	struct silofs_btnode_info *bni[SILOFS_BTREE_HEIGHT_MAX];
+	size_t height;
+};
+
+struct silofs_btree_ctx {
+	struct silofs_btree *btree;
+	struct silofs_btree_path bpath;
+};
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 static const struct silofs_paddr *
 bli_paddr(const struct silofs_btleaf_info *bli)
 {
@@ -33,6 +46,17 @@ static const struct silofs_paddr *
 bni_paddr(const struct silofs_btnode_info *bni)
 {
 	return &bni->bn_pni.pn_paddr;
+}
+
+static const struct silofs_pvid *bni_pvid(const struct silofs_btnode_info *bni)
+{
+	return &bni->bn_pni.pn_paddr.pvsid.pvid;
+}
+
+static bool bni_has_same_pvid(const struct silofs_btnode_info *bni,
+                              const struct silofs_btnode_info *bni_other)
+{
+	return silofs_pvid_isequal(bni_pvid(bni), bni_pvid(bni_other));
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -159,19 +183,37 @@ static int validate_btnode(const struct silofs_btnode_info *bni)
 
 static int validate_btroot(const struct silofs_btnode_info *bni)
 {
-	struct silofs_paddr paddr;
 	int err;
 
 	err = validate_btnode(bni);
 	if (err) {
 		return err;
 	}
-	silofs_bni_parent(bni, &paddr);
-	if (!paddr_isnull(&paddr)) {
-		return -SILOFS_EFSCORRUPTED;
-	}
 	if (!silofs_bni_marked_root(bni)) {
 		return -SILOFS_EFSCORRUPTED;
+	}
+	return 0;
+}
+
+static int validate_child_btnode(const struct silofs_btnode_info *parent_bni,
+                                 const struct silofs_btnode_info *child_bni)
+{
+	const size_t parent_height = silofs_bni_height(parent_bni);
+	const size_t child_height = silofs_bni_height(child_bni);
+	int err;
+
+	err = validate_btnode(child_bni);
+	if (err) {
+		return err;
+	}
+	if (bni_has_same_pvid(parent_bni, child_bni)) {
+		if ((child_height + 1) != parent_height) {
+			return -SILOFS_EFSCORRUPTED;
+		}
+	} else {
+		if ((child_height + 1) > parent_height) {
+			return -SILOFS_EFSCORRUPTED;
+		}
 	}
 	return 0;
 }
@@ -346,28 +388,6 @@ static int btree_stage_btroot(const struct silofs_btree *btree,
 	return 0;
 }
 
-static int validate_child_btnode(const struct silofs_btnode_info *parent_bni,
-                                 const struct silofs_btnode_info *child_bni)
-{
-	struct silofs_paddr parent_paddr;
-	const size_t parent_height = silofs_bni_height(parent_bni);
-	const size_t child_height = silofs_bni_height(child_bni);
-	int err;
-
-	err = validate_btnode(child_bni);
-	if (err) {
-		return err;
-	}
-	if ((child_height + 1) != parent_height) {
-		return -SILOFS_EFSCORRUPTED;
-	}
-	silofs_bni_parent(child_bni, &parent_paddr);
-	if (!paddr_isequal(&parent_paddr, bni_paddr(parent_bni))) {
-		return -SILOFS_EFSCORRUPTED;
-	}
-	return 0;
-}
-
 static int btree_stage_child_btnode(const struct silofs_btree *btree,
                                     struct silofs_btnode_info *parent_bni,
                                     const struct silofs_vaddr *vaddr,
@@ -408,7 +428,7 @@ static int btree_stage_level1_btnode(const struct silofs_btree *btree,
 		if (err) {
 			return err;
 		}
-		height--;
+		height = silofs_bni_height(bni);
 	}
 	*out_bni = bni;
 	return 0;
@@ -487,4 +507,107 @@ int silofs_btree_lookup(const struct silofs_btree *btree,
                         struct silofs_paddr *out_paddr)
 {
 	return btree_resolve(btree, vaddr, out_paddr);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static int btree_require_child_btnode(struct silofs_btree *btree,
+                                      struct silofs_btnode_info *parent_bni,
+                                      const struct silofs_vaddr *vaddr,
+                                      struct silofs_btnode_info **out_bni)
+{
+	int err;
+
+	err = btree_stage_child_btnode(btree, parent_bni, vaddr, out_bni);
+	if (!err || (err != -SILOFS_ENOENT)) {
+		return err;
+	}
+
+	/* XXX */
+
+	return 0;
+}
+
+static int btree_require_level1_btnode(struct silofs_btree *btree,
+                                       struct silofs_btnode_info *from_bni,
+                                       const struct silofs_vaddr *vaddr,
+                                       struct silofs_btnode_info **out_bni)
+{
+	struct silofs_btnode_info *bni = from_bni;
+	size_t height;
+	int err = 0;
+
+	height = silofs_bni_height(bni);
+	while (height > 1) {
+		err = btree_require_child_btnode(btree, bni, vaddr, &bni);
+		if (err) {
+			return err;
+		}
+		height = silofs_bni_height(bni);
+	}
+	*out_bni = bni;
+	return 0;
+}
+
+static int btree_require_child_btleaf(struct silofs_btree *btree,
+                                      struct silofs_btnode_info *bni,
+                                      const struct silofs_vaddr *vaddr,
+                                      struct silofs_btleaf_info **out_bli)
+{
+	int err;
+
+	err = btree_stage_child_btleaf(btree, bni, vaddr, out_bli);
+	if (!err || (err != -SILOFS_ENOENT)) {
+		return err;
+	}
+
+	/* XXX */
+	return 0;
+}
+
+static int btree_require_btleaf_of(struct silofs_btree *btree,
+                                   const struct silofs_vaddr *vaddr,
+                                   struct silofs_btleaf_info **out_bli)
+{
+	struct silofs_btnode_info *root_bni = NULL;
+	struct silofs_btnode_info *bni = NULL;
+	struct silofs_btleaf_info *bli = NULL;
+	int err = 0;
+
+	err = btree_stage_btleaf_of(btree, vaddr, &bli);
+	if (!err || (err != -SILOFS_ENOENT)) {
+		return err;
+	}
+	err = btree_stage_btroot(btree, &root_bni);
+	if (err) {
+		return err;
+	}
+	err = btree_require_level1_btnode(btree, root_bni, vaddr, &bni);
+	if (!err || (err != -SILOFS_ENOENT)) {
+		return err;
+	}
+	err = btree_require_child_btleaf(btree, bni, vaddr, &bli);
+	if (err) {
+		return err;
+	}
+	*out_bli = bli;
+	return 0;
+}
+
+int silofs_btree_insert(struct silofs_btree *btree,
+                        const struct silofs_vaddr *vaddr,
+                        const struct silofs_paddr *paddr)
+{
+	struct silofs_btleaf_info *bli = NULL;
+	int err;
+
+	err = btree_require_btleaf_of(btree, vaddr, &bli);
+	if (err) {
+		return err;
+	}
+	err = silofs_bli_extend(bli, vaddr, paddr);
+	if (err) {
+		return err;
+	}
+	return err;
 }

@@ -162,23 +162,6 @@ static void btn_set_height(struct silofs_btree_node *btn, size_t height)
 	btn->btn_height = (uint8_t)height;
 }
 
-static void
-btn_parent(const struct silofs_btree_node *btn, struct silofs_paddr *out_paddr)
-{
-	silofs_paddr48b_xtoh(&btn->btn_parent, out_paddr);
-}
-
-static void
-btn_set_parent(struct silofs_btree_node *btn, const struct silofs_paddr *paddr)
-{
-	silofs_paddr48b_htox(&btn->btn_parent, paddr);
-}
-
-static void btn_reset_parent(struct silofs_btree_node *btn)
-{
-	btn_set_parent(btn, paddr_none());
-}
-
 static size_t btn_nchilds(struct silofs_btree_node *btn)
 {
 	return btn->btn_nchilds;
@@ -343,7 +326,6 @@ static void btn_init(struct silofs_btree_node *btn)
 	btn_set_height(btn, 1);
 	btn_set_nkeys(btn, 0);
 	btn_set_nchilds(btn, 0);
-	btn_reset_parent(btn);
 	btn_reset_childs(btn);
 	btn_reset_keys(btn);
 }
@@ -352,7 +334,6 @@ static void btn_fini(struct silofs_btree_node *btn)
 {
 	btn_set_nkeys(btn, 0);
 	btn_set_nchilds(btn, 0);
-	btn_reset_parent(btn);
 	btn_reset_childs(btn);
 	btn_reset_keys(btn);
 }
@@ -866,12 +847,6 @@ bool silofs_bni_marked_root(const struct silofs_btnode_info *bni)
 	const enum silofs_pnodef flgs = btn_flags(bni->bn);
 
 	return ((flgs & SILOFS_PNODEF_BTROOT) > 0);
-}
-
-void silofs_bni_parent(const struct silofs_btnode_info *bni,
-                       struct silofs_paddr *out_paddr)
-{
-	btn_parent(bni->bn, out_paddr);
 }
 
 size_t silofs_bni_height(const struct silofs_btnode_info *bni)

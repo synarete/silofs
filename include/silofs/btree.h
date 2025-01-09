@@ -20,6 +20,9 @@
 #include <silofs/infra.h>
 #include <silofs/addr.h>
 
+/* maximal btree height, including leaf nodes */
+#define SILOFS_BTREE_HEIGHT_MAX (8)
+
 struct silofs_pcache;
 struct silofs_repo;
 
@@ -47,5 +50,9 @@ void silofs_btree_update_root(struct silofs_btree       *btree,
 int silofs_btree_lookup(const struct silofs_btree *btree,
                         const struct silofs_vaddr *vaddr,
                         struct silofs_paddr       *out_paddr);
+
+int silofs_btree_insert(struct silofs_btree       *btree,
+                        const struct silofs_vaddr *vaddr,
+                        const struct silofs_paddr *paddr);
 
 #endif /* SILOFS_BTREE_H_ */

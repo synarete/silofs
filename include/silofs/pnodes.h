@@ -95,9 +95,6 @@ void silofs_bni_mark_root(struct silofs_btnode_info *bni);
 
 bool silofs_bni_marked_root(const struct silofs_btnode_info *bni);
 
-void silofs_bni_parent(const struct silofs_btnode_info *bni,
-                       struct silofs_paddr             *out_paddr);
-
 size_t silofs_bni_height(const struct silofs_btnode_info *bni);
 
 size_t silofs_bni_nkeys(const struct silofs_btnode_info *bni);

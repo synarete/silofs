@@ -315,9 +315,8 @@ static void require_persistent_types_alignment4(void)
 	REQUIRE_OFFSETXX(struct silofs_btree_node, btn_nchilds, 18);
 	REQUIRE_OFFSETXX(struct silofs_btree_node, btn_height, 19);
 	REQUIRE_OFFSET64(struct silofs_btree_node, btn_flags, 24);
-	REQUIRE_OFFSET64(struct silofs_btree_node, btn_parent, 64);
-	REQUIRE_OFFSET64(struct silofs_btree_node, btn_child, 128);
-	REQUIRE_OFFSET64(struct silofs_btree_node, btn_key, 3536);
+	REQUIRE_OFFSET64(struct silofs_btree_node, btn_child, 64);
+	REQUIRE_OFFSET64(struct silofs_btree_node, btn_key, 3528);
 	REQUIRE_OFFSET64(struct silofs_btree_leaf, btl_hdr, 0);
 	REQUIRE_OFFSET64(struct silofs_btree_leaf, btl_ltype, 16);
 	REQUIRE_OFFSETXX(struct silofs_btree_leaf, btl_nltops, 17);

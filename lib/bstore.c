@@ -22,18 +22,6 @@
 #include <silofs/pcache.h>
 #include <silofs/bstore.h>
 
-static bool paddr_isbtnode(const struct silofs_paddr *paddr)
-{
-	return !paddr_isnull(paddr) && (paddr->ptype == SILOFS_PTYPE_BTNODE);
-}
-
-static bool paddr_isbtleaf(const struct silofs_paddr *paddr)
-{
-	return !paddr_isnull(paddr) && (paddr->ptype == SILOFS_PTYPE_BTLEAF);
-}
-
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-
 int silofs_bstore_init(struct silofs_bstore *bstore,
                        struct silofs_pcache *pcache, struct silofs_repo *repo)
 {
@@ -234,17 +222,6 @@ static int bstore_save_btnode(const struct silofs_bstore *bstore,
 	return silofs_repo_save_pobj(bstore->repo, bni_paddr(bni), &rov);
 }
 
-static int bstore_load_btnode(const struct silofs_bstore *bstore,
-                              const struct silofs_btnode_info *bni)
-{
-	const struct silofs_rwvec rwv = {
-		.rwv_base = bni->bn,
-		.rwv_len = sizeof(*bni->bn),
-	};
-
-	return silofs_repo_load_pobj(bstore->repo, bni_paddr(bni), &rwv);
-}
-
 static int bstore_commit_btnode(const struct silofs_bstore *bstore,
                                 struct silofs_btnode_info *bni)
 {
@@ -320,54 +297,6 @@ static int bstore_spawn_btroot(struct silofs_bstore *bstore)
 	return 0;
 }
 
-static void bstore_evict_cached_bni(struct silofs_bstore *bstore,
-                                    struct silofs_btnode_info *bni)
-{
-	silofs_pcache_evict_bni(bstore->pcache, bni);
-}
-
-static int bstore_lookup_cached_btnode(struct silofs_bstore *bstore,
-                                       const struct silofs_paddr *paddr,
-                                       struct silofs_btnode_info **out_bni)
-{
-	*out_bni = silofs_pcache_lookup_bni(bstore->pcache, paddr);
-	return (*out_bni == NULL) ? -SILOFS_ENOENT : 0;
-}
-
-static int bstore_stage_btnode_at(struct silofs_bstore *bstore,
-                                  const struct silofs_paddr *paddr,
-                                  struct silofs_btnode_info **out_bni)
-{
-	struct silofs_btnode_info *bni = NULL;
-	int err;
-
-	silofs_assert_eq(paddr->ptype, SILOFS_PTYPE_BTNODE);
-
-	err = bstore_lookup_cached_btnode(bstore, paddr, out_bni);
-	if (!err) {
-		return 0; /* cache hit */
-	}
-	err = bstore_validate_paddr(bstore, paddr);
-	if (err) {
-		return err;
-	}
-	err = bstore_require_pvseg_of(bstore, false, paddr);
-	if (err) {
-		return err;
-	}
-	err = bstore_create_cached_bni(bstore, paddr, &bni);
-	if (err) {
-		return err;
-	}
-	err = bstore_load_btnode(bstore, bni);
-	if (err) {
-		bstore_evict_cached_bni(bstore, bni);
-		return err;
-	}
-	*out_bni = bni;
-	return 0;
-}
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct silofs_paddr *
@@ -387,17 +316,6 @@ static int bstore_save_btleaf(const struct silofs_bstore *bstore,
 	return silofs_repo_save_pobj(bstore->repo, bli_paddr(bli), &rov);
 }
 
-static int bstore_load_btleaf(const struct silofs_bstore *bstore,
-                              const struct silofs_btleaf_info *bli)
-{
-	const struct silofs_rwvec rwv = {
-		.rwv_base = bli->bl,
-		.rwv_len = sizeof(*bli->bl),
-	};
-
-	return silofs_repo_load_pobj(bstore->repo, bli_paddr(bli), &rwv);
-}
-
 static int bstore_commit_btleaf(const struct silofs_bstore *bstore,
                                 struct silofs_btleaf_info *bli)
 {
@@ -408,56 +326,6 @@ static int bstore_commit_btleaf(const struct silofs_bstore *bstore,
 		return err;
 	}
 	silofs_bli_undirtify(bli);
-	return 0;
-}
-
-static int bstore_create_cached_bli(struct silofs_bstore *bstore,
-                                    const struct silofs_paddr *paddr,
-                                    struct silofs_btleaf_info **out_bli)
-{
-	struct silofs_btleaf_info *bli;
-
-	bli = silofs_pcache_create_bli(bstore->pcache, paddr);
-	if (bli == NULL) {
-		return -SILOFS_ENOMEM;
-	}
-	*out_bli = bli;
-	return 0;
-}
-
-static void bstore_evict_cached_bli(struct silofs_bstore *bstore,
-                                    struct silofs_btleaf_info *bli)
-{
-	silofs_pcache_evict_bli(bstore->pcache, bli);
-}
-
-static int bstore_stage_btleaf_at(struct silofs_bstore *bstore,
-                                  const struct silofs_paddr *paddr,
-                                  struct silofs_btleaf_info **out_bli)
-{
-	struct silofs_btleaf_info *bli = NULL;
-	int err;
-
-	silofs_assert_eq(paddr->ptype, SILOFS_PTYPE_BTLEAF);
-
-	err = bstore_validate_paddr(bstore, paddr);
-	if (err) {
-		return err;
-	}
-	err = bstore_require_pvseg_of(bstore, false, paddr);
-	if (err) {
-		return err;
-	}
-	err = bstore_create_cached_bli(bstore, paddr, &bli);
-	if (err) {
-		return err;
-	}
-	err = bstore_load_btleaf(bstore, bli);
-	if (err) {
-		bstore_evict_cached_bli(bstore, bli);
-		return err;
-	}
-	*out_bli = bli;
 	return 0;
 }
 
@@ -526,84 +394,11 @@ static int bstore_stage_last_chkpt(struct silofs_bstore *bstore)
 	return 0;
 }
 
-static int bstore_stage_btnode_childs(struct silofs_bstore *bstore,
-                                      const struct silofs_btnode_info *bni)
-{
-	struct silofs_paddr paddr;
-	struct silofs_btnode_info *child_bni = NULL;
-	struct silofs_btleaf_info *child_bli = NULL;
-	size_t nchilds;
-	int err = 0;
-
-	nchilds = silofs_bni_nchilds(bni);
-	for (size_t slot = 0; (slot < nchilds) && !err; ++slot) {
-		silofs_bni_child_at(bni, slot, &paddr);
-		if (paddr_isbtnode(&paddr)) {
-			child_bni = NULL;
-			err = bstore_stage_btnode_at(bstore, &paddr,
-			                             &child_bni);
-		} else if (paddr_isbtleaf(&paddr)) {
-			child_bli = NULL;
-			err = bstore_stage_btleaf_at(bstore, &paddr,
-			                             &child_bli);
-		} else {
-			err = -SILOFS_EFSCORRUPTED;
-		}
-	}
-	return err;
-}
-
-static int validate_btroot(const struct silofs_btnode_info *bni)
-{
-	struct silofs_paddr paddr;
-	size_t height;
-
-	height = silofs_bni_height(bni);
-	if ((height < 1) || (height > 8)) {
-		return -SILOFS_EFSCORRUPTED;
-	}
-	silofs_bni_parent(bni, &paddr);
-	if (!paddr_isnull(&paddr)) {
-		return -SILOFS_EFSCORRUPTED;
-	}
-	if (!silofs_bni_marked_root(bni)) {
-		return -SILOFS_EFSCORRUPTED;
-	}
-	return 0;
-}
-
-static int bstore_stage_btroot(struct silofs_bstore *bstore,
-                               struct silofs_btnode_info **out_bni)
-{
-	struct silofs_paddr paddr = { .off = -1 };
-	struct silofs_btnode_info *bni = NULL;
-	int err;
-
-	err = bstore_stage_btnode_at(bstore, &paddr, &bni);
-	if (err) {
-		return err;
-	}
-	err = validate_btroot(bni);
-	if (err) {
-		return err;
-	}
-	*out_bni = bni;
-	return 0;
-}
-
 static int bstore_reload_btree_root(struct silofs_bstore *bstore)
 {
-	struct silofs_btnode_info *bni = NULL;
-	int err;
+	/* XXX YOU ARE HERE */
+	silofs_unused(bstore);
 
-	err = bstore_stage_btroot(bstore, &bni);
-	if (err) {
-		return err;
-	}
-	err = bstore_stage_btnode_childs(bstore, bni);
-	if (err) {
-		return err;
-	}
 	return 0;
 }
 
@@ -727,236 +522,3 @@ void silofs_bstore_curr_pvsegr(const struct silofs_bstore *bstore,
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static int validate_child_btnode(const struct silofs_btnode_info *parent_bni,
-                                 const struct silofs_btnode_info *child_bni)
-{
-	struct silofs_paddr parent_paddr;
-	const size_t parent_height = silofs_bni_height(parent_bni);
-	const size_t child_height = silofs_bni_height(child_bni);
-
-	if ((child_height + 1) != parent_height) {
-		return -SILOFS_EFSCORRUPTED;
-	}
-	silofs_bni_parent(child_bni, &parent_paddr);
-	if (!paddr_isequal(&parent_paddr, bni_paddr(parent_bni))) {
-		return -SILOFS_EFSCORRUPTED;
-	}
-	return 0;
-}
-
-static int bstore_stage_child_btnode(struct silofs_bstore *bstore,
-                                     struct silofs_btnode_info *parent_bni,
-                                     const struct silofs_vaddr *vaddr,
-                                     struct silofs_btnode_info **out_bni)
-{
-	struct silofs_paddr paddr = { .off = -1 };
-	struct silofs_btnode_info *bni = NULL;
-	int err;
-
-	err = silofs_bni_resolve(parent_bni, vaddr, &paddr);
-	if (err) {
-		return err;
-	}
-	err = bstore_stage_btnode_at(bstore, &paddr, &bni);
-	if (err) {
-		return err;
-	}
-	err = validate_child_btnode(parent_bni, bni);
-	if (err) {
-		return err;
-	}
-	*out_bni = bni;
-	return 0;
-}
-
-static int validate_child_btleaf(const struct silofs_btnode_info *parent_bni,
-                                 const struct silofs_btleaf_info *child_bli)
-{
-	struct silofs_paddr parent_paddr;
-	const size_t parent_height = silofs_bni_height(parent_bni);
-
-	silofs_assert_eq(parent_height, 1);
-	if (parent_height != 1) {
-		return -SILOFS_EFSCORRUPTED;
-	}
-	silofs_bli_parent(child_bli, &parent_paddr);
-	if (!paddr_isequal(&parent_paddr, bni_paddr(parent_bni))) {
-		return -SILOFS_EFSCORRUPTED;
-	}
-	return 0;
-}
-
-static int bstore_stage_child_btleaf(struct silofs_bstore *bstore,
-                                     struct silofs_btnode_info *parent_bni,
-                                     const struct silofs_vaddr *vaddr,
-                                     struct silofs_btleaf_info **out_bli)
-{
-	struct silofs_paddr paddr = { .off = -1 };
-	struct silofs_btleaf_info *bli = NULL;
-	int err;
-
-	err = silofs_bni_resolve(parent_bni, vaddr, &paddr);
-	if (err) {
-		return err;
-	}
-	err = bstore_stage_btleaf_at(bstore, &paddr, &bli);
-	if (err) {
-		return err;
-	}
-	err = validate_child_btleaf(parent_bni, bli);
-	if (err) {
-		return err;
-	}
-	*out_bli = bli;
-	return 0;
-}
-
-static int bstore_stage_btleaf(struct silofs_bstore *bstore,
-                               struct silofs_btnode_info *root_bni,
-                               const struct silofs_vaddr *vaddr,
-                               struct silofs_btleaf_info **out_bli)
-{
-	struct silofs_btnode_info *bni = root_bni;
-	struct silofs_btleaf_info *bli = NULL;
-	size_t height;
-	int err = 0;
-
-	height = silofs_bni_height(bni);
-	while (height > 1) {
-		err = bstore_stage_child_btnode(bstore, bni, vaddr, &bni);
-		if (err) {
-			return err;
-		}
-		height--;
-	}
-	err = bstore_stage_child_btleaf(bstore, bni, vaddr, &bli);
-	if (err) {
-		return err;
-	}
-	*out_bli = bli;
-	return 0;
-}
-
-static int bstore_resolve_btleaf_of(struct silofs_bstore *bstore,
-                                    const struct silofs_vaddr *vaddr,
-                                    struct silofs_btleaf_info **out_bli)
-{
-	struct silofs_btnode_info *root_bni = NULL;
-	int err;
-
-	err = bstore_stage_btroot(bstore, &root_bni);
-	if (err) {
-		return err;
-	}
-	err = bstore_stage_btleaf(bstore, root_bni, vaddr, out_bli);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
-int silofs_bstore_resolve(struct silofs_bstore *bstore,
-                          const struct silofs_vaddr *vaddr,
-                          struct silofs_paddr *out_paddr)
-{
-	struct silofs_btleaf_info *bli = NULL;
-	int err;
-
-	err = bstore_resolve_btleaf_of(bstore, vaddr, &bli);
-	if (err) {
-		return err;
-	}
-	err = silofs_bli_resolve(bli, vaddr, out_paddr);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static int bstore_require_child_btnode(struct silofs_bstore *bstore,
-                                       struct silofs_btnode_info *parent_bni,
-                                       const struct silofs_vaddr *vaddr,
-                                       struct silofs_btnode_info **out_bni)
-{
-	int err;
-
-	err = bstore_stage_child_btnode(bstore, parent_bni, vaddr, out_bni);
-	if (!err) {
-		return 0;
-	}
-	if (err != -SILOFS_ENOENT) {
-		return err;
-	}
-	/* XXX */
-
-	return 0;
-}
-
-static int bstore_require_btleaf(struct silofs_bstore *bstore,
-                                 struct silofs_btnode_info *root_bni,
-                                 const struct silofs_vaddr *vaddr,
-                                 struct silofs_btleaf_info **out_bli)
-{
-	struct silofs_btnode_info *bni = root_bni;
-	struct silofs_btleaf_info *bli = NULL;
-	size_t height;
-	int err = 0;
-
-	height = silofs_bni_height(bni);
-	while (height > 1) {
-		err = bstore_require_child_btnode(bstore, bni, vaddr, &bni);
-		if (err) {
-			return err;
-		}
-		height--;
-	}
-	err = bstore_stage_child_btleaf(bstore, bni, vaddr, &bli);
-	if (err) {
-		return err;
-	}
-	*out_bli = bli;
-	return 0;
-}
-
-static int bstore_require_btleaf_of(struct silofs_bstore *bstore,
-                                    const struct silofs_vaddr *vaddr,
-                                    struct silofs_btleaf_info **out_bli)
-{
-	struct silofs_btnode_info *root_bni = NULL;
-	int err;
-
-	err = bstore_resolve_btleaf_of(bstore, vaddr, out_bli);
-	if (!err || (err != -SILOFS_ENOENT)) {
-		return err;
-	}
-	err = bstore_stage_btroot(bstore, &root_bni);
-	if (err) {
-		return err;
-	}
-	err = bstore_require_btleaf(bstore, root_bni, vaddr, out_bli);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
-int silofs_bstore_remap(struct silofs_bstore *bstore,
-                        const struct silofs_vaddr *vaddr,
-                        const struct silofs_paddr *paddr)
-{
-	struct silofs_btleaf_info *bli = NULL;
-	int err;
-
-	err = bstore_require_btleaf_of(bstore, vaddr, &bli);
-	if (err) {
-		return err;
-	}
-	err = silofs_bli_extend(bli, vaddr, paddr);
-	if (err) {
-		return err;
-	}
-	return err;
-}

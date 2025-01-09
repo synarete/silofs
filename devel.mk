@@ -360,8 +360,8 @@ params:
 	$(info  SANITIZER=$(SANITIZER))
 	$(info  VERBOSE=$(V))
 	$(info  PREFIX=$(PREFIX))
-	$(info  CFLAGS=$(CFLAGS) $(CFLAGS2))
-	$(info  LDFLAGS=$(LDFLAGS))
+#	$(info  CFLAGS=$(CFLAGS) $(CFLAGS2))
+#	$(info  LDFLAGS=$(LDFLAGS))
 
 
 # Help the naive user

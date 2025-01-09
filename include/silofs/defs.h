@@ -111,7 +111,7 @@
 #define SILOFS_PSEG_CHKPT_SIZE (4096)
 
 /* number of pointers btree mapping-node */
-#define SILOFS_BTREE_NODE_NCHILDS (71)
+#define SILOFS_BTREE_NODE_NCHILDS (72)
 
 /* number of keys in btree mapping-node */
 #define SILOFS_BTREE_NODE_NKEYS (SILOFS_BTREE_NODE_NCHILDS - 1)
@@ -994,9 +994,8 @@ struct silofs_btree_node {
 	uint8_t                btn_reserved1[4];
 	uint32_t               btn_flags;
 	uint8_t                btn_reserved2[36];
-	struct silofs_paddr48b btn_parent;
-	uint8_t                btn_reserved3[16];
 	struct silofs_paddr48b btn_child[SILOFS_BTREE_NODE_NCHILDS];
+	uint8_t                btn_reserved3[8];
 	int64_t                btn_key[SILOFS_BTREE_NODE_NKEYS];
 } silofs_attr_aligned64;
 

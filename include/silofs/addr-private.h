@@ -36,11 +36,11 @@
 
 #define ptype_size(pt) silofs_ptype_size(pt)
 
-#define paddr_none()          silofs_paddr_none()
-#define paddr_reset(pa)       silofs_paddr_reset(pa)
-#define paddr_assign(pa, oth) silofs_paddr_assign(pa, oth)
+#define paddr_none()            silofs_paddr_none()
+#define paddr_reset(pa)         silofs_paddr_reset(pa)
+#define paddr_assign(pa, oth)   silofs_paddr_assign(pa, oth)
 #define paddr_isequal(pa1, pa2) silofs_paddr_isequal(pa1, pa2)
-#define paddr_isnull(pa)      silofs_paddr_isnull(pa)
+#define paddr_isnull(pa)        silofs_paddr_isnull(pa)
 
 #define ltype_nkbs(lt)      silofs_ltype_nkbs(lt)
 #define ltype_size(lt)      silofs_ltype_size(lt)

@@ -147,7 +147,7 @@ static int fetch_cached_uni(const struct silofs_env *env,
                             const struct silofs_uaddr *uaddr,
                             struct silofs_unode_info **out_uni)
 {
-	*out_uni = silofs_lcache_lookup_uni(env->fse.lcache, uaddr);
+	*out_uni = silofs_lcache_lookup_uni(env->base.lcache, uaddr);
 	return (*out_uni == NULL) ? -SILOFS_ENOENT : 0;
 }
 
@@ -161,7 +161,7 @@ static int
 create_cached_uni(struct silofs_env *env, const struct silofs_ulink *ulink,
                   struct silofs_unode_info **out_uni)
 {
-	*out_uni = silofs_lcache_create_uni(env->fse.lcache, ulink);
+	*out_uni = silofs_lcache_create_uni(env->base.lcache, ulink);
 	if (*out_uni == NULL) {
 		return -SILOFS_ENOMEM;
 	}
@@ -185,7 +185,7 @@ require_cached_uni(struct silofs_env *env, const struct silofs_ulink *ulink,
 static void
 forget_cached_uni(const struct silofs_env *env, struct silofs_unode_info *uni)
 {
-	silofs_lcache_forget_uni(env->fse.lcache, uni);
+	silofs_lcache_forget_uni(env->base.lcache, uni);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -193,7 +193,7 @@ forget_cached_uni(const struct silofs_env *env, struct silofs_unode_info *uni)
 static bool
 lsid_rw_mode(const struct silofs_env *env, const struct silofs_lsid *lsid)
 {
-	const struct silofs_sb_info *sbi = env->fse_sbi;
+	const struct silofs_sb_info *sbi = env->sbi;
 	bool rw_mode;
 
 	if (unlikely(sbi == NULL) || silofs_sbi_ismutable_lsid(sbi, lsid)) {
@@ -217,7 +217,7 @@ lookup_lseg(const struct silofs_env *env, const struct silofs_lsid *lsid)
 {
 	struct stat st;
 
-	return silofs_repo_stat_lseg(env->fse.repo, lsid, true, &st);
+	return silofs_repo_stat_lseg(env->base.repo, lsid, true, &st);
 }
 
 static int
@@ -226,7 +226,7 @@ stage_lseg(const struct silofs_env *env, const struct silofs_lsid *lsid)
 	int err;
 	const bool rw = lsid_rw_mode(env, lsid);
 
-	err = silofs_repo_stage_lseg(env->fse.repo, rw, lsid);
+	err = silofs_repo_stage_lseg(env->base.repo, rw, lsid);
 	if (err && (err != -SILOFS_ENOENT)) {
 		log_dbg("stage lseg failed: err=%d", err);
 	}
@@ -238,7 +238,7 @@ spawn_lseg(const struct silofs_env *env, const struct silofs_lsid *lsid)
 {
 	int err;
 
-	err = silofs_repo_spawn_lseg(env->fse.repo, lsid);
+	err = silofs_repo_spawn_lseg(env->base.repo, lsid);
 	if (err && (err != -SILOFS_ENOENT)) {
 		log_dbg("spawn lseg failed: err=%d", err);
 	}
@@ -269,7 +269,7 @@ static int
 load_view_at(const struct silofs_env *env, const struct silofs_laddr *laddr,
              struct silofs_view *view)
 {
-	return silofs_repo_read_at(env->fse.repo, laddr, view);
+	return silofs_repo_read_at(env->base.repo, laddr, view);
 }
 
 static int

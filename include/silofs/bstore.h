@@ -26,15 +26,16 @@
 
 /* blobs-storage control object */
 struct silofs_bstore {
-	struct silofs_pvasd  pvasd;
-	struct silofs_pcache pcache;
-	struct silofs_btree  btree;
-	struct silofs_repo  *repo;
+	struct silofs_pvasd   pvasd;
+	struct silofs_btree   btree;
+	struct silofs_repo   *repo;
+	struct silofs_pcache *pcache;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_bstore_init(struct silofs_bstore *bstore, struct silofs_repo *repo);
+int silofs_bstore_init(struct silofs_bstore *bstore,
+                       struct silofs_pcache *pcache, struct silofs_repo *repo);
 
 void silofs_bstore_fini(struct silofs_bstore *bstore);
 

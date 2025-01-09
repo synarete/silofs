@@ -31,7 +31,7 @@ static bool has_nlookup_mode(const struct silofs_inode_info *ii)
 {
 	const struct silofs_env *env = ii_env(ii);
 
-	return ((env->fse_ctl_flags & SILOFS_ENVF_NLOOKUP) > 0);
+	return ((env->ctl_flags & SILOFS_ENVF_NLOOKUP) > 0);
 }
 
 static void ii_sub_nlookup(struct silofs_inode_info *ii, long n)
@@ -119,10 +119,10 @@ static int check_reg_or_fifo(const struct silofs_inode_info *ii)
 static int check_open_limit(const struct silofs_inode_info *ii)
 {
 	const struct silofs_env *env = ii_env(ii);
-	const size_t total_iopen_max = env->fse_op_stat.op_iopen_max;
+	const size_t total_iopen_max = env->oper_stat.op_iopen_max;
 	const size_t iopen_max = total_iopen_max / 2;
 
-	if (env->fse_op_stat.op_iopen >= total_iopen_max) {
+	if (env->oper_stat.op_iopen >= total_iopen_max) {
 		return -SILOFS_EMFILE;
 	}
 	if (ii->i_nopen >= (long)iopen_max) {
@@ -139,9 +139,9 @@ static void update_nopen(struct silofs_inode_info *ii, int n)
 	silofs_assert_lt(ii->i_nopen + n, INT_MAX);
 
 	if ((n > 0) && (ii->i_nopen == 0)) {
-		env->fse_op_stat.op_iopen++;
+		env->oper_stat.op_iopen++;
 	} else if ((n < 0) && (ii->i_nopen == 1)) {
-		env->fse_op_stat.op_iopen--;
+		env->oper_stat.op_iopen--;
 	}
 	ii->i_nopen += n;
 }
@@ -689,7 +689,7 @@ check_mknod(struct silofs_task *task, struct silofs_inode_info *dir_ii,
 		if (rdev == 0) {
 			return -SILOFS_EINVAL;
 		}
-		if (task->t_env->fse_ms_flags & MS_NODEV) {
+		if (task->t_env->ms_flags & MS_NODEV) {
 			return -SILOFS_EOPNOTSUPP;
 		}
 	} else {
@@ -2076,16 +2076,16 @@ fill_proc(const struct silofs_env *env, struct silofs_query_proc *qpr)
 	silofs_env_allocstat(env, &alst);
 
 	silofs_memzero(qpr, sizeof(*qpr));
-	qpr->uid = env->fse_owner.uid;
-	qpr->gid = env->fse_owner.gid;
-	qpr->pid = env->fse_args.pid;
-	qpr->msflags = env->fse_ms_flags;
+	qpr->uid = env->owner_cred.uid;
+	qpr->gid = env->owner_cred.gid;
+	qpr->pid = env->args.pid;
+	qpr->msflags = env->ms_flags;
 	qpr->uptime = uptime;
-	qpr->iopen_max = env->fse_op_stat.op_iopen_max;
-	qpr->iopen_cur = env->fse_op_stat.op_iopen;
+	qpr->iopen_max = env->oper_stat.op_iopen_max;
+	qpr->iopen_cur = env->oper_stat.op_iopen;
 	qpr->memsz_max = alst.nbytes_max;
 	qpr->memsz_cur = alst.nbytes_use;
-	qpr->bopen_cur = env->fse.repo->re_htbl.rh_size;
+	qpr->bopen_cur = env->base.repo->re_htbl.rh_size;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -2154,12 +2154,12 @@ static void fill_query_boot(const struct silofs_inode_info *ii,
 
 	silofs_env_bootpath(env, &bootpath);
 	str_to_buf(&bootpath.name.sv, query->u.boot.name, bsz);
-	silofs_caddr_to_name2(&env->fse_boot.caddr, query->u.boot.addr);
+	silofs_caddr_to_name2(&env->boot.caddr, query->u.boot.addr);
 
-	silofs_sbi_fs_uuid(env->fse_sbi, &fs_uuid);
+	silofs_sbi_fs_uuid(env->sbi, &fs_uuid);
 	silofs_uuid_copyto(&fs_uuid, query->u.boot.fs_uuid);
 
-	silofs_sbi_get_lvid(env->fse_sbi, &lvid);
+	silofs_sbi_get_lvid(env->sbi, &lvid);
 	silofs_uuid_copyto(&lvid.uuid, query->u.boot.lv_uuid);
 }
 
@@ -2266,7 +2266,7 @@ int silofs_do_query(struct silofs_task *task, struct silofs_inode_info *ii,
 static int check_fsowner(const struct silofs_task *task)
 {
 	const struct silofs_creds *creds = creds_of(task);
-	const uid_t owner_uid = task->t_env->fse_owner.uid;
+	const uid_t owner_uid = task->t_env->owner_cred.uid;
 
 	return uid_eq(creds->host_cred.uid, owner_uid) ? 0 : -SILOFS_EPERM;
 }
@@ -2344,7 +2344,7 @@ static int flush_and_sync(struct silofs_task *task)
 	if (err) {
 		return err;
 	}
-	err = silofs_repo_fsync_all(task->t_env->fse.repo);
+	err = silofs_repo_fsync_all(task->t_env->base.repo);
 	if (err) {
 		return err;
 	}

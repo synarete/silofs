@@ -24,7 +24,7 @@ static void resolve_ivkey_of(const struct silofs_env *env,
                              struct silofs_ivkey *out_ivkey)
 {
 	struct silofs_iv laddriv;
-	const struct silofs_ivkey *ivkey = &env->fse_boot.brec.main_ivkey;
+	const struct silofs_ivkey *ivkey = &env->boot.brec.main_ivkey;
 
 	silofs_laddr_as_iv(laddr, &laddriv);
 	silofs_ivkey_assign(out_ivkey, ivkey);
@@ -36,7 +36,7 @@ encrypt_view_with(const struct silofs_env *env,
                   const struct silofs_ivkey *ivkey,
                   const struct silofs_view *view, void *ptr, size_t len)
 {
-	return silofs_encrypt_buf(&env->fse_enc_cipher, ivkey, view, ptr, len);
+	return silofs_encrypt_buf(&env->enc_cipher, ivkey, view, ptr, len);
 }
 
 int silofs_encrypt_view(const struct silofs_env *env,
@@ -55,7 +55,7 @@ decrypt_view_with(const struct silofs_env *env,
                   const struct silofs_ivkey *ivkey,
                   const struct silofs_view *view, void *ptr, size_t len)
 {
-	return silofs_decrypt_buf(&env->fse_dec_cipher, ivkey, view, ptr, len);
+	return silofs_decrypt_buf(&env->dec_cipher, ivkey, view, ptr, len);
 }
 
 static int

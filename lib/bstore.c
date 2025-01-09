@@ -34,27 +34,22 @@ static bool paddr_isbtleaf(const struct silofs_paddr *paddr)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-int silofs_bstore_init(struct silofs_bstore *bstore, struct silofs_repo *repo)
+int silofs_bstore_init(struct silofs_bstore *bstore,
+                       struct silofs_pcache *pcache, struct silofs_repo *repo)
 {
-	int err;
-
 	silofs_pvasd_init(&bstore->pvasd);
-	err = silofs_pcache_init(&bstore->pcache, repo->re.alloc);
-	if (err) {
-		return err;
-	}
-	silofs_btree_init(&bstore->btree, &bstore->pcache, repo);
+	silofs_btree_init(&bstore->btree, bstore->pcache, repo);
 	bstore->repo = repo;
+	bstore->pcache = pcache;
 	return 0;
 }
 
 void silofs_bstore_fini(struct silofs_bstore *bstore)
 {
 	silofs_btree_fini(&bstore->btree);
-	silofs_pcache_drop(&bstore->pcache);
-	silofs_pcache_fini(&bstore->pcache);
 	silofs_pvasd_fini(&bstore->pvasd);
 	bstore->repo = NULL;
+	bstore->pcache = NULL;
 }
 
 static int bstore_validate_paddr(const struct silofs_bstore *bstore,
@@ -114,7 +109,7 @@ static int bstore_create_cached_cpi(struct silofs_bstore *bstore,
 {
 	struct silofs_chkpt_info *cpi;
 
-	cpi = silofs_pcache_create_cpi(&bstore->pcache, paddr);
+	cpi = silofs_pcache_create_cpi(bstore->pcache, paddr);
 	if (cpi == NULL) {
 		return -SILOFS_ENOMEM;
 	}
@@ -171,14 +166,14 @@ static int bstore_spawn_chkpt(struct silofs_bstore *bstore, bool create,
 static void bstore_evict_cached_cpi(struct silofs_bstore *bstore,
                                     struct silofs_chkpt_info *cpi)
 {
-	silofs_pcache_evict_cpi(&bstore->pcache, cpi);
+	silofs_pcache_evict_cpi(bstore->pcache, cpi);
 }
 
 static int bstore_lookup_cached_chkpt(struct silofs_bstore *bstore,
                                       const struct silofs_paddr *paddr,
                                       struct silofs_chkpt_info **out_cpi)
 {
-	*out_cpi = silofs_pcache_lookup_cpi(&bstore->pcache, paddr);
+	*out_cpi = silofs_pcache_lookup_cpi(bstore->pcache, paddr);
 	return (*out_cpi == NULL) ? -SILOFS_ENOENT : 0;
 }
 
@@ -263,7 +258,7 @@ static int bstore_create_cached_bni(struct silofs_bstore *bstore,
 {
 	struct silofs_btnode_info *bni;
 
-	bni = silofs_pcache_create_bni(&bstore->pcache, paddr);
+	bni = silofs_pcache_create_bni(bstore->pcache, paddr);
 	if (bni == NULL) {
 		return -SILOFS_ENOMEM;
 	}
@@ -322,14 +317,14 @@ static int bstore_spawn_btroot(struct silofs_bstore *bstore)
 static void bstore_evict_cached_bni(struct silofs_bstore *bstore,
                                     struct silofs_btnode_info *bni)
 {
-	silofs_pcache_evict_bni(&bstore->pcache, bni);
+	silofs_pcache_evict_bni(bstore->pcache, bni);
 }
 
 static int bstore_lookup_cached_btnode(struct silofs_bstore *bstore,
                                        const struct silofs_paddr *paddr,
                                        struct silofs_btnode_info **out_bni)
 {
-	*out_bni = silofs_pcache_lookup_bni(&bstore->pcache, paddr);
+	*out_bni = silofs_pcache_lookup_bni(bstore->pcache, paddr);
 	return (*out_bni == NULL) ? -SILOFS_ENOENT : 0;
 }
 
@@ -416,7 +411,7 @@ static int bstore_create_cached_bli(struct silofs_bstore *bstore,
 {
 	struct silofs_btleaf_info *bli;
 
-	bli = silofs_pcache_create_bli(&bstore->pcache, paddr);
+	bli = silofs_pcache_create_bli(bstore->pcache, paddr);
 	if (bli == NULL) {
 		return -SILOFS_ENOMEM;
 	}
@@ -427,7 +422,7 @@ static int bstore_create_cached_bli(struct silofs_bstore *bstore,
 static void bstore_evict_cached_bli(struct silofs_bstore *bstore,
                                     struct silofs_btleaf_info *bli)
 {
-	silofs_pcache_evict_bli(&bstore->pcache, bli);
+	silofs_pcache_evict_bli(bstore->pcache, bli);
 }
 
 static int bstore_stage_btleaf_at(struct silofs_bstore *bstore,
@@ -647,7 +642,7 @@ int silofs_bstore_close(struct silofs_bstore *bstore)
 	if (err) {
 		return err;
 	}
-	silofs_pcache_drop(&bstore->pcache);
+	silofs_pcache_drop(bstore->pcache);
 	return 0;
 }
 
@@ -682,7 +677,7 @@ static int bstore_commit_pnode(struct silofs_bstore *bstore,
 static struct silofs_pnode_info *
 bstore_dirtyq_front(const struct silofs_bstore *bstore)
 {
-	return silofs_pcache_dq_front(&bstore->pcache);
+	return silofs_pcache_dq_front(bstore->pcache);
 }
 
 static void bstore_drop_dirty(struct silofs_bstore *bstore)
@@ -715,7 +710,7 @@ int silofs_bstore_flush_dirty(struct silofs_bstore *bstore)
 int silofs_bstore_dropall(struct silofs_bstore *bstore)
 {
 	bstore_drop_dirty(bstore);
-	silofs_pcache_drop(&bstore->pcache);
+	silofs_pcache_drop(bstore->pcache);
 	return 0;
 }
 

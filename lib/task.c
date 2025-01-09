@@ -157,8 +157,8 @@ out_err:
 
 static int sqe_do_write(const struct silofs_submitq_ent *sqe)
 {
-	return silofs_repo_writev_at(sqe->env->fse.repo, &sqe->laddr, sqe->iov,
-	                             sqe->cnt);
+	return silofs_repo_writev_at(sqe->env->base.repo, &sqe->laddr,
+	                             sqe->iov, sqe->cnt);
 }
 
 void silofs_sqe_increfs(struct silofs_submitq_ent *sqe)
@@ -420,22 +420,22 @@ static int task_apply(const struct silofs_task *task, bool all)
 
 struct silofs_sb_info *silofs_task_sbi(const struct silofs_task *task)
 {
-	return task->t_env->fse_sbi;
+	return task->t_env->sbi;
 }
 
 struct silofs_lcache *silofs_task_lcache(const struct silofs_task *task)
 {
-	return task->t_env->fse.lcache;
+	return task->t_env->base.lcache;
 }
 
 struct silofs_repo *silofs_task_repo(const struct silofs_task *task)
 {
-	return task->t_env->fse.repo;
+	return task->t_env->base.repo;
 }
 
 const struct silofs_idsmap *silofs_task_idsmap(const struct silofs_task *task)
 {
-	return task->t_env->fse.idsmap;
+	return task->t_env->base.idsmap;
 }
 
 const struct silofs_creds *silofs_task_creds(const struct silofs_task *task)
@@ -449,7 +449,7 @@ void silofs_task_init(struct silofs_task *task, struct silofs_env *env)
 	cred_init(&task->t_oper.op_creds.fs_cred);
 	cred_init(&task->t_oper.op_creds.host_cred);
 	task->t_env = env;
-	task->t_submitq = env->fse.submitq;
+	task->t_submitq = env->base.submitq;
 	task->t_looseq = NULL;
 	task->t_apex_id = 0;
 	task->t_interrupt = 0;

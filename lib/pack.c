@@ -645,8 +645,8 @@ static int pac_init(struct silofs_par_ctx *pa_ctx, struct silofs_task *task)
 	silofs_memzero(pa_ctx, sizeof(*pa_ctx));
 	pa_ctx->pac_task = task;
 	pa_ctx->pac_env = env;
-	pa_ctx->pac_alloc = env->fse.alloc;
-	pa_ctx->pac_repo = env->fse.repo;
+	pa_ctx->pac_alloc = env->base.alloc;
+	pa_ctx->pac_repo = env->base.repo;
 	return pindex_init(&pa_ctx->pac_pindex, pa_ctx->pac_alloc);
 }
 
@@ -866,7 +866,7 @@ static const struct silofs_caddr *
 pac_fs_bootrec_caddr(const struct silofs_par_ctx *pa_ctx)
 {
 	const struct silofs_env *env = pa_ctx->pac_env;
-	const struct silofs_caddr *caddr = &env->fse_boot.caddr;
+	const struct silofs_caddr *caddr = &env->boot.caddr;
 
 	silofs_assert_eq(caddr->ctype, SILOFS_CTYPE_BOOTREC);
 	return caddr;
@@ -1096,7 +1096,7 @@ static const struct silofs_caddr *
 pac_ar_packidx_caddr(const struct silofs_par_ctx *pa_ctx)
 {
 	const struct silofs_env *env = pa_ctx->pac_env;
-	const struct silofs_caddr *caddr = &env->fse_pack_caddr;
+	const struct silofs_caddr *caddr = &env->pack_caddr;
 
 	silofs_assert_eq(caddr->ctype, SILOFS_CTYPE_PACKIDX);
 	return caddr;

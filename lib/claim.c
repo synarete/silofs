@@ -52,7 +52,7 @@ static loff_t off_to_spleaf_next(loff_t voff)
 static struct silofs_lcache *
 spac_lcache(const struct silofs_spalloc_ctx *spa_ctx)
 {
-	return spa_ctx->env->fse.lcache;
+	return spa_ctx->env->base.lcache;
 }
 
 static struct silofs_spamaps *
@@ -485,7 +485,7 @@ static int spac_try_reclaim_vlseg(const struct silofs_spalloc_ctx *spa_ctx)
 	if (!spac_ismutable_laddr(spa_ctx, &laddr)) {
 		return 0; /* not a mutable lseg */
 	}
-	err = silofs_repo_punch_lseg(spa_ctx->env->fse.repo, &laddr.lsid);
+	err = silofs_repo_punch_lseg(spa_ctx->env->base.repo, &laddr.lsid);
 	if (err && (err != -ENOTSUP)) {
 		log_err("failed to punch lseg: err=%d", err);
 		return err;

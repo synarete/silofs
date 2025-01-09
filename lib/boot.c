@@ -611,9 +611,9 @@ int silofs_encode_bootrec(const struct silofs_env *env,
                           const struct silofs_bootrec *brec,
                           struct silofs_bootrec1k *out_brec1k)
 {
-	const struct silofs_mdigest *mdigest = &env->fse_mdigest;
-	const struct silofs_cipher *cipher = &env->fse_boot.cipher;
-	const struct silofs_ivkey *ivkey = &env->fse_boot.ivkey;
+	const struct silofs_mdigest *mdigest = &env->mdigest;
+	const struct silofs_cipher *cipher = &env->boot.cipher;
+	const struct silofs_ivkey *ivkey = &env->boot.ivkey;
 
 	return bootrec_encode(brec, mdigest, cipher, ivkey, out_brec1k);
 }
@@ -622,9 +622,9 @@ int silofs_decode_bootrec(const struct silofs_env *env,
                           const struct silofs_bootrec1k *brec1k_enc,
                           struct silofs_bootrec *out_brec)
 {
-	const struct silofs_mdigest *mdigest = &env->fse_mdigest;
-	const struct silofs_cipher *cipher = &env->fse_boot.cipher;
-	const struct silofs_ivkey *ivkey = &env->fse_boot.ivkey;
+	const struct silofs_mdigest *mdigest = &env->mdigest;
+	const struct silofs_cipher *cipher = &env->boot.cipher;
+	const struct silofs_ivkey *ivkey = &env->boot.ivkey;
 
 	return bootrec_decode(out_brec, mdigest, cipher, ivkey, brec1k_enc);
 }
@@ -638,7 +638,7 @@ static void calc_bootrec1k_caddr(const struct silofs_env *env,
 		.iov_len = sizeof(*brec1k),
 	};
 
-	silofs_calc_caddr_of(&iov, 1, SILOFS_CTYPE_BOOTREC, &env->fse_mdigest,
+	silofs_calc_caddr_of(&iov, 1, SILOFS_CTYPE_BOOTREC, &env->mdigest,
 	                     out_caddr);
 }
 
@@ -690,12 +690,12 @@ int silofs_save_bootrec(const struct silofs_env *env,
 		return err;
 	}
 	calc_bootrec1k_caddr(env, &brec1k_enc, &caddr);
-	err = silofs_repo_save_cobj(env->fse.repo, &caddr, &rovec);
+	err = silofs_repo_save_cobj(env->base.repo, &caddr, &rovec);
 	if (err) {
 		log_err("failed to save bootrec: err=%d", err);
 		return err;
 	}
-	err = silofs_repo_create_ref(env->fse.repo, &caddr);
+	err = silofs_repo_create_ref(env->base.repo, &caddr);
 	if (err) {
 		log_err("failed to create ref: err=%d", err);
 		return err;
@@ -715,12 +715,12 @@ int silofs_load_bootrec(const struct silofs_env *env,
 	};
 	int err;
 
-	err = silofs_repo_lookup_ref(env->fse.repo, caddr);
+	err = silofs_repo_lookup_ref(env->base.repo, caddr);
 	if (err) {
 		log_dbg("failed to lookup ref: err=%d", err);
 		return (err == -ENOENT) ? -SILOFS_ENOREF : err;
 	}
-	err = silofs_repo_load_cobj(env->fse.repo, caddr, &rwvec);
+	err = silofs_repo_load_cobj(env->base.repo, caddr, &rwvec);
 	if (err) {
 		log_dbg("failed to load bootrec: err=%d", err);
 		return (err == -ENOENT) ? -SILOFS_ENOBOOT : err;
@@ -744,12 +744,12 @@ int silofs_stat_bootrec(const struct silofs_env *env,
 	size_t sz = 0;
 	int err;
 
-	err = silofs_repo_lookup_ref(env->fse.repo, caddr);
+	err = silofs_repo_lookup_ref(env->base.repo, caddr);
 	if (err) {
 		log_err("failed to lookup ref: err=%d", err);
 		return err;
 	}
-	err = silofs_repo_stat_cobj(env->fse.repo, caddr, &sz);
+	err = silofs_repo_stat_cobj(env->base.repo, caddr, &sz);
 	if (err) {
 		log_err("failed to stat bootrec: err=%d", err);
 		return err;
@@ -766,12 +766,12 @@ int silofs_unlink_bootrec(const struct silofs_env *env,
 {
 	int err;
 
-	err = silofs_repo_unlink_cobj(env->fse.repo, caddr);
+	err = silofs_repo_unlink_cobj(env->base.repo, caddr);
 	if (err) {
 		log_err("failed to unlink bootrec: err=%d", err);
 		return err;
 	}
-	err = silofs_repo_remove_ref(env->fse.repo, caddr);
+	err = silofs_repo_remove_ref(env->base.repo, caddr);
 	if (err) {
 		log_err("failed to unlink ref: err=%d", err);
 		return err;

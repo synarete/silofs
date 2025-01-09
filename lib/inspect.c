@@ -228,7 +228,7 @@ int silofs_walk_inspect_fs(struct silofs_task *task,
                            struct silofs_sb_info *sbi,
                            silofs_visit_laddr_fn cb, void *user_ctx)
 {
-	struct silofs_alloc *alloc = task->t_env->fse.alloc;
+	struct silofs_alloc *alloc = task->t_env->base.alloc;
 	struct silofs_inspect_ctx *insp_ctx = NULL;
 	int ret;
 

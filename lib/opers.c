@@ -43,8 +43,8 @@ static int op_start(struct silofs_task *task)
 	struct silofs_env *env = task->t_env;
 
 	silofs_task_lock_fs(task);
-	env->fse_op_stat.op_time = task->t_oper.op_creds.ts.tv_sec;
-	env->fse_op_stat.op_count++;
+	env->oper_stat.op_time = task->t_oper.op_creds.ts.tv_sec;
+	env->oper_stat.op_count++;
 	return 0;
 }
 
@@ -75,7 +75,7 @@ static void op_probe_duration(const struct silofs_task *task, int status)
 	const time_t beg = task->t_oper.op_creds.ts.tv_sec;
 	const time_t dif = now - beg;
 	const uint32_t op_code = task->t_oper.op_code;
-	const unsigned long id = task->t_env->fse_op_stat.op_count;
+	const unsigned long id = task->t_env->oper_stat.op_count;
 
 	if (op_code && (beg < now) && (dif > 30)) {
 		log_warn("slow-oper: id=%ld op_code=%u duration=%ld status=%d",
@@ -182,20 +182,20 @@ static bool op_is_fsowner(const struct silofs_task *task)
 {
 	const struct silofs_creds *creds = creds_of(task);
 
-	return uid_eq(creds->host_cred.uid, task->t_env->fse_owner.uid);
+	return uid_eq(creds->host_cred.uid, task->t_env->owner_cred.uid);
 }
 
 static bool op_cap_sys_admin(const struct silofs_task *task)
 {
 	const struct silofs_creds *creds = creds_of(task);
 
-	return (task->t_env->fse_ctl_flags & SILOFS_ENVF_ALLOWADMIN) &&
+	return (task->t_env->ctl_flags & SILOFS_ENVF_ALLOWADMIN) &&
 	       silofs_user_cap_sys_admin(&creds->host_cred);
 }
 
 static bool op_allow_other(const struct silofs_task *task)
 {
-	return (task->t_env->fse_ctl_flags & SILOFS_ENVF_ALLOWOTHER) > 0;
+	return (task->t_env->ctl_flags & SILOFS_ENVF_ALLOWOTHER) > 0;
 }
 
 static int op_authorize(const struct silofs_task *task)

@@ -98,7 +98,7 @@ ismutable(const struct silofs_env *env, const struct silofs_laddr *laddr)
 	bool ret = false;
 
 	if (!laddr_isnull(laddr)) {
-		ret = silofs_sbi_ismutable_laddr(env->fse_sbi, laddr);
+		ret = silofs_sbi_ismutable_laddr(env->sbi, laddr);
 	}
 	return ret;
 }
@@ -171,7 +171,7 @@ static bool sni_has_main_lseg(const struct silofs_spnode_info *sni)
 static struct silofs_lcache *
 vstgc_lcache(const struct silofs_vstage_ctx *vstg_ctx)
 {
-	return vstg_ctx->env->fse.lcache;
+	return vstg_ctx->env->base.lcache;
 }
 
 static void vstgc_log_cache_stat(const struct silofs_vstage_ctx *vstg_ctx)
@@ -395,7 +395,7 @@ vstgc_setup(struct silofs_vstage_ctx *vstg_ctx, struct silofs_task *task,
 	memset(vstg_ctx, 0, sizeof(*vstg_ctx));
 	vstg_ctx->task = task;
 	vstg_ctx->env = task->t_env;
-	vstg_ctx->sbi = task->t_env->fse_sbi;
+	vstg_ctx->sbi = task->t_env->sbi;
 	vstg_ctx->vaddr = vaddr;
 	vstg_ctx->stg_mode = stg_mode;
 	vstg_ctx->vspace = vaddr->ltype;
@@ -2021,7 +2021,7 @@ static int
 vstgc_load_view_at(const struct silofs_vstage_ctx *vstg_ctx,
                    const struct silofs_laddr *laddr, struct silofs_view *view)
 {
-	struct silofs_repo *repo = vstg_ctx->env->fse.repo;
+	struct silofs_repo *repo = vstg_ctx->env->base.repo;
 	const enum silofs_ltype ltype = laddr_ltype(laddr);
 	enum silofs_stg_mode stg_mode = vstg_ctx->stg_mode;
 	int ret = 0;
@@ -2039,7 +2039,7 @@ vstgc_load_view_at(const struct silofs_vstage_ctx *vstg_ctx,
 static int vstgc_require_laddr(const struct silofs_vstage_ctx *vstg_ctx,
                                const struct silofs_laddr *laddr)
 {
-	struct silofs_repo *repo = vstg_ctx->env->fse.repo;
+	struct silofs_repo *repo = vstg_ctx->env->base.repo;
 	int err;
 
 	err = silofs_repo_require_lseg(repo, &laddr->lsid);

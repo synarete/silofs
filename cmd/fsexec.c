@@ -40,7 +40,7 @@ void cmd_del_env(struct silofs_env **p_env)
 
 static char *cmd_repodir_name(const struct silofs_env *env)
 {
-	const struct silofs_fs_bref *bref = &env->fse_args.bref;
+	const struct silofs_fs_bref *bref = &env->args.bref;
 	char *ret = NULL;
 
 	cmd_join_path(bref->repodir, bref->name, &ret);

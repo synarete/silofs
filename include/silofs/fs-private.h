@@ -163,7 +163,7 @@ silofs_vni_env(const struct silofs_vnode_info *vni)
 static inline struct silofs_sb_info *
 silofs_vni_sbi(const struct silofs_vnode_info *vni)
 {
-	return vni->vn_lni.ln_env->fse_sbi;
+	return vni->vn_lni.ln_env->sbi;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

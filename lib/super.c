@@ -688,7 +688,7 @@ int silof_sbi_check_mut_fs(const struct silofs_sb_info *sbi)
 	const struct silofs_env *env = sbi_env(sbi);
 	const unsigned long ms_mask = MS_RDONLY;
 
-	if ((env->fse_ms_flags & ms_mask) == ms_mask) {
+	if ((env->ms_flags & ms_mask) == ms_mask) {
 		return -SILOFS_EROFS;
 	}
 	if (silofs_sb_test_flags(sbi->sb, SILOFS_SUPERF_FOSSIL)) {
@@ -703,7 +703,7 @@ int silofs_sbi_shut(struct silofs_sb_info *sbi)
 
 	if (sbi != NULL) {
 		env = sbi_env(sbi);
-		log_dbg("shut-super: op_count=%lu", env->fse_op_stat.op_count);
+		log_dbg("shut-super: op_count=%lu", env->oper_stat.op_count);
 	}
 	return 0;
 }

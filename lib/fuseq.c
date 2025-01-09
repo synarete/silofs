@@ -2684,7 +2684,7 @@ static bool fqd_asyncwr_mode(const struct silofs_fuseq_dispatcher *fqd)
 	const struct silofs_fuseq *fq = fqd_fuseq(fqd);
 	const enum silofs_env_flags mask = SILOFS_ENVF_ASYNCWR;
 
-	return (fq->fq_env->fse_ctl_flags & mask) == mask;
+	return (fq->fq_env->ctl_flags & mask) == mask;
 }
 
 static void
@@ -4277,7 +4277,7 @@ static void fqw_setup_self_task(const struct silofs_fuseq_worker *fqw,
 {
 	const struct silofs_fuseq *fq = fqw_fuseq(fqw);
 	const struct silofs_env *env = fq->fq_env;
-	const struct silofs_fs_args *args = &env->fse_args;
+	const struct silofs_fs_args *args = &env->args;
 
 	silofs_task_set_creds(task, args->uid, args->gid, args->umask);
 	silofs_task_set_ts(task, false);
@@ -4789,7 +4789,7 @@ static bool has_allow_other_mode(const struct silofs_env *env)
 {
 	const enum silofs_env_flags mask = SILOFS_ENVF_ALLOWOTHER;
 
-	return (env->fse_ctl_flags & mask) == mask;
+	return (env->ctl_flags & mask) == mask;
 }
 
 int silofs_fuseq_mount(struct silofs_fuseq *fq, struct silofs_env *env,
@@ -4804,9 +4804,9 @@ int silofs_fuseq_mount(struct silofs_fuseq *fq, struct silofs_env *env,
 	int err;
 	bool allow_other;
 
-	uid = env->fse_owner.uid;
-	gid = env->fse_owner.gid;
-	ms_flags = env->fse_ms_flags;
+	uid = env->owner_cred.uid;
+	gid = env->owner_cred.gid;
+	ms_flags = env->ms_flags;
 	allow_other = has_allow_other_mode(env);
 
 	err = silofs_mntrpc_handshake(uid, gid);
@@ -4825,7 +4825,7 @@ int silofs_fuseq_mount(struct silofs_fuseq *fq, struct silofs_env *env,
 		return err;
 	}
 
-	fq->fq_fs_owner = env->fse_owner.uid;
+	fq->fq_fs_owner = env->owner_cred.uid;
 	fq->fq_fuse_fd = fd;
 	fq->fq_mount = true;
 	fq->fq_env = env;

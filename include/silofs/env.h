@@ -45,19 +45,14 @@ struct silofs_oper_stat {
 /* base members of env-block (provided) */
 struct silofs_env_base {
 	struct silofs_alloc   *alloc;
-	struct silofs_lcache  *lcache;
 	struct silofs_repo    *repo;
+	struct silofs_pcache  *pcache;
+	struct silofs_lcache  *lcache;
 	struct silofs_submitq *submitq;
 	struct silofs_flusher *flusher;
 	struct silofs_idsmap  *idsmap;
 	struct silofs_bstore  *bstore;
 	struct silofs_fuseq   *fuseq;
-};
-
-/* fs two-layers locking */
-struct silofs_env_locks {
-	struct silofs_mutex  mutex;
-	struct silofs_rwlock rwlock;
 };
 
 /* top-level boot state */
@@ -68,25 +63,31 @@ struct silofs_env_boot {
 	struct silofs_bootrec brec;
 };
 
+/* fs two-layers locking */
+struct silofs_env_locks {
+	struct silofs_rwlock rwlock;
+	struct silofs_mutex  mutex;
+};
+
 /* top-level environment object */
 struct silofs_env {
-	struct silofs_fs_args   fse_args;
-	struct silofs_env_base  fse;
-	struct silofs_env_locks fse_locks;
-	struct silofs_env_boot  fse_boot;
-	struct silofs_cipher    fse_enc_cipher;
-	struct silofs_cipher    fse_dec_cipher;
-	struct silofs_mdigest   fse_mdigest;
-	struct silofs_caddr     fse_pack_caddr;
-	struct silofs_oper_stat fse_op_stat;
-	struct silofs_lsid      fse_sb_lsid;
-	struct silofs_sb_info  *fse_sbi;
-	struct silofs_ulink     fse_sb_ulink;
-	struct silofs_cred      fse_owner;
-	unsigned long           fse_ms_flags;
-	enum silofs_env_flags   fse_ctl_flags;
-	iconv_t                 fse_iconv;
-	time_t                  fse_init_time;
+	struct silofs_fs_args   args;
+	struct silofs_env_base  base;
+	struct silofs_env_boot  boot;
+	struct silofs_env_locks locks;
+	struct silofs_cipher    enc_cipher;
+	struct silofs_cipher    dec_cipher;
+	struct silofs_mdigest   mdigest;
+	struct silofs_caddr     pack_caddr;
+	struct silofs_oper_stat oper_stat;
+	struct silofs_lsid      sb_lsid;
+	struct silofs_sb_info  *sbi;
+	struct silofs_ulink     sb_ulink;
+	struct silofs_cred      owner_cred;
+	unsigned long           ms_flags;
+	enum silofs_env_flags   ctl_flags;
+	iconv_t                 iconv;
+	time_t                  init_time;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

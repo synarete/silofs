@@ -369,7 +369,7 @@ static bool fli_asyncwr(const struct silofs_fileaf_info *fli)
 {
 	const struct silofs_env *env = vni_env(&fli->fl_vni);
 
-	return (env->fse_ctl_flags & SILOFS_ENVF_ASYNCWR) > 0;
+	return (env->ctl_flags & SILOFS_ENVF_ASYNCWR) > 0;
 }
 
 static void fli_pre_io(struct silofs_fileaf_info *fli, int wr_mode)
@@ -884,7 +884,7 @@ static void filc_decref(const struct silofs_file_ctx *f_ctx)
 
 static void *filc_nil_block(const struct silofs_file_ctx *f_ctx)
 {
-	struct silofs_lblock *nil_bk = f_ctx->env->fse.lcache->lc_nil_lbk;
+	struct silofs_lblock *nil_bk = f_ctx->env->base.lcache->lc_nil_lbk;
 
 	return nil_bk->u.bk;
 }

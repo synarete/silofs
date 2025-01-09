@@ -1246,7 +1246,7 @@ static iconv_t iconv_by(const struct silofs_inode_info *dir_ii)
 {
 	const struct silofs_env *env = ii_env(dir_ii);
 
-	return env->fse_iconv;
+	return env->iconv;
 }
 
 static int dir_check_utf8_name(const struct silofs_inode_info *dir_ii,
@@ -1300,7 +1300,7 @@ mdigest_of(const struct silofs_inode_info *dii)
 {
 	const struct silofs_env *env = ii_env(dii);
 
-	return &env->fse_mdigest;
+	return &env->mdigest;
 }
 
 static uint64_t hash256_to_u64(const struct silofs_hash256 *hash)

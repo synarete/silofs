@@ -89,16 +89,16 @@ static uint64_t hash_of_blobid(const struct silofs_blobid *blobid)
 	return silofs_blobid_hash64(blobid);
 }
 
-static uint64_t hash_of_psid(const struct silofs_psid *psid)
+static uint64_t hash_of_pvsid(const struct silofs_pvsid *pvsid)
 {
-	return silofs_psid_hash64(psid);
+	return silofs_pvsid_hash64(pvsid);
 }
 
 static uint64_t hash_of_paddr(const struct silofs_paddr *paddr)
 {
 	const uint64_t uoff = (uint64_t)paddr->off;
 	const uint64_t h1 = 0xc6a4a7935bd1e995ULL - paddr->len;
-	const uint64_t h2 = hash_of_psid(&paddr->psid);
+	const uint64_t h2 = hash_of_pvsid(&paddr->pvsid);
 
 	return uoff ^ h1 ^ h2;
 }

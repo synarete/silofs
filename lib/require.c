@@ -126,8 +126,8 @@ static void require_persistent_types_size1(void)
 {
 	REQUIRE_SIZEOF(struct silofs_name, SILOFS_NAME_MAX + 1);
 	REQUIRE_SIZEOF(struct silofs_header, SILOFS_HEADER_SIZE);
-	REQUIRE_SIZEOF(struct silofs_psid32b, 32);
-	REQUIRE_SIZEOF(struct silofs_pvasd64b, 64);
+	REQUIRE_SIZEOF(struct silofs_pvsid32b, 32);
+	REQUIRE_SIZEOF(struct silofs_pvsegr64b, 64);
 	REQUIRE_SIZEOF(struct silofs_paddr48b, 48);
 	REQUIRE_SIZEOF(struct silofs_caddr64b, 64);
 	REQUIRE_SIZEOF(struct silofs_chkpt_node, SILOFS_PSEG_CHKPT_SIZE);
@@ -224,7 +224,7 @@ static void require_persistent_types_alignment2(void)
 	REQUIRE_OFFSET64(struct silofs_bootrec1k, br_sb_riv, 112);
 	REQUIRE_OFFSET64(struct silofs_bootrec1k, br_sb_uaddr, 128);
 	REQUIRE_OFFSET64(struct silofs_bootrec1k, br_reserved2, 192);
-	REQUIRE_OFFSET64(struct silofs_bootrec1k, br_pvasd, 256);
+	REQUIRE_OFFSET64(struct silofs_bootrec1k, br_pvsegr, 256);
 	REQUIRE_OFFSET64(struct silofs_bootrec1k, br_reserved3, 320);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_hdr, 0);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_magic, 16);

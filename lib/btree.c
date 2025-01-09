@@ -89,24 +89,25 @@ static int btree_load_btnode(const struct silofs_btree *btree,
 	return silofs_repo_load_pobj(btree->bt_repo, bni_paddr(bni), &rwv);
 }
 
-static int btree_require_pseg(const struct silofs_btree *btree,
-                              const struct silofs_psid *psid, bool create)
+static int btree_require_pvseg(const struct silofs_btree *btree,
+                               const struct silofs_pvsid *pvsid, bool create)
 
 {
 	int err;
 
 	if (create) {
-		err = silofs_repo_create_pseg(btree->bt_repo, psid);
+		err = silofs_repo_create_pvseg(btree->bt_repo, pvsid);
 	} else {
-		err = silofs_repo_stage_pseg(btree->bt_repo, psid);
+		err = silofs_repo_stage_pvseg(btree->bt_repo, pvsid);
 	}
 	return err;
 }
 
-static int btree_require_pseg_of(const struct silofs_btree *btree,
-                                 const struct silofs_paddr *paddr, bool create)
+static int
+btree_require_pvseg_of(const struct silofs_btree *btree,
+                       const struct silofs_paddr *paddr, bool create)
 {
-	return btree_require_pseg(btree, &paddr->psid, create);
+	return btree_require_pvseg(btree, &paddr->pvsid, create);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -207,7 +208,7 @@ static int btree_stage_btleaf_at(const struct silofs_btree *btree,
 
 	silofs_assert_eq(paddr->ptype, SILOFS_PTYPE_BTLEAF);
 
-	err = btree_require_pseg_of(btree, paddr, false);
+	err = btree_require_pvseg_of(btree, paddr, false);
 	if (err) {
 		return err;
 	}
@@ -279,7 +280,7 @@ static int btree_stage_btnode_at(const struct silofs_btree *btree,
 
 	silofs_assert_eq(paddr->ptype, SILOFS_PTYPE_BTNODE);
 
-	err = btree_require_pseg_of(btree, paddr, false);
+	err = btree_require_pvseg_of(btree, paddr, false);
 	if (err) {
 		return err;
 	}

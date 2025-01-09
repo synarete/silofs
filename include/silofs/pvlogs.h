@@ -20,8 +20,8 @@
 #include <silofs/infra.h>
 #include <silofs/addr.h>
 
-/* persistent volume address-space descriptor */
-struct silofs_pvasd {
+/* persistent volume segments range */
+struct silofs_pvsegr {
 	struct silofs_pvid pvid;
 	uint32_t           base_index;
 	uint32_t           curr_index;
@@ -30,31 +30,31 @@ struct silofs_pvasd {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_pvasd_init(struct silofs_pvasd *pvasd);
+void silofs_pvsegr_init(struct silofs_pvsegr *pvsegr);
 
-void silofs_pvasd_fini(struct silofs_pvasd *pvasd);
+void silofs_pvsegr_fini(struct silofs_pvsegr *pvsegr);
 
-int silofs_pvasd_validate(const struct silofs_pvasd *pvasd);
+int silofs_pvsegr_validate(const struct silofs_pvsegr *pvsegr);
 
-void silofs_pvasd_assign(struct silofs_pvasd       *pvasd,
-                         const struct silofs_pvasd *other);
+void silofs_pvsegr_assign(struct silofs_pvsegr       *pvsegr,
+                          const struct silofs_pvsegr *other);
 
-bool silofs_pvasd_has_paddr(const struct silofs_pvasd *pvasd,
-                            const struct silofs_paddr *paddr);
+bool silofs_pvsegr_has_paddr(const struct silofs_pvsegr *pvsegr,
+                             const struct silofs_paddr  *paddr);
 
-void silofs_pvasd_next_chkpt(struct silofs_pvasd *pvasd,
-                             struct silofs_paddr *out_paddr);
+void silofs_pvsegr_next_chkpt(struct silofs_pvsegr *pvsegr,
+                              struct silofs_paddr  *out_paddr);
 
-void silofs_pvasd_last_chkpt(const struct silofs_pvasd *pvasd,
-                             struct silofs_paddr       *out_paddr);
+void silofs_pvsegr_last_chkpt(const struct silofs_pvsegr *pvsegr,
+                              struct silofs_paddr        *out_paddr);
 
-void silofs_pvasd_next_btnode(struct silofs_pvasd *pvasd,
-                              struct silofs_paddr *out_paddr);
+void silofs_pvsegr_next_btnode(struct silofs_pvsegr *pvsegr,
+                               struct silofs_paddr  *out_paddr);
 
-void silofs_pvasd64b_htox(struct silofs_pvasd64b    *pvasd64,
-                          const struct silofs_pvasd *pvasd);
+void silofs_pvsegr64b_htox(struct silofs_pvsegr64b    *pvsegr64,
+                           const struct silofs_pvsegr *pvsegr);
 
-void silofs_pvasd64b_xtoh(const struct silofs_pvasd64b *pvasd64,
-                          struct silofs_pvasd          *pvasd);
+void silofs_pvsegr64b_xtoh(const struct silofs_pvsegr64b *pvsegr64,
+                           struct silofs_pvsegr          *pvsegr);
 
 #endif /* SILOFS_PVLOGS_H_ */

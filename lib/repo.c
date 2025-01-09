@@ -29,7 +29,7 @@
 struct silofs_repo_cek {
 	union {
 		struct silofs_lsid lsid;
-		struct silofs_psid psid;
+		struct silofs_pvsid pvsid;
 	} u;
 	int kind;
 };
@@ -42,7 +42,7 @@ struct silofs_repo_ce {
 };
 
 /* persistent-segment control file */
-struct silofs_psegf {
+struct silofs_pvsegf {
 	struct silofs_repo_ce psf_rce;
 	ssize_t psf_size;
 	int psf_fd;
@@ -84,7 +84,7 @@ static const struct silofs_repo_defs repo_defs = {
 /* local functions */
 static int repo_close(struct silofs_repo *repo);
 static void
-repo_evict_psegf(struct silofs_repo *repo, struct silofs_psegf *psegf);
+repo_evict_pvsegf(struct silofs_repo *repo, struct silofs_pvsegf *pvsegf);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
@@ -552,11 +552,11 @@ rce_from_lru_link(const struct silofs_list_head *lh)
 }
 
 static void
-rce_init1(struct silofs_repo_ce *rce, const struct silofs_psid *psid)
+rce_init1(struct silofs_repo_ce *rce, const struct silofs_pvsid *pvsid)
 {
 	silofs_list_head_init(&rce->rce_htb_lh);
 	silofs_list_head_init(&rce->rce_lru_lh);
-	silofs_psid_assign(&rce->rce_key.u.psid, psid);
+	silofs_pvsid_assign(&rce->rce_key.u.pvsid, pvsid);
 	rce->rce_key.kind = RCEK_PSID;
 }
 
@@ -577,11 +577,11 @@ static void rce_fini(struct silofs_repo_ce *rce)
 	rce->rce_key.kind = -1;
 }
 
-static bool
-rce_has_psid(const struct silofs_repo_ce *rce, const struct silofs_psid *psid)
+static bool rce_has_pvsid(const struct silofs_repo_ce *rce,
+                          const struct silofs_pvsid *pvsid)
 {
 	return (rce->rce_key.kind == RCEK_PSID) &&
-	       silofs_psid_isequal(&rce->rce_key.u.psid, psid);
+	       silofs_pvsid_isequal(&rce->rce_key.u.pvsid, pvsid);
 }
 
 static bool
@@ -593,94 +593,95 @@ rce_has_lsid(const struct silofs_repo_ce *rce, const struct silofs_lsid *lsid)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct silofs_psegf *psegf_from_rce(const struct silofs_repo_ce *rce)
+static struct silofs_pvsegf *pvsegf_from_rce(const struct silofs_repo_ce *rce)
 {
-	const struct silofs_psegf *psegf;
+	const struct silofs_pvsegf *pvsegf;
 
-	psegf = container_of2(rce, struct silofs_psegf, psf_rce);
-	return unconst(psegf);
+	pvsegf = container_of2(rce, struct silofs_pvsegf, psf_rce);
+	return unconst(pvsegf);
 }
 
 static int
-psegf_init(struct silofs_psegf *psegf, const struct silofs_psid *psid)
+pvsegf_init(struct silofs_pvsegf *pvsegf, const struct silofs_pvsid *pvsid)
 {
-	rce_init1(&psegf->psf_rce, psid);
-	psegf->psf_size = 0;
-	psegf->psf_fd = -1;
+	rce_init1(&pvsegf->psf_rce, pvsid);
+	pvsegf->psf_size = 0;
+	pvsegf->psf_fd = -1;
 	return 0;
 }
 
-static void psegf_fini(struct silofs_psegf *psegf)
+static void pvsegf_fini(struct silofs_pvsegf *pvsegf)
 {
-	rce_fini(&psegf->psf_rce);
-	psegf->psf_size = -1;
-	psegf->psf_fd = -1;
+	rce_fini(&pvsegf->psf_rce);
+	pvsegf->psf_size = -1;
+	pvsegf->psf_fd = -1;
 }
 
-static int psegf_openat(struct silofs_psegf *psegf, int dfd, const char *name,
-                        bool creat_mode)
+static int pvsegf_openat(struct silofs_pvsegf *pvsegf, int dfd,
+                         const char *name, bool creat_mode)
 {
 	const int o_flags = creat_mode ? (O_CREAT | O_RDWR | O_TRUNC) : O_RDWR;
 
-	silofs_assert_eq(psegf->psf_fd, -1);
-	return do_openat(dfd, name, o_flags, 0600, &psegf->psf_fd);
+	silofs_assert_eq(pvsegf->psf_fd, -1);
+	return do_openat(dfd, name, o_flags, 0600, &pvsegf->psf_fd);
 }
 
-static int psegf_close(struct silofs_psegf *psegf)
+static int pvsegf_close(struct silofs_pvsegf *pvsegf)
 {
-	return do_closefd(&psegf->psf_fd);
+	return do_closefd(&pvsegf->psf_fd);
 }
 
-static int psegf_fsync(const struct silofs_psegf *psegf)
+static int pvsegf_fsync(const struct silofs_pvsegf *pvsegf)
 {
-	return do_fsync(psegf->psf_fd);
+	return do_fsync(pvsegf->psf_fd);
 }
 
-static int psegf_pwriten(const struct silofs_psegf *psegf, loff_t off,
-                         const void *buf, size_t len)
+static int pvsegf_pwriten(const struct silofs_pvsegf *pvsegf, loff_t off,
+                          const void *buf, size_t len)
 {
-	return do_pwriten(psegf->psf_fd, buf, len, off);
+	return do_pwriten(pvsegf->psf_fd, buf, len, off);
 }
 
-static int psegf_preadn(const struct silofs_psegf *psegf, loff_t off,
-                        void *buf, size_t len)
+static int pvsegf_preadn(const struct silofs_pvsegf *pvsegf, loff_t off,
+                         void *buf, size_t len)
 {
-	return do_preadn(psegf->psf_fd, buf, len, off);
+	return do_preadn(pvsegf->psf_fd, buf, len, off);
 }
 
-static int psegf_truncate(const struct silofs_psegf *psegf, ssize_t len)
+static int pvsegf_truncate(const struct silofs_pvsegf *pvsegf, ssize_t len)
 {
-	return do_ftruncate(psegf->psf_fd, len);
+	return do_ftruncate(pvsegf->psf_fd, len);
 }
 
-static int psegf_sync(const struct silofs_psegf *psegf)
+static int pvsegf_sync(const struct silofs_pvsegf *pvsegf)
 {
-	return do_fsync(psegf->psf_fd);
+	return do_fsync(pvsegf->psf_fd);
 }
 
-static struct silofs_psegf *
-psegf_new(struct silofs_alloc *alloc, const struct silofs_psid *psid)
+static struct silofs_pvsegf *
+pvsegf_new(struct silofs_alloc *alloc, const struct silofs_pvsid *pvsid)
 {
-	struct silofs_psegf *psegf;
+	struct silofs_pvsegf *pvsegf;
 	int err;
 
-	psegf = silofs_memalloc(alloc, sizeof(*psegf), SILOFS_ALLOCF_BZERO);
-	if (psegf == NULL) {
+	pvsegf = silofs_memalloc(alloc, sizeof(*pvsegf), SILOFS_ALLOCF_BZERO);
+	if (pvsegf == NULL) {
 		return NULL;
 	}
-	err = psegf_init(psegf, psid);
+	err = pvsegf_init(pvsegf, pvsid);
 	if (err) {
-		silofs_memfree(alloc, psegf, sizeof(*psegf), 0);
+		silofs_memfree(alloc, pvsegf, sizeof(*pvsegf), 0);
 		return NULL;
 	}
-	return psegf;
+	return pvsegf;
 }
 
-static void psegf_del(struct silofs_psegf *psegf, struct silofs_alloc *alloc)
+static void
+pvsegf_del(struct silofs_pvsegf *pvsegf, struct silofs_alloc *alloc)
 {
-	psegf_close(psegf);
-	psegf_fini(psegf);
-	silofs_memfree(alloc, psegf, sizeof(*psegf), 0);
+	pvsegf_close(pvsegf);
+	pvsegf_fini(pvsegf);
+	silofs_memfree(alloc, pvsegf, sizeof(*pvsegf), 0);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1126,10 +1127,10 @@ static void repo_htbl_fini(struct silofs_repo *repo)
 	}
 }
 
-static size_t repo_htbl_slot_of_psid(const struct silofs_repo *repo,
-                                     const struct silofs_psid *psid)
+static size_t repo_htbl_slot_of_pvsid(const struct silofs_repo *repo,
+                                      const struct silofs_pvsid *pvsid)
 {
-	const uint64_t hash = silofs_psid_hash64(psid);
+	const uint64_t hash = silofs_pvsid_hash64(pvsid);
 
 	return hash % repo->re_htbl.rh_nelems;
 }
@@ -1153,10 +1154,10 @@ repo_htbl_list_at(const struct silofs_repo *repo, size_t slot)
 }
 
 static struct silofs_list_head *
-repo_htbl_list_of_psid(const struct silofs_repo *repo,
-                       const struct silofs_psid *psid)
+repo_htbl_list_of_pvsid(const struct silofs_repo *repo,
+                        const struct silofs_pvsid *pvsid)
 {
-	const size_t slot = repo_htbl_slot_of_psid(repo, psid);
+	const size_t slot = repo_htbl_slot_of_pvsid(repo, pvsid);
 
 	return repo_htbl_list_at(repo, slot);
 }
@@ -1170,22 +1171,22 @@ repo_htbl_list_of_lsid(const struct silofs_repo *repo,
 	return repo_htbl_list_at(repo, slot);
 }
 
-static struct silofs_psegf *
-repo_htbl_lookup_psegf(const struct silofs_repo *repo,
-                       const struct silofs_psid *psid)
+static struct silofs_pvsegf *
+repo_htbl_lookup_pvsegf(const struct silofs_repo *repo,
+                        const struct silofs_pvsid *pvsid)
 {
 	const struct silofs_list_head *lst;
 	const struct silofs_list_head *itr;
 	const struct silofs_repo_ce *rce;
-	const struct silofs_psegf *psegf;
+	const struct silofs_pvsegf *pvsegf;
 
-	lst = repo_htbl_list_of_psid(repo, psid);
+	lst = repo_htbl_list_of_pvsid(repo, pvsid);
 	itr = lst->next;
 	while (itr != lst) {
 		rce = rce_from_htb_link(itr);
-		if (rce_has_psid(rce, psid)) {
-			psegf = psegf_from_rce(rce);
-			return unconst(psegf);
+		if (rce_has_pvsid(rce, pvsid)) {
+			pvsegf = pvsegf_from_rce(rce);
+			return unconst(pvsegf);
 		}
 		itr = itr->next;
 	}
@@ -1215,12 +1216,12 @@ repo_htbl_lookup_lsegf(const struct silofs_repo *repo,
 }
 
 static void
-repo_htbl_insert_psegf(struct silofs_repo *repo, struct silofs_psegf *psegf)
+repo_htbl_insert_pvsegf(struct silofs_repo *repo, struct silofs_pvsegf *pvsegf)
 {
-	struct silofs_repo_ce *rce = &psegf->psf_rce;
+	struct silofs_repo_ce *rce = &pvsegf->psf_rce;
 	struct silofs_list_head *lst;
 
-	lst = repo_htbl_list_of_psid(repo, &rce->rce_key.u.psid);
+	lst = repo_htbl_list_of_pvsid(repo, &rce->rce_key.u.pvsid);
 	list_push_front(lst, &rce->rce_htb_lh);
 	repo->re_htbl.rh_size += 1;
 }
@@ -1246,9 +1247,9 @@ repo_htbl_remove(struct silofs_repo *repo, struct silofs_repo_ce *rce)
 }
 
 static void
-repo_htbl_remove_psegf(struct silofs_repo *repo, struct silofs_psegf *psegf)
+repo_htbl_remove_pvsegf(struct silofs_repo *repo, struct silofs_pvsegf *pvsegf)
 {
-	repo_htbl_remove(repo, &psegf->psf_rce);
+	repo_htbl_remove(repo, &pvsegf->psf_rce);
 }
 
 static void
@@ -1266,9 +1267,9 @@ repo_lruq_insert(struct silofs_repo *repo, struct silofs_repo_ce *rce)
 }
 
 static void
-repo_lruq_insert_psegf(struct silofs_repo *repo, struct silofs_psegf *psegf)
+repo_lruq_insert_pvsegf(struct silofs_repo *repo, struct silofs_pvsegf *pvsegf)
 {
-	repo_lruq_insert(repo, &psegf->psf_rce);
+	repo_lruq_insert(repo, &pvsegf->psf_rce);
 }
 
 static void
@@ -1284,9 +1285,9 @@ repo_lruq_remove(struct silofs_repo *repo, struct silofs_repo_ce *rce)
 }
 
 static void
-repo_lruq_remove_psegf(struct silofs_repo *repo, struct silofs_psegf *psegf)
+repo_lruq_remove_pvsegf(struct silofs_repo *repo, struct silofs_pvsegf *pvsegf)
 {
-	repo_lruq_remove(repo, &psegf->psf_rce);
+	repo_lruq_remove(repo, &pvsegf->psf_rce);
 }
 
 static void
@@ -1313,10 +1314,10 @@ repo_lruq_requeue(struct silofs_repo *repo, struct silofs_repo_ce *rce)
 	}
 }
 
-static void
-repo_lruq_requeue_psegf(struct silofs_repo *repo, struct silofs_psegf *psegf)
+static void repo_lruq_requeue_pvsegf(struct silofs_repo *repo,
+                                     struct silofs_pvsegf *pvsegf)
 {
-	repo_lruq_requeue(repo, &psegf->psf_rce);
+	repo_lruq_requeue(repo, &pvsegf->psf_rce);
 }
 
 static void
@@ -1393,7 +1394,7 @@ repo_prevof(const struct silofs_repo *repo, const struct silofs_repo_ce *rce)
 static int repo_do_fsync_all(struct silofs_repo *repo)
 {
 	const struct silofs_repo_ce *rce = NULL;
-	const struct silofs_psegf *psegf = NULL;
+	const struct silofs_pvsegf *pvsegf = NULL;
 	const struct silofs_lsegf *lsegf = NULL;
 	int ret = 0;
 	int err = 0;
@@ -1401,8 +1402,8 @@ static int repo_do_fsync_all(struct silofs_repo *repo)
 	rce = repo_prevof(repo, NULL);
 	while (rce != NULL) {
 		if (rce->rce_key.kind == RCEK_PSID) {
-			psegf = psegf_from_rce(rce);
-			err = psegf_fsync(psegf);
+			pvsegf = pvsegf_from_rce(rce);
+			err = pvsegf_fsync(pvsegf);
 		} else if (rce->rce_key.kind == RCEK_LSID) {
 			lsegf = lsegf_from_rce(rce);
 			err = lsegf_fsync2(lsegf);
@@ -1428,12 +1429,12 @@ int silofs_repo_fsync_all(struct silofs_repo *repo)
 static void
 repo_evict_one(struct silofs_repo *repo, struct silofs_repo_ce *rce)
 {
-	struct silofs_psegf *psegf = NULL;
+	struct silofs_pvsegf *pvsegf = NULL;
 	struct silofs_lsegf *lsegf = NULL;
 
 	if (rce->rce_key.kind == RCEK_PSID) {
-		psegf = psegf_from_rce(rce);
-		repo_evict_psegf(repo, psegf);
+		pvsegf = pvsegf_from_rce(rce);
+		repo_evict_pvsegf(repo, pvsegf);
 	} else if (rce->rce_key.kind == RCEK_LSID) {
 		lsegf = lsegf_from_rce(rce);
 		repo_evict_lsegf(repo, lsegf);
@@ -1454,9 +1455,9 @@ static void repo_evict_all(struct silofs_repo *repo)
 }
 
 static void
-repo_requeue_psegf(struct silofs_repo *repo, struct silofs_psegf *psegf)
+repo_requeue_pvsegf(struct silofs_repo *repo, struct silofs_pvsegf *pvsegf)
 {
-	repo_lruq_requeue_psegf(repo, psegf);
+	repo_lruq_requeue_pvsegf(repo, pvsegf);
 }
 
 static void
@@ -1510,35 +1511,35 @@ void silofs_repo_relax(struct silofs_repo *repo)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int
-repo_create_psegf(struct silofs_repo *repo, const struct silofs_psid *psid,
-                  struct silofs_psegf **out_psegf)
+repo_create_pvsegf(struct silofs_repo *repo, const struct silofs_pvsid *pvsid,
+                   struct silofs_pvsegf **out_pvsegf)
 {
-	struct silofs_psegf *psegf = NULL;
+	struct silofs_pvsegf *pvsegf = NULL;
 
-	psegf = psegf_new(repo->re.alloc, psid);
-	if (psegf == NULL) {
+	pvsegf = pvsegf_new(repo->re.alloc, pvsid);
+	if (pvsegf == NULL) {
 		return -SILOFS_ENOMEM;
 	}
-	repo_htbl_insert_psegf(repo, psegf);
-	repo_lruq_insert_psegf(repo, psegf);
-	*out_psegf = psegf;
+	repo_htbl_insert_pvsegf(repo, pvsegf);
+	repo_lruq_insert_pvsegf(repo, pvsegf);
+	*out_pvsegf = pvsegf;
 	return 0;
 }
 
 static void
-repo_evict_psegf(struct silofs_repo *repo, struct silofs_psegf *psegf)
+repo_evict_pvsegf(struct silofs_repo *repo, struct silofs_pvsegf *pvsegf)
 {
-	repo_htbl_remove_psegf(repo, psegf);
-	repo_lruq_remove_psegf(repo, psegf);
-	psegf_del(psegf, repo->re.alloc);
+	repo_htbl_remove_pvsegf(repo, pvsegf);
+	repo_lruq_remove_pvsegf(repo, pvsegf);
+	pvsegf_del(pvsegf, repo->re.alloc);
 }
 
-static int repo_create_cached_psegf(struct silofs_repo *repo,
-                                    const struct silofs_psid *psid,
-                                    struct silofs_psegf **out_psegf)
+static int repo_create_cached_pvsegf(struct silofs_repo *repo,
+                                     const struct silofs_pvsid *pvsid,
+                                     struct silofs_pvsegf **out_pvsegf)
 {
 	repo_try_evict_overpop(repo);
-	return repo_create_psegf(repo, psid, out_psegf);
+	return repo_create_pvsegf(repo, pvsid, out_pvsegf);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -2970,45 +2971,46 @@ int silofs_repo_lookup_ref(struct silofs_repo *repo,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void repo_pseg_pathname(const struct silofs_repo *repo,
-                               const struct silofs_psid *psid,
-                               struct silofs_strbuf *out_sbuf)
+static void repo_pvseg_pathname(const struct silofs_repo *repo,
+                                const struct silofs_pvsid *pvsid,
+                                struct silofs_strbuf *out_sbuf)
 {
 	struct silofs_strbuf sbuf;
 	const char *dname = repo->re_defs->re_blobs_name;
 
-	silofs_psid_to_str(psid, &sbuf);
+	silofs_pvsid_to_str(pvsid, &sbuf);
 	silofs_strbuf_sprintf(out_sbuf, "%s/%s", dname, sbuf.str);
 }
 
-static int repo_fetch_cached_psegf(const struct silofs_repo *repo,
-                                   const struct silofs_psid *psid,
-                                   struct silofs_psegf **out_psegf)
+static int repo_fetch_cached_pvsegf(const struct silofs_repo *repo,
+                                    const struct silofs_pvsid *pvsid,
+                                    struct silofs_pvsegf **out_pvsegf)
 {
-	*out_psegf = repo_htbl_lookup_psegf(repo, psid);
-	return (*out_psegf != NULL) ? 0 : -SILOFS_ENOENT;
+	*out_pvsegf = repo_htbl_lookup_pvsegf(repo, pvsid);
+	return (*out_pvsegf != NULL) ? 0 : -SILOFS_ENOENT;
 }
 
-static int repo_fetch_cached_psegf2(struct silofs_repo *repo,
-                                    const struct silofs_psid *psid,
-                                    struct silofs_psegf **out_psegf)
+static int repo_fetch_cached_pvsegf2(struct silofs_repo *repo,
+                                     const struct silofs_pvsid *pvsid,
+                                     struct silofs_pvsegf **out_pvsegf)
 {
 	int err;
 
-	err = repo_fetch_cached_psegf(repo, psid, out_psegf);
+	err = repo_fetch_cached_pvsegf(repo, pvsid, out_pvsegf);
 	if (!err) {
-		repo_requeue_psegf(repo, *out_psegf);
+		repo_requeue_pvsegf(repo, *out_pvsegf);
 	}
 	return err;
 }
 
-static int repo_stat_pseg(const struct silofs_repo *repo,
-                          const struct silofs_psid *psid, struct stat *out_st)
+static int
+repo_stat_pvseg(const struct silofs_repo *repo,
+                const struct silofs_pvsid *pvsid, struct stat *out_st)
 {
 	struct silofs_strbuf sbuf;
 	int err;
 
-	repo_pseg_pathname(repo, psid, &sbuf);
+	repo_pvseg_pathname(repo, pvsid, &sbuf);
 	err = do_fstatat(repo->re_dots_dfd, sbuf.str, out_st, 0);
 	if (err) {
 		return (err == -ENOENT) ? -SILOFS_ENOENT : err;
@@ -3019,25 +3021,26 @@ static int repo_stat_pseg(const struct silofs_repo *repo,
 	return 0;
 }
 
-int silofs_repo_stat_pseg(struct silofs_repo *repo,
-                          const struct silofs_psid *psid, struct stat *out_st)
+int silofs_repo_stat_pvseg(struct silofs_repo *repo,
+                           const struct silofs_pvsid *pvsid,
+                           struct stat *out_st)
 {
 	int err;
 
 	repo_lock(repo);
-	err = repo_stat_pseg(repo, psid, out_st);
+	err = repo_stat_pvseg(repo, pvsid, out_st);
 	repo_unlock(repo);
 	return err;
 }
 
-static int repo_stat_no_pseg(const struct silofs_repo *repo,
-                             const struct silofs_psid *psid)
+static int repo_stat_no_pvseg(const struct silofs_repo *repo,
+                              const struct silofs_pvsid *pvsid)
 {
 	struct stat st;
 	int ret = 0;
 	int err;
 
-	err = repo_stat_pseg(repo, psid, &st);
+	err = repo_stat_pvseg(repo, pvsid, &st);
 	if (!err) {
 		ret = -SILOFS_EEXIST;
 	} else if (err != -SILOFS_ENOENT) {
@@ -3046,47 +3049,47 @@ static int repo_stat_no_pseg(const struct silofs_repo *repo,
 	return ret;
 }
 
-static int
-repo_create_pseg_of(const struct silofs_repo *repo, struct silofs_psegf *psegf)
+static int repo_create_pvseg_of(const struct silofs_repo *repo,
+                                struct silofs_pvsegf *pvsegf)
 {
 	struct silofs_strbuf sbuf;
-	const struct silofs_psid *psid = &psegf->psf_rce.rce_key.u.psid;
+	const struct silofs_pvsid *pvsid = &pvsegf->psf_rce.rce_key.u.pvsid;
 
-	repo_pseg_pathname(repo, psid, &sbuf);
-	return psegf_openat(psegf, repo->re_dots_dfd, sbuf.str, true);
+	repo_pvseg_pathname(repo, pvsid, &sbuf);
+	return pvsegf_openat(pvsegf, repo->re_dots_dfd, sbuf.str, true);
 }
 
 static int
-repo_spawn_pseg(struct silofs_repo *repo, const struct silofs_psid *psid,
-                struct silofs_psegf **out_psegf)
+repo_spawn_pvseg(struct silofs_repo *repo, const struct silofs_pvsid *pvsid,
+                 struct silofs_pvsegf **out_pvsegf)
 {
-	struct silofs_psegf *psegf = NULL;
+	struct silofs_pvsegf *pvsegf = NULL;
 	int err;
 
-	err = repo_create_cached_psegf(repo, psid, &psegf);
+	err = repo_create_cached_pvsegf(repo, pvsid, &pvsegf);
 	if (err) {
 		return err;
 	}
-	err = repo_create_pseg_of(repo, psegf);
+	err = repo_create_pvseg_of(repo, pvsegf);
 	if (err) {
-		repo_evict_psegf(repo, psegf);
+		repo_evict_pvsegf(repo, pvsegf);
 		return err;
 	}
-	*out_psegf = psegf;
+	*out_pvsegf = pvsegf;
 	return 0;
 }
 
-static int repo_check_no_pseg(const struct silofs_repo *repo,
-                              const struct silofs_psid *psid)
+static int repo_check_no_pvseg(const struct silofs_repo *repo,
+                               const struct silofs_pvsid *pvsid)
 {
-	struct silofs_psegf *psegf = NULL;
+	struct silofs_pvsegf *pvsegf = NULL;
 	int err;
 
-	err = repo_fetch_cached_psegf(repo, psid, &psegf);
+	err = repo_fetch_cached_pvsegf(repo, pvsid, &pvsegf);
 	if (!err) {
 		return -SILOFS_EEXIST;
 	}
-	err = repo_stat_no_pseg(repo, psid);
+	err = repo_stat_no_pvseg(repo, pvsid);
 	if (err) {
 		return err;
 	}
@@ -3094,106 +3097,106 @@ static int repo_check_no_pseg(const struct silofs_repo *repo,
 }
 
 static int
-repo_create_pseg(struct silofs_repo *repo, const struct silofs_psid *psid)
+repo_create_pvseg(struct silofs_repo *repo, const struct silofs_pvsid *pvsid)
 {
-	struct silofs_psegf *psegf = NULL;
+	struct silofs_pvsegf *pvsegf = NULL;
 	int err;
 
 	err = repo_check_wopen(repo);
 	if (err) {
 		return err;
 	}
-	err = repo_check_no_pseg(repo, psid);
+	err = repo_check_no_pvseg(repo, pvsid);
 	if (err) {
 		return err;
 	}
-	err = repo_spawn_pseg(repo, psid, &psegf);
+	err = repo_spawn_pvseg(repo, pvsid, &pvsegf);
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-int silofs_repo_create_pseg(struct silofs_repo *repo,
-                            const struct silofs_psid *psid)
+int silofs_repo_create_pvseg(struct silofs_repo *repo,
+                             const struct silofs_pvsid *pvsid)
 {
 	int err;
 
 	repo_lock(repo);
-	err = repo_create_pseg(repo, psid);
+	err = repo_create_pvseg(repo, pvsid);
 	repo_unlock(repo);
 	return err;
 }
 
-static int repo_check_has_pseg(const struct silofs_repo *repo,
-                               const struct silofs_psid *psid)
+static int repo_check_has_pvseg(const struct silofs_repo *repo,
+                                const struct silofs_pvsid *pvsid)
 {
 	struct stat st;
-	struct silofs_psegf *psegf = NULL;
+	struct silofs_pvsegf *pvsegf = NULL;
 	int err;
 
-	err = repo_fetch_cached_psegf(repo, psid, &psegf);
+	err = repo_fetch_cached_pvsegf(repo, pvsid, &pvsegf);
 	if (!err) {
 		return 0; /* ok -- cached */
 	}
-	err = repo_stat_pseg(repo, psid, &st);
+	err = repo_stat_pvseg(repo, pvsid, &st);
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-static int repo_check_has_pseg_of(const struct silofs_repo *repo,
-                                  const struct silofs_paddr *paddr)
+static int repo_check_has_pvseg_of(const struct silofs_repo *repo,
+                                   const struct silofs_paddr *paddr)
 {
-	return repo_check_has_pseg(repo, &paddr->psid);
+	return repo_check_has_pvseg(repo, &paddr->pvsid);
 }
 
-static int
-repo_open_pseg_of(const struct silofs_repo *repo, struct silofs_psegf *psegf)
+static int repo_open_pvseg_of(const struct silofs_repo *repo,
+                              struct silofs_pvsegf *pvsegf)
 {
 	struct silofs_strbuf sbuf;
-	const struct silofs_psid *psid = &psegf->psf_rce.rce_key.u.psid;
+	const struct silofs_pvsid *pvsid = &pvsegf->psf_rce.rce_key.u.pvsid;
 
-	repo_pseg_pathname(repo, psid, &sbuf);
-	return psegf_openat(psegf, repo->re_dots_dfd, sbuf.str, false);
+	repo_pvseg_pathname(repo, pvsid, &sbuf);
+	return pvsegf_openat(pvsegf, repo->re_dots_dfd, sbuf.str, false);
 }
 
 static int
-repo_do_stage_pseg(struct silofs_repo *repo, const struct silofs_psid *psid,
-                   struct silofs_psegf **out_psegf)
+repo_do_stage_pvseg(struct silofs_repo *repo, const struct silofs_pvsid *pvsid,
+                    struct silofs_pvsegf **out_pvsegf)
 {
-	struct silofs_psegf *psegf = NULL;
+	struct silofs_pvsegf *pvsegf = NULL;
 	int err;
 
-	err = repo_fetch_cached_psegf2(repo, psid, out_psegf);
+	err = repo_fetch_cached_pvsegf2(repo, pvsid, out_pvsegf);
 	if (!err) {
-		repo_requeue_psegf(repo, *out_psegf);
+		repo_requeue_pvsegf(repo, *out_pvsegf);
 		return 0; /* OK -- cached */
 	}
-	err = repo_create_cached_psegf(repo, psid, &psegf);
+	err = repo_create_cached_pvsegf(repo, pvsid, &pvsegf);
 	if (err) {
 		return err;
 	}
-	err = repo_open_pseg_of(repo, psegf);
+	err = repo_open_pvseg_of(repo, pvsegf);
 	if (err) {
-		repo_evict_psegf(repo, psegf);
+		repo_evict_pvsegf(repo, pvsegf);
 		return err;
 	}
-	*out_psegf = psegf;
+	*out_pvsegf = pvsegf;
 	return 0;
 }
 
 static int
-repo_stage_pseg_of(struct silofs_repo *repo, const struct silofs_paddr *paddr,
-                   struct silofs_psegf **out_psegf)
+repo_stage_pvseg_of(struct silofs_repo *repo, const struct silofs_paddr *paddr,
+                    struct silofs_pvsegf **out_pvsegf)
 {
-	return repo_do_stage_pseg(repo, &paddr->psid, out_psegf);
+	return repo_do_stage_pvseg(repo, &paddr->pvsid, out_pvsegf);
 }
 
 static int
-repo_stage_pseg(struct silofs_repo *repo, const struct silofs_psid *psid,
-                struct silofs_psegf **out_psegf)
+repo_stage_pvseg(struct silofs_repo *repo, const struct silofs_pvsid *pvsid,
+                 struct silofs_pvsegf **out_pvsegf)
 {
 	int err;
 
@@ -3201,25 +3204,25 @@ repo_stage_pseg(struct silofs_repo *repo, const struct silofs_psid *psid,
 	if (err) {
 		return err;
 	}
-	err = repo_check_has_pseg(repo, psid);
+	err = repo_check_has_pvseg(repo, pvsid);
 	if (err) {
 		return err;
 	}
-	err = repo_do_stage_pseg(repo, psid, out_psegf);
+	err = repo_do_stage_pvseg(repo, pvsid, out_pvsegf);
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-int silofs_repo_stage_pseg(struct silofs_repo *repo,
-                           const struct silofs_psid *psid)
+int silofs_repo_stage_pvseg(struct silofs_repo *repo,
+                            const struct silofs_pvsid *pvsid)
 {
-	struct silofs_psegf *psegf = NULL;
+	struct silofs_pvsegf *pvsegf = NULL;
 	int err;
 
 	repo_lock(repo);
-	err = repo_stage_pseg(repo, psid, &psegf);
+	err = repo_stage_pvseg(repo, pvsid, &pvsegf);
 	repo_unlock(repo);
 	return err;
 }
@@ -3228,7 +3231,7 @@ static int
 repo_save_pobj(struct silofs_repo *repo, const struct silofs_paddr *paddr,
                const struct silofs_rovec *rovec)
 {
-	struct silofs_psegf *psegf = NULL;
+	struct silofs_pvsegf *pvsegf = NULL;
 	const size_t len = min(paddr->len, rovec->rov_len);
 	int err;
 
@@ -3236,15 +3239,15 @@ repo_save_pobj(struct silofs_repo *repo, const struct silofs_paddr *paddr,
 	if (err) {
 		return err;
 	}
-	err = repo_check_has_pseg_of(repo, paddr);
+	err = repo_check_has_pvseg_of(repo, paddr);
 	if (err) {
 		return err;
 	}
-	err = repo_stage_pseg_of(repo, paddr, &psegf);
+	err = repo_stage_pvseg_of(repo, paddr, &pvsegf);
 	if (err) {
 		return err;
 	}
-	err = psegf_pwriten(psegf, paddr->off, rovec->rov_base, len);
+	err = pvsegf_pwriten(pvsegf, paddr->off, rovec->rov_base, len);
 	if (err) {
 		return err;
 	}
@@ -3267,7 +3270,7 @@ static int
 repo_load_pobj(struct silofs_repo *repo, const struct silofs_paddr *paddr,
                const struct silofs_rwvec *rwvec)
 {
-	struct silofs_psegf *psegf = NULL;
+	struct silofs_pvsegf *pvsegf = NULL;
 	const size_t len = min(paddr->len, rwvec->rwv_len);
 	int err;
 
@@ -3275,15 +3278,15 @@ repo_load_pobj(struct silofs_repo *repo, const struct silofs_paddr *paddr,
 	if (err) {
 		return err;
 	}
-	err = repo_check_has_pseg_of(repo, paddr);
+	err = repo_check_has_pvseg_of(repo, paddr);
 	if (err) {
 		return err;
 	}
-	err = repo_stage_pseg_of(repo, paddr, &psegf);
+	err = repo_stage_pvseg_of(repo, paddr, &pvsegf);
 	if (err) {
 		return err;
 	}
-	err = psegf_preadn(psegf, paddr->off, rwvec->rwv_base, len);
+	err = pvsegf_preadn(pvsegf, paddr->off, rwvec->rwv_base, len);
 	if (err) {
 		return err;
 	}
@@ -3302,89 +3305,89 @@ int silofs_repo_load_pobj(struct silofs_repo *repo,
 	return err;
 }
 
-static int
-repo_unlink_pseg_of(struct silofs_repo *repo, const struct silofs_psegf *psegf)
+static int repo_unlink_pvseg_of(struct silofs_repo *repo,
+                                const struct silofs_pvsegf *pvsegf)
 {
 	struct silofs_strbuf sbuf;
-	const struct silofs_psid *psid = &psegf->psf_rce.rce_key.u.psid;
+	const struct silofs_pvsid *pvsid = &pvsegf->psf_rce.rce_key.u.pvsid;
 
-	repo_pseg_pathname(repo, psid, &sbuf);
+	repo_pvseg_pathname(repo, pvsid, &sbuf);
 	return do_unlinkat(repo->re_dots_dfd, sbuf.str, 0);
 }
 
 static int
-repo_remove_pseg(struct silofs_repo *repo, const struct silofs_psid *psid)
+repo_remove_pvseg(struct silofs_repo *repo, const struct silofs_pvsid *pvsid)
 {
-	struct silofs_psegf *psegf = NULL;
+	struct silofs_pvsegf *pvsegf = NULL;
 	int err;
 
 	err = repo_check_wopen(repo);
 	if (err) {
 		return err;
 	}
-	err = repo_check_has_pseg(repo, psid);
+	err = repo_check_has_pvseg(repo, pvsid);
 	if (err) {
 		return err;
 	}
-	err = repo_do_stage_pseg(repo, psid, &psegf);
+	err = repo_do_stage_pvseg(repo, pvsid, &pvsegf);
 	if (err) {
 		return err;
 	}
-	err = psegf_truncate(psegf, 0);
+	err = pvsegf_truncate(pvsegf, 0);
 	if (err) {
 		return err;
 	}
-	err = repo_unlink_pseg_of(repo, psegf);
+	err = repo_unlink_pvseg_of(repo, pvsegf);
 	if (err) {
 		return err;
 	}
-	repo_evict_psegf(repo, psegf);
+	repo_evict_pvsegf(repo, pvsegf);
 	return 0;
 }
 
-int silofs_repo_remove_pseg(struct silofs_repo *repo,
-                            const struct silofs_psid *psid)
+int silofs_repo_remove_pvseg(struct silofs_repo *repo,
+                             const struct silofs_pvsid *pvsid)
 {
 	int err;
 
 	repo_lock(repo);
-	err = repo_remove_pseg(repo, psid);
+	err = repo_remove_pvseg(repo, pvsid);
 	repo_unlock(repo);
 	return err;
 }
 
 static int
-repo_flush_pseg(struct silofs_repo *repo, const struct silofs_psid *psid)
+repo_flush_pvseg(struct silofs_repo *repo, const struct silofs_pvsid *pvsid)
 {
-	struct silofs_psegf *psegf = NULL;
+	struct silofs_pvsegf *pvsegf = NULL;
 	int err;
 
 	err = repo_check_wopen(repo);
 	if (err) {
 		return err;
 	}
-	err = repo_check_has_pseg(repo, psid);
+	err = repo_check_has_pvseg(repo, pvsid);
 	if (err) {
 		return err;
 	}
-	err = repo_do_stage_pseg(repo, psid, &psegf);
+	err = repo_do_stage_pvseg(repo, pvsid, &pvsegf);
 	if (err) {
 		return err;
 	}
-	err = psegf_sync(psegf);
+	err = pvsegf_sync(pvsegf);
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-int silofs_repo_flush_pseg(struct silofs_repo *repo,
-                           const struct silofs_psid *psid)
+int silofs_repo_flush_pvseg(struct silofs_repo *repo,
+                            const struct silofs_pvsid *pvsid)
 {
 	int err;
 
 	repo_lock(repo);
-	err = repo_flush_pseg(repo, psid);
+	err = repo_flush_pvseg(repo, pvsid);
 	repo_unlock(repo);
 	return err;
 }

@@ -37,7 +37,7 @@ static bool paddr_isbtleaf(const struct silofs_paddr *paddr)
 int silofs_bstore_init(struct silofs_bstore *bstore,
                        struct silofs_pcache *pcache, struct silofs_repo *repo)
 {
-	silofs_pvasd_init(&bstore->pvasd);
+	silofs_pvsegr_init(&bstore->pvsegr);
 	silofs_btree_init(&bstore->btree, bstore->pcache, repo);
 	bstore->repo = repo;
 	bstore->pcache = pcache;
@@ -47,7 +47,7 @@ int silofs_bstore_init(struct silofs_bstore *bstore,
 void silofs_bstore_fini(struct silofs_bstore *bstore)
 {
 	silofs_btree_fini(&bstore->btree);
-	silofs_pvasd_fini(&bstore->pvasd);
+	silofs_pvsegr_fini(&bstore->pvsegr);
 	bstore->repo = NULL;
 	bstore->pcache = NULL;
 }
@@ -55,9 +55,9 @@ void silofs_bstore_fini(struct silofs_bstore *bstore)
 static int bstore_validate_paddr(const struct silofs_bstore *bstore,
                                  const struct silofs_paddr *paddr)
 {
-	const struct silofs_pvasd *pvasd = &bstore->pvasd;
+	const struct silofs_pvsegr *pvsegr = &bstore->pvsegr;
 
-	return silofs_pvasd_has_paddr(pvasd, paddr) ? 0 : -SILOFS_EINVAL;
+	return silofs_pvsegr_has_paddr(pvsegr, paddr) ? 0 : -SILOFS_EINVAL;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -117,24 +117,24 @@ static int bstore_create_cached_cpi(struct silofs_bstore *bstore,
 	return 0;
 }
 
-static int bstore_require_pseg(struct silofs_bstore *bstore, bool create,
-                               const struct silofs_psid *psid)
+static int bstore_require_pvseg(struct silofs_bstore *bstore, bool create,
+                                const struct silofs_pvsid *pvsid)
 
 {
 	int err;
 
 	if (create) {
-		err = silofs_repo_create_pseg(bstore->repo, psid);
+		err = silofs_repo_create_pvseg(bstore->repo, pvsid);
 	} else {
-		err = silofs_repo_stage_pseg(bstore->repo, psid);
+		err = silofs_repo_stage_pvseg(bstore->repo, pvsid);
 	}
 	return err;
 }
 
-static int bstore_require_pseg_of(struct silofs_bstore *bstore, bool create,
-                                  const struct silofs_paddr *paddr)
+static int bstore_require_pvseg_of(struct silofs_bstore *bstore, bool create,
+                                   const struct silofs_paddr *paddr)
 {
-	return bstore_require_pseg(bstore, create, &paddr->psid);
+	return bstore_require_pvseg(bstore, create, &paddr->pvsid);
 }
 
 static void bstore_update_chkpt(const struct silofs_bstore *bstore,
@@ -151,7 +151,7 @@ static int bstore_spawn_chkpt(struct silofs_bstore *bstore, bool create,
 {
 	int err;
 
-	err = bstore_require_pseg_of(bstore, create, paddr);
+	err = bstore_require_pvseg_of(bstore, create, paddr);
 	if (err) {
 		return err;
 	}
@@ -192,7 +192,7 @@ static int bstore_stage_chkpt(struct silofs_bstore *bstore,
 	if (err) {
 		return err;
 	}
-	err = bstore_require_pseg_of(bstore, false, paddr);
+	err = bstore_require_pvseg_of(bstore, false, paddr);
 	if (err) {
 		return err;
 	}
@@ -274,7 +274,7 @@ static int bstore_spawn_btnode(struct silofs_bstore *bstore, bool create,
 
 	silofs_assert_eq(paddr->ptype, SILOFS_PTYPE_BTNODE);
 
-	err = bstore_require_pseg_of(bstore, create, paddr);
+	err = bstore_require_pvseg_of(bstore, create, paddr);
 	if (err) {
 		return err;
 	}
@@ -305,7 +305,7 @@ static int bstore_spawn_btroot(struct silofs_bstore *bstore)
 	struct silofs_paddr paddr;
 	int err;
 
-	silofs_pvasd_next_btnode(&bstore->pvasd, &paddr);
+	silofs_pvsegr_next_btnode(&bstore->pvsegr, &paddr);
 	err = bstore_create_btroot_at(bstore, &paddr);
 	if (err) {
 		return err;
@@ -345,7 +345,7 @@ static int bstore_stage_btnode_at(struct silofs_bstore *bstore,
 	if (err) {
 		return err;
 	}
-	err = bstore_require_pseg_of(bstore, false, paddr);
+	err = bstore_require_pvseg_of(bstore, false, paddr);
 	if (err) {
 		return err;
 	}
@@ -438,7 +438,7 @@ static int bstore_stage_btleaf_at(struct silofs_bstore *bstore,
 	if (err) {
 		return err;
 	}
-	err = bstore_require_pseg_of(bstore, false, paddr);
+	err = bstore_require_pvseg_of(bstore, false, paddr);
 	if (err) {
 		return err;
 	}
@@ -462,7 +462,7 @@ static int bstore_spawn_next_chkpt(struct silofs_bstore *bstore)
 	struct silofs_paddr paddr;
 	struct silofs_chkpt_info *cpi = NULL;
 
-	silofs_pvasd_next_chkpt(&bstore->pvasd, &paddr);
+	silofs_pvsegr_next_chkpt(&bstore->pvsegr, &paddr);
 	return bstore_spawn_chkpt(bstore, paddr.off == 0, &paddr, &cpi);
 }
 
@@ -508,7 +508,7 @@ static int bstore_stage_last_chkpt(struct silofs_bstore *bstore)
 	struct silofs_chkpt_info *cpi = NULL;
 	int err;
 
-	silofs_pvasd_last_chkpt(&bstore->pvasd, &paddr);
+	silofs_pvsegr_last_chkpt(&bstore->pvsegr, &paddr);
 	err = bstore_stage_chkpt(bstore, &paddr, &cpi);
 	if (err) {
 		return err;
@@ -601,25 +601,25 @@ static int bstore_reload_btree_root(struct silofs_bstore *bstore)
 	return 0;
 }
 
-static int bstore_assign_pvasd(struct silofs_bstore *bstore,
-                               const struct silofs_pvasd *pvasd)
+static int bstore_assign_pvsegr(struct silofs_bstore *bstore,
+                                const struct silofs_pvsegr *pvsegr)
 {
 	int err;
 
-	err = silofs_pvasd_validate(pvasd);
+	err = silofs_pvsegr_validate(pvsegr);
 	if (err) {
 		return err;
 	}
-	silofs_pvasd_assign(&bstore->pvasd, pvasd);
+	silofs_pvsegr_assign(&bstore->pvsegr, pvsegr);
 	return 0;
 }
 
 int silofs_bstore_reload(struct silofs_bstore *bstore,
-                         const struct silofs_pvasd *pvasd)
+                         const struct silofs_pvsegr *pvsegr)
 {
 	int err;
 
-	err = bstore_assign_pvasd(bstore, pvasd);
+	err = bstore_assign_pvsegr(bstore, pvsegr);
 	if (err) {
 		return err;
 	}
@@ -714,10 +714,10 @@ int silofs_bstore_dropall(struct silofs_bstore *bstore)
 	return 0;
 }
 
-void silofs_bstore_curr_pvasd(const struct silofs_bstore *bstore,
-                              struct silofs_pvasd *out_pvasd)
+void silofs_bstore_curr_pvsegr(const struct silofs_bstore *bstore,
+                               struct silofs_pvsegr *out_pvsegr)
 {
-	silofs_pvasd_assign(out_pvasd, &bstore->pvasd);
+	silofs_pvsegr_assign(out_pvsegr, &bstore->pvsegr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

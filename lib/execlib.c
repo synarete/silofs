@@ -1029,12 +1029,12 @@ generate_main_ivkey(const struct silofs_env *env, struct silofs_bootrec *brec)
 }
 
 static void
-update_pvasd(const struct silofs_env *env, struct silofs_bootrec *brec)
+update_pvsegr(const struct silofs_env *env, struct silofs_bootrec *brec)
 {
-	struct silofs_pvasd pvasd;
+	struct silofs_pvsegr pvsegr;
 
-	silofs_bstore_curr_pvasd(env->base.bstore, &pvasd);
-	silofs_bootrec_set_pvasd(brec, &pvasd);
+	silofs_bstore_curr_pvsegr(env->base.bstore, &pvsegr);
+	silofs_bootrec_set_pvsegr(brec, &pvsegr);
 }
 
 static int check_superblock(const struct silofs_env *env)
@@ -1572,7 +1572,7 @@ format_bootrec(const struct silofs_env *env, struct silofs_bootrec *brec)
 {
 	silofs_bootrec_setup(brec);
 	generate_main_ivkey(env, brec);
-	update_pvasd(env, brec);
+	update_pvsegr(env, brec);
 	return 0;
 }
 
@@ -1645,7 +1645,7 @@ reload_bstore(struct silofs_env *env, const struct silofs_bootrec *brec)
 	int err = 0;
 
 	if (xxx_ready) {
-		err = silofs_bstore_reload(env->base.bstore, &brec->pvasd);
+		err = silofs_bstore_reload(env->base.bstore, &brec->pvsegr);
 	}
 	return err;
 }

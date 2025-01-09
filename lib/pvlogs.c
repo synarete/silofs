@@ -19,153 +19,153 @@
 #include <silofs/addr.h>
 #include <silofs/pvlogs.h>
 
-void silofs_pvasd_init(struct silofs_pvasd *pvasd)
+void silofs_pvsegr_init(struct silofs_pvsegr *pvsegr)
 {
-	silofs_pvid_generate(&pvasd->pvid);
-	pvasd->base_index = 1;
-	pvasd->curr_index = 1;
-	pvasd->curr_pos = 0;
+	silofs_pvid_generate(&pvsegr->pvid);
+	pvsegr->base_index = 1;
+	pvsegr->curr_index = 1;
+	pvsegr->curr_pos = 0;
 }
 
-void silofs_pvasd_fini(struct silofs_pvasd *pvasd)
+void silofs_pvsegr_fini(struct silofs_pvsegr *pvsegr)
 {
-	pvasd->base_index = 0;
-	pvasd->curr_index = 0;
-	pvasd->curr_pos = -1;
+	pvsegr->base_index = 0;
+	pvsegr->curr_index = 0;
+	pvsegr->curr_pos = -1;
 }
 
-void silofs_pvasd_assign(struct silofs_pvasd *pvasd,
-                         const struct silofs_pvasd *other)
+void silofs_pvsegr_assign(struct silofs_pvsegr *pvsegr,
+                          const struct silofs_pvsegr *other)
 {
-	silofs_pvid_assign(&pvasd->pvid, &other->pvid);
-	pvasd->base_index = other->base_index;
-	pvasd->curr_index = other->curr_index;
-	pvasd->curr_pos = other->curr_pos;
+	silofs_pvid_assign(&pvsegr->pvid, &other->pvid);
+	pvsegr->base_index = other->base_index;
+	pvsegr->curr_index = other->curr_index;
+	pvsegr->curr_pos = other->curr_pos;
+}
+
+static void pvsegr_curr_pvsid(const struct silofs_pvsegr *pvsegr,
+                              struct silofs_pvsid *out_pvsid)
+{
+	silofs_pvsid_init(out_pvsid, &pvsegr->pvid, pvsegr->curr_index);
 }
 
 static void
-pvasd_curr_psid(const struct silofs_pvasd *pvasd, struct silofs_psid *out_psid)
+pvsegr_curr_paddr_at(const struct silofs_pvsegr *pvsegr, loff_t pos,
+                     enum silofs_ptype ptype, struct silofs_paddr *out_paddr)
 {
-	silofs_psid_init(out_psid, &pvasd->pvid, pvasd->curr_index);
-}
-
-static void
-pvasd_curr_paddr_at(const struct silofs_pvasd *pvasd, loff_t pos,
-                    enum silofs_ptype ptype, struct silofs_paddr *out_paddr)
-{
-	struct silofs_psid psid;
+	struct silofs_pvsid pvsid;
 	const size_t len = silofs_ptype_size(ptype);
 
-	pvasd_curr_psid(pvasd, &psid);
-	silofs_paddr_init(out_paddr, &psid, ptype, pos, len);
+	pvsegr_curr_pvsid(pvsegr, &pvsid);
+	silofs_paddr_init(out_paddr, &pvsid, ptype, pos, len);
 }
 
 static void
-pvasd_curr_paddr(const struct silofs_pvasd *pvasd, enum silofs_ptype ptype,
-                 struct silofs_paddr *out_paddr)
+pvsegr_curr_paddr(const struct silofs_pvsegr *pvsegr, enum silofs_ptype ptype,
+                  struct silofs_paddr *out_paddr)
 {
-	pvasd_curr_paddr_at(pvasd, pvasd->curr_pos, ptype, out_paddr);
+	pvsegr_curr_paddr_at(pvsegr, pvsegr->curr_pos, ptype, out_paddr);
 }
 
 static void
-pvasd_last_paddr(const struct silofs_pvasd *pvasd, enum silofs_ptype ptype,
-                 struct silofs_paddr *out_paddr)
+pvsegr_last_paddr(const struct silofs_pvsegr *pvsegr, enum silofs_ptype ptype,
+                  struct silofs_paddr *out_paddr)
 {
-	const loff_t off = pvasd->curr_pos;
+	const loff_t off = pvsegr->curr_pos;
 	const ssize_t len = (ssize_t)silofs_ptype_size(ptype);
 	const loff_t pos = (off > len) ? (off - len) : 0;
 
-	pvasd_curr_paddr_at(pvasd, pos, ptype, out_paddr);
+	pvsegr_curr_paddr_at(pvsegr, pos, ptype, out_paddr);
 }
 
-static void
-pvasd_advance_by(struct silofs_pvasd *pvasd, const struct silofs_paddr *paddr)
+static void pvsegr_advance_by(struct silofs_pvsegr *pvsegr,
+                              const struct silofs_paddr *paddr)
 {
-	pvasd->curr_pos = off_end(paddr->off, paddr->len);
+	pvsegr->curr_pos = off_end(paddr->off, paddr->len);
 }
 
-static void pvasd_carve(struct silofs_pvasd *pvasd, enum silofs_ptype ptype,
-                        struct silofs_paddr *out_paddr)
+static void pvsegr_carve(struct silofs_pvsegr *pvsegr, enum silofs_ptype ptype,
+                         struct silofs_paddr *out_paddr)
 {
-	pvasd_curr_paddr(pvasd, ptype, out_paddr);
-	pvasd_advance_by(pvasd, out_paddr);
+	pvsegr_curr_paddr(pvsegr, ptype, out_paddr);
+	pvsegr_advance_by(pvsegr, out_paddr);
 }
 
-static bool pvasd_has_pvid(const struct silofs_pvasd *pvasd,
-                           const struct silofs_pvid *pvid)
+static bool pvsegr_has_pvid(const struct silofs_pvsegr *pvsegr,
+                            const struct silofs_pvid *pvid)
 {
-	return silofs_pvid_isequal(&pvasd->pvid, pvid);
+	return silofs_pvid_isequal(&pvsegr->pvid, pvid);
 }
 
-static bool pvasd_has_index(const struct silofs_pvasd *pvasd, uint32_t idx)
+static bool pvsegr_has_index(const struct silofs_pvsegr *pvsegr, uint32_t idx)
 {
-	return (idx >= pvasd->base_index) && (idx <= pvasd->curr_index);
+	return (idx >= pvsegr->base_index) && (idx <= pvsegr->curr_index);
 }
 
-bool silofs_pvasd_has_paddr(const struct silofs_pvasd *pvasd,
-                            const struct silofs_paddr *paddr)
+bool silofs_pvsegr_has_paddr(const struct silofs_pvsegr *pvsegr,
+                             const struct silofs_paddr *paddr)
 {
 	if (paddr_isnull(paddr)) {
 		return false;
 	}
-	if (!pvasd_has_pvid(pvasd, &paddr->psid.pvid)) {
+	if (!pvsegr_has_pvid(pvsegr, &paddr->pvsid.pvid)) {
 		return false;
 	}
-	if (!pvasd_has_index(pvasd, paddr->psid.index)) {
+	if (!pvsegr_has_index(pvsegr, paddr->pvsid.index)) {
 		return false;
 	}
 	return true;
 }
 
-int silofs_pvasd_validate(const struct silofs_pvasd *pvasd)
+int silofs_pvsegr_validate(const struct silofs_pvsegr *pvsegr)
 {
-	if (pvasd->base_index > pvasd->curr_index) {
+	if (pvsegr->base_index > pvsegr->curr_index) {
 		return -SILOFS_EINVAL;
 	}
-	if (pvasd->base_index > (UINT32_MAX / 2)) {
+	if (pvsegr->base_index > (UINT32_MAX / 2)) {
 		return -SILOFS_EINVAL;
 	}
-	if (off_isnull(pvasd->curr_pos)) {
+	if (off_isnull(pvsegr->curr_pos)) {
 		return -SILOFS_EINVAL;
 	}
 	return 0;
 }
 
-void silofs_pvasd_next_chkpt(struct silofs_pvasd *pvasd,
-                             struct silofs_paddr *out_paddr)
-{
-	pvasd_carve(pvasd, SILOFS_PTYPE_CHKPT, out_paddr);
-}
-
-void silofs_pvasd_last_chkpt(const struct silofs_pvasd *pvasd,
-                             struct silofs_paddr *out_paddr)
-{
-	pvasd_last_paddr(pvasd, SILOFS_PTYPE_CHKPT, out_paddr);
-}
-
-void silofs_pvasd_next_btnode(struct silofs_pvasd *pvasd,
+void silofs_pvsegr_next_chkpt(struct silofs_pvsegr *pvsegr,
                               struct silofs_paddr *out_paddr)
 {
-	silofs_assert_gt(pvasd->curr_pos, 0);
-
-	pvasd_carve(pvasd, SILOFS_PTYPE_BTNODE, out_paddr);
+	pvsegr_carve(pvsegr, SILOFS_PTYPE_CHKPT, out_paddr);
 }
 
-void silofs_pvasd64b_htox(struct silofs_pvasd64b *pvasd64,
-                          const struct silofs_pvasd *pvasd)
+void silofs_pvsegr_last_chkpt(const struct silofs_pvsegr *pvsegr,
+                              struct silofs_paddr *out_paddr)
 {
-	memset(pvasd64, 0, sizeof(*pvasd64));
-	silofs_pvid_assign(&pvasd64->pvid, &pvasd->pvid);
-	pvasd64->base_index = silofs_cpu_to_le32(pvasd->base_index);
-	pvasd64->curr_index = silofs_cpu_to_le32(pvasd->curr_index);
-	pvasd64->curr_pos = silofs_cpu_to_off(pvasd->curr_pos);
+	pvsegr_last_paddr(pvsegr, SILOFS_PTYPE_CHKPT, out_paddr);
 }
 
-void silofs_pvasd64b_xtoh(const struct silofs_pvasd64b *pvasd64,
-                          struct silofs_pvasd *pvasd)
+void silofs_pvsegr_next_btnode(struct silofs_pvsegr *pvsegr,
+                               struct silofs_paddr *out_paddr)
 {
-	silofs_pvid_assign(&pvasd->pvid, &pvasd64->pvid);
-	pvasd->base_index = silofs_le32_to_cpu(pvasd64->base_index);
-	pvasd->curr_index = silofs_le32_to_cpu(pvasd64->curr_index);
-	pvasd->curr_pos = silofs_off_to_cpu(pvasd64->curr_pos);
+	silofs_assert_gt(pvsegr->curr_pos, 0);
+
+	pvsegr_carve(pvsegr, SILOFS_PTYPE_BTNODE, out_paddr);
+}
+
+void silofs_pvsegr64b_htox(struct silofs_pvsegr64b *pvsegr64,
+                           const struct silofs_pvsegr *pvsegr)
+{
+	memset(pvsegr64, 0, sizeof(*pvsegr64));
+	silofs_pvid_assign(&pvsegr64->pvid, &pvsegr->pvid);
+	pvsegr64->base_index = silofs_cpu_to_le32(pvsegr->base_index);
+	pvsegr64->curr_index = silofs_cpu_to_le32(pvsegr->curr_index);
+	pvsegr64->curr_pos = silofs_cpu_to_off(pvsegr->curr_pos);
+}
+
+void silofs_pvsegr64b_xtoh(const struct silofs_pvsegr64b *pvsegr64,
+                           struct silofs_pvsegr *pvsegr)
+{
+	silofs_pvid_assign(&pvsegr->pvid, &pvsegr64->pvid);
+	pvsegr->base_index = silofs_le32_to_cpu(pvsegr64->base_index);
+	pvsegr->curr_index = silofs_le32_to_cpu(pvsegr64->curr_index);
+	pvsegr->curr_pos = silofs_off_to_cpu(pvsegr64->curr_pos);
 }

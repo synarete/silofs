@@ -21,17 +21,17 @@
 #include <silofs/str.h>
 
 /* persistent-volume segment id */
-struct silofs_psid {
+struct silofs_pvsid {
 	struct silofs_pvid pvid;
 	uint32_t           index;
 };
 
 /* persistent object address within specific volume segment */
 struct silofs_paddr {
-	struct silofs_psid psid;
-	loff_t             off;
-	size_t             len;
-	enum silofs_ptype  ptype;
+	struct silofs_pvsid pvsid;
+	loff_t              off;
+	size_t              len;
+	enum silofs_ptype   ptype;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -58,38 +58,38 @@ int silofs_pvid_from_str(struct silofs_lvid          *pvid,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-const struct silofs_psid *silofs_psid_none(void);
+const struct silofs_pvsid *silofs_pvsid_none(void);
 
-void silofs_psid_init(struct silofs_psid *psid, const struct silofs_pvid *pvid,
-                      uint32_t idx);
+void silofs_pvsid_init(struct silofs_pvsid      *pvsid,
+                       const struct silofs_pvid *pvid, uint32_t idx);
 
-void silofs_psid_fini(struct silofs_psid *psid);
+void silofs_pvsid_fini(struct silofs_pvsid *pvsid);
 
-bool silofs_psid_isnull(const struct silofs_psid *psid);
+bool silofs_pvsid_isnull(const struct silofs_pvsid *pvsid);
 
-bool silofs_psid_has_pvid(const struct silofs_psid *psid,
-                          const struct silofs_pvid *pvid);
+bool silofs_pvsid_has_pvid(const struct silofs_pvsid *pvsid,
+                           const struct silofs_pvid  *pvid);
 
-void silofs_psid_generate(struct silofs_psid *psid);
+void silofs_pvsid_generate(struct silofs_pvsid *pvsid);
 
-void silofs_psid_reset(struct silofs_psid *psid);
+void silofs_pvsid_reset(struct silofs_pvsid *pvsid);
 
-void silofs_psid_assign(struct silofs_psid       *psid,
-                        const struct silofs_psid *other);
+void silofs_pvsid_assign(struct silofs_pvsid       *pvsid,
+                         const struct silofs_pvsid *other);
 
-bool silofs_psid_isequal(const struct silofs_psid *psid,
-                         const struct silofs_psid *other);
+bool silofs_pvsid_isequal(const struct silofs_pvsid *pvsid,
+                          const struct silofs_pvsid *other);
 
-uint64_t silofs_psid_hash64(const struct silofs_psid *psid);
+uint64_t silofs_pvsid_hash64(const struct silofs_pvsid *pvsid);
 
-void silofs_psid_to_str(const struct silofs_psid *psid,
-                        struct silofs_strbuf     *sbuf);
+void silofs_pvsid_to_str(const struct silofs_pvsid *pvsid,
+                         struct silofs_strbuf      *sbuf);
 
-void silofs_psid32b_htox(struct silofs_psid32b    *psid32,
-                         const struct silofs_psid *psid);
+void silofs_pvsid32b_htox(struct silofs_pvsid32b    *pvsid32,
+                          const struct silofs_pvsid *pvsid);
 
-void silofs_psid32b_xtoh(const struct silofs_psid32b *psid32,
-                         struct silofs_psid          *psid);
+void silofs_pvsid32b_xtoh(const struct silofs_pvsid32b *pvsid32,
+                          struct silofs_pvsid          *pvsid);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -97,9 +97,9 @@ const struct silofs_paddr *silofs_paddr_none(void);
 
 bool silofs_paddr_isnull(const struct silofs_paddr *paddr);
 
-void silofs_paddr_init(struct silofs_paddr      *paddr,
-                       const struct silofs_psid *psid, enum silofs_ptype ptype,
-                       loff_t off, size_t len);
+void silofs_paddr_init(struct silofs_paddr       *paddr,
+                       const struct silofs_pvsid *pvsid,
+                       enum silofs_ptype ptype, loff_t off, size_t len);
 
 void silofs_paddr_fini(struct silofs_paddr *paddr);
 

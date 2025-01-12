@@ -24,17 +24,23 @@
 #include <silofs/btree.h>
 
 struct silofs_btree_path {
-	struct silofs_btree *btree;
 	struct silofs_btnode_info *bni[SILOFS_BTREE_HEIGHT_MAX];
-	size_t height;
-};
-
-struct silofs_btree_ctx {
-	struct silofs_btree *btree;
-	struct silofs_btree_path bpath;
+	size_t cnt;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static void bni_incref(struct silofs_btnode_info *bni)
+{
+	silofs_assert_not_null(bni);
+	silofs_pni_incref(&bni->bn_pni);
+}
+
+static void bni_decref(struct silofs_btnode_info *bni)
+{
+	silofs_assert_not_null(bni);
+	silofs_pni_decref(&bni->bn_pni);
+}
 
 static const struct silofs_paddr *
 bni_paddr(const struct silofs_btnode_info *bni)
@@ -54,6 +60,44 @@ static bool bni_has_same_pvid(const struct silofs_btnode_info *bni,
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static void bpath_init(struct silofs_btree_path *bpath)
+{
+	for (size_t i = 0; i < ARRAY_SIZE(bpath->bni); ++i) {
+		bpath->bni[i] = NULL;
+	}
+	bpath->cnt = 0;
+}
+
+static void bpath_fini(struct silofs_btree_path *bpath)
+{
+	for (size_t i = 0; i < bpath->cnt; ++i) {
+		bni_decref(bpath->bni[i]);
+		bpath->bni[i] = NULL;
+	}
+	bpath->cnt = 0;
+}
+
+static void
+bpath_append(struct silofs_btree_path *bpath, struct silofs_btnode_info *bni)
+{
+	silofs_assert_lt(bpath->cnt, ARRAY_SIZE(bpath->bni));
+	bpath->bni[bpath->cnt++] = bni;
+	bni_incref(bni);
+}
+
+static struct silofs_btnode_info *
+bpath_last(const struct silofs_btree_path *bpath)
+{
+	struct silofs_btnode_info *bni = NULL;
+
+	if (bpath->cnt > 0) {
+		bni = bpath->bni[bpath->cnt - 1];
+	}
+	return bni;
+}
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 void silofs_btree_init(struct silofs_btree *btree,
                        const struct silofs_btree_base *base)
@@ -155,15 +199,11 @@ static int validate_child_btnode(const struct silofs_btnode_info *parent_bni,
 	if (err) {
 		return err;
 	}
-	if (bni_has_same_pvid(parent_bni, child_bni)) {
-		if ((child_height + 1) != parent_height) {
-			return -SILOFS_EFSCORRUPTED;
-		}
-	} else {
-		if ((child_height + 1) > parent_height) {
-			return -SILOFS_EFSCORRUPTED;
-		}
+	if ((child_height + 1) != parent_height) {
+		return -SILOFS_EFSCORRUPTED;
 	}
+	/* XXX */
+	silofs_assert(bni_has_same_pvid(parent_bni, child_bni));
 	return 0;
 }
 
@@ -290,14 +330,19 @@ static int btree_stage_child_btnode(const struct silofs_btree *btree,
 	return 0;
 }
 
-static int btree_stage_level1_btnode(const struct silofs_btree *btree,
-                                     struct silofs_btnode_info *from_bni,
-                                     const struct silofs_vaddr *vaddr,
-                                     struct silofs_btnode_info **out_bni)
+static int btree_resolve_path(const struct silofs_btree *btree,
+                              const struct silofs_vaddr *vaddr,
+                              struct silofs_btree_path *bpath)
 {
-	struct silofs_btnode_info *bni = from_bni;
+	struct silofs_btnode_info *bni = NULL;
 	size_t height;
 	int err = 0;
+
+	err = btree_stage_btroot(btree, &bni);
+	if (err) {
+		return err;
+	}
+	bpath_append(bpath, bni);
 
 	height = silofs_bni_height(bni);
 	while (height > 1) {
@@ -305,42 +350,27 @@ static int btree_stage_level1_btnode(const struct silofs_btree *btree,
 		if (err) {
 			return err;
 		}
+		bpath_append(bpath, bni);
 		height = silofs_bni_height(bni);
 	}
-	*out_bni = bni;
 	return 0;
 }
 
-static int btree_stage_btnode1(const struct silofs_btree *btree,
-                               const struct silofs_vaddr *vaddr,
-                               struct silofs_btnode_info **out_bni)
+static int btree_resolve_rdonly(const struct silofs_btree *btree,
+                                const struct silofs_vaddr *vaddr,
+                                struct silofs_btree_path *bpath,
+                                struct silofs_paddr *out_paddr)
 {
-	struct silofs_btnode_info *root_bni = NULL;
-	struct silofs_btnode_info *bni = NULL;
-	int err = 0;
-
-	err = btree_stage_btroot(btree, &root_bni);
-	if (err) {
-		return err;
-	}
-	err = btree_stage_level1_btnode(btree, root_bni, vaddr, &bni);
-	if (err) {
-		return err;
-	}
-	*out_bni = bni;
-	return 0;
-}
-
-static int
-btree_resolve(const struct silofs_btree *btree,
-              const struct silofs_vaddr *vaddr, struct silofs_paddr *out_paddr)
-{
-	struct silofs_btnode_info *bni = NULL;
+	const struct silofs_btnode_info *bni = NULL;
 	int err;
 
-	err = btree_stage_btnode1(btree, vaddr, &bni);
+	err = btree_resolve_path(btree, vaddr, bpath);
 	if (err) {
 		return err;
+	}
+	bni = bpath_last(bpath);
+	if (bni == NULL) {
+		return -SILOFS_ENOENT;
 	}
 	err = silofs_bni_resolve(bni, vaddr, out_paddr);
 	if (err) {
@@ -353,7 +383,14 @@ int silofs_btree_lookup(const struct silofs_btree *btree,
                         const struct silofs_vaddr *vaddr,
                         struct silofs_paddr *out_paddr)
 {
-	return btree_resolve(btree, vaddr, out_paddr);
+	struct silofs_btree_path bpath = { .cnt = 0 };
+	int err;
+
+	bpath_init(&bpath);
+	err = btree_resolve_rdonly(btree, vaddr, &bpath, out_paddr);
+	bpath_fini(&bpath);
+
+	return err;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

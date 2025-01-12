@@ -364,10 +364,10 @@ static struct silofs_pnode_info *
 pcache_find_evictable(struct silofs_pcache *pcache, bool iterall)
 {
 	struct silofs_pnode_info *pni = NULL;
-	const size_t limit = iterall ? SILOFS_HMAPQ_ITERALL : 10;
 
-	silofs_hmapq_riterate(&pcache->pc_hmapq, limit, visit_evictable_pni,
-	                      &pni);
+	silofs_hmapq_riterate(&pcache->pc_hmapq,
+	                      iterall ? SILOFS_HMAPQ_ITERALL : 10,
+	                      visit_evictable_pni, &pni);
 	return pni;
 }
 

@@ -47,6 +47,10 @@ enum silofs_ptype silofs_pni_ptype(const struct silofs_pnode_info *pni);
 
 void silofs_pni_undirtify(struct silofs_pnode_info *pni);
 
+void silofs_pni_incref(struct silofs_pnode_info *pni);
+
+void silofs_pni_decref(struct silofs_pnode_info *pni);
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 struct silofs_chkpt_info *

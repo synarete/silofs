@@ -480,6 +480,16 @@ void silofs_pni_undirtify(struct silofs_pnode_info *pni)
 	}
 }
 
+void silofs_pni_incref(struct silofs_pnode_info *pni)
+{
+	silofs_hmqe_incref(&pni->pn_hmqe);
+}
+
+void silofs_pni_decref(struct silofs_pnode_info *pni)
+{
+	silofs_hmqe_decref(&pni->pn_hmqe);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static struct silofs_chkpt_info *cpi_malloc(struct silofs_alloc *alloc)

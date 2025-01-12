@@ -299,38 +299,6 @@ static int bstore_spawn_btroot(struct silofs_bstore *bstore)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static const struct silofs_paddr *
-bli_paddr(const struct silofs_btleaf_info *bli)
-{
-	return &bli->bl_pni.pn_paddr;
-}
-
-static int bstore_save_btleaf(const struct silofs_bstore *bstore,
-                              const struct silofs_btleaf_info *bli)
-{
-	const struct silofs_rovec rov = {
-		.rov_base = bli->bl,
-		.rov_len = sizeof(*bli->bl),
-	};
-
-	return silofs_repo_save_pobj(bstore->repo, bli_paddr(bli), &rov);
-}
-
-static int bstore_commit_btleaf(const struct silofs_bstore *bstore,
-                                struct silofs_btleaf_info *bli)
-{
-	int err;
-
-	err = bstore_save_btleaf(bstore, bli);
-	if (err) {
-		return err;
-	}
-	silofs_bli_undirtify(bli);
-	return 0;
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 static int bstore_spawn_next_chkpt(struct silofs_bstore *bstore)
 {
 	struct silofs_paddr paddr;
@@ -461,9 +429,6 @@ static int bstore_commit_pnode(struct silofs_bstore *bstore,
 		break;
 	case SILOFS_PTYPE_BTNODE:
 		ret = bstore_commit_btnode(bstore, silofs_bni_from_pni(pni));
-		break;
-	case SILOFS_PTYPE_BTLEAF:
-		ret = bstore_commit_btleaf(bstore, silofs_bli_from_pni(pni));
 		break;
 	case SILOFS_PTYPE_NONE:
 	case SILOFS_PTYPE_DATA:

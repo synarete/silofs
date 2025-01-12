@@ -326,99 +326,6 @@ void silofs_pcache_evict_bni(struct silofs_pcache *pcache,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct silofs_btleaf_info *
-pcache_new_bli(const struct silofs_pcache *pcache,
-               const struct silofs_paddr *paddr)
-{
-	silofs_assert_eq(paddr->ptype, SILOFS_PTYPE_BTLEAF);
-
-	return silofs_bli_new(paddr, pcache->pc_alloc);
-}
-
-static void pcache_del_bli(const struct silofs_pcache *pcache,
-                           struct silofs_btleaf_info *bli)
-{
-	silofs_assert_eq(bli->bl_pni.pn_paddr.ptype, SILOFS_PTYPE_BTLEAF);
-
-	silofs_bli_del(bli, pcache->pc_alloc);
-}
-
-struct silofs_btleaf_info *
-silofs_pcache_lookup_bli(struct silofs_pcache *pcache,
-                         const struct silofs_paddr *paddr)
-{
-	struct silofs_pnode_info *pni;
-
-	silofs_assert_eq(paddr->ptype, SILOFS_PTYPE_BTLEAF);
-
-	pni = pcache_lookup(pcache, paddr);
-	return silofs_bli_from_pni(pni);
-}
-
-static void pcache_bind_bli_dq(struct silofs_pcache *pcache,
-                               struct silofs_btleaf_info *bli)
-{
-	silofs_bli_set_dq(bli, &pcache->pc_dirtyq);
-}
-
-static void
-pcache_store_bli(struct silofs_pcache *pcache, struct silofs_btleaf_info *bli)
-{
-	pcache_store(pcache, &bli->bl_pni);
-}
-
-static struct silofs_btleaf_info *
-pcache_require_bli(struct silofs_pcache *pcache,
-                   const struct silofs_paddr *paddr)
-{
-	struct silofs_btleaf_info *bli = NULL;
-
-	for (size_t i = 0; i < RETRY_MAX; ++i) {
-		bli = pcache_new_bli(pcache, paddr);
-		if (bli != NULL) {
-			break;
-		}
-		pcache_evict_some(pcache, i + 1, false);
-	}
-	return bli;
-}
-
-struct silofs_btleaf_info *
-silofs_pcache_create_bli(struct silofs_pcache *pcache,
-                         const struct silofs_paddr *paddr)
-{
-	struct silofs_btleaf_info *bli;
-
-	bli = pcache_require_bli(pcache, paddr);
-	if (bli != NULL) {
-		pcache_bind_bli_dq(pcache, bli);
-		pcache_store_bli(pcache, bli);
-	}
-	return bli;
-}
-
-static void
-pcache_remove_bli(struct silofs_pcache *pcache, struct silofs_btleaf_info *bli)
-{
-	pcache_remove(pcache, &bli->bl_pni);
-}
-
-static void
-pcache_forget_bli(struct silofs_pcache *pcache, struct silofs_btleaf_info *bli)
-{
-	silofs_bli_undirtify(bli);
-	pcache_remove_bli(pcache, bli);
-}
-
-void silofs_pcache_evict_bli(struct silofs_pcache *pcache,
-                             struct silofs_btleaf_info *bli)
-{
-	pcache_forget_bli(pcache, bli);
-	pcache_del_bli(pcache, bli);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 static void
 pcache_evict_by(struct silofs_pcache *pcache, struct silofs_pnode_info *pni)
 {
@@ -430,9 +337,6 @@ pcache_evict_by(struct silofs_pcache *pcache, struct silofs_pnode_info *pni)
 		break;
 	case SILOFS_PTYPE_BTNODE:
 		silofs_pcache_evict_bni(pcache, silofs_bni_from_pni(pni));
-		break;
-	case SILOFS_PTYPE_BTLEAF:
-		silofs_pcache_evict_bli(pcache, silofs_bli_from_pni(pni));
 		break;
 	case SILOFS_PTYPE_DATA:
 	case SILOFS_PTYPE_NONE:

@@ -65,15 +65,4 @@ silofs_pcache_create_bni(struct silofs_pcache      *pcache,
 void silofs_pcache_evict_bni(struct silofs_pcache      *pcache,
                              struct silofs_btnode_info *bni);
 
-struct silofs_btleaf_info *
-silofs_pcache_lookup_bli(struct silofs_pcache      *pcache,
-                         const struct silofs_paddr *paddr);
-
-struct silofs_btleaf_info *
-silofs_pcache_create_bli(struct silofs_pcache      *pcache,
-                         const struct silofs_paddr *paddr);
-
-void silofs_pcache_evict_bli(struct silofs_pcache      *pcache,
-                             struct silofs_btleaf_info *bli);
-
 #endif /* SILOFS_PCACHE_H_ */

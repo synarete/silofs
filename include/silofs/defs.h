@@ -356,7 +356,6 @@ enum silofs_ptype {
 	SILOFS_PTYPE_NONE   = 0,
 	SILOFS_PTYPE_CHKPT  = 1,
 	SILOFS_PTYPE_BTNODE = 2,
-	SILOFS_PTYPE_BTLEAF = 3,
 	SILOFS_PTYPE_DATA   = 4,
 	SILOFS_PTYPE_LAST, /* keep last */
 };
@@ -973,6 +972,9 @@ struct silofs_repo_meta {
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
+/* maximal btree height, including leaf nodes */
+#define SILOFS_BTREE_HEIGHT_MAX (8)
+
 /* persistent volume segment check-point node */
 struct silofs_chkpt_node {
 	struct silofs_header   cpn_hdr;
@@ -997,26 +999,6 @@ struct silofs_btree_node {
 	struct silofs_paddr48b btn_child[SILOFS_BTREE_NODE_NCHILDS];
 	uint8_t                btn_reserved3[8];
 	int64_t                btn_key[SILOFS_BTREE_NODE_NKEYS];
-} silofs_attr_aligned64;
-
-/* laddr-to-paddr mapping entry */
-struct silofs_btree_ltop {
-	int64_t                off;
-	uint8_t                reserved2[8];
-	struct silofs_paddr48b paddr;
-} silofs_attr_aligned16;
-
-/*  b+tree leaf of persistent volume mapping */
-struct silofs_btree_leaf {
-	struct silofs_header     btl_hdr;
-	uint8_t                  btl_ltype;
-	uint8_t                  btl_nltops;
-	uint8_t                  btl_reserved1[6];
-	uint32_t                 btl_flags;
-	uint8_t                  btl_reserved2[36];
-	struct silofs_paddr48b   btl_parent;
-	uint8_t                  btl_reserved3[16];
-	struct silofs_btree_ltop btl_ltop[SILOFS_BTREE_LEAF_NENTS];
 } silofs_attr_aligned64;
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

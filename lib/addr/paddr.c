@@ -27,8 +27,6 @@ uint32_t silofs_ptype_size(enum silofs_ptype ptype)
 		return sizeof(struct silofs_chkpt_node);
 	case SILOFS_PTYPE_BTNODE:
 		return sizeof(struct silofs_btree_node);
-	case SILOFS_PTYPE_BTLEAF:
-		return sizeof(struct silofs_btree_leaf);
 	case SILOFS_PTYPE_NONE:
 	case SILOFS_PTYPE_DATA:
 	case SILOFS_PTYPE_LAST:
@@ -48,7 +46,6 @@ static bool ptype_isdata(enum silofs_ptype ptype)
 		break;
 	case SILOFS_PTYPE_CHKPT:
 	case SILOFS_PTYPE_BTNODE:
-	case SILOFS_PTYPE_BTLEAF:
 	case SILOFS_PTYPE_NONE:
 	case SILOFS_PTYPE_LAST:
 	default:

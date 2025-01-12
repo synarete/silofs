@@ -107,7 +107,6 @@ static void require_fundamental_types_size(void)
 static void require_persistent_types_nk(void)
 {
 	REQUIRE_SIZEOF_4K(struct silofs_btree_node);
-	REQUIRE_SIZEOF_4K(struct silofs_btree_leaf);
 	REQUIRE_SIZEOF_8K(struct silofs_super_block);
 	REQUIRE_SIZEOF_32K(struct silofs_spmap_node);
 	REQUIRE_SIZEOF_32K(struct silofs_spmap_leaf);
@@ -131,9 +130,7 @@ static void require_persistent_types_size1(void)
 	REQUIRE_SIZEOF(struct silofs_paddr48b, 48);
 	REQUIRE_SIZEOF(struct silofs_caddr64b, 64);
 	REQUIRE_SIZEOF(struct silofs_chkpt_node, SILOFS_PSEG_CHKPT_SIZE);
-	REQUIRE_SIZEOF(struct silofs_btree_ltop, 64);
 	REQUIRE_SIZEOF(struct silofs_btree_node, SILOFS_BTREE_NODE_SIZE);
-	REQUIRE_SIZEOF(struct silofs_btree_leaf, SILOFS_BTREE_LEAF_SIZE);
 	REQUIRE_SIZEOF(struct silofs_par_desc256b, 256);
 }
 
@@ -317,12 +314,6 @@ static void require_persistent_types_alignment4(void)
 	REQUIRE_OFFSET64(struct silofs_btree_node, btn_flags, 24);
 	REQUIRE_OFFSET64(struct silofs_btree_node, btn_child, 64);
 	REQUIRE_OFFSET64(struct silofs_btree_node, btn_key, 3528);
-	REQUIRE_OFFSET64(struct silofs_btree_leaf, btl_hdr, 0);
-	REQUIRE_OFFSET64(struct silofs_btree_leaf, btl_ltype, 16);
-	REQUIRE_OFFSETXX(struct silofs_btree_leaf, btl_nltops, 17);
-	REQUIRE_OFFSET64(struct silofs_btree_leaf, btl_flags, 24);
-	REQUIRE_OFFSET64(struct silofs_btree_leaf, btl_parent, 64);
-	REQUIRE_OFFSET64(struct silofs_btree_leaf, btl_ltop, 128);
 }
 
 static void require_ioctl_types_size(void)

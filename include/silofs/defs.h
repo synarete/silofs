@@ -998,7 +998,7 @@ struct silofs_btree_node {
 	uint8_t                btn_reserved2[36];
 	struct silofs_paddr48b btn_child[SILOFS_BTREE_NODE_NCHILDS];
 	uint8_t                btn_reserved3[8];
-	int64_t                btn_key[SILOFS_BTREE_NODE_NKEYS];
+	uint64_t               btn_key[SILOFS_BTREE_NODE_NKEYS];
 } silofs_attr_aligned64;
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

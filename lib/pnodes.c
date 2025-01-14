@@ -253,7 +253,7 @@ static long btn_compare_key_at(const struct silofs_btree_node *btn,
 }
 
 static size_t
-btn_resolve_slot_by(const struct silofs_btree_node *btn, uint64_t key)
+btn_find_slot_ge(const struct silofs_btree_node *btn, uint64_t key)
 {
 	const size_t nkeys = btn_nkeys(btn);
 	long cmp;
@@ -268,7 +268,7 @@ btn_resolve_slot_by(const struct silofs_btree_node *btn, uint64_t key)
 }
 
 static size_t
-btn_lookup_slot_by(const struct silofs_btree_node *btn, uint64_t key)
+btn_find_slot_eq(const struct silofs_btree_node *btn, uint64_t key)
 {
 	const size_t nkeys = btn_nkeys(btn);
 	long cmp;
@@ -336,7 +336,7 @@ static void
 btn_resolve_internal_child(const struct silofs_btree_node *btn, uint64_t key,
                            struct silofs_paddr *out_paddr)
 {
-	const size_t slot = btn_resolve_slot_by(btn, key);
+	const size_t slot = btn_find_slot_ge(btn, key);
 
 	btn_child_at(btn, slot, out_paddr);
 }
@@ -345,7 +345,7 @@ static void
 btn_resolve_leaf_child(const struct silofs_btree_node *btn, uint64_t key,
                        struct silofs_paddr *out_paddr)
 {
-	const size_t slot = btn_lookup_slot_by(btn, key);
+	const size_t slot = btn_find_slot_eq(btn, key);
 
 	btn_child_at(btn, slot, out_paddr);
 }
@@ -739,7 +739,7 @@ int silofs_bni_expand(struct silofs_btnode_info *bni,
 	if (!nfree_keys) {
 		return -SILOFS_ENOSPC;
 	}
-	slot = btn_resolve_slot_by(btn, key);
+	slot = btn_find_slot_ge(btn, key);
 	btn_insert_child(btn, slot, paddr);
 	btn_insert_key(btn, slot, key);
 	return 0;

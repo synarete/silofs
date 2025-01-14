@@ -289,11 +289,7 @@ static int btree_stage_btroot(const struct silofs_btree *btree,
 	struct silofs_btnode_info *bni = NULL;
 	int err;
 
-	err = btree_lookup_cached_bni(btree, paddr, out_bni);
-	if (!err) {
-		return 0; /* cache hit */
-	}
-	err = btree_stage_btnode_at(btree, paddr, &bni);
+	err = btree_stage_btnode(btree, paddr, &bni);
 	if (err) {
 		return err;
 	}
@@ -331,9 +327,9 @@ static int btree_stage_child_btnode(const struct silofs_btree *btree,
 	return 0;
 }
 
-static int btree_resolve_path(const struct silofs_btree *btree,
-                              const struct silofs_vaddr *vaddr,
-                              struct silofs_btree_path *bpath)
+static int btree_stage_path(const struct silofs_btree *btree,
+                            const struct silofs_vaddr *vaddr,
+                            struct silofs_btree_path *bpath)
 {
 	struct silofs_btnode_info *bni = NULL;
 	size_t height;
@@ -365,7 +361,7 @@ static int btree_resolve_rdonly(const struct silofs_btree *btree,
 	const struct silofs_btnode_info *bni = NULL;
 	int err;
 
-	err = btree_resolve_path(btree, vaddr, bpath);
+	err = btree_stage_path(btree, vaddr, bpath);
 	if (err) {
 		return err;
 	}

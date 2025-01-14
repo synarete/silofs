@@ -44,9 +44,9 @@ static bool delfc_is_lsid_of(const struct silofs_delfs_ctx *delf_ctx,
                              const struct silofs_lsid *lsid)
 {
 	const struct silofs_uaddr *sb_uaddr = &delf_ctx->sb_uaddr;
-	const struct silofs_lvid *lvid = &sb_uaddr->laddr.lsid.lvid;
+	const struct silofs_volid *volid = &sb_uaddr->laddr.lsid.volid;
 
-	return silofs_lsid_has_lvid(lsid, lvid);
+	return silofs_lsid_has_volid(lsid, volid);
 }
 
 static int delfc_exec_unrefs_at(struct silofs_delfs_ctx *delf_ctx,

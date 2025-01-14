@@ -515,30 +515,25 @@ struct silofs_uuid {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-struct silofs_pvid {
-	struct silofs_uuid uuid;
+/* volume identifier */
+struct silofs_volid {
+	struct silofs_uuid id;
 } silofs_attr_aligned16;
-
-struct silofs_lvid {
-	struct silofs_uuid uuid;
-} silofs_attr_aligned16;
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 /* persistent volume segment identifier */
 struct silofs_pvsid32b {
-	struct silofs_pvid pvid;
-	uint32_t           index;
-	uint8_t            pad[12];
+	struct silofs_volid volid;
+	uint32_t            index;
+	uint8_t             pad[12];
 } silofs_attr_aligned16;
 
 /* persistent volume segments range */
 struct silofs_pvsegr64b {
-	struct silofs_pvid pvid;
-	uint32_t           base_index;
-	uint32_t           curr_index;
-	int64_t            curr_pos;
-	uint8_t            pad[32];
+	struct silofs_volid volid;
+	uint32_t            base_index;
+	uint32_t            curr_index;
+	int64_t             curr_pos;
+	uint8_t             pad[32];
 } silofs_attr_aligned64;
 
 /* persistent object address */
@@ -552,13 +547,13 @@ struct silofs_paddr48b {
 
 /* logical volume's segment identifier */
 struct silofs_lsid32b {
-	struct silofs_lvid lvid;
-	uint32_t           lsize;
-	uint32_t           vindex;
-	uint8_t            vspace;
-	uint8_t            height;
-	uint8_t            ltype;
-	uint8_t            pad[5];
+	struct silofs_volid volid;
+	uint32_t            lsize;
+	uint32_t            vindex;
+	uint8_t             vspace;
+	uint8_t             height;
+	uint8_t             ltype;
+	uint8_t             pad[5];
 } silofs_attr_aligned16;
 
 /* logical address */
@@ -712,7 +707,7 @@ struct silofs_super_block {
 	struct silofs_tm64b       sb_lv_birth_tm;
 	struct silofs_uaddr64b    sb_self_uaddr;
 	struct silofs_uaddr64b    sb_orig_uaddr;
-	struct silofs_lvid        sb_lvid;
+	struct silofs_volid       sb_volid;
 	struct silofs_vrange128   sb_vrange;
 	uint8_t                   sb_reserved4b[224];
 	/* 1K..2K */

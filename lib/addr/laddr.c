@@ -21,51 +21,6 @@
 #include <silofs/addr.h>
 #include <stdio.h>
 
-void silofs_lvid_generate(struct silofs_lvid *lvid)
-{
-	silofs_uuid_generate(&lvid->uuid);
-}
-
-void silofs_lvid_assign(struct silofs_lvid *lvid,
-                        const struct silofs_lvid *other)
-{
-	silofs_uuid_assign(&lvid->uuid, &other->uuid);
-}
-
-static long
-lvid_compare(const struct silofs_lvid *lvid1, const struct silofs_lvid *lvid2)
-{
-	return silofs_uuid_compare(&lvid1->uuid, &lvid2->uuid);
-}
-
-bool silofs_lvid_isequal(const struct silofs_lvid *lvid1,
-                         const struct silofs_lvid *lvid2)
-{
-	return (lvid_compare(lvid1, lvid2) == 0);
-}
-
-void silofs_lvid_by_uuid(struct silofs_lvid *lvid,
-                         const struct silofs_uuid *uuid)
-{
-	STATICASSERT_EQ(sizeof(lvid->uuid.uu), 16);
-
-	silofs_uuid_assign(&lvid->uuid, uuid);
-}
-
-void silofs_lvid_to_str(const struct silofs_lvid *lvid,
-                        struct silofs_strbuf *sbuf)
-{
-	silofs_uuid_unparse(&lvid->uuid, sbuf);
-}
-
-int silofs_lvid_from_str(struct silofs_lvid *lvid,
-                         const struct silofs_strview *sv)
-{
-	return silofs_uuid_parse(&lvid->uuid, sv);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 static size_t height_to_lseg_size(enum silofs_height height)
 {
 	size_t elemsz = 0;
@@ -137,10 +92,10 @@ bool silofs_lsid_isnull(const struct silofs_lsid *lsid)
 	       (lsid->vindex == UINT32_MAX);
 }
 
-bool silofs_lsid_has_lvid(const struct silofs_lsid *lsid,
-                          const struct silofs_lvid *lvid)
+bool silofs_lsid_has_volid(const struct silofs_lsid *lsid,
+                           const struct silofs_volid *volid)
 {
-	return silofs_lvid_isequal(&lsid->lvid, lvid);
+	return silofs_volid_isequal(&lsid->volid, volid);
 }
 
 loff_t silofs_lsid_pos(const struct silofs_lsid *lsid, loff_t off)
@@ -163,7 +118,7 @@ void silofs_lsid_reset(struct silofs_lsid *lsid)
 void silofs_lsid_assign(struct silofs_lsid *lsid,
                         const struct silofs_lsid *other)
 {
-	silofs_lvid_assign(&lsid->lvid, &other->lvid);
+	silofs_volid_assign(&lsid->volid, &other->volid);
 	lsid->vindex = other->vindex;
 	lsid->lsize = other->lsize;
 	lsid->vspace = other->vspace;
@@ -176,7 +131,7 @@ lsid_compare(const struct silofs_lsid *lsid1, const struct silofs_lsid *lsid2)
 {
 	long cmp;
 
-	cmp = lvid_compare(&lsid1->lvid, &lsid2->lvid);
+	cmp = silofs_volid_compare(&lsid1->volid, &lsid2->volid);
 	if (cmp) {
 		return cmp;
 	}
@@ -220,13 +175,13 @@ uint64_t silofs_lsid_hash64(const struct silofs_lsid *lsid)
 }
 
 void silofs_lsid_setup(struct silofs_lsid *lsid,
-                       const struct silofs_lvid *lvid, loff_t voff,
+                       const struct silofs_volid *volid, loff_t voff,
                        enum silofs_ltype vspace, enum silofs_height height,
                        enum silofs_ltype ltype)
 {
 	const size_t lseg_size = height_to_lseg_size(height);
 
-	silofs_lvid_assign(&lsid->lvid, lvid);
+	silofs_volid_assign(&lsid->volid, volid);
 	lsid->lsize = lseg_size;
 	lsid->vindex = lseg_vindex_of(voff, (ssize_t)lseg_size);
 	lsid->height = height;
@@ -248,7 +203,7 @@ void silofs_lsid32b_htox(struct silofs_lsid32b *lsid32,
                          const struct silofs_lsid *lsid)
 {
 	memset(lsid32, 0, sizeof(*lsid32));
-	silofs_lvid_assign(&lsid32->lvid, &lsid->lvid);
+	silofs_volid_assign(&lsid32->volid, &lsid->volid);
 	lsid32->vindex = silofs_cpu_to_le32(lsid->vindex);
 	lsid32->lsize = silofs_cpu_to_le32((uint32_t)lsid->lsize);
 	lsid32->vspace = (uint8_t)lsid->vspace;
@@ -259,7 +214,7 @@ void silofs_lsid32b_htox(struct silofs_lsid32b *lsid32,
 void silofs_lsid32b_xtoh(const struct silofs_lsid32b *lsid32,
                          struct silofs_lsid *lsid)
 {
-	silofs_lvid_assign(&lsid->lvid, &lsid32->lvid);
+	silofs_volid_assign(&lsid->volid, &lsid32->volid);
 	lsid->vindex = silofs_le32_to_cpu(lsid32->vindex);
 	lsid->lsize = silofs_le32_to_cpu(lsid32->lsize);
 	lsid->vspace = (enum silofs_ltype)lsid32->vspace;
@@ -428,7 +383,7 @@ void silofs_laddr48b_xtoh(const struct silofs_laddr48b *laddr48,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 struct silofs_laddr_repr {
-	struct silofs_lvid lvid;
+	struct silofs_volid volid;
 	uint32_t lsize;
 	int32_t pos;
 	uint32_t len;
@@ -443,7 +398,7 @@ static void
 laddr_to_repr(const struct silofs_laddr *laddr, struct silofs_laddr_repr *repr)
 {
 	silofs_memzero(repr, sizeof(*repr));
-	silofs_lvid_assign(&repr->lvid, &laddr->lsid.lvid);
+	silofs_volid_assign(&repr->volid, &laddr->lsid.volid);
 	repr->lsize = (uint32_t)laddr->lsid.lsize;
 	repr->pos = (int32_t)laddr->pos;
 	repr->len = (uint32_t)laddr->len;
@@ -461,7 +416,7 @@ static int laddr_from_repr(struct silofs_laddr *laddr,
 		return -SILOFS_EINVAL;
 	}
 	silofs_laddr_reset(laddr);
-	silofs_lvid_assign(&laddr->lsid.lvid, &repr->lvid);
+	silofs_volid_assign(&laddr->lsid.volid, &repr->volid);
 	laddr->lsid.lsize = repr->lsize;
 	laddr->pos = repr->pos;
 	laddr->len = repr->len;
@@ -475,19 +430,19 @@ static int laddr_from_repr(struct silofs_laddr *laddr,
 	return 0;
 }
 
-static void laddr_repr_lvid_to_str(const struct silofs_laddr_repr *repr,
-                                   struct silofs_strbuf *sbuf)
+static void laddr_repr_volid_to_str(const struct silofs_laddr_repr *repr,
+                                    struct silofs_strbuf *sbuf)
 {
-	silofs_lvid_to_str(&repr->lvid, sbuf);
+	silofs_volid_to_str(&repr->volid, sbuf);
 }
 
-static int laddr_repr_lvid_from_str(struct silofs_laddr_repr *repr,
-                                    const struct silofs_strbuf *sbuf)
+static int laddr_repr_volid_from_str(struct silofs_laddr_repr *repr,
+                                     const struct silofs_strbuf *sbuf)
 {
 	struct silofs_strview sv;
 
 	silofs_strview_init(&sv, sbuf->str);
-	return silofs_lvid_from_str(&repr->lvid, &sv);
+	return silofs_volid_from_str(&repr->volid, &sv);
 }
 
 static void laddr_repr_meta_to_str(const struct silofs_laddr_repr *repr,
@@ -512,17 +467,17 @@ static void laddr_repr_meta_from_str(struct silofs_laddr_repr *repr,
 static void laddr_repr_to_str(const struct silofs_laddr_repr *repr,
                               struct silofs_strbuf *sbuf)
 {
-	struct silofs_strbuf lvid;
+	struct silofs_strbuf volid;
 	struct silofs_strbuf meta;
 	const size_t lim = sizeof(sbuf->str) - 1;
 	int n;
 
-	silofs_strbuf_reset(&lvid);
+	silofs_strbuf_reset(&volid);
 	silofs_strbuf_reset(&meta);
 
-	laddr_repr_lvid_to_str(repr, &lvid);
+	laddr_repr_volid_to_str(repr, &volid);
 	laddr_repr_meta_to_str(repr, &meta);
-	n = snprintf(sbuf->str, lim, "%s:%s-%08x-%08x-%08x-%08x", lvid.str,
+	n = snprintf(sbuf->str, lim, "%s:%s-%08x-%08x-%08x-%08x", volid.str,
 	             meta.str, repr->lsize, repr->vindex, repr->pos,
 	             repr->len);
 	if (n >= (int)lim) {
@@ -534,22 +489,22 @@ static void laddr_repr_to_str(const struct silofs_laddr_repr *repr,
 static int laddr_repr_from_str(struct silofs_laddr_repr *repr,
                                const struct silofs_strbuf *sbuf)
 {
-	struct silofs_strbuf lvid;
+	struct silofs_strbuf volid;
 	struct silofs_strbuf meta;
 	uint32_t pos;
 	int nscan;
 	int err;
 
-	silofs_strbuf_reset(&lvid);
+	silofs_strbuf_reset(&volid);
 	silofs_strbuf_reset(&meta);
-	nscan = sscanf(sbuf->str, "%36s:%6s-%08x-%08x-%08x-%08x", lvid.str,
+	nscan = sscanf(sbuf->str, "%36s:%6s-%08x-%08x-%08x-%08x", volid.str,
 	               meta.str, &repr->lsize, &repr->vindex, &pos,
 	               &repr->len);
 	if (nscan != 6) {
 		return -SILOFS_EINVAL;
 	}
 	repr->pos = (int32_t)pos;
-	err = laddr_repr_lvid_from_str(repr, &lvid);
+	err = laddr_repr_volid_from_str(repr, &volid);
 	if (err) {
 		return err;
 	}

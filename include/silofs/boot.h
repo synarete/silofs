@@ -158,14 +158,14 @@ void silofs_bootrec_sb_ulink(const struct silofs_bootrec *brec,
 void silofs_bootrec_set_sb_ulink(struct silofs_bootrec     *brec,
                                  const struct silofs_ulink *sb_ulink);
 
-void silofs_bootrec_lvid(const struct silofs_bootrec *brec,
-                         struct silofs_lvid          *out_lvid);
+void silofs_bootrec_volid(const struct silofs_bootrec *brec,
+                          struct silofs_volid         *out_volid);
 
 void silofs_bootrec_self_uaddr(const struct silofs_bootrec *brec,
                                struct silofs_uaddr         *out_uaddr);
 
-void silofs_make_bootrec_uaddr(const struct silofs_lvid *lvid,
-                               struct silofs_uaddr      *out_uaddr);
+void silofs_make_bootrec_uaddr(const struct silofs_volid *volid,
+                               struct silofs_uaddr       *out_uaddr);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

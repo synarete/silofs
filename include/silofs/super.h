@@ -82,8 +82,8 @@ int silof_sbi_check_mut_fs(const struct silofs_sb_info *sbi);
 void silofs_sbi_fs_uuid(const struct silofs_sb_info *sbi,
                         struct silofs_uuid          *out_uuid);
 
-void silofs_sbi_get_lvid(const struct silofs_sb_info *sbi,
-                         struct silofs_lvid          *out_lvid);
+void silofs_sbi_get_volid(const struct silofs_sb_info *sbi,
+                          struct silofs_volid         *out_volid);
 
 int silofs_sbi_main_lseg(const struct silofs_sb_info *sbi,
                          enum silofs_ltype            vspace,

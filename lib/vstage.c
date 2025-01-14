@@ -427,21 +427,21 @@ static void vstgc_make_lsid_of_spmaps(const struct silofs_vstage_ctx *vstg_ctx,
                                       enum silofs_ltype ltype,
                                       struct silofs_lsid *out_lsid)
 {
-	struct silofs_lvid lvid;
+	struct silofs_volid volid;
 	const enum silofs_ltype vspace = vstg_ctx->vspace;
 
-	silofs_sbi_get_lvid(vstg_ctx->sbi, &lvid);
-	silofs_lsid_setup(out_lsid, &lvid, voff, vspace, height, ltype);
+	silofs_sbi_get_volid(vstg_ctx->sbi, &volid);
+	silofs_lsid_setup(out_lsid, &volid, voff, vspace, height, ltype);
 }
 
 static void
 vstgc_make_lsid_of_vdata(const struct silofs_vstage_ctx *vstg_ctx, loff_t voff,
                          enum silofs_ltype ltype, struct silofs_lsid *out_lsid)
 {
-	struct silofs_lvid lvid;
+	struct silofs_volid volid;
 
-	silofs_sbi_get_lvid(vstg_ctx->sbi, &lvid);
-	silofs_lsid_setup(out_lsid, &lvid, voff, vstg_ctx->vspace,
+	silofs_sbi_get_volid(vstg_ctx->sbi, &volid);
+	silofs_lsid_setup(out_lsid, &volid, voff, vstg_ctx->vspace,
 	                  SILOFS_HEIGHT_VDATA, ltype);
 }
 

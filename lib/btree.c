@@ -48,15 +48,16 @@ bni_paddr(const struct silofs_btnode_info *bni)
 	return &bni->bn_pni.pn_paddr;
 }
 
-static const struct silofs_pvid *bni_pvid(const struct silofs_btnode_info *bni)
+static const struct silofs_volid *
+bni_volid(const struct silofs_btnode_info *bni)
 {
-	return &bni->bn_pni.pn_paddr.pvsid.pvid;
+	return &bni->bn_pni.pn_paddr.pvsid.volid;
 }
 
-static bool bni_has_same_pvid(const struct silofs_btnode_info *bni,
-                              const struct silofs_btnode_info *bni_other)
+static bool bni_has_same_volid(const struct silofs_btnode_info *bni,
+                               const struct silofs_btnode_info *bni_other)
 {
-	return silofs_pvid_isequal(bni_pvid(bni), bni_pvid(bni_other));
+	return silofs_volid_isequal(bni_volid(bni), bni_volid(bni_other));
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -203,7 +204,7 @@ static int validate_child_btnode(const struct silofs_btnode_info *parent_bni,
 		return -SILOFS_EFSCORRUPTED;
 	}
 	/* XXX */
-	silofs_assert(bni_has_same_pvid(parent_bni, child_bni));
+	silofs_assert(bni_has_same_volid(parent_bni, child_bni));
 	return 0;
 }
 

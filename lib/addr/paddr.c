@@ -57,56 +57,6 @@ static bool ptype_isdata(enum silofs_ptype ptype)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_pvid_generate(struct silofs_pvid *pvid)
-{
-	silofs_uuid_generate(&pvid->uuid);
-}
-
-void silofs_pvid_assign(struct silofs_pvid *pvid,
-                        const struct silofs_pvid *other)
-{
-	silofs_uuid_assign(&pvid->uuid, &other->uuid);
-}
-
-static void pvid_reset(struct silofs_pvid *pvid)
-{
-	memset(pvid, 0, sizeof(*pvid));
-}
-
-static long
-pvid_compare(const struct silofs_pvid *pvid1, const struct silofs_pvid *pvid2)
-{
-	return silofs_uuid_compare(&pvid1->uuid, &pvid2->uuid);
-}
-
-bool silofs_pvid_isequal(const struct silofs_pvid *pvid1,
-                         const struct silofs_pvid *pvid2)
-{
-	return (pvid_compare(pvid1, pvid2) == 0);
-}
-
-uint64_t silofs_pvid_hash64(const struct silofs_pvid *pvid)
-{
-	uint64_t u[2] = { 0, 0 };
-
-	silofs_uuid_as_u64s(&pvid->uuid, u);
-	return u[0] ^ u[1];
-}
-
-void silofs_pvid_to_str(const struct silofs_pvid *pvid,
-                        struct silofs_strbuf *sbuf)
-{
-	silofs_uuid_unparse(&pvid->uuid, sbuf);
-}
-
-int silofs_pvid_from_str(struct silofs_lvid *pvid,
-                         const struct silofs_strview *sv)
-{
-	return silofs_uuid_parse(&pvid->uuid, sv);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 static const struct silofs_pvsid s_pvsid_none = {
 	.index = 0,
 };
@@ -117,15 +67,15 @@ const struct silofs_pvsid *silofs_pvsid_none(void)
 }
 
 void silofs_pvsid_init(struct silofs_pvsid *pvsid,
-                       const struct silofs_pvid *pvid, uint32_t idx)
+                       const struct silofs_volid *volid, uint32_t idx)
 {
-	silofs_pvid_assign(&pvsid->pvid, pvid);
+	silofs_volid_assign(&pvsid->volid, volid);
 	pvsid->index = idx;
 }
 
 void silofs_pvsid_fini(struct silofs_pvsid *pvsid)
 {
-	pvid_reset(&pvsid->pvid);
+	silofs_volid_reset(&pvsid->volid);
 	pvsid->index = 0;
 }
 
@@ -134,28 +84,28 @@ bool silofs_pvsid_isnull(const struct silofs_pvsid *pvsid)
 	return (pvsid->index == 0);
 }
 
-bool silofs_pvsid_has_pvid(const struct silofs_pvsid *pvsid,
-                           const struct silofs_pvid *pvid)
+bool silofs_pvsid_has_volid(const struct silofs_pvsid *pvsid,
+                            const struct silofs_volid *volid)
 {
-	return silofs_pvid_isequal(&pvsid->pvid, pvid);
+	return silofs_volid_isequal(&pvsid->volid, volid);
 }
 
 void silofs_pvsid_generate(struct silofs_pvsid *pvsid)
 {
-	silofs_pvid_generate(&pvsid->pvid);
+	silofs_volid_generate(&pvsid->volid);
 	pvsid->index = 1;
 }
 
 void silofs_pvsid_reset(struct silofs_pvsid *pvsid)
 {
-	pvid_reset(&pvsid->pvid);
+	silofs_volid_reset(&pvsid->volid);
 	pvsid->index = 0;
 }
 
 void silofs_pvsid_assign(struct silofs_pvsid *pvsid,
                          const struct silofs_pvsid *other)
 {
-	silofs_pvid_assign(&pvsid->pvid, &other->pvid);
+	silofs_volid_assign(&pvsid->volid, &other->volid);
 	pvsid->index = other->index;
 }
 
@@ -164,7 +114,7 @@ static long pvsid_compare(const struct silofs_pvsid *pvsid1,
 {
 	long cmp;
 
-	cmp = pvid_compare(&pvsid1->pvid, &pvsid2->pvid);
+	cmp = silofs_volid_compare(&pvsid1->volid, &pvsid2->volid);
 	if (cmp) {
 		return cmp;
 	}
@@ -194,7 +144,7 @@ void silofs_pvsid_to_str(const struct silofs_pvsid *pvsid,
 {
 	struct silofs_strbuf sbuf;
 
-	silofs_pvid_to_str(&pvsid->pvid, &sbuf);
+	silofs_volid_to_str(&pvsid->volid, &sbuf);
 	silofs_strbuf_sprintf(out_sbuf, "%s:%u", sbuf.str, pvsid->index);
 }
 
@@ -202,14 +152,14 @@ void silofs_pvsid32b_htox(struct silofs_pvsid32b *pvsid32,
                           const struct silofs_pvsid *pvsid)
 {
 	memset(pvsid32, 0, sizeof(*pvsid32));
-	silofs_pvid_assign(&pvsid32->pvid, &pvsid->pvid);
+	silofs_volid_assign(&pvsid32->volid, &pvsid->volid);
 	pvsid32->index = silofs_cpu_to_le32(pvsid->index);
 }
 
 void silofs_pvsid32b_xtoh(const struct silofs_pvsid32b *pvsid32,
                           struct silofs_pvsid *pvsid)
 {
-	silofs_pvid_assign(&pvsid->pvid, &pvsid32->pvid);
+	silofs_volid_assign(&pvsid->volid, &pvsid32->volid);
 	pvsid->index = silofs_le32_to_cpu(pvsid32->index);
 }
 

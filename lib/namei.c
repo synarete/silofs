@@ -2149,7 +2149,7 @@ static void fill_query_boot(const struct silofs_inode_info *ii,
 	const struct silofs_env *env = ii_env(ii);
 	struct silofs_bootpath bootpath = { .repodir.len = 0 };
 	struct silofs_uuid fs_uuid;
-	struct silofs_lvid lvid;
+	struct silofs_volid volid;
 	const size_t bsz = sizeof(query->u.boot.name);
 
 	silofs_env_bootpath(env, &bootpath);
@@ -2157,10 +2157,10 @@ static void fill_query_boot(const struct silofs_inode_info *ii,
 	silofs_caddr_to_name2(&env->boot.caddr, query->u.boot.addr);
 
 	silofs_sbi_fs_uuid(env->sbi, &fs_uuid);
-	silofs_uuid_copyto(&fs_uuid, query->u.boot.fs_uuid);
+	silofs_uuid_copyto(&fs_uuid, query->u.boot.fsid);
 
-	silofs_sbi_get_lvid(env->sbi, &lvid);
-	silofs_uuid_copyto(&lvid.uuid, query->u.boot.lv_uuid);
+	silofs_sbi_get_volid(env->sbi, &volid);
+	silofs_uuid_copyto(&volid.id, query->u.boot.volid);
 }
 
 static void fill_query_proc(const struct silofs_inode_info *ii,

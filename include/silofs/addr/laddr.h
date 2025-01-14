@@ -22,12 +22,12 @@
 
 /* logical-segment id within specific volume mapping */
 struct silofs_lsid {
-	struct silofs_lvid lvid;
-	size_t             lsize;
-	uint32_t           vindex;
-	enum silofs_ltype  vspace;
-	enum silofs_height height;
-	enum silofs_ltype  ltype;
+	struct silofs_volid volid;
+	size_t              lsize;
+	uint32_t            vindex;
+	enum silofs_ltype   vspace;
+	enum silofs_height  height;
+	enum silofs_ltype   ltype;
 };
 
 /* logical-address within specific volume's mapping extend */
@@ -45,38 +45,19 @@ struct silofs_llink {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_lvid_generate(struct silofs_lvid *lvid);
-
-void silofs_lvid_assign(struct silofs_lvid       *lvid,
-                        const struct silofs_lvid *other);
-
-bool silofs_lvid_isequal(const struct silofs_lvid *lvid1,
-                         const struct silofs_lvid *lvid2);
-
-void silofs_lvid_by_uuid(struct silofs_lvid       *lvid,
-                         const struct silofs_uuid *uuid);
-
-void silofs_lvid_to_str(const struct silofs_lvid *lvid,
-                        struct silofs_strbuf     *sbuf);
-
-int silofs_lvid_from_str(struct silofs_lvid          *lvid,
-                         const struct silofs_strview *sv);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 const struct silofs_lsid *silofs_lsid_none(void);
 
 size_t silofs_lsid_size(const struct silofs_lsid *lsid);
 
 bool silofs_lsid_isnull(const struct silofs_lsid *lsid);
 
-bool silofs_lsid_has_lvid(const struct silofs_lsid *lsid,
-                          const struct silofs_lvid *lvid);
+bool silofs_lsid_has_volid(const struct silofs_lsid  *lsid,
+                           const struct silofs_volid *volid);
 
 void silofs_lsid_reset(struct silofs_lsid *lsid);
 
-void silofs_lsid_setup(struct silofs_lsid       *lsid,
-                       const struct silofs_lvid *lvid, loff_t voff,
+void silofs_lsid_setup(struct silofs_lsid        *lsid,
+                       const struct silofs_volid *volid, loff_t voff,
                        enum silofs_ltype vspace, enum silofs_height height,
                        enum silofs_ltype ltype);
 

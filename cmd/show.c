@@ -174,17 +174,17 @@ static void cmd_show_boot(struct cmd_show_ctx *ctx)
 	struct silofs_ioc_query *qry = &ctx->ioc->query;
 	char *boot_name = NULL;
 	char *boot_addr = NULL;
-	char *fs_uuid = NULL;
+	char *fsid = NULL;
 
 	cmd_show_do_ioctl_query(ctx);
 
 	boot_name = cmd_strdup(qry->u.boot.name);
 	boot_addr = cmd_strdup(qry->u.boot.addr);
-	fs_uuid = cmd_struuid(qry->u.boot.fs_uuid);
-	fprintf(ctx->out_fp, "%s %s %s\n", boot_name, boot_addr, fs_uuid);
+	fsid = cmd_struuid(qry->u.boot.fsid);
+	fprintf(ctx->out_fp, "%s %s %s\n", boot_name, boot_addr, fsid);
 	cmd_pstrfree(&boot_name);
 	cmd_pstrfree(&boot_addr);
-	cmd_pstrfree(&fs_uuid);
+	cmd_pstrfree(&fsid);
 }
 
 struct silofs_msflag_name {

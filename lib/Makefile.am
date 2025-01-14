@@ -51,6 +51,7 @@ libsilofs_la_SOURCES += addr/offlba.c
 libsilofs_la_SOURCES += addr/paddr.c
 libsilofs_la_SOURCES += addr/uaddr.c
 libsilofs_la_SOURCES += addr/vaddr.c
+libsilofs_la_SOURCES += addr/volid.c
 libsilofs_la_SOURCES += hmdq/dirtyq.c
 libsilofs_la_SOURCES += hmdq/hmapq.c
 libsilofs_la_SOURCES += boot.c

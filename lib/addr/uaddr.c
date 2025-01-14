@@ -81,9 +81,9 @@ bool silofs_uaddr_isequal(const struct silofs_uaddr *uaddr1,
 	return (silofs_uaddr_compare(uaddr1, uaddr2) == 0);
 }
 
-const struct silofs_lvid *silofs_uaddr_lvid(const struct silofs_uaddr *uaddr)
+const struct silofs_volid *silofs_uaddr_volid(const struct silofs_uaddr *uaddr)
 {
-	return &uaddr->laddr.lsid.lvid;
+	return &uaddr->laddr.lsid.volid;
 }
 
 const struct silofs_lsid *silofs_uaddr_lsid(const struct silofs_uaddr *uaddr)

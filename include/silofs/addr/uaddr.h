@@ -50,7 +50,8 @@ long silofs_uaddr_compare(const struct silofs_uaddr *uaddr1,
 bool silofs_uaddr_isequal(const struct silofs_uaddr *uaddr1,
                           const struct silofs_uaddr *uaddr2);
 
-const struct silofs_lvid *silofs_uaddr_lvid(const struct silofs_uaddr *uaddr);
+const struct silofs_volid *
+silofs_uaddr_volid(const struct silofs_uaddr *uaddr);
 
 const struct silofs_lsid *silofs_uaddr_lsid(const struct silofs_uaddr *uaddr);
 

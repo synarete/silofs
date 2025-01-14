@@ -22,6 +22,7 @@
 #include <silofs/addr/offlba.h>
 #include <silofs/addr/htox.h>
 #include <silofs/addr/meta.h>
+#include <silofs/addr/volid.h>
 #include <silofs/addr/blobid.h>
 #include <silofs/addr/paddr.h>
 #include <silofs/addr/ltype.h>

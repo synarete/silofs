@@ -20,6 +20,7 @@ nobase_include_HEADERS += silofs/addr/offlba.h
 nobase_include_HEADERS += silofs/addr/paddr.h
 nobase_include_HEADERS += silofs/addr/uaddr.h
 nobase_include_HEADERS += silofs/addr/vaddr.h
+nobase_include_HEADERS += silofs/addr/volid.h
 nobase_include_HEADERS += silofs/boot.h
 nobase_include_HEADERS += silofs/bstore.h
 nobase_include_HEADERS += silofs/btree.h

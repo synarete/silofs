@@ -373,10 +373,10 @@ int silofs_env_setup(struct silofs_env *env, const struct silofs_password *pw)
 
 static void make_super_lsid(struct silofs_lsid *out_lsid)
 {
-	struct silofs_lvid lvid;
+	struct silofs_volid volid;
 
-	silofs_lvid_generate(&lvid);
-	silofs_lsid_setup(out_lsid, &lvid, 0, SILOFS_LTYPE_SUPER,
+	silofs_volid_generate(&volid);
+	silofs_lsid_setup(out_lsid, &volid, 0, SILOFS_LTYPE_SUPER,
 	                  SILOFS_HEIGHT_SUPER, SILOFS_LTYPE_SUPER);
 }
 

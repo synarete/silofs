@@ -39,6 +39,7 @@ struct silofs_chkpt_info {
 struct silofs_btnode_info {
 	struct silofs_pnode_info  bn_pni;
 	struct silofs_btree_node *bn;
+	bool                      bn_rdonly;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -88,6 +89,9 @@ void silofs_bni_set_dq(struct silofs_btnode_info *bni,
 void silofs_bni_dirtify(struct silofs_btnode_info *bni);
 
 void silofs_bni_undirtify(struct silofs_btnode_info *bni);
+
+void silofs_bni_dup_by(struct silofs_btnode_info       *bni,
+                       const struct silofs_btnode_info *bni_other);
 
 void silofs_bni_mark_root(struct silofs_btnode_info *bni);
 

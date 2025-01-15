@@ -129,8 +129,8 @@ int silofs_repo_stat_pvseg(struct silofs_repo        *repo,
                            const struct silofs_pvsid *pvsid,
                            struct stat               *out_st);
 
-int silofs_repo_create_pvseg(struct silofs_repo        *repo,
-                             const struct silofs_pvsid *pvsid);
+int silofs_repo_spawn_pvseg(struct silofs_repo        *repo,
+                            const struct silofs_pvsid *pvsid);
 
 int silofs_repo_stage_pvseg(struct silofs_repo        *repo,
                             const struct silofs_pvsid *pvsid);

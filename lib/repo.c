@@ -3060,8 +3060,8 @@ static int repo_create_pvseg_of(const struct silofs_repo *repo,
 }
 
 static int
-repo_spawn_pvseg(struct silofs_repo *repo, const struct silofs_pvsid *pvsid,
-                 struct silofs_pvsegf **out_pvsegf)
+repo_do_spawn_pvseg(struct silofs_repo *repo, const struct silofs_pvsid *pvsid,
+                    struct silofs_pvsegf **out_pvsegf)
 {
 	struct silofs_pvsegf *pvsegf = NULL;
 	int err;
@@ -3097,7 +3097,7 @@ static int repo_check_no_pvseg(const struct silofs_repo *repo,
 }
 
 static int
-repo_create_pvseg(struct silofs_repo *repo, const struct silofs_pvsid *pvsid)
+repo_spawn_pvseg(struct silofs_repo *repo, const struct silofs_pvsid *pvsid)
 {
 	struct silofs_pvsegf *pvsegf = NULL;
 	int err;
@@ -3110,20 +3110,20 @@ repo_create_pvseg(struct silofs_repo *repo, const struct silofs_pvsid *pvsid)
 	if (err) {
 		return err;
 	}
-	err = repo_spawn_pvseg(repo, pvsid, &pvsegf);
+	err = repo_do_spawn_pvseg(repo, pvsid, &pvsegf);
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-int silofs_repo_create_pvseg(struct silofs_repo *repo,
-                             const struct silofs_pvsid *pvsid)
+int silofs_repo_spawn_pvseg(struct silofs_repo *repo,
+                            const struct silofs_pvsid *pvsid)
 {
 	int err;
 
 	repo_lock(repo);
-	err = repo_create_pvseg(repo, pvsid);
+	err = repo_spawn_pvseg(repo, pvsid);
 	repo_unlock(repo);
 	return err;
 }

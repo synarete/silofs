@@ -118,7 +118,7 @@ static int bstore_require_pvseg(struct silofs_bstore *bstore, bool create,
 	int err;
 
 	if (create) {
-		err = silofs_repo_create_pvseg(bstore->repo, pvsid);
+		err = silofs_repo_spawn_pvseg(bstore->repo, pvsid);
 	} else {
 		err = silofs_repo_stage_pvseg(bstore->repo, pvsid);
 	}

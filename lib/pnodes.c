@@ -172,7 +172,7 @@ static bool btn_isleaf(const struct silofs_btree_node *btn)
 	return (height == 1);
 }
 
-static size_t btn_nchilds(struct silofs_btree_node *btn)
+static size_t btn_nchilds(const struct silofs_btree_node *btn)
 {
 	return btn->btn_nchilds;
 }
@@ -372,6 +372,40 @@ static void btn_insert_child(struct silofs_btree_node *btn, size_t slot,
 		btn_set_child_at(btn, i + 1, &paddr_at_slot);
 	}
 	btn_set_child_at(btn, slot, paddr);
+}
+
+static void btn_dup_keys(struct silofs_btree_node *btn,
+                         const struct silofs_btree_node *btn_other)
+{
+	const size_t nkeys = btn_nkeys(btn_other);
+	uint64_t key;
+
+	for (size_t slot = 0; slot < nkeys; ++slot) {
+		key = btn_key_at(btn_other, slot);
+		btn_set_key_at(btn, slot, key);
+	}
+	btn_set_nkeys(btn, nkeys);
+}
+
+static void btn_dup_childs(struct silofs_btree_node *btn,
+                           const struct silofs_btree_node *btn_other)
+{
+	struct silofs_paddr paddr;
+	const size_t nchilds = btn_nchilds(btn_other);
+
+	for (size_t slot = 0; slot < nchilds; ++slot) {
+		btn_child_at(btn_other, slot, &paddr);
+		btn_set_child_at(btn, slot, &paddr);
+	}
+}
+
+static void btn_dup_by(struct silofs_btree_node *btn,
+                       const struct silofs_btree_node *btn_other)
+{
+	btn_set_flags(btn, btn_flags(btn_other));
+	btn_set_height(btn, btn_height(btn_other));
+	btn_dup_keys(btn, btn_other);
+	btn_dup_childs(btn, btn_other);
 }
 
 static void btn_init(struct silofs_btree_node *btn)
@@ -622,6 +656,7 @@ bni_init(struct silofs_btnode_info *bni, const struct silofs_paddr *paddr)
 
 	pni_init(&bni->bn_pni, paddr);
 	bni->bn = NULL;
+	bni->bn_rdonly = false;
 }
 
 static void bni_fini(struct silofs_btnode_info *bni)
@@ -761,6 +796,13 @@ void silofs_bni_dirtify(struct silofs_btnode_info *bni)
 void silofs_bni_undirtify(struct silofs_btnode_info *bni)
 {
 	silofs_pni_undirtify(&bni->bn_pni);
+}
+
+void silofs_bni_dup_by(struct silofs_btnode_info *bni,
+                       const struct silofs_btnode_info *bni_other)
+{
+	btn_dup_by(bni->bn, bni_other->bn);
+	silofs_bni_dirtify(bni);
 }
 
 static struct silofs_btnode_info *

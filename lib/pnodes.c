@@ -312,6 +312,15 @@ static void btn_child_at(const struct silofs_btree_node *btn, size_t slot,
 	silofs_paddr48b_xtoh(&btn->btn_child[slot], out_paddr);
 }
 
+static bool btn_is_child_at(const struct silofs_btree_node *btn, size_t slot,
+                            const struct silofs_paddr *paddr)
+{
+	struct silofs_paddr paddr_at;
+
+	btn_child_at(btn, slot, &paddr_at);
+	return silofs_paddr_isequal(paddr, &paddr_at);
+}
+
 static void btn_set_child_at(struct silofs_btree_node *btn, size_t slot,
                              const struct silofs_paddr *paddr)
 {
@@ -803,6 +812,20 @@ void silofs_bni_dup_by(struct silofs_btnode_info *bni,
 {
 	btn_dup_by(bni->bn, bni_other->bn);
 	silofs_bni_dirtify(bni);
+}
+
+void silofs_bni_update_child(struct silofs_btnode_info *bni,
+                             const struct silofs_vaddr *vaddr,
+                             const struct silofs_paddr *paddr)
+{
+	const uint64_t key = (uint64_t)(vaddr->off);
+	size_t slot;
+
+	slot = btn_find_slot_ge(bni->bn, key);
+	if (btn_is_child_at(bni->bn, slot, paddr)) {
+		btn_set_child_at(bni->bn, slot, paddr);
+		silofs_bni_dirtify(bni);
+	}
 }
 
 static struct silofs_btnode_info *

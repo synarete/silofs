@@ -93,6 +93,10 @@ void silofs_bni_undirtify(struct silofs_btnode_info *bni);
 void silofs_bni_dup_by(struct silofs_btnode_info       *bni,
                        const struct silofs_btnode_info *bni_other);
 
+void silofs_bni_update_child(struct silofs_btnode_info *bni,
+                             const struct silofs_vaddr *vaddr,
+                             const struct silofs_paddr *paddr);
+
 void silofs_bni_mark_root(struct silofs_btnode_info *bni);
 
 bool silofs_bni_marked_root(const struct silofs_btnode_info *bni);

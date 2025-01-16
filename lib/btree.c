@@ -88,6 +88,17 @@ bpath_append(struct silofs_btree_path *bpath, struct silofs_btnode_info *bni)
 	bni_incref(bni);
 }
 
+static void bpath_replace(struct silofs_btree_path *bpath, size_t slot,
+                          struct silofs_btnode_info *bni_new)
+{
+	struct silofs_btnode_info *bni = bpath->bni[slot];
+
+	silofs_assert_lt(slot, bpath->cnt);
+	bpath->bni[slot] = bni_new;
+	bni_incref(bni_new);
+	bni_decref(bni);
+}
+
 static struct silofs_btnode_info *
 bpath_at(const struct silofs_btree_path *bpath, size_t slot)
 {
@@ -131,6 +142,16 @@ void silofs_btree_update_root(struct silofs_btree *btree,
 	silofs_assert_eq(paddr->ptype, SILOFS_PTYPE_BTNODE);
 
 	paddr_assign(&btree->bt_root, paddr);
+}
+
+static void btree_update_root_by(struct silofs_btree *btree,
+                                 const struct silofs_btnode_info *bni)
+{
+	const struct silofs_paddr *paddr = bni_paddr(bni);
+
+	if (!paddr_isequal(&btree->bt_root, paddr)) {
+		paddr_assign(&btree->bt_root, paddr);
+	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -233,8 +254,8 @@ static bool btree_has_main_volid_as(const struct silofs_btree *btree,
 	return silofs_volid_isequal(volid, &paddr->pvsid.volid);
 }
 
-static bool btree_test_rw(const struct silofs_btree *btree,
-                          const struct silofs_btnode_info *bni)
+static bool btree_is_writeable(const struct silofs_btree *btree,
+                               const struct silofs_btnode_info *bni)
 {
 	const struct silofs_paddr *paddr = bni_paddr(bni);
 
@@ -247,7 +268,7 @@ static void btree_update_bni(const struct silofs_btree *btree,
 	if (!bni->bn_rdonly) {
 		if (as_rdonly) {
 			bni->bn_rdonly = true;
-		} else if (!btree_test_rw(btree, bni)) {
+		} else if (!btree_is_writeable(btree, bni)) {
 			bni->bn_rdonly = true;
 		}
 	}
@@ -467,7 +488,7 @@ static int btree_require_btnode(const struct silofs_btree *btree,
 
 	err = btree_stage_btnode(btree, paddr, &bni);
 	if (!err) {
-		if (btree_test_rw(btree, bni)) {
+		if (btree_is_writeable(btree, bni)) {
 			goto out;
 		}
 		err = btree_spawn_btnode_by(btree, bni, &bni);
@@ -501,12 +522,61 @@ static int btree_require_btroot(struct silofs_btree *btree,
 	return 0;
 }
 
-int silofs_btree_format(struct silofs_btree *btree)
+static int btree_require_writable_path(const struct silofs_btree *btree,
+                                       struct silofs_btree_path *bpath)
 {
-	struct silofs_paddr paddr = { .off = -1 };
+	struct silofs_btnode_info *bni = NULL;
+	int err;
 
-	silofs_pvsegr_next_btnode(btree->bt_base.pvsegr, &paddr);
-	return btree_require_btroot(btree, &paddr);
+	for (size_t i = 0; i < bpath->cnt; ++i) {
+		bni = bpath_at(bpath, i);
+		if (btree_is_writeable(btree, bni)) {
+			continue;
+		}
+		err = btree_spawn_btnode_by(btree, bni, &bni);
+		if (err) {
+			return err;
+		}
+		bpath_replace(bpath, i, bni);
+	}
+	return 0;
+}
+
+static void btree_relinked_path(struct silofs_btree *btree,
+                                const struct silofs_vaddr *vaddr,
+                                struct silofs_btree_path *bpath)
+{
+	struct silofs_btnode_info *bni = NULL;
+	struct silofs_btnode_info *child_bni = NULL;
+	const struct silofs_paddr *paddr = NULL;
+
+	if (bpath->cnt > 1) {
+		for (size_t i = 0; i < (bpath->cnt - 1); ++i) {
+			bni = bpath_at(bpath, i);
+			child_bni = bpath_at(bpath, i + 1);
+			paddr = bni_paddr(child_bni);
+			silofs_bni_update_child(bni, vaddr, paddr);
+		}
+	}
+	btree_update_root_by(btree, bpath_at(bpath, 0));
+}
+
+static int btree_require_path(struct silofs_btree *btree,
+                              const struct silofs_vaddr *vaddr,
+                              struct silofs_btree_path *bpath)
+{
+	int err;
+
+	err = btree_stage_path(btree, vaddr, bpath);
+	if (err) {
+		return err;
+	}
+	err = btree_require_writable_path(btree, bpath);
+	if (err) {
+		return err;
+	}
+	btree_relinked_path(btree, vaddr, bpath);
+	return 0;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -534,6 +604,16 @@ static int btree_resolve_rdonly(const struct silofs_btree *btree,
 	return 0;
 }
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_btree_format(struct silofs_btree *btree)
+{
+	struct silofs_paddr paddr = { .off = -1 };
+
+	silofs_pvsegr_next_btnode(btree->bt_base.pvsegr, &paddr);
+	return btree_require_btroot(btree, &paddr);
+}
+
 int silofs_btree_lookup(const struct silofs_btree *btree,
                         const struct silofs_vaddr *vaddr,
                         struct silofs_paddr *out_paddr)
@@ -548,4 +628,21 @@ int silofs_btree_lookup(const struct silofs_btree *btree,
 	return err;
 }
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+int silofs_btree_insert(struct silofs_btree *btree,
+                        const struct silofs_vaddr *vaddr,
+                        const struct silofs_paddr *paddr)
+{
+	struct silofs_btree_path bpath = { .cnt = 0 };
+	int err;
+
+	bpath_init(&bpath);
+	err = btree_require_path(btree, vaddr, &bpath);
+	if (err) {
+		goto out;
+	}
+	/* XXX */
+	silofs_unused(paddr);
+out:
+	bpath_fini(&bpath);
+	return err;
+}

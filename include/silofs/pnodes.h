@@ -97,6 +97,8 @@ void silofs_bni_update_child(struct silofs_btnode_info *bni,
                              const struct silofs_vaddr *vaddr,
                              const struct silofs_paddr *paddr);
 
+bool silofs_bni_isfull(const struct silofs_btnode_info *bni);
+
 void silofs_bni_mark_root(struct silofs_btnode_info *bni);
 
 bool silofs_bni_marked_root(const struct silofs_btnode_info *bni);

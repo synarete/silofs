@@ -828,6 +828,11 @@ void silofs_bni_update_child(struct silofs_btnode_info *bni,
 	}
 }
 
+bool silofs_bni_isfull(const struct silofs_btnode_info *bni)
+{
+	return btn_nkeys(bni->bn) == btn_nkeys_max(bni->bn);
+}
+
 static struct silofs_btnode_info *
 bni_unconst(const struct silofs_btnode_info *p)
 {

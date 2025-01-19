@@ -381,9 +381,10 @@ static int btree_stage_child_btnode(const struct silofs_btree *btree,
 {
 	struct silofs_paddr paddr = { .off = -1 };
 	struct silofs_btnode_info *bni = NULL;
+	const uint64_t key = (uint64_t)vaddr->off;
 	int err;
 
-	err = silofs_bni_resolve(parent_bni, vaddr, &paddr);
+	err = silofs_bni_resolve(parent_bni, key, &paddr);
 	if (err) {
 		return err;
 	}
@@ -626,6 +627,7 @@ static int btree_resolve_rdonly(const struct silofs_btree *btree,
                                 struct silofs_paddr *out_paddr)
 {
 	const struct silofs_btnode_info *bni = NULL;
+	const uint64_t key = (uint64_t)vaddr->off;
 	int err;
 
 	err = btree_stage_path(btree, vaddr, bpath);
@@ -636,7 +638,7 @@ static int btree_resolve_rdonly(const struct silofs_btree *btree,
 	if (bni == NULL) {
 		return -SILOFS_ENOENT;
 	}
-	err = silofs_bni_resolve(bni, vaddr, out_paddr);
+	err = silofs_bni_resolve(bni, key, out_paddr);
 	if (err) {
 		return err;
 	}

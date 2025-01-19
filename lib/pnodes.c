@@ -19,6 +19,13 @@
 #include <silofs/addr.h>
 #include <silofs/pnodes.h>
 
+static bool key_isvalid(uint64_t key)
+{
+	return (key != SILOFS_BTREE_KEY_NULL);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 static void *pnode_memalloc(struct silofs_alloc *alloc, size_t size)
 {
 	return silofs_memalloc(alloc, size, SILOFS_ALLOCF_BZERO);
@@ -234,7 +241,7 @@ btn_set_key_at(struct silofs_btree_node *btn, size_t slot, uint64_t key)
 
 static void btn_reset_key_at(struct silofs_btree_node *btn, size_t slot)
 {
-	btn_set_key_at(btn, slot, UINT64_MAX);
+	btn_set_key_at(btn, slot, SILOFS_BTREE_KEY_NULL);
 }
 
 static void btn_reset_keys(struct silofs_btree_node *btn)
@@ -751,17 +758,33 @@ void silofs_bni_child_at(const struct silofs_btnode_info *bni, size_t slot,
 	}
 }
 
-int silofs_bni_resolve(const struct silofs_btnode_info *bni,
-                       const struct silofs_vaddr *vaddr,
+uint64_t silofs_bni_median_key(const struct silofs_btnode_info *bni)
+{
+	const size_t nkeys = silofs_bni_nkeys(bni);
+	uint64_t ikey[2];
+	uint64_t mkey;
+
+	if (nkeys == 0) {
+		mkey = SILOFS_BTREE_KEY_NULL;
+	} else if (nkeys % 2 == 1) {
+		mkey = btn_key_at(bni->bn, nkeys / 2);
+	} else {
+		ikey[0] = btn_key_at(bni->bn, (nkeys - 1) / 2);
+		ikey[1] = btn_key_at(bni->bn, nkeys / 2);
+		mkey = (ikey[0] + ikey[1]) / 2;
+	}
+	return mkey;
+}
+
+int silofs_bni_resolve(const struct silofs_btnode_info *bni, uint64_t key,
                        struct silofs_paddr *out_paddr)
 {
 	const size_t nkeys = btn_nkeys(bni->bn);
-	const uint64_t key = (uint64_t)vaddr->off;
 
-	if (!nkeys) {
-		return -SILOFS_ENOENT;
+	if (!key_isvalid(key)) {
+		return -SILOFS_EINVAL;
 	}
-	if (vaddr_isnull(vaddr)) {
+	if (!nkeys) {
 		return -SILOFS_ENOENT;
 	}
 	btn_resolve_child(bni->bn, key, out_paddr);
@@ -771,15 +794,16 @@ int silofs_bni_resolve(const struct silofs_btnode_info *bni,
 	return 0;
 }
 
-int silofs_bni_expand(struct silofs_btnode_info *bni,
-                      const struct silofs_vaddr *vaddr,
+int silofs_bni_expand(struct silofs_btnode_info *bni, uint64_t key,
                       const struct silofs_paddr *paddr)
 {
 	struct silofs_btree_node *btn = bni->bn;
 	const size_t nfree_keys = btn_nfree_keys(btn);
-	const uint64_t key = (uint64_t)(vaddr->off);
 	size_t slot;
 
+	if (!key_isvalid(key)) {
+		return -SILOFS_EINVAL;
+	}
 	if (!nfree_keys) {
 		return -SILOFS_ENOSPC;
 	}

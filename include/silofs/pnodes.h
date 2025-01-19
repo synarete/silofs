@@ -21,6 +21,8 @@
 #include <silofs/addr.h>
 #include <silofs/hmdq.h>
 
+#define SILOFS_BTREE_KEY_NULL (0)
+
 struct silofs_bstore;
 
 /* base of all persistent-segment nodes */
@@ -107,17 +109,17 @@ size_t silofs_bni_height(const struct silofs_btnode_info *bni);
 
 size_t silofs_bni_nkeys(const struct silofs_btnode_info *bni);
 
+uint64_t silofs_bni_median_key(const struct silofs_btnode_info *bni);
+
 size_t silofs_bni_nchilds(const struct silofs_btnode_info *bni);
 
 void silofs_bni_child_at(const struct silofs_btnode_info *bni, size_t slot,
                          struct silofs_paddr *out_paddr);
 
-int silofs_bni_resolve(const struct silofs_btnode_info *bni,
-                       const struct silofs_vaddr       *vaddr,
-                       struct silofs_paddr             *out_paddr);
+int silofs_bni_resolve(const struct silofs_btnode_info *bni, uint64_t key,
+                       struct silofs_paddr *out_paddr);
 
-int silofs_bni_expand(struct silofs_btnode_info *bni,
-                      const struct silofs_vaddr *vaddr,
+int silofs_bni_expand(struct silofs_btnode_info *bni, uint64_t key,
                       const struct silofs_paddr *paddr);
 
 void silofs_bni_setapex(struct silofs_btnode_info *bni,

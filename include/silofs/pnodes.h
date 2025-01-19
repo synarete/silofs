@@ -95,10 +95,6 @@ void silofs_bni_undirtify(struct silofs_btnode_info *bni);
 void silofs_bni_dup_by(struct silofs_btnode_info       *bni,
                        const struct silofs_btnode_info *bni_other);
 
-void silofs_bni_update_child(struct silofs_btnode_info *bni,
-                             const struct silofs_vaddr *vaddr,
-                             const struct silofs_paddr *paddr);
-
 bool silofs_bni_isfull(const struct silofs_btnode_info *bni);
 
 void silofs_bni_mark_root(struct silofs_btnode_info *bni);
@@ -118,6 +114,9 @@ void silofs_bni_child_at(const struct silofs_btnode_info *bni, size_t slot,
 
 int silofs_bni_resolve(const struct silofs_btnode_info *bni, uint64_t key,
                        struct silofs_paddr *out_paddr);
+
+int silofs_bni_update_child(struct silofs_btnode_info *bni, uint64_t key,
+                            const struct silofs_paddr *paddr);
 
 int silofs_bni_expand(struct silofs_btnode_info *bni, uint64_t key,
                       const struct silofs_paddr *paddr);

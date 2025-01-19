@@ -46,7 +46,7 @@ void silofs_btree_update_root(struct silofs_btree       *btree,
 
 int silofs_btree_format(struct silofs_btree *btree);
 
-int silofs_btree_lookup(const struct silofs_btree *btree,
+int silofs_btree_lookup(struct silofs_btree       *btree,
                         const struct silofs_vaddr *vaddr,
                         struct silofs_paddr       *out_paddr);
 

@@ -838,18 +838,20 @@ void silofs_bni_dup_by(struct silofs_btnode_info *bni,
 	silofs_bni_dirtify(bni);
 }
 
-void silofs_bni_update_child(struct silofs_btnode_info *bni,
-                             const struct silofs_vaddr *vaddr,
-                             const struct silofs_paddr *paddr)
+int silofs_bni_update_child(struct silofs_btnode_info *bni, uint64_t key,
+                            const struct silofs_paddr *paddr)
 {
-	const uint64_t key = (uint64_t)(vaddr->off);
 	size_t slot;
 
+	if (!key_isvalid(key)) {
+		return -SILOFS_EINVAL;
+	}
 	slot = btn_find_slot_ge(bni->bn, key);
-	if (btn_is_child_at(bni->bn, slot, paddr)) {
+	if (!btn_is_child_at(bni->bn, slot, paddr)) {
 		btn_set_child_at(bni->bn, slot, paddr);
 		silofs_bni_dirtify(bni);
 	}
+	return 0;
 }
 
 bool silofs_bni_isfull(const struct silofs_btnode_info *bni)

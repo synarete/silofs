@@ -50,7 +50,6 @@
 #include <silofs/symlink.h>
 #include <silofs/xattr.h>
 #include <silofs/walk.h>
-#include <silofs/opers.h>
 #include <silofs/namei.h>
 #include <silofs/vstage.h>
 #include <silofs/spmaps.h>
@@ -58,6 +57,8 @@
 #include <silofs/env.h>
 #include <silofs/ustage.h>
 #include <silofs/flush.h>
+#include <silofs/opcall.h>
+#include <silofs/opexec.h>
 #include <silofs/mntsvc.h>
 #include <silofs/pack.h>
 

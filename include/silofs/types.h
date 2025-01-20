@@ -104,13 +104,6 @@ struct silofs_creds {
 	struct timespec    ts;
 };
 
-/* extended inode stat */
-struct silofs_stat {
-	struct stat  st;
-	struct statx stx;
-	uint64_t     gen;
-};
-
 /* inode's time-stamps (birth, access, modify, change) */
 struct silofs_itimes {
 	struct timespec btime;

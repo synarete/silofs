@@ -80,7 +80,7 @@ static bool fuseq_has_live_opers(const struct silofs_fuseq *fq);
 static bool fuseq_is_active(const struct silofs_fuseq *fq);
 static void fuseq_set_active(struct silofs_fuseq *fq);
 static void fuseq_set_non_active(struct silofs_fuseq *fq);
-static int exec_op(struct silofs_task *task, struct silofs_oper_args *args);
+static int exec_op(struct silofs_task *task, struct silofs_args *args);
 static const struct silofs_fuseq_cmd_desc *cmd_desc_of(unsigned int opc);
 
 /* FUSE types per 7.34 */
@@ -445,7 +445,7 @@ struct silofs_fuseq_cmd_ctx {
 	struct silofs_fuseq *fq;
 	struct silofs_fuseq_dispatcher *fqd;
 	struct silofs_task *task;
-	struct silofs_oper_args *args;
+	struct silofs_args *args;
 	const struct silofs_fuseq_in *in;
 	ino_t ino;
 };
@@ -1968,12 +1968,28 @@ static int do_forget(const struct silofs_fuseq_cmd_ctx *fcc)
 	return fqd_reply_none(fcc->fqd);
 }
 
+static const struct silofs_forget_in *
+as_forget_in(const struct fuse_forget_one *one)
+{
+	const void *ptr = one;
+	const struct silofs_forget_in *ret = ptr;
+
+	STATICASSERT_EQ(sizeof(*ret), sizeof(*one));
+	STATICASSERT_EQ(offsetof(struct fuse_forget_one, nodeid),
+	                offsetof(struct silofs_forget_in, ino));
+	STATICASSERT_EQ(offsetof(struct fuse_forget_one, nlookup),
+	                offsetof(struct silofs_forget_in, nlookup));
+
+	return ret;
+}
+
 static int do_batch_forget(const struct silofs_fuseq_cmd_ctx *fcc)
 {
 	int err;
 
 	fcc->args->in.batch_forget.count = fcc->in->u.batch_forget.arg.count;
-	fcc->args->in.batch_forget.one = fcc->in->u.batch_forget.one;
+	fcc->args->in.batch_forget.one =
+		as_forget_in(fcc->in->u.batch_forget.one);
 	err = do_exec_op(fcc);
 	unused(err);
 	return fqd_reply_none(fcc->fqd);
@@ -3941,7 +3957,7 @@ static void fqd_fini_rwi(struct silofs_fuseq_dispatcher *fqd)
 
 static int fqd_init_op_args(struct silofs_fuseq_dispatcher *fqd)
 {
-	struct silofs_oper_args *op_args = &fqd->fqd_args;
+	struct silofs_args *op_args = &fqd->fqd_args;
 
 	silofs_memzero(op_args, sizeof(*op_args));
 	return 0;
@@ -3949,7 +3965,7 @@ static int fqd_init_op_args(struct silofs_fuseq_dispatcher *fqd)
 
 static void fqd_fini_op_args(struct silofs_fuseq_dispatcher *fqd)
 {
-	struct silofs_oper_args *op_args = &fqd->fqd_args;
+	struct silofs_args *op_args = &fqd->fqd_args;
 
 	silofs_memffff(op_args, sizeof(*op_args));
 }
@@ -5008,456 +5024,62 @@ void silofs_fuseq_term(struct silofs_fuseq *fq)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-typedef int (*silofs_oper_fn)(struct silofs_task *, struct silofs_oper_args *);
-
-static int op_setattr(struct silofs_task *task, struct silofs_oper_args *args)
-{
-	struct silofs_stat *out_st = &args->out.setattr.st;
-	const struct stat *tms = &args->in.setattr.tims;
-	const loff_t size = args->in.setattr.size;
-	const mode_t mode = args->in.setattr.mode;
-	const uid_t uid = args->in.setattr.uid;
-	const gid_t gid = args->in.setattr.gid;
-	const ino_t ino = args->in.setattr.ino;
-	int err = 0;
-
-	out_st->gen = 0;
-	if (args->in.setattr.set_amtime_now) {
-		err = silofs_exec_utimens(task, ino, tms, out_st);
-		if (err) {
-			goto out;
-		}
-	}
-	if (args->in.setattr.set_mode) {
-		err = silofs_exec_chmod(task, ino, mode, tms, out_st);
-		if (err) {
-			goto out;
-		}
-	}
-	if (args->in.setattr.set_uid_gid) {
-		err = silofs_exec_chown(task, ino, uid, gid, tms, out_st);
-		if (err) {
-			goto out;
-		}
-	}
-	if (args->in.setattr.set_size) {
-		err = silofs_exec_truncate(task, ino, size, out_st);
-		if (err) {
-			goto out;
-		}
-	}
-	if (args->in.setattr.set_amctime && !args->in.setattr.set_nontime) {
-		err = silofs_exec_utimens(task, ino, tms, out_st);
-		if (err) {
-			goto out;
-		}
-	}
-out:
-	if (!err && !out_st->gen) {
-		err = silofs_exec_getattr(task, ino, out_st);
-	}
-	return err;
-}
-
-static int op_lookup(struct silofs_task *task, struct silofs_oper_args *args)
-{
-	return silofs_exec_lookup(task, args->in.lookup.parent,
-	                          args->in.lookup.name, &args->out.lookup.st);
-}
-
-static int op_forget(struct silofs_task *task, struct silofs_oper_args *args)
-{
-	return silofs_exec_forget(task, args->in.forget.ino,
-	                          args->in.forget.nlookup);
-}
-
-static int
-op_forget_one(struct silofs_task *task, const struct fuse_forget_one *one)
-{
-	return silofs_exec_forget(task, (ino_t)(one->nodeid), one->nlookup);
-}
-
-static int
-op_batch_forget(struct silofs_task *task, struct silofs_oper_args *args)
-{
-	const struct fuse_forget_one *one;
-	int err;
-
-	for (size_t i = 0; i < args->in.batch_forget.count; ++i) {
-		one = &args->in.batch_forget.one[i];
-		err = op_forget_one(task, one);
-		unused(err);
-	}
-	return 0;
-}
-
-static int op_getattr(struct silofs_task *task, struct silofs_oper_args *args)
-{
-	return silofs_exec_getattr(task, args->in.getattr.ino,
-	                           &args->out.getattr.st);
-}
-
-static int op_statx(struct silofs_task *task, struct silofs_oper_args *args)
-{
-	return silofs_exec_statx(task, args->in.statx.ino,
-	                         args->in.statx.sx_mask, &args->out.statx.st);
-}
-
-static int op_readlink(struct silofs_task *task, struct silofs_oper_args *args)
-{
-	return silofs_exec_readlink(task, args->in.readlink.ino,
-	                            args->in.readlink.ptr,
-	                            args->in.readlink.lim,
-	                            &args->out.readlink.len);
-}
-
-static int op_symlink(struct silofs_task *task, struct silofs_oper_args *args)
-{
-	return silofs_exec_symlink(task, args->in.symlink.parent,
-	                           args->in.symlink.name,
-	                           args->in.symlink.symval,
-	                           &args->out.symlink.st);
-}
-
-static int op_mknod(struct silofs_task *task, struct silofs_oper_args *args)
-{
-	return silofs_exec_mknod(task, args->in.mknod.parent,
-	                         args->in.mknod.name, args->in.mknod.mode,
-	                         args->in.mknod.rdev, &args->out.mknod.st);
-}
-
-static int op_mkdir(struct silofs_task *task, struct silofs_oper_args *args)
-{
-	return silofs_exec_mkdir(task, args->in.mkdir.parent,
-	                         args->in.mkdir.name, args->in.mkdir.mode,
-	                         &args->out.mkdir.st);
-}
-
-static int op_unlink(struct silofs_task *task, struct silofs_oper_args *args)
-{
-	return silofs_exec_unlink(task, args->in.unlink.parent,
-	                          args->in.unlink.name);
-}
-
-static int op_rmdir(struct silofs_task *task, struct silofs_oper_args *args)
-{
-	return silofs_exec_rmdir(task, args->in.rmdir.parent,
-	                         args->in.rmdir.name);
-}
-
-static int op_rename(struct silofs_task *task, struct silofs_oper_args *args)
-{
-	return silofs_exec_rename(task, args->in.rename.parent,
-	                          args->in.rename.name,
-	                          args->in.rename.newparent,
-	                          args->in.rename.newname,
-	                          args->in.rename.flags);
-}
-
-static int op_link(struct silofs_task *task, struct silofs_oper_args *args)
-{
-	return silofs_exec_link(task, args->in.link.ino, args->in.link.parent,
-	                        args->in.link.name, &args->out.link.st);
-}
-
-static int op_open(struct silofs_task *task, struct silofs_oper_args *args)
-{
-	return silofs_exec_open(task, args->in.open.ino,
-	                        args->in.open.o_flags);
-}
-
-static int op_statfs(struct silofs_task *task, struct silofs_oper_args *args)
-{
-	return silofs_exec_statfs(task, args->in.statfs.ino,
-	                          &args->out.statfs.stv);
-}
-
-static int op_release(struct silofs_task *task, struct silofs_oper_args *args)
-{
-	return silofs_exec_release(task, args->in.release.ino,
-	                           args->in.release.o_flags,
-	                           args->in.release.flush);
-}
-
-static int op_fsync(struct silofs_task *task, struct silofs_oper_args *args)
-{
-	return silofs_exec_fsync(task, args->in.fsync.ino,
-	                         args->in.fsync.datasync);
-}
-
-static int op_setxattr(struct silofs_task *task, struct silofs_oper_args *args)
-{
-	return silofs_exec_setxattr(
-		task, args->in.setxattr.ino, args->in.setxattr.name,
-		args->in.setxattr.value, args->in.setxattr.size,
-		args->in.setxattr.flags, args->in.setxattr.kill_sgid);
-}
-
-static int op_getxattr(struct silofs_task *task, struct silofs_oper_args *args)
-{
-	return silofs_exec_getxattr(task, args->in.getxattr.ino,
-	                            args->in.getxattr.name,
-	                            args->in.getxattr.buf,
-	                            args->in.getxattr.size,
-	                            &args->out.getxattr.size);
-}
-
-static int
-op_listxattr(struct silofs_task *task, struct silofs_oper_args *args)
-{
-	return silofs_exec_listxattr(task, args->in.listxattr.ino,
-	                             args->in.listxattr.lxa_ctx);
-}
-
-static int
-op_removexattr(struct silofs_task *task, struct silofs_oper_args *args)
-{
-	return silofs_exec_removexattr(task, args->in.removexattr.ino,
-	                               args->in.removexattr.name);
-}
-
-static int op_flush(struct silofs_task *task, struct silofs_oper_args *args)
-{
-	return silofs_exec_flush(task, args->in.flush.ino,
-	                         args->in.flush.ino == 0);
-}
-
-static int op_opendir(struct silofs_task *task, struct silofs_oper_args *args)
-{
-	return silofs_exec_opendir(task, args->in.opendir.ino,
-	                           args->in.opendir.o_flags);
-}
-
-static int op_readdir(struct silofs_task *task, struct silofs_oper_args *args)
-{
-	return silofs_exec_readdir(task, args->in.readdir.ino,
-	                           args->in.readdir.rd_ctx);
-}
-
-static int
-op_readdirplus(struct silofs_task *task, struct silofs_oper_args *args)
-{
-	return silofs_exec_readdirplus(task, args->in.readdir.ino,
-	                               args->in.readdir.rd_ctx);
-}
-
-static int
-op_releasedir(struct silofs_task *task, struct silofs_oper_args *args)
-{
-	return silofs_exec_releasedir(task, args->in.releasedir.ino,
-	                              args->in.releasedir.o_flags);
-}
-
-static int op_fsyncdir(struct silofs_task *task, struct silofs_oper_args *args)
-{
-	return silofs_exec_fsyncdir(task, args->in.fsyncdir.ino,
-	                            args->in.fsyncdir.datasync);
-}
-
-static int op_access(struct silofs_task *task, struct silofs_oper_args *args)
-{
-	return silofs_exec_access(task, args->in.access.ino,
-	                          args->in.access.mask);
-}
-
-static int op_create(struct silofs_task *task, struct silofs_oper_args *args)
-{
-	return silofs_exec_create(task, args->in.create.parent,
-	                          args->in.create.name,
-	                          args->in.create.o_flags,
-	                          args->in.create.mode, &args->out.create.st);
-}
-
-static int
-op_fallocate(struct silofs_task *task, struct silofs_oper_args *args)
-{
-	return silofs_exec_fallocate(task, args->in.fallocate.ino,
-	                             args->in.fallocate.mode,
-	                             args->in.fallocate.off,
-	                             args->in.fallocate.len);
-}
-
-static int op_lseek(struct silofs_task *task, struct silofs_oper_args *args)
-{
-	return silofs_exec_lseek(task, args->in.lseek.ino, args->in.lseek.off,
-	                         args->in.lseek.whence, &args->out.lseek.off);
-}
-
-static int
-op_copy_file_range(struct silofs_task *task, struct silofs_oper_args *args)
-{
-	return silofs_exec_copy_file_range(task,
-	                                   args->in.copy_file_range.ino_in,
-	                                   args->in.copy_file_range.off_in,
-	                                   args->in.copy_file_range.ino_out,
-	                                   args->in.copy_file_range.off_out,
-	                                   args->in.copy_file_range.len,
-	                                   args->in.copy_file_range.flags,
-	                                   &args->out.copy_file_range.ncp);
-}
-
-static int op_read_buf(struct silofs_task *task, struct silofs_oper_args *args)
-{
-	return silofs_exec_read(task, args->in.read.ino, args->in.read.buf,
-	                        args->in.read.len, args->in.read.off,
-	                        args->in.read.o_flags, &args->out.read.nrd);
-}
-
-static int
-op_read_iter(struct silofs_task *task, struct silofs_oper_args *args)
-{
-	return silofs_exec_read_iter(task, args->in.read.ino,
-	                             args->in.read.o_flags,
-	                             args->in.read.rwi_ctx);
-}
-
-static int op_read(struct silofs_task *task, struct silofs_oper_args *args)
-{
-	return (args->in.read.rwi_ctx != NULL) ? op_read_iter(task, args) :
-	                                         op_read_buf(task, args);
-}
-
-static int
-op_write_buf(struct silofs_task *task, struct silofs_oper_args *args)
-{
-	return silofs_exec_write(task, args->in.write.ino, args->in.write.buf,
-	                         args->in.write.len, args->in.write.off,
-	                         args->in.write.o_flags, &args->out.write.nwr);
-}
-
-static int
-op_write_iter(struct silofs_task *task, struct silofs_oper_args *args)
-{
-	return silofs_exec_write_iter(task, args->in.write.ino,
-	                              args->in.write.o_flags,
-	                              args->in.write.rwi_ctx);
-}
-
-static int op_write(struct silofs_task *task, struct silofs_oper_args *args)
-{
-	return (args->in.write.rwi_ctx != NULL) ? op_write_iter(task, args) :
-	                                          op_write_buf(task, args);
-}
-
-static int op_syncfs(struct silofs_task *task, struct silofs_oper_args *args)
-{
-	return silofs_exec_syncfs(task, args->in.syncfs.ino,
-	                          args->in.syncfs.flags);
-}
-
-static int
-op_ioctl_query(struct silofs_task *task, struct silofs_oper_args *args)
-{
-	return silofs_exec_query(task, args->in.query.ino,
-	                         args->in.query.qtype, &args->out.query.qry);
-}
-
-static int
-op_ioctl_clone(struct silofs_task *task, struct silofs_oper_args *args)
-{
-	return silofs_exec_clone(task, args->in.clone.ino,
-	                         args->in.clone.flags, &args->out.clone.brecs);
-}
-
-static int
-op_ioctl_syncfs(struct silofs_task *task, struct silofs_oper_args *args)
-{
-	/*
-	 * Currently (Linux kernel v6.3) fuse has 'fc->sync_fs = true' only for
-	 * fs/fuse/virtio_fs.c code-path. Thus, implement full sync-fs via
-	 * dedicated ioctl.
-	 */
-	return op_syncfs(task, args);
-}
-
-static int
-op_ioctl_tune(struct silofs_task *task, struct silofs_oper_args *args)
-{
-	return silofs_exec_tune(task, args->in.tune.ino,
-	                        args->in.tune.iflags_want,
-	                        args->in.tune.iflags_dont);
-}
-
-static int op_ioctl(struct silofs_task *task, struct silofs_oper_args *args)
-{
-	int ret;
-
-	switch (args->ioc_cmd) {
-	case SILOFS_IOC_QUERY:
-		ret = op_ioctl_query(task, args);
-		break;
-	case SILOFS_IOC_CLONE:
-		ret = op_ioctl_clone(task, args);
-		break;
-	case SILOFS_IOC_SYNCFS:
-		ret = op_ioctl_syncfs(task, args);
-		break;
-	case SILOFS_IOC_TUNE:
-		ret = op_ioctl_tune(task, args);
-		break;
-	default:
-		ret = -SILOFS_ENOSYS;
-		break;
-	}
-	return ret;
-}
-
-static const silofs_oper_fn silofs_op_tbl[FUSEQ_CMD_MAX] = {
-	[FUSE_LOOKUP] = op_lookup,
-	[FUSE_FORGET] = op_forget,
-	[FUSE_GETATTR] = op_getattr,
-	[FUSE_SETATTR] = op_setattr,
-	[FUSE_READLINK] = op_readlink,
-	[FUSE_SYMLINK] = op_symlink,
-	[FUSE_MKNOD] = op_mknod,
-	[FUSE_MKDIR] = op_mkdir,
-	[FUSE_UNLINK] = op_unlink,
-	[FUSE_RMDIR] = op_rmdir,
-	[FUSE_RENAME] = op_rename,
-	[FUSE_LINK] = op_link,
-	[FUSE_OPEN] = op_open,
-	[FUSE_READ] = op_read,
-	[FUSE_WRITE] = op_write,
-	[FUSE_STATFS] = op_statfs,
-	[FUSE_RELEASE] = op_release,
-	[FUSE_FSYNC] = op_fsync,
-	[FUSE_SETXATTR] = op_setxattr,
-	[FUSE_GETXATTR] = op_getxattr,
-	[FUSE_LISTXATTR] = op_listxattr,
-	[FUSE_REMOVEXATTR] = op_removexattr,
-	[FUSE_FLUSH] = op_flush,
-	[FUSE_OPENDIR] = op_opendir,
-	[FUSE_READDIR] = op_readdir,
-	[FUSE_RELEASEDIR] = op_releasedir,
-	[FUSE_FSYNCDIR] = op_fsyncdir,
-	[FUSE_ACCESS] = op_access,
-	[FUSE_CREATE] = op_create,
-	[FUSE_BATCH_FORGET] = op_batch_forget,
-	[FUSE_FALLOCATE] = op_fallocate,
-	[FUSE_READDIRPLUS] = op_readdirplus,
-	[FUSE_RENAME2] = op_rename,
-	[FUSE_LSEEK] = op_lseek,
-	[FUSE_COPY_FILE_RANGE] = op_copy_file_range,
-	[FUSE_SYNCFS] = op_syncfs,
-	[FUSE_IOCTL] = op_ioctl,
-	[FUSE_STATX] = op_statx,
+static const silofs_call_fn silofs_call_tbl[FUSEQ_CMD_MAX] = {
+	[FUSE_LOOKUP] = silofs_call_lookup,
+	[FUSE_FORGET] = silofs_call_forget,
+	[FUSE_GETATTR] = silofs_call_getattr,
+	[FUSE_SETATTR] = silofs_call_setattr,
+	[FUSE_READLINK] = silofs_call_readlink,
+	[FUSE_SYMLINK] = silofs_call_symlink,
+	[FUSE_MKNOD] = silofs_call_mknod,
+	[FUSE_MKDIR] = silofs_call_mkdir,
+	[FUSE_UNLINK] = silofs_call_unlink,
+	[FUSE_RMDIR] = silofs_call_rmdir,
+	[FUSE_RENAME] = silofs_call_rename,
+	[FUSE_LINK] = silofs_call_link,
+	[FUSE_OPEN] = silofs_call_open,
+	[FUSE_READ] = silofs_call_read,
+	[FUSE_WRITE] = silofs_call_write,
+	[FUSE_STATFS] = silofs_call_statfs,
+	[FUSE_RELEASE] = silofs_call_release,
+	[FUSE_FSYNC] = silofs_call_fsync,
+	[FUSE_SETXATTR] = silofs_call_setxattr,
+	[FUSE_GETXATTR] = silofs_call_getxattr,
+	[FUSE_LISTXATTR] = silofs_call_listxattr,
+	[FUSE_REMOVEXATTR] = silofs_call_removexattr,
+	[FUSE_FLUSH] = silofs_call_flush,
+	[FUSE_OPENDIR] = silofs_call_opendir,
+	[FUSE_READDIR] = silofs_call_readdir,
+	[FUSE_RELEASEDIR] = silofs_call_releasedir,
+	[FUSE_FSYNCDIR] = silofs_call_fsyncdir,
+	[FUSE_ACCESS] = silofs_call_access,
+	[FUSE_CREATE] = silofs_call_create,
+	[FUSE_BATCH_FORGET] = silofs_call_batch_forget,
+	[FUSE_FALLOCATE] = silofs_call_fallocate,
+	[FUSE_READDIRPLUS] = silofs_call_readdirplus,
+	[FUSE_RENAME2] = silofs_call_rename,
+	[FUSE_LSEEK] = silofs_call_lseek,
+	[FUSE_COPY_FILE_RANGE] = silofs_call_copy_file_range,
+	[FUSE_SYNCFS] = silofs_call_syncfs,
+	[FUSE_IOCTL] = silofs_call_ioctl,
+	[FUSE_STATX] = silofs_call_statx,
 };
 
-static silofs_oper_fn hook_of(uint32_t op_code)
+static silofs_call_fn hook_of(uint32_t op_code)
 {
-	silofs_oper_fn hook = NULL;
+	silofs_call_fn hook = NULL;
 
-	STATICASSERT_EQ(ARRAY_SIZE(silofs_op_tbl), FUSEQ_CMD_MAX);
+	STATICASSERT_EQ(ARRAY_SIZE(silofs_call_tbl), FUSEQ_CMD_MAX);
 
-	if (op_code && (op_code < ARRAY_SIZE(silofs_op_tbl))) {
-		hook = silofs_op_tbl[op_code];
+	if (op_code && (op_code < ARRAY_SIZE(silofs_call_tbl))) {
+		hook = silofs_call_tbl[op_code];
 	}
 	return hook;
 }
 
-static int exec_op(struct silofs_task *task, struct silofs_oper_args *args)
+static int exec_op(struct silofs_task *task, struct silofs_args *args)
 {
-	silofs_oper_fn hook = hook_of(task->t_oper.op_code);
+	silofs_call_fn hook = hook_of(task->t_oper.op_code);
 
 	return likely(hook != NULL) ? hook(task, args) : -SILOFS_ENOSYS;
 }

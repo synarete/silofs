@@ -18,6 +18,7 @@
 #define SILOFS_FUSEQ_H_
 
 #include <silofs/infra.h>
+#include <silofs/opcall.h>
 
 /* fuse-queue machinery */
 struct silofs_fuseq_conn_info {
@@ -52,7 +53,7 @@ struct silofs_fuseq_worker {
 } silofs_attr_aligned64;
 
 struct silofs_fuseq_dispatcher {
-	struct silofs_oper_args      fqd_args;
+	struct silofs_args           fqd_args;
 	struct silofs_fuseq_thread   fqd_th;
 	struct silofs_list_head      fqd_lh;
 	struct silofs_fuseq_inb     *fqd_inb;

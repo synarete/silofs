@@ -22,6 +22,13 @@
 
 struct silofs_task;
 
+/* extended inode stat */
+struct silofs_stat {
+	struct stat  st;
+	struct statx stx;
+	uint64_t     gen;
+};
+
 /* inode's attributes */
 struct silofs_iattr {
 	enum silofs_iattr_flags ia_flags;

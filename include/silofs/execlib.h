@@ -46,7 +46,7 @@ int silofs_open_fs(struct silofs_env *env, const struct silofs_caddr *caddr);
 
 int silofs_close_fs(struct silofs_env *env);
 
-int silofs_exec_fs(struct silofs_env *env);
+int silofs_run_fs(struct silofs_env *env);
 
 int silofs_post_exec_fs(struct silofs_env *env);
 

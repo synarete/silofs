@@ -19,12 +19,12 @@
 
 #include <silofs.h>
 
-typedef void (*silofs_exec_fn)(void);
+typedef void (*silofs_subcmd_fn)(void);
 
 /* sub-command descriptor */
 struct cmd_info {
-	const char    *name;
-	silofs_exec_fn action_hook;
+	const char      *name;
+	silofs_subcmd_fn subcmd;
 };
 
 /* sub-command option descriptor */

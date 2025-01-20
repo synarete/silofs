@@ -86,7 +86,7 @@ static int ut_do_statfs(struct ut_env *ute, ino_t ino, struct statvfs *st)
 	int ret;
 
 	ut_setup_task(ute, &task);
-	ret = silofs_fs_statfs(&task, ino, st);
+	ret = silofs_exec_statfs(&task, ino, st);
 	ut_release_task(ute, &task);
 	return sanitize_status(ret);
 }
@@ -99,7 +99,7 @@ static int ut_do_statx(struct ut_env *ute, ino_t ino, uint32_t sx_want_mask,
 	int ret;
 
 	ut_setup_task(ute, &task);
-	ret = silofs_fs_statx(&task, ino, sx_want_mask, &st);
+	ret = silofs_exec_statx(&task, ino, sx_want_mask, &st);
 	ut_release_task(ute, &task);
 	assign_statx(stx, &st);
 	return sanitize_status(ret);
@@ -111,7 +111,7 @@ static int ut_do_access(struct ut_env *ute, ino_t ino, int mode)
 	int ret;
 
 	ut_setup_task(ute, &task);
-	ret = silofs_fs_access(&task, ino, mode);
+	ret = silofs_exec_access(&task, ino, mode);
 	ut_release_task(ute, &task);
 	return sanitize_status(ret);
 }
@@ -123,7 +123,7 @@ static int ut_do_getattr(struct ut_env *ute, ino_t ino, struct stat *out_st)
 	int ret;
 
 	ut_setup_task(ute, &task);
-	ret = silofs_fs_getattr(&task, ino, &st);
+	ret = silofs_exec_getattr(&task, ino, &st);
 	ut_release_task(ute, &task);
 	assign_stat(out_st, &st);
 	return sanitize_status(ret);
@@ -137,7 +137,7 @@ static int ut_do_lookup(struct ut_env *ute, ino_t parent, const char *name,
 	int ret;
 
 	ut_setup_task(ute, &task);
-	ret = silofs_fs_lookup(&task, parent, name, &st);
+	ret = silofs_exec_lookup(&task, parent, name, &st);
 	ut_release_task(ute, &task);
 	assign_stat(out_st, &st);
 	return sanitize_status(ret);
@@ -151,7 +151,7 @@ static int ut_do_utimens(struct ut_env *ute, ino_t ino,
 	int ret;
 
 	ut_setup_task(ute, &task);
-	ret = silofs_fs_utimens(&task, ino, utimes, &st);
+	ret = silofs_exec_utimens(&task, ino, utimes, &st);
 	ut_release_task(ute, &task);
 	assign_stat(out_st, &st);
 	return sanitize_status(ret);
@@ -165,7 +165,7 @@ static int ut_do_mkdir(struct ut_env *ute, ino_t parent, const char *name,
 	int ret;
 
 	ut_setup_task(ute, &task);
-	ret = silofs_fs_mkdir(&task, parent, name, mode | S_IFDIR, &st);
+	ret = silofs_exec_mkdir(&task, parent, name, mode | S_IFDIR, &st);
 	ut_release_task(ute, &task);
 	assign_stat(out_st, &st);
 	return sanitize_status(ret);
@@ -177,7 +177,7 @@ static int ut_do_rmdir(struct ut_env *ute, ino_t parent, const char *name)
 	int ret;
 
 	ut_setup_task(ute, &task);
-	ret = silofs_fs_rmdir(&task, parent, name);
+	ret = silofs_exec_rmdir(&task, parent, name);
 	ut_release_task(ute, &task);
 	return sanitize_status(ret);
 }
@@ -188,7 +188,7 @@ static int ut_do_opendir(struct ut_env *ute, ino_t ino)
 	int ret;
 
 	ut_setup_task(ute, &task);
-	ret = silofs_fs_opendir(&task, ino, 0);
+	ret = silofs_exec_opendir(&task, ino, 0);
 	ut_release_task(ute, &task);
 	return sanitize_status(ret);
 }
@@ -199,7 +199,7 @@ static int ut_do_releasedir(struct ut_env *ute, ino_t ino)
 	int ret;
 
 	ut_setup_task(ute, &task);
-	ret = silofs_fs_releasedir(&task, ino, 0);
+	ret = silofs_exec_releasedir(&task, ino, 0);
 	ut_release_task(ute, &task);
 	return sanitize_status(ret);
 }
@@ -210,7 +210,7 @@ static int ut_do_fsyncdir(struct ut_env *ute, ino_t ino, bool datasync)
 	int ret;
 
 	ut_setup_task(ute, &task);
-	ret = silofs_fs_fsyncdir(&task, ino, datasync);
+	ret = silofs_exec_fsyncdir(&task, ino, datasync);
 	ut_release_task(ute, &task);
 	return sanitize_status(ret);
 }
@@ -223,7 +223,7 @@ static int ut_do_symlink(struct ut_env *ute, ino_t parent, const char *name,
 	int ret;
 
 	ut_setup_task(ute, &task);
-	ret = silofs_fs_symlink(&task, parent, name, val, &st);
+	ret = silofs_exec_symlink(&task, parent, name, val, &st);
 	ut_release_task(ute, &task);
 	assign_stat(out_st, &st);
 	return sanitize_status(ret);
@@ -236,7 +236,7 @@ static int ut_do_readlink(struct ut_env *ute, ino_t ino, char *buf, size_t len,
 	int ret;
 
 	ut_setup_task(ute, &task);
-	ret = silofs_fs_readlink(&task, ino, buf, len, out_len);
+	ret = silofs_exec_readlink(&task, ino, buf, len, out_len);
 	ut_release_task(ute, &task);
 	return sanitize_status(ret);
 }
@@ -249,7 +249,7 @@ static int ut_do_link(struct ut_env *ute, ino_t ino, ino_t parent,
 	int ret;
 
 	ut_setup_task(ute, &task);
-	ret = silofs_fs_link(&task, ino, parent, name, &st);
+	ret = silofs_exec_link(&task, ino, parent, name, &st);
 	ut_release_task(ute, &task);
 	assign_stat(out_st, &st);
 	return sanitize_status(ret);
@@ -261,7 +261,7 @@ static int ut_do_unlink(struct ut_env *ute, ino_t parent, const char *name)
 	int ret;
 
 	ut_setup_task(ute, &task);
-	ret = silofs_fs_unlink(&task, parent, name);
+	ret = silofs_exec_unlink(&task, parent, name);
 	ut_release_task(ute, &task);
 	return sanitize_status(ret);
 }
@@ -274,7 +274,7 @@ static int ut_do_create(struct ut_env *ute, ino_t parent, const char *name,
 	int ret;
 
 	ut_setup_task(ute, &task);
-	ret = silofs_fs_create(&task, parent, name, 0, mode, &st);
+	ret = silofs_exec_create(&task, parent, name, 0, mode, &st);
 	ut_release_task(ute, &task);
 	assign_stat(out_st, &st);
 	return sanitize_status(ret);
@@ -286,7 +286,7 @@ static int ut_do_open(struct ut_env *ute, ino_t ino, int flags)
 	int ret;
 
 	ut_setup_task(ute, &task);
-	ret = silofs_fs_open(&task, ino, flags);
+	ret = silofs_exec_open(&task, ino, flags);
 	ut_release_task(ute, &task);
 	return sanitize_status(ret);
 }
@@ -297,7 +297,7 @@ static int ut_do_release(struct ut_env *ute, ino_t ino, bool flush)
 	int ret;
 
 	ut_setup_task(ute, &task);
-	ret = silofs_fs_release(&task, ino, 0, flush);
+	ret = silofs_exec_release(&task, ino, 0, flush);
 	ut_release_task(ute, &task);
 	return sanitize_status(ret);
 }
@@ -310,7 +310,7 @@ static int ut_do_truncate(struct ut_env *ute, ino_t ino, loff_t length,
 	int ret;
 
 	ut_setup_task(ute, &task);
-	ret = silofs_fs_truncate(&task, ino, length, &st);
+	ret = silofs_exec_truncate(&task, ino, length, &st);
 	ut_release_task(ute, &task);
 	assign_stat(out_st, &st);
 	return sanitize_status(ret);
@@ -322,7 +322,7 @@ static int ut_do_fsync(struct ut_env *ute, ino_t ino, bool datasync)
 	int ret;
 
 	ut_setup_task(ute, &task);
-	ret = silofs_fs_fsync(&task, ino, datasync);
+	ret = silofs_exec_fsync(&task, ino, datasync);
 	ut_release_task(ute, &task);
 	return sanitize_status(ret);
 }
@@ -334,7 +334,8 @@ static int ut_do_rename(struct ut_env *ute, ino_t parent, const char *name,
 	int ret;
 
 	ut_setup_task(ute, &task);
-	ret = silofs_fs_rename(&task, parent, name, newparent, newname, flags);
+	ret = silofs_exec_rename(&task, parent, name, newparent, newname,
+	                         flags);
 	ut_release_task(ute, &task);
 	return sanitize_status(ret);
 }
@@ -345,7 +346,7 @@ static int ut_do_fiemap(struct ut_env *ute, ino_t ino, struct fiemap *fm)
 	int ret;
 
 	ut_setup_task(ute, &task);
-	ret = silofs_fs_fiemap(&task, ino, fm);
+	ret = silofs_exec_fiemap(&task, ino, fm);
 	ut_release_task(ute, &task);
 	return sanitize_status(ret);
 }
@@ -357,7 +358,7 @@ ut_do_lseek(struct ut_env *ute, ino_t ino, loff_t off, int whence, loff_t *out)
 	int ret;
 
 	ut_setup_task(ute, &task);
-	ret = silofs_fs_lseek(&task, ino, off, whence, out);
+	ret = silofs_exec_lseek(&task, ino, off, whence, out);
 	ut_release_task(ute, &task);
 	return sanitize_status(ret);
 }
@@ -370,8 +371,8 @@ static int ut_do_copy_file_range(struct ut_env *ute, ino_t ino_in,
 	int ret;
 
 	ut_setup_task(ute, &task);
-	ret = silofs_fs_copy_file_range(&task, ino_in, off_in, ino_out,
-	                                off_out, len, 0, out_len);
+	ret = silofs_exec_copy_file_range(&task, ino_in, off_in, ino_out,
+	                                  off_out, len, 0, out_len);
 	ut_release_task(ute, &task);
 	return sanitize_status(ret);
 }
@@ -384,7 +385,7 @@ ut_do_query(struct ut_env *ute, ino_t ino, enum silofs_query_type qtype,
 	int ret;
 
 	ut_setup_task(ute, &task);
-	ret = silofs_fs_query(&task, ino, qtype, out_qry);
+	ret = silofs_exec_query(&task, ino, qtype, out_qry);
 	ut_release_task(ute, &task);
 	return sanitize_status(ret);
 }
@@ -395,7 +396,7 @@ static int ut_do_flush(struct ut_env *ute, ino_t ino, bool now)
 	int ret;
 
 	ut_setup_task(ute, &task);
-	ret = silofs_fs_flush(&task, ino, now);
+	ret = silofs_exec_flush(&task, ino, now);
 	ut_release_task(ute, &task);
 	return sanitize_status(ret);
 }
@@ -407,7 +408,7 @@ static int ut_do_read(struct ut_env *ute, ino_t ino, void *buf, size_t len,
 	int ret;
 
 	ut_setup_task(ute, &task);
-	ret = silofs_fs_read(&task, ino, buf, len, off, 0, out_len);
+	ret = silofs_exec_read(&task, ino, buf, len, off, 0, out_len);
 	ut_release_task(ute, &task);
 	return sanitize_status(ret);
 }
@@ -419,7 +420,7 @@ static int ut_do_fallocate(struct ut_env *ute, ino_t ino, int mode,
 	int ret;
 
 	ut_setup_task(ute, &task);
-	ret = silofs_fs_fallocate(&task, ino, mode, offset, len);
+	ret = silofs_exec_fallocate(&task, ino, mode, offset, len);
 	ut_release_task(ute, &task);
 	return sanitize_status(ret);
 }
@@ -431,7 +432,7 @@ static int ut_do_write(struct ut_env *ute, ino_t ino, const void *buf,
 	int ret;
 
 	ut_setup_task(ute, &task);
-	ret = silofs_fs_write(&task, ino, buf, len, off, 0, out_len);
+	ret = silofs_exec_write(&task, ino, buf, len, off, 0, out_len);
 	ut_release_task(ute, &task);
 	return sanitize_status(ret);
 }
@@ -549,14 +550,14 @@ static int ut_do_write_iter(struct ut_env *ute, ino_t ino, const void *buf,
 	int err3;
 
 	ut_setup_task(ute, &task);
-	err1 = silofs_fs_write_iter(&task, ino, 0, &wri.rwi);
+	err1 = silofs_exec_write_iter(&task, ino, 0, &wri.rwi);
 	ut_release_task(ute, &task);
 
 	err2 = ut_write_iter_copy_rem(&wri);
 	*out_len = wri.dat_len;
 
 	ut_setup_task(ute, &task);
-	err3 = silofs_fs_rdwr_post(&task, 1, wri.iov, wri.cnt);
+	err3 = silofs_exec_rdwr_post(&task, 1, wri.iov, wri.cnt);
 	ut_release_task(ute, &task);
 
 	return sanitize_status(err1 || err2 || err3);
@@ -611,7 +612,7 @@ static int ut_do_readdir(struct ut_env *ute, ino_t ino, loff_t doff,
 	rd_ctx->actor = filldir;
 
 	ut_setup_task(ute, &task);
-	ret = silofs_fs_readdir(&task, ino, rd_ctx);
+	ret = silofs_exec_readdir(&task, ino, rd_ctx);
 	ut_release_task(ute, &task);
 	return sanitize_status(ret);
 }
@@ -629,7 +630,7 @@ static int ut_do_readdirplus(struct ut_env *ute, ino_t ino, loff_t doff,
 	rd_ctx->actor = filldir;
 
 	ut_setup_task(ute, &task);
-	ret = silofs_fs_readdirplus(&task, ino, rd_ctx);
+	ret = silofs_exec_readdirplus(&task, ino, rd_ctx);
 	ut_release_task(ute, &task);
 	return sanitize_status(ret);
 }
@@ -641,7 +642,8 @@ static int ut_do_setxattr(struct ut_env *ute, ino_t ino, const char *name,
 	int ret;
 
 	ut_setup_task(ute, &task);
-	ret = silofs_fs_setxattr(&task, ino, name, value, size, flags, false);
+	ret = silofs_exec_setxattr(&task, ino, name, value, size, flags,
+	                           false);
 	ut_release_task(ute, &task);
 	return sanitize_status(ret);
 }
@@ -653,7 +655,7 @@ static int ut_do_getxattr(struct ut_env *ute, ino_t ino, const char *name,
 	int ret;
 
 	ut_setup_task(ute, &task);
-	ret = silofs_fs_getxattr(&task, ino, name, buf, size, out_size);
+	ret = silofs_exec_getxattr(&task, ino, name, buf, size, out_size);
 	ut_release_task(ute, &task);
 	return sanitize_status(ret);
 }
@@ -664,7 +666,7 @@ static int ut_do_removexattr(struct ut_env *ute, ino_t ino, const char *name)
 	int ret;
 
 	ut_setup_task(ute, &task);
-	ret = silofs_fs_removexattr(&task, ino, name);
+	ret = silofs_exec_removexattr(&task, ino, name);
 	ut_release_task(ute, &task);
 	return sanitize_status(ret);
 }
@@ -705,7 +707,7 @@ static int ut_do_listxattr(struct ut_env *ute, ino_t ino,
 	ut_lxa_ctx->lxa_ctx.actor = fillxent;
 
 	ut_setup_task(ute, &task);
-	ret = silofs_fs_listxattr(&task, ino, lxa_ctx);
+	ret = silofs_exec_listxattr(&task, ino, lxa_ctx);
 	ut_release_task(ute, &task);
 	return sanitize_status(ret);
 }
@@ -717,7 +719,7 @@ ut_do_tune(struct ut_env *ute, ino_t ino, int iflags_want, int iflags_dont)
 	int ret;
 
 	ut_setup_task(ute, &task);
-	ret = silofs_fs_tune(&task, ino, iflags_want, iflags_dont);
+	ret = silofs_exec_tune(&task, ino, iflags_want, iflags_dont);
 	ut_release_task(ute, &task);
 	return sanitize_status(ret);
 }
@@ -728,7 +730,7 @@ static int ut_do_timedout(struct ut_env *ute)
 	int ret;
 
 	ut_setup_task(ute, &task);
-	ret = silofs_fs_maintain(&task, SILOFS_F_IDLE);
+	ret = silofs_exec_maintain(&task, SILOFS_F_IDLE);
 	ut_release_task(ute, &task);
 	return sanitize_status(ret);
 }

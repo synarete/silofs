@@ -56,7 +56,7 @@ static void ft_creat_with_size(const char *path, size_t len)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ste_run(struct ft_stress_executor *ste, silofs_execute_fn exec)
+static void ste_run(struct ft_stress_executor *ste, silofs_threadexec_fn exec)
 {
 	int err;
 
@@ -65,8 +65,8 @@ static void ste_run(struct ft_stress_executor *ste, silofs_execute_fn exec)
 	ft_expect_ok(err);
 }
 
-static void
-ste_nrun(struct ft_stress_executor *ste_arr, size_t n, silofs_execute_fn exec)
+static void ste_nrun(struct ft_stress_executor *ste_arr, size_t n,
+                     silofs_threadexec_fn exec)
 {
 	for (size_t i = 0; i < n; ++i) {
 		ste_run(&ste_arr[i], exec);

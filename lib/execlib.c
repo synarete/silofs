@@ -923,17 +923,25 @@ static int do_mount_and_exec(struct silofs_env *env)
 	return 0;
 }
 
-int silofs_exec_fs(struct silofs_env *env)
+int silofs_run_fs(struct silofs_env *env)
 {
-	struct silofs_fuseq *fuseq = env->base.fuseq;
+	struct silofs_fuseq *fuseq = NULL;
 	int err = -SILOFS_EINVAL;
+	bool do_term = false;
 
-	if (run_with_fuse(env)) {
-		err = silofs_fuseq_update(fuseq);
-		if (!err) {
-			err = do_mount_and_exec(env);
-			silofs_fuseq_term(fuseq);
-		}
+	if (!run_with_fuse(env)) {
+		goto out;
+	}
+	fuseq = env->base.fuseq;
+	err = silofs_fuseq_update(fuseq);
+	if (err) {
+		goto out;
+	}
+	do_term = true;
+	err = do_mount_and_exec(env);
+out:
+	if (do_term) {
+		silofs_fuseq_term(fuseq);
 	}
 	return err;
 }
@@ -1766,7 +1774,7 @@ exec_clone_fs(struct silofs_env *env, struct silofs_bootrecs *out_brecs)
 	if (err) {
 		return err;
 	}
-	err = silofs_fs_clone(&task, SILOFS_INO_ROOT, 0, out_brecs);
+	err = silofs_exec_clone(&task, SILOFS_INO_ROOT, 0, out_brecs);
 	if (err) {
 		return err;
 	}
@@ -1798,7 +1806,7 @@ static int exec_unref_fs(struct silofs_env *env)
 	if (err) {
 		return err;
 	}
-	err = silofs_fs_unrefs(&task);
+	err = silofs_exec_unrefs(&task);
 	return term_task(&task, err);
 }
 
@@ -1860,7 +1868,7 @@ static int exec_inspect_fs(struct silofs_env *env, silofs_visit_laddr_fn cb,
 	if (err) {
 		return err;
 	}
-	err = silofs_fs_inspect(&task, cb, user_ctx);
+	err = silofs_exec_inspect(&task, cb, user_ctx);
 	return term_task(&task, err);
 }
 

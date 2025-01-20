@@ -27,7 +27,7 @@ struct ft_mmap_mt_ctx {
 };
 
 static void
-ft_mmtc_exec_thread(struct ft_mmap_mt_ctx *mmtc, silofs_execute_fn exec)
+ft_mmtc_exec_thread(struct ft_mmap_mt_ctx *mmtc, silofs_threadexec_fn exec)
 {
 	int err;
 

@@ -207,7 +207,7 @@ void cmd_exec_fs(struct silofs_env *env)
 {
 	int err;
 
-	err = silofs_exec_fs(env);
+	err = silofs_run_fs(env);
 	cmd_require_ok(env, err, "failed to exec fs");
 }
 

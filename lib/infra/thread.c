@@ -90,7 +90,7 @@ static void *silofs_thread_start(void *arg)
 	return th; /* should not get here */
 }
 
-int silofs_thread_create(struct silofs_thread *th, silofs_execute_fn exec,
+int silofs_thread_create(struct silofs_thread *th, silofs_threadexec_fn exec,
                          void *arg, const char *name)
 {
 	pthread_attr_t attr;

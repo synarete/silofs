@@ -951,7 +951,8 @@ static int pac_visit_laddr_cb(void *ctx, const struct silofs_laddr *laddr)
 
 static int pac_export_fs(struct silofs_par_ctx *pa_ctx)
 {
-	return silofs_fs_inspect(pa_ctx->pac_task, pac_visit_laddr_cb, pa_ctx);
+	return silofs_exec_inspect(pa_ctx->pac_task, pac_visit_laddr_cb,
+	                           pa_ctx);
 }
 
 static int pac_encode_save_pindex(struct silofs_par_ctx *pa_ctx,

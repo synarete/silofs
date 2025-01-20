@@ -140,10 +140,10 @@ static void cmd_clean_postexec(void)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-#define DEFCMD(cmd_)                               \
-	{                                          \
-		.name = #cmd_,                     \
-		.action_hook = cmd_execute_##cmd_, \
+#define DEFCMD(cmd_)                          \
+	{                                     \
+		.name = #cmd_,                \
+		.subcmd = cmd_execute_##cmd_, \
 	}
 
 static const struct cmd_info g_cmd_info[] = {
@@ -238,7 +238,7 @@ static void cmd_execute_sub(void)
 {
 	const struct cmd_info *cmdi = cmd_globals.cmdi;
 
-	if ((cmdi != NULL) && (cmdi->action_hook != NULL)) {
-		cmdi->action_hook();
+	if ((cmdi != NULL) && (cmdi->subcmd != NULL)) {
+		cmdi->subcmd();
 	}
 }

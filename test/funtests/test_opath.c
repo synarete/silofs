@@ -265,6 +265,38 @@ static void test_opath_unlinked(struct ft_env *fte)
 	ft_close(dfd);
 	ft_rmdir(path);
 }
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+/*
+ * Expects open(3p) with O_PATH on dir to allow re-open same directory.
+ */
+static void test_opath_selfdir(struct ft_env *fte)
+{
+	struct stat st[3];
+	const char *path = ft_new_path_unique(fte);
+	const int o_flags = O_DIRECTORY | O_RDONLY | O_NONBLOCK;
+	int dfd[3] = { -1, -1 };
+
+	ft_mkdir(path, 0700);
+	ft_openat(AT_FDCWD, path, o_flags, 0, &dfd[0]);
+	ft_fstat(dfd[0], &st[0]);
+	ft_expect_st_dir(&st[0]);
+	ft_openat(dfd[0], ".", o_flags | O_PATH, 0, &dfd[1]);
+	ft_fstat(dfd[1], &st[1]);
+	ft_expect_st_dir(&st[1]);
+	ft_expect_eq(st[0].st_ino, st[1].st_ino);
+	ft_fstat(dfd[1], &st[1]);
+	ft_expect_st_dir(&st[1]);
+	ft_openat(dfd[1], ".", o_flags, 0, &dfd[2]);
+	ft_fstatat(dfd[2], ".", &st[2], AT_SYMLINK_NOFOLLOW);
+	ft_expect_st_dir(&st[2]);
+	ft_expect_eq(st[1].st_ino, st[2].st_ino);
+	ft_close(dfd[0]);
+	ft_close(dfd[1]);
+	ft_close(dfd[2]);
+	ft_rmdir(path);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ft_tdef ft_local_tests[] = {
@@ -274,6 +306,7 @@ static const struct ft_tdef ft_local_tests[] = {
 	FT_DEFTEST(test_opath_renameat), //
 	FT_DEFTEST(test_opath_fstatat),  //
 	FT_DEFTEST(test_opath_unlinked), //
+	FT_DEFTEST(test_opath_selfdir),  //
 };
 
 const struct ft_tests ft_test_opath = FT_DEFTESTS(ft_local_tests);

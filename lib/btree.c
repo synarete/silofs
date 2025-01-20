@@ -160,7 +160,7 @@ bpath_at(const struct silofs_btree_path *bpath, size_t slot)
 
 	silofs_assert_lt(slot, bpath->cnt);
 	if (slot < bpath->cnt) {
-		bni = bpath->bni[slot - 1];
+		bni = bpath->bni[slot];
 	}
 	return bni;
 }
@@ -685,7 +685,7 @@ static int btc_init(struct silofs_btree_ctx *btc, struct silofs_btree *btree,
 	btc->pcache = btree->bt_base.pcache;
 	btc->repo = btree->bt_base.repo;
 	bpath_init(&btc->bpath);
-	if (vaddr != NULL) {
+	if (vaddr == NULL) {
 		btc->key = SILOFS_BTREE_KEY_NULL;
 	} else if (!vaddr_isnull(vaddr)) {
 		btc->key = (uint64_t)(vaddr->off);

@@ -582,6 +582,7 @@ static int bootrec_decode(struct silofs_bootrec *brec,
 int silofs_bootpath_setup(struct silofs_bootpath *bpath, const char *repodir,
                           const char *name)
 {
+	struct silofs_namestr nstr;
 	size_t len;
 
 	silofs_memzero(bpath, sizeof(*bpath));
@@ -593,7 +594,8 @@ int silofs_bootpath_setup(struct silofs_bootpath *bpath, const char *repodir,
 	if (name == NULL) {
 		return 0; /* boot with repo-dir only */
 	}
-	return silofs_make_namestr(&bpath->name, name);
+	silofs_strview_init(&bpath->name, name);
+	return silofs_make_namestr(&nstr, name);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

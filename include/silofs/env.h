@@ -131,6 +131,8 @@ void silofs_env_bootpath(const struct silofs_env *env,
 int silofs_env_update_by(struct silofs_env           *env,
                          const struct silofs_bootrec *brec);
 
+void silofs_env_drop_caches(struct silofs_env *env);
+
 void silofs_env_set_boot_caddr(struct silofs_env         *env,
                                const struct silofs_caddr *caddr);
 

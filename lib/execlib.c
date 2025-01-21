@@ -772,11 +772,9 @@ static int term_task(struct silofs_task *task, int status)
 	return status ? status : err;
 }
 
-static void drop_caches(const struct silofs_env *env)
+static void drop_caches(struct silofs_env *env)
 {
-	silofs_lcache_drop(env->base.lcache);
-	silofs_pcache_drop(env->base.pcache);
-	silofs_repo_drop_some(env->base.repo);
+	silofs_env_drop_caches(env);
 }
 
 static int exec_stage_rootdir_inode(struct silofs_env *env,

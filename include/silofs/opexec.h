@@ -162,4 +162,6 @@ int silofs_exec_inspect(struct silofs_task *task, silofs_visit_laddr_fn cb,
 
 int silofs_exec_unrefs(struct silofs_task *task);
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 #endif /* SILOFS_OPEXEC_H_ */

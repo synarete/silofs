@@ -411,6 +411,13 @@ static void env_make_super_ulink(const struct silofs_env *env,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+void silofs_env_drop_caches(struct silofs_env *env)
+{
+	silofs_lcache_drop(env->base.lcache);
+	silofs_pcache_drop(env->base.pcache);
+	silofs_repo_drop_some(env->base.repo);
+}
+
 void silofs_env_set_boot_caddr(struct silofs_env *env,
                                const struct silofs_caddr *caddr)
 {

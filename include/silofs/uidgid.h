@@ -17,7 +17,7 @@
 #ifndef SILOFS_UIDGID_H_
 #define SILOFS_UIDGID_H_
 
-#include <silofs/defs.h>
+#include <stdbool.h>
 #include <unistd.h>
 
 /*

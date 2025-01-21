@@ -57,10 +57,10 @@ struct silofs_env_base {
 
 /* top-level boot state */
 struct silofs_env_boot {
-	struct silofs_ivkey   ivkey;
-	struct silofs_caddr   caddr;
-	struct silofs_cipher  cipher;
-	struct silofs_bootrec brec;
+	struct silofs_ivkey  ivkey;
+	struct silofs_caddr  caddr;
+	struct silofs_cipher cipher;
+	struct silofs_uber   uber;
 };
 
 /* fs two-layers locking */
@@ -115,8 +115,7 @@ int silofs_env_reload_super(struct silofs_env *env);
 
 int silofs_env_reload_sb_lseg(struct silofs_env *env);
 
-int silofs_env_forkfs(struct silofs_env      *env,
-                      struct silofs_bootrecs *out_brecs);
+int silofs_env_forkfs(struct silofs_env *env, struct silofs_ubers *out_ubers);
 
 void silofs_env_relax_caches(const struct silofs_env *env, int flags);
 
@@ -128,8 +127,8 @@ void silofs_env_allocstat(const struct silofs_env  *env,
 void silofs_env_bootpath(const struct silofs_env *env,
                          struct silofs_bootpath  *out_bootpath);
 
-int silofs_env_update_by(struct silofs_env           *env,
-                         const struct silofs_bootrec *brec);
+int silofs_env_update_by(struct silofs_env        *env,
+                         const struct silofs_uber *uber);
 
 void silofs_env_drop_caches(struct silofs_env *env);
 

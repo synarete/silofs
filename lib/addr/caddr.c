@@ -84,8 +84,8 @@ static int check_ctype_size(enum silofs_ctype ctype, size_t size)
 	int ret;
 
 	switch (ctype) {
-	case SILOFS_CTYPE_BOOTREC:
-		ret = (size == SILOFS_BOOTREC_SIZE) ? 0 : -SILOFS_EPROTO;
+	case SILOFS_CTYPE_UBER:
+		ret = (size == SILOFS_UBER_SIZE) ? 0 : -SILOFS_EPROTO;
 		break;
 	case SILOFS_CTYPE_ENCSEG:
 	case SILOFS_CTYPE_PACKIDX:

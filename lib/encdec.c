@@ -24,7 +24,7 @@ static void resolve_ivkey_of(const struct silofs_env *env,
                              struct silofs_ivkey *out_ivkey)
 {
 	struct silofs_iv laddriv;
-	const struct silofs_ivkey *ivkey = &env->boot.brec.main_ivkey;
+	const struct silofs_ivkey *ivkey = &env->boot.uber.main_ivkey;
 
 	silofs_laddr_as_iv(laddr, &laddriv);
 	silofs_ivkey_assign(out_ivkey, ivkey);

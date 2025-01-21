@@ -36,6 +36,7 @@
 #include <silofs/types.h>
 #include <silofs/uidgid.h>
 #include <silofs/idsmap.h>
+#include <silofs/uber.h>
 #include <silofs/boot.h>
 #include <silofs/spxmap.h>
 #include <silofs/lnodes.h>

@@ -30,25 +30,6 @@ struct silofs_bootpath {
 	struct silofs_strview name;
 };
 
-/* boot-record representation (in-memory) */
-struct silofs_bootrec {
-	struct silofs_uuid   uuid;
-	struct silofs_ivkey  main_ivkey;
-	struct silofs_ulink  sb_ulink;
-	struct silofs_pvsegr pvsegr;
-	enum silofs_bootf    flags;
-	int32_t              cipher_algo;
-	int32_t              cipher_mode;
-};
-
-/* boot-records pair after fork-fs with their content-addresses */
-struct silofs_bootrecs {
-	struct silofs_bootrec brec_new;
-	struct silofs_bootrec brec_alt;
-	struct silofs_caddr   caddr_new;
-	struct silofs_caddr   caddr_alt;
-};
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 /* file-system's control flags (as explicit booleans) */
@@ -112,106 +93,7 @@ void silofs_bootref_export(const struct silofs_fs_bref *bref,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_bootrec1k_init(struct silofs_bootrec1k *brec1k);
-
-void silofs_bootrec1k_fini(struct silofs_bootrec1k *brec1k);
-
-void silofs_bootrec1k_stamp(struct silofs_bootrec1k     *brec1k,
-                            const struct silofs_mdigest *md);
-
-int silofs_bootrec1k_verify(const struct silofs_bootrec1k *brec1k,
-                            const struct silofs_mdigest   *md);
-
-void silofs_bootrec1k_xtoh(const struct silofs_bootrec1k *brec1k,
-                           struct silofs_bootrec         *brec);
-
-void silofs_bootrec1k_htox(struct silofs_bootrec1k     *brec1k,
-                           const struct silofs_bootrec *brec);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-void silofs_bootrec_init(struct silofs_bootrec *brec);
-
-void silofs_bootrec_fini(struct silofs_bootrec *brec);
-
-void silofs_bootrec_setup(struct silofs_bootrec *brec);
-
-void silofs_bootrec_assign(struct silofs_bootrec       *brec,
-                           const struct silofs_bootrec *other);
-
-void silofs_bootrec_gen_uuid(struct silofs_bootrec *brec);
-
-void silofs_bootrec_set_ivkey(struct silofs_bootrec     *brec,
-                              const struct silofs_ivkey *ivkey);
-
-void silofs_bootrec_gen_ivkey(struct silofs_bootrec *brec);
-
-void silofs_bootrec_pvsegr(const struct silofs_bootrec *brec,
-                           struct silofs_pvsegr        *out_pvsegr);
-
-void silofs_bootrec_set_pvsegr(struct silofs_bootrec      *brec,
-                               const struct silofs_pvsegr *pvsegr);
-
-void silofs_bootrec_sb_ulink(const struct silofs_bootrec *brec,
-                             struct silofs_ulink         *out_ulink);
-
-void silofs_bootrec_set_sb_ulink(struct silofs_bootrec     *brec,
-                                 const struct silofs_ulink *sb_ulink);
-
-void silofs_bootrec_volid(const struct silofs_bootrec *brec,
-                          struct silofs_volid         *out_volid);
-
-void silofs_bootrec_self_uaddr(const struct silofs_bootrec *brec,
-                               struct silofs_uaddr         *out_uaddr);
-
-void silofs_make_bootrec_uaddr(const struct silofs_volid *volid,
-                               struct silofs_uaddr       *out_uaddr);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 int silofs_bootpath_setup(struct silofs_bootpath *bp, const char *repodir,
                           const char *name);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-int silofs_check_name(const struct silofs_namestr *nstr);
-
-int silofs_make_namestr(struct silofs_namestr *nstr, const char *s);
-
-int silofs_make_fsnamestr(struct silofs_namestr *nstr, const char *s);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-void silofs_calc_key_hash(const struct silofs_key     *key,
-                          const struct silofs_mdigest *md,
-                          struct silofs_hash256       *out_hash);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-int silofs_encode_bootrec(const struct silofs_env     *env,
-                          const struct silofs_bootrec *brec,
-                          struct silofs_bootrec1k     *out_brec1k_enc);
-
-int silofs_decode_bootrec(const struct silofs_env       *env,
-                          const struct silofs_bootrec1k *brec1k_enc,
-                          struct silofs_bootrec         *out_brec);
-
-int silofs_save_bootrec(const struct silofs_env     *env,
-                        const struct silofs_bootrec *brec,
-                        struct silofs_caddr         *out_caddr);
-
-int silofs_load_bootrec(const struct silofs_env   *env,
-                        const struct silofs_caddr *caddr,
-                        struct silofs_bootrec     *out_brec);
-
-int silofs_stat_bootrec(const struct silofs_env   *env,
-                        const struct silofs_caddr *caddr);
-
-int silofs_unlink_bootrec(const struct silofs_env   *env,
-                          const struct silofs_caddr *caddr);
-
-int silofs_calc_bootrec_caddr(const struct silofs_env     *env,
-                              const struct silofs_bootrec *brec,
-                              struct silofs_caddr         *out_caddr);
 
 #endif /* SILOFS_BOOT_H_ */

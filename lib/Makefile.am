@@ -87,6 +87,7 @@ libsilofs_la_SOURCES += stats.c
 libsilofs_la_SOURCES += super.c
 libsilofs_la_SOURCES += symlink.c
 libsilofs_la_SOURCES += task.c
+libsilofs_la_SOURCES += uber.c
 libsilofs_la_SOURCES += ustage.c
 libsilofs_la_SOURCES += version.c
 libsilofs_la_SOURCES += vstage.c

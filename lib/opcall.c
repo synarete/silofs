@@ -353,7 +353,7 @@ static int call_ioctl_query(struct silofs_task *task, struct silofs_args *args)
 static int call_ioctl_clone(struct silofs_task *task, struct silofs_args *args)
 {
 	return silofs_exec_clone(task, args->in.clone.ino,
-	                         args->in.clone.flags, &args->out.clone.brecs);
+	                         args->in.clone.flags, &args->out.clone.ubers);
 }
 
 static int

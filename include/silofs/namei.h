@@ -17,12 +17,20 @@
 #ifndef SILOFS_NAMEI_H_
 #define SILOFS_NAMEI_H_
 
-struct silofs_bootrec;
+struct silofs_uber;
 struct silofs_sb_info;
 struct silofs_task;
 struct silofs_ioc_query;
 struct silofs_ioc_iterfs;
 struct silofs_inew_params;
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_make_namestr(struct silofs_namestr *nstr, const char *s);
+
+int silofs_make_fsnamestr(struct silofs_namestr *nstr, const char *s);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_inew_params_of(struct silofs_inew_params      *inp,
                            const struct silofs_creds      *creds,
@@ -109,7 +117,7 @@ int silofs_do_query(struct silofs_task *task, struct silofs_inode_info *ii,
                     struct silofs_ioc_query *out_qry);
 
 int silofs_do_clone(struct silofs_task *task, struct silofs_inode_info *dir_ii,
-                    int flags, struct silofs_bootrecs *out_brecs);
+                    int flags, struct silofs_ubers *out_ubers);
 
 int silofs_do_tune(struct silofs_task *task, struct silofs_inode_info *dir_ii,
                    int iflags_want, int iflags_dont);

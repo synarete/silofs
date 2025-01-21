@@ -313,7 +313,7 @@ struct silofs_clone_in {
 };
 
 struct silofs_clone_out {
-	struct silofs_bootrecs brecs;
+	struct silofs_ubers ubers;
 };
 
 struct silofs_syncfs_in {

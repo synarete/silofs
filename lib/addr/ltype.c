@@ -28,9 +28,9 @@ bool silofs_ltype_isnone(enum silofs_ltype ltype)
 	return ltype_isequal(ltype, SILOFS_LTYPE_NONE);
 }
 
-bool silofs_ltype_isbootrec(enum silofs_ltype ltype)
+bool silofs_ltype_isuber(enum silofs_ltype ltype)
 {
-	return ltype_isequal(ltype, SILOFS_LTYPE_BOOTREC);
+	return ltype_isequal(ltype, SILOFS_LTYPE_UBER);
 }
 
 bool silofs_ltype_issuper(enum silofs_ltype ltype)
@@ -95,7 +95,7 @@ bool silofs_ltype_isunode(enum silofs_ltype ltype)
 	bool ret;
 
 	switch (ltype) {
-	case SILOFS_LTYPE_BOOTREC:
+	case SILOFS_LTYPE_UBER:
 	case SILOFS_LTYPE_SUPER:
 	case SILOFS_LTYPE_SPNODE:
 	case SILOFS_LTYPE_SPLEAF:
@@ -133,7 +133,7 @@ bool silofs_ltype_isvnode(enum silofs_ltype ltype)
 	case SILOFS_LTYPE_DATABK:
 		ret = true;
 		break;
-	case SILOFS_LTYPE_BOOTREC:
+	case SILOFS_LTYPE_UBER:
 	case SILOFS_LTYPE_SUPER:
 	case SILOFS_LTYPE_SPNODE:
 	case SILOFS_LTYPE_SPLEAF:
@@ -156,7 +156,7 @@ bool silofs_ltype_isdata(enum silofs_ltype ltype)
 	case SILOFS_LTYPE_DATABK:
 		ret = true;
 		break;
-	case SILOFS_LTYPE_BOOTREC:
+	case SILOFS_LTYPE_UBER:
 	case SILOFS_LTYPE_SUPER:
 	case SILOFS_LTYPE_SPNODE:
 	case SILOFS_LTYPE_SPLEAF:
@@ -177,8 +177,8 @@ bool silofs_ltype_isdata(enum silofs_ltype ltype)
 uint32_t silofs_ltype_size(enum silofs_ltype ltype)
 {
 	switch (ltype) {
-	case SILOFS_LTYPE_BOOTREC:
-		return sizeof(struct silofs_bootrec1k);
+	case SILOFS_LTYPE_UBER:
+		return sizeof(struct silofs_uber1k);
 	case SILOFS_LTYPE_SUPER:
 		return sizeof(struct silofs_super_block);
 	case SILOFS_LTYPE_SPNODE:

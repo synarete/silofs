@@ -99,7 +99,7 @@
 #define SILOFS_NSGRP_MAX (16)
 
 /* size of boot-record */
-#define SILOFS_BOOTREC_SIZE (1024)
+#define SILOFS_UBER_SIZE (1024)
 
 /* number of octets in UUID */
 #define SILOFS_UUID_SIZE (16)
@@ -346,7 +346,7 @@ enum silofs_endianness {
 /* content-addressable sub-types */
 enum silofs_ctype {
 	SILOFS_CTYPE_NONE    = 0,
-	SILOFS_CTYPE_BOOTREC = 1,
+	SILOFS_CTYPE_UBER    = 1,
 	SILOFS_CTYPE_PACKIDX = 2,
 	SILOFS_CTYPE_ENCSEG  = 3,
 };
@@ -369,19 +369,19 @@ enum silofs_pnodef {
 
 /* logical-elements types */
 enum silofs_ltype {
-	SILOFS_LTYPE_NONE    = 0,
-	SILOFS_LTYPE_BOOTREC = 1,
-	SILOFS_LTYPE_SUPER   = 2,
-	SILOFS_LTYPE_SPNODE  = 3,
-	SILOFS_LTYPE_SPLEAF  = 4,
-	SILOFS_LTYPE_INODE   = 5,
-	SILOFS_LTYPE_XANODE  = 6,
-	SILOFS_LTYPE_SYMVAL  = 7,
-	SILOFS_LTYPE_DTNODE  = 8,
-	SILOFS_LTYPE_FTNODE  = 9,
-	SILOFS_LTYPE_DATA1K  = 10,
-	SILOFS_LTYPE_DATA4K  = 11,
-	SILOFS_LTYPE_DATABK  = 12,
+	SILOFS_LTYPE_NONE   = 0,
+	SILOFS_LTYPE_UBER   = 1,
+	SILOFS_LTYPE_SUPER  = 2,
+	SILOFS_LTYPE_SPNODE = 3,
+	SILOFS_LTYPE_SPLEAF = 4,
+	SILOFS_LTYPE_INODE  = 5,
+	SILOFS_LTYPE_XANODE = 6,
+	SILOFS_LTYPE_SYMVAL = 7,
+	SILOFS_LTYPE_DTNODE = 8,
+	SILOFS_LTYPE_FTNODE = 9,
+	SILOFS_LTYPE_DATA1K = 10,
+	SILOFS_LTYPE_DATA4K = 11,
+	SILOFS_LTYPE_DATABK = 12,
 	SILOFS_LTYPE_LAST, /* keep last */
 };
 
@@ -595,22 +595,22 @@ struct silofs_vaddr64 {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-struct silofs_bootrec1k {
-	uint64_t                br_magic;
-	uint64_t                br_version;
-	struct silofs_uuid      br_uuid;
-	uint64_t                br_flags;
-	uint32_t                br_chiper_algo;
-	uint32_t                br_chiper_mode;
-	uint8_t                 br_reserved1[16];
-	struct silofs_key       br_main_key;
-	struct silofs_iv        br_main_iv;
-	struct silofs_iv        br_sb_riv;
-	struct silofs_uaddr64b  br_sb_uaddr;
-	uint8_t                 br_reserved2[64];
-	struct silofs_pvsegr64b br_pvsegr;
-	uint8_t                 br_reserved3[672];
-	struct silofs_hash256   br_hash;
+struct silofs_uber1k {
+	uint64_t                ub_magic;
+	uint64_t                ub_version;
+	struct silofs_uuid      ub_uuid;
+	uint64_t                ub_flags;
+	uint32_t                ub_chiper_algo;
+	uint32_t                ub_chiper_mode;
+	uint8_t                 ub_reserved1[16];
+	struct silofs_key       ub_main_key;
+	struct silofs_iv        ub_main_iv;
+	struct silofs_iv        ub_sb_riv;
+	struct silofs_uaddr64b  ub_sb_uaddr;
+	uint8_t                 ub_reserved2[64];
+	struct silofs_pvsegr64b ub_pvsegr;
+	uint8_t                 ub_reserved3[672];
+	struct silofs_hash256   ub_hash;
 } silofs_attr_aligned64;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

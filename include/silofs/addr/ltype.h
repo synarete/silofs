@@ -22,7 +22,7 @@
 
 bool silofs_ltype_isnone(enum silofs_ltype ltype);
 
-bool silofs_ltype_isbootrec(enum silofs_ltype ltype);
+bool silofs_ltype_isuber(enum silofs_ltype ltype);
 
 bool silofs_ltype_issuper(enum silofs_ltype ltype);
 

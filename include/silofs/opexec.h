@@ -147,7 +147,7 @@ int silofs_exec_query(struct silofs_task *task, ino_t ino,
                       struct silofs_ioc_query *out_qry);
 
 int silofs_exec_clone(struct silofs_task *task, ino_t ino, int flags,
-                      struct silofs_bootrecs *out_brecs);
+                      struct silofs_ubers *out_ubers);
 
 int silofs_exec_tune(struct silofs_task *task, ino_t ino, int iflags_want,
                      int iflags_dont);

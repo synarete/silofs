@@ -27,6 +27,117 @@
 #include <dirent.h>
 #include <limits.h>
 
+static int check_ascii_fs_name(const struct silofs_strview *sv)
+{
+	const char *allowed = "abcdefghijklmnopqrstuvwxyz"
+			      "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+			      "0123456789_-+.";
+	size_t n;
+
+	if (!silofs_strview_isprint(sv)) {
+		return -SILOFS_EILLSTR;
+	}
+	if (!silofs_strview_isascii(sv)) {
+		return -SILOFS_EILLSTR;
+	}
+	n = silofs_strview_count_if(sv, silofs_chr_isspace);
+	if (n > 0) {
+		return -SILOFS_EILLSTR;
+	}
+	n = silofs_strview_count_if(sv, silofs_chr_iscntrl);
+	if (n > 0) {
+		return -SILOFS_EILLSTR;
+	}
+	n = silofs_strview_find_first_not_of(sv, allowed);
+	if (n < sv->len) {
+		return -SILOFS_EILLSTR;
+	}
+	return 0;
+}
+
+static int check_name_len(const struct silofs_strview *sv)
+{
+	const size_t namelen_max = min(SILOFS_NAME_MAX, NAME_MAX);
+
+	if (sv->len == 0) {
+		return -SILOFS_EILLSTR;
+	}
+	if (sv->len > namelen_max) {
+		return -SILOFS_ENAMETOOLONG;
+	}
+	return 0;
+}
+
+static int check_name_dat(const struct silofs_strview *sv)
+{
+	if (sv->str == NULL) {
+		return -SILOFS_EILLSTR;
+	}
+	if (memchr(sv->str, '/', sv->len)) {
+		return -SILOFS_EILLSTR;
+	}
+	if (sv->str[sv->len] != '\0') {
+		return -SILOFS_EILLSTR;
+	}
+	return 0;
+}
+
+static int check_name(const struct silofs_strview *sv)
+{
+	int err;
+
+	err = check_name_len(sv);
+	if (err) {
+		return err;
+	}
+	err = check_name_dat(sv);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+int silofs_make_namestr(struct silofs_namestr *nstr, const char *s)
+{
+	silofs_strview_init(&nstr->sv, s);
+	nstr->hash = 0;
+	return check_name(&nstr->sv);
+}
+
+static int check_fsname(const struct silofs_strview *sv)
+{
+	int err;
+
+	if (sv->str[0] == '.') {
+		return -SILOFS_EILLSTR;
+	}
+	if (sv->len > SILOFS_FSNAME_MAX) {
+		return -SILOFS_ENAMETOOLONG;
+	}
+	err = check_ascii_fs_name(sv);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+int silofs_make_fsnamestr(struct silofs_namestr *nstr, const char *s)
+{
+	int err;
+
+	err = silofs_make_namestr(nstr, s);
+	if (err) {
+		return err;
+	}
+	err = check_fsname(&nstr->sv);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
 static bool has_nlookup_mode(const struct silofs_inode_info *ii)
 {
 	const struct silofs_env *env = ii_env(ii);
@@ -401,7 +512,7 @@ static int check_dir_and_name(const struct silofs_inode_info *ii,
 	if (err) {
 		return err;
 	}
-	err = silofs_check_name(name);
+	err = silofs_dir_check_name(ii, name);
 	if (err) {
 		return err;
 	}
@@ -2306,30 +2417,30 @@ static int check_clone(const struct silofs_task *task,
 	return 0;
 }
 
-static int update_save_bootrec(const struct silofs_task *task,
-                               const struct silofs_bootrec *brec,
-                               struct silofs_caddr *out_caddr)
+static int update_save_uber(const struct silofs_task *task,
+                            const struct silofs_uber *uber,
+                            struct silofs_caddr *out_caddr)
 {
 	struct silofs_uaddr uaddr = { .voff = -1 };
 
-	silofs_bootrec_self_uaddr(brec, &uaddr);
-	return silofs_save_bootrec(task->t_env, brec, out_caddr);
+	silofs_uber_self_uaddr(uber, &uaddr);
+	return silofs_save_uber(task->t_env, uber, out_caddr);
 }
 
 static int do_post_clone_updates(const struct silofs_task *task,
-                                 struct silofs_bootrecs *brecs)
+                                 struct silofs_ubers *ubers)
 {
 	int err;
 
-	err = update_save_bootrec(task, &brecs->brec_new, &brecs->caddr_new);
+	err = update_save_uber(task, &ubers->uber_new, &ubers->caddr_new);
 	if (err) {
 		return err;
 	}
-	err = update_save_bootrec(task, &brecs->brec_alt, &brecs->caddr_alt);
+	err = update_save_uber(task, &ubers->uber_alt, &ubers->caddr_alt);
 	if (err) {
 		return err;
 	}
-	err = silofs_env_update_by(task->t_env, &brecs->brec_new);
+	err = silofs_env_update_by(task->t_env, &ubers->uber_new);
 	if (err) {
 		return err;
 	}
@@ -2352,7 +2463,7 @@ static int flush_and_sync(struct silofs_task *task)
 }
 
 static int do_clone(struct silofs_task *task, struct silofs_inode_info *dir_ii,
-                    int flags, struct silofs_bootrecs *out_brecs)
+                    int flags, struct silofs_ubers *out_ubers)
 {
 	struct silofs_env *env = task->t_env;
 	int err;
@@ -2365,7 +2476,7 @@ static int do_clone(struct silofs_task *task, struct silofs_inode_info *dir_ii,
 	if (err) {
 		return err;
 	}
-	err = silofs_env_forkfs(env, out_brecs);
+	err = silofs_env_forkfs(env, out_ubers);
 	if (err) {
 		return err;
 	}
@@ -2373,7 +2484,7 @@ static int do_clone(struct silofs_task *task, struct silofs_inode_info *dir_ii,
 	if (err) {
 		return err;
 	}
-	err = do_post_clone_updates(task, out_brecs);
+	err = do_post_clone_updates(task, out_ubers);
 	if (err) {
 		return err;
 	}
@@ -2383,12 +2494,12 @@ static int do_clone(struct silofs_task *task, struct silofs_inode_info *dir_ii,
 static int
 do_clone_of(struct silofs_task *task, struct silofs_sb_info *sbi_cur,
             struct silofs_inode_info *dir_ii, int flags,
-            struct silofs_bootrecs *out_brecs)
+            struct silofs_ubers *out_ubers)
 {
 	int err;
 
 	sbi_incref(sbi_cur);
-	err = do_clone(task, dir_ii, flags, out_brecs);
+	err = do_clone(task, dir_ii, flags, out_ubers);
 	sbi_decref(sbi_cur);
 	return err;
 }
@@ -2402,12 +2513,12 @@ do_post_clone_relax(const struct silofs_task *task, struct silofs_sb_info *sbi)
 
 static int
 do_clone_and_relex(struct silofs_task *task, struct silofs_inode_info *dir_ii,
-                   int flags, struct silofs_bootrecs *out_brecs)
+                   int flags, struct silofs_ubers *out_ubers)
 {
 	struct silofs_sb_info *sbi_cur = task_sbi(task);
 	int err;
 
-	err = do_clone_of(task, sbi_cur, dir_ii, flags, out_brecs);
+	err = do_clone_of(task, sbi_cur, dir_ii, flags, out_ubers);
 	if (!err) {
 		do_post_clone_relax(task, sbi_cur);
 	}
@@ -2415,12 +2526,12 @@ do_clone_and_relex(struct silofs_task *task, struct silofs_inode_info *dir_ii,
 }
 
 int silofs_do_clone(struct silofs_task *task, struct silofs_inode_info *dir_ii,
-                    int flags, struct silofs_bootrecs *out_brecs)
+                    int flags, struct silofs_ubers *out_ubers)
 {
 	int err;
 
 	ii_incref(dir_ii);
-	err = do_clone_and_relex(task, dir_ii, flags, out_brecs);
+	err = do_clone_and_relex(task, dir_ii, flags, out_ubers);
 	ii_decref(dir_ii);
 	return err;
 }

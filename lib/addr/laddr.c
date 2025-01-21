@@ -43,7 +43,7 @@ static size_t height_to_lseg_size(enum silofs_height height)
 		elemsz = SILOFS_SB_SIZE;
 		break;
 	case SILOFS_HEIGHT_BOOT:
-		elemsz = SILOFS_BOOTREC_SIZE;
+		elemsz = SILOFS_UBER_SIZE;
 		break;
 	case SILOFS_HEIGHT_NONE:
 	case SILOFS_HEIGHT_LAST:

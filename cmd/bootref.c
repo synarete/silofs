@@ -150,7 +150,7 @@ static void
 cmd_bootref_verify(const struct silofs_fs_bref *bref, enum silofs_ctype ctype)
 {
 	if (bref->caddr.ctype != ctype) {
-		if (ctype == SILOFS_CTYPE_BOOTREC) {
+		if (ctype == SILOFS_CTYPE_UBER) {
 			cmd_die(0, "not fs boot-ref: %s", bref->name);
 		} else if (ctype == SILOFS_CTYPE_PACKIDX) {
 			cmd_die(0, "not archive boot-ref: %s", bref->name);
@@ -163,7 +163,7 @@ cmd_bootref_verify(const struct silofs_fs_bref *bref, enum silofs_ctype ctype)
 void cmd_bootref_load(struct silofs_fs_bref *bref)
 {
 	cmd_bootref_reload(bref);
-	cmd_bootref_verify(bref, SILOFS_CTYPE_BOOTREC);
+	cmd_bootref_verify(bref, SILOFS_CTYPE_UBER);
 }
 
 void cmd_bootref_load_ar(struct silofs_fs_bref *bref)

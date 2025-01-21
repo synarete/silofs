@@ -2242,14 +2242,22 @@ static void fill_query_version(const struct silofs_inode_info *ii,
 	unused(ii);
 }
 
+static void bootpath_of(const struct silofs_inode_info *ii,
+                        struct silofs_bootpath *out_bootpath)
+{
+	const struct silofs_env *env = ii_env(ii);
+	const struct silofs_fs_bref *bref = &env->args.bref;
+
+	silofs_bootpath_setup(out_bootpath, bref->repodir, bref->name);
+}
+
 static void fill_query_repo(const struct silofs_inode_info *ii,
                             struct silofs_ioc_query *query)
 {
-	const struct silofs_env *env = ii_env(ii);
 	struct silofs_bootpath bootpath;
 	size_t bsz;
 
-	silofs_env_bootpath(env, &bootpath);
+	bootpath_of(ii, &bootpath);
 	bsz = sizeof(query->u.repo.path);
 	str_to_buf(&bootpath.repodir, query->u.repo.path, bsz);
 }
@@ -2263,7 +2271,7 @@ static void fill_query_boot(const struct silofs_inode_info *ii,
 	struct silofs_volid volid;
 	const size_t bsz = sizeof(query->u.boot.name);
 
-	silofs_env_bootpath(env, &bootpath);
+	bootpath_of(ii, &bootpath);
 	str_to_buf(&bootpath.name, query->u.boot.name, bsz);
 	silofs_caddr_to_name2(&env->boot.caddr, query->u.boot.addr);
 

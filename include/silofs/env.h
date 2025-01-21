@@ -124,9 +124,6 @@ void silofs_env_uptime(const struct silofs_env *env, time_t *out_uptime);
 void silofs_env_allocstat(const struct silofs_env  *env,
                           struct silofs_alloc_stat *out_alst);
 
-void silofs_env_bootpath(const struct silofs_env *env,
-                         struct silofs_bootpath  *out_bootpath);
-
 int silofs_env_update_by(struct silofs_env        *env,
                          const struct silofs_uber *uber);
 

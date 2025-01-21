@@ -20,9 +20,9 @@
 #include <silofs/infra.h>
 #include <silofs/addr.h>
 #include <silofs/types.h>
-#include <silofs/idsmap.h>
 
 struct silofs_env;
+struct silofs_task;
 
 /* boot pathname: a pair of repo-directory & boot-record name (optional) */
 struct silofs_bootpath {
@@ -75,6 +75,9 @@ struct silofs_fs_args {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+int silofs_bootpath_setup(struct silofs_bootpath *bp, const char *repodir,
+                          const char *name);
+
 void silofs_bootref_init(struct silofs_fs_bref *bref);
 
 void silofs_bootref_fini(struct silofs_fs_bref *bref);
@@ -93,7 +96,8 @@ void silofs_bootref_export(const struct silofs_fs_bref *bref,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_bootpath_setup(struct silofs_bootpath *bp, const char *repodir,
-                          const char *name);
+int silofs_reload_vspace(struct silofs_task *task);
+
+int silofs_reload_rootd(struct silofs_task *task);
 
 #endif /* SILOFS_BOOT_H_ */

@@ -325,9 +325,17 @@
 /* cryptographic hash-512-bits bytes-size */
 #define SILOFS_HASH512_LEN (64)
 
-/* boot-record flags */
-enum silofs_bootf {
-	SILOFS_BOOTF_NONE = 0x00,
+/* unix-domain socket for mount daemon */
+#define SILOFS_MNTSOCK_NAME "silofs-mount"
+
+/* max number of mount-rules */
+#define SILOFS_MNTRULE_MAX 1024
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+/* uber-block flags */
+enum silofs_uberf {
+	SILOFS_UBERF_NONE = 0x00,
 };
 
 /* common-header flags */
@@ -458,12 +466,6 @@ enum silofs_kdf_algos {
 	SILOFS_KDF_PBKDF2 = 34,
 	SILOFS_KDF_SCRYPT = 48,
 };
-
-/* unix-domain socket for mount daemon */
-#define SILOFS_MNTSOCK_NAME "silofs-mount"
-
-/* max number of mount-rules */
-#define SILOFS_MNTRULE_MAX 1024
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

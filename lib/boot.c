@@ -38,8 +38,6 @@ int silofs_bootpath_setup(struct silofs_bootpath *bpath, const char *repodir,
 	return silofs_make_namestr(&nstr, name);
 }
 
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-
 void silofs_bootref_init(struct silofs_fs_bref *bref)
 {
 	silofs_caddr_reset(&bref->caddr);
@@ -82,4 +80,43 @@ void silofs_bootref_export(const struct silofs_fs_bref *bref,
                            struct silofs_strbuf *sbuf)
 {
 	silofs_caddr_to_name(&bref->caddr, sbuf);
+}
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+int silofs_reload_vspace(struct silofs_task *task)
+{
+	enum silofs_ltype ltype = SILOFS_LTYPE_NONE;
+	int err;
+
+	while (++ltype < SILOFS_LTYPE_LAST) {
+		if (!ltype_isvnode(ltype)) {
+			continue;
+		}
+		err = silofs_rescan_vspace_of(task, ltype);
+		if (err) {
+			log_err("failed to reload vspace: ltype=%d err=%d",
+			        ltype, err);
+			return err;
+		}
+	}
+	return 0;
+}
+
+int silofs_reload_rootd(struct silofs_task *task)
+{
+	struct silofs_inode_info *ii = NULL;
+	const ino_t ino = SILOFS_INO_ROOT;
+	int err;
+
+	err = silofs_stage_inode(task, ino, SILOFS_STG_CUR, &ii);
+	if (err) {
+		log_err("failed to reload root-inode: err=%d", err);
+		return err;
+	}
+	if (!ii_isdir(ii)) {
+		log_err("root-inode is not-a-dir: mode=0%o", ii_mode(ii));
+		return -SILOFS_EFSCORRUPTED;
+	}
+	return 0;
 }

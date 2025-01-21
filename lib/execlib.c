@@ -777,8 +777,7 @@ static void drop_caches(struct silofs_env *env)
 	silofs_env_drop_caches(env);
 }
 
-static int exec_stage_rootdir_inode(struct silofs_env *env,
-                                    struct silofs_inode_info **out_ii)
+static int exec_reload_rootd(struct silofs_env *env)
 {
 	struct silofs_task task;
 	int err;
@@ -787,30 +786,11 @@ static int exec_stage_rootdir_inode(struct silofs_env *env,
 	if (err) {
 		return err;
 	}
-	err = silofs_stage_inode(&task, SILOFS_INO_ROOT, SILOFS_STG_CUR,
-	                         out_ii);
+	err = silofs_reload_rootd(&task);
 	return term_task(&task, err);
 }
 
-static int reload_rootdir_inode(struct silofs_env *env)
-{
-	struct silofs_inode_info *ii = NULL;
-	int err;
-
-	err = exec_stage_rootdir_inode(env, &ii);
-	if (err) {
-		log_err("failed to reload root-inode: err=%d", err);
-		return err;
-	}
-	if (!ii_isdir(ii)) {
-		log_err("root-inode is not-a-dir: mode=0%o", ii_mode(ii));
-		return -SILOFS_EFSCORRUPTED;
-	}
-	return 0;
-}
-
-static int
-exec_rescan_vspace_of(struct silofs_env *env, enum silofs_ltype ltype)
+static int exec_reload_vspace(struct silofs_env *env)
 {
 	struct silofs_task task;
 	int err;
@@ -819,40 +799,8 @@ exec_rescan_vspace_of(struct silofs_env *env, enum silofs_ltype ltype)
 	if (err) {
 		return err;
 	}
-	err = silofs_rescan_vspace_of(&task, ltype);
+	err = silofs_reload_vspace(&task);
 	return term_task(&task, err);
-}
-
-static int reload_free_vspace(struct silofs_env *env)
-{
-	enum silofs_ltype ltype = SILOFS_LTYPE_NONE;
-	int err;
-
-	while (++ltype < SILOFS_LTYPE_LAST) {
-		if (!ltype_isvnode(ltype)) {
-			continue;
-		}
-		err = exec_rescan_vspace_of(env, ltype);
-		if (err && (err != -SILOFS_ENOSPC) &&
-		    (err != -SILOFS_ENOENT)) {
-			log_err("failed to reload free vspace: err=%d", err);
-			return err;
-		}
-	}
-	return 0;
-}
-
-static int reload_fs_meta(struct silofs_env *env)
-{
-	int err;
-
-	err = reload_rootdir_inode(env);
-	if (err) {
-		log_err("failed to reload root dir: err=%d", err);
-		return err;
-	}
-	drop_caches(env);
-	return 0;
 }
 
 static int exec_flush_dirty_now(struct silofs_env *env)
@@ -1216,59 +1164,6 @@ static int claim_reclaim_vspace(struct silofs_env *env)
 	return 0;
 }
 
-static int
-exec_stage_spmaps_at(struct silofs_env *env, const struct silofs_vaddr *vaddr)
-{
-	struct silofs_task task;
-	struct silofs_spnode_info *sni = NULL;
-	struct silofs_spleaf_info *sli = NULL;
-	const enum silofs_stg_mode stg_mode = SILOFS_STG_CUR;
-	int err;
-
-	err = make_task(env, &task);
-	if (err) {
-		return err;
-	}
-	err = silofs_stage_spmaps_of(&task, vaddr, stg_mode, &sni, &sli);
-	return term_task(&task, err);
-}
-
-static int
-reload_base_vspace_of(struct silofs_env *env, enum silofs_ltype vspace)
-{
-	struct silofs_vaddr vaddr;
-	int err;
-
-	vaddr_setup(&vaddr, vspace, 0);
-	err = exec_stage_spmaps_at(env, &vaddr);
-	if (err) {
-		log_err("failed to reload: vspace=%d err=%d", vspace, err);
-		return -SILOFS_EFSCORRUPTED;
-	}
-	return 0;
-}
-
-static int reload_base_vspace(struct silofs_env *env)
-{
-	enum silofs_ltype ltype = SILOFS_LTYPE_NONE;
-	int err = 0;
-
-	while (++ltype < SILOFS_LTYPE_LAST) {
-		if (!ltype_isvnode(ltype)) {
-			continue;
-		}
-		err = reload_base_vspace_of(env, ltype);
-		if (err) {
-			return err;
-		}
-		err = flush_and_drop_cache(env);
-		if (err) {
-			return err;
-		}
-	}
-	return 0;
-}
-
 static int exec_spawn_vnode(struct silofs_env *env, enum silofs_ltype ltype,
                             struct silofs_vnode_info **out_vni)
 {
@@ -1497,52 +1392,10 @@ int silofs_open_repo(struct silofs_env *env)
 	return ret;
 }
 
-static int
-reload_uber_of(const struct silofs_env *env, const struct silofs_caddr *caddr,
-               struct silofs_uber *out_uber)
-{
-	int err;
-
-	err = silofs_stat_uber(env, caddr);
-	if (err) {
-		return err;
-	}
-	err = silofs_load_uber(env, caddr, out_uber);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
-static int
-reload_uber(struct silofs_env *env, const struct silofs_caddr *caddr,
-            struct silofs_uber *out_uber)
-{
-	int err;
-
-	err = reload_uber_of(env, caddr, out_uber);
-	if (err) {
-		return err;
-	}
-	err = silofs_env_update_by(env, out_uber);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
-static int
-update_by_uber(struct silofs_env *env, const struct silofs_uber *uber)
-{
-	return silofs_env_update_by(env, uber);
-}
-
 static void
 ref_super_by(const struct silofs_env *env, struct silofs_uber *uber)
 {
-	const struct silofs_ulink *sb_ulink = sbi_ulink(env->sbi);
-
-	silofs_uber_set_sb_ulink(uber, sb_ulink);
+	silofs_uber_set_sb_ulink(uber, sbi_ulink(env->sbi));
 }
 
 static int commit_uber(struct silofs_env *env, struct silofs_uber *uber)
@@ -1555,7 +1408,7 @@ static int commit_uber(struct silofs_env *env, struct silofs_uber *uber)
 	if (err) {
 		return err;
 	}
-	err = update_by_uber(env, uber);
+	err = silofs_env_update_by(env, uber);
 	if (err) {
 		return err;
 	}
@@ -1583,7 +1436,7 @@ static int format_uber(const struct silofs_env *env, struct silofs_uber *uber)
 
 static int do_format_fs(struct silofs_env *env, struct silofs_caddr *out_caddr)
 {
-	struct silofs_uber uber = { .flags = SILOFS_BOOTF_NONE };
+	struct silofs_uber uber = { .flags = SILOFS_UBERF_NONE };
 	int err;
 
 	err = format_bstore(env);
@@ -1594,7 +1447,7 @@ static int do_format_fs(struct silofs_env *env, struct silofs_caddr *out_caddr)
 	if (err) {
 		return err;
 	}
-	err = update_by_uber(env, &uber);
+	err = silofs_env_update_by(env, &uber);
 	if (err) {
 		return err;
 	}
@@ -1643,28 +1496,12 @@ reload_root_lseg(struct silofs_env *env, const struct silofs_uber *uber)
 	return silofs_env_reload_sb_lseg(env);
 }
 
-static int
-reload_bstore(struct silofs_env *env, const struct silofs_uber *uber)
-{
-	bool xxx_ready = false; /* XXX-1 */
-	int err = 0;
-
-	if (xxx_ready) {
-		err = silofs_bstore_reload(env->base.bstore, &uber->pvsegr);
-	}
-	return err;
-}
-
 static int do_open_fs(struct silofs_env *env, const struct silofs_caddr *caddr)
 {
-	struct silofs_uber uber = { .flags = SILOFS_BOOTF_NONE };
+	struct silofs_uber uber = { .flags = SILOFS_UBERF_NONE };
 	int err;
 
-	err = reload_uber(env, caddr, &uber);
-	if (err) {
-		return err;
-	}
-	err = reload_bstore(env, &uber);
+	err = silofs_reload_uber(env, caddr, &uber);
 	if (err) {
 		return err;
 	}
@@ -1676,18 +1513,15 @@ static int do_open_fs(struct silofs_env *env, const struct silofs_caddr *caddr)
 	if (err) {
 		return err;
 	}
-	err = reload_base_vspace(env);
+	err = exec_reload_vspace(env);
 	if (err) {
 		return err;
 	}
-	err = reload_free_vspace(env);
+	err = exec_reload_rootd(env);
 	if (err) {
 		return err;
 	}
-	err = reload_fs_meta(env);
-	if (err) {
-		return err;
-	}
+	drop_caches(env);
 	return 0;
 }
 
@@ -1733,11 +1567,11 @@ int silofs_close_fs(struct silofs_env *env)
 
 int silofs_poke_fs(struct silofs_env *env, const struct silofs_caddr *caddr)
 {
-	struct silofs_uber uber = { .flags = SILOFS_BOOTF_NONE };
+	struct silofs_uber uber = { .flags = SILOFS_UBERF_NONE };
 	int err;
 
 	silofs_env_lock(env);
-	err = reload_uber(env, caddr, &uber);
+	err = silofs_reload_uber(env, caddr, &uber);
 	silofs_env_unlock(env);
 	return err;
 }
@@ -1825,10 +1659,10 @@ unlink_uber_of(const struct silofs_env *env, const struct silofs_caddr *caddr)
 
 int silofs_unref_fs(struct silofs_env *env, const struct silofs_caddr *caddr)
 {
-	struct silofs_uber uber = { .flags = SILOFS_BOOTF_NONE };
+	struct silofs_uber uber = { .flags = SILOFS_UBERF_NONE };
 	int err;
 
-	err = reload_uber(env, caddr, &uber);
+	err = silofs_reload_uber(env, caddr, &uber);
 	if (err) {
 		return err;
 	}

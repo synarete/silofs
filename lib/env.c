@@ -668,14 +668,6 @@ void silofs_env_allocstat(const struct silofs_env *env,
 	silofs_memstat(env->base.alloc, out_alst);
 }
 
-void silofs_env_bootpath(const struct silofs_env *env,
-                         struct silofs_bootpath *out_bootpath)
-{
-	const struct silofs_fs_bref *bref = &env->args.bref;
-
-	silofs_bootpath_setup(out_bootpath, bref->repodir, bref->name);
-}
-
 static int env_reinit_ciphers(struct silofs_env *env, int algo, int mode)
 {
 	int err;

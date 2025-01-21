@@ -754,7 +754,7 @@ static int pac_load_uber(const struct silofs_par_ctx *pa_ctx,
                          const struct silofs_caddr *caddr,
                          struct silofs_uber1k *out_uber1k)
 {
-	struct silofs_uber uber = { .flags = SILOFS_BOOTF_NONE };
+	struct silofs_uber uber = { .flags = SILOFS_UBERF_NONE };
 	int err;
 
 	err = silofs_load_uber(pa_ctx->pac_env, caddr, &uber);
@@ -774,7 +774,7 @@ static int
 pac_save_uber(const struct silofs_par_ctx *pa_ctx,
               const struct silofs_caddr *caddr, struct silofs_uber1k *uber1k)
 {
-	struct silofs_uber uber = { .flags = SILOFS_BOOTF_NONE };
+	struct silofs_uber uber = { .flags = SILOFS_UBERF_NONE };
 	struct silofs_caddr caddr2;
 	int err;
 

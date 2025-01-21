@@ -28,7 +28,7 @@ struct silofs_uber {
 	struct silofs_ivkey  main_ivkey;
 	struct silofs_ulink  sb_ulink;
 	struct silofs_pvsegr pvsegr;
-	enum silofs_bootf    flags;
+	enum silofs_uberf    flags;
 	int32_t              cipher_algo;
 	int32_t              cipher_mode;
 };
@@ -108,6 +108,9 @@ int silofs_decode_uber(const struct silofs_env    *env,
                        const struct silofs_uber1k *uber1k_enc,
                        struct silofs_uber         *out_uber);
 
+int silofs_stat_uber(const struct silofs_env   *env,
+                     const struct silofs_caddr *caddr);
+
 int silofs_save_uber(const struct silofs_env  *env,
                      const struct silofs_uber *uber,
                      struct silofs_caddr      *out_caddr);
@@ -116,8 +119,9 @@ int silofs_load_uber(const struct silofs_env   *env,
                      const struct silofs_caddr *caddr,
                      struct silofs_uber        *out_uber);
 
-int silofs_stat_uber(const struct silofs_env   *env,
-                     const struct silofs_caddr *caddr);
+int silofs_reload_uber(struct silofs_env         *env,
+                       const struct silofs_caddr *caddr,
+                       struct silofs_uber        *out_uber);
 
 int silofs_unlink_uber(const struct silofs_env   *env,
                        const struct silofs_caddr *caddr);

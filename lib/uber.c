@@ -38,14 +38,14 @@ static void uber1k_set_version(struct silofs_uber1k *uber1k, uint64_t version)
 	uber1k->ub_version = silofs_cpu_to_le64(version);
 }
 
-static enum silofs_bootf uber1k_flags(const struct silofs_uber1k *uber1k)
+static enum silofs_uberf uber1k_flags(const struct silofs_uber1k *uber1k)
 {
 	const uint64_t f = silofs_le64_to_cpu(uber1k->ub_flags);
 
-	return (enum silofs_bootf)f;
+	return (enum silofs_uberf)f;
 }
 
-static void uber1k_set_flags(struct silofs_uber1k *uber1k, enum silofs_bootf f)
+static void uber1k_set_flags(struct silofs_uber1k *uber1k, enum silofs_uberf f)
 {
 	uber1k->ub_flags = silofs_cpu_to_le64((uint64_t)f);
 }
@@ -72,7 +72,7 @@ void silofs_uber1k_init(struct silofs_uber1k *uber1k)
 	silofs_memzero(uber1k, sizeof(*uber1k));
 	uber1k_set_magic(uber1k, SILOFS_BOOT_RECORD_MAGIC);
 	uber1k_set_version(uber1k, SILOFS_FMT_VERSION);
-	uber1k_set_flags(uber1k, SILOFS_BOOTF_NONE);
+	uber1k_set_flags(uber1k, SILOFS_UBERF_NONE);
 	uber1k_set_cipher(uber1k, SILOFS_CIPHER_ALGO_DEFAULT,
 	                  SILOFS_CIPHER_MODE_DEFAULT);
 }
@@ -302,7 +302,7 @@ void silofs_uber_init(struct silofs_uber *uber)
 {
 	silofs_memzero(uber, sizeof(*uber));
 	silofs_ulink_reset(&uber->sb_ulink);
-	uber->flags = SILOFS_BOOTF_NONE;
+	uber->flags = SILOFS_UBERF_NONE;
 	uber->cipher_algo = SILOFS_CIPHER_AES256;
 	uber->cipher_mode = SILOFS_CIPHER_MODE_XTS;
 }
@@ -613,6 +613,27 @@ int silofs_stat_uber(const struct silofs_env *env,
 	if (sz != SILOFS_UBER_SIZE) {
 		log_warn("bad uber: size=%zu", sz);
 		return -SILOFS_EBADBOOT;
+	}
+	return 0;
+}
+
+int silofs_reload_uber(struct silofs_env *env,
+                       const struct silofs_caddr *caddr,
+                       struct silofs_uber *out_uber)
+{
+	int err;
+
+	err = silofs_stat_uber(env, caddr);
+	if (err) {
+		return err;
+	}
+	err = silofs_load_uber(env, caddr, out_uber);
+	if (err) {
+		return err;
+	}
+	err = silofs_env_update_by(env, out_uber);
+	if (err) {
+		return err;
 	}
 	return 0;
 }

@@ -38,7 +38,8 @@ run make dist
 run stat "${autotoolsdir}/${disttgz}"
 
 # Run CI tests on local work-dir
-run "${selfdir}/silofs-cicd-all.sh" "${autotoolsdir}/${disttgz}" "${workdir}"
+run sh "${selfdir}/silofs-cicd-all.sh" \
+  "${autotoolsdir}/${disttgz}" "${workdir}"
 
 # Post-op cleanups
 cdx "${basedir}"

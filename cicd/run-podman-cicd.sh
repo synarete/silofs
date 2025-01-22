@@ -59,6 +59,7 @@ run podman inspect "${imagename}"
 scratchdir="${workdir}/scratch/"
 run mkdir -p "${scratchdir}"
 run cp "${selfdir}/silofs-cicd-build.sh" "${scratchdir}"
+run chmod +x "${scratchdir}/silofs-cicd-build.sh"
 run mv "${autotoolsdir}/${disttgz}" "${scratchdir}"
 
 run podman run --rm \

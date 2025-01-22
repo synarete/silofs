@@ -270,23 +270,23 @@ void cmd_open_repo(struct silofs_env *env);
 
 void cmd_close_repo(struct silofs_env *env);
 
-void cmd_format_fs(struct silofs_env *env, struct silofs_fs_bref *bref);
+void cmd_format_fs(struct silofs_env *env, struct silofs_bootref *bref);
 
 void cmd_close_fs(struct silofs_env *env);
 
-void cmd_poke_fs(struct silofs_env *env, const struct silofs_fs_bref *bref);
+void cmd_poke_fs(struct silofs_env *env, const struct silofs_bootref *bref);
 
 void cmd_poke_archive(struct silofs_env           *env,
-                      const struct silofs_fs_bref *bref);
+                      const struct silofs_bootref *bref);
 
-void cmd_open_fs(struct silofs_env *env, const struct silofs_fs_bref *bref);
+void cmd_open_fs(struct silofs_env *env, const struct silofs_bootref *bref);
 
 void cmd_exec_fs(struct silofs_env *env);
 
 void cmd_fork_fs(struct silofs_env *env, struct silofs_caddr *out_new,
                  struct silofs_caddr *out_alt);
 
-void cmd_unref_fs(struct silofs_env *env, const struct silofs_fs_bref *bconf);
+void cmd_unref_fs(struct silofs_env *env, const struct silofs_bootref *bconf);
 
 void cmd_inspect_fs(struct silofs_env *env, silofs_visit_laddr_fn cb,
                     void *user_ctx);
@@ -315,8 +315,8 @@ void cmd_del_iocp(union silofs_ioc_u **pioc);
 void cmd_reset_ioc(union silofs_ioc_u *ioc);
 
 /* file-system environment */
-void cmd_new_env(const struct silofs_fs_args *fs_args,
-                 struct silofs_env          **p_env);
+void cmd_new_env(const struct silofs_env_args *env_args,
+                 struct silofs_env           **p_env);
 
 void cmd_del_env(struct silofs_env **p_env);
 
@@ -335,24 +335,21 @@ char *cmd_duppass(const char *pass);
 void cmd_delpass(char **pass);
 
 /* boot-reference */
-void cmd_bootref_load(struct silofs_fs_bref *bref);
+void cmd_bootref_load(struct silofs_bootref *bref);
 
-void cmd_bootref_load_ar(struct silofs_fs_bref *bref);
+void cmd_bootref_load_ar(struct silofs_bootref *bref);
 
-void cmd_bootref_save(const struct silofs_fs_bref *bref);
+void cmd_bootref_save(const struct silofs_bootref *bref);
 
-void cmd_bootref_resave(const struct silofs_fs_bref *bref,
+void cmd_bootref_resave(const struct silofs_bootref *bref,
                         const struct silofs_caddr *caddr, const char *newname);
 
-void cmd_bootref_unlink(const struct silofs_fs_bref *bref);
+void cmd_bootref_unlink(const struct silofs_bootref *bref);
 
 /* fs input arguments */
-void cmd_fs_args_init(struct silofs_fs_args *fs_args);
+void cmd_setup_env_args(struct silofs_env_args *env_args);
 
-void cmd_fs_args_init2(struct silofs_fs_args         *fs_args,
-                       const struct silofs_fs_cflags *fs_cflags);
-
-void cmd_fini_fs_args(struct silofs_fs_args *fs_args);
+void cmd_destroy_env_args(struct silofs_env_args *env_args);
 
 /* fs-ids config */
 void cmd_fs_ids_unlinkat(const char *basedir);

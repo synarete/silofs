@@ -45,7 +45,7 @@ static uint64_t ut_unique_opid(struct ut_env *ute)
 
 void ut_setup_task(struct ut_env *ute, struct silofs_task *task)
 {
-	const struct silofs_fs_args *args = &ute->args->fs_args;
+	const struct silofs_env_args *args = &ute->args->env_args;
 
 	silofs_task_init(task, ute->env);
 	silofs_task_set_creds(task, args->uid, args->gid, 0002);
@@ -526,7 +526,7 @@ static int ut_write_iter_copy_rem(struct ut_write_iter *wri)
 
 static bool ut_with_aswyncwr(const struct ut_env *ute)
 {
-	return ute->args->fs_args.cflags.asyncwr;
+	return (ute->args->env_args.flags & SILOFS_F_ASYNCWR) > 0;
 }
 
 static int ut_do_write_iter(struct ut_env *ute, ino_t ino, const void *buf,
@@ -730,7 +730,7 @@ static int ut_do_timedout(struct ut_env *ute)
 	int ret;
 
 	ut_setup_task(ute, &task);
-	ret = silofs_exec_maintain(&task, SILOFS_F_IDLE);
+	ret = silofs_exec_maintain(&task, SILOFS_CTLF_IDLE);
 	ut_release_task(ute, &task);
 	return sanitize_status(ret);
 }

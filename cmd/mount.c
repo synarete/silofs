@@ -51,7 +51,7 @@ struct cmd_mount_in_args {
 	char *mntpoint_real;
 	char *uhelper;
 	char *password;
-	struct silofs_fs_cflags flags;
+	enum silofs_env_flags flags;
 	bool explicit_log_level;
 	bool systemd_run;
 	bool no_prompt;
@@ -59,7 +59,7 @@ struct cmd_mount_in_args {
 
 struct cmd_mount_ctx {
 	struct cmd_mount_in_args in_args;
-	struct silofs_fs_args fs_args;
+	struct silofs_env_args env_args;
 	struct silofs_env *env;
 	pid_t child_pid;
 	time_t start_time;
@@ -125,23 +125,23 @@ static void cmd_mount_getsubopts(struct cmd_mount_ctx *ctx)
 		sval = NULL;
 		skey = getsubopt(&sopt, toks, &sval);
 		if (skey == CMD_MOUNT_OPT_RO) {
-			ctx->in_args.flags.rdonly = true;
+			ctx->in_args.flags |= SILOFS_F_RDONLY;
 		} else if (skey == CMD_MOUNT_OPT_RW) {
-			ctx->in_args.flags.rdonly = false;
+			ctx->in_args.flags &= ~SILOFS_F_RDONLY;
 		} else if (skey == CMD_MOUNT_OPT_DEV) {
-			ctx->in_args.flags.nodev = false;
+			ctx->in_args.flags &= ~SILOFS_F_NODEV;
 		} else if (skey == CMD_MOUNT_OPT_NODEV) {
-			ctx->in_args.flags.nodev = true;
+			ctx->in_args.flags |= SILOFS_F_NODEV;
 		} else if (skey == CMD_MOUNT_OPT_SUID) {
-			ctx->in_args.flags.nosuid = false;
+			ctx->in_args.flags &= ~SILOFS_F_NOSUID;
 		} else if (skey == CMD_MOUNT_OPT_NOSUID) {
-			ctx->in_args.flags.nosuid = true;
+			ctx->in_args.flags |= SILOFS_F_NOSUID;
 		} else if (skey == CMD_MOUNT_OPT_EXEC) {
-			ctx->in_args.flags.noexec = false;
+			ctx->in_args.flags &= ~SILOFS_F_NOEXEC;
 		} else if (skey == CMD_MOUNT_OPT_NOEXEC) {
-			ctx->in_args.flags.noexec = true;
+			ctx->in_args.flags |= SILOFS_F_NOEXEC;
 		} else if (skey == CMD_MOUNT_OPT_HOSTIDS) {
-			ctx->in_args.flags.allow_hostids = true;
+			ctx->in_args.flags |= SILOFS_F_ALLOWHOSTIDS;
 		} else if (skey == CMD_MOUNT_OPT_PASSWD) {
 			ctx->in_args.password = cmd_duppass(sval);
 		} else {
@@ -172,6 +172,7 @@ static void cmd_mount_parse_optargs(struct cmd_mount_ctx *ctx)
 	};
 	struct cmd_optargs opa;
 	int opt_chr = 1;
+	bool barg;
 
 	cmd_optargs_init(&opa, ods);
 	while (!opa.opa_done && (opt_chr > 0)) {
@@ -181,20 +182,24 @@ static void cmd_mount_parse_optargs(struct cmd_mount_ctx *ctx)
 			cmd_mount_getsubopts(ctx);
 			break;
 		case 'i':
-			ctx->in_args.flags.allow_hostids = true;
+			ctx->in_args.flags |= SILOFS_F_ALLOWHOSTIDS;
 			break;
 		case 'A':
-			ctx->in_args.flags.allow_other = false;
+			ctx->in_args.flags &= ~SILOFS_F_ALLOWOTHER;
 			break;
 		case 'E':
-			ctx->in_args.flags.allow_xattr_acl = true;
+			ctx->in_args.flags |= SILOFS_F_ALLOWXACL;
 			break;
 		case 'W':
-			ctx->in_args.flags.writeback_cache =
-				cmd_optargs_curr_as_bool(&opa);
+			barg = cmd_optargs_curr_as_bool(&opa);
+			if (barg) {
+				ctx->in_args.flags |= SILOFS_F_WRITEBACK;
+			} else {
+				ctx->in_args.flags &= ~SILOFS_F_WRITEBACK;
+			}
 			break;
 		case 'B':
-			ctx->in_args.flags.may_splice = false;
+			ctx->in_args.flags &= ~SILOFS_F_MAYSPLICE;
 			break;
 		case 'D':
 			cmd_globals.dont_daemonize = true;
@@ -203,11 +208,15 @@ static void cmd_mount_parse_optargs(struct cmd_mount_ctx *ctx)
 			cmd_globals.allow_coredump = true;
 			break;
 		case 'a':
-			ctx->in_args.flags.asyncwr =
-				cmd_optargs_curr_as_bool(&opa);
+			barg = cmd_optargs_curr_as_bool(&opa);
+			if (barg) {
+				ctx->in_args.flags |= SILOFS_F_ASYNCWR;
+			} else {
+				ctx->in_args.flags &= ~SILOFS_F_ASYNCWR;
+			}
 			break;
 		case 'M':
-			ctx->in_args.flags.stdalloc = true;
+			ctx->in_args.flags |= SILOFS_F_STDALLOC;
 			break;
 		case 'P':
 			ctx->in_args.no_prompt = true;
@@ -239,31 +248,32 @@ static void cmd_mount_parse_optargs(struct cmd_mount_ctx *ctx)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void cmd_mount_setup_fs_args(struct cmd_mount_ctx *ctx)
+static void cmd_mount_setup_env_args(struct cmd_mount_ctx *ctx)
 {
 	const struct cmd_mount_in_args *in_args = &ctx->in_args;
-	struct silofs_fs_args *fs_args = &ctx->fs_args;
+	struct silofs_env_args *env_args = &ctx->env_args;
 
-	cmd_fs_args_init2(fs_args, &in_args->flags);
-	fs_args->bref.repodir = in_args->repodir_real;
-	fs_args->bref.name = in_args->name;
-	fs_args->bref.passwd = in_args->password;
-	fs_args->mntdir = in_args->mntpoint_real;
+	cmd_setup_env_args(env_args);
+	env_args->flags = in_args->flags;
+	env_args->bref.repodir = in_args->repodir_real;
+	env_args->bref.name = in_args->name;
+	env_args->bref.passwd = in_args->password;
+	env_args->mntdir = in_args->mntpoint_real;
 }
 
 static void cmd_mount_setup_fs_ids(struct cmd_mount_ctx *ctx)
 {
-	cmd_fs_ids_load(&ctx->fs_args.ids, ctx->in_args.repodir_real);
+	cmd_fs_ids_load(&ctx->env_args.ids, ctx->in_args.repodir_real);
 }
 
 static void cmd_mount_load_bref(struct cmd_mount_ctx *ctx)
 {
-	cmd_bootref_load(&ctx->fs_args.bref);
+	cmd_bootref_load(&ctx->env_args.bref);
 }
 
 static void cmd_mount_setup_env(struct cmd_mount_ctx *ctx)
 {
-	cmd_new_env(&ctx->fs_args, &ctx->env);
+	cmd_new_env(&ctx->env_args, &ctx->env);
 }
 
 static void cmd_mount_destroy_env(struct cmd_mount_ctx *ctx)
@@ -314,7 +324,7 @@ static void cmd_mount_finalize(struct cmd_mount_ctx *ctx)
 	cmd_pstrfree(&ctx->in_args.name);
 	cmd_pstrfree(&ctx->in_args.uhelper);
 	cmd_delpass(&ctx->in_args.password);
-	cmd_fini_fs_args(&ctx->fs_args);
+	cmd_destroy_env_args(&ctx->env_args);
 	cmd_close_syslog();
 	cmd_mount_ctx = NULL;
 }
@@ -335,23 +345,13 @@ static void cmd_mount_start(struct cmd_mount_ctx *ctx)
 
 static void cmd_mount_mkdefaults(struct cmd_mount_ctx *ctx)
 {
-	ctx->in_args.flags.pedantic = false;
-	ctx->in_args.flags.rdonly = false;
-	ctx->in_args.flags.noexec = false;
-	ctx->in_args.flags.nosuid = false;
-	ctx->in_args.flags.nodev = false;
-	ctx->in_args.flags.with_fuse = true;
-	ctx->in_args.flags.asyncwr = true;
-	ctx->in_args.flags.allow_other = true;
-	ctx->in_args.flags.allow_hostids = false;
-	ctx->in_args.flags.allow_xattr_acl = false;
-	ctx->in_args.flags.allow_admin = true;
-	ctx->in_args.flags.writeback_cache = true;
-	ctx->in_args.flags.may_splice = true;
-	ctx->in_args.flags.lazytime = false;
-	ctx->in_args.flags.stdalloc = false;
-	ctx->in_args.explicit_log_level = false;
-	ctx->in_args.systemd_run = false;
+	ctx->in_args.flags = 0;
+	ctx->in_args.flags |= SILOFS_F_WITHFUSE;
+	ctx->in_args.flags |= SILOFS_F_ASYNCWR;
+	ctx->in_args.flags |= SILOFS_F_ALLOWOTHER;
+	ctx->in_args.flags |= SILOFS_F_ALLOWADMIN;
+	ctx->in_args.flags |= SILOFS_F_WRITEBACK;
+	ctx->in_args.flags |= SILOFS_F_MAYSPLICE;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -393,12 +393,12 @@ static void cmd_mount_close_repo(struct cmd_mount_ctx *ctx)
 
 static void cmd_mount_poke_fs(struct cmd_mount_ctx *ctx)
 {
-	cmd_poke_fs(ctx->env, &ctx->fs_args.bref);
+	cmd_poke_fs(ctx->env, &ctx->env_args.bref);
 }
 
 static void cmd_mount_open_fs(struct cmd_mount_ctx *ctx)
 {
-	cmd_open_fs(ctx->env, &ctx->fs_args.bref);
+	cmd_open_fs(ctx->env, &ctx->env_args.bref);
 }
 
 static void cmd_mount_execute_fs(struct cmd_mount_ctx *ctx)
@@ -516,27 +516,38 @@ static void cmd_mount_update_log_params(const struct cmd_mount_ctx *ctx)
  */
 #define silofs_log_iarg(fmt_, ...) silofs_log_info("inarg: " fmt_, __VA_ARGS__)
 
+static int
+cmd_mount_testf(const struct cmd_mount_ctx *ctx, enum silofs_env_flags mask)
+{
+	return ((ctx->in_args.flags & mask) == mask);
+}
+
 static void cmd_mount_trace_start(const struct cmd_mount_ctx *ctx)
 {
-	const struct silofs_fs_cflags *cflags = &ctx->in_args.flags;
-
 	silofs_log_meta_banner(cmd_globals.name, 1);
 	silofs_log_info("executable: %s", cmd_globals.prog);
 	silofs_log_info("nprocs: %ld", silofs_sc_nproc_onln());
 	silofs_log_iarg("mountpoint=%s", ctx->in_args.mntpoint_real);
 	silofs_log_iarg("repodir=%s", ctx->in_args.repodir_real);
-	silofs_log_iarg("rdonly=%d", cflags->rdonly);
-	silofs_log_iarg("noexec=%d", cflags->noexec);
-	silofs_log_iarg("nosuid=%d", cflags->nosuid);
-	silofs_log_iarg("nodev=%d", cflags->nodev);
-	silofs_log_iarg("asyncwr=%d", cflags->asyncwr);
-	silofs_log_iarg("allow_admin=%d", cflags->allow_admin);
-	silofs_log_iarg("allow_other=%d", cflags->allow_other);
-	silofs_log_iarg("allow_hostids=%d", cflags->allow_hostids);
-	silofs_log_iarg("allow_xattr_acl=%d", cflags->allow_xattr_acl);
-	silofs_log_iarg("writeback_cache=%d", cflags->writeback_cache);
-	silofs_log_iarg("may_splice=%d", cflags->may_splice);
-	silofs_log_iarg("lazytime=%d", cflags->lazytime);
+	silofs_log_iarg("rdonly=%d", cmd_mount_testf(ctx, SILOFS_F_RDONLY));
+	silofs_log_iarg("noexec=%d", cmd_mount_testf(ctx, SILOFS_F_NOEXEC));
+	silofs_log_iarg("nosuid=%d", cmd_mount_testf(ctx, SILOFS_F_NOSUID));
+	silofs_log_iarg("nodev=%d", cmd_mount_testf(ctx, SILOFS_F_NODEV));
+	silofs_log_iarg("asyncwr=%d", cmd_mount_testf(ctx, SILOFS_F_ASYNCWR));
+	silofs_log_iarg("allow_admin=%d",
+	                cmd_mount_testf(ctx, SILOFS_F_ALLOWADMIN));
+	silofs_log_iarg("allow_other=%d",
+	                cmd_mount_testf(ctx, SILOFS_F_ALLOWOTHER));
+	silofs_log_iarg("allow_hostids=%d",
+	                cmd_mount_testf(ctx, SILOFS_F_ALLOWHOSTIDS));
+	silofs_log_iarg("allow_xattr_acl=%d",
+	                cmd_mount_testf(ctx, SILOFS_F_ALLOWXACL));
+	silofs_log_iarg("writeback_cache=%d",
+	                cmd_mount_testf(ctx, SILOFS_F_WRITEBACK));
+	silofs_log_iarg("may_splice=%d",
+	                cmd_mount_testf(ctx, SILOFS_F_MAYSPLICE));
+	silofs_log_iarg("lazytime=%d",
+	                cmd_mount_testf(ctx, SILOFS_F_LAZYTIME));
 	cmd_trace_versions();
 }
 
@@ -676,7 +687,7 @@ void cmd_execute_mount(void)
 	cmd_mount_getpass(&ctx);
 
 	/* Setup input arguments */
-	cmd_mount_setup_fs_args(&ctx);
+	cmd_mount_setup_env_args(&ctx);
 
 	/* Load fs-ids mapping */
 	cmd_mount_setup_fs_ids(&ctx);

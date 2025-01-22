@@ -2698,9 +2698,8 @@ static int fq_wri_copy_iov(struct silofs_fuseq_wr_iter *fq_wri)
 static bool fqd_asyncwr_mode(const struct silofs_fuseq_dispatcher *fqd)
 {
 	const struct silofs_fuseq *fq = fqd_fuseq(fqd);
-	const enum silofs_env_flags mask = SILOFS_ENVF_ASYNCWR;
 
-	return (fq->fq_env->ctl_flags & mask) == mask;
+	return silofs_env_hasflag(fq->fq_env, SILOFS_F_ASYNCWR);
 }
 
 static void
@@ -4293,7 +4292,7 @@ static void fqw_setup_self_task(const struct silofs_fuseq_worker *fqw,
 {
 	const struct silofs_fuseq *fq = fqw_fuseq(fqw);
 	const struct silofs_env *env = fq->fq_env;
-	const struct silofs_fs_args *args = &env->args;
+	const struct silofs_env_args *args = &env->args;
 
 	silofs_task_set_creds(task, args->uid, args->gid, args->umask);
 	silofs_task_set_ts(task, false);
@@ -4337,10 +4336,10 @@ static int fqw_exec_once(struct silofs_fuseq_worker *fqw)
 		silofs_sys_sched_yield();
 	} else if (fuseq_is_nexecs_idle(fq)) {
 		/* do flush-and-relax in idle mode */
-		ret = fqw_exec_maintain(fqw, SILOFS_F_IDLE);
+		ret = fqw_exec_maintain(fqw, SILOFS_CTLF_IDLE);
 	} else {
 		/* do flush-and-relax along-side dispatcher threads */
-		ret = fqw_exec_maintain(fqw, SILOFS_F_INTERN);
+		ret = fqw_exec_maintain(fqw, SILOFS_CTLF_INTERN);
 	}
 	return ret;
 }
@@ -4801,13 +4800,6 @@ int silofs_fuseq_update(struct silofs_fuseq *fq)
 	return 0;
 }
 
-static bool has_allow_other_mode(const struct silofs_env *env)
-{
-	const enum silofs_env_flags mask = SILOFS_ENVF_ALLOWOTHER;
-
-	return (env->ctl_flags & mask) == mask;
-}
-
 int silofs_fuseq_mount(struct silofs_fuseq *fq, struct silofs_env *env,
                        const char *path)
 {
@@ -4823,7 +4815,7 @@ int silofs_fuseq_mount(struct silofs_fuseq *fq, struct silofs_env *env,
 	uid = env->owner_cred.uid;
 	gid = env->owner_cred.gid;
 	ms_flags = env->ms_flags;
-	allow_other = has_allow_other_mode(env);
+	allow_other = silofs_env_hasflag(env, SILOFS_F_ALLOWOTHER);
 
 	err = silofs_mntrpc_handshake(uid, gid);
 	if (err) {

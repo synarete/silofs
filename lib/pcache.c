@@ -427,11 +427,11 @@ static void pcache_relax_args(const struct silofs_pcache *pcache, int flags,
 
 	*out_niter = 0;
 	*out_iterall = false;
-	if (flags & SILOFS_F_NOW) {
+	if (flags & SILOFS_CTLF_NOW) {
 		*out_niter += 2;
 		*out_iterall = true;
 	}
-	if (flags & SILOFS_F_IDLE) {
+	if (flags & SILOFS_CTLF_IDLE) {
 		*out_niter += 1;
 		*out_iterall = false;
 	}

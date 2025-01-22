@@ -208,8 +208,8 @@ lcache_get_lru_uni(struct silofs_lcache *lcache)
 
 static enum silofs_allocf flags_to_allocf(int flags)
 {
-	return (flags & SILOFS_F_IDLE) ? SILOFS_ALLOCF_TRYPUNCH :
-	                                 SILOFS_ALLOCF_NONE;
+	return (flags & SILOFS_CTLF_IDLE) ? SILOFS_ALLOCF_TRYPUNCH :
+	                                    SILOFS_ALLOCF_NONE;
 }
 
 static bool lcache_evict_or_relru_uni(struct silofs_lcache *lcache,
@@ -236,7 +236,7 @@ static size_t lcache_shrink_or_relru_unis(struct silofs_lcache *lcache,
 	bool now;
 	bool ok;
 
-	now = (flags & SILOFS_F_NOW) > 0;
+	now = (flags & SILOFS_CTLF_NOW) > 0;
 	for (size_t i = 0; i < n; ++i) {
 		uni = lcache_get_lru_uni(lcache);
 		if (uni == NULL) {
@@ -570,7 +570,7 @@ static size_t lcache_shrink_or_relru_vnis(struct silofs_lcache *lcache,
 	bool now;
 	bool ok;
 
-	now = (flags & SILOFS_F_NOW) > 0;
+	now = (flags & SILOFS_CTLF_NOW) > 0;
 	for (size_t i = 0; i < n; ++i) {
 		vni = lcache_get_lru_vni(lcache);
 		if (vni == NULL) {
@@ -766,17 +766,17 @@ static size_t lcache_calc_niter(const struct silofs_lcache *lcache, int flags)
 	if (mempress_percentage > 60) {
 		niter += 10;
 	} else if (mempress_percentage > 20) {
-		if (flags & SILOFS_F_INTERN) {
+		if (flags & SILOFS_CTLF_INTERN) {
 			niter += 5;
 		}
-		if (flags & SILOFS_F_OPSTART) {
+		if (flags & SILOFS_CTLF_OPSTART) {
 			niter += 1;
 		}
 	}
-	if (flags & SILOFS_F_NOW) {
+	if (flags & SILOFS_CTLF_NOW) {
 		niter += 2 + min(mempress_percentage, 5);
 	}
-	if (!niter && (flags & SILOFS_F_IDLE)) {
+	if (!niter && (flags & SILOFS_CTLF_IDLE)) {
 		niter += 2 + min(mempress_percentage, 3);
 	}
 	return niter;
@@ -796,7 +796,7 @@ lcache_relax_by_niter(struct silofs_lcache *lcache, size_t niter, int flags)
 	size_t cnt;
 	bool now;
 
-	now = (flags & SILOFS_F_NOW) > 0;
+	now = (flags & SILOFS_CTLF_NOW) > 0;
 	cnt = (now || (niter > 1)) ? 2 : 1;
 	for (size_t i = 0; i < niter; ++i) {
 		nvis = lcache_shrink_some_vnis(lcache, i + 1, flags);
@@ -832,19 +832,21 @@ static size_t lcache_relax_by_overpop(struct silofs_lcache *lcache)
 	opop = lcache_overpop_vnis(lcache);
 	if (opop > 0) {
 		want = min(opop, 8);
-		total += lcache_shrink_some_vnis(lcache, want, SILOFS_F_NOW);
+		total +=
+			lcache_shrink_some_vnis(lcache, want, SILOFS_CTLF_NOW);
 	}
 	opop = lcache_overpop_unis(lcache);
 	if (opop > 0) {
 		want = min(opop, 2);
-		total += lcache_shrink_some_unis(lcache, want, SILOFS_F_NOW);
+		total +=
+			lcache_shrink_some_unis(lcache, want, SILOFS_CTLF_NOW);
 	}
 	return total;
 }
 
 static void lcache_try_relax_uamap(struct silofs_lcache *lcache, int flags)
 {
-	if (flags & SILOFS_F_IDLE) {
+	if (flags & SILOFS_CTLF_IDLE) {
 		silofs_uamap_drop_lru(&lcache->lc_uamap);
 	}
 }

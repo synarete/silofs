@@ -50,7 +50,7 @@ struct silofs_fs_inst {
 };
 
 struct silofs_fs_ctx {
-	struct silofs_fs_args args;
+	struct silofs_env_args args;
 	struct silofs_fs_inst *inst;
 	struct silofs_password *password;
 	struct silofs_alloc *alloc;
@@ -123,30 +123,30 @@ static struct silofs_fs_inst *fs_inst_of(struct silofs_env *env)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int check_bootpath(const struct silofs_fs_args *fs_args)
+static int check_bootpath(const struct silofs_env_args *env_args)
 {
-	const struct silofs_fs_bref *bref = &fs_args->bref;
+	const struct silofs_bootref *bref = &env_args->bref;
 	struct silofs_bootpath bootpath;
 
 	return silofs_bootpath_setup(&bootpath, bref->repodir, bref->name);
 }
 
-static int check_password(const struct silofs_fs_args *fs_args)
+static int check_password(const struct silofs_env_args *env_args)
 {
 	struct silofs_password passwd;
 
-	return silofs_password_setup(&passwd, fs_args->bref.passwd);
+	return silofs_password_setup(&passwd, env_args->bref.passwd);
 }
 
-static int check_fs_args(const struct silofs_fs_args *fs_args)
+static int check_env_args(const struct silofs_env_args *env_args)
 {
 	int err;
 
-	err = check_bootpath(fs_args);
+	err = check_bootpath(env_args);
 	if (err) {
 		return err;
 	}
-	err = check_password(fs_args);
+	err = check_password(env_args);
 	if (err) {
 		return err;
 	}
@@ -159,8 +159,9 @@ static struct silofs_qalloc *fs_ctx_qalloc_of(struct silofs_fs_ctx *fs_ctx)
 {
 	struct silofs_alloc *alloc = fs_ctx->alloc;
 	struct silofs_qalloc *qalloc = NULL;
+	const int with_stdalloc = fs_ctx->args.flags & SILOFS_F_STDALLOC;
 
-	if ((alloc != NULL) && !fs_ctx->args.cflags.stdalloc) {
+	if ((alloc != NULL) && !with_stdalloc) {
 		qalloc = container_of(alloc, struct silofs_qalloc, alloc);
 	}
 	return qalloc;
@@ -170,8 +171,9 @@ static struct silofs_calloc *fs_ctx_calloc_of(struct silofs_fs_ctx *fs_ctx)
 {
 	struct silofs_alloc *alloc = fs_ctx->alloc;
 	struct silofs_calloc *calloc = NULL;
+	const int with_stdalloc = fs_ctx->args.flags & SILOFS_F_STDALLOC;
 
-	if ((alloc != NULL) && fs_ctx->args.cflags.stdalloc) {
+	if ((alloc != NULL) && with_stdalloc) {
 		calloc = container_of(alloc, struct silofs_calloc, alloc);
 	}
 	return calloc;
@@ -188,7 +190,7 @@ static int fs_ctx_setup_qalloc(struct silofs_fs_ctx *fs_ctx)
 	if (err) {
 		return err;
 	}
-	if (fs_ctx->args.cflags.pedantic) {
+	if (fs_ctx->args.flags & SILOFS_F_PEDANTIC) {
 		qaflags |= SILOFS_QALLOCF_DEMASK;
 	}
 	qalloc = &fs_ctx->inst->fs_core.c.alloc_u.qalloc;
@@ -245,7 +247,7 @@ static int fs_ctx_setup_alloc(struct silofs_fs_ctx *fs_ctx)
 {
 	int ret;
 
-	if (fs_ctx->args.cflags.stdalloc) {
+	if (fs_ctx->args.flags & SILOFS_F_STDALLOC) {
 		ret = fs_ctx_setup_calloc(fs_ctx);
 	} else {
 		ret = fs_ctx_setup_qalloc(fs_ctx);
@@ -255,7 +257,7 @@ static int fs_ctx_setup_alloc(struct silofs_fs_ctx *fs_ctx)
 
 static void fs_ctx_destroy_alloc(struct silofs_fs_ctx *fs_ctx)
 {
-	if (fs_ctx->args.cflags.stdalloc) {
+	if (fs_ctx->args.flags & SILOFS_F_STDALLOC) {
 		fs_ctx_destroy_calloc(fs_ctx);
 	} else {
 		fs_ctx_destroy_qalloc(fs_ctx);
@@ -267,7 +269,7 @@ static void fs_ctx_make_repo_base(const struct silofs_fs_ctx *fs_ctx,
 {
 	silofs_memzero(re_base, sizeof(*re_base));
 	re_base->alloc = fs_ctx->alloc;
-	if (fs_ctx->args.cflags.rdonly) {
+	if (fs_ctx->args.flags & SILOFS_F_RDONLY) {
 		re_base->flags |= SILOFS_REPOF_RDONLY;
 	}
 	silofs_strview_init(&re_base->repodir, fs_ctx->args.bref.repodir);
@@ -388,12 +390,13 @@ static void fs_ctx_destroy_flusher(struct silofs_fs_ctx *fs_ctx)
 static int fs_ctx_setup_idsmap(struct silofs_fs_ctx *fs_ctx)
 {
 	const struct silofs_fs_ids *ids = &fs_ctx->args.ids;
-	const struct silofs_fs_cflags *cflags = &fs_ctx->args.cflags;
 	struct silofs_idsmap *idsmap = NULL;
+	int allow_hostids;
 	int err;
 
 	idsmap = &fs_ctx->inst->fs_core.c.idsmap;
-	err = silofs_idsmap_init(idsmap, fs_ctx->alloc, cflags->allow_hostids);
+	allow_hostids = fs_ctx->args.flags & SILOFS_F_ALLOWHOSTIDS;
+	err = silofs_idsmap_init(idsmap, fs_ctx->alloc, allow_hostids > 0);
 	if (err) {
 		return err;
 	}
@@ -479,11 +482,14 @@ static void fs_ctx_destroy_env(struct silofs_fs_ctx *fs_ctx)
 	}
 }
 
+static bool has_ctlf(const struct silofs_env *env, enum silofs_env_flags ctlf)
+{
+	return silofs_env_hasflag(env, ctlf);
+}
+
 static bool has_with_fuse(const struct silofs_env *env)
 {
-	const enum silofs_env_flags mask = SILOFS_ENVF_WITHFUSE;
-
-	return (env->ctl_flags & mask) == mask;
+	return has_ctlf(env, SILOFS_F_WITHFUSE);
 }
 
 static bool run_with_fuse(const struct silofs_env *env)
@@ -491,11 +497,6 @@ static bool run_with_fuse(const struct silofs_env *env)
 	const struct silofs_fuseq *fuseq = env->base.fuseq;
 
 	return (fuseq != NULL) && has_with_fuse(env);
-}
-
-static bool has_ctlf(const struct silofs_env *env, enum silofs_env_flags mask)
-{
-	return (env->ctl_flags & mask) == mask;
 }
 
 static void
@@ -511,8 +512,8 @@ fs_ctx_bind_fuseq(struct silofs_fs_ctx *fs_ctx, struct silofs_fuseq *fuseq)
 	if (fuseq == NULL) {
 		return;
 	}
-	fuseq->fq_writeback_cache = has_ctlf(env, SILOFS_ENVF_WRITEBACK);
-	fuseq->fq_may_splice = has_ctlf(env, SILOFS_ENVF_MAYSPLICE);
+	fuseq->fq_writeback_cache = has_ctlf(env, SILOFS_F_WRITEBACK);
+	fuseq->fq_may_splice = has_ctlf(env, SILOFS_F_MAYSPLICE);
 }
 
 static int fs_ctx_setup_fuseq(struct silofs_fs_ctx *fs_ctx)
@@ -633,10 +634,10 @@ out_err:
 
 static void
 fs_ctx_init(struct silofs_fs_ctx *fs_ctx, struct silofs_fs_inst *fs_inst,
-            const struct silofs_fs_args *fs_args)
+            const struct silofs_env_args *env_args)
 {
 	memset(fs_ctx, 0, sizeof(*fs_ctx));
-	memcpy(&fs_ctx->args, fs_args, sizeof(fs_ctx->args));
+	memcpy(&fs_ctx->args, env_args, sizeof(fs_ctx->args));
 	fs_ctx->inst = fs_inst;
 }
 
@@ -659,7 +660,7 @@ fs_ctx_init_from(struct silofs_fs_ctx *fs_ctx, struct silofs_fs_inst *fs_inst)
 	fs_ctx->fuseq = env->base.fuseq;
 }
 
-static int new_fs_inst(const struct silofs_fs_args *fs_args,
+static int new_fs_inst(const struct silofs_env_args *env_args,
                        struct silofs_fs_inst **out_fs_inst)
 {
 	struct silofs_fs_ctx fs_ctx = { .inst = NULL };
@@ -672,7 +673,7 @@ static int new_fs_inst(const struct silofs_fs_args *fs_args,
 		return err;
 	}
 
-	fs_ctx_init(&fs_ctx, mem, fs_args);
+	fs_ctx_init(&fs_ctx, mem, env_args);
 	err = fs_ctx_setup(&fs_ctx);
 	if (err) {
 		silofs_zfree(mem, msz);
@@ -682,7 +683,7 @@ static int new_fs_inst(const struct silofs_fs_args *fs_args,
 	return 0;
 }
 
-int silofs_new_env(const struct silofs_fs_args *fs_args,
+int silofs_new_env(const struct silofs_env_args *env_args,
                    struct silofs_env **out_env)
 {
 	struct silofs_fs_inst *fs_inst = NULL;
@@ -690,11 +691,11 @@ int silofs_new_env(const struct silofs_fs_args *fs_args,
 
 	STATICASSERT_LE(sizeof(*fs_inst), 64 * SILOFS_KILO);
 
-	err = check_fs_args(fs_args);
+	err = check_env_args(env_args);
 	if (err) {
 		goto out;
 	}
-	err = new_fs_inst(fs_args, &fs_inst);
+	err = new_fs_inst(env_args, &fs_inst);
 	if (err) {
 		goto out;
 	}
@@ -753,7 +754,7 @@ static int map_task_creds(struct silofs_task *task)
 
 static int make_task(struct silofs_env *env, struct silofs_task *task)
 {
-	const struct silofs_fs_args *args = &env->args;
+	const struct silofs_env_args *args = &env->args;
 
 	silofs_task_init(task, env);
 	silofs_task_set_ts(task, true);
@@ -996,6 +997,7 @@ static int check_superblock(const struct silofs_env *env)
 	const struct silofs_sb_info *sbi = env->sbi;
 	const struct silofs_super_block *sb = sbi->sb;
 	int fossil;
+	int rdonly;
 	int err;
 
 	err = silofs_sb_check_version(sb);
@@ -1005,7 +1007,8 @@ static int check_superblock(const struct silofs_env *env)
 		return err;
 	}
 	fossil = silofs_sb_test_flags(sb, SILOFS_SUPERF_FOSSIL);
-	if (fossil && !env->args.cflags.rdonly) {
+	rdonly = env->args.flags & SILOFS_F_RDONLY;
+	if (fossil && !rdonly) {
 		log_warn("read-only fs: sb-flags=%08x", (int)sb->sb_flags);
 		return -SILOFS_EROFS;
 	}

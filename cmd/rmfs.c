@@ -37,7 +37,7 @@ struct cmd_rmfs_ctx {
 	struct silofs_ioc_query ioc_qry;
 	long pad;
 	struct cmd_rmfs_in_args in_args;
-	struct silofs_fs_args fs_args;
+	struct silofs_env_args env_args;
 	struct silofs_env *env;
 	bool has_lockfile;
 };
@@ -172,29 +172,29 @@ static void cmd_rmfs_check_nomnt(struct cmd_rmfs_ctx *ctx)
 	cmd_free_mountinfo(mi_list);
 }
 
-static void cmd_rmfs_setup_fs_args(struct cmd_rmfs_ctx *ctx)
+static void cmd_rmfs_setup_env_args(struct cmd_rmfs_ctx *ctx)
 {
-	struct silofs_fs_args *fs_args = &ctx->fs_args;
+	struct silofs_env_args *env_args = &ctx->env_args;
 
-	cmd_fs_args_init(fs_args);
-	fs_args->bref.repodir = ctx->in_args.repodir_real;
-	fs_args->bref.name = ctx->in_args.name;
-	fs_args->bref.passwd = ctx->in_args.password;
+	cmd_setup_env_args(env_args);
+	env_args->bref.repodir = ctx->in_args.repodir_real;
+	env_args->bref.name = ctx->in_args.name;
+	env_args->bref.passwd = ctx->in_args.password;
 }
 
 static void cmd_rmfs_setup_fs_ids(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_fs_ids_load(&ctx->fs_args.ids, ctx->in_args.repodir_real);
+	cmd_fs_ids_load(&ctx->env_args.ids, ctx->in_args.repodir_real);
 }
 
 static void cmd_rmfs_load_bref(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_bootref_load(&ctx->fs_args.bref);
+	cmd_bootref_load(&ctx->env_args.bref);
 }
 
 static void cmd_rmfs_setup_env(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_new_env(&ctx->fs_args, &ctx->env);
+	cmd_new_env(&ctx->env_args, &ctx->env);
 }
 
 static void cmd_rmfs_open_repo(struct cmd_rmfs_ctx *ctx)
@@ -209,17 +209,17 @@ static void cmd_rmfs_close_repo(struct cmd_rmfs_ctx *ctx)
 
 static void cmd_rmfs_poke_fs(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_poke_fs(ctx->env, &ctx->fs_args.bref);
+	cmd_poke_fs(ctx->env, &ctx->env_args.bref);
 }
 
 static void cmd_rmfs_execute(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_unref_fs(ctx->env, &ctx->fs_args.bref);
+	cmd_unref_fs(ctx->env, &ctx->env_args.bref);
 }
 
 static void cmd_rmfs_unlink_bref(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_bootref_unlink(&ctx->fs_args.bref);
+	cmd_bootref_unlink(&ctx->env_args.bref);
 }
 
 static void cmd_rmfs_destroy_env(struct cmd_rmfs_ctx *ctx)
@@ -298,7 +298,7 @@ void cmd_execute_rmfs(void)
 	cmd_rmfs_enable_signals();
 
 	/* Setup input arguments */
-	cmd_rmfs_setup_fs_args(&ctx);
+	cmd_rmfs_setup_env_args(&ctx);
 
 	/* Load fs-ids mapping */
 	cmd_rmfs_setup_fs_ids(&ctx);

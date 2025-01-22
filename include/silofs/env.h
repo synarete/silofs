@@ -21,20 +21,42 @@
 #include <silofs/types.h>
 #include <silofs/boot.h>
 
-/* fs-env control flags */
+/* top-level control flags */
 enum silofs_env_flags {
-	SILOFS_ENVF_WITHFUSE   = SILOFS_BIT(0),
-	SILOFS_ENVF_NLOOKUP    = SILOFS_BIT(1),
-	SILOFS_ENVF_WRITEBACK  = SILOFS_BIT(2),
-	SILOFS_ENVF_MAYSPLICE  = SILOFS_BIT(3),
-	SILOFS_ENVF_ALLOWOTHER = SILOFS_BIT(4),
-	SILOFS_ENVF_ALLOWADMIN = SILOFS_BIT(5),
-	SILOFS_ENVF_ALLOWXACL  = SILOFS_BIT(6),
-	SILOFS_ENVF_ASYNCWR    = SILOFS_BIT(7),
+	SILOFS_F_PEDANTIC     = SILOFS_BIT(0),
+	SILOFS_F_RDONLY       = SILOFS_BIT(1),
+	SILOFS_F_NOEXEC       = SILOFS_BIT(2),
+	SILOFS_F_NOSUID       = SILOFS_BIT(3),
+	SILOFS_F_NODEV        = SILOFS_BIT(4),
+	SILOFS_F_WITHFUSE     = SILOFS_BIT(5),
+	SILOFS_F_NLOOKUP      = SILOFS_BIT(6),
+	SILOFS_F_WRITEBACK    = SILOFS_BIT(7),
+	SILOFS_F_MAYSPLICE    = SILOFS_BIT(8),
+	SILOFS_F_ALLOWOTHER   = SILOFS_BIT(9),
+	SILOFS_F_ALLOWADMIN   = SILOFS_BIT(10),
+	SILOFS_F_ALLOWXACL    = SILOFS_BIT(11),
+	SILOFS_F_ALLOWHOSTIDS = SILOFS_BIT(12),
+	SILOFS_F_ASYNCWR      = SILOFS_BIT(13),
+	SILOFS_F_LAZYTIME     = SILOFS_BIT(14),
+	SILOFS_F_STDALLOC     = SILOFS_BIT(15),
 };
 
-/* operations counters */
-struct silofs_oper_stat {
+/* input arguments */
+struct silofs_env_args {
+	struct silofs_bootref bref;
+	struct silofs_fs_ids  ids;
+	const char           *mntdir;
+	enum silofs_env_flags flags;
+	uid_t                 uid;
+	gid_t                 gid;
+	pid_t                 pid;
+	mode_t                umask;
+	size_t                capacity;
+	size_t                memwant;
+};
+
+/* top-level operations counters/stats */
+struct silofs_env_opstat {
 	size_t op_iopen_max;
 	size_t op_iopen;
 	time_t op_time;
@@ -71,31 +93,32 @@ struct silofs_env_locks {
 
 /* top-level environment object */
 struct silofs_env {
-	struct silofs_fs_args   args;
-	struct silofs_env_base  base;
-	struct silofs_env_boot  boot;
-	struct silofs_env_locks locks;
-	struct silofs_cipher    enc_cipher;
-	struct silofs_cipher    dec_cipher;
-	struct silofs_mdigest   mdigest;
-	struct silofs_caddr     pack_caddr;
-	struct silofs_oper_stat oper_stat;
-	struct silofs_lsid      sb_lsid;
-	struct silofs_sb_info  *sbi;
-	struct silofs_ulink     sb_ulink;
-	struct silofs_cred      owner_cred;
-	unsigned long           ms_flags;
-	enum silofs_env_flags   ctl_flags;
-	iconv_t                 iconv;
-	time_t                  init_time;
+	struct silofs_env_args   args;
+	struct silofs_env_base   base;
+	struct silofs_env_boot   boot;
+	struct silofs_env_locks  locks;
+	struct silofs_cipher     enc_cipher;
+	struct silofs_cipher     dec_cipher;
+	struct silofs_mdigest    mdigest;
+	struct silofs_caddr      pack_caddr;
+	struct silofs_env_opstat opstat;
+	struct silofs_lsid       sb_lsid;
+	struct silofs_sb_info   *sbi;
+	struct silofs_ulink      sb_ulink;
+	struct silofs_cred       owner_cred;
+	unsigned long            ms_flags;
+	iconv_t                  iconv;
+	time_t                   init_time;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_env_init(struct silofs_env *env, const struct silofs_fs_args *args,
+int silofs_env_init(struct silofs_env *env, const struct silofs_env_args *args,
                     const struct silofs_env_base *base);
 
 void silofs_env_fini(struct silofs_env *env);
+
+bool silofs_env_hasflag(const struct silofs_env *env, enum silofs_env_flags f);
 
 int silofs_env_setup(struct silofs_env *env, const struct silofs_password *pw);
 

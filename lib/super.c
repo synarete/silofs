@@ -703,7 +703,7 @@ int silofs_sbi_shut(struct silofs_sb_info *sbi)
 
 	if (sbi != NULL) {
 		env = sbi_env(sbi);
-		log_dbg("shut-super: op_count=%lu", env->oper_stat.op_count);
+		log_dbg("shut-super: op_count=%lu", env->opstat.op_count);
 	}
 	return 0;
 }

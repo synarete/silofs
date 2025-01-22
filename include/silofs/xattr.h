@@ -23,6 +23,8 @@
 #include <silofs/task.h>
 
 /* call-back context for list extended-attributes operations */
+struct silofs_listxattr_ctx;
+
 typedef int (*silofs_fillxattr_fn)(struct silofs_listxattr_ctx *lxa_ctx,
                                    const char *name, size_t name_len);
 

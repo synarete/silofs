@@ -34,7 +34,7 @@ static void ut_statfs_empty(struct ut_env *ute)
 	ut_expect_gt(stv.f_files, stv.f_ffree);
 
 	fs_size = stv.f_frsize * stv.f_blocks;
-	capacity = ute->args->fs_args.capacity;
+	capacity = ute->args->env_args.capacity;
 	ut_expect_eq(fs_size, capacity);
 
 	used_bytes = (stv.f_blocks - stv.f_bfree) * stv.f_frsize;

@@ -142,7 +142,7 @@ static bool has_nlookup_mode(const struct silofs_inode_info *ii)
 {
 	const struct silofs_env *env = ii_env(ii);
 
-	return ((env->ctl_flags & SILOFS_ENVF_NLOOKUP) > 0);
+	return silofs_env_hasflag(env, SILOFS_F_NLOOKUP);
 }
 
 static void ii_sub_nlookup(struct silofs_inode_info *ii, long n)
@@ -230,10 +230,10 @@ static int check_reg_or_fifo(const struct silofs_inode_info *ii)
 static int check_open_limit(const struct silofs_inode_info *ii)
 {
 	const struct silofs_env *env = ii_env(ii);
-	const size_t total_iopen_max = env->oper_stat.op_iopen_max;
+	const size_t total_iopen_max = env->opstat.op_iopen_max;
 	const size_t iopen_max = total_iopen_max / 2;
 
-	if (env->oper_stat.op_iopen >= total_iopen_max) {
+	if (env->opstat.op_iopen >= total_iopen_max) {
 		return -SILOFS_EMFILE;
 	}
 	if (ii->i_nopen >= (long)iopen_max) {
@@ -250,9 +250,9 @@ static void update_nopen(struct silofs_inode_info *ii, int n)
 	silofs_assert_lt(ii->i_nopen + n, INT_MAX);
 
 	if ((n > 0) && (ii->i_nopen == 0)) {
-		env->oper_stat.op_iopen++;
+		env->opstat.op_iopen++;
 	} else if ((n < 0) && (ii->i_nopen == 1)) {
-		env->oper_stat.op_iopen--;
+		env->opstat.op_iopen--;
 	}
 	ii->i_nopen += n;
 }
@@ -1646,13 +1646,13 @@ static int
 do_releasedir_flush(struct silofs_task *task, struct silofs_inode_info *dir_ii,
                     int o_flags, bool flush)
 {
-	int flags = SILOFS_F_RELEASE;
+	int flags = SILOFS_CTLF_RELEASE;
 
 	if (o_flags & (O_SYNC | O_DSYNC)) {
-		flags |= SILOFS_F_FSYNC;
+		flags |= SILOFS_CTLF_FSYNC;
 	}
 	if (flush) {
-		flags |= SILOFS_F_NOW;
+		flags |= SILOFS_CTLF_NOW;
 	}
 	return flush_dirty_of(task, dir_ii, flags);
 }
@@ -1711,7 +1711,7 @@ static int check_release(const struct silofs_inode_info *ii)
 static int
 do_release(struct silofs_task *task, struct silofs_inode_info *ii, bool flush)
 {
-	const int flags = flush ? SILOFS_F_NOW : SILOFS_F_RELEASE;
+	const int flags = flush ? SILOFS_CTLF_NOW : SILOFS_CTLF_RELEASE;
 	int err;
 
 	err = check_release(ii);
@@ -1762,7 +1762,7 @@ do_fsyncdir(struct silofs_task *task, struct silofs_inode_info *dir_ii)
 	if (err) {
 		return err;
 	}
-	err = flush_dirty_of(task, dir_ii, SILOFS_F_FSYNC);
+	err = flush_dirty_of(task, dir_ii, SILOFS_CTLF_FSYNC);
 	if (err) {
 		return err;
 	}
@@ -1795,7 +1795,7 @@ static int do_fsync(struct silofs_task *task, struct silofs_inode_info *ii)
 	if (err) {
 		return err;
 	}
-	err = flush_dirty_of(task, ii, SILOFS_F_FSYNC);
+	err = flush_dirty_of(task, ii, SILOFS_CTLF_FSYNC);
 	if (err) {
 		return err;
 	}
@@ -1825,7 +1825,7 @@ int silofs_do_fsync(struct silofs_task *task, struct silofs_inode_info *ii,
 int silofs_do_flush(struct silofs_task *task, struct silofs_inode_info *ii,
                     bool now)
 {
-	const int flags = now ? SILOFS_F_NOW : 0;
+	const int flags = now ? SILOFS_CTLF_NOW : 0;
 
 	return flush_dirty_of(task, ii, flags);
 }
@@ -2192,8 +2192,8 @@ fill_proc(const struct silofs_env *env, struct silofs_query_proc *qpr)
 	qpr->pid = env->args.pid;
 	qpr->msflags = env->ms_flags;
 	qpr->uptime = uptime;
-	qpr->iopen_max = env->oper_stat.op_iopen_max;
-	qpr->iopen_cur = env->oper_stat.op_iopen;
+	qpr->iopen_max = env->opstat.op_iopen_max;
+	qpr->iopen_cur = env->opstat.op_iopen;
 	qpr->memsz_max = alst.nbytes_max;
 	qpr->memsz_cur = alst.nbytes_use;
 	qpr->bopen_cur = env->base.repo->re_htbl.rh_size;
@@ -2246,7 +2246,7 @@ static void bootpath_of(const struct silofs_inode_info *ii,
                         struct silofs_bootpath *out_bootpath)
 {
 	const struct silofs_env *env = ii_env(ii);
-	const struct silofs_fs_bref *bref = &env->args.bref;
+	const struct silofs_bootref *bref = &env->args.bref;
 
 	silofs_bootpath_setup(out_bootpath, bref->repodir, bref->name);
 }
@@ -2516,7 +2516,7 @@ static void
 do_post_clone_relax(const struct silofs_task *task, struct silofs_sb_info *sbi)
 {
 	silofs_lcache_forget_uni(task_lcache(task), &sbi->sb_uni);
-	silofs_lcache_relax(task_lcache(task), SILOFS_F_NOW);
+	silofs_lcache_relax(task_lcache(task), SILOFS_CTLF_NOW);
 }
 
 static int

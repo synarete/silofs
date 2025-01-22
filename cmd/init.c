@@ -36,7 +36,7 @@ struct cmd_init_in_args {
 
 struct cmd_init_ctx {
 	struct cmd_init_in_args in_args;
-	struct silofs_fs_args fs_args;
+	struct silofs_env_args env_args;
 	struct silofs_env *env;
 };
 
@@ -89,7 +89,7 @@ static void cmd_init_parse_optargs(struct cmd_init_ctx *ctx)
 static void cmd_init_finalize(struct cmd_init_ctx *ctx)
 {
 	cmd_del_env(&ctx->env);
-	cmd_fs_ids_fini(&ctx->fs_args.ids);
+	cmd_fs_ids_fini(&ctx->env_args.ids);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.username);
@@ -137,20 +137,20 @@ static void cmd_init_resolve_owner(struct cmd_init_ctx *ctx)
 	}
 }
 
-static void cmd_init_setup_fs_args(struct cmd_init_ctx *ctx)
+static void cmd_init_setup_env_args(struct cmd_init_ctx *ctx)
 {
-	struct silofs_fs_args *fs_args = &ctx->fs_args;
+	struct silofs_env_args *env_args = &ctx->env_args;
 	const char *username = ctx->in_args.username;
 
-	cmd_fs_args_init(fs_args);
-	cmd_resolve_uidgid(username, &fs_args->uid, &fs_args->gid);
-	fs_args->bref.repodir = ctx->in_args.repodir_real;
-	fs_args->bref.name = "silofs";
+	cmd_setup_env_args(env_args);
+	cmd_resolve_uidgid(username, &env_args->uid, &env_args->gid);
+	env_args->bref.repodir = ctx->in_args.repodir_real;
+	env_args->bref.name = "silofs";
 }
 
 static void cmd_init_setup_fs_ids(struct cmd_init_ctx *ctx)
 {
-	struct silofs_fs_ids *ids = &ctx->fs_args.ids;
+	struct silofs_fs_ids *ids = &ctx->env_args.ids;
 	const char *username = ctx->in_args.username;
 	const bool with_sup_groups = ctx->in_args.with_sup_groups;
 	const bool with_root_user = ctx->in_args.with_root_user;
@@ -165,7 +165,7 @@ static void cmd_init_setup_fs_ids(struct cmd_init_ctx *ctx)
 
 static void cmd_init_setup_env(struct cmd_init_ctx *ctx)
 {
-	cmd_new_env(&ctx->fs_args, &ctx->env);
+	cmd_new_env(&ctx->env_args, &ctx->env);
 }
 
 static void cmd_init_format_repo(const struct cmd_init_ctx *ctx)
@@ -180,7 +180,7 @@ static void cmd_init_close_repo(const struct cmd_init_ctx *ctx)
 
 static void cmd_init_save_idsconf(const struct cmd_init_ctx *ctx)
 {
-	cmd_fs_ids_save(&ctx->fs_args.ids, ctx->fs_args.bref.repodir);
+	cmd_fs_ids_save(&ctx->env_args.ids, ctx->env_args.bref.repodir);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -202,7 +202,7 @@ void cmd_execute_init(void)
 	cmd_init_resolve_owner(&ctx);
 
 	/* Setup input arguments */
-	cmd_init_setup_fs_args(&ctx);
+	cmd_init_setup_env_args(&ctx);
 
 	/* Setup users/groups ids */
 	cmd_init_setup_fs_ids(&ctx);

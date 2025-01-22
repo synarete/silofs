@@ -27,8 +27,8 @@ int silofs_initlib_once(void);
 
 void silofs_require_proper_defs(void);
 
-int silofs_new_env(const struct silofs_fs_args *args,
-                   struct silofs_env          **out_env);
+int silofs_new_env(const struct silofs_env_args *args,
+                   struct silofs_env           **out_env);
 
 void silofs_del_env(struct silofs_env *env);
 

@@ -545,7 +545,7 @@ static void flusher_relax_cache_now(const struct silofs_flusher *flusher)
 {
 	struct silofs_env *env = flusher_env_from_task(flusher);
 
-	silofs_lcache_relax(env->base.lcache, SILOFS_F_NOW);
+	silofs_lcache_relax(env->base.lcache, SILOFS_CTLF_NOW);
 }
 
 static int flusher_do_make_sqe(struct silofs_flusher *flusher,
@@ -801,7 +801,7 @@ static void flusher_fill_dsets(struct silofs_flusher *flusher)
 {
 	struct silofs_dirtyqs *dirtyqs = flusher_dirtyqs_from_task(flusher);
 
-	if ((flusher->ii == NULL) || (flusher->flags & SILOFS_F_NOW)) {
+	if ((flusher->ii == NULL) || (flusher->flags & SILOFS_CTLF_NOW)) {
 		flusher_add_dirty_any_of(flusher, dirtyqs);
 	} else {
 		flusher_add_dirty_ii(flusher, flusher->ii);
@@ -846,7 +846,7 @@ static int flusher_complete_commits(const struct silofs_flusher *flusher)
 {
 	int ret = 0;
 
-	if (flusher->flags & SILOFS_F_NOW) {
+	if (flusher->flags & SILOFS_CTLF_NOW) {
 		ret = silofs_task_submit(flusher->task, true);
 	}
 	return ret;
@@ -927,13 +927,13 @@ static size_t flush_threshold_of(int flags)
 {
 	size_t threshold;
 
-	if (flags & (SILOFS_F_NOW | SILOFS_F_IDLE | SILOFS_F_FSYNC)) {
+	if (flags & (SILOFS_CTLF_NOW | SILOFS_CTLF_IDLE | SILOFS_CTLF_FSYNC)) {
 		threshold = 0;
-	} else if (flags & SILOFS_F_RELEASE) {
+	} else if (flags & SILOFS_CTLF_RELEASE) {
 		threshold = SILOFS_LSEG_SIZE_MAX / 2;
-	} else if (flags & SILOFS_F_INTERN) {
+	} else if (flags & SILOFS_CTLF_INTERN) {
 		threshold = SILOFS_LSEG_SIZE_MAX;
-	} else if (flags & SILOFS_F_OPSTART) {
+	} else if (flags & SILOFS_CTLF_OPSTART) {
 		threshold = 2 * SILOFS_LSEG_SIZE_MAX;
 	} else {
 		threshold = 4 * SILOFS_LSEG_SIZE_MAX;
@@ -945,7 +945,7 @@ static bool need_flush_now(const struct silofs_task *task, int flags)
 {
 	struct silofs_alloc_stat alst = { .nbytes_use = 0, .nbytes_max = 0 };
 
-	if (flags & SILOFS_F_NOW) {
+	if (flags & SILOFS_CTLF_NOW) {
 		return true;
 	}
 	silofs_memstat(task->t_env->base.alloc, &alst);
@@ -1013,5 +1013,5 @@ int silofs_flush_dirty(struct silofs_task *task, struct silofs_inode_info *ii,
 
 int silofs_flush_dirty_now(struct silofs_task *task)
 {
-	return silofs_flush_dirty(task, NULL, SILOFS_F_NOW);
+	return silofs_flush_dirty(task, NULL, SILOFS_CTLF_NOW);
 }

@@ -60,40 +60,40 @@ env_bind_sbi(struct silofs_env *env, struct silofs_sb_info *sbi_new)
 
 static void env_update_owner(struct silofs_env *env)
 {
-	const struct silofs_fs_args *fs_args = &env->args;
+	const struct silofs_env_args *env_args = &env->args;
 
-	env->owner_cred.uid = fs_args->uid;
-	env->owner_cred.gid = fs_args->gid;
-	env->owner_cred.umask = fs_args->umask;
+	env->owner_cred.uid = env_args->uid;
+	env->owner_cred.gid = env_args->gid;
+	env->owner_cred.umask = env_args->umask;
 }
 
 static void env_update_mntflags(struct silofs_env *env)
 {
-	const struct silofs_fs_args *fs_args = &env->args;
+	const enum silofs_env_flags flags = env->args.flags;
 	unsigned long ms_flag_with = 0;
 	unsigned long ms_flag_dont = 0;
 
-	if (fs_args->cflags.lazytime) {
+	if (flags & SILOFS_F_LAZYTIME) {
 		ms_flag_with |= MS_LAZYTIME;
 	} else {
 		ms_flag_dont |= MS_LAZYTIME;
 	}
-	if (fs_args->cflags.noexec) {
+	if (flags & SILOFS_F_NOEXEC) {
 		ms_flag_with |= MS_NOEXEC;
 	} else {
 		ms_flag_dont |= MS_NOEXEC;
 	}
-	if (fs_args->cflags.nosuid) {
+	if (flags & SILOFS_F_NOSUID) {
 		ms_flag_with |= MS_NOSUID;
 	} else {
 		ms_flag_dont |= MS_NOSUID;
 	}
-	if (fs_args->cflags.nodev) {
+	if (flags & SILOFS_F_NODEV) {
 		ms_flag_with |= MS_NODEV;
 	} else {
 		ms_flag_dont |= MS_NODEV;
 	}
-	if (fs_args->cflags.rdonly) {
+	if (flags & SILOFS_F_RDONLY) {
 		ms_flag_with |= MS_RDONLY;
 	} else {
 		ms_flag_dont |= MS_RDONLY;
@@ -102,38 +102,10 @@ static void env_update_mntflags(struct silofs_env *env)
 	env->ms_flags &= ~ms_flag_dont;
 }
 
-static void env_update_ctlflags(struct silofs_env *env)
-{
-	const struct silofs_fs_args *fs_args = &env->args;
-
-	if (fs_args->cflags.with_fuse) {
-		env->ctl_flags |= SILOFS_ENVF_WITHFUSE;
-		env->ctl_flags |= SILOFS_ENVF_NLOOKUP;
-	}
-	if (fs_args->cflags.writeback_cache) {
-		env->ctl_flags |= SILOFS_ENVF_WRITEBACK;
-	}
-	if (fs_args->cflags.may_splice) {
-		env->ctl_flags |= SILOFS_ENVF_MAYSPLICE;
-	}
-	if (fs_args->cflags.allow_other) {
-		env->ctl_flags |= SILOFS_ENVF_ALLOWOTHER;
-	}
-	if (fs_args->cflags.allow_xattr_acl) {
-		env->ctl_flags |= SILOFS_ENVF_ALLOWXACL;
-	}
-	if (fs_args->cflags.allow_admin) {
-		env->ctl_flags |= SILOFS_ENVF_ALLOWADMIN;
-	}
-	if (fs_args->cflags.asyncwr) {
-		env->ctl_flags |= SILOFS_ENVF_ASYNCWR;
-	}
-}
-
 static int env_update_base_caddr(struct silofs_env *env)
 {
-	const struct silofs_fs_args *fs_args = &env->args;
-	const struct silofs_caddr *caddr = &fs_args->bref.caddr;
+	const struct silofs_env_args *env_args = &env->args;
+	const struct silofs_caddr *caddr = &env_args->bref.caddr;
 	int ret = 0;
 
 	switch (caddr->ctype) {
@@ -154,12 +126,10 @@ static int env_update_base_caddr(struct silofs_env *env)
 	return ret;
 }
 
-static int env_update_by_fs_args(struct silofs_env *env)
+static int env_update_by_env_args(struct silofs_env *env)
 {
-
 	env_update_owner(env);
 	env_update_mntflags(env);
-	env_update_ctlflags(env);
 	return env_update_base_caddr(env);
 }
 
@@ -174,8 +144,17 @@ static size_t env_calc_iopen_limit(const struct silofs_env *env)
 	return div_round_up(lim, align) * align;
 }
 
+static void env_init_opstat(struct silofs_env *env)
+{
+	env->opstat.op_iopen_max = 0;
+	env->opstat.op_iopen = 0;
+	env->opstat.op_time = silofs_time_now();
+	env->opstat.op_count = 0;
+	env->opstat.op_iopen_max = env_calc_iopen_limit(env);
+}
+
 static void
-env_init_commons(struct silofs_env *env, const struct silofs_fs_args *args,
+env_init_commons(struct silofs_env *env, const struct silofs_env_args *args,
                  const struct silofs_env_base *base)
 {
 	memcpy(&env->args, args, sizeof(env->args));
@@ -185,14 +164,7 @@ env_init_commons(struct silofs_env *env, const struct silofs_fs_args *args,
 	env->init_time = silofs_time_now_monotonic();
 	env->iconv = (iconv_t)(-1);
 	env->sbi = NULL;
-	env->ctl_flags = 0;
 	env->ms_flags = 0;
-
-	env->oper_stat.op_iopen_max = 0;
-	env->oper_stat.op_iopen = 0;
-	env->oper_stat.op_time = silofs_time_now();
-	env->oper_stat.op_count = 0;
-	env->oper_stat.op_iopen_max = env_calc_iopen_limit(env);
 }
 
 static void env_fini_commons(struct silofs_env *env)
@@ -290,14 +262,15 @@ static void env_fini_iconv(struct silofs_env *env)
 	}
 }
 
-int silofs_env_init(struct silofs_env *env, const struct silofs_fs_args *args,
+int silofs_env_init(struct silofs_env *env, const struct silofs_env_args *args,
                     const struct silofs_env_base *base)
 {
 	int err;
 
 	env_init_commons(env, args, base);
+	env_init_opstat(env);
 
-	err = env_update_by_fs_args(env);
+	err = env_update_by_env_args(env);
 	if (err) {
 		return err;
 	}
@@ -367,6 +340,11 @@ int silofs_env_setup(struct silofs_env *env, const struct silofs_password *pw)
 		ret = silofs_derive_boot_ivkey(md, pw, ivkey);
 	}
 	return ret;
+}
+
+bool silofs_env_hasflag(const struct silofs_env *env, enum silofs_env_flags f)
+{
+	return (env->args.flags & f) == f;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -650,7 +628,7 @@ void silofs_env_relax_caches(const struct silofs_env *env, int flags)
 {
 	silofs_pcache_relax(env->base.pcache, flags);
 	silofs_lcache_relax(env->base.lcache, flags);
-	if (flags & SILOFS_F_IDLE) {
+	if (flags & SILOFS_CTLF_IDLE) {
 		silofs_repo_relax(env->base.repo);
 	}
 }

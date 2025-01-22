@@ -107,7 +107,7 @@ static void cmd_save_bref_file(const char *pathname, const char *txt)
 	cmd_pstrfree(&tmp);
 }
 
-static void cmd_decode_bootref(struct silofs_fs_bref *bref, const char *txt)
+static void cmd_decode_bootref(struct silofs_bootref *bref, const char *txt)
 {
 	struct silofs_strview sv;
 	int err;
@@ -119,7 +119,7 @@ static void cmd_decode_bootref(struct silofs_fs_bref *bref, const char *txt)
 	}
 }
 
-static char *cmd_encode_bootref(const struct silofs_fs_bref *bref)
+static char *cmd_encode_bootref(const struct silofs_bootref *bref)
 {
 	struct silofs_strbuf sbuf;
 
@@ -127,7 +127,7 @@ static char *cmd_encode_bootref(const struct silofs_fs_bref *bref)
 	return cmd_strdup(sbuf.str);
 }
 
-static char *cmd_bootref_path(const struct silofs_fs_bref *bref)
+static char *cmd_bootref_path(const struct silofs_bootref *bref)
 {
 	char *path = NULL;
 
@@ -135,7 +135,7 @@ static char *cmd_bootref_path(const struct silofs_fs_bref *bref)
 	return path;
 }
 
-static void cmd_bootref_reload(struct silofs_fs_bref *bref)
+static void cmd_bootref_reload(struct silofs_bootref *bref)
 {
 	char *path = cmd_bootref_path(bref);
 	char *text = NULL;
@@ -147,7 +147,7 @@ static void cmd_bootref_reload(struct silofs_fs_bref *bref)
 }
 
 static void
-cmd_bootref_verify(const struct silofs_fs_bref *bref, enum silofs_ctype ctype)
+cmd_bootref_verify(const struct silofs_bootref *bref, enum silofs_ctype ctype)
 {
 	if (bref->caddr.ctype != ctype) {
 		if (ctype == SILOFS_CTYPE_UBER) {
@@ -160,19 +160,19 @@ cmd_bootref_verify(const struct silofs_fs_bref *bref, enum silofs_ctype ctype)
 	}
 }
 
-void cmd_bootref_load(struct silofs_fs_bref *bref)
+void cmd_bootref_load(struct silofs_bootref *bref)
 {
 	cmd_bootref_reload(bref);
 	cmd_bootref_verify(bref, SILOFS_CTYPE_UBER);
 }
 
-void cmd_bootref_load_ar(struct silofs_fs_bref *bref)
+void cmd_bootref_load_ar(struct silofs_bootref *bref)
 {
 	cmd_bootref_reload(bref);
 	cmd_bootref_verify(bref, SILOFS_CTYPE_PACKIDX);
 }
 
-void cmd_bootref_save(const struct silofs_fs_bref *bref)
+void cmd_bootref_save(const struct silofs_bootref *bref)
 {
 	char *path = cmd_bootref_path(bref);
 	char *text = NULL;
@@ -183,10 +183,10 @@ void cmd_bootref_save(const struct silofs_fs_bref *bref)
 	cmd_pstrfree(&path);
 }
 
-void cmd_bootref_resave(const struct silofs_fs_bref *bref,
+void cmd_bootref_resave(const struct silofs_bootref *bref,
                         const struct silofs_caddr *caddr, const char *newname)
 {
-	struct silofs_fs_bref bref_alt;
+	struct silofs_bootref bref_alt;
 
 	silofs_bootref_init(&bref_alt);
 	silofs_bootref_assign(&bref_alt, bref);
@@ -195,7 +195,7 @@ void cmd_bootref_resave(const struct silofs_fs_bref *bref,
 	silofs_bootref_fini(&bref_alt);
 }
 
-void cmd_bootref_unlink(const struct silofs_fs_bref *bref)
+void cmd_bootref_unlink(const struct silofs_bootref *bref)
 {
 	char *path = cmd_bootref_path(bref);
 

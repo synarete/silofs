@@ -634,7 +634,7 @@ static bool xac_allow_acl(const struct silofs_xattr_ctx *xa_ctx)
 {
 	const struct silofs_env *env = xa_ctx->task->t_env;
 
-	return (env->ctl_flags & SILOFS_ENVF_ALLOWXACL) > 0;
+	return silofs_env_hasflag(env, SILOFS_F_ALLOWXACL);
 }
 
 static int

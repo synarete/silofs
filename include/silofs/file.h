@@ -28,6 +28,8 @@ enum silofs_file_type {
 };
 
 /* call-back context for read-write operations */
+struct silofs_rwiter_ctx;
+
 typedef int (*silofs_rwiter_fn)(struct silofs_rwiter_ctx  *rwi_ctx,
                                 const struct silofs_iovec *iov);
 

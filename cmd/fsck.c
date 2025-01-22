@@ -34,7 +34,7 @@ struct cmd_fsck_in_args {
 
 struct cmd_fsck_ctx {
 	struct cmd_fsck_in_args in_args;
-	struct silofs_fs_args fs_args;
+	struct silofs_env_args env_args;
 	struct silofs_env *env;
 	bool has_lockfile;
 };
@@ -93,7 +93,7 @@ static void cmd_fsck_finalize(struct cmd_fsck_ctx *ctx)
 	cmd_pstrfree(&ctx->in_args.repodir_real);
 	cmd_pstrfree(&ctx->in_args.name);
 	cmd_delpass(&ctx->in_args.password);
-	cmd_fini_fs_args(&ctx->fs_args);
+	cmd_destroy_env_args(&ctx->env_args);
 	cmd_fsck_ctx = NULL;
 }
 
@@ -145,29 +145,29 @@ static void cmd_fsck_getpass(struct cmd_fsck_ctx *ctx)
 	}
 }
 
-static void cmd_fsck_setup_fs_args(struct cmd_fsck_ctx *ctx)
+static void cmd_fsck_setup_env_args(struct cmd_fsck_ctx *ctx)
 {
-	struct silofs_fs_args *fs_args = &ctx->fs_args;
+	struct silofs_env_args *env_args = &ctx->env_args;
 
-	cmd_fs_args_init(fs_args);
-	fs_args->bref.repodir = ctx->in_args.repodir_real;
-	fs_args->bref.name = ctx->in_args.name;
-	fs_args->bref.passwd = ctx->in_args.password;
+	cmd_setup_env_args(env_args);
+	env_args->bref.repodir = ctx->in_args.repodir_real;
+	env_args->bref.name = ctx->in_args.name;
+	env_args->bref.passwd = ctx->in_args.password;
 }
 
 static void cmd_fsck_setup_fs_ids(struct cmd_fsck_ctx *ctx)
 {
-	cmd_fs_ids_load(&ctx->fs_args.ids, ctx->in_args.repodir_real);
+	cmd_fs_ids_load(&ctx->env_args.ids, ctx->in_args.repodir_real);
 }
 
 static void cmd_fsck_load_bref(struct cmd_fsck_ctx *ctx)
 {
-	cmd_bootref_load(&ctx->fs_args.bref);
+	cmd_bootref_load(&ctx->env_args.bref);
 }
 
 static void cmd_fsck_setup_env(struct cmd_fsck_ctx *ctx)
 {
-	cmd_new_env(&ctx->fs_args, &ctx->env);
+	cmd_new_env(&ctx->env_args, &ctx->env);
 }
 
 static void cmd_fsck_open_repo(struct cmd_fsck_ctx *ctx)
@@ -177,12 +177,12 @@ static void cmd_fsck_open_repo(struct cmd_fsck_ctx *ctx)
 
 static void cmd_fsck_poke_fs(struct cmd_fsck_ctx *ctx)
 {
-	cmd_poke_fs(ctx->env, &ctx->fs_args.bref);
+	cmd_poke_fs(ctx->env, &ctx->env_args.bref);
 }
 
 static void cmd_fsck_open_fs(struct cmd_fsck_ctx *ctx)
 {
-	cmd_open_fs(ctx->env, &ctx->fs_args.bref);
+	cmd_open_fs(ctx->env, &ctx->env_args.bref);
 }
 
 static void cmd_fsck_close_fs(struct cmd_fsck_ctx *ctx)
@@ -221,7 +221,7 @@ void cmd_execute_fsck(void)
 	cmd_fsck_getpass(&ctx);
 
 	/* Setup input arguments */
-	cmd_fsck_setup_fs_args(&ctx);
+	cmd_fsck_setup_env_args(&ctx);
 
 	/* Load fs-ids mapping */
 	cmd_fsck_setup_fs_ids(&ctx);

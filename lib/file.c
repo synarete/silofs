@@ -369,7 +369,7 @@ static bool fli_asyncwr(const struct silofs_fileaf_info *fli)
 {
 	const struct silofs_env *env = vni_env(&fli->fl_vni);
 
-	return (env->ctl_flags & SILOFS_ENVF_ASYNCWR) > 0;
+	return silofs_env_hasflag(env, SILOFS_F_ASYNCWR);
 }
 
 static void fli_pre_io(struct silofs_fileaf_info *fli, int wr_mode)
@@ -2825,7 +2825,7 @@ static int filc_flush_dirty_of(const struct silofs_file_ctx *f_ctx, int flags)
 
 static int filc_flush_dirty_now(const struct silofs_file_ctx *f_ctx)
 {
-	return filc_flush_dirty_of(f_ctx, SILOFS_F_NOW);
+	return filc_flush_dirty_of(f_ctx, SILOFS_CTLF_NOW);
 }
 
 static int filc_post_write_iter(const struct silofs_file_ctx *f_ctx)
@@ -2833,7 +2833,7 @@ static int filc_post_write_iter(const struct silofs_file_ctx *f_ctx)
 	int ret = 0;
 
 	if (f_ctx->o_flags & (O_SYNC | O_DSYNC)) {
-		ret = filc_flush_dirty_of(f_ctx, SILOFS_F_FSYNC);
+		ret = filc_flush_dirty_of(f_ctx, SILOFS_CTLF_FSYNC);
 	}
 	return ret;
 }

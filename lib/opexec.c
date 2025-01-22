@@ -60,14 +60,14 @@ static int op_start(struct silofs_task *task)
 	struct silofs_env *env = task->t_env;
 
 	silofs_task_lock_fs(task);
-	env->oper_stat.op_time = task->t_oper.op_creds.ts.tv_sec;
-	env->oper_stat.op_count++;
+	env->opstat.op_time = task->t_oper.op_creds.ts.tv_sec;
+	env->opstat.op_count++;
 	return 0;
 }
 
 static int op_try_flush(struct silofs_task *task, struct silofs_inode_info *ii)
 {
-	return silofs_flush_dirty(task, ii, SILOFS_F_OPSTART);
+	return silofs_flush_dirty(task, ii, SILOFS_CTLF_OPSTART);
 }
 
 static int
@@ -92,7 +92,7 @@ static void op_probe_duration(const struct silofs_task *task, int status)
 	const time_t beg = task->t_oper.op_creds.ts.tv_sec;
 	const time_t dif = now - beg;
 	const uint32_t op_code = task->t_oper.op_code;
-	const unsigned long id = task->t_env->oper_stat.op_count;
+	const unsigned long id = task->t_env->opstat.op_count;
 
 	if (op_code && (beg < now) && (dif > 30)) {
 		log_warn("slow-oper: id=%ld op_code=%u duration=%ld status=%d",
@@ -206,13 +206,13 @@ static bool op_cap_sys_admin(const struct silofs_task *task)
 {
 	const struct silofs_creds *creds = creds_of(task);
 
-	return (task->t_env->ctl_flags & SILOFS_ENVF_ALLOWADMIN) &&
+	return silofs_env_hasflag(task->t_env, SILOFS_F_ALLOWADMIN) &&
 	       silofs_user_cap_sys_admin(&creds->host_cred);
 }
 
 static bool op_allow_other(const struct silofs_task *task)
 {
-	return (task->t_env->ctl_flags & SILOFS_ENVF_ALLOWOTHER) > 0;
+	return silofs_env_hasflag(task->t_env, SILOFS_F_ALLOWOTHER);
 }
 
 static int op_authorize(const struct silofs_task *task)
@@ -1652,7 +1652,7 @@ int silofs_exec_maintain(struct silofs_task *task, int flags)
 	err = op_start(task);
 	ok_or_goto_out(err);
 
-	err = silofs_do_maintain(task, flags | SILOFS_F_OPSTART);
+	err = silofs_do_maintain(task, flags | SILOFS_CTLF_OPSTART);
 	ok_or_goto_out(err);
 out:
 	return op_finish(task, err);

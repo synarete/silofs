@@ -30,47 +30,12 @@ struct silofs_bootpath {
 	struct silofs_strview name;
 };
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-/* file-system's control flags (as explicit booleans) */
-struct silofs_fs_cflags {
-	bool pedantic;
-	bool rdonly;
-	bool noexec;
-	bool nosuid;
-	bool nodev;
-	bool with_fuse;
-	bool asyncwr;
-	bool allow_admin;
-	bool allow_other;
-	bool allow_hostids;
-	bool allow_xattr_acl;
-	bool writeback_cache;
-	bool may_splice;
-	bool lazytime;
-	bool stdalloc;
-};
-
 /* file-system's boot reference */
-struct silofs_fs_bref {
+struct silofs_bootref {
 	struct silofs_caddr caddr;
 	const char         *repodir;
 	const char         *name;
 	const char         *passwd;
-};
-
-/* file-system's arguments */
-struct silofs_fs_args {
-	struct silofs_fs_bref   bref;
-	struct silofs_fs_ids    ids;
-	struct silofs_fs_cflags cflags;
-	const char             *mntdir;
-	uid_t                   uid;
-	gid_t                   gid;
-	pid_t                   pid;
-	mode_t                  umask;
-	size_t                  capacity;
-	size_t                  memwant;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -78,20 +43,20 @@ struct silofs_fs_args {
 int silofs_bootpath_setup(struct silofs_bootpath *bp, const char *repodir,
                           const char *name);
 
-void silofs_bootref_init(struct silofs_fs_bref *bref);
+void silofs_bootref_init(struct silofs_bootref *bref);
 
-void silofs_bootref_fini(struct silofs_fs_bref *bref);
+void silofs_bootref_fini(struct silofs_bootref *bref);
 
-void silofs_bootref_assign(struct silofs_fs_bref       *bref,
-                           const struct silofs_fs_bref *other);
+void silofs_bootref_assign(struct silofs_bootref       *bref,
+                           const struct silofs_bootref *other);
 
-void silofs_bootref_update(struct silofs_fs_bref     *bref,
+void silofs_bootref_update(struct silofs_bootref     *bref,
                            const struct silofs_caddr *caddr, const char *name);
 
-int silofs_bootref_import(struct silofs_fs_bref       *bref,
+int silofs_bootref_import(struct silofs_bootref       *bref,
                           const struct silofs_strview *sv);
 
-void silofs_bootref_export(const struct silofs_fs_bref *bref,
+void silofs_bootref_export(const struct silofs_bootref *bref,
                            struct silofs_strbuf        *sbuf);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

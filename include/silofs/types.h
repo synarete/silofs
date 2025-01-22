@@ -32,62 +32,21 @@
 #include <silofs/infra.h>
 #include <silofs/str.h>
 
-/* types forward declarations */
-struct silofs_dset;
-struct silofs_lnode_info;
-struct silofs_unode_info;
-struct silofs_vnode_info;
-struct silofs_inode_info;
-struct silofs_rwiter_ctx;
-struct silofs_readdir_ctx;
-struct silofs_readdir_info;
-struct silofs_listxattr_ctx;
-
 /* common control flags */
-enum silofs_flags {
-	SILOFS_F_NOW     = SILOFS_BIT(0),
-	SILOFS_F_FSYNC   = SILOFS_BIT(1),
-	SILOFS_F_RELEASE = SILOFS_BIT(2),
-	SILOFS_F_BRINGUP = SILOFS_BIT(4),
-	SILOFS_F_OPSTART = SILOFS_BIT(5),
-	SILOFS_F_INTERN  = SILOFS_BIT(6),
-	SILOFS_F_IDLE    = SILOFS_BIT(7),
-};
-
-/* inode's attributes masks */
-enum silofs_iattr_flags {
-	SILOFS_IATTR_PARENT    = SILOFS_BIT(0),
-	SILOFS_IATTR_LAZY      = SILOFS_BIT(1),
-	SILOFS_IATTR_SIZE      = SILOFS_BIT(2),
-	SILOFS_IATTR_SPAN      = SILOFS_BIT(3),
-	SILOFS_IATTR_NLINK     = SILOFS_BIT(4),
-	SILOFS_IATTR_BLOCKS    = SILOFS_BIT(5),
-	SILOFS_IATTR_MODE      = SILOFS_BIT(6),
-	SILOFS_IATTR_UID       = SILOFS_BIT(7),
-	SILOFS_IATTR_GID       = SILOFS_BIT(8),
-	SILOFS_IATTR_KILL_SUID = SILOFS_BIT(9),
-	SILOFS_IATTR_KILL_SGID = SILOFS_BIT(10),
-	SILOFS_IATTR_BTIME     = SILOFS_BIT(11),
-	SILOFS_IATTR_ATIME     = SILOFS_BIT(12),
-	SILOFS_IATTR_MTIME     = SILOFS_BIT(13),
-	SILOFS_IATTR_CTIME     = SILOFS_BIT(14),
-	SILOFS_IATTR_NOW       = SILOFS_BIT(15),
-	SILOFS_IATTR_MCTIME    = SILOFS_IATTR_MTIME | SILOFS_IATTR_CTIME,
-	SILOFS_IATTR_TIMES     = SILOFS_IATTR_BTIME | SILOFS_IATTR_ATIME |
-	                     SILOFS_IATTR_MTIME | SILOFS_IATTR_CTIME
+enum silofs_ctlf {
+	SILOFS_CTLF_NOW     = SILOFS_BIT(0),
+	SILOFS_CTLF_FSYNC   = SILOFS_BIT(1),
+	SILOFS_CTLF_RELEASE = SILOFS_BIT(2),
+	SILOFS_CTLF_BRINGUP = SILOFS_BIT(4),
+	SILOFS_CTLF_OPSTART = SILOFS_BIT(5),
+	SILOFS_CTLF_INTERN  = SILOFS_BIT(6),
+	SILOFS_CTLF_IDLE    = SILOFS_BIT(7),
 };
 
 /* name-string: a pair of string-view and (optional) 64-bits hash */
 struct silofs_namestr {
 	struct silofs_strview sv;
 	uint64_t              hash;
-};
-
-/* pair of ino and dir-type */
-struct silofs_ino_dt {
-	ino_t  ino;
-	mode_t dt;
-	int    pad;
 };
 
 /* user-credentials */

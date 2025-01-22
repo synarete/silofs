@@ -38,7 +38,7 @@ int silofs_bootpath_setup(struct silofs_bootpath *bpath, const char *repodir,
 	return silofs_make_namestr(&nstr, name);
 }
 
-void silofs_bootref_init(struct silofs_fs_bref *bref)
+void silofs_bootref_init(struct silofs_bootref *bref)
 {
 	silofs_caddr_reset(&bref->caddr);
 	bref->repodir = NULL;
@@ -46,7 +46,7 @@ void silofs_bootref_init(struct silofs_fs_bref *bref)
 	bref->passwd = NULL;
 }
 
-void silofs_bootref_fini(struct silofs_fs_bref *bref)
+void silofs_bootref_fini(struct silofs_bootref *bref)
 {
 	silofs_caddr_reset(&bref->caddr);
 	bref->repodir = NULL;
@@ -54,8 +54,8 @@ void silofs_bootref_fini(struct silofs_fs_bref *bref)
 	bref->passwd = NULL;
 }
 
-void silofs_bootref_assign(struct silofs_fs_bref *bref,
-                           const struct silofs_fs_bref *other)
+void silofs_bootref_assign(struct silofs_bootref *bref,
+                           const struct silofs_bootref *other)
 {
 	silofs_caddr_assign(&bref->caddr, &other->caddr);
 	bref->repodir = other->repodir;
@@ -63,20 +63,20 @@ void silofs_bootref_assign(struct silofs_fs_bref *bref,
 	bref->passwd = other->passwd;
 }
 
-void silofs_bootref_update(struct silofs_fs_bref *bref,
+void silofs_bootref_update(struct silofs_bootref *bref,
                            const struct silofs_caddr *caddr, const char *name)
 {
 	silofs_caddr_assign(&bref->caddr, caddr);
 	bref->name = name;
 }
 
-int silofs_bootref_import(struct silofs_fs_bref *bref,
+int silofs_bootref_import(struct silofs_bootref *bref,
                           const struct silofs_strview *sv)
 {
 	return silofs_caddr_by_name2(&bref->caddr, sv);
 }
 
-void silofs_bootref_export(const struct silofs_fs_bref *bref,
+void silofs_bootref_export(const struct silofs_bootref *bref,
                            struct silofs_strbuf *sbuf)
 {
 	silofs_caddr_to_name(&bref->caddr, sbuf);

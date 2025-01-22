@@ -217,7 +217,7 @@ static int vstgc_flush_dirty_now(const struct silofs_vstage_ctx *vstg_ctx)
 
 static void vstgc_relax_caches_now(const struct silofs_vstage_ctx *vstg_ctx)
 {
-	silofs_env_relax_caches(vstg_ctx->env, SILOFS_F_NOW);
+	silofs_env_relax_caches(vstg_ctx->env, SILOFS_CTLF_NOW);
 }
 
 static int vstgc_try_evict_some(const struct silofs_vstage_ctx *vstg_ctx,

@@ -37,7 +37,7 @@ struct cmd_mkfs_in_args {
 
 struct cmd_mkfs_ctx {
 	struct cmd_mkfs_in_args in_args;
-	struct silofs_fs_args fs_args;
+	struct silofs_env_args env_args;
 	struct silofs_env *env;
 	bool has_lockfile;
 };
@@ -104,7 +104,7 @@ static void cmd_mkfs_finalize(struct cmd_mkfs_ctx *ctx)
 	cmd_pstrfree(&ctx->in_args.repodir_real);
 	cmd_pstrfree(&ctx->in_args.username);
 	cmd_delpass(&ctx->in_args.password);
-	cmd_fini_fs_args(&ctx->fs_args);
+	cmd_destroy_env_args(&ctx->env_args);
 	cmd_mkfs_ctx = NULL;
 }
 
@@ -163,30 +163,30 @@ static void cmd_mkfs_getpass(struct cmd_mkfs_ctx *ctx)
 	}
 }
 
-static void cmd_mkfs_setup_fs_args(struct cmd_mkfs_ctx *ctx)
+static void cmd_mkfs_setup_env_args(struct cmd_mkfs_ctx *ctx)
 {
-	struct silofs_fs_args *fs_args = &ctx->fs_args;
+	struct silofs_env_args *env_args = &ctx->env_args;
 
-	cmd_fs_args_init(fs_args);
-	fs_args->bref.repodir = ctx->in_args.repodir_real;
-	fs_args->bref.name = ctx->in_args.name;
-	fs_args->bref.passwd = ctx->in_args.password;
-	fs_args->capacity = (size_t)ctx->in_args.fs_size;
+	cmd_setup_env_args(env_args);
+	env_args->bref.repodir = ctx->in_args.repodir_real;
+	env_args->bref.name = ctx->in_args.name;
+	env_args->bref.passwd = ctx->in_args.password;
+	env_args->capacity = (size_t)ctx->in_args.fs_size;
 }
 
 static void cmd_mkfs_setup_fs_ids(struct cmd_mkfs_ctx *ctx)
 {
-	struct silofs_fs_args *fs_args = &ctx->fs_args;
-	struct silofs_fs_ids *ids = &fs_args->ids;
+	struct silofs_env_args *env_args = &ctx->env_args;
+	struct silofs_fs_ids *ids = &env_args->ids;
 	const char *username = ctx->in_args.username;
 
 	cmd_fs_ids_load(ids, ctx->in_args.repodir_real);
-	cmd_require_uidgid(ids, username, &fs_args->uid, &fs_args->gid);
+	cmd_require_uidgid(ids, username, &env_args->uid, &env_args->gid);
 }
 
 static void cmd_mkfs_setup_env(struct cmd_mkfs_ctx *ctx)
 {
-	cmd_new_env(&ctx->fs_args, &ctx->env);
+	cmd_new_env(&ctx->env_args, &ctx->env);
 }
 
 static void cmd_mkfs_open_repo(const struct cmd_mkfs_ctx *ctx)
@@ -201,12 +201,12 @@ static void cmd_mkfs_close_repo(const struct cmd_mkfs_ctx *ctx)
 
 static void cmd_mkfs_format_fs(struct cmd_mkfs_ctx *ctx)
 {
-	cmd_format_fs(ctx->env, &ctx->fs_args.bref);
+	cmd_format_fs(ctx->env, &ctx->env_args.bref);
 }
 
 static void cmd_mkfs_save_bref(struct cmd_mkfs_ctx *ctx)
 {
-	cmd_bootref_save(&ctx->fs_args.bref);
+	cmd_bootref_save(&ctx->env_args.bref);
 }
 
 static void cmd_mkfs_close_fs(struct cmd_mkfs_ctx *ctx)
@@ -239,7 +239,7 @@ void cmd_execute_mkfs(void)
 	cmd_mkfs_getpass(&ctx);
 
 	/* Setup input arguments */
-	cmd_mkfs_setup_fs_args(&ctx);
+	cmd_mkfs_setup_env_args(&ctx);
 
 	/* Setup fs owner and ids */
 	cmd_mkfs_setup_fs_ids(&ctx);

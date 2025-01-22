@@ -42,6 +42,13 @@ struct silofs_readdir_ctx {
 	loff_t            pos;
 };
 
+/* pair of ino and dir-type */
+struct silofs_ino_dt {
+	ino_t  ino;
+	mode_t dt;
+	int    pad;
+};
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 enum silofs_dirf silofs_dir_flags(const struct silofs_inode_info *dir_ii);

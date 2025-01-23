@@ -48,7 +48,9 @@ def test_rsync(env: TestEnv) -> None:
 
 
 def _test_rsync_at(env: TestEnv, base: Path) -> None:
-    env.subcmd.sh.run_ok("./configure --disable-md2man", base)
+    env.subcmd.sh.run_ok(
+        "./configure --disable-md2man --disable-openssl", base
+    )
     env.subcmd.sh.run_ok("make", base)
     env.subcmd.sh.run_ok("make check", base)
     env.subcmd.sh.run_ok("make clean", base)

@@ -602,20 +602,20 @@ static enum idsconf_sec idsconf_sec_by_name(const struct silofs_strview *sv)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void fs_ids_parse_user_conf(struct silofs_fs_ids *ids,
-                                   const struct idsconf_ctx *ctx)
+static void
+fs_ids_parse_user_conf(struct silofs_ugids *ids, const struct idsconf_ctx *ctx)
 {
 	cmd_parse_user_conf(ctx, &ids->users.uids, &ids->users.nuids);
 }
 
-static void fs_ids_parse_group_conf(struct silofs_fs_ids *ids,
+static void fs_ids_parse_group_conf(struct silofs_ugids *ids,
                                     const struct idsconf_ctx *ctx)
 {
 	cmd_parse_group_conf(ctx, &ids->groups.gids, &ids->groups.ngids);
 }
 
 static void
-fs_ids_parse_line(struct silofs_fs_ids *ids, const struct idsconf_ctx *ctx)
+fs_ids_parse_line(struct silofs_ugids *ids, const struct idsconf_ctx *ctx)
 {
 	switch (ctx->sec) {
 	case IDSCONF_SEC_NIL:
@@ -646,7 +646,7 @@ static enum idsconf_sec cmd_parse_sec_state(const struct silofs_strview *line)
 	return sec;
 }
 
-static void fs_ids_parse(struct silofs_fs_ids *ids, struct idsconf_ctx *ctx)
+static void fs_ids_parse(struct silofs_ugids *ids, struct idsconf_ctx *ctx)
 {
 	struct silofs_strview data;
 	struct silofs_strview_pair pair;
@@ -682,7 +682,7 @@ static void fs_ids_parse(struct silofs_fs_ids *ids, struct idsconf_ctx *ctx)
 }
 
 static void
-fs_ids_unparse(const struct silofs_fs_ids *ids, struct idsconf_ctx *ctx)
+fs_ids_unparse(const struct silofs_ugids *ids, struct idsconf_ctx *ctx)
 {
 	const char *sec_name = NULL;
 	char *text = NULL;
@@ -704,18 +704,18 @@ fs_ids_unparse(const struct silofs_fs_ids *ids, struct idsconf_ctx *ctx)
 }
 
 static void
-fs_ids_append_uids(struct silofs_fs_ids *ids, const struct silofs_uids *uids)
+fs_ids_append_uids(struct silofs_ugids *ids, const struct silofs_uids *uids)
 {
 	cmd_append_uids1(&ids->users.uids, &ids->users.nuids, uids);
 }
 
 static void
-fs_ids_append_gids(struct silofs_fs_ids *ids, const struct silofs_gids *gids)
+fs_ids_append_gids(struct silofs_ugids *ids, const struct silofs_gids *gids)
 {
 	cmd_append_gids1(&ids->groups.gids, &ids->groups.ngids, gids);
 }
 
-static bool fs_ids_has_host_uid(const struct silofs_fs_ids *ids, uid_t uid)
+static bool fs_ids_has_host_uid(const struct silofs_ugids *ids, uid_t uid)
 {
 	for (size_t i = 0; i < ids->users.nuids; ++i) {
 		if (ids->users.uids[i].host_uid == uid) {
@@ -725,7 +725,7 @@ static bool fs_ids_has_host_uid(const struct silofs_fs_ids *ids, uid_t uid)
 	return false;
 }
 
-static bool fs_ids_has_host_gid(const struct silofs_fs_ids *ids, gid_t gid)
+static bool fs_ids_has_host_gid(const struct silofs_ugids *ids, gid_t gid)
 {
 	for (size_t i = 0; i < ids->groups.ngids; ++i) {
 		if (ids->groups.gids[i].host_gid == gid) {
@@ -735,7 +735,7 @@ static bool fs_ids_has_host_gid(const struct silofs_fs_ids *ids, gid_t gid)
 	return false;
 }
 
-static void fs_ids_add_supgr(struct silofs_fs_ids *ids, const char *user)
+static void fs_ids_add_supgr(struct silofs_ugids *ids, const char *user)
 {
 	struct silofs_gids gids;
 	gid_t groups[64] = { (gid_t)(-1) };
@@ -760,7 +760,7 @@ static void fs_ids_add_supgr(struct silofs_fs_ids *ids, const char *user)
 	}
 }
 
-void cmd_fs_ids_add_user(struct silofs_fs_ids *ids, const char *user,
+void cmd_fs_ids_add_user(struct silofs_ugids *ids, const char *user,
                          bool with_sup_groups)
 {
 	struct silofs_uids uids;
@@ -778,7 +778,7 @@ void cmd_fs_ids_add_user(struct silofs_fs_ids *ids, const char *user,
 	}
 }
 
-void cmd_fs_ids_init(struct silofs_fs_ids *ids)
+void cmd_fs_ids_init(struct silofs_ugids *ids)
 {
 	ids->users.uids = NULL;
 	ids->users.nuids = 0;
@@ -786,7 +786,7 @@ void cmd_fs_ids_init(struct silofs_fs_ids *ids)
 	ids->groups.ngids = 0;
 }
 
-void cmd_fs_ids_fini(struct silofs_fs_ids *ids)
+void cmd_fs_ids_fini(struct silofs_ugids *ids)
 {
 	cmd_fs_ids_reset(ids);
 	ids->users.uids = NULL;
@@ -795,8 +795,8 @@ void cmd_fs_ids_fini(struct silofs_fs_ids *ids)
 	ids->groups.ngids = 0;
 }
 
-void cmd_fs_ids_assign(struct silofs_fs_ids *ids,
-                       const struct silofs_fs_ids *other)
+void cmd_fs_ids_assign(struct silofs_ugids *ids,
+                       const struct silofs_ugids *other)
 {
 	cmd_fs_ids_reset(ids);
 	for (size_t i = 0; i < other->users.nuids; ++i) {
@@ -807,7 +807,7 @@ void cmd_fs_ids_assign(struct silofs_fs_ids *ids,
 	}
 }
 
-void cmd_fs_ids_reset(struct silofs_fs_ids *ids)
+void cmd_fs_ids_reset(struct silofs_ugids *ids)
 {
 	cmd_pfree_uids(&ids->users.uids, &ids->users.nuids);
 	cmd_pfree_gids(&ids->groups.gids, &ids->groups.ngids);
@@ -818,7 +818,7 @@ static void cmd_fs_ids_pathname(const char *basedir, char **out_pathname)
 	cmd_join_path(basedir, "fsids.conf", out_pathname);
 }
 
-void cmd_fs_ids_load(struct silofs_fs_ids *ids, const char *basedir)
+void cmd_fs_ids_load(struct silofs_ugids *ids, const char *basedir)
 {
 	struct idsconf_ctx ctx = { .line_no = 0 };
 
@@ -830,7 +830,7 @@ void cmd_fs_ids_load(struct silofs_fs_ids *ids, const char *basedir)
 	cmd_pstrfree(&ctx.path);
 }
 
-void cmd_fs_ids_save(const struct silofs_fs_ids *ids, const char *basedir)
+void cmd_fs_ids_save(const struct silofs_ugids *ids, const char *basedir)
 {
 	struct idsconf_ctx ctx = { .line_no = 0 };
 
@@ -865,7 +865,7 @@ void cmd_resolve_uidgid(const char *name, uid_t *out_uid, gid_t *out_gid)
 	cmd_zfree(buf, bsz);
 }
 
-void cmd_require_uidgid(const struct silofs_fs_ids *ids, const char *name,
+void cmd_require_uidgid(const struct silofs_ugids *ids, const char *name,
                         uid_t *out_uid, gid_t *out_gid)
 {
 	cmd_resolve_uidgid(name, out_uid, out_gid);

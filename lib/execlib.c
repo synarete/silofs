@@ -50,7 +50,7 @@ struct silofs_fs_inst {
 };
 
 struct silofs_fs_ctx {
-	struct silofs_env_args args;
+	struct silofs_args args;
 	struct silofs_fs_inst *inst;
 	struct silofs_password *password;
 	struct silofs_alloc *alloc;
@@ -123,7 +123,7 @@ static struct silofs_fs_inst *fs_inst_of(struct silofs_env *env)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int check_bootpath(const struct silofs_env_args *env_args)
+static int check_bootpath(const struct silofs_args *env_args)
 {
 	const struct silofs_bootref *bref = &env_args->bref;
 	struct silofs_bootpath bootpath;
@@ -131,14 +131,14 @@ static int check_bootpath(const struct silofs_env_args *env_args)
 	return silofs_bootpath_setup(&bootpath, bref->repodir, bref->name);
 }
 
-static int check_password(const struct silofs_env_args *env_args)
+static int check_password(const struct silofs_args *env_args)
 {
 	struct silofs_password passwd;
 
 	return silofs_password_setup(&passwd, env_args->bref.passwd);
 }
 
-static int check_env_args(const struct silofs_env_args *env_args)
+static int check_env_args(const struct silofs_args *env_args)
 {
 	int err;
 
@@ -389,7 +389,7 @@ static void fs_ctx_destroy_flusher(struct silofs_fs_ctx *fs_ctx)
 
 static int fs_ctx_setup_idsmap(struct silofs_fs_ctx *fs_ctx)
 {
-	const struct silofs_fs_ids *ids = &fs_ctx->args.ids;
+	const struct silofs_ugids *ids = &fs_ctx->args.ids;
 	struct silofs_idsmap *idsmap = NULL;
 	int allow_hostids;
 	int err;
@@ -482,7 +482,7 @@ static void fs_ctx_destroy_env(struct silofs_fs_ctx *fs_ctx)
 	}
 }
 
-static bool has_ctlf(const struct silofs_env *env, enum silofs_env_flags ctlf)
+static bool has_ctlf(const struct silofs_env *env, enum silofs_flags ctlf)
 {
 	return silofs_env_hasflag(env, ctlf);
 }
@@ -634,7 +634,7 @@ out_err:
 
 static void
 fs_ctx_init(struct silofs_fs_ctx *fs_ctx, struct silofs_fs_inst *fs_inst,
-            const struct silofs_env_args *env_args)
+            const struct silofs_args *env_args)
 {
 	memset(fs_ctx, 0, sizeof(*fs_ctx));
 	memcpy(&fs_ctx->args, env_args, sizeof(fs_ctx->args));
@@ -660,7 +660,7 @@ fs_ctx_init_from(struct silofs_fs_ctx *fs_ctx, struct silofs_fs_inst *fs_inst)
 	fs_ctx->fuseq = env->base.fuseq;
 }
 
-static int new_fs_inst(const struct silofs_env_args *env_args,
+static int new_fs_inst(const struct silofs_args *env_args,
                        struct silofs_fs_inst **out_fs_inst)
 {
 	struct silofs_fs_ctx fs_ctx = { .inst = NULL };
@@ -683,7 +683,7 @@ static int new_fs_inst(const struct silofs_env_args *env_args,
 	return 0;
 }
 
-int silofs_new_env(const struct silofs_env_args *env_args,
+int silofs_new_env(const struct silofs_args *env_args,
                    struct silofs_env **out_env)
 {
 	struct silofs_fs_inst *fs_inst = NULL;
@@ -754,7 +754,7 @@ static int map_task_creds(struct silofs_task *task)
 
 static int make_task(struct silofs_env *env, struct silofs_task *task)
 {
-	const struct silofs_env_args *args = &env->args;
+	const struct silofs_args *args = &env->args;
 
 	silofs_task_init(task, env);
 	silofs_task_set_ts(task, true);
@@ -859,7 +859,7 @@ static int do_mount_and_exec(struct silofs_env *env)
 	struct silofs_fuseq *fuseq = env->base.fuseq;
 	int err;
 
-	err = silofs_fuseq_mount(fuseq, env, env->args.mntdir);
+	err = silofs_fuseq_mount(fuseq, env, env->args.bref.mntdir);
 	if (err) {
 		return err;
 	}
@@ -1945,7 +1945,7 @@ static int check_and_init_lib(void)
 
 static bool g_initlib_once_done;
 
-int silofs_initlib_once(void)
+int silofs_init_once(void)
 {
 	int ret = 0;
 

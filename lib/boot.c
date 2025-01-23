@@ -44,6 +44,7 @@ void silofs_bootref_init(struct silofs_bootref *bref)
 	bref->repodir = NULL;
 	bref->name = NULL;
 	bref->passwd = NULL;
+	bref->mntdir = NULL;
 }
 
 void silofs_bootref_fini(struct silofs_bootref *bref)
@@ -52,6 +53,7 @@ void silofs_bootref_fini(struct silofs_bootref *bref)
 	bref->repodir = NULL;
 	bref->name = NULL;
 	bref->passwd = NULL;
+	bref->mntdir = NULL;
 }
 
 void silofs_bootref_assign(struct silofs_bootref *bref,
@@ -61,6 +63,7 @@ void silofs_bootref_assign(struct silofs_bootref *bref,
 	bref->repodir = other->repodir;
 	bref->name = other->name;
 	bref->passwd = other->passwd;
+	bref->mntdir = other->mntdir;
 }
 
 void silofs_bootref_update(struct silofs_bootref *bref,

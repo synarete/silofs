@@ -37,7 +37,7 @@ struct cmd_rmfs_ctx {
 	struct silofs_ioc_query ioc_qry;
 	long pad;
 	struct cmd_rmfs_in_args in_args;
-	struct silofs_env_args env_args;
+	struct silofs_args env_args;
 	struct silofs_env *env;
 	bool has_lockfile;
 };
@@ -174,7 +174,7 @@ static void cmd_rmfs_check_nomnt(struct cmd_rmfs_ctx *ctx)
 
 static void cmd_rmfs_setup_env_args(struct cmd_rmfs_ctx *ctx)
 {
-	struct silofs_env_args *env_args = &ctx->env_args;
+	struct silofs_args *env_args = &ctx->env_args;
 
 	cmd_setup_env_args(env_args);
 	env_args->bref.repodir = ctx->in_args.repodir_real;

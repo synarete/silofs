@@ -17,8 +17,7 @@
 #define _GNU_SOURCE 1
 #include "cmd.h"
 
-void cmd_new_env(const struct silofs_env_args *env_args,
-                 struct silofs_env **p_env)
+void cmd_new_env(const struct silofs_args *env_args, struct silofs_env **p_env)
 {
 	int err;
 
@@ -255,7 +254,7 @@ void cmd_restore_fs(struct silofs_env *env, struct silofs_caddr *out_caddr)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void cmd_setup_env_args(struct silofs_env_args *args)
+void cmd_setup_env_args(struct silofs_args *args)
 {
 	memset(args, 0, sizeof(*args));
 	silofs_bootref_init(&args->bref);
@@ -266,7 +265,7 @@ void cmd_setup_env_args(struct silofs_env_args *args)
 	args->umask = 0022;
 }
 
-void cmd_destroy_env_args(struct silofs_env_args *args)
+void cmd_destroy_env_args(struct silofs_args *args)
 {
 	silofs_bootref_fini(&args->bref);
 	cmd_fs_ids_fini(&args->ids);

@@ -32,17 +32,6 @@
 #include <silofs/infra.h>
 #include <silofs/str.h>
 
-/* common control flags */
-enum silofs_ctlf {
-	SILOFS_CTLF_NOW     = SILOFS_BIT(0),
-	SILOFS_CTLF_FSYNC   = SILOFS_BIT(1),
-	SILOFS_CTLF_RELEASE = SILOFS_BIT(2),
-	SILOFS_CTLF_BRINGUP = SILOFS_BIT(4),
-	SILOFS_CTLF_OPSTART = SILOFS_BIT(5),
-	SILOFS_CTLF_INTERN  = SILOFS_BIT(6),
-	SILOFS_CTLF_IDLE    = SILOFS_BIT(7),
-};
-
 /* name-string: a pair of string-view and (optional) 64-bits hash */
 struct silofs_namestr {
 	struct silofs_strview sv;
@@ -61,14 +50,6 @@ struct silofs_creds {
 	struct silofs_cred host_cred;
 	struct silofs_cred fs_cred;
 	struct timespec    ts;
-};
-
-/* inode's time-stamps (birth, access, modify, change) */
-struct silofs_itimes {
-	struct timespec btime;
-	struct timespec atime;
-	struct timespec mtime;
-	struct timespec ctime;
 };
 
 #endif /* SILOFS_TYPES_H_ */

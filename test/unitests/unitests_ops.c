@@ -45,7 +45,7 @@ static uint64_t ut_unique_opid(struct ut_env *ute)
 
 void ut_setup_task(struct ut_env *ute, struct silofs_task *task)
 {
-	const struct silofs_env_args *args = &ute->args->env_args;
+	const struct silofs_args *args = &ute->args->env_args;
 
 	silofs_task_init(task, ute->env);
 	silofs_task_set_creds(task, args->uid, args->gid, 0002);

@@ -642,9 +642,9 @@ idsmap_add_uid(struct silofs_idsmap *idsm, const struct silofs_uids *uid)
 }
 
 int silofs_idsmap_populate_uids(struct silofs_idsmap *idsm,
-                                const struct silofs_fs_ids *ids)
+                                const struct silofs_ugids *ugids)
 {
-	const struct silofs_users_ids *uids = &ids->users;
+	const struct silofs_users_ids *uids = &ugids->users;
 	int err;
 
 	for (size_t i = 0; i < uids->nuids; ++i) {
@@ -663,9 +663,9 @@ idsmap_add_gid(struct silofs_idsmap *idsm, const struct silofs_gids *gid)
 }
 
 int silofs_idsmap_populate_gids(struct silofs_idsmap *idsm,
-                                const struct silofs_fs_ids *ids)
+                                const struct silofs_ugids *ugids)
 {
-	const struct silofs_groups_ids *gids = &ids->groups;
+	const struct silofs_groups_ids *gids = &ugids->groups;
 	int err;
 
 	for (size_t j = 0; j < gids->ngids; ++j) {

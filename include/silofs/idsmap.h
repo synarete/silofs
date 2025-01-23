@@ -59,7 +59,7 @@ struct silofs_groups_ids {
 };
 
 /* users & groups id-mappings */
-struct silofs_fs_ids {
+struct silofs_ugids {
 	struct silofs_users_ids  users;
 	struct silofs_groups_ids groups;
 };
@@ -73,11 +73,11 @@ void silofs_idsmap_fini(struct silofs_idsmap *idsm);
 
 void silofs_idsmap_clear(struct silofs_idsmap *idsm);
 
-int silofs_idsmap_populate_uids(struct silofs_idsmap       *idsm,
-                                const struct silofs_fs_ids *ids);
+int silofs_idsmap_populate_uids(struct silofs_idsmap      *idsm,
+                                const struct silofs_ugids *ugids);
 
-int silofs_idsmap_populate_gids(struct silofs_idsmap       *idsm,
-                                const struct silofs_fs_ids *ids);
+int silofs_idsmap_populate_gids(struct silofs_idsmap      *idsm,
+                                const struct silofs_ugids *ugids);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

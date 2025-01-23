@@ -138,7 +138,7 @@ static void ute_unlock(struct ut_env *ute)
 
 static void ute_setup_random_passwd(struct ut_env *ute)
 {
-	struct silofs_env_args *env_args = &ute->args->env_args;
+	struct silofs_args *env_args = &ute->args->env_args;
 	struct silofs_password *pp = &ute->passwd;
 
 	pp->passlen = sizeof(pp->pass) - 1;
@@ -456,7 +456,7 @@ static void ut_init_args(struct ut_args *args)
 	silofs_bootref_init(&args->env_args.bref);
 	args->env_args.bref.repodir = ut_globals.test_dir_repo;
 	args->env_args.bref.name = "unitests";
-	args->env_args.mntdir = "/";
+	args->env_args.bref.mntdir = "/";
 	args->env_args.ids.users.uids = ut_new_uids();
 	args->env_args.ids.users.nuids = 2;
 	args->env_args.ids.groups.gids = ut_new_gids();

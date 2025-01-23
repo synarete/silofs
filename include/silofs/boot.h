@@ -36,6 +36,7 @@ struct silofs_bootref {
 	const char         *repodir;
 	const char         *name;
 	const char         *passwd;
+	const char         *mntdir;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

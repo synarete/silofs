@@ -43,7 +43,7 @@ struct cmd_snap_in_args {
 
 struct cmd_snap_ctx {
 	struct cmd_snap_in_args in_args;
-	struct silofs_env_args env_args;
+	struct silofs_args env_args;
 	struct silofs_env *env;
 	union silofs_ioc_u *ioc;
 	struct silofs_caddr boot_new;
@@ -276,7 +276,7 @@ static void cmd_snap_do_ioctl_syncfs(struct cmd_snap_ctx *ctx)
 
 static void cmd_snap_setup_env_args(struct cmd_snap_ctx *ctx)
 {
-	struct silofs_env_args *env_args = &ctx->env_args;
+	struct silofs_args *env_args = &ctx->env_args;
 
 	cmd_setup_env_args(env_args);
 	env_args->bref.repodir = ctx->in_args.repodir_real;

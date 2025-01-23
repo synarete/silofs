@@ -22,7 +22,7 @@
 #include <silofs/boot.h>
 
 /* top-level control flags */
-enum silofs_env_flags {
+enum silofs_flags {
 	SILOFS_F_PEDANTIC     = SILOFS_BIT(0),
 	SILOFS_F_RDONLY       = SILOFS_BIT(1),
 	SILOFS_F_NOEXEC       = SILOFS_BIT(2),
@@ -42,11 +42,10 @@ enum silofs_env_flags {
 };
 
 /* input arguments */
-struct silofs_env_args {
+struct silofs_args {
 	struct silofs_bootref bref;
-	struct silofs_fs_ids  ids;
-	const char           *mntdir;
-	enum silofs_env_flags flags;
+	struct silofs_ugids   ids;
+	enum silofs_flags     flags;
 	uid_t                 uid;
 	gid_t                 gid;
 	pid_t                 pid;
@@ -93,7 +92,7 @@ struct silofs_env_locks {
 
 /* top-level environment object */
 struct silofs_env {
-	struct silofs_env_args   args;
+	struct silofs_args       args;
 	struct silofs_env_base   base;
 	struct silofs_env_boot   boot;
 	struct silofs_env_locks  locks;
@@ -115,12 +114,12 @@ struct silofs_env {
 
 void silofs_require_proper_defs(void);
 
-int silofs_env_init(struct silofs_env *env, const struct silofs_env_args *args,
+int silofs_env_init(struct silofs_env *env, const struct silofs_args *args,
                     const struct silofs_env_base *base);
 
 void silofs_env_fini(struct silofs_env *env);
 
-bool silofs_env_hasflag(const struct silofs_env *env, enum silofs_env_flags f);
+bool silofs_env_hasflag(const struct silofs_env *env, enum silofs_flags f);
 
 int silofs_env_setup(struct silofs_env *env, const struct silofs_password *pw);
 

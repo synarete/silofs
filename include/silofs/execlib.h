@@ -19,14 +19,12 @@
 
 #include <silofs/infra.h>
 #include <silofs/addr.h>
-#include <silofs/boot.h>
-#include <silofs/stats.h>
 #include <silofs/walk.h>
 
-int silofs_initlib_once(void);
+int silofs_init_once(void);
 
-int silofs_new_env(const struct silofs_env_args *args,
-                   struct silofs_env           **out_env);
+int silofs_new_env(const struct silofs_args *args,
+                   struct silofs_env       **out_env);
 
 void silofs_del_env(struct silofs_env *env);
 

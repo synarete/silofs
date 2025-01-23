@@ -315,8 +315,8 @@ void cmd_del_iocp(union silofs_ioc_u **pioc);
 void cmd_reset_ioc(union silofs_ioc_u *ioc);
 
 /* file-system environment */
-void cmd_new_env(const struct silofs_env_args *env_args,
-                 struct silofs_env           **p_env);
+void cmd_new_env(const struct silofs_args *env_args,
+                 struct silofs_env       **p_env);
 
 void cmd_del_env(struct silofs_env **p_env);
 
@@ -347,27 +347,27 @@ void cmd_bootref_resave(const struct silofs_bootref *bref,
 void cmd_bootref_unlink(const struct silofs_bootref *bref);
 
 /* fs input arguments */
-void cmd_setup_env_args(struct silofs_env_args *env_args);
+void cmd_setup_env_args(struct silofs_args *env_args);
 
-void cmd_destroy_env_args(struct silofs_env_args *env_args);
+void cmd_destroy_env_args(struct silofs_args *env_args);
 
 /* fs-ids config */
 void cmd_fs_ids_unlinkat(const char *basedir);
 
-void cmd_fs_ids_init(struct silofs_fs_ids *ids);
+void cmd_fs_ids_init(struct silofs_ugids *ids);
 
-void cmd_fs_ids_fini(struct silofs_fs_ids *ids);
+void cmd_fs_ids_fini(struct silofs_ugids *ids);
 
-void cmd_fs_ids_assign(struct silofs_fs_ids       *ids,
-                       const struct silofs_fs_ids *other);
+void cmd_fs_ids_assign(struct silofs_ugids       *ids,
+                       const struct silofs_ugids *other);
 
-void cmd_fs_ids_reset(struct silofs_fs_ids *ids);
+void cmd_fs_ids_reset(struct silofs_ugids *ids);
 
-void cmd_fs_ids_load(struct silofs_fs_ids *ids, const char *basedir);
+void cmd_fs_ids_load(struct silofs_ugids *ids, const char *basedir);
 
-void cmd_fs_ids_save(const struct silofs_fs_ids *ids, const char *basedir);
+void cmd_fs_ids_save(const struct silofs_ugids *ids, const char *basedir);
 
-void cmd_fs_ids_add_user(struct silofs_fs_ids *ids, const char *user,
+void cmd_fs_ids_add_user(struct silofs_ugids *ids, const char *user,
                          bool with_sup_groups);
 
 /* users/groups */
@@ -377,7 +377,7 @@ char *cmd_getusername(void);
 
 void cmd_resolve_uidgid(const char *name, uid_t *out_uid, gid_t *out_gid);
 
-void cmd_require_uidgid(const struct silofs_fs_ids *ids, const char *name,
+void cmd_require_uidgid(const struct silofs_ugids *ids, const char *name,
                         uid_t *out_uid, gid_t *out_gid);
 
 /* misc */

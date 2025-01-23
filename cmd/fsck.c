@@ -34,7 +34,7 @@ struct cmd_fsck_in_args {
 
 struct cmd_fsck_ctx {
 	struct cmd_fsck_in_args in_args;
-	struct silofs_env_args env_args;
+	struct silofs_args env_args;
 	struct silofs_env *env;
 	bool has_lockfile;
 };
@@ -147,7 +147,7 @@ static void cmd_fsck_getpass(struct cmd_fsck_ctx *ctx)
 
 static void cmd_fsck_setup_env_args(struct cmd_fsck_ctx *ctx)
 {
-	struct silofs_env_args *env_args = &ctx->env_args;
+	struct silofs_args *env_args = &ctx->env_args;
 
 	cmd_setup_env_args(env_args);
 	env_args->bref.repodir = ctx->in_args.repodir_real;

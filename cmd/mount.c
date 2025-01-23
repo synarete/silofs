@@ -51,7 +51,7 @@ struct cmd_mount_in_args {
 	char *mntpoint_real;
 	char *uhelper;
 	char *password;
-	enum silofs_env_flags flags;
+	enum silofs_flags flags;
 	bool explicit_log_level;
 	bool systemd_run;
 	bool no_prompt;
@@ -59,7 +59,7 @@ struct cmd_mount_in_args {
 
 struct cmd_mount_ctx {
 	struct cmd_mount_in_args in_args;
-	struct silofs_env_args env_args;
+	struct silofs_args env_args;
 	struct silofs_env *env;
 	pid_t child_pid;
 	time_t start_time;
@@ -251,14 +251,14 @@ static void cmd_mount_parse_optargs(struct cmd_mount_ctx *ctx)
 static void cmd_mount_setup_env_args(struct cmd_mount_ctx *ctx)
 {
 	const struct cmd_mount_in_args *in_args = &ctx->in_args;
-	struct silofs_env_args *env_args = &ctx->env_args;
+	struct silofs_args *env_args = &ctx->env_args;
 
 	cmd_setup_env_args(env_args);
 	env_args->flags = in_args->flags;
 	env_args->bref.repodir = in_args->repodir_real;
 	env_args->bref.name = in_args->name;
 	env_args->bref.passwd = in_args->password;
-	env_args->mntdir = in_args->mntpoint_real;
+	env_args->bref.mntdir = in_args->mntpoint_real;
 }
 
 static void cmd_mount_setup_fs_ids(struct cmd_mount_ctx *ctx)
@@ -517,7 +517,7 @@ static void cmd_mount_update_log_params(const struct cmd_mount_ctx *ctx)
 #define silofs_log_iarg(fmt_, ...) silofs_log_info("inarg: " fmt_, __VA_ARGS__)
 
 static int
-cmd_mount_testf(const struct cmd_mount_ctx *ctx, enum silofs_env_flags mask)
+cmd_mount_testf(const struct cmd_mount_ctx *ctx, enum silofs_flags mask)
 {
 	return ((ctx->in_args.flags & mask) == mask);
 }

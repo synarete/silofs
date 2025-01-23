@@ -35,7 +35,7 @@ struct cmd_view_in_args {
 
 struct cmd_view_ctx {
 	struct cmd_view_in_args in_args;
-	struct silofs_env_args env_args;
+	struct silofs_args env_args;
 	struct silofs_env *env;
 	FILE *out_fp;
 	bool has_lockfile;
@@ -157,7 +157,7 @@ static void cmd_view_getpass(struct cmd_view_ctx *ctx)
 
 static void cmd_view_setup_env_args(struct cmd_view_ctx *ctx)
 {
-	struct silofs_env_args *env_args = &ctx->env_args;
+	struct silofs_args *env_args = &ctx->env_args;
 
 	cmd_setup_env_args(env_args);
 	env_args->bref.repodir = ctx->in_args.repodir_real;

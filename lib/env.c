@@ -60,7 +60,7 @@ env_bind_sbi(struct silofs_env *env, struct silofs_sb_info *sbi_new)
 
 static void env_update_owner(struct silofs_env *env)
 {
-	const struct silofs_env_args *env_args = &env->args;
+	const struct silofs_args *env_args = &env->args;
 
 	env->owner_cred.uid = env_args->uid;
 	env->owner_cred.gid = env_args->gid;
@@ -69,7 +69,7 @@ static void env_update_owner(struct silofs_env *env)
 
 static void env_update_mntflags(struct silofs_env *env)
 {
-	const enum silofs_env_flags flags = env->args.flags;
+	const enum silofs_flags flags = env->args.flags;
 	unsigned long ms_flag_with = 0;
 	unsigned long ms_flag_dont = 0;
 
@@ -104,7 +104,7 @@ static void env_update_mntflags(struct silofs_env *env)
 
 static int env_update_base_caddr(struct silofs_env *env)
 {
-	const struct silofs_env_args *env_args = &env->args;
+	const struct silofs_args *env_args = &env->args;
 	const struct silofs_caddr *caddr = &env_args->bref.caddr;
 	int ret = 0;
 
@@ -154,7 +154,7 @@ static void env_init_opstat(struct silofs_env *env)
 }
 
 static void
-env_init_commons(struct silofs_env *env, const struct silofs_env_args *args,
+env_init_commons(struct silofs_env *env, const struct silofs_args *args,
                  const struct silofs_env_base *base)
 {
 	memcpy(&env->args, args, sizeof(env->args));
@@ -262,7 +262,7 @@ static void env_fini_iconv(struct silofs_env *env)
 	}
 }
 
-int silofs_env_init(struct silofs_env *env, const struct silofs_env_args *args,
+int silofs_env_init(struct silofs_env *env, const struct silofs_args *args,
                     const struct silofs_env_base *base)
 {
 	int err;
@@ -342,7 +342,7 @@ int silofs_env_setup(struct silofs_env *env, const struct silofs_password *pw)
 	return ret;
 }
 
-bool silofs_env_hasflag(const struct silofs_env *env, enum silofs_env_flags f)
+bool silofs_env_hasflag(const struct silofs_env *env, enum silofs_flags f)
 {
 	return (env->args.flags & f) == f;
 }

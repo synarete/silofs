@@ -37,7 +37,7 @@ struct cmd_mkfs_in_args {
 
 struct cmd_mkfs_ctx {
 	struct cmd_mkfs_in_args in_args;
-	struct silofs_env_args env_args;
+	struct silofs_args env_args;
 	struct silofs_env *env;
 	bool has_lockfile;
 };
@@ -165,7 +165,7 @@ static void cmd_mkfs_getpass(struct cmd_mkfs_ctx *ctx)
 
 static void cmd_mkfs_setup_env_args(struct cmd_mkfs_ctx *ctx)
 {
-	struct silofs_env_args *env_args = &ctx->env_args;
+	struct silofs_args *env_args = &ctx->env_args;
 
 	cmd_setup_env_args(env_args);
 	env_args->bref.repodir = ctx->in_args.repodir_real;
@@ -176,8 +176,8 @@ static void cmd_mkfs_setup_env_args(struct cmd_mkfs_ctx *ctx)
 
 static void cmd_mkfs_setup_fs_ids(struct cmd_mkfs_ctx *ctx)
 {
-	struct silofs_env_args *env_args = &ctx->env_args;
-	struct silofs_fs_ids *ids = &env_args->ids;
+	struct silofs_args *env_args = &ctx->env_args;
+	struct silofs_ugids *ids = &env_args->ids;
 	const char *username = ctx->in_args.username;
 
 	cmd_fs_ids_load(ids, ctx->in_args.repodir_real);

@@ -36,7 +36,7 @@ struct cmd_init_in_args {
 
 struct cmd_init_ctx {
 	struct cmd_init_in_args in_args;
-	struct silofs_env_args env_args;
+	struct silofs_args env_args;
 	struct silofs_env *env;
 };
 
@@ -139,7 +139,7 @@ static void cmd_init_resolve_owner(struct cmd_init_ctx *ctx)
 
 static void cmd_init_setup_env_args(struct cmd_init_ctx *ctx)
 {
-	struct silofs_env_args *env_args = &ctx->env_args;
+	struct silofs_args *env_args = &ctx->env_args;
 	const char *username = ctx->in_args.username;
 
 	cmd_setup_env_args(env_args);
@@ -150,7 +150,7 @@ static void cmd_init_setup_env_args(struct cmd_init_ctx *ctx)
 
 static void cmd_init_setup_fs_ids(struct cmd_init_ctx *ctx)
 {
-	struct silofs_fs_ids *ids = &ctx->env_args.ids;
+	struct silofs_ugids *ids = &ctx->env_args.ids;
 	const char *username = ctx->in_args.username;
 	const bool with_sup_groups = ctx->in_args.with_sup_groups;
 	const bool with_root_user = ctx->in_args.with_root_user;

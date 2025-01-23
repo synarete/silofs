@@ -80,7 +80,7 @@ static bool fuseq_has_live_opers(const struct silofs_fuseq *fq);
 static bool fuseq_is_active(const struct silofs_fuseq *fq);
 static void fuseq_set_active(struct silofs_fuseq *fq);
 static void fuseq_set_non_active(struct silofs_fuseq *fq);
-static int exec_op(struct silofs_task *task, struct silofs_args *args);
+static int exec_op(struct silofs_task *task, struct silofs_call_args *args);
 static const struct silofs_fuseq_cmd_desc *cmd_desc_of(unsigned int opc);
 
 /* FUSE types per 7.34 */
@@ -445,7 +445,7 @@ struct silofs_fuseq_cmd_ctx {
 	struct silofs_fuseq *fq;
 	struct silofs_fuseq_dispatcher *fqd;
 	struct silofs_task *task;
-	struct silofs_args *args;
+	struct silofs_call_args *args;
 	const struct silofs_fuseq_in *in;
 	ino_t ino;
 };
@@ -3956,7 +3956,7 @@ static void fqd_fini_rwi(struct silofs_fuseq_dispatcher *fqd)
 
 static int fqd_init_op_args(struct silofs_fuseq_dispatcher *fqd)
 {
-	struct silofs_args *op_args = &fqd->fqd_args;
+	struct silofs_call_args *op_args = &fqd->fqd_args;
 
 	silofs_memzero(op_args, sizeof(*op_args));
 	return 0;
@@ -3964,7 +3964,7 @@ static int fqd_init_op_args(struct silofs_fuseq_dispatcher *fqd)
 
 static void fqd_fini_op_args(struct silofs_fuseq_dispatcher *fqd)
 {
-	struct silofs_args *op_args = &fqd->fqd_args;
+	struct silofs_call_args *op_args = &fqd->fqd_args;
 
 	silofs_memffff(op_args, sizeof(*op_args));
 }
@@ -5069,7 +5069,7 @@ static silofs_call_fn hook_of(uint32_t op_code)
 	return hook;
 }
 
-static int exec_op(struct silofs_task *task, struct silofs_args *args)
+static int exec_op(struct silofs_task *task, struct silofs_call_args *args)
 {
 	silofs_call_fn hook = hook_of(task->t_oper.op_code);
 

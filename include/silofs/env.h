@@ -113,6 +113,8 @@ struct silofs_env {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+void silofs_require_proper_defs(void);
+
 int silofs_env_init(struct silofs_env *env, const struct silofs_env_args *args,
                     const struct silofs_env_base *base);
 

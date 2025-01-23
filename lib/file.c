@@ -1359,7 +1359,7 @@ static bool filc_ismapping_boundaries(const struct silofs_file_ctx *f_ctx)
 static void
 filc_update_post_io(const struct silofs_file_ctx *f_ctx, bool kill_suid_sgid)
 {
-	struct silofs_iattr iattr;
+	struct silofs_iattr iattr = { .ia_size = -1 };
 	struct silofs_inode_info *ii = f_ctx->ii;
 	const loff_t isz = ii_size(ii);
 	const loff_t isp = ii_span(ii);
@@ -1367,7 +1367,7 @@ filc_update_post_io(const struct silofs_file_ctx *f_ctx, bool kill_suid_sgid)
 	const loff_t end = f_ctx->end;
 	const size_t len = filc_io_length(f_ctx);
 
-	ii_mkiattr(ii, &iattr);
+	silofs_ii_mkiattr(ii, &iattr);
 	if (f_ctx->op_mask & OP_READ) {
 		iattr.ia_flags |= SILOFS_IATTR_ATIME | SILOFS_IATTR_LAZY;
 	} else if (f_ctx->op_mask & (OP_WRITE | OP_COPY_RANGE)) {
@@ -1401,7 +1401,7 @@ filc_update_post_io(const struct silofs_file_ctx *f_ctx, bool kill_suid_sgid)
 		}
 	}
 
-	ii_update_iattrs(ii, task_creds(f_ctx->task), &iattr);
+	silofs_update_iattrs_of(f_ctx->task, ii, &iattr);
 }
 
 static int filc_update_unwritten_by(const struct silofs_file_ctx *f_ctx,
@@ -2287,8 +2287,7 @@ static void filc_update_tree_root(const struct silofs_file_ctx *f_ctx,
 static void filc_update_iblocks(const struct silofs_file_ctx *f_ctx,
                                 const struct silofs_vaddr *vaddr, long dif)
 {
-	silofs_ii_update_iblocks(f_ctx->ii, task_creds(f_ctx->task),
-	                         vaddr->ltype, dif);
+	silofs_update_iblocks_of(f_ctx->task, f_ctx->ii, vaddr->ltype, dif);
 }
 
 static int

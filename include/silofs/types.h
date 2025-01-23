@@ -17,13 +17,6 @@
 #ifndef SILOFS_TYPES_H_
 #define SILOFS_TYPES_H_
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <netinet/in.h>
-#include <gcrypt.h>
-#include <iconv.h>
 #include <unistd.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -50,6 +43,12 @@ struct silofs_creds {
 	struct silofs_cred host_cred;
 	struct silofs_cred fs_cred;
 	struct timespec    ts;
+};
+
+/* credentials with time-stamp */
+struct silofs_tcreds {
+	struct timespec     ts;
+	struct silofs_creds cs;
 };
 
 #endif /* SILOFS_TYPES_H_ */

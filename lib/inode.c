@@ -26,6 +26,13 @@
 #include <stdbool.h>
 #include <limits.h>
 
+/* local functions forward declarations */
+static void ii_update_itimes(struct silofs_inode_info *ii,
+                             const struct silofs_creds *creds,
+                             enum silofs_iattr_flags attr_flags);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 bool silofs_ino_isnull(ino_t ino)
 {
 	return (ino == SILOFS_INO_NULL);
@@ -769,12 +776,12 @@ update_times_attr(const struct silofs_task *task, struct silofs_inode_info *ii,
                   enum silofs_iattr_flags attr_flags,
                   const struct silofs_itimes *itimes)
 {
-	struct silofs_iattr iattr;
+	struct silofs_iattr iattr = { .ia_size = -1 };
 
-	ii_mkiattr(ii, &iattr);
+	silofs_ii_mkiattr(ii, &iattr);
 	memcpy(&iattr.ia_t, itimes, sizeof(iattr.ia_t));
 	iattr.ia_flags = attr_flags;
-	ii_update_iattrs(ii, task_creds(task), &iattr);
+	silofs_update_iattrs_of(task, ii, &iattr);
 }
 
 /*
@@ -787,15 +794,15 @@ static void
 update_post_chmod(const struct silofs_task *task, struct silofs_inode_info *ii,
                   struct silofs_iattr *iattr)
 {
-	const gid_t gid = ii_gid(ii);
 	const struct silofs_creds *creds = task_creds(task);
 	const struct silofs_cred *cred = &creds->fs_cred;
+	const gid_t gid = ii_gid(ii);
 
 	iattr->ia_flags |= SILOFS_IATTR_MODE | SILOFS_IATTR_CTIME;
 	if (!gid_eq(gid, cred->gid) && !silofs_user_cap_fsetid(cred)) {
 		iattr->ia_flags |= SILOFS_IATTR_KILL_SGID;
 	}
-	ii_update_iattrs(ii, creds, iattr);
+	silofs_update_iattrs_of(task, ii, iattr);
 }
 
 static int do_chmod(struct silofs_task *task, struct silofs_inode_info *ii,
@@ -887,7 +894,7 @@ update_post_chown(const struct silofs_task *task, struct silofs_inode_info *ii,
 		iattr->ia_flags |= SILOFS_IATTR_KILL_SUID;
 		iattr->ia_flags |= SILOFS_IATTR_KILL_SGID;
 	}
-	ii_update_iattrs(ii, task_creds(task), iattr);
+	silofs_update_iattrs_of(task, ii, iattr);
 }
 
 static int
@@ -1310,24 +1317,29 @@ static void ii_update_inode_attr(struct silofs_inode_info *ii,
 	ii_dirtify(ii);
 }
 
-void silofs_ii_update_iattrs(struct silofs_inode_info *ii,
+static void ii_update_iattrs(struct silofs_inode_info *ii,
                              const struct silofs_creds *creds,
                              const struct silofs_iattr *iattr)
 {
-	struct silofs_creds dummy_creds = { .ts.tv_sec = 0 };
-
-	ii_update_inode_attr(ii, creds ? creds : &dummy_creds, iattr->ia_flags,
-	                     iattr);
+	ii_update_inode_attr(ii, creds, iattr->ia_flags, iattr);
 }
 
-void silofs_ii_update_itimes(struct silofs_inode_info *ii,
+void silofs_ii_update_diattrs(struct silofs_inode_info *ii,
+                              const struct silofs_iattr *iattr)
+{
+	struct silofs_creds creds = { .ts.tv_nsec = UTIME_OMIT };
+
+	ii_update_iattrs(ii, &creds, iattr);
+}
+
+static void ii_update_itimes(struct silofs_inode_info *ii,
                              const struct silofs_creds *creds,
                              enum silofs_iattr_flags attr_flags)
 {
-	struct silofs_iattr iattr;
+	struct silofs_iattr iattr = { .ia_size = -1 };
 	const enum silofs_iattr_flags mask = SILOFS_IATTR_TIMES;
 
-	ii_mkiattr(ii, &iattr);
+	silofs_ii_mkiattr(ii, &iattr);
 	ii_update_inode_attr(ii, creds, attr_flags & mask, &iattr);
 }
 
@@ -1355,25 +1367,25 @@ static blkcnt_t recalc_iblocks(const struct silofs_inode_info *ii,
 	return cnt;
 }
 
-void silofs_ii_update_iblocks(struct silofs_inode_info *ii,
+static void ii_update_iblocks(struct silofs_inode_info *ii,
                               const struct silofs_creds *creds,
                               enum silofs_ltype ltype, long dif)
 {
-	struct silofs_iattr iattr;
+	struct silofs_iattr iattr = { .ia_size = -1 };
 
-	ii_mkiattr(ii, &iattr);
+	silofs_ii_mkiattr(ii, &iattr);
 	iattr.ia_blocks = recalc_iblocks(ii, ltype, dif);
 	iattr.ia_flags = SILOFS_IATTR_BLOCKS;
 
 	ii_update_iattrs(ii, creds, &iattr);
 }
 
-void silofs_ii_update_isize(struct silofs_inode_info *ii,
+static void ii_update_isize(struct silofs_inode_info *ii,
                             const struct silofs_creds *creds, ssize_t size)
 {
-	struct silofs_iattr iattr;
+	struct silofs_iattr iattr = { .ia_size = -1 };
 
-	ii_mkiattr(ii, &iattr);
+	silofs_ii_mkiattr(ii, &iattr);
 	iattr.ia_size = size;
 	iattr.ia_flags = SILOFS_IATTR_SIZE;
 
@@ -1393,6 +1405,35 @@ void silofs_ii_undirtify_vnis(struct silofs_inode_info *ii)
 		silofs_vni_undirtify(vni);
 		dqe = silofs_dirtyq_front(dq);
 	}
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_update_itimes_of(const struct silofs_task *task,
+                             struct silofs_inode_info *ii,
+                             enum silofs_iattr_flags attr_flags)
+{
+	ii_update_itimes(ii, silofs_task_creds(task), attr_flags);
+}
+
+void silofs_update_iblocks_of(const struct silofs_task *task,
+                              struct silofs_inode_info *ii,
+                              enum silofs_ltype ltype, long dif)
+{
+	ii_update_iblocks(ii, silofs_task_creds(task), ltype, dif);
+}
+
+void silofs_update_iattrs_of(const struct silofs_task *task,
+                             struct silofs_inode_info *ii,
+                             const struct silofs_iattr *iattr)
+{
+	ii_update_iattrs(ii, silofs_task_creds(task), iattr);
+}
+
+void silofs_update_isize_of(const struct silofs_task *task,
+                            struct silofs_inode_info *ii, ssize_t size)
+{
+	ii_update_isize(ii, silofs_task_creds(task), size);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

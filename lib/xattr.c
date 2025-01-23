@@ -998,13 +998,13 @@ static int xac_setxattr_apply(struct silofs_xattr_ctx *xa_ctx)
 
 static void xac_update_post_setxattr(const struct silofs_xattr_ctx *xa_ctx)
 {
-	struct silofs_iattr iattr;
+	struct silofs_iattr iattr = { .ia_size = -1 };
 	struct silofs_inode_info *ii = xa_ctx->ii;
 
-	ii_mkiattr(ii, &iattr);
+	silofs_ii_mkiattr(ii, &iattr);
 	iattr.ia_flags |= SILOFS_IATTR_CTIME;
 	iattr.ia_flags |= (xa_ctx->kill_sgid ? SILOFS_IATTR_KILL_SGID : 0);
-	silofs_ii_update_iattrs(ii, task_creds(xa_ctx->task), &iattr);
+	silofs_update_iattrs_of(xa_ctx->task, ii, &iattr);
 }
 
 static int xac_do_setxattr(struct silofs_xattr_ctx *xa_ctx)
@@ -1072,9 +1072,14 @@ static bool is_posix_acl_name(const struct silofs_namestr *name)
 static int
 xac_removexattr_retval(const struct silofs_xattr_ctx *xa_ctx, int err)
 {
-	return ((err == -SILOFS_ENODATA) && is_posix_acl_name(xa_ctx->name)) ?
-	               0 :
-	               err;
+	int ret;
+
+	if ((err == -SILOFS_ENODATA) && is_posix_acl_name(xa_ctx->name)) {
+		ret = 0;
+	} else {
+		ret = err;
+	}
+	return ret;
 }
 
 /*
@@ -1085,7 +1090,6 @@ xac_removexattr_retval(const struct silofs_xattr_ctx *xa_ctx, int err)
 static int xac_do_removexattr(struct silofs_xattr_ctx *xa_ctx)
 {
 	struct silofs_xentry_info xei = { .xe = NULL };
-	const enum silofs_iattr_flags attr_flags = SILOFS_IATTR_CTIME;
 	int err;
 
 	err = xac_check_op(xa_ctx, W_OK);
@@ -1098,7 +1102,7 @@ static int xac_do_removexattr(struct silofs_xattr_ctx *xa_ctx)
 	}
 	xei_discard_entry(&xei);
 	xai_dirtify(xei.xai, xa_ctx->ii);
-	ii_update_itimes(xa_ctx->ii, task_creds(xa_ctx->task), attr_flags);
+	silofs_update_itimes_of(xa_ctx->task, xa_ctx->ii, SILOFS_IATTR_CTIME);
 	return 0;
 }
 

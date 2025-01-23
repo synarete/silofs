@@ -139,20 +139,8 @@ void silofs_ii_fixup_as_rootdir(struct silofs_inode_info *ii);
 void silofs_ii_update_iflags(struct silofs_inode_info *ii, int iflags_want,
                              int iflags_dont);
 
-void silofs_ii_update_itimes(struct silofs_inode_info  *ii,
-                             const struct silofs_creds *creds,
-                             enum silofs_iattr_flags    attr_flags);
-
-void silofs_ii_update_iblocks(struct silofs_inode_info  *ii,
-                              const struct silofs_creds *creds,
-                              enum silofs_ltype ltype, long dif);
-
-void silofs_ii_update_isize(struct silofs_inode_info  *ii,
-                            const struct silofs_creds *creds, ssize_t size);
-
-void silofs_ii_update_iattrs(struct silofs_inode_info  *ii,
-                             const struct silofs_creds *creds,
-                             const struct silofs_iattr *iattr);
+void silofs_ii_update_diattrs(struct silofs_inode_info  *ii,
+                              const struct silofs_iattr *iattr);
 
 void silofs_ii_refresh_atime(struct silofs_inode_info *ii, bool to_volatile);
 
@@ -205,6 +193,23 @@ int silofs_do_chown(const struct silofs_task *task,
 int silofs_do_utimens(const struct silofs_task   *task,
                       struct silofs_inode_info   *ii,
                       const struct silofs_itimes *itimes);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_update_itimes_of(const struct silofs_task *task,
+                             struct silofs_inode_info *ii,
+                             enum silofs_iattr_flags   attr_flags);
+
+void silofs_update_iblocks_of(const struct silofs_task *task,
+                              struct silofs_inode_info *ii,
+                              enum silofs_ltype ltype, long dif);
+
+void silofs_update_iattrs_of(const struct silofs_task  *task,
+                             struct silofs_inode_info  *ii,
+                             const struct silofs_iattr *iattr);
+
+void silofs_update_isize_of(const struct silofs_task *task,
+                            struct silofs_inode_info *ii, ssize_t size);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

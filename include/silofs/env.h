@@ -20,6 +20,7 @@
 #include <silofs/macros.h>
 #include <silofs/types.h>
 #include <silofs/boot.h>
+#include <iconv.h>
 
 /* top-level control flags */
 enum silofs_flags {

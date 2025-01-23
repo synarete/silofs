@@ -1420,7 +1420,7 @@ void silofs_setup_dir(struct silofs_inode_info *dir_ii, mode_t parent_mode,
 	};
 
 	indr_setup(indr_of(dir_ii->inode), unique_seed());
-	ii_update_iattrs(dir_ii, NULL, &iattr);
+	silofs_ii_update_diattrs(dir_ii, &iattr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1557,12 +1557,12 @@ dirc_curr_node_index_of(const struct silofs_dir_ctx *d_ctx)
 
 static void dirc_update_isize(const struct silofs_dir_ctx *d_ctx, ssize_t sz)
 {
-	silofs_ii_update_isize(d_ctx->dir_ii, task_creds(d_ctx->task), sz);
+	silofs_update_isize_of(d_ctx->task, d_ctx->dir_ii, sz);
 }
 
 static void dirc_update_iblocks(const struct silofs_dir_ctx *d_ctx, int dif)
 {
-	silofs_ii_update_iblocks(d_ctx->dir_ii, task_creds(d_ctx->task),
+	silofs_update_iblocks_of(d_ctx->task, d_ctx->dir_ii,
 	                         SILOFS_LTYPE_DTNODE, dif);
 }
 
@@ -1903,12 +1903,11 @@ static nlink_t i_nlink_new(const struct silofs_inode_info *ii, long dif)
 
 static void dirc_update_nlink(const struct silofs_dir_ctx *d_ctx, long dif)
 {
-	struct silofs_iattr iattr;
+	struct silofs_iattr iattr = { .ia_size = -1 };
 	struct silofs_inode_info *child_ii = d_ctx->child_ii;
 	struct silofs_inode_info *dir_ii = d_ctx->dir_ii;
-	const struct silofs_creds *creds = task_creds(d_ctx->task);
 
-	ii_mkiattr(child_ii, &iattr);
+	silofs_ii_mkiattr(child_ii, &iattr);
 	iattr.ia_nlink = i_nlink_new(child_ii, dif);
 	iattr.ia_flags |= SILOFS_IATTR_NLINK;
 	if (dif > 0) {
@@ -1918,14 +1917,14 @@ static void dirc_update_nlink(const struct silofs_dir_ctx *d_ctx, long dif)
 		iattr.ia_parent = SILOFS_INO_NULL;
 		iattr.ia_flags |= SILOFS_IATTR_PARENT;
 	}
-	ii_update_iattrs(child_ii, creds, &iattr);
+	silofs_update_iattrs_of(d_ctx->task, child_ii, &iattr);
 
-	ii_mkiattr(dir_ii, &iattr);
+	silofs_ii_mkiattr(dir_ii, &iattr);
 	if (ii_isdir(child_ii)) {
 		iattr.ia_nlink = i_nlink_new(dir_ii, dif);
 		iattr.ia_flags |= SILOFS_IATTR_NLINK;
 	}
-	ii_update_iattrs(dir_ii, creds, &iattr);
+	silofs_update_iattrs_of(d_ctx->task, dir_ii, &iattr);
 }
 
 static int dirc_add_to_dnode(const struct silofs_dir_ctx *d_ctx,
@@ -2409,11 +2408,11 @@ static int dirc_readdir_iter(struct silofs_dir_ctx *d_ctx)
 
 static void dirc_post_readdir(const struct silofs_dir_ctx *d_ctx)
 {
-	struct silofs_iattr iattr;
+	struct silofs_iattr iattr = { .ia_size = -1 };
 
-	ii_mkiattr(d_ctx->dir_ii, &iattr);
+	silofs_ii_mkiattr(d_ctx->dir_ii, &iattr);
 	iattr.ia_flags |= SILOFS_IATTR_ATIME | SILOFS_IATTR_LAZY;
-	ii_update_iattrs(d_ctx->dir_ii, task_creds(d_ctx->task), &iattr);
+	silofs_update_iattrs_of(d_ctx->task, d_ctx->dir_ii, &iattr);
 }
 
 static int dirc_readdir_and_update(struct silofs_dir_ctx *d_ctx)

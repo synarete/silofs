@@ -181,22 +181,17 @@ static void ii_set_pinned(struct silofs_inode_info *ii)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static const struct silofs_creds *creds_of(const struct silofs_task *task)
-{
-	return task_creds(task);
-}
-
 static bool
 isowner(const struct silofs_task *task, const struct silofs_inode_info *ii)
 {
-	const struct silofs_creds *creds = creds_of(task);
+	const struct silofs_creds *creds = task_creds(task);
 
 	return uid_eq(creds->fs_cred.uid, ii_uid(ii));
 }
 
 static bool has_cap_fowner(const struct silofs_task *task)
 {
-	const struct silofs_creds *creds = creds_of(task);
+	const struct silofs_creds *creds = task_creds(task);
 
 	return silofs_user_cap_fowner(&creds->host_cred);
 }
@@ -393,7 +388,7 @@ spawn_inode_by_mode(struct silofs_task *task,
 static int do_access(const struct silofs_task *task,
                      const struct silofs_inode_info *ii, int mode)
 {
-	const struct silofs_creds *creds = creds_of(task);
+	const struct silofs_creds *creds = task_creds(task);
 	const uid_t uid = creds->fs_cred.uid;
 	const gid_t gid = creds->fs_cred.gid;
 	const uid_t i_uid = ii_uid(ii);
@@ -756,7 +751,7 @@ do_create(struct silofs_task *task, struct silofs_inode_info *dir_ii,
 		return err;
 	}
 	update_nopen(ii, 1);
-	ii_update_itimes(dir_ii, creds_of(task), SILOFS_IATTR_MCTIME);
+	silofs_update_itimes_of(task, dir_ii, SILOFS_IATTR_MCTIME);
 
 	*out_ii = ii;
 	return 0;
@@ -862,7 +857,7 @@ do_mknod_special(struct silofs_task *task, struct silofs_inode_info *dir_ii,
 	if (err) {
 		return err;
 	}
-	ii_update_itimes(dir_ii, creds_of(task), SILOFS_IATTR_MCTIME);
+	silofs_update_itimes_of(task, dir_ii, SILOFS_IATTR_MCTIME);
 
 	/* can not use 'nopen' as FUSE does not sent OPEN on fifo, and
 	 * therefore no RELEASE */
@@ -1123,7 +1118,7 @@ static int try_prune_inode(struct silofs_task *task,
 		return err;
 	}
 	if (update_ctime) {
-		ii_update_itimes(ii, creds_of(task), SILOFS_IATTR_CTIME);
+		silofs_update_itimes_of(task, ii, SILOFS_IATTR_CTIME);
 	}
 	enqueue_if_loose(task, ii);
 	return 0;
@@ -1189,7 +1184,7 @@ static int remove_de_and_update(struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	ii_update_itimes(ii, creds_of(task), SILOFS_IATTR_CTIME);
+	silofs_update_itimes_of(task, ii, SILOFS_IATTR_CTIME);
 	return 0;
 }
 
@@ -1236,7 +1231,7 @@ do_unlink(struct silofs_task *task, struct silofs_inode_info *dir_ii,
 	if (err) {
 		return err;
 	}
-	ii_update_itimes(dir_ii, creds_of(task), SILOFS_IATTR_MCTIME);
+	silofs_update_itimes_of(task, dir_ii, SILOFS_IATTR_MCTIME);
 	return 0;
 }
 
@@ -1298,8 +1293,8 @@ do_link(struct silofs_task *task, struct silofs_inode_info *dir_ii,
 	if (err) {
 		return err;
 	}
-	ii_update_itimes(dir_ii, creds_of(task), SILOFS_IATTR_MCTIME);
-	ii_update_itimes(ii, creds_of(task), SILOFS_IATTR_CTIME);
+	silofs_update_itimes_of(task, dir_ii, SILOFS_IATTR_MCTIME);
+	silofs_update_itimes_of(task, ii, SILOFS_IATTR_CTIME);
 
 	return 0;
 }
@@ -1355,7 +1350,7 @@ static int do_mkdir(struct silofs_task *task, struct silofs_inode_info *dir_ii,
 	if (err) {
 		return err;
 	}
-	ii_update_itimes(dir_ii, creds_of(task), SILOFS_IATTR_MCTIME);
+	silofs_update_itimes_of(task, dir_ii, SILOFS_IATTR_MCTIME);
 
 	*out_ii = ii;
 	return 0;
@@ -1439,7 +1434,7 @@ static int do_rmdir(struct silofs_task *task, struct silofs_inode_info *dir_ii,
 	if (err) {
 		return err;
 	}
-	ii_update_itimes(dir_ii, creds_of(task), SILOFS_IATTR_MCTIME);
+	silofs_update_itimes_of(task, dir_ii, SILOFS_IATTR_MCTIME);
 	return 0;
 }
 
@@ -1523,7 +1518,7 @@ do_symlink(struct silofs_task *task, struct silofs_inode_info *dir_ii,
 	if (err) {
 		return err;
 	}
-	ii_update_itimes(dir_ii, creds_of(task), SILOFS_IATTR_MCTIME);
+	silofs_update_itimes_of(task, dir_ii, SILOFS_IATTR_MCTIME);
 
 	*out_ii = ii;
 	return 0;
@@ -2007,7 +2002,6 @@ static int
 rename_specific(struct silofs_task *task, struct silofs_dentry_ref *cur_dref,
                 struct silofs_dentry_ref *new_dref, int flags)
 {
-	const struct silofs_creds *creds = creds_of(task);
 	int err;
 
 	if (new_dref->ii == NULL) {
@@ -2019,8 +2013,8 @@ rename_specific(struct silofs_task *task, struct silofs_dentry_ref *cur_dref,
 	} else {
 		err = rename_replace(task, cur_dref, new_dref);
 	}
-	ii_update_itimes(cur_dref->dir_ii, creds, SILOFS_IATTR_MCTIME);
-	ii_update_itimes(new_dref->dir_ii, creds, SILOFS_IATTR_MCTIME);
+	silofs_update_itimes_of(task, cur_dref->dir_ii, SILOFS_IATTR_MCTIME);
+	silofs_update_itimes_of(task, new_dref->dir_ii, SILOFS_IATTR_MCTIME);
 	return err;
 }
 
@@ -2384,7 +2378,7 @@ int silofs_do_query(struct silofs_task *task, struct silofs_inode_info *ii,
 
 static int check_fsowner(const struct silofs_task *task)
 {
-	const struct silofs_creds *creds = creds_of(task);
+	const struct silofs_creds *creds = task_creds(task);
 	const uid_t owner_uid = task->t_env->owner_cred.uid;
 
 	return uid_eq(creds->host_cred.uid, owner_uid) ? 0 : -SILOFS_EPERM;

@@ -69,7 +69,7 @@
 
 #define vni_ltype(vni)         silofs_vni_ltype(vni)
 #define vni_vaddr(vni)         silofs_vni_vaddr(vni)
-#define vni_env(vni)         silofs_vni_env(vni)
+#define vni_env(vni)           silofs_vni_env(vni)
 #define vni_sbi(vni)           silofs_vni_sbi(vni)
 #define vni_refcnt(vni)        silofs_vni_refcnt(vni)
 #define vni_incref(vni)        silofs_vni_incref(vni)
@@ -83,7 +83,7 @@
 #define ii_ino(ii)                  silofs_ii_ino(ii)
 #define ii_vaddr(ii)                silofs_ii_vaddr(ii)
 #define ii_sbi(ii)                  silofs_ii_sbi(ii)
-#define ii_env(ii)                silofs_ii_env(ii)
+#define ii_env(ii)                  silofs_ii_env(ii)
 #define ii_cache(ii)                silofs_ii_cache(ii)
 #define ii_refcnt(ii)               silofs_ii_refcnt(ii)
 #define ii_incref(ii)               silofs_ii_incref(ii)
@@ -106,9 +106,6 @@
 #define ii_islnk(ii)                silofs_ii_islnk(ii)
 #define ii_isfifo(ii)               silofs_ii_isfifo(ii)
 #define ii_issock(ii)               silofs_ii_issock(ii)
-#define ii_mkiattr(ii, ia)          silofs_ii_mkiattr(ii, ia)
-#define ii_update_itimes(ii, cr, f) silofs_ii_update_itimes(ii, cr, f)
-#define ii_update_iattrs(ii, cr, a) silofs_ii_update_iattrs(ii, cr, a)
 
 #define uid_eq(uid1, uid2) silofs_uid_eq(uid1, uid2)
 #define uid_isroot(uid)    silofs_uid_isroot(uid)

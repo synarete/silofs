@@ -417,8 +417,8 @@ static int sylc_assign_symval_head(const struct silofs_symlnk_ctx *sl_ctx,
 static void sylc_update_iblocks_by(const struct silofs_symlnk_ctx *sl_ctx,
                                    const struct silofs_vaddr *vaddr)
 {
-	silofs_ii_update_iblocks(sl_ctx->lnk_ii, task_creds(sl_ctx->task),
-	                         vaddr->ltype, 1);
+	silofs_update_iblocks_of(sl_ctx->task, sl_ctx->lnk_ii, vaddr->ltype,
+	                         1);
 }
 
 static void
@@ -476,14 +476,13 @@ static ssize_t symval_length(const struct silofs_strview *symval)
 
 static void sylc_update_post_symlink(const struct silofs_symlnk_ctx *sl_ctx)
 {
-	struct silofs_iattr iattr = { .ia_flags = 0 };
+	struct silofs_iattr iattr = { .ia_size = -1 };
 	struct silofs_inode_info *lnk_ii = sl_ctx->lnk_ii;
-	const struct silofs_creds *creds = task_creds(sl_ctx->task);
 
-	ii_mkiattr(lnk_ii, &iattr);
+	silofs_ii_mkiattr(lnk_ii, &iattr);
 	iattr.ia_size = symval_length(sl_ctx->symval);
 	iattr.ia_flags = SILOFS_IATTR_MCTIME | SILOFS_IATTR_SIZE;
-	ii_update_iattrs(lnk_ii, creds, &iattr);
+	silofs_update_iattrs_of(sl_ctx->task, lnk_ii, &iattr);
 }
 
 static int sylc_do_symlink(const struct silofs_symlnk_ctx *sl_ctx)

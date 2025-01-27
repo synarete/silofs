@@ -738,9 +738,9 @@ int silofs_post_exec_fs(struct silofs_env *env)
 	return ret;
 }
 
-static int map_task_creds(struct silofs_task *task)
+static int map_silofs_task_creds(struct silofs_task *task)
 {
-	const struct silofs_idsmap *idsm = task_idsmap(task);
+	const struct silofs_idsmap *idsm = silofs_task_idsmap(task);
 	const struct silofs_cred *xcred = &task->t_oper.op_creds.host_cred;
 	struct silofs_cred *icred = &task->t_oper.op_creds.fs_cred;
 	int ret = 0;
@@ -760,7 +760,7 @@ static int make_task(struct silofs_env *env, struct silofs_task *task)
 	silofs_task_set_ts(task, true);
 	silofs_task_set_creds(task, args->uid, args->gid, args->umask);
 	task->t_uber_op = true;
-	return map_task_creds(task);
+	return map_silofs_task_creds(task);
 }
 
 static int term_task(struct silofs_task *task, int status)
@@ -1230,7 +1230,7 @@ do_spawn_rootdir(struct silofs_task *task, struct silofs_inode_info **out_ii)
 {
 	struct silofs_inew_params inp;
 
-	silofs_inew_params_of(&inp, task_creds(task), NULL, S_IFDIR | 0755, 0);
+	silofs_inew_params_of(task, NULL, S_IFDIR | 0755, 0, &inp);
 	return silofs_spawn_inode(task, &inp, out_ii);
 }
 

@@ -79,6 +79,7 @@ struct silofs_iattr {
 /* new-inode's create parameters */
 struct silofs_inew_params {
 	struct silofs_creds creds;
+	struct timespec     ts;
 	mode_t              mode;
 	dev_t               rdev;
 	ino_t               parent_ino;

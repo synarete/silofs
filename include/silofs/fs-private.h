@@ -28,9 +28,6 @@
 
 #define task_sbi(t)    silofs_task_sbi(t)
 #define task_lcache(t) silofs_task_lcache(t)
-#define task_repo(t)   silofs_task_repo(t)
-#define task_idsmap(t) silofs_task_idsmap(t)
-#define task_creds(t)  silofs_task_creds(t)
 
 #define uni_incref(uni)  silofs_uni_incref(uni)
 #define uni_decref(uni)  silofs_uni_decref(uni)
@@ -41,7 +38,7 @@
 #define uni_ltype(uni)   silofs_uni_ltype(uni)
 #define uni_riv(uni)     silofs_uni_riv(uni)
 
-#define sbi_env(sbi)   silofs_sbi_env(sbi)
+#define sbi_env(sbi)     silofs_sbi_env(sbi)
 #define sbi_cache(sbi)   silofs_sbi_cache(sbi)
 #define sbi_ulink(sbi)   silofs_sbi_ulink(sbi)
 #define sbi_uaddr(sbi)   silofs_sbi_uaddr(sbi)

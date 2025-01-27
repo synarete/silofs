@@ -391,10 +391,10 @@ void silofs_task_set_ts(struct silofs_task *task, bool rt)
 {
 	int err;
 
-	err = silofs_ts_gettime(&task->t_oper.op_creds.ts, rt);
+	err = silofs_ts_gettime(&task->t_oper.op_ts, rt);
 	if (err && rt) {
 		/* failure in clock_gettime -- fall to non-realtime */
-		silofs_ts_gettime(&task->t_oper.op_creds.ts, !rt);
+		silofs_ts_gettime(&task->t_oper.op_ts, !rt);
 	}
 }
 
@@ -416,31 +416,6 @@ static int task_apply(const struct silofs_task *task, bool all)
 		ret = submitq_apply(task->t_submitq, task->t_apex_id);
 	}
 	return ret;
-}
-
-struct silofs_sb_info *silofs_task_sbi(const struct silofs_task *task)
-{
-	return task->t_env->sbi;
-}
-
-struct silofs_lcache *silofs_task_lcache(const struct silofs_task *task)
-{
-	return task->t_env->base.lcache;
-}
-
-struct silofs_repo *silofs_task_repo(const struct silofs_task *task)
-{
-	return task->t_env->base.repo;
-}
-
-const struct silofs_idsmap *silofs_task_idsmap(const struct silofs_task *task)
-{
-	return task->t_env->base.idsmap;
-}
-
-const struct silofs_creds *silofs_task_creds(const struct silofs_task *task)
-{
-	return &task->t_oper.op_creds;
 }
 
 void silofs_task_init(struct silofs_task *task, struct silofs_env *env)
@@ -575,4 +550,36 @@ int silofs_task_submit(struct silofs_task *task, bool all)
 	ret = task_apply(task, all || task_has_looseq(task));
 	task_purge(task);
 	return ret;
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+struct silofs_sb_info *silofs_task_sbi(const struct silofs_task *task)
+{
+	return task->t_env->sbi;
+}
+
+struct silofs_lcache *silofs_task_lcache(const struct silofs_task *task)
+{
+	return task->t_env->base.lcache;
+}
+
+const struct silofs_idsmap *silofs_task_idsmap(const struct silofs_task *task)
+{
+	return task->t_env->base.idsmap;
+}
+
+const struct silofs_creds *silofs_task_creds(const struct silofs_task *task)
+{
+	return &task->t_oper.op_creds;
+}
+
+const struct silofs_cred *silofs_task_fs_cred(const struct silofs_task *task)
+{
+	return &task->t_oper.op_creds.fs_cred;
+}
+
+const struct timespec *silofs_task_ts(const struct silofs_task *task)
+{
+	return &task->t_oper.op_ts;
 }

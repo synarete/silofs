@@ -184,14 +184,14 @@ static void ii_set_pinned(struct silofs_inode_info *ii)
 static bool
 isowner(const struct silofs_task *task, const struct silofs_inode_info *ii)
 {
-	const struct silofs_creds *creds = task_creds(task);
+	const struct silofs_creds *creds = silofs_task_creds(task);
 
 	return uid_eq(creds->fs_cred.uid, ii_uid(ii));
 }
 
 static bool has_cap_fowner(const struct silofs_task *task)
 {
-	const struct silofs_creds *creds = task_creds(task);
+	const struct silofs_creds *creds = silofs_task_creds(task);
 
 	return silofs_user_cap_fowner(&creds->host_cred);
 }
@@ -296,6 +296,12 @@ static void inewp_set_creds(struct silofs_inew_params *inp,
 	memcpy(&inp->creds, creds, sizeof(inp->creds));
 }
 
+static void
+inewp_set_ts(struct silofs_inew_params *inp, const struct timespec *ts)
+{
+	memcpy(&inp->ts, ts, sizeof(inp->ts));
+}
+
 static void inewp_set_by_parent(struct silofs_inew_params *inp,
                                 const struct silofs_inode_info *parent_dii)
 {
@@ -311,16 +317,17 @@ static void inewp_set_by_parent(struct silofs_inew_params *inp,
 	}
 }
 
-void silofs_inew_params_of(struct silofs_inew_params *inp,
-                           const struct silofs_creds *creds,
+void silofs_inew_params_of(const struct silofs_task *task,
                            const struct silofs_inode_info *parent_dii,
-                           mode_t mode, dev_t rdev)
+                           mode_t mode, dev_t rdev,
+                           struct silofs_inew_params *out_inp)
 {
-	inewp_reset(inp);
-	inp->mode = mode;
-	inp->rdev = rdev;
-	inewp_set_creds(inp, creds);
-	inewp_set_by_parent(inp, parent_dii);
+	inewp_reset(out_inp);
+	out_inp->mode = mode;
+	out_inp->rdev = rdev;
+	inewp_set_creds(out_inp, silofs_task_creds(task));
+	inewp_set_ts(out_inp, silofs_task_ts(task));
+	inewp_set_by_parent(out_inp, parent_dii);
 }
 
 static int spawn_inode(struct silofs_task *task,
@@ -329,7 +336,7 @@ static int spawn_inode(struct silofs_task *task,
 {
 	struct silofs_inew_params inp;
 
-	silofs_inew_params_of(&inp, task_creds(task), parent_dii, mode, rdev);
+	silofs_inew_params_of(task, parent_dii, mode, rdev, &inp);
 	return silofs_spawn_inode(task, &inp, out_ii);
 }
 
@@ -388,7 +395,7 @@ spawn_inode_by_mode(struct silofs_task *task,
 static int do_access(const struct silofs_task *task,
                      const struct silofs_inode_info *ii, int mode)
 {
-	const struct silofs_creds *creds = task_creds(task);
+	const struct silofs_creds *creds = silofs_task_creds(task);
 	const uid_t uid = creds->fs_cred.uid;
 	const gid_t gid = creds->fs_cred.gid;
 	const uid_t i_uid = ii_uid(ii);
@@ -2378,7 +2385,7 @@ int silofs_do_query(struct silofs_task *task, struct silofs_inode_info *ii,
 
 static int check_fsowner(const struct silofs_task *task)
 {
-	const struct silofs_creds *creds = task_creds(task);
+	const struct silofs_creds *creds = silofs_task_creds(task);
 	const uid_t owner_uid = task->t_env->owner_cred.uid;
 
 	return uid_eq(creds->host_cred.uid, owner_uid) ? 0 : -SILOFS_EPERM;

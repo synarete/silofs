@@ -34,9 +34,23 @@ enum silofs_ctlf {
 	SILOFS_CTLF_IDLE    = SILOFS_BIT(7),
 };
 
+/* user-credentials */
+struct silofs_cred {
+	uid_t  uid;
+	gid_t  gid;
+	mode_t umask;
+};
+
+/* credential mapping (host/external to fs/internal) */
+struct silofs_creds {
+	struct silofs_cred host_cred;
+	struct silofs_cred fs_cred;
+};
+
 /* current file-system operation */
 struct silofs_oper {
 	struct silofs_creds op_creds;
+	struct timespec     op_ts;
 	pid_t               op_pid;
 	uint64_t            op_unique;
 	uint32_t            op_code;
@@ -118,16 +132,6 @@ void silofs_task_update_by(struct silofs_task        *task,
 
 int silofs_task_submit(struct silofs_task *task, bool all);
 
-struct silofs_sb_info *silofs_task_sbi(const struct silofs_task *task);
-
-struct silofs_lcache *silofs_task_lcache(const struct silofs_task *task);
-
-struct silofs_repo *silofs_task_repo(const struct silofs_task *task);
-
-const struct silofs_idsmap *silofs_task_idsmap(const struct silofs_task *task);
-
-const struct silofs_creds *silofs_task_creds(const struct silofs_task *task);
-
 void silofs_task_enq_loose(struct silofs_task       *task,
                            struct silofs_inode_info *ii);
 
@@ -138,6 +142,18 @@ void silofs_task_unlock_fs(struct silofs_task *task);
 void silofs_task_rwlock_fs(struct silofs_task *task);
 
 void silofs_task_rwunlock_fs(struct silofs_task *task);
+
+struct silofs_sb_info *silofs_task_sbi(const struct silofs_task *task);
+
+struct silofs_lcache *silofs_task_lcache(const struct silofs_task *task);
+
+const struct silofs_idsmap *silofs_task_idsmap(const struct silofs_task *task);
+
+const struct silofs_creds *silofs_task_creds(const struct silofs_task *task);
+
+const struct silofs_cred *silofs_task_fs_cred(const struct silofs_task *task);
+
+const struct timespec *silofs_task_ts(const struct silofs_task *task);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

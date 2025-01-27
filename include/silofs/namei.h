@@ -32,13 +32,13 @@ int silofs_make_fsnamestr(struct silofs_namestr *nstr, const char *s);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_inew_params_of(struct silofs_inew_params      *inp,
-                           const struct silofs_creds      *creds,
-                           const struct silofs_inode_info *parent_dii,
-                           mode_t mode, dev_t rdev);
-
 int silofs_make_namestr_by(struct silofs_namestr          *nstr,
                            const struct silofs_inode_info *ii, const char *s);
+
+void silofs_inew_params_of(const struct silofs_task       *task,
+                           const struct silofs_inode_info *parent_dii,
+                           mode_t mode, dev_t rdev,
+                           struct silofs_inew_params *out_inp);
 
 int silofs_do_forget(struct silofs_task *task, struct silofs_inode_info *ii,
                      size_t nlookup);

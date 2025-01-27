@@ -60,7 +60,7 @@ static int op_start(struct silofs_task *task)
 	struct silofs_env *env = task->t_env;
 
 	silofs_task_lock_fs(task);
-	env->opstat.op_time = task->t_oper.op_creds.ts.tv_sec;
+	env->opstat.op_time = task->t_oper.op_ts.tv_sec;
 	env->opstat.op_count++;
 	return 0;
 }
@@ -89,7 +89,7 @@ op_try_flush2(struct silofs_task *task, struct silofs_inode_info *ii1,
 static void op_probe_duration(const struct silofs_task *task, int status)
 {
 	const time_t now = silofs_time_now();
-	const time_t beg = task->t_oper.op_creds.ts.tv_sec;
+	const time_t beg = task->t_oper.op_ts.tv_sec;
 	const time_t dif = now - beg;
 	const uint32_t op_code = task->t_oper.op_code;
 	const unsigned long id = task->t_env->opstat.op_count;
@@ -165,7 +165,7 @@ static const struct silofs_sb_info *sbi_of(const struct silofs_task *task)
 
 static const struct silofs_creds *creds_of(const struct silofs_task *task)
 {
-	return &task->t_oper.op_creds;
+	return silofs_task_creds(task);
 }
 
 static struct silofs_creds *creds_of2(struct silofs_task *task)
@@ -238,10 +238,10 @@ static int op_authorize(const struct silofs_task *task)
 static int op_map_uidgid(const struct silofs_task *task, uid_t uid, gid_t gid,
                          uid_t *out_uid, gid_t *out_gid)
 {
+	const struct silofs_idsmap *idsm = silofs_task_idsmap(task);
 	int ret;
 
-	ret = silofs_idsmap_map_uidgid(task_idsmap(task), uid, gid, out_uid,
-	                               out_gid);
+	ret = silofs_idsmap_map_uidgid(idsm, uid, gid, out_uid, out_gid);
 	return (ret == -SILOFS_ENOENT) ? -SILOFS_EPERM : ret;
 }
 
@@ -271,8 +271,8 @@ static int op_rmap_stat(const struct silofs_task *task, struct silofs_stat *st)
 	gid_t gid_out = (gid_t)(-1);
 	int ret;
 
-	ret = silofs_idsmap_rmap_uidgid(task_idsmap(task), uid_in, gid_in,
-	                                &uid_out, &gid_out);
+	ret = silofs_idsmap_rmap_uidgid(silofs_task_idsmap(task), uid_in,
+	                                gid_in, &uid_out, &gid_out);
 	st->st.st_uid = st->stx.stx_uid = uid_out;
 	st->st.st_gid = st->stx.stx_gid = gid_out;
 	return (ret == -SILOFS_ENOENT) ? 0 : ret;

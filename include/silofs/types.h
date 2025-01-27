@@ -19,8 +19,6 @@
 
 #include <unistd.h>
 #include <stdint.h>
-#include <stdbool.h>
-#include <time.h>
 #include <silofs/defs.h>
 #include <silofs/infra.h>
 #include <silofs/str.h>
@@ -29,26 +27,6 @@
 struct silofs_namestr {
 	struct silofs_strview sv;
 	uint64_t              hash;
-};
-
-/* user-credentials */
-struct silofs_cred {
-	uid_t  uid;
-	gid_t  gid;
-	mode_t umask;
-};
-
-/* external-internal credentials + time */
-struct silofs_creds {
-	struct silofs_cred host_cred;
-	struct silofs_cred fs_cred;
-	struct timespec    ts;
-};
-
-/* credentials with time-stamp */
-struct silofs_tcreds {
-	struct timespec     ts;
-	struct silofs_creds cs;
 };
 
 #endif /* SILOFS_TYPES_H_ */

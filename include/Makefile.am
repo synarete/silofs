@@ -58,6 +58,7 @@ nobase_include_HEADERS += silofs/infra/hash.h
 nobase_include_HEADERS += silofs/infra/iovec.h
 nobase_include_HEADERS += silofs/infra/list.h
 nobase_include_HEADERS += silofs/infra/logging.h
+nobase_include_HEADERS += silofs/infra/memalloc.h
 nobase_include_HEADERS += silofs/infra/panic.h
 nobase_include_HEADERS += silofs/infra/pipe.h
 nobase_include_HEADERS += silofs/infra/qalloc.h

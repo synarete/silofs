@@ -15,7 +15,8 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/infra.h>
+#include <silofs/infra/memalloc.h>
+#include <silofs/infra/list.h>
 
 void silofs_list_head_initn(struct silofs_list_head *lh_arr, size_t cnt)
 {

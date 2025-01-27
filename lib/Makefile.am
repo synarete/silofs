@@ -24,6 +24,7 @@ libsilofs_la_SOURCES += infra/iovec.c
 libsilofs_la_SOURCES += infra/hash.c
 libsilofs_la_SOURCES += infra/list.c
 libsilofs_la_SOURCES += infra/logging.c
+libsilofs_la_SOURCES += infra/memalloc.c
 libsilofs_la_SOURCES += infra/panic.c
 libsilofs_la_SOURCES += infra/pipe.c
 libsilofs_la_SOURCES += infra/qalloc.c

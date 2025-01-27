@@ -24,7 +24,7 @@
 
 union silofs_alloc_u {
 	struct silofs_qalloc qalloc;
-	struct silofs_calloc calloc;
+	struct silofs_stdalloc stdalloc;
 };
 
 struct silofs_fs_core {
@@ -92,7 +92,7 @@ static int calc_mem_size(size_t mem_want, size_t *out_mem_size)
 		mem_want = 4 * SILOFS_GIGA;
 	}
 
-	err = silofs_memory_limits(&mem_total, &mem_rlim);
+	err = silofs_memlimits(&mem_total, &mem_rlim);
 	if (err) {
 		return err;
 	}
@@ -167,14 +167,14 @@ static struct silofs_qalloc *fs_ctx_qalloc_of(struct silofs_fs_ctx *fs_ctx)
 	return qalloc;
 }
 
-static struct silofs_calloc *fs_ctx_calloc_of(struct silofs_fs_ctx *fs_ctx)
+static struct silofs_stdalloc *fs_ctx_stdalloc_of(struct silofs_fs_ctx *fs_ctx)
 {
 	struct silofs_alloc *alloc = fs_ctx->alloc;
-	struct silofs_calloc *calloc = NULL;
+	struct silofs_stdalloc *calloc = NULL;
 	const int with_stdalloc = fs_ctx->args.flags & SILOFS_F_STDALLOC;
 
 	if ((alloc != NULL) && with_stdalloc) {
-		calloc = container_of(alloc, struct silofs_calloc, alloc);
+		calloc = container_of(alloc, struct silofs_stdalloc, alloc);
 	}
 	return calloc;
 }
@@ -213,9 +213,9 @@ static void fs_ctx_destroy_qalloc(struct silofs_fs_ctx *fs_ctx)
 	}
 }
 
-static int fs_ctx_setup_calloc(struct silofs_fs_ctx *fs_ctx)
+static int fs_ctx_setup_stdalloc(struct silofs_fs_ctx *fs_ctx)
 {
-	struct silofs_calloc *calloc = NULL;
+	struct silofs_stdalloc *stdalloc = NULL;
 	size_t memsize = 0;
 	int err;
 
@@ -223,22 +223,22 @@ static int fs_ctx_setup_calloc(struct silofs_fs_ctx *fs_ctx)
 	if (err) {
 		return err;
 	}
-	calloc = &fs_ctx->inst->fs_core.c.alloc_u.calloc;
-	err = silofs_calloc_init(calloc, memsize);
+	stdalloc = &fs_ctx->inst->fs_core.c.alloc_u.stdalloc;
+	err = silofs_stdalloc_init(stdalloc, memsize);
 	if (err) {
 		return err;
 	}
-	fs_ctx->alloc = &calloc->alloc;
+	fs_ctx->alloc = &stdalloc->alloc;
 	return 0;
 }
 
-static void fs_ctx_destroy_calloc(struct silofs_fs_ctx *fs_ctx)
+static void fs_ctx_destroy_stdalloc(struct silofs_fs_ctx *fs_ctx)
 {
-	struct silofs_calloc *calloc;
+	struct silofs_stdalloc *stdalloc;
 
 	if (fs_ctx->alloc != NULL) {
-		calloc = fs_ctx_calloc_of(fs_ctx);
-		silofs_calloc_fini(calloc);
+		stdalloc = fs_ctx_stdalloc_of(fs_ctx);
+		silofs_stdalloc_fini(stdalloc);
 		fs_ctx->alloc = NULL;
 	}
 }
@@ -248,7 +248,7 @@ static int fs_ctx_setup_alloc(struct silofs_fs_ctx *fs_ctx)
 	int ret;
 
 	if (fs_ctx->args.flags & SILOFS_F_STDALLOC) {
-		ret = fs_ctx_setup_calloc(fs_ctx);
+		ret = fs_ctx_setup_stdalloc(fs_ctx);
 	} else {
 		ret = fs_ctx_setup_qalloc(fs_ctx);
 	}
@@ -258,7 +258,7 @@ static int fs_ctx_setup_alloc(struct silofs_fs_ctx *fs_ctx)
 static void fs_ctx_destroy_alloc(struct silofs_fs_ctx *fs_ctx)
 {
 	if (fs_ctx->args.flags & SILOFS_F_STDALLOC) {
-		fs_ctx_destroy_calloc(fs_ctx);
+		fs_ctx_destroy_stdalloc(fs_ctx);
 	} else {
 		fs_ctx_destroy_qalloc(fs_ctx);
 	}

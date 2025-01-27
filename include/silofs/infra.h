@@ -35,6 +35,7 @@
 #include <silofs/infra/pipe.h>
 #include <silofs/infra/random.h>
 #include <silofs/infra/socket.h>
+#include <silofs/infra/memalloc.h>
 #include <silofs/infra/thread.h>
 #include <silofs/infra/time.h>
 #include <silofs/infra/qalloc.h>

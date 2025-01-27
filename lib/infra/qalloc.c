@@ -110,15 +110,6 @@ static bool is_slab_size(size_t size)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void apply_allocf(void *ptr, size_t size, int flags)
-{
-	if (likely(ptr != NULL) && (flags & SILOFS_ALLOCF_BZERO)) {
-		memset(ptr, 0, size);
-	}
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 static struct silofs_qalloc *alloc_to_qalloc(const struct silofs_alloc *alloc)
 {
 	const struct silofs_qalloc *qal;
@@ -148,34 +139,6 @@ qal_stat(const struct silofs_alloc *alloc, struct silofs_alloc_stat *out_stat)
 	const struct silofs_qalloc *qal = alloc_to_qalloc(alloc);
 
 	silofs_qalloc_stat(qal, out_stat);
-}
-
-void *silofs_memalloc(struct silofs_alloc *alloc, size_t size, int flags)
-{
-	void *ptr = NULL;
-
-	if (likely(alloc->malloc_fn && size)) {
-		ptr = alloc->malloc_fn(alloc, size, flags);
-	}
-	return ptr;
-}
-
-void silofs_memfree(struct silofs_alloc *alloc, void *ptr, size_t size,
-                    int flags)
-{
-	if (likely(ptr && size && alloc->free_fn)) {
-		alloc->free_fn(alloc, ptr, size, flags);
-	}
-}
-
-void silofs_memstat(const struct silofs_alloc *alloc,
-                    struct silofs_alloc_stat *out_stat)
-{
-	if (alloc->stat_fn != NULL) {
-		alloc->stat_fn(alloc, out_stat);
-	} else {
-		memset(out_stat, 0, sizeof(*out_stat));
-	}
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -1365,13 +1328,6 @@ static size_t qalloc_get_nbytes_use(const struct silofs_qalloc *qal)
 	return silofs_atomic_getul(&qal->nbytes_use);
 }
 
-static void qalloc_apply_flags(const struct silofs_qalloc *qal, void *ptr,
-                               size_t size, int flags)
-{
-	apply_allocf(ptr, size, flags);
-	silofs_unused(qal);
-}
-
 static int qalloc_malloc(struct silofs_qalloc *qal, size_t nbytes, int flags,
                          void **out_ptr)
 {
@@ -1391,7 +1347,7 @@ static int qalloc_malloc(struct silofs_qalloc *qal, size_t nbytes, int flags,
 		return err;
 	}
 	qalloc_add_nbytes_use(qal, nbytes);
-	qalloc_apply_flags(qal, *out_ptr, nbytes, flags);
+	silofs_unused(flags);
 	return 0;
 }
 
@@ -1492,9 +1448,7 @@ static bool qalloc_may_demask_on_free(const struct silofs_qalloc *qal)
 static void qalloc_pre_free(const struct silofs_qalloc *qal, void *ptr,
                             size_t nbytes, int flags)
 {
-	if (flags) {
-		qalloc_apply_flags(qal, ptr, nbytes, flags);
-	} else if (qalloc_may_demask_on_free(qal)) {
+	if (!flags && qalloc_may_demask_on_free(qal)) {
 		memset(ptr, (int)qal->magic, silofs_min(512, nbytes));
 	}
 }
@@ -1628,166 +1582,4 @@ void silofs_qalloc_stat(const struct silofs_qalloc *qal,
 	out_stat->nbytes_max = qal->qpool.data.msz;
 	out_stat->nbytes_use = qalloc_get_nbytes_use(qal);
 	out_stat->nbytes_ext = qal->qpool.meta.msz;
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-/* memory utilities */
-
-void silofs_memzero(void *s, size_t n)
-{
-	memset(s, 0, n);
-}
-
-void silofs_memffff(void *s, size_t n)
-{
-	memset(s, 0xff, n);
-}
-
-static size_t alignment_of(size_t sz)
-{
-	const size_t al_min = 64;
-	const size_t al_max = 65536;
-	size_t al;
-
-	if (sz <= al_min) {
-		al = al_min;
-	} else if (sz >= al_max) {
-		al = al_max;
-	} else {
-		al = 1 << (64 - silofs_clz_u64(sz - 1));
-	}
-	return al;
-}
-
-static int cstd_memalign(size_t sz, void **out_mem)
-{
-	return posix_memalign(out_mem, alignment_of(sz), sz);
-}
-
-static void cstd_memfree(void *mem, size_t sz)
-{
-	if (mem && sz) {
-		free(mem);
-	}
-}
-
-int silofs_zmalloc(size_t sz, void **out_mem)
-{
-	int err;
-
-	err = cstd_memalign(sz, out_mem);
-	if (err) {
-		return err;
-	}
-	silofs_memzero(*out_mem, sz);
-	return 0;
-}
-
-void silofs_zfree(void *mem, size_t sz)
-{
-	silofs_memzero(mem, sz);
-	cstd_memfree(mem, sz);
-}
-
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-
-static struct silofs_calloc *alloc_to_calloc(const struct silofs_alloc *alloc)
-{
-	const struct silofs_calloc *cal;
-
-	cal = silofs_container_of2(alloc, struct silofs_calloc, alloc);
-	return silofs_unconst(cal);
-}
-
-static void calloc_apply_flags(const struct silofs_calloc *cal, void *ptr,
-                               size_t size, int flags)
-{
-	apply_allocf(ptr, size, flags);
-	silofs_unused(cal);
-}
-
-static void *calloc_malloc(struct silofs_calloc *cal, size_t size, int flags)
-{
-	void *ptr = NULL;
-	int err;
-
-	err = cstd_memalign(size, &ptr);
-	if (err) {
-		return NULL;
-	}
-	silofs_atomic_addul(&cal->nbytes_use, size);
-	calloc_apply_flags(cal, ptr, size, flags);
-	return ptr;
-}
-
-static void
-calloc_free(struct silofs_calloc *cal, void *ptr, size_t size, int flags)
-{
-	if ((ptr != NULL) && (size > 0)) {
-		calloc_apply_flags(cal, ptr, size, flags);
-		cstd_memfree(ptr, size);
-		silofs_atomic_subul(&cal->nbytes_use, size);
-	}
-}
-
-static void
-calloc_stat(struct silofs_calloc *cal, struct silofs_alloc_stat *out_stat)
-{
-	silofs_memzero(out_stat, sizeof(*out_stat));
-	out_stat->nbytes_max = silofs_atomic_getul(&cal->nbytes_max);
-	out_stat->nbytes_use = silofs_atomic_getul(&cal->nbytes_use);
-}
-
-static void *cal_malloc(struct silofs_alloc *alloc, size_t size, int flags)
-{
-	return calloc_malloc(alloc_to_calloc(alloc), size, flags);
-}
-
-static void
-cal_free(struct silofs_alloc *alloc, void *ptr, size_t size, int flags)
-{
-	calloc_free(alloc_to_calloc(alloc), ptr, size, flags);
-}
-
-static void
-cal_stat(const struct silofs_alloc *alloc, struct silofs_alloc_stat *out_stat)
-{
-	calloc_stat(alloc_to_calloc(alloc), out_stat);
-}
-
-int silofs_calloc_init(struct silofs_calloc *cal, size_t memsize)
-{
-	silofs_memzero(cal, sizeof(*cal));
-	cal->alloc.malloc_fn = cal_malloc;
-	cal->alloc.free_fn = cal_free;
-	cal->alloc.stat_fn = cal_stat;
-	cal->nbytes_max = memsize;
-	return 0;
-}
-
-int silofs_calloc_fini(struct silofs_calloc *cal)
-{
-	silofs_memzero(cal, sizeof(*cal));
-	return 0;
-}
-
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-
-static int getmemlimit(size_t *out_lim)
-{
-	struct rlimit rlim = { .rlim_cur = 0 };
-	int err;
-
-	err = silofs_sys_getrlimit(RLIMIT_AS, &rlim);
-	*out_lim = err ? 0 : rlim.rlim_cur;
-	return err;
-}
-
-int silofs_memory_limits(size_t *out_phy, size_t *out_as)
-{
-	const long page_size = silofs_sc_page_size();
-	const long phys_pages = silofs_sc_phys_pages();
-
-	*out_phy = (size_t)(page_size * phys_pages);
-	return getmemlimit(out_as);
 }

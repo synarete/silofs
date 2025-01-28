@@ -97,11 +97,26 @@ static int check_name(const struct silofs_strview *sv)
 	return 0;
 }
 
+static int
+make_namestr(struct silofs_namestr *nstr, const struct silofs_strview *sv)
+{
+	int err;
+
+	err = check_name(sv);
+	if (err) {
+		return err;
+	}
+	silofs_strview_init_by(&nstr->sv, sv);
+	nstr->hash = 0;
+	return 0;
+}
+
 int silofs_make_namestr(struct silofs_namestr *nstr, const char *s)
 {
-	silofs_strview_init(&nstr->sv, s);
-	nstr->hash = 0;
-	return check_name(&nstr->sv);
+	struct silofs_strview sv;
+
+	silofs_strview_init(&sv, s);
+	return make_namestr(nstr, &sv);
 }
 
 static int check_fsname(const struct silofs_strview *sv)
@@ -133,6 +148,87 @@ int silofs_make_fsnamestr(struct silofs_namestr *nstr, const char *s)
 	if (err) {
 		return err;
 	}
+	return 0;
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static uint64_t hash256_to_u64(const struct silofs_hash256 *hash)
+{
+	const uint8_t *h = hash->hash;
+
+	STATICASSERT_EQ(ARRAY_SIZE(hash->hash), 4 * sizeof(uint64_t));
+
+	return silofs_u8b_as_u64(h) ^ silofs_u8b_as_u64(h + 8) ^
+	       silofs_u8b_as_u64(h + 16) ^ silofs_u8b_as_u64(h + 24);
+}
+
+static uint64_t
+namehash_by_sha256(const struct silofs_strview *sv,
+                   const struct silofs_mdigest *md, uint64_t seed)
+{
+	struct silofs_hash256 sha256;
+
+	silofs_sha256_of(md, sv->str, sv->len, &sha256);
+	return seed ^ hash256_to_u64(&sha256);
+}
+
+static uint64_t
+namehash_by_xxh64(const struct silofs_strview *sv, uint64_t seed)
+{
+	return silofs_hash_xxh64(sv->str, sv->len, seed);
+}
+
+static int
+namehash_of(const struct silofs_strview *sv, const struct silofs_mdigest *md,
+            enum silofs_namehfn nhfn, uint64_t seed, uint64_t *out_hash)
+{
+	switch (nhfn) {
+	case SILOFS_NAMEHASH_SHA256:
+		*out_hash = namehash_by_sha256(sv, md, seed);
+		break;
+	case SILOFS_NAMEHASH_XXH64:
+		*out_hash = namehash_by_xxh64(sv, seed);
+		break;
+	default:
+		return -SILOFS_EINVAL;
+	}
+	return 0;
+}
+
+int silofs_make_hnamestr(struct silofs_namestr *nstr,
+                         const struct silofs_strview *sv,
+                         const struct silofs_mdigest *md,
+                         enum silofs_namehfn nhfn, uint64_t seed)
+{
+	struct silofs_strbuf sbuf;
+	struct silofs_strview asv;
+	const size_t alen = 8 * div_round_up(sv->len, 8);
+	uint64_t hash = 0;
+	int err;
+
+	STATICASSERT_EQ(sizeof(sbuf.str) % 8, 0);
+	STATICASSERT_EQ(sizeof(sbuf.str), SILOFS_NAME_MAX + 1);
+
+	err = check_name(sv);
+	if (err) {
+		return err;
+	}
+	if (unlikely(sv->len >= sizeof(sbuf.str))) {
+		return -SILOFS_EINVAL;
+	}
+	err = make_namestr(nstr, sv);
+	if (err) {
+		return err;
+	}
+	silofs_strbuf_bzero(&sbuf, alen);
+	silofs_strbuf_setup(&sbuf, sv);
+	silofs_strview_initn(&asv, sbuf.str, alen);
+	err = namehash_of(&asv, md, nhfn, seed, &hash);
+	if (err) {
+		return err;
+	}
+	nstr->hash = hash;
 	return 0;
 }
 

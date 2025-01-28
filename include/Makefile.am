@@ -95,7 +95,6 @@ nobase_include_HEADERS += silofs/super.h
 nobase_include_HEADERS += silofs/symlink.h
 nobase_include_HEADERS += silofs/syscall.h
 nobase_include_HEADERS += silofs/task.h
-nobase_include_HEADERS += silofs/types.h
 nobase_include_HEADERS += silofs/uber.h
 nobase_include_HEADERS += silofs/uidgid.h
 nobase_include_HEADERS += silofs/ustage.h

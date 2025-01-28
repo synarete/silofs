@@ -18,7 +18,6 @@
 #define SILOFS_FSENV_H_
 
 #include <silofs/macros.h>
-#include <silofs/types.h>
 #include <silofs/boot.h>
 #include <iconv.h>
 

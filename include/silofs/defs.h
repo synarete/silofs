@@ -407,6 +407,12 @@ enum silofs_height {
 	SILOFS_HEIGHT_LAST, /* keep last */
 };
 
+/* name-to-hash functions */
+enum silofs_namehfn {
+	SILOFS_NAMEHASH_SHA256 = 1,
+	SILOFS_NAMEHASH_XXH64  = 2,
+};
+
 /* super-block flags */
 enum silofs_superf {
 	SILOFS_SUPERF_NONE   = 0x00,
@@ -423,12 +429,6 @@ enum silofs_inodef {
 enum silofs_dirf {
 	SILOFS_DIRF_NONE      = 0x00,
 	SILOFS_DIRF_NAME_UTF8 = 0x01,
-};
-
-/* dir-inode hash-functions for names */
-enum silofs_dirhfn {
-	SILOFS_DIRHASH_SHA256 = 1,
-	SILOFS_DIRHASH_XXH64  = 2,
 };
 
 /* extended attributes known classes */

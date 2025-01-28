@@ -23,7 +23,6 @@
 
 #include <silofs/defs.h>
 #include <silofs/infra.h>
-#include <silofs/types.h>
 #include <silofs/lnodes.h>
 
 #define task_sbi(t)    silofs_task_sbi(t)

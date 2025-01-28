@@ -24,11 +24,22 @@ struct silofs_ioc_query;
 struct silofs_ioc_iterfs;
 struct silofs_inew_params;
 
+/* name-string: a pair of string-view and (optional) 64-bits hash */
+struct silofs_namestr {
+	struct silofs_strview sv;
+	uint64_t              hash;
+};
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_make_namestr(struct silofs_namestr *nstr, const char *s);
 
 int silofs_make_fsnamestr(struct silofs_namestr *nstr, const char *s);
+
+int silofs_make_hnamestr(struct silofs_namestr       *nstr,
+                         const struct silofs_strview *sv,
+                         const struct silofs_mdigest *md,
+                         enum silofs_namehfn nhfn, uint64_t seed);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

@@ -19,7 +19,6 @@
 
 #include <silofs/infra.h>
 #include <silofs/addr.h>
-#include <silofs/types.h>
 
 #define SILOFS_SQENT_NREFS_MAX (32)
 

@@ -19,7 +19,6 @@
 
 #include <silofs/infra.h>
 #include <silofs/str.h>
-#include <silofs/types.h>
 #include <silofs/task.h>
 
 /* call-back context for list extended-attributes operations */

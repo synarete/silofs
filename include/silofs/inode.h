@@ -18,7 +18,6 @@
 #define SILOFS_INODE_H_
 
 #include <unistd.h>
-#include <silofs/types.h>
 
 struct silofs_task;
 

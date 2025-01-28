@@ -19,7 +19,6 @@
 
 #include <silofs/infra.h>
 #include <silofs/addr.h>
-#include <silofs/types.h>
 
 struct silofs_task;
 struct silofs_visitor;

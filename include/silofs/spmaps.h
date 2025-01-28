@@ -20,7 +20,6 @@
 #include <silofs/defs.h>
 #include <silofs/infra.h>
 #include <silofs/addr.h>
-#include <silofs/types.h>
 
 struct silofs_spnode_info;
 

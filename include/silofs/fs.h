@@ -33,7 +33,6 @@
 #include <silofs/btree.h>
 #include <silofs/bstore.h>
 
-#include <silofs/types.h>
 #include <silofs/uidgid.h>
 #include <silofs/idsmap.h>
 #include <silofs/uber.h>

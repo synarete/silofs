@@ -20,711 +20,6 @@
 #include <silofs/execlib.h>
 #include <sys/resource.h>
 
-#define ROUND_TO_4K(n) SILOFS_ROUND_TO(n, (4 * SILOFS_KILO))
-
-union silofs_alloc_u {
-	struct silofs_qalloc qalloc;
-	struct silofs_stdalloc stdalloc;
-};
-
-struct silofs_fs_core {
-	struct silofs_password passwd;
-	union silofs_alloc_u alloc_u;
-	struct silofs_repo repo;
-	struct silofs_pcache pcache;
-	struct silofs_lcache lcache;
-	struct silofs_submitq submitq;
-	struct silofs_idsmap idsmap;
-	struct silofs_bstore bstore;
-	struct silofs_env env;
-	struct silofs_flusher flusher;
-};
-
-union silofs_fs_core_u {
-	struct silofs_fs_core c;
-	uint8_t dat[ROUND_TO_4K(sizeof(struct silofs_fs_core))];
-};
-
-struct silofs_fs_inst {
-	union silofs_fs_core_u fs_core;
-};
-
-struct silofs_fs_ctx {
-	struct silofs_args args;
-	struct silofs_fs_inst *inst;
-	struct silofs_password *password;
-	struct silofs_alloc *alloc;
-	struct silofs_repo *repo;
-	struct silofs_pcache *pcache;
-	struct silofs_lcache *lcache;
-	struct silofs_submitq *submitq;
-	struct silofs_flusher *flusher;
-	struct silofs_idsmap *idsmap;
-	struct silofs_bstore *bstore;
-	struct silofs_env *env;
-	struct silofs_fuseq *fuseq;
-};
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static size_t align_down(size_t sz, size_t align)
-{
-	return (sz / align) * align;
-}
-
-static uint64_t minu64(uint64_t x, uint64_t y, uint64_t z)
-{
-	return silofs_min(silofs_min(x, y), z);
-}
-
-static int calc_mem_size(size_t mem_want, size_t *out_mem_size)
-{
-	const size_t mem_floor = SILOFS_UGIGA / 4;
-	const size_t mem_glim = 64 * SILOFS_UGIGA;
-	size_t mem_total = 0;
-	size_t mem_rlim = 0;
-	size_t mem_ceil = 0;
-	size_t mem_uget = 0;
-	int err;
-
-	/* zero implies default value */
-	if (mem_want == 0) {
-		mem_want = 4 * SILOFS_GIGA;
-	}
-
-	err = silofs_memlimits(&mem_total, &mem_rlim);
-	if (err) {
-		return err;
-	}
-	if (mem_total < mem_floor) {
-		return -SILOFS_ENOMEM;
-	}
-	if (mem_rlim < mem_floor) {
-		return -SILOFS_ENOMEM;
-	}
-	mem_ceil = minu64(mem_glim, mem_rlim, mem_total / 4);
-	mem_uget = silofs_clamp_u64(mem_want, mem_floor, mem_ceil);
-	*out_mem_size = align_down(mem_uget, 2 * SILOFS_UMEGA);
-	return 0;
-}
-
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-
-static struct silofs_fs_inst *fs_inst_of(struct silofs_env *env)
-{
-	struct silofs_fs_core *fs_core;
-	union silofs_fs_core_u *fs_core_u;
-
-	fs_core = container_of(env, struct silofs_fs_core, env);
-	fs_core_u = container_of(fs_core, union silofs_fs_core_u, c);
-
-	return container_of(fs_core_u, struct silofs_fs_inst, fs_core);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static int check_bootpath(const struct silofs_args *env_args)
-{
-	const struct silofs_bootref *bref = &env_args->bref;
-	struct silofs_bootpath bootpath;
-
-	return silofs_bootpath_setup(&bootpath, bref->repodir, bref->name);
-}
-
-static int check_password(const struct silofs_args *env_args)
-{
-	struct silofs_password passwd;
-
-	return silofs_password_setup(&passwd, env_args->bref.passwd);
-}
-
-static int check_env_args(const struct silofs_args *env_args)
-{
-	int err;
-
-	err = check_bootpath(env_args);
-	if (err) {
-		return err;
-	}
-	err = check_password(env_args);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static struct silofs_qalloc *fs_ctx_qalloc_of(struct silofs_fs_ctx *fs_ctx)
-{
-	struct silofs_alloc *alloc = fs_ctx->alloc;
-	struct silofs_qalloc *qalloc = NULL;
-	const int with_stdalloc = fs_ctx->args.flags & SILOFS_F_STDALLOC;
-
-	if ((alloc != NULL) && !with_stdalloc) {
-		qalloc = container_of(alloc, struct silofs_qalloc, alloc);
-	}
-	return qalloc;
-}
-
-static struct silofs_stdalloc *fs_ctx_stdalloc_of(struct silofs_fs_ctx *fs_ctx)
-{
-	struct silofs_alloc *alloc = fs_ctx->alloc;
-	struct silofs_stdalloc *calloc = NULL;
-	const int with_stdalloc = fs_ctx->args.flags & SILOFS_F_STDALLOC;
-
-	if ((alloc != NULL) && with_stdalloc) {
-		calloc = container_of(alloc, struct silofs_stdalloc, alloc);
-	}
-	return calloc;
-}
-
-static int fs_ctx_setup_qalloc(struct silofs_fs_ctx *fs_ctx)
-{
-	struct silofs_qalloc *qalloc = NULL;
-	size_t memsize = 0;
-	enum silofs_qallocf qaflags = SILOFS_QALLOCF_NOFAIL;
-	int err;
-
-	err = calc_mem_size(fs_ctx->args.memwant, &memsize);
-	if (err) {
-		return err;
-	}
-	if (fs_ctx->args.flags & SILOFS_F_PEDANTIC) {
-		qaflags |= SILOFS_QALLOCF_DEMASK;
-	}
-	qalloc = &fs_ctx->inst->fs_core.c.alloc_u.qalloc;
-	err = silofs_qalloc_init(qalloc, memsize, qaflags);
-	if (err) {
-		return err;
-	}
-	fs_ctx->alloc = &qalloc->alloc;
-	return 0;
-}
-
-static void fs_ctx_destroy_qalloc(struct silofs_fs_ctx *fs_ctx)
-{
-	struct silofs_qalloc *qalloc = NULL;
-
-	if (fs_ctx->alloc != NULL) {
-		qalloc = fs_ctx_qalloc_of(fs_ctx);
-		silofs_qalloc_fini(qalloc);
-		fs_ctx->alloc = NULL;
-	}
-}
-
-static int fs_ctx_setup_stdalloc(struct silofs_fs_ctx *fs_ctx)
-{
-	struct silofs_stdalloc *stdalloc = NULL;
-	size_t memsize = 0;
-	int err;
-
-	err = calc_mem_size(fs_ctx->args.memwant, &memsize);
-	if (err) {
-		return err;
-	}
-	stdalloc = &fs_ctx->inst->fs_core.c.alloc_u.stdalloc;
-	err = silofs_stdalloc_init(stdalloc, memsize);
-	if (err) {
-		return err;
-	}
-	fs_ctx->alloc = &stdalloc->alloc;
-	return 0;
-}
-
-static void fs_ctx_destroy_stdalloc(struct silofs_fs_ctx *fs_ctx)
-{
-	struct silofs_stdalloc *stdalloc;
-
-	if (fs_ctx->alloc != NULL) {
-		stdalloc = fs_ctx_stdalloc_of(fs_ctx);
-		silofs_stdalloc_fini(stdalloc);
-		fs_ctx->alloc = NULL;
-	}
-}
-
-static int fs_ctx_setup_alloc(struct silofs_fs_ctx *fs_ctx)
-{
-	int ret;
-
-	if (fs_ctx->args.flags & SILOFS_F_STDALLOC) {
-		ret = fs_ctx_setup_stdalloc(fs_ctx);
-	} else {
-		ret = fs_ctx_setup_qalloc(fs_ctx);
-	}
-	return ret;
-}
-
-static void fs_ctx_destroy_alloc(struct silofs_fs_ctx *fs_ctx)
-{
-	if (fs_ctx->args.flags & SILOFS_F_STDALLOC) {
-		fs_ctx_destroy_stdalloc(fs_ctx);
-	} else {
-		fs_ctx_destroy_qalloc(fs_ctx);
-	}
-}
-
-static void fs_ctx_make_repo_base(const struct silofs_fs_ctx *fs_ctx,
-                                  struct silofs_repo_base *re_base)
-{
-	silofs_memzero(re_base, sizeof(*re_base));
-	re_base->alloc = fs_ctx->alloc;
-	if (fs_ctx->args.flags & SILOFS_F_RDONLY) {
-		re_base->flags |= SILOFS_REPOF_RDONLY;
-	}
-	silofs_strview_init(&re_base->repodir, fs_ctx->args.bref.repodir);
-}
-
-static int fs_ctx_setup_repo(struct silofs_fs_ctx *fs_ctx)
-{
-	struct silofs_repo_base re_base = { .flags = 0 };
-	struct silofs_repo *repo = NULL;
-	int err;
-
-	repo = &fs_ctx->inst->fs_core.c.repo;
-	fs_ctx_make_repo_base(fs_ctx, &re_base);
-	err = silofs_repo_init(repo, &re_base);
-	if (err) {
-		return err;
-	}
-	fs_ctx->repo = repo;
-	return 0;
-}
-
-static void fs_ctx_destroy_repo(struct silofs_fs_ctx *fs_ctx)
-{
-	if (fs_ctx->repo != NULL) {
-		silofs_repo_fini(fs_ctx->repo);
-		fs_ctx->repo = NULL;
-	}
-}
-
-static int fs_ctx_setup_pcache(struct silofs_fs_ctx *fs_ctx)
-{
-	struct silofs_pcache *pcache = NULL;
-	int err;
-
-	pcache = &fs_ctx->inst->fs_core.c.pcache;
-	err = silofs_pcache_init(pcache, fs_ctx->alloc);
-	if (err) {
-		return err;
-	}
-	fs_ctx->pcache = pcache;
-	return 0;
-}
-
-static void fs_ctx_destroy_pcache(struct silofs_fs_ctx *fs_ctx)
-{
-	if (fs_ctx->pcache != NULL) {
-		silofs_pcache_fini(fs_ctx->pcache);
-		fs_ctx->pcache = NULL;
-	}
-}
-
-static int fs_ctx_setup_lcache(struct silofs_fs_ctx *fs_ctx)
-{
-	struct silofs_lcache *lcache = NULL;
-	int err;
-
-	lcache = &fs_ctx->inst->fs_core.c.lcache;
-	err = silofs_lcache_init(lcache, fs_ctx->alloc);
-	if (err) {
-		return err;
-	}
-	fs_ctx->lcache = lcache;
-	return 0;
-}
-
-static void fs_ctx_destroy_lcache(struct silofs_fs_ctx *fs_ctx)
-{
-	if (fs_ctx->lcache != NULL) {
-		silofs_lcache_fini(fs_ctx->lcache);
-		fs_ctx->lcache = NULL;
-	}
-}
-
-static int fs_ctx_setup_submitq(struct silofs_fs_ctx *fs_ctx)
-{
-	struct silofs_submitq *submitq = NULL;
-	int err;
-
-	submitq = &fs_ctx->inst->fs_core.c.submitq;
-	err = silofs_submitq_init(submitq, fs_ctx->alloc);
-	if (err) {
-		return err;
-	}
-	fs_ctx->submitq = submitq;
-	return 0;
-}
-
-static void fs_ctx_destroy_submitq(struct silofs_fs_ctx *fs_ctx)
-{
-	if (fs_ctx->submitq != NULL) {
-		silofs_submitq_fini(fs_ctx->submitq);
-		fs_ctx->submitq = NULL;
-	}
-}
-
-static int fs_ctx_setup_flusher(struct silofs_fs_ctx *fs_ctx)
-{
-	struct silofs_flusher *flusher = NULL;
-	int err;
-
-	flusher = &fs_ctx->inst->fs_core.c.flusher;
-	err = silofs_flusher_init(flusher, fs_ctx->submitq);
-	if (err) {
-		return err;
-	}
-	fs_ctx->flusher = flusher;
-	return 0;
-}
-
-static void fs_ctx_destroy_flusher(struct silofs_fs_ctx *fs_ctx)
-{
-	if (fs_ctx->flusher != NULL) {
-		silofs_flusher_fini(fs_ctx->flusher);
-		fs_ctx->flusher = NULL;
-	}
-}
-
-static int fs_ctx_setup_idsmap(struct silofs_fs_ctx *fs_ctx)
-{
-	const struct silofs_ugids *ids = &fs_ctx->args.ids;
-	struct silofs_idsmap *idsmap = NULL;
-	int allow_hostids;
-	int err;
-
-	idsmap = &fs_ctx->inst->fs_core.c.idsmap;
-	allow_hostids = fs_ctx->args.flags & SILOFS_F_ALLOWHOSTIDS;
-	err = silofs_idsmap_init(idsmap, fs_ctx->alloc, allow_hostids > 0);
-	if (err) {
-		return err;
-	}
-	err = silofs_idsmap_populate_uids(idsmap, ids);
-	if (err) {
-		silofs_idsmap_fini(idsmap);
-		return err;
-	}
-	err = silofs_idsmap_populate_gids(idsmap, ids);
-	if (err) {
-		silofs_idsmap_fini(idsmap);
-		return err;
-	}
-	fs_ctx->idsmap = idsmap;
-	return 0;
-}
-
-static void fs_ctx_destroy_idsmap(struct silofs_fs_ctx *fs_ctx)
-{
-	if (fs_ctx->idsmap != NULL) {
-		silofs_idsmap_clear(fs_ctx->idsmap);
-		silofs_idsmap_fini(fs_ctx->idsmap);
-		fs_ctx->idsmap = NULL;
-	}
-}
-
-static int fs_ctx_setup_bstore(struct silofs_fs_ctx *fs_ctx)
-{
-	struct silofs_bstore *bstore;
-	int err;
-
-	bstore = &fs_ctx->inst->fs_core.c.bstore;
-	err = silofs_bstore_init(bstore, fs_ctx->pcache, fs_ctx->repo);
-	if (err) {
-		return err;
-	}
-	fs_ctx->bstore = bstore;
-	return 0;
-}
-
-static void fs_ctx_destroy_bstore(struct silofs_fs_ctx *fs_ctx)
-{
-	if (fs_ctx->bstore != NULL) {
-		silofs_bstore_fini(fs_ctx->bstore);
-		fs_ctx->bstore = NULL;
-	}
-}
-
-static int fs_ctx_setup_env(struct silofs_fs_ctx *fs_ctx)
-{
-	const struct silofs_env_base fse_base = {
-		.alloc = fs_ctx->alloc,
-		.pcache = fs_ctx->pcache,
-		.lcache = fs_ctx->lcache,
-		.repo = fs_ctx->repo,
-		.submitq = fs_ctx->submitq,
-		.flusher = fs_ctx->flusher,
-		.idsmap = fs_ctx->idsmap,
-		.bstore = fs_ctx->bstore,
-		.fuseq = NULL,
-	};
-	struct silofs_env *env;
-	int err;
-
-	env = &fs_ctx->inst->fs_core.c.env;
-	err = silofs_env_init(env, &fs_ctx->args, &fse_base);
-	if (err) {
-		return err;
-	}
-	err = silofs_env_setup(env, fs_ctx->password);
-	if (err) {
-		return err;
-	}
-	fs_ctx->env = env;
-	return 0;
-}
-
-static void fs_ctx_destroy_env(struct silofs_fs_ctx *fs_ctx)
-{
-	if (fs_ctx->env != NULL) {
-		silofs_env_fini(fs_ctx->env);
-		fs_ctx->env = NULL;
-	}
-}
-
-static bool has_ctlf(const struct silofs_env *env, enum silofs_flags ctlf)
-{
-	return silofs_env_hasflag(env, ctlf);
-}
-
-static bool has_with_fuse(const struct silofs_env *env)
-{
-	return has_ctlf(env, SILOFS_F_WITHFUSE);
-}
-
-static bool run_with_fuse(const struct silofs_env *env)
-{
-	const struct silofs_fuseq *fuseq = env->base.fuseq;
-
-	return (fuseq != NULL) && has_with_fuse(env);
-}
-
-static void
-fs_ctx_bind_fuseq(struct silofs_fs_ctx *fs_ctx, struct silofs_fuseq *fuseq)
-{
-	struct silofs_env *env = fs_ctx->env;
-
-	fs_ctx->fuseq = fuseq;
-	if (env == NULL) {
-		return;
-	}
-	env->base.fuseq = fuseq;
-	if (fuseq == NULL) {
-		return;
-	}
-	fuseq->fq_writeback_cache = has_ctlf(env, SILOFS_F_WRITEBACK);
-	fuseq->fq_may_splice = has_ctlf(env, SILOFS_F_MAYSPLICE);
-}
-
-static int fs_ctx_setup_fuseq(struct silofs_fs_ctx *fs_ctx)
-{
-	struct silofs_fuseq *fq = NULL;
-	int err;
-
-	if (!has_with_fuse(fs_ctx->env)) {
-		return 0;
-	}
-	err = silofs_fuseq_new(fs_ctx->alloc, &fq);
-	if (err) {
-		return err;
-	}
-	fs_ctx_bind_fuseq(fs_ctx, fq);
-	return 0;
-}
-
-static void fs_ctx_destroy_fuseq(struct silofs_fs_ctx *fs_ctx)
-{
-
-	if (fs_ctx->fuseq != NULL) {
-		silofs_fuseq_del(fs_ctx->fuseq, fs_ctx->alloc);
-		fs_ctx_bind_fuseq(fs_ctx, NULL);
-	}
-}
-
-static int fs_ctx_setup_password(struct silofs_fs_ctx *fs_ctx)
-{
-	struct silofs_password *passwd;
-	int err;
-
-	passwd = &fs_ctx->inst->fs_core.c.passwd;
-	err = silofs_password_setup(passwd, fs_ctx->args.bref.passwd);
-	if (err) {
-		return err;
-	}
-	fs_ctx->password = passwd;
-	return 0;
-}
-
-static void fs_ctx_destroy_passwd(struct silofs_fs_ctx *fs_ctx)
-{
-	if (fs_ctx->password != NULL) {
-		silofs_password_reset(fs_ctx->password);
-		fs_ctx->password = NULL;
-	}
-}
-
-static void fs_ctx_destroy(struct silofs_fs_ctx *fs_ctx)
-{
-	fs_ctx_destroy_fuseq(fs_ctx);
-	fs_ctx_destroy_env(fs_ctx);
-	fs_ctx_destroy_idsmap(fs_ctx);
-	fs_ctx_destroy_flusher(fs_ctx);
-	fs_ctx_destroy_submitq(fs_ctx);
-	fs_ctx_destroy_lcache(fs_ctx);
-	fs_ctx_destroy_bstore(fs_ctx);
-	fs_ctx_destroy_pcache(fs_ctx);
-	fs_ctx_destroy_repo(fs_ctx);
-	fs_ctx_destroy_alloc(fs_ctx);
-	fs_ctx_destroy_passwd(fs_ctx);
-}
-
-static int fs_ctx_setup(struct silofs_fs_ctx *fs_ctx)
-{
-	int err;
-
-	err = fs_ctx_setup_password(fs_ctx);
-	if (err) {
-		goto out_err;
-	}
-	err = fs_ctx_setup_alloc(fs_ctx);
-	if (err) {
-		goto out_err;
-	}
-	err = fs_ctx_setup_repo(fs_ctx);
-	if (err) {
-		goto out_err;
-	}
-	err = fs_ctx_setup_pcache(fs_ctx);
-	if (err) {
-		goto out_err;
-	}
-	err = fs_ctx_setup_bstore(fs_ctx);
-	if (err) {
-		goto out_err;
-	}
-	err = fs_ctx_setup_lcache(fs_ctx);
-	if (err) {
-		goto out_err;
-	}
-	err = fs_ctx_setup_submitq(fs_ctx);
-	if (err) {
-		goto out_err;
-	}
-	err = fs_ctx_setup_flusher(fs_ctx);
-	if (err) {
-		goto out_err;
-	}
-	err = fs_ctx_setup_idsmap(fs_ctx);
-	if (err) {
-		goto out_err;
-	}
-	err = fs_ctx_setup_env(fs_ctx);
-	if (err) {
-		goto out_err;
-	}
-	err = fs_ctx_setup_fuseq(fs_ctx);
-	if (err) {
-		goto out_err;
-	}
-	return 0;
-out_err:
-	fs_ctx_destroy(fs_ctx);
-	return err;
-}
-
-static void
-fs_ctx_init(struct silofs_fs_ctx *fs_ctx, struct silofs_fs_inst *fs_inst,
-            const struct silofs_args *env_args)
-{
-	memset(fs_ctx, 0, sizeof(*fs_ctx));
-	memcpy(&fs_ctx->args, env_args, sizeof(fs_ctx->args));
-	fs_ctx->inst = fs_inst;
-}
-
-static void
-fs_ctx_init_from(struct silofs_fs_ctx *fs_ctx, struct silofs_fs_inst *fs_inst)
-{
-	struct silofs_env *env = &fs_inst->fs_core.c.env;
-
-	fs_ctx_init(fs_ctx, fs_inst, &env->args);
-	fs_ctx->password = &fs_inst->fs_core.c.passwd;
-	fs_ctx->alloc = env->base.alloc;
-	fs_ctx->repo = env->base.repo;
-	fs_ctx->pcache = env->base.pcache;
-	fs_ctx->lcache = env->base.lcache;
-	fs_ctx->submitq = env->base.submitq;
-	fs_ctx->flusher = env->base.flusher;
-	fs_ctx->idsmap = env->base.idsmap;
-	fs_ctx->bstore = env->base.bstore;
-	fs_ctx->env = env;
-	fs_ctx->fuseq = env->base.fuseq;
-}
-
-static int new_fs_inst(const struct silofs_args *env_args,
-                       struct silofs_fs_inst **out_fs_inst)
-{
-	struct silofs_fs_ctx fs_ctx = { .inst = NULL };
-	const size_t msz = sizeof(*fs_ctx.inst);
-	void *mem = NULL;
-	int err;
-
-	err = silofs_zmalloc(msz, &mem);
-	if (err) {
-		return err;
-	}
-
-	fs_ctx_init(&fs_ctx, mem, env_args);
-	err = fs_ctx_setup(&fs_ctx);
-	if (err) {
-		silofs_zfree(mem, msz);
-		return err;
-	}
-	*out_fs_inst = fs_ctx.inst;
-	return 0;
-}
-
-int silofs_new_env(const struct silofs_args *env_args,
-                   struct silofs_env **out_env)
-{
-	struct silofs_fs_inst *fs_inst = NULL;
-	int err = 0;
-
-	STATICASSERT_LE(sizeof(*fs_inst), 64 * SILOFS_KILO);
-
-	err = check_env_args(env_args);
-	if (err) {
-		goto out;
-	}
-	err = new_fs_inst(env_args, &fs_inst);
-	if (err) {
-		goto out;
-	}
-	*out_env = &fs_inst->fs_core.c.env;
-out:
-	silofs_burnstack();
-	return err;
-}
-
-static void del_fs_inst(struct silofs_fs_inst *fs_inst)
-{
-	struct silofs_fs_ctx fs_ctx = { .inst = NULL };
-	const size_t msz = sizeof(*fs_inst);
-	void *mem = fs_inst;
-
-	fs_ctx_init_from(&fs_ctx, fs_inst);
-	fs_ctx_destroy(&fs_ctx);
-	silofs_zfree(mem, msz);
-}
-
-void silofs_del_env(struct silofs_env *env)
-{
-	struct silofs_fs_inst *fs_inst = NULL;
-
-	fs_inst = fs_inst_of(env);
-	del_fs_inst(fs_inst);
-	silofs_burnstack();
-}
-
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 int silofs_post_exec_fs(struct silofs_env *env)
@@ -754,7 +49,7 @@ static int map_silofs_task_creds(struct silofs_task *task)
 
 static int make_task(struct silofs_env *env, struct silofs_task *task)
 {
-	const struct silofs_args *args = &env->args;
+	const struct silofs_args *args = env->base.args;
 
 	silofs_task_init(task, env);
 	silofs_task_set_ts(task, true);
@@ -856,10 +151,11 @@ int silofs_close_repo(struct silofs_env *env)
 
 static int do_mount_and_exec(struct silofs_env *env)
 {
+	const struct silofs_args *args = env->base.args;
 	struct silofs_fuseq *fuseq = env->base.fuseq;
 	int err;
 
-	err = silofs_fuseq_mount(fuseq, env, env->args.bref.mntdir);
+	err = silofs_fuseq_mount(fuseq, env, args->bref.mntdir);
 	if (err) {
 		return err;
 	}
@@ -870,24 +166,24 @@ static int do_mount_and_exec(struct silofs_env *env)
 	return 0;
 }
 
+static bool run_with_fuse(const struct silofs_env *env)
+{
+	const struct silofs_fuseq *fuseq = env->base.fuseq;
+
+	return (fuseq != NULL) && silofs_env_hasflag(env, SILOFS_F_WITHFUSE);
+}
+
 int silofs_run_fs(struct silofs_env *env)
 {
-	struct silofs_fuseq *fuseq = NULL;
-	int err = -SILOFS_EINVAL;
-	bool do_term = false;
+	struct silofs_fuseq *fuseq = env->base.fuseq;
+	int err;
 
 	if (!run_with_fuse(env)) {
-		goto out;
+		return -SILOFS_EINVAL;
 	}
-	fuseq = env->base.fuseq;
 	err = silofs_fuseq_update(fuseq);
-	if (err) {
-		goto out;
-	}
-	do_term = true;
-	err = do_mount_and_exec(env);
-out:
-	if (do_term) {
+	if (!err) {
+		err = do_mount_and_exec(env);
 		silofs_fuseq_term(fuseq);
 	}
 	return err;
@@ -1007,7 +303,7 @@ static int check_superblock(const struct silofs_env *env)
 		return err;
 	}
 	fossil = silofs_sb_test_flags(sb, SILOFS_SUPERF_FOSSIL);
-	rdonly = env->args.flags & SILOFS_F_RDONLY;
+	rdonly = env->base.args->flags & SILOFS_F_RDONLY;
 	if (fossil && !rdonly) {
 		log_warn("read-only fs: sb-flags=%08x", (int)sb->sb_flags);
 		return -SILOFS_EROFS;
@@ -1289,7 +585,8 @@ static int check_fs_capacity(size_t cap_size)
 
 static int check_want_capacity(const struct silofs_env *env)
 {
-	const size_t cap_want = env->args.capacity;
+	const struct silofs_args *args = env->base.args;
+	const size_t cap_want = args->capacity;
 	int err;
 
 	err = check_fs_capacity(cap_want);
@@ -1304,8 +601,9 @@ static int check_want_capacity(const struct silofs_env *env)
 
 static int check_owner_ids(const struct silofs_env *env)
 {
-	const uid_t owner_uid = env->args.uid;
-	const gid_t owner_gid = env->args.gid;
+	const struct silofs_args *args = env->base.args;
+	const uid_t owner_uid = args->uid;
+	const gid_t owner_gid = args->gid;
 	uid_t suid;
 	gid_t sgid;
 	int err;
@@ -1329,6 +627,7 @@ static size_t calc_aligned_fs_cap(size_t cap_want)
 
 static int format_umeta(struct silofs_env *env)
 {
+	const struct silofs_args *args = env->base.args;
 	size_t fs_cap;
 	int err;
 
@@ -1336,7 +635,7 @@ static int format_umeta(struct silofs_env *env)
 	if (err) {
 		return err;
 	}
-	fs_cap = calc_aligned_fs_cap(env->args.capacity);
+	fs_cap = calc_aligned_fs_cap(args->capacity);
 	err = silofs_env_format_super(env, fs_cap);
 	if (err) {
 		return err;

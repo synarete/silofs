@@ -60,16 +60,16 @@ env_bind_sbi(struct silofs_env *env, struct silofs_sb_info *sbi_new)
 
 static void env_update_owner(struct silofs_env *env)
 {
-	const struct silofs_args *env_args = &env->args;
+	const struct silofs_args *args = env->base.args;
 
-	env->owner_cred.uid = env_args->uid;
-	env->owner_cred.gid = env_args->gid;
-	env->owner_cred.umask = env_args->umask;
+	env->owner_cred.uid = args->uid;
+	env->owner_cred.gid = args->gid;
+	env->owner_cred.umask = args->umask;
 }
 
 static void env_update_mntflags(struct silofs_env *env)
 {
-	const enum silofs_flags flags = env->args.flags;
+	const enum silofs_flags flags = env->base.args->flags;
 	unsigned long ms_flag_with = 0;
 	unsigned long ms_flag_dont = 0;
 
@@ -104,8 +104,8 @@ static void env_update_mntflags(struct silofs_env *env)
 
 static int env_update_base_caddr(struct silofs_env *env)
 {
-	const struct silofs_args *env_args = &env->args;
-	const struct silofs_caddr *caddr = &env_args->bref.caddr;
+	const struct silofs_args *args = env->base.args;
+	const struct silofs_caddr *caddr = &args->bref.caddr;
 	int ret = 0;
 
 	switch (caddr->ctype) {
@@ -154,10 +154,8 @@ static void env_init_opstat(struct silofs_env *env)
 }
 
 static void
-env_init_commons(struct silofs_env *env, const struct silofs_args *args,
-                 const struct silofs_env_base *base)
+env_init_commons(struct silofs_env *env, const struct silofs_env_base *base)
 {
-	memcpy(&env->args, args, sizeof(env->args));
 	memcpy(&env->base, base, sizeof(env->base));
 	silofs_caddr_reset(&env->pack_caddr);
 	silofs_lsid_reset(&env->sb_lsid);
@@ -262,12 +260,11 @@ static void env_fini_iconv(struct silofs_env *env)
 	}
 }
 
-int silofs_env_init(struct silofs_env *env, const struct silofs_args *args,
-                    const struct silofs_env_base *base)
+int silofs_env_init(struct silofs_env *env, const struct silofs_env_base *base)
 {
 	int err;
 
-	env_init_commons(env, args, base);
+	env_init_commons(env, base);
 	env_init_opstat(env);
 
 	err = env_update_by_env_args(env);
@@ -344,7 +341,7 @@ int silofs_env_setup(struct silofs_env *env, const struct silofs_password *pw)
 
 bool silofs_env_hasflag(const struct silofs_env *env, enum silofs_flags f)
 {
-	return (env->args.flags & f) == f;
+	return (env->base.args->flags & f) == f;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

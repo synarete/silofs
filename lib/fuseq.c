@@ -4292,7 +4292,7 @@ static void fqw_setup_self_task(const struct silofs_fuseq_worker *fqw,
 {
 	const struct silofs_fuseq *fq = fqw_fuseq(fqw);
 	const struct silofs_env *env = fq->fq_env;
-	const struct silofs_args *args = &env->args;
+	const struct silofs_args *args = env->base.args;
 
 	silofs_task_set_creds(task, args->uid, args->gid, args->umask);
 	silofs_task_set_ts(task, false);

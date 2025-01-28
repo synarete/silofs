@@ -485,8 +485,8 @@ bool silofs_sem_ntimedwait(struct silofs_sem *sem, time_t nsec)
 
 static void burnstack_recursively(int depth, int nbytes)
 {
-	char buf[512];
-	const int cnt = silofs_min_i32((int)sizeof(buf), nbytes);
+	char buf[1020];
+	const int32_t cnt = silofs_min_i32((int)sizeof(buf), nbytes);
 
 	if (cnt > 0) {
 		memset(buf, 0xF4 ^ depth, (size_t)cnt);

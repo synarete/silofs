@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_FSENV_H_
-#define SILOFS_FSENV_H_
+#ifndef SILOFS_ENV_H_
+#define SILOFS_ENV_H_
 
 #include <silofs/macros.h>
 #include <silofs/boot.h>
@@ -65,14 +65,15 @@ struct silofs_env_opstat {
 
 /* base members of env-block (provided) */
 struct silofs_env_base {
+	struct silofs_args    *args;
 	struct silofs_alloc   *alloc;
 	struct silofs_repo    *repo;
 	struct silofs_pcache  *pcache;
+	struct silofs_bstore  *bstore;
 	struct silofs_lcache  *lcache;
 	struct silofs_submitq *submitq;
 	struct silofs_flusher *flusher;
 	struct silofs_idsmap  *idsmap;
-	struct silofs_bstore  *bstore;
 	struct silofs_fuseq   *fuseq;
 };
 
@@ -92,7 +93,6 @@ struct silofs_env_locks {
 
 /* top-level environment object */
 struct silofs_env {
-	struct silofs_args       args;
 	struct silofs_env_base   base;
 	struct silofs_env_boot   boot;
 	struct silofs_env_locks  locks;
@@ -114,7 +114,7 @@ struct silofs_env {
 
 void silofs_require_proper_defs(void);
 
-int silofs_env_init(struct silofs_env *env, const struct silofs_args *args,
+int silofs_env_init(struct silofs_env            *env,
                     const struct silofs_env_base *base);
 
 void silofs_env_fini(struct silofs_env *env);
@@ -162,4 +162,4 @@ void silofs_env_set_pack_caddr(struct silofs_env         *env,
 void silofs_env_set_sb_ulink(struct silofs_env         *env,
                              const struct silofs_ulink *ulink);
 
-#endif /* SILOFS_FSENV_H_ */
+#endif /* SILOFS_ENV_H_ */

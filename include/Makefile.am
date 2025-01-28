@@ -37,6 +37,7 @@ nobase_include_HEADERS += silofs/defs.h
 nobase_include_HEADERS += silofs/dir.h
 nobase_include_HEADERS += silofs/encdec.h
 nobase_include_HEADERS += silofs/env.h
+nobase_include_HEADERS += silofs/envi.h
 nobase_include_HEADERS += silofs/errors.h
 nobase_include_HEADERS += silofs/execlib.h
 nobase_include_HEADERS += silofs/file.h

@@ -63,6 +63,7 @@ libsilofs_la_SOURCES += delfs.c
 libsilofs_la_SOURCES += dir.c
 libsilofs_la_SOURCES += encdec.c
 libsilofs_la_SOURCES += env.c
+libsilofs_la_SOURCES += envi.c
 libsilofs_la_SOURCES += execlib.c
 libsilofs_la_SOURCES += file.c
 libsilofs_la_SOURCES += flush.c

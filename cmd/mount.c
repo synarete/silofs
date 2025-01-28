@@ -51,7 +51,7 @@ struct cmd_mount_in_args {
 	char *mntpoint_real;
 	char *uhelper;
 	char *password;
-	enum silofs_flags flags;
+	int flags;
 	bool explicit_log_level;
 	bool systemd_run;
 	bool no_prompt;
@@ -99,17 +99,19 @@ static void cmd_mount_getsubopts(struct cmd_mount_ctx *ctx)
 	char tok_noexec[] = "noexec";
 	char tok_hostids[] = "hostids";
 	char tok_passwd[] = "passwd";
-	char *const toks[] = { [CMD_MOUNT_OPT_RO] = tok_ro,
-		               [CMD_MOUNT_OPT_RW] = tok_rw,
-		               [CMD_MOUNT_OPT_DEV] = tok_dev,
-		               [CMD_MOUNT_OPT_NODEV] = tok_nodev,
-		               [CMD_MOUNT_OPT_SUID] = tok_suid,
-		               [CMD_MOUNT_OPT_NOSUID] = tok_nosuid,
-		               [CMD_MOUNT_OPT_EXEC] = tok_exec,
-		               [CMD_MOUNT_OPT_NOEXEC] = tok_noexec,
-		               [CMD_MOUNT_OPT_HOSTIDS] = tok_hostids,
-		               [CMD_MOUNT_OPT_PASSWD] = tok_passwd,
-		               NULL };
+	char *const toks[] = {
+		[CMD_MOUNT_OPT_RO] = tok_ro,           //
+		[CMD_MOUNT_OPT_RW] = tok_rw,           //
+		[CMD_MOUNT_OPT_DEV] = tok_dev,         //
+		[CMD_MOUNT_OPT_NODEV] = tok_nodev,     //
+		[CMD_MOUNT_OPT_SUID] = tok_suid,       //
+		[CMD_MOUNT_OPT_NOSUID] = tok_nosuid,   //
+		[CMD_MOUNT_OPT_EXEC] = tok_exec,       //
+		[CMD_MOUNT_OPT_NOEXEC] = tok_noexec,   //
+		[CMD_MOUNT_OPT_HOSTIDS] = tok_hostids, //
+		[CMD_MOUNT_OPT_PASSWD] = tok_passwd,   //
+		NULL                                   //
+	};
 	char *sopt = NULL;
 	char *sval = NULL;
 	int skey = 0;
@@ -516,8 +518,7 @@ static void cmd_mount_update_log_params(const struct cmd_mount_ctx *ctx)
  */
 #define silofs_log_iarg(fmt_, ...) silofs_log_info("inarg: " fmt_, __VA_ARGS__)
 
-static int
-cmd_mount_testf(const struct cmd_mount_ctx *ctx, enum silofs_flags mask)
+static int cmd_mount_testf(const struct cmd_mount_ctx *ctx, int mask)
 {
 	return ((ctx->in_args.flags & mask) == mask);
 }

@@ -17,7 +17,7 @@
 #include <silofs/configs.h>
 #include <silofs/fs.h>
 #include <silofs/fuseq.h>
-#include <silofs/execlib.h>
+#include <silofs/api.h>
 #include <sys/resource.h>
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

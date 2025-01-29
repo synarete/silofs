@@ -26,6 +26,8 @@
 #include <silofs/crypt.h>
 #include <silofs/addr.h>
 
+#include <silofs/api.h>
+
 #include <silofs/repo.h>
 #include <silofs/pvlogs.h>
 #include <silofs/pnodes.h>

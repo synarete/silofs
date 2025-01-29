@@ -17,7 +17,6 @@
 #include <silofs/configs.h>
 #include <silofs/addr.h>
 #include <silofs/fs.h>
-#include <silofs/execlib.h>
 #include <linux/limits.h>
 #include <sys/types.h>
 #include <limits.h>

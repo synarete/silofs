@@ -25,6 +25,6 @@
 #include <silofs/str.h>
 #include <silofs/addr.h>
 #include <silofs/fs.h>
-#include <silofs/execlib.h>
+#include <silofs/api.h>
 
 #endif /* SILOFS_H_ */

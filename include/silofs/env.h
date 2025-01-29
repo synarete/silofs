@@ -18,41 +18,9 @@
 #define SILOFS_ENV_H_
 
 #include <silofs/macros.h>
+#include <silofs/api.h>
 #include <silofs/boot.h>
 #include <iconv.h>
-
-/* top-level control flags */
-enum silofs_flags {
-	SILOFS_F_PEDANTIC     = SILOFS_BIT(0),
-	SILOFS_F_RDONLY       = SILOFS_BIT(1),
-	SILOFS_F_NOEXEC       = SILOFS_BIT(2),
-	SILOFS_F_NOSUID       = SILOFS_BIT(3),
-	SILOFS_F_NODEV        = SILOFS_BIT(4),
-	SILOFS_F_WITHFUSE     = SILOFS_BIT(5),
-	SILOFS_F_NLOOKUP      = SILOFS_BIT(6),
-	SILOFS_F_WRITEBACK    = SILOFS_BIT(7),
-	SILOFS_F_MAYSPLICE    = SILOFS_BIT(8),
-	SILOFS_F_ALLOWOTHER   = SILOFS_BIT(9),
-	SILOFS_F_ALLOWADMIN   = SILOFS_BIT(10),
-	SILOFS_F_ALLOWXACL    = SILOFS_BIT(11),
-	SILOFS_F_ALLOWHOSTIDS = SILOFS_BIT(12),
-	SILOFS_F_ASYNCWR      = SILOFS_BIT(13),
-	SILOFS_F_LAZYTIME     = SILOFS_BIT(14),
-	SILOFS_F_STDALLOC     = SILOFS_BIT(15),
-};
-
-/* input arguments */
-struct silofs_args {
-	struct silofs_bootref bref;
-	struct silofs_ugids   ids;
-	enum silofs_flags     flags;
-	uid_t                 uid;
-	gid_t                 gid;
-	pid_t                 pid;
-	mode_t                umask;
-	size_t                capacity;
-	size_t                memwant;
-};
 
 /* top-level operations counters/stats */
 struct silofs_env_opstat {

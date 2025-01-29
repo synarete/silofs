@@ -20,17 +20,7 @@
 #include <unistd.h>
 #include <stdbool.h>
 
-/* user-id host-to-fs bidirectional-mapping */
-struct silofs_uids {
-	uid_t host_uid;
-	uid_t fs_uid;
-};
-
-/* group-id host-to-fs bidirectional-mapping */
-struct silofs_gids {
-	gid_t host_gid;
-	gid_t fs_gid;
-};
+struct silofs_ugids;
 
 /* bi-directional id-mapping hash-table (external-internal) */
 struct silofs_idsmap {
@@ -44,24 +34,6 @@ struct silofs_idsmap {
 	size_t                   idm_ghcap;
 	size_t                   idm_gsize;
 	bool                     idm_allow_hotids;
-};
-
-/* file-system's input user-ids list */
-struct silofs_users_ids {
-	struct silofs_uids *uids;
-	size_t              nuids;
-};
-
-/* file-system's input group-ids list */
-struct silofs_groups_ids {
-	struct silofs_gids *gids;
-	size_t              ngids;
-};
-
-/* users & groups id-mappings */
-struct silofs_ugids {
-	struct silofs_users_ids  users;
-	struct silofs_groups_ids groups;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

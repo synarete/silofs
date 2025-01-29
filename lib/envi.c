@@ -15,9 +15,9 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
+#include <silofs/api.h>
 #include <silofs/fs.h>
 #include <silofs/fuseq.h>
-#include <silofs/execlib.h>
 #include <silofs/envi.h>
 #include <sys/resource.h>
 

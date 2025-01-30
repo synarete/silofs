@@ -123,6 +123,9 @@ static int check_fsname(const struct silofs_strview *sv)
 {
 	int err;
 
+	if (!sv->len || (sv->str == NULL)) {
+		return -SILOFS_EILLSTR;
+	}
 	if (sv->str[0] == '.') {
 		return -SILOFS_EILLSTR;
 	}

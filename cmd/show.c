@@ -278,8 +278,9 @@ static void cmd_show_proc(struct cmd_show_ctx *ctx)
 static void cmd_show_spacestats(const struct cmd_show_ctx *ctx,
                                 const struct silofs_spacestats *spst)
 {
-	const char *prefix = "";
+	const char *prefix = NULL;
 
+	prefix = "";
 	cmd_show_time(ctx, "btime", spst->btime);
 	cmd_show_time(ctx, "ctime", spst->ctime);
 	cmd_show_counter(ctx, prefix, "capacity", (ssize_t)spst->capacity);

@@ -21,7 +21,7 @@ void cmd_new_env(const struct silofs_args *env_args, struct silofs_env **p_env)
 {
 	int err;
 
-	err = silofs_new_env(env_args, p_env);
+	err = silofs_create_env(env_args, p_env);
 	if (err) {
 		cmd_die(err, "failed to create fs instance");
 	}
@@ -30,7 +30,7 @@ void cmd_new_env(const struct silofs_args *env_args, struct silofs_env **p_env)
 void cmd_del_env(struct silofs_env **p_env)
 {
 	if (p_env && *p_env) {
-		silofs_del_env(*p_env);
+		silofs_destroy_env(*p_env);
 		*p_env = NULL;
 	}
 }
@@ -39,11 +39,11 @@ void cmd_del_env(struct silofs_env **p_env)
 
 static char *cmd_repodir_name(const struct silofs_env *env)
 {
-	const struct silofs_args *args = env->base.args;
-	const struct silofs_bootref *bref = &args->bref;
+	struct silofs_args args;
 	char *ret = NULL;
 
-	cmd_join_path(bref->repodir, bref->name, &ret);
+	silofs_getargs(env, &args);
+	cmd_join_path(args.bref.repodir, args.bref.name, &ret);
 	return ret;
 }
 

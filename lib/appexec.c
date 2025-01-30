@@ -17,7 +17,7 @@
 #include <silofs/configs.h>
 #include <silofs/fs.h>
 #include <silofs/fuseq.h>
-#include <silofs/api.h>
+#include <silofs/appexec.h>
 #include <sys/resource.h>
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -1063,6 +1063,11 @@ int silofs_restore_fs(struct silofs_env *env, struct silofs_caddr *out_caddr)
 	return err;
 }
 
+void silofs_getargs(const struct silofs_env *env, struct silofs_args *out_args)
+{
+	memcpy(out_args, env->base.args, sizeof(*out_args));
+}
+
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 #define SILOFS_NOFILES_MIN (512)
@@ -1259,4 +1264,28 @@ int silofs_init_once(void)
 	g_initlib_once_done = true;
 out:
 	return ret;
+}
+
+void silofs_getversions(struct silofs_versions *out_vers)
+{
+	out_vers->silofs_version = silofs_version.string;
+	out_vers->gcrypt_version = silofs_gcrypt_version();
+	out_vers->zstd_version = silofs_zstd_version();
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_remap_status_code(int status)
+{
+	int ret = status;
+
+	if (ret) {
+		ret = abs(status);
+		if (ret >= SILOFS_ERRBASE2) {
+			ret = EUCLEAN;
+		} else if (ret >= SILOFS_ERRBASE) {
+			ret = (ret - SILOFS_ERRBASE);
+		}
+	}
+	return -ret;
 }

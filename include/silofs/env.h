@@ -18,7 +18,7 @@
 #define SILOFS_ENV_H_
 
 #include <silofs/macros.h>
-#include <silofs/api.h>
+#include <silofs/appexec.h>
 #include <silofs/boot.h>
 #include <iconv.h>
 

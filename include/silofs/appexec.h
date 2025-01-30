@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_API_H_
-#define SILOFS_API_H_
+#ifndef SILOFS_APPEXEC_H_
+#define SILOFS_APPEXEC_H_
 
 #include <silofs/infra.h>
 #include <silofs/addr.h>
@@ -85,16 +85,58 @@ struct silofs_args {
 	size_t                memwant;
 };
 
+/* in-use versions */
+struct silofs_versions {
+	const char *silofs_version;
+	const char *gcrypt_version;
+	const char *zstd_version;
+};
+
+/* space accounting per sub-type */
+struct silofs_spacegauges {
+	ssize_t nsuper;
+	ssize_t nspnode;
+	ssize_t nspleaf;
+	ssize_t ninode;
+	ssize_t nxanode;
+	ssize_t ndtnode;
+	ssize_t nsymval;
+	ssize_t nftnode;
+	ssize_t ndata1k;
+	ssize_t ndata4k;
+	ssize_t ndatabk;
+};
+
+/* space accounting per sub-kind + sub-type */
+struct silofs_spacestats {
+	time_t                    btime;
+	time_t                    ctime;
+	size_t                    capacity;
+	size_t                    vspacesize;
+	uint64_t                  generation;
+	struct silofs_spacegauges lsegs;
+	struct silofs_spacegauges bks;
+	struct silofs_spacegauges objs;
+};
+
+/* file-system' internal cache stats */
+struct silofs_cachestats {
+	size_t nalloc_bytes;
+	size_t ncache_unodes;
+	size_t ncache_vnodes;
+};
+
 /* file-system's main control object */
 struct silofs_env;
-struct silofs_cachestats;
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_init_once(void);
 
-int silofs_new_env(const struct silofs_args *args,
-                   struct silofs_env       **out_env);
+int silofs_create_env(const struct silofs_args *args,
+                      struct silofs_env       **out_env);
 
-void silofs_del_env(struct silofs_env *env);
+void silofs_destroy_env(struct silofs_env *env);
 
 int silofs_format_repo(struct silofs_env *env);
 
@@ -136,4 +178,13 @@ int silofs_restore_fs(struct silofs_env *env, struct silofs_caddr *out_caddr);
 int silofs_poke_archive(struct silofs_env         *env,
                         const struct silofs_caddr *caddr);
 
-#endif /* SILOFS_API_H_ */
+void silofs_getargs(const struct silofs_env *env,
+                    struct silofs_args      *out_args);
+
+int silofs_remap_status_code(int status);
+
+int silofs_check_fsname(const char *s);
+
+void silofs_getversions(struct silofs_versions *out_vers);
+
+#endif /* SILOFS_APPEXEC_H_ */

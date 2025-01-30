@@ -38,23 +38,6 @@
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_remap_status_code(int status)
-{
-	int ret = status;
-
-	if (ret) {
-		ret = abs(status);
-		if (ret >= SILOFS_ERRBASE2) {
-			ret = EUCLEAN;
-		} else if (ret >= SILOFS_ERRBASE) {
-			ret = (ret - SILOFS_ERRBASE);
-		}
-	}
-	return -ret;
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 static int op_start(struct silofs_task *task)
 {
 	struct silofs_env *env = task->t_env;

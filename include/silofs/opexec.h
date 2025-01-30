@@ -20,8 +20,6 @@
 #include <sys/stat.h>
 #include <sys/statvfs.h>
 
-int silofs_remap_status_code(int status);
-
 int silofs_exec_forget(struct silofs_task *task, ino_t ino, size_t nlookup);
 
 int silofs_exec_statfs(struct silofs_task *task, ino_t ino,

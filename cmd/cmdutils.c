@@ -22,6 +22,9 @@
 #include <sys/resource.h>
 #include <sys/capability.h>
 #include <sys/prctl.h>
+#include <stdlib.h>
+#include <stdarg.h>
+#include <stdio.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <syslog.h>
@@ -65,10 +68,9 @@ void cmd_check_repopath(const char *arg_val)
 
 void cmd_check_fsname(const char *arg_val)
 {
-	struct silofs_namestr nstr;
 	int err;
 
-	err = silofs_make_fsnamestr(&nstr, arg_val);
+	err = silofs_check_fsname(arg_val);
 	if (err) {
 		cmd_die(err, "illegal file-system name: %s", arg_val);
 	}
@@ -1077,7 +1079,10 @@ void cmd_reset_ioc(union silofs_ioc_u *ioc)
 
 void cmd_trace_versions(void)
 {
-	silofs_log_info("silofs version: %s", silofs_version.string);
-	silofs_log_info("gcrypt version: %s", silofs_gcrypt_version());
-	silofs_log_info("zstd version: %s", silofs_zstd_version());
+	struct silofs_versions vers;
+
+	silofs_getversions(&vers);
+	silofs_log_info("silofs version: %s", vers.silofs_version);
+	silofs_log_info("gcrypt version: %s", vers.gcrypt_version);
+	silofs_log_info("zstd version: %s", vers.zstd_version);
 }

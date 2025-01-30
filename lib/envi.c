@@ -15,13 +15,51 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/api.h>
+#include <silofs/appexec.h>
 #include <silofs/fs.h>
 #include <silofs/fuseq.h>
-#include <silofs/envi.h>
 #include <sys/resource.h>
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+/* env initialization-state flags */
+enum silofs_env_initf {
+	SILOFS_ENVIF_QALLOC = SILOFS_BIT(0),
+	SILOFS_ENVIF_STDALLOC = SILOFS_BIT(1),
+	SILOFS_ENVIF_REPO = SILOFS_BIT(2),
+	SILOFS_ENVIF_PCACHE = SILOFS_BIT(3),
+	SILOFS_ENVIF_LCACHE = SILOFS_BIT(4),
+	SILOFS_ENVIF_SUBMITQ = SILOFS_BIT(5),
+	SILOFS_ENVIF_IDSMAP = SILOFS_BIT(6),
+	SILOFS_ENVIF_BSTORE = SILOFS_BIT(7),
+	SILOFS_ENVIF_FLUSHER = SILOFS_BIT(8),
+	SILOFS_ENVIF_FUSEQ = SILOFS_BIT(9),
+	SILOFS_ENVIF_ENV = SILOFS_BIT(10),
+};
+
+/* memory allocator of choice */
+union silofs_alloc_u {
+	struct silofs_qalloc qalloc;
+	struct silofs_stdalloc stdalloc;
+};
+
+/* actual environment instance object (internal) */
+struct silofs_env_inst {
+	struct silofs_password passwd;
+	struct silofs_args args;
+	union silofs_alloc_u alloc_u;
+	struct silofs_repo repo;
+	struct silofs_pcache pcache;
+	struct silofs_lcache lcache;
+	struct silofs_submitq submitq;
+	struct silofs_idsmap idsmap;
+	struct silofs_bstore bstore;
+	struct silofs_flusher flusher;
+	struct silofs_env env;
+	struct silofs_alloc *alloc;
+	struct silofs_fuseq *fuseq;
+	long initf;
+};
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static size_t align_down(size_t sz, size_t align)
 {
@@ -596,7 +634,8 @@ static void envi_del(struct silofs_env_inst *envi)
 	silofs_zfree(mem, msz);
 }
 
-int silofs_new_env(const struct silofs_args *args, struct silofs_env **out_env)
+int silofs_create_env(const struct silofs_args *args,
+                      struct silofs_env **out_env)
 {
 	struct silofs_env_inst *envi = NULL;
 	int err = 0;
@@ -622,7 +661,7 @@ static struct silofs_env_inst *env_inst_of(struct silofs_env *env)
 	return container_of(env, struct silofs_env_inst, env);
 }
 
-void silofs_del_env(struct silofs_env *env)
+void silofs_destroy_env(struct silofs_env *env)
 {
 	struct silofs_env_inst *envi = NULL;
 

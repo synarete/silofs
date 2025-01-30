@@ -151,6 +151,14 @@ int silofs_make_fsnamestr(struct silofs_namestr *nstr, const char *s)
 	return 0;
 }
 
+int silofs_check_fsname(const char *s)
+{
+	struct silofs_strview sv;
+
+	silofs_strview_init(&sv, s);
+	return check_fsname(&sv);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static uint64_t hash256_to_u64(const struct silofs_hash256 *hash)

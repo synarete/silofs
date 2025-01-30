@@ -23,10 +23,9 @@
 #include <silofs/ioctls.h>
 #include <silofs/infra.h>
 #include <silofs/str.h>
-#include <silofs/crypt.h>
 #include <silofs/addr.h>
 
-#include <silofs/api.h>
+#include <silofs/appexec.h>
 
 #include <silofs/repo.h>
 #include <silofs/pvlogs.h>

@@ -113,7 +113,7 @@ static void ute_init(struct ut_env *ute, struct ut_args *args)
 static void ute_cleanup(struct ut_env *ute)
 {
 	if (ute->env != NULL) {
-		silofs_del_env(ute->env);
+		silofs_destroy_env(ute->env);
 		ute->env = NULL;
 	}
 }
@@ -150,7 +150,7 @@ static void ute_setup(struct ut_env *ute)
 {
 	int err;
 
-	err = silofs_new_env(&ute->args->env_args, &ute->env);
+	err = silofs_create_env(&ute->args->env_args, &ute->env);
 	silofs_assert_ok(err);
 }
 

@@ -14,17 +14,22 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_H_
-#define SILOFS_H_
+#ifndef SILOFS_SILOFS_H_
+#define SILOFS_SILOFS_H_
 
 #include <silofs/version.h>
 #include <silofs/ccattr.h>
 #include <silofs/consts.h>
+#include <silofs/errors.h>
 #include <silofs/defs.h>
 #include <silofs/infra.h>
 #include <silofs/str.h>
 #include <silofs/addr.h>
-#include <silofs/fs.h>
-#include <silofs/api.h>
 
-#endif /* SILOFS_H_ */
+#include <silofs/fs.h>
+
+#include <silofs/ioctls.h>
+#include <silofs/mntsvc.h>
+#include <silofs/appexec.h>
+
+#endif /* SILOFS_SILOFS_H_ */

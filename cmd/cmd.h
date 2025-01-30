@@ -17,7 +17,9 @@
 #ifndef SILOFS_CMD_H_
 #define SILOFS_CMD_H_
 
-#include <silofs.h>
+#include <silofs/silofs.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 typedef void (*silofs_subcmd_fn)(void);
 

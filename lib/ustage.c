@@ -51,13 +51,6 @@ static void sli_set_env(struct silofs_spleaf_info *sli, struct silofs_env *env)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static void sbi_bind_spstats(struct silofs_sb_info *sbi)
-{
-	sbi->sb_sti.spst_curr = &sbi->sb->sb_space_stats_curr;
-	sbi->sb_sti.spst_base = &sbi->sb->sb_space_stats_base;
-	sbi->sb_sti.sbi = sbi;
-}
-
 static bool sbi_is_active(const struct silofs_sb_info *sbi)
 {
 	return silofs_uni_isactive(&sbi->sb_uni);
@@ -76,13 +69,11 @@ static int sbi_verify_view(struct silofs_sb_info *sbi)
 static void sbi_set_staged(struct silofs_sb_info *sbi)
 {
 	sbi_set_active(sbi);
-	sbi_bind_spstats(sbi);
 }
 
 static void sbi_set_spawned(struct silofs_sb_info *sbi)
 {
 	sbi_set_active(sbi);
-	sbi_bind_spstats(sbi);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

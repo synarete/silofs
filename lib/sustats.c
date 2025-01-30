@@ -531,93 +531,86 @@ void silofs_spacestats_import(struct silofs_spacestats *spst,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void sti_dirtify(struct silofs_stats_info *sti)
+void silofs_sbst_setup_spawned(struct silofs_sb_info *sbi)
 {
-	sbi_dirtify(sti->sbi);
+	spst_init(sbi->sb_spst_curr);
 }
 
-void silofs_sti_setup_spawned(struct silofs_stats_info *sti,
-                              struct silofs_sb_info *sbi)
+void silofs_sbst_make_clone(struct silofs_sb_info *sbi,
+                            const struct silofs_sb_info *sbi_other)
 {
-	spst_init(sti->spst_curr);
-	sti->sbi = sbi;
+	spst_make_clone(sbi->sb_spst_curr, sbi_other->sb_spst_curr);
+	sbi_dirtify(sbi);
 }
 
-void silofs_sti_make_clone(struct silofs_stats_info *sti,
-                           const struct silofs_stats_info *sti_other)
-{
-	spst_make_clone(sti->spst_curr, sti_other->spst_curr);
-	sti_dirtify(sti);
-}
-
-void silofs_sti_renew_stats(struct silofs_stats_info *sti)
+void silofs_sbst_renew_stats(struct silofs_sb_info *sbi)
 {
 	struct silofs_spacestats spst;
 
-	silofs_sti_collect_stats(sti, &spst);
-	silofs_spacestats_export(&spst, sti->spst_base);
-	spst_renew(sti->spst_curr);
-	sti_dirtify(sti);
+	silofs_sbst_collect_stats(sbi, &spst);
+	silofs_spacestats_export(&spst, sbi->sb_spst_base);
+	spst_renew(sbi->sb_spst_curr);
+	sbi_dirtify(sbi);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static size_t silofs_sti_capacity(const struct silofs_stats_info *sti)
+static size_t silofs_sbst_capacity(const struct silofs_sb_info *sbi)
 {
-	return spst_capacity(sti->spst_curr);
+	return spst_capacity(sbi->sb_spst_curr);
 }
 
-void silofs_sti_set_capacity(struct silofs_stats_info *sti, size_t capacity)
+void silofs_sbst_set_capacity(struct silofs_sb_info *sbi, size_t capacity)
 {
-	spst_set_capacity(sti->spst_curr, capacity);
-	sti_dirtify(sti);
+	spst_set_capacity(sbi->sb_spst_curr, capacity);
+	sbi_dirtify(sbi);
 }
 
-void silofs_sti_update_lsegs(struct silofs_stats_info *sti,
-                             enum silofs_ltype ltype, ssize_t take)
+void silofs_sbst_update_lsegs(struct silofs_sb_info *sbi,
+                              enum silofs_ltype ltype, ssize_t take)
 {
 	if (take != 0) {
-		spst_update_lsegs(sti->spst_curr, ltype, take);
-		sti_dirtify(sti);
+		spst_update_lsegs(sbi->sb_spst_curr, ltype, take);
+		sbi_dirtify(sbi);
 	}
 }
 
-void silofs_sti_update_bks(struct silofs_stats_info *sti,
-                           enum silofs_ltype ltype, ssize_t take)
-{
-	if (take != 0) {
-		spst_update_bks(sti->spst_curr, ltype, take);
-		sti_dirtify(sti);
-	}
-}
-
-void silofs_sti_update_objs(struct silofs_stats_info *sti,
+void silofs_sbst_update_bks(struct silofs_sb_info *sbi,
                             enum silofs_ltype ltype, ssize_t take)
 {
 	if (take != 0) {
-		spst_update_objs(sti->spst_curr, ltype, take);
-		sti_dirtify(sti);
+		spst_update_bks(sbi->sb_spst_curr, ltype, take);
+		sbi_dirtify(sbi);
 	}
 }
 
-void silofs_sti_collect_stats(const struct silofs_stats_info *sti,
-                              struct silofs_spacestats *spst)
+void silofs_sbst_update_objs(struct silofs_sb_info *sbi,
+                             enum silofs_ltype ltype, ssize_t take)
+{
+	if (take != 0) {
+		spst_update_objs(sbi->sb_spst_curr, ltype, take);
+		sbi_dirtify(sbi);
+	}
+}
+
+void silofs_sbst_collect_stats(const struct silofs_sb_info *sbi,
+                               struct silofs_spacestats *spst)
 {
 	struct silofs_spacestats spst_base;
 
-	spst_export_to(sti->spst_base, &spst_base);
-	spst_export_to(sti->spst_curr, spst);
+	spst_export_to(sbi->sb_spst_base, &spst_base);
+	spst_export_to(sbi->sb_spst_curr, spst);
 	spacestats_accum_gauges(spst, &spst_base);
 }
 
-void silofs_sti_vspace_end(const struct silofs_stats_info *sti, loff_t *out)
+void silofs_sbst_vspace_end(const struct silofs_sb_info *sbi, loff_t *out)
 {
-	const size_t vspsz = spst_vspacesize(sti->spst_curr);
+	const size_t vspsz = spst_vspacesize(sbi->sb_spst_curr);
 
 	*out = (loff_t)vspsz;
 }
 
-static size_t silofs_sti_bytes_used(const struct silofs_stats_info *sti)
+static size_t silofs_sbst_bytes_used(const struct silofs_sb_info *sbi)
 {
 	struct silofs_spacestats spst = { .btime = 0 };
 	ssize_t total;
@@ -628,57 +621,55 @@ static size_t silofs_sti_bytes_used(const struct silofs_stats_info *sti)
 	 * Do not collect-stats for each call; speed-up using cached in-memory
 	 * counter.
 	 */
-	silofs_sti_collect_stats(sti, &spst);
+	silofs_sbst_collect_stats(sbi, &spst);
 	total = spgs_sum(&spst.objs);
 	return (size_t)total;
 }
 
-static fsfilcnt_t sti_inodes_used(const struct silofs_stats_info *sti)
+static fsfilcnt_t sbst_inodes_used(const struct silofs_sb_info *sbi)
 {
-	const ssize_t ninodes_base = spst_ninodes(sti->spst_base);
-	const ssize_t ninodes_curr = spst_ninodes(sti->spst_curr);
+	const ssize_t ninodes_base = spst_ninodes(sbi->sb_spst_base);
+	const ssize_t ninodes_curr = spst_ninodes(sbi->sb_spst_curr);
 	const ssize_t ninodes = ninodes_base + ninodes_curr;
 
 	return (fsfilcnt_t)ninodes;
 }
 
-static fsfilcnt_t sti_inodes_max(const struct silofs_stats_info *sti)
+static fsfilcnt_t sbst_inodes_max(const struct silofs_sb_info *sbi)
 {
-	return (silofs_sti_capacity(sti) / SILOFS_INODE_SIZE) >> 2;
+	return (silofs_sbst_capacity(sbi) / SILOFS_INODE_SIZE) >> 2;
 }
 
-void silofs_sti_next_generation(struct silofs_stats_info *sti, uint64_t *out)
+void silofs_sbst_next_generation(struct silofs_sb_info *sbi, uint64_t *out)
 {
-	*out = spst_inc_generation(sti->spst_curr);
-	sti_dirtify(sti);
+	*out = spst_inc_generation(sbi->sb_spst_curr);
+	sbi_dirtify(sbi);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-bool silofs_sti_mayalloc_some(const struct silofs_stats_info *sti,
-                              size_t nbytes_want)
+bool silofs_sbst_mayalloc_some(const struct silofs_sb_info *sbi, size_t nwant)
 {
-	const size_t nbytes_used = silofs_sti_bytes_used(sti);
-	const size_t nbytes_cap = silofs_sti_capacity(sti);
+	const size_t nbytes_used = silofs_sbst_bytes_used(sbi);
+	const size_t nbytes_cap = silofs_sbst_capacity(sbi);
 	const size_t nbytes_pad = SILOFS_LBK_SIZE;
 
-	return ((nbytes_want + nbytes_used + nbytes_pad) < nbytes_cap);
+	return ((nwant + nbytes_used + nbytes_pad) < nbytes_cap);
 }
 
-bool silofs_sti_mayalloc_data(const struct silofs_stats_info *sti,
-                              size_t nbytes_want)
+bool silofs_sbst_mayalloc_data(const struct silofs_sb_info *sbi, size_t nwant)
 {
-	const size_t user_limit = (31 * silofs_sti_capacity(sti)) / 32;
-	const size_t used_bytes = silofs_sti_bytes_used(sti);
+	const size_t user_limit = (31 * silofs_sbst_capacity(sbi)) / 32;
+	const size_t used_bytes = silofs_sbst_bytes_used(sbi);
 
-	return ((used_bytes + nbytes_want) <= user_limit);
+	return ((used_bytes + nwant) <= user_limit);
 }
 
-bool silofs_sti_mayalloc_meta(const struct silofs_stats_info *sti,
-                              size_t nbytes_want, bool new_file)
+bool silofs_sbst_mayalloc_meta(const struct silofs_sb_info *sbi,
+                               size_t nbytes_want, bool new_file)
 {
-	const size_t limit = silofs_sti_capacity(sti);
-	const size_t nused = silofs_sti_bytes_used(sti);
+	const size_t limit = silofs_sbst_capacity(sbi);
+	const size_t nused = silofs_sbst_bytes_used(sbi);
 	fsfilcnt_t files_max;
 	fsfilcnt_t files_cur;
 	bool ret = true;
@@ -686,8 +677,8 @@ bool silofs_sti_mayalloc_meta(const struct silofs_stats_info *sti,
 	if ((nused + nbytes_want) > limit) {
 		ret = false;
 	} else if (new_file) {
-		files_max = sti_inodes_max(sti);
-		files_cur = sti_inodes_used(sti);
+		files_max = sbst_inodes_max(sbi);
+		files_cur = sbst_inodes_used(sbi);
 		ret = (files_cur < files_max);
 	}
 	return ret;
@@ -709,17 +700,17 @@ static fsblkcnt_t bytes_to_fsblkcnt(size_t nbytes, size_t unit)
 	return (fsblkcnt_t)nbytes / unit;
 }
 
-void silofs_sti_fill_statvfs(const struct silofs_stats_info *sti,
-                             struct statvfs *out_stv)
+void silofs_sbst_fill_statvfs(const struct silofs_sb_info *sbi,
+                              struct statvfs *out_stv)
 {
 	const size_t funit = 4 * SILOFS_KB_SIZE;
 	const size_t bsize = funit;
 	const size_t frsize = funit;
-	const size_t nbytes_max = silofs_sti_capacity(sti);
-	const size_t nbytes_use = silofs_sti_bytes_used(sti);
+	const size_t nbytes_max = silofs_sbst_capacity(sbi);
+	const size_t nbytes_use = silofs_sbst_bytes_used(sbi);
 	const size_t nbytes_free = nbytes_max - nbytes_use;
-	const fsfilcnt_t nfiles_max = sti_inodes_max(sti);
-	const fsfilcnt_t nfiles_cur = sti_inodes_used(sti);
+	const fsfilcnt_t nfiles_max = sbst_inodes_max(sbi);
+	const fsfilcnt_t nfiles_cur = sbst_inodes_used(sbi);
 
 	silofs_memzero(out_stv, sizeof(*out_stv));
 	out_stv->f_bsize = bsize;

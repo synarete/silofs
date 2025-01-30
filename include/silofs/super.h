@@ -21,7 +21,7 @@
 #include <silofs/infra.h>
 #include <silofs/addr.h>
 
-struct silofs_stats_info;
+struct silofs_sb_info;
 struct silofs_spnode_info;
 struct silofs_spleaf_info;
 struct silofs_spmap_lmap;
@@ -50,9 +50,6 @@ void silofs_sbi_setup_spawned(struct silofs_sb_info *sbi);
 void silofs_sbi_set_fs_birth(struct silofs_sb_info *sbi);
 
 void silofs_sbi_set_lv_birth(struct silofs_sb_info *sbi);
-
-void silofs_sbi_bind_stats(struct silofs_sb_info    *sbi,
-                           struct silofs_stats_info *sti);
 
 int silofs_sbi_sproot_of(const struct silofs_sb_info *sbi,
                          enum silofs_ltype            ltype,
@@ -105,6 +102,51 @@ bool silofs_sbi_ismutable_lsid(const struct silofs_sb_info *sbi,
 
 bool silofs_sbi_ismutable_laddr(const struct silofs_sb_info *sbi,
                                 const struct silofs_laddr   *laddr);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_spacestats_export(const struct silofs_spacestats *spst,
+                              struct silofs_space_stats      *out_spst);
+
+void silofs_spacestats_import(struct silofs_spacestats        *spst,
+                              const struct silofs_space_stats *in_spst);
+
+void silofs_sbst_setup_spawned(struct silofs_sb_info *sbi);
+
+void silofs_sbst_make_clone(struct silofs_sb_info       *sbi,
+                            const struct silofs_sb_info *sbi_other);
+
+void silofs_sbst_renew_stats(struct silofs_sb_info *sbi);
+
+void silofs_sbst_set_capacity(struct silofs_sb_info *sbi, size_t capacity);
+
+void silofs_sbst_vspace_end(const struct silofs_sb_info *sbi, loff_t *out);
+
+void silofs_sbst_next_generation(struct silofs_sb_info *sbi, uint64_t *out);
+
+void silofs_sbst_update_lsegs(struct silofs_sb_info *sbi,
+                              enum silofs_ltype ltype, ssize_t take);
+
+void silofs_sbst_update_bks(struct silofs_sb_info *sbi,
+                            enum silofs_ltype ltype, ssize_t take);
+
+void silofs_sbst_update_objs(struct silofs_sb_info *sbi,
+                             enum silofs_ltype ltype, ssize_t take);
+
+void silofs_sbst_collect_stats(const struct silofs_sb_info *sbi,
+                               struct silofs_spacestats    *out_sp);
+
+bool silofs_sbst_mayalloc_some(const struct silofs_sb_info *sbi, size_t nwant);
+
+bool silofs_sbst_mayalloc_data(const struct silofs_sb_info *sbi, size_t nwant);
+
+bool silofs_sbst_mayalloc_meta(const struct silofs_sb_info *sbi,
+                               size_t nbytes_want, bool new_file);
+
+void silofs_sbst_fill_statvfs(const struct silofs_sb_info *sbi,
+                              struct statvfs              *out_stv);
+
+int silofs_verify_space_stats(const struct silofs_space_stats *sp);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

@@ -2281,7 +2281,7 @@ static void fill_spstats(const struct silofs_sb_info *sbi,
 {
 	struct silofs_spacestats spst;
 
-	silofs_sti_collect_stats(&sbi->sb_sti, &spst);
+	silofs_sbst_collect_stats(sbi, &spst);
 	silofs_spacestats_export(&spst, &qsp->spst);
 }
 
@@ -2313,7 +2313,7 @@ static int do_statvfs(const struct silofs_task *task, struct statvfs *out_stv)
 {
 	const struct silofs_sb_info *sbi = task_sbi(task);
 
-	silofs_sti_fill_statvfs(&sbi->sb_sti, out_stv);
+	silofs_sbst_fill_statvfs(sbi, out_stv);
 	return 0;
 }
 

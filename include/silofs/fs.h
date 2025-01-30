@@ -44,7 +44,6 @@
 #include <silofs/encdec.h>
 #include <silofs/task.h>
 #include <silofs/super.h>
-#include <silofs/stats.h>
 #include <silofs/inode.h>
 #include <silofs/dir.h>
 #include <silofs/file.h>

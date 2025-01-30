@@ -568,6 +568,8 @@ static int sbi_init(struct silofs_sb_info *sbi,
 {
 	uni_init(&sbi->sb_uni, ulink, view);
 	sbi->sb = &view->u.sb;
+	sbi->sb_spst_base = &sbi->sb->sb_space_stats_base;
+	sbi->sb_spst_curr = &sbi->sb->sb_space_stats_curr;
 	return 0;
 }
 
@@ -575,6 +577,8 @@ static void sbi_fini(struct silofs_sb_info *sbi)
 {
 	uni_fini(&sbi->sb_uni);
 	sbi->sb = NULL;
+	sbi->sb_spst_base = NULL;
+	sbi->sb_spst_curr = NULL;
 }
 
 static struct silofs_sb_info *sbi_malloc(struct silofs_alloc *alloc)

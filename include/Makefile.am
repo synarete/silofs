@@ -83,7 +83,6 @@ nobase_include_HEADERS += silofs/pvlogs.h
 nobase_include_HEADERS += silofs/repo.h
 nobase_include_HEADERS += silofs/spmaps.h
 nobase_include_HEADERS += silofs/spxmap.h
-nobase_include_HEADERS += silofs/stats.h
 nobase_include_HEADERS += silofs/str.h
 nobase_include_HEADERS += silofs/str/ascii.h
 nobase_include_HEADERS += silofs/str/strbuf.h

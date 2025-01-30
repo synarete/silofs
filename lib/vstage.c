@@ -417,7 +417,7 @@ static int vstgc_spawn_lseg(const struct silofs_vstage_ctx *vstg_ctx,
 
 	err = vstgc_do_spawn_lseg(vstg_ctx, lsid);
 	if (!err) {
-		silofs_sti_update_lsegs(&vstg_ctx->sbi->sb_sti, ltype, 1);
+		silofs_sbst_update_lsegs(vstg_ctx->sbi, ltype, 1);
 	}
 	return err;
 }
@@ -452,8 +452,8 @@ static void vstgc_update_space_stats(const struct silofs_vstage_ctx *vstg_ctx,
 {
 	const enum silofs_ltype ltype = uaddr_ltype(uaddr);
 
-	silofs_sti_update_objs(&vstg_ctx->sbi->sb_sti, ltype, 1);
-	silofs_sti_update_bks(&vstg_ctx->sbi->sb_sti, ltype, 1);
+	silofs_sbst_update_objs(vstg_ctx->sbi, ltype, 1);
+	silofs_sbst_update_bks(vstg_ctx->sbi, ltype, 1);
 }
 
 static int
@@ -2820,7 +2820,7 @@ setup_uniqe_generation(struct silofs_task *task, struct silofs_inode_info *ii)
 	struct silofs_sb_info *sbi = task_sbi(task);
 	uint64_t gen = 0;
 
-	silofs_sti_next_generation(&sbi->sb_sti, &gen);
+	silofs_sbst_next_generation(sbi, &gen);
 	silofs_ii_set_generation(ii, gen);
 }
 

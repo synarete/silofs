@@ -79,7 +79,7 @@ struct silofs_query_proc {
 };
 
 struct silofs_query_spstats {
-	struct silofs_space_stats spst;
+	struct silofs_space_stats1k spst;
 };
 
 struct silofs_query_statx {

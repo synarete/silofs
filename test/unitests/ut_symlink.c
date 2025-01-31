@@ -303,12 +303,12 @@ static blkcnt_t symval_length_to_blocks(size_t len)
 
 static void ut_symlink_stat_(struct ut_env *ute, size_t valsize)
 {
-	ino_t dino = 0;
-	ino_t sino = 0;
 	struct stat st = { .st_size = -1 };
 	const char *name = UT_NAME;
 	const char *symval = ut_make_symval_with(ute, 's', valsize);
 	const blkcnt_t blocks = symval_length_to_blocks(valsize);
+	ino_t dino = 0;
+	ino_t sino = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_symlink(ute, dino, name, symval, &sino);
@@ -335,10 +335,13 @@ static void ut_symlink_stat(struct ut_env *ute)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ut_testdef ut_local_tests[] = {
-	UT_DEFTEST1(ut_symlink_simple), UT_DEFTEST(ut_symlink_length),
-	UT_DEFTEST(ut_symlink_nested),  UT_DEFTEST(ut_symlink_to_reg),
-	UT_DEFTEST(ut_symlink_and_io),  UT_DEFTEST(ut_symlink_and_io2),
-	UT_DEFTEST(ut_symlink_stat),
+	UT_DEFTEST1(ut_symlink_simple), //
+	UT_DEFTEST(ut_symlink_length),  //
+	UT_DEFTEST(ut_symlink_nested),  //
+	UT_DEFTEST(ut_symlink_to_reg),  //
+	UT_DEFTEST(ut_symlink_and_io),  //
+	UT_DEFTEST(ut_symlink_and_io2), //
+	UT_DEFTEST(ut_symlink_stat),    //
 };
 
 const struct ut_testdefs ut_tdefs_symlink = UT_MKTESTS(ut_local_tests);

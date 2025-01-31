@@ -76,6 +76,11 @@ static void sbi_set_spawned(struct silofs_sb_info *sbi)
 	sbi_set_active(sbi);
 }
 
+static void sbi_refresh_spstats(struct silofs_sb_info *sbi)
+{
+	silofs_sbst_fetch_from_sb(sbi);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static bool sni_is_active(const struct silofs_spnode_info *sni)
@@ -390,6 +395,7 @@ stage_super_at(struct silofs_env *env, const struct silofs_ulink *ulink,
 		goto out_err;
 	}
 	sbi_set_staged(sbi);
+	sbi_refresh_spstats(sbi);
 out_ok:
 	*out_sbi = sbi;
 	return 0;

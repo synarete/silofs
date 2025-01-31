@@ -93,7 +93,7 @@ struct silofs_versions {
 };
 
 /* space accounting per sub-type */
-struct silofs_spacegauges {
+struct silofs_space_gauges {
 	ssize_t nsuper;
 	ssize_t nspnode;
 	ssize_t nspleaf;
@@ -108,19 +108,19 @@ struct silofs_spacegauges {
 };
 
 /* space accounting per sub-kind + sub-type */
-struct silofs_spacestats {
-	time_t                    btime;
-	time_t                    ctime;
-	size_t                    capacity;
-	size_t                    vspacesize;
-	uint64_t                  generation;
-	struct silofs_spacegauges lsegs;
-	struct silofs_spacegauges bks;
-	struct silofs_spacegauges objs;
+struct silofs_space_stats {
+	time_t                     btime;
+	time_t                     ctime;
+	size_t                     capacity;
+	size_t                     vspacesize;
+	uint64_t                   generation;
+	struct silofs_space_gauges lsegs;
+	struct silofs_space_gauges bks;
+	struct silofs_space_gauges objs;
 };
 
 /* file-system' internal cache stats */
-struct silofs_cachestats {
+struct silofs_cache_stats {
 	size_t nalloc_bytes;
 	size_t ncache_unodes;
 	size_t ncache_vnodes;
@@ -165,8 +165,8 @@ void silofs_halt_fs(struct silofs_env *env);
 
 int silofs_sync_fs(struct silofs_env *env, bool drop);
 
-void silofs_stat_fs(const struct silofs_env  *env,
-                    struct silofs_cachestats *cst);
+void silofs_stat_fs(const struct silofs_env   *env,
+                    struct silofs_cache_stats *cst);
 
 int silofs_inspect_fs(struct silofs_env *env, silofs_visit_laddr_fn cb,
                       void *user_ctx);

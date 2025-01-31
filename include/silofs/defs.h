@@ -664,7 +664,7 @@ struct silofs_sb_rootivs {
 	uint8_t          sb_reserved[368];
 } silofs_attr_aligned64;
 
-struct silofs_space_gauges {
+struct silofs_space_gauges256 {
 	uint64_t sg_nsuper;
 	uint64_t sg_nspnode;
 	uint64_t sg_nspleaf;
@@ -680,51 +680,51 @@ struct silofs_space_gauges {
 	uint64_t sg_reserved2[20];
 } silofs_attr_aligned64;
 
-struct silofs_space_stats {
-	uint64_t                   sp_btime;
-	uint64_t                   sp_ctime;
-	uint64_t                   sp_capacity;
-	uint64_t                   sp_vspacesize;
-	uint64_t                   sp_generation;
-	uint8_t                    sp_reserved[216];
-	struct silofs_space_gauges sp_lsegs;
-	struct silofs_space_gauges sp_bks;
-	struct silofs_space_gauges sp_objs;
+struct silofs_space_stats1k {
+	uint64_t                      sp_btime;
+	uint64_t                      sp_ctime;
+	uint64_t                      sp_capacity;
+	uint64_t                      sp_vspacesize;
+	uint64_t                      sp_generation;
+	uint8_t                       sp_reserved[216];
+	struct silofs_space_gauges256 sp_lsegs;
+	struct silofs_space_gauges256 sp_bks;
+	struct silofs_space_gauges256 sp_objs;
 } silofs_attr_aligned64;
 
 struct silofs_super_block {
 	/* 0..512 */
-	struct silofs_header      sb_hdr;
-	uint64_t                  sb_magic;
-	uint64_t                  sb_version;
-	uint32_t                  sb_flags;
-	uint8_t                   sb_reserved1[4];
-	uint8_t                   sb_endianness;
-	uint8_t                   sb_reserved2[23];
-	uint8_t                   sb_sw_version[64];
-	struct silofs_uuid        sb_fs_uuid;
-	uint8_t                   sb_reserved3[368];
+	struct silofs_header        sb_hdr;
+	uint64_t                    sb_magic;
+	uint64_t                    sb_version;
+	uint32_t                    sb_flags;
+	uint8_t                     sb_reserved1[4];
+	uint8_t                     sb_endianness;
+	uint8_t                     sb_reserved2[23];
+	uint8_t                     sb_sw_version[64];
+	struct silofs_uuid          sb_fs_uuid;
+	uint8_t                     sb_reserved3[368];
 	/* 512..1K */
-	struct silofs_tm64b       sb_fs_birth_tm;
-	struct silofs_tm64b       sb_lv_birth_tm;
-	struct silofs_uaddr64b    sb_self_uaddr;
-	struct silofs_uaddr64b    sb_orig_uaddr;
-	struct silofs_volid       sb_volid;
-	struct silofs_vrange128   sb_vrange;
-	uint8_t                   sb_reserved4b[224];
+	struct silofs_tm64b         sb_fs_birth_tm;
+	struct silofs_tm64b         sb_lv_birth_tm;
+	struct silofs_uaddr64b      sb_self_uaddr;
+	struct silofs_uaddr64b      sb_orig_uaddr;
+	struct silofs_volid         sb_volid;
+	struct silofs_vrange128     sb_vrange;
+	uint8_t                     sb_reserved4b[224];
 	/* 1K..2K */
-	struct silofs_sb_sproots  sb_sproots;
+	struct silofs_sb_sproots    sb_sproots;
 	/* 2K..3K */
-	struct silofs_sb_lsids    sb_main_lsid;
+	struct silofs_sb_lsids      sb_main_lsid;
 	/* 3K..4K */
-	struct silofs_sb_rootivs  sb_rootivs;
-	uint8_t                   sb_reserved5[512];
+	struct silofs_sb_rootivs    sb_rootivs;
+	uint8_t                     sb_reserved5[512];
 	/* 4K..6K */
-	struct silofs_space_stats sb_space_stats_curr;
-	struct silofs_space_stats sb_space_stats_base;
+	struct silofs_space_stats1k sb_space_stats_curr;
+	struct silofs_space_stats1k sb_space_stats_base;
 	/* 6K..8K */
-	uint8_t                   sb_reserved6[1536];
-	struct silofs_name        sb_name;
+	uint8_t                     sb_reserved6[1536];
+	struct silofs_name          sb_name;
 } silofs_attr_aligned64;
 
 struct silofs_spmap_ref {

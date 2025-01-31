@@ -35,7 +35,7 @@
 
 struct silofs_inspect_ctx {
 	struct silofs_visitor vis;
-	struct silofs_spacestats sp_st;
+	struct silofs_space_stats sp_st;
 	struct silofs_spmap_lmap lmap;
 	struct silofs_task *task;
 	struct silofs_sb_info *sbi;

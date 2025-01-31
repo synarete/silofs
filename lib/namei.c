@@ -2279,10 +2279,7 @@ int silofs_do_rename(struct silofs_task *task,
 static void fill_spstats(const struct silofs_sb_info *sbi,
                          struct silofs_query_spstats *qsp)
 {
-	struct silofs_spacestats spst;
-
-	silofs_sbst_collect_stats(sbi, &spst);
-	silofs_spacestats_export(&spst, &qsp->spst);
+	silofs_sbst_fill_qspst(sbi, qsp);
 }
 
 static void

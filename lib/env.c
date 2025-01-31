@@ -454,13 +454,6 @@ static int env_spawn_super(struct silofs_env *env, size_t capacity,
 	return 0;
 }
 
-static void sbi_account_super_of(struct silofs_sb_info *sbi)
-{
-	silofs_sbst_update_lsegs(sbi, SILOFS_LTYPE_SUPER, 1);
-	silofs_sbst_update_bks(sbi, SILOFS_LTYPE_SUPER, 1);
-	silofs_sbst_update_objs(sbi, SILOFS_LTYPE_SUPER, 1);
-}
-
 int silofs_env_format_super(struct silofs_env *env, size_t capacity)
 {
 	struct silofs_sb_info *sbi = NULL;
@@ -470,7 +463,7 @@ int silofs_env_format_super(struct silofs_env *env, size_t capacity)
 	if (err) {
 		return err;
 	}
-	sbi_account_super_of(sbi);
+	silofs_sbst_account_super(sbi);
 	env_bind_sbi(env, sbi);
 	return 0;
 }
@@ -505,11 +498,11 @@ int silofs_env_reload_sb_lseg(struct silofs_env *env)
 static void sbi_make_clone(struct silofs_sb_info *sbi_new,
                            const struct silofs_sb_info *sbi_cur)
 {
-	silofs_sbi_clone_from(sbi_new, sbi_cur);
-	silofs_sbst_make_clone(sbi_new, sbi_cur);
-	silofs_sbst_renew_stats(sbi_new);
+	silofs_sbi_make_shadow_of(sbi_new, sbi_cur);
 	silofs_sbi_set_lv_birth(sbi_new);
-	sbi_account_super_of(sbi_new);
+	silofs_sbst_rebuild_from(sbi_new, sbi_cur);
+	silofs_sbst_account_super(sbi_new);
+	silofs_sbst_force_into_sb(sbi_new);
 }
 
 static int env_shut_sb(struct silofs_env *env)

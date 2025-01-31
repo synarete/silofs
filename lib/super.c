@@ -999,8 +999,8 @@ void silofs_sbi_setup_spawned(struct silofs_sb_info *sbi)
 	sbi_dirtify(sbi);
 }
 
-void silofs_sbi_clone_from(struct silofs_sb_info *sbi,
-                           const struct silofs_sb_info *sbi_other)
+void silofs_sbi_make_shadow_of(struct silofs_sb_info *sbi,
+                               const struct silofs_sb_info *sbi_other)
 {
 	struct silofs_super_block *sb = sbi->sb;
 	const struct silofs_super_block *sb_other = sbi_other->sb;

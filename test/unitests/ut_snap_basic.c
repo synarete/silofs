@@ -21,7 +21,7 @@
 static void ut_snap_mkdir_rmdir(struct ut_env *ute)
 {
 	struct statvfs stvfs[2];
-	struct silofs_spacestats spst[2];
+	struct silofs_space_stats1k spst[2];
 	const ino_t rootd_ino = SILOFS_INO_ROOT;
 	ino_t dino = 0;
 	const char *name = UT_NAME;
@@ -179,10 +179,13 @@ static void ut_snap_reload_other(struct ut_env *ute)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ut_testdef ut_local_tests[] = {
-	UT_DEFTEST(ut_snap_mkdir_rmdir),  UT_DEFTEST(ut_snap_create_remove),
-	UT_DEFTEST(ut_snap_write_read),   UT_DEFTEST(ut_snap_write_post),
-	UT_DEFTEST(ut_snap_overwrite),    UT_DEFTEST(ut_snap_reload),
-	UT_DEFTEST(ut_snap_reload_other),
+	UT_DEFTEST(ut_snap_mkdir_rmdir),   //
+	UT_DEFTEST(ut_snap_create_remove), //
+	UT_DEFTEST(ut_snap_write_read),    //
+	UT_DEFTEST(ut_snap_write_post),    //
+	UT_DEFTEST(ut_snap_overwrite),     //
+	UT_DEFTEST(ut_snap_reload),        //
+	UT_DEFTEST(ut_snap_reload_other),  //
 };
 
 const struct ut_testdefs ut_tdefs_snap_basic = UT_MKTESTS(ut_local_tests);

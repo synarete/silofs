@@ -235,7 +235,7 @@ int silofs_sync_fs(struct silofs_env *env, bool drop)
 }
 
 void silofs_stat_fs(const struct silofs_env *env,
-                    struct silofs_cachestats *cst)
+                    struct silofs_cache_stats *cst)
 {
 	struct silofs_alloc_stat alst = { .nbytes_use = 0 };
 	const struct silofs_alloc *alloc = env->base.alloc;

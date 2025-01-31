@@ -469,10 +469,14 @@ static void ut_qalloc_random(struct ut_env *ute)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ut_testdef ut_local_tests[] = {
-	UT_DEFTEST1(ut_qalloc_simple),      UT_DEFTEST1(ut_qalloc_simple3),
-	UT_DEFTEST1(ut_qalloc_nbks_simple), UT_DEFTEST(ut_qalloc_free_nbks),
-	UT_DEFTEST(ut_qalloc_small_elems),  UT_DEFTEST(ut_qalloc_mixed),
-	UT_DEFTEST(ut_qalloc_small_sizes),  UT_DEFTEST(ut_qalloc_random),
+	UT_DEFTEST1(ut_qalloc_simple),      //
+	UT_DEFTEST1(ut_qalloc_simple3),     //
+	UT_DEFTEST1(ut_qalloc_nbks_simple), //
+	UT_DEFTEST(ut_qalloc_free_nbks),    //
+	UT_DEFTEST(ut_qalloc_small_elems),  //
+	UT_DEFTEST(ut_qalloc_mixed),        //
+	UT_DEFTEST(ut_qalloc_small_sizes),  //
+	UT_DEFTEST(ut_qalloc_random),       //
 };
 
 const struct ut_testdefs ut_tdefs_qalloc = UT_MKTESTS(ut_local_tests);

@@ -32,6 +32,7 @@ struct silofs_flusher {
 	struct silofs_listq       txq;
 	struct silofs_submitq    *submitq;
 	struct silofs_task       *task;
+	struct silofs_sb_info    *sbi;
 	struct silofs_inode_info *ii;
 	uint32_t                  tx_count;
 	int                       flags;

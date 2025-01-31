@@ -203,81 +203,82 @@ ut_check_statvfs(const struct statvfs *stv1, const struct statvfs *stv2)
 	ut_expect_statvfs(stv1, stv2);
 }
 
-static void ut_check_valid_spacecounts(const struct silofs_spacegauges *spc)
+static void
+ut_check_valid_space_gauges(const struct silofs_space_gauges256 *spg)
 {
-	ut_expect_ge(spc->nsuper, 1);
-	ut_expect_ge(spc->nspnode, 4);
-	ut_expect_ge(spc->nspleaf, 4);
-	ut_expect_ge(spc->ninode, 1);
-	ut_expect_ge(spc->nxanode, 0);
-	ut_expect_ge(spc->nxanode, 0);
-	ut_expect_ge(spc->ndtnode, 0);
-	ut_expect_ge(spc->nsymval, 0);
-	ut_expect_ge(spc->nftnode, 0);
-	ut_expect_ge(spc->ndata1k, 0);
-	ut_expect_ge(spc->ndata4k, 0);
-	ut_expect_ge(spc->ndatabk, 0);
+	ut_expect_ge(spg->sg_nsuper, 1);
+	ut_expect_ge(spg->sg_nspnode, 4);
+	ut_expect_ge(spg->sg_nspleaf, 4);
+	ut_expect_ge(spg->sg_ninode, 1);
+	ut_expect_ge(spg->sg_nxanode, 0);
+	ut_expect_ge(spg->sg_nxanode, 0);
+	ut_expect_ge(spg->sg_ndtnode, 0);
+	ut_expect_ge(spg->sg_nsymval, 0);
+	ut_expect_ge(spg->sg_nftnode, 0);
+	ut_expect_ge(spg->sg_ndata1k, 0);
+	ut_expect_ge(spg->sg_ndata4k, 0);
+	ut_expect_ge(spg->sg_ndatabk, 0);
 }
 
-static void ut_expect_spacestats(const struct silofs_spacestats *spst1,
-                                 const struct silofs_spacestats *spst2)
+static void ut_expect_space_stats(const struct silofs_space_stats1k *spst1,
+                                  const struct silofs_space_stats1k *spst2)
 {
-	ut_expect_le(spst1->lsegs.nsuper, spst2->lsegs.nsuper);
-	ut_expect_le(spst1->lsegs.nspnode, spst2->lsegs.nspnode);
-	ut_expect_le(spst1->lsegs.nspleaf, spst2->lsegs.nspleaf);
-	ut_expect_le(spst1->lsegs.ninode, spst2->lsegs.ninode);
-	ut_expect_le(spst1->lsegs.nxanode, spst2->lsegs.nxanode);
-	ut_expect_le(spst1->lsegs.ndtnode, spst2->lsegs.ndtnode);
-	ut_expect_le(spst1->lsegs.nsymval, spst2->lsegs.nsymval);
-	ut_expect_le(spst1->lsegs.nftnode, spst2->lsegs.nftnode);
-	ut_expect_le(spst1->lsegs.ndata1k, spst2->lsegs.ndata1k);
-	ut_expect_le(spst1->lsegs.ndata4k, spst2->lsegs.ndata4k);
-	ut_expect_le(spst1->lsegs.ndatabk, spst2->lsegs.ndatabk);
+	ut_expect_le(spst1->sp_lsegs.sg_nsuper, spst2->sp_lsegs.sg_nsuper);
+	ut_expect_le(spst1->sp_lsegs.sg_nspnode, spst2->sp_lsegs.sg_nspnode);
+	ut_expect_le(spst1->sp_lsegs.sg_nspleaf, spst2->sp_lsegs.sg_nspleaf);
+	ut_expect_le(spst1->sp_lsegs.sg_ninode, spst2->sp_lsegs.sg_ninode);
+	ut_expect_le(spst1->sp_lsegs.sg_nxanode, spst2->sp_lsegs.sg_nxanode);
+	ut_expect_le(spst1->sp_lsegs.sg_ndtnode, spst2->sp_lsegs.sg_ndtnode);
+	ut_expect_le(spst1->sp_lsegs.sg_nsymval, spst2->sp_lsegs.sg_nsymval);
+	ut_expect_le(spst1->sp_lsegs.sg_nftnode, spst2->sp_lsegs.sg_nftnode);
+	ut_expect_le(spst1->sp_lsegs.sg_ndata1k, spst2->sp_lsegs.sg_ndata1k);
+	ut_expect_le(spst1->sp_lsegs.sg_ndata4k, spst2->sp_lsegs.sg_ndata4k);
+	ut_expect_le(spst1->sp_lsegs.sg_ndatabk, spst2->sp_lsegs.sg_ndatabk);
 
-	ut_expect_le(spst1->bks.nsuper, spst2->bks.nsuper);
-	ut_expect_le(spst1->bks.nspnode, spst2->bks.nspnode);
-	ut_expect_le(spst1->bks.nspleaf, spst2->bks.nspleaf);
-	ut_expect_le(spst1->bks.ninode, spst2->bks.ninode);
-	ut_expect_le(spst1->bks.nxanode, spst2->bks.nxanode);
-	ut_expect_le(spst1->bks.ndtnode, spst2->bks.ndtnode);
-	ut_expect_le(spst1->bks.nsymval, spst2->bks.nsymval);
-	ut_expect_le(spst1->bks.nftnode, spst2->bks.nftnode);
-	ut_expect_le(spst1->bks.ndata1k, spst2->bks.ndata1k);
-	ut_expect_le(spst1->bks.ndata4k, spst2->bks.ndata4k);
-	ut_expect_le(spst1->bks.ndatabk, spst2->bks.ndatabk);
+	ut_expect_le(spst1->sp_bks.sg_nsuper, spst2->sp_bks.sg_nsuper);
+	ut_expect_le(spst1->sp_bks.sg_nspnode, spst2->sp_bks.sg_nspnode);
+	ut_expect_le(spst1->sp_bks.sg_nspleaf, spst2->sp_bks.sg_nspleaf);
+	ut_expect_le(spst1->sp_bks.sg_ninode, spst2->sp_bks.sg_ninode);
+	ut_expect_le(spst1->sp_bks.sg_nxanode, spst2->sp_bks.sg_nxanode);
+	ut_expect_le(spst1->sp_bks.sg_ndtnode, spst2->sp_bks.sg_ndtnode);
+	ut_expect_le(spst1->sp_bks.sg_nsymval, spst2->sp_bks.sg_nsymval);
+	ut_expect_le(spst1->sp_bks.sg_nftnode, spst2->sp_bks.sg_nftnode);
+	ut_expect_le(spst1->sp_bks.sg_ndata1k, spst2->sp_bks.sg_ndata1k);
+	ut_expect_le(spst1->sp_bks.sg_ndata4k, spst2->sp_bks.sg_ndata4k);
+	ut_expect_le(spst1->sp_bks.sg_ndatabk, spst2->sp_bks.sg_ndatabk);
 
-	ut_expect_le(spst1->objs.nsuper, spst2->objs.nsuper);
-	ut_expect_le(spst1->objs.nspnode, spst2->objs.nspnode);
-	ut_expect_le(spst1->objs.nspleaf, spst2->objs.nspleaf);
-	ut_expect_eq(spst1->objs.ninode, spst2->objs.ninode);
-	ut_expect_eq(spst1->objs.nxanode, spst2->objs.nxanode);
-	ut_expect_eq(spst1->objs.ndtnode, spst2->objs.ndtnode);
-	ut_expect_eq(spst1->objs.nsymval, spst2->objs.nsymval);
-	ut_expect_eq(spst1->objs.nftnode, spst2->objs.nftnode);
-	ut_expect_eq(spst1->objs.ndata1k, spst2->objs.ndata1k);
-	ut_expect_eq(spst1->objs.ndata4k, spst2->objs.ndata4k);
-	ut_expect_eq(spst1->objs.ndatabk, spst2->objs.ndatabk);
+	ut_expect_le(spst1->sp_objs.sg_nsuper, spst2->sp_objs.sg_nsuper);
+	ut_expect_le(spst1->sp_objs.sg_nspnode, spst2->sp_objs.sg_nspnode);
+	ut_expect_le(spst1->sp_objs.sg_nspleaf, spst2->sp_objs.sg_nspleaf);
+	ut_expect_eq(spst1->sp_objs.sg_ninode, spst2->sp_objs.sg_ninode);
+	ut_expect_eq(spst1->sp_objs.sg_nxanode, spst2->sp_objs.sg_nxanode);
+	ut_expect_eq(spst1->sp_objs.sg_ndtnode, spst2->sp_objs.sg_ndtnode);
+	ut_expect_eq(spst1->sp_objs.sg_nsymval, spst2->sp_objs.sg_nsymval);
+	ut_expect_eq(spst1->sp_objs.sg_nftnode, spst2->sp_objs.sg_nftnode);
+	ut_expect_eq(spst1->sp_objs.sg_ndata1k, spst2->sp_objs.sg_ndata1k);
+	ut_expect_eq(spst1->sp_objs.sg_ndata4k, spst2->sp_objs.sg_ndata4k);
+	ut_expect_eq(spst1->sp_objs.sg_ndatabk, spst2->sp_objs.sg_ndatabk);
 }
 
-static void ut_check_spacestats(const struct silofs_spacestats *spst1,
-                                const struct silofs_spacestats *spst2)
+static void ut_check_spacestats(const struct silofs_space_stats1k *spst1,
+                                const struct silofs_space_stats1k *spst2)
 {
-	ut_expect_le(spst1->btime, spst2->btime);
-	ut_expect_le(spst1->ctime, spst2->ctime);
-	ut_expect_eq(spst1->capacity, spst2->capacity);
-	ut_expect_eq(spst1->vspacesize, spst2->vspacesize);
-	ut_check_valid_spacecounts(&spst1->lsegs);
-	ut_check_valid_spacecounts(&spst1->bks);
-	ut_check_valid_spacecounts(&spst1->objs);
-	ut_check_valid_spacecounts(&spst2->lsegs);
-	ut_check_valid_spacecounts(&spst2->bks);
-	ut_check_valid_spacecounts(&spst2->objs);
-	ut_expect_spacestats(spst1, spst2);
+	ut_expect_le(spst1->sp_btime, spst2->sp_btime);
+	ut_expect_le(spst1->sp_ctime, spst2->sp_ctime);
+	ut_expect_eq(spst1->sp_capacity, spst2->sp_capacity);
+	ut_expect_eq(spst1->sp_vspacesize, spst2->sp_vspacesize);
+	ut_check_valid_space_gauges(&spst1->sp_lsegs);
+	ut_check_valid_space_gauges(&spst1->sp_bks);
+	ut_check_valid_space_gauges(&spst1->sp_objs);
+	ut_check_valid_space_gauges(&spst2->sp_lsegs);
+	ut_check_valid_space_gauges(&spst2->sp_bks);
+	ut_check_valid_space_gauges(&spst2->sp_objs);
+	ut_expect_space_stats(spst1, spst2);
 }
 
 static size_t ualloc_nbytes_now(const struct ut_env *ute)
 {
-	struct silofs_cachestats st;
+	struct silofs_cache_stats st;
 
 	silofs_stat_fs(ute->env, &st);
 	return st.nalloc_bytes;

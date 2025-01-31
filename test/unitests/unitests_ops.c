@@ -760,12 +760,13 @@ void ut_statfs_rootd(struct ut_env *ute, struct statvfs *stv)
 	ut_statfs(ute, SILOFS_INO_ROOT, stv);
 }
 
-void ut_statsp(struct ut_env *ute, ino_t ino, struct silofs_spacestats *spst)
+void ut_statsp(struct ut_env *ute, ino_t ino,
+               struct silofs_space_stats1k *spst)
 {
 	ut_query_spst(ute, ino, spst);
 }
 
-void ut_statsp_rootd(struct ut_env *ute, struct silofs_spacestats *spst)
+void ut_statsp_rootd(struct ut_env *ute, struct silofs_space_stats1k *spst)
 {
 	ut_statsp(ute, SILOFS_INO_ROOT, spst);
 }
@@ -1740,12 +1741,12 @@ void ut_query(struct ut_env *ute, ino_t ino, enum silofs_query_type qtype,
 }
 
 void ut_query_spst(struct ut_env *ute, ino_t ino,
-                   struct silofs_spacestats *out_spst)
+                   struct silofs_space_stats1k *out_spst)
 {
 	struct silofs_ioc_query query = { .qtype = 0 };
 
 	ut_query(ute, ino, SILOFS_QUERY_SPSTATS, &query);
-	silofs_spacestats_import(out_spst, &query.u.spstats.spst);
+	memcpy(out_spst, &query.u.spstats.spst, sizeof(*out_spst));
 }
 
 void ut_fiemap(struct ut_env *ute, ino_t ino, struct fiemap *fm)
@@ -1833,7 +1834,7 @@ void ut_sync_drop(struct ut_env *ute)
 
 void ut_drop_caches_fully(struct ut_env *ute)
 {
-	struct silofs_cachestats st;
+	struct silofs_cache_stats st;
 
 	ut_sync_drop(ute);
 	silofs_stat_fs(ute->env, &st);

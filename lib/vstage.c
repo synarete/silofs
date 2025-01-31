@@ -2820,7 +2820,7 @@ setup_uniqe_generation(struct silofs_task *task, struct silofs_inode_info *ii)
 	struct silofs_sb_info *sbi = task_sbi(task);
 	uint64_t gen = 0;
 
-	silofs_sbst_next_generation(sbi, &gen);
+	gen = silofs_sbst_next_generation(sbi);
 	silofs_ii_set_generation(ii, gen);
 }
 

@@ -44,9 +44,8 @@ struct silofs_walk_ctx {
 static void
 sbi_vrange(const struct silofs_sb_info *sbi, struct silofs_vrange *out_vrange)
 {
-	loff_t voff_end = 0;
+	const loff_t voff_end = silofs_sbst_vspace_end(sbi);
 
-	silofs_sbst_vspace_end(sbi, &voff_end);
 	silofs_vrange_setup(out_vrange, SILOFS_HEIGHT_SUPER, 0, voff_end);
 }
 

@@ -125,22 +125,22 @@ struct ut_args {
 };
 
 struct ut_env {
-	struct silofs_prandgen   prng;
-	struct silofs_password   passwd;
-	struct silofs_caddr      boot_ref[2];
-	struct silofs_caddr      pack_ref;
-	struct ut_args          *args;
-	struct silofs_env       *env;
-	struct timespec          ts_start;
-	struct statvfs           stvfs[2];
-	struct silofs_spacestats spst[2];
-	struct silofs_mutex      mutex;
-	struct ut_malloc_chunk  *malloc_list;
-	size_t                   ualloc_start;
-	size_t                   nbytes_alloc;
-	long                     unique_opid;
-	int                      run_level;
-	enum silofs_file_type    ftype;
+	struct silofs_prandgen      prng;
+	struct silofs_password      passwd;
+	struct silofs_caddr         boot_ref[2];
+	struct silofs_caddr         pack_ref;
+	struct ut_args             *args;
+	struct silofs_env          *env;
+	struct timespec             ts_start;
+	struct statvfs              stvfs[2];
+	struct silofs_space_stats1k spst[2];
+	struct silofs_mutex         mutex;
+	struct ut_malloc_chunk     *malloc_list;
+	size_t                      ualloc_start;
+	size_t                      nbytes_alloc;
+	long                        unique_opid;
+	int                         run_level;
+	enum silofs_file_type       ftype;
 };
 
 struct ut_dvec {
@@ -266,9 +266,10 @@ void ut_statfs(struct ut_env *ute, ino_t ino, struct statvfs *st);
 
 void ut_statfs_rootd(struct ut_env *ute, struct statvfs *st);
 
-void ut_statsp(struct ut_env *ute, ino_t ino, struct silofs_spacestats *spst);
+void ut_statsp(struct ut_env *ute, ino_t ino,
+               struct silofs_space_stats1k *spst);
 
-void ut_statsp_rootd(struct ut_env *ute, struct silofs_spacestats *spst);
+void ut_statsp_rootd(struct ut_env *ute, struct silofs_space_stats1k *spst);
 
 void ut_statx(struct ut_env *ute, ino_t ino, struct statx *stx);
 
@@ -475,7 +476,7 @@ void ut_query(struct ut_env *ute, ino_t ino, enum silofs_query_type qtype,
               struct silofs_ioc_query *out_qry);
 
 void ut_query_spst(struct ut_env *ute, ino_t ino,
-                   struct silofs_spacestats *out_spst);
+                   struct silofs_space_stats1k *out_spst);
 
 void ut_snap(struct ut_env *ute, ino_t ino);
 

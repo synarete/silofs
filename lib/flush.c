@@ -879,12 +879,20 @@ static int flusher_flush_dirty(struct silofs_flusher *flusher)
 	return err;
 }
 
+static void flusher_pre_flush_dirty(struct silofs_flusher *flusher)
+{
+	if (flusher->sbi != NULL) {
+		silofs_sbst_force_into_sb(flusher->sbi);
+	}
+}
+
 static void
 flusher_rebind(struct silofs_flusher *flusher, struct silofs_task *task,
                struct silofs_inode_info *ii, int flags)
 {
 	flusher_reinit_dsets(flusher);
 	flusher->task = task;
+	flusher->sbi = task_sbi(task);
 	flusher->ii = ii;
 	flusher->tx_count = 0;
 	flusher->flags = flags;
@@ -893,6 +901,7 @@ flusher_rebind(struct silofs_flusher *flusher, struct silofs_task *task,
 static void flusher_unbind(struct silofs_flusher *flusher)
 {
 	flusher->task = NULL;
+	flusher->sbi = NULL;
 	flusher->ii = NULL;
 	flusher->tx_count = 0;
 	flusher->flags = 0;
@@ -906,6 +915,7 @@ int silofs_flusher_init(struct silofs_flusher *flusher,
 	flusher_init_txq(flusher);
 	flusher->submitq = submitq;
 	flusher->task = NULL;
+	flusher->sbi = NULL;
 	flusher->ii = NULL;
 	flusher->tx_count = 0;
 	flusher->flags = 0;
@@ -993,21 +1003,30 @@ static bool need_flush_by(const struct silofs_task *task,
 	return ret;
 }
 
-int silofs_flush_dirty(struct silofs_task *task, struct silofs_inode_info *ii,
-                       int flags)
+static int do_flush_dirty(struct silofs_task *task,
+                          struct silofs_inode_info *ii, int flags)
 {
 	struct silofs_flusher *flusher = task->t_env->base.flusher;
 	int err;
 
-	if (!need_flush_by(task, ii, flags)) {
-		return 0;
-	}
 	flusher_rebind(flusher, task, ii, flags);
+	flusher_pre_flush_dirty(flusher);
 	err = flusher_flush_dirty(flusher);
 	if (err) {
 		log_dbg("failed to flush: err=%d", err);
 	}
 	flusher_unbind(flusher);
+	return err;
+}
+
+int silofs_flush_dirty(struct silofs_task *task, struct silofs_inode_info *ii,
+                       int flags)
+{
+	int err = 0;
+
+	if (need_flush_by(task, ii, flags)) {
+		err = do_flush_dirty(task, ii, flags);
+	}
 	return err;
 }
 

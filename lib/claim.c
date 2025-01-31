@@ -79,21 +79,13 @@ static void spac_set_hint(struct silofs_spalloc_ctx *spa_ctx, loff_t off)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static loff_t sbi_vspace_end(const struct silofs_sb_info *sbi)
-{
-	loff_t voff_end = 0;
-
-	silofs_sbst_vspace_end(sbi, &voff_end);
-	return voff_end;
-}
-
 static bool sbi_is_within_vspace(const struct silofs_sb_info *sbi,
                                  const struct silofs_vaddr *vaddr)
 {
 	const size_t vaddr_len = vaddr_len(vaddr);
 	const loff_t vaddr_beg = vaddr->off;
 	const loff_t vaddr_end = off_end(vaddr_beg, vaddr_len);
-	const loff_t vspace_end = sbi_vspace_end(sbi);
+	const loff_t vspace_end = silofs_sbst_vspace_end(sbi);
 
 	return (vaddr_end <= vspace_end);
 }
@@ -259,7 +251,7 @@ static int
 spac_require_vspace_by_spmaps(struct silofs_spalloc_ctx *spa_ctx, loff_t hint,
                               struct silofs_vaddr *out_vaddr)
 {
-	const loff_t vend = sbi_vspace_end(spa_ctx->sbi);
+	const loff_t vend = silofs_sbst_vspace_end(spa_ctx->sbi);
 	loff_t voff = hint;
 	int err;
 
@@ -590,7 +582,7 @@ int silofs_addref_vspace(struct silofs_task *task,
 static int spac_rescan_free_vspace(struct silofs_spalloc_ctx *spa_ctx,
                                    struct silofs_vaddr *out_vaddr)
 {
-	const loff_t vend = sbi_vspace_end(spa_ctx->sbi);
+	const loff_t vend = silofs_sbst_vspace_end(spa_ctx->sbi);
 	loff_t voff = 0;
 	int err;
 

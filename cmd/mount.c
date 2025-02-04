@@ -395,12 +395,12 @@ static void cmd_mount_close_repo(struct cmd_mount_ctx *ctx)
 
 static void cmd_mount_poke_fs(struct cmd_mount_ctx *ctx)
 {
-	cmd_poke_fs(ctx->env, &ctx->env_args.bref);
+	cmd_poke_fs(ctx->env, &ctx->env_args.bref.ba);
 }
 
 static void cmd_mount_open_fs(struct cmd_mount_ctx *ctx)
 {
-	cmd_open_fs(ctx->env, &ctx->env_args.bref);
+	cmd_open_fs(ctx->env, &ctx->env_args.bref.ba);
 }
 
 static void cmd_mount_execute_fs(struct cmd_mount_ctx *ctx)

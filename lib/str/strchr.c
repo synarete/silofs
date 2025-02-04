@@ -60,6 +60,16 @@ size_t silofs_str_length(const char *s)
 	return (s != NULL) ? str_length(s) : 0;
 }
 
+static size_t str_nlength(const char *s, size_t n)
+{
+	return strnlen(s, n);
+}
+
+size_t silofs_str_nlength(const char *s, size_t n)
+{
+	return (s != NULL) ? str_nlength(s, n) : 0;
+}
+
 int silofs_str_compare(const char *s1, const char *s2, size_t n)
 {
 	return (s1 == s2) ? 0 : memcmp(s1, s2, n);

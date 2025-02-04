@@ -17,7 +17,27 @@
 #include <silofs/configs.h>
 #include <silofs/infra.h>
 #include <silofs/fs.h>
+#include <string.h>
 #include <limits.h>
+
+void silofs_bootaddr_reset(struct silofs_bootaddr *ba)
+{
+	memset(ba->s, 0, sizeof(ba->s));
+}
+
+static void bootaddr_assign(struct silofs_bootaddr *ba,
+                            const struct silofs_bootaddr *ba_other)
+{
+	memcpy(ba->s, ba_other->s, sizeof(ba->s));
+}
+
+void silofs_bootaddr_setup(struct silofs_bootaddr *ba,
+                           const struct silofs_caddr *caddr)
+{
+	silofs_caddr_to_str(caddr, ba->s, sizeof(ba->s));
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_bootpath_setup(struct silofs_bootpath *bpath, const char *repodir,
                           const char *name)
@@ -40,6 +60,7 @@ int silofs_bootpath_setup(struct silofs_bootpath *bpath, const char *repodir,
 
 void silofs_bootref_init(struct silofs_bootref *bref)
 {
+	silofs_bootaddr_reset(&bref->ba);
 	silofs_caddr_reset(&bref->caddr);
 	bref->repodir = NULL;
 	bref->name = NULL;
@@ -49,6 +70,7 @@ void silofs_bootref_init(struct silofs_bootref *bref)
 
 void silofs_bootref_fini(struct silofs_bootref *bref)
 {
+	silofs_bootaddr_reset(&bref->ba);
 	silofs_caddr_reset(&bref->caddr);
 	bref->repodir = NULL;
 	bref->name = NULL;
@@ -59,6 +81,7 @@ void silofs_bootref_fini(struct silofs_bootref *bref)
 void silofs_bootref_assign(struct silofs_bootref *bref,
                            const struct silofs_bootref *other)
 {
+	bootaddr_assign(&bref->ba, &other->ba);
 	silofs_caddr_assign(&bref->caddr, &other->caddr);
 	bref->repodir = other->repodir;
 	bref->name = other->name;
@@ -69,6 +92,7 @@ void silofs_bootref_assign(struct silofs_bootref *bref,
 void silofs_bootref_update(struct silofs_bootref *bref,
                            const struct silofs_caddr *caddr, const char *name)
 {
+	silofs_bootaddr_setup(&bref->ba, caddr);
 	silofs_caddr_assign(&bref->caddr, caddr);
 	bref->name = name;
 }

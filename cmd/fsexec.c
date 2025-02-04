@@ -15,6 +15,9 @@
  * GNU General Public License for more details.
  */
 #define _GNU_SOURCE 1
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdarg.h>
 #include "cmd.h"
 
 void cmd_new_env(const struct silofs_args *env_args, struct silofs_env **p_env)
@@ -138,6 +141,20 @@ cmd_require_ok(const struct silofs_env *env, int status, const char *msg)
 	}
 }
 
+silofs_attr_printf(3, 4) static void cmd_require_okf(
+	const struct silofs_env *env, int status, const char *fmt, ...)
+{
+	char msg[512] = "";
+	va_list ap;
+
+	if (status != 0) {
+		va_start(ap, fmt);
+		vsnprintf(msg, sizeof(msg) - 1, fmt, ap);
+		va_end(ap);
+		cmd_report_err_and_die(env, status, msg);
+	}
+}
+
 void cmd_format_repo(struct silofs_env *env)
 {
 	int err;
@@ -162,28 +179,27 @@ void cmd_close_repo(struct silofs_env *env)
 	cmd_require_ok(env, err, "failed to close repo");
 }
 
-void cmd_poke_fs(struct silofs_env *env, const struct silofs_bootref *bref)
+void cmd_poke_fs(struct silofs_env *env, const struct silofs_bootaddr *ba)
 {
 	int err;
 
-	err = silofs_poke_fs(env, &bref->caddr);
-	cmd_require_ok(env, err, "can not poke fs");
+	err = silofs_poke_fs(env, ba);
+	cmd_require_okf(env, err, "can not poke fs '%s'", ba->s);
 }
 
-void cmd_poke_archive(struct silofs_env *env,
-                      const struct silofs_bootref *bref)
+void cmd_poke_ar(struct silofs_env *env, const struct silofs_bootaddr *ba)
 {
 	int err;
 
-	err = silofs_poke_archive(env, &bref->caddr);
-	cmd_require_ok(env, err, "can not poke archive");
+	err = silofs_poke_ar(env, ba);
+	cmd_require_okf(env, err, "can not poke archive '%s'", ba->s);
 }
 
-void cmd_format_fs(struct silofs_env *env, struct silofs_bootref *bref)
+void cmd_format_fs(struct silofs_env *env, struct silofs_bootaddr *out_ba)
 {
 	int err;
 
-	err = silofs_format_fs(env, &bref->caddr);
+	err = silofs_format_fs(env, out_ba);
 	cmd_require_ok(env, err, "failed to format fs");
 }
 
@@ -195,12 +211,12 @@ void cmd_close_fs(struct silofs_env *env)
 	cmd_require_ok(env, err, "failed to close fs");
 }
 
-void cmd_open_fs(struct silofs_env *env, const struct silofs_bootref *bref)
+void cmd_open_fs(struct silofs_env *env, const struct silofs_bootaddr *ba)
 {
 	int err;
 
-	err = silofs_open_fs(env, &bref->caddr);
-	cmd_require_ok(env, err, "failed to open fs");
+	err = silofs_open_fs(env, ba);
+	cmd_require_okf(env, err, "failed to open fs '%s'", ba->s);
 }
 
 void cmd_exec_fs(struct silofs_env *env)
@@ -211,21 +227,20 @@ void cmd_exec_fs(struct silofs_env *env)
 	cmd_require_ok(env, err, "failed to exec fs");
 }
 
-void cmd_fork_fs(struct silofs_env *env, struct silofs_caddr *out_new,
-                 struct silofs_caddr *out_alt)
+void cmd_fork_fs(struct silofs_env *env, struct silofs_bootaddrs *out_bas)
 {
 	int err;
 
-	err = silofs_fork_fs(env, out_new, out_alt);
+	err = silofs_fork_fs(env, out_bas);
 	cmd_require_ok(env, err, "failed to fork fs");
 }
 
-void cmd_unref_fs(struct silofs_env *env, const struct silofs_bootref *bref)
+void cmd_unref_fs(struct silofs_env *env, const struct silofs_bootaddr *ba)
 {
 	int err;
 
-	err = silofs_unref_fs(env, &bref->caddr);
-	cmd_require_ok(env, err, "unref-fs error");
+	err = silofs_unref_fs(env, ba);
+	cmd_require_okf(env, err, "failed to unref fs '%s'", ba->s);
 }
 
 void cmd_inspect_fs(struct silofs_env *env, silofs_visit_laddr_fn cb,
@@ -237,19 +252,19 @@ void cmd_inspect_fs(struct silofs_env *env, silofs_visit_laddr_fn cb,
 	cmd_require_ok(env, err, "inspect-fs error");
 }
 
-void cmd_archive_fs(struct silofs_env *env, struct silofs_caddr *out_caddr)
+void cmd_archive_fs(struct silofs_env *env, struct silofs_bootaddr *out_ba)
 {
 	int err;
 
-	err = silofs_archive_fs(env, out_caddr);
-	cmd_require_ok(env, err, "archive-fs failure");
+	err = silofs_archive_fs(env, out_ba);
+	cmd_require_ok(env, err, "failed to archive fs");
 }
 
-void cmd_restore_fs(struct silofs_env *env, struct silofs_caddr *out_caddr)
+void cmd_restore_fs(struct silofs_env *env, struct silofs_bootaddr *out_ba)
 {
 	int err;
 
-	err = silofs_restore_fs(env, out_caddr);
+	err = silofs_restore_fs(env, out_ba);
 	cmd_require_ok(env, err, "restore-fs failure");
 }
 

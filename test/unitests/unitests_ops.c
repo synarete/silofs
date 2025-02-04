@@ -1956,7 +1956,7 @@ void ut_format_fs(struct ut_env *ute)
 {
 	int err;
 
-	err = silofs_format_fs(ute->env, &ute->boot_ref[0]);
+	err = silofs_format_fs(ute->env, &ute->boot_ba[0]);
 	ut_expect_ok(err);
 }
 
@@ -1964,7 +1964,7 @@ void ut_open_fs(struct ut_env *ute)
 {
 	int err;
 
-	err = silofs_open_fs(ute->env, &ute->boot_ref[0]);
+	err = silofs_open_fs(ute->env, &ute->boot_ba[0]);
 	ut_expect_ok(err);
 }
 
@@ -1972,7 +1972,7 @@ void ut_open_fs2(struct ut_env *ute)
 {
 	int err;
 
-	err = silofs_open_fs(ute->env, &ute->boot_ref[1]);
+	err = silofs_open_fs(ute->env, &ute->boot_ba[1]);
 	ut_expect_ok(err);
 }
 
@@ -1996,7 +1996,7 @@ void ut_unref_fs(struct ut_env *ute)
 {
 	int err;
 
-	err = silofs_unref_fs(ute->env, &ute->boot_ref[0]);
+	err = silofs_unref_fs(ute->env, &ute->boot_ba[0]);
 	ut_expect_ok(err);
 }
 
@@ -2004,7 +2004,7 @@ void ut_unref_fs2(struct ut_env *ute)
 {
 	int err;
 
-	err = silofs_unref_fs(ute->env, &ute->boot_ref[1]);
+	err = silofs_unref_fs(ute->env, &ute->boot_ba[1]);
 	ut_expect_ok(err);
 }
 
@@ -2018,17 +2018,21 @@ void ut_reload_fs(struct ut_env *ute)
 
 void ut_fork_fs(struct ut_env *ute)
 {
+	struct silofs_bootaddrs bas;
 	int err;
 
-	err = silofs_fork_fs(ute->env, &ute->boot_ref[0], &ute->boot_ref[1]);
+	err = silofs_fork_fs(ute->env, &bas);
 	ut_expect_ok(err);
+
+	memcpy(&ute->boot_ba[0], &bas.ba_new, sizeof(ute->boot_ba[0]));
+	memcpy(&ute->boot_ba[1], &bas.ba_alt, sizeof(ute->boot_ba[1]));
 }
 
 void ut_archive_fs(struct ut_env *ute)
 {
 	int err;
 
-	err = silofs_archive_fs(ute->env, &ute->pack_ref);
+	err = silofs_archive_fs(ute->env, &ute->pack_ba);
 	ut_expect_ok(err);
 }
 
@@ -2036,6 +2040,6 @@ void ut_restore_fs(struct ut_env *ute)
 {
 	int err;
 
-	err = silofs_restore_fs(ute->env, &ute->boot_ref[0]);
+	err = silofs_restore_fs(ute->env, &ute->boot_ba[0]);
 	ut_expect_ok(err);
 }

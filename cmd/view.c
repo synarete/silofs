@@ -192,12 +192,12 @@ static void cmd_view_close_repo(struct cmd_view_ctx *ctx)
 
 static void cmd_view_poke_fs(struct cmd_view_ctx *ctx)
 {
-	cmd_poke_fs(ctx->env, &ctx->env_args.bref);
+	cmd_poke_fs(ctx->env, &ctx->env_args.bref.ba);
 }
 
 static void cmd_view_open_fs(struct cmd_view_ctx *ctx)
 {
-	cmd_open_fs(ctx->env, &ctx->env_args.bref);
+	cmd_open_fs(ctx->env, &ctx->env_args.bref.ba);
 }
 
 static void cmd_view_close_fs(struct cmd_view_ctx *ctx)

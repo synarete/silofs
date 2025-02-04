@@ -209,12 +209,12 @@ static void cmd_rmfs_close_repo(struct cmd_rmfs_ctx *ctx)
 
 static void cmd_rmfs_poke_fs(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_poke_fs(ctx->env, &ctx->env_args.bref);
+	cmd_poke_fs(ctx->env, &ctx->env_args.bref.ba);
 }
 
 static void cmd_rmfs_execute(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_unref_fs(ctx->env, &ctx->env_args.bref);
+	cmd_unref_fs(ctx->env, &ctx->env_args.bref.ba);
 }
 
 static void cmd_rmfs_unlink_bref(struct cmd_rmfs_ctx *ctx)

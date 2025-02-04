@@ -46,8 +46,7 @@ struct cmd_snap_ctx {
 	struct silofs_args env_args;
 	struct silofs_env *env;
 	union silofs_ioc_u *ioc;
-	struct silofs_caddr boot_new;
-	struct silofs_caddr boot_alt;
+	struct silofs_bootaddrs bas;
 };
 
 static struct cmd_snap_ctx *cmd_snap_ctx;
@@ -224,11 +223,15 @@ cmd_snap_ioctl_query(const char *path, struct silofs_ioc_query *qry)
 
 static void cmd_snap_do_ioctl_clone(struct cmd_snap_ctx *ctx)
 {
-	struct silofs_strbuf name;
 	struct silofs_ioc_clone *cl = &ctx->ioc->clone;
 	const char *dirpath = ctx->in_args.dirpath_real;
 	int dfd = -1;
 	int err;
+
+	SILOFS_STATICASSERT_EQ(sizeof(ctx->bas.ba_new.s),
+	                       sizeof(cl->boot_new));
+	SILOFS_STATICASSERT_EQ(sizeof(ctx->bas.ba_alt.s),
+	                       sizeof(cl->boot_alt));
 
 	cmd_reset_ioc(ctx->ioc);
 	err = silofs_sys_opendir(dirpath, &dfd);
@@ -247,11 +250,8 @@ static void cmd_snap_do_ioctl_clone(struct cmd_snap_ctx *ctx)
 		cmd_die(err, "failed to snap: %s", ctx->in_args.repodir_name);
 	}
 
-	silofs_strbuf_setup_by(&name, cl->boot_new);
-	silofs_caddr_by_name(&ctx->boot_new, &name);
-
-	silofs_strbuf_setup_by(&name, cl->boot_alt);
-	silofs_caddr_by_name(&ctx->boot_alt, &name);
+	memcpy(ctx->bas.ba_new.s, cl->boot_new, sizeof(ctx->bas.ba_new.s));
+	memcpy(ctx->bas.ba_alt.s, cl->boot_alt, sizeof(ctx->bas.ba_alt.s));
 }
 
 static void cmd_snap_do_ioctl_syncfs(struct cmd_snap_ctx *ctx)
@@ -311,17 +311,17 @@ static void cmd_snap_close_repo(struct cmd_snap_ctx *ctx)
 
 static void cmd_snap_poke_fs(struct cmd_snap_ctx *ctx)
 {
-	cmd_poke_fs(ctx->env, &ctx->env_args.bref);
+	cmd_poke_fs(ctx->env, &ctx->env_args.bref.ba);
 }
 
 static void cmd_snap_open_fs(struct cmd_snap_ctx *ctx)
 {
-	cmd_open_fs(ctx->env, &ctx->env_args.bref);
+	cmd_open_fs(ctx->env, &ctx->env_args.bref.ba);
 }
 
 static void cmd_snap_fork_fs(struct cmd_snap_ctx *ctx)
 {
-	cmd_fork_fs(ctx->env, &ctx->boot_new, &ctx->boot_alt);
+	cmd_fork_fs(ctx->env, &ctx->bas);
 }
 
 static void cmd_snap_close_fs(struct cmd_snap_ctx *ctx)
@@ -335,7 +335,9 @@ static void cmd_snap_save_snap_bref(struct cmd_snap_ctx *ctx)
 
 	silofs_bootref_init(&bref);
 	silofs_bootref_assign(&bref, &ctx->env_args.bref);
-	silofs_bootref_update(&bref, &ctx->boot_alt, ctx->in_args.snapname);
+	bref.name = ctx->in_args.snapname;
+	memcpy(&bref.ba, &ctx->bas.ba_alt, sizeof(bref.ba));
+
 	cmd_bootref_save(&bref);
 	silofs_bootref_fini(&bref);
 }
@@ -346,7 +348,8 @@ static void cmd_snap_save_orig_bref(struct cmd_snap_ctx *ctx)
 
 	silofs_bootref_init(&bref);
 	silofs_bootref_assign(&bref, &ctx->env_args.bref);
-	silofs_bootref_update(&bref, &ctx->boot_new, ctx->in_args.name);
+	bref.name = ctx->in_args.name;
+	memcpy(&bref.ba, &ctx->bas.ba_new, sizeof(bref.ba));
 	cmd_bootref_save(&bref);
 	silofs_bootref_fini(&bref);
 }

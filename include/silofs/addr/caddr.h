@@ -30,6 +30,10 @@ struct silofs_caddr {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+int silofs_caddr_from_str(struct silofs_caddr *caddr, const char *s, size_t n);
+
+int silofs_caddr_to_str(const struct silofs_caddr *caddr, char *s, size_t n);
+
 void silofs_caddr_reset(struct silofs_caddr *caddr);
 
 void silofs_caddr_setup(struct silofs_caddr         *caddr,
@@ -48,7 +52,7 @@ void silofs_caddr_to_name(const struct silofs_caddr *caddr,
                           struct silofs_strbuf      *out_name);
 
 void silofs_caddr_to_name2(const struct silofs_caddr *caddr,
-                           char                       s[SILOFS_NAME_MAX + 1]);
+                           char                       s[SILOFS_ADDR_MAX + 1]);
 
 int silofs_caddr_by_name(struct silofs_caddr        *caddr,
                          const struct silofs_strbuf *name);

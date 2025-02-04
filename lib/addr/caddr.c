@@ -75,8 +75,19 @@ static size_t caddr_to_str(const struct silofs_caddr *caddr, char *s, size_t n)
 		strncpy(d, hname.str, hn);
 		d += hn;
 		*d = '\0';
+		d += 1;
+	} else {
+		d += silofs_min(n, pn);
 	}
 	return (size_t)(d - s);
+}
+
+int silofs_caddr_to_str(const struct silofs_caddr *caddr, char *s, size_t n)
+{
+	size_t k;
+
+	k = caddr_to_str(caddr, s, n);
+	return (k < n) ? 0 : -SILOFS_ERANGE;
 }
 
 static int check_ctype_size(enum silofs_ctype ctype, size_t size)
@@ -99,8 +110,7 @@ static int check_ctype_size(enum silofs_ctype ctype, size_t size)
 	return ret;
 }
 
-static int
-caddr_from_str(struct silofs_caddr *caddr, const char *s, size_t len)
+int silofs_caddr_from_str(struct silofs_caddr *caddr, const char *s, size_t n)
 {
 	struct silofs_strbuf sbuf;
 	struct silofs_strbuf hname;
@@ -112,10 +122,10 @@ caddr_from_str(struct silofs_caddr *caddr, const char *s, size_t len)
 	int k = 0;
 	int err = 0;
 
-	if (len >= sizeof(sbuf.str)) {
+	if (n >= sizeof(sbuf.str)) {
 		return -SILOFS_EINVAL;
 	}
-	silofs_strbuf_setup_by2(&sbuf, s, len);
+	silofs_strbuf_setup_by2(&sbuf, s, n);
 
 	silofs_strbuf_reset(&hname);
 	k = sscanf(sbuf.str, "silofs.v%d.%d.%x:%64s", &vers, &ctyp, &size,
@@ -147,7 +157,7 @@ caddr_from_strview(struct silofs_caddr *caddr, const struct silofs_strview *sv)
 
 	silofs_strview_strip_ws(sv, &sv2);
 	if (silofs_strview_isascii(&sv2)) {
-		ret = caddr_from_str(caddr, sv2.str, sv2.len);
+		ret = silofs_caddr_from_str(caddr, sv2.str, sv2.len);
 	}
 	return ret;
 }
@@ -162,15 +172,9 @@ void silofs_caddr_to_name(const struct silofs_caddr *caddr,
 }
 
 void silofs_caddr_to_name2(const struct silofs_caddr *caddr,
-                           char s[SILOFS_NAME_MAX + 1])
+                           char s[SILOFS_ADDR_MAX + 1])
 {
-	const size_t n = SILOFS_NAME_MAX;
-	size_t k;
-
-	k = caddr_to_str(caddr, s, n);
-	if (k >= n) {
-		s[n] = '\0';
-	}
+	caddr_to_str(caddr, s, SILOFS_ADDR_MAX + 1);
 }
 
 int silofs_caddr_by_name(struct silofs_caddr *caddr,

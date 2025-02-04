@@ -201,7 +201,7 @@ static void cmd_mkfs_close_repo(const struct cmd_mkfs_ctx *ctx)
 
 static void cmd_mkfs_format_fs(struct cmd_mkfs_ctx *ctx)
 {
-	cmd_format_fs(ctx->env, &ctx->env_args.bref);
+	cmd_format_fs(ctx->env, &ctx->env_args.bref.ba);
 }
 
 static void cmd_mkfs_save_bref(struct cmd_mkfs_ctx *ctx)

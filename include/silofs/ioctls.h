@@ -59,7 +59,7 @@ struct silofs_query_repo {
 
 struct silofs_query_boot {
 	char    name[SILOFS_NAME_MAX + 1];
-	char    addr[SILOFS_NAME_MAX + 1];
+	char    addr[SILOFS_ADDR_MAX + 1];
 	uint8_t fsid[SILOFS_UUID_SIZE];
 	uint8_t volid[SILOFS_UUID_SIZE];
 };
@@ -105,8 +105,8 @@ struct silofs_ioc_query {
 };
 
 struct silofs_ioc_clone {
-	char boot_new[SILOFS_NAME_MAX + 1];
-	char boot_alt[SILOFS_NAME_MAX + 1];
+	char boot_new[SILOFS_ADDR_MAX + 1];
+	char boot_alt[SILOFS_ADDR_MAX + 1];
 };
 
 struct silofs_ioc_syncfs {

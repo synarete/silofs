@@ -198,12 +198,12 @@ static void cmd_archive_close_repo(struct cmd_archive_ctx *ctx)
 
 static void cmd_archive_poke_fs(struct cmd_archive_ctx *ctx)
 {
-	cmd_poke_fs(ctx->env, &ctx->env_args.bref);
+	cmd_poke_fs(ctx->env, &ctx->env_args.bref.ba);
 }
 
 static void cmd_archive_open_fs(struct cmd_archive_ctx *ctx)
 {
-	cmd_open_fs(ctx->env, &ctx->env_args.bref);
+	cmd_open_fs(ctx->env, &ctx->env_args.bref.ba);
 }
 
 static void cmd_archive_close_fs(struct cmd_archive_ctx *ctx)
@@ -213,10 +213,10 @@ static void cmd_archive_close_fs(struct cmd_archive_ctx *ctx)
 
 static void cmd_archive_execute(struct cmd_archive_ctx *ctx)
 {
-	struct silofs_caddr caddr;
+	struct silofs_bootaddr ba;
 
-	cmd_archive_fs(ctx->env, &caddr);
-	cmd_bootref_resave(&ctx->env_args.bref, &caddr, ctx->in_args.arname);
+	cmd_archive_fs(ctx->env, &ba);
+	cmd_bootref_resave(&ctx->env_args.bref, &ba, ctx->in_args.arname);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

@@ -28,6 +28,7 @@ typedef void (*silofs_chr_modify_fn)(char *);
  * Returns the number of characters in s before the first null character.
  */
 size_t silofs_str_length(const char *s);
+size_t silofs_str_nlength(const char *s, size_t n);
 
 /*
  * Three way lexicographic compare of two characters-arrays.

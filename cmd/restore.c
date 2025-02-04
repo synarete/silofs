@@ -193,15 +193,15 @@ static void cmd_restore_close_repo(struct cmd_restore_ctx *ctx)
 
 static void cmd_restore_poke_archive(struct cmd_restore_ctx *ctx)
 {
-	cmd_poke_archive(ctx->env, &ctx->env_args.bref);
+	cmd_poke_ar(ctx->env, &ctx->env_args.bref.ba);
 }
 
 static void cmd_restore_execute(struct cmd_restore_ctx *ctx)
 {
-	struct silofs_caddr caddr = { .ctype = SILOFS_CTYPE_NONE };
+	struct silofs_bootaddr ba;
 
-	cmd_restore_fs(ctx->env, &caddr);
-	cmd_bootref_resave(&ctx->env_args.bref, &caddr, ctx->in_args.name);
+	cmd_restore_fs(ctx->env, &ba);
+	cmd_bootref_resave(&ctx->env_args.bref, &ba, ctx->in_args.name);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

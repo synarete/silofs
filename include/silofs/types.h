@@ -21,6 +21,8 @@
 #include <stdint.h>
 #include <unistd.h>
 
+#include <silofs/addr.h>
+
 /* file-system's top-level control flags */
 enum silofs_flags {
 	SILOFS_F_PEDANTIC     = SILOFS_BIT(0),
@@ -39,6 +41,27 @@ enum silofs_flags {
 	SILOFS_F_ASYNCWR      = SILOFS_BIT(13),
 	SILOFS_F_LAZYTIME     = SILOFS_BIT(14),
 	SILOFS_F_STDALLOC     = SILOFS_BIT(15),
+};
+
+/* boot-reference address string */
+struct silofs_bootaddr {
+	char s[SILOFS_ADDR_MAX + 1];
+};
+
+/* boot-reference address pair */
+struct silofs_bootaddrs {
+	struct silofs_bootaddr ba_new;
+	struct silofs_bootaddr ba_alt;
+};
+
+/* file-system's boot reference */
+struct silofs_bootref {
+	struct silofs_bootaddr ba;
+	struct silofs_caddr    caddr;
+	const char            *repodir;
+	const char            *name;
+	const char            *passwd;
+	const char            *mntdir;
 };
 
 /* user-id host-to-fs bidirectional-mapping */

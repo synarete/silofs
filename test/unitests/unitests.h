@@ -128,8 +128,8 @@ struct ut_args {
 struct ut_env {
 	struct silofs_prandgen      prng;
 	struct silofs_password      passwd;
-	struct silofs_caddr         boot_ref[2];
-	struct silofs_caddr         pack_ref;
+	struct silofs_bootaddr      boot_ba[2];
+	struct silofs_bootaddr      pack_ba;
 	struct ut_args             *args;
 	struct silofs_env          *env;
 	struct timespec             ts_start;

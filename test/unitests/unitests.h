@@ -19,6 +19,7 @@
 
 #include <silofs/configs.h>
 #include <silofs/silofs.h>
+#include <silofs/fs.h>
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <sys/stat.h>

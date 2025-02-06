@@ -106,7 +106,7 @@ static int calc_mem_size(size_t mem_want, size_t *out_mem_size)
 
 static int check_bootpath(const struct silofs_args *args)
 {
-	const struct silofs_bootref *bref = &args->bref;
+	const struct silofs_boot_args *bref = &args->boot;
 	struct silofs_bootpath bootpath;
 
 	return silofs_bootpath_setup(&bootpath, bref->repodir, bref->name);
@@ -116,7 +116,7 @@ static int check_password(const struct silofs_args *args)
 {
 	struct silofs_password passwd;
 
-	return silofs_password_setup(&passwd, args->bref.passwd);
+	return silofs_password_setup(&passwd, args->boot.passwd);
 }
 
 static int check_args(const struct silofs_args *args)
@@ -233,7 +233,7 @@ static void envi_make_repo_base(const struct silofs_env_inst *envi,
 	if (envi->args.flags & SILOFS_F_RDONLY) {
 		re_base->flags |= SILOFS_REPOF_RDONLY;
 	}
-	silofs_strview_init(&re_base->repodir, envi->args.bref.repodir);
+	silofs_strview_init(&re_base->repodir, envi->args.boot.repodir);
 }
 
 static int envi_init_repo(struct silofs_env_inst *envi)
@@ -500,7 +500,7 @@ static void envi_fini_env(struct silofs_env_inst *envi)
 
 static int envi_init_passwd(struct silofs_env_inst *envi)
 {
-	return silofs_password_setup(&envi->passwd, envi->args.bref.passwd);
+	return silofs_password_setup(&envi->passwd, envi->args.boot.passwd);
 }
 
 static void envi_fini_passwd(struct silofs_env_inst *envi)

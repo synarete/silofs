@@ -168,9 +168,9 @@ static void cmd_mkfs_setup_env_args(struct cmd_mkfs_ctx *ctx)
 	struct silofs_args *env_args = &ctx->env_args;
 
 	cmd_setup_env_args(env_args);
-	env_args->bref.repodir = ctx->in_args.repodir_real;
-	env_args->bref.name = ctx->in_args.name;
-	env_args->bref.passwd = ctx->in_args.password;
+	env_args->boot.repodir = ctx->in_args.repodir_real;
+	env_args->boot.name = ctx->in_args.name;
+	env_args->boot.passwd = ctx->in_args.password;
 	env_args->capacity = (size_t)ctx->in_args.fs_size;
 }
 
@@ -201,12 +201,12 @@ static void cmd_mkfs_close_repo(const struct cmd_mkfs_ctx *ctx)
 
 static void cmd_mkfs_format_fs(struct cmd_mkfs_ctx *ctx)
 {
-	cmd_format_fs(ctx->env, &ctx->env_args.bref.ba);
+	cmd_format_fs(ctx->env, &ctx->env_args.boot.xref);
 }
 
 static void cmd_mkfs_save_bref(struct cmd_mkfs_ctx *ctx)
 {
-	cmd_bootref_save(&ctx->env_args.bref);
+	cmd_bootref_save(&ctx->env_args.boot);
 }
 
 static void cmd_mkfs_close_fs(struct cmd_mkfs_ctx *ctx)

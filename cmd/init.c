@@ -144,8 +144,8 @@ static void cmd_init_setup_env_args(struct cmd_init_ctx *ctx)
 
 	cmd_setup_env_args(env_args);
 	cmd_resolve_uidgid(username, &env_args->uid, &env_args->gid);
-	env_args->bref.repodir = ctx->in_args.repodir_real;
-	env_args->bref.name = "silofs";
+	env_args->boot.repodir = ctx->in_args.repodir_real;
+	env_args->boot.name = "silofs";
 }
 
 static void cmd_init_setup_fs_ids(struct cmd_init_ctx *ctx)
@@ -180,7 +180,7 @@ static void cmd_init_close_repo(const struct cmd_init_ctx *ctx)
 
 static void cmd_init_save_idsconf(const struct cmd_init_ctx *ctx)
 {
-	cmd_fs_ids_save(&ctx->env_args.ids, ctx->env_args.bref.repodir);
+	cmd_fs_ids_save(&ctx->env_args.ids, ctx->env_args.boot.repodir);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

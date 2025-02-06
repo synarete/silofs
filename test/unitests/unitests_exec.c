@@ -143,7 +143,7 @@ static void ute_setup_random_passwd(struct ut_env *ute)
 
 	pp->passlen = sizeof(pp->pass) - 1;
 	silofs_prandgen_ascii(&ute->prng, (char *)pp->pass, pp->passlen);
-	env_args->bref.passwd = (const char *)(pp->pass);
+	env_args->boot.passwd = (const char *)(pp->pass);
 }
 
 static void ute_setup(struct ut_env *ute)
@@ -454,10 +454,10 @@ static void ut_del_gids(struct silofs_gids *gids)
 static void ut_init_args(struct ut_args *args)
 {
 	memset(args, 0, sizeof(*args));
-	silofs_bootref_init(&args->env_args.bref);
-	args->env_args.bref.repodir = ut_globals.test_dir_repo;
-	args->env_args.bref.name = "unitests";
-	args->env_args.bref.mntdir = "/";
+	silofs_bootref_init(&args->env_args.boot);
+	args->env_args.boot.repodir = ut_globals.test_dir_repo;
+	args->env_args.boot.name = "unitests";
+	args->env_args.boot.mntdir = "/";
 	args->env_args.ids.users.uids = ut_new_uids();
 	args->env_args.ids.users.nuids = 2;
 	args->env_args.ids.groups.gids = ut_new_gids();

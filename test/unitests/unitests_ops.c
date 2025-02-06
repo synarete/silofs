@@ -2018,14 +2018,14 @@ void ut_reload_fs(struct ut_env *ute)
 
 void ut_fork_fs(struct ut_env *ute)
 {
-	struct silofs_bootaddrs bas;
+	struct silofs_xrefs bas;
 	int err;
 
 	err = silofs_fork_fs(ute->env, &bas);
 	ut_expect_ok(err);
 
-	memcpy(&ute->boot_ba[0], &bas.ba_new, sizeof(ute->boot_ba[0]));
-	memcpy(&ute->boot_ba[1], &bas.ba_alt, sizeof(ute->boot_ba[1]));
+	memcpy(&ute->boot_ba[0], &bas.xref_new, sizeof(ute->boot_ba[0]));
+	memcpy(&ute->boot_ba[1], &bas.xref_alt, sizeof(ute->boot_ba[1]));
 }
 
 void ut_archive_fs(struct ut_env *ute)

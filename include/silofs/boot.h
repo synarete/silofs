@@ -32,31 +32,23 @@ struct silofs_bootpath {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_bootaddr_reset(struct silofs_bootaddr *ba);
+void silofs_xref_reset(struct silofs_xref *ba);
 
-void silofs_bootaddr_setup(struct silofs_bootaddr    *ba,
-                           const struct silofs_caddr *caddr);
+void silofs_xref_setup(struct silofs_xref        *ba,
+                       const struct silofs_caddr *caddr);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_bootpath_setup(struct silofs_bootpath *bp, const char *repodir,
                           const char *name);
 
-void silofs_bootref_init(struct silofs_bootref *bref);
+void silofs_bootref_init(struct silofs_boot_args *bref);
 
-void silofs_bootref_fini(struct silofs_bootref *bref);
+void silofs_bootref_assign(struct silofs_boot_args       *bref,
+                           const struct silofs_boot_args *other);
 
-void silofs_bootref_assign(struct silofs_bootref       *bref,
-                           const struct silofs_bootref *other);
-
-void silofs_bootref_update(struct silofs_bootref     *bref,
-                           const struct silofs_caddr *caddr, const char *name);
-
-int silofs_bootref_import(struct silofs_bootref       *bref,
+int silofs_bootref_import(struct silofs_boot_args     *bref,
                           const struct silofs_strview *sv);
-
-void silofs_bootref_export(const struct silofs_bootref *bref,
-                           struct silofs_strbuf        *sbuf);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

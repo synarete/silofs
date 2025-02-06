@@ -2352,7 +2352,7 @@ static void bootpath_of(const struct silofs_inode_info *ii,
 {
 	const struct silofs_env *env = ii_env(ii);
 	const struct silofs_args *args = env->base.args;
-	const struct silofs_bootref *bref = &args->bref;
+	const struct silofs_boot_args *bref = &args->boot;
 
 	silofs_bootpath_setup(out_bootpath, bref->repodir, bref->name);
 }

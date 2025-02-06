@@ -160,9 +160,9 @@ static void cmd_view_setup_env_args(struct cmd_view_ctx *ctx)
 	struct silofs_args *env_args = &ctx->env_args;
 
 	cmd_setup_env_args(env_args);
-	env_args->bref.repodir = ctx->in_args.repodir_real;
-	env_args->bref.name = ctx->in_args.name;
-	env_args->bref.passwd = ctx->in_args.password;
+	env_args->boot.repodir = ctx->in_args.repodir_real;
+	env_args->boot.name = ctx->in_args.name;
+	env_args->boot.passwd = ctx->in_args.password;
 }
 
 static void cmd_view_setup_fs_ids(struct cmd_view_ctx *ctx)
@@ -172,7 +172,7 @@ static void cmd_view_setup_fs_ids(struct cmd_view_ctx *ctx)
 
 static void cmd_view_load_bref(struct cmd_view_ctx *ctx)
 {
-	cmd_bootref_load(&ctx->env_args.bref);
+	cmd_bootref_load(&ctx->env_args.boot);
 }
 
 static void cmd_view_setup_env(struct cmd_view_ctx *ctx)
@@ -192,12 +192,12 @@ static void cmd_view_close_repo(struct cmd_view_ctx *ctx)
 
 static void cmd_view_poke_fs(struct cmd_view_ctx *ctx)
 {
-	cmd_poke_fs(ctx->env, &ctx->env_args.bref.ba);
+	cmd_poke_fs(ctx->env, &ctx->env_args.boot.xref);
 }
 
 static void cmd_view_open_fs(struct cmd_view_ctx *ctx)
 {
-	cmd_open_fs(ctx->env, &ctx->env_args.bref.ba);
+	cmd_open_fs(ctx->env, &ctx->env_args.boot.xref);
 }
 
 static void cmd_view_close_fs(struct cmd_view_ctx *ctx)

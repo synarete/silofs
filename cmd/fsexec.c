@@ -46,7 +46,7 @@ static char *cmd_repodir_name(const struct silofs_env *env)
 	char *ret = NULL;
 
 	silofs_getargs(env, &args);
-	cmd_join_path(args.bref.repodir, args.bref.name, &ret);
+	cmd_join_path(args.boot.repodir, args.boot.name, &ret);
 	return ret;
 }
 
@@ -179,7 +179,7 @@ void cmd_close_repo(struct silofs_env *env)
 	cmd_require_ok(env, err, "failed to close repo");
 }
 
-void cmd_poke_fs(struct silofs_env *env, const struct silofs_bootaddr *ba)
+void cmd_poke_fs(struct silofs_env *env, const struct silofs_xref *ba)
 {
 	int err;
 
@@ -187,7 +187,7 @@ void cmd_poke_fs(struct silofs_env *env, const struct silofs_bootaddr *ba)
 	cmd_require_okf(env, err, "can not poke fs '%s'", ba->s);
 }
 
-void cmd_poke_ar(struct silofs_env *env, const struct silofs_bootaddr *ba)
+void cmd_poke_ar(struct silofs_env *env, const struct silofs_xref *ba)
 {
 	int err;
 
@@ -195,7 +195,7 @@ void cmd_poke_ar(struct silofs_env *env, const struct silofs_bootaddr *ba)
 	cmd_require_okf(env, err, "can not poke archive '%s'", ba->s);
 }
 
-void cmd_format_fs(struct silofs_env *env, struct silofs_bootaddr *out_ba)
+void cmd_format_fs(struct silofs_env *env, struct silofs_xref *out_ba)
 {
 	int err;
 
@@ -211,7 +211,7 @@ void cmd_close_fs(struct silofs_env *env)
 	cmd_require_ok(env, err, "failed to close fs");
 }
 
-void cmd_open_fs(struct silofs_env *env, const struct silofs_bootaddr *ba)
+void cmd_open_fs(struct silofs_env *env, const struct silofs_xref *ba)
 {
 	int err;
 
@@ -227,7 +227,7 @@ void cmd_exec_fs(struct silofs_env *env)
 	cmd_require_ok(env, err, "failed to exec fs");
 }
 
-void cmd_fork_fs(struct silofs_env *env, struct silofs_bootaddrs *out_bas)
+void cmd_fork_fs(struct silofs_env *env, struct silofs_xrefs *out_bas)
 {
 	int err;
 
@@ -235,7 +235,7 @@ void cmd_fork_fs(struct silofs_env *env, struct silofs_bootaddrs *out_bas)
 	cmd_require_ok(env, err, "failed to fork fs");
 }
 
-void cmd_unref_fs(struct silofs_env *env, const struct silofs_bootaddr *ba)
+void cmd_unref_fs(struct silofs_env *env, const struct silofs_xref *ba)
 {
 	int err;
 
@@ -252,7 +252,7 @@ void cmd_inspect_fs(struct silofs_env *env, silofs_visit_laddr_fn cb,
 	cmd_require_ok(env, err, "inspect-fs error");
 }
 
-void cmd_archive_fs(struct silofs_env *env, struct silofs_bootaddr *out_ba)
+void cmd_archive_fs(struct silofs_env *env, struct silofs_xref *out_ba)
 {
 	int err;
 
@@ -260,7 +260,7 @@ void cmd_archive_fs(struct silofs_env *env, struct silofs_bootaddr *out_ba)
 	cmd_require_ok(env, err, "failed to archive fs");
 }
 
-void cmd_restore_fs(struct silofs_env *env, struct silofs_bootaddr *out_ba)
+void cmd_restore_fs(struct silofs_env *env, struct silofs_xref *out_ba)
 {
 	int err;
 
@@ -273,7 +273,7 @@ void cmd_restore_fs(struct silofs_env *env, struct silofs_bootaddr *out_ba)
 void cmd_setup_env_args(struct silofs_args *args)
 {
 	memset(args, 0, sizeof(*args));
-	silofs_bootref_init(&args->bref);
+	silofs_bootref_init(&args->boot);
 	cmd_fs_ids_init(&args->ids);
 	args->uid = getuid();
 	args->gid = getgid();
@@ -283,7 +283,6 @@ void cmd_setup_env_args(struct silofs_args *args)
 
 void cmd_destroy_env_args(struct silofs_args *args)
 {
-	silofs_bootref_fini(&args->bref);
 	cmd_fs_ids_fini(&args->ids);
-	args->umask = 0;
+	memset(args, 0, sizeof(*args));
 }

@@ -55,11 +55,11 @@ int silofs_close_repo(struct silofs_env *env);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_format_fs(struct silofs_env *env, struct silofs_bootaddr *out_ba);
+int silofs_format_fs(struct silofs_env *env, struct silofs_xref *out_ba);
 
-int silofs_poke_fs(struct silofs_env *env, const struct silofs_bootaddr *ba);
+int silofs_poke_fs(struct silofs_env *env, const struct silofs_xref *ba);
 
-int silofs_open_fs(struct silofs_env *env, const struct silofs_bootaddr *ba);
+int silofs_open_fs(struct silofs_env *env, const struct silofs_xref *ba);
 
 int silofs_close_fs(struct silofs_env *env);
 
@@ -67,9 +67,9 @@ int silofs_run_fs(struct silofs_env *env);
 
 int silofs_post_exec_fs(struct silofs_env *env);
 
-int silofs_fork_fs(struct silofs_env *env, struct silofs_bootaddrs *out_bas);
+int silofs_fork_fs(struct silofs_env *env, struct silofs_xrefs *out_bas);
 
-int silofs_unref_fs(struct silofs_env *env, const struct silofs_bootaddr *ba);
+int silofs_unref_fs(struct silofs_env *env, const struct silofs_xref *ba);
 
 void silofs_halt_fs(struct silofs_env *env);
 
@@ -81,10 +81,10 @@ void silofs_stat_fs(const struct silofs_env   *env,
 int silofs_inspect_fs(struct silofs_env *env, silofs_visit_laddr_fn cb,
                       void *user_ctx);
 
-int silofs_archive_fs(struct silofs_env *env, struct silofs_bootaddr *out_ba);
+int silofs_archive_fs(struct silofs_env *env, struct silofs_xref *out_ba);
 
-int silofs_restore_fs(struct silofs_env *env, struct silofs_bootaddr *out_ba);
+int silofs_restore_fs(struct silofs_env *env, struct silofs_xref *out_ba);
 
-int silofs_poke_ar(struct silofs_env *env, const struct silofs_bootaddr *ba);
+int silofs_poke_ar(struct silofs_env *env, const struct silofs_xref *ba);
 
 #endif /* SILOFS_APPEXEC_H_ */

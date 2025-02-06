@@ -166,14 +166,14 @@ static void cmd_restore_setup_env_args(struct cmd_restore_ctx *ctx)
 	struct silofs_args *env_args = &ctx->env_args;
 
 	cmd_setup_env_args(env_args);
-	env_args->bref.repodir = ctx->in_args.repodir_real;
-	env_args->bref.name = ctx->in_args.arname;
-	env_args->bref.passwd = ctx->in_args.password;
+	env_args->boot.repodir = ctx->in_args.repodir_real;
+	env_args->boot.name = ctx->in_args.arname;
+	env_args->boot.passwd = ctx->in_args.password;
 }
 
 static void cmd_restore_load_bref(struct cmd_restore_ctx *ctx)
 {
-	cmd_bootref_load_ar(&ctx->env_args.bref);
+	cmd_bootref_load_ar(&ctx->env_args.boot);
 }
 
 static void cmd_restore_setup_env(struct cmd_restore_ctx *ctx)
@@ -193,15 +193,15 @@ static void cmd_restore_close_repo(struct cmd_restore_ctx *ctx)
 
 static void cmd_restore_poke_archive(struct cmd_restore_ctx *ctx)
 {
-	cmd_poke_ar(ctx->env, &ctx->env_args.bref.ba);
+	cmd_poke_ar(ctx->env, &ctx->env_args.boot.xref);
 }
 
 static void cmd_restore_execute(struct cmd_restore_ctx *ctx)
 {
-	struct silofs_bootaddr ba;
+	struct silofs_xref ba;
 
 	cmd_restore_fs(ctx->env, &ba);
-	cmd_bootref_resave(&ctx->env_args.bref, &ba, ctx->in_args.name);
+	cmd_bootref_resave(&ctx->env_args.boot, &ba, ctx->in_args.name);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

@@ -105,7 +105,7 @@ static void env_update_mntflags(struct silofs_env *env)
 static int env_update_base_caddr(struct silofs_env *env)
 {
 	const struct silofs_args *args = env->base.args;
-	const struct silofs_caddr *caddr = &args->bref.caddr;
+	const struct silofs_caddr *caddr = &args->boot.caddr;
 	int ret = 0;
 
 	switch (caddr->ctype) {

@@ -272,28 +272,28 @@ void cmd_open_repo(struct silofs_env *env);
 
 void cmd_close_repo(struct silofs_env *env);
 
-void cmd_format_fs(struct silofs_env *env, struct silofs_bootaddr *out_ba);
+void cmd_format_fs(struct silofs_env *env, struct silofs_xref *out_ba);
 
 void cmd_close_fs(struct silofs_env *env);
 
-void cmd_poke_fs(struct silofs_env *env, const struct silofs_bootaddr *ba);
+void cmd_poke_fs(struct silofs_env *env, const struct silofs_xref *ba);
 
-void cmd_poke_ar(struct silofs_env *env, const struct silofs_bootaddr *ba);
+void cmd_poke_ar(struct silofs_env *env, const struct silofs_xref *ba);
 
-void cmd_open_fs(struct silofs_env *env, const struct silofs_bootaddr *ba);
+void cmd_open_fs(struct silofs_env *env, const struct silofs_xref *ba);
 
 void cmd_exec_fs(struct silofs_env *env);
 
-void cmd_fork_fs(struct silofs_env *env, struct silofs_bootaddrs *out_bas);
+void cmd_fork_fs(struct silofs_env *env, struct silofs_xrefs *out_bas);
 
-void cmd_unref_fs(struct silofs_env *env, const struct silofs_bootaddr *ba);
+void cmd_unref_fs(struct silofs_env *env, const struct silofs_xref *ba);
 
 void cmd_inspect_fs(struct silofs_env *env, silofs_visit_laddr_fn cb,
                     void *user_ctx);
 
-void cmd_archive_fs(struct silofs_env *env, struct silofs_bootaddr *out_ba);
+void cmd_archive_fs(struct silofs_env *env, struct silofs_xref *out_ba);
 
-void cmd_restore_fs(struct silofs_env *env, struct silofs_bootaddr *out_ba);
+void cmd_restore_fs(struct silofs_env *env, struct silofs_xref *out_ba);
 
 /* mount-info */
 struct cmd_proc_mntinfo {
@@ -335,16 +335,16 @@ char *cmd_duppass(const char *pass);
 void cmd_delpass(char **pass);
 
 /* boot-reference */
-void cmd_bootref_load(struct silofs_bootref *bref);
+void cmd_bootref_load(struct silofs_boot_args *bref);
 
-void cmd_bootref_load_ar(struct silofs_bootref *bref);
+void cmd_bootref_load_ar(struct silofs_boot_args *bref);
 
-void cmd_bootref_save(const struct silofs_bootref *bref);
+void cmd_bootref_save(const struct silofs_boot_args *bref);
 
-void cmd_bootref_resave(const struct silofs_bootref  *bref,
-                        const struct silofs_bootaddr *ba, const char *newname);
+void cmd_bootref_resave(const struct silofs_boot_args *bref,
+                        const struct silofs_xref *ba, const char *newname);
 
-void cmd_bootref_unlink(const struct silofs_bootref *bref);
+void cmd_bootref_unlink(const struct silofs_boot_args *bref);
 
 /* fs input arguments */
 void cmd_setup_env_args(struct silofs_args *env_args);

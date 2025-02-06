@@ -56,8 +56,8 @@
 /* max size for file-system names (not including null terminator) */
 #define SILOFS_FSNAME_MAX (127)
 
-/* max size of address string representation (not including null terminator) */
-#define SILOFS_ADDR_MAX (127)
+/* max size of exported reference string (not including null terminator) */
+#define SILOFS_XREFLEN_MAX (127)
 
 /* max size of path (symbolic link value, including null) */
 #define SILOFS_PATH_MAX (4096)

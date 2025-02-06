@@ -43,25 +43,25 @@ enum silofs_flags {
 	SILOFS_F_STDALLOC     = SILOFS_BIT(15),
 };
 
-/* boot-reference address string */
-struct silofs_bootaddr {
-	char s[SILOFS_ADDR_MAX + 1];
+/* exported-reference address string */
+struct silofs_xref {
+	char s[SILOFS_XREFLEN_MAX + 1];
 };
 
 /* boot-reference address pair */
-struct silofs_bootaddrs {
-	struct silofs_bootaddr ba_new;
-	struct silofs_bootaddr ba_alt;
+struct silofs_xrefs {
+	struct silofs_xref xref_new;
+	struct silofs_xref xref_alt;
 };
 
-/* file-system's boot reference */
-struct silofs_bootref {
-	struct silofs_bootaddr ba;
-	struct silofs_caddr    caddr;
-	const char            *repodir;
-	const char            *name;
-	const char            *passwd;
-	const char            *mntdir;
+/* file-system's boot arguments */
+struct silofs_boot_args {
+	struct silofs_xref  xref;
+	struct silofs_caddr caddr;
+	const char         *repodir;
+	const char         *name;
+	const char         *passwd;
+	const char         *mntdir;
 };
 
 /* user-id host-to-fs bidirectional-mapping */
@@ -96,15 +96,15 @@ struct silofs_ugids {
 
 /* input arguments */
 struct silofs_args {
-	struct silofs_bootref bref;
-	struct silofs_ugids   ids;
-	enum silofs_flags     flags;
-	uid_t                 uid;
-	gid_t                 gid;
-	pid_t                 pid;
-	mode_t                umask;
-	size_t                capacity;
-	size_t                memwant;
+	struct silofs_boot_args boot;
+	struct silofs_ugids     ids;
+	enum silofs_flags       flags;
+	uid_t                   uid;
+	gid_t                   gid;
+	pid_t                   pid;
+	mode_t                  umask;
+	size_t                  capacity;
+	size_t                  memwant;
 };
 
 /* in-use versions */

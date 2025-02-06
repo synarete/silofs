@@ -257,10 +257,10 @@ static void cmd_mount_setup_env_args(struct cmd_mount_ctx *ctx)
 
 	cmd_setup_env_args(env_args);
 	env_args->flags = in_args->flags;
-	env_args->bref.repodir = in_args->repodir_real;
-	env_args->bref.name = in_args->name;
-	env_args->bref.passwd = in_args->password;
-	env_args->bref.mntdir = in_args->mntpoint_real;
+	env_args->boot.repodir = in_args->repodir_real;
+	env_args->boot.name = in_args->name;
+	env_args->boot.passwd = in_args->password;
+	env_args->boot.mntdir = in_args->mntpoint_real;
 }
 
 static void cmd_mount_setup_fs_ids(struct cmd_mount_ctx *ctx)
@@ -270,7 +270,7 @@ static void cmd_mount_setup_fs_ids(struct cmd_mount_ctx *ctx)
 
 static void cmd_mount_load_bref(struct cmd_mount_ctx *ctx)
 {
-	cmd_bootref_load(&ctx->env_args.bref);
+	cmd_bootref_load(&ctx->env_args.boot);
 }
 
 static void cmd_mount_setup_env(struct cmd_mount_ctx *ctx)
@@ -395,12 +395,12 @@ static void cmd_mount_close_repo(struct cmd_mount_ctx *ctx)
 
 static void cmd_mount_poke_fs(struct cmd_mount_ctx *ctx)
 {
-	cmd_poke_fs(ctx->env, &ctx->env_args.bref.ba);
+	cmd_poke_fs(ctx->env, &ctx->env_args.boot.xref);
 }
 
 static void cmd_mount_open_fs(struct cmd_mount_ctx *ctx)
 {
-	cmd_open_fs(ctx->env, &ctx->env_args.bref.ba);
+	cmd_open_fs(ctx->env, &ctx->env_args.boot.xref);
 }
 
 static void cmd_mount_execute_fs(struct cmd_mount_ctx *ctx)

@@ -79,10 +79,10 @@ static void cmd_report_err_and_die(const struct silofs_env *env, int status,
 	case SILOFS_EBADREF:
 		cmd_die(err, "%s%sbad ref: %s", xmsg, xtag, rname);
 		break;
-	case SILOFS_ENOBOOT:
+	case SILOFS_ENOUBER:
 		cmd_die(err, "%s%smissing boot: %s", xmsg, xtag, rname);
 		break;
-	case SILOFS_EBADBOOT:
+	case SILOFS_EBADUBER:
 		cmd_die(err, "%s%sbad boot: %s", xmsg, xtag, rname);
 		break;
 	case SILOFS_EKEYEXPIRED:
@@ -273,7 +273,6 @@ void cmd_restore_fs(struct silofs_env *env, struct silofs_xref *out_ba)
 void cmd_setup_env_args(struct silofs_args *args)
 {
 	memset(args, 0, sizeof(*args));
-	silofs_bootref_init(&args->boot);
 	cmd_fs_ids_init(&args->ids);
 	args->uid = getuid();
 	args->gid = getgid();

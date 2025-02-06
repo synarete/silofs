@@ -145,11 +145,11 @@ static int uber1k_check_base(const struct silofs_uber1k *uber1k)
 	}
 	if (magic != SILOFS_BOOT_RECORD_MAGIC) {
 		log_dbg("bad uber magic: 0x%lx", magic);
-		return -SILOFS_EBADBOOT;
+		return -SILOFS_EBADUBER;
 	}
 	if (version != SILOFS_FMT_VERSION) {
 		log_dbg("bad uber version: %lu", version);
-		return -SILOFS_EBADBOOT;
+		return -SILOFS_EBADUBER;
 	}
 	return 0;
 }
@@ -167,7 +167,7 @@ static int uber1k_check_uaddr_sb(const struct silofs_uber1k *uber1k)
 	    (uaddr.voff != 0)) {
 		log_dbg("bad uber uaddr-sb: voff=%ld ltype=%d height=%d",
 		        uaddr.voff, (int)ltype, (int)height);
-		return -SILOFS_EBADBOOT;
+		return -SILOFS_EBADUBER;
 	}
 	return 0;
 }
@@ -505,7 +505,7 @@ static int verify_uber1k_caddr(const struct silofs_env *env,
 	struct silofs_caddr caddr2;
 
 	calc_uber1k_caddr(env, uber1k, &caddr2);
-	return caddr_isequal(caddr, &caddr2) ? 0 : -SILOFS_EBADBOOT;
+	return caddr_isequal(caddr, &caddr2) ? 0 : -SILOFS_EBADUBER;
 }
 
 int silofs_calc_uber_caddr(const struct silofs_env *env,
@@ -579,7 +579,7 @@ int silofs_load_uber(const struct silofs_env *env,
 	err = silofs_repo_load_cobj(env->base.repo, caddr, &rwvec);
 	if (err) {
 		log_dbg("failed to load uber: err=%d", err);
-		return (err == -ENOENT) ? -SILOFS_ENOBOOT : err;
+		return (err == -ENOENT) ? -SILOFS_ENOUBER : err;
 	}
 	err = verify_uber1k_caddr(env, &uber1k_enc, caddr);
 	if (err) {
@@ -612,7 +612,7 @@ int silofs_stat_uber(const struct silofs_env *env,
 	}
 	if (sz != SILOFS_UBER_SIZE) {
 		log_warn("bad uber: size=%zu", sz);
-		return -SILOFS_EBADBOOT;
+		return -SILOFS_EBADUBER;
 	}
 	return 0;
 }

@@ -160,9 +160,9 @@ static void cmd_fsck_setup_fs_ids(struct cmd_fsck_ctx *ctx)
 	cmd_fs_ids_load(&ctx->env_args.ids, ctx->in_args.repodir_real);
 }
 
-static void cmd_fsck_load_bref(struct cmd_fsck_ctx *ctx)
+static void cmd_fsck_load_xref(struct cmd_fsck_ctx *ctx)
 {
-	cmd_bootref_load(&ctx->env_args.boot);
+	cmd_load_fs_xref(&ctx->env_args.boot);
 }
 
 static void cmd_fsck_setup_env(struct cmd_fsck_ctx *ctx)
@@ -227,7 +227,7 @@ void cmd_execute_fsck(void)
 	cmd_fsck_setup_fs_ids(&ctx);
 
 	/* Load fs boot-reference */
-	cmd_fsck_load_bref(&ctx);
+	cmd_fsck_load_xref(&ctx);
 
 	/* Setup execution environment */
 	cmd_fsck_setup_env(&ctx);

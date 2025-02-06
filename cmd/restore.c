@@ -173,7 +173,7 @@ static void cmd_restore_setup_env_args(struct cmd_restore_ctx *ctx)
 
 static void cmd_restore_load_bref(struct cmd_restore_ctx *ctx)
 {
-	cmd_bootref_load_ar(&ctx->env_args.boot);
+	cmd_load_ar_xref(&ctx->env_args.boot);
 }
 
 static void cmd_restore_setup_env(struct cmd_restore_ctx *ctx)
@@ -198,10 +198,13 @@ static void cmd_restore_poke_archive(struct cmd_restore_ctx *ctx)
 
 static void cmd_restore_execute(struct cmd_restore_ctx *ctx)
 {
-	struct silofs_xref ba;
+	struct silofs_boot_args boot_args = {
+		.repodir = ctx->in_args.repodir_real,
+		.name = ctx->in_args.name,
+	};
 
-	cmd_restore_fs(ctx->env, &ba);
-	cmd_bootref_resave(&ctx->env_args.boot, &ba, ctx->in_args.name);
+	cmd_restore_fs(ctx->env, &boot_args.xref);
+	cmd_save_fs_xref(&boot_args);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

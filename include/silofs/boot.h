@@ -32,24 +32,18 @@ struct silofs_bootpath {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_xref_reset(struct silofs_xref *ba);
+void silofs_xref_reset(struct silofs_xref *xref);
 
-void silofs_xref_setup(struct silofs_xref        *ba,
-                       const struct silofs_caddr *caddr);
+bool silofs_xref_isnull(const struct silofs_xref *xref);
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+void silofs_xref_from_caddr(struct silofs_xref        *xref,
+                            const struct silofs_caddr *caddr);
+
+int silofs_xref_to_caddr(const struct silofs_xref *xref,
+                         struct silofs_caddr      *out_caddr);
 
 int silofs_bootpath_setup(struct silofs_bootpath *bp, const char *repodir,
                           const char *name);
-
-void silofs_bootref_init(struct silofs_boot_args *bref);
-
-void silofs_bootref_assign(struct silofs_boot_args       *bref,
-                           const struct silofs_boot_args *other);
-
-int silofs_bootref_import(struct silofs_boot_args     *bref,
-                          const struct silofs_strview *sv);
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_reload_vspace(struct silofs_task *task);

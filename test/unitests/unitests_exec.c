@@ -454,7 +454,6 @@ static void ut_del_gids(struct silofs_gids *gids)
 static void ut_init_args(struct ut_args *args)
 {
 	memset(args, 0, sizeof(*args));
-	silofs_bootref_init(&args->env_args.boot);
 	args->env_args.boot.repodir = ut_globals.test_dir_repo;
 	args->env_args.boot.name = "unitests";
 	args->env_args.boot.mntdir = "/";

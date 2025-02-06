@@ -20,21 +20,33 @@
 #include <string.h>
 #include <limits.h>
 
-void silofs_xref_reset(struct silofs_xref *ba)
+void silofs_xref_reset(struct silofs_xref *xref)
 {
-	memset(ba->s, 0, sizeof(ba->s));
+	memset(xref->s, 0, sizeof(xref->s));
 }
 
-static void
-xref_assign(struct silofs_xref *ba, const struct silofs_xref *ba_other)
+bool silofs_xref_isnull(const struct silofs_xref *xref)
 {
-	memcpy(ba->s, ba_other->s, sizeof(ba->s));
+	return xref->s[0] == '\0';
 }
 
-void silofs_xref_setup(struct silofs_xref *ba,
-                       const struct silofs_caddr *caddr)
+void silofs_xref_from_caddr(struct silofs_xref *xref,
+                            const struct silofs_caddr *caddr)
 {
-	silofs_caddr_to_str(caddr, ba->s, sizeof(ba->s));
+	silofs_caddr_to_str(caddr, xref->s, sizeof(xref->s));
+}
+
+int silofs_xref_to_caddr(const struct silofs_xref *xref,
+                         struct silofs_caddr *out_caddr)
+{
+	const size_t lim = sizeof(xref->s);
+	const size_t n = silofs_str_nlength(xref->s, lim);
+	int ret = -SILOFS_EINVAL;
+
+	if (n < lim) {
+		ret = silofs_caddr_from_str(out_caddr, xref->s, n);
+	}
+	return ret;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -56,33 +68,6 @@ int silofs_bootpath_setup(struct silofs_bootpath *bpath, const char *repodir,
 	}
 	silofs_strview_init(&bpath->name, name);
 	return silofs_make_namestr(&nstr, name);
-}
-
-void silofs_bootref_init(struct silofs_boot_args *bref)
-{
-	silofs_xref_reset(&bref->xref);
-	silofs_caddr_reset(&bref->caddr);
-	bref->repodir = NULL;
-	bref->name = NULL;
-	bref->passwd = NULL;
-	bref->mntdir = NULL;
-}
-
-void silofs_bootref_assign(struct silofs_boot_args *bref,
-                           const struct silofs_boot_args *other)
-{
-	xref_assign(&bref->xref, &other->xref);
-	silofs_caddr_assign(&bref->caddr, &other->caddr);
-	bref->repodir = other->repodir;
-	bref->name = other->name;
-	bref->passwd = other->passwd;
-	bref->mntdir = other->mntdir;
-}
-
-int silofs_bootref_import(struct silofs_boot_args *bref,
-                          const struct silofs_strview *sv)
-{
-	return silofs_caddr_by_name2(&bref->caddr, sv);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

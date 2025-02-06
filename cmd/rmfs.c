@@ -187,9 +187,9 @@ static void cmd_rmfs_setup_fs_ids(struct cmd_rmfs_ctx *ctx)
 	cmd_fs_ids_load(&ctx->env_args.ids, ctx->in_args.repodir_real);
 }
 
-static void cmd_rmfs_load_bref(struct cmd_rmfs_ctx *ctx)
+static void cmd_rmfs_load_xref(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_bootref_load(&ctx->env_args.boot);
+	cmd_load_fs_xref(&ctx->env_args.boot);
 }
 
 static void cmd_rmfs_setup_env(struct cmd_rmfs_ctx *ctx)
@@ -217,9 +217,9 @@ static void cmd_rmfs_execute(struct cmd_rmfs_ctx *ctx)
 	cmd_unref_fs(ctx->env, &ctx->env_args.boot.xref);
 }
 
-static void cmd_rmfs_unlink_bref(struct cmd_rmfs_ctx *ctx)
+static void cmd_rmfs_unlink_xref(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_bootref_unlink(&ctx->env_args.boot);
+	cmd_unlink_fs_xref(&ctx->env_args.boot);
 }
 
 static void cmd_rmfs_destroy_env(struct cmd_rmfs_ctx *ctx)
@@ -304,7 +304,7 @@ void cmd_execute_rmfs(void)
 	cmd_rmfs_setup_fs_ids(&ctx);
 
 	/* Load fs boot-reference */
-	cmd_rmfs_load_bref(&ctx);
+	cmd_rmfs_load_xref(&ctx);
 
 	/* Setup execution context */
 	cmd_rmfs_setup_env(&ctx);
@@ -322,7 +322,7 @@ void cmd_execute_rmfs(void)
 	cmd_rmfs_execute(&ctx);
 
 	/* Unlink boot-configuration */
-	cmd_rmfs_unlink_bref(&ctx);
+	cmd_rmfs_unlink_xref(&ctx);
 
 	/* Close repository */
 	cmd_rmfs_close_repo(&ctx);

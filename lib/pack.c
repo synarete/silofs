@@ -788,7 +788,7 @@ pac_save_uber(const struct silofs_par_ctx *pa_ctx,
 		return err;
 	}
 	if (!caddr_isequal(caddr, &caddr2)) {
-		return -SILOFS_EBADBOOT;
+		return -SILOFS_EBADUBER;
 	}
 	return 0;
 }

@@ -178,7 +178,7 @@ static void cmd_archive_setup_fs_ids(struct cmd_archive_ctx *ctx)
 
 static void cmd_archive_load_bref(struct cmd_archive_ctx *ctx)
 {
-	cmd_bootref_load(&ctx->env_args.boot);
+	cmd_load_fs_xref(&ctx->env_args.boot);
 }
 
 static void cmd_archive_setup_env(struct cmd_archive_ctx *ctx)
@@ -213,10 +213,13 @@ static void cmd_archive_close_fs(struct cmd_archive_ctx *ctx)
 
 static void cmd_archive_execute(struct cmd_archive_ctx *ctx)
 {
-	struct silofs_xref ba;
+	struct silofs_boot_args boot_args = {
+		.repodir = ctx->in_args.repodir_real,
+		.name = ctx->in_args.arname,
+	};
 
-	cmd_archive_fs(ctx->env, &ba);
-	cmd_bootref_resave(&ctx->env_args.boot, &ba, ctx->in_args.arname);
+	cmd_archive_fs(ctx->env, &boot_args.xref);
+	cmd_save_ar_xref(&boot_args);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

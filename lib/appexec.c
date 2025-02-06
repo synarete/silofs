@@ -21,21 +21,49 @@
 #include <sys/resource.h>
 
 static void caddr_to_xref(const struct silofs_caddr *caddr, int status,
-                          struct silofs_xref *out_ba)
+                          struct silofs_xref *out_xref)
 {
 	if (status == 0) {
-		silofs_xref_setup(out_ba, caddr);
+		silofs_xref_from_caddr(out_xref, caddr);
 	} else {
-		silofs_xref_reset(out_ba);
+		silofs_xref_reset(out_xref);
 	}
 }
 
 static int
-caddr_from_xref(struct silofs_caddr *caddr, const struct silofs_xref *ba)
+caddr_from_xref(struct silofs_caddr *caddr, const struct silofs_xref *xref)
 {
-	const size_t n = silofs_str_nlength(ba->s, sizeof(ba->s) - 1);
+	return silofs_xref_to_caddr(xref, caddr);
+}
 
-	return silofs_caddr_from_str(caddr, ba->s, n);
+int silofs_check_fs_xref(const struct silofs_xref *xref)
+{
+	struct silofs_caddr caddr;
+	int err;
+
+	err = caddr_from_xref(&caddr, xref);
+	if (err) {
+		return err;
+	}
+	if (caddr.ctype != SILOFS_CTYPE_UBER) {
+		return -SILOFS_EBADUBER;
+	}
+	return 0;
+}
+
+int silofs_check_ar_xref(const struct silofs_xref *xref)
+{
+	struct silofs_caddr caddr;
+	int err;
+
+	err = caddr_from_xref(&caddr, xref);
+	if (err) {
+		return err;
+	}
+	if (caddr.ctype != SILOFS_CTYPE_PACKIDX) {
+		return -SILOFS_EBADPACK;
+	}
+	return 0;
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

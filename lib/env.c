@@ -104,26 +104,33 @@ static void env_update_mntflags(struct silofs_env *env)
 
 static int env_update_base_caddr(struct silofs_env *env)
 {
-	const struct silofs_args *args = env->base.args;
-	const struct silofs_caddr *caddr = &args->boot.caddr;
-	int ret = 0;
+	const struct silofs_xref *xref = &env->base.args->boot.xref;
+	struct silofs_caddr caddr = { .ctype = SILOFS_CTYPE_NONE };
+	int err = 0;
 
-	switch (caddr->ctype) {
+	if (silofs_xref_isnull(xref)) {
+		goto out;
+	}
+	err = silofs_xref_to_caddr(xref, &caddr);
+	if (err) {
+		goto out;
+	}
+	switch (caddr.ctype) {
 	case SILOFS_CTYPE_UBER:
-		silofs_env_set_boot_caddr(env, caddr);
+		silofs_env_set_boot_caddr(env, &caddr);
 		break;
 	case SILOFS_CTYPE_PACKIDX:
-		silofs_env_set_pack_caddr(env, caddr);
+		silofs_env_set_pack_caddr(env, &caddr);
 		break;
 	case SILOFS_CTYPE_NONE:
-		break;
 	case SILOFS_CTYPE_ENCSEG:
 	default:
-		log_err("bad fs-args boot-ref: ctype=%d", caddr->ctype);
-		ret = -SILOFS_EINVAL;
+		log_err("invalid xref: '%s'", xref->s);
+		err = -SILOFS_EINVAL;
 		break;
 	}
-	return ret;
+out:
+	return err;
 }
 
 static int env_update_by_env_args(struct silofs_env *env)

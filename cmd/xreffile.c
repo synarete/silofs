@@ -16,172 +16,177 @@
  */
 #define _GNU_SOURCE 1
 #include "cmd.h"
+#include <string.h>
+#include <limits.h>
 
-static void cmd_load_bref_file(const char *pathname, char **out_txt)
+static void
+cmd_open_repodir(const struct silofs_boot_args *boot_args, int *out_dfd)
 {
-	struct stat st = { .st_mode = 0 };
-	size_t len = 0;
-	char *txt = NULL;
+	const char *repodir = boot_args->repodir;
+	int dfd = -1;
+	int err;
+
+	err = silofs_sys_open(repodir, O_DIRECTORY | O_RDONLY, 0, &dfd);
+	if (err) {
+		cmd_die(err, "failed to open repodir: %s", repodir);
+	}
+	*out_dfd = dfd;
+}
+
+static void cmd_save_xref_at(int dfd, const char *name, const char *txt)
+{
+	char tmpname[NAME_MAX + 1] = "";
 	int fd = -1;
 	int err;
 
-	err = silofs_sys_stat(pathname, &st);
+	snprintf(tmpname, sizeof(tmpname) - 1, "%s~", name);
+	err = silofs_sys_openat(dfd, tmpname, O_CREAT | O_RDWR | O_TRUNC,
+	                        S_IRUSR | S_IWUSR, &fd);
 	if (err) {
-		cmd_die(err, "stat failure: %s", pathname);
-	}
-	if (!S_ISREG(st.st_mode)) {
-		cmd_die(0, "not a regular file: %s", pathname);
-	}
-	len = (size_t)st.st_size;
-	if (len >= SILOFS_KILO) {
-		cmd_die(-EFBIG, "illegal boot-ref file: %s", pathname);
-	}
-	err = silofs_sys_open(pathname, O_RDONLY, 0, &fd);
-	if (err) {
-		cmd_die(err, "failed to open boot-ref: %s", pathname);
-	}
-	txt = cmd_zalloc(len + 1);
-	err = silofs_sys_readn(fd, txt, len);
-	if (err) {
-		cmd_die(err, "failed to read boot-ref: %s", pathname);
-	}
-	silofs_sys_close(fd);
-	*out_txt = txt;
-}
-
-static char *cmd_bref_tmp_pathname(const char *pathname)
-{
-	const size_t len = strlen(pathname);
-	char *tmp = NULL;
-
-	tmp = cmd_zalloc(len + 2);
-	memcpy(tmp, pathname, len);
-	tmp[len] = '~';
-	tmp[len + 1] = '\0';
-	return tmp;
-}
-
-static void cmd_save_bref_file(const char *pathname, const char *txt)
-{
-	const size_t len = strlen(txt);
-	char *tmp = NULL;
-	int fd = -1;
-	int err;
-
-	tmp = cmd_bref_tmp_pathname(pathname);
-	err = silofs_sys_open(tmp, O_CREAT | O_RDWR | O_TRUNC,
-	                      S_IRUSR | S_IWUSR, &fd);
-	if (err) {
-		cmd_die(err, "failed to create boot-ref: %s", tmp);
+		cmd_die(err, "failed to create: %s", tmpname);
 	}
 	err = silofs_sys_fchmod(fd, S_IRUSR);
 	if (err) {
-		cmd_die(err, "failed to change-mode of: %s", tmp);
+		cmd_die(err, "failed to change-mode: %s", tmpname);
 	}
-	err = silofs_sys_writen(fd, txt, len);
+	err = silofs_sys_writen(fd, txt, strlen(txt));
 	if (err) {
-		cmd_die(err, "failed to write boot-ref: %s", tmp);
+		cmd_die(err, "failed to write: %s", tmpname);
 	}
-	err = silofs_sys_pwriten(fd, "\n", 1, (loff_t)len);
+	err = silofs_sys_writen(fd, "\n", 1);
 	if (err) {
-		cmd_die(err, "failed to write boot-ref: %s", tmp);
+		cmd_die(err, "failed to write: %s", tmpname);
 	}
 	silofs_sys_closefd(&fd);
 
-	silofs_sys_chmod(pathname, S_IRUSR | S_IWUSR);
-	err = silofs_sys_rename(tmp, pathname);
+	silofs_sys_fchmodat(dfd, name, S_IRUSR | S_IWUSR, 0);
+	err = silofs_sys_renameat(dfd, tmpname, dfd, name);
 	if (err) {
-		silofs_sys_chmod(pathname, S_IRUSR);
-		cmd_die(err, "failed to rename boot-ref: %s", pathname);
+		silofs_sys_fchmodat(dfd, name, S_IRUSR, 0);
+		cmd_die(err, "failed to rename: %s", name);
 	}
-	err = silofs_sys_chmod(pathname, S_IRUSR);
+	err = silofs_sys_fchmodat(dfd, name, S_IRUSR, 0);
 	if (err) {
-		cmd_die(err, "failed to chmod rdonly boot-ref: %s", pathname);
+		cmd_die(err, "failed to change-mode: %s", name);
 	}
-	cmd_pstrfree(&tmp);
 }
 
-static void cmd_decode_bootref(struct silofs_boot_args *bref, const char *txt)
+void cmd_save_fs_xref(const struct silofs_boot_args *boot_args)
 {
-	struct silofs_strview sv;
+	int dfd = -1;
+
+	cmd_open_repodir(boot_args, &dfd);
+	cmd_save_xref_at(dfd, boot_args->name, boot_args->xref.s);
+	silofs_sys_closefd(&dfd);
+}
+
+void cmd_save_ar_xref(const struct silofs_boot_args *boot_args)
+{
+	int dfd = -1;
+
+	cmd_open_repodir(boot_args, &dfd);
+	cmd_save_xref_at(dfd, boot_args->name, boot_args->xref.s);
+	silofs_sys_closefd(&dfd);
+}
+
+void cmd_unlink_fs_xref(const struct silofs_boot_args *boot_args)
+{
+	int dfd = -1;
+
+	cmd_open_repodir(boot_args, &dfd);
+	silofs_sys_unlinkat(dfd, boot_args->name, 0);
+	silofs_sys_closefd(&dfd);
+}
+
+static char *cmd_load_xref_at(int dfd, const char *name)
+{
+	char txt[SILOFS_XREFLEN_MAX + 2] = "";
+	struct stat st = { .st_mode = 0 };
+	size_t len = 0;
+	char *end = NULL;
+	int fd = -1;
 	int err;
 
-	silofs_strview_init(&sv, txt);
-	err = silofs_bootref_import(bref, &sv);
+	err = silofs_sys_fstatat(dfd, name, &st, 0);
 	if (err) {
-		cmd_die(err, "bad boot-ref in: %s", bref->name);
+		cmd_die(err, "stat failure: %s", name);
+	}
+	if (!S_ISREG(st.st_mode)) {
+		cmd_die(0, "not a regular file: %s", name);
+	}
+	len = (size_t)st.st_size;
+	if (len >= sizeof(txt)) {
+		cmd_die(-EFBIG, "illegal xref: %s", name);
+	}
+	err = silofs_sys_openat(dfd, name, O_RDONLY, 0, &fd);
+	if (err) {
+		cmd_die(err, "failed to open: %s", name);
+	}
+	err = silofs_sys_readn(fd, txt, len - 1);
+	silofs_sys_closefd(&fd);
+	if (err) {
+		cmd_die(err, "failed to read xref: %s", name);
+	}
+	end = strchr(txt, '\n');
+	if (end != NULL) {
+		*end = '\0';
+	}
+	return cmd_strdup(txt);
+}
+
+static void
+cmd_assign_xref(struct silofs_boot_args *boot_args, const char *txt)
+{
+	const size_t len = strlen(txt);
+	;
+
+	if (len == 0) {
+		cmd_die(0, "empty xref");
+	}
+	if (len >= sizeof(boot_args->xref.s)) {
+		cmd_die(0, "bad xref: '%s'", txt);
+	}
+	memcpy(boot_args->xref.s, txt, len);
+}
+
+void cmd_load_fs_xref(struct silofs_boot_args *boot_args)
+{
+	char *txt = NULL;
+	int dfd = -1;
+	int err;
+
+	cmd_open_repodir(boot_args, &dfd);
+	txt = cmd_load_xref_at(dfd, boot_args->name);
+	silofs_sys_closefd(&dfd);
+
+	cmd_assign_xref(boot_args, txt);
+	err = silofs_check_fs_xref(&boot_args->xref);
+	if (err == -SILOFS_EBADUBER) {
+		cmd_die(0, "not a fs xref: %s (%s)", boot_args->name,
+		        boot_args->xref.s);
+	} else if (err) {
+		cmd_die(0, "bad fs xref: %s (%s)", boot_args->name,
+		        boot_args->xref.s);
 	}
 }
 
-static char *cmd_bootref_path(const struct silofs_boot_args *bref)
+void cmd_load_ar_xref(struct silofs_boot_args *boot_args)
 {
-	char *path = NULL;
+	char *txt = NULL;
+	int dfd = -1;
+	int err;
 
-	cmd_join_path(bref->repodir, bref->name, &path);
-	return path;
-}
+	cmd_open_repodir(boot_args, &dfd);
+	txt = cmd_load_xref_at(dfd, boot_args->name);
+	silofs_sys_closefd(&dfd);
 
-static void cmd_bootref_reload(struct silofs_boot_args *bref)
-{
-	char *path = cmd_bootref_path(bref);
-	char *text = NULL;
-
-	cmd_load_bref_file(path, &text);
-	cmd_decode_bootref(bref, text);
-	cmd_pstrfree(&text);
-	cmd_pstrfree(&path);
-}
-
-static void cmd_bootref_verify(const struct silofs_boot_args *bref,
-                               enum silofs_ctype ctype)
-{
-	if (bref->caddr.ctype != ctype) {
-		if (ctype == SILOFS_CTYPE_UBER) {
-			cmd_die(0, "not fs boot-ref: %s", bref->name);
-		} else if (ctype == SILOFS_CTYPE_PACKIDX) {
-			cmd_die(0, "not archive boot-ref: %s", bref->name);
-		} else {
-			cmd_die(0, "bad boot-ref: %s", bref->name);
-		}
+	cmd_assign_xref(boot_args, txt);
+	err = silofs_check_ar_xref(&boot_args->xref);
+	if (err == -SILOFS_EBADPACK) {
+		cmd_die(0, "not an archive xref: %s (%s)", boot_args->name,
+		        boot_args->xref.s);
+	} else if (err) {
+		cmd_die(0, "bad archive xref: %s (%s)", boot_args->name,
+		        boot_args->xref.s);
 	}
-}
-
-void cmd_bootref_load(struct silofs_boot_args *bref)
-{
-	cmd_bootref_reload(bref);
-	cmd_bootref_verify(bref, SILOFS_CTYPE_UBER);
-}
-
-void cmd_bootref_load_ar(struct silofs_boot_args *bref)
-{
-	cmd_bootref_reload(bref);
-	cmd_bootref_verify(bref, SILOFS_CTYPE_PACKIDX);
-}
-
-void cmd_bootref_save(const struct silofs_boot_args *bref)
-{
-	char *path = cmd_bootref_path(bref);
-
-	cmd_save_bref_file(path, bref->xref.s);
-	cmd_pstrfree(&path);
-}
-
-void cmd_bootref_resave(const struct silofs_boot_args *bref,
-                        const struct silofs_xref *ba, const char *newname)
-{
-	struct silofs_boot_args bref_alt;
-
-	silofs_bootref_init(&bref_alt);
-	silofs_bootref_assign(&bref_alt, bref);
-	bref_alt.name = newname;
-	memcpy(&bref_alt.xref, ba, sizeof(bref_alt.xref));
-	cmd_bootref_save(&bref_alt);
-}
-
-void cmd_bootref_unlink(const struct silofs_boot_args *bref)
-{
-	char *path = cmd_bootref_path(bref);
-
-	silofs_sys_unlink(path);
-	cmd_pstrfree(&path);
 }

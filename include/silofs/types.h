@@ -21,8 +21,6 @@
 #include <stdint.h>
 #include <unistd.h>
 
-#include <silofs/addr.h>
-
 /* file-system's top-level control flags */
 enum silofs_flags {
 	SILOFS_F_PEDANTIC     = SILOFS_BIT(0),
@@ -56,12 +54,11 @@ struct silofs_xrefs {
 
 /* file-system's boot arguments */
 struct silofs_boot_args {
-	struct silofs_xref  xref;
-	struct silofs_caddr caddr;
-	const char         *repodir;
-	const char         *name;
-	const char         *passwd;
-	const char         *mntdir;
+	struct silofs_xref xref;
+	const char        *repodir;
+	const char        *name;
+	const char        *passwd;
+	const char        *mntdir;
 };
 
 /* user-id host-to-fs bidirectional-mapping */

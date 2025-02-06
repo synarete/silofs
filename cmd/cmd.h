@@ -334,17 +334,16 @@ char *cmd_duppass(const char *pass);
 
 void cmd_delpass(char **pass);
 
-/* boot-reference */
-void cmd_bootref_load(struct silofs_boot_args *bref);
+/* x-reference */
+void cmd_save_fs_xref(const struct silofs_boot_args *boot_args);
 
-void cmd_bootref_load_ar(struct silofs_boot_args *bref);
+void cmd_save_ar_xref(const struct silofs_boot_args *boot_args);
 
-void cmd_bootref_save(const struct silofs_boot_args *bref);
+void cmd_unlink_fs_xref(const struct silofs_boot_args *boot_args);
 
-void cmd_bootref_resave(const struct silofs_boot_args *bref,
-                        const struct silofs_xref *ba, const char *newname);
+void cmd_load_fs_xref(struct silofs_boot_args *boot_args);
 
-void cmd_bootref_unlink(const struct silofs_boot_args *bref);
+void cmd_load_ar_xref(struct silofs_boot_args *boot_args);
 
 /* fs input arguments */
 void cmd_setup_env_args(struct silofs_args *env_args);

@@ -256,7 +256,7 @@ static void cmd_mount_setup_env_args(struct cmd_mount_ctx *ctx)
 	struct silofs_args *env_args = &ctx->env_args;
 
 	cmd_setup_env_args(env_args);
-	env_args->flags = in_args->flags;
+	env_args->flags = (enum silofs_flags)in_args->flags;
 	env_args->boot.repodir = in_args->repodir_real;
 	env_args->boot.name = in_args->name;
 	env_args->boot.passwd = in_args->password;

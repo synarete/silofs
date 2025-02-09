@@ -1,38 +1,27 @@
-#!/bin/bash -e
+#!/usr/bin/env bash
+set -o errexit
+set -o nounset
+set -o pipefail
+export LC_ALL=C
+unset CDPATH
 
-_clang_tidy_check_list() {
-  clang-tidy --list-checks -checks='*' | \
-    grep -Ev 'Enabled checks' | \
-    grep -Ev '(abseil|android|boost|cplusplus|osx|optin)' | \
-    grep -Ev '(fuchsia|objc|zircon|security|altera)' | \
-    grep -Ev '(magic-numbers|hicpp-signed-bitwise|llvm-include-order)' | \
-    grep -Ev '(cppcoreguidelines-init-variables)' | \
-    grep -Ev '(lvmlibc-restrict-system-libc-headers)' | \
-    grep -Ev '(Uninitialized|DeprecatedOrUnsafeBufferHandling)' | \
-    grep -Ev 'readability-identifier-length' | \
-    grep -Ev 'bugprone-easily-swappable-parameters' | \
-    grep -Ev 'performance-no-int-to-ptr' | \
-    grep -Ev 'readability-suspicious-call-argument' | \
-    awk '{print $1}' | \
-    tr "\n" " "
-}
+# run from project's root dir
+basedir=$(realpath "$(dirname "${BASH_SOURCE[0]}")/../")
+cd "${basedir}"
 
-_clang_tidy_check() {
-  basedir=$(realpath "$(dirname "${BASH_SOURCE[0]}")/../")
-  srcs=$(find "${basedir}" -type f -name '*.c')
-  chks=$(_clang_tidy_check_list | tr " " ",")
-  idefs="-I${basedir}/include -I${basedir}/lib -I${basedir}/build/include"
-  xdefs="-DSILOFS_USE_PRIVATE=1 -DSILOFS_UNITEST=1"
+# require clang-tidy utility
+command -v clang-tidy &> /dev/null
 
-  clang-tidy ${srcs} -checks='-*',${chks} -- "${idefs}" "${xdefs}"
-}
+# require bear utility to generate compilation database for clang tooling
+command -v bear &> /dev/null
 
-_clang_tidy_version() {
-  type clang-tidy
-  clang-tidy -version
-}
+# require compilation database
+if [ ! -f "${basedir}/compile_commands.json" ]; then
+  make -f devel.mk reset
+  bear -- make -f devel.mk CC=clang
+fi
 
-_clang_tidy_version
-_clang_tidy_check
-
-
+# run clang-tidy
+conf="${basedir}/.clang-tidy.yaml"
+srcs=$(find "${basedir}/" -type f -name '*.c')
+clang-tidy --config-file="${conf}" ${srcs} 2> /dev/null

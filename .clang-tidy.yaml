@@ -1,0 +1,24 @@
+---
+Checks: >
+  -*,
+  bugprone-*,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-reserved-identifier,
+  clang-analyzer-*
+  misc-*,
+  -misc-include-cleaner,
+  modernize-*,
+  performance-*,
+  portability-*
+  readability-*,
+  -readability-identifier-length,
+  -readability-magic-numbers,
+WarningsAsErrors: '*'
+FormatStyle: file
+CheckOptions:
+  - key: readability-identifier-naming.VariableCase
+    value: lower_case
+  - key: readability-identifier-naming.FunctionCase
+    value: lower_case
+  - key: readability-identifier-naming.EnumCase
+    value: lower_case

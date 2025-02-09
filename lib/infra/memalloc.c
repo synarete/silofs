@@ -161,14 +161,14 @@ int silofs_stdalloc_fini(struct silofs_stdalloc *sal)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static void post_malloc(void *ptr, size_t size, enum silofs_allocf flags)
+static void post_malloc(void *ptr, size_t size, int flags)
 {
 	if ((ptr != NULL) && (flags & SILOFS_ALLOCF_BZERO)) {
 		silofs_memzero(ptr, size);
 	}
 }
 
-static void pre_free(void *ptr, size_t size, enum silofs_allocf flags)
+static void pre_free(void *ptr, size_t size, int flags)
 {
 	if ((ptr != NULL) && (flags & SILOFS_ALLOCF_BZERO)) {
 		silofs_memzero(ptr, size);

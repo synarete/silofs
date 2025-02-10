@@ -108,8 +108,8 @@ void cmd_optargs_init(struct cmd_optargs *opa, const struct cmd_optdesc *ods)
 {
 	memset(opa, 0, sizeof(*opa));
 	opa->opa_goi = getopti_new(ods);
-	opa->opa_cmd_argc = cmd_globals.argc - 1;
-	opa->opa_cmd_argv = cmd_globals.argv + 1;
+	opa->opa_cmd_argc = cmd_global_params.argc - 1;
+	opa->opa_cmd_argv = cmd_global_params.argv + 1;
 	opa->opa_optind = optind = 1;
 	opa->opa_opterr = opterr = 0;
 	opa->opa_optarg = optarg = NULL;

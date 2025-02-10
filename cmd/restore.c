@@ -17,7 +17,7 @@
 #define _GNU_SOURCE 1
 #include "cmd.h"
 
-static const char *cmd_restore_help_desc =
+static const char *const cmd_restore_help_desc =
 	"restore <repodir/name> --from=<arname>                          \n"
 	"                                                                \n"
 	"options:                                                        \n"
@@ -41,7 +41,7 @@ struct cmd_restore_ctx {
 	bool has_lockfile;
 };
 
-static struct cmd_restore_ctx *cmd_restore_ctx;
+static struct cmd_restore_ctx *cmd_restore_ctx_p;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -119,21 +119,23 @@ static void cmd_restore_finalize(struct cmd_restore_ctx *ctx)
 	cmd_pstrfree(&ctx->in_args.name);
 	cmd_delpass(&ctx->in_args.password);
 	cmd_destroy_env_args(&ctx->env_args);
-	cmd_restore_ctx = NULL;
+	cmd_restore_ctx_p = NULL;
 }
 
 static void cmd_restore_atexit(void)
 {
-	if (cmd_restore_ctx != NULL) {
-		cmd_restore_release_lockfile(cmd_restore_ctx);
-		cmd_restore_finalize(cmd_restore_ctx);
+	struct cmd_restore_ctx *ctx = cmd_restore_ctx_p;
+
+	if (ctx != NULL) {
+		cmd_restore_release_lockfile(ctx);
+		cmd_restore_finalize(ctx);
 	}
 }
 
 static void cmd_restore_start(struct cmd_restore_ctx *ctx)
 {
-	cmd_restore_ctx = ctx;
-	atexit(cmd_restore_atexit);
+	cmd_restore_ctx_p = ctx;
+	cmd_atexit(cmd_restore_atexit);
 }
 
 static void cmd_restore_enable_signals(void)

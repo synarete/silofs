@@ -16,11 +16,9 @@
  */
 #define _GNU_SOURCE 1
 #include <sys/types.h>
-#include <sys/time.h>
 #include <sys/vfs.h>
 #include <sys/stat.h>
 #include <sys/resource.h>
-#include <sys/capability.h>
 #include <sys/prctl.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -55,6 +53,16 @@ void cmd_die(int err, const char *restrict fmt, ...)
 	va_end(ap);
 	error(EXIT_FAILURE, cmd_errnum_of(err), "%s", msg);
 	exit(EXIT_FAILURE); /* never gets here, but makes clang-scan happy */
+}
+
+void cmd_atexit(void (*fn)(void))
+{
+	int err;
+
+	err = atexit(fn);
+	if (err) {
+		error(EXIT_FAILURE, cmd_errnum_of(err), "atexit failure");
+	}
 }
 
 void cmd_check_repopath(const char *arg_val)
@@ -596,18 +604,18 @@ void cmd_fork_daemon(pid_t *out_pid)
 
 void cmd_open_syslog(void)
 {
-	cmd_globals.log_params.flags |= SILOFS_LOGF_SYSLOG;
-	openlog(cmd_globals.name, LOG_CONS | LOG_NDELAY, 0);
+	cmd_global_params.log_params.flags |= SILOFS_LOGF_SYSLOG;
+	openlog(cmd_global_params.name, LOG_CONS | LOG_NDELAY, 0);
 }
 
 void cmd_close_syslog(void)
 {
-	int log_flags = (int)cmd_globals.log_params.flags;
+	int log_flags = (int)cmd_global_params.log_params.flags;
 
 	if (log_flags & SILOFS_LOGF_SYSLOG) {
 		closelog();
 		log_flags &= ~SILOFS_LOGF_SYSLOG;
-		cmd_globals.log_params.flags =
+		cmd_global_params.log_params.flags =
 			(enum silofs_log_flags)log_flags;
 	}
 }
@@ -817,7 +825,7 @@ char *cmd_mkpathf(const char *fmt, ...)
 void cmd_print_help_and_exit(const char *help_string)
 {
 	FILE *fp = stdout;
-	const char *name = cmd_globals.name;
+	const char *name = cmd_global_params.name;
 
 	if (silofs_str_length(name)) {
 		fprintf(fp, "%s %s\n", name, help_string);
@@ -830,7 +838,7 @@ void cmd_print_help_and_exit(const char *help_string)
 
 void cmd_set_log_level_by(const char *s)
 {
-	cmd_globals.log_params.level = silofs_log_level_by_rfc5424(s);
+	cmd_global_params.log_params.level = silofs_log_level_by_rfc5424(s);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

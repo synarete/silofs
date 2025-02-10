@@ -18,7 +18,7 @@
 #include <sys/mount.h>
 #include "cmd.h"
 
-static const char *cmd_show_help_desc =
+static const char *const cmd_show_help_desc =
 	"show <subcmd> <pathname>                                        \n"
 	"                                                                \n"
 	"sub commands:                                                   \n"
@@ -42,7 +42,7 @@ struct cmd_show_ctx {
 	FILE *out_fp;
 };
 
-static struct cmd_show_ctx *cmd_show_ctx;
+static struct cmd_show_ctx *cmd_show_ctx_p;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -103,20 +103,22 @@ static void cmd_show_finalize(struct cmd_show_ctx *ctx)
 	cmd_pstrfree(&ctx->in_args.subcmd);
 	cmd_pstrfree(&ctx->in_args.pathname);
 	cmd_del_iocp(&ctx->ioc);
-	cmd_show_ctx = NULL;
+	cmd_show_ctx_p = NULL;
 }
 
 static void cmd_show_atexit(void)
 {
-	if (cmd_show_ctx != NULL) {
-		cmd_show_finalize(cmd_show_ctx);
+	struct cmd_show_ctx *ctx = cmd_show_ctx_p;
+
+	if (ctx != NULL) {
+		cmd_show_finalize(ctx);
 	}
 }
 
 static void cmd_show_start(struct cmd_show_ctx *ctx)
 {
-	cmd_show_ctx = ctx;
-	atexit(cmd_show_atexit);
+	cmd_show_ctx_p = ctx;
+	cmd_atexit(cmd_show_atexit);
 }
 
 static void cmd_show_enable_signals(void)

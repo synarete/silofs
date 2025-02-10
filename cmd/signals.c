@@ -36,7 +36,7 @@ static void sigaction_info_handler(int signum)
 static void sigaction_halt_handler(int signum)
 {
 	silofs_log_info("halt-signal: %d", signum);
-	cmd_globals.sig_halt = signum;
+	cmd_global_params.sig_halt = signum;
 	if (silofs_signal_callback_hook != NULL) {
 		/* Call sub-program specific logic */
 		silofs_signal_callback_hook(signum);
@@ -50,21 +50,21 @@ silofs_attr_noreturn static void sigaction_term_handler(int signum)
 {
 	silofs_backtrace();
 	silofs_log_crit("term-signal: %d", signum);
-	cmd_globals.sig_halt = signum;
-	cmd_globals.sig_fatal = signum;
+	cmd_global_params.sig_halt = signum;
+	cmd_global_params.sig_fatal = signum;
 	exit(EXIT_FAILURE);
 }
 
 silofs_attr_noreturn static void sigaction_abort_handler(int signum)
 {
-	if (cmd_globals.sig_fatal) {
+	if (cmd_global_params.sig_fatal) {
 		_exit(EXIT_FAILURE);
 	}
 
 	silofs_backtrace();
 	silofs_log_crit("abort-signal: %d", signum);
-	cmd_globals.sig_halt = signum;
-	cmd_globals.sig_fatal = signum;
+	cmd_global_params.sig_halt = signum;
+	cmd_global_params.sig_fatal = signum;
 	abort(); /* Re-raise to _exit */
 }
 

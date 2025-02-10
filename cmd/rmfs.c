@@ -17,7 +17,7 @@
 #define _GNU_SOURCE 1
 #include "cmd.h"
 
-static const char *cmd_rmfs_help_desc = {
+static const char *const cmd_rmfs_help_desc = {
 	"rmfs <repodir/name>                                             \n"
 	"                                                                \n"
 	"options:                                                        \n"
@@ -42,7 +42,7 @@ struct cmd_rmfs_ctx {
 	bool has_lockfile;
 };
 
-static struct cmd_rmfs_ctx *cmd_rmfs_ctx;
+static struct cmd_rmfs_ctx *cmd_rmfs_ctx_p;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -251,21 +251,23 @@ static void cmd_rmfs_finalize(struct cmd_rmfs_ctx *ctx)
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
 	cmd_pstrfree(&ctx->in_args.name);
-	cmd_rmfs_ctx = NULL;
+	cmd_rmfs_ctx_p = NULL;
 }
 
 static void cmd_rmfs_atexit(void)
 {
-	if (cmd_rmfs_ctx != NULL) {
-		cmd_rmfs_release_lockfile(cmd_rmfs_ctx);
-		cmd_rmfs_finalize(cmd_rmfs_ctx);
+	struct cmd_rmfs_ctx *ctx = cmd_rmfs_ctx_p;
+
+	if (ctx != NULL) {
+		cmd_rmfs_release_lockfile(ctx);
+		cmd_rmfs_finalize(ctx);
 	}
 }
 
 static void cmd_rmfs_start(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_rmfs_ctx = ctx;
-	atexit(cmd_rmfs_atexit);
+	cmd_rmfs_ctx_p = ctx;
+	cmd_atexit(cmd_rmfs_atexit);
 }
 
 static void cmd_rmfs_enable_signals(void)

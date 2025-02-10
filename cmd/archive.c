@@ -17,7 +17,7 @@
 #define _GNU_SOURCE 1
 #include "cmd.h"
 
-static const char *cmd_archive_help_desc =
+static const char *const cmd_archive_help_desc =
 	"archive <repodir/name> --into=<arname>                          \n"
 	"                                                                \n"
 	"options:                                                        \n"
@@ -41,7 +41,7 @@ struct cmd_archive_ctx {
 	bool has_lockfile;
 };
 
-static struct cmd_archive_ctx *cmd_archive_ctx;
+static struct cmd_archive_ctx *cmd_archive_ctx_p;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -120,21 +120,23 @@ static void cmd_archive_finalize(struct cmd_archive_ctx *ctx)
 	cmd_pstrfree(&ctx->in_args.arname);
 	cmd_delpass(&ctx->in_args.password);
 	cmd_destroy_env_args(&ctx->env_args);
-	cmd_archive_ctx = NULL;
+	cmd_archive_ctx_p = NULL;
 }
 
 static void cmd_archive_atexit(void)
 {
-	if (cmd_archive_ctx != NULL) {
-		cmd_archive_release_lockfile(cmd_archive_ctx);
-		cmd_archive_finalize(cmd_archive_ctx);
+	struct cmd_archive_ctx *ctx = cmd_archive_ctx_p;
+
+	if (ctx != NULL) {
+		cmd_archive_release_lockfile(ctx);
+		cmd_archive_finalize(ctx);
 	}
 }
 
 static void cmd_archive_start(struct cmd_archive_ctx *ctx)
 {
-	cmd_archive_ctx = ctx;
-	atexit(cmd_archive_atexit);
+	cmd_archive_ctx_p = ctx;
+	cmd_atexit(cmd_archive_atexit);
 }
 
 static void cmd_archive_enable_signals(void)

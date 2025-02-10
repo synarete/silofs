@@ -15,7 +15,6 @@
  * GNU General Public License for more details.
  */
 #define _GNU_SOURCE 1
-#include <uuid/uuid.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <limits.h>
@@ -465,10 +464,10 @@ static void cmd_append_cfgline(char **pcfg_curr, const char *line)
 
 	pcfg_next = cmd_zalloc(conf_len + line_len + 1);
 	if (*pcfg_curr != NULL) {
-		memcpy(pcfg_next, *pcfg_curr, conf_len);
+		strncpy(pcfg_next, *pcfg_curr, conf_len);
 		cmd_pstrfree(pcfg_curr);
 	}
-	memcpy(pcfg_next + conf_len, line, line_len);
+	strncpy(pcfg_next + conf_len, line, line_len);
 	*pcfg_curr = pcfg_next;
 }
 

@@ -32,7 +32,7 @@ struct cmd_info {
 /* sub-command option descriptor */
 struct cmd_optdesc {
 	const char *lopt;
-	char        sopt;
+	int         sopt;
 	int         has_arg;
 };
 
@@ -88,7 +88,7 @@ struct cmd_globals {
 	const struct cmd_info *cmdi;
 };
 
-extern struct cmd_globals cmd_globals;
+extern struct cmd_globals cmd_global_params;
 
 /* execution hooks */
 void cmd_execute_init(void);
@@ -153,6 +153,8 @@ void cmd_optargs_set_loglevel(const struct cmd_optargs *opa);
 void cmd_require_arg(const char *arg_name, const void *arg_val);
 
 void cmd_require_arg_size(const char *arg_name, long val);
+
+void cmd_atexit(void (*fn)(void));
 
 /* fatal-error handling */
 silofs_attr_dief(2, 3) void cmd_die(int errnum, const char *restrict fmt, ...);

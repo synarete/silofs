@@ -17,7 +17,7 @@
 #define _GNU_SOURCE 1
 #include "cmd.h"
 
-static const char *cmd_fsck_help_desc =
+static const char *const cmd_fsck_help_desc =
 	"fsck <repodir/name>                                             \n"
 	"                                                                \n"
 	"options:                                                        \n"
@@ -39,7 +39,7 @@ struct cmd_fsck_ctx {
 	bool has_lockfile;
 };
 
-static struct cmd_fsck_ctx *cmd_fsck_ctx;
+static struct cmd_fsck_ctx *cmd_fsck_ctx_p;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -94,7 +94,7 @@ static void cmd_fsck_finalize(struct cmd_fsck_ctx *ctx)
 	cmd_pstrfree(&ctx->in_args.name);
 	cmd_delpass(&ctx->in_args.password);
 	cmd_destroy_env_args(&ctx->env_args);
-	cmd_fsck_ctx = NULL;
+	cmd_fsck_ctx_p = NULL;
 }
 
 static void cmd_fsck_acquire_lockfile(struct cmd_fsck_ctx *ctx)
@@ -115,16 +115,18 @@ static void cmd_fsck_release_lockfile(struct cmd_fsck_ctx *ctx)
 
 static void cmd_fsck_atexit(void)
 {
-	if (cmd_fsck_ctx != NULL) {
-		cmd_fsck_release_lockfile(cmd_fsck_ctx);
-		cmd_fsck_finalize(cmd_fsck_ctx);
+	struct cmd_fsck_ctx *ctx = cmd_fsck_ctx_p;
+
+	if (ctx != NULL) {
+		cmd_fsck_release_lockfile(ctx);
+		cmd_fsck_finalize(ctx);
 	}
 }
 
 static void cmd_fsck_start(struct cmd_fsck_ctx *ctx)
 {
-	cmd_fsck_ctx = ctx;
-	atexit(cmd_fsck_atexit);
+	cmd_fsck_ctx_p = ctx;
+	cmd_atexit(cmd_fsck_atexit);
 }
 
 static void cmd_fsck_prepare(struct cmd_fsck_ctx *ctx)

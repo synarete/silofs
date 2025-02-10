@@ -17,7 +17,7 @@
 #define _GNU_SOURCE 1
 #include "cmd.h"
 
-static const char *cmd_view_help_desc =
+static const char *const cmd_view_help_desc =
 	"view <repodir/name>                                             \n"
 	"                                                                \n"
 	"options:                                                        \n"
@@ -41,7 +41,7 @@ struct cmd_view_ctx {
 	bool has_lockfile;
 };
 
-static struct cmd_view_ctx *cmd_view_ctx;
+static struct cmd_view_ctx *cmd_view_ctx_p;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -115,21 +115,23 @@ static void cmd_view_finalize(struct cmd_view_ctx *ctx)
 	cmd_pstrfree(&ctx->in_args.outfile);
 	cmd_delpass(&ctx->in_args.password);
 	cmd_destroy_env_args(&ctx->env_args);
-	cmd_view_ctx = NULL;
+	cmd_view_ctx_p = NULL;
 }
 
 static void cmd_view_atexit(void)
 {
-	if (cmd_view_ctx != NULL) {
-		cmd_view_release_lockfile(cmd_view_ctx);
-		cmd_view_finalize(cmd_view_ctx);
+	struct cmd_view_ctx *ctx = cmd_view_ctx_p;
+
+	if (ctx != NULL) {
+		cmd_view_release_lockfile(ctx);
+		cmd_view_finalize(ctx);
 	}
 }
 
 static void cmd_view_start(struct cmd_view_ctx *ctx)
 {
-	cmd_view_ctx = ctx;
-	atexit(cmd_view_atexit);
+	cmd_view_ctx_p = ctx;
+	cmd_atexit(cmd_view_atexit);
 }
 
 static void cmd_view_enable_signals(void)

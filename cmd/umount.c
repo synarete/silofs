@@ -20,7 +20,7 @@
 #include <sys/mount.h>
 #include "cmd.h"
 
-static const char *cmd_umount_help_desc =
+static const char *const cmd_umount_help_desc =
 	"umount [options] <mountpoint>                                   \n"
 	"                                                                \n"
 	"options:                                                        \n"
@@ -41,7 +41,7 @@ struct cmd_umount_ctx {
 	bool notconn;
 };
 
-static struct cmd_umount_ctx *cmd_umount_ctx;
+static struct cmd_umount_ctx *cmd_umount_ctx_p;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -86,20 +86,22 @@ static void cmd_umount_finalize(struct cmd_umount_ctx *ctx)
 {
 	cmd_pstrfree(&ctx->in_args.mntpoint_real);
 	cmd_pstrfree(&ctx->in_args.mntpoint);
-	cmd_umount_ctx = NULL;
+	cmd_umount_ctx_p = NULL;
 }
 
 static void cmd_umount_atexit(void)
 {
-	if (cmd_umount_ctx != NULL) {
-		cmd_umount_finalize(cmd_umount_ctx);
+	struct cmd_umount_ctx *ctx = cmd_umount_ctx_p;
+
+	if (ctx != NULL) {
+		cmd_umount_finalize(ctx);
 	}
 }
 
 static void cmd_umount_start(struct cmd_umount_ctx *ctx)
 {
-	cmd_umount_ctx = ctx;
-	atexit(cmd_umount_atexit);
+	cmd_umount_ctx_p = ctx;
+	cmd_atexit(cmd_umount_atexit);
 }
 
 static void cmd_umount_probe_proc(struct cmd_umount_ctx *ctx)

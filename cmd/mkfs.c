@@ -17,7 +17,7 @@
 #define _GNU_SOURCE 1
 #include "cmd.h"
 
-static const char *cmd_mkfs_help_desc =
+static const char *const cmd_mkfs_help_desc =
 	"mkfs --size=nbytes [options] <repodir/name>                     \n"
 	"                                                                \n"
 	"options:                                                        \n"
@@ -42,7 +42,7 @@ struct cmd_mkfs_ctx {
 	bool has_lockfile;
 };
 
-static struct cmd_mkfs_ctx *cmd_mkfs_ctx;
+static struct cmd_mkfs_ctx *cmd_mkfs_ctx_p;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -105,7 +105,7 @@ static void cmd_mkfs_finalize(struct cmd_mkfs_ctx *ctx)
 	cmd_pstrfree(&ctx->in_args.username);
 	cmd_delpass(&ctx->in_args.password);
 	cmd_destroy_env_args(&ctx->env_args);
-	cmd_mkfs_ctx = NULL;
+	cmd_mkfs_ctx_p = NULL;
 }
 
 static void cmd_mkfs_acquire_lockfile(struct cmd_mkfs_ctx *ctx)
@@ -126,16 +126,18 @@ static void cmd_mkfs_release_lockfile(struct cmd_mkfs_ctx *ctx)
 
 static void cmd_mkfs_atexit(void)
 {
-	if (cmd_mkfs_ctx != NULL) {
-		cmd_mkfs_release_lockfile(cmd_mkfs_ctx);
-		cmd_mkfs_finalize(cmd_mkfs_ctx);
+	struct cmd_mkfs_ctx *ctx = cmd_mkfs_ctx_p;
+
+	if (ctx != NULL) {
+		cmd_mkfs_release_lockfile(ctx);
+		cmd_mkfs_finalize(ctx);
 	}
 }
 
 static void cmd_mkfs_start(struct cmd_mkfs_ctx *ctx)
 {
-	cmd_mkfs_ctx = ctx;
-	atexit(cmd_mkfs_atexit);
+	cmd_mkfs_ctx_p = ctx;
+	cmd_atexit(cmd_mkfs_atexit);
 }
 
 static void cmd_mkfs_prepare(struct cmd_mkfs_ctx *ctx)

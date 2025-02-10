@@ -24,7 +24,7 @@
 #include <sys/mount.h>
 #include "cmd.h"
 
-static const char *cmd_mount_help_desc =
+static const char *const cmd_mount_help_desc =
 	"mount [options] <repodir/name> <mountpoint>                       \n"
 	"                                                                  \n"
 	"options:                                                          \n"
@@ -69,7 +69,7 @@ struct cmd_mount_ctx {
 	bool with_progname; /* XXX: TODO: allow set */
 };
 
-static struct cmd_mount_ctx *cmd_mount_ctx;
+static struct cmd_mount_ctx *cmd_mount_ctx_p;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -204,10 +204,10 @@ static void cmd_mount_parse_optargs(struct cmd_mount_ctx *ctx)
 			ctx->in_args.flags &= ~SILOFS_F_MAYSPLICE;
 			break;
 		case 'D':
-			cmd_globals.dont_daemonize = true;
+			cmd_global_params.dont_daemonize = true;
 			break;
 		case 'C':
-			cmd_globals.allow_coredump = true;
+			cmd_global_params.allow_coredump = true;
 			break;
 		case 'a':
 			barg = cmd_optargs_curr_as_bool(&opa);
@@ -285,10 +285,9 @@ static void cmd_mount_destroy_env(struct cmd_mount_ctx *ctx)
 
 static void cmd_mount_halt_by_signal(int signum)
 {
-	struct cmd_mount_ctx *ctx;
+	struct cmd_mount_ctx *ctx = cmd_mount_ctx_p;
 
-	ctx = cmd_mount_ctx;
-	if (ctx && ctx->env) {
+	if ((ctx != NULL) && (ctx->env != NULL)) {
 		silofs_halt_fs(ctx->env);
 		ctx->halt_signal = signum;
 	}
@@ -328,21 +327,23 @@ static void cmd_mount_finalize(struct cmd_mount_ctx *ctx)
 	cmd_delpass(&ctx->in_args.password);
 	cmd_destroy_env_args(&ctx->env_args);
 	cmd_close_syslog();
-	cmd_mount_ctx = NULL;
+	cmd_mount_ctx_p = NULL;
 }
 
 static void cmd_mount_atexit(void)
 {
-	if (cmd_mount_ctx != NULL) {
-		cmd_mount_release_lockfile(cmd_mount_ctx);
-		cmd_mount_finalize(cmd_mount_ctx);
+	struct cmd_mount_ctx *ctx = cmd_mount_ctx_p;
+
+	if (ctx != NULL) {
+		cmd_mount_release_lockfile(ctx);
+		cmd_mount_finalize(cmd_mount_ctx_p);
 	}
 }
 
 static void cmd_mount_start(struct cmd_mount_ctx *ctx)
 {
-	cmd_mount_ctx = ctx;
-	atexit(cmd_mount_atexit);
+	cmd_mount_ctx_p = ctx;
+	cmd_atexit(cmd_mount_atexit);
 }
 
 static void cmd_mount_mkdefaults(struct cmd_mount_ctx *ctx)
@@ -473,18 +474,18 @@ static void cmd_mount_start_daemon(struct cmd_mount_ctx *ctx)
 
 static void cmd_mount_boostrap_process(struct cmd_mount_ctx *ctx)
 {
-	if (!cmd_globals.dont_daemonize) {
+	if (!cmd_global_params.dont_daemonize) {
 		cmd_mount_start_daemon(ctx);
 	}
-	cmd_setup_coredump_mode(cmd_globals.allow_coredump);
+	cmd_setup_coredump_mode(cmd_global_params.allow_coredump);
 }
 
 static void cmd_mount_update_log_params(const struct cmd_mount_ctx *ctx)
 {
-	int log_flags = (int)cmd_globals.log_params.flags;
+	int log_flags = (int)cmd_global_params.log_params.flags;
 
 	/* log control flags bits-mask */
-	if (!cmd_globals.dont_daemonize) { /* daemon mode */
+	if (!cmd_global_params.dont_daemonize) { /* daemon mode */
 		log_flags |= SILOFS_LOGF_SYSLOG;
 		log_flags &= ~SILOFS_LOGF_STDOUT;
 		log_flags &= ~SILOFS_LOGF_PROGNAME;
@@ -497,14 +498,14 @@ static void cmd_mount_update_log_params(const struct cmd_mount_ctx *ctx)
 	} else {
 		log_flags &= ~SILOFS_LOGF_PROGNAME;
 	}
-	cmd_globals.log_params.flags = (enum silofs_log_flags)log_flags;
+	cmd_global_params.log_params.flags = (enum silofs_log_flags)log_flags;
 
 	/* log level */
 	if (!ctx->in_args.explicit_log_level) {
 		if (ctx->in_args.systemd_run) {
-			cmd_globals.log_params.level = SILOFS_LOG_ERROR;
+			cmd_global_params.log_params.level = SILOFS_LOG_ERROR;
 		} else {
-			cmd_globals.log_params.level = SILOFS_LOG_INFO;
+			cmd_global_params.log_params.level = SILOFS_LOG_INFO;
 		}
 	}
 }
@@ -525,8 +526,8 @@ static int cmd_mount_testf(const struct cmd_mount_ctx *ctx, int mask)
 
 static void cmd_mount_trace_start(const struct cmd_mount_ctx *ctx)
 {
-	silofs_log_meta_banner(cmd_globals.name, 1);
-	silofs_log_info("executable: %s", cmd_globals.prog);
+	silofs_log_meta_banner(cmd_global_params.name, 1);
+	silofs_log_info("executable: %s", cmd_global_params.prog);
 	silofs_log_info("nprocs: %ld", silofs_sc_nproc_onln());
 	silofs_log_iarg("mountpoint=%s", ctx->in_args.mntpoint_real);
 	silofs_log_iarg("repodir=%s", ctx->in_args.repodir_real);
@@ -558,7 +559,7 @@ static void cmd_mount_trace_finish(const struct cmd_mount_ctx *ctx)
 
 	silofs_log_info("mount done: %s", ctx->in_args.mntpoint_real);
 	silofs_log_info("execution time: %ld seconds", exec_time);
-	silofs_log_meta_banner(cmd_globals.name, 0);
+	silofs_log_meta_banner(cmd_global_params.name, 0);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

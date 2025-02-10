@@ -34,7 +34,7 @@ static void cmd_execute_sub(void);
 static void cmd_clean_postexec(void);
 
 /* Global process' variables */
-struct cmd_globals cmd_globals;
+struct cmd_globals cmd_global_params;
 
 /*
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -75,35 +75,36 @@ static void cmd_error_print_progname(void)
 {
 	FILE *fp = stderr;
 
-	if ((cmd_globals.cmdi == NULL) || (cmd_globals.cmdi->name == NULL)) {
-		fprintf(fp, "%s: ", cmd_globals.name);
+	if ((cmd_global_params.cmdi == NULL) ||
+	    (cmd_global_params.cmdi->name == NULL)) {
+		fprintf(fp, "%s: ", cmd_global_params.name);
 	} else {
-		fprintf(fp, "%s %s: ", cmd_globals.name,
-		        cmd_globals.cmdi->name);
+		fprintf(fp, "%s %s: ", cmd_global_params.name,
+		        cmd_global_params.cmdi->name);
 	}
 	fflush(fp);
 }
 
 static void cmd_setup_globals(int argc, char *argv[])
 {
-	SILOFS_STATICASSERT_LT(sizeof(cmd_globals), 1024);
+	SILOFS_STATICASSERT_LT(sizeof(cmd_global_params), 1024);
 
-	cmd_globals.version = silofs_version.string;
-	cmd_globals.name = program_invocation_short_name;
-	cmd_globals.prog = program_invocation_name;
-	cmd_globals.argc = argc;
-	cmd_globals.argv = argv;
-	cmd_globals.pid = getpid();
-	cmd_globals.uid = getuid();
-	cmd_globals.gid = getgid();
-	cmd_globals.umsk = 0022;
-	cmd_globals.dont_daemonize = false;
-	cmd_globals.allow_coredump = false;
-	cmd_globals.log_params.progname = program_invocation_short_name;
-	cmd_globals.log_params.level = SILOFS_LOG_INFO;
-	cmd_globals.log_params.flags = SILOFS_LOGF_DEFAULT;
+	cmd_global_params.version = silofs_version.string;
+	cmd_global_params.name = program_invocation_short_name;
+	cmd_global_params.prog = program_invocation_name;
+	cmd_global_params.argc = argc;
+	cmd_global_params.argv = argv;
+	cmd_global_params.pid = getpid();
+	cmd_global_params.uid = getuid();
+	cmd_global_params.gid = getgid();
+	cmd_global_params.umsk = 0022;
+	cmd_global_params.dont_daemonize = false;
+	cmd_global_params.allow_coredump = false;
+	cmd_global_params.log_params.progname = program_invocation_short_name;
+	cmd_global_params.log_params.level = SILOFS_LOG_INFO;
+	cmd_global_params.log_params.flags = SILOFS_LOGF_DEFAULT;
 
-	umask(cmd_globals.umsk);
+	umask(cmd_global_params.umsk);
 	setlocale(LC_ALL, "");
 	error_print_progname = cmd_error_print_progname;
 }
@@ -116,7 +117,7 @@ static void cmd_init_libsilofs(void)
 	if (err) {
 		cmd_die(err, "unable to init libsilofs");
 	}
-	silofs_set_global_log_params(&cmd_globals.log_params);
+	silofs_set_global_log_params(&cmd_global_params.log_params);
 }
 
 static void cmd_resolve_caps(void)
@@ -130,7 +131,7 @@ static void cmd_resolve_caps(void)
 		err = cap_get_flag(cap, CAP_SYS_ADMIN, CAP_EFFECTIVE, &flag);
 		cap_free(cap);
 	}
-	cmd_globals.cap_sys_admin = (!err && (flag == CAP_SET));
+	cmd_global_params.cap_sys_admin = (!err && (flag == CAP_SET));
 }
 
 static void cmd_clean_postexec(void)
@@ -191,7 +192,7 @@ silofs_attr_noreturn static void show_main_help_and_exit(int exit_code)
 {
 	FILE *fp = stdout;
 
-	fprintf(fp, "%s <command> [options]\n\n", cmd_globals.name);
+	fprintf(fp, "%s <command> [options]\n\n", cmd_global_params.name);
 	fputs("main commands: \n", fp);
 	for (size_t i = 0; i < SILOFS_ARRAY_SIZE(g_cmd_info); ++i) {
 		fprintf(fp, "  %s\n", g_cmd_info[i].name);
@@ -204,7 +205,8 @@ silofs_attr_noreturn static void cmd_print_version_and_exit(void)
 {
 	FILE *fp = stdout;
 
-	fprintf(fp, "%s %s\n", cmd_globals.name, cmd_globals.version);
+	fprintf(fp, "%s %s\n", cmd_global_params.name,
+	        cmd_global_params.version);
 	fflush(fp);
 	exit(0);
 }
@@ -217,9 +219,9 @@ cmd_has_subname(const char *cmd_name, const char *name1, const char *name2)
 
 static void cmd_parse_global_args(void)
 {
-	const char *cmd_name = cmd_globals.argv[1];
+	const char *cmd_name = cmd_global_params.argv[1];
 
-	if (cmd_globals.argc <= 1) {
+	if (cmd_global_params.argc <= 1) {
 		show_main_help_and_exit(1);
 	}
 	if (cmd_has_subname(cmd_name, "-v", "--version")) {
@@ -228,15 +230,15 @@ static void cmd_parse_global_args(void)
 	if (cmd_has_subname(cmd_name, "-h", "--help")) {
 		show_main_help_and_exit(0);
 	}
-	cmd_globals.cmdi = cmd_info_of(cmd_name);
-	if (cmd_globals.cmdi == NULL) {
+	cmd_global_params.cmdi = cmd_info_of(cmd_name);
+	if (cmd_global_params.cmdi == NULL) {
 		show_main_help_and_exit(1);
 	}
 }
 
 static void cmd_execute_sub(void)
 {
-	const struct cmd_info *cmdi = cmd_globals.cmdi;
+	const struct cmd_info *cmdi = cmd_global_params.cmdi;
 
 	if ((cmdi != NULL) && (cmdi->subcmd != NULL)) {
 		cmdi->subcmd();

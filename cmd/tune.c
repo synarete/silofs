@@ -17,7 +17,7 @@
 #define _GNU_SOURCE 1
 #include "cmd.h"
 
-static const char *cmd_tune_help_desc =
+static const char *const cmd_tune_help_desc =
 	"tune --ftype=1|2 <dirpath>                                      \n"
 	"                                                                \n"
 	"options:                                                        \n"
@@ -37,7 +37,7 @@ struct cmd_tune_ctx {
 	enum silofs_inodef iflags_dont;
 };
 
-static struct cmd_tune_ctx *cmd_tune_ctx;
+static struct cmd_tune_ctx *cmd_tune_ctx_p;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -84,20 +84,22 @@ static void cmd_tune_finalize(struct cmd_tune_ctx *ctx)
 	cmd_pstrfree(&ctx->in_args.dirpath_real);
 	cmd_pstrfree(&ctx->in_args.dirpath);
 	cmd_del_iocp(&ctx->ioc);
-	cmd_tune_ctx = NULL;
+	cmd_tune_ctx_p = NULL;
 }
 
 static void cmd_tune_atexit(void)
 {
-	if (cmd_tune_ctx != NULL) {
-		cmd_tune_finalize(cmd_tune_ctx);
+	struct cmd_tune_ctx *ctx = cmd_tune_ctx_p;
+
+	if (ctx != NULL) {
+		cmd_tune_finalize(ctx);
 	}
 }
 
 static void cmd_tune_start(struct cmd_tune_ctx *ctx)
 {
-	cmd_tune_ctx = ctx;
-	atexit(cmd_tune_atexit);
+	cmd_tune_ctx_p = ctx;
+	cmd_atexit(cmd_tune_atexit);
 }
 
 static void cmd_tune_prepare(struct cmd_tune_ctx *ctx)

@@ -17,7 +17,7 @@
 #define _GNU_SOURCE 1
 #include "cmd.h"
 
-static const char *cmd_prune_help_desc =
+static const char *const cmd_prune_help_desc =
 	"prune [options] <repodir>                                       \n"
 	"                                                                \n";
 
@@ -31,7 +31,7 @@ struct cmd_prune_ctx {
 	struct silofs_env *env;
 };
 
-static struct cmd_prune_ctx *cmd_prune_ctx;
+static struct cmd_prune_ctx *cmd_prune_ctx_p;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -68,20 +68,22 @@ static void cmd_prune_finalize(struct cmd_prune_ctx *ctx)
 	cmd_del_env(&ctx->env);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
 	cmd_pstrfree(&ctx->in_args.repodir);
-	cmd_prune_ctx = NULL;
+	cmd_prune_ctx_p = NULL;
 }
 
 static void cmd_prune_atexit(void)
 {
-	if (cmd_prune_ctx != NULL) {
-		cmd_prune_finalize(cmd_prune_ctx);
+	struct cmd_prune_ctx *ctx = cmd_prune_ctx_p;
+
+	if (ctx != NULL) {
+		cmd_prune_finalize(ctx);
 	}
 }
 
 static void cmd_prune_start(struct cmd_prune_ctx *ctx)
 {
-	cmd_prune_ctx = ctx;
-	atexit(cmd_prune_atexit);
+	cmd_prune_ctx_p = ctx;
+	cmd_atexit(cmd_prune_atexit);
 }
 
 static void cmd_prune_prepare(struct cmd_prune_ctx *ctx)

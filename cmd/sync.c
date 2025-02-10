@@ -17,7 +17,7 @@
 #define _GNU_SOURCE 1
 #include "cmd.h"
 
-static const char *cmd_sync_help_desc =
+static const char *const cmd_sync_help_desc =
 	"sync [<pathname>]                                               \n"
 	"                                                                \n"
 	"options:                                                        \n"
@@ -33,7 +33,7 @@ struct cmd_sync_ctx {
 	union silofs_ioc_u *ioc;
 };
 
-static struct cmd_sync_ctx *cmd_sync_ctx;
+static struct cmd_sync_ctx *cmd_sync_ctx_p;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -74,20 +74,22 @@ static void cmd_sync_finalize(struct cmd_sync_ctx *ctx)
 	cmd_pstrfree(&ctx->in_args.pathname_real);
 	cmd_pstrfree(&ctx->in_args.pathname);
 	cmd_del_iocp(&ctx->ioc);
-	cmd_sync_ctx = NULL;
+	cmd_sync_ctx_p = NULL;
 }
 
 static void cmd_sync_atexit(void)
 {
-	if (cmd_sync_ctx != NULL) {
-		cmd_sync_finalize(cmd_sync_ctx);
+	struct cmd_sync_ctx *ctx = cmd_sync_ctx_p;
+
+	if (ctx != NULL) {
+		cmd_sync_finalize(ctx);
 	}
 }
 
 static void cmd_sync_start(struct cmd_sync_ctx *ctx)
 {
-	cmd_sync_ctx = ctx;
-	atexit(cmd_sync_atexit);
+	cmd_sync_ctx_p = ctx;
+	cmd_atexit(cmd_sync_atexit);
 }
 
 static void cmd_sync_prepare(struct cmd_sync_ctx *ctx)

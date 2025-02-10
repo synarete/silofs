@@ -19,7 +19,7 @@
 #include <sys/ioctl.h>
 #include "cmd.h"
 
-static const char *cmd_snap_help_desc =
+static const char *const cmd_snap_help_desc =
 	"snap -n <snapname> [<pathname>]                                 \n"
 	"snap -n <snapname> --offline <repodir/name>                     \n"
 	"                                                                \n"
@@ -49,7 +49,7 @@ struct cmd_snap_ctx {
 	struct silofs_xrefs xrefs;
 };
 
-static struct cmd_snap_ctx *cmd_snap_ctx;
+static struct cmd_snap_ctx *cmd_snap_ctx_p;
 
 /* local functions */
 static void
@@ -131,21 +131,23 @@ static void cmd_snap_finalize(struct cmd_snap_ctx *ctx)
 	cmd_pstrfree(&ctx->in_args.dirpath_real);
 	cmd_del_iocp(&ctx->ioc);
 	cmd_destroy_env_args(&ctx->env_args);
-	cmd_snap_ctx = NULL;
+	cmd_snap_ctx_p = NULL;
 }
 
 static void cmd_snap_atexit(void)
 {
-	if (cmd_snap_ctx != NULL) {
-		cmd_snap_finalize(cmd_snap_ctx);
+	struct cmd_snap_ctx *ctx = cmd_snap_ctx_p;
+
+	if (ctx != NULL) {
+		cmd_snap_finalize(ctx);
 	}
 }
 
 static void cmd_snap_start(struct cmd_snap_ctx *ctx)
 {
 	ctx->ioc = cmd_new_ioc();
-	cmd_snap_ctx = ctx;
-	atexit(cmd_snap_atexit);
+	cmd_snap_ctx_p = ctx;
+	cmd_atexit(cmd_snap_atexit);
 }
 
 static void cmd_snap_prepare_by_query(struct cmd_snap_ctx *ctx)

@@ -17,7 +17,7 @@
 #define _GNU_SOURCE 1
 #include "cmd.h"
 
-static const char *cmd_init_help_desc =
+static const char *const cmd_init_help_desc =
 	"init [--user=<username>] [<repodir>]                            \n"
 	"                                                                \n"
 	"options:                                                        \n"
@@ -40,7 +40,7 @@ struct cmd_init_ctx {
 	struct silofs_env *env;
 };
 
-static struct cmd_init_ctx *cmd_init_ctx;
+static struct cmd_init_ctx *cmd_init_ctx_p;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -93,20 +93,22 @@ static void cmd_init_finalize(struct cmd_init_ctx *ctx)
 	cmd_pstrfree(&ctx->in_args.repodir_real);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.username);
-	cmd_init_ctx = NULL;
+	cmd_init_ctx_p = NULL;
 }
 
 static void cmd_init_atexit(void)
 {
-	if (cmd_init_ctx != NULL) {
-		cmd_init_finalize(cmd_init_ctx);
+	struct cmd_init_ctx *ctx = cmd_init_ctx_p;
+
+	if (ctx != NULL) {
+		cmd_init_finalize(ctx);
 	}
 }
 
 static void cmd_init_start(struct cmd_init_ctx *ctx)
 {
-	cmd_init_ctx = ctx;
-	atexit(cmd_init_atexit);
+	cmd_init_ctx_p = ctx;
+	cmd_atexit(cmd_init_atexit);
 }
 
 static void cmd_init_prepare_repodir(const struct cmd_init_ctx *ctx)
@@ -157,7 +159,7 @@ static void cmd_init_setup_fs_ids(struct cmd_init_ctx *ctx)
 	char *rootname = cmd_getpwuid(0);
 
 	cmd_fs_ids_add_user(ids, username, with_sup_groups);
-	if (with_root_user && strcmp(rootname, username)) {
+	if (with_root_user && (strcmp(rootname, username) != 0)) {
 		cmd_fs_ids_add_user(ids, rootname, false);
 	}
 	cmd_pstrfree(&rootname);

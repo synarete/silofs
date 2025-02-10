@@ -17,7 +17,7 @@
 #define _GNU_SOURCE 1
 #include "cmd.h"
 
-static const char *cmd_lsmnt_help_desc =
+static const char *const cmd_lsmnt_help_desc =
 	"lsmnt [options]                                                 \n"
 	"                                                                \n"
 	"options:                                                        \n"
@@ -35,7 +35,7 @@ struct cmd_lsmnt_ctx {
 	FILE *out_fp;
 };
 
-static struct cmd_lsmnt_ctx *cmd_lsmnt_ctx;
+static struct cmd_lsmnt_ctx *cmd_lsmnt_ctx_p;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -73,20 +73,22 @@ static void cmd_lsmnt_parse_optargs(struct cmd_lsmnt_ctx *ctx)
 static void cmd_lsmnt_finalize(struct cmd_lsmnt_ctx *ctx)
 {
 	memset(&ctx->ioc_qry, 0, sizeof(ctx->ioc_qry));
-	cmd_lsmnt_ctx = NULL;
+	cmd_lsmnt_ctx_p = NULL;
 }
 
 static void cmd_lsmnt_atexit(void)
 {
-	if (cmd_lsmnt_ctx != NULL) {
-		cmd_lsmnt_finalize(cmd_lsmnt_ctx);
+	struct cmd_lsmnt_ctx *ctx = cmd_lsmnt_ctx_p;
+
+	if (ctx != NULL) {
+		cmd_lsmnt_finalize(ctx);
 	}
 }
 
 static void cmd_lsmnt_start(struct cmd_lsmnt_ctx *ctx)
 {
-	cmd_lsmnt_ctx = ctx;
-	atexit(cmd_lsmnt_atexit);
+	cmd_lsmnt_ctx_p = ctx;
+	cmd_atexit(cmd_lsmnt_atexit);
 }
 
 static void cmd_lsmnt_prepare(struct cmd_lsmnt_ctx *ctx)

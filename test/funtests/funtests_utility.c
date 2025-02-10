@@ -21,7 +21,7 @@
 #include <errno.h>
 #include <ctype.h>
 
-#define MCHUNK_MAGIC 0x3A4BE8C1
+enum { MCHUNK_MAGIC = 0x3A4BE8C1 };
 
 struct ft_mchunk {
 	struct ft_mchunk *next;
@@ -466,14 +466,14 @@ const char *ft_curr_test_name(const struct ft_env *fte)
 char *
 ft_make_xname_unique(struct ft_env *fte, size_t nlen, char *buf, size_t bsz)
 {
+	const char *curr_name = ft_curr_test_name(fte);
 	const uint32_t seq = (uint32_t)ft_next_seqn(fte);
 	const uint32_t rnd = (uint32_t)ft_lrand(fte);
 	const uint32_t val = seq ^ rnd ^ (uint32_t)fte->pid;
 	ssize_t len;
 
 	if ((bsz > 0) && (nlen < bsz)) {
-		len = snprintf(buf, bsz, "%s_%08x", ft_curr_test_name(fte),
-		               val);
+		len = snprintf(buf, bsz, "%s_%08x", curr_name, val);
 		if ((size_t)len < bsz) {
 			memset(buf + len, 'x', bsz - (size_t)len);
 		}

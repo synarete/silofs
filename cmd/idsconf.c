@@ -467,7 +467,7 @@ static void cmd_append_cfgline(char **pcfg_curr, const char *line)
 		strncpy(pcfg_next, *pcfg_curr, conf_len);
 		cmd_pstrfree(pcfg_curr);
 	}
-	strncpy(pcfg_next + conf_len, line, line_len);
+	strncpy(pcfg_next + conf_len, line, line_len + 1);
 	*pcfg_curr = pcfg_next;
 }
 

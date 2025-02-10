@@ -56,9 +56,6 @@ do_autoclean() {
   run mkdir -p "${builddir}"
   run rm -f "${autom4te_cfg}"
   run rm -rf "${autom4te_cachedir}"
-  run rm -rf "${basedir}/.cache"
-  run rm -f "${basedir}/tags"
-  run rm -f "${basedir}/TAGS"
   run rm -f "${basedir}/configure"
   run rm -f "${basedir}/configure~"
   run rm -f "${basedir}/aclocal.m4"
@@ -86,6 +83,10 @@ do_autoclean() {
   run find "${basedir}" -type d -name .mypy_cache -exec rm -rf {} +
   run find "${basedir}" -type d -name .deps -exec rm -rf {} +
   run find "${builddir}/" -depth -mindepth 1 -exec rm -rf {} +
+  run rm -rf "${basedir}/.cache"
+  run rm -f "${basedir}/tags"
+  run rm -f "${basedir}/TAGS"
+  run rm -f "${basedir}/compile_commands.json"
 }
 
 do_autoregen() {

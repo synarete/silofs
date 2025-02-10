@@ -225,9 +225,14 @@ static void mountd_atexit(void)
 
 static void mountd_start(struct mountd_ctx *ctx)
 {
+	int err;
+
 	mountd_ctx = ctx;
-	atexit(mountd_atexit);
 	setlocale(LC_ALL, "");
+	err = atexit(mountd_atexit);
+	if (err) {
+		silofs_die(err, "atexit error");
+	}
 }
 
 static void mound_execute_ms(struct mountd_ctx *ctx)

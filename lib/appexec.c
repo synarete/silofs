@@ -339,7 +339,7 @@ static int check_superblock(const struct silofs_env *env)
 	const struct silofs_sb_info *sbi = env->sbi;
 	const struct silofs_super_block *sb = sbi->sb;
 	int fossil;
-	int rdonly;
+	bool rdonly;
 	int err;
 
 	err = silofs_sb_check_version(sb);
@@ -349,7 +349,7 @@ static int check_superblock(const struct silofs_env *env)
 		return err;
 	}
 	fossil = silofs_sb_test_flags(sb, SILOFS_SUPERF_FOSSIL);
-	rdonly = env->base.args->flags & SILOFS_F_RDONLY;
+	rdonly = silofs_env_hasflag(env, SILOFS_F_RDONLY);
 	if (fossil && !rdonly) {
 		log_warn("read-only fs: sb-flags=%08x", (int)sb->sb_flags);
 		return -SILOFS_EROFS;
@@ -1135,8 +1135,6 @@ void silofs_getargs(const struct silofs_env *env, struct silofs_args *out_args)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-#define SILOFS_NOFILES_MIN (512)
-
 static int errno_or_errnum(int errnum)
 {
 	return (errno > 0) ? -errno : -abs(errnum);
@@ -1262,6 +1260,7 @@ static int check_system_page_size(void)
 static int check_proc_rlimits(void)
 {
 	struct rlimit rlim;
+	const rlim_t nofiles_min = 512;
 	int err;
 
 	err = silofs_sys_getrlimit(RLIMIT_AS, &rlim);
@@ -1275,7 +1274,7 @@ static int check_proc_rlimits(void)
 	if (err) {
 		return err;
 	}
-	if (rlim.rlim_cur < SILOFS_NOFILES_MIN) {
+	if (rlim.rlim_cur < nofiles_min) {
 		return -SILOFS_ENFILE;
 	}
 	return 0;

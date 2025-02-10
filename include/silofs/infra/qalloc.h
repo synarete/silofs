@@ -60,7 +60,6 @@ struct silofs_qalloc {
 	struct silofs_qpool qpool;
 	struct silofs_alloc alloc;
 	size_t              nbytes_use;
-	int64_t             magic;
 };
 
 /* quick allocator */

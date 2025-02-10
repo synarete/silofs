@@ -956,20 +956,17 @@ static int xac_setxattr_replace(struct silofs_xattr_ctx *xa_ctx,
 static int xac_setxattr_do_apply_on(struct silofs_xattr_ctx *xa_ctx,
                                     struct silofs_xentry_info *xei)
 {
-	int ret;
-
-	if (xa_ctx->flags == XATTR_CREATE) {
-		ret = xac_setxattr_create(xa_ctx, xei);
-	} else if (xa_ctx->flags == XATTR_REPLACE) {
-		ret = xac_setxattr_replace(xa_ctx, xei);
-	} else if (xei->xe) { /* implicit replace */
-		xa_ctx->flags = XATTR_REPLACE;
-		ret = xac_setxattr_replace(xa_ctx, xei);
-	} else {
-		/* by-default, create */
-		ret = xac_setxattr_create(xa_ctx, xei);
+	if (xa_ctx->flags == XATTR_REPLACE) {
+		/* explicit replace */
+		return xac_setxattr_replace(xa_ctx, xei);
 	}
-	return ret;
+	if (!xa_ctx->flags && xei->xe) {
+		/* implicit replace */
+		xa_ctx->flags = XATTR_REPLACE;
+		return xac_setxattr_replace(xa_ctx, xei);
+	}
+	/* by-default, create */
+	return xac_setxattr_create(xa_ctx, xei);
 }
 
 static int xac_setxattr_apply_on(struct silofs_xattr_ctx *xa_ctx,

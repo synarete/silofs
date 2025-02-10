@@ -4871,9 +4871,7 @@ static bool fuseq_join_workers(struct silofs_fuseq *fq)
 
 	for (size_t i = 0; i < fq->fq_subx.fq_nworkers_run; ++i) {
 		fqw = &fq->fq_subx.fq_workers[i];
-		if (fqw->fqw_th.joined) {
-			njoined++;
-		} else if (fqw_try_join_thread(fqw)) {
+		if (fqw->fqw_th.joined || fqw_try_join_thread(fqw)) {
 			njoined++;
 		}
 		silofs_sys_sched_yield();
@@ -5168,7 +5166,7 @@ void silofs_fuseq_del(struct silofs_fuseq *fq, struct silofs_alloc *alloc)
 #define FUSEQ_HDR_IN_SIZE (40)
 
 #define REQUIRE_SIZEOF(type, size) \
-	SILOFS_STATICASSERT(((sizeof(type) == size)) && ((size % 8) == 0))
+	SILOFS_STATICASSERT(((sizeof(type) == (size)) && ((size) % 8) == 0))
 
 #define REQUIRE_OFFSET(type, member, offset) \
 	SILOFS_STATICASSERT_EQ(offsetof(type, member), offset)

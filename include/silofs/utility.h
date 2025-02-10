@@ -17,7 +17,7 @@
 #ifndef SILOFS_UTILITY_H_
 #define SILOFS_UTILITY_H_
 
-#include <silofs/macros.h>
+#include <stddef.h>
 #include <stdint.h>
 
 static inline uint64_t silofs_min(uint64_t x, uint64_t y)
@@ -107,16 +107,12 @@ static inline uint64_t silofs_div_round_up(uint64_t n, uint64_t d)
 
 static inline uint64_t silofs_lrotate64(uint64_t x, unsigned int n)
 {
-	return silofs_likely((n > 0) && (n < 64)) ?
-	               (x << n) | (x >> (64 - n)) :
-	               x;
+	return ((n > 0) && (n < 64)) ? (x << n) | (x >> (64 - n)) : x;
 }
 
 static inline uint64_t silofs_rrotate64(uint64_t x, unsigned int n)
 {
-	return silofs_likely((n > 0) && (n < 64)) ?
-	               (x >> n) | (x << (64 - n)) :
-	               x;
+	return ((n > 0) && (n < 64)) ? (x >> n) | (x << (64 - n)) : x;
 }
 
 static inline void *silofs_unconst(const void *p)
@@ -126,6 +122,22 @@ static inline void *silofs_unconst(const void *p)
 		void       *q;
 	} u = { .p = p };
 	return u.q;
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static inline void *silofs_baseof(void *p, size_t d)
+{
+	uint8_t *q = (uint8_t *)p;
+
+	return q - d;
+}
+
+static inline const void *silofs_const_baseof(const void *p, size_t d)
+{
+	const uint8_t *q = (const uint8_t *)p;
+
+	return q - d;
 }
 
 #endif /* SILOFS_UTILITY_H_ */

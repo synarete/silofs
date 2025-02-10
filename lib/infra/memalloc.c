@@ -16,8 +16,8 @@
  */
 #include <silofs/configs.h>
 #include <silofs/macros.h>
+#include <silofs/utility.h>
 #include <silofs/syscall.h>
-#include <silofs/infra/utility.h>
 #include <silofs/infra/atomic.h>
 #include <silofs/infra/memalloc.h>
 #include <sys/types.h>

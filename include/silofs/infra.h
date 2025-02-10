@@ -20,6 +20,7 @@
 #include <silofs/ccattr.h>
 #include <silofs/consts.h>
 #include <silofs/macros.h>
+#include <silofs/utility.h>
 #include <silofs/syscall.h>
 #include <silofs/version.h>
 
@@ -39,7 +40,6 @@
 #include <silofs/infra/thread.h>
 #include <silofs/infra/time.h>
 #include <silofs/infra/qalloc.h>
-#include <silofs/infra/utility.h>
 #include <silofs/infra/zcmpr.h>
 
 #ifdef SILOFS_USE_PRIVATE

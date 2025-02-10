@@ -25,8 +25,10 @@
 #define ZCOMP_ZSTD_DEFAULT_CLEVEL (3)
 #endif
 
-#define ZCOMP_ZSTD_CCTX (1)
-#define ZCOMP_ZSTD_DCTX (2)
+enum {
+	ZCOMP_ZSTD_CCTX = 1,
+	ZCOMP_ZSTD_DCTX = 2,
+};
 
 const char *silofs_zstd_version(void)
 {

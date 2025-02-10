@@ -184,26 +184,32 @@ int silofs_logf(enum silofs_log_level log_level, const char *file, int line,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static bool eqs(const char *s, const char *t)
+{
+	return strcmp(s, t) == 0;
+}
+
+static bool icase_eqs(const char *s, const char *t)
+{
+	return strcasecmp(s, t) == 0;
+}
+
 enum silofs_log_level silofs_log_level_by_rfc5424(const char *s)
 {
 	enum silofs_log_level ll = SILOFS_LOG_ERROR; /* default value */
 
 	if (s != NULL) {
-		if (!strcmp(s, "0")) {
+		if (eqs(s, "0") || eqs(s, "1") || eqs(s, "2") ||
+		    icase_eqs(s, "ALERT") || icase_eqs(s, "CRIT")) {
 			ll = SILOFS_LOG_CRIT;
-		} else if (!strcmp(s, "1") || !strcasecmp(s, "ALERT")) {
-			ll = SILOFS_LOG_CRIT;
-		} else if (!strcmp(s, "2") || !strcasecmp(s, "CRIT")) {
-			ll = SILOFS_LOG_CRIT;
-		} else if (!strcmp(s, "3") || !strcasecmp(s, "ERROR")) {
+		} else if (eqs(s, "3") || icase_eqs(s, "ERROR")) {
 			ll = SILOFS_LOG_ERROR;
-		} else if (!strcmp(s, "4") || !strcasecmp(s, "WARN")) {
+		} else if (eqs(s, "4") || eqs(s, "5") ||
+		           icase_eqs(s, "WARN") || icase_eqs(s, "NOTICE")) {
 			ll = SILOFS_LOG_WARN;
-		} else if (!strcmp(s, "5") || !strcasecmp(s, "NOTICE")) {
-			ll = SILOFS_LOG_WARN;
-		} else if (!strcmp(s, "6") || !strcasecmp(s, "INFO")) {
+		} else if (eqs(s, "6") || icase_eqs(s, "INFO")) {
 			ll = SILOFS_LOG_INFO;
-		} else if (!strcmp(s, "7") || !strcasecmp(s, "DEBUG")) {
+		} else if (eqs(s, "7") || icase_eqs(s, "DEBUG")) {
 			ll = SILOFS_LOG_DEBUG;
 		}
 	}

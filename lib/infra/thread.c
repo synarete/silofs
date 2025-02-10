@@ -16,8 +16,8 @@
  */
 #include <silofs/configs.h>
 #include <silofs/macros.h>
+#include <silofs/utility.h>
 #include <silofs/syscall.h>
-#include <silofs/infra/utility.h>
 #include <silofs/infra/panic.h>
 #include <silofs/infra/time.h>
 #include <silofs/infra/thread.h>

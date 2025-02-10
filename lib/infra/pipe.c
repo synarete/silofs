@@ -17,7 +17,7 @@
 #include <silofs/configs.h>
 #include <silofs/syscall.h>
 #include <silofs/errors.h>
-#include <silofs/infra/utility.h>
+#include <silofs/utility.h>
 #include <silofs/infra/logging.h>
 #include <silofs/infra/pipe.h>
 #include <sys/types.h>

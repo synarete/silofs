@@ -16,7 +16,7 @@
  */
 #include <silofs/configs.h>
 #include <silofs/macros.h>
-#include <silofs/infra/utility.h>
+#include <silofs/utility.h>
 #include <silofs/infra/panic.h>
 #include <silofs/infra/logging.h>
 #include <unistd.h>
@@ -41,7 +41,7 @@
 
 struct silofs_backtrace_args {
 	const char *sym;
-	void *ip;
+	const void *ip;
 	long sp;
 	long off;
 };
@@ -59,6 +59,16 @@ struct silofs_backtrace_ctx {
 	char sym[512];
 	struct silofs_backtrace_args args;
 };
+
+static const void *unw_word_to_ptr(unw_word_t word)
+{
+	union u {
+		const void *p;
+		unw_word_t w;
+	} u = { .w = word };
+
+	return u.p;
+}
 
 static int silofs_backtrace_calls(silofs_backtrace_cb bt_cb)
 {
@@ -97,7 +107,7 @@ static int silofs_backtrace_calls(silofs_backtrace_cb bt_cb)
 		if (err) {
 			bt_ctx.sym[0] = '\0';
 		}
-		bt_ctx.args.ip = (void *)bt_ctx.ip;
+		bt_ctx.args.ip = unw_word_to_ptr(bt_ctx.ip);
 		bt_ctx.args.sp = (long)bt_ctx.sp;
 		bt_ctx.args.off = (long)bt_ctx.off;
 		err = bt_cb(&bt_ctx.args);
@@ -156,13 +166,10 @@ backtrace_addrs_to_str(char *buf, size_t bsz, void **bt_arr, int bt_len)
 
 static void silofs_dump_addr2line(void)
 {
-	void *bt_arr[128];
-	char bt_addrs[1024];
+	void *bt_arr[64] = { NULL };
+	char bt_addrs[1024] = "";
 	const int bt_cnt = (int)(SILOFS_ARRAY_SIZE(bt_arr));
 	int bt_len;
-
-	memset(bt_arr, 0, sizeof(bt_arr));
-	memset(bt_addrs, 0, sizeof(bt_addrs));
 
 	bt_len = unw_backtrace(bt_arr, bt_cnt);
 	backtrace_addrs_to_str(bt_addrs, sizeof(bt_addrs) - 1, bt_arr, bt_len);

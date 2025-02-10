@@ -24,27 +24,27 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
 #include <limits.h>
 
-#define QALLOC_MAGIC            (0xBCC12573666F)
-#define QALLOC_MALLOC_SIZE_MAX  (64 * SILOFS_UMEGA)
-#define QALLOC_FREE_NPAGES_MANY (2)
-
-#define QALLOC_PAGE_SHIFT (16)
-#define QALLOC_PAGE_SIZE  (1U << QALLOC_PAGE_SHIFT)
-#define QALLOC_PAGE_NSEGS (QALLOC_PAGE_SIZE / QALLOC_SLAB_SEG_SIZE)
-
-#define QALLOC_SLAB_SHIFT_MIN  (4)
-#define QALLOC_SLAB_SHIFT_MAX  (QALLOC_PAGE_SHIFT - 1)
-#define QALLOC_SLAB_SIZE_MIN   (1U << QALLOC_SLAB_SHIFT_MIN)
-#define QALLOC_SLAB_SIZE_MAX   (1U << QALLOC_SLAB_SHIFT_MAX)
-#define QALLOC_SLAB_SEG_SIZE   QALLOC_SLAB_SIZE_MIN
-#define QALLOC_SLAB_INDEX_NONE (-1)
-#define QALLOC_NSLABS_MAX      (QALLOC_PAGE_SHIFT - QALLOC_SLAB_SHIFT_MIN)
+enum silofs_qalloc_consts {
+	QALLOC_MALLOC_SIZE_MAX = 64 * SILOFS_MEGA,
+	QALLOC_FREE_NPAGES_MANY = 2,
+	QALLOC_PAGE_SHIFT = 16,
+	QALLOC_PAGE_SIZE = 1U << QALLOC_PAGE_SHIFT,
+	QALLOC_SLAB_SHIFT_MIN = 4,
+	QALLOC_SLAB_SHIFT_MAX = QALLOC_PAGE_SHIFT - 1,
+	QALLOC_SLAB_SIZE_MIN = 1 << QALLOC_SLAB_SHIFT_MIN,
+	QALLOC_SLAB_SIZE_MAX = 1 << QALLOC_SLAB_SHIFT_MAX,
+	QALLOC_SLAB_SEG_SIZE = QALLOC_SLAB_SIZE_MIN,
+	QALLOC_SLAB_INDEX_NONE = -1,
+	QALLOC_NSLABS_MAX = QALLOC_PAGE_SHIFT - QALLOC_SLAB_SHIFT_MIN,
+	QALLOC_NSEGS_PER_PAGE = QALLOC_PAGE_SIZE / QALLOC_SLAB_SEG_SIZE,
+};
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -55,7 +55,7 @@ struct silofs_slab_seg {
 } silofs_attr_aligned16;
 
 union silofs_qpage {
-	struct silofs_slab_seg seg[QALLOC_PAGE_NSEGS];
+	struct silofs_slab_seg seg[QALLOC_NSEGS_PER_PAGE];
 	uint8_t data[QALLOC_PAGE_SIZE];
 } silofs_attr_aligned64;
 
@@ -1080,16 +1080,17 @@ static int slab_check_seg(const struct silofs_slab *slab,
                           const struct silofs_slab_seg *seg, size_t nbytes)
 {
 	const struct silofs_qpage_info *qpgi = NULL;
+	const size_t elemsz = slab->elemsz;
 
 	if (!slab->nused) {
 		slab_error(slab, "nbytes=%zu", nbytes);
 		return -SILOFS_EQALLOC;
 	}
-	if (nbytes > slab->elemsz) {
+	if (nbytes > elemsz) {
 		slab_error(slab, "nbytes=%zu", nbytes);
 		return -SILOFS_EQALLOC;
 	}
-	if (nbytes >= (2 * slab->elemsz)) {
+	if (nbytes >= (2 * elemsz)) {
 		slab_error(slab, "nbytes=%zu", nbytes);
 		return -SILOFS_EQALLOC;
 	}
@@ -1210,7 +1211,6 @@ int silofs_qalloc_init(struct silofs_qalloc *qal, size_t memsize,
 
 	silofs_memzero(qal, sizeof(*qal));
 	qal->nbytes_use = 0;
-	qal->magic = QALLOC_MAGIC;
 
 	err = check_memsize(memsize);
 	if (err) {
@@ -1449,7 +1449,12 @@ static void qalloc_pre_free(const struct silofs_qalloc *qal, void *ptr,
                             size_t nbytes, int flags)
 {
 	if (!flags && qalloc_may_demask_on_free(qal)) {
-		memset(ptr, (int)qal->magic, silofs_min(512, nbytes));
+		uint64_t *q = ptr;
+
+		memset(ptr, 1, silofs_min(512, nbytes));
+		if (nbytes >= sizeof(*q)) {
+			*q = 0xBADC0DE;
+		}
 	}
 }
 

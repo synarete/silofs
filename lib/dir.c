@@ -20,13 +20,20 @@
 #include <dirent.h>
 #include <errno.h>
 
-#define DTREE_SHIFT      SILOFS_DIR_NODE_SHIFT
-#define DTREE_FANOUT     SILOFS_DIR_NODE_NCHILDS
-#define DTREE_DEPTH_MAX  SILOFS_DIR_TREE_DEPTH_MAX
-#define DTREE_INDEX_MAX  SILOFS_DIR_TREE_INDEX_MAX
-#define DTREE_INDEX_NULL SILOFS_DIR_TREE_INDEX_NULL
-#define DTREE_INDEX_ROOT SILOFS_DIR_TREE_INDEX_ROOT
-#define DTREE_OFF_SHIFT  (13)
+enum silofs_dtree_consts {
+	DTREE_SHIFT = SILOFS_DIR_NODE_SHIFT,
+	DTREE_FANOUT = SILOFS_DIR_NODE_NCHILDS,
+	DTREE_DEPTH_MAX = SILOFS_DIR_TREE_DEPTH_MAX,
+	DTREE_INDEX_MAX = SILOFS_DIR_TREE_INDEX_MAX,
+	DTREE_INDEX_NULL = SILOFS_DIR_TREE_INDEX_NULL,
+	DTREE_INDEX_ROOT = SILOFS_DIR_TREE_INDEX_ROOT,
+	DTREE_OFF_SHIFT = 13,
+};
+
+enum silofs_de_consts {
+	DE_NAME_HASH_SHIFT = 24,
+	DE_NAME_HASH_MASK = (1U << DE_NAME_HASH_SHIFT) - 1
+};
 
 /*
  * TODO-0006: Support SILOFS_NAME_MAX=1023
@@ -251,9 +258,6 @@ static ssize_t dtn_index_to_isize(silofs_dtn_index_t dtn_index_last)
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-#define DE_NAME_HASH_SHIFT 24
-#define DE_NAME_HASH_MASK ((1U << DE_NAME_HASH_SHIFT) - 1)
 
 static struct silofs_dir_entry *de_unconst(const struct silofs_dir_entry *de)
 {

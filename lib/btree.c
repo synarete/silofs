@@ -233,11 +233,7 @@ static void btree_update_bni(const struct silofs_btree *btree,
                              struct silofs_btnode_info *bni, bool as_rdonly)
 {
 	if (!bni->bn_rdonly) {
-		if (as_rdonly) {
-			bni->bn_rdonly = true;
-		} else if (!btree_is_writeable(btree, bni)) {
-			bni->bn_rdonly = true;
-		}
+		bni->bn_rdonly = as_rdonly || !btree_is_writeable(btree, bni);
 	}
 }
 

@@ -207,7 +207,7 @@ int silofs_base64_decode(const char *in, size_t inlen, void *out,
 	int err = -1;
 
 	while ((incnt < inlen) && (outlen < outlen_max) && (npads < 2)) {
-		chr = in[incnt];
+		chr = (int)in[incnt];
 		if (base64_ispad(chr)) {
 			npads++;
 		} else {

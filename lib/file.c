@@ -27,13 +27,15 @@
 #include <stdio.h>
 #include <limits.h>
 
-#define OP_READ       (1 << 0)
-#define OP_WRITE      (1 << 1)
-#define OP_TRUNC      (1 << 2)
-#define OP_FALLOC     (1 << 3)
-#define OP_FIEMAP     (1 << 4)
-#define OP_LSEEK      (1 << 5)
-#define OP_COPY_RANGE (1 << 6)
+enum silofs_file_op {
+	OP_READ = 1 << 0,
+	OP_WRITE = 1 << 1,
+	OP_TRUNC = 1 << 2,
+	OP_FALLOC = 1 << 3,
+	OP_FIEMAP = 1 << 4,
+	OP_LSEEK = 1 << 5,
+	OP_COPY_RANGE = 1 << 6,
+};
 
 struct silofs_file_ctx {
 	struct silofs_task *task;

@@ -16,7 +16,9 @@
  */
 #include "unitests.h"
 
-#define MAGIC 0xDEADBEEF
+enum {
+	UT_QALLOC_MAGIC = 0xBEDEAD,
+};
 
 struct ut_mrecord {
 	long magic;
@@ -34,7 +36,7 @@ static void mrecord_setup(struct ut_mrecord *mr, void *mem, size_t len)
 
 	ut_expect_ge(len, sizeof(*mr));
 	silofs_list_head_init(&mr->link);
-	mr->magic = MAGIC;
+	mr->magic = UT_QALLOC_MAGIC;
 	mr->mem = mem;
 	mr->len = len;
 	mr->dat_len = len - offsetof(struct ut_mrecord, dat);
@@ -50,7 +52,7 @@ static struct ut_mrecord *mrecord_of(void *mem, size_t len)
 
 static void mrecord_check(const struct ut_mrecord *mr)
 {
-	ut_expect_eq(mr->magic, MAGIC);
+	ut_expect_eq(mr->magic, UT_QALLOC_MAGIC);
 	ut_expect_ge(mr->len, sizeof(*mr));
 	ut_expect_not_null(mr->mem);
 }
@@ -334,8 +336,6 @@ static void ut_qalloc_mixed(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-#define NALLOC_SMALL 128
-
 static size_t small_alloc_size(size_t i)
 {
 	return (i * 17) + 1;
@@ -343,6 +343,7 @@ static size_t small_alloc_size(size_t i)
 
 static void ut_qalloc_small_sizes(struct ut_env *ute)
 {
+	enum { NALLOC_SMALL = 128 };
 	void *ptr[NALLOC_SMALL];
 	long idx_arr[NALLOC_SMALL];
 	struct silofs_qalloc *qal = NULL;

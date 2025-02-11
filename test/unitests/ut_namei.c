@@ -26,9 +26,9 @@ ut_mkname(struct ut_env *ute, const char *prefix, unsigned long i)
 
 static void ut_create_open_release(struct ut_env *ute)
 {
-	ino_t ino;
-	ino_t dino;
 	const char *name = UT_NAME;
+	ino_t dino = 0;
+	ino_t ino = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -46,10 +46,10 @@ static void ut_create_open_release(struct ut_env *ute)
 
 static void ut_create_unlink_simple(struct ut_env *ute)
 {
-	ino_t ino;
-	ino_t dino;
-	struct stat st;
+	struct stat st = { .st_size = -1 };
 	const char *name = UT_NAME;
+	ino_t dino = 0;
+	ino_t ino = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -70,8 +70,8 @@ static void ut_create_unlink_simple(struct ut_env *ute)
 static void ut_create_write_release(struct ut_env *ute, ino_t dino,
                                     const char *name, size_t bsz, loff_t off)
 {
-	ino_t ino;
 	void *buf = ut_randbuf(ute, bsz);
+	ino_t ino = 0;
 
 	ut_create_file(ute, dino, name, &ino);
 	ut_write_read(ute, ino, buf, bsz, off);
@@ -81,11 +81,12 @@ static void ut_create_write_release(struct ut_env *ute, ino_t dino,
 static void ut_create_unlink_random_(struct ut_env *ute, size_t nfiles,
                                      size_t bsz, loff_t off)
 {
-	ino_t dino;
 	const char *name = UT_NAME;
-	const char **fname = ut_zalloc(ute, nfiles * sizeof(char *));
+	const char **fname = NULL;
 	const long *keys = ut_randseq(ute, nfiles, 0);
+	ino_t dino = 0;
 
+	fname = (const char **)ut_zalloc(ute, nfiles * sizeof(char *));
 	ut_mkdir_at_root(ute, name, &dino);
 	for (size_t i = 0; i < nfiles; ++i) {
 		fname[i] = ut_mkname(ute, name, i);
@@ -225,19 +226,19 @@ static void ut_link_similar_names(struct ut_env *ute)
 
 static void ut_link_rand_names(struct ut_env *ute)
 {
-	ino_t ino;
-	ino_t dino;
-	size_t name_len;
-	struct stat st;
+	struct stat st = { .st_size = -1 };
 	const char *name = UT_NAME;
-	const size_t nlinks = 8 * 1024; /* XXX check with large */
+	const size_t nlinks = 10000; /* XXX check with large */
 	const size_t name_max = NAME_MAX;
 	char *lname = NULL;
 	char **links = NULL;
+	size_t name_len;
+	ino_t dino = 0;
+	ino_t ino = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_only(ute, dino, name, &ino);
-	links = ut_zerobuf(ute, nlinks * sizeof(*links));
+	links = (char **)ut_zerobuf(ute, nlinks * sizeof(*links));
 	for (size_t i = 0; i < nlinks; ++i) {
 		name_len = (i % name_max) | 0xA1;
 		lname = ut_randstr(ute, name_len);

@@ -34,13 +34,14 @@ struct ut_ioparams {
 static struct ut_dvec **
 new_dvecs(struct ut_env *ute, const struct ut_ioparams *params)
 {
-	loff_t off;
-	struct ut_dvec **list;
 	const size_t step = params->length + params->nskip;
+	const size_t size = params->count * sizeof(struct ut_dvec *);
+	struct ut_dvec **list = NULL;
 
-	list = ut_zerobuf(ute, params->count * sizeof(struct ut_dvec *));
+	list = (struct ut_dvec **)ut_zerobuf(ute, size);
 	for (size_t i = 0; i < params->count; ++i) {
-		off = params->offset + (loff_t)(i * step);
+		const loff_t off = params->offset + (loff_t)(i * step);
+
 		list[i] = ut_new_dvec(ute, off, params->length);
 	}
 	return list;

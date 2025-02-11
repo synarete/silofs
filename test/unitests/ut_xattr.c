@@ -16,7 +16,7 @@
  */
 #include "unitests.h"
 
-struct silofs_kv_sizes {
+struct ut_kv_sizes {
 	size_t name_len;
 	size_t value_size;
 };
@@ -35,12 +35,12 @@ static struct ut_keyval *kv_new(struct ut_env *ute, size_t nlen, size_t size)
 
 static struct ut_kvl *kvl_new(struct ut_env *ute, size_t limit)
 {
-	struct ut_kvl *kvl;
+	struct ut_kvl *kvl = NULL;
 	const size_t list_sz = limit * sizeof(struct ut_keyval *);
 
 	kvl = ut_malloc(ute, sizeof(*kvl));
 	kvl->ute = ute;
-	kvl->list = ut_zalloc(ute, list_sz);
+	kvl->list = (struct ut_keyval **)ut_zalloc(ute, list_sz);
 	kvl->limit = limit;
 	kvl->count = 0;
 	return kvl;
@@ -53,8 +53,8 @@ static void kvl_append(struct ut_kvl *kvl, size_t nlen, size_t value_sz)
 	kvl->list[kvl->count++] = kv_new(kvl->ute, nlen, value_sz);
 }
 
-static void kvl_appendn(struct ut_kvl *kvl, const struct silofs_kv_sizes *arr,
-                        size_t arr_len)
+static void
+kvl_appendn(struct ut_kvl *kvl, const struct ut_kv_sizes *arr, size_t arr_len)
 {
 	for (size_t i = 0; i < arr_len; ++i) {
 		kvl_append(kvl, arr[i].name_len, arr[i].value_size);
@@ -322,7 +322,7 @@ static void ut_xattr_multi(struct ut_env *ute)
 	const char *dname = UT_NAME;
 	const char *fname = UT_NAME;
 	struct ut_kvl *kvl = NULL;
-	const struct silofs_kv_sizes kv_sizes_arr[] = {
+	const struct ut_kv_sizes kv_sizes_arr[] = {
 		{ 1, 1 },
 		{ NAME_MAX / 2, 2 },
 		{ 2, SILOFS_XATTR_VALUE_MAX / 2 },

@@ -147,7 +147,7 @@ static void cmd_init_setup_env_args(struct cmd_init_ctx *ctx)
 	cmd_setup_env_args(env_args);
 	cmd_resolve_uidgid(username, &env_args->uid, &env_args->gid);
 	env_args->boot.repodir = ctx->in_args.repodir_real;
-	env_args->boot.name = "silofs";
+	env_args->boot.fsname = "silofs";
 }
 
 static void cmd_init_setup_fs_ids(struct cmd_init_ctx *ctx)

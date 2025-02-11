@@ -1956,7 +1956,9 @@ void ut_format_fs(struct ut_env *ute)
 {
 	int err;
 
-	err = silofs_format_fs(ute->env, &ute->boot_ba[0]);
+	err = silofs_format_fs(ute->env);
+	ut_expect_ok(err);
+	err = silofs_get_fs_xref(ute->env, &ute->boot_xref[0]);
 	ut_expect_ok(err);
 }
 
@@ -1964,7 +1966,7 @@ void ut_open_fs(struct ut_env *ute)
 {
 	int err;
 
-	err = silofs_open_fs(ute->env, &ute->boot_ba[0]);
+	err = silofs_open_fs(ute->env, &ute->boot_xref[0]);
 	ut_expect_ok(err);
 }
 
@@ -1972,7 +1974,7 @@ void ut_open_fs2(struct ut_env *ute)
 {
 	int err;
 
-	err = silofs_open_fs(ute->env, &ute->boot_ba[1]);
+	err = silofs_open_fs(ute->env, &ute->boot_xref[1]);
 	ut_expect_ok(err);
 }
 
@@ -1996,7 +1998,7 @@ void ut_unref_fs(struct ut_env *ute)
 {
 	int err;
 
-	err = silofs_unref_fs(ute->env, &ute->boot_ba[0]);
+	err = silofs_unref_fs(ute->env, &ute->boot_xref[0]);
 	ut_expect_ok(err);
 }
 
@@ -2004,7 +2006,7 @@ void ut_unref_fs2(struct ut_env *ute)
 {
 	int err;
 
-	err = silofs_unref_fs(ute->env, &ute->boot_ba[1]);
+	err = silofs_unref_fs(ute->env, &ute->boot_xref[1]);
 	ut_expect_ok(err);
 }
 
@@ -2024,15 +2026,17 @@ void ut_fork_fs(struct ut_env *ute)
 	err = silofs_fork_fs(ute->env, &bas);
 	ut_expect_ok(err);
 
-	memcpy(&ute->boot_ba[0], &bas.xref_new, sizeof(ute->boot_ba[0]));
-	memcpy(&ute->boot_ba[1], &bas.xref_alt, sizeof(ute->boot_ba[1]));
+	memcpy(&ute->boot_xref[0], &bas.xref_new, sizeof(ute->boot_xref[0]));
+	memcpy(&ute->boot_xref[1], &bas.xref_alt, sizeof(ute->boot_xref[1]));
 }
 
 void ut_archive_fs(struct ut_env *ute)
 {
 	int err;
 
-	err = silofs_archive_fs(ute->env, &ute->pack_ba);
+	err = silofs_archive_fs(ute->env);
+	ut_expect_ok(err);
+	err = silofs_get_ar_xref(ute->env, &ute->pack_xref);
 	ut_expect_ok(err);
 }
 
@@ -2040,6 +2044,6 @@ void ut_restore_fs(struct ut_env *ute)
 {
 	int err;
 
-	err = silofs_restore_fs(ute->env, &ute->boot_ba[0]);
+	err = silofs_restore_fs(ute->env, &ute->boot_xref[0]);
 	ut_expect_ok(err);
 }

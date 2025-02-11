@@ -109,7 +109,7 @@ static int check_bootpath(const struct silofs_args *args)
 	const struct silofs_boot_args *bref = &args->boot;
 	struct silofs_bootpath bootpath;
 
-	return silofs_bootpath_setup(&bootpath, bref->repodir, bref->name);
+	return silofs_bootpath_setup(&bootpath, bref->repodir, bref->fsname);
 }
 
 static int check_password(const struct silofs_args *args)

@@ -18,17 +18,17 @@
 #include "cmd.h"
 
 static const char *const cmd_rmfs_help_desc = {
-	"rmfs <repodir/name>                                             \n"
+	"rmfs <repodir/fsname>                                           \n"
 	"                                                                \n"
 	"options:                                                        \n"
 	"  -L, --loglevel=level         Logging level (rfc5424)          \n"
 };
 
 struct cmd_rmfs_in_args {
-	char *repodir_name;
+	char *repodir_fsname;
 	char *repodir;
 	char *repodir_real;
-	char *name;
+	char *fsname;
 	char *password;
 	bool no_prompt;
 };
@@ -80,7 +80,8 @@ static void cmd_rmfs_parse_optargs(struct cmd_rmfs_ctx *ctx)
 		}
 	}
 
-	ctx->in_args.repodir_name = cmd_optargs_getarg(&opa, "repodir/name");
+	ctx->in_args.repodir_fsname =
+		cmd_optargs_getarg(&opa, "repodir/fsname");
 	cmd_optargs_endargs(&opa);
 	cmd_optargs_fini(&opa);
 }
@@ -89,11 +90,12 @@ static void cmd_rmfs_parse_optargs(struct cmd_rmfs_ctx *ctx)
 
 static void cmd_rmfs_prepare(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_check_isreg(ctx->in_args.repodir_name);
-	cmd_split_path(ctx->in_args.repodir_name, &ctx->in_args.repodir,
-	               &ctx->in_args.name);
+	cmd_check_isreg(ctx->in_args.repodir_fsname);
+	cmd_split_path(ctx->in_args.repodir_fsname, &ctx->in_args.repodir,
+	               &ctx->in_args.fsname);
 	cmd_realpath_dir(ctx->in_args.repodir, &ctx->in_args.repodir_real);
-	cmd_check_repodir_fsname(ctx->in_args.repodir_real, ctx->in_args.name);
+	cmd_check_repodir_fsname(ctx->in_args.repodir_real,
+	                         ctx->in_args.fsname);
 }
 
 static void cmd_rmfs_getpass(struct cmd_rmfs_ctx *ctx)
@@ -143,7 +145,8 @@ static void cmd_rmfs_check_nomnt_at(struct cmd_rmfs_ctx *ctx,
 		goto out;
 	}
 
-	cmd_join_path(ctx->in_args.repodir_real, ctx->in_args.name, &path[1]);
+	cmd_join_path(ctx->in_args.repodir_real, ctx->in_args.fsname,
+	              &path[1]);
 	err = silofs_sys_stat(path[1], &st[1]);
 	if (err) {
 		goto out;
@@ -178,7 +181,7 @@ static void cmd_rmfs_setup_env_args(struct cmd_rmfs_ctx *ctx)
 
 	cmd_setup_env_args(env_args);
 	env_args->boot.repodir = ctx->in_args.repodir_real;
-	env_args->boot.name = ctx->in_args.name;
+	env_args->boot.fsname = ctx->in_args.fsname;
 	env_args->boot.passwd = ctx->in_args.password;
 }
 
@@ -230,7 +233,7 @@ static void cmd_rmfs_destroy_env(struct cmd_rmfs_ctx *ctx)
 static void cmd_rmfs_acquire_lockfile(struct cmd_rmfs_ctx *ctx)
 {
 	if (!ctx->has_lockfile) {
-		cmd_lock_fs(ctx->in_args.repodir_real, ctx->in_args.name);
+		cmd_lock_fs(ctx->in_args.repodir_real, ctx->in_args.fsname);
 		ctx->has_lockfile = true;
 	}
 }
@@ -238,7 +241,7 @@ static void cmd_rmfs_acquire_lockfile(struct cmd_rmfs_ctx *ctx)
 static void cmd_rmfs_release_lockfile(struct cmd_rmfs_ctx *ctx)
 {
 	if (ctx->has_lockfile) {
-		cmd_unlock_fs(ctx->in_args.repodir_real, ctx->in_args.name);
+		cmd_unlock_fs(ctx->in_args.repodir_real, ctx->in_args.fsname);
 		ctx->has_lockfile = false;
 	}
 }
@@ -247,10 +250,10 @@ static void cmd_rmfs_finalize(struct cmd_rmfs_ctx *ctx)
 {
 	cmd_rmfs_destroy_env(ctx);
 	cmd_delpass(&ctx->in_args.password);
-	cmd_pstrfree(&ctx->in_args.repodir_name);
+	cmd_pstrfree(&ctx->in_args.repodir_fsname);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
-	cmd_pstrfree(&ctx->in_args.name);
+	cmd_pstrfree(&ctx->in_args.fsname);
 	cmd_rmfs_ctx_p = NULL;
 }
 

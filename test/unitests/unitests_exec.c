@@ -455,7 +455,7 @@ static void ut_init_args(struct ut_args *args)
 {
 	memset(args, 0, sizeof(*args));
 	args->env_args.boot.repodir = ut_globals.test_dir_repo;
-	args->env_args.boot.name = "unitests";
+	args->env_args.boot.fsname = "unitests";
 	args->env_args.boot.mntdir = "/";
 	args->env_args.ids.users.uids = ut_new_uids();
 	args->env_args.ids.users.nuids = 2;

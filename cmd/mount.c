@@ -25,7 +25,7 @@
 #include "cmd.h"
 
 static const char *const cmd_mount_help_desc =
-	"mount [options] <repodir/name> <mountpoint>                       \n"
+	"mount [options] <repodir/fsname> <mountpoint>                     \n"
 	"                                                                  \n"
 	"options:                                                          \n"
 	"  -o, --opts=subopts           Comma-separated sub-options        \n"
@@ -43,10 +43,10 @@ static const char *const cmd_mount_help_desc =
 	"  -L, --loglevel=level         Logging level (rfc5424)            \n";
 
 struct cmd_mount_in_args {
-	char *repodir_name;
+	char *repodir_fsname;
 	char *repodir;
 	char *repodir_real;
-	char *name;
+	char *fsname;
 	char *mntpoint;
 	char *mntpoint_real;
 	char *uhelper;
@@ -242,7 +242,8 @@ static void cmd_mount_parse_optargs(struct cmd_mount_ctx *ctx)
 		}
 	}
 
-	ctx->in_args.repodir_name = cmd_optargs_getarg(&opa, "repodir/name");
+	ctx->in_args.repodir_fsname =
+		cmd_optargs_getarg(&opa, "repodir/fsname");
 	ctx->in_args.mntpoint = cmd_optargs_getarg(&opa, "mountpoint");
 	cmd_optargs_endargs(&opa);
 	cmd_optargs_fini(&opa);
@@ -258,7 +259,7 @@ static void cmd_mount_setup_env_args(struct cmd_mount_ctx *ctx)
 	cmd_setup_env_args(env_args);
 	env_args->flags = (enum silofs_flags)in_args->flags;
 	env_args->boot.repodir = in_args->repodir_real;
-	env_args->boot.name = in_args->name;
+	env_args->boot.fsname = in_args->fsname;
 	env_args->boot.passwd = in_args->password;
 	env_args->boot.mntdir = in_args->mntpoint_real;
 }
@@ -301,7 +302,7 @@ static void cmd_mount_enable_signals(void)
 static void cmd_mount_acquire_lockfile(struct cmd_mount_ctx *ctx)
 {
 	if (!ctx->has_lockfile) {
-		cmd_lock_fs(ctx->in_args.repodir_real, ctx->in_args.name);
+		cmd_lock_fs(ctx->in_args.repodir_real, ctx->in_args.fsname);
 		ctx->has_lockfile = true;
 	}
 }
@@ -309,7 +310,7 @@ static void cmd_mount_acquire_lockfile(struct cmd_mount_ctx *ctx)
 static void cmd_mount_release_lockfile(struct cmd_mount_ctx *ctx)
 {
 	if (ctx->has_lockfile) {
-		cmd_unlock_fs(ctx->in_args.repodir_real, ctx->in_args.name);
+		cmd_unlock_fs(ctx->in_args.repodir_real, ctx->in_args.fsname);
 		ctx->has_lockfile = false;
 	}
 }
@@ -317,12 +318,12 @@ static void cmd_mount_release_lockfile(struct cmd_mount_ctx *ctx)
 static void cmd_mount_finalize(struct cmd_mount_ctx *ctx)
 {
 	cmd_mount_destroy_env(ctx);
-	cmd_pstrfree(&ctx->in_args.repodir_name);
+	cmd_pstrfree(&ctx->in_args.repodir_fsname);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
 	cmd_pstrfree(&ctx->in_args.mntpoint);
 	cmd_pstrfree(&ctx->in_args.mntpoint_real);
-	cmd_pstrfree(&ctx->in_args.name);
+	cmd_pstrfree(&ctx->in_args.fsname);
 	cmd_pstrfree(&ctx->in_args.uhelper);
 	cmd_delpass(&ctx->in_args.password);
 	cmd_destroy_env_args(&ctx->env_args);
@@ -369,11 +370,12 @@ static void cmd_mount_prepare_mntpoint(struct cmd_mount_ctx *ctx)
 
 static void cmd_mount_prepare_repo(struct cmd_mount_ctx *ctx)
 {
-	cmd_check_isreg(ctx->in_args.repodir_name);
-	cmd_split_path(ctx->in_args.repodir_name, &ctx->in_args.repodir,
-	               &ctx->in_args.name);
+	cmd_check_isreg(ctx->in_args.repodir_fsname);
+	cmd_split_path(ctx->in_args.repodir_fsname, &ctx->in_args.repodir,
+	               &ctx->in_args.fsname);
 	cmd_realpath_rdir(ctx->in_args.repodir, &ctx->in_args.repodir_real);
-	cmd_check_repodir_fsname(ctx->in_args.repodir_real, ctx->in_args.name);
+	cmd_check_repodir_fsname(ctx->in_args.repodir_real,
+	                         ctx->in_args.fsname);
 }
 
 static void cmd_mount_getpass(struct cmd_mount_ctx *ctx)

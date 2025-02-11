@@ -56,7 +56,8 @@ struct silofs_xrefs {
 struct silofs_boot_args {
 	struct silofs_xref xref;
 	const char        *repodir;
-	const char        *name;
+	const char        *fsname;
+	const char        *arname;
 	const char        *passwd;
 	const char        *mntdir;
 };

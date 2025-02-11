@@ -763,12 +763,6 @@ static int commit_uber(struct silofs_env *env, struct silofs_uber *uber)
 	return 0;
 }
 
-static void resolve_uber_caddr(const struct silofs_env *env,
-                               struct silofs_caddr *out_caddr)
-{
-	caddr_assign(out_caddr, &env->boot.caddr);
-}
-
 static int format_bstore(struct silofs_env *env)
 {
 	return silofs_bstore_format(env->base.bstore);
@@ -782,11 +776,27 @@ static int format_uber(const struct silofs_env *env, struct silofs_uber *uber)
 	return 0;
 }
 
-static int do_format_fs(struct silofs_env *env, struct silofs_caddr *out_caddr)
+static int check_format(struct silofs_env *env)
+{
+	struct silofs_caddr caddr = { .ctype = SILOFS_CTYPE_NONE };
+	int err;
+
+	err = silofs_env_uber_caddr(env, &caddr);
+	if (!err) {
+		return -SILOFS_EEXIST;
+	}
+	return 0;
+}
+
+static int do_format_fs(struct silofs_env *env)
 {
 	struct silofs_uber uber = { .flags = SILOFS_UBERF_NONE };
 	int err;
 
+	err = check_format(env);
+	if (err) {
+		return err;
+	}
 	err = format_bstore(env);
 	if (err) {
 		return err;
@@ -823,19 +833,16 @@ static int do_format_fs(struct silofs_env *env, struct silofs_caddr *out_caddr)
 	if (err) {
 		return err;
 	}
-	resolve_uber_caddr(env, out_caddr);
 	return 0;
 }
 
-int silofs_format_fs(struct silofs_env *env, struct silofs_xref *out_ba)
+int silofs_format_fs(struct silofs_env *env)
 {
-	struct silofs_caddr caddr = { .ctype = SILOFS_CTYPE_NONE };
 	int ret;
 
 	silofs_env_lock(env);
-	ret = do_format_fs(env, &caddr);
+	ret = do_format_fs(env);
 	silofs_env_unlock(env);
-	caddr_to_xref(&caddr, ret, out_ba);
 	return ret;
 }
 
@@ -1077,7 +1084,7 @@ int silofs_inspect_fs(struct silofs_env *env, silofs_visit_laddr_fn cb,
 	return err;
 }
 
-static int exec_pack_fs(struct silofs_env *env, struct silofs_caddr *out_caddr)
+static int exec_pack_fs(struct silofs_env *env)
 {
 	struct silofs_task task;
 	int err;
@@ -1086,19 +1093,17 @@ static int exec_pack_fs(struct silofs_env *env, struct silofs_caddr *out_caddr)
 	if (err) {
 		return err;
 	}
-	err = silofs_fs_pack(&task, out_caddr);
+	err = silofs_fs_pack(&task);
 	return term_task(&task, err);
 }
 
-int silofs_archive_fs(struct silofs_env *env, struct silofs_xref *out_ba)
+int silofs_archive_fs(struct silofs_env *env)
 {
-	struct silofs_caddr caddr = { .ctype = SILOFS_CTYPE_NONE };
 	int err;
 
 	silofs_env_lock(env);
-	err = exec_pack_fs(env, &caddr);
+	err = exec_pack_fs(env);
 	silofs_env_unlock(env);
-	caddr_to_xref(&caddr, err, out_ba);
 	return err;
 }
 
@@ -1128,9 +1133,34 @@ int silofs_restore_fs(struct silofs_env *env, struct silofs_xref *out_ba)
 	return err;
 }
 
-void silofs_getargs(const struct silofs_env *env, struct silofs_args *out_args)
+void silofs_get_args(const struct silofs_env *env,
+                     struct silofs_args *out_args)
 {
 	memcpy(out_args, env->base.args, sizeof(*out_args));
+}
+
+int silofs_get_fs_xref(struct silofs_env *env, struct silofs_xref *out_xref)
+{
+	struct silofs_caddr caddr = { .ctype = SILOFS_CTYPE_NONE };
+	int ret;
+
+	silofs_env_lock(env);
+	ret = silofs_env_uber_caddr(env, &caddr);
+	silofs_env_unlock(env);
+	caddr_to_xref(&caddr, ret, out_xref);
+	return ret;
+}
+
+int silofs_get_ar_xref(struct silofs_env *env, struct silofs_xref *out_xref)
+{
+	struct silofs_caddr caddr = { .ctype = SILOFS_CTYPE_NONE };
+	int ret;
+
+	silofs_env_lock(env);
+	ret = silofs_env_pack_caddr(env, &caddr);
+	silofs_env_unlock(env);
+	caddr_to_xref(&caddr, ret, out_xref);
+	return ret;
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

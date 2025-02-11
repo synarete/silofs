@@ -76,7 +76,7 @@ void cmd_save_fs_xref(const struct silofs_boot_args *boot_args)
 	int dfd = -1;
 
 	cmd_open_repodir(boot_args, &dfd);
-	cmd_save_xref_at(dfd, boot_args->name, boot_args->xref.s);
+	cmd_save_xref_at(dfd, boot_args->fsname, boot_args->xref.s);
 	silofs_sys_closefd(&dfd);
 }
 
@@ -85,7 +85,7 @@ void cmd_save_ar_xref(const struct silofs_boot_args *boot_args)
 	int dfd = -1;
 
 	cmd_open_repodir(boot_args, &dfd);
-	cmd_save_xref_at(dfd, boot_args->name, boot_args->xref.s);
+	cmd_save_xref_at(dfd, boot_args->arname, boot_args->xref.s);
 	silofs_sys_closefd(&dfd);
 }
 
@@ -94,7 +94,7 @@ void cmd_unlink_fs_xref(const struct silofs_boot_args *boot_args)
 	int dfd = -1;
 
 	cmd_open_repodir(boot_args, &dfd);
-	silofs_sys_unlinkat(dfd, boot_args->name, 0);
+	silofs_sys_unlinkat(dfd, boot_args->fsname, 0);
 	silofs_sys_closefd(&dfd);
 }
 
@@ -156,16 +156,16 @@ void cmd_load_fs_xref(struct silofs_boot_args *boot_args)
 	int err;
 
 	cmd_open_repodir(boot_args, &dfd);
-	txt = cmd_load_xref_at(dfd, boot_args->name);
+	txt = cmd_load_xref_at(dfd, boot_args->fsname);
 	silofs_sys_closefd(&dfd);
 
 	cmd_assign_xref(boot_args, txt);
 	err = silofs_check_fs_xref(&boot_args->xref);
 	if (err == -SILOFS_EBADUBER) {
-		cmd_die(0, "not a fs xref: %s (%s)", boot_args->name,
+		cmd_die(0, "not a fs xref: %s (%s)", boot_args->fsname,
 		        boot_args->xref.s);
 	} else if (err) {
-		cmd_die(0, "bad fs xref: %s (%s)", boot_args->name,
+		cmd_die(0, "bad fs xref: %s (%s)", boot_args->fsname,
 		        boot_args->xref.s);
 	}
 }
@@ -177,16 +177,16 @@ void cmd_load_ar_xref(struct silofs_boot_args *boot_args)
 	int err;
 
 	cmd_open_repodir(boot_args, &dfd);
-	txt = cmd_load_xref_at(dfd, boot_args->name);
+	txt = cmd_load_xref_at(dfd, boot_args->arname);
 	silofs_sys_closefd(&dfd);
 
 	cmd_assign_xref(boot_args, txt);
 	err = silofs_check_ar_xref(&boot_args->xref);
 	if (err == -SILOFS_EBADPACK) {
-		cmd_die(0, "not an archive xref: %s (%s)", boot_args->name,
+		cmd_die(0, "not an archive xref: %s (%s)", boot_args->fsname,
 		        boot_args->xref.s);
 	} else if (err) {
-		cmd_die(0, "bad archive xref: %s (%s)", boot_args->name,
+		cmd_die(0, "bad archive xref: %s (%s)", boot_args->fsname,
 		        boot_args->xref.s);
 	}
 }

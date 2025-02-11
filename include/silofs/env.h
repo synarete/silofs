@@ -49,8 +49,8 @@ struct silofs_env_base {
 struct silofs_env_boot {
 	struct silofs_ivkey  ivkey;
 	struct silofs_caddr  caddr;
-	struct silofs_cipher cipher;
 	struct silofs_uber   uber;
+	struct silofs_cipher cipher;
 };
 
 /* fs two-layers locking */
@@ -121,13 +121,19 @@ int silofs_env_update_by(struct silofs_env        *env,
 
 void silofs_env_drop_caches(struct silofs_env *env);
 
-void silofs_env_set_boot_caddr(struct silofs_env         *env,
+void silofs_env_set_sb_ulink(struct silofs_env         *env,
+                             const struct silofs_ulink *ulink);
+
+int silofs_env_uber_caddr(const struct silofs_env *env,
+                          struct silofs_caddr     *out_caddr);
+
+void silofs_env_set_uber_caddr(struct silofs_env         *env,
                                const struct silofs_caddr *caddr);
+
+int silofs_env_pack_caddr(const struct silofs_env *env,
+                          struct silofs_caddr     *out_caddr);
 
 void silofs_env_set_pack_caddr(struct silofs_env         *env,
                                const struct silofs_caddr *caddr);
-
-void silofs_env_set_sb_ulink(struct silofs_env         *env,
-                             const struct silofs_ulink *ulink);
 
 #endif /* SILOFS_ENV_H_ */

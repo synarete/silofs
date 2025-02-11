@@ -117,7 +117,7 @@ static int env_update_base_caddr(struct silofs_env *env)
 	}
 	switch (caddr.ctype) {
 	case SILOFS_CTYPE_UBER:
-		silofs_env_set_boot_caddr(env, &caddr);
+		silofs_env_set_uber_caddr(env, &caddr);
 		break;
 	case SILOFS_CTYPE_PACKIDX:
 		silofs_env_set_pack_caddr(env, &caddr);
@@ -351,6 +351,46 @@ bool silofs_env_hasflag(const struct silofs_env *env, enum silofs_flags f)
 	return (env->base.args->flags & f) == f;
 }
 
+int silofs_env_uber_caddr(const struct silofs_env *env,
+                          struct silofs_caddr *out_caddr)
+{
+	const struct silofs_caddr *caddr = &env->boot.caddr;
+
+	caddr_assign(out_caddr, caddr);
+	return (caddr->ctype == SILOFS_CTYPE_UBER) ? 0 : -SILOFS_ENOENT;
+}
+
+void silofs_env_set_uber_caddr(struct silofs_env *env,
+                               const struct silofs_caddr *caddr)
+{
+	silofs_assert_eq(caddr->ctype, SILOFS_CTYPE_UBER);
+
+	caddr_assign(&env->boot.caddr, caddr);
+}
+
+int silofs_env_pack_caddr(const struct silofs_env *env,
+                          struct silofs_caddr *out_caddr)
+{
+	const struct silofs_caddr *caddr = &env->pack_caddr;
+
+	caddr_assign(out_caddr, caddr);
+	return (caddr->ctype == SILOFS_CTYPE_PACKIDX) ? 0 : -SILOFS_ENOENT;
+}
+
+void silofs_env_set_pack_caddr(struct silofs_env *env,
+                               const struct silofs_caddr *caddr)
+{
+	silofs_assert_eq(caddr->ctype, SILOFS_CTYPE_PACKIDX);
+
+	caddr_assign(&env->pack_caddr, caddr);
+}
+
+void silofs_env_set_sb_ulink(struct silofs_env *env,
+                             const struct silofs_ulink *sb_ulink)
+{
+	ulink_assign(&env->sb_ulink, sb_ulink);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void make_super_lsid(struct silofs_lsid *out_lsid)
@@ -398,28 +438,6 @@ void silofs_env_drop_caches(struct silofs_env *env)
 	silofs_lcache_drop(env->base.lcache);
 	silofs_pcache_drop(env->base.pcache);
 	silofs_repo_drop_some(env->base.repo);
-}
-
-void silofs_env_set_boot_caddr(struct silofs_env *env,
-                               const struct silofs_caddr *caddr)
-{
-	silofs_assert_eq(caddr->ctype, SILOFS_CTYPE_UBER);
-
-	caddr_assign(&env->boot.caddr, caddr);
-}
-
-void silofs_env_set_pack_caddr(struct silofs_env *env,
-                               const struct silofs_caddr *caddr)
-{
-	silofs_assert_eq(caddr->ctype, SILOFS_CTYPE_PACKIDX);
-
-	caddr_assign(&env->pack_caddr, caddr);
-}
-
-void silofs_env_set_sb_ulink(struct silofs_env *env,
-                             const struct silofs_ulink *sb_ulink)
-{
-	ulink_assign(&env->sb_ulink, sb_ulink);
 }
 
 static int
@@ -671,7 +689,7 @@ env_update_uber(struct silofs_env *env, const struct silofs_uber *uber)
 	if (err) {
 		return err;
 	}
-	silofs_env_set_boot_caddr(env, &caddr);
+	silofs_env_set_uber_caddr(env, &caddr);
 	silofs_uber_assign(&env->boot.uber, uber);
 	return 0;
 }

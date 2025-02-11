@@ -274,28 +274,28 @@ void cmd_open_repo(struct silofs_env *env);
 
 void cmd_close_repo(struct silofs_env *env);
 
-void cmd_format_fs(struct silofs_env *env, struct silofs_xref *out_ba);
+void cmd_format_fs(struct silofs_env *env, struct silofs_xref *out_xref);
 
 void cmd_close_fs(struct silofs_env *env);
 
-void cmd_poke_fs(struct silofs_env *env, const struct silofs_xref *ba);
+void cmd_poke_fs(struct silofs_env *env, const struct silofs_xref *xref);
 
-void cmd_poke_ar(struct silofs_env *env, const struct silofs_xref *ba);
+void cmd_poke_ar(struct silofs_env *env, const struct silofs_xref *xref);
 
-void cmd_open_fs(struct silofs_env *env, const struct silofs_xref *ba);
+void cmd_open_fs(struct silofs_env *env, const struct silofs_xref *xref);
 
 void cmd_exec_fs(struct silofs_env *env);
 
 void cmd_fork_fs(struct silofs_env *env, struct silofs_xrefs *out_bas);
 
-void cmd_unref_fs(struct silofs_env *env, const struct silofs_xref *ba);
+void cmd_unref_fs(struct silofs_env *env, const struct silofs_xref *xref);
 
 void cmd_inspect_fs(struct silofs_env *env, silofs_visit_laddr_fn cb,
                     void *user_ctx);
 
-void cmd_archive_fs(struct silofs_env *env, struct silofs_xref *out_ba);
+void cmd_archive_fs(struct silofs_env *env, struct silofs_xref *out_xref);
 
-void cmd_restore_fs(struct silofs_env *env, struct silofs_xref *out_ba);
+void cmd_restore_fs(struct silofs_env *env, struct silofs_xref *out_xref);
 
 /* mount-info */
 struct cmd_proc_mntinfo {

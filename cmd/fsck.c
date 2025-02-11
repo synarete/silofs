@@ -153,7 +153,7 @@ static void cmd_fsck_setup_env_args(struct cmd_fsck_ctx *ctx)
 
 	cmd_setup_env_args(env_args);
 	env_args->boot.repodir = ctx->in_args.repodir_real;
-	env_args->boot.name = ctx->in_args.name;
+	env_args->boot.fsname = ctx->in_args.name;
 	env_args->boot.passwd = ctx->in_args.password;
 }
 

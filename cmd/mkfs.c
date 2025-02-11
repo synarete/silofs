@@ -18,7 +18,7 @@
 #include "cmd.h"
 
 static const char *const cmd_mkfs_help_desc =
-	"mkfs --size=nbytes [options] <repodir/name>                     \n"
+	"mkfs --size=nbytes [options] <repodir/fsname>                   \n"
 	"                                                                \n"
 	"options:                                                        \n"
 	"  -s, --size=nbytes            Capacity size limit              \n"
@@ -26,10 +26,10 @@ static const char *const cmd_mkfs_help_desc =
 	"  -L, --loglevel=level         Logging level (rfc5424)          \n";
 
 struct cmd_mkfs_in_args {
-	char *repodir_name;
+	char *repodir_fsname;
 	char *repodir;
 	char *repodir_real;
-	char *name;
+	char *fsname;
 	char *password;
 	char *username;
 	long fs_size;
@@ -83,7 +83,7 @@ static void cmd_mkfs_parse_optargs(struct cmd_mkfs_ctx *ctx)
 	}
 	cmd_require_arg_size("size", ctx->in_args.fs_size);
 
-	ctx->in_args.repodir_name = cmd_optargs_getarg(&opa, "repodir/name");
+	ctx->in_args.repodir_fsname = cmd_optargs_getarg(&opa, "repodir/name");
 	cmd_optargs_endargs(&opa);
 	cmd_optargs_fini(&opa);
 }
@@ -98,9 +98,9 @@ static void cmd_mkfs_destroy_env(struct cmd_mkfs_ctx *ctx)
 static void cmd_mkfs_finalize(struct cmd_mkfs_ctx *ctx)
 {
 	cmd_mkfs_destroy_env(ctx);
-	cmd_pstrfree(&ctx->in_args.name);
+	cmd_pstrfree(&ctx->in_args.fsname);
 	cmd_pstrfree(&ctx->in_args.repodir);
-	cmd_pstrfree(&ctx->in_args.repodir_name);
+	cmd_pstrfree(&ctx->in_args.repodir_fsname);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
 	cmd_pstrfree(&ctx->in_args.username);
 	cmd_delpass(&ctx->in_args.password);
@@ -111,7 +111,7 @@ static void cmd_mkfs_finalize(struct cmd_mkfs_ctx *ctx)
 static void cmd_mkfs_acquire_lockfile(struct cmd_mkfs_ctx *ctx)
 {
 	if (!ctx->has_lockfile) {
-		cmd_lock_fs(ctx->in_args.repodir_real, ctx->in_args.name);
+		cmd_lock_fs(ctx->in_args.repodir_real, ctx->in_args.fsname);
 		ctx->has_lockfile = true;
 	}
 }
@@ -119,7 +119,7 @@ static void cmd_mkfs_acquire_lockfile(struct cmd_mkfs_ctx *ctx)
 static void cmd_mkfs_release_lockfile(struct cmd_mkfs_ctx *ctx)
 {
 	if (ctx->has_lockfile) {
-		cmd_unlock_fs(ctx->in_args.repodir_real, ctx->in_args.name);
+		cmd_unlock_fs(ctx->in_args.repodir_real, ctx->in_args.fsname);
 		ctx->has_lockfile = false;
 	}
 }
@@ -142,13 +142,13 @@ static void cmd_mkfs_start(struct cmd_mkfs_ctx *ctx)
 
 static void cmd_mkfs_prepare(struct cmd_mkfs_ctx *ctx)
 {
-	cmd_check_notdir(ctx->in_args.repodir_name);
-	cmd_check_notexists(ctx->in_args.repodir_name);
-	cmd_split_path(ctx->in_args.repodir_name, &ctx->in_args.repodir,
-	               &ctx->in_args.name);
+	cmd_check_notdir(ctx->in_args.repodir_fsname);
+	cmd_check_notexists(ctx->in_args.repodir_fsname);
+	cmd_split_path(ctx->in_args.repodir_fsname, &ctx->in_args.repodir,
+	               &ctx->in_args.fsname);
 	cmd_realpath_dir(ctx->in_args.repodir, &ctx->in_args.repodir_real);
 	cmd_check_repodir(ctx->in_args.repodir_real);
-	cmd_check_fsname(ctx->in_args.name);
+	cmd_check_fsname(ctx->in_args.fsname);
 }
 
 static void cmd_mkfs_require_owner(struct cmd_mkfs_ctx *ctx)
@@ -171,7 +171,7 @@ static void cmd_mkfs_setup_env_args(struct cmd_mkfs_ctx *ctx)
 
 	cmd_setup_env_args(env_args);
 	env_args->boot.repodir = ctx->in_args.repodir_real;
-	env_args->boot.name = ctx->in_args.name;
+	env_args->boot.fsname = ctx->in_args.fsname;
 	env_args->boot.passwd = ctx->in_args.password;
 	env_args->capacity = (size_t)ctx->in_args.fs_size;
 }

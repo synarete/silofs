@@ -1013,27 +1013,27 @@ static int pac_export_post(struct silofs_par_ctx *pa_ctx,
 	return 0;
 }
 
-static int
-pac_do_export(struct silofs_par_ctx *pa_ctx, struct silofs_caddr *out_caddr)
+static int pac_do_export(struct silofs_par_ctx *pa_ctx)
 {
+	struct silofs_caddr caddr = { .ctype = SILOFS_CTYPE_NONE };
 	int err;
 
 	err = pac_export_fs(pa_ctx);
 	if (err) {
 		return err;
 	}
-	err = pac_export_pindex(pa_ctx, out_caddr);
+	err = pac_export_pindex(pa_ctx, &caddr);
 	if (err) {
 		return err;
 	}
-	err = pac_export_post(pa_ctx, out_caddr);
+	err = pac_export_post(pa_ctx, &caddr);
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-int silofs_fs_pack(struct silofs_task *task, struct silofs_caddr *out_caddr)
+int silofs_fs_pack(struct silofs_task *task)
 {
 	struct silofs_par_ctx pa_ctx;
 	int err;
@@ -1042,7 +1042,7 @@ int silofs_fs_pack(struct silofs_task *task, struct silofs_caddr *out_caddr)
 	if (err) {
 		goto out;
 	}
-	err = pac_do_export(&pa_ctx, out_caddr);
+	err = pac_do_export(&pa_ctx);
 	if (err) {
 		goto out;
 	}
@@ -1174,7 +1174,7 @@ pac_import_post(struct silofs_par_ctx *pa_ctx, struct silofs_caddr *out_caddr)
 	if (nubers != 1) {
 		return -SILOFS_EBADPACK;
 	}
-	silofs_env_set_boot_caddr(pa_ctx->pac_env, out_caddr);
+	silofs_env_set_uber_caddr(pa_ctx->pac_env, out_caddr);
 	return 0;
 }
 

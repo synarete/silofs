@@ -21,7 +21,7 @@
 
 static const char *const cmd_snap_help_desc =
 	"snap -n <snapname> [<pathname>]                                 \n"
-	"snap -n <snapname> --offline <repodir/name>                     \n"
+	"snap -n <snapname> --offline <repodir/fsname>                   \n"
 	"                                                                \n"
 	"options:                                                        \n"
 	"  -n, --name=snapname          Result snapshot name             \n"
@@ -29,10 +29,10 @@ static const char *const cmd_snap_help_desc =
 	"  -L, --loglevel=level         Logging level (rfc5424)          \n";
 
 struct cmd_snap_in_args {
-	char *repodir_name;
+	char *repodir_fsname;
 	char *repodir;
 	char *repodir_real;
-	char *name;
+	char *fsname;
 	char *snapname;
 	char *dirpath;
 	char *dirpath_real;
@@ -102,8 +102,8 @@ static void cmd_snap_parse_optargs(struct cmd_snap_ctx *ctx)
 	cmd_require_arg("name", ctx->in_args.snapname);
 
 	if (ctx->in_args.offline) {
-		ctx->in_args.repodir_name =
-			cmd_optargs_getarg(&opa, "repodir/name");
+		ctx->in_args.repodir_fsname =
+			cmd_optargs_getarg(&opa, "repodir/fsname");
 	} else {
 		ctx->in_args.dirpath = cmd_optargs_getarg(&opa, "pathname");
 	}
@@ -122,10 +122,10 @@ static void cmd_snap_finalize(struct cmd_snap_ctx *ctx)
 {
 	cmd_snap_destroy_env(ctx);
 	cmd_delpass(&ctx->in_args.password);
-	cmd_pstrfree(&ctx->in_args.repodir_name);
+	cmd_pstrfree(&ctx->in_args.repodir_fsname);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
-	cmd_pstrfree(&ctx->in_args.name);
+	cmd_pstrfree(&ctx->in_args.fsname);
 	cmd_pstrfree(&ctx->in_args.snapname);
 	cmd_pstrfree(&ctx->in_args.dirpath);
 	cmd_pstrfree(&ctx->in_args.dirpath_real);
@@ -163,7 +163,7 @@ static void cmd_snap_prepare_by_query(struct cmd_snap_ctx *ctx)
 
 	qry->qtype = SILOFS_QUERY_BOOT;
 	cmd_snap_ioctl_query(args->dirpath_real, qry);
-	args->name = cmd_strdup(qry->u.boot.name);
+	args->fsname = cmd_strdup(qry->u.boot.name);
 }
 
 static void cmd_snap_prepare_online(struct cmd_snap_ctx *ctx)
@@ -173,18 +173,20 @@ static void cmd_snap_prepare_online(struct cmd_snap_ctx *ctx)
 	cmd_check_fusefs(ctx->in_args.dirpath_real);
 	cmd_snap_prepare_by_query(ctx);
 	cmd_realpath_dir(ctx->in_args.repodir, &ctx->in_args.repodir_real);
-	cmd_check_repodir_fsname(ctx->in_args.repodir_real, ctx->in_args.name);
+	cmd_check_repodir_fsname(ctx->in_args.repodir_real,
+	                         ctx->in_args.fsname);
 	cmd_check_notexists2(ctx->in_args.repodir_real, ctx->in_args.snapname);
 }
 
 static void cmd_snap_prepare_offline(struct cmd_snap_ctx *ctx)
 {
-	cmd_check_isreg(ctx->in_args.repodir_name);
-	cmd_split_path(ctx->in_args.repodir_name, &ctx->in_args.repodir,
-	               &ctx->in_args.name);
+	cmd_check_isreg(ctx->in_args.repodir_fsname);
+	cmd_split_path(ctx->in_args.repodir_fsname, &ctx->in_args.repodir,
+	               &ctx->in_args.fsname);
 	cmd_check_nonemptydir(ctx->in_args.repodir, true);
 	cmd_realpath_dir(ctx->in_args.repodir, &ctx->in_args.repodir_real);
-	cmd_check_repodir_fsname(ctx->in_args.repodir_real, ctx->in_args.name);
+	cmd_check_repodir_fsname(ctx->in_args.repodir_real,
+	                         ctx->in_args.fsname);
 	cmd_check_fsname(ctx->in_args.snapname);
 	cmd_check_notexists2(ctx->in_args.repodir_real, ctx->in_args.snapname);
 }
@@ -249,7 +251,8 @@ static void cmd_snap_do_ioctl_clone(struct cmd_snap_ctx *ctx)
 	if (err == -ENOTTY) {
 		cmd_die(err, "ioctl error: %s", dirpath);
 	} else if (err) {
-		cmd_die(err, "failed to snap: %s", ctx->in_args.repodir_name);
+		cmd_die(err, "failed to snap: %s",
+		        ctx->in_args.repodir_fsname);
 	}
 
 	memcpy(ctx->xrefs.xref_new.s, cl->boot_new,
@@ -284,7 +287,7 @@ static void cmd_snap_setup_env_args(struct cmd_snap_ctx *ctx)
 
 	cmd_setup_env_args(env_args);
 	env_args->boot.repodir = ctx->in_args.repodir_real;
-	env_args->boot.name = ctx->in_args.name;
+	env_args->boot.fsname = ctx->in_args.fsname;
 	env_args->boot.passwd = ctx->in_args.password;
 }
 
@@ -337,7 +340,7 @@ static void cmd_snap_save_snap_xref(struct cmd_snap_ctx *ctx)
 {
 	struct silofs_boot_args boot_args = {
 		.repodir = ctx->in_args.repodir_real,
-		.name = ctx->in_args.snapname,
+		.fsname = ctx->in_args.snapname,
 	};
 
 	memcpy(&boot_args.xref, &ctx->xrefs.xref_alt, sizeof(boot_args.xref));
@@ -348,7 +351,7 @@ static void cmd_snap_save_orig_bref(struct cmd_snap_ctx *ctx)
 {
 	struct silofs_boot_args boot_args = {
 		.repodir = ctx->in_args.repodir_real,
-		.name = ctx->in_args.name,
+		.fsname = ctx->in_args.fsname,
 	};
 
 	memcpy(&boot_args.xref, &ctx->xrefs.xref_new, sizeof(boot_args.xref));

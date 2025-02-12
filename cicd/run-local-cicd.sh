@@ -26,8 +26,9 @@ run mkdir -p "${workdir}"
 run mkdir -p "${autotoolsdir}"
 
 # Use autotools build to create dist
-version=$("${version_sh}" --version)
-distname="${name}-${version}"
+version=$("${version_sh}")
+version_only=$("${version_sh}" --version)
+distname="${name}-${version_only}"
 disttgz="${distname}.tar.gz"
 cdx "${autotoolsdir}"
 run "${basedir}"/bootstrap
@@ -38,6 +39,7 @@ run make dist
 run stat "${autotoolsdir}/${disttgz}"
 
 # Run CI tests on local work-dir
+msg "start running (${version})"
 run sh "${selfdir}/silofs-cicd-all.sh" \
   "${autotoolsdir}/${disttgz}" "${workdir}"
 
@@ -48,5 +50,5 @@ run rm -rf "${workdir}"
 run sleep 2
 
 # Goodby ;)
-msg "completed successfully for '${version}'"
+msg "completed successfully (${version})"
 exit 0

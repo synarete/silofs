@@ -71,6 +71,11 @@ run make -f devel.mk V=1 O=2 clangscan
 run make -f devel.mk reset
 
 ###
+msg "run clang-tidy"
+run ./scripts/clangtidy.sh
+run make -f devel.mk reset
+
+###
 msg "run sanitizer check"
 run make -f devel.mk O=1 SANITIZER=1
 run env ASAN_OPTIONS=detect_leaks=1 \

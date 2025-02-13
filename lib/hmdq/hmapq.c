@@ -20,7 +20,9 @@
 #include <silofs/hmdq/hmapq.h>
 #include <limits.h>
 
-#define HMQE_MAGIC (0xDECAFE)
+enum silofs_hmde_consts {
+	SILOFS_HMQE_MAGIC = 0xDECAFE,
+};
 
 /* prime-value for hash-table of n-elements */
 static const unsigned int htbl_primes[] = {
@@ -270,7 +272,7 @@ void silofs_hkey_by_vaddr(struct silofs_hkey *hkey,
 
 static void hmqe_sanitize(const struct silofs_hmapq_elem *hmqe)
 {
-	if (unlikely(hmqe->hme_magic != HMQE_MAGIC) ||
+	if (unlikely(hmqe->hme_magic != SILOFS_HMQE_MAGIC) ||
 	    unlikely(hmqe->hme_refcnt < 0)) {
 		silofs_panic("corrupted: hmqe=%p hme_key.type=%d "
 		             "hme_refcnt=%d hme_mapped=%d "
@@ -317,7 +319,7 @@ void silofs_hmqe_init(struct silofs_hmapq_elem *hmqe, size_t sz)
 	hkey_reset(&hmqe->hme_key);
 	list_head_init(&hmqe->hme_htb_lh);
 	list_head_init(&hmqe->hme_lru_lh);
-	hmqe->hme_magic = HMQE_MAGIC;
+	hmqe->hme_magic = SILOFS_HMQE_MAGIC;
 	hmqe->hme_refcnt = 0;
 	hmqe->hme_htb_hitcnt = 0;
 	hmqe->hme_lru_hitcnt = 0;

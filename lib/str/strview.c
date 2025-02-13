@@ -24,7 +24,7 @@
 
 #define strview_out_of_range(sv_, pos_)                             \
 	silofs_panic("strview out-of-range: pos=%ld len=%ld sv=%p", \
-		     (long)(pos_), (long)((sv_)->len), ((const void *)sv_))
+		     (long)(pos_), (long)((sv_)->len), ((const void *)(sv_)))
 
 #define strview_check_range(sv_, pos_)                   \
 	do {                                             \
@@ -493,12 +493,12 @@ void silofs_strview_intersection(const struct silofs_strview *sv1,
 			i = sv2->len;
 		}
 		/* Case 2: [.s1........)
-		                [.s2..) */
+				[.s2..) */
 		else if (sv2_end <= sv1_end) {
 			n = sv2->len;
 		}
 		/* Case 3: [.s1.....)
-		               [.s2......) */
+			       [.s2......) */
 		else {
 			n = (size_t)(sv1_end - sv2_beg);
 		}

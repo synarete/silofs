@@ -19,8 +19,10 @@
 #include <silofs/fs.h>
 #include <limits.h>
 
-#define UI_MAGIC (0xCAFEBEBE)
-#define VI_MAGIC (0xFEEDFACE)
+enum {
+	SILOFS_UI_MAGIC = 0xCAFEBEB,
+	SILOFS_VI_MAGIC = 0xDEDFACE,
+};
 
 /* local functions forward declarations */
 static int
@@ -282,7 +284,7 @@ static void uni_verify(const struct silofs_unode_info *uni)
 	silofs_assert_not_null(uni);
 	silofs_assert_not_null(uni->un_lni.ln_view);
 
-	if (unlikely(uni->un_magic != UI_MAGIC)) {
+	if (unlikely(uni->un_magic != SILOFS_UI_MAGIC)) {
 		silofs_panic("bad unode: uni=%p magic=%lx", (const void *)uni,
 		             uni->un_magic);
 	}
@@ -294,7 +296,7 @@ uni_init(struct silofs_unode_info *uni, const struct silofs_ulink *ulink,
 {
 	lni_init(&uni->un_lni, ltype_of(ulink), view);
 	ulink_assign(&uni->un_ulink, ulink);
-	uni->un_magic = UI_MAGIC;
+	uni->un_magic = SILOFS_UI_MAGIC;
 }
 
 static void uni_fini(struct silofs_unode_info *uni)
@@ -406,7 +408,7 @@ vni_unconst(const struct silofs_vnode_info *vni)
 
 static void vni_verify(const struct silofs_vnode_info *vni)
 {
-	if (unlikely(vni->vn_magic != VI_MAGIC)) {
+	if (unlikely(vni->vn_magic != SILOFS_VI_MAGIC)) {
 		silofs_panic("bad vnode: vni=%p magic=%lx", (const void *)vni,
 		             vni->vn_magic);
 	}
@@ -420,7 +422,7 @@ vni_init(struct silofs_vnode_info *vni, const struct silofs_vaddr *vaddr,
 	vaddr_assign(&vni->vn_vaddr, vaddr);
 	silofs_llink_reset(&vni->vn_llink);
 	vni->vn_asyncwr = 0;
-	vni->vn_magic = VI_MAGIC;
+	vni->vn_magic = SILOFS_VI_MAGIC;
 }
 
 static void vni_fini(struct silofs_vnode_info *vni)

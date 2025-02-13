@@ -22,8 +22,10 @@
 #include <sys/file.h>
 #include <fcntl.h>
 
-#define RCEK_PSID 1
-#define RCEK_LSID 2
+enum {
+	RCEK_PSID = 1,
+	RCEK_LSID = 2,
+};
 
 /* repo cached element key */
 struct silofs_repo_cek {

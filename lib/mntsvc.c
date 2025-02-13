@@ -23,6 +23,7 @@
 #include <sys/mount.h>
 #include <sys/socket.h>
 #include <fcntl.h>
+#include "knownfs.h"
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -102,21 +103,6 @@ struct silofs_ms_env_obj {
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-/* Known file-systems */
-#define FUSE_SUPER_MAGIC      0x65735546 /*  from kernel 'fs/fuse/inode.c' */
-#define TMPFS_MAGIC           0x01021994
-#define XFS_SB_MAGIC          0x58465342
-#define EXT234_SUPER_MAGIC    0x0000EF53
-#define ZFS_SUPER_MAGIC       0x2FC12FC1
-#define BTRFS_SUPER_MAGIC     0x9123683E
-#define CEPH_SUPER_MAGIC      0x00C36400
-#define CIFS_MAGIC_NUMBER     0xFF534D42
-#define ECRYPTFS_SUPER_MAGIC  0x0000F15F
-#define F2FS_SUPER_MAGIC      0xF2F52010
-#define NFS_SUPER_MAGIC       0x00006969
-#define NTFS_SB_MAGIC         0x5346544E
-#define OVERLAYFS_SUPER_MAGIC 0x794C7630
 
 #define MKFSINFO(t_, n_, a_, i_) \
 	{                        \
@@ -875,6 +861,7 @@ static int mntsvc_check_mount(const struct silofs_mntsvc *msvc,
                               const struct silofs_mntparams *mntp)
 {
 	const struct ucred *peer_cred = &msvc->ms_peer_ucred;
+	const size_t page_size = msvc->ms_page_size;
 	const uint64_t sup_mnt_mask =
 		(MS_LAZYTIME | MS_NOEXEC | MS_NOSUID | MS_NODEV | MS_RDONLY);
 	int err;
@@ -892,10 +879,10 @@ static int mntsvc_check_mount(const struct silofs_mntsvc *msvc,
 	    (mntp->group_id != peer_cred->gid)) {
 		return -SILOFS_EACCES;
 	}
-	if (mntp->max_read < (2 * msvc->ms_page_size)) {
+	if (mntp->max_read < (2 * page_size)) {
 		return -SILOFS_EINVAL;
 	}
-	if (mntp->max_read > (512 * msvc->ms_page_size)) {
+	if (mntp->max_read > (512 * page_size)) {
 		return -SILOFS_EINVAL;
 	}
 	if (mntp->path == NULL) {

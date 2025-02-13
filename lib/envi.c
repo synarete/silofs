@@ -136,6 +136,12 @@ static int check_args(const struct silofs_args *args)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static bool
+envi_has_flag(const struct silofs_env_inst *envi, enum silofs_flags f)
+{
+	return ((envi->args.flags & f) == f);
+}
+
 static int envi_init_qalloc(struct silofs_env_inst *envi)
 {
 	struct silofs_qalloc *qalloc = NULL;
@@ -380,11 +386,11 @@ static int envi_init_idsmap(struct silofs_env_inst *envi)
 {
 	const struct silofs_ugids *ids = &envi->args.ids;
 	struct silofs_idsmap *idsmap = &envi->idsmap;
-	int allow_hostids;
+	bool allow_hostids;
 	int err;
 
-	allow_hostids = envi->args.flags & SILOFS_F_ALLOWHOSTIDS;
-	err = silofs_idsmap_init(idsmap, envi->alloc, allow_hostids > 0);
+	allow_hostids = envi_has_flag(envi, SILOFS_F_ALLOWHOSTIDS);
+	err = silofs_idsmap_init(idsmap, envi->alloc, allow_hostids);
 	if (err) {
 		return err;
 	}

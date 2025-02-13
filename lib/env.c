@@ -167,7 +167,7 @@ env_init_commons(struct silofs_env *env, const struct silofs_env_base *base)
 	silofs_caddr_reset(&env->pack_caddr);
 	silofs_lsid_reset(&env->sb_lsid);
 	env->init_time = silofs_time_now_monotonic();
-	env->iconv = (iconv_t)(-1);
+	env->iconv_set = false;
 	env->sbi = NULL;
 	env->ms_flags = 0;
 }
@@ -176,7 +176,6 @@ static void env_fini_commons(struct silofs_env *env)
 {
 	memset(&env->base, 0, sizeof(env->base));
 	lsid_reset(&env->sb_lsid);
-	env->iconv = (iconv_t)(-1);
 	env->sbi = NULL;
 }
 
@@ -253,17 +252,18 @@ static int env_init_iconv(struct silofs_env *env)
 {
 	/* Using UTF32LE to avoid BOM (byte-order-mark) character */
 	env->iconv = iconv_open("UTF32LE", "UTF8");
-	if (env->iconv == (iconv_t)(-1)) {
+	if (env->iconv == (iconv_t)(-1)) { // NOLINT
 		return errno ? -errno : -SILOFS_EOPNOTSUPP;
 	}
+	env->iconv_set = true;
 	return 0;
 }
 
 static void env_fini_iconv(struct silofs_env *env)
 {
-	if (env->iconv != (iconv_t)(-1)) {
+	if (env->iconv_set) {
 		iconv_close(env->iconv);
-		env->iconv = (iconv_t)(-1);
+		env->iconv_set = false;
 	}
 }
 

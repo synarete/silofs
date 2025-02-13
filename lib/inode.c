@@ -762,9 +762,8 @@ static int check_chmod(const struct silofs_task *task,
 	int ret = -SILOFS_EPERM;
 
 	if (!itype_of(mode) || has_itype(ii, mode)) {
-		if (user_isowner(silofs_task_fs_cred(task), ii)) {
-			ret = 0;
-		} else if (silofs_user_cap_fowner(&creds->host_cred)) {
+		if (user_isowner(&creds->fs_cred, ii) ||
+		    silofs_user_cap_fowner(&creds->host_cred)) {
 			ret = 0;
 		}
 	}
@@ -1046,7 +1045,7 @@ static blksize_t ii_stat_blksize(const struct silofs_inode_info *ii)
 	blksize_t bsz = SILOFS_LBK_SIZE;
 
 	if (ii_isreg(ii) && (ii_size(ii) < bsz)) {
-		bsz = SILOFS_FILE_HEAD2_LEAF_SIZE;
+		bsz = (blksize_t)SILOFS_FILE_HEAD2_LEAF_SIZE;
 	}
 	return bsz;
 }

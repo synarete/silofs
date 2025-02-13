@@ -190,12 +190,10 @@ static int do_sys_pwritevn(int fd, struct iovec *iov, int cnt, loff_t off,
 	return io_status(err, nwr, len);
 }
 
-#define PWRITEVN_IOV_MAX 128
-
 int silofs_sys_pwritevn(int fd, const struct iovec *iov, int cnt, loff_t off)
 {
-	struct iovec iov2[PWRITEVN_IOV_MAX];
-	const int cnt_max = PWRITEVN_IOV_MAX;
+	struct iovec iov2[128];
+	const int cnt_max = (int)(sizeof(iov2) / sizeof(iov2[0]));
 	int cnt2;
 	int err = 0;
 

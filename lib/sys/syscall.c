@@ -657,6 +657,7 @@ int silofs_sys_brk(void *addr)
 
 int silofs_sys_sbrk(intptr_t increment, void **out_addr)
 {
+	// NOLINTNEXTLINE(performance-no-int-to-ptr)
 	return differ_or_errno(sbrk(increment), (void *)(-1), out_addr);
 }
 

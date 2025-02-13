@@ -17,7 +17,9 @@
 #include <silofs/configs.h>
 #include <silofs/fs.h>
 
-#define IDSMAP_HCAP (509)
+enum {
+	SILOFS_IDSMAP_HCAP = 509,
+};
 
 /* in-memory host <--> silofs user-id mapping entry */
 struct silofs_umap_entry {
@@ -169,7 +171,7 @@ static int idsmap_init_uhmaps(struct silofs_idsmap *idsm)
 {
 	struct silofs_list_head *uhtof = NULL;
 	struct silofs_list_head *uftoh = NULL;
-	const size_t hcap = IDSMAP_HCAP;
+	const size_t hcap = SILOFS_IDSMAP_HCAP;
 
 	idsm->idm_uhtof = NULL;
 	idsm->idm_uftoh = NULL;
@@ -206,7 +208,7 @@ static int idsmap_init_ghmaps(struct silofs_idsmap *idsm)
 {
 	struct silofs_list_head *ghtof = NULL;
 	struct silofs_list_head *gftoh = NULL;
-	const size_t hcap = IDSMAP_HCAP;
+	const size_t hcap = SILOFS_IDSMAP_HCAP;
 
 	idsm->idm_ghtof = NULL;
 	idsm->idm_gftoh = NULL;

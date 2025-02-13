@@ -41,10 +41,12 @@
 #error "wrong FUSE_KERNEL_MINOR_VERSION"
 #endif
 
-/* constants from libfuse::lib/fuse_i.h */
-
-/* room needed in buffer to accommodate header */
-#define FUSE_BUFFER_HEADER_SIZE 0x1000
+enum silofs_fuseq_consts {
+	/* room needed to accommodate header (from libfuse::lib/fuse_i.h) */
+	FUSE_BUFFER_HEADER_SIZE = 0x1000,
+	/* max sub-commands */
+	FUSEQ_CMD_MAX = 64,
+};
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -3131,12 +3133,10 @@ static bool fqt_completed(const struct silofs_fuseq_thread *fqt)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-#define FUSEQ_CMD_MAX (64)
-
 #define FUSEQ_CMD(opcode_, hook_, rtime_) \
 	[opcode_] = { hook_, SILOFS_STR(opcode_), opcode_, rtime_ }
 
-static const struct silofs_fuseq_cmd_desc fuseq_cmd_tbl[FUSEQ_CMD_MAX] = {
+static const struct silofs_fuseq_cmd_desc fuseq_cmd_tbl[] = {
 	FUSEQ_CMD(FUSE_LOOKUP, do_lookup, 0),
 	FUSEQ_CMD(FUSE_FORGET, do_forget, 0),
 	FUSEQ_CMD(FUSE_GETATTR, do_getattr, 0),
@@ -3191,7 +3191,7 @@ static const struct silofs_fuseq_cmd_desc *cmd_desc_of(uint32_t opc)
 {
 	const struct silofs_fuseq_cmd_desc *cmd = NULL;
 
-	STATICASSERT_EQ(ARRAY_SIZE(fuseq_cmd_tbl), FUSEQ_CMD_MAX);
+	STATICASSERT_LE(ARRAY_SIZE(fuseq_cmd_tbl), FUSEQ_CMD_MAX);
 
 	if (opc && (opc < ARRAY_SIZE(fuseq_cmd_tbl))) {
 		cmd = &fuseq_cmd_tbl[opc];
@@ -4924,9 +4924,7 @@ static bool fuseq_join_dispatchers(struct silofs_fuseq *fq)
 
 	for (size_t i = 0; i < fq->fq_subx.fq_ndisptch_run; ++i) {
 		fqd = &fq->fq_subx.fq_disptchs[i];
-		if (fqd->fqd_th.joined) {
-			njoined++;
-		} else if (fqd_try_join_thread(fqd)) {
+		if (fqd->fqd_th.joined || fqd_try_join_thread(fqd)) {
 			njoined++;
 		}
 		silofs_sys_sched_yield();
@@ -5014,7 +5012,7 @@ void silofs_fuseq_term(struct silofs_fuseq *fq)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static const silofs_call_fn silofs_call_tbl[FUSEQ_CMD_MAX] = {
+static const silofs_call_fn silofs_call_tbl[] = {
 	[FUSE_LOOKUP] = silofs_call_lookup,
 	[FUSE_FORGET] = silofs_call_forget,
 	[FUSE_GETATTR] = silofs_call_getattr,
@@ -5059,7 +5057,7 @@ static silofs_call_fn hook_of(uint32_t op_code)
 {
 	silofs_call_fn hook = NULL;
 
-	STATICASSERT_EQ(ARRAY_SIZE(silofs_call_tbl), FUSEQ_CMD_MAX);
+	STATICASSERT_LE(ARRAY_SIZE(silofs_call_tbl), FUSEQ_CMD_MAX);
 
 	if (op_code && (op_code < ARRAY_SIZE(silofs_call_tbl))) {
 		hook = silofs_call_tbl[op_code];

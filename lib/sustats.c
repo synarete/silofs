@@ -704,7 +704,7 @@ static fsblkcnt_t bytes_to_fsblkcnt(size_t nbytes, size_t unit)
 void silofs_sbst_fill_statvfs(const struct silofs_sb_info *sbi,
                               struct statvfs *out_stv)
 {
-	const size_t funit = 4 * SILOFS_KB_SIZE;
+	const size_t funit = 4096;
 	const size_t bsize = funit;
 	const size_t frsize = funit;
 	const size_t nbytes_max = sbst_capacity(sbi);

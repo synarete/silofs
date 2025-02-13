@@ -76,6 +76,7 @@ struct silofs_env {
 	unsigned long            ms_flags;
 	iconv_t                  iconv;
 	time_t                   init_time;
+	bool                     iconv_set;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

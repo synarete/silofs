@@ -251,7 +251,7 @@
 #define SILOFS_FILE_HEAD1_NLEAF (4)
 
 /* file's level2 head-mapping block-sizes (4K) */
-#define SILOFS_FILE_HEAD2_LEAF_SIZE (4 * SILOFS_KB_SIZE)
+#define SILOFS_FILE_HEAD2_LEAF_SIZE (4U * SILOFS_KB_SIZE)
 
 /* number of 4K leaves in regular-file's head mapping */
 #define SILOFS_FILE_HEAD2_NLEAF (15)

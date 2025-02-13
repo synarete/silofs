@@ -61,8 +61,6 @@ static bool is_low_resource_error(int err)
 
 	switch (abs(err)) {
 	case SILOFS_ENOMEM:
-		ret = true;
-		break;
 	case ENOMEM:
 	case EMFILE:
 	case ENFILE:
@@ -2204,6 +2202,7 @@ static int vstgc_pre_clone_stage_at(const struct silofs_vstage_ctx *vstg_ctx,
 
 	if (vaddr->off == 0) {
 		/* ignore off=0 which is allocated-as-numb once upon format */
+		log_dbg("unexpected pre-clone: ltype=%d", vaddr->ltype);
 		*out_vni = NULL;
 	} else if (vstgc_has_vaddr(vstg_ctx, vaddr) &&
 	           ((stg_mode & SILOFS_STG_RAW) || vaddr_isdatabk(vaddr))) {

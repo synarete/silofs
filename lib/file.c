@@ -191,7 +191,7 @@ static loff_t off_head1_max(void)
 
 static loff_t off_head2_end_of(size_t slot)
 {
-	const size_t leaf_size = SILOFS_FILE_HEAD2_LEAF_SIZE;
+	const size_t leaf_size = (size_t)SILOFS_FILE_HEAD2_LEAF_SIZE;
 
 	return off_end(off_head1_max(), (slot + 1) * leaf_size);
 }
@@ -225,7 +225,7 @@ static size_t off_to_head1_slot(loff_t off)
 
 static size_t off_to_head2_slot(loff_t off)
 {
-	const size_t slot_size = SILOFS_FILE_HEAD2_LEAF_SIZE;
+	const size_t slot_size = (size_t)SILOFS_FILE_HEAD2_LEAF_SIZE;
 
 	return (size_t)(off - off_head1_max()) / slot_size;
 }
@@ -976,17 +976,17 @@ flref_setup(struct silofs_fileaf_ref *flref,
 		flref->head1 = true;
 		flref->slot_idx = off_to_head1_slot(file_pos);
 		flref->partial = off_is_partial_head1(file_pos, io_end);
-		flref->leaf_size = SILOFS_FILE_HEAD1_LEAF_SIZE;
+		flref->leaf_size = (size_t)SILOFS_FILE_HEAD1_LEAF_SIZE;
 	} else if (!ftype2 && off_is_head2(file_pos)) {
 		flref->head2 = true;
 		flref->slot_idx = off_to_head2_slot(file_pos);
 		flref->partial = off_is_partial_head2(file_pos, io_end);
-		flref->leaf_size = SILOFS_FILE_HEAD2_LEAF_SIZE;
+		flref->leaf_size = (size_t)SILOFS_FILE_HEAD2_LEAF_SIZE;
 	} else {
 		flref->tree = true;
 		flref->slot_idx = off_to_leaf_slot(file_pos);
 		flref->partial = off_is_partial_leaf(file_pos, io_end);
-		flref->leaf_size = SILOFS_FILE_TREE_LEAF_SIZE;
+		flref->leaf_size = (size_t)SILOFS_FILE_TREE_LEAF_SIZE;
 	}
 }
 

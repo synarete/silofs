@@ -138,10 +138,11 @@ static int visit_evictable_uni(struct silofs_hmapq_elem *hmqe, void *arg)
 static struct silofs_unode_info *
 lcache_find_evictable_uni(struct silofs_lcache *lcache)
 {
+	struct silofs_hmapq *hmapq = &lcache->lc_uni_hmapq;
 	struct silofs_unode_info *uni = NULL;
+	struct silofs_unode_info **puni = &uni;
 
-	silofs_hmapq_riterate(&lcache->lc_uni_hmapq, 10, visit_evictable_uni,
-	                      &uni);
+	silofs_hmapq_riterate(hmapq, 10, visit_evictable_uni, (void *)puni);
 	return uni;
 }
 
@@ -472,10 +473,11 @@ static int visit_evictable_vni(struct silofs_hmapq_elem *hmqe, void *arg)
 static struct silofs_vnode_info *
 lcache_find_evictable_vni(struct silofs_lcache *lcache)
 {
+	struct silofs_hmapq *hmapq = &lcache->lc_vni_hmapq;
 	struct silofs_vnode_info *vni = NULL;
+	struct silofs_vnode_info **pvni = &vni;
 
-	silofs_hmapq_riterate(&lcache->lc_vni_hmapq, 10, visit_evictable_vni,
-	                      &vni);
+	silofs_hmapq_riterate(hmapq, 10, visit_evictable_vni, (void *)pvni);
 	return vni;
 }
 

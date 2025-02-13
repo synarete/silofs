@@ -71,6 +71,7 @@ libsilofs_la_SOURCES += fuseq.c
 libsilofs_la_SOURCES += idsmap.c
 libsilofs_la_SOURCES += inode.c
 libsilofs_la_SOURCES += inspect.c
+libsilofs_la_SOURCES += knownfs.h
 libsilofs_la_SOURCES += lcache.c
 libsilofs_la_SOURCES += lnodes.c
 libsilofs_la_SOURCES += mntsvc.c

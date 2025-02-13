@@ -19,7 +19,9 @@
 #include <silofs/addr.h>
 #include <silofs/fs.h>
 
-#define RETRY_MAX (4)
+enum {
+	PCACHE_RETRY_MAX = 4,
+};
 
 /* local functions */
 static size_t
@@ -175,7 +177,7 @@ pcache_require_cpi(struct silofs_pcache *pcache,
 {
 	struct silofs_chkpt_info *cpi = NULL;
 
-	for (size_t i = 0; i < RETRY_MAX; ++i) {
+	for (size_t i = 0; i < PCACHE_RETRY_MAX; ++i) {
 		cpi = pcache_new_cpi(pcache, paddr);
 		if (cpi != NULL) {
 			break;
@@ -268,7 +270,7 @@ pcache_require_bni(struct silofs_pcache *pcache,
 {
 	struct silofs_btnode_info *bni = NULL;
 
-	for (size_t i = 0; i < RETRY_MAX; ++i) {
+	for (size_t i = 0; i < PCACHE_RETRY_MAX; ++i) {
 		bni = pcache_new_bni(pcache, paddr);
 		if (bni != NULL) {
 			break;
@@ -350,10 +352,11 @@ pcache_evict_by(struct silofs_pcache *pcache, struct silofs_pnode_info *pni)
 static int visit_evictable_pni(struct silofs_hmapq_elem *hmqe, void *arg)
 {
 	struct silofs_pnode_info *pni = pni_from_hmqe(hmqe);
-	struct silofs_pnode_info **out_pni = arg;
+	struct silofs_pnode_info **out_pni;
 	int ret = 0;
 
 	if (pni_isevictable(pni)) {
+		out_pni = (struct silofs_pnode_info **)arg;
 		*out_pni = pni; /* found candidate for eviction */
 		ret = 1;
 	}
@@ -364,10 +367,11 @@ static struct silofs_pnode_info *
 pcache_find_evictable(struct silofs_pcache *pcache, bool iterall)
 {
 	struct silofs_pnode_info *pni = NULL;
+	struct silofs_pnode_info **p_pni = &pni;
 
 	silofs_hmapq_riterate(&pcache->pc_hmapq,
 	                      iterall ? SILOFS_HMAPQ_ITERALL : 10,
-	                      visit_evictable_pni, &pni);
+	                      visit_evictable_pni, (void *)p_pni);
 	return pni;
 }
 

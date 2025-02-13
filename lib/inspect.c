@@ -85,10 +85,6 @@ static int inspc_exec_at(struct silofs_inspect_ctx *insp_ctx,
 	int ret = 0;
 
 	switch (witr->height) {
-	case SILOFS_HEIGHT_BOOT:
-		break;
-	case SILOFS_HEIGHT_SUPER:
-		break;
 	case SILOFS_HEIGHT_SPNODE4:
 		insp_ctx->sp_st.objs.nspnode++;
 		ret = inspc_exec_at_spnode(insp_ctx, witr->sni4);
@@ -110,6 +106,8 @@ static int inspc_exec_at(struct silofs_inspect_ctx *insp_ctx,
 		ret = inspc_exec_at_spleaf(insp_ctx, witr->sli);
 		break;
 	case SILOFS_HEIGHT_NONE:
+	case SILOFS_HEIGHT_BOOT:
+	case SILOFS_HEIGHT_SUPER:
 	case SILOFS_HEIGHT_VDATA:
 	case SILOFS_HEIGHT_LAST:
 	default:

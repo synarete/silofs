@@ -45,16 +45,11 @@ struct silofs_env_base {
 	struct silofs_fuseq   *fuseq;
 };
 
-/* fs two-layers locking */
-struct silofs_env_locks {
-	struct silofs_rwlock rwlock;
-	struct silofs_mutex  mutex;
-};
-
 /* top-level environment object */
 struct silofs_env {
 	struct silofs_env_base   base;
-	struct silofs_env_locks  locks;
+	struct silofs_rwlock     rwlock;
+	struct silofs_mutex      mutex;
 	struct silofs_cipher     enc_cipher;
 	struct silofs_cipher     dec_cipher;
 	struct silofs_mdigest    mdigest;

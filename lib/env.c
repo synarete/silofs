@@ -189,13 +189,13 @@ static int env_init_locks(struct silofs_env *env)
 {
 	int err;
 
-	err = silofs_rwlock_init(&env->locks.rwlock);
+	err = silofs_rwlock_init(&env->rwlock);
 	if (err) {
 		return err;
 	}
-	err = silofs_mutex_init(&env->locks.mutex);
+	err = silofs_mutex_init(&env->mutex);
 	if (err) {
-		silofs_rwlock_fini(&env->locks.rwlock);
+		silofs_rwlock_fini(&env->rwlock);
 		return err;
 	}
 	return 0;
@@ -203,8 +203,8 @@ static int env_init_locks(struct silofs_env *env)
 
 static void env_fini_locks(struct silofs_env *env)
 {
-	silofs_mutex_fini(&env->locks.mutex);
-	silofs_rwlock_fini(&env->locks.rwlock);
+	silofs_mutex_fini(&env->mutex);
+	silofs_rwlock_fini(&env->rwlock);
 }
 
 static int env_init_crypto(struct silofs_env *env)
@@ -297,26 +297,26 @@ void silofs_env_fini(struct silofs_env *env)
 
 void silofs_env_lock(struct silofs_env *env)
 {
-	silofs_mutex_lock(&env->locks.mutex);
+	silofs_mutex_lock(&env->mutex);
 }
 
 void silofs_env_unlock(struct silofs_env *env)
 {
-	silofs_mutex_unlock(&env->locks.mutex);
+	silofs_mutex_unlock(&env->mutex);
 }
 
 void silofs_env_rwlock(struct silofs_env *env, bool ex)
 {
 	if (ex) {
-		silofs_rwlock_wrlock(&env->locks.rwlock);
+		silofs_rwlock_wrlock(&env->rwlock);
 	} else {
-		silofs_rwlock_rdlock(&env->locks.rwlock);
+		silofs_rwlock_rdlock(&env->rwlock);
 	}
 }
 
 void silofs_env_rwunlock(struct silofs_env *env)
 {
-	silofs_rwlock_unlock(&env->locks.rwlock);
+	silofs_rwlock_unlock(&env->rwlock);
 }
 
 int silofs_env_setup(struct silofs_env *env, const struct silofs_password *pw)

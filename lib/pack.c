@@ -866,7 +866,7 @@ static const struct silofs_caddr *
 pac_fs_uber_caddr(const struct silofs_par_ctx *pa_ctx)
 {
 	const struct silofs_env *env = pa_ctx->pac_env;
-	const struct silofs_caddr *caddr = &env->boot.caddr;
+	const struct silofs_caddr *caddr = &env->uber_caddr;
 
 	silofs_assert_eq(caddr->ctype, SILOFS_CTYPE_UBER);
 	return caddr;

@@ -468,8 +468,8 @@ int silofs_encode_uber(const struct silofs_env *env,
                        struct silofs_uber1k *out_uber1k)
 {
 	const struct silofs_mdigest *mdigest = &env->mdigest;
-	const struct silofs_cipher *cipher = &env->boot.cipher;
-	const struct silofs_ivkey *ivkey = &env->boot.ivkey;
+	const struct silofs_cipher *cipher = &env->enc_cipher;
+	const struct silofs_ivkey *ivkey = &env->uber_ivkey;
 
 	return uber_encode(uber, mdigest, cipher, ivkey, out_uber1k);
 }
@@ -479,8 +479,8 @@ int silofs_decode_uber(const struct silofs_env *env,
                        struct silofs_uber *out_uber)
 {
 	const struct silofs_mdigest *mdigest = &env->mdigest;
-	const struct silofs_cipher *cipher = &env->boot.cipher;
-	const struct silofs_ivkey *ivkey = &env->boot.ivkey;
+	const struct silofs_cipher *cipher = &env->dec_cipher;
+	const struct silofs_ivkey *ivkey = &env->uber_ivkey;
 
 	return uber_decode(out_uber, mdigest, cipher, ivkey, uber1k_enc);
 }

@@ -164,7 +164,10 @@ static void
 env_init_commons(struct silofs_env *env, const struct silofs_env_base *base)
 {
 	memcpy(&env->base, base, sizeof(env->base));
+	silofs_ivkey_init(&env->uber_ivkey);
+	silofs_caddr_reset(&env->uber_caddr);
 	silofs_caddr_reset(&env->pack_caddr);
+	silofs_uber_init(&env->uber);
 	silofs_lsid_reset(&env->sb_lsid);
 	env->init_time = silofs_time_now_monotonic();
 	env->iconv_set = false;
@@ -175,7 +178,10 @@ env_init_commons(struct silofs_env *env, const struct silofs_env_base *base)
 static void env_fini_commons(struct silofs_env *env)
 {
 	memset(&env->base, 0, sizeof(env->base));
-	lsid_reset(&env->sb_lsid);
+	silofs_uber_fini(&env->uber);
+	silofs_caddr_reset(&env->uber_caddr);
+	silofs_ivkey_fini(&env->uber_ivkey);
+	silofs_lsid_reset(&env->sb_lsid);
 	env->sbi = NULL;
 }
 
@@ -199,22 +205,6 @@ static void env_fini_locks(struct silofs_env *env)
 {
 	silofs_mutex_fini(&env->locks.mutex);
 	silofs_rwlock_fini(&env->locks.rwlock);
-}
-
-static int env_init_boot(struct silofs_env *env)
-{
-	silofs_uber_init(&env->boot.uber);
-	silofs_caddr_reset(&env->boot.caddr);
-	silofs_ivkey_init(&env->boot.ivkey);
-	return silofs_cipher_init(&env->boot.cipher);
-}
-
-static void env_fini_boot(struct silofs_env *env)
-{
-	silofs_cipher_fini(&env->boot.cipher);
-	silofs_uber_fini(&env->boot.uber);
-	silofs_caddr_reset(&env->boot.caddr);
-	silofs_ivkey_fini(&env->boot.ivkey);
 }
 
 static int env_init_crypto(struct silofs_env *env)
@@ -282,10 +272,6 @@ int silofs_env_init(struct silofs_env *env, const struct silofs_env_base *base)
 	if (err) {
 		return err;
 	}
-	err = env_init_boot(env);
-	if (err) {
-		goto out_err;
-	}
 	err = env_init_crypto(env);
 	if (err) {
 		goto out_err;
@@ -305,7 +291,6 @@ void silofs_env_fini(struct silofs_env *env)
 	env_bind_sbi(env, NULL);
 	env_fini_iconv(env);
 	env_fini_crypto(env);
-	env_fini_boot(env);
 	env_fini_locks(env);
 	env_fini_commons(env);
 }
@@ -337,11 +322,10 @@ void silofs_env_rwunlock(struct silofs_env *env)
 int silofs_env_setup(struct silofs_env *env, const struct silofs_password *pw)
 {
 	const struct silofs_mdigest *md = &env->mdigest;
-	struct silofs_ivkey *ivkey = &env->boot.ivkey;
 	int ret = 0;
 
 	if ((pw != NULL) && (pw->passlen > 0)) {
-		ret = silofs_derive_boot_ivkey(md, pw, ivkey);
+		ret = silofs_derive_boot_ivkey(md, pw, &env->uber_ivkey);
 	}
 	return ret;
 }
@@ -354,7 +338,7 @@ bool silofs_env_hasflag(const struct silofs_env *env, enum silofs_flags f)
 int silofs_env_uber_caddr(const struct silofs_env *env,
                           struct silofs_caddr *out_caddr)
 {
-	const struct silofs_caddr *caddr = &env->boot.caddr;
+	const struct silofs_caddr *caddr = &env->uber_caddr;
 
 	caddr_assign(out_caddr, caddr);
 	return (caddr->ctype == SILOFS_CTYPE_UBER) ? 0 : -SILOFS_ENOENT;
@@ -365,7 +349,7 @@ void silofs_env_set_uber_caddr(struct silofs_env *env,
 {
 	silofs_assert_eq(caddr->ctype, SILOFS_CTYPE_UBER);
 
-	caddr_assign(&env->boot.caddr, caddr);
+	caddr_assign(&env->uber_caddr, caddr);
 }
 
 int silofs_env_pack_caddr(const struct silofs_env *env,
@@ -424,7 +408,7 @@ static void env_make_super_ulink(const struct silofs_env *env,
 {
 	struct silofs_lsid lsid = { .lsize = 0 };
 	struct silofs_uaddr uaddr = { .voff = -1 };
-	const struct silofs_iv *iv = &env->boot.uber.main_ivkey.iv;
+	const struct silofs_iv *iv = &env->uber.main_ivkey.iv;
 
 	make_super_lsid(&lsid);
 	make_super_uaddr(&lsid, &uaddr);
@@ -598,7 +582,7 @@ static void env_make_uber_of(const struct silofs_env *env,
                              const struct silofs_sb_info *sbi,
                              struct silofs_uber *out_uber)
 {
-	silofs_uber_assign(out_uber, &env->boot.uber);
+	silofs_uber_assign(out_uber, &env->uber);
 	silofs_uber_gen_uuid(out_uber);
 	silofs_uber_set_sb_ulink(out_uber, sbi_ulink(sbi));
 }
@@ -690,7 +674,7 @@ env_update_uber(struct silofs_env *env, const struct silofs_uber *uber)
 		return err;
 	}
 	silofs_env_set_uber_caddr(env, &caddr);
-	silofs_uber_assign(&env->boot.uber, uber);
+	silofs_uber_assign(&env->uber, uber);
 	return 0;
 }
 

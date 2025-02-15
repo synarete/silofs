@@ -45,14 +45,6 @@ struct silofs_env_base {
 	struct silofs_fuseq   *fuseq;
 };
 
-/* top-level boot state */
-struct silofs_env_boot {
-	struct silofs_ivkey  ivkey;
-	struct silofs_caddr  caddr;
-	struct silofs_uber   uber;
-	struct silofs_cipher cipher;
-};
-
 /* fs two-layers locking */
 struct silofs_env_locks {
 	struct silofs_rwlock rwlock;
@@ -62,12 +54,14 @@ struct silofs_env_locks {
 /* top-level environment object */
 struct silofs_env {
 	struct silofs_env_base   base;
-	struct silofs_env_boot   boot;
 	struct silofs_env_locks  locks;
 	struct silofs_cipher     enc_cipher;
 	struct silofs_cipher     dec_cipher;
 	struct silofs_mdigest    mdigest;
+	struct silofs_ivkey      uber_ivkey;
+	struct silofs_caddr      uber_caddr;
 	struct silofs_caddr      pack_caddr;
+	struct silofs_uber       uber;
 	struct silofs_env_opstat opstat;
 	struct silofs_lsid       sb_lsid;
 	struct silofs_sb_info   *sbi;

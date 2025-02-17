@@ -58,9 +58,7 @@ struct silofs_env {
 	struct silofs_caddr      pack_caddr;
 	struct silofs_uber       uber;
 	struct silofs_env_opstat opstat;
-	struct silofs_lsid       sb_lsid;
 	struct silofs_sb_info   *sbi;
-	struct silofs_ulink      sb_ulink;
 	struct silofs_cred       owner_cred;
 	unsigned long            ms_flags;
 	iconv_t                  iconv;
@@ -91,6 +89,10 @@ void silofs_env_rwunlock(struct silofs_env *env);
 
 int silofs_env_shut(struct silofs_env *env);
 
+int silofs_env_reload_uber(struct silofs_env *env);
+
+int silofs_env_unlink_uber(struct silofs_env *env);
+
 int silofs_env_format_super(struct silofs_env *env, size_t capacity);
 
 int silofs_env_reload_super(struct silofs_env *env);
@@ -111,19 +113,16 @@ int silofs_env_update_by(struct silofs_env        *env,
 
 void silofs_env_drop_caches(struct silofs_env *env);
 
-void silofs_env_set_sb_ulink(struct silofs_env         *env,
-                             const struct silofs_ulink *ulink);
-
 int silofs_env_uber_caddr(const struct silofs_env *env,
                           struct silofs_caddr     *out_caddr);
 
-void silofs_env_set_uber_caddr(struct silofs_env         *env,
-                               const struct silofs_caddr *caddr);
+int silofs_env_set_uber_caddr(struct silofs_env         *env,
+                              const struct silofs_caddr *caddr);
 
 int silofs_env_pack_caddr(const struct silofs_env *env,
                           struct silofs_caddr     *out_caddr);
 
-void silofs_env_set_pack_caddr(struct silofs_env         *env,
-                               const struct silofs_caddr *caddr);
+int silofs_env_set_pack_caddr(struct silofs_env         *env,
+                              const struct silofs_caddr *caddr);
 
 #endif /* SILOFS_ENV_H_ */

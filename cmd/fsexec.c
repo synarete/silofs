@@ -179,12 +179,12 @@ void cmd_close_repo(struct silofs_env *env)
 	cmd_require_ok(env, err, "failed to close repo");
 }
 
-void cmd_poke_fs(struct silofs_env *env, const struct silofs_xref *ba)
+void cmd_poke_fs(struct silofs_env *env)
 {
 	int err;
 
-	err = silofs_poke_fs(env, ba);
-	cmd_require_okf(env, err, "can not poke fs '%s'", ba->s);
+	err = silofs_poke_fs(env);
+	cmd_require_ok(env, err, "can not poke fs");
 }
 
 void cmd_poke_ar(struct silofs_env *env, const struct silofs_xref *ba)
@@ -213,12 +213,12 @@ void cmd_close_fs(struct silofs_env *env)
 	cmd_require_ok(env, err, "failed to close fs");
 }
 
-void cmd_open_fs(struct silofs_env *env, const struct silofs_xref *ba)
+void cmd_open_fs(struct silofs_env *env)
 {
 	int err;
 
-	err = silofs_open_fs(env, ba);
-	cmd_require_okf(env, err, "failed to open fs '%s'", ba->s);
+	err = silofs_open_fs(env);
+	cmd_require_ok(env, err, "failed to open fs");
 }
 
 void cmd_exec_fs(struct silofs_env *env)
@@ -237,12 +237,12 @@ void cmd_fork_fs(struct silofs_env *env, struct silofs_xrefs *out_bas)
 	cmd_require_ok(env, err, "failed to fork fs");
 }
 
-void cmd_unref_fs(struct silofs_env *env, const struct silofs_xref *ba)
+void cmd_unref_fs(struct silofs_env *env)
 {
 	int err;
 
-	err = silofs_unref_fs(env, ba);
-	cmd_require_okf(env, err, "failed to unref fs '%s'", ba->s);
+	err = silofs_unref_fs(env);
+	cmd_require_ok(env, err, "failed to unref fs");
 }
 
 void cmd_inspect_fs(struct silofs_env *env, silofs_visit_laddr_fn cb,

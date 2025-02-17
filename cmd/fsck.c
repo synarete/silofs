@@ -179,12 +179,12 @@ static void cmd_fsck_open_repo(struct cmd_fsck_ctx *ctx)
 
 static void cmd_fsck_poke_fs(struct cmd_fsck_ctx *ctx)
 {
-	cmd_poke_fs(ctx->env, &ctx->env_args.boot.xref);
+	cmd_poke_fs(ctx->env);
 }
 
 static void cmd_fsck_open_fs(struct cmd_fsck_ctx *ctx)
 {
-	cmd_open_fs(ctx->env, &ctx->env_args.boot.xref);
+	cmd_open_fs(ctx->env);
 }
 
 static void cmd_fsck_close_fs(struct cmd_fsck_ctx *ctx)

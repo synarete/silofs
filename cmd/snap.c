@@ -296,7 +296,7 @@ static void cmd_snap_setup_fs_ids(struct cmd_snap_ctx *ctx)
 	cmd_fs_ids_load(&ctx->env_args.ids, ctx->in_args.repodir_real);
 }
 
-static void cmd_snap_load_bref(struct cmd_snap_ctx *ctx)
+static void cmd_snap_load_xref(struct cmd_snap_ctx *ctx)
 {
 	cmd_load_fs_xref(&ctx->env_args.boot);
 }
@@ -318,12 +318,12 @@ static void cmd_snap_close_repo(struct cmd_snap_ctx *ctx)
 
 static void cmd_snap_poke_fs(struct cmd_snap_ctx *ctx)
 {
-	cmd_poke_fs(ctx->env, &ctx->env_args.boot.xref);
+	cmd_poke_fs(ctx->env);
 }
 
 static void cmd_snap_open_fs(struct cmd_snap_ctx *ctx)
 {
-	cmd_open_fs(ctx->env, &ctx->env_args.boot.xref);
+	cmd_open_fs(ctx->env);
 }
 
 static void cmd_snap_fork_fs(struct cmd_snap_ctx *ctx)
@@ -347,7 +347,7 @@ static void cmd_snap_save_snap_xref(struct cmd_snap_ctx *ctx)
 	cmd_save_fs_xref(&boot_args);
 }
 
-static void cmd_snap_save_orig_bref(struct cmd_snap_ctx *ctx)
+static void cmd_snap_save_orig_xref(struct cmd_snap_ctx *ctx)
 {
 	struct silofs_boot_args boot_args = {
 		.repodir = ctx->in_args.repodir_real,
@@ -417,7 +417,7 @@ void cmd_execute_snap(void)
 	cmd_snap_setup_env_args(&ctx);
 
 	/* Load fs boot-reference */
-	cmd_snap_load_bref(&ctx);
+	cmd_snap_load_xref(&ctx);
 
 	/* Load fs-ids mapping */
 	cmd_snap_setup_fs_ids(&ctx);
@@ -441,7 +441,7 @@ void cmd_execute_snap(void)
 	cmd_snap_save_snap_xref(&ctx);
 
 	/* Re-save (overwrite) original bconf */
-	cmd_snap_save_orig_bref(&ctx);
+	cmd_snap_save_orig_xref(&ctx);
 
 	/* Delete environment */
 	cmd_snap_destroy_env(&ctx);

@@ -25,22 +25,7 @@ static const struct silofs_lsid *lsid_of(const struct silofs_ulink *ulink)
 	return &ulink->uaddr.laddr.lsid;
 }
 
-static const struct silofs_lsid *sbi_lsid(const struct silofs_sb_info *sbi)
-{
-	return lsid_of(&sbi->sb_uni.un_ulink);
-}
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static void
-env_bind_sb_lsid(struct silofs_env *env, const struct silofs_lsid *lsid_new)
-{
-	if (lsid_new) {
-		lsid_assign(&env->sb_lsid, lsid_new);
-	} else {
-		lsid_reset(&env->sb_lsid);
-	}
-}
 
 static void
 env_bind_sbi(struct silofs_env *env, struct silofs_sb_info *sbi_new)
@@ -55,8 +40,6 @@ env_bind_sbi(struct silofs_env *env, struct silofs_sb_info *sbi_new)
 	}
 	env->sbi = sbi_new;
 }
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void env_update_owner(struct silofs_env *env)
 {
@@ -168,7 +151,6 @@ env_init_commons(struct silofs_env *env, const struct silofs_env_base *base)
 	silofs_caddr_reset(&env->uber_caddr);
 	silofs_caddr_reset(&env->pack_caddr);
 	silofs_uber_init(&env->uber);
-	silofs_lsid_reset(&env->sb_lsid);
 	env->init_time = silofs_time_now_monotonic();
 	env->iconv_set = false;
 	env->sbi = NULL;
@@ -181,7 +163,6 @@ static void env_fini_commons(struct silofs_env *env)
 	silofs_uber_fini(&env->uber);
 	silofs_caddr_reset(&env->uber_caddr);
 	silofs_ivkey_fini(&env->uber_ivkey);
-	silofs_lsid_reset(&env->sb_lsid);
 	env->sbi = NULL;
 }
 
@@ -344,12 +325,14 @@ int silofs_env_uber_caddr(const struct silofs_env *env,
 	return (caddr->ctype == SILOFS_CTYPE_UBER) ? 0 : -SILOFS_ENOENT;
 }
 
-void silofs_env_set_uber_caddr(struct silofs_env *env,
-                               const struct silofs_caddr *caddr)
+int silofs_env_set_uber_caddr(struct silofs_env *env,
+                              const struct silofs_caddr *caddr)
 {
-	silofs_assert_eq(caddr->ctype, SILOFS_CTYPE_UBER);
-
+	if (caddr->ctype != SILOFS_CTYPE_UBER) {
+		return -SILOFS_EINVAL;
+	}
 	caddr_assign(&env->uber_caddr, caddr);
+	return 0;
 }
 
 int silofs_env_pack_caddr(const struct silofs_env *env,
@@ -361,18 +344,48 @@ int silofs_env_pack_caddr(const struct silofs_env *env,
 	return (caddr->ctype == SILOFS_CTYPE_PACKIDX) ? 0 : -SILOFS_ENOENT;
 }
 
-void silofs_env_set_pack_caddr(struct silofs_env *env,
-                               const struct silofs_caddr *caddr)
+int silofs_env_set_pack_caddr(struct silofs_env *env,
+                              const struct silofs_caddr *caddr)
 {
-	silofs_assert_eq(caddr->ctype, SILOFS_CTYPE_PACKIDX);
-
+	if (caddr->ctype != SILOFS_CTYPE_PACKIDX) {
+		return -SILOFS_EINVAL;
+	}
 	caddr_assign(&env->pack_caddr, caddr);
+	return 0;
 }
 
-void silofs_env_set_sb_ulink(struct silofs_env *env,
-                             const struct silofs_ulink *sb_ulink)
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_env_reload_uber(struct silofs_env *env)
 {
-	ulink_assign(&env->sb_ulink, sb_ulink);
+	struct silofs_caddr caddr = { .ctype = SILOFS_CTYPE_NONE };
+	int err;
+
+	err = silofs_env_uber_caddr(env, &caddr);
+	if (err) {
+		return err;
+	}
+	err = silofs_reload_uber(env, &caddr, &env->uber);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+int silofs_env_unlink_uber(struct silofs_env *env)
+{
+	struct silofs_caddr caddr = { .ctype = SILOFS_CTYPE_NONE };
+	int err;
+
+	err = silofs_env_uber_caddr(env, &caddr);
+	if (err) {
+		return err;
+	}
+	err = silofs_unlink_uber(env, &caddr);
+	if (err) {
+		return err;
+	}
+	return 0;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -477,12 +490,44 @@ int silofs_env_format_super(struct silofs_env *env, size_t capacity)
 	return 0;
 }
 
+static const struct silofs_ulink *env_sb_ulink(const struct silofs_env *env)
+{
+	return &env->uber.sb_ulink;
+}
+
+static int
+env_check_sb(const struct silofs_env *env, const struct silofs_sb_info *sbi)
+{
+	const struct silofs_super_block *sb = sbi->sb;
+	int err;
+	bool fossil;
+	bool rdonly;
+
+	err = silofs_sb_check_version(sb);
+	if (err) {
+		log_err("bad sb: magic=%lx version:=%ld err=%d", sb->sb_magic,
+		        sb->sb_version, err);
+		return err;
+	}
+	fossil = silofs_sb_test_flags(sb, SILOFS_SUPERF_FOSSIL);
+	rdonly = silofs_env_hasflag(env, SILOFS_F_RDONLY);
+	if (fossil && !rdonly) {
+		log_warn("read-only fs: sb-flags=%08x", (int)sb->sb_flags);
+		return -SILOFS_EROFS;
+	}
+	return 0;
+}
+
 int silofs_env_reload_super(struct silofs_env *env)
 {
 	struct silofs_sb_info *sbi = NULL;
 	int err;
 
-	err = silofs_stage_super(env, &env->sb_ulink, &sbi);
+	err = silofs_stage_super(env, env_sb_ulink(env), &sbi);
+	if (err) {
+		return err;
+	}
+	err = env_check_sb(env, sbi);
 	if (err) {
 		return err;
 	}
@@ -492,7 +537,8 @@ int silofs_env_reload_super(struct silofs_env *env)
 
 int silofs_env_reload_sb_lseg(struct silofs_env *env)
 {
-	const struct silofs_lsid *lsid = lsid_of(&env->sb_ulink);
+	const struct silofs_ulink *sb_ulink = env_sb_ulink(env);
+	const struct silofs_lsid *lsid = lsid_of(sb_ulink);
 	int err;
 
 	err = silofs_stage_lseg(env, lsid);
@@ -500,7 +546,6 @@ int silofs_env_reload_sb_lseg(struct silofs_env *env)
 		log_warn("unable to stage sb-lseg: err=%d", err);
 		return err;
 	}
-	env_bind_sb_lsid(env, lsid);
 	return 0;
 }
 
@@ -523,7 +568,6 @@ static int env_shut_sb(struct silofs_env *env)
 		return err;
 	}
 	env_bind_sbi(env, NULL);
-	env_bind_sb_lsid(env, NULL);
 	return 0;
 }
 
@@ -550,9 +594,8 @@ int silofs_env_shut(struct silofs_env *env)
 static void
 env_rebind_root_sb(struct silofs_env *env, struct silofs_sb_info *sbi)
 {
-	silofs_env_set_sb_ulink(env, sbi_ulink(sbi));
-	env_bind_sb_lsid(env, sbi_lsid(sbi));
 	env_bind_sbi(env, sbi);
+	silofs_uber_set_sb_ulink(&env->uber, sbi_ulink(sbi));
 }
 
 static int env_clone_rebind_super(struct silofs_env *env,

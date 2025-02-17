@@ -2056,6 +2056,8 @@ void ut_restore_fs(struct ut_env *ute)
 {
 	int err;
 
-	err = silofs_restore_fs(ute->env, &ute->boot_xref[0]);
+	err = silofs_restore_fs(ute->env);
+	ut_expect_ok(err);
+	err = silofs_get_fs_xref(ute->env, &ute->boot_xref[0]);
 	ut_expect_ok(err);
 }

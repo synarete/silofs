@@ -748,6 +748,13 @@ static int require_no_uber_caddr(const struct silofs_env *env)
 	return err ? 0 : -SILOFS_EEXIST;
 }
 
+static int require_pack_caddr(const struct silofs_env *env)
+{
+	struct silofs_caddr caddr = { .ctype = SILOFS_CTYPE_NONE };
+
+	return silofs_env_pack_caddr(env, &caddr);
+}
+
 static int do_format_fs(struct silofs_env *env)
 {
 	struct silofs_uber uber = { .flags = SILOFS_UBERF_NONE };
@@ -968,7 +975,7 @@ static int exec_unref_fs(struct silofs_env *env)
 	return term_task(&task, err);
 }
 
-int silofs_unref_fs(struct silofs_env *env)
+static int do_unref_fs(struct silofs_env *env)
 {
 	int err;
 
@@ -1001,6 +1008,16 @@ int silofs_unref_fs(struct silofs_env *env)
 		return err;
 	}
 	return 0;
+}
+
+int silofs_unref_fs(struct silofs_env *env)
+{
+	int err;
+
+	silofs_env_lock(env);
+	err = do_unref_fs(env);
+	silofs_env_unlock(env);
+	return err;
 }
 
 static int exec_inspect_fs(struct silofs_env *env, silofs_visit_laddr_fn cb,
@@ -1041,18 +1058,32 @@ static int exec_pack_fs(struct silofs_env *env)
 	return term_task(&task, err);
 }
 
+static int do_archive_fs(struct silofs_env *env)
+{
+	int err;
+
+	err = require_uber_caddr(env);
+	if (err) {
+		return err;
+	}
+	err = exec_pack_fs(env);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
 int silofs_archive_fs(struct silofs_env *env)
 {
 	int err;
 
 	silofs_env_lock(env);
-	err = exec_pack_fs(env);
+	err = do_archive_fs(env);
 	silofs_env_unlock(env);
 	return err;
 }
 
-static int
-exec_unpack_fs(struct silofs_env *env, struct silofs_caddr *out_caddr)
+static int exec_unpack_fs(struct silofs_env *env)
 {
 	struct silofs_task task;
 	int err;
@@ -1061,19 +1092,32 @@ exec_unpack_fs(struct silofs_env *env, struct silofs_caddr *out_caddr)
 	if (err) {
 		return err;
 	}
-	err = silofs_fs_unpack(&task, out_caddr);
+	err = silofs_fs_unpack(&task);
 	return term_task(&task, err);
 }
 
-int silofs_restore_fs(struct silofs_env *env, struct silofs_xref *out_ba)
+static int do_restore_fs(struct silofs_env *env)
 {
-	struct silofs_caddr caddr = { .ctype = SILOFS_CTYPE_NONE };
+	int err;
+
+	err = require_pack_caddr(env);
+	if (err) {
+		return err;
+	}
+	err = exec_unpack_fs(env);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+int silofs_restore_fs(struct silofs_env *env)
+{
 	int err;
 
 	silofs_env_lock(env);
-	err = exec_unpack_fs(env, &caddr);
+	err = do_restore_fs(env);
 	silofs_env_unlock(env);
-	caddr_to_xref(&caddr, err, out_ba);
 	return err;
 }
 

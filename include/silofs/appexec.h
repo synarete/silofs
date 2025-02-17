@@ -95,7 +95,7 @@ int silofs_inspect_fs(struct silofs_env *env, silofs_visit_laddr_fn cb,
 
 int silofs_archive_fs(struct silofs_env *env);
 
-int silofs_restore_fs(struct silofs_env *env, struct silofs_xref *out_ba);
+int silofs_restore_fs(struct silofs_env *env);
 
 int silofs_poke_ar(struct silofs_env *env, const struct silofs_xref *ba);
 

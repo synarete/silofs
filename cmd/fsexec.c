@@ -261,15 +261,17 @@ void cmd_archive_fs(struct silofs_env *env, struct silofs_xref *out_xref)
 	err = silofs_archive_fs(env);
 	cmd_require_ok(env, err, "failed to archive");
 	err = silofs_get_ar_xref(env, out_xref);
-	cmd_require_ok(env, err, "resolve archive failure");
+	cmd_require_ok(env, err, "post archive failure");
 }
 
-void cmd_restore_fs(struct silofs_env *env, struct silofs_xref *out_ba)
+void cmd_restore_fs(struct silofs_env *env, struct silofs_xref *out_xref)
 {
 	int err;
 
-	err = silofs_restore_fs(env, out_ba);
-	cmd_require_ok(env, err, "restore-fs failure");
+	err = silofs_restore_fs(env);
+	cmd_require_ok(env, err, "failed to restore");
+	err = silofs_get_fs_xref(env, out_xref);
+	cmd_require_ok(env, err, "post restore failure");
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

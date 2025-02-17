@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
 	/* Parse top-level arguments */
 	cmd_parse_global_args();
 
-	/* Common library initializations */
+	/* Common library initialization */
 	cmd_init_libsilofs();
 
 	/* Resolve process capabilities */

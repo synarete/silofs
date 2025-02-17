@@ -261,7 +261,7 @@ static int silofs_derive_ivkey(const struct silofs_mdigest *md,
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static const struct silofs_kdf_descs s_kdf_descs_boot = {
+static const struct silofs_kdf_descs s_kdf_descs_default = {
 	.kdf_key = {
 		.kd_iterations = 8192,
 		.kd_algo = SILOFS_KDF_PBKDF2,
@@ -276,9 +276,9 @@ static const struct silofs_kdf_descs s_kdf_descs_boot = {
 	},
 };
 
-int silofs_derive_boot_ivkey(const struct silofs_mdigest *md,
-                             const struct silofs_password *pw,
-                             struct silofs_ivkey *out_ivkey)
+int silofs_derive_default_ivkey(const struct silofs_mdigest *md,
+                                const struct silofs_password *pw,
+                                struct silofs_ivkey *out_ivkey)
 {
-	return silofs_derive_ivkey(md, pw, &s_kdf_descs_boot, out_ivkey);
+	return silofs_derive_ivkey(md, pw, &s_kdf_descs_default, out_ivkey);
 }

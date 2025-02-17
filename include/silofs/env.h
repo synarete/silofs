@@ -50,6 +50,7 @@ struct silofs_env {
 	struct silofs_env_base   base;
 	struct silofs_rwlock     rwlock;
 	struct silofs_mutex      mutex;
+	struct silofs_cipher     uber_cipher;
 	struct silofs_cipher     enc_cipher;
 	struct silofs_cipher     dec_cipher;
 	struct silofs_mdigest    mdigest;
@@ -88,6 +89,12 @@ void silofs_env_rwlock(struct silofs_env *env, bool ex);
 void silofs_env_rwunlock(struct silofs_env *env);
 
 int silofs_env_shut(struct silofs_env *env);
+
+int silofs_env_format_bstore(struct silofs_env *env);
+
+int silofs_env_format_uber(struct silofs_env *env);
+
+int silofs_env_commit_uber(struct silofs_env *env);
 
 int silofs_env_reload_uber(struct silofs_env *env);
 

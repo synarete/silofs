@@ -70,7 +70,7 @@ static void uber1k_set_cipher(struct silofs_uber1k *uber1k,
 void silofs_uber1k_init(struct silofs_uber1k *uber1k)
 {
 	silofs_memzero(uber1k, sizeof(*uber1k));
-	uber1k_set_magic(uber1k, SILOFS_BOOT_RECORD_MAGIC);
+	uber1k_set_magic(uber1k, SILOFS_UBER_MAGIC);
 	uber1k_set_version(uber1k, SILOFS_FMT_VERSION);
 	uber1k_set_flags(uber1k, SILOFS_UBERF_NONE);
 	uber1k_set_cipher(uber1k, SILOFS_CIPHER_ALGO_DEFAULT,
@@ -139,11 +139,10 @@ static int uber1k_check_base(const struct silofs_uber1k *uber1k)
 
 	/* When both magic and version are no valid, we are likely to assume it
 	 * is due to bad password provided by user. */
-	if ((magic != SILOFS_BOOT_RECORD_MAGIC) &&
-	    (version != SILOFS_FMT_VERSION)) {
+	if ((magic != SILOFS_UBER_MAGIC) && (version != SILOFS_FMT_VERSION)) {
 		return -SILOFS_EKEYEXPIRED;
 	}
-	if (magic != SILOFS_BOOT_RECORD_MAGIC) {
+	if (magic != SILOFS_UBER_MAGIC) {
 		log_dbg("bad uber magic: 0x%lx", magic);
 		return -SILOFS_EBADUBER;
 	}
@@ -312,12 +311,6 @@ void silofs_uber_fini(struct silofs_uber *uber)
 	silofs_memffff(uber, sizeof(*uber));
 }
 
-void silofs_uber_setup(struct silofs_uber *uber)
-{
-	silofs_uber_init(uber);
-	silofs_uber_gen_uuid(uber);
-}
-
 void silofs_uber_assign(struct silofs_uber *uber,
                         const struct silofs_uber *other)
 {
@@ -341,12 +334,34 @@ void silofs_uber_set_ivkey(struct silofs_uber *uber,
 	silofs_ivkey_assign(&uber->main_ivkey, ivkey);
 }
 
-void silofs_uber_gen_ivkey(struct silofs_uber *uber)
+/*
+ * Try to add some pseudo-randomness for the rare (yet, possible) case where
+ * '/dev/urandom' does not provide good-enough random  bits stream.
+ */
+static int
+ivkey_make_prand(struct silofs_ivkey *ivkey, const struct silofs_mdigest *md)
 {
-	struct silofs_ivkey ivkey;
+	struct silofs_password pw = { .passlen = 0 };
 
-	silofs_ivkey_mkrand(&ivkey);
-	silofs_uber_set_ivkey(uber, &ivkey);
+	silofs_password_mkrand(&pw);
+	return silofs_derive_default_ivkey(md, &pw, ivkey);
+}
+
+int silofs_uber_gen_ivkey(struct silofs_uber *uber,
+                          const struct silofs_mdigest *md)
+{
+	struct silofs_ivkey ivkey[2];
+	int err;
+
+	silofs_ivkey_mkrand(&ivkey[0]);
+	err = ivkey_make_prand(&ivkey[1], md);
+	if (err) {
+		log_dbg("failed to make prandom ivkey: err=%d", err);
+		return err;
+	}
+	silofs_ivkey_xor_with(&ivkey[0], &ivkey[1]);
+	silofs_uber_set_ivkey(uber, &ivkey[0]);
+	return 0;
 }
 
 void silofs_uber_pvsegr(const struct silofs_uber *uber,
@@ -467,22 +482,16 @@ int silofs_encode_uber(const struct silofs_env *env,
                        const struct silofs_uber *uber,
                        struct silofs_uber1k *out_uber1k)
 {
-	const struct silofs_mdigest *mdigest = &env->mdigest;
-	const struct silofs_cipher *cipher = &env->enc_cipher;
-	const struct silofs_ivkey *ivkey = &env->uber_ivkey;
-
-	return uber_encode(uber, mdigest, cipher, ivkey, out_uber1k);
+	return uber_encode(uber, &env->mdigest, &env->uber_cipher,
+	                   &env->uber_ivkey, out_uber1k);
 }
 
 int silofs_decode_uber(const struct silofs_env *env,
                        const struct silofs_uber1k *uber1k_enc,
                        struct silofs_uber *out_uber)
 {
-	const struct silofs_mdigest *mdigest = &env->mdigest;
-	const struct silofs_cipher *cipher = &env->dec_cipher;
-	const struct silofs_ivkey *ivkey = &env->uber_ivkey;
-
-	return uber_decode(out_uber, mdigest, cipher, ivkey, uber1k_enc);
+	return uber_decode(out_uber, &env->mdigest, &env->uber_cipher,
+	                   &env->uber_ivkey, uber1k_enc);
 }
 
 static void calc_uber1k_caddr(const struct silofs_env *env,

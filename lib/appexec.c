@@ -296,44 +296,6 @@ void silofs_stat_fs(const struct silofs_env *env,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-/*
- * Try to add some pseudo-randomness for the rare (yet, possible) case where
- * '/dev/urandom' does not provide good-enough random  bits stream.
- */
-static void make_prandom_ivkey(const struct silofs_env *env,
-                               struct silofs_ivkey *out_ivkey)
-{
-	struct silofs_password pw = { .passlen = 0 };
-
-	silofs_password_mkrand(&pw);
-	silofs_derive_boot_ivkey(&env->mdigest, &pw, out_ivkey);
-}
-
-static void
-xrandom_ivkey(const struct silofs_env *env, struct silofs_ivkey *ivkey)
-{
-	struct silofs_ivkey ivkey2;
-
-	make_prandom_ivkey(env, &ivkey2);
-	silofs_ivkey_xor_with(ivkey, &ivkey2);
-}
-
-static void
-generate_main_ivkey(const struct silofs_env *env, struct silofs_uber *uber)
-{
-	silofs_uber_gen_ivkey(uber);
-	xrandom_ivkey(env, &uber->main_ivkey);
-}
-
-static void
-update_pvsegr(const struct silofs_env *env, struct silofs_uber *uber)
-{
-	struct silofs_pvsegr pvsegr;
-
-	silofs_bstore_curr_pvsegr(env->base.bstore, &pvsegr);
-	silofs_uber_set_pvsegr(uber, &pvsegr);
-}
-
 static int exec_require_spmaps_of(struct silofs_env *env,
                                   const struct silofs_vaddr *vaddr)
 {
@@ -696,42 +658,6 @@ int silofs_open_repo(struct silofs_env *env)
 	return ret;
 }
 
-static void
-ref_super_by(const struct silofs_env *env, struct silofs_uber *uber)
-{
-	silofs_uber_set_sb_ulink(uber, sbi_ulink(env->sbi));
-}
-
-static int commit_uber(struct silofs_env *env, struct silofs_uber *uber)
-{
-	struct silofs_caddr caddr;
-	int err;
-
-	ref_super_by(env, uber);
-	err = silofs_save_uber(env, uber, &caddr);
-	if (err) {
-		return err;
-	}
-	err = silofs_env_update_by(env, uber);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
-static int format_bstore(struct silofs_env *env)
-{
-	return silofs_bstore_format(env->base.bstore);
-}
-
-static int format_uber(const struct silofs_env *env, struct silofs_uber *uber)
-{
-	silofs_uber_setup(uber);
-	generate_main_ivkey(env, uber);
-	update_pvsegr(env, uber);
-	return 0;
-}
-
 static int require_uber_caddr(const struct silofs_env *env)
 {
 	struct silofs_caddr caddr = { .ctype = SILOFS_CTYPE_NONE };
@@ -757,22 +683,17 @@ static int require_pack_caddr(const struct silofs_env *env)
 
 static int do_format_fs(struct silofs_env *env)
 {
-	struct silofs_uber uber = { .flags = SILOFS_UBERF_NONE };
 	int err;
 
 	err = require_no_uber_caddr(env);
 	if (err) {
 		return err;
 	}
-	err = format_bstore(env);
+	err = silofs_env_format_bstore(env);
 	if (err) {
 		return err;
 	}
-	err = format_uber(env, &uber);
-	if (err) {
-		return err;
-	}
-	err = silofs_env_update_by(env, &uber);
+	err = silofs_env_format_uber(env);
 	if (err) {
 		return err;
 	}
@@ -796,7 +717,7 @@ static int do_format_fs(struct silofs_env *env)
 	if (err) {
 		return err;
 	}
-	err = commit_uber(env, &uber);
+	err = silofs_env_commit_uber(env);
 	if (err) {
 		return err;
 	}
@@ -1202,7 +1123,7 @@ static int check_endianess(void)
 	if (err) {
 		return err;
 	}
-	err = check_endianess64(SILOFS_BOOT_RECORD_MAGIC, "@SILOFS@");
+	err = check_endianess64(SILOFS_UBER_MAGIC, "@SILOFS@");
 	if (err) {
 		return err;
 	}

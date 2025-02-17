@@ -65,8 +65,6 @@ void silofs_uber_init(struct silofs_uber *uber);
 
 void silofs_uber_fini(struct silofs_uber *uber);
 
-void silofs_uber_setup(struct silofs_uber *uber);
-
 void silofs_uber_assign(struct silofs_uber       *uber,
                         const struct silofs_uber *other);
 
@@ -75,7 +73,8 @@ void silofs_uber_gen_uuid(struct silofs_uber *uber);
 void silofs_uber_set_ivkey(struct silofs_uber        *uber,
                            const struct silofs_ivkey *ivkey);
 
-void silofs_uber_gen_ivkey(struct silofs_uber *uber);
+int silofs_uber_gen_ivkey(struct silofs_uber          *uber,
+                          const struct silofs_mdigest *md);
 
 void silofs_uber_pvsegr(const struct silofs_uber *uber,
                         struct silofs_pvsegr     *out_pvsegr);

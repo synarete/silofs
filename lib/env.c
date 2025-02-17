@@ -188,6 +188,14 @@ static void env_fini_locks(struct silofs_env *env)
 	silofs_rwlock_fini(&env->rwlock);
 }
 
+static void env_fini_crypto(struct silofs_env *env)
+{
+	silofs_cipher_fini(&env->dec_cipher);
+	silofs_cipher_fini(&env->enc_cipher);
+	silofs_cipher_fini(&env->uber_cipher);
+	silofs_mdigest_fini(&env->mdigest);
+}
+
 static int env_init_crypto(struct silofs_env *env)
 {
 	int err;
@@ -195,6 +203,10 @@ static int env_init_crypto(struct silofs_env *env)
 	err = silofs_mdigest_init(&env->mdigest);
 	if (err) {
 		return err;
+	}
+	err = silofs_cipher_init(&env->uber_cipher);
+	if (err) {
+		goto out_err;
 	}
 	err = silofs_cipher_init(&env->enc_cipher);
 	if (err) {
@@ -206,17 +218,8 @@ static int env_init_crypto(struct silofs_env *env)
 	}
 	return 0;
 out_err:
-	silofs_cipher_fini(&env->dec_cipher);
-	silofs_cipher_fini(&env->enc_cipher);
-	silofs_mdigest_fini(&env->mdigest);
+	env_fini_crypto(env);
 	return err;
-}
-
-static void env_fini_crypto(struct silofs_env *env)
-{
-	silofs_cipher_fini(&env->dec_cipher);
-	silofs_cipher_fini(&env->enc_cipher);
-	silofs_mdigest_fini(&env->mdigest);
 }
 
 static int env_init_iconv(struct silofs_env *env)
@@ -306,7 +309,7 @@ int silofs_env_setup(struct silofs_env *env, const struct silofs_password *pw)
 	int ret = 0;
 
 	if ((pw != NULL) && (pw->passlen > 0)) {
-		ret = silofs_derive_boot_ivkey(md, pw, &env->uber_ivkey);
+		ret = silofs_derive_default_ivkey(md, pw, &env->uber_ivkey);
 	}
 	return ret;
 }
@@ -352,6 +355,13 @@ int silofs_env_set_pack_caddr(struct silofs_env *env,
 	}
 	caddr_assign(&env->pack_caddr, caddr);
 	return 0;
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_env_format_bstore(struct silofs_env *env)
+{
+	return silofs_bstore_format(env->base.bstore);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -721,6 +731,14 @@ env_update_uber(struct silofs_env *env, const struct silofs_uber *uber)
 	return 0;
 }
 
+static void env_update_pvsegr(struct silofs_env *env)
+{
+	struct silofs_pvsegr pvsegr;
+
+	silofs_bstore_curr_pvsegr(env->base.bstore, &pvsegr);
+	silofs_uber_set_pvsegr(&env->uber, &pvsegr);
+}
+
 int silofs_env_update_by(struct silofs_env *env,
                          const struct silofs_uber *uber)
 {
@@ -731,6 +749,50 @@ int silofs_env_update_by(struct silofs_env *env,
 		return err;
 	}
 	err = env_update_uber(env, uber);
+	if (err) {
+		return err;
+	}
+	env_update_pvsegr(env);
+	return 0;
+}
+
+int silofs_env_format_uber(struct silofs_env *env)
+{
+	struct silofs_uber uber = { .flags = SILOFS_UBERF_NONE };
+	int err;
+
+	silofs_uber_init(&uber);
+	silofs_uber_gen_uuid(&uber);
+	err = silofs_uber_gen_ivkey(&uber, &env->mdigest);
+	if (err) {
+		return err;
+	}
+	err = silofs_env_update_by(env, &uber);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+static void
+env_pre_commit_uber(const struct silofs_env *env, struct silofs_uber *uber)
+{
+	silofs_uber_assign(uber, &env->uber);
+	silofs_uber_set_sb_ulink(uber, sbi_ulink(env->sbi));
+}
+
+int silofs_env_commit_uber(struct silofs_env *env)
+{
+	struct silofs_uber uber = { .flags = SILOFS_UBERF_NONE };
+	struct silofs_caddr caddr;
+	int err;
+
+	env_pre_commit_uber(env, &uber);
+	err = silofs_save_uber(env, &uber, &caddr);
+	if (err) {
+		return err;
+	}
+	err = silofs_env_update_by(env, &uber);
 	if (err) {
 		return err;
 	}

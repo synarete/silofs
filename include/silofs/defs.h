@@ -33,7 +33,7 @@
 #define SILOFS_REPO_META_MAGIC (0x2353464F4C495323L)
 
 /* boot-record magic-signature (ASCII: "@SILOFS@") */
-#define SILOFS_BOOT_RECORD_MAGIC (0x4053464F4C495340L)
+#define SILOFS_UBER_MAGIC (0x4053464F4C495340L)
 
 /* pack-index header magic-signature (ASCII: "%silofs%") */
 #define SILOFS_PAR_INDEX_MAGIC (0x2573666F6C697325L)

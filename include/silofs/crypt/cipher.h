@@ -64,8 +64,8 @@ int silofs_decrypt_buf(const struct silofs_cipher *ci,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_derive_boot_ivkey(const struct silofs_mdigest  *md,
-                             const struct silofs_password *pw,
-                             struct silofs_ivkey          *out_ivkey);
+int silofs_derive_default_ivkey(const struct silofs_mdigest  *md,
+                                const struct silofs_password *pw,
+                                struct silofs_ivkey          *out_ivkey);
 
 #endif /* SILOFS_CIPHER_H_ */

@@ -91,9 +91,6 @@ void silofs_uber_set_sb_ulink(struct silofs_uber        *uber,
 void silofs_uber_volid(const struct silofs_uber *uber,
                        struct silofs_volid      *out_volid);
 
-void silofs_uber_self_uaddr(const struct silofs_uber *uber,
-                            struct silofs_uaddr      *out_uaddr);
-
 void silofs_make_uber_uaddr(const struct silofs_volid *volid,
                             struct silofs_uaddr       *out_uaddr);
 

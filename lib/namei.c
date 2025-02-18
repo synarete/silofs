@@ -2531,26 +2531,17 @@ static int check_clone(const struct silofs_task *task,
 	return 0;
 }
 
-static int update_save_uber(const struct silofs_task *task,
-                            const struct silofs_uber *uber,
-                            struct silofs_caddr *out_caddr)
-{
-	struct silofs_uaddr uaddr = { .voff = -1 };
-
-	silofs_uber_self_uaddr(uber, &uaddr);
-	return silofs_save_uber(task->t_env, uber, out_caddr);
-}
-
 static int do_post_clone_updates(const struct silofs_task *task,
                                  struct silofs_ubers *ubers)
 {
+	struct silofs_env *env = task->t_env;
 	int err;
 
-	err = update_save_uber(task, &ubers->uber_new, &ubers->caddr_new);
+	err = silofs_save_uber(env, &ubers->uber_new, &ubers->caddr_new);
 	if (err) {
 		return err;
 	}
-	err = update_save_uber(task, &ubers->uber_alt, &ubers->caddr_alt);
+	err = silofs_save_uber(env, &ubers->uber_alt, &ubers->caddr_alt);
 	if (err) {
 		return err;
 	}

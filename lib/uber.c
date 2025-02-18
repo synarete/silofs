@@ -407,15 +407,6 @@ static void uber_uaddr_by_volid(const struct silofs_volid *volid,
 	silofs_uaddr_setup(out_uaddr, &lsid, 0, 0);
 }
 
-void silofs_uber_self_uaddr(const struct silofs_uber *uber,
-                            struct silofs_uaddr *out_uaddr)
-{
-	struct silofs_volid volid;
-
-	silofs_uber_volid(uber, &volid);
-	uber_uaddr_by_volid(&volid, out_uaddr);
-}
-
 void silofs_make_uber_uaddr(const struct silofs_volid *volid,
                             struct silofs_uaddr *out_uaddr)
 {

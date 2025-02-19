@@ -177,9 +177,9 @@ static void cmd_fsck_open_repo(struct cmd_fsck_ctx *ctx)
 	cmd_open_repo(ctx->env);
 }
 
-static void cmd_fsck_poke_fs(struct cmd_fsck_ctx *ctx)
+static void cmd_fsck_sense_fs(struct cmd_fsck_ctx *ctx)
 {
-	cmd_poke_fs(ctx->env);
+	cmd_sense_fs(ctx->env);
 }
 
 static void cmd_fsck_open_fs(struct cmd_fsck_ctx *ctx)
@@ -241,7 +241,7 @@ void cmd_execute_fsck(void)
 	cmd_fsck_open_repo(&ctx);
 
 	/* Require source boot-record */
-	cmd_fsck_poke_fs(&ctx);
+	cmd_fsck_sense_fs(&ctx);
 
 	/* Open file-system */
 	cmd_fsck_open_fs(&ctx);

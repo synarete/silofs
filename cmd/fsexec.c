@@ -141,20 +141,6 @@ cmd_require_ok(const struct silofs_env *env, int status, const char *msg)
 	}
 }
 
-silofs_attr_printf(3, 4) static void cmd_require_okf(
-	const struct silofs_env *env, int status, const char *fmt, ...)
-{
-	char msg[512] = "";
-	va_list ap;
-
-	if (status != 0) {
-		va_start(ap, fmt);
-		vsnprintf(msg, sizeof(msg) - 1, fmt, ap);
-		va_end(ap);
-		cmd_report_err_and_die(env, status, msg);
-	}
-}
-
 void cmd_format_repo(struct silofs_env *env)
 {
 	int err;
@@ -179,20 +165,20 @@ void cmd_close_repo(struct silofs_env *env)
 	cmd_require_ok(env, err, "failed to close repo");
 }
 
-void cmd_poke_fs(struct silofs_env *env)
+void cmd_sense_fs(struct silofs_env *env)
 {
 	int err;
 
-	err = silofs_poke_fs(env);
-	cmd_require_ok(env, err, "can not poke fs");
+	err = silofs_sense_fs(env);
+	cmd_require_ok(env, err, "can not sense fs");
 }
 
-void cmd_poke_ar(struct silofs_env *env, const struct silofs_xref *ba)
+void cmd_sense_ar(struct silofs_env *env)
 {
 	int err;
 
-	err = silofs_poke_ar(env, ba);
-	cmd_require_okf(env, err, "can not poke archive '%s'", ba->s);
+	err = silofs_sense_ar(env);
+	cmd_require_ok(env, err, "failed to sense archive");
 }
 
 void cmd_format_fs(struct silofs_env *env, struct silofs_xref *out_xref)

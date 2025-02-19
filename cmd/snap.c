@@ -316,9 +316,9 @@ static void cmd_snap_close_repo(struct cmd_snap_ctx *ctx)
 	cmd_close_repo(ctx->env);
 }
 
-static void cmd_snap_poke_fs(struct cmd_snap_ctx *ctx)
+static void cmd_snap_sense_fs(struct cmd_snap_ctx *ctx)
 {
-	cmd_poke_fs(ctx->env);
+	cmd_sense_fs(ctx->env);
 }
 
 static void cmd_snap_open_fs(struct cmd_snap_ctx *ctx)
@@ -429,7 +429,7 @@ void cmd_execute_snap(void)
 	cmd_snap_open_repo(&ctx);
 
 	/* Require source boot-record */
-	cmd_snap_poke_fs(&ctx);
+	cmd_snap_sense_fs(&ctx);
 
 	/* Do actual snap (offline|online) */
 	cmd_snap_execute(&ctx);

@@ -198,9 +198,9 @@ static void cmd_restore_close_repo(struct cmd_restore_ctx *ctx)
 	cmd_close_repo(ctx->env);
 }
 
-static void cmd_restore_poke_archive(struct cmd_restore_ctx *ctx)
+static void cmd_restore_sense_archive(struct cmd_restore_ctx *ctx)
 {
-	cmd_poke_ar(ctx->env, &ctx->env_args.boot.xref);
+	cmd_sense_ar(ctx->env);
 }
 
 static void cmd_restore_execute(struct cmd_restore_ctx *ctx)
@@ -254,7 +254,7 @@ void cmd_execute_restore(void)
 	cmd_restore_open_repo(&ctx);
 
 	/* Require valid boot-record */
-	cmd_restore_poke_archive(&ctx);
+	cmd_restore_sense_archive(&ctx);
 
 	/* Do actual restore */
 	cmd_restore_execute(&ctx);

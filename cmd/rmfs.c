@@ -210,9 +210,9 @@ static void cmd_rmfs_close_repo(struct cmd_rmfs_ctx *ctx)
 	cmd_close_repo(ctx->env);
 }
 
-static void cmd_rmfs_poke_fs(struct cmd_rmfs_ctx *ctx)
+static void cmd_rmfs_sense_fs(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_poke_fs(ctx->env);
+	cmd_sense_fs(ctx->env);
 }
 
 static void cmd_rmfs_execute(struct cmd_rmfs_ctx *ctx)
@@ -321,7 +321,7 @@ void cmd_execute_rmfs(void)
 	cmd_rmfs_open_repo(&ctx);
 
 	/* Require existing boot-record */
-	cmd_rmfs_poke_fs(&ctx);
+	cmd_rmfs_sense_fs(&ctx);
 
 	/* Do actual lsegs deletion*/
 	cmd_rmfs_execute(&ctx);

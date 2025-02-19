@@ -396,9 +396,9 @@ static void cmd_mount_close_repo(struct cmd_mount_ctx *ctx)
 	cmd_close_repo(ctx->env);
 }
 
-static void cmd_mount_poke_fs(struct cmd_mount_ctx *ctx)
+static void cmd_mount_sense_fs(struct cmd_mount_ctx *ctx)
 {
-	cmd_poke_fs(ctx->env);
+	cmd_sense_fs(ctx->env);
 }
 
 static void cmd_mount_open_fs(struct cmd_mount_ctx *ctx)
@@ -598,7 +598,7 @@ static void cmd_mount_exec_phase1(struct cmd_mount_ctx *ctx)
 	cmd_mount_open_repo(ctx);
 
 	/* Load-verify boot-record */
-	cmd_mount_poke_fs(ctx);
+	cmd_mount_sense_fs(ctx);
 
 	/* Require boot + lock-able file-system */
 	cmd_mount_open_fs(ctx);
@@ -634,7 +634,7 @@ static void cmd_mount_exec_phase2(struct cmd_mount_ctx *ctx)
 	cmd_mount_open_repo(ctx);
 
 	/* Re-load and verify boot-record  */
-	cmd_mount_poke_fs(ctx);
+	cmd_mount_sense_fs(ctx);
 
 	/* Open-load file-system meta-data */
 	cmd_mount_open_fs(ctx);

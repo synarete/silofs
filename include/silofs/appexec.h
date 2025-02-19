@@ -69,7 +69,7 @@ int silofs_get_ar_xref(struct silofs_env *env, struct silofs_xref *out_xref);
 
 int silofs_format_fs(struct silofs_env *env);
 
-int silofs_poke_fs(struct silofs_env *env);
+int silofs_sense_fs(struct silofs_env *env);
 
 int silofs_open_fs(struct silofs_env *env);
 
@@ -97,6 +97,6 @@ int silofs_archive_fs(struct silofs_env *env);
 
 int silofs_restore_fs(struct silofs_env *env);
 
-int silofs_poke_ar(struct silofs_env *env, const struct silofs_xref *ba);
+int silofs_sense_ar(struct silofs_env *env);
 
 #endif /* SILOFS_APPEXEC_H_ */

@@ -76,8 +76,6 @@ int silofs_env_init(struct silofs_env            *env,
 
 void silofs_env_fini(struct silofs_env *env);
 
-bool silofs_env_hasflag(const struct silofs_env *env, enum silofs_flags f);
-
 int silofs_env_setup(struct silofs_env *env, const struct silofs_password *pw);
 
 void silofs_env_lock(struct silofs_env *env);
@@ -95,6 +93,8 @@ int silofs_env_format_bstore(struct silofs_env *env);
 int silofs_env_format_uber(struct silofs_env *env);
 
 int silofs_env_commit_uber(struct silofs_env *env);
+
+int silofs_env_sense_uber(struct silofs_env *env);
 
 int silofs_env_reload_uber(struct silofs_env *env);
 
@@ -118,7 +118,11 @@ void silofs_env_allocstat(const struct silofs_env  *env,
 int silofs_env_update_by(struct silofs_env        *env,
                          const struct silofs_uber *uber);
 
+int silofs_env_sense_pack(struct silofs_env *env);
+
 void silofs_env_drop_caches(struct silofs_env *env);
+
+bool silofs_env_hasflag(const struct silofs_env *env, enum silofs_flags f);
 
 int silofs_env_uber_caddr(const struct silofs_env *env,
                           struct silofs_caddr     *out_caddr);

@@ -278,9 +278,9 @@ void cmd_format_fs(struct silofs_env *env, struct silofs_xref *out_xref);
 
 void cmd_close_fs(struct silofs_env *env);
 
-void cmd_poke_fs(struct silofs_env *env);
+void cmd_sense_fs(struct silofs_env *env);
 
-void cmd_poke_ar(struct silofs_env *env, const struct silofs_xref *xref);
+void cmd_sense_ar(struct silofs_env *env);
 
 void cmd_open_fs(struct silofs_env *env);
 

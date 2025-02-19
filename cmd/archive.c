@@ -204,9 +204,9 @@ static void cmd_archive_close_repo(struct cmd_archive_ctx *ctx)
 	cmd_close_repo(ctx->env);
 }
 
-static void cmd_archive_poke_fs(struct cmd_archive_ctx *ctx)
+static void cmd_archive_sense_fs(struct cmd_archive_ctx *ctx)
 {
-	cmd_poke_fs(ctx->env);
+	cmd_sense_fs(ctx->env);
 }
 
 static void cmd_archive_open_fs(struct cmd_archive_ctx *ctx)
@@ -273,7 +273,7 @@ void cmd_execute_archive(void)
 	cmd_archive_open_repo(&ctx);
 
 	/* Require valid boot-record */
-	cmd_archive_poke_fs(&ctx);
+	cmd_archive_sense_fs(&ctx);
 
 	/* Open file-system */
 	cmd_archive_open_fs(&ctx);

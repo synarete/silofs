@@ -194,9 +194,9 @@ static void cmd_view_close_repo(struct cmd_view_ctx *ctx)
 	cmd_close_repo(ctx->env);
 }
 
-static void cmd_view_poke_fs(struct cmd_view_ctx *ctx)
+static void cmd_view_sense_fs(struct cmd_view_ctx *ctx)
 {
-	cmd_poke_fs(ctx->env);
+	cmd_sense_fs(ctx->env);
 }
 
 static void cmd_view_open_fs(struct cmd_view_ctx *ctx)
@@ -275,7 +275,7 @@ void cmd_execute_view(void)
 	cmd_view_open_repo(&ctx);
 
 	/* Require valid boot-record */
-	cmd_view_poke_fs(&ctx);
+	cmd_view_sense_fs(&ctx);
 
 	/* Open file-system */
 	cmd_view_open_fs(&ctx);

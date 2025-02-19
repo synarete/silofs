@@ -366,6 +366,22 @@ int silofs_env_format_bstore(struct silofs_env *env)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+int silofs_env_sense_uber(struct silofs_env *env)
+{
+	struct silofs_caddr caddr = { .ctype = SILOFS_CTYPE_NONE };
+	int err;
+
+	err = silofs_env_uber_caddr(env, &caddr);
+	if (err) {
+		return err;
+	}
+	err = silofs_stat_uber(env, &caddr);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
 int silofs_env_reload_uber(struct silofs_env *env)
 {
 	struct silofs_caddr caddr = { .ctype = SILOFS_CTYPE_NONE };
@@ -793,6 +809,36 @@ int silofs_env_commit_uber(struct silofs_env *env)
 		return err;
 	}
 	err = silofs_env_update_by(env, &uber);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+static int check_par_index_size(ssize_t sz)
+{
+	if ((sz < SILOFS_PAR_INDEX_SIZE_MIN) ||
+	    (sz > SILOFS_PAR_INDEX_SIZE_MAX)) {
+		return -SILOFS_EBADPACK;
+	}
+	return 0;
+}
+
+int silofs_env_sense_pack(struct silofs_env *env)
+{
+	struct silofs_caddr caddr = { .ctype = SILOFS_CTYPE_NONE };
+	ssize_t sz = -1;
+	int err;
+
+	err = silofs_env_pack_caddr(env, &caddr);
+	if (err) {
+		return err;
+	}
+	err = silofs_repo_stat_pack(env->base.repo, &caddr, &sz);
+	if (err) {
+		return err;
+	}
+	err = check_par_index_size(sz);
 	if (err) {
 		return err;
 	}

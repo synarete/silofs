@@ -734,7 +734,7 @@ int silofs_format_fs(struct silofs_env *env)
 	return ret;
 }
 
-static int do_poke_fs(struct silofs_env *env)
+static int do_sense_fs(struct silofs_env *env)
 {
 	int err;
 
@@ -742,19 +742,19 @@ static int do_poke_fs(struct silofs_env *env)
 	if (err) {
 		return err;
 	}
-	err = silofs_env_reload_uber(env);
+	err = silofs_env_sense_uber(env);
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-int silofs_poke_fs(struct silofs_env *env)
+int silofs_sense_fs(struct silofs_env *env)
 {
 	int err;
 
 	silofs_env_lock(env);
-	err = do_poke_fs(env);
+	err = do_sense_fs(env);
 	silofs_env_unlock(env);
 	return err;
 }
@@ -831,25 +831,29 @@ int silofs_close_fs(struct silofs_env *env)
 	return err;
 }
 
-static int stat_archive_index(const struct silofs_env *env,
-                              const struct silofs_caddr *caddr)
+static int do_sense_ar(struct silofs_env *env)
 {
-	ssize_t sz = -1;
-
-	return silofs_repo_stat_pack(env->base.repo, caddr, &sz);
-}
-
-int silofs_poke_ar(struct silofs_env *env, const struct silofs_xref *ba)
-{
-	struct silofs_caddr caddr = { .ctype = SILOFS_CTYPE_NONE };
 	int err;
 
-	err = caddr_from_xref(&caddr, ba);
-	if (!err) {
-		silofs_env_lock(env);
-		err = stat_archive_index(env, &caddr);
-		silofs_env_unlock(env);
+	err = require_pack_caddr(env);
+	if (err) {
+		return err;
 	}
+	err = silofs_env_sense_pack(env);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+int silofs_sense_ar(struct silofs_env *env)
+{
+	int err;
+
+	silofs_env_lock(env);
+	err = do_sense_ar(env);
+	silofs_env_unlock(env);
+
 	return err;
 }
 

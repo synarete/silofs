@@ -388,6 +388,11 @@ void silofs_uber_set_sb_ulink(struct silofs_uber *uber,
 	silofs_ulink_assign(&uber->sb_ulink, sb_ulink);
 }
 
+void silofs_uber_reset_sb_ulink(struct silofs_uber *uber)
+{
+	silofs_ulink_reset(&uber->sb_ulink);
+}
+
 void silofs_uber_volid(const struct silofs_uber *uber,
                        struct silofs_volid *out_volid)
 {

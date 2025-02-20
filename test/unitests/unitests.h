@@ -128,7 +128,7 @@ struct ut_args {
 struct ut_env {
 	struct silofs_prandgen      prng;
 	struct silofs_password      passwd;
-	struct silofs_xref          boot_xref[2];
+	struct silofs_xref          uber_xref[2];
 	struct silofs_xref          pack_xref;
 	struct ut_args             *args;
 	struct silofs_env          *env;

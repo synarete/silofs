@@ -858,7 +858,7 @@ int silofs_sense_ar(struct silofs_env *env)
 }
 
 static int
-exec_clone_fs(struct silofs_env *env, struct silofs_ubers *out_ubers)
+exec_clone_fs(struct silofs_env *env, struct silofs_urefs *out_urefs)
 {
 	struct silofs_task task;
 	int err;
@@ -867,7 +867,7 @@ exec_clone_fs(struct silofs_env *env, struct silofs_ubers *out_ubers)
 	if (err) {
 		return err;
 	}
-	err = silofs_exec_clone(&task, SILOFS_INO_ROOT, 0, out_ubers);
+	err = silofs_exec_clone(&task, SILOFS_INO_ROOT, 0, out_urefs);
 	if (err) {
 		return err;
 	}
@@ -876,14 +876,14 @@ exec_clone_fs(struct silofs_env *env, struct silofs_ubers *out_ubers)
 
 int silofs_fork_fs(struct silofs_env *env, struct silofs_xrefs *out_bas)
 {
-	struct silofs_ubers ubers;
+	struct silofs_urefs ubers;
 	int err;
 
 	silofs_env_lock(env);
 	err = exec_clone_fs(env, &ubers);
 	silofs_env_unlock(env);
-	caddr_to_xref(&ubers.caddr_new, err, &out_bas->xref_new);
-	caddr_to_xref(&ubers.caddr_alt, err, &out_bas->xref_alt);
+	caddr_to_xref(&ubers.unew, err, &out_bas->xref_new);
+	caddr_to_xref(&ubers.ualt, err, &out_bas->xref_alt);
 	return err;
 }
 

@@ -2873,10 +2873,15 @@ out:
 	                       sizeof(fcc->args->out.query.qry), err);
 }
 
+static void assing_ioc_xref(int8_t *xref, const struct silofs_caddr *caddr)
+{
+	silofs_caddr_to_str(caddr, (char *)xref, SILOFS_XREFLEN_MAX + 1);
+}
+
 static int do_ioc_clone(const struct silofs_fuseq_cmd_ctx *fcc)
 {
 	union silofs_ioc_u ioc_u;
-	const struct silofs_ubers *ubers = &fcc->args->out.clone.ubers;
+	const struct silofs_urefs *urefs = &fcc->args->out.clone.urefs;
 	void *buf_out = fcc->fqd->fqd_outb->u.iob.b;
 	struct silofs_ioc_clone *cl_out = &ioc_u.clone;
 	const size_t bsz_in_min = 1;
@@ -2908,8 +2913,9 @@ static int do_ioc_clone(const struct silofs_fuseq_cmd_ctx *fcc)
 	}
 
 	memset(cl_out, 0, sizeof(*cl_out));
-	silofs_caddr_to_name2(&ubers->caddr_new, cl_out->boot_new);
-	silofs_caddr_to_name2(&ubers->caddr_alt, cl_out->boot_alt);
+	assing_ioc_xref(cl_out->xref_base, &urefs->ubase);
+	assing_ioc_xref(cl_out->xref_new, &urefs->unew);
+	assing_ioc_xref(cl_out->xref_alt, &urefs->ualt);
 	memcpy(buf_out, cl_out, sizeof(*cl_out));
 out:
 	return fqd_reply_ioctl(fcc->fqd, fcc->task, 0, cl_out, sizeof(*cl_out),

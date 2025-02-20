@@ -33,12 +33,11 @@ struct silofs_uber {
 	int32_t              cipher_mode;
 };
 
-/* boot-records pair after fork-fs with their content-addresses */
-struct silofs_ubers {
-	struct silofs_uber  uber_new;
-	struct silofs_uber  uber_alt;
-	struct silofs_caddr caddr_new;
-	struct silofs_caddr caddr_alt;
+/* a tuple of content-addressable references to uber blocks */
+struct silofs_urefs {
+	struct silofs_caddr ubase;
+	struct silofs_caddr unew;
+	struct silofs_caddr ualt;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -87,6 +86,8 @@ void silofs_uber_sb_ulink(const struct silofs_uber *uber,
 
 void silofs_uber_set_sb_ulink(struct silofs_uber        *uber,
                               const struct silofs_ulink *sb_ulink);
+
+void silofs_uber_reset_sb_ulink(struct silofs_uber *uber);
 
 void silofs_uber_volid(const struct silofs_uber *uber,
                        struct silofs_volid      *out_volid);

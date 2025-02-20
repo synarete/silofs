@@ -41,6 +41,25 @@ env_bind_sbi(struct silofs_env *env, struct silofs_sb_info *sbi_new)
 	env->sbi = sbi_new;
 }
 
+static void env_update_uber_sb_ulink(struct silofs_env *env)
+{
+	struct silofs_uber *uber = &env->uber;
+	struct silofs_sb_info *sbi = env->sbi;
+
+	if (sbi != NULL) {
+		silofs_uber_set_sb_ulink(uber, sbi_ulink(sbi));
+	} else {
+		silofs_uber_reset_sb_ulink(uber);
+	}
+	silofs_uber_gen_uuid(uber);
+}
+
+static void env_rebind_sbi(struct silofs_env *env, struct silofs_sb_info *sbi)
+{
+	env_bind_sbi(env, sbi);
+	env_update_uber_sb_ulink(env);
+}
+
 static void env_update_owner(struct silofs_env *env)
 {
 	const struct silofs_args *args = env->base.args;
@@ -593,7 +612,7 @@ static int env_shut_sb(struct silofs_env *env)
 	if (err) {
 		return err;
 	}
-	env_bind_sbi(env, NULL);
+	env_rebind_sbi(env, NULL);
 	return 0;
 }
 
@@ -614,75 +633,6 @@ int silofs_env_shut(struct silofs_env *env)
 	if (err) {
 		return err;
 	}
-	return 0;
-}
-
-static void
-env_rebind_root_sb(struct silofs_env *env, struct silofs_sb_info *sbi)
-{
-	env_bind_sbi(env, sbi);
-	silofs_uber_set_sb_ulink(&env->uber, sbi_ulink(sbi));
-}
-
-static int env_clone_rebind_super(struct silofs_env *env,
-                                  const struct silofs_sb_info *sbi_cur,
-                                  struct silofs_sb_info **out_sbi)
-{
-	struct silofs_sb_info *sbi = NULL;
-	int err;
-
-	err = env_spawn_super(env, 0, &sbi);
-	if (err) {
-		return err;
-	}
-	sbi_make_clone(sbi, sbi_cur);
-	env_rebind_root_sb(env, sbi);
-
-	*out_sbi = sbi;
-	return 0;
-}
-
-static void sbi_mark_fossil(struct silofs_sb_info *sbi)
-{
-	silofs_sbi_add_flags(sbi, SILOFS_SUPERF_FOSSIL);
-}
-
-static void env_make_uber_of(const struct silofs_env *env,
-                             const struct silofs_sb_info *sbi,
-                             struct silofs_uber *out_uber)
-{
-	silofs_uber_assign(out_uber, &env->uber);
-	silofs_uber_gen_uuid(out_uber);
-	silofs_uber_set_sb_ulink(out_uber, sbi_ulink(sbi));
-}
-
-static void env_pre_forkfs(struct silofs_env *env)
-{
-	silofs_lcache_drop_uamap(env->base.lcache);
-}
-
-int silofs_env_forkfs(struct silofs_env *env, struct silofs_ubers *out_ubers)
-{
-	struct silofs_sb_info *sbi_alt = NULL;
-	struct silofs_sb_info *sbi_new = NULL;
-	struct silofs_sb_info *sbi_cur = env->sbi;
-	int err;
-
-	env_pre_forkfs(env);
-	err = env_clone_rebind_super(env, sbi_cur, &sbi_alt);
-	if (err) {
-		return err;
-	}
-	env_make_uber_of(env, sbi_alt, &out_ubers->uber_alt);
-
-	env_pre_forkfs(env);
-	err = env_clone_rebind_super(env, sbi_cur, &sbi_new);
-	if (err) {
-		return err;
-	}
-	env_make_uber_of(env, sbi_new, &out_ubers->uber_new);
-
-	sbi_mark_fossil(sbi_cur);
 	return 0;
 }
 
@@ -813,6 +763,94 @@ int silofs_env_commit_uber(struct silofs_env *env)
 		return err;
 	}
 	return 0;
+}
+
+static int
+env_resave_uber(struct silofs_env *env, struct silofs_caddr *out_caddr)
+{
+	int err;
+
+	err = silofs_save_uber(env, &env->uber, out_caddr);
+	if (err) {
+		return err;
+	}
+	silofs_env_set_uber_caddr(env, out_caddr);
+	return 0;
+}
+
+static void env_drop_uamap(struct silofs_env *env)
+{
+	silofs_lcache_drop_uamap(env->base.lcache);
+}
+
+static int env_clone_rebind_super(struct silofs_env *env,
+                                  const struct silofs_sb_info *sbi_cur,
+                                  struct silofs_sb_info **out_sbi)
+{
+	struct silofs_sb_info *sbi = NULL;
+	int err;
+
+	env_drop_uamap(env);
+	err = env_spawn_super(env, 0, &sbi);
+	if (err) {
+		return err;
+	}
+	sbi_make_clone(sbi, sbi_cur);
+	env_rebind_sbi(env, sbi);
+
+	*out_sbi = sbi;
+	return 0;
+}
+
+static void sbi_mark_fossil(struct silofs_sb_info *sbi)
+{
+	silofs_sbi_add_flags(sbi, SILOFS_SUPERF_FOSSIL);
+}
+
+static int
+env_do_forkfs(struct silofs_env *env, struct silofs_urefs *out_urefs)
+{
+	struct silofs_sb_info *sbi_alt = NULL;
+	struct silofs_sb_info *sbi_new = NULL;
+	struct silofs_sb_info *sbi_cur = env->sbi;
+	int err;
+
+	err = silofs_env_uber_caddr(env, &out_urefs->ubase);
+	if (err) {
+		return err;
+	}
+
+	err = env_clone_rebind_super(env, sbi_cur, &sbi_alt);
+	if (err) {
+		return err;
+	}
+	err = env_resave_uber(env, &out_urefs->ualt);
+	if (err) {
+		return err;
+	}
+
+	err = env_clone_rebind_super(env, sbi_cur, &sbi_new);
+	if (err) {
+		return err;
+	}
+	err = env_resave_uber(env, &out_urefs->unew);
+	if (err) {
+		return err;
+	}
+
+	sbi_mark_fossil(sbi_cur);
+	return 0;
+}
+
+int silofs_env_forkfs(struct silofs_env *env, struct silofs_urefs *out_urefs)
+{
+	struct silofs_sb_info *sbi = env->sbi;
+	int err;
+
+	sbi_incref(sbi);
+	err = env_do_forkfs(env, out_urefs);
+	sbi_decref(sbi);
+	return err;
 }
 
 static int check_par_index_size(ssize_t sz)

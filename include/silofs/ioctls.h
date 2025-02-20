@@ -105,8 +105,10 @@ struct silofs_ioc_query {
 };
 
 struct silofs_ioc_clone {
-	char boot_new[SILOFS_XREFLEN_MAX + 1];
-	char boot_alt[SILOFS_XREFLEN_MAX + 1];
+	int8_t xref_base[SILOFS_XREFLEN_MAX + 1];
+	int8_t xref_new[SILOFS_XREFLEN_MAX + 1];
+	int8_t xref_alt[SILOFS_XREFLEN_MAX + 1];
+	int8_t pad[SILOFS_XREFLEN_MAX + 1];
 };
 
 struct silofs_ioc_syncfs {

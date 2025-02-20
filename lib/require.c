@@ -318,7 +318,7 @@ static void require_persistent_types_alignment4(void)
 static void require_ioctl_types_size(void)
 {
 	REQUIRE_SIZEOF(struct silofs_ioc_query, 2048);
-	REQUIRE_SIZEOF(struct silofs_ioc_clone, 256);
+	REQUIRE_SIZEOF(struct silofs_ioc_clone, 512);
 	REQUIRE_SIZEOF_LE(struct silofs_ioc_query, SILOFS_IOC_SIZE_MAX);
 	REQUIRE_SIZEOF_LE(struct silofs_ioc_clone, SILOFS_IOC_SIZE_MAX);
 }

@@ -233,9 +233,9 @@ static void cmd_snap_do_ioctl_clone(struct cmd_snap_ctx *ctx)
 	int err;
 
 	SILOFS_STATICASSERT_EQ(sizeof(ctx->xrefs.xref_new.s),
-	                       sizeof(cl->boot_new));
+	                       sizeof(cl->xref_new));
 	SILOFS_STATICASSERT_EQ(sizeof(ctx->xrefs.xref_alt.s),
-	                       sizeof(cl->boot_alt));
+	                       sizeof(cl->xref_alt));
 
 	cmd_reset_ioc(ctx->ioc);
 	err = silofs_sys_opendir(dirpath, &dfd);
@@ -255,9 +255,9 @@ static void cmd_snap_do_ioctl_clone(struct cmd_snap_ctx *ctx)
 		        ctx->in_args.repodir_fsname);
 	}
 
-	memcpy(ctx->xrefs.xref_new.s, cl->boot_new,
+	memcpy(ctx->xrefs.xref_new.s, cl->xref_new,
 	       sizeof(ctx->xrefs.xref_new.s));
-	memcpy(ctx->xrefs.xref_alt.s, cl->boot_alt,
+	memcpy(ctx->xrefs.xref_alt.s, cl->xref_alt,
 	       sizeof(ctx->xrefs.xref_alt.s));
 }
 

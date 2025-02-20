@@ -857,7 +857,7 @@ int silofs_sense_ar(struct silofs_env *env)
 	return err;
 }
 
-static int exec_clone_fs(struct silofs_env *env)
+static int exec_fork_fs(struct silofs_env *env)
 {
 	struct silofs_task task;
 	struct silofs_uber_caddrs caddrs;
@@ -867,7 +867,7 @@ static int exec_clone_fs(struct silofs_env *env)
 	if (err) {
 		return err;
 	}
-	err = silofs_exec_clone(&task, SILOFS_INO_ROOT, 0, &caddrs);
+	err = silofs_exec_forkfs(&task, SILOFS_INO_ROOT, 0, &caddrs);
 	if (err) {
 		return err;
 	}
@@ -879,7 +879,7 @@ int silofs_fork_fs(struct silofs_env *env)
 	int err;
 
 	silofs_env_lock(env);
-	err = exec_clone_fs(env);
+	err = exec_fork_fs(env);
 	silofs_env_unlock(env);
 	return err;
 }

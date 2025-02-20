@@ -144,8 +144,8 @@ int silofs_exec_query(struct silofs_task *task, ino_t ino,
                       enum silofs_query_type   qtype,
                       struct silofs_ioc_query *out_qry);
 
-int silofs_exec_clone(struct silofs_task *task, ino_t ino, int flags,
-                      struct silofs_uber_caddrs *out_caddrs);
+int silofs_exec_forkfs(struct silofs_task *task, ino_t ino, int flags,
+                       struct silofs_uber_caddrs *out_caddrs);
 
 int silofs_exec_tune(struct silofs_task *task, ino_t ino, int iflags_want,
                      int iflags_dont);

@@ -2549,8 +2549,8 @@ static int flush_and_sync(struct silofs_task *task)
 	return 0;
 }
 
-static int
-do_clone(struct silofs_task *task, struct silofs_inode_info *dir_ii, int flags)
+static int do_forkfs(struct silofs_task *task,
+                     struct silofs_inode_info *dir_ii, int flags)
 {
 	struct silofs_env *env = task->t_env;
 	int err;
@@ -2575,47 +2575,48 @@ do_clone(struct silofs_task *task, struct silofs_inode_info *dir_ii, int flags)
 }
 
 static int
-do_clone_of(struct silofs_task *task, struct silofs_sb_info *sbi_cur,
-            struct silofs_inode_info *dir_ii, int flags)
+do_forkfs_of(struct silofs_task *task, struct silofs_sb_info *sbi_cur,
+             struct silofs_inode_info *dir_ii, int flags)
 {
 	int err;
 
 	sbi_incref(sbi_cur);
-	err = do_clone(task, dir_ii, flags);
+	err = do_forkfs(task, dir_ii, flags);
 	sbi_decref(sbi_cur);
 	return err;
 }
 
-static void
-do_post_clone_relax(const struct silofs_task *task, struct silofs_sb_info *sbi)
+static void forget_and_relax_post_forkfs(const struct silofs_task *task,
+                                         struct silofs_sb_info *sbi)
 {
 	silofs_lcache_forget_uni(task_lcache(task), &sbi->sb_uni);
 	silofs_lcache_relax(task_lcache(task), SILOFS_CTLF_NOW);
 }
 
 static int
-do_clone_and_relex(struct silofs_task *task, struct silofs_inode_info *dir_ii,
-                   int flags, struct silofs_uber_caddrs *out_caddrs)
+do_forkfs_and_relex(struct silofs_task *task, struct silofs_inode_info *dir_ii,
+                    int flags, struct silofs_uber_caddrs *out_caddrs)
 {
 	struct silofs_sb_info *sbi_cur = task_sbi(task);
 	int err;
 
-	err = do_clone_of(task, sbi_cur, dir_ii, flags);
+	err = do_forkfs_of(task, sbi_cur, dir_ii, flags);
 	if (err) {
 		return err;
 	}
-	do_post_clone_relax(task, sbi_cur);
+	forget_and_relax_post_forkfs(task, sbi_cur);
 	silofs_env_uber_caddrs(task->t_env, out_caddrs);
 	return 0;
 }
 
-int silofs_do_clone(struct silofs_task *task, struct silofs_inode_info *dir_ii,
-                    int flags, struct silofs_uber_caddrs *out_caddrs)
+int silofs_do_forkfs(struct silofs_task *task,
+                     struct silofs_inode_info *dir_ii, int flags,
+                     struct silofs_uber_caddrs *out_caddrs)
 {
 	int err;
 
 	ii_incref(dir_ii);
-	err = do_clone_and_relex(task, dir_ii, flags, out_caddrs);
+	err = do_forkfs_and_relex(task, dir_ii, flags, out_caddrs);
 	ii_decref(dir_ii);
 	return err;
 }

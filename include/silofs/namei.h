@@ -127,8 +127,9 @@ int silofs_do_query(struct silofs_task *task, struct silofs_inode_info *ii,
                     enum silofs_query_type   qtype,
                     struct silofs_ioc_query *out_qry);
 
-int silofs_do_clone(struct silofs_task *task, struct silofs_inode_info *dir_ii,
-                    int flags, struct silofs_uber_caddrs *out_caddrs);
+int silofs_do_forkfs(struct silofs_task       *task,
+                     struct silofs_inode_info *dir_ii, int flags,
+                     struct silofs_uber_caddrs *out_caddrs);
 
 int silofs_do_tune(struct silofs_task *task, struct silofs_inode_info *dir_ii,
                    int iflags_want, int iflags_dont);

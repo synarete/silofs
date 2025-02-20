@@ -56,6 +56,8 @@ struct silofs_env {
 	struct silofs_mdigest    mdigest;
 	struct silofs_ivkey      uber_ivkey;
 	struct silofs_caddr      uber_caddr;
+	struct silofs_caddr      uber_base_caddr;
+	struct silofs_caddr      uber_fork_caddr;
 	struct silofs_caddr      pack_caddr;
 	struct silofs_uber       uber;
 	struct silofs_env_opstat opstat;
@@ -106,7 +108,7 @@ int silofs_env_reload_super(struct silofs_env *env);
 
 int silofs_env_reload_sb_lseg(struct silofs_env *env);
 
-int silofs_env_forkfs(struct silofs_env *env, struct silofs_urefs *out_urefs);
+int silofs_env_forkfs(struct silofs_env *env);
 
 void silofs_env_relax_caches(const struct silofs_env *env, int flags);
 
@@ -129,6 +131,9 @@ int silofs_env_uber_caddr(const struct silofs_env *env,
 
 int silofs_env_set_uber_caddr(struct silofs_env         *env,
                               const struct silofs_caddr *caddr);
+
+int silofs_env_uber_caddrs(const struct silofs_env   *env,
+                           struct silofs_uber_caddrs *out_caddrs);
 
 int silofs_env_pack_caddr(const struct silofs_env *env,
                           struct silofs_caddr     *out_caddr);

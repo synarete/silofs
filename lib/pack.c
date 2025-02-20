@@ -862,29 +862,28 @@ out:
 	return err;
 }
 
-static const struct silofs_caddr *
-pac_fs_uber_caddr(const struct silofs_par_ctx *pa_ctx)
+static int pac_fs_uber_caddr(const struct silofs_par_ctx *pa_ctx,
+                             struct silofs_caddr *out_caddr)
 {
-	const struct silofs_env *env = pa_ctx->pac_env;
-	const struct silofs_caddr *caddr = &env->uber_caddr;
-
-	silofs_assert_eq(caddr->ctype, SILOFS_CTYPE_UBER);
-	return caddr;
+	return silofs_env_uber_caddr(pa_ctx->pac_env, out_caddr);
 }
 
 static int pac_export_uber(const struct silofs_par_ctx *pa_ctx,
                            struct silofs_par_desc_info *pdi)
 {
 	struct silofs_uber1k uber1k = { .ub_magic = 0xff };
-	const struct silofs_caddr *boot_caddr = NULL;
+	struct silofs_caddr caddr = { .ctype = SILOFS_CTYPE_NONE };
 	int err;
 
-	boot_caddr = pac_fs_uber_caddr(pa_ctx);
-	err = pac_load_uber(pa_ctx, boot_caddr, &uber1k);
+	err = pac_fs_uber_caddr(pa_ctx, &caddr);
 	if (err) {
 		return err;
 	}
-	pdi_update_caddr(pdi, boot_caddr);
+	err = pac_load_uber(pa_ctx, &caddr, &uber1k);
+	if (err) {
+		return err;
+	}
+	pdi_update_caddr(pdi, &caddr);
 
 	err = pac_send_pack(pa_ctx, &pdi->pd.caddr, &uber1k, sizeof(uber1k));
 	if (err) {

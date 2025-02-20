@@ -63,6 +63,9 @@ int silofs_get_fs_xref(struct silofs_env *env, struct silofs_xref *out_xref);
 
 int silofs_set_fs_xref(struct silofs_env *env, const struct silofs_xref *xref);
 
+int silofs_get_fs_xrefs(struct silofs_env   *env,
+                        struct silofs_xrefs *out_xrefs);
+
 int silofs_get_ar_xref(struct silofs_env *env, struct silofs_xref *out_xref);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -79,7 +82,7 @@ int silofs_run_fs(struct silofs_env *env);
 
 int silofs_post_exec_fs(struct silofs_env *env);
 
-int silofs_fork_fs(struct silofs_env *env, struct silofs_xrefs *out_bas);
+int silofs_fork_fs(struct silofs_env *env);
 
 int silofs_unref_fs(struct silofs_env *env);
 

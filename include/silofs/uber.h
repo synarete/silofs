@@ -34,10 +34,10 @@ struct silofs_uber {
 };
 
 /* a tuple of content-addressable references to uber blocks */
-struct silofs_urefs {
-	struct silofs_caddr ubase;
-	struct silofs_caddr unew;
-	struct silofs_caddr ualt;
+struct silofs_uber_caddrs {
+	struct silofs_caddr base;
+	struct silofs_caddr curr;
+	struct silofs_caddr fork;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

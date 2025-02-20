@@ -136,7 +136,7 @@ cmd_lsmnt_long(struct cmd_lsmnt_ctx *ctx, const struct cmd_proc_mntinfo *mi)
 		goto out;
 	}
 	boot_name = cmd_strdup(qry->u.boot.name);
-	boot_addr = cmd_strdup(qry->u.boot.addr);
+	boot_addr = cmd_strdup(qry->u.boot.xref);
 	fs_uuid = cmd_struuid(qry->u.boot.fsid);
 
 	fprintf(ctx->out_fp, "%s %s/%s %s %s", mntd_path, repo_path, boot_name,

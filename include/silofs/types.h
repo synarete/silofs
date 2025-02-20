@@ -46,10 +46,11 @@ struct silofs_xref {
 	char s[SILOFS_XREFLEN_MAX + 1];
 };
 
-/* boot-reference address pair */
+/* uber-blocks reference address tuple */
 struct silofs_xrefs {
-	struct silofs_xref xref_new;
-	struct silofs_xref xref_alt;
+	struct silofs_xref base;
+	struct silofs_xref curr;
+	struct silofs_xref fork;
 };
 
 /* file-system's boot arguments */

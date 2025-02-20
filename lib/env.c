@@ -25,6 +25,12 @@ static const struct silofs_lsid *lsid_of(const struct silofs_ulink *ulink)
 	return &ulink->uaddr.laddr.lsid;
 }
 
+static bool caddr_isuber(const struct silofs_caddr *caddr)
+{
+	return (caddr->ctype == SILOFS_CTYPE_UBER) &&
+	       (caddr->size == SILOFS_UBER_SIZE);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void
@@ -168,6 +174,8 @@ env_init_commons(struct silofs_env *env, const struct silofs_env_base *base)
 	memcpy(&env->base, base, sizeof(env->base));
 	silofs_ivkey_init(&env->uber_ivkey);
 	silofs_caddr_reset(&env->uber_caddr);
+	silofs_caddr_reset(&env->uber_base_caddr);
+	silofs_caddr_reset(&env->uber_fork_caddr);
 	silofs_caddr_reset(&env->pack_caddr);
 	silofs_uber_init(&env->uber);
 	env->init_time = silofs_time_now_monotonic();
@@ -179,10 +187,13 @@ env_init_commons(struct silofs_env *env, const struct silofs_env_base *base)
 static void env_fini_commons(struct silofs_env *env)
 {
 	memset(&env->base, 0, sizeof(env->base));
-	silofs_uber_fini(&env->uber);
-	silofs_caddr_reset(&env->uber_caddr);
 	silofs_ivkey_fini(&env->uber_ivkey);
+	silofs_caddr_reset(&env->uber_caddr);
+	silofs_caddr_reset(&env->uber_base_caddr);
+	silofs_caddr_reset(&env->uber_fork_caddr);
+	silofs_uber_fini(&env->uber);
 	env->sbi = NULL;
+	env->ms_flags = 0;
 }
 
 static int env_init_locks(struct silofs_env *env)
@@ -341,20 +352,27 @@ bool silofs_env_hasflag(const struct silofs_env *env, enum silofs_flags f)
 int silofs_env_uber_caddr(const struct silofs_env *env,
                           struct silofs_caddr *out_caddr)
 {
-	const struct silofs_caddr *caddr = &env->uber_caddr;
-
-	caddr_assign(out_caddr, caddr);
-	return (caddr->ctype == SILOFS_CTYPE_UBER) ? 0 : -SILOFS_ENOENT;
+	caddr_assign(out_caddr, &env->uber_caddr);
+	return caddr_isuber(&env->uber_caddr) ? 0 : -SILOFS_ENOENT;
 }
 
 int silofs_env_set_uber_caddr(struct silofs_env *env,
                               const struct silofs_caddr *caddr)
 {
-	if (caddr->ctype != SILOFS_CTYPE_UBER) {
+	if (!caddr_isuber(caddr)) {
 		return -SILOFS_EINVAL;
 	}
 	caddr_assign(&env->uber_caddr, caddr);
 	return 0;
+}
+
+int silofs_env_uber_caddrs(const struct silofs_env *env,
+                           struct silofs_uber_caddrs *out_caddrs)
+{
+	silofs_caddr_assign(&out_caddrs->base, &env->uber_base_caddr);
+	silofs_caddr_assign(&out_caddrs->curr, &env->uber_caddr);
+	silofs_caddr_assign(&out_caddrs->fork, &env->uber_fork_caddr);
+	return caddr_isuber(&env->uber_caddr) ? 0 : -SILOFS_ENOENT;
 }
 
 int silofs_env_pack_caddr(const struct silofs_env *env,
@@ -807,15 +825,14 @@ static void sbi_mark_fossil(struct silofs_sb_info *sbi)
 	silofs_sbi_add_flags(sbi, SILOFS_SUPERF_FOSSIL);
 }
 
-static int
-env_do_forkfs(struct silofs_env *env, struct silofs_urefs *out_urefs)
+static int env_do_forkfs(struct silofs_env *env)
 {
 	struct silofs_sb_info *sbi_alt = NULL;
 	struct silofs_sb_info *sbi_new = NULL;
 	struct silofs_sb_info *sbi_cur = env->sbi;
 	int err;
 
-	err = silofs_env_uber_caddr(env, &out_urefs->ubase);
+	err = silofs_env_uber_caddr(env, &env->uber_base_caddr);
 	if (err) {
 		return err;
 	}
@@ -824,7 +841,7 @@ env_do_forkfs(struct silofs_env *env, struct silofs_urefs *out_urefs)
 	if (err) {
 		return err;
 	}
-	err = env_resave_uber(env, &out_urefs->ualt);
+	err = env_resave_uber(env, &env->uber_fork_caddr);
 	if (err) {
 		return err;
 	}
@@ -833,7 +850,7 @@ env_do_forkfs(struct silofs_env *env, struct silofs_urefs *out_urefs)
 	if (err) {
 		return err;
 	}
-	err = env_resave_uber(env, &out_urefs->unew);
+	err = env_resave_uber(env, &env->uber_caddr);
 	if (err) {
 		return err;
 	}
@@ -842,13 +859,13 @@ env_do_forkfs(struct silofs_env *env, struct silofs_urefs *out_urefs)
 	return 0;
 }
 
-int silofs_env_forkfs(struct silofs_env *env, struct silofs_urefs *out_urefs)
+int silofs_env_forkfs(struct silofs_env *env)
 {
 	struct silofs_sb_info *sbi = env->sbi;
 	int err;
 
 	sbi_incref(sbi);
-	err = env_do_forkfs(env, out_urefs);
+	err = env_do_forkfs(env);
 	sbi_decref(sbi);
 	return err;
 }

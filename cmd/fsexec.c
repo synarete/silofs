@@ -188,7 +188,7 @@ void cmd_format_fs(struct silofs_env *env, struct silofs_xref *out_xref)
 	err = silofs_format_fs(env);
 	cmd_require_ok(env, err, "failed to format fs");
 	err = silofs_get_fs_xref(env, out_xref);
-	cmd_require_ok(env, err, "post format fs failure");
+	cmd_require_ok(env, err, "post format-fs failure");
 }
 
 void cmd_close_fs(struct silofs_env *env)
@@ -215,12 +215,14 @@ void cmd_exec_fs(struct silofs_env *env)
 	cmd_require_ok(env, err, "failed to exec fs");
 }
 
-void cmd_fork_fs(struct silofs_env *env, struct silofs_xrefs *out_bas)
+void cmd_fork_fs(struct silofs_env *env, struct silofs_xrefs *out_xrefs)
 {
 	int err;
 
-	err = silofs_fork_fs(env, out_bas);
+	err = silofs_fork_fs(env);
 	cmd_require_ok(env, err, "failed to fork fs");
+	err = silofs_get_fs_xrefs(env, out_xrefs);
+	cmd_require_ok(env, err, "post fork-fs failure");
 }
 
 void cmd_unref_fs(struct silofs_env *env)

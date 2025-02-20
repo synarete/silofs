@@ -232,9 +232,9 @@ static void cmd_snap_do_ioctl_clone(struct cmd_snap_ctx *ctx)
 	int dfd = -1;
 	int err;
 
-	SILOFS_STATICASSERT_EQ(sizeof(ctx->xrefs.xref_new.s),
+	SILOFS_STATICASSERT_EQ(sizeof(ctx->xrefs.curr.s),
 	                       sizeof(cl->xref_new));
-	SILOFS_STATICASSERT_EQ(sizeof(ctx->xrefs.xref_alt.s),
+	SILOFS_STATICASSERT_EQ(sizeof(ctx->xrefs.fork.s),
 	                       sizeof(cl->xref_alt));
 
 	cmd_reset_ioc(ctx->ioc);
@@ -255,10 +255,8 @@ static void cmd_snap_do_ioctl_clone(struct cmd_snap_ctx *ctx)
 		        ctx->in_args.repodir_fsname);
 	}
 
-	memcpy(ctx->xrefs.xref_new.s, cl->xref_new,
-	       sizeof(ctx->xrefs.xref_new.s));
-	memcpy(ctx->xrefs.xref_alt.s, cl->xref_alt,
-	       sizeof(ctx->xrefs.xref_alt.s));
+	memcpy(ctx->xrefs.curr.s, cl->xref_new, sizeof(ctx->xrefs.curr.s));
+	memcpy(ctx->xrefs.fork.s, cl->xref_alt, sizeof(ctx->xrefs.fork.s));
 }
 
 static void cmd_snap_do_ioctl_syncfs(struct cmd_snap_ctx *ctx)
@@ -343,7 +341,7 @@ static void cmd_snap_save_snap_xref(struct cmd_snap_ctx *ctx)
 		.fsname = ctx->in_args.snapname,
 	};
 
-	memcpy(&boot_args.xref, &ctx->xrefs.xref_alt, sizeof(boot_args.xref));
+	memcpy(&boot_args.xref, &ctx->xrefs.fork, sizeof(boot_args.xref));
 	cmd_save_fs_xref(&boot_args);
 }
 
@@ -354,7 +352,7 @@ static void cmd_snap_save_orig_xref(struct cmd_snap_ctx *ctx)
 		.fsname = ctx->in_args.fsname,
 	};
 
-	memcpy(&boot_args.xref, &ctx->xrefs.xref_new, sizeof(boot_args.xref));
+	memcpy(&boot_args.xref, &ctx->xrefs.curr, sizeof(boot_args.xref));
 	cmd_save_fs_xref(&boot_args);
 }
 

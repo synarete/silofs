@@ -2032,14 +2032,16 @@ void ut_reload_fs(struct ut_env *ute)
 
 void ut_fork_fs(struct ut_env *ute)
 {
-	struct silofs_xrefs bas;
+	struct silofs_xrefs xrefs;
 	int err;
 
-	err = silofs_fork_fs(ute->env, &bas);
+	err = silofs_fork_fs(ute->env);
+	ut_expect_ok(err);
+	err = silofs_get_fs_xrefs(ute->env, &xrefs);
 	ut_expect_ok(err);
 
-	memcpy(&ute->uber_xref[0], &bas.xref_new, sizeof(ute->uber_xref[0]));
-	memcpy(&ute->uber_xref[1], &bas.xref_alt, sizeof(ute->uber_xref[1]));
+	memcpy(&ute->uber_xref[0], &xrefs.curr, sizeof(ute->uber_xref[0]));
+	memcpy(&ute->uber_xref[1], &xrefs.fork, sizeof(ute->uber_xref[1]));
 }
 
 void ut_archive_fs(struct ut_env *ute)

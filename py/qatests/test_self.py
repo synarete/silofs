@@ -31,7 +31,7 @@ def test_unitests(env: TestEnv) -> None:
 def test_funtests(env: TestEnv) -> None:
     ff_pre_dname = "pre-funtests"
     ff_dname = "funtests"
-    ff_snap_name = "funtests-snap"
+    ff_fork_name = "funtests-fork"
     env.exec_setup_fs(64, allow_xattr_acl=True, writeback_cache=False)
     tds = env.make_tds(64, ff_pre_dname, 2**22)
     tds.do_makedirs()
@@ -39,12 +39,12 @@ def test_funtests(env: TestEnv) -> None:
     ff_root = env.create_fstree(ff_dname)
     env.subcmd.funtests.version()
     env.subcmd.funtests.run(ff_root, rand=False)
-    env.exec_snap(ff_snap_name)
+    env.exec_fork(ff_fork_name)
     tds.do_read()
     env.subcmd.funtests.run(ff_root, rand=True)
     tds.do_read()
     tds.do_unlink()
-    env.exec_rmfs(ff_snap_name)
+    env.exec_rmfs(ff_fork_name)
     env.remove_fstree(ff_pre_dname)
     env.remove_fstree(ff_dname)
     env.exec_teardown_fs()
@@ -93,8 +93,8 @@ def test_funtests_mt(env: TestEnv) -> None:
     ff_pre_dname = "pre-funtests"
     ff_dname1 = "funtests1"
     ff_dname2 = "funtests2"
-    ff_snap_name1 = "funtests-snap1"
-    ff_snap_name2 = "funtests-snap2"
+    ff_fork_name1 = "funtests-fork1"
+    ff_fork_name2 = "funtests-fork2"
     env.exec_setup_fs(64, writeback_cache=False)
     tds = env.make_tds(32, ff_pre_dname, 2**20)
     tds.do_makedirs()
@@ -103,10 +103,10 @@ def test_funtests_mt(env: TestEnv) -> None:
     ff_root2 = env.create_fstree(ff_dname2)
     fu1 = env.executor.submit(_run_funtests, env, ff_root1)
     fu2 = env.executor.submit(_run_funtests, env, ff_root2)
-    env.exec_snap(ff_snap_name1)
+    env.exec_fork(ff_fork_name1)
     tds.do_read()
     env.suspend(2)
-    env.exec_snap(ff_snap_name2)
+    env.exec_fork(ff_fork_name2)
     tds.do_read()
     fu1.result()
     fu2.result()
@@ -114,8 +114,8 @@ def test_funtests_mt(env: TestEnv) -> None:
     env.remove_fstree(ff_pre_dname)
     env.remove_fstree(ff_dname1)
     env.remove_fstree(ff_dname2)
-    env.exec_rmfs(ff_snap_name1)
-    env.exec_rmfs(ff_snap_name2)
+    env.exec_rmfs(ff_fork_name1)
+    env.exec_rmfs(ff_fork_name2)
     env.exec_teardown_fs()
 
 

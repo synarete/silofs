@@ -4,10 +4,10 @@ from . import test_archive
 from . import test_basic
 from . import test_fillfs
 from . import test_fio
+from . import test_fork
 from . import test_fsck
 from . import test_io
 from . import test_self
-from . import test_snap
 from . import test_view
 from . import test_xprogs
 
@@ -28,13 +28,13 @@ TESTS = [
     test_io.test_async_io,
     test_view.test_view_minimal,
     test_view.test_view_data,
-    test_snap.test_snap_basic,
-    test_snap.test_snap_reload_twice,
-    test_snap.test_snap_reload_multi,
-    test_snap.test_snap_offline,
-    test_snap.test_snap_repeated,
+    test_fork.test_fork_basic,
+    test_fork.test_fork_reload_twice,
+    test_fork.test_fork_reload_multi,
+    test_fork.test_fork_offline,
+    test_fork.test_fork_repeated,
     test_fsck.test_fsck_basic,
-    test_fsck.test_fsck_snap,
+    test_fsck.test_fsck_fork,
     test_archive.test_archive_basic,
     test_archive.test_archive_twice,
     test_fillfs.test_fill_data,

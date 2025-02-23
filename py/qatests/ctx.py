@@ -227,15 +227,15 @@ class TestEnv:
         self.exec_umount()
         self.exec_rmfs()
 
-    def exec_snap(self, name: str) -> None:
-        self.subcmd.silofs.snap(name, self.mntpoint(), self._passwd())
+    def exec_fork(self, name: str) -> None:
+        self.subcmd.silofs.fork(name, self.mntpoint(), self._passwd())
         self._require_bref(name)
 
-    def exec_snap_offline(self, mainname: str, snapname: str) -> None:
-        self.subcmd.silofs.snap_offline(
-            snapname, self._repodir_name(mainname), self._passwd()
+    def exec_fork_offline(self, mainname: str, forkname: str) -> None:
+        self.subcmd.silofs.fork_offline(
+            forkname, self._repodir_name(mainname), self._passwd()
         )
-        self._require_bref(snapname)
+        self._require_bref(forkname)
 
     def exec_tune(self, path: Path, ftype: int = 2) -> None:
         self.subcmd.silofs.tune(path, ftype)

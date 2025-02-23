@@ -269,14 +269,14 @@ class SubcmdSilofs(SubcmdExec):
     def show_statx(self, pathname: Path) -> str:
         return self.execute_sub(["show", "statx", pathname])
 
-    def snap(self, name: str, pathname: Path, password: str) -> None:
-        args = ["snap", "--no-prompt", "-n", name, pathname]
+    def fork(self, name: str, pathname: Path, password: str) -> None:
+        args = ["fork", "--no-prompt", "-n", name, pathname]
         self.execute_sub(args, indat=password)
 
-    def snap_offline(
+    def fork_offline(
         self, name: str, repodir_name: Path, password: str
     ) -> None:
-        args = ["snap", "--no-prompt", "-n", name, "--offline", repodir_name]
+        args = ["fork", "--no-prompt", "-n", name, "--offline", repodir_name]
         self.execute_sub(args, indat=password)
 
     def tune(self, pathname: Path, ftype: int) -> None:

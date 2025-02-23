@@ -217,7 +217,7 @@ void cmd_remake_path2(const char *path, const char *suffix, char **out_head,
 
 void cmd_join_path(const char *dirpath, const char *name, char **out_path);
 
-void cmd_fork_daemon(pid_t *out_pid);
+void cmd_daemonize_process(pid_t *out_pid);
 
 void cmd_open_syslog(void);
 

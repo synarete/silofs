@@ -588,7 +588,7 @@ static void cmd_daemonize(void)
 	 */
 }
 
-void cmd_fork_daemon(pid_t *out_pid)
+void cmd_daemonize_process(pid_t *out_pid)
 {
 	pid_t pid;
 

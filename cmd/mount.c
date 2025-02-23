@@ -463,7 +463,7 @@ static void cmd_mount_start_daemon(struct cmd_mount_ctx *ctx)
 {
 	const pid_t pre_pid = getpid();
 
-	cmd_fork_daemon(&ctx->child_pid);
+	cmd_daemonize_process(&ctx->child_pid);
 	if (pre_pid == getpid()) {
 		/* I am parent: wait for active mount & exit */
 		cmd_mount_wait_child_pid(ctx);

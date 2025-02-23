@@ -353,7 +353,7 @@ int silofs_env_uber_caddr(const struct silofs_env *env,
                           struct silofs_caddr *out_caddr)
 {
 	caddr_assign(out_caddr, &env->uber_caddr);
-	return caddr_isuber(&env->uber_caddr) ? 0 : -SILOFS_ENOENT;
+	return caddr_isuber(out_caddr) ? 0 : -SILOFS_ENOENT;
 }
 
 int silofs_env_set_uber_caddr(struct silofs_env *env,
@@ -366,13 +366,18 @@ int silofs_env_set_uber_caddr(struct silofs_env *env,
 	return 0;
 }
 
-int silofs_env_uber_caddrs(const struct silofs_env *env,
-                           struct silofs_uber_caddrs *out_caddrs)
+int silofs_env_base_caddr(const struct silofs_env *env,
+                          struct silofs_caddr *out_caddr)
 {
-	silofs_caddr_assign(&out_caddrs->base, &env->uber_base_caddr);
-	silofs_caddr_assign(&out_caddrs->curr, &env->uber_caddr);
-	silofs_caddr_assign(&out_caddrs->fork, &env->uber_fork_caddr);
-	return caddr_isuber(&env->uber_caddr) ? 0 : -SILOFS_ENOENT;
+	caddr_assign(out_caddr, &env->uber_base_caddr);
+	return caddr_isuber(out_caddr) ? 0 : -SILOFS_ENOENT;
+}
+
+int silofs_env_fork_caddr(const struct silofs_env *env,
+                          struct silofs_caddr *out_caddr)
+{
+	caddr_assign(out_caddr, &env->uber_fork_caddr);
+	return caddr_isuber(out_caddr) ? 0 : -SILOFS_ENOENT;
 }
 
 int silofs_env_pack_caddr(const struct silofs_env *env,

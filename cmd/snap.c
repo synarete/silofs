@@ -46,7 +46,8 @@ struct cmd_snap_ctx {
 	struct silofs_args env_args;
 	struct silofs_env *env;
 	union silofs_ioc_u *ioc;
-	struct silofs_xrefs xrefs;
+	struct silofs_xref xref_curr;
+	struct silofs_xref xref_fork;
 };
 
 static struct cmd_snap_ctx *cmd_snap_ctx_p;
@@ -232,10 +233,8 @@ static void cmd_snap_do_ioctl_clone(struct cmd_snap_ctx *ctx)
 	int dfd = -1;
 	int err;
 
-	SILOFS_STATICASSERT_EQ(sizeof(ctx->xrefs.curr.s),
-	                       sizeof(cl->xref_new));
-	SILOFS_STATICASSERT_EQ(sizeof(ctx->xrefs.fork.s),
-	                       sizeof(cl->xref_alt));
+	SILOFS_STATICASSERT_EQ(sizeof(ctx->xref_curr.s), sizeof(cl->xref_new));
+	SILOFS_STATICASSERT_EQ(sizeof(ctx->xref_fork.s), sizeof(cl->xref_alt));
 
 	cmd_reset_ioc(ctx->ioc);
 	err = silofs_sys_opendir(dirpath, &dfd);
@@ -255,8 +254,8 @@ static void cmd_snap_do_ioctl_clone(struct cmd_snap_ctx *ctx)
 		        ctx->in_args.repodir_fsname);
 	}
 
-	memcpy(ctx->xrefs.curr.s, cl->xref_new, sizeof(ctx->xrefs.curr.s));
-	memcpy(ctx->xrefs.fork.s, cl->xref_alt, sizeof(ctx->xrefs.fork.s));
+	memcpy(ctx->xref_curr.s, cl->xref_new, sizeof(ctx->xref_curr.s));
+	memcpy(ctx->xref_fork.s, cl->xref_alt, sizeof(ctx->xref_fork.s));
 }
 
 static void cmd_snap_do_ioctl_syncfs(struct cmd_snap_ctx *ctx)
@@ -326,7 +325,7 @@ static void cmd_snap_open_fs(struct cmd_snap_ctx *ctx)
 
 static void cmd_snap_fork_fs(struct cmd_snap_ctx *ctx)
 {
-	cmd_fork_fs(ctx->env, &ctx->xrefs);
+	cmd_fork_fs(ctx->env, &ctx->xref_curr, &ctx->xref_fork);
 }
 
 static void cmd_snap_close_fs(struct cmd_snap_ctx *ctx)
@@ -334,25 +333,25 @@ static void cmd_snap_close_fs(struct cmd_snap_ctx *ctx)
 	cmd_close_fs(ctx->env);
 }
 
-static void cmd_snap_save_snap_xref(struct cmd_snap_ctx *ctx)
+static void cmd_snap_save_fork_xref(struct cmd_snap_ctx *ctx)
 {
 	struct silofs_boot_args boot_args = {
 		.repodir = ctx->in_args.repodir_real,
 		.fsname = ctx->in_args.snapname,
 	};
 
-	memcpy(&boot_args.xref, &ctx->xrefs.fork, sizeof(boot_args.xref));
+	memcpy(&boot_args.xref, &ctx->xref_fork, sizeof(boot_args.xref));
 	cmd_save_fs_xref(&boot_args);
 }
 
-static void cmd_snap_save_orig_xref(struct cmd_snap_ctx *ctx)
+static void cmd_snap_save_curr_xref(struct cmd_snap_ctx *ctx)
 {
 	struct silofs_boot_args boot_args = {
 		.repodir = ctx->in_args.repodir_real,
 		.fsname = ctx->in_args.fsname,
 	};
 
-	memcpy(&boot_args.xref, &ctx->xrefs.curr, sizeof(boot_args.xref));
+	memcpy(&boot_args.xref, &ctx->xref_curr, sizeof(boot_args.xref));
 	cmd_save_fs_xref(&boot_args);
 }
 
@@ -436,10 +435,10 @@ void cmd_execute_snap(void)
 	cmd_snap_close_repo(&ctx);
 
 	/* Save new snap bconf */
-	cmd_snap_save_snap_xref(&ctx);
+	cmd_snap_save_fork_xref(&ctx);
 
 	/* Re-save (overwrite) original bconf */
-	cmd_snap_save_orig_xref(&ctx);
+	cmd_snap_save_curr_xref(&ctx);
 
 	/* Delete environment */
 	cmd_snap_destroy_env(&ctx);

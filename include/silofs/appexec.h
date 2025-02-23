@@ -61,10 +61,13 @@ void silofs_get_args(const struct silofs_env *env,
 
 int silofs_get_fs_xref(struct silofs_env *env, struct silofs_xref *out_xref);
 
-int silofs_set_fs_xref(struct silofs_env *env, const struct silofs_xref *xref);
+int silofs_get_fs_base_xref(struct silofs_env  *env,
+                            struct silofs_xref *out_xref);
 
-int silofs_get_fs_xrefs(struct silofs_env   *env,
-                        struct silofs_xrefs *out_xrefs);
+int silofs_get_fs_fork_xref(struct silofs_env  *env,
+                            struct silofs_xref *out_xref);
+
+int silofs_set_fs_xref(struct silofs_env *env, const struct silofs_xref *xref);
 
 int silofs_get_ar_xref(struct silofs_env *env, struct silofs_xref *out_xref);
 

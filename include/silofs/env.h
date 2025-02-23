@@ -132,8 +132,11 @@ int silofs_env_uber_caddr(const struct silofs_env *env,
 int silofs_env_set_uber_caddr(struct silofs_env         *env,
                               const struct silofs_caddr *caddr);
 
-int silofs_env_uber_caddrs(const struct silofs_env   *env,
-                           struct silofs_uber_caddrs *out_caddrs);
+int silofs_env_base_caddr(const struct silofs_env *env,
+                          struct silofs_caddr     *out_caddr);
+
+int silofs_env_fork_caddr(const struct silofs_env *env,
+                          struct silofs_caddr     *out_caddr);
 
 int silofs_env_pack_caddr(const struct silofs_env *env,
                           struct silofs_caddr     *out_caddr);

@@ -976,7 +976,7 @@ static int exec_pack_fs(struct silofs_env *env)
 	if (err) {
 		return err;
 	}
-	err = silofs_fs_pack(&task);
+	err = silofs_exec_archive(&task);
 	return term_task(&task, err);
 }
 
@@ -1014,7 +1014,7 @@ static int exec_unpack_fs(struct silofs_env *env)
 	if (err) {
 		return err;
 	}
-	err = silofs_fs_unpack(&task);
+	err = silofs_exec_restore(&task);
 	return term_task(&task, err);
 }
 
@@ -1154,7 +1154,7 @@ static int check_endianess(void)
 	if (err) {
 		return err;
 	}
-	err = check_endianess64(SILOFS_PAR_INDEX_MAGIC, "%silofs%");
+	err = check_endianess64(SILOFS_AR_INDEX_MAGIC, "%silofs%");
 	if (err) {
 		return err;
 	}

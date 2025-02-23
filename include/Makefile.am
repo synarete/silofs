@@ -75,7 +75,6 @@ nobase_include_HEADERS += silofs/mntsvc.h
 nobase_include_HEADERS += silofs/namei.h
 nobase_include_HEADERS += silofs/opexec.h
 nobase_include_HEADERS += silofs/opcall.h
-nobase_include_HEADERS += silofs/pack.h
 nobase_include_HEADERS += silofs/pcache.h
 nobase_include_HEADERS += silofs/pnodes.h
 nobase_include_HEADERS += silofs/pvlogs.h

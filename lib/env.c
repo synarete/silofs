@@ -877,8 +877,8 @@ int silofs_env_forkfs(struct silofs_env *env)
 
 static int check_par_index_size(ssize_t sz)
 {
-	if ((sz < SILOFS_PAR_INDEX_SIZE_MIN) ||
-	    (sz > SILOFS_PAR_INDEX_SIZE_MAX)) {
+	if ((sz < SILOFS_AR_INDEX_SIZE_MIN) ||
+	    (sz > SILOFS_AR_INDEX_SIZE_MAX)) {
 		return -SILOFS_EBADPACK;
 	}
 	return 0;

@@ -36,7 +36,7 @@
 #define SILOFS_UBER_MAGIC (0x4053464F4C495340L)
 
 /* pack-index header magic-signature (ASCII: "%silofs%") */
-#define SILOFS_PAR_INDEX_MAGIC (0x2573666F6C697325L)
+#define SILOFS_AR_INDEX_MAGIC (0x2573666F6C697325L)
 
 /* super-block special magic-signature (ASCII: "@silofs@") */
 #define SILOFS_SUPER_MAGIC (0x4073666F6C697340L)
@@ -1004,20 +1004,20 @@ struct silofs_btree_node {
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 /* minimal pack-archive index total size in bytes */
-#define SILOFS_PAR_INDEX_SIZE_MIN SILOFS_LBK_SIZE
+#define SILOFS_AR_INDEX_SIZE_MIN SILOFS_LBK_SIZE
 
 /* maximal pack-archive index total size in bytes */
-#define SILOFS_PAR_INDEX_SIZE_MAX (256 * SILOFS_MEGA)
+#define SILOFS_AR_INDEX_SIZE_MAX (256 * SILOFS_MEGA)
 
-/* pack-archive descriptor */
-struct silofs_par_desc256b {
+/* archive descriptor */
+struct silofs_ar_desc256b {
 	struct silofs_caddr64b pd_caddr;
 	struct silofs_laddr48b pd_laddr;
 	uint8_t                pd_reserved[144];
 } silofs_attr_aligned64;
 
 /* pac-archive header */
-struct silofs_par_hdr1k {
+struct silofs_ar_hdr1k {
 	uint64_t ph_magic;
 	uint32_t ph_version;
 	uint32_t ph_flags;

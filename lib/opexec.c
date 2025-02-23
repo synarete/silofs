@@ -1679,5 +1679,3 @@ int silofs_exec_unrefs(struct silofs_task *task)
 out:
 	return op_finish(task, err);
 }
-
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

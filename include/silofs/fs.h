@@ -60,7 +60,6 @@
 #include <silofs/opcall.h>
 #include <silofs/opexec.h>
 #include <silofs/mntsvc.h>
-#include <silofs/pack.h>
 
 #ifdef SILOFS_USE_PRIVATE
 #include <silofs/fs-private.h>

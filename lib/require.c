@@ -117,7 +117,7 @@ static void require_persistent_types_nk(void)
 	REQUIRE_SIZEOF_1K(struct silofs_data_block1);
 	REQUIRE_SIZEOF_4K(struct silofs_data_block4);
 	REQUIRE_SIZEOF_64K(struct silofs_data_block64);
-	REQUIRE_SIZEOF_1K(struct silofs_par_hdr1k);
+	REQUIRE_SIZEOF_1K(struct silofs_ar_hdr1k);
 }
 
 static void require_persistent_types_size1(void)
@@ -130,7 +130,7 @@ static void require_persistent_types_size1(void)
 	REQUIRE_SIZEOF(struct silofs_caddr64b, 64);
 	REQUIRE_SIZEOF(struct silofs_chkpt_node, SILOFS_PSEG_CHKPT_SIZE);
 	REQUIRE_SIZEOF(struct silofs_btree_node, SILOFS_BTREE_NODE_SIZE);
-	REQUIRE_SIZEOF(struct silofs_par_desc256b, 256);
+	REQUIRE_SIZEOF(struct silofs_ar_desc256b, 256);
 }
 
 static void require_persistent_types_size2(void)

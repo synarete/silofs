@@ -162,4 +162,8 @@ int silofs_exec_unrefs(struct silofs_task *task);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+int silofs_exec_archive(struct silofs_task *task);
+
+int silofs_exec_restore(struct silofs_task *task);
+
 #endif /* SILOFS_OPEXEC_H_ */

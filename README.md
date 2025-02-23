@@ -114,7 +114,7 @@ structure called *repository*. There is no limit to the number of
 repositories a user may create, or the number of distinct file-system
 which are co-located within the same repository, thou a good practice
 would be to define a single file-system (with all its associated
-snapshots) within a single repository. In order to setup a new silofs
+forks) within a single repository. In order to setup a new silofs
 repository over an empty directory, use the `silofs init` command:
 
 ```console
@@ -210,12 +210,12 @@ $ silofs lsmnt
 $ silofs umount /path/to/mntdir
 ```
 
-### Snapshot
+### Forks
 
-A silofs snapshot captures a complete state of the file-system at a
-particular point in time, and fossilize it. There are two types of
-snapshot operations: *online* and *offline*. The *online* mode operates
-on a locally mounted silofs file-system (using dedicated ioctl), while
+A silofs fork (also known as clone) captures a complete state of the
+file-system at a particular point in time. There are two types of fork
+operations: *online* and *offline*. The *online* mode operates on a
+locally mounted silofs file-system (using dedicated ioctl), while
 the *offline* mode manipulates the repository blobs directly. In both
 cases, upon successful completion, an identical file-system is formed
 within the same repository, but with a different name. This newly
@@ -223,9 +223,9 @@ created file-system shares the same blobs as the original file-system
 in read-only mode, and performs copy-on-write for every mutating
 operation.
 
-Creating an online snapshot requires a mounted `silofs` file-system, in
-read-write mode. Upon successful `silofs snap` a new boot configuration
-file with the snapshot name is created at the root of the repository:
+Creating an online fork requires a mounted `silofs` file-system, in
+read-write mode. Upon successful `silofs fork` a new boot configuration
+file with the fork's name is created at the root of the repository:
 
 ```console
 $ silofs mount /path/to/repo/myfs /path/to/mntdir
@@ -234,9 +234,9 @@ $ silofs lsmnt
 $ silofs show boot /path/to/mntdir
 /path/to/repo/myfs
 
-$ silofs snap --name=snap1 /path/to/mntdir
+$ silofs fork --name=fork1 /path/to/mntdir
 $ ls /path/to/repo
-myfs snap1
+myfs fork1
 ```
 
 Alternatively, the user may achieve the same result using *offline*
@@ -244,18 +244,18 @@ mode:
 
 ```console
 $ silofs umount /path/to/mntdir
-$ silofs snap --name=snap2 --offline /path/to/repo/myfs
+$ silofs fork --name=fork2 --offline /path/to/repo/myfs
 enter password: ********
 ...
 $ ls /path/to/repo
-myfs snap1 snap2
+myfs fork1 fork2
 ```
 
-In both bases, the newly created snapshot may be mounted as an ordinary
+In both bases, the newly created fork may be mounted as an ordinary
 silofs file-system:
 
 ```console
-$ silofs mount /path/to/repo/snap2 /path/to/mntdir
+$ silofs mount /path/to/repo/fork2 /path/to/mntdir
 $ silofs lsmnt
 /path/to/mntdir
 $ # read previously written file

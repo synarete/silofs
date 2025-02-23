@@ -32,7 +32,7 @@
 
 /* supported ioctl commands */
 #define SILOFS_IOC_QUERY  _IOWR('S', 1, struct silofs_ioc_query)
-#define SILOFS_IOC_CLONE  _IOWR('S', 2, struct silofs_ioc_clone)
+#define SILOFS_IOC_FORKFS _IOWR('S', 2, struct silofs_ioc_forkfs)
 #define SILOFS_IOC_SYNCFS _IOW('S', 3, struct silofs_ioc_syncfs)
 #define SILOFS_IOC_TUNE   _IOW('S', 4, struct silofs_ioc_tune)
 
@@ -104,11 +104,11 @@ struct silofs_ioc_query {
 	union silofs_query_u u;
 };
 
-struct silofs_ioc_clone {
+struct silofs_ioc_forkfs {
 	int8_t xref_base[SILOFS_XREFLEN_MAX + 1];
 	int8_t xref_new[SILOFS_XREFLEN_MAX + 1];
 	int8_t xref_alt[SILOFS_XREFLEN_MAX + 1];
-	int8_t pad[SILOFS_XREFLEN_MAX + 1];
+	int8_t reserved[SILOFS_XREFLEN_MAX + 1];
 };
 
 struct silofs_ioc_syncfs {
@@ -125,7 +125,7 @@ struct silofs_ioc_tune {
 union silofs_ioc_u {
 	uint8_t                  buf[SILOFS_IOC_SIZE_MAX];
 	struct silofs_ioc_query  query;
-	struct silofs_ioc_clone  clone;
+	struct silofs_ioc_forkfs forkfs;
 	struct silofs_ioc_syncfs syncfs;
 	struct silofs_ioc_tune   tune;
 };

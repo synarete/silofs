@@ -405,7 +405,7 @@ int silofs_call_ioctl(struct silofs_task *task, struct silofs_call_args *args)
 	case SILOFS_IOC_QUERY:
 		ret = call_ioctl_query(task, args);
 		break;
-	case SILOFS_IOC_CLONE:
+	case SILOFS_IOC_FORKFS:
 		ret = call_ioctl_clone(task, args);
 		break;
 	case SILOFS_IOC_SYNCFS:

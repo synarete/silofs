@@ -71,7 +71,7 @@ _silofs_show() {
   fi
 }
 
-_silofs_snap() {
+_silofs_fork() {
   local cur prev words cword
   _init_completion || return
 
@@ -175,8 +175,8 @@ _silofs_subcmd() {
     "show")
       _silofs_show
       ;;
-    "snap")
-      _silofs_snap
+    "fork")
+      _silofs_fork
       ;;
     "sync")
       _silofs_sync
@@ -213,7 +213,7 @@ _silofs_main() {
     COMPREPLY+=( $(compgen -W '-v --version -h --help' -- "$cur") )
   else
     COMPREPLY+=( $(compgen -W 'init mkfs mount umount ' -- "$cur") )
-    COMPREPLY+=( $(compgen -W 'lsmnt show snap sync ' -- "$cur") )
+    COMPREPLY+=( $(compgen -W 'lsmnt show fork sync ' -- "$cur") )
     COMPREPLY+=( $(compgen -W 'tune rmfs prune fsck ' -- "$cur") )
     COMPREPLY+=( $(compgen -W 'view archive restore ' -- "$cur") )
   fi

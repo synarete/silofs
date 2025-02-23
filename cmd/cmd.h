@@ -101,7 +101,7 @@ void cmd_execute_umount(void);
 
 void cmd_execute_show(void);
 
-void cmd_execute_snap(void);
+void cmd_execute_fork(void);
 
 void cmd_execute_sync(void);
 

@@ -2883,7 +2883,7 @@ static int do_ioc_clone(const struct silofs_fuseq_cmd_ctx *fcc)
 	union silofs_ioc_u ioc_u;
 	const struct silofs_uber_caddrs *caddrs = &fcc->args->out.clone.caddrs;
 	void *buf_out = fcc->fqd->fqd_outb->u.iob.b;
-	struct silofs_ioc_clone *cl_out = &ioc_u.clone;
+	struct silofs_ioc_forkfs *cl_out = &ioc_u.forkfs;
 	const size_t bsz_in_min = 1;
 	const size_t bsz_in_max = sizeof(*cl_out);
 	const size_t bsz_out_min = sizeof(*cl_out);
@@ -2904,7 +2904,7 @@ static int do_ioc_clone(const struct silofs_fuseq_cmd_ctx *fcc)
 		err = -SILOFS_EINVAL;
 		goto out;
 	}
-	fcc->args->ioc_cmd = SILOFS_IOC_CLONE;
+	fcc->args->ioc_cmd = SILOFS_IOC_FORKFS;
 	fcc->args->in.clone.ino = fcc->ino;
 	fcc->args->in.clone.flags = 0;
 	err = do_exec_op(fcc);
@@ -3028,7 +3028,7 @@ static int do_ioctl(const struct silofs_fuseq_cmd_ctx *fcc)
 	case SILOFS_IOC_QUERY:
 		ret = do_ioc_query(fcc);
 		break;
-	case SILOFS_IOC_CLONE:
+	case SILOFS_IOC_FORKFS:
 		ret = do_ioc_clone(fcc);
 		break;
 	case SILOFS_IOC_SYNCFS:
@@ -3240,7 +3240,8 @@ static bool fqd_has_exclusive_cmd(const struct silofs_fuseq_dispatcher *fqd)
 {
 	const uint64_t ioc_cmd = fqd_in_ioctl_cmd(fqd);
 
-	return (ioc_cmd == SILOFS_IOC_CLONE) || (ioc_cmd == SILOFS_IOC_SYNCFS);
+	return (ioc_cmd == SILOFS_IOC_FORKFS) ||
+	       (ioc_cmd == SILOFS_IOC_SYNCFS);
 }
 
 static int

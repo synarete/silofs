@@ -194,7 +194,7 @@ static void cmd_fsck_close_fs(struct cmd_fsck_ctx *ctx)
 
 static void cmd_fsck_execute(struct cmd_fsck_ctx *ctx)
 {
-	cmd_inspect_fs(ctx->env, NULL, NULL);
+	cmd_inspect_fs(ctx->env, false);
 }
 
 static void cmd_fsck_close_repo(struct cmd_fsck_ctx *ctx)

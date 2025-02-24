@@ -139,8 +139,8 @@ int silofs_do_syncfs(struct silofs_task *task, struct silofs_inode_info *ii,
 
 int silofs_do_maintain(struct silofs_task *task, int flags);
 
-int silofs_do_inspect(struct silofs_task *task, silofs_visit_laddr_fn cb,
-                      void *user_ctx);
+int silofs_do_walkfs(struct silofs_task *task, silofs_visit_laddr_fn cb,
+                     void *user_ctx);
 
 int silofs_do_unrefs(struct silofs_task *task);
 

@@ -236,12 +236,11 @@ void cmd_unref_fs(struct silofs_env *env)
 	cmd_require_ok(env, err, "failed to unref fs");
 }
 
-void cmd_inspect_fs(struct silofs_env *env, silofs_visit_laddr_fn cb,
-                    void *user_ctx)
+void cmd_inspect_fs(struct silofs_env *env, bool view)
 {
 	int err;
 
-	err = silofs_inspect_fs(env, cb, user_ctx);
+	err = silofs_inspect_fs(env, view);
 	cmd_require_ok(env, err, "inspect-fs error");
 }
 

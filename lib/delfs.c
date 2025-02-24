@@ -243,13 +243,13 @@ static int delfc_remove_super(const struct silofs_delfs_ctx *delf_ctx)
 	return delfc_try_remove_lseg_of(delf_ctx, lsid);
 }
 
-int silofs_walk_unref_fs(struct silofs_task *task, struct silofs_sb_info *sbi)
+int silofs_unrefs_at(struct silofs_task *task, struct silofs_sb_info *sbi)
 {
 	struct silofs_delfs_ctx delf_ctx;
 	int err;
 
 	delfc_init(&delf_ctx, sbi);
-	err = silofs_walk_space_tree(task, sbi, &delf_ctx.vis);
+	err = silofs_visit_sptree(task, sbi, &delf_ctx.vis);
 	if (!err) {
 		err = delfc_remove_super(&delf_ctx);
 	}

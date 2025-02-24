@@ -50,16 +50,14 @@ struct silofs_visitor {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_walk_space_tree(struct silofs_task    *task,
-                           struct silofs_sb_info *sbi,
-                           struct silofs_visitor *vis);
+int silofs_visit_sptree(struct silofs_task *task, struct silofs_sb_info *sbi,
+                        struct silofs_visitor *vis);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_walk_inspect_fs(struct silofs_task    *task,
-                           struct silofs_sb_info *sbi,
-                           silofs_visit_laddr_fn cb, void *user_ctx);
+int silofs_walkfs_at(struct silofs_task *task, struct silofs_sb_info *sbi,
+                     silofs_visit_laddr_fn cb, void *user_ctx);
 
-int silofs_walk_unref_fs(struct silofs_task *task, struct silofs_sb_info *sbi);
+int silofs_unrefs_at(struct silofs_task *task, struct silofs_sb_info *sbi);
 
 #endif /* SILOFS_WALK_H_ */

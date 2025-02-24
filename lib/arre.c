@@ -954,7 +954,7 @@ static int arc_visit_laddr_cb(void *ctx, const struct silofs_laddr *laddr)
 
 static int arc_export_fs(struct silofs_ar_ctx *ar_ctx)
 {
-	return silofs_exec_inspect(ar_ctx->task, arc_visit_laddr_cb, ar_ctx);
+	return silofs_exec_walkfs(ar_ctx->task, arc_visit_laddr_cb, ar_ctx);
 }
 
 static int

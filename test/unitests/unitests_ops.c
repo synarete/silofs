@@ -1996,7 +1996,7 @@ void ut_inspect_fs(struct ut_env *ute)
 {
 	int err;
 
-	err = silofs_inspect_fs(ute->env, NULL, NULL);
+	err = silofs_inspect_fs(ute->env, false);
 	ut_expect_ok(err);
 }
 

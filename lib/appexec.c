@@ -952,17 +952,27 @@ static int exec_inspect_fs(struct silofs_env *env, silofs_visit_laddr_fn cb,
 	if (err) {
 		return err;
 	}
-	err = silofs_exec_inspect(&task, cb, user_ctx);
+	err = silofs_exec_walkfs(&task, cb, user_ctx);
 	return term_task(&task, err);
 }
 
-int silofs_inspect_fs(struct silofs_env *env, silofs_visit_laddr_fn cb,
-                      void *user_ctx)
+static int inspect_view(void *ctx, const struct silofs_laddr *laddr)
 {
+	struct silofs_strbuf sbuf;
+
+	silofs_laddr_to_ascii(laddr, &sbuf);
+	silofs_log_info("%s", sbuf.str);
+	silofs_unused(ctx);
+	return 0;
+}
+
+int silofs_inspect_fs(struct silofs_env *env, bool view)
+{
+	silofs_visit_laddr_fn cb = view ? inspect_view : NULL;
 	int err;
 
 	silofs_env_lock(env);
-	err = exec_inspect_fs(env, cb, user_ctx);
+	err = exec_inspect_fs(env, cb, NULL);
 	silofs_env_unlock(env);
 	return err;
 }

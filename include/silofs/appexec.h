@@ -96,8 +96,7 @@ int silofs_sync_fs(struct silofs_env *env, bool drop);
 void silofs_stat_fs(const struct silofs_env   *env,
                     struct silofs_cache_stats *cst);
 
-int silofs_inspect_fs(struct silofs_env *env, silofs_visit_laddr_fn cb,
-                      void *user_ctx);
+int silofs_inspect_fs(struct silofs_env *env, bool show);
 
 int silofs_archive_fs(struct silofs_env *env);
 

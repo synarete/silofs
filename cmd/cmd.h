@@ -291,8 +291,7 @@ void cmd_fork_fs(struct silofs_env *env, struct silofs_xref *out_curr_xrefs,
 
 void cmd_unref_fs(struct silofs_env *env);
 
-void cmd_inspect_fs(struct silofs_env *env, silofs_visit_laddr_fn cb,
-                    void *user_ctx);
+void cmd_inspect_fs(struct silofs_env *env, bool view);
 
 void cmd_archive_fs(struct silofs_env *env, struct silofs_xref *out_xref);
 

@@ -209,27 +209,9 @@ static void cmd_view_close_fs(struct cmd_view_ctx *ctx)
 	cmd_close_fs(ctx->env);
 }
 
-static void cmd_view_show_laddr(const struct cmd_view_ctx *ctx,
-                                const struct silofs_laddr *laddr)
-{
-	struct silofs_strbuf sbuf;
-	FILE *fp = ctx->out_fp;
-
-	silofs_laddr_to_ascii(laddr, &sbuf);
-	fputs(sbuf.str, fp);
-	fputs("\n", fp);
-	fflush(fp);
-}
-
-static int cmd_view_cb(void *user_ctx, const struct silofs_laddr *laddr)
-{
-	cmd_view_show_laddr(user_ctx, laddr);
-	return 0;
-}
-
 static void cmd_view_execute(struct cmd_view_ctx *ctx)
 {
-	cmd_inspect_fs(ctx->env, cmd_view_cb, ctx);
+	cmd_inspect_fs(ctx->env, true);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -274,7 +256,7 @@ void cmd_execute_view(void)
 	/* Open repository */
 	cmd_view_open_repo(&ctx);
 
-	/* Require valid boot-record */
+	/* Require valid uber-record */
 	cmd_view_sense_fs(&ctx);
 
 	/* Open file-system */

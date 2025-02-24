@@ -15,10 +15,21 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/fs.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mount.h>
+#include "repo.h"
+#include "uber.h"
+#include "lnodes.h"
+#include "lcache.h"
+#include "encdec.h"
+#include "task.h"
+#include "super.h"
+#include "inode.h"
+#include "env.h"
+#include "spmaps.h"
+#include "ustage.h"
+#include "alias.h"
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

@@ -19,6 +19,13 @@
 
 #include <sys/stat.h>
 #include <sys/statvfs.h>
+#include <silofs/ioctls.h>
+
+struct silofs_task;
+struct silofs_readdir_ctx;
+struct silofs_rwiter_ctx;
+struct silofs_listxattr_ctx;
+struct silofs_laddr_visitor;
 
 int silofs_exec_forget(struct silofs_task *task, ino_t ino, size_t nlookup);
 
@@ -155,8 +162,8 @@ int silofs_exec_rdwr_post(const struct silofs_task *task, int wr_mode,
 
 int silofs_exec_maintain(struct silofs_task *task, int flags);
 
-int silofs_exec_walkfs(struct silofs_task *task, silofs_visit_laddr_fn cb,
-                       void *user_ctx);
+int silofs_exec_walkfs(struct silofs_task                *task,
+                       const struct silofs_laddr_visitor *lvis);
 
 int silofs_exec_unrefs(struct silofs_task *task);
 

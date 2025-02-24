@@ -16,7 +16,12 @@
  */
 #include <silofs/configs.h>
 #include <silofs/infra.h>
-#include <silofs/fs.h>
+#include "uber.h"
+#include "lnodes.h"
+#include "task.h"
+#include "inode.h"
+#include "env.h"
+#include "spxmap.h"
 
 /* single entry of free vspace */
 struct silofs_spa_entry {

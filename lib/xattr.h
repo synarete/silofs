@@ -19,7 +19,9 @@
 
 #include <silofs/infra.h>
 #include <silofs/str.h>
-#include <silofs/task.h>
+
+struct silofs_task;
+struct silofs_namestr;
 
 /* call-back context for list extended-attributes operations */
 struct silofs_listxattr_ctx;

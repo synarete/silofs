@@ -18,11 +18,11 @@
 #include <silofs/errors.h>
 #include <silofs/defs.h>
 #include <silofs/addr.h>
-#include <silofs/repo.h>
-#include <silofs/pvlogs.h>
-#include <silofs/pnodes.h>
-#include <silofs/pcache.h>
-#include <silofs/btree.h>
+#include "pvlogs.h"
+#include "repo.h"
+#include "pnodes.h"
+#include "pcache.h"
+#include "btree.h"
 
 struct silofs_btree_path {
 	struct silofs_btnode_info *bni[SILOFS_BTREE_HEIGHT_MAX];

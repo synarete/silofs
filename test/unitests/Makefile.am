@@ -5,7 +5,7 @@ AM_CFLAGS = $(WARN_CFLAGS)
 
 bin_PROGRAMS = silofs-unitests
 silofs_unitests_CPPFLAGS = $(NULL)
-silofs_unitests_CPPFLAGS += -I$(top_srcdir)/include
+silofs_unitests_CPPFLAGS += -I$(top_srcdir)/include -I$(top_srcdir)/lib
 silofs_unitests_CPPFLAGS += -DSILOFS_UNITEST=1
 silofs_unitests_CPPFLAGS += $(LIBGCRYPT_CFLAGS)
 silofs_unitests_LDFLAGS = $(NULL)

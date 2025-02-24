@@ -18,7 +18,6 @@
 #define SILOFS_FUSEQ_H_
 
 #include <silofs/infra.h>
-#include <silofs/opcall.h>
 
 /* fuse-queue machinery */
 struct silofs_fuseq_conn_info {

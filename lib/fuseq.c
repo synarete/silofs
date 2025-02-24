@@ -15,10 +15,6 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/infra.h>
-#include <silofs/ioctls.h>
-#include <silofs/fs.h>
-#include <silofs/fuseq.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>
@@ -33,6 +29,20 @@
 #include <errno.h>
 #include <limits.h>
 #include <time.h>
+#include <silofs/infra.h>
+#include <silofs/ioctls.h>
+#include <silofs/mntsvc.h>
+#include "uber.h"
+#include "lnodes.h"
+#include "task.h"
+#include "inode.h"
+#include "dir.h"
+#include "file.h"
+#include "xattr.h"
+#include "env.h"
+#include "opcall.h"
+#include "opexec.h"
+#include "fuseq.h"
 
 #if FUSE_KERNEL_VERSION != 7
 #error "wrong FUSE_KERNEL_VERSION"

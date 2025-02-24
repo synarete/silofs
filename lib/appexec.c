@@ -15,10 +15,34 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/fs.h>
-#include <silofs/fuseq.h>
 #include <silofs/appexec.h>
 #include <sys/resource.h>
+#include <sys/stat.h>
+#include <silofs/defs.h>
+#include <silofs/ioctls.h>
+#include "repo.h"
+#include "idsmap.h"
+#include "uber.h"
+#include "boot.h"
+#include "lnodes.h"
+#include "lcache.h"
+#include "uidgid.h"
+#include "task.h"
+#include "inode.h"
+#include "namei.h"
+#include "env.h"
+#include "dir.h"
+#include "file.h"
+#include "symlink.h"
+#include "xattr.h"
+#include "flush.h"
+#include "vstage.h"
+#include "claim.h"
+#include "opcall.h"
+#include "opexec.h"
+#include "fuseq.h"
+#include "walk.h"
+#include "alias.h"
 
 static void caddr_to_xref(const struct silofs_caddr *caddr, int status,
                           struct silofs_xref *out_xref)
@@ -942,8 +966,8 @@ int silofs_unref_fs(struct silofs_env *env)
 	return err;
 }
 
-static int exec_inspect_fs(struct silofs_env *env, silofs_visit_laddr_fn cb,
-                           void *user_ctx)
+static int exec_inspect_fs(struct silofs_env *env,
+                           const struct silofs_laddr_visitor *lvis)
 {
 	struct silofs_task task;
 	int err;
@@ -952,7 +976,7 @@ static int exec_inspect_fs(struct silofs_env *env, silofs_visit_laddr_fn cb,
 	if (err) {
 		return err;
 	}
-	err = silofs_exec_walkfs(&task, cb, user_ctx);
+	err = silofs_exec_walkfs(&task, lvis);
 	return term_task(&task, err);
 }
 
@@ -968,11 +992,14 @@ static int inspect_view(void *ctx, const struct silofs_laddr *laddr)
 
 int silofs_inspect_fs(struct silofs_env *env, bool view)
 {
-	silofs_visit_laddr_fn cb = view ? inspect_view : NULL;
+	const struct silofs_laddr_visitor lvis = {
+		.hook = view ? inspect_view : NULL,
+		.userp = NULL,
+	};
 	int err;
 
 	silofs_env_lock(env);
-	err = exec_inspect_fs(env, cb, NULL);
+	err = exec_inspect_fs(env, &lvis);
 	silofs_env_unlock(env);
 	return err;
 }

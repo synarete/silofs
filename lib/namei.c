@@ -15,7 +15,6 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/fs.h>
 #include <silofs/ioctls.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -26,6 +25,25 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <limits.h>
+#include "repo.h"
+#include "uber.h"
+#include "boot.h"
+#include "uidgid.h"
+#include "lnodes.h"
+#include "lcache.h"
+#include "task.h"
+#include "super.h"
+#include "inode.h"
+#include "dir.h"
+#include "file.h"
+#include "symlink.h"
+#include "xattr.h"
+#include "walk.h"
+#include "namei.h"
+#include "env.h"
+#include "vstage.h"
+#include "flush.h"
+#include "alias.h"
 
 static int check_ascii_fs_name(const struct silofs_strview *sv)
 {
@@ -2718,8 +2736,8 @@ int silofs_do_tune(struct silofs_task *task, struct silofs_inode_info *dir_ii,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_do_walkfs(struct silofs_task *task, silofs_visit_laddr_fn cb,
-                     void *user_ctx)
+int silofs_do_walkfs(struct silofs_task *task,
+                     const struct silofs_laddr_visitor *lvis)
 {
 	int err;
 
@@ -2727,7 +2745,7 @@ int silofs_do_walkfs(struct silofs_task *task, silofs_visit_laddr_fn cb,
 	if (err) {
 		return err;
 	}
-	err = silofs_walkfs_at(task, task_sbi(task), cb, user_ctx);
+	err = silofs_walkfs_at(task, task_sbi(task), lvis);
 	if (err) {
 		return err;
 	}

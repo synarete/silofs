@@ -26,6 +26,7 @@ struct silofs_spnode_info;
 struct silofs_spleaf_info;
 struct silofs_vnode_info;
 struct silofs_inode_info;
+struct silofs_inew_params;
 
 /* stage operation control flags */
 enum silofs_stg_mode {

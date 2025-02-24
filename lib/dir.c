@@ -15,10 +15,18 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/infra.h>
-#include <silofs/fs.h>
 #include <dirent.h>
 #include <errno.h>
+#include <silofs/infra.h>
+#include "uber.h"
+#include "lnodes.h"
+#include "task.h"
+#include "inode.h"
+#include "dir.h"
+#include "env.h"
+#include "namei.h"
+#include "vstage.h"
+#include "alias.h"
 
 enum silofs_dtree_consts {
 	DTREE_SHIFT = SILOFS_DIR_NODE_SHIFT,

@@ -16,7 +16,17 @@
  */
 #include <silofs/configs.h>
 #include <silofs/infra.h>
-#include <silofs/fs.h>
+#include <silofs/ioctls.h>
+#include "repo.h"
+#include "uber.h"
+#include "lnodes.h"
+#include "task.h"
+#include "super.h"
+#include "env.h"
+#include "spmaps.h"
+#include "vstage.h"
+#include "walk.h"
+#include "alias.h"
 
 struct silofs_delfs_ctx {
 	struct silofs_visitor vis;

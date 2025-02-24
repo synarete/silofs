@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_FS_PRIVATE_H_
-#define SILOFS_FS_PRIVATE_H_
+#ifndef SILOFS_ALIAS_H_
+#define SILOFS_ALIAS_H_
 
 #ifndef SILOFS_USE_PRIVATE
 #error "internal library header -- do not include!"
@@ -23,7 +23,6 @@
 
 #include <silofs/defs.h>
 #include <silofs/infra.h>
-#include <silofs/lnodes.h>
 
 #define task_sbi(t)    silofs_task_sbi(t)
 #define task_lcache(t) silofs_task_lcache(t)
@@ -232,4 +231,4 @@ silofs_sli_laddr(const struct silofs_spleaf_info *sli)
 	return silofs_uni_laddr(&sli->sl_uni);
 }
 
-#endif /* SILOFS_FS_PRIVATE_H_ */
+#endif /* SILOFS_ALIAS_H_ */

@@ -15,7 +15,14 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/fs.h>
+#include <stdlib.h>
+#include "idsmap.h"
+#include "uidgid.h"
+#include "uber.h"
+#include "lnodes.h"
+#include "task.h"
+#include "inode.h"
+#include "env.h"
 
 enum {
 	SILOFS_IDSMAP_HCAP = 509,

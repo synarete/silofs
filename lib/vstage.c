@@ -16,7 +16,21 @@
  */
 #include <silofs/configs.h>
 #include <silofs/infra.h>
-#include <silofs/fs.h>
+#include "repo.h"
+#include "uber.h"
+#include "lnodes.h"
+#include "lcache.h"
+#include "encdec.h"
+#include "task.h"
+#include "super.h"
+#include "inode.h"
+#include "env.h"
+#include "spmaps.h"
+#include "vstage.h"
+#include "ustage.h"
+#include "claim.h"
+#include "flush.h"
+#include "alias.h"
 
 struct silofs_vstage_ctx {
 	struct silofs_task *task;

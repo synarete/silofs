@@ -17,10 +17,12 @@
 #include <silofs/configs.h>
 #include <silofs/infra.h>
 #include <silofs/addr.h>
-#include <silofs/repo.h>
-#include <silofs/pnodes.h>
-#include <silofs/pcache.h>
-#include <silofs/bstore.h>
+#include "repo.h"
+#include "pvlogs.h"
+#include "pnodes.h"
+#include "pcache.h"
+#include "btree.h"
+#include "bstore.h"
 
 int silofs_bstore_init(struct silofs_bstore *bstore,
                        struct silofs_pcache *pcache, struct silofs_repo *repo)

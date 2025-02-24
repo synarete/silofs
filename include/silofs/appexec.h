@@ -18,9 +18,7 @@
 #define SILOFS_APPEXEC_H_
 
 #include <silofs/infra.h>
-#include <silofs/boot.h>
 #include <silofs/types.h>
-#include <silofs/walk.h>
 
 /* file-system's main control object */
 struct silofs_env;

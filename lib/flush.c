@@ -15,7 +15,17 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/fs.h>
+#include "uber.h"
+#include "lnodes.h"
+#include "lcache.h"
+#include "task.h"
+#include "super.h"
+#include "inode.h"
+#include "env.h"
+#include "ustage.h"
+#include "vstage.h"
+#include "flush.h"
+#include "alias.h"
 
 static bool lni_isunode(const struct silofs_lnode_info *lni)
 {

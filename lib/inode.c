@@ -15,7 +15,6 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/fs.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/sysmacros.h>
@@ -25,6 +24,20 @@
 #include <string.h>
 #include <stdbool.h>
 #include <limits.h>
+#include "uidgid.h"
+#include "uber.h"
+#include "lnodes.h"
+#include "task.h"
+#include "inode.h"
+#include "dir.h"
+#include "file.h"
+#include "walk.h"
+#include "namei.h"
+#include "xattr.h"
+#include "symlink.h"
+#include "env.h"
+#include "vstage.h"
+#include "alias.h"
 
 /* local functions forward declarations */
 static void ii_update_itimes(struct silofs_inode_info *ii,

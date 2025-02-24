@@ -16,7 +16,13 @@
  */
 #include <silofs/configs.h>
 #include <silofs/infra.h>
-#include <silofs/fs.h>
+#include "repo.h"
+#include "uber.h"
+#include "lnodes.h"
+#include "uidgid.h"
+#include "task.h"
+#include "inode.h"
+#include "env.h"
 
 static uint64_t uber1k_magic(const struct silofs_uber1k *uber1k)
 {

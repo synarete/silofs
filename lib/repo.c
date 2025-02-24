@@ -16,11 +16,11 @@
  */
 #include <silofs/configs.h>
 #include <silofs/infra.h>
-#include <silofs/repo.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/file.h>
 #include <fcntl.h>
+#include "repo.h"
 
 enum {
 	RCEK_PSID = 1,

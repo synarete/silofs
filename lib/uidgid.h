@@ -20,6 +20,21 @@
 #include <stdbool.h>
 #include <unistd.h>
 
+/* user-credentials */
+struct silofs_cred {
+	uid_t  uid;
+	gid_t  gid;
+	mode_t umask;
+};
+
+/* credential mapping (host/external to fs/internal) */
+struct silofs_creds {
+	struct silofs_cred host_cred;
+	struct silofs_cred fs_cred;
+};
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 /*
  * TODO-0043: Map uig/gid "nobody" to host values
  *

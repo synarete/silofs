@@ -15,8 +15,16 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/fs.h>
 #include <linux/fuse_kernel.h>
+#include "uber.h"
+#include "lnodes.h"
+#include "task.h"
+#include "inode.h"
+#include "walk.h"
+#include "namei.h"
+#include "env.h"
+#include "opcall.h"
+#include "opexec.h"
 
 int silofs_call_setattr(struct silofs_task *task,
                         struct silofs_call_args *args)

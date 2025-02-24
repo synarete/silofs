@@ -15,10 +15,22 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/fs.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mount.h>
+#include "repo.h"
+#include "pcache.h"
+#include "bstore.h"
+#include "uber.h"
+#include "boot.h"
+#include "lnodes.h"
+#include "lcache.h"
+#include "task.h"
+#include "super.h"
+#include "inode.h"
+#include "ustage.h"
+#include "env.h"
+#include "alias.h"
 
 static const struct silofs_lsid *lsid_of(const struct silofs_ulink *ulink)
 {

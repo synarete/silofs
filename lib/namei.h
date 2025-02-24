@@ -17,12 +17,13 @@
 #ifndef SILOFS_NAMEI_H_
 #define SILOFS_NAMEI_H_
 
-struct silofs_uber;
-struct silofs_sb_info;
+#include <silofs/ioctls.h>
+
 struct silofs_task;
+struct silofs_sb_info;
 struct silofs_ioc_query;
-struct silofs_ioc_iterfs;
 struct silofs_inew_params;
+struct silofs_laddr_visitor;
 
 /* name-string: a pair of string-view and (optional) 64-bits hash */
 struct silofs_namestr {
@@ -139,8 +140,8 @@ int silofs_do_syncfs(struct silofs_task *task, struct silofs_inode_info *ii,
 
 int silofs_do_maintain(struct silofs_task *task, int flags);
 
-int silofs_do_walkfs(struct silofs_task *task, silofs_visit_laddr_fn cb,
-                     void *user_ctx);
+int silofs_do_walkfs(struct silofs_task                *task,
+                     const struct silofs_laddr_visitor *lvis);
 
 int silofs_do_unrefs(struct silofs_task *task);
 

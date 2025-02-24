@@ -15,12 +15,19 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/infra.h>
-#include <silofs/fs.h>
 #include <sys/types.h>
 #include <sys/xattr.h>
 #include <linux/xattr.h>
 #include <limits.h>
+#include "uber.h"
+#include "lnodes.h"
+#include "task.h"
+#include "inode.h"
+#include "xattr.h"
+#include "namei.h"
+#include "env.h"
+#include "vstage.h"
+#include "alias.h"
 
 #define XATTR_DATA_MAX (SILOFS_NAME_MAX + 1 + SILOFS_XATTR_VALUE_MAX)
 

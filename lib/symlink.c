@@ -16,7 +16,16 @@
  */
 #include <silofs/configs.h>
 #include <silofs/infra.h>
-#include <silofs/fs.h>
+#include "uber.h"
+#include "lnodes.h"
+#include "task.h"
+#include "inode.h"
+#include "walk.h"
+#include "symlink.h"
+#include "namei.h"
+#include "env.h"
+#include "vstage.h"
+#include "alias.h"
 
 struct silofs_symval_desc {
 	struct silofs_strview head;

@@ -17,10 +17,13 @@
 #ifndef SILOFS_ENV_H_
 #define SILOFS_ENV_H_
 
+#include <iconv.h>
 #include <silofs/macros.h>
 #include <silofs/appexec.h>
-#include <silofs/boot.h>
-#include <iconv.h>
+#include <silofs/infra.h>
+#include <silofs/addr.h>
+#include <silofs/crypt.h>
+#include "uber.h"
 
 /* top-level operations counters/stats */
 struct silofs_env_opstat {

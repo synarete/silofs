@@ -17,6 +17,7 @@
 #ifndef SILOFS_INODE_H_
 #define SILOFS_INODE_H_
 
+#include <sys/stat.h>
 #include <unistd.h>
 
 struct silofs_task;

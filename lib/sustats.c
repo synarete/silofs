@@ -15,10 +15,17 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/infra.h>
-#include <silofs/fs.h>
 #include <sys/statvfs.h>
 #include <limits.h>
+#include <silofs/infra.h>
+#include <silofs/ioctls.h>
+#include "uber.h"
+#include "lnodes.h"
+#include "task.h"
+#include "super.h"
+#include "inode.h"
+#include "env.h"
+#include "alias.h"
 
 /* local functions */
 static ssize_t *

@@ -19,6 +19,7 @@
 
 #include <silofs/infra.h>
 #include <silofs/addr.h>
+#include "uidgid.h"
 
 #define SILOFS_SQENT_NREFS_MAX (32)
 
@@ -31,19 +32,6 @@ enum silofs_ctlf {
 	SILOFS_CTLF_OPSTART = SILOFS_BIT(5),
 	SILOFS_CTLF_INTERN  = SILOFS_BIT(6),
 	SILOFS_CTLF_IDLE    = SILOFS_BIT(7),
-};
-
-/* user-credentials */
-struct silofs_cred {
-	uid_t  uid;
-	gid_t  gid;
-	mode_t umask;
-};
-
-/* credential mapping (host/external to fs/internal) */
-struct silofs_creds {
-	struct silofs_cred host_cred;
-	struct silofs_cred fs_cred;
 };
 
 /* current file-system operation */

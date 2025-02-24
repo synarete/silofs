@@ -16,7 +16,16 @@
  */
 #include <silofs/configs.h>
 #include <silofs/infra.h>
-#include <silofs/fs.h>
+#include "uber.h"
+#include "lnodes.h"
+#include "task.h"
+#include "super.h"
+#include "inode.h"
+#include "env.h"
+#include "spmaps.h"
+#include "ustage.h"
+#include "walk.h"
+#include "alias.h"
 
 #define check_ok_or_bailout(err_)      \
 	do {                           \
@@ -913,13 +922,13 @@ static int inspc_walk_fs(struct silofs_inspect_ctx *insp_ctx)
 }
 
 int silofs_walkfs_at(struct silofs_task *task, struct silofs_sb_info *sbi,
-                     silofs_visit_laddr_fn cb, void *user_ctx)
+                     const struct silofs_laddr_visitor *lvis)
 {
 	struct silofs_alloc *alloc = task->t_env->base.alloc;
 	struct silofs_inspect_ctx *insp_ctx = NULL;
 	int ret;
 
-	insp_ctx = inspc_new(alloc, task, sbi, cb, user_ctx);
+	insp_ctx = inspc_new(alloc, task, sbi, lvis->hook, lvis->userp);
 	if (insp_ctx == NULL) {
 		return -SILOFS_ENOMEM;
 	}

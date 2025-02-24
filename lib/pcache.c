@@ -17,7 +17,15 @@
 #include <silofs/configs.h>
 #include <silofs/infra.h>
 #include <silofs/addr.h>
-#include <silofs/fs.h>
+#include "pnodes.h"
+#include "pcache.h"
+#include "uber.h"
+#include "lnodes.h"
+#include "task.h"
+#include "inode.h"
+#include "walk.h"
+#include "namei.h"
+#include "env.h"
 
 enum {
 	PCACHE_RETRY_MAX = 4,

@@ -27,6 +27,7 @@ struct silofs_spleaf_info;
 struct silofs_spmap_lmap;
 struct silofs_super_block;
 struct silofs_sb_info;
+struct silofs_query_spstats;
 
 int silofs_sb_check_version(const struct silofs_super_block *sb);
 

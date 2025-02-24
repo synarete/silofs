@@ -15,12 +15,18 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/addr.h>
-#include <silofs/fs.h>
 #include <linux/limits.h>
 #include <sys/types.h>
 #include <limits.h>
 #include <endian.h>
+#include <silofs/ioctls.h>
+#include <silofs/infra.h>
+#include <silofs/addr.h>
+#include "uber.h"
+#include "lnodes.h"
+#include "task.h"
+#include "inode.h"
+#include "env.h"
 
 #ifndef LINK_MAX
 #define LINK_MAX 127

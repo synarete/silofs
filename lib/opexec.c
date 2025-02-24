@@ -15,12 +15,28 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/fs.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>
 #include <fcntl.h>
 #include <time.h>
+#include "uidgid.h"
+#include "idsmap.h"
+#include "uber.h"
+#include "lnodes.h"
+#include "task.h"
+#include "inode.h"
+#include "dir.h"
+#include "file.h"
+#include "symlink.h"
+#include "xattr.h"
+#include "walk.h"
+#include "namei.h"
+#include "env.h"
+#include "flush.h"
+#include "vstage.h"
+#include "opexec.h"
+#include "alias.h"
 
 #define status_ok(err_) ((err_) == 0)
 
@@ -1641,8 +1657,8 @@ out:
 	return op_finish(task, err);
 }
 
-int silofs_exec_walkfs(struct silofs_task *task, silofs_visit_laddr_fn cb,
-                       void *user_ctx)
+int silofs_exec_walkfs(struct silofs_task *task,
+                       const struct silofs_laddr_visitor *lvis)
 {
 	int err;
 
@@ -1655,7 +1671,7 @@ int silofs_exec_walkfs(struct silofs_task *task, silofs_visit_laddr_fn cb,
 	err = op_map_creds(task);
 	ok_or_goto_out(err);
 
-	err = silofs_do_walkfs(task, cb, user_ctx);
+	err = silofs_do_walkfs(task, lvis);
 	ok_or_goto_out(err);
 out:
 	return op_finish(task, err);

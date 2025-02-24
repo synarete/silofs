@@ -16,7 +16,13 @@
  */
 #include <silofs/configs.h>
 #include <silofs/infra.h>
-#include <silofs/fs.h>
+#include "uber.h"
+#include "lnodes.h"
+#include "lcache.h"
+#include "task.h"
+#include "inode.h"
+#include "env.h"
+#include "alias.h"
 
 static void lcache_drop_uamap(struct silofs_lcache *lcache);
 static void lcache_evict_some(struct silofs_lcache *lcache);

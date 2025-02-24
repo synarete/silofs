@@ -48,6 +48,11 @@ struct silofs_visitor {
 	silofs_visit_fn post_hook;
 };
 
+struct silofs_laddr_visitor {
+	silofs_visit_laddr_fn hook;
+	void                 *userp;
+};
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_visit_sptree(struct silofs_task *task, struct silofs_sb_info *sbi,
@@ -56,7 +61,7 @@ int silofs_visit_sptree(struct silofs_task *task, struct silofs_sb_info *sbi,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_walkfs_at(struct silofs_task *task, struct silofs_sb_info *sbi,
-                     silofs_visit_laddr_fn cb, void *user_ctx);
+                     const struct silofs_laddr_visitor *lvis);
 
 int silofs_unrefs_at(struct silofs_task *task, struct silofs_sb_info *sbi);
 

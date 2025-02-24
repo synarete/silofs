@@ -19,10 +19,9 @@
 
 #include <silofs/infra.h>
 #include <silofs/addr.h>
-#include <silofs/repo.h>
-#include <silofs/pvlogs.h>
-#include <silofs/pcache.h>
-#include <silofs/btree.h>
+
+#include "pvlogs.h"
+#include "btree.h"
 
 /* blobs-storage control object */
 struct silofs_bstore {

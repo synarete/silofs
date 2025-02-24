@@ -15,11 +15,19 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/infra.h>
-#include <silofs/fs.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mount.h>
+#include <silofs/infra.h>
+#include "uber.h"
+#include "lnodes.h"
+#include "task.h"
+#include "super.h"
+#include "inode.h"
+#include "env.h"
+#include "vstage.h"
+#include "spmaps.h"
+#include "alias.h"
 
 static void tm64b_htox(struct silofs_tm64b *tm64, const struct tm *tm)
 {

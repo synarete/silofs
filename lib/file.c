@@ -16,25 +16,35 @@
  */
 #include <silofs/configs.h>
 #include <silofs/infra.h>
-#include <silofs/fs.h>
 #include <linux/falloc.h>
 #include <linux/fiemap.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <stdlib.h>
 #include <stdio.h>
 #include <limits.h>
+#include "uber.h"
+#include "lnodes.h"
+#include "lcache.h"
+#include "task.h"
+#include "super.h"
+#include "inode.h"
+#include "file.h"
+#include "env.h"
+#include "vstage.h"
+#include "claim.h"
+#include "flush.h"
+#include "alias.h"
 
 enum silofs_file_op {
-	OP_READ = 1 << 0,
-	OP_WRITE = 1 << 1,
-	OP_TRUNC = 1 << 2,
-	OP_FALLOC = 1 << 3,
-	OP_FIEMAP = 1 << 4,
-	OP_LSEEK = 1 << 5,
-	OP_COPY_RANGE = 1 << 6,
+	FILE_OP_READ = 1 << 0,
+	FILE_OP_WRITE = 1 << 1,
+	FILE_OP_TRUNC = 1 << 2,
+	FILE_OP_FALLOC = 1 << 3,
+	FILE_OP_FIEMAP = 1 << 4,
+	FILE_OP_LSEEK = 1 << 5,
+	FILE_OP_COPY_RANGE = 1 << 6,
 };
 
 struct silofs_file_ctx {
@@ -1297,25 +1307,25 @@ static int filc_check_file_io(const struct silofs_file_ctx *f_ctx)
 		return err;
 	}
 	err = filc_check_isopen(f_ctx);
-	if (err && (f_ctx->op_mask & ~OP_TRUNC)) {
+	if (err && (f_ctx->op_mask & ~FILE_OP_TRUNC)) {
 		return err;
 	}
 	err = filc_check_io_range(f_ctx);
 	if (err) {
 		return err;
 	}
-	if ((f_ctx->op_mask & OP_WRITE) && f_ctx->o_flags) {
+	if ((f_ctx->op_mask & FILE_OP_WRITE) && f_ctx->o_flags) {
 		if (!(f_ctx->o_flags & (O_RDWR | O_WRONLY))) {
 			return -SILOFS_EPERM;
 		}
 	}
-	if (f_ctx->op_mask & (OP_WRITE | OP_FALLOC)) {
+	if (f_ctx->op_mask & (FILE_OP_WRITE | FILE_OP_FALLOC)) {
 		err = filc_check_io_end(f_ctx);
 		if (err) {
 			return err;
 		}
 	}
-	if (f_ctx->op_mask & (OP_READ | OP_WRITE)) {
+	if (f_ctx->op_mask & (FILE_OP_READ | FILE_OP_WRITE)) {
 		if (f_ctx->len > SILOFS_IO_SIZE_MAX) {
 			return -SILOFS_EINVAL;
 		}
@@ -1323,13 +1333,13 @@ static int filc_check_file_io(const struct silofs_file_ctx *f_ctx)
 			return -SILOFS_EINVAL;
 		}
 	}
-	if (f_ctx->op_mask & OP_LSEEK) {
+	if (f_ctx->op_mask & FILE_OP_LSEEK) {
 		err = filc_check_seek_pos(f_ctx);
 		if (err) {
 			return err;
 		}
 	}
-	if (f_ctx->op_mask & OP_COPY_RANGE) {
+	if (f_ctx->op_mask & FILE_OP_COPY_RANGE) {
 		if (f_ctx->cp_flags != 0) {
 			return -SILOFS_EINVAL;
 		}
@@ -1370,9 +1380,9 @@ filc_update_post_io(const struct silofs_file_ctx *f_ctx, bool kill_suid_sgid)
 	const size_t len = filc_io_length(f_ctx);
 
 	silofs_ii_mkiattr(ii, &iattr);
-	if (f_ctx->op_mask & OP_READ) {
+	if (f_ctx->op_mask & FILE_OP_READ) {
 		iattr.ia_flags |= SILOFS_IATTR_ATIME | SILOFS_IATTR_LAZY;
-	} else if (f_ctx->op_mask & (OP_WRITE | OP_COPY_RANGE)) {
+	} else if (f_ctx->op_mask & (FILE_OP_WRITE | FILE_OP_COPY_RANGE)) {
 		iattr.ia_flags |= SILOFS_IATTR_SIZE | SILOFS_IATTR_SPAN;
 		iattr.ia_size = off_max(off, isz);
 		iattr.ia_span = off_max(off, isp);
@@ -1383,14 +1393,14 @@ filc_update_post_io(const struct silofs_file_ctx *f_ctx, bool kill_suid_sgid)
 				iattr.ia_flags |= SILOFS_IATTR_KILL_SGID;
 			}
 		}
-	} else if (f_ctx->op_mask & OP_FALLOC) {
+	} else if (f_ctx->op_mask & FILE_OP_FALLOC) {
 		iattr.ia_flags |= SILOFS_IATTR_MCTIME | SILOFS_IATTR_SPAN;
 		iattr.ia_span = off_max(end, isp);
 		if (!fl_mode_keep_size(f_ctx->fl_mode)) {
 			iattr.ia_flags |= SILOFS_IATTR_SIZE;
 			iattr.ia_size = off_max(end, isz);
 		}
-	} else if (f_ctx->op_mask & OP_TRUNC) {
+	} else if (f_ctx->op_mask & FILE_OP_TRUNC) {
 		iattr.ia_flags |= SILOFS_IATTR_SIZE | SILOFS_IATTR_SPAN;
 		iattr.ia_size = f_ctx->beg;
 		iattr.ia_span = f_ctx->beg;
@@ -1760,7 +1770,7 @@ static int filc_call_rw_actor(const struct silofs_file_ctx *f_ctx,
 		.iov_off = -1,
 		.iov_fd = -1,
 	};
-	int wr_mode = f_ctx->op_mask & OP_WRITE;
+	int wr_mode = f_ctx->op_mask & FILE_OP_WRITE;
 	int err;
 
 	filc_resolve_iovec(f_ctx, fli, &iovec);
@@ -2084,7 +2094,7 @@ static void filc_update_with_rw_iter(struct silofs_file_ctx *f_ctx,
 	f_ctx->len = rwi_ctx->len;
 	f_ctx->beg = rwi_ctx->off;
 	f_ctx->off = rwi_ctx->off;
-	if (f_ctx->op_mask & OP_READ) {
+	if (f_ctx->op_mask & FILE_OP_READ) {
 		f_ctx->end = off_min(end, isz);
 	} else {
 		f_ctx->end = end;
@@ -2111,7 +2121,7 @@ int silofs_do_read_iter(struct silofs_task *task, struct silofs_inode_info *ii,
 		.env = task->t_env,
 		.sbi = task_sbi(task),
 		.ii = ii,
-		.op_mask = OP_READ,
+		.op_mask = FILE_OP_READ,
 		.with_backref = 1,
 		.o_flags = o_flags,
 		.stg_mode = SILOFS_STG_CUR,
@@ -2142,7 +2152,7 @@ int silofs_do_read(struct silofs_task *task, struct silofs_inode_info *ii,
 		.env = task->t_env,
 		.sbi = task_sbi(task),
 		.ii = ii,
-		.op_mask = OP_READ,
+		.op_mask = FILE_OP_READ,
 		.with_backref = 0,
 		.o_flags = o_flags,
 		.stg_mode = SILOFS_STG_CUR,
@@ -2869,7 +2879,7 @@ int silofs_do_write_iter(struct silofs_task *task,
 		.env = task->t_env,
 		.sbi = task_sbi(task),
 		.ii = ii,
-		.op_mask = OP_WRITE,
+		.op_mask = FILE_OP_WRITE,
 		.with_backref = 1,
 		.o_flags = o_flags,
 		.stg_mode = SILOFS_STG_COW,
@@ -2901,7 +2911,7 @@ int silofs_do_write(struct silofs_task *task, struct silofs_inode_info *ii,
 		.env = task->t_env,
 		.sbi = task_sbi(task),
 		.ii = ii,
-		.op_mask = OP_WRITE,
+		.op_mask = FILE_OP_WRITE,
 		.with_backref = 0,
 		.o_flags = o_flags,
 		.stg_mode = SILOFS_STG_COW,
@@ -3463,7 +3473,7 @@ int silofs_do_truncate(struct silofs_task *task, struct silofs_inode_info *ii,
 		.beg = off,
 		.off = off,
 		.end = off_end(off, len),
-		.op_mask = OP_TRUNC,
+		.op_mask = FILE_OP_TRUNC,
 		.stg_mode = SILOFS_STG_COW,
 	};
 	int ret;
@@ -3577,7 +3587,7 @@ int silofs_do_lseek(struct silofs_task *task, struct silofs_inode_info *ii,
 		.beg = off,
 		.off = off,
 		.end = ii_size(ii),
-		.op_mask = OP_LSEEK,
+		.op_mask = FILE_OP_LSEEK,
 		.whence = whence,
 		.stg_mode = SILOFS_STG_CUR,
 	};
@@ -3841,7 +3851,7 @@ int silofs_do_fallocate(struct silofs_task *task, struct silofs_inode_info *ii,
 		.beg = off,
 		.off = off,
 		.end = off_end(off, (size_t)len),
-		.op_mask = OP_FALLOC,
+		.op_mask = FILE_OP_FALLOC,
 		.fl_mode = mode,
 		.stg_mode = SILOFS_STG_COW,
 	};
@@ -4032,7 +4042,7 @@ int silofs_do_fiemap(struct silofs_task *task, struct silofs_inode_info *ii,
 		.beg = off,
 		.off = off,
 		.end = ii_off_end(ii, off, len),
-		.op_mask = OP_FIEMAP,
+		.op_mask = FILE_OP_FIEMAP,
 		.fm = fm,
 		.fm_flags = (int)(fm->fm_flags),
 		.fm_stop = 0,
@@ -4586,7 +4596,7 @@ filc_lseek_data_pos(const struct silofs_file_ctx *f_ctx, loff_t *out_off)
 		.beg = f_ctx->beg,
 		.off = f_ctx->off,
 		.end = f_ctx->end,
-		.op_mask = OP_LSEEK,
+		.op_mask = FILE_OP_LSEEK,
 		.whence = SEEK_DATA,
 		.stg_mode = SILOFS_STG_CUR,
 	};
@@ -4688,7 +4698,7 @@ int silofs_do_copy_file_range(struct silofs_task *task,
 		.beg = off_in,
 		.off = off_in,
 		.end = ii_off_end(ii_in, off_in, len),
-		.op_mask = OP_COPY_RANGE,
+		.op_mask = FILE_OP_COPY_RANGE,
 		.cp_flags = flags,
 		.with_backref = 0,
 		.stg_mode = SILOFS_STG_CUR,
@@ -4702,7 +4712,7 @@ int silofs_do_copy_file_range(struct silofs_task *task,
 		.beg = off_out,
 		.off = off_out,
 		.end = off_end(off_out, len),
-		.op_mask = OP_COPY_RANGE,
+		.op_mask = FILE_OP_COPY_RANGE,
 		.cp_flags = flags,
 		.with_backref = 0,
 		.stg_mode = SILOFS_STG_COW,

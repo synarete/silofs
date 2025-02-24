@@ -16,9 +16,20 @@
  */
 #include <silofs/configs.h>
 #include <silofs/infra.h>
-#include <silofs/fs.h>
+#include <silofs/ioctls.h>
 #include <string.h>
 #include <limits.h>
+#include "uber.h"
+#include "boot.h"
+#include "lnodes.h"
+#include "task.h"
+#include "inode.h"
+#include "walk.h"
+#include "namei.h"
+#include "env.h"
+#include "vstage.h"
+#include "claim.h"
+#include "alias.h"
 
 void silofs_xref_reset(struct silofs_xref *xref)
 {

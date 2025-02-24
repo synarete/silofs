@@ -16,7 +16,12 @@
  */
 #include <silofs/configs.h>
 #include <silofs/infra.h>
-#include <silofs/fs.h>
+#include "uber.h"
+#include "lnodes.h"
+#include "encdec.h"
+#include "task.h"
+#include "env.h"
+#include "alias.h"
 
 static void resolve_ivkey_of(const struct silofs_env *env,
                              const struct silofs_laddr *laddr,

@@ -17,7 +17,7 @@
 #include <silofs/configs.h>
 #include <silofs/infra.h>
 #include <silofs/addr.h>
-#include <silofs/pnodes.h>
+#include "pnodes.h"
 
 static bool key_isvalid(uint64_t key)
 {

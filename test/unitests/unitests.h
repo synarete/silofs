@@ -18,8 +18,6 @@
 #define SILOFS_UNITESTS_H_
 
 #include <silofs/configs.h>
-#include <silofs/silofs.h>
-#include <silofs/fs.h>
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <sys/stat.h>
@@ -31,6 +29,16 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include <dirent.h>
+
+#include <silofs/silofs.h>
+#include "uber.h"
+#include "task.h"
+#include "inode.h"
+#include "dir.h"
+#include "file.h"
+#include "xattr.h"
+#include "opexec.h"
+#include "walk.h"
 
 #ifndef SILOFS_UNITEST
 #error "this header must not be included out-side of unitests"

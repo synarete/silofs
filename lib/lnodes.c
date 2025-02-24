@@ -16,8 +16,21 @@
  */
 #include <silofs/configs.h>
 #include <silofs/infra.h>
-#include <silofs/fs.h>
 #include <limits.h>
+#include "uber.h"
+#include "lnodes.h"
+#include "uidgid.h"
+#include "task.h"
+#include "super.h"
+#include "inode.h"
+#include "dir.h"
+#include "file.h"
+#include "walk.h"
+#include "xattr.h"
+#include "symlink.h"
+#include "env.h"
+#include "spmaps.h"
+#include "alias.h"
 
 enum {
 	SILOFS_UI_MAGIC = 0xCAFEBEB,

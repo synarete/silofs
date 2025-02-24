@@ -15,15 +15,20 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/infra.h>
-#include <silofs/fs.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/statfs.h>
 #include <sys/mount.h>
 #include <sys/socket.h>
 #include <fcntl.h>
+#include <stdio.h>
+#include <silofs/infra.h>
+#include <silofs/mntsvc.h>
 #include "knownfs.h"
+#include "lnodes.h"
+#include "task.h"
+#include "inode.h"
+#include "env.h"
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

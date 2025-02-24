@@ -15,8 +15,20 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/fs.h>
 #include <errno.h>
+#include <silofs/ioctls.h>
+#include "repo.h"
+#include "uber.h"
+#include "lnodes.h"
+#include "lcache.h"
+#include "task.h"
+#include "super.h"
+#include "env.h"
+#include "namei.h"
+#include "spmaps.h"
+#include "vstage.h"
+#include "claim.h"
+#include "alias.h"
 
 /* space-allocation context */
 struct silofs_spalloc_ctx {

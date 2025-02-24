@@ -15,10 +15,24 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/appexec.h>
-#include <silofs/fs.h>
-#include <silofs/fuseq.h>
 #include <sys/resource.h>
+#include <silofs/ioctls.h>
+#include "repo.h"
+#include "pnodes.h"
+#include "pcache.h"
+#include "bstore.h"
+#include "uidgid.h"
+#include "idsmap.h"
+#include "uber.h"
+#include "boot.h"
+#include "lnodes.h"
+#include "lcache.h"
+#include "inode.h"
+#include "task.h"
+#include "env.h"
+#include "opcall.h"
+#include "flush.h"
+#include "fuseq.h"
 
 /* env initialization-state flags */
 enum silofs_env_initf {

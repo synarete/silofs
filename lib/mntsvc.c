@@ -1140,28 +1140,36 @@ static int mntsrv_bind_abstract(struct silofs_mntsrv *msrv)
 {
 	struct silofs_sockaddr saddr;
 	struct silofs_socket *sock = &msrv->ms_lsock;
-	const char *sock_name = SILOFS_MNTSOCK_NAME;
+	const char *sockname = SILOFS_MNTSOCK_NAME;
 	int err;
 
-	silofs_sockaddr_abstract(&saddr, sock_name);
+	silofs_sockaddr_abstract(&saddr, sockname);
 	err = silofs_socket_bind(sock, &saddr);
 	if (err) {
 		return err;
 	}
-	log_info("bind-socket: @%s", sock_name);
+	log_info("bind-socket: @%s", sockname);
 	return 0;
+}
+
+static const char *mntsrv_runstatedir(const struct silofs_mntsrv *msrv)
+{
+	const char *statedir_args = msrv->ms_args.runstatedir;
+	const char *statedir_conf = SILOFS_RUNSTATEDIR;
+
+	return (statedir_args != NULL) ? statedir_args : statedir_conf;
 }
 
 static int
 mntsrv_make_unixaddr(const struct silofs_mntsrv *msrv, char *buf, size_t bsz)
 {
-	const char *base_path = msrv->ms_args.runstatedir;
-	const char *sock_name = SILOFS_MNTSOCK_NAME;
+	const char *statedir = mntsrv_runstatedir(msrv);
+	const char *sockname = SILOFS_MNTSOCK_NAME;
 	ssize_t len;
 
-	len = snprintf(buf, bsz, "%s/%s", base_path, sock_name);
+	len = snprintf(buf, bsz, "%s/%s", statedir, sockname);
 	if ((size_t)len >= bsz) {
-		log_err("invalid unix sock: %s/%s", base_path, sock_name);
+		log_err("invalid unix sock: %s/%s", statedir, sockname);
 		return -SILOFS_EINVAL;
 	}
 	return 0;

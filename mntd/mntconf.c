@@ -14,6 +14,11 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
+#include <sys/stat.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <limits.h>
+#include <silofs/silofs.h>
 #include "mountd.h"
 
 static void *zalloc(size_t nbytes)

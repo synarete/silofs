@@ -14,7 +14,38 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
+#define _GNU_SOURCE 1
+#include <sys/resource.h>
+#include <sys/capability.h>
+#include <sys/prctl.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <locale.h>
+#include <signal.h>
+#include <getopt.h>
 #include "mountd.h"
+#include <silofs/silofs.h>
+
+/* global context */
+struct mountd_args {
+	int argc;
+	char **argv;
+	char *mntpoint;
+	char *mntpoint_real;
+	char *confpath;
+	bool long_listing;
+	bool allow_coredump;
+	bool dumpable;
+};
+
+struct mountd_ctx {
+	struct mountd_args args;
+	struct silofs_ms_env *mse;
+	struct silofs_mntrules *mntrules;
+	struct silofs_log_params log_params;
+	int sig_halt;
+	int sig_fatal;
+};
 
 /* local functions */
 static void mountd_start(struct mountd_ctx *ctx);
@@ -165,7 +196,7 @@ static void mountd_require_cap_sys_admin(const struct mountd_ctx *ctx)
 static void mountd_setup_env(struct mountd_ctx *ctx)
 {
 	struct silofs_ms_args ms_args = {
-		.runstatedir = SILOFS_RUNSTATEDIR,
+		.runstatedir = NULL,
 		.use_abstract = true,
 	};
 	int err;

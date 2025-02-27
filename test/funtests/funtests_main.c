@@ -14,7 +14,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include "funtests.h"
+#define _GNU_SOURCE 1
 #include <unistd.h>
 #include <signal.h>
 #include <getopt.h>
@@ -22,6 +22,7 @@
 #include <errno.h>
 #include <locale.h>
 #include <stdio.h>
+#include "funtests.h"
 
 struct ft_global_settings {
 	struct silofs_log_params log_params;

@@ -14,6 +14,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
+#define _GNU_SOURCE 1
+#include <unistd.h>
+#include <fcntl.h>
+#include <errno.h>
 #include "funtests.h"
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

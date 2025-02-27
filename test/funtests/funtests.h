@@ -17,25 +17,17 @@
 #ifndef SILOFS_FUNTESTS_H_
 #define SILOFS_FUNTESTS_H_
 
-#include <silofs/configs.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/statvfs.h>
+#include <sys/time.h>
+#include <fcntl.h>
+
+#include <limits.h>
 #include <silofs/defs.h>
 #include <silofs/ioctls.h>
 #include <silofs/infra.h>
 #include <silofs/str.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/statvfs.h>
-#include <sys/mman.h>
-#include <sys/time.h>
-#include <sys/xattr.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <errno.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdbool.h>
-#include <limits.h>
-#include <dirent.h>
 
 /* re-mapped macros */
 #define FT_1K  SILOFS_KILO

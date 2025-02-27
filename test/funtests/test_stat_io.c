@@ -14,6 +14,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
+#define _GNU_SOURCE 1
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdio.h>
 #include "funtests.h"
 
 static blkcnt_t calc_nfrgs_of(loff_t off, loff_t len, blksize_t blksz)

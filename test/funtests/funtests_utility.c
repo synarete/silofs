@@ -14,12 +14,16 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include "funtests.h"
+#define _GNU_SOURCE 1
 #include <sys/wait.h>
 #include <stdarg.h>
+#include <stdio.h>
 #include <error.h>
 #include <errno.h>
 #include <ctype.h>
+#include <unistd.h>
+#include <dirent.h>
+#include "funtests.h"
 
 enum { MCHUNK_MAGIC = 0x3A4BE8C1 };
 

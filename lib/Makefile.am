@@ -2,6 +2,8 @@
 
 AM_CFLAGS = $(WARN_CFLAGS)
 
+noinst_HEADERS = configs.h
+
 libsilofsdir = $(libdir)
 libsilofs_LTLIBRARIES = libsilofs.la
 libsilofs_la_LDFLAGS = $(NULL)
@@ -65,12 +67,14 @@ libsilofs_la_SOURCES += bstore.h
 libsilofs_la_SOURCES += btree.c
 libsilofs_la_SOURCES += btree.h
 libsilofs_la_SOURCES += claim.c
+libsilofs_la_SOURCES += claim.h
 libsilofs_la_SOURCES += delfs.c
 libsilofs_la_SOURCES += dir.c
 libsilofs_la_SOURCES += dir.h
 libsilofs_la_SOURCES += encdec.c
 libsilofs_la_SOURCES += encdec.h
 libsilofs_la_SOURCES += env.c
+libsilofs_la_SOURCES += env.h
 libsilofs_la_SOURCES += envinst.c
 libsilofs_la_SOURCES += file.c
 libsilofs_la_SOURCES += file.h
@@ -118,6 +122,7 @@ libsilofs_la_SOURCES += uber.c
 libsilofs_la_SOURCES += uber.h
 libsilofs_la_SOURCES += uidgid.h
 libsilofs_la_SOURCES += ustage.c
+libsilofs_la_SOURCES += ustage.h
 libsilofs_la_SOURCES += version.c
 libsilofs_la_SOURCES += vstage.c
 libsilofs_la_SOURCES += vstage.h

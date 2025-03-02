@@ -14,7 +14,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <silofs/configs.h>
+#include "configs.h"
 #include <silofs/infra.h>
 #include <silofs/addr.h>
 
@@ -24,7 +24,7 @@ void silofs_volid_generate(struct silofs_volid *volid)
 }
 
 void silofs_volid_assign(struct silofs_volid *volid,
-                         const struct silofs_volid *other)
+			 const struct silofs_volid *other)
 {
 	silofs_uuid_assign(&volid->id, &other->id);
 }
@@ -35,31 +35,31 @@ void silofs_volid_reset(struct silofs_volid *volid)
 }
 
 long silofs_volid_compare(const struct silofs_volid *volid1,
-                          const struct silofs_volid *volid2)
+			  const struct silofs_volid *volid2)
 {
 	return silofs_uuid_compare(&volid1->id, &volid2->id);
 }
 
 bool silofs_volid_isequal(const struct silofs_volid *volid1,
-                          const struct silofs_volid *volid2)
+			  const struct silofs_volid *volid2)
 {
 	return (silofs_volid_compare(volid1, volid2) == 0);
 }
 
 void silofs_volid_to_str(const struct silofs_volid *volid,
-                         struct silofs_strbuf *sbuf)
+			 struct silofs_strbuf *sbuf)
 {
 	silofs_uuid_unparse(&volid->id, sbuf);
 }
 
 int silofs_volid_from_str(struct silofs_volid *volid,
-                          const struct silofs_strview *sv)
+			  const struct silofs_strview *sv)
 {
 	return silofs_uuid_parse(&volid->id, sv);
 }
 
 void silofs_volid_by_uuid(struct silofs_volid *volid,
-                          const struct silofs_uuid *uuid)
+			  const struct silofs_uuid *uuid)
 {
 	STATICASSERT_EQ(sizeof(volid->id.uu), 16);
 

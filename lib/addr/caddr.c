@@ -14,12 +14,13 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <silofs/configs.h>
+#include "configs.h"
+#include <stdlib.h>
+#include <stdio.h>
 #include <silofs/infra.h>
 #include <silofs/str.h>
 #include <silofs/crypt.h>
 #include <silofs/addr.h>
-#include <stdio.h>
 
 void silofs_caddr_reset(struct silofs_caddr *caddr)
 {
@@ -29,8 +30,8 @@ void silofs_caddr_reset(struct silofs_caddr *caddr)
 }
 
 void silofs_caddr_setup(struct silofs_caddr *caddr,
-                        const struct silofs_hash256 *hash, uint32_t size,
-                        enum silofs_ctype ctype)
+			const struct silofs_hash256 *hash, uint32_t size,
+			enum silofs_ctype ctype)
 {
 	silofs_hash256_assign(&caddr->hash, hash);
 	caddr->size = size;
@@ -38,7 +39,7 @@ void silofs_caddr_setup(struct silofs_caddr *caddr,
 }
 
 void silofs_caddr_assign(struct silofs_caddr *caddr,
-                         const struct silofs_caddr *other)
+			 const struct silofs_caddr *other)
 {
 	silofs_hash256_assign(&caddr->hash, &other->hash);
 	caddr->size = other->size;
@@ -51,7 +52,7 @@ bool silofs_caddr_isnone(const struct silofs_caddr *caddr)
 }
 
 bool silofs_caddr_isequal(const struct silofs_caddr *caddr,
-                          const struct silofs_caddr *other)
+			  const struct silofs_caddr *other)
 {
 	return (caddr->size == other->size) &&
 	       (caddr->ctype == other->ctype) &&
@@ -129,7 +130,7 @@ int silofs_caddr_from_str(struct silofs_caddr *caddr, const char *s, size_t n)
 
 	silofs_strbuf_reset(&hname);
 	k = sscanf(sbuf.str, "silofs.v%d.%d.%x:%64s", &vers, &ctyp, &size,
-	           hname.str);
+		   hname.str);
 	if (k != 4) {
 		return -SILOFS_EINVAL;
 	}
@@ -163,7 +164,7 @@ caddr_from_strview(struct silofs_caddr *caddr, const struct silofs_strview *sv)
 }
 
 void silofs_caddr_to_name(const struct silofs_caddr *caddr,
-                          struct silofs_strbuf *out_name)
+			  struct silofs_strbuf *out_name)
 {
 	const size_t n = sizeof(out_name->str);
 
@@ -172,13 +173,13 @@ void silofs_caddr_to_name(const struct silofs_caddr *caddr,
 }
 
 void silofs_caddr_to_name2(const struct silofs_caddr *caddr,
-                           char s[SILOFS_XREFLEN_MAX + 1])
+			   char s[SILOFS_XREFLEN_MAX + 1])
 {
 	caddr_to_str(caddr, s, SILOFS_XREFLEN_MAX + 1);
 }
 
 int silofs_caddr_by_name(struct silofs_caddr *caddr,
-                         const struct silofs_strbuf *name)
+			 const struct silofs_strbuf *name)
 {
 	struct silofs_strview sv;
 
@@ -187,7 +188,7 @@ int silofs_caddr_by_name(struct silofs_caddr *caddr,
 }
 
 int silofs_caddr_by_name2(struct silofs_caddr *caddr,
-                          const struct silofs_strview *name)
+			  const struct silofs_strview *name)
 {
 	return caddr_from_strview(caddr, name);
 }
@@ -201,7 +202,7 @@ uint32_t silofs_caddr_to_u32(const struct silofs_caddr *caddr)
 }
 
 void silofs_caddr64b_htox(struct silofs_caddr64b *caddr64b,
-                          const struct silofs_caddr *caddr)
+			  const struct silofs_caddr *caddr)
 {
 	silofs_hash256_assign(&caddr64b->hash, &caddr->hash);
 	caddr64b->size = silofs_cpu_to_le32(caddr->size);
@@ -210,7 +211,7 @@ void silofs_caddr64b_htox(struct silofs_caddr64b *caddr64b,
 }
 
 void silofs_caddr64b_xtoh(const struct silofs_caddr64b *caddr64b,
-                          struct silofs_caddr *caddr)
+			  struct silofs_caddr *caddr)
 {
 	const uint32_t size = silofs_le32_to_cpu(caddr64b->size);
 
@@ -220,9 +221,9 @@ void silofs_caddr64b_xtoh(const struct silofs_caddr64b *caddr64b,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_calc_caddr_of(const struct iovec *iov, size_t cnt,
-                          enum silofs_ctype ctype,
-                          const struct silofs_mdigest *md,
-                          struct silofs_caddr *out_caddr)
+			  enum silofs_ctype ctype,
+			  const struct silofs_mdigest *md,
+			  struct silofs_caddr *out_caddr)
 {
 	struct silofs_hash256 hash;
 	const uint32_t size = (uint32_t)silofs_iov_length(iov, cnt);

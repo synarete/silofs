@@ -14,8 +14,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <silofs/configs.h>
-#include <silofs/syscall.h>
+#include "configs.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>
@@ -27,6 +26,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <silofs/syscall.h>
 
 static void *buffer_at(const void *buf, size_t step)
 {
@@ -166,7 +166,7 @@ static void iov_advance(struct iovec **p_iov, size_t len)
 }
 
 static int do_sys_pwritevn(int fd, struct iovec *iov, int cnt, loff_t off,
-                           loff_t *out_off)
+			   loff_t *out_off)
 {
 	size_t nwr_cur;
 	size_t nwr = 0;
@@ -227,7 +227,7 @@ int silofs_sys_opendir(const char *path, int *out_fd)
 int silofs_sys_opendirat(int dfd, const char *pathname, int *out_fd)
 {
 	return silofs_sys_openat(dfd, pathname, O_DIRECTORY | O_RDONLY, 0,
-	                         out_fd);
+				 out_fd);
 }
 
 int silofs_sys_closefd(int *pfd)
@@ -316,7 +316,7 @@ int silofs_sys_pollin_rfd(int fd, int timeout)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int sys_readfile(int dfd, const char *filename, void *buf, size_t bsz,
-                        int flags, size_t *nrd)
+			int flags, size_t *nrd)
 {
 	int err;
 	int fd = -1;
@@ -338,7 +338,7 @@ static int sys_readfile(int dfd, const char *filename, void *buf, size_t bsz,
 }
 
 static int sys_readproc(const char *procdir, const char *filename, void *buf,
-                        size_t bsz, size_t *nrd)
+			size_t bsz, size_t *nrd)
 {
 	int err;
 	int dfd = -1;

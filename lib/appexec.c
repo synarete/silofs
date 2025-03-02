@@ -14,12 +14,9 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <silofs/configs.h>
-#include <silofs/appexec.h>
+#include "configs.h"
 #include <sys/resource.h>
 #include <sys/stat.h>
-#include <silofs/defs.h>
-#include <silofs/ioctls.h>
 #include "repo.h"
 #include "idsmap.h"
 #include "uber.h"
@@ -31,10 +28,6 @@
 #include "inode.h"
 #include "namei.h"
 #include "env.h"
-#include "dir.h"
-#include "file.h"
-#include "symlink.h"
-#include "xattr.h"
 #include "flush.h"
 #include "vstage.h"
 #include "claim.h"
@@ -43,9 +36,12 @@
 #include "fuseq.h"
 #include "walk.h"
 #include "alias.h"
+#include <silofs/defs.h>
+#include <silofs/ioctls.h>
+#include <silofs/appexec.h>
 
 static void caddr_to_xref(const struct silofs_caddr *caddr, int status,
-                          struct silofs_xref *out_xref)
+			  struct silofs_xref *out_xref)
 {
 	if (status == 0) {
 		silofs_xref_from_caddr(out_xref, caddr);
@@ -112,7 +108,7 @@ static int map_silofs_task_creds(struct silofs_task *task)
 
 	if (idsm->idm_usize || idsm->idm_gsize) {
 		ret = silofs_idsmap_map_uidgid(idsm, xcred->uid, xcred->gid,
-		                               &icred->uid, &icred->gid);
+					       &icred->uid, &icred->gid);
 	}
 	return ret;
 }
@@ -305,7 +301,7 @@ int silofs_sync_fs(struct silofs_env *env, bool drop)
 }
 
 void silofs_stat_fs(const struct silofs_env *env,
-                    struct silofs_cache_stats *cst)
+		    struct silofs_cache_stats *cst)
 {
 	struct silofs_alloc_stat alst = { .nbytes_use = 0 };
 	const struct silofs_alloc *alloc = env->base.alloc;
@@ -321,7 +317,7 @@ void silofs_stat_fs(const struct silofs_env *env,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int exec_require_spmaps_of(struct silofs_env *env,
-                                  const struct silofs_vaddr *vaddr)
+				  const struct silofs_vaddr *vaddr)
 {
 	struct silofs_task task;
 	struct silofs_spnode_info *sni = NULL;
@@ -338,15 +334,15 @@ static int exec_require_spmaps_of(struct silofs_env *env,
 }
 
 static int format_base_vspmaps_of(struct silofs_env *env,
-                                  const struct silofs_vaddr *vaddr)
+				  const struct silofs_vaddr *vaddr)
 {
 	int err;
 
 	err = exec_require_spmaps_of(env, vaddr);
 	if (err) {
 		log_err("failed to format base spmaps: "
-		        "ltype=%d err=%d",
-		        vaddr->ltype, err);
+			"ltype=%d err=%d",
+			vaddr->ltype, err);
 		return err;
 	}
 	err = do_sync_fs(env, false);
@@ -377,7 +373,7 @@ static int format_base_vspmaps(struct silofs_env *env)
 }
 
 static int exec_claim_vspace(struct silofs_env *env, enum silofs_ltype ltype,
-                             struct silofs_vaddr *out_vaddr)
+			     struct silofs_vaddr *out_vaddr)
 {
 	struct silofs_task task;
 	int err;
@@ -420,8 +416,8 @@ claim_reclaim_vspace_of(struct silofs_env *env, enum silofs_ltype vspace)
 
 	if (vaddr.off != voff_exp) {
 		log_err("wrong first voff: vspace=%d expected-voff=%ld "
-		        "got-voff=%ld",
-		        vspace, voff_exp, vaddr.off);
+			"got-voff=%ld",
+			vspace, voff_exp, vaddr.off);
 		return -SILOFS_EFSCORRUPTED;
 	}
 
@@ -429,7 +425,7 @@ claim_reclaim_vspace_of(struct silofs_env *env, enum silofs_ltype vspace)
 	err = exec_reclaim_vspace(env, &vaddr);
 	if (err) {
 		log_err("failed to reclaim space: vspace=%d voff=%ld err=%d",
-		        vspace, vaddr.off, err);
+			vspace, vaddr.off, err);
 	}
 	return 0;
 }
@@ -456,7 +452,7 @@ static int claim_reclaim_vspace(struct silofs_env *env)
 }
 
 static int exec_spawn_vnode(struct silofs_env *env, enum silofs_ltype ltype,
-                            struct silofs_vnode_info **out_vni)
+			    struct silofs_vnode_info **out_vni)
 {
 	struct silofs_task task;
 	int err;
@@ -584,8 +580,8 @@ static int check_want_capacity(const struct silofs_env *env)
 	err = check_fs_capacity(cap_want);
 	if (err) {
 		log_err("illegal file-system capacity: "
-		        "cap=%lu err=%d",
-		        cap_want, err);
+			"cap=%lu err=%d",
+			cap_want, err);
 		return err;
 	}
 	return 0;
@@ -601,10 +597,10 @@ static int check_owner_ids(const struct silofs_env *env)
 	int err;
 
 	err = silofs_idsmap_map_uidgid(env->base.idsmap, owner_uid, owner_gid,
-	                               &suid, &sgid);
+				       &suid, &sgid);
 	if (err) {
 		log_err("unable to map owner credentials: uid=%ld gid=%ld",
-		        (long)owner_uid, (long)owner_gid);
+			(long)owner_uid, (long)owner_gid);
 		return err;
 	}
 	return 0;
@@ -967,7 +963,7 @@ int silofs_unref_fs(struct silofs_env *env)
 }
 
 static int exec_inspect_fs(struct silofs_env *env,
-                           const struct silofs_laddr_visitor *lvis)
+			   const struct silofs_laddr_visitor *lvis)
 {
 	struct silofs_task task;
 	int err;
@@ -1081,7 +1077,7 @@ int silofs_restore_fs(struct silofs_env *env)
 }
 
 void silofs_get_args(const struct silofs_env *env,
-                     struct silofs_args *out_args)
+		     struct silofs_args *out_args)
 {
 	memcpy(out_args, env->base.args, sizeof(*out_args));
 }
@@ -1099,7 +1095,7 @@ int silofs_get_fs_xref(struct silofs_env *env, struct silofs_xref *out_xref)
 }
 
 int silofs_get_fs_base_xref(struct silofs_env *env,
-                            struct silofs_xref *out_xref)
+			    struct silofs_xref *out_xref)
 {
 	struct silofs_caddr caddr = { .ctype = SILOFS_CTYPE_NONE };
 	int ret;
@@ -1112,7 +1108,7 @@ int silofs_get_fs_base_xref(struct silofs_env *env,
 }
 
 int silofs_get_fs_fork_xref(struct silofs_env *env,
-                            struct silofs_xref *out_xref)
+			    struct silofs_xref *out_xref)
 {
 	struct silofs_caddr caddr = { .ctype = SILOFS_CTYPE_NONE };
 	int ret;

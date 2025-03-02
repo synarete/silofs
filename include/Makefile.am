@@ -3,7 +3,6 @@
 noinst_HEADERS = $(NULL)
 noinst_HEADERS += config.h
 noinst_HEADERS += config-am.h
-noinst_HEADERS += silofs/configs.h
 noinst_HEADERS += linux/fuse_kernel.h
 
 nobase_include_HEADERS = $(NULL)

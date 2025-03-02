@@ -14,7 +14,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <silofs/configs.h>
+#include "configs.h"
 #include <silofs/infra.h>
 #include <silofs/addr.h>
 
@@ -67,7 +67,7 @@ const struct silofs_pvsid *silofs_pvsid_none(void)
 }
 
 void silofs_pvsid_init(struct silofs_pvsid *pvsid,
-                       const struct silofs_volid *volid, uint32_t idx)
+		       const struct silofs_volid *volid, uint32_t idx)
 {
 	silofs_volid_assign(&pvsid->volid, volid);
 	pvsid->index = idx;
@@ -85,7 +85,7 @@ bool silofs_pvsid_isnull(const struct silofs_pvsid *pvsid)
 }
 
 bool silofs_pvsid_has_volid(const struct silofs_pvsid *pvsid,
-                            const struct silofs_volid *volid)
+			    const struct silofs_volid *volid)
 {
 	return silofs_volid_isequal(&pvsid->volid, volid);
 }
@@ -103,14 +103,14 @@ void silofs_pvsid_reset(struct silofs_pvsid *pvsid)
 }
 
 void silofs_pvsid_assign(struct silofs_pvsid *pvsid,
-                         const struct silofs_pvsid *other)
+			 const struct silofs_pvsid *other)
 {
 	silofs_volid_assign(&pvsid->volid, &other->volid);
 	pvsid->index = other->index;
 }
 
 static long pvsid_compare(const struct silofs_pvsid *pvsid1,
-                          const struct silofs_pvsid *pvsid2)
+			  const struct silofs_pvsid *pvsid2)
 {
 	long cmp;
 
@@ -126,7 +126,7 @@ static long pvsid_compare(const struct silofs_pvsid *pvsid1,
 }
 
 bool silofs_pvsid_isequal(const struct silofs_pvsid *pvsid,
-                          const struct silofs_pvsid *other)
+			  const struct silofs_pvsid *other)
 {
 	return pvsid_compare(pvsid, other) == 0;
 }
@@ -140,7 +140,7 @@ uint64_t silofs_pvsid_hash64(const struct silofs_pvsid *pvsid)
 }
 
 void silofs_pvsid_to_str(const struct silofs_pvsid *pvsid,
-                         struct silofs_strbuf *out_sbuf)
+			 struct silofs_strbuf *out_sbuf)
 {
 	struct silofs_strbuf sbuf;
 
@@ -149,7 +149,7 @@ void silofs_pvsid_to_str(const struct silofs_pvsid *pvsid,
 }
 
 void silofs_pvsid32b_htox(struct silofs_pvsid32b *pvsid32,
-                          const struct silofs_pvsid *pvsid)
+			  const struct silofs_pvsid *pvsid)
 {
 	memset(pvsid32, 0, sizeof(*pvsid32));
 	silofs_volid_assign(&pvsid32->volid, &pvsid->volid);
@@ -157,7 +157,7 @@ void silofs_pvsid32b_htox(struct silofs_pvsid32b *pvsid32,
 }
 
 void silofs_pvsid32b_xtoh(const struct silofs_pvsid32b *pvsid32,
-                          struct silofs_pvsid *pvsid)
+			  struct silofs_pvsid *pvsid)
 {
 	silofs_volid_assign(&pvsid->volid, &pvsid32->volid);
 	pvsid->index = silofs_le32_to_cpu(pvsid32->index);
@@ -184,8 +184,8 @@ bool silofs_paddr_isnull(const struct silofs_paddr *paddr)
 }
 
 void silofs_paddr_init(struct silofs_paddr *paddr,
-                       const struct silofs_pvsid *pvsid,
-                       enum silofs_ptype ptype, loff_t off, size_t len)
+		       const struct silofs_pvsid *pvsid,
+		       enum silofs_ptype ptype, loff_t off, size_t len)
 {
 	silofs_pvsid_assign(&paddr->pvsid, pvsid);
 	paddr->off = off;
@@ -207,7 +207,7 @@ void silofs_paddr_reset(struct silofs_paddr *paddr)
 }
 
 void silofs_paddr_assign(struct silofs_paddr *paddr,
-                         const struct silofs_paddr *other)
+			 const struct silofs_paddr *other)
 {
 	silofs_pvsid_assign(&paddr->pvsid, &other->pvsid);
 	paddr->off = other->off;
@@ -221,7 +221,7 @@ bool silofs_paddr_isdata(const struct silofs_paddr *paddr)
 }
 
 long silofs_paddr_compare(const struct silofs_paddr *paddr1,
-                          const struct silofs_paddr *paddr2)
+			  const struct silofs_paddr *paddr2)
 {
 	long cmp;
 
@@ -245,7 +245,7 @@ long silofs_paddr_compare(const struct silofs_paddr *paddr1,
 }
 
 bool silofs_paddr_isequal(const struct silofs_paddr *paddr1,
-                          const struct silofs_paddr *paddr2)
+			  const struct silofs_paddr *paddr2)
 {
 	return (silofs_paddr_compare(paddr1, paddr2) == 0);
 }
@@ -256,7 +256,7 @@ void silofs_paddr48b_reset(struct silofs_paddr48b *paddr48)
 }
 
 void silofs_paddr48b_htox(struct silofs_paddr48b *paddr48,
-                          const struct silofs_paddr *paddr)
+			  const struct silofs_paddr *paddr)
 {
 	silofs_paddr48b_reset(paddr48);
 	silofs_pvsid32b_htox(&paddr48->pvsid, &paddr->pvsid);
@@ -266,7 +266,7 @@ void silofs_paddr48b_htox(struct silofs_paddr48b *paddr48,
 }
 
 void silofs_paddr48b_xtoh(const struct silofs_paddr48b *paddr48,
-                          struct silofs_paddr *paddr)
+			  struct silofs_paddr *paddr)
 {
 	silofs_pvsid32b_xtoh(&paddr48->pvsid, &paddr->pvsid);
 	paddr->off = silofs_off_to_cpu(paddr48->off);

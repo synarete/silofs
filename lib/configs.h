@@ -19,15 +19,15 @@
 #endif
 
 #ifdef NULL
-#error "<silofs/configs.h> must be included before system headers"
+#error "this header file must be included before system headers"
 #endif
 
 #ifdef SILOFS_STR
-#error "<silofs/configs.h> must be included first"
+#error "this header file must be included first"
 #endif
 
 #ifdef SILOFS_CONFIGS_ONCE
-#error "<silofs/configs.h> must be included once"
+#error "this header file must be included once"
 #endif
 
 #include "config.h"

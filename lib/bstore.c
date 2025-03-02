@@ -14,7 +14,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <silofs/configs.h>
+#include "configs.h"
 #include <silofs/infra.h>
 #include <silofs/addr.h>
 #include "repo.h"
@@ -25,7 +25,7 @@
 #include "bstore.h"
 
 int silofs_bstore_init(struct silofs_bstore *bstore,
-                       struct silofs_pcache *pcache, struct silofs_repo *repo)
+		       struct silofs_pcache *pcache, struct silofs_repo *repo)
 {
 	const struct silofs_btree_base base = {
 		.pvsegr = &bstore->pvsegr,
@@ -49,7 +49,7 @@ void silofs_bstore_fini(struct silofs_bstore *bstore)
 }
 
 static int bstore_validate_paddr(const struct silofs_bstore *bstore,
-                                 const struct silofs_paddr *paddr)
+				 const struct silofs_paddr *paddr)
 {
 	const struct silofs_pvsegr *pvsegr = &bstore->pvsegr;
 
@@ -65,7 +65,7 @@ cpi_paddr(const struct silofs_chkpt_info *cpi)
 }
 
 static int bstore_save_chkpt(const struct silofs_bstore *bstore,
-                             const struct silofs_chkpt_info *cpi)
+			     const struct silofs_chkpt_info *cpi)
 {
 	const struct silofs_rovec rov = {
 		.rov_base = cpi->cp,
@@ -76,7 +76,7 @@ static int bstore_save_chkpt(const struct silofs_bstore *bstore,
 }
 
 static int bstore_load_chkpt(const struct silofs_bstore *bstore,
-                             const struct silofs_chkpt_info *cpi)
+			     const struct silofs_chkpt_info *cpi)
 {
 	const struct silofs_rwvec rwv = {
 		.rwv_base = cpi->cp,
@@ -87,7 +87,7 @@ static int bstore_load_chkpt(const struct silofs_bstore *bstore,
 }
 
 static int bstore_commit_chkpt(const struct silofs_bstore *bstore,
-                               struct silofs_chkpt_info *cpi)
+			       struct silofs_chkpt_info *cpi)
 {
 	int err;
 
@@ -100,8 +100,8 @@ static int bstore_commit_chkpt(const struct silofs_bstore *bstore,
 }
 
 static int bstore_create_cached_cpi(struct silofs_bstore *bstore,
-                                    const struct silofs_paddr *paddr,
-                                    struct silofs_chkpt_info **out_cpi)
+				    const struct silofs_paddr *paddr,
+				    struct silofs_chkpt_info **out_cpi)
 {
 	struct silofs_chkpt_info *cpi;
 
@@ -114,7 +114,7 @@ static int bstore_create_cached_cpi(struct silofs_bstore *bstore,
 }
 
 static int bstore_require_pvseg(struct silofs_bstore *bstore, bool create,
-                                const struct silofs_pvsid *pvsid)
+				const struct silofs_pvsid *pvsid)
 
 {
 	int err;
@@ -128,13 +128,13 @@ static int bstore_require_pvseg(struct silofs_bstore *bstore, bool create,
 }
 
 static int bstore_require_pvseg_of(struct silofs_bstore *bstore, bool create,
-                                   const struct silofs_paddr *paddr)
+				   const struct silofs_paddr *paddr)
 {
 	return bstore_require_pvseg(bstore, create, &paddr->pvsid);
 }
 
 static void bstore_update_chkpt(const struct silofs_bstore *bstore,
-                                struct silofs_chkpt_info *cpi)
+				struct silofs_chkpt_info *cpi)
 {
 	const struct silofs_btree *btree = &bstore->btree;
 
@@ -142,8 +142,8 @@ static void bstore_update_chkpt(const struct silofs_bstore *bstore,
 }
 
 static int bstore_spawn_chkpt(struct silofs_bstore *bstore, bool create,
-                              const struct silofs_paddr *paddr,
-                              struct silofs_chkpt_info **out_cpi)
+			      const struct silofs_paddr *paddr,
+			      struct silofs_chkpt_info **out_cpi)
 {
 	int err;
 
@@ -160,22 +160,22 @@ static int bstore_spawn_chkpt(struct silofs_bstore *bstore, bool create,
 }
 
 static void bstore_evict_cached_cpi(struct silofs_bstore *bstore,
-                                    struct silofs_chkpt_info *cpi)
+				    struct silofs_chkpt_info *cpi)
 {
 	silofs_pcache_evict_cpi(bstore->pcache, cpi);
 }
 
 static int bstore_lookup_cached_chkpt(struct silofs_bstore *bstore,
-                                      const struct silofs_paddr *paddr,
-                                      struct silofs_chkpt_info **out_cpi)
+				      const struct silofs_paddr *paddr,
+				      struct silofs_chkpt_info **out_cpi)
 {
 	*out_cpi = silofs_pcache_lookup_cpi(bstore->pcache, paddr);
 	return (*out_cpi == NULL) ? -SILOFS_ENOENT : 0;
 }
 
 static int bstore_stage_chkpt(struct silofs_bstore *bstore,
-                              const struct silofs_paddr *paddr,
-                              struct silofs_chkpt_info **out_cpi)
+			      const struct silofs_paddr *paddr,
+			      struct silofs_chkpt_info **out_cpi)
 {
 	struct silofs_chkpt_info *cpi = NULL;
 	int err;
@@ -214,7 +214,7 @@ bni_paddr(const struct silofs_btnode_info *bni)
 }
 
 static int bstore_save_btnode(const struct silofs_bstore *bstore,
-                              const struct silofs_btnode_info *bni)
+			      const struct silofs_btnode_info *bni)
 {
 	const struct silofs_rovec rov = {
 		.rov_base = bni->bn,
@@ -225,7 +225,7 @@ static int bstore_save_btnode(const struct silofs_bstore *bstore,
 }
 
 static int bstore_commit_btnode(const struct silofs_bstore *bstore,
-                                struct silofs_btnode_info *bni)
+				struct silofs_btnode_info *bni)
 {
 	int err;
 
@@ -238,8 +238,8 @@ static int bstore_commit_btnode(const struct silofs_bstore *bstore,
 }
 
 static int bstore_create_cached_bni(struct silofs_bstore *bstore,
-                                    const struct silofs_paddr *paddr,
-                                    struct silofs_btnode_info **out_bni)
+				    const struct silofs_paddr *paddr,
+				    struct silofs_btnode_info **out_bni)
 {
 	struct silofs_btnode_info *bni;
 
@@ -252,8 +252,8 @@ static int bstore_create_cached_bni(struct silofs_bstore *bstore,
 }
 
 static int bstore_spawn_btnode(struct silofs_bstore *bstore, bool create,
-                               const struct silofs_paddr *paddr,
-                               struct silofs_btnode_info **out_bni)
+			       const struct silofs_paddr *paddr,
+			       struct silofs_btnode_info **out_bni)
 {
 	int err;
 
@@ -272,7 +272,7 @@ static int bstore_spawn_btnode(struct silofs_bstore *bstore, bool create,
 }
 
 static int bstore_create_btroot_at(struct silofs_bstore *bstore,
-                                   const struct silofs_paddr *paddr)
+				   const struct silofs_paddr *paddr)
 {
 	struct silofs_btnode_info *bni = NULL;
 	int err;
@@ -334,7 +334,7 @@ int silofs_bstore_format(struct silofs_bstore *bstore)
 }
 
 static int bstore_update_btree_root_by(struct silofs_bstore *bstore,
-                                       const struct silofs_chkpt_info *cpi)
+				       const struct silofs_chkpt_info *cpi)
 {
 	struct silofs_paddr btree_root;
 
@@ -373,7 +373,7 @@ static int bstore_reload_btree_root(struct silofs_bstore *bstore)
 }
 
 static int bstore_assign_pvsegr(struct silofs_bstore *bstore,
-                                const struct silofs_pvsegr *pvsegr)
+				const struct silofs_pvsegr *pvsegr)
 {
 	int err;
 
@@ -386,7 +386,7 @@ static int bstore_assign_pvsegr(struct silofs_bstore *bstore,
 }
 
 int silofs_bstore_reload(struct silofs_bstore *bstore,
-                         const struct silofs_pvsegr *pvsegr)
+			 const struct silofs_pvsegr *pvsegr)
 {
 	int err;
 
@@ -420,7 +420,7 @@ int silofs_bstore_close(struct silofs_bstore *bstore)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int bstore_commit_pnode(struct silofs_bstore *bstore,
-                               struct silofs_pnode_info *pni)
+			       struct silofs_pnode_info *pni)
 {
 	const enum silofs_ptype ptype = silofs_pni_ptype(pni);
 	int ret = -SILOFS_EINVAL;
@@ -483,7 +483,7 @@ int silofs_bstore_dropall(struct silofs_bstore *bstore)
 }
 
 void silofs_bstore_curr_pvsegr(const struct silofs_bstore *bstore,
-                               struct silofs_pvsegr *out_pvsegr)
+			       struct silofs_pvsegr *out_pvsegr)
 {
 	silofs_pvsegr_assign(out_pvsegr, &bstore->pvsegr);
 }

@@ -14,13 +14,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <silofs/configs.h>
-#include <silofs/macros.h>
-#include <silofs/utility.h>
-#include <silofs/syscall.h>
-#include <silofs/infra/panic.h>
-#include <silofs/infra/time.h>
-#include <silofs/infra/thread.h>
+#include "configs.h"
 #include <unistd.h>
 #include <signal.h>
 #include <pthread.h>
@@ -29,6 +23,12 @@
 #include <string.h>
 #include <errno.h>
 #include <time.h>
+#include <silofs/macros.h>
+#include <silofs/utility.h>
+#include <silofs/syscall.h>
+#include <silofs/infra/panic.h>
+#include <silofs/infra/time.h>
+#include <silofs/infra/thread.h>
 
 #if defined(NDEBUG)
 #define SILOFS_MUTEX_KIND PTHREAD_MUTEX_NORMAL
@@ -91,7 +91,7 @@ static void *silofs_thread_start(void *arg)
 }
 
 int silofs_thread_create(struct silofs_thread *th, silofs_threadexec_fn exec,
-                         void *arg, const char *name)
+			 void *arg, const char *name)
 {
 	pthread_attr_t attr;
 	size_t nlen = 0;
@@ -205,7 +205,7 @@ bool silofs_mutex_trylock(struct silofs_mutex *mutex)
 }
 
 bool silofs_mutex_timedlock(struct silofs_mutex *mutex,
-                            const struct timespec *abstime)
+			    const struct timespec *abstime)
 {
 	int err;
 	bool status = false;
@@ -281,7 +281,7 @@ void silofs_cond_wait(struct silofs_cond *cond, struct silofs_mutex *mutex)
 }
 
 int silofs_cond_timedwait(struct silofs_cond *cond, struct silofs_mutex *mutex,
-                          const struct timespec *ts)
+			  const struct timespec *ts)
 {
 	int err;
 
@@ -293,7 +293,7 @@ int silofs_cond_timedwait(struct silofs_cond *cond, struct silofs_mutex *mutex,
 }
 
 int silofs_cond_ntimedwait(struct silofs_cond *cond,
-                           struct silofs_mutex *mutex, time_t nsec)
+			   struct silofs_mutex *mutex, time_t nsec)
 {
 	struct timespec ts;
 

@@ -14,15 +14,15 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <silofs/configs.h>
+#include "configs.h"
+#include <unistd.h>
+#include <string.h>
+#include <errno.h>
 #include <silofs/macros.h>
 #include <silofs/utility.h>
 #include <silofs/infra/panic.h>
 #include <silofs/infra/random.h>
 #include <silofs/infra/time.h>
-#include <unistd.h>
-#include <string.h>
-#include <errno.h>
 
 static void do_getentropy(void *buf, size_t len)
 {

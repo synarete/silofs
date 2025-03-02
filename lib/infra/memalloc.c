@@ -14,15 +14,15 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <silofs/configs.h>
+#include "configs.h"
+#include <sys/types.h>
+#include <sys/resource.h>
+#include <string.h>
 #include <silofs/macros.h>
 #include <silofs/utility.h>
 #include <silofs/syscall.h>
 #include <silofs/infra/atomic.h>
 #include <silofs/infra/memalloc.h>
-#include <sys/types.h>
-#include <sys/resource.h>
-#include <string.h>
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -119,7 +119,7 @@ stdalloc_free(struct silofs_stdalloc *stdal, void *ptr, size_t n, int flags)
 }
 
 static void stdalloc_stat(struct silofs_stdalloc *stdal,
-                          struct silofs_alloc_stat *out_stat)
+			  struct silofs_alloc_stat *out_stat)
 {
 	silofs_memzero(out_stat, sizeof(*out_stat));
 	out_stat->nbytes_max = silofs_atomic_getul(&stdal->nbytes_max);
@@ -138,7 +138,7 @@ stdal_free(struct silofs_alloc *alloc, void *ptr, size_t n, int flags)
 }
 
 static void stdal_stat(const struct silofs_alloc *alloc,
-                       struct silofs_alloc_stat *out_stat)
+		       struct silofs_alloc_stat *out_stat)
 {
 	stdalloc_stat(alloc_to_stdalloc(alloc), out_stat);
 }
@@ -195,7 +195,7 @@ void silofs_memfree(struct silofs_alloc *alloc, void *ptr, size_t n, int flags)
 }
 
 void silofs_memstat(const struct silofs_alloc *alloc,
-                    struct silofs_alloc_stat *out_stat)
+		    struct silofs_alloc_stat *out_stat)
 {
 	silofs_memzero(out_stat, sizeof(*out_stat));
 	if (alloc->stat_fn != NULL) {

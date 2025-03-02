@@ -14,11 +14,11 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <silofs/configs.h>
+#include "configs.h"
+#include <gcrypt.h>
 #include <silofs/infra.h>
 #include <silofs/errors.h>
 #include <silofs/crypt.h>
-#include <gcrypt.h>
 
 #define SILOFS_SECMEM_SIZE (64L * SILOFS_KILO)
 

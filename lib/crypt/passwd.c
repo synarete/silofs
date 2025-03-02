@@ -14,13 +14,13 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <silofs/configs.h>
+#include "configs.h"
+#include <sys/sysinfo.h>
 #include <silofs/errors.h>
 #include <silofs/infra.h>
 #include <silofs/str.h>
 #include <silofs/crypt/passwd.h>
 #include <silofs/crypt/ivkey.h>
-#include <sys/sysinfo.h>
 
 int silofs_password_setup(struct silofs_password *pw, const char *pass)
 {
@@ -37,7 +37,7 @@ int silofs_password_setup(struct silofs_password *pw, const char *pass)
 }
 
 int silofs_password_setup2(struct silofs_password *pw, const void *pass,
-                           size_t len)
+			   size_t len)
 {
 	silofs_password_reset(pw);
 	if (len >= sizeof(pw->pass)) {

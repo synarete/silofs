@@ -14,9 +14,9 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <silofs/configs.h>
-#include <silofs/str/ascii.h>
+#include "configs.h"
 #include <ctype.h>
+#include <silofs/str/ascii.h>
 
 char silofs_nibble_to_ascii(int n)
 {
@@ -166,7 +166,7 @@ int silofs_ascii_to_uint64(const char *a, uint64_t *out_u)
 }
 
 void silofs_mem_to_ascii(const void *mem, size_t msz, char *asb, size_t asz,
-                         size_t *out_cnt)
+			 size_t *out_cnt)
 {
 	const uint8_t *b = mem;
 	size_t cnt = 0;
@@ -182,7 +182,7 @@ void silofs_mem_to_ascii(const void *mem, size_t msz, char *asb, size_t asz,
 }
 
 int silofs_ascii_to_mem(void *mem, size_t msz, const char *asb, size_t asz,
-                        size_t *out_cnt)
+			size_t *out_cnt)
 {
 	uint8_t *b = mem;
 	size_t cnt = 0;

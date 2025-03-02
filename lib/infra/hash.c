@@ -14,9 +14,9 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <silofs/configs.h>
-#include <silofs/infra/hash.h>
+#include "configs.h"
 #include <xxhash.h>
+#include <silofs/infra/hash.h>
 
 uint64_t silofs_hash_fnv1a(const void *buf, size_t len, uint64_t seed)
 {

@@ -178,10 +178,21 @@ void silofs_uni_set_active(struct silofs_unode_info *uni);
 
 void silofs_uni_seal_view(struct silofs_unode_info *uni);
 
-enum silofs_ltype silofs_uni_ltype(const struct silofs_unode_info *uni);
-
 void silofs_uni_set_dq(struct silofs_unode_info *uni,
                        struct silofs_dirtyq     *dq);
+
+enum silofs_ltype silofs_uni_ltype(const struct silofs_unode_info *uni);
+
+const struct silofs_ulink *
+silofs_uni_ulink(const struct silofs_unode_info *uni);
+
+const struct silofs_iv *silofs_uni_riv(const struct silofs_unode_info *uni);
+
+const struct silofs_uaddr *
+silofs_uni_uaddr(const struct silofs_unode_info *uni);
+
+const struct silofs_laddr *
+silofs_uni_laddr(const struct silofs_unode_info *uni);
 
 struct silofs_unode_info *
 silofs_uni_from_lni(const struct silofs_lnode_info *lni);
@@ -211,6 +222,15 @@ void silofs_vni_set_dq(struct silofs_vnode_info *vni,
 bool silofs_vni_need_recheck(const struct silofs_vnode_info *vni);
 
 void silofs_vni_set_rechecked(struct silofs_vnode_info *vni);
+
+enum silofs_ltype silofs_vni_ltype(const struct silofs_vnode_info *vni);
+
+const struct silofs_vaddr *
+silofs_vni_vaddr(const struct silofs_vnode_info *vni);
+
+struct silofs_env *silofs_vni_env(const struct silofs_vnode_info *vni);
+
+struct silofs_sb_info *silofs_vni_sbi(const struct silofs_vnode_info *vni);
 
 struct silofs_vnode_info *silofs_vni_from_dqe(struct silofs_dq_elem *dqe);
 

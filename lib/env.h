@@ -23,6 +23,7 @@
 #include <silofs/infra.h>
 #include <silofs/addr.h>
 #include <silofs/crypt.h>
+#include "uidgid.h"
 #include "uber.h"
 
 /* top-level operations counters/stats */

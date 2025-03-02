@@ -19,6 +19,8 @@
 
 #include <sys/stat.h>
 #include <unistd.h>
+#include <silofs/macros.h>
+#include "uidgid.h"
 
 struct silofs_task;
 
@@ -163,6 +165,17 @@ bool silofs_ii_isloose(const struct silofs_inode_info *ii);
 ino_t silofs_ii_parent(const struct silofs_inode_info *ii);
 
 enum silofs_inodef silofs_ii_flags(const struct silofs_inode_info *ii);
+
+struct silofs_inode_info *
+silofs_ii_unconst(const struct silofs_inode_info *ii);
+
+struct silofs_vnode_info *silofs_ii_to_vni(const struct silofs_inode_info *ii);
+
+ino_t silofs_ii_ino(const struct silofs_inode_info *ii);
+
+const struct silofs_vaddr *silofs_ii_vaddr(const struct silofs_inode_info *ii);
+
+struct silofs_sb_info *silofs_ii_sbi(const struct silofs_inode_info *ii);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

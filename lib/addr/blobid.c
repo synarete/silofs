@@ -19,7 +19,7 @@
 #include <silofs/addr.h>
 
 void silofs_blobid_setup(struct silofs_blobid *blobid, const void *id,
-			 size_t id_len)
+                         size_t id_len)
 {
 	silofs_memzero(blobid, sizeof(*blobid));
 	blobid->id_len = (uint32_t)silofs_min(id_len, sizeof(blobid->id));
@@ -27,7 +27,7 @@ void silofs_blobid_setup(struct silofs_blobid *blobid, const void *id,
 }
 
 void silofs_blobid_assign(struct silofs_blobid *blobid,
-			  const struct silofs_blobid *other)
+                          const struct silofs_blobid *other)
 {
 	blobid->id_len = other->id_len;
 	memcpy(blobid->id, other->id, sizeof(blobid->id));
@@ -39,7 +39,7 @@ void silofs_blobid_reset(struct silofs_blobid *blobid)
 }
 
 long silofs_blobid_compare(const struct silofs_blobid *blobid1,
-			   const struct silofs_blobid *blobid2)
+                           const struct silofs_blobid *blobid2)
 {
 	int cmp;
 

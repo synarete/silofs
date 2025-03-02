@@ -37,7 +37,7 @@ int silofs_password_setup(struct silofs_password *pw, const char *pass)
 }
 
 int silofs_password_setup2(struct silofs_password *pw, const void *pass,
-			   size_t len)
+                           size_t len)
 {
 	silofs_password_reset(pw);
 	if (len >= sizeof(pw->pass)) {

@@ -35,7 +35,7 @@ void silofs_pvsegr_fini(struct silofs_pvsegr *pvsegr)
 }
 
 void silofs_pvsegr_assign(struct silofs_pvsegr *pvsegr,
-			  const struct silofs_pvsegr *other)
+                          const struct silofs_pvsegr *other)
 {
 	silofs_volid_assign(&pvsegr->volid, &other->volid);
 	pvsegr->base_index = other->base_index;
@@ -44,14 +44,14 @@ void silofs_pvsegr_assign(struct silofs_pvsegr *pvsegr,
 }
 
 static void pvsegr_curr_pvsid(const struct silofs_pvsegr *pvsegr,
-			      struct silofs_pvsid *out_pvsid)
+                              struct silofs_pvsid *out_pvsid)
 {
 	silofs_pvsid_init(out_pvsid, &pvsegr->volid, pvsegr->curr_index);
 }
 
 static void
 pvsegr_curr_paddr_at(const struct silofs_pvsegr *pvsegr, loff_t pos,
-		     enum silofs_ptype ptype, struct silofs_paddr *out_paddr)
+                     enum silofs_ptype ptype, struct silofs_paddr *out_paddr)
 {
 	struct silofs_pvsid pvsid;
 	const size_t len = silofs_ptype_size(ptype);
@@ -62,14 +62,14 @@ pvsegr_curr_paddr_at(const struct silofs_pvsegr *pvsegr, loff_t pos,
 
 static void
 pvsegr_curr_paddr(const struct silofs_pvsegr *pvsegr, enum silofs_ptype ptype,
-		  struct silofs_paddr *out_paddr)
+                  struct silofs_paddr *out_paddr)
 {
 	pvsegr_curr_paddr_at(pvsegr, pvsegr->curr_pos, ptype, out_paddr);
 }
 
 static void
 pvsegr_last_paddr(const struct silofs_pvsegr *pvsegr, enum silofs_ptype ptype,
-		  struct silofs_paddr *out_paddr)
+                  struct silofs_paddr *out_paddr)
 {
 	const loff_t off = pvsegr->curr_pos;
 	const ssize_t len = (ssize_t)silofs_ptype_size(ptype);
@@ -79,20 +79,20 @@ pvsegr_last_paddr(const struct silofs_pvsegr *pvsegr, enum silofs_ptype ptype,
 }
 
 static void pvsegr_advance_by(struct silofs_pvsegr *pvsegr,
-			      const struct silofs_paddr *paddr)
+                              const struct silofs_paddr *paddr)
 {
 	pvsegr->curr_pos = off_end(paddr->off, paddr->len);
 }
 
 static void pvsegr_carve(struct silofs_pvsegr *pvsegr, enum silofs_ptype ptype,
-			 struct silofs_paddr *out_paddr)
+                         struct silofs_paddr *out_paddr)
 {
 	pvsegr_curr_paddr(pvsegr, ptype, out_paddr);
 	pvsegr_advance_by(pvsegr, out_paddr);
 }
 
 static bool pvsegr_has_volid(const struct silofs_pvsegr *pvsegr,
-			     const struct silofs_volid *volid)
+                             const struct silofs_volid *volid)
 {
 	return silofs_volid_isequal(&pvsegr->volid, volid);
 }
@@ -103,7 +103,7 @@ static bool pvsegr_has_index(const struct silofs_pvsegr *pvsegr, uint32_t idx)
 }
 
 bool silofs_pvsegr_has_paddr(const struct silofs_pvsegr *pvsegr,
-			     const struct silofs_paddr *paddr)
+                             const struct silofs_paddr *paddr)
 {
 	if (paddr_isnull(paddr)) {
 		return false;
@@ -132,19 +132,19 @@ int silofs_pvsegr_validate(const struct silofs_pvsegr *pvsegr)
 }
 
 void silofs_pvsegr_next_chkpt(struct silofs_pvsegr *pvsegr,
-			      struct silofs_paddr *out_paddr)
+                              struct silofs_paddr *out_paddr)
 {
 	pvsegr_carve(pvsegr, SILOFS_PTYPE_CHKPT, out_paddr);
 }
 
 void silofs_pvsegr_last_chkpt(const struct silofs_pvsegr *pvsegr,
-			      struct silofs_paddr *out_paddr)
+                              struct silofs_paddr *out_paddr)
 {
 	pvsegr_last_paddr(pvsegr, SILOFS_PTYPE_CHKPT, out_paddr);
 }
 
 void silofs_pvsegr_next_btnode(struct silofs_pvsegr *pvsegr,
-			       struct silofs_paddr *out_paddr)
+                               struct silofs_paddr *out_paddr)
 {
 	silofs_assert_gt(pvsegr->curr_pos, 0);
 
@@ -152,7 +152,7 @@ void silofs_pvsegr_next_btnode(struct silofs_pvsegr *pvsegr,
 }
 
 void silofs_pvsegr64b_htox(struct silofs_pvsegr64b *pvsegr64,
-			   const struct silofs_pvsegr *pvsegr)
+                           const struct silofs_pvsegr *pvsegr)
 {
 	memset(pvsegr64, 0, sizeof(*pvsegr64));
 	silofs_volid_assign(&pvsegr64->volid, &pvsegr->volid);
@@ -162,7 +162,7 @@ void silofs_pvsegr64b_htox(struct silofs_pvsegr64b *pvsegr64,
 }
 
 void silofs_pvsegr64b_xtoh(const struct silofs_pvsegr64b *pvsegr64,
-			   struct silofs_pvsegr *pvsegr)
+                           struct silofs_pvsegr *pvsegr)
 {
 	silofs_volid_assign(&pvsegr->volid, &pvsegr64->volid);
 	pvsegr->base_index = silofs_le32_to_cpu(pvsegr64->base_index);

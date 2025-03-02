@@ -26,6 +26,7 @@ struct silofs_readdir_ctx;
 struct silofs_rwiter_ctx;
 struct silofs_listxattr_ctx;
 struct silofs_laddr_visitor;
+struct silofs_stat;
 
 int silofs_exec_forget(struct silofs_task *task, ino_t ino, size_t nlookup);
 

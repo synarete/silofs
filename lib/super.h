@@ -21,7 +21,7 @@
 #include <silofs/infra.h>
 #include <silofs/addr.h>
 
-struct silofs_sb_info;
+struct silofs_task;
 struct silofs_spnode_info;
 struct silofs_spleaf_info;
 struct silofs_spmap_lmap;
@@ -37,6 +37,14 @@ bool silofs_sb_test_flags(const struct silofs_super_block *sb,
 int silofs_verify_super_block(const struct silofs_super_block *sb);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+struct silofs_env *silofs_sbi_env(const struct silofs_sb_info *sbi);
+
+const struct silofs_ulink *silofs_sbi_ulink(const struct silofs_sb_info *sbi);
+
+const struct silofs_uaddr *silofs_sbi_uaddr(const struct silofs_sb_info *sbi);
+
+const struct silofs_laddr *silofs_sbi_laddr(const struct silofs_sb_info *sbi);
 
 void silofs_sbi_incref(struct silofs_sb_info *sbi);
 

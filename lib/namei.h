@@ -24,6 +24,7 @@ struct silofs_sb_info;
 struct silofs_ioc_query;
 struct silofs_inew_params;
 struct silofs_laddr_visitor;
+struct silofs_uber_caddrs;
 
 /* name-string: a pair of string-view and (optional) 64-bits hash */
 struct silofs_namestr {

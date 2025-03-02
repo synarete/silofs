@@ -19,13 +19,11 @@
 #include <limits.h>
 #include <silofs/infra.h>
 #include <silofs/ioctls.h>
-#include "uber.h"
 #include "boot.h"
 #include "lnodes.h"
 #include "task.h"
 #include "inode.h"
 #include "namei.h"
-#include "env.h"
 #include "vstage.h"
 #include "claim.h"
 #include "alias.h"
@@ -41,13 +39,13 @@ bool silofs_xref_isnull(const struct silofs_xref *xref)
 }
 
 void silofs_xref_from_caddr(struct silofs_xref *xref,
-			    const struct silofs_caddr *caddr)
+                            const struct silofs_caddr *caddr)
 {
 	silofs_caddr_to_str(caddr, xref->s, sizeof(xref->s));
 }
 
 int silofs_xref_to_caddr(const struct silofs_xref *xref,
-			 struct silofs_caddr *out_caddr)
+                         struct silofs_caddr *out_caddr)
 {
 	const size_t lim = sizeof(xref->s);
 	const size_t n = silofs_str_nlength(xref->s, lim);
@@ -62,7 +60,7 @@ int silofs_xref_to_caddr(const struct silofs_xref *xref,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_bootpath_setup(struct silofs_bootpath *bpath, const char *repodir,
-			  const char *name)
+                          const char *name)
 {
 	struct silofs_namestr nstr;
 	size_t len;
@@ -94,7 +92,7 @@ int silofs_reload_vspace(struct silofs_task *task)
 		err = silofs_rescan_vspace_of(task, ltype);
 		if (err) {
 			log_err("failed to reload vspace: ltype=%d err=%d",
-				ltype, err);
+			        ltype, err);
 			return err;
 		}
 	}

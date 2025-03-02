@@ -19,12 +19,8 @@
 #include <limits.h>
 #include <silofs/infra.h>
 #include <silofs/ioctls.h>
-#include "uber.h"
 #include "lnodes.h"
-#include "task.h"
 #include "super.h"
-#include "inode.h"
-#include "env.h"
 #include "alias.h"
 
 /* local functions */
@@ -89,7 +85,7 @@ static int verify_size(size_t sz)
 
 static const uint64_t *
 spgs256_gauge_of(const struct silofs_space_gauges256 *spgs256,
-		 enum silofs_ltype ltype)
+                 enum silofs_ltype ltype)
 {
 	const uint64_t *ret;
 
@@ -138,13 +134,13 @@ spgs256_gauge_of(const struct silofs_space_gauges256 *spgs256,
 }
 
 static uint64_t *spgs256_gauge_of2(struct silofs_space_gauges256 *spgs256,
-				   enum silofs_ltype ltype)
+                                   enum silofs_ltype ltype)
 {
 	return silofs_unconst(spgs256_gauge_of(spgs256, ltype));
 }
 
 static void spgs256_xtoh(const struct silofs_space_gauges256 *spgs256,
-			 struct silofs_space_gauges *spgs)
+                         struct silofs_space_gauges *spgs)
 {
 	ssize_t *dst = NULL;
 	const uint64_t *src = NULL;
@@ -160,7 +156,7 @@ static void spgs256_xtoh(const struct silofs_space_gauges256 *spgs256,
 }
 
 static void spgs256_htox(struct silofs_space_gauges256 *spgs256,
-			 const struct silofs_space_gauges *spgs)
+                         const struct silofs_space_gauges *spgs)
 {
 	uint64_t *dst = NULL;
 	const ssize_t *src = NULL;
@@ -252,7 +248,7 @@ spst1k_set_generation(struct silofs_space_stats1k *spst1k, uint64_t gen)
 }
 
 static void spst1k_xtoh(const struct silofs_space_stats1k *spst1k,
-			struct silofs_space_stats *spst)
+                        struct silofs_space_stats *spst)
 {
 	spst->btime = spst1k_btime(spst1k);
 	spst->ctime = spst1k_ctime(spst1k);
@@ -265,7 +261,7 @@ static void spst1k_xtoh(const struct silofs_space_stats1k *spst1k,
 }
 
 static void spst1k_htox(struct silofs_space_stats1k *spst1k,
-			const struct silofs_space_stats *spst)
+                        const struct silofs_space_stats *spst)
 {
 	spst1k_set_btime(spst1k, spst->btime);
 	spst1k_set_ctime(spst1k, spst->ctime);
@@ -375,7 +371,7 @@ static void spgs_reset(struct silofs_space_gauges *spgs)
 }
 
 static void spgs_assign(struct silofs_space_gauges *spgs,
-			const struct silofs_space_gauges *spgs_other)
+                        const struct silofs_space_gauges *spgs_other)
 {
 	ssize_t *dst = NULL;
 	const ssize_t *src = NULL;
@@ -391,7 +387,7 @@ static void spgs_assign(struct silofs_space_gauges *spgs,
 }
 
 static void spgs_update_take(struct silofs_space_gauges *spgs,
-			     enum silofs_ltype ltype, ssize_t take)
+                             enum silofs_ltype ltype, ssize_t take)
 {
 	ssize_t *cnt = spgs_gauge_of2(spgs, ltype);
 
@@ -423,7 +419,7 @@ static ssize_t spgs_sum(const struct silofs_space_gauges *spgs)
 }
 
 static void spgs_accum(struct silofs_space_gauges *spgs,
-		       const struct silofs_space_gauges *spgs_other)
+                       const struct silofs_space_gauges *spgs_other)
 {
 	ssize_t *dst = NULL;
 	const ssize_t *src = NULL;
@@ -439,7 +435,7 @@ static void spgs_accum(struct silofs_space_gauges *spgs,
 }
 
 static void spgs_export(const struct silofs_space_gauges *spgs,
-			struct silofs_space_gauges256 *out_spg)
+                        struct silofs_space_gauges256 *out_spg)
 {
 	uint64_t *dst = NULL;
 	const ssize_t *src = NULL;
@@ -474,7 +470,7 @@ static void spst_init(struct silofs_space_stats *spst)
 }
 
 static void spst_assign(struct silofs_space_stats *spst,
-			const struct silofs_space_stats *spst_other)
+                        const struct silofs_space_stats *spst_other)
 {
 	silofs_memzero(spst, sizeof(*spst));
 	spst->btime = spst_other->btime;
@@ -494,19 +490,19 @@ static uint64_t spgs_inc_generation(struct silofs_space_stats *spst)
 }
 
 static void spst_update_lsegs(struct silofs_space_stats *spst,
-			      enum silofs_ltype ltype, ssize_t take)
+                              enum silofs_ltype ltype, ssize_t take)
 {
 	spgs_update_take(&spst->lsegs, ltype, take);
 }
 
 static void spst_update_objs(struct silofs_space_stats *spst,
-			     enum silofs_ltype ltype, ssize_t take)
+                             enum silofs_ltype ltype, ssize_t take)
 {
 	spgs_update_take(&spst->objs, ltype, take);
 }
 
 static void spst_update_bks(struct silofs_space_stats *spst,
-			    enum silofs_ltype ltype, ssize_t take)
+                            enum silofs_ltype ltype, ssize_t take)
 {
 	spgs_update_take(&spst->bks, ltype, take);
 }
@@ -517,7 +513,7 @@ static ssize_t spst_ninodes(const struct silofs_space_stats *spst)
 }
 
 static void spst_accum_gauges(struct silofs_space_stats *spst,
-			      const struct silofs_space_stats *spst_other)
+                              const struct silofs_space_stats *spst_other)
 {
 	spgs_accum(&spst->lsegs, &spst_other->lsegs);
 	spgs_accum(&spst->bks, &spst_other->bks);
@@ -525,7 +521,7 @@ static void spst_accum_gauges(struct silofs_space_stats *spst,
 }
 
 static void spst_export(const struct silofs_space_stats *spst,
-			struct silofs_space_stats1k *out_spst)
+                        struct silofs_space_stats1k *out_spst)
 {
 	silofs_memzero(out_spst, sizeof(*out_spst));
 	out_spst->sp_btime = (uint64_t)spst->btime;
@@ -541,7 +537,7 @@ static void spst_export(const struct silofs_space_stats *spst,
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static void sbst_collect_stats(const struct silofs_sb_info *sbi,
-			       struct silofs_space_stats *out_spst)
+                               struct silofs_space_stats *out_spst)
 {
 	spst_assign(out_spst, &sbi->sb_spst_curr);
 	spst_accum_gauges(out_spst, &sbi->sb_spst_base);
@@ -553,7 +549,7 @@ void silofs_sbst_setup_spawned(struct silofs_sb_info *sbi)
 }
 
 void silofs_sbst_rebuild_from(struct silofs_sb_info *sbi,
-			      const struct silofs_sb_info *sbi_from)
+                              const struct silofs_sb_info *sbi_from)
 {
 	struct silofs_space_stats spst;
 
@@ -585,7 +581,7 @@ void silofs_sbst_set_capacity(struct silofs_sb_info *sbi, size_t capacity)
 }
 
 void silofs_sbst_update_lsegs(struct silofs_sb_info *sbi,
-			      enum silofs_ltype ltype, ssize_t take)
+                              enum silofs_ltype ltype, ssize_t take)
 {
 	if (take != 0) {
 		spst_update_lsegs(&sbi->sb_spst_curr, ltype, take);
@@ -594,7 +590,7 @@ void silofs_sbst_update_lsegs(struct silofs_sb_info *sbi,
 }
 
 void silofs_sbst_update_bks(struct silofs_sb_info *sbi,
-			    enum silofs_ltype ltype, ssize_t take)
+                            enum silofs_ltype ltype, ssize_t take)
 {
 	if (take != 0) {
 		spst_update_bks(&sbi->sb_spst_curr, ltype, take);
@@ -603,7 +599,7 @@ void silofs_sbst_update_bks(struct silofs_sb_info *sbi,
 }
 
 void silofs_sbst_update_objs(struct silofs_sb_info *sbi,
-			     enum silofs_ltype ltype, ssize_t take)
+                             enum silofs_ltype ltype, ssize_t take)
 {
 	if (take != 0) {
 		spst_update_objs(&sbi->sb_spst_curr, ltype, take);
@@ -674,7 +670,7 @@ bool silofs_sbst_mayalloc_data(const struct silofs_sb_info *sbi, size_t nwant)
 }
 
 bool silofs_sbst_mayalloc_meta(const struct silofs_sb_info *sbi,
-			       size_t nbytes_want, bool new_file)
+                               size_t nbytes_want, bool new_file)
 {
 	const size_t limit = sbst_capacity(sbi);
 	const size_t nused = sbst_bytes_used(sbi);
@@ -709,7 +705,7 @@ static fsblkcnt_t bytes_to_fsblkcnt(size_t nbytes, size_t unit)
 }
 
 void silofs_sbst_fill_statvfs(const struct silofs_sb_info *sbi,
-			      struct statvfs *out_stv)
+                              struct statvfs *out_stv)
 {
 	const size_t funit = 4096;
 	const size_t bsize = funit;
@@ -734,7 +730,7 @@ void silofs_sbst_fill_statvfs(const struct silofs_sb_info *sbi,
 }
 
 void silofs_sbst_fill_qspst(const struct silofs_sb_info *sbi,
-			    struct silofs_query_spstats *out_qsp)
+                            struct silofs_query_spstats *out_qsp)
 {
 	struct silofs_space_stats spst;
 

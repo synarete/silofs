@@ -67,7 +67,7 @@ static int32_t uber1k_chiper_mode(const struct silofs_uber1k *uber1k)
 }
 
 static void uber1k_set_cipher(struct silofs_uber1k *uber1k,
-			      int32_t cipher_algo, int32_t cipher_mode)
+                              int32_t cipher_algo, int32_t cipher_mode)
 {
 	uber1k->ub_chiper_algo = silofs_cpu_to_le32((uint32_t)cipher_algo);
 	uber1k->ub_chiper_mode = silofs_cpu_to_le32((uint32_t)cipher_mode);
@@ -80,7 +80,7 @@ void silofs_uber1k_init(struct silofs_uber1k *uber1k)
 	uber1k_set_version(uber1k, SILOFS_FMT_VERSION);
 	uber1k_set_flags(uber1k, SILOFS_UBERF_NONE);
 	uber1k_set_cipher(uber1k, SILOFS_CIPHER_ALGO_DEFAULT,
-			  SILOFS_CIPHER_MODE_DEFAULT);
+	                  SILOFS_CIPHER_MODE_DEFAULT);
 }
 
 void silofs_uber1k_fini(struct silofs_uber1k *uber1k)
@@ -89,13 +89,13 @@ void silofs_uber1k_fini(struct silofs_uber1k *uber1k)
 }
 
 static void uber1k_sb_uaddr(const struct silofs_uber1k *uber1k,
-			    struct silofs_uaddr *out_sb_uaddr)
+                            struct silofs_uaddr *out_sb_uaddr)
 {
 	silofs_uaddr64b_xtoh(&uber1k->ub_sb_uaddr, out_sb_uaddr);
 }
 
 static void uber1k_set_sb_uaddr(struct silofs_uber1k *uber1k,
-				const struct silofs_uaddr *sb_uaddr)
+                                const struct silofs_uaddr *sb_uaddr)
 {
 	silofs_uaddr64b_htox(&uber1k->ub_sb_uaddr, sb_uaddr);
 }
@@ -113,27 +113,27 @@ uber1k_set_sb_riv(struct silofs_uber1k *uber1k, const struct silofs_iv *sb_riv)
 }
 
 static void uber1k_main_ivkey(const struct silofs_uber1k *uber1k,
-			      struct silofs_ivkey *out_ivkey)
+                              struct silofs_ivkey *out_ivkey)
 {
 	silofs_ivkey_setup(out_ivkey, &uber1k->ub_main_key,
-			   &uber1k->ub_main_iv);
+	                   &uber1k->ub_main_iv);
 }
 
 static void uber1k_set_main_ivkey(struct silofs_uber1k *uber1k,
-				  const struct silofs_ivkey *ivkey)
+                                  const struct silofs_ivkey *ivkey)
 {
 	silofs_key_assign(&uber1k->ub_main_key, &ivkey->key);
 	silofs_iv_assign(&uber1k->ub_main_iv, &ivkey->iv);
 }
 
 static void uber1k_pvsegr(const struct silofs_uber1k *uber1k,
-			  struct silofs_pvsegr *out_pvsegr)
+                          struct silofs_pvsegr *out_pvsegr)
 {
 	silofs_pvsegr64b_xtoh(&uber1k->ub_pvsegr, out_pvsegr);
 }
 
 static void uber1k_set_pvsegr(struct silofs_uber1k *uber1k,
-			      const struct silofs_pvsegr *pvsegr)
+                              const struct silofs_pvsegr *pvsegr)
 {
 	silofs_pvsegr64b_htox(&uber1k->ub_pvsegr, pvsegr);
 }
@@ -171,7 +171,7 @@ static int uber1k_check_uaddr_sb(const struct silofs_uber1k *uber1k)
 	if ((ltype != SILOFS_LTYPE_SUPER) || (height != SILOFS_HEIGHT_SUPER) ||
 	    (uaddr.voff != 0)) {
 		log_dbg("bad uber uaddr-sb: voff=%ld ltype=%d height=%d",
-			uaddr.voff, (int)ltype, (int)height);
+		        uaddr.voff, (int)ltype, (int)height);
 		return -SILOFS_EBADUBER;
 	}
 	return 0;
@@ -219,14 +219,14 @@ uber1k_hash(const struct silofs_uber1k *uber1k, struct silofs_hash256 *hash)
 }
 
 static void uber1k_set_hash(struct silofs_uber1k *uber1k,
-			    const struct silofs_hash256 *hash)
+                            const struct silofs_hash256 *hash)
 {
 	silofs_hash256_assign(&uber1k->ub_hash, hash);
 }
 
 static void uber1k_calc_hash(const struct silofs_uber1k *uber1k,
-			     const struct silofs_mdigest *md,
-			     struct silofs_hash256 *out_hash)
+                             const struct silofs_mdigest *md,
+                             struct silofs_hash256 *out_hash)
 {
 	const size_t len = offsetof(struct silofs_uber1k, ub_hash);
 
@@ -234,7 +234,7 @@ static void uber1k_calc_hash(const struct silofs_uber1k *uber1k,
 }
 
 void silofs_uber1k_stamp(struct silofs_uber1k *uber1k,
-			 const struct silofs_mdigest *md)
+                         const struct silofs_mdigest *md)
 {
 	struct silofs_hash256 hash;
 
@@ -243,7 +243,7 @@ void silofs_uber1k_stamp(struct silofs_uber1k *uber1k,
 }
 
 static int uber1k_check_hash(const struct silofs_uber1k *uber1k,
-			     const struct silofs_mdigest *md)
+                             const struct silofs_mdigest *md)
 {
 	struct silofs_hash256 hash[2];
 
@@ -254,7 +254,7 @@ static int uber1k_check_hash(const struct silofs_uber1k *uber1k,
 }
 
 static int uber1k_verify(const struct silofs_uber1k *uber1k,
-			 const struct silofs_mdigest *md)
+                         const struct silofs_mdigest *md)
 {
 	int err;
 
@@ -270,13 +270,13 @@ static int uber1k_verify(const struct silofs_uber1k *uber1k,
 }
 
 int silofs_uber1k_verify(const struct silofs_uber1k *uber1k,
-			 const struct silofs_mdigest *md)
+                         const struct silofs_mdigest *md)
 {
 	return uber1k_verify(uber1k, md);
 }
 
 void silofs_uber1k_xtoh(const struct silofs_uber1k *uber1k,
-			struct silofs_uber *uber)
+                        struct silofs_uber *uber)
 {
 	uber1k_sb_uaddr(uber1k, &uber->sb_ulink.uaddr);
 	uber1k_sb_riv(uber1k, &uber->sb_ulink.riv);
@@ -289,7 +289,7 @@ void silofs_uber1k_xtoh(const struct silofs_uber1k *uber1k,
 }
 
 void silofs_uber1k_htox(struct silofs_uber1k *uber1k,
-			const struct silofs_uber *uber)
+                        const struct silofs_uber *uber)
 {
 	silofs_uber1k_init(uber1k);
 	uber1k_set_sb_uaddr(uber1k, &uber->sb_ulink.uaddr);
@@ -318,7 +318,7 @@ void silofs_uber_fini(struct silofs_uber *uber)
 }
 
 void silofs_uber_assign(struct silofs_uber *uber,
-			const struct silofs_uber *other)
+                        const struct silofs_uber *other)
 {
 	silofs_uuid_assign(&uber->uuid, &other->uuid);
 	silofs_ivkey_assign(&uber->main_ivkey, &other->main_ivkey);
@@ -335,7 +335,7 @@ void silofs_uber_gen_uuid(struct silofs_uber *uber)
 }
 
 void silofs_uber_set_ivkey(struct silofs_uber *uber,
-			   const struct silofs_ivkey *ivkey)
+                           const struct silofs_ivkey *ivkey)
 {
 	silofs_ivkey_assign(&uber->main_ivkey, ivkey);
 }
@@ -354,7 +354,7 @@ ivkey_make_prand(struct silofs_ivkey *ivkey, const struct silofs_mdigest *md)
 }
 
 int silofs_uber_gen_ivkey(struct silofs_uber *uber,
-			  const struct silofs_mdigest *md)
+                          const struct silofs_mdigest *md)
 {
 	struct silofs_ivkey ivkey[2];
 	int err;
@@ -371,25 +371,25 @@ int silofs_uber_gen_ivkey(struct silofs_uber *uber,
 }
 
 void silofs_uber_pvsegr(const struct silofs_uber *uber,
-			struct silofs_pvsegr *out_pvsegr)
+                        struct silofs_pvsegr *out_pvsegr)
 {
 	silofs_pvsegr_assign(out_pvsegr, &uber->pvsegr);
 }
 
 void silofs_uber_set_pvsegr(struct silofs_uber *uber,
-			    const struct silofs_pvsegr *pvsegr)
+                            const struct silofs_pvsegr *pvsegr)
 {
 	silofs_pvsegr_assign(&uber->pvsegr, pvsegr);
 }
 
 void silofs_uber_sb_ulink(const struct silofs_uber *uber,
-			  struct silofs_ulink *out_ulink)
+                          struct silofs_ulink *out_ulink)
 {
 	silofs_ulink_assign(out_ulink, &uber->sb_ulink);
 }
 
 void silofs_uber_set_sb_ulink(struct silofs_uber *uber,
-			      const struct silofs_ulink *sb_ulink)
+                              const struct silofs_ulink *sb_ulink)
 {
 	silofs_ulink_assign(&uber->sb_ulink, sb_ulink);
 }
@@ -400,7 +400,7 @@ void silofs_uber_reset_sb_ulink(struct silofs_uber *uber)
 }
 
 void silofs_uber_volid(const struct silofs_uber *uber,
-		       struct silofs_volid *out_volid)
+                       struct silofs_volid *out_volid)
 {
 	const struct silofs_uaddr *sb_uaddr = &uber->sb_ulink.uaddr;
 
@@ -408,7 +408,7 @@ void silofs_uber_volid(const struct silofs_uber *uber,
 }
 
 static void uber_uaddr_by_volid(const struct silofs_volid *volid,
-				struct silofs_uaddr *out_uaddr)
+                                struct silofs_uaddr *out_uaddr)
 {
 	struct silofs_lsid lsid;
 	const enum silofs_ltype ltype = SILOFS_LTYPE_UBER;
@@ -419,7 +419,7 @@ static void uber_uaddr_by_volid(const struct silofs_volid *volid,
 }
 
 void silofs_make_uber_uaddr(const struct silofs_volid *volid,
-			    struct silofs_uaddr *out_uaddr)
+                            struct silofs_uaddr *out_uaddr)
 {
 	uber_uaddr_by_volid(volid, out_uaddr);
 }
@@ -427,28 +427,28 @@ void silofs_make_uber_uaddr(const struct silofs_volid *volid,
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static int encrypt_uber1k(const struct silofs_cipher *ci,
-			  const struct silofs_ivkey *ivkey,
-			  const struct silofs_uber1k *uber1k_in,
-			  struct silofs_uber1k *uber1k_out)
+                          const struct silofs_ivkey *ivkey,
+                          const struct silofs_uber1k *uber1k_in,
+                          struct silofs_uber1k *uber1k_out)
 {
 	return silofs_encrypt_buf(ci, ivkey, uber1k_in, uber1k_out,
-				  sizeof(*uber1k_out));
+	                          sizeof(*uber1k_out));
 }
 
 static int decrypt_uber1k(const struct silofs_cipher *ci,
-			  const struct silofs_ivkey *ivkey,
-			  const struct silofs_uber1k *uber1k_in,
-			  struct silofs_uber1k *uber1k_out)
+                          const struct silofs_ivkey *ivkey,
+                          const struct silofs_uber1k *uber1k_in,
+                          struct silofs_uber1k *uber1k_out)
 {
 	return silofs_decrypt_buf(ci, ivkey, uber1k_in, uber1k_out,
-				  sizeof(*uber1k_out));
+	                          sizeof(*uber1k_out));
 }
 
 static int
 uber_encode(const struct silofs_uber *uber,
-	    const struct silofs_mdigest *mdigest,
-	    const struct silofs_cipher *cipher,
-	    const struct silofs_ivkey *ivkey, struct silofs_uber1k *out_uber1k)
+            const struct silofs_mdigest *mdigest,
+            const struct silofs_cipher *cipher,
+            const struct silofs_ivkey *ivkey, struct silofs_uber1k *out_uber1k)
 {
 	struct silofs_uber1k uber1k;
 
@@ -459,9 +459,9 @@ uber_encode(const struct silofs_uber *uber,
 
 static int
 uber_decode(struct silofs_uber *uber, const struct silofs_mdigest *mdigest,
-	    const struct silofs_cipher *cipher,
-	    const struct silofs_ivkey *ivkey,
-	    const struct silofs_uber1k *uber1k_enc)
+            const struct silofs_cipher *cipher,
+            const struct silofs_ivkey *ivkey,
+            const struct silofs_uber1k *uber1k_enc)
 {
 	struct silofs_uber1k uber1k = { .ub_magic = 1 };
 	int err;
@@ -481,24 +481,24 @@ uber_decode(struct silofs_uber *uber, const struct silofs_mdigest *mdigest,
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 int silofs_encode_uber(const struct silofs_env *env,
-		       const struct silofs_uber *uber,
-		       struct silofs_uber1k *out_uber1k)
+                       const struct silofs_uber *uber,
+                       struct silofs_uber1k *out_uber1k)
 {
 	return uber_encode(uber, &env->mdigest, &env->uber_cipher,
-			   &env->uber_ivkey, out_uber1k);
+	                   &env->uber_ivkey, out_uber1k);
 }
 
 int silofs_decode_uber(const struct silofs_env *env,
-		       const struct silofs_uber1k *uber1k_enc,
-		       struct silofs_uber *out_uber)
+                       const struct silofs_uber1k *uber1k_enc,
+                       struct silofs_uber *out_uber)
 {
 	return uber_decode(out_uber, &env->mdigest, &env->uber_cipher,
-			   &env->uber_ivkey, uber1k_enc);
+	                   &env->uber_ivkey, uber1k_enc);
 }
 
 static void calc_uber1k_caddr(const struct silofs_env *env,
-			      const struct silofs_uber1k *uber1k,
-			      struct silofs_caddr *out_caddr)
+                              const struct silofs_uber1k *uber1k,
+                              struct silofs_caddr *out_caddr)
 {
 	const struct iovec iov = {
 		.iov_base = unconst(uber1k),
@@ -506,12 +506,12 @@ static void calc_uber1k_caddr(const struct silofs_env *env,
 	};
 
 	silofs_calc_caddr_of(&iov, 1, SILOFS_CTYPE_UBER, &env->mdigest,
-			     out_caddr);
+	                     out_caddr);
 }
 
 static int verify_uber1k_caddr(const struct silofs_env *env,
-			       const struct silofs_uber1k *uber1k,
-			       const struct silofs_caddr *caddr)
+                               const struct silofs_uber1k *uber1k,
+                               const struct silofs_caddr *caddr)
 {
 	struct silofs_caddr caddr2;
 
@@ -520,8 +520,8 @@ static int verify_uber1k_caddr(const struct silofs_env *env,
 }
 
 int silofs_calc_uber_caddr(const struct silofs_env *env,
-			   const struct silofs_uber *uber,
-			   struct silofs_caddr *out_caddr)
+                           const struct silofs_uber *uber,
+                           struct silofs_caddr *out_caddr)
 {
 	struct silofs_uber1k uber1k_enc = {
 		.ub_magic = 1,
@@ -538,8 +538,8 @@ int silofs_calc_uber_caddr(const struct silofs_env *env,
 }
 
 int silofs_save_uber(const struct silofs_env *env,
-		     const struct silofs_uber *uber,
-		     struct silofs_caddr *out_caddr)
+                     const struct silofs_uber *uber,
+                     struct silofs_caddr *out_caddr)
 {
 	struct silofs_uber1k uber1k_enc = {
 		.ub_magic = 1,
@@ -572,8 +572,8 @@ int silofs_save_uber(const struct silofs_env *env,
 }
 
 int silofs_load_uber(const struct silofs_env *env,
-		     const struct silofs_caddr *caddr,
-		     struct silofs_uber *out_uber)
+                     const struct silofs_caddr *caddr,
+                     struct silofs_uber *out_uber)
 {
 	struct silofs_uber1k uber1k_enc = { .ub_magic = 0 };
 	struct silofs_rwvec rwvec = {
@@ -606,7 +606,7 @@ int silofs_load_uber(const struct silofs_env *env,
 }
 
 int silofs_stat_uber(const struct silofs_env *env,
-		     const struct silofs_caddr *caddr)
+                     const struct silofs_caddr *caddr)
 {
 	size_t sz = 0;
 	int err;
@@ -629,8 +629,8 @@ int silofs_stat_uber(const struct silofs_env *env,
 }
 
 int silofs_reload_uber(struct silofs_env *env,
-		       const struct silofs_caddr *caddr,
-		       struct silofs_uber *out_uber)
+                       const struct silofs_caddr *caddr,
+                       struct silofs_uber *out_uber)
 {
 	int err;
 
@@ -650,7 +650,7 @@ int silofs_reload_uber(struct silofs_env *env,
 }
 
 int silofs_unlink_uber(const struct silofs_env *env,
-		       const struct silofs_caddr *caddr)
+                       const struct silofs_caddr *caddr)
 {
 	int err;
 

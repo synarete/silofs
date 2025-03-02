@@ -22,7 +22,6 @@
 #include "encdec.h"
 #include "task.h"
 #include "inode.h"
-#include "walk.h"
 #include "namei.h"
 #include "env.h"
 #include "alias.h"
@@ -50,14 +49,14 @@ static void sqe_reset_iovs(struct silofs_submitq_ent *sqe)
 {
 	for (size_t idx = 0; idx < sqe->cnt; ++idx) {
 		silofs_memfree(sqe->alloc, sqe->iov[idx].iov_base,
-			       sqe->iov[idx].iov_len, SILOFS_ALLOCF_NOPUNCH);
+		               sqe->iov[idx].iov_len, SILOFS_ALLOCF_NOPUNCH);
 		sqe->iov[idx].iov_base = NULL;
 		sqe->iov[idx].iov_len = 0;
 	}
 }
 
 static bool sqe_isappendable(const struct silofs_submitq_ent *sqe,
-			     const struct silofs_laddr *laddr)
+                             const struct silofs_laddr *laddr)
 {
 	const struct silofs_laddr *sqe_laddr = &sqe->laddr;
 	const ssize_t len_max = SILOFS_COMMIT_LEN_MAX;
@@ -92,8 +91,8 @@ static bool sqe_isappendable(const struct silofs_submitq_ent *sqe,
 }
 
 bool silofs_sqe_append_ref(struct silofs_submitq_ent *sqe,
-			   const struct silofs_laddr *laddr,
-			   struct silofs_lnode_info *lni)
+                           const struct silofs_laddr *laddr,
+                           struct silofs_lnode_info *lni)
 {
 	if (!sqe_isappendable(sqe, laddr)) {
 		return false;
@@ -109,7 +108,7 @@ bool silofs_sqe_append_ref(struct silofs_submitq_ent *sqe,
 }
 
 static int sqe_setup_iovs(struct silofs_submitq_ent *sqe,
-			  const struct silofs_submit_ref *refs_arr)
+                          const struct silofs_submit_ref *refs_arr)
 {
 	const struct silofs_submit_ref *ref;
 	size_t len;
@@ -127,7 +126,7 @@ static int sqe_setup_iovs(struct silofs_submitq_ent *sqe,
 }
 
 static int sqe_encrypted_iovs(struct silofs_submitq_ent *sqe,
-			      const struct silofs_submit_ref *refs_arr)
+                              const struct silofs_submit_ref *refs_arr)
 {
 	const struct silofs_submit_ref *ref = NULL;
 	const struct silofs_llink *llink = NULL;
@@ -137,7 +136,7 @@ static int sqe_encrypted_iovs(struct silofs_submitq_ent *sqe,
 		ref = &refs_arr[i];
 		llink = &ref->llink;
 		err = silofs_encrypt_view(sqe->env, &llink->laddr, &llink->riv,
-					  ref->view, sqe->iov[i].iov_base);
+		                          ref->view, sqe->iov[i].iov_base);
 		if (err) {
 			return err;
 		}
@@ -146,7 +145,7 @@ static int sqe_encrypted_iovs(struct silofs_submitq_ent *sqe,
 }
 
 int silofs_sqe_assign_iovs(struct silofs_submitq_ent *sqe,
-			   const struct silofs_submit_ref *refs_arr)
+                           const struct silofs_submit_ref *refs_arr)
 {
 	int err;
 
@@ -167,7 +166,7 @@ out_err:
 static int sqe_do_write(const struct silofs_submitq_ent *sqe)
 {
 	return silofs_repo_writev_at(sqe->env->base.repo, &sqe->laddr,
-				     sqe->iov, sqe->cnt);
+	                             sqe->iov, sqe->cnt);
 }
 
 void silofs_sqe_increfs(struct silofs_submitq_ent *sqe)
@@ -191,7 +190,7 @@ static void sqe_decrefs(struct silofs_submitq_ent *sqe)
 }
 
 static void sqe_init(struct silofs_submitq_ent *sqe,
-		     struct silofs_alloc *alloc, uint64_t uniq_id)
+                     struct silofs_alloc *alloc, uint64_t uniq_id)
 {
 	memset(sqe, 0, sizeof(*sqe));
 	list_head_init(&sqe->qlh);
@@ -289,7 +288,7 @@ submitq_push_sqe(struct silofs_submitq *smq, struct silofs_submitq_ent *sqe)
 }
 
 void silofs_submitq_enqueue(struct silofs_submitq *smq,
-			    struct silofs_submitq_ent *sqe)
+                            struct silofs_submitq_ent *sqe)
 {
 	silofs_mutex_lock(&smq->smq_mutex);
 	submitq_push_sqe(smq, sqe);
@@ -312,7 +311,7 @@ submitq_get_sqe(struct silofs_submitq *smq, uint64_t id)
 }
 
 static int submitq_apply_one(struct silofs_submitq *smq, uint64_t id,
-			     struct silofs_submitq_ent **out_sqe)
+                             struct silofs_submitq_ent **out_sqe)
 {
 	struct silofs_submitq_ent *sqe;
 	int ret = 0;
@@ -345,14 +344,14 @@ static int submitq_apply(struct silofs_submitq *smq, uint64_t id)
 }
 
 int silofs_submitq_new_sqe(struct silofs_submitq *smq,
-			   struct silofs_submitq_ent **out_sqe)
+                           struct silofs_submitq_ent **out_sqe)
 {
 	*out_sqe = sqe_new(smq->smq_alloc, smq->smq_apex_id++);
 	return likely(*out_sqe != NULL) ? 0 : -SILOFS_ENOMEM;
 }
 
 void silofs_submitq_del_sqe(struct silofs_submitq *smq,
-			    struct silofs_submitq_ent *sqe)
+                            struct silofs_submitq_ent *sqe)
 {
 	sqe_decrefs(sqe);
 	sqe_reset_iovs(sqe);
@@ -384,7 +383,7 @@ static void cred_update_umask(struct silofs_cred *cred, mode_t umsk)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_task_set_creds(struct silofs_task *task, uid_t uid, gid_t gid,
-			   mode_t umsk)
+                           mode_t umsk)
 {
 	cred_setup(&task->t_oper.op_creds.host_cred, uid, gid, umsk);
 	cred_setup(&task->t_oper.op_creds.fs_cred, uid, gid, umsk);
@@ -408,7 +407,7 @@ void silofs_task_set_ts(struct silofs_task *task, bool rt)
 }
 
 void silofs_task_update_by(struct silofs_task *task,
-			   struct silofs_submitq_ent *sqe)
+                           struct silofs_submitq_ent *sqe)
 {
 	if (sqe->uniq_id > task->t_apex_id) {
 		task->t_apex_id = sqe->uniq_id;
@@ -454,7 +453,7 @@ void silofs_task_fini(struct silofs_task *task)
 }
 
 void silofs_task_enq_loose(struct silofs_task *task,
-			   struct silofs_inode_info *ii)
+                           struct silofs_inode_info *ii)
 {
 	silofs_assert_null(ii->i_looseq_next);
 	silofs_assert_eq(ii->i_vni.vn_lni.ln_flags & SILOFS_LNF_PINNED, 0);
@@ -492,9 +491,9 @@ static void task_forget_looseq(struct silofs_task *task)
 		if (err) {
 			/* TODO: maybe have retry loop ? */
 			silofs_panic("failed to forget loose inode: "
-				     "ino=%ld flags=%x err=%d",
-				     ii->i_ino, ii->i_vni.vn_lni.ln_flags,
-				     err);
+			             "ino=%ld flags=%x err=%d",
+			             ii->i_ino, ii->i_vni.vn_lni.ln_flags,
+			             err);
 		}
 		ii = task_deq_loose(task);
 	}

@@ -42,6 +42,9 @@ silofs_sni_ulink(const struct silofs_spnode_info *sni);
 const struct silofs_uaddr *
 silofs_sni_uaddr(const struct silofs_spnode_info *sni);
 
+const struct silofs_laddr *
+silofs_sni_laddr(const struct silofs_spnode_info *sni);
+
 void silofs_sni_incref(struct silofs_spnode_info *sni);
 
 void silofs_sni_decref(struct silofs_spnode_info *sni);
@@ -82,6 +85,9 @@ void silofs_sni_resolve_lmap(const struct silofs_spnode_info *sni,
 
 const struct silofs_ulink *
 silofs_sli_ulink(const struct silofs_spleaf_info *sli);
+
+const struct silofs_laddr *
+silofs_sli_laddr(const struct silofs_spleaf_info *sli);
 
 const struct silofs_uaddr *
 silofs_sli_uaddr(const struct silofs_spleaf_info *sli);

@@ -32,7 +32,7 @@ static void do_clock_gettime(clockid_t clock_id, struct timespec *tp)
 	err = silofs_sys_clock_gettime(clock_id, tp);
 	if (err) {
 		silofs_panic("clock_gettime failure: clock_id=%ld err=%d",
-			     (long)clock_id, err);
+		             (long)clock_id, err);
 	}
 }
 
@@ -47,7 +47,7 @@ void silofs_mclock_now(struct timespec *ts)
 }
 
 static void timespec_dif(const struct timespec *beg,
-			 const struct timespec *end, struct timespec *dif)
+                         const struct timespec *end, struct timespec *dif)
 {
 	dif->tv_sec = end->tv_sec - beg->tv_sec;
 	if (end->tv_nsec >= beg->tv_nsec) {
@@ -67,7 +67,7 @@ void silofs_mclock_dur(const struct timespec *start, struct timespec *dur)
 }
 
 void silofs_mclock_dif(const struct timespec *start,
-		       const struct timespec *finish, struct timespec *dif)
+                       const struct timespec *finish, struct timespec *dif)
 {
 	timespec_dif(start, finish, dif);
 }

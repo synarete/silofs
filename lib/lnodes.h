@@ -19,8 +19,8 @@
 
 #include <silofs/infra.h>
 #include <silofs/addr.h>
-#include <silofs/hmdq.h>
 #include <silofs/types.h>
+#include "hmdq.h"
 
 struct silofs_lnode_info;
 struct silofs_unode_info;

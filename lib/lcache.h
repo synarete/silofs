@@ -19,7 +19,7 @@
 
 #include <silofs/infra.h>
 #include <silofs/addr.h>
-#include <silofs/hmdq.h>
+#include "hmdq.h"
 #include "spxmap.h"
 
 /* dirty-queues of cached-elements by owner */

@@ -19,7 +19,7 @@
 
 #include <silofs/infra.h>
 #include <silofs/addr.h>
-#include <silofs/hmdq.h>
+#include "hmdq.h"
 
 #define SILOFS_BTREE_KEY_NULL (0)
 

@@ -4729,7 +4729,7 @@ int silofs_do_copy_file_range(struct silofs_task *task,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_setup_reg(struct silofs_inode_info *ii)
+void silofs_ii_setup_reg(struct silofs_inode_info *ii)
 {
 	struct silofs_inode_file *infl = ii_infl_of(ii);
 

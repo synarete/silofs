@@ -498,7 +498,7 @@ static void ii_xa_set_at(const struct silofs_inode_info *ii, size_t sloti,
 	ixa_set_vaddr(ixa_of(ii), sloti, vaddr);
 }
 
-void silofs_setup_xattr(struct silofs_inode_info *ii)
+void silofs_ii_setup_xattr(struct silofs_inode_info *ii)
 {
 	ixa_setup(ixa_of(ii));
 }

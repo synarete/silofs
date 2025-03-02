@@ -2820,41 +2820,30 @@ claim_inode(struct silofs_task *task, struct silofs_inode_info **out_ii)
 	return 0;
 }
 
-static void setup_new_inode(struct silofs_inode_info *ii,
-                            const struct silofs_inew_params *inp)
-{
-	silofs_ii_setup_by(ii, inp);
-	ii_dirtify(ii);
-}
-
-static void
-setup_uniqe_generation(struct silofs_task *task, struct silofs_inode_info *ii)
+static uint64_t next_igen(const struct silofs_task *task)
 {
 	struct silofs_sb_info *sbi = task_sbi(task);
-	uint64_t gen = 0;
 
-	gen = silofs_sbst_next_generation(sbi);
-	silofs_ii_set_generation(ii, gen);
+	return silofs_sbst_next_generation(sbi);
 }
 
 int silofs_spawn_inode(struct silofs_task *task,
                        const struct silofs_inew_params *inp,
                        struct silofs_inode_info **out_ii)
 {
-	struct silofs_inode_info *ii = NULL;
+	uint64_t gen;
 	int err;
 
 	err = check_itype(task, inp->mode);
 	if (err) {
 		return err;
 	}
-	err = claim_inode(task, &ii);
+	err = claim_inode(task, out_ii);
 	if (err) {
 		return err;
 	}
-	setup_new_inode(ii, inp);
-	setup_uniqe_generation(task, ii);
-	*out_ii = ii;
+	gen = next_igen(task);
+	silofs_ii_setup_new(*out_ii, inp, gen);
 	return 0;
 }
 

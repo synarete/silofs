@@ -564,7 +564,7 @@ int silofs_drop_symlink(struct silofs_task *task,
 	return err;
 }
 
-void silofs_setup_symlnk(struct silofs_inode_info *lnk_ii)
+void silofs_ii_setup_symlnk(struct silofs_inode_info *lnk_ii)
 {
 	inln_setup(inln_of(lnk_ii));
 }

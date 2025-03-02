@@ -1336,8 +1336,8 @@ static uint64_t unique_seed(void)
 	return s ^ (uint64_t)silofs_time_now();
 }
 
-void silofs_setup_dir(struct silofs_inode_info *dir_ii, mode_t parent_mode,
-                      nlink_t nlink)
+void silofs_ii_setup_dir(struct silofs_inode_info *dir_ii, mode_t parent_mode,
+                         nlink_t nlink)
 {
 	struct silofs_iattr iattr = {
 		.ia_size = SILOFS_DIR_EMPTY_SIZE,
@@ -2514,7 +2514,7 @@ static void dirc_resetup_dir(const struct silofs_dir_ctx *d_ctx)
 {
 	struct silofs_inode_info *dir_ii = d_ctx->dir_ii;
 
-	silofs_setup_dir(dir_ii, 0, ii_nlink(dir_ii));
+	silofs_ii_setup_dir(dir_ii, 0, ii_nlink(dir_ii));
 	ii_dirtify(dir_ii);
 }
 

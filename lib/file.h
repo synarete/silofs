@@ -41,7 +41,7 @@ struct silofs_rwiter_ctx {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_setup_reg(struct silofs_inode_info *ii);
+void silofs_ii_setup_reg(struct silofs_inode_info *ii);
 
 int silofs_drop_reg(struct silofs_task *task, struct silofs_inode_info *ii);
 

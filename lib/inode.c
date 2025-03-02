@@ -648,7 +648,7 @@ struct silofs_sb_info *silofs_ii_sbi(const struct silofs_inode_info *ii)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void silofs_setup_ispecial(struct silofs_inode_info *ii, dev_t rdev)
+static void ii_setup_ispecial(struct silofs_inode_info *ii, dev_t rdev)
 {
 	const unsigned int rdev_major = major(rdev);
 	const unsigned int rdev_minor = minor(rdev);
@@ -685,33 +685,37 @@ static void inode_setup_common(struct silofs_inode *inode, ino_t ino,
 static void ii_setup_inode(struct silofs_inode_info *ii,
                            const struct silofs_inew_params *inp)
 {
-	struct silofs_inode *inode = ii->inode;
-	const ino_t ino = ii_ino(ii);
+	inode_setup_common(ii->inode, ii_ino(ii), inp);
+}
 
-	inode_setup_common(inode, ino, inp);
-	silofs_setup_xattr(ii);
+static void ii_setup_sub(struct silofs_inode_info *ii,
+                         const struct silofs_inew_params *inp)
+{
+	silofs_ii_setup_xattr(ii);
 	if (ii_isdir(ii)) {
-		silofs_setup_dir(ii, inp->parent_mode, 1);
+		silofs_ii_setup_dir(ii, inp->parent_mode, 1);
 	} else if (ii_isreg(ii)) {
-		silofs_setup_reg(ii);
+		silofs_ii_setup_reg(ii);
 	} else if (ii_islnk(ii)) {
-		silofs_setup_symlnk(ii);
+		silofs_ii_setup_symlnk(ii);
 	} else {
-		silofs_setup_ispecial(ii, inp->rdev);
+		ii_setup_ispecial(ii, inp->rdev);
 	}
 }
 
-void silofs_ii_set_generation(struct silofs_inode_info *ii, uint64_t gen)
+static void ii_set_generation(struct silofs_inode_info *ii, uint64_t gen)
 {
 	inode_set_generation(ii->inode, gen);
 	ii_dirtify(ii);
 }
 
-void silofs_ii_setup_by(struct silofs_inode_info *ii,
-                        const struct silofs_inew_params *inp)
+void silofs_ii_setup_new(struct silofs_inode_info *ii,
+                         const struct silofs_inew_params *inp, uint64_t gen)
 {
 	ii_setup_inode(ii, inp);
+	ii_setup_sub(ii, inp);
 	ii_update_itimes(ii, SILOFS_IATTR_TIMES, &inp->ts);
+	ii_set_generation(ii, gen);
 	ii_dirtify(ii);
 }
 

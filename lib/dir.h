@@ -53,8 +53,8 @@ struct silofs_ino_dt {
 
 enum silofs_dirf silofs_dir_flags(const struct silofs_inode_info *dir_ii);
 
-void silofs_setup_dir(struct silofs_inode_info *dir_ii, mode_t parent_mode,
-                      nlink_t nlink);
+void silofs_ii_setup_dir(struct silofs_inode_info *dir_ii, mode_t parent_mode,
+                         nlink_t nlink);
 
 int silofs_lookup_dentry(struct silofs_task          *task,
                          struct silofs_inode_info    *dir_ii,

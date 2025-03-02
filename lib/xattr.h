@@ -35,7 +35,7 @@ struct silofs_listxattr_ctx {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_setup_xattr(struct silofs_inode_info *ii);
+void silofs_ii_setup_xattr(struct silofs_inode_info *ii);
 
 int silofs_do_getxattr(struct silofs_task *task, struct silofs_inode_info *ii,
                        const struct silofs_namestr *name, void *buf,

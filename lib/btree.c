@@ -17,7 +17,7 @@
 #include "configs.h"
 #include <silofs/errors.h>
 #include <silofs/defs.h>
-#include <silofs/addr.h>
+#include "addr.h"
 #include "pvlogs.h"
 #include "repo.h"
 #include "pnodes.h"

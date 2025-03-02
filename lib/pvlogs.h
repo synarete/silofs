@@ -17,8 +17,9 @@
 #ifndef SILOFS_PVLOGS_H_
 #define SILOFS_PVLOGS_H_
 
+#include <stdint.h>
 #include <silofs/infra.h>
-#include <silofs/addr.h>
+#include "addr.h"
 
 /* persistent volume segments range */
 struct silofs_pvsegr {

@@ -16,7 +16,7 @@
  */
 #include "configs.h"
 #include <silofs/infra.h>
-#include <silofs/addr.h>
+#include "ltype.h"
 
 static bool ltype_isequal(enum silofs_ltype st1, enum silofs_ltype st2)
 {

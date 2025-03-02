@@ -18,7 +18,7 @@
 #define SILOFS_DIRTYQ_H_
 
 #include <silofs/infra.h>
-#include <silofs/addr.h>
+#include "addr.h"
 
 /* dirty-queue of cached-elements */
 struct silofs_dirtyq {

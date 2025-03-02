@@ -20,7 +20,7 @@
 #include <silofs/infra.h>
 #include <silofs/str.h>
 #include <silofs/crypt.h>
-#include <silofs/addr.h>
+#include "addr.h"
 
 /* repository control flags */
 #define SILOFS_REPOF_RDONLY (1)

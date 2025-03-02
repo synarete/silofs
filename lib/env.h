@@ -21,8 +21,8 @@
 #include <silofs/macros.h>
 #include <silofs/appexec.h>
 #include <silofs/infra.h>
-#include <silofs/addr.h>
 #include <silofs/crypt.h>
+#include "addr.h"
 #include "uidgid.h"
 #include "uber.h"
 

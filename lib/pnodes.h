@@ -18,7 +18,7 @@
 #define SILOFS_PNODES_H_
 
 #include <silofs/infra.h>
-#include <silofs/addr.h>
+#include "addr.h"
 #include "hmdq.h"
 
 #define SILOFS_BTREE_KEY_NULL (0)

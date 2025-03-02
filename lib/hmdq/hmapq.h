@@ -17,11 +17,16 @@
 #ifndef SILOFS_HMAPQ_H_
 #define SILOFS_HMAPQ_H_
 
+#include <stdint.h>
 #include <silofs/infra.h>
-#include <silofs/addr.h>
 #include "dirtyq.h"
 
 #define SILOFS_HMAPQ_ITERALL (0xffffffffU)
+
+struct silofs_blobid;
+struct silofs_paddr;
+struct silofs_uaddr;
+struct silofs_vaddr;
 
 /* elements' mapping hash-key types */
 enum silofs_hkey_type {

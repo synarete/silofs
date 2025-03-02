@@ -17,6 +17,9 @@
 #ifndef SILOFS_BLOBID_H_
 #define SILOFS_BLOBID_H_
 
+#include <stdlib.h>
+#include <stdint.h>
+
 #define SILOFS_BOLBID_LEN_MAX (40)
 
 struct silofs_blobid {

@@ -20,7 +20,9 @@
 #include <silofs/infra.h>
 #include <silofs/str.h>
 #include <silofs/crypt.h>
-#include <silofs/addr.h>
+#include "htox.h"
+#include "meta.h"
+#include "caddr.h"
 
 void silofs_caddr_reset(struct silofs_caddr *caddr)
 {

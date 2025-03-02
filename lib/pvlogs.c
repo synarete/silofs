@@ -16,7 +16,7 @@
  */
 #include "configs.h"
 #include <silofs/infra.h>
-#include <silofs/addr.h>
+#include "addr.h"
 #include "pvlogs.h"
 
 void silofs_pvsegr_init(struct silofs_pvsegr *pvsegr)

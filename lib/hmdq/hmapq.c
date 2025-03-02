@@ -15,9 +15,11 @@
  * GNU General Public License for more details.
  */
 #include "configs.h"
+#include <stdlib.h>
 #include <limits.h>
+#include <silofs/macros.h>
 #include <silofs/infra.h>
-#include <silofs/addr.h>
+#include "addr.h"
 #include "hmapq.h"
 
 enum silofs_hmde_consts {

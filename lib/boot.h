@@ -17,11 +17,10 @@
 #ifndef SILOFS_BOOT_H_
 #define SILOFS_BOOT_H_
 
-#include <silofs/infra.h>
-#include <silofs/addr.h>
-#include <silofs/types.h>
+#include <silofs/str.h>
 
-struct silofs_env;
+struct silofs_caddr;
+struct silofs_xref;
 struct silofs_task;
 
 /* boot pathname: a pair of repo-directory & boot-record name (optional) */

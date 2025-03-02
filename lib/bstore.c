@@ -16,7 +16,7 @@
  */
 #include "configs.h"
 #include <silofs/infra.h>
-#include <silofs/addr.h>
+#include "addr.h"
 #include "repo.h"
 #include "pvlogs.h"
 #include "pnodes.h"

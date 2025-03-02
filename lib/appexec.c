@@ -31,7 +31,6 @@
 #include "flush.h"
 #include "vstage.h"
 #include "claim.h"
-#include "opcall.h"
 #include "opexec.h"
 #include "fuseq.h"
 #include "walk.h"

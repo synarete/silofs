@@ -16,7 +16,7 @@
  */
 #include "configs.h"
 #include <silofs/infra.h>
-#include <silofs/addr.h>
+#include "blobid.h"
 
 void silofs_blobid_setup(struct silofs_blobid *blobid, const void *id,
                          size_t id_len)

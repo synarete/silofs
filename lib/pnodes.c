@@ -16,7 +16,7 @@
  */
 #include "configs.h"
 #include <silofs/infra.h>
-#include <silofs/addr.h>
+#include "addr.h"
 #include "pnodes.h"
 
 static bool key_isvalid(uint64_t key)
@@ -479,7 +479,7 @@ static void
 pni_init(struct silofs_pnode_info *pni, const struct silofs_paddr *paddr)
 {
 	silofs_paddr_assign(&pni->pn_paddr, paddr);
-	silofs_hmqe_init(&pni->pn_hmqe, ptype_size(paddr->ptype));
+	silofs_hmqe_init(&pni->pn_hmqe, silofs_ptype_size(paddr->ptype));
 	silofs_hkey_by_paddr(&pni->pn_hmqe.hme_key, &pni->pn_paddr);
 }
 

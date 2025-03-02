@@ -19,20 +19,16 @@
 
 #include <silofs/defs.h>
 #include <silofs/errors.h>
-#include <silofs/addr/offlba.h>
-#include <silofs/addr/htox.h>
-#include <silofs/addr/meta.h>
-#include <silofs/addr/volid.h>
-#include <silofs/addr/blobid.h>
-#include <silofs/addr/paddr.h>
-#include <silofs/addr/ltype.h>
-#include <silofs/addr/laddr.h>
-#include <silofs/addr/uaddr.h>
-#include <silofs/addr/vaddr.h>
-#include <silofs/addr/caddr.h>
-
-#ifdef SILOFS_USE_PRIVATE
-#include <silofs/addr-private.h>
-#endif
+#include "addr/offlba.h"
+#include "addr/htox.h"
+#include "addr/meta.h"
+#include "addr/volid.h"
+#include "addr/blobid.h"
+#include "addr/paddr.h"
+#include "addr/ltype.h"
+#include "addr/laddr.h"
+#include "addr/uaddr.h"
+#include "addr/vaddr.h"
+#include "addr/caddr.h"
 
 #endif /* SILOFS_ADDR_H_ */

@@ -18,8 +18,8 @@
 #define SILOFS_UBER_H_
 
 #include <silofs/infra.h>
-#include <silofs/addr.h>
 #include <silofs/crypt.h>
+#include "addr.h"
 #include "pvlogs.h"
 
 struct silofs_env;

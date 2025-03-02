@@ -18,7 +18,7 @@
 #define SILOFS_ENCDEC_H_
 
 #include <silofs/infra.h>
-#include <silofs/addr.h>
+#include "addr.h"
 
 struct silofs_env;
 struct silofs_unode_info;

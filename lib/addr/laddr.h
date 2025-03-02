@@ -79,6 +79,14 @@ void silofs_lsid32b_htox(struct silofs_lsid32b    *lsid32,
 void silofs_lsid32b_xtoh(const struct silofs_lsid32b *lsid32,
                          struct silofs_lsid          *lsid);
 
+#ifdef SILOFS_USE_PRIVATE
+#define lsid_reset(lid)        silofs_lsid_reset(lid)
+#define lsid_assign(lid, oth)  silofs_lsid_assign(lid, oth)
+#define lsid_isequal(lid, oth) silofs_lsid_isequal(lid, oth)
+#define lsid_isnull(lid)       silofs_lsid_isnull(lid)
+#define lsid_size(lid)         silofs_lsid_size(lid)
+#endif
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 const struct silofs_laddr *silofs_laddr_none(void);
@@ -129,6 +137,16 @@ int silofs_laddr_from_ascii(struct silofs_laddr        *laddr,
 
 void silofs_laddr_to_base64(const struct silofs_laddr *laddr,
                             struct silofs_strbuf      *sbuf);
+
+#ifdef SILOFS_USE_PRIVATE
+#define laddr_none()            silofs_laddr_none()
+#define laddr_reset(la)         silofs_laddr_reset(la)
+#define laddr_assign(la, oth)   silofs_laddr_assign(la, oth)
+#define laddr_ltype(la)         silofs_laddr_ltype(la)
+#define laddr_isvalid(la)       silofs_laddr_isvalid(la)
+#define laddr_isnull(la)        silofs_laddr_isnull(la)
+#define laddr_isnext(la, oth)   silofs_laddr_isnext(la, oth)
+#endif
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

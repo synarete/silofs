@@ -16,9 +16,12 @@
  */
 #include "configs.h"
 #include <uuid/uuid.h>
+#include <errno.h>
+#include <silofs/errors.h>
 #include <silofs/infra.h>
 #include <silofs/str.h>
-#include <silofs/addr.h>
+#include "htox.h"
+#include "meta.h"
 
 uint32_t silofs_squash_to_u32(const void *ptr, size_t len)
 {

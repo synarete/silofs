@@ -17,7 +17,10 @@
 #include "configs.h"
 #include <silofs/infra.h>
 #include <silofs/crypt.h>
-#include <silofs/addr.h>
+#include "offlba.h"
+#include "htox.h"
+#include "ltype.h"
+#include "uaddr.h"
 
 static const struct silofs_uaddr s_uaddr_none = {
 	.laddr.lsid.lsize = 0,

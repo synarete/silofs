@@ -19,7 +19,7 @@
 
 #include <silofs/defs.h>
 #include <silofs/infra.h>
-#include <silofs/addr.h>
+#include "addr.h"
 
 struct silofs_spnode_info;
 

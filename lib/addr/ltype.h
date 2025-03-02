@@ -58,4 +58,26 @@ ssize_t silofs_ltype_ssize(enum silofs_ltype ltype);
 
 size_t silofs_ltype_nkbs(enum silofs_ltype ltype);
 
+#ifdef SILOFS_USE_PRIVATE
+#define ltype_nkbs(lt)          silofs_ltype_nkbs(lt)
+#define ltype_size(lt)          silofs_ltype_size(lt)
+#define ltype_ssize(lt)         silofs_ltype_ssize(lt)
+#define ltype_isnone(lt)        silofs_ltype_isnone(lt)
+#define ltype_isuber(lt)        silofs_ltype_isuber(lt)
+#define ltype_issuper(lt)       silofs_ltype_issuper(lt)
+#define ltype_isspnode(lt)      silofs_ltype_isspnode(lt)
+#define ltype_isspleaf(lt)      silofs_ltype_isspleaf(lt)
+#define ltype_isunode(lt)       silofs_ltype_isunode(lt)
+#define ltype_isvnode(lt)       silofs_ltype_isvnode(lt)
+#define ltype_isinode(lt)       silofs_ltype_isinode(lt)
+#define ltype_isxanode(lt)      silofs_ltype_isxanode(lt)
+#define ltype_issymval(lt)      silofs_ltype_issymval(lt)
+#define ltype_isdtnode(lt)      silofs_ltype_isdtnode(lt)
+#define ltype_isftnode(lt)      silofs_ltype_isftnode(lt)
+#define ltype_isdata(lt)        silofs_ltype_isdata(lt)
+#define ltype_isdata1k(lt)      silofs_ltype_isdata1k(lt)
+#define ltype_isdata4k(lt)      silofs_ltype_isdata4k(lt)
+#define ltype_isdatabk(lt)      silofs_ltype_isdatabk(lt)
+#endif
+
 #endif /* SILOFS_LTYPE_H_ */

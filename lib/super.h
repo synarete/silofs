@@ -19,8 +19,10 @@
 
 #include <silofs/defs.h>
 #include <silofs/infra.h>
-#include <silofs/addr.h>
 
+struct silofs_laddr;
+struct silofs_uaddr;
+struct silofs_vaddr;
 struct silofs_task;
 struct silofs_spnode_info;
 struct silofs_spleaf_info;

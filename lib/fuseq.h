@@ -17,7 +17,11 @@
 #ifndef SILOFS_FUSEQ_H_
 #define SILOFS_FUSEQ_H_
 
+#include <stdint.h>
 #include <silofs/infra.h>
+
+struct silofs_fuseq_worker;
+struct silofs_fuseq_dispatcher;
 
 /* fuse-queue machinery */
 struct silofs_fuseq_conn_info {
@@ -45,24 +49,6 @@ struct silofs_fuseq_thread {
 	bool                 joined;
 	uint8_t              pad[2];
 };
-
-struct silofs_fuseq_worker {
-	struct silofs_fuseq_thread fqw_th;
-	uint32_t                   fqw_pad[3];
-} silofs_attr_aligned64;
-
-struct silofs_fuseq_dispatcher {
-	struct silofs_call_args      fqd_args;
-	struct silofs_fuseq_thread   fqd_th;
-	struct silofs_list_head      fqd_lh;
-	struct silofs_fuseq_inb     *fqd_inb;
-	struct silofs_fuseq_outb    *fqd_outb;
-	struct silofs_fuseq_rw_iter *fqd_rwi;
-	struct silofs_piper          fqd_piper;
-	time_t                       fqd_time_stamp;
-	volatile uint64_t            fqd_req_count;
-	bool                         fqd_init_ok;
-} silofs_attr_aligned64;
 
 struct silofs_fuseq_subx {
 	struct silofs_fuseq_worker     *fq_workers;

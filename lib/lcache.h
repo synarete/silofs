@@ -18,7 +18,7 @@
 #define SILOFS_LCACHE_H_
 
 #include <silofs/infra.h>
-#include <silofs/addr.h>
+#include "addr.h"
 #include "hmdq.h"
 #include "spxmap.h"
 

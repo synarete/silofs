@@ -18,7 +18,7 @@
 #define SILOFS_TASK_H_
 
 #include <silofs/infra.h>
-#include <silofs/addr.h>
+#include "addr.h"
 #include "uidgid.h"
 
 #define SILOFS_SQENT_NREFS_MAX (32)

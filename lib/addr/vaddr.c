@@ -16,7 +16,10 @@
  */
 #include "configs.h"
 #include <silofs/infra.h>
-#include <silofs/addr.h>
+#include "offlba.h"
+#include "ltype.h"
+#include "htox.h"
+#include "vaddr.h"
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

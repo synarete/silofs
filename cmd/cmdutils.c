@@ -20,6 +20,7 @@
 #include <sys/stat.h>
 #include <sys/resource.h>
 #include <sys/prctl.h>
+#include <uuid/uuid.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -791,13 +792,12 @@ char *cmd_strndup(const char *s, size_t n)
 
 char *cmd_struuid(const uint8_t uu[16])
 {
-	struct silofs_strbuf sbuf;
-	struct silofs_uuid uuid;
+	char str[40] = "";
+	uuid_t uuid;
 
-	silofs_strbuf_reset(&sbuf);
-	silofs_uuid_assign2(&uuid, uu);
-	silofs_uuid_unparse(&uuid, &sbuf);
-	return cmd_strdup(sbuf.str);
+	memcpy(uuid, uu, sizeof(uuid));
+	uuid_unparse(uuid, str);
+	return cmd_strdup(str);
 }
 
 char *cmd_mkpathf(const char *fmt, ...)

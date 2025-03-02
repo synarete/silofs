@@ -84,6 +84,20 @@ void silofs_vaddr64_htox(struct silofs_vaddr64     *vadr,
 void silofs_vaddr64_xtoh(const struct silofs_vaddr64 *vadr,
                          struct silofs_vaddr         *vaddr);
 
+#ifdef SILOFS_USE_PRIVATE
+#define vaddr_none()            silofs_vaddr_none()
+#define vaddr_isnull(va)        silofs_vaddr_isnull(va)
+#define vaddr_isdata(va)        silofs_vaddr_isdata(va)
+#define vaddr_isdatabk(va)      silofs_vaddr_isdatabk(va)
+#define vaddr_isinode(va)       silofs_vaddr_isinode(va)
+#define vaddr_reset(va)         silofs_vaddr_reset(va)
+#define vaddr_assign(va, oth)   silofs_vaddr_assign(va, oth)
+#define vaddr_setup(va, st, o)  silofs_vaddr_setup(va, st, o)
+#define vaddr_compare(va1, va2) silofs_vaddr_compare(va1, va2)
+#define vaddr_isequal(va1, va2) silofs_vaddr_isequal(va1, va2)
+#define vaddr_len(va)           silofs_vaddr_length(va)
+#endif
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 ssize_t silofs_height_to_space_span(enum silofs_height height);

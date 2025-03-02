@@ -21,11 +21,7 @@
 #include <endian.h>
 #include <silofs/ioctls.h>
 #include <silofs/infra.h>
-#include <silofs/addr.h>
-#include "uber.h"
-#include "lnodes.h"
-#include "task.h"
-#include "inode.h"
+#include "addr.h"
 #include "env.h"
 
 #ifndef LINK_MAX

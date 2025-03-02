@@ -16,7 +16,8 @@
  */
 #include "configs.h"
 #include <silofs/infra.h>
-#include <silofs/addr.h>
+#include "meta.h"
+#include "volid.h"
 
 void silofs_volid_generate(struct silofs_volid *volid)
 {

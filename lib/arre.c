@@ -16,6 +16,7 @@
  */
 #include "configs.h"
 #include <silofs/infra.h>
+#include "addr.h"
 #include "repo.h"
 #include "task.h"
 #include "env.h"

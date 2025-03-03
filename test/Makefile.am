@@ -1,1 +1,1 @@
-SUBDIRS = unitests funtests
+SUBDIRS = unitests fnctests

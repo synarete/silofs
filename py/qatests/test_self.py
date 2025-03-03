@@ -28,20 +28,20 @@ def test_unitests(env: TestEnv) -> None:
     env.exec_teardown_fs()
 
 
-def test_funtests(env: TestEnv) -> None:
-    ff_pre_dname = "pre-funtests"
-    ff_dname = "funtests"
-    ff_fork_name = "funtests-fork"
+def test_fnctests(env: TestEnv) -> None:
+    ff_pre_dname = "pre-fnctests"
+    ff_dname = "fnctests"
+    ff_fork_name = "fnctests-fork"
     env.exec_setup_fs(64, allow_xattr_acl=True, writeback_cache=False)
     tds = env.make_tds(64, ff_pre_dname, 2**22)
     tds.do_makedirs()
     tds.do_write()
     ff_root = env.create_fstree(ff_dname)
-    env.subcmd.funtests.version()
-    env.subcmd.funtests.run(ff_root, rand=False)
+    env.subcmd.fnctests.version()
+    env.subcmd.fnctests.run(ff_root, rand=False)
     env.exec_fork(ff_fork_name)
     tds.do_read()
-    env.subcmd.funtests.run(ff_root, rand=True)
+    env.subcmd.fnctests.run(ff_root, rand=True)
     tds.do_read()
     tds.do_unlink()
     env.exec_rmfs(ff_fork_name)
@@ -50,8 +50,8 @@ def test_funtests(env: TestEnv) -> None:
     env.exec_teardown_fs()
 
 
-def test_funtests_nosplice(env: TestEnv) -> None:
-    ff_dname = "funtests_nosplice"
+def test_fnctests_nosplice(env: TestEnv) -> None:
+    ff_dname = "fnctests_nosplice"
     env.exec_init()
     env.exec_mkfs(40)
     env.exec_mount(writeback_cache=False, buffer_copy_mode=True)
@@ -61,13 +61,13 @@ def test_funtests_nosplice(env: TestEnv) -> None:
     tds.do_unlink()
     tds.do_rmdirs()
     ff_root = env.create_fstree(ff_dname)
-    env.subcmd.funtests.run(ff_root)
+    env.subcmd.fnctests.run(ff_root)
     env.remove_fstree(ff_dname)
     env.exec_teardown_fs()
 
 
-def test_funtests_tune2(env: TestEnv) -> None:
-    ff_dname = "funtests2"
+def test_fnctests_tune2(env: TestEnv) -> None:
+    ff_dname = "fnctests2"
     env.exec_setup_fs(64, writeback_cache=False)
     tds = env.make_tds(64, ff_dname, 2**22)
     tds.do_makedirs()
@@ -79,30 +79,30 @@ def test_funtests_tune2(env: TestEnv) -> None:
     tds.do_rmdirs()
     ff_root = env.create_fstree(ff_dname)
     env.exec_tune2([ff_root])
-    env.subcmd.funtests.version()
-    env.subcmd.funtests.run(ff_root)
+    env.subcmd.fnctests.version()
+    env.subcmd.fnctests.run(ff_root)
     env.remove_fstree(ff_dname)
     env.exec_teardown_fs()
 
 
-def _run_funtests(env: TestEnv, base: Path) -> None:
-    env.subcmd.funtests.run(base, rand=True, nostatvfs=True, noflaky=True)
+def _run_fnctests(env: TestEnv, base: Path) -> None:
+    env.subcmd.fnctests.run(base, rand=True, nostatvfs=True, noflaky=True)
 
 
-def test_funtests_mt(env: TestEnv) -> None:
-    ff_pre_dname = "pre-funtests"
-    ff_dname1 = "funtests1"
-    ff_dname2 = "funtests2"
-    ff_fork_name1 = "funtests-fork1"
-    ff_fork_name2 = "funtests-fork2"
+def test_fnctests_mt(env: TestEnv) -> None:
+    ff_pre_dname = "pre-fnctests"
+    ff_dname1 = "fnctests1"
+    ff_dname2 = "fnctests2"
+    ff_fork_name1 = "fnctests-fork1"
+    ff_fork_name2 = "fnctests-fork2"
     env.exec_setup_fs(64, writeback_cache=False)
     tds = env.make_tds(32, ff_pre_dname, 2**20)
     tds.do_makedirs()
     tds.do_write()
     ff_root1 = env.create_fstree(ff_dname1)
     ff_root2 = env.create_fstree(ff_dname2)
-    fu1 = env.executor.submit(_run_funtests, env, ff_root1)
-    fu2 = env.executor.submit(_run_funtests, env, ff_root2)
+    fu1 = env.executor.submit(_run_fnctests, env, ff_root1)
+    fu2 = env.executor.submit(_run_fnctests, env, ff_root2)
     env.exec_fork(ff_fork_name1)
     tds.do_read()
     env.suspend(2)

@@ -12,7 +12,6 @@ nobase_include_HEADERS += silofs/consts.h
 nobase_include_HEADERS += silofs/defs.h
 nobase_include_HEADERS += silofs/errors.h
 nobase_include_HEADERS += silofs/infra.h
-nobase_include_HEADERS += silofs/infra-private.h
 nobase_include_HEADERS += silofs/infra/atomic.h
 nobase_include_HEADERS += silofs/infra/avl.h
 nobase_include_HEADERS += silofs/infra/base64.h

@@ -100,3 +100,21 @@ int silofs_decrypt_vni_view(const struct silofs_env *env,
 
 	return decrypt_view_inplace(env, llink, vni->vn_lni.ln_view);
 }
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static uint32_t iov_length(const struct iovec *iov, size_t iov_cnt)
+{
+	return (uint32_t)silofs_iov_length(iov, iov_cnt);
+}
+
+void silofs_calc_caddr_of(const struct silofs_env *env,
+                          const struct iovec *iov, size_t iov_cnt,
+                          enum silofs_ctype ctype,
+                          struct silofs_caddr *out_caddr)
+{
+	struct silofs_hash256 hash;
+
+	silofs_sha256_ofv(&env->mdigest, iov, iov_cnt, &hash);
+	silofs_caddr_setup(out_caddr, &hash, iov_length(iov, iov_cnt), ctype);
+}

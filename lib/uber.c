@@ -15,13 +15,11 @@
  * GNU General Public License for more details.
  */
 #include "configs.h"
+#include <silofs/defs.h>
 #include <silofs/infra.h>
 #include "repo.h"
+#include "encdec.h"
 #include "uber.h"
-#include "lnodes.h"
-#include "uidgid.h"
-#include "task.h"
-#include "inode.h"
 #include "env.h"
 
 static uint64_t uber1k_magic(const struct silofs_uber1k *uber1k)
@@ -505,8 +503,7 @@ static void calc_uber1k_caddr(const struct silofs_env *env,
 		.iov_len = sizeof(*uber1k),
 	};
 
-	silofs_calc_caddr_of(&iov, 1, SILOFS_CTYPE_UBER, &env->mdigest,
-	                     out_caddr);
+	silofs_calc_caddr_of(env, &iov, 1, SILOFS_CTYPE_UBER, out_caddr);
 }
 
 static int verify_uber1k_caddr(const struct silofs_env *env,

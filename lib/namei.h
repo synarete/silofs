@@ -19,6 +19,7 @@
 
 #include <silofs/ioctls.h>
 
+struct silofs_mdigest;
 struct silofs_task;
 struct silofs_sb_info;
 struct silofs_ioc_query;

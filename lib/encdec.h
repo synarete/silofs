@@ -35,4 +35,9 @@ int silofs_decrypt_uni_view(const struct silofs_env  *env,
 int silofs_decrypt_vni_view(const struct silofs_env  *env,
                             struct silofs_vnode_info *vni);
 
+void silofs_calc_caddr_of(const struct silofs_env *env,
+                          const struct iovec *iov, size_t iov_cnt,
+                          enum silofs_ctype    ctype,
+                          struct silofs_caddr *out_caddr);
+
 #endif /* SILOFS_ENCDEC_H_ */

@@ -20,7 +20,6 @@
 #include <silofs/errors.h>
 #include <silofs/infra.h>
 #include <silofs/str.h>
-#include "crypt.h"
 #include "htox.h"
 #include "meta.h"
 #include "caddr.h"
@@ -219,18 +218,4 @@ void silofs_caddr64b_xtoh(const struct silofs_caddr64b *caddr64b,
 	const uint32_t size = silofs_le32_to_cpu(caddr64b->size);
 
 	silofs_caddr_setup(caddr, &caddr64b->hash, size, caddr64b->ctype);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-void silofs_calc_caddr_of(const struct iovec *iov, size_t cnt,
-                          enum silofs_ctype ctype,
-                          const struct silofs_mdigest *md,
-                          struct silofs_caddr *out_caddr)
-{
-	struct silofs_hash256 hash;
-	const uint32_t size = (uint32_t)silofs_iov_length(iov, cnt);
-
-	silofs_sha256_ofv(md, iov, cnt, &hash);
-	silofs_caddr_setup(out_caddr, &hash, size, ctype);
 }

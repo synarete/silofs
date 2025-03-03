@@ -74,14 +74,4 @@ void silofs_caddr64b_xtoh(const struct silofs_caddr64b *caddr64b,
 #define caddr_assign(ca, oth)  silofs_caddr_assign(ca, oth)
 #endif
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-struct iovec;
-struct silofs_mdigest;
-
-void silofs_calc_caddr_of(const struct iovec *iov, size_t cnt,
-                          enum silofs_ctype            ctype,
-                          const struct silofs_mdigest *md,
-                          struct silofs_caddr         *out_caddr);
-
 #endif /* SILOFS_CADDR_H_ */

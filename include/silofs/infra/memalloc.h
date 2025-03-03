@@ -46,6 +46,9 @@ struct silofs_alloc {
 	                struct silofs_alloc_stat  *out_stat);
 };
 
+/* default allocator interface (C malloc/free) */
+extern struct silofs_alloc *silofs_default_alloc;
+
 /* allocator via standard C malloc/free */
 struct silofs_stdalloc {
 	struct silofs_alloc alloc;

@@ -18,6 +18,7 @@
 #include <sys/types.h>
 #include <sys/resource.h>
 #include <string.h>
+#include <limits.h>
 #include <silofs/macros.h>
 #include <silofs/utility.h>
 #include <silofs/syscall.h>
@@ -158,6 +159,15 @@ int silofs_stdalloc_fini(struct silofs_stdalloc *sal)
 	silofs_memzero(sal, sizeof(*sal));
 	return 0;
 }
+
+static struct silofs_stdalloc g_stdalloc = {
+	.alloc.malloc_fn = stdal_malloc,
+	.alloc.free_fn = stdal_free,
+	.alloc.stat_fn = stdal_stat,
+	.nbytes_max = UINT32_MAX,
+};
+
+struct silofs_alloc *silofs_default_alloc = &g_stdalloc.alloc;
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 

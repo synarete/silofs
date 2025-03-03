@@ -17,7 +17,8 @@
 #include "configs.h"
 #include <gcrypt.h>
 #include <silofs/infra.h>
-#include <silofs/crypt.h>
+#include "gcry.h"
+#include "ivkey.h"
 
 static void randomize_by_gcry(void *ptr, size_t len, bool very_strong)
 {

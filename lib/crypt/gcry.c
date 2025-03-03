@@ -18,9 +18,11 @@
 #include <gcrypt.h>
 #include <silofs/infra.h>
 #include <silofs/errors.h>
-#include <silofs/crypt.h>
+#include "gcry.h"
 
-#define SILOFS_SECMEM_SIZE (64L * SILOFS_KILO)
+enum {
+	SILOFS_SECMEM_SIZE = 64L * SILOFS_KILO,
+};
 
 int silofs_init_gcrypt(void)
 {

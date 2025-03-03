@@ -17,13 +17,18 @@
 #ifndef SILOFS_CIPHER_H_
 #define SILOFS_CIPHER_H_
 
+#include <gcrypt.h>
 #include <silofs/defs.h>
 #include <silofs/infra.h>
-#include <silofs/crypt.h>
-#include <gcrypt.h>
+#include "ivkey.h"
 
-#define SILOFS_CIPHER_ALGO_DEFAULT SILOFS_CIPHER_AES256
-#define SILOFS_CIPHER_MODE_DEFAULT SILOFS_CIPHER_MODE_GCM
+struct silofs_mdigest;
+struct silofs_password;
+
+enum silofs_cipher_consts {
+	SILOFS_CIPHER_ALGO_DEFAULT = SILOFS_CIPHER_AES256,
+	SILOFS_CIPHER_MODE_DEFAULT = SILOFS_CIPHER_MODE_GCM,
+};
 
 struct silofs_kdf_desc {
 	uint32_t kd_iterations;

@@ -17,9 +17,10 @@
 #include "configs.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <silofs/errors.h>
 #include <silofs/infra.h>
 #include <silofs/str.h>
-#include <silofs/crypt.h>
+#include "crypt.h"
 #include "htox.h"
 #include "meta.h"
 #include "caddr.h"

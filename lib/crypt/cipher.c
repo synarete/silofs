@@ -18,7 +18,10 @@
 #include <gcrypt.h>
 #include <silofs/infra.h>
 #include <silofs/errors.h>
-#include <silofs/crypt.h>
+#include "gcry.h"
+#include "passwd.h"
+#include "mdigest.h"
+#include "cipher.h"
 
 int silofs_check_cipher_args(int algo, int mode)
 {

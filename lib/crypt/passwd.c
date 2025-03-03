@@ -19,8 +19,8 @@
 #include <silofs/errors.h>
 #include <silofs/infra.h>
 #include <silofs/str.h>
-#include <silofs/crypt/passwd.h>
-#include <silofs/crypt/ivkey.h>
+#include "passwd.h"
+#include "ivkey.h"
 
 int silofs_password_setup(struct silofs_password *pw, const char *pass)
 {

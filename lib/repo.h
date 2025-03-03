@@ -19,7 +19,7 @@
 
 #include <silofs/infra.h>
 #include <silofs/str.h>
-#include <silofs/crypt.h>
+#include "crypt.h"
 #include "addr.h"
 
 /* repository control flags */

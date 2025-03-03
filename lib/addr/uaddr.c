@@ -16,7 +16,7 @@
  */
 #include "configs.h"
 #include <silofs/infra.h>
-#include <silofs/crypt.h>
+#include "crypt.h"
 #include "offlba.h"
 #include "htox.h"
 #include "ltype.h"

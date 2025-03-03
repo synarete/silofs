@@ -18,7 +18,7 @@
 #define SILOFS_UBER_H_
 
 #include <silofs/infra.h>
-#include <silofs/crypt.h>
+#include "crypt.h"
 #include "addr.h"
 #include "pvlogs.h"
 

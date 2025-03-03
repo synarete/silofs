@@ -17,15 +17,11 @@
 #ifndef SILOFS_CRYPT_H_
 #define SILOFS_CRYPT_H_
 
-#include <silofs/consts.h>
-#include <silofs/errors.h>
-#include <silofs/defs.h>
 #include <silofs/infra.h>
-
-#include <silofs/crypt/passwd.h>
-#include <silofs/crypt/ivkey.h>
-#include <silofs/crypt/mdigest.h>
-#include <silofs/crypt/cipher.h>
-#include <silofs/crypt/gcry.h>
+#include "crypt/passwd.h"
+#include "crypt/ivkey.h"
+#include "crypt/mdigest.h"
+#include "crypt/cipher.h"
+#include "crypt/gcry.h"
 
 #endif /* SILOFS_CRYPT_H_ */

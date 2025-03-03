@@ -18,7 +18,8 @@
 #include <gcrypt.h>
 #include <silofs/infra.h>
 #include <silofs/errors.h>
-#include <silofs/crypt.h>
+#include "gcry.h"
+#include "mdigest.h"
 
 int silofs_mdigest_init(struct silofs_mdigest *md)
 {

@@ -24,8 +24,7 @@
 #include "dir.h"
 #include "env.h"
 #include "namei.h"
-#include "vstage.h"
-#include "alias.h"
+#include "stage.h"
 
 enum silofs_dtree_consts {
 	DTREE_SHIFT = SILOFS_DIR_NODE_SHIFT,
@@ -1374,7 +1373,7 @@ static int dirc_recheck_dnode(const struct silofs_dir_ctx *d_ctx,
 	ino_t dnode_ino;
 	ino_t owner_ino;
 
-	if (!vni_need_recheck(&dni->dn_vni)) {
+	if (!silofs_vni_need_recheck(&dni->dn_vni)) {
 		return 0;
 	}
 	dnode_ino = dtn_ino(dni->dtn);
@@ -1384,7 +1383,7 @@ static int dirc_recheck_dnode(const struct silofs_dir_ctx *d_ctx,
 		        owner_ino);
 		return -SILOFS_EFSCORRUPTED;
 	}
-	vni_set_rechecked(&dni->dn_vni);
+	silofs_vni_set_rechecked(&dni->dn_vni);
 	return 0;
 }
 
@@ -1977,7 +1976,7 @@ static int dirc_check_stage_parent(struct silofs_dir_ctx *d_ctx)
 	int err;
 
 	parent = ii_parent(d_ctx->dir_ii);
-	if (ino_isnull(parent)) {
+	if (silofs_ino_isnull(parent)) {
 		/* special case: unlinked-but-open dir */
 		return -SILOFS_ENOENT;
 	}

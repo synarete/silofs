@@ -37,6 +37,52 @@ enum silofs_stg_mode {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+int silofs_spawn_super(struct silofs_env         *env,
+                       const struct silofs_ulink *ulink,
+                       struct silofs_sb_info    **out_sbi);
+
+int silofs_stage_super(struct silofs_env         *env,
+                       const struct silofs_ulink *ulink,
+                       struct silofs_sb_info    **out_sbi);
+
+int silofs_spawn_spnode(struct silofs_env          *env,
+                        const struct silofs_ulink  *ulink,
+                        struct silofs_spnode_info **out_sni);
+
+int silofs_stage_spnode(struct silofs_env          *env,
+                        const struct silofs_ulink  *ulink,
+                        struct silofs_spnode_info **out_sni);
+
+int silofs_spawn_spleaf(struct silofs_env          *env,
+                        const struct silofs_ulink  *ulink,
+                        struct silofs_spleaf_info **out_sli);
+
+int silofs_stage_spleaf(struct silofs_env          *env,
+                        const struct silofs_ulink  *ulink,
+                        struct silofs_spleaf_info **out_sli);
+
+int silofs_spawn_lseg(struct silofs_env *env, const struct silofs_lsid *lsid);
+
+int silofs_stage_lseg(struct silofs_env *env, const struct silofs_lsid *lsid);
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+int silofs_claim_vspace(struct silofs_task *task, enum silofs_ltype ltype,
+                        struct silofs_vaddr *out_vaddr);
+
+int silofs_reclaim_vspace(struct silofs_task        *task,
+                          const struct silofs_vaddr *vaddr);
+
+int silofs_claim_ispace(struct silofs_task  *task,
+                        struct silofs_vaddr *out_vaddr);
+
+int silofs_addref_vspace(struct silofs_task        *task,
+                         const struct silofs_vaddr *vaddr);
+
+int silofs_rescan_vspace_of(struct silofs_task *task, enum silofs_ltype ltype);
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
 int silofs_stage_spmaps_of(struct silofs_task         *task,
                            const struct silofs_vaddr  *vaddr,
                            enum silofs_stg_mode        stg_mode,

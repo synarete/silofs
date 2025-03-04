@@ -114,6 +114,16 @@ bool silofs_sbi_ismutable_lsid(const struct silofs_sb_info *sbi,
 bool silofs_sbi_ismutable_laddr(const struct silofs_sb_info *sbi,
                                 const struct silofs_laddr   *laddr);
 
+#ifdef SILOFS_USE_PRIVATE
+#define sbi_env(sbi)            silofs_sbi_env(sbi)
+#define sbi_ulink(sbi)          silofs_sbi_ulink(sbi)
+#define sbi_uaddr(sbi)          silofs_sbi_uaddr(sbi)
+#define sbi_laddr(sbi)          silofs_sbi_laddr(sbi)
+#define sbi_incref(sbi)         silofs_sbi_incref(sbi)
+#define sbi_decref(sbi)         silofs_sbi_decref(sbi)
+#define sbi_dirtify(sbi)        silofs_sbi_dirtify(sbi)
+#endif
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_sbst_setup_spawned(struct silofs_sb_info *sbi);

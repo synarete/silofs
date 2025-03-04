@@ -23,9 +23,8 @@
 #include "inode.h"
 #include "env.h"
 #include "spmaps.h"
-#include "ustage.h"
+#include "stage.h"
 #include "walk.h"
-#include "alias.h"
 
 #define check_ok_or_bailout(err_)      \
 	do {                           \
@@ -340,7 +339,7 @@ static int wac_do_traverse_spnode1(struct silofs_walk_ctx *wa_ctx)
 	loff_t voff;
 	int err = 0;
 
-	sni_vrange(wa_ctx->sni1, &vrange);
+	silofs_sni_vspace_range(wa_ctx->sni1, &vrange);
 	wa_ctx->voff = vrange.beg;
 	while (wa_ctx->voff < vrange.end) {
 		voff = wa_ctx->voff;
@@ -416,7 +415,7 @@ static int wac_do_traverse_spnode2(struct silofs_walk_ctx *wa_ctx)
 	loff_t voff;
 	int err = 0;
 
-	sni_vrange(wa_ctx->sni2, &vrange);
+	silofs_sni_vspace_range(wa_ctx->sni2, &vrange);
 	wa_ctx->voff = vrange.beg;
 	while (wa_ctx->voff < vrange.end) {
 		voff = wa_ctx->voff;
@@ -492,7 +491,7 @@ static int wac_do_traverse_spnode3(struct silofs_walk_ctx *wa_ctx)
 	loff_t voff;
 	int err = 0;
 
-	sni_vrange(wa_ctx->sni3, &vrange);
+	silofs_sni_vspace_range(wa_ctx->sni3, &vrange);
 	wa_ctx->voff = vrange.beg;
 	while (wa_ctx->voff < vrange.end) {
 		voff = wa_ctx->voff;
@@ -568,7 +567,7 @@ static int wac_do_traverse_spnode4(struct silofs_walk_ctx *wa_ctx)
 	loff_t voff;
 	int err = 0;
 
-	sni_vrange(wa_ctx->sni4, &vrange);
+	silofs_sni_vspace_range(wa_ctx->sni4, &vrange);
 	wa_ctx->voff = vrange.beg;
 	while (wa_ctx->voff < vrange.end) {
 		voff = wa_ctx->voff;

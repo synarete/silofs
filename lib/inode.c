@@ -36,8 +36,7 @@
 #include "xattr.h"
 #include "symlink.h"
 #include "env.h"
-#include "vstage.h"
-#include "alias.h"
+#include "stage.h"
 
 /* local functions forward declarations */
 static void ii_update_itimes(struct silofs_inode_info *ii,
@@ -54,25 +53,25 @@ bool silofs_ino_isnull(ino_t ino)
 bool silofs_user_cap_fowner(const struct silofs_cred *cred)
 {
 	/* TODO: CAP_FOWNER */
-	return uid_isroot(cred->uid);
+	return silofs_uid_isroot(cred->uid);
 }
 
 bool silofs_user_cap_sys_admin(const struct silofs_cred *cred)
 {
 	/* TODO: CAP_SYS_ADMIN */
-	return uid_isroot(cred->uid);
+	return silofs_uid_isroot(cred->uid);
 }
 
 static bool silofs_user_cap_fsetid(const struct silofs_cred *cred)
 {
 	/* TODO: CAP_SYS_ADMIN */
-	return uid_isroot(cred->uid);
+	return silofs_uid_isroot(cred->uid);
 }
 
 static bool silofs_user_cap_chown(const struct silofs_cred *cred)
 {
 	/* TODO: CAP_CHOWN */
-	return uid_isroot(cred->uid);
+	return silofs_uid_isroot(cred->uid);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -735,7 +734,7 @@ static mode_t itype_of(mode_t mode)
 static bool user_isowner(const struct silofs_cred *cred,
                          const struct silofs_inode_info *ii)
 {
-	return uid_eq(cred->uid, ii_uid(ii));
+	return silofs_uid_eq(cred->uid, ii_uid(ii));
 }
 
 static bool has_itype(const struct silofs_inode_info *ii, mode_t mode)
@@ -844,7 +843,7 @@ update_post_chmod(const struct silofs_task *task, struct silofs_inode_info *ii,
 	const gid_t gid = ii_gid(ii);
 
 	iattr->ia_flags |= SILOFS_IATTR_MODE | SILOFS_IATTR_CTIME;
-	if (!gid_eq(gid, cred->gid) && !silofs_user_cap_fsetid(cred)) {
+	if (!silofs_gid_eq(gid, cred->gid) && !silofs_user_cap_fsetid(cred)) {
 		iattr->ia_flags |= SILOFS_IATTR_KILL_SGID;
 	}
 	silofs_update_iattrs_of(task, ii, iattr);
@@ -892,7 +891,7 @@ static int check_cap_chown(const struct silofs_task *task)
 static int check_chown_uid(const struct silofs_task *task,
                            const struct silofs_inode_info *ii, uid_t uid)
 {
-	if (uid_eq(uid, ii_uid(ii))) {
+	if (silofs_uid_eq(uid, ii_uid(ii))) {
 		return 0;
 	}
 	return check_cap_chown(task);
@@ -903,7 +902,7 @@ static int check_chown_gid(const struct silofs_task *task,
 {
 	const struct silofs_creds *creds = silofs_task_creds(task);
 
-	if (gid_eq(gid, ii_gid(ii))) {
+	if (silofs_gid_eq(gid, ii_gid(ii))) {
 		return 0;
 	}
 	if (user_isowner(&creds->fs_cred, ii)) {
@@ -1064,7 +1063,7 @@ static int check_parent_dir_ii(struct silofs_task *task,
 		return 0;
 	}
 	parent = ii_parent(ii);
-	if (ino_isnull(parent)) {
+	if (silofs_ino_isnull(parent)) {
 		return ii->i_nopen ? 0 : -SILOFS_ENOENT;
 	}
 	err = silofs_stage_inode(task, parent, SILOFS_STG_CUR, &parent_ii);
@@ -1485,7 +1484,7 @@ void silofs_update_isize_of(const struct silofs_task *task,
 
 int silofs_verify_ino(ino_t ino)
 {
-	return !ino_isnull(ino) ? 0 : -SILOFS_EFSCORRUPTED;
+	return !silofs_ino_isnull(ino) ? 0 : -SILOFS_EFSCORRUPTED;
 }
 
 static int verify_inode_specific(const struct silofs_inode *inode)

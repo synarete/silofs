@@ -21,7 +21,6 @@
 #include <silofs/ioctls.h>
 #include "lnodes.h"
 #include "super.h"
-#include "alias.h"
 
 /* local functions */
 static ssize_t *

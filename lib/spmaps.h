@@ -81,6 +81,14 @@ int silofs_sni_resolve_child(const struct silofs_spnode_info *sni, loff_t voff,
 void silofs_sni_resolve_lmap(const struct silofs_spnode_info *sni,
                              struct silofs_spmap_lmap        *out_lmap);
 
+#ifdef SILOFS_USE_PRIVATE
+#define sni_ulink(sni)          silofs_sni_ulink(sni)
+#define sni_uaddr(sni)          silofs_sni_uaddr(sni)
+#define sni_laddr(sni)          silofs_sni_laddr(sni)
+#define sni_incref(sni)         silofs_sni_incref(sni)
+#define sni_decref(sni)         silofs_sni_decref(sni)
+#endif
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 const struct silofs_ulink *
@@ -164,6 +172,14 @@ int silofs_sli_resolve_child(const struct silofs_spleaf_info *sli, loff_t voff,
 
 void silofs_sli_resolve_lmap(const struct silofs_spleaf_info *sli,
                              struct silofs_spmap_lmap        *out_lmaps);
+
+#ifdef SILOFS_USE_PRIVATE
+#define sli_ulink(sli)          silofs_sli_ulink(sli)
+#define sli_uaddr(sli)          silofs_sli_uaddr(sli)
+#define sli_laddr(sli)          silofs_sli_laddr(sli)
+#define sli_incref(sli)         silofs_sli_incref(sli)
+#define sli_decref(sli)         silofs_sli_decref(sli)
+#endif
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

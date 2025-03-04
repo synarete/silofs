@@ -23,10 +23,9 @@
 #include "task.h"
 #include "super.h"
 #include "inode.h"
-#include "env.h"
-#include "vstage.h"
+#include "stage.h"
 #include "spmaps.h"
-#include "alias.h"
+#include "env.h"
 
 static void tm64b_htox(struct silofs_tm64b *tm64, const struct tm *tm)
 {

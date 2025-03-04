@@ -17,6 +17,9 @@
 #include "configs.h"
 #include <sys/resource.h>
 #include <sys/stat.h>
+#include <silofs/defs.h>
+#include <silofs/ioctls.h>
+#include <silofs/appexec.h>
 #include "repo.h"
 #include "idsmap.h"
 #include "uber.h"
@@ -29,15 +32,10 @@
 #include "namei.h"
 #include "env.h"
 #include "flush.h"
-#include "vstage.h"
-#include "claim.h"
+#include "stage.h"
 #include "opexec.h"
 #include "fuseq.h"
 #include "walk.h"
-#include "alias.h"
-#include <silofs/defs.h>
-#include <silofs/ioctls.h>
-#include <silofs/appexec.h>
 
 static void caddr_to_xref(const struct silofs_caddr *caddr, int status,
                           struct silofs_xref *out_xref)

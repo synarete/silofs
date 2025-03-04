@@ -22,10 +22,8 @@
 #include "super.h"
 #include "inode.h"
 #include "env.h"
-#include "ustage.h"
-#include "vstage.h"
+#include "stage.h"
 #include "flush.h"
-#include "alias.h"
 
 static bool lni_isunode(const struct silofs_lnode_info *lni)
 {

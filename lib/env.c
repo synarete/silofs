@@ -27,10 +27,8 @@
 #include "lcache.h"
 #include "task.h"
 #include "super.h"
-#include "inode.h"
-#include "ustage.h"
+#include "stage.h"
 #include "env.h"
-#include "alias.h"
 
 static const struct silofs_lsid *lsid_of(const struct silofs_ulink *ulink)
 {

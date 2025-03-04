@@ -24,9 +24,8 @@
 #include "super.h"
 #include "env.h"
 #include "spmaps.h"
-#include "vstage.h"
+#include "stage.h"
 #include "walk.h"
-#include "alias.h"
 
 struct silofs_delfs_ctx {
 	struct silofs_visitor vis;
@@ -113,7 +112,7 @@ static int delfc_post_at_spleaf(struct silofs_delfs_ctx *delf_ctx,
 	loff_t voff = -1;
 	int err;
 
-	sli_vrange(sli, &vrange);
+	silofs_sli_vspace_range(sli, &vrange);
 	voff = vrange.beg;
 	while (voff < vrange.end) {
 		err = delfc_post_at_lseg_of(delf_ctx, sli, voff);
@@ -138,7 +137,7 @@ static int delfc_post_at_spnode(struct silofs_delfs_ctx *delf_ctx,
 	loff_t voff;
 	int err;
 
-	sni_vrange(sni, &vrange);
+	silofs_sni_vspace_range(sni, &vrange);
 	voff = vrange.beg;
 	while (voff < vrange.end) {
 		err = silofs_sni_resolve_child(sni, voff, &ulink);

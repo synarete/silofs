@@ -142,6 +142,11 @@ const struct silofs_cred *silofs_task_fs_cred(const struct silofs_task *task);
 
 const struct timespec *silofs_task_ts(const struct silofs_task *task);
 
+#ifdef SILOFS_USE_PRIVATE
+#define task_sbi(t)             silofs_task_sbi(t)
+#define task_lcache(t)          silofs_task_lcache(t)
+#endif
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_sqe_increfs(struct silofs_submitq_ent *sqe);

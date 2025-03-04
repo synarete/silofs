@@ -26,10 +26,7 @@
 #include "super.h"
 #include "env.h"
 #include "spmaps.h"
-#include "ustage.h"
-#include "alias.h"
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+#include "stage.h"
 
 static void uni_set_env(struct silofs_unode_info *uni, struct silofs_env *env)
 {

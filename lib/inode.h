@@ -187,6 +187,37 @@ void silofs_ii_undirtify(struct silofs_inode_info *ii);
 
 bool silofs_ii_isdirty(const struct silofs_inode_info *ii);
 
+#ifdef SILOFS_USE_PRIVATE
+#define ii_unconst(ii)         silofs_ii_unconst(ii)
+#define ii_to_vni(ii)          silofs_ii_to_vni(ii)
+#define ii_ino(ii)             silofs_ii_ino(ii)
+#define ii_vaddr(ii)           silofs_ii_vaddr(ii)
+#define ii_sbi(ii)             silofs_ii_sbi(ii)
+#define ii_env(ii)             silofs_ii_env(ii)
+#define ii_cache(ii)           silofs_ii_cache(ii)
+#define ii_refcnt(ii)          silofs_ii_refcnt(ii)
+#define ii_incref(ii)          silofs_ii_incref(ii)
+#define ii_decref(ii)          silofs_ii_decref(ii)
+#define ii_dirtify(ii)         silofs_ii_dirtify(ii)
+#define ii_xino(ii)            silofs_ii_xino_of(ii)
+#define ii_parent(ii)          silofs_ii_parent(ii)
+#define ii_uid(ii)             silofs_ii_uid(ii)
+#define ii_gid(ii)             silofs_ii_gid(ii)
+#define ii_mode(ii)            silofs_ii_mode(ii)
+#define ii_nlink(ii)           silofs_ii_nlink(ii)
+#define ii_size(ii)            silofs_ii_size(ii)
+#define ii_flags(ii)           silofs_ii_flags(ii)
+#define ii_span(ii)            silofs_ii_span(ii)
+#define ii_blocks(ii)          silofs_ii_blocks(ii)
+#define ii_generation(ii)      silofs_ii_generation(ii)
+#define ii_isrootd(ii)         silofs_ii_isrootd(ii)
+#define ii_isdir(ii)           silofs_ii_isdir(ii)
+#define ii_isreg(ii)           silofs_ii_isreg(ii)
+#define ii_islnk(ii)           silofs_ii_islnk(ii)
+#define ii_isfifo(ii)          silofs_ii_isfifo(ii)
+#define ii_issock(ii)          silofs_ii_issock(ii)
+#endif
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_do_getattr(struct silofs_task *task, struct silofs_inode_info *ii,

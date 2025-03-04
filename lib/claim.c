@@ -26,9 +26,7 @@
 #include "env.h"
 #include "namei.h"
 #include "spmaps.h"
-#include "vstage.h"
-#include "claim.h"
-#include "alias.h"
+#include "stage.h"
 
 /* space-allocation context */
 struct silofs_spalloc_ctx {

@@ -19,13 +19,9 @@
 #include <sys/stat.h>
 #include <limits.h>
 #include <silofs/infra.h>
-#include "uber.h"
 #include "lnodes.h"
-#include "task.h"
-#include "inode.h"
-#include "env.h"
 #include "spmaps.h"
-#include "alias.h"
+#include "env.h"
 
 static void vrange_of_spleaf(struct silofs_vrange *vrange, loff_t voff)
 {
@@ -1169,7 +1165,7 @@ loff_t silofs_sli_base_voff(const struct silofs_spleaf_info *sli)
 {
 	struct silofs_vrange vrange;
 
-	sli_vrange(sli, &vrange);
+	silofs_sli_vspace_range(sli, &vrange);
 	return vrange.beg;
 }
 
@@ -1177,7 +1173,7 @@ static bool sli_is_inrange(const struct silofs_spleaf_info *sli, loff_t voff)
 {
 	struct silofs_vrange vrange;
 
-	sli_vrange(sli, &vrange);
+	silofs_sli_vspace_range(sli, &vrange);
 	return (vrange.beg <= voff) && (voff < vrange.end);
 }
 
@@ -1210,7 +1206,7 @@ static int sli_find_free_space_from(const struct silofs_spleaf_info *sli,
 	size_t kbn;
 	int err;
 
-	sli_vrange(sli, &vrange);
+	silofs_sli_vspace_range(sli, &vrange);
 	voff_beg = off_max(voff_from, vrange.beg);
 	if (voff_beg >= vrange.end) {
 		return -SILOFS_ENOSPC;
@@ -1229,7 +1225,7 @@ static size_t sli_vrange_len(const struct silofs_spleaf_info *sli)
 {
 	struct silofs_vrange vrange;
 
-	sli_vrange(sli, &vrange);
+	silofs_sli_vspace_range(sli, &vrange);
 	return vrange.len;
 }
 
@@ -1590,7 +1586,7 @@ static bool sni_is_inrange(const struct silofs_spnode_info *sni, loff_t voff)
 {
 	struct silofs_vrange vrange;
 
-	sni_vrange(sni, &vrange);
+	silofs_sni_vspace_range(sni, &vrange);
 	return (vrange.beg <= voff) && (voff < vrange.end);
 }
 
@@ -1607,7 +1603,7 @@ void silofs_sni_active_vrange(const struct silofs_spnode_info *sni,
 	size_t nform_size;
 	ssize_t span;
 
-	sni_vrange(sni, &vrange);
+	silofs_sni_vspace_range(sni, &vrange);
 	span = silofs_height_to_space_span(vrange.height - 1);
 	nform_size = sni->sn_nactive_subs * (size_t)span;
 	silofs_vrange_setup(out_vrange, vrange.height, vrange.beg,
@@ -1618,7 +1614,7 @@ loff_t silofs_sni_base_voff(const struct silofs_spnode_info *sni)
 {
 	struct silofs_vrange vrange;
 
-	sni_vrange(sni, &vrange);
+	silofs_sni_vspace_range(sni, &vrange);
 	return vrange.beg;
 }
 

@@ -24,9 +24,7 @@
 #include "task.h"
 #include "inode.h"
 #include "namei.h"
-#include "vstage.h"
-#include "claim.h"
-#include "alias.h"
+#include "stage.h"
 
 void silofs_xref_reset(struct silofs_xref *xref)
 {

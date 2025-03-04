@@ -20,7 +20,6 @@
 #include "lnodes.h"
 #include "encdec.h"
 #include "env.h"
-#include "alias.h"
 
 static void resolve_ivkey_of(const struct silofs_env *env,
                              const struct silofs_laddr *laddr,

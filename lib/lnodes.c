@@ -17,10 +17,7 @@
 #include "configs.h"
 #include <limits.h>
 #include <silofs/infra.h>
-#include "uber.h"
 #include "lnodes.h"
-//#include "uidgid.h"
-//#include "task.h"
 #include "super.h"
 #include "inode.h"
 #include "dir.h"
@@ -28,9 +25,8 @@
 #include "walk.h"
 #include "xattr.h"
 #include "symlink.h"
-#include "env.h"
 #include "spmaps.h"
-#include "alias.h"
+#include "env.h"
 
 enum {
 	SILOFS_UI_MAGIC = 0xCAFEBEB,
@@ -411,11 +407,6 @@ const struct silofs_ulink *
 silofs_uni_ulink(const struct silofs_unode_info *uni)
 {
 	return &uni->un_ulink;
-}
-
-const struct silofs_iv *silofs_uni_riv(const struct silofs_unode_info *uni)
-{
-	return &uni->un_ulink.riv;
 }
 
 const struct silofs_uaddr *

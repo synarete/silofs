@@ -26,11 +26,8 @@
 #include "inode.h"
 #include "env.h"
 #include "spmaps.h"
-#include "vstage.h"
-#include "ustage.h"
-#include "claim.h"
+#include "stage.h"
 #include "flush.h"
-#include "alias.h"
 
 struct silofs_vstage_ctx {
 	struct silofs_task *task;
@@ -150,7 +147,7 @@ sbi_bind_child_spnode(struct silofs_sb_info *sbi, enum silofs_ltype vspace,
 static void sni_bind_child_spnode(struct silofs_spnode_info *sni,
                                   const struct silofs_spnode_info *sni_child)
 {
-	const loff_t voff = sni_base_voff(sni_child);
+	const loff_t voff = silofs_sni_base_voff(sni_child);
 
 	silofs_sni_bind_child(sni, voff, sni_ulink(sni_child));
 }
@@ -158,7 +155,7 @@ static void sni_bind_child_spnode(struct silofs_spnode_info *sni,
 static void sni_bind_child_spleaf(struct silofs_spnode_info *sni,
                                   const struct silofs_spleaf_info *sli_child)
 {
-	const loff_t voff = sli_base_voff(sli_child);
+	const loff_t voff = silofs_sli_base_voff(sli_child);
 
 	silofs_sni_bind_child(sni, voff, sli_ulink(sli_child));
 }
@@ -514,7 +511,7 @@ vstgc_spawn_spnode_main_lseg(const struct silofs_vstage_ctx *vstg_ctx,
                              struct silofs_spnode_info *sni)
 {
 	struct silofs_lsid lsid;
-	const loff_t voff = sni_base_voff(sni);
+	const loff_t voff = silofs_sni_base_voff(sni);
 	const enum silofs_height height = sni_child_height(sni);
 	const enum silofs_ltype ltype = sni_child_ltype(sni);
 	int err;
@@ -1603,7 +1600,7 @@ vstgc_require_spleaf_main_lseg(const struct silofs_vstage_ctx *vstg_ctx,
 	/*
 	 * TODO-0047: Do not use underlying repo to detect if vdata-lseg exists
 	 */
-	voff = sli_base_voff(sli);
+	voff = silofs_sli_base_voff(sli);
 	vstgc_make_lsid_of_vdata(vstg_ctx, voff, ltype, &lsid);
 	err = vstgc_do_stage_lseg(vstg_ctx, &lsid);
 	if (!err) {
@@ -1738,7 +1735,7 @@ vstgc_track_spawned_spleaf(const struct silofs_vstage_ctx *vstg_ctx,
 	struct silofs_vrange vrange;
 	struct silofs_spamaps *spam = vstgc_spamaps(vstg_ctx);
 
-	sli_vrange(sli, &vrange);
+	silofs_sli_vspace_range(sli, &vrange);
 	silofs_spamaps_store(spam, vstg_ctx->vspace, vrange.beg, vrange.len);
 }
 
@@ -2605,7 +2602,7 @@ static int resolve_iaddr(ino_t ino, struct silofs_vaddr *out_vaddr)
 static int check_stage_inode(const struct silofs_task *task, ino_t ino,
                              enum silofs_stg_mode stg_mode)
 {
-	if (ino_isnull(ino)) {
+	if (silofs_ino_isnull(ino)) {
 		return -SILOFS_ENOENT;
 	}
 	if ((stg_mode & SILOFS_STG_COW) == 0) {

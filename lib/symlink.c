@@ -21,8 +21,7 @@
 #include "inode.h"
 #include "symlink.h"
 #include "namei.h"
-#include "vstage.h"
-#include "alias.h"
+#include "stage.h"
 
 struct silofs_symval_desc {
 	struct silofs_strview head;
@@ -215,11 +214,11 @@ syi_dirtify(struct silofs_symval_info *syi, struct silofs_inode_info *ii)
 
 static int syi_recheck_symval(struct silofs_symval_info *syi)
 {
-	if (!vni_need_recheck(&syi->sy_vni)) {
+	if (!silofs_vni_need_recheck(&syi->sy_vni)) {
 		return 0;
 	}
 	/* TODO: recheck */
-	vni_set_rechecked(&syi->sy_vni);
+	silofs_vni_set_rechecked(&syi->sy_vni);
 	return 0;
 }
 

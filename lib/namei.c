@@ -26,7 +26,6 @@
 #include <limits.h>
 #include <silofs/ioctls.h>
 #include "repo.h"
-#include "uber.h"
 #include "boot.h"
 #include "uidgid.h"
 #include "lnodes.h"
@@ -40,10 +39,9 @@
 #include "xattr.h"
 #include "walk.h"
 #include "namei.h"
-#include "env.h"
-#include "vstage.h"
+#include "stage.h"
 #include "flush.h"
-#include "alias.h"
+#include "env.h"
 
 static int check_ascii_fs_name(const struct silofs_strview *sv)
 {
@@ -311,7 +309,7 @@ isowner(const struct silofs_task *task, const struct silofs_inode_info *ii)
 {
 	const struct silofs_creds *creds = silofs_task_creds(task);
 
-	return uid_eq(creds->fs_cred.uid, ii_uid(ii));
+	return silofs_uid_eq(creds->fs_cred.uid, ii_uid(ii));
 }
 
 static bool has_cap_fowner(const struct silofs_task *task)
@@ -529,7 +527,7 @@ static int do_access(const struct silofs_task *task,
 	const mode_t mask = (mode_t)mode;
 	mode_t rwx = 0;
 
-	if (uid_isroot(uid)) {
+	if (silofs_uid_isroot(uid)) {
 		rwx |= R_OK | W_OK;
 		if (S_ISREG(i_mode)) {
 			if (i_mode & (S_IXUSR | S_IXGRP | S_IXOTH)) {
@@ -538,7 +536,7 @@ static int do_access(const struct silofs_task *task,
 		} else {
 			rwx |= X_OK;
 		}
-	} else if (uid_eq(uid, i_uid)) {
+	} else if (silofs_uid_eq(uid, i_uid)) {
 		/* Owner permissions */
 		if (i_mode & S_IRUSR) {
 			rwx |= R_OK;
@@ -549,7 +547,7 @@ static int do_access(const struct silofs_task *task,
 		if (i_mode & S_IXUSR) {
 			rwx |= X_OK;
 		}
-	} else if (gid_eq(gid, i_gid)) {
+	} else if (silofs_gid_eq(gid, i_gid)) {
 		/* Group permissions */
 		if (i_mode & S_IRGRP) {
 			rwx |= R_OK;
@@ -2513,8 +2511,9 @@ static int check_fsowner(const struct silofs_task *task)
 {
 	const struct silofs_creds *creds = silofs_task_creds(task);
 	const uid_t owner_uid = task->t_env->owner_cred.uid;
+	const uid_t host_uid = creds->host_cred.uid;
 
-	return uid_eq(creds->host_cred.uid, owner_uid) ? 0 : -SILOFS_EPERM;
+	return silofs_uid_eq(host_uid, owner_uid) ? 0 : -SILOFS_EPERM;
 }
 
 static int check_clone_flags(int flags)

@@ -25,8 +25,7 @@
 #include "xattr.h"
 #include "namei.h"
 #include "env.h"
-#include "vstage.h"
-#include "alias.h"
+#include "stage.h"
 
 #define XATTR_DATA_MAX (SILOFS_NAME_MAX + 1 + SILOFS_XATTR_VALUE_MAX)
 
@@ -555,7 +554,7 @@ static int xac_recheck_node(const struct silofs_xattr_ctx *xa_ctx,
 	ino_t owner_ino;
 	ino_t xanode_ino;
 
-	if (!vni_need_recheck(&xai->xan_vni)) {
+	if (!silofs_vni_need_recheck(&xai->xan_vni)) {
 		return 0;
 	}
 	owner_ino = ii_ino(xa_ctx->ii);
@@ -565,7 +564,7 @@ static int xac_recheck_node(const struct silofs_xattr_ctx *xa_ctx,
 		        owner_ino, xanode_ino);
 		return -SILOFS_EFSCORRUPTED;
 	}
-	vni_set_rechecked(&xai->xan_vni);
+	silofs_vni_set_rechecked(&xai->xan_vni);
 	return 0;
 }
 static int xac_do_stage_xanode(const struct silofs_xattr_ctx *xa_ctx,

@@ -32,10 +32,8 @@
 #include "inode.h"
 #include "file.h"
 #include "env.h"
-#include "vstage.h"
-#include "claim.h"
+#include "stage.h"
 #include "flush.h"
-#include "alias.h"
 
 enum silofs_file_op {
 	FILE_OP_READ = 1 << 0,
@@ -1439,11 +1437,11 @@ filc_update_pre_write_leaf_by(const struct silofs_file_ctx *f_ctx,
 static int filc_recheck_fileaf(const struct silofs_file_ctx *f_ctx,
                                struct silofs_fileaf_info *fli)
 {
-	if (!vni_need_recheck(&fli->fl_vni)) {
+	if (!silofs_vni_need_recheck(&fli->fl_vni)) {
 		return 0;
 	}
 	silofs_unused(f_ctx);
-	vni_set_rechecked(&fli->fl_vni);
+	silofs_vni_set_rechecked(&fli->fl_vni);
 	return 0;
 }
 
@@ -1513,7 +1511,7 @@ static int filc_recheck_fni(const struct silofs_file_ctx *f_ctx,
 	ino_t owner_ino;
 	size_t height;
 
-	if (!vni_need_recheck(&fni->fn_vni)) {
+	if (!silofs_vni_need_recheck(&fni->fn_vni)) {
 		return 0;
 	}
 	fnode_ino = ftn_ino(fni->ftn);
@@ -1529,7 +1527,7 @@ static int filc_recheck_fni(const struct silofs_file_ctx *f_ctx,
 		        owner_ino);
 		return -SILOFS_EFSCORRUPTED;
 	}
-	vni_set_rechecked(&fni->fn_vni);
+	silofs_vni_set_rechecked(&fni->fn_vni);
 	return 0;
 }
 

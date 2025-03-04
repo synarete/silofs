@@ -32,11 +32,10 @@
 #include "xattr.h"
 #include "walk.h"
 #include "namei.h"
-#include "env.h"
 #include "flush.h"
-#include "vstage.h"
+#include "stage.h"
 #include "opexec.h"
-#include "alias.h"
+#include "env.h"
 
 #define status_ok(err_) ((err_) == 0)
 
@@ -198,7 +197,8 @@ static bool op_is_fsowner(const struct silofs_task *task)
 {
 	const struct silofs_creds *creds = creds_of(task);
 
-	return uid_eq(creds->host_cred.uid, task->t_env->owner_cred.uid);
+	return silofs_uid_eq(creds->host_cred.uid,
+	                     task->t_env->owner_cred.uid);
 }
 
 static bool op_cap_sys_admin(const struct silofs_task *task)

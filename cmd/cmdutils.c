@@ -382,10 +382,8 @@ void cmd_check_mntdir(const char *path, bool mount)
 		fstype = (long)stfs.f_type;
 		fsi = silofs_fsinfo_by_vfstype(fstype);
 		if (fsi == NULL) {
-			cmd_die(0,
-			        "unknown fstype at: "
-			        "%s fstype=0x%lx",
-			        path, fstype);
+			cmd_die(0, "unknown fstype at: %s fstype=0x%lx", path,
+			        fstype);
 		}
 		if (fsi->isfuse) {
 			cmd_die(0,
@@ -395,8 +393,7 @@ void cmd_check_mntdir(const char *path, bool mount)
 		}
 		if (!fsi->allowed) {
 			cmd_die(0,
-			        "not allowed to mount over: "
-			        "%s fstype=0x%lx",
+			        "not allowed to mount over: %s fstype=0x%lx",
 			        path, fstype);
 		}
 		cmd_check_emptydir(path, true);
@@ -405,10 +402,8 @@ void cmd_check_mntdir(const char *path, bool mount)
 		fstype = (long)stfs.f_type;
 		fsi = silofs_fsinfo_by_vfstype(fstype);
 		if (fsi == NULL) {
-			cmd_die(0,
-			        "unknown fstype at: "
-			        "%s fstype=0x%lx",
-			        path, fstype);
+			cmd_die(0, "unknown fstype at: %s fstype=0x%lx", path,
+			        fstype);
 		}
 		if (!fsi->isfuse) {
 			cmd_die(0, "not a FUSE file-system: %s", path);

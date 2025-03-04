@@ -117,6 +117,7 @@ libsilofs_la_SOURCES += opexec.c
 libsilofs_la_SOURCES += opexec.h
 libsilofs_la_SOURCES += opcall.c
 libsilofs_la_SOURCES += opcall.h
+libsilofs_la_SOURCES += parseconf.c
 libsilofs_la_SOURCES += pcache.c
 libsilofs_la_SOURCES += pcache.h
 libsilofs_la_SOURCES += pnodes.c

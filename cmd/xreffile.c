@@ -112,7 +112,7 @@ static char *cmd_load_xref_at(int dfd, const char *name)
 		cmd_die(err, "stat failure: %s", name);
 	}
 	if (!S_ISREG(st.st_mode)) {
-		cmd_die(0, "not a regular file: %s", name);
+		cmd_diez("not a regular file: %s", name);
 	}
 	len = (size_t)st.st_size;
 	if (len >= sizeof(txt)) {
@@ -141,10 +141,10 @@ cmd_assign_xref(struct silofs_boot_args *boot_args, const char *txt)
 	;
 
 	if (len == 0) {
-		cmd_die(0, "empty xref");
+		cmd_diez("empty xref");
 	}
 	if (len >= sizeof(boot_args->xref.s)) {
-		cmd_die(0, "bad xref: '%s'", txt);
+		cmd_diez("bad xref: '%s'", txt);
 	}
 	memcpy(boot_args->xref.s, txt, len);
 }
@@ -162,11 +162,11 @@ void cmd_load_fs_xref(struct silofs_boot_args *boot_args)
 	cmd_assign_xref(boot_args, txt);
 	err = silofs_check_fs_xref(&boot_args->xref);
 	if (err == -SILOFS_EBADUBER) {
-		cmd_die(0, "not a fs xref: %s (%s)", boot_args->fsname,
-		        boot_args->xref.s);
+		cmd_diez("not a fs xref: %s (%s)", boot_args->fsname,
+		         boot_args->xref.s);
 	} else if (err) {
-		cmd_die(0, "bad fs xref: %s (%s)", boot_args->fsname,
-		        boot_args->xref.s);
+		cmd_diez("bad fs xref: %s (%s)", boot_args->fsname,
+		         boot_args->xref.s);
 	}
 }
 
@@ -183,10 +183,10 @@ void cmd_load_ar_xref(struct silofs_boot_args *boot_args)
 	cmd_assign_xref(boot_args, txt);
 	err = silofs_check_ar_xref(&boot_args->xref);
 	if (err == -SILOFS_EBADPACK) {
-		cmd_die(0, "not an archive xref: %s (%s)", boot_args->fsname,
-		        boot_args->xref.s);
+		cmd_diez("not an archive xref: %s (%s)", boot_args->fsname,
+		         boot_args->xref.s);
 	} else if (err) {
-		cmd_die(0, "bad archive xref: %s (%s)", boot_args->fsname,
-		        boot_args->xref.s);
+		cmd_diez("bad archive xref: %s (%s)", boot_args->fsname,
+		         boot_args->xref.s);
 	}
 }

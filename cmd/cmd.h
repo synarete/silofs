@@ -159,6 +159,8 @@ void cmd_atexit(void (*fn)(void));
 /* fatal-error handling */
 silofs_attr_dief(2, 3) void cmd_die(int errnum, const char *restrict fmt, ...);
 
+silofs_attr_dief(1, 2) void cmd_diez(const char *restrict fmt, ...);
+
 /* common utilities */
 
 void cmd_check_repopath(const char *arg_val);

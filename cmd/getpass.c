@@ -251,7 +251,7 @@ static char *do_getpass(const char *path, bool with_prompt, bool repeat)
 	if (strcmp(pass, pass2) != 0) {
 		cmd_delpass(&pass);
 		cmd_delpass(&pass2);
-		cmd_die(0, "password not equal");
+		cmd_diez("password not equal");
 	}
 	cmd_delpass(&pass2);
 	return pass;

@@ -46,13 +46,25 @@ static int cmd_errnum_of(int err)
 
 void cmd_die(int err, const char *restrict fmt, ...)
 {
-	char msg[2048] = "";
+	char msg[1024] = "";
 	va_list ap;
 
 	va_start(ap, fmt);
 	vsnprintf(msg, sizeof(msg) - 1, fmt, ap);
 	va_end(ap);
 	error(EXIT_FAILURE, cmd_errnum_of(err), "%s", msg);
+	exit(EXIT_FAILURE); /* never gets here, but makes clang-scan happy */
+}
+
+void cmd_diez(const char *restrict fmt, ...)
+{
+	char msg[1024] = "";
+	va_list ap;
+
+	va_start(ap, fmt);
+	vsnprintf(msg, sizeof(msg) - 1, fmt, ap);
+	va_end(ap);
+	error(EXIT_FAILURE, 0, "%s", msg);
 	exit(EXIT_FAILURE); /* never gets here, but makes clang-scan happy */
 }
 
@@ -103,7 +115,7 @@ static void cmd_stat_ok(const char *path, struct stat *st)
 
 	err = silofs_sys_stat(path, st);
 	if (err == -ENOENT) {
-		cmd_die(0, "no such path: %s", path);
+		cmd_diez("no such path: %s", path);
 	} else if (err) {
 		cmd_die(err, "stat failed: %s", path);
 	}
@@ -136,7 +148,7 @@ void cmd_check_isreg(const char *path)
 		cmd_die(-EISDIR, "illegal: %s", path);
 	}
 	if (!S_ISREG(st.st_mode)) {
-		cmd_die(0, "not reg: %s", path);
+		cmd_diez("not reg: %s", path);
 	}
 	err = silofs_sys_access(path, access_mode);
 	if (err) {
@@ -159,7 +171,7 @@ void cmd_check_reg_or_dir(const char *path)
 
 	cmd_stat_ok(path, &st);
 	if (!S_ISDIR(st.st_mode) && !S_ISREG(st.st_mode)) {
-		cmd_die(0, "not dir-or-reg: %s", path);
+		cmd_diez("not dir-or-reg: %s", path);
 	}
 }
 
@@ -182,9 +194,9 @@ void cmd_check_notexists(const char *path)
 	err = silofs_sys_stat(path, &st);
 	if (!err) {
 		if (S_ISDIR(st.st_mode)) {
-			cmd_die(0, "directory exists: %s", path);
+			cmd_diez("directory exists: %s", path);
 		} else {
-			cmd_die(0, "path exists: %s", path);
+			cmd_diez("path exists: %s", path);
 		}
 	}
 	if (err != -ENOENT) {
@@ -231,11 +243,11 @@ void cmd_check_not_same(const char *path, const char *other)
 	cmd_stat_ok(other, &st_other);
 	if ((st.st_ino == st_other.st_ino) && (st.st_dev == st_other.st_dev)) {
 		if (S_ISDIR(st.st_mode)) {
-			cmd_die(0, "not different directory: %s", path);
+			cmd_diez("not different directory: %s", path);
 		} else if (S_ISREG(st.st_mode)) {
-			cmd_die(0, "not different file: %s", path);
+			cmd_diez("not different file: %s", path);
 		} else {
-			cmd_die(0, "not different: %s", path);
+			cmd_diez("not different: %s", path);
 		}
 	}
 }
@@ -270,7 +282,7 @@ void cmd_check_mntsrv_perm(const char *path)
 
 	err = silofs_mntrpc_mount(path, uid, gid, rdsz, 0, false, true, &fd);
 	if (err == -SILOFS_EMOUNT) {
-		cmd_die(0, "mount not permitted: %s", path);
+		cmd_diez("mount not permitted: %s", path);
 	} else if (err) {
 		cmd_die(err, "can not mount: %s", path);
 	}
@@ -299,7 +311,7 @@ void cmd_check_nonemptydir(const char *path, bool w_ok)
 		cmd_die(err, "close-dir error: %s", path);
 	}
 	if (ndes <= 2) {
-		cmd_die(0, "an empty directory: %s", path);
+		cmd_diez("an empty directory: %s", path);
 	}
 }
 
@@ -326,7 +338,7 @@ void cmd_check_emptydir(const char *path, bool w_ok)
 		cmd_die(err, "close-dir error: %s", path);
 	}
 	if (ndes > 2) {
-		cmd_die(0, "not an empty directory: %s", path);
+		cmd_diez("not an empty directory: %s", path);
 	}
 }
 
@@ -373,7 +385,7 @@ void cmd_check_mntdir(const char *path, bool mount)
 	const struct silofs_fsinfo *fsi = NULL;
 
 	if (strlen(path) >= SILOFS_MNTPATH_MAX) {
-		cmd_die(0, "illegal mount-path length: %s", path);
+		cmd_diez("illegal mount-path length: %s", path);
 	}
 	cmd_check_isdir(path, mount);
 
@@ -382,19 +394,17 @@ void cmd_check_mntdir(const char *path, bool mount)
 		fstype = (long)stfs.f_type;
 		fsi = silofs_fsinfo_by_vfstype(fstype);
 		if (fsi == NULL) {
-			cmd_die(0, "unknown fstype at: %s fstype=0x%lx", path,
-			        fstype);
+			cmd_diez("unknown fstype at: %s fstype=0x%lx", path,
+			         fstype);
 		}
 		if (fsi->isfuse) {
-			cmd_die(0,
-			        "can not mount over FUSE file-system: "
-			        "%s fstype=0x%lx",
-			        path, fstype);
+			cmd_diez("can not mount over FUSE file-system: "
+			         "%s fstype=0x%lx",
+			         path, fstype);
 		}
 		if (!fsi->allowed) {
-			cmd_die(0,
-			        "not allowed to mount over: %s fstype=0x%lx",
-			        path, fstype);
+			cmd_diez("not allowed to mount over: %s fstype=0x%lx",
+			         path, fstype);
 		}
 		cmd_check_emptydir(path, true);
 	} else {
@@ -402,15 +412,15 @@ void cmd_check_mntdir(const char *path, bool mount)
 		fstype = (long)stfs.f_type;
 		fsi = silofs_fsinfo_by_vfstype(fstype);
 		if (fsi == NULL) {
-			cmd_die(0, "unknown fstype at: %s fstype=0x%lx", path,
-			        fstype);
+			cmd_diez("unknown fstype at: %s fstype=0x%lx", path,
+			         fstype);
 		}
 		if (!fsi->isfuse) {
-			cmd_die(0, "not a FUSE file-system: %s", path);
+			cmd_diez("not a FUSE file-system: %s", path);
 		}
 		cmd_stat_ok(path, &st);
 		if (st.st_ino != SILOFS_INO_ROOT) {
-			cmd_die(0, "not a silofs mount-point: %s", path);
+			cmd_diez("not a silofs mount-point: %s", path);
 		}
 	}
 }
@@ -421,7 +431,7 @@ void cmd_check_fusefs(const char *path)
 
 	cmd_statfs_ok(path, &stfs);
 	if (!silofs_is_fuse_fstype(stfs.f_type)) {
-		cmd_die(0, "not on FUSE file-system: %s", path);
+		cmd_diez("not on FUSE file-system: %s", path);
 	}
 }
 
@@ -496,7 +506,7 @@ static long cmd_parse_str_as_long(const char *str)
 		cmd_die(errno, "bad integer value: %s", str);
 	}
 	if (strlen(endptr) > 1) {
-		cmd_die(0, "illegal integer value: %s", str);
+		cmd_diez("illegal integer value: %s", str);
 	}
 	return val;
 }
@@ -507,7 +517,7 @@ uint32_t cmd_parse_str_as_u32(const char *str)
 
 	val = cmd_parse_str_as_long(str);
 	if ((val < 0) || (val > UINT32_MAX)) {
-		cmd_die(0, "bad uint32 value: %s", str);
+		cmd_diez("bad uint32 value: %s", str);
 	}
 	return (uint32_t)val;
 }
@@ -518,7 +528,7 @@ uint32_t cmd_parse_str_as_u32v(const char *str, uint32_t vmin, uint32_t vmax)
 
 	val = cmd_parse_str_as_u32(str);
 	if ((val < vmin) || (val > vmax)) {
-		cmd_die(0, "%s is not within range [%u..%u]", str, vmin, vmax);
+		cmd_diez("%s is not within range [%u..%u]", str, vmin, vmax);
 	}
 	return val;
 }
@@ -529,7 +539,7 @@ uid_t cmd_parse_str_as_uid(const char *str)
 
 	val = cmd_parse_str_as_long(str);
 	if ((val < 0) || (val > (INT_MAX / 2))) {
-		cmd_die(0, "illegal uid: %s", str);
+		cmd_diez("illegal uid: %s", str);
 	}
 	return (uid_t)val;
 }
@@ -540,7 +550,7 @@ gid_t cmd_parse_str_as_gid(const char *str)
 
 	val = cmd_parse_str_as_long(str);
 	if ((val < 0) || (val > (INT_MAX / 2))) {
-		cmd_die(0, "illegal gid: %s", str);
+		cmd_diez("illegal gid: %s", str);
 	}
 	return (gid_t)val;
 }
@@ -554,7 +564,7 @@ bool cmd_parse_str_as_bool(const char *str)
 	} else if (!strcmp(str, "1") || !strcmp(str, "true")) {
 		val = true;
 	} else {
-		cmd_die(0, "illegal bool: %s", str);
+		cmd_diez("illegal bool: %s", str);
 	}
 	return val;
 }
@@ -677,7 +687,7 @@ void cmd_stat_dir(const char *path, struct stat *st)
 {
 	cmd_stat_ok(path, st);
 	if (!S_ISDIR(st->st_mode)) {
-		cmd_die(0, "not a directory: %s", path);
+		cmd_diez("not a directory: %s", path);
 	}
 }
 
@@ -694,10 +704,10 @@ void cmd_split_path(const char *path, char **out_head, char **out_tail)
 	} else {
 		tail_len = strlen(sep + 1);
 		if (!tail_len) {
-			cmd_die(0, "missing filename: %s", path);
+			cmd_diez("missing filename: %s", path);
 		}
 		if (sep == path) {
-			cmd_die(0, "missing basename: %s", path);
+			cmd_diez("missing basename: %s", path);
 		}
 		head_len = (size_t)(sep - path);
 		*out_head = cmd_strndup(path, head_len);
@@ -808,7 +818,7 @@ char *cmd_mkpathf(const char *fmt, ...)
 	va_end(ap);
 
 	if (n >= (int)path_size) {
-		cmd_die(0, "illegal path-len %d", n);
+		cmd_diez("illegal path-len %d", n);
 	}
 	path_dup = cmd_strdup(path);
 	cmd_pstrfree(&path);

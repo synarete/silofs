@@ -22,12 +22,12 @@
 
 silofs_attr_noreturn static void cmd_fatal_missing_arg(const char *s)
 {
-	cmd_die(0, "missing argument: '%s'", s);
+	cmd_diez("missing argument: '%s'", s);
 }
 
 silofs_attr_noreturn static void cmd_fatal_redundant_arg(const char *s)
 {
-	cmd_die(0, "redundant argument: '%s'", s);
+	cmd_diez("redundant argument: '%s'", s);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -48,7 +48,7 @@ static void getopti_pre_add(const struct cmd_getopt_info *goi)
 	const size_t nopts_max = CMD_ARRAY_SIZE(goi->lopts);
 
 	if (((sopt + slen + 3) > send) || ((goi->nopts + 1) >= nopts_max)) {
-		cmd_die(0, "too many options");
+		cmd_diez("too many options");
 	}
 }
 
@@ -164,7 +164,7 @@ cmd_optargs_die_unrecognized(const struct cmd_optargs *opa)
 {
 	const char *opt = cmd_optargs_by_ind(opa);
 
-	cmd_die(0, "unrecognized option: '%s'", opt ? opt : "");
+	cmd_diez("unrecognized option: '%s'", opt ? opt : "");
 }
 
 silofs_attr_noreturn static void
@@ -172,7 +172,7 @@ cmd_optargs_die_missing(const struct cmd_optargs *opa)
 {
 	const char *opt = cmd_optargs_by_ind(opa);
 
-	cmd_die(0, "missing argument for: '%s'", opt ? opt : "");
+	cmd_diez("missing argument for: '%s'", opt ? opt : "");
 }
 
 int cmd_optargs_parse(struct cmd_optargs *opa)
@@ -204,7 +204,7 @@ char *cmd_optargs_dupcurr(const struct cmd_optargs *opa)
 char *cmd_optarg_dupoptarg(const struct cmd_optargs *opa, const char *id)
 {
 	if (!silofs_str_length(opa->opa_optarg)) {
-		cmd_die(0, "missing option argument: %s", id);
+		cmd_diez("missing option argument: %s", id);
 	}
 	return cmd_optargs_dupcurr(opa);
 }

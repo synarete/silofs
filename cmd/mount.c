@@ -119,7 +119,7 @@ static void cmd_mount_getsubopts(struct cmd_mount_ctx *ctx)
 
 	len = strlen(optarg);
 	if (len >= sizeof(subopts)) {
-		cmd_die(0, "too many sub-options: %s", optarg);
+		cmd_diez("too many sub-options: %s", optarg);
 	}
 	memcpy(subopts, optarg, len);
 	sopt = subopts;

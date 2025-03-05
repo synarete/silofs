@@ -123,7 +123,7 @@ static void cmd_report_err_and_die(const struct silofs_env *env, int status,
 		cmd_die(err, "%s%sbad password: %s", xmsg, xtag, rname);
 		break;
 	case ENOENT:
-		cmd_die(0, "%s%snot exist: %s", xmsg, xtag, rname);
+		cmd_diez("%s%snot exist: %s", xmsg, xtag, rname);
 		break;
 	default:
 		cmd_die(err, "%s%s%s", xmsg, xtag, rname);

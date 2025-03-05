@@ -216,7 +216,7 @@ static void cmd_open_repo_lock(const char *path, int *out_fd)
 		cmd_die(err, "failed to stat repo lock: %s", path);
 	}
 	if (st.st_size != SILOFS_REPO_METAFILE_SIZE) {
-		cmd_die(0, "bad repo lock: %s", path);
+		cmd_diez("bad repo lock: %s", path);
 	}
 	*out_fd = fd;
 }

@@ -138,7 +138,7 @@ static void cmd_show_resolve_subcmd(struct cmd_show_ctx *ctx)
 {
 	ctx->qtype = cmd_show_qtype_by_subcmd(ctx->in_args.subcmd);
 	if (ctx->qtype == SILOFS_QUERY_NONE) {
-		cmd_die(0, "unknown sub-command %s", ctx->in_args.subcmd);
+		cmd_diez("unknown sub-command %s", ctx->in_args.subcmd);
 	}
 	ctx->ioc->query.qtype = (int32_t)ctx->qtype;
 }

@@ -187,7 +187,7 @@ static void cmd_resolve_uid_by_name(const char *name, uid_t *out_uid)
 		cmd_die(err, "failed to resolve user name: %s", name);
 	}
 	if (pw == NULL) {
-		cmd_die(0, "unknown user name: %s", name);
+		cmd_diez("unknown user name: %s", name);
 	}
 	*out_uid = pw->pw_uid;
 	cmd_zfree(buf, bsz);
@@ -227,10 +227,10 @@ static void cmd_resolve_uid_to_name(uid_t uid, char *name, size_t nsz)
 	buf = cmd_zalloc(bsz);
 	err = getpwuid_r(uid, &pwd, buf, bsz, &pw);
 	if (err) {
-		cmd_die(err, "failed to resolve uid: %u", uid);
+		cmd_diez("failed to resolve uid: %u", uid);
 	}
 	if ((pw == NULL) || (pw->pw_name == NULL)) {
-		cmd_die(0, "unknown uid: %u", uid);
+		cmd_diez("unknown uid: %u", uid);
 	}
 	len = strlen(pw->pw_name);
 	if (!len || (len >= nsz)) {
@@ -256,7 +256,7 @@ static void cmd_resolve_gid_to_name(gid_t gid, char *name, size_t nsz)
 		cmd_die(err, "failed to resolve gid: %u", gid);
 	}
 	if ((gr == NULL) || (gr->gr_name == NULL)) {
-		cmd_die(0, "unknown gid: %u", gid);
+		cmd_diez("unknown gid: %u", gid);
 	}
 	len = strlen(gr->gr_name);
 	if (!len || (len >= nsz)) {
@@ -531,7 +531,7 @@ static void cmd_load_idsconf_file(const char *pathname, char **out_txt)
 		cmd_die(err, "stat failure: %s", pathname);
 	}
 	if (!S_ISREG(st.st_mode)) {
-		cmd_die(0, "not a regular file: %s", pathname);
+		cmd_diez("not a regular file: %s", pathname);
 	}
 	size = (size_t)st.st_size;
 	if (size >= SILOFS_MEGA) {
@@ -550,7 +550,7 @@ static void cmd_load_idsconf_file(const char *pathname, char **out_txt)
 	silofs_sys_close(fd);
 
 	if (!isascii_idsconf(txt, size)) {
-		cmd_die(0, "non-ascii character in: %s", pathname);
+		cmd_diez("non-ascii character in: %s", pathname);
 	}
 	*out_txt = txt;
 }
@@ -857,7 +857,7 @@ void cmd_resolve_uidgid(const char *name, uid_t *out_uid, gid_t *out_gid)
 		cmd_die(err, "getpwnam failed: %s", name);
 	}
 	if (pw == NULL) {
-		cmd_die(0, "unknown user name: %s", name);
+		cmd_diez("unknown user name: %s", name);
 	}
 	*out_uid = pw->pw_uid;
 	*out_gid = pw->pw_gid;
@@ -869,10 +869,10 @@ void cmd_require_uidgid(const struct silofs_ugids *ids, const char *name,
 {
 	cmd_resolve_uidgid(name, out_uid, out_gid);
 	if (!fs_ids_has_host_uid(ids, *out_uid)) {
-		cmd_die(0, "missing uid-mapping for user: '%s'", name);
+		cmd_diez("missing uid-mapping for user: '%s'", name);
 	}
 	if (!fs_ids_has_host_gid(ids, *out_gid)) {
-		cmd_die(0, "missing gid-mapping for user: '%s'", name);
+		cmd_diez("missing gid-mapping for user: '%s'", name);
 	}
 }
 

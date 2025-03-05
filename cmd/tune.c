@@ -116,7 +116,7 @@ static void cmd_tune_set_iflags(struct cmd_tune_ctx *ctx)
 	} else if (ctx->in_args.ftype == 1) {
 		ctx->iflags_dont = SILOFS_INODEF_FTYPE2;
 	} else {
-		cmd_die(0, "must provide ftype: %s", "1|2");
+		cmd_diez("must provide ftype: %s", "1|2");
 	}
 }
 

@@ -22,96 +22,31 @@
 #include <grp.h>
 #include "cmd.h"
 
-static void strview_init(struct silofs_strview *sv, const char *s)
-{
-	silofs_strview_init(sv, s);
-}
-
-static void strview_initn(struct silofs_strview *sv, const char *s, size_t n)
-{
-	silofs_strview_initn(sv, s, n);
-}
-
-static bool strview_isempty(const struct silofs_strview *sv)
-{
-	return silofs_strview_isempty(sv);
-}
-
-static void strview_split_by(const struct silofs_strview *sv, char sep,
-                             struct silofs_strview_pair *out_sv_pair)
-{
-	silofs_strview_split_chr(sv, sep, out_sv_pair);
-}
-
-static void strview_split_by_nl(const struct silofs_strview *sv,
-                                struct silofs_strview_pair *out_sv_pair)
-{
-	strview_split_by(sv, '\n', out_sv_pair);
-}
-
-static void strview_strip_ws(const struct silofs_strview *sv,
-                             struct silofs_strview *out_sv)
-{
-	silofs_strview_strip_ws(sv, out_sv);
-}
-
-static void strview_strip_any(const struct silofs_strview *sv, const char *set,
-                              struct silofs_strview *out_sv)
-{
-	silofs_strview_strip_any_of(sv, set, out_sv);
-}
-
-static void strview_copyto(const struct silofs_strview *sv, char *s, size_t n)
-{
-	silofs_strview_copyto(sv, s, n);
-}
-
-static bool strview_isascii(const struct silofs_strview *sv)
-{
-	return silofs_strview_isascii(sv);
-}
-
-static bool strview_isequal(const struct silofs_strview *sv, const char *s)
-{
-	return silofs_strview_isequal(sv, s);
-}
-
-static bool strview_starts_with(const struct silofs_strview *sv, char c)
-{
-	return silofs_strview_starts_with(sv, c);
-}
-
-static bool strview_ends_with(const struct silofs_strview *sv, char c)
-{
-	return silofs_strview_ends_with(sv, c);
-}
-
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-
-enum idsconf_sec {
-	IDSCONF_SEC_NIL,
-	IDSCONF_SEC_USERS,
-	IDSCONF_SEC_GROUPS,
+enum silofs_idsconf_sec {
+	SILOFS_IDSCONF_SEC_NIL,
+	SILOFS_IDSCONF_SEC_USERS,
+	SILOFS_IDSCONF_SEC_GROUPS,
 };
 
 static const char *s_idsconf_sec_name[] = {
-	[IDSCONF_SEC_NIL] = "",
-	[IDSCONF_SEC_USERS] = "users",
-	[IDSCONF_SEC_GROUPS] = "groups",
+	[SILOFS_IDSCONF_SEC_NIL] = "",
+	[SILOFS_IDSCONF_SEC_USERS] = "users",
+	[SILOFS_IDSCONF_SEC_GROUPS] = "groups",
 };
 
-struct idsconf_ctx {
+struct silofs_idsconf_ctx {
 	char *path;
 	char *text;
+	struct silofs_strview conf;
+	struct silofs_strview line;
+	enum silofs_idsconf_sec sec;
 	int line_no;
-	enum idsconf_sec sec;
-	const struct silofs_strview *line;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 silofs_attr_noreturn static void
-cmd_die_by(const struct idsconf_ctx *ctx, const char *msg)
+cmd_die_by(const struct silofs_idsconf_ctx *ctx, const char *msg)
 {
 	if (ctx && ctx->line_no && ctx->path) {
 		cmd_die(errno, "%s (%s:%d)", msg, ctx->path, ctx->line_no);
@@ -122,7 +57,7 @@ cmd_die_by(const struct idsconf_ctx *ctx, const char *msg)
 }
 
 static void
-cmd_parse_uid_by_value(const struct idsconf_ctx *ctx,
+cmd_parse_uid_by_value(const struct silofs_idsconf_ctx *ctx,
                        const struct silofs_strview *ss, uid_t *out_uid)
 {
 	char str[64] = "";
@@ -130,12 +65,12 @@ cmd_parse_uid_by_value(const struct idsconf_ctx *ctx,
 	if (ss->len >= sizeof(str)) {
 		cmd_die_by(ctx, "not an integer");
 	}
-	strview_copyto(ss, str, sizeof(str));
+	silofs_strview_copyto(ss, str, sizeof(str));
 	*out_uid = cmd_parse_str_as_uid(str);
 }
 
 static void
-cmd_parse_gid_by_value(const struct idsconf_ctx *ctx,
+cmd_parse_gid_by_value(const struct silofs_idsconf_ctx *ctx,
                        const struct silofs_strview *ss, gid_t *out_gid)
 {
 	char str[64] = "";
@@ -143,7 +78,7 @@ cmd_parse_gid_by_value(const struct idsconf_ctx *ctx,
 	if (ss->len >= sizeof(str)) {
 		cmd_die_by(ctx, "not an integer");
 	}
-	strview_copyto(ss, str, sizeof(str));
+	silofs_strview_copyto(ss, str, sizeof(str));
 	*out_gid = cmd_parse_str_as_gid(str);
 }
 
@@ -373,7 +308,7 @@ static void cmd_append_gids1(struct silofs_gids **pgids, size_t *pngids,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void
-cmd_parse_uid_by_name(const struct idsconf_ctx *ctx,
+cmd_parse_uid_by_name(const struct silofs_idsconf_ctx *ctx,
                       const struct silofs_strview *name, uid_t *out_uid)
 {
 	char buf[NAME_MAX + 1] = "";
@@ -381,12 +316,12 @@ cmd_parse_uid_by_name(const struct idsconf_ctx *ctx,
 	if (name->len >= sizeof(buf)) {
 		cmd_die_by(ctx, "illegal user name");
 	}
-	strview_copyto(name, buf, sizeof(buf) - 1);
+	silofs_strview_copyto(name, buf, sizeof(buf) - 1);
 	cmd_resolve_uid_by_name(buf, out_uid);
 }
 
 static void
-cmd_parse_gid_by_name(const struct idsconf_ctx *ctx,
+cmd_parse_gid_by_name(const struct silofs_idsconf_ctx *ctx,
                       const struct silofs_strview *name, gid_t *out_gid)
 {
 	char buf[NAME_MAX + 1] = "";
@@ -394,12 +329,12 @@ cmd_parse_gid_by_name(const struct idsconf_ctx *ctx,
 	if (name->len >= sizeof(buf)) {
 		cmd_die_by(ctx, "illegal group name");
 	}
-	strview_copyto(name, buf, sizeof(buf) - 1);
+	silofs_strview_copyto(name, buf, sizeof(buf) - 1);
 	cmd_resolve_gid_by_name(buf, out_gid);
 }
 
 static void
-cmd_parse_uids(const struct idsconf_ctx *ctx,
+cmd_parse_uids(const struct silofs_idsconf_ctx *ctx,
                const struct silofs_strview *name,
                const struct silofs_strview *suid, struct silofs_uids *out_uids)
 {
@@ -408,7 +343,7 @@ cmd_parse_uids(const struct idsconf_ctx *ctx,
 }
 
 static void
-cmd_parse_gids(const struct idsconf_ctx *ctx,
+cmd_parse_gids(const struct silofs_idsconf_ctx *ctx,
                const struct silofs_strview *name,
                const struct silofs_strview *sgid, struct silofs_gids *out_gids)
 {
@@ -416,7 +351,7 @@ cmd_parse_gids(const struct idsconf_ctx *ctx,
 	cmd_parse_gid_by_value(ctx, sgid, &out_gids->fs_gid);
 }
 
-static void cmd_parse_user_conf(const struct idsconf_ctx *ctx,
+static void cmd_parse_user_conf(const struct silofs_idsconf_ctx *ctx,
                                 struct silofs_uids **uids, size_t *nuids)
 {
 	struct silofs_strview_pair ssp;
@@ -424,18 +359,18 @@ static void cmd_parse_user_conf(const struct idsconf_ctx *ctx,
 	struct silofs_strview suid;
 	struct silofs_uids uid;
 
-	strview_split_by(ctx->line, '=', &ssp);
-	strview_strip_ws(&ssp.first, &name);
-	strview_strip_ws(&ssp.second, &suid);
+	silofs_strview_split_chr(&ctx->line, '=', &ssp);
+	silofs_strview_strip_ws(&ssp.first, &name);
+	silofs_strview_strip_ws(&ssp.second, &suid);
 
-	if (strview_isempty(&name) || strview_isempty(&suid)) {
+	if (silofs_strview_isempty(&name) || silofs_strview_isempty(&suid)) {
 		cmd_die_by(ctx, "missing user mapping");
 	}
 	cmd_parse_uids(ctx, &name, &suid, &uid);
 	cmd_append_uids1(uids, nuids, &uid);
 }
 
-static void cmd_parse_group_conf(const struct idsconf_ctx *ctx,
+static void cmd_parse_group_conf(const struct silofs_idsconf_ctx *ctx,
                                  struct silofs_gids **gids, size_t *ngids)
 {
 	struct silofs_strview_pair ssp;
@@ -443,11 +378,11 @@ static void cmd_parse_group_conf(const struct idsconf_ctx *ctx,
 	struct silofs_strview sgid;
 	struct silofs_gids gid;
 
-	strview_split_by(ctx->line, '=', &ssp);
-	strview_strip_ws(&ssp.first, &name);
-	strview_strip_ws(&ssp.second, &sgid);
+	silofs_strview_split_chr(&ctx->line, '=', &ssp);
+	silofs_strview_strip_ws(&ssp.first, &name);
+	silofs_strview_strip_ws(&ssp.second, &sgid);
 
-	if (strview_isempty(&name) || strview_isempty(&sgid)) {
+	if (silofs_strview_isempty(&name) || silofs_strview_isempty(&sgid)) {
 		cmd_die_by(ctx, "missing group mapping");
 	}
 	cmd_parse_gids(ctx, &name, &sgid, &gid);
@@ -514,8 +449,8 @@ static bool isascii_idsconf(const char *txt, size_t size)
 {
 	struct silofs_strview ss;
 
-	strview_initn(&ss, txt, size);
-	return strview_isascii(&ss);
+	silofs_strview_initn(&ss, txt, size);
+	return silofs_strview_isascii(&ss);
 }
 
 static void cmd_load_idsconf_file(const char *pathname, char **out_txt)
@@ -576,7 +511,7 @@ static void cmd_save_idsconf_file(const char *pathname, const char *txt)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static const char *idsconf_sec_to_name(enum idsconf_sec sec)
+static const char *idsconf_sec_to_name(enum silofs_idsconf_sec sec)
 {
 	const char *sec_name = "";
 
@@ -586,43 +521,44 @@ static const char *idsconf_sec_to_name(enum idsconf_sec sec)
 	return sec_name;
 }
 
-static enum idsconf_sec idsconf_sec_by_name(const struct silofs_strview *sv)
+static enum silofs_idsconf_sec
+idsconf_sec_by_name(const struct silofs_strview *sv)
 {
 	const char *sec_name;
 
 	for (int i = 0; i < (int)SILOFS_ARRAY_SIZE(s_idsconf_sec_name); ++i) {
 		sec_name = s_idsconf_sec_name[i];
-		if (strview_isequal(sv, sec_name)) {
-			return (enum idsconf_sec)i;
+		if (silofs_strview_isequal(sv, sec_name)) {
+			return (enum silofs_idsconf_sec)i;
 		}
 	}
-	return IDSCONF_SEC_NIL;
+	return SILOFS_IDSCONF_SEC_NIL;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void
-fs_ids_parse_user_conf(struct silofs_ugids *ids, const struct idsconf_ctx *ctx)
+static void fs_ids_parse_user_conf(struct silofs_ugids *ids,
+                                   const struct silofs_idsconf_ctx *ctx)
 {
 	cmd_parse_user_conf(ctx, &ids->users.uids, &ids->users.nuids);
 }
 
 static void fs_ids_parse_group_conf(struct silofs_ugids *ids,
-                                    const struct idsconf_ctx *ctx)
+                                    const struct silofs_idsconf_ctx *ctx)
 {
 	cmd_parse_group_conf(ctx, &ids->groups.gids, &ids->groups.ngids);
 }
 
-static void
-fs_ids_parse_line(struct silofs_ugids *ids, const struct idsconf_ctx *ctx)
+static void fs_ids_parse_line(struct silofs_ugids *ids,
+                              const struct silofs_idsconf_ctx *ctx)
 {
 	switch (ctx->sec) {
-	case IDSCONF_SEC_NIL:
+	case SILOFS_IDSCONF_SEC_NIL:
 		break;
-	case IDSCONF_SEC_USERS:
+	case SILOFS_IDSCONF_SEC_USERS:
 		fs_ids_parse_user_conf(ids, ctx);
 		break;
-	case IDSCONF_SEC_GROUPS:
+	case SILOFS_IDSCONF_SEC_GROUPS:
 		fs_ids_parse_group_conf(ids, ctx);
 		break;
 	default:
@@ -631,21 +567,34 @@ fs_ids_parse_line(struct silofs_ugids *ids, const struct idsconf_ctx *ctx)
 	}
 }
 
-static enum idsconf_sec cmd_parse_sec_state(const struct silofs_strview *line)
+static enum silofs_idsconf_sec
+cmd_parse_sec_state(const struct silofs_strview *line)
 {
 	struct silofs_strview sv = { .str = NULL };
-	enum idsconf_sec sec = IDSCONF_SEC_NIL;
+	enum silofs_idsconf_sec sec = SILOFS_IDSCONF_SEC_NIL;
 
-	strview_strip_ws(line, &sv);
-	if (strview_starts_with(&sv, '[') && strview_ends_with(&sv, ']')) {
-		strview_strip_any(&sv, "[]", &sv);
-		strview_strip_ws(&sv, &sv);
+	silofs_strview_strip_ws(line, &sv);
+	if (silofs_strview_starts_with(&sv, '[') &&
+	    silofs_strview_ends_with(&sv, ']')) {
+		silofs_strview_strip_any_of(&sv, "[]", &sv);
+		silofs_strview_strip_ws(&sv, &sv);
 		sec = idsconf_sec_by_name(&sv);
 	}
 	return sec;
 }
 
-static void fs_ids_parse(struct silofs_ugids *ids, struct idsconf_ctx *ctx)
+static void fs_ids_update_line(struct silofs_idsconf_ctx *ctx,
+                               const struct silofs_strview *line)
+{
+	if (line != NULL) {
+		silofs_strview_init_by(&ctx->line, line);
+	} else {
+		silofs_strview_initz(&ctx->line);
+	}
+}
+
+static void
+fs_ids_parse(struct silofs_ugids *ids, struct silofs_idsconf_ctx *ctx)
 {
 	struct silofs_strview data;
 	struct silofs_strview_pair pair;
@@ -653,53 +602,60 @@ static void fs_ids_parse(struct silofs_ugids *ids, struct idsconf_ctx *ctx)
 	struct silofs_strview *line = &pair.first;
 	struct silofs_strview *tail = &pair.second;
 	struct silofs_strview sline;
-	enum idsconf_sec sec_next = IDSCONF_SEC_NIL;
+	enum silofs_idsconf_sec sec_next = SILOFS_IDSCONF_SEC_NIL;
 
-	strview_init(&data, ctx->text);
+	silofs_strview_init_by(&data, &ctx->conf);
 	ctx->line_no = 0;
-	ctx->line = line;
-	ctx->sec = IDSCONF_SEC_NIL;
+	ctx->sec = SILOFS_IDSCONF_SEC_NIL;
 
-	strview_split_by_nl(&data, &pair);
-	while (!strview_isempty(line) || !strview_isempty(tail)) {
+	silofs_strview_split_chr(&data, '\n', &pair);
+	while (!silofs_strview_isempty(line) ||
+	       !silofs_strview_isempty(tail)) {
 		ctx->line_no++;
-		ctx->line = line;
+		fs_ids_update_line(ctx, line);
 
-		strview_split_by(line, '#', &pair2);
-		strview_strip_ws(&pair2.first, &sline);
+		silofs_strview_split_chr(line, '#', &pair2);
+		silofs_strview_strip_ws(&pair2.first, &sline);
 
 		sec_next = cmd_parse_sec_state(&sline);
-		if ((sec_next != IDSCONF_SEC_NIL) && (sec_next != ctx->sec)) {
+		if ((sec_next != SILOFS_IDSCONF_SEC_NIL) &&
+		    (sec_next != ctx->sec)) {
 			ctx->sec = sec_next;
-		} else if (!strview_isempty(&sline)) {
-			ctx->line = &sline;
+		} else if (!silofs_strview_isempty(&sline)) {
+			fs_ids_update_line(ctx, &sline);
 			fs_ids_parse_line(ids, ctx);
 		}
-		strview_split_by_nl(tail, &pair);
+		silofs_strview_split_chr(tail, '\n', &pair);
 	}
-	ctx->line = NULL;
+	fs_ids_update_line(ctx, NULL);
+}
+
+static void idsconf_update_by(struct silofs_idsconf_ctx *ctx, char *text)
+{
+	ctx->text = text;
+	silofs_strview_init(&ctx->conf, text);
 }
 
 static void
-fs_ids_unparse(const struct silofs_ugids *ids, struct idsconf_ctx *ctx)
+fs_ids_unparse(const struct silofs_ugids *ids, struct silofs_idsconf_ctx *ctx)
 {
 	const char *sec_name = NULL;
 	char *text = NULL;
 
-	sec_name = idsconf_sec_to_name(IDSCONF_SEC_USERS);
+	sec_name = idsconf_sec_to_name(SILOFS_IDSCONF_SEC_USERS);
 	cmd_append_section(sec_name, &text);
 	for (size_t i = 0; i < ids->users.nuids; ++i) {
 		cmd_append_user(&ids->users.uids[i], &text);
 	}
 	cmd_append_newline(&text);
 
-	sec_name = idsconf_sec_to_name(IDSCONF_SEC_GROUPS);
+	sec_name = idsconf_sec_to_name(SILOFS_IDSCONF_SEC_GROUPS);
 	cmd_append_section(sec_name, &text);
 	for (size_t j = 0; j < ids->groups.ngids; ++j) {
 		cmd_append_group(&ids->groups.gids[j], &text);
 	}
 	cmd_append_newline(&text);
-	ctx->text = text;
+	idsconf_update_by(ctx, text);
 }
 
 static void
@@ -819,19 +775,21 @@ static void cmd_fs_ids_pathname(const char *basedir, char **out_pathname)
 
 void cmd_fs_ids_load(struct silofs_ugids *ids, const char *basedir)
 {
-	struct idsconf_ctx ctx = { .line_no = 0 };
+	struct silofs_idsconf_ctx ctx = { .line_no = 0 };
+	char *text = NULL;
 
 	cmd_fs_ids_reset(ids);
 	cmd_fs_ids_pathname(basedir, &ctx.path);
-	cmd_load_idsconf_file(ctx.path, &ctx.text);
+	cmd_load_idsconf_file(ctx.path, &text);
+	idsconf_update_by(&ctx, text);
 	fs_ids_parse(ids, &ctx);
-	cmd_pstrfree(&ctx.text);
+	cmd_pstrfree(&text);
 	cmd_pstrfree(&ctx.path);
 }
 
 void cmd_fs_ids_save(const struct silofs_ugids *ids, const char *basedir)
 {
-	struct idsconf_ctx ctx = { .line_no = 0 };
+	struct silofs_idsconf_ctx ctx = { .line_no = 0 };
 
 	fs_ids_unparse(ids, &ctx);
 	cmd_fs_ids_pathname(basedir, &ctx.path);

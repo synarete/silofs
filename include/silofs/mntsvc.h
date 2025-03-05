@@ -77,8 +77,7 @@ const struct silofs_fsinfo *silofs_fsinfo_by_vfstype(long vfstype);
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_parse_mntrules(struct silofs_mntrules *mrules,
-                          struct silofs_alloc *alloc, const char *file,
-                          const char *conf);
+                          struct silofs_alloc *alloc, const char *conf);
 
 void silofs_release_mntrules(struct silofs_mntrules *mrules,
                              struct silofs_alloc    *alloc);

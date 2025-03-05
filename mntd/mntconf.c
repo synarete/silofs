@@ -98,10 +98,10 @@ struct silofs_mntrules *mountd_parse_mntrules(const char *path)
 	int err;
 
 	conf = read_mntconf_file(path);
-	err = silofs_parse_mntrules(mntrules, alloc, path, conf);
+	err = silofs_parse_mntrules(mntrules, alloc, conf);
 	zfreestr(conf);
 	if (err) {
-		silofs_die(err, "failed to parse mount rules of %s", path);
+		silofs_die(err, "not a valid mount rules file: %s", path);
 	}
 	return mntrules;
 }

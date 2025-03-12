@@ -20,8 +20,9 @@
 #include <silofs/infra.h>
 #include <silofs/types.h>
 
-/* file-system's main control object */
 struct silofs_env;
+struct silofs_ugids;
+struct silofs_mntrules;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -36,6 +37,20 @@ int silofs_check_fsname(const char *s);
 int silofs_check_fs_xref(const struct silofs_xref *xref);
 
 int silofs_check_ar_xref(const struct silofs_xref *xref);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_parse_fsids(struct silofs_ugids *ugids, struct silofs_alloc *alloc,
+                       const char *conf);
+
+void silofs_release_fsids(struct silofs_ugids *ugids,
+                          struct silofs_alloc *alloc);
+
+int silofs_parse_mntrules(struct silofs_mntrules *mrules,
+                          struct silofs_alloc *alloc, const char *conf);
+
+void silofs_release_mntrules(struct silofs_mntrules *mrules,
+                             struct silofs_alloc    *alloc);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

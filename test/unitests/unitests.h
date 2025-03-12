@@ -200,6 +200,7 @@ extern const struct ut_testdefs ut_tdefs_avl;
 extern const struct ut_testdefs ut_tdefs_base64;
 extern const struct ut_testdefs ut_tdefs_strings;
 extern const struct ut_testdefs ut_tdefs_qalloc;
+extern const struct ut_testdefs ut_tdefs_parseconf;
 extern const struct ut_testdefs ut_tdefs_super;
 extern const struct ut_testdefs ut_tdefs_statfs;
 extern const struct ut_testdefs ut_tdefs_dir;

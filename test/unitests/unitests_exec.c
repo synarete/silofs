@@ -31,6 +31,7 @@ static struct ut_tgroup const g_ut_tgroups[] = {
 	UT_DEFTGRP(ut_tdefs_avl),
 	UT_DEFTGRP(ut_tdefs_base64),
 	UT_DEFTGRP(ut_tdefs_qalloc),
+	UT_DEFTGRP(ut_tdefs_parseconf),
 	/* namespace */
 	UT_DEFTGRP(ut_tdefs_super),
 	UT_DEFTGRP(ut_tdefs_statfs),

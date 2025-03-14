@@ -75,17 +75,40 @@ static bool strview_has_substr(const struct silofs_strview *sv, const char *s)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static int
+strspan_append(struct silofs_strspan *ss, const struct silofs_strview *sv)
+{
+	size_t n;
+
+	n = silofs_strspan_nappend(ss, sv->str, sv->len);
+	return (n == sv->len) ? 0 : -SILOFS_ENOSPC;
+}
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
 struct silofs_conf_parser {
 	struct silofs_alloc *alloc;
-	struct silofs_strview data;
+	struct silofs_strspan wcfg;
+	struct silofs_strview rcfg;
 	struct silofs_strview line;
 	int line_no;
 };
 
-static void cpr_setup(struct silofs_conf_parser *cpr,
-                      struct silofs_alloc *alloc, const char *data)
+static void cpr_rsetup(struct silofs_conf_parser *cpr,
+                       struct silofs_alloc *alloc, const char *data)
 {
-	silofs_strview_init(&cpr->data, data);
+	silofs_strspan_initz(&cpr->wcfg);
+	silofs_strview_init(&cpr->rcfg, data);
+	silofs_strview_initz(&cpr->line);
+	cpr->alloc = alloc;
+	cpr->line_no = 0;
+}
+
+static void cpr_wsetup(struct silofs_conf_parser *cpr,
+                       struct silofs_alloc *alloc, char *buf, size_t n)
+{
+	silofs_strspan_initk(&cpr->wcfg, buf, 0, n);
+	silofs_strview_initz(&cpr->rcfg);
 	silofs_strview_initz(&cpr->line);
 	cpr->alloc = alloc;
 	cpr->line_no = 0;
@@ -369,6 +392,46 @@ out:
 	return err;
 }
 
+static int cpr_resolve_uid_to_name(const struct silofs_conf_parser *cpr,
+                                   uid_t uid, char *name, size_t nsz)
+{
+	struct passwd pwd = { .pw_uid = (uid_t)(-1) };
+	struct passwd *pw = NULL;
+	void *buf = NULL;
+	size_t bsz = 0;
+	size_t len = 0;
+	int err;
+
+	err = getxx_bsz(&bsz);
+	if (err) {
+		goto out;
+	}
+	err = cpr_zalloc(cpr, bsz, &buf);
+	if (err) {
+		goto out;
+	}
+	errno = 0;
+	err = getpwuid_r(uid, &pwd, buf, bsz, &pw);
+	if (err) {
+		err = cpr_bad_input(cpr, "failed to resolve uid: %u", uid);
+		goto out;
+	}
+	if ((pw == NULL) || (pw->pw_name == NULL)) {
+		err = cpr_bad_input(cpr, "unknown uid: %u", uid);
+		goto out;
+	}
+	len = silofs_str_length(pw->pw_name);
+	if (!len || (len >= nsz)) {
+		cpr_bad_input(cpr, "bad user name: %s", pw->pw_name);
+		err = -SILOFS_ENAMETOOLONG;
+		goto out;
+	}
+	silofs_str_copy(name, pw->pw_name, len + 1);
+out:
+	cpr_zfree(cpr, buf, bsz);
+	return err;
+}
+
 static int cpr_resolve_gid_by_name(const struct silofs_conf_parser *cpr,
                                    const char *name, gid_t *out_gid)
 {
@@ -402,6 +465,46 @@ out:
 	return err;
 }
 
+static int cpr_resolve_gid_to_name(const struct silofs_conf_parser *cpr,
+                                   gid_t gid, char *name, size_t nsz)
+{
+	struct group grp = { .gr_gid = (gid_t)(-1) };
+	struct group *gr = NULL;
+	void *buf = NULL;
+	size_t bsz = 0;
+	size_t len = 0;
+	int err;
+
+	err = getxx_bsz(&bsz);
+	if (err) {
+		goto out;
+	}
+	err = cpr_zalloc(cpr, bsz, &buf);
+	if (err) {
+		goto out;
+	}
+	errno = 0;
+	err = getgrgid_r(gid, &grp, buf, bsz, &gr);
+	if (err) {
+		err = cpr_bad_input(cpr, "failed to resolve gid: %u", gid);
+		goto out;
+	}
+	if ((gr == NULL) || (gr->gr_name == NULL)) {
+		err = cpr_bad_input(cpr, "unknown gid: %u", gid);
+		goto out;
+	}
+	len = silofs_str_length(gr->gr_name);
+	if (!len || (len >= nsz)) {
+		cpr_bad_input(cpr, "bad group name: %s", gr->gr_name);
+		err = -SILOFS_ENAMETOOLONG;
+		goto out;
+	}
+	silofs_str_copy(name, gr->gr_name, len + 1);
+out:
+	cpr_zfree(cpr, buf, bsz);
+	return err;
+}
+
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 struct silofs_mntconf_parser {
@@ -411,7 +514,7 @@ struct silofs_mntconf_parser {
 static void mpr_setup(struct silofs_mntconf_parser *mpr,
                       struct silofs_alloc *alloc, const char *data)
 {
-	cpr_setup(&mpr->cpr, alloc, data);
+	cpr_rsetup(&mpr->cpr, alloc, data);
 }
 
 static int mpr_parse_rule_args(const struct silofs_mntconf_parser *mpr,
@@ -552,7 +655,7 @@ static int mpr_parse_rules(struct silofs_mntconf_parser *mpr,
 	int err;
 
 	cpr_reset_line(&mpr->cpr);
-	strview_split_chr(&mpr->cpr.data, '\n', &svp);
+	strview_split_chr(&mpr->cpr.rcfg, '\n', &svp);
 	while (!strview_isempty(line) || !strview_isempty(tail)) {
 		cpr_update_next_line(&mpr->cpr, line);
 		err = mpr_parse_line(mpr, mrules);
@@ -625,6 +728,16 @@ idsconf_sec_by_name(const struct silofs_strview *sv)
 	return SILOFS_IDSCONF_SEC_NIL;
 }
 
+static const char *idsconf_sec_to_name(enum silofs_idsconf_sec sec)
+{
+	const char *sec_name = "";
+
+	if (sec < ARRAY_SIZE(s_idsconf_sec_name)) {
+		sec_name = s_idsconf_sec_name[sec];
+	}
+	return sec_name;
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 struct silofs_idsconf_parser {
@@ -632,10 +745,17 @@ struct silofs_idsconf_parser {
 	enum silofs_idsconf_sec sec;
 };
 
-static void ipr_setup(struct silofs_idsconf_parser *ipr,
-                      struct silofs_alloc *alloc, const char *data)
+static void ipr_rsetup(struct silofs_idsconf_parser *ipr,
+                       struct silofs_alloc *alloc, const char *data)
 {
-	cpr_setup(&ipr->cpr, alloc, data);
+	cpr_rsetup(&ipr->cpr, alloc, data);
+	ipr->sec = SILOFS_IDSCONF_SEC_NIL;
+}
+
+static void ipr_wsetup(struct silofs_idsconf_parser *ipr,
+                       struct silofs_alloc *alloc, char *buf, size_t n)
+{
+	cpr_wsetup(&ipr->cpr, alloc, buf, n);
 	ipr->sec = SILOFS_IDSCONF_SEC_NIL;
 }
 
@@ -839,11 +959,11 @@ ipr_parse_uids(const struct silofs_idsconf_parser *ipr,
 {
 	int err;
 
-	err = ipr_parse_uid_by_name(ipr, name, &out_uids->fs_uid);
+	err = ipr_parse_uid_by_name(ipr, name, &out_uids->host_uid);
 	if (err) {
 		return err;
 	}
-	err = ipr_parse_uid_by_value(ipr, suid, &out_uids->host_uid);
+	err = ipr_parse_uid_by_value(ipr, suid, &out_uids->fs_uid);
 	if (err) {
 		return err;
 	}
@@ -973,8 +1093,8 @@ static void ipr_split_data(struct silofs_idsconf_parser *ipr)
 	struct silofs_strview_pair svp;
 	struct silofs_strview sline;
 
-	strview_split_chr(&ipr->cpr.data, '\n', &svp);
-	strview_strip_ws(&svp.second, &ipr->cpr.data);
+	strview_split_chr(&ipr->cpr.rcfg, '\n', &svp);
+	strview_strip_ws(&svp.second, &ipr->cpr.rcfg);
 
 	strview_split_chr(&svp.first, '#', &svp);
 	strview_strip_ws(&svp.first, &sline);
@@ -989,7 +1109,7 @@ ipr_parse_ugids(struct silofs_idsconf_parser *ipr, struct silofs_ugids *ugids)
 
 	ipr_split_data(ipr);
 	while (strview_hasdata(&ipr->cpr.line) ||
-	       strview_hasdata(&ipr->cpr.data)) {
+	       strview_hasdata(&ipr->cpr.rcfg)) {
 		sec_next = ipr_parse_sec_state(ipr);
 		if ((sec_next != SILOFS_IDSCONF_SEC_NIL) &&
 		    (sec_next != ipr->sec)) {
@@ -1036,7 +1156,7 @@ int silofs_parse_fsids(struct silofs_ugids *ugids, struct silofs_alloc *alloc,
 	if (err) {
 		return err;
 	}
-	ipr_setup(&ipr, alloc, data);
+	ipr_rsetup(&ipr, alloc, data);
 	err = ipr_parse_ugids(&ipr, ugids);
 	if (err) {
 		ipr_release_ugids(&ipr, ugids);
@@ -1050,6 +1170,128 @@ void silofs_release_fsids(struct silofs_ugids *ugids,
 {
 	struct silofs_idsconf_parser ipr;
 
-	ipr_setup(&ipr, alloc, "");
+	ipr_rsetup(&ipr, alloc, "");
 	ipr_release_ugids(&ipr, ugids);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static int ipr_append_cfgline(struct silofs_idsconf_parser *ipr,
+                              const struct silofs_strview *sv)
+{
+	struct silofs_strview nl;
+	int err;
+
+	silofs_strview_init(&nl, "\n");
+	err = strspan_append(&ipr->cpr.wcfg, sv);
+	if (err) {
+		return err;
+	}
+	err = strspan_append(&ipr->cpr.wcfg, &nl);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+static int ipr_append_newline(struct silofs_idsconf_parser *ipr)
+{
+	struct silofs_strview el;
+
+	silofs_strview_initz(&el);
+	return ipr_append_cfgline(ipr, &el);
+}
+
+static int ipr_append_section(struct silofs_idsconf_parser *ipr,
+                              enum silofs_idsconf_sec sec_id)
+{
+	char sec[64] = { 0 };
+	struct silofs_strview sv;
+
+	snprintf(sec, sizeof(sec) - 1, "[%s]", idsconf_sec_to_name(sec_id));
+	silofs_strview_init(&sv, sec);
+	return ipr_append_cfgline(ipr, &sv);
+}
+
+static int
+ipr_append_id(struct silofs_idsconf_parser *ipr, const char *name, uint32_t id)
+{
+	char dat[512] = { 0 };
+	struct silofs_strview sv;
+
+	snprintf(dat, sizeof(dat) - 1, "%s = %u", name, id);
+	silofs_strview_init(&sv, dat);
+	return ipr_append_cfgline(ipr, &sv);
+}
+
+static int ipr_append_user(struct silofs_idsconf_parser *ipr,
+                           const struct silofs_uids *uids)
+{
+	char s[NAME_MAX + 1] = { 0 };
+	int err;
+
+	err = cpr_resolve_uid_to_name(&ipr->cpr, uids->host_uid, s, sizeof(s));
+	return err ? err : ipr_append_id(ipr, s, uids->fs_uid);
+}
+
+static int ipr_append_group(struct silofs_idsconf_parser *ipr,
+                            const struct silofs_gids *gids)
+{
+	char s[NAME_MAX + 1] = { 0 };
+	int err;
+
+	err = cpr_resolve_gid_to_name(&ipr->cpr, gids->host_gid, s, sizeof(s));
+	return err ? err : ipr_append_id(ipr, s, gids->fs_gid);
+}
+
+static int ipr_unparse_users(struct silofs_idsconf_parser *ipr,
+                             const struct silofs_ugids *ugids)
+
+{
+	int err;
+
+	err = ipr_append_section(ipr, SILOFS_IDSCONF_SEC_USERS);
+	for (size_t i = 0; !err && (i < ugids->users.nuids); ++i) {
+		err = ipr_append_user(ipr, &ugids->users.uids[i]);
+	}
+	return err ? err : ipr_append_newline(ipr);
+}
+
+static int ipr_unparse_groups(struct silofs_idsconf_parser *ipr,
+                              const struct silofs_ugids *ugids)
+
+{
+	int err;
+
+	err = ipr_append_section(ipr, SILOFS_IDSCONF_SEC_GROUPS);
+	for (size_t i = 0; !err && (i < ugids->groups.ngids); ++i) {
+		err = ipr_append_group(ipr, &ugids->groups.gids[i]);
+	}
+	return err ? err : ipr_append_newline(ipr);
+}
+
+static int ipr_unparse_ugids(struct silofs_idsconf_parser *ipr,
+                             const struct silofs_ugids *ugids)
+
+{
+	int err;
+
+	err = ipr_unparse_users(ipr, ugids);
+	if (err) {
+		return err;
+	}
+	err = ipr_unparse_groups(ipr, ugids);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+int silofs_unparse_fsids(struct silofs_ugids *ugids,
+                         struct silofs_alloc *alloc, char *buf, size_t n)
+{
+	struct silofs_idsconf_parser ipr;
+
+	ipr_wsetup(&ipr, alloc, buf, n);
+	return ipr_unparse_ugids(&ipr, ugids);
 }

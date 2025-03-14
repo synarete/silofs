@@ -112,8 +112,10 @@ char *silofs_strspan_data(const struct silofs_strspan *ss);
 /* Assigns s, truncates result in case of insufficient room. Return the number
    of added cheracters */
 size_t silofs_strspan_assign(struct silofs_strspan *ss, const char *s);
+
 size_t
 silofs_strspan_nassign(struct silofs_strspan *ss, const char *s, size_t len);
+
 size_t silofs_strspan_vassign(struct silofs_strspan       *ss,
                               const struct silofs_strview *sv);
 
@@ -122,6 +124,7 @@ size_t silofs_strspan_assign_chr(struct silofs_strspan *ss, size_t n, char c);
 
 /* Appends s. Return the number of added cheracters */
 size_t silofs_strspan_append(struct silofs_strspan *ss, const char *s);
+
 size_t
 silofs_strspan_nappend(struct silofs_strspan *ss, const char *s, size_t len);
 

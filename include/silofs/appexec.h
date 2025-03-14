@@ -46,6 +46,9 @@ int silofs_parse_fsids(struct silofs_ugids *ugids, struct silofs_alloc *alloc,
 void silofs_release_fsids(struct silofs_ugids *ugids,
                           struct silofs_alloc *alloc);
 
+int silofs_unparse_fsids(struct silofs_ugids *ugids,
+                         struct silofs_alloc *alloc, char *buf, size_t n);
+
 int silofs_parse_mntrules(struct silofs_mntrules *mrules,
                           struct silofs_alloc *alloc, const char *conf);
 

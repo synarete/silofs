@@ -505,6 +505,48 @@ out:
 	return err;
 }
 
+static int cpr_resolve_uidgid(const struct silofs_conf_parser *cpr,
+                              const char *name, uid_t *out_uid, gid_t *out_gid)
+{
+	struct passwd pwd = { .pw_uid = (uid_t)(-1) };
+	struct passwd *pw = NULL;
+	void *buf = NULL;
+	size_t bsz = 0;
+	int err;
+
+	err = getxx_bsz(&bsz);
+	if (err) {
+		goto out;
+	}
+	err = cpr_zalloc(cpr, bsz, &buf);
+	if (err) {
+		goto out;
+	}
+	errno = 0;
+	err = getpwnam_r(name, &pwd, buf, bsz, &pw);
+	if (err) {
+		err = cpr_bad_input(cpr, "failed to resolve user: %s", name);
+		goto out;
+	}
+	if (pw == NULL) {
+		err = cpr_bad_input(cpr, "unknown user: %s", name);
+		goto out;
+	}
+	*out_uid = pw->pw_uid;
+	*out_gid = pw->pw_gid;
+out:
+	cpr_zfree(cpr, buf, bsz);
+	return err;
+}
+
+static int cpr_require_ascii(const struct silofs_conf_parser *cpr)
+{
+	if (!silofs_strview_isascii(&cpr->rcfg)) {
+		return cpr_bad_conf(cpr, NULL, "non-ascii");
+	}
+	return 0;
+}
+
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 struct silofs_mntconf_parser {
@@ -1157,6 +1199,11 @@ int silofs_parse_fsids(struct silofs_ugids *ugids, struct silofs_alloc *alloc,
 		return err;
 	}
 	ipr_rsetup(&ipr, alloc, data);
+	err = cpr_require_ascii(&ipr.cpr);
+	if (err) {
+		ipr_release_ugids(&ipr, ugids);
+		return err;
+	}
 	err = ipr_parse_ugids(&ipr, ugids);
 	if (err) {
 		ipr_release_ugids(&ipr, ugids);
@@ -1287,11 +1334,108 @@ static int ipr_unparse_ugids(struct silofs_idsconf_parser *ipr,
 	return 0;
 }
 
-int silofs_unparse_fsids(struct silofs_ugids *ugids,
+int silofs_unparse_fsids(const struct silofs_ugids *ugids,
                          struct silofs_alloc *alloc, char *buf, size_t n)
 {
 	struct silofs_idsconf_parser ipr;
 
 	ipr_wsetup(&ipr, alloc, buf, n);
 	return ipr_unparse_ugids(&ipr, ugids);
+}
+
+static bool ugids_has_host_gid(const struct silofs_ugids *ugids, gid_t gid)
+{
+	for (size_t i = 0; i < ugids->groups.ngids; ++i) {
+		if (ugids->groups.gids[i].host_gid == gid) {
+			return true;
+		}
+	}
+	return false;
+}
+
+static int ipr_resolve_uids_gids(const struct silofs_idsconf_parser *ipr,
+                                 const char *user, struct silofs_uids *uids,
+                                 struct silofs_gids *gids)
+{
+	uid_t uid = (uid_t)(-1);
+	gid_t gid = (gid_t)(-1);
+	int err;
+
+	err = cpr_resolve_uidgid(&ipr->cpr, user, &uid, &gid);
+	if (err) {
+		return err;
+	}
+	uids->fs_uid = uids->host_uid = uid;
+	gids->fs_gid = gids->host_gid = gid;
+	return 0;
+}
+
+static int ipr_extend_ugids(struct silofs_idsconf_parser *ipr,
+                            struct silofs_ugids *ugids, const char *user)
+{
+	struct silofs_uids uids;
+	struct silofs_gids gids;
+	int err;
+
+	err = ipr_resolve_uids_gids(ipr, user, &uids, &gids);
+	if (err) {
+		return err;
+	}
+	err = ipr_append_uids1(ipr, &ugids->users.uids, &ugids->users.nuids,
+	                       &uids);
+	if (err) {
+		return err;
+	}
+	err = ipr_append_gids1(ipr, &ugids->groups.gids, &ugids->groups.ngids,
+	                       &gids);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+static int ipr_extend_supgr(struct silofs_idsconf_parser *ipr,
+                            struct silofs_ugids *ugids, const char *user)
+{
+	struct silofs_gids gids;
+	gid_t groups[64] = { (gid_t)(-1) };
+	gid_t gid = (gid_t)(-1);
+	int ngroups = (int)ARRAY_SIZE(groups);
+	int err;
+
+	errno = 0;
+	err = getgrouplist(user, gid, groups, &ngroups);
+	if (err < 0) {
+		return cpr_bad_input(&ipr->cpr, "getgrouplist failure");
+	}
+	for (int i = 0; i < ngroups; ++i) {
+		gid = groups[i];
+		if (gid == (gid_t)(-1)) {
+			continue;
+		}
+		if (ugids_has_host_gid(ugids, gid)) {
+			continue;
+		}
+		gids.host_gid = gids.fs_gid = gid;
+		err = ipr_append_gids1(ipr, &ugids->groups.gids,
+		                       &ugids->groups.ngids, &gids);
+		if (err) {
+			return err;
+		}
+	}
+	return 0;
+}
+
+int silofs_extend_fsids(struct silofs_ugids *ugids, struct silofs_alloc *alloc,
+                        const char *user, bool with_sup_groups)
+{
+	struct silofs_idsconf_parser ipr;
+	int err;
+
+	ipr_rsetup(&ipr, alloc, "");
+	err = ipr_extend_ugids(&ipr, ugids, user);
+	if (!err && with_sup_groups) {
+		err = ipr_extend_supgr(&ipr, ugids, user);
+	}
+	return err;
 }

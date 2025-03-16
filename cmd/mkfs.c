@@ -179,10 +179,10 @@ static void cmd_mkfs_setup_env_args(struct cmd_mkfs_ctx *ctx)
 static void cmd_mkfs_setup_fs_ids(struct cmd_mkfs_ctx *ctx)
 {
 	struct silofs_args *env_args = &ctx->env_args;
-	struct silofs_ugids *ids = &env_args->ids;
+	struct silofs_ugids *ids = &env_args->ugids;
 	const char *username = ctx->in_args.username;
 
-	cmd_fs_ids_load(ids, ctx->in_args.repodir_real);
+	cmd_load_fsids(ids, ctx->in_args.repodir_real);
 	cmd_require_uidgid(ids, username, &env_args->uid, &env_args->gid);
 }
 

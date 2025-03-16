@@ -43,11 +43,14 @@ int silofs_check_ar_xref(const struct silofs_xref *xref);
 int silofs_parse_fsids(struct silofs_ugids *ugids, struct silofs_alloc *alloc,
                        const char *conf);
 
+int silofs_unparse_fsids(const struct silofs_ugids *ugids,
+                         struct silofs_alloc *alloc, char *buf, size_t n);
+
 void silofs_release_fsids(struct silofs_ugids *ugids,
                           struct silofs_alloc *alloc);
 
-int silofs_unparse_fsids(struct silofs_ugids *ugids,
-                         struct silofs_alloc *alloc, char *buf, size_t n);
+int silofs_extend_fsids(struct silofs_ugids *ugids, struct silofs_alloc *alloc,
+                        const char *user, bool with_sup_groups);
 
 int silofs_parse_mntrules(struct silofs_mntrules *mrules,
                           struct silofs_alloc *alloc, const char *conf);

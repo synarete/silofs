@@ -22,66 +22,6 @@
 #include <grp.h>
 #include "cmd.h"
 
-enum silofs_idsconf_sec {
-	SILOFS_IDSCONF_SEC_NIL,
-	SILOFS_IDSCONF_SEC_USERS,
-	SILOFS_IDSCONF_SEC_GROUPS,
-};
-
-static const char *s_idsconf_sec_name[] = {
-	[SILOFS_IDSCONF_SEC_NIL] = "",
-	[SILOFS_IDSCONF_SEC_USERS] = "users",
-	[SILOFS_IDSCONF_SEC_GROUPS] = "groups",
-};
-
-struct silofs_idsconf_ctx {
-	char *path;
-	char *text;
-	struct silofs_strview conf;
-	struct silofs_strview line;
-	enum silofs_idsconf_sec sec;
-	int line_no;
-};
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-silofs_attr_noreturn static void
-cmd_die_by(const struct silofs_idsconf_ctx *ctx, const char *msg)
-{
-	if (ctx && ctx->line_no && ctx->path) {
-		cmd_die(errno, "%s (%s:%d)", msg, ctx->path, ctx->line_no);
-	} else {
-		cmd_die(errno, "%s", msg);
-	}
-	silofs_unreachable();
-}
-
-static void
-cmd_parse_uid_by_value(const struct silofs_idsconf_ctx *ctx,
-                       const struct silofs_strview *ss, uid_t *out_uid)
-{
-	char str[64] = "";
-
-	if (ss->len >= sizeof(str)) {
-		cmd_die_by(ctx, "not an integer");
-	}
-	silofs_strview_copyto(ss, str, sizeof(str));
-	*out_uid = cmd_parse_str_as_uid(str);
-}
-
-static void
-cmd_parse_gid_by_value(const struct silofs_idsconf_ctx *ctx,
-                       const struct silofs_strview *ss, gid_t *out_gid)
-{
-	char str[64] = "";
-
-	if (ss->len >= sizeof(str)) {
-		cmd_die_by(ctx, "not an integer");
-	}
-	silofs_strview_copyto(ss, str, sizeof(str));
-	*out_gid = cmd_parse_str_as_gid(str);
-}
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static size_t cmd_sysconf(int key)
@@ -107,351 +47,11 @@ static size_t cmd_getxx_bsz(void)
 	return bsz;
 }
 
-static void cmd_resolve_uid_by_name(const char *name, uid_t *out_uid)
-{
-	struct passwd pwd = { .pw_uid = (uid_t)(-1) };
-	struct passwd *pw = NULL;
-	char *buf = NULL;
-	size_t bsz;
-	int err;
-
-	bsz = cmd_getxx_bsz();
-	buf = cmd_zalloc(bsz);
-	err = getpwnam_r(name, &pwd, buf, bsz, &pw);
-	if (err) {
-		cmd_die(err, "failed to resolve user name: %s", name);
-	}
-	if (pw == NULL) {
-		cmd_diez("unknown user name: %s", name);
-	}
-	*out_uid = pw->pw_uid;
-	cmd_zfree(buf, bsz);
-}
-
-static void cmd_resolve_gid_by_name(const char *name, gid_t *out_gid)
-{
-	struct group grp = { .gr_gid = (gid_t)(-1) };
-	struct group *gr = NULL;
-	char *buf = NULL;
-	size_t bsz;
-	int err;
-
-	bsz = cmd_getxx_bsz();
-	buf = cmd_zalloc(bsz);
-	err = getgrnam_r(name, &grp, buf, bsz, &gr);
-	if (err) {
-		cmd_die(err, "failed to resolve group name: %s", name);
-	}
-	if (gr == NULL) {
-		cmd_die(0, "unknown group name: %s", name);
-	}
-	*out_gid = gr->gr_gid;
-	cmd_zfree(buf, bsz);
-}
-
-static void cmd_resolve_uid_to_name(uid_t uid, char *name, size_t nsz)
-{
-	struct passwd pwd = { .pw_uid = (uid_t)(-1) };
-	struct passwd *pw = NULL;
-	char *buf = NULL;
-	size_t bsz;
-	size_t len;
-	int err;
-
-	bsz = cmd_getxx_bsz();
-	buf = cmd_zalloc(bsz);
-	err = getpwuid_r(uid, &pwd, buf, bsz, &pw);
-	if (err) {
-		cmd_diez("failed to resolve uid: %u", uid);
-	}
-	if ((pw == NULL) || (pw->pw_name == NULL)) {
-		cmd_diez("unknown uid: %u", uid);
-	}
-	len = strlen(pw->pw_name);
-	if (!len || (len >= nsz)) {
-		cmd_die(-ENAMETOOLONG, "bad user name: %s", pw->pw_name);
-	}
-	strncpy(name, pw->pw_name, nsz);
-	cmd_zfree(buf, bsz);
-}
-
-static void cmd_resolve_gid_to_name(gid_t gid, char *name, size_t nsz)
-{
-	struct group grp = { .gr_gid = (gid_t)(-1) };
-	struct group *gr = NULL;
-	char *buf = NULL;
-	size_t bsz;
-	size_t len;
-	int err;
-
-	bsz = cmd_getxx_bsz();
-	buf = cmd_zalloc(bsz);
-	err = getgrgid_r(gid, &grp, buf, bsz, &gr);
-	if (err) {
-		cmd_die(err, "failed to resolve gid: %u", gid);
-	}
-	if ((gr == NULL) || (gr->gr_name == NULL)) {
-		cmd_diez("unknown gid: %u", gid);
-	}
-	len = strlen(gr->gr_name);
-	if (!len || (len >= nsz)) {
-		cmd_die(-ENAMETOOLONG, "bad group name: %s", gr->gr_name);
-	}
-	strncpy(name, gr->gr_name, nsz);
-	cmd_zfree(buf, bsz);
-}
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct silofs_uids *cmd_malloc_uids(size_t nuids)
-{
-	struct silofs_uids *uids;
-
-	uids = cmd_zalloc(nuids * sizeof(uids[0]));
-	return uids;
-}
-
-static void cmd_free_uids(struct silofs_uids *uids, size_t nuids)
-{
-	cmd_zfree(uids, nuids * sizeof(uids[0]));
-}
-
-static void cmd_pfree_uids(struct silofs_uids **puids, size_t *pnuids)
-{
-	if (*puids && *pnuids) {
-		cmd_free_uids(*puids, *pnuids);
-		*puids = NULL;
-		*pnuids = 0;
-	}
-}
-
-static void cmd_copy_uids(struct silofs_uids *uids_dst,
-                          const struct silofs_uids *uids_src, size_t nuids)
-{
-	if (uids_src && nuids) {
-		memcpy(uids_dst, uids_src, nuids * sizeof(uids_dst[0]));
-	}
-}
-
-static void
-cmd_extend_uids(struct silofs_uids **puids, size_t *pnuids, size_t cnt)
-{
-	struct silofs_uids *uids = NULL;
-	size_t nuids = *pnuids + cnt;
-
-	uids = cmd_malloc_uids(nuids);
-	cmd_copy_uids(uids, *puids, *pnuids);
-	cmd_pfree_uids(puids, pnuids);
-	*puids = uids;
-	*pnuids = nuids;
-}
-
-static void cmd_append_uids1(struct silofs_uids **puids, size_t *pnuids,
-                             const struct silofs_uids *uids)
-{
-	cmd_extend_uids(puids, pnuids, 1);
-	cmd_copy_uids(&(*puids)[*pnuids - 1], uids, 1);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static struct silofs_gids *cmd_malloc_gids(size_t ngids)
-{
-	struct silofs_gids *gids;
-
-	gids = cmd_zalloc(ngids * sizeof(gids[0]));
-	return gids;
-}
-
-static void cmd_free_gids(struct silofs_gids *gids, size_t ngids)
-{
-	cmd_zfree(gids, ngids * sizeof(gids[0]));
-}
-
-static void cmd_pfree_gids(struct silofs_gids **pgids, size_t *pngids)
-{
-	if (*pgids && *pngids) {
-		cmd_free_gids(*pgids, *pngids);
-		*pgids = NULL;
-		*pngids = 0;
-	}
-}
-
-static void cmd_copy_gids(struct silofs_gids *gids_dst,
-                          const struct silofs_gids *gids_src, size_t ngids)
-{
-	if (gids_src && ngids) {
-		memcpy(gids_dst, gids_src, ngids * sizeof(gids_dst[0]));
-	}
-}
-
-static void
-cmd_extend_gids(struct silofs_gids **pgids, size_t *pngids, size_t cnt)
-{
-	struct silofs_gids *gids = NULL;
-	size_t ngids = *pngids + cnt;
-
-	gids = cmd_malloc_gids(ngids);
-	cmd_copy_gids(gids, *pgids, *pngids);
-	cmd_pfree_gids(pgids, pngids);
-	*pgids = gids;
-	*pngids = ngids;
-}
-
-static void cmd_append_gids1(struct silofs_gids **pgids, size_t *pngids,
-                             const struct silofs_gids *gids)
-{
-	cmd_extend_gids(pgids, pngids, 1);
-	cmd_copy_gids(&(*pgids)[*pngids - 1], gids, 1);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static void
-cmd_parse_uid_by_name(const struct silofs_idsconf_ctx *ctx,
-                      const struct silofs_strview *name, uid_t *out_uid)
-{
-	char buf[NAME_MAX + 1] = "";
-
-	if (name->len >= sizeof(buf)) {
-		cmd_die_by(ctx, "illegal user name");
-	}
-	silofs_strview_copyto(name, buf, sizeof(buf) - 1);
-	cmd_resolve_uid_by_name(buf, out_uid);
-}
-
-static void
-cmd_parse_gid_by_name(const struct silofs_idsconf_ctx *ctx,
-                      const struct silofs_strview *name, gid_t *out_gid)
-{
-	char buf[NAME_MAX + 1] = "";
-
-	if (name->len >= sizeof(buf)) {
-		cmd_die_by(ctx, "illegal group name");
-	}
-	silofs_strview_copyto(name, buf, sizeof(buf) - 1);
-	cmd_resolve_gid_by_name(buf, out_gid);
-}
-
-static void
-cmd_parse_uids(const struct silofs_idsconf_ctx *ctx,
-               const struct silofs_strview *name,
-               const struct silofs_strview *suid, struct silofs_uids *out_uids)
-{
-	cmd_parse_uid_by_name(ctx, name, &out_uids->fs_uid);
-	cmd_parse_uid_by_value(ctx, suid, &out_uids->host_uid);
-}
-
-static void
-cmd_parse_gids(const struct silofs_idsconf_ctx *ctx,
-               const struct silofs_strview *name,
-               const struct silofs_strview *sgid, struct silofs_gids *out_gids)
-{
-	cmd_parse_gid_by_name(ctx, name, &out_gids->host_gid);
-	cmd_parse_gid_by_value(ctx, sgid, &out_gids->fs_gid);
-}
-
-static void cmd_parse_user_conf(const struct silofs_idsconf_ctx *ctx,
-                                struct silofs_uids **uids, size_t *nuids)
-{
-	struct silofs_strview_pair ssp;
-	struct silofs_strview name;
-	struct silofs_strview suid;
-	struct silofs_uids uid;
-
-	silofs_strview_split_chr(&ctx->line, '=', &ssp);
-	silofs_strview_strip_ws(&ssp.first, &name);
-	silofs_strview_strip_ws(&ssp.second, &suid);
-
-	if (silofs_strview_isempty(&name) || silofs_strview_isempty(&suid)) {
-		cmd_die_by(ctx, "missing user mapping");
-	}
-	cmd_parse_uids(ctx, &name, &suid, &uid);
-	cmd_append_uids1(uids, nuids, &uid);
-}
-
-static void cmd_parse_group_conf(const struct silofs_idsconf_ctx *ctx,
-                                 struct silofs_gids **gids, size_t *ngids)
-{
-	struct silofs_strview_pair ssp;
-	struct silofs_strview name;
-	struct silofs_strview sgid;
-	struct silofs_gids gid;
-
-	silofs_strview_split_chr(&ctx->line, '=', &ssp);
-	silofs_strview_strip_ws(&ssp.first, &name);
-	silofs_strview_strip_ws(&ssp.second, &sgid);
-
-	if (silofs_strview_isempty(&name) || silofs_strview_isempty(&sgid)) {
-		cmd_die_by(ctx, "missing group mapping");
-	}
-	cmd_parse_gids(ctx, &name, &sgid, &gid);
-	cmd_append_gids1(gids, ngids, &gid);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static void cmd_append_cfgline(char **pcfg_curr, const char *line)
-{
-	const size_t line_len = strlen(line);
-	const size_t conf_len = *pcfg_curr ? strlen(*pcfg_curr) : 0;
-	char *pcfg_next = NULL;
-
-	pcfg_next = cmd_zalloc(conf_len + line_len + 1);
-	if (*pcfg_curr != NULL) {
-		strncpy(pcfg_next, *pcfg_curr, conf_len);
-		cmd_pstrfree(pcfg_curr);
-	}
-	strncpy(pcfg_next + conf_len, line, line_len + 1);
-	*pcfg_curr = pcfg_next;
-}
-
-static void cmd_append_newline(char **pcfg)
-{
-	cmd_append_cfgline(pcfg, "\n");
-}
-
-static void cmd_append_section(const char *name, char **ptext)
-{
-	char line[256] = "";
-
-	snprintf(line, sizeof(line) - 1, "[%s]\n", name);
-	cmd_append_cfgline(ptext, line);
-}
-
-static void cmd_append_id(const char *name, uint32_t id, char **conf)
-{
-	char line[512] = "";
-
-	snprintf(line, sizeof(line) - 1, "%s = %u\n", name, id);
-	cmd_append_cfgline(conf, line);
-}
-
-static void cmd_append_user(const struct silofs_uids *uid, char **conf)
-{
-	char name[NAME_MAX + 1] = "";
-
-	cmd_resolve_uid_to_name(uid->host_uid, name, sizeof(name));
-	cmd_append_id(name, uid->fs_uid, conf);
-}
-
-static void cmd_append_group(const struct silofs_gids *gid, char **conf)
-{
-	char name[NAME_MAX + 1] = "";
-
-	cmd_resolve_gid_to_name(gid->fs_gid, name, sizeof(name));
-	cmd_append_id(name, gid->host_gid, conf);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static bool isascii_idsconf(const char *txt, size_t size)
-{
-	struct silofs_strview ss;
-
-	silofs_strview_initn(&ss, txt, size);
-	return silofs_strview_isascii(&ss);
-}
+enum {
+	CMD_IDSCONF_SIZE_MAX = 1L << 20,
+};
 
 static void cmd_load_idsconf_file(const char *pathname, char **out_txt)
 {
@@ -469,7 +69,7 @@ static void cmd_load_idsconf_file(const char *pathname, char **out_txt)
 		cmd_diez("not a regular file: %s", pathname);
 	}
 	size = (size_t)st.st_size;
-	if (size >= SILOFS_MEGA) {
+	if (size >= CMD_IDSCONF_SIZE_MAX) {
 		cmd_die(-EFBIG, "illegal ids-config file: %s", pathname);
 	}
 	err = silofs_sys_open(pathname, O_RDONLY, 0, &fd);
@@ -484,9 +84,6 @@ static void cmd_load_idsconf_file(const char *pathname, char **out_txt)
 	}
 	silofs_sys_close(fd);
 
-	if (!isascii_idsconf(txt, size)) {
-		cmd_diez("non-ascii character in: %s", pathname);
-	}
 	*out_txt = txt;
 }
 
@@ -511,166 +108,20 @@ static void cmd_save_idsconf_file(const char *pathname, const char *txt)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static const char *idsconf_sec_to_name(enum silofs_idsconf_sec sec)
+void cmd_setup_fsids(struct silofs_ugids *ugids)
 {
-	const char *sec_name = "";
-
-	if (sec < SILOFS_ARRAY_SIZE(s_idsconf_sec_name)) {
-		sec_name = s_idsconf_sec_name[sec];
-	}
-	return sec_name;
+	ugids->users.uids = NULL;
+	ugids->users.nuids = 0;
+	ugids->groups.gids = NULL;
+	ugids->groups.ngids = 0;
 }
 
-static enum silofs_idsconf_sec
-idsconf_sec_by_name(const struct silofs_strview *sv)
+void cmd_reset_fsids(struct silofs_ugids *ugids)
 {
-	const char *sec_name;
-
-	for (int i = 0; i < (int)SILOFS_ARRAY_SIZE(s_idsconf_sec_name); ++i) {
-		sec_name = s_idsconf_sec_name[i];
-		if (silofs_strview_isequal(sv, sec_name)) {
-			return (enum silofs_idsconf_sec)i;
-		}
-	}
-	return SILOFS_IDSCONF_SEC_NIL;
+	silofs_release_fsids(ugids, silofs_default_alloc);
 }
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static void fs_ids_parse_user_conf(struct silofs_ugids *ids,
-                                   const struct silofs_idsconf_ctx *ctx)
-{
-	cmd_parse_user_conf(ctx, &ids->users.uids, &ids->users.nuids);
-}
-
-static void fs_ids_parse_group_conf(struct silofs_ugids *ids,
-                                    const struct silofs_idsconf_ctx *ctx)
-{
-	cmd_parse_group_conf(ctx, &ids->groups.gids, &ids->groups.ngids);
-}
-
-static void fs_ids_parse_line(struct silofs_ugids *ids,
-                              const struct silofs_idsconf_ctx *ctx)
-{
-	switch (ctx->sec) {
-	case SILOFS_IDSCONF_SEC_NIL:
-		break;
-	case SILOFS_IDSCONF_SEC_USERS:
-		fs_ids_parse_user_conf(ids, ctx);
-		break;
-	case SILOFS_IDSCONF_SEC_GROUPS:
-		fs_ids_parse_group_conf(ids, ctx);
-		break;
-	default:
-		cmd_die_by(ctx, "illegal config");
-		break;
-	}
-}
-
-static enum silofs_idsconf_sec
-cmd_parse_sec_state(const struct silofs_strview *line)
-{
-	struct silofs_strview sv = { .str = NULL };
-	enum silofs_idsconf_sec sec = SILOFS_IDSCONF_SEC_NIL;
-
-	silofs_strview_strip_ws(line, &sv);
-	if (silofs_strview_starts_with(&sv, '[') &&
-	    silofs_strview_ends_with(&sv, ']')) {
-		silofs_strview_strip_any_of(&sv, "[]", &sv);
-		silofs_strview_strip_ws(&sv, &sv);
-		sec = idsconf_sec_by_name(&sv);
-	}
-	return sec;
-}
-
-static void fs_ids_update_line(struct silofs_idsconf_ctx *ctx,
-                               const struct silofs_strview *line)
-{
-	if (line != NULL) {
-		silofs_strview_init_by(&ctx->line, line);
-	} else {
-		silofs_strview_initz(&ctx->line);
-	}
-}
-
-static void
-fs_ids_parse(struct silofs_ugids *ids, struct silofs_idsconf_ctx *ctx)
-{
-	struct silofs_strview data;
-	struct silofs_strview_pair pair;
-	struct silofs_strview_pair pair2;
-	struct silofs_strview *line = &pair.first;
-	struct silofs_strview *tail = &pair.second;
-	struct silofs_strview sline;
-	enum silofs_idsconf_sec sec_next = SILOFS_IDSCONF_SEC_NIL;
-
-	silofs_strview_init_by(&data, &ctx->conf);
-	ctx->line_no = 0;
-	ctx->sec = SILOFS_IDSCONF_SEC_NIL;
-
-	silofs_strview_split_chr(&data, '\n', &pair);
-	while (!silofs_strview_isempty(line) ||
-	       !silofs_strview_isempty(tail)) {
-		ctx->line_no++;
-		fs_ids_update_line(ctx, line);
-
-		silofs_strview_split_chr(line, '#', &pair2);
-		silofs_strview_strip_ws(&pair2.first, &sline);
-
-		sec_next = cmd_parse_sec_state(&sline);
-		if ((sec_next != SILOFS_IDSCONF_SEC_NIL) &&
-		    (sec_next != ctx->sec)) {
-			ctx->sec = sec_next;
-		} else if (!silofs_strview_isempty(&sline)) {
-			fs_ids_update_line(ctx, &sline);
-			fs_ids_parse_line(ids, ctx);
-		}
-		silofs_strview_split_chr(tail, '\n', &pair);
-	}
-	fs_ids_update_line(ctx, NULL);
-}
-
-static void idsconf_update_by(struct silofs_idsconf_ctx *ctx, char *text)
-{
-	ctx->text = text;
-	silofs_strview_init(&ctx->conf, text);
-}
-
-static void
-fs_ids_unparse(const struct silofs_ugids *ids, struct silofs_idsconf_ctx *ctx)
-{
-	const char *sec_name = NULL;
-	char *text = NULL;
-
-	sec_name = idsconf_sec_to_name(SILOFS_IDSCONF_SEC_USERS);
-	cmd_append_section(sec_name, &text);
-	for (size_t i = 0; i < ids->users.nuids; ++i) {
-		cmd_append_user(&ids->users.uids[i], &text);
-	}
-	cmd_append_newline(&text);
-
-	sec_name = idsconf_sec_to_name(SILOFS_IDSCONF_SEC_GROUPS);
-	cmd_append_section(sec_name, &text);
-	for (size_t j = 0; j < ids->groups.ngids; ++j) {
-		cmd_append_group(&ids->groups.gids[j], &text);
-	}
-	cmd_append_newline(&text);
-	idsconf_update_by(ctx, text);
-}
-
-static void
-fs_ids_append_uids(struct silofs_ugids *ids, const struct silofs_uids *uids)
-{
-	cmd_append_uids1(&ids->users.uids, &ids->users.nuids, uids);
-}
-
-static void
-fs_ids_append_gids(struct silofs_ugids *ids, const struct silofs_gids *gids)
-{
-	cmd_append_gids1(&ids->groups.gids, &ids->groups.ngids, gids);
-}
-
-static bool fs_ids_has_host_uid(const struct silofs_ugids *ids, uid_t uid)
+static bool ugids_has_host_uid(const struct silofs_ugids *ids, uid_t uid)
 {
 	for (size_t i = 0; i < ids->users.nuids; ++i) {
 		if (ids->users.uids[i].host_uid == uid) {
@@ -680,7 +131,7 @@ static bool fs_ids_has_host_uid(const struct silofs_ugids *ids, uid_t uid)
 	return false;
 }
 
-static bool fs_ids_has_host_gid(const struct silofs_ugids *ids, gid_t gid)
+static bool ugids_has_host_gid(const struct silofs_ugids *ids, gid_t gid)
 {
 	for (size_t i = 0; i < ids->groups.ngids; ++i) {
 		if (ids->groups.gids[i].host_gid == gid) {
@@ -690,112 +141,56 @@ static bool fs_ids_has_host_gid(const struct silofs_ugids *ids, gid_t gid)
 	return false;
 }
 
-static void fs_ids_add_supgr(struct silofs_ugids *ids, const char *user)
+void cmd_extend_fsids(struct silofs_ugids *ugids, const char *user,
+                      bool with_sup_groups)
 {
-	struct silofs_gids gids;
-	gid_t groups[64] = { (gid_t)(-1) };
-	gid_t gid = (gid_t)(-1);
-	int ngroups = (int)SILOFS_ARRAY_SIZE(groups);
-	int ret;
+	int err;
 
-	ret = getgrouplist(user, gid, groups, &ngroups);
-	if (ret < 0) {
-		cmd_die(errno, "getgrouplist failure: ret=%d", ret);
-	}
-	for (int i = 0; i < ngroups; ++i) {
-		gid = groups[i];
-		if (gid == (gid_t)(-1)) {
-			continue;
-		}
-		if (fs_ids_has_host_gid(ids, gid)) {
-			continue;
-		}
-		gids.host_gid = gids.fs_gid = gid;
-		fs_ids_append_gids(ids, &gids);
+	err = silofs_extend_fsids(ugids, silofs_default_alloc, user,
+	                          with_sup_groups);
+	if (err) {
+		cmd_die(err, "failed to add user: %s", user);
 	}
 }
 
-void cmd_fs_ids_add_user(struct silofs_ugids *ids, const char *user,
-                         bool with_sup_groups)
+static char *cmd_fsids_confpath(const char *basedir)
 {
-	struct silofs_uids uids;
-	struct silofs_gids gids;
-	uid_t uid = (uid_t)(-1);
-	gid_t gid = (gid_t)(-1);
+	char *path = NULL;
 
-	cmd_resolve_uidgid(user, &uid, &gid);
-	uids.host_uid = uids.fs_uid = uid;
-	fs_ids_append_uids(ids, &uids);
-	gids.host_gid = gids.fs_gid = gid;
-	fs_ids_append_gids(ids, &gids);
-	if (with_sup_groups) {
-		fs_ids_add_supgr(ids, user);
-	}
+	cmd_join_path(basedir, "fsids.conf", &path);
+	return path;
 }
 
-void cmd_fs_ids_init(struct silofs_ugids *ids)
+void cmd_load_fsids(struct silofs_ugids *ugids, const char *basedir)
 {
-	ids->users.uids = NULL;
-	ids->users.nuids = 0;
-	ids->groups.gids = NULL;
-	ids->groups.ngids = 0;
-}
-
-void cmd_fs_ids_fini(struct silofs_ugids *ids)
-{
-	cmd_fs_ids_reset(ids);
-	ids->users.uids = NULL;
-	ids->users.nuids = 0;
-	ids->groups.gids = NULL;
-	ids->groups.ngids = 0;
-}
-
-void cmd_fs_ids_assign(struct silofs_ugids *ids,
-                       const struct silofs_ugids *other)
-{
-	cmd_fs_ids_reset(ids);
-	for (size_t i = 0; i < other->users.nuids; ++i) {
-		fs_ids_append_uids(ids, &ids->users.uids[i]);
-	}
-	for (size_t j = 0; j < other->groups.ngids; ++j) {
-		fs_ids_append_gids(ids, &ids->groups.gids[j]);
-	}
-}
-
-void cmd_fs_ids_reset(struct silofs_ugids *ids)
-{
-	cmd_pfree_uids(&ids->users.uids, &ids->users.nuids);
-	cmd_pfree_gids(&ids->groups.gids, &ids->groups.ngids);
-}
-
-static void cmd_fs_ids_pathname(const char *basedir, char **out_pathname)
-{
-	cmd_join_path(basedir, "fsids.conf", out_pathname);
-}
-
-void cmd_fs_ids_load(struct silofs_ugids *ids, const char *basedir)
-{
-	struct silofs_idsconf_ctx ctx = { .line_no = 0 };
+	char *path = cmd_fsids_confpath(basedir);
 	char *text = NULL;
+	int err;
 
-	cmd_fs_ids_reset(ids);
-	cmd_fs_ids_pathname(basedir, &ctx.path);
-	cmd_load_idsconf_file(ctx.path, &text);
-	idsconf_update_by(&ctx, text);
-	fs_ids_parse(ids, &ctx);
+	cmd_reset_fsids(ugids);
+	cmd_load_idsconf_file(path, &text);
+	err = silofs_parse_fsids(ugids, silofs_default_alloc, text);
+	if (err) {
+		cmd_die(err, "illegal fs-ids config: %s", path);
+	}
 	cmd_pstrfree(&text);
-	cmd_pstrfree(&ctx.path);
+	cmd_pstrfree(&path);
 }
 
-void cmd_fs_ids_save(const struct silofs_ugids *ids, const char *basedir)
+void cmd_save_fsids(const struct silofs_ugids *ugids, const char *basedir)
 {
-	struct silofs_idsconf_ctx ctx = { .line_no = 0 };
+	const size_t size = CMD_IDSCONF_SIZE_MAX;
+	char *path = cmd_fsids_confpath(basedir);
+	char *text = cmd_zalloc(CMD_IDSCONF_SIZE_MAX);
+	int err;
 
-	fs_ids_unparse(ids, &ctx);
-	cmd_fs_ids_pathname(basedir, &ctx.path);
-	cmd_save_idsconf_file(ctx.path, ctx.text);
-	cmd_pstrfree(&ctx.text);
-	cmd_pstrfree(&ctx.path);
+	err = silofs_unparse_fsids(ugids, silofs_default_alloc, text, size);
+	if (err) {
+		cmd_die(err, "failed to create fs-ids config: %s", path);
+	}
+	cmd_save_idsconf_file(path, text);
+	cmd_pstrfree(&text);
+	cmd_pstrfree(&path);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -822,14 +217,14 @@ void cmd_resolve_uidgid(const char *name, uid_t *out_uid, gid_t *out_gid)
 	cmd_zfree(buf, bsz);
 }
 
-void cmd_require_uidgid(const struct silofs_ugids *ids, const char *name,
+void cmd_require_uidgid(const struct silofs_ugids *ugids, const char *name,
                         uid_t *out_uid, gid_t *out_gid)
 {
 	cmd_resolve_uidgid(name, out_uid, out_gid);
-	if (!fs_ids_has_host_uid(ids, *out_uid)) {
+	if (!ugids_has_host_uid(ugids, *out_uid)) {
 		cmd_diez("missing uid-mapping for user: '%s'", name);
 	}
-	if (!fs_ids_has_host_gid(ids, *out_gid)) {
+	if (!ugids_has_host_gid(ugids, *out_gid)) {
 		cmd_diez("missing gid-mapping for user: '%s'", name);
 	}
 }
@@ -851,10 +246,22 @@ static char *cmd_getlogin(void)
 
 char *cmd_getpwuid(uid_t uid)
 {
-	char name[NAME_MAX + 1] = "";
+	struct passwd pwd = { .pw_uid = (uid_t)(-1) };
+	struct passwd *pw = NULL;
+	char *buf = NULL;
+	size_t bsz;
+	int err;
 
-	cmd_resolve_uid_to_name(uid, name, sizeof(name) - 1);
-	return cmd_strdup(name);
+	bsz = cmd_getxx_bsz();
+	buf = cmd_zalloc(bsz);
+	err = getpwuid_r(uid, &pwd, buf, bsz, &pw);
+	if (err) {
+		cmd_diez("failed to resolve uid: %u", uid);
+	}
+	if ((pw == NULL) || (pw->pw_name == NULL)) {
+		cmd_diez("unknown uid: %u", uid);
+	}
+	return cmd_strdup(pw->pw_name);
 }
 
 static char *cmd_getpwuid_self(void)

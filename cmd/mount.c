@@ -266,7 +266,7 @@ static void cmd_mount_setup_env_args(struct cmd_mount_ctx *ctx)
 
 static void cmd_mount_setup_fs_ids(struct cmd_mount_ctx *ctx)
 {
-	cmd_fs_ids_load(&ctx->env_args.ids, ctx->in_args.repodir_real);
+	cmd_load_fsids(&ctx->env_args.ugids, ctx->in_args.repodir_real);
 }
 
 static void cmd_mount_load_xref(struct cmd_mount_ctx *ctx)

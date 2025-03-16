@@ -89,7 +89,7 @@ static void cmd_init_parse_optargs(struct cmd_init_ctx *ctx)
 static void cmd_init_finalize(struct cmd_init_ctx *ctx)
 {
 	cmd_del_env(&ctx->env);
-	cmd_fs_ids_fini(&ctx->env_args.ids);
+	cmd_reset_fsids(&ctx->env_args.ugids);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.username);
@@ -152,15 +152,15 @@ static void cmd_init_setup_env_args(struct cmd_init_ctx *ctx)
 
 static void cmd_init_setup_fs_ids(struct cmd_init_ctx *ctx)
 {
-	struct silofs_ugids *ids = &ctx->env_args.ids;
+	struct silofs_ugids *ids = &ctx->env_args.ugids;
 	const char *username = ctx->in_args.username;
 	const bool with_sup_groups = ctx->in_args.with_sup_groups;
 	const bool with_root_user = ctx->in_args.with_root_user;
 	char *rootname = cmd_getpwuid(0);
 
-	cmd_fs_ids_add_user(ids, username, with_sup_groups);
+	cmd_extend_fsids(ids, username, with_sup_groups);
 	if (with_root_user && (strcmp(rootname, username) != 0)) {
-		cmd_fs_ids_add_user(ids, rootname, false);
+		cmd_extend_fsids(ids, rootname, false);
 	}
 	cmd_pstrfree(&rootname);
 }
@@ -182,7 +182,7 @@ static void cmd_init_close_repo(const struct cmd_init_ctx *ctx)
 
 static void cmd_init_save_idsconf(const struct cmd_init_ctx *ctx)
 {
-	cmd_fs_ids_save(&ctx->env_args.ids, ctx->env_args.boot.repodir);
+	cmd_save_fsids(&ctx->env_args.ugids, ctx->env_args.boot.repodir);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

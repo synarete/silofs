@@ -355,23 +355,16 @@ void cmd_setup_env_args(struct silofs_args *env_args);
 void cmd_destroy_env_args(struct silofs_args *env_args);
 
 /* fs-ids config */
-void cmd_fs_ids_unlinkat(const char *basedir);
+void cmd_setup_fsids(struct silofs_ugids *ids);
 
-void cmd_fs_ids_init(struct silofs_ugids *ids);
+void cmd_reset_fsids(struct silofs_ugids *ugids);
 
-void cmd_fs_ids_fini(struct silofs_ugids *ids);
+void cmd_load_fsids(struct silofs_ugids *ugids, const char *basedir);
 
-void cmd_fs_ids_assign(struct silofs_ugids       *ids,
-                       const struct silofs_ugids *other);
+void cmd_save_fsids(const struct silofs_ugids *ugids, const char *basedir);
 
-void cmd_fs_ids_reset(struct silofs_ugids *ids);
-
-void cmd_fs_ids_load(struct silofs_ugids *ids, const char *basedir);
-
-void cmd_fs_ids_save(const struct silofs_ugids *ids, const char *basedir);
-
-void cmd_fs_ids_add_user(struct silofs_ugids *ids, const char *user,
-                         bool with_sup_groups);
+void cmd_extend_fsids(struct silofs_ugids *ugids, const char *user,
+                      bool with_sup_groups);
 
 /* users/groups */
 char *cmd_getpwuid(uid_t uid);

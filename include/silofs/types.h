@@ -91,7 +91,7 @@ struct silofs_ugids {
 /* input arguments */
 struct silofs_args {
 	struct silofs_boot_args boot;
-	struct silofs_ugids     ids;
+	struct silofs_ugids     ugids;
 	enum silofs_flags       flags;
 	uid_t                   uid;
 	gid_t                   gid;

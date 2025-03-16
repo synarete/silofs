@@ -458,10 +458,10 @@ static void ut_init_args(struct ut_args *args)
 	args->env_args.boot.repodir = ut_globals.test_dir_repo;
 	args->env_args.boot.fsname = "unitests";
 	args->env_args.boot.mntdir = "/";
-	args->env_args.ids.users.uids = ut_new_uids();
-	args->env_args.ids.users.nuids = 2;
-	args->env_args.ids.groups.gids = ut_new_gids();
-	args->env_args.ids.groups.ngids = 2;
+	args->env_args.ugids.users.uids = ut_new_uids();
+	args->env_args.ugids.users.nuids = 2;
+	args->env_args.ugids.groups.gids = ut_new_gids();
+	args->env_args.ugids.groups.ngids = 2;
 	args->env_args.uid = getuid();
 	args->env_args.gid = getgid();
 	args->env_args.pid = getpid();
@@ -482,8 +482,8 @@ static void ut_init_args(struct ut_args *args)
 
 static void ut_fini_args(struct ut_args *args)
 {
-	ut_del_uids(args->env_args.ids.users.uids);
-	ut_del_gids(args->env_args.ids.groups.gids);
+	ut_del_uids(args->env_args.ugids.users.uids);
+	ut_del_gids(args->env_args.ugids.groups.gids);
 	memset(args, 0, sizeof(*args));
 }
 

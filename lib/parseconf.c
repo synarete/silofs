@@ -339,7 +339,7 @@ static int sysconf_u32(int key, uint32_t *out_val)
 
 static int getxx_bsz(size_t *out_bsz)
 {
-	const uint32_t align = 1024;
+	const size_t align = 1024;
 	uint32_t bsz1 = 0;
 	uint32_t bsz2 = 0;
 	uint32_t bsz;
@@ -355,7 +355,7 @@ static int getxx_bsz(size_t *out_bsz)
 	}
 
 	bsz = (bsz1 > bsz2) ? bsz1 : bsz2;
-	*out_bsz = ((bsz + align - 1) / align) * align;
+	*out_bsz = (((size_t)bsz + align - 1) / align) * align;
 	return 0;
 }
 

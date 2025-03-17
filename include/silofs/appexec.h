@@ -23,6 +23,7 @@
 struct silofs_env;
 struct silofs_ugids;
 struct silofs_mntrules;
+struct silofs_mntinfos;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -56,6 +57,12 @@ int silofs_parse_mntrules(struct silofs_mntrules *mrules,
                           struct silofs_alloc *alloc, const char *conf);
 
 void silofs_release_mntrules(struct silofs_mntrules *mrules,
+                             struct silofs_alloc    *alloc);
+
+int silofs_parse_mntinfos(struct silofs_mntinfos *minfos,
+                          struct silofs_alloc *alloc, const char *conf);
+
+void silofs_release_mntinfos(struct silofs_mntinfos *minfos,
                              struct silofs_alloc    *alloc);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

@@ -106,8 +106,7 @@ static void cmd_rmfs_getpass(struct cmd_rmfs_ctx *ctx)
 	}
 }
 
-static void cmd_rmfs_check_nomnt_at(struct cmd_rmfs_ctx *ctx,
-                                    const struct cmd_proc_mntinfo *mi)
+static void cmd_rmfs_check_nomnt_at(struct cmd_rmfs_ctx *ctx, const char *mntp)
 {
 	struct stat st[2];
 	char *path[2] = { NULL, NULL };
@@ -118,7 +117,7 @@ static void cmd_rmfs_check_nomnt_at(struct cmd_rmfs_ctx *ctx,
 	int dfd = -1;
 	int err = 0;
 
-	err = silofs_sys_openat(AT_FDCWD, mi->mntdir, o_flags, 0, &dfd);
+	err = silofs_sys_openat(AT_FDCWD, mntp, o_flags, 0, &dfd);
 	if (err) {
 		goto out;
 	}
@@ -153,7 +152,7 @@ static void cmd_rmfs_check_nomnt_at(struct cmd_rmfs_ctx *ctx,
 	}
 
 	if ((st[0].st_ino == st[1].st_ino) && (st[0].st_dev == st[1].st_dev)) {
-		cmd_die(EBUSY, "currently mounted at: %s", mi->mntdir);
+		cmd_die(EBUSY, "currently mounted at: %s", mntp);
 	}
 out:
 	silofs_sys_closefd(&dfd);
@@ -165,14 +164,13 @@ out:
 
 static void cmd_rmfs_check_nomnt(struct cmd_rmfs_ctx *ctx)
 {
-	struct cmd_proc_mntinfo *mi_list = NULL;
-	const struct cmd_proc_mntinfo *mi_iter = NULL;
+	struct silofs_mntinfos *minfos = NULL;
 
-	mi_list = cmd_parse_mountinfo();
-	for (mi_iter = mi_list; mi_iter != NULL; mi_iter = mi_iter->next) {
-		cmd_rmfs_check_nomnt_at(ctx, mi_iter);
+	minfos = cmd_parse_mountinfo();
+	for (size_t i = 0; i < minfos->ninfos; ++i) {
+		cmd_rmfs_check_nomnt_at(ctx, minfos->infos[i].mntdir);
 	}
-	cmd_free_mountinfo(mi_list);
+	cmd_free_mountinfo(minfos);
 }
 
 static void cmd_rmfs_setup_env_args(struct cmd_rmfs_ctx *ctx)

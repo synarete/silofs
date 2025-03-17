@@ -909,8 +909,6 @@ static void cmd_closefd(int *pfd)
 	}
 }
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 static char *cmd_read_proc_mountinfo(void)
 {
 	const size_t bsz = 1UL << 20;
@@ -927,141 +925,28 @@ static char *cmd_read_proc_mountinfo(void)
 	return buf;
 }
 
-static void cmd_parse_field(const struct silofs_strview *line, size_t idx,
-                            struct silofs_strview *out_field)
+struct silofs_mntinfos *cmd_parse_mountinfo(void)
 {
-	struct silofs_strview_pair pair;
-	struct silofs_strview *word = &pair.first;
-	struct silofs_strview *tail = &pair.second;
+	struct silofs_mntinfos *minfos = NULL;
+	char *midata = NULL;
+	int err;
 
-	silofs_strview_init(out_field, "");
-	silofs_strview_split(line, " \t\v", &pair);
-	while (!silofs_strview_isempty(word) ||
-	       !silofs_strview_isempty(tail)) {
-		if (idx == 0) {
-			silofs_strview_strip_ws(word, out_field);
-			break;
-		}
-		silofs_strview_split(tail, " \t\v", &pair);
-		idx--;
+	midata = cmd_read_proc_mountinfo();
+	minfos = cmd_zalloc(sizeof(*minfos));
+	err = silofs_parse_mntinfos(minfos, NULL, midata);
+	if (err) {
+		cmd_die(err, "failed to parse mountinfo");
 	}
+	cmd_pstrfree(&midata);
+
+	return minfos;
 }
 
-static void cmd_parse_mountinfo_line(const struct silofs_strview *line,
-                                     struct silofs_strview *out_mntdir,
-                                     struct silofs_strview *out_mntargs)
+void cmd_free_mountinfo(struct silofs_mntinfos *minfos)
 {
-	struct silofs_strview_pair pair;
-	struct silofs_strview *head = &pair.first;
-	struct silofs_strview *tail = &pair.second;
-
-	silofs_strview_split_str(line, " - ", &pair);
-	cmd_parse_field(head, 4, out_mntdir);
-	cmd_parse_field(tail, 2, out_mntargs);
-}
-
-static bool cmd_isfusesilofs_mountinfo_line(const struct silofs_strview *line)
-{
-	return (silofs_strview_find(line, "fuse.silofs") < line->len);
-}
-
-static size_t round_up(size_t sz)
-{
-	const size_t align = sizeof(void *);
-
-	return ((sz + align - 1) / align) * align;
-}
-
-static void *memory_at(void *mem, size_t pos)
-{
-	return (uint8_t *)mem + pos;
-}
-
-static struct cmd_proc_mntinfo *
-cmd_new_mntinfo(const struct silofs_strview *mntdir,
-                const struct silofs_strview *mntargs)
-{
-	struct cmd_proc_mntinfo *mi = NULL;
-	void *mem = NULL;
-	char *str = NULL;
-	size_t sz1 = 0;
-	size_t sz2 = 0;
-	size_t hsz = 0;
-	size_t msz = 0;
-
-	hsz = round_up(sizeof(*mi));
-	sz1 = round_up(mntdir->len + 1);
-	sz2 = round_up(mntargs->len + 1);
-	msz = hsz + sz1 + sz2;
-	mem = cmd_zalloc(msz);
-
-	mi = mem;
-	mi->msz = msz;
-	mi->next = NULL;
-
-	str = memory_at(mem, hsz);
-	silofs_strview_copyto(mntdir, str, sz1);
-	mi->mntdir = str;
-
-	str = memory_at(mem, hsz + sz1);
-	silofs_strview_copyto(mntargs, str, sz2);
-	mi->mntargs = str;
-
-	return mi;
-}
-
-static struct cmd_proc_mntinfo *
-cmd_new_mntinfo_of(const struct silofs_strview *line)
-{
-	struct silofs_strview mntdir;
-	struct silofs_strview mntargs;
-
-	cmd_parse_mountinfo_line(line, &mntdir, &mntargs);
-	return cmd_new_mntinfo(&mntdir, &mntargs);
-}
-
-static void cmd_parse_mountinfo_into(struct cmd_proc_mntinfo **pmi_list,
-                                     const char *mount_info_text)
-{
-	struct silofs_strview info;
-	struct silofs_strview_pair pair;
-	struct silofs_strview *line = &pair.first;
-	struct silofs_strview *tail = &pair.second;
-	struct cmd_proc_mntinfo *mi = NULL;
-
-	silofs_strview_init(&info, mount_info_text);
-	silofs_strview_split_chr(&info, '\n', &pair);
-	while (!silofs_strview_isempty(line) ||
-	       !silofs_strview_isempty(tail)) {
-		if (cmd_isfusesilofs_mountinfo_line(line)) {
-			mi = cmd_new_mntinfo_of(line);
-			mi->next = *pmi_list;
-			*pmi_list = mi;
-		}
-		silofs_strview_split_chr(tail, '\n', &pair);
-	}
-}
-
-struct cmd_proc_mntinfo *cmd_parse_mountinfo(void)
-{
-	struct cmd_proc_mntinfo *mi_list = NULL;
-	char *mount_info;
-
-	mount_info = cmd_read_proc_mountinfo();
-	cmd_parse_mountinfo_into(&mi_list, mount_info);
-	cmd_pstrfree(&mount_info);
-
-	return mi_list;
-}
-
-void cmd_free_mountinfo(struct cmd_proc_mntinfo *mi_list)
-{
-	struct cmd_proc_mntinfo *mi_next;
-
-	while (mi_list != NULL) {
-		mi_next = mi_list->next;
-		cmd_zfree(mi_list, mi_list->msz);
-		mi_list = mi_next;
+	if (minfos != NULL) {
+		silofs_release_mntinfos(minfos, NULL);
+		cmd_zfree(minfos, sizeof(*minfos));
 	}
 }
 

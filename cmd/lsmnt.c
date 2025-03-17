@@ -97,13 +97,13 @@ static void cmd_lsmnt_prepare(struct cmd_lsmnt_ctx *ctx)
 }
 
 static void cmd_lsmnt_short(const struct cmd_lsmnt_ctx *ctx,
-                            const struct cmd_proc_mntinfo *mi)
+                            const struct silofs_mntinfo *mi)
 {
 	fprintf(ctx->out_fp, "%s\n", mi->mntdir);
 }
 
 static void
-cmd_lsmnt_long(struct cmd_lsmnt_ctx *ctx, const struct cmd_proc_mntinfo *mi)
+cmd_lsmnt_long(struct cmd_lsmnt_ctx *ctx, const struct silofs_mntinfo *mi)
 {
 	struct silofs_ioc_query *qry = &ctx->ioc_qry;
 	char *mntd_path = NULL;
@@ -154,18 +154,17 @@ out:
 
 static void cmd_lsmnt_execute(struct cmd_lsmnt_ctx *ctx)
 {
-	struct cmd_proc_mntinfo *mi_list = NULL;
-	const struct cmd_proc_mntinfo *mi_iter = NULL;
+	struct silofs_mntinfos *minfos = NULL;
 
-	mi_list = cmd_parse_mountinfo();
-	for (mi_iter = mi_list; mi_iter != NULL; mi_iter = mi_iter->next) {
+	minfos = cmd_parse_mountinfo();
+	for (size_t i = 0; i < minfos->ninfos; ++i) {
 		if (ctx->in_args.long_listing) {
-			cmd_lsmnt_long(ctx, mi_iter);
+			cmd_lsmnt_long(ctx, &minfos->infos[i]);
 		} else {
-			cmd_lsmnt_short(ctx, mi_iter);
+			cmd_lsmnt_short(ctx, &minfos->infos[i]);
 		}
 	}
-	cmd_free_mountinfo(mi_list);
+	cmd_free_mountinfo(minfos);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

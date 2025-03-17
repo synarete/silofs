@@ -334,6 +334,9 @@
 /* max number of mount-rules */
 #define SILOFS_MNTRULE_MAX 1024
 
+/* system-wide limit on number for fuse.silofs mounts */
+#define SILOFS_FUSEMNT_MAX 1024
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 /* uber-block flags */

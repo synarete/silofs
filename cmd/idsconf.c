@@ -169,7 +169,7 @@ void cmd_load_fsids(struct silofs_ugids *ugids, const char *basedir)
 
 	cmd_reset_fsids(ugids);
 	cmd_load_idsconf_file(path, &text);
-	err = silofs_parse_fsids(ugids, silofs_default_alloc, text);
+	err = silofs_parse_fsids(ugids, NULL, text);
 	if (err) {
 		cmd_die(err, "illegal fs-ids config: %s", path);
 	}

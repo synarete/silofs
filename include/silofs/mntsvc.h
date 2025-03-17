@@ -42,6 +42,15 @@ struct silofs_mntrules {
 	struct silofs_mntrule rules[SILOFS_MNTRULE_MAX];
 };
 
+struct silofs_mntinfo {
+	char *mntdir;
+};
+
+struct silofs_mntinfos {
+	size_t                ninfos;
+	struct silofs_mntinfo infos[SILOFS_FUSEMNT_MAX];
+};
+
 struct silofs_ms_args {
 	const char *runstatedir;
 	bool        use_abstract;

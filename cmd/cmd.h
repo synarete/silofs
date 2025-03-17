@@ -300,16 +300,9 @@ void cmd_archive_fs(struct silofs_env *env, struct silofs_xref *out_xref);
 void cmd_restore_fs(struct silofs_env *env, struct silofs_xref *out_xref);
 
 /* mount-info */
-struct cmd_proc_mntinfo {
-	struct cmd_proc_mntinfo *next;
-	const char              *mntdir;
-	const char              *mntargs;
-	size_t                   msz;
-};
+struct silofs_mntinfos *cmd_parse_mountinfo(void);
 
-struct cmd_proc_mntinfo *cmd_parse_mountinfo(void);
-
-void cmd_free_mountinfo(struct cmd_proc_mntinfo *mi_list);
+void cmd_free_mountinfo(struct silofs_mntinfos *minfos);
 
 /* ioctl helpers */
 union silofs_ioc_u *cmd_new_ioc(void);

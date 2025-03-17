@@ -19,6 +19,7 @@
 #include <sys/stat.h>
 #include <sys/mount.h>
 #include <silofs/infra.h>
+#include "str.h"
 #include "lnodes.h"
 #include "task.h"
 #include "super.h"

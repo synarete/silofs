@@ -18,7 +18,6 @@
 #define SILOFS_PADDR_H_
 
 #include <silofs/defs.h>
-#include <silofs/str.h>
 
 /* persistent-volume segment id */
 struct silofs_pvsid {

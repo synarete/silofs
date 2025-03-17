@@ -24,8 +24,8 @@
 #include <stdio.h>
 #include <silofs/errors.h>
 #include <silofs/infra.h>
-#include <silofs/str.h>
 #include <silofs/mntsvc.h>
+#include "str.h"
 #include "knownfs.h"
 
 enum silofs_mntcmd {

@@ -16,7 +16,7 @@
  */
 #include "configs.h"
 #include <ctype.h>
-#include <silofs/str/ascii.h>
+#include "ascii.h"
 
 char silofs_nibble_to_ascii(int n)
 {

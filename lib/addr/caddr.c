@@ -19,7 +19,7 @@
 #include <stdio.h>
 #include <silofs/errors.h>
 #include <silofs/infra.h>
-#include <silofs/str.h>
+#include "str.h"
 #include "htox.h"
 #include "meta.h"
 #include "caddr.h"

@@ -832,7 +832,7 @@ void cmd_print_help_and_exit(const char *help_string)
 	FILE *fp = stdout;
 	const char *name = cmd_global_params.name;
 
-	if (silofs_str_length(name)) {
+	if (strlen(name) > 0) {
 		fprintf(fp, "%s %s\n", name, help_string);
 	} else {
 		fprintf(fp, "%s\n", help_string);

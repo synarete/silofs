@@ -19,8 +19,8 @@
 #include <stdbool.h>
 #include <limits.h>
 #include <silofs/infra.h>
-#include <silofs/str/strchr.h>
-#include <silofs/str/strspan.h>
+#include "strchr.h"
+#include "strspan.h"
 
 #define strspan_out_of_range(ss_, pos_)                                    \
 	silofs_panic("strspan out-of-range: pos=%ld len=%ld n=%ld ss=%p",  \

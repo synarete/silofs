@@ -18,8 +18,8 @@
 #define SILOFS_SYMLINK_H_
 
 #include <silofs/infra.h>
-#include <silofs/str.h>
 
+struct silofs_strview;
 struct silofs_task;
 struct silofs_inode_info;
 struct silofs_symlnk_value;

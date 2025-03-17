@@ -17,7 +17,6 @@
 #ifndef SILOFS_STRVIEW_H_
 #define SILOFS_STRVIEW_H_
 
-#include <silofs/str/strchr.h>
 #include <stddef.h>
 #include <stdbool.h>
 

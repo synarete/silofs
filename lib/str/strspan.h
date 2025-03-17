@@ -17,8 +17,7 @@
 #ifndef SILOFS_STRSPAN_H_
 #define SILOFS_STRSPAN_H_
 
-#include <silofs/str/strchr.h>
-#include <silofs/str/strview.h>
+#include "strview.h"
 
 /*
  * String mutable reference: pointer to start of read-write characters array

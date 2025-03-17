@@ -44,7 +44,7 @@ static void getopti_pre_add(const struct cmd_getopt_info *goi)
 {
 	const char *sopt = goi->sopts;
 	const char *send = goi->sopts + CMD_ARRAY_SIZE(goi->sopts);
-	const size_t slen = silofs_str_length(goi->sopts);
+	const size_t slen = strlen(goi->sopts);
 	const size_t nopts_max = CMD_ARRAY_SIZE(goi->lopts);
 
 	if (((sopt + slen + 3) > send) || ((goi->nopts + 1) >= nopts_max)) {
@@ -56,7 +56,7 @@ static void
 getopti_add(struct cmd_getopt_info *goi, const struct cmd_optdesc *od)
 {
 	struct option *lopt = goi->lopts + goi->nopts;
-	char *sopt = goi->sopts + silofs_str_length(goi->sopts);
+	char *sopt = goi->sopts + strlen(goi->sopts);
 
 	lopt->name = od->lopt;
 	lopt->flag = NULL;
@@ -203,7 +203,7 @@ char *cmd_optargs_dupcurr(const struct cmd_optargs *opa)
 
 char *cmd_optarg_dupoptarg(const struct cmd_optargs *opa, const char *id)
 {
-	if (!silofs_str_length(opa->opa_optarg)) {
+	if (!strlen(opa->opa_optarg)) {
 		cmd_diez("missing option argument: %s", id);
 	}
 	return cmd_optargs_dupcurr(opa);

@@ -19,8 +19,9 @@
 
 #include <silofs/defs.h>
 #include <silofs/infra.h>
-#include <silofs/str.h>
 
+struct silofs_strview;
+struct silofs_strbuf;
 struct silofs_uuid;
 struct silofs_header;
 

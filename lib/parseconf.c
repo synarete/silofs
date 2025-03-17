@@ -25,9 +25,9 @@
 #include <silofs/types.h>
 #include <silofs/errors.h>
 #include <silofs/infra.h>
-#include <silofs/str.h>
 #include <silofs/mntsvc.h>
 #include <silofs/appexec.h>
+#include "str.h"
 #include "uidgid.h"
 
 static bool strview_isempty(const struct silofs_strview *sv)

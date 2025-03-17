@@ -19,8 +19,8 @@
 #include <stdbool.h>
 #include <limits.h>
 #include <silofs/infra.h>
-#include <silofs/str/strchr.h>
-#include <silofs/str/strview.h>
+#include "strchr.h"
+#include "strview.h"
 
 #define strview_out_of_range(sv_, pos_)                             \
 	silofs_panic("strview out-of-range: pos=%ld len=%ld sv=%p", \

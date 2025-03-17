@@ -20,7 +20,7 @@
 #include <ctype.h>
 #include <limits.h>
 #include <silofs/infra.h>
-#include <silofs/str/strchr.h>
+#include "strchr.h"
 
 static void chr_assign(char *c1, char c2)
 {

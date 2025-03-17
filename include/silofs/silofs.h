@@ -23,7 +23,6 @@
 #include <silofs/errors.h>
 #include <silofs/defs.h>
 #include <silofs/infra.h>
-#include <silofs/str.h>
 #include <silofs/ioctls.h>
 #include <silofs/mntsvc.h>
 #include <silofs/appexec.h>

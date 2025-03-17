@@ -16,6 +16,7 @@
  */
 #include "configs.h"
 #include <silofs/infra.h>
+#include "str.h"
 #include "htox.h"
 #include "offlba.h"
 #include "volid.h"

@@ -27,7 +27,6 @@
 #include <silofs/defs.h>
 #include <silofs/ioctls.h>
 #include <silofs/infra.h>
-#include <silofs/str.h>
 
 /* re-mapped macros */
 #define FT_1K  SILOFS_KILO

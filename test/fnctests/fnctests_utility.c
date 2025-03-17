@@ -537,7 +537,7 @@ int ft_memcmp(const void *p, const void *q, size_t n)
 
 size_t ft_strlen(const char *s)
 {
-	return silofs_str_length(s);
+	return (s != NULL) ? strlen(s) : 0;
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

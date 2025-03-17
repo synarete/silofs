@@ -18,10 +18,10 @@
 #define SILOFS_STR_H_
 
 #include <silofs/infra.h>
-#include <silofs/str/ascii.h>
-#include <silofs/str/strchr.h>
-#include <silofs/str/strview.h>
-#include <silofs/str/strspan.h>
-#include <silofs/str/strbuf.h>
+#include "str/ascii.h"
+#include "str/strchr.h"
+#include "str/strview.h"
+#include "str/strspan.h"
+#include "str/strbuf.h"
 
 #endif /* SILOFS_STR_H_ */

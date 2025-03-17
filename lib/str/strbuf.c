@@ -19,8 +19,8 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdarg.h>
-#include <silofs/str/strchr.h>
-#include <silofs/str/strbuf.h>
+#include "strchr.h"
+#include "strbuf.h"
 
 void silofs_strbuf_init(struct silofs_strbuf *sbuf)
 {

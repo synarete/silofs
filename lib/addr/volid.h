@@ -18,7 +18,9 @@
 #define SILOFS_VOLID_H_
 
 #include <silofs/defs.h>
-#include <silofs/str.h>
+
+struct silofs_strview;
+struct silofs_strbuf;
 
 void silofs_volid_generate(struct silofs_volid *volid);
 

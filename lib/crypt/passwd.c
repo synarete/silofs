@@ -18,7 +18,7 @@
 #include <sys/sysinfo.h>
 #include <silofs/errors.h>
 #include <silofs/infra.h>
-#include <silofs/str.h>
+#include "str.h"
 #include "passwd.h"
 #include "ivkey.h"
 

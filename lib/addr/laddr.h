@@ -18,7 +18,8 @@
 #define SILOFS_LADDR_H_
 
 #include <silofs/infra.h>
-#include <silofs/str.h>
+
+struct silofs_strbuf;
 
 /* logical-segment id within specific volume mapping */
 struct silofs_lsid {

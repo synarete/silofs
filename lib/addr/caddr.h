@@ -19,7 +19,8 @@
 
 #include <silofs/defs.h>
 #include <silofs/infra.h>
-#include <silofs/str.h>
+
+struct silofs_strview;
 
 /* content-addressable identifier */
 struct silofs_caddr {

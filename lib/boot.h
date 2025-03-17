@@ -17,7 +17,7 @@
 #ifndef SILOFS_BOOT_H_
 #define SILOFS_BOOT_H_
 
-#include <silofs/str.h>
+#include "str.h"
 
 struct silofs_caddr;
 struct silofs_xref;

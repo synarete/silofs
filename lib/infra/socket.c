@@ -276,6 +276,9 @@ int silofs_cmsg_unpack_fd(const struct cmsghdr *cmh, int *out_fd)
 {
 	size_t size;
 
+	if (cmh->cmsg_level != SOL_SOCKET) {
+		return -1;
+	}
 	if (cmh->cmsg_type != SCM_RIGHTS) {
 		return -1;
 	}

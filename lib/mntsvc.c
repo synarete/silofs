@@ -543,26 +543,44 @@ static int mntmsg_check(const struct silofs_mntmsg *mmsg)
 	return 0;
 }
 
-static int
-do_sendmsg(const struct silofs_socket *sock, const struct msghdr *msg)
+enum {
+	SENDRECVMSG_RETRY_MAX = 10,
+};
+
+static int try_sendmsg(const struct silofs_socket *sock,
+                       const struct msghdr *mh, size_t *out_nbytes)
 {
-	size_t nbytes = 0;
-	int retry = 8;
+	const int flags = MSG_NOSIGNAL;
 	int err;
 
-	while (retry--) {
-		err = silofs_socket_sendmsg(sock, msg, MSG_NOSIGNAL, &nbytes);
+	for (int i = 0; i < SENDRECVMSG_RETRY_MAX; ++i) {
+		err = silofs_socket_sendmsg(sock, mh, flags, out_nbytes);
 		if (err != -EINTR) {
 			break;
 		}
 	}
-	if (err) {
-		return err;
-	}
-	if (nbytes < sizeof(*msg)) {
+	return err;
+}
+
+static int check_post_sendmsg(const struct msghdr *mh, size_t nbytes)
+{
+	if (nbytes < sizeof(*mh)) {
 		return -SILOFS_ECOMM;
 	}
 	return 0;
+}
+
+static int
+do_sendmsg(const struct silofs_socket *sock, const struct msghdr *mh)
+{
+	size_t nbytes = 0;
+	int err;
+
+	err = try_sendmsg(sock, mh, &nbytes);
+	if (!err) {
+		err = check_post_sendmsg(mh, nbytes);
+	}
+	return err;
 }
 
 /*
@@ -571,13 +589,13 @@ do_sendmsg(const struct silofs_socket *sock, const struct msghdr *msg)
  * Consider using Linux modern pidfd_open(2) + pidfd_getfd(2) to send FUSE fd
  * back to client process. See also: https://lwn.net/Articles/808997/
  */
-static void do_pack_fd(struct msghdr *msg, int fd)
+static void do_pack_fd(struct msghdr *mh, int fd)
 {
-	struct cmsghdr *cmsg = NULL;
+	struct cmsghdr *cmh = NULL;
 
 	if (fd > 0) {
-		cmsg = silofs_cmsg_firsthdr(msg);
-		silofs_cmsg_pack_fd(cmsg, fd);
+		cmh = silofs_cmsg_firsthdr(mh);
+		silofs_cmsg_pack_fd(cmh, fd);
 	}
 }
 
@@ -605,38 +623,68 @@ static int mntmsg_send(const struct silofs_mntmsg *mmsg,
 	return do_sendmsg(sock, &msg);
 }
 
-static int do_recvmsg(const struct silofs_socket *sock, struct msghdr *msg)
+static int try_recvmsg(const struct silofs_socket *sock, struct msghdr *mh,
+                       size_t *out_nbytes)
 {
-	size_t nbytes = 0;
-	int retry = 8;
+	const int flags = MSG_WAITALL | MSG_NOSIGNAL | MSG_CMSG_CLOEXEC;
 	int err;
 
-	while (retry--) {
-		err = silofs_socket_recvmsg(sock, msg, MSG_WAITALL, &nbytes);
+	for (int i = 0; i < SENDRECVMSG_RETRY_MAX; ++i) {
+		err = silofs_socket_recvmsg(sock, mh, flags, out_nbytes);
 		if (err != -EINTR) {
 			break;
 		}
 	}
-	if (err) {
-		return err;
+	return err;
+}
+
+static int
+check_post_recvmsg(struct msghdr *mh, size_t nbytes, bool allow_cmsg)
+{
+	struct cmsghdr *cmh = NULL;
+
+	if (nbytes < sizeof(*mh)) {
+		return -SILOFS_ECOMM;
 	}
-	if (nbytes < sizeof(*msg)) {
+	if (mh->msg_flags & (MSG_TRUNC | MSG_CTRUNC)) {
+		return -SILOFS_ECOMM;
+	}
+	cmh = silofs_cmsg_firsthdr(mh);
+	if (cmh == NULL) {
+		return 0;
+	}
+	if (!allow_cmsg) {
+		return -SILOFS_ECOMM;
+	}
+	cmh = silofs_cmsg_nexthdr(mh, cmh);
+	if (cmh != NULL) {
 		return -SILOFS_ECOMM;
 	}
 	return 0;
 }
 
-static int do_unpack_fd(struct msghdr *msg, int *out_fd)
+static int do_recvmsg(const struct silofs_socket *sock, struct msghdr *mh,
+                      bool allow_cmsg)
 {
-	struct cmsghdr *cmsg;
+	size_t nbytes = 0;
 	int err;
 
-	cmsg = silofs_cmsg_firsthdr(msg);
+	err = try_recvmsg(sock, mh, &nbytes);
+	if (!err) {
+		err = check_post_recvmsg(mh, nbytes, allow_cmsg);
+	}
+	return err;
+}
+
+static int do_unpack_fd(struct msghdr *mh, int *out_fd)
+{
+	struct cmsghdr *cmsg;
+	int err = 0;
+
+	*out_fd = -1;
+	cmsg = silofs_cmsg_firsthdr(mh);
 	if (cmsg != NULL) {
 		err = silofs_cmsg_unpack_fd(cmsg, out_fd);
-	} else {
-		*out_fd = -1;
-		err = 0;
 	}
 	return err;
 }
@@ -661,27 +709,21 @@ static int mntmsg_recv(const struct silofs_mntmsg *mmsg,
 		.msg_flags = 0,
 	};
 	int err;
+	bool want_fd = (out_fd != NULL);
 
-	*out_fd = -1;
-	err = do_recvmsg(sock, &msg);
-	if (err) {
-		return err;
+	err = do_recvmsg(sock, &msg, want_fd);
+	if (!err && want_fd) {
+		err = do_unpack_fd(&msg, out_fd);
 	}
-	err = do_unpack_fd(&msg, out_fd);
-	if (err) {
-		return err;
-	}
-	return 0;
+	return err;
 }
 
 static int mntmsg_recv2(const struct silofs_mntmsg *mmsg,
                         const struct silofs_socket *sock)
 {
-	int dummy_fd = -1;
 	int err;
 
-	err = mntmsg_recv(mmsg, sock, &dummy_fd);
-	close_fd(&dummy_fd);
+	err = mntmsg_recv(mmsg, sock, NULL);
 	return err;
 }
 

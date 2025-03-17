@@ -832,10 +832,10 @@ int silofs_sys_sendto(int sd, const void *buf, size_t len, int flags,
 	                     out_sent);
 }
 
-int silofs_sys_sendmsg(int sd, const struct msghdr *msg, int flags,
+int silofs_sys_sendmsg(int sd, const struct msghdr *mh, int flags,
                        size_t *out_sent)
 {
-	return size_or_errno(sendmsg(sd, msg, flags), out_sent);
+	return size_or_errno(sendmsg(sd, mh, flags), out_sent);
 }
 
 int silofs_sys_recv(int sd, void *buf, size_t len, int flags, size_t *out_recv)
@@ -851,9 +851,9 @@ int silofs_sys_recvfrom(int sd, void *buf, size_t len, int flags,
 	                     out_recv);
 }
 
-int silofs_sys_recvmsg(int sd, struct msghdr *msg, int flags, size_t *out_recv)
+int silofs_sys_recvmsg(int sd, struct msghdr *mh, int flags, size_t *out_recv)
 {
-	return size_or_errno(recvmsg(sd, msg, flags), out_recv);
+	return size_or_errno(recvmsg(sd, mh, flags), out_recv);
 }
 
 int silofs_sys_listen(int sd, int backlog)

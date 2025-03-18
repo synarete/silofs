@@ -55,27 +55,6 @@ int silofs_xref_to_caddr(const struct silofs_xref *xref,
 	return ret;
 }
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-int silofs_bootpath_setup(struct silofs_bootpath *bpath, const char *repodir,
-                          const char *name)
-{
-	struct silofs_namestr nstr;
-	size_t len;
-
-	silofs_memzero(bpath, sizeof(*bpath));
-	len = silofs_str_length(repodir);
-	if (!len || (len >= SILOFS_REPOPATH_MAX)) {
-		return -SILOFS_EINVAL;
-	}
-	silofs_strview_init(&bpath->repodir, repodir);
-	if (name == NULL) {
-		return 0; /* boot with repo-dir only */
-	}
-	silofs_strview_init(&bpath->name, name);
-	return silofs_make_namestr(&nstr, name);
-}
-
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 int silofs_reload_vspace(struct silofs_task *task)

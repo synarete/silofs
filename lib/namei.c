@@ -2363,14 +2363,26 @@ static void fill_query_version(const struct silofs_inode_info *ii,
 	unused(ii);
 }
 
+/* boot pathname: a pair of repo-directory & fsname */
+struct silofs_bootpath {
+	struct silofs_strview repodir;
+	struct silofs_strview fsname;
+};
+
+static void make_bootpath(struct silofs_bootpath *bootpath,
+                          const char *repodir, const char *fsname)
+{
+	silofs_strview_init(&bootpath->repodir, repodir);
+	silofs_strview_init(&bootpath->fsname, fsname);
+}
+
 static void bootpath_of(const struct silofs_inode_info *ii,
                         struct silofs_bootpath *out_bootpath)
 {
 	const struct silofs_env *env = ii_env(ii);
-	const struct silofs_args *args = env->base.args;
-	const struct silofs_boot_args *bref = &args->boot;
+	const struct silofs_boot_args *boot_args = &env->base.args->boot;
 
-	silofs_bootpath_setup(out_bootpath, bref->repodir, bref->fsname);
+	make_bootpath(out_bootpath, boot_args->repodir, boot_args->fsname);
 }
 
 static void fill_query_repo(const struct silofs_inode_info *ii,
@@ -2397,7 +2409,7 @@ static void fill_query_boot(const struct silofs_inode_info *ii,
 	silofs_env_uber_caddr(env, &caddr);
 
 	bootpath_of(ii, &bootpath);
-	str_to_buf(&bootpath.name, query->u.boot.name, bsz);
+	str_to_buf(&bootpath.fsname, query->u.boot.name, bsz);
 	silofs_caddr_to_name2(&caddr, query->u.boot.xref);
 
 	silofs_sbi_fs_uuid(env->sbi, &fs_uuid);

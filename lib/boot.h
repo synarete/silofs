@@ -23,14 +23,6 @@ struct silofs_caddr;
 struct silofs_xref;
 struct silofs_task;
 
-/* boot pathname: a pair of repo-directory & boot-record name (optional) */
-struct silofs_bootpath {
-	struct silofs_strview repodir;
-	struct silofs_strview name;
-};
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 void silofs_xref_reset(struct silofs_xref *xref);
 
 bool silofs_xref_isnull(const struct silofs_xref *xref);
@@ -41,8 +33,6 @@ void silofs_xref_from_caddr(struct silofs_xref        *xref,
 int silofs_xref_to_caddr(const struct silofs_xref *xref,
                          struct silofs_caddr      *out_caddr);
 
-int silofs_bootpath_setup(struct silofs_bootpath *bp, const char *repodir,
-                          const char *name);
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_reload_vspace(struct silofs_task *task);

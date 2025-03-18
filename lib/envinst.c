@@ -29,8 +29,8 @@
 #include "lcache.h"
 #include "inode.h"
 #include "task.h"
+#include "namei.h"
 #include "env.h"
-#include "opcall.h"
 #include "flush.h"
 #include "fuseq.h"
 
@@ -120,10 +120,30 @@ static int calc_mem_size(size_t mem_want, size_t *out_mem_size)
 
 static int check_bootpath(const struct silofs_args *args)
 {
-	const struct silofs_boot_args *bref = &args->boot;
-	struct silofs_bootpath bootpath;
+	struct silofs_namestr nstr;
+	const struct silofs_boot_args *boot_args = &args->boot;
+	const size_t len = silofs_str_length(boot_args->repodir);
+	int err;
 
-	return silofs_bootpath_setup(&bootpath, bref->repodir, bref->fsname);
+	if (!len || (len >= SILOFS_REPOPATH_MAX)) {
+		log_dbg("illegal repodir length: %s", boot_args->repodir);
+		return -SILOFS_EINVAL;
+	}
+	if (boot_args->fsname != NULL) {
+		err = silofs_make_namestr(&nstr, boot_args->fsname);
+		if (err) {
+			log_dbg("illegal fsname: %s", boot_args->fsname);
+			return err;
+		}
+	}
+	if (boot_args->arname != NULL) {
+		err = silofs_make_namestr(&nstr, boot_args->arname);
+		if (err) {
+			log_dbg("illegal arname: %s", boot_args->arname);
+			return err;
+		}
+	}
+	return 0;
 }
 
 static int check_password(const struct silofs_args *args)

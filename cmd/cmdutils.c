@@ -886,8 +886,8 @@ static void cmd_readfile(int fd, char *buf, size_t bsz, size_t *out_nrd)
 	const size_t pgsz = (size_t)silofs_sc_page_size();
 
 	while (len < bsz) {
-		cnt = silofs_min(pgsz, bsz - len);
-		cmd_read(fd, buf + len, cnt, &nrd);
+		cnt = bsz - len;
+		cmd_read(fd, buf + len, (cnt < pgsz) ? cnt : pgsz, &nrd);
 		if (!nrd) {
 			break;
 		}

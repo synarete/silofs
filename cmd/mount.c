@@ -22,6 +22,7 @@
 #include <sys/wait.h>
 #include <sys/prctl.h>
 #include <sys/mount.h>
+#include <time.h>
 #include "cmd.h"
 
 static const char *const cmd_mount_help_desc =
@@ -408,7 +409,7 @@ static void cmd_mount_open_fs(struct cmd_mount_ctx *ctx)
 
 static void cmd_mount_execute_fs(struct cmd_mount_ctx *ctx)
 {
-	ctx->start_time = silofs_time_now();
+	ctx->start_time = time(NULL);
 	cmd_exec_fs(ctx->env);
 	ctx->post_exec_status = silofs_post_exec_fs(ctx->env);
 }
@@ -557,7 +558,7 @@ static void cmd_mount_trace_start(const struct cmd_mount_ctx *ctx)
 
 static void cmd_mount_trace_finish(const struct cmd_mount_ctx *ctx)
 {
-	const time_t exec_time = silofs_time_now() - ctx->start_time;
+	const time_t exec_time = time(NULL) - ctx->start_time;
 
 	silofs_log_info("mount done: %s", ctx->in_args.mntpoint_real);
 	silofs_log_info("execution time: %ld seconds", exec_time);

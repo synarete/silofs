@@ -17,7 +17,7 @@
 #ifndef SILOFS_STRBUF_H_
 #define SILOFS_STRBUF_H_
 
-#include <silofs/infra.h>
+#include <silofs/ccattr.h>
 #include "strview.h"
 #include "strspan.h"
 

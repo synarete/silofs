@@ -90,11 +90,6 @@ static void ft_list_test(struct ft_env *fte, const struct ft_tdef *tdef)
 	fflush(stdout);
 }
 
-static void ft_take_timestamp(struct ft_env *fte, bool finish)
-{
-	silofs_mclock_now(finish ? &fte->ts_finish : &fte->ts_start);
-}
-
 static void ft_start_test(struct ft_env *fte, const struct ft_tdef *tdef)
 {
 	fte->currtest = tdef;
@@ -105,11 +100,7 @@ static void ft_start_test(struct ft_env *fte, const struct ft_tdef *tdef)
 
 static void ft_finish_test(struct ft_env *fte)
 {
-	struct timespec dif;
-
-	silofs_mclock_dif(&fte->ts_start, &fte->ts_finish, &dif);
-	silofs_log_info("%-40s OK (%ld.%03lds)", fte->currtest->name,
-	                dif.tv_sec, dif.tv_nsec / 1000000L);
+	silofs_log_info("%-40s OK", fte->currtest->name);
 	umask(fte->umsk);
 	fte->currtest = NULL;
 	ft_freeall(fte);
@@ -165,9 +156,7 @@ ft_verify_fsstat(const struct ft_env *fte, const struct ft_tdef *tdef)
 static void ft_exec_test(struct ft_env *fte, const struct ft_tdef *tdef)
 {
 	ft_start_test(fte, tdef);
-	ft_take_timestamp(fte, false);
 	tdef->hook(fte);
-	ft_take_timestamp(fte, true);
 	ft_verify_fsstat(fte, tdef);
 	ft_finish_test(fte);
 }
@@ -263,13 +252,22 @@ static struct ft_tdef *alloc_tests_arr(void)
 	return arr;
 }
 
+static struct ft_tdef *unconst_tdef(const struct ft_tdef *p)
+{
+	union {
+		const struct ft_tdef *p;
+		struct ft_tdef *q;
+	} u = { .p = p };
+	return u.q;
+}
+
 static void random_shuffle_tests(struct ft_env *fte)
 {
 	size_t pos1;
 	size_t pos2;
 	uint64_t rand;
 	struct ft_tests *tests = &fte->tests;
-	struct ft_tdef *tests_arr = silofs_unconst(tests->arr);
+	struct ft_tdef *tests_arr = unconst_tdef(tests->arr);
 
 	for (size_t i = 0; i < tests->len; ++i) {
 		rand = (uint64_t)ft_lrand(fte);
@@ -301,7 +299,7 @@ static void ft_clone_tests(struct ft_env *fte)
 
 static void ft_free_tests(struct ft_env *fte)
 {
-	void *arr = silofs_unconst(fte->tests.arr);
+	void *arr = unconst_tdef(fte->tests.arr);
 
 	free(arr);
 	fte->tests.arr = NULL;

@@ -17,7 +17,7 @@
 #ifndef SILOFS_STR_H_
 #define SILOFS_STR_H_
 
-#include <silofs/infra.h>
+#include "infra.h"
 #include "str/ascii.h"
 #include "str/strchr.h"
 #include "str/strview.h"

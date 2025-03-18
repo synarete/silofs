@@ -19,7 +19,6 @@
 
 #include <gcrypt.h>
 #include <silofs/defs.h>
-#include <silofs/infra.h>
 #include "ivkey.h"
 
 struct silofs_mdigest;

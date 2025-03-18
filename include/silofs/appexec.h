@@ -17,9 +17,9 @@
 #ifndef SILOFS_APPEXEC_H_
 #define SILOFS_APPEXEC_H_
 
-#include <silofs/infra.h>
 #include <silofs/types.h>
 
+struct silofs_alloc;
 struct silofs_env;
 struct silofs_ugids;
 struct silofs_mntrules;

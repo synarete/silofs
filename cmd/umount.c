@@ -186,9 +186,9 @@ static void cmd_umount_probe_post(const struct cmd_umount_ctx *ctx)
 	const int retry_max = 5;
 	long fstype = 0;
 	int retry = 0;
-	int err = 0;
+	int err;
 
-	while ((retry++ < retry_max) && !err) {
+	while (retry++ < retry_max) {
 		stfs.f_type = 0;
 		err = silofs_sys_statfs(path, &stfs);
 		if (err) {
@@ -204,7 +204,7 @@ static void cmd_umount_probe_post(const struct cmd_umount_ctx *ctx)
 		 * It appears that FUSE forces zero value for 'statvfs.f_fsid'.
 		 * Need to check why and if possible to fix.
 		 */
-		err = silofs_suspend_secs(2);
+		sleep(1);
 	}
 }
 
@@ -214,12 +214,12 @@ static void cmd_umount_wait_nopid(const struct cmd_umount_ctx *ctx)
 	struct stat st = { .st_size = -1 };
 	const int retry_max = ctx->in_args.lazy ? 2 : 120;
 	int retry = 0;
-	int err = 0;
+	int err;
 
 	snprintf(procfs_path, sizeof(procfs_path) - 1, "/proc/%ld/fdinfo",
 	         (long)(ctx->server_pid));
 
-	while ((retry++ < retry_max) && !err) {
+	while (retry++ < retry_max) {
 		if (ctx->notconn || !ctx->server_pid) {
 			break;
 		}
@@ -227,7 +227,7 @@ static void cmd_umount_wait_nopid(const struct cmd_umount_ctx *ctx)
 		if (err) {
 			break;
 		}
-		err = silofs_suspend_secs(1);
+		sleep(1);
 	}
 }
 

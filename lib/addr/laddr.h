@@ -17,7 +17,7 @@
 #ifndef SILOFS_LADDR_H_
 #define SILOFS_LADDR_H_
 
-#include <silofs/infra.h>
+#include "infra.h"
 
 struct silofs_strbuf;
 

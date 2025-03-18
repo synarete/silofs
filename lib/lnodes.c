@@ -16,7 +16,7 @@
  */
 #include "configs.h"
 #include <limits.h>
-#include <silofs/infra.h>
+#include "infra.h"
 #include "lnodes.h"
 #include "super.h"
 #include "inode.h"

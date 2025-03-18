@@ -17,8 +17,8 @@
 #include "configs.h"
 #include <string.h>
 #include <limits.h>
-#include <silofs/infra.h>
 #include <silofs/ioctls.h>
+#include "infra.h"
 #include "boot.h"
 #include "lnodes.h"
 #include "task.h"

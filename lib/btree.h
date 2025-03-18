@@ -17,7 +17,7 @@
 #ifndef SILOFS_BTREE_H_
 #define SILOFS_BTREE_H_
 
-#include <silofs/infra.h>
+#include "infra.h"
 #include "addr.h"
 
 struct silofs_pcache;

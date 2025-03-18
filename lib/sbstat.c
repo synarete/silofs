@@ -17,8 +17,8 @@
 #include "configs.h"
 #include <sys/statvfs.h>
 #include <limits.h>
-#include <silofs/infra.h>
 #include <silofs/ioctls.h>
+#include "infra.h"
 #include "lnodes.h"
 #include "super.h"
 

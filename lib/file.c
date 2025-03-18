@@ -23,7 +23,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <limits.h>
-#include <silofs/infra.h>
+#include "infra.h"
 #include "uber.h"
 #include "lnodes.h"
 #include "lcache.h"

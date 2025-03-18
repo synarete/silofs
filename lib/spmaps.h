@@ -18,7 +18,7 @@
 #define SILOFS_SPMAPS_H_
 
 #include <silofs/defs.h>
-#include <silofs/infra.h>
+#include "infra.h"
 #include "addr.h"
 
 struct silofs_spnode_info;

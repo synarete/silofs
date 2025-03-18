@@ -17,7 +17,7 @@
 #ifndef SILOFS_PCACHE_H_
 #define SILOFS_PCACHE_H_
 
-#include <silofs/infra.h>
+#include "infra.h"
 #include "addr.h"
 #include "hmdq.h"
 

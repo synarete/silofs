@@ -24,11 +24,11 @@
 #include <errno.h>
 #include <time.h>
 #include <silofs/macros.h>
-#include <silofs/utility.h>
 #include <silofs/syscall.h>
-#include <silofs/infra/panic.h>
-#include <silofs/infra/time.h>
-#include <silofs/infra/thread.h>
+#include <silofs/panic.h>
+#include <silofs/thread.h>
+#include "utility.h"
+#include "times.h"
 
 #if defined(NDEBUG)
 #define SILOFS_MUTEX_KIND PTHREAD_MUTEX_NORMAL
@@ -479,27 +479,4 @@ bool silofs_sem_ntimedwait(struct silofs_sem *sem, time_t nsec)
 	ts.tv_sec += nsec;
 
 	return silofs_sem_timedwait(sem, &ts);
-}
-
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-
-static void burnstack_recursively(int depth, int nbytes)
-{
-	char buf[1020];
-	const int32_t cnt = silofs_min_i32((int)sizeof(buf), nbytes);
-
-	if (cnt > 0) {
-		memset(buf, 0xF4 ^ depth, (size_t)cnt);
-		burnstack_recursively(depth + 1, nbytes - cnt);
-	}
-}
-
-void silofs_burnstackn(int n)
-{
-	burnstack_recursively(0, n);
-}
-
-void silofs_burnstack(void)
-{
-	silofs_burnstackn((int)silofs_sc_page_size());
 }

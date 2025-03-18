@@ -18,7 +18,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <limits.h>
-#include <silofs/infra.h>
+#include "infra.h"
 #include "strchr.h"
 #include "strspan.h"
 

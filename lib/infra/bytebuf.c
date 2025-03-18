@@ -17,8 +17,8 @@
 #include "configs.h"
 #include <string.h>
 #include <stdint.h>
-#include <silofs/utility.h>
-#include <silofs/infra/bytebuf.h>
+#include "utility.h"
+#include "bytebuf.h"
 
 void silofs_bytebuf_init(struct silofs_bytebuf *bb, void *p, size_t n)
 {

@@ -17,7 +17,7 @@
 #ifndef SILOFS_HMDQ_H_
 #define SILOFS_HMDQ_H_
 
-#include <silofs/infra.h>
+#include "infra.h"
 #include "hmdq/dirtyq.h"
 #include "hmdq/hmapq.h"
 

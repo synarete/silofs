@@ -18,7 +18,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <limits.h>
-#include <silofs/infra.h>
+#include "infra.h"
 #include "lnodes.h"
 #include "spmaps.h"
 #include "env.h"

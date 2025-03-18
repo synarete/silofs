@@ -19,7 +19,7 @@
 #include <stdbool.h>
 #include <ctype.h>
 #include <limits.h>
-#include <silofs/infra.h>
+#include "infra.h"
 #include "strchr.h"
 
 static void chr_assign(char *c1, char c2)

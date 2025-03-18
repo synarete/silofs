@@ -19,6 +19,8 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <silofs/macros.h>
+#include "infra.h"
 #include "strchr.h"
 #include "strbuf.h"
 

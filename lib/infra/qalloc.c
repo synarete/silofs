@@ -27,9 +27,19 @@
 #include <string.h>
 #include <stdbool.h>
 #include <limits.h>
+#include <silofs/consts.h>
+#include <silofs/macros.h>
 #include <silofs/errors.h>
 #include <silofs/syscall.h>
-#include <silofs/infra.h>
+#include <silofs/memalloc.h>
+#include <silofs/logging.h>
+#include <silofs/panic.h>
+#include <silofs/thread.h>
+#include "list.h"
+#include "utility.h"
+#include "iovec.h"
+#include "atomic.h"
+#include "qalloc.h"
 
 enum silofs_qalloc_consts {
 	QALLOC_MALLOC_SIZE_MAX = 64 * SILOFS_MEGA,

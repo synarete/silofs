@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 #include "configs.h"
-#include <silofs/infra.h>
+#include "infra.h"
 #include "ltype.h"
 
 static bool ltype_isequal(enum silofs_ltype st1, enum silofs_ltype st2)

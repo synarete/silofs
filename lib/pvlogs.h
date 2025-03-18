@@ -18,7 +18,7 @@
 #define SILOFS_PVLOGS_H_
 
 #include <stdint.h>
-#include <silofs/infra.h>
+#include "infra.h"
 #include "addr.h"
 
 /* persistent volume segments range */

@@ -20,10 +20,10 @@
 #include <string.h>
 #include <limits.h>
 #include <silofs/macros.h>
-#include <silofs/utility.h>
 #include <silofs/syscall.h>
-#include <silofs/infra/atomic.h>
-#include <silofs/infra/memalloc.h>
+#include <silofs/memalloc.h>
+#include "utility.h"
+#include "atomic.h"
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -232,4 +232,22 @@ int silofs_memlimits(uint64_t *out_phy, uint64_t *out_as)
 
 	*out_phy = (uint64_t)(page_size * phys_pages);
 	return getmemlimit(out_as);
+}
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+static void burnstack_recursively(int depth, int nbytes)
+{
+	char buf[1020];
+	const int32_t cnt = silofs_min_i32((int)sizeof(buf), nbytes);
+
+	if (cnt > 0) {
+		memset(buf, 0xF4 ^ depth, (size_t)cnt);
+		burnstack_recursively(depth + 1, nbytes - cnt);
+	}
+}
+
+void silofs_burnstack(void)
+{
+	burnstack_recursively(0, 4096);
 }

@@ -19,6 +19,7 @@
 
 #include <silofs/silofs.h>
 #include <stdlib.h>
+#include <string.h>
 #include <stdio.h>
 
 typedef void (*silofs_subcmd_fn)(void);

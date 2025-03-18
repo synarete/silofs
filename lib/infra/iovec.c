@@ -18,7 +18,7 @@
 #include <string.h>
 #include <silofs/syscall.h>
 #include <silofs/errors.h>
-#include <silofs/infra/iovec.h>
+#include "iovec.h"
 
 void silofs_iovec_reset(struct silofs_iovec *iov)
 {

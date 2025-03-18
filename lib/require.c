@@ -20,7 +20,7 @@
 #include <limits.h>
 #include <endian.h>
 #include <silofs/ioctls.h>
-#include <silofs/infra.h>
+#include "infra.h"
 #include "addr.h"
 #include "env.h"
 

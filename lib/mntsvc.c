@@ -23,8 +23,8 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <silofs/errors.h>
-#include <silofs/infra.h>
 #include <silofs/mntsvc.h>
+#include "infra.h"
 #include "str.h"
 #include "knownfs.h"
 

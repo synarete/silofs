@@ -18,7 +18,7 @@
 #define SILOFS_HMAPQ_H_
 
 #include <stdint.h>
-#include <silofs/infra.h>
+#include "infra.h"
 #include "dirtyq.h"
 
 #define SILOFS_HMAPQ_ITERALL (0xffffffffU)

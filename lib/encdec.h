@@ -17,7 +17,7 @@
 #ifndef SILOFS_ENCDEC_H_
 #define SILOFS_ENCDEC_H_
 
-#include <silofs/infra.h>
+#include "infra.h"
 #include "addr.h"
 
 struct silofs_env;

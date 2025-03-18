@@ -25,9 +25,9 @@
 #include <errno.h>
 #include <error.h>
 #include <silofs/macros.h>
-#include <silofs/utility.h>
-#include <silofs/infra/panic.h>
-#include <silofs/infra/logging.h>
+#include <silofs/panic.h>
+#include <silofs/logging.h>
+#include "utility.h"
 
 #ifdef SILOFS_WITH_LIBUNWIND
 #ifndef HAVE_LIBUNWIND_H

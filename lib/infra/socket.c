@@ -33,10 +33,8 @@
 #include <stdio.h>
 #include <silofs/syscall.h>
 #include <silofs/ccattr.h>
-#include <silofs/utility.h>
-#include <silofs/infra/socket.h>
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+#include "utility.h"
+#include "socket.h"
 
 uint16_t silofs_htons(uint16_t n)
 {

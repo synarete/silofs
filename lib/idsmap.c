@@ -16,8 +16,8 @@
  */
 #include "configs.h"
 #include <silofs/types.h>
-#include <silofs/infra.h>
 #include <silofs/errors.h>
+#include "infra.h"
 #include "idsmap.h"
 
 enum {

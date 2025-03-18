@@ -79,4 +79,7 @@ void silofs_zfree(void *mem, size_t sz);
 
 int silofs_memlimits(uint64_t *out_phy, uint64_t *out_as);
 
+/* recursively trash current thread's stakc */
+void silofs_burnstack(void);
+
 #endif /* SILOFS_MEMALLOC_H_ */

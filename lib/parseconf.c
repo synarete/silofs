@@ -24,9 +24,9 @@
 #include <grp.h>
 #include <silofs/types.h>
 #include <silofs/errors.h>
-#include <silofs/infra.h>
 #include <silofs/mntsvc.h>
 #include <silofs/appexec.h>
+#include "infra.h"
 #include "str.h"
 #include "uidgid.h"
 

@@ -22,6 +22,7 @@
 #include <errno.h>
 #include <locale.h>
 #include <stdio.h>
+#include <string.h>
 #include "fnctests.h"
 
 struct ft_global_settings {

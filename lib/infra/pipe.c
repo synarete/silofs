@@ -23,9 +23,9 @@
 #include <limits.h>
 #include <silofs/syscall.h>
 #include <silofs/errors.h>
-#include <silofs/utility.h>
-#include <silofs/infra/logging.h>
-#include <silofs/infra/pipe.h>
+#include <silofs/logging.h>
+#include "utility.h"
+#include "pipe.h"
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

@@ -22,8 +22,8 @@
 #include <errno.h>
 #include <time.h>
 #include <silofs/syscall.h>
-#include <silofs/infra/panic.h>
-#include <silofs/infra/time.h>
+#include <silofs/panic.h>
+#include "times.h"
 
 static void do_clock_gettime(clockid_t clock_id, struct timespec *tp)
 {

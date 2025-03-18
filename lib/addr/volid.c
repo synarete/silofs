@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 #include "configs.h"
-#include <silofs/infra.h>
+#include "infra.h"
 #include "meta.h"
 #include "volid.h"
 

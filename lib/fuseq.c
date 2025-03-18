@@ -29,9 +29,9 @@
 #include <errno.h>
 #include <limits.h>
 #include <time.h>
-#include <silofs/infra.h>
 #include <silofs/ioctls.h>
 #include <silofs/mntsvc.h>
+#include "infra.h"
 #include "uber.h"
 #include "lnodes.h"
 #include "task.h"

@@ -16,7 +16,7 @@
  */
 #include "configs.h"
 #include <xxhash.h>
-#include <silofs/infra/hash.h>
+#include "hash.h"
 
 uint64_t silofs_hash_fnv1a(const void *buf, size_t len, uint64_t seed)
 {

@@ -25,7 +25,7 @@
 #include <errno.h>
 #include <time.h>
 #include <silofs/version.h>
-#include <silofs/infra/logging.h>
+#include <silofs/logging.h>
 
 #define SILOFS_LOG_LEVEL_DEFAULT (SILOFS_LOG_ERROR)
 

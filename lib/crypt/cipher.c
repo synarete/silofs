@@ -16,8 +16,8 @@
  */
 #include "configs.h"
 #include <gcrypt.h>
-#include <silofs/infra.h>
 #include <silofs/errors.h>
+#include "infra.h"
 #include "gcry.h"
 #include "passwd.h"
 #include "mdigest.h"

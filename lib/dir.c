@@ -17,7 +17,7 @@
 #include "configs.h"
 #include <dirent.h>
 #include <errno.h>
-#include <silofs/infra.h>
+#include "infra.h"
 #include "lnodes.h"
 #include "task.h"
 #include "inode.h"

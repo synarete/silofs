@@ -22,7 +22,12 @@
 #include <silofs/consts.h>
 #include <silofs/errors.h>
 #include <silofs/defs.h>
-#include <silofs/infra.h>
+#include <silofs/syscall.h>
+#include <silofs/logging.h>
+#include <silofs/panic.h>
+#include <silofs/memalloc.h>
+#include <silofs/random.h>
+#include <silofs/thread.h>
 #include <silofs/ioctls.h>
 #include <silofs/mntsvc.h>
 #include <silofs/appexec.h>

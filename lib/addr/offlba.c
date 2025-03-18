@@ -16,8 +16,7 @@
  */
 #include "configs.h"
 #include <silofs/defs.h>
-#include <silofs/errors.h>
-#include <silofs/infra.h>
+#include "infra.h"
 #include "offlba.h"
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

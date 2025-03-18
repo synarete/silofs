@@ -17,6 +17,7 @@
 #define _GNU_SOURCE 1
 #include <fcntl.h>
 #include <limits.h>
+#include <time.h>
 #include "cmd.h"
 
 struct cmd_lockfile_ctx {
@@ -46,7 +47,7 @@ static void cmd_lockfile_init(struct cmd_lockfile_ctx *lf_ctx,
 	memset(lf_ctx, 0, sizeof(*lf_ctx));
 	lf_ctx->repodir = repodir;
 	lf_ctx->name = name;
-	lf_ctx->now = silofs_time_now();
+	lf_ctx->now = time(NULL);
 	lf_ctx->pid = getpid();
 	lf_ctx->dfd = -1;
 }
@@ -117,7 +118,7 @@ cmd_lockfile_wait_noent(const struct cmd_lockfile_ctx *lf_ctx, int retry_max)
 		if (err) {
 			break;
 		}
-		silofs_suspend_secs(2);
+		sleep(2);
 	}
 
 	if (!err) {

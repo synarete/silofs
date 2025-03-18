@@ -16,7 +16,7 @@
  */
 #include "configs.h"
 #include <silofs/defs.h>
-#include <silofs/infra.h>
+#include "infra.h"
 #include "repo.h"
 #include "encdec.h"
 #include "uber.h"

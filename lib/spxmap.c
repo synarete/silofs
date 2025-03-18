@@ -15,12 +15,7 @@
  * GNU General Public License for more details.
  */
 #include "configs.h"
-#include <silofs/infra.h>
-#include "uber.h"
 #include "lnodes.h"
-#include "task.h"
-#include "inode.h"
-#include "env.h"
 #include "spxmap.h"
 
 /* single entry of free vspace */

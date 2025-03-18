@@ -18,7 +18,7 @@
 #define SILOFS_FUSEQ_H_
 
 #include <stdint.h>
-#include <silofs/infra.h>
+#include "infra.h"
 
 struct silofs_fuseq_worker;
 struct silofs_fuseq_dispatcher;

@@ -19,7 +19,7 @@
 #include <sys/stat.h>
 #include <sys/file.h>
 #include <fcntl.h>
-#include <silofs/infra.h>
+#include "infra.h"
 #include "repo.h"
 
 enum {

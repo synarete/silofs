@@ -18,7 +18,7 @@
 #define SILOFS_CADDR_H_
 
 #include <silofs/defs.h>
-#include <silofs/infra.h>
+#include "infra.h"
 
 struct silofs_strview;
 

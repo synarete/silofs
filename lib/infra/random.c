@@ -19,10 +19,10 @@
 #include <string.h>
 #include <errno.h>
 #include <silofs/macros.h>
-#include <silofs/utility.h>
-#include <silofs/infra/panic.h>
-#include <silofs/infra/random.h>
-#include <silofs/infra/time.h>
+#include <silofs/panic.h>
+#include <silofs/random.h>
+#include "utility.h"
+#include "times.h"
 
 static void do_getentropy(void *buf, size_t len)
 {

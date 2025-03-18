@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 #include "configs.h"
-#include <silofs/infra.h>
+#include "infra.h"
 #include "lnodes.h"
 #include "lcache.h"
 #include "task.h"

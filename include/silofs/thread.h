@@ -123,10 +123,4 @@ bool silofs_sem_timedwait(struct silofs_sem *sem, const struct timespec *ts);
 
 bool silofs_sem_ntimedwait(struct silofs_sem *sem, time_t nsec);
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-void silofs_burnstackn(int n);
-
-void silofs_burnstack(void);
-
 #endif /* SILOFS_THREAD_H_ */

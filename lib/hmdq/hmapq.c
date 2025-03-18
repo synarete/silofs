@@ -17,8 +17,7 @@
 #include "configs.h"
 #include <stdlib.h>
 #include <limits.h>
-#include <silofs/macros.h>
-#include <silofs/infra.h>
+#include "infra.h"
 #include "addr.h"
 #include "hmapq.h"
 

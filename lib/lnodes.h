@@ -17,8 +17,8 @@
 #ifndef SILOFS_LNODES_H_
 #define SILOFS_LNODES_H_
 
-#include <silofs/infra.h>
 #include <silofs/types.h>
+#include "infra.h"
 #include "addr.h"
 #include "hmdq.h"
 

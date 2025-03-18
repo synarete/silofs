@@ -17,7 +17,7 @@
 #ifndef SILOFS_BSTORE_H_
 #define SILOFS_BSTORE_H_
 
-#include <silofs/infra.h>
+#include "infra.h"
 #include "addr.h"
 #include "pvlogs.h"
 #include "btree.h"

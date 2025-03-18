@@ -22,11 +22,13 @@
 #include <sys/statvfs.h>
 #include <sys/time.h>
 #include <fcntl.h>
-
 #include <limits.h>
-#include <silofs/defs.h>
-#include <silofs/ioctls.h>
-#include <silofs/infra.h>
+#include <string.h>
+#include <silofs/silofs.h>
+
+struct dirent64;
+struct utimbuf;
+struct fiemap;
 
 /* re-mapped macros */
 #define FT_1K  SILOFS_KILO
@@ -99,8 +101,6 @@ struct ft_env {
 	struct ft_params       params;
 	const struct ft_tdef  *currtest;
 	struct statvfs         stvfs;
-	struct timespec        ts_start;
-	struct timespec        ts_finish;
 	uint64_t               seqn;
 	time_t                 start;
 	pid_t                  pid;

@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_TIME_H_
-#define SILOFS_TIME_H_
+#ifndef SILOFS_TIMES_H_
+#define SILOFS_TIMES_H_
 
 #include <time.h>
 
@@ -46,4 +46,4 @@ int silofs_suspend_ts(const struct timespec *ts);
 
 int silofs_suspend_secs(time_t secs);
 
-#endif /* SILOFS_TIME_H_ */
+#endif /* SILOFS_TIMES_H_ */

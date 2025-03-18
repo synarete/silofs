@@ -19,27 +19,28 @@
 
 #include <silofs/ccattr.h>
 #include <silofs/consts.h>
+#include <silofs/errors.h>
 #include <silofs/macros.h>
-#include <silofs/utility.h>
 #include <silofs/syscall.h>
 #include <silofs/version.h>
+#include <silofs/logging.h>
+#include <silofs/panic.h>
+#include <silofs/memalloc.h>
+#include <silofs/random.h>
+#include <silofs/thread.h>
 
-#include <silofs/infra/atomic.h>
-#include <silofs/infra/avl.h>
-#include <silofs/infra/base64.h>
-#include <silofs/infra/bytebuf.h>
-#include <silofs/infra/hash.h>
-#include <silofs/infra/iovec.h>
-#include <silofs/infra/list.h>
-#include <silofs/infra/logging.h>
-#include <silofs/infra/panic.h>
-#include <silofs/infra/pipe.h>
-#include <silofs/infra/random.h>
-#include <silofs/infra/socket.h>
-#include <silofs/infra/memalloc.h>
-#include <silofs/infra/thread.h>
-#include <silofs/infra/time.h>
-#include <silofs/infra/qalloc.h>
-#include <silofs/infra/zcmpr.h>
+#include "infra/utility.h"
+#include "infra/atomic.h"
+#include "infra/avl.h"
+#include "infra/base64.h"
+#include "infra/bytebuf.h"
+#include "infra/hash.h"
+#include "infra/iovec.h"
+#include "infra/list.h"
+#include "infra/pipe.h"
+#include "infra/socket.h"
+#include "infra/times.h"
+#include "infra/qalloc.h"
+#include "infra/zcmpr.h"
 
 #endif /* SILOFS_INFRA_H_ */

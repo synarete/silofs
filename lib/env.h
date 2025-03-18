@@ -18,9 +18,8 @@
 #define SILOFS_ENV_H_
 
 #include <iconv.h>
-#include <silofs/macros.h>
 #include <silofs/appexec.h>
-#include <silofs/infra.h>
+#include "infra.h"
 #include "crypt.h"
 #include "addr.h"
 #include "uidgid.h"

@@ -17,7 +17,7 @@
 #ifndef SILOFS_SPXMAP_H_
 #define SILOFS_SPXMAP_H_
 
-#include <silofs/infra.h>
+#include "infra.h"
 
 /* short lifo of previously-allocated now-free space-addresses */
 struct silofs_spalifo {

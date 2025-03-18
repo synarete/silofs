@@ -18,7 +18,6 @@
 #define SILOFS_SUPER_H_
 
 #include <silofs/defs.h>
-#include <silofs/infra.h>
 
 struct silofs_laddr;
 struct silofs_uaddr;

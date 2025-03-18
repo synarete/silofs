@@ -17,7 +17,7 @@
 #ifndef SILOFS_VSTAGE_H_
 #define SILOFS_VSTAGE_H_
 
-#include <silofs/infra.h>
+#include "infra.h"
 
 struct silofs_vaddr;
 struct silofs_llink;

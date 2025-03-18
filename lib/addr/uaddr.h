@@ -18,7 +18,7 @@
 #define SILOFS_UADDR_H_
 
 #include <silofs/defs.h>
-#include <silofs/infra.h>
+#include "infra.h"
 #include "laddr.h"
 
 /* logical addressing of space-mapping nodes */

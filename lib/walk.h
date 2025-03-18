@@ -17,7 +17,7 @@
 #ifndef SILOFS_WALK_H_
 #define SILOFS_WALK_H_
 
-#include <silofs/infra.h>
+#include "infra.h"
 #include "addr.h"
 
 struct silofs_task;

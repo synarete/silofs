@@ -17,7 +17,7 @@
 #ifndef SILOFS_DIRTYQ_H_
 #define SILOFS_DIRTYQ_H_
 
-#include <silofs/infra.h>
+#include "infra.h"
 #include "addr.h"
 
 /* dirty-queue of cached-elements */

@@ -17,7 +17,7 @@
 #ifndef SILOFS_FLUSH_H_
 #define SILOFS_FLUSH_H_
 
-#include <silofs/infra.h>
+#include "infra.h"
 
 struct silofs_task;
 

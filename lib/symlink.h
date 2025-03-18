@@ -17,8 +17,6 @@
 #ifndef SILOFS_SYMLINK_H_
 #define SILOFS_SYMLINK_H_
 
-#include <silofs/infra.h>
-
 struct silofs_strview;
 struct silofs_task;
 struct silofs_inode_info;

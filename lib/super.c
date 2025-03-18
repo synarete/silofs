@@ -18,7 +18,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mount.h>
-#include <silofs/infra.h>
+#include "infra.h"
 #include "str.h"
 #include "lnodes.h"
 #include "task.h"

@@ -17,7 +17,7 @@
 #ifndef SILOFS_REPO_H_
 #define SILOFS_REPO_H_
 
-#include <silofs/infra.h>
+#include "infra.h"
 #include "str.h"
 #include "crypt.h"
 #include "addr.h"

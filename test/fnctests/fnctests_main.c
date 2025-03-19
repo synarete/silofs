@@ -125,7 +125,8 @@ static void ft_setup_globals(int argc, char *argv[])
 	ft_globals.repeat_count = 1;
 	ft_globals.log_params.level = SILOFS_LOG_INFO;
 	ft_globals.log_params.flags = SILOFS_LOGF_STDOUT |
-	                              SILOFS_LOGF_PROGNAME;
+	                              SILOFS_LOGF_PROGNAME |
+	                              SILOFS_LOGF_TIMESTAMP;
 	silofs_set_global_log_params(&ft_globals.log_params);
 }
 

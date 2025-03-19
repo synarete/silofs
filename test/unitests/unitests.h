@@ -141,6 +141,7 @@ struct ut_env {
 	struct ut_args             *args;
 	struct silofs_env          *env;
 	struct timespec             ts_start;
+	struct timespec             ts_finish;
 	struct statvfs              stvfs[2];
 	struct silofs_space_stats1k spst[2];
 	struct silofs_mutex         mutex;
@@ -191,6 +192,7 @@ struct ut_globals {
 	bool                     asyncwr;
 	bool                     stdalloc;
 	bool                     pedantic;
+	bool                     timestamp;
 };
 
 extern struct ut_globals ut_globals;

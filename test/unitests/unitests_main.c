@@ -32,7 +32,7 @@ struct ut_globals ut_globals;
 /* Local functions */
 static void ut_setup_globals(int argc, char *argv[]);
 static void ut_parse_args(void);
-static void ut_setup_tracing(void);
+static void ut_setup_logging(void);
 static void ut_setup_args(void);
 static void ut_prepare(void);
 static void ut_init_lib(void);
@@ -55,11 +55,11 @@ int main(int argc, char *argv[])
 	/* Setup process defaults */
 	ut_setup_globals(argc, argv);
 
-	/* Allow error tracing only */
-	ut_setup_tracing();
-
 	/* Parse command-line arguments */
 	ut_parse_args();
+
+	/* Setup output logging */
+	ut_setup_logging();
 
 	/* Require valid test directory */
 	ut_setup_args();
@@ -92,10 +92,13 @@ static void ut_setup_globals(int argc, char *argv[])
 	silofs_mclock_now(&ut_globals.start_ts);
 }
 
-static void ut_setup_tracing(void)
+static void ut_setup_logging(void)
 {
-	ut_globals.log_params.level = SILOFS_LOG_ERROR;
+	ut_globals.log_params.level = SILOFS_LOG_INFO;
 	ut_globals.log_params.flags = SILOFS_LOGF_STDOUT;
+	if (ut_globals.timestamp) {
+		ut_globals.log_params.flags |= SILOFS_LOGF_TIMESTAMP;
+	}
 	silofs_set_global_log_params(&ut_globals.log_params);
 }
 
@@ -108,6 +111,7 @@ silofs_attr_noreturn static void ut_show_help_and_exit(void)
 	puts(" -l, --level=0|1|2     Run level");
 	puts(" -M, --malloc          Use standard malloc functions");
 	puts(" -p, --pedantic        Run in pedantic mode");
+	puts(" -T, --timestamp       Add timestamps to output logs");
 	puts(" -v, --version         Show version info");
 	exit(EXIT_SUCCESS);
 }
@@ -139,6 +143,7 @@ static void ut_parse_args(void)
 		{ "level", required_argument, NULL, 'l' },
 		{ "malloc", no_argument, NULL, 'M' },
 		{ "pedantic", no_argument, NULL, 'p' },
+		{ "timestamp", no_argument, NULL, 'T' },
 		{ "version", no_argument, NULL, 'v' },
 		{ "help", no_argument, NULL, 'h' },
 		{ NULL, no_argument, NULL, 0 },
@@ -147,13 +152,15 @@ static void ut_parse_args(void)
 	while (opt_chr > 0) {
 		opt_index = 0;
 		opt_chr = getopt_long(ut_globals.argc, ut_globals.argv,
-		                      "l:Mpvh", long_opts, &opt_index);
+		                      "l:MpTvh", long_opts, &opt_index);
 		if (opt_chr == 'l') {
 			ut_set_run_level(optarg);
 		} else if (opt_chr == 'M') {
 			ut_globals.stdalloc = true;
 		} else if (opt_chr == 'p') {
 			ut_globals.pedantic = true;
+		} else if (opt_chr == 'T') {
+			ut_globals.timestamp = true;
 		} else if (opt_chr == 'v') {
 			ut_show_version_and_exit();
 		} else if (opt_chr == 'h') {

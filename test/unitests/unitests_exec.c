@@ -175,17 +175,13 @@ static void ute_del(struct ut_env *ute)
 static void ut_track_test(struct ut_env *ute, const struct ut_testdef *td,
                           bool pre_execute)
 {
-	struct timespec dur;
-
 	if (pre_execute) {
-		printf("  %-40s", td->name);
+		silofs_log_info("  %-40s =>", td->name);
 		silofs_mclock_now(&ute->ts_start);
 	} else {
-		silofs_mclock_dur(&ute->ts_start, &dur);
-		printf("OK (%ld.%03lds)\n", dur.tv_sec,
-		       dur.tv_nsec / 1000000L);
+		silofs_mclock_now(&ute->ts_finish);
+		silofs_log_info("  %-40s OK", td->name);
 	}
-	fflush(stdout);
 }
 
 static void ut_check_valid_statvfs(const struct statvfs *stv)
@@ -412,10 +408,10 @@ static void ut_execute_tests_cycle(struct ut_args *args)
 
 static void ut_print_tests_info(const struct ut_args *args, int start)
 {
-	char buf[128] = "";
+	char name[256] = "";
 
-	silofs_make_version_banner(buf, sizeof(buf) - 1, start);
-	printf("  %s %s \n", args->program, buf);
+	snprintf(name, sizeof(name) - 1, "  %s", args->program);
+	silofs_log_meta_banner(name, start);
 }
 
 static struct silofs_uids *ut_new_uids(void)

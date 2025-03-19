@@ -440,6 +440,7 @@ void silofs_task_init(struct silofs_task *task, struct silofs_env *env)
 	task->t_exclusive = false;
 	task->t_uber_op = false;
 	task->t_kwrite = false;
+	task->t_runnable = true;
 }
 
 void silofs_task_fini(struct silofs_task *task)
@@ -449,6 +450,7 @@ void silofs_task_fini(struct silofs_task *task)
 
 	task->t_env = NULL;
 	task->t_submitq = NULL;
+	task->t_runnable = false;
 }
 
 void silofs_task_enq_loose(struct silofs_task *task,

@@ -17,8 +17,6 @@
 #ifndef SILOFS_BOOT_H_
 #define SILOFS_BOOT_H_
 
-#include "str.h"
-
 struct silofs_caddr;
 struct silofs_xref;
 struct silofs_task;
@@ -35,8 +33,10 @@ int silofs_xref_to_caddr(const struct silofs_xref *xref,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_reload_vspace(struct silofs_task *task);
+int silofs_reload_vmeta(struct silofs_task *task);
 
-int silofs_reload_rootd(struct silofs_task *task);
+int silofs_resync_vmeta(struct silofs_task *task, bool drop);
+
+int silofs_retry_vclaim(struct silofs_task *task);
 
 #endif /* SILOFS_BOOT_H_ */

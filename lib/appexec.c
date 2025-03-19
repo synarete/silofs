@@ -113,21 +113,27 @@ static int map_silofs_task_creds(struct silofs_task *task)
 static int make_task(struct silofs_env *env, struct silofs_task *task)
 {
 	const struct silofs_args *args = env->base.args;
+	int err;
 
 	silofs_task_init(task, env);
 	silofs_task_set_ts(task, true);
 	silofs_task_set_creds(task, args->uid, args->gid, args->umask);
 	task->t_uber_op = true;
-	return map_silofs_task_creds(task);
+	err = map_silofs_task_creds(task);
+	if (err) {
+		task->t_runnable = false;
+	}
+	return err;
 }
 
 static int term_task(struct silofs_task *task, int status)
 {
-	int err;
+	int err = 0;
 
-	err = silofs_task_submit(task, true);
+	if (task->t_runnable) {
+		err = silofs_task_submit(task, true);
+	}
 	silofs_task_fini(task);
-	silofs_burnstack();
 	return status ? status : err;
 }
 
@@ -136,54 +142,28 @@ static void drop_caches(struct silofs_env *env)
 	silofs_env_drop_caches(env);
 }
 
-static int exec_reload_rootd(struct silofs_env *env)
+static int exec_reload_vmeta(struct silofs_env *env)
 {
 	struct silofs_task task;
 	int err;
 
 	err = make_task(env, &task);
-	if (err) {
-		return err;
+	if (!err) {
+		err = silofs_reload_vmeta(&task);
 	}
-	err = silofs_reload_rootd(&task);
 	return term_task(&task, err);
 }
 
-static int exec_reload_vspace(struct silofs_env *env)
+static int exec_resync_vmeta(struct silofs_env *env, bool drop)
 {
 	struct silofs_task task;
 	int err;
 
 	err = make_task(env, &task);
-	if (err) {
-		return err;
+	if (!err) {
+		err = silofs_resync_vmeta(&task, drop);
 	}
-	err = silofs_reload_vspace(&task);
 	return term_task(&task, err);
-}
-
-static int exec_flush_dirty_now(struct silofs_env *env)
-{
-	struct silofs_task task;
-	int err;
-
-	err = make_task(env, &task);
-	if (err) {
-		return err;
-	}
-	err = silofs_flush_dirty_now(&task);
-	return term_task(&task, err);
-}
-
-static int flush_dirty(struct silofs_env *env)
-{
-	int err;
-
-	err = exec_flush_dirty_now(env);
-	if (err) {
-		log_err("failed to flush dirty: err=%d", err);
-	}
-	return err;
 }
 
 static int fsync_lsegs(const struct silofs_env *env)
@@ -261,29 +241,6 @@ void silofs_halt_fs(struct silofs_env *env)
 	silofs_env_unlock(env);
 }
 
-static int flush_and_drop_cache(struct silofs_env *env)
-{
-	int err;
-
-	err = flush_dirty(env);
-	if (err) {
-		return err;
-	}
-	drop_caches(env);
-	return 0;
-}
-
-static int do_sync_fs(struct silofs_env *env, bool drop)
-{
-	int err;
-
-	err = flush_dirty(env);
-	if (!err && drop) {
-		drop_caches(env);
-	}
-	return err;
-}
-
 int silofs_sync_fs(struct silofs_env *env, bool drop)
 {
 	int cnt = 3;
@@ -291,7 +248,7 @@ int silofs_sync_fs(struct silofs_env *env, bool drop)
 
 	silofs_env_lock(env);
 	while ((cnt-- > 0) && !err) {
-		err = do_sync_fs(env, drop);
+		err = exec_resync_vmeta(env, drop);
 	}
 	silofs_env_unlock(env);
 	return err;
@@ -342,7 +299,7 @@ static int format_base_vspmaps_of(struct silofs_env *env,
 		        vaddr->ltype, err);
 		return err;
 	}
-	err = do_sync_fs(env, false);
+	err = exec_resync_vmeta(env, false);
 	if (err) {
 		return err;
 	}
@@ -369,83 +326,16 @@ static int format_base_vspmaps(struct silofs_env *env)
 	return 0;
 }
 
-static int exec_claim_vspace(struct silofs_env *env, enum silofs_ltype ltype,
-                             struct silofs_vaddr *out_vaddr)
+static int exec_retry_vclaim(struct silofs_env *env)
 {
 	struct silofs_task task;
 	int err;
 
 	err = make_task(env, &task);
-	if (err) {
-		return err;
+	if (!err) {
+		err = silofs_retry_vclaim(&task);
 	}
-	err = silofs_claim_vspace(&task, ltype, out_vaddr);
 	return term_task(&task, err);
-}
-
-static int
-exec_reclaim_vspace(struct silofs_env *env, const struct silofs_vaddr *vaddr)
-{
-	struct silofs_task task;
-	int err;
-
-	err = make_task(env, &task);
-	if (err) {
-		return err;
-	}
-	err = silofs_reclaim_vspace(&task, vaddr);
-	return term_task(&task, err);
-}
-
-static int
-claim_reclaim_vspace_of(struct silofs_env *env, enum silofs_ltype vspace)
-{
-	struct silofs_vaddr vaddr;
-	const loff_t voff_exp = 0;
-	int err;
-
-	drop_caches(env);
-	err = exec_claim_vspace(env, vspace, &vaddr);
-	if (err) {
-		log_err("failed to claim: vspace=%d err=%d", vspace, err);
-		return err;
-	}
-
-	if (vaddr.off != voff_exp) {
-		log_err("wrong first voff: vspace=%d expected-voff=%ld "
-		        "got-voff=%ld",
-		        vspace, voff_exp, vaddr.off);
-		return -SILOFS_EFSCORRUPTED;
-	}
-
-	drop_caches(env);
-	err = exec_reclaim_vspace(env, &vaddr);
-	if (err) {
-		log_err("failed to reclaim space: vspace=%d voff=%ld err=%d",
-		        vspace, vaddr.off, err);
-	}
-	return 0;
-}
-
-static int claim_reclaim_vspace(struct silofs_env *env)
-{
-	enum silofs_ltype ltype = SILOFS_LTYPE_NONE;
-	int err;
-
-	while (++ltype < SILOFS_LTYPE_LAST) {
-		if (!ltype_isvnode(ltype)) {
-			continue;
-		}
-		err = claim_reclaim_vspace_of(env, ltype);
-		if (err) {
-			return err;
-		}
-		err = flush_and_drop_cache(env);
-		if (err) {
-			return err;
-		}
-	}
-	return 0;
 }
 
 static int exec_spawn_vnode(struct silofs_env *env, enum silofs_ltype ltype,
@@ -498,7 +388,7 @@ static int format_zero_vspace(struct silofs_env *env)
 		if (err) {
 			return err;
 		}
-		err = flush_and_drop_cache(env);
+		err = exec_resync_vmeta(env, true);
 		if (err) {
 			return err;
 		}
@@ -552,7 +442,7 @@ static int format_rootdir(struct silofs_env *env)
 
 	err = do_format_rootdir(env);
 	if (!err) {
-		err = flush_and_drop_cache(env);
+		err = exec_resync_vmeta(env, true);
 	}
 	return err;
 }
@@ -625,7 +515,7 @@ static int format_umeta(struct silofs_env *env)
 	if (err) {
 		return err;
 	}
-	err = flush_dirty(env);
+	err = exec_resync_vmeta(env, false);
 	if (err) {
 		return err;
 	}
@@ -640,7 +530,7 @@ static int format_vmeta(struct silofs_env *env)
 	if (err) {
 		return err;
 	}
-	err = claim_reclaim_vspace(env);
+	err = exec_retry_vclaim(env);
 	if (err) {
 		return err;
 	}
@@ -648,7 +538,7 @@ static int format_vmeta(struct silofs_env *env)
 	if (err) {
 		return err;
 	}
-	err = flush_dirty(env);
+	err = exec_resync_vmeta(env, true);
 	if (err) {
 		return err;
 	}
@@ -788,19 +678,7 @@ static int do_open_fs(struct silofs_env *env)
 	if (err) {
 		return err;
 	}
-	err = silofs_env_reload_sb_lseg(env);
-	if (err) {
-		return err;
-	}
-	err = silofs_env_reload_super(env);
-	if (err) {
-		return err;
-	}
-	err = exec_reload_vspace(env);
-	if (err) {
-		return err;
-	}
-	err = exec_reload_rootd(env);
+	err = exec_reload_vmeta(env);
 	if (err) {
 		return err;
 	}
@@ -822,7 +700,7 @@ static int do_close_fs(struct silofs_env *env)
 {
 	int err;
 
-	err = flush_dirty(env);
+	err = exec_resync_vmeta(env, true);
 	if (err) {
 		return err;
 	}
@@ -907,10 +785,9 @@ static int exec_unref_fs(struct silofs_env *env)
 	int err;
 
 	err = make_task(env, &task);
-	if (err) {
-		return err;
+	if (!err) {
+		err = silofs_exec_unrefs(&task);
 	}
-	err = silofs_exec_unrefs(&task);
 	return term_task(&task, err);
 }
 
@@ -930,7 +807,7 @@ static int do_unref_fs(struct silofs_env *env)
 	if (err) {
 		return err;
 	}
-	err = silofs_env_reload_super(env);
+	err = exec_reload_vmeta(env);
 	if (err) {
 		return err;
 	}
@@ -966,10 +843,9 @@ static int exec_inspect_fs(struct silofs_env *env,
 	int err;
 
 	err = make_task(env, &task);
-	if (err) {
-		return err;
+	if (!err) {
+		err = silofs_exec_walkfs(&task, lvis);
 	}
-	err = silofs_exec_walkfs(&task, lvis);
 	return term_task(&task, err);
 }
 
@@ -1003,10 +879,9 @@ static int exec_pack_fs(struct silofs_env *env)
 	int err;
 
 	err = make_task(env, &task);
-	if (err) {
-		return err;
+	if (!err) {
+		err = silofs_exec_archive(&task);
 	}
-	err = silofs_exec_archive(&task);
 	return term_task(&task, err);
 }
 
@@ -1041,10 +916,9 @@ static int exec_unpack_fs(struct silofs_env *env)
 	int err;
 
 	err = make_task(env, &task);
-	if (err) {
-		return err;
+	if (!err) {
+		err = silofs_exec_restore(&task);
 	}
-	err = silofs_exec_restore(&task);
 	return term_task(&task, err);
 }
 

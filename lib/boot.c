@@ -25,6 +25,8 @@
 #include "inode.h"
 #include "namei.h"
 #include "stage.h"
+#include "flush.h"
+#include "env.h"
 
 void silofs_xref_reset(struct silofs_xref *xref)
 {
@@ -57,7 +59,22 @@ int silofs_xref_to_caddr(const struct silofs_xref *xref,
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-int silofs_reload_vspace(struct silofs_task *task)
+static int reload_super(struct silofs_task *task)
+{
+	int err;
+
+	err = silofs_env_reload_sb_lseg(task->t_env);
+	if (err) {
+		return err;
+	}
+	err = silofs_env_reload_super(task->t_env);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+static int reload_vspace(struct silofs_task *task)
 {
 	enum silofs_ltype ltype = SILOFS_LTYPE_NONE;
 	int err;
@@ -76,7 +93,7 @@ int silofs_reload_vspace(struct silofs_task *task)
 	return 0;
 }
 
-int silofs_reload_rootd(struct silofs_task *task)
+static int reload_rootd(struct silofs_task *task)
 {
 	struct silofs_inode_info *ii = NULL;
 	const ino_t ino = SILOFS_INO_ROOT;
@@ -90,6 +107,114 @@ int silofs_reload_rootd(struct silofs_task *task)
 	if (!ii_isdir(ii)) {
 		log_err("root-inode is not-a-dir: mode=0%o", ii_mode(ii));
 		return -SILOFS_EFSCORRUPTED;
+	}
+	return 0;
+}
+
+int silofs_reload_vmeta(struct silofs_task *task)
+{
+	int err;
+
+	err = reload_super(task);
+	if (err) {
+		return err;
+	}
+	err = reload_vspace(task);
+	if (err) {
+		return err;
+	}
+	err = reload_rootd(task);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+static void relax_caches(struct silofs_task *task, bool now)
+{
+	const int flags = now ? SILOFS_CTLF_NOW : SILOFS_CTLF_IDLE;
+
+	silofs_env_relax_caches(task->t_env, flags);
+}
+
+static int flush_dirty(struct silofs_task *task)
+{
+	int err;
+
+	err = silofs_flush_dirty_now(task);
+	if (err) {
+		log_err("failed to flush dirty: err=%d", err);
+	}
+	return err;
+}
+
+static void drop_caches(struct silofs_task *task)
+{
+	silofs_env_drop_caches(task->t_env);
+}
+
+static void drop_relax_caches(struct silofs_task *task)
+{
+	drop_caches(task);
+	relax_caches(task, false);
+}
+
+int silofs_resync_vmeta(struct silofs_task *task, bool drop)
+{
+	int err;
+
+	relax_caches(task, drop);
+	err = flush_dirty(task);
+	if (err || !drop) {
+		return err;
+	}
+	drop_relax_caches(task);
+	return 0;
+}
+
+static int do_claim_reclaim(struct silofs_task *task, enum silofs_ltype ltype)
+{
+	struct silofs_vaddr vaddr;
+	const loff_t voff_exp = 0;
+	int err;
+
+	err = silofs_claim_vspace(task, ltype, &vaddr);
+	if (err) {
+		log_err("vclaim failed: ltype=%d err=%d", ltype, err);
+		return err;
+	}
+	if (vaddr.off != voff_exp) {
+		log_err("bad claim: ltype=%d exp=%ld got=%ld", ltype, voff_exp,
+		        vaddr.off);
+		return -SILOFS_EFSCORRUPTED;
+	}
+	drop_caches(task);
+	err = silofs_reclaim_vspace(task, &vaddr);
+	if (err) {
+		log_err("bad reclaim: ltype=%d voff=%ld err=%d", ltype,
+		        vaddr.off, err);
+	}
+	return 0;
+}
+
+int silofs_retry_vclaim(struct silofs_task *task)
+{
+	enum silofs_ltype ltype = SILOFS_LTYPE_NONE;
+	int err;
+
+	while (++ltype < SILOFS_LTYPE_LAST) {
+		if (!ltype_isvnode(ltype)) {
+			continue;
+		}
+		err = do_claim_reclaim(task, ltype);
+		if (err) {
+			return err;
+		}
+		err = flush_dirty(task);
+		if (err) {
+			return err;
+		}
+		drop_relax_caches(task);
 	}
 	return 0;
 }

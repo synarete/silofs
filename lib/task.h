@@ -56,6 +56,7 @@ struct silofs_task {
 	bool                      t_exclusive;
 	bool                      t_uber_op;
 	bool                      t_kwrite;
+	bool                      t_runnable;
 };
 
 /* submit reference into view within underlying block */

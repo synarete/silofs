@@ -21,6 +21,7 @@
 #include <silofs/ccattr.h>
 #include <silofs/consts.h>
 #include <silofs/errors.h>
+#include <silofs/macros.h>
 #include <silofs/defs.h>
 #include <silofs/syscall.h>
 #include <silofs/logging.h>
@@ -28,6 +29,7 @@
 #include <silofs/memalloc.h>
 #include <silofs/random.h>
 #include <silofs/thread.h>
+#include <silofs/types.h>
 #include <silofs/ioctls.h>
 #include <silofs/mntsvc.h>
 #include <silofs/appexec.h>

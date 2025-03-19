@@ -41,6 +41,10 @@
 #include "atomic.h"
 #include "qalloc.h"
 
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(x_) SILOFS_ARRAY_SIZE(x_)
+#endif
+
 enum silofs_qalloc_consts {
 	QALLOC_MALLOC_SIZE_MAX = 64 * SILOFS_MEGA,
 	QALLOC_FREE_NPAGES_MANY = 2,
@@ -89,16 +93,17 @@ static long g_qpool_id;
 
 static void qalloc_staticassert_defs(const struct silofs_qalloc *qal)
 {
-	STATICASSERT_GE(QALLOC_PAGE_SIZE, SILOFS_PAGE_SIZE_MIN);
-	STATICASSERT_LE(QALLOC_PAGE_SIZE, SILOFS_PAGE_SIZE_MAX);
-	STATICASSERT_EQ(sizeof(struct silofs_slab_seg), QALLOC_SLAB_SEG_SIZE);
-	STATICASSERT_EQ(sizeof(union silofs_qpage), QALLOC_PAGE_SIZE);
-	STATICASSERT_EQ(sizeof(struct silofs_qpage_info), 64);
-	STATICASSERT_LE(sizeof(struct silofs_slab_seg),
-	                SILOFS_CACHELINE_SIZE_MAX);
-	STATICASSERT_GE(sizeof(struct silofs_qpage_info),
-	                SILOFS_CACHELINE_SIZE_DFL);
-	STATICASSERT_EQ(ARRAY_SIZE(qal->slabs), QALLOC_NSLABS_MAX);
+	SILOFS_STATICASSERT_GE(QALLOC_PAGE_SIZE, SILOFS_PAGE_SIZE_MIN);
+	SILOFS_STATICASSERT_LE(QALLOC_PAGE_SIZE, SILOFS_PAGE_SIZE_MAX);
+	SILOFS_STATICASSERT_EQ(sizeof(struct silofs_slab_seg),
+	                       QALLOC_SLAB_SEG_SIZE);
+	SILOFS_STATICASSERT_EQ(sizeof(union silofs_qpage), QALLOC_PAGE_SIZE);
+	SILOFS_STATICASSERT_EQ(sizeof(struct silofs_qpage_info), 64);
+	SILOFS_STATICASSERT_LE(sizeof(struct silofs_slab_seg),
+	                       SILOFS_CACHELINE_SIZE_MAX);
+	SILOFS_STATICASSERT_GE(sizeof(struct silofs_qpage_info),
+	                       SILOFS_CACHELINE_SIZE_DFL);
+	SILOFS_STATICASSERT_EQ(ARRAY_SIZE(qal->slabs), QALLOC_NSLABS_MAX);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1265,7 +1270,7 @@ qalloc_slab_of(const struct silofs_qalloc *qal, size_t nbytes)
 	const struct silofs_slab *slab = NULL;
 	const size_t slot = qalloc_slab_slot_of(qal, nbytes);
 
-	if (likely(slot < ARRAY_SIZE(qal->slabs))) {
+	if (silofs_likely(slot < ARRAY_SIZE(qal->slabs))) {
 		slab = &qal->slabs[slot];
 	}
 	return silofs_unconst(slab);
@@ -1278,7 +1283,7 @@ static int qalloc_alloc_by_slab(struct silofs_qalloc *qal, size_t nbytes,
 	int err;
 
 	slab = qalloc_slab_of(qal, nbytes);
-	if (likely(slab != NULL)) {
+	if (silofs_likely(slab != NULL)) {
 		err = slab_alloc_seg(slab, out_seg);
 	} else {
 		err = -SILOFS_ENOMEM;
@@ -1383,7 +1388,7 @@ void *silofs_qalloc_malloc(struct silofs_qalloc *qal, size_t nbytes, int flags)
 		return NULL; /* OK, no-alloc case */
 	}
 	err = qalloc_malloc(qal, nbytes, flags, &ptr);
-	if (unlikely(err)) {
+	if (silofs_unlikely(err)) {
 		qalloc_handle_malloc_failure(qal, nbytes, err);
 		return NULL;
 	}
@@ -1415,7 +1420,7 @@ qalloc_check_slab_seg_of(const struct silofs_qalloc *qal,
 	int ret = -SILOFS_EQALLOC;
 
 	slab = qalloc_slab_of(qal, nbytes);
-	if (likely(slab != NULL)) {
+	if (silofs_likely(slab != NULL)) {
 		ret = slab_check_seg(slab, seg, nbytes);
 	}
 	return ret;
@@ -1429,7 +1434,7 @@ qalloc_free_by_slab(struct silofs_qalloc *qal, struct silofs_slab_seg *seg,
 	int ret = -SILOFS_EQALLOC;
 
 	slab = qalloc_slab_of(qal, nbytes);
-	if (likely(slab != NULL)) {
+	if (silofs_likely(slab != NULL)) {
 		ret = slab_free_seg(slab, seg, nbytes, flags);
 	}
 	return ret;
@@ -1520,7 +1525,7 @@ void silofs_qalloc_free(struct silofs_qalloc *qal, void *ptr, size_t nbytes,
 	int err;
 
 	err = qalloc_free(qal, ptr, nbytes, flags);
-	if (unlikely(err)) {
+	if (silofs_unlikely(err)) {
 		qalloc_handle_free_failure(qal, ptr, nbytes, err);
 	}
 }
@@ -1532,7 +1537,7 @@ static int qalloc_check_by_slab(const struct silofs_qalloc *qal,
 	int ret = -SILOFS_EQALLOC;
 
 	seg = qpool_slab_seg_of(&qal->qpool, ptr);
-	if (likely(seg != NULL)) {
+	if (silofs_likely(seg != NULL)) {
 		ret = qalloc_check_slab_seg_of(qal, seg, nbytes);
 	}
 	return ret;
@@ -1575,10 +1580,10 @@ int silofs_qalloc_resolve(const struct silofs_qalloc *qal, void *ptr,
 	const void *base;
 
 	base = qpool_base_of(&qal->qpool, ptr, len);
-	if (unlikely(base == NULL)) {
+	if (silofs_unlikely(base == NULL)) {
 		return -SILOFS_ERANGE;
 	}
-	if (unlikely(base > ptr)) {
+	if (silofs_unlikely(base > ptr)) {
 		return -SILOFS_ERANGE;
 	}
 	silofs_iovec_reset(iov);

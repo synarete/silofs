@@ -36,13 +36,17 @@ static void do_getentropy(void *buf, size_t len)
 
 void silofs_getentropy(void *buf, size_t len)
 {
-	size_t cnt;
 	uint8_t *ptr = buf;
 	const uint8_t *end = ptr + len;
 	const size_t getentropy_max = 256;
 
 	while (ptr < end) {
-		cnt = silofs_min((size_t)(end - ptr), getentropy_max);
+		size_t cnt;
+
+		cnt = (size_t)(end - ptr);
+		if (cnt > getentropy_max) {
+			cnt = getentropy_max;
+		}
 		do_getentropy(ptr, cnt);
 		ptr += cnt;
 	}

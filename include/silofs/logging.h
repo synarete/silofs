@@ -30,11 +30,12 @@ enum silofs_log_level {
 
 /* logging control flags */
 enum silofs_log_flags {
-	SILOFS_LOGF_STDOUT   = 0x01,
-	SILOFS_LOGF_SYSLOG   = 0x02,
-	SILOFS_LOGF_FILINE   = 0x04,
-	SILOFS_LOGF_PROGNAME = 0x08,
-	SILOFS_LOGF_DEFAULT  = SILOFS_LOGF_STDOUT | SILOFS_LOGF_PROGNAME,
+	SILOFS_LOGF_STDOUT    = 0x01,
+	SILOFS_LOGF_SYSLOG    = 0x02,
+	SILOFS_LOGF_FILINE    = 0x04,
+	SILOFS_LOGF_PROGNAME  = 0x08,
+	SILOFS_LOGF_TIMESTAMP = 0x10,
+	SILOFS_LOGF_DEFAULT   = SILOFS_LOGF_STDOUT | SILOFS_LOGF_PROGNAME,
 };
 
 struct silofs_log_params {
@@ -79,7 +80,5 @@ silofs_attr_printf(4, 5) int silofs_logf(enum silofs_log_level log_level,
 enum silofs_log_level silofs_log_level_by_rfc5424(const char *s);
 
 void silofs_log_meta_banner(const char *name, int start);
-
-void silofs_make_version_banner(char *s, unsigned int n, int start);
 
 #endif /* SILOFS_LOGGING_H_ */

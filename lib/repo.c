@@ -414,7 +414,7 @@ static int do_mkdirat(int dirfd, const char *pathname, mode_t mode)
 	int err;
 
 	err = silofs_sys_mkdirat(dirfd, pathname, mode);
-	if (err) {
+	if (err && (err != -EEXIST)) {
 		log_warn("mkdirat error: dirfd=%d pathname=%s mode=0%o err=%d",
 		         dirfd, pathname, mode, err);
 	}

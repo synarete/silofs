@@ -57,12 +57,28 @@ static const char *log_progname(void)
 	                                      program_invocation_short_name;
 }
 
+static const char *log_timestamp(char *buf, size_t bsz)
+{
+	struct tm tm_now;
+	const time_t now = time(NULL);
+	size_t n;
+
+	localtime_r(&now, &tm_now);
+	n = strftime(buf, bsz, "%Y-%m-%d %H:%M:%S", &tm_now);
+	return (n == 0) ? "" : buf;
+}
+
 static void log_to_stdout(enum silofs_log_flags log_flags, const char *msg,
                           const char *file, int line)
 {
 	FILE *fp = stdout;
 
 	flockfile(fp);
+	if (log_flags & SILOFS_LOGF_TIMESTAMP) {
+		char buf[40] = { 0 };
+
+		fprintf(fp, "[%s] ", log_timestamp(buf, sizeof(buf)));
+	}
 	if (log_flags & SILOFS_LOGF_PROGNAME) {
 		fprintf(fp, "%s: ", log_progname());
 	}
@@ -216,17 +232,17 @@ enum silofs_log_level silofs_log_level_by_rfc5424(const char *s)
 	return ll;
 }
 
-void silofs_log_meta_banner(const char *name, int start)
-{
-	char buf[128] = "";
-
-	silofs_make_version_banner(buf, sizeof(buf) - 1, start);
-	silofs_log_info("%s %s", name, buf);
-}
-
-void silofs_make_version_banner(char *s, unsigned int n, int start)
+static void make_version_banner(char *s, unsigned int n, int start)
 {
 	const char *tag = start ? "============" : "------------";
 
 	snprintf(s, n, "%s %s", silofs_version.string, tag);
+}
+
+void silofs_log_meta_banner(const char *name, int start)
+{
+	char buf[128] = "";
+
+	make_version_banner(buf, sizeof(buf) - 1, start);
+	silofs_log_info("%s %s", name, buf);
 }

@@ -21,18 +21,6 @@ struct silofs_caddr;
 struct silofs_xref;
 struct silofs_task;
 
-void silofs_xref_reset(struct silofs_xref *xref);
-
-bool silofs_xref_isnull(const struct silofs_xref *xref);
-
-void silofs_xref_from_caddr(struct silofs_xref        *xref,
-                            const struct silofs_caddr *caddr);
-
-int silofs_xref_to_caddr(const struct silofs_xref *xref,
-                         struct silofs_caddr      *out_caddr);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 int silofs_reload_vmeta(struct silofs_task *task);
 
 int silofs_resync_vmeta(struct silofs_task *task, bool drop);

@@ -47,40 +47,18 @@ static void caddr_to_xref(const struct silofs_caddr *caddr, int status,
 	}
 }
 
-static int
-caddr_from_xref(struct silofs_caddr *caddr, const struct silofs_xref *xref)
-{
-	return silofs_xref_to_caddr(xref, caddr);
-}
-
 int silofs_check_fs_xref(const struct silofs_xref *xref)
 {
 	struct silofs_caddr caddr;
-	int err;
 
-	err = caddr_from_xref(&caddr, xref);
-	if (err) {
-		return err;
-	}
-	if (caddr.ctype != SILOFS_CTYPE_UBER) {
-		return -SILOFS_EBADUBER;
-	}
-	return 0;
+	return silofs_xref_to_caddr_with(xref, SILOFS_CTYPE_UBER, &caddr);
 }
 
 int silofs_check_ar_xref(const struct silofs_xref *xref)
 {
 	struct silofs_caddr caddr;
-	int err;
 
-	err = caddr_from_xref(&caddr, xref);
-	if (err) {
-		return err;
-	}
-	if (caddr.ctype != SILOFS_CTYPE_PACKIDX) {
-		return -SILOFS_EBADPACK;
-	}
-	return 0;
+	return silofs_xref_to_caddr_with(xref, SILOFS_CTYPE_PACKIDX, &caddr);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -997,7 +975,7 @@ int silofs_set_fs_xref(struct silofs_env *env, const struct silofs_xref *xref)
 	int err;
 
 	silofs_env_lock(env);
-	err = caddr_from_xref(&caddr, xref);
+	err = silofs_xref_to_caddr(xref, &caddr);
 	if (!err) {
 		err = silofs_env_set_uber_caddr(env, &caddr);
 	}

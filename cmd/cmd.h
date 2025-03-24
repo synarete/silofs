@@ -292,7 +292,7 @@ void cmd_exec_fs(struct silofs_env *env);
 void cmd_fork_fs(struct silofs_env *env, struct silofs_xref *out_curr_xrefs,
                  struct silofs_xref *out_fork_xrefs);
 
-void cmd_unref_fs(struct silofs_env *env);
+void cmd_remove_fs(struct silofs_env *env);
 
 void cmd_inspect_fs(struct silofs_env *env, bool view);
 

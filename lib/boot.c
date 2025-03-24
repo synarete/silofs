@@ -19,13 +19,14 @@
 #include <limits.h>
 #include <silofs/ioctls.h>
 #include "infra.h"
-#include "boot.h"
 #include "lnodes.h"
 #include "task.h"
 #include "inode.h"
 #include "namei.h"
 #include "stage.h"
 #include "flush.h"
+#include "opexec.h"
+#include "repo.h"
 #include "env.h"
 
 static int reload_super(struct silofs_task *task)
@@ -80,7 +81,7 @@ static int reload_rootd(struct silofs_task *task)
 	return 0;
 }
 
-int silofs_reload_vmeta(struct silofs_task *task)
+static int reload_vmeta(struct silofs_task *task)
 {
 	int err;
 
@@ -128,7 +129,7 @@ static void drop_relax_caches(struct silofs_task *task)
 	relax_caches(task, false);
 }
 
-int silofs_resync_vmeta(struct silofs_task *task, bool drop)
+int silofs_appexec_resync_vmeta(struct silofs_task *task, bool drop)
 {
 	int err;
 
@@ -166,7 +167,7 @@ static int do_claim_reclaim(struct silofs_task *task, enum silofs_ltype ltype)
 	return 0;
 }
 
-int silofs_retry_vclaim(struct silofs_task *task)
+int silofs_appexec_retry_claim(struct silofs_task *task)
 {
 	enum silofs_ltype ltype = SILOFS_LTYPE_NONE;
 	int err;
@@ -184,6 +185,125 @@ int silofs_retry_vclaim(struct silofs_task *task)
 			return err;
 		}
 		drop_relax_caches(task);
+	}
+	return 0;
+}
+
+static int reload_uber(const struct silofs_task *task)
+{
+	struct silofs_caddr caddr = { .ctype = SILOFS_CTYPE_NONE };
+	int err;
+
+	err = silofs_env_uber_caddr(task->t_env, &caddr);
+	if (err) {
+		return err;
+	}
+	err = silofs_env_reload_uber(task->t_env);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+int silofs_appexec_reload_fs(struct silofs_task *task)
+{
+	int err;
+
+	err = reload_uber(task);
+	if (err) {
+		return err;
+	}
+	err = reload_vmeta(task);
+	if (err) {
+		return err;
+	}
+	drop_caches(task);
+	return 0;
+}
+
+static int unlink_uber(struct silofs_task *task)
+{
+	int err;
+
+	err = silofs_env_unlink_uber(task->t_env);
+	if (err) {
+		return err;
+	}
+	drop_caches(task);
+	return 0;
+}
+
+int silofs_appexec_fork_fs(struct silofs_task *task)
+{
+	struct silofs_uber_caddrs caddrs;
+	int err;
+
+	err = silofs_env_uber_caddr(task->t_env, &caddrs.curr);
+	if (err) {
+		return err;
+	}
+	err = silofs_exec_forkfs(task, SILOFS_INO_ROOT, 0, &caddrs);
+	if (err) {
+		return err;
+	}
+	err = flush_dirty(task);
+	if (err) {
+		return err;
+	}
+	drop_relax_caches(task);
+	return 0;
+}
+
+static int shutdown_fs(struct silofs_task *task)
+{
+	struct silofs_repo *repo = silofs_task_repo(task);
+	int err;
+
+	err = silofs_repo_fsync_all(repo);
+	if (err) {
+		return err;
+	}
+	drop_relax_caches(task);
+
+	err = silofs_env_shut(task->t_env);
+	if (err) {
+		return err;
+	}
+	drop_relax_caches(task);
+
+	return 0;
+}
+
+int silofs_appexec_unload_fs(struct silofs_task *task)
+{
+	int err;
+
+	err = flush_dirty(task);
+	if (err) {
+		return err;
+	}
+	err = shutdown_fs(task);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+int silofs_appexec_remove_fs(struct silofs_task *task)
+{
+	int err;
+
+	err = silofs_exec_unrefs(task);
+	if (err) {
+		return err;
+	}
+	err = unlink_uber(task);
+	if (err) {
+		return err;
+	}
+	err = shutdown_fs(task);
+	if (err) {
+		return err;
 	}
 	return 0;
 }

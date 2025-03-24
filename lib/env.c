@@ -22,7 +22,6 @@
 #include "pcache.h"
 #include "bstore.h"
 #include "uber.h"
-#include "boot.h"
 #include "lnodes.h"
 #include "lcache.h"
 #include "task.h"

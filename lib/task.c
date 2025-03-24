@@ -563,6 +563,11 @@ int silofs_task_submit(struct silofs_task *task, bool all)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+struct silofs_repo *silofs_task_repo(const struct silofs_task *task)
+{
+	return task->t_env->base.repo;
+}
+
 struct silofs_sb_info *silofs_task_sbi(const struct silofs_task *task)
 {
 	return task->t_env->sbi;

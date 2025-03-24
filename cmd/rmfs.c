@@ -215,7 +215,7 @@ static void cmd_rmfs_sense_fs(struct cmd_rmfs_ctx *ctx)
 
 static void cmd_rmfs_execute(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_unref_fs(ctx->env);
+	cmd_remove_fs(ctx->env);
 }
 
 static void cmd_rmfs_unlink_xref(struct cmd_rmfs_ctx *ctx)

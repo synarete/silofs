@@ -2007,7 +2007,7 @@ void ut_unref_fs(struct ut_env *ute)
 	err = silofs_set_fs_xref(ute->env, &ute->uber_xref[0]);
 	ut_expect_ok(err);
 
-	err = silofs_unref_fs(ute->env);
+	err = silofs_remove_fs(ute->env);
 	ut_expect_ok(err);
 }
 
@@ -2018,7 +2018,7 @@ void ut_unref_fs2(struct ut_env *ute)
 	err = silofs_set_fs_xref(ute->env, &ute->uber_xref[1]);
 	ut_expect_ok(err);
 
-	err = silofs_unref_fs(ute->env);
+	err = silofs_remove_fs(ute->env);
 	ut_expect_ok(err);
 }
 

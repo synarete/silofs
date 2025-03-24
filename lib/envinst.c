@@ -24,7 +24,6 @@
 #include "uidgid.h"
 #include "idsmap.h"
 #include "uber.h"
-#include "boot.h"
 #include "lnodes.h"
 #include "lcache.h"
 #include "inode.h"

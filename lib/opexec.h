@@ -174,4 +174,18 @@ int silofs_exec_archive(struct silofs_task *task);
 
 int silofs_exec_restore(struct silofs_task *task);
 
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+int silofs_appexec_resync_vmeta(struct silofs_task *task, bool drop);
+
+int silofs_appexec_retry_claim(struct silofs_task *task);
+
+int silofs_appexec_reload_fs(struct silofs_task *task);
+
+int silofs_appexec_fork_fs(struct silofs_task *task);
+
+int silofs_appexec_unload_fs(struct silofs_task *task);
+
+int silofs_appexec_remove_fs(struct silofs_task *task);
+
 #endif /* SILOFS_OPEXEC_H_ */

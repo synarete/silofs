@@ -113,7 +113,7 @@ int silofs_post_exec_fs(struct silofs_env *env);
 
 int silofs_fork_fs(struct silofs_env *env);
 
-int silofs_unref_fs(struct silofs_env *env);
+int silofs_remove_fs(struct silofs_env *env);
 
 void silofs_halt_fs(struct silofs_env *env);
 

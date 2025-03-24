@@ -26,7 +26,6 @@
 #include <limits.h>
 #include <silofs/ioctls.h>
 #include "repo.h"
-#include "boot.h"
 #include "uidgid.h"
 #include "lnodes.h"
 #include "lcache.h"

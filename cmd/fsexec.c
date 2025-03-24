@@ -228,11 +228,11 @@ void cmd_fork_fs(struct silofs_env *env, struct silofs_xref *out_curr_xrefs,
 	cmd_require_ok(env, err, "post fork-fs failure");
 }
 
-void cmd_unref_fs(struct silofs_env *env)
+void cmd_remove_fs(struct silofs_env *env)
 {
 	int err;
 
-	err = silofs_unref_fs(env);
+	err = silofs_remove_fs(env);
 	cmd_require_ok(env, err, "failed to unref fs");
 }
 

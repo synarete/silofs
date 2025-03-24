@@ -103,7 +103,6 @@ libsilofs_la_SOURCES += hmdq.h
 libsilofs_la_SOURCES += appexec.c
 libsilofs_la_SOURCES += arre.c
 libsilofs_la_SOURCES += boot.c
-libsilofs_la_SOURCES += boot.h
 libsilofs_la_SOURCES += bstore.c
 libsilofs_la_SOURCES += bstore.h
 libsilofs_la_SOURCES += btree.c

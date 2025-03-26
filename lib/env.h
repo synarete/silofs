@@ -95,7 +95,7 @@ int silofs_env_shut(struct silofs_env *env);
 
 int silofs_env_format_bstore(struct silofs_env *env);
 
-int silofs_env_format_uber(struct silofs_env *env);
+int silofs_env_setup_uber(struct silofs_env *env);
 
 int silofs_env_commit_uber(struct silofs_env *env);
 

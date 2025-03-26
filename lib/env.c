@@ -754,7 +754,7 @@ int silofs_env_update_by(struct silofs_env *env,
 	return 0;
 }
 
-int silofs_env_format_uber(struct silofs_env *env)
+int silofs_env_setup_uber(struct silofs_env *env)
 {
 	struct silofs_uber uber = { .flags = SILOFS_UBERF_NONE };
 	int err;

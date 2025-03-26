@@ -23,7 +23,6 @@
 #include "repo.h"
 #include "idsmap.h"
 #include "uber.h"
-#include "lnodes.h"
 #include "lcache.h"
 #include "uidgid.h"
 #include "task.h"
@@ -73,32 +72,36 @@ int silofs_post_exec_fs(struct silofs_env *env)
 	return ret;
 }
 
-static int map_creds_of(struct silofs_task *task)
+static int do_map_task_creds(struct silofs_task *task)
 {
-	const struct silofs_idsmap *idsm = silofs_task_idsmap(task);
 	const struct silofs_cred *xcred = &task->t_oper.op_creds.host_cred;
 	struct silofs_cred *icred = &task->t_oper.op_creds.fs_cred;
-	int ret = 0;
+
+	return silofs_idsmap_map_uidgid(silofs_task_idsmap(task), xcred->uid,
+	                                xcred->gid, &icred->uid, &icred->gid);
+}
+
+static int map_task_creds(struct silofs_task *task)
+{
+	const struct silofs_idsmap *idsm = silofs_task_idsmap(task);
+	int err = 0;
 
 	if (idsm->idm_usize || idsm->idm_gsize) {
-		ret = silofs_idsmap_map_uidgid(idsm, xcred->uid, xcred->gid,
-		                               &icred->uid, &icred->gid);
+		err = do_map_task_creds(task);
 	}
-	return ret;
+	task->t_runnable = (err == 0);
+	return err;
 }
 
 static int make_task(struct silofs_env *env, struct silofs_task *task)
 {
 	const struct silofs_args *args = env->base.args;
-	int err;
 
 	silofs_task_init(task, env);
 	silofs_task_set_ts(task, true);
 	silofs_task_set_creds(task, args->uid, args->gid, args->umask);
 	task->t_uber_op = true;
-	err = map_creds_of(task);
-	task->t_runnable = (err == 0);
-	return err;
+	return map_task_creds(task);
 }
 
 static int term_task(struct silofs_task *task, int status)
@@ -197,11 +200,10 @@ void silofs_halt_fs(struct silofs_env *env)
 
 int silofs_sync_fs(struct silofs_env *env, bool drop)
 {
-	int cnt = 3;
 	int err = 0;
 
 	silofs_env_lock(env);
-	while ((cnt-- > 0) && !err) {
+	for (int i = 0; (i < 3) && !err; ++i) {
 		err = exec_resync_vmeta(env, drop);
 	}
 	silofs_env_unlock(env);
@@ -224,183 +226,6 @@ void silofs_stat_fs(const struct silofs_env *env,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int exec_require_spmaps_of(struct silofs_env *env,
-                                  const struct silofs_vaddr *vaddr)
-{
-	struct silofs_task task;
-	struct silofs_spnode_info *sni = NULL;
-	struct silofs_spleaf_info *sli = NULL;
-	enum silofs_stg_mode stg_mode = SILOFS_STG_COW;
-	int err;
-
-	err = make_task(env, &task);
-	if (err) {
-		return err;
-	}
-	err = silofs_require_spmaps_of(&task, vaddr, stg_mode, &sni, &sli);
-	return term_task(&task, err);
-}
-
-static int format_base_vspmaps_of(struct silofs_env *env,
-                                  const struct silofs_vaddr *vaddr)
-{
-	int err;
-
-	err = exec_require_spmaps_of(env, vaddr);
-	if (err) {
-		log_err("failed to format base spmaps: "
-		        "ltype=%d err=%d",
-		        vaddr->ltype, err);
-		return err;
-	}
-	err = exec_resync_vmeta(env, false);
-	if (err) {
-		return err;
-	}
-	log_dbg("format base spmaps of: ltype=%d err=%d", vaddr->ltype, err);
-	return 0;
-}
-
-static int format_base_vspmaps(struct silofs_env *env)
-{
-	struct silofs_vaddr vaddr;
-	enum silofs_ltype ltype = SILOFS_LTYPE_NONE;
-	int err;
-
-	while (++ltype < SILOFS_LTYPE_LAST) {
-		if (!ltype_isvnode(ltype)) {
-			continue;
-		}
-		vaddr_setup(&vaddr, ltype, 0);
-		err = format_base_vspmaps_of(env, &vaddr);
-		if (err) {
-			return err;
-		}
-	}
-	return 0;
-}
-
-static int exec_retry_vclaim(struct silofs_env *env)
-{
-	struct silofs_task task;
-	int err;
-
-	err = make_task(env, &task);
-	if (!err) {
-		err = silofs_appexec_retry_claim(&task);
-	}
-	return term_task(&task, err);
-}
-
-static int exec_spawn_vnode(struct silofs_env *env, enum silofs_ltype ltype,
-                            struct silofs_vnode_info **out_vni)
-{
-	struct silofs_task task;
-	int err;
-
-	err = make_task(env, &task);
-	if (err) {
-		return err;
-	}
-	err = silofs_spawn_vnode(&task, NULL, ltype, out_vni);
-	if (!err) {
-		vni_dirtify(*out_vni, NULL);
-	}
-	return term_task(&task, err);
-}
-
-static int
-format_zero_vspace_of(struct silofs_env *env, enum silofs_ltype vspace)
-{
-	struct silofs_vnode_info *vni = NULL;
-	const struct silofs_vaddr *vaddr = NULL;
-	int err;
-
-	err = exec_spawn_vnode(env, vspace, &vni);
-	if (err) {
-		log_err("failed to spawn: vspace=%d err=%d", vspace, err);
-		return err;
-	}
-	vaddr = vni_vaddr(vni);
-	if (vaddr->off != 0) {
-		log_err("bad offset: vspace=%d off=%ld", vspace, vaddr->off);
-		return -SILOFS_EFSCORRUPTED;
-	}
-	return 0;
-}
-
-static int format_zero_vspace(struct silofs_env *env)
-{
-	enum silofs_ltype ltype = SILOFS_LTYPE_NONE;
-	int err;
-
-	while (++ltype < SILOFS_LTYPE_LAST) {
-		if (!ltype_isvnode(ltype)) {
-			continue;
-		}
-		err = format_zero_vspace_of(env, ltype);
-		if (err) {
-			return err;
-		}
-		err = exec_resync_vmeta(env, true);
-		if (err) {
-			return err;
-		}
-	}
-	return 0;
-}
-
-static int
-do_spawn_rootdir(struct silofs_task *task, struct silofs_inode_info **out_ii)
-{
-	struct silofs_inew_params inp;
-
-	silofs_inew_params_of(task, NULL, S_IFDIR | 0755, 0, &inp);
-	return silofs_spawn_inode(task, &inp, out_ii);
-}
-
-static int
-exec_spawn_rootdir(struct silofs_env *env, struct silofs_inode_info **out_ii)
-{
-	struct silofs_task task;
-	int err;
-
-	err = make_task(env, &task);
-	if (err) {
-		return err;
-	}
-	err = do_spawn_rootdir(&task, out_ii);
-	return term_task(&task, err);
-}
-
-static int do_format_rootdir(struct silofs_env *env)
-{
-	struct silofs_inode_info *root_ii = NULL;
-	int err;
-
-	err = exec_spawn_rootdir(env, &root_ii);
-	if (err) {
-		return err;
-	}
-	if (root_ii->i_ino != SILOFS_INO_ROOT) {
-		log_err("format root-dir failed: ino=%ld", root_ii->i_ino);
-		return -SILOFS_EFSCORRUPTED;
-	}
-	silofs_ii_fixup_as_rootdir(root_ii);
-	return 0;
-}
-
-static int format_rootdir(struct silofs_env *env)
-{
-	int err;
-
-	err = do_format_rootdir(env);
-	if (!err) {
-		err = exec_resync_vmeta(env, true);
-	}
-	return err;
-}
-
 static int check_fs_capacity(size_t cap_size)
 {
 	if (cap_size < SILOFS_CAPACITY_SIZE_MIN) {
@@ -414,14 +239,12 @@ static int check_fs_capacity(size_t cap_size)
 
 static int check_want_capacity(const struct silofs_env *env)
 {
-	const struct silofs_args *args = env->base.args;
-	const size_t cap_want = args->capacity;
+	const size_t cap_want = env->base.args->capacity;
 	int err;
 
 	err = check_fs_capacity(cap_want);
 	if (err) {
-		log_err("illegal file-system capacity: "
-		        "cap=%lu err=%d",
+		log_err("illegal file-system capacity: cap=%lu err=%d",
 		        cap_want, err);
 		return err;
 	}
@@ -447,56 +270,16 @@ static int check_owner_ids(const struct silofs_env *env)
 	return 0;
 }
 
-static size_t calc_aligned_fs_cap(size_t cap_want)
+static int exec_format_meta(struct silofs_env *env)
 {
-	const size_t align_size = SILOFS_LSEG_SIZE_MAX;
-
-	return (cap_want / align_size) * align_size;
-}
-
-static int format_umeta(struct silofs_env *env)
-{
-	const struct silofs_args *args = env->base.args;
-	size_t fs_cap;
+	struct silofs_task task;
 	int err;
 
-	err = check_want_capacity(env);
-	if (err) {
-		return err;
+	err = make_task(env, &task);
+	if (!err) {
+		err = silofs_appexec_format_meta(&task);
 	}
-	fs_cap = calc_aligned_fs_cap(args->capacity);
-	err = silofs_env_format_super(env, fs_cap);
-	if (err) {
-		return err;
-	}
-	err = exec_resync_vmeta(env, false);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
-static int format_vmeta(struct silofs_env *env)
-{
-	int err;
-
-	err = format_base_vspmaps(env);
-	if (err) {
-		return err;
-	}
-	err = exec_retry_vclaim(env);
-	if (err) {
-		return err;
-	}
-	err = format_zero_vspace(env);
-	if (err) {
-		return err;
-	}
-	err = exec_resync_vmeta(env, true);
-	if (err) {
-		return err;
-	}
-	return 0;
+	return term_task(&task, err);
 }
 
 int silofs_format_repo(struct silofs_env *env)
@@ -542,22 +325,10 @@ static int require_pack_caddr(const struct silofs_env *env)
 	return silofs_env_pack_caddr(env, &caddr);
 }
 
-static int do_format_fs(struct silofs_env *env)
+static int check_format_fs(struct silofs_env *env)
 {
 	int err;
 
-	err = require_no_uber_caddr(env);
-	if (err) {
-		return err;
-	}
-	err = silofs_env_format_bstore(env);
-	if (err) {
-		return err;
-	}
-	err = silofs_env_format_uber(env);
-	if (err) {
-		return err;
-	}
 	err = check_want_capacity(env);
 	if (err) {
 		return err;
@@ -566,19 +337,26 @@ static int do_format_fs(struct silofs_env *env)
 	if (err) {
 		return err;
 	}
-	err = format_umeta(env);
+	err = require_no_uber_caddr(env);
 	if (err) {
 		return err;
 	}
-	err = format_vmeta(env);
+	return 0;
+}
+
+static int do_format_fs(struct silofs_env *env)
+{
+	int err;
+
+	err = check_format_fs(env);
 	if (err) {
 		return err;
 	}
-	err = format_rootdir(env);
+	err = silofs_env_format_bstore(env);
 	if (err) {
 		return err;
 	}
-	err = silofs_env_commit_uber(env);
+	err = exec_format_meta(env);
 	if (err) {
 		return err;
 	}

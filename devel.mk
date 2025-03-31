@@ -219,6 +219,7 @@ endif
 ifeq ($(CC), gcc)
 CFLAGS += -pie
 CFLAGS += -Walloc-zero
+CFLAGS += -Wbidi-chars=any
 CFLAGS += -Wduplicated-branches
 CFLAGS += -Wduplicated-cond
 CFLAGS += -Wlogical-op
@@ -226,6 +227,8 @@ CFLAGS += -Wl,-z,nodlopen
 CFLAGS += -Wl,-z,noexecstack
 CFLAGS += -Wl,-z,now
 CFLAGS += -Wl,-z,relro
+CFLAGS += -Wl,--as-needed
+CFLAGS += -Wl,--no-copy-dt-needed-entries
 CFLAGS += -Wmaybe-uninitialized
 CFLAGS += -Wmultistatement-macros
 CFLAGS += -Wpacked-not-aligned

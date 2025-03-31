@@ -50,8 +50,8 @@ long silofs_uaddr_compare(const struct silofs_uaddr *uaddr1,
 bool silofs_uaddr_isequal(const struct silofs_uaddr *uaddr1,
                           const struct silofs_uaddr *uaddr2);
 
-const struct silofs_volid *
-silofs_uaddr_volid(const struct silofs_uaddr *uaddr);
+const struct silofs_volumeid *
+silofs_uaddr_volumeid(const struct silofs_uaddr *uaddr);
 
 const struct silofs_lsid *silofs_uaddr_lsid(const struct silofs_uaddr *uaddr);
 
@@ -78,7 +78,7 @@ void silofs_uaddr64b_xtoh(const struct silofs_uaddr64b *uaddr64,
 #define uaddr_reset(ua)                 silofs_uaddr_reset(ua)
 #define uaddr_isequal(ua1, ua2)         silofs_uaddr_isequal(ua1, ua2)
 #define uaddr_setup(ua, ls, p, o)       silofs_uaddr_setup(ua, ls, p, o)
-#define uaddr_volid(ua)                 silofs_uaddr_volid(ua)
+#define uaddr_volumeid(ua)                 silofs_uaddr_volumeid(ua)
 #define uaddr_lsid(ua)                  silofs_uaddr_lsid(ua)
 #define uaddr_ltype(ua)                 silofs_uaddr_ltype(ua)
 #define uaddr_height(ua)                silofs_uaddr_height(ua)

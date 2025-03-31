@@ -397,29 +397,29 @@ void silofs_uber_reset_sb_ulink(struct silofs_uber *uber)
 	silofs_ulink_reset(&uber->sb_ulink);
 }
 
-void silofs_uber_volid(const struct silofs_uber *uber,
-                       struct silofs_volid *out_volid)
+void silofs_uber_volumeid(const struct silofs_uber *uber,
+                          struct silofs_volumeid *out_vid)
 {
 	const struct silofs_uaddr *sb_uaddr = &uber->sb_ulink.uaddr;
 
-	silofs_volid_assign(out_volid, &sb_uaddr->laddr.lsid.volid);
+	silofs_volumeid_assign(out_vid, &sb_uaddr->laddr.lsid.volumeid);
 }
 
-static void uber_uaddr_by_volid(const struct silofs_volid *volid,
-                                struct silofs_uaddr *out_uaddr)
+static void uber_uaddr_by_volumeid(const struct silofs_volumeid *volumeid,
+                                   struct silofs_uaddr *out_uaddr)
 {
 	struct silofs_lsid lsid;
 	const enum silofs_ltype ltype = SILOFS_LTYPE_UBER;
 	const enum silofs_height height = SILOFS_HEIGHT_BOOT;
 
-	silofs_lsid_setup(&lsid, volid, 0, ltype, height, ltype);
+	silofs_lsid_setup(&lsid, volumeid, 0, ltype, height, ltype);
 	silofs_uaddr_setup(out_uaddr, &lsid, 0, 0);
 }
 
-void silofs_make_uber_uaddr(const struct silofs_volid *volid,
+void silofs_make_uber_uaddr(const struct silofs_volumeid *volumeid,
                             struct silofs_uaddr *out_uaddr)
 {
-	uber_uaddr_by_volid(volid, out_uaddr);
+	uber_uaddr_by_volumeid(volumeid, out_uaddr);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

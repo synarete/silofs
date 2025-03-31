@@ -57,12 +57,6 @@ static void tm64b_xtoh(const struct silofs_tm64b *tm64, struct tm *tm)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void sb_assign(struct silofs_super_block *sb,
-                      const struct silofs_super_block *sb_other)
-{
-	memcpy(sb, sb_other, sizeof(*sb));
-}
-
 static uint64_t sb_magic(const struct silofs_super_block *sb)
 {
 	return silofs_le64_to_cpu(sb->sb_magic);
@@ -111,17 +105,6 @@ sb_set_swversion(struct silofs_super_block *sb, const char *sw_version)
 	memcpy(sb->sb_sw_version, sw_version, min(len, len_max));
 }
 
-static void
-sb_fs_uuid(const struct silofs_super_block *sb, struct silofs_uuid *out_uuid)
-{
-	silofs_uuid_assign(out_uuid, &sb->sb_fs_uuid);
-}
-
-static void sb_generate_fs_uuid(struct silofs_super_block *sb)
-{
-	silofs_uuid_generate(&sb->sb_fs_uuid);
-}
-
 int silofs_sb_check_version(const struct silofs_super_block *sb)
 {
 	if (sb_magic(sb) != SILOFS_SUPER_MAGIC) {
@@ -161,49 +144,48 @@ static enum silofs_height sb_height(const struct silofs_super_block *sb)
 	return vrange.height;
 }
 
-static void
-sb_volid(const struct silofs_super_block *sb, struct silofs_volid *out_volid)
+static void sb_lv_base(const struct silofs_super_block *sb,
+                       struct silofs_volumeid *out_vid)
 {
-	silofs_volid_assign(out_volid, &sb->sb_volid);
+	silofs_volumeid_assign(out_vid, &sb->sb_lv_base);
+}
+
+static void sb_set_lv_base(struct silofs_super_block *sb,
+                           const struct silofs_volumeid *vid)
+{
+	silofs_volumeid_assign(&sb->sb_lv_base, vid);
+}
+
+static void sb_lv_prev(const struct silofs_super_block *sb,
+                       struct silofs_volumeid *out_vid)
+{
+	silofs_volumeid_assign(out_vid, &sb->sb_lv_prev);
+}
+
+static void sb_set_lv_prev(struct silofs_super_block *sb,
+                           const struct silofs_volumeid *vid)
+{
+	silofs_volumeid_assign(&sb->sb_lv_prev, vid);
+}
+
+static void sb_lv_self(const struct silofs_super_block *sb,
+                       struct silofs_volumeid *out_vid)
+{
+	silofs_volumeid_assign(out_vid, &sb->sb_lv_self);
+}
+
+static void sb_set_lv_self(struct silofs_super_block *sb,
+                           const struct silofs_volumeid *vid)
+{
+	silofs_volumeid_assign(&sb->sb_lv_self, vid);
 }
 
 static void
-sb_set_volid(struct silofs_super_block *sb, const struct silofs_volid *volid)
+sb_set_lv_ids(struct silofs_super_block *sb, const struct silofs_volumeid *vid)
 {
-	silofs_volid_assign(&sb->sb_volid, volid);
-}
-
-static void
-sb_self(const struct silofs_super_block *sb, struct silofs_uaddr *out_uaddr)
-{
-	silofs_uaddr64b_xtoh(&sb->sb_self_uaddr, out_uaddr);
-}
-
-static void
-sb_set_self(struct silofs_super_block *sb, const struct silofs_uaddr *uaddr)
-{
-	silofs_uaddr64b_htox(&sb->sb_self_uaddr, uaddr);
-	sb_set_volid(sb, &uaddr->laddr.lsid.volid);
-}
-
-static void
-sb_origin(const struct silofs_super_block *sb, struct silofs_uaddr *out_uaddr)
-{
-	silofs_uaddr64b_xtoh(&sb->sb_orig_uaddr, out_uaddr);
-}
-
-static void
-sb_set_origin(struct silofs_super_block *sb, const struct silofs_uaddr *uaddr)
-{
-	silofs_uaddr64b_htox(&sb->sb_orig_uaddr, uaddr);
-}
-
-static void sb_generate_volid(struct silofs_super_block *sb)
-{
-	struct silofs_volid volid;
-
-	silofs_volid_generate(&volid);
-	sb_set_volid(sb, &volid);
+	sb_set_lv_base(sb, vid);
+	sb_set_lv_prev(sb, vid);
+	sb_set_lv_self(sb, vid);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -484,7 +466,7 @@ sb_gen_rootiv_of(struct silofs_super_block *sb, enum silofs_ltype ltype)
 	sb_set_rootiv_of(sb, ltype, &iv);
 }
 
-static void sb_gen_rootivs(struct silofs_super_block *sb)
+static void sb_generate_rootivs(struct silofs_super_block *sb)
 {
 	enum silofs_ltype ltype;
 
@@ -509,42 +491,40 @@ static void sb_clone_rootivs(struct silofs_super_block *sb,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void sb_init(struct silofs_super_block *sb)
+static void
+sb_init(struct silofs_super_block *sb, const struct silofs_volumeid *vid)
 {
 	sb_set_magic(sb, SILOFS_SUPER_MAGIC);
 	sb_set_version(sb, SILOFS_FMT_VERSION);
 	sb_set_flags(sb, SILOFS_SUPERF_NONE);
 	sb_set_swversion(sb, silofs_version.string);
-	sb_generate_fs_uuid(sb);
+	sb_set_lv_ids(sb, vid);
 	sb->sb_endianness = SILOFS_ENDIANNESS_LE;
 	sb_reset_sproots(sb);
-	sb_gen_rootivs(sb);
-	sb_generate_volid(sb);
+	sb_generate_rootivs(sb);
 	sb_reset_main_lsids(sb);
-	silofs_uaddr64b_reset(&sb->sb_self_uaddr);
-	silofs_uaddr64b_reset(&sb->sb_orig_uaddr);
 }
 
 static void sb_fs_birth_tm(const struct silofs_super_block *sb, struct tm *tm)
 {
-	tm64b_xtoh(&sb->sb_fs_birth_tm, tm);
+	tm64b_xtoh(&sb->sb_btime_base, tm);
 }
 
 static void
 sb_set_fs_birth_tm(struct silofs_super_block *sb, const struct tm *tm)
 {
-	tm64b_htox(&sb->sb_fs_birth_tm, tm);
+	tm64b_htox(&sb->sb_btime_base, tm);
 }
 
 static void sb_lv_birth_tm(const struct silofs_super_block *sb, struct tm *tm)
 {
-	tm64b_xtoh(&sb->sb_lv_birth_tm, tm);
+	tm64b_xtoh(&sb->sb_btime_self, tm);
 }
 
 static void
 sb_set_lv_birth_tm(struct silofs_super_block *sb, const struct tm *tm)
 {
-	tm64b_htox(&sb->sb_lv_birth_tm, tm);
+	tm64b_htox(&sb->sb_btime_self, tm);
 }
 
 static void
@@ -564,6 +544,20 @@ static void sb_clone_tms(struct silofs_super_block *sb,
 
 	sb_lv_birth_tm(sb_other, &tm);
 	sb_set_lv_birth_tm(sb, &tm);
+}
+
+static void sb_clone_raw(struct silofs_super_block *sb,
+                         const struct silofs_super_block *sb_other)
+{
+	struct silofs_volumeid vid;
+
+	sb_lv_self(sb, &vid);
+	memcpy(sb, sb_other, sizeof(*sb));
+	sb_set_lv_self(sb, &vid);
+	sb_lv_self(sb_other, &vid);
+	sb_set_lv_prev(sb, &vid);
+	sb_lv_base(sb_other, &vid);
+	sb_set_lv_base(sb, &vid);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -604,35 +598,6 @@ static int sb_verify_sproots(const struct silofs_super_block *sb)
 	return 0;
 }
 
-static int sb_verify_self(const struct silofs_super_block *sb)
-{
-	struct silofs_uaddr uaddr;
-	enum silofs_ltype ltype;
-
-	sb_self(sb, &uaddr);
-	ltype = uaddr_ltype(&uaddr);
-	if (!ltype_issuper(ltype)) {
-		return -SILOFS_EFSCORRUPTED;
-	}
-	if (uaddr_isnull(&uaddr)) {
-		return -SILOFS_EFSCORRUPTED;
-	}
-	return 0;
-}
-
-static int sb_verify_origin(const struct silofs_super_block *sb)
-{
-	struct silofs_uaddr uaddr;
-	enum silofs_ltype ltype;
-
-	sb_origin(sb, &uaddr);
-	ltype = uaddr_ltype(&uaddr);
-	if (!uaddr_isnull(&uaddr) && !ltype_issuper(ltype)) {
-		return -SILOFS_EFSCORRUPTED;
-	}
-	return 0;
-}
-
 static int sb_verify_height(const struct silofs_super_block *sb)
 {
 	const enum silofs_height height = sb_height(sb);
@@ -649,14 +614,6 @@ int silofs_verify_super_block(const struct silofs_super_block *sb)
 	int err;
 
 	err = sb_verify_height(sb);
-	if (err) {
-		return err;
-	}
-	err = sb_verify_self(sb);
-	if (err) {
-		return err;
-	}
-	err = sb_verify_origin(sb);
 	if (err) {
 		return err;
 	}
@@ -717,16 +674,35 @@ int silofs_sbi_shut(struct silofs_sb_info *sbi)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_sbi_fs_uuid(const struct silofs_sb_info *sbi,
-                        struct silofs_uuid *out_uuid)
+static void uaddr_setup_super(struct silofs_uaddr *out_uaddr,
+                              const struct silofs_volumeid *vid)
 {
-	sb_fs_uuid(sbi->sb, out_uuid);
+	struct silofs_lsid lsid;
+
+	silofs_lsid_setup(&lsid, vid, 0, SILOFS_LTYPE_SUPER,
+	                  SILOFS_HEIGHT_SUPER, SILOFS_LTYPE_SUPER);
+	silofs_uaddr_setup(out_uaddr, &lsid, 0, 0);
 }
 
-void silofs_sbi_get_volid(const struct silofs_sb_info *sbi,
-                          struct silofs_volid *out_volid)
+void silofs_sbi_resolve_uaddrs(const struct silofs_sb_info *sbi,
+                               struct silofs_uaddr *out_uaddr_base,
+                               struct silofs_uaddr *out_uaddr_prev,
+                               struct silofs_uaddr *out_uaddr_self)
 {
-	sb_volid(sbi->sb, out_volid);
+	struct silofs_volumeid vid;
+
+	sb_lv_base(sbi->sb, &vid);
+	uaddr_setup_super(out_uaddr_base, &vid);
+	sb_lv_prev(sbi->sb, &vid);
+	uaddr_setup_super(out_uaddr_prev, &vid);
+	sb_lv_self(sbi->sb, &vid);
+	uaddr_setup_super(out_uaddr_self, &vid);
+}
+
+void silofs_sbi_volume_id(const struct silofs_sb_info *sbi,
+                          struct silofs_volumeid *out_vid)
+{
+	sb_lv_self(sbi->sb, out_vid);
 }
 
 int silofs_sbi_main_lseg(const struct silofs_sb_info *sbi,
@@ -845,10 +821,10 @@ void silofs_sbi_bind_child(struct silofs_sb_info *sbi, enum silofs_ltype ltype,
 bool silofs_sbi_ismutable_lsid(const struct silofs_sb_info *sbi,
                                const struct silofs_lsid *lsid)
 {
-	struct silofs_volid volid;
+	struct silofs_volumeid volumeid;
 
-	silofs_sbi_get_volid(sbi, &volid);
-	return silofs_lsid_has_volid(lsid, &volid);
+	silofs_sbi_volume_id(sbi, &volumeid);
+	return silofs_lsid_has_volumeid(lsid, &volumeid);
 }
 
 bool silofs_sbi_ismutable_laddr(const struct silofs_sb_info *sbi,
@@ -965,6 +941,11 @@ const struct silofs_laddr *silofs_sbi_laddr(const struct silofs_sb_info *sbi)
 	return silofs_uni_laddr(&sbi->sb_uni);
 }
 
+static const struct silofs_volumeid *sbi_lvid(const struct silofs_sb_info *sbi)
+{
+	return silofs_uni_lvid(&sbi->sb_uni);
+}
+
 void silofs_sbi_incref(struct silofs_sb_info *sbi)
 {
 	if (likely(sbi != NULL)) {
@@ -995,7 +976,7 @@ void silofs_sbi_set_fs_birth(struct silofs_sb_info *sbi)
 	sbi_dirtify(sbi);
 }
 
-void silofs_sbi_set_lv_birth(struct silofs_sb_info *sbi)
+static void sbi_set_lv_birth(struct silofs_sb_info *sbi)
 {
 	struct tm now;
 
@@ -1019,28 +1000,34 @@ static void sbi_setup_spstats(struct silofs_sb_info *sbi)
 
 void silofs_sbi_setup_spawned(struct silofs_sb_info *sbi)
 {
-	sb_init(sbi->sb);
-	sb_set_self(sbi->sb, sbi_uaddr(sbi));
+	sb_init(sbi->sb, sbi_lvid(sbi));
 	sbi_setup_spstats(sbi);
 	sbi_assign_vspace_span(sbi);
 	sbi_dirtify(sbi);
 }
 
-void silofs_sbi_make_shadow_of(struct silofs_sb_info *sbi,
-                               const struct silofs_sb_info *sbi_other)
+static void sbi_make_fork_of(struct silofs_sb_info *sbi,
+                             const struct silofs_sb_info *sbi_other)
 {
 	struct silofs_super_block *sb = sbi->sb;
 	const struct silofs_super_block *sb_other = sbi_other->sb;
 
-	sb_assign(sb, sb_other);
+	sb_clone_raw(sb, sb_other);
 	sb_clone_sproots(sb, sb_other);
 	sb_clone_rootivs(sb, sb_other);
 	sb_clone_tms(sb, sb_other);
-	sb_generate_volid(sb);
 	sb_reset_main_lsids(sb);
-	sb_set_self(sb, sbi_uaddr(sbi));
-	sb_set_origin(sb, sbi_uaddr(sbi_other));
 	sbi_dirtify(sbi);
+}
+
+void silofs_sbi_make_fork_of(struct silofs_sb_info *sbi_new,
+                             const struct silofs_sb_info *sbi_cur)
+{
+	sbi_make_fork_of(sbi_new, sbi_cur);
+	sbi_set_lv_birth(sbi_new);
+	silofs_sbst_setup_forked(sbi_new, sbi_cur);
+	silofs_sbst_account_super(sbi_new);
+	silofs_sbst_force_into_sb(sbi_new);
 }
 
 void silofs_sbi_resolve_lmap(const struct silofs_sb_info *sbi,

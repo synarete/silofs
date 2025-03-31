@@ -469,10 +469,10 @@ int silofs_env_unlink_uber(struct silofs_env *env)
 
 static void make_super_lsid(struct silofs_lsid *out_lsid)
 {
-	struct silofs_volid volid;
+	struct silofs_volumeid volumeid;
 
-	silofs_volid_generate(&volid);
-	silofs_lsid_setup(out_lsid, &volid, 0, SILOFS_LTYPE_SUPER,
+	silofs_volumeid_generate(&volumeid);
+	silofs_lsid_setup(out_lsid, &volumeid, 0, SILOFS_LTYPE_SUPER,
 	                  SILOFS_HEIGHT_SUPER, SILOFS_LTYPE_SUPER);
 }
 
@@ -624,16 +624,6 @@ int silofs_env_reload_sb_lseg(struct silofs_env *env)
 		return err;
 	}
 	return 0;
-}
-
-static void sbi_make_clone(struct silofs_sb_info *sbi_new,
-                           const struct silofs_sb_info *sbi_cur)
-{
-	silofs_sbi_make_shadow_of(sbi_new, sbi_cur);
-	silofs_sbi_set_lv_birth(sbi_new);
-	silofs_sbst_rebuild_from(sbi_new, sbi_cur);
-	silofs_sbst_account_super(sbi_new);
-	silofs_sbst_force_into_sb(sbi_new);
 }
 
 static int env_shut_sb(struct silofs_env *env)
@@ -815,9 +805,9 @@ static void env_drop_uamap(struct silofs_env *env)
 	silofs_lcache_drop_uamap(env->base.lcache);
 }
 
-static int env_clone_rebind_super(struct silofs_env *env,
-                                  const struct silofs_sb_info *sbi_cur,
-                                  struct silofs_sb_info **out_sbi)
+static int env_fork_rebind_super(struct silofs_env *env,
+                                 const struct silofs_sb_info *sbi_cur,
+                                 struct silofs_sb_info **out_sbi)
 {
 	struct silofs_sb_info *sbi = NULL;
 	int err;
@@ -827,7 +817,7 @@ static int env_clone_rebind_super(struct silofs_env *env,
 	if (err) {
 		return err;
 	}
-	sbi_make_clone(sbi, sbi_cur);
+	silofs_sbi_make_fork_of(sbi, sbi_cur);
 	env_rebind_sbi(env, sbi);
 
 	*out_sbi = sbi;
@@ -851,7 +841,7 @@ static int env_do_forkfs(struct silofs_env *env)
 		return err;
 	}
 
-	err = env_clone_rebind_super(env, sbi_cur, &sbi_alt);
+	err = env_fork_rebind_super(env, sbi_cur, &sbi_alt);
 	if (err) {
 		return err;
 	}
@@ -860,7 +850,7 @@ static int env_do_forkfs(struct silofs_env *env)
 		return err;
 	}
 
-	err = env_clone_rebind_super(env, sbi_cur, &sbi_new);
+	err = env_fork_rebind_super(env, sbi_cur, &sbi_new);
 	if (err) {
 		return err;
 	}

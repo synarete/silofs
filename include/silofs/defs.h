@@ -524,24 +524,24 @@ struct silofs_uuid {
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 /* volume identifier */
-struct silofs_volid {
+struct silofs_volumeid {
 	struct silofs_uuid id;
 } silofs_attr_aligned16;
 
 /* persistent volume segment identifier */
 struct silofs_pvsid32b {
-	struct silofs_volid volid;
-	uint32_t            index;
-	uint8_t             pad[12];
+	struct silofs_volumeid volumeid;
+	uint32_t               index;
+	uint8_t                pad[12];
 } silofs_attr_aligned16;
 
 /* persistent volume segments range */
 struct silofs_pvsegr64b {
-	struct silofs_volid volid;
-	uint32_t            base_index;
-	uint32_t            curr_index;
-	int64_t             curr_pos;
-	uint8_t             pad[32];
+	struct silofs_volumeid volumeid;
+	uint32_t               base_index;
+	uint32_t               curr_index;
+	int64_t                curr_pos;
+	uint8_t                pad[32];
 } silofs_attr_aligned64;
 
 /* persistent object address */
@@ -555,13 +555,13 @@ struct silofs_paddr48b {
 
 /* logical volume's segment identifier */
 struct silofs_lsid32b {
-	struct silofs_volid volid;
-	uint32_t            lsize;
-	uint32_t            vindex;
-	uint8_t             vspace;
-	uint8_t             height;
-	uint8_t             ltype;
-	uint8_t             pad[5];
+	struct silofs_volumeid volumeid;
+	uint32_t               lsize;
+	uint32_t               vindex;
+	uint8_t                vspace;
+	uint8_t                height;
+	uint8_t                ltype;
+	uint8_t                pad[5];
 } silofs_attr_aligned16;
 
 /* logical address */
@@ -708,16 +708,15 @@ struct silofs_super_block {
 	uint8_t                     sb_endianness;
 	uint8_t                     sb_reserved2[23];
 	uint8_t                     sb_sw_version[64];
-	struct silofs_uuid          sb_fs_uuid;
-	uint8_t                     sb_reserved3[368];
+	uint8_t                     sb_reserved3[384];
 	/* 512..1K */
-	struct silofs_tm64b         sb_fs_birth_tm;
-	struct silofs_tm64b         sb_lv_birth_tm;
-	struct silofs_uaddr64b      sb_self_uaddr;
-	struct silofs_uaddr64b      sb_orig_uaddr;
-	struct silofs_volid         sb_volid;
+	struct silofs_tm64b         sb_btime_base;
+	struct silofs_tm64b         sb_btime_self;
+	struct silofs_volumeid      sb_lv_base;
+	struct silofs_volumeid      sb_lv_prev;
+	struct silofs_volumeid      sb_lv_self;
 	struct silofs_vrange128     sb_vrange;
-	uint8_t                     sb_reserved4b[224];
+	uint8_t                     sb_reserved4b[320];
 	/* 1K..2K */
 	struct silofs_sb_sproots    sb_sproots;
 	/* 2K..3K */

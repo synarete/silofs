@@ -547,7 +547,7 @@ void silofs_sbst_setup_spawned(struct silofs_sb_info *sbi)
 	spst_init(&sbi->sb_spst_curr);
 }
 
-void silofs_sbst_rebuild_from(struct silofs_sb_info *sbi,
+void silofs_sbst_setup_forked(struct silofs_sb_info *sbi,
                               const struct silofs_sb_info *sbi_from)
 {
 	struct silofs_space_stats spst;

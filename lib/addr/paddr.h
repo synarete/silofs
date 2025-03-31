@@ -21,8 +21,8 @@
 
 /* persistent-volume segment id */
 struct silofs_pvsid {
-	struct silofs_volid volid;
-	uint32_t            index;
+	struct silofs_volumeid volumeid;
+	uint32_t               index;
 };
 
 /* persistent object address within specific volume segment */
@@ -41,15 +41,15 @@ uint32_t silofs_ptype_size(enum silofs_ptype ptype);
 
 const struct silofs_pvsid *silofs_pvsid_none(void);
 
-void silofs_pvsid_init(struct silofs_pvsid       *pvsid,
-                       const struct silofs_volid *volid, uint32_t idx);
+void silofs_pvsid_init(struct silofs_pvsid          *pvsid,
+                       const struct silofs_volumeid *volumeid, uint32_t idx);
 
 void silofs_pvsid_fini(struct silofs_pvsid *pvsid);
 
 bool silofs_pvsid_isnull(const struct silofs_pvsid *pvsid);
 
-bool silofs_pvsid_has_volid(const struct silofs_pvsid *pvsid,
-                            const struct silofs_volid *volid);
+bool silofs_pvsid_has_volumeid(const struct silofs_pvsid    *pvsid,
+                               const struct silofs_volumeid *volumeid);
 
 void silofs_pvsid_generate(struct silofs_pvsid *pvsid);
 

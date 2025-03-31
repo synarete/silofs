@@ -897,7 +897,7 @@ static int inspc_walk_boot(struct silofs_inspect_ctx *insp_ctx)
 	struct silofs_uaddr uber_uaddr = { .voff = -1 };
 	const struct silofs_laddr *sb_laddr = sbi_laddr(insp_ctx->sbi);
 
-	silofs_make_uber_uaddr(&sb_laddr->lsid.volid, &uber_uaddr);
+	silofs_make_uber_uaddr(&sb_laddr->lsid.volumeid, &uber_uaddr);
 	return insp_ctx->cb(insp_ctx->user_ctx, &uber_uaddr.laddr);
 }
 

@@ -150,7 +150,7 @@ bool silofs_lni_isevictable(const struct silofs_lnode_info *lni);
 
 bool silofs_lni_isdirty(const struct silofs_lnode_info *lni);
 
-int silofs_lni_verify_view(struct silofs_lnode_info *lni);
+int silofs_lni_verify_view(const struct silofs_lnode_info *lni);
 
 struct silofs_lnode_info *
 silofs_lni_from_dqe(const struct silofs_dq_elem *dqe);
@@ -191,6 +191,9 @@ silofs_uni_uaddr(const struct silofs_unode_info *uni);
 
 const struct silofs_laddr *
 silofs_uni_laddr(const struct silofs_unode_info *uni);
+
+const struct silofs_volumeid *
+silofs_uni_lvid(const struct silofs_unode_info *uni);
 
 struct silofs_unode_info *
 silofs_uni_from_lni(const struct silofs_lnode_info *lni);

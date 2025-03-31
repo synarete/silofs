@@ -130,7 +130,7 @@ static void vni_update_llink(struct silofs_vnode_info *vni,
 	silofs_llink_assign(&vni->vn_llink, llink);
 }
 
-static int vni_verify_view(struct silofs_vnode_info *vni)
+static int vni_verify_view(const struct silofs_vnode_info *vni)
 {
 	return silofs_lni_verify_view(&vni->vn_lni);
 }
@@ -436,21 +436,21 @@ static void vstgc_make_lsid_of_spmaps(const struct silofs_vstage_ctx *vstg_ctx,
                                       enum silofs_ltype ltype,
                                       struct silofs_lsid *out_lsid)
 {
-	struct silofs_volid volid;
+	struct silofs_volumeid volumeid;
 	const enum silofs_ltype vspace = vstg_ctx->vspace;
 
-	silofs_sbi_get_volid(vstg_ctx->sbi, &volid);
-	silofs_lsid_setup(out_lsid, &volid, voff, vspace, height, ltype);
+	silofs_sbi_volume_id(vstg_ctx->sbi, &volumeid);
+	silofs_lsid_setup(out_lsid, &volumeid, voff, vspace, height, ltype);
 }
 
 static void
 vstgc_make_lsid_of_vdata(const struct silofs_vstage_ctx *vstg_ctx, loff_t voff,
                          enum silofs_ltype ltype, struct silofs_lsid *out_lsid)
 {
-	struct silofs_volid volid;
+	struct silofs_volumeid volumeid;
 
-	silofs_sbi_get_volid(vstg_ctx->sbi, &volid);
-	silofs_lsid_setup(out_lsid, &volid, voff, vstg_ctx->vspace,
+	silofs_sbi_volume_id(vstg_ctx->sbi, &volumeid);
+	silofs_lsid_setup(out_lsid, &volumeid, voff, vstg_ctx->vspace,
 	                  SILOFS_HEIGHT_VDATA, ltype);
 }
 

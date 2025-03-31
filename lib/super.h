@@ -47,6 +47,9 @@ const struct silofs_uaddr *silofs_sbi_uaddr(const struct silofs_sb_info *sbi);
 
 const struct silofs_laddr *silofs_sbi_laddr(const struct silofs_sb_info *sbi);
 
+const struct silofs_volumeid *
+silofs_sbi_lvid(const struct silofs_sb_info *sbi);
+
 void silofs_sbi_incref(struct silofs_sb_info *sbi);
 
 void silofs_sbi_decref(struct silofs_sb_info *sbi);
@@ -59,8 +62,6 @@ void silofs_sbi_setup_spawned(struct silofs_sb_info *sbi);
 
 void silofs_sbi_set_fs_birth(struct silofs_sb_info *sbi);
 
-void silofs_sbi_set_lv_birth(struct silofs_sb_info *sbi);
-
 int silofs_sbi_sproot_of(const struct silofs_sb_info *sbi,
                          enum silofs_ltype            ltype,
                          struct silofs_uaddr         *out_uaddr);
@@ -72,8 +73,8 @@ int silofs_sbi_resolve_child(const struct silofs_sb_info *sbi,
 void silofs_sbi_bind_child(struct silofs_sb_info *sbi, enum silofs_ltype ltype,
                            const struct silofs_ulink *ulink);
 
-void silofs_sbi_make_shadow_of(struct silofs_sb_info       *sbi,
-                               const struct silofs_sb_info *sbi_other);
+void silofs_sbi_make_fork_of(struct silofs_sb_info       *sbi_new,
+                             const struct silofs_sb_info *sbi_cur);
 
 void silofs_sbi_resolve_lmap(const struct silofs_sb_info *sbi,
                              struct silofs_spmap_lmap    *out_lmap);
@@ -86,11 +87,13 @@ bool silofs_sbi_test_flags(const struct silofs_sb_info *sbi,
 
 int silof_sbi_check_mut_fs(const struct silofs_sb_info *sbi);
 
-void silofs_sbi_fs_uuid(const struct silofs_sb_info *sbi,
-                        struct silofs_uuid          *out_uuid);
+void silofs_sbi_resolve_uaddrs(const struct silofs_sb_info *sbi,
+                               struct silofs_uaddr         *out_uaddr_base,
+                               struct silofs_uaddr         *out_uaddr_prev,
+                               struct silofs_uaddr         *out_uaddr_self);
 
-void silofs_sbi_get_volid(const struct silofs_sb_info *sbi,
-                          struct silofs_volid         *out_volid);
+void silofs_sbi_volume_id(const struct silofs_sb_info *sbi,
+                          struct silofs_volumeid      *out_vid);
 
 int silofs_sbi_main_lseg(const struct silofs_sb_info *sbi,
                          enum silofs_ltype            vspace,
@@ -127,7 +130,7 @@ bool silofs_sbi_ismutable_laddr(const struct silofs_sb_info *sbi,
 
 void silofs_sbst_setup_spawned(struct silofs_sb_info *sbi);
 
-void silofs_sbst_rebuild_from(struct silofs_sb_info       *sbi,
+void silofs_sbst_setup_forked(struct silofs_sb_info       *sbi,
                               const struct silofs_sb_info *sbi_from);
 
 void silofs_sbst_account_super(struct silofs_sb_info *sbi);

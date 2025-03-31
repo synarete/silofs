@@ -33,7 +33,7 @@ static void uni_set_env(struct silofs_unode_info *uni, struct silofs_env *env)
 	uni->un_lni.ln_env = env;
 }
 
-static int uni_verify_view(struct silofs_unode_info *uni)
+static int uni_verify_view(const struct silofs_unode_info *uni)
 {
 	return silofs_lni_verify_view(&uni->un_lni);
 }
@@ -67,7 +67,7 @@ static void sbi_set_active(struct silofs_sb_info *sbi)
 	silofs_uni_set_active(&sbi->sb_uni);
 }
 
-static int sbi_verify_view(struct silofs_sb_info *sbi)
+static int sbi_verify_view(const struct silofs_sb_info *sbi)
 {
 	return uni_verify_view(&sbi->sb_uni);
 }
@@ -85,6 +85,17 @@ static void sbi_set_spawned(struct silofs_sb_info *sbi)
 static void sbi_refresh_spstats(struct silofs_sb_info *sbi)
 {
 	silofs_sbst_fetch_from_sb(sbi);
+}
+
+static int sbi_verify_uaddr(const struct silofs_sb_info *sbi)
+{
+	const struct silofs_uaddr *uaddr = silofs_sbi_uaddr(sbi);
+	struct silofs_uaddr base;
+	struct silofs_uaddr prev;
+	struct silofs_uaddr self;
+
+	silofs_sbi_resolve_uaddrs(sbi, &base, &prev, &self);
+	return silofs_uaddr_isequal(uaddr, &self) ? 0 : -SILOFS_EFSCORRUPTED;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -397,6 +408,10 @@ stage_super_at(struct silofs_env *env, const struct silofs_ulink *ulink,
 		goto out_err;
 	}
 	err = sbi_verify_view(sbi);
+	if (err) {
+		goto out_err;
+	}
+	err = sbi_verify_uaddr(sbi);
 	if (err) {
 		goto out_err;
 	}

@@ -91,11 +91,11 @@ void silofs_uber_set_sb_ulink(struct silofs_uber        *uber,
 
 void silofs_uber_reset_sb_ulink(struct silofs_uber *uber);
 
-void silofs_uber_volid(const struct silofs_uber *uber,
-                       struct silofs_volid      *out_volid);
+void silofs_uber_volumeid(const struct silofs_uber *uber,
+                          struct silofs_volumeid   *out_vid);
 
-void silofs_make_uber_uaddr(const struct silofs_volid *volid,
-                            struct silofs_uaddr       *out_uaddr);
+void silofs_make_uber_uaddr(const struct silofs_volumeid *volumeid,
+                            struct silofs_uaddr          *out_uaddr);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

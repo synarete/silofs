@@ -57,16 +57,17 @@ bni_paddr(const struct silofs_btnode_info *bni)
 	return &bni->bn_pni.pn_paddr;
 }
 
-static const struct silofs_volid *
-bni_volid(const struct silofs_btnode_info *bni)
+static const struct silofs_volumeid *
+bni_volumeid(const struct silofs_btnode_info *bni)
 {
-	return &bni->bn_pni.pn_paddr.pvsid.volid;
+	return &bni->bn_pni.pn_paddr.pvsid.volumeid;
 }
 
-static bool bni_has_same_volid(const struct silofs_btnode_info *bni,
-                               const struct silofs_btnode_info *bni_other)
+static bool bni_has_same_volumeid(const struct silofs_btnode_info *bni,
+                                  const struct silofs_btnode_info *bni_other)
 {
-	return silofs_volid_isequal(bni_volid(bni), bni_volid(bni_other));
+	return silofs_volumeid_isequal(bni_volumeid(bni),
+	                               bni_volumeid(bni_other));
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -111,7 +112,7 @@ static int validate_child_btnode(const struct silofs_btnode_info *parent_bni,
 		return -SILOFS_EFSCORRUPTED;
 	}
 	/* XXX */
-	silofs_assert(bni_has_same_volid(parent_bni, child_bni));
+	silofs_assert(bni_has_same_volumeid(parent_bni, child_bni));
 	return 0;
 }
 
@@ -207,18 +208,18 @@ void silofs_btree_update_root(struct silofs_btree *btree,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static const struct silofs_volid *
-btree_main_volid(const struct silofs_btree *btree)
+static const struct silofs_volumeid *
+btree_main_volumeid(const struct silofs_btree *btree)
 {
-	return &btree->bt_base.pvsegr->volid;
+	return &btree->bt_base.pvsegr->volumeid;
 }
 
-static bool btree_has_main_volid_as(const struct silofs_btree *btree,
-                                    const struct silofs_paddr *paddr)
+static bool btree_has_main_volumeid_as(const struct silofs_btree *btree,
+                                       const struct silofs_paddr *paddr)
 {
-	const struct silofs_volid *volid = btree_main_volid(btree);
+	const struct silofs_volumeid *volumeid = btree_main_volumeid(btree);
 
-	return silofs_volid_isequal(volid, &paddr->pvsid.volid);
+	return silofs_volumeid_isequal(volumeid, &paddr->pvsid.volumeid);
 }
 
 static bool btree_is_writeable(const struct silofs_btree *btree,
@@ -226,7 +227,7 @@ static bool btree_is_writeable(const struct silofs_btree *btree,
 {
 	const struct silofs_paddr *paddr = bni_paddr(bni);
 
-	return btree_has_main_volid_as(btree, paddr);
+	return btree_has_main_volumeid_as(btree, paddr);
 }
 
 static void btree_update_bni(const struct silofs_btree *btree,

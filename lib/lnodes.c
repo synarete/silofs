@@ -152,7 +152,7 @@ static void lni_fini(struct silofs_lnode_info *lni)
 	lni->ln_view = NULL;
 }
 
-int silofs_lni_verify_view(struct silofs_lnode_info *lni)
+int silofs_lni_verify_view(const struct silofs_lnode_info *lni)
 {
 	silofs_assert_not_null(lni->ln_view);
 	return verify_view_by(lni->ln_view, lni->ln_ltype);
@@ -419,6 +419,12 @@ const struct silofs_laddr *
 silofs_uni_laddr(const struct silofs_unode_info *uni)
 {
 	return &uni->un_ulink.uaddr.laddr;
+}
+
+const struct silofs_volumeid *
+silofs_uni_lvid(const struct silofs_unode_info *uni)
+{
+	return &uni->un_ulink.uaddr.laddr.lsid.volumeid;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

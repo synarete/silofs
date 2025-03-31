@@ -2398,24 +2398,20 @@ static void fill_query_repo(const struct silofs_inode_info *ii,
 static void fill_query_boot(const struct silofs_inode_info *ii,
                             struct silofs_ioc_query *query)
 {
-	const struct silofs_env *env = ii_env(ii);
-	struct silofs_bootpath bootpath = { .repodir.len = 0 };
-	struct silofs_uuid fs_uuid;
 	struct silofs_caddr caddr;
-	struct silofs_volid volid;
-	const size_t bsz = sizeof(query->u.boot.name);
+	struct silofs_volumeid lvid;
+	struct silofs_bootpath bootpath = { .repodir.len = 0 };
+	struct silofs_query_boot *qboot = &query->u.boot;
 
-	silofs_env_uber_caddr(env, &caddr);
+	STATICASSERT_EQ(sizeof(qboot->lvid), sizeof(lvid.id.uu));
 
+	silofs_env_uber_caddr(ii_env(ii), &caddr);
+	silofs_sbi_volume_id(ii_sbi(ii), &lvid);
 	bootpath_of(ii, &bootpath);
-	str_to_buf(&bootpath.fsname, query->u.boot.name, bsz);
+
+	str_to_buf(&bootpath.fsname, qboot->name, sizeof(qboot->name));
 	silofs_caddr_to_name2(&caddr, query->u.boot.xref);
-
-	silofs_sbi_fs_uuid(env->sbi, &fs_uuid);
-	silofs_uuid_copyto(&fs_uuid, query->u.boot.fsid);
-
-	silofs_sbi_get_volid(env->sbi, &volid);
-	silofs_uuid_copyto(&volid.id, query->u.boot.volid);
+	silofs_uuid_copyto(&lvid.id, qboot->lvid);
 }
 
 static void fill_query_proc(const struct silofs_inode_info *ii,

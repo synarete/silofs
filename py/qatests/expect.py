@@ -26,7 +26,13 @@ class Expect:
         if a != b:
             sa = self._stringify(a)
             sb = self._stringify(b)
-            self.error(f"not equal: {sa} != {sb}")
+            self.error(f"expected to be equal: {sa} != {sb}")
+
+    def ne(self, a, b) -> None:
+        if a == b:
+            sa = self._stringify(a)
+            sb = self._stringify(b)
+            self.error(f"should not be equal: {sa} == {sb}")
 
     def gt(self, a, b) -> None:
         if a <= b:

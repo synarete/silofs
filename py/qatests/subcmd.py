@@ -255,10 +255,10 @@ class SubcmdSilofs(SubcmdExec):
 
     def show_boot(self, pathname: Path) -> typing.Tuple[str, str, UUID]:
         boot_info = self.execute_sub(["show", "boot", pathname]).split()
-        boot_name = boot_info[0]
-        boot_addr = boot_info[1]
-        fs_uuid = UUID(boot_info[2])
-        return (boot_name, boot_addr, fs_uuid)
+        name = boot_info[0]
+        addr = boot_info[1]
+        lvid = UUID(boot_info[2])
+        return (name, addr, lvid)
 
     def show_proc(self, pathname: Path) -> str:
         return self.execute_sub(["show", "proc", pathname])

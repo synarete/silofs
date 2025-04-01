@@ -2406,7 +2406,7 @@ static void fill_query_boot(const struct silofs_inode_info *ii,
 	STATICASSERT_EQ(sizeof(qboot->lvid), sizeof(lvid.id.uu));
 
 	silofs_env_uber_caddr(ii_env(ii), &caddr);
-	silofs_sbi_volume_id(ii_sbi(ii), &lvid);
+	silofs_sbi_self_lvid(ii_sbi(ii), &lvid);
 	bootpath_of(ii, &bootpath);
 
 	str_to_buf(&bootpath.fsname, qboot->name, sizeof(qboot->name));

@@ -89,13 +89,12 @@ static void sbi_refresh_spstats(struct silofs_sb_info *sbi)
 
 static int sbi_verify_uaddr(const struct silofs_sb_info *sbi)
 {
-	const struct silofs_uaddr *uaddr = silofs_sbi_uaddr(sbi);
-	struct silofs_uaddr base;
-	struct silofs_uaddr prev;
-	struct silofs_uaddr self;
+	struct silofs_sb_refs sb_refs;
+	bool eq;
 
-	silofs_sbi_resolve_uaddrs(sbi, &base, &prev, &self);
-	return silofs_uaddr_isequal(uaddr, &self) ? 0 : -SILOFS_EFSCORRUPTED;
+	silofs_sbi_resolve_refs(sbi, &sb_refs);
+	eq = silofs_uaddr_isequal(sbi_uaddr(sbi), &sb_refs.curr);
+	return eq ? 0 : -SILOFS_EFSCORRUPTED;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

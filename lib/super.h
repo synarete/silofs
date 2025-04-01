@@ -60,8 +60,6 @@ int silofs_sbi_shut(struct silofs_sb_info *sbi);
 
 void silofs_sbi_setup_spawned(struct silofs_sb_info *sbi);
 
-void silofs_sbi_set_fs_birth(struct silofs_sb_info *sbi);
-
 int silofs_sbi_sproot_of(const struct silofs_sb_info *sbi,
                          enum silofs_ltype            ltype,
                          struct silofs_uaddr         *out_uaddr);
@@ -87,12 +85,7 @@ bool silofs_sbi_test_flags(const struct silofs_sb_info *sbi,
 
 int silof_sbi_check_mut_fs(const struct silofs_sb_info *sbi);
 
-void silofs_sbi_resolve_uaddrs(const struct silofs_sb_info *sbi,
-                               struct silofs_uaddr         *out_uaddr_base,
-                               struct silofs_uaddr         *out_uaddr_prev,
-                               struct silofs_uaddr         *out_uaddr_self);
-
-void silofs_sbi_volume_id(const struct silofs_sb_info *sbi,
+void silofs_sbi_self_lvid(const struct silofs_sb_info *sbi,
                           struct silofs_volumeid      *out_vid);
 
 int silofs_sbi_main_lseg(const struct silofs_sb_info *sbi,
@@ -115,6 +108,15 @@ bool silofs_sbi_ismutable_lsid(const struct silofs_sb_info *sbi,
 
 bool silofs_sbi_ismutable_laddr(const struct silofs_sb_info *sbi,
                                 const struct silofs_laddr   *laddr);
+
+struct silofs_sb_refs {
+	struct silofs_uaddr curr;
+	struct silofs_uaddr prev;
+	struct silofs_uaddr base;
+};
+
+void silofs_sbi_resolve_refs(const struct silofs_sb_info *sbi,
+                             struct silofs_sb_refs       *out_refs);
 
 #ifdef SILOFS_USE_PRIVATE
 #define sbi_env(sbi)            silofs_sbi_env(sbi)

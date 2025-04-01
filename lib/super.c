@@ -168,16 +168,16 @@ static void sb_set_lv_prev(struct silofs_super_block *sb,
 	silofs_volumeid_assign(&sb->sb_lv_prev, vid);
 }
 
-static void sb_lv_self(const struct silofs_super_block *sb,
+static void sb_lv_curr(const struct silofs_super_block *sb,
                        struct silofs_volumeid *out_vid)
 {
-	silofs_volumeid_assign(out_vid, &sb->sb_lv_self);
+	silofs_volumeid_assign(out_vid, &sb->sb_lv_curr);
 }
 
-static void sb_set_lv_self(struct silofs_super_block *sb,
+static void sb_set_lv_curr(struct silofs_super_block *sb,
                            const struct silofs_volumeid *vid)
 {
-	silofs_volumeid_assign(&sb->sb_lv_self, vid);
+	silofs_volumeid_assign(&sb->sb_lv_curr, vid);
 }
 
 static void
@@ -185,7 +185,7 @@ sb_set_lv_ids(struct silofs_super_block *sb, const struct silofs_volumeid *vid)
 {
 	sb_set_lv_base(sb, vid);
 	sb_set_lv_prev(sb, vid);
-	sb_set_lv_self(sb, vid);
+	sb_set_lv_curr(sb, vid);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -236,18 +236,18 @@ sb_mainlsid_by(const struct silofs_super_block *sb, enum silofs_ltype ltype)
 static struct silofs_lsid32b *
 sb_mainlsid_by2(struct silofs_super_block *sb, enum silofs_ltype ltype)
 {
-	const struct silofs_lsid32b *bid = sb_mainlsid_by(sb, ltype);
+	const struct silofs_lsid32b *lsid32 = sb_mainlsid_by(sb, ltype);
 
-	return unconst(bid);
+	return unconst(lsid32);
 }
 
 static void sb_main_lsid(const struct silofs_super_block *sb,
                          enum silofs_ltype ltype, struct silofs_lsid *out_lsid)
 {
-	const struct silofs_lsid32b *bid = sb_mainlsid_by(sb, ltype);
+	const struct silofs_lsid32b *lsid32 = sb_mainlsid_by(sb, ltype);
 
-	if (likely(bid != NULL)) {
-		silofs_lsid32b_xtoh(bid, out_lsid);
+	if (likely(lsid32 != NULL)) {
+		silofs_lsid32b_xtoh(lsid32, out_lsid);
 	} else {
 		silofs_lsid_reset(out_lsid);
 	}
@@ -505,33 +505,40 @@ sb_init(struct silofs_super_block *sb, const struct silofs_volumeid *vid)
 	sb_reset_main_lsids(sb);
 }
 
-static void sb_fs_birth_tm(const struct silofs_super_block *sb, struct tm *tm)
+static void sb_btime_curr(const struct silofs_super_block *sb, struct tm *tm)
+{
+	tm64b_xtoh(&sb->sb_btime_curr, tm);
+}
+
+static void
+sb_set_btime_curr(struct silofs_super_block *sb, const struct tm *tm)
+{
+	tm64b_htox(&sb->sb_btime_curr, tm);
+}
+
+static void
+sb_set_btime_prev(struct silofs_super_block *sb, const struct tm *tm)
+{
+	tm64b_htox(&sb->sb_btime_prev, tm);
+}
+
+static void sb_btime_base(const struct silofs_super_block *sb, struct tm *tm)
 {
 	tm64b_xtoh(&sb->sb_btime_base, tm);
 }
 
 static void
-sb_set_fs_birth_tm(struct silofs_super_block *sb, const struct tm *tm)
+sb_set_btime_base(struct silofs_super_block *sb, const struct tm *tm)
 {
 	tm64b_htox(&sb->sb_btime_base, tm);
-}
-
-static void sb_lv_birth_tm(const struct silofs_super_block *sb, struct tm *tm)
-{
-	tm64b_xtoh(&sb->sb_btime_self, tm);
-}
-
-static void
-sb_set_lv_birth_tm(struct silofs_super_block *sb, const struct tm *tm)
-{
-	tm64b_htox(&sb->sb_btime_self, tm);
 }
 
 static void
 sb_set_birth_tms(struct silofs_super_block *sb, const struct tm *tm)
 {
-	sb_set_fs_birth_tm(sb, tm);
-	sb_set_lv_birth_tm(sb, tm);
+	sb_set_btime_curr(sb, tm);
+	sb_set_btime_prev(sb, tm);
+	sb_set_btime_base(sb, tm);
 }
 
 static void sb_clone_tms(struct silofs_super_block *sb,
@@ -539,11 +546,11 @@ static void sb_clone_tms(struct silofs_super_block *sb,
 {
 	struct tm tm;
 
-	sb_fs_birth_tm(sb_other, &tm);
-	sb_set_fs_birth_tm(sb, &tm);
+	sb_btime_base(sb_other, &tm);
+	sb_set_btime_base(sb, &tm);
 
-	sb_lv_birth_tm(sb_other, &tm);
-	sb_set_lv_birth_tm(sb, &tm);
+	sb_btime_curr(sb_other, &tm);
+	sb_set_btime_prev(sb, &tm);
 }
 
 static void sb_clone_raw(struct silofs_super_block *sb,
@@ -551,10 +558,10 @@ static void sb_clone_raw(struct silofs_super_block *sb,
 {
 	struct silofs_volumeid vid;
 
-	sb_lv_self(sb, &vid);
+	sb_lv_curr(sb, &vid);
 	memcpy(sb, sb_other, sizeof(*sb));
-	sb_set_lv_self(sb, &vid);
-	sb_lv_self(sb_other, &vid);
+	sb_set_lv_curr(sb, &vid);
+	sb_lv_curr(sb_other, &vid);
 	sb_set_lv_prev(sb, &vid);
 	sb_lv_base(sb_other, &vid);
 	sb_set_lv_base(sb, &vid);
@@ -625,7 +632,7 @@ int silofs_verify_super_block(const struct silofs_super_block *sb)
 	if (err) {
 		return err;
 	}
-	err = silofs_verify_space_stats(&sb->sb_space_stats_base);
+	err = silofs_verify_space_stats(&sb->sb_space_stats_prev);
 	if (err) {
 		return err;
 	}
@@ -684,25 +691,23 @@ static void uaddr_setup_super(struct silofs_uaddr *out_uaddr,
 	silofs_uaddr_setup(out_uaddr, &lsid, 0, 0);
 }
 
-void silofs_sbi_resolve_uaddrs(const struct silofs_sb_info *sbi,
-                               struct silofs_uaddr *out_uaddr_base,
-                               struct silofs_uaddr *out_uaddr_prev,
-                               struct silofs_uaddr *out_uaddr_self)
+void silofs_sbi_resolve_refs(const struct silofs_sb_info *sbi,
+                             struct silofs_sb_refs *out_refs)
 {
 	struct silofs_volumeid vid;
 
 	sb_lv_base(sbi->sb, &vid);
-	uaddr_setup_super(out_uaddr_base, &vid);
+	uaddr_setup_super(&out_refs->base, &vid);
 	sb_lv_prev(sbi->sb, &vid);
-	uaddr_setup_super(out_uaddr_prev, &vid);
-	sb_lv_self(sbi->sb, &vid);
-	uaddr_setup_super(out_uaddr_self, &vid);
+	uaddr_setup_super(&out_refs->prev, &vid);
+	sb_lv_curr(sbi->sb, &vid);
+	uaddr_setup_super(&out_refs->curr, &vid);
 }
 
-void silofs_sbi_volume_id(const struct silofs_sb_info *sbi,
+void silofs_sbi_self_lvid(const struct silofs_sb_info *sbi,
                           struct silofs_volumeid *out_vid)
 {
-	sb_lv_self(sbi->sb, out_vid);
+	sb_lv_curr(sbi->sb, out_vid);
 }
 
 int silofs_sbi_main_lseg(const struct silofs_sb_info *sbi,
@@ -823,7 +828,7 @@ bool silofs_sbi_ismutable_lsid(const struct silofs_sb_info *sbi,
 {
 	struct silofs_volumeid volumeid;
 
-	silofs_sbi_volume_id(sbi, &volumeid);
+	silofs_sbi_self_lvid(sbi, &volumeid);
 	return silofs_lsid_has_volumeid(lsid, &volumeid);
 }
 
@@ -967,7 +972,7 @@ void silofs_sbi_dirtify(struct silofs_sb_info *sbi)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_sbi_set_fs_birth(struct silofs_sb_info *sbi)
+static void sbi_setup_birth_tms_now(struct silofs_sb_info *sbi)
 {
 	struct tm now;
 
@@ -981,7 +986,7 @@ static void sbi_set_lv_birth(struct silofs_sb_info *sbi)
 	struct tm now;
 
 	silofs_localtime_now(&now);
-	sb_set_lv_birth_tm(sbi->sb, &now);
+	sb_set_btime_curr(sbi->sb, &now);
 	sbi_dirtify(sbi);
 }
 
@@ -1002,6 +1007,7 @@ void silofs_sbi_setup_spawned(struct silofs_sb_info *sbi)
 {
 	sb_init(sbi->sb, sbi_lvid(sbi));
 	sbi_setup_spstats(sbi);
+	sbi_setup_birth_tms_now(sbi);
 	sbi_assign_vspace_span(sbi);
 	sbi_dirtify(sbi);
 }

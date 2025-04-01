@@ -547,7 +547,6 @@ static int env_spawn_super(struct silofs_env *env, size_t capacity,
 	if (err) {
 		return err;
 	}
-	silofs_sbi_set_fs_birth(sbi);
 	silofs_sbst_set_capacity(sbi, capacity);
 	*out_sbi = sbi;
 	return 0;

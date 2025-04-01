@@ -55,7 +55,7 @@ struct silofs_unode_info {
 struct silofs_sb_info {
 	struct silofs_unode_info   sb_uni;
 	struct silofs_space_stats  sb_spst_curr;
-	struct silofs_space_stats  sb_spst_base;
+	struct silofs_space_stats  sb_spst_prev;
 	struct silofs_super_block *sb;
 };
 

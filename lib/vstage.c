@@ -431,27 +431,36 @@ static int vstgc_spawn_lseg(const struct silofs_vstage_ctx *vstg_ctx,
 	return err;
 }
 
+static void
+vstgc_make_lsid_of(const struct silofs_vstage_ctx *vstg_ctx, loff_t voff,
+                   enum silofs_height height, enum silofs_ltype ltype,
+                   struct silofs_lsid *out_lsid)
+{
+	struct silofs_volumeid lvid;
+
+	silofs_sbi_self_lvid(vstg_ctx->sbi, &lvid);
+	silofs_lsid_setup(out_lsid, &lvid, voff, vstg_ctx->vspace, height,
+	                  ltype);
+}
+
 static void vstgc_make_lsid_of_spmaps(const struct silofs_vstage_ctx *vstg_ctx,
                                       loff_t voff, enum silofs_height height,
                                       enum silofs_ltype ltype,
                                       struct silofs_lsid *out_lsid)
 {
-	struct silofs_volumeid volumeid;
-	const enum silofs_ltype vspace = vstg_ctx->vspace;
+	silofs_assert_ne(ltype, vstg_ctx->vspace);
 
-	silofs_sbi_volume_id(vstg_ctx->sbi, &volumeid);
-	silofs_lsid_setup(out_lsid, &volumeid, voff, vspace, height, ltype);
+	vstgc_make_lsid_of(vstg_ctx, voff, height, ltype, out_lsid);
 }
 
 static void
 vstgc_make_lsid_of_vdata(const struct silofs_vstage_ctx *vstg_ctx, loff_t voff,
                          enum silofs_ltype ltype, struct silofs_lsid *out_lsid)
 {
-	struct silofs_volumeid volumeid;
+	silofs_assert_eq(ltype, vstg_ctx->vspace);
 
-	silofs_sbi_volume_id(vstg_ctx->sbi, &volumeid);
-	silofs_lsid_setup(out_lsid, &volumeid, voff, vstg_ctx->vspace,
-	                  SILOFS_HEIGHT_VDATA, ltype);
+	vstgc_make_lsid_of(vstg_ctx, voff, SILOFS_HEIGHT_VDATA, ltype,
+	                   out_lsid);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

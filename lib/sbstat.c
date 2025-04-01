@@ -539,7 +539,7 @@ static void sbst_collect_stats(const struct silofs_sb_info *sbi,
                                struct silofs_space_stats *out_spst)
 {
 	spst_assign(out_spst, &sbi->sb_spst_curr);
-	spst_accum_gauges(out_spst, &sbi->sb_spst_base);
+	spst_accum_gauges(out_spst, &sbi->sb_spst_prev);
 }
 
 void silofs_sbst_setup_spawned(struct silofs_sb_info *sbi)
@@ -554,7 +554,7 @@ void silofs_sbst_setup_forked(struct silofs_sb_info *sbi,
 
 	sbst_collect_stats(sbi_from, &spst);
 	spst_assign(&sbi->sb_spst_curr, &spst);
-	spst_assign(&sbi->sb_spst_base, &spst);
+	spst_assign(&sbi->sb_spst_prev, &spst);
 	spst_reset_spgs(&sbi->sb_spst_curr);
 	sbi_dirtify(sbi);
 }
@@ -629,7 +629,7 @@ static size_t sbst_bytes_used(const struct silofs_sb_info *sbi)
 
 static fsfilcnt_t sbst_inodes_used(const struct silofs_sb_info *sbi)
 {
-	const ssize_t ninodes_base = spst_ninodes(&sbi->sb_spst_base);
+	const ssize_t ninodes_base = spst_ninodes(&sbi->sb_spst_prev);
 	const ssize_t ninodes_curr = spst_ninodes(&sbi->sb_spst_curr);
 
 	return (fsfilcnt_t)(ninodes_base + ninodes_curr);
@@ -742,7 +742,7 @@ void silofs_sbst_fetch_from_sb(struct silofs_sb_info *sbi)
 	const struct silofs_super_block *sb = sbi->sb;
 
 	spst1k_xtoh(&sb->sb_space_stats_curr, &sbi->sb_spst_curr);
-	spst1k_xtoh(&sb->sb_space_stats_base, &sbi->sb_spst_base);
+	spst1k_xtoh(&sb->sb_space_stats_prev, &sbi->sb_spst_prev);
 }
 
 void silofs_sbst_force_into_sb(struct silofs_sb_info *sbi)
@@ -750,5 +750,5 @@ void silofs_sbst_force_into_sb(struct silofs_sb_info *sbi)
 	struct silofs_super_block *sb = sbi->sb;
 
 	spst1k_htox(&sb->sb_space_stats_curr, &sbi->sb_spst_curr);
-	spst1k_htox(&sb->sb_space_stats_base, &sbi->sb_spst_base);
+	spst1k_htox(&sb->sb_space_stats_prev, &sbi->sb_spst_prev);
 }

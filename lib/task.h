@@ -54,7 +54,7 @@ struct silofs_task {
 	volatile bool             t_fs_locked;
 	bool                      t_ex_locked;
 	bool                      t_exclusive;
-	bool                      t_uber_op;
+	bool                      t_bootrec_op;
 	bool                      t_kwrite;
 	bool                      t_runnable;
 };

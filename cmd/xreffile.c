@@ -161,7 +161,7 @@ void cmd_load_fs_xref(struct silofs_boot_args *boot_args)
 
 	cmd_assign_xref(boot_args, txt);
 	err = silofs_check_fs_xref(&boot_args->xref);
-	if (err == -SILOFS_EBADUBER) {
+	if (err == -SILOFS_EBADBOOTREC) {
 		cmd_diez("not a fs xref: %s (%s)", boot_args->fsname,
 		         boot_args->xref.s);
 	} else if (err) {

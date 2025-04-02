@@ -33,7 +33,7 @@
 #define SILOFS_REPO_META_MAGIC (0x2353464F4C495323L)
 
 /* boot-record magic-signature (ASCII: "@SILOFS@") */
-#define SILOFS_UBER_MAGIC (0x4053464F4C495340L)
+#define SILOFS_BOOTREC_MAGIC (0x4053464F4C495340L)
 
 /* pack-index header magic-signature (ASCII: "%silofs%") */
 #define SILOFS_AR_INDEX_MAGIC (0x2573666F6C697325L)
@@ -102,7 +102,7 @@
 #define SILOFS_NSGRP_MAX (16)
 
 /* size of boot-record */
-#define SILOFS_UBER_SIZE (1024)
+#define SILOFS_BOOTREC_SIZE (1024)
 
 /* number of octets in UUID */
 #define SILOFS_UUID_SIZE (16)
@@ -339,9 +339,9 @@
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-/* uber-block flags */
-enum silofs_uberf {
-	SILOFS_UBERF_NONE = 0x00,
+/* bootrec-block flags */
+enum silofs_bootrecf {
+	SILOFS_BOOTRECF_NONE = 0x00,
 };
 
 /* common-header flags */
@@ -360,7 +360,7 @@ enum silofs_endianness {
 /* content-addressable sub-types */
 enum silofs_ctype {
 	SILOFS_CTYPE_NONE    = 0,
-	SILOFS_CTYPE_UBER    = 1,
+	SILOFS_CTYPE_BOOTREC = 1,
 	SILOFS_CTYPE_PACKIDX = 2,
 	SILOFS_CTYPE_ENCSEG  = 3,
 };
@@ -383,19 +383,19 @@ enum silofs_pnodef {
 
 /* logical-elements types */
 enum silofs_ltype {
-	SILOFS_LTYPE_NONE   = 0,
-	SILOFS_LTYPE_UBER   = 1,
-	SILOFS_LTYPE_SUPER  = 2,
-	SILOFS_LTYPE_SPNODE = 3,
-	SILOFS_LTYPE_SPLEAF = 4,
-	SILOFS_LTYPE_INODE  = 5,
-	SILOFS_LTYPE_XANODE = 6,
-	SILOFS_LTYPE_SYMVAL = 7,
-	SILOFS_LTYPE_DTNODE = 8,
-	SILOFS_LTYPE_FTNODE = 9,
-	SILOFS_LTYPE_DATA1K = 10,
-	SILOFS_LTYPE_DATA4K = 11,
-	SILOFS_LTYPE_DATABK = 12,
+	SILOFS_LTYPE_NONE    = 0,
+	SILOFS_LTYPE_BOOTREC = 1,
+	SILOFS_LTYPE_SUPER   = 2,
+	SILOFS_LTYPE_SPNODE  = 3,
+	SILOFS_LTYPE_SPLEAF  = 4,
+	SILOFS_LTYPE_INODE   = 5,
+	SILOFS_LTYPE_XANODE  = 6,
+	SILOFS_LTYPE_SYMVAL  = 7,
+	SILOFS_LTYPE_DTNODE  = 8,
+	SILOFS_LTYPE_FTNODE  = 9,
+	SILOFS_LTYPE_DATA1K  = 10,
+	SILOFS_LTYPE_DATA4K  = 11,
+	SILOFS_LTYPE_DATABK  = 12,
 	SILOFS_LTYPE_LAST, /* keep last */
 };
 
@@ -603,7 +603,7 @@ struct silofs_vaddr64 {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-struct silofs_uber1k {
+struct silofs_bootrec1k {
 	uint64_t                ub_magic;
 	uint64_t                ub_version;
 	struct silofs_uuid      ub_uuid;

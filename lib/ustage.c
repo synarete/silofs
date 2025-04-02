@@ -19,7 +19,7 @@
 #include <sys/stat.h>
 #include <sys/mount.h>
 #include "repo.h"
-#include "uber.h"
+#include "bootrec.h"
 #include "lnodes.h"
 #include "lcache.h"
 #include "encdec.h"

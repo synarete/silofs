@@ -16,7 +16,7 @@
  */
 #include "configs.h"
 #include "infra.h"
-#include "uber.h"
+#include "bootrec.h"
 #include "lnodes.h"
 #include "encdec.h"
 #include "env.h"
@@ -27,7 +27,7 @@ static void resolve_ivkey_of(const struct silofs_env *env,
                              struct silofs_ivkey *out_ivkey)
 {
 	struct silofs_iv laddriv;
-	const struct silofs_ivkey *ivkey = &env->uber.main_ivkey;
+	const struct silofs_ivkey *ivkey = &env->bootrec.main_ivkey;
 
 	silofs_laddr_as_iv(laddr, &laddriv);
 	silofs_ivkey_assign(out_ivkey, ivkey);

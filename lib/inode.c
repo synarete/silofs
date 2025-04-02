@@ -25,7 +25,7 @@
 #include <stdbool.h>
 #include <limits.h>
 #include "uidgid.h"
-#include "uber.h"
+#include "bootrec.h"
 #include "lnodes.h"
 #include "task.h"
 #include "inode.h"

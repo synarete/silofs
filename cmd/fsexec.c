@@ -79,10 +79,10 @@ static void cmd_report_err_and_die(const struct silofs_env *env, int status,
 	case SILOFS_EBADREF:
 		cmd_die(err, "%s%sbad ref: %s", xmsg, xtag, rname);
 		break;
-	case SILOFS_ENOUBER:
+	case SILOFS_ENOBOOTREC:
 		cmd_die(err, "%s%smissing boot: %s", xmsg, xtag, rname);
 		break;
-	case SILOFS_EBADUBER:
+	case SILOFS_EBADBOOTREC:
 		cmd_die(err, "%s%sbad boot: %s", xmsg, xtag, rname);
 		break;
 	case SILOFS_EKEYEXPIRED:

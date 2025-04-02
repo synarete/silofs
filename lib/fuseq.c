@@ -32,7 +32,7 @@
 #include <silofs/ioctls.h>
 #include <silofs/mntsvc.h>
 #include "infra.h"
-#include "uber.h"
+#include "bootrec.h"
 #include "lnodes.h"
 #include "task.h"
 #include "inode.h"
@@ -2909,7 +2909,8 @@ static void assing_ioc_xref(int8_t *xref, const struct silofs_caddr *caddr)
 static int do_ioc_clone(const struct silofs_fuseq_cmd_ctx *fcc)
 {
 	union silofs_ioc_u ioc_u;
-	const struct silofs_uber_caddrs *caddrs = &fcc->args->out.clone.caddrs;
+	const struct silofs_bootrec_caddrs *caddrs =
+		&fcc->args->out.clone.caddrs;
 	void *buf_out = fcc->fqd->fqd_outb->u.iob.b;
 	struct silofs_ioc_forkfs *cl_out = &ioc_u.forkfs;
 	const size_t bsz_in_min = 1;

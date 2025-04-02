@@ -17,7 +17,7 @@
 #include "configs.h"
 #include "infra.h"
 #include "repo.h"
-#include "uber.h"
+#include "bootrec.h"
 #include "lnodes.h"
 #include "encdec.h"
 #include "task.h"
@@ -438,7 +438,7 @@ void silofs_task_init(struct silofs_task *task, struct silofs_env *env)
 	task->t_fs_locked = false;
 	task->t_ex_locked = false;
 	task->t_exclusive = false;
-	task->t_uber_op = false;
+	task->t_bootrec_op = false;
 	task->t_kwrite = false;
 	task->t_runnable = true;
 }
@@ -517,7 +517,7 @@ static void task_purge(struct silofs_task *task)
 
 void silofs_task_lock_fs(struct silofs_task *task)
 {
-	if (!task->t_fs_locked && !task->t_uber_op) {
+	if (!task->t_fs_locked && !task->t_bootrec_op) {
 		silofs_env_lock(task->t_env);
 		task->t_fs_locked = true;
 	}
@@ -525,7 +525,7 @@ void silofs_task_lock_fs(struct silofs_task *task)
 
 void silofs_task_unlock_fs(struct silofs_task *task)
 {
-	if (task->t_fs_locked && !task->t_uber_op) {
+	if (task->t_fs_locked && !task->t_bootrec_op) {
 		silofs_env_unlock(task->t_env);
 		task->t_fs_locked = false;
 	}

@@ -122,7 +122,7 @@ spgs256_gauge_of(const struct silofs_space_gauges256 *spgs256,
 	case SILOFS_LTYPE_DATABK:
 		ret = &spgs256->sg_ndatabk;
 		break;
-	case SILOFS_LTYPE_UBER:
+	case SILOFS_LTYPE_BOOTREC:
 	case SILOFS_LTYPE_NONE:
 	case SILOFS_LTYPE_LAST:
 	default:
@@ -340,7 +340,7 @@ spgs_gauge_of(const struct silofs_space_gauges *spgs, enum silofs_ltype ltype)
 	case SILOFS_LTYPE_DATABK:
 		ret = &spgs->ndatabk;
 		break;
-	case SILOFS_LTYPE_UBER:
+	case SILOFS_LTYPE_BOOTREC:
 	case SILOFS_LTYPE_NONE:
 	case SILOFS_LTYPE_LAST:
 	default:

@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 #include "configs.h"
-#include "uber.h"
+#include "bootrec.h"
 #include "lnodes.h"
 #include "lcache.h"
 #include "task.h"

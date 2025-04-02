@@ -22,7 +22,7 @@
 
 bool silofs_ltype_isnone(enum silofs_ltype ltype);
 
-bool silofs_ltype_isuber(enum silofs_ltype ltype);
+bool silofs_ltype_isbootrec(enum silofs_ltype ltype);
 
 bool silofs_ltype_issuper(enum silofs_ltype ltype);
 
@@ -63,7 +63,7 @@ size_t silofs_ltype_nkbs(enum silofs_ltype ltype);
 #define ltype_size(lt)          silofs_ltype_size(lt)
 #define ltype_ssize(lt)         silofs_ltype_ssize(lt)
 #define ltype_isnone(lt)        silofs_ltype_isnone(lt)
-#define ltype_isuber(lt)        silofs_ltype_isuber(lt)
+#define ltype_isbootrec(lt)        silofs_ltype_isbootrec(lt)
 #define ltype_issuper(lt)       silofs_ltype_issuper(lt)
 #define ltype_isspnode(lt)      silofs_ltype_isspnode(lt)
 #define ltype_isspleaf(lt)      silofs_ltype_isspleaf(lt)

@@ -24,7 +24,7 @@
 #include <stdio.h>
 #include <limits.h>
 #include "infra.h"
-#include "uber.h"
+#include "bootrec.h"
 #include "lnodes.h"
 #include "lcache.h"
 #include "task.h"

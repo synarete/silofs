@@ -256,7 +256,7 @@ void cmd_execute_view(void)
 	/* Open repository */
 	cmd_view_open_repo(&ctx);
 
-	/* Require valid uber-record */
+	/* Require valid boot-record */
 	cmd_view_sense_fs(&ctx);
 
 	/* Open file-system */

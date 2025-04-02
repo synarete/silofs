@@ -22,7 +22,7 @@
 #include <silofs/appexec.h>
 #include "repo.h"
 #include "idsmap.h"
-#include "uber.h"
+#include "bootrec.h"
 #include "lcache.h"
 #include "lnodes.h"
 #include "uidgid.h"
@@ -63,7 +63,7 @@ static int reload_vspace(struct silofs_task *task)
 		err = silofs_rescan_vspace_of(task, ltype);
 		if (err) {
 			log_err("failed to reload vspace: ltype=%d err=%d",
-				ltype, err);
+			        ltype, err);
 			return err;
 		}
 	}
@@ -177,14 +177,14 @@ static int do_claim_reclaim(struct silofs_task *task, enum silofs_ltype ltype)
 	}
 	if (vaddr.off != voff_exp) {
 		log_err("bad claim: ltype=%d exp=%ld got=%ld", ltype, voff_exp,
-			vaddr.off);
+		        vaddr.off);
 		return -SILOFS_EFSCORRUPTED;
 	}
 	drop_caches(task);
 	err = silofs_reclaim_vspace(task, &vaddr);
 	if (err) {
 		log_err("bad reclaim: ltype=%d voff=%ld err=%d", ltype,
-			vaddr.off, err);
+		        vaddr.off, err);
 	}
 	return 0;
 }
@@ -219,7 +219,7 @@ static int require_spmaps_of(struct silofs_task *task, enum silofs_ltype ltype)
 
 	silofs_vaddr_setup(&vaddr, ltype, 0);
 	return silofs_require_spmaps_of(task, &vaddr, SILOFS_STG_COW, &sni,
-					&sli);
+	                                &sli);
 }
 
 static int format_spmaps_of(struct silofs_task *task, enum silofs_ltype ltype)
@@ -331,21 +331,21 @@ static int format_rootdir(struct silofs_task *task)
 	return 0;
 }
 
-static int setup_uber(struct silofs_task *task)
+static int setup_bootrec(struct silofs_task *task)
 {
-	return silofs_env_setup_uber(task->t_env);
+	return silofs_env_setup_bootrec(task->t_env);
 }
 
-static int commit_uber(struct silofs_task *task)
+static int commit_bootrec(struct silofs_task *task)
 {
-	return silofs_env_commit_uber(task->t_env);
+	return silofs_env_commit_bootrec(task->t_env);
 }
 
 static int appexec_format_meta(struct silofs_task *task)
 {
 	int err;
 
-	err = setup_uber(task);
+	err = setup_bootrec(task);
 	if (err) {
 		return err;
 	}
@@ -377,7 +377,7 @@ static int appexec_format_meta(struct silofs_task *task)
 	if (err) {
 		return err;
 	}
-	err = commit_uber(task);
+	err = commit_bootrec(task);
 	if (err) {
 		return err;
 	}
@@ -385,16 +385,16 @@ static int appexec_format_meta(struct silofs_task *task)
 	return 0;
 }
 
-static int reload_uber(const struct silofs_task *task)
+static int reload_bootrec(const struct silofs_task *task)
 {
 	struct silofs_caddr caddr = { .ctype = SILOFS_CTYPE_NONE };
 	int err;
 
-	err = silofs_env_uber_caddr(task->t_env, &caddr);
+	err = silofs_env_bootrec_caddr(task->t_env, &caddr);
 	if (err) {
 		return err;
 	}
-	err = silofs_env_reload_uber(task->t_env);
+	err = silofs_env_reload_bootrec(task->t_env);
 	if (err) {
 		return err;
 	}
@@ -405,7 +405,7 @@ static int appexec_reload_fs(struct silofs_task *task)
 {
 	int err;
 
-	err = reload_uber(task);
+	err = reload_bootrec(task);
 	if (err) {
 		return err;
 	}
@@ -417,11 +417,11 @@ static int appexec_reload_fs(struct silofs_task *task)
 	return 0;
 }
 
-static int unlink_uber(struct silofs_task *task)
+static int unlink_bootrec(struct silofs_task *task)
 {
 	int err;
 
-	err = silofs_env_unlink_uber(task->t_env);
+	err = silofs_env_unlink_bootrec(task->t_env);
 	if (err) {
 		return err;
 	}
@@ -431,10 +431,10 @@ static int unlink_uber(struct silofs_task *task)
 
 static int appexec_fork_fs(struct silofs_task *task)
 {
-	struct silofs_uber_caddrs caddrs;
+	struct silofs_bootrec_caddrs caddrs;
 	int err;
 
-	err = silofs_env_uber_caddr(task->t_env, &caddrs.curr);
+	err = silofs_env_bootrec_caddr(task->t_env, &caddrs.curr);
 	if (err) {
 		return err;
 	}
@@ -493,7 +493,7 @@ static int appexec_remove_fs(struct silofs_task *task)
 	if (err) {
 		return err;
 	}
-	err = unlink_uber(task);
+	err = unlink_bootrec(task);
 	if (err) {
 		return err;
 	}
@@ -507,7 +507,7 @@ static int appexec_remove_fs(struct silofs_task *task)
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static void caddr_to_xref(const struct silofs_caddr *caddr, int status,
-			  struct silofs_xref *out_xref)
+                          struct silofs_xref *out_xref)
 {
 	if (status == 0) {
 		silofs_xref_from_caddr(out_xref, caddr);
@@ -520,7 +520,7 @@ int silofs_check_fs_xref(const struct silofs_xref *xref)
 {
 	struct silofs_caddr caddr;
 
-	return silofs_xref_to_caddr_with(xref, SILOFS_CTYPE_UBER, &caddr);
+	return silofs_xref_to_caddr_with(xref, SILOFS_CTYPE_BOOTREC, &caddr);
 }
 
 int silofs_check_ar_xref(const struct silofs_xref *xref)
@@ -549,7 +549,7 @@ static int do_map_task_creds(struct silofs_task *task)
 	struct silofs_cred *icred = &task->t_oper.op_creds.fs_cred;
 
 	return silofs_idsmap_map_uidgid(silofs_task_idsmap(task), xcred->uid,
-					xcred->gid, &icred->uid, &icred->gid);
+	                                xcred->gid, &icred->uid, &icred->gid);
 }
 
 static int map_task_creds(struct silofs_task *task)
@@ -571,7 +571,7 @@ static int make_task(struct silofs_env *env, struct silofs_task *task)
 	silofs_task_init(task, env);
 	silofs_task_set_ts(task, true);
 	silofs_task_set_creds(task, args->uid, args->gid, args->umask);
-	task->t_uber_op = true;
+	task->t_bootrec_op = true;
 	return map_task_creds(task);
 }
 
@@ -682,7 +682,7 @@ int silofs_sync_fs(struct silofs_env *env, bool drop)
 }
 
 void silofs_stat_fs(const struct silofs_env *env,
-		    struct silofs_cache_stats *cst)
+                    struct silofs_cache_stats *cst)
 {
 	struct silofs_alloc_stat alst = { .nbytes_use = 0 };
 	const struct silofs_alloc *alloc = env->base.alloc;
@@ -716,7 +716,7 @@ static int check_want_capacity(const struct silofs_env *env)
 	err = check_fs_capacity(cap_want);
 	if (err) {
 		log_err("illegal file-system capacity: cap=%lu err=%d",
-			cap_want, err);
+		        cap_want, err);
 		return err;
 	}
 	return 0;
@@ -732,10 +732,10 @@ static int check_owner_ids(const struct silofs_env *env)
 	int err;
 
 	err = silofs_idsmap_map_uidgid(env->base.idsmap, owner_uid, owner_gid,
-				       &suid, &sgid);
+	                               &suid, &sgid);
 	if (err) {
 		log_err("unable to map owner credentials: uid=%ld gid=%ld",
-			(long)owner_uid, (long)owner_gid);
+		        (long)owner_uid, (long)owner_gid);
 		return err;
 	}
 	return 0;
@@ -773,19 +773,19 @@ int silofs_open_repo(struct silofs_env *env)
 	return ret;
 }
 
-static int require_uber_caddr(const struct silofs_env *env)
+static int require_bootrec_caddr(const struct silofs_env *env)
 {
 	struct silofs_caddr caddr = { .ctype = SILOFS_CTYPE_NONE };
 
-	return silofs_env_uber_caddr(env, &caddr);
+	return silofs_env_bootrec_caddr(env, &caddr);
 }
 
-static int require_no_uber_caddr(const struct silofs_env *env)
+static int require_no_bootrec_caddr(const struct silofs_env *env)
 {
 	struct silofs_caddr caddr = { .ctype = SILOFS_CTYPE_NONE };
 	int err;
 
-	err = silofs_env_uber_caddr(env, &caddr);
+	err = silofs_env_bootrec_caddr(env, &caddr);
 	return err ? 0 : -SILOFS_EEXIST;
 }
 
@@ -808,7 +808,7 @@ static int check_format_fs(struct silofs_env *env)
 	if (err) {
 		return err;
 	}
-	err = require_no_uber_caddr(env);
+	err = require_no_bootrec_caddr(env);
 	if (err) {
 		return err;
 	}
@@ -848,11 +848,11 @@ static int do_sense_fs(struct silofs_env *env)
 {
 	int err;
 
-	err = require_uber_caddr(env);
+	err = require_bootrec_caddr(env);
 	if (err) {
 		return err;
 	}
-	err = silofs_env_sense_uber(env);
+	err = silofs_env_sense_bootrec(env);
 	if (err) {
 		return err;
 	}
@@ -981,7 +981,7 @@ int silofs_remove_fs(struct silofs_env *env)
 }
 
 static int exec_inspect_fs(struct silofs_env *env,
-			   const struct silofs_laddr_visitor *lvis)
+                           const struct silofs_laddr_visitor *lvis)
 {
 	struct silofs_task task;
 	int err;
@@ -1033,7 +1033,7 @@ static int do_archive_fs(struct silofs_env *env)
 {
 	int err;
 
-	err = require_uber_caddr(env);
+	err = require_bootrec_caddr(env);
 	if (err) {
 		return err;
 	}
@@ -1092,7 +1092,7 @@ int silofs_restore_fs(struct silofs_env *env)
 }
 
 void silofs_get_args(const struct silofs_env *env,
-		     struct silofs_args *out_args)
+                     struct silofs_args *out_args)
 {
 	memcpy(out_args, env->base.args, sizeof(*out_args));
 }
@@ -1103,14 +1103,14 @@ int silofs_get_fs_xref(struct silofs_env *env, struct silofs_xref *out_xref)
 	int ret;
 
 	silofs_env_lock(env);
-	ret = silofs_env_uber_caddr(env, &caddr);
+	ret = silofs_env_bootrec_caddr(env, &caddr);
 	silofs_env_unlock(env);
 	caddr_to_xref(&caddr, ret, out_xref);
 	return ret;
 }
 
 int silofs_get_fs_base_xref(struct silofs_env *env,
-			    struct silofs_xref *out_xref)
+                            struct silofs_xref *out_xref)
 {
 	struct silofs_caddr caddr = { .ctype = SILOFS_CTYPE_NONE };
 	int ret;
@@ -1123,7 +1123,7 @@ int silofs_get_fs_base_xref(struct silofs_env *env,
 }
 
 int silofs_get_fs_fork_xref(struct silofs_env *env,
-			    struct silofs_xref *out_xref)
+                            struct silofs_xref *out_xref)
 {
 	struct silofs_caddr caddr = { .ctype = SILOFS_CTYPE_NONE };
 	int ret;
@@ -1143,7 +1143,7 @@ int silofs_set_fs_xref(struct silofs_env *env, const struct silofs_xref *xref)
 	silofs_env_lock(env);
 	err = silofs_xref_to_caddr(xref, &caddr);
 	if (!err) {
-		err = silofs_env_set_uber_caddr(env, &caddr);
+		err = silofs_env_set_bootrec_caddr(env, &caddr);
 	}
 	silofs_env_unlock(env);
 	return err;
@@ -1198,7 +1198,7 @@ static int check_endianess(void)
 	if (err) {
 		return err;
 	}
-	err = check_endianess64(SILOFS_UBER_MAGIC, "@SILOFS@");
+	err = check_endianess64(SILOFS_BOOTREC_MAGIC, "@SILOFS@");
 	if (err) {
 		return err;
 	}

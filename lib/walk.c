@@ -16,7 +16,7 @@
  */
 #include "configs.h"
 #include "infra.h"
-#include "uber.h"
+#include "bootrec.h"
 #include "lnodes.h"
 #include "task.h"
 #include "super.h"
@@ -894,11 +894,11 @@ static int inspc_walk_super(struct silofs_inspect_ctx *insp_ctx)
 
 static int inspc_walk_boot(struct silofs_inspect_ctx *insp_ctx)
 {
-	struct silofs_uaddr uber_uaddr = { .voff = -1 };
+	struct silofs_uaddr bootrec_uaddr = { .voff = -1 };
 	const struct silofs_laddr *sb_laddr = sbi_laddr(insp_ctx->sbi);
 
-	silofs_make_uber_uaddr(&sb_laddr->lsid.volumeid, &uber_uaddr);
-	return insp_ctx->cb(insp_ctx->user_ctx, &uber_uaddr.laddr);
+	silofs_make_bootrec_uaddr(&sb_laddr->lsid.volumeid, &bootrec_uaddr);
+	return insp_ctx->cb(insp_ctx->user_ctx, &bootrec_uaddr.laddr);
 }
 
 static int inspc_walk_fs(struct silofs_inspect_ctx *insp_ctx)

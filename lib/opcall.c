@@ -16,7 +16,7 @@
  */
 #include "configs.h"
 #include <linux/fuse_kernel.h>
-#include "uber.h"
+#include "bootrec.h"
 #include "lnodes.h"
 #include "task.h"
 #include "inode.h"

@@ -22,7 +22,7 @@
 #include <time.h>
 #include "uidgid.h"
 #include "idsmap.h"
-#include "uber.h"
+#include "bootrec.h"
 #include "lnodes.h"
 #include "task.h"
 #include "inode.h"
@@ -1585,7 +1585,7 @@ out:
 }
 
 int silofs_exec_forkfs(struct silofs_task *task, ino_t ino, int flags,
-                       struct silofs_uber_caddrs *out_caddrs)
+                       struct silofs_bootrec_caddrs *out_caddrs)
 {
 	struct silofs_inode_info *dir_ii = NULL;
 	int err;

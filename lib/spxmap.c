@@ -498,7 +498,7 @@ spamaps_sub_map(struct silofs_spamaps *spam, enum silofs_ltype ltype)
 	case SILOFS_LTYPE_SYMVAL:
 		ret = &spam->spa_symval;
 		break;
-	case SILOFS_LTYPE_UBER:
+	case SILOFS_LTYPE_BOOTREC:
 	case SILOFS_LTYPE_SUPER:
 	case SILOFS_LTYPE_SPNODE:
 	case SILOFS_LTYPE_SPLEAF:

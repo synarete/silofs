@@ -23,7 +23,7 @@
 #include "crypt.h"
 #include "addr.h"
 #include "uidgid.h"
-#include "uber.h"
+#include "bootrec.h"
 
 /* top-level operations counters/stats */
 struct silofs_env_opstat {
@@ -53,16 +53,16 @@ struct silofs_env {
 	struct silofs_env_base   base;
 	struct silofs_rwlock     rwlock;
 	struct silofs_mutex      mutex;
-	struct silofs_cipher     uber_cipher;
+	struct silofs_cipher     bootrec_cipher;
 	struct silofs_cipher     enc_cipher;
 	struct silofs_cipher     dec_cipher;
 	struct silofs_mdigest    mdigest;
-	struct silofs_ivkey      uber_ivkey;
-	struct silofs_caddr      uber_caddr;
-	struct silofs_caddr      uber_base_caddr;
-	struct silofs_caddr      uber_fork_caddr;
+	struct silofs_ivkey      bootrec_ivkey;
+	struct silofs_caddr      bootrec_caddr;
+	struct silofs_caddr      bootrec_base_caddr;
+	struct silofs_caddr      bootrec_fork_caddr;
 	struct silofs_caddr      pack_caddr;
-	struct silofs_uber       uber;
+	struct silofs_bootrec    bootrec;
 	struct silofs_env_opstat opstat;
 	struct silofs_sb_info   *sbi;
 	struct silofs_cred       owner_cred;
@@ -95,15 +95,15 @@ int silofs_env_shut(struct silofs_env *env);
 
 int silofs_env_format_bstore(struct silofs_env *env);
 
-int silofs_env_setup_uber(struct silofs_env *env);
+int silofs_env_setup_bootrec(struct silofs_env *env);
 
-int silofs_env_commit_uber(struct silofs_env *env);
+int silofs_env_commit_bootrec(struct silofs_env *env);
 
-int silofs_env_sense_uber(struct silofs_env *env);
+int silofs_env_sense_bootrec(struct silofs_env *env);
 
-int silofs_env_reload_uber(struct silofs_env *env);
+int silofs_env_reload_bootrec(struct silofs_env *env);
 
-int silofs_env_unlink_uber(struct silofs_env *env);
+int silofs_env_unlink_bootrec(struct silofs_env *env);
 
 int silofs_env_format_super(struct silofs_env *env, size_t capacity);
 
@@ -120,8 +120,8 @@ void silofs_env_uptime(const struct silofs_env *env, time_t *out_uptime);
 void silofs_env_allocstat(const struct silofs_env  *env,
                           struct silofs_alloc_stat *out_alst);
 
-int silofs_env_update_by(struct silofs_env        *env,
-                         const struct silofs_uber *uber);
+int silofs_env_update_by(struct silofs_env           *env,
+                         const struct silofs_bootrec *bootrec);
 
 int silofs_env_sense_pack(struct silofs_env *env);
 
@@ -129,11 +129,11 @@ void silofs_env_drop_caches(struct silofs_env *env);
 
 bool silofs_env_hasflag(const struct silofs_env *env, enum silofs_flags f);
 
-int silofs_env_uber_caddr(const struct silofs_env *env,
-                          struct silofs_caddr     *out_caddr);
+int silofs_env_bootrec_caddr(const struct silofs_env *env,
+                             struct silofs_caddr     *out_caddr);
 
-int silofs_env_set_uber_caddr(struct silofs_env         *env,
-                              const struct silofs_caddr *caddr);
+int silofs_env_set_bootrec_caddr(struct silofs_env         *env,
+                                 const struct silofs_caddr *caddr);
 
 int silofs_env_base_caddr(const struct silofs_env *env,
                           struct silofs_caddr     *out_caddr);

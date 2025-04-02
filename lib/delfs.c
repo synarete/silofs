@@ -18,7 +18,7 @@
 #include <silofs/ioctls.h>
 #include "infra.h"
 #include "repo.h"
-#include "uber.h"
+#include "bootrec.h"
 #include "lnodes.h"
 #include "task.h"
 #include "super.h"

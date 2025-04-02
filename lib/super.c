@@ -221,7 +221,7 @@ sb_mainlsid_by(const struct silofs_super_block *sb, enum silofs_ltype ltype)
 		ret = &sb->sb_main_lsid.sb_lsid_symval;
 		break;
 	case SILOFS_LTYPE_NONE:
-	case SILOFS_LTYPE_UBER:
+	case SILOFS_LTYPE_BOOTREC:
 	case SILOFS_LTYPE_SUPER:
 	case SILOFS_LTYPE_SPNODE:
 	case SILOFS_LTYPE_SPLEAF:
@@ -310,7 +310,7 @@ sb_sproot_by(const struct silofs_super_block *sb, enum silofs_ltype ltype)
 		ret = &sb->sb_sproots.sb_sproot_databk;
 		break;
 	case SILOFS_LTYPE_NONE:
-	case SILOFS_LTYPE_UBER:
+	case SILOFS_LTYPE_BOOTREC:
 	case SILOFS_LTYPE_SUPER:
 	case SILOFS_LTYPE_SPNODE:
 	case SILOFS_LTYPE_SPLEAF:
@@ -414,7 +414,7 @@ sb_rootiv_by(const struct silofs_super_block *sb, enum silofs_ltype ltype)
 		ret = &sb->sb_rootivs.sb_iv_databk;
 		break;
 	case SILOFS_LTYPE_NONE:
-	case SILOFS_LTYPE_UBER:
+	case SILOFS_LTYPE_BOOTREC:
 	case SILOFS_LTYPE_SUPER:
 	case SILOFS_LTYPE_SPNODE:
 	case SILOFS_LTYPE_SPLEAF:

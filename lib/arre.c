@@ -267,11 +267,11 @@ static void adi_update_caddr(struct silofs_ar_desc_info *adi,
 	ard_update_caddr(&adi->ard, caddr);
 }
 
-static bool adi_isuber(const struct silofs_ar_desc_info *adi)
+static bool adi_isbootrec(const struct silofs_ar_desc_info *adi)
 {
 	const enum silofs_ltype ltype = laddr_ltype(&adi->ard.laddr);
 
-	return ltype_isuber(ltype);
+	return ltype_isbootrec(ltype);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -773,45 +773,45 @@ static int arc_save_seg(const struct silofs_ar_ctx *ar_ctx,
 	return 0;
 }
 
-static int arc_load_uber(const struct silofs_ar_ctx *ar_ctx,
-                         const struct silofs_caddr *caddr,
-                         struct silofs_uber1k *out_uber1k)
+static int arc_load_bootrec(const struct silofs_ar_ctx *ar_ctx,
+                            const struct silofs_caddr *caddr,
+                            struct silofs_bootrec1k *out_bootrec1k)
 {
-	struct silofs_uber uber = { .flags = SILOFS_UBERF_NONE };
+	struct silofs_bootrec bootrec = { .flags = SILOFS_BOOTRECF_NONE };
 	int err;
 
-	err = silofs_load_uber(ar_ctx->env, caddr, &uber);
+	err = silofs_load_bootrec(ar_ctx->env, caddr, &bootrec);
 	if (err) {
-		log_err("failed to load uber: err=%d", err);
+		log_err("failed to load bootrec: err=%d", err);
 		return err;
 	}
-	err = silofs_encode_uber(ar_ctx->env, &uber, out_uber1k);
+	err = silofs_encode_bootrec(ar_ctx->env, &bootrec, out_bootrec1k);
 	if (err) {
-		log_err("failed to encode uber: err=%d", err);
+		log_err("failed to encode bootrec: err=%d", err);
 		return err;
 	}
 	return 0;
 }
 
-static int
-arc_save_uber(const struct silofs_ar_ctx *ar_ctx,
-              const struct silofs_caddr *caddr, struct silofs_uber1k *uber1k)
+static int arc_save_bootrec(const struct silofs_ar_ctx *ar_ctx,
+                            const struct silofs_caddr *caddr,
+                            struct silofs_bootrec1k *bootrec1k)
 {
-	struct silofs_uber uber = { .flags = SILOFS_UBERF_NONE };
+	struct silofs_bootrec bootrec = { .flags = SILOFS_BOOTRECF_NONE };
 	struct silofs_caddr caddr2;
 	int err;
 
-	err = silofs_decode_uber(ar_ctx->env, uber1k, &uber);
+	err = silofs_decode_bootrec(ar_ctx->env, bootrec1k, &bootrec);
 	if (err) {
 		return err;
 	}
 	/* TODO: check proper caddr before save */
-	err = silofs_save_uber(ar_ctx->env, &uber, &caddr2);
+	err = silofs_save_bootrec(ar_ctx->env, &bootrec, &caddr2);
 	if (err) {
 		return err;
 	}
 	if (!caddr_isequal(caddr, &caddr2)) {
-		return -SILOFS_EBADUBER;
+		return -SILOFS_EBADBOOTREC;
 	}
 	return 0;
 }
@@ -884,48 +884,49 @@ out:
 	return err;
 }
 
-static int arc_fs_uber_caddr(const struct silofs_ar_ctx *ar_ctx,
-                             struct silofs_caddr *out_caddr)
+static int arc_fs_bootrec_caddr(const struct silofs_ar_ctx *ar_ctx,
+                                struct silofs_caddr *out_caddr)
 {
-	return silofs_env_uber_caddr(ar_ctx->env, out_caddr);
+	return silofs_env_bootrec_caddr(ar_ctx->env, out_caddr);
 }
 
-static int arc_export_uber(const struct silofs_ar_ctx *ar_ctx,
-                           struct silofs_ar_desc_info *adi)
+static int arc_export_bootrec(const struct silofs_ar_ctx *ar_ctx,
+                              struct silofs_ar_desc_info *adi)
 {
-	struct silofs_uber1k uber1k = { .ub_magic = 0xff };
+	struct silofs_bootrec1k bootrec1k = { .ub_magic = 0xff };
 	struct silofs_caddr caddr = { .ctype = SILOFS_CTYPE_NONE };
 	int err;
 
-	err = arc_fs_uber_caddr(ar_ctx, &caddr);
+	err = arc_fs_bootrec_caddr(ar_ctx, &caddr);
 	if (err) {
 		return err;
 	}
-	err = arc_load_uber(ar_ctx, &caddr, &uber1k);
+	err = arc_load_bootrec(ar_ctx, &caddr, &bootrec1k);
 	if (err) {
 		return err;
 	}
 	adi_update_caddr(adi, &caddr);
 
-	err = arc_send_pack(ar_ctx, &adi->ard.caddr, &uber1k, sizeof(uber1k));
+	err = arc_send_pack(ar_ctx, &adi->ard.caddr, &bootrec1k,
+	                    sizeof(bootrec1k));
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-static int arc_import_uber(const struct silofs_ar_ctx *ar_ctx,
-                           const struct silofs_ar_desc_info *adi)
+static int arc_import_bootrec(const struct silofs_ar_ctx *ar_ctx,
+                              const struct silofs_ar_desc_info *adi)
 {
-	struct silofs_uber1k uber1k = { .ub_magic = 0xff };
+	struct silofs_bootrec1k bootrec1k = { .ub_magic = 0xff };
 	const struct silofs_caddr *caddr = &adi->ard.caddr;
 	int err;
 
-	err = arc_recv_pack(ar_ctx, caddr, &uber1k, sizeof(uber1k));
+	err = arc_recv_pack(ar_ctx, caddr, &bootrec1k, sizeof(bootrec1k));
 	if (err) {
 		return err;
 	}
-	err = arc_save_uber(ar_ctx, caddr, &uber1k);
+	err = arc_save_bootrec(ar_ctx, caddr, &bootrec1k);
 	if (err) {
 		return err;
 	}
@@ -937,8 +938,8 @@ static int arc_export_by_desc(struct silofs_ar_ctx *ar_ctx,
 {
 	int err;
 
-	if (adi_isuber(adi)) {
-		err = arc_export_uber(ar_ctx, adi);
+	if (adi_isbootrec(adi)) {
+		err = arc_export_bootrec(ar_ctx, adi);
 	} else {
 		err = arc_export_segdata(ar_ctx, adi);
 	}
@@ -1158,8 +1159,8 @@ static int arc_import_by_desc(const struct silofs_ar_ctx *ar_ctx,
 {
 	int err;
 
-	if (adi_isuber(adi)) {
-		err = arc_import_uber(ar_ctx, adi);
+	if (adi_isbootrec(adi)) {
+		err = arc_import_bootrec(ar_ctx, adi);
 	} else {
 		err = arc_import_segdata(ar_ctx, adi);
 	}
@@ -1186,20 +1187,20 @@ static int arc_import_post(struct silofs_ar_ctx *ar_ctx)
 {
 	struct silofs_caddr caddr = { .ctype = SILOFS_CTYPE_NONE };
 	const struct silofs_ar_desc_info *adi = NULL;
-	size_t nubers = 0;
+	size_t nbootrecs = 0;
 
 	adi = aridx_next_desc(&ar_ctx->aridx, adi);
 	while (adi != NULL) {
-		if (adi_isuber(adi)) {
+		if (adi_isbootrec(adi)) {
 			adi_caddr(adi, &caddr);
-			nubers++;
+			nbootrecs++;
 		}
 		adi = aridx_next_desc(&ar_ctx->aridx, adi);
 	}
-	if (nubers != 1) {
+	if (nbootrecs != 1) {
 		return -SILOFS_EBADPACK;
 	}
-	silofs_env_set_uber_caddr(ar_ctx->env, &caddr);
+	silofs_env_set_bootrec_caddr(ar_ctx->env, &caddr);
 	return 0;
 }
 

@@ -24,6 +24,7 @@
 #include "idsmap.h"
 #include "uber.h"
 #include "lcache.h"
+#include "lnodes.h"
 #include "uidgid.h"
 #include "task.h"
 #include "inode.h"
@@ -35,8 +36,478 @@
 #include "fuseq.h"
 #include "walk.h"
 
+static int reload_super(struct silofs_task *task)
+{
+	int err;
+
+	err = silofs_env_reload_sb_lseg(task->t_env);
+	if (err) {
+		return err;
+	}
+	err = silofs_env_reload_super(task->t_env);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+static int reload_vspace(struct silofs_task *task)
+{
+	enum silofs_ltype ltype = SILOFS_LTYPE_NONE;
+	int err;
+
+	while (++ltype < SILOFS_LTYPE_LAST) {
+		if (!ltype_isvnode(ltype)) {
+			continue;
+		}
+		err = silofs_rescan_vspace_of(task, ltype);
+		if (err) {
+			log_err("failed to reload vspace: ltype=%d err=%d",
+				ltype, err);
+			return err;
+		}
+	}
+	return 0;
+}
+
+static int reload_rootd(struct silofs_task *task)
+{
+	struct silofs_inode_info *ii = NULL;
+	const ino_t ino = SILOFS_INO_ROOT;
+	int err;
+
+	err = silofs_stage_inode(task, ino, SILOFS_STG_CUR, &ii);
+	if (err) {
+		log_err("failed to reload root-inode: err=%d", err);
+		return err;
+	}
+	if (!ii_isdir(ii)) {
+		log_err("root-inode is not-a-dir: mode=0%o", ii_mode(ii));
+		return -SILOFS_EFSCORRUPTED;
+	}
+	return 0;
+}
+
+static int reload_vmeta(struct silofs_task *task)
+{
+	int err;
+
+	err = reload_super(task);
+	if (err) {
+		return err;
+	}
+	err = reload_vspace(task);
+	if (err) {
+		return err;
+	}
+	err = reload_rootd(task);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+static void relax_caches(struct silofs_task *task, bool now)
+{
+	const int flags = now ? SILOFS_CTLF_NOW : SILOFS_CTLF_IDLE;
+
+	silofs_env_relax_caches(task->t_env, flags);
+}
+
+static int flush_dirty(struct silofs_task *task)
+{
+	int err;
+
+	err = silofs_flush_dirty_now(task);
+	if (err) {
+		log_err("failed to flush dirty: err=%d", err);
+	}
+	return err;
+}
+
+static void drop_caches(struct silofs_task *task)
+{
+	silofs_env_drop_caches(task->t_env);
+}
+
+static void drop_relax_caches(struct silofs_task *task)
+{
+	drop_caches(task);
+	relax_caches(task, false);
+}
+
+static size_t calc_aligned_fs_cap(const struct silofs_task *task)
+{
+	const size_t fs_cap_want = task->t_env->base.args->capacity;
+	const size_t align_size = SILOFS_LSEG_SIZE_MAX;
+
+	return (fs_cap_want / align_size) * align_size;
+}
+
+static int format_super(struct silofs_task *task)
+{
+	const size_t fs_cap = calc_aligned_fs_cap(task);
+
+	return silofs_env_format_super(task->t_env, fs_cap);
+}
+
+static int appexec_resync_vmeta(struct silofs_task *task, bool drop)
+{
+	int err;
+
+	relax_caches(task, drop);
+	err = flush_dirty(task);
+	if (err || !drop) {
+		return err;
+	}
+	drop_relax_caches(task);
+	return 0;
+}
+
+static int do_claim_reclaim(struct silofs_task *task, enum silofs_ltype ltype)
+{
+	struct silofs_vaddr vaddr;
+	const loff_t voff_exp = 0;
+	int err;
+
+	err = silofs_claim_vspace(task, ltype, &vaddr);
+	if (err) {
+		log_err("vclaim failed: ltype=%d err=%d", ltype, err);
+		return err;
+	}
+	if (vaddr.off != voff_exp) {
+		log_err("bad claim: ltype=%d exp=%ld got=%ld", ltype, voff_exp,
+			vaddr.off);
+		return -SILOFS_EFSCORRUPTED;
+	}
+	drop_caches(task);
+	err = silofs_reclaim_vspace(task, &vaddr);
+	if (err) {
+		log_err("bad reclaim: ltype=%d voff=%ld err=%d", ltype,
+			vaddr.off, err);
+	}
+	return 0;
+}
+
+static int retry_claim(struct silofs_task *task)
+{
+	enum silofs_ltype ltype = SILOFS_LTYPE_NONE;
+	int err;
+
+	while (++ltype < SILOFS_LTYPE_LAST) {
+		if (!ltype_isvnode(ltype)) {
+			continue;
+		}
+		err = do_claim_reclaim(task, ltype);
+		if (err) {
+			return err;
+		}
+		err = flush_dirty(task);
+		if (err) {
+			return err;
+		}
+		drop_relax_caches(task);
+	}
+	return 0;
+}
+
+static int require_spmaps_of(struct silofs_task *task, enum silofs_ltype ltype)
+{
+	struct silofs_vaddr vaddr;
+	struct silofs_spnode_info *sni = NULL;
+	struct silofs_spleaf_info *sli = NULL;
+
+	silofs_vaddr_setup(&vaddr, ltype, 0);
+	return silofs_require_spmaps_of(task, &vaddr, SILOFS_STG_COW, &sni,
+					&sli);
+}
+
+static int format_spmaps_of(struct silofs_task *task, enum silofs_ltype ltype)
+{
+	int err;
+
+	err = require_spmaps_of(task, ltype);
+	if (err) {
+		log_err("format spmaps failed: ltype=%d err=%d", ltype, err);
+		return err;
+	}
+	err = flush_dirty(task);
+	if (err) {
+		return err;
+	}
+	log_dbg("format spmaps of: ltype=%d", ltype);
+	return 0;
+}
+
+static int format_spmaps(struct silofs_task *task)
+{
+	enum silofs_ltype ltype = SILOFS_LTYPE_NONE;
+	int err;
+
+	while (++ltype < SILOFS_LTYPE_LAST) {
+		if (!ltype_isvnode(ltype)) {
+			continue;
+		}
+		err = format_spmaps_of(task, ltype);
+		if (err) {
+			return err;
+		}
+		drop_relax_caches(task);
+	}
+	return 0;
+}
+
+static loff_t vni_offset(const struct silofs_vnode_info *vni)
+{
+	const struct silofs_vaddr *vaddr = silofs_vni_vaddr(vni);
+
+	return vaddr->off;
+}
+
+static int claim_offset_zero(struct silofs_task *task, enum silofs_ltype ltype)
+{
+	struct silofs_vnode_info *vni = NULL;
+	loff_t off = -1;
+	int err;
+
+	err = silofs_spawn_vnode(task, NULL, ltype, &vni);
+	if (err) {
+		log_err("failed to spawn: ltype=%d err=%d", ltype, err);
+		return err;
+	}
+	off = vni_offset(vni);
+	if (off != 0) {
+		log_err("format zspace failed: ltype=%d off=%ld", ltype, off);
+		return -SILOFS_EFSCORRUPTED;
+	}
+	return 0;
+}
+
+static int format_nil_space(struct silofs_task *task)
+{
+	enum silofs_ltype ltype = SILOFS_LTYPE_NONE;
+	int err;
+
+	while (++ltype < SILOFS_LTYPE_LAST) {
+		if (!ltype_isvnode(ltype)) {
+			continue;
+		}
+		err = claim_offset_zero(task, ltype);
+		if (err) {
+			return err;
+		}
+		err = flush_dirty(task);
+		if (err) {
+			return err;
+		}
+		drop_relax_caches(task);
+	}
+	return 0;
+}
+
+static int
+spawn_rootdir(struct silofs_task *task, struct silofs_inode_info **out_ii)
+{
+	struct silofs_inew_params inp;
+
+	silofs_inew_params_of(task, NULL, S_IFDIR | 0755, 0, &inp);
+	return silofs_spawn_inode(task, &inp, out_ii);
+}
+
+static int format_rootdir(struct silofs_task *task)
+{
+	struct silofs_inode_info *root_ii = NULL;
+	int err;
+
+	err = spawn_rootdir(task, &root_ii);
+	if (err) {
+		return err;
+	}
+	if (root_ii->i_ino != SILOFS_INO_ROOT) {
+		log_err("failed to format root-dir: ino=%ld", root_ii->i_ino);
+		return -SILOFS_EFSCORRUPTED;
+	}
+	silofs_ii_fixup_as_rootdir(root_ii);
+	return 0;
+}
+
+static int setup_uber(struct silofs_task *task)
+{
+	return silofs_env_setup_uber(task->t_env);
+}
+
+static int commit_uber(struct silofs_task *task)
+{
+	return silofs_env_commit_uber(task->t_env);
+}
+
+static int appexec_format_meta(struct silofs_task *task)
+{
+	int err;
+
+	err = setup_uber(task);
+	if (err) {
+		return err;
+	}
+	err = format_super(task);
+	if (err) {
+		return err;
+	}
+	err = flush_dirty(task);
+	if (err) {
+		return err;
+	}
+	err = format_spmaps(task);
+	if (err) {
+		return err;
+	}
+	err = retry_claim(task);
+	if (err) {
+		return err;
+	}
+	err = format_nil_space(task);
+	if (err) {
+		return err;
+	}
+	err = format_rootdir(task);
+	if (err) {
+		return err;
+	}
+	err = flush_dirty(task);
+	if (err) {
+		return err;
+	}
+	err = commit_uber(task);
+	if (err) {
+		return err;
+	}
+	drop_relax_caches(task);
+	return 0;
+}
+
+static int reload_uber(const struct silofs_task *task)
+{
+	struct silofs_caddr caddr = { .ctype = SILOFS_CTYPE_NONE };
+	int err;
+
+	err = silofs_env_uber_caddr(task->t_env, &caddr);
+	if (err) {
+		return err;
+	}
+	err = silofs_env_reload_uber(task->t_env);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+static int appexec_reload_fs(struct silofs_task *task)
+{
+	int err;
+
+	err = reload_uber(task);
+	if (err) {
+		return err;
+	}
+	err = reload_vmeta(task);
+	if (err) {
+		return err;
+	}
+	drop_caches(task);
+	return 0;
+}
+
+static int unlink_uber(struct silofs_task *task)
+{
+	int err;
+
+	err = silofs_env_unlink_uber(task->t_env);
+	if (err) {
+		return err;
+	}
+	drop_caches(task);
+	return 0;
+}
+
+static int appexec_fork_fs(struct silofs_task *task)
+{
+	struct silofs_uber_caddrs caddrs;
+	int err;
+
+	err = silofs_env_uber_caddr(task->t_env, &caddrs.curr);
+	if (err) {
+		return err;
+	}
+	err = silofs_exec_forkfs(task, SILOFS_INO_ROOT, 0, &caddrs);
+	if (err) {
+		return err;
+	}
+	err = flush_dirty(task);
+	if (err) {
+		return err;
+	}
+	drop_relax_caches(task);
+	return 0;
+}
+
+static int shutdown_fs(struct silofs_task *task)
+{
+	struct silofs_repo *repo = silofs_task_repo(task);
+	int err;
+
+	err = silofs_repo_fsync_all(repo);
+	if (err) {
+		return err;
+	}
+	drop_relax_caches(task);
+
+	err = silofs_env_shut(task->t_env);
+	if (err) {
+		return err;
+	}
+	drop_relax_caches(task);
+
+	return 0;
+}
+
+static int appexec_unload_fs(struct silofs_task *task)
+{
+	int err;
+
+	err = flush_dirty(task);
+	if (err) {
+		return err;
+	}
+	err = shutdown_fs(task);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+static int appexec_remove_fs(struct silofs_task *task)
+{
+	int err;
+
+	err = silofs_exec_unrefs(task);
+	if (err) {
+		return err;
+	}
+	err = unlink_uber(task);
+	if (err) {
+		return err;
+	}
+	err = shutdown_fs(task);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
 static void caddr_to_xref(const struct silofs_caddr *caddr, int status,
-                          struct silofs_xref *out_xref)
+			  struct silofs_xref *out_xref)
 {
 	if (status == 0) {
 		silofs_xref_from_caddr(out_xref, caddr);
@@ -78,7 +549,7 @@ static int do_map_task_creds(struct silofs_task *task)
 	struct silofs_cred *icred = &task->t_oper.op_creds.fs_cred;
 
 	return silofs_idsmap_map_uidgid(silofs_task_idsmap(task), xcred->uid,
-	                                xcred->gid, &icred->uid, &icred->gid);
+					xcred->gid, &icred->uid, &icred->gid);
 }
 
 static int map_task_creds(struct silofs_task *task)
@@ -122,7 +593,7 @@ static int exec_reload_fs(struct silofs_env *env)
 
 	err = make_task(env, &task);
 	if (!err) {
-		err = silofs_appexec_reload_fs(&task);
+		err = appexec_reload_fs(&task);
 	}
 	return term_task(&task, err);
 }
@@ -134,7 +605,7 @@ static int exec_resync_vmeta(struct silofs_env *env, bool drop)
 
 	err = make_task(env, &task);
 	if (!err) {
-		err = silofs_appexec_resync_vmeta(&task, drop);
+		err = appexec_resync_vmeta(&task, drop);
 	}
 	return term_task(&task, err);
 }
@@ -211,7 +682,7 @@ int silofs_sync_fs(struct silofs_env *env, bool drop)
 }
 
 void silofs_stat_fs(const struct silofs_env *env,
-                    struct silofs_cache_stats *cst)
+		    struct silofs_cache_stats *cst)
 {
 	struct silofs_alloc_stat alst = { .nbytes_use = 0 };
 	const struct silofs_alloc *alloc = env->base.alloc;
@@ -245,7 +716,7 @@ static int check_want_capacity(const struct silofs_env *env)
 	err = check_fs_capacity(cap_want);
 	if (err) {
 		log_err("illegal file-system capacity: cap=%lu err=%d",
-		        cap_want, err);
+			cap_want, err);
 		return err;
 	}
 	return 0;
@@ -261,10 +732,10 @@ static int check_owner_ids(const struct silofs_env *env)
 	int err;
 
 	err = silofs_idsmap_map_uidgid(env->base.idsmap, owner_uid, owner_gid,
-	                               &suid, &sgid);
+				       &suid, &sgid);
 	if (err) {
 		log_err("unable to map owner credentials: uid=%ld gid=%ld",
-		        (long)owner_uid, (long)owner_gid);
+			(long)owner_uid, (long)owner_gid);
 		return err;
 	}
 	return 0;
@@ -277,7 +748,7 @@ static int exec_format_meta(struct silofs_env *env)
 
 	err = make_task(env, &task);
 	if (!err) {
-		err = silofs_appexec_format_meta(&task);
+		err = appexec_format_meta(&task);
 	}
 	return term_task(&task, err);
 }
@@ -415,7 +886,7 @@ static int exec_unload_fs(struct silofs_env *env)
 
 	err = make_task(env, &task);
 	if (!err) {
-		err = silofs_appexec_unload_fs(&task);
+		err = appexec_unload_fs(&task);
 	}
 	return term_task(&task, err);
 }
@@ -463,7 +934,7 @@ static int exec_fork_fs(struct silofs_env *env)
 
 	err = make_task(env, &task);
 	if (!err) {
-		err = silofs_appexec_fork_fs(&task);
+		err = appexec_fork_fs(&task);
 	}
 	return term_task(&task, err);
 }
@@ -487,11 +958,11 @@ static int exec_reload_remove_fs(struct silofs_env *env)
 	if (err) {
 		goto out;
 	}
-	err = silofs_appexec_reload_fs(&task);
+	err = appexec_reload_fs(&task);
 	if (err) {
 		goto out;
 	}
-	err = silofs_appexec_remove_fs(&task);
+	err = appexec_remove_fs(&task);
 	if (err) {
 		goto out;
 	}
@@ -510,7 +981,7 @@ int silofs_remove_fs(struct silofs_env *env)
 }
 
 static int exec_inspect_fs(struct silofs_env *env,
-                           const struct silofs_laddr_visitor *lvis)
+			   const struct silofs_laddr_visitor *lvis)
 {
 	struct silofs_task task;
 	int err;
@@ -621,7 +1092,7 @@ int silofs_restore_fs(struct silofs_env *env)
 }
 
 void silofs_get_args(const struct silofs_env *env,
-                     struct silofs_args *out_args)
+		     struct silofs_args *out_args)
 {
 	memcpy(out_args, env->base.args, sizeof(*out_args));
 }
@@ -639,7 +1110,7 @@ int silofs_get_fs_xref(struct silofs_env *env, struct silofs_xref *out_xref)
 }
 
 int silofs_get_fs_base_xref(struct silofs_env *env,
-                            struct silofs_xref *out_xref)
+			    struct silofs_xref *out_xref)
 {
 	struct silofs_caddr caddr = { .ctype = SILOFS_CTYPE_NONE };
 	int ret;
@@ -652,7 +1123,7 @@ int silofs_get_fs_base_xref(struct silofs_env *env,
 }
 
 int silofs_get_fs_fork_xref(struct silofs_env *env,
-                            struct silofs_xref *out_xref)
+			    struct silofs_xref *out_xref)
 {
 	struct silofs_caddr caddr = { .ctype = SILOFS_CTYPE_NONE };
 	int ret;

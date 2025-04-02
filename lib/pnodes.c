@@ -813,8 +813,8 @@ int silofs_bni_expand(struct silofs_btnode_info *bni, uint64_t key,
 	return 0;
 }
 
-void silofs_bni_setapex(struct silofs_btnode_info *bni,
-                        const struct silofs_paddr *paddr)
+void silofs_bni_set_final(struct silofs_btnode_info *bni,
+                          const struct silofs_paddr *paddr)
 {
 	const size_t slot = btn_nkeys(bni->bn);
 

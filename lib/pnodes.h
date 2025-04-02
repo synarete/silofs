@@ -121,8 +121,8 @@ int silofs_bni_update_child(struct silofs_btnode_info *bni, uint64_t key,
 int silofs_bni_expand(struct silofs_btnode_info *bni, uint64_t key,
                       const struct silofs_paddr *paddr);
 
-void silofs_bni_setapex(struct silofs_btnode_info *bni,
-                        const struct silofs_paddr *paddr);
+void silofs_bni_set_final(struct silofs_btnode_info *bni,
+                          const struct silofs_paddr *paddr);
 
 struct silofs_btnode_info *
 silofs_bni_from_pni(const struct silofs_pnode_info *pni);

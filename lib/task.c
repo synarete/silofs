@@ -255,7 +255,7 @@ int silofs_submitq_init(struct silofs_submitq *smq, struct silofs_alloc *alloc)
 	memset(smq, 0, sizeof(*smq));
 	silofs_listq_init(&smq->smq_listq);
 	smq->smq_alloc = alloc;
-	smq->smq_apex_id = 1;
+	smq->smq_upper_id = 1;
 	return silofs_mutex_init(&smq->smq_mutex);
 }
 
@@ -263,7 +263,7 @@ void silofs_submitq_fini(struct silofs_submitq *smq)
 {
 	silofs_mutex_fini(&smq->smq_mutex);
 	silofs_listq_fini(&smq->smq_listq);
-	smq->smq_apex_id = 0;
+	smq->smq_upper_id = 0;
 }
 
 static struct silofs_submitq_ent *submitq_front_sqe(struct silofs_submitq *smq)
@@ -345,7 +345,7 @@ static int submitq_apply(struct silofs_submitq *smq, uint64_t id)
 int silofs_submitq_new_sqe(struct silofs_submitq *smq,
                            struct silofs_submitq_ent **out_sqe)
 {
-	*out_sqe = sqe_new(smq->smq_alloc, smq->smq_apex_id++);
+	*out_sqe = sqe_new(smq->smq_alloc, smq->smq_upper_id++);
 	return likely(*out_sqe != NULL) ? 0 : -SILOFS_ENOMEM;
 }
 
@@ -408,8 +408,8 @@ void silofs_task_set_ts(struct silofs_task *task, bool rt)
 void silofs_task_update_by(struct silofs_task *task,
                            struct silofs_submitq_ent *sqe)
 {
-	if (sqe->uniq_id > task->t_apex_id) {
-		task->t_apex_id = sqe->uniq_id;
+	if (sqe->uniq_id > task->t_upper_id) {
+		task->t_upper_id = sqe->uniq_id;
 	}
 }
 
@@ -419,8 +419,8 @@ static int task_apply(const struct silofs_task *task, bool all)
 
 	if (all) {
 		ret = submitq_apply(task->t_submitq, SILOFS_CID_ALL);
-	} else if (task->t_apex_id) {
-		ret = submitq_apply(task->t_submitq, task->t_apex_id);
+	} else if (task->t_upper_id) {
+		ret = submitq_apply(task->t_submitq, task->t_upper_id);
 	}
 	return ret;
 }
@@ -433,7 +433,7 @@ void silofs_task_init(struct silofs_task *task, struct silofs_env *env)
 	task->t_env = env;
 	task->t_submitq = env->base.submitq;
 	task->t_looseq = NULL;
-	task->t_apex_id = 0;
+	task->t_upper_id = 0;
 	task->t_interrupt = 0;
 	task->t_fs_locked = false;
 	task->t_ex_locked = false;

@@ -49,7 +49,7 @@ struct silofs_task {
 	struct silofs_submitq    *t_submitq;
 	struct silofs_inode_info *t_looseq;
 	struct silofs_oper        t_oper;
-	uint64_t                  t_apex_id;
+	uint64_t                  t_upper_id;
 	volatile int8_t           t_interrupt;
 	volatile bool             t_fs_locked;
 	bool                      t_ex_locked;
@@ -88,7 +88,7 @@ struct silofs_submitq {
 	struct silofs_listq  smq_listq;
 	struct silofs_mutex  smq_mutex;
 	struct silofs_alloc *smq_alloc;
-	uint64_t             smq_apex_id;
+	uint64_t             smq_upper_id;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

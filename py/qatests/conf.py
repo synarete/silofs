@@ -9,6 +9,7 @@ import toml
 
 from .expect import ExpectException
 
+_DEFAULT_REPO_URL = "@default"
 _POSTGRESQL_REPO_URL = "https://git.postgresql.org/git/postgresql.git"
 _RSYNC_REPO_URL = "git://git.samba.org/rsync.git"
 _FINDUTILS_REPO_URL = "https://git.savannah.gnu.org/git/findutils.git"
@@ -23,11 +24,11 @@ class ConfigParams(pydantic.BaseModel):
 
 
 class ConfigRemotes(pydantic.BaseModel):
-    postgresql_repo_url: str = _POSTGRESQL_REPO_URL
-    rsync_repo_url: str = _RSYNC_REPO_URL
-    findutils_repo_url: str = _FINDUTILS_REPO_URL
-    git_repo_url: str = _GITSCM_REPO_URL
-    silofs_repo_url: str = _SILOFS_REPO_URL
+    postgresql_repo_url: str = ""
+    rsync_repo_url: str = ""
+    findutils_repo_url: str = ""
+    git_repo_url: str = ""
+    silofs_repo_url: str = ""
 
 
 class Config(pydantic.BaseModel):
@@ -51,7 +52,7 @@ def _load_toml_as_json(path: Path) -> str:
     return json.dumps(toml_data)
 
 
-def load_config(path: Path) -> Config:
+def _load_config(path: Path) -> Config:
     try:
         json_conf = json.loads(_load_toml_as_json(path))
         return Config(**json_conf)
@@ -59,6 +60,30 @@ def load_config(path: Path) -> Config:
         raise ExpectException(f"bad configuration toml: {path}") from tde
     except pydantic.ValidationError as ve:
         raise ExpectException(f"non-valid configuration: {path}") from ve
+
+
+def _use_default_url(url: str) -> bool:
+    return url.strip() == _DEFAULT_REPO_URL
+
+
+def _fixup_remotes(remotes: ConfigRemotes) -> ConfigRemotes:
+    if _use_default_url(remotes.postgresql_repo_url):
+        remotes.postgresql_repo_url = _POSTGRESQL_REPO_URL
+    if _use_default_url(remotes.rsync_repo_url):
+        remotes.rsync_repo_url = _RSYNC_REPO_URL
+    if _use_default_url(remotes.findutils_repo_url):
+        remotes.findutils_repo_url = _FINDUTILS_REPO_URL
+    if _use_default_url(remotes.git_repo_url):
+        remotes.git_repo_url = _GITSCM_REPO_URL
+    if _use_default_url(remotes.silofs_repo_url):
+        remotes.silofs_repo_url = _SILOFS_REPO_URL
+    return remotes
+
+
+def load_config(path: Path) -> Config:
+    config = _load_config(path)
+    config.remotes = _fixup_remotes(config.remotes)
+    return config
 
 
 def load_fsids(repodir: Path) -> FsIdsConf:

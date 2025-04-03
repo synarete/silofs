@@ -128,7 +128,7 @@ static void require_persistent_types_size1(void)
 	REQUIRE_SIZEOF(struct silofs_header, SILOFS_HEADER_SIZE);
 	REQUIRE_SIZEOF(struct silofs_pvsid32b, 32);
 	REQUIRE_SIZEOF(struct silofs_pvsegr64b, 64);
-	REQUIRE_SIZEOF(struct silofs_paddr48b, 48);
+	REQUIRE_SIZEOF(struct silofs_paddr64b, 64);
 	REQUIRE_SIZEOF(struct silofs_caddr64b, 64);
 	REQUIRE_SIZEOF(struct silofs_chkpt_node, SILOFS_PSEG_CHKPT_SIZE);
 	REQUIRE_SIZEOF(struct silofs_btree_node, SILOFS_BTREE_NODE_SIZE);
@@ -314,7 +314,7 @@ static void require_persistent_types_alignment4(void)
 	REQUIRE_OFFSETXX(struct silofs_btree_node, btn_height, 19);
 	REQUIRE_OFFSET64(struct silofs_btree_node, btn_flags, 24);
 	REQUIRE_OFFSET64(struct silofs_btree_node, btn_child, 64);
-	REQUIRE_OFFSET64(struct silofs_btree_node, btn_key, 3528);
+	REQUIRE_OFFSET64(struct silofs_btree_node, btn_key, 3136);
 }
 
 static void require_ioctl_types_size(void)

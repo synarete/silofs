@@ -254,26 +254,26 @@ bool silofs_paddr_isequal(const struct silofs_paddr *paddr1,
 	return (silofs_paddr_compare(paddr1, paddr2) == 0);
 }
 
-void silofs_paddr48b_reset(struct silofs_paddr48b *paddr48)
+void silofs_paddr64b_reset(struct silofs_paddr64b *paddr64)
 {
-	memset(paddr48, 0, sizeof(*paddr48));
+	memset(paddr64, 0, sizeof(*paddr64));
 }
 
-void silofs_paddr48b_htox(struct silofs_paddr48b *paddr48,
+void silofs_paddr64b_htox(struct silofs_paddr64b *paddr64,
                           const struct silofs_paddr *paddr)
 {
-	silofs_paddr48b_reset(paddr48);
-	silofs_pvsid32b_htox(&paddr48->pvsid, &paddr->pvsid);
-	paddr48->off = silofs_cpu_to_off(paddr->off);
-	paddr48->len = silofs_cpu_to_le32((uint32_t)paddr->len);
-	paddr48->ptype = (uint8_t)(paddr->ptype);
+	silofs_paddr64b_reset(paddr64);
+	silofs_pvsid32b_htox(&paddr64->pvsid, &paddr->pvsid);
+	paddr64->off = silofs_cpu_to_off(paddr->off);
+	paddr64->len = silofs_cpu_to_le32((uint32_t)paddr->len);
+	paddr64->ptype = (uint8_t)(paddr->ptype);
 }
 
-void silofs_paddr48b_xtoh(const struct silofs_paddr48b *paddr48,
+void silofs_paddr64b_xtoh(const struct silofs_paddr64b *paddr64,
                           struct silofs_paddr *paddr)
 {
-	silofs_pvsid32b_xtoh(&paddr48->pvsid, &paddr->pvsid);
-	paddr->off = silofs_off_to_cpu(paddr48->off);
-	paddr->len = silofs_le32_to_cpu(paddr48->len);
-	paddr->ptype = (enum silofs_ptype)(paddr48->ptype);
+	silofs_pvsid32b_xtoh(&paddr64->pvsid, &paddr->pvsid);
+	paddr->off = silofs_off_to_cpu(paddr64->off);
+	paddr->len = silofs_le32_to_cpu(paddr64->len);
+	paddr->ptype = (enum silofs_ptype)(paddr64->ptype);
 }

@@ -114,7 +114,7 @@
 #define SILOFS_PSEG_CHKPT_SIZE (4096)
 
 /* number of pointers btree mapping-node */
-#define SILOFS_BTREE_NODE_NCHILDS (72)
+#define SILOFS_BTREE_NODE_NCHILDS (48)
 
 /* number of keys in btree mapping-node */
 #define SILOFS_BTREE_NODE_NKEYS (SILOFS_BTREE_NODE_NCHILDS - 1)
@@ -545,12 +545,12 @@ struct silofs_pvsegr64b {
 } silofs_attr_aligned64;
 
 /* persistent object address */
-struct silofs_paddr48b {
+struct silofs_paddr64b {
 	struct silofs_pvsid32b pvsid;
 	int64_t                off;
 	uint32_t               len;
 	uint8_t                ptype;
-	uint8_t                pad[3];
+	uint8_t                pad[19];
 } silofs_attr_aligned16;
 
 /* logical volume's segment identifier */
@@ -983,10 +983,9 @@ struct silofs_chkpt_node {
 	struct silofs_header   cpn_hdr;
 	uint32_t               cpn_flags;
 	uint8_t                cpn_reserved1[44];
-	struct silofs_paddr48b cpn_self_paddr;
-	uint8_t                cpn_reserved2[16];
-	struct silofs_paddr48b cpn_btree_root;
-	uint8_t                cpn_reserved3[3920];
+	struct silofs_paddr64b cpn_self_paddr;
+	struct silofs_paddr64b cpn_btree_root;
+	uint8_t                cpn_reserved3[3904];
 } silofs_attr_aligned64;
 
 /* b+tree node of persistent volume mapping */
@@ -999,9 +998,9 @@ struct silofs_btree_node {
 	uint8_t                btn_reserved1[4];
 	uint32_t               btn_flags;
 	uint8_t                btn_reserved2[36];
-	struct silofs_paddr48b btn_child[SILOFS_BTREE_NODE_NCHILDS];
-	uint8_t                btn_reserved3[8];
+	struct silofs_paddr64b btn_child[SILOFS_BTREE_NODE_NCHILDS];
 	uint64_t               btn_key[SILOFS_BTREE_NODE_NKEYS];
+	uint8_t                btn_reserved3[584];
 } silofs_attr_aligned64;
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

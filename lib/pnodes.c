@@ -49,19 +49,19 @@ static void cpn_set_self_paddr(struct silofs_chkpt_node *cpn,
 {
 	silofs_assert_eq(paddr->ptype, SILOFS_PTYPE_CHKPT);
 
-	silofs_paddr48b_htox(&cpn->cpn_self_paddr, paddr);
+	silofs_paddr64b_htox(&cpn->cpn_self_paddr, paddr);
 }
 
 static void cpn_btree_root(const struct silofs_chkpt_node *cpn,
                            struct silofs_paddr *out_paddr)
 {
-	silofs_paddr48b_xtoh(&cpn->cpn_btree_root, out_paddr);
+	silofs_paddr64b_xtoh(&cpn->cpn_btree_root, out_paddr);
 }
 
 static void cpn_set_btree_root(struct silofs_chkpt_node *cpn,
                                const struct silofs_paddr *paddr)
 {
-	silofs_paddr48b_htox(&cpn->cpn_btree_root, paddr);
+	silofs_paddr64b_htox(&cpn->cpn_btree_root, paddr);
 }
 
 static void cpn_reset_btree_root(struct silofs_chkpt_node *cpn)
@@ -316,7 +316,7 @@ static void btn_child_at(const struct silofs_btree_node *btn, size_t slot,
 {
 	silofs_assert_lt(slot, ARRAY_SIZE(btn->btn_child));
 
-	silofs_paddr48b_xtoh(&btn->btn_child[slot], out_paddr);
+	silofs_paddr64b_xtoh(&btn->btn_child[slot], out_paddr);
 }
 
 static bool btn_is_child_at(const struct silofs_btree_node *btn, size_t slot,
@@ -333,7 +333,7 @@ static void btn_set_child_at(struct silofs_btree_node *btn, size_t slot,
 {
 	silofs_assert_lt(slot, ARRAY_SIZE(btn->btn_child));
 
-	silofs_paddr48b_htox(&btn->btn_child[slot], paddr);
+	silofs_paddr64b_htox(&btn->btn_child[slot], paddr);
 }
 
 static void btn_reset_child_at(struct silofs_btree_node *btn, size_t slot)

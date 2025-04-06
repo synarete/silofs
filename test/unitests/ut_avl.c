@@ -19,8 +19,8 @@
 #define ZMAGIC 0xA334CDE661L
 
 struct ut_zrecord {
-	struct ut_env *ute;
 	struct silofs_avl_node avl_node;
+	struct ut_env *ute;
 	long key;
 	long magic;
 };

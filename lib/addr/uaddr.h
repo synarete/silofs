@@ -18,7 +18,6 @@
 #define SILOFS_UADDR_H_
 
 #include <silofs/defs.h>
-#include "infra.h"
 #include "laddr.h"
 
 /* logical addressing of space-mapping nodes */
@@ -27,10 +26,10 @@ struct silofs_uaddr {
 	loff_t              voff;
 };
 
-/* a pair of unode-address and its associate (random) IV */
+/* a pair of unode-address and its associate IV */
 struct silofs_ulink {
 	struct silofs_uaddr uaddr;
-	struct silofs_iv    riv;
+	struct silofs_iv    iv;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -71,37 +70,18 @@ void silofs_uaddr64b_htox(struct silofs_uaddr64b    *uaddr64,
 void silofs_uaddr64b_xtoh(const struct silofs_uaddr64b *uaddr64,
                           struct silofs_uaddr          *uaddr);
 
-#ifdef SILOFS_USE_PRIVATE
-#define uaddr_none()                    silofs_uaddr_none()
-#define uaddr_isnull(ua)                silofs_uaddr_isnull(ua)
-#define uaddr_assign(ua, oth)           silofs_uaddr_assign(ua, oth)
-#define uaddr_reset(ua)                 silofs_uaddr_reset(ua)
-#define uaddr_isequal(ua1, ua2)         silofs_uaddr_isequal(ua1, ua2)
-#define uaddr_setup(ua, ls, p, o)       silofs_uaddr_setup(ua, ls, p, o)
-#define uaddr_volumeid(ua)                 silofs_uaddr_volumeid(ua)
-#define uaddr_lsid(ua)                  silofs_uaddr_lsid(ua)
-#define uaddr_ltype(ua)                 silofs_uaddr_ltype(ua)
-#define uaddr_height(ua)                silofs_uaddr_height(ua)
-#endif
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_ulink_setup(struct silofs_ulink       *ulink,
+                        const struct silofs_uaddr *uaddr,
+                        const struct silofs_iv    *iv);
 
 void silofs_ulink_assign(struct silofs_ulink       *ulink,
                          const struct silofs_ulink *other);
-
-void silofs_ulink_assign2(struct silofs_ulink       *ulink,
-                          const struct silofs_uaddr *uaddr,
-                          const struct silofs_iv    *iv);
 
 void silofs_ulink_reset(struct silofs_ulink *ulink);
 
 void silofs_ulink_as_llink(const struct silofs_ulink *ulink,
                            struct silofs_llink       *out_llink);
-
-#ifdef SILOFS_USE_PRIVATE
-#define ulink_assign(ul, oth)           silofs_ulink_assign(ul, oth)
-#define ulink_assign2(ul, ua, iv)       silofs_ulink_assign2(ul, ua, iv)
-#define ulink_reset(ul)                 silofs_ulink_reset(ul)
-#endif
 
 #endif /* SILOFS_UADDR_H_ */

@@ -571,10 +571,10 @@ static void sb_clone_raw(struct silofs_super_block *sb,
 
 static int verify_sproot(const struct silofs_uaddr *uaddr)
 {
-	const enum silofs_height height = uaddr_height(uaddr);
-	const enum silofs_ltype ltype = uaddr_ltype(uaddr);
+	const enum silofs_height height = silofs_uaddr_height(uaddr);
+	const enum silofs_ltype ltype = silofs_uaddr_ltype(uaddr);
 
-	if (uaddr_isnull(uaddr)) {
+	if (silofs_uaddr_isnull(uaddr)) {
 		return 0;
 	}
 	if ((ltype != SILOFS_LTYPE_SPNODE) ||
@@ -786,7 +786,7 @@ sbi_main_ulink(const struct silofs_sb_info *sbi, loff_t voff,
 	silofs_sbi_main_lseg(sbi, vspace, &lsid);
 	silofs_assert_eq(lsid.ltype, SILOFS_LTYPE_SPNODE);
 
-	uaddr_setup(out_uaddr, &lsid, bpos, base);
+	silofs_uaddr_setup(out_uaddr, &lsid, bpos, base);
 	silofs_assert_eq(lsid.height, SILOFS_HEIGHT_SUPER - 1);
 }
 
@@ -795,7 +795,7 @@ void silofs_sbi_resolve_main_at(const struct silofs_sb_info *sbi, loff_t voff,
                                 struct silofs_ulink *out_ulink)
 {
 	sbi_main_ulink(sbi, voff, vspace, &out_ulink->uaddr);
-	sbi_rootiv_of(sbi, vspace, &out_ulink->riv);
+	sbi_rootiv_of(sbi, vspace, &out_ulink->iv);
 }
 
 int silofs_sbi_sproot_of(const struct silofs_sb_info *sbi,
@@ -803,7 +803,7 @@ int silofs_sbi_sproot_of(const struct silofs_sb_info *sbi,
                          struct silofs_uaddr *out_uaddr)
 {
 	sbi_sproot_of(sbi, ltype, out_uaddr);
-	return !uaddr_isnull(out_uaddr) ? 0 : -SILOFS_ENOENT;
+	return !silofs_uaddr_isnull(out_uaddr) ? 0 : -SILOFS_ENOENT;
 }
 
 int silofs_sbi_resolve_child(const struct silofs_sb_info *sbi,
@@ -811,15 +811,15 @@ int silofs_sbi_resolve_child(const struct silofs_sb_info *sbi,
                              struct silofs_ulink *out_ulink)
 {
 	sbi_sproot_of(sbi, ltype, &out_ulink->uaddr);
-	sbi_rootiv_of(sbi, ltype, &out_ulink->riv);
-	return !uaddr_isnull(&out_ulink->uaddr) ? 0 : -SILOFS_ENOENT;
+	sbi_rootiv_of(sbi, ltype, &out_ulink->iv);
+	return !silofs_uaddr_isnull(&out_ulink->uaddr) ? 0 : -SILOFS_ENOENT;
 }
 
 void silofs_sbi_bind_child(struct silofs_sb_info *sbi, enum silofs_ltype ltype,
                            const struct silofs_ulink *ulink)
 {
 	sb_set_sproot_of(sbi->sb, ltype, &ulink->uaddr);
-	sb_set_rootiv_of(sbi->sb, ltype, &ulink->riv);
+	sb_set_rootiv_of(sbi->sb, ltype, &ulink->iv);
 	sbi_dirtify(sbi);
 }
 
@@ -1046,7 +1046,7 @@ void silofs_sbi_resolve_lmap(const struct silofs_sb_info *sbi,
 
 	while (++ltype < SILOFS_LTYPE_LAST) {
 		sbi_sproot_of(sbi, ltype, &uaddr);
-		if (!uaddr_isnull(&uaddr)) {
+		if (!silofs_uaddr_isnull(&uaddr)) {
 			laddr_sub = &out_lmap->laddr[cnt++];
 			laddr_assign(laddr_sub, &uaddr.laddr);
 		}

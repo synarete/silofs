@@ -29,11 +29,6 @@
 #include "stage.h"
 #include "env.h"
 
-static const struct silofs_lsid *lsid_of(const struct silofs_ulink *ulink)
-{
-	return &ulink->uaddr.laddr.lsid;
-}
-
 static bool caddr_isbootrec(const struct silofs_caddr *caddr)
 {
 	return (caddr->ctype == SILOFS_CTYPE_BOOTREC) &&
@@ -56,23 +51,24 @@ env_bind_sbi(struct silofs_env *env, struct silofs_sb_info *sbi_new)
 	env->sbi = sbi_new;
 }
 
-static void env_update_bootrec_sb_ulink(struct silofs_env *env)
+static void env_update_bootrec_sb_uaddr(struct silofs_env *env)
 {
+	const struct silofs_uaddr *uaddr = NULL;
 	struct silofs_bootrec *bootrec = &env->bootrec;
-	struct silofs_sb_info *sbi = env->sbi;
 
-	if (sbi != NULL) {
-		silofs_bootrec_set_sb_ulink(bootrec, sbi_ulink(sbi));
+	if (env->sbi != NULL) {
+		uaddr = sbi_uaddr(env->sbi);
 	} else {
-		silofs_bootrec_reset_sb_ulink(bootrec);
+		uaddr = silofs_uaddr_none();
 	}
+	silofs_bootrec_set_sb_uaddr(bootrec, uaddr);
 	silofs_bootrec_gen_uuid(bootrec);
 }
 
 static void env_rebind_sbi(struct silofs_env *env, struct silofs_sb_info *sbi)
 {
 	env_bind_sbi(env, sbi);
-	env_update_bootrec_sb_ulink(env);
+	env_update_bootrec_sb_uaddr(env);
 }
 
 static void env_update_owner(struct silofs_env *env)
@@ -482,15 +478,17 @@ static void make_super_uaddr(const struct silofs_lsid *lsid,
 	silofs_assert_eq(lsid->height, SILOFS_HEIGHT_SUPER);
 	silofs_assert_eq(lsid->ltype, SILOFS_LTYPE_SUPER);
 
-	uaddr_setup(out_uaddr, lsid, 0, 0);
+	silofs_uaddr_setup(out_uaddr, lsid, 0, 0);
 }
 
-static void
-ulink_init(struct silofs_ulink *ulink, const struct silofs_uaddr *uaddr,
-           const struct silofs_iv *iv)
+static const struct silofs_uaddr *env_sb_uaddr(const struct silofs_env *env)
 {
-	silofs_uaddr_assign(&ulink->uaddr, uaddr);
-	silofs_iv_assign(&ulink->riv, iv);
+	return &env->bootrec.sb_uaddr;
+}
+
+static const struct silofs_iv *env_sb_iv(const struct silofs_env *env)
+{
+	return &env->bootrec.main_ivkey.iv;
 }
 
 static void env_make_super_ulink(const struct silofs_env *env,
@@ -498,11 +496,16 @@ static void env_make_super_ulink(const struct silofs_env *env,
 {
 	struct silofs_lsid lsid = { .lsize = 0 };
 	struct silofs_uaddr uaddr = { .voff = -1 };
-	const struct silofs_iv *iv = &env->bootrec.main_ivkey.iv;
 
 	make_super_lsid(&lsid);
 	make_super_uaddr(&lsid, &uaddr);
-	ulink_init(out_ulink, &uaddr, iv);
+	silofs_ulink_setup(out_ulink, &uaddr, env_sb_iv(env));
+}
+
+static void env_resolve_super_ulink(const struct silofs_env *env,
+                                    struct silofs_ulink *out_ulink)
+{
+	silofs_ulink_setup(out_ulink, env_sb_uaddr(env), env_sb_iv(env));
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -566,11 +569,6 @@ int silofs_env_format_super(struct silofs_env *env, size_t capacity)
 	return 0;
 }
 
-static const struct silofs_ulink *env_sb_ulink(const struct silofs_env *env)
-{
-	return &env->bootrec.sb_ulink;
-}
-
 static int
 env_check_sb(const struct silofs_env *env, const struct silofs_sb_info *sbi)
 {
@@ -596,10 +594,12 @@ env_check_sb(const struct silofs_env *env, const struct silofs_sb_info *sbi)
 
 int silofs_env_reload_super(struct silofs_env *env)
 {
+	struct silofs_ulink ulink;
 	struct silofs_sb_info *sbi = NULL;
 	int err;
 
-	err = silofs_stage_super(env, env_sb_ulink(env), &sbi);
+	env_resolve_super_ulink(env, &ulink);
+	err = silofs_stage_super(env, &ulink, &sbi);
 	if (err) {
 		return err;
 	}
@@ -611,10 +611,16 @@ int silofs_env_reload_super(struct silofs_env *env)
 	return 0;
 }
 
+static const struct silofs_lsid *env_sb_lsid(const struct silofs_env *env)
+{
+	const struct silofs_uaddr *sb_uaddr = env_sb_uaddr(env);
+
+	return &sb_uaddr->laddr.lsid;
+}
+
 int silofs_env_reload_sb_lseg(struct silofs_env *env)
 {
-	const struct silofs_ulink *sb_ulink = env_sb_ulink(env);
-	const struct silofs_lsid *lsid = lsid_of(sb_ulink);
+	const struct silofs_lsid *lsid = env_sb_lsid(env);
 	int err;
 
 	err = silofs_stage_lseg(env, lsid);
@@ -765,7 +771,7 @@ static void env_pre_commit_bootrec(const struct silofs_env *env,
                                    struct silofs_bootrec *bootrec)
 {
 	silofs_bootrec_assign(bootrec, &env->bootrec);
-	silofs_bootrec_set_sb_ulink(bootrec, sbi_ulink(env->sbi));
+	silofs_bootrec_set_sb_uaddr(bootrec, silofs_sbi_uaddr(env->sbi));
 }
 
 int silofs_env_commit_bootrec(struct silofs_env *env)

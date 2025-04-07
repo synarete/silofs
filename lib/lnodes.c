@@ -41,10 +41,8 @@ verify_view_by(const struct silofs_view *view, const enum silofs_ltype ltype);
 
 static enum silofs_ltype ltype_of(const struct silofs_ulink *ulink)
 {
-	return uaddr_ltype(&ulink->uaddr);
+	return silofs_uaddr_ltype(&ulink->uaddr);
 }
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void view_init_by(struct silofs_view *view, enum silofs_ltype ltype)
 {
@@ -109,7 +107,9 @@ static void
 view_del_by_ulink(struct silofs_view *view, const struct silofs_ulink *ulink,
                   struct silofs_alloc *alloc, int flags)
 {
-	view_del_by(view, uaddr_ltype(&ulink->uaddr), alloc, flags);
+	const enum silofs_ltype ltype = silofs_uaddr_ltype(&ulink->uaddr);
+
+	view_del_by(view, ltype, alloc, flags);
 }
 
 static void
@@ -304,13 +304,13 @@ uni_init(struct silofs_unode_info *uni, const struct silofs_ulink *ulink,
          struct silofs_view *view)
 {
 	lni_init(&uni->un_lni, ltype_of(ulink), view);
-	ulink_assign(&uni->un_ulink, ulink);
+	silofs_ulink_assign(&uni->un_ulink, ulink);
 	uni->un_magic = SILOFS_UI_MAGIC;
 }
 
 static void uni_fini(struct silofs_unode_info *uni)
 {
-	ulink_reset(&uni->un_ulink);
+	silofs_ulink_reset(&uni->un_ulink);
 	lni_fini(&uni->un_lni);
 	uni->un_magic = UINT64_MAX;
 }
@@ -395,7 +395,7 @@ enum silofs_ltype silofs_uni_ltype(const struct silofs_unode_info *uni)
 {
 	uni_verify(uni);
 
-	return uaddr_ltype(&uni->un_ulink.uaddr);
+	return silofs_uaddr_ltype(&uni->un_ulink.uaddr);
 }
 
 void silofs_uni_set_dq(struct silofs_unode_info *uni, struct silofs_dirtyq *dq)

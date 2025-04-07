@@ -70,7 +70,7 @@ static bool spr_isactive(const struct silofs_spmap_ref *spr)
 	struct silofs_uaddr uaddr;
 
 	spr_uaddr(spr, &uaddr);
-	return !uaddr_isnull(&uaddr);
+	return !silofs_uaddr_isnull(&uaddr);
 }
 
 static void spr_init(struct silofs_spmap_ref *spr)
@@ -138,7 +138,7 @@ static enum silofs_height spnode_heigth(const struct silofs_spmap_node *spn)
 	struct silofs_uaddr self_uaddr;
 
 	spnode_self(spn, &self_uaddr);
-	return uaddr_height(&self_uaddr);
+	return silofs_uaddr_height(&self_uaddr);
 }
 
 static void spnode_main_lsid(const struct silofs_spmap_node *spn,
@@ -1521,7 +1521,7 @@ void silofs_sni_setup_spawned(struct silofs_spnode_info *sni,
                               const struct silofs_uaddr *parent, loff_t voff)
 {
 	struct silofs_vrange vrange = { .beg = -1, .end = -1, .len = 0 };
-	const enum silofs_height parent_height = uaddr_height(parent);
+	const enum silofs_height parent_height = silofs_uaddr_height(parent);
 
 	vrange_of_spnode(&vrange, parent_height - 1, voff);
 	spnode_init(sni->sn, &vrange);
@@ -1538,7 +1538,7 @@ void silofs_sni_update_nactive(struct silofs_spnode_info *sni)
 
 enum silofs_height silofs_sni_height(const struct silofs_spnode_info *sni)
 {
-	return uaddr_height(sni_uaddr(sni));
+	return silofs_uaddr_height(sni_uaddr(sni));
 }
 
 static enum silofs_height sni_sub_height(const struct silofs_spnode_info *sni)
@@ -1553,7 +1553,7 @@ void silofs_sni_bind_child(struct silofs_spnode_info *sni, loff_t voff,
 	const bool bind_override = spnode_has_child_at(sni->sn, voff);
 
 	spnode_set_uaddr_of(sni->sn, voff, &ulink->uaddr);
-	spnode_set_riv_of(sni->sn, voff, &ulink->riv);
+	spnode_set_riv_of(sni->sn, voff, &ulink->iv);
 	if (!bind_override) {
 		sni->sn_nactive_subs++;
 	}
@@ -1619,7 +1619,7 @@ static void sni_get_ulink_of(const struct silofs_spnode_info *sni, loff_t voff,
                              struct silofs_ulink *out_ulink)
 {
 	spnode_uaddr_of(sni->sn, voff, &out_ulink->uaddr);
-	spnode_riv_of(sni->sn, voff, &out_ulink->riv);
+	spnode_riv_of(sni->sn, voff, &out_ulink->iv);
 }
 
 int silofs_sni_resolve_child(const struct silofs_spnode_info *sni, loff_t voff,
@@ -1630,7 +1630,7 @@ int silofs_sni_resolve_child(const struct silofs_spnode_info *sni, loff_t voff,
 		return -SILOFS_ERANGE;
 	}
 	sni_get_ulink_of(sni, voff, out_ulink);
-	if (uaddr_isnull(&out_ulink->uaddr)) {
+	if (silofs_uaddr_isnull(&out_ulink->uaddr)) {
 		return -SILOFS_ENOENT;
 	}
 	return 0;
@@ -1679,8 +1679,8 @@ void silofs_sni_resolve_main(const struct silofs_spnode_info *sni, loff_t voff,
 	silofs_sni_main_lseg(sni, &lsid);
 	silofs_assert_eq(child_ltype, lsid.ltype);
 
-	uaddr_setup(&out_ulink->uaddr, &lsid, bpos, base);
-	sni_get_riv_of(sni, voff, &out_ulink->riv);
+	silofs_uaddr_setup(&out_ulink->uaddr, &lsid, bpos, base);
+	sni_get_riv_of(sni, voff, &out_ulink->iv);
 
 	silofs_unused(child_ltype);
 }
@@ -1741,10 +1741,10 @@ static int verify_spmap_leaf_parent(const struct silofs_spmap_leaf *sl)
 	struct silofs_uaddr uaddr;
 
 	spleaf_parent(sl, &uaddr);
-	if (uaddr_isnull(&uaddr)) {
+	if (silofs_uaddr_isnull(&uaddr)) {
 		return -SILOFS_EFSCORRUPTED;
 	}
-	if (uaddr_ltype(&uaddr) != SILOFS_LTYPE_SPNODE) {
+	if (silofs_uaddr_ltype(&uaddr) != SILOFS_LTYPE_SPNODE) {
 		return -SILOFS_EFSCORRUPTED;
 	}
 	return 0;
@@ -1755,10 +1755,10 @@ static int verify_spmap_leaf_self(const struct silofs_spmap_leaf *sl)
 	struct silofs_uaddr uaddr;
 
 	spleaf_self(sl, &uaddr);
-	if (uaddr_isnull(&uaddr)) {
+	if (silofs_uaddr_isnull(&uaddr)) {
 		return -SILOFS_EFSCORRUPTED;
 	}
-	if (uaddr_ltype(&uaddr) != SILOFS_LTYPE_SPLEAF) {
+	if (silofs_uaddr_ltype(&uaddr) != SILOFS_LTYPE_SPLEAF) {
 		return -SILOFS_EFSCORRUPTED;
 	}
 	return 0;
@@ -1798,7 +1798,7 @@ static int verify_spmap_ref(const struct silofs_spmap_ref *spr)
 	int err;
 
 	spr_uaddr(spr, &uaddr);
-	if (uaddr_isnull(&uaddr)) {
+	if (silofs_uaddr_isnull(&uaddr)) {
 		return 0;
 	}
 	err = verify_ulink(&uaddr);
@@ -1817,14 +1817,14 @@ static int verify_spmap_node_parent(const struct silofs_spmap_node *sn)
 	enum silofs_height parent_height;
 
 	spnode_parent(sn, &parent_uaddr);
-	if (uaddr_isnull(&parent_uaddr)) {
+	if (silofs_uaddr_isnull(&parent_uaddr)) {
 		return -SILOFS_EFSCORRUPTED;
 	}
-	parent_height = uaddr_height(&parent_uaddr);
+	parent_height = silofs_uaddr_height(&parent_uaddr);
 	if (parent_height != (height + 1)) {
 		return -SILOFS_EFSCORRUPTED;
 	}
-	parent_ltype = uaddr_ltype(&parent_uaddr);
+	parent_ltype = silofs_uaddr_ltype(&parent_uaddr);
 	if ((height == height_max) && !ltype_issuper(parent_ltype)) {
 		return -SILOFS_EFSCORRUPTED;
 	}
@@ -1842,14 +1842,14 @@ static int verify_spmap_node_self(const struct silofs_spmap_node *sn)
 	int err;
 
 	spnode_self(sn, &uaddr);
-	if (uaddr_isnull(&uaddr)) {
+	if (silofs_uaddr_isnull(&uaddr)) {
 		return -SILOFS_EFSCORRUPTED;
 	}
-	ltype = uaddr_ltype(&uaddr);
+	ltype = silofs_uaddr_ltype(&uaddr);
 	if (!ltype_isspnode(ltype)) {
 		return -SILOFS_EFSCORRUPTED;
 	}
-	height = uaddr_height(&uaddr);
+	height = silofs_uaddr_height(&uaddr);
 	err = verify_spnode_height(height);
 	if (err) {
 		return err;

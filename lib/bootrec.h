@@ -28,7 +28,7 @@ struct silofs_env;
 struct silofs_bootrec {
 	struct silofs_uuid   uuid;
 	struct silofs_ivkey  main_ivkey;
-	struct silofs_ulink  sb_ulink;
+	struct silofs_uaddr  sb_uaddr;
 	struct silofs_pvsegr pvsegr;
 	enum silofs_bootrecf flags;
 	int32_t              cipher_algo;
@@ -86,10 +86,8 @@ void silofs_bootrec_set_pvsegr(struct silofs_bootrec      *bootrec,
 void silofs_bootrec_sb_ulink(const struct silofs_bootrec *bootrec,
                              struct silofs_ulink         *out_ulink);
 
-void silofs_bootrec_set_sb_ulink(struct silofs_bootrec     *bootrec,
-                                 const struct silofs_ulink *sb_ulink);
-
-void silofs_bootrec_reset_sb_ulink(struct silofs_bootrec *bootrec);
+void silofs_bootrec_set_sb_uaddr(struct silofs_bootrec     *bootrec,
+                                 const struct silofs_uaddr *sb_uaddr);
 
 void silofs_bootrec_volumeid(const struct silofs_bootrec *bootrec,
                              struct silofs_volumeid      *out_vid);

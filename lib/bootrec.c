@@ -102,18 +102,6 @@ static void bootrec1k_set_sb_uaddr(struct silofs_bootrec1k *bootrec1k,
 	silofs_uaddr64b_htox(&bootrec1k->ub_sb_uaddr, sb_uaddr);
 }
 
-static void bootrec1k_sb_riv(const struct silofs_bootrec1k *bootrec1k,
-                             struct silofs_iv *out_sb_riv)
-{
-	silofs_iv_assign(out_sb_riv, &bootrec1k->ub_sb_riv);
-}
-
-static void bootrec1k_set_sb_riv(struct silofs_bootrec1k *bootrec1k,
-                                 const struct silofs_iv *sb_riv)
-{
-	silofs_iv_assign(&bootrec1k->ub_sb_riv, sb_riv);
-}
-
 static void bootrec1k_main_ivkey(const struct silofs_bootrec1k *bootrec1k,
                                  struct silofs_ivkey *out_ivkey)
 {
@@ -169,8 +157,8 @@ static int bootrec1k_check_uaddr_sb(const struct silofs_bootrec1k *bootrec1k)
 	enum silofs_ltype ltype;
 
 	bootrec1k_sb_uaddr(bootrec1k, &uaddr);
-	height = uaddr_height(&uaddr);
-	ltype = uaddr_ltype(&uaddr);
+	height = silofs_uaddr_height(&uaddr);
+	ltype = silofs_uaddr_ltype(&uaddr);
 	if ((ltype != SILOFS_LTYPE_SUPER) || (height != SILOFS_HEIGHT_SUPER) ||
 	    (uaddr.voff != 0)) {
 		log_dbg("bad bootrec uaddr-sb: voff=%ld ltype=%d height=%d",
@@ -281,12 +269,11 @@ int silofs_bootrec1k_verify(const struct silofs_bootrec1k *bootrec1k,
 void silofs_bootrec1k_xtoh(const struct silofs_bootrec1k *bootrec1k,
                            struct silofs_bootrec *bootrec)
 {
-	bootrec1k_sb_uaddr(bootrec1k, &bootrec->sb_ulink.uaddr);
-	bootrec1k_sb_riv(bootrec1k, &bootrec->sb_ulink.riv);
-	bootrec->flags = bootrec1k_flags(bootrec1k);
 	bootrec1k_uuid(bootrec1k, &bootrec->uuid);
 	bootrec1k_main_ivkey(bootrec1k, &bootrec->main_ivkey);
+	bootrec1k_sb_uaddr(bootrec1k, &bootrec->sb_uaddr);
 	bootrec1k_pvsegr(bootrec1k, &bootrec->pvsegr);
+	bootrec->flags = bootrec1k_flags(bootrec1k);
 	bootrec->cipher_algo = (int32_t)bootrec1k_chiper_algo(bootrec1k);
 	bootrec->cipher_mode = (int32_t)bootrec1k_chiper_mode(bootrec1k);
 }
@@ -295,8 +282,7 @@ void silofs_bootrec1k_htox(struct silofs_bootrec1k *bootrec1k,
                            const struct silofs_bootrec *bootrec)
 {
 	silofs_bootrec1k_init(bootrec1k);
-	bootrec1k_set_sb_uaddr(bootrec1k, &bootrec->sb_ulink.uaddr);
-	bootrec1k_set_sb_riv(bootrec1k, &bootrec->sb_ulink.riv);
+	bootrec1k_set_sb_uaddr(bootrec1k, &bootrec->sb_uaddr);
 	bootrec1k_set_flags(bootrec1k, bootrec->flags);
 	bootrec1k_set_uuid(bootrec1k, &bootrec->uuid);
 	bootrec1k_set_main_ivkey(bootrec1k, &bootrec->main_ivkey);
@@ -310,7 +296,7 @@ void silofs_bootrec1k_htox(struct silofs_bootrec1k *bootrec1k,
 void silofs_bootrec_init(struct silofs_bootrec *bootrec)
 {
 	silofs_memzero(bootrec, sizeof(*bootrec));
-	silofs_ulink_reset(&bootrec->sb_ulink);
+	silofs_uaddr_reset(&bootrec->sb_uaddr);
 	bootrec->flags = SILOFS_BOOTRECF_NONE;
 	bootrec->cipher_algo = SILOFS_CIPHER_AES256;
 	bootrec->cipher_mode = SILOFS_CIPHER_MODE_XTS;
@@ -327,7 +313,7 @@ void silofs_bootrec_assign(struct silofs_bootrec *bootrec,
 	silofs_uuid_assign(&bootrec->uuid, &other->uuid);
 	silofs_ivkey_assign(&bootrec->main_ivkey, &other->main_ivkey);
 	silofs_pvsegr_assign(&bootrec->pvsegr, &other->pvsegr);
-	silofs_ulink_assign(&bootrec->sb_ulink, &other->sb_ulink);
+	silofs_uaddr_assign(&bootrec->sb_uaddr, &other->sb_uaddr);
 	bootrec->flags = other->flags;
 	bootrec->cipher_algo = other->cipher_algo;
 	bootrec->cipher_mode = other->cipher_mode;
@@ -389,24 +375,20 @@ void silofs_bootrec_set_pvsegr(struct silofs_bootrec *bootrec,
 void silofs_bootrec_sb_ulink(const struct silofs_bootrec *bootrec,
                              struct silofs_ulink *out_ulink)
 {
-	silofs_ulink_assign(out_ulink, &bootrec->sb_ulink);
+	silofs_ulink_setup(out_ulink, &bootrec->sb_uaddr,
+	                   &bootrec->main_ivkey.iv);
 }
 
-void silofs_bootrec_set_sb_ulink(struct silofs_bootrec *bootrec,
-                                 const struct silofs_ulink *sb_ulink)
+void silofs_bootrec_set_sb_uaddr(struct silofs_bootrec *bootrec,
+                                 const struct silofs_uaddr *uaddr)
 {
-	silofs_ulink_assign(&bootrec->sb_ulink, sb_ulink);
-}
-
-void silofs_bootrec_reset_sb_ulink(struct silofs_bootrec *bootrec)
-{
-	silofs_ulink_reset(&bootrec->sb_ulink);
+	silofs_uaddr_assign(&bootrec->sb_uaddr, uaddr);
 }
 
 void silofs_bootrec_volumeid(const struct silofs_bootrec *bootrec,
                              struct silofs_volumeid *out_vid)
 {
-	const struct silofs_uaddr *sb_uaddr = &bootrec->sb_ulink.uaddr;
+	const struct silofs_uaddr *sb_uaddr = &bootrec->sb_uaddr;
 
 	silofs_volumeid_assign(out_vid, &sb_uaddr->laddr.lsid.volumeid);
 }

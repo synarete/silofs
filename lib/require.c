@@ -220,11 +220,8 @@ static void require_persistent_types_alignment2(void)
 	REQUIRE_OFFSET32(struct silofs_bootrec1k, ub_chiper_mode, 44);
 	REQUIRE_OFFSET64(struct silofs_bootrec1k, ub_main_key, 64);
 	REQUIRE_OFFSET64(struct silofs_bootrec1k, ub_main_iv, 96);
-	REQUIRE_OFFSET64(struct silofs_bootrec1k, ub_sb_riv, 112);
 	REQUIRE_OFFSET64(struct silofs_bootrec1k, ub_sb_uaddr, 128);
-	REQUIRE_OFFSET64(struct silofs_bootrec1k, ub_reserved2, 192);
 	REQUIRE_OFFSET64(struct silofs_bootrec1k, ub_pvsegr, 256);
-	REQUIRE_OFFSET64(struct silofs_bootrec1k, ub_reserved3, 320);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_hdr, 0);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_magic, 16);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_version, 24);

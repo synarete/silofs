@@ -468,7 +468,7 @@ vstgc_make_lsid_of_vdata(const struct silofs_vstage_ctx *vstg_ctx, loff_t voff,
 static void vstgc_update_space_stats(const struct silofs_vstage_ctx *vstg_ctx,
                                      const struct silofs_uaddr *uaddr)
 {
-	const enum silofs_ltype ltype = uaddr_ltype(uaddr);
+	const enum silofs_ltype ltype = silofs_uaddr_ltype(uaddr);
 
 	silofs_sbst_update_objs(vstg_ctx->sbi, ltype, 1);
 	silofs_sbst_update_bks(vstg_ctx->sbi, ltype, 1);

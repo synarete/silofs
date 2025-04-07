@@ -127,28 +127,28 @@ void silofs_uaddr64b_xtoh(const struct silofs_uaddr64b *uaddr64,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+void silofs_ulink_setup(struct silofs_ulink *ulink,
+                        const struct silofs_uaddr *uaddr,
+                        const struct silofs_iv *iv)
+{
+	silofs_uaddr_assign(&ulink->uaddr, uaddr);
+	silofs_iv_assign(&ulink->iv, iv);
+}
+
 void silofs_ulink_assign(struct silofs_ulink *ulink,
                          const struct silofs_ulink *other)
 {
-	silofs_ulink_assign2(ulink, &other->uaddr, &other->riv);
-}
-
-void silofs_ulink_assign2(struct silofs_ulink *ulink,
-                          const struct silofs_uaddr *uaddr,
-                          const struct silofs_iv *iv)
-{
-	silofs_uaddr_assign(&ulink->uaddr, uaddr);
-	silofs_iv_assign(&ulink->riv, iv);
+	silofs_ulink_setup(ulink, &other->uaddr, &other->iv);
 }
 
 void silofs_ulink_reset(struct silofs_ulink *ulink)
 {
 	silofs_uaddr_reset(&ulink->uaddr);
-	silofs_iv_reset(&ulink->riv);
+	silofs_iv_reset(&ulink->iv);
 }
 
 void silofs_ulink_as_llink(const struct silofs_ulink *ulink,
                            struct silofs_llink *out_llink)
 {
-	silofs_llink_setup(out_llink, &ulink->uaddr.laddr, &ulink->riv);
+	silofs_llink_setup(out_llink, &ulink->uaddr.laddr, &ulink->iv);
 }

@@ -641,7 +641,7 @@ static void uakey_setup(struct silofs_uakey *uakey, loff_t voff,
 void silofs_uakey_setup_by(struct silofs_uakey *uakey,
                            const struct silofs_uaddr *uaddr)
 {
-	uakey_setup(uakey, uaddr->voff, uaddr_height(uaddr),
+	uakey_setup(uakey, uaddr->voff, silofs_uaddr_height(uaddr),
 	            uaddr_vspace(uaddr));
 }
 
@@ -684,16 +684,16 @@ struct silofs_uaent {
 static void
 uaent_init(struct silofs_uaent *uae, const struct silofs_uaddr *uaddr)
 {
-	list_head_init(&uae->htb_lh);
-	list_head_init(&uae->lru_lh);
-	uaddr_assign(&uae->uaddr, uaddr);
+	silofs_list_head_init(&uae->htb_lh);
+	silofs_list_head_init(&uae->lru_lh);
+	silofs_uaddr_assign(&uae->uaddr, uaddr);
 }
 
 static void uaent_fini(struct silofs_uaent *uae)
 {
-	list_head_fini(&uae->htb_lh);
-	list_head_fini(&uae->lru_lh);
-	uaddr_reset(&uae->uaddr);
+	silofs_list_head_fini(&uae->htb_lh);
+	silofs_list_head_fini(&uae->lru_lh);
+	silofs_uaddr_reset(&uae->uaddr);
 }
 
 static struct silofs_uaent *

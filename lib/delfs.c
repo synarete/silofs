@@ -127,7 +127,7 @@ static int delfc_post_at_spleaf(struct silofs_delfs_ctx *delf_ctx,
 
 static const struct silofs_lsid *lsid_of(const struct silofs_ulink *ulink)
 {
-	return uaddr_lsid(&ulink->uaddr);
+	return silofs_uaddr_lsid(&ulink->uaddr);
 }
 
 static int delfc_post_at_spnode(struct silofs_delfs_ctx *delf_ctx,
@@ -164,7 +164,7 @@ static int delfc_post_at_super(struct silofs_delfs_ctx *delf_ctx,
 	if (err) {
 		return err;
 	}
-	err = delfc_try_remove_lseg_of(delf_ctx, uaddr_lsid(&uaddr));
+	err = delfc_try_remove_lseg_of(delf_ctx, silofs_uaddr_lsid(&uaddr));
 	if (err) {
 		return err;
 	}
@@ -236,7 +236,7 @@ delfc_init(struct silofs_delfs_ctx *delf_ctx, const struct silofs_sb_info *sbi)
 	delf_ctx->vis.post_hook = delfc_visit_post_hook;
 	delf_ctx->env = sbi_env(sbi);
 	delf_ctx->repo = delf_ctx->env->base.repo;
-	uaddr_assign(&delf_ctx->sb_uaddr, uaddr);
+	silofs_uaddr_assign(&delf_ctx->sb_uaddr, uaddr);
 }
 
 static void delfc_fini(struct silofs_delfs_ctx *delf_ctx)
@@ -248,7 +248,8 @@ static void delfc_fini(struct silofs_delfs_ctx *delf_ctx)
 
 static int delfc_remove_super(const struct silofs_delfs_ctx *delf_ctx)
 {
-	const struct silofs_lsid *lsid = uaddr_lsid(&delf_ctx->sb_uaddr);
+	const struct silofs_lsid *lsid =
+		silofs_uaddr_lsid(&delf_ctx->sb_uaddr);
 
 	return delfc_try_remove_lseg_of(delf_ctx, lsid);
 }

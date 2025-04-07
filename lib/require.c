@@ -164,7 +164,7 @@ static void require_persistent_types_size2(void)
 	REQUIRE_SIZEOF(struct silofs_space_stats1k, 1024);
 	REQUIRE_SIZEOF(struct silofs_spmap_ref, 96);
 	REQUIRE_SIZEOF(struct silofs_spmap_node, SILOFS_SPMAP_SIZE);
-	REQUIRE_SIZEOF(struct silofs_bk_ref, 96);
+	REQUIRE_SIZEOF(struct silofs_bk_ref, 112);
 	REQUIRE_SIZEOF(struct silofs_spmap_leaf, SILOFS_SPMAP_SIZE);
 	REQUIRE_SIZEOF(struct silofs_inode, SILOFS_KB_SIZE);
 	REQUIRE_SIZEOF(struct silofs_lblock, SILOFS_LBK_SIZE);
@@ -203,10 +203,11 @@ static void require_persistent_types_members(void)
 static void require_persistent_types_alignment1(void)
 {
 	REQUIRE_OFFSET64(struct silofs_spmap_ref, sr_uaddr, 0);
-	REQUIRE_OFFSET64(struct silofs_bk_ref, bkr_uref, 0);
-	REQUIRE_OFFSET64(struct silofs_bk_ref, bkr_allocated, 48);
-	REQUIRE_OFFSET64(struct silofs_bk_ref, bkr_unwritten, 56);
-	REQUIRE_OFFSET64(struct silofs_bk_ref, bkr_dbkref, 64);
+	REQUIRE_OFFSET64(struct silofs_bk_ref, bkr_riv, 0);
+	REQUIRE_OFFSET64(struct silofs_bk_ref, bkr_uref, 32);
+	REQUIRE_OFFSET64(struct silofs_bk_ref, bkr_allocated, 80);
+	REQUIRE_OFFSET64(struct silofs_bk_ref, bkr_unwritten, 88);
+	REQUIRE_OFFSET64(struct silofs_bk_ref, bkr_dbkref, 96);
 }
 
 static void require_persistent_types_alignment2(void)
@@ -262,7 +263,6 @@ static void require_persistent_types_alignment2(void)
 	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_self, 128);
 	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_vrange, 192);
 	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_subrefs, 4096);
-	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_rivs, 28672);
 }
 
 static void require_persistent_types_alignment3(void)

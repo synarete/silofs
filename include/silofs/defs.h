@@ -758,12 +758,14 @@ struct silofs_bk_state {
 } silofs_attr_aligned8;
 
 struct silofs_bk_ref {
+	struct silofs_iv       bkr_riv;
+	uint8_t                bkr_reserved2[16];
 	struct silofs_laddr48b bkr_uref;
 	struct silofs_bk_state bkr_allocated;
 	struct silofs_bk_state bkr_unwritten;
 	uint64_t               bkr_dbkref;
-	uint8_t                bkr_reserved[24];
-} silofs_attr_aligned32;
+	uint8_t                bkr_reserved[8];
+} silofs_attr_aligned16;
 
 struct silofs_spmap_leaf {
 	struct silofs_header    sl_hdr;
@@ -776,7 +778,6 @@ struct silofs_spmap_leaf {
 	uint8_t                 sl_reserved3[1024];
 	uint8_t                 sl_reserved4[2048];
 	struct silofs_bk_ref    sl_subrefs[SILOFS_SPMAP_NCHILDS];
-	struct silofs_iv        sl_rivs[SILOFS_SPMAP_NCHILDS];
 } silofs_attr_aligned64;
 
 struct silofs_inode_times {

@@ -164,7 +164,7 @@ static void require_persistent_types_size2(void)
 	REQUIRE_SIZEOF(struct silofs_space_stats1k, 1024);
 	REQUIRE_SIZEOF(struct silofs_spmap_ref, 96);
 	REQUIRE_SIZEOF(struct silofs_spmap_node, SILOFS_SPMAP_SIZE);
-	REQUIRE_SIZEOF(struct silofs_bk_ref, 112);
+	REQUIRE_SIZEOF(struct silofs_lbk_ref, 112);
 	REQUIRE_SIZEOF(struct silofs_spmap_leaf, SILOFS_SPMAP_SIZE);
 	REQUIRE_SIZEOF(struct silofs_inode, SILOFS_KB_SIZE);
 	REQUIRE_SIZEOF(struct silofs_lblock, SILOFS_LBK_SIZE);
@@ -190,9 +190,9 @@ static void require_persistent_types_size2(void)
 static void require_persistent_types_members(void)
 {
 	REQUIRE_NBITS(struct silofs_header, h_type, 8);
-	REQUIRE_NBITS(struct silofs_bk_ref, bkr_allocated, SILOFS_NKB_IN_LBK);
-	REQUIRE_NBITS(struct silofs_bk_ref, bkr_unwritten, SILOFS_NKB_IN_LBK);
-	REQUIRE_MEMBER_SIZE(struct silofs_bk_ref, bkr_dbkref, 8);
+	REQUIRE_NBITS(struct silofs_lbk_ref, lbr_allocated, SILOFS_NKB_IN_LBK);
+	REQUIRE_NBITS(struct silofs_lbk_ref, lbr_unwritten, SILOFS_NKB_IN_LBK);
+	REQUIRE_MEMBER_SIZE(struct silofs_lbk_ref, lbr_refcnt, 8);
 	REQUIRE_NELEMS(struct silofs_ftree_node, fn_child,
 	               SILOFS_FILE_NODE_NCHILDS);
 	REQUIRE_NELEMS(union silofs_dtree_data, de, SILOFS_DIR_NODE_NENTS);
@@ -203,11 +203,11 @@ static void require_persistent_types_members(void)
 static void require_persistent_types_alignment1(void)
 {
 	REQUIRE_OFFSET64(struct silofs_spmap_ref, sr_uaddr, 0);
-	REQUIRE_OFFSET64(struct silofs_bk_ref, bkr_riv, 0);
-	REQUIRE_OFFSET64(struct silofs_bk_ref, bkr_uref, 32);
-	REQUIRE_OFFSET64(struct silofs_bk_ref, bkr_allocated, 80);
-	REQUIRE_OFFSET64(struct silofs_bk_ref, bkr_unwritten, 88);
-	REQUIRE_OFFSET64(struct silofs_bk_ref, bkr_dbkref, 96);
+	REQUIRE_OFFSET64(struct silofs_lbk_ref, lbr_riv, 0);
+	REQUIRE_OFFSET64(struct silofs_lbk_ref, lbr_subref, 32);
+	REQUIRE_OFFSET64(struct silofs_lbk_ref, lbr_allocated, 80);
+	REQUIRE_OFFSET64(struct silofs_lbk_ref, lbr_unwritten, 88);
+	REQUIRE_OFFSET64(struct silofs_lbk_ref, lbr_refcnt, 96);
 }
 
 static void require_persistent_types_alignment2(void)
@@ -262,7 +262,7 @@ static void require_persistent_types_alignment2(void)
 	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_parent, 64);
 	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_self, 128);
 	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_vrange, 192);
-	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_subrefs, 4096);
+	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_lbrs, 4096);
 }
 
 static void require_persistent_types_alignment3(void)

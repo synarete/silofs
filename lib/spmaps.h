@@ -28,8 +28,6 @@ struct silofs_spmap_lmap {
 	uint32_t            cnt;
 };
 
-void silofs_bk_state_init(struct silofs_bk_state *bk_st);
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 loff_t silofs_sni_base_voff(const struct silofs_spnode_info *sni);

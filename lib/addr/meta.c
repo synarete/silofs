@@ -320,13 +320,6 @@ int silofs_hdr_verify(const struct silofs_header *hdr, uint8_t type,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct silofs_hash256 s_hash_nil;
-
-bool silofs_hash256_isnil(const struct silofs_hash256 *hash)
-{
-	return silofs_hash256_isequal(hash, &s_hash_nil);
-}
-
 bool silofs_hash256_isequal(const struct silofs_hash256 *hash,
                             const struct silofs_hash256 *other)
 {

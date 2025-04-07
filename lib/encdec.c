@@ -68,7 +68,7 @@ decrypt_view(const struct silofs_env *env, const struct silofs_llink *llink,
 	struct silofs_ivkey ivkey;
 	int ret;
 
-	resolve_ivkey_of(env, &llink->laddr, &llink->riv, &ivkey);
+	resolve_ivkey_of(env, &llink->laddr, &llink->iv, &ivkey);
 	ret = decrypt_view_with(env, &ivkey, view, ptr, llink->laddr.len);
 	silofs_assert_ok(ret);
 	return ret;

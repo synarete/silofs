@@ -576,17 +576,17 @@ void silofs_llink_setup(struct silofs_llink *llink,
                         const struct silofs_iv *riv)
 {
 	silofs_laddr_assign(&llink->laddr, laddr);
-	silofs_iv_assign(&llink->riv, riv);
+	silofs_iv_assign(&llink->iv, riv);
 }
 
 void silofs_llink_assign(struct silofs_llink *llink,
                          const struct silofs_llink *other)
 {
-	silofs_llink_setup(llink, &other->laddr, &other->riv);
+	silofs_llink_setup(llink, &other->laddr, &other->iv);
 }
 
 void silofs_llink_reset(struct silofs_llink *llink)
 {
 	silofs_laddr_reset(&llink->laddr);
-	silofs_iv_reset(&llink->riv);
+	silofs_iv_reset(&llink->iv);
 }

@@ -38,10 +38,10 @@ struct silofs_laddr {
 	size_t             len;
 };
 
-/* a pair of object logical-address and its associate (random) IV */
+/* logical-address and its associate IV-key */
 struct silofs_llink {
 	struct silofs_laddr laddr;
-	struct silofs_iv    riv;
+	struct silofs_iv    iv;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

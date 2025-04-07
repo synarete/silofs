@@ -1006,7 +1006,7 @@ static void spleaf_bind_child(struct silofs_spmap_leaf *spl, loff_t voff,
 
 	silofs_assert_gt(lbr_usecnt(lbr), 0);
 	lbr_set_subref(lbr, &llink->laddr);
-	lbr_set_riv(lbr, &llink->riv);
+	lbr_set_riv(lbr, &llink->iv);
 }
 
 static void spleaf_gen_rivs(struct silofs_spmap_leaf *spl)
@@ -1047,7 +1047,7 @@ static void spleaf_resolve_child(const struct silofs_spmap_leaf *spl,
                                  loff_t voff, struct silofs_llink *out_llink)
 {
 	spleaf_child_of(spl, voff, &out_llink->laddr);
-	spleaf_riv_of(spl, voff, &out_llink->riv);
+	spleaf_riv_of(spl, voff, &out_llink->iv);
 }
 
 static void spleaf_clone_subrefs(struct silofs_spmap_leaf *spl,
@@ -1377,7 +1377,7 @@ void silofs_sli_resolve_main_lbk(const struct silofs_spleaf_info *sli,
                                  loff_t voff, struct silofs_llink *out_llink)
 {
 	spleaf_resolve_main_lbk(sli->sl, voff, &out_llink->laddr);
-	spleaf_riv_of(sli->sl, voff, &out_llink->riv);
+	spleaf_riv_of(sli->sl, voff, &out_llink->iv);
 }
 
 int silofs_sli_resolve_child(const struct silofs_spleaf_info *sli, loff_t voff,

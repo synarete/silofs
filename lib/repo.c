@@ -498,7 +498,8 @@ out:
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static size_t lsid_to_index(const struct silofs_lsid *lsid, uint32_t index_max)
+static size_t
+silofs_lsid_to_index(const struct silofs_lsid *lsid, uint32_t index_max)
 {
 	const uint64_t h = silofs_lsid_hash64(lsid);
 
@@ -717,7 +718,7 @@ static ssize_t lsegf_capacity(const struct silofs_lsegf *lsegf)
 {
 	const struct silofs_lsid *lsid = &lsegf->lsf_rce.rce_key.u.lsid;
 
-	return (ssize_t)lsid_size(lsid);
+	return (ssize_t)silofs_lsid_size(lsid);
 }
 
 static ssize_t lsegf_size(const struct silofs_lsegf *lsegf)
@@ -823,7 +824,9 @@ lsegf_require_size_ge(struct silofs_lsegf *lsegf, loff_t off, size_t len)
 static int lsegf_require_laddr(struct silofs_lsegf *lsegf,
                                const struct silofs_laddr *laddr)
 {
-	return lsegf_require_size_ge(lsegf, laddr->pos, laddr->len);
+	const size_t len = silofs_laddr_len(laddr);
+
+	return lsegf_require_size_ge(lsegf, laddr->pos, len);
 }
 
 static int
@@ -857,11 +860,11 @@ static int lsegf_iovec_at(const struct silofs_lsegf *lsegf, loff_t off,
 	return err;
 }
 
-static int
-lsegf_iovec_of(const struct silofs_lsegf *lsegf,
-               const struct silofs_laddr *laddr, struct silofs_iovec *siov)
+static int lsegf_iovec_of(const struct silofs_lsegf *lsegf,
+                          const struct silofs_laddr *laddr, size_t len,
+                          struct silofs_iovec *siov)
 {
-	return lsegf_iovec_at(lsegf, laddr->pos, laddr->len, siov);
+	return lsegf_iovec_at(lsegf, laddr->pos, len, siov);
 }
 
 static int
@@ -949,9 +952,9 @@ static int lsegf_writev(struct silofs_lsegf *lsegf, loff_t off,
 	return err;
 }
 
-static int
-lsegf_load_bb(const struct silofs_lsegf *lsegf,
-              const struct silofs_laddr *laddr, struct silofs_bytebuf *bb)
+static int lsegf_load_bb(const struct silofs_lsegf *lsegf,
+                         const struct silofs_laddr *laddr, size_t len,
+                         struct silofs_bytebuf *bb)
 {
 	struct silofs_iovec iovec = { .iov_off = -1 };
 	struct stat st;
@@ -959,7 +962,7 @@ lsegf_load_bb(const struct silofs_lsegf *lsegf,
 	void *bobj;
 	int err;
 
-	err = lsegf_iovec_of(lsegf, laddr, &iovec);
+	err = lsegf_iovec_of(lsegf, laddr, len, &iovec);
 	if (err) {
 		return err;
 	}
@@ -987,19 +990,20 @@ out:
 	return 0;
 }
 
-static int lsegf_load_buf(const struct silofs_lsegf *lsegf,
-                          const struct silofs_laddr *laddr, void *buf)
+static int
+lsegf_load_buf(const struct silofs_lsegf *lsegf,
+               const struct silofs_laddr *laddr, void *buf, size_t len)
 {
 	struct silofs_bytebuf bb;
 
-	silofs_bytebuf_init(&bb, buf, laddr->len);
-	return lsegf_load_bb(lsegf, laddr, &bb);
+	silofs_bytebuf_init(&bb, buf, len);
+	return lsegf_load_bb(lsegf, laddr, len, &bb);
 }
 
 static int lsegf_check_laddr(const struct silofs_lsegf *lsegf,
-                             const struct silofs_laddr *laddr)
+                             const struct silofs_laddr *laddr, size_t len)
 {
-	return lsegf_check_size_ge(lsegf, laddr->pos, laddr->len);
+	return lsegf_check_size_ge(lsegf, laddr->pos, len);
 }
 
 static int lsegf_punch_with_ftruncate(const struct silofs_lsegf *lsegf)
@@ -1646,7 +1650,7 @@ static int repo_objs_sub_pathname_of(const struct silofs_repo *repo,
 	struct silofs_hash256 hash;
 	size_t idx;
 
-	idx = lsid_to_index(lsid, repo->re_defs->re_objs_nsubs);
+	idx = silofs_lsid_to_index(lsid, repo->re_defs->re_objs_nsubs);
 	repo_hash_lsid(repo, lsid, &hash);
 
 	return make_pathname(&hash, idx, out_name);
@@ -1808,7 +1812,7 @@ repo_objs_stat_lseg(const struct silofs_repo *repo,
 	if (err) {
 		return (err == -ENOENT) ? -SILOFS_ENOENT : err;
 	}
-	len = lsid_size(lsid);
+	len = silofs_lsid_size(lsid);
 	if (out_st->st_size > (loff_t)(len + SILOFS_LBK_SIZE)) {
 		log_warn("lseg-size mismatch: %s len=%lu st_size=%ld",
 		         sbuf.str, len, out_st->st_size);
@@ -2718,18 +2722,20 @@ int silofs_repo_writev_at(struct silofs_repo *repo,
 }
 
 int silofs_repo_write_at(struct silofs_repo *repo,
-                         const struct silofs_laddr *laddr, const void *buf)
+                         const struct silofs_laddr *laddr, const void *buf,
+                         size_t len)
 {
 	const struct iovec iov = {
 		.iov_base = unconst(buf),
-		.iov_len = laddr->len,
+		.iov_len = len,
 	};
 
 	return silofs_repo_writev_at(repo, laddr, &iov, 1);
 }
 
-static int repo_do_read_at(struct silofs_repo *repo,
-                           const struct silofs_laddr *laddr, void *buf)
+static int
+repo_do_read_at(struct silofs_repo *repo, const struct silofs_laddr *laddr,
+                void *buf, size_t len)
 {
 	struct silofs_lsegf *lsegf = NULL;
 	int err;
@@ -2742,12 +2748,12 @@ static int repo_do_read_at(struct silofs_repo *repo,
 	if (err) {
 		return err;
 	}
-	err = lsegf_check_laddr(lsegf, laddr);
+	err = lsegf_check_laddr(lsegf, laddr, len);
 	if (err) {
 		silofs_assert_ok(err);
 		return err;
 	}
-	err = lsegf_load_buf(lsegf, laddr, buf);
+	err = lsegf_load_buf(lsegf, laddr, buf, len);
 	if (err) {
 		return err;
 	}
@@ -2755,12 +2761,13 @@ static int repo_do_read_at(struct silofs_repo *repo,
 }
 
 int silofs_repo_read_at(struct silofs_repo *repo,
-                        const struct silofs_laddr *laddr, void *buf)
+                        const struct silofs_laddr *laddr, void *buf,
+                        size_t len)
 {
 	int err;
 
 	repo_lock(repo);
-	err = repo_do_read_at(repo, laddr, buf);
+	err = repo_do_read_at(repo, laddr, buf, len);
 	repo_unlock(repo);
 	return err;
 }

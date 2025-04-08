@@ -18,13 +18,13 @@
 #define SILOFS_SPMAPS_H_
 
 #include <silofs/defs.h>
-#include "infra.h"
-#include "addr.h"
+#include "addr/laddr.h"
 
 struct silofs_spnode_info;
 
 struct silofs_spmap_lmap {
 	struct silofs_laddr laddr[SILOFS_SPMAP_NCHILDS];
+	size_t              len[SILOFS_SPMAP_NCHILDS];
 	uint32_t            cnt;
 };
 

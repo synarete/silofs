@@ -57,7 +57,7 @@ static void sqe_reset_iovs(struct silofs_submitq_ent *sqe)
 static bool sqe_isappendable(const struct silofs_submitq_ent *sqe,
                              const struct silofs_laddr *laddr)
 {
-	const struct silofs_laddr *sqe_laddr = &sqe->laddr;
+	const struct silofs_laddr *sqe_laddr = &sqe->laddr_base;
 	const ssize_t len_max = SILOFS_COMMIT_LEN_MAX;
 	size_t len;
 	loff_t end;
@@ -71,20 +71,25 @@ static bool sqe_isappendable(const struct silofs_submitq_ent *sqe,
 	if (sqe->cnt == ARRAY_SIZE(sqe->iov)) {
 		return false;
 	}
-	if (!silofs_laddr_isnext(sqe_laddr, laddr)) {
+	if (!silofs_lsid_isequal(&sqe_laddr->lsid, &laddr->lsid)) {
 		return false;
 	}
-	len = sqe_laddr->len + laddr->len;
+	end = off_end(sqe_laddr->pos, sqe->len);
+	if (laddr->pos != end) {
+		return false;
+	}
+	len = sqe->len + silofs_laddr_len(laddr);
 	if (len > (size_t)len_max) {
 		return false;
 	}
+	if (!ltype_isinode(sqe->ltype)) {
+		return true;
+	}
 	/* for inodes require alignment on commit-len boundaries */
-	if (ltype_isinode(sqe->ltype)) {
-		nxt = off_next(sqe_laddr->pos, len_max);
-		end = off_end(sqe_laddr->pos, len);
-		if (end > nxt) {
-			return false;
-		}
+	nxt = off_next(sqe_laddr->pos, len_max);
+	end = off_end(sqe_laddr->pos, len);
+	if (end > nxt) {
+		return false;
 	}
 	return true;
 }
@@ -97,11 +102,10 @@ bool silofs_sqe_append_ref(struct silofs_submitq_ent *sqe,
 		return false;
 	}
 	if (sqe->cnt == 0) {
-		laddr_assign(&sqe->laddr, laddr);
+		silofs_laddr_assign(&sqe->laddr_base, laddr);
 		sqe->ltype = lni->ln_ltype;
-	} else {
-		sqe->laddr.len += laddr->len;
 	}
+	sqe->len += silofs_laddr_len(laddr);
 	sqe->lni[sqe->cnt++] = lni;
 	return true;
 }
@@ -115,7 +119,7 @@ static int sqe_setup_iovs(struct silofs_submitq_ent *sqe,
 
 	for (size_t i = 0; i < sqe->cnt; ++i) {
 		ref = &refs_arr[i];
-		len = ref->llink.laddr.len;
+		len = silofs_laddr_len(&ref->llink.laddr);
 		err = sqe_setup_iov_at(sqe, i, len);
 		if (err) {
 			return err;
@@ -164,7 +168,7 @@ out_err:
 
 static int sqe_do_write(const struct silofs_submitq_ent *sqe)
 {
-	return silofs_repo_writev_at(sqe->env->base.repo, &sqe->laddr,
+	return silofs_repo_writev_at(sqe->env->base.repo, &sqe->laddr_base,
 	                             sqe->iov, sqe->cnt);
 }
 
@@ -192,11 +196,12 @@ static void sqe_init(struct silofs_submitq_ent *sqe,
                      struct silofs_alloc *alloc, uint64_t uniq_id)
 {
 	memset(sqe, 0, sizeof(*sqe));
-	list_head_init(&sqe->qlh);
-	laddr_reset(&sqe->laddr);
+	silofs_list_head_init(&sqe->qlh);
+	silofs_laddr_reset(&sqe->laddr_base);
 	sqe->alloc = alloc;
 	sqe->env = NULL;
 	sqe->uniq_id = uniq_id;
+	sqe->len = 0;
 	sqe->cnt = 0;
 	sqe->hold_refs = 0;
 	sqe->status = 0;
@@ -204,9 +209,10 @@ static void sqe_init(struct silofs_submitq_ent *sqe,
 
 static void sqe_fini(struct silofs_submitq_ent *sqe)
 {
-	list_head_fini(&sqe->qlh);
-	laddr_reset(&sqe->laddr);
+	silofs_list_head_fini(&sqe->qlh);
+	silofs_laddr_reset(&sqe->laddr_base);
 	sqe_reset_iovs(sqe);
+	sqe->len = 0;
 	sqe->cnt = 0;
 	sqe->alloc = NULL;
 	sqe->status = -1;

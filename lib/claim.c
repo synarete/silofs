@@ -442,29 +442,26 @@ static int spac_try_recache_vspace(const struct silofs_spalloc_ctx *spa_ctx,
 	return ret;
 }
 
-static bool spac_ismutable_laddr(const struct silofs_spalloc_ctx *spa_ctx,
-                                 const struct silofs_laddr *laddr)
+static bool spac_ismutable_lsid(const struct silofs_spalloc_ctx *spa_ctx,
+                                const struct silofs_lsid *lsid)
 {
-	return silofs_sbi_ismutable_laddr(spa_ctx->sbi, laddr);
+	return silofs_sbi_ismutable_lsid(spa_ctx->sbi, lsid);
 }
 
 static int spac_resolve_main_range(const struct silofs_spalloc_ctx *spa_ctx,
-                                   struct silofs_laddr *out_laddr)
+                                   struct silofs_lsid *out_lsid,
+                                   struct silofs_vrange *out_vrange)
 {
-	struct silofs_vrange vrange;
-	struct silofs_lsid lsid;
 	struct silofs_spleaf_info *sli = spa_ctx->sli;
 
-	silofs_sli_main_lseg(sli, &lsid);
-	if (lsid_isnull(&lsid)) {
+	silofs_sli_main_lseg(sli, out_lsid);
+	if (silofs_lsid_isnull(out_lsid)) {
 		return -SILOFS_ENOENT;
 	}
-	silofs_assert_eq(lsid.ltype, spa_ctx->ltype);
-	if (lsid.ltype != spa_ctx->ltype) {
+	if (out_lsid->ltype != spa_ctx->ltype) {
 		return -SILOFS_EBUG;
 	}
-	silofs_sli_vspace_range(sli, &vrange);
-	silofs_laddr_setup(out_laddr, &lsid, 0, vrange.len);
+	silofs_sli_vspace_range(sli, out_vrange);
 	return 0;
 }
 
@@ -474,20 +471,21 @@ static int spac_resolve_main_range(const struct silofs_spalloc_ctx *spa_ctx,
  */
 static int spac_try_reclaim_vlseg(const struct silofs_spalloc_ctx *spa_ctx)
 {
-	struct silofs_laddr laddr = { .pos = -1 };
+	struct silofs_lsid lsid;
+	struct silofs_vrange vrange;
 	int err;
 
 	if (spa_ctx->sli->sl_nused_bytes) {
 		return 0; /* still has in-use blocks: no-op */
 	}
-	err = spac_resolve_main_range(spa_ctx, &laddr);
+	err = spac_resolve_main_range(spa_ctx, &lsid, &vrange);
 	if (err) {
 		return 0; /* not on main lseg: no-op */
 	}
-	if (!spac_ismutable_laddr(spa_ctx, &laddr)) {
+	if (!spac_ismutable_lsid(spa_ctx, &lsid)) {
 		return 0; /* not a mutable lseg */
 	}
-	err = silofs_repo_punch_lseg(spa_ctx->env->base.repo, &laddr.lsid);
+	err = silofs_repo_punch_lseg(spa_ctx->env->base.repo, &lsid);
 	if (err && (err != -ENOTSUP)) {
 		log_err("failed to punch lseg: err=%d", err);
 		return err;

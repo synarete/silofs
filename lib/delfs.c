@@ -42,15 +42,15 @@ static int sli_resolve_lseg_of(const struct silofs_spleaf_info *sli,
 
 	ret = silofs_sli_resolve_child(sli, voff, &llink);
 	if (ret == 0) {
-		lsid_assign(out_lsid, &llink.laddr.lsid);
+		silofs_lsid_assign(out_lsid, &llink.laddr.lsid);
 	}
 	return ret;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static bool delfc_is_lsid_of(const struct silofs_delfs_ctx *delf_ctx,
-                             const struct silofs_lsid *lsid)
+static bool delfc_is_silofs_lsid_of(const struct silofs_delfs_ctx *delf_ctx,
+                                    const struct silofs_lsid *lsid)
 {
 	const struct silofs_uaddr *sb_uaddr = &delf_ctx->sb_uaddr;
 	const struct silofs_volumeid *volumeid =
@@ -73,7 +73,7 @@ static int delfc_try_remove_lseg_of(const struct silofs_delfs_ctx *delf_ctx,
 	struct stat st = { .st_size = -1 };
 	int err;
 
-	if (!delfc_is_lsid_of(delf_ctx, lsid)) {
+	if (!delfc_is_silofs_lsid_of(delf_ctx, lsid)) {
 		return 0;
 	}
 	err = silofs_repo_stat_lseg(delf_ctx->repo, lsid, false, &st);
@@ -125,7 +125,8 @@ static int delfc_post_at_spleaf(struct silofs_delfs_ctx *delf_ctx,
 	return 0;
 }
 
-static const struct silofs_lsid *lsid_of(const struct silofs_ulink *ulink)
+static const struct silofs_lsid *
+silofs_lsid_of(const struct silofs_ulink *ulink)
 {
 	return silofs_uaddr_lsid(&ulink->uaddr);
 }
@@ -145,7 +146,8 @@ static int delfc_post_at_spnode(struct silofs_delfs_ctx *delf_ctx,
 		if (err == -SILOFS_ENOENT) {
 			break;
 		}
-		err = delfc_try_remove_lseg_of(delf_ctx, lsid_of(&ulink));
+		err = delfc_try_remove_lseg_of(delf_ctx,
+		                               silofs_lsid_of(&ulink));
 		if (err) {
 			return err;
 		}

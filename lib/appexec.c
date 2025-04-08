@@ -993,12 +993,13 @@ static int exec_inspect_fs(struct silofs_env *env,
 	return term_task(&task, err);
 }
 
-static int inspect_view(void *ctx, const struct silofs_laddr *laddr)
+static int
+inspect_view(void *ctx, const struct silofs_laddr *laddr, size_t len)
 {
 	struct silofs_strbuf sbuf;
 
 	silofs_laddr_to_ascii(laddr, &sbuf);
-	silofs_log_info("%s", sbuf.str);
+	silofs_log_info("%s:%zu", sbuf.str, len);
 	silofs_unused(ctx);
 	return 0;
 }

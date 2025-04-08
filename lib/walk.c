@@ -744,11 +744,14 @@ struct silofs_inspect_ctx {
 static int inspc_exec_lmap(const struct silofs_inspect_ctx *insp_ctx)
 {
 	const struct silofs_laddr *laddr = NULL;
+	size_t len;
 	int err;
 
 	for (size_t i = 0; i < insp_ctx->lmap.cnt; ++i) {
 		laddr = &insp_ctx->lmap.laddr[i];
-		err = insp_ctx->cb(insp_ctx->user_ctx, laddr);
+		len = insp_ctx->lmap.len[i];
+		silofs_assert_gt(len, 0);
+		err = insp_ctx->cb(insp_ctx->user_ctx, laddr, len);
 		if (err) {
 			return err;
 		}
@@ -825,10 +828,12 @@ static int inspc_exec_hook(struct silofs_visitor *vis,
 	return inspc_exec_at(inspc_of(vis), witr);
 }
 
-static int noop_callback(void *ctx, const struct silofs_laddr *laddr)
+static int
+noop_callback(void *ctx, const struct silofs_laddr *laddr, size_t len)
 {
-	silofs_unused(laddr);
 	silofs_unused(ctx);
+	silofs_unused(laddr);
+	silofs_unused(len);
 	return 0;
 }
 
@@ -877,7 +882,8 @@ static int inspc_walk_spmaps(struct silofs_inspect_ctx *insp_ctx)
 
 static int inspc_walk_super(struct silofs_inspect_ctx *insp_ctx)
 {
-	const struct silofs_laddr *sb_laddr = sbi_laddr(insp_ctx->sbi);
+	const struct silofs_laddr *laddr = sbi_laddr(insp_ctx->sbi);
+	size_t len;
 	int err;
 
 	insp_ctx->sp_st.objs.nsuper++;
@@ -885,7 +891,8 @@ static int inspc_walk_super(struct silofs_inspect_ctx *insp_ctx)
 	if (err) {
 		return err;
 	}
-	err = insp_ctx->cb(insp_ctx->user_ctx, sb_laddr);
+	len = silofs_laddr_len(laddr);
+	err = insp_ctx->cb(insp_ctx->user_ctx, laddr, len);
 	if (err) {
 		return err;
 	}
@@ -896,9 +903,12 @@ static int inspc_walk_boot(struct silofs_inspect_ctx *insp_ctx)
 {
 	struct silofs_uaddr bootrec_uaddr = { .voff = -1 };
 	const struct silofs_laddr *sb_laddr = sbi_laddr(insp_ctx->sbi);
+	const struct silofs_laddr *laddr = &bootrec_uaddr.laddr;
+	size_t len;
 
 	silofs_make_bootrec_uaddr(&sb_laddr->lsid.volumeid, &bootrec_uaddr);
-	return insp_ctx->cb(insp_ctx->user_ctx, &bootrec_uaddr.laddr);
+	len = silofs_laddr_len(laddr);
+	return insp_ctx->cb(insp_ctx->user_ctx, laddr, len);
 }
 
 static int inspc_walk_fs(struct silofs_inspect_ctx *insp_ctx)

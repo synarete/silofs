@@ -102,10 +102,12 @@ int silofs_repo_writev_at(struct silofs_repo        *repo,
                           const struct iovec *iov, size_t cnt);
 
 int silofs_repo_write_at(struct silofs_repo        *repo,
-                         const struct silofs_laddr *laddr, const void *buf);
+                         const struct silofs_laddr *laddr, const void *buf,
+                         size_t len);
 
 int silofs_repo_read_at(struct silofs_repo        *repo,
-                        const struct silofs_laddr *laddr, void *buf);
+                        const struct silofs_laddr *laddr, void *buf,
+                        size_t len);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

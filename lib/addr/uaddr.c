@@ -15,11 +15,9 @@
  * GNU General Public License for more details.
  */
 #include "configs.h"
-#include "infra.h"
-#include "crypt.h"
+#include "crypt/ivkey.h"
 #include "offlba.h"
 #include "htox.h"
-#include "ltype.h"
 #include "uaddr.h"
 
 static const struct silofs_uaddr s_uaddr_none = {
@@ -43,9 +41,7 @@ void silofs_uaddr_setup(struct silofs_uaddr *uaddr,
                         const struct silofs_lsid *lsid, loff_t pos,
                         loff_t voff)
 {
-	const size_t lsz = ltype_size(lsid->ltype);
-
-	silofs_laddr_setup(&uaddr->laddr, lsid, pos, lsz);
+	silofs_laddr_setup(&uaddr->laddr, lsid, pos);
 	uaddr->voff = voff;
 }
 
@@ -97,7 +93,7 @@ const struct silofs_lsid *silofs_uaddr_lsid(const struct silofs_uaddr *uaddr)
 
 enum silofs_ltype silofs_uaddr_ltype(const struct silofs_uaddr *uaddr)
 {
-	return laddr_ltype(&uaddr->laddr);
+	return silofs_laddr_ltype(&uaddr->laddr);
 }
 
 enum silofs_height silofs_uaddr_height(const struct silofs_uaddr *uaddr)

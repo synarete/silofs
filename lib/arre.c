@@ -25,6 +25,7 @@
 struct silofs_ar_desc {
 	struct silofs_caddr caddr;
 	struct silofs_laddr laddr;
+	size_t len;
 };
 
 struct silofs_ar_desc_info {
@@ -135,17 +136,19 @@ static void arhdr1k_init(struct silofs_ar_hdr1k *ah1k)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void
-ard_init(struct silofs_ar_desc *ard, const struct silofs_laddr *laddr)
+static void ard_init(struct silofs_ar_desc *ard,
+                     const struct silofs_laddr *laddr, size_t len)
 {
 	silofs_memzero(ard, sizeof(*ard));
 	silofs_laddr_assign(&ard->laddr, laddr);
+	ard->len = len;
 }
 
 static void ard_fini(struct silofs_ar_desc *ard)
 {
 	silofs_caddr_reset(&ard->caddr);
 	silofs_laddr_reset(&ard->laddr);
+	ard->len = 0;
 }
 
 static void
@@ -185,6 +188,7 @@ static void ardsc256b_htox(struct silofs_ar_desc256b *ard256,
 	ardsc256b_reset(ard256);
 	silofs_caddr64b_htox(&ard256->pd_caddr, &ard->caddr);
 	silofs_laddr48b_htox(&ard256->pd_laddr, &ard->laddr);
+	ard256->pd_len = silofs_cpu_to_le64(ard->len);
 }
 
 static void ardsc256b_xtoh(const struct silofs_ar_desc256b *ard256,
@@ -192,6 +196,7 @@ static void ardsc256b_xtoh(const struct silofs_ar_desc256b *ard256,
 {
 	silofs_caddr64b_xtoh(&ard256->pd_caddr, &ard->caddr);
 	silofs_laddr48b_xtoh(&ard256->pd_laddr, &ard->laddr);
+	ard->len = silofs_le64_to_cpu(ard256->pd_len);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -221,11 +226,11 @@ adi_free(struct silofs_ar_desc_info *adi, struct silofs_alloc *alloc)
 	silofs_memfree(alloc, adi, sizeof(*adi), 0);
 }
 
-static void
-adi_init(struct silofs_ar_desc_info *adi, const struct silofs_laddr *laddr)
+static void adi_init(struct silofs_ar_desc_info *adi,
+                     const struct silofs_laddr *laddr, size_t len)
 {
 	silofs_list_head_init(&adi->lh);
-	ard_init(&adi->ard, laddr);
+	ard_init(&adi->ard, laddr, len);
 }
 
 static void adi_fini(struct silofs_ar_desc_info *adi)
@@ -235,13 +240,14 @@ static void adi_fini(struct silofs_ar_desc_info *adi)
 }
 
 static struct silofs_ar_desc_info *
-adi_new(const struct silofs_laddr *laddr, struct silofs_alloc *alloc)
+adi_new(const struct silofs_laddr *laddr, size_t len,
+        struct silofs_alloc *alloc)
 {
 	struct silofs_ar_desc_info *adi;
 
 	adi = adi_malloc(alloc);
 	if (adi != NULL) {
-		adi_init(adi, laddr);
+		adi_init(adi, laddr, len);
 	}
 	return adi;
 }
@@ -269,7 +275,7 @@ static void adi_update_caddr(struct silofs_ar_desc_info *adi,
 
 static bool adi_isbootrec(const struct silofs_ar_desc_info *adi)
 {
-	const enum silofs_ltype ltype = laddr_ltype(&adi->ard.laddr);
+	const enum silofs_ltype ltype = silofs_laddr_ltype(&adi->ard.laddr);
 
 	return ltype_isbootrec(ltype);
 }
@@ -407,11 +413,11 @@ static void aridx_unlink_desc(struct silofs_ar_index *aridx,
 
 static struct silofs_ar_desc_info *
 aridx_add_desc(struct silofs_ar_index *aridx, const struct silofs_laddr *laddr,
-               bool front)
+               size_t len, bool front)
 {
 	struct silofs_ar_desc_info *adi;
 
-	adi = adi_new(laddr, aridx->alloc);
+	adi = adi_new(laddr, len, aridx->alloc);
 	if (adi != NULL) {
 		aridx_link_desc(aridx, adi, front);
 	}
@@ -530,7 +536,7 @@ static int aridx_decode_descs(struct silofs_ar_index *aridx,
 
 	for (size_t i = 0; i < aiview->ndescs; ++i) {
 		pd256 = &aiview->descs[i];
-		adi = aridx_add_desc(aridx, laddr_none(), false);
+		adi = aridx_add_desc(aridx, silofs_laddr_none(), 0, false);
 		if (adi == NULL) {
 			return -SILOFS_ENOMEM;
 		}
@@ -734,23 +740,25 @@ arc_recv_pack(const struct silofs_ar_ctx *ar_ctx,
 	return arc_recv_from_repo(ar_ctx, caddr, &rwv);
 }
 
-static int arc_load_seg(const struct silofs_ar_ctx *ar_ctx,
-                        const struct silofs_laddr *laddr, void *seg)
+static int
+arc_load_seg(const struct silofs_ar_ctx *ar_ctx,
+             const struct silofs_laddr *laddr, void *seg, size_t len)
 {
 	int err;
 
-	err = silofs_repo_read_at(arc_repo(ar_ctx), laddr, seg);
+	err = silofs_repo_read_at(arc_repo(ar_ctx), laddr, seg, len);
 	if (err) {
-		log_err("failed to read: ltype=%d len=%zu err=%d",
-		        laddr_ltype(laddr), laddr->len, err);
+		log_err("failed to read: ltype=%d pos=%ld len=%zu err=%d",
+		        silofs_laddr_ltype(laddr), laddr->pos, len, err);
 	}
 	return err;
 }
 
-static int arc_save_seg(const struct silofs_ar_ctx *ar_ctx,
-                        const struct silofs_laddr *laddr, void *seg)
+static int
+arc_save_seg(const struct silofs_ar_ctx *ar_ctx,
+             const struct silofs_laddr *laddr, void *seg, size_t len)
 {
-	const enum silofs_ltype ltype = laddr_ltype(laddr);
+	const enum silofs_ltype ltype = silofs_laddr_ltype(laddr);
 	int err;
 
 	err = silofs_repo_require_lseg(arc_repo(ar_ctx), &laddr->lsid);
@@ -760,14 +768,13 @@ static int arc_save_seg(const struct silofs_ar_ctx *ar_ctx,
 	}
 	err = silofs_repo_require_laddr(arc_repo(ar_ctx), laddr);
 	if (err) {
-		log_err("failed to require laddr: ltype=%d len=%zu err=%d",
-		        (int)ltype, laddr->len, err);
+		log_err("failed to require laddr: ltype=%d err=%d", (int)ltype,
+		        err);
 		return err;
 	}
-	err = silofs_repo_write_at(arc_repo(ar_ctx), laddr, seg);
+	err = silofs_repo_write_at(arc_repo(ar_ctx), laddr, seg, len);
 	if (err) {
-		log_err("failed to write: ltype=%d len=%zu err=%d", (int)ltype,
-		        laddr->len, err);
+		log_err("failed to write: ltype=%d err=%d", (int)ltype, err);
 		return err;
 	}
 	return 0;
@@ -821,7 +828,7 @@ static int arc_update_hash_of(const struct silofs_ar_ctx *ar_ctx,
 {
 	const struct silofs_rovec rov = {
 		.rov_base = dat,
-		.rov_len = adi->ard.laddr.len,
+		.rov_len = adi->ard.len,
 	};
 	const struct silofs_mdigest *md = &ar_ctx->aridx.mdigest;
 
@@ -833,7 +840,7 @@ static int arc_export_segdata(const struct silofs_ar_ctx *ar_ctx,
                               struct silofs_ar_desc_info *adi)
 {
 	const struct silofs_laddr *laddr = &adi->ard.laddr;
-	const size_t len = laddr->len;
+	const size_t len = adi->ard.len;
 	void *seg = NULL;
 	int err;
 
@@ -841,7 +848,7 @@ static int arc_export_segdata(const struct silofs_ar_ctx *ar_ctx,
 	if (seg == NULL) {
 		return -SILOFS_ENOMEM;
 	}
-	err = arc_load_seg(ar_ctx, laddr, seg);
+	err = arc_load_seg(ar_ctx, laddr, seg, len);
 	if (err) {
 		goto out;
 	}
@@ -862,7 +869,7 @@ static int arc_import_segdata(const struct silofs_ar_ctx *ar_ctx,
                               const struct silofs_ar_desc_info *adi)
 {
 	const struct silofs_laddr *laddr = &adi->ard.laddr;
-	const size_t len = laddr->len;
+	const size_t len = adi->ard.len;
 	void *seg = NULL;
 	int err;
 
@@ -875,7 +882,7 @@ static int arc_import_segdata(const struct silofs_ar_ctx *ar_ctx,
 		goto out;
 	}
 	/* TODO: recheck caddr by content */
-	err = arc_save_seg(ar_ctx, laddr, seg);
+	err = arc_save_seg(ar_ctx, laddr, seg, len);
 	if (err) {
 		goto out;
 	}
@@ -947,12 +954,12 @@ static int arc_export_by_desc(struct silofs_ar_ctx *ar_ctx,
 }
 
 static int arc_export_by_laddr(struct silofs_ar_ctx *ar_ctx,
-                               const struct silofs_laddr *laddr)
+                               const struct silofs_laddr *laddr, size_t len)
 {
 	struct silofs_ar_desc_info *adi = NULL;
 	int err;
 
-	adi = aridx_add_desc(&ar_ctx->aridx, laddr, true);
+	adi = aridx_add_desc(&ar_ctx->aridx, laddr, len, true);
 	if (adi == NULL) {
 		return -SILOFS_ENOMEM;
 	}
@@ -964,11 +971,12 @@ static int arc_export_by_laddr(struct silofs_ar_ctx *ar_ctx,
 	return 0;
 }
 
-static int arc_visit_laddr_cb(void *ctx, const struct silofs_laddr *laddr)
+static int
+arc_visit_laddr_cb(void *ctx, const struct silofs_laddr *laddr, size_t len)
 {
 	struct silofs_ar_ctx *ar_ctx = ctx;
 
-	return arc_export_by_laddr(ar_ctx, laddr);
+	return arc_export_by_laddr(ar_ctx, laddr, len);
 }
 
 static int arc_export_fs(struct silofs_ar_ctx *ar_ctx)

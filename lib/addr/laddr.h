@@ -17,8 +17,6 @@
 #ifndef SILOFS_LADDR_H_
 #define SILOFS_LADDR_H_
 
-#include "infra.h"
-
 struct silofs_strbuf;
 
 /* logical-segment id within specific volume mapping */
@@ -35,7 +33,6 @@ struct silofs_lsid {
 struct silofs_laddr {
 	struct silofs_lsid lsid;
 	loff_t             pos;
-	size_t             len;
 };
 
 /* logical-address and its associate IV-key */
@@ -80,21 +77,12 @@ void silofs_lsid32b_htox(struct silofs_lsid32b    *lsid32,
 void silofs_lsid32b_xtoh(const struct silofs_lsid32b *lsid32,
                          struct silofs_lsid          *lsid);
 
-#ifdef SILOFS_USE_PRIVATE
-#define lsid_reset(lid)        silofs_lsid_reset(lid)
-#define lsid_assign(lid, oth)  silofs_lsid_assign(lid, oth)
-#define lsid_isequal(lid, oth) silofs_lsid_isequal(lid, oth)
-#define lsid_isnull(lid)       silofs_lsid_isnull(lid)
-#define lsid_size(lid)         silofs_lsid_size(lid)
-#endif
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 const struct silofs_laddr *silofs_laddr_none(void);
 
 void silofs_laddr_setup(struct silofs_laddr      *laddr,
-                        const struct silofs_lsid *lsid, loff_t off,
-                        size_t len);
+                        const struct silofs_lsid *lsid, loff_t off);
 
 void silofs_laddr_setup_lbk(struct silofs_laddr      *laddr,
                             const struct silofs_lsid *lsid, loff_t off);
@@ -105,6 +93,8 @@ void silofs_laddr_assign(struct silofs_laddr       *laddr,
                          const struct silofs_laddr *other);
 
 enum silofs_ltype silofs_laddr_ltype(const struct silofs_laddr *laddr);
+
+size_t silofs_laddr_len(const struct silofs_laddr *laddr);
 
 long silofs_laddr_compare(const struct silofs_laddr *laddr1,
                           const struct silofs_laddr *laddr2);
@@ -118,9 +108,6 @@ bool silofs_laddr_isvalid(const struct silofs_laddr *laddr);
 
 bool silofs_laddr_isequal(const struct silofs_laddr *laddr,
                           const struct silofs_laddr *other);
-
-bool silofs_laddr_isnext(const struct silofs_laddr *laddr,
-                         const struct silofs_laddr *other);
 
 void silofs_laddr48b_htox(struct silofs_laddr48b    *laddr48,
                           const struct silofs_laddr *laddr);
@@ -138,16 +125,6 @@ int silofs_laddr_from_ascii(struct silofs_laddr        *laddr,
 
 void silofs_laddr_to_base64(const struct silofs_laddr *laddr,
                             struct silofs_strbuf      *sbuf);
-
-#ifdef SILOFS_USE_PRIVATE
-#define laddr_none()            silofs_laddr_none()
-#define laddr_reset(la)         silofs_laddr_reset(la)
-#define laddr_assign(la, oth)   silofs_laddr_assign(la, oth)
-#define laddr_ltype(la)         silofs_laddr_ltype(la)
-#define laddr_isvalid(la)       silofs_laddr_isvalid(la)
-#define laddr_isnull(la)        silofs_laddr_isnull(la)
-#define laddr_isnext(la, oth)   silofs_laddr_isnext(la, oth)
-#endif
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

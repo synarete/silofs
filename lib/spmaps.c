@@ -1387,7 +1387,7 @@ int silofs_sli_resolve_child(const struct silofs_spleaf_info *sli, loff_t voff,
 		return -SILOFS_ERANGE;
 	}
 	spleaf_resolve_child(sli->sl, voff, out_llink);
-	if (laddr_isnull(&out_llink->laddr)) {
+	if (silofs_laddr_isnull(&out_llink->laddr)) {
 		return -SILOFS_ENOENT;
 	}
 	return 0;
@@ -1401,47 +1401,69 @@ void silofs_sli_bind_child(struct silofs_spleaf_info *sli, loff_t voff,
 }
 
 static void lmap_append_entry(struct silofs_spmap_lmap *lmap,
-                              const struct silofs_laddr *laddr)
+                              const struct silofs_laddr *laddr, size_t len)
 {
 	silofs_assert_lt(lmap->cnt, ARRAY_SIZE(lmap->laddr));
+	silofs_assert_gt(len, 0);
 
-	laddr_assign(&lmap->laddr[lmap->cnt++], laddr);
+	silofs_laddr_assign(&lmap->laddr[lmap->cnt], laddr);
+	lmap->len[lmap->cnt] = len;
+	lmap->cnt++;
 }
 
-static void lmap_append_length(struct silofs_spmap_lmap *lmap,
-                               const struct silofs_laddr *laddr)
+static void lmap_append_length(struct silofs_spmap_lmap *lmap, size_t len)
 {
-	struct silofs_laddr *laddr_prev = &lmap->laddr[lmap->cnt - 1];
-
 	silofs_assert_lt(lmap->cnt, ARRAY_SIZE(lmap->laddr));
 	silofs_assert_gt(lmap->cnt, 0);
+	silofs_assert_gt(len, 0);
 
-	laddr_prev->len += laddr->len;
+	lmap->len[lmap->cnt - 1] += len;
+}
+
+static bool
+is_consecutive_laddrs(const struct silofs_laddr *laddr1, size_t len1,
+                      const struct silofs_laddr *laddr2)
+{
+	loff_t end1;
+
+	if (!silofs_lsid_isequal(&laddr1->lsid, &laddr2->lsid)) {
+		return false;
+	}
+	end1 = off_end(laddr1->pos, len1);
+	if (end1 != laddr2->pos) {
+		return false;
+	}
+	if (end1 > (ssize_t)laddr2->lsid.lsize) {
+		return false;
+	}
+	return true;
 }
 
 static bool lmap_may_append_length(const struct silofs_spmap_lmap *lmap,
-                                   const struct silofs_laddr *laddr)
+                                   const struct silofs_laddr *laddr2)
 {
-	const struct silofs_laddr *laddr_prev = NULL;
+	const struct silofs_laddr *laddr1;
+	size_t len1;
 	bool ret = false;
 
 	if (lmap->cnt > 0) {
-		laddr_prev = &lmap->laddr[lmap->cnt - 1];
-		ret = laddr_isnext(laddr_prev, laddr);
+		laddr1 = &lmap->laddr[lmap->cnt - 1];
+		len1 = lmap->len[lmap->cnt - 1];
+		ret = is_consecutive_laddrs(laddr1, len1, laddr2);
 	}
 	return ret;
 }
 
-static void
-lmap_append(struct silofs_spmap_lmap *lmap, const struct silofs_laddr *laddr)
+static void lmap_append(struct silofs_spmap_lmap *lmap,
+                        const struct silofs_laddr *laddr, size_t len)
 {
 	silofs_assert_le(lmap->cnt, ARRAY_SIZE(lmap->laddr));
 
-	if (!laddr_isnull(laddr)) {
+	if (!silofs_laddr_isnull(laddr)) {
 		if (lmap_may_append_length(lmap, laddr)) {
-			lmap_append_length(lmap, laddr);
+			lmap_append_length(lmap, len);
 		} else {
-			lmap_append_entry(lmap, laddr);
+			lmap_append_entry(lmap, laddr, len);
 		}
 	}
 }
@@ -1465,7 +1487,7 @@ void silofs_sli_resolve_lmap(const struct silofs_spleaf_info *sli,
 		nused_at_slot = lbr_usecnt_nbytes(lbr);
 		if (nused_at_slot > 0) {
 			lbr_subref(lbr, &laddr);
-			lmap_append(out_lmap, &laddr);
+			lmap_append(out_lmap, &laddr, SILOFS_LBK_SIZE);
 			nbytes += nused_at_slot;
 		}
 	}
@@ -1700,6 +1722,7 @@ void silofs_sni_resolve_lmap(const struct silofs_spnode_info *sni,
 	struct silofs_uaddr uaddr = { .voff = -1 };
 	const struct silofs_spmap_node *sn = sni->sn;
 	const struct silofs_spmap_ref *spr = NULL;
+	size_t len;
 
 	STATICASSERT_EQ(ARRAY_SIZE(out_lmap->laddr),
 	                ARRAY_SIZE(sn->sn_subrefs));
@@ -1708,7 +1731,8 @@ void silofs_sni_resolve_lmap(const struct silofs_spnode_info *sni,
 	for (size_t slot = 0; slot < ARRAY_SIZE(sn->sn_subrefs); ++slot) {
 		spr = spnode_subref_at(sn, slot);
 		spr_uaddr(spr, &uaddr);
-		lmap_append(out_lmap, &uaddr.laddr);
+		len = silofs_laddr_len(&uaddr.laddr);
+		lmap_append(out_lmap, &uaddr.laddr, len);
 	}
 }
 
@@ -1789,7 +1813,7 @@ int silofs_verify_spmap_leaf(const struct silofs_spmap_leaf *sl)
 
 static int verify_ulink(const struct silofs_uaddr *uaddr)
 {
-	return laddr_isvalid(&uaddr->laddr) ? 0 : -SILOFS_EFSCORRUPTED;
+	return silofs_laddr_isvalid(&uaddr->laddr) ? 0 : -SILOFS_EFSCORRUPTED;
 }
 
 static int verify_spmap_ref(const struct silofs_spmap_ref *spr)

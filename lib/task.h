@@ -73,7 +73,8 @@ struct silofs_submitq_ent {
 	struct silofs_list_head   qlh;
 	struct silofs_env        *env;
 	struct silofs_alloc      *alloc;
-	struct silofs_laddr       laddr;
+	struct silofs_laddr       laddr_base;
+	size_t                    len;
 	uint64_t                  uniq_id;
 	uint32_t                  cnt;
 	uint32_t                  tx_count;

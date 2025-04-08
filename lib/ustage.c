@@ -202,8 +202,8 @@ forget_cached_uni(const struct silofs_env *env, struct silofs_unode_info *uni)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static bool
-lsid_rw_mode(const struct silofs_env *env, const struct silofs_lsid *lsid)
+static bool silofs_lsid_rw_mode(const struct silofs_env *env,
+                                const struct silofs_lsid *lsid)
 {
 	const struct silofs_sb_info *sbi = env->sbi;
 	bool rw_mode;
@@ -236,7 +236,7 @@ static int
 stage_lseg(const struct silofs_env *env, const struct silofs_lsid *lsid)
 {
 	int err;
-	const bool rw = lsid_rw_mode(env, lsid);
+	const bool rw = silofs_lsid_rw_mode(env, lsid);
 
 	err = silofs_repo_stage_lseg(env->base.repo, rw, lsid);
 	if (err && (err != -SILOFS_ENOENT)) {
@@ -281,7 +281,9 @@ static int
 load_view_at(const struct silofs_env *env, const struct silofs_laddr *laddr,
              struct silofs_view *view)
 {
-	return silofs_repo_read_at(env->base.repo, laddr, view);
+	const size_t len = silofs_laddr_len(laddr);
+
+	return silofs_repo_read_at(env->base.repo, laddr, view, len);
 }
 
 static int

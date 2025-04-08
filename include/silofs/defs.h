@@ -565,8 +565,7 @@ struct silofs_lsid32b {
 struct silofs_laddr48b {
 	struct silofs_lsid32b lsid;
 	uint32_t              pos;
-	uint32_t              len;
-	uint8_t               pad[8];
+	uint8_t               reserved[12];
 } silofs_attr_aligned16;
 
 /* content address (by hash) */
@@ -643,14 +642,14 @@ struct silofs_sb_sproots {
 } silofs_attr_aligned64;
 
 struct silofs_sb_lsids {
-	struct silofs_lsid32b sb_lsid_inode;
-	struct silofs_lsid32b sb_lsid_xanode;
-	struct silofs_lsid32b sb_lsid_dtnode;
-	struct silofs_lsid32b sb_lsid_ftnode;
-	struct silofs_lsid32b sb_lsid_symval;
-	struct silofs_lsid32b sb_lsid_data1k;
-	struct silofs_lsid32b sb_lsid_data4k;
-	struct silofs_lsid32b sb_lsid_databk;
+	struct silofs_lsid32b sb_silofs_lsid_inode;
+	struct silofs_lsid32b sb_silofs_lsid_xanode;
+	struct silofs_lsid32b sb_silofs_lsid_dtnode;
+	struct silofs_lsid32b sb_silofs_lsid_ftnode;
+	struct silofs_lsid32b sb_silofs_lsid_symval;
+	struct silofs_lsid32b sb_silofs_lsid_data1k;
+	struct silofs_lsid32b sb_silofs_lsid_data4k;
+	struct silofs_lsid32b sb_silofs_lsid_databk;
 	uint8_t               sb_reserved[768];
 } silofs_attr_aligned64;
 
@@ -1011,7 +1010,8 @@ struct silofs_btree_node {
 struct silofs_ar_desc256b {
 	struct silofs_caddr64b pd_caddr;
 	struct silofs_laddr48b pd_laddr;
-	uint8_t                pd_reserved[144];
+	uint64_t               pd_len;
+	uint8_t                pd_reserved[136];
 } silofs_attr_aligned64;
 
 /* pac-archive header */

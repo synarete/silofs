@@ -106,7 +106,7 @@ ismutable(const struct silofs_env *env, const struct silofs_laddr *laddr)
 {
 	bool ret = false;
 
-	if (!laddr_isnull(laddr)) {
+	if (!silofs_laddr_isnull(laddr)) {
 		ret = silofs_sbi_ismutable_laddr(env->sbi, laddr);
 	}
 	return ret;
@@ -172,7 +172,7 @@ static bool sni_has_main_lseg(const struct silofs_spnode_info *sni)
 	struct silofs_lsid lsid;
 
 	silofs_sni_main_lseg(sni, &lsid);
-	return (lsid_size(&lsid) > 0);
+	return (silofs_lsid_size(&lsid) > 0);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -431,10 +431,10 @@ static int vstgc_spawn_lseg(const struct silofs_vstage_ctx *vstg_ctx,
 	return err;
 }
 
-static void
-vstgc_make_lsid_of(const struct silofs_vstage_ctx *vstg_ctx, loff_t voff,
-                   enum silofs_height height, enum silofs_ltype ltype,
-                   struct silofs_lsid *out_lsid)
+static void vstgc_make_silofs_lsid_of(const struct silofs_vstage_ctx *vstg_ctx,
+                                      loff_t voff, enum silofs_height height,
+                                      enum silofs_ltype ltype,
+                                      struct silofs_lsid *out_lsid)
 {
 	struct silofs_volumeid lvid;
 
@@ -443,24 +443,26 @@ vstgc_make_lsid_of(const struct silofs_vstage_ctx *vstg_ctx, loff_t voff,
 	                  ltype);
 }
 
-static void vstgc_make_lsid_of_spmaps(const struct silofs_vstage_ctx *vstg_ctx,
-                                      loff_t voff, enum silofs_height height,
-                                      enum silofs_ltype ltype,
-                                      struct silofs_lsid *out_lsid)
+static void
+vstgc_make_silofs_lsid_of_spmaps(const struct silofs_vstage_ctx *vstg_ctx,
+                                 loff_t voff, enum silofs_height height,
+                                 enum silofs_ltype ltype,
+                                 struct silofs_lsid *out_lsid)
 {
 	silofs_assert_ne(ltype, vstg_ctx->vspace);
 
-	vstgc_make_lsid_of(vstg_ctx, voff, height, ltype, out_lsid);
+	vstgc_make_silofs_lsid_of(vstg_ctx, voff, height, ltype, out_lsid);
 }
 
 static void
-vstgc_make_lsid_of_vdata(const struct silofs_vstage_ctx *vstg_ctx, loff_t voff,
-                         enum silofs_ltype ltype, struct silofs_lsid *out_lsid)
+vstgc_make_silofs_lsid_of_vdata(const struct silofs_vstage_ctx *vstg_ctx,
+                                loff_t voff, enum silofs_ltype ltype,
+                                struct silofs_lsid *out_lsid)
 {
 	silofs_assert_eq(ltype, vstg_ctx->vspace);
 
-	vstgc_make_lsid_of(vstg_ctx, voff, SILOFS_HEIGHT_VDATA, ltype,
-	                   out_lsid);
+	vstgc_make_silofs_lsid_of(vstg_ctx, voff, SILOFS_HEIGHT_VDATA, ltype,
+	                          out_lsid);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -482,7 +484,7 @@ vstgc_spawn_super_main_lseg(const struct silofs_vstage_ctx *vstg_ctx)
 	const enum silofs_ltype ltype = SILOFS_LTYPE_SPNODE;
 	int err;
 
-	vstgc_make_lsid_of_spmaps(vstg_ctx, 0, height, ltype, &lsid);
+	vstgc_make_silofs_lsid_of_spmaps(vstg_ctx, 0, height, ltype, &lsid);
 	err = vstgc_spawn_lseg(vstg_ctx, &lsid);
 	if (err) {
 		return err;
@@ -525,7 +527,7 @@ vstgc_spawn_spnode_main_lseg(const struct silofs_vstage_ctx *vstg_ctx,
 	const enum silofs_ltype ltype = sni_child_ltype(sni);
 	int err;
 
-	vstgc_make_lsid_of_spmaps(vstg_ctx, voff, height, ltype, &lsid);
+	vstgc_make_silofs_lsid_of_spmaps(vstg_ctx, voff, height, ltype, &lsid);
 	err = vstgc_spawn_lseg(vstg_ctx, &lsid);
 	if (err) {
 		return err;
@@ -1603,14 +1605,14 @@ vstgc_require_spleaf_main_lseg(const struct silofs_vstage_ctx *vstg_ctx,
 	int err;
 
 	silofs_sli_main_lseg(sli, &lsid);
-	if (!lsid_isnull(&lsid)) {
+	if (!silofs_lsid_isnull(&lsid)) {
 		return vstgc_do_stage_lseg(vstg_ctx, &lsid);
 	}
 	/*
 	 * TODO-0047: Do not use underlying repo to detect if vdata-lseg exists
 	 */
 	voff = silofs_sli_base_voff(sli);
-	vstgc_make_lsid_of_vdata(vstg_ctx, voff, ltype, &lsid);
+	vstgc_make_silofs_lsid_of_vdata(vstg_ctx, voff, ltype, &lsid);
 	err = vstgc_do_stage_lseg(vstg_ctx, &lsid);
 	if (!err) {
 		goto out_ok;
@@ -1861,7 +1863,6 @@ static int vstgc_resolve_llink_of(const struct silofs_vstage_ctx *vstg_ctx,
 	struct silofs_llink llink_lbk;
 	struct silofs_laddr laddr;
 	const struct silofs_vaddr *vaddr = vstg_ctx->vaddr;
-	const size_t len = vaddr_len(vaddr);
 	int err;
 
 	err = vstgc_resolve_spleaf_child(vstg_ctx, vstg_ctx->sli, &llink_lbk);
@@ -1870,7 +1871,7 @@ static int vstgc_resolve_llink_of(const struct silofs_vstage_ctx *vstg_ctx,
 	}
 	silofs_assert_eq(llink_lbk.laddr.lsid.ltype, vaddr->ltype);
 
-	silofs_laddr_setup(&laddr, &llink_lbk.laddr.lsid, vaddr->off, len);
+	silofs_laddr_setup(&laddr, &llink_lbk.laddr.lsid, vaddr->off);
 	silofs_llink_setup(out_llink, &laddr, &llink_lbk.iv);
 	return 0;
 }
@@ -2035,21 +2036,28 @@ check_stable_at(struct silofs_task *task, const struct silofs_vaddr *vaddr)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
+static bool laddr_isdata(const struct silofs_laddr *laddr)
+{
+	const enum silofs_ltype ltype = silofs_laddr_ltype(laddr);
+
+	return silofs_ltype_isdata(ltype);
+}
+
 static int
 vstgc_load_view_at(const struct silofs_vstage_ctx *vstg_ctx,
                    const struct silofs_laddr *laddr, struct silofs_view *view)
 {
 	struct silofs_repo *repo = vstg_ctx->env->base.repo;
-	const enum silofs_ltype ltype = laddr_ltype(laddr);
 	enum silofs_stg_mode stg_mode = vstg_ctx->stg_mode;
+	const size_t len = silofs_laddr_len(laddr);
 	int ret = 0;
 
 	if ((stg_mode & SILOFS_STG_RAW) != SILOFS_STG_RAW) {
 		/* Normal mode: load encrypted from stable storage */
-		ret = silofs_repo_read_at(repo, laddr, view);
-	} else if (ltype_isdata(ltype)) {
+		ret = silofs_repo_read_at(repo, laddr, view, len);
+	} else if (laddr_isdata(laddr)) {
 		/* Raw-data mode: force all-zeros for in-memory view */
-		silofs_memzero(view, laddr->len);
+		silofs_memzero(view, len);
 	}
 	return ret;
 }

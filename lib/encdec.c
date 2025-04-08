@@ -48,9 +48,11 @@ int silofs_encrypt_view(const struct silofs_env *env,
                         const struct silofs_view *view, void *ptr)
 {
 	struct silofs_ivkey ivkey;
+	size_t len;
 
 	resolve_ivkey_of(env, laddr, seediv, &ivkey);
-	return encrypt_view_with(env, &ivkey, view, ptr, laddr->len);
+	len = silofs_laddr_len(laddr);
+	return encrypt_view_with(env, &ivkey, view, ptr, len);
 }
 
 static int
@@ -66,12 +68,11 @@ decrypt_view(const struct silofs_env *env, const struct silofs_llink *llink,
              const struct silofs_view *view, void *ptr)
 {
 	struct silofs_ivkey ivkey;
-	int ret;
+	size_t len;
 
 	resolve_ivkey_of(env, &llink->laddr, &llink->iv, &ivkey);
-	ret = decrypt_view_with(env, &ivkey, view, ptr, llink->laddr.len);
-	silofs_assert_ok(ret);
-	return ret;
+	len = silofs_laddr_len(&llink->laddr);
+	return decrypt_view_with(env, &ivkey, view, ptr, len);
 }
 
 static int decrypt_view_inplace(const struct silofs_env *env,

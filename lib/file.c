@@ -957,8 +957,8 @@ static bool filc_has_more_io(const struct silofs_file_ctx *f_ctx)
 static void flref_reset(struct silofs_fileaf_ref *flref)
 {
 	silofs_memzero(flref, sizeof(*flref));
-	vaddr_reset(&flref->vaddr);
-	laddr_reset(&flref->laddr);
+	silofs_vaddr_reset(&flref->vaddr);
+	silofs_laddr_reset(&flref->laddr);
 }
 
 static void
@@ -4384,7 +4384,7 @@ static int filc_share_leaf_by(const struct silofs_file_ctx *f_ctx_src,
 static bool filc_test_ismutable_by(const struct silofs_file_ctx *f_ctx,
                                    const struct silofs_fileaf_ref *flref)
 {
-	return laddr_isnull(&flref->laddr) ||
+	return silofs_laddr_isnull(&flref->laddr) ||
 	       silofs_sbi_ismutable_laddr(f_ctx->sbi, &flref->laddr);
 }
 
@@ -4418,7 +4418,7 @@ static int filc_resolve_laddr_by(const struct silofs_file_ctx *f_ctx,
 	if (err) {
 		return err;
 	}
-	laddr_assign(&flref->laddr, &llink.laddr);
+	silofs_laddr_assign(&flref->laddr, &llink.laddr);
 	return 0;
 }
 

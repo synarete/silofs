@@ -75,9 +75,9 @@ class FioOutput:
         self.wr_lat_mean = float(fields[81])
 
 
-class FioExec(subcmd.SubcmdExec):
+class FioExec(subcmd._SubcmdExec):
     def __init__(self, base: Path):
-        subcmd.SubcmdExec.__init__(self, "fio")
+        subcmd._SubcmdExec.__init__(self, "fio")
         self.base = base
         self.timeout = 180.0
 

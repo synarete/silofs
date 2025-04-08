@@ -20,14 +20,16 @@ def _require_executable(name: str) -> Path:
 
 
 class SubcmdError(Exception):
+    """Exception for all cases of sub-commands executions."""
+
     def __init__(self, msg: str, out: str = "", ret: int = 0) -> None:
         Exception.__init__(self, msg)
-        self.output = out[-1024:]
+        self.output = out[-2048:]
         self.retcode = ret
 
 
-class SubcmdExec:
-    """Generic wrapper over command-line executor"""
+class _SubcmdExec:
+    """Generic wrapper over command-line executor."""
 
     def __init__(self, prog: str, xbin: typing.Optional[Path] = None) -> None:
         self.prog = prog
@@ -82,7 +84,7 @@ class SubcmdExec:
     def execute_run(
         self, args, wdir: typing.Optional[Path] = None, indat: str = ""
     ) -> None:
-        """Run command as sub-process without output, raise upon failure"""
+        """Run command as sub-process without output, raise upon failure."""
         cmd = self._make_cmdline(args)
         self.logcmd("EXEC", cmd, wdir)
         ret = subprocess.run(
@@ -115,12 +117,12 @@ class SubcmdExec:
         log.printsl(f"{prefix}: {cmd}{suffix}")
 
 
-class SubcmdShell(SubcmdExec):
+class _Shell(_SubcmdExec):
     """Wrapper over execution via shell command."""
 
     def __init__(self) -> None:
         """Execute command as sub shell."""
-        SubcmdExec.__init__(self, "sh")
+        _SubcmdExec.__init__(self, "sh")
         self.env = os.environ.copy()
 
     def run(
@@ -162,13 +164,13 @@ class SubcmdShell(SubcmdExec):
         return env
 
 
-class SubcmdSilofs(SubcmdExec):
-    """Wrapper over silofs command-line front-end"""
+class _Silofs(_SubcmdExec):
+    """Wrapper over silofs command-line front-end."""
 
     def __init__(
         self, use_stdalloc: bool = False, allow_coredump: bool = False
     ) -> None:
-        SubcmdExec.__init__(self, "silofs")
+        _SubcmdExec.__init__(self, "silofs")
         self.use_stdalloc = use_stdalloc
         self.allow_coredump = allow_coredump
         self.giga = 2**30
@@ -303,29 +305,37 @@ class SubcmdSilofs(SubcmdExec):
         self.execute_sub(args, indat=password, timeout=600.0)
 
 
-class SubcmdUnitests(SubcmdExec):
-    """Wrapper over silofs-unitests command-line front-end"""
+class _Unitests(_SubcmdExec):
+    """Wrapper over silofs-unitests command-line front-end."""
 
     def __init__(self) -> None:
-        SubcmdExec.__init__(self, "silofs-unitests")
+        _SubcmdExec.__init__(self, "silofs-unitests")
 
     def version(self) -> str:
         return self.execute_sub(["-v"])
 
-    def run(self, basedir: Path, level: int = 1, malloc: bool = False) -> None:
+    def run(
+        self,
+        basedir: Path,
+        level: int = 1,
+        malloc: bool = False,
+        timestamp: bool = True,
+    ) -> None:
         args = [str(basedir)]
         if level > 0:
             args.append(f"--level={level}")
         if malloc:
             args.append("--malloc")
+        if timestamp:
+            args.append("--timestamp")
         self.execute_sub(args, timeout=1200)
 
 
-class SubcmdFnctests(SubcmdExec):
-    """Wrapper over silofs-fnctests command-line front-end"""
+class _Fnctests(_SubcmdExec):
+    """Wrapper over silofs-fnctests command-line front-end."""
 
     def __init__(self) -> None:
-        SubcmdExec.__init__(self, "silofs-fnctests")
+        _SubcmdExec.__init__(self, "silofs-fnctests")
 
     def version(self) -> str:
         return self.execute_sub(["-v"])
@@ -347,11 +357,11 @@ class SubcmdFnctests(SubcmdExec):
         self.execute_sub(args, wdir=Path("/"), timeout=2400)
 
 
-class SubcmdGit(SubcmdExec):
-    """Wrapper over git command-line utility"""
+class _Git(_SubcmdExec):
+    """Wrapper over git command-line utility."""
 
     def __init__(self) -> None:
-        SubcmdExec.__init__(self, "git")
+        _SubcmdExec.__init__(self, "git")
 
     def version(self) -> str:
         return self.execute_sub(["version"])
@@ -370,13 +380,14 @@ class SubcmdGit(SubcmdExec):
 
 # pylint: disable=R0903
 class Subcmds:
-    """All command-line wrappers in single class"""
+    """All command-line wrappers in single class."""
 
     def __init__(
         self, use_stdalloc: bool = False, allow_coredump: bool = False
     ) -> None:
-        self.sh = SubcmdShell()
-        self.silofs = SubcmdSilofs(use_stdalloc, allow_coredump)
-        self.unitests = SubcmdUnitests()
-        self.fnctests = SubcmdFnctests()
-        self.git = SubcmdGit()
+        """Create executor objects for various sub-commands."""
+        self.sh = _Shell()
+        self.silofs = _Silofs(use_stdalloc, allow_coredump)
+        self.unitests = _Unitests()
+        self.fnctests = _Fnctests()
+        self.git = _Git()

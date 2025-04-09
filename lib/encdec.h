@@ -17,12 +17,11 @@
 #ifndef SILOFS_ENCDEC_H_
 #define SILOFS_ENCDEC_H_
 
-#include "infra.h"
-#include "addr.h"
-
-struct silofs_env;
+struct silofs_laddr;
+struct silofs_bootrec;
 struct silofs_unode_info;
 struct silofs_vnode_info;
+struct silofs_env;
 
 int silofs_encrypt_view(const struct silofs_env   *env,
                         const struct silofs_laddr *laddr,
@@ -35,7 +34,15 @@ int silofs_decrypt_uni_view(const struct silofs_env  *env,
 int silofs_decrypt_vni_view(const struct silofs_env  *env,
                             struct silofs_vnode_info *vni);
 
-void silofs_calc_caddr_of(const struct silofs_env *env,
+void silofs_llink_of_uni(const struct silofs_bootrec    *bootrec,
+                         const struct silofs_unode_info *uni,
+                         struct silofs_llink            *out_llink);
+
+void silofs_llink_of_vni(const struct silofs_bootrec    *bootrec,
+                         const struct silofs_vnode_info *vni,
+                         struct silofs_llink            *out_llink);
+
+void silofs_calc_caddr_of(const struct silofs_mdigest *md,
                           const struct iovec *iov, size_t iov_cnt,
                           enum silofs_ctype    ctype,
                           struct silofs_caddr *out_caddr);

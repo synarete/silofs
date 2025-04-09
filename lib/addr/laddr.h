@@ -17,6 +17,8 @@
 #ifndef SILOFS_LADDR_H_
 #define SILOFS_LADDR_H_
 
+#include "crypt/ivkey.h"
+
 struct silofs_strbuf;
 
 /* logical-segment id within specific volume mapping */
@@ -38,7 +40,7 @@ struct silofs_laddr {
 /* logical-address and its associate IV-key */
 struct silofs_llink {
 	struct silofs_laddr laddr;
-	struct silofs_iv    iv;
+	struct silofs_ivkey ivkey;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -130,7 +132,11 @@ void silofs_laddr_to_base64(const struct silofs_laddr *laddr,
 
 void silofs_llink_setup(struct silofs_llink       *llink,
                         const struct silofs_laddr *laddr,
-                        const struct silofs_iv    *riv);
+                        const struct silofs_iv    *iv);
+
+void silofs_llink_setup2(struct silofs_llink       *llink,
+                         const struct silofs_laddr *laddr,
+                         const struct silofs_ivkey *ivkey);
 
 void silofs_llink_assign(struct silofs_llink       *llink,
                          const struct silofs_llink *other);

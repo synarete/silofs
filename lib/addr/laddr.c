@@ -331,7 +331,9 @@ void silofs_laddr_as_iv(const struct silofs_laddr *laddr,
 
 	silofs_laddr48b_htox(&u.laddr48, laddr);
 	for (size_t i = 0; i < ARRAY_SIZE(out_iv->iv); ++i) {
-		out_iv->iv[i] = u.d[i] ^ u.d[i + 16] ^ u.d[i + 32];
+		const size_t j = i % 8;
+
+		out_iv->iv[i] = u.d[j] ^ u.d[j + 16] ^ u.d[j + 32];
 	}
 }
 
@@ -540,20 +542,29 @@ void silofs_laddr_to_base64(const struct silofs_laddr *laddr,
 
 void silofs_llink_setup(struct silofs_llink *llink,
                         const struct silofs_laddr *laddr,
-                        const struct silofs_iv *riv)
+                        const struct silofs_iv *iv)
 {
 	silofs_laddr_assign(&llink->laddr, laddr);
-	silofs_iv_assign(&llink->iv, riv);
+	silofs_iv_assign(&llink->ivkey.iv, iv);
+	silofs_key_reset(&llink->ivkey.key);
+}
+
+void silofs_llink_setup2(struct silofs_llink *llink,
+                         const struct silofs_laddr *laddr,
+                         const struct silofs_ivkey *ivkey)
+{
+	silofs_laddr_assign(&llink->laddr, laddr);
+	silofs_ivkey_assign(&llink->ivkey, ivkey);
 }
 
 void silofs_llink_assign(struct silofs_llink *llink,
                          const struct silofs_llink *other)
 {
-	silofs_llink_setup(llink, &other->laddr, &other->iv);
+	silofs_llink_setup2(llink, &other->laddr, &other->ivkey);
 }
 
 void silofs_llink_reset(struct silofs_llink *llink)
 {
 	silofs_laddr_reset(&llink->laddr);
-	silofs_iv_reset(&llink->iv);
+	silofs_ivkey_reset(&llink->ivkey);
 }

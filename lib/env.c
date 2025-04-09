@@ -54,7 +54,7 @@ env_bind_sbi(struct silofs_env *env, struct silofs_sb_info *sbi_new)
 static void env_update_bootrec_sb_uaddr(struct silofs_env *env)
 {
 	const struct silofs_uaddr *uaddr = NULL;
-	struct silofs_bootrec *bootrec = &env->bootrec;
+	struct silofs_bootrec *bootrec = env->base.bootrec;
 
 	if (env->sbi != NULL) {
 		uaddr = sbi_uaddr(env->sbi);
@@ -182,7 +182,6 @@ env_init_commons(struct silofs_env *env, const struct silofs_env_base *base)
 	silofs_caddr_reset(&env->bootrec_base_caddr);
 	silofs_caddr_reset(&env->bootrec_fork_caddr);
 	silofs_caddr_reset(&env->pack_caddr);
-	silofs_bootrec_init(&env->bootrec);
 	env->init_time = silofs_time_now_monotonic();
 	env->iconv_set = false;
 	env->sbi = NULL;
@@ -192,11 +191,10 @@ env_init_commons(struct silofs_env *env, const struct silofs_env_base *base)
 static void env_fini_commons(struct silofs_env *env)
 {
 	memset(&env->base, 0, sizeof(env->base));
-	silofs_ivkey_fini(&env->bootrec_ivkey);
+	silofs_ivkey_reset(&env->bootrec_ivkey);
 	silofs_caddr_reset(&env->bootrec_caddr);
 	silofs_caddr_reset(&env->bootrec_base_caddr);
 	silofs_caddr_reset(&env->bootrec_fork_caddr);
-	silofs_bootrec_fini(&env->bootrec);
 	env->sbi = NULL;
 	env->ms_flags = 0;
 }
@@ -438,7 +436,7 @@ int silofs_env_reload_bootrec(struct silofs_env *env)
 	if (err) {
 		return err;
 	}
-	err = silofs_reload_bootrec(env, &caddr, &env->bootrec);
+	err = silofs_reload_bootrec(env, &caddr, env->base.bootrec);
 	if (err) {
 		return err;
 	}
@@ -483,12 +481,12 @@ static void make_super_uaddr(const struct silofs_lsid *lsid,
 
 static const struct silofs_uaddr *env_sb_uaddr(const struct silofs_env *env)
 {
-	return &env->bootrec.sb_uaddr;
+	return &env->base.bootrec->sb_uaddr;
 }
 
 static const struct silofs_iv *env_sb_iv(const struct silofs_env *env)
 {
-	return &env->bootrec.main_ivkey.iv;
+	return &env->base.bootrec->main_ivkey.iv;
 }
 
 static void env_make_super_ulink(const struct silofs_env *env,
@@ -720,7 +718,7 @@ static int env_update_bootrec(struct silofs_env *env,
 		return err;
 	}
 	silofs_env_set_bootrec_caddr(env, &caddr);
-	silofs_bootrec_assign(&env->bootrec, bootrec);
+	silofs_bootrec_assign(env->base.bootrec, bootrec);
 	return 0;
 }
 
@@ -729,7 +727,7 @@ static void env_update_pvsegr(struct silofs_env *env)
 	struct silofs_pvsegr pvsegr;
 
 	silofs_bstore_curr_pvsegr(env->base.bstore, &pvsegr);
-	silofs_bootrec_set_pvsegr(&env->bootrec, &pvsegr);
+	silofs_bootrec_set_pvsegr(env->base.bootrec, &pvsegr);
 }
 
 int silofs_env_update_by(struct silofs_env *env,
@@ -770,7 +768,7 @@ int silofs_env_setup_bootrec(struct silofs_env *env)
 static void env_pre_commit_bootrec(const struct silofs_env *env,
                                    struct silofs_bootrec *bootrec)
 {
-	silofs_bootrec_assign(bootrec, &env->bootrec);
+	silofs_bootrec_assign(bootrec, env->base.bootrec);
 	silofs_bootrec_set_sb_uaddr(bootrec, silofs_sbi_uaddr(env->sbi));
 }
 
@@ -797,7 +795,7 @@ env_resave_bootrec(struct silofs_env *env, struct silofs_caddr *out_caddr)
 {
 	int err;
 
-	err = silofs_save_bootrec(env, &env->bootrec, out_caddr);
+	err = silofs_save_bootrec(env, env->base.bootrec, out_caddr);
 	if (err) {
 		return err;
 	}

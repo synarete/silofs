@@ -490,8 +490,9 @@ static void calc_bootrec1k_caddr(const struct silofs_env *env,
 		.iov_base = unconst(bootrec1k),
 		.iov_len = sizeof(*bootrec1k),
 	};
+	const enum silofs_ctype ctype = SILOFS_CTYPE_BOOTREC;
 
-	silofs_calc_caddr_of(env, &iov, 1, SILOFS_CTYPE_BOOTREC, out_caddr);
+	silofs_calc_caddr_of(&env->mdigest, &iov, 1, ctype, out_caddr);
 }
 
 static int verify_bootrec1k_caddr(const struct silofs_env *env,

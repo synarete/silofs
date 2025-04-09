@@ -42,6 +42,7 @@ struct silofs_env_base {
 	struct silofs_pcache  *pcache;
 	struct silofs_bstore  *bstore;
 	struct silofs_lcache  *lcache;
+	struct silofs_bootrec *bootrec;
 	struct silofs_submitq *submitq;
 	struct silofs_flusher *flusher;
 	struct silofs_idsmap  *idsmap;
@@ -53,16 +54,15 @@ struct silofs_env {
 	struct silofs_env_base   base;
 	struct silofs_rwlock     rwlock;
 	struct silofs_mutex      mutex;
-	struct silofs_cipher     bootrec_cipher;
 	struct silofs_cipher     enc_cipher;
 	struct silofs_cipher     dec_cipher;
 	struct silofs_mdigest    mdigest;
+	struct silofs_cipher     bootrec_cipher;
 	struct silofs_ivkey      bootrec_ivkey;
 	struct silofs_caddr      bootrec_caddr;
 	struct silofs_caddr      bootrec_base_caddr;
 	struct silofs_caddr      bootrec_fork_caddr;
 	struct silofs_caddr      pack_caddr;
-	struct silofs_bootrec    bootrec;
 	struct silofs_env_opstat opstat;
 	struct silofs_sb_info   *sbi;
 	struct silofs_cred       owner_cred;

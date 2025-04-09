@@ -1872,7 +1872,7 @@ static int vstgc_resolve_llink_of(const struct silofs_vstage_ctx *vstg_ctx,
 	silofs_assert_eq(llink_lbk.laddr.lsid.ltype, vaddr->ltype);
 
 	silofs_laddr_setup(&laddr, &llink_lbk.laddr.lsid, vaddr->off);
-	silofs_llink_setup(out_llink, &laddr, &llink_lbk.iv);
+	silofs_llink_setup(out_llink, &laddr, &llink_lbk.ivkey.iv);
 	return 0;
 }
 

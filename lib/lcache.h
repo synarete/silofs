@@ -19,7 +19,8 @@
 
 #include "infra.h"
 #include "addr.h"
-#include "hmdq.h"
+#include "hmdq/hmapq.h"
+#include "hmdq/dirtyq.h"
 #include "spxmap.h"
 
 /* dirty-queues of cached-elements by owner */

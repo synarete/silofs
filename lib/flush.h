@@ -28,21 +28,23 @@ struct silofs_dset {
 };
 
 struct silofs_flusher {
-	struct silofs_submit_ref  sref[SILOFS_SQENT_NREFS_MAX];
-	struct silofs_dset        dset[3];
-	struct silofs_listq       txq;
-	struct silofs_submitq    *submitq;
-	struct silofs_task       *task;
-	struct silofs_sb_info    *sbi;
-	struct silofs_inode_info *ii;
-	uint32_t                  tx_count;
-	int                       flags;
+	struct silofs_submit_ref     sref[SILOFS_SQENT_NREFS_MAX];
+	struct silofs_dset           dset[3];
+	struct silofs_listq          txq;
+	const struct silofs_bootrec *bootrec;
+	struct silofs_submitq       *submitq;
+	struct silofs_task          *task;
+	struct silofs_sb_info       *sbi;
+	struct silofs_inode_info    *ii;
+	uint32_t                     tx_count;
+	int                          flags;
 } silofs_attr_aligned64;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_flusher_init(struct silofs_flusher *flusher,
-                        struct silofs_submitq *submitq);
+int silofs_flusher_init(struct silofs_flusher       *flusher,
+                        const struct silofs_bootrec *bootrec,
+                        struct silofs_submitq       *submitq);
 
 void silofs_flusher_fini(struct silofs_flusher *flusher);
 

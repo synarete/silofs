@@ -17,6 +17,7 @@
 #include "configs.h"
 #include "infra.h"
 #include "repo.h"
+#include "encdec.h"
 #include "task.h"
 #include "env.h"
 #include "opexec.h"
@@ -51,20 +52,6 @@ struct silofs_ar_ctx {
 	struct silofs_task *task;
 	struct silofs_env *env;
 };
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-/* TODO: make me part of encdec */
-static void
-calc_caddr_of(const struct iovec *iov, size_t cnt, enum silofs_ctype ctype,
-              const struct silofs_mdigest *md, struct silofs_caddr *out_caddr)
-{
-	struct silofs_hash256 hash;
-	const uint32_t size = (uint32_t)silofs_iov_length(iov, cnt);
-
-	silofs_sha256_ofv(md, iov, cnt, &hash);
-	silofs_caddr_setup(out_caddr, &hash, size, ctype);
-}
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -173,7 +160,7 @@ static void ard_update_caddr_by(struct silofs_ar_desc *ard,
 		.iov_len = rov->rov_len,
 	};
 
-	calc_caddr_of(&iov, 1, SILOFS_CTYPE_ENCSEG, md, &caddr);
+	silofs_calc_caddr_of(md, &iov, 1, SILOFS_CTYPE_ENCSEG, &caddr);
 	ard_update_caddr(ard, &caddr);
 }
 
@@ -390,7 +377,7 @@ static void aiview_calc_caddr(const struct silofs_ar_index_view *aiv,
 	iov[1].iov_base = unconst(descs);
 	iov[1].iov_len = aiv->ndescs_max * sizeof(*descs);
 
-	calc_caddr_of(iov, 2, SILOFS_CTYPE_PACKIDX, md, out_caddr);
+	silofs_calc_caddr_of(md, iov, 2, SILOFS_CTYPE_PACKIDX, out_caddr);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

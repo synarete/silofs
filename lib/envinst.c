@@ -40,12 +40,13 @@ enum silofs_env_initf {
 	SILOFS_ENVIF_REPO = SILOFS_BIT(2),
 	SILOFS_ENVIF_PCACHE = SILOFS_BIT(3),
 	SILOFS_ENVIF_LCACHE = SILOFS_BIT(4),
-	SILOFS_ENVIF_SUBMITQ = SILOFS_BIT(5),
-	SILOFS_ENVIF_IDSMAP = SILOFS_BIT(6),
-	SILOFS_ENVIF_BSTORE = SILOFS_BIT(7),
-	SILOFS_ENVIF_FLUSHER = SILOFS_BIT(8),
-	SILOFS_ENVIF_FUSEQ = SILOFS_BIT(9),
-	SILOFS_ENVIF_ENV = SILOFS_BIT(10),
+	SILOFS_ENVIF_BOOTREC = SILOFS_BIT(5),
+	SILOFS_ENVIF_SUBMITQ = SILOFS_BIT(6),
+	SILOFS_ENVIF_IDSMAP = SILOFS_BIT(7),
+	SILOFS_ENVIF_BSTORE = SILOFS_BIT(8),
+	SILOFS_ENVIF_FLUSHER = SILOFS_BIT(9),
+	SILOFS_ENVIF_FUSEQ = SILOFS_BIT(10),
+	SILOFS_ENVIF_ENV = SILOFS_BIT(11),
 };
 
 /* memory allocator of choice */
@@ -62,9 +63,10 @@ struct silofs_env_inst {
 	struct silofs_repo repo;
 	struct silofs_pcache pcache;
 	struct silofs_lcache lcache;
-	struct silofs_submitq submitq;
 	struct silofs_idsmap idsmap;
 	struct silofs_bstore bstore;
+	struct silofs_bootrec bootrec;
+	struct silofs_submitq submitq;
 	struct silofs_flusher flusher;
 	struct silofs_env env;
 	struct silofs_alloc *alloc;
@@ -369,6 +371,21 @@ static void envi_fini_lcache(struct silofs_env_inst *envi)
 	}
 }
 
+static int envi_init_bootrec(struct silofs_env_inst *envi)
+{
+	silofs_bootrec_init(&envi->bootrec);
+	envi->initf |= SILOFS_ENVIF_BOOTREC;
+	return 0;
+}
+
+static void envi_fini_bootrec(struct silofs_env_inst *envi)
+{
+	if (envi->initf & SILOFS_ENVIF_LCACHE) {
+		silofs_bootrec_fini(&envi->bootrec);
+		envi->initf &= ~SILOFS_ENVIF_BOOTREC;
+	}
+}
+
 static int envi_init_submitq(struct silofs_env_inst *envi)
 {
 	struct silofs_submitq *submitq = &envi->submitq;
@@ -397,7 +414,7 @@ static int envi_init_flusher(struct silofs_env_inst *envi)
 	struct silofs_flusher *flusher = &envi->flusher;
 	int err;
 
-	err = silofs_flusher_init(flusher, &envi->submitq);
+	err = silofs_flusher_init(flusher, &envi->bootrec, &envi->submitq);
 	if (err) {
 		return err;
 	}
@@ -507,6 +524,7 @@ static int envi_init_env(struct silofs_env_inst *envi)
 		.pcache = &envi->pcache,
 		.bstore = &envi->bstore,
 		.lcache = &envi->lcache,
+		.bootrec = &envi->bootrec,
 		.submitq = &envi->submitq,
 		.flusher = &envi->flusher,
 		.idsmap = &envi->idsmap,
@@ -554,6 +572,7 @@ static void envi_fini(struct silofs_env_inst *envi)
 	envi_fini_idsmap(envi);
 	envi_fini_flusher(envi);
 	envi_fini_submitq(envi);
+	envi_fini_bootrec(envi);
 	envi_fini_lcache(envi);
 	envi_fini_bstore(envi);
 	envi_fini_pcache(envi);
@@ -608,6 +627,11 @@ envi_init(struct silofs_env_inst *envi, const struct silofs_args *args)
 	if (err) {
 		goto out_err;
 	}
+	err = envi_init_bootrec(envi);
+	if (err) {
+		goto out_err;
+	}
+
 	err = envi_init_submitq(envi);
 	if (err) {
 		goto out_err;

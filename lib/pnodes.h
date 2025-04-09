@@ -17,12 +17,12 @@
 #ifndef SILOFS_PNODES_H_
 #define SILOFS_PNODES_H_
 
-#include "infra.h"
-#include "addr.h"
-#include "hmdq.h"
+#include "addr/paddr.h"
+#include "hmdq/hmapq.h"
 
 #define SILOFS_BTREE_KEY_NULL (0)
 
+struct silofs_paddr;
 struct silofs_bstore;
 
 /* base of all persistent-segment nodes */

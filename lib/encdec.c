@@ -15,7 +15,6 @@
  * GNU General Public License for more details.
  */
 #include "configs.h"
-#include "infra.h"
 #include "bootrec.h"
 #include "lnodes.h"
 #include "encdec.h"
@@ -27,7 +26,7 @@ static void resolve_ivkey_of(const struct silofs_env *env,
                              struct silofs_ivkey *out_ivkey)
 {
 	struct silofs_iv laddriv;
-	const struct silofs_ivkey *ivkey = &env->bootrec.main_ivkey;
+	const struct silofs_ivkey *ivkey = &env->base.bootrec->main_ivkey;
 
 	silofs_laddr_as_iv(laddr, &laddriv);
 	silofs_ivkey_assign(out_ivkey, ivkey);
@@ -70,7 +69,7 @@ decrypt_view(const struct silofs_env *env, const struct silofs_llink *llink,
 	struct silofs_ivkey ivkey;
 	size_t len;
 
-	resolve_ivkey_of(env, &llink->laddr, &llink->iv, &ivkey);
+	resolve_ivkey_of(env, &llink->laddr, &llink->ivkey.iv, &ivkey);
 	len = silofs_laddr_len(&llink->laddr);
 	return decrypt_view_with(env, &ivkey, view, ptr, len);
 }
@@ -89,32 +88,50 @@ int silofs_decrypt_uni_view(const struct silofs_env *env,
 {
 	struct silofs_llink llink;
 
-	silofs_ulink_as_llink(uni_ulink(uni), &llink);
+	silofs_llink_of_uni(env->base.bootrec, uni, &llink);
 	return decrypt_view_inplace(env, &llink, uni->un_lni.ln_view);
 }
 
 int silofs_decrypt_vni_view(const struct silofs_env *env,
                             struct silofs_vnode_info *vni)
 {
-	const struct silofs_llink *llink = &vni->vn_llink;
+	struct silofs_llink llink;
 
-	return decrypt_view_inplace(env, llink, vni->vn_lni.ln_view);
+	silofs_llink_of_vni(env->base.bootrec, vni, &llink);
+	return decrypt_view_inplace(env, &llink, vni->vn_lni.ln_view);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static uint32_t iov_length(const struct iovec *iov, size_t iov_cnt)
+void silofs_llink_of_uni(const struct silofs_bootrec *bootrec,
+                         const struct silofs_unode_info *uni,
+                         struct silofs_llink *out_llink)
 {
-	return (uint32_t)silofs_iov_length(iov, iov_cnt);
+	const struct silofs_laddr *laddr = silofs_uni_laddr(uni);
+	const struct silofs_ivkey *ivkey = &bootrec->main_ivkey;
+
+	silofs_llink_setup2(out_llink, laddr, ivkey);
 }
 
-void silofs_calc_caddr_of(const struct silofs_env *env,
+void silofs_llink_of_vni(const struct silofs_bootrec *bootrec,
+                         const struct silofs_vnode_info *vni,
+                         struct silofs_llink *out_llink)
+{
+	silofs_unused(bootrec);
+	silofs_llink_assign(out_llink, &vni->vn_llink);
+}
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+void silofs_calc_caddr_of(const struct silofs_mdigest *md,
                           const struct iovec *iov, size_t iov_cnt,
                           enum silofs_ctype ctype,
                           struct silofs_caddr *out_caddr)
 {
 	struct silofs_hash256 hash;
+	uint32_t iov_len;
 
-	silofs_sha256_ofv(&env->mdigest, iov, iov_cnt, &hash);
-	silofs_caddr_setup(out_caddr, &hash, iov_length(iov, iov_cnt), ctype);
+	silofs_sha256_ofv(md, iov, iov_cnt, &hash);
+	iov_len = (uint32_t)silofs_iov_length(iov, iov_cnt);
+	silofs_caddr_setup(out_caddr, &hash, iov_len, ctype);
 }

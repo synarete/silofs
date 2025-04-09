@@ -81,7 +81,4 @@ void silofs_ulink_assign(struct silofs_ulink       *ulink,
 
 void silofs_ulink_reset(struct silofs_ulink *ulink);
 
-void silofs_ulink_as_llink(const struct silofs_ulink *ulink,
-                           struct silofs_llink       *out_llink);
-
 #endif /* SILOFS_UADDR_H_ */

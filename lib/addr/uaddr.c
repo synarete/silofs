@@ -142,9 +142,3 @@ void silofs_ulink_reset(struct silofs_ulink *ulink)
 	silofs_uaddr_reset(&ulink->uaddr);
 	silofs_iv_reset(&ulink->iv);
 }
-
-void silofs_ulink_as_llink(const struct silofs_ulink *ulink,
-                           struct silofs_llink *out_llink)
-{
-	silofs_llink_setup(out_llink, &ulink->uaddr.laddr, &ulink->iv);
-}

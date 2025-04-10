@@ -120,25 +120,3 @@ void silofs_uaddr64b_xtoh(const struct silofs_uaddr64b *uaddr64,
 	silofs_laddr48b_xtoh(&uaddr64->laddr, &uaddr->laddr);
 	uaddr->voff = silofs_off_to_cpu(uaddr64->voff);
 }
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-void silofs_ulink_setup(struct silofs_ulink *ulink,
-                        const struct silofs_uaddr *uaddr,
-                        const struct silofs_iv *iv)
-{
-	silofs_uaddr_assign(&ulink->uaddr, uaddr);
-	silofs_iv_assign(&ulink->iv, iv);
-}
-
-void silofs_ulink_assign(struct silofs_ulink *ulink,
-                         const struct silofs_ulink *other)
-{
-	silofs_ulink_setup(ulink, &other->uaddr, &other->iv);
-}
-
-void silofs_ulink_reset(struct silofs_ulink *ulink)
-{
-	silofs_uaddr_reset(&ulink->uaddr);
-	silofs_iv_reset(&ulink->iv);
-}

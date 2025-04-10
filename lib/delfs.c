@@ -126,15 +126,15 @@ static int delfc_post_at_spleaf(struct silofs_delfs_ctx *delf_ctx,
 }
 
 static const struct silofs_lsid *
-silofs_lsid_of(const struct silofs_ulink *ulink)
+silofs_lsid_of(const struct silofs_uaddr *uaddr)
 {
-	return silofs_uaddr_lsid(&ulink->uaddr);
+	return silofs_uaddr_lsid(uaddr);
 }
 
 static int delfc_post_at_spnode(struct silofs_delfs_ctx *delf_ctx,
                                 const struct silofs_spnode_info *sni)
 {
-	struct silofs_ulink ulink;
+	struct silofs_uaddr uaddr;
 	struct silofs_vrange vrange;
 	loff_t voff;
 	int err;
@@ -142,12 +142,12 @@ static int delfc_post_at_spnode(struct silofs_delfs_ctx *delf_ctx,
 	silofs_sni_vspace_range(sni, &vrange);
 	voff = vrange.beg;
 	while (voff < vrange.end) {
-		err = silofs_sni_resolve_child(sni, voff, &ulink);
+		err = silofs_sni_resolve_child(sni, voff, &uaddr);
 		if (err == -SILOFS_ENOENT) {
 			break;
 		}
 		err = delfc_try_remove_lseg_of(delf_ctx,
-		                               silofs_lsid_of(&ulink));
+		                               silofs_lsid_of(&uaddr));
 		if (err) {
 			return err;
 		}

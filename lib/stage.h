@@ -17,8 +17,6 @@
 #ifndef SILOFS_VSTAGE_H_
 #define SILOFS_VSTAGE_H_
 
-#include "infra.h"
-
 struct silofs_vaddr;
 struct silofs_llink;
 struct silofs_task;
@@ -38,27 +36,27 @@ enum silofs_stg_mode {
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_spawn_super(struct silofs_env         *env,
-                       const struct silofs_ulink *ulink,
+                       const struct silofs_uaddr *uaddr,
                        struct silofs_sb_info    **out_sbi);
 
 int silofs_stage_super(struct silofs_env         *env,
-                       const struct silofs_ulink *ulink,
+                       const struct silofs_uaddr *uaddr,
                        struct silofs_sb_info    **out_sbi);
 
 int silofs_spawn_spnode(struct silofs_env          *env,
-                        const struct silofs_ulink  *ulink,
+                        const struct silofs_uaddr  *uaddr,
                         struct silofs_spnode_info **out_sni);
 
 int silofs_stage_spnode(struct silofs_env          *env,
-                        const struct silofs_ulink  *ulink,
+                        const struct silofs_uaddr  *uaddr,
                         struct silofs_spnode_info **out_sni);
 
 int silofs_spawn_spleaf(struct silofs_env          *env,
-                        const struct silofs_ulink  *ulink,
+                        const struct silofs_uaddr  *uaddr,
                         struct silofs_spleaf_info **out_sli);
 
 int silofs_stage_spleaf(struct silofs_env          *env,
-                        const struct silofs_ulink  *ulink,
+                        const struct silofs_uaddr  *uaddr,
                         struct silofs_spleaf_info **out_sli);
 
 int silofs_spawn_lseg(struct silofs_env *env, const struct silofs_lsid *lsid);

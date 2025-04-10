@@ -83,8 +83,8 @@ void silofs_bootrec_pvsegr(const struct silofs_bootrec *bootrec,
 void silofs_bootrec_set_pvsegr(struct silofs_bootrec      *bootrec,
                                const struct silofs_pvsegr *pvsegr);
 
-void silofs_bootrec_sb_ulink(const struct silofs_bootrec *bootrec,
-                             struct silofs_ulink         *out_ulink);
+void silofs_bootrec_sb_uaddr(const struct silofs_bootrec *bootrec,
+                             struct silofs_uaddr         *out_uaddr);
 
 void silofs_bootrec_set_sb_uaddr(struct silofs_bootrec     *bootrec,
                                  const struct silofs_uaddr *sb_uaddr);

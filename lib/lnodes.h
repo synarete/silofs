@@ -47,7 +47,7 @@ struct silofs_lnode_info {
 /* unode */
 struct silofs_unode_info {
 	struct silofs_lnode_info un_lni;
-	struct silofs_ulink      un_ulink;
+	struct silofs_uaddr      un_uaddr;
 	uint64_t                 un_magic;
 };
 
@@ -183,9 +183,6 @@ void silofs_uni_set_dq(struct silofs_unode_info *uni,
 
 enum silofs_ltype silofs_uni_ltype(const struct silofs_unode_info *uni);
 
-const struct silofs_ulink *
-silofs_uni_ulink(const struct silofs_unode_info *uni);
-
 const struct silofs_uaddr *
 silofs_uni_uaddr(const struct silofs_unode_info *uni);
 
@@ -202,7 +199,7 @@ silofs_uni_from_lni(const struct silofs_lnode_info *lni);
 #define uni_incref(uni)         silofs_uni_incref(uni)
 #define uni_decref(uni)         silofs_uni_decref(uni)
 #define uni_dirtify(uni)        silofs_uni_dirtify(uni)
-#define uni_ulink(uni)          silofs_uni_ulink(uni)
+#define uni_uaddr(uni)          silofs_uni_uaddr(uni)
 #define uni_uaddr(uni)          silofs_uni_uaddr(uni)
 #define uni_laddr(uni)          silofs_uni_laddr(uni)
 #define uni_ltype(uni)          silofs_uni_ltype(uni)
@@ -289,7 +286,7 @@ struct silofs_fileaf_info *silofs_fli_from_vni(struct silofs_vnode_info *vni);
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 struct silofs_unode_info *
-silofs_new_unode(struct silofs_alloc *alloc, const struct silofs_ulink *ulink);
+silofs_new_unode(struct silofs_alloc *alloc, const struct silofs_uaddr *uaddr);
 
 void silofs_del_unode(struct silofs_unode_info *uni,
                       struct silofs_alloc *alloc, int flags);

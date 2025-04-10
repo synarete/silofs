@@ -770,14 +770,8 @@ sbi_sproot_of(const struct silofs_sb_info *sbi, enum silofs_ltype ltype,
 	sb_sproot_of(sbi->sb, ltype, out_uaddr);
 }
 
-static void sbi_rootiv_of(const struct silofs_sb_info *sbi,
-                          enum silofs_ltype ltype, struct silofs_iv *out_iv)
-{
-	sb_rootiv_of(sbi->sb, ltype, out_iv);
-}
-
 static void
-sbi_main_ulink(const struct silofs_sb_info *sbi, loff_t voff,
+sbi_main_uaddr(const struct silofs_sb_info *sbi, loff_t voff,
                enum silofs_ltype vspace, struct silofs_uaddr *out_uaddr)
 {
 	struct silofs_lsid lsid;
@@ -793,10 +787,9 @@ sbi_main_ulink(const struct silofs_sb_info *sbi, loff_t voff,
 
 void silofs_sbi_resolve_main_at(const struct silofs_sb_info *sbi, loff_t voff,
                                 enum silofs_ltype vspace,
-                                struct silofs_ulink *out_ulink)
+                                struct silofs_uaddr *out_uaddr)
 {
-	sbi_main_ulink(sbi, voff, vspace, &out_ulink->uaddr);
-	sbi_rootiv_of(sbi, vspace, &out_ulink->iv);
+	sbi_main_uaddr(sbi, voff, vspace, out_uaddr);
 }
 
 int silofs_sbi_sproot_of(const struct silofs_sb_info *sbi,
@@ -809,18 +802,16 @@ int silofs_sbi_sproot_of(const struct silofs_sb_info *sbi,
 
 int silofs_sbi_resolve_child(const struct silofs_sb_info *sbi,
                              enum silofs_ltype ltype,
-                             struct silofs_ulink *out_ulink)
+                             struct silofs_uaddr *out_uaddr)
 {
-	sbi_sproot_of(sbi, ltype, &out_ulink->uaddr);
-	sbi_rootiv_of(sbi, ltype, &out_ulink->iv);
-	return !silofs_uaddr_isnull(&out_ulink->uaddr) ? 0 : -SILOFS_ENOENT;
+	sbi_sproot_of(sbi, ltype, out_uaddr);
+	return !silofs_uaddr_isnull(out_uaddr) ? 0 : -SILOFS_ENOENT;
 }
 
 void silofs_sbi_bind_child(struct silofs_sb_info *sbi, enum silofs_ltype ltype,
-                           const struct silofs_ulink *ulink)
+                           const struct silofs_uaddr *uaddr)
 {
-	sb_set_sproot_of(sbi->sb, ltype, &ulink->uaddr);
-	sb_set_rootiv_of(sbi->sb, ltype, &ulink->iv);
+	sb_set_sproot_of(sbi->sb, ltype, uaddr);
 	sbi_dirtify(sbi);
 }
 
@@ -930,11 +921,6 @@ int silofs_test_shared_dbkref(struct silofs_task *task,
 struct silofs_env *silofs_sbi_env(const struct silofs_sb_info *sbi)
 {
 	return sbi->sb_uni.un_lni.ln_env;
-}
-
-const struct silofs_ulink *silofs_sbi_ulink(const struct silofs_sb_info *sbi)
-{
-	return silofs_uni_ulink(&sbi->sb_uni);
 }
 
 const struct silofs_uaddr *silofs_sbi_uaddr(const struct silofs_sb_info *sbi)

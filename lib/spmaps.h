@@ -34,9 +34,6 @@ loff_t silofs_sni_base_voff(const struct silofs_spnode_info *sni);
 
 enum silofs_height silofs_sni_height(const struct silofs_spnode_info *sni);
 
-const struct silofs_ulink *
-silofs_sni_ulink(const struct silofs_spnode_info *sni);
-
 const struct silofs_uaddr *
 silofs_sni_uaddr(const struct silofs_spnode_info *sni);
 
@@ -68,29 +65,23 @@ void silofs_sni_bind_main_lseg(struct silofs_spnode_info *sni,
                                const struct silofs_lsid  *lsid);
 
 void silofs_sni_resolve_main(const struct silofs_spnode_info *sni, loff_t voff,
-                             struct silofs_ulink *out_ulink);
+                             struct silofs_uaddr *out_uaddr);
 
 void silofs_sni_bind_child(struct silofs_spnode_info *sni, loff_t voff,
-                           const struct silofs_ulink *ulink);
+                           const struct silofs_uaddr *uaddr);
 
 int silofs_sni_resolve_child(const struct silofs_spnode_info *sni, loff_t voff,
-                             struct silofs_ulink *out_ulink);
+                             struct silofs_uaddr *out_uaddr);
 
 void silofs_sni_resolve_lmap(const struct silofs_spnode_info *sni,
                              struct silofs_spmap_lmap        *out_lmap);
 
 #ifdef SILOFS_USE_PRIVATE
-#define sni_ulink(sni)          silofs_sni_ulink(sni)
-#define sni_uaddr(sni)          silofs_sni_uaddr(sni)
-#define sni_laddr(sni)          silofs_sni_laddr(sni)
 #define sni_incref(sni)         silofs_sni_incref(sni)
 #define sni_decref(sni)         silofs_sni_decref(sni)
 #endif
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-const struct silofs_ulink *
-silofs_sli_ulink(const struct silofs_spleaf_info *sli);
 
 const struct silofs_laddr *
 silofs_sli_laddr(const struct silofs_spleaf_info *sli);
@@ -172,9 +163,6 @@ void silofs_sli_resolve_lmap(const struct silofs_spleaf_info *sli,
                              struct silofs_spmap_lmap        *out_lmaps);
 
 #ifdef SILOFS_USE_PRIVATE
-#define sli_ulink(sli)          silofs_sli_ulink(sli)
-#define sli_uaddr(sli)          silofs_sli_uaddr(sli)
-#define sli_laddr(sli)          silofs_sli_laddr(sli)
 #define sli_incref(sli)         silofs_sli_incref(sli)
 #define sli_decref(sli)         silofs_sli_decref(sli)
 #endif

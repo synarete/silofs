@@ -26,12 +26,6 @@ struct silofs_uaddr {
 	loff_t              voff;
 };
 
-/* a pair of unode-address and its associate IV */
-struct silofs_ulink {
-	struct silofs_uaddr uaddr;
-	struct silofs_iv    iv;
-};
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 const struct silofs_uaddr *silofs_uaddr_none(void);
@@ -69,16 +63,5 @@ void silofs_uaddr64b_htox(struct silofs_uaddr64b    *uaddr64,
 
 void silofs_uaddr64b_xtoh(const struct silofs_uaddr64b *uaddr64,
                           struct silofs_uaddr          *uaddr);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-void silofs_ulink_setup(struct silofs_ulink       *ulink,
-                        const struct silofs_uaddr *uaddr,
-                        const struct silofs_iv    *iv);
-
-void silofs_ulink_assign(struct silofs_ulink       *ulink,
-                         const struct silofs_ulink *other);
-
-void silofs_ulink_reset(struct silofs_ulink *ulink);
 
 #endif /* SILOFS_UADDR_H_ */

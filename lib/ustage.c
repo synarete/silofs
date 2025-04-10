@@ -170,10 +170,10 @@ bind_spawned_uni(struct silofs_env *env, struct silofs_unode_info *uni)
 }
 
 static int
-create_cached_uni(struct silofs_env *env, const struct silofs_ulink *ulink,
+create_cached_uni(struct silofs_env *env, const struct silofs_uaddr *uaddr,
                   struct silofs_unode_info **out_uni)
 {
-	*out_uni = silofs_lcache_create_uni(env->base.lcache, ulink);
+	*out_uni = silofs_lcache_create_uni(env->base.lcache, uaddr);
 	if (*out_uni == NULL) {
 		return -SILOFS_ENOMEM;
 	}
@@ -182,14 +182,14 @@ create_cached_uni(struct silofs_env *env, const struct silofs_ulink *ulink,
 }
 
 static int
-require_cached_uni(struct silofs_env *env, const struct silofs_ulink *ulink,
+require_cached_uni(struct silofs_env *env, const struct silofs_uaddr *uaddr,
                    struct silofs_unode_info **out_uni)
 {
 	int ret;
 
-	ret = fetch_cached_uni(env, &ulink->uaddr, out_uni);
+	ret = fetch_cached_uni(env, uaddr, out_uni);
 	if (ret == -SILOFS_ENOENT) {
-		ret = create_cached_uni(env, ulink, out_uni);
+		ret = create_cached_uni(env, uaddr, out_uni);
 	}
 	return ret;
 }
@@ -272,9 +272,9 @@ require_lseg(const struct silofs_env *env, const struct silofs_lsid *lsid)
 }
 
 static int
-require_lseg_by(const struct silofs_env *env, const struct silofs_ulink *ulink)
+require_lseg_by(const struct silofs_env *env, const struct silofs_uaddr *uaddr)
 {
-	return require_lseg(env, &ulink->uaddr.laddr.lsid);
+	return require_lseg(env, &uaddr->laddr.lsid);
 }
 
 static int
@@ -322,13 +322,13 @@ forget_cached_sbi(const struct silofs_env *env, struct silofs_sb_info *sbi)
 }
 
 static int
-require_cached_sbi(struct silofs_env *env, const struct silofs_ulink *ulink,
+require_cached_sbi(struct silofs_env *env, const struct silofs_uaddr *uaddr,
                    struct silofs_sb_info **out_sbi)
 {
 	struct silofs_unode_info *uni = NULL;
 	int err;
 
-	err = require_cached_uni(env, ulink, &uni);
+	err = require_cached_uni(env, uaddr, &uni);
 	if (err) {
 		return err;
 	}
@@ -338,17 +338,17 @@ require_cached_sbi(struct silofs_env *env, const struct silofs_ulink *ulink,
 }
 
 static int
-spawn_super_at(struct silofs_env *env, const struct silofs_ulink *ulink,
+spawn_super_at(struct silofs_env *env, const struct silofs_uaddr *uaddr,
                struct silofs_sb_info **out_sbi)
 {
 	struct silofs_sb_info *sbi = NULL;
 	int err;
 
-	err = require_cached_sbi(env, ulink, &sbi);
+	err = require_cached_sbi(env, uaddr, &sbi);
 	if (err) {
 		goto out_err;
 	}
-	err = require_lseg_by(env, ulink);
+	err = require_lseg_by(env, uaddr);
 	if (err) {
 		goto out_err;
 	}
@@ -363,10 +363,10 @@ out_err:
 }
 
 int silofs_spawn_super(struct silofs_env *env,
-                       const struct silofs_ulink *ulink,
+                       const struct silofs_uaddr *uaddr,
                        struct silofs_sb_info **out_sbi)
 {
-	return spawn_super_at(env, ulink, out_sbi);
+	return spawn_super_at(env, uaddr, out_sbi);
 }
 
 static int
@@ -383,20 +383,20 @@ load_view_of_sbi(const struct silofs_env *env, struct silofs_sb_info *sbi)
 }
 
 static int
-stage_super_at(struct silofs_env *env, const struct silofs_ulink *ulink,
+stage_super_at(struct silofs_env *env, const struct silofs_uaddr *uaddr,
                struct silofs_sb_info **out_sbi)
 {
 	struct silofs_sb_info *sbi = NULL;
 	int err;
 
-	err = require_cached_sbi(env, ulink, &sbi);
+	err = require_cached_sbi(env, uaddr, &sbi);
 	if (err) {
 		return err;
 	}
 	if (sbi_is_active(sbi)) {
 		goto out_ok;
 	}
-	err = require_lseg_by(env, ulink);
+	err = require_lseg_by(env, uaddr);
 	if (err) {
 		goto out_err;
 	}
@@ -428,10 +428,10 @@ out_err:
 }
 
 int silofs_stage_super(struct silofs_env *env,
-                       const struct silofs_ulink *ulink,
+                       const struct silofs_uaddr *uaddr,
                        struct silofs_sb_info **out_sbi)
 {
-	return stage_super_at(env, ulink, out_sbi);
+	return stage_super_at(env, uaddr, out_sbi);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -445,13 +445,13 @@ forget_cached_sni(const struct silofs_env *env, struct silofs_spnode_info *sni)
 }
 
 static int
-require_cached_sni(struct silofs_env *env, const struct silofs_ulink *ulink,
+require_cached_sni(struct silofs_env *env, const struct silofs_uaddr *uaddr,
                    struct silofs_spnode_info **out_sni)
 {
 	struct silofs_unode_info *uni = NULL;
 	int err;
 
-	err = require_cached_uni(env, ulink, &uni);
+	err = require_cached_uni(env, uaddr, &uni);
 	if (err) {
 		return err;
 	}
@@ -461,20 +461,20 @@ require_cached_sni(struct silofs_env *env, const struct silofs_ulink *ulink,
 }
 
 static int
-spawn_spnode_at(struct silofs_env *env, const struct silofs_ulink *ulink,
+spawn_spnode_at(struct silofs_env *env, const struct silofs_uaddr *uaddr,
                 struct silofs_spnode_info **out_sni)
 {
 	struct silofs_spnode_info *sni = NULL;
 	int err;
 
-	err = require_cached_sni(env, ulink, &sni);
+	err = require_cached_sni(env, uaddr, &sni);
 	if (err) {
 		return err;
 	}
 	if (sni_is_active(sni)) {
 		goto out_ok;
 	}
-	err = require_lseg_by(env, ulink);
+	err = require_lseg_by(env, uaddr);
 	if (err) {
 		goto out_err;
 	}
@@ -489,10 +489,10 @@ out_err:
 }
 
 int silofs_spawn_spnode(struct silofs_env *env,
-                        const struct silofs_ulink *ulink,
+                        const struct silofs_uaddr *uaddr,
                         struct silofs_spnode_info **out_sni)
 {
-	return spawn_spnode_at(env, ulink, out_sni);
+	return spawn_spnode_at(env, uaddr, out_sni);
 }
 
 static int decrypt_view_of_sni(const struct silofs_env *env,
@@ -504,25 +504,25 @@ static int decrypt_view_of_sni(const struct silofs_env *env,
 static int
 load_view_of_sni(const struct silofs_env *env, struct silofs_spnode_info *sni)
 {
-	return stage_load_view(env, sni_laddr(sni),
+	return stage_load_view(env, silofs_sni_laddr(sni),
 	                       sni->sn_uni.un_lni.ln_view);
 }
 
 static int
-stage_spnode_at(struct silofs_env *env, const struct silofs_ulink *ulink,
+stage_spnode_at(struct silofs_env *env, const struct silofs_uaddr *uaddr,
                 struct silofs_spnode_info **out_sni)
 {
 	struct silofs_spnode_info *sni = NULL;
 	int err;
 
-	err = require_cached_sni(env, ulink, &sni);
+	err = require_cached_sni(env, uaddr, &sni);
 	if (err) {
 		return err;
 	}
 	if (sni_is_active(sni)) {
 		goto out_ok;
 	}
-	err = require_lseg_by(env, ulink);
+	err = require_lseg_by(env, uaddr);
 	if (err) {
 		goto out_err;
 	}
@@ -549,10 +549,10 @@ out_err:
 }
 
 int silofs_stage_spnode(struct silofs_env *env,
-                        const struct silofs_ulink *ulink,
+                        const struct silofs_uaddr *uaddr,
                         struct silofs_spnode_info **out_sni)
 {
-	return stage_spnode_at(env, ulink, out_sni);
+	return stage_spnode_at(env, uaddr, out_sni);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -566,13 +566,13 @@ forget_cached_sli(const struct silofs_env *env, struct silofs_spleaf_info *sli)
 }
 
 static int
-require_cached_sli(struct silofs_env *env, const struct silofs_ulink *ulink,
+require_cached_sli(struct silofs_env *env, const struct silofs_uaddr *uaddr,
                    struct silofs_spleaf_info **out_sli)
 {
 	struct silofs_unode_info *uni = NULL;
 	int err;
 
-	err = require_cached_uni(env, ulink, &uni);
+	err = require_cached_uni(env, uaddr, &uni);
 	if (err) {
 		return err;
 	}
@@ -582,20 +582,20 @@ require_cached_sli(struct silofs_env *env, const struct silofs_ulink *ulink,
 }
 
 static int
-spawn_spleaf_at(struct silofs_env *env, const struct silofs_ulink *ulink,
+spawn_spleaf_at(struct silofs_env *env, const struct silofs_uaddr *uaddr,
                 struct silofs_spleaf_info **out_sli)
 {
 	struct silofs_spleaf_info *sli = NULL;
 	int err;
 
-	err = require_cached_sli(env, ulink, &sli);
+	err = require_cached_sli(env, uaddr, &sli);
 	if (err) {
 		goto out_err;
 	}
 	if (sli_is_active(sli)) {
 		goto out_ok;
 	}
-	err = require_lseg_by(env, ulink);
+	err = require_lseg_by(env, uaddr);
 	if (err) {
 		goto out_err;
 	}
@@ -610,10 +610,10 @@ out_err:
 }
 
 int silofs_spawn_spleaf(struct silofs_env *env,
-                        const struct silofs_ulink *ulink,
+                        const struct silofs_uaddr *uaddr,
                         struct silofs_spleaf_info **out_sli)
 {
-	return spawn_spleaf_at(env, ulink, out_sli);
+	return spawn_spleaf_at(env, uaddr, out_sli);
 }
 
 static int decrypt_view_of_sli(const struct silofs_env *env,
@@ -625,25 +625,25 @@ static int decrypt_view_of_sli(const struct silofs_env *env,
 static int
 load_view_of_sli(const struct silofs_env *env, struct silofs_spleaf_info *sli)
 {
-	return stage_load_view(env, sli_laddr(sli),
+	return stage_load_view(env, silofs_sli_laddr(sli),
 	                       sli->sl_uni.un_lni.ln_view);
 }
 
 static int
-stage_spleaf_at(struct silofs_env *env, const struct silofs_ulink *ulink,
+stage_spleaf_at(struct silofs_env *env, const struct silofs_uaddr *uaddr,
                 struct silofs_spleaf_info **out_sli)
 {
 	struct silofs_spleaf_info *sli = NULL;
 	int err;
 
-	err = require_cached_sli(env, ulink, &sli);
+	err = require_cached_sli(env, uaddr, &sli);
 	if (err) {
 		goto out_err;
 	}
 	if (sli_is_active(sli)) {
 		goto out_ok;
 	}
-	err = require_lseg_by(env, ulink);
+	err = require_lseg_by(env, uaddr);
 	if (err) {
 		goto out_err;
 	}
@@ -670,10 +670,10 @@ out_err:
 }
 
 int silofs_stage_spleaf(struct silofs_env *env,
-                        const struct silofs_ulink *ulink,
+                        const struct silofs_uaddr *uaddr,
                         struct silofs_spleaf_info **out_sli)
 {
-	return stage_spleaf_at(env, ulink, out_sli);
+	return stage_spleaf_at(env, uaddr, out_sli);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

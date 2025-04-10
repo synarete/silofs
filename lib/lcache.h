@@ -58,7 +58,7 @@ silofs_lcache_lookup_uni(struct silofs_lcache      *lcache,
 
 struct silofs_unode_info *
 silofs_lcache_create_uni(struct silofs_lcache      *lcache,
-                         const struct silofs_ulink *ulink);
+                         const struct silofs_uaddr *uaddr);
 
 void silofs_lcache_forget_uni(struct silofs_lcache     *lcache,
                               struct silofs_unode_info *uni);

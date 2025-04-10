@@ -272,9 +272,9 @@ static void lcache_drop_evictable_unis(struct silofs_lcache *lcache)
 
 static struct silofs_unode_info *
 lcache_new_uni(const struct silofs_lcache *lcache,
-               const struct silofs_ulink *ulink)
+               const struct silofs_uaddr *uaddr)
 {
-	return silofs_new_unode(lcache->lc_alloc, ulink);
+	return silofs_new_unode(lcache->lc_alloc, uaddr);
 }
 
 static void lcache_track_uaddr(struct silofs_lcache *lcache,
@@ -336,13 +336,13 @@ silofs_lcache_lookup_uni(struct silofs_lcache *lcache,
 
 static struct silofs_unode_info *
 lcache_require_uni(struct silofs_lcache *lcache,
-                   const struct silofs_ulink *ulink)
+                   const struct silofs_uaddr *uaddr)
 {
 	struct silofs_unode_info *uni = NULL;
 	int retry = 4;
 
 	while (retry-- > 0) {
-		uni = lcache_new_uni(lcache, ulink);
+		uni = lcache_new_uni(lcache, uaddr);
 		if (uni != NULL) {
 			break;
 		}
@@ -368,26 +368,26 @@ static void lcache_set_dq_of_uni(struct silofs_lcache *lcache,
 
 static struct silofs_unode_info *
 lcache_create_uni(struct silofs_lcache *lcache,
-                  const struct silofs_ulink *ulink)
+                  const struct silofs_uaddr *uaddr)
 {
 	struct silofs_unode_info *uni;
 
-	uni = lcache_require_uni(lcache, ulink);
+	uni = lcache_require_uni(lcache, uaddr);
 	if (uni != NULL) {
 		lcache_set_dq_of_uni(lcache, uni);
 		lcache_store_uni(lcache, uni);
-		lcache_track_uaddr(lcache, uni_uaddr(uni));
+		lcache_track_uaddr(lcache, silofs_uni_uaddr(uni));
 	}
 	return uni;
 }
 
 struct silofs_unode_info *
 silofs_lcache_create_uni(struct silofs_lcache *lcache,
-                         const struct silofs_ulink *ulink)
+                         const struct silofs_uaddr *uaddr)
 {
 	struct silofs_unode_info *uni;
 
-	uni = lcache_create_uni(lcache, ulink);
+	uni = lcache_create_uni(lcache, uaddr);
 	return uni;
 }
 

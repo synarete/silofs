@@ -41,8 +41,6 @@ int silofs_verify_super_block(const struct silofs_super_block *sb);
 
 struct silofs_env *silofs_sbi_env(const struct silofs_sb_info *sbi);
 
-const struct silofs_ulink *silofs_sbi_ulink(const struct silofs_sb_info *sbi);
-
 const struct silofs_uaddr *silofs_sbi_uaddr(const struct silofs_sb_info *sbi);
 
 const struct silofs_laddr *silofs_sbi_laddr(const struct silofs_sb_info *sbi);
@@ -66,10 +64,10 @@ int silofs_sbi_sproot_of(const struct silofs_sb_info *sbi,
 
 int silofs_sbi_resolve_child(const struct silofs_sb_info *sbi,
                              enum silofs_ltype            ltype,
-                             struct silofs_ulink         *out_ulink);
+                             struct silofs_uaddr         *out_uaddr);
 
 void silofs_sbi_bind_child(struct silofs_sb_info *sbi, enum silofs_ltype ltype,
-                           const struct silofs_ulink *ulink);
+                           const struct silofs_uaddr *uaddr);
 
 void silofs_sbi_make_fork_of(struct silofs_sb_info       *sbi_new,
                              const struct silofs_sb_info *sbi_cur);
@@ -101,7 +99,7 @@ bool silofs_sbi_has_main_lseg(const struct silofs_sb_info *sbi,
 
 void silofs_sbi_resolve_main_at(const struct silofs_sb_info *sbi, loff_t voff,
                                 enum silofs_ltype    vspace,
-                                struct silofs_ulink *out_ulink);
+                                struct silofs_uaddr *out_uaddr);
 
 bool silofs_sbi_ismutable_lsid(const struct silofs_sb_info *sbi,
                                const struct silofs_lsid    *lsid);

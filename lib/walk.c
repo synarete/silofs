@@ -59,9 +59,9 @@ sbi_vrange(const struct silofs_sb_info *sbi, struct silofs_vrange *out_vrange)
 
 static bool sni_has_subref(const struct silofs_spnode_info *sni, loff_t voff)
 {
-	struct silofs_ulink ulink;
+	struct silofs_uaddr uaddr;
 
-	return silofs_sni_resolve_child(sni, voff, &ulink) == 0;
+	return silofs_sni_resolve_child(sni, voff, &uaddr) == 0;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -199,22 +199,22 @@ static int wac_visit_post_at_unode(const struct silofs_walk_ctx *wa_ctx)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int wac_stage_spnode_at(const struct silofs_walk_ctx *wa_ctx,
-                               const struct silofs_ulink *ulink,
+                               const struct silofs_uaddr *uaddr,
                                struct silofs_spnode_info **out_sni)
 {
-	return silofs_stage_spnode(wa_ctx->env, ulink, out_sni);
+	return silofs_stage_spnode(wa_ctx->env, uaddr, out_sni);
 }
 
 static int wac_stage_spleaf_at(const struct silofs_walk_ctx *wa_ctx,
-                               const struct silofs_ulink *ulink,
+                               const struct silofs_uaddr *uaddr,
                                struct silofs_spleaf_info **out_sli)
 {
-	return silofs_stage_spleaf(wa_ctx->env, ulink, out_sli);
+	return silofs_stage_spleaf(wa_ctx->env, uaddr, out_sli);
 }
 
 static int wac_stage_spnode4(struct silofs_walk_ctx *wa_ctx)
 {
-	struct silofs_ulink ulink = { .uaddr.voff = -1 };
+	struct silofs_uaddr uaddr = { .voff = -1 };
 	struct silofs_vrange vrange;
 	int err;
 
@@ -222,62 +222,62 @@ static int wac_stage_spnode4(struct silofs_walk_ctx *wa_ctx)
 	if (wa_ctx->voff > vrange.end) {
 		return -SILOFS_ENOENT;
 	}
-	err = silofs_sbi_resolve_child(wa_ctx->sbi, wa_ctx->vspace, &ulink);
+	err = silofs_sbi_resolve_child(wa_ctx->sbi, wa_ctx->vspace, &uaddr);
 	check_ok_or_bailout(err);
 
-	err = wac_stage_spnode_at(wa_ctx, &ulink, &wa_ctx->sni4);
+	err = wac_stage_spnode_at(wa_ctx, &uaddr, &wa_ctx->sni4);
 	check_ok_or_bailout(err);
 	return 0;
 }
 
 static int wac_stage_spnode3(struct silofs_walk_ctx *wa_ctx)
 {
-	struct silofs_ulink ulink = { .uaddr.voff = -1 };
+	struct silofs_uaddr uaddr = { .voff = -1 };
 	int err;
 
-	err = silofs_sni_resolve_child(wa_ctx->sni4, wa_ctx->voff, &ulink);
+	err = silofs_sni_resolve_child(wa_ctx->sni4, wa_ctx->voff, &uaddr);
 	check_ok_or_bailout(err);
 
-	err = wac_stage_spnode_at(wa_ctx, &ulink, &wa_ctx->sni3);
+	err = wac_stage_spnode_at(wa_ctx, &uaddr, &wa_ctx->sni3);
 	check_ok_or_bailout(err);
 	return 0;
 }
 
 static int wac_stage_spnode2(struct silofs_walk_ctx *wa_ctx)
 {
-	struct silofs_ulink ulink = { .uaddr.voff = -1 };
+	struct silofs_uaddr uaddr = { .voff = -1 };
 	int err;
 
-	err = silofs_sni_resolve_child(wa_ctx->sni3, wa_ctx->voff, &ulink);
+	err = silofs_sni_resolve_child(wa_ctx->sni3, wa_ctx->voff, &uaddr);
 	check_ok_or_bailout(err);
 
-	err = wac_stage_spnode_at(wa_ctx, &ulink, &wa_ctx->sni2);
+	err = wac_stage_spnode_at(wa_ctx, &uaddr, &wa_ctx->sni2);
 	check_ok_or_bailout(err);
 	return 0;
 }
 
 static int wac_stage_spnode1(struct silofs_walk_ctx *wa_ctx)
 {
-	struct silofs_ulink ulink = { .uaddr.voff = -1 };
+	struct silofs_uaddr uaddr = { .voff = -1 };
 	int err;
 
-	err = silofs_sni_resolve_child(wa_ctx->sni2, wa_ctx->voff, &ulink);
+	err = silofs_sni_resolve_child(wa_ctx->sni2, wa_ctx->voff, &uaddr);
 	check_ok_or_bailout(err);
 
-	err = wac_stage_spnode_at(wa_ctx, &ulink, &wa_ctx->sni1);
+	err = wac_stage_spnode_at(wa_ctx, &uaddr, &wa_ctx->sni1);
 	check_ok_or_bailout(err);
 	return 0;
 }
 
 static int wac_stage_spleaf(struct silofs_walk_ctx *wa_ctx)
 {
-	struct silofs_ulink ulink;
+	struct silofs_uaddr uaddr;
 	int err;
 
-	err = silofs_sni_resolve_child(wa_ctx->sni1, wa_ctx->voff, &ulink);
+	err = silofs_sni_resolve_child(wa_ctx->sni1, wa_ctx->voff, &uaddr);
 	check_ok_or_bailout(err);
 
-	err = wac_stage_spleaf_at(wa_ctx, &ulink, &wa_ctx->sli);
+	err = wac_stage_spleaf_at(wa_ctx, &uaddr, &wa_ctx->sli);
 	check_ok_or_bailout(err);
 	return 0;
 }

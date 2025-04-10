@@ -372,11 +372,10 @@ void silofs_bootrec_set_pvsegr(struct silofs_bootrec *bootrec,
 	silofs_pvsegr_assign(&bootrec->pvsegr, pvsegr);
 }
 
-void silofs_bootrec_sb_ulink(const struct silofs_bootrec *bootrec,
-                             struct silofs_ulink *out_ulink)
+void silofs_bootrec_sb_uaddr(const struct silofs_bootrec *bootrec,
+                             struct silofs_uaddr *out_uaddr)
 {
-	silofs_ulink_setup(out_ulink, &bootrec->sb_uaddr,
-	                   &bootrec->main_ivkey.iv);
+	silofs_uaddr_assign(out_uaddr, &bootrec->sb_uaddr);
 }
 
 void silofs_bootrec_set_sb_uaddr(struct silofs_bootrec *bootrec,

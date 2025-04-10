@@ -484,26 +484,20 @@ static const struct silofs_uaddr *env_sb_uaddr(const struct silofs_env *env)
 	return &env->base.bootrec->sb_uaddr;
 }
 
-static const struct silofs_iv *env_sb_iv(const struct silofs_env *env)
-{
-	return &env->base.bootrec->main_ivkey.iv;
-}
-
-static void env_make_super_ulink(const struct silofs_env *env,
-                                 struct silofs_ulink *out_ulink)
+static void env_make_super_uaddr(const struct silofs_env *env,
+                                 struct silofs_uaddr *out_uaddr)
 {
 	struct silofs_lsid lsid = { .lsize = 0 };
-	struct silofs_uaddr uaddr = { .voff = -1 };
 
 	make_super_lsid(&lsid);
-	make_super_uaddr(&lsid, &uaddr);
-	silofs_ulink_setup(out_ulink, &uaddr, env_sb_iv(env));
+	make_super_uaddr(&lsid, out_uaddr);
+	silofs_unused(env);
 }
 
-static void env_resolve_super_ulink(const struct silofs_env *env,
-                                    struct silofs_ulink *out_ulink)
+static void env_resolve_super_uaddr(const struct silofs_env *env,
+                                    struct silofs_uaddr *out_uaddr)
 {
-	silofs_ulink_setup(out_ulink, env_sb_uaddr(env), env_sb_iv(env));
+	silofs_uaddr_assign(out_uaddr, env_sb_uaddr(env));
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -516,12 +510,12 @@ void silofs_env_drop_caches(struct silofs_env *env)
 }
 
 static int
-env_spawn_super_at(struct silofs_env *env, const struct silofs_ulink *ulink,
+env_spawn_super_at(struct silofs_env *env, const struct silofs_uaddr *uaddr,
                    struct silofs_sb_info **out_sbi)
 {
 	int err;
 
-	err = silofs_spawn_super(env, ulink, out_sbi);
+	err = silofs_spawn_super(env, uaddr, out_sbi);
 	if (err) {
 		return err;
 	}
@@ -532,10 +526,10 @@ env_spawn_super_at(struct silofs_env *env, const struct silofs_ulink *ulink,
 static int
 env_spawn_super_of(struct silofs_env *env, struct silofs_sb_info **out_sbi)
 {
-	struct silofs_ulink ulink = { .uaddr.voff = -1 };
+	struct silofs_uaddr uaddr = { .voff = -1 };
 
-	env_make_super_ulink(env, &ulink);
-	return env_spawn_super_at(env, &ulink, out_sbi);
+	env_make_super_uaddr(env, &uaddr);
+	return env_spawn_super_at(env, &uaddr, out_sbi);
 }
 
 static int env_spawn_super(struct silofs_env *env, size_t capacity,
@@ -592,12 +586,12 @@ env_check_sb(const struct silofs_env *env, const struct silofs_sb_info *sbi)
 
 int silofs_env_reload_super(struct silofs_env *env)
 {
-	struct silofs_ulink ulink;
+	struct silofs_uaddr uaddr;
 	struct silofs_sb_info *sbi = NULL;
 	int err;
 
-	env_resolve_super_ulink(env, &ulink);
-	err = silofs_stage_super(env, &ulink, &sbi);
+	env_resolve_super_uaddr(env, &uaddr);
+	err = silofs_stage_super(env, &uaddr, &sbi);
 	if (err) {
 		return err;
 	}

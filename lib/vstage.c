@@ -141,7 +141,7 @@ static void
 sbi_bind_child_spnode(struct silofs_sb_info *sbi, enum silofs_ltype vspace,
                       const struct silofs_spnode_info *sni_child)
 {
-	silofs_sbi_bind_child(sbi, vspace, sni_ulink(sni_child));
+	silofs_sbi_bind_child(sbi, vspace, silofs_sni_uaddr(sni_child));
 }
 
 static void sni_bind_child_spnode(struct silofs_spnode_info *sni,
@@ -149,7 +149,7 @@ static void sni_bind_child_spnode(struct silofs_spnode_info *sni,
 {
 	const loff_t voff = silofs_sni_base_voff(sni_child);
 
-	silofs_sni_bind_child(sni, voff, sni_ulink(sni_child));
+	silofs_sni_bind_child(sni, voff, silofs_sni_uaddr(sni_child));
 }
 
 static void sni_bind_child_spleaf(struct silofs_spnode_info *sni,
@@ -157,14 +157,14 @@ static void sni_bind_child_spleaf(struct silofs_spnode_info *sni,
 {
 	const loff_t voff = silofs_sli_base_voff(sli_child);
 
-	silofs_sni_bind_child(sni, voff, sli_ulink(sli_child));
+	silofs_sni_bind_child(sni, voff, silofs_sli_uaddr(sli_child));
 }
 
 static bool sni_has_child_at(const struct silofs_spnode_info *sni, loff_t voff)
 {
-	struct silofs_ulink ulink;
+	struct silofs_uaddr uaddr;
 
-	return (silofs_sni_resolve_child(sni, voff, &ulink) == 0);
+	return (silofs_sni_resolve_child(sni, voff, &uaddr) == 0);
 }
 
 static bool sni_has_main_lseg(const struct silofs_spnode_info *sni)
@@ -707,11 +707,11 @@ vstgc_inspect_cached_spleaf(const struct silofs_vstage_ctx *vstg_ctx,
 
 static int vstgc_resolve_spnode_child(const struct silofs_vstage_ctx *vstg_ctx,
                                       const struct silofs_spnode_info *sni,
-                                      struct silofs_ulink *out_ulink)
+                                      struct silofs_uaddr *out_uaddr)
 {
 	const loff_t lbk_voff = vstgc_lbk_voff(vstg_ctx);
 
-	return silofs_sni_resolve_child(sni, lbk_voff, out_ulink);
+	return silofs_sni_resolve_child(sni, lbk_voff, out_uaddr);
 }
 
 static int vstgc_resolve_spleaf_child(const struct silofs_vstage_ctx *vstg_ctx,
@@ -724,13 +724,13 @@ static int vstgc_resolve_spleaf_child(const struct silofs_vstage_ctx *vstg_ctx,
 }
 
 static int vstgc_do_stage_spnode_at(const struct silofs_vstage_ctx *vstg_ctx,
-                                    const struct silofs_ulink *ulink,
+                                    const struct silofs_uaddr *uaddr,
                                     struct silofs_spnode_info **out_sni)
 {
 	int err = -SILOFS_ENOMEM;
 
 	for (size_t i = 0; i < vstg_ctx->retry; ++i) {
-		err = silofs_stage_spnode(vstg_ctx->env, ulink, out_sni);
+		err = silofs_stage_spnode(vstg_ctx->env, uaddr, out_sni);
 		if (!is_low_resource_error(err)) {
 			break;
 		}
@@ -740,20 +740,20 @@ static int vstgc_do_stage_spnode_at(const struct silofs_vstage_ctx *vstg_ctx,
 }
 
 static int vstgc_stage_spnode_at(const struct silofs_vstage_ctx *vstg_ctx,
-                                 const struct silofs_ulink *ulink,
+                                 const struct silofs_uaddr *uaddr,
                                  struct silofs_spnode_info **out_sni)
 {
-	return vstgc_do_stage_spnode_at(vstg_ctx, ulink, out_sni);
+	return vstgc_do_stage_spnode_at(vstg_ctx, uaddr, out_sni);
 }
 
 static int vstgc_do_spawn_spnode_at(const struct silofs_vstage_ctx *vstg_ctx,
-                                    const struct silofs_ulink *ulink,
+                                    const struct silofs_uaddr *uaddr,
                                     struct silofs_spnode_info **out_sni)
 {
 	int err = -SILOFS_ENOMEM;
 
 	for (size_t i = 0; i < vstg_ctx->retry; ++i) {
-		err = silofs_spawn_spnode(vstg_ctx->env, ulink, out_sni);
+		err = silofs_spawn_spnode(vstg_ctx->env, uaddr, out_sni);
 		if (!is_low_resource_error(err)) {
 			break;
 		}
@@ -763,20 +763,20 @@ static int vstgc_do_spawn_spnode_at(const struct silofs_vstage_ctx *vstg_ctx,
 }
 
 static int vstgc_spawn_spnode_at(const struct silofs_vstage_ctx *vstg_ctx,
-                                 const struct silofs_ulink *ulink,
+                                 const struct silofs_uaddr *uaddr,
                                  struct silofs_spnode_info **out_sni)
 {
-	return vstgc_do_spawn_spnode_at(vstg_ctx, ulink, out_sni);
+	return vstgc_do_spawn_spnode_at(vstg_ctx, uaddr, out_sni);
 }
 
 static int vstgc_do_stage_spleaf_at(const struct silofs_vstage_ctx *vstg_ctx,
-                                    const struct silofs_ulink *ulink,
+                                    const struct silofs_uaddr *uaddr,
                                     struct silofs_spleaf_info **out_sli)
 {
 	int err = -SILOFS_ENOMEM;
 
 	for (size_t i = 0; i < vstg_ctx->retry; ++i) {
-		err = silofs_stage_spleaf(vstg_ctx->env, ulink, out_sli);
+		err = silofs_stage_spleaf(vstg_ctx->env, uaddr, out_sli);
 		if (!is_low_resource_error(err)) {
 			break;
 		}
@@ -786,20 +786,20 @@ static int vstgc_do_stage_spleaf_at(const struct silofs_vstage_ctx *vstg_ctx,
 }
 
 static int vstgc_stage_spleaf_at(const struct silofs_vstage_ctx *vstg_ctx,
-                                 const struct silofs_ulink *ulink,
+                                 const struct silofs_uaddr *uaddr,
                                  struct silofs_spleaf_info **out_sli)
 {
-	return vstgc_do_stage_spleaf_at(vstg_ctx, ulink, out_sli);
+	return vstgc_do_stage_spleaf_at(vstg_ctx, uaddr, out_sli);
 }
 
 static int vstgc_do_spawn_spleaf_at(const struct silofs_vstage_ctx *vstg_ctx,
-                                    const struct silofs_ulink *ulink,
+                                    const struct silofs_uaddr *uaddr,
                                     struct silofs_spleaf_info **out_sli)
 {
 	int err = -SILOFS_ENOMEM;
 
 	for (size_t i = 0; i < vstg_ctx->retry; ++i) {
-		err = silofs_spawn_spleaf(vstg_ctx->env, ulink, out_sli);
+		err = silofs_spawn_spleaf(vstg_ctx->env, uaddr, out_sli);
 		if (!is_low_resource_error(err)) {
 			break;
 		}
@@ -809,10 +809,10 @@ static int vstgc_do_spawn_spleaf_at(const struct silofs_vstage_ctx *vstg_ctx,
 }
 
 static int vstgc_spawn_spleaf_at(const struct silofs_vstage_ctx *vstg_ctx,
-                                 const struct silofs_ulink *ulink,
+                                 const struct silofs_uaddr *uaddr,
                                  struct silofs_spleaf_info **out_sli)
 {
-	return vstgc_do_spawn_spleaf_at(vstg_ctx, ulink, out_sli);
+	return vstgc_do_spawn_spleaf_at(vstg_ctx, uaddr, out_sli);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -840,7 +840,7 @@ vstgc_setup_spawned_spnode4(const struct silofs_vstage_ctx *vstg_ctx,
 static int vstgc_spawn_spnode4_of(const struct silofs_vstage_ctx *vstg_ctx,
                                   struct silofs_spnode_info **out_sni)
 {
-	struct silofs_ulink ulink = { .uaddr.voff = -1 };
+	struct silofs_uaddr uaddr = { .voff = -1 };
 	int err;
 
 	err = vstgc_require_super_main_lseg(vstg_ctx);
@@ -848,9 +848,9 @@ static int vstgc_spawn_spnode4_of(const struct silofs_vstage_ctx *vstg_ctx,
 		return err;
 	}
 	silofs_sbi_resolve_main_at(vstg_ctx->sbi, vstg_ctx->voff,
-	                           vstg_ctx->vspace, &ulink);
+	                           vstg_ctx->vspace, &uaddr);
 
-	err = vstgc_spawn_spnode_at(vstg_ctx, &ulink, out_sni);
+	err = vstgc_spawn_spnode_at(vstg_ctx, &uaddr, out_sni);
 	if (err) {
 		return err;
 	}
@@ -867,7 +867,7 @@ static int vstgc_spawn_spnode4(const struct silofs_vstage_ctx *vstg_ctx,
 	if (err) {
 		return err;
 	}
-	vstgc_update_space_stats(vstg_ctx, sni_uaddr(*out_sni));
+	vstgc_update_space_stats(vstg_ctx, silofs_sni_uaddr(*out_sni));
 	return 0;
 }
 
@@ -906,15 +906,15 @@ vstgc_inspect_cached_spnode4(const struct silofs_vstage_ctx *vstg_ctx)
 
 static int vstgc_do_stage_spnode4(struct silofs_vstage_ctx *vstg_ctx)
 {
-	struct silofs_ulink ulink = { .uaddr.voff = -1 };
+	struct silofs_uaddr uaddr = { .voff = -1 };
 	int err;
 
 	err = silofs_sbi_resolve_child(vstg_ctx->sbi, vstg_ctx->vspace,
-	                               &ulink);
+	                               &uaddr);
 	if (err) {
 		return -SILOFS_EFSCORRUPTED;
 	}
-	err = vstgc_stage_spnode_at(vstg_ctx, &ulink, &vstg_ctx->sni4);
+	err = vstgc_stage_spnode_at(vstg_ctx, &uaddr, &vstg_ctx->sni4);
 	if (err) {
 		return err;
 	}
@@ -1021,14 +1021,14 @@ static void
 vstgc_setup_spawned_spnode3(const struct silofs_vstage_ctx *vstg_ctx,
                             struct silofs_spnode_info *sni)
 {
-	silofs_sni_setup_spawned(sni, sni_uaddr(vstg_ctx->sni4),
+	silofs_sni_setup_spawned(sni, silofs_sni_uaddr(vstg_ctx->sni4),
 	                         vstgc_lbk_voff(vstg_ctx));
 }
 
 static int vstgc_spawn_spnode3_of(const struct silofs_vstage_ctx *vstg_ctx,
                                   struct silofs_spnode_info **out_sni)
 {
-	struct silofs_ulink ulink = { .uaddr.voff = -1 };
+	struct silofs_uaddr uaddr = { .voff = -1 };
 	int err;
 
 	err = vstgc_require_spnode_main_lseg(vstg_ctx, vstg_ctx->sni4);
@@ -1036,9 +1036,9 @@ static int vstgc_spawn_spnode3_of(const struct silofs_vstage_ctx *vstg_ctx,
 		return err;
 	}
 	silofs_sni_resolve_main(vstg_ctx->sni4, vstgc_lbk_voff(vstg_ctx),
-	                        &ulink);
+	                        &uaddr);
 
-	err = vstgc_spawn_spnode_at(vstg_ctx, &ulink, out_sni);
+	err = vstgc_spawn_spnode_at(vstg_ctx, &uaddr, out_sni);
 	if (err) {
 		return err;
 	}
@@ -1055,7 +1055,7 @@ static int vstgc_spawn_spnode3(const struct silofs_vstage_ctx *vstg_ctx,
 	if (err) {
 		return err;
 	}
-	vstgc_update_space_stats(vstg_ctx, sni_uaddr(*out_sni));
+	vstgc_update_space_stats(vstg_ctx, silofs_sni_uaddr(*out_sni));
 	return 0;
 }
 
@@ -1094,14 +1094,14 @@ vstgc_inspect_cached_spnode3(const struct silofs_vstage_ctx *vstg_ctx)
 
 static int vstgc_do_stage_spnode3(struct silofs_vstage_ctx *vstg_ctx)
 {
-	struct silofs_ulink ulink = { .uaddr.voff = -1 };
+	struct silofs_uaddr uaddr = { .voff = -1 };
 	int err;
 
-	err = vstgc_resolve_spnode_child(vstg_ctx, vstg_ctx->sni4, &ulink);
+	err = vstgc_resolve_spnode_child(vstg_ctx, vstg_ctx->sni4, &uaddr);
 	if (err) {
 		return err;
 	}
-	err = vstgc_stage_spnode_at(vstg_ctx, &ulink, &vstg_ctx->sni3);
+	err = vstgc_stage_spnode_at(vstg_ctx, &uaddr, &vstg_ctx->sni3);
 	if (err) {
 		return err;
 	}
@@ -1204,14 +1204,14 @@ static void
 vstgc_setup_spawned_spnode2(const struct silofs_vstage_ctx *vstg_ctx,
                             struct silofs_spnode_info *sni)
 {
-	silofs_sni_setup_spawned(sni, sni_uaddr(vstg_ctx->sni3),
+	silofs_sni_setup_spawned(sni, silofs_sni_uaddr(vstg_ctx->sni3),
 	                         vstgc_lbk_voff(vstg_ctx));
 }
 
 static int vstgc_spawn_spnode2_of(const struct silofs_vstage_ctx *vstg_ctx,
                                   struct silofs_spnode_info **out_sni)
 {
-	struct silofs_ulink ulink = { .uaddr.voff = -1 };
+	struct silofs_uaddr uaddr = { .voff = -1 };
 	int err;
 
 	err = vstgc_require_spnode_main_lseg(vstg_ctx, vstg_ctx->sni3);
@@ -1219,9 +1219,9 @@ static int vstgc_spawn_spnode2_of(const struct silofs_vstage_ctx *vstg_ctx,
 		return err;
 	}
 	silofs_sni_resolve_main(vstg_ctx->sni3, vstgc_lbk_voff(vstg_ctx),
-	                        &ulink);
+	                        &uaddr);
 
-	err = vstgc_spawn_spnode_at(vstg_ctx, &ulink, out_sni);
+	err = vstgc_spawn_spnode_at(vstg_ctx, &uaddr, out_sni);
 	if (err) {
 		return err;
 	}
@@ -1238,7 +1238,7 @@ static int vstgc_spawn_spnode2(const struct silofs_vstage_ctx *vstg_ctx,
 	if (err) {
 		return err;
 	}
-	vstgc_update_space_stats(vstg_ctx, sni_uaddr(*out_sni));
+	vstgc_update_space_stats(vstg_ctx, silofs_sni_uaddr(*out_sni));
 	return 0;
 }
 
@@ -1277,14 +1277,14 @@ vstgc_inspect_cached_spnode2(const struct silofs_vstage_ctx *vstg_ctx)
 
 static int vstgc_do_stage_spnode2(struct silofs_vstage_ctx *vstg_ctx)
 {
-	struct silofs_ulink ulink = { .uaddr.voff = -1 };
+	struct silofs_uaddr uaddr = { .voff = -1 };
 	int err;
 
-	err = vstgc_resolve_spnode_child(vstg_ctx, vstg_ctx->sni3, &ulink);
+	err = vstgc_resolve_spnode_child(vstg_ctx, vstg_ctx->sni3, &uaddr);
 	if (err) {
 		return err;
 	}
-	err = vstgc_stage_spnode_at(vstg_ctx, &ulink, &vstg_ctx->sni2);
+	err = vstgc_stage_spnode_at(vstg_ctx, &uaddr, &vstg_ctx->sni2);
 	if (err) {
 		return err;
 	}
@@ -1387,14 +1387,14 @@ static void
 vstgc_setup_spawned_spnode1(const struct silofs_vstage_ctx *vstg_ctx,
                             struct silofs_spnode_info *sni)
 {
-	silofs_sni_setup_spawned(sni, sni_uaddr(vstg_ctx->sni2),
+	silofs_sni_setup_spawned(sni, silofs_sni_uaddr(vstg_ctx->sni2),
 	                         vstgc_lbk_voff(vstg_ctx));
 }
 
 static int vstgc_spawn_spnode1_of(const struct silofs_vstage_ctx *vstg_ctx,
                                   struct silofs_spnode_info **out_sni)
 {
-	struct silofs_ulink ulink = { .uaddr.voff = -1 };
+	struct silofs_uaddr uaddr = { .voff = -1 };
 	int err;
 
 	err = vstgc_require_spnode_main_lseg(vstg_ctx, vstg_ctx->sni2);
@@ -1402,9 +1402,9 @@ static int vstgc_spawn_spnode1_of(const struct silofs_vstage_ctx *vstg_ctx,
 		return err;
 	}
 	silofs_sni_resolve_main(vstg_ctx->sni2, vstgc_lbk_voff(vstg_ctx),
-	                        &ulink);
+	                        &uaddr);
 
-	err = vstgc_spawn_spnode_at(vstg_ctx, &ulink, out_sni);
+	err = vstgc_spawn_spnode_at(vstg_ctx, &uaddr, out_sni);
 	if (err) {
 		return err;
 	}
@@ -1421,7 +1421,7 @@ static int vstgc_spawn_spnode1(const struct silofs_vstage_ctx *vstg_ctx,
 	if (err) {
 		return err;
 	}
-	vstgc_update_space_stats(vstg_ctx, sni_uaddr(*out_sni));
+	vstgc_update_space_stats(vstg_ctx, silofs_sni_uaddr(*out_sni));
 	return 0;
 }
 
@@ -1460,14 +1460,14 @@ vstgc_inspect_cached_spnode1(const struct silofs_vstage_ctx *vstg_ctx)
 
 static int vstgc_do_stage_spnode1(struct silofs_vstage_ctx *vstg_ctx)
 {
-	struct silofs_ulink ulink = { .uaddr.voff = -1 };
+	struct silofs_uaddr uaddr = { .voff = -1 };
 	int err;
 
-	err = vstgc_resolve_spnode_child(vstg_ctx, vstg_ctx->sni2, &ulink);
+	err = vstgc_resolve_spnode_child(vstg_ctx, vstg_ctx->sni2, &uaddr);
 	if (err) {
 		return err;
 	}
-	err = vstgc_stage_spnode_at(vstg_ctx, &ulink, &vstg_ctx->sni1);
+	err = vstgc_stage_spnode_at(vstg_ctx, &uaddr, &vstg_ctx->sni1);
 	if (err) {
 		return err;
 	}
@@ -1570,14 +1570,14 @@ static void
 vstgc_setup_spawned_spleaf(const struct silofs_vstage_ctx *vstg_ctx,
                            struct silofs_spleaf_info *sli)
 {
-	silofs_sli_setup_spawned(sli, sni_uaddr(vstg_ctx->sni1),
+	silofs_sli_setup_spawned(sli, silofs_sni_uaddr(vstg_ctx->sni1),
 	                         vstgc_lbk_voff(vstg_ctx));
 }
 
 static int vstgc_spawn_spleaf_of(const struct silofs_vstage_ctx *vstg_ctx,
                                  struct silofs_spleaf_info **out_sli)
 {
-	struct silofs_ulink ulink = { .uaddr.voff = -1 };
+	struct silofs_uaddr uaddr = { .voff = -1 };
 	int err;
 
 	err = vstgc_require_spnode_main_lseg(vstg_ctx, vstg_ctx->sni1);
@@ -1585,9 +1585,9 @@ static int vstgc_spawn_spleaf_of(const struct silofs_vstage_ctx *vstg_ctx,
 		return err;
 	}
 	silofs_sni_resolve_main(vstg_ctx->sni1, vstgc_lbk_voff(vstg_ctx),
-	                        &ulink);
+	                        &uaddr);
 
-	err = vstgc_spawn_spleaf_at(vstg_ctx, &ulink, out_sli);
+	err = vstgc_spawn_spleaf_at(vstg_ctx, &uaddr, out_sli);
 	if (err) {
 		return err;
 	}
@@ -1642,7 +1642,7 @@ static int vstgc_spawn_spleaf(const struct silofs_vstage_ctx *vstg_ctx,
 	if (err) {
 		return err;
 	}
-	vstgc_update_space_stats(vstg_ctx, sli_uaddr(*out_sli));
+	vstgc_update_space_stats(vstg_ctx, silofs_sli_uaddr(*out_sli));
 	return 0;
 }
 
@@ -1675,14 +1675,14 @@ static int vstgc_clone_spleaf(const struct silofs_vstage_ctx *vstg_ctx,
 
 static int vstgc_do_stage_spleaf(struct silofs_vstage_ctx *vstg_ctx)
 {
-	struct silofs_ulink ulink = { .uaddr.voff = -1 };
+	struct silofs_uaddr uaddr = { .voff = -1 };
 	int err;
 
-	err = vstgc_resolve_spnode_child(vstg_ctx, vstg_ctx->sni1, &ulink);
+	err = vstgc_resolve_spnode_child(vstg_ctx, vstg_ctx->sni1, &uaddr);
 	if (err) {
 		return err;
 	}
-	err = vstgc_stage_spleaf_at(vstg_ctx, &ulink, &vstg_ctx->sli);
+	err = vstgc_stage_spleaf_at(vstg_ctx, &uaddr, &vstg_ctx->sli);
 	if (err) {
 		return err;
 	}

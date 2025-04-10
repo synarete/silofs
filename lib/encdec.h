@@ -24,8 +24,7 @@ struct silofs_vnode_info;
 struct silofs_env;
 
 int silofs_encrypt_view(const struct silofs_env   *env,
-                        const struct silofs_laddr *laddr,
-                        const struct silofs_iv    *seediv,
+                        const struct silofs_llink *llink,
                         const struct silofs_view *view, void *ptr);
 
 int silofs_decrypt_uni_view(const struct silofs_env  *env,

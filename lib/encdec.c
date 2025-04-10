@@ -20,19 +20,6 @@
 #include "encdec.h"
 #include "env.h"
 
-static void resolve_ivkey_of(const struct silofs_env *env,
-                             const struct silofs_laddr *laddr,
-                             const struct silofs_iv *seediv,
-                             struct silofs_ivkey *out_ivkey)
-{
-	struct silofs_iv laddriv;
-	const struct silofs_ivkey *ivkey = &env->base.bootrec->main_ivkey;
-
-	silofs_laddr_as_iv(laddr, &laddriv);
-	silofs_ivkey_assign(out_ivkey, ivkey);
-	silofs_iv_xor_with2(&out_ivkey->iv, &laddriv, seediv);
-}
-
 static int
 encrypt_view_with(const struct silofs_env *env,
                   const struct silofs_ivkey *ivkey,
@@ -42,16 +29,13 @@ encrypt_view_with(const struct silofs_env *env,
 }
 
 int silofs_encrypt_view(const struct silofs_env *env,
-                        const struct silofs_laddr *laddr,
-                        const struct silofs_iv *seediv,
+                        const struct silofs_llink *llink,
                         const struct silofs_view *view, void *ptr)
 {
-	struct silofs_ivkey ivkey;
-	size_t len;
+	const struct silofs_ivkey *ivkey = &llink->ivkey;
+	const size_t len = silofs_laddr_len(&llink->laddr);
 
-	resolve_ivkey_of(env, laddr, seediv, &ivkey);
-	len = silofs_laddr_len(laddr);
-	return encrypt_view_with(env, &ivkey, view, ptr, len);
+	return encrypt_view_with(env, ivkey, view, ptr, len);
 }
 
 static int
@@ -66,12 +50,10 @@ static int
 decrypt_view(const struct silofs_env *env, const struct silofs_llink *llink,
              const struct silofs_view *view, void *ptr)
 {
-	struct silofs_ivkey ivkey;
-	size_t len;
+	const struct silofs_ivkey *ivkey = &llink->ivkey;
+	const size_t len = silofs_laddr_len(&llink->laddr);
 
-	resolve_ivkey_of(env, &llink->laddr, &llink->ivkey.iv, &ivkey);
-	len = silofs_laddr_len(&llink->laddr);
-	return decrypt_view_with(env, &ivkey, view, ptr, len);
+	return decrypt_view_with(env, ivkey, view, ptr, len);
 }
 
 static int decrypt_view_inplace(const struct silofs_env *env,

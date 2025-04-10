@@ -653,20 +653,6 @@ struct silofs_sb_lsids {
 	uint8_t               sb_reserved[768];
 } silofs_attr_aligned64;
 
-struct silofs_sb_rootivs {
-	struct silofs_iv sb_iv_reserved;
-	struct silofs_iv sb_iv_inode;
-	struct silofs_iv sb_iv_xanode;
-	struct silofs_iv sb_iv_dtnode;
-	struct silofs_iv sb_iv_ftnode;
-	struct silofs_iv sb_iv_symval;
-	struct silofs_iv sb_iv_data1k;
-	struct silofs_iv sb_iv_data4k;
-	struct silofs_iv sb_iv_databk;
-	uint8_t          sb_reserved[368];
-	uint8_t          sb_reserved2[512];
-} silofs_attr_aligned64;
-
 struct silofs_space_gauges256 {
 	uint64_t sg_nsuper;
 	uint64_t sg_nspnode;
@@ -714,13 +700,13 @@ struct silofs_super_block {
 	struct silofs_volumeid      sb_lv_prev;
 	struct silofs_volumeid      sb_lv_base;
 	struct silofs_vrange128     sb_vrange;
-	uint8_t                     sb_reserved4b[256];
+	uint8_t                     sb_reserved4[256];
 	/* 1K..2K */
 	struct silofs_sb_sproots    sb_sproots;
 	/* 2K..3K */
 	struct silofs_sb_lsids      sb_main_lsid;
 	/* 3K..4K */
-	struct silofs_sb_rootivs    sb_rootivs;
+	uint8_t                     sb_reserved5[1024];
 	/* 4K..6K */
 	struct silofs_space_stats1k sb_space_stats_curr;
 	struct silofs_space_stats1k sb_space_stats_prev;

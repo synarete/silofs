@@ -158,7 +158,6 @@ static void require_persistent_types_size2(void)
 	REQUIRE_SIZEOF(struct silofs_bootrec1k, SILOFS_BOOTREC_SIZE);
 	REQUIRE_SIZEOF(struct silofs_sb_sproots, 1024);
 	REQUIRE_SIZEOF(struct silofs_sb_lsids, 1024);
-	REQUIRE_SIZEOF(struct silofs_sb_rootivs, 1024);
 	REQUIRE_SIZEOF(struct silofs_super_block, SILOFS_SB_SIZE);
 	REQUIRE_SIZEOF(struct silofs_space_gauges256, 256);
 	REQUIRE_SIZEOF(struct silofs_space_stats1k, 1024);
@@ -235,7 +234,6 @@ static void require_persistent_types_alignment2(void)
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_vrange, 752);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_sproots, 1024);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_main_lsid, 2048);
-	REQUIRE_OFFSET64(struct silofs_super_block, sb_rootivs, 3072);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_space_stats_curr, 4096);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_space_stats_prev, 5120);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_name, 7680);

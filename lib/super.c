@@ -384,114 +384,6 @@ static void sb_clone_sproots(struct silofs_super_block *sb,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static const struct silofs_iv *
-sb_rootiv_by(const struct silofs_super_block *sb, enum silofs_ltype ltype)
-{
-	const struct silofs_iv *ret;
-
-	switch (ltype) {
-	case SILOFS_LTYPE_INODE:
-		ret = &sb->sb_rootivs.sb_iv_inode;
-		break;
-	case SILOFS_LTYPE_XANODE:
-		ret = &sb->sb_rootivs.sb_iv_xanode;
-		break;
-	case SILOFS_LTYPE_DTNODE:
-		ret = &sb->sb_rootivs.sb_iv_dtnode;
-		break;
-	case SILOFS_LTYPE_FTNODE:
-		ret = &sb->sb_rootivs.sb_iv_ftnode;
-		break;
-	case SILOFS_LTYPE_SYMVAL:
-		ret = &sb->sb_rootivs.sb_iv_symval;
-		break;
-	case SILOFS_LTYPE_DATA1K:
-		ret = &sb->sb_rootivs.sb_iv_data1k;
-		break;
-	case SILOFS_LTYPE_DATA4K:
-		ret = &sb->sb_rootivs.sb_iv_data4k;
-		break;
-	case SILOFS_LTYPE_DATABK:
-		ret = &sb->sb_rootivs.sb_iv_databk;
-		break;
-	case SILOFS_LTYPE_NONE:
-	case SILOFS_LTYPE_BOOTREC:
-	case SILOFS_LTYPE_SUPER:
-	case SILOFS_LTYPE_SPNODE:
-	case SILOFS_LTYPE_SPLEAF:
-	case SILOFS_LTYPE_LAST:
-	default:
-		ret = NULL;
-		break;
-	}
-	return ret;
-}
-
-static struct silofs_iv *
-sb_rootiv_by2(struct silofs_super_block *sb, enum silofs_ltype ltype)
-{
-	const struct silofs_iv *ret = sb_rootiv_by(sb, ltype);
-
-	return unconst(ret);
-}
-
-static void sb_rootiv_of(const struct silofs_super_block *sb,
-                         enum silofs_ltype ltype, struct silofs_iv *out_iv)
-{
-	const struct silofs_iv *iv = sb_rootiv_by(sb, ltype);
-
-	if (likely(iv != NULL)) {
-		silofs_iv_assign(out_iv, iv);
-	} else {
-		silofs_iv_reset(out_iv);
-	}
-}
-
-static void
-sb_set_rootiv_of(struct silofs_super_block *sb, enum silofs_ltype ltype,
-                 const struct silofs_iv *iv_src)
-{
-	struct silofs_iv *iv_dst = sb_rootiv_by2(sb, ltype);
-
-	if (likely(iv_dst != NULL)) {
-		silofs_iv_assign(iv_dst, iv_src);
-	}
-}
-
-static void
-sb_gen_rootiv_of(struct silofs_super_block *sb, enum silofs_ltype ltype)
-{
-	struct silofs_iv iv;
-
-	silofs_gen_random_ivs(&iv, 1);
-	sb_set_rootiv_of(sb, ltype, &iv);
-}
-
-static void sb_generate_rootivs(struct silofs_super_block *sb)
-{
-	enum silofs_ltype ltype;
-
-	for (ltype = SILOFS_LTYPE_NONE; ltype < SILOFS_LTYPE_LAST; ++ltype) {
-		sb_gen_rootiv_of(sb, ltype);
-	}
-}
-
-static void sb_clone_rootivs(struct silofs_super_block *sb,
-                             const struct silofs_super_block *sb_other)
-{
-	struct silofs_iv iv;
-	enum silofs_ltype ltype = SILOFS_LTYPE_NONE;
-
-	while (++ltype < SILOFS_LTYPE_LAST) {
-		if (ltype_isvnode(ltype)) {
-			sb_rootiv_of(sb_other, ltype, &iv);
-			sb_set_rootiv_of(sb, ltype, &iv);
-		}
-	}
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 static void
 sb_init(struct silofs_super_block *sb, const struct silofs_volumeid *vid)
 {
@@ -502,7 +394,6 @@ sb_init(struct silofs_super_block *sb, const struct silofs_volumeid *vid)
 	sb_set_lv_ids(sb, vid);
 	sb->sb_endianness = SILOFS_ENDIANNESS_LE;
 	sb_reset_sproots(sb);
-	sb_generate_rootivs(sb);
 	sb_reset_main_lsids(sb);
 }
 
@@ -1007,7 +898,6 @@ static void sbi_make_fork_of(struct silofs_sb_info *sbi,
 
 	sb_clone_raw(sb, sb_other);
 	sb_clone_sproots(sb, sb_other);
-	sb_clone_rootivs(sb, sb_other);
 	sb_clone_tms(sb, sb_other);
 	sb_reset_main_lsids(sb);
 	sbi_dirtify(sbi);

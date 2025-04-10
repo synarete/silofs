@@ -83,6 +83,8 @@ void silofs_lsid32b_xtoh(const struct silofs_lsid32b *lsid32,
 
 const struct silofs_laddr *silofs_laddr_none(void);
 
+void silofs_laddr_setpos(struct silofs_laddr *laddr, loff_t off);
+
 void silofs_laddr_setup(struct silofs_laddr      *laddr,
                         const struct silofs_lsid *lsid, loff_t off);
 
@@ -132,11 +134,12 @@ void silofs_laddr_to_base64(const struct silofs_laddr *laddr,
 
 void silofs_llink_setup(struct silofs_llink       *llink,
                         const struct silofs_laddr *laddr,
-                        const struct silofs_iv    *iv);
+                        const struct silofs_key   *key);
 
 void silofs_llink_setup2(struct silofs_llink       *llink,
                          const struct silofs_laddr *laddr,
-                         const struct silofs_ivkey *ivkey);
+                         const struct silofs_key   *key,
+                         const struct silofs_iv    *iv);
 
 void silofs_llink_assign(struct silofs_llink       *llink,
                          const struct silofs_llink *other);

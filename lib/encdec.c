@@ -92,7 +92,7 @@ void silofs_llink_of_uni(const struct silofs_bootrec *bootrec,
 	const struct silofs_laddr *laddr = silofs_uni_laddr(uni);
 	const struct silofs_ivkey *ivkey = &bootrec->main_ivkey;
 
-	silofs_llink_setup2(out_llink, laddr, ivkey);
+	silofs_llink_setup2(out_llink, laddr, &ivkey->key, &ivkey->iv);
 }
 
 void silofs_llink_of_vni(const struct silofs_bootrec *bootrec,

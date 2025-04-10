@@ -739,8 +739,7 @@ struct silofs_lbk_state {
 } silofs_attr_aligned8;
 
 struct silofs_lbk_ref {
-	struct silofs_iv        lbr_iv;
-	uint8_t                 lbr_reserved2[16];
+	struct silofs_key       lbr_key;
 	struct silofs_laddr48b  lbr_subref;
 	struct silofs_lbk_state lbr_allocated;
 	struct silofs_lbk_state lbr_unwritten;

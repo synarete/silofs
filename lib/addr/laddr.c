@@ -238,15 +238,22 @@ const struct silofs_laddr *silofs_laddr_none(void)
 	return &s_laddr_none;
 }
 
-void silofs_laddr_setup(struct silofs_laddr *laddr,
-                        const struct silofs_lsid *lsid, loff_t off)
+void silofs_laddr_setpos(struct silofs_laddr *laddr, loff_t off)
 {
-	silofs_lsid_assign(&laddr->lsid, lsid);
+	const struct silofs_lsid *lsid = &laddr->lsid;
+
 	if (lsid->lsize && !off_isnull(off)) {
 		laddr->pos = silofs_lsid_pos(lsid, off);
 	} else {
 		laddr->pos = SILOFS_OFF_NULL;
 	}
+}
+
+void silofs_laddr_setup(struct silofs_laddr *laddr,
+                        const struct silofs_lsid *lsid, loff_t off)
+{
+	silofs_lsid_assign(&laddr->lsid, lsid);
+	silofs_laddr_setpos(laddr, off);
 }
 
 void silofs_laddr_setup_lbk(struct silofs_laddr *laddr,
@@ -542,25 +549,28 @@ void silofs_laddr_to_base64(const struct silofs_laddr *laddr,
 
 void silofs_llink_setup(struct silofs_llink *llink,
                         const struct silofs_laddr *laddr,
-                        const struct silofs_iv *iv)
+                        const struct silofs_key *key)
 {
-	silofs_laddr_assign(&llink->laddr, laddr);
-	silofs_iv_assign(&llink->ivkey.iv, iv);
-	silofs_key_reset(&llink->ivkey.key);
+	struct silofs_iv iv;
+
+	silofs_laddr_as_iv(laddr, &iv);
+	silofs_llink_setup2(llink, laddr, key, &iv);
 }
 
 void silofs_llink_setup2(struct silofs_llink *llink,
                          const struct silofs_laddr *laddr,
-                         const struct silofs_ivkey *ivkey)
+                         const struct silofs_key *key,
+                         const struct silofs_iv *iv)
 {
 	silofs_laddr_assign(&llink->laddr, laddr);
-	silofs_ivkey_assign(&llink->ivkey, ivkey);
+	silofs_ivkey_setup(&llink->ivkey, key, iv);
 }
 
 void silofs_llink_assign(struct silofs_llink *llink,
                          const struct silofs_llink *other)
 {
-	silofs_llink_setup2(llink, &other->laddr, &other->ivkey);
+	silofs_laddr_assign(&llink->laddr, &other->laddr);
+	silofs_ivkey_assign(&llink->ivkey, &other->ivkey);
 }
 
 void silofs_llink_reset(struct silofs_llink *llink)

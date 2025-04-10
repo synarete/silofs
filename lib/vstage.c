@@ -718,9 +718,7 @@ static int vstgc_resolve_spleaf_child(const struct silofs_vstage_ctx *vstg_ctx,
                                       const struct silofs_spleaf_info *sli,
                                       struct silofs_llink *out_llink)
 {
-	const loff_t lbk_voff = vstgc_lbk_voff(vstg_ctx);
-
-	return silofs_sli_resolve_child(sli, lbk_voff, out_llink);
+	return silofs_sli_resolve_child(sli, vstg_ctx->voff, out_llink);
 }
 
 static int vstgc_do_stage_spnode_at(const struct silofs_vstage_ctx *vstg_ctx,
@@ -1860,20 +1858,7 @@ static int vstgc_stage_spmaps_of(struct silofs_vstage_ctx *vstg_ctx)
 static int vstgc_resolve_llink_of(const struct silofs_vstage_ctx *vstg_ctx,
                                   struct silofs_llink *out_llink)
 {
-	struct silofs_llink llink_lbk;
-	struct silofs_laddr laddr;
-	const struct silofs_vaddr *vaddr = vstg_ctx->vaddr;
-	int err;
-
-	err = vstgc_resolve_spleaf_child(vstg_ctx, vstg_ctx->sli, &llink_lbk);
-	if (err) {
-		return err;
-	}
-	silofs_assert_eq(llink_lbk.laddr.lsid.ltype, vaddr->ltype);
-
-	silofs_laddr_setup(&laddr, &llink_lbk.laddr.lsid, vaddr->off);
-	silofs_llink_setup(out_llink, &laddr, &llink_lbk.ivkey.iv);
-	return 0;
+	return vstgc_resolve_spleaf_child(vstg_ctx, vstg_ctx->sli, out_llink);
 }
 
 static int vstgc_stage_spleaf_for_resolve(struct silofs_vstage_ctx *vstg_ctx)

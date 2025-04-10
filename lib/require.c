@@ -251,7 +251,6 @@ static void require_persistent_types_alignment2(void)
 	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_parent, 128);
 	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_self, 192);
 	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_subrefs, 2048);
-	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_rivs, 14336);
 	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_hdr, 0);
 	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_main_lsid, 32);
 	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_parent, 64);

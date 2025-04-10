@@ -731,7 +731,7 @@ struct silofs_spmap_node {
 	uint8_t                 sn_reserved3[768];
 	uint8_t                 sn_reserved4[1024];
 	struct silofs_spmap_ref sn_subrefs[SILOFS_SPMAP_NCHILDS];
-	struct silofs_iv        sn_rivs[SILOFS_SPMAP_NCHILDS];
+	uint8_t                 sn_reserved5[2048];
 } silofs_attr_aligned64;
 
 struct silofs_lbk_state {

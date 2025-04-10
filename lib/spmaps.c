@@ -172,7 +172,6 @@ static size_t spnode_slot_of(const struct silofs_spmap_node *spn, loff_t voff)
 	ssize_t roff;
 
 	STATICASSERT_EQ(ARRAY_SIZE(spn->sn_subrefs), SILOFS_SPMAP_NCHILDS);
-	STATICASSERT_EQ(ARRAY_SIZE(spn->sn_rivs), SILOFS_SPMAP_NCHILDS);
 
 	spnode_vrange(spn, &vrange);
 	len = vrange.len;
@@ -248,39 +247,6 @@ spnode_has_child_at(const struct silofs_spmap_node *spn, loff_t voff)
 	const struct silofs_spmap_ref *spr = spnode_subref_of(spn, voff);
 
 	return spr_isactive(spr);
-}
-
-static void spnode_gen_rivs(struct silofs_spmap_node *spn)
-{
-	silofs_gen_random_ivs(spn->sn_rivs, ARRAY_SIZE(spn->sn_rivs));
-}
-
-static struct silofs_iv *
-spnode_riv_at(const struct silofs_spmap_node *spn, size_t slot)
-{
-	const struct silofs_iv *riv = &spn->sn_rivs[slot];
-
-	silofs_assert_lt(slot, ARRAY_SIZE(spn->sn_rivs));
-
-	return unconst(riv);
-}
-
-static void spnode_set_riv_at(struct silofs_spmap_node *spn, size_t slot,
-                              const struct silofs_iv *iv)
-{
-	struct silofs_iv *riv = &spn->sn_rivs[slot];
-
-	silofs_iv_assign(riv, iv);
-}
-
-static void spnode_clone_rivs(struct silofs_spmap_node *spn,
-                              const struct silofs_spmap_node *spn_other)
-{
-	const size_t nslots_max = ARRAY_SIZE(spn->sn_rivs);
-
-	for (size_t slot = 0; slot < nslots_max; ++slot) {
-		spnode_set_riv_at(spn, slot, spnode_riv_at(spn_other, slot));
-	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1523,7 +1489,6 @@ void silofs_sni_setup_spawned(struct silofs_spnode_info *sni,
 	spnode_init(sni->sn, &vrange);
 	spnode_set_parent(sni->sn, parent);
 	spnode_set_self(sni->sn, silofs_sni_uaddr(sni));
-	spnode_gen_rivs(sni->sn);
 	sni_dirtify(sni);
 }
 
@@ -1676,7 +1641,6 @@ void silofs_sni_clone_from(struct silofs_spnode_info *sni,
                            const struct silofs_spnode_info *sni_other)
 {
 	spnode_clone_subrefs(sni->sn, sni_other->sn);
-	spnode_clone_rivs(sni->sn, sni_other->sn);
 	sni->sn_nactive_subs = sni_other->sn_nactive_subs;
 	sni_dirtify(sni);
 }

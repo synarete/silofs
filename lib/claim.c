@@ -595,11 +595,11 @@ static int spac_rescan_free_vspace(struct silofs_spalloc_ctx *spa_ctx,
 	int err;
 
 	while (voff < vend) {
+		spac_set_hint(spa_ctx, voff);
 		err = spac_stage_spmaps_of(spa_ctx, voff);
 		if (err) {
-			return err;
+			return (err == -SILOFS_ENOENT) ? 0 : err;
 		}
-		spac_set_hint(spa_ctx, voff);
 
 		err = spac_find_free_vspace_at(spa_ctx, voff, out_vaddr);
 		if (!err) {

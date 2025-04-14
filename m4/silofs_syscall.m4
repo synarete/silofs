@@ -1,10 +1,13 @@
 AC_DEFUN([AX_SILOFS_NEED_SYSDEFS],
 [
   AX_SILOFS_NEED_SYSDEF(SYS_getdents64)
+  AX_SILOFS_NEED_SYSDEF(SYS_landlock_add_rule)
+  AX_SILOFS_NEED_SYSDEF(SYS_landlock_create_ruleset)
+  AX_SILOFS_NEED_SYSDEF(SYS_landlock_restrict_self)
 ])
 
 AC_DEFUN([AX_SILOFS_NEED_SYSDEF],
-[AC_CACHE_CHECK([for $1 syscall def], [ax_cv_sysdef_$1_defined],
+[AC_CACHE_CHECK([for $1], [ax_cv_sysdef_$1_defined],
 [AC_RUN_IFELSE(
   [AC_LANG_PROGRAM(
     [[

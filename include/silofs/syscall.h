@@ -19,6 +19,7 @@
 
 #include <unistd.h>
 #include <stdlib.h>
+#include <stdint.h>
 
 struct stat;
 struct statx;
@@ -392,5 +393,18 @@ long silofs_sc_iov_max(void);
 
 /* iovec */
 size_t silofs_iov_length(const struct iovec *iov, size_t cnt);
+
+/* landlock */
+struct landlock_ruleset_attr;
+
+int silofs_sys_landlock_abi_version(int *out_abi_version);
+
+int silofs_sys_landlock_add_rule(int ruleset_fd, int rule_type,
+                                 const void *rule_attr, uint32_t flags);
+
+int silofs_sys_landlock_create_ruleset(const struct landlock_ruleset_attr *atr,
+                                       size_t size, int *out_fd);
+
+int silofs_sys_landlock_restrict_self(int ruleset_fd, uint32_t flags);
 
 #endif /* SILOFS_SYSCALL_H_ */

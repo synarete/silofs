@@ -15,6 +15,9 @@
  * GNU General Public License for more details.
  */
 #include "configs.h"
+#include <linux/fs.h>
+#include <linux/fiemap.h>
+#include <linux/landlock.h>
 #include <sys/types.h>
 #include <sys/file.h>
 #include <sys/uio.h>
@@ -29,8 +32,6 @@
 #include <sys/resource.h>
 #include <sys/prctl.h>
 #include <sys/socket.h>
-#include <linux/fs.h>
-#include <linux/fiemap.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <signal.h>
@@ -66,6 +67,11 @@ static int ok_or_errno(int err)
 	return err ? errno_value() : 0;
 }
 
+static int ok_or_errnol(long err)
+{
+	return err ? errno_value() : 0;
+}
+
 static int val_or_errno(int val)
 {
 	return (val < 0) ? errno_value() : val;
@@ -85,40 +91,61 @@ static int val_or_errno2(int val, int *out_val)
 	return err;
 }
 
-static int fd_or_errno(int err, int *fd)
+static int fd_or_errno(int err, int *out_fd)
+{
+	int ret;
+
+	if (err >= 0) {
+		*out_fd = err;
+		ret = 0;
+	} else {
+		ret = errno_value();
+		*out_fd = -1;
+	}
+	return ret;
+}
+
+static int val_or_errnol(long err, int *out_val)
+{
+	int ret;
+
+	if (err >= 0) {
+		*out_val = (int)err;
+		ret = 0;
+	} else {
+		ret = errno_value();
+		*out_val = -1;
+	}
+	return ret;
+}
+
+static int fd_or_errnol(long err, int *out_fd)
+{
+	return val_or_errnol(err, out_fd);
+}
+
+static int nfds_or_errno(int err, int *out_nfds)
 {
 	if (err >= 0) {
-		*fd = err;
+		*out_nfds = err;
 		err = 0;
 	} else {
 		err = errno_value();
-		*fd = -1;
+		*out_nfds = -1;
 	}
 	return err;
 }
 
-static int nfds_or_errno(int err, int *nfds)
-{
-	if (err >= 0) {
-		*nfds = err;
-		err = 0;
-	} else {
-		err = errno_value();
-		*nfds = -1;
-	}
-	return err;
-}
-
-static int size_or_errno(ssize_t res, size_t *cnt)
+static int size_or_errno(ssize_t res, size_t *out_cnt)
 {
 	int err;
 
 	if (res >= 0) {
 		err = 0;
-		*cnt = (size_t)res;
+		*out_cnt = (size_t)res;
 	} else {
 		err = errno_value();
-		*cnt = 0;
+		*out_cnt = 0;
 	}
 	return err;
 }
@@ -927,4 +954,34 @@ int silofs_sys_setresgid(gid_t rgid, gid_t egid, gid_t sgid)
 int silofs_sys_sched_yield(void)
 {
 	return ok_or_errno(sched_yield());
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_sys_landlock_abi_version(int *out_abi_version)
+{
+	return val_or_errnol(syscall(SYS_landlock_create_ruleset, NULL, 0,
+	                             LANDLOCK_CREATE_RULESET_VERSION),
+	                     out_abi_version);
+}
+
+int silofs_sys_landlock_add_rule(int ruleset_fd, int rule_type,
+                                 const void *rule_attr, uint32_t flags)
+{
+	return ok_or_errnol(syscall(SYS_landlock_add_rule, ruleset_fd,
+	                            (enum landlock_rule_type)rule_type,
+	                            rule_attr, flags));
+}
+
+int silofs_sys_landlock_create_ruleset(const struct landlock_ruleset_attr *atr,
+                                       size_t size, int *out_fd)
+{
+	return fd_or_errnol(syscall(SYS_landlock_create_ruleset, atr, size, 0),
+	                    out_fd);
+}
+
+int silofs_sys_landlock_restrict_self(int ruleset_fd, uint32_t flags)
+{
+	return ok_or_errnol(syscall(SYS_landlock_restrict_self, ruleset_fd,
+	                            flags));
 }

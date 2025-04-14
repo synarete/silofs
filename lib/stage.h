@@ -77,7 +77,7 @@ int silofs_claim_ispace(struct silofs_task  *task,
 int silofs_addref_vspace(struct silofs_task        *task,
                          const struct silofs_vaddr *vaddr);
 
-int silofs_rescan_vspace_of(struct silofs_task *task, enum silofs_ltype ltype);
+int silofs_reload_vspace(struct silofs_task *task);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 

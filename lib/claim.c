@@ -595,11 +595,11 @@ static int spac_rescan_free_vspace(struct silofs_spalloc_ctx *spa_ctx,
 	int err;
 
 	while (voff < vend) {
-		spac_set_hint(spa_ctx, voff);
 		err = spac_stage_spmaps_of(spa_ctx, voff);
 		if (err) {
-			return (err == -SILOFS_ENOENT) ? 0 : err;
+			return err;
 		}
+		spac_set_hint(spa_ctx, voff);
 
 		err = spac_find_free_vspace_at(spa_ctx, voff, out_vaddr);
 		if (!err) {
@@ -610,7 +610,7 @@ static int spac_rescan_free_vspace(struct silofs_spalloc_ctx *spa_ctx,
 	return -SILOFS_ENOSPC;
 }
 
-int silofs_rescan_vspace_of(struct silofs_task *task, enum silofs_ltype ltype)
+static int rescan_vspace_of(struct silofs_task *task, enum silofs_ltype ltype)
 {
 	struct silofs_spalloc_ctx spa_ctx;
 	struct silofs_vaddr vaddr;
@@ -622,5 +622,24 @@ int silofs_rescan_vspace_of(struct silofs_task *task, enum silofs_ltype ltype)
 		return err;
 	}
 	spac_try_recache_vspace(&spa_ctx, &vaddr);
+	return 0;
+}
+
+int silofs_reload_vspace(struct silofs_task *task)
+{
+	enum silofs_ltype ltype = SILOFS_LTYPE_NONE;
+	int err;
+
+	while (++ltype < SILOFS_LTYPE_LAST) {
+		if (!ltype_isvnode(ltype)) {
+			continue;
+		}
+		err = rescan_vspace_of(task, ltype);
+		if (err && (err != -SILOFS_ENOENT)) {
+			log_err("failed to reload vspace: ltype=%d err=%d",
+			        ltype, err);
+			return err;
+		}
+	}
 	return 0;
 }

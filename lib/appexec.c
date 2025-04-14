@@ -53,21 +53,7 @@ static int reload_super(struct silofs_task *task)
 
 static int reload_vspace(struct silofs_task *task)
 {
-	enum silofs_ltype ltype = SILOFS_LTYPE_NONE;
-	int err;
-
-	while (++ltype < SILOFS_LTYPE_LAST) {
-		if (!ltype_isvnode(ltype)) {
-			continue;
-		}
-		err = silofs_rescan_vspace_of(task, ltype);
-		if (err) {
-			log_err("failed to reload vspace: ltype=%d err=%d",
-			        ltype, err);
-			return err;
-		}
-	}
-	return 0;
+	return silofs_reload_vspace(task);
 }
 
 static int reload_rootd(struct silofs_task *task)

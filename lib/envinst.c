@@ -631,7 +631,6 @@ envi_init(struct silofs_env_inst *envi, const struct silofs_args *args)
 	if (err) {
 		goto out_err;
 	}
-
 	err = envi_init_submitq(envi);
 	if (err) {
 		goto out_err;

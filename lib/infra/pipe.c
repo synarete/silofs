@@ -418,35 +418,35 @@ static int pipe_kcopy_by_splice(struct silofs_pipe *pipe, int fd_in,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void silofs_nilfd_close(struct silofs_nilfd *nfd)
+static void nilfd_close(struct silofs_nilfd *nfd)
 {
 	if (!(nfd->fd < 0)) {
 		silofs_sys_closefd(&nfd->fd);
 	}
 }
 
-static void silofs_nilfd_init(struct silofs_nilfd *nfd)
+static void nilfd_init(struct silofs_nilfd *nfd)
 {
 	nfd->fd = -1;
 }
 
-static void silofs_nilfd_fini(struct silofs_nilfd *nfd)
+static void nilfd_fini(struct silofs_nilfd *nfd)
 {
-	silofs_nilfd_close(nfd);
+	nilfd_close(nfd);
 	nfd->fd = -1;
 }
 
-static int silofs_nilfd_open(struct silofs_nilfd *nfd)
+static int nilfd_open(struct silofs_nilfd *nfd)
 {
 	const char *path = "/dev/null";
-	const int o_flags = O_WRONLY | O_CREAT | O_TRUNC;
+	const int o_flags = O_WRONLY;
 	int err = 0;
 
 	if (nfd->fd < 0) {
 		err = silofs_sys_open(path, o_flags, 0666, &nfd->fd);
 		if (err) {
-			silofs_log_warn("failed to open: path=%s"
-			                "o_flags=%o err=%d",
+			silofs_log_warn("failed to open: "
+			                "path=%s o_flags=%o err=%d",
 			                path, o_flags, err);
 		}
 	}
@@ -458,12 +458,12 @@ static int silofs_nilfd_open(struct silofs_nilfd *nfd)
 void silofs_piper_init(struct silofs_piper *piper)
 {
 	silofs_pipe_init(&piper->pipe);
-	silofs_nilfd_init(&piper->nfd);
+	nilfd_init(&piper->nfd);
 }
 
 void silofs_piper_fini(struct silofs_piper *piper)
 {
-	silofs_nilfd_fini(&piper->nfd);
+	nilfd_fini(&piper->nfd);
 	silofs_pipe_fini(&piper->pipe);
 }
 
@@ -471,13 +471,13 @@ int silofs_piper_open(struct silofs_piper *piper)
 {
 	int err;
 
-	err = silofs_nilfd_open(&piper->nfd);
+	err = nilfd_open(&piper->nfd);
 	if (err) {
 		return err;
 	}
 	err = silofs_pipe_open(&piper->pipe);
 	if (err) {
-		silofs_nilfd_close(&piper->nfd);
+		nilfd_close(&piper->nfd);
 		return err;
 	}
 	return 0;
@@ -485,7 +485,7 @@ int silofs_piper_open(struct silofs_piper *piper)
 
 void silofs_piper_close(struct silofs_piper *piper)
 {
-	silofs_nilfd_close(&piper->nfd);
+	nilfd_close(&piper->nfd);
 	silofs_pipe_close(&piper->pipe);
 }
 

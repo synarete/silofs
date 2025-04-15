@@ -973,6 +973,14 @@ int silofs_sys_landlock_add_rule(int ruleset_fd, int rule_type,
 	                            rule_attr, flags));
 }
 
+int silofs_sys_landlock_add_rule_beneath(
+	int ruleset_fd, const struct landlock_path_beneath_attr *path_beneath)
+{
+	return silofs_sys_landlock_add_rule(ruleset_fd,
+	                                    LANDLOCK_RULE_PATH_BENEATH,
+	                                    path_beneath, 0);
+}
+
 int silofs_sys_landlock_create_ruleset(const struct landlock_ruleset_attr *atr,
                                        size_t size, int *out_fd)
 {

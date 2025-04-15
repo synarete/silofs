@@ -396,11 +396,15 @@ size_t silofs_iov_length(const struct iovec *iov, size_t cnt);
 
 /* landlock */
 struct landlock_ruleset_attr;
+struct landlock_path_beneath_attr;
 
 int silofs_sys_landlock_abi_version(int *out_abi_version);
 
 int silofs_sys_landlock_add_rule(int ruleset_fd, int rule_type,
                                  const void *rule_attr, uint32_t flags);
+
+int silofs_sys_landlock_add_rule_beneath(
+	int ruleset_fd, const struct landlock_path_beneath_attr *path_beneath);
 
 int silofs_sys_landlock_create_ruleset(const struct landlock_ruleset_attr *atr,
                                        size_t size, int *out_fd);

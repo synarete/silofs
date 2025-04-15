@@ -379,6 +379,11 @@ static void cmd_mount_prepare_repo(struct cmd_mount_ctx *ctx)
 	                         ctx->in_args.fsname);
 }
 
+static void cmd_mount_restrict_process(struct cmd_mount_ctx *ctx)
+{
+	cmd_restrict_process(ctx->in_args.repodir_real, false);
+}
+
 static void cmd_mount_getpass(struct cmd_mount_ctx *ctx)
 {
 	if (ctx->in_args.password == NULL) {
@@ -687,6 +692,9 @@ void cmd_execute_mount(void)
 
 	/* Require minimal repository validity */
 	cmd_mount_prepare_repo(&ctx);
+
+	/* Restrict process access */
+	cmd_mount_restrict_process(&ctx);
 
 	/* Require password */
 	cmd_mount_getpass(&ctx);

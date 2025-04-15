@@ -151,6 +151,11 @@ static void cmd_mkfs_prepare(struct cmd_mkfs_ctx *ctx)
 	cmd_check_fsname(ctx->in_args.fsname);
 }
 
+static void cmd_mkfs_restrict_process(struct cmd_mkfs_ctx *ctx)
+{
+	cmd_restrict_process(ctx->in_args.repodir_real, false);
+}
+
 static void cmd_mkfs_require_owner(struct cmd_mkfs_ctx *ctx)
 {
 	if (ctx->in_args.username == NULL) {
@@ -233,6 +238,9 @@ void cmd_execute_mkfs(void)
 
 	/* Verify user's arguments */
 	cmd_mkfs_prepare(&ctx);
+
+	/* Restrict process access */
+	cmd_mkfs_restrict_process(&ctx);
 
 	/* Have proper file-system owner username */
 	cmd_mkfs_require_owner(&ctx);

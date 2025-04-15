@@ -151,6 +151,11 @@ static void cmd_view_prepare(struct cmd_view_ctx *ctx)
 	                         ctx->in_args.fsname);
 }
 
+static void cmd_view_restrict_process(struct cmd_view_ctx *ctx)
+{
+	cmd_restrict_process(ctx->in_args.repodir_real, false);
+}
+
 static void cmd_view_getpass(struct cmd_view_ctx *ctx)
 {
 	if (ctx->in_args.password == NULL) {
@@ -231,6 +236,9 @@ void cmd_execute_view(void)
 
 	/* Verify user's arguments */
 	cmd_view_prepare(&ctx);
+
+	/* Restrict process access */
+	cmd_view_restrict_process(&ctx);
 
 	/* Require password */
 	cmd_view_getpass(&ctx);

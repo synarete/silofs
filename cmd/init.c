@@ -132,6 +132,11 @@ static void cmd_init_prepare(struct cmd_init_ctx *ctx)
 	cmd_check_repopath(ctx->in_args.repodir_real);
 }
 
+static void cmd_init_restrict_process(struct cmd_init_ctx *ctx)
+{
+	cmd_restrict_process(ctx->in_args.repodir_real, true);
+}
+
 static void cmd_init_resolve_owner(struct cmd_init_ctx *ctx)
 {
 	if (ctx->in_args.username == NULL) {
@@ -199,6 +204,9 @@ void cmd_execute_init(void)
 
 	/* Verify user's arguments */
 	cmd_init_prepare(&ctx);
+
+	/* Restrict process access */
+	cmd_init_restrict_process(&ctx);
 
 	/* Have proper file-system owner username */
 	cmd_init_resolve_owner(&ctx);

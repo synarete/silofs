@@ -201,6 +201,11 @@ static void cmd_fork_prepare(struct cmd_fork_ctx *ctx)
 	}
 }
 
+static void cmd_fork_restrict_process(struct cmd_fork_ctx *ctx)
+{
+	cmd_restrict_process(ctx->in_args.repodir_real, false);
+}
+
 static void cmd_fork_getpass(struct cmd_fork_ctx *ctx)
 {
 	if (ctx->in_args.password == NULL) {
@@ -406,6 +411,9 @@ void cmd_execute_fork(void)
 
 	/* Verify user's arguments */
 	cmd_fork_prepare(&ctx);
+
+	/* Restrict process access */
+	cmd_fork_restrict_process(&ctx);
 
 	/* Require password (off-line mode) */
 	cmd_fork_getpass(&ctx);

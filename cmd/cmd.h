@@ -370,6 +370,9 @@ void cmd_resolve_uidgid(const char *name, uid_t *out_uid, gid_t *out_gid);
 void cmd_require_uidgid(const struct silofs_ugids *ids, const char *name,
                         uid_t *out_uid, gid_t *out_gid);
 
+/* security restrictions (landlock) */
+void cmd_restrict_process(const char *path, bool allow_mkdir);
+
 /* misc */
 void cmd_trace_versions(void);
 

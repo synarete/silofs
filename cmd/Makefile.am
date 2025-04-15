@@ -36,6 +36,7 @@ silofs_SOURCES += mount.c
 silofs_SOURCES += optargs.c
 silofs_SOURCES += prune.c
 silofs_SOURCES += restore.c
+silofs_SOURCES += restrict.c
 silofs_SOURCES += show.c
 silofs_SOURCES += signals.c
 silofs_SOURCES += sync.c

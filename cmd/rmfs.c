@@ -98,6 +98,11 @@ static void cmd_rmfs_prepare(struct cmd_rmfs_ctx *ctx)
 	                         ctx->in_args.fsname);
 }
 
+static void cmd_rmfs_restrict_process(struct cmd_rmfs_ctx *ctx)
+{
+	cmd_restrict_process(ctx->in_args.repodir_real, false);
+}
+
 static void cmd_rmfs_getpass(struct cmd_rmfs_ctx *ctx)
 {
 	if (ctx->in_args.password == NULL) {
@@ -293,6 +298,9 @@ void cmd_execute_rmfs(void)
 
 	/* Ensure not and active mount */
 	cmd_rmfs_check_nomnt(&ctx);
+
+	/* Restrict process access */
+	cmd_rmfs_restrict_process(&ctx);
 
 	/* Require password */
 	cmd_rmfs_getpass(&ctx);

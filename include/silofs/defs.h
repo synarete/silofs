@@ -759,6 +759,18 @@ struct silofs_spmap_leaf {
 	struct silofs_lbk_ref   sl_lbrs[SILOFS_SPMAP_NCHILDS];
 } silofs_attr_aligned64;
 
+struct silofs_lvsmap {
+	struct silofs_header    lsm_hdr;
+	uint8_t                 lsm_reserved1[16];
+	struct silofs_lsid32b   lsm_main_lsid;
+	struct silofs_uaddr64b  lsm_parent;
+	struct silofs_uaddr64b  lsm_self;
+	struct silofs_vrange128 lsm_vrange;
+	uint8_t                 lsm_reserved2[816];
+	uint8_t                 lsm_reserved3[1024];
+	struct silofs_lbk_ref   lsm_lbrs[SILOFS_SPMAP_NCHILDS];
+} silofs_attr_aligned64;
+
 struct silofs_inode_times {
 	struct silofs_timespec btime;
 	struct silofs_timespec atime;

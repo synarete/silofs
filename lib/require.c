@@ -111,6 +111,7 @@ static void require_persistent_types_nk(void)
 	REQUIRE_SIZEOF_8K(struct silofs_super_block);
 	REQUIRE_SIZEOF_16K(struct silofs_spmap_node);
 	REQUIRE_SIZEOF_16K(struct silofs_spmap_leaf);
+	REQUIRE_SIZEOF_16K(struct silofs_lvsmap);
 	REQUIRE_SIZEOF_1K(struct silofs_inode);
 	REQUIRE_SIZEOF_4K(struct silofs_xattr_node);
 	REQUIRE_SIZEOF_8K(struct silofs_dtree_node);

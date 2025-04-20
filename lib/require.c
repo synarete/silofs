@@ -61,8 +61,6 @@
 
 #define REQUIRE_SIZEOF_8K(type) REQUIRE_SIZEOF_NK(type, 8)
 
-#define REQUIRE_SIZEOF_16K(type) REQUIRE_SIZEOF_NK(type, 16)
-
 #define REQUIRE_SIZEOF_64K(type) REQUIRE_SIZEOF_NK(type, 64)
 
 #define REQUIRE_MEMBER_SIZE(type, f, size) \
@@ -109,9 +107,9 @@ static void require_persistent_types_nk(void)
 {
 	REQUIRE_SIZEOF_4K(struct silofs_btree_node);
 	REQUIRE_SIZEOF_8K(struct silofs_super_block);
-	REQUIRE_SIZEOF_16K(struct silofs_spmap_node);
-	REQUIRE_SIZEOF_16K(struct silofs_spmap_leaf);
-	REQUIRE_SIZEOF_16K(struct silofs_lvsmap);
+	REQUIRE_SIZEOF_8K(struct silofs_spmap_node);
+	REQUIRE_SIZEOF_8K(struct silofs_spmap_leaf);
+	REQUIRE_SIZEOF_8K(struct silofs_lvsmap);
 	REQUIRE_SIZEOF_1K(struct silofs_inode);
 	REQUIRE_SIZEOF_4K(struct silofs_xattr_node);
 	REQUIRE_SIZEOF_8K(struct silofs_dtree_node);
@@ -257,7 +255,7 @@ static void require_persistent_types_alignment2(void)
 	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_parent, 64);
 	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_self, 128);
 	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_vrange, 192);
-	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_lbrs, 2048);
+	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_lbrs, 1024);
 }
 
 static void require_persistent_types_alignment3(void)
@@ -329,7 +327,7 @@ static void require_defs_consistency(void)
 	REQUIRE_GT(SILOFS_DIR_ENTRIES_MAX, SILOFS_LINK_MAX);
 	REQUIRE_LT(SILOFS_XATTR_VALUE_MAX, SILOFS_XATTR_NODE_SIZE);
 	REQUIRE_EQ(SILOFS_FILE_SIZE_MAX, 64 * SILOFS_PETA - 1);
-	REQUIRE_EQ(SILOFS_LSEG_SIZE_MAX, 8 * SILOFS_MEGA);
+	REQUIRE_EQ(SILOFS_LSEG_SIZE_MAX, 4 * SILOFS_MEGA);
 	REQUIRE_EQ(SILOFS_LSEG_SIZE_MAX,
 	           SILOFS_LBK_SIZE * SILOFS_SPMAP_NCHILDS);
 	REQUIRE_EQ(SILOFS_CAPACITY_SIZE_MIN, 2 * SILOFS_GIGA);

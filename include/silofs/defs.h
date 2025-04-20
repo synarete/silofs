@@ -149,7 +149,7 @@
 /* number of 1K blocks in logical block */
 #define SILOFS_NKB_IN_LBK (SILOFS_LBK_SIZE / SILOFS_KB_SIZE)
 
-/* maximal size in bytes of single logical segment (8M) */
+/* maximal size in bytes of single logical segment (4M) */
 #define SILOFS_LSEG_SIZE_MAX (SILOFS_SPMAP_NCHILDS * SILOFS_LBK_SIZE)
 
 /* non-valid ("NIL") logical byte address */
@@ -174,13 +174,13 @@
 #define SILOFS_SB_SIZE (8192)
 
 /* bits-shift for space-mapping children fan-out */
-#define SILOFS_SPMAP_SHIFT (7)
+#define SILOFS_SPMAP_SHIFT (6)
 
 /* number of children per space-mapping node/leaf */
 #define SILOFS_SPMAP_NCHILDS (1L << SILOFS_SPMAP_SHIFT)
 
 /* on-disk size of space-node/leaf mapping */
-#define SILOFS_SPMAP_SIZE (16384)
+#define SILOFS_SPMAP_SIZE (8192)
 
 /* number of space-maps per logical-block */
 #define SILOFS_NSPMAP_IN_LBK (SILOFS_LBK_SIZE / SILOFS_SPMAP_SIZE)
@@ -731,7 +731,6 @@ struct silofs_spmap_node {
 	uint8_t                 sn_reserved3[768];
 	uint8_t                 sn_reserved4[1024];
 	struct silofs_spmap_ref sn_subrefs[SILOFS_SPMAP_NCHILDS];
-	uint8_t                 sn_reserved5[2048];
 } silofs_attr_aligned64;
 
 struct silofs_lbk_state {
@@ -755,7 +754,6 @@ struct silofs_spmap_leaf {
 	struct silofs_uaddr64b  sl_self;
 	struct silofs_vrange128 sl_vrange;
 	uint8_t                 sl_reserved2[816];
-	uint8_t                 sl_reserved3[1024];
 	struct silofs_lbk_ref   sl_lbrs[SILOFS_SPMAP_NCHILDS];
 } silofs_attr_aligned64;
 
@@ -767,7 +765,6 @@ struct silofs_lvsmap {
 	struct silofs_uaddr64b  lsm_self;
 	struct silofs_vrange128 lsm_vrange;
 	uint8_t                 lsm_reserved2[816];
-	uint8_t                 lsm_reserved3[1024];
 	struct silofs_lbk_ref   lsm_lbrs[SILOFS_SPMAP_NCHILDS];
 } silofs_attr_aligned64;
 

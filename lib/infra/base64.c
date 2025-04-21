@@ -28,7 +28,7 @@
 #define BASE64_DECODE_ADD        64
 #define BASE64_DECODE_ENT(ch, v) [(ch)] = ((short)(v) + BASE64_DECODE_ADD)
 
-static const char base64_encode_tbl[64] =
+static const char base64_encode_tbl[] =
 	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 static const int8_t base64_decode_tbl[] = {

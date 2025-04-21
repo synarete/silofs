@@ -38,14 +38,15 @@ struct silofs_spamap {
 
 /* map of previously-allocated now-free space-addresses by ltype */
 struct silofs_spamaps {
-	struct silofs_spamap spa_data1k;
-	struct silofs_spamap spa_data4k;
-	struct silofs_spamap spa_databk;
+	struct silofs_spamap spa_lsmap;
 	struct silofs_spamap spa_inode;
 	struct silofs_spamap spa_xanode;
 	struct silofs_spamap spa_dtnode;
-	struct silofs_spamap spa_ftnode;
 	struct silofs_spamap spa_symval;
+	struct silofs_spamap spa_ftnode;
+	struct silofs_spamap spa_data1k;
+	struct silofs_spamap spa_data4k;
+	struct silofs_spamap spa_databk;
 };
 
 /* key of in-memory uaddress-mapping */

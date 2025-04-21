@@ -474,14 +474,8 @@ spamaps_sub_map(struct silofs_spamaps *spam, enum silofs_ltype ltype)
 	struct silofs_spamap *ret;
 
 	switch (ltype) {
-	case SILOFS_LTYPE_DATA1K:
-		ret = &spam->spa_data1k;
-		break;
-	case SILOFS_LTYPE_DATA4K:
-		ret = &spam->spa_data4k;
-		break;
-	case SILOFS_LTYPE_DATABK:
-		ret = &spam->spa_databk;
+	case SILOFS_LTYPE_LSMAP:
+		ret = &spam->spa_lsmap;
 		break;
 	case SILOFS_LTYPE_INODE:
 		ret = &spam->spa_inode;
@@ -492,12 +486,22 @@ spamaps_sub_map(struct silofs_spamaps *spam, enum silofs_ltype ltype)
 	case SILOFS_LTYPE_DTNODE:
 		ret = &spam->spa_dtnode;
 		break;
-	case SILOFS_LTYPE_FTNODE:
-		ret = &spam->spa_ftnode;
-		break;
 	case SILOFS_LTYPE_SYMVAL:
 		ret = &spam->spa_symval;
 		break;
+	case SILOFS_LTYPE_FTNODE:
+		ret = &spam->spa_ftnode;
+		break;
+	case SILOFS_LTYPE_DATA1K:
+		ret = &spam->spa_data1k;
+		break;
+	case SILOFS_LTYPE_DATA4K:
+		ret = &spam->spa_data4k;
+		break;
+	case SILOFS_LTYPE_DATABK:
+		ret = &spam->spa_databk;
+		break;
+
 	case SILOFS_LTYPE_BOOTREC:
 	case SILOFS_LTYPE_SUPER:
 	case SILOFS_LTYPE_SPNODE:

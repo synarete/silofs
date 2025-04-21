@@ -385,14 +385,15 @@ enum silofs_ltype {
 	SILOFS_LTYPE_SUPER   = 2,
 	SILOFS_LTYPE_SPNODE  = 3,
 	SILOFS_LTYPE_SPLEAF  = 4,
-	SILOFS_LTYPE_INODE   = 5,
-	SILOFS_LTYPE_XANODE  = 6,
-	SILOFS_LTYPE_SYMVAL  = 7,
+	SILOFS_LTYPE_LSMAP   = 5,
+	SILOFS_LTYPE_INODE   = 6,
+	SILOFS_LTYPE_XANODE  = 7,
 	SILOFS_LTYPE_DTNODE  = 8,
-	SILOFS_LTYPE_FTNODE  = 9,
-	SILOFS_LTYPE_DATA1K  = 10,
-	SILOFS_LTYPE_DATA4K  = 11,
-	SILOFS_LTYPE_DATABK  = 12,
+	SILOFS_LTYPE_SYMVAL  = 9,
+	SILOFS_LTYPE_FTNODE  = 10,
+	SILOFS_LTYPE_DATA1K  = 11,
+	SILOFS_LTYPE_DATA4K  = 12,
+	SILOFS_LTYPE_DATABK  = 13,
 	SILOFS_LTYPE_LAST, /* keep last */
 };
 
@@ -629,7 +630,7 @@ struct silofs_header {
 } silofs_attr_aligned16;
 
 struct silofs_sb_sproots {
-	struct silofs_uaddr64b sb_sproot_reserved;
+	struct silofs_uaddr64b sb_sproot_lsmap;
 	struct silofs_uaddr64b sb_sproot_inode;
 	struct silofs_uaddr64b sb_sproot_xanode;
 	struct silofs_uaddr64b sb_sproot_dtnode;
@@ -642,6 +643,7 @@ struct silofs_sb_sproots {
 } silofs_attr_aligned64;
 
 struct silofs_sb_lsids {
+	struct silofs_lsid32b sb_silofs_lsid_lsmap;
 	struct silofs_lsid32b sb_silofs_lsid_inode;
 	struct silofs_lsid32b sb_silofs_lsid_xanode;
 	struct silofs_lsid32b sb_silofs_lsid_dtnode;
@@ -650,14 +652,14 @@ struct silofs_sb_lsids {
 	struct silofs_lsid32b sb_silofs_lsid_data1k;
 	struct silofs_lsid32b sb_silofs_lsid_data4k;
 	struct silofs_lsid32b sb_silofs_lsid_databk;
-	uint8_t               sb_reserved[768];
+	uint8_t               sb_reserved[736];
 } silofs_attr_aligned64;
 
 struct silofs_space_gauges256 {
 	uint64_t sg_nsuper;
 	uint64_t sg_nspnode;
 	uint64_t sg_nspleaf;
-	uint64_t sg_reserved;
+	uint64_t sg_nlsmap;
 	uint64_t sg_ninode;
 	uint64_t sg_nxanode;
 	uint64_t sg_ndtnode;
@@ -757,7 +759,7 @@ struct silofs_spmap_leaf {
 	struct silofs_lbk_ref   sl_lbrs[SILOFS_SPMAP_NCHILDS];
 } silofs_attr_aligned64;
 
-struct silofs_lvsmap {
+struct silofs_lsmap {
 	struct silofs_header    lsm_hdr;
 	uint8_t                 lsm_reserved1[16];
 	struct silofs_lsid32b   lsm_main_lsid;
@@ -935,6 +937,7 @@ union silofs_view_u {
 	struct silofs_super_block  sb;
 	struct silofs_spmap_node   sn;
 	struct silofs_spmap_leaf   sl;
+	struct silofs_lsmap        lsm;
 	struct silofs_inode        in;
 	struct silofs_dtree_node   dtn;
 	struct silofs_ftree_node   ftn;

@@ -19,6 +19,7 @@
 #include "infra.h"
 #include "lnodes.h"
 #include "super.h"
+#include "lsmap.h"
 #include "inode.h"
 #include "dir.h"
 #include "file.h"
@@ -600,10 +601,7 @@ static struct silofs_unode_info *sbi_to_uni(struct silofs_sb_info *sbi)
 
 static struct silofs_sb_info *sbi_from_uni(struct silofs_unode_info *uni)
 {
-	struct silofs_sb_info *sbi = NULL;
-
-	sbi = container_of(uni, struct silofs_sb_info, sb_uni);
-	return sbi;
+	return container_of(uni, struct silofs_sb_info, sb_uni);
 }
 
 static int sbi_init(struct silofs_sb_info *sbi,
@@ -682,10 +680,7 @@ static struct silofs_unode_info *sni_to_uni(struct silofs_spnode_info *sni)
 
 static struct silofs_spnode_info *sni_from_uni(struct silofs_unode_info *uni)
 {
-	struct silofs_spnode_info *sni = NULL;
-
-	sni = container_of(uni, struct silofs_spnode_info, sn_uni);
-	return sni;
+	return container_of(uni, struct silofs_spnode_info, sn_uni);
 }
 
 static void
@@ -761,10 +756,7 @@ static struct silofs_unode_info *sli_to_uni(struct silofs_spleaf_info *sli)
 
 static struct silofs_spleaf_info *sli_from_uni(struct silofs_unode_info *uni)
 {
-	struct silofs_spleaf_info *sli = NULL;
-
-	sli = container_of(uni, struct silofs_spleaf_info, sl_uni);
-	return sli;
+	return container_of(uni, struct silofs_spleaf_info, sl_uni);
 }
 
 static void
@@ -832,12 +824,74 @@ struct silofs_spleaf_info *silofs_sli_from_uni(struct silofs_unode_info *uni)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static struct silofs_vnode_info *lsi_to_vni(struct silofs_lsmap_info *lsi)
+{
+	return &lsi->ls_vni;
+}
+
+static struct silofs_lsmap_info *lsi_from_vni(struct silofs_vnode_info *vni)
+{
+	return container_of(vni, struct silofs_lsmap_info, ls_vni);
+}
+
+static void
+lsi_init(struct silofs_lsmap_info *lsi, const struct silofs_vaddr *vaddr,
+         struct silofs_view *view)
+{
+	vni_init(&lsi->ls_vni, vaddr, view);
+}
+
+static void lsi_fini(struct silofs_lsmap_info *lsi)
+{
+	vni_fini(&lsi->ls_vni);
+}
+
+static struct silofs_lsmap_info *lsi_malloc(struct silofs_alloc *alloc)
+{
+	struct silofs_lsmap_info *lsi;
+
+	lsi = silofs_memalloc(alloc, sizeof(*lsi), 0);
+	return lsi;
+}
+
+static void
+lsi_free(struct silofs_lsmap_info *lsi, struct silofs_alloc *alloc, int flags)
+{
+	silofs_memfree(alloc, lsi, sizeof(*lsi), flags);
+}
+
+static struct silofs_lsmap_info *
+lsi_new(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
+{
+	struct silofs_view *view;
+	struct silofs_lsmap_info *lsi;
+
+	view = view_new_by_vaddr(alloc, vaddr);
+	if (view == NULL) {
+		return NULL;
+	}
+	lsi = lsi_malloc(alloc);
+	if (lsi == NULL) {
+		view_del_by_vaddr(view, vaddr, alloc, 0);
+		return NULL;
+	}
+	lsi_init(lsi, vaddr, view);
+	return lsi;
+}
+
+static void
+lsi_del(struct silofs_lsmap_info *lsi, struct silofs_alloc *alloc, int flags)
+{
+	vni_del_view(&lsi->ls_vni, alloc, flags);
+	lsi_fini(lsi);
+	lsi_free(lsi, alloc, flags);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 static struct silofs_inode_info *ii_from_vni(struct silofs_vnode_info *vni)
 {
-	struct silofs_inode_info *ii = NULL;
-
-	ii = container_of(vni, struct silofs_inode_info, i_vni);
-	return ii;
+	return container_of(vni, struct silofs_inode_info, i_vni);
 }
 
 static void ii_init(struct silofs_inode_info *ii,
@@ -937,11 +991,7 @@ static struct silofs_vnode_info *xai_to_vni(struct silofs_xanode_info *xai)
 
 static struct silofs_xanode_info *xai_from_vni(struct silofs_vnode_info *vni)
 {
-	struct silofs_xanode_info *xai = NULL;
-
-	silofs_assert_not_null(vni);
-	xai = container_of(vni, struct silofs_xanode_info, xan_vni);
-	return xai;
+	return container_of(vni, struct silofs_xanode_info, xan_vni);
 }
 
 static void
@@ -1014,10 +1064,7 @@ static struct silofs_vnode_info *syi_to_vni(struct silofs_symval_info *syi)
 
 static struct silofs_symval_info *syi_from_vni(struct silofs_vnode_info *vni)
 {
-	struct silofs_symval_info *syi = NULL;
-
-	syi = container_of(vni, struct silofs_symval_info, sy_vni);
-	return syi;
+	return container_of(vni, struct silofs_symval_info, sy_vni);
 }
 
 static void
@@ -1077,11 +1124,7 @@ syi_del(struct silofs_symval_info *syi, struct silofs_alloc *alloc, int flags)
 
 struct silofs_symval_info *silofs_syi_from_vni(struct silofs_vnode_info *vni)
 {
-	struct silofs_symval_info *syi = NULL;
-
-	silofs_assert_not_null(vni);
-	syi = container_of(vni, struct silofs_symval_info, sy_vni);
-	return syi;
+	return container_of(vni, struct silofs_symval_info, sy_vni);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1093,10 +1136,7 @@ static struct silofs_vnode_info *dni_to_vni(struct silofs_dnode_info *dni)
 
 static struct silofs_dnode_info *dni_from_vni(struct silofs_vnode_info *vni)
 {
-	struct silofs_dnode_info *dni = NULL;
-
-	dni = container_of(vni, struct silofs_dnode_info, dn_vni);
-	return dni;
+	return container_of(vni, struct silofs_dnode_info, dn_vni);
 }
 
 static void
@@ -1170,10 +1210,7 @@ static struct silofs_vnode_info *fni_to_vni(struct silofs_finode_info *fni)
 
 static struct silofs_finode_info *fni_from_vni(struct silofs_vnode_info *vni)
 {
-	struct silofs_finode_info *fni = NULL;
-
-	fni = container_of(vni, struct silofs_finode_info, fn_vni);
-	return fni;
+	return container_of(vni, struct silofs_finode_info, fn_vni);
 }
 
 static void
@@ -1246,10 +1283,7 @@ static struct silofs_vnode_info *fli_to_vni(struct silofs_fileaf_info *fli)
 
 static struct silofs_fileaf_info *fli_from_vni(struct silofs_vnode_info *vni)
 {
-	struct silofs_fileaf_info *fli = NULL;
-
-	fli = container_of(vni, struct silofs_fileaf_info, fl_vni);
-	return fli;
+	return container_of(vni, struct silofs_fileaf_info, fl_vni);
 }
 
 static void
@@ -1343,6 +1377,8 @@ view_verify_sub(const struct silofs_view *view, enum silofs_ltype ltype)
 		return silofs_verify_spmap_node(&view->u.sn);
 	case SILOFS_LTYPE_SPLEAF:
 		return silofs_verify_spmap_leaf(&view->u.sl);
+	case SILOFS_LTYPE_LSMAP:
+		return silofs_verify_lsmap(&view->u.lsm);
 	case SILOFS_LTYPE_INODE:
 		return silofs_verify_inode(&view->u.in);
 	case SILOFS_LTYPE_XANODE:
@@ -1404,6 +1440,7 @@ silofs_new_unode(struct silofs_alloc *alloc, const struct silofs_uaddr *uaddr)
 		uni = sli_to_uni(sli_new(alloc, uaddr));
 		break;
 	case SILOFS_LTYPE_BOOTREC:
+	case SILOFS_LTYPE_LSMAP:
 	case SILOFS_LTYPE_INODE:
 	case SILOFS_LTYPE_XANODE:
 	case SILOFS_LTYPE_SYMVAL:
@@ -1437,6 +1474,7 @@ void silofs_del_unode(struct silofs_unode_info *uni,
 		sli_del(sli_from_uni(uni), alloc, flags);
 		break;
 	case SILOFS_LTYPE_BOOTREC:
+	case SILOFS_LTYPE_LSMAP:
 	case SILOFS_LTYPE_INODE:
 	case SILOFS_LTYPE_XANODE:
 	case SILOFS_LTYPE_SYMVAL:
@@ -1462,6 +1500,9 @@ silofs_new_vnode(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 	const enum silofs_ltype ltype = vaddr->ltype;
 
 	switch (ltype) {
+	case SILOFS_LTYPE_LSMAP:
+		vni = lsi_to_vni(lsi_new(alloc, vaddr));
+		break;
 	case SILOFS_LTYPE_INODE:
 		vni = ii_to_vni(ii_new(alloc, vaddr));
 		break;
@@ -1501,6 +1542,9 @@ void silofs_del_vnode(struct silofs_vnode_info *vni,
 	const enum silofs_ltype ltype = vni_ltype(vni);
 
 	switch (ltype) {
+	case SILOFS_LTYPE_LSMAP:
+		lsi_del(lsi_from_vni(vni), alloc, flags);
+		break;
 	case SILOFS_LTYPE_INODE:
 		ii_del(ii_from_vni(vni), alloc, flags);
 		break;

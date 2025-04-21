@@ -82,6 +82,11 @@ struct silofs_vnode_info {
 	int                      vn_asyncwr;
 };
 
+/* lsmap */
+struct silofs_lsmap_info {
+	struct silofs_vnode_info ls_vni;
+};
+
 /* inode */
 struct silofs_inode_info {
 	struct silofs_vnode_info  i_vni;

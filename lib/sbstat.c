@@ -98,6 +98,9 @@ spgs256_gauge_of(const struct silofs_space_gauges256 *spgs256,
 	case SILOFS_LTYPE_SPLEAF:
 		ret = &spgs256->sg_nspleaf;
 		break;
+	case SILOFS_LTYPE_LSMAP:
+		ret = &spgs256->sg_nlsmap;
+		break;
 	case SILOFS_LTYPE_INODE:
 		ret = &spgs256->sg_ninode;
 		break;
@@ -315,6 +318,9 @@ spgs_gauge_of(const struct silofs_space_gauges *spgs, enum silofs_ltype ltype)
 		break;
 	case SILOFS_LTYPE_SPLEAF:
 		ret = &spgs->nspleaf;
+		break;
+	case SILOFS_LTYPE_LSMAP:
+		ret = &spgs->nlsmap;
 		break;
 	case SILOFS_LTYPE_INODE:
 		ret = &spgs->ninode;

@@ -113,6 +113,7 @@ struct silofs_space_gauges {
 	ssize_t nsuper;
 	ssize_t nspnode;
 	ssize_t nspleaf;
+	ssize_t nlsmap;
 	ssize_t ninode;
 	ssize_t nxanode;
 	ssize_t ndtnode;

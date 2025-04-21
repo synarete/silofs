@@ -101,6 +101,7 @@ bool silofs_ltype_isunode(enum silofs_ltype ltype)
 	case SILOFS_LTYPE_SPLEAF:
 		ret = true;
 		break;
+	case SILOFS_LTYPE_LSMAP:
 	case SILOFS_LTYPE_INODE:
 	case SILOFS_LTYPE_XANODE:
 	case SILOFS_LTYPE_SYMVAL:
@@ -123,6 +124,7 @@ bool silofs_ltype_isvnode(enum silofs_ltype ltype)
 	bool ret;
 
 	switch (ltype) {
+	case SILOFS_LTYPE_LSMAP:
 	case SILOFS_LTYPE_INODE:
 	case SILOFS_LTYPE_XANODE:
 	case SILOFS_LTYPE_SYMVAL:
@@ -160,6 +162,7 @@ bool silofs_ltype_isdata(enum silofs_ltype ltype)
 	case SILOFS_LTYPE_SUPER:
 	case SILOFS_LTYPE_SPNODE:
 	case SILOFS_LTYPE_SPLEAF:
+	case SILOFS_LTYPE_LSMAP:
 	case SILOFS_LTYPE_INODE:
 	case SILOFS_LTYPE_XANODE:
 	case SILOFS_LTYPE_DTNODE:
@@ -185,6 +188,8 @@ uint32_t silofs_ltype_size(enum silofs_ltype ltype)
 		return sizeof(struct silofs_spmap_node);
 	case SILOFS_LTYPE_SPLEAF:
 		return sizeof(struct silofs_spmap_leaf);
+	case SILOFS_LTYPE_LSMAP:
+		return sizeof(struct silofs_lsmap);
 	case SILOFS_LTYPE_INODE:
 		return sizeof(struct silofs_inode);
 	case SILOFS_LTYPE_XANODE:

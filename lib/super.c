@@ -197,14 +197,8 @@ sb_mainsilofs_lsid_by(const struct silofs_super_block *sb,
 	const struct silofs_lsid32b *ret;
 
 	switch (ltype) {
-	case SILOFS_LTYPE_DATA1K:
-		ret = &sb->sb_main_lsid.sb_silofs_lsid_data1k;
-		break;
-	case SILOFS_LTYPE_DATA4K:
-		ret = &sb->sb_main_lsid.sb_silofs_lsid_data4k;
-		break;
-	case SILOFS_LTYPE_DATABK:
-		ret = &sb->sb_main_lsid.sb_silofs_lsid_databk;
+	case SILOFS_LTYPE_LSMAP:
+		ret = &sb->sb_main_lsid.sb_silofs_lsid_lsmap;
 		break;
 	case SILOFS_LTYPE_INODE:
 		ret = &sb->sb_main_lsid.sb_silofs_lsid_inode;
@@ -215,11 +209,20 @@ sb_mainsilofs_lsid_by(const struct silofs_super_block *sb,
 	case SILOFS_LTYPE_DTNODE:
 		ret = &sb->sb_main_lsid.sb_silofs_lsid_dtnode;
 		break;
+	case SILOFS_LTYPE_SYMVAL:
+		ret = &sb->sb_main_lsid.sb_silofs_lsid_symval;
+		break;
 	case SILOFS_LTYPE_FTNODE:
 		ret = &sb->sb_main_lsid.sb_silofs_lsid_ftnode;
 		break;
-	case SILOFS_LTYPE_SYMVAL:
-		ret = &sb->sb_main_lsid.sb_silofs_lsid_symval;
+	case SILOFS_LTYPE_DATA1K:
+		ret = &sb->sb_main_lsid.sb_silofs_lsid_data1k;
+		break;
+	case SILOFS_LTYPE_DATA4K:
+		ret = &sb->sb_main_lsid.sb_silofs_lsid_data4k;
+		break;
+	case SILOFS_LTYPE_DATABK:
+		ret = &sb->sb_main_lsid.sb_silofs_lsid_databk;
 		break;
 	case SILOFS_LTYPE_NONE:
 	case SILOFS_LTYPE_BOOTREC:
@@ -286,6 +289,9 @@ sb_sproot_by(const struct silofs_super_block *sb, enum silofs_ltype ltype)
 	const struct silofs_uaddr64b *ret;
 
 	switch (ltype) {
+	case SILOFS_LTYPE_LSMAP:
+		ret = &sb->sb_sproots.sb_sproot_lsmap;
+		break;
 	case SILOFS_LTYPE_INODE:
 		ret = &sb->sb_sproots.sb_sproot_inode;
 		break;

@@ -53,10 +53,10 @@ void silofs_sni_clone_from(struct silofs_spnode_info       *sni,
                            const struct silofs_spnode_info *sni_other);
 
 void silofs_sni_vspace_range(const struct silofs_spnode_info *sni,
-                             struct silofs_vrange            *vrange);
+                             struct silofs_lrange            *lrange);
 
-void silofs_sni_active_vrange(const struct silofs_spnode_info *sni,
-                              struct silofs_vrange            *out_vrange);
+void silofs_sni_active_lrange(const struct silofs_spnode_info *sni,
+                              struct silofs_lrange            *out_lrange);
 
 void silofs_sni_main_lseg(const struct silofs_spnode_info *sni,
                           struct silofs_lsid              *out_lsid);
@@ -99,7 +99,7 @@ void silofs_sli_setup_spawned(struct silofs_spleaf_info *sli,
 void silofs_sli_update_nused(struct silofs_spleaf_info *sli);
 
 void silofs_sli_vspace_range(const struct silofs_spleaf_info *sli,
-                             struct silofs_vrange            *out_vrange);
+                             struct silofs_lrange            *out_lrange);
 
 loff_t silofs_sli_base_voff(const struct silofs_spleaf_info *sli);
 

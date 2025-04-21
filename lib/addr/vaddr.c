@@ -23,45 +23,6 @@
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-ssize_t silofs_height_to_space_span(enum silofs_height height)
-{
-	ssize_t shift_fac;
-	ssize_t span;
-
-	switch (height) {
-	default:
-	case SILOFS_HEIGHT_NONE:
-	case SILOFS_HEIGHT_VDATA:
-		shift_fac = 0;
-		break;
-	case SILOFS_HEIGHT_SPLEAF:
-		shift_fac = 1;
-		break;
-	case SILOFS_HEIGHT_SPNODE1:
-		shift_fac = 2;
-		break;
-	case SILOFS_HEIGHT_SPNODE2:
-		shift_fac = 3;
-		break;
-	case SILOFS_HEIGHT_SPNODE3:
-		shift_fac = 4;
-		break;
-	case SILOFS_HEIGHT_SPNODE4:
-	case SILOFS_HEIGHT_SUPER:
-	case SILOFS_HEIGHT_BOOT:
-	case SILOFS_HEIGHT_LAST:
-		shift_fac = 5;
-		break;
-	}
-	span = (1L << (SILOFS_SPMAP_SHIFT * shift_fac)) * SILOFS_LBK_SIZE;
-	silofs_assert_ge(span, SILOFS_LBK_SIZE);
-	silofs_assert_le(span, SILOFS_VSPACE_SIZE_MAX);
-
-	return span;
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 static uint64_t cpu_to_voff_ltype(loff_t voff, enum silofs_ltype ltype)
 {
 	uint64_t voff_ltype;
@@ -94,31 +55,6 @@ static void voff_ltype_to_cpu(uint64_t voff_ltype, loff_t *out_voff,
 		*out_voff = SILOFS_OFF_NULL;
 		*out_ltype = SILOFS_LTYPE_NONE;
 	}
-}
-
-static uint64_t cpu_to_len_height(size_t len, enum silofs_height height)
-{
-	uint64_t val;
-
-	silofs_assert_le(len, (1L << 58));
-	silofs_assert_lt(height, 0xF);
-	silofs_assert_le(height, SILOFS_HEIGHT_SUPER);
-
-	val = ((uint64_t)len << 4) | (height & 0xF);
-	return silofs_cpu_to_le64(val);
-}
-
-static void len_height_to_cpu(uint64_t len_height, size_t *out_len,
-                              enum silofs_height *out_height)
-{
-	const uint64_t val = silofs_le64_to_cpu(len_height);
-
-	*out_len = val >> 4;
-	*out_height = (enum silofs_height)(val & 0xF);
-
-	silofs_assert_le(*out_len, (1L << 58));
-	silofs_assert_lt(*out_height, 0xF);
-	silofs_assert_le(*out_height, SILOFS_HEIGHT_SUPER);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -286,106 +222,4 @@ void silofs_vaddr64_xtoh(const struct silofs_vaddr64 *vadr,
 
 	voff_ltype_to_cpu(vadr->voff_ltype, &voff, &ltype);
 	silofs_vaddr_setup(vaddr, ltype, voff);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-bool silofs_vrange_within(const struct silofs_vrange *vrange, loff_t off)
-{
-	return (vrange->beg <= off) && (off < vrange->end);
-}
-
-void silofs_vrange_setup(struct silofs_vrange *vrange,
-                         enum silofs_height height, loff_t beg, loff_t end)
-{
-	vrange->beg = beg;
-	vrange->end = end;
-	vrange->len = off_ulen(beg, end);
-	vrange->height = height;
-}
-
-void silofs_vrange_setup_sub(struct silofs_vrange *vrange,
-                             const struct silofs_vrange *other, loff_t beg)
-{
-	silofs_vrange_setup(vrange, other->height, beg, other->end);
-}
-
-void silofs_vrange_of_space(struct silofs_vrange *vrange,
-                            enum silofs_height height, loff_t voff_base)
-{
-	const ssize_t span = silofs_height_to_space_span(height);
-	const loff_t beg = off_align(voff_base, span);
-
-	silofs_vrange_setup(vrange, height, beg, off_next(beg, span));
-}
-
-void silofs_vrange_of_spmap(struct silofs_vrange *vrange,
-                            enum silofs_height height, loff_t voff_base)
-{
-	const ssize_t span = silofs_height_to_space_span(height);
-	const loff_t beg = off_align(voff_base, span);
-
-	silofs_vrange_setup(vrange, height, beg, off_next(beg, span));
-}
-
-static loff_t off_next_n(loff_t off, ssize_t len, size_t n)
-{
-	return silofs_off_align(off + ((ssize_t)n * len), len);
-}
-
-loff_t silofs_vrange_voff_at(const struct silofs_vrange *vrange, size_t slot)
-{
-	ssize_t span;
-	loff_t voff;
-
-	span = silofs_height_to_space_span(vrange->height - 1);
-	voff = off_next_n(vrange->beg, span, slot);
-	silofs_assert_le(voff, vrange->end);
-	return voff;
-}
-
-loff_t silofs_vrange_next(const struct silofs_vrange *vrange, loff_t voff)
-{
-	ssize_t span;
-	loff_t vnxt;
-
-	if (unlikely(voff < vrange->beg)) {
-		vnxt = vrange->beg;
-	} else if (unlikely(voff >= vrange->end)) {
-		vnxt = voff;
-	} else {
-		span = silofs_height_to_space_span(vrange->height - 1);
-		vnxt = off_next(voff, span);
-	}
-	return vnxt;
-}
-
-void silofs_vrange128_reset(struct silofs_vrange128 *vrng)
-{
-	struct silofs_vrange vrange = {
-		.beg = SILOFS_OFF_NULL,
-		.end = SILOFS_OFF_NULL,
-		.height = SILOFS_HEIGHT_VDATA,
-	};
-
-	silofs_vrange128_htox(vrng, &vrange);
-}
-
-void silofs_vrange128_htox(struct silofs_vrange128 *vrng,
-                           const struct silofs_vrange *vrange)
-{
-	vrng->beg = silofs_cpu_to_off(vrange->beg);
-	vrng->len_height = cpu_to_len_height(vrange->len, vrange->height);
-}
-
-void silofs_vrange128_xtoh(const struct silofs_vrange128 *vrng,
-                           struct silofs_vrange *vrange)
-{
-	loff_t beg;
-	size_t len;
-	enum silofs_height height;
-
-	beg = silofs_off_to_cpu(vrng->beg);
-	len_height_to_cpu(vrng->len_height, &len, &height);
-	silofs_vrange_setup(vrange, height, beg, off_end(beg, len));
 }

@@ -145,6 +145,7 @@ libsilofs_la_SOURCES += pcache.c
 libsilofs_la_SOURCES += pcache.h
 libsilofs_la_SOURCES += pnodes.c
 libsilofs_la_SOURCES += pnodes.h
+libsilofs_la_SOURCES += private.h
 libsilofs_la_SOURCES += pvlogs.c
 libsilofs_la_SOURCES += pvlogs.h
 libsilofs_la_SOURCES += repo.c

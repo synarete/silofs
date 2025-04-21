@@ -18,6 +18,7 @@
 #define SILOFS_PANIC_H_
 
 #include <silofs/ccattr.h>
+#include <silofs/macros.h>
 
 /*
  * TODO-0052: Define and use bug_on macros

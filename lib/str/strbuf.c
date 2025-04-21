@@ -21,6 +21,7 @@
 #include <stdarg.h>
 #include <silofs/macros.h>
 #include "infra.h"
+#include "private.h"
 #include "strchr.h"
 #include "strbuf.h"
 

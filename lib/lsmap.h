@@ -19,6 +19,11 @@
 
 #include <silofs/defs.h>
 
+void silofs_lsi_get_lrange(const struct silofs_lsmap_info *lsi,
+                           struct silofs_lrange           *out_lrange);
+
+void silofs_lsi_setup_spawned(struct silofs_lsmap_info *lsi, loff_t beg);
+
 int silofs_verify_lsmap(const struct silofs_lsmap *lsm);
 
 #endif /* SILOFS_LSMAP_H_ */

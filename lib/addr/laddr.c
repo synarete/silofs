@@ -578,3 +578,175 @@ void silofs_llink_reset(struct silofs_llink *llink)
 	silofs_laddr_reset(&llink->laddr);
 	silofs_ivkey_reset(&llink->ivkey);
 }
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static uint64_t cpu_to_len_height(size_t len, enum silofs_height height)
+{
+	uint64_t val;
+
+	silofs_assert_le(len, (1L << 58));
+	silofs_assert_lt(height, 0xF);
+	silofs_assert_le(height, SILOFS_HEIGHT_SUPER);
+
+	val = ((uint64_t)len << 4) | (height & 0xF);
+	return silofs_cpu_to_le64(val);
+}
+
+static void len_height_to_cpu(uint64_t len_height, size_t *out_len,
+                              enum silofs_height *out_height)
+{
+	const uint64_t val = silofs_le64_to_cpu(len_height);
+
+	*out_len = val >> 4;
+	*out_height = (enum silofs_height)(val & 0xF);
+
+	silofs_assert_le(*out_len, (1L << 58));
+	silofs_assert_lt(*out_height, 0xF);
+	silofs_assert_le(*out_height, SILOFS_HEIGHT_SUPER);
+}
+
+size_t silofs_lrange_len(const struct silofs_lrange *lrange)
+{
+	return silofs_off_ulen(lrange->beg, lrange->end);
+}
+
+bool silofs_lrange_within(const struct silofs_lrange *lrange, loff_t off)
+{
+	return (lrange->beg <= off) && (off < lrange->end);
+}
+
+void silofs_lrange_setup(struct silofs_lrange *lrange,
+                         enum silofs_height height, loff_t beg, loff_t end)
+{
+	lrange->beg = beg;
+	lrange->end = end;
+	lrange->height = height;
+}
+
+void silofs_lrange_setup_sub(struct silofs_lrange *lrange,
+                             const struct silofs_lrange *other, loff_t beg)
+{
+	silofs_lrange_setup(lrange, other->height, beg, other->end);
+}
+
+void silofs_lrange_of_space(struct silofs_lrange *lrange,
+                            enum silofs_height height, loff_t voff_base)
+{
+	const ssize_t span = silofs_height_to_space_span(height);
+	const loff_t beg = off_align(voff_base, span);
+
+	silofs_lrange_setup(lrange, height, beg, off_next(beg, span));
+}
+
+void silofs_lrange_of_spmap(struct silofs_lrange *lrange,
+                            enum silofs_height height, loff_t voff_base)
+{
+	const ssize_t span = silofs_height_to_space_span(height);
+	const loff_t beg = off_align(voff_base, span);
+
+	silofs_lrange_setup(lrange, height, beg, off_next(beg, span));
+}
+
+static loff_t off_next_n(loff_t off, ssize_t len, size_t n)
+{
+	return silofs_off_align(off + ((ssize_t)n * len), len);
+}
+
+loff_t silofs_lrange_voff_at(const struct silofs_lrange *lrange, size_t slot)
+{
+	ssize_t span;
+	loff_t voff;
+
+	span = silofs_height_to_space_span(lrange->height - 1);
+	voff = off_next_n(lrange->beg, span, slot);
+	silofs_assert_le(voff, lrange->end);
+	return voff;
+}
+
+loff_t silofs_lrange_next(const struct silofs_lrange *lrange, loff_t voff)
+{
+	ssize_t span;
+	loff_t vnxt;
+
+	if (unlikely(voff < lrange->beg)) {
+		vnxt = lrange->beg;
+	} else if (unlikely(voff >= lrange->end)) {
+		vnxt = voff;
+	} else {
+		span = silofs_height_to_space_span(lrange->height - 1);
+		vnxt = off_next(voff, span);
+	}
+	return vnxt;
+}
+
+void silofs_lrange128_reset(struct silofs_lrange128 *vrng)
+{
+	struct silofs_lrange lrange = {
+		.beg = SILOFS_OFF_NULL,
+		.end = SILOFS_OFF_NULL,
+		.height = SILOFS_HEIGHT_VDATA,
+	};
+
+	silofs_lrange128_htox(vrng, &lrange);
+}
+
+void silofs_lrange128_htox(struct silofs_lrange128 *lrange128,
+                           const struct silofs_lrange *lrange)
+{
+	const size_t len = silofs_lrange_len(lrange);
+
+	lrange128->beg = silofs_cpu_to_off(lrange->beg);
+	lrange128->len_height = cpu_to_len_height(len, lrange->height);
+}
+
+void silofs_lrange128_xtoh(const struct silofs_lrange128 *lrange128,
+                           struct silofs_lrange *lrange)
+{
+	loff_t beg;
+	size_t len;
+	enum silofs_height height;
+
+	beg = silofs_off_to_cpu(lrange128->beg);
+	len_height_to_cpu(lrange128->len_height, &len, &height);
+	silofs_lrange_setup(lrange, height, beg, off_end(beg, len));
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+ssize_t silofs_height_to_space_span(enum silofs_height height)
+{
+	ssize_t shift_fac;
+	ssize_t span;
+
+	switch (height) {
+	default:
+	case SILOFS_HEIGHT_NONE:
+	case SILOFS_HEIGHT_VDATA:
+		shift_fac = 0;
+		break;
+	case SILOFS_HEIGHT_SPLEAF:
+		shift_fac = 1;
+		break;
+	case SILOFS_HEIGHT_SPNODE1:
+		shift_fac = 2;
+		break;
+	case SILOFS_HEIGHT_SPNODE2:
+		shift_fac = 3;
+		break;
+	case SILOFS_HEIGHT_SPNODE3:
+		shift_fac = 4;
+		break;
+	case SILOFS_HEIGHT_SPNODE4:
+	case SILOFS_HEIGHT_SUPER:
+	case SILOFS_HEIGHT_BOOT:
+	case SILOFS_HEIGHT_LAST:
+		shift_fac = 5;
+		break;
+	}
+	span = (1L << (SILOFS_SPMAP_SHIFT * shift_fac)) * SILOFS_LBK_SIZE;
+	silofs_assert_ge(span, SILOFS_LBK_SIZE);
+	silofs_assert_le(span, SILOFS_VSPACE_SIZE_MAX);
+
+	return span;
+}

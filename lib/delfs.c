@@ -109,18 +109,18 @@ delfc_post_at_lseg_of(struct silofs_delfs_ctx *delf_ctx,
 static int delfc_post_at_spleaf(struct silofs_delfs_ctx *delf_ctx,
                                 const struct silofs_spleaf_info *sli)
 {
-	struct silofs_vrange vrange = { .beg = -1 };
+	struct silofs_lrange lrange = { .beg = -1 };
 	loff_t voff = -1;
 	int err;
 
-	silofs_sli_vspace_range(sli, &vrange);
-	voff = vrange.beg;
-	while (voff < vrange.end) {
+	silofs_sli_vspace_range(sli, &lrange);
+	voff = lrange.beg;
+	while (voff < lrange.end) {
 		err = delfc_post_at_lseg_of(delf_ctx, sli, voff);
 		if (err) {
 			return err;
 		}
-		voff = silofs_vrange_next(&vrange, voff);
+		voff = silofs_lrange_next(&lrange, voff);
 	}
 	return 0;
 }
@@ -135,13 +135,13 @@ static int delfc_post_at_spnode(struct silofs_delfs_ctx *delf_ctx,
                                 const struct silofs_spnode_info *sni)
 {
 	struct silofs_uaddr uaddr;
-	struct silofs_vrange vrange;
+	struct silofs_lrange lrange;
 	loff_t voff;
 	int err;
 
-	silofs_sni_vspace_range(sni, &vrange);
-	voff = vrange.beg;
-	while (voff < vrange.end) {
+	silofs_sni_vspace_range(sni, &lrange);
+	voff = lrange.beg;
+	while (voff < lrange.end) {
 		err = silofs_sni_resolve_child(sni, voff, &uaddr);
 		if (err == -SILOFS_ENOENT) {
 			break;
@@ -151,7 +151,7 @@ static int delfc_post_at_spnode(struct silofs_delfs_ctx *delf_ctx,
 		if (err) {
 			return err;
 		}
-		voff = silofs_vrange_next(&vrange, voff);
+		voff = silofs_lrange_next(&lrange, voff);
 	}
 	return 0;
 }

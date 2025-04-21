@@ -95,7 +95,7 @@ void silofs_uakey_setup_by(struct silofs_uakey       *uakey,
                            const struct silofs_uaddr *uaddr);
 
 void silofs_uakey_setup_by2(struct silofs_uakey        *uakey,
-                            const struct silofs_vrange *vrange,
+                            const struct silofs_lrange *lrange,
                             enum silofs_ltype           vspace);
 
 int silofs_uamap_init(struct silofs_uamap *uamap, struct silofs_alloc *alloc);

@@ -644,10 +644,10 @@ static int vstgc_find_cached_unode(const struct silofs_vstage_ctx *vstg_ctx,
                                    struct silofs_unode_info **out_uni)
 {
 	struct silofs_uakey uakey;
-	struct silofs_vrange vrange;
+	struct silofs_lrange lrange;
 
-	silofs_vrange_of_spmap(&vrange, height, vstgc_lbk_voff(vstg_ctx));
-	silofs_uakey_setup_by2(&uakey, &vrange, vstg_ctx->vspace);
+	silofs_lrange_of_spmap(&lrange, height, vstgc_lbk_voff(vstg_ctx));
+	silofs_uakey_setup_by2(&uakey, &lrange, vstg_ctx->vspace);
 	*out_uni = silofs_lcache_find_uni_by(vstgc_lcache(vstg_ctx), &uakey);
 	return (*out_uni != NULL) ? 0 : -SILOFS_ENOENT;
 }
@@ -1741,11 +1741,13 @@ static void
 vstgc_track_spawned_spleaf(const struct silofs_vstage_ctx *vstg_ctx,
                            const struct silofs_spleaf_info *sli)
 {
-	struct silofs_vrange vrange;
+	struct silofs_lrange lrange;
 	struct silofs_spamaps *spam = vstgc_spamaps(vstg_ctx);
+	size_t len;
 
-	silofs_sli_vspace_range(sli, &vrange);
-	silofs_spamaps_store(spam, vstg_ctx->vspace, vrange.beg, vrange.len);
+	silofs_sli_vspace_range(sli, &lrange);
+	len = silofs_lrange_len(&lrange);
+	silofs_spamaps_store(spam, vstg_ctx->vspace, lrange.beg, len);
 }
 
 static int vstgc_spawn_bind_spleaf_at(struct silofs_vstage_ctx *vstg_ctx)

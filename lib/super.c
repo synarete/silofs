@@ -124,24 +124,24 @@ bool silofs_sb_test_flags(const struct silofs_super_block *sb,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void sb_vrange(const struct silofs_super_block *sb,
-                      struct silofs_vrange *out_vrange)
+static void sb_lrange(const struct silofs_super_block *sb,
+                      struct silofs_lrange *out_lrange)
 {
-	silofs_vrange128_xtoh(&sb->sb_vrange, out_vrange);
+	silofs_lrange128_xtoh(&sb->sb_lrange, out_lrange);
 }
 
-static void sb_set_vrange(struct silofs_super_block *sb,
-                          const struct silofs_vrange *vrange)
+static void sb_set_lrange(struct silofs_super_block *sb,
+                          const struct silofs_lrange *lrange)
 {
-	silofs_vrange128_htox(&sb->sb_vrange, vrange);
+	silofs_lrange128_htox(&sb->sb_lrange, lrange);
 }
 
 static enum silofs_height sb_height(const struct silofs_super_block *sb)
 {
-	struct silofs_vrange vrange;
+	struct silofs_lrange lrange;
 
-	sb_vrange(sb, &vrange);
-	return vrange.height;
+	sb_lrange(sb, &lrange);
+	return lrange.height;
 }
 
 static void sb_lv_base(const struct silofs_super_block *sb,
@@ -635,11 +635,11 @@ bool silofs_sbi_has_main_lseg(const struct silofs_sb_info *sbi,
 
 static size_t sb_slot_of(const struct silofs_super_block *sb, loff_t voff)
 {
-	struct silofs_vrange vrange;
+	struct silofs_lrange lrange;
 	ssize_t span;
 
-	sb_vrange(sb, &vrange);
-	span = silofs_height_to_space_span(vrange.height - 1);
+	sb_lrange(sb, &lrange);
+	span = silofs_height_to_space_span(lrange.height - 1);
 	return (size_t)(voff / span);
 }
 
@@ -653,11 +653,11 @@ static loff_t sbi_bpos_of_child(const struct silofs_sb_info *sbi, loff_t voff)
 static loff_t
 sbi_base_voff_of_child(const struct silofs_sb_info *sbi, loff_t voff)
 {
-	struct silofs_vrange vrange;
+	struct silofs_lrange lrange;
 
 	silofs_unused(sbi);
-	silofs_vrange_of_spmap(&vrange, SILOFS_HEIGHT_SUPER - 1, voff);
-	return vrange.beg;
+	silofs_lrange_of_spmap(&lrange, SILOFS_HEIGHT_SUPER - 1, voff);
+	return lrange.beg;
 }
 
 static void
@@ -876,10 +876,10 @@ static void sbi_set_lv_birth(struct silofs_sb_info *sbi)
 
 static void sbi_assign_vspace_span(struct silofs_sb_info *sbi)
 {
-	struct silofs_vrange vrange;
+	struct silofs_lrange lrange;
 
-	silofs_vrange_of_space(&vrange, SILOFS_HEIGHT_SUPER, 0);
-	sb_set_vrange(sbi->sb, &vrange);
+	silofs_lrange_of_space(&lrange, SILOFS_HEIGHT_SUPER, 0);
+	sb_set_lrange(sbi->sb, &lrange);
 }
 
 static void sbi_setup_spstats(struct silofs_sb_info *sbi)

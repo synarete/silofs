@@ -650,10 +650,10 @@ void silofs_uakey_setup_by(struct silofs_uakey *uakey,
 }
 
 void silofs_uakey_setup_by2(struct silofs_uakey *uakey,
-                            const struct silofs_vrange *vrange,
+                            const struct silofs_lrange *lrange,
                             enum silofs_ltype vspace)
 {
-	uakey_setup(uakey, vrange->beg, vrange->height, vspace);
+	uakey_setup(uakey, lrange->beg, lrange->height, vspace);
 }
 
 static bool uakey_isequal(const struct silofs_uakey *uakey1,

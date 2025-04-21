@@ -839,6 +839,7 @@ lsi_init(struct silofs_lsmap_info *lsi, const struct silofs_vaddr *vaddr,
          struct silofs_view *view)
 {
 	vni_init(&lsi->ls_vni, vaddr, view);
+	lsi->lsm = &view->u.lsm;
 }
 
 static void lsi_fini(struct silofs_lsmap_info *lsi)

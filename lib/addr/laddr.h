@@ -43,6 +43,13 @@ struct silofs_llink {
 	struct silofs_ivkey ivkey;
 };
 
+/* logical-space address-range [beg, end) */
+struct silofs_lrange {
+	loff_t             beg;
+	loff_t             end;
+	enum silofs_height height;
+};
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 const struct silofs_lsid *silofs_lsid_none(void);
@@ -145,5 +152,39 @@ void silofs_llink_assign(struct silofs_llink       *llink,
                          const struct silofs_llink *other);
 
 void silofs_llink_reset(struct silofs_llink *llink);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+size_t silofs_lrange_len(const struct silofs_lrange *lrange);
+
+bool silofs_lrange_within(const struct silofs_lrange *lrange, loff_t off);
+
+void silofs_lrange_setup(struct silofs_lrange *lrange,
+                         enum silofs_height height, loff_t beg, loff_t end);
+
+void silofs_lrange_setup_sub(struct silofs_lrange       *lrange,
+                             const struct silofs_lrange *other, loff_t beg);
+
+void silofs_lrange_of_space(struct silofs_lrange *lrange,
+                            enum silofs_height height, loff_t voff_base);
+
+void silofs_lrange_of_spmap(struct silofs_lrange *lrange,
+                            enum silofs_height height, loff_t voff_base);
+
+loff_t silofs_lrange_voff_at(const struct silofs_lrange *lrange, size_t slot);
+
+loff_t silofs_lrange_next(const struct silofs_lrange *lrange, loff_t voff);
+
+void silofs_lrange128_reset(struct silofs_lrange128 *vrng);
+
+void silofs_lrange128_htox(struct silofs_lrange128    *vrng,
+                           const struct silofs_lrange *lrange);
+
+void silofs_lrange128_xtoh(const struct silofs_lrange128 *vrng,
+                           struct silofs_lrange          *lrange);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+ssize_t silofs_height_to_space_span(enum silofs_height height);
 
 #endif /* SILOFS_LADDR_H_ */

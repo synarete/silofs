@@ -18,6 +18,7 @@
 #define SILOFS_VADDR_H_
 
 #include <silofs/defs.h>
+#include "offlba.h"
 
 /* logical addressing of virtual nodes */
 struct silofs_vaddr {
@@ -29,14 +30,6 @@ struct silofs_vaddr {
 struct silofs_vaddrs {
 	struct silofs_vaddr vaddr[SILOFS_NKB_IN_LBK];
 	size_t              count;
-};
-
-/* vspace address range [beg, end) */
-struct silofs_vrange {
-	loff_t             beg;
-	loff_t             end;
-	size_t             len;
-	enum silofs_height height;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -97,35 +90,5 @@ void silofs_vaddr64_xtoh(const struct silofs_vaddr64 *vadr,
 #define vaddr_isequal(va1, va2) silofs_vaddr_isequal(va1, va2)
 #define vaddr_len(va)           silofs_vaddr_length(va)
 #endif
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-ssize_t silofs_height_to_space_span(enum silofs_height height);
-
-bool silofs_vrange_within(const struct silofs_vrange *vrange, loff_t off);
-
-void silofs_vrange_setup(struct silofs_vrange *vrange,
-                         enum silofs_height height, loff_t beg, loff_t end);
-
-void silofs_vrange_setup_sub(struct silofs_vrange       *vrange,
-                             const struct silofs_vrange *other, loff_t beg);
-
-void silofs_vrange_of_space(struct silofs_vrange *vrange,
-                            enum silofs_height height, loff_t voff_base);
-
-void silofs_vrange_of_spmap(struct silofs_vrange *vrange,
-                            enum silofs_height height, loff_t voff_base);
-
-loff_t silofs_vrange_voff_at(const struct silofs_vrange *vrange, size_t slot);
-
-loff_t silofs_vrange_next(const struct silofs_vrange *vrange, loff_t voff);
-
-void silofs_vrange128_reset(struct silofs_vrange128 *vrng);
-
-void silofs_vrange128_htox(struct silofs_vrange128    *vrng,
-                           const struct silofs_vrange *vrange);
-
-void silofs_vrange128_xtoh(const struct silofs_vrange128 *vrng,
-                           struct silofs_vrange          *vrange);
 
 #endif /* SILOFS_VADDR_H_ */

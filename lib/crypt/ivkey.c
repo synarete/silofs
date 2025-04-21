@@ -22,9 +22,10 @@
 
 static void randomize_by_gcry(void *ptr, size_t len, bool very_strong)
 {
-	gcry_randomize(ptr, len,
-	               very_strong ? GCRY_VERY_STRONG_RANDOM :
-	                             GCRY_STRONG_RANDOM);
+	enum gcry_random_level level = very_strong ? GCRY_VERY_STRONG_RANDOM :
+	                                             GCRY_STRONG_RANDOM;
+
+	gcry_randomize(ptr, len, level);
 }
 
 /* add pseudo-randomness as protection from poor gcry_randomize */
@@ -42,11 +43,12 @@ void silofs_prandomize_with(void *ptr, size_t len)
 	silofs_mclock_now(&t);
 	u[0] = (uint64_t)t.tv_sec;
 	u[1] = (uint64_t)t.tv_nsec;
-	silofs_rclock_now(&t);
-	u[2] = (uint64_t)t.tv_sec;
-	u[3] = (uint64_t)t.tv_nsec;
 	tid = gettid();
-	u[4] = (uint64_t)tid;
+	u[2] = (uint64_t)tid;
+	silofs_rclock_now(&t);
+	u[3] = (uint64_t)t.tv_sec;
+	u[4] = (uint64_t)t.tv_nsec;
+	u[5] = ~(uint64_t)tid;
 
 	for (uint32_t i = 0; i < ns; ++i) {
 		u[(i + 1) % nu] ^= silofs_twang_mix64(xx);

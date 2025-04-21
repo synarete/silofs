@@ -450,7 +450,7 @@ static bool spac_ismutable_lsid(const struct silofs_spalloc_ctx *spa_ctx,
 
 static int spac_resolve_main_range(const struct silofs_spalloc_ctx *spa_ctx,
                                    struct silofs_lsid *out_lsid,
-                                   struct silofs_vrange *out_vrange)
+                                   struct silofs_lrange *out_lrange)
 {
 	struct silofs_spleaf_info *sli = spa_ctx->sli;
 
@@ -461,7 +461,7 @@ static int spac_resolve_main_range(const struct silofs_spalloc_ctx *spa_ctx,
 	if (out_lsid->ltype != spa_ctx->ltype) {
 		return -SILOFS_EBUG;
 	}
-	silofs_sli_vspace_range(sli, out_vrange);
+	silofs_sli_vspace_range(sli, out_lrange);
 	return 0;
 }
 
@@ -472,13 +472,13 @@ static int spac_resolve_main_range(const struct silofs_spalloc_ctx *spa_ctx,
 static int spac_try_reclaim_vlseg(const struct silofs_spalloc_ctx *spa_ctx)
 {
 	struct silofs_lsid lsid;
-	struct silofs_vrange vrange;
+	struct silofs_lrange lrange;
 	int err;
 
 	if (spa_ctx->sli->sl_nused_bytes) {
 		return 0; /* still has in-use blocks: no-op */
 	}
-	err = spac_resolve_main_range(spa_ctx, &lsid, &vrange);
+	err = spac_resolve_main_range(spa_ctx, &lsid, &lrange);
 	if (err) {
 		return 0; /* not on main lseg: no-op */
 	}

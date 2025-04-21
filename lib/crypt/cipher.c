@@ -65,8 +65,10 @@ int silofs_cipher_init(struct silofs_cipher *ci)
 	const int mode = GCRY_CIPHER_MODE_GCM;
 	int err;
 
-	STATICASSERT_EQ(GCRY_CIPHER_AES256, (int)SILOFS_CIPHER_ALGO_DEFAULT);
-	STATICASSERT_EQ(GCRY_CIPHER_MODE_GCM, (int)SILOFS_CIPHER_MODE_DEFAULT);
+	SILOFS_STATICASSERT_EQ(GCRY_CIPHER_AES256,
+	                       (int)SILOFS_CIPHER_ALGO_DEFAULT);
+	SILOFS_STATICASSERT_EQ(GCRY_CIPHER_MODE_GCM,
+	                       (int)SILOFS_CIPHER_MODE_DEFAULT);
 
 	err = silofs_check_cipher_args(algo, mode);
 	if (err) {

@@ -85,6 +85,7 @@ struct silofs_vnode_info {
 /* lsmap */
 struct silofs_lsmap_info {
 	struct silofs_vnode_info ls_vni;
+	struct silofs_lsmap     *lsm;
 };
 
 /* inode */

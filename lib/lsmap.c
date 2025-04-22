@@ -20,11 +20,8 @@
 #include <limits.h>
 #include <silofs/errors.h>
 #include <silofs/panic.h>
-#include "infra/utility.h"
-#include "addr/htox.h"
-#include "addr/ltype.h"
-#include "addr/laddr.h"
-#include "addr/vaddr.h"
+#include "infra.h"
+#include "addr.h"
 #include "private.h"
 #include "lnodes.h"
 #include "lsmap.h"

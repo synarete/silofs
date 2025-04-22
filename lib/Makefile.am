@@ -99,6 +99,7 @@ libsilofs_la_SOURCES += hmdq/dirtyq.c
 libsilofs_la_SOURCES += hmdq/dirtyq.h
 libsilofs_la_SOURCES += hmdq/hmapq.c
 libsilofs_la_SOURCES += hmdq/hmapq.h
+libsilofs_la_SOURCES += hmdq.h
 libsilofs_la_SOURCES += appexec.c
 libsilofs_la_SOURCES += arre.c
 libsilofs_la_SOURCES += bootrec.c

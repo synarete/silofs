@@ -17,8 +17,8 @@
 #ifndef SILOFS_PNODES_H_
 #define SILOFS_PNODES_H_
 
-#include "addr/paddr.h"
-#include "hmdq/hmapq.h"
+#include "addr.h"
+#include "hmdq.h"
 
 #define SILOFS_BTREE_KEY_NULL (0)
 

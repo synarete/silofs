@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 #include "configs.h"
-#include "crypt/ivkey.h"
+#include "crypt.h"
 #include "offlba.h"
 #include "htox.h"
 #include "uaddr.h"

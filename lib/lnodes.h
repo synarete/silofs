@@ -18,9 +18,8 @@
 #define SILOFS_LNODES_H_
 
 #include <silofs/types.h>
-#include "addr/offlba.h"
-#include "addr/vaddr.h"
-#include "hmdq/hmapq.h"
+#include "addr.h"
+#include "hmdq.h"
 
 struct silofs_lnode_info;
 struct silofs_unode_info;

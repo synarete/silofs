@@ -17,8 +17,7 @@
 #ifndef SILOFS_PCACHE_H_
 #define SILOFS_PCACHE_H_
 
-#include "hmdq/hmapq.h"
-#include "hmdq/dirtyq.h"
+#include "hmdq.h"
 
 struct silofs_alloc;
 struct silofs_paddr;

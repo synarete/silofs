@@ -17,7 +17,7 @@
 #ifndef SILOFS_LADDR_H_
 #define SILOFS_LADDR_H_
 
-#include "crypt/ivkey.h"
+#include "crypt.h"
 
 struct silofs_strbuf;
 

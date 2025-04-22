@@ -310,7 +310,7 @@ clean: params
 maintainer-clean: params
 	$(call submake, $@)
 
-dist: check
+dist: configure
 	$(call submake, $@)
 
 

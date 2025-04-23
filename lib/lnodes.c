@@ -840,11 +840,15 @@ lsi_init(struct silofs_lsmap_info *lsi, const struct silofs_vaddr *vaddr,
 {
 	vni_init(&lsi->ls_vni, vaddr, view);
 	lsi->lsm = &view->u.lsm;
+	lsi->ls_nused_bytes = 0;
+	lsi->ls_off_hint = 0;
 }
 
 static void lsi_fini(struct silofs_lsmap_info *lsi)
 {
 	vni_fini(&lsi->ls_vni);
+	lsi->ls_nused_bytes = UINT_MAX;
+	lsi->ls_off_hint = -1;
 }
 
 static struct silofs_lsmap_info *lsi_malloc(struct silofs_alloc *alloc)

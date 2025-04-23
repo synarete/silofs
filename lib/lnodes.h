@@ -85,6 +85,8 @@ struct silofs_vnode_info {
 struct silofs_lsmap_info {
 	struct silofs_vnode_info ls_vni;
 	struct silofs_lsmap     *lsm;
+	size_t                   ls_nused_bytes;
+	loff_t                   ls_off_hint;
 };
 
 /* inode */

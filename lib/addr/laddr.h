@@ -155,6 +155,8 @@ void silofs_llink_reset(struct silofs_llink *llink);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+bool silofs_lrange_isvalid(const struct silofs_lrange *lrange);
+
 size_t silofs_lrange_len(const struct silofs_lrange *lrange);
 
 bool silofs_lrange_within(const struct silofs_lrange *lrange, loff_t off);

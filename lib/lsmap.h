@@ -22,7 +22,16 @@
 void silofs_lsi_get_lrange(const struct silofs_lsmap_info *lsi,
                            struct silofs_lrange           *out_lrange);
 
-void silofs_lsi_setup_spawned(struct silofs_lsmap_info *lsi, loff_t beg);
+void silofs_lsi_setup_spawned(struct silofs_lsmap_info *lsi,
+                              enum silofs_ltype reftype, loff_t beg);
+
+void silofs_lsi_update_nused(struct silofs_lsmap_info *lsi);
+
+bool silofs_lsi_has_allocated_with(const struct silofs_lsmap_info *lsi,
+                                   const struct silofs_vaddr      *vaddr);
+
+int silofs_lsi_find_free_space(const struct silofs_lsmap_info *lsi,
+                               struct silofs_vaddr            *out_vaddr);
 
 int silofs_verify_lsmap(const struct silofs_lsmap *lsm);
 

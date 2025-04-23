@@ -606,6 +606,12 @@ static void len_height_to_cpu(uint64_t len_height, size_t *out_len,
 	silofs_assert_le(*out_height, SILOFS_HEIGHT_SUPER);
 }
 
+bool silofs_lrange_isvalid(const struct silofs_lrange *lrange)
+{
+	return ((lrange->beg >= 0) && (lrange->end >= 0) &&
+	        (lrange->beg < lrange->end));
+}
+
 size_t silofs_lrange_len(const struct silofs_lrange *lrange)
 {
 	return silofs_off_ulen(lrange->beg, lrange->end);

@@ -864,8 +864,8 @@ static size_t spleaf_refltype_nkb(const struct silofs_spmap_leaf *spl)
 	return silofs_ltype_nkbs(refltype);
 }
 
-static int spleaf_find_nfree_at(const struct silofs_spmap_leaf *spl, size_t bn,
-                                size_t *out_kbn)
+static int spleaf_find_free_at(const struct silofs_spmap_leaf *spl, size_t bn,
+                               size_t *out_kbn)
 {
 	const size_t nkb = spleaf_refltype_nkb(spl);
 	const struct silofs_lbk_ref *lbr = spleaf_lbr_at(spl, bn);
@@ -884,7 +884,7 @@ static int spleaf_find_free(const struct silofs_spmap_leaf *spl, size_t bn_beg,
 	int err = -SILOFS_ENOSPC;
 
 	for (size_t bn = bn_beg; bn < bn_end; ++bn) {
-		err = spleaf_find_nfree_at(spl, bn, &kbn);
+		err = spleaf_find_free_at(spl, bn, &kbn);
 		if (!err) {
 			*out_bn = bn;
 			*out_kbn = kbn;
@@ -1156,7 +1156,7 @@ static void sli_vaddr_at(const struct silofs_spleaf_info *sli, size_t bn,
 	silofs_vaddr_by_spleaf(out_vaddr, refltype, beg, bn, kbn);
 }
 
-static size_t sli_start_bn_hint(const struct silofs_spleaf_info *sli)
+static size_t sli_start_bn(const struct silofs_spleaf_info *sli)
 {
 	struct silofs_lrange lrange;
 	loff_t voff_beg = sli->sl_voff_hint;
@@ -1176,10 +1176,10 @@ static size_t sli_finish_bn(const struct silofs_spleaf_info *sli)
 	return sli_voff_to_bn(sli, lrange.end);
 }
 
-static int sli_find_free_space_from(const struct silofs_spleaf_info *sli,
-                                    struct silofs_vaddr *out_vaddr)
+static int sli_find_free_space(const struct silofs_spleaf_info *sli,
+                               struct silofs_vaddr *out_vaddr)
 {
-	size_t bn_beg = sli_start_bn_hint(sli);
+	size_t bn_beg = sli_start_bn(sli);
 	size_t bn_end = sli_finish_bn(sli);
 	size_t bn = 0;
 	size_t kbn = 0;
@@ -1209,7 +1209,7 @@ static size_t sli_refltype_size(const struct silofs_spleaf_info *sli)
 	return silofs_ltype_size(sli_refltype(sli));
 }
 
-static int sli_cap_allocate(const struct silofs_spleaf_info *sli)
+static bool sli_cap_allocate(const struct silofs_spleaf_info *sli)
 {
 	const size_t nlimit = sli_lrange_len(sli);
 	const size_t nbytes_want = sli_refltype_size(sli);
@@ -1218,23 +1218,18 @@ static int sli_cap_allocate(const struct silofs_spleaf_info *sli)
 	silofs_assert_le(nlimit, SILOFS_LSEG_SIZE_MAX);
 	silofs_assert_le(nbytes_used, SILOFS_LSEG_SIZE_MAX);
 
-	return ((nbytes_used + nbytes_want) <= nlimit) ? 0 : -SILOFS_ENOSPC;
+	return ((nbytes_used + nbytes_want) <= nlimit);
 }
 
 int silofs_sli_find_free_space(const struct silofs_spleaf_info *sli,
                                struct silofs_vaddr *out_vaddr)
 {
-	int err;
+	int ret = -SILOFS_ENOSPC;
 
-	err = sli_cap_allocate(sli);
-	if (err) {
-		return err;
+	if (sli_cap_allocate(sli)) {
+		ret = sli_find_free_space(sli, out_vaddr);
 	}
-	err = sli_find_free_space_from(sli, out_vaddr);
-	if (err) {
-		return err;
-	}
-	return 0;
+	return ret;
 }
 
 void silofs_sli_mark_allocated_space(struct silofs_spleaf_info *sli,

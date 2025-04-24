@@ -1232,6 +1232,20 @@ int silofs_sli_find_free_space(const struct silofs_spleaf_info *sli,
 	return ret;
 }
 
+void silofs_sli_update_voff_hint(struct silofs_spleaf_info *sli,
+                                 const struct silofs_vaddr *vaddr)
+{
+	struct silofs_lrange lrange;
+	const loff_t voff = vaddr->off;
+
+	silofs_sli_vspace_range(sli, &lrange);
+	if (silofs_lrange_within(&lrange, voff)) {
+		sli->sl_voff_hint = voff;
+	} else {
+		sli->sl_voff_hint = lrange.beg;
+	}
+}
+
 void silofs_sli_mark_allocated_space(struct silofs_spleaf_info *sli,
                                      const struct silofs_vaddr *vaddr)
 {

@@ -223,6 +223,7 @@ static int spac_do_find_free_vspace_at(struct silofs_spalloc_ctx *spa_ctx,
 	if (err) {
 		return err;
 	}
+	silofs_sli_update_voff_hint(spa_ctx->sli, out_vaddr);
 	return 0;
 }
 

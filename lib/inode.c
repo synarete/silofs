@@ -1399,9 +1399,9 @@ void silofs_ii_refresh_atime(struct silofs_inode_info *ii, bool to_volatile)
 static blkcnt_t recalc_iblocks(const struct silofs_inode_info *ii,
                                enum silofs_ltype ltype, long dif)
 {
-	blkcnt_t cnt;
-	const size_t nkbs = ltype_nkbs(ltype);
+	const size_t nkbs = silofs_ltype_nkbs(ltype);
 	const blkcnt_t blocks = ii_blocks(ii);
+	blkcnt_t cnt;
 
 	if (dif > 0) {
 		cnt = blocks + (blkcnt_t)(nkbs * (size_t)dif);

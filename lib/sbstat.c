@@ -410,14 +410,16 @@ static ssize_t spgs_ninodes(const struct silofs_space_gauges *spgs)
 
 static ssize_t spgs_sum(const struct silofs_space_gauges *spgs)
 {
-	ssize_t sum = 0;
 	const ssize_t *cnt = NULL;
 	enum silofs_ltype ltype = SILOFS_LTYPE_NONE;
+	ssize_t ssz = 0;
+	ssize_t sum = 0;
 
 	while (++ltype < SILOFS_LTYPE_LAST) {
 		cnt = spgs_gauge_of(spgs, ltype);
 		if (likely(cnt != NULL)) {
-			sum += *cnt * ltype_ssize(ltype);
+			ssz = silofs_ltype_ssize(ltype);
+			sum += *cnt * ssz;
 		}
 	}
 	return sum;

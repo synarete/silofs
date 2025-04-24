@@ -766,6 +766,7 @@ sli_init(struct silofs_spleaf_info *sli, const struct silofs_uaddr *uaddr,
 	uni_init(&sli->sl_uni, uaddr, view);
 	sli->sl = &view->u.sl;
 	sli->sl_nused_bytes = 0;
+	sli->sl_voff_hint = 0;
 }
 
 static void sli_fini(struct silofs_spleaf_info *sli)
@@ -773,6 +774,7 @@ static void sli_fini(struct silofs_spleaf_info *sli)
 	uni_fini(&sli->sl_uni);
 	sli->sl = NULL;
 	sli->sl_nused_bytes = UINT_MAX;
+	sli->sl_voff_hint = -1;
 }
 
 static struct silofs_spleaf_info *sli_malloc(struct silofs_alloc *alloc)

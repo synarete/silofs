@@ -120,12 +120,12 @@ static bool ii_isftype2(const struct silofs_inode_info *ii)
 
 static loff_t off_max3(loff_t off1, loff_t off2, loff_t off3)
 {
-	return off_max(off_max(off1, off2), off3);
+	return silofs_off_max(silofs_off_max(off1, off2), off3);
 }
 
 static loff_t off_clamp(loff_t off1, loff_t off2, loff_t off3)
 {
-	return off_min(off_max(off1, off2), off3);
+	return silofs_off_min(silofs_off_max(off1, off2), off3);
 }
 
 static bool off_is_within(loff_t off, loff_t beg, loff_t end)
@@ -140,32 +140,33 @@ static bool off_is_lbk_aligned(loff_t off)
 
 static loff_t off_in_data(loff_t off, enum silofs_ltype ltype)
 {
-	const ssize_t len = ltype_ssize(ltype);
+	const ssize_t len = silofs_ltype_ssize(ltype);
 
 	return off % len;
 }
 
 static size_t len_to_next(loff_t off, enum silofs_ltype ltype)
 {
-	const ssize_t len = ltype_ssize(ltype);
-	const loff_t next = off_next(off, len);
+	const ssize_t len = silofs_ltype_ssize(ltype);
+	const loff_t next = silofs_off_next(off, len);
 
-	return off_ulen(off, next);
+	return silofs_off_ulen(off, next);
 }
 
 static size_t len_of_data(loff_t off, loff_t end, enum silofs_ltype ltype)
 {
-	const ssize_t len = ltype_ssize(ltype);
-	const loff_t next = off_next(off, len);
+	const ssize_t len = silofs_ltype_ssize(ltype);
+	const loff_t next = silofs_off_next(off, len);
 
-	return (next < end) ? off_ulen(off, next) : off_ulen(off, end);
+	return (next < end) ? silofs_off_ulen(off, next) :
+	                      silofs_off_ulen(off, end);
 }
 
 static bool off_is_partial(loff_t off, loff_t end, enum silofs_ltype ltype)
 {
-	const ssize_t data_len = ltype_ssize(ltype);
-	const loff_t off_start = off_align(off, data_len);
-	const ssize_t io_len = off_len(off, end);
+	const ssize_t data_len = silofs_ltype_ssize(ltype);
+	const loff_t off_start = silofs_off_align(off, data_len);
+	const ssize_t io_len = silofs_off_len(off, end);
 
 	return (off != off_start) || (io_len < data_len);
 }

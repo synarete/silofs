@@ -257,14 +257,15 @@ static void require_persistent_types_alignment2(void)
 	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_self, 192);
 	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_subrefs, 2048);
 	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_hdr, 0);
-	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_main_lsid, 32);
-	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_parent, 64);
-	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_self, 128);
-	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_lrange, 192);
+	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_lrange, 16);
+	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_refltype, 32);
+	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_main_lsid, 64);
+	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_parent, 128);
+	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_self, 192);
 	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_lbrs, 1024);
 	REQUIRE_OFFSET64(struct silofs_lsmap, lsm_hdr, 0);
 	REQUIRE_OFFSET64(struct silofs_lsmap, lsm_lrange, 16);
-	REQUIRE_OFFSET64(struct silofs_lsmap, lsm_reftype, 32);
+	REQUIRE_OFFSET64(struct silofs_lsmap, lsm_refltype, 32);
 	REQUIRE_OFFSET64(struct silofs_lsmap, lsm_lbms, 64);
 	REQUIRE_OFFSET64(struct silofs_lsmap, lsm_keys, 2048);
 }

@@ -70,6 +70,7 @@ struct silofs_spleaf_info {
 	struct silofs_unode_info  sl_uni;
 	struct silofs_spmap_leaf *sl;
 	size_t                    sl_nused_bytes;
+	loff_t                    sl_voff_hint;
 };
 
 /* vnode */

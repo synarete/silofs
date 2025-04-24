@@ -59,9 +59,7 @@ ssize_t silofs_ltype_ssize(enum silofs_ltype ltype);
 size_t silofs_ltype_nkbs(enum silofs_ltype ltype);
 
 #ifdef SILOFS_USE_PRIVATE
-#define ltype_nkbs(lt)          silofs_ltype_nkbs(lt)
 #define ltype_size(lt)          silofs_ltype_size(lt)
-#define ltype_ssize(lt)         silofs_ltype_ssize(lt)
 #define ltype_isnone(lt)        silofs_ltype_isnone(lt)
 #define ltype_isbootrec(lt)     silofs_ltype_isbootrec(lt)
 #define ltype_issuper(lt)       silofs_ltype_issuper(lt)

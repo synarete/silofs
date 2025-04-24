@@ -588,7 +588,7 @@ struct silofs_uaddr64b {
 struct silofs_lrange128 {
 	int64_t  beg;
 	uint64_t len_height;
-} silofs_attr_aligned8;
+} silofs_attr_aligned16;
 
 struct silofs_vaddr56 {
 	uint8_t b[7];
@@ -750,12 +750,14 @@ struct silofs_lbk_ref {
 
 struct silofs_spmap_leaf {
 	struct silofs_header    sl_hdr;
-	uint8_t                 sl_reserved1[16];
+	struct silofs_lrange128 sl_lrange;
+	uint8_t                 sl_refltype;
+	uint8_t                 sl_reserved1[31];
 	struct silofs_lsid32b   sl_main_lsid;
+	uint8_t                 sl_reserved2[32];
 	struct silofs_uaddr64b  sl_parent;
 	struct silofs_uaddr64b  sl_self;
-	struct silofs_lrange128 sl_lrange;
-	uint8_t                 sl_reserved2[816];
+	uint8_t                 sl_reserved3[768];
 	struct silofs_lbk_ref   sl_lbrs[SILOFS_SPMAP_NCHILDS];
 } silofs_attr_aligned64;
 
@@ -768,10 +770,10 @@ struct silofs_lbk_meta {
 struct silofs_lsmap {
 	struct silofs_header    lsm_hdr;
 	struct silofs_lrange128 lsm_lrange;
-	uint8_t                 lsm_reftype;
+	uint8_t                 lsm_refltype;
 	uint8_t                 lsm_reserved1[31];
 	struct silofs_lbk_meta  lsm_lbms[SILOFS_SPMAP_NCHILDS];
-	uint8_t                 lsm_reserved2[448];
+	uint8_t                 lsm_reserved3[448];
 	struct silofs_key       lsm_keys[SILOFS_SPMAP_NCHILDS];
 } silofs_attr_aligned64;
 

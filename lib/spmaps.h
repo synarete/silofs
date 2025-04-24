@@ -89,12 +89,15 @@ silofs_sli_laddr(const struct silofs_spleaf_info *sli);
 const struct silofs_uaddr *
 silofs_sli_uaddr(const struct silofs_spleaf_info *sli);
 
+enum silofs_ltype silofs_sli_refltype(const struct silofs_spleaf_info *sli);
+
 void silofs_sli_incref(struct silofs_spleaf_info *sli);
 
 void silofs_sli_decref(struct silofs_spleaf_info *sli);
 
 void silofs_sli_setup_spawned(struct silofs_spleaf_info *sli,
-                              const struct silofs_uaddr *parent, loff_t voff);
+                              const struct silofs_uaddr *parent,
+                              enum silofs_ltype refltype, loff_t voff);
 
 void silofs_sli_update_nused(struct silofs_spleaf_info *sli);
 
@@ -104,8 +107,7 @@ void silofs_sli_vspace_range(const struct silofs_spleaf_info *sli,
 loff_t silofs_sli_base_voff(const struct silofs_spleaf_info *sli);
 
 int silofs_sli_find_free_space(const struct silofs_spleaf_info *sli,
-                               loff_t voff_from, enum silofs_ltype ltype,
-                               struct silofs_vaddr *out_vaddr);
+                               struct silofs_vaddr             *out_vaddr);
 
 void silofs_sli_mark_allocated_space(struct silofs_spleaf_info *sli,
                                      const struct silofs_vaddr *vaddr);

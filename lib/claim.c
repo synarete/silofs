@@ -207,14 +207,15 @@ static int spac_resolve_llink(struct silofs_spalloc_ctx *spa_ctx,
 	                               out_llink);
 }
 
-static int
-spac_do_find_free_vspace_at(struct silofs_spalloc_ctx *spa_ctx, loff_t voff,
-                            struct silofs_vaddr *out_vaddr)
+static int spac_do_find_free_vspace_at(struct silofs_spalloc_ctx *spa_ctx,
+                                       struct silofs_vaddr *out_vaddr)
 {
-	const enum silofs_ltype ltype = spa_ctx->ltype;
+	const enum silofs_ltype refltype = silofs_sli_refltype(spa_ctx->sli);
 	int err;
 
-	err = silofs_sli_find_free_space(spa_ctx->sli, voff, ltype, out_vaddr);
+	silofs_assert_eq(refltype, spa_ctx->ltype);
+
+	err = silofs_sli_find_free_space(spa_ctx->sli, out_vaddr);
 	if (err) {
 		return err;
 	}
@@ -225,14 +226,13 @@ spac_do_find_free_vspace_at(struct silofs_spalloc_ctx *spa_ctx, loff_t voff,
 	return 0;
 }
 
-static int
-spac_find_free_vspace_at(struct silofs_spalloc_ctx *spa_ctx, loff_t voff,
-                         struct silofs_vaddr *out_vaddr)
+static int spac_find_free_vspace_at(struct silofs_spalloc_ctx *spa_ctx,
+                                    struct silofs_vaddr *out_vaddr)
 {
 	int err;
 
 	spac_increfs(spa_ctx);
-	err = spac_do_find_free_vspace_at(spa_ctx, voff, out_vaddr);
+	err = spac_do_find_free_vspace_at(spa_ctx, out_vaddr);
 	spac_decrefs(spa_ctx);
 	return err;
 }
@@ -250,7 +250,7 @@ static int spac_require_vspace_at(struct silofs_spalloc_ctx *spa_ctx,
 	if (err) {
 		return err;
 	}
-	err = spac_find_free_vspace_at(spa_ctx, voff, out_vaddr);
+	err = spac_find_free_vspace_at(spa_ctx, out_vaddr);
 	if (err) {
 		return err;
 	}
@@ -601,7 +601,7 @@ static int spac_rescan_free_vspace(struct silofs_spalloc_ctx *spa_ctx,
 		}
 		spac_set_hint(spa_ctx, voff);
 
-		err = spac_find_free_vspace_at(spa_ctx, voff, out_vaddr);
+		err = spac_find_free_vspace_at(spa_ctx, out_vaddr);
 		if (!err) {
 			return 0;
 		}

@@ -1568,8 +1568,10 @@ static void
 vstgc_setup_spawned_spleaf(const struct silofs_vstage_ctx *vstg_ctx,
                            struct silofs_spleaf_info *sli)
 {
+	silofs_assert(silofs_ltype_isvnode(vstg_ctx->vspace));
+
 	silofs_sli_setup_spawned(sli, silofs_sni_uaddr(vstg_ctx->sni1),
-	                         vstgc_lbk_voff(vstg_ctx));
+	                         vstg_ctx->vspace, vstgc_lbk_voff(vstg_ctx));
 }
 
 static int vstgc_spawn_spleaf_of(const struct silofs_vstage_ctx *vstg_ctx,

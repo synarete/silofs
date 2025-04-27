@@ -36,7 +36,7 @@ struct silofs_vaddrs {
 
 const struct silofs_vaddr *silofs_vaddr_none(void);
 
-size_t silofs_vaddr_length(const struct silofs_vaddr *vaddr);
+size_t silofs_vaddr_len(const struct silofs_vaddr *vaddr);
 
 long silofs_vaddr_compare(const struct silofs_vaddr *vaddr1,
                           const struct silofs_vaddr *vaddr2);
@@ -88,7 +88,7 @@ void silofs_vaddr64_xtoh(const struct silofs_vaddr64 *vadr,
 #define vaddr_setup(va, st, o)  silofs_vaddr_setup(va, st, o)
 #define vaddr_compare(va1, va2) silofs_vaddr_compare(va1, va2)
 #define vaddr_isequal(va1, va2) silofs_vaddr_isequal(va1, va2)
-#define vaddr_len(va)           silofs_vaddr_length(va)
+#define vaddr_len(va)           silofs_vaddr_len(va)
 #endif
 
 #endif /* SILOFS_VADDR_H_ */

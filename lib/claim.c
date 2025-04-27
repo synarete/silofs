@@ -425,7 +425,7 @@ int silofs_claim_ispace(struct silofs_task *task,
 static bool spac_has_dbkref_at(const struct silofs_spalloc_ctx *spa_ctx,
                                const struct silofs_vaddr *vaddr)
 {
-	const size_t cnt = silofs_sli_dbkref_at(spa_ctx->sli, vaddr);
+	const size_t cnt = silofs_sli_refcnt_at(spa_ctx->sli, vaddr);
 
 	return (cnt > 0);
 }

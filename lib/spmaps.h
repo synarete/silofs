@@ -139,12 +139,12 @@ void silofs_sli_clear_unwritten_at(struct silofs_spleaf_info *sli,
 void silofs_sli_mark_unwritten_at(struct silofs_spleaf_info *sli,
                                   const struct silofs_vaddr *vaddr);
 
-size_t silofs_sli_dbkref_at(const struct silofs_spleaf_info *sli,
+size_t silofs_sli_refcnt_at(const struct silofs_spleaf_info *sli,
                             const struct silofs_vaddr       *vaddr);
 
 void silofs_sli_vaddrs_at(const struct silofs_spleaf_info *sli,
-                          enum silofs_ltype ltype, silofs_lba_t lba,
-                          struct silofs_vaddrs *vas);
+                          const struct silofs_vaddr       *vaddr,
+                          struct silofs_vaddrs            *out_vaddrs);
 
 void silofs_sli_main_lseg(const struct silofs_spleaf_info *sli,
                           struct silofs_lsid              *out_lsid);

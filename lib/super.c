@@ -808,7 +808,7 @@ int silofs_test_shared_dbkref(struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	dbkref = silofs_sli_dbkref_at(sli, vaddr);
+	dbkref = silofs_sli_refcnt_at(sli, vaddr);
 	*out_res = (dbkref > 1);
 	return 0;
 }

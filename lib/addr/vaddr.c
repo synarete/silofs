@@ -69,7 +69,7 @@ const struct silofs_vaddr *silofs_vaddr_none(void)
 	return &s_vaddr_none;
 }
 
-size_t silofs_vaddr_length(const struct silofs_vaddr *vaddr)
+size_t silofs_vaddr_len(const struct silofs_vaddr *vaddr)
 {
 	return (size_t)ltype_size(vaddr->ltype);
 }

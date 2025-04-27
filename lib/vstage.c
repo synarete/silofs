@@ -2240,13 +2240,11 @@ static int vstgc_do_pre_clone_lbk(struct silofs_vstage_ctx *vstg_ctx,
 {
 	struct silofs_vnode_info *vni = NULL;
 	const struct silofs_vaddr *vaddrj = NULL;
-	const struct silofs_vaddr *vaddr = vstg_ctx->vaddr;
-	const silofs_lba_t lba = off_to_lba(vaddr->off);
 	int err;
 
 	STATICASSERT_EQ(ARRAY_SIZE(vis->vnis), ARRAY_SIZE(vis->vas.vaddr));
 
-	silofs_sli_vaddrs_at(vstg_ctx->sli, vaddr->ltype, lba, &vis->vas);
+	silofs_sli_vaddrs_at(vstg_ctx->sli, vstg_ctx->vaddr, &vis->vas);
 	for (size_t j = 0; j < vis->vas.count; ++j) {
 		vaddrj = &vis->vas.vaddr[j];
 		err = vstgc_pre_clone_stage_at(vstg_ctx, vaddrj, &vni);

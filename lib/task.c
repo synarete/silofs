@@ -82,7 +82,7 @@ static bool sqe_isappendable(const struct silofs_submitq_ent *sqe,
 	if (len > (size_t)len_max) {
 		return false;
 	}
-	if (!ltype_isinode(sqe->ltype)) {
+	if (!silofs_ltype_isinode(sqe->ltype)) {
 		return true;
 	}
 	/* for inodes require alignment on commit-len boundaries */

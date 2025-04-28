@@ -281,12 +281,13 @@ static int spac_claim_vspace_from_cache(struct silofs_spalloc_ctx *spa_ctx,
 {
 	struct silofs_spamaps *spam = spac_spamaps(spa_ctx);
 	const enum silofs_ltype ltype = spa_ctx->ltype;
+	const size_t len = silofs_ltype_size(ltype);
 	loff_t voff = SILOFS_OFF_NULL;
 	int err;
 
-	err = silofs_spamaps_trypop(spam, ltype, ltype_size(ltype), &voff);
+	err = silofs_spamaps_trypop(spam, ltype, len, &voff);
 	if (!err) {
-		vaddr_setup(out_vaddr, ltype, voff);
+		silofs_vaddr_setup(out_vaddr, ltype, voff);
 	}
 	return err;
 }
@@ -317,16 +318,16 @@ spac_require_unalloc_vspace(struct silofs_spalloc_ctx *spa_ctx, loff_t hint,
 static int spac_check_avail_space(const struct silofs_spalloc_ctx *spa_ctx)
 {
 	const struct silofs_sb_info *sbi = spa_ctx->sbi;
-	const size_t nb = ltype_size(spa_ctx->ltype);
+	const size_t nb = silofs_ltype_size(spa_ctx->ltype);
 	bool new_file;
 	bool ok;
 
 	ok = silofs_sbst_mayalloc_some(sbi, nb);
 	if (ok) {
-		if (ltype_isdata(spa_ctx->ltype)) {
+		if (silofs_ltype_isdata(spa_ctx->ltype)) {
 			ok = silofs_sbst_mayalloc_data(sbi, nb);
 		} else {
-			new_file = ltype_isinode(spa_ctx->ltype);
+			new_file = silofs_ltype_isinode(spa_ctx->ltype);
 			ok = silofs_sbst_mayalloc_meta(sbi, nb, new_file);
 		}
 	}
@@ -632,7 +633,7 @@ int silofs_reload_vspace(struct silofs_task *task)
 	int err;
 
 	while (++ltype < SILOFS_LTYPE_LAST) {
-		if (!ltype_isvnode(ltype)) {
+		if (!silofs_ltype_isvnode(ltype)) {
 			continue;
 		}
 		err = rescan_vspace_of(task, ltype);

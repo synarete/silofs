@@ -337,7 +337,7 @@ static enum silofs_ltype fli_ltype(const struct silofs_fileaf_info *fli)
 
 static size_t fli_data_len(const struct silofs_fileaf_info *fli)
 {
-	return ltype_size(fli_ltype(fli));
+	return silofs_ltype_size(fli_ltype(fli));
 }
 
 static void *fli_data_at(const struct silofs_fileaf_info *fli, loff_t pos)
@@ -1152,7 +1152,7 @@ static bool filc_has_tree_root(const struct silofs_file_ctx *f_ctx)
 	struct silofs_vaddr vaddr;
 
 	filc_tree_root_of(f_ctx, &vaddr);
-	return ltype_isftnode(vaddr.ltype);
+	return silofs_ltype_isftnode(vaddr.ltype);
 }
 
 static void filc_set_tree_root_at(const struct silofs_file_ctx *f_ctx,

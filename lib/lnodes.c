@@ -44,8 +44,8 @@ static void view_init_by(struct silofs_view *view, enum silofs_ltype ltype)
 {
 	size_t size;
 
-	if (!ltype_isdata(ltype)) {
-		size = ltype_size(ltype);
+	if (!silofs_ltype_isdata(ltype)) {
+		size = silofs_ltype_size(ltype);
 		silofs_memzero(view, size);
 		silofs_hdr_setup(&view->u.hdr, (uint8_t)ltype, size,
 		                 SILOFS_HDRF_LTYPE);
@@ -56,9 +56,9 @@ static struct silofs_view *
 view_new_by(struct silofs_alloc *alloc, enum silofs_ltype ltype)
 {
 	struct silofs_view *view = NULL;
-	const int flags = ltype_issuper(ltype) ? SILOFS_ALLOCF_BZERO : 0;
+	int flags = silofs_ltype_issuper(ltype) ? SILOFS_ALLOCF_BZERO : 0;
 
-	view = silofs_memalloc(alloc, ltype_size(ltype), flags);
+	view = silofs_memalloc(alloc, silofs_ltype_size(ltype), flags);
 	if (view != NULL) {
 		view_init_by(view, ltype);
 	}
@@ -80,12 +80,12 @@ view_new_by_vaddr(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 static void view_del(struct silofs_view *view, enum silofs_ltype ltype,
                      struct silofs_alloc *alloc, int flags)
 {
-	const size_t size = ltype_size(ltype);
+	const size_t size = silofs_ltype_size(ltype);
 
-	if (ltype_issuper(ltype)) {
+	if (silofs_ltype_issuper(ltype)) {
 		flags |= SILOFS_ALLOCF_TRYPUNCH;
 	}
-	if (!ltype_isdata(ltype)) {
+	if (!silofs_ltype_isdata(ltype)) {
 		silofs_memzero(view, min(size, sizeof(struct silofs_header)));
 	}
 	silofs_memfree(alloc, view, size, flags);
@@ -128,7 +128,7 @@ lni_unconst(const struct silofs_lnode_info *lni)
 static void lni_init(struct silofs_lnode_info *lni, enum silofs_ltype ltype,
                      struct silofs_view *view)
 {
-	silofs_hmqe_init(&lni->ln_hmqe, ltype_size(ltype));
+	silofs_hmqe_init(&lni->ln_hmqe, silofs_ltype_size(ltype));
 	silofs_avl_node_init(&lni->ln_ds_avl_node);
 	lni->ln_ltype = ltype;
 	lni->ln_ds_next = NULL;
@@ -1299,11 +1299,11 @@ fli_init(struct silofs_fileaf_info *fli, const struct silofs_vaddr *vaddr,
 {
 	vni_init(&fli->fl_vni, vaddr, view);
 
-	if (ltype_isdata1k(vaddr->ltype)) {
+	if (silofs_ltype_isdata1k(vaddr->ltype)) {
 		fli->flu.db1 = &view->u.dbk1;
-	} else if (ltype_isdata4k(vaddr->ltype)) {
+	} else if (silofs_ltype_isdata4k(vaddr->ltype)) {
 		fli->flu.db4 = &view->u.dbk4;
-	} else if (ltype_isdatabk(vaddr->ltype)) {
+	} else if (silofs_ltype_isdatabk(vaddr->ltype)) {
 		fli->flu.db = &view->u.dbk64;
 	}
 }
@@ -1368,7 +1368,7 @@ view_verify_by_hdr(const struct silofs_view *view, enum silofs_ltype ltype)
 {
 	const struct silofs_header *hdr = &view->u.hdr;
 
-	return silofs_hdr_verify(hdr, (uint8_t)ltype, ltype_size(ltype),
+	return silofs_hdr_verify(hdr, (uint8_t)ltype, silofs_ltype_size(ltype),
 	                         SILOFS_HDRF_CSUM | SILOFS_HDRF_LTYPE);
 }
 
@@ -1414,7 +1414,7 @@ verify_view_by(const struct silofs_view *view, const enum silofs_ltype ltype)
 {
 	int err;
 
-	if (ltype_isdata(ltype)) {
+	if (silofs_ltype_isdata(ltype)) {
 		return 0;
 	}
 	err = view_verify_by_hdr(view, ltype);

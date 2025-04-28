@@ -381,7 +381,7 @@ static void sb_clone_sproots(struct silofs_super_block *sb,
 	enum silofs_ltype ltype = SILOFS_LTYPE_NONE;
 
 	while (++ltype < SILOFS_LTYPE_LAST) {
-		if (ltype_isvnode(ltype)) {
+		if (silofs_ltype_isvnode(ltype)) {
 			sb_sproot_of(sb_other, ltype, &uaddr);
 			sb_set_sproot_of(sb, ltype, &uaddr);
 		}
@@ -491,7 +491,7 @@ static int sb_verify_sproots(const struct silofs_super_block *sb)
 	int err;
 
 	while (++ltype < SILOFS_LTYPE_LAST) {
-		if (!ltype_isvnode(ltype)) {
+		if (!silofs_ltype_isvnode(ltype)) {
 			continue;
 		}
 		sb_sproot_of(sb, ltype, &uaddr);

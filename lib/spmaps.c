@@ -1841,10 +1841,10 @@ static int verify_spmap_node_parent(const struct silofs_spmap_node *sn)
 		return -SILOFS_EFSCORRUPTED;
 	}
 	parent_ltype = silofs_uaddr_ltype(&parent_uaddr);
-	if ((height == height_max) && !ltype_issuper(parent_ltype)) {
+	if ((height == height_max) && !silofs_ltype_issuper(parent_ltype)) {
 		return -SILOFS_EFSCORRUPTED;
 	}
-	if ((height < height_max) && !ltype_isspnode(parent_ltype)) {
+	if ((height < height_max) && !silofs_ltype_isspnode(parent_ltype)) {
 		return -SILOFS_EFSCORRUPTED;
 	}
 	return 0;
@@ -1862,7 +1862,7 @@ static int verify_spmap_node_self(const struct silofs_spmap_node *sn)
 		return -SILOFS_EFSCORRUPTED;
 	}
 	ltype = silofs_uaddr_ltype(&uaddr);
-	if (!ltype_isspnode(ltype)) {
+	if (!silofs_ltype_isspnode(ltype)) {
 		return -SILOFS_EFSCORRUPTED;
 	}
 	height = silofs_uaddr_height(&uaddr);

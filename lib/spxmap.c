@@ -152,7 +152,7 @@ static void spe_del(struct silofs_spa_entry *spe, struct silofs_alloc *alloc)
 static unsigned int spamap_capacity(enum silofs_ltype ltype)
 {
 	const uint32_t mega = SILOFS_MEGA;
-	const uint32_t nmul = ltype_isdata(ltype) ? 16 : 4;
+	const uint32_t nmul = silofs_ltype_isdata(ltype) ? 16 : 4;
 
 	return (nmul * mega);
 }
@@ -449,7 +449,7 @@ static void spamap_set_hint(struct silofs_spamap *spa, loff_t off)
 static void spamap_init(struct silofs_spamap *spa, enum silofs_ltype ltype,
                         struct silofs_alloc *alloc)
 {
-	spalifo_init(&spa->spa_lifo, (unsigned int)ltype_size(ltype));
+	spalifo_init(&spa->spa_lifo, (unsigned int)silofs_ltype_size(ltype));
 	silofs_avl_init(&spa->spa_avl, spe_getkey, voff_compare, spa);
 	spa->spa_alloc = alloc;
 	spa->spa_cap_max = spamap_capacity(ltype);

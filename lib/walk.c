@@ -686,7 +686,7 @@ static int wac_traverse_spaces(struct silofs_walk_ctx *wa_ctx)
 	int err;
 
 	while (++ltype < SILOFS_LTYPE_LAST) {
-		if (!ltype_isvnode(ltype)) {
+		if (!silofs_ltype_isvnode(ltype)) {
 			continue;
 		}
 		err = wac_traverse_sptree_of(wa_ctx, ltype);

@@ -30,7 +30,7 @@ static uint64_t cpu_to_voff_ltype(loff_t voff, enum silofs_ltype ltype)
 	const uint64_t uoff = (uint64_t)voff;
 	const uint64_t ultype = (uint64_t)ltype;
 
-	if (!ltype_isnone(ltype)) {
+	if (!silofs_ltype_isnone(ltype)) {
 		silofs_assert_eq(uoff & mask, 0);
 
 		voff_ltype = ((uoff & ~mask) | (ultype & mask));
@@ -71,7 +71,7 @@ const struct silofs_vaddr *silofs_vaddr_none(void)
 
 size_t silofs_vaddr_len(const struct silofs_vaddr *vaddr)
 {
-	return (size_t)ltype_size(vaddr->ltype);
+	return (size_t)silofs_ltype_size(vaddr->ltype);
 }
 
 long silofs_vaddr_compare(const struct silofs_vaddr *vaddr1,
@@ -124,7 +124,7 @@ void silofs_vaddr_reset(struct silofs_vaddr *vaddr)
 
 bool silofs_vaddr_isnull(const struct silofs_vaddr *vaddr)
 {
-	return off_isnull(vaddr->off) || ltype_isnone(vaddr->ltype);
+	return off_isnull(vaddr->off) || silofs_ltype_isnone(vaddr->ltype);
 }
 
 bool silofs_vaddr_isdata(const struct silofs_vaddr *vaddr)

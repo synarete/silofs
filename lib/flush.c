@@ -28,22 +28,22 @@
 
 static bool lni_isunode(const struct silofs_lnode_info *lni)
 {
-	return ltype_isunode(lni->ln_ltype);
+	return silofs_ltype_isunode(lni->ln_ltype);
 }
 
 static bool lni_isvnode(const struct silofs_lnode_info *lni)
 {
-	return ltype_isvnode(lni->ln_ltype);
+	return silofs_ltype_isvnode(lni->ln_ltype);
 }
 
 static bool lni_isdata(const struct silofs_lnode_info *lni)
 {
-	return ltype_isdata(lni->ln_ltype);
+	return silofs_ltype_isdata(lni->ln_ltype);
 }
 
 static bool uni_issuper(const struct silofs_unode_info *uni)
 {
-	return ltype_issuper(uni_ltype(uni));
+	return silofs_ltype_issuper(uni_ltype(uni));
 }
 
 static struct silofs_unode_info *
@@ -276,9 +276,9 @@ static size_t flusher_dset_slot_of(const struct silofs_flusher *flusher,
 
 	STATICASSERT_EQ(ARRAY_SIZE(flusher->dset), 3);
 
-	if (ltype_isdata(ltype)) {
+	if (silofs_ltype_isdata(ltype)) {
 		slot = 0;
-	} else if (ltype_isvnode(ltype)) {
+	} else if (silofs_ltype_isvnode(ltype)) {
 		slot = 1;
 	} else {
 		slot = 2;

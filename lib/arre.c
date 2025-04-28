@@ -264,7 +264,7 @@ static bool adi_isbootrec(const struct silofs_ar_desc_info *adi)
 {
 	const enum silofs_ltype ltype = silofs_laddr_ltype(&adi->ard.laddr);
 
-	return ltype_isbootrec(ltype);
+	return silofs_ltype_isbootrec(ltype);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

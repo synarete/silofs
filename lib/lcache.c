@@ -61,12 +61,12 @@ dirtyqs_get(struct silofs_dirtyqs *dqs, enum silofs_ltype ltype)
 {
 	struct silofs_dirtyq *dq;
 
-	if (ltype_isinode(ltype)) {
+	if (silofs_ltype_isinode(ltype)) {
 		dq = &dqs->dq_iis;
-	} else if (ltype_isvnode(ltype)) {
+	} else if (silofs_ltype_isvnode(ltype)) {
 		dq = &dqs->dq_vnis;
 	} else {
-		silofs_assert(ltype_isunode(ltype));
+		silofs_assert(silofs_ltype_isunode(ltype));
 		dq = &dqs->dq_unis;
 	}
 	return dq;
@@ -103,7 +103,7 @@ static bool vni_isinode(const struct silofs_vnode_info *vni)
 {
 	const enum silofs_ltype ltype = vni_ltype(vni);
 
-	return ltype_isinode(ltype);
+	return silofs_ltype_isinode(ltype);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

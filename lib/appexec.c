@@ -181,7 +181,7 @@ static int retry_claim(struct silofs_task *task)
 	int err;
 
 	while (++ltype < SILOFS_LTYPE_LAST) {
-		if (!ltype_isvnode(ltype)) {
+		if (!silofs_ltype_isvnode(ltype)) {
 			continue;
 		}
 		err = do_claim_reclaim(task, ltype);
@@ -231,7 +231,7 @@ static int format_spmaps(struct silofs_task *task)
 	int err;
 
 	while (++ltype < SILOFS_LTYPE_LAST) {
-		if (!ltype_isvnode(ltype)) {
+		if (!silofs_ltype_isvnode(ltype)) {
 			continue;
 		}
 		err = format_spmaps_of(task, ltype);
@@ -275,7 +275,7 @@ static int format_nil_space(struct silofs_task *task)
 	int err;
 
 	while (++ltype < SILOFS_LTYPE_LAST) {
-		if (!ltype_isvnode(ltype)) {
+		if (!silofs_ltype_isvnode(ltype)) {
 			continue;
 		}
 		err = claim_offset_zero(task, ltype);

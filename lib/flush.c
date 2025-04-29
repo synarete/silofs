@@ -512,7 +512,7 @@ static int flusher_resolve_llink_of_vni(const struct silofs_flusher *flusher,
                                         const struct silofs_vnode_info *vni,
                                         struct silofs_llink *out_llink)
 {
-	silofs_llink_assign(out_llink, &vni->vn_llink);
+	silofs_llink_of_vni(NULL, vni, out_llink);
 	return flusher_require_mutable_llink(flusher, out_llink);
 }
 

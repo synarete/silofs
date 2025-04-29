@@ -1892,29 +1892,12 @@ static int vstgc_resolve_llink(struct silofs_vstage_ctx *vstg_ctx,
 	return 0;
 }
 
-int silofs_stage_spnode1_of(struct silofs_task *task,
-                            const struct silofs_vaddr *vaddr,
-                            enum silofs_stg_mode stg_mode,
-                            struct silofs_spnode_info **out_sni)
-{
-	struct silofs_vstage_ctx vstg_ctx;
-	int err;
-
-	vstgc_setup(&vstg_ctx, task, vaddr, stg_mode);
-	err = vstgc_stage_spnodes_of(&vstg_ctx);
-	if (err) {
-		return err;
-	}
-	*out_sni = vstg_ctx.sni1;
-	return 0;
-}
-
-int silofs_stage_spmaps_of(struct silofs_task *task,
+int silofs_stage_spleaf_of(struct silofs_task *task,
                            const struct silofs_vaddr *vaddr,
                            enum silofs_stg_mode stg_mode,
-                           struct silofs_spnode_info **out_sni,
                            struct silofs_spleaf_info **out_sli)
 {
+
 	struct silofs_vstage_ctx vstg_ctx;
 	int err;
 
@@ -1923,25 +1906,13 @@ int silofs_stage_spmaps_of(struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	*out_sni = vstg_ctx.sni1;
 	*out_sli = vstg_ctx.sli;
 	return 0;
 }
 
-int silofs_stage_spleaf_of(struct silofs_task *task,
-                           const struct silofs_vaddr *vaddr,
-                           enum silofs_stg_mode stg_mode,
-                           struct silofs_spleaf_info **out_sli)
-{
-	struct silofs_spnode_info *sni = NULL;
-
-	return silofs_stage_spmaps_of(task, vaddr, stg_mode, &sni, out_sli);
-}
-
-int silofs_require_spmaps_of(struct silofs_task *task,
+int silofs_require_spleaf_of(struct silofs_task *task,
                              const struct silofs_vaddr *vaddr,
                              enum silofs_stg_mode stg_mode,
-                             struct silofs_spnode_info **out_sni,
                              struct silofs_spleaf_info **out_sli)
 {
 	struct silofs_vstage_ctx vstg_ctx;
@@ -1960,7 +1931,6 @@ int silofs_require_spmaps_of(struct silofs_task *task,
 	if (err) {
 		return err;
 	}
-	*out_sni = vstg_ctx.sni1;
 	*out_sli = vstg_ctx.sli;
 	return 0;
 }

@@ -200,12 +200,10 @@ static int retry_claim(struct silofs_task *task)
 static int require_spmaps_of(struct silofs_task *task, enum silofs_ltype ltype)
 {
 	struct silofs_vaddr vaddr;
-	struct silofs_spnode_info *sni = NULL;
 	struct silofs_spleaf_info *sli = NULL;
 
 	silofs_vaddr_setup(&vaddr, ltype, 0);
-	return silofs_require_spmaps_of(task, &vaddr, SILOFS_STG_COW, &sni,
-	                                &sli);
+	return silofs_require_spleaf_of(task, &vaddr, SILOFS_STG_COW, &sli);
 }
 
 static int format_spmaps_of(struct silofs_task *task, enum silofs_ltype ltype)

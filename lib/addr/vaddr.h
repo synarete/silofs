@@ -50,6 +50,9 @@ void silofs_vaddr_setup(struct silofs_vaddr *vaddr, enum silofs_ltype ltype,
 void silofs_vaddr_setup2(struct silofs_vaddr *vaddr, enum silofs_ltype ltype,
                          silofs_lba_t lba);
 
+void silofs_vaddr_of_lsmap(struct silofs_vaddr *vaddr,
+                           enum silofs_ltype refltype, loff_t off);
+
 void silofs_vaddr_assign(struct silofs_vaddr       *vaddr,
                          const struct silofs_vaddr *other);
 

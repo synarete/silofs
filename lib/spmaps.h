@@ -76,11 +76,6 @@ int silofs_sni_resolve_child(const struct silofs_spnode_info *sni, loff_t voff,
 void silofs_sni_resolve_lmap(const struct silofs_spnode_info *sni,
                              struct silofs_spmap_lmap        *out_lmap);
 
-#ifdef SILOFS_USE_PRIVATE
-#define sni_incref(sni)         silofs_sni_incref(sni)
-#define sni_decref(sni)         silofs_sni_decref(sni)
-#endif
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 const struct silofs_laddr *
@@ -158,19 +153,16 @@ void silofs_sli_clone_from(struct silofs_spleaf_info       *sli,
 void silofs_sli_resolve_main_lbk(const struct silofs_spleaf_info *sli,
                                  loff_t voff, struct silofs_llink *out_llink);
 
-void silofs_sli_bind_child(struct silofs_spleaf_info *sli, loff_t voff,
-                           const struct silofs_llink *llink);
-
-int silofs_sli_resolve_child(const struct silofs_spleaf_info *sli, loff_t voff,
-                             struct silofs_llink *out_llink);
-
 void silofs_sli_resolve_lmap(const struct silofs_spleaf_info *sli,
                              struct silofs_spmap_lmap        *out_lmaps);
 
-#ifdef SILOFS_USE_PRIVATE
-#define sli_incref(sli)         silofs_sli_incref(sli)
-#define sli_decref(sli)         silofs_sli_decref(sli)
-#endif
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_resolve_llink_by(const struct silofs_spleaf_info *sli, loff_t voff,
+                            struct silofs_llink *out_llink);
+
+void silofs_rebind_llink_by(struct silofs_spleaf_info *sli, loff_t voff,
+                            const struct silofs_llink *llink);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

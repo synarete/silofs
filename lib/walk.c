@@ -69,20 +69,20 @@ static bool sni_has_subref(const struct silofs_spnode_info *sni, loff_t voff)
 static void wit_increfs(const struct silofs_walk_iter *witr)
 {
 	sbi_incref(witr->sbi);
-	sni_incref(witr->sni4);
-	sni_incref(witr->sni3);
-	sni_incref(witr->sni2);
-	sni_incref(witr->sni1);
-	sli_incref(witr->sli);
+	silofs_sni_incref(witr->sni4);
+	silofs_sni_incref(witr->sni3);
+	silofs_sni_incref(witr->sni2);
+	silofs_sni_incref(witr->sni1);
+	silofs_sli_incref(witr->sli);
 }
 
 static void wit_decrefs(const struct silofs_walk_iter *witr)
 {
-	sli_decref(witr->sli);
-	sni_decref(witr->sni1);
-	sni_decref(witr->sni2);
-	sni_decref(witr->sni3);
-	sni_decref(witr->sni4);
+	silofs_sli_decref(witr->sli);
+	silofs_sni_decref(witr->sni1);
+	silofs_sni_decref(witr->sni2);
+	silofs_sni_decref(witr->sni3);
+	silofs_sni_decref(witr->sni4);
 	sbi_decref(witr->sbi);
 }
 
@@ -298,9 +298,9 @@ static int wac_traverse_spleaf(struct silofs_walk_ctx *wa_ctx)
 {
 	int err;
 
-	sli_incref(wa_ctx->sli);
+	silofs_sli_incref(wa_ctx->sli);
 	err = wac_do_traverse_spleaf(wa_ctx);
-	sli_decref(wa_ctx->sli);
+	silofs_sli_decref(wa_ctx->sli);
 	return err;
 }
 
@@ -359,9 +359,9 @@ static int wac_traverse_spnode1(struct silofs_walk_ctx *wa_ctx)
 {
 	int ret;
 
-	sni_incref(wa_ctx->sni1);
+	silofs_sni_incref(wa_ctx->sni1);
 	ret = wac_do_traverse_spnode1(wa_ctx);
-	sni_decref(wa_ctx->sni1);
+	silofs_sni_decref(wa_ctx->sni1);
 	return ret;
 }
 
@@ -435,9 +435,9 @@ static int wac_traverse_spnode2(struct silofs_walk_ctx *wa_ctx)
 {
 	int ret;
 
-	sni_incref(wa_ctx->sni2);
+	silofs_sni_incref(wa_ctx->sni2);
 	ret = wac_do_traverse_spnode2(wa_ctx);
-	sni_decref(wa_ctx->sni2);
+	silofs_sni_decref(wa_ctx->sni2);
 	return ret;
 }
 
@@ -511,9 +511,9 @@ static int wac_traverse_spnode3(struct silofs_walk_ctx *wa_ctx)
 {
 	int ret;
 
-	sni_incref(wa_ctx->sni3);
+	silofs_sni_incref(wa_ctx->sni3);
 	ret = wac_do_traverse_spnode3(wa_ctx);
-	sni_decref(wa_ctx->sni3);
+	silofs_sni_decref(wa_ctx->sni3);
 	return ret;
 }
 
@@ -587,9 +587,9 @@ static int wac_traverse_spnode4(struct silofs_walk_ctx *wa_ctx)
 {
 	int ret;
 
-	sni_incref(wa_ctx->sni4);
+	silofs_sni_incref(wa_ctx->sni4);
 	ret = wac_do_traverse_spnode4(wa_ctx);
-	sni_decref(wa_ctx->sni4);
+	silofs_sni_decref(wa_ctx->sni4);
 	return ret;
 }
 

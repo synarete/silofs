@@ -595,19 +595,19 @@ static void vstgc_increfs(const struct silofs_vstage_ctx *vstg_ctx,
 		sbi_incref(vstg_ctx->sbi);
 	}
 	if (height_upto <= SILOFS_HEIGHT_SPNODE4) {
-		sni_incref(vstg_ctx->sni4);
+		silofs_sni_incref(vstg_ctx->sni4);
 	}
 	if (height_upto <= SILOFS_HEIGHT_SPNODE3) {
-		sni_incref(vstg_ctx->sni3);
+		silofs_sni_incref(vstg_ctx->sni3);
 	}
 	if (height_upto <= SILOFS_HEIGHT_SPNODE2) {
-		sni_incref(vstg_ctx->sni2);
+		silofs_sni_incref(vstg_ctx->sni2);
 	}
 	if (height_upto <= SILOFS_HEIGHT_SPNODE1) {
-		sni_incref(vstg_ctx->sni1);
+		silofs_sni_incref(vstg_ctx->sni1);
 	}
 	if (height_upto <= SILOFS_HEIGHT_SPLEAF) {
-		sli_incref(vstg_ctx->sli);
+		silofs_sli_incref(vstg_ctx->sli);
 	}
 }
 
@@ -615,19 +615,19 @@ static void vstgc_decrefs(const struct silofs_vstage_ctx *vstg_ctx,
                           enum silofs_height height_from)
 {
 	if (height_from <= SILOFS_HEIGHT_SPLEAF) {
-		sli_decref(vstg_ctx->sli);
+		silofs_sli_decref(vstg_ctx->sli);
 	}
 	if (height_from <= SILOFS_HEIGHT_SPNODE1) {
-		sni_decref(vstg_ctx->sni1);
+		silofs_sni_decref(vstg_ctx->sni1);
 	}
 	if (height_from <= SILOFS_HEIGHT_SPNODE2) {
-		sni_decref(vstg_ctx->sni2);
+		silofs_sni_decref(vstg_ctx->sni2);
 	}
 	if (height_from <= SILOFS_HEIGHT_SPNODE3) {
-		sni_decref(vstg_ctx->sni3);
+		silofs_sni_decref(vstg_ctx->sni3);
 	}
 	if (height_from <= SILOFS_HEIGHT_SPNODE4) {
-		sni_decref(vstg_ctx->sni4);
+		silofs_sni_decref(vstg_ctx->sni4);
 	}
 	if (height_from <= SILOFS_HEIGHT_SUPER) {
 		sbi_decref(vstg_ctx->sbi);
@@ -718,7 +718,7 @@ static int vstgc_resolve_spleaf_child(const struct silofs_vstage_ctx *vstg_ctx,
                                       const struct silofs_spleaf_info *sli,
                                       struct silofs_llink *out_llink)
 {
-	return silofs_sli_resolve_child(sli, vstg_ctx->voff, out_llink);
+	return silofs_resolve_llink_by(sli, vstg_ctx->voff, out_llink);
 }
 
 static int vstgc_do_stage_spnode_at(const struct silofs_vstage_ctx *vstg_ctx,
@@ -2122,6 +2122,7 @@ static int vstgc_clone_rebind_lbk(const struct silofs_vstage_ctx *vstg_ctx,
                                   const struct silofs_laddr *src_laddr)
 {
 	struct silofs_llink dst_llink;
+	const loff_t voff = vstg_ctx->vaddr->off;
 	int err;
 
 	err = vstgc_require_clone_lbk(vstg_ctx, &dst_llink);
@@ -2132,7 +2133,7 @@ static int vstgc_clone_rebind_lbk(const struct silofs_vstage_ctx *vstg_ctx,
 	if (err) {
 		return err;
 	}
-	silofs_sli_bind_child(vstg_ctx->sli, vstg_ctx->vaddr->off, &dst_llink);
+	silofs_rebind_llink_by(vstg_ctx->sli, voff, &dst_llink);
 	return 0;
 }
 

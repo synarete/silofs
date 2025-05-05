@@ -143,13 +143,13 @@ static void spac_setup(struct silofs_spalloc_ctx *spa_ctx,
 static void spac_incref(const struct silofs_spalloc_ctx *spa_ctx)
 {
 	silofs_assert_not_null(spa_ctx->sli);
-	sli_incref(spa_ctx->sli);
+	silofs_sli_incref(spa_ctx->sli);
 }
 
 static void spac_decref(const struct silofs_spalloc_ctx *spa_ctx)
 {
 	silofs_assert_not_null(spa_ctx->sli);
-	sli_decref(spa_ctx->sli);
+	silofs_sli_decref(spa_ctx->sli);
 }
 
 static int spac_stage_spleaf_of(struct silofs_spalloc_ctx *spa_ctx, loff_t off)

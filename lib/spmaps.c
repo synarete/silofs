@@ -966,14 +966,13 @@ static void spleaf_child_of(const struct silofs_spmap_leaf *spl, loff_t voff,
 	lbr_subref(lbr, out_laddr);
 }
 
-static void spleaf_bind_child(struct silofs_spmap_leaf *spl, loff_t voff,
-                              const struct silofs_llink *llink)
+static void spleaf_set_child_of(struct silofs_spmap_leaf *spl, loff_t voff,
+                                const struct silofs_laddr *laddr)
 {
 	struct silofs_lbk_ref *lbr = spleaf_lbr_by_voff(spl, voff);
 
 	silofs_assert_gt(lbr_usecnt(lbr), 0);
-	lbr_set_subref(lbr, &llink->laddr);
-	lbr_set_key(lbr, &llink->ivkey.key);
+	lbr_set_subref(lbr, laddr);
 }
 
 static void spleaf_gen_child_keys(struct silofs_spmap_leaf *spl)
@@ -1000,6 +999,14 @@ static void spleaf_child_key_of(const struct silofs_spmap_leaf *spl,
 	const size_t slot = spleaf_slot_of(spl, voff);
 
 	silofs_key_assign(out_key, spleaf_child_key_at(spl, slot));
+}
+
+static void spleaf_set_child_key_of(struct silofs_spmap_leaf *spl, loff_t voff,
+                                    const struct silofs_key *key)
+{
+	struct silofs_lbk_ref *lbr = spleaf_lbr_by_voff(spl, voff);
+
+	lbr_set_key(lbr, key);
 }
 
 static void
@@ -1384,28 +1391,48 @@ void silofs_sli_resolve_main_lbk(const struct silofs_spleaf_info *sli,
 	silofs_llink_setup(out_llink, &laddr, &key);
 }
 
-int silofs_sli_resolve_child(const struct silofs_spleaf_info *sli, loff_t voff,
-                             struct silofs_llink *out_llink)
+static int sli_resolve_child(const struct silofs_spleaf_info *sli, loff_t voff,
+                             struct silofs_laddr *out_laddr)
 {
-	struct silofs_laddr laddr;
 	struct silofs_key key;
 
 	if (!sli_is_inrange(sli, voff)) {
 		return -SILOFS_ERANGE;
 	}
-	spleaf_resolve_child(sli->sl, voff, &laddr, &key);
-	if (silofs_laddr_isnull(&laddr)) {
+	spleaf_resolve_child(sli->sl, voff, out_laddr, &key);
+	if (silofs_laddr_isnull(out_laddr)) {
 		return -SILOFS_ENOENT;
 	}
-	silofs_laddr_setpos(&laddr, voff);
-	silofs_llink_setup(out_llink, &laddr, &key);
+	silofs_laddr_setpos(out_laddr, voff);
 	return 0;
 }
 
-void silofs_sli_bind_child(struct silofs_spleaf_info *sli, loff_t voff,
-                           const struct silofs_llink *llink)
+static void sli_bind_child(struct silofs_spleaf_info *sli, loff_t voff,
+                           const struct silofs_laddr *laddr)
 {
-	spleaf_bind_child(sli->sl, voff, llink);
+	spleaf_set_child_of(sli->sl, voff, laddr);
+	sli_dirtify(sli);
+}
+
+static int sli_resolve_key(const struct silofs_spleaf_info *sli, loff_t voff,
+                           struct silofs_key *out_key)
+{
+	struct silofs_laddr laddr;
+
+	if (!sli_is_inrange(sli, voff)) {
+		return -SILOFS_ERANGE;
+	}
+	spleaf_resolve_child(sli->sl, voff, &laddr, out_key);
+	if (silofs_laddr_isnull(&laddr)) {
+		return -SILOFS_ENOENT;
+	}
+	return 0;
+}
+
+static void sli_bind_key(struct silofs_spleaf_info *sli, loff_t voff,
+                         const struct silofs_key *key)
+{
+	spleaf_set_child_key_of(sli->sl, voff, key);
 	sli_dirtify(sli);
 }
 
@@ -1504,7 +1531,35 @@ void silofs_sli_resolve_lmap(const struct silofs_spleaf_info *sli,
 	silofs_assert_eq(nbytes, nused);
 }
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+int silofs_resolve_llink_by(const struct silofs_spleaf_info *sli, loff_t voff,
+                            struct silofs_llink *out_llink)
+{
+	struct silofs_laddr laddr;
+	struct silofs_key key;
+	int err;
+
+	err = sli_resolve_key(sli, voff, &key);
+	if (err) {
+		return err;
+	}
+	err = sli_resolve_child(sli, voff, &laddr);
+	if (err) {
+		return err;
+	}
+	silofs_llink_setup(out_llink, &laddr, &key);
+	return 0;
+}
+
+void silofs_rebind_llink_by(struct silofs_spleaf_info *sli, loff_t voff,
+                            const struct silofs_llink *llink)
+{
+	sli_bind_key(sli, voff, &llink->ivkey.key);
+	sli_bind_child(sli, voff, &llink->laddr);
+}
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static struct silofs_unode_info *sni_uni(const struct silofs_spnode_info *sni)
 {
@@ -1728,7 +1783,7 @@ void silofs_sni_resolve_lmap(const struct silofs_spnode_info *sni,
 	}
 }
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static int verify_spnode_height(enum silofs_height height)
 {

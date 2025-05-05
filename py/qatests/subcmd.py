@@ -332,10 +332,10 @@ class _Unitests(_SubcmdExec):
 
 
 class _Fnctests(_SubcmdExec):
-    """Wrapper over silofs-fnctests command-line front-end."""
+    """Wrapper over silofs-ftests command-line front-end."""
 
     def __init__(self) -> None:
-        _SubcmdExec.__init__(self, "silofs-fnctests")
+        _SubcmdExec.__init__(self, "silofs-ftests")
 
     def version(self) -> str:
         return self.execute_sub(["-v"])
@@ -389,5 +389,5 @@ class Subcmds:
         self.sh = _Shell()
         self.silofs = _Silofs(use_stdalloc, allow_coredump)
         self.utests = _Unitests()
-        self.fnctests = _Fnctests()
+        self.ftests = _Fnctests()
         self.git = _Git()

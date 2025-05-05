@@ -887,7 +887,7 @@ static int arc_fs_bootrec_caddr(const struct silofs_ar_ctx *ar_ctx,
 static int arc_export_bootrec(const struct silofs_ar_ctx *ar_ctx,
                               struct silofs_ar_desc_info *adi)
 {
-	struct silofs_bootrec1k bootrec1k = { .ub_magic = 0xff };
+	struct silofs_bootrec1k bootrec1k = { .br_magic = 0xff };
 	struct silofs_caddr caddr = { .ctype = SILOFS_CTYPE_NONE };
 	int err;
 
@@ -912,7 +912,7 @@ static int arc_export_bootrec(const struct silofs_ar_ctx *ar_ctx,
 static int arc_import_bootrec(const struct silofs_ar_ctx *ar_ctx,
                               const struct silofs_ar_desc_info *adi)
 {
-	struct silofs_bootrec1k bootrec1k = { .ub_magic = 0xff };
+	struct silofs_bootrec1k bootrec1k = { .br_magic = 0xff };
 	const struct silofs_caddr *caddr = &adi->ard.caddr;
 	int err;
 

@@ -601,21 +601,21 @@ struct silofs_vaddr64 {
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 struct silofs_bootrec1k {
-	uint64_t                ub_magic;
-	uint64_t                ub_version;
-	struct silofs_uuid      ub_uuid;
-	uint64_t                ub_flags;
-	uint32_t                ub_chiper_algo;
-	uint32_t                ub_chiper_mode;
-	uint8_t                 ub_reserved1[16];
-	struct silofs_key       ub_main_key;
-	struct silofs_iv        ub_main_iv;
-	uint8_t                 ub_reserved2[16];
-	struct silofs_uaddr64b  ub_sb_uaddr;
-	uint8_t                 ub_reserved3[64];
-	struct silofs_pvsegr64b ub_pvsegr;
-	uint8_t                 ub_reserved4[672];
-	struct silofs_hash256   ub_hash;
+	uint64_t                br_magic;
+	uint64_t                br_version;
+	struct silofs_uuid      br_uuid;
+	uint64_t                br_flags;
+	uint32_t                br_chiper_algo;
+	uint32_t                br_chiper_mode;
+	uint8_t                 br_reserved1[16];
+	struct silofs_key       br_main_key;
+	struct silofs_iv        br_main_iv;
+	uint8_t                 br_reserved2[16];
+	struct silofs_uaddr64b  br_sb_uaddr;
+	uint8_t                 br_reserved3[64];
+	struct silofs_pvsegr64b br_pvsegr;
+	uint8_t                 br_reserved4[672];
+	struct silofs_hash256   br_hash;
 } silofs_attr_aligned64;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

@@ -79,7 +79,7 @@ Various testing programs for silofs.
 
 %files devel
 %defattr(-, root, root)
-%{_bindir}/%{name}-unitests
+%{_bindir}/%{name}-utests
 %{_bindir}/%{name}-fnctests
 %{_bindir}/%{name}-qatests
 %{_prefix}/lib/python3*/site-packages/%{name}/qatests/*

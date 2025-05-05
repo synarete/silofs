@@ -54,7 +54,7 @@ run "${basedir}"/bootstrap
 run mkdir -p "${autotoolsdir}"
 cd "${autotoolsdir}"
 run "${basedir}"/configure \
-    "--enable-unitests=1" "--enable-compile-warnings=error"
+    "--enable-utests=1" "--enable-compile-warnings=error"
 run make distcheck
 
 # Pre rpmbuild

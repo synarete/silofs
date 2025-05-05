@@ -90,7 +90,7 @@ endif
 # Configure options
 CONFIGURE_OPTS += --prefix=$(PREFIX)
 CONFIGURE_OPTS += --disable-shared
-CONFIGURE_OPTS += --enable-unitests=2
+CONFIGURE_OPTS += --enable-utests=2
 CONFIGURE_OPTS += --enable-compile-warnings=no
 ifeq ($(D), 2)
 CONFIGURE_OPTS += --enable-debug=profile

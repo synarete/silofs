@@ -29,7 +29,7 @@ msg "prepare workdir: $*"
 dist_name="$(basename -s .tar.gz "${archive_file}")"
 archive_tgz="${dist_name}.tar.gz"
 workdir="${citests_dir}/${dist_name}"
-unitestsdir="${workdir}/build/test/unitests/"
+utestsdir="${workdir}/build/test/utests/"
 run mkdir -p "${workdir}"
 run rm -rf "${workdir}"
 
@@ -79,15 +79,15 @@ run make -f devel.mk reset
 msg "run sanitizer check"
 run make -f devel.mk O=1 SANITIZER=1
 run env ASAN_OPTIONS=detect_leaks=1 \
-  LSAN_OPTIONS=suppressions="${workdir}/test/unitests/lsan_suppressions.txt" \
-  "${unitestsdir}/silofs-unitests" "${unitestsdir}/ut" -M -l1
+  LSAN_OPTIONS=suppressions="${workdir}/test/utests/lsan_suppressions.txt" \
+  "${utestsdir}/silofs-utests" "${utestsdir}/ut" -M -l1
 run make -f devel.mk reset
 
 ###
 msg "run valgrind check"
 run make -f devel.mk
 run valgrind --tool=memcheck --error-exitcode=1 \
-  "${unitestsdir}/silofs-unitests" "${unitestsdir}/ut" -M -l1
+  "${utestsdir}/silofs-utests" "${utestsdir}/ut" -M -l1
 run make -f devel.mk reset
 
 ###
@@ -101,7 +101,7 @@ run ../configure --prefix="${workdir}/build/local" \
 run make install
 # this one fails on ubuntu, so just execute it without die-upon-failure
 env HEAPCHECK=normal HEAP_CHECK_TEST_POINTER_ALIGNMENT=1 \
-  "${workdir}/build/local/bin/silofs-unitests" \
+  "${workdir}/build/local/bin/silofs-utests" \
   -M -l2 "${workdir}/build/local/tmp"
 cdx "${currdir}"
 run rm -rf "${workdir}"

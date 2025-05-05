@@ -22,7 +22,7 @@ TESTS = [
     test_basic.test_mkfs_mount_with_opts,
     test_io.test_rw_text,
     test_io.test_rw_rands,
-    test_self.test_unitests,
+    test_self.test_utests,
     test_io.test_reload,
     test_io.test_reload_n,
     test_io.test_async_io,

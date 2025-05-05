@@ -100,7 +100,7 @@ jobs:
       - name: Bootstrap
         run: ./bootstrap
       - name: Configure
-        run: ./configure --enable-unitests=1
+        run: ./configure --enable-utests=1
       - name: Build
         run: make
       - name: Check

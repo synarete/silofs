@@ -33,7 +33,7 @@ disttgz="${distname}.tar.gz"
 cdx "${autotoolsdir}"
 run "${basedir}"/bootstrap
 run "${basedir}"/configure \
-  "--enable-unitests=0" \
+  "--enable-utests=0" \
   "--enable-compile-warnings=error"
 run make dist
 run stat "${autotoolsdir}/${disttgz}"

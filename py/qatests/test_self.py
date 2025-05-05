@@ -6,21 +6,21 @@ from . import utils
 from .ctx import TestEnv
 
 
-def test_unitests(env: TestEnv) -> None:
+def test_utests(env: TestEnv) -> None:
     ut_pre_dname = "pre-uniests"
     env.exec_setup_fs(64, writeback_cache=False)
     tds = env.make_tds(128, ut_pre_dname, 2**20)
     tds.do_makedirs()
     tds.do_write()
-    ut_dname = "unitests"
+    ut_dname = "utests"
     ut_root = env.create_fstree(ut_dname)
-    env.subcmd.unitests.version()
-    env.subcmd.unitests.run(ut_root, level=2)
+    env.subcmd.utests.version()
+    env.subcmd.utests.run(ut_root, level=2)
     env.remove_fstree(ut_dname)
-    ut_dname = "unitests-malloc"
+    ut_dname = "utests-malloc"
     ut_root = env.create_fstree(ut_dname)
-    env.subcmd.unitests.version()
-    env.subcmd.unitests.run(ut_root, level=2, malloc=True)
+    env.subcmd.utests.version()
+    env.subcmd.utests.run(ut_root, level=2, malloc=True)
     env.remove_fstree(ut_dname)
     tds.do_read()
     tds.do_unlink()

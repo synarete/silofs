@@ -112,6 +112,7 @@ void silofs_vaddr_setup2(struct silofs_vaddr *vaddr, enum silofs_ltype ltype,
 void silofs_vaddr_of_lsmap(struct silofs_vaddr *vaddr,
                            enum silofs_ltype refltype, loff_t pos)
 {
+	const ssize_t step = sizeof(struct silofs_lsmap);
 	ssize_t lseg_idx;
 	ssize_t refl_idx;
 	ssize_t span;
@@ -121,7 +122,7 @@ void silofs_vaddr_of_lsmap(struct silofs_vaddr *vaddr,
 	STATICASSERT_EQ(SILOFS_LTYPE_INODE, 6);
 	STATICASSERT_EQ(SILOFS_LTYPE_DATABK - SILOFS_LTYPE_INODE + 1, 8);
 	STATICASSERT_EQ(SILOFS_LTYPE_DATABK + 1, SILOFS_LTYPE_LAST);
-	STATICASSERT_EQ(sizeof(struct silofs_lsmap), 4096);
+	STATICASSERT_EQ(sizeof(struct silofs_lsmap), 8192);
 
 	silofs_assert_ge(refltype, SILOFS_LTYPE_INODE);
 	silofs_assert_le(refltype, SILOFS_LTYPE_DATABK);
@@ -129,7 +130,7 @@ void silofs_vaddr_of_lsmap(struct silofs_vaddr *vaddr,
 	lseg_idx = pos / SILOFS_LSEG_SIZE_MAX;
 	refl_idx = (ssize_t)refltype - SILOFS_LTYPE_INODE;
 	span = SILOFS_LTYPE_DATABK - SILOFS_LTYPE_INODE + 1;
-	off = ((lseg_idx * span) + refl_idx + 1) * 4096; /* zero is reserved */
+	off = ((lseg_idx * span) + refl_idx + 1) * step; /* zero is reserved */
 
 	silofs_vaddr_setup(vaddr, SILOFS_LTYPE_LSMAP, off);
 }

@@ -180,7 +180,7 @@
 #define SILOFS_SPMAP_NCHILDS (1L << SILOFS_SPMAP_SHIFT)
 
 /* on-disk size of space-node/leaf mapping */
-#define SILOFS_SPMAP_SIZE (8192)
+#define SILOFS_SPMAP_SIZE (16384)
 
 /* number of space-maps per logical-block */
 #define SILOFS_NSPMAP_IN_LBK (SILOFS_LBK_SIZE / SILOFS_SPMAP_SIZE)
@@ -311,7 +311,7 @@
 #define SILOFS_IO_SIZE_MAX ((1UL << 21) - SILOFS_LBK_SIZE)
 
 /* cryptographic key size */
-#define SILOFS_KEY_SIZE (32)
+#define SILOFS_KEY_SIZE (64)
 
 /* initialization vector size (for AES256) */
 #define SILOFS_IV_SIZE (16)
@@ -509,7 +509,7 @@ struct silofs_name {
 
 struct silofs_key {
 	uint8_t key[SILOFS_KEY_SIZE];
-} silofs_attr_aligned16;
+} silofs_attr_aligned32;
 
 struct silofs_iv {
 	uint8_t iv[SILOFS_IV_SIZE];
@@ -607,14 +607,12 @@ struct silofs_bootrec1k {
 	uint64_t                br_flags;
 	uint32_t                br_chiper_algo;
 	uint32_t                br_chiper_mode;
-	uint8_t                 br_reserved1[16];
-	struct silofs_key       br_main_key;
 	struct silofs_iv        br_main_iv;
-	uint8_t                 br_reserved2[16];
+	struct silofs_key       br_main_key;
 	struct silofs_uaddr64b  br_sb_uaddr;
-	uint8_t                 br_reserved3[64];
+	uint8_t                 br_reserved2[64];
 	struct silofs_pvsegr64b br_pvsegr;
-	uint8_t                 br_reserved4[672];
+	uint8_t                 br_reserved3[672];
 	struct silofs_hash256   br_hash;
 } silofs_attr_aligned64;
 
@@ -733,6 +731,7 @@ struct silofs_spmap_node {
 	uint8_t                 sn_reserved3[768];
 	uint8_t                 sn_reserved4[1024];
 	struct silofs_spmap_ref sn_subrefs[SILOFS_SPMAP_NCHILDS];
+	uint8_t                 sl_reserved5[8192];
 } silofs_attr_aligned64;
 
 struct silofs_lbk_state {
@@ -745,7 +744,7 @@ struct silofs_lbk_ref {
 	struct silofs_lbk_state lbr_allocated;
 	struct silofs_lbk_state lbr_unwritten;
 	uint64_t                lbr_refcnt;
-	uint8_t                 lbr_reserved[8];
+	uint8_t                 lbr_reserved2[24];
 } silofs_attr_aligned16;
 
 struct silofs_spmap_leaf {
@@ -759,12 +758,14 @@ struct silofs_spmap_leaf {
 	struct silofs_uaddr64b  sl_self;
 	uint8_t                 sl_reserved3[768];
 	struct silofs_lbk_ref   sl_lbrs[SILOFS_SPMAP_NCHILDS];
+	uint8_t                 sl_reserved4[5120];
 } silofs_attr_aligned64;
 
 struct silofs_lbk_meta {
 	struct silofs_lbk_state lbm_allocated;
 	struct silofs_lbk_state lbm_unwritten;
 	uint64_t                lbm_refcnt;
+	uint8_t                 lbm_reserved[32];
 } silofs_attr_aligned8;
 
 struct silofs_lsmap {
@@ -773,7 +774,7 @@ struct silofs_lsmap {
 	uint8_t                 lsm_refltype;
 	uint8_t                 lsm_reserved1[31];
 	struct silofs_lbk_meta  lsm_lbms[SILOFS_SPMAP_NCHILDS];
-	uint8_t                 lsm_reserved3[448];
+	uint8_t                 lsm_reserved2[448];
 	struct silofs_key       lsm_keys[SILOFS_SPMAP_NCHILDS];
 } silofs_attr_aligned64;
 

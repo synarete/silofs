@@ -62,12 +62,12 @@ static void cipher_close(struct silofs_cipher *ci)
 int silofs_cipher_init(struct silofs_cipher *ci)
 {
 	const int algo = GCRY_CIPHER_AES256;
-	const int mode = GCRY_CIPHER_MODE_GCM;
+	const int mode = GCRY_CIPHER_MODE_XTS;
 	int err;
 
 	SILOFS_STATICASSERT_EQ(GCRY_CIPHER_AES256,
 	                       (int)SILOFS_CIPHER_ALGO_DEFAULT);
-	SILOFS_STATICASSERT_EQ(GCRY_CIPHER_MODE_GCM,
+	SILOFS_STATICASSERT_EQ(GCRY_CIPHER_MODE_XTS,
 	                       (int)SILOFS_CIPHER_MODE_DEFAULT);
 
 	err = silofs_check_cipher_args(algo, mode);

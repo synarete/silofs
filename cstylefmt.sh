@@ -24,6 +24,6 @@ h_srcs=$(find "${root}/"{include,lib,cmd,mntd,test} -type f \
 clang-format -i --style=file:"${c_conf}" ${c_srcs}
 clang-format -i --style=file:"${h_conf}" ${h_srcs}
 
-# link-check code style
+# lint-check code style via python helper script
 checkcstyle_py="${root}/scripts/checkcstyle.py"
 ${checkcstyle_py} ${h_srcs} ${c_srcs}

@@ -17,7 +17,9 @@
 #ifndef SILOFS_LSMAP_H_
 #define SILOFS_LSMAP_H_
 
-#include <silofs/defs.h>
+void silofs_lsi_incref(struct silofs_lsmap_info *lsi);
+
+void silofs_lsi_decref(struct silofs_lsmap_info *lsi);
 
 void silofs_lsi_get_lrange(const struct silofs_lsmap_info *lsi,
                            struct silofs_lrange           *out_lrange);
@@ -71,5 +73,7 @@ void silofs_lsi_clone_from(struct silofs_lsmap_info *lsi,
                            struct silofs_lsmap_info *lsi_other);
 
 int silofs_verify_lsmap(const struct silofs_lsmap *lsm);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 #endif /* SILOFS_LSMAP_H_ */

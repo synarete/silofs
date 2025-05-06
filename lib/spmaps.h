@@ -158,11 +158,14 @@ void silofs_sli_resolve_lmap(const struct silofs_spleaf_info *sli,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_resolve_llink_by(const struct silofs_spleaf_info *sli, loff_t voff,
-                            struct silofs_llink *out_llink);
+int silofs_sli_resolve_child_by(const struct silofs_spleaf_info *sli,
+                                loff_t voff, struct silofs_laddr *out_laddr);
 
-void silofs_rebind_llink_by(struct silofs_spleaf_info *sli, loff_t voff,
-                            const struct silofs_llink *llink);
+int silofs_sli_resolve_llink_by(const struct silofs_spleaf_info *sli,
+                                loff_t voff, struct silofs_llink *out_llink);
+
+void silofs_sli_rebind_llink_by(struct silofs_spleaf_info *sli, loff_t voff,
+                                const struct silofs_llink *llink);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

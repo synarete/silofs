@@ -694,6 +694,20 @@ static void lsmap_clone_from(struct silofs_lsmap *lsm,
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
+void silofs_lsi_incref(struct silofs_lsmap_info *lsi)
+{
+	if (likely(lsi != NULL)) {
+		silofs_vni_incref(&lsi->ls_vni);
+	}
+}
+
+void silofs_lsi_decref(struct silofs_lsmap_info *lsi)
+{
+	if (likely(lsi != NULL)) {
+		silofs_vni_decref(&lsi->ls_vni);
+	}
+}
+
 static void lrange_of(struct silofs_lrange *lrange, loff_t beg, size_t nlbk)
 {
 	const loff_t end = silofs_off_end(beg, nlbk * SILOFS_LBK_SIZE);

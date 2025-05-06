@@ -718,7 +718,7 @@ static int vstgc_resolve_spleaf_child(const struct silofs_vstage_ctx *vstg_ctx,
                                       const struct silofs_spleaf_info *sli,
                                       struct silofs_llink *out_llink)
 {
-	return silofs_resolve_llink_by(sli, vstg_ctx->voff, out_llink);
+	return silofs_sli_resolve_llink_by(sli, vstg_ctx->voff, out_llink);
 }
 
 static int vstgc_do_stage_spnode_at(const struct silofs_vstage_ctx *vstg_ctx,
@@ -2133,7 +2133,7 @@ static int vstgc_clone_rebind_lbk(const struct silofs_vstage_ctx *vstg_ctx,
 	if (err) {
 		return err;
 	}
-	silofs_rebind_llink_by(vstg_ctx->sli, voff, &dst_llink);
+	silofs_sli_rebind_llink_by(vstg_ctx->sli, voff, &dst_llink);
 	return 0;
 }
 

@@ -40,7 +40,7 @@ static int sli_resolve_lseg_of(const struct silofs_spleaf_info *sli,
 	struct silofs_llink llink;
 	int ret;
 
-	ret = silofs_resolve_llink_by(sli, voff, &llink);
+	ret = silofs_sli_resolve_llink_by(sli, voff, &llink);
 	if (ret == 0) {
 		silofs_lsid_assign(out_lsid, &llink.laddr.lsid);
 	}

@@ -19,7 +19,7 @@
 
 #include "infra.h"
 
-struct silofs_task;
+struct silofs_task_ctx;
 struct silofs_readdir_ctx;
 struct silofs_readdir_info;
 struct silofs_namestr;
@@ -56,29 +56,29 @@ enum silofs_dirf silofs_dir_flags(const struct silofs_inode_info *dir_ii);
 void silofs_ii_setup_dir(struct silofs_inode_info *dir_ii, mode_t parent_mode,
                          nlink_t nlink);
 
-int silofs_lookup_dentry(struct silofs_task          *task,
+int silofs_lookup_dentry(struct silofs_task_ctx      *task,
                          struct silofs_inode_info    *dir_ii,
                          const struct silofs_namestr *name,
                          struct silofs_ino_dt        *out_idt);
 
-int silofs_add_dentry(struct silofs_task          *task,
+int silofs_add_dentry(struct silofs_task_ctx      *task,
                       struct silofs_inode_info    *dir_ii,
                       const struct silofs_namestr *name,
                       struct silofs_inode_info    *ii);
 
-int silofs_remove_dentry(struct silofs_task          *task,
+int silofs_remove_dentry(struct silofs_task_ctx      *task,
                          struct silofs_inode_info    *dir_ii,
                          const struct silofs_namestr *name);
 
-int silofs_do_readdir(struct silofs_task        *task,
+int silofs_do_readdir(struct silofs_task_ctx    *task,
                       struct silofs_inode_info  *dir_ii,
                       struct silofs_readdir_ctx *rd_ctx);
 
-int silofs_do_readdirplus(struct silofs_task        *task,
+int silofs_do_readdirplus(struct silofs_task_ctx    *task,
                           struct silofs_inode_info  *dir_ii,
                           struct silofs_readdir_ctx *rd_ctx);
 
-int silofs_drop_dir(struct silofs_task       *task,
+int silofs_drop_dir(struct silofs_task_ctx   *task,
                     struct silofs_inode_info *dir_ii);
 
 bool silofs_dir_isempty(const struct silofs_inode_info *dir_ii);

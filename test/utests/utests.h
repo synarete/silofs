@@ -32,7 +32,7 @@
 
 #include <silofs/silofs.h>
 #include "bootrec.h"
-#include "task.h"
+#include "exec.h"
 #include "inode.h"
 #include "dir.h"
 #include "file.h"
@@ -267,9 +267,9 @@ struct ut_readdir_ctx *ut_new_readdir_ctx(struct ut_env *ute);
 
 struct ut_dvec *ut_new_dvec(struct ut_env *, loff_t, size_t);
 
-void ut_setup_task(struct ut_env *ute, struct silofs_task *task);
+void ut_setup_task(struct ut_env *ute, struct silofs_task_ctx *task);
 
-void ut_release_task(struct ut_env *ute, struct silofs_task *task);
+void ut_release_task(struct ut_env *ute, struct silofs_task_ctx *task);
 
 /* no-fail operations wrappers */
 void ut_access(struct ut_env *ute, ino_t ino, int mode);

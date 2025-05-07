@@ -27,13 +27,12 @@
 #include "bootrec.h"
 #include "lnodes.h"
 #include "lcache.h"
-#include "task.h"
+#include "exec.h"
 #include "super.h"
 #include "inode.h"
 #include "file.h"
 #include "env.h"
 #include "stage.h"
-#include "flush.h"
 
 enum silofs_file_op {
 	FILE_OP_READ = 1 << 0,
@@ -46,7 +45,7 @@ enum silofs_file_op {
 };
 
 struct silofs_file_ctx {
-	struct silofs_task *task;
+	struct silofs_task_ctx *task;
 	struct silofs_env *env;
 	struct silofs_sb_info *sbi;
 	struct silofs_inode_info *ii;
@@ -2112,13 +2111,14 @@ static int filc_read_iter(struct silofs_file_ctx *f_ctx)
 	return err;
 }
 
-int silofs_do_read_iter(struct silofs_task *task, struct silofs_inode_info *ii,
-                        int o_flags, struct silofs_rwiter_ctx *rwi)
+int silofs_do_read_iter(struct silofs_task_ctx *task,
+                        struct silofs_inode_info *ii, int o_flags,
+                        struct silofs_rwiter_ctx *rwi)
 {
 	struct silofs_file_ctx f_ctx = {
 		.task = task,
 		.env = task->t_env,
-		.sbi = task_sbi(task),
+		.sbi = silofs_get_sbi(task),
 		.ii = ii,
 		.op_mask = FILE_OP_READ,
 		.with_backref = 1,
@@ -2134,7 +2134,7 @@ int silofs_do_read_iter(struct silofs_task *task, struct silofs_inode_info *ii,
 	return ret;
 }
 
-int silofs_do_read(struct silofs_task *task, struct silofs_inode_info *ii,
+int silofs_do_read(struct silofs_task_ctx *task, struct silofs_inode_info *ii,
                    void *buf, size_t len, loff_t off, int o_flags,
                    size_t *out_len)
 {
@@ -2149,7 +2149,7 @@ int silofs_do_read(struct silofs_task *task, struct silofs_inode_info *ii,
 	struct silofs_file_ctx f_ctx = {
 		.task = task,
 		.env = task->t_env,
-		.sbi = task_sbi(task),
+		.sbi = silofs_get_sbi(task),
 		.ii = ii,
 		.op_mask = FILE_OP_READ,
 		.with_backref = 0,
@@ -2869,14 +2869,14 @@ out:
 	return err;
 }
 
-int silofs_do_write_iter(struct silofs_task *task,
+int silofs_do_write_iter(struct silofs_task_ctx *task,
                          struct silofs_inode_info *ii, int o_flags,
                          struct silofs_rwiter_ctx *rwi)
 {
 	struct silofs_file_ctx f_ctx = {
 		.task = task,
 		.env = task->t_env,
-		.sbi = task_sbi(task),
+		.sbi = silofs_get_sbi(task),
 		.ii = ii,
 		.op_mask = FILE_OP_WRITE,
 		.with_backref = 1,
@@ -2893,7 +2893,7 @@ int silofs_do_write_iter(struct silofs_task *task,
 	return ret;
 }
 
-int silofs_do_write(struct silofs_task *task, struct silofs_inode_info *ii,
+int silofs_do_write(struct silofs_task_ctx *task, struct silofs_inode_info *ii,
                     const void *buf, size_t len, loff_t off, int o_flags,
                     size_t *out_len)
 {
@@ -2908,7 +2908,7 @@ int silofs_do_write(struct silofs_task *task, struct silofs_inode_info *ii,
 	struct silofs_file_ctx f_ctx = {
 		.task = task,
 		.env = task->t_env,
-		.sbi = task_sbi(task),
+		.sbi = silofs_get_sbi(task),
 		.ii = ii,
 		.op_mask = FILE_OP_WRITE,
 		.with_backref = 0,
@@ -2927,7 +2927,7 @@ int silofs_do_write(struct silofs_task *task, struct silofs_inode_info *ii,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_do_rdwr_post(const struct silofs_task *task, int wr_mode,
+int silofs_do_rdwr_post(const struct silofs_task_ctx *task, int wr_mode,
                         const struct silofs_iovec *iov, size_t cnt)
 {
 	silofs_unused(task);
@@ -3185,12 +3185,12 @@ static int filc_drop_data_and_meta(struct silofs_file_ctx *f_ctx)
 	return 0;
 }
 
-int silofs_drop_reg(struct silofs_task *task, struct silofs_inode_info *ii)
+int silofs_drop_reg(struct silofs_task_ctx *task, struct silofs_inode_info *ii)
 {
 	struct silofs_file_ctx f_ctx = {
 		.task = task,
 		.env = task->t_env,
-		.sbi = task_sbi(task),
+		.sbi = silofs_get_sbi(task),
 		.ii = ii,
 		.stg_mode = SILOFS_STG_COW,
 	};
@@ -3458,15 +3458,15 @@ static int filc_truncate(struct silofs_file_ctx *f_ctx)
 	return 0;
 }
 
-int silofs_do_truncate(struct silofs_task *task, struct silofs_inode_info *ii,
-                       loff_t off)
+int silofs_do_truncate(struct silofs_task_ctx *task,
+                       struct silofs_inode_info *ii, loff_t off)
 {
 	const loff_t isp = ii_span(ii);
 	const size_t len = (off < isp) ? off_ulen(off, isp) : 0;
 	struct silofs_file_ctx f_ctx = {
 		.task = task,
 		.env = task->t_env,
-		.sbi = task_sbi(task),
+		.sbi = silofs_get_sbi(task),
 		.ii = ii,
 		.len = len,
 		.beg = off,
@@ -3574,13 +3574,13 @@ static int filc_lseek(struct silofs_file_ctx *f_ctx)
 	return filc_lseek_notsupp(f_ctx);
 }
 
-int silofs_do_lseek(struct silofs_task *task, struct silofs_inode_info *ii,
+int silofs_do_lseek(struct silofs_task_ctx *task, struct silofs_inode_info *ii,
                     loff_t off, int whence, loff_t *out_off)
 {
 	struct silofs_file_ctx f_ctx = {
 		.task = task,
 		.env = task->t_env,
-		.sbi = task_sbi(task),
+		.sbi = silofs_get_sbi(task),
 		.ii = ii,
 		.len = 0,
 		.beg = off,
@@ -3838,13 +3838,14 @@ static int filc_fallocate(struct silofs_file_ctx *f_ctx)
 	return 0;
 }
 
-int silofs_do_fallocate(struct silofs_task *task, struct silofs_inode_info *ii,
-                        int mode, loff_t off, loff_t len)
+int silofs_do_fallocate(struct silofs_task_ctx *task,
+                        struct silofs_inode_info *ii, int mode, loff_t off,
+                        loff_t len)
 {
 	struct silofs_file_ctx f_ctx = {
 		.task = task,
 		.env = task->t_env,
-		.sbi = task_sbi(task),
+		.sbi = silofs_get_sbi(task),
 		.ii = ii,
 		.len = (size_t)len,
 		.beg = off,
@@ -4027,15 +4028,15 @@ ii_off_end(const struct silofs_inode_info *ii, loff_t off, size_t len)
 	return off_min(end, isz);
 }
 
-int silofs_do_fiemap(struct silofs_task *task, struct silofs_inode_info *ii,
-                     struct fiemap *fm)
+int silofs_do_fiemap(struct silofs_task_ctx *task,
+                     struct silofs_inode_info *ii, struct fiemap *fm)
 {
 	const loff_t off = (loff_t)fm->fm_start;
 	const size_t len = (size_t)fm->fm_length;
 	struct silofs_file_ctx f_ctx = {
 		.task = task,
 		.env = task->t_env,
-		.sbi = task_sbi(task),
+		.sbi = silofs_get_sbi(task),
 		.ii = ii,
 		.len = len,
 		.beg = off,
@@ -4682,7 +4683,7 @@ static int filc_copy_range(struct silofs_file_ctx *f_ctx_src,
 	return 0;
 }
 
-int silofs_do_copy_file_range(struct silofs_task *task,
+int silofs_do_copy_file_range(struct silofs_task_ctx *task,
                               struct silofs_inode_info *ii_in,
                               struct silofs_inode_info *ii_out, loff_t off_in,
                               loff_t off_out, size_t len, int flags,
@@ -4691,7 +4692,7 @@ int silofs_do_copy_file_range(struct silofs_task *task,
 	struct silofs_file_ctx f_ctx_src = {
 		.task = task,
 		.env = task->t_env,
-		.sbi = task_sbi(task),
+		.sbi = silofs_get_sbi(task),
 		.ii = ii_in,
 		.len = len,
 		.beg = off_in,
@@ -4705,7 +4706,7 @@ int silofs_do_copy_file_range(struct silofs_task *task,
 	struct silofs_file_ctx f_ctx_dst = {
 		.task = task,
 		.env = task->t_env,
-		.sbi = task_sbi(task),
+		.sbi = silofs_get_sbi(task),
 		.ii = ii_out,
 		.len = len,
 		.beg = off_out,

@@ -24,7 +24,7 @@
 #include "bootrec.h"
 #include "lnodes.h"
 #include "lcache.h"
-#include "task.h"
+#include "exec.h"
 #include "super.h"
 #include "stage.h"
 #include "env.h"

@@ -21,7 +21,7 @@
 #include "infra.h"
 #include "str.h"
 #include "lnodes.h"
-#include "task.h"
+#include "exec.h"
 #include "super.h"
 #include "inode.h"
 #include "stage.h"
@@ -730,14 +730,14 @@ bool silofs_sbi_ismutable_laddr(const struct silofs_sb_info *sbi,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int
-stage_spleaf(struct silofs_task *task, const struct silofs_vaddr *vaddr,
+stage_spleaf(struct silofs_task_ctx *task, const struct silofs_vaddr *vaddr,
              enum silofs_stg_mode stg_mode,
              struct silofs_spleaf_info **out_sli)
 {
 	return silofs_stage_spleaf_of(task, vaddr, stg_mode, out_sli);
 }
 
-int silofs_test_unwritten_at(struct silofs_task *task,
+int silofs_test_unwritten_at(struct silofs_task_ctx *task,
                              const struct silofs_vaddr *vaddr, bool *out_res)
 {
 	struct silofs_spleaf_info *sli = NULL;
@@ -751,7 +751,7 @@ int silofs_test_unwritten_at(struct silofs_task *task,
 	return 0;
 }
 
-int silofs_clear_unwritten_at(struct silofs_task *task,
+int silofs_clear_unwritten_at(struct silofs_task_ctx *task,
                               const struct silofs_vaddr *vaddr)
 {
 	struct silofs_spleaf_info *sli = NULL;
@@ -765,7 +765,7 @@ int silofs_clear_unwritten_at(struct silofs_task *task,
 	return 0;
 }
 
-int silofs_mark_unwritten_at(struct silofs_task *task,
+int silofs_mark_unwritten_at(struct silofs_task_ctx *task,
                              const struct silofs_vaddr *vaddr)
 {
 	struct silofs_spleaf_info *sli = NULL;
@@ -779,7 +779,7 @@ int silofs_mark_unwritten_at(struct silofs_task *task,
 	return 0;
 }
 
-int silofs_test_last_allocated(struct silofs_task *task,
+int silofs_test_last_allocated(struct silofs_task_ctx *task,
                                const struct silofs_vaddr *vaddr, bool *out_res)
 {
 	struct silofs_spleaf_info *sli = NULL;
@@ -793,7 +793,7 @@ int silofs_test_last_allocated(struct silofs_task *task,
 	return 0;
 }
 
-int silofs_test_shared_dbkref(struct silofs_task *task,
+int silofs_test_shared_dbkref(struct silofs_task_ctx *task,
                               const struct silofs_vaddr *vaddr, bool *out_res)
 {
 	struct silofs_spleaf_info *sli = NULL;

@@ -20,7 +20,7 @@
 #include "repo.h"
 #include "bootrec.h"
 #include "lnodes.h"
-#include "task.h"
+#include "exec.h"
 #include "super.h"
 #include "env.h"
 #include "spmaps.h"
@@ -256,7 +256,7 @@ static int delfc_remove_super(const struct silofs_delfs_ctx *delf_ctx)
 	return delfc_try_remove_lseg_of(delf_ctx, lsid);
 }
 
-int silofs_unrefs_at(struct silofs_task *task, struct silofs_sb_info *sbi)
+int silofs_unrefs_at(struct silofs_task_ctx *task, struct silofs_sb_info *sbi)
 {
 	struct silofs_delfs_ctx delf_ctx;
 	int err;

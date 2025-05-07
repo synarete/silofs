@@ -347,7 +347,7 @@ static void ut_run_test(struct ut_env *ute, const struct ut_testdef *td)
 
 static void ut_post_test(struct ut_env *ute)
 {
-	struct silofs_task task;
+	struct silofs_task_ctx task;
 	int err;
 
 	ut_setup_task(ute, &task);

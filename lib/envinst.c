@@ -27,10 +27,9 @@
 #include "lnodes.h"
 #include "lcache.h"
 #include "inode.h"
-#include "task.h"
+#include "exec.h"
 #include "namei.h"
 #include "env.h"
-#include "flush.h"
 #include "fuseq.h"
 
 /* env initialization-state flags */

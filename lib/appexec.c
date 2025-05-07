@@ -26,17 +26,16 @@
 #include "lcache.h"
 #include "lnodes.h"
 #include "uidgid.h"
-#include "task.h"
+#include "exec.h"
 #include "inode.h"
 #include "namei.h"
 #include "env.h"
-#include "flush.h"
 #include "stage.h"
 #include "opexec.h"
 #include "fuseq.h"
 #include "walk.h"
 
-static int reload_super(struct silofs_task *task)
+static int reload_super(struct silofs_task_ctx *task)
 {
 	int err;
 
@@ -51,12 +50,12 @@ static int reload_super(struct silofs_task *task)
 	return 0;
 }
 
-static int reload_vspace(struct silofs_task *task)
+static int reload_vspace(struct silofs_task_ctx *task)
 {
 	return silofs_reload_vspace(task);
 }
 
-static int reload_rootd(struct silofs_task *task)
+static int reload_rootd(struct silofs_task_ctx *task)
 {
 	struct silofs_inode_info *ii = NULL;
 	const ino_t ino = SILOFS_INO_ROOT;
@@ -74,7 +73,7 @@ static int reload_rootd(struct silofs_task *task)
 	return 0;
 }
 
-static int reload_vmeta(struct silofs_task *task)
+static int reload_vmeta(struct silofs_task_ctx *task)
 {
 	int err;
 
@@ -93,14 +92,14 @@ static int reload_vmeta(struct silofs_task *task)
 	return 0;
 }
 
-static void relax_caches(struct silofs_task *task, bool now)
+static void relax_caches(struct silofs_task_ctx *task, bool now)
 {
 	const int flags = now ? SILOFS_CTLF_NOW : SILOFS_CTLF_IDLE;
 
 	silofs_env_relax_caches(task->t_env, flags);
 }
 
-static int flush_dirty(struct silofs_task *task)
+static int flush_dirty(struct silofs_task_ctx *task)
 {
 	int err;
 
@@ -111,18 +110,18 @@ static int flush_dirty(struct silofs_task *task)
 	return err;
 }
 
-static void drop_caches(struct silofs_task *task)
+static void drop_caches(struct silofs_task_ctx *task)
 {
 	silofs_env_drop_caches(task->t_env);
 }
 
-static void drop_relax_caches(struct silofs_task *task)
+static void drop_relax_caches(struct silofs_task_ctx *task)
 {
 	drop_caches(task);
 	relax_caches(task, false);
 }
 
-static size_t calc_aligned_fs_cap(const struct silofs_task *task)
+static size_t calc_aligned_fs_cap(const struct silofs_task_ctx *task)
 {
 	const size_t fs_cap_want = task->t_env->base.args->capacity;
 	const size_t align_size = SILOFS_LSEG_SIZE_MAX;
@@ -130,14 +129,14 @@ static size_t calc_aligned_fs_cap(const struct silofs_task *task)
 	return (fs_cap_want / align_size) * align_size;
 }
 
-static int format_super(struct silofs_task *task)
+static int format_super(struct silofs_task_ctx *task)
 {
 	const size_t fs_cap = calc_aligned_fs_cap(task);
 
 	return silofs_env_format_super(task->t_env, fs_cap);
 }
 
-static int appexec_resync_vmeta(struct silofs_task *task, bool drop)
+static int appexec_resync_vmeta(struct silofs_task_ctx *task, bool drop)
 {
 	int err;
 
@@ -150,7 +149,8 @@ static int appexec_resync_vmeta(struct silofs_task *task, bool drop)
 	return 0;
 }
 
-static int do_claim_reclaim(struct silofs_task *task, enum silofs_ltype ltype)
+static int
+do_claim_reclaim(struct silofs_task_ctx *task, enum silofs_ltype ltype)
 {
 	struct silofs_vaddr vaddr;
 	const loff_t voff_exp = 0;
@@ -175,7 +175,7 @@ static int do_claim_reclaim(struct silofs_task *task, enum silofs_ltype ltype)
 	return 0;
 }
 
-static int retry_claim(struct silofs_task *task)
+static int retry_claim(struct silofs_task_ctx *task)
 {
 	enum silofs_ltype ltype = SILOFS_LTYPE_NONE;
 	int err;
@@ -197,7 +197,8 @@ static int retry_claim(struct silofs_task *task)
 	return 0;
 }
 
-static int require_spmaps_of(struct silofs_task *task, enum silofs_ltype ltype)
+static int
+require_spmaps_of(struct silofs_task_ctx *task, enum silofs_ltype ltype)
 {
 	struct silofs_vaddr vaddr;
 	struct silofs_spleaf_info *sli = NULL;
@@ -206,7 +207,8 @@ static int require_spmaps_of(struct silofs_task *task, enum silofs_ltype ltype)
 	return silofs_require_spleaf_of(task, &vaddr, SILOFS_STG_COW, &sli);
 }
 
-static int format_spmaps_of(struct silofs_task *task, enum silofs_ltype ltype)
+static int
+format_spmaps_of(struct silofs_task_ctx *task, enum silofs_ltype ltype)
 {
 	int err;
 
@@ -223,7 +225,7 @@ static int format_spmaps_of(struct silofs_task *task, enum silofs_ltype ltype)
 	return 0;
 }
 
-static int format_spmaps(struct silofs_task *task)
+static int format_spmaps(struct silofs_task_ctx *task)
 {
 	enum silofs_ltype ltype = SILOFS_LTYPE_NONE;
 	int err;
@@ -248,7 +250,8 @@ static loff_t vni_offset(const struct silofs_vnode_info *vni)
 	return vaddr->off;
 }
 
-static int claim_offset_zero(struct silofs_task *task, enum silofs_ltype ltype)
+static int
+claim_offset_zero(struct silofs_task_ctx *task, enum silofs_ltype ltype)
 {
 	struct silofs_vnode_info *vni = NULL;
 	loff_t off = -1;
@@ -267,7 +270,7 @@ static int claim_offset_zero(struct silofs_task *task, enum silofs_ltype ltype)
 	return 0;
 }
 
-static int format_nil_space(struct silofs_task *task)
+static int format_nil_space(struct silofs_task_ctx *task)
 {
 	enum silofs_ltype ltype = SILOFS_LTYPE_NONE;
 	int err;
@@ -290,7 +293,7 @@ static int format_nil_space(struct silofs_task *task)
 }
 
 static int
-spawn_rootdir(struct silofs_task *task, struct silofs_inode_info **out_ii)
+spawn_rootdir(struct silofs_task_ctx *task, struct silofs_inode_info **out_ii)
 {
 	struct silofs_inew_params inp;
 
@@ -298,7 +301,7 @@ spawn_rootdir(struct silofs_task *task, struct silofs_inode_info **out_ii)
 	return silofs_spawn_inode(task, &inp, out_ii);
 }
 
-static int format_rootdir(struct silofs_task *task)
+static int format_rootdir(struct silofs_task_ctx *task)
 {
 	struct silofs_inode_info *root_ii = NULL;
 	int err;
@@ -315,17 +318,17 @@ static int format_rootdir(struct silofs_task *task)
 	return 0;
 }
 
-static int setup_bootrec(struct silofs_task *task)
+static int setup_bootrec(struct silofs_task_ctx *task)
 {
 	return silofs_env_setup_bootrec(task->t_env);
 }
 
-static int commit_bootrec(struct silofs_task *task)
+static int commit_bootrec(struct silofs_task_ctx *task)
 {
 	return silofs_env_commit_bootrec(task->t_env);
 }
 
-static int appexec_format_meta(struct silofs_task *task)
+static int appexec_format_meta(struct silofs_task_ctx *task)
 {
 	int err;
 
@@ -369,7 +372,7 @@ static int appexec_format_meta(struct silofs_task *task)
 	return 0;
 }
 
-static int reload_bootrec(const struct silofs_task *task)
+static int reload_bootrec(const struct silofs_task_ctx *task)
 {
 	struct silofs_caddr caddr = { .ctype = SILOFS_CTYPE_NONE };
 	int err;
@@ -385,7 +388,7 @@ static int reload_bootrec(const struct silofs_task *task)
 	return 0;
 }
 
-static int appexec_reload_fs(struct silofs_task *task)
+static int appexec_reload_fs(struct silofs_task_ctx *task)
 {
 	int err;
 
@@ -401,7 +404,7 @@ static int appexec_reload_fs(struct silofs_task *task)
 	return 0;
 }
 
-static int unlink_bootrec(struct silofs_task *task)
+static int unlink_bootrec(struct silofs_task_ctx *task)
 {
 	int err;
 
@@ -413,7 +416,7 @@ static int unlink_bootrec(struct silofs_task *task)
 	return 0;
 }
 
-static int appexec_fork_fs(struct silofs_task *task)
+static int appexec_fork_fs(struct silofs_task_ctx *task)
 {
 	struct silofs_bootrec_caddrs caddrs;
 	int err;
@@ -434,12 +437,11 @@ static int appexec_fork_fs(struct silofs_task *task)
 	return 0;
 }
 
-static int shutdown_fs(struct silofs_task *task)
+static int shutdown_fs(struct silofs_task_ctx *task)
 {
-	struct silofs_repo *repo = silofs_task_repo(task);
 	int err;
 
-	err = silofs_repo_fsync_all(repo);
+	err = silofs_repo_fsync_all(task->t_repo);
 	if (err) {
 		return err;
 	}
@@ -454,7 +456,7 @@ static int shutdown_fs(struct silofs_task *task)
 	return 0;
 }
 
-static int appexec_unload_fs(struct silofs_task *task)
+static int appexec_unload_fs(struct silofs_task_ctx *task)
 {
 	int err;
 
@@ -469,7 +471,7 @@ static int appexec_unload_fs(struct silofs_task *task)
 	return 0;
 }
 
-static int appexec_remove_fs(struct silofs_task *task)
+static int appexec_remove_fs(struct silofs_task_ctx *task)
 {
 	int err;
 
@@ -527,18 +529,18 @@ int silofs_post_exec_fs(struct silofs_env *env)
 	return ret;
 }
 
-static int do_map_task_creds(struct silofs_task *task)
+static int do_map_task_creds(struct silofs_task_ctx *task)
 {
-	const struct silofs_cred *xcred = &task->t_oper.op_creds.host_cred;
-	struct silofs_cred *icred = &task->t_oper.op_creds.fs_cred;
+	const struct silofs_cred *xcred = &task->t_auth.creds.host_cred;
+	struct silofs_cred *icred = &task->t_auth.creds.fs_cred;
 
-	return silofs_idsmap_map_uidgid(silofs_task_idsmap(task), xcred->uid,
-	                                xcred->gid, &icred->uid, &icred->gid);
+	return silofs_idsmap_map_uidgid(task->t_idsm, xcred->uid, xcred->gid,
+	                                &icred->uid, &icred->gid);
 }
 
-static int map_task_creds(struct silofs_task *task)
+static int map_task_creds(struct silofs_task_ctx *task)
 {
-	const struct silofs_idsmap *idsm = silofs_task_idsmap(task);
+	const struct silofs_idsmap *idsm = task->t_idsm;
 	int err = 0;
 
 	if (idsm->idm_usize || idsm->idm_gsize) {
@@ -548,7 +550,7 @@ static int map_task_creds(struct silofs_task *task)
 	return err;
 }
 
-static int make_task(struct silofs_env *env, struct silofs_task *task)
+static int make_task(struct silofs_env *env, struct silofs_task_ctx *task)
 {
 	const struct silofs_args *args = env->base.args;
 
@@ -559,7 +561,7 @@ static int make_task(struct silofs_env *env, struct silofs_task *task)
 	return map_task_creds(task);
 }
 
-static int term_task(struct silofs_task *task, int status)
+static int term_task(struct silofs_task_ctx *task, int status)
 {
 	int err = 0;
 
@@ -572,7 +574,7 @@ static int term_task(struct silofs_task *task, int status)
 
 static int exec_reload_fs(struct silofs_env *env)
 {
-	struct silofs_task task;
+	struct silofs_task_ctx task;
 	int err;
 
 	err = make_task(env, &task);
@@ -584,7 +586,7 @@ static int exec_reload_fs(struct silofs_env *env)
 
 static int exec_resync_vmeta(struct silofs_env *env, bool drop)
 {
-	struct silofs_task task;
+	struct silofs_task_ctx task;
 	int err;
 
 	err = make_task(env, &task);
@@ -727,7 +729,7 @@ static int check_owner_ids(const struct silofs_env *env)
 
 static int exec_format_meta(struct silofs_env *env)
 {
-	struct silofs_task task;
+	struct silofs_task_ctx task;
 	int err;
 
 	err = make_task(env, &task);
@@ -865,7 +867,7 @@ int silofs_open_fs(struct silofs_env *env)
 
 static int exec_unload_fs(struct silofs_env *env)
 {
-	struct silofs_task task;
+	struct silofs_task_ctx task;
 	int err;
 
 	err = make_task(env, &task);
@@ -913,7 +915,7 @@ int silofs_sense_ar(struct silofs_env *env)
 
 static int exec_fork_fs(struct silofs_env *env)
 {
-	struct silofs_task task;
+	struct silofs_task_ctx task;
 	int err;
 
 	err = make_task(env, &task);
@@ -935,7 +937,7 @@ int silofs_fork_fs(struct silofs_env *env)
 
 static int exec_reload_remove_fs(struct silofs_env *env)
 {
-	struct silofs_task task;
+	struct silofs_task_ctx task;
 	int err;
 
 	err = make_task(env, &task);
@@ -967,7 +969,7 @@ int silofs_remove_fs(struct silofs_env *env)
 static int exec_inspect_fs(struct silofs_env *env,
                            const struct silofs_laddr_visitor *lvis)
 {
-	struct silofs_task task;
+	struct silofs_task_ctx task;
 	int err;
 
 	err = make_task(env, &task);
@@ -1004,7 +1006,7 @@ int silofs_inspect_fs(struct silofs_env *env, bool view)
 
 static int exec_pack_fs(struct silofs_env *env)
 {
-	struct silofs_task task;
+	struct silofs_task_ctx task;
 	int err;
 
 	err = make_task(env, &task);
@@ -1041,7 +1043,7 @@ int silofs_archive_fs(struct silofs_env *env)
 
 static int exec_unpack_fs(struct silofs_env *env)
 {
-	struct silofs_task task;
+	struct silofs_task_ctx task;
 	int err;
 
 	err = make_task(env, &task);

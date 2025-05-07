@@ -18,7 +18,7 @@
 #include "infra.h"
 #include "repo.h"
 #include "encdec.h"
-#include "task.h"
+#include "exec.h"
 #include "env.h"
 #include "opexec.h"
 #include "walk.h"
@@ -49,7 +49,7 @@ struct silofs_ar_index {
 
 struct silofs_ar_ctx {
 	struct silofs_ar_index aridx;
-	struct silofs_task *task;
+	struct silofs_task_ctx *task;
 	struct silofs_env *env;
 };
 
@@ -658,7 +658,7 @@ static void arc_release_buf(const struct silofs_ar_ctx *ar_ctx,
 	}
 }
 
-static int arc_init(struct silofs_ar_ctx *ar_ctx, struct silofs_task *task)
+static int arc_init(struct silofs_ar_ctx *ar_ctx, struct silofs_task_ctx *task)
 {
 	struct silofs_env *env = task->t_env;
 
@@ -1054,7 +1054,7 @@ static int arc_do_export(struct silofs_ar_ctx *ar_ctx)
 	return 0;
 }
 
-int silofs_exec_archive(struct silofs_task *task)
+int silofs_exec_archive(struct silofs_task_ctx *task)
 {
 	struct silofs_ar_ctx ar_ctx;
 	int err;
@@ -1218,7 +1218,7 @@ static int arc_do_import(struct silofs_ar_ctx *ar_ctx)
 	return 0;
 }
 
-int silofs_exec_restore(struct silofs_task *task)
+int silofs_exec_restore(struct silofs_task_ctx *task)
 {
 	struct silofs_ar_ctx ar_ctx;
 	int err;

@@ -21,16 +21,15 @@
 #include "lnodes.h"
 #include "lcache.h"
 #include "encdec.h"
-#include "task.h"
+#include "exec.h"
 #include "super.h"
 #include "inode.h"
 #include "env.h"
 #include "spmaps.h"
 #include "stage.h"
-#include "flush.h"
 
 struct silofs_vstage_ctx {
-	struct silofs_task *task;
+	struct silofs_task_ctx *task;
 	struct silofs_env *env;
 	struct silofs_sb_info *sbi;
 	struct silofs_spnode_info *sni4;
@@ -398,7 +397,7 @@ sni_child_height(const struct silofs_spnode_info *sni)
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static void
-vstgc_setup(struct silofs_vstage_ctx *vstg_ctx, struct silofs_task *task,
+vstgc_setup(struct silofs_vstage_ctx *vstg_ctx, struct silofs_task_ctx *task,
             const struct silofs_vaddr *vaddr, enum silofs_stg_mode stg_mode)
 {
 	memset(vstg_ctx, 0, sizeof(*vstg_ctx));
@@ -1892,7 +1891,7 @@ static int vstgc_resolve_llink(struct silofs_vstage_ctx *vstg_ctx,
 	return 0;
 }
 
-int silofs_stage_spleaf_of(struct silofs_task *task,
+int silofs_stage_spleaf_of(struct silofs_task_ctx *task,
                            const struct silofs_vaddr *vaddr,
                            enum silofs_stg_mode stg_mode,
                            struct silofs_spleaf_info **out_sli)
@@ -1910,7 +1909,7 @@ int silofs_stage_spleaf_of(struct silofs_task *task,
 	return 0;
 }
 
-int silofs_require_spleaf_of(struct silofs_task *task,
+int silofs_require_spleaf_of(struct silofs_task_ctx *task,
                              const struct silofs_vaddr *vaddr,
                              enum silofs_stg_mode stg_mode,
                              struct silofs_spleaf_info **out_sli)
@@ -1948,8 +1947,8 @@ static int vstgc_require_stable_vaddr(const struct silofs_vstage_ctx *vstg_ctx)
 	return -SILOFS_EFSCORRUPTED;
 }
 
-static int
-require_stable_at(struct silofs_task *task, const struct silofs_vaddr *vaddr)
+static int require_stable_at(struct silofs_task_ctx *task,
+                             const struct silofs_vaddr *vaddr)
 {
 	struct silofs_vstage_ctx vstg_ctx;
 	int err;
@@ -1976,7 +1975,7 @@ static int vstgc_check_stable_vaddr(const struct silofs_vstage_ctx *vstg_ctx)
 }
 
 static int
-check_stable_at(struct silofs_task *task, const struct silofs_vaddr *vaddr)
+check_stable_at(struct silofs_task_ctx *task, const struct silofs_vaddr *vaddr)
 {
 	struct silofs_vstage_ctx vstg_ctx;
 	int err;
@@ -2315,7 +2314,7 @@ static int vstgc_resolve_inspect_llink(struct silofs_vstage_ctx *vstg_ctx,
 	return 0;
 }
 
-int silofs_resolve_llink_of(struct silofs_task *task,
+int silofs_resolve_llink_of(struct silofs_task_ctx *task,
                             const struct silofs_vaddr *vaddr,
                             enum silofs_stg_mode stg_mode,
                             struct silofs_llink *out_llink)
@@ -2384,8 +2383,8 @@ out_err:
  * Special case where data-node has been unmapped due to forget, yet it still
  * had a live ref-count due to on-going I/O operation.
  */
-static int
-fixup_cached_vni(const struct silofs_task *task, struct silofs_vnode_info *vni)
+static int fixup_cached_vni(const struct silofs_task_ctx *task,
+                            struct silofs_vnode_info *vni)
 {
 	if (!vni->vn_lni.ln_hmqe.hme_forgot) {
 		return 0;
@@ -2393,18 +2392,18 @@ fixup_cached_vni(const struct silofs_task *task, struct silofs_vnode_info *vni)
 	if (silofs_vni_refcnt(vni)) {
 		return 0;
 	}
-	silofs_lcache_forget_vni(task_lcache(task), vni);
+	silofs_lcache_forget_vni(task->t_lcache, vni);
 	return -SILOFS_ENOENT;
 }
 
-static int
-fetch_cached_vni(struct silofs_task *task, const struct silofs_vaddr *vaddr,
-                 struct silofs_vnode_info **out_vni)
+static int fetch_cached_vni(struct silofs_task_ctx *task,
+                            const struct silofs_vaddr *vaddr,
+                            struct silofs_vnode_info **out_vni)
 {
 	struct silofs_vnode_info *vni;
 	int err;
 
-	vni = silofs_lcache_lookup_vni(task_lcache(task), vaddr);
+	vni = silofs_lcache_lookup_vni(task->t_lcache, vaddr);
 	if (vni == NULL) {
 		return -SILOFS_ENOENT;
 	}
@@ -2416,7 +2415,7 @@ fetch_cached_vni(struct silofs_task *task, const struct silofs_vaddr *vaddr,
 	return 0;
 }
 
-int silofs_fetch_cached_vnode(struct silofs_task *task,
+int silofs_fetch_cached_vnode(struct silofs_task_ctx *task,
                               const struct silofs_vaddr *vaddr,
                               struct silofs_vnode_info **out_vni)
 {
@@ -2429,7 +2428,7 @@ int silofs_fetch_cached_vnode(struct silofs_task *task,
 }
 
 static int
-stage_vnode_at(struct silofs_task *task, const struct silofs_vaddr *vaddr,
+stage_vnode_at(struct silofs_task_ctx *task, const struct silofs_vaddr *vaddr,
                enum silofs_stg_mode stg_mode,
                struct silofs_vnode_info **out_vni)
 {
@@ -2439,7 +2438,7 @@ stage_vnode_at(struct silofs_task *task, const struct silofs_vaddr *vaddr,
 	return vstgc_stage_vnode_at(&vstg_ctx, out_vni);
 }
 
-static int stage_stable_vnode_at(struct silofs_task *task,
+static int stage_stable_vnode_at(struct silofs_task_ctx *task,
                                  const struct silofs_vaddr *vaddr,
                                  enum silofs_stg_mode stg_mode,
                                  struct silofs_vnode_info **out_vni)
@@ -2457,7 +2456,7 @@ static int stage_stable_vnode_at(struct silofs_task *task,
 	return 0;
 }
 
-static int require_updated_cached_vni(struct silofs_task *task,
+static int require_updated_cached_vni(struct silofs_task_ctx *task,
                                       struct silofs_vnode_info *vni,
                                       enum silofs_stg_mode stg_mode)
 {
@@ -2478,7 +2477,7 @@ static int require_updated_cached_vni(struct silofs_task *task,
 	return 0;
 }
 
-static int do_resolve_stage_vnode(struct silofs_task *task,
+static int do_resolve_stage_vnode(struct silofs_task_ctx *task,
                                   const struct silofs_vaddr *vaddr,
                                   enum silofs_stg_mode stg_mode,
                                   struct silofs_vnode_info **out_vni)
@@ -2496,7 +2495,7 @@ static int do_resolve_stage_vnode(struct silofs_task *task,
 	return err;
 }
 
-static int check_stage_vnode(const struct silofs_task *task,
+static int check_stage_vnode(const struct silofs_task_ctx *task,
                              const struct silofs_vaddr *vaddr,
                              enum silofs_stg_mode stg_mode)
 {
@@ -2506,11 +2505,11 @@ static int check_stage_vnode(const struct silofs_task *task,
 	if ((stg_mode & SILOFS_STG_COW) == 0) {
 		return 0;
 	}
-	return silof_sbi_check_mut_fs(task_sbi(task));
+	return silof_sbi_check_mut_fs(silofs_get_sbi(task));
 }
 
 static int
-do_stage_vnode(struct silofs_task *task, const struct silofs_vaddr *vaddr,
+do_stage_vnode(struct silofs_task_ctx *task, const struct silofs_vaddr *vaddr,
                enum silofs_stg_mode stg_mode,
                struct silofs_vnode_info **out_vni)
 {
@@ -2527,7 +2526,8 @@ do_stage_vnode(struct silofs_task *task, const struct silofs_vaddr *vaddr,
 	return 0;
 }
 
-int silofs_stage_vnode(struct silofs_task *task, struct silofs_inode_info *pii,
+int silofs_stage_vnode(struct silofs_task_ctx *task,
+                       struct silofs_inode_info *pii,
                        const struct silofs_vaddr *vaddr,
                        enum silofs_stg_mode stg_mode,
                        struct silofs_vnode_info **out_vni)
@@ -2543,7 +2543,7 @@ int silofs_stage_vnode(struct silofs_task *task, struct silofs_inode_info *pii,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int
-fetch_cached_ii(struct silofs_task *task, const struct silofs_vaddr *vaddr,
+fetch_cached_ii(struct silofs_task_ctx *task, const struct silofs_vaddr *vaddr,
                 struct silofs_inode_info **out_ii)
 {
 	struct silofs_vnode_info *vni = NULL;
@@ -2574,7 +2574,7 @@ static int resolve_iaddr(ino_t ino, struct silofs_vaddr *out_vaddr)
 	return 0;
 }
 
-static int check_stage_inode(const struct silofs_task *task, ino_t ino,
+static int check_stage_inode(const struct silofs_task_ctx *task, ino_t ino,
                              enum silofs_stg_mode stg_mode)
 {
 	if (silofs_ino_isnull(ino)) {
@@ -2583,10 +2583,10 @@ static int check_stage_inode(const struct silofs_task *task, ino_t ino,
 	if ((stg_mode & SILOFS_STG_COW) == 0) {
 		return 0;
 	}
-	return silof_sbi_check_mut_fs(task_sbi(task));
+	return silof_sbi_check_mut_fs(silofs_get_sbi(task));
 }
 
-static int resolve_stable_iaddr(struct silofs_task *task, ino_t ino,
+static int resolve_stable_iaddr(struct silofs_task_ctx *task, ino_t ino,
                                 struct silofs_vaddr *out_vaddr)
 {
 	int err;
@@ -2602,7 +2602,7 @@ static int resolve_stable_iaddr(struct silofs_task *task, ino_t ino,
 	return 0;
 }
 
-static int stage_stable_inode_at(struct silofs_task *task,
+static int stage_stable_inode_at(struct silofs_task_ctx *task,
                                  const struct silofs_vaddr *vaddr,
                                  enum silofs_stg_mode stg_mode,
                                  struct silofs_inode_info **out_ii)
@@ -2620,14 +2620,14 @@ static int stage_stable_inode_at(struct silofs_task *task,
 	return 0;
 }
 
-static int require_updated_cached_ii(struct silofs_task *task,
+static int require_updated_cached_ii(struct silofs_task_ctx *task,
                                      struct silofs_inode_info *ii,
                                      enum silofs_stg_mode stg_mode)
 {
 	return require_updated_cached_vni(task, &ii->i_vni, stg_mode);
 }
 
-static int do_resolve_stage_inode(struct silofs_task *task, ino_t ino,
+static int do_resolve_stage_inode(struct silofs_task_ctx *task, ino_t ino,
                                   enum silofs_stg_mode stg_mode,
                                   struct silofs_inode_info **out_ii)
 {
@@ -2672,7 +2672,7 @@ static int ii_check_post_stage(const struct silofs_inode_info *ii,
 	return 0;
 }
 
-int silofs_stage_inode(struct silofs_task *task, ino_t ino,
+int silofs_stage_inode(struct silofs_task_ctx *task, ino_t ino,
                        enum silofs_stg_mode stg_mode,
                        struct silofs_inode_info **out_ii)
 {
@@ -2693,7 +2693,7 @@ int silofs_stage_inode(struct silofs_task *task, ino_t ino,
 	return 0;
 }
 
-int silofs_fetch_cached_inode(struct silofs_task *task, ino_t ino,
+int silofs_fetch_cached_inode(struct silofs_task_ctx *task, ino_t ino,
                               struct silofs_inode_info **out_ii)
 {
 	struct silofs_vaddr vaddr = { .off = -1 };
@@ -2714,7 +2714,7 @@ int silofs_fetch_cached_inode(struct silofs_task *task, ino_t ino,
 
 /* TODO: cleanups and resource reclaim upon failure in every path */
 static int
-stage_raw_vnode(struct silofs_task *task, struct silofs_inode_info *pii,
+stage_raw_vnode(struct silofs_task_ctx *task, struct silofs_inode_info *pii,
                 const struct silofs_vaddr *vaddr,
                 struct silofs_vnode_info **out_vni)
 {
@@ -2724,7 +2724,7 @@ stage_raw_vnode(struct silofs_task *task, struct silofs_inode_info *pii,
 }
 
 static int
-do_spawn_vnode(struct silofs_task *task, struct silofs_inode_info *pii,
+do_spawn_vnode(struct silofs_task_ctx *task, struct silofs_inode_info *pii,
                enum silofs_ltype ltype, struct silofs_vnode_info **out_vni)
 {
 	struct silofs_vaddr vaddr;
@@ -2744,8 +2744,8 @@ do_spawn_vnode(struct silofs_task *task, struct silofs_inode_info *pii,
 	return 0;
 }
 
-int silofs_spawn_vnode(struct silofs_task *task, struct silofs_inode_info *pii,
-                       enum silofs_ltype ltype,
+int silofs_spawn_vnode(struct silofs_task_ctx *task,
+                       struct silofs_inode_info *pii, enum silofs_ltype ltype,
                        struct silofs_vnode_info **out_vni)
 {
 	int err;
@@ -2758,7 +2758,7 @@ int silofs_spawn_vnode(struct silofs_task *task, struct silofs_inode_info *pii,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int check_itype(const struct silofs_task *task, mode_t mode)
+static int check_itype(const struct silofs_task_ctx *task, mode_t mode)
 {
 	/*
 	 * TODO-0031: Filter supported modes based on mount flags
@@ -2771,7 +2771,7 @@ static int check_itype(const struct silofs_task *task, mode_t mode)
 }
 
 static int
-claim_inode(struct silofs_task *task, struct silofs_inode_info **out_ii)
+claim_inode(struct silofs_task_ctx *task, struct silofs_inode_info **out_ii)
 {
 	struct silofs_vaddr vaddr;
 	struct silofs_vnode_info *vni = NULL;
@@ -2792,14 +2792,14 @@ claim_inode(struct silofs_task *task, struct silofs_inode_info **out_ii)
 	return 0;
 }
 
-static uint64_t next_igen(const struct silofs_task *task)
+static uint64_t next_igen(const struct silofs_task_ctx *task)
 {
-	struct silofs_sb_info *sbi = task_sbi(task);
+	struct silofs_sb_info *sbi = silofs_get_sbi(task);
 
 	return silofs_sbst_next_generation(sbi);
 }
 
-int silofs_spawn_inode(struct silofs_task *task,
+int silofs_spawn_inode(struct silofs_task_ctx *task,
                        const struct silofs_inew_params *inp,
                        struct silofs_inode_info **out_ii)
 {
@@ -2821,14 +2821,14 @@ int silofs_spawn_inode(struct silofs_task *task,
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static void forget_cached_vni(const struct silofs_task *task,
+static void forget_cached_vni(const struct silofs_task_ctx *task,
                               struct silofs_vnode_info *vni)
 {
-	silofs_lcache_forget_vni(task_lcache(task), vni);
+	silofs_lcache_forget_vni(task->t_lcache, vni);
 }
 
-static int
-reclaim_vspace_at(struct silofs_task *task, const struct silofs_vaddr *vaddr)
+static int reclaim_vspace_at(struct silofs_task_ctx *task,
+                             const struct silofs_vaddr *vaddr)
 {
 	struct silofs_llink llink;
 	const enum silofs_stg_mode stg_mode = SILOFS_STG_COW;
@@ -2846,7 +2846,7 @@ reclaim_vspace_at(struct silofs_task *task, const struct silofs_vaddr *vaddr)
 }
 
 static int
-remove_vnode_of(struct silofs_task *task, struct silofs_vnode_info *vni)
+remove_vnode_of(struct silofs_task_ctx *task, struct silofs_vnode_info *vni)
 {
 	int err;
 
@@ -2856,7 +2856,7 @@ remove_vnode_of(struct silofs_task *task, struct silofs_vnode_info *vni)
 	return err;
 }
 
-int silofs_remove_vnode(struct silofs_task *task,
+int silofs_remove_vnode(struct silofs_task_ctx *task,
                         struct silofs_vnode_info *vni)
 {
 	int err;
@@ -2869,7 +2869,7 @@ int silofs_remove_vnode(struct silofs_task *task,
 	return 0;
 }
 
-int silofs_remove_vnode_at(struct silofs_task *task,
+int silofs_remove_vnode_at(struct silofs_task_ctx *task,
                            const struct silofs_vaddr *vaddr)
 {
 	struct silofs_vnode_info *vni = NULL;
@@ -2885,7 +2885,7 @@ int silofs_remove_vnode_at(struct silofs_task *task,
 }
 
 static int
-remove_inode_of(struct silofs_task *task, struct silofs_inode_info *ii)
+remove_inode_of(struct silofs_task_ctx *task, struct silofs_inode_info *ii)
 {
 	int err;
 
@@ -2895,8 +2895,8 @@ remove_inode_of(struct silofs_task *task, struct silofs_inode_info *ii)
 	return err;
 }
 
-static void
-forget_cached_ii(const struct silofs_task *task, struct silofs_inode_info *ii)
+static void forget_cached_ii(const struct silofs_task_ctx *task,
+                             struct silofs_inode_info *ii)
 {
 	silofs_assert_eq(ii->i_dq_vnis.dq.sz, 0);
 
@@ -2904,7 +2904,8 @@ forget_cached_ii(const struct silofs_task *task, struct silofs_inode_info *ii)
 	forget_cached_vni(task, &ii->i_vni);
 }
 
-int silofs_remove_inode(struct silofs_task *task, struct silofs_inode_info *ii)
+int silofs_remove_inode(struct silofs_task_ctx *task,
+                        struct silofs_inode_info *ii)
 {
 	int err;
 
@@ -2918,7 +2919,7 @@ int silofs_remove_inode(struct silofs_task *task, struct silofs_inode_info *ii)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-int silofs_refresh_llink(struct silofs_task *task,
+int silofs_refresh_llink(struct silofs_task_ctx *task,
                          struct silofs_vnode_info *vni)
 {
 	struct silofs_llink llink;

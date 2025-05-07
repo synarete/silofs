@@ -16,7 +16,7 @@
  */
 #include "configs.h"
 #include "lnodes.h"
-#include "task.h"
+#include "exec.h"
 #include "inode.h"
 #include "symlink.h"
 #include "namei.h"
@@ -29,7 +29,7 @@ struct silofs_symval_desc {
 };
 
 struct silofs_symlnk_ctx {
-	struct silofs_task *task;
+	struct silofs_task_ctx *task;
 	struct silofs_sb_info *sbi;
 	struct silofs_inode_info *lnk_ii;
 	const struct silofs_strview *symval;
@@ -343,13 +343,13 @@ static int sylc_readlink_of(const struct silofs_symlnk_ctx *sl_ctx,
 	return 0;
 }
 
-int silofs_do_readlink(struct silofs_task *task,
+int silofs_do_readlink(struct silofs_task_ctx *task,
                        struct silofs_inode_info *lnk_ii, void *ptr, size_t lim,
                        size_t *out_len)
 {
 	struct silofs_symlnk_ctx sl_ctx = {
 		.task = task,
-		.sbi = task_sbi(task),
+		.sbi = silofs_get_sbi(task),
 		.lnk_ii = lnk_ii,
 		.stg_mode = SILOFS_STG_CUR,
 	};
@@ -515,12 +515,12 @@ static int sylc_symlink(const struct silofs_symlnk_ctx *sl_ctx)
 	return ret;
 }
 
-int silofs_bind_symval(struct silofs_task *task,
+int silofs_bind_symval(struct silofs_task_ctx *task,
                        struct silofs_inode_info *lnk_ii,
                        const struct silofs_strview *symval)
 {
 	struct silofs_symlnk_ctx sl_ctx = { .task = task,
-		                            .sbi = task_sbi(task),
+		                            .sbi = silofs_get_sbi(task),
 		                            .lnk_ii = lnk_ii,
 		                            .symval = symval,
 		                            .stg_mode = SILOFS_STG_COW };
@@ -546,12 +546,12 @@ static int sylc_drop_symval(const struct silofs_symlnk_ctx *sl_ctx)
 	return 0;
 }
 
-int silofs_drop_symlink(struct silofs_task *task,
+int silofs_drop_symlink(struct silofs_task_ctx *task,
                         struct silofs_inode_info *lnk_ii)
 {
 	struct silofs_symlnk_ctx sl_ctx = {
 		.task = task,
-		.sbi = task_sbi(task),
+		.sbi = silofs_get_sbi(task),
 		.lnk_ii = lnk_ii,
 	};
 	int err;

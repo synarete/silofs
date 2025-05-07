@@ -20,7 +20,7 @@
 #include "bootrec.h"
 #include "lnodes.h"
 #include "encdec.h"
-#include "task.h"
+#include "exec.h"
 #include "inode.h"
 #include "namei.h"
 #include "env.h"
@@ -385,31 +385,31 @@ static void cred_update_umask(struct silofs_cred *cred, mode_t umsk)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_task_set_creds(struct silofs_task *task, uid_t uid, gid_t gid,
+void silofs_task_set_creds(struct silofs_task_ctx *task, uid_t uid, gid_t gid,
                            mode_t umsk)
 {
-	cred_setup(&task->t_oper.op_creds.host_cred, uid, gid, umsk);
-	cred_setup(&task->t_oper.op_creds.fs_cred, uid, gid, umsk);
+	cred_setup(&task->t_auth.creds.host_cred, uid, gid, umsk);
+	cred_setup(&task->t_auth.creds.fs_cred, uid, gid, umsk);
 }
 
-void silofs_task_update_umask(struct silofs_task *task, mode_t umask)
+void silofs_task_update_umask(struct silofs_task_ctx *task, mode_t umask)
 {
-	cred_update_umask(&task->t_oper.op_creds.host_cred, umask);
-	cred_update_umask(&task->t_oper.op_creds.fs_cred, umask);
+	cred_update_umask(&task->t_auth.creds.host_cred, umask);
+	cred_update_umask(&task->t_auth.creds.fs_cred, umask);
 }
 
-void silofs_task_set_ts(struct silofs_task *task, bool rt)
+void silofs_task_set_ts(struct silofs_task_ctx *task, bool rt)
 {
 	int err;
 
-	err = silofs_ts_gettime(&task->t_oper.op_ts, rt);
+	err = silofs_ts_gettime(&task->t_auth.ts, rt);
 	if (err && rt) {
 		/* failure in clock_gettime -- fall to non-realtime */
-		silofs_ts_gettime(&task->t_oper.op_ts, !rt);
+		silofs_ts_gettime(&task->t_auth.ts, !rt);
 	}
 }
 
-void silofs_task_update_by(struct silofs_task *task,
+void silofs_task_update_by(struct silofs_task_ctx *task,
                            struct silofs_submitq_ent *sqe)
 {
 	if (sqe->uniq_id > task->t_upper_id) {
@@ -417,7 +417,7 @@ void silofs_task_update_by(struct silofs_task *task,
 	}
 }
 
-static int task_apply(const struct silofs_task *task, bool all)
+static int task_apply(const struct silofs_task_ctx *task, bool all)
 {
 	int ret = 0;
 
@@ -429,12 +429,16 @@ static int task_apply(const struct silofs_task *task, bool all)
 	return ret;
 }
 
-void silofs_task_init(struct silofs_task *task, struct silofs_env *env)
+void silofs_task_init(struct silofs_task_ctx *task, struct silofs_env *env)
 {
 	memset(task, 0, sizeof(*task));
-	cred_init(&task->t_oper.op_creds.fs_cred);
-	cred_init(&task->t_oper.op_creds.host_cred);
+	cred_init(&task->t_auth.creds.fs_cred);
+	cred_init(&task->t_auth.creds.host_cred);
 	task->t_env = env;
+	task->t_creds = &task->t_auth.creds;
+	task->t_idsm = env->base.idsmap;
+	task->t_repo = env->base.repo;
+	task->t_lcache = env->base.lcache;
 	task->t_submitq = env->base.submitq;
 	task->t_looseq = NULL;
 	task->t_upper_id = 0;
@@ -447,17 +451,20 @@ void silofs_task_init(struct silofs_task *task, struct silofs_env *env)
 	task->t_runnable = true;
 }
 
-void silofs_task_fini(struct silofs_task *task)
+void silofs_task_fini(struct silofs_task_ctx *task)
 {
 	silofs_assert_null(task->t_looseq);
 	silofs_assert_eq(task->t_fs_locked, false);
 
 	task->t_env = NULL;
+	task->t_idsm = NULL;
+	task->t_repo = NULL;
+	task->t_lcache = NULL;
 	task->t_submitq = NULL;
 	task->t_runnable = false;
 }
 
-void silofs_task_enq_loose(struct silofs_task *task,
+void silofs_task_enq_loose(struct silofs_task_ctx *task,
                            struct silofs_inode_info *ii)
 {
 	silofs_assert_null(ii->i_looseq_next);
@@ -471,7 +478,7 @@ void silofs_task_enq_loose(struct silofs_task *task,
 	}
 }
 
-static struct silofs_inode_info *task_deq_loose(struct silofs_task *task)
+static struct silofs_inode_info *task_deq_loose(struct silofs_task_ctx *task)
 {
 	struct silofs_inode_info *ii = NULL;
 
@@ -485,7 +492,7 @@ static struct silofs_inode_info *task_deq_loose(struct silofs_task *task)
 	return ii;
 }
 
-static void task_forget_looseq(struct silofs_task *task)
+static void task_forget_looseq(struct silofs_task_ctx *task)
 {
 	struct silofs_inode_info *ii;
 	int err;
@@ -504,7 +511,7 @@ static void task_forget_looseq(struct silofs_task *task)
 	}
 }
 
-static void task_purge(struct silofs_task *task)
+static void task_purge(struct silofs_task_ctx *task)
 {
 	if (task->t_looseq != NULL) {
 		if (task->t_fs_locked) {
@@ -512,14 +519,14 @@ static void task_purge(struct silofs_task *task)
 			task_forget_looseq(task);
 		} else {
 			/* case 2: need to protect with fs-lock/unlock pair */
-			silofs_task_lock_fs(task);
+			silofs_lock_fs_by(task);
 			task_forget_looseq(task);
-			silofs_task_unlock_fs(task);
+			silofs_unlock_fs_by(task);
 		}
 	}
 }
 
-void silofs_task_lock_fs(struct silofs_task *task)
+void silofs_lock_fs_by(struct silofs_task_ctx *task)
 {
 	if (!task->t_fs_locked && !task->t_bootrec_op) {
 		silofs_env_lock(task->t_env);
@@ -527,7 +534,7 @@ void silofs_task_lock_fs(struct silofs_task *task)
 	}
 }
 
-void silofs_task_unlock_fs(struct silofs_task *task)
+void silofs_unlock_fs_by(struct silofs_task_ctx *task)
 {
 	if (task->t_fs_locked && !task->t_bootrec_op) {
 		silofs_env_unlock(task->t_env);
@@ -535,7 +542,7 @@ void silofs_task_unlock_fs(struct silofs_task *task)
 	}
 }
 
-void silofs_task_rwlock_fs(struct silofs_task *task)
+void silofs_rwlock_fs_by(struct silofs_task_ctx *task)
 {
 	if (!task->t_ex_locked) {
 		silofs_env_rwlock(task->t_env, task->t_exclusive);
@@ -543,7 +550,7 @@ void silofs_task_rwlock_fs(struct silofs_task *task)
 	}
 }
 
-void silofs_task_rwunlock_fs(struct silofs_task *task)
+void silofs_rwunlock_fs_by(struct silofs_task_ctx *task)
 {
 	if (task->t_ex_locked) {
 		silofs_env_rwunlock(task->t_env);
@@ -551,12 +558,12 @@ void silofs_task_rwunlock_fs(struct silofs_task *task)
 	}
 }
 
-static bool task_has_looseq(const struct silofs_task *task)
+static bool task_has_looseq(const struct silofs_task_ctx *task)
 {
 	return (task->t_looseq != NULL);
 }
 
-int silofs_task_submit(struct silofs_task *task, bool all)
+int silofs_task_submit(struct silofs_task_ctx *task, bool all)
 {
 	int ret;
 
@@ -565,39 +572,7 @@ int silofs_task_submit(struct silofs_task *task, bool all)
 	return ret;
 }
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-struct silofs_repo *silofs_task_repo(const struct silofs_task *task)
-{
-	return task->t_env->base.repo;
-}
-
-struct silofs_sb_info *silofs_task_sbi(const struct silofs_task *task)
+struct silofs_sb_info *silofs_get_sbi(const struct silofs_task_ctx *task)
 {
 	return task->t_env->sbi;
-}
-
-struct silofs_lcache *silofs_task_lcache(const struct silofs_task *task)
-{
-	return task->t_env->base.lcache;
-}
-
-const struct silofs_idsmap *silofs_task_idsmap(const struct silofs_task *task)
-{
-	return task->t_env->base.idsmap;
-}
-
-const struct silofs_creds *silofs_task_creds(const struct silofs_task *task)
-{
-	return &task->t_oper.op_creds;
-}
-
-const struct silofs_cred *silofs_task_fs_cred(const struct silofs_task *task)
-{
-	return &task->t_oper.op_creds.fs_cred;
-}
-
-const struct timespec *silofs_task_ts(const struct silofs_task *task)
-{
-	return &task->t_oper.op_ts;
 }

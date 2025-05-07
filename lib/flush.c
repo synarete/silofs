@@ -19,12 +19,11 @@
 #include "lnodes.h"
 #include "lcache.h"
 #include "encdec.h"
-#include "task.h"
+#include "exec.h"
 #include "super.h"
 #include "inode.h"
 #include "env.h"
 #include "stage.h"
-#include "flush.h"
 
 static bool lni_isunode(const struct silofs_lnode_info *lni)
 {
@@ -896,12 +895,12 @@ static void flusher_pre_flush_dirty(struct silofs_flusher *flusher)
 }
 
 static void
-flusher_rebind(struct silofs_flusher *flusher, struct silofs_task *task,
+flusher_rebind(struct silofs_flusher *flusher, struct silofs_task_ctx *task,
                struct silofs_inode_info *ii, int flags)
 {
 	flusher_reinit_dsets(flusher);
 	flusher->task = task;
-	flusher->sbi = task_sbi(task);
+	flusher->sbi = silofs_get_sbi(task);
 	flusher->ii = ii;
 	flusher->tx_count = 0;
 	flusher->flags = flags;
@@ -963,7 +962,7 @@ static size_t flush_threshold_of(int flags)
 	return threshold;
 }
 
-static bool need_flush_now(const struct silofs_task *task, int flags)
+static bool need_flush_now(const struct silofs_task_ctx *task, int flags)
 {
 	struct silofs_alloc_stat alst = { .nbytes_use = 0, .nbytes_max = 0 };
 
@@ -1000,7 +999,7 @@ static bool need_flush_by_env(const struct silofs_env *env, int flags)
 	return (ndirty > thresh);
 }
 
-static bool need_flush_by(const struct silofs_task *task,
+static bool need_flush_by(const struct silofs_task_ctx *task,
                           const struct silofs_inode_info *ii, int flags)
 {
 	bool ret = false;
@@ -1015,7 +1014,7 @@ static bool need_flush_by(const struct silofs_task *task,
 	return ret;
 }
 
-static int do_flush_dirty(struct silofs_task *task,
+static int do_flush_dirty(struct silofs_task_ctx *task,
                           struct silofs_inode_info *ii, int flags)
 {
 	struct silofs_flusher *flusher = task->t_env->base.flusher;
@@ -1031,8 +1030,8 @@ static int do_flush_dirty(struct silofs_task *task,
 	return err;
 }
 
-int silofs_flush_dirty(struct silofs_task *task, struct silofs_inode_info *ii,
-                       int flags)
+int silofs_flush_dirty(struct silofs_task_ctx *task,
+                       struct silofs_inode_info *ii, int flags)
 {
 	int err = 0;
 
@@ -1042,7 +1041,7 @@ int silofs_flush_dirty(struct silofs_task *task, struct silofs_inode_info *ii,
 	return err;
 }
 
-int silofs_flush_dirty_now(struct silofs_task *task)
+int silofs_flush_dirty_now(struct silofs_task_ctx *task)
 {
 	return silofs_flush_dirty(task, NULL, SILOFS_CTLF_NOW);
 }

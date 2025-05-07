@@ -19,7 +19,7 @@
 #include "addr.h"
 #include "pnodes.h"
 #include "pcache.h"
-#include "task.h"
+#include "exec.h"
 
 enum {
 	PCACHE_RETRY_MAX = 4,

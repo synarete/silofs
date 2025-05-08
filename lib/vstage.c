@@ -1939,7 +1939,7 @@ static int vstgc_require_stable_vaddr(const struct silofs_vstage_ctx *vstg_ctx)
 	const struct silofs_vaddr *vaddr = vstg_ctx->vaddr;
 	bool allocated;
 
-	allocated = silofs_sli_has_allocated_space(vstg_ctx->sli, vaddr);
+	allocated = silofs_sli_has_allocated_at(vstg_ctx->sli, vaddr);
 	if (likely(allocated)) {
 		return 0;
 	}
@@ -1970,7 +1970,7 @@ static int vstgc_check_stable_vaddr(const struct silofs_vstage_ctx *vstg_ctx)
 	const struct silofs_vaddr *vaddr = vstg_ctx->vaddr;
 	bool allocated;
 
-	allocated = silofs_sli_has_allocated_space(vstg_ctx->sli, vaddr);
+	allocated = silofs_sli_has_allocated_at(vstg_ctx->sli, vaddr);
 	return likely(allocated) ? 0 : -SILOFS_ENOENT;
 }
 

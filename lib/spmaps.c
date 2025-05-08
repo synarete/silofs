@@ -763,8 +763,8 @@ static bool spleaf_has_allocated_with(const struct silofs_spmap_leaf *spl,
 	return ret;
 }
 
-static bool spleaf_is_last_allocated(const struct silofs_spmap_leaf *spl,
-                                     const struct silofs_vaddr *vaddr)
+static bool spleaf_is_last_allocated_at(const struct silofs_spmap_leaf *spl,
+                                        const struct silofs_vaddr *vaddr)
 {
 	const size_t kbn = kbn_of(vaddr);
 	const size_t nkb = nkbs_of(vaddr);
@@ -1244,8 +1244,8 @@ void silofs_sli_update_voff_hint(struct silofs_spleaf_info *sli,
 	}
 }
 
-void silofs_sli_mark_allocated_space(struct silofs_spleaf_info *sli,
-                                     const struct silofs_vaddr *vaddr)
+void silofs_sli_mark_allocated_at(struct silofs_spleaf_info *sli,
+                                  const struct silofs_vaddr *vaddr)
 {
 	const size_t len = silofs_vaddr_len(vaddr);
 
@@ -1260,11 +1260,11 @@ void silofs_sli_mark_allocated_space(struct silofs_spleaf_info *sli,
 	sli_dirtify(sli);
 }
 
-void silofs_sli_unref_allocated_space(struct silofs_spleaf_info *sli,
-                                      const struct silofs_vaddr *vaddr)
+void silofs_sli_unref_allocated_at(struct silofs_spleaf_info *sli,
+                                   const struct silofs_vaddr *vaddr)
 {
 	const size_t len = silofs_vaddr_len(vaddr);
-	const bool last = spleaf_is_last_allocated(sli->sl, vaddr);
+	const bool last = spleaf_is_last_allocated_at(sli->sl, vaddr);
 
 	spleaf_unset_allocated_at(sli->sl, vaddr);
 	if (!spleaf_is_allocated_at(sli->sl, vaddr)) {
@@ -1278,8 +1278,8 @@ void silofs_sli_unref_allocated_space(struct silofs_spleaf_info *sli,
 	sli_dirtify(sli);
 }
 
-void silofs_sli_reref_allocated_space(struct silofs_spleaf_info *sli,
-                                      const struct silofs_vaddr *vaddr)
+void silofs_sli_reref_allocated_at(struct silofs_spleaf_info *sli,
+                                   const struct silofs_vaddr *vaddr)
 {
 	silofs_assert_eq(vaddr->ltype, SILOFS_LTYPE_DATABK);
 	silofs_assert_ge(sli->sl_nused_bytes, SILOFS_LBK_SIZE);
@@ -1306,14 +1306,14 @@ bool silofs_sli_has_allocated_with(const struct silofs_spleaf_info *sli,
 	return spleaf_has_allocated_with(sli->sl, vaddr);
 }
 
-bool silofs_sli_is_last_allocated(const struct silofs_spleaf_info *sli,
-                                  const struct silofs_vaddr *vaddr)
+bool silofs_sli_has_last_allocated_at(const struct silofs_spleaf_info *sli,
+                                      const struct silofs_vaddr *vaddr)
 {
-	return spleaf_is_last_allocated(sli->sl, vaddr);
+	return spleaf_is_last_allocated_at(sli->sl, vaddr);
 }
 
-bool silofs_sli_has_allocated_space(const struct silofs_spleaf_info *sli,
-                                    const struct silofs_vaddr *vaddr)
+bool silofs_sli_has_allocated_at(const struct silofs_spleaf_info *sli,
+                                 const struct silofs_vaddr *vaddr)
 {
 	return spleaf_is_allocated_at(sli->sl, vaddr);
 }

@@ -789,7 +789,7 @@ int silofs_test_last_allocated(struct silofs_task_ctx *task,
 	if (err) {
 		return err;
 	}
-	*out_res = silofs_sli_is_last_allocated(sli, vaddr);
+	*out_res = silofs_sli_has_last_allocated_at(sli, vaddr);
 	return 0;
 }
 

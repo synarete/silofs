@@ -22,8 +22,6 @@
 
 bool silofs_ltype_isnone(enum silofs_ltype ltype);
 
-bool silofs_ltype_isbootrec(enum silofs_ltype ltype);
-
 bool silofs_ltype_issuper(enum silofs_ltype ltype);
 
 bool silofs_ltype_isspnode(enum silofs_ltype ltype);
@@ -31,20 +29,6 @@ bool silofs_ltype_isspnode(enum silofs_ltype ltype);
 bool silofs_ltype_isspleaf(enum silofs_ltype ltype);
 
 bool silofs_ltype_isinode(enum silofs_ltype ltype);
-
-bool silofs_ltype_isxanode(enum silofs_ltype ltype);
-
-bool silofs_ltype_issymval(enum silofs_ltype ltype);
-
-bool silofs_ltype_isdtnode(enum silofs_ltype ltype);
-
-bool silofs_ltype_isftnode(enum silofs_ltype ltype);
-
-bool silofs_ltype_isdata1k(enum silofs_ltype ltype);
-
-bool silofs_ltype_isdata4k(enum silofs_ltype ltype);
-
-bool silofs_ltype_isdatabk(enum silofs_ltype ltype);
 
 bool silofs_ltype_isunode(enum silofs_ltype ltype);
 

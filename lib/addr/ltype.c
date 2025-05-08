@@ -23,16 +23,6 @@ static bool ltype_isequal(enum silofs_ltype st1, enum silofs_ltype st2)
 	return (st1 == st2);
 }
 
-bool silofs_ltype_isnone(enum silofs_ltype ltype)
-{
-	return ltype_isequal(ltype, SILOFS_LTYPE_NONE);
-}
-
-bool silofs_ltype_isbootrec(enum silofs_ltype ltype)
-{
-	return ltype_isequal(ltype, SILOFS_LTYPE_BOOTREC);
-}
-
 bool silofs_ltype_issuper(enum silofs_ltype ltype)
 {
 	return ltype_isequal(ltype, SILOFS_LTYPE_SUPER);
@@ -53,42 +43,36 @@ bool silofs_ltype_isinode(enum silofs_ltype ltype)
 	return ltype_isequal(ltype, SILOFS_LTYPE_INODE);
 }
 
-bool silofs_ltype_isxanode(enum silofs_ltype ltype)
-{
-	return ltype_isequal(ltype, SILOFS_LTYPE_XANODE);
-}
-
-bool silofs_ltype_issymval(enum silofs_ltype ltype)
-{
-	return ltype_isequal(ltype, SILOFS_LTYPE_SYMVAL);
-}
-
-bool silofs_ltype_isdtnode(enum silofs_ltype ltype)
-{
-	return ltype_isequal(ltype, SILOFS_LTYPE_DTNODE);
-}
-
-bool silofs_ltype_isftnode(enum silofs_ltype ltype)
-{
-	return ltype_isequal(ltype, SILOFS_LTYPE_FTNODE);
-}
-
-bool silofs_ltype_isdata1k(enum silofs_ltype ltype)
-{
-	return ltype_isequal(ltype, SILOFS_LTYPE_DATA1K);
-}
-
-bool silofs_ltype_isdata4k(enum silofs_ltype ltype)
-{
-	return ltype_isequal(ltype, SILOFS_LTYPE_DATA4K);
-}
-
-bool silofs_ltype_isdatabk(enum silofs_ltype ltype)
-{
-	return ltype_isequal(ltype, SILOFS_LTYPE_DATABK);
-}
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+bool silofs_ltype_isnone(enum silofs_ltype ltype)
+{
+	bool ret;
+
+	switch (ltype) {
+	case SILOFS_LTYPE_BOOTREC:
+	case SILOFS_LTYPE_SUPER:
+	case SILOFS_LTYPE_SPNODE:
+	case SILOFS_LTYPE_SPLEAF:
+	case SILOFS_LTYPE_LSMAP:
+	case SILOFS_LTYPE_INODE:
+	case SILOFS_LTYPE_XANODE:
+	case SILOFS_LTYPE_SYMVAL:
+	case SILOFS_LTYPE_DTNODE:
+	case SILOFS_LTYPE_FTNODE:
+	case SILOFS_LTYPE_DATA1K:
+	case SILOFS_LTYPE_DATA4K:
+	case SILOFS_LTYPE_DATABK:
+		ret = false;
+		break;
+	case SILOFS_LTYPE_NONE:
+	case SILOFS_LTYPE_LAST:
+	default:
+		ret = true;
+		break;
+	}
+	return ret;
+}
 
 bool silofs_ltype_isunode(enum silofs_ltype ltype)
 {

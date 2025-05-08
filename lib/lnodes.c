@@ -1299,12 +1299,14 @@ fli_init(struct silofs_fileaf_info *fli, const struct silofs_vaddr *vaddr,
 {
 	vni_init(&fli->fl_vni, vaddr, view);
 
-	if (silofs_ltype_isdata1k(vaddr->ltype)) {
+	if (vaddr->ltype == SILOFS_LTYPE_DATA1K) {
 		fli->flu.db1 = &view->u.dbk1;
-	} else if (silofs_ltype_isdata4k(vaddr->ltype)) {
+	} else if (vaddr->ltype == SILOFS_LTYPE_DATA4K) {
 		fli->flu.db4 = &view->u.dbk4;
-	} else if (silofs_ltype_isdatabk(vaddr->ltype)) {
+	} else if (vaddr->ltype == SILOFS_LTYPE_DATABK) {
 		fli->flu.db = &view->u.dbk64;
+	} else {
+		silofs_panic("not data ltype: %d", (int)vaddr->ltype);
 	}
 }
 

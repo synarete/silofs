@@ -2654,6 +2654,11 @@ static ino_t ino_of(const struct silofs_inode *inode)
 	return silofs_inode_ino(inode);
 }
 
+static bool ltype_isdtnode(enum silofs_ltype ltype)
+{
+	return (ltype == SILOFS_LTYPE_DTNODE);
+}
+
 static int dinode_verify_root(const struct silofs_inode *inode)
 {
 	const struct silofs_inode_dir *indr = indr_of(inode);
@@ -2669,7 +2674,7 @@ static int dinode_verify_root(const struct silofs_inode *inode)
 			        ino_of(inode), vaddr.off);
 			return err;
 		}
-		if (!silofs_ltype_isdtnode(vaddr.ltype)) {
+		if (!ltype_isdtnode(vaddr.ltype)) {
 			log_err("illegal dir root: ino=%lu off=%ld ltype=%d",
 			        ino_of(inode), vaddr.off, vaddr.ltype);
 			return -SILOFS_EFSCORRUPTED;
@@ -2756,7 +2761,7 @@ static int dtn_verify_childs(const struct silofs_dtree_node *dtn)
 		if (err) {
 			return err;
 		}
-		if (!silofs_ltype_isdtnode(vaddr.ltype)) {
+		if (!ltype_isdtnode(vaddr.ltype)) {
 			return -SILOFS_EFSCORRUPTED;
 		}
 	}

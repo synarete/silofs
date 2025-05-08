@@ -160,7 +160,7 @@ bool silofs_vaddr_isdata(const struct silofs_vaddr *vaddr)
 
 bool silofs_vaddr_isdatabk(const struct silofs_vaddr *vaddr)
 {
-	return silofs_ltype_isdatabk(vaddr->ltype);
+	return vaddr->ltype == SILOFS_LTYPE_DATABK;
 }
 
 bool silofs_vaddr_isinode(const struct silofs_vaddr *vaddr)

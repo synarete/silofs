@@ -345,13 +345,13 @@ static void *fli_data_at(const struct silofs_fileaf_info *fli, loff_t pos)
 	uint8_t *dat_base = NULL;
 	const enum silofs_ltype ltype = fli_ltype(fli);
 
-	if (silofs_ltype_isdata1k(ltype)) {
+	if (ltype == SILOFS_LTYPE_DATA1K) {
 		dat_size = sizeof(fli->flu.db1->dat);
 		dat_base = fli->flu.db1->dat;
-	} else if (silofs_ltype_isdata4k(ltype)) {
+	} else if (ltype == SILOFS_LTYPE_DATA4K) {
 		dat_size = sizeof(fli->flu.db4->dat);
 		dat_base = fli->flu.db4->dat;
-	} else if (silofs_ltype_isdatabk(ltype)) {
+	} else if (ltype == SILOFS_LTYPE_DATABK) {
 		dat_size = sizeof(fli->flu.db->dat);
 		dat_base = fli->flu.db->dat;
 	}
@@ -1151,7 +1151,7 @@ static bool filc_has_tree_root(const struct silofs_file_ctx *f_ctx)
 	struct silofs_vaddr vaddr;
 
 	filc_tree_root_of(f_ctx, &vaddr);
-	return silofs_ltype_isftnode(vaddr.ltype);
+	return (vaddr.ltype == SILOFS_LTYPE_FTNODE);
 }
 
 static void filc_set_tree_root_at(const struct silofs_file_ctx *f_ctx,
@@ -4768,7 +4768,7 @@ int silofs_verify_ftree_node(const struct silofs_ftree_node *ftn)
 	if (child_ltype != expect_ltype) {
 		return -SILOFS_EFSCORRUPTED;
 	}
-	if (ftn_isbottom(ftn) && !silofs_ltype_isdatabk(child_ltype)) {
+	if (ftn_isbottom(ftn) && (child_ltype != SILOFS_LTYPE_DATABK)) {
 		return -SILOFS_EFSCORRUPTED;
 	}
 	return 0;

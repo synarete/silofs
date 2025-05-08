@@ -465,7 +465,7 @@ static int ixa_verify(const struct silofs_inode_xattr *ixa)
 			if (err) {
 				return err;
 			}
-			if (!silofs_ltype_isxanode(vaddr.ltype)) {
+			if (vaddr.ltype != SILOFS_LTYPE_XANODE) {
 				return -SILOFS_EFSCORRUPTED;
 			}
 		}

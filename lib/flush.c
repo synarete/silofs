@@ -42,7 +42,7 @@ static bool lni_isdata(const struct silofs_lnode_info *lni)
 
 static bool uni_issuper(const struct silofs_unode_info *uni)
 {
-	return silofs_ltype_issuper(uni_ltype(uni));
+	return silofs_ltype_issuper(silofs_uni_ltype(uni));
 }
 
 static struct silofs_unode_info *
@@ -316,7 +316,7 @@ flusher_dset_at(struct silofs_flusher *flusher, size_t slot)
 }
 
 static struct silofs_dset *
-flusher_dset_of(struct silofs_flusher *flusher, const enum silofs_ltype ltype)
+flusher_dset_of(struct silofs_flusher *flusher, enum silofs_ltype ltype)
 {
 	const size_t slot = flusher_dset_slot_of(flusher, ltype);
 
@@ -335,14 +335,14 @@ static struct silofs_dset *
 flusher_dset_of_vni(struct silofs_flusher *flusher,
                     const struct silofs_vnode_info *vni)
 {
-	return flusher_dset_of(flusher, vni_ltype(vni));
+	return flusher_dset_of(flusher, silofs_vni_ltype(vni));
 }
 
 static struct silofs_dset *
 flusher_dset_of_uni(struct silofs_flusher *flusher,
                     const struct silofs_unode_info *uni)
 {
-	return flusher_dset_of(flusher, uni_ltype(uni));
+	return flusher_dset_of(flusher, silofs_uni_ltype(uni));
 }
 
 static void flusher_add_dirty_vni(struct silofs_flusher *flusher,

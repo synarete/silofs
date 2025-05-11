@@ -113,7 +113,7 @@ ismutable(const struct silofs_env *env, const struct silofs_laddr *laddr)
 
 static bool vni_has_mutable_laddr(const struct silofs_vnode_info *vni)
 {
-	return ismutable(vni_env(vni), &vni->vn_llink.laddr);
+	return ismutable(silofs_vni_env(vni), &vni->vn_llink.laddr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -342,7 +342,7 @@ static int sbi_inspect_cached_uni(const struct silofs_sb_info *sbi,
                                   const struct silofs_unode_info *uni,
                                   enum silofs_stg_mode stg_mode)
 {
-	return sbi_inspect_laddr(sbi, uni_laddr(uni), stg_mode);
+	return sbi_inspect_laddr(sbi, silofs_uni_laddr(uni), stg_mode);
 }
 
 static int sbi_inspect_cached_sni(const struct silofs_sb_info *sbi,
@@ -582,7 +582,7 @@ static int vstgc_inspect_llink(const struct silofs_vstage_ctx *vstg_ctx,
 static int vstgc_inspect_cached_uni(const struct silofs_vstage_ctx *vstg_ctx,
                                     const struct silofs_unode_info *uni)
 {
-	return vstgc_inspect_laddr(vstg_ctx, uni_laddr(uni));
+	return vstgc_inspect_laddr(vstg_ctx, silofs_uni_laddr(uni));
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -2221,7 +2221,7 @@ static int vstgc_do_pre_clone_lbk(struct silofs_vstage_ctx *vstg_ctx,
 		if (err) {
 			return err;
 		}
-		vni_incref(vni);
+		silofs_vni_incref(vni);
 		vis->vnis[j] = vni;
 	}
 	return 0;
@@ -2253,7 +2253,7 @@ static void vstgc_post_clone_lbk(const struct silofs_vstage_ctx *vstg_ctx,
 		vni = vis->vnis[i];
 		if (vni != NULL) {
 			vstgc_redirtify_vni(vstg_ctx, vni);
-			vni_decref(vni);
+			silofs_vni_decref(vni);
 		}
 	}
 }
@@ -2460,7 +2460,8 @@ static int require_updated_cached_vni(struct silofs_task_ctx *task,
                                       struct silofs_vnode_info *vni,
                                       enum silofs_stg_mode stg_mode)
 {
-	struct silofs_llink llink;
+	struct silofs_llink llink = { .laddr.pos = -1 };
+	const struct silofs_vaddr *vaddr = NULL;
 	int err;
 
 	if (!(stg_mode & SILOFS_STG_COW)) {
@@ -2469,7 +2470,8 @@ static int require_updated_cached_vni(struct silofs_task_ctx *task,
 	if (vni_has_mutable_laddr(vni)) {
 		return 0;
 	}
-	err = silofs_resolve_llink_of(task, vni_vaddr(vni), stg_mode, &llink);
+	vaddr = silofs_vni_vaddr(vni);
+	err = silofs_resolve_llink_of(task, vaddr, stg_mode, &llink);
 	if (err) {
 		return err;
 	}
@@ -2739,7 +2741,7 @@ do_spawn_vnode(struct silofs_task_ctx *task, struct silofs_inode_info *pii,
 	if (err) {
 		return err;
 	}
-	vni_dirtify(vni, pii);
+	silofs_vni_dirtify(vni, pii);
 	*out_vni = vni;
 	return 0;
 }
@@ -2850,9 +2852,9 @@ remove_vnode_of(struct silofs_task_ctx *task, struct silofs_vnode_info *vni)
 {
 	int err;
 
-	vni_incref(vni);
-	err = reclaim_vspace_at(task, vni_vaddr(vni));
-	vni_decref(vni);
+	silofs_vni_incref(vni);
+	err = reclaim_vspace_at(task, silofs_vni_vaddr(vni));
+	silofs_vni_decref(vni);
 	return err;
 }
 
@@ -2922,14 +2924,14 @@ int silofs_remove_inode(struct silofs_task_ctx *task,
 int silofs_refresh_llink(struct silofs_task_ctx *task,
                          struct silofs_vnode_info *vni)
 {
-	struct silofs_llink llink;
+	struct silofs_llink llink = { .laddr.pos = -1 };
 	const struct silofs_vaddr *vaddr = NULL;
 	int err;
 
 	if (vni_has_mutable_laddr(vni)) {
 		return 0;
 	}
-	vaddr = vni_vaddr(vni);
+	vaddr = silofs_vni_vaddr(vni);
 	err = silofs_resolve_llink_of(task, vaddr, SILOFS_STG_CUR, &llink);
 	if (err) {
 		log_warn("failed to refresh llink: ltype=%d off=%ld err=%d",

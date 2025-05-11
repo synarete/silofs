@@ -507,26 +507,26 @@ void silofs_ii_setup_xattr(struct silofs_inode_info *ii)
 static const struct silofs_vaddr *
 xai_vaddr(const struct silofs_xanode_info *xai)
 {
-	return vni_vaddr(&xai->xan_vni);
+	return silofs_vni_vaddr(&xai->xan_vni);
 }
 
 static void
 xai_dirtify(struct silofs_xanode_info *xai, struct silofs_inode_info *ii)
 {
-	vni_dirtify(&xai->xan_vni, ii);
+	silofs_vni_dirtify(&xai->xan_vni, ii);
 }
 
 static void xai_incref(struct silofs_xanode_info *xai)
 {
 	if (likely(xai != NULL)) {
-		vni_incref(&xai->xan_vni);
+		silofs_vni_incref(&xai->xan_vni);
 	}
 }
 
 static void xai_decref(struct silofs_xanode_info *xai)
 {
 	if (likely(xai != NULL)) {
-		vni_decref(&xai->xan_vni);
+		silofs_vni_decref(&xai->xan_vni);
 	}
 }
 

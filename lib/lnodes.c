@@ -346,7 +346,9 @@ void silofs_uni_seal_view(struct silofs_unode_info *uni)
 static void uni_del_view(struct silofs_unode_info *uni,
                          struct silofs_alloc *alloc, int flags)
 {
-	view_del_by_uaddr(uni->un_lni.ln_view, uni_uaddr(uni), alloc, flags);
+	struct silofs_view *view = uni->un_lni.ln_view;
+
+	view_del_by_uaddr(view, silofs_uni_uaddr(uni), alloc, flags);
 	uni->un_lni.ln_view = NULL;
 }
 
@@ -535,8 +537,6 @@ struct silofs_vnode_info *silofs_vni_from_dqe(struct silofs_dq_elem *dqe)
 void silofs_vni_seal_view(struct silofs_vnode_info *vni)
 {
 	silofs_assert_not_null(vni->vn_lni.ln_view);
-	silofs_assert(!vaddr_isdata(vni_vaddr(vni)));
-
 	silofs_hdr_seal(&vni->vn_lni.ln_view->u.hdr);
 }
 
@@ -549,7 +549,9 @@ vni_has_ltype(const struct silofs_vnode_info *vni, enum silofs_ltype ltype)
 static void vni_del_view(struct silofs_vnode_info *vni,
                          struct silofs_alloc *alloc, int flags)
 {
-	view_del_by_vaddr(vni->vn_lni.ln_view, vni_vaddr(vni), alloc, flags);
+	struct silofs_view *view = vni->vn_lni.ln_view;
+
+	view_del_by_vaddr(view, silofs_vni_vaddr(vni), alloc, flags);
 	vni->vn_lni.ln_view = NULL;
 }
 
@@ -831,7 +833,7 @@ static struct silofs_vnode_info *lsi_to_vni(struct silofs_lsmap_info *lsi)
 	return &lsi->ls_vni;
 }
 
-static struct silofs_lsmap_info *lsi_from_vni(struct silofs_vnode_info *vni)
+struct silofs_lsmap_info *silofs_lsi_from_vni(struct silofs_vnode_info *vni)
 {
 	return container_of(vni, struct silofs_lsmap_info, ls_vni);
 }
@@ -1470,7 +1472,7 @@ silofs_new_unode(struct silofs_alloc *alloc, const struct silofs_uaddr *uaddr)
 void silofs_del_unode(struct silofs_unode_info *uni,
                       struct silofs_alloc *alloc, int flags)
 {
-	const enum silofs_ltype ltype = uni_ltype(uni);
+	const enum silofs_ltype ltype = silofs_uni_ltype(uni);
 
 	switch (ltype) {
 	case SILOFS_LTYPE_SUPER:
@@ -1548,11 +1550,11 @@ silofs_new_vnode(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 void silofs_del_vnode(struct silofs_vnode_info *vni,
                       struct silofs_alloc *alloc, int flags)
 {
-	const enum silofs_ltype ltype = vni_ltype(vni);
+	const enum silofs_ltype ltype = silofs_vni_ltype(vni);
 
 	switch (ltype) {
 	case SILOFS_LTYPE_LSMAP:
-		lsi_del(lsi_from_vni(vni), alloc, flags);
+		lsi_del(silofs_lsi_from_vni(vni), alloc, flags);
 		break;
 	case SILOFS_LTYPE_INODE:
 		ii_del(ii_from_vni(vni), alloc, flags);

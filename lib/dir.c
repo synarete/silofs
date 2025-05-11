@@ -926,27 +926,27 @@ dni_unconst(const struct silofs_dnode_info *dni)
 static void
 dni_dirtify(struct silofs_dnode_info *dni, struct silofs_inode_info *ii)
 {
-	vni_dirtify(&dni->dn_vni, ii);
+	silofs_vni_dirtify(&dni->dn_vni, ii);
 }
 
 static void dni_incref(struct silofs_dnode_info *dni)
 {
 	if (likely(dni != NULL)) {
-		vni_incref(&dni->dn_vni);
+		silofs_vni_incref(&dni->dn_vni);
 	}
 }
 
 static void dni_decref(struct silofs_dnode_info *dni)
 {
 	if (likely(dni != NULL)) {
-		vni_decref(&dni->dn_vni);
+		silofs_vni_decref(&dni->dn_vni);
 	}
 }
 
 static const struct silofs_vaddr *
 dni_vaddr(const struct silofs_dnode_info *dni)
 {
-	return vni_vaddr(&dni->dn_vni);
+	return silofs_vni_vaddr(&dni->dn_vni);
 }
 
 static void

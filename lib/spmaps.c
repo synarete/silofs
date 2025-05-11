@@ -1070,20 +1070,20 @@ enum silofs_ltype silofs_sli_refltype(const struct silofs_spleaf_info *sli)
 void silofs_sli_incref(struct silofs_spleaf_info *sli)
 {
 	if (likely(sli != NULL)) {
-		uni_incref(sli_uni(sli));
+		silofs_uni_incref(sli_uni(sli));
 	}
 }
 
 void silofs_sli_decref(struct silofs_spleaf_info *sli)
 {
 	if (likely(sli != NULL)) {
-		uni_decref(sli_uni(sli));
+		silofs_uni_decref(sli_uni(sli));
 	}
 }
 
 static void sli_dirtify(struct silofs_spleaf_info *sli)
 {
-	uni_dirtify(sli_uni(sli));
+	silofs_uni_dirtify(sli_uni(sli));
 }
 
 void silofs_sli_vspace_range(const struct silofs_spleaf_info *sli,
@@ -1574,7 +1574,7 @@ static struct silofs_unode_info *sni_uni(const struct silofs_spnode_info *sni)
 
 static void sni_dirtify(struct silofs_spnode_info *sni)
 {
-	uni_dirtify(sni_uni(sni));
+	silofs_uni_dirtify(sni_uni(sni));
 }
 
 const struct silofs_uaddr *
@@ -1592,14 +1592,14 @@ silofs_sni_laddr(const struct silofs_spnode_info *sni)
 void silofs_sni_incref(struct silofs_spnode_info *sni)
 {
 	if (likely(sni != NULL)) {
-		uni_incref(sni_uni(sni));
+		silofs_uni_incref(sni_uni(sni));
 	}
 }
 
 void silofs_sni_decref(struct silofs_spnode_info *sni)
 {
 	if (likely(sni != NULL)) {
-		uni_decref(sni_uni(sni));
+		silofs_uni_decref(sni_uni(sni));
 	}
 }
 

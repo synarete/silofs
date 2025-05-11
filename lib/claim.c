@@ -119,16 +119,6 @@ static void sbi_update_space_stats(struct silofs_sb_info *sbi,
 	silofs_sbst_update_bks(sbi, vaddr->ltype, nbks_take);
 }
 
-static void sbi_mark_allocated_at(struct silofs_sb_info *sbi,
-                                  struct silofs_spleaf_info *sli,
-                                  const struct silofs_vaddr *vaddr)
-{
-	const bool first = !silofs_sli_has_allocated_with(sli, vaddr);
-
-	silofs_sli_mark_allocated_at(sli, vaddr);
-	sbi_update_space_stats(sbi, vaddr, 1, first ? 1 : 0);
-}
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void spac_setup(struct silofs_spalloc_ctx *spa_ctx,
@@ -330,9 +320,10 @@ static int spac_check_want_free_vspace(struct silofs_spalloc_ctx *spa_ctx,
 static void spac_mark_allocated(struct silofs_spalloc_ctx *spa_ctx,
                                 const struct silofs_vaddr *vaddr)
 {
-	silofs_expect_eq(spa_ctx->ltype, vaddr->ltype);
+	const bool first = !silofs_sli_has_allocated_with(spa_ctx->sli, vaddr);
 
-	sbi_mark_allocated_at(spa_ctx->sbi, spa_ctx->sli, vaddr);
+	silofs_sli_mark_allocated_at(spa_ctx->sli, vaddr);
+	sbi_update_space_stats(spa_ctx->sbi, vaddr, 1, first ? 1 : 0);
 	spac_set_hint(spa_ctx, vaddr->off);
 }
 
@@ -429,8 +420,8 @@ claim_vspace_of(struct silofs_task_ctx *task, enum silofs_ltype ltype,
 	return spac_claim_vspace(&spa_ctx, out_vaddr);
 }
 
-static int claim_lsmap_vspace(struct silofs_task_ctx *task,
-                              const struct silofs_vaddr *vaddr)
+static int
+claim_lsmap_of(struct silofs_task_ctx *task, const struct silofs_vaddr *vaddr)
 {
 	struct silofs_spalloc_ctx spa_ctx;
 	struct silofs_vaddr lsmap_vaddr;
@@ -442,19 +433,61 @@ static int claim_lsmap_vspace(struct silofs_task_ctx *task,
 	return spac_claim_vspace_at(&spa_ctx, &lsmap_vaddr);
 }
 
+static int
+stage_lsmap_of(struct silofs_task_ctx *task, const struct silofs_vaddr *vaddr,
+               struct silofs_lsmap_info **out_lsi)
+{
+	struct silofs_vaddr lsmap_vaddr;
+	struct silofs_vnode_info *vni = NULL;
+	const enum silofs_stg_mode stg_mode = SILOFS_STG_COW | SILOFS_STG_RAW;
+	int err;
+
+	silofs_vaddr_of_lsmap(&lsmap_vaddr, vaddr->ltype, vaddr->off);
+	err = silofs_stage_vnode(task, NULL, &lsmap_vaddr, stg_mode, &vni);
+	if (err) {
+		return err;
+	}
+	*out_lsi = silofs_lsi_from_vni(vni);
+	return 0;
+}
+
+static int
+update_lsmap_by(struct silofs_task_ctx *task, const struct silofs_vaddr *vaddr)
+
+{
+	struct silofs_lsmap_info *lsi = NULL;
+	bool mark_allocated_xxx = false; /* XXX */
+	int err;
+
+	err = stage_lsmap_of(task, vaddr, &lsi);
+	if (err) {
+		return err;
+	}
+	if (mark_allocated_xxx) {
+		silofs_lsi_mark_allocated_at(lsi, vaddr);
+	}
+	return 0;
+}
+
 int silofs_claim_vspace(struct silofs_task_ctx *task, enum silofs_ltype ltype,
                         struct silofs_vaddr *out_vaddr)
 {
+	struct silofs_vaddr vaddr;
 	int err;
 
-	err = claim_vspace_of(task, ltype, out_vaddr);
+	err = claim_vspace_of(task, ltype, &vaddr);
 	if (err) {
 		return err;
 	}
-	err = claim_lsmap_vspace(task, out_vaddr);
+	err = claim_lsmap_of(task, &vaddr);
 	if (err) {
 		return err;
 	}
+	err = update_lsmap_by(task, &vaddr);
+	if (err) {
+		return err;
+	}
+	silofs_vaddr_assign(out_vaddr, &vaddr);
 	return 0;
 }
 

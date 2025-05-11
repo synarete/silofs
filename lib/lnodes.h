@@ -203,16 +203,6 @@ silofs_uni_lvid(const struct silofs_unode_info *uni);
 struct silofs_unode_info *
 silofs_uni_from_lni(const struct silofs_lnode_info *lni);
 
-#ifdef SILOFS_USE_PRIVATE
-#define uni_incref(uni)         silofs_uni_incref(uni)
-#define uni_decref(uni)         silofs_uni_decref(uni)
-#define uni_dirtify(uni)        silofs_uni_dirtify(uni)
-#define uni_uaddr(uni)          silofs_uni_uaddr(uni)
-#define uni_uaddr(uni)          silofs_uni_uaddr(uni)
-#define uni_laddr(uni)          silofs_uni_laddr(uni)
-#define uni_ltype(uni)          silofs_uni_ltype(uni)
-#endif
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_vni_refcnt(const struct silofs_vnode_info *vni);
@@ -252,16 +242,6 @@ struct silofs_vnode_info *silofs_vni_from_dqe(struct silofs_dq_elem *dqe);
 
 struct silofs_vnode_info *
 silofs_vni_from_lni(const struct silofs_lnode_info *lni);
-
-#ifdef SILOFS_USE_PRIVATE
-#define vni_ltype(vni)         silofs_vni_ltype(vni)
-#define vni_vaddr(vni)         silofs_vni_vaddr(vni)
-#define vni_env(vni)           silofs_vni_env(vni)
-#define vni_refcnt(vni)        silofs_vni_refcnt(vni)
-#define vni_incref(vni)        silofs_vni_incref(vni)
-#define vni_decref(vni)        silofs_vni_decref(vni)
-#define vni_dirtify(vni, ii)   silofs_vni_dirtify(vni, ii)
-#endif
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

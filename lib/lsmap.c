@@ -893,8 +893,8 @@ void silofs_lsi_update_off_hint(struct silofs_lsmap_info *lsi,
 	}
 }
 
-void silofs_lsi_mark_allocated_space(struct silofs_lsmap_info *lsi,
-                                     const struct silofs_vaddr *vaddr)
+void silofs_lsi_mark_allocated_at(struct silofs_lsmap_info *lsi,
+                                  const struct silofs_vaddr *vaddr)
 {
 	const size_t len = silofs_vaddr_len(vaddr);
 
@@ -909,8 +909,8 @@ void silofs_lsi_mark_allocated_space(struct silofs_lsmap_info *lsi,
 	lsi_dirtify(lsi);
 }
 
-void silofs_lsi_unref_allocated_space(struct silofs_lsmap_info *lsi,
-                                      const struct silofs_vaddr *vaddr)
+void silofs_lsi_unref_allocated_at(struct silofs_lsmap_info *lsi,
+                                   const struct silofs_vaddr *vaddr)
 {
 	const size_t len = silofs_vaddr_len(vaddr);
 	const bool last = lsmap_is_last_allocated(lsi->lsm, vaddr);
@@ -927,8 +927,8 @@ void silofs_lsi_unref_allocated_space(struct silofs_lsmap_info *lsi,
 	lsi_dirtify(lsi);
 }
 
-void silofs_lsi_reref_allocated_space(struct silofs_lsmap_info *lsi,
-                                      const struct silofs_vaddr *vaddr)
+void silofs_lsi_reref_allocated_at(struct silofs_lsmap_info *lsi,
+                                   const struct silofs_vaddr *vaddr)
 {
 	silofs_assert_eq(vaddr->ltype, SILOFS_LTYPE_DATABK);
 	silofs_assert_ge(lsi->ls_nused_bytes, SILOFS_LBK_SIZE);
@@ -971,8 +971,8 @@ bool silofs_lsi_is_last_allocated(const struct silofs_lsmap_info *lsi,
 	return ret;
 }
 
-bool silofs_lsi_has_allocated_space(const struct silofs_lsmap_info *lsi,
-                                    const struct silofs_vaddr *vaddr)
+bool silofs_lsi_has_allocated_at(const struct silofs_lsmap_info *lsi,
+                                 const struct silofs_vaddr *vaddr)
 {
 	bool ret = false;
 

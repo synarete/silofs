@@ -202,13 +202,13 @@ static void lnk_set_value_part(struct silofs_inode_info *lnk_ii, size_t slot,
 static const struct silofs_vaddr *
 syi_vaddr(const struct silofs_symval_info *syi)
 {
-	return vni_vaddr(&syi->sy_vni);
+	return silofs_vni_vaddr(&syi->sy_vni);
 }
 
 static void
 syi_dirtify(struct silofs_symval_info *syi, struct silofs_inode_info *ii)
 {
-	vni_dirtify(&syi->sy_vni, ii);
+	silofs_vni_dirtify(&syi->sy_vni, ii);
 }
 
 static int syi_recheck_symval(struct silofs_symval_info *syi)

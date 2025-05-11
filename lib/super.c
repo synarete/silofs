@@ -851,7 +851,7 @@ void silofs_sbi_decref(struct silofs_sb_info *sbi)
 
 void silofs_sbi_dirtify(struct silofs_sb_info *sbi)
 {
-	uni_dirtify(&sbi->sb_uni);
+	silofs_uni_dirtify(&sbi->sb_uni);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

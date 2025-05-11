@@ -306,32 +306,32 @@ static bool fl_mode_zero_range(int fl_mode)
 static void
 fli_dirtify(struct silofs_fileaf_info *fli, struct silofs_inode_info *ii)
 {
-	vni_dirtify(&fli->fl_vni, ii);
+	silofs_vni_dirtify(&fli->fl_vni, ii);
 }
 
 static void fli_incref(struct silofs_fileaf_info *fli)
 {
 	if (likely(fli != NULL)) {
-		vni_incref(&fli->fl_vni);
+		silofs_vni_incref(&fli->fl_vni);
 	}
 }
 
 static void fli_decref(struct silofs_fileaf_info *fli)
 {
 	if (likely(fli != NULL)) {
-		vni_decref(&fli->fl_vni);
+		silofs_vni_decref(&fli->fl_vni);
 	}
 }
 
 static const struct silofs_vaddr *
 fli_vaddr(const struct silofs_fileaf_info *fli)
 {
-	return (fli != NULL) ? vni_vaddr(&fli->fl_vni) : NULL;
+	return (fli != NULL) ? silofs_vni_vaddr(&fli->fl_vni) : NULL;
 }
 
 static enum silofs_ltype fli_ltype(const struct silofs_fileaf_info *fli)
 {
-	return vni_ltype(&fli->fl_vni);
+	return silofs_vni_ltype(&fli->fl_vni);
 }
 
 static size_t fli_data_len(const struct silofs_fileaf_info *fli)
@@ -377,7 +377,7 @@ fli_len_within(const struct silofs_fileaf_info *fli, loff_t off, loff_t end)
 
 static bool fli_asyncwr(const struct silofs_fileaf_info *fli)
 {
-	const struct silofs_env *env = vni_env(&fli->fl_vni);
+	const struct silofs_env *env = silofs_vni_env(&fli->fl_vni);
 
 	return silofs_env_hasflag(env, SILOFS_F_ASYNCWR);
 }
@@ -758,27 +758,27 @@ static struct silofs_inode_file *ii_infl_of(const struct silofs_inode_info *ii)
 static void
 fni_dirtify(struct silofs_finode_info *fni, struct silofs_inode_info *ii)
 {
-	vni_dirtify(&fni->fn_vni, ii);
+	silofs_vni_dirtify(&fni->fn_vni, ii);
 }
 
 static void fni_incref(struct silofs_finode_info *fni)
 {
 	if (likely(fni != NULL)) {
-		vni_incref(&fni->fn_vni);
+		silofs_vni_incref(&fni->fn_vni);
 	}
 }
 
 static void fni_decref(struct silofs_finode_info *fni)
 {
 	if (likely(fni != NULL)) {
-		vni_decref(&fni->fn_vni);
+		silofs_vni_decref(&fni->fn_vni);
 	}
 }
 
 static const struct silofs_vaddr *
 fni_vaddr(const struct silofs_finode_info *fni)
 {
-	return vni_vaddr(&fni->fn_vni);
+	return silofs_vni_vaddr(&fni->fn_vni);
 }
 
 static bool

@@ -1539,23 +1539,10 @@ int silofs_sli_resolve_child_by(const struct silofs_spleaf_info *sli,
 	return sli_resolve_child(sli, voff, out_laddr);
 }
 
-int silofs_sli_resolve_llink_by(const struct silofs_spleaf_info *sli,
-                                loff_t voff, struct silofs_llink *out_llink)
+int silofs_sli_resolve_key_by(const struct silofs_spleaf_info *sli,
+                              loff_t voff, struct silofs_key *out_key)
 {
-	struct silofs_laddr laddr;
-	struct silofs_key key;
-	int err;
-
-	err = sli_resolve_key(sli, voff, &key);
-	if (err) {
-		return err;
-	}
-	err = sli_resolve_child(sli, voff, &laddr);
-	if (err) {
-		return err;
-	}
-	silofs_llink_setup(out_llink, &laddr, &key);
-	return 0;
+	return sli_resolve_key(sli, voff, out_key);
 }
 
 void silofs_sli_rebind_llink_by(struct silofs_spleaf_info *sli, loff_t voff,

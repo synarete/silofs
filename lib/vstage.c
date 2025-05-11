@@ -713,13 +713,6 @@ static int vstgc_resolve_spnode_child(const struct silofs_vstage_ctx *vstg_ctx,
 	return silofs_sni_resolve_child(sni, lbk_voff, out_uaddr);
 }
 
-static int vstgc_resolve_spleaf_child(const struct silofs_vstage_ctx *vstg_ctx,
-                                      const struct silofs_spleaf_info *sli,
-                                      struct silofs_llink *out_llink)
-{
-	return silofs_sli_resolve_llink_by(sli, vstg_ctx->voff, out_llink);
-}
-
 static int vstgc_do_stage_spnode_at(const struct silofs_vstage_ctx *vstg_ctx,
                                     const struct silofs_uaddr *uaddr,
                                     struct silofs_spnode_info **out_sni)
@@ -1843,6 +1836,49 @@ static int vstgc_require_spnodes_of(struct silofs_vstage_ctx *vstg_ctx)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static int vstgc_resolve_child_of(const struct silofs_vstage_ctx *vstg_ctx,
+                                  struct silofs_laddr *out_laddr)
+{
+	return silofs_sli_resolve_child_by(vstg_ctx->sli, vstg_ctx->voff,
+	                                   out_laddr);
+}
+
+static int vstgc_resolve_key_of(const struct silofs_vstage_ctx *vstg_ctx,
+                                struct silofs_key *out_key)
+{
+	const struct silofs_ivkey *main_ivkey = NULL;
+	int ret = 0;
+
+	if (vstg_ctx->vspace != SILOFS_LTYPE_LSMAP) {
+		ret = silofs_sli_resolve_key_by(vstg_ctx->sli, vstg_ctx->voff,
+		                                out_key);
+	} else {
+		main_ivkey = &vstg_ctx->env->base.bootrec->main_ivkey;
+		silofs_key_assign(out_key, &main_ivkey->key);
+	}
+	return ret;
+}
+
+static int vstgc_resolve_llink_of(const struct silofs_vstage_ctx *vstg_ctx,
+                                  struct silofs_llink *out_llink)
+{
+	struct silofs_laddr laddr;
+	struct silofs_key key;
+	int err;
+
+	err = vstgc_resolve_child_of(vstg_ctx, &laddr);
+	if (err) {
+		return err;
+	}
+	err = vstgc_resolve_key_of(vstg_ctx, &key);
+	if (err) {
+		return err;
+	}
+	silofs_laddr_setpos(&laddr, vstg_ctx->voff);
+	silofs_llink_setup(out_llink, &laddr, &key);
+	return 0;
+}
+
 static int vstgc_stage_spmaps_of(struct silofs_vstage_ctx *vstg_ctx)
 {
 	int err;
@@ -1856,12 +1892,6 @@ static int vstgc_stage_spmaps_of(struct silofs_vstage_ctx *vstg_ctx)
 		return err;
 	}
 	return 0;
-}
-
-static int vstgc_resolve_llink_of(const struct silofs_vstage_ctx *vstg_ctx,
-                                  struct silofs_llink *out_llink)
-{
-	return vstgc_resolve_spleaf_child(vstg_ctx, vstg_ctx->sli, out_llink);
 }
 
 static int vstgc_stage_spleaf_for_resolve(struct silofs_vstage_ctx *vstg_ctx)

@@ -26,6 +26,7 @@
 #include "inode.h"
 #include "stage.h"
 #include "spmaps.h"
+#include "lsmap.h"
 #include "env.h"
 
 static void tm64b_htox(struct silofs_tm64b *tm64, const struct tm *tm)
@@ -730,11 +731,73 @@ bool silofs_sbi_ismutable_laddr(const struct silofs_sb_info *sbi,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int
+do_stage_spleaf(struct silofs_task_ctx *task, const struct silofs_vaddr *vaddr,
+                enum silofs_stg_mode stg_mode,
+                struct silofs_spleaf_info **out_sli)
+{
+	return silofs_stage_spleaf_of(task, vaddr, stg_mode, out_sli);
+}
+
+static void lsmap_vaddr_of(const struct silofs_spleaf_info *sli,
+                           struct silofs_vaddr *out_vaddr)
+{
+	struct silofs_lrange lrange;
+	enum silofs_ltype refltype;
+
+	refltype = silofs_sli_refltype(sli);
+	silofs_sli_vspace_range(sli, &lrange);
+	silofs_vaddr_of_lsmap(out_vaddr, refltype, lrange.beg);
+}
+
+static int do_stage_lsmap_of(struct silofs_task_ctx *task,
+                             const struct silofs_spleaf_info *sli,
+                             enum silofs_stg_mode stg_mode,
+                             struct silofs_lsmap_info **out_lsi)
+{
+	struct silofs_vaddr vaddr;
+	struct silofs_vnode_info *vni = NULL;
+	int err;
+
+	lsmap_vaddr_of(sli, &vaddr);
+	err = silofs_stage_vnode(task, NULL, &vaddr, stg_mode, &vni);
+	if (err) {
+		return err;
+	}
+	*out_lsi = silofs_lsi_from_vni(vni);
+	return 0;
+}
+
+static int
+stage_lsmap_of(struct silofs_task_ctx *task, struct silofs_spleaf_info *sli,
+               enum silofs_stg_mode stg_mode,
+               struct silofs_lsmap_info **out_lsi)
+{
+	int err;
+
+	silofs_sli_incref(sli);
+	err = do_stage_lsmap_of(task, sli, stg_mode, out_lsi);
+	silofs_sli_decref(sli);
+	return err;
+}
+
+static int
 stage_spleaf(struct silofs_task_ctx *task, const struct silofs_vaddr *vaddr,
              enum silofs_stg_mode stg_mode,
              struct silofs_spleaf_info **out_sli)
 {
-	return silofs_stage_spleaf_of(task, vaddr, stg_mode, out_sli);
+	struct silofs_lsmap_info *lsi = NULL;
+	int err;
+
+	err = do_stage_spleaf(task, vaddr, stg_mode, out_sli);
+	if (err) {
+		return err;
+	}
+	err = stage_lsmap_of(task, *out_sli, stg_mode, &lsi);
+	silofs_assert_ok(err);
+	if (err) {
+		return err;
+	}
+	return 0;
 }
 
 int silofs_test_unwritten_at(struct silofs_task_ctx *task,

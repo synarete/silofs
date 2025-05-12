@@ -5,7 +5,7 @@ from typing import Dict, Optional
 
 import pydantic
 
-import toml
+import tomllib
 
 from .expect import ExpectException
 
@@ -48,15 +48,16 @@ class FsIdsConf(pydantic.BaseModel):
 
 
 def _load_toml_as_json(path: Path) -> str:
-    toml_data = toml.load(path)
-    return json.dumps(toml_data)
+    with open(path, "rb") as f:
+        toml_data = tomllib.load(f)
+        return json.dumps(toml_data)
 
 
 def _load_config(path: Path) -> Config:
     try:
         json_conf = json.loads(_load_toml_as_json(path))
         return Config(**json_conf)
-    except toml.TomlDecodeError as tde:
+    except tomllib.TOMLDecodeError as tde:
         raise ExpectException(f"bad configuration toml: {path}") from tde
     except pydantic.ValidationError as ve:
         raise ExpectException(f"non-valid configuration: {path}") from ve
@@ -91,7 +92,7 @@ def load_fsids(repodir: Path) -> FsIdsConf:
     try:
         json_conf = json.loads(_load_toml_as_json(path))
         return FsIdsConf(**json_conf)
-    except toml.TomlDecodeError as tde:
+    except tomllib.TOMLDecodeError as tde:
         raise ExpectException(f"bad fs-ids conf: {path}") from tde
     except pydantic.ValidationError as ve:
         raise ExpectException(f"non-valid fs-ids conf: {path}") from ve

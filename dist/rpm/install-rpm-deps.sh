@@ -15,7 +15,6 @@ base_deps=(
   make
   python3-docutils
   python3-pydantic
-  python3-toml
   python3-typing-extensions
   rpm-build
   xxhash-libs

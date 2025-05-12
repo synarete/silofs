@@ -29,7 +29,6 @@ base_deps=(
   python3-mypy-extensions
   python3-pydantic
   python3-setproctitle
-  python3-toml
   uuid-dev
   xxhash
 )

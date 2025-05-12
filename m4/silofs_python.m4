@@ -14,7 +14,7 @@ AC_DEFUN([AX_SILOFS_WANT_PYTHON],
   AX_PYTHON_MODULE([platform], [1])
   AX_PYTHON_MODULE([pydantic], [1])
   AX_PYTHON_MODULE([tempfile], [1])
-  AX_PYTHON_MODULE([toml], [1])
+  AX_PYTHON_MODULE([tomllib], [1])
   AX_PYTHON_MODULE([typing], [1])
 ])
 
@@ -29,4 +29,3 @@ AC_DEFUN([AX_SILOFS_WITH_PYTHON_SITE_PACKAGES],
     pythondir="${with_python_site_packages}"
   ])
 ])
-

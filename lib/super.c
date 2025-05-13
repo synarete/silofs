@@ -745,7 +745,7 @@ static void lsmap_vaddr_of(const struct silofs_spleaf_info *sli,
 	enum silofs_ltype refltype;
 
 	refltype = silofs_sli_refltype(sli);
-	silofs_sli_vspace_range(sli, &lrange);
+	silofs_sli_get_lrange(sli, &lrange);
 	silofs_vaddr_of_lsmap(out_vaddr, refltype, lrange.beg);
 }
 

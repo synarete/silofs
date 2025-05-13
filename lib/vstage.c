@@ -1739,7 +1739,7 @@ vstgc_track_spawned_spleaf(const struct silofs_vstage_ctx *vstg_ctx,
 	struct silofs_spamaps *spam = vstgc_spamaps(vstg_ctx);
 	size_t len;
 
-	silofs_sli_vspace_range(sli, &lrange);
+	silofs_sli_get_lrange(sli, &lrange);
 	len = silofs_lrange_len(&lrange);
 	silofs_spamaps_store(spam, vstg_ctx->vspace, lrange.beg, len);
 }

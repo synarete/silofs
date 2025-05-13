@@ -96,8 +96,8 @@ void silofs_sli_setup_spawned(struct silofs_spleaf_info *sli,
 
 void silofs_sli_update_nused(struct silofs_spleaf_info *sli);
 
-void silofs_sli_vspace_range(const struct silofs_spleaf_info *sli,
-                             struct silofs_lrange            *out_lrange);
+void silofs_sli_get_lrange(const struct silofs_spleaf_info *sli,
+                           struct silofs_lrange            *out_lrange);
 
 loff_t silofs_sli_base_voff(const struct silofs_spleaf_info *sli);
 

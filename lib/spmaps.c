@@ -1086,8 +1086,8 @@ static void sli_dirtify(struct silofs_spleaf_info *sli)
 	silofs_uni_dirtify(sli_uni(sli));
 }
 
-void silofs_sli_vspace_range(const struct silofs_spleaf_info *sli,
-                             struct silofs_lrange *out_lrange)
+void silofs_sli_get_lrange(const struct silofs_spleaf_info *sli,
+                           struct silofs_lrange *out_lrange)
 {
 	spleaf_lrange(sli->sl, out_lrange);
 }
@@ -1125,7 +1125,7 @@ loff_t silofs_sli_base_voff(const struct silofs_spleaf_info *sli)
 {
 	struct silofs_lrange lrange;
 
-	silofs_sli_vspace_range(sli, &lrange);
+	silofs_sli_get_lrange(sli, &lrange);
 	return lrange.beg;
 }
 
@@ -1133,7 +1133,7 @@ static bool sli_is_inrange(const struct silofs_spleaf_info *sli, loff_t voff)
 {
 	struct silofs_lrange lrange;
 
-	silofs_sli_vspace_range(sli, &lrange);
+	silofs_sli_get_lrange(sli, &lrange);
 	return (lrange.beg <= voff) && (voff < lrange.end);
 }
 
@@ -1159,7 +1159,7 @@ static size_t sli_start_bn(const struct silofs_spleaf_info *sli)
 	struct silofs_lrange lrange;
 	loff_t voff_beg = sli->sl_voff_hint;
 
-	silofs_sli_vspace_range(sli, &lrange);
+	silofs_sli_get_lrange(sli, &lrange);
 	if (!silofs_lrange_within(&lrange, voff_beg)) {
 		voff_beg = lrange.beg;
 	}
@@ -1170,7 +1170,7 @@ static size_t sli_finish_bn(const struct silofs_spleaf_info *sli)
 {
 	struct silofs_lrange lrange;
 
-	silofs_sli_vspace_range(sli, &lrange);
+	silofs_sli_get_lrange(sli, &lrange);
 	return sli_voff_to_bn(sli, lrange.end);
 }
 
@@ -1198,7 +1198,7 @@ static size_t sli_lrange_len(const struct silofs_spleaf_info *sli)
 {
 	struct silofs_lrange lrange;
 
-	silofs_sli_vspace_range(sli, &lrange);
+	silofs_sli_get_lrange(sli, &lrange);
 	return silofs_lrange_len(&lrange);
 }
 
@@ -1236,7 +1236,7 @@ void silofs_sli_update_voff_hint(struct silofs_spleaf_info *sli,
 	struct silofs_lrange lrange;
 	const loff_t voff = vaddr->off;
 
-	silofs_sli_vspace_range(sli, &lrange);
+	silofs_sli_get_lrange(sli, &lrange);
 	if (silofs_lrange_within(&lrange, voff)) {
 		sli->sl_voff_hint = voff;
 	} else {

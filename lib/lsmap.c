@@ -913,9 +913,11 @@ void silofs_lsi_unref_allocated_at(struct silofs_lsmap_info *lsi,
                                    const struct silofs_vaddr *vaddr)
 {
 	const size_t len = silofs_vaddr_len(vaddr);
+	const enum silofs_ltype refltype = lsi_refltype(lsi);
 	const bool last = lsmap_is_last_allocated(lsi->lsm, vaddr);
 
 	silofs_assert_gt(lsi->ls_nused_bytes, 0);
+	silofs_assert_eq(refltype, vaddr->ltype);
 
 	lsmap_unset_allocated_at(lsi->lsm, vaddr);
 	if (!lsmap_is_allocated_at(lsi->lsm, vaddr)) {

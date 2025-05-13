@@ -114,7 +114,7 @@ static int delfc_post_at_spleaf(struct silofs_delfs_ctx *delf_ctx,
 	loff_t voff = -1;
 	int err;
 
-	silofs_sli_vspace_range(sli, &lrange);
+	silofs_sli_get_lrange(sli, &lrange);
 	voff = lrange.beg;
 	while (voff < lrange.end) {
 		err = delfc_post_at_lseg_of(delf_ctx, sli, voff);

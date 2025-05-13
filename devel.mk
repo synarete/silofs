@@ -330,12 +330,18 @@ bootstrap:
 
 
 # Special targets
-.PHONY: tags clangscan rpm deb reset params
+.PHONY: tags compdb clangscan rpm deb reset params
 
 tags:
 	$(call report, $@)
 	@rm -f $(TOP)/TAGS
 	@find $(TOP) -name "*.[ch]" -print | etags -
+
+compdb: configure tags
+	$(call report, $@)
+	@rm -f $(TOP)/compile_commands.json
+	@(bear -- $(MAKE) $(MAKE_OPTS) V=$(V) \
+	  CFLAGS="$(CFLAGS) $(CFLAGS2)" LDFLAGS="$(LDFLAGS)" -C $(BUILDDIR))
 
 clangscan:
 	$(call report, $@)

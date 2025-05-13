@@ -777,23 +777,23 @@ stage_lsmap_of(struct silofs_task_ctx *task, struct silofs_spleaf_info *sli,
 	silofs_sli_incref(sli);
 	err = do_stage_lsmap_of(task, sli, stg_mode, out_lsi);
 	silofs_sli_decref(sli);
+	silofs_assert_ok(err);
 	return err;
 }
 
-static int
-stage_spleaf(struct silofs_task_ctx *task, const struct silofs_vaddr *vaddr,
-             enum silofs_stg_mode stg_mode,
-             struct silofs_spleaf_info **out_sli)
+static int stage_spleaf_lsmap(struct silofs_task_ctx *task,
+                              const struct silofs_vaddr *vaddr,
+                              enum silofs_stg_mode stg_mode,
+                              struct silofs_spleaf_info **out_sli,
+                              struct silofs_lsmap_info **out_lsi)
 {
-	struct silofs_lsmap_info *lsi = NULL;
 	int err;
 
 	err = do_stage_spleaf(task, vaddr, stg_mode, out_sli);
 	if (err) {
 		return err;
 	}
-	err = stage_lsmap_of(task, *out_sli, stg_mode, &lsi);
-	silofs_assert_ok(err);
+	err = stage_lsmap_of(task, *out_sli, stg_mode, out_lsi);
 	if (err) {
 		return err;
 	}
@@ -804,13 +804,18 @@ int silofs_test_unwritten_at(struct silofs_task_ctx *task,
                              const struct silofs_vaddr *vaddr, bool *out_res)
 {
 	struct silofs_spleaf_info *sli = NULL;
+	struct silofs_lsmap_info *lsi = NULL;
+	bool unwritten;
 	int err;
 
-	err = stage_spleaf(task, vaddr, SILOFS_STG_CUR, &sli);
+	err = stage_spleaf_lsmap(task, vaddr, SILOFS_STG_CUR, &sli, &lsi);
 	if (err) {
 		return err;
 	}
 	*out_res = silofs_sli_has_unwritten_at(sli, vaddr);
+
+	unwritten = silofs_lsi_has_unwritten_at(lsi, vaddr);
+	silofs_assert_eq(unwritten, *out_res);
 	return 0;
 }
 
@@ -818,13 +823,15 @@ int silofs_clear_unwritten_at(struct silofs_task_ctx *task,
                               const struct silofs_vaddr *vaddr)
 {
 	struct silofs_spleaf_info *sli = NULL;
+	struct silofs_lsmap_info *lsi = NULL;
 	int err;
 
-	err = stage_spleaf(task, vaddr, SILOFS_STG_COW, &sli);
+	err = stage_spleaf_lsmap(task, vaddr, SILOFS_STG_COW, &sli, &lsi);
 	if (err) {
 		return err;
 	}
 	silofs_sli_clear_unwritten_at(sli, vaddr);
+	silofs_lsi_clear_unwritten_at(lsi, vaddr);
 	return 0;
 }
 
@@ -832,13 +839,15 @@ int silofs_mark_unwritten_at(struct silofs_task_ctx *task,
                              const struct silofs_vaddr *vaddr)
 {
 	struct silofs_spleaf_info *sli = NULL;
+	struct silofs_lsmap_info *lsi = NULL;
 	int err;
 
-	err = stage_spleaf(task, vaddr, SILOFS_STG_COW, &sli);
+	err = stage_spleaf_lsmap(task, vaddr, SILOFS_STG_COW, &sli, &lsi);
 	if (err) {
 		return err;
 	}
 	silofs_sli_mark_unwritten_at(sli, vaddr);
+	silofs_lsi_mark_unwritten_at(lsi, vaddr);
 	return 0;
 }
 
@@ -846,13 +855,18 @@ int silofs_test_last_allocated(struct silofs_task_ctx *task,
                                const struct silofs_vaddr *vaddr, bool *out_res)
 {
 	struct silofs_spleaf_info *sli = NULL;
+	struct silofs_lsmap_info *lsi = NULL;
+	bool last_allocated;
 	int err;
 
-	err = stage_spleaf(task, vaddr, SILOFS_STG_CUR, &sli);
+	err = stage_spleaf_lsmap(task, vaddr, SILOFS_STG_CUR, &sli, &lsi);
 	if (err) {
 		return err;
 	}
 	*out_res = silofs_sli_has_last_allocated_at(sli, vaddr);
+
+	last_allocated = silofs_lsi_is_last_allocated(lsi, vaddr);
+	silofs_assert_eq(last_allocated, *out_res);
 	return 0;
 }
 
@@ -860,19 +874,24 @@ int silofs_test_shared_dbkref(struct silofs_task_ctx *task,
                               const struct silofs_vaddr *vaddr, bool *out_res)
 {
 	struct silofs_spleaf_info *sli = NULL;
-	size_t dbkref = 0;
+	struct silofs_lsmap_info *lsi = NULL;
+	size_t refcnt = 0;
+	size_t refcnt2 = 0;
 	int err;
 
 	*out_res = false;
 	if (!vaddr_isdatabk(vaddr)) {
 		return 0;
 	}
-	err = stage_spleaf(task, vaddr, SILOFS_STG_CUR, &sli);
+	err = stage_spleaf_lsmap(task, vaddr, SILOFS_STG_CUR, &sli, &lsi);
 	if (err) {
 		return err;
 	}
-	dbkref = silofs_sli_refcnt_at(sli, vaddr);
-	*out_res = (dbkref > 1);
+	refcnt = silofs_sli_refcnt_at(sli, vaddr);
+	*out_res = (refcnt > 1);
+
+	refcnt2 = silofs_lsi_refcnt_at(lsi, vaddr);
+	silofs_assert_eq(refcnt, refcnt2);
 	return 0;
 }
 

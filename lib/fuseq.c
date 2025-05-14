@@ -58,24 +58,6 @@ enum silofs_fuseq_consts {
 	FUSEQ_CMD_MAX = 64,
 };
 
-struct silofs_fuseq_worker {
-	struct silofs_fuseq_thread fqw_th;
-	uint32_t fqw_pad[3];
-} silofs_attr_aligned64;
-
-struct silofs_fuseq_dispatcher {
-	struct silofs_call_args fqd_args;
-	struct silofs_fuseq_thread fqd_th;
-	struct silofs_list_head fqd_lh;
-	struct silofs_fuseq_inb *fqd_inb;
-	struct silofs_fuseq_outb *fqd_outb;
-	struct silofs_fuseq_rw_iter *fqd_rwi;
-	struct silofs_piper fqd_piper;
-	time_t fqd_time_stamp;
-	volatile uint64_t fqd_req_count;
-	bool fqd_init_ok;
-} silofs_attr_aligned64;
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 #define fuseq_log_dbg(fmt, ...)  silofs_log_debug("fuseq: " fmt, __VA_ARGS__)
@@ -643,6 +625,138 @@ check_fh_of(const struct silofs_task_ctx *task, ino_t ino, uint64_t fh)
 		fuseq_log_warn("op=%s ino=%lu fh=0x%lx",
 		               cmd_desc ? cmd_desc->name : "", ino, fh);
 	}
+}
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+static struct silofs_fuseq_piper *fqp_from_lh(struct silofs_list_head *lh)
+{
+	struct silofs_fuseq_piper *fqp = NULL;
+
+	if (lh != NULL) {
+		fqp = silofs_container_of(lh, struct silofs_fuseq_piper,
+		                          fp_lh);
+	}
+	return fqp;
+}
+
+static void
+fqp_init(struct silofs_fuseq_piper *fqp, const struct silofs_nilfd *nilfd)
+{
+	silofs_list_head_init(&fqp->fp_lh);
+	silofs_pipe_init(&fqp->fp_pipe);
+	fqp->fp_nilfd = nilfd;
+}
+
+static void fqp_fini(struct silofs_fuseq_piper *fqp)
+{
+	silofs_list_head_fini(&fqp->fp_lh);
+	silofs_pipe_fini(&fqp->fp_pipe);
+	fqp->fp_nilfd = NULL;
+}
+
+static int fqp_open(struct silofs_fuseq_piper *fqp, size_t sz)
+{
+	int err;
+
+	err = silofs_pipe_open(&fqp->fp_pipe);
+	if (err) {
+		fuseq_log_warn("failed to open pipe: err=%d", err);
+		return err;
+	}
+	err = silofs_pipe_grow(&fqp->fp_pipe, sz);
+	if (err) {
+		fuseq_log_warn("failed to grow pipe: sz=%zu err=%d", sz, err);
+		return err;
+	}
+	return 0;
+}
+
+static int fqp_dispose(struct silofs_fuseq_piper *fqp)
+{
+	int err;
+
+	err = silofs_pipe_dispose(&fqp->fp_pipe, fqp->fp_nilfd);
+	if (err) {
+		fuseq_log_warn("failed to dispose pipe: pipe-fd=%d "
+		               "size=%d npend=%d nil-fd=%d err=%d",
+		               fqp->fp_pipe.fd[0], fqp->fp_pipe.size,
+		               fqp->fp_pipe.pend, fqp->fp_nilfd->fd, err);
+	}
+	return err;
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static int fqps_init(struct silofs_fuseq_pipes *fqps)
+{
+	silofs_listq_init(&fqps->listq);
+	silofs_nilfd_init(&fqps->nilfd);
+	for (size_t i = 0; i < ARRAY_SIZE(fqps->fqp); ++i) {
+		fqp_init(&fqps->fqp[i], &fqps->nilfd);
+	}
+	return silofs_mutex_init(&fqps->mutex);
+}
+
+static void fqps_fini(struct silofs_fuseq_pipes *fqps)
+{
+	silofs_mutex_fini(&fqps->mutex);
+	for (size_t i = 0; i < ARRAY_SIZE(fqps->fqp); ++i) {
+		fqp_fini(&fqps->fqp[i]);
+	}
+	silofs_nilfd_fini(&fqps->nilfd);
+	silofs_listq_fini(&fqps->listq);
+}
+
+static void
+fqps_pushq(struct silofs_fuseq_pipes *fqps, struct silofs_fuseq_piper *fqp)
+{
+	silofs_mutex_lock(&fqps->mutex);
+	silofs_listq_push_back(&fqps->listq, &fqp->fp_lh);
+	silofs_mutex_unlock(&fqps->mutex);
+}
+
+static struct silofs_fuseq_piper *fqps_popq(struct silofs_fuseq_pipes *fqps)
+{
+	struct silofs_list_head *lh;
+
+	silofs_mutex_lock(&fqps->mutex);
+	lh = silofs_listq_pop_front(&fqps->listq);
+	silofs_mutex_unlock(&fqps->mutex);
+
+	return fqp_from_lh(lh);
+}
+
+static size_t fqps_open_max(const struct silofs_fuseq_pipes *fqps)
+{
+	const uint32_t nproc = (uint32_t)silofs_sc_nproc_onln();
+	const uint32_t limit = ARRAY_SIZE(fqps->fqp);
+
+	return silofs_clamp_u32(nproc / 2, 1, limit);
+}
+
+static int fqps_open_nilfd(struct silofs_fuseq_pipes *fqps)
+{
+	return silofs_nilfd_open(&fqps->nilfd);
+}
+
+static int fqps_open_pipes(struct silofs_fuseq_pipes *fqps, size_t psz)
+{
+	struct silofs_fuseq_piper *fqp = NULL;
+	const size_t lim = fqps_open_max(fqps);
+	int err;
+
+	for (size_t i = 0; i < lim; ++i) {
+		fqp = &fqps->fqp[i];
+		err = fqp_open(fqp, psz);
+		if (err) {
+			// if unable to open-and-grow any pipe than fallback to
+			// non-splice copy-mode.
+			return (i > 0) ? 0 : err;
+		}
+		fqps_pushq(fqps, fqp);
+	}
+	return 0;
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -1290,12 +1404,19 @@ iovec_append_len(struct silofs_iovec *iovec, const struct silofs_iovec *other)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static struct silofs_pipe *fqd_cur_pipe(struct silofs_fuseq_dispatcher *fqd)
+{
+	silofs_assert_not_null(fqd->fqd_pipe);
+
+	return &fqd->fqd_pipe->fp_pipe;
+}
+
 static int
 fqd_append_hdr_to_pipe(struct silofs_fuseq_dispatcher *fqd,
                        const struct silofs_task_ctx *task, size_t len)
 {
 	struct fuse_out_header hdr;
-	struct silofs_pipe *pipe = &fqd->fqd_piper.pipe;
+	struct silofs_pipe *pipe = fqd_cur_pipe(fqd);
 
 	fill_out_header_ok(&hdr, task, len);
 	return silofs_pipe_append_from_buf(pipe, &hdr, sizeof(hdr));
@@ -1306,7 +1427,7 @@ fqd_append_data_to_pipe(struct silofs_fuseq_dispatcher *fqd,
                         const struct silofs_iovec *iovec, size_t cnt)
 {
 	struct iovec iov[48];
-	struct silofs_pipe *pipe = &fqd->fqd_piper.pipe;
+	struct silofs_pipe *pipe = fqd_cur_pipe(fqd);
 	size_t ncp = 0;
 	size_t cur = 0;
 	int err;
@@ -1330,7 +1451,7 @@ fqd_append_data_to_pipe(struct silofs_fuseq_dispatcher *fqd,
 
 static int fqd_send_pipe(struct silofs_fuseq_dispatcher *fqd)
 {
-	struct silofs_pipe *pipe = &fqd->fqd_piper.pipe;
+	struct silofs_pipe *pipe = fqd_cur_pipe(fqd);
 	const int fuse_fd = fqd_fuse_fd(fqd);
 
 	return silofs_pipe_sendall_to_fd(pipe, fuse_fd, 0);
@@ -2544,14 +2665,9 @@ static int do_read_buf(const struct silofs_fuseq_cmd_ctx *fcc)
 	                          fcc->args->out.read.nrd, err);
 }
 
-static bool fqd_cap_read_iter(const struct silofs_fuseq_dispatcher *fqd)
-{
-	return fuseq_allowed_splice(fqd_fuseq(fqd));
-}
-
 static bool fqd_may_read_iter(const struct silofs_fuseq_dispatcher *fqd)
 {
-	return fqd_cap_read_iter(fqd) && fqd_has_large_read_in(fqd);
+	return (fqd->fqd_pipe != NULL) && fqd_has_large_read_in(fqd);
 }
 
 static int do_read(const struct silofs_fuseq_cmd_ctx *fcc)
@@ -2581,7 +2697,7 @@ fq_wri_of(const struct silofs_rwiter_ctx *rwi)
 static int fqd_extract_from_pipe_by_fd(struct silofs_fuseq_dispatcher *fqd,
                                        const struct silofs_iovec *iovec)
 {
-	struct silofs_pipe *pipe = &fqd->fqd_piper.pipe;
+	struct silofs_pipe *pipe = fqd_cur_pipe(fqd);
 	loff_t off = iovec->iov_off;
 
 	return silofs_pipe_splice_to_fd(pipe, iovec->iov_fd, &off,
@@ -2592,7 +2708,7 @@ static int fqd_extract_from_pipe_by_fd(struct silofs_fuseq_dispatcher *fqd,
 static int fqd_extract_from_pipe_by_iov(struct silofs_fuseq_dispatcher *fqd,
                                         const struct silofs_iovec *iovec)
 {
-	struct silofs_pipe *pipe = &fqd->fqd_piper.pipe;
+	struct silofs_pipe *pipe = fqd_cur_pipe(fqd);
 
 	return silofs_pipe_vmsplice_to_iov(pipe, &iovec->iov, 1,
 	                                   SPLICE_F_MOVE | SPLICE_F_NONBLOCK);
@@ -2783,14 +2899,9 @@ static int do_write_iter(const struct silofs_fuseq_cmd_ctx *fcc)
 	return ret;
 }
 
-static bool fqd_cap_write_iter(const struct silofs_fuseq_dispatcher *fqd)
-{
-	return fuseq_allowed_splice(fqd_fuseq(fqd));
-}
-
 static bool fqd_may_write_iter(const struct silofs_fuseq_dispatcher *fqd)
 {
-	return fqd_cap_write_iter(fqd) && fqd_has_large_write_in(fqd);
+	return (fqd->fqd_pipe != NULL) && fqd_has_large_write_in(fqd);
 }
 
 static void do_pre_write(const struct silofs_fuseq_cmd_ctx *fcc)
@@ -3214,6 +3325,11 @@ static const struct silofs_fuseq_cmd_desc *cmd_desc_of(uint32_t opc)
 	return cmd;
 }
 
+static const char *fqd_thread_name(const struct silofs_fuseq_dispatcher *fqd)
+{
+	return fqd->fqd_th.th.name;
+}
+
 static struct silofs_fuseq_in *fqd_in_of(struct silofs_fuseq_dispatcher *fqd)
 {
 	return &fqd->fqd_inb->u.in;
@@ -3569,29 +3685,10 @@ static int fqd_check_inhdr(const struct silofs_fuseq_dispatcher *fqd,
 	return 0;
 }
 
-static int fqd_check_pipe_pre(const struct silofs_fuseq_dispatcher *fqd)
-{
-	const struct silofs_fuseq *fq = fqd_fuseq(fqd);
-	const struct silofs_pipe *pipe = &fqd->fqd_piper.pipe;
-	const size_t buffsize = fq->fq_coni.buffsize;
-
-	if (unlikely((int)buffsize < pipe->size)) {
-		fuseq_log_err("pipe-fuse mismatch: pipesize=%d buffsize=%zu ",
-		              pipe->size, buffsize);
-		return -SILOFS_EIO;
-	}
-	if (unlikely(pipe->pend != 0)) {
-		fuseq_log_err("pipe not empty: pend=%d fuse_fd=%d", pipe->pend,
-		              fq->fq_fuse_fd);
-		return -SILOFS_EIO;
-	}
-	return 0;
-}
-
 static int fqd_wait_request(const struct silofs_fuseq_dispatcher *fqd)
 {
 	const int fuse_fd = fqd_fuse_fd(fqd);
-	const int timout_millisec = 100 + (int)(fqd->fqd_th.idx);
+	const int timout_millisec = 500 + (int)(fqd->fqd_th.idx);
 
 	return silofs_sys_pollin_rfd(fuse_fd, timout_millisec);
 }
@@ -3636,7 +3733,7 @@ static int fqd_recv_copy_in(struct silofs_fuseq_dispatcher *fqd)
 static int
 fqd_splice_into_pipe(struct silofs_fuseq_dispatcher *fqd, size_t cnt)
 {
-	struct silofs_pipe *pipe = &fqd->fqd_piper.pipe;
+	struct silofs_pipe *pipe = fqd_cur_pipe(fqd);
 	const int fuse_fd = fqd_fuse_fd(fqd);
 	int err;
 
@@ -3664,7 +3761,7 @@ static int fqd_copy_from_pipe_in(struct silofs_fuseq_dispatcher *fqd,
                                  size_t head_sz, size_t cnt, size_t *out_ncp)
 {
 	struct silofs_fuseq_in *in = fqd_in_of(fqd);
-	struct silofs_pipe *pipe = &fqd->fqd_piper.pipe;
+	struct silofs_pipe *pipe = fqd_cur_pipe(fqd);
 	const int pre = pipe->pend;
 	int err;
 
@@ -3705,7 +3802,8 @@ static int fqd_copy_pipe_in(struct silofs_fuseq_dispatcher *fqd)
 {
 	struct silofs_fuseq_in *in = fqd_in_of(fqd);
 	struct silofs_fuseq_hdr_in *hdr_in = &in->u.hdr;
-	const size_t nsp = (size_t)(fqd->fqd_piper.pipe.pend);
+	struct silofs_pipe *pipe = fqd_cur_pipe(fqd);
+	const size_t nsp = (size_t)(pipe->pend);
 	const size_t cnt = min(sizeof(in->u.write), nsp);
 	size_t ncp1 = 0;
 	size_t ncp2 = 0;
@@ -3742,66 +3840,166 @@ static bool fqd_has_exec_mode(const struct silofs_fuseq_dispatcher *fqd)
 	return fuseq_is_active(fq) || fuseq_has_live_opers(fq);
 }
 
-static bool fqd_allowed_splice_in(const struct silofs_fuseq_dispatcher *fqd)
+static int fqd_copy_or_splice_in(struct silofs_fuseq_dispatcher *fqd)
 {
-	return fuseq_allowed_splice(fqd_fuseq(fqd));
+	int ret;
+
+	if (fqd->fqd_pipe != NULL) {
+		ret = fqd_recv_splice_in(fqd);
+	} else {
+		ret = fqd_recv_copy_in(fqd);
+	}
+	return ret;
 }
 
-static int fqd_do_recv_in(struct silofs_fuseq_dispatcher *fqd, bool *out_spl)
+static int fqd_do_recv_in(struct silofs_fuseq_dispatcher *fqd)
 {
-	int err;
+	int err = -SILOFS_ENORX;
 
-	if (!fqd_has_exec_mode(fqd)) {
-		return -SILOFS_ENORX;
-	}
-	err = fqd_wait_request(fqd);
-	if (err != 0) {
-		return err;
-	}
-
-	if (!fqd_allowed_splice_in(fqd)) {
-		*out_spl = false;
-		err = fqd_recv_copy_in(fqd);
-	} else {
-		*out_spl = true;
-		err = fqd_recv_splice_in(fqd);
+	if (fqd_has_exec_mode(fqd)) {
+		err = fqd_wait_request(fqd);
+		if (!err) {
+			err = fqd_copy_or_splice_in(fqd);
+		}
 	}
 	return err;
+}
+
+static int fqd_check_pipe_pre(const struct silofs_fuseq_dispatcher *fqd)
+{
+	const struct silofs_fuseq *fq = fqd_fuseq(fqd);
+	const size_t buffsize = fq->fq_coni.buffsize;
+	int pipesize, pipepend;
+
+	if (fqd->fqd_pipe == NULL) {
+		return 0;
+	}
+	pipesize = fqd->fqd_pipe->fp_pipe.size;
+	if (unlikely((int)buffsize < pipesize)) {
+		fuseq_log_err("pipe-fuse mismatch: pipesize=%d buffsize=%zu ",
+		              pipesize, buffsize);
+		return -SILOFS_EIO;
+	}
+	pipepend = fqd->fqd_pipe->fp_pipe.pend;
+	if (unlikely(pipepend != 0)) {
+		fuseq_log_err("pipe not empty: pend=%d fuse_fd=%d", pipepend,
+		              fq->fq_fuse_fd);
+		return -SILOFS_EIO;
+	}
+	return 0;
+}
+
+static int fqd_acquire_pipe(struct silofs_fuseq_dispatcher *fqd)
+{
+	struct silofs_fuseq *fq = fqd_fuseq2(fqd);
+	int err;
+
+	silofs_assert_null(fqd->fqd_pipe);
+
+	fqd->fqd_pipe = fqps_popq(&fq->fq_pipes);
+	if (fqd->fqd_pipe == NULL) {
+		return 0; /* OK -- buffer-only mode */
+	}
+	err = fqp_dispose(fqd->fqd_pipe);
+	if (err) {
+		return err; /* should never happen */
+	}
+	return fqd_check_pipe_pre(fqd);
+}
+
+static bool fqd_allowed_splice(const struct silofs_fuseq_dispatcher *fqd)
+{
+	const struct silofs_fuseq *fq = fqd_fuseq(fqd);
+
+	return fuseq_allowed_splice(fq);
+}
+
+static int fqd_try_acquire_pipe(struct silofs_fuseq_dispatcher *fqd)
+{
+	int ret = 0;
+
+	if (fqd_allowed_splice(fqd)) {
+		ret = fqd_acquire_pipe(fqd);
+	}
+	return ret;
+}
+
+static void fqd_release_pipe(struct silofs_fuseq_dispatcher *fqd)
+{
+	struct silofs_fuseq *fq = fqd_fuseq2(fqd);
+
+	if (fqd->fqd_pipe != NULL) {
+		fqps_pushq(&fq->fq_pipes, fqd->fqd_pipe);
+		fqd->fqd_pipe = NULL;
+	}
+}
+
+static bool fqd_want_keep_pipe(const struct silofs_fuseq_dispatcher *fqd)
+{
+	return fqd_has_large_write_in(fqd) || fqd_has_large_read_in(fqd);
+}
+
+static void fqd_deactivate_fuseq(struct silofs_fuseq_dispatcher *fqd)
+{
+	struct silofs_fuseq *fq = fqd_fuseq2(fqd);
+
+	if (fq->fq_active) {
+		fuseq_set_non_active(fq);
+		fuseq_log_info("deactivated by: %s", fqd_thread_name(fqd));
+	}
+}
+
+static void
+fqd_post_recv_in_locked(struct silofs_fuseq_dispatcher *fqd, int status)
+{
+	if ((status != 0) && (fqd->fqd_pipe != NULL)) {
+		fqd_release_pipe(fqd);
+	}
+
+	if (status == -SILOFS_EINVAL) {
+		fuseq_log_err("unexpected input error: fuse_fd=%d err=%d",
+		              fqd_fuse_fd(fqd), status);
+		fqd_deactivate_fuseq(fqd);
+	} else if (status == -ENODEV) {
+		/* umount case: set non-active under channel-lock */
+		fuseq_log_info("input status: err=%d", status);
+		fqd_deactivate_fuseq(fqd);
+	}
 }
 
 static int fqd_recv_in_locked(struct silofs_fuseq_dispatcher *fqd)
 {
 	struct silofs_fuseq *fq = fqd_fuseq2(fqd);
 	int err = 0;
-	bool spliced = false;
 
 	fuseq_lock_ch(fq);
-	err = fqd_do_recv_in(fqd, &spliced);
-	if (err == -SILOFS_EINVAL) {
-		fuseq_log_err("unexpected input error: fuse_fd=%d err=%d",
-		              fqd_fuse_fd(fqd), err);
-		fuseq_set_non_active(fq);
-	} else if (err == -ENODEV) {
-		/* umount case: set non-active under channel-lock */
-		fuseq_log_info("input status: err=%d", err);
-		fuseq_set_non_active(fq);
+	err = fqd_try_acquire_pipe(fqd);
+	if (!err) {
+		err = fqd_do_recv_in(fqd);
+		fqd_post_recv_in_locked(fqd, err);
 	}
 	fuseq_unlock_ch(fq);
+	return err;
+}
 
-	if (!err && spliced) {
+static int fqd_splice_request_tail(struct silofs_fuseq_dispatcher *fqd)
+{
+	int err = 0;
+
+	if (fqd->fqd_pipe != NULL) {
+		/* copy from pipe to buffer outside of channel-lock */
 		err = fqd_copy_pipe_in(fqd);
+		if (err || !fqd_want_keep_pipe(fqd)) {
+			fqd_release_pipe(fqd);
+		}
 	}
 	return err;
 }
 
-static int fqd_read_or_splice_request(struct silofs_fuseq_dispatcher *fqd)
+static int fqd_recv_request_in(struct silofs_fuseq_dispatcher *fqd)
 {
 	int err;
 
-	err = fqd_check_pipe_pre(fqd);
-	if (err) {
-		return err;
-	}
 	err = fqd_recv_in_locked(fqd);
 	if ((err == -ETIMEDOUT) || (err == -SILOFS_ENORX)) {
 		return err;
@@ -3823,29 +4021,19 @@ static int fqd_read_or_splice_request(struct silofs_fuseq_dispatcher *fqd)
 		fuseq_log_err("fuse recv-request: err=%d", err);
 		return err;
 	}
-	return 0;
-}
-
-static int fqd_prep_request(struct silofs_fuseq_dispatcher *fqd)
-{
-	fqd_reset_inhdr(fqd);
-	return silofs_piper_dispose(&fqd->fqd_piper);
+	return fqd_splice_request_tail(fqd);
 }
 
 static int fqd_recv_request(struct silofs_fuseq_dispatcher *fqd)
 {
 	int err;
 
-	err = fqd_prep_request(fqd);
-	if (err) {
-		return err;
+	fqd_reset_inhdr(fqd);
+	err = fqd_recv_request_in(fqd);
+	if (!err) {
+		fqd->fqd_req_count++;
 	}
-	err = fqd_read_or_splice_request(fqd);
-	if (err) {
-		return err;
-	}
-	fqd->fqd_req_count++;
-	return 0;
+	return err;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -3915,17 +4103,6 @@ rwi_del(struct silofs_fuseq_rw_iter *rwi, struct silofs_alloc *alloc)
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static void fqd_init_piper(struct silofs_fuseq_dispatcher *fqd)
-{
-	silofs_piper_init(&fqd->fqd_piper);
-}
-
-static void fqd_fini_piper(struct silofs_fuseq_dispatcher *fqd)
-{
-	silofs_piper_close(&fqd->fqd_piper);
-	silofs_piper_fini(&fqd->fqd_piper);
-}
 
 static struct silofs_alloc *
 fqd_alloc(const struct silofs_fuseq_dispatcher *fqd)
@@ -4031,6 +4208,7 @@ static int fqd_init(struct silofs_fuseq_dispatcher *fqd,
 	silofs_memzero(fqd, sizeof(*fqd));
 	fqt_init(&fqd->fqd_th, fq, idx);
 	list_head_init(&fqd->fqd_lh);
+	fqd->fqd_pipe = NULL;
 	fqd->fqd_inb = NULL;
 	fqd->fqd_outb = NULL;
 	fqd->fqd_req_count = 0;
@@ -4048,7 +4226,6 @@ static int fqd_init(struct silofs_fuseq_dispatcher *fqd,
 	if (err) {
 		goto out_err;
 	}
-	fqd_init_piper(fqd);
 	fqd->fqd_init_ok = true;
 	return 0;
 out_err:
@@ -4061,37 +4238,10 @@ out_err:
 static void fqd_fini(struct silofs_fuseq_dispatcher *fqd)
 {
 	list_head_fini(&fqd->fqd_lh);
-	fqd_fini_piper(fqd);
 	fqd_fini_op_args(fqd);
 	fqd_fini_rwi(fqd);
 	fqd_fini_bufs(fqd);
 	fqt_fini(&fqd->fqd_th);
-}
-
-static int
-fqd_open_piper(struct silofs_fuseq_dispatcher *fqd, size_t pipe_size_want)
-{
-	struct silofs_piper *piper = &fqd->fqd_piper;
-	int err;
-
-	err = silofs_piper_open(piper);
-	if (err) {
-		fuseq_log_warn("failed to open piper: err=%d", err);
-		return err;
-	}
-	err = silofs_piper_try_grow(piper, pipe_size_want);
-	if (err) {
-		fuseq_log_warn("failed to grow pipe size: "
-		               "pipe_size_curr=%d pipe_size_want=%zu err=%d",
-		               piper->pipe.size, pipe_size_want, err);
-		return err;
-	}
-	return 0;
-}
-
-static void fqd_close_piper(struct silofs_fuseq_dispatcher *fqd)
-{
-	silofs_piper_close(&fqd->fqd_piper);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -4110,6 +4260,13 @@ static int fqd_check_input(const struct silofs_fuseq_dispatcher *fqd)
 	return 0;
 }
 
+static void fqd_recv_done_request(struct silofs_fuseq_dispatcher *fqd)
+{
+	if (fqd->fqd_pipe != NULL) {
+		fqd_release_pipe(fqd);
+	}
+}
+
 static int fqd_recv_exec_request(struct silofs_fuseq_dispatcher *fqd)
 {
 	int err;
@@ -4119,22 +4276,21 @@ static int fqd_recv_exec_request(struct silofs_fuseq_dispatcher *fqd)
 	}
 	err = fqd_recv_request(fqd);
 	if (err) {
-		return err;
+		goto out;
 	}
 	err = fqd_check_input(fqd);
 	if (err) {
-		return err;
+		goto out;
 	}
 	err = fqd_exec_request(fqd);
 	if (err == -ENOENT) {
 		/* probably due to FR_ABORTED on FUSE side (ENOENT means the
 		 * operation was interrupted). */
-		return -SILOFS_ENOTX;
+		err = -SILOFS_ENOTX;
 	}
-	if (err) {
-		return err;
-	}
-	return 0;
+out:
+	fqd_recv_done_request(fqd);
+	return err;
 }
 
 static void fqd_post_timedout(struct silofs_fuseq_dispatcher *fqd)
@@ -4193,21 +4349,6 @@ static struct silofs_fuseq_dispatcher *fqd_from_th(struct silofs_thread *th)
 	struct silofs_fuseq_thread *fqt = fqt_from_th(th);
 
 	return container_of(fqt, struct silofs_fuseq_dispatcher, fqd_th);
-}
-
-static const char *fqd_thread_name(const struct silofs_fuseq_dispatcher *fqd)
-{
-	return fqd->fqd_th.th.name;
-}
-
-static void fqd_deactivate_fuseq(struct silofs_fuseq_dispatcher *fqd)
-{
-	struct silofs_fuseq *fq = fqd_fuseq2(fqd);
-
-	if (fq->fq_active) {
-		fuseq_set_non_active(fq);
-		fuseq_log_info("deactivated by: %s", fqd_thread_name(fqd));
-	}
 }
 
 static int fqd_post_exec_once(struct silofs_fuseq_dispatcher *fqd, int status)
@@ -4519,41 +4660,48 @@ static void fuseq_set_non_active(struct silofs_fuseq *fq)
 	}
 }
 
-static int fuseq_update_dispatchers(struct silofs_fuseq *fq)
+static int fuseq_update_pipes(struct silofs_fuseq *fq)
 {
-	struct silofs_fuseq_dispatcher *fqd = NULL;
-	const size_t buffsize = fq->fq_coni.buffsize;
-	const size_t pipesize = buffsize;
-	size_t cnt = 0;
+	const size_t pipesize = fq->fq_coni.buffsize;
 	int err;
 
 	if (!fq->fq_may_splice) {
 		/* operate in non-splice mode */
 		return 0;
 	}
-	fuseq_log_dbg("set splice-mode: pipesize=%zu", pipesize);
-	for (size_t i = 0; i < fq->fq_subx.fq_ndisptch_lim; ++i) {
-		fqd = &fq->fq_subx.fq_disptchs[i];
-		err = fqd_open_piper(fqd, pipesize);
-		if (err == -EPERM) {
-			goto can_not_splice;
-		} else if (err) {
-			return err;
-		}
-		cnt++;
+	err = fqps_open_nilfd(&fq->fq_pipes);
+	if (err) {
+		fuseq_log_warn("failed to open nilfd: err=%d", err);
+		return err;
 	}
-	/* normal mode: all workers set with proper pipe */
+	fuseq_log_dbg("set pipes for splice-mode: pipesize=%zu", pipesize);
+	err = fqps_open_pipes(&fq->fq_pipes, pipesize);
+	if (err) {
+		fuseq_log_warn("failed to set pipes for splice-mode: "
+		               "pipesize=%zu err=%d",
+		               pipesize, err);
+		fq->fq_may_splice = false;
+	}
 	return 0;
+}
 
-can_not_splice:
-	/* can not have proper pipe size: fallback to buffer-only mode */
-	fuseq_log_dbg("disable splice mode: cnt=%zu", cnt);
-	for (size_t i = 0; i < cnt; ++i) {
-		fqd = &fq->fq_subx.fq_disptchs[i];
-		fqd_close_piper(fqd);
+static int fuseq_init_pipes(struct silofs_fuseq *fq)
+{
+	int err;
+
+	err = fqps_init(&fq->fq_pipes);
+	if (err) {
+		return err;
 	}
-	fq->fq_may_splice = false;
+	fq->fq_init_pipes = true;
 	return 0;
+}
+
+static void fuseq_fini_pipes(struct silofs_fuseq *fq)
+{
+	if (fq->fq_init_pipes) {
+		fqps_fini(&fq->fq_pipes);
+	}
 }
 
 static int fuseq_init_locks(struct silofs_fuseq *fq)
@@ -4805,9 +4953,13 @@ static int fuseq_init(struct silofs_fuseq *fq, struct silofs_alloc *alloc,
 	fuseq_init_common(fq, alloc, subx);
 	fuseq_init_conn_info(fq);
 
-	err = fuseq_init_locks(fq);
+	err = fuseq_init_pipes(fq);
 	if (err) {
 		return err;
+	}
+	err = fuseq_init_locks(fq);
+	if (err) {
+		goto out_err;
 	}
 	err = fuseq_init_workers(fq);
 	if (err) {
@@ -4822,6 +4974,7 @@ out_err:
 	fuseq_fini_dispatchers(fq);
 	fuseq_fini_workers(fq);
 	fuseq_fini_locks(fq);
+	fuseq_fini_pipes(fq);
 	return err;
 }
 
@@ -4841,7 +4994,8 @@ static void fuseq_fini(struct silofs_fuseq *fq)
 	fuseq_fini_dispatchers(fq);
 	fuseq_fini_workers(fq);
 	fuseq_fini_locks(fq);
-	listq_fini(&fq->fq_curr_opers);
+	fuseq_fini_pipes(fq);
+	silofs_listq_fini(&fq->fq_curr_opers);
 	fq->fq_alloc = NULL;
 	fq->fq_env = NULL;
 }
@@ -4855,7 +5009,7 @@ int silofs_fuseq_update(struct silofs_fuseq *fq)
 	if (err) {
 		return err;
 	}
-	err = fuseq_update_dispatchers(fq);
+	err = fuseq_update_pipes(fq);
 	if (err) {
 		return err;
 	}

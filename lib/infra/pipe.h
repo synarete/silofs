@@ -31,17 +31,20 @@ struct silofs_nilfd {
 	int fd;
 };
 
-struct silofs_piper {
-	struct silofs_nilfd nfd;
-	struct silofs_pipe  pipe;
-};
-
 struct silofs_pipe_limits {
 	long pipe_max_size;
 	long pipe_max_pages;
 	long pipe_user_pages_hard;
 	long pipe_user_pages_soft;
 };
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_nilfd_init(struct silofs_nilfd *nfd);
+
+void silofs_nilfd_fini(struct silofs_nilfd *nfd);
+
+int silofs_nilfd_open(struct silofs_nilfd *nfd);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -54,6 +57,8 @@ void silofs_pipe_fini(struct silofs_pipe *pipe);
 int silofs_pipe_open(struct silofs_pipe *pipe);
 
 void silofs_pipe_close(struct silofs_pipe *pipe);
+
+int silofs_pipe_grow(struct silofs_pipe *pipe, size_t sz);
 
 int silofs_pipe_splice_from_fd(struct silofs_pipe *pipe, int fd, loff_t *off,
                                size_t len, unsigned int flags);
@@ -80,23 +85,9 @@ int silofs_pipe_sendall_to_fd(struct silofs_pipe *pipe, int fd,
 int silofs_pipe_dispose(struct silofs_pipe        *pipe,
                         const struct silofs_nilfd *nfd);
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-void silofs_piper_init(struct silofs_piper *piper);
-
-void silofs_piper_fini(struct silofs_piper *piper);
-
-int silofs_piper_open(struct silofs_piper *piper);
-
-void silofs_piper_close(struct silofs_piper *piper);
-
-int silofs_piper_try_grow(struct silofs_piper *piper, size_t sz);
-
-int silofs_piper_dispose(struct silofs_piper *piper);
-
-int silofs_piper_kcopy(struct silofs_piper *piper, int fd_in, loff_t *off_in,
-                       int fd_out, loff_t *off_out, size_t len,
-                       unsigned int flags);
+int silofs_pipe_kcopy_by_splice(struct silofs_pipe *pipe, int fd_in,
+                                loff_t *off_in, int fd_out, loff_t *off_out,
+                                size_t len, unsigned int flags);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

@@ -19,9 +19,7 @@
 
 #include <stdint.h>
 #include "infra.h"
-
-struct silofs_fuseq_worker;
-struct silofs_fuseq_dispatcher;
+#include "opcall.h"
 
 /* fuse-queue machinery */
 struct silofs_fuseq_conn_info {
@@ -41,6 +39,19 @@ struct silofs_fuseq_conn_info {
 	uint32_t max_pages;
 } silofs_attr_aligned64;
 
+struct silofs_fuseq_piper {
+	struct silofs_list_head    fp_lh;
+	struct silofs_pipe         fp_pipe;
+	const struct silofs_nilfd *fp_nilfd;
+} silofs_attr_aligned64;
+
+struct silofs_fuseq_pipes {
+	struct silofs_fuseq_piper fqp[8];
+	struct silofs_listq       listq;
+	struct silofs_nilfd       nilfd;
+	struct silofs_mutex       mutex;
+};
+
 struct silofs_fuseq_thread {
 	struct silofs_thread th;
 	struct silofs_fuseq *fq;
@@ -49,6 +60,24 @@ struct silofs_fuseq_thread {
 	bool                 joined;
 	uint8_t              pad[2];
 };
+
+struct silofs_fuseq_worker {
+	struct silofs_fuseq_thread fqw_th;
+	uint32_t                   fqw_pad[3];
+} silofs_attr_aligned64;
+
+struct silofs_fuseq_dispatcher {
+	struct silofs_call_args      fqd_args;
+	struct silofs_fuseq_thread   fqd_th;
+	struct silofs_list_head      fqd_lh;
+	struct silofs_fuseq_piper   *fqd_pipe;
+	struct silofs_fuseq_inb     *fqd_inb;
+	struct silofs_fuseq_outb    *fqd_outb;
+	struct silofs_fuseq_rw_iter *fqd_rwi;
+	time_t                       fqd_time_stamp;
+	volatile uint64_t            fqd_req_count;
+	bool                         fqd_init_ok;
+} silofs_attr_aligned64;
 
 struct silofs_fuseq_subx {
 	struct silofs_fuseq_worker     *fq_workers;
@@ -62,6 +91,7 @@ struct silofs_fuseq_subx {
 struct silofs_fuseq {
 	struct silofs_fuseq_subx      fq_subx;
 	struct silofs_fuseq_conn_info fq_coni;
+	struct silofs_fuseq_pipes     fq_pipes;
 	struct silofs_mutex           fq_ch_lock;
 	struct silofs_mutex           fq_op_lock;
 	struct silofs_mutex           fq_ctl_lock;
@@ -76,6 +106,7 @@ struct silofs_fuseq {
 	uid_t                         fq_fs_owner;
 	volatile int                  fq_active;
 	volatile int                  fq_fuse_fd;
+	bool                          fq_init_pipes;
 	bool                          fq_init_locks;
 	bool                          fq_got_init;
 	bool                          fq_reply_init_ok;

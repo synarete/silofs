@@ -191,6 +191,11 @@ static int pipe_try_grow(struct silofs_pipe *pipe, size_t pipe_size_want)
 	return err;
 }
 
+int silofs_pipe_grow(struct silofs_pipe *pipe, size_t sz)
+{
+	return ((int)sz != pipe->size) ? pipe_try_grow(pipe, sz) : 0;
+}
+
 void silofs_pipe_close(struct silofs_pipe *pipe)
 {
 	if (pipe->fd[0] > 0) {
@@ -301,7 +306,7 @@ int silofs_pipe_splice_to_fd(struct silofs_pipe *pipe, int fd, loff_t *off,
 	if ((int)nsp > pipe->pend) {
 		silofs_log_error("bad-splice: fd_in=%d fd_out=%d off_out=%ld"
 		                 "cnt=%zu flags=%u nsp=%zu",
-		                 pipe->fd[0], fd, off_out, cnt, flags, nsp);
+		                 fd_in, fd, off_out, cnt, flags, nsp);
 		return -SILOFS_EIO;
 	}
 	pipe->pend -= (int)nsp;
@@ -403,7 +408,7 @@ int silofs_pipe_dispose(struct silofs_pipe *pipe,
 	return silofs_pipe_sendall_to_fd(pipe, nfd->fd, 0);
 }
 
-static int pipe_kcopy_by_splice(struct silofs_pipe *pipe, int fd_in,
+int silofs_pipe_kcopy_by_splice(struct silofs_pipe *pipe, int fd_in,
                                 loff_t *off_in, int fd_out, loff_t *off_out,
                                 size_t len, unsigned int flags)
 {
@@ -429,18 +434,18 @@ static void nilfd_close(struct silofs_nilfd *nfd)
 	}
 }
 
-static void nilfd_init(struct silofs_nilfd *nfd)
+void silofs_nilfd_init(struct silofs_nilfd *nfd)
 {
 	nfd->fd = -1;
 }
 
-static void nilfd_fini(struct silofs_nilfd *nfd)
+void silofs_nilfd_fini(struct silofs_nilfd *nfd)
 {
 	nilfd_close(nfd);
 	nfd->fd = -1;
 }
 
-static int nilfd_open(struct silofs_nilfd *nfd)
+int silofs_nilfd_open(struct silofs_nilfd *nfd)
 {
 	const char *path = "/dev/null";
 	const int o_flags = O_WRONLY;
@@ -455,65 +460,6 @@ static int nilfd_open(struct silofs_nilfd *nfd)
 		}
 	}
 	return err;
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-void silofs_piper_init(struct silofs_piper *piper)
-{
-	silofs_pipe_init(&piper->pipe);
-	nilfd_init(&piper->nfd);
-}
-
-void silofs_piper_fini(struct silofs_piper *piper)
-{
-	nilfd_fini(&piper->nfd);
-	silofs_pipe_fini(&piper->pipe);
-}
-
-int silofs_piper_open(struct silofs_piper *piper)
-{
-	int err;
-
-	err = nilfd_open(&piper->nfd);
-	if (err) {
-		return err;
-	}
-	err = silofs_pipe_open(&piper->pipe);
-	if (err) {
-		nilfd_close(&piper->nfd);
-		return err;
-	}
-	return 0;
-}
-
-void silofs_piper_close(struct silofs_piper *piper)
-{
-	nilfd_close(&piper->nfd);
-	silofs_pipe_close(&piper->pipe);
-}
-
-int silofs_piper_try_grow(struct silofs_piper *piper, size_t sz)
-{
-	int ret = 0;
-
-	if ((int)sz != piper->pipe.size) {
-		ret = pipe_try_grow(&piper->pipe, sz);
-	}
-	return ret;
-}
-
-int silofs_piper_dispose(struct silofs_piper *piper)
-{
-	return silofs_pipe_dispose(&piper->pipe, &piper->nfd);
-}
-
-int silofs_piper_kcopy(struct silofs_piper *piper, int fd_in, loff_t *off_in,
-                       int fd_out, loff_t *off_out, size_t len,
-                       unsigned int flags)
-{
-	return pipe_kcopy_by_splice(&piper->pipe, fd_in, off_in, fd_out,
-	                            off_out, len, flags);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

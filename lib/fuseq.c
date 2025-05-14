@@ -1333,7 +1333,7 @@ static int fqd_send_pipe(struct silofs_fuseq_dispatcher *fqd)
 	struct silofs_pipe *pipe = &fqd->fqd_piper.pipe;
 	const int fuse_fd = fqd_fuse_fd(fqd);
 
-	return silofs_pipe_flush_to_fd(pipe, fuse_fd, 0);
+	return silofs_pipe_sendall_to_fd(pipe, fuse_fd, 0);
 }
 
 static int fqd_reply_read_data(struct silofs_fuseq_dispatcher *fqd,
@@ -2592,8 +2592,9 @@ static int fqd_extract_from_pipe_by_fd(struct silofs_fuseq_dispatcher *fqd,
 static int fqd_extract_from_pipe_by_iov(struct silofs_fuseq_dispatcher *fqd,
                                         const struct silofs_iovec *iovec)
 {
-	return silofs_pipe_vmsplice_to_iov(&fqd->fqd_piper.pipe, &iovec->iov,
-	                                   1,
+	struct silofs_pipe *pipe = &fqd->fqd_piper.pipe;
+
+	return silofs_pipe_vmsplice_to_iov(pipe, &iovec->iov, 1,
 	                                   SPLICE_F_MOVE | SPLICE_F_NONBLOCK);
 }
 
@@ -3754,14 +3755,18 @@ static int fqd_do_recv_in(struct silofs_fuseq_dispatcher *fqd, bool *out_spl)
 		return -SILOFS_ENORX;
 	}
 	err = fqd_wait_request(fqd);
-	if (err) {
+	if (err != 0) {
 		return err;
 	}
+
 	if (!fqd_allowed_splice_in(fqd)) {
-		return fqd_recv_copy_in(fqd);
+		*out_spl = false;
+		err = fqd_recv_copy_in(fqd);
+	} else {
+		*out_spl = true;
+		err = fqd_recv_splice_in(fqd);
 	}
-	*out_spl = true;
-	return fqd_recv_splice_in(fqd);
+	return err;
 }
 
 static int fqd_recv_in_locked(struct silofs_fuseq_dispatcher *fqd)

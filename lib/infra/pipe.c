@@ -384,19 +384,23 @@ int silofs_pipe_append_from_buf(struct silofs_pipe *pipe, const void *buf,
 	return 0;
 }
 
-int silofs_pipe_flush_to_fd(struct silofs_pipe *pipe, int fd,
-                            unsigned int flags)
+int silofs_pipe_sendall_to_fd(struct silofs_pipe *pipe, int fd,
+                              unsigned int flags)
 {
-	return (pipe->pend > 0) ?
-	               silofs_pipe_splice_to_fd(pipe, fd, NULL,
-	                                        (size_t)pipe->pend, flags) :
-	               0;
+	size_t len;
+	int ret = 0;
+
+	if (pipe->pend > 0) {
+		len = (size_t)pipe->pend;
+		ret = silofs_pipe_splice_to_fd(pipe, fd, NULL, len, flags);
+	}
+	return ret;
 }
 
 int silofs_pipe_dispose(struct silofs_pipe *pipe,
                         const struct silofs_nilfd *nfd)
 {
-	return silofs_pipe_flush_to_fd(pipe, nfd->fd, 0);
+	return silofs_pipe_sendall_to_fd(pipe, nfd->fd, 0);
 }
 
 static int pipe_kcopy_by_splice(struct silofs_pipe *pipe, int fd_in,

@@ -24,9 +24,10 @@
 #include "exec.h"
 #include "super.h"
 #include "inode.h"
-#include "env.h"
 #include "spmaps.h"
+#include "lsmap.h"
 #include "stage.h"
+#include "env.h"
 
 struct silofs_vstage_ctx {
 	struct silofs_task_ctx *task;
@@ -45,8 +46,8 @@ struct silofs_vstage_ctx {
 };
 
 struct silofs_vnis {
-	struct silofs_vaddrs vas;
 	struct silofs_vnode_info *vnis[SILOFS_NKB_IN_LBK];
+	size_t count;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -2235,35 +2236,78 @@ static int vstgc_pre_clone_stage_at(const struct silofs_vstage_ctx *vstg_ctx,
 	return ret;
 }
 
-static int vstgc_do_pre_clone_lbk(struct silofs_vstage_ctx *vstg_ctx,
-                                  struct silofs_vnis *vis)
+static int vstgc_stage_lsmap_of(struct silofs_vstage_ctx *vstg_ctx,
+                                struct silofs_lsmap_info **out_lsi)
 {
+	struct silofs_vaddr vaddr;
 	struct silofs_vnode_info *vni = NULL;
-	const struct silofs_vaddr *vaddrj = NULL;
 	int err;
 
-	STATICASSERT_EQ(ARRAY_SIZE(vis->vnis), ARRAY_SIZE(vis->vas.vaddr));
-
-	silofs_sli_vaddrs_at(vstg_ctx->sli, vstg_ctx->vaddr, &vis->vas);
-	for (size_t j = 0; j < vis->vas.count; ++j) {
-		vaddrj = &vis->vas.vaddr[j];
-		err = vstgc_pre_clone_stage_at(vstg_ctx, vaddrj, &vni);
-		if (err) {
-			return err;
-		}
-		silofs_vni_incref(vni);
-		vis->vnis[j] = vni;
+	silofs_vaddr_of_lsmap(&vaddr, vstg_ctx->vspace, vstg_ctx->vaddr->off);
+	err = silofs_stage_vnode(vstg_ctx->task, NULL, &vaddr, SILOFS_STG_CUR,
+	                         &vni);
+	if (err) {
+		return err;
 	}
+	*out_lsi = silofs_lsi_from_vni(vni);
 	return 0;
 }
 
+static int vstgc_resolve_vaddrs(struct silofs_vstage_ctx *vstg_ctx,
+                                struct silofs_vaddrs *out_vaddrs)
+{
+	struct silofs_vaddrs vaddrs;
+	struct silofs_lsmap_info *lsi = NULL;
+	int err;
+
+	silofs_sli_vaddrs_at(vstg_ctx->sli, vstg_ctx->vaddr, out_vaddrs);
+	if (vstg_ctx->vspace == SILOFS_LTYPE_LSMAP) {
+		return 0;
+	}
+	err = vstgc_stage_lsmap_of(vstg_ctx, &lsi);
+	if (err) {
+		return err;
+	}
+	silofs_lsi_vaddrs_at(lsi, vstg_ctx->vaddr, &vaddrs);
+	silofs_assert_eq(vaddrs.count, out_vaddrs->count);
+	return 0;
+}
+
+static int vstgc_do_pre_clone_lbk(struct silofs_vstage_ctx *vstg_ctx,
+                                  struct silofs_vnis *vnis)
+{
+	struct silofs_vaddrs vas = { .count = 0 };
+	struct silofs_vnode_info *vni = NULL;
+	int err = 0;
+
+	STATICASSERT_EQ(ARRAY_SIZE(vnis->vnis), ARRAY_SIZE(vas.vaddr));
+
+	err = vstgc_resolve_vaddrs(vstg_ctx, &vas);
+	if (err) {
+		return err;
+	}
+	vnis->count = 0;
+	for (size_t i = 0; (i < vas.count) && !err; ++i) {
+		vni = NULL;
+		err = vstgc_pre_clone_stage_at(vstg_ctx, &vas.vaddr[i], &vni);
+		if (err) {
+			return err;
+		}
+		if (vni != NULL) {
+			silofs_vni_incref(vni);
+			vnis->vnis[vnis->count++] = vni;
+		}
+	}
+	return err;
+}
+
 static int vstgc_pre_clone_lbk(struct silofs_vstage_ctx *vstg_ctx,
-                               struct silofs_vnis *vis)
+                               struct silofs_vnis *vnis)
 {
 	int err;
 
 	vstgc_increfs(vstg_ctx, SILOFS_HEIGHT_SPLEAF);
-	err = vstgc_do_pre_clone_lbk(vstg_ctx, vis);
+	err = vstgc_do_pre_clone_lbk(vstg_ctx, vnis);
 	vstgc_decrefs(vstg_ctx, SILOFS_HEIGHT_SPLEAF);
 	return err;
 }
@@ -2275,30 +2319,29 @@ static void vstgc_redirtify_vni(const struct silofs_vstage_ctx *vstg_ctx,
 }
 
 static void vstgc_post_clone_lbk(const struct silofs_vstage_ctx *vstg_ctx,
-                                 const struct silofs_vnis *vis)
+                                 const struct silofs_vnis *vnis)
 {
 	struct silofs_vnode_info *vni = NULL;
 
-	for (size_t i = 0; i < vis->vas.count; ++i) {
-		vni = vis->vnis[i];
-		if (vni != NULL) {
-			vstgc_redirtify_vni(vstg_ctx, vni);
-			silofs_vni_decref(vni);
-		}
+	for (size_t i = 0; i < vnis->count; ++i) {
+		vni = vnis->vnis[i];
+		silofs_assert_not_null(vni);
+		vstgc_redirtify_vni(vstg_ctx, vni);
+		silofs_vni_decref(vni);
 	}
 }
 
 static int vstgc_clone_lbk_at(struct silofs_vstage_ctx *vstg_ctx,
                               const struct silofs_laddr *src_laddr)
 {
-	struct silofs_vnis vis = { .vas.count = 0 };
+	struct silofs_vnis vnis = { .count = 0 };
 	int err;
 
-	err = vstgc_pre_clone_lbk(vstg_ctx, &vis);
+	err = vstgc_pre_clone_lbk(vstg_ctx, &vnis);
 	if (!err) {
 		err = vstgc_clone_rebind_lbk(vstg_ctx, src_laddr);
 	}
-	vstgc_post_clone_lbk(vstg_ctx, &vis);
+	vstgc_post_clone_lbk(vstg_ctx, &vnis);
 	return err;
 }
 

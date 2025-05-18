@@ -462,6 +462,11 @@ int silofs_nilfd_open(struct silofs_nilfd *nfd)
 	return err;
 }
 
+void silofs_nilfd_close(struct silofs_nilfd *nfd)
+{
+	nilfd_close(nfd);
+}
+
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 int silofs_proc_pipe_limits(struct silofs_pipe_limits *pl)

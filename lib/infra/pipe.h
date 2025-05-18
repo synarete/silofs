@@ -46,6 +46,8 @@ void silofs_nilfd_fini(struct silofs_nilfd *nfd);
 
 int silofs_nilfd_open(struct silofs_nilfd *nfd);
 
+void silofs_nilfd_close(struct silofs_nilfd *nfd);
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 size_t silofs_pipe_size_of(size_t pipe_size_want);

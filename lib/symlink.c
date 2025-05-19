@@ -148,7 +148,7 @@ static void inln_set_tail_part(struct silofs_inode_lnk *inln, size_t slot,
 
 static void inln_reset_tail_part(struct silofs_inode_lnk *inln, size_t slot)
 {
-	inln_set_tail_part(inln, slot, vaddr_none());
+	inln_set_tail_part(inln, slot, silofs_vaddr_none());
 }
 
 static void inln_setup(struct silofs_inode_lnk *inln)
@@ -188,7 +188,7 @@ static int lnk_get_value_part(const struct silofs_inode_info *lnk_ii,
                               size_t slot, struct silofs_vaddr *out_vaddr)
 {
 	inln_tail_part(inln_of(lnk_ii), slot, out_vaddr);
-	return !vaddr_isnull(out_vaddr) ? 0 : -SILOFS_ENOENT;
+	return !silofs_vaddr_isnull(out_vaddr) ? 0 : -SILOFS_ENOENT;
 }
 
 static void lnk_set_value_part(struct silofs_inode_info *lnk_ii, size_t slot,

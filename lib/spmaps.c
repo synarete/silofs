@@ -611,7 +611,7 @@ lbr_make_vaddrs(const struct silofs_lbk_ref *lbr, enum silofs_ltype ltype,
 		if (lbk_state_has_mask(&lbk_st, &bk_mask)) {
 			voff = off_end(voff_base, kbn * SILOFS_KB_SIZE);
 			vaddr = &out_vaddrs->vaddr[out_vaddrs->count++];
-			vaddr_setup(vaddr, ltype, voff);
+			silofs_vaddr_setup(vaddr, ltype, voff);
 		}
 	}
 }
@@ -755,7 +755,7 @@ static bool spleaf_has_allocated_with(const struct silofs_spmap_leaf *spl,
 	const struct silofs_lbk_ref *lbr = spleaf_lbr_by_vaddr(spl, vaddr);
 	bool ret;
 
-	if (vaddr_isdatabk(vaddr)) {
+	if (silofs_vaddr_isdatabk(vaddr)) {
 		ret = (lbr_refcnt(lbr) > 0);
 	} else {
 		ret = lbr_test_allocated_other(lbr, kbn, nkb);

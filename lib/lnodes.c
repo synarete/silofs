@@ -442,7 +442,7 @@ vni_init(struct silofs_vnode_info *vni, const struct silofs_vaddr *vaddr,
          struct silofs_view *view)
 {
 	lni_init(&vni->vn_lni, vaddr->ltype, view);
-	vaddr_assign(&vni->vn_vaddr, vaddr);
+	silofs_vaddr_assign(&vni->vn_vaddr, vaddr);
 	silofs_llink_reset(&vni->vn_llink);
 	vni->vn_asyncwr = 0;
 	vni->vn_magic = SILOFS_VI_MAGIC;
@@ -454,7 +454,7 @@ static void vni_fini(struct silofs_vnode_info *vni)
 	silofs_assert_eq(vni->vn_asyncwr, 0);
 
 	lni_fini(&vni->vn_lni);
-	vaddr_reset(&vni->vn_vaddr);
+	silofs_vaddr_reset(&vni->vn_vaddr);
 	vni->vn_magic = UINT64_MAX;
 }
 

@@ -116,7 +116,7 @@ void silofs_fuseq_del(struct silofs_fuseq *fq, struct silofs_alloc *alloc);
 int silofs_fuseq_update(struct silofs_fuseq *fq);
 
 int silofs_fuseq_mount(struct silofs_fuseq *fq, struct silofs_env *env,
-		       const char *path);
+                       const char *path);
 
 int silofs_fuseq_exec(struct silofs_fuseq *fq);
 

@@ -2208,7 +2208,7 @@ vstgc_pre_clone_stage_vnode_at(const struct silofs_vstage_ctx *vstg_ctx,
 static bool vstgc_has_vaddr(const struct silofs_vstage_ctx *vstg_ctx,
                             const struct silofs_vaddr *vaddr)
 {
-	return vaddr_isequal(vstg_ctx->vaddr, vaddr);
+	return silofs_vaddr_isequal(vstg_ctx->vaddr, vaddr);
 }
 
 static int vstgc_pre_clone_stage_at(const struct silofs_vstage_ctx *vstg_ctx,
@@ -2223,10 +2223,11 @@ static int vstgc_pre_clone_stage_at(const struct silofs_vstage_ctx *vstg_ctx,
 		log_dbg("unexpected pre-clone: ltype=%d", vaddr->ltype);
 		*out_vni = NULL;
 	} else if (vstgc_has_vaddr(vstg_ctx, vaddr) &&
-	           ((stg_mode & SILOFS_STG_RAW) || vaddr_isdatabk(vaddr))) {
+	           ((stg_mode & SILOFS_STG_RAW) ||
+	            silofs_vaddr_isdatabk(vaddr))) {
 		/* ignore current data-block */
 		*out_vni = NULL;
-	} else if (vaddr_isinode(vaddr)) {
+	} else if (silofs_vaddr_isinode(vaddr)) {
 		/* inode case */
 		ret = vstgc_pre_clone_stage_inode_at(vstg_ctx, vaddr, out_vni);
 	} else {
@@ -2494,7 +2495,7 @@ int silofs_fetch_cached_vnode(struct silofs_task_ctx *task,
 {
 	int ret = -SILOFS_ENOENT;
 
-	if (!vaddr_isnull(vaddr)) {
+	if (!silofs_vaddr_isnull(vaddr)) {
 		ret = fetch_cached_vni(task, vaddr, out_vni);
 	}
 	return ret;
@@ -2574,7 +2575,7 @@ static int check_stage_vnode(const struct silofs_task_ctx *task,
                              const struct silofs_vaddr *vaddr,
                              enum silofs_stg_mode stg_mode)
 {
-	if (vaddr_isnull(vaddr)) {
+	if (silofs_vaddr_isnull(vaddr)) {
 		return -SILOFS_ENOENT;
 	}
 	if ((stg_mode & SILOFS_STG_COW) == 0) {
@@ -2645,7 +2646,7 @@ static int resolve_iaddr(ino_t ino, struct silofs_vaddr *out_vaddr)
 	if (off_isnull(voff)) {
 		return -SILOFS_EINVAL;
 	}
-	vaddr_setup(out_vaddr, SILOFS_LTYPE_INODE, voff);
+	silofs_vaddr_setup(out_vaddr, SILOFS_LTYPE_INODE, voff);
 	return 0;
 }
 

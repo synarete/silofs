@@ -684,7 +684,7 @@ static int btc_init(struct silofs_btree_ctx *btc, struct silofs_btree *btree,
 	bpath_init(&btc->bpath);
 	if (vaddr == NULL) {
 		btc->key = SILOFS_BTREE_KEY_NULL;
-	} else if (!vaddr_isnull(vaddr)) {
+	} else if (!silofs_vaddr_isnull(vaddr)) {
 		btc->key = (uint64_t)(vaddr->off);
 	} else {
 		ret = -SILOFS_EINVAL;

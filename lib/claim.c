@@ -98,7 +98,7 @@ static void spac_set_hint(struct silofs_spalloc_ctx *spa_ctx, loff_t off)
 static bool sbi_is_within_vspace(const struct silofs_sb_info *sbi,
                                  const struct silofs_vaddr *vaddr)
 {
-	const size_t vaddr_len = vaddr_len(vaddr);
+	const size_t vaddr_len = silofs_vaddr_len(vaddr);
 	const loff_t vaddr_beg = vaddr->off;
 	const loff_t vaddr_end = off_end(vaddr_beg, vaddr_len);
 	const loff_t vspace_end = silofs_sbst_vspace_end(sbi);
@@ -313,7 +313,7 @@ static int spac_check_avail_space(const struct silofs_spalloc_ctx *spa_ctx)
 static int spac_check_want_free_vspace(struct silofs_spalloc_ctx *spa_ctx,
                                        const struct silofs_vaddr *vaddr)
 {
-	if (vaddr_isnull(vaddr)) {
+	if (silofs_vaddr_isnull(vaddr)) {
 		return -SILOFS_ENOSPC;
 	}
 	if (!sbi_is_within_vspace(spa_ctx->sbi, vaddr)) {
@@ -655,7 +655,7 @@ static int spac_try_recache_vspace(const struct silofs_spalloc_ctx *spa_ctx,
 
 	if (!spac_has_dbkref_at(spa_ctx, vaddr)) {
 		ret = silofs_spamaps_store(spam, vaddr->ltype, vaddr->off,
-		                           vaddr_len(vaddr));
+		                           silofs_vaddr_len(vaddr));
 	}
 	return ret;
 }

@@ -59,14 +59,14 @@ static void voff_ltype_to_cpu(uint64_t voff_ltype, loff_t *out_voff,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static const struct silofs_vaddr s_vaddr_none = {
+static const struct silofs_vaddr s_silofs_vaddr_none = {
 	.off = SILOFS_OFF_NULL,
 	.ltype = SILOFS_LTYPE_NONE,
 };
 
 const struct silofs_vaddr *silofs_vaddr_none(void)
 {
-	return &s_vaddr_none;
+	return &s_silofs_vaddr_none;
 }
 
 size_t silofs_vaddr_len(const struct silofs_vaddr *vaddr)

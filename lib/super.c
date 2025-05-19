@@ -880,7 +880,7 @@ int silofs_test_shared_dbkref(struct silofs_task_ctx *task,
 	int err;
 
 	*out_res = false;
-	if (!vaddr_isdatabk(vaddr)) {
+	if (!silofs_vaddr_isdatabk(vaddr)) {
 		return 0;
 	}
 	err = stage_spleaf_lsmap(task, vaddr, SILOFS_STG_CUR, &sli, &lsi);

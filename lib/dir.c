@@ -102,7 +102,7 @@ static mode_t dttoif(mode_t dt)
 
 static void vaddr_of_dnode(struct silofs_vaddr *vaddr, loff_t off)
 {
-	vaddr_setup(vaddr, SILOFS_LTYPE_DTNODE, off);
+	silofs_vaddr_setup(vaddr, SILOFS_LTYPE_DTNODE, off);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -515,7 +515,9 @@ dtn_child_off(const struct silofs_dtree_node *dtn, silofs_dtn_ord_t ord)
 static void dtn_child(const struct silofs_dtree_node *dtn,
                       silofs_dtn_ord_t ord, struct silofs_vaddr *out_vaddr)
 {
-	vaddr_setup(out_vaddr, SILOFS_LTYPE_DTNODE, dtn_child_off(dtn, ord));
+	const loff_t off = dtn_child_off(dtn, ord);
+
+	silofs_vaddr_setup(out_vaddr, SILOFS_LTYPE_DTNODE, off);
 }
 
 static bool
@@ -524,7 +526,7 @@ dtn_has_child_at(const struct silofs_dtree_node *dtn, silofs_dtn_ord_t ord)
 	struct silofs_vaddr vaddr;
 
 	dtn_child(dtn, ord, &vaddr);
-	return !vaddr_isnull(&vaddr);
+	return !silofs_vaddr_isnull(&vaddr);
 }
 
 static void dtn_set_child(struct silofs_dtree_node *dtn, silofs_dtn_ord_t ord,
@@ -538,7 +540,7 @@ static void dtn_reset_childs(struct silofs_dtree_node *dtn)
 	silofs_dtn_ord_t ord;
 
 	for (ord = 0; ord < ARRAY_SIZE(dtn->dn_child); ++ord) {
-		dtn_set_child(dtn, ord, vaddr_none());
+		dtn_set_child(dtn, ord, silofs_vaddr_none());
 	}
 }
 
@@ -1143,7 +1145,7 @@ indr_set_hashfn(struct silofs_inode_dir *indr, enum silofs_namehfn hfn)
 
 static void indr_setup(struct silofs_inode_dir *indr, uint64_t seed)
 {
-	indr_set_tree_root(indr, vaddr_none());
+	indr_set_tree_root(indr, silofs_vaddr_none());
 	indr_set_seed(indr, seed);
 	indr_set_last_index(indr, DTREE_INDEX_NULL);
 	indr_set_ndents(indr, 0);
@@ -1187,7 +1189,7 @@ static bool dir_has_tree(const struct silofs_inode_info *dir_ii)
 	struct silofs_vaddr vaddr = { .off = -1 };
 
 	dir_tree_root(dir_ii, &vaddr);
-	return !vaddr_isnull(&vaddr);
+	return !silofs_vaddr_isnull(&vaddr);
 }
 
 static void dir_set_tree_root(struct silofs_inode_info *dir_ii,
@@ -1538,7 +1540,7 @@ static int dirc_stage_tree_root(const struct silofs_dir_ctx *d_ctx,
 	int ret = -SILOFS_ENOENT;
 
 	dirc_resolve_tree(d_ctx, &vaddr);
-	if (!vaddr_isnull(&vaddr)) {
+	if (!silofs_vaddr_isnull(&vaddr)) {
 		ret = dirc_stage_dnode(d_ctx, &vaddr, out_dni);
 	}
 	return ret;
@@ -1799,7 +1801,7 @@ static int dirc_require_child(const struct silofs_dir_ctx *d_ctx,
 	int err;
 
 	dirc_resolve_child_of(d_ctx, parent_dni, &vaddr);
-	if (!vaddr_isnull(&vaddr)) {
+	if (!silofs_vaddr_isnull(&vaddr)) {
 		err = dirc_stage_child(d_ctx, parent_dni, &vaddr, out_dni);
 	} else {
 		err = dirc_spawn_bind_child(d_ctx, parent_dni, out_dni);
@@ -2197,7 +2199,7 @@ static int dirc_next_node(struct silofs_dir_ctx *d_ctx,
 	next_dtn_index = curr_dtn_index + 1;
 
 	dtn_parent_addr(dni->dtn, &vaddr);
-	if (vaddr_isnull(&vaddr)) {
+	if (silofs_vaddr_isnull(&vaddr)) {
 		*out_dtn_index = next_dtn_index;
 		return 0;
 	}
@@ -2208,7 +2210,7 @@ static int dirc_next_node(struct silofs_dir_ctx *d_ctx,
 	ord = dtn_child_ord(dni->dtn);
 	while (++ord < DTREE_FANOUT) {
 		dni_child_addr_by_ord(parent_dni, ord, &vaddr);
-		if (!vaddr_isnull(&vaddr)) {
+		if (!silofs_vaddr_isnull(&vaddr)) {
 			break;
 		}
 		next_dtn_index += 1;
@@ -2460,7 +2462,7 @@ static int dirc_discard_childs_of(const struct silofs_dir_ctx *d_ctx,
 			break;
 		}
 		dtn_child_by_ord(dni->dtn, ord, &child_vaddr);
-		if (vaddr_isnull(&child_vaddr)) {
+		if (silofs_vaddr_isnull(&child_vaddr)) {
 			continue;
 		}
 		err = dirc_discard_recursively(d_ctx, &child_vaddr);
@@ -2495,7 +2497,7 @@ static int dirc_discard_recursively(const struct silofs_dir_ctx *d_ctx,
 	struct silofs_dnode_info *dni = NULL;
 	int err;
 
-	if (vaddr_isnull(vaddr)) {
+	if (silofs_vaddr_isnull(vaddr)) {
 		return 0;
 	}
 	err = dirc_stage_dnode(d_ctx, vaddr, &dni);
@@ -2754,7 +2756,7 @@ static int dtn_verify_childs(const struct silofs_dtree_node *dtn)
 
 	for (unsigned int i = 0; i < ARRAY_SIZE(dtn->dn_child); ++i) {
 		dtn_child(dtn, i, &vaddr);
-		if (vaddr_isnull(&vaddr)) {
+		if (silofs_vaddr_isnull(&vaddr)) {
 			continue;
 		}
 		err = silofs_verify_off(vaddr.off);

@@ -1795,16 +1795,32 @@ void ut_lseek_nodata(struct ut_env *ute, ino_t ino, loff_t off)
 	ut_expect_err(err, -ENXIO);
 }
 
+static void
+ut_copy_file_range1(struct ut_env *ute, ino_t ino_in, loff_t off_in,
+                    ino_t ino_out, loff_t off_out, size_t len, size_t *out_ncp)
+{
+	int err;
+
+	err = ut_do_copy_file_range(ute, ino_in, off_in, ino_out, off_out, len,
+	                            out_ncp);
+	ut_expect_ok(err);
+	ut_expect_gt(*out_ncp, 0);
+	ut_expect_le(*out_ncp, len);
+}
+
 void ut_copy_file_range(struct ut_env *ute, ino_t ino_in, loff_t off_in,
                         ino_t ino_out, loff_t off_out, size_t len)
 {
 	size_t cnt = 0;
-	int err;
+	size_t ncp;
 
-	err = ut_do_copy_file_range(ute, ino_in, off_in, ino_out, off_out, len,
-	                            &cnt);
-	ut_expect_ok(err);
-	ut_expect_eq(len, cnt);
+	while (cnt < len) {
+		ncp = 0;
+		ut_copy_file_range1(ute, ino_in, ut_off_end(off_in, cnt),
+		                    ino_out, ut_off_end(off_out, cnt),
+		                    len - cnt, &ncp);
+		cnt += ncp;
+	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

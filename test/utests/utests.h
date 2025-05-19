@@ -651,6 +651,11 @@ static inline loff_t ut_off_baligned(loff_t off)
 	return ut_off_aligned(off, SILOFS_LBK_SIZE);
 }
 
+static inline loff_t ut_off_end(loff_t off, size_t len)
+{
+	return off + (ssize_t)len;
+}
+
 static inline size_t ut_off_len(loff_t beg, loff_t end)
 {
 	return (size_t)(end - beg);

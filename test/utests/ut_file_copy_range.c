@@ -67,11 +67,6 @@ static long ut_lmax(long x, long y)
 	return (x > y) ? x : y;
 }
 
-static loff_t ut_off_end(loff_t off, size_t len)
-{
-	return off + (long)len;
-}
-
 static void ut_expect_gt_mtime(const struct stat *st1, const struct stat *st0)
 {
 	ut_expect_ge(st1->st_mtim.tv_sec, st0->st_mtim.tv_sec);
@@ -809,6 +804,9 @@ static void ut_file_copy_range_sparse(struct ut_env *ute)
 {
 	const struct ut_copy_range_args args[] = {
 		/* aligned */
+		COPYARGS1(UT_64K, UT_64K),
+		COPYARGS1(UT_1M, UT_64K),
+		COPYARGS1(UT_1T, UT_64K),
 		COPYARGS1(UT_1M, UT_1M),
 		COPYARGS1(UT_1G, UT_1M),
 		COPYARGS1(4 * UT_1G, UT_1M),

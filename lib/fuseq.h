@@ -21,6 +21,9 @@
 #include "infra.h"
 #include "opcall.h"
 
+/* high-limit for pipes in splice-mode */
+#define SILOFS_FUSEQ_PIPES_MAX (8)
+
 /* fuse-queue machinery */
 struct silofs_fuseq_conn_info {
 	size_t   buffsize;
@@ -43,11 +46,6 @@ struct silofs_fuseq_pipe {
 	struct silofs_list_head lh;
 	struct silofs_pipe      pp;
 } silofs_attr_aligned64;
-
-struct silofs_fuseq_pipes {
-	struct silofs_fuseq_pipe fq_pipes[8];
-	struct silofs_listq      fq_freeq;
-};
 
 struct silofs_fuseq_thread {
 	struct silofs_thread th;
@@ -79,10 +77,9 @@ struct silofs_fuseq_subs {
 };
 
 struct silofs_fuseq {
+	struct silofs_fuseq_pipe      fq_pipes[SILOFS_FUSEQ_PIPES_MAX];
 	struct silofs_fuseq_conn_info fq_coni;
-	struct silofs_fuseq_subs      fq_subs;
 	struct silofs_nilfd           fq_nilfd;
-	struct silofs_fuseq_pipes     fq_pipes;
 	struct silofs_mutex           fq_ps_lock;
 	struct silofs_mutex           fq_ch_lock;
 	struct silofs_mutex           fq_op_lock;
@@ -90,6 +87,8 @@ struct silofs_fuseq {
 	struct silofs_sem             fq_sem;
 	struct silofs_env            *fq_env;
 	struct silofs_alloc          *fq_alloc;
+	struct silofs_fuseq_subs      fq_subs;
+	struct silofs_listq           fq_pipes_freeq;
 	struct silofs_listq           fq_curr_opers;
 	size_t                        fq_selfsize;
 	size_t                        fq_pagesize;
@@ -117,7 +116,7 @@ void silofs_fuseq_del(struct silofs_fuseq *fq, struct silofs_alloc *alloc);
 int silofs_fuseq_update(struct silofs_fuseq *fq);
 
 int silofs_fuseq_mount(struct silofs_fuseq *fq, struct silofs_env *env,
-                       const char *path);
+		       const char *path);
 
 int silofs_fuseq_exec(struct silofs_fuseq *fq);
 

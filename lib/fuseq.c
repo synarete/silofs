@@ -731,7 +731,7 @@ static void
 fuseq_push_pipe(struct silofs_fuseq *fq, struct silofs_fuseq_pipe *fqp)
 {
 	fuseq_lock_ps(fq);
-	silofs_listq_push_back(&fq->fq_pipes.fq_freeq, &fqp->lh);
+	silofs_listq_push_back(&fq->fq_pipes_freeq, &fqp->lh);
 	fuseq_unlock_ps(fq);
 }
 
@@ -740,7 +740,7 @@ static struct silofs_fuseq_pipe *fuseq_pop_pipe(struct silofs_fuseq *fq)
 	struct silofs_list_head *lh;
 
 	fuseq_lock_ps(fq);
-	lh = silofs_listq_pop_front(&fq->fq_pipes.fq_freeq);
+	lh = silofs_listq_pop_front(&fq->fq_pipes_freeq);
 	fuseq_unlock_ps(fq);
 
 	return fqp_from_lh(lh);
@@ -749,7 +749,7 @@ static struct silofs_fuseq_pipe *fuseq_pop_pipe(struct silofs_fuseq *fq)
 static size_t fuseq_open_pipes_max(const struct silofs_fuseq *fq)
 {
 	const uint32_t nproc = (uint32_t)silofs_sc_nproc_onln();
-	const uint32_t limit = ARRAY_SIZE(fq->fq_pipes.fq_pipes);
+	const uint32_t limit = ARRAY_SIZE(fq->fq_pipes);
 
 	return silofs_clamp_u32(nproc / 2, 1, limit);
 }
@@ -761,12 +761,12 @@ static int fuseq_open_pipes(struct silofs_fuseq *fq)
 	int err;
 
 	for (size_t i = 0; i < lim; ++i) {
-		struct silofs_fuseq_pipe *fqp = &fq->fq_pipes.fq_pipes[i];
+		struct silofs_fuseq_pipe *fqp = &fq->fq_pipes[i];
 
 		err = fqp_open(fqp, pipesize);
 		if (err) {
 			// if unable to open-and-grow any pipe than fallback to
-			// non-splice copy-mode.
+			// full non-splice copy-mode.
 			return (i > 0) ? 0 : err;
 		}
 		fuseq_push_pipe(fq, fqp);
@@ -4418,7 +4418,7 @@ static int fqs_exec_maintain_once(struct silofs_fuseq_sub *fqs)
 		/* do flush-and-relax in idle mode */
 		ret = fqs_exec_maintain(fqs, SILOFS_CTLF_IDLE);
 	} else if (fuseq_has_memory_pressure(fq)) {
-		/* do flush-and-relax along-side dispatcher threads */
+		/* do flush-and-relax along-side other threads */
 		ret = fqs_exec_maintain(fqs, SILOFS_CTLF_INTERN);
 	}
 	return ret;
@@ -4426,6 +4426,7 @@ static int fqs_exec_maintain_once(struct silofs_fuseq_sub *fqs)
 
 static int fqs_exec_loop(struct silofs_fuseq_sub *fqs)
 {
+	const uint32_t idx = fqs->fqs_th.idx;
 	int err = 0;
 
 	while (fqs_has_exec_mode(fqs)) {
@@ -4439,7 +4440,7 @@ static int fqs_exec_loop(struct silofs_fuseq_sub *fqs)
 		}
 	}
 	if (err && (err != -ENODEV)) {
-		fuseq_log_warn("dispatch done: err=%d", err);
+		fuseq_log_warn("sub-thread done: idx=%u err=%d", idx, err);
 	}
 	return err;
 }
@@ -4537,9 +4538,9 @@ static void fuseq_fini_nilfd(struct silofs_fuseq *fq)
 
 static int fuseq_init_pipes(struct silofs_fuseq *fq)
 {
-	silofs_listq_init(&fq->fq_pipes.fq_freeq);
-	for (size_t i = 0; i < ARRAY_SIZE(fq->fq_pipes.fq_pipes); ++i) {
-		fqp_init(&fq->fq_pipes.fq_pipes[i]);
+	silofs_listq_init(&fq->fq_pipes_freeq);
+	for (size_t i = 0; i < ARRAY_SIZE(fq->fq_pipes); ++i) {
+		fqp_init(&fq->fq_pipes[i]);
 	}
 	fq->fq_init_pipes = true;
 	return 0;
@@ -4548,11 +4549,10 @@ static int fuseq_init_pipes(struct silofs_fuseq *fq)
 static void fuseq_fini_pipes(struct silofs_fuseq *fq)
 {
 	if (fq->fq_init_pipes) {
-		for (size_t i = 0; i < ARRAY_SIZE(fq->fq_pipes.fq_pipes);
-		     ++i) {
-			fqp_fini(&fq->fq_pipes.fq_pipes[i]);
+		for (size_t i = 0; i < ARRAY_SIZE(fq->fq_pipes); ++i) {
+			fqp_fini(&fq->fq_pipes[i]);
 		}
-		silofs_listq_fini(&fq->fq_pipes.fq_freeq);
+		silofs_listq_fini(&fq->fq_pipes_freeq);
 	}
 }
 
@@ -4630,7 +4630,7 @@ fuseq_init_common(struct silofs_fuseq *fq, struct silofs_alloc *alloc,
 	fq->fq_fs_owner = (uid_t)(-1);
 }
 
-static int fuseq_init_dispatchers(struct silofs_fuseq *fq)
+static int fuseq_init_subs(struct silofs_fuseq *fq)
 {
 	struct silofs_fuseq_sub *fqs = NULL;
 	int err;
@@ -4645,7 +4645,7 @@ static int fuseq_init_dispatchers(struct silofs_fuseq *fq)
 	return 0;
 }
 
-static void fuseq_fini_dispatchers(struct silofs_fuseq *fq)
+static void fuseq_fini_subs(struct silofs_fuseq *fq)
 {
 	struct silofs_fuseq_sub *fqs = NULL;
 
@@ -4796,13 +4796,13 @@ static int fuseq_init(struct silofs_fuseq *fq, struct silofs_alloc *alloc,
 	if (err) {
 		goto out_err;
 	}
-	err = fuseq_init_dispatchers(fq);
+	err = fuseq_init_subs(fq);
 	if (err) {
 		goto out_err;
 	}
 	return 0;
 out_err:
-	fuseq_fini_dispatchers(fq);
+	fuseq_fini_subs(fq);
 	fuseq_fini_locks(fq);
 	fuseq_fini_pipes(fq);
 	fuseq_fini_nilfd(fq);
@@ -4822,7 +4822,7 @@ static void fuseq_fini(struct silofs_fuseq *fq)
 	silofs_assert_eq(fq->fq_curr_opers.sz, 0);
 
 	fuseq_fini_fuse_fd(fq);
-	fuseq_fini_dispatchers(fq);
+	fuseq_fini_subs(fq);
 	fuseq_fini_locks(fq);
 	fuseq_fini_pipes(fq);
 	fuseq_fini_nilfd(fq);
@@ -4904,14 +4904,14 @@ int silofs_fuseq_mount(struct silofs_fuseq *fq, struct silofs_env *env,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int fuseq_start_dispatchers(struct silofs_fuseq *fq)
+static int fuseq_start_subs(struct silofs_fuseq *fq)
 {
-	const size_t ndisptch_lim = fq->fq_subs.fq_nsub_lim;
+	const size_t nsub_lim = fq->fq_subs.fq_nsub_lim;
 	int err;
 
-	fuseq_log_dbg("start dispatchers: lim=%zu", ndisptch_lim);
+	fuseq_log_dbg("start dispatchers: lim=%zu", nsub_lim);
 	fq->fq_subs.fq_nsub_run = 0;
-	for (size_t i = 0; i < ndisptch_lim; ++i) {
+	for (size_t i = 0; i < nsub_lim; ++i) {
 		err = fqs_exec_thread(&fq->fq_subs.fq_subs[i]);
 		if (err) {
 			return err;
@@ -4922,7 +4922,7 @@ static int fuseq_start_dispatchers(struct silofs_fuseq *fq)
 	return 0;
 }
 
-static bool fuseq_join_dispatchers(struct silofs_fuseq *fq)
+static bool fuseq_join_subs(struct silofs_fuseq *fq)
 {
 	struct silofs_fuseq_sub *fqs = NULL;
 	size_t njoined = 0;
@@ -4937,22 +4937,21 @@ static bool fuseq_join_dispatchers(struct silofs_fuseq *fq)
 	return (njoined == fq->fq_subs.fq_nsub_run);
 }
 
-static void fuseq_finish_dispatchers(struct silofs_fuseq *fq)
+static void fuseq_finish_subs(struct silofs_fuseq *fq)
 {
-	const size_t ndisptch_run = fq->fq_subs.fq_nsub_run;
+	const size_t nsub_run = fq->fq_subs.fq_nsub_run;
 	int retry = 30;
 
-	fuseq_log_dbg("finish dispatchers: ndisptch_run=%zu", ndisptch_run);
+	fuseq_log_dbg("finish sub-threads: nsub_run=%zu", nsub_run);
 	while (--retry > 0) {
-		if (fuseq_join_dispatchers(fq)) {
+		if (fuseq_join_subs(fq)) {
 			break;
 		}
 		silofs_suspend_secs(1);
 	}
 	if (retry == 0) {
-		silofs_panic("failed to join all dispatchers threads: "
-		             "ndisptch_run=%zu",
-		             ndisptch_run);
+		silofs_panic("failed to join all sub-threads: nsub_run=%zu",
+		             nsub_run);
 	}
 	fq->fq_subs.fq_nsub_run = 0;
 }
@@ -4960,13 +4959,13 @@ static void fuseq_finish_dispatchers(struct silofs_fuseq *fq)
 static int fuseq_start_exec_threads(struct silofs_fuseq *fq)
 {
 	fuseq_set_active(fq);
-	return fuseq_start_dispatchers(fq);
+	return fuseq_start_subs(fq);
 }
 
 static void fuseq_finish_exec_threads(struct silofs_fuseq *fq)
 {
 	fuseq_set_non_active(fq);
-	fuseq_finish_dispatchers(fq);
+	fuseq_finish_subs(fq);
 }
 
 static bool fuseq_ntimedwait(struct silofs_fuseq *fq, time_t nsecs)
@@ -5073,9 +5072,11 @@ static void *address_at(void *ptr, ptrdiff_t dif)
 	return (int8_t *)ptr + dif;
 }
 
-static uint32_t calc_ndisptch_lim(uint32_t nwant)
+static uint32_t calc_nsub_lim(void)
 {
-	return clamp(nwant, 2, 16);
+	const uint32_t nproc = (uint32_t)silofs_sc_nproc_onln();
+
+	return clamp(nproc, 2, 16);
 }
 
 static size_t fuseq_calc_selfsize(const struct silofs_fuseq *fq,
@@ -5100,24 +5101,24 @@ fuseq_resolve_subx(struct silofs_fuseq *fq, struct silofs_fuseq_subs *subx)
 int silofs_fuseq_new(struct silofs_alloc *alloc, struct silofs_fuseq **out_fq)
 {
 	struct silofs_fuseq *fq = NULL;
-	const uint32_t nproc = (uint32_t)silofs_sc_nproc_onln();
-	struct silofs_fuseq_subs fq_subx = { .fq_subs = NULL,
-		                             .fq_nsub_lim =
-		                                     calc_ndisptch_lim(nproc),
-		                             .fq_nsub_run = 0 };
+	struct silofs_fuseq_subs fq_subs = {
+		.fq_subs = NULL,
+		.fq_nsub_lim = calc_nsub_lim(),
+		.fq_nsub_run = 0,
+	};
 	size_t fq_msz = 0;
 	void *fq_mem = NULL;
 	int err;
 
-	fq_msz = fuseq_calc_selfsize(fq, &fq_subx);
+	fq_msz = fuseq_calc_selfsize(fq, &fq_subs);
 	fq_mem = silofs_memalloc(alloc, fq_msz, SILOFS_ALLOCF_BZERO);
 	if (fq_mem == NULL) {
 		return -SILOFS_ENOMEM;
 	}
 
 	fq = fq_mem;
-	fuseq_resolve_subx(fq, &fq_subx);
-	err = fuseq_init(fq, alloc, &fq_subx);
+	fuseq_resolve_subx(fq, &fq_subs);
+	err = fuseq_init(fq, alloc, &fq_subs);
 	if (err) {
 		silofs_memfree(alloc, fq_mem, fq_msz, 0);
 		return err;

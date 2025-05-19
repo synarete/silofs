@@ -724,7 +724,9 @@ static void test_copy_file_range_sparse(struct ft_env *fte)
 {
 	const struct ft_copy_range_args args[] = {
 		/* aligned */
+		COPYARGS1(FT_64K, FT_64K),
 		COPYARGS1(FT_1M, FT_64K),
+		COPYARGS1(FT_1T, FT_64K),
 		COPYARGS1(FT_1G, FT_1M),
 		COPYARGS1(4 * FT_1G, 2 * FT_1M),
 		COPYARGS1(64 * FT_1G, 4 * FT_1M),
@@ -825,8 +827,14 @@ static void test_copy_file_range_empty_(struct ft_env *fte, ssize_t len)
 static void test_copy_file_range_empty(struct ft_env *fte)
 {
 	const loff_t len[] = {
-		FT_1M, FT_1G,           4 * FT_1G,         64 * FT_1G,
-		FT_1T, 11 * FT_1M - 11, 111 * FT_1G - 111, FT_1T + 111111,
+		FT_1M,             //
+		FT_1G,             //
+		4 * FT_1G,         //
+		64 * FT_1G,        //
+		FT_1T,             //
+		11 * FT_1M - 11,   //
+		111 * FT_1G - 111, //
+		FT_1T + 111111,
 	};
 
 	for (size_t i = 0; i < FT_ARRAY_SIZE(len); ++i) {

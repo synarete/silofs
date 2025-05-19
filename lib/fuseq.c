@@ -1031,7 +1031,12 @@ static int fqs_reply_opendir_ok(struct silofs_fuseq_sub *fqs,
 static int fqs_reply_write_ok(struct silofs_fuseq_sub *fqs,
                               const struct silofs_task_ctx *task, size_t cnt)
 {
-	struct fuse_write_out arg = { .size = (uint32_t)cnt };
+	const struct fuse_write_out arg = {
+		.size = (uint32_t)cnt,
+		.padding = 0,
+	};
+
+	silofs_assert_lt(cnt, UINT32_MAX);
 
 	return fqs_reply_arg(fqs, task, &arg, sizeof(arg));
 }
@@ -1047,7 +1052,10 @@ static int fqs_reply_lseek_ok(struct silofs_fuseq_sub *fqs,
 static int fqs_reply_xattr_len(struct silofs_fuseq_sub *fqs,
                                const struct silofs_task_ctx *task, size_t len)
 {
-	const struct fuse_getxattr_out arg = { .size = (uint32_t)len };
+	const struct fuse_getxattr_out arg = {
+		.size = (uint32_t)len,
+		.padding = 0,
+	};
 
 	return fqs_reply_arg(fqs, task, &arg, sizeof(arg));
 }

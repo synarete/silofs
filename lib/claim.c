@@ -622,6 +622,8 @@ int silofs_claim_vspace(struct silofs_task_ctx *task, enum silofs_ltype ltype,
 {
 	int err;
 
+	silofs_assert_ne(ltype, SILOFS_LTYPE_LSMAP);
+
 	err = claim_vspace_of(task, ltype, out_vaddr);
 	if (err) {
 		return err;
@@ -785,6 +787,8 @@ int silofs_reclaim_vspace(struct silofs_task_ctx *task,
                           const struct silofs_vaddr *vaddr)
 {
 	struct silofs_spalloc_ctx spa_ctx;
+
+	silofs_assert_ne(vaddr->ltype, SILOFS_LTYPE_LSMAP);
 
 	spac_setup(&spa_ctx, task, vaddr->ltype);
 	return spac_reclaim_vspace(&spa_ctx, vaddr);

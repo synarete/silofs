@@ -4184,13 +4184,27 @@ static size_t filc_copy_length_of(const struct silofs_file_ctx *f_ctx)
 	return min(len_to_end, len_to_next);
 }
 
-static size_t filc_copy_range_length(const struct silofs_file_ctx *f_ctx_src,
-                                     const struct silofs_file_ctx *f_ctx_dst)
-{
-	const size_t len_src = filc_copy_length_of(f_ctx_src);
-	const size_t len_dst = filc_copy_length_of(f_ctx_dst);
+/*
+ * FUSE (and maybe kernel's VFS) uses uint32_t for return value of
+ * copy_file_range. Tested with XFS and it looks like the actual limit is
+ * (INT32_MAX - PAGE_SIZE + 1) but we don't take risks here.
+ *
+ * TODO: investigate more on Kernel/VFS/FUSE side.
+ */
+enum {
+	SILOFS_COPY_FILE_RANGE_MAX = 1L << 30,
+};
 
-	return min(len_src, len_dst);
+static size_t
+filc_calc_next_copy_range_len(const struct silofs_file_ctx *f_ctx_src,
+                              const struct silofs_file_ctx *f_ctx_dst)
+{
+	const size_t src_len = filc_copy_length_of(f_ctx_src);
+	const size_t dst_len = filc_copy_length_of(f_ctx_dst);
+	const size_t cur_len = filc_io_length(f_ctx_dst);
+	const size_t len = min(src_len, dst_len);
+
+	return ((cur_len + len) <= SILOFS_COPY_FILE_RANGE_MAX) ? len : 0;
 }
 
 static int filc_clear_unwritten_by(const struct silofs_file_ctx *f_ctx,
@@ -4547,12 +4561,13 @@ static int filc_copy_range_iter(struct silofs_file_ctx *f_ctx_src,
 		if (err && (err != -SILOFS_ENOENT)) {
 			return err;
 		}
-		len = filc_copy_range_length(f_ctx_src, f_ctx_dst);
+		len = filc_calc_next_copy_range_len(f_ctx_src, f_ctx_dst);
 		if (!len) {
 			break;
 		}
 		err = filc_copy_range_at_leaf_by(f_ctx_src, &flref_src,
 		                                 f_ctx_dst, &flref_dst, len);
+
 		if (err) {
 			return err;
 		}
@@ -4617,6 +4632,11 @@ filc_lseek_data_pos(const struct silofs_file_ctx *f_ctx, loff_t *out_off)
 	return err;
 }
 
+static ssize_t min3(ssize_t a, ssize_t b, ssize_t c)
+{
+	return silofs_min_i64(silofs_min_i64(a, b), c);
+}
+
 static int filc_set_copy_range_start(struct silofs_file_ctx *f_ctx_src,
                                      struct silofs_file_ctx *f_ctx_dst)
 {
@@ -4641,7 +4661,7 @@ static int filc_set_copy_range_start(struct silofs_file_ctx *f_ctx_src,
 	if (f_ctx_dst->off < off_data_dst) {
 		skip_dst = off_len(f_ctx_dst->off, off_data_dst);
 	}
-	skip = silofs_min_i64(skip_src, skip_dst);
+	skip = min3(skip_src, skip_dst, SILOFS_COPY_FILE_RANGE_MAX);
 	filc_advance_by_nbytes2(f_ctx_src, f_ctx_dst, skip);
 	return 0;
 }
@@ -4685,6 +4705,7 @@ static int filc_copy_range(struct silofs_file_ctx *f_ctx_src,
 	}
 	filc_update_post_io(f_ctx_dst, false);
 	*out_ncp = filc_io_length(f_ctx_dst);
+
 	return 0;
 }
 
@@ -4724,11 +4745,13 @@ int silofs_do_copy_file_range(struct silofs_task_ctx *task,
 	};
 	int ret;
 
+	*out_ncp = 0;
 	filc_incref(&f_ctx_src);
 	filc_incref(&f_ctx_dst);
 	ret = filc_copy_range(&f_ctx_src, &f_ctx_dst, out_ncp);
 	filc_decref(&f_ctx_dst);
 	filc_decref(&f_ctx_src);
+
 	return ret;
 }
 

@@ -180,7 +180,6 @@ CFLAGS += -Wlarger-than=4096
 endif
 
 # C-Dialect compilation flags
-CFLAGS2 += -std=gnu17
 CFLAGS2 += -Waggregate-return
 CFLAGS2 += -Wbad-function-cast
 CFLAGS2 += -Wdeclaration-after-statement
@@ -244,6 +243,7 @@ CFLAGS += -Wunused-const-variable=2
 CFLAGS2 += -Wjump-misses-init
 CFLAGS2 += -Wold-style-declaration
 CFLAGS2 += -Wunsuffixed-float-constants
+CFLAGS2 += -std=gnu23
 ifeq ($(O), 0)
 CFLAGS += -Wunsafe-loop-optimizations
 CFLAGS += -fasynchronous-unwind-tables

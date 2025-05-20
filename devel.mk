@@ -50,7 +50,6 @@ SNTZ := 0 1
 
 # Guard against environment variables
 CFLAGS =
-CFLAGS2 =
 CXXFLAGS =
 LDFLAGS =
 MAKE_OPTS =
@@ -180,17 +179,17 @@ CFLAGS += -Wlarger-than=4096
 endif
 
 # C-Dialect compilation flags
-CFLAGS2 += -Waggregate-return
-CFLAGS2 += -Wbad-function-cast
-CFLAGS2 += -Wdeclaration-after-statement
-CFLAGS2 += -Wfree-nonheap-object
-CFLAGS2 += -Winit-self
-CFLAGS2 += -Wmissing-prototypes
-CFLAGS2 += -Wnested-externs
-CFLAGS2 += -Wold-style-definition
-CFLAGS2 += -Wpointer-sign
-CFLAGS2 += -Wstrict-prototypes
-CFLAGS2 += -Wuninitialized
+CFLAGS += -Waggregate-return
+CFLAGS += -Wbad-function-cast
+CFLAGS += -Wdeclaration-after-statement
+CFLAGS += -Wfree-nonheap-object
+CFLAGS += -Winit-self
+CFLAGS += -Wmissing-prototypes
+CFLAGS += -Wnested-externs
+CFLAGS += -Wold-style-definition
+CFLAGS += -Wpointer-sign
+CFLAGS += -Wstrict-prototypes
+CFLAGS += -Wuninitialized
 
 # Debug flags
 CFLAGS += -DDEBUG=$(D)
@@ -240,10 +239,10 @@ CFLAGS += -Wstringop-truncation
 CFLAGS += -Wswitch-unreachable
 CFLAGS += -Wtrampolines
 CFLAGS += -Wunused-const-variable=2
-CFLAGS2 += -Wjump-misses-init
-CFLAGS2 += -Wold-style-declaration
-CFLAGS2 += -Wunsuffixed-float-constants
-CFLAGS2 += -std=gnu23
+CFLAGS += -Wjump-misses-init
+CFLAGS += -Wold-style-declaration
+CFLAGS += -Wunsuffixed-float-constants
+CFLAGS += -std=gnu23
 ifeq ($(O), 0)
 CFLAGS += -Wunsafe-loop-optimizations
 CFLAGS += -fasynchronous-unwind-tables
@@ -283,7 +282,7 @@ endef
 
 define submakeat
 	@+$(MAKE) $(MAKE_OPTS) V=$(V) \
-	  CFLAGS="$(CFLAGS) $(CFLAGS2)" LDFLAGS="$(LDFLAGS)" -C $(1) $(2)
+	  CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" -C $(1) $(2)
 endef
 
 define submake
@@ -341,7 +340,7 @@ compdb: configure tags
 	$(call report, $@)
 	@rm -f $(TOP)/compile_commands.json
 	@(bear -- $(MAKE) $(MAKE_OPTS) V=$(V) \
-	  CFLAGS="$(CFLAGS) $(CFLAGS2)" LDFLAGS="$(LDFLAGS)" -C $(BUILDDIR))
+	  CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" -C $(BUILDDIR))
 
 clangscan:
 	$(call report, $@)
@@ -369,7 +368,7 @@ params:
 	$(info  SANITIZER=$(SANITIZER))
 	$(info  VERBOSE=$(V))
 	$(info  PREFIX=$(PREFIX))
-#	$(info  CFLAGS=$(CFLAGS) $(CFLAGS2))
+#	$(info  CFLAGS=$(CFLAGS))
 #	$(info  LDFLAGS=$(LDFLAGS))
 
 

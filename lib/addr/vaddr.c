@@ -20,8 +20,7 @@
 #include "ltype.h"
 #include "htox.h"
 #include "vaddr.h"
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+#include "private.h"
 
 static uint64_t cpu_to_voff_ltype(loff_t voff, enum silofs_ltype ltype)
 {
@@ -150,7 +149,8 @@ void silofs_vaddr_reset(struct silofs_vaddr *vaddr)
 
 bool silofs_vaddr_isnull(const struct silofs_vaddr *vaddr)
 {
-	return off_isnull(vaddr->off) || silofs_ltype_isnone(vaddr->ltype);
+	return silofs_off_isnull(vaddr->off) ||
+	       silofs_ltype_isnone(vaddr->ltype);
 }
 
 bool silofs_vaddr_isdata(const struct silofs_vaddr *vaddr)
@@ -182,7 +182,7 @@ void silofs_vaddr_by_spleaf(struct silofs_vaddr *vaddr,
                             enum silofs_ltype ltype, loff_t voff_base,
                             size_t bn, size_t kbn)
 {
-	const silofs_lba_t lba_base = off_to_lba(voff_base);
+	const silofs_lba_t lba_base = silofs_off_to_lba(voff_base);
 	const silofs_lba_t lba = lba_plus(lba_base, bn);
 	const loff_t off = lba_kbn_to_off(lba, kbn);
 
@@ -199,7 +199,7 @@ void silofs_vaddr56_htox(struct silofs_vaddr56 *vadr, loff_t off)
 {
 	const uint64_t uoff = (uint64_t)off;
 
-	if (!off_isnull(off)) {
+	if (!silofs_off_isnull(off)) {
 		silofs_assert_eq(uoff & 0xFFL, 0);
 
 		vadr->b[0] = (uint8_t)((uoff >> 8) & 0xFF);

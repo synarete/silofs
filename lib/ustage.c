@@ -27,6 +27,7 @@
 #include "env.h"
 #include "spmaps.h"
 #include "stage.h"
+#include "private.h"
 
 static void uni_set_env(struct silofs_unode_info *uni, struct silofs_env *env)
 {
@@ -93,7 +94,7 @@ static int sbi_verify_uaddr(const struct silofs_sb_info *sbi)
 	bool eq;
 
 	silofs_sbi_resolve_refs(sbi, &sb_refs);
-	eq = silofs_uaddr_isequal(sbi_uaddr(sbi), &sb_refs.curr);
+	eq = silofs_uaddr_isequal(silofs_sbi_uaddr(sbi), &sb_refs.curr);
 	return eq ? 0 : -SILOFS_EFSCORRUPTED;
 }
 
@@ -378,7 +379,7 @@ decrypt_view_of_sbi(const struct silofs_env *env, struct silofs_sb_info *sbi)
 static int
 load_view_of_sbi(const struct silofs_env *env, struct silofs_sb_info *sbi)
 {
-	return stage_load_view(env, sbi_laddr(sbi),
+	return stage_load_view(env, silofs_sbi_laddr(sbi),
 	                       sbi->sb_uni.un_lni.ln_view);
 }
 

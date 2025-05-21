@@ -51,25 +51,10 @@ loff_t silofs_off_next_lbk(loff_t off);
 
 loff_t silofs_off_remainder(loff_t off, size_t len);
 
-int silofs_verify_off(loff_t off);
-
 bool silofs_lba_isnull(silofs_lba_t lba);
 
 loff_t silofs_lba_to_off(silofs_lba_t lba);
 
-#ifdef SILOFS_USE_PRIVATE
-#define off_isnull(off)        silofs_off_isnull(off)
-#define off_min(off1, off2)    silofs_off_min(off1, off2)
-#define off_max(off1, off2)    silofs_off_max(off1, off2)
-#define off_end(off, len)      silofs_off_end(off, len)
-#define off_align(off, align)  silofs_off_align(off, align)
-#define off_align_to_lbk(off)  silofs_off_align_to_lbk(off)
-#define off_next(off, len)     silofs_off_next(off, len)
-#define off_next_lbk(off)      silofs_off_next_lbk(off)
-#define off_to_lba(off)        silofs_off_to_lba(off)
-#define off_diff(off, end)     silofs_off_diff(off, end)
-#define off_len(beg, end)      silofs_off_len(beg, end)
-#define off_ulen(beg, end)     silofs_off_ulen(beg, end)
-#endif
+int silofs_verify_off(loff_t off);
 
 #endif /* SILOFS_OFFLBA_H_ */

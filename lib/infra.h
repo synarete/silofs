@@ -43,6 +43,4 @@
 #include "infra/qalloc.h"
 #include "infra/zcmpr.h"
 
-#include "private.h"
-
 #endif /* SILOFS_INFRA_H_ */

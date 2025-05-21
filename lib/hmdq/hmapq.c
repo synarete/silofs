@@ -20,6 +20,7 @@
 #include "infra.h"
 #include "addr.h"
 #include "hmapq.h"
+#include "private.h"
 
 enum silofs_hmde_consts {
 	SILOFS_HMQE_MAGIC = 0xDECAFE,
@@ -698,11 +699,11 @@ void silofs_hmapq_riterate(struct silofs_hmapq *hmapq, size_t limit,
 	struct silofs_list_head *itr = NULL;
 	struct silofs_hmapq_elem *hmqe = NULL;
 	struct silofs_listq *lru = &hmapq->hmq_lru;
-	size_t count = min(limit, lru->sz);
+	size_t cnt = silofs_min(limit, lru->sz);
 	int ret = 0;
 
 	itr = lru->ls.prev; /* backward iteration */
-	while (!ret && count-- && (itr != &lru->ls)) {
+	while (!ret && cnt-- && (itr != &lru->ls)) {
 		hmqe = hmqe_from_lru_link(itr);
 		itr = itr->prev;
 		ret = cb(hmqe, arg);

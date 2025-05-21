@@ -25,6 +25,7 @@
 #include "ltype.h"
 #include "volumeid.h"
 #include "laddr.h"
+#include "private.h"
 
 static size_t height_to_lseg_size(enum silofs_height height)
 {
@@ -64,7 +65,7 @@ static uint32_t lseg_vindex_of(loff_t voff, ssize_t lseg_size)
 	int64_t lseg_index = 0;
 
 	if (lseg_size > 0) {
-		lseg_index = off_align(voff, lseg_size) / lseg_size;
+		lseg_index = silofs_off_align(voff, lseg_size) / lseg_size;
 	}
 	silofs_assert_lt(lseg_index, INT32_MAX);
 	silofs_assert_ge(lseg_index, 0);
@@ -242,7 +243,7 @@ void silofs_laddr_setpos(struct silofs_laddr *laddr, loff_t off)
 {
 	const struct silofs_lsid *lsid = &laddr->lsid;
 
-	if (lsid->lsize && !off_isnull(off)) {
+	if (lsid->lsize && !silofs_off_isnull(off)) {
 		laddr->pos = silofs_lsid_pos(lsid, off);
 	} else {
 		laddr->pos = SILOFS_OFF_NULL;
@@ -259,7 +260,8 @@ void silofs_laddr_setup(struct silofs_laddr *laddr,
 void silofs_laddr_setup_lbk(struct silofs_laddr *laddr,
                             const struct silofs_lsid *lsid, loff_t off)
 {
-	const loff_t lbk_off = !off_isnull(off) ? off_align_to_lbk(off) : off;
+	const loff_t lbk_off =
+		!silofs_off_isnull(off) ? silofs_off_align_to_lbk(off) : off;
 
 	silofs_laddr_setup(laddr, lsid, lbk_off);
 }
@@ -640,21 +642,21 @@ void silofs_lrange_of_space(struct silofs_lrange *lrange,
                             enum silofs_height height, loff_t voff_base)
 {
 	const ssize_t span = silofs_height_to_space_span(height);
-	const loff_t beg = off_align(voff_base, span);
+	const loff_t beg = silofs_off_align(voff_base, span);
 
-	silofs_lrange_setup(lrange, height, beg, off_next(beg, span));
+	silofs_lrange_setup(lrange, height, beg, silofs_off_next(beg, span));
 }
 
 void silofs_lrange_of_spmap(struct silofs_lrange *lrange,
                             enum silofs_height height, loff_t voff_base)
 {
 	const ssize_t span = silofs_height_to_space_span(height);
-	const loff_t beg = off_align(voff_base, span);
+	const loff_t beg = silofs_off_align(voff_base, span);
 
-	silofs_lrange_setup(lrange, height, beg, off_next(beg, span));
+	silofs_lrange_setup(lrange, height, beg, silofs_off_next(beg, span));
 }
 
-static loff_t off_next_n(loff_t off, ssize_t len, size_t n)
+static loff_t silofs_off_next_n(loff_t off, ssize_t len, size_t n)
 {
 	return silofs_off_align(off + ((ssize_t)n * len), len);
 }
@@ -665,7 +667,7 @@ loff_t silofs_lrange_voff_at(const struct silofs_lrange *lrange, size_t slot)
 	loff_t voff;
 
 	span = silofs_height_to_space_span(lrange->height - 1);
-	voff = off_next_n(lrange->beg, span, slot);
+	voff = silofs_off_next_n(lrange->beg, span, slot);
 	silofs_assert_le(voff, lrange->end);
 	return voff;
 }
@@ -681,7 +683,7 @@ loff_t silofs_lrange_next(const struct silofs_lrange *lrange, loff_t voff)
 		vnxt = voff;
 	} else {
 		span = silofs_height_to_space_span(lrange->height - 1);
-		vnxt = off_next(voff, span);
+		vnxt = silofs_off_next(voff, span);
 	}
 	return vnxt;
 }
@@ -715,7 +717,7 @@ void silofs_lrange128_xtoh(const struct silofs_lrange128 *lrange128,
 
 	beg = silofs_off_to_cpu(lrange128->beg);
 	len_height_to_cpu(lrange128->len_height, &len, &height);
-	silofs_lrange_setup(lrange, height, beg, off_end(beg, len));
+	silofs_lrange_setup(lrange, height, beg, silofs_off_end(beg, len));
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

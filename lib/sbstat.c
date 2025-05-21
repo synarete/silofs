@@ -21,6 +21,7 @@
 #include "infra.h"
 #include "lnodes.h"
 #include "super.h"
+#include "private.h"
 
 /* local functions */
 static ssize_t *
@@ -564,7 +565,7 @@ void silofs_sbst_setup_forked(struct silofs_sb_info *sbi,
 	spst_assign(&sbi->sb_spst_curr, &spst);
 	spst_assign(&sbi->sb_spst_prev, &spst);
 	spst_reset_spgs(&sbi->sb_spst_curr);
-	sbi_dirtify(sbi);
+	silofs_sbi_dirtify(sbi);
 }
 
 void silofs_sbst_account_super(struct silofs_sb_info *sbi)
@@ -584,7 +585,7 @@ static size_t sbst_capacity(const struct silofs_sb_info *sbi)
 void silofs_sbst_set_capacity(struct silofs_sb_info *sbi, size_t capacity)
 {
 	sbi->sb_spst_curr.capacity = capacity;
-	sbi_dirtify(sbi);
+	silofs_sbi_dirtify(sbi);
 }
 
 void silofs_sbst_update_lsegs(struct silofs_sb_info *sbi,
@@ -592,7 +593,7 @@ void silofs_sbst_update_lsegs(struct silofs_sb_info *sbi,
 {
 	if (take != 0) {
 		spst_update_lsegs(&sbi->sb_spst_curr, ltype, take);
-		sbi_dirtify(sbi);
+		silofs_sbi_dirtify(sbi);
 	}
 }
 
@@ -601,7 +602,7 @@ void silofs_sbst_update_bks(struct silofs_sb_info *sbi,
 {
 	if (take != 0) {
 		spst_update_bks(&sbi->sb_spst_curr, ltype, take);
-		sbi_dirtify(sbi);
+		silofs_sbi_dirtify(sbi);
 	}
 }
 
@@ -610,7 +611,7 @@ void silofs_sbst_update_objs(struct silofs_sb_info *sbi,
 {
 	if (take != 0) {
 		spst_update_objs(&sbi->sb_spst_curr, ltype, take);
-		sbi_dirtify(sbi);
+		silofs_sbi_dirtify(sbi);
 	}
 }
 
@@ -653,7 +654,7 @@ uint64_t silofs_sbst_next_generation(struct silofs_sb_info *sbi)
 	uint64_t gen;
 
 	gen = spgs_inc_generation(&sbi->sb_spst_curr);
-	sbi_dirtify(sbi);
+	silofs_sbi_dirtify(sbi);
 	return gen;
 }
 

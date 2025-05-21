@@ -52,9 +52,10 @@ struct silofs_walk_ctx {
 static void
 sbi_lrange(const struct silofs_sb_info *sbi, struct silofs_lrange *out_lrange)
 {
-	const loff_t voff_end = silofs_sbst_vspace_end(sbi);
+	const loff_t vsilofs_off_end = silofs_sbst_vspace_end(sbi);
 
-	silofs_lrange_setup(out_lrange, SILOFS_HEIGHT_SUPER, 0, voff_end);
+	silofs_lrange_setup(out_lrange, SILOFS_HEIGHT_SUPER, 0,
+	                    vsilofs_off_end);
 }
 
 static bool sni_has_subref(const struct silofs_spnode_info *sni, loff_t voff)
@@ -68,7 +69,7 @@ static bool sni_has_subref(const struct silofs_spnode_info *sni, loff_t voff)
 
 static void wit_increfs(const struct silofs_walk_iter *witr)
 {
-	sbi_incref(witr->sbi);
+	silofs_sbi_incref(witr->sbi);
 	silofs_sni_incref(witr->sni4);
 	silofs_sni_incref(witr->sni3);
 	silofs_sni_incref(witr->sni2);
@@ -83,7 +84,7 @@ static void wit_decrefs(const struct silofs_walk_iter *witr)
 	silofs_sni_decref(witr->sni2);
 	silofs_sni_decref(witr->sni3);
 	silofs_sni_decref(witr->sni4);
-	sbi_decref(witr->sbi);
+	silofs_sbi_decref(witr->sbi);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -710,9 +711,9 @@ int silofs_visit_sptree(struct silofs_task_ctx *task,
 	};
 	int err;
 
-	sbi_incref(sbi);
+	silofs_sbi_incref(sbi);
 	err = wac_traverse_spaces(&wa_ctx);
-	sbi_decref(sbi);
+	silofs_sbi_decref(sbi);
 	return err;
 }
 
@@ -819,7 +820,7 @@ static int inspc_exec_at(struct silofs_inspect_ctx *insp_ctx,
 
 static struct silofs_inspect_ctx *inspc_of(struct silofs_visitor *vis)
 {
-	return container_of(vis, struct silofs_inspect_ctx, vis);
+	return silofs_container_of(vis, struct silofs_inspect_ctx, vis);
 }
 
 static int inspc_exec_hook(struct silofs_visitor *vis,
@@ -883,7 +884,7 @@ static int inspc_walk_spmaps(struct silofs_inspect_ctx *insp_ctx)
 
 static int inspc_walk_super(struct silofs_inspect_ctx *insp_ctx)
 {
-	const struct silofs_laddr *laddr = sbi_laddr(insp_ctx->sbi);
+	const struct silofs_laddr *laddr = silofs_sbi_laddr(insp_ctx->sbi);
 	size_t len;
 	int err;
 
@@ -903,7 +904,7 @@ static int inspc_walk_super(struct silofs_inspect_ctx *insp_ctx)
 static int inspc_walk_boot(struct silofs_inspect_ctx *insp_ctx)
 {
 	struct silofs_uaddr bootrec_uaddr = { .voff = -1 };
-	const struct silofs_laddr *sb_laddr = sbi_laddr(insp_ctx->sbi);
+	const struct silofs_laddr *sb_laddr = silofs_sbi_laddr(insp_ctx->sbi);
 	const struct silofs_laddr *laddr = &bootrec_uaddr.laddr;
 	size_t len;
 

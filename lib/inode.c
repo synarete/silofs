@@ -37,6 +37,7 @@
 #include "symlink.h"
 #include "env.h"
 #include "stage.h"
+#include "private.h"
 
 /* local functions forward declarations */
 static void ii_update_itimes(struct silofs_inode_info *ii,
@@ -396,7 +397,7 @@ void silofs_ii_set_ino(struct silofs_inode_info *ii, ino_t ino)
 
 ino_t silofs_ii_xino_of(const struct silofs_inode_info *ii)
 {
-	return ii_isrootd(ii) ? SILOFS_INO_ROOT : ii_ino(ii);
+	return silofs_ii_isrootd(ii) ? SILOFS_INO_ROOT : silofs_ii_ino(ii);
 }
 
 ino_t silofs_ii_ino_of(const struct silofs_inode_info *ii)
@@ -466,61 +467,61 @@ static dev_t ii_rdev(const struct silofs_inode_info *ii)
 
 bool silofs_ii_isdir(const struct silofs_inode_info *ii)
 {
-	return S_ISDIR(ii_mode(ii));
+	return S_ISDIR(silofs_ii_mode(ii));
 }
 
 bool silofs_ii_isreg(const struct silofs_inode_info *ii)
 {
-	return S_ISREG(ii_mode(ii));
+	return S_ISREG(silofs_ii_mode(ii));
 }
 
 bool silofs_ii_islnk(const struct silofs_inode_info *ii)
 {
-	return S_ISLNK(ii_mode(ii));
+	return S_ISLNK(silofs_ii_mode(ii));
 }
 
 bool silofs_ii_isfifo(const struct silofs_inode_info *ii)
 {
-	return S_ISFIFO(ii_mode(ii));
+	return S_ISFIFO(silofs_ii_mode(ii));
 }
 
 bool silofs_ii_issock(const struct silofs_inode_info *ii)
 {
-	return S_ISSOCK(ii_mode(ii));
+	return S_ISSOCK(silofs_ii_mode(ii));
 }
 
 bool silofs_ii_isrootd(const struct silofs_inode_info *ii)
 {
-	return ii_isdir(ii) && (ii_ino(ii) == SILOFS_INO_ROOT);
+	return silofs_ii_isdir(ii) && (silofs_ii_ino(ii) == SILOFS_INO_ROOT);
 }
 
 void silofs_ii_fixup_as_rootdir(struct silofs_inode_info *ii)
 {
 	struct silofs_inode *inode = ii->inode;
 
-	inode_set_parent(inode, ii_ino(ii));
+	inode_set_parent(inode, silofs_ii_ino(ii));
 	inode_set_nlink(inode, 2);
 	inode_add_flags(inode, SILOFS_INODEF_ROOTD);
-	ii_dirtify(ii);
+	silofs_ii_dirtify(ii);
 }
 
 static void ii_set_iflags(struct silofs_inode_info *ii, int iflags)
 {
-	const enum silofs_inodef iflags_curr = ii_flags(ii);
+	const enum silofs_inodef iflags_curr = silofs_ii_flags(ii);
 	const enum silofs_inodef iflags_allow = SILOFS_INODEF_FTYPE2;
 	enum silofs_inodef iflags_set;
 
 	iflags_set = (enum silofs_inodef)iflags & iflags_allow;
 	if (iflags_set != iflags_curr) {
 		inode_set_flags(ii->inode, iflags_set);
-		ii_dirtify(ii);
+		silofs_ii_dirtify(ii);
 	}
 }
 
 void silofs_ii_update_iflags(struct silofs_inode_info *ii, int iflags_want,
                              int iflags_dont)
 {
-	const enum silofs_inodef iflags_curr = ii_flags(ii);
+	const enum silofs_inodef iflags_curr = silofs_ii_flags(ii);
 	int iflags = (int)iflags_curr;
 
 	if (iflags_want) {
@@ -534,7 +535,8 @@ void silofs_ii_update_iflags(struct silofs_inode_info *ii, int iflags_want,
 
 bool silofs_is_rootdir(const struct silofs_inode_info *ii)
 {
-	return ii_isdir(ii) && inode_has_flags(ii->inode, SILOFS_INODEF_ROOTD);
+	return silofs_ii_isdir(ii) &&
+	       inode_has_flags(ii->inode, SILOFS_INODEF_ROOTD);
 }
 
 void silofs_ii_set_loose(struct silofs_inode_info *ii)
@@ -584,7 +586,7 @@ void silofs_ii_dirtify(struct silofs_inode_info *ii)
 	silofs_assert_not_null(ii);
 
 	if (!silofs_ii_isloose(ii)) {
-		silofs_vni_dirtify(ii_to_vni(ii), NULL);
+		silofs_vni_dirtify(silofs_ii_to_vni(ii), NULL);
 	}
 }
 
@@ -592,7 +594,7 @@ void silofs_ii_undirtify(struct silofs_inode_info *ii)
 {
 	silofs_assert_not_null(ii);
 
-	silofs_vni_undirtify(ii_to_vni(ii));
+	silofs_vni_undirtify(silofs_ii_to_vni(ii));
 }
 
 bool silofs_ii_isdirty(const struct silofs_inode_info *ii)
@@ -605,14 +607,14 @@ bool silofs_ii_isdirty(const struct silofs_inode_info *ii)
 void silofs_ii_incref(struct silofs_inode_info *ii)
 {
 	if (likely(ii != NULL)) {
-		silofs_vni_incref(ii_to_vni(ii));
+		silofs_vni_incref(silofs_ii_to_vni(ii));
 	}
 }
 
 void silofs_ii_decref(struct silofs_inode_info *ii)
 {
 	if (likely(ii != NULL)) {
-		silofs_vni_decref(ii_to_vni(ii));
+		silofs_vni_decref(silofs_ii_to_vni(ii));
 	}
 }
 
@@ -653,7 +655,7 @@ static void ii_setup_ispecial(struct silofs_inode_info *ii, dev_t rdev)
 	const unsigned int rdev_minor = minor(rdev);
 
 	inode_set_rdev(ii->inode, rdev_major, rdev_minor);
-	ii_dirtify(ii);
+	silofs_ii_dirtify(ii);
 }
 
 /*
@@ -684,18 +686,18 @@ static void inode_setup_common(struct silofs_inode *inode, ino_t ino,
 static void ii_setup_inode(struct silofs_inode_info *ii,
                            const struct silofs_inew_params *inp)
 {
-	inode_setup_common(ii->inode, ii_ino(ii), inp);
+	inode_setup_common(ii->inode, silofs_ii_ino(ii), inp);
 }
 
 static void ii_setup_sub(struct silofs_inode_info *ii,
                          const struct silofs_inew_params *inp)
 {
 	silofs_ii_setup_xattr(ii);
-	if (ii_isdir(ii)) {
+	if (silofs_ii_isdir(ii)) {
 		silofs_ii_setup_dir(ii, inp->parent_mode, 1);
-	} else if (ii_isreg(ii)) {
+	} else if (silofs_ii_isreg(ii)) {
 		silofs_ii_setup_reg(ii);
-	} else if (ii_islnk(ii)) {
+	} else if (silofs_ii_islnk(ii)) {
 		silofs_ii_setup_symlnk(ii);
 	} else {
 		ii_setup_ispecial(ii, inp->rdev);
@@ -705,7 +707,7 @@ static void ii_setup_sub(struct silofs_inode_info *ii,
 static void ii_set_generation(struct silofs_inode_info *ii, uint64_t gen)
 {
 	inode_set_generation(ii->inode, gen);
-	ii_dirtify(ii);
+	silofs_ii_dirtify(ii);
 }
 
 void silofs_ii_setup_new(struct silofs_inode_info *ii,
@@ -715,13 +717,13 @@ void silofs_ii_setup_new(struct silofs_inode_info *ii,
 	ii_setup_sub(ii, inp);
 	ii_update_itimes(ii, SILOFS_IATTR_TIMES, &inp->ts);
 	ii_set_generation(ii, gen);
-	ii_dirtify(ii);
+	silofs_ii_dirtify(ii);
 }
 
 void silofs_ii_mkiattr(const struct silofs_inode_info *ii,
                        struct silofs_iattr *out_iattr)
 {
-	iattr_setup_now(out_iattr, ii_ino(ii));
+	iattr_setup_now(out_iattr, silofs_ii_ino(ii));
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -734,12 +736,12 @@ static mode_t itype_of(mode_t mode)
 static bool user_isowner(const struct silofs_cred *cred,
                          const struct silofs_inode_info *ii)
 {
-	return silofs_uid_eq(cred->uid, ii_uid(ii));
+	return silofs_uid_eq(cred->uid, silofs_ii_uid(ii));
 }
 
 static bool has_itype(const struct silofs_inode_info *ii, mode_t mode)
 {
-	const mode_t imode = ii_mode(ii);
+	const mode_t imode = silofs_ii_mode(ii);
 
 	return (itype_of(imode) == itype_of(mode));
 }
@@ -757,15 +759,15 @@ static int check_xaccess_parent(struct silofs_task_ctx *task,
 	ino_t parent;
 	int err;
 
-	if (!ii_isdir(ii) || ii_isrootd(ii)) {
+	if (!silofs_ii_isdir(ii) || silofs_ii_isrootd(ii)) {
 		return 0;
 	}
-	parent = ii_parent(ii);
+	parent = silofs_ii_parent(ii);
 	err = silofs_stage_inode(task, parent, SILOFS_STG_CUR, &parent_ii);
 	if (err) {
 		return err;
 	}
-	if (!ii_isdir(parent_ii)) {
+	if (!silofs_ii_isdir(parent_ii)) {
 		return -SILOFS_EFSCORRUPTED; /* XXX */
 	}
 	err = silofs_do_access(task, parent_ii, X_OK);
@@ -777,7 +779,7 @@ static int check_xaccess_parent(struct silofs_task_ctx *task,
 
 static void kill_suid_sgid(struct silofs_inode_info *ii, long flags)
 {
-	const long mode_cur = ii_mode(ii);
+	const long mode_cur = silofs_ii_mode(ii);
 	long mode_new = mode_cur;
 
 	if ((flags & SILOFS_IATTR_KILL_SUID) && (mode_cur & S_ISUID)) {
@@ -789,7 +791,7 @@ static void kill_suid_sgid(struct silofs_inode_info *ii, long flags)
 	}
 	if (mode_new != mode_cur) {
 		inode_set_mode(ii->inode, (mode_t)mode_new);
-		ii_dirtify(ii);
+		silofs_ii_dirtify(ii);
 	}
 }
 
@@ -797,7 +799,7 @@ static mode_t new_mode_of(const struct silofs_inode_info *ii, mode_t mask)
 {
 	const mode_t fmt_mask = S_IFMT;
 
-	return (ii_mode(ii) & fmt_mask) | (mask & ~fmt_mask);
+	return (silofs_ii_mode(ii) & fmt_mask) | (mask & ~fmt_mask);
 }
 
 static int check_chmod(const struct silofs_task_ctx *task,
@@ -840,7 +842,7 @@ update_post_chmod(const struct silofs_task_ctx *task,
 {
 	const struct silofs_creds *creds = task->t_creds;
 	const struct silofs_cred *cred = &creds->fs_cred;
-	const gid_t gid = ii_gid(ii);
+	const gid_t gid = silofs_ii_gid(ii);
 
 	iattr->ia_flags |= SILOFS_IATTR_MODE | SILOFS_IATTR_CTIME;
 	if (!silofs_gid_eq(gid, cred->gid) && !silofs_user_cap_fsetid(cred)) {
@@ -864,7 +866,7 @@ static int do_chmod(struct silofs_task_ctx *task, struct silofs_inode_info *ii,
 		return err;
 	}
 
-	iattr_setup_with(&iattr, ii_ino(ii), itimes);
+	iattr_setup_with(&iattr, silofs_ii_ino(ii), itimes);
 	iattr.ia_mode = new_mode_of(ii, mode);
 	update_post_chmod(task, ii, &iattr);
 	return 0;
@@ -875,9 +877,9 @@ int silofs_do_chmod(struct silofs_task_ctx *task, struct silofs_inode_info *ii,
 {
 	int err;
 
-	ii_incref(ii);
+	silofs_ii_incref(ii);
 	err = do_chmod(task, ii, mode, itimes);
-	ii_decref(ii);
+	silofs_ii_decref(ii);
 	return err;
 }
 
@@ -891,7 +893,7 @@ static int check_cap_chown(const struct silofs_task_ctx *task)
 static int check_chown_uid(const struct silofs_task_ctx *task,
                            const struct silofs_inode_info *ii, uid_t uid)
 {
-	if (silofs_uid_eq(uid, ii_uid(ii))) {
+	if (silofs_uid_eq(uid, silofs_ii_uid(ii))) {
 		return 0;
 	}
 	return check_cap_chown(task);
@@ -902,7 +904,7 @@ static int check_chown_gid(const struct silofs_task_ctx *task,
 {
 	const struct silofs_creds *creds = task->t_creds;
 
-	if (silofs_gid_eq(gid, ii_gid(ii))) {
+	if (silofs_gid_eq(gid, silofs_ii_gid(ii))) {
 		return 0;
 	}
 	if (user_isowner(&creds->fs_cred, ii)) {
@@ -930,7 +932,7 @@ static void
 update_post_chown(const struct silofs_task_ctx *task,
                   struct silofs_inode_info *ii, struct silofs_iattr *iattr)
 {
-	const mode_t mode = ii_mode(ii);
+	const mode_t mode = silofs_ii_mode(ii);
 	const mode_t mask = S_IXUSR | S_IXGRP | S_IXOTH;
 
 	iattr->ia_flags |= SILOFS_IATTR_CTIME;
@@ -957,7 +959,7 @@ do_chown(const struct silofs_task_ctx *task, struct silofs_inode_info *ii,
 	if (err) {
 		return err;
 	}
-	iattr_setup_with(&iattr, ii_ino(ii), itimes);
+	iattr_setup_with(&iattr, silofs_ii_ino(ii), itimes);
 	if (chown_uid) {
 		iattr.ia_uid = uid;
 		iattr.ia_flags |= SILOFS_IATTR_UID;
@@ -976,9 +978,9 @@ int silofs_do_chown(const struct silofs_task_ctx *task,
 {
 	int err;
 
-	ii_incref(ii);
+	silofs_ii_incref(ii);
 	err = do_chown(task, ii, uid, gid, itimes);
-	ii_decref(ii);
+	silofs_ii_decref(ii);
 	return err;
 }
 
@@ -1051,9 +1053,9 @@ int silofs_do_utimens(const struct silofs_task_ctx *task,
 {
 	int err;
 
-	ii_incref(ii);
+	silofs_ii_incref(ii);
 	err = do_utimens(task, ii, itimes);
-	ii_decref(ii);
+	silofs_ii_decref(ii);
 	return err;
 }
 
@@ -1064,10 +1066,10 @@ static int check_parent_dir_ii(struct silofs_task_ctx *task,
 	ino_t parent;
 	int err;
 
-	if (!ii_isdir(ii) || ii_isrootd(ii)) {
+	if (!silofs_ii_isdir(ii) || silofs_ii_isrootd(ii)) {
 		return 0;
 	}
-	parent = ii_parent(ii);
+	parent = silofs_ii_parent(ii);
 	if (silofs_ino_isnull(parent)) {
 		return ii->i_nopen ? 0 : -SILOFS_ENOENT;
 	}
@@ -1075,7 +1077,7 @@ static int check_parent_dir_ii(struct silofs_task_ctx *task,
 	if (err) {
 		return err;
 	}
-	if (!ii_isdir(parent_ii)) {
+	if (!silofs_ii_isdir(parent_ii)) {
 		return -SILOFS_EFSCORRUPTED; /* XXX */
 	}
 	return 0;
@@ -1094,7 +1096,7 @@ static blksize_t ii_stat_blksize(const struct silofs_inode_info *ii)
 {
 	blksize_t bsz = SILOFS_LBK_SIZE;
 
-	if (ii_isreg(ii) && (ii_size(ii) < bsz)) {
+	if (silofs_ii_isreg(ii) && (silofs_ii_size(ii) < bsz)) {
 		bsz = (blksize_t)SILOFS_FILE_HEAD2_LEAF_SIZE;
 	}
 	return bsz;
@@ -1104,10 +1106,10 @@ static blkcnt_t ii_stat_blocks(const struct silofs_inode_info *ii)
 {
 	const size_t frg_size = 512;
 	const ssize_t kb_size = SILOFS_KB_SIZE;
-	const blkcnt_t blocks = ii_blocks(ii);
+	const blkcnt_t blocks = silofs_ii_blocks(ii);
 	const size_t nbytes = (size_t)(blocks * kb_size);
 
-	return (blkcnt_t)div_round_up(nbytes, frg_size);
+	return (blkcnt_t)silofs_div_round_up(nbytes, frg_size);
 }
 
 #define SILOFS_STATX_TIMES \
@@ -1192,19 +1194,19 @@ void silofs_ii_stat_of(const struct silofs_inode_info *ii,
 	silofs_ii_times(ii, &tms);
 	silofs_memzero(st, sizeof(*st));
 
-	st->st.st_ino = ii_xino(ii);
-	st->st.st_mode = ii_mode(ii);
-	st->st.st_nlink = ii_nlink(ii);
-	st->st.st_uid = ii_uid(ii);
-	st->st.st_gid = ii_gid(ii);
+	st->st.st_ino = silofs_ii_xino_of(ii);
+	st->st.st_mode = silofs_ii_mode(ii);
+	st->st.st_nlink = silofs_ii_nlink(ii);
+	st->st.st_uid = silofs_ii_uid(ii);
+	st->st.st_gid = silofs_ii_gid(ii);
 	st->st.st_rdev = ii_rdev(ii);
-	st->st.st_size = ii_size(ii);
+	st->st.st_size = silofs_ii_size(ii);
 	st->st.st_blocks = ii_stat_blocks(ii);
 	st->st.st_blksize = ii_stat_blksize(ii);
 	assign_ts(&st->st.st_atim, &ii->i_atime_lazy);
 	assign_ts(&st->st.st_ctim, &tms.ctime);
 	assign_ts(&st->st.st_mtim, &tms.mtime);
-	st->gen = ii_generation(ii);
+	st->gen = silofs_ii_generation(ii);
 
 	ii_update_statx(ii, &tms, sx_want_mask, st);
 }
@@ -1239,9 +1241,9 @@ int silofs_do_getattr(struct silofs_task_ctx *task,
 {
 	int err;
 
-	ii_incref(ii);
+	silofs_ii_incref(ii);
 	err = do_getattr(task, ii, out_st);
-	ii_decref(ii);
+	silofs_ii_decref(ii);
 	return err;
 }
 
@@ -1264,9 +1266,9 @@ int silofs_do_statx(struct silofs_task_ctx *task, struct silofs_inode_info *ii,
 {
 	int err;
 
-	ii_incref(ii);
+	silofs_ii_incref(ii);
 	err = do_statx(task, ii, sx_want_mask, out_st);
-	ii_decref(ii);
+	silofs_ii_decref(ii);
 	return err;
 }
 
@@ -1363,7 +1365,7 @@ static void ii_update_inode_attr(struct silofs_inode_info *ii,
 		kill_suid_sgid(ii, flags);
 	}
 	inode_inc_revision(inode);
-	ii_dirtify(ii);
+	silofs_ii_dirtify(ii);
 }
 
 static void ii_update_iattrs(struct silofs_inode_info *ii,
@@ -1405,7 +1407,7 @@ static blkcnt_t recalc_iblocks(const struct silofs_inode_info *ii,
                                enum silofs_ltype ltype, long dif)
 {
 	const size_t nkbs = silofs_ltype_nkbs(ltype);
-	const blkcnt_t blocks = ii_blocks(ii);
+	const blkcnt_t blocks = silofs_ii_blocks(ii);
 	blkcnt_t cnt;
 
 	if (dif > 0) {

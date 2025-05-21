@@ -24,6 +24,7 @@
 #include "inode.h"
 #include "env.h"
 #include "stage.h"
+#include "private.h"
 
 static bool lni_isunode(const struct silofs_lnode_info *lni)
 {
@@ -881,9 +882,9 @@ static int flusher_flush_dirty(struct silofs_flusher *flusher)
 {
 	int err;
 
-	ii_incref(flusher->ii);
+	silofs_ii_incref(flusher->ii);
 	err = flusher_do_flush_dirty(flusher);
-	ii_decref(flusher->ii);
+	silofs_ii_decref(flusher->ii);
 	return err;
 }
 

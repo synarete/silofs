@@ -34,7 +34,8 @@ const struct silofs_uaddr *silofs_uaddr_none(void)
 
 bool silofs_uaddr_isnull(const struct silofs_uaddr *uaddr)
 {
-	return off_isnull(uaddr->voff) || silofs_laddr_isnull(&uaddr->laddr);
+	return silofs_off_isnull(uaddr->voff) ||
+	       silofs_laddr_isnull(&uaddr->laddr);
 }
 
 void silofs_uaddr_setup(struct silofs_uaddr *uaddr,

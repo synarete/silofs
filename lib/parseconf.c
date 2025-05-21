@@ -29,6 +29,7 @@
 #include "infra.h"
 #include "str.h"
 #include "uidgid.h"
+#include "private.h"
 
 static bool strview_isempty(const struct silofs_strview *sv)
 {

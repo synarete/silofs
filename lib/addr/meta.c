@@ -93,7 +93,7 @@ static void silofs_u8b_from_u64(uint8_t p[8], uint64_t u)
 
 void silofs_uuid_generate(struct silofs_uuid *uu)
 {
-	STATICASSERT_EQ(sizeof(uu->uu), sizeof(uuid_t));
+	SILOFS_STATICASSERT_EQ(sizeof(uu->uu), sizeof(uuid_t));
 
 	uuid_generate_random(uu->uu);
 }
@@ -144,7 +144,7 @@ void silofs_uuid_as_u64s(const struct silofs_uuid *uu, uint64_t u[2])
 {
 	const uint8_t *p = uu->uu;
 
-	STATICASSERT_EQ(sizeof(uu->uu), 16);
+	SILOFS_STATICASSERT_EQ(sizeof(uu->uu), 16);
 
 	u[0] = silofs_u8b_as_u64(p);
 	u[1] = silofs_u8b_as_u64(p + 8);
@@ -336,7 +336,7 @@ void silofs_hash256_to_u64s(const struct silofs_hash256 *hash, uint64_t u[4])
 {
 	const uint8_t *p = hash->hash;
 
-	STATICASSERT_EQ(sizeof(hash->hash), 4 * sizeof(uint64_t));
+	SILOFS_STATICASSERT_EQ(sizeof(hash->hash), 4 * sizeof(uint64_t));
 
 	u[0] = silofs_u8b_as_u64(p);
 	u[1] = silofs_u8b_as_u64(p + 8);
@@ -348,7 +348,7 @@ void silofs_hash256_from_u64s(struct silofs_hash256 *hash, const uint64_t u[4])
 {
 	uint8_t *p = hash->hash;
 
-	STATICASSERT_EQ(sizeof(hash->hash), 4 * sizeof(uint64_t));
+	SILOFS_STATICASSERT_EQ(sizeof(hash->hash), 4 * sizeof(uint64_t));
 
 	silofs_u8b_from_u64(p, u[0]);
 	silofs_u8b_from_u64(p + 8, u[1]);

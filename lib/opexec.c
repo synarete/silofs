@@ -35,6 +35,7 @@
 #include "stage.h"
 #include "opexec.h"
 #include "env.h"
+#include "private.h"
 
 #define status_ok(err_) ((err_) == 0)
 
@@ -75,12 +76,12 @@ op_try_flush2(struct silofs_task_ctx *task, struct silofs_inode_info *ii1,
 	int err1;
 	int err2;
 
-	ii_incref(ii1);
-	ii_incref(ii2);
+	silofs_ii_incref(ii1);
+	silofs_ii_incref(ii2);
 	err1 = op_try_flush(task, ii1);
 	err2 = op_try_flush(task, ii2);
-	ii_decref(ii1);
-	ii_decref(ii2);
+	silofs_ii_decref(ii1);
+	silofs_ii_decref(ii2);
 	return err1 ? err1 : err2;
 }
 
@@ -294,9 +295,9 @@ static int op_stage_mut_inode2(struct silofs_task_ctx *task, ino_t ino1,
 
 	err = op_stage_mut_inode(task, ino1, out_ii1);
 	if (!err) {
-		ii_incref(*out_ii1);
+		silofs_ii_incref(*out_ii1);
 		err = op_stage_mut_inode(task, ino2, out_ii2);
-		ii_decref(*out_ii1);
+		silofs_ii_decref(*out_ii1);
 	}
 	return err;
 }

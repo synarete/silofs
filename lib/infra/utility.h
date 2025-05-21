@@ -140,12 +140,4 @@ static inline const void *silofs_const_baseof(const void *p, size_t d)
 	return q - d;
 }
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-#ifdef SILOFS_USE_PRIVATE
-#define min(x, y)          silofs_min(x, y)
-#define max(x, y)          silofs_max(x, y)
-#define div_round_up(n, d) silofs_div_round_up(n, d)
-#endif
-
 #endif /* SILOFS_UTILITY_H_ */

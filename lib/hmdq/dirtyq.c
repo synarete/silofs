@@ -17,6 +17,7 @@
 #include "configs.h"
 #include "infra.h"
 #include "dirtyq.h"
+#include "private.h"
 
 void silofs_dirtyq_init(struct silofs_dirtyq *dq)
 {

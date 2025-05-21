@@ -62,7 +62,7 @@ int silofs_volumeid_from_str(struct silofs_volumeid *vid,
 void silofs_volumeid_by_uuid(struct silofs_volumeid *vid,
                              const struct silofs_uuid *uuid)
 {
-	STATICASSERT_EQ(sizeof(vid->id.uu), 16);
+	SILOFS_STATICASSERT_EQ(sizeof(vid->id.uu), 16);
 
 	silofs_uuid_assign(&vid->id, uuid);
 }

@@ -116,15 +116,6 @@ struct silofs_sb_refs {
 void silofs_sbi_resolve_refs(const struct silofs_sb_info *sbi,
                              struct silofs_sb_refs       *out_refs);
 
-#ifdef SILOFS_USE_PRIVATE
-#define sbi_env(sbi)            silofs_sbi_env(sbi)
-#define sbi_uaddr(sbi)          silofs_sbi_uaddr(sbi)
-#define sbi_laddr(sbi)          silofs_sbi_laddr(sbi)
-#define sbi_incref(sbi)         silofs_sbi_incref(sbi)
-#define sbi_decref(sbi)         silofs_sbi_decref(sbi)
-#define sbi_dirtify(sbi)        silofs_sbi_dirtify(sbi)
-#endif
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_sbst_setup_spawned(struct silofs_sb_info *sbi);

@@ -24,6 +24,7 @@
 #include "inode.h"
 #include "namei.h"
 #include "env.h"
+#include "private.h"
 
 #define SILOFS_COMMIT_LEN_MAX SILOFS_MEGA
 #define SILOFS_CID_ALL        UINT64_MAX
@@ -74,7 +75,7 @@ static bool sqe_isappendable(const struct silofs_submitq_ent *sqe,
 	if (!silofs_lsid_isequal(&sqe_laddr->lsid, &laddr->lsid)) {
 		return false;
 	}
-	end = off_end(sqe_laddr->pos, sqe->len);
+	end = silofs_off_end(sqe_laddr->pos, sqe->len);
 	if (laddr->pos != end) {
 		return false;
 	}
@@ -86,8 +87,8 @@ static bool sqe_isappendable(const struct silofs_submitq_ent *sqe,
 		return true;
 	}
 	/* for inodes require alignment on commit-len boundaries */
-	nxt = off_next(sqe_laddr->pos, len_max);
-	end = off_end(sqe_laddr->pos, len);
+	nxt = silofs_off_next(sqe_laddr->pos, len_max);
+	end = silofs_off_end(sqe_laddr->pos, len);
 	if (end > nxt) {
 		return false;
 	}
@@ -474,7 +475,7 @@ void silofs_task_enq_loose(struct silofs_task_ctx *task,
 		ii->i_looseq_next = task->t_looseq;
 		ii->i_in_looseq = true;
 		task->t_looseq = ii;
-		ii_incref(ii);
+		silofs_ii_incref(ii);
 	}
 }
 
@@ -487,7 +488,7 @@ static struct silofs_inode_info *task_deq_loose(struct silofs_task_ctx *task)
 		task->t_looseq = ii->i_looseq_next;
 		ii->i_looseq_next = NULL;
 		ii->i_in_looseq = false;
-		ii_decref(ii);
+		silofs_ii_decref(ii);
 	}
 	return ii;
 }

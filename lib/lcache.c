@@ -20,6 +20,7 @@
 #include "lcache.h"
 #include "exec.h"
 #include "inode.h"
+#include "private.h"
 
 static void lcache_drop_uamap(struct silofs_lcache *lcache);
 static void lcache_evict_some(struct silofs_lcache *lcache);
@@ -241,7 +242,7 @@ static size_t lcache_shrink_or_relru_unis(struct silofs_lcache *lcache,
                                           size_t cnt, int flags)
 {
 	struct silofs_unode_info *uni;
-	const size_t n = min(cnt, lcache->lc_uni_hmapq.hmq_lru.sz);
+	const size_t n = silofs_min(cnt, lcache->lc_uni_hmapq.hmq_lru.sz);
 	size_t evicted = 0;
 	bool now;
 	bool ok;
@@ -578,7 +579,7 @@ static size_t lcache_shrink_or_relru_vnis(struct silofs_lcache *lcache,
                                           size_t cnt, int flags)
 {
 	struct silofs_vnode_info *vni = NULL;
-	const size_t n = min(cnt, lcache->lc_vni_hmapq.hmq_lru.sz);
+	const size_t n = silofs_min(cnt, lcache->lc_vni_hmapq.hmq_lru.sz);
 	size_t evicted = 0;
 	bool now;
 	bool ok;
@@ -789,10 +790,10 @@ static size_t lcache_calc_niter(const struct silofs_lcache *lcache, int flags)
 		}
 	}
 	if (flags & SILOFS_CTLF_NOW) {
-		niter += 2 + min(mempress_percentage, 5);
+		niter += 2 + silofs_min(mempress_percentage, 5);
 	}
 	if (!niter && (flags & SILOFS_CTLF_IDLE)) {
-		niter += 2 + min(mempress_percentage, 3);
+		niter += 2 + silofs_min(mempress_percentage, 3);
 	}
 	return niter;
 }
@@ -846,13 +847,13 @@ static size_t lcache_relax_by_overpop(struct silofs_lcache *lcache)
 
 	opop = lcache_overpop_vnis(lcache);
 	if (opop > 0) {
-		want = min(opop, 8);
+		want = silofs_min(opop, 8);
 		total +=
 			lcache_shrink_some_vnis(lcache, want, SILOFS_CTLF_NOW);
 	}
 	opop = lcache_overpop_unis(lcache);
 	if (opop > 0) {
-		want = min(opop, 2);
+		want = silofs_min(opop, 2);
 		total +=
 			lcache_shrink_some_unis(lcache, want, SILOFS_CTLF_NOW);
 	}

@@ -21,13 +21,12 @@
 #include <stdarg.h>
 #include <silofs/macros.h>
 #include "infra.h"
-#include "private.h"
 #include "strchr.h"
 #include "strbuf.h"
 
 void silofs_strbuf_init(struct silofs_strbuf *sbuf)
 {
-	STATICASSERT_GT(sizeof(sbuf->str), NAME_MAX);
+	SILOFS_STATICASSERT_GT(sizeof(sbuf->str), NAME_MAX);
 	sbuf->str[0] = '\0';
 }
 

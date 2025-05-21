@@ -20,6 +20,7 @@
 #include "pnodes.h"
 #include "pcache.h"
 #include "exec.h"
+#include "private.h"
 
 enum {
 	PCACHE_RETRY_MAX = 4,

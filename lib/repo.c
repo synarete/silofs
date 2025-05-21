@@ -21,6 +21,7 @@
 #include <fcntl.h>
 #include "infra.h"
 #include "repo.h"
+#include "private.h"
 
 enum {
 	RCEK_PSID = 1,
@@ -740,7 +741,7 @@ static void lsegf_bindto(struct silofs_lsegf *lsegf, int fd, bool rw)
 static int
 lsegf_check_range(const struct silofs_lsegf *lsegf, loff_t off, size_t len)
 {
-	const loff_t end = off_end(off, len);
+	const loff_t end = silofs_off_end(off, len);
 	const loff_t cap = lsegf_capacity(lsegf);
 
 	if (off < 0) {
@@ -799,7 +800,7 @@ static int lsegf_reassign_size(struct silofs_lsegf *lsegf, loff_t off)
 	if (err) {
 		return err;
 	}
-	len = off_align_to_lbk(off + SILOFS_LBK_SIZE - 1);
+	len = silofs_off_align_to_lbk(off + SILOFS_LBK_SIZE - 1);
 	err = do_ftruncate(lsegf->lsf_fd, len);
 	if (err) {
 		return err;
@@ -811,9 +812,9 @@ static int lsegf_reassign_size(struct silofs_lsegf *lsegf, loff_t off)
 static int
 lsegf_require_size_ge(struct silofs_lsegf *lsegf, loff_t off, size_t len)
 {
-	const loff_t end = off_end(off, len);
-	const loff_t nxt = off_next_lbk(off);
-	const ssize_t want_size = off_max(end, nxt);
+	const loff_t end = silofs_off_end(off, len);
+	const loff_t nxt = silofs_off_next_lbk(off);
+	const ssize_t want_size = silofs_off_max(end, nxt);
 	const ssize_t curr_size = lsegf_size(lsegf);
 
 	return (curr_size >= want_size) ?
@@ -832,7 +833,7 @@ static int lsegf_require_laddr(struct silofs_lsegf *lsegf,
 static int
 lsegf_check_size_ge(const struct silofs_lsegf *lsegf, loff_t off, size_t len)
 {
-	const loff_t end = off_end(off, len);
+	const loff_t end = silofs_off_end(off, len);
 	const ssize_t bsz = lsegf_size(lsegf);
 
 	return (bsz >= end) ? 0 : -SILOFS_ERANGE;
@@ -976,7 +977,7 @@ static int lsegf_load_bb(const struct silofs_lsegf *lsegf,
 	silofs_assert_eq(st.st_size % SILOFS_KB_SIZE, 0);
 
 	bobj = silofs_bytebuf_end(bb);
-	end = off_end(iovec.iov_off, iovec.iov.iov_len);
+	end = silofs_off_end(iovec.iov_off, iovec.iov.iov_len);
 	if (end > st.st_size) {
 		silofs_memzero(bobj, iovec.iov.iov_len);
 		goto out;
@@ -1024,7 +1025,8 @@ static int lsegf_punch_with_ftruncate(const struct silofs_lsegf *lsegf)
 static int lsegf_punch_with_fallocate(const struct silofs_lsegf *lsegf,
                                       loff_t from, loff_t to)
 {
-	return do_fallocate_punch_hole(lsegf->lsf_fd, from, off_len(from, to));
+	return do_fallocate_punch_hole(lsegf->lsf_fd, from,
+	                               silofs_off_len(from, to));
 }
 
 static int lsegf_do_punch_all(const struct silofs_lsegf *lsegf)
@@ -1476,7 +1478,7 @@ static void repo_evict_some(struct silofs_repo *repo, size_t niter_max)
 {
 	struct silofs_repo_ce *rce = NULL;
 	struct silofs_repo_ce *rce_prev = NULL;
-	size_t niter = min(niter_max, repo->re_lruq.sz);
+	size_t niter = silofs_min(niter_max, repo->re_lruq.sz);
 
 	rce = repo_prevof(repo, NULL);
 	while ((rce != NULL) && (niter-- > 0)) {
@@ -1503,7 +1505,7 @@ static void repo_try_evict_overpop(struct silofs_repo *repo)
 	const size_t qmax = 256;
 
 	if (qcur > qmax) {
-		repo_evict_some(repo, min(qcur - qmax, 2));
+		repo_evict_some(repo, silofs_min(qcur - qmax, 2));
 	}
 }
 
@@ -3241,7 +3243,7 @@ repo_save_pobj(struct silofs_repo *repo, const struct silofs_paddr *paddr,
                const struct silofs_rovec *rovec)
 {
 	struct silofs_pvsegf *pvsegf = NULL;
-	const size_t len = min(paddr->len, rovec->rov_len);
+	const size_t len = silofs_min(paddr->len, rovec->rov_len);
 	int err;
 
 	err = repo_check_wopen(repo);
@@ -3280,7 +3282,7 @@ repo_load_pobj(struct silofs_repo *repo, const struct silofs_paddr *paddr,
                const struct silofs_rwvec *rwvec)
 {
 	struct silofs_pvsegf *pvsegf = NULL;
-	const size_t len = min(paddr->len, rwvec->rwv_len);
+	const size_t len = silofs_min(paddr->len, rwvec->rwv_len);
 	int err;
 
 	err = repo_check_ropen(repo);

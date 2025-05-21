@@ -23,6 +23,7 @@
 #include "pnodes.h"
 #include "pcache.h"
 #include "btree.h"
+#include "private.h"
 
 struct silofs_btree_path {
 	struct silofs_btnode_info *bni[SILOFS_BTREE_HEIGHT_MAX];
@@ -184,13 +185,13 @@ void silofs_btree_init(struct silofs_btree *btree,
                        const struct silofs_btree_base *base)
 {
 	memcpy(&btree->bt_base, base, sizeof(btree->bt_base));
-	paddr_reset(&btree->bt_root);
+	silofs_paddr_reset(&btree->bt_root);
 }
 
 void silofs_btree_fini(struct silofs_btree *btree)
 {
 	memset(&btree->bt_base, 0, sizeof(btree->bt_base));
-	paddr_reset(&btree->bt_root);
+	silofs_paddr_reset(&btree->bt_root);
 }
 
 static const struct silofs_paddr *btree_root(const struct silofs_btree *btree)
@@ -203,7 +204,7 @@ void silofs_btree_update_root(struct silofs_btree *btree,
 {
 	silofs_assert_eq(paddr->ptype, SILOFS_PTYPE_BTNODE);
 
-	paddr_assign(&btree->bt_root, paddr);
+	silofs_paddr_assign(&btree->bt_root, paddr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -574,8 +575,8 @@ static void btc_update_root_by_path(const struct silofs_btree_ctx *btc)
 	const struct silofs_btnode_info *bni = btc_path_root_bni(btc);
 	const struct silofs_paddr *paddr = bni_paddr(bni);
 
-	if (!paddr_isequal(&btc->btree->bt_root, paddr)) {
-		paddr_assign(&btc->btree->bt_root, paddr);
+	if (!silofs_paddr_isequal(&btc->btree->bt_root, paddr)) {
+		silofs_paddr_assign(&btc->btree->bt_root, paddr);
 	}
 }
 

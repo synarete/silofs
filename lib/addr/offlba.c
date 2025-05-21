@@ -23,7 +23,7 @@
 
 bool silofs_off_isnull(loff_t off)
 {
-	STATICASSERT_LT(SILOFS_OFF_NULL, 0);
+	SILOFS_STATICASSERT_LT(SILOFS_OFF_NULL, 0);
 
 	return (off < 0);
 }
@@ -96,7 +96,8 @@ size_t silofs_off_ulen(loff_t beg, loff_t end)
 
 int silofs_verify_off(loff_t off)
 {
-	return (off_isnull(off) || (off >= 0)) ? 0 : -SILOFS_EFSCORRUPTED;
+	return (silofs_off_isnull(off) || (off >= 0)) ? 0 :
+	                                                -SILOFS_EFSCORRUPTED;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

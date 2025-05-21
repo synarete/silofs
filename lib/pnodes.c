@@ -18,6 +18,7 @@
 #include "infra.h"
 #include "addr.h"
 #include "pnodes.h"
+#include "private.h"
 
 static bool key_isvalid(uint64_t key)
 {
@@ -66,7 +67,7 @@ static void cpn_set_btree_root(struct silofs_chkpt_node *cpn,
 
 static void cpn_reset_btree_root(struct silofs_chkpt_node *cpn)
 {
-	cpn_set_btree_root(cpn, paddr_none());
+	cpn_set_btree_root(cpn, silofs_paddr_none());
 }
 
 static enum silofs_pnodef cpn_flags(const struct silofs_chkpt_node *cpn)
@@ -98,7 +99,7 @@ cpn_init(struct silofs_chkpt_node *cpn, const struct silofs_paddr *paddr)
 
 static void cpn_fini(struct silofs_chkpt_node *cpn)
 {
-	cpn_set_btree_root(cpn, paddr_none());
+	cpn_set_btree_root(cpn, silofs_paddr_none());
 }
 
 static struct silofs_chkpt_node *cpn_malloc(struct silofs_alloc *alloc)
@@ -338,7 +339,7 @@ static void btn_set_child_at(struct silofs_btree_node *btn, size_t slot,
 
 static void btn_reset_child_at(struct silofs_btree_node *btn, size_t slot)
 {
-	btn_set_child_at(btn, slot, paddr_none());
+	btn_set_child_at(btn, slot, silofs_paddr_none());
 }
 
 static void btn_reset_childs(struct silofs_btree_node *btn)
@@ -788,7 +789,7 @@ int silofs_bni_resolve(const struct silofs_btnode_info *bni, uint64_t key,
 		return -SILOFS_ENOENT;
 	}
 	btn_resolve_child(bni->bn, key, out_paddr);
-	if (paddr_isnull(out_paddr)) {
+	if (silofs_paddr_isnull(out_paddr)) {
 		return -SILOFS_ENOENT;
 	}
 	return 0;

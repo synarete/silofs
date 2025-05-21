@@ -19,6 +19,7 @@
 #include "infra.h"
 #include "gcry.h"
 #include "ivkey.h"
+#include "private.h"
 
 static void randomize_by_gcry(void *ptr, size_t len, bool very_strong)
 {
@@ -91,7 +92,7 @@ long silofs_iv_compare(const struct silofs_iv *iv,
 void silofs_iv_xor_with(struct silofs_iv *iv, const void *buf, size_t len)
 {
 	const uint8_t *p = buf;
-	const size_t n = min(len, ARRAY_SIZE(iv->iv));
+	const size_t n = silofs_min(len, ARRAY_SIZE(iv->iv));
 
 	for (size_t i = 0; i < n; ++i) {
 		iv->iv[i] ^= p[i];
@@ -148,7 +149,7 @@ void silofs_key_mkrand(struct silofs_key *key)
 void silofs_key_xor_with(struct silofs_key *key, const void *buf, size_t len)
 {
 	const uint8_t *p = buf;
-	const size_t n = min(len, ARRAY_SIZE(key->key));
+	const size_t n = silofs_min(len, ARRAY_SIZE(key->key));
 
 	for (size_t i = 0; i < n; ++i) {
 		key->key[i] ^= p[i];

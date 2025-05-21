@@ -28,6 +28,7 @@
 #include "symlink.h"
 #include "spmaps.h"
 #include "env.h"
+#include "private.h"
 
 enum {
 	SILOFS_UI_MAGIC = 0xCAFEBEB,
@@ -81,12 +82,14 @@ static void view_del(struct silofs_view *view, enum silofs_ltype ltype,
                      struct silofs_alloc *alloc, int flags)
 {
 	const size_t size = silofs_ltype_size(ltype);
+	size_t nz;
 
 	if (silofs_ltype_issuper(ltype)) {
 		flags |= SILOFS_ALLOCF_TRYPUNCH;
 	}
 	if (!silofs_ltype_isdata(ltype)) {
-		silofs_memzero(view, min(size, sizeof(struct silofs_header)));
+		nz = silofs_min(size, sizeof(struct silofs_header));
+		silofs_memzero(view, nz);
 	}
 	silofs_memfree(alloc, view, size, flags);
 }
@@ -1515,7 +1518,7 @@ silofs_new_vnode(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 		vni = lsi_to_vni(lsi_new(alloc, vaddr));
 		break;
 	case SILOFS_LTYPE_INODE:
-		vni = ii_to_vni(ii_new(alloc, vaddr));
+		vni = silofs_ii_to_vni(ii_new(alloc, vaddr));
 		break;
 	case SILOFS_LTYPE_XANODE:
 		vni = xai_to_vni(xai_new(alloc, vaddr));

@@ -58,7 +58,7 @@ lbk_state_mask_of(struct silofs_lbk_state *lbk_st, size_t ki, size_t nk)
 
 	lbk_st->state = 0;
 	if (ki < 64) {
-		nn = min(nk, 64 - ki);
+		nn = silofs_min(nk, 64 - ki);
 		lbk_st->state = mask_of(ki, nn);
 	}
 }
@@ -343,7 +343,7 @@ lbm_make_vaddrs(const struct silofs_lbk_meta *lbm, enum silofs_ltype ltype,
 			struct silofs_vaddr *vaddr =
 				&out_vaddrs->vaddr[out_vaddrs->count];
 
-			off = off_end(off_base, kbn * SILOFS_KB_SIZE);
+			off = silofs_off_end(off_base, kbn * SILOFS_KB_SIZE);
 			silofs_vaddr_setup(vaddr, ltype, off);
 			out_vaddrs->count++;
 		}

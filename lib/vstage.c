@@ -28,6 +28,7 @@
 #include "lsmap.h"
 #include "stage.h"
 #include "env.h"
+#include "private.h"
 
 struct silofs_vstage_ctx {
 	struct silofs_task_ctx *task;
@@ -592,7 +593,7 @@ static void vstgc_increfs(const struct silofs_vstage_ctx *vstg_ctx,
                           enum silofs_height height_upto)
 {
 	if (height_upto <= SILOFS_HEIGHT_SUPER) {
-		sbi_incref(vstg_ctx->sbi);
+		silofs_sbi_incref(vstg_ctx->sbi);
 	}
 	if (height_upto <= SILOFS_HEIGHT_SPNODE4) {
 		silofs_sni_incref(vstg_ctx->sni4);
@@ -630,13 +631,13 @@ static void vstgc_decrefs(const struct silofs_vstage_ctx *vstg_ctx,
 		silofs_sni_decref(vstg_ctx->sni4);
 	}
 	if (height_from <= SILOFS_HEIGHT_SUPER) {
-		sbi_decref(vstg_ctx->sbi);
+		silofs_sbi_decref(vstg_ctx->sbi);
 	}
 }
 
 static loff_t vstgc_lbk_voff(const struct silofs_vstage_ctx *vstg_ctx)
 {
-	return off_align_to_lbk(vstg_ctx->voff);
+	return silofs_off_align_to_lbk(vstg_ctx->voff);
 }
 
 static int vstgc_find_cached_unode(const struct silofs_vstage_ctx *vstg_ctx,
@@ -824,7 +825,7 @@ static void
 vstgc_setup_spawned_spnode4(const struct silofs_vstage_ctx *vstg_ctx,
                             struct silofs_spnode_info *sni)
 {
-	silofs_sni_setup_spawned(sni, sbi_uaddr(vstg_ctx->sbi),
+	silofs_sni_setup_spawned(sni, silofs_sbi_uaddr(vstg_ctx->sbi),
 	                         vstgc_lbk_voff(vstg_ctx));
 }
 
@@ -2610,9 +2611,9 @@ int silofs_stage_vnode(struct silofs_task_ctx *task,
 {
 	int err;
 
-	ii_incref(pii);
+	silofs_ii_incref(pii);
 	err = do_stage_vnode(task, vaddr, stg_mode, out_vni);
-	ii_decref(pii);
+	silofs_ii_decref(pii);
 	return err;
 }
 
@@ -2643,7 +2644,7 @@ static int resolve_iaddr(ino_t ino, struct silofs_vaddr *out_vaddr)
 		return -SILOFS_EINVAL;
 	}
 	voff = ino_to_off(ino);
-	if (off_isnull(voff)) {
+	if (silofs_off_isnull(voff)) {
 		return -SILOFS_EINVAL;
 	}
 	silofs_vaddr_setup(out_vaddr, SILOFS_LTYPE_INODE, voff);
@@ -2826,9 +2827,9 @@ int silofs_spawn_vnode(struct silofs_task_ctx *task,
 {
 	int err;
 
-	ii_incref(pii);
+	silofs_ii_incref(pii);
 	err = do_spawn_vnode(task, pii, ltype, out_vni);
-	ii_decref(pii);
+	silofs_ii_decref(pii);
 	return err;
 }
 
@@ -2965,9 +2966,9 @@ remove_inode_of(struct silofs_task_ctx *task, struct silofs_inode_info *ii)
 {
 	int err;
 
-	ii_incref(ii);
-	err = reclaim_vspace_at(task, ii_vaddr(ii));
-	ii_decref(ii);
+	silofs_ii_incref(ii);
+	err = reclaim_vspace_at(task, silofs_ii_vaddr(ii));
+	silofs_ii_decref(ii);
 	return err;
 }
 

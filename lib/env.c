@@ -28,6 +28,7 @@
 #include "super.h"
 #include "stage.h"
 #include "env.h"
+#include "private.h"
 
 static bool caddr_isbootrec(const struct silofs_caddr *caddr)
 {
@@ -57,7 +58,7 @@ static void env_update_bootrec_sb_uaddr(struct silofs_env *env)
 	struct silofs_bootrec *bootrec = env->base.bootrec;
 
 	if (env->sbi != NULL) {
-		uaddr = sbi_uaddr(env->sbi);
+		uaddr = silofs_sbi_uaddr(env->sbi);
 	} else {
 		uaddr = silofs_uaddr_none();
 	}
@@ -161,7 +162,7 @@ static size_t env_calc_iopen_limit(const struct silofs_env *env)
 
 	silofs_memstat(env->base.alloc, &st);
 	lim = (st.nbytes_max / (2 * SILOFS_LBK_SIZE));
-	return div_round_up(lim, align) * align;
+	return silofs_div_round_up(lim, align) * align;
 }
 
 static void env_init_opstat(struct silofs_env *env)
@@ -355,7 +356,7 @@ bool silofs_env_hasflag(const struct silofs_env *env, enum silofs_flags f)
 int silofs_env_bootrec_caddr(const struct silofs_env *env,
                              struct silofs_caddr *out_caddr)
 {
-	caddr_assign(out_caddr, &env->bootrec_caddr);
+	silofs_caddr_assign(out_caddr, &env->bootrec_caddr);
 	return caddr_isbootrec(out_caddr) ? 0 : -SILOFS_ENOENT;
 }
 
@@ -365,21 +366,21 @@ int silofs_env_set_bootrec_caddr(struct silofs_env *env,
 	if (!caddr_isbootrec(caddr)) {
 		return -SILOFS_EINVAL;
 	}
-	caddr_assign(&env->bootrec_caddr, caddr);
+	silofs_caddr_assign(&env->bootrec_caddr, caddr);
 	return 0;
 }
 
 int silofs_env_base_caddr(const struct silofs_env *env,
                           struct silofs_caddr *out_caddr)
 {
-	caddr_assign(out_caddr, &env->bootrec_base_caddr);
+	silofs_caddr_assign(out_caddr, &env->bootrec_base_caddr);
 	return caddr_isbootrec(out_caddr) ? 0 : -SILOFS_ENOENT;
 }
 
 int silofs_env_fork_caddr(const struct silofs_env *env,
                           struct silofs_caddr *out_caddr)
 {
-	caddr_assign(out_caddr, &env->bootrec_fork_caddr);
+	silofs_caddr_assign(out_caddr, &env->bootrec_fork_caddr);
 	return caddr_isbootrec(out_caddr) ? 0 : -SILOFS_ENOENT;
 }
 
@@ -388,7 +389,7 @@ int silofs_env_pack_caddr(const struct silofs_env *env,
 {
 	const struct silofs_caddr *caddr = &env->pack_caddr;
 
-	caddr_assign(out_caddr, caddr);
+	silofs_caddr_assign(out_caddr, caddr);
 	return (caddr->ctype == SILOFS_CTYPE_PACKIDX) ? 0 : -SILOFS_ENOENT;
 }
 
@@ -398,7 +399,7 @@ int silofs_env_set_pack_caddr(struct silofs_env *env,
 	if (caddr->ctype != SILOFS_CTYPE_PACKIDX) {
 		return -SILOFS_EINVAL;
 	}
-	caddr_assign(&env->pack_caddr, caddr);
+	silofs_caddr_assign(&env->pack_caddr, caddr);
 	return 0;
 }
 
@@ -865,9 +866,9 @@ int silofs_env_forkfs(struct silofs_env *env)
 	struct silofs_sb_info *sbi = env->sbi;
 	int err;
 
-	sbi_incref(sbi);
+	silofs_sbi_incref(sbi);
 	err = env_do_forkfs(env);
-	sbi_decref(sbi);
+	silofs_sbi_decref(sbi);
 	return err;
 }
 

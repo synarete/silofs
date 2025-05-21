@@ -28,6 +28,7 @@
 #include "spmaps.h"
 #include "lsmap.h"
 #include "env.h"
+#include "private.h"
 
 static void tm64b_htox(struct silofs_tm64b *tm64, const struct tm *tm)
 {
@@ -103,7 +104,7 @@ sb_set_swversion(struct silofs_super_block *sb, const char *sw_version)
 	const size_t len = silofs_str_length(sw_version);
 	const size_t len_max = ARRAY_SIZE(sb->sb_sw_version) - 1;
 
-	memcpy(sb->sb_sw_version, sw_version, min(len, len_max));
+	memcpy(sb->sb_sw_version, sw_version, silofs_min(len, len_max));
 }
 
 int silofs_sb_check_version(const struct silofs_super_block *sb)
@@ -544,7 +545,7 @@ int silofs_verify_super_block(const struct silofs_super_block *sb)
 void silofs_sbi_add_flags(struct silofs_sb_info *sbi, enum silofs_superf flags)
 {
 	sb_add_flags(sbi->sb, flags);
-	sbi_dirtify(sbi);
+	silofs_sbi_dirtify(sbi);
 }
 
 bool silofs_sbi_test_flags(const struct silofs_sb_info *sbi,
@@ -555,7 +556,7 @@ bool silofs_sbi_test_flags(const struct silofs_sb_info *sbi,
 
 int silof_sbi_check_mut_fs(const struct silofs_sb_info *sbi)
 {
-	const struct silofs_env *env = sbi_env(sbi);
+	const struct silofs_env *env = silofs_sbi_env(sbi);
 	const unsigned long ms_mask = MS_RDONLY;
 
 	if ((env->ms_flags & ms_mask) == ms_mask) {
@@ -572,7 +573,7 @@ int silofs_sbi_shut(struct silofs_sb_info *sbi)
 	const struct silofs_env *env = NULL;
 
 	if (sbi != NULL) {
-		env = sbi_env(sbi);
+		env = silofs_sbi_env(sbi);
 		log_dbg("shut-super: op_count=%lu", env->opstat.op_count);
 	}
 	return 0;
@@ -622,7 +623,7 @@ void silofs_sbi_bind_main_lseg(struct silofs_sb_info *sbi,
                                const struct silofs_lsid *lsid)
 {
 	sb_set_main_lsid(sbi->sb, vspace, lsid);
-	sbi_dirtify(sbi);
+	silofs_sbi_dirtify(sbi);
 }
 
 bool silofs_sbi_has_main_lseg(const struct silofs_sb_info *sbi,
@@ -710,7 +711,7 @@ void silofs_sbi_bind_child(struct silofs_sb_info *sbi, enum silofs_ltype ltype,
                            const struct silofs_uaddr *uaddr)
 {
 	sb_set_sproot_of(sbi->sb, ltype, uaddr);
-	sbi_dirtify(sbi);
+	silofs_sbi_dirtify(sbi);
 }
 
 bool silofs_sbi_ismutable_lsid(const struct silofs_sb_info *sbi,
@@ -944,7 +945,7 @@ static void sbi_setup_birth_tms_now(struct silofs_sb_info *sbi)
 
 	silofs_localtime_now(&now);
 	sb_set_birth_tms(sbi->sb, &now);
-	sbi_dirtify(sbi);
+	silofs_sbi_dirtify(sbi);
 }
 
 static void sbi_set_lv_birth(struct silofs_sb_info *sbi)
@@ -953,7 +954,7 @@ static void sbi_set_lv_birth(struct silofs_sb_info *sbi)
 
 	silofs_localtime_now(&now);
 	sb_set_btime_curr(sbi->sb, &now);
-	sbi_dirtify(sbi);
+	silofs_sbi_dirtify(sbi);
 }
 
 static void sbi_assign_vspace_span(struct silofs_sb_info *sbi)
@@ -975,7 +976,7 @@ void silofs_sbi_setup_spawned(struct silofs_sb_info *sbi)
 	sbi_setup_spstats(sbi);
 	sbi_setup_birth_tms_now(sbi);
 	sbi_assign_vspace_span(sbi);
-	sbi_dirtify(sbi);
+	silofs_sbi_dirtify(sbi);
 }
 
 static void sbi_make_fork_of(struct silofs_sb_info *sbi,
@@ -988,7 +989,7 @@ static void sbi_make_fork_of(struct silofs_sb_info *sbi,
 	sb_clone_sproots(sb, sb_other);
 	sb_clone_tms(sb, sb_other);
 	sb_reset_main_lsids(sb);
-	sbi_dirtify(sbi);
+	silofs_sbi_dirtify(sbi);
 }
 
 void silofs_sbi_make_fork_of(struct silofs_sb_info *sbi_new,

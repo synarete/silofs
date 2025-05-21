@@ -26,6 +26,7 @@
 #include "namei.h"
 #include "env.h"
 #include "stage.h"
+#include "private.h"
 
 #define XATTR_DATA_MAX (SILOFS_NAME_MAX + 1 + SILOFS_XATTR_VALUE_MAX)
 
@@ -93,7 +94,7 @@ static size_t xe_aligned_size(size_t size)
 {
 	const size_t align = sizeof(struct silofs_xattr_entry);
 
-	return (align * div_round_up(size, align));
+	return (align * silofs_div_round_up(size, align));
 }
 
 static size_t xe_calc_payload_nents(size_t name_len, size_t value_size)
@@ -460,7 +461,7 @@ static int ixa_verify(const struct silofs_inode_xattr *ixa)
 
 	for (size_t slot = 0; slot < ARRAY_SIZE(ixa->ix_vaddr); ++slot) {
 		ixa_vaddr(ixa, slot, &vaddr);
-		if (!off_isnull(vaddr.off)) {
+		if (!silofs_off_isnull(vaddr.off)) {
 			err = silofs_verify_off(vaddr.off);
 			if (err) {
 				return err;
@@ -557,7 +558,7 @@ static int xac_recheck_node(const struct silofs_xattr_ctx *xa_ctx,
 	if (!silofs_vni_need_recheck(&xai->xan_vni)) {
 		return 0;
 	}
-	owner_ino = ii_ino(xa_ctx->ii);
+	owner_ino = silofs_ii_ino(xa_ctx->ii);
 	xanode_ino = xan_ino(xai->xan);
 	if (owner_ino != xanode_ino) {
 		log_err("bad xanode ino: owner_ino=%lu xanode_ino=%lu",
@@ -595,9 +596,9 @@ static int xac_stage_xanode(const struct silofs_xattr_ctx *xa_ctx,
 {
 	int ret;
 
-	ii_incref(xa_ctx->ii);
+	silofs_ii_incref(xa_ctx->ii);
 	ret = xac_do_stage_xanode(xa_ctx, vaddr, out_xai);
-	ii_decref(xa_ctx->ii);
+	silofs_ii_decref(xa_ctx->ii);
 	return ret;
 }
 
@@ -647,7 +648,7 @@ xac_check_xattr_name(const struct silofs_xattr_ctx *xa_ctx, int w_mode)
 {
 	const struct silofs_namestr *name = xa_ctx->name;
 	const struct silofs_xattr_prefix *xap = NULL;
-	const size_t namelen_max = min(SILOFS_NAME_MAX, NAME_MAX);
+	const size_t namelen_max = silofs_min(SILOFS_NAME_MAX, NAME_MAX);
 
 	if (!name) {
 		return 0;
@@ -671,7 +672,7 @@ xac_check_xattr_name(const struct silofs_xattr_ctx *xa_ctx, int w_mode)
 static int xac_check_op(const struct silofs_xattr_ctx *xa_ctx, int access_mode)
 {
 	struct silofs_inode_info *ii = xa_ctx->ii;
-	const mode_t mode = ii_mode(ii);
+	const mode_t mode = silofs_ii_mode(ii);
 	int err;
 
 	if (S_ISCHR(mode) || S_ISBLK(mode)) {
@@ -784,9 +785,9 @@ static int xac_getxattr(struct silofs_xattr_ctx *xa_ctx, size_t *out_size)
 {
 	int ret;
 
-	ii_incref(xa_ctx->ii);
+	silofs_ii_incref(xa_ctx->ii);
 	ret = xac_do_getxattr(xa_ctx, out_size);
-	ii_decref(xa_ctx->ii);
+	silofs_ii_decref(xa_ctx->ii);
 	return ret;
 }
 
@@ -839,10 +840,10 @@ xac_spawn_bind_xanode(const struct silofs_xattr_ctx *xa_ctx, size_t slot,
 	if (err) {
 		return err;
 	}
-	xai_setup_node(*out_xai, ii_ino(ii));
+	xai_setup_node(*out_xai, silofs_ii_ino(ii));
 
 	ii_xa_set_at(ii, slot, xai_vaddr(*out_xai));
-	ii_dirtify(ii);
+	silofs_ii_dirtify(ii);
 	return 0;
 }
 
@@ -1030,9 +1031,9 @@ static int xac_setxattr(struct silofs_xattr_ctx *xa_ctx)
 {
 	int ret;
 
-	ii_incref(xa_ctx->ii);
+	silofs_ii_incref(xa_ctx->ii);
 	ret = xac_do_setxattr(xa_ctx);
-	ii_decref(xa_ctx->ii);
+	silofs_ii_decref(xa_ctx->ii);
 	return ret;
 }
 
@@ -1114,9 +1115,9 @@ static int xac_removexattr(struct silofs_xattr_ctx *xa_ctx)
 {
 	int ret;
 
-	ii_incref(xa_ctx->ii);
+	silofs_ii_incref(xa_ctx->ii);
 	ret = xac_do_removexattr(xa_ctx);
-	ii_decref(xa_ctx->ii);
+	silofs_ii_decref(xa_ctx->ii);
 	return ret;
 }
 
@@ -1247,9 +1248,9 @@ static int xac_listxattr(struct silofs_xattr_ctx *xa_ctx)
 {
 	int ret;
 
-	ii_incref(xa_ctx->ii);
+	silofs_ii_incref(xa_ctx->ii);
 	ret = xac_do_listxattr(xa_ctx);
-	ii_decref(xa_ctx->ii);
+	silofs_ii_decref(xa_ctx->ii);
 	return ret;
 }
 
@@ -1304,9 +1305,9 @@ static int xac_drop_slots(struct silofs_xattr_ctx *xa_ctx)
 {
 	int ret;
 
-	ii_incref(xa_ctx->ii);
+	silofs_ii_incref(xa_ctx->ii);
 	ret = xac_do_drop_slots(xa_ctx);
-	ii_decref(xa_ctx->ii);
+	silofs_ii_decref(xa_ctx->ii);
 	return ret;
 }
 

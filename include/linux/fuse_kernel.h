@@ -72,7 +72,7 @@
  *
  * 7.8:
  *  - add lock_owner and flags fields to fuse_release_in
- *  - add FUSE_ MAP message
+ *  - add FUSE_BMAP message
  *  - add FUSE_DESTROY message
  *
  * 7.9:
@@ -1003,10 +1003,10 @@ struct fuse_dirent {
 	uint64_t	off;
 	uint32_t	namelen;
 	uint32_t	type;
-#ifdef SILOFS_USE_PRIVATE
-	char name[8];
-#else
+#ifdef SILOFS_FUSE_HAVE_FLEXARR
 	char name[];
+#else
+	char name[8];
 #endif
 };
 
@@ -1081,7 +1081,7 @@ struct fuse_backing_map {
 
 /* Device ioctls: */
 #define FUSE_DEV_IOC_MAGIC		229
-#define FUSE_DEV_IOC_FORKFS		_IOR(FUSE_DEV_IOC_MAGIC, 0, uint32_t)
+#define FUSE_DEV_IOC_CLONE		_IOR(FUSE_DEV_IOC_MAGIC, 0, uint32_t)
 #define FUSE_DEV_IOC_BACKING_OPEN	_IOW(FUSE_DEV_IOC_MAGIC, 1, \
 					     struct fuse_backing_map)
 #define FUSE_DEV_IOC_BACKING_CLOSE	_IOW(FUSE_DEV_IOC_MAGIC, 2, uint32_t)

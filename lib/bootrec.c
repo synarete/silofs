@@ -21,6 +21,7 @@
 #include "encdec.h"
 #include "bootrec.h"
 #include "env.h"
+#include "private.h"
 
 static uint64_t bootrec1k_magic(const struct silofs_bootrec1k *bootrec1k)
 {
@@ -501,7 +502,7 @@ static int verify_bootrec1k_caddr(const struct silofs_env *env,
 	struct silofs_caddr caddr2;
 
 	calc_bootrec1k_caddr(env, bootrec1k, &caddr2);
-	return caddr_isequal(caddr, &caddr2) ? 0 : -SILOFS_EBADBOOTREC;
+	return silofs_caddr_isequal(caddr, &caddr2) ? 0 : -SILOFS_EBADBOOTREC;
 }
 
 int silofs_calc_bootrec_caddr(const struct silofs_env *env,

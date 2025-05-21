@@ -25,6 +25,7 @@
 #include "env.h"
 #include "opcall.h"
 #include "opexec.h"
+#include "private.h"
 
 int silofs_call_setattr(struct silofs_task_ctx *task,
                         struct silofs_call_args *args)

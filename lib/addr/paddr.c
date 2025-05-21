@@ -169,7 +169,7 @@ void silofs_pvsid32b_xtoh(const struct silofs_pvsid32b *pvsid32,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static const struct silofs_paddr s_paddr_none = {
+static const struct silofs_paddr s_silofs_paddr_none = {
 	.pvsid.index = 0,
 	.off = SILOFS_OFF_NULL,
 	.len = 0,
@@ -178,13 +178,14 @@ static const struct silofs_paddr s_paddr_none = {
 
 const struct silofs_paddr *silofs_paddr_none(void)
 {
-	return &s_paddr_none;
+	return &s_silofs_paddr_none;
 }
 
 bool silofs_paddr_isnull(const struct silofs_paddr *paddr)
 {
 	return (paddr->ptype == SILOFS_PTYPE_NONE) || !paddr->len ||
-	       off_isnull(paddr->off) || silofs_pvsid_isnull(&paddr->pvsid);
+	       silofs_off_isnull(paddr->off) ||
+	       silofs_pvsid_isnull(&paddr->pvsid);
 }
 
 void silofs_paddr_init(struct silofs_paddr *paddr,

@@ -214,7 +214,7 @@ static int delfc_post_at(struct silofs_delfs_ctx *delf_ctx,
 
 static struct silofs_delfs_ctx *delf_ctx_of(struct silofs_visitor *vis)
 {
-	return container_of(vis, struct silofs_delfs_ctx, vis);
+	return silofs_container_of(vis, struct silofs_delfs_ctx, vis);
 }
 
 static int delfc_visit_exec_hook(struct silofs_visitor *vis,
@@ -232,12 +232,12 @@ static int delfc_visit_post_hook(struct silofs_visitor *vis,
 static void
 delfc_init(struct silofs_delfs_ctx *delf_ctx, const struct silofs_sb_info *sbi)
 {
-	const struct silofs_uaddr *uaddr = sbi_uaddr(sbi);
+	const struct silofs_uaddr *uaddr = silofs_sbi_uaddr(sbi);
 
 	silofs_memzero(delf_ctx, sizeof(*delf_ctx));
 	delf_ctx->vis.exec_hook = delfc_visit_exec_hook;
 	delf_ctx->vis.post_hook = delfc_visit_post_hook;
-	delf_ctx->env = sbi_env(sbi);
+	delf_ctx->env = silofs_sbi_env(sbi);
 	delf_ctx->repo = delf_ctx->env->base.repo;
 	silofs_uaddr_assign(&delf_ctx->sb_uaddr, uaddr);
 }

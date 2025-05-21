@@ -34,6 +34,7 @@
 #include "opexec.h"
 #include "fuseq.h"
 #include "walk.h"
+#include "private.h"
 
 static int reload_super(struct silofs_task_ctx *task)
 {
@@ -66,8 +67,9 @@ static int reload_rootd(struct silofs_task_ctx *task)
 		log_err("failed to reload root-inode: err=%d", err);
 		return err;
 	}
-	if (!ii_isdir(ii)) {
-		log_err("root-inode is not-a-dir: mode=0%o", ii_mode(ii));
+	if (!silofs_ii_isdir(ii)) {
+		log_err("root-inode is not-a-dir: mode=0%o",
+		        silofs_ii_mode(ii));
 		return -SILOFS_EFSCORRUPTED;
 	}
 	return 0;

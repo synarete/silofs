@@ -28,6 +28,7 @@
 #include "spmaps.h"
 #include "lsmap.h"
 #include "stage.h"
+#include "private.h"
 
 /* space-allocation context */
 struct silofs_spalloc_ctx {
@@ -48,14 +49,14 @@ static size_t spleaf_span(void)
 
 static loff_t off_to_spleaf_start(loff_t voff)
 {
-	return off_align(voff, (long)spleaf_span());
+	return silofs_off_align(voff, (long)spleaf_span());
 }
 
 static loff_t off_to_spleaf_next(loff_t voff)
 {
-	const loff_t voff_next = off_end(voff, spleaf_span());
+	const loff_t vsilofs_off_next = silofs_off_end(voff, spleaf_span());
 
-	return off_to_spleaf_start(voff_next);
+	return off_to_spleaf_start(vsilofs_off_next);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -100,7 +101,7 @@ static bool sbi_is_within_vspace(const struct silofs_sb_info *sbi,
 {
 	const size_t vaddr_len = silofs_vaddr_len(vaddr);
 	const loff_t vaddr_beg = vaddr->off;
-	const loff_t vaddr_end = off_end(vaddr_beg, vaddr_len);
+	const loff_t vaddr_end = silofs_off_end(vaddr_beg, vaddr_len);
 	const loff_t vspace_end = silofs_sbst_vspace_end(sbi);
 
 	return (vaddr_end <= vspace_end);

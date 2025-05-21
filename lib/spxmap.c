@@ -17,6 +17,7 @@
 #include "configs.h"
 #include "lnodes.h"
 #include "spxmap.h"
+#include "private.h"
 
 /* single entry of free vspace */
 struct silofs_spa_entry {
@@ -111,7 +112,7 @@ static void spe_fini(struct silofs_spa_entry *spe)
 
 static loff_t spe_end(const struct silofs_spa_entry *spe)
 {
-	return off_end(spe->spe_voff, spe->spe_len);
+	return silofs_off_end(spe->spe_voff, spe->spe_len);
 }
 
 static bool spe_is_within(const struct silofs_spa_entry *spe, loff_t voff)
@@ -123,7 +124,7 @@ static void spe_chop_head(struct silofs_spa_entry *spe, size_t len)
 {
 	silofs_assert_lt(len, spe->spe_len);
 
-	spe->spe_voff = off_end(spe->spe_voff, len);
+	spe->spe_voff = silofs_off_end(spe->spe_voff, len);
 	spe->spe_len -= len;
 }
 
@@ -311,7 +312,7 @@ spamap_merge_vspace(struct silofs_spamap *spa, loff_t off, size_t len)
 	loff_t end;
 	int ret = -SILOFS_ENOENT;
 
-	end = off_end(off, len);
+	end = silofs_off_end(off, len);
 	spmap_find_next_prev(spa, off, &spe_prev, &spe_next);
 
 	if (spe_prev && (spe_end(spe_prev) == off)) {
@@ -334,7 +335,7 @@ spamap_merge_vspace(struct silofs_spamap *spa, loff_t off, size_t len)
 	if (spe == NULL) {
 		/* merge with next only */
 		spamap_evict_spe(spa, spe_next);
-		spe = spamap_new_spe(spa, off, off_ulen(off, end));
+		spe = spamap_new_spe(spa, off, silofs_off_ulen(off, end));
 		if (spe == NULL) {
 			return -SILOFS_ENOMEM;
 		}

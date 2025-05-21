@@ -27,6 +27,7 @@
 #include "infra.h"
 #include "str.h"
 #include "knownfs.h"
+#include "private.h"
 
 enum silofs_mntcmd {
 	SILOFS_MNTCMD_NONE = 0,

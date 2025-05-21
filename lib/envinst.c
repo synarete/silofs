@@ -31,6 +31,7 @@
 #include "namei.h"
 #include "env.h"
 #include "fuseq.h"
+#include "private.h"
 
 /* env initialization-state flags */
 enum silofs_env_initf {

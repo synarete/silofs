@@ -22,6 +22,7 @@
 #include "env.h"
 #include "opexec.h"
 #include "walk.h"
+#include "private.h"
 
 struct silofs_ar_desc {
 	struct silofs_caddr caddr;
@@ -591,7 +592,7 @@ static int aridx_check_caddr(const struct silofs_ar_index *aridx,
 	struct silofs_caddr caddr_calc;
 
 	aiview_calc_caddr(aiview, &aridx->mdigest, &caddr_calc);
-	return caddr_isequal(caddr, &caddr_calc) ? 0 : -SILOFS_ECSUM;
+	return silofs_caddr_isequal(caddr, &caddr_calc) ? 0 : -SILOFS_ECSUM;
 }
 
 static int
@@ -804,7 +805,7 @@ static int arc_save_bootrec(const struct silofs_ar_ctx *ar_ctx,
 	if (err) {
 		return err;
 	}
-	if (!caddr_isequal(caddr, &caddr2)) {
+	if (!silofs_caddr_isequal(caddr, &caddr2)) {
 		return -SILOFS_EBADBOOTREC;
 	}
 	return 0;

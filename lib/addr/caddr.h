@@ -69,10 +69,4 @@ void silofs_caddr64b_htox(struct silofs_caddr64b    *caddr64b,
 void silofs_caddr64b_xtoh(const struct silofs_caddr64b *caddr64b,
                           struct silofs_caddr          *caddr);
 
-#ifdef SILOFS_USE_PRIVATE
-#define caddr_isnone(ca)       silofs_caddr_isnone(ca)
-#define caddr_isequal(ca, oth) silofs_caddr_isequal(ca, oth)
-#define caddr_assign(ca, oth)  silofs_caddr_assign(ca, oth)
-#endif
-
 #endif /* SILOFS_CADDR_H_ */

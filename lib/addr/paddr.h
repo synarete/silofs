@@ -105,12 +105,4 @@ void silofs_paddr64b_htox(struct silofs_paddr64b    *paddr64,
 void silofs_paddr64b_xtoh(const struct silofs_paddr64b *paddr64,
                           struct silofs_paddr          *paddr);
 
-#ifdef SILOFS_USE_PRIVATE
-#define paddr_none()            silofs_paddr_none()
-#define paddr_reset(pa)         silofs_paddr_reset(pa)
-#define paddr_assign(pa, oth)   silofs_paddr_assign(pa, oth)
-#define paddr_isequal(pa1, pa2) silofs_paddr_isequal(pa1, pa2)
-#define paddr_isnull(pa)        silofs_paddr_isnull(pa)
-#endif
-
 #endif /* SILOFS_PADDR_H_ */

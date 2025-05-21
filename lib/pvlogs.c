@@ -81,7 +81,7 @@ pvsegr_last_paddr(const struct silofs_pvsegr *pvsegr, enum silofs_ptype ptype,
 static void pvsegr_advance_by(struct silofs_pvsegr *pvsegr,
                               const struct silofs_paddr *paddr)
 {
-	pvsegr->curr_pos = off_end(paddr->off, paddr->len);
+	pvsegr->curr_pos = silofs_off_end(paddr->off, paddr->len);
 }
 
 static void pvsegr_carve(struct silofs_pvsegr *pvsegr, enum silofs_ptype ptype,
@@ -105,7 +105,7 @@ static bool pvsegr_has_index(const struct silofs_pvsegr *pvsegr, uint32_t idx)
 bool silofs_pvsegr_has_paddr(const struct silofs_pvsegr *pvsegr,
                              const struct silofs_paddr *paddr)
 {
-	if (paddr_isnull(paddr)) {
+	if (silofs_paddr_isnull(paddr)) {
 		return false;
 	}
 	if (!pvsegr_has_volumeid(pvsegr, &paddr->pvsid.volumeid)) {
@@ -125,7 +125,7 @@ int silofs_pvsegr_validate(const struct silofs_pvsegr *pvsegr)
 	if (pvsegr->base_index > (UINT32_MAX / 2)) {
 		return -SILOFS_EINVAL;
 	}
-	if (off_isnull(pvsegr->curr_pos)) {
+	if (silofs_off_isnull(pvsegr->curr_pos)) {
 		return -SILOFS_EINVAL;
 	}
 	return 0;

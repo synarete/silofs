@@ -43,6 +43,7 @@
 #include "opcall.h"
 #include "opexec.h"
 #include "fuseq.h"
+#include "private.h"
 
 #if FUSE_KERNEL_VERSION != 7
 #error "wrong FUSE_KERNEL_VERSION"
@@ -1410,7 +1411,8 @@ iovec_assign(struct silofs_iovec *iov, const struct silofs_iovec *other)
 static bool iovec_isfdseq(const struct silofs_iovec *iovec1,
                           const struct silofs_iovec *iovec2)
 {
-	const loff_t end1 = off_end(iovec1->iov_off, iovec1->iov.iov_len);
+	const loff_t end1 =
+		silofs_off_end(iovec1->iov_off, iovec1->iov.iov_len);
 	const loff_t beg2 = iovec2->iov_off;
 	const int fd1 = iovec1->iov_fd;
 	const int fd2 = iovec2->iov_fd;
@@ -1457,7 +1459,7 @@ fqs_append_data_to_pipe(struct silofs_fuseq_sub *fqs,
 	STATICASSERT_LE(ARRAY_SIZE(iov), SILOFS_FILE_NITER_MAX);
 
 	while (ncp < cnt) {
-		cur = min(cnt - ncp, ARRAY_SIZE(iov));
+		cur = silofs_min(cnt - ncp, ARRAY_SIZE(iov));
 		for (size_t i = 0; i < cur; ++i) {
 			iov[i].iov_base = iovec[ncp + i].iov.iov_base;
 			iov[i].iov_len = iovec[ncp + i].iov.iov_len;
@@ -1590,7 +1592,7 @@ static void xiter_prep(struct silofs_fuseq_xiter *xi, size_t size)
 
 	if (size > 0) {
 		xi->beg = xi->buf;
-		xi->end = xi->beg + min(size, sizeof(xi->buf));
+		xi->end = xi->beg + silofs_min(size, sizeof(xi->buf));
 		xi->cur = xi->buf;
 	} else {
 		xi->beg = NULL;
@@ -1700,7 +1702,7 @@ static void update_dirent(struct silofs_fuseq_diter *di,
 	di->de_off = rdi->off;
 	di->de_ino = rdi->ino;
 	di->de_dt = rdi->dt;
-	di->de_nlen = min(rdi->namelen, nbuf_sz - 1);
+	di->de_nlen = silofs_min(rdi->namelen, nbuf_sz - 1);
 	memcpy(di->de_name.str, rdi->name, di->de_nlen);
 	memset(di->de_name.str + di->de_nlen, 0, nbuf_sz - di->de_nlen);
 	if (di->plus) {
@@ -1743,7 +1745,7 @@ diter_prep(struct silofs_fuseq_diter *di, size_t bsz, loff_t pos, int plus)
 	di->de_ino = 0;
 	di->de_dt = 0;
 	di->de_name.str[0] = '\0';
-	di->bsz = min(bsz, sizeof(di->buf));
+	di->bsz = silofs_min(bsz, sizeof(di->buf));
 	di->len = 0;
 	di->rd_ctx.actor = filldir;
 	di->rd_ctx.pos = pos;
@@ -2324,7 +2326,7 @@ static int do_getxattr(const struct silofs_fuseq_cmd_ctx *fcc)
 	fcc->args->in.getxattr.ino = fcc->ino;
 	fcc->args->in.getxattr.name = fcc->in->u.getxattr.name;
 	fcc->args->in.getxattr.size =
-		min(fcc->in->u.getxattr.arg.size, sizeof(xab->value));
+		silofs_min(fcc->in->u.getxattr.arg.size, sizeof(xab->value));
 	fcc->args->in.getxattr.buf = fcc->args->in.getxattr.size ? xab->value :
 	                                                           NULL;
 	fcc->args->out.getxattr.size = 0;
@@ -2513,8 +2515,8 @@ static int do_copy_file_range(const struct silofs_fuseq_cmd_ctx *fcc)
 	int err;
 
 	check_fh_of(fcc->task, fcc->ino, fcc->in->u.copy_file_range.arg.fh_in);
-	len = min(fcc->in->u.copy_file_range.arg.len,
-	          FUSEQ_COPY_FILE_RANGE_MAX);
+	len = silofs_min(fcc->in->u.copy_file_range.arg.len,
+	                 FUSEQ_COPY_FILE_RANGE_MAX);
 	fcc->args->in.copy_file_range.ino_in = fcc->ino;
 	fcc->args->in.copy_file_range.off_in =
 		(loff_t)fcc->in->u.copy_file_range.arg.off_in;
@@ -2609,7 +2611,7 @@ static int do_read_iter(const struct silofs_fuseq_cmd_ctx *fcc)
 	int ret;
 	int err;
 
-	len = min(fcc->in->u.read.arg.size, fcc->fq->fq_coni.max_read);
+	len = silofs_min(fcc->in->u.read.arg.size, fcc->fq->fq_coni.max_read);
 	fcc->args->in.read.ino = fcc->ino;
 	fcc->args->in.read.off = (loff_t)(fcc->in->u.read.arg.offset);
 	fcc->args->in.read.len = len;
@@ -2630,7 +2632,7 @@ static int do_read_buf(const struct silofs_fuseq_cmd_ctx *fcc)
 	size_t len;
 	int err;
 
-	len = min(fcc->in->u.read.arg.size, fcc->fq->fq_coni.max_read);
+	len = silofs_min(fcc->in->u.read.arg.size, fcc->fq->fq_coni.max_read);
 	fcc->args->in.read.ino = fcc->ino;
 	fcc->args->in.read.off = (loff_t)(fcc->in->u.read.arg.offset);
 	fcc->args->in.read.len = len;
@@ -2858,7 +2860,7 @@ static int do_write_iter(const struct silofs_fuseq_cmd_ctx *fcc)
 	int ret = 0;
 
 	check_fh_of(fcc->task, fcc->ino, fcc->in->u.write.arg.fh);
-	len = min(fcc->in->u.write.arg.size, con_max_write);
+	len = silofs_min(fcc->in->u.write.arg.size, con_max_write);
 	fcc->args->in.write.ino = fcc->ino;
 	fcc->args->in.write.len = len;
 	fcc->args->in.write.off = (loff_t)(fcc->in->u.write.arg.offset);
@@ -3781,7 +3783,7 @@ static int fqs_copy_pipe_in(struct silofs_fuseq_sub *fqs)
 	struct silofs_fuseq_hdr_in *hdr_in = &in->u.hdr;
 	struct silofs_pipe *pipe = fqs_cur_pipe(fqs);
 	const size_t nsp = (size_t)(pipe->pend);
-	const size_t cnt = min(sizeof(in->u.write), nsp);
+	const size_t cnt = silofs_min(sizeof(in->u.write), nsp);
 	size_t ncp1 = 0;
 	size_t ncp2 = 0;
 	size_t rem;
@@ -4670,13 +4672,13 @@ static size_t fuseq_bufsize_max(const struct silofs_fuseq *fq)
 	const size_t outbuf_max = sizeof(*fqs->fqs_outb);
 
 	unused(fqs); /* make clangscan happy */
-	return max(inbuf_max, outbuf_max);
+	return silofs_max(inbuf_max, outbuf_max);
 }
 
 static int
 fuseq_resolve_bufsize(const struct silofs_fuseq *fq, size_t *out_bufsize)
 {
-	const size_t page_size = fq->fq_pagesize;
+	const size_t pgsz = fq->fq_pagesize;
 	size_t bufsize_min;
 	size_t bufsize_max;
 	size_t bufsize_may;
@@ -4684,14 +4686,14 @@ fuseq_resolve_bufsize(const struct silofs_fuseq *fq, size_t *out_bufsize)
 
 	STATICASSERT_GE(FUSE_MIN_READ_BUFFER, 2 * FUSE_BUFFER_HEADER_SIZE);
 
-	bufsize_min = min(FUSE_MIN_READ_BUFFER, 2 * SILOFS_LBK_SIZE);
+	bufsize_min = silofs_min(FUSE_MIN_READ_BUFFER, 2 * SILOFS_LBK_SIZE);
 	bufsize_max = fuseq_bufsize_max(fq);
 	if (fq->fq_may_splice) {
 		bufsize_may = silofs_pipe_size_of(bufsize_max);
 	} else {
 		bufsize_may = bufsize_max;
 	}
-	bufsize = (min(bufsize_may, bufsize_max) / page_size) * page_size;
+	bufsize = (silofs_min(bufsize_may, bufsize_max) / pgsz) * pgsz;
 	if ((bufsize < bufsize_min) || (bufsize > bufsize_max)) {
 		fuseq_log_err("can not creat channel: bufsize=%zu "
 		              "bufsize_max=%zu bufsize_min=%zu ",
@@ -4728,7 +4730,7 @@ static int fuseq_calc_max_write(const struct silofs_fuseq *fq, size_t bufsize,
 	}
 	data_size = bufsize - hdr_size - write_in_size;
 	max_write = (data_size / page_size) * page_size;
-	if (max_write < max(2 * page_size, FUSE_MIN_READ_BUFFER)) {
+	if (max_write < silofs_max(2 * page_size, FUSE_MIN_READ_BUFFER)) {
 		fuseq_log_err("short buffer: data_size=%zu max_write=%zu ",
 		              data_size, max_write);
 		return -SILOFS_EPROTO;
@@ -4760,7 +4762,7 @@ static int fuseq_update_conn_info(struct silofs_fuseq *fq)
 
 	/* logic from libfuse::fuse_lowlevel.c -- is it correct? */
 	max_pages = ((coni->max_write - 1) / fq->fq_pagesize) + 1;
-	coni->max_pages = (uint32_t)min(max_pages, UINT16_MAX);
+	coni->max_pages = (uint32_t)silofs_min(max_pages, UINT16_MAX);
 
 	return 0;
 }
@@ -5096,7 +5098,7 @@ static size_t fuseq_calc_selfsize(const struct silofs_fuseq *fq,
 
 	sz = sizeof(*fq);
 	sz += (subx->fq_nsub_lim * dsz);
-	sz = div_round_up(sz, pgsz) * pgsz;
+	sz = silofs_div_round_up(sz, pgsz) * pgsz;
 	return sz;
 }
 

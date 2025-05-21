@@ -21,6 +21,7 @@
 #include "infra.h"
 #include "lnodes.h"
 #include "spmaps.h"
+#include "private.h"
 
 static void lrange_of_spleaf(struct silofs_lrange *lrange, loff_t voff)
 {
@@ -174,7 +175,7 @@ static size_t spnode_slot_of(const struct silofs_spmap_node *spn, loff_t voff)
 
 	spnode_lrange(spn, &lrange);
 	len = silofs_lrange_len(&lrange);
-	roff = off_diff(lrange.beg, voff);
+	roff = silofs_off_diff(lrange.beg, voff);
 	slot = (size_t)(roff * (long)nslots) / len;
 	silofs_assert_lt(slot, nslots);
 	return slot;
@@ -270,7 +271,7 @@ lbk_state_mask_of(struct silofs_lbk_state *lbk_st, size_t ki, size_t nk)
 
 	lbk_st->state = 0;
 	if (ki < 64) {
-		nn = min(nk, 64 - ki);
+		nn = silofs_min(nk, 64 - ki);
 		lbk_st->state = mask_of(ki, nn);
 	}
 }
@@ -609,7 +610,7 @@ lbr_make_vaddrs(const struct silofs_lbk_ref *lbr, enum silofs_ltype ltype,
 	for (size_t kbn = 0; (kbn + nkb) <= nkb_in_bk; kbn += nkb) {
 		lbk_state_mask_of(&bk_mask, kbn, nkb);
 		if (lbk_state_has_mask(&lbk_st, &bk_mask)) {
-			voff = off_end(voff_base, kbn * SILOFS_KB_SIZE);
+			voff = silofs_off_end(voff_base, kbn * SILOFS_KB_SIZE);
 			vaddr = &out_vaddrs->vaddr[out_vaddrs->count++];
 			silofs_vaddr_setup(vaddr, ltype, voff);
 		}
@@ -715,7 +716,7 @@ spleaf_lba_slot(const struct silofs_spmap_leaf *spl, silofs_lba_t lba)
 
 static size_t spleaf_slot_of(const struct silofs_spmap_leaf *spl, loff_t voff)
 {
-	return spleaf_lba_slot(spl, off_to_lba(voff));
+	return spleaf_lba_slot(spl, silofs_off_to_lba(voff));
 }
 
 static struct silofs_lbk_ref *
@@ -1140,7 +1141,7 @@ static bool sli_is_inrange(const struct silofs_spleaf_info *sli, loff_t voff)
 static size_t sli_voff_to_bn(const struct silofs_spleaf_info *sli, loff_t voff)
 {
 	const loff_t beg = sli_start_voff(sli);
-	const size_t bn = (size_t)off_to_lba(voff - beg);
+	const size_t bn = (size_t)silofs_off_to_lba(voff - beg);
 
 	return bn;
 }
@@ -1465,7 +1466,7 @@ is_consecutive_laddrs(const struct silofs_laddr *laddr1, size_t len1,
 	if (!silofs_lsid_isequal(&laddr1->lsid, &laddr2->lsid)) {
 		return false;
 	}
-	end1 = off_end(laddr1->pos, len1);
+	end1 = silofs_off_end(laddr1->pos, len1);
 	if (end1 != laddr2->pos) {
 		return false;
 	}
@@ -1656,7 +1657,7 @@ void silofs_sni_active_lrange(const struct silofs_spnode_info *sni,
 	span = silofs_height_to_space_span(lrange.height - 1);
 	nform_size = sni->sn_nactive_subs * (size_t)span;
 	silofs_lrange_setup(out_lrange, lrange.height, lrange.beg,
-	                    off_end(lrange.beg, nform_size));
+	                    silofs_off_end(lrange.beg, nform_size));
 }
 
 loff_t silofs_sni_base_voff(const struct silofs_spnode_info *sni)
@@ -1936,7 +1937,7 @@ int silofs_verify_spmap_node(const struct silofs_spmap_node *sn)
 		return err;
 	}
 	spnode_lrange(sn, &lrange);
-	lrange_len = off_len(lrange.beg, lrange.end);
+	lrange_len = silofs_off_len(lrange.beg, lrange.end);
 	height_len = silofs_height_to_space_span(height);
 	if (lrange_len != height_len) {
 		log_err("bad spmap-node lrange: height=%d "

@@ -104,8 +104,8 @@ loff_t silofs_sli_base_voff(const struct silofs_spleaf_info *sli);
 int silofs_sli_find_free_space(const struct silofs_spleaf_info *sli,
                                struct silofs_vaddr             *out_vaddr);
 
-void silofs_sli_update_voff_hint(struct silofs_spleaf_info *sli,
-                                 const struct silofs_vaddr *vaddr);
+void silofs_sli_update_off_hint(struct silofs_spleaf_info *sli,
+                                const struct silofs_vaddr *vaddr);
 
 void silofs_sli_mark_allocated_at(struct silofs_spleaf_info *sli,
                                   const struct silofs_vaddr *vaddr);

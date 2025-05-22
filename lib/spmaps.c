@@ -1231,8 +1231,8 @@ int silofs_sli_find_free_space(const struct silofs_spleaf_info *sli,
 	return ret;
 }
 
-void silofs_sli_update_voff_hint(struct silofs_spleaf_info *sli,
-                                 const struct silofs_vaddr *vaddr)
+void silofs_sli_update_off_hint(struct silofs_spleaf_info *sli,
+                                const struct silofs_vaddr *vaddr)
 {
 	struct silofs_lrange lrange;
 	const loff_t voff = vaddr->off;

@@ -338,6 +338,14 @@ void ft_do_close(int fd, const char *fl, int ln)
 	ft_expect_sys_ok(res, fl, ln);
 }
 
+void ft_do_pclose(int *fd, const char *fl, int ln)
+{
+	if (fd != NULL) {
+		ft_do_close(*fd, fl, ln);
+		*fd = -1;
+	}
+}
+
 void ft_do_truncate(const char *path, loff_t len, const char *fl, int ln)
 {
 	int res;
@@ -972,6 +980,15 @@ void ft_do_pwriten(int fd, const void *buf, size_t cnt, loff_t off,
 		nwr += nwr_cur;
 	}
 	ft_expect_eq(nwr, cnt);
+}
+
+void ft_do_creat_resize(const char *path, size_t len, const char *fl, int ln)
+{
+	int fd = -1;
+
+	ft_do_open(path, O_CREAT | O_RDWR | O_TRUNC, 0600, &fd, fl, ln);
+	ft_do_ftruncate(fd, (ssize_t)len, fl, ln);
+	ft_do_pclose(&fd, fl, ln);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

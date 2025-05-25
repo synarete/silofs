@@ -104,6 +104,8 @@ void ft_do_creat(const char *path, mode_t mode, int *out_fd, const char *fl,
 
 void ft_do_close(int fd, const char *fl, int ln);
 
+void ft_do_pclose(int *fd, const char *fl, int ln);
+
 void ft_do_truncate(const char *path, loff_t len, const char *fl, int ln);
 
 void ft_do_ftruncate(int fd, loff_t len, const char *fl, int ln);
@@ -289,6 +291,8 @@ void ft_do_writen(int fd, const void *buf, size_t cnt, const char *fl, int ln);
 void ft_do_pwriten(int fd, const void *buf, size_t cnt, loff_t off,
                    const char *fl, int ln);
 
+void ft_do_creat_resize(const char *path, size_t len, const char *fl, int ln);
+
 /* ioctl wrappers */
 void ft_do_ioctl_syncfs(int fd, const char *fl, int ln);
 
@@ -377,6 +381,8 @@ void ft_do_ioctl_syncfs(int fd, const char *fl, int ln);
 	ft_do_creat(path_, mode_, out_fd_, FT_FL_LN_)
 
 #define ft_close(fd_) ft_do_close(fd_, FT_FL_LN_)
+
+#define ft_pclose(fd_) ft_do_pclose(fd_, FT_FL_LN_)
 
 #define ft_truncate(path_, len_) ft_do_truncate(path, len_, FT_FL_LN_)
 
@@ -563,6 +569,9 @@ void ft_do_ioctl_syncfs(int fd, const char *fl, int ln);
 
 #define ft_pwriten(fd_, buf_, cnt_, off_) \
 	ft_do_pwriten(fd_, buf_, cnt_, off_, FT_FL_LN_)
+
+#define ft_creat_resize(path_, len_) \
+	ft_do_creat_resize(path_, len_, FT_FL_LN_)
 
 #define ft_ioctl_syncfs(fd_) ft_do_ioctl_syncfs(fd_, FT_FL_LN_)
 

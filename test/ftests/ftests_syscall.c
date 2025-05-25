@@ -982,6 +982,25 @@ void ft_do_pwriten(int fd, const void *buf, size_t cnt, loff_t off,
 	ft_expect_eq(nwr, cnt);
 }
 
+void ft_do_copy_file_rangen(int fd_src, loff_t off_in, int fd_dst,
+                            loff_t off_out, size_t len, const char *fl, int ln)
+{
+	size_t ncp = 0;
+	size_t ncp_want = 0;
+	size_t ncp_total = 0;
+	loff_t off_src = off_in;
+	loff_t off_dst = off_out;
+
+	while (ncp_total < len) {
+		ncp_want = len - ncp_total;
+		ft_do_copy_file_range(fd_src, &off_src, fd_dst, &off_dst,
+		                      ncp_want, &ncp, fl, ln);
+		ft_expect_gt(ncp, 0);
+		ft_expect_le(ncp, ncp_want);
+		ncp_total += ncp;
+	}
+}
+
 void ft_do_creat_resize(const char *path, size_t len, const char *fl, int ln)
 {
 	int fd = -1;

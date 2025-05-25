@@ -224,6 +224,7 @@ struct ft_sub_exec {
 	ft_sub_exec_fn       exec_fn;
 	struct ft_env       *fte;
 	const char          *path;
+	const char          *path2;
 	size_t               niter;
 	loff_t               off;
 	size_t               len;
@@ -233,12 +234,11 @@ struct ft_sub_exec {
 
 void ft_sub_run(struct ft_sub_exec *se_arr, size_t n, ft_sub_exec_fn fn);
 
-void ft_sub_pre_run(struct ft_sub_exec *se_arr, size_t n);
-
-void ft_sub_post_run(struct ft_sub_exec *se_arr, size_t n);
-
 void ft_sub_setup(struct ft_sub_exec *se_arr, size_t n, struct ft_env *fte,
                   size_t niter, loff_t off, size_t len);
+
+void ft_sub_setup2(struct ft_sub_exec *se_arr, size_t n, struct ft_env *fte,
+                   size_t niter, loff_t off, size_t len);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -282,6 +282,7 @@ extern const struct ft_tests ft_test_mmap;
 extern const struct ft_tests ft_test_mmap_mt;
 extern const struct ft_tests ft_test_namespace;
 extern const struct ft_tests ft_mt_rw_basic;
+extern const struct ft_tests ft_mt_copy_file_range;
 
 /* test-define helper macros */
 #define FT_DEFTESTF(fn_, fl_)         \

@@ -68,9 +68,7 @@ static void test_mt_rw_trunc_(struct ft_env *fte, loff_t off, size_t len)
 	const size_t nse = FT_ARRAY_SIZE(se);
 
 	ft_sub_setup(se, nse, fte, 100, off, len);
-	ft_sub_pre_run(se, nse);
 	ft_sub_run(se, nse, test_rdwr_trunc);
-	ft_sub_post_run(se, nse);
 }
 
 static void test_mt_rw_trunc(struct ft_env *fte)
@@ -131,9 +129,7 @@ static void test_mt_rw_over_(struct ft_env *fte, loff_t off, size_t len)
 	const size_t nse = FT_ARRAY_SIZE(se);
 
 	ft_sub_setup(se, nse, fte, 100, off, len);
-	ft_sub_pre_run(se, nse);
 	ft_sub_run(se, nse, test_rewrite_over);
-	ft_sub_post_run(se, nse);
 }
 
 static void test_mt_rw_over(struct ft_env *fte)
@@ -207,9 +203,7 @@ static void test_mt_rw_xattr_(struct ft_env *fte, loff_t off, size_t len)
 	const size_t nse = FT_ARRAY_SIZE(se);
 
 	ft_sub_setup(se, nse, fte, 1000, off, len);
-	ft_sub_pre_run(se, nse);
 	ft_sub_run(se, nse, test_rdwr_with_xattr);
-	ft_sub_post_run(se, nse);
 }
 
 static void test_mt_rw_xattr(struct ft_env *fte)

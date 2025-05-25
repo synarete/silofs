@@ -37,6 +37,7 @@ silofs_ftests_SOURCES += test_lseek.c
 silofs_ftests_SOURCES += test_mkdir_rmdir.c
 silofs_ftests_SOURCES += test_mmap.c
 silofs_ftests_SOURCES += test_mmap_mt.c
+silofs_ftests_SOURCES += test_mt_copy_file_range.c
 silofs_ftests_SOURCES += test_mt_rw_basic.c
 silofs_ftests_SOURCES += test_namespace.c
 silofs_ftests_SOURCES += test_opath.c

@@ -291,6 +291,10 @@ void ft_do_writen(int fd, const void *buf, size_t cnt, const char *fl, int ln);
 void ft_do_pwriten(int fd, const void *buf, size_t cnt, loff_t off,
                    const char *fl, int ln);
 
+void ft_do_copy_file_rangen(int fd_src, loff_t off_in, int fd_dst,
+                            loff_t off_out, size_t len, const char *fl,
+                            int ln);
+
 void ft_do_creat_resize(const char *path, size_t len, const char *fl, int ln);
 
 /* ioctl wrappers */
@@ -572,6 +576,10 @@ void ft_do_ioctl_syncfs(int fd, const char *fl, int ln);
 
 #define ft_creat_resize(path_, len_) \
 	ft_do_creat_resize(path_, len_, FT_FL_LN_)
+
+#define ft_copy_file_rangen(fd_in_, off_in_, fd_out_, off_out_, len_) \
+	ft_do_copy_file_rangen(fd_in_, off_in_, fd_out_, off_out_, len_, \
+			      FT_FL_LN_)
 
 #define ft_ioctl_syncfs(fd_) ft_do_ioctl_syncfs(fd_, FT_FL_LN_)
 

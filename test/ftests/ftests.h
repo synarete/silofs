@@ -214,6 +214,34 @@ void ft_exec_with_ranges_(struct ft_env *fte,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+/* multi-threaded stress tests */
+
+struct ft_sub_exec;
+typedef void (*ft_sub_exec_fn)(struct ft_sub_exec *);
+
+struct ft_sub_exec {
+	struct silofs_thread th;
+	ft_sub_exec_fn       exec_fn;
+	struct ft_env       *fte;
+	const char          *path;
+	size_t               niter;
+	loff_t               off;
+	size_t               len;
+	loff_t               end;
+	int                  keep_run;
+};
+
+void ft_sub_run(struct ft_sub_exec *se_arr, size_t n, ft_sub_exec_fn fn);
+
+void ft_sub_pre_run(struct ft_sub_exec *se_arr, size_t n);
+
+void ft_sub_post_run(struct ft_sub_exec *se_arr, size_t n);
+
+void ft_sub_setup(struct ft_sub_exec *se_arr, size_t n, struct ft_env *fte,
+                  size_t niter, loff_t off, size_t len);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 /* sub-tests grouped by topic */
 extern const struct ft_tests ft_test_access;
 extern const struct ft_tests ft_test_stat;
@@ -253,7 +281,7 @@ extern const struct ft_tests ft_test_copy_file_range;
 extern const struct ft_tests ft_test_mmap;
 extern const struct ft_tests ft_test_mmap_mt;
 extern const struct ft_tests ft_test_namespace;
-extern const struct ft_tests ft_stress_rw;
+extern const struct ft_tests ft_mt_rw_basic;
 
 /* test-define helper macros */
 #define FT_DEFTESTF(fn_, fl_)         \

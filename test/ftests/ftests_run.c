@@ -61,7 +61,7 @@ static const struct ft_tests *const ft_testsbl[] = {
 	FT_METATEST(ft_test_tmpfile),
 	FT_METATEST(ft_test_mmap),
 	FT_METATEST(ft_test_mmap_mt),
-	FT_METATEST(ft_stress_rw),
+	FT_METATEST(ft_mt_rw_basic),
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -323,6 +323,127 @@ void fte_run(struct ft_env *fte)
 		ft_free_tests(fte);
 	}
 	fte_meta(fte, 0);
+}
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+static int ft_sub_exec_hook(struct silofs_thread *th)
+{
+	struct ft_sub_exec *se = th->arg;
+
+	se->exec_fn(se);
+	return 0;
+}
+
+static void ft_sub_do_exec(struct ft_sub_exec *se, ft_sub_exec_fn exec_fn)
+{
+	int err;
+
+	se->keep_run = 1;
+	se->exec_fn = exec_fn;
+	err = silofs_thread_create(&se->th, ft_sub_exec_hook, se, NULL);
+	ft_expect_ok(err);
+}
+
+static void
+ft_sub_exec(struct ft_sub_exec *se_arr, size_t n, ft_sub_exec_fn fn)
+{
+	for (size_t i = 0; i < n; ++i) {
+		ft_sub_do_exec(&se_arr[i], fn);
+	}
+}
+
+static void ft_sub_do_wait(const struct ft_sub_exec *se)
+{
+	long iter = 0;
+
+	while (se->th.finish_time == 0) {
+		iter += 1;
+		ft_expect_lt(iter, 100000);
+		ft_suspend1(se->fte);
+	}
+}
+
+static void ft_sub_wait(const struct ft_sub_exec *se_arr, size_t n)
+{
+	for (size_t i = 0; i < n; ++i) {
+		ft_sub_do_wait(&se_arr[i]);
+	}
+}
+
+static void ft_sub_do_join(struct ft_sub_exec *se)
+{
+	int err;
+
+	se->keep_run = 0;
+	err = silofs_thread_join(&se->th);
+	ft_expect_ok(err);
+}
+
+static void ft_sub_join(struct ft_sub_exec *se_arr, size_t n)
+{
+	for (size_t i = 0; i < n; ++i) {
+		ft_sub_do_join(&se_arr[i]);
+	}
+}
+
+void ft_sub_run(struct ft_sub_exec *se_arr, size_t n, ft_sub_exec_fn fn)
+{
+	ft_sub_exec(se_arr, n, fn);
+	ft_sub_wait(se_arr, n);
+	ft_sub_join(se_arr, n);
+}
+
+static void ft_sub_do_create_file(struct ft_sub_exec *se)
+{
+	ft_creat_resize(se->path, se->len);
+}
+
+void ft_sub_pre_run(struct ft_sub_exec *se_arr, size_t n)
+{
+	for (size_t i = 0; i < n; ++i) {
+		ft_sub_do_create_file(&se_arr[i]);
+	}
+}
+
+static void ft_sub_do_unlink_file(struct ft_sub_exec *se)
+{
+	ft_unlink(se->path);
+}
+
+void ft_sub_post_run(struct ft_sub_exec *se_arr, size_t n)
+{
+	for (size_t i = 0; i < n; ++i) {
+		ft_sub_do_unlink_file(&se_arr[i]);
+	}
+}
+
+static void
+ft_sub_do_setup(struct ft_sub_exec *se, struct ft_env *fte, const char *path,
+                size_t niter, loff_t off, size_t len)
+{
+	silofs_memzero(se, sizeof(*se));
+	se->fte = fte;
+	se->path = path;
+	se->niter = niter;
+	se->off = off;
+	se->len = len;
+	se->end = ft_off_end(off, len);
+	se->keep_run = 1;
+}
+
+static void ft_sub_do_setup_uniq(struct ft_sub_exec *se, struct ft_env *fte,
+                                 size_t niter, loff_t off, size_t len)
+{
+	ft_sub_do_setup(se, fte, ft_new_path_unique(fte), niter, off, len);
+}
+
+void ft_sub_setup(struct ft_sub_exec *se_arr, size_t n, struct ft_env *fte,
+                  size_t niter, loff_t off, size_t len)
+{
+	for (size_t i = 0; i < n; ++i) {
+		ft_sub_do_setup_uniq(&se_arr[i], fte, niter, off, len);
+	}
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

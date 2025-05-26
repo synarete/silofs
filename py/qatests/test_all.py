@@ -2,9 +2,9 @@
 from . import ctx
 from . import test_archive
 from . import test_basic
+from . import test_clone
 from . import test_fillfs
 from . import test_fio
-from . import test_fork
 from . import test_fsck
 from . import test_io
 from . import test_self
@@ -28,13 +28,13 @@ TESTS = [
     test_io.test_async_io,
     test_view.test_view_minimal,
     test_view.test_view_data,
-    test_fork.test_fork_basic,
-    test_fork.test_fork_reload_twice,
-    test_fork.test_fork_reload_multi,
-    test_fork.test_fork_offline,
-    test_fork.test_fork_repeated,
+    test_clone.test_clone_basic,
+    test_clone.test_clone_reload_twice,
+    test_clone.test_clone_reload_multi,
+    test_clone.test_clone_offline,
+    test_clone.test_clone_repeated,
     test_fsck.test_fsck_basic,
-    test_fsck.test_fsck_fork,
+    test_fsck.test_fsck_clone,
     test_archive.test_archive_basic,
     test_archive.test_archive_twice,
     test_fillfs.test_fill_data,

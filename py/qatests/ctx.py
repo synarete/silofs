@@ -227,15 +227,15 @@ class TestEnv:
         self.exec_umount()
         self.exec_rmfs()
 
-    def exec_fork(self, name: str) -> None:
-        self.subcmd.silofs.fork(name, self.mntpoint(), self._passwd())
+    def exec_clone(self, name: str) -> None:
+        self.subcmd.silofs.clone(name, self.mntpoint(), self._passwd())
         self._require_bref(name)
 
-    def exec_fork_offline(self, mainname: str, forkname: str) -> None:
-        self.subcmd.silofs.fork_offline(
-            forkname, self._repodir_name(mainname), self._passwd()
+    def exec_clone_offline(self, mainname: str, clonename: str) -> None:
+        self.subcmd.silofs.clone_offline(
+            clonename, self._repodir_name(mainname), self._passwd()
         )
-        self._require_bref(forkname)
+        self._require_bref(clonename)
 
     def exec_tune(self, path: Path, ftype: int = 2) -> None:
         self.subcmd.silofs.tune(path, ftype)

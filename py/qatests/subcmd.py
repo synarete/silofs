@@ -271,14 +271,14 @@ class _Silofs(_SubcmdExec):
     def show_statx(self, pathname: Path) -> str:
         return self.execute_sub(["show", "statx", pathname])
 
-    def fork(self, name: str, pathname: Path, password: str) -> None:
-        args = ["fork", "--no-prompt", "-n", name, pathname]
+    def clone(self, name: str, pathname: Path, password: str) -> None:
+        args = ["clone", "--no-prompt", "-n", name, pathname]
         self.execute_sub(args, indat=password)
 
-    def fork_offline(
+    def clone_offline(
         self, name: str, repodir_name: Path, password: str
     ) -> None:
-        args = ["fork", "--no-prompt", "-n", name, "--offline", repodir_name]
+        args = ["clone", "--no-prompt", "-n", name, "--offline", repodir_name]
         self.execute_sub(args, indat=password)
 
     def tune(self, pathname: Path, ftype: int) -> None:

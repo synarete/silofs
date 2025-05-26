@@ -31,7 +31,7 @@ def test_utests(env: TestEnv) -> None:
 def test_ftests(env: TestEnv) -> None:
     ff_pre_dname = "pre-ftests"
     ff_dname = "ftests"
-    ff_fork_name = "ftests-fork"
+    ff_clone_name = "ftests-clone"
     env.exec_setup_fs(64, allow_xattr_acl=True, writeback_cache=False)
     tds = env.make_tds(64, ff_pre_dname, 2**22)
     tds.do_makedirs()
@@ -39,12 +39,12 @@ def test_ftests(env: TestEnv) -> None:
     ff_root = env.create_fstree(ff_dname)
     env.subcmd.ftests.version()
     env.subcmd.ftests.run(ff_root, rand=False)
-    env.exec_fork(ff_fork_name)
+    env.exec_clone(ff_clone_name)
     tds.do_read()
     env.subcmd.ftests.run(ff_root, rand=True)
     tds.do_read()
     tds.do_unlink()
-    env.exec_rmfs(ff_fork_name)
+    env.exec_rmfs(ff_clone_name)
     env.remove_fstree(ff_pre_dname)
     env.remove_fstree(ff_dname)
     env.exec_teardown_fs()
@@ -93,8 +93,8 @@ def test_ftests_mt(env: TestEnv) -> None:
     ff_pre_dname = "pre-ftests"
     ff_dname1 = "ftests1"
     ff_dname2 = "ftests2"
-    ff_fork_name1 = "ftests-fork1"
-    ff_fork_name2 = "ftests-fork2"
+    ff_clone_name1 = "ftests-clone1"
+    ff_clone_name2 = "ftests-clone2"
     env.exec_setup_fs(64, writeback_cache=False)
     tds = env.make_tds(32, ff_pre_dname, 2**20)
     tds.do_makedirs()
@@ -103,10 +103,10 @@ def test_ftests_mt(env: TestEnv) -> None:
     ff_root2 = env.create_fstree(ff_dname2)
     fu1 = env.executor.submit(_run_ftests, env, ff_root1)
     fu2 = env.executor.submit(_run_ftests, env, ff_root2)
-    env.exec_fork(ff_fork_name1)
+    env.exec_clone(ff_clone_name1)
     tds.do_read()
     env.suspend(2)
-    env.exec_fork(ff_fork_name2)
+    env.exec_clone(ff_clone_name2)
     tds.do_read()
     fu1.result()
     fu2.result()
@@ -114,8 +114,8 @@ def test_ftests_mt(env: TestEnv) -> None:
     env.remove_fstree(ff_pre_dname)
     env.remove_fstree(ff_dname1)
     env.remove_fstree(ff_dname2)
-    env.exec_rmfs(ff_fork_name1)
-    env.exec_rmfs(ff_fork_name2)
+    env.exec_rmfs(ff_clone_name1)
+    env.exec_rmfs(ff_clone_name2)
     env.exec_teardown_fs()
 
 

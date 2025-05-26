@@ -71,7 +71,7 @@ _silofs_show() {
   fi
 }
 
-_silofs_fork() {
+_silofs_clone() {
   local cur prev words cword
   _init_completion || return
 
@@ -175,8 +175,8 @@ _silofs_subcmd() {
     "show")
       _silofs_show
       ;;
-    "fork")
-      _silofs_fork
+    "clone")
+      _silofs_clone
       ;;
     "sync")
       _silofs_sync
@@ -213,7 +213,7 @@ _silofs_main() {
     COMPREPLY+=( $(compgen -W '-v --version -h --help' -- "$cur") )
   else
     COMPREPLY+=( $(compgen -W 'init mkfs mount umount ' -- "$cur") )
-    COMPREPLY+=( $(compgen -W 'lsmnt show fork sync ' -- "$cur") )
+    COMPREPLY+=( $(compgen -W 'lsmnt show clone sync ' -- "$cur") )
     COMPREPLY+=( $(compgen -W 'tune rmfs prune fsck ' -- "$cur") )
     COMPREPLY+=( $(compgen -W 'view archive restore ' -- "$cur") )
   fi

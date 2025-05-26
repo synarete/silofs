@@ -102,7 +102,7 @@ void cmd_execute_umount(void);
 
 void cmd_execute_show(void);
 
-void cmd_execute_fork(void);
+void cmd_execute_clone(void);
 
 void cmd_execute_sync(void);
 
@@ -289,8 +289,8 @@ void cmd_open_fs(struct silofs_env *env);
 
 void cmd_exec_fs(struct silofs_env *env);
 
-void cmd_fork_fs(struct silofs_env *env, struct silofs_xref *out_curr_xrefs,
-                 struct silofs_xref *out_fork_xrefs);
+void cmd_clone_fs(struct silofs_env *env, struct silofs_xref *out_curr_xrefs,
+                  struct silofs_xref *out_clone_xrefs);
 
 void cmd_remove_fs(struct silofs_env *env);
 

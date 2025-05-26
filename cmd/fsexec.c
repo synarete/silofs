@@ -215,16 +215,16 @@ void cmd_exec_fs(struct silofs_env *env)
 	cmd_require_ok(env, err, "failed to exec fs");
 }
 
-void cmd_fork_fs(struct silofs_env *env, struct silofs_xref *out_curr_xrefs,
-                 struct silofs_xref *out_fork_xrefs)
+void cmd_clone_fs(struct silofs_env *env, struct silofs_xref *out_curr_xref,
+                  struct silofs_xref *out_fork_xref)
 {
 	int err;
 
 	err = silofs_fork_fs(env);
 	cmd_require_ok(env, err, "failed to fork fs");
-	err = silofs_get_fs_xref(env, out_curr_xrefs);
+	err = silofs_get_fs_xref(env, out_curr_xref);
 	cmd_require_ok(env, err, "post fork-fs failure");
-	err = silofs_get_fs_fork_xref(env, out_fork_xrefs);
+	err = silofs_get_fs_fork_xref(env, out_fork_xref);
 	cmd_require_ok(env, err, "post fork-fs failure");
 }
 

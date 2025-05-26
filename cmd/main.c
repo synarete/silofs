@@ -154,7 +154,7 @@ static const struct cmd_info g_cmd_info[] = {
 	DEFCMD(umount),  //
 	DEFCMD(lsmnt),   //
 	DEFCMD(show),    //
-	DEFCMD(fork),    //
+	DEFCMD(clone),   //
 	DEFCMD(sync),    //
 	DEFCMD(tune),    //
 	DEFCMD(rmfs),    //

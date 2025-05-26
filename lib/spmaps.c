@@ -301,12 +301,6 @@ static bool lbk_state_has_mask(const struct silofs_lbk_state *lbk_st,
 	return ((lbk_st->state & lbk_mask->state) == lbk_mask->state);
 }
 
-static bool lbk_state_has_mask_none(const struct silofs_lbk_state *lbk_st,
-                                    const struct silofs_lbk_state *lbk_mask)
-{
-	return ((lbk_st->state & lbk_mask->state) == 0);
-}
-
 static bool lbk_state_has_mask_any(const struct silofs_lbk_state *lbk_st,
                                    const struct silofs_lbk_state *lbk_mask)
 {
@@ -408,11 +402,6 @@ lbr_test_allocated_at(const struct silofs_lbk_ref *lbr, size_t kbn, size_t nkb)
 	return lbk_state_has_mask(&lbk_st, &bk_mask);
 }
 
-static bool lbr_test_allocated_bk(const struct silofs_lbk_ref *lbr)
-{
-	return lbr_test_allocated_at(lbr, 0, SILOFS_NKB_IN_LBK);
-}
-
 static bool lbr_test_allocated_other(const struct silofs_lbk_ref *lbr,
                                      size_t kbn, size_t nkb)
 {
@@ -461,16 +450,6 @@ static size_t lbr_usecnt_nbytes(const struct silofs_lbk_ref *lbr)
 	return SILOFS_KB_SIZE * lbr_usecnt(lbr);
 }
 
-static size_t lbr_freecnt(const struct silofs_lbk_ref *lbr)
-{
-	return SILOFS_NKB_IN_LBK - lbr_usecnt(lbr);
-}
-
-static bool lbr_isfull(const struct silofs_lbk_ref *lbr)
-{
-	return lbr_test_allocated_bk(lbr);
-}
-
 static bool lbr_isunused(const struct silofs_lbk_ref *lbr)
 {
 	struct silofs_lbk_state lbk_st;
@@ -491,17 +470,6 @@ static void lbr_set_unwritten(struct silofs_lbk_ref *lbr,
 	lbk_state_htox(&lbr->lbr_unwritten, lbk_st);
 }
 
-static bool
-lbr_test_unwritten_at(const struct silofs_lbk_ref *lbr, size_t kbn, size_t nkb)
-{
-	struct silofs_lbk_state lbk_st;
-	struct silofs_lbk_state bk_mask;
-
-	lbr_unwritten(lbr, &lbk_st);
-	lbk_state_mask_of(&bk_mask, kbn, nkb);
-	return lbk_state_has_mask(&lbk_st, &bk_mask);
-}
-
 static void
 lbr_set_unwritten_at(struct silofs_lbk_ref *lbr, size_t kbn, size_t nkb)
 {
@@ -511,18 +479,6 @@ lbr_set_unwritten_at(struct silofs_lbk_ref *lbr, size_t kbn, size_t nkb)
 	lbr_unwritten(lbr, &lbk_st);
 	lbk_state_mask_of(&bk_mask, kbn, nkb);
 	lbk_state_set_mask(&lbk_st, &bk_mask);
-	lbr_set_unwritten(lbr, &lbk_st);
-}
-
-static void
-lbr_clear_unwritten_at(struct silofs_lbk_ref *lbr, size_t kbn, size_t nkb)
-{
-	struct silofs_lbk_state lbk_st;
-	struct silofs_lbk_state bk_mask;
-
-	lbr_unwritten(lbr, &lbk_st);
-	lbk_state_mask_of(&bk_mask, kbn, nkb);
-	lbk_state_unset_mask(&lbk_st, &bk_mask);
 	lbr_set_unwritten(lbr, &lbk_st);
 }
 
@@ -569,29 +525,6 @@ static void lbr_init_arr(struct silofs_lbk_ref *arr, size_t cnt)
 	for (size_t i = 0; i < cnt; ++i) {
 		lbr_init(&arr[i]);
 	}
-}
-
-static bool lbr_may_alloc(const struct silofs_lbk_ref *lbr, size_t nkb)
-{
-	return !lbr_isfull(lbr) && (nkb <= lbr_freecnt(lbr));
-}
-
-static int
-lbr_find_free(const struct silofs_lbk_ref *lbr, size_t nkb, size_t *out_kbn)
-{
-	struct silofs_lbk_state lbk_st;
-	struct silofs_lbk_state bk_mask;
-	const size_t nkb_in_bk = SILOFS_NKB_IN_LBK;
-
-	lbr_allocated(lbr, &lbk_st);
-	for (size_t kbn = 0; (kbn + nkb) <= nkb_in_bk; kbn += nkb) {
-		lbk_state_mask_of(&bk_mask, kbn, nkb);
-		if (lbk_state_has_mask_none(&lbk_st, &bk_mask)) {
-			*out_kbn = kbn;
-			return 0;
-		}
-	}
-	return -SILOFS_ENOSPC;
 }
 
 static void
@@ -780,28 +713,12 @@ static bool spleaf_is_last_allocated_at(const struct silofs_spmap_leaf *spl,
 	return ret;
 }
 
-static bool spleaf_test_unwritten_at(const struct silofs_spmap_leaf *spl,
-                                     const struct silofs_vaddr *vaddr)
-{
-	const struct silofs_lbk_ref *lbr = spleaf_lbr_by_vaddr(spl, vaddr);
-
-	return lbr_test_unwritten_at(lbr, kbn_of(vaddr), nkbs_of(vaddr));
-}
-
 static void spleaf_set_unwritten_at(struct silofs_spmap_leaf *spl,
                                     const struct silofs_vaddr *vaddr)
 {
 	struct silofs_lbk_ref *lbr = spleaf_lbr_by_vaddr(spl, vaddr);
 
 	lbr_set_unwritten_at(lbr, kbn_of(vaddr), nkbs_of(vaddr));
-}
-
-static void spleaf_clear_unwritten_at(struct silofs_spmap_leaf *spl,
-                                      const struct silofs_vaddr *vaddr)
-{
-	struct silofs_lbk_ref *lbr = spleaf_lbr_by_vaddr(spl, vaddr);
-
-	lbr_clear_unwritten_at(lbr, kbn_of(vaddr), nkbs_of(vaddr));
 }
 
 static size_t spleaf_refcnt_at(const struct silofs_spmap_leaf *spl,
@@ -847,43 +764,6 @@ static void spleaf_renew_bk_at(struct silofs_spmap_leaf *spl,
 
 	silofs_assert(lbr_isunused(lbr));
 	lbr_clear_alloc_state(lbr);
-}
-
-static size_t spleaf_refltype_nkb(const struct silofs_spmap_leaf *spl)
-{
-	const enum silofs_ltype refltype = spleaf_refltype(spl);
-
-	return silofs_ltype_nkbs(refltype);
-}
-
-static int spleaf_find_free_at(const struct silofs_spmap_leaf *spl, size_t bn,
-                               size_t *out_kbn)
-{
-	const size_t nkb = spleaf_refltype_nkb(spl);
-	const struct silofs_lbk_ref *lbr = spleaf_lbr_at(spl, bn);
-	int err = -SILOFS_ENOSPC;
-
-	if (lbr_may_alloc(lbr, nkb)) {
-		err = lbr_find_free(lbr, nkb, out_kbn);
-	}
-	return err;
-}
-
-static int spleaf_find_free(const struct silofs_spmap_leaf *spl, size_t bn_beg,
-                            size_t bn_end, size_t *out_bn, size_t *out_kbn)
-{
-	size_t kbn = 0;
-	int err = -SILOFS_ENOSPC;
-
-	for (size_t bn = bn_beg; bn < bn_end; ++bn) {
-		err = spleaf_find_free_at(spl, bn, &kbn);
-		if (!err) {
-			*out_bn = bn;
-			*out_kbn = kbn;
-			break;
-		}
-	}
-	return err;
 }
 
 static void spleaf_make_vaddrs(const struct silofs_spmap_leaf *spl,
@@ -1108,14 +988,6 @@ void silofs_sli_setup_spawned(struct silofs_spleaf_info *sli,
 	sli_dirtify(sli);
 }
 
-static loff_t sli_start_voff(const struct silofs_spleaf_info *sli)
-{
-	struct silofs_lrange lrange;
-
-	spleaf_lrange(sli->sl, &lrange);
-	return lrange.beg;
-}
-
 void silofs_sli_update_nused(struct silofs_spleaf_info *sli)
 {
 	sli->sl_nused_bytes = spleaf_sum_nbytes_used(sli->sl);
@@ -1136,99 +1008,6 @@ static bool sli_is_inrange(const struct silofs_spleaf_info *sli, loff_t voff)
 
 	silofs_sli_get_lrange(sli, &lrange);
 	return (lrange.beg <= voff) && (voff < lrange.end);
-}
-
-static size_t sli_voff_to_bn(const struct silofs_spleaf_info *sli, loff_t voff)
-{
-	const loff_t beg = sli_start_voff(sli);
-	const size_t bn = (size_t)silofs_off_to_lba(voff - beg);
-
-	return bn;
-}
-
-static void sli_vaddr_at(const struct silofs_spleaf_info *sli, size_t bn,
-                         size_t kbn, struct silofs_vaddr *out_vaddr)
-{
-	const loff_t beg = sli_start_voff(sli);
-	enum silofs_ltype refltype = sli_refltype(sli);
-
-	silofs_vaddr_by_spleaf(out_vaddr, refltype, beg, bn, kbn);
-}
-
-static size_t sli_start_bn(const struct silofs_spleaf_info *sli)
-{
-	struct silofs_lrange lrange;
-	loff_t voff_beg = sli->sl_voff_hint;
-
-	silofs_sli_get_lrange(sli, &lrange);
-	if (!silofs_lrange_within(&lrange, voff_beg)) {
-		voff_beg = lrange.beg;
-	}
-	return sli_voff_to_bn(sli, voff_beg);
-}
-
-static size_t sli_finish_bn(const struct silofs_spleaf_info *sli)
-{
-	struct silofs_lrange lrange;
-
-	silofs_sli_get_lrange(sli, &lrange);
-	return sli_voff_to_bn(sli, lrange.end);
-}
-
-static int sli_find_free_space(const struct silofs_spleaf_info *sli,
-                               struct silofs_vaddr *out_vaddr)
-{
-	size_t bn_beg = sli_start_bn(sli);
-	size_t bn_end = sli_finish_bn(sli);
-	size_t bn = 0;
-	size_t kbn = 0;
-	int err;
-
-	err = spleaf_find_free(sli->sl, bn_beg, bn_end, &bn, &kbn);
-	if (err && bn_beg) {
-		err = spleaf_find_free(sli->sl, 0, bn_beg, &bn, &kbn);
-	}
-	if (!err) {
-		sli_vaddr_at(sli, bn, kbn, out_vaddr);
-	}
-	silofs_assert_ok(err);
-	return err;
-}
-
-static size_t sli_lrange_len(const struct silofs_spleaf_info *sli)
-{
-	struct silofs_lrange lrange;
-
-	silofs_sli_get_lrange(sli, &lrange);
-	return silofs_lrange_len(&lrange);
-}
-
-static size_t sli_refltype_size(const struct silofs_spleaf_info *sli)
-{
-	return silofs_ltype_size(sli_refltype(sli));
-}
-
-static bool sli_cap_allocate(const struct silofs_spleaf_info *sli)
-{
-	const size_t nlimit = sli_lrange_len(sli);
-	const size_t nbytes_want = sli_refltype_size(sli);
-	const size_t nbytes_used = sli->sl_nused_bytes;
-
-	silofs_assert_le(nlimit, SILOFS_LSEG_SIZE_MAX);
-	silofs_assert_le(nbytes_used, SILOFS_LSEG_SIZE_MAX);
-
-	return ((nbytes_used + nbytes_want) <= nlimit);
-}
-
-int silofs_sli_find_free_space(const struct silofs_spleaf_info *sli,
-                               struct silofs_vaddr *out_vaddr)
-{
-	int ret = -SILOFS_ENOSPC;
-
-	if (sli_cap_allocate(sli)) {
-		ret = sli_find_free_space(sli, out_vaddr);
-	}
-	return ret;
 }
 
 void silofs_sli_update_off_hint(struct silofs_spleaf_info *sli,
@@ -1317,34 +1096,6 @@ bool silofs_sli_has_allocated_at(const struct silofs_spleaf_info *sli,
                                  const struct silofs_vaddr *vaddr)
 {
 	return spleaf_is_allocated_at(sli->sl, vaddr);
-}
-
-bool silofs_sli_has_unwritten_at(const struct silofs_spleaf_info *sli,
-                                 const struct silofs_vaddr *vaddr)
-{
-	return spleaf_test_unwritten_at(sli->sl, vaddr);
-}
-
-void silofs_sli_clear_unwritten_at(struct silofs_spleaf_info *sli,
-                                   const struct silofs_vaddr *vaddr)
-{
-	struct silofs_spmap_leaf *sl = sli->sl;
-
-	if (spleaf_test_unwritten_at(sl, vaddr)) {
-		spleaf_clear_unwritten_at(sl, vaddr);
-		sli_dirtify(sli);
-	}
-}
-
-void silofs_sli_mark_unwritten_at(struct silofs_spleaf_info *sli,
-                                  const struct silofs_vaddr *vaddr)
-{
-	struct silofs_spmap_leaf *sl = sli->sl;
-
-	if (!spleaf_test_unwritten_at(sl, vaddr)) {
-		spleaf_set_unwritten_at(sl, vaddr);
-		sli_dirtify(sli);
-	}
 }
 
 void silofs_sli_vaddrs_at(const struct silofs_spleaf_info *sli,

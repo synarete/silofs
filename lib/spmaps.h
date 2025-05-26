@@ -101,9 +101,6 @@ void silofs_sli_get_lrange(const struct silofs_spleaf_info *sli,
 
 loff_t silofs_sli_base_voff(const struct silofs_spleaf_info *sli);
 
-int silofs_sli_find_free_space(const struct silofs_spleaf_info *sli,
-                               struct silofs_vaddr             *out_vaddr);
-
 void silofs_sli_update_off_hint(struct silofs_spleaf_info *sli,
                                 const struct silofs_vaddr *vaddr);
 
@@ -124,15 +121,6 @@ bool silofs_sli_has_allocated_with(const struct silofs_spleaf_info *sli,
 
 bool silofs_sli_has_last_allocated_at(const struct silofs_spleaf_info *sli,
                                       const struct silofs_vaddr       *vaddr);
-
-bool silofs_sli_has_unwritten_at(const struct silofs_spleaf_info *sli,
-                                 const struct silofs_vaddr       *vaddr);
-
-void silofs_sli_clear_unwritten_at(struct silofs_spleaf_info *sli,
-                                   const struct silofs_vaddr *vaddr);
-
-void silofs_sli_mark_unwritten_at(struct silofs_spleaf_info *sli,
-                                  const struct silofs_vaddr *vaddr);
 
 size_t silofs_sli_refcnt_at(const struct silofs_spleaf_info *sli,
                             const struct silofs_vaddr       *vaddr);

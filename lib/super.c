@@ -801,37 +801,39 @@ static int stage_spleaf_lsmap(struct silofs_task_ctx *task,
 	return 0;
 }
 
+static int
+stage_lsmap(struct silofs_task_ctx *task, const struct silofs_vaddr *vaddr,
+            enum silofs_stg_mode stg_mode, struct silofs_lsmap_info **out_lsi)
+{
+	struct silofs_spleaf_info *sli = NULL;
+
+	return stage_spleaf_lsmap(task, vaddr, stg_mode, &sli, out_lsi);
+}
+
 int silofs_test_unwritten_at(struct silofs_task_ctx *task,
                              const struct silofs_vaddr *vaddr, bool *out_res)
 {
-	struct silofs_spleaf_info *sli = NULL;
 	struct silofs_lsmap_info *lsi = NULL;
-	bool unwritten;
 	int err;
 
-	err = stage_spleaf_lsmap(task, vaddr, SILOFS_STG_CUR, &sli, &lsi);
+	err = stage_lsmap(task, vaddr, SILOFS_STG_CUR, &lsi);
 	if (err) {
 		return err;
 	}
-	*out_res = silofs_sli_has_unwritten_at(sli, vaddr);
-
-	unwritten = silofs_lsi_has_unwritten_at(lsi, vaddr);
-	silofs_assert_eq(unwritten, *out_res);
+	*out_res = silofs_lsi_has_unwritten_at(lsi, vaddr);
 	return 0;
 }
 
 int silofs_clear_unwritten_at(struct silofs_task_ctx *task,
                               const struct silofs_vaddr *vaddr)
 {
-	struct silofs_spleaf_info *sli = NULL;
 	struct silofs_lsmap_info *lsi = NULL;
 	int err;
 
-	err = stage_spleaf_lsmap(task, vaddr, SILOFS_STG_COW, &sli, &lsi);
+	err = stage_lsmap(task, vaddr, SILOFS_STG_COW, &lsi);
 	if (err) {
 		return err;
 	}
-	silofs_sli_clear_unwritten_at(sli, vaddr);
 	silofs_lsi_clear_unwritten_at(lsi, vaddr);
 	return 0;
 }
@@ -839,15 +841,13 @@ int silofs_clear_unwritten_at(struct silofs_task_ctx *task,
 int silofs_mark_unwritten_at(struct silofs_task_ctx *task,
                              const struct silofs_vaddr *vaddr)
 {
-	struct silofs_spleaf_info *sli = NULL;
 	struct silofs_lsmap_info *lsi = NULL;
 	int err;
 
-	err = stage_spleaf_lsmap(task, vaddr, SILOFS_STG_COW, &sli, &lsi);
+	err = stage_lsmap(task, vaddr, SILOFS_STG_COW, &lsi);
 	if (err) {
 		return err;
 	}
-	silofs_sli_mark_unwritten_at(sli, vaddr);
 	silofs_lsi_mark_unwritten_at(lsi, vaddr);
 	return 0;
 }

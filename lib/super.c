@@ -855,19 +855,14 @@ int silofs_mark_unwritten_at(struct silofs_task_ctx *task,
 int silofs_test_last_allocated(struct silofs_task_ctx *task,
                                const struct silofs_vaddr *vaddr, bool *out_res)
 {
-	struct silofs_spleaf_info *sli = NULL;
 	struct silofs_lsmap_info *lsi = NULL;
-	bool last_allocated;
 	int err;
 
-	err = stage_spleaf_lsmap(task, vaddr, SILOFS_STG_CUR, &sli, &lsi);
+	err = stage_lsmap(task, vaddr, SILOFS_STG_CUR, &lsi);
 	if (err) {
 		return err;
 	}
-	*out_res = silofs_sli_has_last_allocated_at(sli, vaddr);
-
-	last_allocated = silofs_lsi_is_last_allocated(lsi, vaddr);
-	silofs_assert_eq(last_allocated, *out_res);
+	*out_res = silofs_lsi_is_last_allocated(lsi, vaddr);
 	return 0;
 }
 

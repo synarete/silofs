@@ -119,9 +119,6 @@ bool silofs_sli_has_allocated_at(const struct silofs_spleaf_info *sli,
 bool silofs_sli_has_allocated_with(const struct silofs_spleaf_info *sli,
                                    const struct silofs_vaddr       *vaddr);
 
-bool silofs_sli_has_last_allocated_at(const struct silofs_spleaf_info *sli,
-                                      const struct silofs_vaddr       *vaddr);
-
 size_t silofs_sli_refcnt_at(const struct silofs_spleaf_info *sli,
                             const struct silofs_vaddr       *vaddr);
 

@@ -1086,12 +1086,6 @@ bool silofs_sli_has_allocated_with(const struct silofs_spleaf_info *sli,
 	return spleaf_has_allocated_with(sli->sl, vaddr);
 }
 
-bool silofs_sli_has_last_allocated_at(const struct silofs_spleaf_info *sli,
-                                      const struct silofs_vaddr *vaddr)
-{
-	return spleaf_is_last_allocated_at(sli->sl, vaddr);
-}
-
 bool silofs_sli_has_allocated_at(const struct silofs_spleaf_info *sli,
                                  const struct silofs_vaddr *vaddr)
 {

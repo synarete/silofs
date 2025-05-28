@@ -39,6 +39,7 @@ struct silofs_vstage_ctx {
 	struct silofs_spnode_info *sni2;
 	struct silofs_spnode_info *sni1;
 	struct silofs_spleaf_info *sli;
+	struct silofs_lsmap_info *lsi;
 	const struct silofs_vaddr *vaddr;
 	loff_t voff;
 	enum silofs_stg_mode stg_mode;
@@ -2238,8 +2239,7 @@ static int vstgc_pre_clone_stage_at(const struct silofs_vstage_ctx *vstg_ctx,
 	return ret;
 }
 
-static int vstgc_stage_lsmap_of(struct silofs_vstage_ctx *vstg_ctx,
-                                struct silofs_lsmap_info **out_lsi)
+static int vstgc_stage_lsmap_of(struct silofs_vstage_ctx *vstg_ctx)
 {
 	struct silofs_vaddr vaddr;
 	struct silofs_vnode_info *vni = NULL;
@@ -2251,7 +2251,7 @@ static int vstgc_stage_lsmap_of(struct silofs_vstage_ctx *vstg_ctx,
 	if (err) {
 		return err;
 	}
-	*out_lsi = silofs_lsi_from_vni(vni);
+	vstg_ctx->lsi = silofs_lsi_from_vni(vni);
 	return 0;
 }
 
@@ -2259,18 +2259,17 @@ static int vstgc_resolve_vaddrs(struct silofs_vstage_ctx *vstg_ctx,
                                 struct silofs_vaddrs *out_vaddrs)
 {
 	struct silofs_vaddrs vaddrs;
-	struct silofs_lsmap_info *lsi = NULL;
 	int err;
 
 	silofs_sli_vaddrs_at(vstg_ctx->sli, vstg_ctx->vaddr, out_vaddrs);
 	if (vstg_ctx->vspace == SILOFS_LTYPE_LSMAP) {
 		return 0;
 	}
-	err = vstgc_stage_lsmap_of(vstg_ctx, &lsi);
+	err = vstgc_stage_lsmap_of(vstg_ctx);
 	if (err) {
 		return err;
 	}
-	silofs_lsi_vaddrs_at(lsi, vstg_ctx->vaddr, &vaddrs);
+	silofs_lsi_vaddrs_at(vstg_ctx->lsi, vstg_ctx->vaddr, &vaddrs);
 	silofs_assert_eq(vaddrs.count, out_vaddrs->count);
 	return 0;
 }

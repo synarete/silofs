@@ -646,10 +646,31 @@ lsmap_key_at2(const struct silofs_lsmap *lsm, size_t slot)
 	return &lsm->lsm_keys[slot];
 }
 
-static struct silofs_key *
-lsmap_key_of(struct silofs_lsmap *lsm, const struct silofs_vaddr *vaddr)
+static struct silofs_key *lsmap_key_of(struct silofs_lsmap *lsm, loff_t off)
 {
-	return lsmap_key_at(lsm, lsmap_slot_by_off(lsm, vaddr->off));
+	return lsmap_key_at(lsm, lsmap_slot_by_off(lsm, off));
+}
+
+static const struct silofs_key *
+lsmap_key_of2(const struct silofs_lsmap *lsm, loff_t off)
+{
+	return lsmap_key_at2(lsm, lsmap_slot_by_off(lsm, off));
+}
+
+static void lsmap_get_key_of(const struct silofs_lsmap *lsm, loff_t off,
+                             struct silofs_key *out_key)
+{
+	const struct silofs_key *key = lsmap_key_of2(lsm, off);
+
+	silofs_key_assign(out_key, key);
+}
+
+static void lsmap_set_key_of(struct silofs_lsmap *lsm, loff_t off,
+                             const struct silofs_key *key)
+{
+	struct silofs_key *lsm_key = lsmap_key_of(lsm, off);
+
+	silofs_key_assign(lsm_key, key);
 }
 
 static void lsmap_gen_keys(struct silofs_lsmap *lsm)
@@ -661,7 +682,7 @@ static void
 lsmap_renew_key_at(struct silofs_lsmap *lsm, const struct silofs_vaddr *vaddr)
 {
 	struct silofs_key rkey;
-	struct silofs_key *key = lsmap_key_of(lsm, vaddr);
+	struct silofs_key *key = lsmap_key_of(lsm, vaddr->off);
 
 	silofs_key_mkrand(&rkey);
 	silofs_key_xor_with1(key, &rkey);
@@ -774,19 +795,23 @@ void silofs_lsi_update_nused(struct silofs_lsmap_info *lsi)
 	silofs_assert_le(lsi->ls_nused_bytes, SILOFS_LSEG_SIZE_MAX);
 }
 
-static bool lsi_is_subref(const struct silofs_lsmap_info *lsi,
-                          const struct silofs_vaddr *vaddr)
+static bool lsi_is_off_within(const struct silofs_lsmap_info *lsi, loff_t off)
 {
 	struct silofs_lrange lrange;
 
-	if (vaddr->ltype != lsmap_refltype(lsi->lsm)) {
-		return false;
-	}
 	lsmap_lrange(lsi->lsm, &lrange);
-	if (!silofs_lrange_within(&lrange, vaddr->off)) {
-		return false;
+	return silofs_lrange_within(&lrange, off);
+}
+
+static bool lsi_is_subref(const struct silofs_lsmap_info *lsi,
+                          const struct silofs_vaddr *vaddr)
+{
+	bool ret = false;
+
+	if (vaddr->ltype == lsmap_refltype(lsi->lsm)) {
+		ret = lsi_is_off_within(lsi, vaddr->off);
 	}
-	return true;
+	return ret;
 }
 
 static enum silofs_ltype lsi_refltype(const struct silofs_lsmap_info *lsi)
@@ -1035,6 +1060,29 @@ void silofs_lsi_clone_from(struct silofs_lsmap_info *lsi,
 	lsi->ls_nused_bytes = lsi_other->ls_nused_bytes;
 	lsi->ls_off_hint = lsi_other->ls_off_hint;
 	lsi_dirtify(lsi);
+}
+
+int silofs_lsi_resolve_key(const struct silofs_lsmap_info *lsi,
+                           const struct silofs_vaddr *vaddr,
+                           struct silofs_key *out_key)
+{
+	if (!lsi_is_subref(lsi, vaddr)) {
+		return -SILOFS_ERANGE;
+	}
+	lsmap_get_key_of(lsi->lsm, vaddr->off, out_key);
+	return 0;
+}
+
+int silofs_lsi_rebind_key(struct silofs_lsmap_info *lsi,
+                          const struct silofs_vaddr *vaddr,
+                          const struct silofs_key *key)
+{
+	if (!lsi_is_subref(lsi, vaddr)) {
+		return -SILOFS_ERANGE;
+	}
+	lsmap_set_key_of(lsi->lsm, vaddr->off, key);
+	lsi_dirtify(lsi);
+	return 0;
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

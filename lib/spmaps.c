@@ -882,14 +882,6 @@ static void spleaf_child_key_of(const struct silofs_spmap_leaf *spl,
 	silofs_key_assign(out_key, spleaf_child_key_at(spl, slot));
 }
 
-static void spleaf_set_child_key_of(struct silofs_spmap_leaf *spl, loff_t voff,
-                                    const struct silofs_key *key)
-{
-	struct silofs_lbk_ref *lbr = spleaf_lbr_by_voff(spl, voff);
-
-	lbr_set_key(lbr, key);
-}
-
 static void
 spleaf_renew_child_key_of(struct silofs_spmap_leaf *spl, loff_t voff)
 {
@@ -1137,7 +1129,7 @@ void silofs_sli_resolve_main_lbk(const struct silofs_spleaf_info *sli,
 	silofs_llink_setup(out_llink, &laddr, &key);
 }
 
-static int sli_resolve_child(const struct silofs_spleaf_info *sli, loff_t voff,
+int silofs_sli_resolve_child(const struct silofs_spleaf_info *sli, loff_t voff,
                              struct silofs_laddr *out_laddr)
 {
 	struct silofs_key key;
@@ -1153,32 +1145,10 @@ static int sli_resolve_child(const struct silofs_spleaf_info *sli, loff_t voff,
 	return 0;
 }
 
-static void sli_bind_child(struct silofs_spleaf_info *sli, loff_t voff,
+void silofs_sli_bind_child(struct silofs_spleaf_info *sli, loff_t voff,
                            const struct silofs_laddr *laddr)
 {
 	spleaf_set_child_of(sli->sl, voff, laddr);
-	sli_dirtify(sli);
-}
-
-static int sli_resolve_key(const struct silofs_spleaf_info *sli, loff_t voff,
-                           struct silofs_key *out_key)
-{
-	struct silofs_laddr laddr;
-
-	if (!sli_is_inrange(sli, voff)) {
-		return -SILOFS_ERANGE;
-	}
-	spleaf_resolve_child(sli->sl, voff, &laddr, out_key);
-	if (silofs_laddr_isnull(&laddr)) {
-		return -SILOFS_ENOENT;
-	}
-	return 0;
-}
-
-static void sli_bind_key(struct silofs_spleaf_info *sli, loff_t voff,
-                         const struct silofs_key *key)
-{
-	spleaf_set_child_key_of(sli->sl, voff, key);
 	sli_dirtify(sli);
 }
 
@@ -1275,27 +1245,6 @@ void silofs_sli_resolve_lmap(const struct silofs_spleaf_info *sli,
 	}
 
 	silofs_assert_eq(nbytes, nused);
-}
-
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-
-int silofs_sli_resolve_child_by(const struct silofs_spleaf_info *sli,
-                                loff_t voff, struct silofs_laddr *out_laddr)
-{
-	return sli_resolve_child(sli, voff, out_laddr);
-}
-
-int silofs_sli_resolve_key_by(const struct silofs_spleaf_info *sli,
-                              loff_t voff, struct silofs_key *out_key)
-{
-	return sli_resolve_key(sli, voff, out_key);
-}
-
-void silofs_sli_rebind_llink_by(struct silofs_spleaf_info *sli, loff_t voff,
-                                const struct silofs_llink *llink)
-{
-	sli_bind_key(sli, voff, &llink->ivkey.key);
-	sli_bind_child(sli, voff, &llink->laddr);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

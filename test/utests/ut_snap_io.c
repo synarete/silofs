@@ -56,53 +56,54 @@ static void ut_snap_write_sparse(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_snap_copy_range_(struct ut_env *ute, loff_t off, size_t len)
+static void
+ut_snap_copy_file_range_(struct ut_env *ute, loff_t off, size_t len)
 {
-	ino_t dino = 0;
-	ino_t ino_src = 0;
-	ino_t ino_dst = 0;
-	const loff_t end = off + (long)len;
+	const loff_t end = ut_off_end(off, len);
 	const char *name = UT_NAME;
 	const char *name_src = UT_NAME_AT;
 	const char *name_dst = UT_NAME_AT;
-	void *buf = ut_randbuf(ute, len);
+	void *buf1 = ut_randbuf(ute, len);
 	void *buf2 = ut_randbuf(ute, len);
+	ino_t ino_src = 0;
+	ino_t ino_dst = 0;
+	ino_t dino = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name_src, &ino_src);
 	ut_create_file(ute, dino, name_dst, &ino_dst);
-	ut_write_read(ute, ino_src, buf, len, off);
+	ut_write_read(ute, ino_src, buf1, len, off);
 	ut_trunacate_file(ute, ino_dst, end);
 	ut_snap(ute, dino);
 	ut_copy_file_range(ute, ino_src, off, ino_dst, off, len);
-	ut_read_verify(ute, ino_src, buf, len, off);
-	ut_read_verify(ute, ino_dst, buf, len, off);
+	ut_read_verify(ute, ino_src, buf1, len, off);
+	ut_read_verify(ute, ino_dst, buf1, len, off);
 	ut_trunacate_file(ute, ino_dst, end - 1);
 	ut_trunacate_file(ute, ino_dst, end);
-	ut_read_verify(ute, ino_src, buf, len, off);
-	ut_read_verify(ute, ino_dst, buf, len - 1, off);
+	ut_read_verify(ute, ino_src, buf1, len, off);
+	ut_read_verify(ute, ino_dst, buf1, len - 1, off);
 	ut_read_zero(ute, ino_dst, end - 1);
 	ut_snap(ute, dino);
 	ut_copy_file_range(ute, ino_src, off, ino_dst, off, len);
-	ut_read_verify(ute, ino_src, buf, len, off);
-	ut_read_verify(ute, ino_dst, buf, len, off);
+	ut_read_verify(ute, ino_src, buf1, len, off);
+	ut_read_verify(ute, ino_dst, buf1, len, off);
 	ut_trunacate_file(ute, ino_dst, off + 1);
 	ut_trunacate_file(ute, ino_dst, end);
-	ut_read_verify(ute, ino_src, buf, len, off);
-	ut_read_verify(ute, ino_dst, buf, 1, off);
+	ut_read_verify(ute, ino_src, buf1, len, off);
+	ut_read_verify(ute, ino_dst, buf1, 1, off);
 	ut_read_zeros(ute, ino_dst, off + 1, len - 1);
 	ut_write_read(ute, ino_dst, buf2, len, off);
-	ut_read_verify(ute, ino_src, buf, len, off);
+	ut_read_verify(ute, ino_src, buf1, len, off);
 	ut_snap(ute, dino);
 	ut_copy_file_range(ute, ino_src, off, ino_dst, off, len);
-	ut_read_verify(ute, ino_src, buf, len, off);
-	ut_read_verify(ute, ino_dst, buf, len, off);
+	ut_read_verify(ute, ino_src, buf1, len, off);
+	ut_read_verify(ute, ino_dst, buf1, len, off);
 	ut_remove_file(ute, dino, name_dst, ino_dst);
 	ut_remove_file(ute, dino, name_src, ino_src);
 	ut_rmdir_at_root(ute, name);
 }
 
-static void ut_snap_copy_range(struct ut_env *ute)
+static void ut_snap_copy_file_range(struct ut_env *ute)
 {
 	const struct ut_range ranges[] = {
 		UT_MKRANGE1(0, UT_1K),
@@ -119,7 +120,7 @@ static void ut_snap_copy_range(struct ut_env *ute)
 		UT_MKRANGE1(UT_1T - 7, UT_1M + 11),
 	};
 
-	ut_exec_with_ranges(ute, ut_snap_copy_range_, ranges);
+	ut_exec_with_ranges(ute, ut_snap_copy_file_range_, ranges);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -174,7 +175,7 @@ static void ut_snap_rename_io(struct ut_env *ute)
 
 static const struct ut_testdef ut_local_tests[] = {
 	UT_DEFTEST(ut_snap_write_sparse),
-	UT_DEFTEST(ut_snap_copy_range),
+	UT_DEFTEST(ut_snap_copy_file_range),
 	UT_DEFTEST(ut_snap_rename_io),
 };
 

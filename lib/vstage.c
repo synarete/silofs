@@ -52,6 +52,8 @@ struct silofs_vnis {
 	size_t count;
 };
 
+static int vstgc_stage_lsmap_of(struct silofs_vstage_ctx *vstg_ctx);
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static loff_t ino_to_off(ino_t ino)
@@ -1842,22 +1844,34 @@ static int vstgc_require_spnodes_of(struct silofs_vstage_ctx *vstg_ctx)
 static int vstgc_resolve_child_of(const struct silofs_vstage_ctx *vstg_ctx,
                                   struct silofs_laddr *out_laddr)
 {
-	return silofs_sli_resolve_child_by(vstg_ctx->sli, vstg_ctx->voff,
-	                                   out_laddr);
+	return silofs_sli_resolve_child(vstg_ctx->sli, vstg_ctx->voff,
+	                                out_laddr);
+}
+
+static const struct silofs_key *
+vstgc_main_key(const struct silofs_vstage_ctx *vstg_ctx)
+{
+	return &vstg_ctx->env->base.bootrec->main_ivkey.key;
+}
+
+static void vstgc_resolve_main_key(const struct silofs_vstage_ctx *vstg_ctx,
+                                   struct silofs_key *out_key)
+{
+	silofs_key_assign(out_key, vstgc_main_key(vstg_ctx));
 }
 
 static int vstgc_resolve_key_of(const struct silofs_vstage_ctx *vstg_ctx,
                                 struct silofs_key *out_key)
 {
-	const struct silofs_ivkey *main_ivkey = NULL;
 	int ret = 0;
 
 	if (vstg_ctx->vspace != SILOFS_LTYPE_LSMAP) {
-		ret = silofs_sli_resolve_key_by(vstg_ctx->sli, vstg_ctx->voff,
-		                                out_key);
+		silofs_assert_not_null(vstg_ctx->lsi);
+
+		ret = silofs_lsi_resolve_key(vstg_ctx->lsi, vstg_ctx->vaddr,
+		                             out_key);
 	} else {
-		main_ivkey = &vstg_ctx->env->base.bootrec->main_ivkey;
-		silofs_key_assign(out_key, &main_ivkey->key);
+		vstgc_resolve_main_key(vstg_ctx, out_key);
 	}
 	return ret;
 }
@@ -1908,12 +1922,26 @@ static int vstgc_stage_spleaf_for_resolve(struct silofs_vstage_ctx *vstg_ctx)
 	return ret;
 }
 
+static int vstgc_stage_lsmap_for_resolve(struct silofs_vstage_ctx *vstg_ctx)
+{
+	int ret = 0;
+
+	if (vstg_ctx->vspace != SILOFS_LTYPE_LSMAP) {
+		ret = vstgc_stage_lsmap_of(vstg_ctx);
+	}
+	return ret;
+}
+
 static int vstgc_resolve_llink(struct silofs_vstage_ctx *vstg_ctx,
                                struct silofs_llink *out_llink)
 {
 	int err;
 
 	err = vstgc_stage_spleaf_for_resolve(vstg_ctx);
+	if (err) {
+		return err;
+	}
+	err = vstgc_stage_lsmap_for_resolve(vstg_ctx);
 	if (err) {
 		return err;
 	}
@@ -2150,6 +2178,20 @@ static int vstgc_require_clone_lbk(const struct silofs_vstage_ctx *vstg_ctx,
 	return 0;
 }
 
+static void vstgc_rebind_llink(const struct silofs_vstage_ctx *vstg_ctx,
+                               const struct silofs_llink *llink)
+{
+	const struct silofs_laddr *laddr = &llink->laddr;
+	const struct silofs_key *key = &llink->ivkey.key;
+
+	silofs_sli_bind_child(vstg_ctx->sli, vstg_ctx->vaddr->off, laddr);
+
+	if (vstg_ctx->vspace != SILOFS_LTYPE_LSMAP) {
+		silofs_assert_not_null(vstg_ctx->lsi);
+		silofs_lsi_rebind_key(vstg_ctx->lsi, vstg_ctx->vaddr, key);
+	}
+}
+
 static int vstgc_clone_rebind_lbk(const struct silofs_vstage_ctx *vstg_ctx,
                                   const struct silofs_laddr *src_laddr)
 {
@@ -2165,7 +2207,8 @@ static int vstgc_clone_rebind_lbk(const struct silofs_vstage_ctx *vstg_ctx,
 	if (err) {
 		return err;
 	}
-	silofs_sli_rebind_llink_by(vstg_ctx->sli, voff, &dst_llink);
+	silofs_sli_bind_child(vstg_ctx->sli, voff, &dst_llink.laddr);
+	vstgc_rebind_llink(vstg_ctx, &dst_llink);
 	return 0;
 }
 
@@ -2240,11 +2283,10 @@ static int vstgc_pre_clone_stage_at(const struct silofs_vstage_ctx *vstg_ctx,
 }
 
 static int
-stage_cur_lsmap(struct silofs_task_ctx *task, const struct silofs_vaddr *vaddr,
-                struct silofs_lsmap_info **out_lsi)
+stage_lsmap(struct silofs_task_ctx *task, const struct silofs_vaddr *vaddr,
+            enum silofs_stg_mode stg_mode, struct silofs_lsmap_info **out_lsi)
 {
 	struct silofs_vnode_info *vni = NULL;
-	enum silofs_stg_mode stg_mode = SILOFS_STG_CUR;
 	int err;
 
 	err = silofs_stage_vnode(task, NULL, vaddr, stg_mode, &vni);
@@ -2260,7 +2302,8 @@ static int vstgc_do_stage_lsmap_of(struct silofs_vstage_ctx *vstg_ctx)
 	struct silofs_vaddr vaddr;
 
 	silofs_vaddr_of_lsmap(&vaddr, vstg_ctx->vspace, vstg_ctx->vaddr->off);
-	return stage_cur_lsmap(vstg_ctx->task, &vaddr, &vstg_ctx->lsi);
+	return stage_lsmap(vstg_ctx->task, &vaddr, vstg_ctx->stg_mode,
+	                   &vstg_ctx->lsi);
 }
 
 static int vstgc_stage_lsmap_of(struct silofs_vstage_ctx *vstg_ctx)

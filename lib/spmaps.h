@@ -132,25 +132,20 @@ void silofs_sli_main_lseg(const struct silofs_spleaf_info *sli,
 void silofs_sli_bind_main_lseg(struct silofs_spleaf_info *sli,
                                const struct silofs_lsid  *lsid);
 
+void silofs_sli_bind_child(struct silofs_spleaf_info *sli, loff_t voff,
+                           const struct silofs_laddr *laddr);
+
 void silofs_sli_clone_from(struct silofs_spleaf_info       *sli,
                            const struct silofs_spleaf_info *sli_other);
 
 void silofs_sli_resolve_main_lbk(const struct silofs_spleaf_info *sli,
                                  loff_t voff, struct silofs_llink *out_llink);
 
+int silofs_sli_resolve_child(const struct silofs_spleaf_info *sli, loff_t voff,
+                             struct silofs_laddr *out_laddr);
+
 void silofs_sli_resolve_lmap(const struct silofs_spleaf_info *sli,
                              struct silofs_spmap_lmap        *out_lmaps);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-int silofs_sli_resolve_child_by(const struct silofs_spleaf_info *sli,
-                                loff_t voff, struct silofs_laddr *out_laddr);
-
-int silofs_sli_resolve_key_by(const struct silofs_spleaf_info *sli,
-                              loff_t voff, struct silofs_key *out_key);
-
-void silofs_sli_rebind_llink_by(struct silofs_spleaf_info *sli, loff_t voff,
-                                const struct silofs_llink *llink);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

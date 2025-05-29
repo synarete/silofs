@@ -40,7 +40,7 @@ static int sli_resolve_lseg_of(const struct silofs_spleaf_info *sli,
 	struct silofs_laddr laddr;
 	int err;
 
-	err = silofs_sli_resolve_child_by(sli, voff, &laddr);
+	err = silofs_sli_resolve_child(sli, voff, &laddr);
 	if (err) {
 		return err;
 	}

@@ -25,6 +25,7 @@ AC_DEFUN([AX_SILOFS_NEED_FUNCS2],
 [
   AX_SILOFS_CHECK_FUNCS([atexit])
   AX_SILOFS_CHECK_FUNCS([canonicalize_file_name])
+  AX_SILOFS_CHECK_FUNCS([chdir])
   AX_SILOFS_CHECK_FUNCS([copy_file_range])
   AX_SILOFS_CHECK_FUNCS([endpwent])
   AX_SILOFS_CHECK_FUNCS([fcntl])

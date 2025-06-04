@@ -606,14 +606,14 @@ bool silofs_ii_isdirty(const struct silofs_inode_info *ii)
 
 void silofs_ii_incref(struct silofs_inode_info *ii)
 {
-	if (likely(ii != NULL)) {
+	if (ii != NULL) {
 		silofs_vni_incref(silofs_ii_to_vni(ii));
 	}
 }
 
 void silofs_ii_decref(struct silofs_inode_info *ii)
 {
-	if (likely(ii != NULL)) {
+	if (ii != NULL) {
 		silofs_vni_decref(silofs_ii_to_vni(ii));
 	}
 }

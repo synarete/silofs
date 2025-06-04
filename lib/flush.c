@@ -1035,7 +1035,9 @@ int silofs_flush_dirty(struct silofs_task_ctx *task,
 	int err = 0;
 
 	if (need_flush_by(task, ii, flags)) {
+		silofs_ii_incref(ii);
 		err = do_flush_dirty(task, ii, flags);
+		silofs_ii_decref(ii);
 	}
 	return err;
 }

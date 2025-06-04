@@ -21,10 +21,10 @@
 static void ut_clone_write_sparse_(struct ut_env *ute, const loff_t *offs,
                                    size_t cnt, size_t bsz)
 {
-	ino_t ino = 0;
-	ino_t dino = 0;
 	const char *name = UT_NAME;
 	void *buf = ut_randbuf(ute, bsz);
+	ino_t dino = 0;
+	ino_t ino = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -47,8 +47,13 @@ static void ut_clone_write_sparse_(struct ut_env *ute, const loff_t *offs,
 static void ut_clone_write_sparse(struct ut_env *ute)
 {
 	const loff_t offs[] = {
-		1,         2 * UT_1K - 1, 8 * UT_1K - 1, UT_BK_SIZE - 1,
-		UT_1M - 1, UT_1G - 1,     UT_1T - 1
+		1,              //
+		2 * UT_1K - 1,  //
+		8 * UT_1K - 1,  //
+		UT_BK_SIZE - 1, //
+		UT_1M - 1,      //
+		UT_1G - 1,      //
+		UT_1T - 1,      //
 	};
 
 	ut_clone_write_sparse_(ute, offs, UT_ARRAY_SIZE(offs), UT_1K);
@@ -59,10 +64,10 @@ static void ut_clone_write_sparse(struct ut_env *ute)
 static void
 ut_clone_copy_file_range_(struct ut_env *ute, loff_t off, size_t len)
 {
-	const loff_t end = ut_off_end(off, len);
 	const char *name = UT_NAME;
 	const char *name_src = UT_NAME_AT;
 	const char *name_dst = UT_NAME_AT;
+	const loff_t end = ut_off_end(off, len);
 	void *buf1 = ut_randbuf(ute, len);
 	void *buf2 = ut_randbuf(ute, len);
 	ino_t ino_src = 0;

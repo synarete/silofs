@@ -18,8 +18,8 @@
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_snap_write_sparse_(struct ut_env *ute, const loff_t *offs,
-                                  size_t cnt, size_t bsz)
+static void ut_clone_write_sparse_(struct ut_env *ute, const loff_t *offs,
+                                   size_t cnt, size_t bsz)
 {
 	ino_t ino = 0;
 	ino_t dino = 0;
@@ -32,7 +32,7 @@ static void ut_snap_write_sparse_(struct ut_env *ute, const loff_t *offs,
 		ut_write_read(ute, ino, buf, bsz, offs[i]);
 	}
 	ut_release(ute, ino);
-	ut_snap(ute, dino);
+	ut_clone(ute, dino);
 	ut_open_rdwr(ute, ino);
 	for (size_t i = 0; i < cnt; ++i) {
 		ut_read_verify(ute, ino, buf, bsz, offs[i]);
@@ -44,20 +44,20 @@ static void ut_snap_write_sparse_(struct ut_env *ute, const loff_t *offs,
 	ut_rmdir_at_root(ute, name);
 }
 
-static void ut_snap_write_sparse(struct ut_env *ute)
+static void ut_clone_write_sparse(struct ut_env *ute)
 {
 	const loff_t offs[] = {
 		1,         2 * UT_1K - 1, 8 * UT_1K - 1, UT_BK_SIZE - 1,
 		UT_1M - 1, UT_1G - 1,     UT_1T - 1
 	};
 
-	ut_snap_write_sparse_(ute, offs, UT_ARRAY_SIZE(offs), UT_1K);
+	ut_clone_write_sparse_(ute, offs, UT_ARRAY_SIZE(offs), UT_1K);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void
-ut_snap_copy_file_range_(struct ut_env *ute, loff_t off, size_t len)
+ut_clone_copy_file_range_(struct ut_env *ute, loff_t off, size_t len)
 {
 	const loff_t end = ut_off_end(off, len);
 	const char *name = UT_NAME;
@@ -74,7 +74,7 @@ ut_snap_copy_file_range_(struct ut_env *ute, loff_t off, size_t len)
 	ut_create_file(ute, dino, name_dst, &ino_dst);
 	ut_write_read(ute, ino_src, buf1, len, off);
 	ut_trunacate_file(ute, ino_dst, end);
-	ut_snap(ute, dino);
+	ut_clone(ute, dino);
 	ut_copy_file_range(ute, ino_src, off, ino_dst, off, len);
 	ut_read_verify(ute, ino_src, buf1, len, off);
 	ut_read_verify(ute, ino_dst, buf1, len, off);
@@ -83,7 +83,7 @@ ut_snap_copy_file_range_(struct ut_env *ute, loff_t off, size_t len)
 	ut_read_verify(ute, ino_src, buf1, len, off);
 	ut_read_verify(ute, ino_dst, buf1, len - 1, off);
 	ut_read_zero(ute, ino_dst, end - 1);
-	ut_snap(ute, dino);
+	ut_clone(ute, dino);
 	ut_copy_file_range(ute, ino_src, off, ino_dst, off, len);
 	ut_read_verify(ute, ino_src, buf1, len, off);
 	ut_read_verify(ute, ino_dst, buf1, len, off);
@@ -94,7 +94,7 @@ ut_snap_copy_file_range_(struct ut_env *ute, loff_t off, size_t len)
 	ut_read_zeros(ute, ino_dst, off + 1, len - 1);
 	ut_write_read(ute, ino_dst, buf2, len, off);
 	ut_read_verify(ute, ino_src, buf1, len, off);
-	ut_snap(ute, dino);
+	ut_clone(ute, dino);
 	ut_copy_file_range(ute, ino_src, off, ino_dst, off, len);
 	ut_read_verify(ute, ino_src, buf1, len, off);
 	ut_read_verify(ute, ino_dst, buf1, len, off);
@@ -103,7 +103,7 @@ ut_snap_copy_file_range_(struct ut_env *ute, loff_t off, size_t len)
 	ut_rmdir_at_root(ute, name);
 }
 
-static void ut_snap_copy_file_range(struct ut_env *ute)
+static void ut_clone_copy_file_range(struct ut_env *ute)
 {
 	const struct ut_range ranges[] = {
 		UT_MKRANGE1(0, UT_1K),
@@ -120,12 +120,12 @@ static void ut_snap_copy_file_range(struct ut_env *ute)
 		UT_MKRANGE1(UT_1T - 7, UT_1M + 11),
 	};
 
-	ut_exec_with_ranges(ute, ut_snap_copy_file_range_, ranges);
+	ut_exec_with_ranges(ute, ut_clone_copy_file_range_, ranges);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_snap_rename_io_(struct ut_env *ute, loff_t off, size_t bsz)
+static void ut_clone_rename_io_(struct ut_env *ute, loff_t off, size_t bsz)
 {
 	const char *dname = UT_NAME;
 	const char *name1 = UT_NAME_AT;
@@ -142,7 +142,7 @@ static void ut_snap_rename_io_(struct ut_env *ute, loff_t off, size_t bsz)
 		ut_create_file(ute, dino, name2, &ino2);
 		ut_write_read(ute, ino1, buf1, bsz, off);
 		ut_write_read(ute, ino2, buf2, bsz, off);
-		ut_snap(ute, dino);
+		ut_clone(ute, dino);
 		ut_read_verify(ute, ino1, buf1, bsz, off);
 		ut_read_verify(ute, ino2, buf2, bsz, off);
 		ut_release_file(ute, ino1);
@@ -157,7 +157,7 @@ static void ut_snap_rename_io_(struct ut_env *ute, loff_t off, size_t bsz)
 	ut_rmdir_at_root(ute, dname);
 }
 
-static void ut_snap_rename_io(struct ut_env *ute)
+static void ut_clone_rename_io(struct ut_env *ute)
 {
 	const struct ut_range ranges[] = {
 		UT_MKRANGE1(0, UT_1K - 1),
@@ -168,15 +168,15 @@ static void ut_snap_rename_io(struct ut_env *ute)
 		UT_MKRANGE1(UT_1T - 7, UT_1M + 11),
 	};
 
-	ut_exec_with_ranges(ute, ut_snap_rename_io_, ranges);
+	ut_exec_with_ranges(ute, ut_clone_rename_io_, ranges);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ut_testdef ut_local_tests[] = {
-	UT_DEFTEST(ut_snap_write_sparse),
-	UT_DEFTEST(ut_snap_copy_file_range),
-	UT_DEFTEST(ut_snap_rename_io),
+	UT_DEFTEST(ut_clone_write_sparse),
+	UT_DEFTEST(ut_clone_copy_file_range),
+	UT_DEFTEST(ut_clone_rename_io),
 };
 
-const struct ut_testdefs ut_tdefs_snap_io = UT_MKTESTS(ut_local_tests);
+const struct ut_testdefs ut_tdefs_clone_io = UT_MKTESTS(ut_local_tests);

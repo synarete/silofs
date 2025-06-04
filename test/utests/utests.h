@@ -229,8 +229,8 @@ extern const struct ut_testdefs ut_tdefs_file_mthreads;
 extern const struct ut_testdefs ut_tdefs_inspect;
 extern const struct ut_testdefs ut_tdefs_reload;
 extern const struct ut_testdefs ut_tdefs_fillfs;
-extern const struct ut_testdefs ut_tdefs_snap_basic;
-extern const struct ut_testdefs ut_tdefs_snap_io;
+extern const struct ut_testdefs ut_tdefs_clone_basic;
+extern const struct ut_testdefs ut_tdefs_clone_io;
 extern const struct ut_testdefs ut_tdefs_archive;
 
 /* exec */
@@ -490,7 +490,7 @@ void ut_query(struct ut_env *ute, ino_t ino, enum silofs_query_type qtype,
 void ut_query_spst(struct ut_env *ute, ino_t ino,
                    struct silofs_space_stats1k *out_spst);
 
-void ut_snap(struct ut_env *ute, ino_t ino);
+void ut_clone(struct ut_env *ute, ino_t ino);
 
 void ut_fiemap(struct ut_env *ute, ino_t ino, struct fiemap *fm);
 

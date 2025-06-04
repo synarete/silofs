@@ -1932,7 +1932,7 @@ void ut_reload_fs_at(struct ut_env *ute, ino_t ino)
 	ut_expect_eq_stat(&st[0], &st[1]);
 }
 
-void ut_snap(struct ut_env *ute, ino_t ino)
+void ut_clone(struct ut_env *ute, ino_t ino)
 {
 	struct stat st[2];
 

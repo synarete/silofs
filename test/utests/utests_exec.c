@@ -58,15 +58,15 @@ static struct ut_tgroup const g_ut_tgroups[] = {
 	UT_DEFTGRP(ut_tdefs_file_fiemap),
 	UT_DEFTGRP(ut_tdefs_file_copy_range),
 	UT_DEFTGRP(ut_tdefs_file_mthreads),
-	/* fs (pre snapshot)*/
+	/* fs (pre clone)*/
 	UT_DEFTGRP(ut_tdefs_inspect),
 	UT_DEFTGRP(ut_tdefs_reload),
 	UT_DEFTGRP(ut_tdefs_fillfs),
 	UT_DEFTGRP(ut_tdefs_archive),
-	/* snapshot */
-	UT_DEFTGRP(ut_tdefs_snap_basic),
-	UT_DEFTGRP(ut_tdefs_snap_io),
-	/* re-run (post snapshot) */
+	/* clone */
+	UT_DEFTGRP(ut_tdefs_clone_basic),
+	UT_DEFTGRP(ut_tdefs_clone_io),
+	/* re-run (post clone) */
 	UT_DEFTGRP(ut_tdefs_archive),
 	UT_DEFTGRP(ut_tdefs_file_stat),
 	UT_DEFTGRP(ut_tdefs_dir_iter),

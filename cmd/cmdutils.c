@@ -352,6 +352,16 @@ void cmd_mkdir(const char *path, mode_t mode)
 	}
 }
 
+void cmd_chdir(const char *path)
+{
+	int err;
+
+	err = silofs_sys_chdir(path);
+	if (err) {
+		cmd_die(err, "chdir failed: %s", path);
+	}
+}
+
 static void cmd_access_ok(const char *path)
 {
 	int err;

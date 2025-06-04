@@ -202,6 +202,8 @@ void cmd_check_mntsrv_perm(const char *path);
 
 void cmd_mkdir(const char *path, mode_t mode);
 
+void cmd_chdir(const char *path);
+
 void cmd_realpath(const char *path, char **out_real);
 
 void cmd_realpath_dir(const char *path, char **out_real);

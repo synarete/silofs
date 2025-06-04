@@ -482,6 +482,7 @@ static void cmd_mount_start_daemon(struct cmd_mount_ctx *ctx)
 
 static void cmd_mount_boostrap_process(struct cmd_mount_ctx *ctx)
 {
+	cmd_chdir("/");
 	if (!cmd_global_params.dont_daemonize) {
 		cmd_mount_start_daemon(ctx);
 	}

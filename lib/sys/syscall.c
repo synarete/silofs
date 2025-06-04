@@ -203,6 +203,11 @@ int silofs_sys_umount2(const char *target, int flags)
 	return ok_or_errno(umount2(target, flags));
 }
 
+int silofs_sys_chdir(const char *path)
+{
+	return ok_or_errno(chdir(path));
+}
+
 int silofs_sys_chmod(const char *path, mode_t mode)
 {
 	return ok_or_errno(chmod(path, mode));

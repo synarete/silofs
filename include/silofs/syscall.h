@@ -89,6 +89,8 @@ int silofs_sys_lstat(const char *path, struct stat *st);
 int silofs_sys_statx(int dfd, const char *pathname, int flags,
                      unsigned int mask, struct statx *stx);
 
+int silofs_sys_chdir(const char *path);
+
 int silofs_sys_chmod(const char *path, mode_t mode);
 
 int silofs_sys_fchmod(int fd, mode_t mode);

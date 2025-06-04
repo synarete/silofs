@@ -19,9 +19,11 @@
 #include <sys/resource.h>
 #include <string.h>
 #include <limits.h>
+#include <silofs/consts.h>
 #include <silofs/macros.h>
 #include <silofs/syscall.h>
 #include <silofs/memalloc.h>
+#include <silofs/panic.h>
 #include "utility.h"
 #include "atomic.h"
 
@@ -29,11 +31,17 @@
 
 void silofs_memzero(void *s, size_t n)
 {
+	silofs_assert_not_null(s);
+	silofs_assert_lt(n, SILOFS_GIGA);
+
 	memset(s, 0, n);
 }
 
 void silofs_memffff(void *s, size_t n)
 {
+	silofs_assert_not_null(s);
+	silofs_assert_lt(n, SILOFS_GIGA);
+
 	memset(s, 0xff, n);
 }
 

@@ -872,7 +872,6 @@ int silofs_test_shared_dbkref(struct silofs_task_ctx *task,
 	struct silofs_spleaf_info *sli = NULL;
 	struct silofs_lsmap_info *lsi = NULL;
 	size_t refcnt = 0;
-	size_t refcnt2 = 0;
 	int err;
 
 	*out_res = false;
@@ -883,11 +882,8 @@ int silofs_test_shared_dbkref(struct silofs_task_ctx *task,
 	if (err) {
 		return err;
 	}
-	refcnt = silofs_sli_refcnt_at(sli, vaddr);
+	refcnt = silofs_lsi_refcnt_at(lsi, vaddr);
 	*out_res = (refcnt > 1);
-
-	refcnt2 = silofs_lsi_refcnt_at(lsi, vaddr);
-	silofs_assert_eq(refcnt, refcnt2);
 	return 0;
 }
 

@@ -368,6 +368,11 @@ static void spac_mark_allocated(struct silofs_spalloc_ctx *spa_ctx,
 	const bool first = !silofs_sli_has_allocated_with(spa_ctx->sli, vaddr);
 
 	silofs_sli_mark_allocated_at(spa_ctx->sli, vaddr);
+	if (spa_ctx->ltype != SILOFS_LTYPE_LSMAP) {
+		silofs_assert_not_null(spa_ctx->lsi);
+		silofs_lsi_mark_allocated_at(spa_ctx->lsi, vaddr);
+	}
+
 	sbi_update_space_stats(spa_ctx->sbi, vaddr, 1, first ? 1 : 0);
 	spac_set_hint(spa_ctx, vaddr->off);
 }
@@ -646,23 +651,12 @@ stage_lsmap_of(struct silofs_task_ctx *task, enum silofs_ltype refltype,
 	return 0;
 }
 
-static int
-update_lsmap_of(struct silofs_task_ctx *task, const struct silofs_vaddr *vaddr)
+static int require_lsmap_by(struct silofs_task_ctx *task,
+                            const struct silofs_vaddr *vaddr)
 {
 	struct silofs_lsmap_info *lsi = NULL;
-	bool allocated = false;
-	int err;
 
-	err = require_lsmap_of(task, vaddr->ltype, vaddr->off, &lsi);
-	if (err) {
-		return err;
-	}
-	allocated = silofs_lsi_has_allocated_at(lsi, vaddr);
-	silofs_assert(!allocated);
-
-	silofs_lsi_mark_allocated_at(lsi, vaddr);
-	silofs_lsi_update_off_hint(lsi, vaddr);
-	return 0;
+	return require_lsmap_of(task, vaddr->ltype, vaddr->off, &lsi);
 }
 
 int silofs_claim_vspace(struct silofs_task_ctx *task, enum silofs_ltype ltype,
@@ -676,7 +670,7 @@ int silofs_claim_vspace(struct silofs_task_ctx *task, enum silofs_ltype ltype,
 	if (err) {
 		return err;
 	}
-	err = update_lsmap_of(task, out_vaddr);
+	err = require_lsmap_by(task, out_vaddr);
 	if (err) {
 		return err;
 	}
@@ -692,22 +686,28 @@ int silofs_claim_ispace(struct silofs_task_ctx *task,
 static bool spac_has_dbkref_at(const struct silofs_spalloc_ctx *spa_ctx,
                                const struct silofs_vaddr *vaddr)
 {
-	const size_t cnt = silofs_sli_refcnt_at(spa_ctx->sli, vaddr);
+	size_t refcnt;
 
-	return (cnt > 0);
+	silofs_assert_not_null(spa_ctx->lsi);
+	refcnt = silofs_lsi_refcnt_at(spa_ctx->lsi, vaddr);
+
+	return (refcnt > 0);
 }
 
 static int spac_try_recache_vspace(const struct silofs_spalloc_ctx *spa_ctx,
                                    const struct silofs_vaddr *vaddr)
 {
 	struct silofs_spamaps *spam = spac_spamaps(spa_ctx);
-	int ret = 0;
+	size_t len;
 
-	if (!spac_has_dbkref_at(spa_ctx, vaddr)) {
-		ret = silofs_spamaps_store(spam, vaddr->ltype, vaddr->off,
-		                           silofs_vaddr_len(vaddr));
+	if (vaddr->ltype == SILOFS_LTYPE_LSMAP) {
+		return 0;
 	}
-	return ret;
+	if (spac_has_dbkref_at(spa_ctx, vaddr)) {
+		return 0;
+	}
+	len = silofs_vaddr_len(vaddr);
+	return silofs_spamaps_store(spam, vaddr->ltype, vaddr->off, len);
 }
 
 static bool spac_ismutable_lsid(const struct silofs_spalloc_ctx *spa_ctx,

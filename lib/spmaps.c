@@ -703,14 +703,6 @@ static void spleaf_set_unwritten_at(struct silofs_spmap_leaf *spl,
 	lbr_set_unwritten_at(lbr, kbn_of(vaddr), nkbs_of(vaddr));
 }
 
-static size_t spleaf_refcnt_at(const struct silofs_spmap_leaf *spl,
-                               const struct silofs_vaddr *vaddr)
-{
-	silofs_assert_eq(vaddr->ltype, SILOFS_LTYPE_DATABK);
-
-	return lbr_refcnt(spleaf_lbr_by_vaddr(spl, vaddr));
-}
-
 static void spleaf_set_allocated_at(struct silofs_spmap_leaf *spl,
                                     const struct silofs_vaddr *vaddr)
 {
@@ -1003,17 +995,6 @@ void silofs_sli_reref_allocated_at(struct silofs_spleaf_info *sli,
 
 	spleaf_set_allocated_at(sli->sl, vaddr);
 	sli_dirtify(sli);
-}
-
-size_t silofs_sli_refcnt_at(const struct silofs_spleaf_info *sli,
-                            const struct silofs_vaddr *vaddr)
-{
-	size_t refcnt = 0;
-
-	if (silofs_vaddr_isdatabk(vaddr)) {
-		refcnt = spleaf_refcnt_at(sli->sl, vaddr);
-	}
-	return refcnt;
 }
 
 bool silofs_sli_has_allocated_with(const struct silofs_spleaf_info *sli,

@@ -492,22 +492,6 @@ static void lbr_clear_alloc_state(struct silofs_lbk_ref *lbr)
 	lbr_set_refcnt(lbr, 0);
 }
 
-static const struct silofs_key *lbr_key(const struct silofs_lbk_ref *lbr)
-{
-	return &lbr->lbr_key;
-}
-
-static void lbr_gen_key(struct silofs_lbk_ref *lbr)
-{
-	silofs_key_mkrand(&lbr->lbr_key);
-}
-
-static void
-lbr_set_key(struct silofs_lbk_ref *lbr, const struct silofs_key *key)
-{
-	silofs_key_assign(&lbr->lbr_key, key);
-}
-
 static void lbr_reset(struct silofs_lbk_ref *lbr)
 {
 	memset(lbr, 0, sizeof(*lbr));
@@ -568,8 +552,6 @@ static void lbr_clone_from(struct silofs_lbk_ref *lbr,
 
 	dbkref = lbr_refcnt(lbr_other);
 	lbr_set_refcnt(lbr, dbkref);
-
-	lbr_set_key(lbr, lbr_key(lbr_other));
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -856,46 +838,10 @@ static void spleaf_set_child_of(struct silofs_spmap_leaf *spl, loff_t voff,
 	lbr_set_subref(lbr, laddr);
 }
 
-static void spleaf_gen_child_keys(struct silofs_spmap_leaf *spl)
-{
-	struct silofs_lbk_ref *lbr;
-
-	for (size_t slot = 0; slot < ARRAY_SIZE(spl->sl_lbrs); ++slot) {
-		lbr = spleaf_lbr_at(spl, slot);
-		lbr_gen_key(lbr);
-	}
-}
-
-static const struct silofs_key *
-spleaf_child_key_at(const struct silofs_spmap_leaf *spl, size_t slot)
-{
-	const struct silofs_lbk_ref *lbr = spleaf_lbr_at(spl, slot);
-
-	return lbr_key(lbr);
-}
-
-static void spleaf_child_key_of(const struct silofs_spmap_leaf *spl,
-                                loff_t voff, struct silofs_key *out_key)
-{
-	const size_t slot = spleaf_slot_of(spl, voff);
-
-	silofs_key_assign(out_key, spleaf_child_key_at(spl, slot));
-}
-
-static void
-spleaf_renew_child_key_of(struct silofs_spmap_leaf *spl, loff_t voff)
-{
-	struct silofs_lbk_ref *lbr = spleaf_lbr_by_voff(spl, voff);
-
-	lbr_gen_key(lbr);
-}
-
 static void spleaf_resolve_child(const struct silofs_spmap_leaf *spl,
-                                 loff_t voff, struct silofs_laddr *out_laddr,
-                                 struct silofs_key *out_key)
+                                 loff_t voff, struct silofs_laddr *out_laddr)
 {
 	spleaf_child_of(spl, voff, out_laddr);
-	spleaf_child_key_of(spl, voff, out_key);
 }
 
 static void spleaf_clone_subrefs(struct silofs_spmap_leaf *spl,
@@ -976,7 +922,6 @@ void silofs_sli_setup_spawned(struct silofs_spleaf_info *sli,
 	spleaf_init(sl, &lrange, refltype);
 	spleaf_set_parent(sl, parent);
 	spleaf_set_self(sl, silofs_sli_uaddr(sli));
-	spleaf_gen_child_keys(sl);
 	sli_dirtify(sli);
 }
 
@@ -1045,7 +990,6 @@ void silofs_sli_unref_allocated_at(struct silofs_spleaf_info *sli,
 	}
 	if (last) {
 		spleaf_renew_bk_at(sli->sl, vaddr);
-		spleaf_renew_child_key_of(sli->sl, vaddr->off);
 	}
 	sli_dirtify(sli);
 }
@@ -1118,26 +1062,23 @@ void silofs_sli_clone_from(struct silofs_spleaf_info *sli,
 	sli_dirtify(sli);
 }
 
-void silofs_sli_resolve_main_lbk(const struct silofs_spleaf_info *sli,
-                                 loff_t voff, struct silofs_llink *out_llink)
+int silofs_sli_resolve_main_lbk(const struct silofs_spleaf_info *sli,
+                                loff_t voff, struct silofs_laddr *out_laddr)
 {
-	struct silofs_laddr laddr;
-	struct silofs_key key;
-
-	spleaf_resolve_main_lbk(sli->sl, voff, &laddr);
-	spleaf_child_key_of(sli->sl, voff, &key);
-	silofs_llink_setup(out_llink, &laddr, &key);
+	if (!sli_is_inrange(sli, voff)) {
+		return -SILOFS_ERANGE;
+	}
+	spleaf_resolve_main_lbk(sli->sl, voff, out_laddr);
+	return 0;
 }
 
 int silofs_sli_resolve_child(const struct silofs_spleaf_info *sli, loff_t voff,
                              struct silofs_laddr *out_laddr)
 {
-	struct silofs_key key;
-
 	if (!sli_is_inrange(sli, voff)) {
 		return -SILOFS_ERANGE;
 	}
-	spleaf_resolve_child(sli->sl, voff, out_laddr, &key);
+	spleaf_resolve_child(sli->sl, voff, out_laddr);
 	if (silofs_laddr_isnull(out_laddr)) {
 		return -SILOFS_ENOENT;
 	}

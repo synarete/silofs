@@ -58,14 +58,26 @@ static int vstgc_stage_lsmap_of(struct silofs_vstage_ctx *vstg_ctx);
 
 static loff_t ino_to_off(ino_t ino)
 {
-	return silofs_ino_isnull(ino) ? SILOFS_OFF_NULL :
-	                                (loff_t)(ino << SILOFS_INODE_SHIFT);
+	loff_t off;
+
+	if (silofs_ino_isnull(ino)) {
+		off = SILOFS_OFF_NULL;
+	} else {
+		off = (loff_t)(ino << SILOFS_INODE_SHIFT);
+	}
+	return off;
 }
 
 static ino_t off_to_ino(loff_t off)
 {
-	return silofs_off_isnull(off) ? SILOFS_INO_NULL :
-	                                (ino_t)(off >> SILOFS_INODE_SHIFT);
+	ino_t ino;
+
+	if (silofs_off_isnull(off)) {
+		ino = SILOFS_INO_NULL;
+	} else {
+		ino = (ino_t)(off >> SILOFS_INODE_SHIFT);
+	}
+	return ino;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -2177,35 +2189,33 @@ out_err:
 }
 
 static int vstgc_require_lbk_llink(const struct silofs_vstage_ctx *vstg_ctx,
-                                   struct silofs_llink *out_llink_dst)
+                                   struct silofs_laddr *out_dst_laddr,
+                                   struct silofs_key *out_dst_key)
 {
-	struct silofs_llink llink;
-	struct silofs_key key;
-	const struct silofs_vaddr *vaddr = vstg_ctx->vaddr;
 	int err;
 
 	err = vstgc_require_spleaf_main_lseg(vstg_ctx, vstg_ctx->sli);
 	if (err) {
 		return err;
 	}
-	silofs_sli_resolve_main_lbk(vstg_ctx->sli, vaddr->off, &llink);
-
-	err = vstgc_resolve_key_of(vstg_ctx, &key);
+	err = silofs_sli_resolve_main_lbk(vstg_ctx->sli, vstg_ctx->vaddr->off,
+	                                  out_dst_laddr);
 	if (err) {
 		return err;
 	}
-	silofs_llink_setup(out_llink_dst, &llink.laddr, &key);
+	err = vstgc_resolve_key_of(vstg_ctx, out_dst_key);
+	if (err) {
+		return err;
+	}
 	return 0;
 }
 
 static void vstgc_rebind_lbk_llink(const struct silofs_vstage_ctx *vstg_ctx,
-                                   const struct silofs_llink *llink)
+                                   const struct silofs_laddr *laddr,
+                                   const struct silofs_key *key)
 {
-	const struct silofs_laddr *laddr = &llink->laddr;
-	const struct silofs_key *key = &llink->ivkey.key;
 
 	silofs_sli_bind_child(vstg_ctx->sli, vstg_ctx->vaddr->off, laddr);
-
 	if (vstg_ctx->vspace != SILOFS_LTYPE_LSMAP) {
 		silofs_assert_not_null(vstg_ctx->lsi);
 		silofs_lsi_rebind_key(vstg_ctx->lsi, vstg_ctx->vaddr, key);
@@ -2215,18 +2225,19 @@ static void vstgc_rebind_lbk_llink(const struct silofs_vstage_ctx *vstg_ctx,
 static int vstgc_clone_rebind_lbk(const struct silofs_vstage_ctx *vstg_ctx,
                                   const struct silofs_laddr *src_laddr)
 {
-	struct silofs_llink dst_llink;
+	struct silofs_laddr dst_laddr;
+	struct silofs_key dst_key;
 	int err;
 
-	err = vstgc_require_lbk_llink(vstg_ctx, &dst_llink);
+	err = vstgc_require_lbk_llink(vstg_ctx, &dst_laddr, &dst_key);
 	if (err) {
 		return err;
 	}
-	err = vstgc_require_lbks(vstg_ctx, src_laddr, &dst_llink.laddr);
+	err = vstgc_require_lbks(vstg_ctx, src_laddr, &dst_laddr);
 	if (err) {
 		return err;
 	}
-	vstgc_rebind_lbk_llink(vstg_ctx, &dst_llink);
+	vstgc_rebind_lbk_llink(vstg_ctx, &dst_laddr, &dst_key);
 	return 0;
 }
 

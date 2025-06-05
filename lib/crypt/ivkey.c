@@ -43,12 +43,11 @@ void silofs_prandomize_with(void *ptr, size_t len, uint64_t seed)
 	const size_t ns = len / sizeof(*itr);
 	const size_t nu = ARRAY_SIZE(u);
 	struct timespec t;
-	const pid_t tid = gettid();
 
 	silofs_mclock_now(&t);
 	u[0] = (uint64_t)t.tv_sec;
 	u[1] = (uint64_t)t.tv_nsec;
-	u[2] = (uint64_t)tid;
+	u[2] = (uint64_t)gettid();
 	silofs_rclock_now(&t);
 	u[3] = (uint64_t)t.tv_sec;
 	u[4] = (uint64_t)t.tv_nsec;

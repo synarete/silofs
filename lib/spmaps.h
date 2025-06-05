@@ -138,8 +138,8 @@ void silofs_sli_bind_child(struct silofs_spleaf_info *sli, loff_t voff,
 void silofs_sli_clone_from(struct silofs_spleaf_info       *sli,
                            const struct silofs_spleaf_info *sli_other);
 
-void silofs_sli_resolve_main_lbk(const struct silofs_spleaf_info *sli,
-                                 loff_t voff, struct silofs_llink *out_llink);
+int silofs_sli_resolve_main_lbk(const struct silofs_spleaf_info *sli,
+                                loff_t voff, struct silofs_laddr *out_laddr);
 
 int silofs_sli_resolve_child(const struct silofs_spleaf_info *sli, loff_t voff,
                              struct silofs_laddr *out_laddr);

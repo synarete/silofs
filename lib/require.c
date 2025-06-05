@@ -209,7 +209,6 @@ static void require_persistent_types_members(void)
 static void require_persistent_types_alignment1(void)
 {
 	REQUIRE_OFFSET64(struct silofs_spmap_ref, sr_uaddr, 0);
-	REQUIRE_OFFSET64(struct silofs_lbk_ref, lbr_key, 0);
 	REQUIRE_OFFSET64(struct silofs_lbk_ref, lbr_subref, 64);
 	REQUIRE_OFFSET64(struct silofs_lbk_ref, lbr_allocated, 112);
 	REQUIRE_OFFSET64(struct silofs_lbk_ref, lbr_unwritten, 120);

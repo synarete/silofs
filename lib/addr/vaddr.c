@@ -121,7 +121,7 @@ void silofs_vaddr_of_lsmap(struct silofs_vaddr *vaddr,
 	STATICASSERT_EQ(SILOFS_LTYPE_INODE, 6);
 	STATICASSERT_EQ(SILOFS_LTYPE_DATABK - SILOFS_LTYPE_INODE + 1, 8);
 	STATICASSERT_EQ(SILOFS_LTYPE_DATABK + 1, SILOFS_LTYPE_LAST);
-	STATICASSERT_EQ(sizeof(struct silofs_lsmap), 8192);
+	STATICASSERT_EQ(sizeof(struct silofs_lsmap), SILOFS_LBK_SIZE);
 
 	silofs_assert_ge(refltype, SILOFS_LTYPE_INODE);
 	silofs_assert_le(refltype, SILOFS_LTYPE_DATABK);

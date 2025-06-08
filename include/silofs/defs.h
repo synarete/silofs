@@ -776,6 +776,7 @@ struct silofs_lsmap {
 	struct silofs_lbk_meta  lsm_lbms[SILOFS_SPMAP_NCHILDS];
 	uint8_t                 lsm_reserved2[448];
 	struct silofs_key       lsm_keys[SILOFS_SPMAP_NCHILDS];
+	uint8_t                 lsm_reserved3[57344];
 } silofs_attr_aligned64;
 
 struct silofs_inode_times {

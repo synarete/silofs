@@ -141,6 +141,12 @@ int silofs_sli_resolve_main_lbk(const struct silofs_spleaf_info *sli,
 int silofs_sli_resolve_child(const struct silofs_spleaf_info *sli, loff_t voff,
                              struct silofs_laddr *out_laddr);
 
+int silofs_sli_require_child(struct silofs_spleaf_info *sli,
+                             const struct silofs_vaddr *vaddr, bool *out_new);
+
+bool silofs_sli_has_child_at(const struct silofs_spleaf_info *sli,
+                             const struct silofs_vaddr       *vaddr);
+
 void silofs_sli_resolve_lmap(const struct silofs_spleaf_info *sli,
                              struct silofs_spmap_lmap        *out_lmaps);
 

@@ -772,17 +772,14 @@ static void spleaf_main_child_at(const struct silofs_spmap_leaf *spl,
 	silofs_laddr_setup_lbk(out_laddr, &lsid, pos);
 }
 
-static void spleaf_bind_lbks_to_main(struct silofs_spmap_leaf *spl)
+static void spleaf_bind_lbk_to_main(struct silofs_spmap_leaf *spl, loff_t voff)
 {
 	struct silofs_laddr laddr;
-	struct silofs_lbk_ref *lbr = NULL;
-	const size_t nslots = ARRAY_SIZE(spl->sl_lbrs);
+	const size_t slot = spleaf_slot_of(spl, voff);
+	struct silofs_lbk_ref *lbr = spleaf_lbr_at(spl, slot);
 
-	for (size_t slot = 0; slot < nslots; ++slot) {
-		lbr = spleaf_lbr_at(spl, slot);
-		spleaf_main_child_at(spl, slot, &laddr);
-		lbr_set_subref(lbr, &laddr);
-	}
+	spleaf_main_child_at(spl, slot, &laddr);
+	lbr_set_subref(lbr, &laddr);
 }
 
 static size_t spleaf_calc_total_usecnt(const struct silofs_spmap_leaf *spl)
@@ -828,12 +825,6 @@ static void spleaf_set_child_of(struct silofs_spmap_leaf *spl, loff_t voff,
 
 	silofs_assert_gt(lbr_usecnt(lbr), 0);
 	lbr_set_subref(lbr, laddr);
-}
-
-static void spleaf_resolve_child(const struct silofs_spmap_leaf *spl,
-                                 loff_t voff, struct silofs_laddr *out_laddr)
-{
-	spleaf_child_of(spl, voff, out_laddr);
 }
 
 static void spleaf_clone_subrefs(struct silofs_spmap_leaf *spl,
@@ -1030,7 +1021,6 @@ void silofs_sli_bind_main_lseg(struct silofs_spleaf_info *sli,
                                const struct silofs_lsid *lsid)
 {
 	spleaf_set_main_lsid(sli->sl, lsid);
-	spleaf_bind_lbks_to_main(sli->sl);
 	sli_dirtify(sli);
 }
 
@@ -1059,12 +1049,38 @@ int silofs_sli_resolve_child(const struct silofs_spleaf_info *sli, loff_t voff,
 	if (!sli_is_inrange(sli, voff)) {
 		return -SILOFS_ERANGE;
 	}
-	spleaf_resolve_child(sli->sl, voff, out_laddr);
+	spleaf_child_of(sli->sl, voff, out_laddr);
 	if (silofs_laddr_isnull(out_laddr)) {
 		return -SILOFS_ENOENT;
 	}
 	silofs_laddr_setpos(out_laddr, voff);
 	return 0;
+}
+
+int silofs_sli_require_child(struct silofs_spleaf_info *sli,
+                             const struct silofs_vaddr *vaddr, bool *out_new)
+{
+	*out_new = false;
+	if (!sli_is_inrange(sli, vaddr->off)) {
+		return -SILOFS_ERANGE;
+	}
+	if (silofs_sli_has_child_at(sli, vaddr)) {
+		return 0;
+	}
+	spleaf_bind_lbk_to_main(sli->sl, vaddr->off);
+	sli_dirtify(sli);
+	*out_new = true;
+	return 0;
+}
+
+bool silofs_sli_has_child_at(const struct silofs_spleaf_info *sli,
+                             const struct silofs_vaddr *vaddr)
+{
+	struct silofs_laddr laddr;
+	int err;
+
+	err = silofs_sli_resolve_child(sli, vaddr->off, &laddr);
+	return (err == 0);
 }
 
 void silofs_sli_bind_child(struct silofs_spleaf_info *sli, loff_t voff,

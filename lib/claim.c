@@ -375,12 +375,17 @@ static int spac_check_want_free_vspace(struct silofs_spalloc_ctx *spa_ctx,
 static void spac_mark_allocated(struct silofs_spalloc_ctx *spa_ctx,
                                 const struct silofs_vaddr *vaddr)
 {
-	const bool first = !silofs_sli_has_allocated_with(spa_ctx->sli, vaddr);
+	bool first;
 
-	silofs_sli_mark_allocated_at(spa_ctx->sli, vaddr);
 	if (spa_ctx->ltype != SILOFS_LTYPE_LSMAP) {
 		silofs_assert_not_null(spa_ctx->lsi);
+
+		first = !silofs_lsi_has_allocated_with(spa_ctx->lsi, vaddr);
+		silofs_sli_mark_allocated_at(spa_ctx->sli, vaddr);
 		silofs_lsi_mark_allocated_at(spa_ctx->lsi, vaddr);
+	} else {
+		first = true;
+		silofs_sli_mark_allocated_at(spa_ctx->sli, vaddr);
 	}
 
 	sbi_update_space_stats(spa_ctx->sbi, vaddr, 1, first ? 1 : 0);

@@ -1934,7 +1934,7 @@ static int vstgc_stage_spleaf_for_resolve(struct silofs_vstage_ctx *vstg_ctx)
 	return ret;
 }
 
-static int vstgc_stage_lsmap_for_resolve(struct silofs_vstage_ctx *vstg_ctx)
+static int vstgc_try_stage_lsmap(struct silofs_vstage_ctx *vstg_ctx)
 {
 	int ret = 0;
 
@@ -1953,7 +1953,7 @@ static int vstgc_resolve_llink(struct silofs_vstage_ctx *vstg_ctx,
 	if (err) {
 		return err;
 	}
-	err = vstgc_stage_lsmap_for_resolve(vstg_ctx);
+	err = vstgc_try_stage_lsmap(vstg_ctx);
 	if (err) {
 		return err;
 	}
@@ -2007,17 +2007,46 @@ int silofs_require_spleaf_of(struct silofs_task_ctx *task,
 	return 0;
 }
 
-static int vstgc_require_stable_vaddr(const struct silofs_vstage_ctx *vstg_ctx)
+static int vstgc_check_stable_vaddr(const struct silofs_vstage_ctx *vstg_ctx)
 {
 	const struct silofs_vaddr *vaddr = vstg_ctx->vaddr;
-	bool allocated;
+	bool stable;
 
-	allocated = silofs_sli_has_allocated_at(vstg_ctx->sli, vaddr);
-	if (likely(allocated)) {
-		return 0;
+	if (vstg_ctx->vspace != SILOFS_LTYPE_LSMAP) {
+		silofs_assert_not_null(vstg_ctx->lsi);
+		stable = silofs_lsi_has_allocated_at(vstg_ctx->lsi, vaddr);
+	} else {
+		stable = silofs_sli_has_child_lbk_at(vstg_ctx->sli, vaddr);
 	}
-	log_err("unstable: off=0x%lx ltype=%d", vaddr->off, vaddr->ltype);
-	return -SILOFS_EFSCORRUPTED;
+	return likely(stable) ? 0 : -SILOFS_ENOENT;
+}
+
+static int vstgc_require_stable_vaddr(const struct silofs_vstage_ctx *vstg_ctx)
+{
+	int err;
+
+	err = vstgc_check_stable_vaddr(vstg_ctx);
+	if (err) {
+		log_err("unstable: off=0x%lx ltype=%d", vstg_ctx->vaddr->off,
+		        vstg_ctx->vaddr->ltype);
+		return -SILOFS_EFSCORRUPTED;
+	}
+	return 0;
+}
+
+static int vstgc_stage_spmaps_plus(struct silofs_vstage_ctx *vstg_ctx)
+{
+	int err;
+
+	err = vstgc_stage_spmaps_of(vstg_ctx);
+	if (err) {
+		return err;
+	}
+	err = vstgc_try_stage_lsmap(vstg_ctx);
+	if (err) {
+		return err;
+	}
+	return 0;
 }
 
 static int require_stable_at(struct silofs_task_ctx *task,
@@ -2027,7 +2056,7 @@ static int require_stable_at(struct silofs_task_ctx *task,
 	int err;
 
 	vstgc_setup(&vstg_ctx, task, vaddr, SILOFS_STG_CUR | SILOFS_STG_RAW);
-	err = vstgc_stage_spmaps_of(&vstg_ctx);
+	err = vstgc_stage_spmaps_plus(&vstg_ctx);
 	if (err) {
 		return err;
 	}
@@ -2038,15 +2067,6 @@ static int require_stable_at(struct silofs_task_ctx *task,
 	return 0;
 }
 
-static int vstgc_check_stable_vaddr(const struct silofs_vstage_ctx *vstg_ctx)
-{
-	const struct silofs_vaddr *vaddr = vstg_ctx->vaddr;
-	bool allocated;
-
-	allocated = silofs_sli_has_allocated_at(vstg_ctx->sli, vaddr);
-	return likely(allocated) ? 0 : -SILOFS_ENOENT;
-}
-
 static int
 check_stable_at(struct silofs_task_ctx *task, const struct silofs_vaddr *vaddr)
 {
@@ -2054,7 +2074,7 @@ check_stable_at(struct silofs_task_ctx *task, const struct silofs_vaddr *vaddr)
 	int err;
 
 	vstgc_setup(&vstg_ctx, task, vaddr, SILOFS_STG_CUR | SILOFS_STG_RAW);
-	err = vstgc_stage_spmaps_of(&vstg_ctx);
+	err = vstgc_stage_spmaps_plus(&vstg_ctx);
 	if (err) {
 		return err;
 	}

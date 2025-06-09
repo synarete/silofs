@@ -654,17 +654,17 @@ stage_lsmap_of(struct silofs_task_ctx *task, enum silofs_ltype refltype,
 	return 0;
 }
 
-static int require_lsmap_by(struct silofs_task_ctx *task,
-                            const struct silofs_vaddr *vaddr)
+int silofs_require_lsmap_by(struct silofs_task_ctx *task,
+                            const struct silofs_vaddr *vaddr,
+                            struct silofs_lsmap_info **out_lsi)
 {
-	struct silofs_lsmap_info *lsi = NULL;
-
-	return require_lsmap_of(task, vaddr->ltype, vaddr->off, &lsi);
+	return require_lsmap_of(task, vaddr->ltype, vaddr->off, out_lsi);
 }
 
 int silofs_claim_vspace(struct silofs_task_ctx *task, enum silofs_ltype ltype,
                         struct silofs_vaddr *out_vaddr)
 {
+	struct silofs_lsmap_info *lsi = NULL;
 	int err;
 
 	silofs_assert_ne(ltype, SILOFS_LTYPE_LSMAP);
@@ -673,7 +673,7 @@ int silofs_claim_vspace(struct silofs_task_ctx *task, enum silofs_ltype ltype,
 	if (err) {
 		return err;
 	}
-	err = require_lsmap_by(task, out_vaddr);
+	err = silofs_require_lsmap_by(task, out_vaddr, &lsi);
 	if (err) {
 		return err;
 	}

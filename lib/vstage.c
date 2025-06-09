@@ -52,7 +52,7 @@ struct silofs_vnis {
 	size_t count;
 };
 
-static int vstgc_stage_lsmap_of(struct silofs_vstage_ctx *vstg_ctx);
+static int vstgc_require_lsmap_of(struct silofs_vstage_ctx *vstg_ctx);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -1939,7 +1939,7 @@ static int vstgc_stage_lsmap_for_resolve(struct silofs_vstage_ctx *vstg_ctx)
 	int ret = 0;
 
 	if (vstg_ctx->vspace != SILOFS_LTYPE_LSMAP) {
-		ret = vstgc_stage_lsmap_of(vstg_ctx);
+		ret = vstgc_require_lsmap_of(vstg_ctx);
 	}
 	return ret;
 }
@@ -2311,36 +2311,18 @@ static int vstgc_pre_clone_stage_at(const struct silofs_vstage_ctx *vstg_ctx,
 	return ret;
 }
 
-static int
-stage_lsmap(struct silofs_task_ctx *task, const struct silofs_vaddr *vaddr,
-            enum silofs_stg_mode stg_mode, struct silofs_lsmap_info **out_lsi)
+static int vstgc_do_require_lsmap_of(struct silofs_vstage_ctx *vstg_ctx)
 {
-	struct silofs_vnode_info *vni = NULL;
-	int err;
-
-	err = silofs_stage_vnode(task, NULL, vaddr, stg_mode, &vni);
-	if (err) {
-		return err;
-	}
-	*out_lsi = silofs_lsi_from_vni(vni);
-	return 0;
+	return silofs_require_lsmap_by(vstg_ctx->task, vstg_ctx->vaddr,
+	                               &vstg_ctx->lsi);
 }
 
-static int vstgc_do_stage_lsmap_of(struct silofs_vstage_ctx *vstg_ctx)
-{
-	struct silofs_vaddr vaddr;
-
-	silofs_vaddr_of_lsmap(&vaddr, vstg_ctx->vspace, vstg_ctx->vaddr->off);
-	return stage_lsmap(vstg_ctx->task, &vaddr, vstg_ctx->stg_mode,
-	                   &vstg_ctx->lsi);
-}
-
-static int vstgc_stage_lsmap_of(struct silofs_vstage_ctx *vstg_ctx)
+static int vstgc_require_lsmap_of(struct silofs_vstage_ctx *vstg_ctx)
 {
 	int err;
 
 	vstgc_increfs(vstg_ctx, SILOFS_HEIGHT_SPLEAF);
-	err = vstgc_do_stage_lsmap_of(vstg_ctx);
+	err = vstgc_do_require_lsmap_of(vstg_ctx);
 	vstgc_decrefs(vstg_ctx, SILOFS_HEIGHT_SPLEAF);
 	return err;
 }
@@ -2355,7 +2337,7 @@ static int vstgc_resolve_vaddrs(struct silofs_vstage_ctx *vstg_ctx,
 	if (vstg_ctx->vspace == SILOFS_LTYPE_LSMAP) {
 		return 0;
 	}
-	err = vstgc_stage_lsmap_of(vstg_ctx);
+	err = vstgc_require_lsmap_of(vstg_ctx);
 	if (err) {
 		return err;
 	}
@@ -2909,23 +2891,35 @@ stage_raw_vnode(struct silofs_task_ctx *task, struct silofs_inode_info *pii,
 }
 
 static int
+spawn_vnode_at(struct silofs_task_ctx *task, struct silofs_inode_info *pii,
+               const struct silofs_vaddr *vaddr,
+               struct silofs_vnode_info **out_vni)
+{
+	int err;
+
+	err = stage_raw_vnode(task, pii, vaddr, out_vni);
+	if (err) {
+		return err;
+	}
+	silofs_vni_dirtify(*out_vni, pii);
+	return 0;
+}
+
+static int
 do_spawn_vnode(struct silofs_task_ctx *task, struct silofs_inode_info *pii,
                enum silofs_ltype ltype, struct silofs_vnode_info **out_vni)
 {
 	struct silofs_vaddr vaddr;
-	struct silofs_vnode_info *vni = NULL;
 	int err;
 
 	err = silofs_claim_vspace(task, ltype, &vaddr);
 	if (err) {
 		return err;
 	}
-	err = stage_raw_vnode(task, pii, &vaddr, &vni);
+	err = spawn_vnode_at(task, pii, &vaddr, out_vni);
 	if (err) {
 		return err;
 	}
-	silofs_vni_dirtify(vni, pii);
-	*out_vni = vni;
 	return 0;
 }
 

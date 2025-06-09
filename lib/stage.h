@@ -65,6 +65,10 @@ int silofs_stage_lseg(struct silofs_env *env, const struct silofs_lsid *lsid);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
+int silofs_require_lsmap_by(struct silofs_task_ctx    *task,
+                            const struct silofs_vaddr *vaddr,
+                            struct silofs_lsmap_info **out_lsi);
+
 int silofs_claim_vspace(struct silofs_task_ctx *task, enum silofs_ltype ltype,
                         struct silofs_vaddr *out_vaddr);
 

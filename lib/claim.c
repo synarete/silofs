@@ -400,15 +400,11 @@ static int spac_do_resolve_and_claim(struct silofs_spalloc_ctx *spa_ctx,
                                      struct silofs_llink *out_llink)
 {
 	int err;
-	bool allocated;
 
 	err = spac_resolve_llink(spa_ctx, vaddr, out_llink);
 	if (err) {
 		return err;
 	}
-	allocated = silofs_sli_has_allocated_at(spa_ctx->sli, vaddr);
-	silofs_assert(!allocated);
-
 	spac_mark_allocated(spa_ctx, vaddr);
 	return 0;
 }
@@ -611,11 +607,8 @@ require_lsmap_of(struct silofs_task_ctx *task, enum silofs_ltype refltype,
 static int spac_try_stage_lsmap_at(struct silofs_spalloc_ctx *spa_ctx,
                                    const struct silofs_vaddr *vaddr)
 {
-	int err = -SILOFS_ENOENT;
+	int err;
 
-	if (!silofs_sli_has_allocated_at(spa_ctx->sli, vaddr)) {
-		return -SILOFS_ENOENT;
-	}
 	spac_increfs(spa_ctx);
 	err = spac_stage_lsmap_at(spa_ctx, vaddr, &spa_ctx->lsi);
 	spac_decrefs(spa_ctx);

@@ -1043,15 +1043,43 @@ int silofs_sli_resolve_main_lbk(const struct silofs_spleaf_info *sli,
 	return 0;
 }
 
+static int sli_resolve_child_lbk(const struct silofs_spleaf_info *sli,
+                                 loff_t voff, struct silofs_laddr *out_laddr)
+{
+	spleaf_child_of(sli->sl, voff, out_laddr);
+	return !silofs_laddr_isnull(out_laddr) ? 0 : -SILOFS_ENOENT;
+}
+
+static bool sli_has_child_lbk_at(const struct silofs_spleaf_info *sli,
+                                 const struct silofs_vaddr *vaddr)
+{
+	struct silofs_laddr laddr;
+
+	return (sli_resolve_child_lbk(sli, vaddr->off, &laddr) == 0);
+}
+
+bool silofs_sli_has_child_lbk_at(const struct silofs_spleaf_info *sli,
+                                 const struct silofs_vaddr *vaddr)
+{
+	bool ret = false;
+
+	if (sli_is_inrange(sli, vaddr->off)) {
+		ret = sli_has_child_lbk_at(sli, vaddr);
+	}
+	return ret;
+}
+
 int silofs_sli_resolve_child(const struct silofs_spleaf_info *sli, loff_t voff,
                              struct silofs_laddr *out_laddr)
 {
+	int err;
+
 	if (!sli_is_inrange(sli, voff)) {
 		return -SILOFS_ERANGE;
 	}
-	spleaf_child_of(sli->sl, voff, out_laddr);
-	if (silofs_laddr_isnull(out_laddr)) {
-		return -SILOFS_ENOENT;
+	err = sli_resolve_child_lbk(sli, voff, out_laddr);
+	if (err) {
+		return err;
 	}
 	silofs_laddr_setpos(out_laddr, voff);
 	return 0;
@@ -1064,23 +1092,13 @@ int silofs_sli_require_child(struct silofs_spleaf_info *sli,
 	if (!sli_is_inrange(sli, vaddr->off)) {
 		return -SILOFS_ERANGE;
 	}
-	if (silofs_sli_has_child_at(sli, vaddr)) {
+	if (sli_has_child_lbk_at(sli, vaddr)) {
 		return 0;
 	}
 	spleaf_bind_lbk_to_main(sli->sl, vaddr->off);
 	sli_dirtify(sli);
 	*out_new = true;
 	return 0;
-}
-
-bool silofs_sli_has_child_at(const struct silofs_spleaf_info *sli,
-                             const struct silofs_vaddr *vaddr)
-{
-	struct silofs_laddr laddr;
-	int err;
-
-	err = silofs_sli_resolve_child(sli, vaddr->off, &laddr);
-	return (err == 0);
 }
 
 void silofs_sli_bind_child(struct silofs_spleaf_info *sli, loff_t voff,

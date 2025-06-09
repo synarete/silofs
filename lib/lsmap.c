@@ -398,7 +398,12 @@ lsmap_set_lrange(struct silofs_lsmap *lsm, const struct silofs_lrange *lrange)
 
 static enum silofs_ltype lsmap_refltype(const struct silofs_lsmap *lsm)
 {
-	return (enum silofs_ltype)lsm->lsm_refltype;
+	enum silofs_ltype refltype = (enum silofs_ltype)lsm->lsm_refltype;
+
+	silofs_assert_ge(refltype, SILOFS_LTYPE_INODE);
+	silofs_assert_le(refltype, SILOFS_LTYPE_DATABK);
+
+	return refltype;
 }
 
 static void
@@ -803,20 +808,22 @@ static bool lsi_is_off_within(const struct silofs_lsmap_info *lsi, loff_t off)
 	return silofs_lrange_within(&lrange, off);
 }
 
-static bool lsi_is_subref(const struct silofs_lsmap_info *lsi,
-                          const struct silofs_vaddr *vaddr)
-{
-	bool ret = false;
-
-	if (vaddr->ltype == lsmap_refltype(lsi->lsm)) {
-		ret = lsi_is_off_within(lsi, vaddr->off);
-	}
-	return ret;
-}
-
 static enum silofs_ltype lsi_refltype(const struct silofs_lsmap_info *lsi)
 {
 	return lsmap_refltype(lsi->lsm);
+}
+
+static bool lsi_is_subref(const struct silofs_lsmap_info *lsi,
+                          const struct silofs_vaddr *vaddr)
+{
+	enum silofs_ltype refltype;
+	bool ret = false;
+
+	refltype = lsi_refltype(lsi);
+	if (vaddr->ltype == refltype) {
+		ret = lsi_is_off_within(lsi, vaddr->off);
+	}
+	return ret;
 }
 
 static size_t lsi_refltype_size(const struct silofs_lsmap_info *lsi)

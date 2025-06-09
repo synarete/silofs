@@ -143,6 +143,18 @@ static enum silofs_log_flags log_ctrl_flags(void)
 	return log_flags;
 }
 
+static enum silofs_log_flags log_ctrl_flags_by(enum silofs_log_level log_level)
+{
+	enum silofs_log_flags log_flags = log_ctrl_flags();
+
+	if ((log_level <= SILOFS_LOG_ERROR) &&
+	    (log_flags & SILOFS_LOGF_VERBOSE)) {
+		log_flags |= SILOFS_LOGF_PROGNAME | SILOFS_LOGF_FILINE;
+	}
+
+	return log_flags;
+}
+
 static bool log_output_enabled(void)
 {
 	const enum silofs_log_flags log_mask =
@@ -151,10 +163,11 @@ static bool log_output_enabled(void)
 	return (log_ctrl_flags() & log_mask) > 0;
 }
 
-static bool log_with_file_line(const char *file, int line)
+static bool
+log_with_file_line(enum silofs_log_flags log_flags, const char *file, int line)
 {
 	return (file != NULL) && (line > 0) &&
-	       ((log_ctrl_flags() & SILOFS_LOGF_FILINE) > 0);
+	       ((log_flags & SILOFS_LOGF_FILINE) > 0);
 }
 
 static bool log_level_enabled(enum silofs_log_level log_level)
@@ -178,21 +191,26 @@ int silofs_logf(enum silofs_log_level log_level, const char *file, int line,
 	va_list ap;
 	const char *filename = NULL;
 	const int saved_errno = errno;
+	enum silofs_log_flags log_flags;
+	int n;
 
 	if (!log_enabled_with(log_level)) {
 		return -1;
 	}
 
-	if (log_with_file_line(file, line)) {
+	log_flags = log_ctrl_flags_by(log_level);
+	if (log_with_file_line(log_flags, file, line)) {
 		filename = basename_of(file);
 	}
 
 	va_start(ap, fmt);
-	(void)vsnprintf(msg, sizeof(msg), fmt, ap);
+	n = vsnprintf(msg, sizeof(msg), fmt, ap);
 	va_end(ap);
+	if (n >= (int)sizeof(msg)) {
+		msg[sizeof(msg) - 1] = '\0';
+	}
 
-	msg[sizeof(msg) - 1] = '\0';
-	log_msg(log_level, log_ctrl_flags(), msg, filename, line);
+	log_msg(log_level, log_flags, msg, filename, line);
 
 	errno = saved_errno;
 	return 0;

@@ -91,7 +91,8 @@ struct silofs_fuseq {
 	struct silofs_listq           fq_pipes_freeq;
 	struct silofs_listq           fq_curr_opers;
 	size_t                        fq_selfsize;
-	size_t                        fq_pagesize;
+	uint32_t                      fq_pagesize;
+	uint32_t                      fq_nprocs;
 	int64_t                       fq_nexecs;
 	int64_t                       fq_nopers;
 	uid_t                         fq_fs_owner;

@@ -749,10 +749,9 @@ static struct silofs_fuseq_pipe *fuseq_pop_pipe(struct silofs_fuseq *fq)
 
 static size_t fuseq_open_pipes_max(const struct silofs_fuseq *fq)
 {
-	const uint32_t nproc = (uint32_t)silofs_sc_nproc_onln();
 	const uint32_t limit = ARRAY_SIZE(fq->fq_pipes);
 
-	return silofs_clamp_u32(nproc / 2, 1, limit);
+	return silofs_clamp_u32(fq->fq_nprocs / 2, 1, limit);
 }
 
 static int fuseq_open_pipes(struct silofs_fuseq *fq)
@@ -4623,7 +4622,8 @@ fuseq_init_common(struct silofs_fuseq *fq, struct silofs_alloc *alloc,
 	fq->fq_subs.fq_nsub_run = 0;
 	listq_init(&fq->fq_curr_opers);
 	fq->fq_env = NULL;
-	fq->fq_pagesize = (size_t)silofs_sc_page_size();
+	fq->fq_pagesize = (uint32_t)silofs_sc_page_size();
+	fq->fq_nprocs = (uint32_t)silofs_sc_nproc_onln();
 	fq->fq_alloc = alloc;
 	fq->fq_nopers = 0;
 	fq->fq_nexecs = 0;
@@ -4767,6 +4767,24 @@ static int fuseq_update_conn_info(struct silofs_fuseq *fq)
 	return 0;
 }
 
+/*
+ * Libfuse uses by default max_background of = 1 << 16) - 1 and
+ * congestion_threshold = max_background * 3 / 4 (libfuse:lib/fuse_lowlevel.c).
+ *
+ * It is not clear from the code of libfuse or fuse.ko why those values.
+ * Documentation is minimal, needs further investigation.
+ *
+ * See also:
+ * https://lore.kernel.org/linux-fsdevel/aEi2oPUdTUiRkzSl@archie.me/T/#t
+ */
+static uint32_t fuseq_calc_max_background(const struct silofs_fuseq *fq)
+{
+	const uint32_t max_background_lim = (1 << 16) - 1;
+	const uint32_t max_background_want = fq->fq_nprocs * 1024;
+
+	return silofs_min_u32(max_background_lim, max_background_want);
+}
+
 static void fuseq_init_conn_info(struct silofs_fuseq *fq)
 {
 	struct silofs_fuseq_conn_info *coni = &fq->fq_coni;
@@ -4775,14 +4793,7 @@ static void fuseq_init_conn_info(struct silofs_fuseq *fq)
 	coni->proto_major = FUSE_KERNEL_VERSION;
 	coni->proto_minor = FUSE_KERNEL_MINOR_VERSION;
 	coni->time_gran = 1;
-
-	/*
-	 * Follow similar values as those at libfuse:lib/fuse_lowlevel.c
-	 * However, libfuse has: congestion_threshold = max_background * 3 / 4
-	 * but it is hard to understand from its code or kernel code why it is
-	 * defined that way. Needs further investigation.
-	 */
-	coni->max_background = (1 << 16) - 1;
+	coni->max_background = fuseq_calc_max_background(fq);
 	coni->congestion_threshold = coni->max_background / 2;
 }
 

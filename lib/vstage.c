@@ -590,12 +590,6 @@ static int vstgc_inspect_laddr(const struct silofs_vstage_ctx *vstg_ctx,
 	return -SILOFS_EPERM; /* address on read-only tree */
 }
 
-static int vstgc_inspect_llink(const struct silofs_vstage_ctx *vstg_ctx,
-                               const struct silofs_llink *llink)
-{
-	return vstgc_inspect_laddr(vstg_ctx, &llink->laddr);
-}
-
 static int vstgc_inspect_cached_uni(const struct silofs_vstage_ctx *vstg_ctx,
                                     const struct silofs_unode_info *uni)
 {
@@ -1934,14 +1928,26 @@ static int vstgc_stage_spleaf_for_resolve(struct silofs_vstage_ctx *vstg_ctx)
 	return ret;
 }
 
-static int vstgc_try_stage_lsmap(struct silofs_vstage_ctx *vstg_ctx)
+static int vstgc_stage_lsmap_for_resolve(struct silofs_vstage_ctx *vstg_ctx)
 {
-	int ret = 0;
+	struct silofs_llink llink;
+	struct silofs_vaddr vaddr;
+	int err = 0;
 
-	if (vstg_ctx->vspace != SILOFS_LTYPE_LSMAP) {
-		ret = vstgc_require_lsmap_of(vstg_ctx);
+	silofs_sli_incref(vstg_ctx->sli);
+	if (vstg_ctx->vspace == SILOFS_LTYPE_LSMAP) {
+		goto out;
 	}
-	return ret;
+	silofs_vaddr_of_lsmap(&vaddr, vstg_ctx->vspace, vstg_ctx->voff);
+	err = silofs_resolve_llink_of(vstg_ctx->task, &vaddr,
+	                              vstg_ctx->stg_mode, &llink);
+	if (err) {
+		goto out;
+	}
+	err = vstgc_require_lsmap_of(vstg_ctx);
+out:
+	silofs_sli_decref(vstg_ctx->sli);
+	return err;
 }
 
 static int vstgc_resolve_llink(struct silofs_vstage_ctx *vstg_ctx,
@@ -1953,7 +1959,7 @@ static int vstgc_resolve_llink(struct silofs_vstage_ctx *vstg_ctx,
 	if (err) {
 		return err;
 	}
-	err = vstgc_try_stage_lsmap(vstg_ctx);
+	err = vstgc_stage_lsmap_for_resolve(vstg_ctx);
 	if (err) {
 		return err;
 	}
@@ -2042,7 +2048,7 @@ static int vstgc_stage_spmaps_plus(struct silofs_vstage_ctx *vstg_ctx)
 	if (err) {
 		return err;
 	}
-	err = vstgc_try_stage_lsmap(vstg_ctx);
+	err = vstgc_stage_lsmap_for_resolve(vstg_ctx);
 	if (err) {
 		return err;
 	}
@@ -2479,7 +2485,7 @@ static int vstgc_resolve_inspect_llink(struct silofs_vstage_ctx *vstg_ctx,
 	if (err) {
 		return err;
 	}
-	err = vstgc_inspect_llink(vstg_ctx, &llink);
+	err = vstgc_inspect_laddr(vstg_ctx, &llink.laddr);
 	if (!err) {
 		goto out_ok;
 	}

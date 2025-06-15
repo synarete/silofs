@@ -2719,6 +2719,21 @@ do_stage_vnode(struct silofs_task_ctx *task, const struct silofs_vaddr *vaddr,
 	return 0;
 }
 
+static int
+pre_stage_vnode(struct silofs_task_ctx *task, const struct silofs_vaddr *vaddr,
+                enum silofs_stg_mode stg_mode)
+{
+	struct silofs_vaddr vaddr2;
+	struct silofs_vnode_info *vni = NULL;
+	int ret = 0;
+
+	if (vaddr->ltype != SILOFS_LTYPE_LSMAP) {
+		silofs_vaddr_of_lsmap(&vaddr2, vaddr->ltype, vaddr->off);
+		ret = silofs_stage_vnode(task, NULL, &vaddr2, stg_mode, &vni);
+	}
+	return ret;
+}
+
 int silofs_stage_vnode(struct silofs_task_ctx *task,
                        struct silofs_inode_info *pii,
                        const struct silofs_vaddr *vaddr,
@@ -2728,7 +2743,10 @@ int silofs_stage_vnode(struct silofs_task_ctx *task,
 	int err;
 
 	silofs_ii_incref(pii);
-	err = do_stage_vnode(task, vaddr, stg_mode, out_vni);
+	err = pre_stage_vnode(task, vaddr, stg_mode);
+	if (!err) {
+		err = do_stage_vnode(task, vaddr, stg_mode, out_vni);
+	}
 	silofs_ii_decref(pii);
 	return err;
 }

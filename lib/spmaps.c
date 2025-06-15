@@ -1442,10 +1442,13 @@ static int verify_spnode_height(enum silofs_height height)
 
 static int verify_lbk_ref(const struct silofs_lbk_ref *lbr)
 {
-	size_t val;
+	struct silofs_laddr laddr;
 
-	val = lbr_refcnt(lbr);
-	if (val >= INT_MAX) {
+	lbr_subref(lbr, &laddr);
+	if (silofs_laddr_isnull(&laddr)) {
+		return 0;
+	}
+	if (laddr.pos > INT_MAX) {
 		return -SILOFS_EFSCORRUPTED;
 	}
 	return 0;

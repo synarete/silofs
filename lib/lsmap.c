@@ -407,9 +407,12 @@ static enum silofs_ltype lsmap_refltype(const struct silofs_lsmap *lsm)
 }
 
 static void
-lsmap_set_refltype(struct silofs_lsmap *lsm, enum silofs_ltype ltype)
+lsmap_set_refltype(struct silofs_lsmap *lsm, enum silofs_ltype refltype)
 {
-	lsm->lsm_refltype = (uint8_t)ltype;
+	silofs_assert_ge(refltype, SILOFS_LTYPE_INODE);
+	silofs_assert_le(refltype, SILOFS_LTYPE_DATABK);
+
+	lsm->lsm_refltype = (uint8_t)refltype;
 }
 
 static void
@@ -808,7 +811,7 @@ static bool lsi_is_off_within(const struct silofs_lsmap_info *lsi, loff_t off)
 	return silofs_lrange_within(&lrange, off);
 }
 
-static enum silofs_ltype lsi_refltype(const struct silofs_lsmap_info *lsi)
+enum silofs_ltype silofs_lsi_refltype(const struct silofs_lsmap_info *lsi)
 {
 	return lsmap_refltype(lsi->lsm);
 }
@@ -819,7 +822,7 @@ static bool lsi_is_subref(const struct silofs_lsmap_info *lsi,
 	enum silofs_ltype refltype;
 	bool ret = false;
 
-	refltype = lsi_refltype(lsi);
+	refltype = silofs_lsi_refltype(lsi);
 	if (vaddr->ltype == refltype) {
 		ret = lsi_is_off_within(lsi, vaddr->off);
 	}
@@ -828,7 +831,7 @@ static bool lsi_is_subref(const struct silofs_lsmap_info *lsi,
 
 static size_t lsi_refltype_size(const struct silofs_lsmap_info *lsi)
 {
-	return silofs_ltype_size(lsi_refltype(lsi));
+	return silofs_ltype_size(silofs_lsi_refltype(lsi));
 }
 
 static void lsi_vaddr_at(const struct silofs_lsmap_info *lsi, size_t bn,
@@ -836,7 +839,8 @@ static void lsi_vaddr_at(const struct silofs_lsmap_info *lsi, size_t bn,
 {
 	const loff_t beg = lsi_start_off(lsi);
 
-	silofs_vaddr_by_spleaf(out_vaddr, lsi_refltype(lsi), beg, bn, kbn);
+	silofs_vaddr_by_spleaf(out_vaddr, silofs_lsi_refltype(lsi), beg, bn,
+	                       kbn);
 }
 
 static size_t lsi_start_bn(const struct silofs_lsmap_info *lsi)
@@ -945,7 +949,7 @@ void silofs_lsi_unref_allocated_at(struct silofs_lsmap_info *lsi,
                                    const struct silofs_vaddr *vaddr)
 {
 	const size_t len = silofs_vaddr_len(vaddr);
-	const enum silofs_ltype refltype = lsi_refltype(lsi);
+	const enum silofs_ltype refltype = silofs_lsi_refltype(lsi);
 	const bool last = lsmap_is_last_allocated(lsi->lsm, vaddr);
 
 	silofs_assert_gt(lsi->ls_nused_bytes, 0);

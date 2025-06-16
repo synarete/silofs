@@ -445,11 +445,6 @@ static size_t lbr_usecnt(const struct silofs_lbk_ref *lbr)
 	return lbk_state_popcount(&lbk_st);
 }
 
-static size_t lbr_usecnt_nbytes(const struct silofs_lbk_ref *lbr)
-{
-	return SILOFS_KB_SIZE * lbr_usecnt(lbr);
-}
-
 static bool lbr_isunused(const struct silofs_lbk_ref *lbr)
 {
 	struct silofs_lbk_state lbk_st;
@@ -1183,24 +1178,18 @@ void silofs_sli_resolve_lmap(const struct silofs_spleaf_info *sli,
 	const struct silofs_spmap_leaf *sl = sli->sl;
 	const struct silofs_lbk_ref *lbr = NULL;
 	const size_t nslots = ARRAY_SIZE(sl->sl_lbrs);
-	const size_t nused = sli->sl_nused_bytes;
-	size_t nused_at_slot = 0;
-	size_t nbytes = 0;
 
 	STATICASSERT_EQ(ARRAY_SIZE(out_lmap->laddr), ARRAY_SIZE(sl->sl_lbrs));
 
 	out_lmap->cnt = 0;
-	for (size_t slot = 0; (slot < nslots) && (nbytes < nused); ++slot) {
+	for (size_t slot = 0; slot < nslots; ++slot) {
 		lbr = spleaf_lbr_at(sl, slot);
-		nused_at_slot = lbr_usecnt_nbytes(lbr);
-		if (nused_at_slot > 0) {
-			lbr_subref(lbr, &laddr);
-			lmap_append(out_lmap, &laddr, SILOFS_LBK_SIZE);
-			nbytes += nused_at_slot;
+		lbr_subref(lbr, &laddr);
+		if (silofs_laddr_isnull(&laddr)) {
+			continue;
 		}
+		lmap_append(out_lmap, &laddr, SILOFS_LBK_SIZE);
 	}
-
-	silofs_assert_eq(nbytes, nused);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

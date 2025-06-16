@@ -131,8 +131,8 @@ static bool silofs_backtrace_enabled = true;
 
 static int backtrace_log_err(const struct silofs_backtrace_args *bt_args)
 {
-	silofs_log_error("[<%p>] 0x%lx %s+0x%lx", bt_args->ip, bt_args->sp,
-	                 bt_args->sym, bt_args->off);
+	silofs_logf(SILOFS_LOG_ERROR, NULL, 0, "[<%p>] 0x%lx %s+0x%lx",
+	            bt_args->ip, bt_args->sp, bt_args->sym, bt_args->off);
 	return 0;
 }
 
@@ -423,7 +423,10 @@ silofs_attr_noreturn static void
 silofs_die_not_eqm(const uint8_t *p, const uint8_t *q, size_t n,
                    const char *file, int line)
 {
-	struct silofs_fatal_msg fm = { .fl.file = file, .fl.line = line };
+	struct silofs_fatal_msg fm = {
+		.fl.file = file,
+		.fl.line = line,
+	};
 	const size_t pos = find_first_not_eq(p, q, n);
 
 	fmtmsg(&fm, "memory-not-equal-at: %zu (%u != %u)", pos,
@@ -458,16 +461,18 @@ static const char *basename_of(const char *path)
 static void
 silofs_dump_panic_msg(const char *file, int line, const char *msg, int errnum)
 {
-	const char *es = " ";
-	const char *name = basename_of(file);
+	const char *base = NULL;
+	const char *tag = "[:panic:]";
+	const enum silofs_log_level ll = SILOFS_LOG_CRIT;
 
-	silofs_log_crit("%s", es);
+	silofs_logf(ll, NULL, 0, " ");
+	base = basename_of(file);
 	if (errnum) {
-		silofs_log_crit("%s:%d: %s %d", name, line, msg, errnum);
+		silofs_logf(ll, base, line, "%s %s %d", tag, msg, errnum);
 	} else {
-		silofs_log_crit("%s:%d: %s", name, line, msg);
+		silofs_logf(ll, base, line, "%s %s", tag, msg);
 	}
-	silofs_log_crit("%s", es);
+	silofs_logf(ll, NULL, 0, " ");
 }
 
 void silofs_panicf(const char *file, int line, const char *fmt, ...)

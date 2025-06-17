@@ -83,7 +83,7 @@ static void log_to_stdout(enum silofs_log_flags log_flags, const char *msg,
 		fprintf(fp, "%s: ", log_progname());
 	}
 	if ((file != NULL) && line) {
-		fprintf(fp, "[%s:%d] \t", file, line);
+		fprintf(fp, "[%s:%d] ", file, line);
 	}
 	fprintf(fp, "%s\n", msg);
 	fflush(fp);
@@ -115,7 +115,7 @@ static void log_to_syslog(enum silofs_log_level log_level, const char *msg,
 
 	if (level >= 0) {
 		if ((file != NULL) && line) {
-			syslog(level, "[%s:%d] \t%s", file, line, msg);
+			syslog(level, "[%s:%d] %s", file, line, msg);
 		} else {
 			syslog(level, "%s", msg);
 		}

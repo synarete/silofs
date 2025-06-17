@@ -123,6 +123,10 @@ void silofs_sli_vaddrs_at(const struct silofs_spleaf_info *sli,
                           const struct silofs_vaddr       *vaddr,
                           struct silofs_vaddrs            *out_vaddrs);
 
+void silofs_sli_lbk_vaddrs_at(const struct silofs_spleaf_info *sli,
+                              const struct silofs_vaddr       *vaddr,
+                              struct silofs_vaddrs            *out_vaddrs);
+
 void silofs_sli_main_lseg(const struct silofs_spleaf_info *sli,
                           struct silofs_lsid              *out_lsid);
 

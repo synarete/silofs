@@ -529,6 +529,25 @@ lbr_make_vaddrs(const struct silofs_lbk_ref *lbr, enum silofs_ltype ltype,
 	}
 }
 
+static void
+lbr_make_lbk_vaddrs(const struct silofs_lbk_ref *lbr, enum silofs_ltype ltype,
+                    loff_t voff_base, struct silofs_vaddrs *out_vaddrs)
+{
+	struct silofs_laddr laddr;
+	struct silofs_vaddr *vaddr;
+	size_t sz;
+
+	sz = silofs_ltype_size(ltype);
+	silofs_assert_eq(sz, SILOFS_LBK_SIZE);
+
+	out_vaddrs->count = 0;
+	lbr_subref(lbr, &laddr);
+	if (!silofs_laddr_isnull(&laddr)) {
+		vaddr = &out_vaddrs->vaddr[out_vaddrs->count++];
+		silofs_vaddr_setup(vaddr, ltype, voff_base);
+	}
+}
+
 static void lbr_clone_from(struct silofs_lbk_ref *lbr,
                            const struct silofs_lbk_ref *lbr_other)
 {
@@ -743,6 +762,16 @@ static void spleaf_make_vaddrs(const struct silofs_spmap_leaf *spl,
 	const loff_t voff_base = silofs_off_align_to_lbk(voff);
 
 	lbr_make_vaddrs(lbr, ltype, voff_base, out_vaddrs);
+}
+
+static void spleaf_make_lbk_vaddrs(const struct silofs_spmap_leaf *spl,
+                                   enum silofs_ltype ltype, loff_t voff,
+                                   struct silofs_vaddrs *out_vaddrs)
+{
+	const struct silofs_lbk_ref *lbr = spleaf_lbr_by_voff(spl, voff);
+	const loff_t voff_base = silofs_off_align_to_lbk(voff);
+
+	lbr_make_lbk_vaddrs(lbr, ltype, voff_base, out_vaddrs);
 }
 
 static void spleaf_main_lsid(const struct silofs_spmap_leaf *spl,
@@ -1004,6 +1033,17 @@ void silofs_sli_vaddrs_at(const struct silofs_spleaf_info *sli,
 	silofs_assert_eq(refltype, vaddr->ltype);
 
 	spleaf_make_vaddrs(sli->sl, vaddr->ltype, vaddr->off, out_vaddrs);
+}
+
+void silofs_sli_lbk_vaddrs_at(const struct silofs_spleaf_info *sli,
+                              const struct silofs_vaddr *vaddr,
+                              struct silofs_vaddrs *out_vaddrs)
+{
+	const enum silofs_ltype refltype = silofs_sli_refltype(sli);
+
+	silofs_assert_eq(refltype, vaddr->ltype);
+
+	spleaf_make_lbk_vaddrs(sli->sl, vaddr->ltype, vaddr->off, out_vaddrs);
 }
 
 void silofs_sli_main_lseg(const struct silofs_spleaf_info *sli,

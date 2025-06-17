@@ -2356,19 +2356,18 @@ static int vstgc_require_lsmap_of(struct silofs_vstage_ctx *vstg_ctx)
 static int vstgc_resolve_vaddrs(struct silofs_vstage_ctx *vstg_ctx,
                                 struct silofs_vaddrs *out_vaddrs)
 {
-	struct silofs_vaddrs vaddrs;
+	const struct silofs_vaddr *vaddr = vstg_ctx->vaddr;
 	int err;
 
-	silofs_sli_vaddrs_at(vstg_ctx->sli, vstg_ctx->vaddr, out_vaddrs);
 	if (vstg_ctx->vspace == SILOFS_LTYPE_LSMAP) {
-		return 0;
+		silofs_sli_lbk_vaddrs_at(vstg_ctx->sli, vaddr, out_vaddrs);
+	} else {
+		err = vstgc_require_lsmap_of(vstg_ctx);
+		if (err) {
+			return err;
+		}
+		silofs_lsi_vaddrs_at(vstg_ctx->lsi, vaddr, out_vaddrs);
 	}
-	err = vstgc_require_lsmap_of(vstg_ctx);
-	if (err) {
-		return err;
-	}
-	silofs_lsi_vaddrs_at(vstg_ctx->lsi, vstg_ctx->vaddr, &vaddrs);
-	silofs_assert_eq(vaddrs.count, out_vaddrs->count);
 	return 0;
 }
 

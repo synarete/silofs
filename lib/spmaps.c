@@ -507,29 +507,6 @@ static void lbr_init_arr(struct silofs_lbk_ref *arr, size_t cnt)
 }
 
 static void
-lbr_make_vaddrs(const struct silofs_lbk_ref *lbr, enum silofs_ltype ltype,
-                loff_t voff_base, struct silofs_vaddrs *out_vaddrs)
-{
-	struct silofs_lbk_state lbk_st;
-	struct silofs_lbk_state bk_mask;
-	const size_t nkb = silofs_ltype_nkbs(ltype);
-	const size_t nkb_in_bk = SILOFS_NKB_IN_LBK;
-	struct silofs_vaddr *vaddr;
-	loff_t voff;
-
-	lbr_allocated(lbr, &lbk_st);
-	out_vaddrs->count = 0;
-	for (size_t kbn = 0; (kbn + nkb) <= nkb_in_bk; kbn += nkb) {
-		lbk_state_mask_of(&bk_mask, kbn, nkb);
-		if (lbk_state_has_mask(&lbk_st, &bk_mask)) {
-			voff = silofs_off_end(voff_base, kbn * SILOFS_KB_SIZE);
-			vaddr = &out_vaddrs->vaddr[out_vaddrs->count++];
-			silofs_vaddr_setup(vaddr, ltype, voff);
-		}
-	}
-}
-
-static void
 lbr_make_lbk_vaddrs(const struct silofs_lbk_ref *lbr, enum silofs_ltype ltype,
                     loff_t voff_base, struct silofs_vaddrs *out_vaddrs)
 {
@@ -677,22 +654,6 @@ static bool spleaf_is_allocated_at(const struct silofs_spmap_leaf *spl,
 	return ret;
 }
 
-static bool spleaf_has_allocated_with(const struct silofs_spmap_leaf *spl,
-                                      const struct silofs_vaddr *vaddr)
-{
-	const size_t kbn = kbn_of(vaddr);
-	const size_t nkb = nkbs_of(vaddr);
-	const struct silofs_lbk_ref *lbr = spleaf_lbr_by_vaddr(spl, vaddr);
-	bool ret;
-
-	if (silofs_vaddr_isdatabk(vaddr)) {
-		ret = (lbr_refcnt(lbr) > 0);
-	} else {
-		ret = lbr_test_allocated_other(lbr, kbn, nkb);
-	}
-	return ret;
-}
-
 static bool spleaf_is_last_allocated_at(const struct silofs_spmap_leaf *spl,
                                         const struct silofs_vaddr *vaddr)
 {
@@ -752,16 +713,6 @@ static void spleaf_renew_bk_at(struct silofs_spmap_leaf *spl,
 
 	silofs_assert(lbr_isunused(lbr));
 	lbr_clear_alloc_state(lbr);
-}
-
-static void spleaf_make_vaddrs(const struct silofs_spmap_leaf *spl,
-                               enum silofs_ltype ltype, loff_t voff,
-                               struct silofs_vaddrs *out_vaddrs)
-{
-	const struct silofs_lbk_ref *lbr = spleaf_lbr_by_voff(spl, voff);
-	const loff_t voff_base = silofs_off_align_to_lbk(voff);
-
-	lbr_make_vaddrs(lbr, ltype, voff_base, out_vaddrs);
 }
 
 static void spleaf_make_lbk_vaddrs(const struct silofs_spmap_leaf *spl,
@@ -1010,29 +961,6 @@ void silofs_sli_reref_allocated_at(struct silofs_spleaf_info *sli,
 
 	spleaf_set_allocated_at(sli->sl, vaddr);
 	sli_dirtify(sli);
-}
-
-bool silofs_sli_has_allocated_with(const struct silofs_spleaf_info *sli,
-                                   const struct silofs_vaddr *vaddr)
-{
-	return spleaf_has_allocated_with(sli->sl, vaddr);
-}
-
-bool silofs_sli_has_allocated_at(const struct silofs_spleaf_info *sli,
-                                 const struct silofs_vaddr *vaddr)
-{
-	return spleaf_is_allocated_at(sli->sl, vaddr);
-}
-
-void silofs_sli_vaddrs_at(const struct silofs_spleaf_info *sli,
-                          const struct silofs_vaddr *vaddr,
-                          struct silofs_vaddrs *out_vaddrs)
-{
-	const enum silofs_ltype refltype = silofs_sli_refltype(sli);
-
-	silofs_assert_eq(refltype, vaddr->ltype);
-
-	spleaf_make_vaddrs(sli->sl, vaddr->ltype, vaddr->off, out_vaddrs);
 }
 
 void silofs_sli_lbk_vaddrs_at(const struct silofs_spleaf_info *sli,

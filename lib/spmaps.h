@@ -113,16 +113,6 @@ void silofs_sli_reref_allocated_at(struct silofs_spleaf_info *sli,
 void silofs_sli_unref_allocated_at(struct silofs_spleaf_info *sli,
                                    const struct silofs_vaddr *vaddr);
 
-bool silofs_sli_has_allocated_at(const struct silofs_spleaf_info *sli,
-                                 const struct silofs_vaddr       *vaddr);
-
-bool silofs_sli_has_allocated_with(const struct silofs_spleaf_info *sli,
-                                   const struct silofs_vaddr       *vaddr);
-
-void silofs_sli_vaddrs_at(const struct silofs_spleaf_info *sli,
-                          const struct silofs_vaddr       *vaddr,
-                          struct silofs_vaddrs            *out_vaddrs);
-
 void silofs_sli_lbk_vaddrs_at(const struct silofs_spleaf_info *sli,
                               const struct silofs_vaddr       *vaddr,
                               struct silofs_vaddrs            *out_vaddrs);

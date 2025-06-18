@@ -925,6 +925,11 @@ void ut_lookup_dir(struct ut_env *ute, ino_t parent, const char *name,
 	ut_lookup_exists(ute, parent, name, dino, S_IFDIR);
 }
 
+void ut_lookup_dir_at_root(struct ut_env *ute, const char *name, ino_t dino)
+{
+	ut_lookup_dir(ute, UT_ROOT_INO, name, dino);
+}
+
 void ut_lookup_file(struct ut_env *ute, ino_t parent, const char *name,
                     ino_t ino)
 {

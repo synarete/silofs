@@ -36,9 +36,15 @@ static void ut_create_open_release(struct ut_env *ute)
 	ut_drop_caches_fully(ute);
 	ut_lookup_file(ute, dino, name, ino);
 	ut_drop_caches_fully(ute);
+	ut_lookup_dir_at_root(ute, name, dino);
 	ut_open_rdonly(ute, ino);
 	ut_release(ute, ino);
+	ut_drop_caches_fully(ute);
+	ut_lookup_dir_at_root(ute, name, dino);
 	ut_unlink(ute, dino, name);
+	ut_lookup_dir_at_root(ute, name, dino);
+	ut_drop_caches_fully(ute);
+	ut_lookup_dir_at_root(ute, name, dino);
 	ut_rmdir_at_root(ute, name);
 }
 

@@ -206,14 +206,13 @@ static void ut_mkdir_multi_(struct ut_env *ute, size_t cnt)
 	struct stat st = { .st_size = -1 };
 	struct statvfs stv = { .f_bsize = 0 };
 	const char *dname = UT_NAME;
-	const ino_t root_ino = UT_ROOT_INO;
 	struct ut_namesarr *na = make_names(ute, cnt + 1);
 	blkcnt_t blkcnt = 0;
 	loff_t size = 0;
 	ino_t dino = 0;
 	ino_t child_ino = 0;
 
-	ut_mkdir2(ute, root_ino, dname, &dino);
+	ut_mkdir_at_root(ute, dname, &dino);
 	ut_statfs(ute, dino, &stv);
 	ut_expect_gt(stv.f_favail, cnt);
 
@@ -240,7 +239,7 @@ static void ut_mkdir_multi_(struct ut_env *ute, size_t cnt)
 		ut_expect_gt(st.st_blocks, 0);
 		ut_rmdir(ute, dino, na->arr[j]);
 	}
-	ut_rmdir(ute, root_ino, dname);
+	ut_rmdir_at_root(ute, dname);
 }
 
 static void ut_mkdir_multi(struct ut_env *ute)

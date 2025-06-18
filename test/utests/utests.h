@@ -315,6 +315,8 @@ void ut_lookup_exists(struct ut_env *ute, ino_t parent, const char *name,
 void ut_lookup_dir(struct ut_env *ute, ino_t parent, const char *name,
                    ino_t dino);
 
+void ut_lookup_dir_at_root(struct ut_env *ute, const char *name, ino_t dino);
+
 void ut_lookup_file(struct ut_env *ute, ino_t parent, const char *name,
                     ino_t ino);
 

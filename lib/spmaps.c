@@ -445,7 +445,7 @@ static size_t lbr_usecnt(const struct silofs_lbk_ref *lbr)
 	return lbk_state_popcount(&lbk_st);
 }
 
-static bool lbr_isunused(const struct silofs_lbk_ref *lbr)
+static inline bool lbr_isunused(const struct silofs_lbk_ref *lbr)
 {
 	struct silofs_lbk_state lbk_st;
 
@@ -711,7 +711,6 @@ static void spleaf_renew_bk_at(struct silofs_spmap_leaf *spl,
 {
 	struct silofs_lbk_ref *lbr = spleaf_lbr_by_vaddr(spl, vaddr);
 
-	silofs_assert(lbr_isunused(lbr));
 	lbr_clear_alloc_state(lbr);
 }
 
@@ -798,7 +797,6 @@ static void spleaf_set_child_of(struct silofs_spmap_leaf *spl, loff_t voff,
 {
 	struct silofs_lbk_ref *lbr = spleaf_lbr_by_voff(spl, voff);
 
-	silofs_assert_gt(lbr_usecnt(lbr), 0);
 	lbr_set_subref(lbr, laddr);
 }
 

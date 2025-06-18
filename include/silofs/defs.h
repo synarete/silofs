@@ -734,17 +734,9 @@ struct silofs_spmap_node {
 	uint8_t                 sl_reserved5[8192];
 } silofs_attr_aligned64;
 
-struct silofs_lbk_state {
-	uint64_t state;
-} silofs_attr_aligned8;
-
 struct silofs_lbk_ref {
-	uint8_t                 lbr_reserved1[64];
-	struct silofs_laddr48b  lbr_subref;
-	struct silofs_lbk_state lbr_allocated;
-	struct silofs_lbk_state lbr_unwritten;
-	uint64_t                lbr_refcnt;
-	uint8_t                 lbr_reserved2[24];
+	struct silofs_laddr48b lbr_subref;
+	uint8_t                lbr_reserved[112];
 } silofs_attr_aligned16;
 
 struct silofs_spmap_leaf {
@@ -760,6 +752,10 @@ struct silofs_spmap_leaf {
 	struct silofs_lbk_ref   sl_lbrs[SILOFS_SPMAP_NCHILDS];
 	uint8_t                 sl_reserved4[5120];
 } silofs_attr_aligned64;
+
+struct silofs_lbk_state {
+	uint64_t state;
+} silofs_attr_aligned8;
 
 struct silofs_lbk_meta {
 	struct silofs_lbk_state lbm_allocated;

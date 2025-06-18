@@ -191,9 +191,6 @@ static void require_persistent_types_size2(void)
 static void require_persistent_types_members(void)
 {
 	REQUIRE_NBITS(struct silofs_header, h_type, 8);
-	REQUIRE_NBITS(struct silofs_lbk_ref, lbr_allocated, SILOFS_NKB_IN_LBK);
-	REQUIRE_NBITS(struct silofs_lbk_ref, lbr_unwritten, SILOFS_NKB_IN_LBK);
-	REQUIRE_MEMBER_SIZE(struct silofs_lbk_ref, lbr_refcnt, 8);
 	REQUIRE_NBITS(struct silofs_lbk_meta, lbm_allocated,
 	              SILOFS_NKB_IN_LBK);
 	REQUIRE_NBITS(struct silofs_lbk_meta, lbm_unwritten,
@@ -208,11 +205,12 @@ static void require_persistent_types_members(void)
 
 static void require_persistent_types_alignment1(void)
 {
+	REQUIRE_SIZEOF(struct silofs_lbk_state, 8);
 	REQUIRE_OFFSET64(struct silofs_spmap_ref, sr_uaddr, 0);
-	REQUIRE_OFFSET64(struct silofs_lbk_ref, lbr_subref, 64);
-	REQUIRE_OFFSET64(struct silofs_lbk_ref, lbr_allocated, 112);
-	REQUIRE_OFFSET64(struct silofs_lbk_ref, lbr_unwritten, 120);
-	REQUIRE_OFFSET64(struct silofs_lbk_ref, lbr_refcnt, 128);
+	REQUIRE_OFFSET64(struct silofs_lbk_ref, lbr_subref, 0);
+	REQUIRE_OFFSET64(struct silofs_lbk_meta, lbm_allocated, 0);
+	REQUIRE_OFFSET64(struct silofs_lbk_meta, lbm_unwritten, 8);
+	REQUIRE_OFFSET64(struct silofs_lbk_meta, lbm_refcnt, 16);
 }
 
 static void require_persistent_types_alignment2(void)

@@ -36,18 +36,6 @@ static void lrange_of_spnode(struct silofs_lrange *lrange,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static size_t nkbs_of(const struct silofs_vaddr *vaddr)
-{
-	return silofs_ltype_nkbs(vaddr->ltype);
-}
-
-static size_t kbn_of(const struct silofs_vaddr *vaddr)
-{
-	return (size_t)((vaddr->off / SILOFS_KB_SIZE) % SILOFS_NKB_IN_LBK);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 static void
 spr_uaddr(const struct silofs_spmap_ref *spr, struct silofs_uaddr *out_uaddr)
 {
@@ -251,93 +239,6 @@ spnode_has_child_at(const struct silofs_spmap_node *spn, loff_t voff)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static uint64_t mask_of(size_t ki, size_t nk)
-{
-	uint64_t mask;
-	const uint64_t zero = 0;
-
-	if (nk < 64) {
-		mask = (((1UL << nk) - 1UL) << ki);
-	} else {
-		mask = ~zero;
-	}
-	return mask;
-}
-
-static void
-lbk_state_mask_of(struct silofs_lbk_state *lbk_st, size_t ki, size_t nk)
-{
-	size_t nn;
-
-	lbk_st->state = 0;
-	if (ki < 64) {
-		nn = silofs_min(nk, 64 - ki);
-		lbk_st->state = mask_of(ki, nn);
-	}
-}
-
-static void lbk_state_none(struct silofs_lbk_state *lbk_st)
-{
-	lbk_st->state = 0;
-}
-
-static void lbk_state_mask_of_other(struct silofs_lbk_state *lbk_st,
-                                    size_t kbn, size_t nkb)
-{
-	struct silofs_lbk_state lbk_st2;
-
-	lbk_state_mask_of(&lbk_st2, kbn, nkb);
-	lbk_st->state = ~lbk_st2.state;
-}
-
-static bool lbk_state_has_any(const struct silofs_lbk_state *lbk_st)
-{
-	return (lbk_st->state > 0);
-}
-
-static bool lbk_state_has_mask(const struct silofs_lbk_state *lbk_st,
-                               const struct silofs_lbk_state *lbk_mask)
-{
-	return ((lbk_st->state & lbk_mask->state) == lbk_mask->state);
-}
-
-static bool lbk_state_has_mask_any(const struct silofs_lbk_state *lbk_st,
-                                   const struct silofs_lbk_state *lbk_mask)
-{
-	return ((lbk_st->state & lbk_mask->state) > 0);
-}
-
-static void lbk_state_set_mask(struct silofs_lbk_state *lbk_st,
-                               const struct silofs_lbk_state *lbk_mask)
-{
-	lbk_st->state |= lbk_mask->state;
-}
-
-static void lbk_state_unset_mask(struct silofs_lbk_state *lbk_st,
-                                 const struct silofs_lbk_state *lbk_mask)
-{
-	lbk_st->state &= ~(lbk_mask->state);
-}
-
-static size_t lbk_state_popcount(const struct silofs_lbk_state *lbk_st)
-{
-	return silofs_popcount_u64(lbk_st->state);
-}
-
-static void lbk_state_xtoh(const struct silofs_lbk_state *lbk_st_le,
-                           struct silofs_lbk_state *lbk_st)
-{
-	lbk_st->state = silofs_le64_to_cpu(lbk_st_le->state);
-}
-
-static void lbk_state_htox(struct silofs_lbk_state *lbk_st_le,
-                           const struct silofs_lbk_state *lbk_st)
-{
-	lbk_st_le->state = silofs_cpu_to_le64(lbk_st->state);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 static struct silofs_lbk_ref *lbr_unconst(const struct silofs_lbk_ref *lbr)
 {
 	return unconst(lbr);
@@ -355,142 +256,9 @@ lbr_set_subref(struct silofs_lbk_ref *lbr, const struct silofs_laddr *laddr)
 	silofs_laddr48b_htox(&lbr->lbr_subref, laddr);
 }
 
-static size_t lbr_refcnt(const struct silofs_lbk_ref *lbr)
-{
-	return silofs_le64_to_cpu(lbr->lbr_refcnt);
-}
-
-static void lbr_set_refcnt(struct silofs_lbk_ref *lbr, size_t n)
-{
-	lbr->lbr_refcnt = silofs_cpu_to_le64(n);
-}
-
-static void lbr_inc_refcnt(struct silofs_lbk_ref *lbr)
-{
-	lbr_set_refcnt(lbr, lbr_refcnt(lbr) + 1);
-}
-
-static void lbr_dec_refcnt(struct silofs_lbk_ref *lbr)
-{
-	const size_t cur = lbr_refcnt(lbr);
-
-	silofs_expect_ge(cur, 1);
-
-	lbr_set_refcnt(lbr, cur - 1);
-}
-
-static void lbr_allocated(const struct silofs_lbk_ref *lbr,
-                          struct silofs_lbk_state *lbk_st)
-{
-	lbk_state_xtoh(&lbr->lbr_allocated, lbk_st);
-}
-
-static void lbr_set_allocated(struct silofs_lbk_ref *lbr,
-                              const struct silofs_lbk_state *lbk_st)
-{
-	lbk_state_htox(&lbr->lbr_allocated, lbk_st);
-}
-
-static bool
-lbr_test_allocated_at(const struct silofs_lbk_ref *lbr, size_t kbn, size_t nkb)
-{
-	struct silofs_lbk_state lbk_st;
-	struct silofs_lbk_state bk_mask;
-
-	lbr_allocated(lbr, &lbk_st);
-	lbk_state_mask_of(&bk_mask, kbn, nkb);
-	return lbk_state_has_mask(&lbk_st, &bk_mask);
-}
-
-static bool lbr_test_allocated_other(const struct silofs_lbk_ref *lbr,
-                                     size_t kbn, size_t nkb)
-{
-	struct silofs_lbk_state lbk_st;
-	struct silofs_lbk_state bk_mask;
-
-	lbr_allocated(lbr, &lbk_st);
-	lbk_state_mask_of_other(&bk_mask, kbn, nkb);
-	return lbk_state_has_mask_any(&lbk_st, &bk_mask);
-}
-
-static void
-lbr_set_allocated_at(struct silofs_lbk_ref *lbr, size_t kbn, size_t nkb)
-{
-	struct silofs_lbk_state lbk_st;
-	struct silofs_lbk_state bk_mask;
-
-	lbr_allocated(lbr, &lbk_st);
-	lbk_state_mask_of(&bk_mask, kbn, nkb);
-	lbk_state_set_mask(&lbk_st, &bk_mask);
-	lbr_set_allocated(lbr, &lbk_st);
-}
-
-static void
-lbr_clear_allocated_at(struct silofs_lbk_ref *lbr, size_t kbn, size_t nkb)
-{
-	struct silofs_lbk_state lbk_st;
-	struct silofs_lbk_state bk_mask;
-
-	lbr_allocated(lbr, &lbk_st);
-	lbk_state_mask_of(&bk_mask, kbn, nkb);
-	lbk_state_unset_mask(&lbk_st, &bk_mask);
-	lbr_set_allocated(lbr, &lbk_st);
-}
-
-static size_t lbr_usecnt(const struct silofs_lbk_ref *lbr)
-{
-	struct silofs_lbk_state lbk_st;
-
-	lbr_allocated(lbr, &lbk_st);
-	return lbk_state_popcount(&lbk_st);
-}
-
-static inline bool lbr_isunused(const struct silofs_lbk_ref *lbr)
-{
-	struct silofs_lbk_state lbk_st;
-
-	lbr_allocated(lbr, &lbk_st);
-	return !lbk_state_has_any(&lbk_st);
-}
-
-static void lbr_unwritten(const struct silofs_lbk_ref *lbr,
-                          struct silofs_lbk_state *lbk_st)
-{
-	lbk_state_xtoh(&lbr->lbr_unwritten, lbk_st);
-}
-
-static void lbr_set_unwritten(struct silofs_lbk_ref *lbr,
-                              const struct silofs_lbk_state *lbk_st)
-{
-	lbk_state_htox(&lbr->lbr_unwritten, lbk_st);
-}
-
-static void
-lbr_set_unwritten_at(struct silofs_lbk_ref *lbr, size_t kbn, size_t nkb)
-{
-	struct silofs_lbk_state lbk_st;
-	struct silofs_lbk_state bk_mask;
-
-	lbr_unwritten(lbr, &lbk_st);
-	lbk_state_mask_of(&bk_mask, kbn, nkb);
-	lbk_state_set_mask(&lbk_st, &bk_mask);
-	lbr_set_unwritten(lbr, &lbk_st);
-}
-
-static void lbr_clear_alloc_state(struct silofs_lbk_ref *lbr)
-{
-	struct silofs_lbk_state lbk_st;
-
-	lbk_state_none(&lbk_st);
-	lbr_set_allocated(lbr, &lbk_st);
-	lbr_set_unwritten(lbr, &lbk_st);
-	lbr_set_refcnt(lbr, 0);
-}
-
 static void lbr_reset(struct silofs_lbk_ref *lbr)
 {
 	memset(lbr, 0, sizeof(*lbr));
-	lbr_clear_alloc_state(lbr);
 	silofs_laddr48b_reset(&lbr->lbr_subref);
 }
 
@@ -529,20 +297,9 @@ static void lbr_clone_from(struct silofs_lbk_ref *lbr,
                            const struct silofs_lbk_ref *lbr_other)
 {
 	struct silofs_laddr laddr;
-	struct silofs_lbk_state lbk_st;
-	size_t dbkref;
 
 	lbr_subref(lbr_other, &laddr);
 	lbr_set_subref(lbr, &laddr);
-
-	lbr_allocated(lbr_other, &lbk_st);
-	lbr_set_allocated(lbr, &lbk_st);
-
-	lbr_unwritten(lbr_other, &lbk_st);
-	lbr_set_unwritten(lbr, &lbk_st);
-
-	dbkref = lbr_refcnt(lbr_other);
-	lbr_set_refcnt(lbr, dbkref);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -631,89 +388,6 @@ spleaf_lbr_by_voff(const struct silofs_spmap_leaf *spl, loff_t voff)
 	return spleaf_lbr_at(spl, spleaf_slot_of(spl, voff));
 }
 
-static struct silofs_lbk_ref *
-spleaf_lbr_by_vaddr(const struct silofs_spmap_leaf *spl,
-                    const struct silofs_vaddr *vaddr)
-{
-	return spleaf_lbr_by_voff(spl, vaddr->off);
-}
-
-static bool spleaf_is_allocated_at(const struct silofs_spmap_leaf *spl,
-                                   const struct silofs_vaddr *vaddr)
-{
-	const size_t kbn = kbn_of(vaddr);
-	const size_t nkb = nkbs_of(vaddr);
-	const struct silofs_lbk_ref *lbr = spleaf_lbr_by_vaddr(spl, vaddr);
-	bool ret;
-
-	if (silofs_vaddr_isdatabk(vaddr)) {
-		ret = (lbr_refcnt(lbr) > 0);
-	} else {
-		ret = lbr_test_allocated_at(lbr, kbn, nkb);
-	}
-	return ret;
-}
-
-static bool spleaf_is_last_allocated_at(const struct silofs_spmap_leaf *spl,
-                                        const struct silofs_vaddr *vaddr)
-{
-	const size_t kbn = kbn_of(vaddr);
-	const size_t nkb = nkbs_of(vaddr);
-	const struct silofs_lbk_ref *lbr = spleaf_lbr_by_vaddr(spl, vaddr);
-	bool ret;
-
-	if (silofs_vaddr_isdatabk(vaddr)) {
-		ret = (lbr_refcnt(lbr) == 1);
-	} else {
-		ret = !lbr_test_allocated_other(lbr, kbn, nkb);
-	}
-	return ret;
-}
-
-static void spleaf_set_unwritten_at(struct silofs_spmap_leaf *spl,
-                                    const struct silofs_vaddr *vaddr)
-{
-	struct silofs_lbk_ref *lbr = spleaf_lbr_by_vaddr(spl, vaddr);
-
-	lbr_set_unwritten_at(lbr, kbn_of(vaddr), nkbs_of(vaddr));
-}
-
-static void spleaf_set_allocated_at(struct silofs_spmap_leaf *spl,
-                                    const struct silofs_vaddr *vaddr)
-{
-	const size_t kbn = kbn_of(vaddr);
-	const size_t nkb = nkbs_of(vaddr);
-	struct silofs_lbk_ref *lbr = spleaf_lbr_by_vaddr(spl, vaddr);
-
-	lbr_set_allocated_at(lbr, kbn, nkb);
-	if (silofs_vaddr_isdatabk(vaddr)) {
-		lbr_inc_refcnt(lbr);
-	}
-}
-
-static void spleaf_unset_allocated_at(struct silofs_spmap_leaf *spl,
-                                      const struct silofs_vaddr *vaddr)
-{
-	const size_t kbn = kbn_of(vaddr);
-	const size_t nkb = nkbs_of(vaddr);
-	struct silofs_lbk_ref *lbr = spleaf_lbr_by_vaddr(spl, vaddr);
-
-	if (silofs_vaddr_isdatabk(vaddr)) {
-		lbr_dec_refcnt(lbr);
-	}
-	if (!lbr_refcnt(lbr) || (nkb < SILOFS_NKB_IN_LBK)) {
-		lbr_clear_allocated_at(lbr, kbn, nkb);
-	}
-}
-
-static void spleaf_renew_bk_at(struct silofs_spmap_leaf *spl,
-                               const struct silofs_vaddr *vaddr)
-{
-	struct silofs_lbk_ref *lbr = spleaf_lbr_by_vaddr(spl, vaddr);
-
-	lbr_clear_alloc_state(lbr);
-}
-
 static void spleaf_make_lbk_vaddrs(const struct silofs_spmap_leaf *spl,
                                    enum silofs_ltype ltype, loff_t voff,
                                    struct silofs_vaddrs *out_vaddrs)
@@ -754,24 +428,6 @@ static void spleaf_bind_lbk_to_main(struct silofs_spmap_leaf *spl, loff_t voff)
 
 	spleaf_main_child_at(spl, slot, &laddr);
 	lbr_set_subref(lbr, &laddr);
-}
-
-static size_t spleaf_calc_total_usecnt(const struct silofs_spmap_leaf *spl)
-{
-	const struct silofs_lbk_ref *lbr = NULL;
-	const size_t nslots = ARRAY_SIZE(spl->sl_lbrs);
-	size_t usecnt_sum = 0;
-
-	for (size_t slot = 0; slot < nslots; ++slot) {
-		lbr = spleaf_lbr_at(spl, slot);
-		usecnt_sum += lbr_usecnt(lbr);
-	}
-	return usecnt_sum;
-}
-
-static size_t spleaf_sum_nbytes_used(const struct silofs_spmap_leaf *spl)
-{
-	return spleaf_calc_total_usecnt(spl) * SILOFS_KB_SIZE;
 }
 
 static void
@@ -881,12 +537,6 @@ void silofs_sli_setup_spawned(struct silofs_spleaf_info *sli,
 	sli_dirtify(sli);
 }
 
-void silofs_sli_update_nused(struct silofs_spleaf_info *sli)
-{
-	sli->sl_nused_bytes = spleaf_sum_nbytes_used(sli->sl);
-	silofs_assert_le(sli->sl_nused_bytes, SILOFS_LSEG_SIZE_MAX);
-}
-
 loff_t silofs_sli_base_voff(const struct silofs_spleaf_info *sli)
 {
 	struct silofs_lrange lrange;
@@ -901,64 +551,6 @@ static bool sli_is_inrange(const struct silofs_spleaf_info *sli, loff_t voff)
 
 	silofs_sli_get_lrange(sli, &lrange);
 	return (lrange.beg <= voff) && (voff < lrange.end);
-}
-
-void silofs_sli_update_off_hint(struct silofs_spleaf_info *sli,
-                                const struct silofs_vaddr *vaddr)
-{
-	struct silofs_lrange lrange;
-	const loff_t voff = vaddr->off;
-
-	silofs_sli_get_lrange(sli, &lrange);
-	if (silofs_lrange_within(&lrange, voff)) {
-		sli->sl_voff_hint = voff;
-	} else {
-		sli->sl_voff_hint = lrange.beg;
-	}
-}
-
-void silofs_sli_mark_allocated_at(struct silofs_spleaf_info *sli,
-                                  const struct silofs_vaddr *vaddr)
-{
-	const size_t len = silofs_vaddr_len(vaddr);
-
-	silofs_assert_lt(sli->sl_nused_bytes, SILOFS_LSEG_SIZE_MAX);
-	silofs_assert_le(sli->sl_nused_bytes + len, SILOFS_LSEG_SIZE_MAX);
-
-	spleaf_set_allocated_at(sli->sl, vaddr);
-	if (silofs_vaddr_isdata(vaddr)) {
-		spleaf_set_unwritten_at(sli->sl, vaddr);
-	}
-	sli->sl_nused_bytes += len;
-	sli_dirtify(sli);
-}
-
-void silofs_sli_unref_allocated_at(struct silofs_spleaf_info *sli,
-                                   const struct silofs_vaddr *vaddr)
-{
-	const size_t len = silofs_vaddr_len(vaddr);
-	const bool last = spleaf_is_last_allocated_at(sli->sl, vaddr);
-
-	spleaf_unset_allocated_at(sli->sl, vaddr);
-	if (!spleaf_is_allocated_at(sli->sl, vaddr)) {
-		silofs_assert_ge(sli->sl_nused_bytes, len);
-		sli->sl_nused_bytes -= len;
-	}
-	if (last) {
-		spleaf_renew_bk_at(sli->sl, vaddr);
-	}
-	sli_dirtify(sli);
-}
-
-void silofs_sli_reref_allocated_at(struct silofs_spleaf_info *sli,
-                                   const struct silofs_vaddr *vaddr)
-{
-	silofs_assert_eq(vaddr->ltype, SILOFS_LTYPE_DATABK);
-	silofs_assert_ge(sli->sl_nused_bytes, SILOFS_LBK_SIZE);
-	silofs_assert_le(sli->sl_nused_bytes, SILOFS_LSEG_SIZE_MAX);
-
-	spleaf_set_allocated_at(sli->sl, vaddr);
-	sli_dirtify(sli);
 }
 
 void silofs_sli_lbk_vaddrs_at(const struct silofs_spleaf_info *sli,
@@ -989,8 +581,6 @@ void silofs_sli_clone_from(struct silofs_spleaf_info *sli,
                            const struct silofs_spleaf_info *sli_other)
 {
 	spleaf_clone_subrefs(sli->sl, sli_other->sl);
-	sli->sl_nused_bytes = sli_other->sl_nused_bytes;
-	sli->sl_voff_hint = sli_other->sl_voff_hint;
 	sli_dirtify(sli);
 }
 

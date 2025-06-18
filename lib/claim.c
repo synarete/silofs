@@ -229,7 +229,6 @@ static int spac_do_find_free_vspace_at(struct silofs_spalloc_ctx *spa_ctx,
 		return err;
 	}
 	silofs_lsi_update_off_hint(spa_ctx->lsi, out_vaddr);
-	silofs_sli_update_off_hint(spa_ctx->sli, out_vaddr);
 	return 0;
 }
 
@@ -381,7 +380,6 @@ static void spac_mark_allocated(struct silofs_spalloc_ctx *spa_ctx,
 		silofs_assert_not_null(spa_ctx->lsi);
 
 		first = !silofs_lsi_has_allocated_with(spa_ctx->lsi, vaddr);
-		silofs_sli_mark_allocated_at(spa_ctx->sli, vaddr);
 		silofs_lsi_mark_allocated_at(spa_ctx->lsi, vaddr);
 	}
 
@@ -748,7 +746,10 @@ static int spac_try_reclaim_vlseg(const struct silofs_spalloc_ctx *spa_ctx)
 	struct silofs_lrange lrange;
 	int err;
 
-	if (spa_ctx->sli->sl_nused_bytes) {
+	if (spa_ctx->lsi == NULL) {
+		return 0;
+	}
+	if (spa_ctx->lsi->ls_nused_bytes) {
 		return 0; /* still has in-use blocks: no-op */
 	}
 	err = spac_resolve_main_range(spa_ctx, &lsid, &lrange);
@@ -771,7 +772,7 @@ static void spac_clear_allocate_at(const struct silofs_spalloc_ctx *spa_ctx,
 {
 	silofs_assert_not_null(spa_ctx->lsi);
 
-	silofs_sli_unref_allocated_at(spa_ctx->sli, vaddr);
+	// silofs_sli_unref_allocated_at(spa_ctx->sli, vaddr);
 	silofs_lsi_unref_allocated_at(spa_ctx->lsi, vaddr);
 
 	if (!spac_has_dbkref_at(spa_ctx, vaddr)) {
@@ -856,7 +857,6 @@ static int spac_addref_vspace(struct silofs_spalloc_ctx *spa_ctx,
 	spac_increfs(spa_ctx);
 	err = spac_resolve_llink(spa_ctx, vaddr, &llink);
 	if (!err) {
-		silofs_sli_reref_allocated_at(spa_ctx->sli, vaddr);
 		silofs_lsi_reref_allocated_at(spa_ctx->lsi, vaddr);
 	}
 	spac_decrefs(spa_ctx);

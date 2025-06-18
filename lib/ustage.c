@@ -146,7 +146,6 @@ static int sli_verify_view(struct silofs_spleaf_info *sli)
 static void sli_set_staged(struct silofs_spleaf_info *sli)
 {
 	sli_set_active(sli);
-	silofs_sli_update_nused(sli);
 }
 
 static void sli_set_spawned(struct silofs_spleaf_info *sli)

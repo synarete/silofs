@@ -33,9 +33,6 @@ int silofs_mdigest_init(struct silofs_mdigest *md);
 
 void silofs_mdigest_fini(struct silofs_mdigest *md);
 
-void silofs_blake2s128_of(const struct silofs_mdigest *md, const void *buf,
-                          size_t bsz, struct silofs_hash128 *out_hash);
-
 void silofs_sha256_of(const struct silofs_mdigest *md, const void *buf,
                       size_t bsz, struct silofs_hash256 *out_hash);
 

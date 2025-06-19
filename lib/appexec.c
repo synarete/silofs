@@ -1341,7 +1341,7 @@ static bool g_initlib_once_done;
 
 int silofs_init_once(void)
 {
-	bool with_fips = false;
+	bool with_fips = true;
 	int ret = 0;
 
 	if (g_initlib_once_done) {

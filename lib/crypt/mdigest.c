@@ -25,10 +25,13 @@
 int silofs_mdigest_init(struct silofs_mdigest *md)
 {
 	const int algos[] = {
-		GCRY_MD_MD5,           GCRY_MD_CRC32,
-		GCRY_MD_CRC32_RFC1510, GCRY_MD_CRC24_RFC2440,
-		GCRY_MD_SHA256,        GCRY_MD_SHA3_256,
-		GCRY_MD_SHA3_512,      GCRY_MD_BLAKE2S_128,
+		GCRY_MD_MD5,           //
+		GCRY_MD_CRC32,         //
+		GCRY_MD_CRC32_RFC1510, //
+		GCRY_MD_CRC24_RFC2440, //
+		GCRY_MD_SHA256,        //
+		GCRY_MD_SHA3_256,      //
+		GCRY_MD_SHA3_512,      //
 	};
 	int algo;
 	gcry_error_t err;
@@ -108,20 +111,9 @@ static void require_algo_dlen(int algo, size_t hlen)
 	const size_t dlen = gcry_md_get_algo_dlen(algo);
 
 	if (dlen != hlen) {
-		silofs_panic("algo-dlen mismatch: "
-		             "algo=%d dlen=%lu hlen=%lu",
+		silofs_panic("algo-dlen mismatch: algo=%d dlen=%lu hlen=%lu",
 		             algo, dlen, hlen);
 	}
-}
-
-void silofs_blake2s128_of(const struct silofs_mdigest *md, const void *buf,
-                          size_t bsz, struct silofs_hash128 *out_hash)
-{
-	const int algo = GCRY_MD_BLAKE2S_128;
-	const size_t hlen = sizeof(out_hash->hash);
-
-	require_algo_dlen(algo, hlen);
-	mdigest_calc(md, algo, buf, bsz, hlen, out_hash->hash);
 }
 
 void silofs_sha256_of(const struct silofs_mdigest *md, const void *buf,

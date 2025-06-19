@@ -76,12 +76,14 @@ const char *silofs_gcrypt_version(void)
 	return GCRYPT_VERSION;
 }
 
-int silofs_gcrypt_status(gcry_error_t gcry_err, const char *fn)
+int silofs_gcrypt_status_(gcry_error_t gcry_err, const char *fn,
+                          const char *file, int line)
 {
 	const int err = (int)gcry_err;
 
 	if (gcry_err && (fn != NULL)) {
-		silofs_log_error("%s: %s", fn, gcry_strerror(gcry_err));
+		silofs_logf(SILOFS_LOG_ERROR, file, line, "%s: %s", fn,
+		            gcry_strerror(gcry_err));
 	}
 
 	return (err > 0) ? -err : err;

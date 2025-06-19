@@ -23,6 +23,10 @@ const char *silofs_gcrypt_version(void);
 
 int silofs_init_gcrypt(bool with_fips);
 
-int silofs_gcrypt_status(gcry_error_t gcry_err, const char *fn);
+int silofs_gcrypt_status_(gcry_error_t gcry_err, const char *fn,
+                          const char *file, int line);
+
+#define silofs_gcrypt_status(gcry_err_, fn_) \
+	silofs_gcrypt_status_(gcry_err_, fn_, SILOFS_FL_LN_)
 
 #endif /* SILOFS_GCRY_H_ */

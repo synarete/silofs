@@ -1299,7 +1299,7 @@ static int check_proc_rlimits(void)
 	return 0;
 }
 
-static int check_and_init_lib(void)
+static int check_pre_init_lib(void)
 {
 	int err;
 
@@ -1319,11 +1319,18 @@ static int check_and_init_lib(void)
 	if (err) {
 		return err;
 	}
+	return 0;
+}
+
+static int do_init_lib(bool with_fips)
+{
+	int err;
+
 	err = silofs_init_time();
 	if (err) {
 		return err;
 	}
-	err = silofs_init_gcrypt();
+	err = silofs_init_gcrypt(with_fips);
 	if (err) {
 		return err;
 	}
@@ -1334,12 +1341,17 @@ static bool g_initlib_once_done;
 
 int silofs_init_once(void)
 {
+	bool with_fips = false;
 	int ret = 0;
 
 	if (g_initlib_once_done) {
 		goto out;
 	}
-	ret = check_and_init_lib();
+	ret = check_pre_init_lib();
+	if (ret != 0) {
+		goto out;
+	}
+	ret = do_init_lib(with_fips);
 	if (ret != 0) {
 		goto out;
 	}

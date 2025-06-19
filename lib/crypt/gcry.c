@@ -24,13 +24,21 @@ enum {
 	SILOFS_SECMEM_SIZE = 64L * SILOFS_KILO,
 };
 
-int silofs_init_gcrypt(void)
+int silofs_init_gcrypt(bool with_fips)
 {
-	gcry_error_t err;
-	enum gcry_ctl_cmds cmd;
-	const char *version;
+	const char *version = NULL;
 	const char *expected_version = GCRYPT_VERSION;
+	enum gcry_ctl_cmds cmd;
+	gcry_error_t err;
 
+	if (with_fips) {
+		/* FIPS force-mode _must_ come first */
+		cmd = GCRYCTL_FORCE_FIPS_MODE;
+		err = gcry_control(cmd);
+		if (err) {
+			goto out_control_err;
+		}
+	}
 	version = gcry_check_version(expected_version);
 	if (!version) {
 		silofs_log_warn("libgcrypt version != %s", expected_version);
@@ -59,6 +67,7 @@ int silofs_init_gcrypt(void)
 	return 0;
 
 out_control_err:
+	silofs_log_warn("gcry_control failure: cmd=%d err=%d", cmd, err);
 	return silofs_gcrypt_status(err, "gcry_control");
 }
 

@@ -391,7 +391,7 @@ static bool de_isvalid(const struct silofs_dir_entry *de)
 		return false;
 	}
 	name_pos = de_name_pos(de);
-	if (!name_pos || (name_pos >= SILOFS_DIR_NODE_NBUF_SIZE)) {
+	if (!name_pos || (name_pos >= SILOFS_DIR_NODE_NBSIZE)) {
 		return false;
 	}
 	return true;

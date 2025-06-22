@@ -74,7 +74,7 @@ struct silofs_env {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_require_proper_defs(void);
+void silofs_affirm_ondisk_format(void);
 
 int silofs_env_init(struct silofs_env            *env,
                     const struct silofs_env_base *base);

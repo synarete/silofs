@@ -207,7 +207,7 @@
 #define SILOFS_DIR_NODE_NENTS (480)
 
 /* max size of names-buffer in dir's tree-mapping node */
-#define SILOFS_DIR_NODE_NBUF_SIZE (7680)
+#define SILOFS_DIR_NODE_NBSIZE (7680)
 
 /* bits-shift of children per dir tree-mapping node */
 #define SILOFS_DIR_NODE_SHIFT (6)
@@ -862,7 +862,7 @@ struct silofs_dir_entry {
 
 union silofs_dtree_data {
 	struct silofs_dir_entry de[SILOFS_DIR_NODE_NENTS];
-	uint8_t                 nb[SILOFS_DIR_NODE_NBUF_SIZE];
+	uint8_t                 nb[SILOFS_DIR_NODE_NBSIZE];
 } silofs_attr_aligned64;
 
 struct silofs_dtree_node {

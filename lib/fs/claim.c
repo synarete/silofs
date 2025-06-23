@@ -18,16 +18,9 @@
 #include <errno.h>
 #include <silofs/ioctls.h>
 #include "repo.h"
-#include "bootrec.h"
-#include "lnodes.h"
-#include "lcache.h"
+#include "fs.h"
 #include "exec.h"
-#include "super.h"
 #include "env.h"
-#include "namei.h"
-#include "spmaps.h"
-#include "lsmap.h"
-#include "stage.h"
 #include "private.h"
 
 /* space-allocation context */

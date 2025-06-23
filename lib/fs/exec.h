@@ -19,7 +19,6 @@
 
 #include "infra.h"
 #include "addr.h"
-#include "uidgid.h"
 
 #define SILOFS_SQENT_NREFS_MAX (32)
 

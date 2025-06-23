@@ -18,13 +18,8 @@
 #include <dirent.h>
 #include <errno.h>
 #include "infra.h"
-#include "lnodes.h"
-#include "exec.h"
-#include "inode.h"
-#include "dir.h"
+#include "fs.h"
 #include "env.h"
-#include "namei.h"
-#include "stage.h"
 #include "private.h"
 
 enum silofs_dtree_consts {

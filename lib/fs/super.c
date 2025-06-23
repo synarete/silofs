@@ -20,13 +20,8 @@
 #include <sys/mount.h>
 #include "infra.h"
 #include "str.h"
-#include "lnodes.h"
+#include "fs.h"
 #include "exec.h"
-#include "super.h"
-#include "inode.h"
-#include "stage.h"
-#include "spmaps.h"
-#include "lsmap.h"
 #include "env.h"
 #include "private.h"
 

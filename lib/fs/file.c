@@ -25,14 +25,9 @@
 #include <limits.h>
 #include "infra.h"
 #include "bootrec.h"
-#include "lnodes.h"
-#include "lcache.h"
+#include "fs.h"
 #include "exec.h"
-#include "super.h"
-#include "inode.h"
-#include "file.h"
 #include "env.h"
-#include "stage.h"
 #include "private.h"
 
 enum silofs_file_op {

@@ -16,8 +16,7 @@
  */
 #include "configs.h"
 #include "bootrec.h"
-#include "lnodes.h"
-#include "encdec.h"
+#include "fs.h"
 #include "env.h"
 
 static int

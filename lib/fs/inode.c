@@ -24,19 +24,10 @@
 #include <string.h>
 #include <stdbool.h>
 #include <limits.h>
-#include "uidgid.h"
 #include "bootrec.h"
-#include "lnodes.h"
+#include "fs.h"
 #include "exec.h"
-#include "inode.h"
-#include "dir.h"
-#include "file.h"
-#include "walk.h"
-#include "namei.h"
-#include "xattr.h"
-#include "symlink.h"
 #include "env.h"
-#include "stage.h"
 #include "private.h"
 
 /* local functions forward declarations */

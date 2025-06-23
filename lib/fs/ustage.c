@@ -20,13 +20,8 @@
 #include <sys/mount.h>
 #include "repo.h"
 #include "bootrec.h"
-#include "lnodes.h"
-#include "lcache.h"
-#include "encdec.h"
-#include "super.h"
+#include "fs.h"
 #include "env.h"
-#include "spmaps.h"
-#include "stage.h"
 #include "private.h"
 
 static void uni_set_env(struct silofs_unode_info *uni, struct silofs_env *env)

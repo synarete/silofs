@@ -15,12 +15,8 @@
  * GNU General Public License for more details.
  */
 #include "configs.h"
-#include "lnodes.h"
+#include "fs.h"
 #include "exec.h"
-#include "inode.h"
-#include "symlink.h"
-#include "namei.h"
-#include "stage.h"
 #include "private.h"
 
 struct silofs_symval_desc {

@@ -16,14 +16,9 @@
  */
 #include "configs.h"
 #include "bootrec.h"
-#include "lnodes.h"
-#include "lcache.h"
-#include "encdec.h"
+#include "fs.h"
 #include "exec.h"
-#include "super.h"
-#include "inode.h"
 #include "env.h"
-#include "stage.h"
 #include "private.h"
 
 static bool lni_isunode(const struct silofs_lnode_info *lni)

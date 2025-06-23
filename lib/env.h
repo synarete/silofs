@@ -22,7 +22,6 @@
 #include "infra.h"
 #include "crypt.h"
 #include "addr.h"
-#include "uidgid.h"
 #include "bootrec.h"
 
 /* top-level operations counters/stats */

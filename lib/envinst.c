@@ -21,14 +21,8 @@
 #include "pnodes.h"
 #include "pcache.h"
 #include "bstore.h"
-#include "uidgid.h"
-#include "idsmap.h"
+#include "fs.h"
 #include "bootrec.h"
-#include "lnodes.h"
-#include "lcache.h"
-#include "inode.h"
-#include "exec.h"
-#include "namei.h"
 #include "env.h"
 #include "fuseq.h"
 #include "private.h"
@@ -267,7 +261,7 @@ static void envi_fini_alloc(struct silofs_env_inst *envi)
 }
 
 static void envi_make_repo_base(const struct silofs_env_inst *envi,
-                                struct silofs_repo_base *re_base)
+				struct silofs_repo_base *re_base)
 {
 	silofs_memzero(re_base, sizeof(*re_base));
 	re_base->alloc = envi->alloc;
@@ -697,7 +691,7 @@ static void envi_del(struct silofs_env_inst *envi)
 }
 
 int silofs_create_env(const struct silofs_args *args,
-                      struct silofs_env **out_env)
+		      struct silofs_env **out_env)
 {
 	struct silofs_env_inst *envi = NULL;
 	int err = 0;

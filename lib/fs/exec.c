@@ -18,11 +18,8 @@
 #include "infra.h"
 #include "repo.h"
 #include "bootrec.h"
-#include "lnodes.h"
-#include "encdec.h"
+#include "fs.h"
 #include "exec.h"
-#include "inode.h"
-#include "namei.h"
 #include "env.h"
 #include "private.h"
 

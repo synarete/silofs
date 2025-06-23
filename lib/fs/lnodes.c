@@ -17,16 +17,7 @@
 #include "configs.h"
 #include <limits.h>
 #include "infra.h"
-#include "lnodes.h"
-#include "super.h"
-#include "lsmap.h"
-#include "inode.h"
-#include "dir.h"
-#include "file.h"
-#include "walk.h"
-#include "xattr.h"
-#include "symlink.h"
-#include "spmaps.h"
+#include "fs.h"
 #include "env.h"
 #include "private.h"
 

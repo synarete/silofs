@@ -18,8 +18,8 @@
 #include <silofs/defs.h>
 #include "infra.h"
 #include "repo.h"
-#include "encdec.h"
 #include "bootrec.h"
+#include "fs.h"
 #include "env.h"
 #include "private.h"
 

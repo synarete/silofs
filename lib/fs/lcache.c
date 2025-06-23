@@ -16,10 +16,8 @@
  */
 #include "configs.h"
 #include "infra.h"
-#include "lnodes.h"
-#include "lcache.h"
+#include "fs.h"
 #include "exec.h"
-#include "inode.h"
 #include "private.h"
 
 static void lcache_drop_uamap(struct silofs_lcache *lcache);

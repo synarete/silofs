@@ -19,10 +19,10 @@
 #include <sys/types.h>
 #include <limits.h>
 #include <endian.h>
+#include <gcrypt.h>
+#include <silofs/defs.h>
 #include <silofs/ioctls.h>
 #include "infra.h"
-#include "addr.h"
-#include "env.h"
 
 #ifndef LINK_MAX
 #define LINK_MAX 127
@@ -87,6 +87,8 @@
 
 #define REQUIRE_OFFSET64(type, member, off) \
 	SILOFS_STATICASSERT(ISOFFSET(type, member, off) && ISALIGNED64(off))
+
+void silofs_affirm_ondisk_format(void);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -155,8 +157,6 @@ static void affirm_ondisk_base_types(void)
 	REQUIRE_SIZEOF(struct silofs_hash128, 16);
 	REQUIRE_SIZEOF(struct silofs_hash256, 32);
 	REQUIRE_SIZEOF(struct silofs_hash512, 64);
-	REQUIRE_SIZEOF(struct silofs_kdf_desc, 16);
-	REQUIRE_SIZEOF(struct silofs_kdf_descs, 32);
 	REQUIRE_SIZEOF(struct silofs_iv, SILOFS_IV_SIZE);
 	REQUIRE_SIZEOF(struct silofs_key, SILOFS_KEY_SIZE);
 	REQUIRE_SIZEOF(struct silofs_uuid, SILOFS_UUID_SIZE);

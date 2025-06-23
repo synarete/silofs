@@ -20,7 +20,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <silofs/macros.h>
-#include "uidgid.h"
 
 struct silofs_task_ctx;
 

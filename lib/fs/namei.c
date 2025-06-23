@@ -26,20 +26,10 @@
 #include <limits.h>
 #include <silofs/ioctls.h>
 #include "repo.h"
-#include "uidgid.h"
-#include "lnodes.h"
-#include "lcache.h"
+#include "fs.h"
 #include "exec.h"
-#include "super.h"
-#include "inode.h"
-#include "dir.h"
-#include "file.h"
-#include "symlink.h"
-#include "xattr.h"
-#include "walk.h"
-#include "namei.h"
-#include "stage.h"
 #include "env.h"
+#include "walk.h"
 #include "private.h"
 
 static int check_ascii_fs_name(const struct silofs_strview *sv)

@@ -22,11 +22,7 @@
 #include "pcache.h"
 #include "bstore.h"
 #include "bootrec.h"
-#include "lnodes.h"
-#include "lcache.h"
-#include "exec.h"
-#include "super.h"
-#include "stage.h"
+#include "fs.h"
 #include "env.h"
 #include "private.h"
 
@@ -354,14 +350,14 @@ bool silofs_env_hasflag(const struct silofs_env *env, enum silofs_flags f)
 }
 
 int silofs_env_bootrec_caddr(const struct silofs_env *env,
-                             struct silofs_caddr *out_caddr)
+			     struct silofs_caddr *out_caddr)
 {
 	silofs_caddr_assign(out_caddr, &env->bootrec_caddr);
 	return caddr_isbootrec(out_caddr) ? 0 : -SILOFS_ENOENT;
 }
 
 int silofs_env_set_bootrec_caddr(struct silofs_env *env,
-                                 const struct silofs_caddr *caddr)
+				 const struct silofs_caddr *caddr)
 {
 	if (!caddr_isbootrec(caddr)) {
 		return -SILOFS_EINVAL;
@@ -371,21 +367,21 @@ int silofs_env_set_bootrec_caddr(struct silofs_env *env,
 }
 
 int silofs_env_base_caddr(const struct silofs_env *env,
-                          struct silofs_caddr *out_caddr)
+			  struct silofs_caddr *out_caddr)
 {
 	silofs_caddr_assign(out_caddr, &env->bootrec_base_caddr);
 	return caddr_isbootrec(out_caddr) ? 0 : -SILOFS_ENOENT;
 }
 
 int silofs_env_fork_caddr(const struct silofs_env *env,
-                          struct silofs_caddr *out_caddr)
+			  struct silofs_caddr *out_caddr)
 {
 	silofs_caddr_assign(out_caddr, &env->bootrec_fork_caddr);
 	return caddr_isbootrec(out_caddr) ? 0 : -SILOFS_ENOENT;
 }
 
 int silofs_env_pack_caddr(const struct silofs_env *env,
-                          struct silofs_caddr *out_caddr)
+			  struct silofs_caddr *out_caddr)
 {
 	const struct silofs_caddr *caddr = &env->pack_caddr;
 
@@ -394,7 +390,7 @@ int silofs_env_pack_caddr(const struct silofs_env *env,
 }
 
 int silofs_env_set_pack_caddr(struct silofs_env *env,
-                              const struct silofs_caddr *caddr)
+			      const struct silofs_caddr *caddr)
 {
 	if (caddr->ctype != SILOFS_CTYPE_PACKIDX) {
 		return -SILOFS_EINVAL;
@@ -468,11 +464,11 @@ static void make_super_lsid(struct silofs_lsid *out_lsid)
 
 	silofs_volumeid_generate(&volumeid);
 	silofs_lsid_setup(out_lsid, &volumeid, 0, SILOFS_LTYPE_SUPER,
-	                  SILOFS_HEIGHT_SUPER, SILOFS_LTYPE_SUPER);
+			  SILOFS_HEIGHT_SUPER, SILOFS_LTYPE_SUPER);
 }
 
 static void make_super_uaddr(const struct silofs_lsid *lsid,
-                             struct silofs_uaddr *out_uaddr)
+			     struct silofs_uaddr *out_uaddr)
 {
 	silofs_assert_eq(lsid->height, SILOFS_HEIGHT_SUPER);
 	silofs_assert_eq(lsid->ltype, SILOFS_LTYPE_SUPER);
@@ -486,7 +482,7 @@ static const struct silofs_uaddr *env_sb_uaddr(const struct silofs_env *env)
 }
 
 static void env_make_super_uaddr(const struct silofs_env *env,
-                                 struct silofs_uaddr *out_uaddr)
+				 struct silofs_uaddr *out_uaddr)
 {
 	struct silofs_lsid lsid = { .lsize = 0 };
 
@@ -496,7 +492,7 @@ static void env_make_super_uaddr(const struct silofs_env *env,
 }
 
 static void env_resolve_super_uaddr(const struct silofs_env *env,
-                                    struct silofs_uaddr *out_uaddr)
+				    struct silofs_uaddr *out_uaddr)
 {
 	silofs_uaddr_assign(out_uaddr, env_sb_uaddr(env));
 }
@@ -512,7 +508,7 @@ void silofs_env_drop_caches(struct silofs_env *env)
 
 static int
 env_spawn_super_at(struct silofs_env *env, const struct silofs_uaddr *uaddr,
-                   struct silofs_sb_info **out_sbi)
+		   struct silofs_sb_info **out_sbi)
 {
 	int err;
 
@@ -534,7 +530,7 @@ env_spawn_super_of(struct silofs_env *env, struct silofs_sb_info **out_sbi)
 }
 
 static int env_spawn_super(struct silofs_env *env, size_t capacity,
-                           struct silofs_sb_info **out_sbi)
+			   struct silofs_sb_info **out_sbi)
 {
 	struct silofs_sb_info *sbi = NULL;
 	int err;
@@ -573,7 +569,7 @@ env_check_sb(const struct silofs_env *env, const struct silofs_sb_info *sbi)
 	err = silofs_sb_check_version(sb);
 	if (err) {
 		log_err("bad sb: magic=%lx version:=%ld err=%d", sb->sb_magic,
-		        sb->sb_version, err);
+			sb->sb_version, err);
 		return err;
 	}
 	fossil = silofs_sb_test_flags(sb, SILOFS_SUPERF_FOSSIL);
@@ -673,7 +669,7 @@ void silofs_env_uptime(const struct silofs_env *env, time_t *out_uptime)
 }
 
 void silofs_env_allocstat(const struct silofs_env *env,
-                          struct silofs_alloc_stat *out_alst)
+			  struct silofs_alloc_stat *out_alst)
 {
 	silofs_memstat(env->base.alloc, out_alst);
 }
@@ -694,7 +690,7 @@ static int env_reinit_ciphers(struct silofs_env *env, int algo, int mode)
 }
 
 static int env_reinit_ciphers_by(struct silofs_env *env,
-                                 const struct silofs_bootrec *bootrec)
+				 const struct silofs_bootrec *bootrec)
 {
 	const int algo = bootrec->cipher_algo;
 	const int mode = bootrec->cipher_mode;
@@ -703,7 +699,7 @@ static int env_reinit_ciphers_by(struct silofs_env *env,
 }
 
 static int env_update_bootrec(struct silofs_env *env,
-                              const struct silofs_bootrec *bootrec)
+			      const struct silofs_bootrec *bootrec)
 {
 	struct silofs_caddr caddr;
 	int err;
@@ -726,7 +722,7 @@ static void env_update_pvsegr(struct silofs_env *env)
 }
 
 int silofs_env_update_by(struct silofs_env *env,
-                         const struct silofs_bootrec *bootrec)
+			 const struct silofs_bootrec *bootrec)
 {
 	int err;
 
@@ -761,7 +757,7 @@ int silofs_env_setup_bootrec(struct silofs_env *env)
 }
 
 static void env_pre_commit_bootrec(const struct silofs_env *env,
-                                   struct silofs_bootrec *bootrec)
+				   struct silofs_bootrec *bootrec)
 {
 	silofs_bootrec_assign(bootrec, env->base.bootrec);
 	silofs_bootrec_set_sb_uaddr(bootrec, silofs_sbi_uaddr(env->sbi));
@@ -804,8 +800,8 @@ static void env_drop_uamap(struct silofs_env *env)
 }
 
 static int env_fork_rebind_super(struct silofs_env *env,
-                                 const struct silofs_sb_info *sbi_cur,
-                                 struct silofs_sb_info **out_sbi)
+				 const struct silofs_sb_info *sbi_cur,
+				 struct silofs_sb_info **out_sbi)
 {
 	struct silofs_sb_info *sbi = NULL;
 	int err;

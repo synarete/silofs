@@ -19,7 +19,6 @@
 #include "infra.h"
 #include "fs.h"
 #include "env.h"
-#include "private.h"
 
 enum {
 	SILOFS_UI_MAGIC = 0xCAFEBEB,

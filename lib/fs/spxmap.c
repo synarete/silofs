@@ -17,7 +17,6 @@
 #include "configs.h"
 #include "lnodes.h"
 #include "spxmap.h"
-#include "private.h"
 
 /* single entry of free vspace */
 struct silofs_spa_entry {

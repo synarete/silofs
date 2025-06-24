@@ -16,12 +16,11 @@
  */
 #include "configs.h"
 #include "infra.h"
+#include "fs.h"
 #include "repo.h"
 #include "bootrec.h"
-#include "fs.h"
 #include "exec.h"
 #include "env.h"
-#include "private.h"
 
 struct silofs_vstage_ctx {
 	struct silofs_task_ctx *task;

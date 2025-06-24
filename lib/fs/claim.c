@@ -21,7 +21,6 @@
 #include "fs.h"
 #include "exec.h"
 #include "env.h"
-#include "private.h"
 
 /* space-allocation context */
 struct silofs_spalloc_ctx {

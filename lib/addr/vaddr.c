@@ -20,7 +20,6 @@
 #include "ltype.h"
 #include "htox.h"
 #include "vaddr.h"
-#include "private.h"
 
 static uint64_t cpu_to_voff_ltype(loff_t voff, enum silofs_ltype ltype)
 {

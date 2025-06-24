@@ -18,7 +18,6 @@
 #include "infra.h"
 #include "addr.h"
 #include "pnodes.h"
-#include "private.h"
 
 static bool key_isvalid(uint64_t key)
 {

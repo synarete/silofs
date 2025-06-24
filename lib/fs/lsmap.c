@@ -22,7 +22,6 @@
 #include <silofs/panic.h>
 #include "infra.h"
 #include "addr.h"
-#include "private.h"
 #include "lnodes.h"
 #include "lsmap.h"
 

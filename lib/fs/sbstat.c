@@ -21,7 +21,6 @@
 #include "infra.h"
 #include "lnodes.h"
 #include "super.h"
-#include "private.h"
 
 /* local functions */
 static ssize_t *

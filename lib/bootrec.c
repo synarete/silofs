@@ -21,7 +21,6 @@
 #include "bootrec.h"
 #include "fs.h"
 #include "env.h"
-#include "private.h"
 
 static uint64_t bootrec1k_magic(const struct silofs_bootrec1k *bootrec1k)
 {

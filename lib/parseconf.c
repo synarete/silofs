@@ -29,7 +29,6 @@
 #include "infra.h"
 #include "str.h"
 #include "fs.h"
-#include "private.h"
 
 static bool strview_isempty(const struct silofs_strview *sv)
 {

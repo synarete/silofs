@@ -30,7 +30,6 @@
 #include "exec.h"
 #include "env.h"
 #include "walk.h"
-#include "private.h"
 
 static int check_ascii_fs_name(const struct silofs_strview *sv)
 {

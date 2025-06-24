@@ -21,7 +21,6 @@
 #include "infra.h"
 #include "lnodes.h"
 #include "spmaps.h"
-#include "private.h"
 
 static void lrange_of_spleaf(struct silofs_lrange *lrange, loff_t voff)
 {

@@ -23,7 +23,6 @@
 #include "pnodes.h"
 #include "pcache.h"
 #include "btree.h"
-#include "private.h"
 
 struct silofs_btree_path {
 	struct silofs_btnode_info *bni[SILOFS_BTREE_HEIGHT_MAX];

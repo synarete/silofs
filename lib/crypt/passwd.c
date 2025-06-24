@@ -21,7 +21,6 @@
 #include "str.h"
 #include "passwd.h"
 #include "ivkey.h"
-#include "private.h"
 
 int silofs_password_setup(struct silofs_password *pw, const char *pass)
 {

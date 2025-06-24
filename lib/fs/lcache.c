@@ -18,7 +18,6 @@
 #include "infra.h"
 #include "fs.h"
 #include "exec.h"
-#include "private.h"
 
 static void lcache_drop_uamap(struct silofs_lcache *lcache);
 static void lcache_evict_some(struct silofs_lcache *lcache);

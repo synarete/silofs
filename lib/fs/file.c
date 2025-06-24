@@ -28,7 +28,6 @@
 #include "fs.h"
 #include "exec.h"
 #include "env.h"
-#include "private.h"
 
 enum silofs_file_op {
 	FILE_OP_READ = 1 << 0,

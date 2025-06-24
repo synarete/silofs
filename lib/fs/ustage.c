@@ -22,7 +22,6 @@
 #include "bootrec.h"
 #include "fs.h"
 #include "env.h"
-#include "private.h"
 
 static void uni_set_env(struct silofs_unode_info *uni, struct silofs_env *env)
 {

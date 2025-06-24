@@ -20,7 +20,6 @@
 #include "infra.h"
 #include "addr.h"
 #include "hmapq.h"
-#include "private.h"
 
 enum silofs_hmde_consts {
 	SILOFS_HMQE_MAGIC = 0xDECAFE,

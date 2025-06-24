@@ -28,7 +28,6 @@
 #include "fs.h"
 #include "exec.h"
 #include "env.h"
-#include "private.h"
 
 /* local functions forward declarations */
 static void ii_update_itimes(struct silofs_inode_info *ii,

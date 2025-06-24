@@ -20,7 +20,6 @@
 #include "infra.h"
 #include "fs.h"
 #include "env.h"
-#include "private.h"
 
 enum silofs_dtree_consts {
 	DTREE_SHIFT = SILOFS_DIR_NODE_SHIFT,

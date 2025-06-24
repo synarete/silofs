@@ -21,7 +21,6 @@
 #include <fcntl.h>
 #include "infra.h"
 #include "repo.h"
-#include "private.h"
 
 enum {
 	RCEK_PSID = 1,

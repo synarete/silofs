@@ -21,7 +21,6 @@
 #include "fs.h"
 #include "exec.h"
 #include "env.h"
-#include "private.h"
 
 #define SILOFS_COMMIT_LEN_MAX SILOFS_MEGA
 #define SILOFS_CID_ALL        UINT64_MAX

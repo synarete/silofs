@@ -19,7 +19,6 @@
 #include "fs.h"
 #include "exec.h"
 #include "env.h"
-#include "private.h"
 
 static bool lni_isunode(const struct silofs_lnode_info *lni)
 {

@@ -23,7 +23,6 @@
 #include "fs.h"
 #include "exec.h"
 #include "env.h"
-#include "private.h"
 
 static void tm64b_htox(struct silofs_tm64b *tm64, const struct tm *tm)
 {

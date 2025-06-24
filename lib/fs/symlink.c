@@ -17,7 +17,6 @@
 #include "configs.h"
 #include "fs.h"
 #include "exec.h"
-#include "private.h"
 
 struct silofs_symval_desc {
 	struct silofs_strview head;

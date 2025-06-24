@@ -25,7 +25,6 @@
 #include "ltype.h"
 #include "volumeid.h"
 #include "laddr.h"
-#include "private.h"
 
 static size_t height_to_lseg_size(enum silofs_height height)
 {

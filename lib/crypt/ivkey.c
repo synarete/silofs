@@ -19,7 +19,6 @@
 #include "infra.h"
 #include "gcry.h"
 #include "ivkey.h"
-#include "private.h"
 
 static void randomize_by_gcry(void *ptr, size_t len, bool very_strong)
 {

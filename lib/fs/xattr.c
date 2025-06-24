@@ -22,7 +22,6 @@
 #include "fs.h"
 #include "exec.h"
 #include "env.h"
-#include "private.h"
 
 #define XATTR_DATA_MAX (SILOFS_NAME_MAX + 1 + SILOFS_XATTR_VALUE_MAX)
 

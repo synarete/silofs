@@ -152,6 +152,7 @@ libsilofs_la_SOURCES += delfs.c
 libsilofs_la_SOURCES += env.c
 libsilofs_la_SOURCES += env.h
 libsilofs_la_SOURCES += envinst.c
+libsilofs_la_SOURCES += flags.h
 libsilofs_la_SOURCES += fuseq.c
 libsilofs_la_SOURCES += fuseq.h
 libsilofs_la_SOURCES += knownfs.h

@@ -19,19 +19,9 @@
 
 #include "infra.h"
 #include "addr.h"
+#include "flags.h"
 
 #define SILOFS_SQENT_NREFS_MAX (32)
-
-/* control flags (internal) */
-enum silofs_ctlf {
-	SILOFS_CTLF_NOW     = SILOFS_BIT(0),
-	SILOFS_CTLF_FSYNC   = SILOFS_BIT(1),
-	SILOFS_CTLF_RELEASE = SILOFS_BIT(2),
-	SILOFS_CTLF_BRINGUP = SILOFS_BIT(4),
-	SILOFS_CTLF_OPSTART = SILOFS_BIT(5),
-	SILOFS_CTLF_INTERN  = SILOFS_BIT(6),
-	SILOFS_CTLF_IDLE    = SILOFS_BIT(7),
-};
 
 /* submit reference into view within underlying block */
 struct silofs_submit_ref {

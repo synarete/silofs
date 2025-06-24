@@ -17,9 +17,9 @@
 #include "configs.h"
 #include "infra.h"
 #include "addr.h"
+#include "flags.h"
 #include "pnodes.h"
 #include "pcache.h"
-#include "fs.h"
 
 enum {
 	PCACHE_RETRY_MAX = 4,

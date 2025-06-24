@@ -21,7 +21,7 @@
 #include <stdint.h>
 #include <unistd.h>
 #include <silofs/macros.h>
-#include <silofs/defs.h>
+#include <silofs/ondisk.h>
 
 /* file-system's top-level control flags */
 enum silofs_flags {

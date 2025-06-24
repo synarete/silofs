@@ -17,7 +17,7 @@
 #ifndef SILOFS_META_H_
 #define SILOFS_META_H_
 
-#include <silofs/defs.h>
+#include <silofs/ondisk.h>
 #include "infra.h"
 
 struct silofs_strview;

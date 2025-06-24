@@ -17,7 +17,7 @@
 #ifndef SILOFS_VOLUMEID_H_
 #define SILOFS_VOLUMEID_H_
 
-#include <silofs/defs.h>
+#include <silofs/ondisk.h>
 
 struct silofs_strview;
 struct silofs_strbuf;

@@ -16,7 +16,7 @@
  */
 #include "configs.h"
 #include <gcrypt.h>
-#include <silofs/defs.h>
+#include <silofs/ondisk.h>
 #include <silofs/errors.h>
 #include "infra.h"
 #include "gcry.h"

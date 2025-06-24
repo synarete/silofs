@@ -17,7 +17,7 @@
 #ifndef SILOFS_LTYPE_H_
 #define SILOFS_LTYPE_H_
 
-#include <silofs/defs.h>
+#include <silofs/ondisk.h>
 #include <stdbool.h>
 
 bool silofs_ltype_isnone(enum silofs_ltype ltype);

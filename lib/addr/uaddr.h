@@ -17,7 +17,7 @@
 #ifndef SILOFS_UADDR_H_
 #define SILOFS_UADDR_H_
 
-#include <silofs/defs.h>
+#include <silofs/ondisk.h>
 #include "laddr.h"
 
 /* logical addressing of space-mapping nodes */

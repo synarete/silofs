@@ -17,7 +17,7 @@
 #include "configs.h"
 #include <sys/resource.h>
 #include <sys/stat.h>
-#include <silofs/defs.h>
+#include <silofs/ondisk.h>
 #include <silofs/ioctls.h>
 #include <silofs/appexec.h>
 #include "repo.h"

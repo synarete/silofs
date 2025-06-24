@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_DEFS_H_
-#define SILOFS_DEFS_H_
+#ifndef SILOFS_ONDISK_H_
+#define SILOFS_ONDISK_H_
 
 #include <silofs/ccattr.h>
 #include <stdint.h>
@@ -1027,4 +1027,4 @@ struct silofs_ar_hdr1k {
 	uint64_t ph_hdr_csum;
 } silofs_attr_aligned64;
 
-#endif /* SILOFS_DEFS_H_ */
+#endif /* SILOFS_ONDISK_H_ */

@@ -17,7 +17,7 @@
 #ifndef SILOFS_VADDR_H_
 #define SILOFS_VADDR_H_
 
-#include <silofs/defs.h>
+#include <silofs/ondisk.h>
 #include "offlba.h"
 
 /* logical addressing of virtual nodes */

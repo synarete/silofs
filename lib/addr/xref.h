@@ -17,7 +17,7 @@
 #ifndef SILOFS_XREF_H_
 #define SILOFS_XREF_H_
 
-#include <silofs/defs.h>
+#include <silofs/ondisk.h>
 #include <silofs/types.h>
 
 void silofs_xref_reset(struct silofs_xref *xref);

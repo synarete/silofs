@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 #include "configs.h"
-#include <silofs/defs.h>
+#include <silofs/ondisk.h>
 #include "infra.h"
 #include "repo.h"
 #include "bootrec.h"

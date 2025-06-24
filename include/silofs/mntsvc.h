@@ -20,7 +20,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include <silofs/defs.h>
+#include <silofs/ondisk.h>
 
 struct silofs_ms_env;
 

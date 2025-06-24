@@ -20,7 +20,7 @@
 #include <limits.h>
 #include <endian.h>
 #include <gcrypt.h>
-#include <silofs/defs.h>
+#include <silofs/ondisk.h>
 #include <silofs/ioctls.h>
 #include "infra.h"
 

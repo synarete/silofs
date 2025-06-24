@@ -17,7 +17,7 @@
 #ifndef SILOFS_PASSWD_H_
 #define SILOFS_PASSWD_H_
 
-#include <silofs/defs.h>
+#include <silofs/ondisk.h>
 #include <stdlib.h>
 
 /* password octets-buffers */

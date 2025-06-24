@@ -22,7 +22,7 @@
 #include <silofs/consts.h>
 #include <silofs/errors.h>
 #include <silofs/macros.h>
-#include <silofs/defs.h>
+#include <silofs/ondisk.h>
 #include <silofs/syscall.h>
 #include <silofs/logging.h>
 #include <silofs/panic.h>

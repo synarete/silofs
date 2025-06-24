@@ -17,7 +17,7 @@
 #ifndef SILOFS_ADDR_H_
 #define SILOFS_ADDR_H_
 
-#include <silofs/defs.h>
+#include <silofs/ondisk.h>
 #include <silofs/errors.h>
 #include "addr/offlba.h"
 #include "addr/htox.h"

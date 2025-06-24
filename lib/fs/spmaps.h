@@ -17,7 +17,7 @@
 #ifndef SILOFS_SPMAPS_H_
 #define SILOFS_SPMAPS_H_
 
-#include <silofs/defs.h>
+#include <silofs/ondisk.h>
 #include "addr/laddr.h"
 
 struct silofs_spnode_info;

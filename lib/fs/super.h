@@ -17,7 +17,7 @@
 #ifndef SILOFS_SUPER_H_
 #define SILOFS_SUPER_H_
 
-#include <silofs/defs.h>
+#include <silofs/ondisk.h>
 
 struct silofs_laddr;
 struct silofs_uaddr;

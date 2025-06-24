@@ -18,7 +18,7 @@
 #define SILOFS_CIPHER_H_
 
 #include <gcrypt.h>
-#include <silofs/defs.h>
+#include <silofs/ondisk.h>
 #include "ivkey.h"
 
 struct silofs_mdigest;

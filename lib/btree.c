@@ -16,7 +16,7 @@
  */
 #include "configs.h"
 #include <silofs/errors.h>
-#include <silofs/defs.h>
+#include <silofs/ondisk.h>
 #include "addr.h"
 #include "pvlogs.h"
 #include "repo.h"

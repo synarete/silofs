@@ -17,7 +17,7 @@
 #ifndef SILOFS_PADDR_H_
 #define SILOFS_PADDR_H_
 
-#include <silofs/defs.h>
+#include <silofs/ondisk.h>
 
 /* persistent-volume segment id */
 struct silofs_pvsid {

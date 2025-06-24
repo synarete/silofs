@@ -25,7 +25,7 @@
 #include <stdint.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <silofs/defs.h>
+#include <silofs/ondisk.h>
 
 /* maximal size of ioctl input argument */
 #define SILOFS_IOC_SIZE_MAX (2048)

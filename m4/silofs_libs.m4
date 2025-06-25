@@ -73,7 +73,7 @@ AC_DEFUN([AX_SILOFS_NEED_LIBS],
 [
   AX_PTHREAD
 
-  AM_PATH_LIBGCRYPT(1.8.1, :,
+  AM_PATH_LIBGCRYPT(1.11.0, :,
     AC_MSG_ERROR([Unable to find libgcrypt]))
 
   AC_SEARCH_LIBS([uuid_generate], [uuid], :,

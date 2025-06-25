@@ -16,9 +16,8 @@
  */
 #include "configs.h"
 #include "infra.h"
+#include "obs.h"
 #include "fs.h"
-#include "repo.h"
-#include "bootrec.h"
 #include "exec.h"
 #include "env.h"
 

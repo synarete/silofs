@@ -18,8 +18,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mount.h>
-#include "repo.h"
-#include "bootrec.h"
+#include "obs.h"
 #include "fs.h"
 #include "env.h"
 

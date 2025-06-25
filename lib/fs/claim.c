@@ -17,7 +17,7 @@
 #include "configs.h"
 #include <errno.h>
 #include <silofs/ioctls.h>
-#include "repo.h"
+#include "obs.h"
 #include "fs.h"
 #include "exec.h"
 #include "env.h"

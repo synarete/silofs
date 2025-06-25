@@ -20,7 +20,7 @@
 #include <silofs/ondisk.h>
 #include <silofs/ioctls.h>
 #include <silofs/appexec.h>
-#include "repo.h"
+#include "obs.h"
 #include "bootrec.h"
 #include "fs.h"
 #include "env.h"

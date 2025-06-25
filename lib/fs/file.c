@@ -24,7 +24,6 @@
 #include <stdio.h>
 #include <limits.h>
 #include "infra.h"
-#include "bootrec.h"
 #include "fs.h"
 #include "exec.h"
 #include "env.h"

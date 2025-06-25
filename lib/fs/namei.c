@@ -25,7 +25,7 @@
 #include <dirent.h>
 #include <limits.h>
 #include <silofs/ioctls.h>
-#include "repo.h"
+#include "obs.h"
 #include "fs.h"
 #include "exec.h"
 #include "env.h"

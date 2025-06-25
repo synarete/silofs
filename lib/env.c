@@ -18,11 +18,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mount.h>
-#include "repo.h"
-#include "pcache.h"
-#include "bstore.h"
-#include "bootrec.h"
+#include "obs.h"
 #include "fs.h"
+#include "bootrec.h"
 #include "env.h"
 
 static bool caddr_isbootrec(const struct silofs_caddr *caddr)

@@ -17,10 +17,7 @@
 #include "configs.h"
 #include <sys/resource.h>
 #include <silofs/ioctls.h>
-#include "repo.h"
-#include "pnodes.h"
-#include "pcache.h"
-#include "bstore.h"
+#include "obs.h"
 #include "fs.h"
 #include "bootrec.h"
 #include "env.h"

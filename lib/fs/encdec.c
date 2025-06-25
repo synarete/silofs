@@ -15,7 +15,6 @@
  * GNU General Public License for more details.
  */
 #include "configs.h"
-#include "bootrec.h"
 #include "fs.h"
 #include "env.h"
 

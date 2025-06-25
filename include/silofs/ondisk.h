@@ -296,13 +296,13 @@
 #define SILOFS_NSYMVAL_IN_LBK (SILOFS_LBK_SIZE / SILOFS_SYMLNK_VAL_SIZE)
 
 /* number of extended-attributes entries in indirect node */
-#define SILOFS_XATTR_NENTS (504)
+#define SILOFS_XATTR_NENTS (1008)
 
 /* max length of extended attributes value */
 #define SILOFS_XATTR_VALUE_MAX (2048)
 
 /* on-disk size of xattr node */
-#define SILOFS_XATTR_NODE_SIZE (4096)
+#define SILOFS_XATTR_NODE_SIZE (8192)
 
 /* number of xattr-nodes per logical-block */
 #define SILOFS_NXANODE_IN_LBK (SILOFS_LBK_SIZE / SILOFS_XATTR_NODE_SIZE)
@@ -849,7 +849,7 @@ struct silofs_xattr_node {
 	struct silofs_header      xa_hdr;
 	uint64_t                  xa_ino;
 	uint16_t                  xa_nents;
-	uint8_t                   xa_reserved[38];
+	uint8_t                   xa_reserved[102];
 	struct silofs_xattr_entry xe[SILOFS_XATTR_NENTS];
 } silofs_attr_aligned64;
 

@@ -360,9 +360,9 @@ static void affirm_ondisk_xattr(void)
 {
 	REQUIRE_SIZEOF(struct silofs_xattr_entry, 8);
 	REQUIRE_OFFSET64(struct silofs_xattr_node, xa_hdr, 0);
-	REQUIRE_OFFSET64(struct silofs_xattr_node, xe, 64);
+	REQUIRE_OFFSET64(struct silofs_xattr_node, xe, 128);
 	REQUIRE_SIZEOF(struct silofs_xattr_node, SILOFS_XATTR_NODE_SIZE);
-	REQUIRE_SIZEOF_4K(struct silofs_xattr_node);
+	REQUIRE_SIZEOF_8K(struct silofs_xattr_node);
 }
 
 static void affirm_ondisk_btree(void)

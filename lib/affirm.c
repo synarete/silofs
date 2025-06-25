@@ -322,8 +322,8 @@ static void affirm_ondisk_dir(void)
 	REQUIRE_OFFSETXX(struct silofs_dir_entry, de_name_pos, 14);
 	REQUIRE_SIZEOF(struct silofs_dir_entry, 16);
 	REQUIRE_OFFSET64(struct silofs_dtree_node, dn_hdr, 0);
-	REQUIRE_OFFSET64(struct silofs_dtree_node, dn_child, 64);
-	REQUIRE_OFFSET64(struct silofs_dtree_node, dn_data, 512);
+	REQUIRE_OFFSET64(struct silofs_dtree_node, dn_data, 128);
+	REQUIRE_OFFSET64(struct silofs_dtree_node, dn_child, 7744);
 	REQUIRE_NELEMS(union silofs_dtree_data, de, SILOFS_DIR_NODE_NENTS);
 	REQUIRE_NELEMS(struct silofs_dtree_node, dn_child,
 	               SILOFS_DIR_NODE_NCHILDS);

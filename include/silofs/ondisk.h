@@ -204,10 +204,10 @@
 #define SILOFS_NDTNODE_IN_LBK (SILOFS_LBK_SIZE / SILOFS_DIR_NODE_SIZE)
 
 /* number of directory-entries in dir's hash-tree node */
-#define SILOFS_DIR_NODE_NENTS (480)
+#define SILOFS_DIR_NODE_NENTS (476)
 
 /* max size of names-buffer in dir's tree-mapping node */
-#define SILOFS_DIR_NODE_NBSIZE (7680)
+#define SILOFS_DIR_NODE_NBSIZE (7616)
 
 /* bits-shift of children per dir tree-mapping node */
 #define SILOFS_DIR_NODE_SHIFT (6)
@@ -873,9 +873,9 @@ struct silofs_dtree_node {
 	uint16_t                dn_nde;
 	uint16_t                dn_nnb;
 	uint32_t                dn_nactive_childs;
-	uint32_t                dn_reserved[5];
-	struct silofs_vaddr56   dn_child[SILOFS_DIR_NODE_NCHILDS];
+	uint8_t                 dn_reserved[84];
 	union silofs_dtree_data dn_data;
+	struct silofs_vaddr56   dn_child[SILOFS_DIR_NODE_NCHILDS];
 } silofs_attr_aligned64;
 
 struct silofs_ftree_node {

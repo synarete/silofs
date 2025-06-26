@@ -317,13 +317,15 @@ static void spleaf_set_lrange(struct silofs_spmap_leaf *spl,
 
 static enum silofs_ltype spleaf_refltype(const struct silofs_spmap_leaf *spl)
 {
-	return (enum silofs_ltype)(spl->sl_refltype);
+	const uint16_t refltype = silofs_le16_to_cpu(spl->sl_refltype);
+
+	return (enum silofs_ltype)refltype;
 }
 
 static void
 spleaf_set_refltype(struct silofs_spmap_leaf *spl, enum silofs_ltype refltype)
 {
-	spl->sl_refltype = (uint8_t)refltype;
+	spl->sl_refltype = silofs_cpu_to_le16((uint16_t)refltype);
 }
 
 static void

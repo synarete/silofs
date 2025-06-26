@@ -108,7 +108,7 @@
 #define SILOFS_UUID_SIZE (16)
 
 /* size of common meta-data header */
-#define SILOFS_HEADER_SIZE (16)
+#define SILOFS_HEADER_SIZE (32)
 
 /* on-disk size of persistent segment chkpt node */
 #define SILOFS_PSEG_CHKPT_SIZE (4096)
@@ -620,11 +620,12 @@ struct silofs_bootrec1k {
 
 struct silofs_header {
 	uint32_t h_magic;
+	uint32_t h_size;
 	uint16_t h_type;
 	uint16_t h_flags;
-	uint32_t h_size;
+	uint8_t  h_reserved[16];
 	uint32_t h_csum;
-} silofs_attr_aligned16;
+} silofs_attr_aligned32;
 
 struct silofs_sb_sproots {
 	struct silofs_uaddr64b sb_sproot_lsmap;
@@ -688,9 +689,9 @@ struct silofs_super_block {
 	uint32_t                    sb_flags;
 	uint8_t                     sb_reserved1[4];
 	uint8_t                     sb_endianness;
-	uint8_t                     sb_reserved2[23];
+	uint8_t                     sb_reserved2[7];
 	uint8_t                     sb_sw_version[64];
-	uint8_t                     sb_reserved3[384];
+	uint8_t                     sb_reserved3[368];
 	/* 512..1K */
 	struct silofs_tm64b         sb_btime_curr;
 	struct silofs_tm64b         sb_btime_prev;
@@ -721,7 +722,6 @@ struct silofs_spmap_ref {
 
 struct silofs_spmap_node {
 	struct silofs_header    sn_hdr;
-	uint8_t                 sn_reserved1[16];
 	struct silofs_lsid32b   sn_main_lsid;
 	struct silofs_lrange128 sn_lrange;
 	uint8_t                 sn_reserved2[48];
@@ -742,7 +742,7 @@ struct silofs_spmap_leaf {
 	struct silofs_header    sl_hdr;
 	struct silofs_lrange128 sl_lrange;
 	uint16_t                sl_refltype;
-	uint8_t                 sl_reserved1[30];
+	uint8_t                 sl_reserved1[14];
 	struct silofs_lsid32b   sl_main_lsid;
 	uint8_t                 sl_reserved2[32];
 	struct silofs_uaddr64b  sl_parent;
@@ -767,7 +767,7 @@ struct silofs_lsmap {
 	struct silofs_header    lsm_hdr;
 	struct silofs_lrange128 lsm_lrange;
 	uint16_t                lsm_refltype;
-	uint8_t                 lsm_reserved1[30];
+	uint8_t                 lsm_reserved1[14];
 	struct silofs_lbk_meta  lsm_lbms[SILOFS_SPMAP_NCHILDS];
 	uint8_t                 lsm_reserved2[448];
 	struct silofs_key       lsm_keys[SILOFS_SPMAP_NCHILDS];
@@ -831,7 +831,6 @@ struct silofs_inode {
 	uint32_t                  i_rdev_minor;
 	uint64_t                  i_revision;
 	uint64_t                  i_generation;
-	uint8_t                   i_reserved1[16];
 	struct silofs_inode_times i_tm;
 	uint8_t                   i_reserved2[64];
 	struct silofs_inode_xattr i_xa;
@@ -848,7 +847,7 @@ struct silofs_xattr_node {
 	struct silofs_header      xa_hdr;
 	uint64_t                  xa_ino;
 	uint16_t                  xa_nents;
-	uint8_t                   xa_reserved[102];
+	uint8_t                   xa_reserved[86];
 	struct silofs_xattr_entry xe[SILOFS_XATTR_NENTS];
 } silofs_attr_aligned64;
 
@@ -872,7 +871,7 @@ struct silofs_dtree_node {
 	uint16_t                dn_nde;
 	uint16_t                dn_nnb;
 	uint32_t                dn_nactive_childs;
-	uint8_t                 dn_reserved[84];
+	uint8_t                 dn_reserved[68];
 	union silofs_dtree_data dn_data;
 	struct silofs_vaddr56   dn_child[SILOFS_DIR_NODE_NCHILDS];
 } silofs_attr_aligned64;
@@ -886,8 +885,8 @@ struct silofs_ftree_node {
 	uint32_t              fn_nactive_childs;
 	uint8_t               fn_height;
 	uint8_t               fn_child_ltype;
-	uint8_t               fn_reserved1[10];
-	uint8_t               fn_zeros[960];
+	uint8_t               fn_reserved[58];
+	uint8_t               fn_zeros[896];
 	struct silofs_vaddr56 fn_child[SILOFS_FILE_NODE_NCHILDS];
 } silofs_attr_aligned64;
 
@@ -895,7 +894,7 @@ struct silofs_symlnk_value {
 	struct silofs_header sy_hdr;
 	uint64_t             sy_parent;
 	uint16_t             sy_length;
-	uint8_t              sy_reserved1[38];
+	uint8_t              sy_reserved1[22];
 	uint8_t              sy_value[SILOFS_SYMLNK_PART_MAX];
 } silofs_attr_aligned64;
 
@@ -978,7 +977,7 @@ struct silofs_repo_meta {
 struct silofs_chkpt_node {
 	struct silofs_header   cpn_hdr;
 	uint32_t               cpn_flags;
-	uint8_t                cpn_reserved1[44];
+	uint8_t                cpn_reserved1[28];
 	struct silofs_paddr64b cpn_self_paddr;
 	struct silofs_paddr64b cpn_btree_root;
 	uint8_t                cpn_reserved3[3904];
@@ -987,16 +986,15 @@ struct silofs_chkpt_node {
 /* b+tree node of persistent volume mapping */
 struct silofs_btree_node {
 	struct silofs_header   btn_hdr;
-	uint8_t                btn_ltype;
+	uint32_t               btn_flags;
+	uint16_t               btn_ltype;
+	uint16_t               btn_height;
 	uint8_t                btn_nkeys;
 	uint8_t                btn_nchilds;
-	uint8_t                btn_height;
-	uint8_t                btn_reserved1[4];
-	uint32_t               btn_flags;
-	uint8_t                btn_reserved2[36];
+	uint8_t                btn_reserved1[22];
 	struct silofs_paddr64b btn_child[SILOFS_BTREE_NODE_NCHILDS];
 	uint64_t               btn_key[SILOFS_BTREE_NODE_NKEYS];
-	uint8_t                btn_reserved3[584];
+	uint8_t                btn_reserved2[584];
 } silofs_attr_aligned64;
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

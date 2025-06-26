@@ -159,14 +159,14 @@ static void btn_add_flags(struct silofs_btree_node *btn, enum silofs_pnodef f)
 
 static size_t btn_height(const struct silofs_btree_node *btn)
 {
-	return btn->btn_height;
+	return silofs_le16_to_cpu(btn->btn_height);
 }
 
 static void btn_set_height(struct silofs_btree_node *btn, size_t height)
 {
 	silofs_assert_le(height, 8);
 	silofs_assert_gt(height, 0);
-	btn->btn_height = (uint8_t)height;
+	btn->btn_height = silofs_cpu_to_le16((uint16_t)height);
 }
 
 static bool btn_isleaf(const struct silofs_btree_node *btn)

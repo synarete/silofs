@@ -38,7 +38,7 @@ static void view_init_by(struct silofs_view *view, enum silofs_ltype ltype)
 	if (!silofs_ltype_isdata(ltype)) {
 		size = silofs_ltype_size(ltype);
 		silofs_memzero(view, size);
-		silofs_hdr_setup(&view->u.hdr, (uint8_t)ltype, size,
+		silofs_hdr_setup(&view->u.hdr, (uint16_t)ltype, size,
 		                 SILOFS_HDRF_LTYPE);
 	}
 }

@@ -620,8 +620,7 @@ struct silofs_bootrec1k {
 
 struct silofs_header {
 	uint32_t h_magic;
-	uint8_t  h_type;
-	uint8_t  h_reserved;
+	uint16_t h_type;
 	uint16_t h_flags;
 	uint32_t h_size;
 	uint32_t h_csum;

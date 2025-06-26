@@ -52,10 +52,10 @@ void silofs_uuid_as_u64s(const struct silofs_uuid *uu, uint64_t u[2]);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_hdr_setup(struct silofs_header *hdr, uint8_t type, size_t size,
+void silofs_hdr_setup(struct silofs_header *hdr, uint16_t type, size_t size,
                       enum silofs_hdrf flags);
 
-int silofs_hdr_verify(const struct silofs_header *hdr, uint8_t type,
+int silofs_hdr_verify(const struct silofs_header *hdr, uint16_t type,
                       size_t size, enum silofs_hdrf flags);
 
 void silofs_hdr_seal(struct silofs_header *hdr);

@@ -181,8 +181,9 @@ static void affirm_ondisk_addrs(void)
 
 static void affirm_ondisk_headers(void)
 {
-	REQUIRE_NBITS(struct silofs_header, h_type, 8);
+	REQUIRE_NBITS(struct silofs_header, h_type, 16);
 	REQUIRE_OFFSET32(struct silofs_header, h_magic, 0);
+	REQUIRE_OFFSET32(struct silofs_header, h_type, 4);
 	REQUIRE_OFFSET32(struct silofs_header, h_size, 8);
 	REQUIRE_OFFSET32(struct silofs_header, h_csum, 12);
 	REQUIRE_SIZEOF(struct silofs_header, SILOFS_HEADER_SIZE);

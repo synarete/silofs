@@ -19,8 +19,8 @@
 #include "obs.h"
 #include "fs.h"
 #include "env.h"
-#include "opexec.h"
 #include "walk.h"
+#include "arre.h"
 
 struct silofs_ar_desc {
 	struct silofs_caddr caddr;
@@ -971,8 +971,9 @@ static int arc_export_fs(struct silofs_ar_ctx *ar_ctx)
 		.hook = arc_visit_laddr_cb,
 		.userp = ar_ctx,
 	};
+	struct silofs_task_ctx *task = ar_ctx->task;
 
-	return silofs_exec_walkfs(ar_ctx->task, &lvis);
+	return silofs_walkfs_at(task, silofs_get_sbi(task), &lvis);
 }
 
 static int
@@ -1053,11 +1054,15 @@ static int arc_do_export(struct silofs_ar_ctx *ar_ctx)
 	return 0;
 }
 
-int silofs_exec_archive(struct silofs_task_ctx *task)
+int silofs_do_archive_fs(struct silofs_task_ctx *task)
 {
 	struct silofs_ar_ctx ar_ctx;
 	int err;
 
+	err = silofs_flush_dirty_now(task);
+	if (err) {
+		return err;
+	}
 	err = arc_init(&ar_ctx, task);
 	if (err) {
 		goto out;
@@ -1217,11 +1222,15 @@ static int arc_do_import(struct silofs_ar_ctx *ar_ctx)
 	return 0;
 }
 
-int silofs_exec_restore(struct silofs_task_ctx *task)
+int silofs_do_restore_fs(struct silofs_task_ctx *task)
 {
 	struct silofs_ar_ctx ar_ctx;
 	int err;
 
+	err = silofs_flush_dirty_now(task);
+	if (err) {
+		return err;
+	}
 	err = arc_init(&ar_ctx, task);
 	if (err) {
 		goto out;

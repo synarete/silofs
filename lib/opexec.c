@@ -22,6 +22,7 @@
 #include <time.h>
 #include "bootrec.h"
 #include "fs.h"
+#include "ar.h"
 #include "walk.h"
 #include "opexec.h"
 #include "env.h"
@@ -1625,6 +1626,46 @@ int silofs_exec_unrefs(struct silofs_task_ctx *task)
 	ok_or_goto_out(err);
 
 	err = silofs_do_unrefs(task);
+	ok_or_goto_out(err);
+out:
+	return op_finish(task, err);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_exec_archive(struct silofs_task_ctx *task)
+{
+	int err;
+
+	err = op_start(task);
+	ok_or_goto_out(err);
+
+	err = op_authorize(task);
+	ok_or_goto_out(err);
+
+	err = op_map_creds(task);
+	ok_or_goto_out(err);
+
+	err = silofs_do_archive_fs(task);
+	ok_or_goto_out(err);
+out:
+	return op_finish(task, err);
+}
+
+int silofs_exec_restore(struct silofs_task_ctx *task)
+{
+	int err;
+
+	err = op_start(task);
+	ok_or_goto_out(err);
+
+	err = op_authorize(task);
+	ok_or_goto_out(err);
+
+	err = op_map_creds(task);
+	ok_or_goto_out(err);
+
+	err = silofs_do_restore_fs(task);
 	ok_or_goto_out(err);
 out:
 	return op_finish(task, err);

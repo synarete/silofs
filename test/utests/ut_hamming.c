@@ -126,8 +126,8 @@ static void ut_hamming12_buf_error1(struct ut_env *ute)
 static const struct ut_testdef ut_local_tests[] = {
 	UT_DEFTEST(ut_hamming12_simple),
 	UT_DEFTEST(ut_hamming12_error1),
-	UT_DEFTEST(ut_hamming12_buf_simple),
-	UT_DEFTEST(ut_hamming12_buf_error1),
+	UT_DEFTEST1(ut_hamming12_buf_simple),
+	UT_DEFTEST1(ut_hamming12_buf_error1),
 };
 
 const struct ut_testdefs ut_tdefs_hamming = UT_MKTESTS(ut_local_tests);

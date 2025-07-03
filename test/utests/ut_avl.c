@@ -506,7 +506,7 @@ static void ut_avl_remove_range(struct ut_env *ute)
 
 static const struct ut_testdef ut_local_tests[] = {
 	UT_DEFTEST1(ut_avl_simple),
-	UT_DEFTEST(ut_avl_mixed),
+	UT_DEFTEST1(ut_avl_mixed),
 	UT_DEFTEST(ut_avl_random),
 	UT_DEFTEST(ut_avl_remove_range),
 };

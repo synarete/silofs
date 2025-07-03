@@ -150,9 +150,9 @@ static void ut_base64_random(struct ut_env *ute)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ut_testdef ut_local_tests[] = {
-	UT_DEFTEST(ut_base64_rfc4648),
-	UT_DEFTEST(ut_base64_ascii),
-	UT_DEFTEST(ut_base64_common),
+	UT_DEFTEST1(ut_base64_rfc4648),
+	UT_DEFTEST1(ut_base64_ascii),
+	UT_DEFTEST1(ut_base64_common),
 	UT_DEFTEST(ut_base64_random),
 };
 

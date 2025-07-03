@@ -94,9 +94,13 @@ static void ut_setup_globals(int argc, char *argv[])
 
 static void ut_setup_logging(void)
 {
-	ut_globals.log_params.level = SILOFS_LOG_INFO;
-	ut_globals.log_params.flags = SILOFS_LOGF_VERBOSE | SILOFS_LOGF_STDOUT;
+	ut_globals.log_params.level = SILOFS_LOG_WARN;
+	ut_globals.log_params.flags = SILOFS_LOGF_STDOUT;
 
+	if (ut_globals.run_level >= 2) {
+		ut_globals.log_params.level = SILOFS_LOG_INFO;
+		ut_globals.log_params.flags |= SILOFS_LOGF_VERBOSE;
+	}
 	if (ut_globals.timestamp) {
 		ut_globals.log_params.flags |= SILOFS_LOGF_TIMESTAMP;
 	}

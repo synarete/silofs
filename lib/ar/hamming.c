@@ -158,6 +158,7 @@ static int ham12_decode(uint16_t cw, uint8_t *out_dat)
 {
 	uint16_t syn;
 
+	*out_dat = ham12_extract_data(cw);
 	syn = ham12_calc_syndrome(cw);
 	if (syn > 12) {
 		/* un-correctable data */
@@ -166,8 +167,8 @@ static int ham12_decode(uint16_t cw, uint8_t *out_dat)
 	if (syn != 0) {
 		/* one (or more) bit flips */
 		ham12_flipbit(&cw, syn);
+		*out_dat = ham12_extract_data(cw);
 	}
-	*out_dat = ham12_extract_data(cw);
 	return 0;
 }
 
@@ -181,3 +182,94 @@ int silofs_hamming12_decode(uint16_t codeword, uint8_t *out_octet)
 {
 	return ham12_decode(codeword & 0xFFF, out_octet);
 }
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static void ham12_encode8(const uint8_t dat[8], uint8_t out[12])
+{
+	unsigned i, j = 0;
+	uint16_t cw;
+
+	memset(out, 0, 12);
+	for (i = 0; i < 8; ++i) {
+		cw = ham12_encode(dat[i]);
+		if (i & 1) {
+			out[j] = (uint8_t)(cw & 0xFF);
+			out[j - 1] |= (uint8_t)((cw >> 8) & 0xF);
+			j += 1;
+		} else {
+			out[j] = (uint8_t)(cw >> 4);
+			out[j + 1] |= (uint8_t)((cw & 0xF) << 4);
+			j += 2;
+		}
+	}
+}
+
+static int ham12_decode8(const uint8_t in[12], uint8_t out[8])
+{
+	unsigned i, j = 0;
+	uint16_t cw;
+	int nerr = 0;
+
+	memset(out, 0, 8);
+	for (i = 0; i < 8; ++i) {
+		if (i & 1) {
+			cw = ((uint16_t)in[j - 1] & 0xF) << 8;
+			cw |= in[j];
+			j += 1;
+		} else {
+			cw = in[j];
+			cw <<= 4;
+			cw |= (uint16_t)in[j + 1] >> 4;
+			j += 2;
+		}
+		if (ham12_decode(cw, &out[i])) {
+			nerr++;
+		}
+	}
+	return nerr;
+}
+
+int silofs_hamming12_encode_buf(const void *inb, size_t inlen, void *outb,
+				size_t outlen)
+{
+	const uint8_t *in = inb;
+	uint8_t *out = outb;
+
+	if ((inlen % 8) || (outlen % 12)) {
+		return -1;
+	}
+	if ((12 * inlen) != (8 * outlen)) {
+		return -1;
+	}
+	for (size_t i = 0, j = 0; i < inlen; i += 8, j += 12) {
+		ham12_encode8(in + i, out + j);
+	}
+	return 0;
+}
+
+int silofs_hamming12_decode_buf(const void *inb, size_t inlen, void *outb,
+				size_t outlen)
+{
+	const uint8_t *in = inb;
+	uint8_t *out = outb;
+	int nerr = 0;
+
+	if ((inlen % 12) || (outlen % 8)) {
+		return -1;
+	}
+	if ((8 * inlen) != (12 * outlen)) {
+		return -1;
+	}
+	for (size_t i = 0, j = 0; i < inlen; i += 12, j += 8) {
+		nerr += ham12_decode8(in + i, out + j);
+	}
+	return !nerr ? 0 : -1;
+}
+
+/*
+ * TODO-0060: Add Golay(24,12)
+ *
+ * Need a better error-correction code. See reference implementation in
+ * Wireshark's code base.
+ */

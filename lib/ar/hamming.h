@@ -23,4 +23,10 @@ int silofs_hamming12_encode(uint8_t octect, uint16_t *out_codeword12);
 
 int silofs_hamming12_decode(uint16_t codeword12, uint8_t *out_octet);
 
+int silofs_hamming12_encode_buf(const void *inb, size_t inlen, void *outb,
+                                size_t outlen);
+
+int silofs_hamming12_decode_buf(const void *inb, size_t inlen, void *outb,
+                                size_t outlen);
+
 #endif /* SILOFS_HAMMING_H_ */

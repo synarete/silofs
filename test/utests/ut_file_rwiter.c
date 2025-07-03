@@ -20,8 +20,8 @@
 
 static void ut_file_write_iter_(struct ut_env *ute, loff_t off, size_t len)
 {
-	void *buf = ut_randbuf(ute, len);
 	const char *name = UT_NAME;
+	void *buf = ut_randbuf(ute, len);
 	ino_t dino = 0;
 	ino_t ino = 0;
 

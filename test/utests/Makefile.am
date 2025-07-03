@@ -42,6 +42,7 @@ silofs_utests_SOURCES += ut_file_rwiter.c
 silofs_utests_SOURCES += ut_file_stat.c
 silofs_utests_SOURCES += ut_file_trunc.c
 silofs_utests_SOURCES += ut_fillfs.c
+silofs_utests_SOURCES += ut_hamming.c
 silofs_utests_SOURCES += ut_inspect.c
 silofs_utests_SOURCES += ut_ioctl.c
 silofs_utests_SOURCES += ut_namei.c

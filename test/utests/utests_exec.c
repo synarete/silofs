@@ -26,12 +26,13 @@
 	}
 
 static struct ut_tgroup const g_ut_tgroups[] = {
-	/* infra */
+	/* infra + basics */
 	UT_DEFTGRP(ut_tdefs_strings),
 	UT_DEFTGRP(ut_tdefs_avl),
 	UT_DEFTGRP(ut_tdefs_base64),
 	UT_DEFTGRP(ut_tdefs_qalloc),
 	UT_DEFTGRP(ut_tdefs_parseconf),
+	UT_DEFTGRP(ut_tdefs_hamming),
 	/* namespace */
 	UT_DEFTGRP(ut_tdefs_super),
 	UT_DEFTGRP(ut_tdefs_statfs),

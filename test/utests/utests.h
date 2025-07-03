@@ -32,6 +32,7 @@
 
 #include <silofs/silofs.h>
 #include "fs.h"
+#include "ar.h"
 #include "bootrec.h"
 #include "opexec.h"
 #include "walk.h"
@@ -199,6 +200,7 @@ extern const struct ut_testdefs ut_tdefs_base64;
 extern const struct ut_testdefs ut_tdefs_strings;
 extern const struct ut_testdefs ut_tdefs_qalloc;
 extern const struct ut_testdefs ut_tdefs_parseconf;
+extern const struct ut_testdefs ut_tdefs_hamming;
 extern const struct ut_testdefs ut_tdefs_super;
 extern const struct ut_testdefs ut_tdefs_statfs;
 extern const struct ut_testdefs ut_tdefs_dir;

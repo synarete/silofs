@@ -14,13 +14,13 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_AR_H_
-#define SILOFS_AR_H_
+#ifndef SILOFS_HAMMING_H_
+#define SILOFS_HAMMING_H_
 
-#include "infra.h"
-#include "addr.h"
+#include <stdint.h>
 
-#include "ar/arre.h"
-#include "ar/hamming.h"
+int silofs_hamming12_encode(uint8_t octect, uint16_t *out_codeword12);
 
-#endif /* SILOFS_AR_H_ */
+int silofs_hamming12_decode(uint16_t codeword12, uint8_t *out_octet);
+
+#endif /* SILOFS_HAMMING_H_ */

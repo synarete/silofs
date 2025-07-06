@@ -140,44 +140,44 @@ static enum silofs_height sb_height(const struct silofs_super_block *sb)
 	return lrange.height;
 }
 
-static void sb_lv_base(const struct silofs_super_block *sb,
-                       struct silofs_volumeid *out_vid)
+static void
+sb_lv_base(const struct silofs_super_block *sb, struct silofs_blobid *out_vid)
 {
-	silofs_volumeid_assign(out_vid, &sb->sb_lv_base);
-}
-
-static void sb_set_lv_base(struct silofs_super_block *sb,
-                           const struct silofs_volumeid *vid)
-{
-	silofs_volumeid_assign(&sb->sb_lv_base, vid);
-}
-
-static void sb_lv_prev(const struct silofs_super_block *sb,
-                       struct silofs_volumeid *out_vid)
-{
-	silofs_volumeid_assign(out_vid, &sb->sb_lv_prev);
-}
-
-static void sb_set_lv_prev(struct silofs_super_block *sb,
-                           const struct silofs_volumeid *vid)
-{
-	silofs_volumeid_assign(&sb->sb_lv_prev, vid);
-}
-
-static void sb_lv_curr(const struct silofs_super_block *sb,
-                       struct silofs_volumeid *out_vid)
-{
-	silofs_volumeid_assign(out_vid, &sb->sb_lv_curr);
-}
-
-static void sb_set_lv_curr(struct silofs_super_block *sb,
-                           const struct silofs_volumeid *vid)
-{
-	silofs_volumeid_assign(&sb->sb_lv_curr, vid);
+	silofs_blobid_assign(out_vid, &sb->sb_lv_base);
 }
 
 static void
-sb_set_lv_ids(struct silofs_super_block *sb, const struct silofs_volumeid *vid)
+sb_set_lv_base(struct silofs_super_block *sb, const struct silofs_blobid *vid)
+{
+	silofs_blobid_assign(&sb->sb_lv_base, vid);
+}
+
+static void
+sb_lv_prev(const struct silofs_super_block *sb, struct silofs_blobid *out_vid)
+{
+	silofs_blobid_assign(out_vid, &sb->sb_lv_prev);
+}
+
+static void
+sb_set_lv_prev(struct silofs_super_block *sb, const struct silofs_blobid *vid)
+{
+	silofs_blobid_assign(&sb->sb_lv_prev, vid);
+}
+
+static void
+sb_lv_curr(const struct silofs_super_block *sb, struct silofs_blobid *out_vid)
+{
+	silofs_blobid_assign(out_vid, &sb->sb_lv_curr);
+}
+
+static void
+sb_set_lv_curr(struct silofs_super_block *sb, const struct silofs_blobid *vid)
+{
+	silofs_blobid_assign(&sb->sb_lv_curr, vid);
+}
+
+static void
+sb_set_lv_ids(struct silofs_super_block *sb, const struct silofs_blobid *vid)
 {
 	sb_set_lv_base(sb, vid);
 	sb_set_lv_prev(sb, vid);
@@ -387,7 +387,7 @@ static void sb_clone_sproots(struct silofs_super_block *sb,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void
-sb_init(struct silofs_super_block *sb, const struct silofs_volumeid *vid)
+sb_init(struct silofs_super_block *sb, const struct silofs_blobid *vid)
 {
 	sb_set_magic(sb, SILOFS_SUPER_MAGIC);
 	sb_set_version(sb, SILOFS_FMT_VERSION);
@@ -450,7 +450,7 @@ static void sb_clone_tms(struct silofs_super_block *sb,
 static void sb_clone_raw(struct silofs_super_block *sb,
                          const struct silofs_super_block *sb_other)
 {
-	struct silofs_volumeid vid;
+	struct silofs_blobid vid;
 
 	sb_lv_curr(sb, &vid);
 	memcpy(sb, sb_other, sizeof(*sb));
@@ -576,7 +576,7 @@ int silofs_sbi_shut(struct silofs_sb_info *sbi)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void uaddr_setup_super(struct silofs_uaddr *out_uaddr,
-                              const struct silofs_volumeid *vid)
+                              const struct silofs_blobid *vid)
 {
 	struct silofs_lsid lsid;
 
@@ -588,7 +588,7 @@ static void uaddr_setup_super(struct silofs_uaddr *out_uaddr,
 void silofs_sbi_resolve_refs(const struct silofs_sb_info *sbi,
                              struct silofs_sb_refs *out_refs)
 {
-	struct silofs_volumeid vid;
+	struct silofs_blobid vid;
 
 	sb_lv_base(sbi->sb, &vid);
 	uaddr_setup_super(&out_refs->base, &vid);
@@ -599,7 +599,7 @@ void silofs_sbi_resolve_refs(const struct silofs_sb_info *sbi,
 }
 
 void silofs_sbi_self_lvid(const struct silofs_sb_info *sbi,
-                          struct silofs_volumeid *out_vid)
+                          struct silofs_blobid *out_vid)
 {
 	sb_lv_curr(sbi->sb, out_vid);
 }
@@ -711,10 +711,10 @@ void silofs_sbi_bind_child(struct silofs_sb_info *sbi, enum silofs_ltype ltype,
 bool silofs_sbi_ismutable_lsid(const struct silofs_sb_info *sbi,
                                const struct silofs_lsid *lsid)
 {
-	struct silofs_volumeid volumeid;
+	struct silofs_blobid blobid;
 
-	silofs_sbi_self_lvid(sbi, &volumeid);
-	return silofs_lsid_has_volumeid(lsid, &volumeid);
+	silofs_sbi_self_lvid(sbi, &blobid);
+	return silofs_lsid_has_blobid(lsid, &blobid);
 }
 
 bool silofs_sbi_ismutable_laddr(const struct silofs_sb_info *sbi,
@@ -898,7 +898,7 @@ const struct silofs_laddr *silofs_sbi_laddr(const struct silofs_sb_info *sbi)
 	return silofs_uni_laddr(&sbi->sb_uni);
 }
 
-static const struct silofs_volumeid *sbi_lvid(const struct silofs_sb_info *sbi)
+static const struct silofs_blobid *sbi_lvid(const struct silofs_sb_info *sbi)
 {
 	return silofs_uni_lvid(&sbi->sb_uni);
 }

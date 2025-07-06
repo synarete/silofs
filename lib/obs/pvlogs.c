@@ -21,7 +21,7 @@
 
 void silofs_pvsegr_init(struct silofs_pvsegr *pvsegr)
 {
-	silofs_volumeid_generate(&pvsegr->volumeid);
+	silofs_blobid_generate(&pvsegr->blobid);
 	pvsegr->base_index = 1;
 	pvsegr->curr_index = 1;
 	pvsegr->curr_pos = 0;
@@ -37,7 +37,7 @@ void silofs_pvsegr_fini(struct silofs_pvsegr *pvsegr)
 void silofs_pvsegr_assign(struct silofs_pvsegr *pvsegr,
                           const struct silofs_pvsegr *other)
 {
-	silofs_volumeid_assign(&pvsegr->volumeid, &other->volumeid);
+	silofs_blobid_assign(&pvsegr->blobid, &other->blobid);
 	pvsegr->base_index = other->base_index;
 	pvsegr->curr_index = other->curr_index;
 	pvsegr->curr_pos = other->curr_pos;
@@ -46,7 +46,7 @@ void silofs_pvsegr_assign(struct silofs_pvsegr *pvsegr,
 static void pvsegr_curr_pvsid(const struct silofs_pvsegr *pvsegr,
                               struct silofs_pvsid *out_pvsid)
 {
-	silofs_pvsid_init(out_pvsid, &pvsegr->volumeid, pvsegr->curr_index);
+	silofs_pvsid_init(out_pvsid, &pvsegr->blobid, pvsegr->curr_index);
 }
 
 static void
@@ -91,10 +91,10 @@ static void pvsegr_carve(struct silofs_pvsegr *pvsegr, enum silofs_ptype ptype,
 	pvsegr_advance_by(pvsegr, out_paddr);
 }
 
-static bool pvsegr_has_volumeid(const struct silofs_pvsegr *pvsegr,
-                                const struct silofs_volumeid *volumeid)
+static bool pvsegr_has_blobid(const struct silofs_pvsegr *pvsegr,
+                              const struct silofs_blobid *blobid)
 {
-	return silofs_volumeid_isequal(&pvsegr->volumeid, volumeid);
+	return silofs_blobid_isequal(&pvsegr->blobid, blobid);
 }
 
 static bool pvsegr_has_index(const struct silofs_pvsegr *pvsegr, uint32_t idx)
@@ -108,7 +108,7 @@ bool silofs_pvsegr_has_paddr(const struct silofs_pvsegr *pvsegr,
 	if (silofs_paddr_isnull(paddr)) {
 		return false;
 	}
-	if (!pvsegr_has_volumeid(pvsegr, &paddr->pvsid.volumeid)) {
+	if (!pvsegr_has_blobid(pvsegr, &paddr->pvsid.blobid)) {
 		return false;
 	}
 	if (!pvsegr_has_index(pvsegr, paddr->pvsid.index)) {
@@ -155,7 +155,7 @@ void silofs_pvsegr64b_htox(struct silofs_pvsegr64b *pvsegr64,
                            const struct silofs_pvsegr *pvsegr)
 {
 	memset(pvsegr64, 0, sizeof(*pvsegr64));
-	silofs_volumeid_assign(&pvsegr64->volumeid, &pvsegr->volumeid);
+	silofs_blobid_assign(&pvsegr64->blobid, &pvsegr->blobid);
 	pvsegr64->base_index = silofs_cpu_to_le32(pvsegr->base_index);
 	pvsegr64->curr_index = silofs_cpu_to_le32(pvsegr->curr_index);
 	pvsegr64->curr_pos = silofs_cpu_to_off(pvsegr->curr_pos);
@@ -164,7 +164,7 @@ void silofs_pvsegr64b_htox(struct silofs_pvsegr64b *pvsegr64,
 void silofs_pvsegr64b_xtoh(const struct silofs_pvsegr64b *pvsegr64,
                            struct silofs_pvsegr *pvsegr)
 {
-	silofs_volumeid_assign(&pvsegr->volumeid, &pvsegr64->volumeid);
+	silofs_blobid_assign(&pvsegr->blobid, &pvsegr64->blobid);
 	pvsegr->base_index = silofs_le32_to_cpu(pvsegr64->base_index);
 	pvsegr->curr_index = silofs_le32_to_cpu(pvsegr64->curr_index);
 	pvsegr->curr_pos = silofs_off_to_cpu(pvsegr64->curr_pos);

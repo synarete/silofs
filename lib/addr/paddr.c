@@ -19,7 +19,7 @@
 #include "str.h"
 #include "htox.h"
 #include "offlba.h"
-#include "volumeid.h"
+#include "blobid.h"
 #include "paddr.h"
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -71,15 +71,15 @@ const struct silofs_pvsid *silofs_pvsid_none(void)
 }
 
 void silofs_pvsid_init(struct silofs_pvsid *pvsid,
-                       const struct silofs_volumeid *volumeid, uint32_t idx)
+                       const struct silofs_blobid *blobid, uint32_t idx)
 {
-	silofs_volumeid_assign(&pvsid->volumeid, volumeid);
+	silofs_blobid_assign(&pvsid->blobid, blobid);
 	pvsid->index = idx;
 }
 
 void silofs_pvsid_fini(struct silofs_pvsid *pvsid)
 {
-	silofs_volumeid_reset(&pvsid->volumeid);
+	silofs_blobid_reset(&pvsid->blobid);
 	pvsid->index = 0;
 }
 
@@ -88,28 +88,28 @@ bool silofs_pvsid_isnull(const struct silofs_pvsid *pvsid)
 	return (pvsid->index == 0);
 }
 
-bool silofs_pvsid_has_volumeid(const struct silofs_pvsid *pvsid,
-                               const struct silofs_volumeid *volumeid)
+bool silofs_pvsid_has_blobid(const struct silofs_pvsid *pvsid,
+                             const struct silofs_blobid *blobid)
 {
-	return silofs_volumeid_isequal(&pvsid->volumeid, volumeid);
+	return silofs_blobid_isequal(&pvsid->blobid, blobid);
 }
 
 void silofs_pvsid_generate(struct silofs_pvsid *pvsid)
 {
-	silofs_volumeid_generate(&pvsid->volumeid);
+	silofs_blobid_generate(&pvsid->blobid);
 	pvsid->index = 1;
 }
 
 void silofs_pvsid_reset(struct silofs_pvsid *pvsid)
 {
-	silofs_volumeid_reset(&pvsid->volumeid);
+	silofs_blobid_reset(&pvsid->blobid);
 	pvsid->index = 0;
 }
 
 void silofs_pvsid_assign(struct silofs_pvsid *pvsid,
                          const struct silofs_pvsid *other)
 {
-	silofs_volumeid_assign(&pvsid->volumeid, &other->volumeid);
+	silofs_blobid_assign(&pvsid->blobid, &other->blobid);
 	pvsid->index = other->index;
 }
 
@@ -118,7 +118,7 @@ static long pvsid_compare(const struct silofs_pvsid *pvsid1,
 {
 	long cmp;
 
-	cmp = silofs_volumeid_compare(&pvsid1->volumeid, &pvsid2->volumeid);
+	cmp = silofs_blobid_compare(&pvsid1->blobid, &pvsid2->blobid);
 	if (cmp) {
 		return cmp;
 	}
@@ -148,7 +148,7 @@ void silofs_pvsid_to_str(const struct silofs_pvsid *pvsid,
 {
 	struct silofs_strbuf sbuf;
 
-	silofs_volumeid_to_str(&pvsid->volumeid, &sbuf);
+	silofs_blobid_to_str(&pvsid->blobid, &sbuf);
 	silofs_strbuf_sprintf(out_sbuf, "%s:%u", sbuf.str, pvsid->index);
 }
 
@@ -156,14 +156,14 @@ void silofs_pvsid32b_htox(struct silofs_pvsid32b *pvsid32,
                           const struct silofs_pvsid *pvsid)
 {
 	memset(pvsid32, 0, sizeof(*pvsid32));
-	silofs_volumeid_assign(&pvsid32->volumeid, &pvsid->volumeid);
+	silofs_blobid_assign(&pvsid32->blobid, &pvsid->blobid);
 	pvsid32->index = silofs_cpu_to_le32(pvsid->index);
 }
 
 void silofs_pvsid32b_xtoh(const struct silofs_pvsid32b *pvsid32,
                           struct silofs_pvsid *pvsid)
 {
-	silofs_volumeid_assign(&pvsid->volumeid, &pvsid32->volumeid);
+	silofs_blobid_assign(&pvsid->blobid, &pvsid32->blobid);
 	pvsid->index = silofs_le32_to_cpu(pvsid32->index);
 }
 

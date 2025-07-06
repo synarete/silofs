@@ -23,7 +23,7 @@
 #include "offlba.h"
 #include "htox.h"
 #include "ltype.h"
-#include "volumeid.h"
+#include "blobid.h"
 #include "laddr.h"
 
 static size_t height_to_lseg_size(enum silofs_height height)
@@ -97,10 +97,10 @@ bool silofs_lsid_isnull(const struct silofs_lsid *lsid)
 	       (lsid->vindex == UINT32_MAX);
 }
 
-bool silofs_lsid_has_volumeid(const struct silofs_lsid *lsid,
-                              const struct silofs_volumeid *volumeid)
+bool silofs_lsid_has_blobid(const struct silofs_lsid *lsid,
+                            const struct silofs_blobid *blobid)
 {
-	return silofs_volumeid_isequal(&lsid->volumeid, volumeid);
+	return silofs_blobid_isequal(&lsid->blobid, blobid);
 }
 
 loff_t silofs_lsid_pos(const struct silofs_lsid *lsid, loff_t off)
@@ -123,7 +123,7 @@ void silofs_lsid_reset(struct silofs_lsid *lsid)
 void silofs_lsid_assign(struct silofs_lsid *lsid,
                         const struct silofs_lsid *other)
 {
-	silofs_volumeid_assign(&lsid->volumeid, &other->volumeid);
+	silofs_blobid_assign(&lsid->blobid, &other->blobid);
 	lsid->vindex = other->vindex;
 	lsid->lsize = other->lsize;
 	lsid->vspace = other->vspace;
@@ -136,7 +136,7 @@ static long silofs_lsid_compare(const struct silofs_lsid *lsid1,
 {
 	long cmp;
 
-	cmp = silofs_volumeid_compare(&lsid1->volumeid, &lsid2->volumeid);
+	cmp = silofs_blobid_compare(&lsid1->blobid, &lsid2->blobid);
 	if (cmp) {
 		return cmp;
 	}
@@ -180,13 +180,13 @@ uint64_t silofs_lsid_hash64(const struct silofs_lsid *lsid)
 }
 
 void silofs_lsid_setup(struct silofs_lsid *lsid,
-                       const struct silofs_volumeid *volumeid, loff_t voff,
+                       const struct silofs_blobid *blobid, loff_t voff,
                        enum silofs_ltype vspace, enum silofs_height height,
                        enum silofs_ltype ltype)
 {
 	const size_t lseg_size = height_to_lseg_size(height);
 
-	silofs_volumeid_assign(&lsid->volumeid, volumeid);
+	silofs_blobid_assign(&lsid->blobid, blobid);
 	lsid->lsize = lseg_size;
 	lsid->vindex = lseg_vindex_of(voff, (ssize_t)lseg_size);
 	lsid->height = height;
@@ -208,7 +208,7 @@ void silofs_lsid32b_htox(struct silofs_lsid32b *lsid32,
                          const struct silofs_lsid *lsid)
 {
 	memset(lsid32, 0, sizeof(*lsid32));
-	silofs_volumeid_assign(&lsid32->volumeid, &lsid->volumeid);
+	silofs_blobid_assign(&lsid32->blobid, &lsid->blobid);
 	lsid32->vindex = silofs_cpu_to_le32(lsid->vindex);
 	lsid32->lsize = silofs_cpu_to_le32((uint32_t)lsid->lsize);
 	lsid32->vspace = (uint8_t)lsid->vspace;
@@ -219,7 +219,7 @@ void silofs_lsid32b_htox(struct silofs_lsid32b *lsid32,
 void silofs_lsid32b_xtoh(const struct silofs_lsid32b *lsid32,
                          struct silofs_lsid *lsid)
 {
-	silofs_volumeid_assign(&lsid->volumeid, &lsid32->volumeid);
+	silofs_blobid_assign(&lsid->blobid, &lsid32->blobid);
 	lsid->vindex = silofs_le32_to_cpu(lsid32->vindex);
 	lsid->lsize = silofs_le32_to_cpu(lsid32->lsize);
 	lsid->vspace = (enum silofs_ltype)lsid32->vspace;
@@ -370,7 +370,7 @@ void silofs_laddr48b_xtoh(const struct silofs_laddr48b *laddr48,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 struct silofs_laddr_repr {
-	struct silofs_volumeid volumeid;
+	struct silofs_blobid blobid;
 	uint32_t lsize;
 	int32_t pos;
 	uint32_t vindex;
@@ -384,7 +384,7 @@ static void
 laddr_to_repr(const struct silofs_laddr *laddr, struct silofs_laddr_repr *repr)
 {
 	silofs_memzero(repr, sizeof(*repr));
-	silofs_volumeid_assign(&repr->volumeid, &laddr->lsid.volumeid);
+	silofs_blobid_assign(&repr->blobid, &laddr->lsid.blobid);
 	repr->lsize = (uint32_t)laddr->lsid.lsize;
 	repr->pos = (int32_t)laddr->pos;
 	repr->vindex = laddr->lsid.vindex;
@@ -401,7 +401,7 @@ static int laddr_from_repr(struct silofs_laddr *laddr,
 		return -SILOFS_EINVAL;
 	}
 	silofs_laddr_reset(laddr);
-	silofs_volumeid_assign(&laddr->lsid.volumeid, &repr->volumeid);
+	silofs_blobid_assign(&laddr->lsid.blobid, &repr->blobid);
 	laddr->lsid.lsize = repr->lsize;
 	laddr->pos = repr->pos;
 	laddr->lsid.vindex = repr->vindex;
@@ -414,19 +414,19 @@ static int laddr_from_repr(struct silofs_laddr *laddr,
 	return 0;
 }
 
-static void laddr_repr_volumeid_to_str(const struct silofs_laddr_repr *repr,
-                                       struct silofs_strbuf *sbuf)
+static void laddr_repr_blobid_to_str(const struct silofs_laddr_repr *repr,
+                                     struct silofs_strbuf *sbuf)
 {
-	silofs_volumeid_to_str(&repr->volumeid, sbuf);
+	silofs_blobid_to_str(&repr->blobid, sbuf);
 }
 
-static int laddr_repr_volumeid_from_str(struct silofs_laddr_repr *repr,
-                                        const struct silofs_strbuf *sbuf)
+static int laddr_repr_blobid_from_str(struct silofs_laddr_repr *repr,
+                                      const struct silofs_strbuf *sbuf)
 {
 	struct silofs_strview sv;
 
 	silofs_strview_init(&sv, sbuf->str);
-	return silofs_volumeid_from_str(&repr->volumeid, &sv);
+	return silofs_blobid_from_str(&repr->blobid, &sv);
 }
 
 static void laddr_repr_meta_to_str(const struct silofs_laddr_repr *repr,
@@ -451,17 +451,17 @@ static void laddr_repr_meta_from_str(struct silofs_laddr_repr *repr,
 static void laddr_repr_to_str(const struct silofs_laddr_repr *repr,
                               struct silofs_strbuf *sbuf)
 {
-	struct silofs_strbuf volumeid;
+	struct silofs_strbuf blobid;
 	struct silofs_strbuf meta;
 	const size_t lim = sizeof(sbuf->str) - 1;
 	int n;
 
-	silofs_strbuf_reset(&volumeid);
+	silofs_strbuf_reset(&blobid);
 	silofs_strbuf_reset(&meta);
 
-	laddr_repr_volumeid_to_str(repr, &volumeid);
+	laddr_repr_blobid_to_str(repr, &blobid);
 	laddr_repr_meta_to_str(repr, &meta);
-	n = snprintf(sbuf->str, lim, "%s:%s-%08x-%08x-%08x", volumeid.str,
+	n = snprintf(sbuf->str, lim, "%s:%s-%08x-%08x-%08x", blobid.str,
 	             meta.str, repr->lsize, repr->vindex, repr->pos);
 	if (n >= (int)lim) {
 		n = (int)lim;
@@ -472,21 +472,21 @@ static void laddr_repr_to_str(const struct silofs_laddr_repr *repr,
 static int laddr_repr_from_str(struct silofs_laddr_repr *repr,
                                const struct silofs_strbuf *sbuf)
 {
-	struct silofs_strbuf volumeid;
+	struct silofs_strbuf blobid;
 	struct silofs_strbuf meta;
 	uint32_t pos;
 	int nscan;
 	int err;
 
-	silofs_strbuf_reset(&volumeid);
+	silofs_strbuf_reset(&blobid);
 	silofs_strbuf_reset(&meta);
-	nscan = sscanf(sbuf->str, "%36s:%6s-%08x-%08x-%08x", volumeid.str,
+	nscan = sscanf(sbuf->str, "%36s:%6s-%08x-%08x-%08x", blobid.str,
 	               meta.str, &repr->lsize, &repr->vindex, &pos);
 	if (nscan != 6) {
 		return -SILOFS_EINVAL;
 	}
 	repr->pos = (int32_t)pos;
-	err = laddr_repr_volumeid_from_str(repr, &volumeid);
+	err = laddr_repr_blobid_from_str(repr, &blobid);
 	if (err) {
 		return err;
 	}

@@ -903,7 +903,7 @@ static int inspc_walk_boot(struct silofs_inspect_ctx *insp_ctx)
 	const struct silofs_laddr *laddr = &bootrec_uaddr.laddr;
 	size_t len;
 
-	silofs_make_bootrec_uaddr(&sb_laddr->lsid.volumeid, &bootrec_uaddr);
+	silofs_make_bootrec_uaddr(&sb_laddr->lsid.blobid, &bootrec_uaddr);
 	len = silofs_laddr_len(laddr);
 	return insp_ctx->cb(insp_ctx->user_ctx, laddr, len);
 }

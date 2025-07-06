@@ -22,7 +22,7 @@
 #include "addr/offlba.h"
 #include "addr/htox.h"
 #include "addr/meta.h"
-#include "addr/volumeid.h"
+#include "addr/blobid.h"
 #include "addr/paddr.h"
 #include "addr/ltype.h"
 #include "addr/laddr.h"

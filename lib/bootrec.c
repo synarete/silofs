@@ -384,29 +384,29 @@ void silofs_bootrec_set_sb_uaddr(struct silofs_bootrec *bootrec,
 	silofs_uaddr_assign(&bootrec->sb_uaddr, uaddr);
 }
 
-void silofs_bootrec_volumeid(const struct silofs_bootrec *bootrec,
-                             struct silofs_volumeid *out_vid)
+void silofs_bootrec_blobid(const struct silofs_bootrec *bootrec,
+                           struct silofs_blobid *out_vid)
 {
 	const struct silofs_uaddr *sb_uaddr = &bootrec->sb_uaddr;
 
-	silofs_volumeid_assign(out_vid, &sb_uaddr->laddr.lsid.volumeid);
+	silofs_blobid_assign(out_vid, &sb_uaddr->laddr.lsid.blobid);
 }
 
-static void bootrec_uaddr_by_volumeid(const struct silofs_volumeid *volumeid,
-                                      struct silofs_uaddr *out_uaddr)
+static void bootrec_uaddr_by_blobid(const struct silofs_blobid *blobid,
+                                    struct silofs_uaddr *out_uaddr)
 {
 	struct silofs_lsid lsid;
 	const enum silofs_ltype ltype = SILOFS_LTYPE_BOOTREC;
 	const enum silofs_height height = SILOFS_HEIGHT_BOOT;
 
-	silofs_lsid_setup(&lsid, volumeid, 0, ltype, height, ltype);
+	silofs_lsid_setup(&lsid, blobid, 0, ltype, height, ltype);
 	silofs_uaddr_setup(out_uaddr, &lsid, 0, 0);
 }
 
-void silofs_make_bootrec_uaddr(const struct silofs_volumeid *volumeid,
+void silofs_make_bootrec_uaddr(const struct silofs_blobid *blobid,
                                struct silofs_uaddr *out_uaddr)
 {
-	bootrec_uaddr_by_volumeid(volumeid, out_uaddr);
+	bootrec_uaddr_by_blobid(blobid, out_uaddr);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

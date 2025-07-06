@@ -23,7 +23,6 @@
 
 #define SILOFS_HMAPQ_ITERALL (0xffffffffU)
 
-struct silofs_blobid;
 struct silofs_paddr;
 struct silofs_uaddr;
 struct silofs_vaddr;
@@ -31,7 +30,6 @@ struct silofs_vaddr;
 /* elements' mapping hash-key types */
 enum silofs_hkey_type {
 	SILOFS_HKEY_NONE,
-	SILOFS_HKEY_BLOBID,
 	SILOFS_HKEY_PADDR,
 	SILOFS_HKEY_UADDR,
 	SILOFS_HKEY_VADDR,
@@ -39,11 +37,10 @@ enum silofs_hkey_type {
 
 /* addresses as mapping-key */
 union silofs_hkey_u {
-	const struct silofs_blobid *blobid;
-	const struct silofs_paddr  *paddr;
-	const struct silofs_uaddr  *uaddr;
-	const struct silofs_vaddr  *vaddr;
-	const void                 *key;
+	const struct silofs_paddr *paddr;
+	const struct silofs_uaddr *uaddr;
+	const struct silofs_vaddr *vaddr;
+	const void                *key;
 };
 
 struct silofs_hkey {
@@ -78,9 +75,6 @@ struct silofs_hmapq {
 typedef int (*silofs_hmapq_elem_fn)(struct silofs_hmapq_elem *, void *);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-void silofs_hkey_by_blobid(struct silofs_hkey         *hkey,
-                           const struct silofs_blobid *blobid);
 
 void silofs_hkey_by_paddr(struct silofs_hkey        *hkey,
                           const struct silofs_paddr *paddr);

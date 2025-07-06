@@ -87,11 +87,6 @@ static size_t htbl_calc_nslots(const struct silofs_alloc *alloc, uint8_t fac)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static uint64_t hash_of_blobid(const struct silofs_blobid *blobid)
-{
-	return silofs_blobid_hash64(blobid);
-}
-
 static uint64_t hash_of_pvsid(const struct silofs_pvsid *pvsid)
 {
 	return silofs_pvsid_hash64(pvsid);
@@ -145,12 +140,6 @@ static void hkey_reset(struct silofs_hkey *hkey)
 	hkey->type = SILOFS_HKEY_NONE;
 }
 
-static long hkey_compare_as_blobid(const struct silofs_hkey *hkey1,
-                                   const struct silofs_hkey *hkey2)
-{
-	return silofs_blobid_compare(hkey1->keyu.blobid, hkey2->keyu.blobid);
-}
-
 static long hkey_compare_as_paddr(const struct silofs_hkey *hkey1,
                                   const struct silofs_hkey *hkey2)
 {
@@ -175,9 +164,6 @@ static long hkey_compare_as(const struct silofs_hkey *hkey1,
 	long cmp;
 
 	switch (hkey1->type) {
-	case SILOFS_HKEY_BLOBID:
-		cmp = hkey_compare_as_blobid(hkey1, hkey2);
-		break;
 	case SILOFS_HKEY_PADDR:
 		cmp = hkey_compare_as_paddr(hkey1, hkey2);
 		break;
@@ -219,9 +205,6 @@ static uint64_t hkey_hash_of(enum silofs_hkey_type type, const void *key)
 	uint64_t hash = 0;
 
 	switch (type) {
-	case SILOFS_HKEY_BLOBID:
-		hash = hash_of_blobid(key);
-		break;
 	case SILOFS_HKEY_PADDR:
 		hash = hash_of_paddr(key);
 		break;
@@ -243,12 +226,6 @@ static void hkey_setup_by(struct silofs_hkey *hkey, enum silofs_hkey_type type,
                           const void *key)
 {
 	hkey_setup(hkey, type, key, hkey_hash_of(type, key));
-}
-
-void silofs_hkey_by_blobid(struct silofs_hkey *hkey,
-                           const struct silofs_blobid *blobid)
-{
-	hkey_setup_by(hkey, SILOFS_HKEY_BLOBID, blobid);
 }
 
 void silofs_hkey_by_paddr(struct silofs_hkey *hkey,

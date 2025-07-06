@@ -231,7 +231,7 @@ static int ham12_decode8(const uint8_t in[12], uint8_t out[8])
 }
 
 int silofs_hamming12_encode_buf(const void *inb, size_t inlen, void *outb,
-				size_t outlen)
+                                size_t outlen)
 {
 	const uint8_t *in = inb;
 	uint8_t *out = outb;
@@ -249,7 +249,7 @@ int silofs_hamming12_encode_buf(const void *inb, size_t inlen, void *outb,
 }
 
 int silofs_hamming12_decode_buf(const void *inb, size_t inlen, void *outb,
-				size_t outlen)
+                                size_t outlen)
 {
 	const uint8_t *in = inb;
 	uint8_t *out = outb;

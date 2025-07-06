@@ -171,12 +171,12 @@ bool silofs_lsid_isequal(const struct silofs_lsid *lsid,
 
 uint64_t silofs_lsid_hash64(const struct silofs_lsid *lsid)
 {
-	struct silofs_lsid32b lsid32b = { .lsize = 0 };
+	struct silofs_lsid48b lsid48b = { .lsize = 0 };
 	const uint64_t seed1 = ((uint64_t)lsid->vspace) << 11;
 	const uint64_t seed2 = (uint64_t)lsid->ltype;
 
-	silofs_lsid32b_htox(&lsid32b, lsid);
-	return silofs_hash_xxh64(&lsid32b, sizeof(lsid32b), seed1 | seed2);
+	silofs_lsid48b_htox(&lsid48b, lsid);
+	return silofs_hash_xxh64(&lsid48b, sizeof(lsid48b), seed1 | seed2);
 }
 
 void silofs_lsid_setup(struct silofs_lsid *lsid,
@@ -194,37 +194,37 @@ void silofs_lsid_setup(struct silofs_lsid *lsid,
 	lsid->ltype = ltype;
 }
 
-void silofs_lsid32b_reset(struct silofs_lsid32b *lsid32)
+void silofs_lsid48b_reset(struct silofs_lsid48b *lsid48)
 {
-	memset(lsid32, 0, sizeof(*lsid32));
-	lsid32->vindex = UINT32_MAX;
-	lsid32->lsize = 0;
-	lsid32->vspace = SILOFS_LTYPE_NONE;
-	lsid32->height = SILOFS_HEIGHT_LAST;
-	lsid32->ltype = SILOFS_LTYPE_NONE;
+	memset(lsid48, 0, sizeof(*lsid48));
+	lsid48->vindex = UINT32_MAX;
+	lsid48->lsize = 0;
+	lsid48->vspace = SILOFS_LTYPE_NONE;
+	lsid48->height = SILOFS_HEIGHT_LAST;
+	lsid48->ltype = SILOFS_LTYPE_NONE;
 }
 
-void silofs_lsid32b_htox(struct silofs_lsid32b *lsid32,
+void silofs_lsid48b_htox(struct silofs_lsid48b *lsid48,
                          const struct silofs_lsid *lsid)
 {
-	memset(lsid32, 0, sizeof(*lsid32));
-	silofs_blobid_assign(&lsid32->blobid, &lsid->blobid);
-	lsid32->vindex = silofs_cpu_to_le32(lsid->vindex);
-	lsid32->lsize = silofs_cpu_to_le32((uint32_t)lsid->lsize);
-	lsid32->vspace = (uint8_t)lsid->vspace;
-	lsid32->height = (uint8_t)lsid->height;
-	lsid32->ltype = (uint8_t)lsid->ltype;
+	memset(lsid48, 0, sizeof(*lsid48));
+	silofs_blobid_assign(&lsid48->blobid, &lsid->blobid);
+	lsid48->vindex = silofs_cpu_to_le32(lsid->vindex);
+	lsid48->lsize = silofs_cpu_to_le32((uint32_t)lsid->lsize);
+	lsid48->vspace = (uint8_t)lsid->vspace;
+	lsid48->height = (uint8_t)lsid->height;
+	lsid48->ltype = (uint8_t)lsid->ltype;
 }
 
-void silofs_lsid32b_xtoh(const struct silofs_lsid32b *lsid32,
+void silofs_lsid48b_xtoh(const struct silofs_lsid48b *lsid48,
                          struct silofs_lsid *lsid)
 {
-	silofs_blobid_assign(&lsid->blobid, &lsid32->blobid);
-	lsid->vindex = silofs_le32_to_cpu(lsid32->vindex);
-	lsid->lsize = silofs_le32_to_cpu(lsid32->lsize);
-	lsid->vspace = (enum silofs_ltype)lsid32->vspace;
-	lsid->height = (enum silofs_height)lsid32->height;
-	lsid->ltype = (enum silofs_ltype)lsid32->ltype;
+	silofs_blobid_assign(&lsid->blobid, &lsid48->blobid);
+	lsid->vindex = silofs_le32_to_cpu(lsid48->vindex);
+	lsid->lsize = silofs_le32_to_cpu(lsid48->lsize);
+	lsid->vspace = (enum silofs_ltype)lsid48->vspace;
+	lsid->height = (enum silofs_height)lsid48->height;
+	lsid->ltype = (enum silofs_ltype)lsid48->ltype;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -328,43 +328,44 @@ void silofs_laddr_as_iv(const struct silofs_laddr *laddr,
                         struct silofs_iv *out_iv)
 {
 	union {
-		struct silofs_laddr48b laddr48;
-		uint8_t d[48];
+		struct silofs_laddr64b laddr64;
+		uint8_t d[64];
 	} u;
 
-	STATICASSERT_EQ(sizeof(u), 48);
-	STATICASSERT_EQ(3 * sizeof(out_iv->iv), sizeof(u.laddr48));
-	STATICASSERT_EQ(3 * sizeof(out_iv->iv), sizeof(u));
-	STATICASSERT_EQ(3 * ARRAY_SIZE(out_iv->iv), sizeof(u));
+	STATICASSERT_EQ(sizeof(u), 64);
+	STATICASSERT_EQ(4 * sizeof(out_iv->iv), sizeof(u.laddr64));
+	STATICASSERT_EQ(4 * sizeof(out_iv->iv), sizeof(u));
+	STATICASSERT_EQ(4 * ARRAY_SIZE(out_iv->iv), sizeof(u));
 
-	silofs_laddr48b_htox(&u.laddr48, laddr);
+	silofs_laddr64b_htox(&u.laddr64, laddr);
 	for (size_t i = 0; i < ARRAY_SIZE(out_iv->iv); ++i) {
 		const size_t j = i % 8;
 
-		out_iv->iv[i] = u.d[j] ^ u.d[j + 16] ^ u.d[j + 32];
+		out_iv->iv[i] = //
+			u.d[j] ^ u.d[j + 16] ^ u.d[j + 32] ^ u.d[j + 48];
 	}
 }
 
-void silofs_laddr48b_reset(struct silofs_laddr48b *laddr48)
+void silofs_laddr64b_reset(struct silofs_laddr64b *laddr64)
 {
-	memset(laddr48, 0, sizeof(*laddr48));
-	silofs_lsid32b_reset(&laddr48->lsid);
-	laddr48->pos = 0;
+	memset(laddr64, 0, sizeof(*laddr64));
+	silofs_lsid48b_reset(&laddr64->lsid);
+	laddr64->pos = 0;
 }
 
-void silofs_laddr48b_htox(struct silofs_laddr48b *laddr48,
+void silofs_laddr64b_htox(struct silofs_laddr64b *laddr64,
                           const struct silofs_laddr *laddr)
 {
-	memset(laddr48, 0, sizeof(*laddr48));
-	silofs_lsid32b_htox(&laddr48->lsid, &laddr->lsid);
-	laddr48->pos = silofs_cpu_to_le32((uint32_t)(laddr->pos));
+	memset(laddr64, 0, sizeof(*laddr64));
+	silofs_lsid48b_htox(&laddr64->lsid, &laddr->lsid);
+	laddr64->pos = silofs_cpu_to_le32((uint32_t)(laddr->pos));
 }
 
-void silofs_laddr48b_xtoh(const struct silofs_laddr48b *laddr48,
+void silofs_laddr64b_xtoh(const struct silofs_laddr64b *laddr64,
                           struct silofs_laddr *laddr)
 {
-	silofs_lsid32b_xtoh(&laddr48->lsid, &laddr->lsid);
-	laddr->pos = (loff_t)silofs_le32_to_cpu(laddr48->pos);
+	silofs_lsid48b_xtoh(&laddr64->lsid, &laddr->lsid);
+	laddr->pos = (loff_t)silofs_le32_to_cpu(laddr64->pos);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -527,8 +528,8 @@ int silofs_laddr_from_ascii(struct silofs_laddr *laddr,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 union silofs_laddr_repr_u {
-	struct silofs_laddr48b laddr48;
-	uint8_t d[48];
+	struct silofs_laddr64b laddr64;
+	uint8_t d[64];
 } silofs_attr_aligned16;
 
 void silofs_laddr_to_base64(const struct silofs_laddr *laddr,
@@ -537,10 +538,10 @@ void silofs_laddr_to_base64(const struct silofs_laddr *laddr,
 	union silofs_laddr_repr_u repr;
 	size_t len = 0;
 
-	STATICASSERT_EQ(sizeof(repr), 48);
+	STATICASSERT_EQ(sizeof(repr), 64);
 
 	silofs_memzero(&repr, sizeof(repr));
-	silofs_laddr48b_htox(&repr.laddr48, laddr);
+	silofs_laddr64b_htox(&repr.laddr64, laddr);
 	silofs_base64_encode(repr.d, sizeof(repr.d), sbuf->str,
 	                     sizeof(sbuf->str) - 1, &len);
 	sbuf->str[len] = '\0';

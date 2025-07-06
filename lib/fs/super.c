@@ -186,11 +186,11 @@ sb_set_lv_ids(struct silofs_super_block *sb, const struct silofs_blobid *vid)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static const struct silofs_lsid32b *
+static const struct silofs_lsid48b *
 sb_mainsilofs_lsid_by(const struct silofs_super_block *sb,
                       enum silofs_ltype ltype)
 {
-	const struct silofs_lsid32b *ret;
+	const struct silofs_lsid48b *ret;
 
 	switch (ltype) {
 	case SILOFS_LTYPE_LSMAP:
@@ -233,21 +233,21 @@ sb_mainsilofs_lsid_by(const struct silofs_super_block *sb,
 	return ret;
 }
 
-static struct silofs_lsid32b *
+static struct silofs_lsid48b *
 sb_mainsilofs_lsid_by2(struct silofs_super_block *sb, enum silofs_ltype ltype)
 {
-	const struct silofs_lsid32b *lsid32 = sb_mainsilofs_lsid_by(sb, ltype);
+	const struct silofs_lsid48b *lsid48 = sb_mainsilofs_lsid_by(sb, ltype);
 
-	return unconst(lsid32);
+	return unconst(lsid48);
 }
 
 static void sb_main_lsid(const struct silofs_super_block *sb,
                          enum silofs_ltype ltype, struct silofs_lsid *out_lsid)
 {
-	const struct silofs_lsid32b *lsid32 = sb_mainsilofs_lsid_by(sb, ltype);
+	const struct silofs_lsid48b *lsid48 = sb_mainsilofs_lsid_by(sb, ltype);
 
-	if (likely(lsid32 != NULL)) {
-		silofs_lsid32b_xtoh(lsid32, out_lsid);
+	if (likely(lsid48 != NULL)) {
+		silofs_lsid48b_xtoh(lsid48, out_lsid);
 	} else {
 		silofs_lsid_reset(out_lsid);
 	}
@@ -257,32 +257,32 @@ static void
 sb_set_main_lsid(struct silofs_super_block *sb, enum silofs_ltype ltype,
                  const struct silofs_lsid *lsid)
 {
-	struct silofs_lsid32b *bid = sb_mainsilofs_lsid_by2(sb, ltype);
+	struct silofs_lsid48b *bid = sb_mainsilofs_lsid_by2(sb, ltype);
 
 	if (likely(bid != NULL)) {
-		silofs_lsid32b_htox(bid, lsid);
+		silofs_lsid48b_htox(bid, lsid);
 	}
 }
 
 static void sb_reset_main_lsids(struct silofs_super_block *sb)
 {
-	struct silofs_lsid32b *bid;
+	struct silofs_lsid48b *bid;
 	enum silofs_ltype ltype = SILOFS_LTYPE_NONE;
 
 	while (++ltype < SILOFS_LTYPE_LAST) {
 		bid = sb_mainsilofs_lsid_by2(sb, ltype);
 		if (bid != NULL) {
-			silofs_lsid32b_reset(bid);
+			silofs_lsid48b_reset(bid);
 		}
 	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static const struct silofs_uaddr64b *
+static const struct silofs_uaddr96b *
 sb_sproot_by(const struct silofs_super_block *sb, enum silofs_ltype ltype)
 {
-	const struct silofs_uaddr64b *ret;
+	const struct silofs_uaddr96b *ret;
 
 	switch (ltype) {
 	case SILOFS_LTYPE_LSMAP:
@@ -325,22 +325,22 @@ sb_sproot_by(const struct silofs_super_block *sb, enum silofs_ltype ltype)
 	return ret;
 }
 
-static struct silofs_uaddr64b *
+static struct silofs_uaddr96b *
 sb_sproot_by2(struct silofs_super_block *sb, enum silofs_ltype ltype)
 {
-	const struct silofs_uaddr64b *uaddr64 = sb_sproot_by(sb, ltype);
+	const struct silofs_uaddr96b *uaddr96 = sb_sproot_by(sb, ltype);
 
-	return unconst(uaddr64);
+	return unconst(uaddr96);
 }
 
 static void
 sb_sproot_of(const struct silofs_super_block *sb, enum silofs_ltype ltype,
              struct silofs_uaddr *out_uaddr)
 {
-	const struct silofs_uaddr64b *uaddr64 = sb_sproot_by(sb, ltype);
+	const struct silofs_uaddr96b *uaddr96 = sb_sproot_by(sb, ltype);
 
-	if (likely(uaddr64 != NULL)) {
-		silofs_uaddr64b_xtoh(uaddr64, out_uaddr);
+	if (likely(uaddr96 != NULL)) {
+		silofs_uaddr96b_xtoh(uaddr96, out_uaddr);
 	} else {
 		silofs_uaddr_reset(out_uaddr);
 	}
@@ -350,22 +350,22 @@ static void
 sb_set_sproot_of(struct silofs_super_block *sb, enum silofs_ltype ltype,
                  const struct silofs_uaddr *uaddr)
 {
-	struct silofs_uaddr64b *uaddr64 = sb_sproot_by2(sb, ltype);
+	struct silofs_uaddr96b *uaddr96 = sb_sproot_by2(sb, ltype);
 
-	if (likely(uaddr64 != NULL)) {
-		silofs_uaddr64b_htox(uaddr64, uaddr);
+	if (likely(uaddr96 != NULL)) {
+		silofs_uaddr96b_htox(uaddr96, uaddr);
 	}
 }
 
 static void sb_reset_sproots(struct silofs_super_block *sb)
 {
-	struct silofs_uaddr64b *uaddr64;
+	struct silofs_uaddr96b *uaddr96;
 	enum silofs_ltype ltype = SILOFS_LTYPE_NONE;
 
 	while (++ltype < SILOFS_LTYPE_LAST) {
-		uaddr64 = sb_sproot_by2(sb, ltype);
-		if (uaddr64 != NULL) {
-			silofs_uaddr64b_htox(uaddr64, silofs_uaddr_none());
+		uaddr96 = sb_sproot_by2(sb, ltype);
+		if (uaddr96 != NULL) {
+			silofs_uaddr96b_htox(uaddr96, silofs_uaddr_none());
 		}
 	}
 }

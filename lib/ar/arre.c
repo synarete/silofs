@@ -173,7 +173,7 @@ static void ardsc256b_htox(struct silofs_ar_desc256b *ard256,
 {
 	ardsc256b_reset(ard256);
 	silofs_caddr64b_htox(&ard256->pd_caddr, &ard->caddr);
-	silofs_laddr48b_htox(&ard256->pd_laddr, &ard->laddr);
+	silofs_laddr64b_htox(&ard256->pd_laddr, &ard->laddr);
 	ard256->pd_len = silofs_cpu_to_le64(ard->len);
 }
 
@@ -181,7 +181,7 @@ static void ardsc256b_xtoh(const struct silofs_ar_desc256b *ard256,
                            struct silofs_ar_desc *ard)
 {
 	silofs_caddr64b_xtoh(&ard256->pd_caddr, &ard->caddr);
-	silofs_laddr48b_xtoh(&ard256->pd_laddr, &ard->laddr);
+	silofs_laddr64b_xtoh(&ard256->pd_laddr, &ard->laddr);
 	ard->len = silofs_le64_to_cpu(ard256->pd_len);
 }
 

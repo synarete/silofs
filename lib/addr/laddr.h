@@ -78,12 +78,12 @@ uint64_t silofs_lsid_hash64(const struct silofs_lsid *lsid);
 
 loff_t silofs_lsid_pos(const struct silofs_lsid *lsid, loff_t off);
 
-void silofs_lsid32b_reset(struct silofs_lsid32b *lsid32);
+void silofs_lsid48b_reset(struct silofs_lsid48b *lsid48);
 
-void silofs_lsid32b_htox(struct silofs_lsid32b    *lsid32,
+void silofs_lsid48b_htox(struct silofs_lsid48b    *lsid48,
                          const struct silofs_lsid *lsid);
 
-void silofs_lsid32b_xtoh(const struct silofs_lsid32b *lsid32,
+void silofs_lsid48b_xtoh(const struct silofs_lsid48b *lsid48,
                          struct silofs_lsid          *lsid);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -120,13 +120,13 @@ bool silofs_laddr_isvalid(const struct silofs_laddr *laddr);
 bool silofs_laddr_isequal(const struct silofs_laddr *laddr,
                           const struct silofs_laddr *other);
 
-void silofs_laddr48b_htox(struct silofs_laddr48b    *laddr48,
+void silofs_laddr64b_htox(struct silofs_laddr64b    *laddr64,
                           const struct silofs_laddr *laddr);
 
-void silofs_laddr48b_xtoh(const struct silofs_laddr48b *laddr48,
+void silofs_laddr64b_xtoh(const struct silofs_laddr64b *laddr64,
                           struct silofs_laddr          *laddr);
 
-void silofs_laddr48b_reset(struct silofs_laddr48b *laddr48);
+void silofs_laddr64b_reset(struct silofs_laddr64b *laddr64);
 
 void silofs_laddr_to_ascii(const struct silofs_laddr *laddr,
                            struct silofs_strbuf      *sbuf);

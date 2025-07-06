@@ -38,18 +38,18 @@ static void lrange_of_spnode(struct silofs_lrange *lrange,
 static void
 spr_uaddr(const struct silofs_spmap_ref *spr, struct silofs_uaddr *out_uaddr)
 {
-	silofs_uaddr64b_xtoh(&spr->sr_uaddr, out_uaddr);
+	silofs_uaddr96b_xtoh(&spr->sr_uaddr, out_uaddr);
 }
 
 static void
 spr_set_uaddr(struct silofs_spmap_ref *spr, const struct silofs_uaddr *uaddr)
 {
-	silofs_uaddr64b_htox(&spr->sr_uaddr, uaddr);
+	silofs_uaddr96b_htox(&spr->sr_uaddr, uaddr);
 }
 
 static void spr_reset(struct silofs_spmap_ref *spr)
 {
-	silofs_uaddr64b_reset(&spr->sr_uaddr);
+	silofs_uaddr96b_reset(&spr->sr_uaddr);
 }
 
 static bool spr_isactive(const struct silofs_spmap_ref *spr)
@@ -87,25 +87,25 @@ static void spr_clone_from(struct silofs_spmap_ref *spr,
 static void spnode_parent(const struct silofs_spmap_node *spn,
                           struct silofs_uaddr *out_uaddr)
 {
-	silofs_uaddr64b_xtoh(&spn->sn_parent, out_uaddr);
+	silofs_uaddr96b_xtoh(&spn->sn_parent, out_uaddr);
 }
 
 static void spnode_set_parent(struct silofs_spmap_node *spn,
                               const struct silofs_uaddr *uaddr)
 {
-	silofs_uaddr64b_htox(&spn->sn_parent, uaddr);
+	silofs_uaddr96b_htox(&spn->sn_parent, uaddr);
 }
 
 static void spnode_self(const struct silofs_spmap_node *spn,
                         struct silofs_uaddr *out_uaddr)
 {
-	silofs_uaddr64b_xtoh(&spn->sn_self, out_uaddr);
+	silofs_uaddr96b_xtoh(&spn->sn_self, out_uaddr);
 }
 
 static void spnode_set_self(struct silofs_spmap_node *spn,
                             const struct silofs_uaddr *uaddr)
 {
-	silofs_uaddr64b_htox(&spn->sn_self, uaddr);
+	silofs_uaddr96b_htox(&spn->sn_self, uaddr);
 }
 
 static void spnode_lrange(const struct silofs_spmap_node *spn,
@@ -131,22 +131,22 @@ static enum silofs_height spnode_heigth(const struct silofs_spmap_node *spn)
 static void spnode_main_lsid(const struct silofs_spmap_node *spn,
                              struct silofs_lsid *out_lsid)
 {
-	silofs_lsid32b_xtoh(&spn->sn_main_lsid, out_lsid);
+	silofs_lsid48b_xtoh(&spn->sn_main_lsid, out_lsid);
 }
 
 static void spnode_set_main_lsid(struct silofs_spmap_node *spn,
                                  const struct silofs_lsid *lsid)
 {
-	silofs_lsid32b_htox(&spn->sn_main_lsid, lsid);
+	silofs_lsid48b_htox(&spn->sn_main_lsid, lsid);
 }
 
 static void
 spnode_init(struct silofs_spmap_node *spn, const struct silofs_lrange *lrange)
 {
 	spnode_set_lrange(spn, lrange);
-	silofs_lsid32b_reset(&spn->sn_main_lsid);
-	silofs_uaddr64b_reset(&spn->sn_parent);
-	silofs_uaddr64b_reset(&spn->sn_self);
+	silofs_lsid48b_reset(&spn->sn_main_lsid);
+	silofs_uaddr96b_reset(&spn->sn_parent);
+	silofs_uaddr96b_reset(&spn->sn_self);
 	spr_initn(spn->sn_subrefs, ARRAY_SIZE(spn->sn_subrefs));
 }
 
@@ -246,19 +246,19 @@ static struct silofs_lbk_ref *lbr_unconst(const struct silofs_lbk_ref *lbr)
 static void
 lbr_subref(const struct silofs_lbk_ref *lbr, struct silofs_laddr *out_laddr)
 {
-	silofs_laddr48b_xtoh(&lbr->lbr_subref, out_laddr);
+	silofs_laddr64b_xtoh(&lbr->lbr_subref, out_laddr);
 }
 
 static void
 lbr_set_subref(struct silofs_lbk_ref *lbr, const struct silofs_laddr *laddr)
 {
-	silofs_laddr48b_htox(&lbr->lbr_subref, laddr);
+	silofs_laddr64b_htox(&lbr->lbr_subref, laddr);
 }
 
 static void lbr_reset(struct silofs_lbk_ref *lbr)
 {
 	memset(lbr, 0, sizeof(*lbr));
-	silofs_laddr48b_reset(&lbr->lbr_subref);
+	silofs_laddr64b_reset(&lbr->lbr_subref);
 }
 
 static void lbr_init(struct silofs_lbk_ref *lbr)
@@ -334,34 +334,34 @@ spleaf_init(struct silofs_spmap_leaf *spl, const struct silofs_lrange *lrange,
 {
 	spleaf_set_lrange(spl, lrange);
 	spleaf_set_refltype(spl, refltype);
-	silofs_lsid32b_reset(&spl->sl_main_lsid);
-	silofs_uaddr64b_reset(&spl->sl_parent);
-	silofs_uaddr64b_reset(&spl->sl_self);
+	silofs_lsid48b_reset(&spl->sl_main_lsid);
+	silofs_uaddr96b_reset(&spl->sl_parent);
+	silofs_uaddr96b_reset(&spl->sl_self);
 	lbr_init_arr(spl->sl_lbrs, ARRAY_SIZE(spl->sl_lbrs));
 }
 
 static void spleaf_parent(const struct silofs_spmap_leaf *spl,
                           struct silofs_uaddr *out_uaddr)
 {
-	silofs_uaddr64b_xtoh(&spl->sl_parent, out_uaddr);
+	silofs_uaddr96b_xtoh(&spl->sl_parent, out_uaddr);
 }
 
 static void spleaf_set_parent(struct silofs_spmap_leaf *spl,
                               const struct silofs_uaddr *uaddr)
 {
-	silofs_uaddr64b_htox(&spl->sl_parent, uaddr);
+	silofs_uaddr96b_htox(&spl->sl_parent, uaddr);
 }
 
 static void spleaf_self(const struct silofs_spmap_leaf *spl,
                         struct silofs_uaddr *out_uaddr)
 {
-	silofs_uaddr64b_xtoh(&spl->sl_self, out_uaddr);
+	silofs_uaddr96b_xtoh(&spl->sl_self, out_uaddr);
 }
 
 static void spleaf_set_self(struct silofs_spmap_leaf *spl,
                             const struct silofs_uaddr *uaddr)
 {
-	silofs_uaddr64b_htox(&spl->sl_self, uaddr);
+	silofs_uaddr96b_htox(&spl->sl_self, uaddr);
 }
 
 static struct silofs_lbk_ref *
@@ -402,13 +402,13 @@ static void spleaf_make_lbk_vaddrs(const struct silofs_spmap_leaf *spl,
 static void spleaf_main_lsid(const struct silofs_spmap_leaf *spl,
                              struct silofs_lsid *out_lsid)
 {
-	silofs_lsid32b_xtoh(&spl->sl_main_lsid, out_lsid);
+	silofs_lsid48b_xtoh(&spl->sl_main_lsid, out_lsid);
 }
 
 static void spleaf_set_main_lsid(struct silofs_spmap_leaf *spl,
                                  const struct silofs_lsid *lsid)
 {
-	silofs_lsid32b_htox(&spl->sl_main_lsid, lsid);
+	silofs_lsid48b_htox(&spl->sl_main_lsid, lsid);
 }
 
 static void spleaf_main_child_at(const struct silofs_spmap_leaf *spl,

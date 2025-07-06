@@ -1637,11 +1637,11 @@ static void
 repo_hash_lsid(const struct silofs_repo *repo, const struct silofs_lsid *lsid,
                struct silofs_hash256 *out_hash)
 {
-	struct silofs_lsid32b lsid32;
+	struct silofs_lsid48b lsid48;
 	const struct silofs_mdigest *md = &repo->re_mdigest;
 
-	silofs_lsid32b_htox(&lsid32, lsid);
-	silofs_sha256_of(md, &lsid32, sizeof(lsid32), out_hash);
+	silofs_lsid48b_htox(&lsid48, lsid);
+	silofs_sha256_of(md, &lsid48, sizeof(lsid48), out_hash);
 }
 
 static int repo_objs_sub_pathname_of(const struct silofs_repo *repo,

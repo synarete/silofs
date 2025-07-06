@@ -93,13 +93,13 @@ void silofs_bootrec1k_fini(struct silofs_bootrec1k *bootrec1k)
 static void bootrec1k_sb_uaddr(const struct silofs_bootrec1k *bootrec1k,
                                struct silofs_uaddr *out_sb_uaddr)
 {
-	silofs_uaddr64b_xtoh(&bootrec1k->br_sb_uaddr, out_sb_uaddr);
+	silofs_uaddr96b_xtoh(&bootrec1k->br_sb_uaddr, out_sb_uaddr);
 }
 
 static void bootrec1k_set_sb_uaddr(struct silofs_bootrec1k *bootrec1k,
                                    const struct silofs_uaddr *sb_uaddr)
 {
-	silofs_uaddr64b_htox(&bootrec1k->br_sb_uaddr, sb_uaddr);
+	silofs_uaddr96b_htox(&bootrec1k->br_sb_uaddr, sb_uaddr);
 }
 
 static void bootrec1k_main_ivkey(const struct silofs_bootrec1k *bootrec1k,

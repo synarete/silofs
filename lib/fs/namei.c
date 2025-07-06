@@ -2404,7 +2404,7 @@ static void fill_query_boot(const struct silofs_inode_info *ii,
 	struct silofs_bootpath bootpath = { .repodir.len = 0 };
 	struct silofs_query_boot *qboot = &query->u.boot;
 
-	STATICASSERT_EQ(sizeof(qboot->lvid), sizeof(lvid.id.uu));
+	STATICASSERT_EQ(sizeof(qboot->lvid), sizeof(lvid.uuid.uu));
 
 	silofs_env_bootrec_caddr(silofs_ii_env(ii), &caddr);
 	silofs_sbi_self_lvid(silofs_ii_sbi(ii), &lvid);
@@ -2412,7 +2412,7 @@ static void fill_query_boot(const struct silofs_inode_info *ii,
 
 	str_to_buf(&bootpath.fsname, qboot->name, sizeof(qboot->name));
 	silofs_caddr_to_name2(&caddr, query->u.boot.xref);
-	silofs_uuid_copyto(&lvid.id, qboot->lvid);
+	silofs_uuid_copyto(&lvid.uuid, qboot->lvid);
 }
 
 static void fill_query_proc(const struct silofs_inode_info *ii,

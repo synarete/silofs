@@ -127,21 +127,21 @@ int silofs_repo_unlink_cobj(struct silofs_repo        *repo,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_repo_stat_pvseg(struct silofs_repo        *repo,
-                           const struct silofs_pvsid *pvsid,
-                           struct stat               *out_st);
+int silofs_repo_stat_pvseg(struct silofs_repo          *repo,
+                           const struct silofs_blobidx *blobidx,
+                           struct stat                 *out_st);
 
-int silofs_repo_spawn_pvseg(struct silofs_repo        *repo,
-                            const struct silofs_pvsid *pvsid);
+int silofs_repo_spawn_pvseg(struct silofs_repo          *repo,
+                            const struct silofs_blobidx *blobidx);
 
-int silofs_repo_stage_pvseg(struct silofs_repo        *repo,
-                            const struct silofs_pvsid *pvsid);
+int silofs_repo_stage_pvseg(struct silofs_repo          *repo,
+                            const struct silofs_blobidx *blobidx);
 
-int silofs_repo_remove_pvseg(struct silofs_repo        *repo,
-                             const struct silofs_pvsid *pvsid);
+int silofs_repo_remove_pvseg(struct silofs_repo          *repo,
+                             const struct silofs_blobidx *blobidx);
 
-int silofs_repo_flush_pvseg(struct silofs_repo        *repo,
-                            const struct silofs_pvsid *pvsid);
+int silofs_repo_flush_pvseg(struct silofs_repo          *repo,
+                            const struct silofs_blobidx *blobidx);
 
 int silofs_repo_save_pobj(struct silofs_repo        *repo,
                           const struct silofs_paddr *paddr,

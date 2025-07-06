@@ -60,7 +60,7 @@ bni_paddr(const struct silofs_btnode_info *bni)
 static const struct silofs_blobid *
 bni_blobid(const struct silofs_btnode_info *bni)
 {
-	return &bni->bn_pni.pn_paddr.pvsid.blobid;
+	return &bni->bn_pni.pn_paddr.blobidx.blobid;
 }
 
 static bool bni_has_same_blobid(const struct silofs_btnode_info *bni,
@@ -218,7 +218,7 @@ static bool btree_has_main_blobid_as(const struct silofs_btree *btree,
 {
 	const struct silofs_blobid *blobid = btree_main_blobid(btree);
 
-	return silofs_blobid_isequal(blobid, &paddr->pvsid.blobid);
+	return silofs_blobid_isequal(blobid, &paddr->blobidx.blobid);
 }
 
 static bool btree_is_writeable(const struct silofs_btree *btree,
@@ -242,13 +242,13 @@ static void btree_update_bni(const struct silofs_btree *btree,
 static int btc_stage_pvseg_of(const struct silofs_btree_ctx *btc,
                               const struct silofs_paddr *paddr)
 {
-	return silofs_repo_stage_pvseg(btc->repo, &paddr->pvsid);
+	return silofs_repo_stage_pvseg(btc->repo, &paddr->blobidx);
 }
 
 static int btc_spawn_pvseg_of(const struct silofs_btree_ctx *btc,
                               const struct silofs_paddr *paddr)
 {
-	return silofs_repo_spawn_pvseg(btc->repo, &paddr->pvsid);
+	return silofs_repo_spawn_pvseg(btc->repo, &paddr->blobidx);
 }
 
 static int btc_require_pvseg_of(const struct silofs_btree_ctx *btc,

@@ -114,15 +114,15 @@ static int bstore_create_cached_cpi(struct silofs_bstore *bstore,
 }
 
 static int bstore_require_pvseg(struct silofs_bstore *bstore, bool create,
-                                const struct silofs_pvsid *pvsid)
+                                const struct silofs_blobidx *blobidx)
 
 {
 	int err;
 
 	if (create) {
-		err = silofs_repo_spawn_pvseg(bstore->repo, pvsid);
+		err = silofs_repo_spawn_pvseg(bstore->repo, blobidx);
 	} else {
-		err = silofs_repo_stage_pvseg(bstore->repo, pvsid);
+		err = silofs_repo_stage_pvseg(bstore->repo, blobidx);
 	}
 	return err;
 }
@@ -130,7 +130,7 @@ static int bstore_require_pvseg(struct silofs_bstore *bstore, bool create,
 static int bstore_require_pvseg_of(struct silofs_bstore *bstore, bool create,
                                    const struct silofs_paddr *paddr)
 {
-	return bstore_require_pvseg(bstore, create, &paddr->pvsid);
+	return bstore_require_pvseg(bstore, create, &paddr->blobidx);
 }
 
 static void bstore_update_chkpt(const struct silofs_bstore *bstore,

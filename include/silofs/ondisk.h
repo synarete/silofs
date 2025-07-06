@@ -521,17 +521,25 @@ struct silofs_uuid {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-/* volume identifier */
+/* unique blob identifier */
 struct silofs_blobid {
-	struct silofs_uuid id;
+	struct silofs_uuid uuid;
 } silofs_attr_aligned16;
 
-/* persistent volume segment identifier */
-struct silofs_pvsid32b {
+/* blob identifier + sub-index */
+struct silofs_blobidx48b {
 	struct silofs_blobid blobid;
 	uint32_t             index;
-	uint8_t              pad[12];
+	uint8_t              pad[28];
 } silofs_attr_aligned16;
+
+/* content address (by hash) */
+struct silofs_caddr64b {
+	struct silofs_hash256 hash;
+	uint32_t              size;
+	uint8_t               ctype;
+	uint8_t               reserved[27];
+} silofs_attr_aligned64;
 
 /* persistent volume segments range */
 struct silofs_pvsegr64b {
@@ -544,11 +552,11 @@ struct silofs_pvsegr64b {
 
 /* persistent object address */
 struct silofs_paddr64b {
-	struct silofs_pvsid32b pvsid;
-	int64_t                off;
-	uint32_t               len;
-	uint8_t                ptype;
-	uint8_t                pad[19];
+	struct silofs_blobidx48b blobidx;
+	int64_t                  off;
+	uint32_t                 len;
+	uint8_t                  ptype;
+	uint8_t                  pad[3];
 } silofs_attr_aligned16;
 
 /* logical volume's segment identifier */
@@ -568,14 +576,6 @@ struct silofs_laddr48b {
 	uint32_t              pos;
 	uint8_t               reserved[12];
 } silofs_attr_aligned16;
-
-/* content address (by hash) */
-struct silofs_caddr64b {
-	struct silofs_hash256 hash;
-	uint32_t              size;
-	uint8_t               ctype;
-	uint8_t               reserved[27];
-} silofs_attr_aligned64;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

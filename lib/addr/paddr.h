@@ -19,18 +19,12 @@
 
 #include <silofs/ondisk.h>
 
-/* persistent-volume segment id */
-struct silofs_pvsid {
-	struct silofs_blobid blobid;
-	uint32_t             index;
-};
-
 /* persistent object address within specific volume segment */
 struct silofs_paddr {
-	struct silofs_pvsid pvsid;
-	loff_t              off;
-	size_t              len;
-	enum silofs_ptype   ptype;
+	struct silofs_blobidx blobidx;
+	loff_t                off;
+	size_t                len;
+	enum silofs_ptype     ptype;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -39,47 +33,12 @@ uint32_t silofs_ptype_size(enum silofs_ptype ptype);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-const struct silofs_pvsid *silofs_pvsid_none(void);
-
-void silofs_pvsid_init(struct silofs_pvsid        *pvsid,
-                       const struct silofs_blobid *blobid, uint32_t idx);
-
-void silofs_pvsid_fini(struct silofs_pvsid *pvsid);
-
-bool silofs_pvsid_isnull(const struct silofs_pvsid *pvsid);
-
-bool silofs_pvsid_has_blobid(const struct silofs_pvsid  *pvsid,
-                             const struct silofs_blobid *blobid);
-
-void silofs_pvsid_generate(struct silofs_pvsid *pvsid);
-
-void silofs_pvsid_reset(struct silofs_pvsid *pvsid);
-
-void silofs_pvsid_assign(struct silofs_pvsid       *pvsid,
-                         const struct silofs_pvsid *other);
-
-bool silofs_pvsid_isequal(const struct silofs_pvsid *pvsid,
-                          const struct silofs_pvsid *other);
-
-uint64_t silofs_pvsid_hash64(const struct silofs_pvsid *pvsid);
-
-void silofs_pvsid_to_str(const struct silofs_pvsid *pvsid,
-                         struct silofs_strbuf      *sbuf);
-
-void silofs_pvsid32b_htox(struct silofs_pvsid32b    *pvsid32,
-                          const struct silofs_pvsid *pvsid);
-
-void silofs_pvsid32b_xtoh(const struct silofs_pvsid32b *pvsid32,
-                          struct silofs_pvsid          *pvsid);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 const struct silofs_paddr *silofs_paddr_none(void);
 
 bool silofs_paddr_isnull(const struct silofs_paddr *paddr);
 
-void silofs_paddr_init(struct silofs_paddr       *paddr,
-                       const struct silofs_pvsid *pvsid,
+void silofs_paddr_init(struct silofs_paddr         *paddr,
+                       const struct silofs_blobidx *blobidx,
                        enum silofs_ptype ptype, loff_t off, size_t len);
 
 void silofs_paddr_fini(struct silofs_paddr *paddr);

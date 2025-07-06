@@ -43,21 +43,21 @@ void silofs_pvsegr_assign(struct silofs_pvsegr *pvsegr,
 	pvsegr->curr_pos = other->curr_pos;
 }
 
-static void pvsegr_curr_pvsid(const struct silofs_pvsegr *pvsegr,
-                              struct silofs_pvsid *out_pvsid)
+static void pvsegr_curr_blobidx(const struct silofs_pvsegr *pvsegr,
+                                struct silofs_blobidx *out_blobidx)
 {
-	silofs_pvsid_init(out_pvsid, &pvsegr->blobid, pvsegr->curr_index);
+	silofs_blobidx_init(out_blobidx, &pvsegr->blobid, pvsegr->curr_index);
 }
 
 static void
 pvsegr_curr_paddr_at(const struct silofs_pvsegr *pvsegr, loff_t pos,
                      enum silofs_ptype ptype, struct silofs_paddr *out_paddr)
 {
-	struct silofs_pvsid pvsid;
+	struct silofs_blobidx blobidx;
 	const size_t len = silofs_ptype_size(ptype);
 
-	pvsegr_curr_pvsid(pvsegr, &pvsid);
-	silofs_paddr_init(out_paddr, &pvsid, ptype, pos, len);
+	pvsegr_curr_blobidx(pvsegr, &blobidx);
+	silofs_paddr_init(out_paddr, &blobidx, ptype, pos, len);
 }
 
 static void
@@ -108,10 +108,10 @@ bool silofs_pvsegr_has_paddr(const struct silofs_pvsegr *pvsegr,
 	if (silofs_paddr_isnull(paddr)) {
 		return false;
 	}
-	if (!pvsegr_has_blobid(pvsegr, &paddr->pvsid.blobid)) {
+	if (!pvsegr_has_blobid(pvsegr, &paddr->blobidx.blobid)) {
 		return false;
 	}
-	if (!pvsegr_has_index(pvsegr, paddr->pvsid.index)) {
+	if (!pvsegr_has_index(pvsegr, paddr->blobidx.index)) {
 		return false;
 	}
 	return true;

@@ -36,6 +36,12 @@ void silofs_blobid_assign(struct silofs_blobid *blobid,
 	memcpy(&blobid->u, &other->u, sizeof(blobid->u));
 }
 
+void silofs_blobid_assign_hash(struct silofs_blobid *blobid,
+                               const struct silofs_hash256 *hash)
+{
+	silofs_hash256_assign(&blobid->u.hash, hash);
+}
+
 void silofs_blobid_reset(struct silofs_blobid *blobid)
 {
 	memset(&blobid->u, 0, sizeof(blobid->u));

@@ -540,10 +540,10 @@ struct silofs_blobidx48b {
 
 /* content address (by hash) */
 struct silofs_caddr64b {
-	struct silofs_hash256 hash;
-	uint32_t              size;
-	uint8_t               ctype;
-	uint8_t               reserved[27];
+	struct silofs_blobid blobid;
+	uint32_t             size;
+	uint8_t              ctype;
+	uint8_t              reserved[27];
 } silofs_attr_aligned64;
 
 /* persistent volume segments range */

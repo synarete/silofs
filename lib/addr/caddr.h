@@ -24,9 +24,9 @@ struct silofs_strview;
 
 /* content-addressable identifier */
 struct silofs_caddr {
-	struct silofs_hash256 hash;
-	uint32_t              size;
-	enum silofs_ctype     ctype;
+	struct silofs_blobid blobid;
+	uint32_t             size;
+	enum silofs_ctype    ctype;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

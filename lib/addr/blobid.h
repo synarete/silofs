@@ -38,6 +38,9 @@ void silofs_blobid_reset(struct silofs_blobid *blobid);
 void silofs_blobid_assign(struct silofs_blobid       *blobid,
                           const struct silofs_blobid *other);
 
+void silofs_blobid_assign_hash(struct silofs_blobid        *blobid,
+                               const struct silofs_hash256 *hash);
+
 long silofs_blobid_compare(const struct silofs_blobid *blobid1,
                            const struct silofs_blobid *blobid2);
 

@@ -23,10 +23,10 @@
 
 /* persistent volume segments range */
 struct silofs_pvsegr {
-	struct silofs_blobid blobid;
-	uint32_t             base_index;
-	uint32_t             curr_index;
-	loff_t               curr_pos;
+	union silofs_blobid blobid;
+	uint32_t            base_index;
+	uint32_t            curr_index;
+	loff_t              curr_pos;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

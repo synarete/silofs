@@ -385,14 +385,14 @@ void silofs_bootrec_set_sb_uaddr(struct silofs_bootrec *bootrec,
 }
 
 void silofs_bootrec_blobid(const struct silofs_bootrec *bootrec,
-                           struct silofs_blobid *out_vid)
+                           union silofs_blobid *out_vid)
 {
 	const struct silofs_uaddr *sb_uaddr = &bootrec->sb_uaddr;
 
 	silofs_blobid_assign(out_vid, &sb_uaddr->laddr.lsid.blobid);
 }
 
-static void bootrec_uaddr_by_blobid(const struct silofs_blobid *blobid,
+static void bootrec_uaddr_by_blobid(const union silofs_blobid *blobid,
                                     struct silofs_uaddr *out_uaddr)
 {
 	struct silofs_lsid lsid;
@@ -403,7 +403,7 @@ static void bootrec_uaddr_by_blobid(const struct silofs_blobid *blobid,
 	silofs_uaddr_setup(out_uaddr, &lsid, 0, 0);
 }
 
-void silofs_make_bootrec_uaddr(const struct silofs_blobid *blobid,
+void silofs_make_bootrec_uaddr(const union silofs_blobid *blobid,
                                struct silofs_uaddr *out_uaddr)
 {
 	bootrec_uaddr_by_blobid(blobid, out_uaddr);

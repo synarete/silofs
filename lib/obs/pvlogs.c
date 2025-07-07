@@ -92,7 +92,7 @@ static void pvsegr_carve(struct silofs_pvsegr *pvsegr, enum silofs_ptype ptype,
 }
 
 static bool pvsegr_has_blobid(const struct silofs_pvsegr *pvsegr,
-                              const struct silofs_blobid *blobid)
+                              const union silofs_blobid *blobid)
 {
 	return silofs_blobid_isequal(&pvsegr->blobid, blobid);
 }

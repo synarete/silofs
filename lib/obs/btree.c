@@ -57,7 +57,7 @@ bni_paddr(const struct silofs_btnode_info *bni)
 	return &bni->bn_pni.pn_paddr;
 }
 
-static const struct silofs_blobid *
+static const union silofs_blobid *
 bni_blobid(const struct silofs_btnode_info *bni)
 {
 	return &bni->bn_pni.pn_paddr.blobidx.blobid;
@@ -207,7 +207,7 @@ void silofs_btree_update_root(struct silofs_btree *btree,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static const struct silofs_blobid *
+static const union silofs_blobid *
 btree_main_blobid(const struct silofs_btree *btree)
 {
 	return &btree->bt_base.pvsegr->blobid;
@@ -216,7 +216,7 @@ btree_main_blobid(const struct silofs_btree *btree)
 static bool btree_has_main_blobid_as(const struct silofs_btree *btree,
                                      const struct silofs_paddr *paddr)
 {
-	const struct silofs_blobid *blobid = btree_main_blobid(btree);
+	const union silofs_blobid *blobid = btree_main_blobid(btree);
 
 	return silofs_blobid_isequal(blobid, &paddr->blobidx.blobid);
 }

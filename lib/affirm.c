@@ -165,7 +165,7 @@ static void affirm_ondisk_base_types(void)
 
 static void affirm_ondisk_addrs(void)
 {
-	REQUIRE_SIZEOF(struct silofs_blobid, 32);
+	REQUIRE_SIZEOF(union silofs_blobid, 32);
 	REQUIRE_SIZEOF(struct silofs_vaddr56, 7);
 	REQUIRE_SIZEOF(struct silofs_vaddr64, 8);
 	REQUIRE_SIZEOF(struct silofs_lrange128, 16);

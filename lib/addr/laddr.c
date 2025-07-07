@@ -98,7 +98,7 @@ bool silofs_lsid_isnull(const struct silofs_lsid *lsid)
 }
 
 bool silofs_lsid_has_blobid(const struct silofs_lsid *lsid,
-                            const struct silofs_blobid *blobid)
+                            const union silofs_blobid *blobid)
 {
 	return silofs_blobid_isequal(&lsid->blobid, blobid);
 }
@@ -180,7 +180,7 @@ uint64_t silofs_lsid_hash64(const struct silofs_lsid *lsid)
 }
 
 void silofs_lsid_setup(struct silofs_lsid *lsid,
-                       const struct silofs_blobid *blobid, loff_t voff,
+                       const union silofs_blobid *blobid, loff_t voff,
                        enum silofs_ltype vspace, enum silofs_height height,
                        enum silofs_ltype ltype)
 {
@@ -371,7 +371,7 @@ void silofs_laddr64b_xtoh(const struct silofs_laddr64b *laddr64,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 struct silofs_laddr_repr {
-	struct silofs_blobid blobid;
+	union silofs_blobid blobid;
 	uint32_t lsize;
 	int32_t pos;
 	uint32_t vindex;

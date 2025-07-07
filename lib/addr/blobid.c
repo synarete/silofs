@@ -21,57 +21,57 @@
 #include "meta.h"
 #include "blobid.h"
 
-void silofs_blobid_generate(struct silofs_blobid *blobid)
+void silofs_blobid_generate(union silofs_blobid *blobid)
 {
-	struct silofs_uuid *uu = &blobid->u.uuid[0];
+	struct silofs_uuid *uu = &blobid->uuid[0];
 
-	silofs_uuid_generate(&blobid->u.uuid[0]);
-	blobid->u.d[2] = silofs_hash_xxh64(uu->uu, sizeof(uu->uu), uu->uu[0]);
-	blobid->u.d[3] = silofs_twang_mix64(blobid->u.d[2]);
+	silofs_uuid_generate(uu);
+	blobid->d[2] = silofs_hash_xxh64(uu->uu, sizeof(uu->uu), uu->uu[0]);
+	blobid->d[3] = silofs_twang_mix64(blobid->d[2]);
 }
 
-void silofs_blobid_assign(struct silofs_blobid *blobid,
-                          const struct silofs_blobid *other)
+void silofs_blobid_assign(union silofs_blobid *blobid,
+                          const union silofs_blobid *other)
 {
-	memcpy(&blobid->u, &other->u, sizeof(blobid->u));
+	memcpy(blobid, other, sizeof(*blobid));
 }
 
-void silofs_blobid_assign_hash(struct silofs_blobid *blobid,
+void silofs_blobid_assign_hash(union silofs_blobid *blobid,
                                const struct silofs_hash256 *hash)
 {
-	silofs_hash256_assign(&blobid->u.hash, hash);
+	silofs_hash256_assign(&blobid->hash, hash);
 }
 
-void silofs_blobid_reset(struct silofs_blobid *blobid)
+void silofs_blobid_reset(union silofs_blobid *blobid)
 {
-	memset(&blobid->u, 0, sizeof(blobid->u));
+	memset(blobid, 0, sizeof(*blobid));
 }
 
-long silofs_blobid_compare(const struct silofs_blobid *blobid,
-                           const struct silofs_blobid *other)
+long silofs_blobid_compare(const union silofs_blobid *blobid,
+                           const union silofs_blobid *other)
 {
-	return memcmp(&blobid->u, &other->u, sizeof(blobid->u));
+	return memcmp(blobid, other, sizeof(*blobid));
 }
 
-bool silofs_blobid_isequal(const struct silofs_blobid *blobid1,
-                           const struct silofs_blobid *blobid2)
+bool silofs_blobid_isequal(const union silofs_blobid *blobid1,
+                           const union silofs_blobid *blobid2)
 {
 	return (silofs_blobid_compare(blobid1, blobid2) == 0);
 }
 
-void silofs_blobid_to_sbuf(const struct silofs_blobid *blobid,
+void silofs_blobid_to_sbuf(const union silofs_blobid *blobid,
                            struct silofs_strbuf *sbuf)
 {
 	size_t cnt = 0;
 
-	silofs_mem_to_ascii(blobid->u.bid, sizeof(blobid->u.bid), sbuf->str,
+	silofs_mem_to_ascii(blobid->bid, sizeof(blobid->bid), sbuf->str,
 	                    sizeof(sbuf->str) - 1, &cnt);
 	if (silofs_likely(cnt < sizeof(sbuf->str))) {
 		sbuf->str[cnt] = '\0';
 	}
 }
 
-void silofs_blobid_to_str(const struct silofs_blobid *blobid,
+void silofs_blobid_to_str(const union silofs_blobid *blobid,
                           struct silofs_strspan *ss)
 {
 	struct silofs_strbuf sbuf;
@@ -81,18 +81,18 @@ void silofs_blobid_to_str(const struct silofs_blobid *blobid,
 	silofs_strspan_assign(ss, sbuf.str);
 }
 
-int silofs_blobid_from_str(struct silofs_blobid *blobid,
+int silofs_blobid_from_str(union silofs_blobid *blobid,
                            const struct silofs_strview *sv)
 {
 	size_t cnt = 0;
 	int err;
 
-	err = silofs_ascii_to_mem(blobid->u.bid, sizeof(blobid->u.bid),
-	                          sv->str, sv->len, &cnt);
+	err = silofs_ascii_to_mem(blobid->bid, sizeof(blobid->bid), sv->str,
+	                          sv->len, &cnt);
 	if (err) {
 		return err;
 	}
-	if (cnt != 2 * sizeof(blobid->u.bid)) {
+	if (cnt != 2 * sizeof(blobid->bid)) {
 		return -1;
 	}
 	return 0;
@@ -110,7 +110,7 @@ const struct silofs_blobidx *silofs_blobidx_none(void)
 }
 
 void silofs_blobidx_init(struct silofs_blobidx *blobidx,
-                         const struct silofs_blobid *blobid, uint32_t idx)
+                         const union silofs_blobid *blobid, uint32_t idx)
 {
 	silofs_blobid_assign(&blobidx->blobid, blobid);
 	blobidx->index = idx;
@@ -128,7 +128,7 @@ bool silofs_blobidx_isnull(const struct silofs_blobidx *blobidx)
 }
 
 bool silofs_blobidx_has_blobid(const struct silofs_blobidx *blobidx,
-                               const struct silofs_blobid *blobid)
+                               const union silofs_blobid *blobid)
 {
 	return silofs_blobid_isequal(&blobidx->blobid, blobid);
 }

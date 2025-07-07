@@ -457,7 +457,7 @@ int silofs_env_unlink_bootrec(struct silofs_env *env)
 
 static void make_super_lsid(struct silofs_lsid *out_lsid)
 {
-	struct silofs_blobid blobid;
+	union silofs_blobid blobid;
 
 	silofs_blobid_generate(&blobid);
 	silofs_lsid_setup(out_lsid, &blobid, 0, SILOFS_LTYPE_SUPER,

@@ -522,37 +522,35 @@ struct silofs_uuid {
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 /* unique blob identifier */
-struct silofs_blobid {
-	union {
-		uint64_t              d[4];
-		struct silofs_uuid    uuid[2];
-		struct silofs_hash256 hash;
-		uint8_t               bid[32];
-	} u;
+union silofs_blobid {
+	uint64_t              d[4];
+	struct silofs_uuid    uuid[2];
+	struct silofs_hash256 hash;
+	uint8_t               bid[32];
 } silofs_attr_aligned16;
 
 /* blob identifier + sub-index */
 struct silofs_blobidx48b {
-	struct silofs_blobid blobid;
-	uint32_t             index;
-	uint8_t              pad[12];
+	union silofs_blobid blobid;
+	uint32_t            index;
+	uint8_t             pad[12];
 } silofs_attr_aligned16;
 
 /* content address (by hash) */
 struct silofs_caddr64b {
-	struct silofs_blobid blobid;
-	uint32_t             size;
-	uint8_t              ctype;
-	uint8_t              reserved[27];
+	union silofs_blobid blobid;
+	uint32_t            size;
+	uint8_t             ctype;
+	uint8_t             reserved[27];
 } silofs_attr_aligned64;
 
 /* persistent volume segments range */
 struct silofs_pvsegr64b {
-	struct silofs_blobid blobid;
-	uint32_t             base_index;
-	uint32_t             curr_index;
-	int64_t              curr_pos;
-	uint8_t              pad[16];
+	union silofs_blobid blobid;
+	uint32_t            base_index;
+	uint32_t            curr_index;
+	int64_t             curr_pos;
+	uint8_t             pad[16];
 } silofs_attr_aligned64;
 
 /* persistent object address */
@@ -566,13 +564,13 @@ struct silofs_paddr64b {
 
 /* logical volume's segment identifier */
 struct silofs_lsid48b {
-	struct silofs_blobid blobid;
-	uint32_t             lsize;
-	uint32_t             vindex;
-	uint8_t              vspace;
-	uint8_t              height;
-	uint8_t              ltype;
-	uint8_t              pad[5];
+	union silofs_blobid blobid;
+	uint32_t            lsize;
+	uint32_t            vindex;
+	uint8_t             vspace;
+	uint8_t             height;
+	uint8_t             ltype;
+	uint8_t             pad[5];
 } silofs_attr_aligned16;
 
 /* logical address */
@@ -701,9 +699,9 @@ struct silofs_super_block {
 	struct silofs_tm64b         sb_btime_curr;
 	struct silofs_tm64b         sb_btime_prev;
 	struct silofs_tm64b         sb_btime_base;
-	struct silofs_blobid        sb_lv_curr;
-	struct silofs_blobid        sb_lv_prev;
-	struct silofs_blobid        sb_lv_base;
+	union silofs_blobid         sb_lv_curr;
+	union silofs_blobid         sb_lv_prev;
+	union silofs_blobid         sb_lv_base;
 	struct silofs_lrange128     sb_lrange;
 	uint8_t                     sb_reserved4[208];
 	/* 1K..2K */

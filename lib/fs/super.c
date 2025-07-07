@@ -598,8 +598,8 @@ void silofs_sbi_resolve_refs(const struct silofs_sb_info *sbi,
 	uaddr_setup_super(&out_refs->curr, &vid);
 }
 
-void silofs_sbi_self_lvid(const struct silofs_sb_info *sbi,
-                          struct silofs_blobid *out_vid)
+void silofs_sbi_self_blobid(const struct silofs_sb_info *sbi,
+                            struct silofs_blobid *out_vid)
 {
 	sb_lv_curr(sbi->sb, out_vid);
 }
@@ -713,7 +713,7 @@ bool silofs_sbi_ismutable_lsid(const struct silofs_sb_info *sbi,
 {
 	struct silofs_blobid blobid;
 
-	silofs_sbi_self_lvid(sbi, &blobid);
+	silofs_sbi_self_blobid(sbi, &blobid);
 	return silofs_lsid_has_blobid(lsid, &blobid);
 }
 

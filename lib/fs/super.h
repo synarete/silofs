@@ -82,8 +82,8 @@ bool silofs_sbi_test_flags(const struct silofs_sb_info *sbi,
 
 int silof_sbi_check_mut_fs(const struct silofs_sb_info *sbi);
 
-void silofs_sbi_self_lvid(const struct silofs_sb_info *sbi,
-                          struct silofs_blobid        *out_vid);
+void silofs_sbi_self_blobid(const struct silofs_sb_info *sbi,
+                            struct silofs_blobid        *out_vid);
 
 int silofs_sbi_main_lseg(const struct silofs_sb_info *sbi,
                          enum silofs_ltype            vspace,

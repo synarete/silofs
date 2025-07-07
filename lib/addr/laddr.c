@@ -418,7 +418,7 @@ static int laddr_from_repr(struct silofs_laddr *laddr,
 static void laddr_repr_blobid_to_str(const struct silofs_laddr_repr *repr,
                                      struct silofs_strbuf *sbuf)
 {
-	silofs_blobid_to_str(&repr->blobid, sbuf);
+	silofs_blobid_to_sbuf(&repr->blobid, sbuf);
 }
 
 static int laddr_repr_blobid_from_str(struct silofs_laddr_repr *repr,

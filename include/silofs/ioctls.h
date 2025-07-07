@@ -58,9 +58,9 @@ struct silofs_query_repo {
 };
 
 struct silofs_query_boot {
-	char    name[SILOFS_NAME_MAX + 1];
-	char    xref[SILOFS_XREFLEN_MAX + 1];
-	uint8_t lvid[SILOFS_UUID_SIZE];
+	char name[SILOFS_NAME_MAX + 1];
+	char xref[SILOFS_XREFLEN_MAX + 1];
+	char root_blobid[SILOFS_NAME_MAX + 1];
 };
 
 struct silofs_query_proc {

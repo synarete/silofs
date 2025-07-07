@@ -20,6 +20,7 @@
 #include <silofs/ondisk.h>
 
 struct silofs_strview;
+struct silofs_strspan;
 struct silofs_strbuf;
 
 /* a pair of unique blob-id and sub-index */
@@ -43,14 +44,14 @@ long silofs_blobid_compare(const struct silofs_blobid *blobid1,
 bool silofs_blobid_isequal(const struct silofs_blobid *blobid1,
                            const struct silofs_blobid *blobid2);
 
+void silofs_blobid_to_sbuf(const struct silofs_blobid *blobid,
+                           struct silofs_strbuf       *sbuf);
+
 void silofs_blobid_to_str(const struct silofs_blobid *blobid,
-                          struct silofs_strbuf       *sbuf);
+                          struct silofs_strspan      *ss);
 
 int silofs_blobid_from_str(struct silofs_blobid        *blobid,
                            const struct silofs_strview *sv);
-
-void silofs_blobid_by_uuid(struct silofs_blobid     *blobid,
-                           const struct silofs_uuid *uuid);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

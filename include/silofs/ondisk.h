@@ -497,7 +497,7 @@ struct silofs_hash128 {
 
 struct silofs_hash256 {
 	uint8_t hash[SILOFS_HASH256_LEN];
-} silofs_attr_aligned32;
+} silofs_attr_aligned16;
 
 struct silofs_hash512 {
 	uint8_t hash[SILOFS_HASH512_LEN];
@@ -523,8 +523,12 @@ struct silofs_uuid {
 
 /* unique blob identifier */
 struct silofs_blobid {
-	struct silofs_uuid uuid;
-	uint8_t            pad[16];
+	union {
+		uint64_t              d[4];
+		struct silofs_uuid    uuid[2];
+		struct silofs_hash256 hash;
+		uint8_t               bid[32];
+	} u;
 } silofs_attr_aligned16;
 
 /* blob identifier + sub-index */

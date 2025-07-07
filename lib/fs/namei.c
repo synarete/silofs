@@ -2400,19 +2400,21 @@ static void fill_query_boot(const struct silofs_inode_info *ii,
                             struct silofs_ioc_query *query)
 {
 	struct silofs_caddr caddr;
-	struct silofs_blobid lvid;
+	struct silofs_blobid blobid;
 	struct silofs_bootpath bootpath = { .repodir.len = 0 };
 	struct silofs_query_boot *qboot = &query->u.boot;
-
-	STATICASSERT_EQ(sizeof(qboot->lvid), sizeof(lvid.uuid.uu));
+	struct silofs_strspan ss;
 
 	silofs_env_bootrec_caddr(silofs_ii_env(ii), &caddr);
-	silofs_sbi_self_lvid(silofs_ii_sbi(ii), &lvid);
+	silofs_sbi_self_blobid(silofs_ii_sbi(ii), &blobid);
 	bootpath_of(ii, &bootpath);
 
 	str_to_buf(&bootpath.fsname, qboot->name, sizeof(qboot->name));
 	silofs_caddr_to_name2(&caddr, query->u.boot.xref);
-	silofs_uuid_copyto(&lvid.uuid, qboot->lvid);
+
+	silofs_strspan_initk(&ss, query->u.boot.root_blobid, 0,
+	                     sizeof(query->u.boot.root_blobid));
+	silofs_blobid_to_str(&blobid, &ss);
 }
 
 static void fill_query_proc(const struct silofs_inode_info *ii,

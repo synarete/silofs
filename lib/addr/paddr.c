@@ -156,7 +156,7 @@ void silofs_paddr64b_htox(struct silofs_paddr64b *paddr64,
                           const struct silofs_paddr *paddr)
 {
 	silofs_paddr64b_reset(paddr64);
-	silofs_blobidx32b_htox(&paddr64->blobidx, &paddr->blobidx);
+	silofs_blobidx48b_htox(&paddr64->blobidx, &paddr->blobidx);
 	paddr64->off = silofs_cpu_to_off(paddr->off);
 	paddr64->len = silofs_cpu_to_le32((uint32_t)paddr->len);
 	paddr64->ptype = (uint8_t)(paddr->ptype);
@@ -165,7 +165,7 @@ void silofs_paddr64b_htox(struct silofs_paddr64b *paddr64,
 void silofs_paddr64b_xtoh(const struct silofs_paddr64b *paddr64,
                           struct silofs_paddr *paddr)
 {
-	silofs_blobidx32b_xtoh(&paddr64->blobidx, &paddr->blobidx);
+	silofs_blobidx48b_xtoh(&paddr64->blobidx, &paddr->blobidx);
 	paddr->off = silofs_off_to_cpu(paddr64->off);
 	paddr->len = silofs_le32_to_cpu(paddr64->len);
 	paddr->ptype = (enum silofs_ptype)(paddr64->ptype);

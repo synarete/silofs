@@ -88,10 +88,10 @@ uint64_t silofs_blobidx_hash64(const struct silofs_blobidx *blobidx);
 void silofs_blobidx_to_str(const struct silofs_blobidx *blobidx,
                            struct silofs_strbuf        *sbuf);
 
-void silofs_blobidx32b_htox(struct silofs_blobidx48b    *blobidx32,
+void silofs_blobidx48b_htox(struct silofs_blobidx48b    *blobidx48,
                             const struct silofs_blobidx *blobidx);
 
-void silofs_blobidx32b_xtoh(const struct silofs_blobidx48b *blobidx32,
+void silofs_blobidx48b_xtoh(const struct silofs_blobidx48b *blobidx48,
                             struct silofs_blobidx          *blobidx);
 
 #endif /* SILOFS_BLOBID_H_ */

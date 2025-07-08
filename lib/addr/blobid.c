@@ -176,10 +176,10 @@ bool silofs_blobidx_isequal(const struct silofs_blobidx *blobidx,
 
 uint64_t silofs_blobidx_hash64(const struct silofs_blobidx *blobidx)
 {
-	struct silofs_blobidx48b blobidx32b;
+	struct silofs_blobidx48b blobidx48b;
 
-	silofs_blobidx32b_htox(&blobidx32b, blobidx);
-	return silofs_hash_xxh64(&blobidx32b, sizeof(blobidx32b),
+	silofs_blobidx48b_htox(&blobidx48b, blobidx);
+	return silofs_hash_xxh64(&blobidx48b, sizeof(blobidx48b),
 	                         blobidx->index);
 }
 
@@ -192,17 +192,17 @@ void silofs_blobidx_to_str(const struct silofs_blobidx *blobidx,
 	silofs_strbuf_sprintf(out_sbuf, "%s:%u", sbuf.str, blobidx->index);
 }
 
-void silofs_blobidx32b_htox(struct silofs_blobidx48b *blobidx32,
+void silofs_blobidx48b_htox(struct silofs_blobidx48b *blobidx48,
                             const struct silofs_blobidx *blobidx)
 {
-	memset(blobidx32, 0, sizeof(*blobidx32));
-	silofs_blobid_assign(&blobidx32->blobid, &blobidx->blobid);
-	blobidx32->index = silofs_cpu_to_le32(blobidx->index);
+	memset(blobidx48, 0, sizeof(*blobidx48));
+	silofs_blobid_assign(&blobidx48->blobid, &blobidx->blobid);
+	blobidx48->index = silofs_cpu_to_le32(blobidx->index);
 }
 
-void silofs_blobidx32b_xtoh(const struct silofs_blobidx48b *blobidx32,
+void silofs_blobidx48b_xtoh(const struct silofs_blobidx48b *blobidx48,
                             struct silofs_blobidx *blobidx)
 {
-	silofs_blobid_assign(&blobidx->blobid, &blobidx32->blobid);
-	blobidx->index = silofs_le32_to_cpu(blobidx32->index);
+	silofs_blobid_assign(&blobidx->blobid, &blobidx48->blobid);
+	blobidx->index = silofs_le32_to_cpu(blobidx48->index);
 }

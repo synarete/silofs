@@ -108,7 +108,7 @@ static uint16_t ham12_encode(uint8_t n)
 	return cw;
 }
 
-static uint16_t ham12_calc_syndrome(uint16_t cw)
+static void ham12_extract(uint16_t cw, uint16_t *out_dat, uint16_t *out_syn)
 {
 	const uint16_t d1 = ham12_getbit(cw, 3);
 	const uint16_t d2 = ham12_getbit(cw, 5);
@@ -127,48 +127,39 @@ static uint16_t ham12_calc_syndrome(uint16_t cw)
 	const uint16_t p4r = p4 ^ d2 ^ d3 ^ d4 ^ d8;
 	const uint16_t p8r = p8 ^ d5 ^ d6 ^ d7 ^ d8;
 
-	return (p8r << 3) | (p4r << 2) | (p2r << 1) | p1r;
-}
-
-static uint8_t ham12_extract_data(uint16_t cw)
-{
-	const uint16_t d1 = ham12_getbit(cw, 3);
-	const uint16_t d2 = ham12_getbit(cw, 5);
-	const uint16_t d3 = ham12_getbit(cw, 6);
-	const uint16_t d4 = ham12_getbit(cw, 7);
-	const uint16_t d5 = ham12_getbit(cw, 9);
-	const uint16_t d6 = ham12_getbit(cw, 10);
-	const uint16_t d7 = ham12_getbit(cw, 11);
-	const uint16_t d8 = ham12_getbit(cw, 12);
-	uint16_t n = 0;
-
-	ham12_setbit(&n, 1, d1);
-	ham12_setbit(&n, 2, d2);
-	ham12_setbit(&n, 3, d3);
-	ham12_setbit(&n, 4, d4);
-	ham12_setbit(&n, 5, d5);
-	ham12_setbit(&n, 6, d6);
-	ham12_setbit(&n, 7, d7);
-	ham12_setbit(&n, 8, d8);
-
-	return (uint8_t)n;
+	*out_dat = 0;
+	ham12_setbit(out_dat, 1, d1);
+	ham12_setbit(out_dat, 2, d2);
+	ham12_setbit(out_dat, 3, d3);
+	ham12_setbit(out_dat, 4, d4);
+	ham12_setbit(out_dat, 5, d5);
+	ham12_setbit(out_dat, 6, d6);
+	ham12_setbit(out_dat, 7, d7);
+	ham12_setbit(out_dat, 8, d8);
+	*out_syn = (p8r << 3) | (p4r << 2) | (p2r << 1) | p1r;
 }
 
 static int ham12_decode(uint16_t cw, uint8_t *out_dat)
 {
-	uint16_t syn;
+	uint16_t syn, dat;
 
-	*out_dat = ham12_extract_data(cw);
-	syn = ham12_calc_syndrome(cw);
+	ham12_extract(cw, &dat, &syn);
 	if (syn > 12) {
 		/* un-correctable data */
 		return -1;
 	}
-	if (syn != 0) {
-		/* one (or more) bit flips */
-		ham12_flipbit(&cw, syn);
-		*out_dat = ham12_extract_data(cw);
+	if (syn == 0) {
+		goto out_ok;
 	}
+	/* one (or more) bit flips */
+	ham12_flipbit(&cw, syn);
+	ham12_extract(cw, &dat, &syn);
+	if (syn > 12) {
+		/* un-correctable data */
+		return -1;
+	}
+out_ok:
+	*out_dat = (uint8_t)dat;
 	return 0;
 }
 

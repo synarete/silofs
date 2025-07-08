@@ -28,16 +28,14 @@
 void silofs_caddr_reset(struct silofs_caddr *caddr)
 {
 	silofs_blobid_reset(&caddr->blobid);
-	caddr->size = 0;
 	caddr->ctype = SILOFS_CTYPE_NONE;
 }
 
 void silofs_caddr_setup(struct silofs_caddr *caddr,
-                        const struct silofs_hash256 *hash, uint32_t size,
+                        const struct silofs_hash256 *hash,
                         enum silofs_ctype ctype)
 {
 	silofs_blobid_assign_hash(&caddr->blobid, hash);
-	caddr->size = size;
 	caddr->ctype = ctype;
 }
 
@@ -45,20 +43,18 @@ void silofs_caddr_assign(struct silofs_caddr *caddr,
                          const struct silofs_caddr *other)
 {
 	silofs_blobid_assign(&caddr->blobid, &other->blobid);
-	caddr->size = other->size;
 	caddr->ctype = other->ctype;
 }
 
 bool silofs_caddr_isnone(const struct silofs_caddr *caddr)
 {
-	return (caddr->ctype == SILOFS_CTYPE_NONE) || (caddr->size == 0);
+	return (caddr->ctype == SILOFS_CTYPE_NONE);
 }
 
 bool silofs_caddr_isequal(const struct silofs_caddr *caddr,
                           const struct silofs_caddr *other)
 {
-	return (caddr->size == other->size) &&
-	       (caddr->ctype == other->ctype) &&
+	return (caddr->ctype == other->ctype) &&
 	       silofs_blobid_isequal(&caddr->blobid, &other->blobid);
 }
 
@@ -67,14 +63,13 @@ static size_t caddr_to_str(const struct silofs_caddr *caddr, char *s, size_t n)
 	struct silofs_strbuf sbuf;
 	const int vers = SILOFS_FMT_VERSION;
 	const int ctype = (int)(caddr->ctype);
-	const uint32_t size = caddr->size;
 	size_t hn = 0;
 	size_t pn = 0;
 	char *d = s;
 
 	silofs_blobid_to_sbuf(&caddr->blobid, &sbuf);
 	hn = silofs_str_length(sbuf.str);
-	pn = (size_t)snprintf(d, n, "silofs.v%d.%d.%x:", vers, ctype, size);
+	pn = (size_t)snprintf(d, n, "silofs.v%d.%d:", vers, ctype);
 	if ((pn + hn) < n) {
 		d += pn;
 		strncpy(d, sbuf.str, hn);
@@ -95,17 +90,15 @@ int silofs_caddr_to_str(const struct silofs_caddr *caddr, char *s, size_t n)
 	return (k < n) ? 0 : -SILOFS_ERANGE;
 }
 
-static int check_ctype_size(enum silofs_ctype ctype, size_t size)
+static int check_ctype(enum silofs_ctype ctype)
 {
 	int ret;
 
 	switch (ctype) {
 	case SILOFS_CTYPE_BOOTREC:
-		ret = (size == SILOFS_BOOTREC_SIZE) ? 0 : -SILOFS_EPROTO;
-		break;
 	case SILOFS_CTYPE_ENCSEG:
 	case SILOFS_CTYPE_PACKIDX:
-		ret = !(size % SILOFS_KB_SIZE) ? 0 : -SILOFS_EPROTO;
+		ret = 0;
 		break;
 	case SILOFS_CTYPE_NONE:
 	default:
@@ -123,7 +116,6 @@ int silofs_caddr_from_str(struct silofs_caddr *caddr, const char *s, size_t n)
 	enum silofs_ctype ctype;
 	int vers = 0;
 	int ctyp = 0;
-	uint32_t size = 0;
 	int k = 0;
 	int err = 0;
 
@@ -133,16 +125,15 @@ int silofs_caddr_from_str(struct silofs_caddr *caddr, const char *s, size_t n)
 	silofs_strbuf_setup_by2(&sbuf, s, n);
 
 	silofs_strbuf_reset(&hname);
-	k = sscanf(sbuf.str, "silofs.v%d.%d.%x:%64s", &vers, &ctyp, &size,
-	           hname.str);
-	if (k != 4) {
+	k = sscanf(sbuf.str, "silofs.v%d.%d:%64s", &vers, &ctyp, hname.str);
+	if (k != 3) {
 		return -SILOFS_EINVAL;
 	}
 	if (vers != SILOFS_FMT_VERSION) {
 		return -SILOFS_EPROTO;
 	}
 	ctype = (enum silofs_ctype)ctyp;
-	err = check_ctype_size(ctype, size);
+	err = check_ctype(ctype);
 	if (err) {
 		return err;
 	}
@@ -150,7 +141,7 @@ int silofs_caddr_from_str(struct silofs_caddr *caddr, const char *s, size_t n)
 	if (err) {
 		return err;
 	}
-	silofs_caddr_setup(caddr, &hash, size, ctype);
+	silofs_caddr_setup(caddr, &hash, ctype);
 	return 0;
 }
 
@@ -210,7 +201,6 @@ void silofs_caddr64b_htox(struct silofs_caddr64b *caddr64b,
 {
 	memset(caddr64b, 0, sizeof(*caddr64b));
 	silofs_blobid_assign(&caddr64b->blobid, &caddr->blobid);
-	caddr64b->size = silofs_cpu_to_le32(caddr->size);
 	caddr64b->ctype = (uint8_t)caddr->ctype;
 }
 
@@ -218,6 +208,5 @@ void silofs_caddr64b_xtoh(const struct silofs_caddr64b *caddr64b,
                           struct silofs_caddr *caddr)
 {
 	silofs_blobid_assign(&caddr->blobid, &caddr64b->blobid);
-	caddr->size = silofs_le32_to_cpu(caddr64b->size);
 	caddr->ctype = caddr64b->ctype;
 }

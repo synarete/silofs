@@ -23,14 +23,6 @@
 #include "bootrec.h"
 #include "env.h"
 
-static bool caddr_isbootrec(const struct silofs_caddr *caddr)
-{
-	return (caddr->ctype == SILOFS_CTYPE_BOOTREC) &&
-	       (caddr->size == SILOFS_BOOTREC_SIZE);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 static void
 env_bind_sbi(struct silofs_env *env, struct silofs_sb_info *sbi_new)
 {
@@ -344,6 +336,11 @@ int silofs_env_setup(struct silofs_env *env, const struct silofs_password *pw)
 bool silofs_env_hasflag(const struct silofs_env *env, enum silofs_flags f)
 {
 	return (env->base.args->flags & f) == f;
+}
+
+static bool caddr_isbootrec(const struct silofs_caddr *caddr)
+{
+	return (caddr->ctype == SILOFS_CTYPE_BOOTREC);
 }
 
 int silofs_env_bootrec_caddr(const struct silofs_env *env,

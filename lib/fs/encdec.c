@@ -109,9 +109,7 @@ void silofs_calc_caddr_of(const struct silofs_mdigest *md,
                           struct silofs_caddr *out_caddr)
 {
 	struct silofs_hash256 hash;
-	uint32_t iov_len;
 
 	silofs_sha256_ofv(md, iov, iov_cnt, &hash);
-	iov_len = (uint32_t)silofs_iov_length(iov, iov_cnt);
-	silofs_caddr_setup(out_caddr, &hash, iov_len, ctype);
+	silofs_caddr_setup(out_caddr, &hash, ctype);
 }

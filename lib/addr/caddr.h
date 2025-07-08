@@ -25,7 +25,6 @@ struct silofs_strview;
 /* content-addressable identifier */
 struct silofs_caddr {
 	union silofs_blobid blobid;
-	uint32_t            size;
 	enum silofs_ctype   ctype;
 };
 
@@ -38,8 +37,8 @@ int silofs_caddr_to_str(const struct silofs_caddr *caddr, char *s, size_t n);
 void silofs_caddr_reset(struct silofs_caddr *caddr);
 
 void silofs_caddr_setup(struct silofs_caddr         *caddr,
-                        const struct silofs_hash256 *hash, uint32_t size,
-                        enum silofs_ctype ctype);
+                        const struct silofs_hash256 *hash,
+                        enum silofs_ctype            ctype);
 
 void silofs_caddr_assign(struct silofs_caddr       *caddr,
                          const struct silofs_caddr *other);

@@ -64,7 +64,6 @@ static bool ptype_isdata(enum silofs_ptype ptype)
 static const struct silofs_paddr s_silofs_paddr_none = {
 	.blobidx.index = 0,
 	.off = SILOFS_OFF_NULL,
-	.len = 0,
 	.ptype = SILOFS_PTYPE_NONE,
 };
 
@@ -75,18 +74,17 @@ const struct silofs_paddr *silofs_paddr_none(void)
 
 bool silofs_paddr_isnull(const struct silofs_paddr *paddr)
 {
-	return (paddr->ptype == SILOFS_PTYPE_NONE) || !paddr->len ||
+	return (paddr->ptype == SILOFS_PTYPE_NONE) ||
 	       silofs_off_isnull(paddr->off) ||
 	       silofs_blobidx_isnull(&paddr->blobidx);
 }
 
 void silofs_paddr_init(struct silofs_paddr *paddr,
                        const struct silofs_blobidx *blobidx,
-                       enum silofs_ptype ptype, loff_t off, size_t len)
+                       enum silofs_ptype ptype, loff_t off)
 {
 	silofs_blobidx_assign(&paddr->blobidx, blobidx);
 	paddr->off = off;
-	paddr->len = len;
 	paddr->ptype = ptype;
 }
 
@@ -94,7 +92,6 @@ void silofs_paddr_fini(struct silofs_paddr *paddr)
 {
 	silofs_blobidx_reset(&paddr->blobidx);
 	paddr->off = SILOFS_OFF_NULL;
-	paddr->len = 0;
 	paddr->ptype = SILOFS_PTYPE_NONE;
 }
 
@@ -108,7 +105,6 @@ void silofs_paddr_assign(struct silofs_paddr *paddr,
 {
 	silofs_blobidx_assign(&paddr->blobidx, &other->blobidx);
 	paddr->off = other->off;
-	paddr->len = other->len;
 	paddr->ptype = other->ptype;
 }
 
@@ -127,10 +123,6 @@ long silofs_paddr_compare(const struct silofs_paddr *paddr1,
 		return cmp;
 	}
 	cmp = (long)paddr1->off - (long)paddr2->off;
-	if (cmp) {
-		return cmp;
-	}
-	cmp = (long)paddr1->len - (long)paddr2->len;
 	if (cmp) {
 		return cmp;
 	}
@@ -158,7 +150,6 @@ void silofs_paddr64b_htox(struct silofs_paddr64b *paddr64,
 	silofs_paddr64b_reset(paddr64);
 	silofs_blobidx48b_htox(&paddr64->blobidx, &paddr->blobidx);
 	paddr64->off = silofs_cpu_to_off(paddr->off);
-	paddr64->len = silofs_cpu_to_le32((uint32_t)paddr->len);
 	paddr64->ptype = (uint8_t)(paddr->ptype);
 }
 
@@ -167,6 +158,5 @@ void silofs_paddr64b_xtoh(const struct silofs_paddr64b *paddr64,
 {
 	silofs_blobidx48b_xtoh(&paddr64->blobidx, &paddr->blobidx);
 	paddr->off = silofs_off_to_cpu(paddr64->off);
-	paddr->len = silofs_le32_to_cpu(paddr64->len);
 	paddr->ptype = (enum silofs_ptype)(paddr64->ptype);
 }

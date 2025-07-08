@@ -54,10 +54,9 @@ pvsegr_curr_paddr_at(const struct silofs_pvsegr *pvsegr, loff_t pos,
                      enum silofs_ptype ptype, struct silofs_paddr *out_paddr)
 {
 	struct silofs_blobidx blobidx;
-	const size_t len = silofs_ptype_size(ptype);
 
 	pvsegr_curr_blobidx(pvsegr, &blobidx);
-	silofs_paddr_init(out_paddr, &blobidx, ptype, pos, len);
+	silofs_paddr_init(out_paddr, &blobidx, ptype, pos);
 }
 
 static void
@@ -79,16 +78,18 @@ pvsegr_last_paddr(const struct silofs_pvsegr *pvsegr, enum silofs_ptype ptype,
 }
 
 static void pvsegr_advance_by(struct silofs_pvsegr *pvsegr,
-                              const struct silofs_paddr *paddr)
+                              const struct silofs_paddr *paddr, size_t len)
 {
-	pvsegr->curr_pos = silofs_off_end(paddr->off, paddr->len);
+	pvsegr->curr_pos = silofs_off_end(paddr->off, len);
 }
 
 static void pvsegr_carve(struct silofs_pvsegr *pvsegr, enum silofs_ptype ptype,
                          struct silofs_paddr *out_paddr)
 {
+	const size_t len = silofs_ptype_size(ptype);
+
 	pvsegr_curr_paddr(pvsegr, ptype, out_paddr);
-	pvsegr_advance_by(pvsegr, out_paddr);
+	pvsegr_advance_by(pvsegr, out_paddr, len);
 }
 
 static bool pvsegr_has_blobid(const struct silofs_pvsegr *pvsegr,

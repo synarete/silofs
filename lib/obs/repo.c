@@ -3244,7 +3244,6 @@ repo_save_pobj(struct silofs_repo *repo, const struct silofs_paddr *paddr,
                const struct silofs_rovec *rovec)
 {
 	struct silofs_pvsegf *pvsegf = NULL;
-	const size_t len = silofs_min(paddr->len, rovec->rov_len);
 	int err;
 
 	err = repo_check_wopen(repo);
@@ -3259,7 +3258,8 @@ repo_save_pobj(struct silofs_repo *repo, const struct silofs_paddr *paddr,
 	if (err) {
 		return err;
 	}
-	err = pvsegf_pwriten(pvsegf, paddr->off, rovec->rov_base, len);
+	err = pvsegf_pwriten(pvsegf, paddr->off, rovec->rov_base,
+	                     rovec->rov_len);
 	if (err) {
 		return err;
 	}
@@ -3283,7 +3283,6 @@ repo_load_pobj(struct silofs_repo *repo, const struct silofs_paddr *paddr,
                const struct silofs_rwvec *rwvec)
 {
 	struct silofs_pvsegf *pvsegf = NULL;
-	const size_t len = silofs_min(paddr->len, rwvec->rwv_len);
 	int err;
 
 	err = repo_check_ropen(repo);
@@ -3298,7 +3297,8 @@ repo_load_pobj(struct silofs_repo *repo, const struct silofs_paddr *paddr,
 	if (err) {
 		return err;
 	}
-	err = pvsegf_preadn(pvsegf, paddr->off, rwvec->rwv_base, len);
+	err = pvsegf_preadn(pvsegf, paddr->off, rwvec->rwv_base,
+	                    rwvec->rwv_len);
 	if (err) {
 		return err;
 	}

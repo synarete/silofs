@@ -23,7 +23,6 @@
 struct silofs_paddr {
 	struct silofs_blobidx blobidx;
 	loff_t                off;
-	size_t                len;
 	enum silofs_ptype     ptype;
 };
 
@@ -39,7 +38,7 @@ bool silofs_paddr_isnull(const struct silofs_paddr *paddr);
 
 void silofs_paddr_init(struct silofs_paddr         *paddr,
                        const struct silofs_blobidx *blobidx,
-                       enum silofs_ptype ptype, loff_t off, size_t len);
+                       enum silofs_ptype ptype, loff_t off);
 
 void silofs_paddr_fini(struct silofs_paddr *paddr);
 

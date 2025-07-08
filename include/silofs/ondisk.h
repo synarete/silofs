@@ -556,9 +556,8 @@ struct silofs_pvsegr64b {
 struct silofs_paddr64b {
 	struct silofs_blobidx48b blobidx;
 	int64_t                  off;
-	uint32_t                 len;
 	uint8_t                  ptype;
-	uint8_t                  pad[3];
+	uint8_t                  pad[7];
 } silofs_attr_aligned16;
 
 /* logical volume's segment identifier */

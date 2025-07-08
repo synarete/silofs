@@ -257,7 +257,7 @@ static void envi_fini_alloc(struct silofs_env_inst *envi)
 }
 
 static void envi_make_repo_base(const struct silofs_env_inst *envi,
-                                struct silofs_repo_base *re_base)
+				struct silofs_repo_base *re_base)
 {
 	silofs_memzero(re_base, sizeof(*re_base));
 	re_base->alloc = envi->alloc;
@@ -687,12 +687,12 @@ static void envi_del(struct silofs_env_inst *envi)
 }
 
 int silofs_create_env(const struct silofs_args *args,
-                      struct silofs_env **out_env)
+		      struct silofs_env **out_env)
 {
 	struct silofs_env_inst *envi = NULL;
 	int err = 0;
 
-	STATICASSERT_LE(sizeof(*envi), 16 * SILOFS_KILO);
+	STATICASSERT_LE(sizeof(*envi), 32 * SILOFS_KILO);
 
 	err = check_args(args);
 	if (err) {

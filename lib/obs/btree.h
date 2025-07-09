@@ -25,7 +25,6 @@ struct silofs_repo;
 
 /* b+tree base refs  */
 struct silofs_btree_base {
-	struct silofs_pvsegr *pvsegr;
 	struct silofs_pcache *pcache;
 	struct silofs_repo   *repo;
 };

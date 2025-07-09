@@ -18,7 +18,6 @@
 #include <silofs/errors.h>
 #include <silofs/ondisk.h>
 #include "addr.h"
-#include "pvlogs.h"
 #include "repo.h"
 #include "pnodes.h"
 #include "pcache.h"
@@ -207,26 +206,16 @@ void silofs_btree_update_root(struct silofs_btree *btree,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static const union silofs_blobid *
-btree_main_blobid(const struct silofs_btree *btree)
-{
-	return &btree->bt_base.pvsegr->blobid;
-}
-
-static bool btree_has_main_blobid_as(const struct silofs_btree *btree,
-                                     const struct silofs_paddr *paddr)
-{
-	const union silofs_blobid *blobid = btree_main_blobid(btree);
-
-	return silofs_blobid_isequal(blobid, &paddr->blobidx.blobid);
-}
-
 static bool btree_is_writeable(const struct silofs_btree *btree,
                                const struct silofs_btnode_info *bni)
 {
 	const struct silofs_paddr *paddr = bni_paddr(bni);
 
-	return btree_has_main_blobid_as(btree, paddr);
+	// XXX FIXME
+	silofs_unused(paddr);
+	silofs_unused(btree);
+
+	return true;
 }
 
 static void btree_update_bni(const struct silofs_btree *btree,
@@ -487,7 +476,9 @@ static int btc_spawn_btnode_at(const struct silofs_btree_ctx *btc,
 static void btc_consume_btnode_space(const struct silofs_btree_ctx *btc,
                                      struct silofs_paddr *out_paddr)
 {
-	silofs_pvsegr_next_btnode(btc->btree->bt_base.pvsegr, out_paddr);
+	// XXX FIXME
+	silofs_unused(btc);
+	silofs_paddr_reset(out_paddr);
 }
 
 static int btc_spawn_btnode_by(const struct silofs_btree_ctx *btc,

@@ -17,12 +17,10 @@
 #ifndef SILOFS_BSTORE_H_
 #define SILOFS_BSTORE_H_
 
-#include "pvlogs.h"
 #include "btree.h"
 
 /* blobs-storage control object */
 struct silofs_bstore {
-	struct silofs_pvsegr  pvsegr;
 	struct silofs_btree   btree;
 	struct silofs_repo   *repo;
 	struct silofs_pcache *pcache;
@@ -39,14 +37,10 @@ int silofs_bstore_dropall(struct silofs_bstore *bstore);
 
 int silofs_bstore_format(struct silofs_bstore *bstore);
 
-int silofs_bstore_reload(struct silofs_bstore       *bstore,
-                         const struct silofs_pvsegr *pvsegr);
+int silofs_bstore_reload(struct silofs_bstore *bstore);
 
 int silofs_bstore_close(struct silofs_bstore *bstore);
 
 int silofs_bstore_flush_dirty(struct silofs_bstore *bstore);
-
-void silofs_bstore_curr_pvsegr(const struct silofs_bstore *bstore,
-                               struct silofs_pvsegr       *out_pvsegr);
 
 #endif /* SILOFS_BSTORE_H_ */

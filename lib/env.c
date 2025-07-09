@@ -397,7 +397,10 @@ int silofs_env_set_pack_caddr(struct silofs_env *env,
 
 int silofs_env_format_bstore(struct silofs_env *env)
 {
-	return silofs_bstore_format(env->base.bstore);
+	// XXX FIXME
+	silofs_bstore_format(env->base.bstore);
+
+	return 0;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

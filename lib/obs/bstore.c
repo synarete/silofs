@@ -18,7 +18,6 @@
 #include "infra.h"
 #include "addr.h"
 #include "repo.h"
-#include "pvlogs.h"
 #include "pnodes.h"
 #include "pcache.h"
 #include "btree.h"
@@ -28,12 +27,10 @@ int silofs_bstore_init(struct silofs_bstore *bstore,
                        struct silofs_pcache *pcache, struct silofs_repo *repo)
 {
 	const struct silofs_btree_base base = {
-		.pvsegr = &bstore->pvsegr,
 		.pcache = pcache,
 		.repo = repo,
 	};
 
-	silofs_pvsegr_init(&bstore->pvsegr);
 	silofs_btree_init(&bstore->btree, &base);
 	bstore->repo = repo;
 	bstore->pcache = pcache;
@@ -43,7 +40,6 @@ int silofs_bstore_init(struct silofs_bstore *bstore,
 void silofs_bstore_fini(struct silofs_bstore *bstore)
 {
 	silofs_btree_fini(&bstore->btree);
-	silofs_pvsegr_fini(&bstore->pvsegr);
 	bstore->repo = NULL;
 	bstore->pcache = NULL;
 }
@@ -51,9 +47,10 @@ void silofs_bstore_fini(struct silofs_bstore *bstore)
 static int bstore_validate_paddr(const struct silofs_bstore *bstore,
                                  const struct silofs_paddr *paddr)
 {
-	const struct silofs_pvsegr *pvsegr = &bstore->pvsegr;
-
-	return silofs_pvsegr_has_paddr(pvsegr, paddr) ? 0 : -SILOFS_EINVAL;
+	// XXX FIXME
+	silofs_unused(bstore);
+	silofs_unused(paddr);
+	return 0;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -290,7 +287,9 @@ static int bstore_spawn_btroot(struct silofs_bstore *bstore)
 	struct silofs_paddr paddr;
 	int err;
 
-	silofs_pvsegr_next_btnode(&bstore->pvsegr, &paddr);
+	// XXX FIXME
+	silofs_paddr_reset(&paddr);
+
 	err = bstore_create_btroot_at(bstore, &paddr);
 	if (err) {
 		return err;
@@ -306,7 +305,9 @@ static int bstore_spawn_next_chkpt(struct silofs_bstore *bstore)
 	struct silofs_paddr paddr;
 	struct silofs_chkpt_info *cpi = NULL;
 
-	silofs_pvsegr_next_chkpt(&bstore->pvsegr, &paddr);
+	// XXX FIXME
+	silofs_paddr_reset(&paddr);
+
 	return bstore_spawn_chkpt(bstore, paddr.off == 0, &paddr, &cpi);
 }
 
@@ -352,7 +353,9 @@ static int bstore_stage_last_chkpt(struct silofs_bstore *bstore)
 	struct silofs_chkpt_info *cpi = NULL;
 	int err;
 
-	silofs_pvsegr_last_chkpt(&bstore->pvsegr, &paddr);
+	// XXX FIXME
+	silofs_paddr_reset(&paddr);
+
 	err = bstore_stage_chkpt(bstore, &paddr, &cpi);
 	if (err) {
 		return err;
@@ -372,28 +375,10 @@ static int bstore_reload_btree_root(struct silofs_bstore *bstore)
 	return 0;
 }
 
-static int bstore_assign_pvsegr(struct silofs_bstore *bstore,
-                                const struct silofs_pvsegr *pvsegr)
+int silofs_bstore_reload(struct silofs_bstore *bstore)
 {
 	int err;
 
-	err = silofs_pvsegr_validate(pvsegr);
-	if (err) {
-		return err;
-	}
-	silofs_pvsegr_assign(&bstore->pvsegr, pvsegr);
-	return 0;
-}
-
-int silofs_bstore_reload(struct silofs_bstore *bstore,
-                         const struct silofs_pvsegr *pvsegr)
-{
-	int err;
-
-	err = bstore_assign_pvsegr(bstore, pvsegr);
-	if (err) {
-		return err;
-	}
 	err = bstore_stage_last_chkpt(bstore);
 	if (err) {
 		return err;
@@ -481,11 +466,3 @@ int silofs_bstore_dropall(struct silofs_bstore *bstore)
 	silofs_pcache_drop(bstore->pcache);
 	return 0;
 }
-
-void silofs_bstore_curr_pvsegr(const struct silofs_bstore *bstore,
-                               struct silofs_pvsegr *out_pvsegr)
-{
-	silofs_pvsegr_assign(out_pvsegr, &bstore->pvsegr);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

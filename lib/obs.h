@@ -22,7 +22,6 @@
 #include "obs/repo.h"
 #include "obs/pnodes.h"
 #include "obs/pcache.h"
-#include "obs/pvlogs.h"
 #include "obs/btree.h"
 #include "obs/bstore.h"
 

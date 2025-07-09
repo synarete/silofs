@@ -379,6 +379,8 @@ static void affirm_ondisk_btree(void)
 	REQUIRE_OFFSET64(struct silofs_chkpt_node, cpn_self_paddr, 64);
 	REQUIRE_OFFSET64(struct silofs_chkpt_node, cpn_btree_root, 128);
 	REQUIRE_SIZEOF(struct silofs_chkpt_node, SILOFS_PSEG_CHKPT_SIZE);
+	REQUIRE_SIZEOF_4K(struct silofs_chkpt_node);
+
 	REQUIRE_OFFSET64(struct silofs_btree_node, btn_hdr, 0);
 	REQUIRE_OFFSET64(struct silofs_btree_node, btn_flags, 32);
 	REQUIRE_OFFSET32(struct silofs_btree_node, btn_ltype, 36);

@@ -19,11 +19,11 @@
 
 #include <silofs/ondisk.h>
 
-/* persistent object address within specific volume segment */
+/* persistent object address within specific blob */
 struct silofs_paddr {
-	struct silofs_blobidx blobidx;
-	loff_t                off;
-	enum silofs_ptype     ptype;
+	union silofs_blobid blobid;
+	loff_t              off;
+	enum silofs_ptype   ptype;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -36,8 +36,8 @@ const struct silofs_paddr *silofs_paddr_none(void);
 
 bool silofs_paddr_isnull(const struct silofs_paddr *paddr);
 
-void silofs_paddr_init(struct silofs_paddr         *paddr,
-                       const struct silofs_blobidx *blobidx,
+void silofs_paddr_init(struct silofs_paddr       *paddr,
+                       const union silofs_blobid *blobid,
                        enum silofs_ptype ptype, loff_t off);
 
 void silofs_paddr_fini(struct silofs_paddr *paddr);

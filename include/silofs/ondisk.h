@@ -529,13 +529,6 @@ union silofs_blobid {
 	uint8_t               bid[32];
 } silofs_attr_aligned16;
 
-/* blob identifier + sub-index */
-struct silofs_blobidx48b {
-	union silofs_blobid blobid;
-	uint32_t            index;
-	uint8_t             pad[12];
-} silofs_attr_aligned16;
-
 /* content address (by hash) */
 struct silofs_caddr64b {
 	union silofs_blobid blobid;
@@ -545,10 +538,10 @@ struct silofs_caddr64b {
 
 /* persistent object address */
 struct silofs_paddr64b {
-	struct silofs_blobidx48b blobidx;
-	int64_t                  off;
-	uint8_t                  ptype;
-	uint8_t                  pad[7];
+	union silofs_blobid blobid;
+	int64_t             off;
+	uint8_t             ptype;
+	uint8_t             pad[23];
 } silofs_attr_aligned16;
 
 /* logical volume's segment identifier */

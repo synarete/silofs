@@ -59,7 +59,7 @@ bni_paddr(const struct silofs_btnode_info *bni)
 static const union silofs_blobid *
 bni_blobid(const struct silofs_btnode_info *bni)
 {
-	return &bni->bn_pni.pn_paddr.blobidx.blobid;
+	return &bni->bn_pni.pn_paddr.blobid;
 }
 
 static bool bni_has_same_blobid(const struct silofs_btnode_info *bni,
@@ -228,26 +228,26 @@ static void btree_update_bni(const struct silofs_btree *btree,
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static int btc_stage_pvseg_of(const struct silofs_btree_ctx *btc,
-                              const struct silofs_paddr *paddr)
+static int btc_stage_blob_of(const struct silofs_btree_ctx *btc,
+                             const struct silofs_paddr *paddr)
 {
-	return silofs_repo_stage_pvseg(btc->repo, &paddr->blobidx);
+	return silofs_repo_stage_blob(btc->repo, &paddr->blobid);
 }
 
-static int btc_spawn_pvseg_of(const struct silofs_btree_ctx *btc,
-                              const struct silofs_paddr *paddr)
+static int btc_spawn_blob_of(const struct silofs_btree_ctx *btc,
+                             const struct silofs_paddr *paddr)
 {
-	return silofs_repo_spawn_pvseg(btc->repo, &paddr->blobidx);
+	return silofs_repo_spawn_blob(btc->repo, &paddr->blobid);
 }
 
-static int btc_require_pvseg_of(const struct silofs_btree_ctx *btc,
-                                const struct silofs_paddr *paddr)
+static int btc_require_blob_of(const struct silofs_btree_ctx *btc,
+                               const struct silofs_paddr *paddr)
 {
 	int err;
 
-	err = btc_stage_pvseg_of(btc, paddr);
+	err = btc_stage_blob_of(btc, paddr);
 	if (err == -SILOFS_ENOENT) {
-		err = btc_spawn_pvseg_of(btc, paddr);
+		err = btc_spawn_blob_of(btc, paddr);
 	}
 	return err;
 }
@@ -306,7 +306,7 @@ static int btc_stage_btnode_at(const struct silofs_btree_ctx *btc,
 
 	silofs_assert_eq(paddr->ptype, SILOFS_PTYPE_BTNODE);
 
-	err = btc_stage_pvseg_of(btc, paddr);
+	err = btc_stage_blob_of(btc, paddr);
 	if (err) {
 		return err;
 	}
@@ -461,7 +461,7 @@ static int btc_spawn_btnode_at(const struct silofs_btree_ctx *btc,
 	struct silofs_btnode_info *bni = NULL;
 	int err;
 
-	err = btc_require_pvseg_of(btc, paddr);
+	err = btc_require_blob_of(btc, paddr);
 	if (err) {
 		return err;
 	}

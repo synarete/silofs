@@ -23,14 +23,6 @@ struct silofs_strview;
 struct silofs_strspan;
 struct silofs_strbuf;
 
-/* a pair of unique blob-id and sub-index */
-struct silofs_blobidx {
-	union silofs_blobid blobid;
-	uint32_t            index;
-};
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 void silofs_blobid_generate(union silofs_blobid *blobid);
 
 void silofs_blobid_reset(union silofs_blobid *blobid);
@@ -58,43 +50,5 @@ int silofs_blobid_from_str(union silofs_blobid         *blobid,
 
 uint64_t
 silofs_blobid_hash64(const union silofs_blobid *blobid, uint64_t seed);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-const struct silofs_blobidx *silofs_blobidx_none(void);
-
-void silofs_blobidx_init(struct silofs_blobidx     *blobidx,
-                         const union silofs_blobid *blobid, uint32_t idx);
-
-void silofs_blobidx_fini(struct silofs_blobidx *blobidx);
-
-bool silofs_blobidx_isnull(const struct silofs_blobidx *blobidx);
-
-bool silofs_blobidx_has_blobid(const struct silofs_blobidx *blobidx,
-                               const union silofs_blobid   *blobid);
-
-void silofs_blobidx_generate(struct silofs_blobidx *blobidx);
-
-void silofs_blobidx_reset(struct silofs_blobidx *blobidx);
-
-void silofs_blobidx_assign(struct silofs_blobidx       *blobidx,
-                           const struct silofs_blobidx *other);
-
-long silofs_blobidx_compare(const struct silofs_blobidx *blobidx1,
-                            const struct silofs_blobidx *blobidx2);
-
-bool silofs_blobidx_isequal(const struct silofs_blobidx *blobidx,
-                            const struct silofs_blobidx *other);
-
-uint64_t silofs_blobidx_hash64(const struct silofs_blobidx *blobidx);
-
-void silofs_blobidx_to_str(const struct silofs_blobidx *blobidx,
-                           struct silofs_strbuf        *sbuf);
-
-void silofs_blobidx48b_htox(struct silofs_blobidx48b    *blobidx48,
-                            const struct silofs_blobidx *blobidx);
-
-void silofs_blobidx48b_xtoh(const struct silofs_blobidx48b *blobidx48,
-                            struct silofs_blobidx          *blobidx);
 
 #endif /* SILOFS_BLOBID_H_ */

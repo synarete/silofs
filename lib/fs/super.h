@@ -45,7 +45,7 @@ const struct silofs_uaddr *silofs_sbi_uaddr(const struct silofs_sb_info *sbi);
 
 const struct silofs_laddr *silofs_sbi_laddr(const struct silofs_sb_info *sbi);
 
-const union silofs_blobid *silofs_sbi_lvid(const struct silofs_sb_info *sbi);
+const struct silofs_blobid *silofs_sbi_lvid(const struct silofs_sb_info *sbi);
 
 void silofs_sbi_incref(struct silofs_sb_info *sbi);
 
@@ -83,7 +83,7 @@ bool silofs_sbi_test_flags(const struct silofs_sb_info *sbi,
 int silof_sbi_check_mut_fs(const struct silofs_sb_info *sbi);
 
 void silofs_sbi_self_blobid(const struct silofs_sb_info *sbi,
-                            union silofs_blobid         *out_vid);
+                            struct silofs_blobid        *out_vid);
 
 int silofs_sbi_main_lseg(const struct silofs_sb_info *sbi,
                          enum silofs_ltype            vspace,

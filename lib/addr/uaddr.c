@@ -81,7 +81,7 @@ bool silofs_uaddr_isequal(const struct silofs_uaddr *uaddr1,
 	return (silofs_uaddr_compare(uaddr1, uaddr2) == 0);
 }
 
-const union silofs_blobid *
+const struct silofs_blobid *
 silofs_uaddr_blobid(const struct silofs_uaddr *uaddr)
 {
 	return &uaddr->laddr.lsid.blobid;

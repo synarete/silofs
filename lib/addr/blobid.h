@@ -23,32 +23,32 @@ struct silofs_strview;
 struct silofs_strspan;
 struct silofs_strbuf;
 
-void silofs_blobid_generate(union silofs_blobid *blobid);
+void silofs_blobid_generate(struct silofs_blobid *blobid);
 
-void silofs_blobid_reset(union silofs_blobid *blobid);
+void silofs_blobid_reset(struct silofs_blobid *blobid);
 
-void silofs_blobid_assign(union silofs_blobid       *blobid,
-                          const union silofs_blobid *other);
+void silofs_blobid_assign(struct silofs_blobid       *blobid,
+                          const struct silofs_blobid *other);
 
-void silofs_blobid_assign_hash(union silofs_blobid         *blobid,
+void silofs_blobid_assign_hash(struct silofs_blobid        *blobid,
                                const struct silofs_hash256 *hash);
 
-long silofs_blobid_compare(const union silofs_blobid *blobid1,
-                           const union silofs_blobid *blobid2);
+long silofs_blobid_compare(const struct silofs_blobid *blobid1,
+                           const struct silofs_blobid *blobid2);
 
-bool silofs_blobid_isequal(const union silofs_blobid *blobid1,
-                           const union silofs_blobid *blobid2);
+bool silofs_blobid_isequal(const struct silofs_blobid *blobid1,
+                           const struct silofs_blobid *blobid2);
 
-void silofs_blobid_to_sbuf(const union silofs_blobid *blobid,
-                           struct silofs_strbuf      *sbuf);
+void silofs_blobid_to_sbuf(const struct silofs_blobid *blobid,
+                           struct silofs_strbuf       *sbuf);
 
-void silofs_blobid_to_str(const union silofs_blobid *blobid,
-                          struct silofs_strspan     *ss);
+void silofs_blobid_to_str(const struct silofs_blobid *blobid,
+                          struct silofs_strspan      *ss);
 
-int silofs_blobid_from_str(union silofs_blobid         *blobid,
+int silofs_blobid_from_str(struct silofs_blobid        *blobid,
                            const struct silofs_strview *sv);
 
 uint64_t
-silofs_blobid_hash64(const union silofs_blobid *blobid, uint64_t seed);
+silofs_blobid_hash64(const struct silofs_blobid *blobid, uint64_t seed);
 
 #endif /* SILOFS_BLOBID_H_ */

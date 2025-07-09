@@ -83,10 +83,10 @@ void silofs_bootrec_set_sb_uaddr(struct silofs_bootrec     *bootrec,
                                  const struct silofs_uaddr *sb_uaddr);
 
 void silofs_bootrec_blobid(const struct silofs_bootrec *bootrec,
-                           union silofs_blobid         *out_vid);
+                           struct silofs_blobid        *out_vid);
 
-void silofs_make_bootrec_uaddr(const union silofs_blobid *blobid,
-                               struct silofs_uaddr       *out_uaddr);
+void silofs_make_bootrec_uaddr(const struct silofs_blobid *blobid,
+                               struct silofs_uaddr        *out_uaddr);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

@@ -443,7 +443,7 @@ static void vstgc_make_silofs_lsid_of(const struct silofs_vstage_ctx *vstg_ctx,
                                       enum silofs_ltype ltype,
                                       struct silofs_lsid *out_lsid)
 {
-	union silofs_blobid lvid;
+	struct silofs_blobid lvid;
 
 	silofs_sbi_self_blobid(vstg_ctx->sbi, &lvid);
 	silofs_lsid_setup(out_lsid, &lvid, voff, vstg_ctx->vspace, height,

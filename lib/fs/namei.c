@@ -2400,7 +2400,7 @@ static void fill_query_boot(const struct silofs_inode_info *ii,
                             struct silofs_ioc_query *query)
 {
 	struct silofs_caddr caddr;
-	union silofs_blobid blobid;
+	struct silofs_blobid blobid;
 	struct silofs_bootpath bootpath = { .repodir.len = 0 };
 	struct silofs_query_boot *qboot = &query->u.boot;
 	struct silofs_strspan ss;

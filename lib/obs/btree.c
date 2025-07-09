@@ -56,7 +56,7 @@ bni_paddr(const struct silofs_btnode_info *bni)
 	return &bni->bn_pni.pn_paddr;
 }
 
-static const union silofs_blobid *
+static const struct silofs_blobid *
 bni_blobid(const struct silofs_btnode_info *bni)
 {
 	return &bni->bn_pni.pn_paddr.blobid;

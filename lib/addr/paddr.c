@@ -78,7 +78,7 @@ bool silofs_paddr_isnull(const struct silofs_paddr *paddr)
 }
 
 void silofs_paddr_init(struct silofs_paddr *paddr,
-                       const union silofs_blobid *blobid,
+                       const struct silofs_blobid *blobid,
                        enum silofs_ptype ptype, loff_t off)
 {
 	silofs_blobid_assign(&paddr->blobid, blobid);

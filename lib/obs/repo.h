@@ -127,21 +127,21 @@ int silofs_repo_unlink_cobj(struct silofs_repo        *repo,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_repo_stat_blob(struct silofs_repo        *repo,
-                          const union silofs_blobid *blobid,
-                          struct stat               *out_st);
+int silofs_repo_stat_blob(struct silofs_repo         *repo,
+                          const struct silofs_blobid *blobid,
+                          struct stat                *out_st);
 
-int silofs_repo_spawn_blob(struct silofs_repo        *repo,
-                           const union silofs_blobid *blobid);
+int silofs_repo_spawn_blob(struct silofs_repo         *repo,
+                           const struct silofs_blobid *blobid);
 
-int silofs_repo_stage_blob(struct silofs_repo        *repo,
-                           const union silofs_blobid *blobid);
+int silofs_repo_stage_blob(struct silofs_repo         *repo,
+                           const struct silofs_blobid *blobid);
 
-int silofs_repo_remove_blob(struct silofs_repo        *repo,
-                            const union silofs_blobid *blobid);
+int silofs_repo_remove_blob(struct silofs_repo         *repo,
+                            const struct silofs_blobid *blobid);
 
-int silofs_repo_flush_blob(struct silofs_repo        *repo,
-                           const union silofs_blobid *blobid);
+int silofs_repo_flush_blob(struct silofs_repo         *repo,
+                           const struct silofs_blobid *blobid);
 
 int silofs_repo_save_pobj(struct silofs_repo        *repo,
                           const struct silofs_paddr *paddr,

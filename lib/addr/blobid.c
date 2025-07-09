@@ -98,6 +98,11 @@ int silofs_blobid_from_str(union silofs_blobid *blobid,
 	return 0;
 }
 
+uint64_t silofs_blobid_hash64(const union silofs_blobid *blobid, uint64_t seed)
+{
+	return silofs_hash_xxh64(blobid->bid, sizeof(blobid->bid), seed);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct silofs_blobidx s_blobidx_none = {

@@ -116,18 +116,6 @@ static void bootrec1k_set_main_ivkey(struct silofs_bootrec1k *bootrec1k,
 	silofs_iv_assign(&bootrec1k->br_main_iv, &ivkey->iv);
 }
 
-static void bootrec1k_pvsegr(const struct silofs_bootrec1k *bootrec1k,
-                             struct silofs_pvsegr *out_pvsegr)
-{
-	silofs_pvsegr64b_xtoh(&bootrec1k->br_pvsegr, out_pvsegr);
-}
-
-static void bootrec1k_set_pvsegr(struct silofs_bootrec1k *bootrec1k,
-                                 const struct silofs_pvsegr *pvsegr)
-{
-	silofs_pvsegr64b_htox(&bootrec1k->br_pvsegr, pvsegr);
-}
-
 static int bootrec1k_check_base(const struct silofs_bootrec1k *bootrec1k)
 {
 	const uint64_t magic = bootrec1k_magic(bootrec1k);
@@ -272,7 +260,6 @@ void silofs_bootrec1k_xtoh(const struct silofs_bootrec1k *bootrec1k,
 	bootrec1k_uuid(bootrec1k, &bootrec->uuid);
 	bootrec1k_main_ivkey(bootrec1k, &bootrec->main_ivkey);
 	bootrec1k_sb_uaddr(bootrec1k, &bootrec->sb_uaddr);
-	bootrec1k_pvsegr(bootrec1k, &bootrec->pvsegr);
 	bootrec->flags = bootrec1k_flags(bootrec1k);
 	bootrec->cipher_algo = (int32_t)bootrec1k_chiper_algo(bootrec1k);
 	bootrec->cipher_mode = (int32_t)bootrec1k_chiper_mode(bootrec1k);
@@ -286,7 +273,6 @@ void silofs_bootrec1k_htox(struct silofs_bootrec1k *bootrec1k,
 	bootrec1k_set_flags(bootrec1k, bootrec->flags);
 	bootrec1k_set_uuid(bootrec1k, &bootrec->uuid);
 	bootrec1k_set_main_ivkey(bootrec1k, &bootrec->main_ivkey);
-	bootrec1k_set_pvsegr(bootrec1k, &bootrec->pvsegr);
 	bootrec1k_set_cipher(bootrec1k, bootrec->cipher_algo,
 	                     bootrec->cipher_mode);
 }
@@ -312,7 +298,6 @@ void silofs_bootrec_assign(struct silofs_bootrec *bootrec,
 {
 	silofs_uuid_assign(&bootrec->uuid, &other->uuid);
 	silofs_ivkey_assign(&bootrec->main_ivkey, &other->main_ivkey);
-	silofs_pvsegr_assign(&bootrec->pvsegr, &other->pvsegr);
 	silofs_uaddr_assign(&bootrec->sb_uaddr, &other->sb_uaddr);
 	bootrec->flags = other->flags;
 	bootrec->cipher_algo = other->cipher_algo;
@@ -358,18 +343,6 @@ int silofs_bootrec_gen_ivkey(struct silofs_bootrec *bootrec,
 	silofs_ivkey_xor_with(&ivkey[0], &ivkey[1]);
 	silofs_bootrec_set_ivkey(bootrec, &ivkey[0]);
 	return 0;
-}
-
-void silofs_bootrec_pvsegr(const struct silofs_bootrec *bootrec,
-                           struct silofs_pvsegr *out_pvsegr)
-{
-	silofs_pvsegr_assign(out_pvsegr, &bootrec->pvsegr);
-}
-
-void silofs_bootrec_set_pvsegr(struct silofs_bootrec *bootrec,
-                               const struct silofs_pvsegr *pvsegr)
-{
-	silofs_pvsegr_assign(&bootrec->pvsegr, pvsegr);
 }
 
 void silofs_bootrec_sb_uaddr(const struct silofs_bootrec *bootrec,

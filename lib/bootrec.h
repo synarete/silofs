@@ -29,7 +29,6 @@ struct silofs_bootrec {
 	struct silofs_uuid   uuid;
 	struct silofs_ivkey  main_ivkey;
 	struct silofs_uaddr  sb_uaddr;
-	struct silofs_pvsegr pvsegr;
 	enum silofs_bootrecf flags;
 	int32_t              cipher_algo;
 	int32_t              cipher_mode;
@@ -76,12 +75,6 @@ void silofs_bootrec_set_ivkey(struct silofs_bootrec     *bootrec,
 
 int silofs_bootrec_gen_ivkey(struct silofs_bootrec       *bootrec,
                              const struct silofs_mdigest *md);
-
-void silofs_bootrec_pvsegr(const struct silofs_bootrec *bootrec,
-                           struct silofs_pvsegr        *out_pvsegr);
-
-void silofs_bootrec_set_pvsegr(struct silofs_bootrec      *bootrec,
-                               const struct silofs_pvsegr *pvsegr);
 
 void silofs_bootrec_sb_uaddr(const struct silofs_bootrec *bootrec,
                              struct silofs_uaddr         *out_uaddr);

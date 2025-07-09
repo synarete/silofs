@@ -56,6 +56,9 @@ void silofs_blobid_to_str(const union silofs_blobid *blobid,
 int silofs_blobid_from_str(union silofs_blobid         *blobid,
                            const struct silofs_strview *sv);
 
+uint64_t
+silofs_blobid_hash64(const union silofs_blobid *blobid, uint64_t seed);
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 const struct silofs_blobidx *silofs_blobidx_none(void);

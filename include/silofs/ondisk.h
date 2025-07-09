@@ -543,15 +543,6 @@ struct silofs_caddr64b {
 	uint8_t             reserved[31];
 } silofs_attr_aligned64;
 
-/* persistent volume segments range */
-struct silofs_pvsegr64b {
-	union silofs_blobid blobid;
-	uint32_t            base_index;
-	uint32_t            curr_index;
-	int64_t             curr_pos;
-	uint8_t             pad[16];
-} silofs_attr_aligned64;
-
 /* persistent object address */
 struct silofs_paddr64b {
 	struct silofs_blobidx48b blobidx;
@@ -602,19 +593,19 @@ struct silofs_vaddr64 {
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 struct silofs_bootrec1k {
-	uint64_t                br_magic;
-	uint64_t                br_version;
-	struct silofs_uuid      br_uuid;
-	uint64_t                br_flags;
-	uint32_t                br_chiper_algo;
-	uint32_t                br_chiper_mode;
-	struct silofs_iv        br_main_iv;
-	struct silofs_key       br_main_key;
-	struct silofs_uaddr96b  br_sb_uaddr;
-	uint8_t                 br_reserved2[32];
-	struct silofs_pvsegr64b br_pvsegr;
-	uint8_t                 br_reserved3[672];
-	struct silofs_hash256   br_hash;
+	uint64_t               br_magic;
+	uint64_t               br_version;
+	struct silofs_uuid     br_uuid;
+	uint64_t               br_flags;
+	uint32_t               br_chiper_algo;
+	uint32_t               br_chiper_mode;
+	struct silofs_iv       br_main_iv;
+	struct silofs_key      br_main_key;
+	struct silofs_uaddr96b br_sb_uaddr;
+	uint8_t                br_reserved1[32];
+	uint8_t                br_reserved2[64];
+	uint8_t                br_reserved3[672];
+	struct silofs_hash256  br_hash;
 } silofs_attr_aligned64;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

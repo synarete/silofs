@@ -707,14 +707,6 @@ static int env_update_bootrec(struct silofs_env *env,
 	return 0;
 }
 
-static void env_update_pvsegr(struct silofs_env *env)
-{
-	struct silofs_pvsegr pvsegr;
-
-	silofs_bstore_curr_pvsegr(env->base.bstore, &pvsegr);
-	silofs_bootrec_set_pvsegr(env->base.bootrec, &pvsegr);
-}
-
 int silofs_env_update_by(struct silofs_env *env,
                          const struct silofs_bootrec *bootrec)
 {
@@ -728,7 +720,6 @@ int silofs_env_update_by(struct silofs_env *env,
 	if (err) {
 		return err;
 	}
-	env_update_pvsegr(env);
 	return 0;
 }
 

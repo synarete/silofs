@@ -173,7 +173,6 @@ static void affirm_ondisk_addrs(void)
 	REQUIRE_SIZEOF(struct silofs_laddr64b, 64);
 	REQUIRE_SIZEOF(struct silofs_uaddr96b, 96);
 	REQUIRE_SIZEOF(struct silofs_blobidx48b, 48);
-	REQUIRE_SIZEOF(struct silofs_pvsegr64b, 64);
 	REQUIRE_SIZEOF(struct silofs_paddr64b, 64);
 	REQUIRE_SIZEOF(struct silofs_caddr64b, 64);
 }
@@ -226,7 +225,6 @@ static void affirm_ondisk_bootrec(void)
 	REQUIRE_OFFSET64(struct silofs_bootrec1k, br_main_iv, 48);
 	REQUIRE_OFFSET64(struct silofs_bootrec1k, br_main_key, 64);
 	REQUIRE_OFFSET64(struct silofs_bootrec1k, br_sb_uaddr, 128);
-	REQUIRE_OFFSET64(struct silofs_bootrec1k, br_pvsegr, 256);
 	REQUIRE_SIZEOF(struct silofs_bootrec1k, SILOFS_BOOTREC_SIZE);
 }
 

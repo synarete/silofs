@@ -52,10 +52,4 @@ void silofs_pvsegr_last_chkpt(const struct silofs_pvsegr *pvsegr,
 void silofs_pvsegr_next_btnode(struct silofs_pvsegr *pvsegr,
                                struct silofs_paddr  *out_paddr);
 
-void silofs_pvsegr64b_htox(struct silofs_pvsegr64b    *pvsegr64,
-                           const struct silofs_pvsegr *pvsegr);
-
-void silofs_pvsegr64b_xtoh(const struct silofs_pvsegr64b *pvsegr64,
-                           struct silofs_pvsegr          *pvsegr);
-
 #endif /* SILOFS_PVLOGS_H_ */

@@ -136,7 +136,7 @@ static void ham12_extract(uint16_t cw, uint16_t *out_dat, uint16_t *out_syn)
 	ham12_setbit(out_dat, 6, d6);
 	ham12_setbit(out_dat, 7, d7);
 	ham12_setbit(out_dat, 8, d8);
-	*out_syn = (p8r << 3) | (p4r << 2) | (p2r << 1) | p1r;
+	*out_syn = (uint16_t)((p8r << 3) | (p4r << 2) | (p2r << 1) | p1r);
 }
 
 static int ham12_decode(uint16_t cw, uint8_t *out_dat)
@@ -178,8 +178,7 @@ int silofs_hamming12_decode(uint16_t codeword, uint8_t *out_octet)
 
 static void ham12_encode8(const uint8_t dat[8], uint8_t out[12])
 {
-	unsigned i, j = 0;
-	uint16_t cw;
+	unsigned cw, i, j = 0;
 
 	memset(out, 0, 12);
 	for (i = 0; i < 8; ++i) {
@@ -198,23 +197,22 @@ static void ham12_encode8(const uint8_t dat[8], uint8_t out[12])
 
 static int ham12_decode8(const uint8_t in[12], uint8_t out[8])
 {
-	unsigned i, j = 0;
-	uint16_t cw;
+	unsigned cw, i, j = 0;
 	int nerr = 0;
 
 	memset(out, 0, 8);
 	for (i = 0; i < 8; ++i) {
 		if (i & 1) {
-			cw = ((uint16_t)in[j - 1] & 0xF) << 8;
+			cw = ((unsigned)in[j - 1] & 0xF) << 8;
 			cw |= in[j];
 			j += 1;
 		} else {
 			cw = in[j];
 			cw <<= 4;
-			cw |= (uint16_t)in[j + 1] >> 4;
+			cw |= (unsigned)in[j + 1] >> 4;
 			j += 2;
 		}
-		if (ham12_decode(cw, &out[i])) {
+		if (ham12_decode((uint16_t)cw, &out[i])) {
 			nerr++;
 		}
 	}

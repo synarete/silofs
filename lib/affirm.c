@@ -392,6 +392,23 @@ static void affirm_ondisk_btree(void)
 	REQUIRE_SIZEOF_4K(struct silofs_btree_node);
 }
 
+static void affirm_ondisk_blob(void)
+{
+	REQUIRE_OFFSET64(struct silofs_blob_desc, bd_hdr, 0);
+	REQUIRE_OFFSET64(struct silofs_blob_desc, bd_btime, 32);
+	REQUIRE_OFFSET64(struct silofs_blob_desc, bd_ctime, 48);
+	REQUIRE_OFFSET64(struct silofs_blob_desc, bd_prev, 64);
+	REQUIRE_OFFSET64(struct silofs_blob_desc, bd_refblob, 96);
+	REQUIRE_OFFSET64(struct silofs_blob_desc, bd_blobsize, 128);
+	REQUIRE_OFFSET64(struct silofs_blob_desc, bd_objsize, 136);
+	REQUIRE_OFFSET32(struct silofs_blob_desc, bd_nobjs_max, 140);
+	REQUIRE_OFFSET32(struct silofs_blob_desc, bd_nobjs, 144);
+	REQUIRE_OFFSET32(struct silofs_blob_desc, bd_flags, 148);
+	REQUIRE_OFFSET32(struct silofs_blob_desc, bd_reftype, 152);
+	REQUIRE_OFFSET64(struct silofs_blob_desc, bd_alloc_state, 256);
+	REQUIRE_SIZEOF_8K(struct silofs_blob_desc);
+}
+
 static void affirm_ondisk_archive(void)
 {
 	REQUIRE_SIZEOF(struct silofs_ar_desc256b, 256);
@@ -424,6 +441,7 @@ void silofs_affirm_ondisk_format(void)
 	affirm_ondisk_symlnk();
 	affirm_ondisk_xattr();
 	affirm_ondisk_btree();
+	affirm_ondisk_blob();
 	affirm_ondisk_archive();
 	affirm_ioctl_types();
 }

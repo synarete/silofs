@@ -959,6 +959,23 @@ struct silofs_repo_meta {
 /* maximal btree height, including leaf nodes */
 #define SILOFS_BTREE_HEIGHT_MAX (8)
 
+/* blob's meta descriptor */
+struct silofs_blob_desc {
+	struct silofs_header   bd_hdr;
+	struct silofs_timespec bd_btime;
+	struct silofs_timespec bd_ctime;
+	struct silofs_blobid   bd_prev;
+	struct silofs_blobid   bd_refblob;
+	uint64_t               bd_blobsize;
+	uint32_t               bd_objsize;
+	uint32_t               bd_nobjs_max;
+	uint32_t               bd_nobjs;
+	uint32_t               bd_flags;
+	uint16_t               bd_reftype;
+	uint8_t                bd_reserved1[102];
+	uint8_t                bd_alloc_state[7936];
+} silofs_attr_aligned64;
+
 /* persistent volume segment check-point node */
 struct silofs_chkpt_node {
 	struct silofs_header   cpn_hdr;

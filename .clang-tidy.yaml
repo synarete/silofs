@@ -17,6 +17,7 @@ Checks: >
   -misc-include-cleaner,
   -misc-no-recursion,
   modernize-*,
+  -modernize-use-nullptr,
   performance-*,
   portability-*
   readability-*,

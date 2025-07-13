@@ -398,7 +398,7 @@ int silofs_env_set_pack_caddr(struct silofs_env *env,
 int silofs_env_format_bstore(struct silofs_env *env)
 {
 	// XXX FIXME
-	silofs_bstore_format(env->base.bstore);
+	silofs_unused(env);
 
 	return 0;
 }
@@ -631,7 +631,9 @@ static int env_shut_sb(struct silofs_env *env)
 
 static int env_shut_bstore(struct silofs_env *env)
 {
-	return silofs_bstore_close(env->base.bstore);
+	// XXX
+	silofs_unused(env);
+	return 0;
 }
 
 int silofs_env_shut(struct silofs_env *env)

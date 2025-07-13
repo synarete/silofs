@@ -29,8 +29,6 @@ uint32_t silofs_ptype_size(enum silofs_ptype ptype)
 	switch (ptype) {
 	case SILOFS_PTYPE_BDESC:
 		return sizeof(struct silofs_blob_desc);
-	case SILOFS_PTYPE_CHKPT:
-		return sizeof(struct silofs_chkpt_node);
 	case SILOFS_PTYPE_BTNODE:
 		return sizeof(struct silofs_btree_node);
 	case SILOFS_PTYPE_NONE:
@@ -51,7 +49,6 @@ static bool ptype_isdata(enum silofs_ptype ptype)
 		ret = true;
 		break;
 	case SILOFS_PTYPE_BDESC:
-	case SILOFS_PTYPE_CHKPT:
 	case SILOFS_PTYPE_BTNODE:
 	case SILOFS_PTYPE_NONE:
 	case SILOFS_PTYPE_LAST:

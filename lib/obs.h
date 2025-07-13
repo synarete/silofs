@@ -22,7 +22,7 @@
 #include "obs/repo.h"
 #include "obs/pnodes.h"
 #include "obs/pcache.h"
-#include "obs/blob.h"
+#include "obs/bdesc.h"
 #include "obs/btree.h"
 #include "obs/bstore.h"
 

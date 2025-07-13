@@ -20,6 +20,7 @@
 #include "repo.h"
 #include "pnodes.h"
 #include "pcache.h"
+#include "bdesc.h"
 #include "btree.h"
 #include "bstore.h"
 
@@ -56,57 +57,57 @@ static int bstore_validate_paddr(const struct silofs_bstore *bstore,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct silofs_paddr *
-cpi_paddr(const struct silofs_chkpt_info *cpi)
+bdi_paddr(const struct silofs_bdesc_info *bdi)
 {
-	return &cpi->cp_pni.pn_paddr;
+	return &bdi->bd_pni.pn_paddr;
 }
 
-static int bstore_save_chkpt(const struct silofs_bstore *bstore,
-                             const struct silofs_chkpt_info *cpi)
+static int bstore_save_bdesc(const struct silofs_bstore *bstore,
+                             const struct silofs_bdesc_info *bdi)
 {
 	const struct silofs_rovec rov = {
-		.rov_base = cpi->cp,
-		.rov_len = sizeof(*cpi->cp),
+		.rov_base = bdi->bd,
+		.rov_len = sizeof(*bdi->bd),
 	};
 
-	return silofs_repo_save_pobj(bstore->repo, cpi_paddr(cpi), &rov);
+	return silofs_repo_save_pobj(bstore->repo, bdi_paddr(bdi), &rov);
 }
 
-static int bstore_load_chkpt(const struct silofs_bstore *bstore,
-                             const struct silofs_chkpt_info *cpi)
+static int bstore_load_bdesc(const struct silofs_bstore *bstore,
+                             const struct silofs_bdesc_info *bdi)
 {
 	const struct silofs_rwvec rwv = {
-		.rwv_base = cpi->cp,
-		.rwv_len = sizeof(*cpi->cp),
+		.rwv_base = bdi->bd,
+		.rwv_len = sizeof(*bdi->bd),
 	};
 
-	return silofs_repo_load_pobj(bstore->repo, cpi_paddr(cpi), &rwv);
+	return silofs_repo_load_pobj(bstore->repo, bdi_paddr(bdi), &rwv);
 }
 
-static int bstore_commit_chkpt(const struct silofs_bstore *bstore,
-                               struct silofs_chkpt_info *cpi)
+static int bstore_commit_bdesc(const struct silofs_bstore *bstore,
+                               struct silofs_bdesc_info *bdi)
 {
 	int err;
 
-	err = bstore_save_chkpt(bstore, cpi);
+	err = bstore_save_bdesc(bstore, bdi);
 	if (err) {
 		return err;
 	}
-	silofs_cpi_undirtify(cpi);
+	silofs_bdi_undirtify(bdi);
 	return 0;
 }
 
-static int bstore_create_cached_cpi(struct silofs_bstore *bstore,
+static int bstore_create_cached_bdi(struct silofs_bstore *bstore,
                                     const struct silofs_paddr *paddr,
-                                    struct silofs_chkpt_info **out_cpi)
+                                    struct silofs_bdesc_info **out_bdi)
 {
-	struct silofs_chkpt_info *cpi;
+	struct silofs_bdesc_info *bdi;
 
-	cpi = silofs_pcache_create_cpi(bstore->pcache, paddr);
-	if (cpi == NULL) {
+	bdi = silofs_pcache_create_bdi(bstore->pcache, paddr);
+	if (bdi == NULL) {
 		return -SILOFS_ENOMEM;
 	}
-	*out_cpi = cpi;
+	*out_bdi = bdi;
 	return 0;
 }
 
@@ -130,17 +131,20 @@ static int bstore_require_blob_of(struct silofs_bstore *bstore, bool create,
 	return bstore_require_blob(bstore, create, &paddr->blobid);
 }
 
-static void bstore_update_chkpt(const struct silofs_bstore *bstore,
-                                struct silofs_chkpt_info *cpi)
+static void bstore_update_bdesc(const struct silofs_bstore *bstore,
+                                struct silofs_bdesc_info *bdi)
 {
 	const struct silofs_btree *btree = &bstore->btree;
 
-	silofs_cpi_set_btree_root(cpi, &btree->bt_root);
+	// XXX
+	//silofs_bdi_set_btree_root(bdi, &btree->bt_root);
+	silofs_unused(btree);
+	silofs_unused(bdi);
 }
 
-static int bstore_spawn_chkpt(struct silofs_bstore *bstore, bool create,
+static int bstore_spawn_bdesc(struct silofs_bstore *bstore, bool create,
                               const struct silofs_paddr *paddr,
-                              struct silofs_chkpt_info **out_cpi)
+                              struct silofs_bdesc_info **out_bdi)
 {
 	int err;
 
@@ -148,36 +152,36 @@ static int bstore_spawn_chkpt(struct silofs_bstore *bstore, bool create,
 	if (err) {
 		return err;
 	}
-	err = bstore_create_cached_cpi(bstore, paddr, out_cpi);
+	err = bstore_create_cached_bdi(bstore, paddr, out_bdi);
 	if (err) {
 		return err;
 	}
-	bstore_update_chkpt(bstore, *out_cpi);
+	bstore_update_bdesc(bstore, *out_bdi);
 	return 0;
 }
 
-static void bstore_evict_cached_cpi(struct silofs_bstore *bstore,
-                                    struct silofs_chkpt_info *cpi)
+static void bstore_evict_cached_bdi(struct silofs_bstore *bstore,
+                                    struct silofs_bdesc_info *bdi)
 {
-	silofs_pcache_evict_cpi(bstore->pcache, cpi);
+	silofs_pcache_evict_bdi(bstore->pcache, bdi);
 }
 
-static int bstore_lookup_cached_chkpt(struct silofs_bstore *bstore,
+static int bstore_lookup_cached_bdesc(struct silofs_bstore *bstore,
                                       const struct silofs_paddr *paddr,
-                                      struct silofs_chkpt_info **out_cpi)
+                                      struct silofs_bdesc_info **out_bdi)
 {
-	*out_cpi = silofs_pcache_lookup_cpi(bstore->pcache, paddr);
-	return (*out_cpi == NULL) ? -SILOFS_ENOENT : 0;
+	*out_bdi = silofs_pcache_lookup_bdi(bstore->pcache, paddr);
+	return (*out_bdi == NULL) ? -SILOFS_ENOENT : 0;
 }
 
-static int bstore_stage_chkpt(struct silofs_bstore *bstore,
+static int bstore_stage_bdesc(struct silofs_bstore *bstore,
                               const struct silofs_paddr *paddr,
-                              struct silofs_chkpt_info **out_cpi)
+                              struct silofs_bdesc_info **out_bdi)
 {
-	struct silofs_chkpt_info *cpi = NULL;
+	struct silofs_bdesc_info *bdi = NULL;
 	int err;
 
-	err = bstore_lookup_cached_chkpt(bstore, paddr, out_cpi);
+	err = bstore_lookup_cached_bdesc(bstore, paddr, out_bdi);
 	if (!err) {
 		return 0; /* cache hit */
 	}
@@ -189,16 +193,16 @@ static int bstore_stage_chkpt(struct silofs_bstore *bstore,
 	if (err) {
 		return err;
 	}
-	err = bstore_create_cached_cpi(bstore, paddr, &cpi);
+	err = bstore_create_cached_bdi(bstore, paddr, &bdi);
 	if (err) {
 		return err;
 	}
-	err = bstore_load_chkpt(bstore, cpi);
+	err = bstore_load_bdesc(bstore, bdi);
 	if (err) {
-		bstore_evict_cached_cpi(bstore, cpi);
+		bstore_evict_cached_bdi(bstore, bdi);
 		return err;
 	}
-	*out_cpi = cpi;
+	*out_bdi = bdi;
 	return 0;
 }
 
@@ -300,22 +304,22 @@ static int bstore_spawn_btroot(struct silofs_bstore *bstore)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int bstore_spawn_next_chkpt(struct silofs_bstore *bstore)
+static int bstore_spawn_next_bdesc(struct silofs_bstore *bstore)
 {
 	struct silofs_paddr paddr;
-	struct silofs_chkpt_info *cpi = NULL;
+	struct silofs_bdesc_info *bdi = NULL;
 
 	// XXX FIXME
 	silofs_paddr_reset(&paddr);
 
-	return bstore_spawn_chkpt(bstore, paddr.off == 0, &paddr, &cpi);
+	return bstore_spawn_bdesc(bstore, paddr.off == 0, &paddr, &bdi);
 }
 
 int silofs_bstore_format(struct silofs_bstore *bstore)
 {
 	int err;
 
-	err = bstore_spawn_next_chkpt(bstore);
+	err = bstore_spawn_next_bdesc(bstore);
 	if (err) {
 		return err;
 	}
@@ -323,7 +327,7 @@ int silofs_bstore_format(struct silofs_bstore *bstore)
 	if (err) {
 		return err;
 	}
-	err = bstore_spawn_next_chkpt(bstore);
+	err = bstore_spawn_next_bdesc(bstore);
 	if (err) {
 		return err;
 	}
@@ -335,32 +339,29 @@ int silofs_bstore_format(struct silofs_bstore *bstore)
 }
 
 static int bstore_update_btree_root_by(struct silofs_bstore *bstore,
-                                       const struct silofs_chkpt_info *cpi)
+                                       const struct silofs_bdesc_info *bdi)
 {
-	struct silofs_paddr btree_root;
+	// XXX
+	silofs_unused(bstore);
+	silofs_unused(bdi);
 
-	silofs_cpi_btree_root(cpi, &btree_root);
-	if (btree_root.ptype != SILOFS_PTYPE_BTNODE) {
-		return -SILOFS_EFSCORRUPTED;
-	}
-	(void)bstore;
 	return 0;
 }
 
-static int bstore_stage_last_chkpt(struct silofs_bstore *bstore)
+static int bstore_stage_last_bdesc(struct silofs_bstore *bstore)
 {
 	struct silofs_paddr paddr;
-	struct silofs_chkpt_info *cpi = NULL;
+	struct silofs_bdesc_info *bdi = NULL;
 	int err;
 
 	// XXX FIXME
 	silofs_paddr_reset(&paddr);
 
-	err = bstore_stage_chkpt(bstore, &paddr, &cpi);
+	err = bstore_stage_bdesc(bstore, &paddr, &bdi);
 	if (err) {
 		return err;
 	}
-	err = bstore_update_btree_root_by(bstore, cpi);
+	err = bstore_update_btree_root_by(bstore, bdi);
 	if (err) {
 		return err;
 	}
@@ -379,7 +380,7 @@ int silofs_bstore_reload(struct silofs_bstore *bstore)
 {
 	int err;
 
-	err = bstore_stage_last_chkpt(bstore);
+	err = bstore_stage_last_bdesc(bstore);
 	if (err) {
 		return err;
 	}
@@ -411,13 +412,12 @@ static int bstore_commit_pnode(struct silofs_bstore *bstore,
 	int ret = -SILOFS_EINVAL;
 
 	switch (ptype) {
-	case SILOFS_PTYPE_CHKPT:
-		ret = bstore_commit_chkpt(bstore, silofs_cpi_from_pni(pni));
+	case SILOFS_PTYPE_BDESC:
+		ret = bstore_commit_bdesc(bstore, silofs_bdi_from_pni(pni));
 		break;
 	case SILOFS_PTYPE_BTNODE:
 		ret = bstore_commit_btnode(bstore, silofs_bni_from_pni(pni));
 		break;
-	case SILOFS_PTYPE_BDESC: /* XXX */
 	case SILOFS_PTYPE_NONE:
 	case SILOFS_PTYPE_DATA:
 	case SILOFS_PTYPE_LAST:

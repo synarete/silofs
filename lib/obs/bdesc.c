@@ -18,7 +18,7 @@
 #include "infra.h"
 #include "addr.h"
 #include "pnodes.h"
-#include "blob.h"
+#include "bdesc.h"
 
 static void bd_setup_hdr(struct silofs_blob_desc *bd)
 {
@@ -187,4 +187,41 @@ void silofs_bdi_del(struct silofs_bdesc_info *bdi, struct silofs_alloc *alloc)
 	bdi_fini(bdi);
 	bdi_free(bdi, alloc);
 	bd_del(bd, alloc);
+}
+
+void silofs_bdi_dirtify(struct silofs_bdesc_info *bdi)
+{
+	silofs_pni_dirtify(&bdi->bd_pni);
+}
+
+void silofs_bdi_undirtify(struct silofs_bdesc_info *bdi)
+{
+	silofs_pni_undirtify(&bdi->bd_pni);
+}
+
+static struct silofs_bdesc_info *bdi_unconst(const struct silofs_bdesc_info *p)
+{
+	union {
+		const struct silofs_bdesc_info *p;
+		struct silofs_bdesc_info *q;
+	} u = { .p = p };
+
+	return u.q;
+}
+
+struct silofs_bdesc_info *
+silofs_bdi_from_pni(const struct silofs_pnode_info *pni)
+{
+	const struct silofs_bdesc_info *bdi = NULL;
+
+	if (pni != NULL) {
+		silofs_assert_eq(pni->pn_paddr.ptype, SILOFS_PTYPE_BDESC);
+		bdi = container_of2(pni, struct silofs_bdesc_info, bd_pni);
+	}
+	return bdi_unconst(bdi);
+}
+
+void silofs_bdi_set_dq(struct silofs_bdesc_info *bdi, struct silofs_dirtyq *dq)
+{
+	silofs_pni_set_dq(&bdi->bd_pni, dq);
 }

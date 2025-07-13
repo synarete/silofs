@@ -110,9 +110,6 @@
 /* size of common meta-data header */
 #define SILOFS_HEADER_SIZE (32)
 
-/* on-disk size of persistent segment chkpt node */
-#define SILOFS_PSEG_CHKPT_SIZE (4096)
-
 /* number of pointers btree mapping-node */
 #define SILOFS_BTREE_NODE_NCHILDS (48)
 
@@ -368,7 +365,6 @@ enum silofs_ptype {
 	SILOFS_PTYPE_BDESC  = 1,
 	SILOFS_PTYPE_BTNODE = 2,
 	SILOFS_PTYPE_DATA   = 3,
-	SILOFS_PTYPE_CHKPT  = 4,
 	SILOFS_PTYPE_LAST, /* keep last */
 };
 
@@ -975,16 +971,6 @@ struct silofs_blob_desc {
 	uint16_t               bd_reftype;
 	uint8_t                bd_reserved1[102];
 	uint8_t                bd_alloc_state[7936];
-} silofs_attr_aligned64;
-
-/* persistent volume segment check-point node */
-struct silofs_chkpt_node {
-	struct silofs_header   cpn_hdr;
-	uint32_t               cpn_flags;
-	uint8_t                cpn_reserved1[28];
-	struct silofs_paddr64b cpn_self_paddr;
-	struct silofs_paddr64b cpn_btree_root;
-	uint8_t                cpn_reserved3[3904];
 } silofs_attr_aligned64;
 
 /* b+tree node of persistent volume mapping */

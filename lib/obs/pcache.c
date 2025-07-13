@@ -19,6 +19,7 @@
 #include "addr.h"
 #include "flags.h"
 #include "pnodes.h"
+#include "bdesc.h"
 #include "pcache.h"
 
 enum {
@@ -145,94 +146,91 @@ pcache_remove(struct silofs_pcache *pcache, struct silofs_pnode_info *pni)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct silofs_chkpt_info *
-pcache_new_cpi(const struct silofs_pcache *pcache,
+static struct silofs_bdesc_info *
+pcache_new_bdi(const struct silofs_pcache *pcache,
                const struct silofs_paddr *paddr)
 {
-	silofs_assert_eq(paddr->ptype, SILOFS_PTYPE_CHKPT);
-	silofs_assert_eq(paddr->off % SILOFS_PSEG_CHKPT_SIZE, 0);
-
-	return silofs_cpi_new(paddr, pcache->pc_alloc);
+	return silofs_bdi_new(paddr, pcache->pc_alloc);
 }
 
-static void pcache_del_cpi(const struct silofs_pcache *pcache,
-                           struct silofs_chkpt_info *cpi)
+static void pcache_del_bdi(const struct silofs_pcache *pcache,
+                           struct silofs_bdesc_info *bdi)
 {
-	silofs_cpi_del(cpi, pcache->pc_alloc);
+	silofs_bdi_del(bdi, pcache->pc_alloc);
 }
 
-struct silofs_chkpt_info *
-silofs_pcache_lookup_cpi(struct silofs_pcache *pcache,
+struct silofs_bdesc_info *
+silofs_pcache_lookup_bdi(struct silofs_pcache *pcache,
                          const struct silofs_paddr *paddr)
 {
 	struct silofs_pnode_info *pni;
 
-	silofs_assert_eq(paddr->ptype, SILOFS_PTYPE_CHKPT);
+	silofs_assert_eq(paddr->ptype, SILOFS_PTYPE_BDESC);
 
 	pni = pcache_lookup(pcache, paddr);
-	return silofs_cpi_from_pni(pni);
+	return silofs_bdi_from_pni(pni);
 }
 
-static struct silofs_chkpt_info *
-pcache_require_cpi(struct silofs_pcache *pcache,
+static struct silofs_bdesc_info *
+pcache_require_bdi(struct silofs_pcache *pcache,
                    const struct silofs_paddr *paddr)
 {
-	struct silofs_chkpt_info *cpi = NULL;
+	struct silofs_bdesc_info *bdi = NULL;
 
 	for (size_t i = 0; i < PCACHE_RETRY_MAX; ++i) {
-		cpi = pcache_new_cpi(pcache, paddr);
-		if (cpi != NULL) {
+		bdi = pcache_new_bdi(pcache, paddr);
+		if (bdi != NULL) {
 			break;
 		}
 		pcache_evict_some(pcache, i + 1, false);
 	}
-	return cpi;
+	return bdi;
 }
 
 static void
-pcache_bind_cpi_dq(struct silofs_pcache *pcache, struct silofs_chkpt_info *cpi)
+pcache_bind_bdi_dq(struct silofs_pcache *pcache, struct silofs_bdesc_info *bdi)
 {
-	silofs_cpi_set_dq(cpi, &pcache->pc_dirtyq);
+	silofs_bdi_set_dq(bdi, &pcache->pc_dirtyq);
 }
 
 static void
-pcache_store_cpi(struct silofs_pcache *pcache, struct silofs_chkpt_info *cpi)
+pcache_store_bdi(struct silofs_pcache *pcache, struct silofs_bdesc_info *bdi)
 {
-	pcache_store(pcache, &cpi->cp_pni);
+	pcache_store(pcache, &bdi->bd_pni);
 }
 
-struct silofs_chkpt_info *
-silofs_pcache_create_cpi(struct silofs_pcache *pcache,
+struct silofs_bdesc_info *
+silofs_pcache_create_bdi(struct silofs_pcache *pcache,
                          const struct silofs_paddr *paddr)
 {
-	struct silofs_chkpt_info *cpi;
+	struct silofs_bdesc_info *bdi;
 
-	cpi = pcache_require_cpi(pcache, paddr);
-	if (cpi != NULL) {
-		pcache_bind_cpi_dq(pcache, cpi);
-		pcache_store_cpi(pcache, cpi);
+	bdi = pcache_require_bdi(pcache, paddr);
+	if (bdi != NULL) {
+		pcache_bind_bdi_dq(pcache, bdi);
+		pcache_store_bdi(pcache, bdi);
 	}
-	return cpi;
+	return bdi;
 }
 
 static void
-pcache_remove_cpi(struct silofs_pcache *pcache, struct silofs_chkpt_info *cpi)
+pcache_remove_bdi(struct silofs_pcache *pcache, struct silofs_bdesc_info *bdi)
 {
-	pcache_remove(pcache, &cpi->cp_pni);
+	pcache_remove(pcache, &bdi->bd_pni);
 }
 
 static void
-pcache_forget_cpi(struct silofs_pcache *pcache, struct silofs_chkpt_info *cpi)
+pcache_forget_bdi(struct silofs_pcache *pcache, struct silofs_bdesc_info *bdi)
 {
-	silofs_cpi_undirtify(cpi);
-	pcache_remove_cpi(pcache, cpi);
+	silofs_bdi_undirtify(bdi);
+	pcache_remove_bdi(pcache, bdi);
 }
 
-void silofs_pcache_evict_cpi(struct silofs_pcache *pcache,
-                             struct silofs_chkpt_info *cpi)
+void silofs_pcache_evict_bdi(struct silofs_pcache *pcache,
+                             struct silofs_bdesc_info *bdi)
 {
-	pcache_forget_cpi(pcache, cpi);
-	pcache_del_cpi(pcache, cpi);
+	pcache_forget_bdi(pcache, bdi);
+	pcache_del_bdi(pcache, bdi);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -337,10 +335,7 @@ pcache_evict_by(struct silofs_pcache *pcache, struct silofs_pnode_info *pni)
 
 	switch (ptype) {
 	case SILOFS_PTYPE_BDESC:
-		/* XXX */
-		break;
-	case SILOFS_PTYPE_CHKPT:
-		silofs_pcache_evict_cpi(pcache, silofs_cpi_from_pni(pni));
+		silofs_pcache_evict_bdi(pcache, silofs_bdi_from_pni(pni));
 		break;
 	case SILOFS_PTYPE_BTNODE:
 		silofs_pcache_evict_bni(pcache, silofs_bni_from_pni(pni));

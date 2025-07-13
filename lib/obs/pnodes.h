@@ -59,34 +59,16 @@ void silofs_pni_fini(struct silofs_pnode_info *pni);
 
 enum silofs_ptype silofs_pni_ptype(const struct silofs_pnode_info *pni);
 
+void silofs_pni_dirtify(struct silofs_pnode_info *pni);
+
 void silofs_pni_undirtify(struct silofs_pnode_info *pni);
 
 void silofs_pni_incref(struct silofs_pnode_info *pni);
 
 void silofs_pni_decref(struct silofs_pnode_info *pni);
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-struct silofs_chkpt_info *
-silofs_cpi_new(const struct silofs_paddr *paddr, struct silofs_alloc *alloc);
-
-void silofs_cpi_del(struct silofs_chkpt_info *cpi, struct silofs_alloc *alloc);
-
-struct silofs_chkpt_info *
-silofs_cpi_from_pni(const struct silofs_pnode_info *pni);
-
-void silofs_cpi_set_dq(struct silofs_chkpt_info *cpi,
+void silofs_pni_set_dq(struct silofs_pnode_info *pni,
                        struct silofs_dirtyq     *dq);
-
-void silofs_cpi_dirtify(struct silofs_chkpt_info *cpi);
-
-void silofs_cpi_undirtify(struct silofs_chkpt_info *cpi);
-
-void silofs_cpi_btree_root(const struct silofs_chkpt_info *cpi,
-                           struct silofs_paddr            *out_paddr);
-
-void silofs_cpi_set_btree_root(struct silofs_chkpt_info  *cpi,
-                               const struct silofs_paddr *paddr);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

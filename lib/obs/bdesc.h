@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_BLOB_H_
-#define SILOFS_BLOB_H_
+#ifndef SILOFS_BDESC_H_
+#define SILOFS_BDESC_H_
 
 #include "infra.h"
 #include "addr.h"
@@ -23,8 +23,18 @@
 struct silofs_bdesc_info;
 
 struct silofs_bdesc_info *
+silofs_bdi_from_pni(const struct silofs_pnode_info *pni);
+
+struct silofs_bdesc_info *
 silofs_bdi_new(const struct silofs_paddr *paddr, struct silofs_alloc *alloc);
 
 void silofs_bdi_del(struct silofs_bdesc_info *bdi, struct silofs_alloc *alloc);
 
-#endif /* SILOFS_BLOB_H_ */
+void silofs_bdi_dirtify(struct silofs_bdesc_info *bdi);
+
+void silofs_bdi_undirtify(struct silofs_bdesc_info *bdi);
+
+void silofs_bdi_set_dq(struct silofs_bdesc_info *bdi,
+                       struct silofs_dirtyq     *dq);
+
+#endif /* SILOFS_BDESC_H_ */

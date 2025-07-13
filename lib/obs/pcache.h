@@ -44,16 +44,16 @@ void silofs_pcache_relax(struct silofs_pcache *pcache, int flags);
 struct silofs_pnode_info *
 silofs_pcache_dq_front(const struct silofs_pcache *pcache);
 
-struct silofs_chkpt_info *
-silofs_pcache_lookup_cpi(struct silofs_pcache      *pcache,
+struct silofs_bdesc_info *
+silofs_pcache_lookup_bdi(struct silofs_pcache      *pcache,
                          const struct silofs_paddr *paddr);
 
-struct silofs_chkpt_info *
-silofs_pcache_create_cpi(struct silofs_pcache      *pcache,
+struct silofs_bdesc_info *
+silofs_pcache_create_bdi(struct silofs_pcache      *pcache,
                          const struct silofs_paddr *paddr);
 
-void silofs_pcache_evict_cpi(struct silofs_pcache     *pcache,
-                             struct silofs_chkpt_info *cpi);
+void silofs_pcache_evict_bdi(struct silofs_pcache     *pcache,
+                             struct silofs_bdesc_info *bdi);
 
 struct silofs_btnode_info *
 silofs_pcache_lookup_bni(struct silofs_pcache      *pcache,

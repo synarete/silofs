@@ -38,102 +38,6 @@ static void pnode_memfree(struct silofs_alloc *alloc, void *ptr, size_t size)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void cpn_setup_hdr(struct silofs_chkpt_node *cpn)
-{
-	silofs_hdr_setup(&cpn->cpn_hdr, SILOFS_PTYPE_CHKPT, sizeof(*cpn),
-	                 SILOFS_HDRF_PTYPE);
-}
-
-static void cpn_set_self_paddr(struct silofs_chkpt_node *cpn,
-                               const struct silofs_paddr *paddr)
-{
-	silofs_assert_eq(paddr->ptype, SILOFS_PTYPE_CHKPT);
-
-	silofs_paddr64b_htox(&cpn->cpn_self_paddr, paddr);
-}
-
-static void cpn_btree_root(const struct silofs_chkpt_node *cpn,
-                           struct silofs_paddr *out_paddr)
-{
-	silofs_paddr64b_xtoh(&cpn->cpn_btree_root, out_paddr);
-}
-
-static void cpn_set_btree_root(struct silofs_chkpt_node *cpn,
-                               const struct silofs_paddr *paddr)
-{
-	silofs_paddr64b_htox(&cpn->cpn_btree_root, paddr);
-}
-
-static void cpn_reset_btree_root(struct silofs_chkpt_node *cpn)
-{
-	cpn_set_btree_root(cpn, silofs_paddr_none());
-}
-
-static enum silofs_pnodef cpn_flags(const struct silofs_chkpt_node *cpn)
-{
-	const uint32_t f = silofs_le32_to_cpu(cpn->cpn_flags);
-
-	return (enum silofs_pnodef)f;
-}
-
-static void cpn_set_flags(struct silofs_chkpt_node *cpn, enum silofs_pnodef f)
-{
-	cpn->cpn_flags = silofs_cpu_to_le32((uint32_t)f);
-}
-
-static void cpn_add_flags(struct silofs_chkpt_node *cpn, enum silofs_pnodef f)
-{
-	cpn_set_flags(cpn, f | cpn_flags(cpn));
-}
-
-static void
-cpn_init(struct silofs_chkpt_node *cpn, const struct silofs_paddr *paddr)
-{
-	cpn_setup_hdr(cpn);
-	cpn_set_self_paddr(cpn, paddr);
-	cpn_reset_btree_root(cpn);
-	cpn_set_flags(cpn, SILOFS_PNODEF_NONE);
-	cpn_add_flags(cpn, SILOFS_PNODEF_META);
-}
-
-static void cpn_fini(struct silofs_chkpt_node *cpn)
-{
-	cpn_set_btree_root(cpn, silofs_paddr_none());
-}
-
-static struct silofs_chkpt_node *cpn_malloc(struct silofs_alloc *alloc)
-{
-	struct silofs_chkpt_node *cpn;
-
-	cpn = pnode_memalloc(alloc, sizeof(*cpn));
-	return cpn;
-}
-
-static void cpn_free(struct silofs_chkpt_node *cpn, struct silofs_alloc *alloc)
-{
-	pnode_memfree(alloc, cpn, sizeof(*cpn));
-}
-
-static struct silofs_chkpt_node *
-cpn_new(struct silofs_alloc *alloc, const struct silofs_paddr *paddr)
-{
-	struct silofs_chkpt_node *cpn;
-
-	cpn = cpn_malloc(alloc);
-	if (cpn != NULL) {
-		cpn_init(cpn, paddr);
-	}
-	return cpn;
-}
-
-static void cpn_del(struct silofs_chkpt_node *cpn, struct silofs_alloc *alloc)
-{
-	cpn_fini(cpn);
-	cpn_free(cpn, alloc);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 static void btn_setup_hdr(struct silofs_btree_node *btn)
 {
 	silofs_hdr_setup(&btn->btn_hdr, SILOFS_PTYPE_BTNODE, sizeof(*btn),
@@ -505,7 +409,7 @@ pni_dqe2(const struct silofs_pnode_info *pni)
 	return &pni->pn_hmqe.hme_dqe;
 }
 
-static void pni_set_dq(struct silofs_pnode_info *pni, struct silofs_dirtyq *dq)
+void silofs_pni_set_dq(struct silofs_pnode_info *pni, struct silofs_dirtyq *dq)
 {
 	silofs_dqe_setq(pni_dqe(pni), dq);
 }
@@ -515,7 +419,7 @@ static bool pni_isdirty(const struct silofs_pnode_info *pni)
 	return silofs_dqe_is_dirty(pni_dqe2(pni));
 }
 
-static void silofs_pni_dirtify(struct silofs_pnode_info *pni)
+void silofs_pni_dirtify(struct silofs_pnode_info *pni)
 {
 	if (!pni_isdirty(pni)) {
 		silofs_dqe_enqueue(pni_dqe(pni));
@@ -537,115 +441,6 @@ void silofs_pni_incref(struct silofs_pnode_info *pni)
 void silofs_pni_decref(struct silofs_pnode_info *pni)
 {
 	silofs_hmqe_decref(&pni->pn_hmqe);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static struct silofs_chkpt_info *cpi_malloc(struct silofs_alloc *alloc)
-{
-	struct silofs_chkpt_info *cpi = NULL;
-
-	cpi = silofs_memalloc(alloc, sizeof(*cpi), 0);
-	return cpi;
-}
-
-static void cpi_free(struct silofs_chkpt_info *cpi, struct silofs_alloc *alloc)
-{
-	silofs_memfree(alloc, cpi, sizeof(*cpi), 0);
-}
-
-static void
-cpi_init(struct silofs_chkpt_info *cpi, const struct silofs_paddr *paddr)
-{
-	silofs_assert(!silofs_paddr_isnull(paddr));
-	silofs_assert_eq(paddr->ptype, SILOFS_PTYPE_CHKPT);
-
-	silofs_pni_init(&cpi->cp_pni, paddr);
-	cpi->cp = NULL;
-}
-
-static void cpi_fini(struct silofs_chkpt_info *cpi)
-{
-	silofs_pni_fini(&cpi->cp_pni);
-	cpi->cp = NULL;
-}
-
-struct silofs_chkpt_info *
-silofs_cpi_new(const struct silofs_paddr *paddr, struct silofs_alloc *alloc)
-{
-	struct silofs_chkpt_node *cpn = NULL;
-	struct silofs_chkpt_info *cpi = NULL;
-
-	cpn = cpn_new(alloc, paddr);
-	if (cpn == NULL) {
-		return NULL;
-	}
-	cpi = cpi_malloc(alloc);
-	if (cpi == NULL) {
-		cpn_del(cpn, alloc);
-		return NULL;
-	}
-	cpi_init(cpi, paddr);
-	cpi->cp = cpn;
-	return cpi;
-}
-
-void silofs_cpi_del(struct silofs_chkpt_info *cpi, struct silofs_alloc *alloc)
-{
-	struct silofs_chkpt_node *cpn = cpi->cp;
-
-	cpi_fini(cpi);
-	cpi_free(cpi, alloc);
-	cpn_del(cpn, alloc);
-}
-
-static struct silofs_chkpt_info *cpi_unconst(const struct silofs_chkpt_info *p)
-{
-	union {
-		const struct silofs_chkpt_info *p;
-		struct silofs_chkpt_info *q;
-	} u = { .p = p };
-	return u.q;
-}
-
-struct silofs_chkpt_info *
-silofs_cpi_from_pni(const struct silofs_pnode_info *pni)
-{
-	const struct silofs_chkpt_info *cpi = NULL;
-
-	if (pni != NULL) {
-		silofs_assert_eq(pni->pn_paddr.ptype, SILOFS_PTYPE_CHKPT);
-		cpi = container_of2(pni, struct silofs_chkpt_info, cp_pni);
-	}
-	return cpi_unconst(cpi);
-}
-
-void silofs_cpi_set_dq(struct silofs_chkpt_info *cpi, struct silofs_dirtyq *dq)
-{
-	pni_set_dq(&cpi->cp_pni, dq);
-}
-
-void silofs_cpi_dirtify(struct silofs_chkpt_info *cpi)
-{
-	silofs_pni_dirtify(&cpi->cp_pni);
-}
-
-void silofs_cpi_undirtify(struct silofs_chkpt_info *cpi)
-{
-	silofs_pni_undirtify(&cpi->cp_pni);
-}
-
-void silofs_cpi_btree_root(const struct silofs_chkpt_info *cpi,
-                           struct silofs_paddr *out_paddr)
-{
-	cpn_btree_root(cpi->cp, out_paddr);
-}
-
-void silofs_cpi_set_btree_root(struct silofs_chkpt_info *cpi,
-                               const struct silofs_paddr *paddr)
-{
-	cpn_set_btree_root(cpi->cp, paddr);
-	silofs_cpi_dirtify(cpi);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -713,7 +508,7 @@ void silofs_bni_del(struct silofs_btnode_info *bni, struct silofs_alloc *alloc)
 void silofs_bni_set_dq(struct silofs_btnode_info *bni,
                        struct silofs_dirtyq *dq)
 {
-	pni_set_dq(&bni->bn_pni, dq);
+	silofs_pni_set_dq(&bni->bn_pni, dq);
 }
 
 void silofs_bni_mark_root(struct silofs_btnode_info *bni)
@@ -866,6 +661,7 @@ bni_unconst(const struct silofs_btnode_info *p)
 		const struct silofs_btnode_info *p;
 		struct silofs_btnode_info *q;
 	} u = { .p = p };
+
 	return u.q;
 }
 

@@ -475,15 +475,15 @@ static void btn_del(struct silofs_btree_node *btn, struct silofs_alloc *alloc)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static void
-pni_init(struct silofs_pnode_info *pni, const struct silofs_paddr *paddr)
+void silofs_pni_init(struct silofs_pnode_info *pni,
+                     const struct silofs_paddr *paddr)
 {
 	silofs_paddr_assign(&pni->pn_paddr, paddr);
 	silofs_hmqe_init(&pni->pn_hmqe, silofs_ptype_size(paddr->ptype));
 	silofs_hkey_by_paddr(&pni->pn_hmqe.hme_key, &pni->pn_paddr);
 }
 
-static void pni_fini(struct silofs_pnode_info *pni)
+void silofs_pni_fini(struct silofs_pnode_info *pni)
 {
 	silofs_paddr_fini(&pni->pn_paddr);
 	silofs_hmqe_fini(&pni->pn_hmqe);
@@ -560,13 +560,13 @@ cpi_init(struct silofs_chkpt_info *cpi, const struct silofs_paddr *paddr)
 	silofs_assert(!silofs_paddr_isnull(paddr));
 	silofs_assert_eq(paddr->ptype, SILOFS_PTYPE_CHKPT);
 
-	pni_init(&cpi->cp_pni, paddr);
+	silofs_pni_init(&cpi->cp_pni, paddr);
 	cpi->cp = NULL;
 }
 
 static void cpi_fini(struct silofs_chkpt_info *cpi)
 {
-	pni_fini(&cpi->cp_pni);
+	silofs_pni_fini(&cpi->cp_pni);
 	cpi->cp = NULL;
 }
 
@@ -670,14 +670,14 @@ bni_init(struct silofs_btnode_info *bni, const struct silofs_paddr *paddr)
 	silofs_assert(!silofs_paddr_isnull(paddr));
 	silofs_assert_eq(paddr->ptype, SILOFS_PTYPE_BTNODE);
 
-	pni_init(&bni->bn_pni, paddr);
+	silofs_pni_init(&bni->bn_pni, paddr);
 	bni->bn = NULL;
 	bni->bn_rdonly = false;
 }
 
 static void bni_fini(struct silofs_btnode_info *bni)
 {
-	pni_fini(&bni->bn_pni);
+	silofs_pni_fini(&bni->bn_pni);
 	bni->bn = NULL;
 }
 

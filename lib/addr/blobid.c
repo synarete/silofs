@@ -21,6 +21,13 @@
 #include "meta.h"
 #include "blobid.h"
 
+static const struct silofs_blobid s_silofs_blobid_none = {};
+
+const struct silofs_blobid *silofs_blobid_none(void)
+{
+	return &s_silofs_blobid_none;
+}
+
 void silofs_blobid_generate(struct silofs_blobid *blobid)
 {
 	struct silofs_uuid *uu = &blobid->u.uuid[0];

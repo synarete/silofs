@@ -417,6 +417,7 @@ static int bstore_commit_pnode(struct silofs_bstore *bstore,
 	case SILOFS_PTYPE_BTNODE:
 		ret = bstore_commit_btnode(bstore, silofs_bni_from_pni(pni));
 		break;
+	case SILOFS_PTYPE_BDESC: /* XXX */
 	case SILOFS_PTYPE_NONE:
 	case SILOFS_PTYPE_DATA:
 	case SILOFS_PTYPE_LAST:

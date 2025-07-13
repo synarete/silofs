@@ -31,6 +31,12 @@ struct silofs_pnode_info {
 	struct silofs_hmapq_elem pn_hmqe;
 };
 
+/* blob-descriptor node */
+struct silofs_bdesc_info {
+	struct silofs_pnode_info bd_pni;
+	struct silofs_blob_desc *bd;
+};
+
 /* check-point node */
 struct silofs_chkpt_info {
 	struct silofs_pnode_info  cp_pni;
@@ -45,6 +51,11 @@ struct silofs_btnode_info {
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_pni_init(struct silofs_pnode_info  *pni,
+                     const struct silofs_paddr *paddr);
+
+void silofs_pni_fini(struct silofs_pnode_info *pni);
 
 enum silofs_ptype silofs_pni_ptype(const struct silofs_pnode_info *pni);
 

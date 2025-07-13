@@ -14,16 +14,17 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_OBS_H_
-#define SILOFS_OBS_H_
+#ifndef SILOFS_BLOB_H_
+#define SILOFS_BLOB_H_
 
 #include "infra.h"
 #include "addr.h"
-#include "obs/repo.h"
-#include "obs/pnodes.h"
-#include "obs/pcache.h"
-#include "obs/blob.h"
-#include "obs/btree.h"
-#include "obs/bstore.h"
 
-#endif /* SILOFS_OBS_H_ */
+struct silofs_bdesc_info;
+
+struct silofs_bdesc_info *
+silofs_bdi_new(const struct silofs_paddr *paddr, struct silofs_alloc *alloc);
+
+void silofs_bdi_del(struct silofs_bdesc_info *bdi, struct silofs_alloc *alloc);
+
+#endif /* SILOFS_BLOB_H_ */

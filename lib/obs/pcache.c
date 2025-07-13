@@ -336,6 +336,9 @@ pcache_evict_by(struct silofs_pcache *pcache, struct silofs_pnode_info *pni)
 	const enum silofs_ptype ptype = silofs_pni_ptype(pni);
 
 	switch (ptype) {
+	case SILOFS_PTYPE_BDESC:
+		/* XXX */
+		break;
 	case SILOFS_PTYPE_CHKPT:
 		silofs_pcache_evict_cpi(pcache, silofs_cpi_from_pni(pni));
 		break;

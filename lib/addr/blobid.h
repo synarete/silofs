@@ -23,6 +23,8 @@ struct silofs_strview;
 struct silofs_strspan;
 struct silofs_strbuf;
 
+const struct silofs_blobid *silofs_blobid_none(void);
+
 void silofs_blobid_generate(struct silofs_blobid *blobid);
 
 void silofs_blobid_reset(struct silofs_blobid *blobid);

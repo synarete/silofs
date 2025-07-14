@@ -103,6 +103,10 @@ static void cmd_report_err_and_die(const struct silofs_env *env, int status,
 	case SILOFS_EILLSTR:
 		cmd_die(err, "%s%sillegal string", xmsg, xtag);
 		break;
+	case SILOFS_EILLPASS:
+		cmd_die(err, "%s%spassword is not FIPS 140-2 compliant", xmsg,
+		        xtag);
+		break;
 	default:
 		break;
 	}

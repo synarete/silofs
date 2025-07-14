@@ -284,3 +284,18 @@ void cmd_delpass(char **pass)
 		cmd_pstrfree(pass);
 	}
 }
+
+void cmd_checkpass(const char *pass)
+{
+	const size_t min = SILOFS_PASSWORD_MIN;
+	const size_t max = SILOFS_PASSWORD_MAX;
+	const size_t len = (pass != NULL) ? strlen(pass) : 0;
+
+	if (len < min) {
+		cmd_diez("password is not FIPS 140-2 compliant "
+		         "(len=%lu minlen=%lu)",
+		         len, min);
+	} else if (len > max) {
+		cmd_diez("password too long (len=%lu maxlen=%lu)", len, max);
+	}
+}

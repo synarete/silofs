@@ -334,6 +334,8 @@ char *cmd_duppass(const char *pass);
 
 void cmd_delpass(char **pass);
 
+void cmd_checkpass(const char *pass);
+
 /* x-reference */
 void cmd_save_fs_xref(const struct silofs_boot_args *boot_args);
 

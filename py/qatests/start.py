@@ -10,25 +10,33 @@ from . import subcmd
 from . import utils
 
 
-class ArgsException(Exception):
+class _ArgsException(Exception):
     def __init__(self, msg: str) -> None:
         Exception.__init__(self, msg)
 
 
-class ProgArgs(run.RunArgs):
+class _ProgArgs(run.RunArgs):
     def __init__(self) -> None:
         super().__init__()
         self.argv = sys.argv
 
+    def progname(self) -> str:
+        name = ""
+        if len(self.argv) > 0:
+            name = str(Path(self.argv[0]).name)
+        if len(name) == 0:
+            name = "silofs-qatests"
+        return name
+
     def check_config(self) -> None:
         basedir = self.config.basedir
         if not utils.is_empty_dir(basedir):
-            raise ArgsException(f"not an empty directory: {basedir}")
+            raise _ArgsException(f"not an empty directory: {basedir}")
         mntdir = self.config.mntdir
         if not utils.is_dir(mntdir):
-            raise ArgsException(f"illegal mount-point: {mntdir}")
+            raise _ArgsException(f"illegal mount-point: {mntdir}")
         if not utils.is_empty_dir(mntdir):
-            raise ArgsException(f"not an empty mount-point: {mntdir}")
+            raise _ArgsException(f"not an empty mount-point: {mntdir}")
 
 
 # pylint: disable=R0902
@@ -36,15 +44,15 @@ class ProgInfo:
     def __init__(
         self, version: str = "0.0.0", release: str = "0", revision: str = "0"
     ) -> None:
+        self.args = _ProgArgs()
         self.version = version
         self.release = release
         self.revision = revision
-        self.title = "silofs-qatests"
+        self.title = self.args.progname()
         self.version_mode = False
         self.config = ""
         self.basedir = ""
         self.mntdir = ""
-        self.args = ProgArgs()
 
     def version_string(self) -> str:
         return f"{self.version}-{self.release}.{self.revision}"
@@ -89,9 +97,9 @@ class ProgInfo:
 
     def check_args(self) -> None:
         if not self.basedir:
-            raise ArgsException("missing basedir")
+            raise _ArgsException("missing basedir")
         if not self.mntdir:
-            raise ArgsException("missing mntdir")
+            raise _ArgsException("missing mntdir")
 
     def update_config(self) -> None:
         if self.config:
@@ -123,7 +131,7 @@ def run_silofs_qatests(prog_info: ProgInfo = ProgInfo()) -> None:
             prog_info.check_args()
             prog_info.update_config()
             prog_info.start_run()
-    except ArgsException as aex:
+    except _ArgsException as aex:
         print(f"{prog_info.title}: args error: {aex}")
         sys.exit(1)
     except subcmd.SubcmdError as cer:

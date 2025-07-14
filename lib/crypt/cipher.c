@@ -241,6 +241,16 @@ derive_key(const struct silofs_mdigest *md, const struct silofs_password *pw,
 	return silofs_gcrypt_status(gcry_err, "gcry_kdf_derive");
 }
 
+static int check_passlen(size_t len)
+{
+	int ret = 0;
+
+	if ((len < SILOFS_PASSWORD_MIN) || (len > SILOFS_PASSWORD_MAX)) {
+		ret = -SILOFS_EILLPASS;
+	}
+	return ret;
+}
+
 static int silofs_derive_ivkey(const struct silofs_mdigest *md,
                                const struct silofs_password *pw,
                                const struct silofs_kdf_descs *kdf,
@@ -249,7 +259,7 @@ static int silofs_derive_ivkey(const struct silofs_mdigest *md,
 	int err;
 
 	silofs_memzero(out_ivkey, sizeof(*out_ivkey));
-	err = silofs_password_check(pw);
+	err = check_passlen(pw->passlen);
 	if (err) {
 		return err;
 	}

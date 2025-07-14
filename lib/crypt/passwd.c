@@ -24,24 +24,22 @@
 
 int silofs_password_setup(struct silofs_password *pw, const char *pass)
 {
-	struct silofs_strview sv;
+	const size_t len = silofs_str_length(pass);
 
-	silofs_password_reset(pw);
-	silofs_strview_init(&sv, pass);
-	if (sv.len >= sizeof(pw->pass)) {
-		return -SILOFS_EINVAL;
-	}
-	silofs_strview_copyto(&sv, pw->pass, sizeof(pw->pass));
-	pw->passlen = sv.len;
-	return 0;
+	return silofs_password_setup2(pw, pass, len);
 }
 
 int silofs_password_setup2(struct silofs_password *pw, const void *pass,
                            size_t len)
 {
+	SILOFS_STATICASSERT_GT(sizeof(pw->pass), SILOFS_PASSWORD_MAX);
+
 	silofs_password_reset(pw);
-	if (len >= sizeof(pw->pass)) {
-		return -SILOFS_EINVAL;
+	if (len < SILOFS_PASSWORD_MIN) {
+		return -SILOFS_EILLPASS;
+	}
+	if (len > SILOFS_PASSWORD_MAX) {
+		return -SILOFS_EILLPASS;
 	}
 	memcpy(pw->pass, pass, len);
 	pw->passlen = len;
@@ -52,14 +50,6 @@ void silofs_password_reset(struct silofs_password *pw)
 {
 	silofs_memzero(pw, sizeof(*pw));
 	pw->passlen = 0;
-}
-
-int silofs_password_check(const struct silofs_password *pw)
-{
-	if (!pw->passlen || (pw->passlen > sizeof(pw->pass))) {
-		return -SILOFS_EINVAL;
-	}
-	return 0;
 }
 
 void silofs_password_mkrand(struct silofs_password *pw)

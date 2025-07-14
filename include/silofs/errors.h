@@ -80,6 +80,7 @@
 #define SILOFS_EQALLOC     SILOFS_DEFERR2(17)
 #define SILOFS_EILLSTR     SILOFS_DEFERR2(18)
 #define SILOFS_EBADPACK    SILOFS_DEFERR2(19)
+#define SILOFS_EILLPASS    SILOFS_DEFERR2(20)
 
 /* error codes which are purely internal to silofs */
 #define SILOFS_EBUG SILOFS_DEFERR2(1111)

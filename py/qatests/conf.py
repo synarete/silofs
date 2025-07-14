@@ -18,7 +18,7 @@ _SILOFS_REPO_URL = "https://github.com/synarete/silofs"
 
 
 class ConfigParams(pydantic.BaseModel):
-    password: str = "123456"
+    password: str = "0123456789abcdef"
     use_stdalloc: bool = False
     allow_coredump: bool = False
 

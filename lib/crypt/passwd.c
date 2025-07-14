@@ -22,28 +22,45 @@
 #include "passwd.h"
 #include "ivkey.h"
 
-int silofs_password_setup(struct silofs_password *pw, const char *pass)
+static void
+password_setup_dat(struct silofs_password *pw, const void *pass, size_t len)
 {
-	const size_t len = silofs_str_length(pass);
+	memcpy(pw->pass, pass, len);
+	pw->passlen = len;
+}
 
-	return silofs_password_setup2(pw, pass, len);
+static void password_setup_nil(struct silofs_password *pw)
+{
+	char pass[SILOFS_PASSWORD_MIN];
+
+	memset(pass, 0, sizeof(pass));
+	password_setup_dat(pw, pass, sizeof(pass) - 1);
 }
 
 int silofs_password_setup2(struct silofs_password *pw, const void *pass,
                            size_t len)
 {
+	int ret = 0;
+
 	SILOFS_STATICASSERT_GT(sizeof(pw->pass), SILOFS_PASSWORD_MAX);
 
 	silofs_password_reset(pw);
-	if (len < SILOFS_PASSWORD_MIN) {
-		return -SILOFS_EILLPASS;
+	if ((pass == NULL) && (len == 0)) {
+		/* password-less mode */
+		password_setup_nil(pw);
+	} else if ((pass != NULL) && //
+	           (len >= SILOFS_PASSWORD_MIN) &&
+	           (len <= SILOFS_PASSWORD_MAX)) {
+		password_setup_dat(pw, pass, len);
+	} else {
+		ret = -SILOFS_EILLPASS;
 	}
-	if (len > SILOFS_PASSWORD_MAX) {
-		return -SILOFS_EILLPASS;
-	}
-	memcpy(pw->pass, pass, len);
-	pw->passlen = len;
-	return 0;
+	return ret;
+}
+
+int silofs_password_setup(struct silofs_password *pw, const char *pass)
+{
+	return silofs_password_setup2(pw, pass, silofs_str_length(pass));
 }
 
 void silofs_password_reset(struct silofs_password *pw)

@@ -49,9 +49,12 @@ static struct cmd_mkfs_ctx *cmd_mkfs_ctx_p;
 static void cmd_mkfs_parse_optargs(struct cmd_mkfs_ctx *ctx)
 {
 	const struct cmd_optdesc ods[] = {
-		{ "size", 's', 1 },     { "user", 'u', 1 },
-		{ "password", 'p', 1 }, { "loglevel", 'L', 1 },
-		{ "help", 'h', 0 },     { NULL, 0, 0 },
+		{ "size", 's', 1 },     //
+		{ "user", 'u', 1 },     //
+		{ "password", 'p', 1 }, //
+		{ "loglevel", 'L', 1 }, //
+		{ "help", 'h', 0 },     //
+		{ NULL, 0, 0 },         //
 	};
 	struct cmd_optargs opa;
 	int opt_chr = 1;

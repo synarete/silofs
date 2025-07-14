@@ -47,7 +47,8 @@
 /* magic numbers at meta-objects start (ASCII: "silo") */
 #define SILOFS_META_MAGIC (0x6F6C6973U)
 
-/* max length of encryption password */
+/* min/max length of encryption password (FIPS 140-2) */
+#define SILOFS_PASSWORD_MIN (8)
 #define SILOFS_PASSWORD_MAX (255)
 
 /* max size for names (not including null terminator) */

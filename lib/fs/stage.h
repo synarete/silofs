@@ -69,7 +69,7 @@ int silofs_require_lsmap_by(struct silofs_task_ctx    *task,
                             const struct silofs_vaddr *vaddr,
                             struct silofs_lsmap_info **out_lsi);
 
-int silofs_claim_vspace(struct silofs_task_ctx *task, enum silofs_ltype ltype,
+int silofs_claim_vspace(struct silofs_task_ctx *task, enum silofs_mtype mtype,
                         struct silofs_vaddr *out_vaddr);
 
 int silofs_reclaim_vspace(struct silofs_task_ctx    *task,
@@ -122,7 +122,7 @@ int silofs_fetch_cached_inode(struct silofs_task_ctx *task, ino_t ino,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_spawn_vnode(struct silofs_task_ctx   *task,
-                       struct silofs_inode_info *pii, enum silofs_ltype ltype,
+                       struct silofs_inode_info *pii, enum silofs_mtype mtype,
                        struct silofs_vnode_info **out_vni);
 
 int silofs_spawn_inode(struct silofs_task_ctx          *task,

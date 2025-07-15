@@ -48,7 +48,7 @@ silofs_uaddr_blobid(const struct silofs_uaddr *uaddr);
 
 const struct silofs_lsid *silofs_uaddr_lsid(const struct silofs_uaddr *uaddr);
 
-enum silofs_ltype silofs_uaddr_ltype(const struct silofs_uaddr *uaddr);
+enum silofs_mtype silofs_uaddr_mtype(const struct silofs_uaddr *uaddr);
 
 enum silofs_height silofs_uaddr_height(const struct silofs_uaddr *uaddr);
 

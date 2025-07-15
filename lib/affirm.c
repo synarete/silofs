@@ -203,7 +203,7 @@ static void affirm_ondisk_spmaps(void)
 	REQUIRE_SIZEOF(struct silofs_lbk_ref, 160);
 	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_hdr, 0);
 	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_lrange, 32);
-	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_refltype, 48);
+	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_refmtype, 48);
 	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_main_lsid, 64);
 	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_parent, 128);
 	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_self, 224);
@@ -275,7 +275,7 @@ static void affirm_ondisk_lsmap(void)
 	REQUIRE_SIZEOF(struct silofs_lbk_meta, 56);
 	REQUIRE_OFFSET64(struct silofs_lsmap, lsm_hdr, 0);
 	REQUIRE_OFFSET64(struct silofs_lsmap, lsm_lrange, 32);
-	REQUIRE_OFFSET64(struct silofs_lsmap, lsm_refltype, 48);
+	REQUIRE_OFFSET64(struct silofs_lsmap, lsm_refmtype, 48);
 	REQUIRE_OFFSET64(struct silofs_lsmap, lsm_lbms, 64);
 	REQUIRE_OFFSET64(struct silofs_lsmap, lsm_keys, 4096);
 	REQUIRE_SIZEOF_64K(struct silofs_lsmap);
@@ -341,7 +341,7 @@ static void affirm_ondisk_file(void)
 	REQUIRE_OFFSET64(struct silofs_ftree_node, fn_end, 56);
 	REQUIRE_OFFSET64(struct silofs_ftree_node, fn_nactive_childs, 64);
 	REQUIRE_OFFSET32(struct silofs_ftree_node, fn_height, 68);
-	REQUIRE_OFFSETXX(struct silofs_ftree_node, fn_child_ltype, 69);
+	REQUIRE_OFFSETXX(struct silofs_ftree_node, fn_child_mtype, 69);
 
 	REQUIRE_OFFSET64(struct silofs_ftree_node, fn_zeros, 128);
 	REQUIRE_OFFSET64(struct silofs_ftree_node, fn_child, 1024);
@@ -375,7 +375,7 @@ static void affirm_ondisk_btnode(void)
 {
 	REQUIRE_OFFSET64(struct silofs_btree_node, btn_hdr, 0);
 	REQUIRE_OFFSET64(struct silofs_btree_node, btn_flags, 32);
-	REQUIRE_OFFSET32(struct silofs_btree_node, btn_ltype, 36);
+	REQUIRE_OFFSET32(struct silofs_btree_node, btn_mtype, 36);
 	REQUIRE_OFFSETXX(struct silofs_btree_node, btn_height, 38);
 	REQUIRE_OFFSETXX(struct silofs_btree_node, btn_nkeys, 40);
 	REQUIRE_OFFSETXX(struct silofs_btree_node, btn_nchilds, 41);

@@ -27,31 +27,31 @@ enum {
 
 /* local functions forward declarations */
 static int
-verify_view_by(const struct silofs_view *view, const enum silofs_ltype ltype);
+verify_view_by(const struct silofs_view *view, const enum silofs_mtype mtype);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void view_init_by(struct silofs_view *view, enum silofs_ltype ltype)
+static void view_init_by(struct silofs_view *view, enum silofs_mtype mtype)
 {
 	size_t size;
 
-	if (!silofs_ltype_isdata(ltype)) {
-		size = silofs_ltype_size(ltype);
+	if (!silofs_mtype_isdata(mtype)) {
+		size = silofs_mtype_size(mtype);
 		silofs_memzero(view, size);
-		silofs_hdr_setup(&view->u.hdr, (uint16_t)ltype, size,
-		                 SILOFS_HDRF_LTYPE);
+		silofs_hdr_setup(&view->u.hdr, (uint16_t)mtype, size,
+		                 SILOFS_HDRF_MTYPE);
 	}
 }
 
 static struct silofs_view *
-view_new_by(struct silofs_alloc *alloc, enum silofs_ltype ltype)
+view_new_by(struct silofs_alloc *alloc, enum silofs_mtype mtype)
 {
 	struct silofs_view *view = NULL;
-	int flags = silofs_ltype_issuper(ltype) ? SILOFS_ALLOCF_BZERO : 0;
+	int flags = silofs_mtype_issuper(mtype) ? SILOFS_ALLOCF_BZERO : 0;
 
-	view = silofs_memalloc(alloc, silofs_ltype_size(ltype), flags);
+	view = silofs_memalloc(alloc, silofs_mtype_size(mtype), flags);
 	if (view != NULL) {
-		view_init_by(view, ltype);
+		view_init_by(view, mtype);
 	}
 	return view;
 }
@@ -59,36 +59,36 @@ view_new_by(struct silofs_alloc *alloc, enum silofs_ltype ltype)
 static struct silofs_view *
 view_new_by_uaddr(struct silofs_alloc *alloc, const struct silofs_uaddr *uaddr)
 {
-	return view_new_by(alloc, silofs_uaddr_ltype(uaddr));
+	return view_new_by(alloc, silofs_uaddr_mtype(uaddr));
 }
 
 static struct silofs_view *
 view_new_by_vaddr(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 {
-	return view_new_by(alloc, vaddr->ltype);
+	return view_new_by(alloc, vaddr->mtype);
 }
 
-static void view_del(struct silofs_view *view, enum silofs_ltype ltype,
+static void view_del(struct silofs_view *view, enum silofs_mtype mtype,
                      struct silofs_alloc *alloc, int flags)
 {
-	const size_t size = silofs_ltype_size(ltype);
+	const size_t size = silofs_mtype_size(mtype);
 	size_t nz;
 
-	if (silofs_ltype_issuper(ltype)) {
+	if (silofs_mtype_issuper(mtype)) {
 		flags |= SILOFS_ALLOCF_TRYPUNCH;
 	}
-	if (!silofs_ltype_isdata(ltype)) {
+	if (!silofs_mtype_isdata(mtype)) {
 		nz = silofs_min(size, sizeof(struct silofs_header));
 		silofs_memzero(view, nz);
 	}
 	silofs_memfree(alloc, view, size, flags);
 }
 
-static void view_del_by(struct silofs_view *view, enum silofs_ltype ltype,
+static void view_del_by(struct silofs_view *view, enum silofs_mtype mtype,
                         struct silofs_alloc *alloc, int flags)
 {
 	if (likely(view != NULL)) {
-		view_del(view, ltype, alloc, flags);
+		view_del(view, mtype, alloc, flags);
 	}
 }
 
@@ -96,14 +96,14 @@ static void
 view_del_by_uaddr(struct silofs_view *view, const struct silofs_uaddr *uaddr,
                   struct silofs_alloc *alloc, int flags)
 {
-	view_del_by(view, silofs_uaddr_ltype(uaddr), alloc, flags);
+	view_del_by(view, silofs_uaddr_mtype(uaddr), alloc, flags);
 }
 
 static void
 view_del_by_vaddr(struct silofs_view *view, const struct silofs_vaddr *vaddr,
                   struct silofs_alloc *alloc, int flags)
 {
-	view_del_by(view, vaddr->ltype, alloc, flags);
+	view_del_by(view, vaddr->mtype, alloc, flags);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -118,12 +118,12 @@ lni_unconst(const struct silofs_lnode_info *lni)
 	return u.q;
 }
 
-static void lni_init(struct silofs_lnode_info *lni, enum silofs_ltype ltype,
+static void lni_init(struct silofs_lnode_info *lni, enum silofs_mtype mtype,
                      struct silofs_view *view)
 {
-	silofs_hmqe_init(&lni->ln_hmqe, silofs_ltype_size(ltype));
+	silofs_hmqe_init(&lni->ln_hmqe, silofs_mtype_size(mtype));
 	silofs_avl_node_init(&lni->ln_ds_avl_node);
-	lni->ln_ltype = ltype;
+	lni->ln_mtype = mtype;
 	lni->ln_ds_next = NULL;
 	lni->ln_env = NULL;
 	lni->ln_view = view;
@@ -142,7 +142,7 @@ static void lni_fini(struct silofs_lnode_info *lni)
 int silofs_lni_verify_view(const struct silofs_lnode_info *lni)
 {
 	silofs_assert_not_null(lni->ln_view);
-	return verify_view_by(lni->ln_view, lni->ln_ltype);
+	return verify_view_by(lni->ln_view, lni->ln_mtype);
 }
 
 struct silofs_lnode_info *
@@ -290,7 +290,7 @@ static void
 uni_init(struct silofs_unode_info *uni, const struct silofs_uaddr *uaddr,
          struct silofs_view *view)
 {
-	lni_init(&uni->un_lni, silofs_uaddr_ltype(uaddr), view);
+	lni_init(&uni->un_lni, silofs_uaddr_mtype(uaddr), view);
 	silofs_uaddr_assign(&uni->un_uaddr, uaddr);
 	uni->un_magic = SILOFS_UI_MAGIC;
 }
@@ -380,11 +380,11 @@ bool silofs_uni_isevictable(const struct silofs_unode_info *uni)
 	return silofs_lni_isevictable(&uni->un_lni);
 }
 
-enum silofs_ltype silofs_uni_ltype(const struct silofs_unode_info *uni)
+enum silofs_mtype silofs_uni_mtype(const struct silofs_unode_info *uni)
 {
 	uni_verify(uni);
 
-	return silofs_uaddr_ltype(&uni->un_uaddr);
+	return silofs_uaddr_mtype(&uni->un_uaddr);
 }
 
 void silofs_uni_set_dq(struct silofs_unode_info *uni, struct silofs_dirtyq *dq)
@@ -434,7 +434,7 @@ static void
 vni_init(struct silofs_vnode_info *vni, const struct silofs_vaddr *vaddr,
          struct silofs_view *view)
 {
-	lni_init(&vni->vn_lni, vaddr->ltype, view);
+	lni_init(&vni->vn_lni, vaddr->mtype, view);
 	silofs_vaddr_assign(&vni->vn_vaddr, vaddr);
 	silofs_llink_reset(&vni->vn_llink);
 	vni->vn_asyncwr = 0;
@@ -534,9 +534,9 @@ void silofs_vni_seal_view(struct silofs_vnode_info *vni)
 }
 
 static bool
-vni_has_ltype(const struct silofs_vnode_info *vni, enum silofs_ltype ltype)
+vni_has_mtype(const struct silofs_vnode_info *vni, enum silofs_mtype mtype)
 {
-	return silofs_vni_ltype(vni) == ltype;
+	return silofs_vni_mtype(vni) == mtype;
 }
 
 static void vni_del_view(struct silofs_vnode_info *vni,
@@ -566,9 +566,9 @@ void silofs_vni_set_rechecked(struct silofs_vnode_info *vni)
 	vni->vn_lni.ln_flags |= SILOFS_LNF_RECHECK;
 }
 
-enum silofs_ltype silofs_vni_ltype(const struct silofs_vnode_info *vni)
+enum silofs_mtype silofs_vni_mtype(const struct silofs_vnode_info *vni)
 {
-	return vni->vn_vaddr.ltype;
+	return vni->vn_vaddr.mtype;
 }
 
 const struct silofs_vaddr *
@@ -1195,7 +1195,7 @@ dni_del(struct silofs_dnode_info *dni, struct silofs_alloc *alloc, int flags)
 struct silofs_dnode_info *silofs_dni_from_vni(struct silofs_vnode_info *vni)
 {
 	silofs_assert_not_null(vni);
-	silofs_assert(vni_has_ltype(vni, SILOFS_LTYPE_DTNODE));
+	silofs_assert(vni_has_mtype(vni, SILOFS_MTYPE_DTNODE));
 	return dni_from_vni(vni);
 }
 
@@ -1290,14 +1290,14 @@ fli_init(struct silofs_fileaf_info *fli, const struct silofs_vaddr *vaddr,
 {
 	vni_init(&fli->fl_vni, vaddr, view);
 
-	if (vaddr->ltype == SILOFS_LTYPE_DATA1K) {
+	if (vaddr->mtype == SILOFS_MTYPE_DATA1K) {
 		fli->flu.db1 = &view->u.dbk1;
-	} else if (vaddr->ltype == SILOFS_LTYPE_DATA4K) {
+	} else if (vaddr->mtype == SILOFS_MTYPE_DATA4K) {
 		fli->flu.db4 = &view->u.dbk4;
-	} else if (vaddr->ltype == SILOFS_LTYPE_DATABK) {
+	} else if (vaddr->mtype == SILOFS_MTYPE_DATABK) {
 		fli->flu.db = &view->u.dbk64;
 	} else {
-		silofs_panic("not data ltype: %d", (int)vaddr->ltype);
+		silofs_panic("not data mtype: %d", (int)vaddr->mtype);
 	}
 }
 
@@ -1357,64 +1357,64 @@ struct silofs_fileaf_info *silofs_fli_from_vni(struct silofs_vnode_info *vni)
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static int
-view_verify_by_hdr(const struct silofs_view *view, enum silofs_ltype ltype)
+view_verify_by_hdr(const struct silofs_view *view, enum silofs_mtype mtype)
 {
 	const struct silofs_header *hdr = &view->u.hdr;
 
-	return silofs_hdr_verify(hdr, (uint8_t)ltype, silofs_ltype_size(ltype),
-	                         SILOFS_HDRF_CSUM | SILOFS_HDRF_LTYPE);
+	return silofs_hdr_verify(hdr, (uint8_t)mtype, silofs_mtype_size(mtype),
+	                         SILOFS_HDRF_CSUM | SILOFS_HDRF_MTYPE);
 }
 
 static int
-view_verify_sub(const struct silofs_view *view, enum silofs_ltype ltype)
+view_verify_sub(const struct silofs_view *view, enum silofs_mtype mtype)
 {
-	switch (ltype) {
-	case SILOFS_LTYPE_BOOTREC:
+	switch (mtype) {
+	case SILOFS_MTYPE_BOOTREC:
 		break;
-	case SILOFS_LTYPE_SUPER:
+	case SILOFS_MTYPE_SUPER:
 		return silofs_verify_super_block(&view->u.sb);
-	case SILOFS_LTYPE_SPNODE:
+	case SILOFS_MTYPE_SPNODE:
 		return silofs_verify_spmap_node(&view->u.sn);
-	case SILOFS_LTYPE_SPLEAF:
+	case SILOFS_MTYPE_SPLEAF:
 		return silofs_verify_spmap_leaf(&view->u.sl);
-	case SILOFS_LTYPE_LSMAP:
+	case SILOFS_MTYPE_LSMAP:
 		return silofs_verify_lsmap(&view->u.lsm);
-	case SILOFS_LTYPE_INODE:
+	case SILOFS_MTYPE_INODE:
 		return silofs_verify_inode(&view->u.in);
-	case SILOFS_LTYPE_XANODE:
+	case SILOFS_MTYPE_XANODE:
 		return silofs_verify_xattr_node(&view->u.xan);
-	case SILOFS_LTYPE_SYMVAL:
+	case SILOFS_MTYPE_SYMVAL:
 		return silofs_verify_symlnk_value(&view->u.syv);
-	case SILOFS_LTYPE_DTNODE:
+	case SILOFS_MTYPE_DTNODE:
 		return silofs_verify_dtree_node(&view->u.dtn);
-	case SILOFS_LTYPE_FTNODE:
+	case SILOFS_MTYPE_FTNODE:
 		return silofs_verify_ftree_node(&view->u.ftn);
-	case SILOFS_LTYPE_DATA1K:
-	case SILOFS_LTYPE_DATA4K:
-	case SILOFS_LTYPE_DATABK:
+	case SILOFS_MTYPE_DATA1K:
+	case SILOFS_MTYPE_DATA4K:
+	case SILOFS_MTYPE_DATABK:
 		break;
-	case SILOFS_LTYPE_NONE:
-	case SILOFS_LTYPE_LAST:
+	case SILOFS_MTYPE_NONE:
+	case SILOFS_MTYPE_LAST:
 	default:
-		log_err("illegal sub-type: ltype=%d", (int)ltype);
+		log_err("illegal sub-type: mtype=%d", (int)mtype);
 		return -SILOFS_EFSCORRUPTED;
 	}
 	return 0;
 }
 
 static int
-verify_view_by(const struct silofs_view *view, const enum silofs_ltype ltype)
+verify_view_by(const struct silofs_view *view, const enum silofs_mtype mtype)
 {
 	int err;
 
-	if (silofs_ltype_isdata(ltype)) {
+	if (silofs_mtype_isdata(mtype)) {
 		return 0;
 	}
-	err = view_verify_by_hdr(view, ltype);
+	err = view_verify_by_hdr(view, mtype);
 	if (err) {
 		return err;
 	}
-	err = view_verify_sub(view, ltype);
+	err = view_verify_sub(view, mtype);
 	if (err) {
 		return err;
 	}
@@ -1427,32 +1427,32 @@ struct silofs_unode_info *
 silofs_new_unode(struct silofs_alloc *alloc, const struct silofs_uaddr *uaddr)
 {
 	struct silofs_unode_info *uni = NULL;
-	const enum silofs_ltype ltype = silofs_uaddr_ltype(uaddr);
+	const enum silofs_mtype mtype = silofs_uaddr_mtype(uaddr);
 
-	switch (ltype) {
-	case SILOFS_LTYPE_SUPER:
+	switch (mtype) {
+	case SILOFS_MTYPE_SUPER:
 		uni = sbi_to_uni(sbi_new(alloc, uaddr));
 		break;
-	case SILOFS_LTYPE_SPNODE:
+	case SILOFS_MTYPE_SPNODE:
 		uni = sni_to_uni(sni_new(alloc, uaddr));
 		break;
-	case SILOFS_LTYPE_SPLEAF:
+	case SILOFS_MTYPE_SPLEAF:
 		uni = sli_to_uni(sli_new(alloc, uaddr));
 		break;
-	case SILOFS_LTYPE_BOOTREC:
-	case SILOFS_LTYPE_LSMAP:
-	case SILOFS_LTYPE_INODE:
-	case SILOFS_LTYPE_XANODE:
-	case SILOFS_LTYPE_SYMVAL:
-	case SILOFS_LTYPE_DTNODE:
-	case SILOFS_LTYPE_FTNODE:
-	case SILOFS_LTYPE_DATA1K:
-	case SILOFS_LTYPE_DATA4K:
-	case SILOFS_LTYPE_DATABK:
-	case SILOFS_LTYPE_NONE:
-	case SILOFS_LTYPE_LAST:
+	case SILOFS_MTYPE_BOOTREC:
+	case SILOFS_MTYPE_LSMAP:
+	case SILOFS_MTYPE_INODE:
+	case SILOFS_MTYPE_XANODE:
+	case SILOFS_MTYPE_SYMVAL:
+	case SILOFS_MTYPE_DTNODE:
+	case SILOFS_MTYPE_FTNODE:
+	case SILOFS_MTYPE_DATA1K:
+	case SILOFS_MTYPE_DATA4K:
+	case SILOFS_MTYPE_DATABK:
+	case SILOFS_MTYPE_NONE:
+	case SILOFS_MTYPE_LAST:
 	default:
-		silofs_panic("can not create unode: ltype=%d", (int)ltype);
+		silofs_panic("can not create unode: mtype=%d", (int)mtype);
 		break;
 	}
 	return uni;
@@ -1461,32 +1461,32 @@ silofs_new_unode(struct silofs_alloc *alloc, const struct silofs_uaddr *uaddr)
 void silofs_del_unode(struct silofs_unode_info *uni,
                       struct silofs_alloc *alloc, int flags)
 {
-	const enum silofs_ltype ltype = silofs_uni_ltype(uni);
+	const enum silofs_mtype mtype = silofs_uni_mtype(uni);
 
-	switch (ltype) {
-	case SILOFS_LTYPE_SUPER:
+	switch (mtype) {
+	case SILOFS_MTYPE_SUPER:
 		sbi_del(sbi_from_uni(uni), alloc, flags);
 		break;
-	case SILOFS_LTYPE_SPNODE:
+	case SILOFS_MTYPE_SPNODE:
 		sni_del(sni_from_uni(uni), alloc, flags);
 		break;
-	case SILOFS_LTYPE_SPLEAF:
+	case SILOFS_MTYPE_SPLEAF:
 		sli_del(sli_from_uni(uni), alloc, flags);
 		break;
-	case SILOFS_LTYPE_BOOTREC:
-	case SILOFS_LTYPE_LSMAP:
-	case SILOFS_LTYPE_INODE:
-	case SILOFS_LTYPE_XANODE:
-	case SILOFS_LTYPE_SYMVAL:
-	case SILOFS_LTYPE_DTNODE:
-	case SILOFS_LTYPE_FTNODE:
-	case SILOFS_LTYPE_DATA1K:
-	case SILOFS_LTYPE_DATA4K:
-	case SILOFS_LTYPE_DATABK:
-	case SILOFS_LTYPE_NONE:
-	case SILOFS_LTYPE_LAST:
+	case SILOFS_MTYPE_BOOTREC:
+	case SILOFS_MTYPE_LSMAP:
+	case SILOFS_MTYPE_INODE:
+	case SILOFS_MTYPE_XANODE:
+	case SILOFS_MTYPE_SYMVAL:
+	case SILOFS_MTYPE_DTNODE:
+	case SILOFS_MTYPE_FTNODE:
+	case SILOFS_MTYPE_DATA1K:
+	case SILOFS_MTYPE_DATA4K:
+	case SILOFS_MTYPE_DATABK:
+	case SILOFS_MTYPE_NONE:
+	case SILOFS_MTYPE_LAST:
 	default:
-		silofs_panic("can not destroy unode: ltype=%d", (int)ltype);
+		silofs_panic("can not destroy unode: mtype=%d", (int)mtype);
 		break;
 	}
 }
@@ -1497,40 +1497,40 @@ struct silofs_vnode_info *
 silofs_new_vnode(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 {
 	struct silofs_vnode_info *vni = NULL;
-	const enum silofs_ltype ltype = vaddr->ltype;
+	const enum silofs_mtype mtype = vaddr->mtype;
 
-	switch (ltype) {
-	case SILOFS_LTYPE_LSMAP:
+	switch (mtype) {
+	case SILOFS_MTYPE_LSMAP:
 		vni = lsi_to_vni(lsi_new(alloc, vaddr));
 		break;
-	case SILOFS_LTYPE_INODE:
+	case SILOFS_MTYPE_INODE:
 		vni = silofs_ii_to_vni(ii_new(alloc, vaddr));
 		break;
-	case SILOFS_LTYPE_XANODE:
+	case SILOFS_MTYPE_XANODE:
 		vni = xai_to_vni(xai_new(alloc, vaddr));
 		break;
-	case SILOFS_LTYPE_SYMVAL:
+	case SILOFS_MTYPE_SYMVAL:
 		vni = syi_to_vni(syi_new(alloc, vaddr));
 		break;
-	case SILOFS_LTYPE_DTNODE:
+	case SILOFS_MTYPE_DTNODE:
 		vni = dni_to_vni(dni_new(alloc, vaddr));
 		break;
-	case SILOFS_LTYPE_FTNODE:
+	case SILOFS_MTYPE_FTNODE:
 		vni = fni_to_vni(fni_new(alloc, vaddr));
 		break;
-	case SILOFS_LTYPE_DATA1K:
-	case SILOFS_LTYPE_DATA4K:
-	case SILOFS_LTYPE_DATABK:
+	case SILOFS_MTYPE_DATA1K:
+	case SILOFS_MTYPE_DATA4K:
+	case SILOFS_MTYPE_DATABK:
 		vni = fli_to_vni(fli_new(alloc, vaddr));
 		break;
-	case SILOFS_LTYPE_BOOTREC:
-	case SILOFS_LTYPE_SUPER:
-	case SILOFS_LTYPE_SPNODE:
-	case SILOFS_LTYPE_SPLEAF:
-	case SILOFS_LTYPE_NONE:
-	case SILOFS_LTYPE_LAST:
+	case SILOFS_MTYPE_BOOTREC:
+	case SILOFS_MTYPE_SUPER:
+	case SILOFS_MTYPE_SPNODE:
+	case SILOFS_MTYPE_SPLEAF:
+	case SILOFS_MTYPE_NONE:
+	case SILOFS_MTYPE_LAST:
 	default:
-		silofs_panic("can not create vnode: ltype=%d", (int)ltype);
+		silofs_panic("can not create vnode: mtype=%d", (int)mtype);
 		break;
 	}
 	return vni;
@@ -1539,40 +1539,40 @@ silofs_new_vnode(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 void silofs_del_vnode(struct silofs_vnode_info *vni,
                       struct silofs_alloc *alloc, int flags)
 {
-	const enum silofs_ltype ltype = silofs_vni_ltype(vni);
+	const enum silofs_mtype mtype = silofs_vni_mtype(vni);
 
-	switch (ltype) {
-	case SILOFS_LTYPE_LSMAP:
+	switch (mtype) {
+	case SILOFS_MTYPE_LSMAP:
 		lsi_del(silofs_lsi_from_vni(vni), alloc, flags);
 		break;
-	case SILOFS_LTYPE_INODE:
+	case SILOFS_MTYPE_INODE:
 		ii_del(ii_from_vni(vni), alloc, flags);
 		break;
-	case SILOFS_LTYPE_XANODE:
+	case SILOFS_MTYPE_XANODE:
 		xai_del(xai_from_vni(vni), alloc, flags);
 		break;
-	case SILOFS_LTYPE_SYMVAL:
+	case SILOFS_MTYPE_SYMVAL:
 		syi_del(syi_from_vni(vni), alloc, flags);
 		break;
-	case SILOFS_LTYPE_DTNODE:
+	case SILOFS_MTYPE_DTNODE:
 		dni_del(dni_from_vni(vni), alloc, flags);
 		break;
-	case SILOFS_LTYPE_FTNODE:
+	case SILOFS_MTYPE_FTNODE:
 		fni_del(fni_from_vni(vni), alloc, flags);
 		break;
-	case SILOFS_LTYPE_DATA1K:
-	case SILOFS_LTYPE_DATA4K:
-	case SILOFS_LTYPE_DATABK:
+	case SILOFS_MTYPE_DATA1K:
+	case SILOFS_MTYPE_DATA4K:
+	case SILOFS_MTYPE_DATABK:
 		fli_del(fli_from_vni(vni), alloc, flags);
 		break;
-	case SILOFS_LTYPE_BOOTREC:
-	case SILOFS_LTYPE_SUPER:
-	case SILOFS_LTYPE_SPNODE:
-	case SILOFS_LTYPE_SPLEAF:
-	case SILOFS_LTYPE_NONE:
-	case SILOFS_LTYPE_LAST:
+	case SILOFS_MTYPE_BOOTREC:
+	case SILOFS_MTYPE_SUPER:
+	case SILOFS_MTYPE_SPNODE:
+	case SILOFS_MTYPE_SPLEAF:
+	case SILOFS_MTYPE_NONE:
+	case SILOFS_MTYPE_LAST:
 	default:
-		silofs_panic("can not destroy vnode: ltype=%d", (int)ltype);
+		silofs_panic("can not destroy vnode: mtype=%d", (int)mtype);
 		break;
 	}
 }

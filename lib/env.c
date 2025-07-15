@@ -460,15 +460,15 @@ static void make_super_lsid(struct silofs_lsid *out_lsid)
 	struct silofs_blobid blobid;
 
 	silofs_blobid_generate(&blobid);
-	silofs_lsid_setup(out_lsid, &blobid, 0, SILOFS_LTYPE_SUPER,
-	                  SILOFS_HEIGHT_SUPER, SILOFS_LTYPE_SUPER);
+	silofs_lsid_setup(out_lsid, &blobid, 0, SILOFS_MTYPE_SUPER,
+	                  SILOFS_HEIGHT_SUPER, SILOFS_MTYPE_SUPER);
 }
 
 static void make_super_uaddr(const struct silofs_lsid *lsid,
                              struct silofs_uaddr *out_uaddr)
 {
 	silofs_assert_eq(lsid->height, SILOFS_HEIGHT_SUPER);
-	silofs_assert_eq(lsid->ltype, SILOFS_LTYPE_SUPER);
+	silofs_assert_eq(lsid->mtype, SILOFS_MTYPE_SUPER);
 
 	silofs_uaddr_setup(out_uaddr, lsid, 0, 0);
 }

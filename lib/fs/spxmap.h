@@ -33,10 +33,10 @@ struct silofs_spamap {
 	struct silofs_avl     spa_avl;
 	loff_t                spa_hint;
 	unsigned int          spa_cap_max;
-	enum silofs_ltype     spa_ltype;
+	enum silofs_mtype     spa_mtype;
 };
 
-/* map of previously-allocated now-free space-addresses by ltype */
+/* map of previously-allocated now-free space-addresses by mtype */
 struct silofs_spamaps {
 	struct silofs_spamap spa_lsmap;
 	struct silofs_spamap spa_inode;
@@ -53,7 +53,7 @@ struct silofs_spamaps {
 struct silofs_uakey {
 	loff_t             voff;
 	enum silofs_height height;
-	enum silofs_ltype  vspace;
+	enum silofs_mtype  vspace;
 };
 
 /* in-memory mapping of uaddr by (voff,height,vspace) */
@@ -74,20 +74,20 @@ void silofs_spamaps_fini(struct silofs_spamaps *spam);
 
 void silofs_spamaps_drop(struct silofs_spamaps *spam);
 
-int silofs_spamaps_trypop(struct silofs_spamaps *spam, enum silofs_ltype ltype,
+int silofs_spamaps_trypop(struct silofs_spamaps *spam, enum silofs_mtype mtype,
                           size_t len, loff_t *out_voff);
 
-int silofs_spamaps_store(struct silofs_spamaps *spam, enum silofs_ltype ltype,
+int silofs_spamaps_store(struct silofs_spamaps *spam, enum silofs_mtype mtype,
                          loff_t voff, size_t len);
 
 int silofs_spamaps_baseof(const struct silofs_spamaps *spam,
-                          enum silofs_ltype ltype, loff_t voff, loff_t *out);
+                          enum silofs_mtype mtype, loff_t voff, loff_t *out);
 
 loff_t silofs_spamaps_get_hint(const struct silofs_spamaps *spam,
-                               enum silofs_ltype            ltype);
+                               enum silofs_mtype            mtype);
 
 void silofs_spamaps_set_hint(struct silofs_spamaps *spam,
-                             enum silofs_ltype ltype, loff_t off);
+                             enum silofs_mtype mtype, loff_t off);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -96,7 +96,7 @@ void silofs_uakey_setup_by(struct silofs_uakey       *uakey,
 
 void silofs_uakey_setup_by2(struct silofs_uakey        *uakey,
                             const struct silofs_lrange *lrange,
-                            enum silofs_ltype           vspace);
+                            enum silofs_mtype           vspace);
 
 int silofs_uamap_init(struct silofs_uamap *uamap, struct silofs_alloc *alloc);
 

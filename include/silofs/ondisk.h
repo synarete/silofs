@@ -343,7 +343,7 @@ enum silofs_bootrecf {
 enum silofs_hdrf {
 	SILOFS_HDRF_CSUM  = 0x01,
 	SILOFS_HDRF_PTYPE = 0x02,
-	SILOFS_HDRF_LTYPE = 0x04,
+	SILOFS_HDRF_MTYPE = 0x04,
 };
 
 /* format endianness */
@@ -376,22 +376,22 @@ enum silofs_pnodef {
 };
 
 /* logical-elements types */
-enum silofs_ltype {
-	SILOFS_LTYPE_NONE    = 0,
-	SILOFS_LTYPE_BOOTREC = 1,
-	SILOFS_LTYPE_SUPER   = 2,
-	SILOFS_LTYPE_SPNODE  = 3,
-	SILOFS_LTYPE_SPLEAF  = 4,
-	SILOFS_LTYPE_LSMAP   = 5,
-	SILOFS_LTYPE_INODE   = 6,
-	SILOFS_LTYPE_XANODE  = 7,
-	SILOFS_LTYPE_DTNODE  = 8,
-	SILOFS_LTYPE_SYMVAL  = 9,
-	SILOFS_LTYPE_FTNODE  = 10,
-	SILOFS_LTYPE_DATA1K  = 11,
-	SILOFS_LTYPE_DATA4K  = 12,
-	SILOFS_LTYPE_DATABK  = 13,
-	SILOFS_LTYPE_LAST, /* keep last */
+enum silofs_mtype {
+	SILOFS_MTYPE_NONE    = 0,
+	SILOFS_MTYPE_BOOTREC = 1,
+	SILOFS_MTYPE_SUPER   = 2,
+	SILOFS_MTYPE_SPNODE  = 3,
+	SILOFS_MTYPE_SPLEAF  = 4,
+	SILOFS_MTYPE_LSMAP   = 5,
+	SILOFS_MTYPE_INODE   = 6,
+	SILOFS_MTYPE_XANODE  = 7,
+	SILOFS_MTYPE_DTNODE  = 8,
+	SILOFS_MTYPE_SYMVAL  = 9,
+	SILOFS_MTYPE_FTNODE  = 10,
+	SILOFS_MTYPE_DATA1K  = 11,
+	SILOFS_MTYPE_DATA4K  = 12,
+	SILOFS_MTYPE_DATABK  = 13,
+	SILOFS_MTYPE_LAST, /* keep last */
 };
 
 /* logical heights of unode mappings */
@@ -550,7 +550,7 @@ struct silofs_lsid48b {
 	uint32_t             vindex;
 	uint8_t              vspace;
 	uint8_t              height;
-	uint8_t              ltype;
+	uint8_t              mtype;
 	uint8_t              pad[5];
 } silofs_attr_aligned16;
 
@@ -579,7 +579,7 @@ struct silofs_vaddr56 {
 };
 
 struct silofs_vaddr64 {
-	uint64_t voff_ltype;
+	uint64_t voff_mtype;
 } silofs_attr_aligned8;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -724,7 +724,7 @@ struct silofs_lbk_ref {
 struct silofs_spmap_leaf {
 	struct silofs_header    sl_hdr;
 	struct silofs_lrange128 sl_lrange;
-	uint16_t                sl_refltype;
+	uint16_t                sl_refmtype;
 	uint8_t                 sl_reserved1[14];
 	struct silofs_lsid48b   sl_main_lsid;
 	uint8_t                 sl_reserved2[16];
@@ -749,7 +749,7 @@ struct silofs_lbk_meta {
 struct silofs_lsmap {
 	struct silofs_header    lsm_hdr;
 	struct silofs_lrange128 lsm_lrange;
-	uint16_t                lsm_refltype;
+	uint16_t                lsm_refmtype;
 	uint8_t                 lsm_reserved1[14];
 	struct silofs_lbk_meta  lsm_lbms[SILOFS_SPMAP_NCHILDS];
 	uint8_t                 lsm_reserved2[448];
@@ -867,7 +867,7 @@ struct silofs_ftree_node {
 	int64_t               fn_end;
 	uint32_t              fn_nactive_childs;
 	uint8_t               fn_height;
-	uint8_t               fn_child_ltype;
+	uint8_t               fn_child_mtype;
 	uint8_t               fn_reserved[58];
 	uint8_t               fn_zeros[896];
 	struct silofs_vaddr56 fn_child[SILOFS_FILE_NODE_NCHILDS];
@@ -977,7 +977,7 @@ struct silofs_blob_desc {
 struct silofs_btree_node {
 	struct silofs_header   btn_hdr;
 	uint32_t               btn_flags;
-	uint16_t               btn_ltype;
+	uint16_t               btn_mtype;
 	uint16_t               btn_height;
 	uint8_t                btn_nkeys;
 	uint8_t                btn_nchilds;

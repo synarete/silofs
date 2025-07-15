@@ -149,10 +149,10 @@ static void spe_del(struct silofs_spa_entry *spe, struct silofs_alloc *alloc)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static unsigned int spamap_capacity(enum silofs_ltype ltype)
+static unsigned int spamap_capacity(enum silofs_mtype mtype)
 {
 	const uint32_t mega = SILOFS_MEGA;
-	const uint32_t nmul = silofs_ltype_isdata(ltype) ? 16 : 4;
+	const uint32_t nmul = silofs_mtype_isdata(mtype) ? 16 : 4;
 
 	return (nmul * mega);
 }
@@ -446,14 +446,14 @@ static void spamap_set_hint(struct silofs_spamap *spa, loff_t off)
 	spa->spa_hint = off;
 }
 
-static void spamap_init(struct silofs_spamap *spa, enum silofs_ltype ltype,
+static void spamap_init(struct silofs_spamap *spa, enum silofs_mtype mtype,
                         struct silofs_alloc *alloc)
 {
-	spalifo_init(&spa->spa_lifo, (unsigned int)silofs_ltype_size(ltype));
+	spalifo_init(&spa->spa_lifo, (unsigned int)silofs_mtype_size(mtype));
 	silofs_avl_init(&spa->spa_avl, spe_getkey, voff_compare, spa);
 	spa->spa_alloc = alloc;
-	spa->spa_cap_max = spamap_capacity(ltype);
-	spa->spa_ltype = ltype;
+	spa->spa_cap_max = spamap_capacity(mtype);
+	spa->spa_mtype = mtype;
 	spa->spa_hint = 0;
 }
 
@@ -463,51 +463,51 @@ static void spamap_fini(struct silofs_spamap *spa)
 	silofs_avl_fini(&spa->spa_avl);
 	spa->spa_alloc = NULL;
 	spa->spa_cap_max = 0;
-	spa->spa_ltype = SILOFS_LTYPE_NONE;
+	spa->spa_mtype = SILOFS_MTYPE_NONE;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static struct silofs_spamap *
-spamaps_sub_map(struct silofs_spamaps *spam, enum silofs_ltype ltype)
+spamaps_sub_map(struct silofs_spamaps *spam, enum silofs_mtype mtype)
 {
 	struct silofs_spamap *ret;
 
-	switch (ltype) {
-	case SILOFS_LTYPE_LSMAP:
+	switch (mtype) {
+	case SILOFS_MTYPE_LSMAP:
 		ret = &spam->spa_lsmap;
 		break;
-	case SILOFS_LTYPE_INODE:
+	case SILOFS_MTYPE_INODE:
 		ret = &spam->spa_inode;
 		break;
-	case SILOFS_LTYPE_XANODE:
+	case SILOFS_MTYPE_XANODE:
 		ret = &spam->spa_xanode;
 		break;
-	case SILOFS_LTYPE_DTNODE:
+	case SILOFS_MTYPE_DTNODE:
 		ret = &spam->spa_dtnode;
 		break;
-	case SILOFS_LTYPE_SYMVAL:
+	case SILOFS_MTYPE_SYMVAL:
 		ret = &spam->spa_symval;
 		break;
-	case SILOFS_LTYPE_FTNODE:
+	case SILOFS_MTYPE_FTNODE:
 		ret = &spam->spa_ftnode;
 		break;
-	case SILOFS_LTYPE_DATA1K:
+	case SILOFS_MTYPE_DATA1K:
 		ret = &spam->spa_data1k;
 		break;
-	case SILOFS_LTYPE_DATA4K:
+	case SILOFS_MTYPE_DATA4K:
 		ret = &spam->spa_data4k;
 		break;
-	case SILOFS_LTYPE_DATABK:
+	case SILOFS_MTYPE_DATABK:
 		ret = &spam->spa_databk;
 		break;
 
-	case SILOFS_LTYPE_BOOTREC:
-	case SILOFS_LTYPE_SUPER:
-	case SILOFS_LTYPE_SPNODE:
-	case SILOFS_LTYPE_SPLEAF:
-	case SILOFS_LTYPE_NONE:
-	case SILOFS_LTYPE_LAST:
+	case SILOFS_MTYPE_BOOTREC:
+	case SILOFS_MTYPE_SUPER:
+	case SILOFS_MTYPE_SPNODE:
+	case SILOFS_MTYPE_SPLEAF:
+	case SILOFS_MTYPE_NONE:
+	case SILOFS_MTYPE_LAST:
 	default:
 		ret = NULL;
 		break;
@@ -516,31 +516,31 @@ spamaps_sub_map(struct silofs_spamaps *spam, enum silofs_ltype ltype)
 }
 
 static const struct silofs_spamap *
-spamaps_sub_map2(const struct silofs_spamaps *spam, enum silofs_ltype ltype)
+spamaps_sub_map2(const struct silofs_spamaps *spam, enum silofs_mtype mtype)
 {
-	return spamaps_sub_map(unconst(spam), ltype);
+	return spamaps_sub_map(unconst(spam), mtype);
 }
 
-int silofs_spamaps_store(struct silofs_spamaps *spam, enum silofs_ltype ltype,
+int silofs_spamaps_store(struct silofs_spamaps *spam, enum silofs_mtype mtype,
                          loff_t voff, size_t len)
 {
 	struct silofs_spamap *spa;
 	int err = -SILOFS_EINVAL;
 
-	spa = spamaps_sub_map(spam, ltype);
+	spa = spamaps_sub_map(spam, mtype);
 	if (spa != NULL) {
 		err = spamap_add_vspace(spa, voff, len);
 	}
 	return err;
 }
 
-int silofs_spamaps_trypop(struct silofs_spamaps *spam, enum silofs_ltype ltype,
+int silofs_spamaps_trypop(struct silofs_spamaps *spam, enum silofs_mtype mtype,
                           size_t len, loff_t *out_voff)
 {
 	struct silofs_spamap *spa;
 	int err = -SILOFS_EINVAL;
 
-	spa = spamaps_sub_map(spam, ltype);
+	spa = spamaps_sub_map(spam, mtype);
 	if (spa != NULL) {
 		err = spamap_pop_vspace(spa, len, out_voff);
 	}
@@ -549,12 +549,12 @@ int silofs_spamaps_trypop(struct silofs_spamaps *spam, enum silofs_ltype ltype,
 
 /* TODO: unused; remove me */
 int silofs_spamaps_baseof(const struct silofs_spamaps *spam,
-                          enum silofs_ltype ltype, loff_t voff, loff_t *out)
+                          enum silofs_mtype mtype, loff_t voff, loff_t *out)
 {
 	const struct silofs_spamap *spa;
 	int err = -SILOFS_ENOENT;
 
-	spa = spamaps_sub_map2(spam, ltype);
+	spa = spamaps_sub_map2(spam, mtype);
 	if (spa != NULL) {
 		err = spamap_find_baseof(spa, voff, out);
 	}
@@ -562,12 +562,12 @@ int silofs_spamaps_baseof(const struct silofs_spamaps *spam,
 }
 
 loff_t silofs_spamaps_get_hint(const struct silofs_spamaps *spam,
-                               enum silofs_ltype ltype)
+                               enum silofs_mtype mtype)
 {
 	const struct silofs_spamap *spa;
 	loff_t hint = 0;
 
-	spa = spamaps_sub_map2(spam, ltype);
+	spa = spamaps_sub_map2(spam, mtype);
 	if (spa != NULL) {
 		hint = spamap_get_hint(spa);
 	}
@@ -575,11 +575,11 @@ loff_t silofs_spamaps_get_hint(const struct silofs_spamaps *spam,
 }
 
 void silofs_spamaps_set_hint(struct silofs_spamaps *spam,
-                             enum silofs_ltype ltype, loff_t off)
+                             enum silofs_mtype mtype, loff_t off)
 {
 	struct silofs_spamap *spa;
 
-	spa = spamaps_sub_map(spam, ltype);
+	spa = spamaps_sub_map(spam, mtype);
 	if (spa != NULL) {
 		spamap_set_hint(spa, off);
 	}
@@ -588,10 +588,10 @@ void silofs_spamaps_set_hint(struct silofs_spamaps *spam,
 void silofs_spamaps_drop(struct silofs_spamaps *spam)
 {
 	struct silofs_spamap *spa = NULL;
-	enum silofs_ltype ltype = SILOFS_LTYPE_NONE;
+	enum silofs_mtype mtype = SILOFS_MTYPE_NONE;
 
-	while (++ltype < SILOFS_LTYPE_LAST) {
-		spa = spamaps_sub_map(spam, ltype);
+	while (++mtype < SILOFS_MTYPE_LAST) {
+		spa = spamaps_sub_map(spam, mtype);
 		if (spa != NULL) {
 			spamap_clear(spa);
 		}
@@ -602,12 +602,12 @@ int silofs_spamaps_init(struct silofs_spamaps *spam,
                         struct silofs_alloc *alloc)
 {
 	struct silofs_spamap *spa = NULL;
-	enum silofs_ltype ltype = SILOFS_LTYPE_NONE;
+	enum silofs_mtype mtype = SILOFS_MTYPE_NONE;
 
-	while (++ltype < SILOFS_LTYPE_LAST) {
-		spa = spamaps_sub_map(spam, ltype);
+	while (++mtype < SILOFS_MTYPE_LAST) {
+		spa = spamaps_sub_map(spam, mtype);
 		if (spa != NULL) {
-			spamap_init(spa, ltype, alloc);
+			spamap_init(spa, mtype, alloc);
 		}
 	}
 	return 0;
@@ -616,10 +616,10 @@ int silofs_spamaps_init(struct silofs_spamaps *spam,
 void silofs_spamaps_fini(struct silofs_spamaps *spam)
 {
 	struct silofs_spamap *spa = NULL;
-	enum silofs_ltype ltype = SILOFS_LTYPE_NONE;
+	enum silofs_mtype mtype = SILOFS_MTYPE_NONE;
 
-	while (++ltype < SILOFS_LTYPE_LAST) {
-		spa = spamaps_sub_map(spam, ltype);
+	while (++mtype < SILOFS_MTYPE_LAST) {
+		spa = spamaps_sub_map(spam, mtype);
 		if (spa != NULL) {
 			spamap_clear(spa);
 			spamap_fini(spa);
@@ -629,13 +629,13 @@ void silofs_spamaps_fini(struct silofs_spamaps *spam)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static enum silofs_ltype uaddr_vspace(const struct silofs_uaddr *uaddr)
+static enum silofs_mtype uaddr_vspace(const struct silofs_uaddr *uaddr)
 {
 	return uaddr->laddr.lsid.vspace;
 }
 
 static void uakey_setup(struct silofs_uakey *uakey, loff_t voff,
-                        enum silofs_height height, enum silofs_ltype vspace)
+                        enum silofs_height height, enum silofs_mtype vspace)
 {
 	uakey->voff = voff;
 	uakey->height = height;
@@ -651,7 +651,7 @@ void silofs_uakey_setup_by(struct silofs_uakey *uakey,
 
 void silofs_uakey_setup_by2(struct silofs_uakey *uakey,
                             const struct silofs_lrange *lrange,
-                            enum silofs_ltype vspace)
+                            enum silofs_mtype vspace)
 {
 	uakey_setup(uakey, lrange->beg, lrange->height, vspace);
 }

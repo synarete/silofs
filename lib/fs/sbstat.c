@@ -24,10 +24,10 @@
 
 /* local functions */
 static ssize_t *
-spgs_gauge_of2(struct silofs_space_gauges *spgs, enum silofs_ltype ltype);
+spgs_gauge_of2(struct silofs_space_gauges *spgs, enum silofs_mtype mtype);
 
 static const ssize_t *
-spgs_gauge_of(const struct silofs_space_gauges *spgs, enum silofs_ltype ltype);
+spgs_gauge_of(const struct silofs_space_gauges *spgs, enum silofs_mtype mtype);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -84,50 +84,50 @@ static int verify_size(size_t sz)
 
 static const uint64_t *
 spgs256_gauge_of(const struct silofs_space_gauges256 *spgs256,
-                 enum silofs_ltype ltype)
+                 enum silofs_mtype mtype)
 {
 	const uint64_t *ret;
 
-	switch (ltype) {
-	case SILOFS_LTYPE_SUPER:
+	switch (mtype) {
+	case SILOFS_MTYPE_SUPER:
 		ret = &spgs256->sg_nsuper;
 		break;
-	case SILOFS_LTYPE_SPNODE:
+	case SILOFS_MTYPE_SPNODE:
 		ret = &spgs256->sg_nspnode;
 		break;
-	case SILOFS_LTYPE_SPLEAF:
+	case SILOFS_MTYPE_SPLEAF:
 		ret = &spgs256->sg_nspleaf;
 		break;
-	case SILOFS_LTYPE_LSMAP:
+	case SILOFS_MTYPE_LSMAP:
 		ret = &spgs256->sg_nlsmap;
 		break;
-	case SILOFS_LTYPE_INODE:
+	case SILOFS_MTYPE_INODE:
 		ret = &spgs256->sg_ninode;
 		break;
-	case SILOFS_LTYPE_XANODE:
+	case SILOFS_MTYPE_XANODE:
 		ret = &spgs256->sg_nxanode;
 		break;
-	case SILOFS_LTYPE_SYMVAL:
+	case SILOFS_MTYPE_SYMVAL:
 		ret = &spgs256->sg_nsymval;
 		break;
-	case SILOFS_LTYPE_DTNODE:
+	case SILOFS_MTYPE_DTNODE:
 		ret = &spgs256->sg_ndtnode;
 		break;
-	case SILOFS_LTYPE_FTNODE:
+	case SILOFS_MTYPE_FTNODE:
 		ret = &spgs256->sg_nftnode;
 		break;
-	case SILOFS_LTYPE_DATA1K:
+	case SILOFS_MTYPE_DATA1K:
 		ret = &spgs256->sg_ndata1k;
 		break;
-	case SILOFS_LTYPE_DATA4K:
+	case SILOFS_MTYPE_DATA4K:
 		ret = &spgs256->sg_ndata4k;
 		break;
-	case SILOFS_LTYPE_DATABK:
+	case SILOFS_MTYPE_DATABK:
 		ret = &spgs256->sg_ndatabk;
 		break;
-	case SILOFS_LTYPE_BOOTREC:
-	case SILOFS_LTYPE_NONE:
-	case SILOFS_LTYPE_LAST:
+	case SILOFS_MTYPE_BOOTREC:
+	case SILOFS_MTYPE_NONE:
+	case SILOFS_MTYPE_LAST:
 	default:
 		ret = NULL;
 		break;
@@ -136,9 +136,9 @@ spgs256_gauge_of(const struct silofs_space_gauges256 *spgs256,
 }
 
 static uint64_t *spgs256_gauge_of2(struct silofs_space_gauges256 *spgs256,
-                                   enum silofs_ltype ltype)
+                                   enum silofs_mtype mtype)
 {
-	return silofs_unconst(spgs256_gauge_of(spgs256, ltype));
+	return silofs_unconst(spgs256_gauge_of(spgs256, mtype));
 }
 
 static void spgs256_xtoh(const struct silofs_space_gauges256 *spgs256,
@@ -146,11 +146,11 @@ static void spgs256_xtoh(const struct silofs_space_gauges256 *spgs256,
 {
 	ssize_t *dst = NULL;
 	const uint64_t *src = NULL;
-	enum silofs_ltype ltype = SILOFS_LTYPE_NONE;
+	enum silofs_mtype mtype = SILOFS_MTYPE_NONE;
 
-	while (++ltype < SILOFS_LTYPE_LAST) {
-		src = spgs256_gauge_of(spgs256, ltype);
-		dst = spgs_gauge_of2(spgs, ltype);
+	while (++mtype < SILOFS_MTYPE_LAST) {
+		src = spgs256_gauge_of(spgs256, mtype);
+		dst = spgs_gauge_of2(spgs, mtype);
 		if ((src != NULL) && (dst != NULL)) {
 			*dst = silofs_gauge_to_cpu(*src);
 		}
@@ -162,11 +162,11 @@ static void spgs256_htox(struct silofs_space_gauges256 *spgs256,
 {
 	uint64_t *dst = NULL;
 	const ssize_t *src = NULL;
-	enum silofs_ltype ltype = SILOFS_LTYPE_NONE;
+	enum silofs_mtype mtype = SILOFS_MTYPE_NONE;
 
-	while (++ltype < SILOFS_LTYPE_LAST) {
-		src = spgs_gauge_of(spgs, ltype);
-		dst = spgs256_gauge_of2(spgs256, ltype);
+	while (++mtype < SILOFS_MTYPE_LAST) {
+		src = spgs_gauge_of(spgs, mtype);
+		dst = spgs256_gauge_of2(spgs256, mtype);
 		if ((src != NULL) && (dst != NULL)) {
 			*dst = silofs_cpu_to_gauge(*src);
 		}
@@ -176,12 +176,12 @@ static void spgs256_htox(struct silofs_space_gauges256 *spgs256,
 static int spgs256_verify(const struct silofs_space_gauges256 *spgs256)
 {
 	const uint64_t *pcnt = NULL;
-	enum silofs_ltype ltype = SILOFS_LTYPE_NONE;
+	enum silofs_mtype mtype = SILOFS_MTYPE_NONE;
 	ssize_t cnt;
 	int err;
 
-	while (++ltype < SILOFS_LTYPE_LAST) {
-		pcnt = spgs256_gauge_of(spgs256, ltype);
+	while (++mtype < SILOFS_MTYPE_LAST) {
+		pcnt = spgs256_gauge_of(spgs256, mtype);
 		if (unlikely(pcnt == NULL)) {
 			continue;
 		}
@@ -305,50 +305,50 @@ int silofs_verify_space_stats(const struct silofs_space_stats1k *spst1k)
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static const ssize_t *
-spgs_gauge_of(const struct silofs_space_gauges *spgs, enum silofs_ltype ltype)
+spgs_gauge_of(const struct silofs_space_gauges *spgs, enum silofs_mtype mtype)
 {
 	const ssize_t *ret;
 
-	switch (ltype) {
-	case SILOFS_LTYPE_SUPER:
+	switch (mtype) {
+	case SILOFS_MTYPE_SUPER:
 		ret = &spgs->nsuper;
 		break;
-	case SILOFS_LTYPE_SPNODE:
+	case SILOFS_MTYPE_SPNODE:
 		ret = &spgs->nspnode;
 		break;
-	case SILOFS_LTYPE_SPLEAF:
+	case SILOFS_MTYPE_SPLEAF:
 		ret = &spgs->nspleaf;
 		break;
-	case SILOFS_LTYPE_LSMAP:
+	case SILOFS_MTYPE_LSMAP:
 		ret = &spgs->nlsmap;
 		break;
-	case SILOFS_LTYPE_INODE:
+	case SILOFS_MTYPE_INODE:
 		ret = &spgs->ninode;
 		break;
-	case SILOFS_LTYPE_XANODE:
+	case SILOFS_MTYPE_XANODE:
 		ret = &spgs->nxanode;
 		break;
-	case SILOFS_LTYPE_SYMVAL:
+	case SILOFS_MTYPE_SYMVAL:
 		ret = &spgs->nsymval;
 		break;
-	case SILOFS_LTYPE_DTNODE:
+	case SILOFS_MTYPE_DTNODE:
 		ret = &spgs->ndtnode;
 		break;
-	case SILOFS_LTYPE_FTNODE:
+	case SILOFS_MTYPE_FTNODE:
 		ret = &spgs->nftnode;
 		break;
-	case SILOFS_LTYPE_DATA1K:
+	case SILOFS_MTYPE_DATA1K:
 		ret = &spgs->ndata1k;
 		break;
-	case SILOFS_LTYPE_DATA4K:
+	case SILOFS_MTYPE_DATA4K:
 		ret = &spgs->ndata4k;
 		break;
-	case SILOFS_LTYPE_DATABK:
+	case SILOFS_MTYPE_DATABK:
 		ret = &spgs->ndatabk;
 		break;
-	case SILOFS_LTYPE_BOOTREC:
-	case SILOFS_LTYPE_NONE:
-	case SILOFS_LTYPE_LAST:
+	case SILOFS_MTYPE_BOOTREC:
+	case SILOFS_MTYPE_NONE:
+	case SILOFS_MTYPE_LAST:
 	default:
 		ret = NULL;
 		break;
@@ -357,18 +357,18 @@ spgs_gauge_of(const struct silofs_space_gauges *spgs, enum silofs_ltype ltype)
 }
 
 static ssize_t *
-spgs_gauge_of2(struct silofs_space_gauges *spgs, enum silofs_ltype ltype)
+spgs_gauge_of2(struct silofs_space_gauges *spgs, enum silofs_mtype mtype)
 {
-	return silofs_unconst(spgs_gauge_of(spgs, ltype));
+	return silofs_unconst(spgs_gauge_of(spgs, mtype));
 }
 
 static void spgs_reset(struct silofs_space_gauges *spgs)
 {
 	ssize_t *cnt = NULL;
-	enum silofs_ltype ltype = SILOFS_LTYPE_NONE;
+	enum silofs_mtype mtype = SILOFS_MTYPE_NONE;
 
-	while (++ltype < SILOFS_LTYPE_LAST) {
-		cnt = spgs_gauge_of2(spgs, ltype);
+	while (++mtype < SILOFS_MTYPE_LAST) {
+		cnt = spgs_gauge_of2(spgs, mtype);
 		if (likely(cnt != NULL)) {
 			*cnt = 0;
 		}
@@ -380,11 +380,11 @@ static void spgs_assign(struct silofs_space_gauges *spgs,
 {
 	ssize_t *dst = NULL;
 	const ssize_t *src = NULL;
-	enum silofs_ltype ltype = SILOFS_LTYPE_NONE;
+	enum silofs_mtype mtype = SILOFS_MTYPE_NONE;
 
-	while (++ltype < SILOFS_LTYPE_LAST) {
-		dst = spgs_gauge_of2(spgs, ltype);
-		src = spgs_gauge_of(spgs_other, ltype);
+	while (++mtype < SILOFS_MTYPE_LAST) {
+		dst = spgs_gauge_of2(spgs, mtype);
+		src = spgs_gauge_of(spgs_other, mtype);
 		if (likely((src != NULL) && (dst != NULL))) {
 			*dst = *src;
 		}
@@ -392,9 +392,9 @@ static void spgs_assign(struct silofs_space_gauges *spgs,
 }
 
 static void spgs_update_take(struct silofs_space_gauges *spgs,
-                             enum silofs_ltype ltype, ssize_t take)
+                             enum silofs_mtype mtype, ssize_t take)
 {
-	ssize_t *cnt = spgs_gauge_of2(spgs, ltype);
+	ssize_t *cnt = spgs_gauge_of2(spgs, mtype);
 
 	if (likely(cnt != NULL)) {
 		*cnt += take;
@@ -403,7 +403,7 @@ static void spgs_update_take(struct silofs_space_gauges *spgs,
 
 static ssize_t spgs_ninodes(const struct silofs_space_gauges *spgs)
 {
-	const ssize_t *cnt = spgs_gauge_of(spgs, SILOFS_LTYPE_INODE);
+	const ssize_t *cnt = spgs_gauge_of(spgs, SILOFS_MTYPE_INODE);
 
 	return likely(cnt != NULL) ? *cnt : 0;
 }
@@ -411,14 +411,14 @@ static ssize_t spgs_ninodes(const struct silofs_space_gauges *spgs)
 static ssize_t spgs_sum(const struct silofs_space_gauges *spgs)
 {
 	const ssize_t *cnt = NULL;
-	enum silofs_ltype ltype = SILOFS_LTYPE_NONE;
+	enum silofs_mtype mtype = SILOFS_MTYPE_NONE;
 	ssize_t ssz = 0;
 	ssize_t sum = 0;
 
-	while (++ltype < SILOFS_LTYPE_LAST) {
-		cnt = spgs_gauge_of(spgs, ltype);
+	while (++mtype < SILOFS_MTYPE_LAST) {
+		cnt = spgs_gauge_of(spgs, mtype);
 		if (likely(cnt != NULL)) {
-			ssz = silofs_ltype_ssize(ltype);
+			ssz = silofs_mtype_ssize(mtype);
 			sum += *cnt * ssz;
 		}
 	}
@@ -430,11 +430,11 @@ static void spgs_accum(struct silofs_space_gauges *spgs,
 {
 	ssize_t *dst = NULL;
 	const ssize_t *src = NULL;
-	enum silofs_ltype ltype = SILOFS_LTYPE_NONE;
+	enum silofs_mtype mtype = SILOFS_MTYPE_NONE;
 
-	while (++ltype < SILOFS_LTYPE_LAST) {
-		src = spgs_gauge_of(spgs_other, ltype);
-		dst = spgs_gauge_of2(spgs, ltype);
+	while (++mtype < SILOFS_MTYPE_LAST) {
+		src = spgs_gauge_of(spgs_other, mtype);
+		dst = spgs_gauge_of2(spgs, mtype);
 		if ((src != NULL) && (dst != NULL)) {
 			*dst += *src;
 		}
@@ -446,11 +446,11 @@ static void spgs_export(const struct silofs_space_gauges *spgs,
 {
 	uint64_t *dst = NULL;
 	const ssize_t *src = NULL;
-	enum silofs_ltype ltype = SILOFS_LTYPE_NONE;
+	enum silofs_mtype mtype = SILOFS_MTYPE_NONE;
 
-	while (++ltype < SILOFS_LTYPE_LAST) {
-		src = spgs_gauge_of(spgs, ltype);
-		dst = spgs256_gauge_of2(out_spg, ltype);
+	while (++mtype < SILOFS_MTYPE_LAST) {
+		src = spgs_gauge_of(spgs, mtype);
+		dst = spgs256_gauge_of2(out_spg, mtype);
 		if ((src != NULL) && (dst != NULL)) {
 			*dst = silofs_cpu_to_gauge(*src);
 		}
@@ -497,21 +497,21 @@ static uint64_t spgs_inc_generation(struct silofs_space_stats *spst)
 }
 
 static void spst_update_lsegs(struct silofs_space_stats *spst,
-                              enum silofs_ltype ltype, ssize_t take)
+                              enum silofs_mtype mtype, ssize_t take)
 {
-	spgs_update_take(&spst->lsegs, ltype, take);
+	spgs_update_take(&spst->lsegs, mtype, take);
 }
 
 static void spst_update_objs(struct silofs_space_stats *spst,
-                             enum silofs_ltype ltype, ssize_t take)
+                             enum silofs_mtype mtype, ssize_t take)
 {
-	spgs_update_take(&spst->objs, ltype, take);
+	spgs_update_take(&spst->objs, mtype, take);
 }
 
 static void spst_update_bks(struct silofs_space_stats *spst,
-                            enum silofs_ltype ltype, ssize_t take)
+                            enum silofs_mtype mtype, ssize_t take)
 {
-	spgs_update_take(&spst->bks, ltype, take);
+	spgs_update_take(&spst->bks, mtype, take);
 }
 
 static ssize_t spst_ninodes(const struct silofs_space_stats *spst)
@@ -569,9 +569,9 @@ void silofs_sbst_setup_forked(struct silofs_sb_info *sbi,
 
 void silofs_sbst_account_super(struct silofs_sb_info *sbi)
 {
-	silofs_sbst_update_lsegs(sbi, SILOFS_LTYPE_SUPER, 1);
-	silofs_sbst_update_bks(sbi, SILOFS_LTYPE_SUPER, 1);
-	silofs_sbst_update_objs(sbi, SILOFS_LTYPE_SUPER, 1);
+	silofs_sbst_update_lsegs(sbi, SILOFS_MTYPE_SUPER, 1);
+	silofs_sbst_update_bks(sbi, SILOFS_MTYPE_SUPER, 1);
+	silofs_sbst_update_objs(sbi, SILOFS_MTYPE_SUPER, 1);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -588,28 +588,28 @@ void silofs_sbst_set_capacity(struct silofs_sb_info *sbi, size_t capacity)
 }
 
 void silofs_sbst_update_lsegs(struct silofs_sb_info *sbi,
-                              enum silofs_ltype ltype, ssize_t take)
+                              enum silofs_mtype mtype, ssize_t take)
 {
 	if (take != 0) {
-		spst_update_lsegs(&sbi->sb_spst_curr, ltype, take);
+		spst_update_lsegs(&sbi->sb_spst_curr, mtype, take);
 		silofs_sbi_dirtify(sbi);
 	}
 }
 
 void silofs_sbst_update_bks(struct silofs_sb_info *sbi,
-                            enum silofs_ltype ltype, ssize_t take)
+                            enum silofs_mtype mtype, ssize_t take)
 {
 	if (take != 0) {
-		spst_update_bks(&sbi->sb_spst_curr, ltype, take);
+		spst_update_bks(&sbi->sb_spst_curr, mtype, take);
 		silofs_sbi_dirtify(sbi);
 	}
 }
 
 void silofs_sbst_update_objs(struct silofs_sb_info *sbi,
-                             enum silofs_ltype ltype, ssize_t take)
+                             enum silofs_mtype mtype, ssize_t take)
 {
 	if (take != 0) {
-		spst_update_objs(&sbi->sb_spst_curr, ltype, take);
+		spst_update_objs(&sbi->sb_spst_curr, mtype, take);
 		silofs_sbi_dirtify(sbi);
 	}
 }

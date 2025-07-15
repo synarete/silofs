@@ -261,9 +261,9 @@ static void adi_update_caddr(struct silofs_ar_desc_info *adi,
 
 static bool adi_isbootrec(const struct silofs_ar_desc_info *adi)
 {
-	const enum silofs_ltype ltype = silofs_laddr_ltype(&adi->ard.laddr);
+	const enum silofs_mtype mtype = silofs_laddr_mtype(&adi->ard.laddr);
 
-	return (ltype == SILOFS_LTYPE_BOOTREC);
+	return (mtype == SILOFS_MTYPE_BOOTREC);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -734,8 +734,8 @@ arc_load_seg(const struct silofs_ar_ctx *ar_ctx,
 
 	err = silofs_repo_read_at(arc_repo(ar_ctx), laddr, seg, len);
 	if (err) {
-		log_err("failed to read: ltype=%d pos=%ld len=%zu err=%d",
-		        silofs_laddr_ltype(laddr), laddr->pos, len, err);
+		log_err("failed to read: mtype=%d pos=%ld len=%zu err=%d",
+		        silofs_laddr_mtype(laddr), laddr->pos, len, err);
 	}
 	return err;
 }
@@ -744,23 +744,23 @@ static int
 arc_save_seg(const struct silofs_ar_ctx *ar_ctx,
              const struct silofs_laddr *laddr, void *seg, size_t len)
 {
-	const enum silofs_ltype ltype = silofs_laddr_ltype(laddr);
+	const enum silofs_mtype mtype = silofs_laddr_mtype(laddr);
 	int err;
 
 	err = silofs_repo_require_lseg(arc_repo(ar_ctx), &laddr->lsid);
 	if (err) {
-		log_err("failed to require lseg: ltype=%d", (int)ltype);
+		log_err("failed to require lseg: mtype=%d", (int)mtype);
 		return err;
 	}
 	err = silofs_repo_require_laddr(arc_repo(ar_ctx), laddr);
 	if (err) {
-		log_err("failed to require laddr: ltype=%d err=%d", (int)ltype,
+		log_err("failed to require laddr: mtype=%d err=%d", (int)mtype,
 		        err);
 		return err;
 	}
 	err = silofs_repo_write_at(arc_repo(ar_ctx), laddr, seg, len);
 	if (err) {
-		log_err("failed to write: ltype=%d err=%d", (int)ltype, err);
+		log_err("failed to write: mtype=%d err=%d", (int)mtype, err);
 		return err;
 	}
 	return 0;

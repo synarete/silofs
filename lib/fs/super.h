@@ -58,14 +58,14 @@ int silofs_sbi_shut(struct silofs_sb_info *sbi);
 void silofs_sbi_setup_spawned(struct silofs_sb_info *sbi);
 
 int silofs_sbi_sproot_of(const struct silofs_sb_info *sbi,
-                         enum silofs_ltype            ltype,
+                         enum silofs_mtype            mtype,
                          struct silofs_uaddr         *out_uaddr);
 
 int silofs_sbi_resolve_child(const struct silofs_sb_info *sbi,
-                             enum silofs_ltype            ltype,
+                             enum silofs_mtype            mtype,
                              struct silofs_uaddr         *out_uaddr);
 
-void silofs_sbi_bind_child(struct silofs_sb_info *sbi, enum silofs_ltype ltype,
+void silofs_sbi_bind_child(struct silofs_sb_info *sbi, enum silofs_mtype mtype,
                            const struct silofs_uaddr *uaddr);
 
 void silofs_sbi_make_fork_of(struct silofs_sb_info       *sbi_new,
@@ -86,18 +86,18 @@ void silofs_sbi_self_blobid(const struct silofs_sb_info *sbi,
                             struct silofs_blobid        *out_vid);
 
 int silofs_sbi_main_lseg(const struct silofs_sb_info *sbi,
-                         enum silofs_ltype            vspace,
+                         enum silofs_mtype            vspace,
                          struct silofs_lsid          *out_lsid);
 
 void silofs_sbi_bind_main_lseg(struct silofs_sb_info    *sbi,
-                               enum silofs_ltype         vspace,
+                               enum silofs_mtype         vspace,
                                const struct silofs_lsid *lsid);
 
 bool silofs_sbi_has_main_lseg(const struct silofs_sb_info *sbi,
-                              enum silofs_ltype            vspace);
+                              enum silofs_mtype            vspace);
 
 void silofs_sbi_resolve_main_at(const struct silofs_sb_info *sbi, loff_t voff,
-                                enum silofs_ltype    vspace,
+                                enum silofs_mtype    vspace,
                                 struct silofs_uaddr *out_uaddr);
 
 bool silofs_sbi_ismutable_lsid(const struct silofs_sb_info *sbi,
@@ -131,13 +131,13 @@ loff_t silofs_sbst_vspace_end(const struct silofs_sb_info *sbi);
 uint64_t silofs_sbst_next_generation(struct silofs_sb_info *sbi);
 
 void silofs_sbst_update_lsegs(struct silofs_sb_info *sbi,
-                              enum silofs_ltype ltype, ssize_t take);
+                              enum silofs_mtype mtype, ssize_t take);
 
 void silofs_sbst_update_bks(struct silofs_sb_info *sbi,
-                            enum silofs_ltype ltype, ssize_t take);
+                            enum silofs_mtype mtype, ssize_t take);
 
 void silofs_sbst_update_objs(struct silofs_sb_info *sbi,
-                             enum silofs_ltype ltype, ssize_t take);
+                             enum silofs_mtype mtype, ssize_t take);
 
 bool silofs_sbst_mayalloc_some(const struct silofs_sb_info *sbi, size_t nwant);
 

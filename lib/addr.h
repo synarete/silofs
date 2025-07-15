@@ -24,7 +24,7 @@
 #include "addr/meta.h"
 #include "addr/blobid.h"
 #include "addr/paddr.h"
-#include "addr/ltype.h"
+#include "addr/mtype.h"
 #include "addr/laddr.h"
 #include "addr/uaddr.h"
 #include "addr/vaddr.h"

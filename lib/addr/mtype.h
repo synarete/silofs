@@ -14,32 +14,32 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_LTYPE_H_
-#define SILOFS_LTYPE_H_
+#ifndef SILOFS_MTYPE_H_
+#define SILOFS_MTYPE_H_
 
 #include <silofs/ondisk.h>
 #include <stdbool.h>
 
-bool silofs_ltype_isnone(enum silofs_ltype ltype);
+bool silofs_mtype_isnone(enum silofs_mtype mtype);
 
-bool silofs_ltype_issuper(enum silofs_ltype ltype);
+bool silofs_mtype_issuper(enum silofs_mtype mtype);
 
-bool silofs_ltype_isspnode(enum silofs_ltype ltype);
+bool silofs_mtype_isspnode(enum silofs_mtype mtype);
 
-bool silofs_ltype_isspleaf(enum silofs_ltype ltype);
+bool silofs_mtype_isspleaf(enum silofs_mtype mtype);
 
-bool silofs_ltype_isinode(enum silofs_ltype ltype);
+bool silofs_mtype_isinode(enum silofs_mtype mtype);
 
-bool silofs_ltype_isunode(enum silofs_ltype ltype);
+bool silofs_mtype_isunode(enum silofs_mtype mtype);
 
-bool silofs_ltype_isvnode(enum silofs_ltype ltype);
+bool silofs_mtype_isvnode(enum silofs_mtype mtype);
 
-bool silofs_ltype_isdata(enum silofs_ltype ltype);
+bool silofs_mtype_isdata(enum silofs_mtype mtype);
 
-uint32_t silofs_ltype_size(enum silofs_ltype ltype);
+uint32_t silofs_mtype_size(enum silofs_mtype mtype);
 
-ssize_t silofs_ltype_ssize(enum silofs_ltype ltype);
+ssize_t silofs_mtype_ssize(enum silofs_mtype mtype);
 
-size_t silofs_ltype_nkbs(enum silofs_ltype ltype);
+size_t silofs_mtype_nkbs(enum silofs_mtype mtype);
 
-#endif /* SILOFS_LTYPE_H_ */
+#endif /* SILOFS_MTYPE_H_ */

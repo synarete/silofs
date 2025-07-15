@@ -38,7 +38,7 @@ struct silofs_walk_ctx {
 	struct silofs_spnode_info *sni1;
 	struct silofs_spleaf_info *sli;
 	enum silofs_height height;
-	enum silofs_ltype vspace;
+	enum silofs_mtype vspace;
 	loff_t voff;
 };
 
@@ -100,7 +100,7 @@ static void wac_setup_space_iter(const struct silofs_walk_ctx *wa_ctx,
 }
 
 static void
-wac_resetup(struct silofs_walk_ctx *wa_ctx, enum silofs_ltype vspace)
+wac_resetup(struct silofs_walk_ctx *wa_ctx, enum silofs_mtype vspace)
 {
 	wa_ctx->vspace = vspace;
 	wa_ctx->sni4 = NULL;
@@ -666,26 +666,26 @@ static int wac_traverse_sptree(struct silofs_walk_ctx *wa_ctx)
 }
 
 static int wac_traverse_sptree_of(struct silofs_walk_ctx *wa_ctx,
-                                  enum silofs_ltype vspace)
+                                  enum silofs_mtype vspace)
 {
 	int err;
 
 	wac_resetup(wa_ctx, vspace);
 	err = wac_traverse_sptree(wa_ctx);
-	wac_resetup(wa_ctx, SILOFS_LTYPE_NONE);
+	wac_resetup(wa_ctx, SILOFS_MTYPE_NONE);
 	return err;
 }
 
 static int wac_traverse_spaces(struct silofs_walk_ctx *wa_ctx)
 {
-	enum silofs_ltype ltype = SILOFS_LTYPE_NONE;
+	enum silofs_mtype mtype = SILOFS_MTYPE_NONE;
 	int err;
 
-	while (++ltype < SILOFS_LTYPE_LAST) {
-		if (!silofs_ltype_isvnode(ltype)) {
+	while (++mtype < SILOFS_MTYPE_LAST) {
+		if (!silofs_mtype_isvnode(mtype)) {
 			continue;
 		}
-		err = wac_traverse_sptree_of(wa_ctx, ltype);
+		err = wac_traverse_sptree_of(wa_ctx, mtype);
 		if (err) {
 			return err;
 		}

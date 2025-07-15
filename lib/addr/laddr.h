@@ -26,9 +26,9 @@ struct silofs_lsid {
 	struct silofs_blobid blobid;
 	size_t               lsize;
 	uint32_t             vindex;
-	enum silofs_ltype    vspace;
+	enum silofs_mtype    vspace;
 	enum silofs_height   height;
-	enum silofs_ltype    ltype;
+	enum silofs_mtype    mtype;
 };
 
 /* logical-address within specific volume's mapping extend */
@@ -65,8 +65,8 @@ void silofs_lsid_reset(struct silofs_lsid *lsid);
 
 void silofs_lsid_setup(struct silofs_lsid         *lsid,
                        const struct silofs_blobid *blobid, loff_t voff,
-                       enum silofs_ltype vspace, enum silofs_height height,
-                       enum silofs_ltype ltype);
+                       enum silofs_mtype vspace, enum silofs_height height,
+                       enum silofs_mtype mtype);
 
 void silofs_lsid_assign(struct silofs_lsid       *lsid,
                         const struct silofs_lsid *other);
@@ -103,7 +103,7 @@ void silofs_laddr_reset(struct silofs_laddr *laddr);
 void silofs_laddr_assign(struct silofs_laddr       *laddr,
                          const struct silofs_laddr *other);
 
-enum silofs_ltype silofs_laddr_ltype(const struct silofs_laddr *laddr);
+enum silofs_mtype silofs_laddr_mtype(const struct silofs_laddr *laddr);
 
 size_t silofs_laddr_len(const struct silofs_laddr *laddr);
 

@@ -84,7 +84,7 @@ silofs_sli_laddr(const struct silofs_spleaf_info *sli);
 const struct silofs_uaddr *
 silofs_sli_uaddr(const struct silofs_spleaf_info *sli);
 
-enum silofs_ltype silofs_sli_refltype(const struct silofs_spleaf_info *sli);
+enum silofs_mtype silofs_sli_refmtype(const struct silofs_spleaf_info *sli);
 
 void silofs_sli_incref(struct silofs_spleaf_info *sli);
 
@@ -92,7 +92,7 @@ void silofs_sli_decref(struct silofs_spleaf_info *sli);
 
 void silofs_sli_setup_spawned(struct silofs_spleaf_info *sli,
                               const struct silofs_uaddr *parent,
-                              enum silofs_ltype refltype, loff_t voff);
+                              enum silofs_mtype refmtype, loff_t voff);
 
 void silofs_sli_get_lrange(const struct silofs_spleaf_info *sli,
                            struct silofs_lrange            *out_lrange);

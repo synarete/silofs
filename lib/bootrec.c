@@ -142,15 +142,15 @@ static int bootrec1k_check_uaddr_sb(const struct silofs_bootrec1k *bootrec1k)
 {
 	struct silofs_uaddr uaddr;
 	enum silofs_height height;
-	enum silofs_ltype ltype;
+	enum silofs_mtype mtype;
 
 	bootrec1k_sb_uaddr(bootrec1k, &uaddr);
 	height = silofs_uaddr_height(&uaddr);
-	ltype = silofs_uaddr_ltype(&uaddr);
-	if ((ltype != SILOFS_LTYPE_SUPER) || (height != SILOFS_HEIGHT_SUPER) ||
+	mtype = silofs_uaddr_mtype(&uaddr);
+	if ((mtype != SILOFS_MTYPE_SUPER) || (height != SILOFS_HEIGHT_SUPER) ||
 	    (uaddr.voff != 0)) {
-		log_dbg("bad bootrec uaddr-sb: voff=%ld ltype=%d height=%d",
-		        uaddr.voff, (int)ltype, (int)height);
+		log_dbg("bad bootrec uaddr-sb: voff=%ld mtype=%d height=%d",
+		        uaddr.voff, (int)mtype, (int)height);
 		return -SILOFS_EBADBOOTREC;
 	}
 	return 0;
@@ -369,10 +369,10 @@ static void bootrec_uaddr_by_blobid(const struct silofs_blobid *blobid,
                                     struct silofs_uaddr *out_uaddr)
 {
 	struct silofs_lsid lsid;
-	const enum silofs_ltype ltype = SILOFS_LTYPE_BOOTREC;
+	const enum silofs_mtype mtype = SILOFS_MTYPE_BOOTREC;
 	const enum silofs_height height = SILOFS_HEIGHT_BOOT;
 
-	silofs_lsid_setup(&lsid, blobid, 0, ltype, height, ltype);
+	silofs_lsid_setup(&lsid, blobid, 0, mtype, height, mtype);
 	silofs_uaddr_setup(out_uaddr, &lsid, 0, 0);
 }
 

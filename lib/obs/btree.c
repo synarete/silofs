@@ -199,7 +199,7 @@ static const struct silofs_paddr *btree_root(const struct silofs_btree *btree)
 void silofs_btree_update_root(struct silofs_btree *btree,
                               const struct silofs_paddr *paddr)
 {
-	silofs_assert_eq(paddr->ptype, SILOFS_PTYPE_BTNODE);
+	silofs_assert_eq(paddr->mtype, SILOFS_MTYPE_BTNODE);
 
 	silofs_paddr_assign(&btree->bt_root, paddr);
 }
@@ -304,7 +304,7 @@ static int btc_stage_btnode_at(const struct silofs_btree_ctx *btc,
 	struct silofs_btnode_info *bni = NULL;
 	int err;
 
-	silofs_assert_eq(paddr->ptype, SILOFS_PTYPE_BTNODE);
+	silofs_assert_eq(paddr->mtype, SILOFS_MTYPE_BTNODE);
 
 	err = btc_stage_blob_of(btc, paddr);
 	if (err) {

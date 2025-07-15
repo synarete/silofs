@@ -181,8 +181,13 @@ static const void *hdr_payload(const struct silofs_header *hdr)
 	return hdr + 1;
 }
 
-void silofs_hdr_setup(struct silofs_header *hdr, uint16_t type, size_t size,
-                      enum silofs_hdrf flags)
+void silofs_hdr_setup(struct silofs_header *hdr, uint16_t type, size_t size)
+{
+	silofs_hdr_setup2(hdr, type, size, SILOFS_HDRF_NONE);
+}
+
+void silofs_hdr_setup2(struct silofs_header *hdr, uint16_t type, size_t size,
+                       enum silofs_hdrf flags)
 {
 	memset(hdr, 0, sizeof(*hdr));
 	hdr_set_magic(hdr, SILOFS_META_MAGIC);

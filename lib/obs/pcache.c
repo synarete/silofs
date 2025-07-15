@@ -165,7 +165,7 @@ silofs_pcache_lookup_bdi(struct silofs_pcache *pcache,
 {
 	struct silofs_pnode_info *pni;
 
-	silofs_assert_eq(paddr->ptype, SILOFS_PTYPE_BDESC);
+	silofs_assert_eq(paddr->mtype, SILOFS_MTYPE_BLDESC);
 
 	pni = pcache_lookup(pcache, paddr);
 	return silofs_bdi_from_pni(pni);
@@ -239,7 +239,7 @@ static struct silofs_btnode_info *
 pcache_new_bni(const struct silofs_pcache *pcache,
                const struct silofs_paddr *paddr)
 {
-	silofs_assert_eq(paddr->ptype, SILOFS_PTYPE_BTNODE);
+	silofs_assert_eq(paddr->mtype, SILOFS_MTYPE_BTNODE);
 
 	return silofs_bni_new(paddr, pcache->pc_alloc);
 }
@@ -247,7 +247,7 @@ pcache_new_bni(const struct silofs_pcache *pcache,
 static void pcache_del_bni(const struct silofs_pcache *pcache,
                            struct silofs_btnode_info *bni)
 {
-	silofs_assert_eq(bni->bn_pni.pn_paddr.ptype, SILOFS_PTYPE_BTNODE);
+	silofs_assert_eq(bni->bn_pni.pn_paddr.mtype, SILOFS_MTYPE_BTNODE);
 
 	silofs_bni_del(bni, pcache->pc_alloc);
 }
@@ -258,7 +258,7 @@ silofs_pcache_lookup_bni(struct silofs_pcache *pcache,
 {
 	struct silofs_pnode_info *pni;
 
-	silofs_assert_eq(paddr->ptype, SILOFS_PTYPE_BTNODE);
+	silofs_assert_eq(paddr->mtype, SILOFS_MTYPE_BTNODE);
 
 	pni = pcache_lookup(pcache, paddr);
 	return silofs_bni_from_pni(pni);
@@ -331,19 +331,32 @@ void silofs_pcache_evict_bni(struct silofs_pcache *pcache,
 static void
 pcache_evict_by(struct silofs_pcache *pcache, struct silofs_pnode_info *pni)
 {
-	const enum silofs_ptype ptype = silofs_pni_ptype(pni);
+	const enum silofs_mtype mtype = silofs_pni_mtype(pni);
 
-	switch (ptype) {
-	case SILOFS_PTYPE_BDESC:
+	switch (mtype) {
+	case SILOFS_MTYPE_BLDESC:
 		silofs_pcache_evict_bdi(pcache, silofs_bdi_from_pni(pni));
 		break;
-	case SILOFS_PTYPE_BTNODE:
+	case SILOFS_MTYPE_BTNODE:
 		silofs_pcache_evict_bni(pcache, silofs_bni_from_pni(pni));
 		break;
-	case SILOFS_PTYPE_NONE:
-	case SILOFS_PTYPE_LAST:
+	case SILOFS_MTYPE_NONE:
+	case SILOFS_MTYPE_BOOTREC:
+	case SILOFS_MTYPE_SUPER:
+	case SILOFS_MTYPE_SPNODE:
+	case SILOFS_MTYPE_SPLEAF:
+	case SILOFS_MTYPE_LSMAP:
+	case SILOFS_MTYPE_INODE:
+	case SILOFS_MTYPE_XANODE:
+	case SILOFS_MTYPE_DTNODE:
+	case SILOFS_MTYPE_SYMVAL:
+	case SILOFS_MTYPE_FTNODE:
+	case SILOFS_MTYPE_DATA1K:
+	case SILOFS_MTYPE_DATA4K:
+	case SILOFS_MTYPE_DATABK:
+	case SILOFS_MTYPE_LAST:
 	default:
-		silofs_panic("corrupted pcache: ptype=%d", (int)ptype);
+		silofs_panic("corrupted pcache: mtype=%d", (int)mtype);
 		break;
 	}
 }

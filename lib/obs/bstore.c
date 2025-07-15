@@ -258,7 +258,7 @@ static int bstore_spawn_btnode(struct silofs_bstore *bstore, bool create,
 {
 	int err;
 
-	silofs_assert_eq(paddr->ptype, SILOFS_PTYPE_BTNODE);
+	silofs_assert_eq(paddr->mtype, SILOFS_MTYPE_BTNODE);
 
 	err = bstore_require_blob_of(bstore, create, paddr);
 	if (err) {
@@ -408,20 +408,33 @@ int silofs_bstore_close(struct silofs_bstore *bstore)
 static int bstore_commit_pnode(struct silofs_bstore *bstore,
                                struct silofs_pnode_info *pni)
 {
-	const enum silofs_ptype ptype = silofs_pni_ptype(pni);
+	const enum silofs_mtype mtype = silofs_pni_mtype(pni);
 	int ret = -SILOFS_EINVAL;
 
-	switch (ptype) {
-	case SILOFS_PTYPE_BDESC:
+	switch (mtype) {
+	case SILOFS_MTYPE_BLDESC:
 		ret = bstore_commit_bdesc(bstore, silofs_bdi_from_pni(pni));
 		break;
-	case SILOFS_PTYPE_BTNODE:
+	case SILOFS_MTYPE_BTNODE:
 		ret = bstore_commit_btnode(bstore, silofs_bni_from_pni(pni));
 		break;
-	case SILOFS_PTYPE_NONE:
-	case SILOFS_PTYPE_LAST:
+	case SILOFS_MTYPE_NONE:
+	case SILOFS_MTYPE_BOOTREC:
+	case SILOFS_MTYPE_SUPER:
+	case SILOFS_MTYPE_SPNODE:
+	case SILOFS_MTYPE_SPLEAF:
+	case SILOFS_MTYPE_LSMAP:
+	case SILOFS_MTYPE_INODE:
+	case SILOFS_MTYPE_XANODE:
+	case SILOFS_MTYPE_DTNODE:
+	case SILOFS_MTYPE_SYMVAL:
+	case SILOFS_MTYPE_FTNODE:
+	case SILOFS_MTYPE_DATA1K:
+	case SILOFS_MTYPE_DATA4K:
+	case SILOFS_MTYPE_DATABK:
+	case SILOFS_MTYPE_LAST:
 	default:
-		silofs_panic("bad commit: ptype=%d", (int)ptype);
+		silofs_panic("bad commit: mtype=%d", (int)mtype);
 		break;
 	}
 	return ret;

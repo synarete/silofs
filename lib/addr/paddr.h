@@ -23,12 +23,8 @@
 struct silofs_paddr {
 	struct silofs_blobid blobid;
 	loff_t               off;
-	enum silofs_ptype    ptype;
+	enum silofs_mtype    mtype;
 };
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-uint32_t silofs_ptype_size(enum silofs_ptype ptype);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -38,7 +34,7 @@ bool silofs_paddr_isnull(const struct silofs_paddr *paddr);
 
 void silofs_paddr_init(struct silofs_paddr        *paddr,
                        const struct silofs_blobid *blobid,
-                       enum silofs_ptype ptype, loff_t off);
+                       enum silofs_mtype mtype, loff_t off);
 
 void silofs_paddr_fini(struct silofs_paddr *paddr);
 

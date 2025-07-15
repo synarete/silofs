@@ -57,7 +57,7 @@ void silofs_pni_init(struct silofs_pnode_info  *pni,
 
 void silofs_pni_fini(struct silofs_pnode_info *pni);
 
-enum silofs_ptype silofs_pni_ptype(const struct silofs_pnode_info *pni);
+enum silofs_mtype silofs_pni_mtype(const struct silofs_pnode_info *pni);
 
 void silofs_pni_dirtify(struct silofs_pnode_info *pni);
 

@@ -95,7 +95,7 @@ static uint64_t hash_of_blobid(const struct silofs_blobid *blobid)
 static uint64_t hash_of_paddr(const struct silofs_paddr *paddr)
 {
 	const uint64_t uoff = (uint64_t)paddr->off;
-	const uint64_t h1 = 0xc6a4a7935bd1e995ULL / (paddr->ptype + 1);
+	const uint64_t h1 = 0xc6a4a7935bd1e995ULL / (paddr->mtype + 1);
 	const uint64_t h2 = hash_of_blobid(&paddr->blobid);
 
 	return uoff ^ h1 ^ h2;

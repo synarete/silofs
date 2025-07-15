@@ -501,7 +501,8 @@ spamaps_sub_map(struct silofs_spamaps *spam, enum silofs_mtype mtype)
 	case SILOFS_MTYPE_DATABK:
 		ret = &spam->spa_databk;
 		break;
-
+	case SILOFS_MTYPE_BLDESC:
+	case SILOFS_MTYPE_BTNODE:
 	case SILOFS_MTYPE_BOOTREC:
 	case SILOFS_MTYPE_SUPER:
 	case SILOFS_MTYPE_SPNODE:

@@ -210,12 +210,12 @@ void silofs_caddr64b_htox(struct silofs_caddr64b *caddr64b,
 {
 	memset(caddr64b, 0, sizeof(*caddr64b));
 	silofs_blobid_assign(&caddr64b->blobid, &caddr->blobid);
-	caddr64b->ctype = (uint8_t)caddr->ctype;
+	caddr64b->ctype = silofs_cpu_to_le16((uint16_t)caddr->ctype);
 }
 
 void silofs_caddr64b_xtoh(const struct silofs_caddr64b *caddr64b,
                           struct silofs_caddr *caddr)
 {
 	silofs_blobid_assign(&caddr->blobid, &caddr64b->blobid);
-	caddr->ctype = caddr64b->ctype;
+	caddr->ctype = silofs_le16_to_cpu(caddr64b->ctype);
 }

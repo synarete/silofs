@@ -43,8 +43,10 @@ int silofs_hash256_by_name(struct silofs_hash256      *hash,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_hdr_setup(struct silofs_header *hdr, uint16_t type, size_t size,
-                      enum silofs_hdrf flags);
+void silofs_hdr_setup(struct silofs_header *hdr, uint16_t type, size_t size);
+
+void silofs_hdr_setup2(struct silofs_header *hdr, uint16_t type, size_t size,
+                       enum silofs_hdrf flags);
 
 int silofs_hdr_verify(const struct silofs_header *hdr, uint16_t type,
                       size_t size, enum silofs_hdrf flags);

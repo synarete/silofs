@@ -40,8 +40,7 @@ static void pnode_memfree(struct silofs_alloc *alloc, void *ptr, size_t size)
 
 static void btn_setup_hdr(struct silofs_btree_node *btn)
 {
-	silofs_hdr_setup(&btn->btn_hdr, SILOFS_PTYPE_BTNODE, sizeof(*btn),
-	                 SILOFS_HDRF_PTYPE);
+	silofs_hdr_setup(&btn->btn_hdr, SILOFS_MTYPE_BTNODE, sizeof(*btn));
 }
 
 static enum silofs_pnodef btn_flags(const struct silofs_btree_node *btn)
@@ -383,7 +382,7 @@ void silofs_pni_init(struct silofs_pnode_info *pni,
                      const struct silofs_paddr *paddr)
 {
 	silofs_paddr_assign(&pni->pn_paddr, paddr);
-	silofs_hmqe_init(&pni->pn_hmqe, silofs_ptype_size(paddr->ptype));
+	silofs_hmqe_init(&pni->pn_hmqe, silofs_mtype_size(paddr->mtype));
 	silofs_hkey_by_paddr(&pni->pn_hmqe.hme_key, &pni->pn_paddr);
 }
 
@@ -393,9 +392,9 @@ void silofs_pni_fini(struct silofs_pnode_info *pni)
 	silofs_hmqe_fini(&pni->pn_hmqe);
 }
 
-enum silofs_ptype silofs_pni_ptype(const struct silofs_pnode_info *pni)
+enum silofs_mtype silofs_pni_mtype(const struct silofs_pnode_info *pni)
 {
-	return pni->pn_paddr.ptype;
+	return pni->pn_paddr.mtype;
 }
 
 static struct silofs_dq_elem *pni_dqe(struct silofs_pnode_info *pni)
@@ -463,7 +462,7 @@ static void
 bni_init(struct silofs_btnode_info *bni, const struct silofs_paddr *paddr)
 {
 	silofs_assert(!silofs_paddr_isnull(paddr));
-	silofs_assert_eq(paddr->ptype, SILOFS_PTYPE_BTNODE);
+	silofs_assert_eq(paddr->mtype, SILOFS_MTYPE_BTNODE);
 
 	silofs_pni_init(&bni->bn_pni, paddr);
 	bni->bn = NULL;
@@ -671,7 +670,7 @@ silofs_bni_from_pni(const struct silofs_pnode_info *pni)
 	const struct silofs_btnode_info *bni = NULL;
 
 	if (pni != NULL) {
-		silofs_assert_eq(pni->pn_paddr.ptype, SILOFS_PTYPE_BTNODE);
+		silofs_assert_eq(pni->pn_paddr.mtype, SILOFS_MTYPE_BTNODE);
 		bni = container_of2(pni, struct silofs_btnode_info, bn_pni);
 	}
 	return bni_unconst(bni);

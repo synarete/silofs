@@ -38,8 +38,7 @@ static void view_init_by(struct silofs_view *view, enum silofs_mtype mtype)
 	if (!silofs_mtype_isdata(mtype)) {
 		size = silofs_mtype_size(mtype);
 		silofs_memzero(view, size);
-		silofs_hdr_setup(&view->u.hdr, (uint16_t)mtype, size,
-		                 SILOFS_HDRF_MTYPE);
+		silofs_hdr_setup(&view->u.hdr, (uint16_t)mtype, size);
 	}
 }
 
@@ -1362,15 +1361,19 @@ view_verify_by_hdr(const struct silofs_view *view, enum silofs_mtype mtype)
 	const struct silofs_header *hdr = &view->u.hdr;
 
 	return silofs_hdr_verify(hdr, (uint8_t)mtype, silofs_mtype_size(mtype),
-	                         SILOFS_HDRF_CSUM | SILOFS_HDRF_MTYPE);
+	                         SILOFS_HDRF_CSUM);
 }
 
 static int
 view_verify_sub(const struct silofs_view *view, enum silofs_mtype mtype)
 {
 	switch (mtype) {
+		// XXX
+	case SILOFS_MTYPE_BLDESC:
+	case SILOFS_MTYPE_BTNODE:
+
 	case SILOFS_MTYPE_BOOTREC:
-		break;
+		return 0;
 	case SILOFS_MTYPE_SUPER:
 		return silofs_verify_super_block(&view->u.sb);
 	case SILOFS_MTYPE_SPNODE:
@@ -1439,6 +1442,8 @@ silofs_new_unode(struct silofs_alloc *alloc, const struct silofs_uaddr *uaddr)
 	case SILOFS_MTYPE_SPLEAF:
 		uni = sli_to_uni(sli_new(alloc, uaddr));
 		break;
+	case SILOFS_MTYPE_BLDESC:
+	case SILOFS_MTYPE_BTNODE:
 	case SILOFS_MTYPE_BOOTREC:
 	case SILOFS_MTYPE_LSMAP:
 	case SILOFS_MTYPE_INODE:
@@ -1473,6 +1478,8 @@ void silofs_del_unode(struct silofs_unode_info *uni,
 	case SILOFS_MTYPE_SPLEAF:
 		sli_del(sli_from_uni(uni), alloc, flags);
 		break;
+	case SILOFS_MTYPE_BLDESC:
+	case SILOFS_MTYPE_BTNODE:
 	case SILOFS_MTYPE_BOOTREC:
 	case SILOFS_MTYPE_LSMAP:
 	case SILOFS_MTYPE_INODE:
@@ -1523,6 +1530,8 @@ silofs_new_vnode(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 	case SILOFS_MTYPE_DATABK:
 		vni = fli_to_vni(fli_new(alloc, vaddr));
 		break;
+	case SILOFS_MTYPE_BLDESC:
+	case SILOFS_MTYPE_BTNODE:
 	case SILOFS_MTYPE_BOOTREC:
 	case SILOFS_MTYPE_SUPER:
 	case SILOFS_MTYPE_SPNODE:
@@ -1565,6 +1574,8 @@ void silofs_del_vnode(struct silofs_vnode_info *vni,
 	case SILOFS_MTYPE_DATABK:
 		fli_del(fli_from_vni(vni), alloc, flags);
 		break;
+	case SILOFS_MTYPE_BLDESC:
+	case SILOFS_MTYPE_BTNODE:
 	case SILOFS_MTYPE_BOOTREC:
 	case SILOFS_MTYPE_SUPER:
 	case SILOFS_MTYPE_SPNODE:

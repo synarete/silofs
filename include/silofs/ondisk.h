@@ -341,31 +341,14 @@ enum silofs_bootrecf {
 
 /* common-header flags */
 enum silofs_hdrf {
-	SILOFS_HDRF_CSUM  = 0x01,
-	SILOFS_HDRF_PTYPE = 0x02,
-	SILOFS_HDRF_MTYPE = 0x04,
+	SILOFS_HDRF_NONE = 0x00,
+	SILOFS_HDRF_CSUM = 0x01,
 };
 
 /* format endianness */
 enum silofs_endianness {
 	SILOFS_ENDIANNESS_LE = 1,
 	SILOFS_ENDIANNESS_BE = 2,
-};
-
-/* content-addressable sub-types */
-enum silofs_ctype {
-	SILOFS_CTYPE_NONE    = 0,
-	SILOFS_CTYPE_BOOTREC = 1,
-	SILOFS_CTYPE_PACKIDX = 2,
-	SILOFS_CTYPE_ENCSEG  = 3,
-};
-
-/* persistent-elements types */
-enum silofs_ptype {
-	SILOFS_PTYPE_NONE   = 0,
-	SILOFS_PTYPE_BDESC  = 1,
-	SILOFS_PTYPE_BTNODE = 2,
-	SILOFS_PTYPE_LAST, /* keep last */
 };
 
 /* persistent nodes' flags */
@@ -375,23 +358,33 @@ enum silofs_pnodef {
 	SILOFS_PNODEF_BTROOT = 0x02,
 };
 
-/* logical-elements types */
+/* meta elements types */
 enum silofs_mtype {
 	SILOFS_MTYPE_NONE    = 0,
-	SILOFS_MTYPE_BOOTREC = 1,
-	SILOFS_MTYPE_SUPER   = 2,
-	SILOFS_MTYPE_SPNODE  = 3,
-	SILOFS_MTYPE_SPLEAF  = 4,
-	SILOFS_MTYPE_LSMAP   = 5,
-	SILOFS_MTYPE_INODE   = 6,
-	SILOFS_MTYPE_XANODE  = 7,
-	SILOFS_MTYPE_DTNODE  = 8,
-	SILOFS_MTYPE_SYMVAL  = 9,
-	SILOFS_MTYPE_FTNODE  = 10,
-	SILOFS_MTYPE_DATA1K  = 11,
-	SILOFS_MTYPE_DATA4K  = 12,
-	SILOFS_MTYPE_DATABK  = 13,
+	SILOFS_MTYPE_BLDESC  = 1,
+	SILOFS_MTYPE_BTNODE  = 2,
+	SILOFS_MTYPE_BOOTREC = 3,
+	SILOFS_MTYPE_SUPER   = 4,
+	SILOFS_MTYPE_SPNODE  = 5,
+	SILOFS_MTYPE_SPLEAF  = 6,
+	SILOFS_MTYPE_LSMAP   = 7,
+	SILOFS_MTYPE_INODE   = 8,
+	SILOFS_MTYPE_XANODE  = 9,
+	SILOFS_MTYPE_DTNODE  = 10,
+	SILOFS_MTYPE_SYMVAL  = 11,
+	SILOFS_MTYPE_FTNODE  = 12,
+	SILOFS_MTYPE_DATA1K  = 13,
+	SILOFS_MTYPE_DATA4K  = 14,
+	SILOFS_MTYPE_DATABK  = 15,
 	SILOFS_MTYPE_LAST, /* keep last */
+};
+
+/* content-addressable sub-types */
+enum silofs_ctype {
+	SILOFS_CTYPE_NONE    = 0,
+	SILOFS_CTYPE_BOOTREC = 1,
+	SILOFS_CTYPE_PACKIDX = 2,
+	SILOFS_CTYPE_ENCSEG  = 3,
 };
 
 /* logical heights of unode mappings */
@@ -531,16 +524,16 @@ struct silofs_blobid {
 /* content address (by hash) */
 struct silofs_caddr64b {
 	struct silofs_blobid blobid;
-	uint8_t              ctype;
-	uint8_t              reserved[31];
+	uint16_t             ctype;
+	uint8_t              reserved[30];
 } silofs_attr_aligned64;
 
 /* persistent object address */
 struct silofs_paddr64b {
 	struct silofs_blobid blobid;
 	int64_t              off;
-	uint8_t              ptype;
-	uint8_t              pad[23];
+	uint16_t             mtype;
+	uint8_t              pad[22];
 } silofs_attr_aligned16;
 
 /* logical volume's segment identifier */
@@ -917,30 +910,6 @@ struct silofs_lblock {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-/* semantic "view" into meta elements */
-union silofs_view_u {
-	struct silofs_header       hdr;
-	struct silofs_super_block  sb;
-	struct silofs_spmap_node   sn;
-	struct silofs_spmap_leaf   sl;
-	struct silofs_lsmap        lsm;
-	struct silofs_inode        in;
-	struct silofs_dtree_node   dtn;
-	struct silofs_ftree_node   ftn;
-	struct silofs_xattr_node   xan;
-	struct silofs_symlnk_value syv;
-	struct silofs_data_block1  dbk1;
-	struct silofs_data_block4  dbk4;
-	struct silofs_data_block64 dbk64;
-	struct silofs_lblock       lbk;
-} silofs_attr_aligned64;
-
-struct silofs_view {
-	union silofs_view_u u;
-} silofs_attr_aligned64;
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 /* repo meta record */
 struct silofs_repo_meta {
 	uint64_t rm_magic;
@@ -1012,6 +981,33 @@ struct silofs_ar_hdr1k {
 	uint64_t ph_descs_csum;
 	uint64_t ph_reserved2[123];
 	uint64_t ph_hdr_csum;
+} silofs_attr_aligned64;
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+/* semantic "view" into meta elements */
+union silofs_view_u {
+	struct silofs_header       hdr;
+	struct silofs_blob_desc    bd;
+	struct silofs_btree_node   btn;
+	struct silofs_bootrec1k    brec;
+	struct silofs_super_block  sb;
+	struct silofs_spmap_node   sn;
+	struct silofs_spmap_leaf   sl;
+	struct silofs_lsmap        lsm;
+	struct silofs_inode        in;
+	struct silofs_dtree_node   dtn;
+	struct silofs_ftree_node   ftn;
+	struct silofs_xattr_node   xan;
+	struct silofs_symlnk_value syv;
+	struct silofs_data_block1  dbk1;
+	struct silofs_data_block4  dbk4;
+	struct silofs_data_block64 dbk64;
+	struct silofs_lblock       lbk;
+} silofs_attr_aligned64;
+
+struct silofs_view {
+	union silofs_view_u u;
 } silofs_attr_aligned64;
 
 #endif /* SILOFS_ONDISK_H_ */

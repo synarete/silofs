@@ -340,7 +340,6 @@ pcache_evict_by(struct silofs_pcache *pcache, struct silofs_pnode_info *pni)
 	case SILOFS_PTYPE_BTNODE:
 		silofs_pcache_evict_bni(pcache, silofs_bni_from_pni(pni));
 		break;
-	case SILOFS_PTYPE_DATA:
 	case SILOFS_PTYPE_NONE:
 	case SILOFS_PTYPE_LAST:
 	default:

@@ -365,7 +365,6 @@ enum silofs_ptype {
 	SILOFS_PTYPE_NONE   = 0,
 	SILOFS_PTYPE_BDESC  = 1,
 	SILOFS_PTYPE_BTNODE = 2,
-	SILOFS_PTYPE_DATA   = 3,
 	SILOFS_PTYPE_LAST, /* keep last */
 };
 

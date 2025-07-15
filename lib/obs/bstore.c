@@ -419,7 +419,6 @@ static int bstore_commit_pnode(struct silofs_bstore *bstore,
 		ret = bstore_commit_btnode(bstore, silofs_bni_from_pni(pni));
 		break;
 	case SILOFS_PTYPE_NONE:
-	case SILOFS_PTYPE_DATA:
 	case SILOFS_PTYPE_LAST:
 	default:
 		silofs_panic("bad commit: ptype=%d", (int)ptype);

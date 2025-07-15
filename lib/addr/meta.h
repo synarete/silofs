@@ -25,12 +25,6 @@ struct silofs_strbuf;
 struct silofs_uuid;
 struct silofs_header;
 
-uint32_t silofs_squash_to_u32(const void *ptr, size_t len);
-
-uint64_t silofs_u8b_as_u64(const uint8_t p[8]);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 void silofs_uuid_generate(struct silofs_uuid *uu);
 
 void silofs_uuid_assign(struct silofs_uuid       *uu,
@@ -52,16 +46,6 @@ void silofs_uuid_as_u64s(const struct silofs_uuid *uu, uint64_t u[2]);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_hdr_setup(struct silofs_header *hdr, uint16_t type, size_t size,
-                      enum silofs_hdrf flags);
-
-int silofs_hdr_verify(const struct silofs_header *hdr, uint16_t type,
-                      size_t size, enum silofs_hdrf flags);
-
-void silofs_hdr_seal(struct silofs_header *hdr);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 bool silofs_hash256_isequal(const struct silofs_hash256 *hash,
                             const struct silofs_hash256 *other);
 
@@ -78,5 +62,15 @@ size_t silofs_hash256_to_name(const struct silofs_hash256 *hash,
 
 int silofs_hash256_by_name(struct silofs_hash256      *hash,
                            const struct silofs_strbuf *name);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_hdr_setup(struct silofs_header *hdr, uint16_t type, size_t size,
+                      enum silofs_hdrf flags);
+
+int silofs_hdr_verify(const struct silofs_header *hdr, uint16_t type,
+                      size_t size, enum silofs_hdrf flags);
+
+void silofs_hdr_seal(struct silofs_header *hdr);
 
 #endif /* SILOFS_META_H_ */

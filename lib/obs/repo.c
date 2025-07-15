@@ -3412,11 +3412,12 @@ static void repo_pack_subdir_of(const struct silofs_repo *repo,
                                 const struct silofs_caddr *caddr,
                                 struct silofs_strbuf *out_sbuf)
 {
-	const uint32_t u = silofs_caddr_to_u32(caddr);
+	const uint64_t n = silofs_caddr_to_u64(caddr);
+	const uint32_t u = (uint32_t)(n ^ (n >> 32));
 	const uint32_t i = u % repo->re_defs->re_pack_nsubs;
 
 	silofs_strbuf_sprintf(out_sbuf, "%s/%02x", repo->re_defs->re_pack_name,
-	                      (int)i);
+	                      (int32_t)i);
 }
 
 static void repo_pack_pathname_of(const struct silofs_repo *repo,

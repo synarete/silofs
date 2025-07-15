@@ -22,75 +22,6 @@
 #include "htox.h"
 #include "meta.h"
 
-uint32_t silofs_squash_to_u32(const void *ptr, size_t len)
-{
-	const uint8_t *ba = ptr;
-	const size_t len_head = (len / 4) * 4;
-	const size_t len_tail = len - len_head;
-	uint32_t ret = 0;
-	uint32_t lei = 0;
-	size_t pos = 0;
-
-	while (pos < len_head) {
-		lei = ((uint32_t)(ba[pos]) << 24) |
-		      ((uint32_t)(ba[pos + 1]) << 16) |
-		      ((uint32_t)(ba[pos + 2]) << 8) |
-		      ((uint32_t)(ba[pos + 3]));
-		ret ^= silofs_le32_to_cpu(lei);
-		pos += 4;
-	}
-
-	switch (len_tail) {
-	case 3:
-		lei = ((uint32_t)(ba[pos]) << 16) |
-		      ((uint32_t)(ba[pos + 1]) << 8) |
-		      ((uint32_t)(ba[pos + 2]));
-		break;
-	case 2:
-		lei = ((uint32_t)(ba[pos]) << 8) | ((uint32_t)(ba[pos + 1]));
-		break;
-	case 1:
-		lei = ((uint32_t)(ba[pos]));
-		break;
-	default:
-		lei = 0;
-		break;
-	}
-	ret ^= silofs_le32_to_cpu(lei);
-
-	return ret;
-}
-
-uint64_t silofs_u8b_as_u64(const uint8_t p[8])
-{
-	uint64_t u = 0;
-
-	u |= (uint64_t)(p[0]) << 56;
-	u |= (uint64_t)(p[1]) << 48;
-	u |= (uint64_t)(p[2]) << 40;
-	u |= (uint64_t)(p[3]) << 32;
-	u |= (uint64_t)(p[4]) << 24;
-	u |= (uint64_t)(p[5]) << 16;
-	u |= (uint64_t)(p[6]) << 8;
-	u |= (uint64_t)(p[7]);
-
-	return u;
-}
-
-static void silofs_u8b_from_u64(uint8_t p[8], uint64_t u)
-{
-	p[0] = (uint8_t)(u >> 56);
-	p[1] = (uint8_t)(u >> 48);
-	p[2] = (uint8_t)(u >> 40);
-	p[3] = (uint8_t)(u >> 32);
-	p[4] = (uint8_t)(u >> 24);
-	p[5] = (uint8_t)(u >> 16);
-	p[6] = (uint8_t)(u >> 8);
-	p[7] = (uint8_t)(u);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 void silofs_uuid_generate(struct silofs_uuid *uu)
 {
 	SILOFS_STATICASSERT_EQ(sizeof(uu->uu), sizeof(uuid_t));
@@ -151,6 +82,74 @@ void silofs_uuid_as_u64s(const struct silofs_uuid *uu, uint64_t u[2])
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+bool silofs_hash256_isequal(const struct silofs_hash256 *hash,
+                            const struct silofs_hash256 *other)
+{
+	return (memcmp(hash->hash, other->hash, sizeof(hash->hash)) == 0);
+}
+
+void silofs_hash256_assign(struct silofs_hash256 *hash,
+                           const struct silofs_hash256 *other)
+{
+	memcpy(hash->hash, other->hash, sizeof(hash->hash));
+}
+
+void silofs_hash256_to_u64s(const struct silofs_hash256 *hash, uint64_t u[4])
+{
+	const uint8_t *p = hash->hash;
+
+	SILOFS_STATICASSERT_EQ(sizeof(hash->hash), 4 * sizeof(uint64_t));
+
+	u[0] = silofs_u8b_as_u64(p);
+	u[1] = silofs_u8b_as_u64(p + 8);
+	u[2] = silofs_u8b_as_u64(p + 16);
+	u[3] = silofs_u8b_as_u64(p + 24);
+}
+
+void silofs_hash256_from_u64s(struct silofs_hash256 *hash, const uint64_t u[4])
+{
+	uint8_t *p = hash->hash;
+
+	SILOFS_STATICASSERT_EQ(sizeof(hash->hash), 4 * sizeof(uint64_t));
+
+	silofs_u8b_from_u64(p, u[0]);
+	silofs_u8b_from_u64(p + 8, u[1]);
+	silofs_u8b_from_u64(p + 16, u[2]);
+	silofs_u8b_from_u64(p + 24, u[3]);
+}
+
+size_t silofs_hash256_to_name(const struct silofs_hash256 *hash,
+                              struct silofs_strbuf *out_name)
+{
+	size_t cnt = 0;
+
+	silofs_strbuf_reset(out_name);
+	silofs_mem_to_ascii(hash->hash, sizeof(hash->hash), out_name->str,
+	                    sizeof(out_name->str) - 1, &cnt);
+	return cnt;
+}
+
+int silofs_hash256_by_name(struct silofs_hash256 *hash,
+                           const struct silofs_strbuf *name)
+{
+	struct silofs_strview sv;
+	size_t cnt = 0;
+	int err;
+
+	silofs_strbuf_as_sv(name, &sv);
+	err = silofs_ascii_to_mem(hash->hash, sizeof(hash->hash), sv.str,
+	                          sv.len, &cnt);
+	if (err) {
+		return err;
+	}
+	if (cnt != sizeof(hash->hash)) {
+		return -SILOFS_EILLSTR;
+	}
+	return 0;
+}
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static uint32_t hdr_magic(const struct silofs_header *hdr)
 {
@@ -314,74 +313,6 @@ int silofs_hdr_verify(const struct silofs_header *hdr, uint16_t type,
 	err = hdr_verify_checksum(hdr);
 	if (err) {
 		return err;
-	}
-	return 0;
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-bool silofs_hash256_isequal(const struct silofs_hash256 *hash,
-                            const struct silofs_hash256 *other)
-{
-	return (memcmp(hash->hash, other->hash, sizeof(hash->hash)) == 0);
-}
-
-void silofs_hash256_assign(struct silofs_hash256 *hash,
-                           const struct silofs_hash256 *other)
-{
-	memcpy(hash->hash, other->hash, sizeof(hash->hash));
-}
-
-void silofs_hash256_to_u64s(const struct silofs_hash256 *hash, uint64_t u[4])
-{
-	const uint8_t *p = hash->hash;
-
-	SILOFS_STATICASSERT_EQ(sizeof(hash->hash), 4 * sizeof(uint64_t));
-
-	u[0] = silofs_u8b_as_u64(p);
-	u[1] = silofs_u8b_as_u64(p + 8);
-	u[2] = silofs_u8b_as_u64(p + 16);
-	u[3] = silofs_u8b_as_u64(p + 24);
-}
-
-void silofs_hash256_from_u64s(struct silofs_hash256 *hash, const uint64_t u[4])
-{
-	uint8_t *p = hash->hash;
-
-	SILOFS_STATICASSERT_EQ(sizeof(hash->hash), 4 * sizeof(uint64_t));
-
-	silofs_u8b_from_u64(p, u[0]);
-	silofs_u8b_from_u64(p + 8, u[1]);
-	silofs_u8b_from_u64(p + 16, u[2]);
-	silofs_u8b_from_u64(p + 24, u[3]);
-}
-
-size_t silofs_hash256_to_name(const struct silofs_hash256 *hash,
-                              struct silofs_strbuf *out_name)
-{
-	size_t cnt = 0;
-
-	silofs_strbuf_reset(out_name);
-	silofs_mem_to_ascii(hash->hash, sizeof(hash->hash), out_name->str,
-	                    sizeof(out_name->str) - 1, &cnt);
-	return cnt;
-}
-
-int silofs_hash256_by_name(struct silofs_hash256 *hash,
-                           const struct silofs_strbuf *name)
-{
-	struct silofs_strview sv;
-	size_t cnt = 0;
-	int err;
-
-	silofs_strbuf_as_sv(name, &sv);
-	err = silofs_ascii_to_mem(hash->hash, sizeof(hash->hash), sv.str,
-	                          sv.len, &cnt);
-	if (err) {
-		return err;
-	}
-	if (cnt != sizeof(hash->hash)) {
-		return -SILOFS_EILLSTR;
 	}
 	return 0;
 }

@@ -188,12 +188,21 @@ int silofs_caddr_by_name2(struct silofs_caddr *caddr,
 	return caddr_from_strview(caddr, name);
 }
 
-uint32_t silofs_caddr_to_u32(const struct silofs_caddr *caddr)
+uint64_t silofs_caddr_to_u64(const struct silofs_caddr *caddr)
 {
-	struct silofs_caddr64b caddr64b;
+	union {
+		struct silofs_caddr64b caddr64b;
+		uint8_t d[64];
+	} u;
+	uint64_t n = 0;
 
-	silofs_caddr64b_htox(&caddr64b, caddr);
-	return silofs_squash_to_u32(&caddr64b, sizeof(caddr64b));
+	STATICASSERT_EQ(sizeof(u), 64);
+
+	silofs_caddr64b_htox(&u.caddr64b, caddr);
+	for (size_t i = 0; i < sizeof(u); i += 8) {
+		n ^= silofs_u8b_as_u64(&u.d[i]);
+	}
+	return n;
 }
 
 void silofs_caddr64b_htox(struct silofs_caddr64b *caddr64b,

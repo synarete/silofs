@@ -23,6 +23,10 @@
 #include <endian.h>
 #include <time.h>
 
+uint64_t silofs_u8b_as_u64(const uint8_t p[8]);
+
+void silofs_u8b_from_u64(uint8_t p[8], uint64_t u);
+
 static inline uint16_t silofs_cpu_to_le16(uint16_t n)
 {
 	return htole16(n);

@@ -75,6 +75,7 @@ libsilofs_la_SOURCES += crypt/passwd.h
 libsilofs_la_SOURCES += crypt.h
 libsilofs_la_SOURCES += addr/caddr.c
 libsilofs_la_SOURCES += addr/caddr.h
+libsilofs_la_SOURCES += addr/htox.c
 libsilofs_la_SOURCES += addr/htox.h
 libsilofs_la_SOURCES += addr/laddr.c
 libsilofs_la_SOURCES += addr/laddr.h

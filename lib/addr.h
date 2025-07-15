@@ -21,6 +21,7 @@
 #include <silofs/errors.h>
 #include "addr/offlba.h"
 #include "addr/htox.h"
+#include "addr/uuid.h"
 #include "addr/meta.h"
 #include "addr/blobid.h"
 #include "addr/paddr.h"

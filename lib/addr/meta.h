@@ -17,34 +17,12 @@
 #ifndef SILOFS_META_H_
 #define SILOFS_META_H_
 
+#include <stdlib.h>
+#include <stdint.h>
 #include <silofs/ondisk.h>
-#include "infra.h"
 
 struct silofs_strview;
 struct silofs_strbuf;
-struct silofs_uuid;
-struct silofs_header;
-
-void silofs_uuid_generate(struct silofs_uuid *uu);
-
-void silofs_uuid_assign(struct silofs_uuid       *uu,
-                        const struct silofs_uuid *other);
-
-void silofs_uuid_assign2(struct silofs_uuid *uu, const uint8_t u[16]);
-
-void silofs_uuid_copyto(const struct silofs_uuid *uu, uint8_t u[16]);
-
-long silofs_uuid_compare(const struct silofs_uuid *uu1,
-                         const struct silofs_uuid *uu2);
-
-void silofs_uuid_unparse(const struct silofs_uuid *uu,
-                         struct silofs_strbuf     *sbuf);
-
-int silofs_uuid_parse(struct silofs_uuid *uu, const struct silofs_strview *sv);
-
-void silofs_uuid_as_u64s(const struct silofs_uuid *uu, uint64_t u[2]);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 bool silofs_hash256_isequal(const struct silofs_hash256 *hash,
                             const struct silofs_hash256 *other);

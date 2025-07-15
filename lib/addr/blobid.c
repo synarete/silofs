@@ -18,6 +18,7 @@
 #include "infra.h"
 #include "str.h"
 #include "htox.h"
+#include "uuid.h"
 #include "meta.h"
 #include "blobid.h"
 

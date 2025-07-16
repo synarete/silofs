@@ -29,4 +29,6 @@ uint64_t silofs_hash_xxh64(const void *buf, size_t len, uint64_t seed);
 
 silofs_attr_const uint64_t silofs_twang_mix64(uint64_t n);
 
+void silofs_xrand_by_hash(void *ptr, size_t len, uint64_t seed);
+
 #endif /* SILOFS_HASH_H_ */

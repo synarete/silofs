@@ -33,36 +33,6 @@ static void randomize(void *ptr, size_t len, bool very_strong)
 	randomize_by_gcry(ptr, len, very_strong);
 }
 
-/* add pseudo-randomness as protection from poor gcry_randomize */
-void silofs_prandomize_with(void *ptr, size_t len, uint64_t seed)
-{
-	uint64_t u[6];
-	uint64_t *itr = ptr;
-	uint64_t xx = *itr;
-	const size_t ns = len / sizeof(*itr);
-	const size_t nu = ARRAY_SIZE(u);
-	struct timespec t;
-
-	silofs_mclock_now(&t);
-	u[0] = (uint64_t)t.tv_sec;
-	u[1] = (uint64_t)t.tv_nsec;
-	u[2] = (uint64_t)gettid();
-	silofs_rclock_now(&t);
-	u[3] = (uint64_t)t.tv_sec;
-	u[4] = (uint64_t)t.tv_nsec;
-	u[5] = seed;
-
-	for (uint32_t i = 0; i < ns; ++i) {
-		u[(i + 1) % nu] ^= silofs_twang_mix64(xx);
-		u[(i + 2) % nu] ^= xx / (i | 1);
-		u[(i + 3) % nu] ^= ~xx + i;
-		u[(i + 4) % nu] ^= silofs_lrotate64(xx, i % 61);
-
-		xx = silofs_hash_xxh64(u, sizeof(u), xx);
-		*itr++ ^= xx;
-	}
-}
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_iv_reset(struct silofs_iv *iv)
@@ -162,14 +132,18 @@ void silofs_key_xor_with1(struct silofs_key *key,
 	}
 }
 
+static void key_rerandomize(struct silofs_key *key, uint64_t seed)
+{
+	/* add pseudo-randomness as protection from poor gcry_randomize */
+	silofs_xrand_by_hash(key->key, sizeof(key->key), seed);
+}
+
 void silofs_generate_keys(struct silofs_key *keys, size_t nkeys, bool extra)
 {
 	for (size_t i = 0; i < nkeys; ++i) {
-		struct silofs_key *key = &keys[i];
-
-		silofs_key_mkrand(key);
+		silofs_key_mkrand(&keys[i]);
 		if (extra) {
-			silofs_prandomize_with(key->key, sizeof(key->key), i);
+			key_rerandomize(&keys[i], i);
 		}
 	}
 }

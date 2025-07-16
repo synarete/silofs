@@ -87,6 +87,6 @@ void silofs_password_mkrand(struct silofs_password *pw)
 	u.s.pid = getpid();
 	u.s.uid = getuid();
 
-	silofs_prandomize_with(&u, sizeof(u), (uint64_t)silofs_time_now());
+	silofs_xrand_by_hash(&u, sizeof(u), (uint64_t)silofs_time_now());
 	silofs_password_setup2(pw, &u, sizeof(u));
 }

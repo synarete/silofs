@@ -17,7 +17,7 @@
 #include "configs.h"
 #include <silofs/ondisk.h>
 #include "infra.h"
-#include "obs.h"
+#include "bs.h"
 #include "bootrec.h"
 #include "fs.h"
 #include "env.h"

@@ -14,16 +14,16 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_OBS_H_
-#define SILOFS_OBS_H_
+#ifndef SILOFS_BS_H_
+#define SILOFS_BS_H_
 
 #include "infra.h"
 #include "addr.h"
-#include "obs/repo.h"
-#include "obs/pnodes.h"
-#include "obs/pcache.h"
-#include "obs/bdesc.h"
-#include "obs/btree.h"
-#include "obs/bstore.h"
+#include "bs/repo.h"
+#include "bs/pnodes.h"
+#include "bs/pcache.h"
+#include "bs/bdesc.h"
+#include "bs/btree.h"
+#include "bs/bstore.h"
 
-#endif /* SILOFS_OBS_H_ */
+#endif /* SILOFS_BS_H_ */

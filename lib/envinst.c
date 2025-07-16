@@ -17,7 +17,7 @@
 #include "configs.h"
 #include <sys/resource.h>
 #include <silofs/ioctls.h>
-#include "obs.h"
+#include "bs.h"
 #include "fs.h"
 #include "bootrec.h"
 #include "env.h"

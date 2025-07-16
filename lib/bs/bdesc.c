@@ -17,7 +17,7 @@
 #include "configs.h"
 #include "infra.h"
 #include "addr.h"
-#include "pnodes.h"
+#include "pnode.h"
 #include "bdesc.h"
 
 static void bd_setup_hdr(struct silofs_blob_desc *bd)

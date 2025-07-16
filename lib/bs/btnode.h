@@ -14,34 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_PNODES_H_
-#define SILOFS_PNODES_H_
+#ifndef SILOFS_BTNODE_H_
+#define SILOFS_BTNODE_H_
 
+#include "infra.h"
 #include "addr.h"
-#include "hmdq.h"
-
-#define SILOFS_BTREE_KEY_NULL (0)
-
-struct silofs_paddr;
-struct silofs_bstore;
-
-/* base of all persistent-segment nodes */
-struct silofs_pnode_info {
-	struct silofs_paddr      pn_paddr;
-	struct silofs_hmapq_elem pn_hmqe;
-};
-
-/* blob-descriptor node */
-struct silofs_bdesc_info {
-	struct silofs_pnode_info bd_pni;
-	struct silofs_blob_desc *bd;
-};
-
-/* check-point node */
-struct silofs_chkpt_info {
-	struct silofs_pnode_info  cp_pni;
-	struct silofs_chkpt_node *cp;
-};
+#include "pnode.h"
 
 /* btree-node */
 struct silofs_btnode_info {
@@ -49,28 +27,6 @@ struct silofs_btnode_info {
 	struct silofs_btree_node *bn;
 	bool                      bn_rdonly;
 };
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-void silofs_pni_init(struct silofs_pnode_info  *pni,
-                     const struct silofs_paddr *paddr);
-
-void silofs_pni_fini(struct silofs_pnode_info *pni);
-
-enum silofs_mtype silofs_pni_mtype(const struct silofs_pnode_info *pni);
-
-void silofs_pni_dirtify(struct silofs_pnode_info *pni);
-
-void silofs_pni_undirtify(struct silofs_pnode_info *pni);
-
-void silofs_pni_incref(struct silofs_pnode_info *pni);
-
-void silofs_pni_decref(struct silofs_pnode_info *pni);
-
-void silofs_pni_set_dq(struct silofs_pnode_info *pni,
-                       struct silofs_dirtyq     *dq);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 struct silofs_btnode_info *
 silofs_bni_new(const struct silofs_paddr *paddr, struct silofs_alloc *alloc);
@@ -120,4 +76,4 @@ void silofs_bni_set_final(struct silofs_btnode_info *bni,
 struct silofs_btnode_info *
 silofs_bni_from_pni(const struct silofs_pnode_info *pni);
 
-#endif /* SILOFS_PNODES_H_ */
+#endif /* SILOFS_BTNODE_H_ */

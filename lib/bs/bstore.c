@@ -18,9 +18,10 @@
 #include "infra.h"
 #include "addr.h"
 #include "repo.h"
-#include "pnodes.h"
+#include "pnode.h"
 #include "pcache.h"
 #include "bdesc.h"
+#include "btnode.h"
 #include "btree.h"
 #include "bstore.h"
 

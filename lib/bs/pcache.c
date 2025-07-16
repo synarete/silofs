@@ -18,8 +18,8 @@
 #include "infra.h"
 #include "addr.h"
 #include "flags.h"
-#include "pnodes.h"
 #include "bdesc.h"
+#include "btnode.h"
 #include "pcache.h"
 
 enum {

@@ -19,7 +19,7 @@
 #include <silofs/ondisk.h>
 #include "addr.h"
 #include "repo.h"
-#include "pnodes.h"
+#include "btnode.h"
 #include "pcache.h"
 #include "btree.h"
 

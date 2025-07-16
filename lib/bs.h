@@ -20,7 +20,7 @@
 #include "infra.h"
 #include "addr.h"
 #include "bs/repo.h"
-#include "bs/pnodes.h"
+#include "bs/pnode.h"
 #include "bs/pcache.h"
 #include "bs/bdesc.h"
 #include "bs/btree.h"

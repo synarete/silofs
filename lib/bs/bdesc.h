@@ -19,8 +19,13 @@
 
 #include "infra.h"
 #include "addr.h"
+#include "pnode.h"
 
-struct silofs_bdesc_info;
+/* blob-descriptor node */
+struct silofs_bdesc_info {
+	struct silofs_pnode_info bd_pni;
+	struct silofs_blob_desc *bd;
+};
 
 struct silofs_bdesc_info *
 silofs_bdi_from_pni(const struct silofs_pnode_info *pni);

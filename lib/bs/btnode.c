@@ -17,26 +17,8 @@
 #include "configs.h"
 #include "infra.h"
 #include "addr.h"
-#include "pnodes.h"
-
-static bool key_isvalid(uint64_t key)
-{
-	return (key != SILOFS_BTREE_KEY_NULL);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static void *pnode_memalloc(struct silofs_alloc *alloc, size_t size)
-{
-	return silofs_memalloc(alloc, size, SILOFS_ALLOCF_BZERO);
-}
-
-static void pnode_memfree(struct silofs_alloc *alloc, void *ptr, size_t size)
-{
-	silofs_memfree(alloc, ptr, size, SILOFS_ALLOCF_TRYPUNCH);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+#include "pnode.h"
+#include "btnode.h"
 
 static void btn_setup_hdr(struct silofs_btree_node *btn)
 {
@@ -350,13 +332,13 @@ static struct silofs_btree_node *btn_malloc(struct silofs_alloc *alloc)
 {
 	struct silofs_btree_node *btn;
 
-	btn = pnode_memalloc(alloc, sizeof(*btn));
+	btn = silofs_memalloc(alloc, sizeof(*btn), SILOFS_ALLOCF_BZERO);
 	return btn;
 }
 
 static void btn_free(struct silofs_btree_node *btn, struct silofs_alloc *alloc)
 {
-	pnode_memfree(alloc, btn, sizeof(*btn));
+	silofs_memfree(alloc, btn, sizeof(*btn), SILOFS_ALLOCF_TRYPUNCH);
 }
 
 static struct silofs_btree_node *btn_new(struct silofs_alloc *alloc)
@@ -374,72 +356,6 @@ static void btn_del(struct silofs_btree_node *btn, struct silofs_alloc *alloc)
 {
 	btn_fini(btn);
 	btn_free(btn, alloc);
-}
-
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-
-void silofs_pni_init(struct silofs_pnode_info *pni,
-                     const struct silofs_paddr *paddr)
-{
-	silofs_paddr_assign(&pni->pn_paddr, paddr);
-	silofs_hmqe_init(&pni->pn_hmqe, silofs_mtype_size(paddr->mtype));
-	silofs_hkey_by_paddr(&pni->pn_hmqe.hme_key, &pni->pn_paddr);
-}
-
-void silofs_pni_fini(struct silofs_pnode_info *pni)
-{
-	silofs_paddr_fini(&pni->pn_paddr);
-	silofs_hmqe_fini(&pni->pn_hmqe);
-}
-
-enum silofs_mtype silofs_pni_mtype(const struct silofs_pnode_info *pni)
-{
-	return pni->pn_paddr.mtype;
-}
-
-static struct silofs_dq_elem *pni_dqe(struct silofs_pnode_info *pni)
-{
-	return &pni->pn_hmqe.hme_dqe;
-}
-
-static const struct silofs_dq_elem *
-pni_dqe2(const struct silofs_pnode_info *pni)
-{
-	return &pni->pn_hmqe.hme_dqe;
-}
-
-void silofs_pni_set_dq(struct silofs_pnode_info *pni, struct silofs_dirtyq *dq)
-{
-	silofs_dqe_setq(pni_dqe(pni), dq);
-}
-
-static bool pni_isdirty(const struct silofs_pnode_info *pni)
-{
-	return silofs_dqe_is_dirty(pni_dqe2(pni));
-}
-
-void silofs_pni_dirtify(struct silofs_pnode_info *pni)
-{
-	if (!pni_isdirty(pni)) {
-		silofs_dqe_enqueue(pni_dqe(pni));
-	}
-}
-
-void silofs_pni_undirtify(struct silofs_pnode_info *pni)
-{
-	if (pni_isdirty(pni)) {
-		silofs_dqe_dequeue(pni_dqe(pni));
-	}
-}
-
-void silofs_pni_incref(struct silofs_pnode_info *pni)
-{
-	silofs_hmqe_incref(&pni->pn_hmqe);
-}
-
-void silofs_pni_decref(struct silofs_pnode_info *pni)
-{
-	silofs_hmqe_decref(&pni->pn_hmqe);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -570,12 +486,17 @@ uint64_t silofs_bni_median_key(const struct silofs_btnode_info *bni)
 	return mkey;
 }
 
+static bool btkey_isvalid(uint64_t key)
+{
+	return (key != SILOFS_BTREE_KEY_NULL);
+}
+
 int silofs_bni_resolve(const struct silofs_btnode_info *bni, uint64_t key,
                        struct silofs_paddr *out_paddr)
 {
 	const size_t nkeys = btn_nkeys(bni->bn);
 
-	if (!key_isvalid(key)) {
+	if (!btkey_isvalid(key)) {
 		return -SILOFS_EINVAL;
 	}
 	if (!nkeys) {
@@ -595,7 +516,7 @@ int silofs_bni_expand(struct silofs_btnode_info *bni, uint64_t key,
 	const size_t nfree_keys = btn_nfree_keys(btn);
 	size_t slot;
 
-	if (!key_isvalid(key)) {
+	if (!btkey_isvalid(key)) {
 		return -SILOFS_EINVAL;
 	}
 	if (!nfree_keys) {
@@ -637,7 +558,7 @@ int silofs_bni_update_child(struct silofs_btnode_info *bni, uint64_t key,
 {
 	size_t slot;
 
-	if (!key_isvalid(key)) {
+	if (!btkey_isvalid(key)) {
 		return -SILOFS_EINVAL;
 	}
 	slot = btn_find_slot_ge(bni->bn, key);

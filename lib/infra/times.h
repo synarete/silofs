@@ -19,22 +19,17 @@
 
 #include <time.h>
 
-int silofs_init_time(void);
+int silofs_init_times(void);
 
 int silofs_localtime_now(struct tm *res);
 
-time_t silofs_time_now(void);
+time_t silofs_time_real_now(void);
 
-time_t silofs_time_now_monotonic(void);
+time_t silofs_time_mono_now(void);
 
-void silofs_rclock_now(struct timespec *ts);
+void silofs_clock_real_now(struct timespec *ts);
 
-void silofs_mclock_now(struct timespec *ts);
-
-void silofs_mclock_dur(const struct timespec *start, struct timespec *dur);
-
-void silofs_mclock_dif(const struct timespec *start,
-                       const struct timespec *finish, struct timespec *dif);
+void silofs_clock_mono_now(struct timespec *ts);
 
 void silofs_ts_omit(struct timespec *ts);
 
@@ -42,8 +37,11 @@ void silofs_ts_copy(struct timespec *dst, const struct timespec *src);
 
 int silofs_ts_gettime(struct timespec *ts, int realtime);
 
+void silofs_ts_diff(const struct timespec *start,
+                    const struct timespec *finish, struct timespec *dif);
+
 int silofs_suspend_ts(const struct timespec *ts);
 
-int silofs_suspend_secs(time_t secs);
+int silofs_suspend_nsecs(time_t nsecs);
 
 #endif /* SILOFS_TIMES_H_ */

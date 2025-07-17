@@ -154,7 +154,7 @@ static void env_init_opstat(struct silofs_env *env)
 {
 	env->opstat.op_iopen_max = 0;
 	env->opstat.op_iopen = 0;
-	env->opstat.op_time = silofs_time_now();
+	env->opstat.op_time = silofs_time_real_now();
 	env->opstat.op_count = 0;
 	env->opstat.op_iopen_max = env_calc_iopen_limit(env);
 }
@@ -168,7 +168,7 @@ env_init_commons(struct silofs_env *env, const struct silofs_env_base *base)
 	silofs_caddr_reset(&env->bootrec_base_caddr);
 	silofs_caddr_reset(&env->bootrec_fork_caddr);
 	silofs_caddr_reset(&env->pack_caddr);
-	env->init_time = silofs_time_now_monotonic();
+	env->init_time = silofs_time_mono_now();
 	env->iconv_set = false;
 	env->sbi = NULL;
 	env->ms_flags = 0;
@@ -662,7 +662,7 @@ void silofs_env_relax_caches(const struct silofs_env *env, int flags)
 
 void silofs_env_uptime(const struct silofs_env *env, time_t *out_uptime)
 {
-	const time_t now = silofs_time_now_monotonic();
+	const time_t now = silofs_time_mono_now();
 
 	*out_uptime = now - env->init_time;
 }

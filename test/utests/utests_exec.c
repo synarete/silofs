@@ -178,9 +178,9 @@ static void ut_track_test(struct ut_env *ute, const struct ut_testdef *td,
 {
 	if (pre_execute) {
 		silofs_log_info("  %-40s =>", td->name);
-		silofs_mclock_now(&ute->ts_start);
+		silofs_clock_mono_now(&ute->ts_start);
 	} else {
-		silofs_mclock_now(&ute->ts_finish);
+		silofs_clock_mono_now(&ute->ts_finish);
 		silofs_log_info("  %-40s OK", td->name);
 	}
 }

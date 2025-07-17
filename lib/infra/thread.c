@@ -61,7 +61,7 @@ int silofs_thread_sigblock_common(void)
 
 static void silofs_thread_prepare(struct silofs_thread *th)
 {
-	th->start_time = silofs_time_now_monotonic();
+	th->start_time = silofs_time_mono_now();
 	if (strlen(th->name)) {
 		pthread_setname_np(th->pth, th->name);
 	}
@@ -70,7 +70,7 @@ static void silofs_thread_prepare(struct silofs_thread *th)
 static void silofs_thread_complete(struct silofs_thread *th, int err)
 {
 	th->status = err;
-	th->finish_time = silofs_time_now_monotonic();
+	th->finish_time = silofs_time_mono_now();
 }
 
 silofs_attr_noreturn static void silofs_thread_exit(struct silofs_thread *th)
@@ -297,7 +297,7 @@ int silofs_cond_ntimedwait(struct silofs_cond *cond,
 {
 	struct timespec ts;
 
-	silofs_mclock_now(&ts);
+	silofs_clock_mono_now(&ts);
 	ts.tv_sec += nsec;
 	return silofs_cond_timedwait(cond, mutex, &ts);
 }
@@ -475,7 +475,7 @@ bool silofs_sem_ntimedwait(struct silofs_sem *sem, time_t nsec)
 {
 	struct timespec ts;
 
-	silofs_rclock_now(&ts);
+	silofs_clock_real_now(&ts);
 	ts.tv_sec += nsec;
 
 	return silofs_sem_timedwait(sem, &ts);

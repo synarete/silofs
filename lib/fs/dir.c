@@ -1329,7 +1329,7 @@ static uint64_t unique_seed(void)
 	uint64_t s;
 
 	silofs_getentropy(&s, sizeof(s));
-	return s ^ (uint64_t)silofs_time_now();
+	return s ^ (uint64_t)silofs_time_real_now();
 }
 
 void silofs_ii_setup_dir(struct silofs_inode_info *dir_ii, mode_t parent_mode,

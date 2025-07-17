@@ -1318,7 +1318,7 @@ static int do_init_lib(bool with_fips)
 {
 	int err;
 
-	err = silofs_init_time();
+	err = silofs_init_times();
 	if (err) {
 		return err;
 	}

@@ -55,7 +55,7 @@ static void ut_clone_create_remove(struct ut_env *ute)
 
 static void ut_clone_write_read(struct ut_env *ute)
 {
-	time_t val = silofs_time_now();
+	time_t val = silofs_time_real_now();
 	const char *name = UT_NAME;
 	const loff_t off = (loff_t)(val & 0xFFFFFF);
 	ino_t dino = 0;
@@ -91,7 +91,7 @@ static void ut_clone_write_post(struct ut_env *ute)
 
 static void ut_clone_overwrite(struct ut_env *ute)
 {
-	uint64_t val1 = (uint64_t)silofs_time_now();
+	uint64_t val1 = (uint64_t)silofs_time_real_now();
 	uint64_t val2 = ~val1;
 	const char *name = UT_NAME;
 	const loff_t off = UT_1G;

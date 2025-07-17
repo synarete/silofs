@@ -61,7 +61,7 @@ op_try_flush(struct silofs_task_ctx *task, struct silofs_inode_info *ii)
 
 static void op_probe_duration(const struct silofs_task_ctx *task, int status)
 {
-	const time_t now = silofs_time_now();
+	const time_t now = silofs_time_real_now();
 	const time_t beg = task->t_auth.ts.tv_sec;
 	const time_t dif = now - beg;
 	const uint32_t op_code = task->t_auth.opcode;

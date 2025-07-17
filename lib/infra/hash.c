@@ -67,11 +67,11 @@ void silofs_xrand_by_hash(void *ptr, size_t len, uint64_t seed)
 	const size_t nu = SILOFS_ARRAY_SIZE(u);
 	struct timespec t;
 
-	silofs_mclock_now(&t);
+	silofs_clock_mono_now(&t);
 	u[0] ^= (uint64_t)t.tv_sec;
 	u[1] ^= (uint64_t)t.tv_nsec;
 	u[2] ^= (uint64_t)gettid();
-	silofs_rclock_now(&t);
+	silofs_clock_real_now(&t);
 	u[3] ^= (uint64_t)t.tv_sec;
 	u[4] ^= (uint64_t)t.tv_nsec;
 

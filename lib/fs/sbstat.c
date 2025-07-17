@@ -473,7 +473,7 @@ static void spst_reset_spgs(struct silofs_space_stats *spst)
 static void spst_init(struct silofs_space_stats *spst)
 {
 	silofs_memzero(spst, sizeof(*spst));
-	spst->btime = spst->ctime = silofs_time_now();
+	spst->btime = spst->ctime = silofs_time_real_now();
 	spst->capacity = 0;
 	spst->vspacesize = SILOFS_VSPACE_SIZE_MAX;
 	spst->generation = 0;

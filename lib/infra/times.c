@@ -36,12 +36,12 @@ static void do_clock_gettime(clockid_t clock_id, struct timespec *tp)
 	}
 }
 
-void silofs_rclock_now(struct timespec *ts)
+void silofs_clock_real_now(struct timespec *ts)
 {
 	do_clock_gettime(CLOCK_REALTIME, ts);
 }
 
-void silofs_mclock_now(struct timespec *ts)
+void silofs_clock_mono_now(struct timespec *ts)
 {
 	do_clock_gettime(CLOCK_MONOTONIC, ts);
 }
@@ -58,30 +58,16 @@ static void timespec_dif(const struct timespec *beg,
 	}
 }
 
-void silofs_mclock_dur(const struct timespec *start, struct timespec *dur)
-{
-	struct timespec now;
-
-	silofs_mclock_now(&now);
-	silofs_mclock_dif(start, &now, dur);
-}
-
-void silofs_mclock_dif(const struct timespec *start,
-                       const struct timespec *finish, struct timespec *dif)
-{
-	timespec_dif(start, finish, dif);
-}
-
-time_t silofs_time_now(void)
+time_t silofs_time_real_now(void)
 {
 	return time(NULL);
 }
 
-time_t silofs_time_now_monotonic(void)
+time_t silofs_time_mono_now(void)
 {
 	struct timespec ts;
 
-	silofs_mclock_now(&ts);
+	silofs_clock_mono_now(&ts);
 	return ts.tv_sec;
 }
 
@@ -104,10 +90,16 @@ int silofs_ts_gettime(struct timespec *ts, int realtime)
 	if (realtime) {
 		err = silofs_sys_clock_gettime(CLOCK_REALTIME, ts);
 	} else {
-		ts->tv_sec = silofs_time_now();
+		ts->tv_sec = silofs_time_real_now();
 		ts->tv_nsec = 0;
 	}
 	return err;
+}
+
+void silofs_ts_diff(const struct timespec *start,
+                    const struct timespec *finish, struct timespec *out_dif)
+{
+	timespec_dif(start, finish, out_dif);
 }
 
 static int silofs_nanosleep(const struct timespec *req, struct timespec *rem)
@@ -124,11 +116,11 @@ static int silofs_nanosleep(const struct timespec *req, struct timespec *rem)
 	return err ? -errno : 0;
 }
 
-int silofs_suspend_secs(time_t secs)
+int silofs_suspend_nsecs(time_t nsecs)
 {
-	struct timespec ts = { .tv_sec = secs, .tv_nsec = 0 };
+	const struct timespec ts = { .tv_sec = nsecs, .tv_nsec = 0 };
 
-	return silofs_suspend_ts(&ts);
+	return (nsecs > 0) ? silofs_suspend_ts(&ts) : 0;
 }
 
 int silofs_suspend_ts(const struct timespec *ts)
@@ -150,7 +142,7 @@ int silofs_suspend_ts(const struct timespec *ts)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_init_time(void)
+int silofs_init_times(void)
 {
 	struct tm res = { .tm_zone = NULL };
 
@@ -160,7 +152,7 @@ int silofs_init_time(void)
 
 int silofs_localtime_now(struct tm *res)
 {
-	const time_t now = silofs_time_now();
+	const time_t now = silofs_time_real_now();
 	const struct tm *ptm = NULL;
 
 	errno = 0;

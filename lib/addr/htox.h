@@ -22,6 +22,7 @@
 #include <stdint.h>
 #include <endian.h>
 #include <time.h>
+#include <silofs/ondisk.h>
 
 uint64_t silofs_u8b_as_u64(const uint8_t p[8]);
 
@@ -85,6 +86,20 @@ static inline uint64_t silofs_cpu_to_time(time_t tm)
 static inline time_t silofs_time_to_cpu(uint64_t tm)
 {
 	return (time_t)silofs_le64_to_cpu(tm);
+}
+
+static inline void
+silofs_ts_to_cpu(const struct silofs_timespec *t, struct timespec *ts)
+{
+	ts->tv_sec  = (time_t)silofs_le64_to_cpu(t->t_sec);
+	ts->tv_nsec = (long)silofs_le64_to_cpu(t->t_nsec);
+}
+
+static inline void
+silofs_cpu_to_ts(const struct timespec *ts, struct silofs_timespec *t)
+{
+	t->t_sec  = silofs_cpu_to_le64((uint64_t)ts->tv_sec);
+	t->t_nsec = silofs_cpu_to_le64((uint64_t)ts->tv_nsec);
 }
 
 #endif /* SILOFS_HTOX_H_ */

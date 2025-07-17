@@ -85,22 +85,6 @@ static bool silofs_user_cap_chown(const struct silofs_cred *cred)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ts_to_cpu(const struct silofs_timespec *vts, struct timespec *ts)
-{
-	if (ts != NULL) {
-		ts->tv_sec = (time_t)silofs_le64_to_cpu(vts->t_sec);
-		ts->tv_nsec = (long)silofs_le64_to_cpu(vts->t_nsec);
-	}
-}
-
-static void cpu_to_ts(const struct timespec *ts, struct silofs_timespec *vts)
-{
-	if (ts != NULL) {
-		vts->t_sec = silofs_cpu_to_le64((uint64_t)ts->tv_sec);
-		vts->t_nsec = silofs_cpu_to_le64((uint64_t)ts->tv_nsec);
-	}
-}
-
 static void assign_ts(struct timespec *ts, const struct timespec *other)
 {
 	ts->tv_sec = other->tv_sec;
@@ -274,46 +258,46 @@ inode_set_rdev(struct silofs_inode *inode, unsigned int maj, unsigned int min)
 
 static void inode_btime(const struct silofs_inode *inode, struct timespec *ts)
 {
-	ts_to_cpu(&inode->i_tm.btime, ts);
+	silofs_ts_to_cpu(&inode->i_tm.btime, ts);
 }
 
 static void
 inode_set_btime(struct silofs_inode *inode, const struct timespec *ts)
 {
-	cpu_to_ts(ts, &inode->i_tm.btime);
+	silofs_cpu_to_ts(ts, &inode->i_tm.btime);
 }
 
 static void inode_atime(const struct silofs_inode *inode, struct timespec *ts)
 {
-	ts_to_cpu(&inode->i_tm.atime, ts);
+	silofs_ts_to_cpu(&inode->i_tm.atime, ts);
 }
 
 static void
 inode_set_atime(struct silofs_inode *inode, const struct timespec *ts)
 {
-	cpu_to_ts(ts, &inode->i_tm.atime);
+	silofs_cpu_to_ts(ts, &inode->i_tm.atime);
 }
 
 static void inode_mtime(const struct silofs_inode *inode, struct timespec *ts)
 {
-	ts_to_cpu(&inode->i_tm.mtime, ts);
+	silofs_ts_to_cpu(&inode->i_tm.mtime, ts);
 }
 
 static void
 inode_set_mtime(struct silofs_inode *inode, const struct timespec *ts)
 {
-	cpu_to_ts(ts, &inode->i_tm.mtime);
+	silofs_cpu_to_ts(ts, &inode->i_tm.mtime);
 }
 
 static void inode_ctime(const struct silofs_inode *inode, struct timespec *ts)
 {
-	ts_to_cpu(&inode->i_tm.ctime, ts);
+	silofs_ts_to_cpu(&inode->i_tm.ctime, ts);
 }
 
 static void
 inode_set_ctime(struct silofs_inode *inode, const struct timespec *ts)
 {
-	cpu_to_ts(ts, &inode->i_tm.ctime);
+	silofs_cpu_to_ts(ts, &inode->i_tm.ctime);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -544,7 +528,7 @@ enum silofs_inodef silofs_ii_flags(const struct silofs_inode_info *ii)
 }
 
 static void
-silofs_ii_times(const struct silofs_inode_info *ii, struct silofs_itimes *tms)
+ii_times(const struct silofs_inode_info *ii, struct silofs_itimes *tms)
 {
 	const struct silofs_inode *inode = ii->inode;
 
@@ -1180,7 +1164,7 @@ void silofs_ii_stat_of(const struct silofs_inode_info *ii,
 {
 	struct silofs_itimes tms;
 
-	silofs_ii_times(ii, &tms);
+	ii_times(ii, &tms);
 	silofs_memzero(st, sizeof(*st));
 
 	st->st.st_ino = silofs_ii_xino_of(ii);

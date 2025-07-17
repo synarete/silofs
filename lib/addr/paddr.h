@@ -22,7 +22,7 @@
 /* persistent object address within specific blob */
 struct silofs_paddr {
 	struct silofs_blobid blobid;
-	loff_t               off;
+	loff_t               pos;
 	enum silofs_mtype    mtype;
 };
 

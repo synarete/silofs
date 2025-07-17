@@ -313,7 +313,7 @@ static int bstore_spawn_next_bdesc(struct silofs_bstore *bstore)
 	// XXX FIXME
 	silofs_paddr_reset(&paddr);
 
-	return bstore_spawn_bdesc(bstore, paddr.off == 0, &paddr, &bdi);
+	return bstore_spawn_bdesc(bstore, paddr.pos == 0, &paddr, &bdi);
 }
 
 int silofs_bstore_format(struct silofs_bstore *bstore)

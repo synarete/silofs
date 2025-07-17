@@ -3262,7 +3262,7 @@ repo_save_pobj(struct silofs_repo *repo, const struct silofs_paddr *paddr,
 	if (err) {
 		return err;
 	}
-	err = blobf_pwriten(blobf, paddr->off, rovec->rov_base,
+	err = blobf_pwriten(blobf, paddr->pos, rovec->rov_base,
 	                    rovec->rov_len);
 	if (err) {
 		return err;
@@ -3301,7 +3301,7 @@ repo_load_pobj(struct silofs_repo *repo, const struct silofs_paddr *paddr,
 	if (err) {
 		return err;
 	}
-	err = blobf_preadn(blobf, paddr->off, rwvec->rwv_base, rwvec->rwv_len);
+	err = blobf_preadn(blobf, paddr->pos, rwvec->rwv_base, rwvec->rwv_len);
 	if (err) {
 		return err;
 	}

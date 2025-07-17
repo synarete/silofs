@@ -391,7 +391,7 @@ static int btc_stage_child_btnode(const struct silofs_btree_ctx *btc,
                                   struct silofs_btnode_info *parent_bni,
                                   struct silofs_btnode_info **out_bni)
 {
-	struct silofs_paddr paddr = { .off = -1 };
+	struct silofs_paddr paddr = { .pos = -1 };
 	struct silofs_btnode_info *bni = NULL;
 	int err;
 
@@ -485,7 +485,7 @@ static int btc_spawn_btnode_by(const struct silofs_btree_ctx *btc,
                                const struct silofs_btnode_info *bni_src,
                                struct silofs_btnode_info **out_bni)
 {
-	struct silofs_paddr paddr = { .off = -1 };
+	struct silofs_paddr paddr = { .pos = -1 };
 	int err;
 
 	btc_consume_btnode_space(btc, &paddr);

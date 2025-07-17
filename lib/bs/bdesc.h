@@ -42,4 +42,22 @@ void silofs_bdi_undirtify(struct silofs_bdesc_info *bdi);
 void silofs_bdi_set_dq(struct silofs_bdesc_info *bdi,
                        struct silofs_dirtyq     *dq);
 
+void silofs_bdi_setup_spawned(struct silofs_bdesc_info *bdi,
+                              enum silofs_mtype         refmtype);
+
+void silofs_bdi_set_refblob(struct silofs_bdesc_info   *bdi,
+                            const struct silofs_blobid *blobid);
+
+int silofs_bdi_find_free(const struct silofs_bdesc_info *bdi,
+                         struct silofs_paddr            *out_paddr);
+
+int silofs_bdi_test_free(const struct silofs_bdesc_info *bdi,
+                         const struct silofs_paddr      *paddr);
+
+int silofs_bdi_mark_free(struct silofs_bdesc_info  *bdi,
+                         const struct silofs_paddr *paddr);
+
+int silofs_bdi_mark_used(struct silofs_bdesc_info  *bdi,
+                         const struct silofs_paddr *paddr);
+
 #endif /* SILOFS_BDESC_H_ */

@@ -25,7 +25,7 @@
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct silofs_paddr s_silofs_paddr_none = {
-	.off = SILOFS_OFF_NULL,
+	.pos = SILOFS_OFF_NULL,
 	.mtype = SILOFS_MTYPE_NONE,
 };
 
@@ -37,7 +37,7 @@ const struct silofs_paddr *silofs_paddr_none(void)
 bool silofs_paddr_isnull(const struct silofs_paddr *paddr)
 {
 	return (paddr->mtype == SILOFS_MTYPE_NONE) ||
-	       silofs_off_isnull(paddr->off);
+	       silofs_off_isnull(paddr->pos);
 }
 
 void silofs_paddr_init(struct silofs_paddr *paddr,
@@ -45,14 +45,14 @@ void silofs_paddr_init(struct silofs_paddr *paddr,
                        enum silofs_mtype mtype, loff_t off)
 {
 	silofs_blobid_assign(&paddr->blobid, blobid);
-	paddr->off = off;
+	paddr->pos = off;
 	paddr->mtype = mtype;
 }
 
 void silofs_paddr_fini(struct silofs_paddr *paddr)
 {
 	silofs_blobid_reset(&paddr->blobid);
-	paddr->off = SILOFS_OFF_NULL;
+	paddr->pos = SILOFS_OFF_NULL;
 	paddr->mtype = SILOFS_MTYPE_NONE;
 }
 
@@ -65,7 +65,7 @@ void silofs_paddr_assign(struct silofs_paddr *paddr,
                          const struct silofs_paddr *other)
 {
 	silofs_blobid_assign(&paddr->blobid, &other->blobid);
-	paddr->off = other->off;
+	paddr->pos = other->pos;
 	paddr->mtype = other->mtype;
 }
 
@@ -78,7 +78,7 @@ long silofs_paddr_compare(const struct silofs_paddr *paddr1,
 	if (cmp) {
 		return cmp;
 	}
-	cmp = (long)paddr1->off - (long)paddr2->off;
+	cmp = (long)paddr1->pos - (long)paddr2->pos;
 	if (cmp) {
 		return cmp;
 	}
@@ -105,7 +105,7 @@ void silofs_paddr64b_htox(struct silofs_paddr64b *paddr64,
 {
 	silofs_paddr64b_reset(paddr64);
 	silofs_blobid_assign(&paddr64->blobid, &paddr->blobid);
-	paddr64->off = silofs_cpu_to_off(paddr->off);
+	paddr64->pos = silofs_cpu_to_off(paddr->pos);
 	paddr64->mtype = silofs_cpu_to_le16((uint16_t)(paddr->mtype));
 }
 
@@ -113,6 +113,6 @@ void silofs_paddr64b_xtoh(const struct silofs_paddr64b *paddr64,
                           struct silofs_paddr *paddr)
 {
 	silofs_blobid_assign(&paddr->blobid, &paddr64->blobid);
-	paddr->off = silofs_off_to_cpu(paddr64->off);
+	paddr->pos = silofs_off_to_cpu(paddr64->pos);
 	paddr->mtype = silofs_le16_to_cpu(paddr64->mtype);
 }

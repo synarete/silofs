@@ -397,8 +397,8 @@ static void affirm_ondisk_bdesc(void)
 	REQUIRE_OFFSET32(struct silofs_blob_desc, bd_nobjs_max, 140);
 	REQUIRE_OFFSET32(struct silofs_blob_desc, bd_nobjs, 144);
 	REQUIRE_OFFSET32(struct silofs_blob_desc, bd_flags, 148);
-	REQUIRE_OFFSET32(struct silofs_blob_desc, bd_reftype, 152);
-	REQUIRE_OFFSET64(struct silofs_blob_desc, bd_alloc_state, 256);
+	REQUIRE_OFFSET32(struct silofs_blob_desc, bd_refmtype, 152);
+	REQUIRE_OFFSET64(struct silofs_blob_desc, bd_obj_state, 256);
 	REQUIRE_SIZEOF_8K(struct silofs_blob_desc);
 }
 

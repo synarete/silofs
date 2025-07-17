@@ -531,7 +531,7 @@ struct silofs_caddr64b {
 /* persistent object address */
 struct silofs_paddr64b {
 	struct silofs_blobid blobid;
-	int64_t              off;
+	int64_t              pos;
 	uint16_t             mtype;
 	uint8_t              pad[22];
 } silofs_attr_aligned16;
@@ -922,6 +922,12 @@ struct silofs_repo_meta {
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
+/* blob-descriptor obj-ref state flags */
+enum silofs_objstatef {
+	SILOFS_OBJSTATEF_NONE = 0x00,
+	SILOFS_OBJSTATEF_USED = 0x01,
+};
+
 /* maximal btree height, including leaf nodes */
 #define SILOFS_BTREE_HEIGHT_MAX (8)
 
@@ -937,9 +943,9 @@ struct silofs_blob_desc {
 	uint32_t               bd_nobjs_max;
 	uint32_t               bd_nobjs;
 	uint32_t               bd_flags;
-	uint16_t               bd_reftype;
+	uint16_t               bd_refmtype;
 	uint8_t                bd_reserved1[102];
-	uint8_t                bd_alloc_state[7936];
+	uint8_t                bd_obj_state[7936];
 } silofs_attr_aligned64;
 
 /* b+tree node of persistent volume mapping */

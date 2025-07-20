@@ -34,7 +34,7 @@ static void password_setup_nil(struct silofs_password *pw)
 	char pass[SILOFS_PASSWORD_MIN];
 
 	memset(pass, 0, sizeof(pass));
-	password_setup_dat(pw, pass, sizeof(pass) - 1);
+	password_setup_dat(pw, pass, sizeof(pass));
 }
 
 int silofs_password_setup2(struct silofs_password *pw, const void *pass,

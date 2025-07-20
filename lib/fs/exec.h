@@ -65,16 +65,16 @@ struct silofs_dset {
 
 /* flush-to-stable controller */
 struct silofs_flusher {
-	struct silofs_submit_ref     sref[SILOFS_SQENT_NREFS_MAX];
-	struct silofs_dset           dset[3];
-	struct silofs_listq          txq;
-	const struct silofs_bootrec *bootrec;
-	struct silofs_submitq       *submitq;
-	struct silofs_task_ctx      *task;
-	struct silofs_sb_info       *sbi;
-	struct silofs_inode_info    *ii;
-	uint32_t                     tx_count;
-	int                          flags;
+	struct silofs_submit_ref  sref[SILOFS_SQENT_NREFS_MAX];
+	struct silofs_dset        dset[3];
+	struct silofs_listq       txq;
+	const struct silofs_mbr  *mbr;
+	struct silofs_submitq    *submitq;
+	struct silofs_task_ctx   *task;
+	struct silofs_sb_info    *sbi;
+	struct silofs_inode_info *ii;
+	uint32_t                  tx_count;
+	int                       flags;
 } silofs_attr_aligned64;
 
 /* execution-context authentication */
@@ -101,7 +101,7 @@ struct silofs_task_ctx {
 	volatile bool               t_fs_locked;
 	bool                        t_ex_locked;
 	bool                        t_exclusive;
-	bool                        t_bootrec_op;
+	bool                        t_mbr_op;
 	bool                        t_kwrite;
 	bool                        t_runnable;
 };
@@ -137,9 +137,9 @@ void silofs_submitq_del_sqe(struct silofs_submitq     *smq,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_flusher_init(struct silofs_flusher       *flusher,
-                        const struct silofs_bootrec *bootrec,
-                        struct silofs_submitq       *submitq);
+int silofs_flusher_init(struct silofs_flusher   *flusher,
+                        const struct silofs_mbr *mbr,
+                        struct silofs_submitq   *submitq);
 
 void silofs_flusher_fini(struct silofs_flusher *flusher);
 

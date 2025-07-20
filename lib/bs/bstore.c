@@ -420,7 +420,7 @@ static int bstore_commit_pnode(struct silofs_bstore *bstore,
 		ret = bstore_commit_btnode(bstore, silofs_bni_from_pni(pni));
 		break;
 	case SILOFS_MTYPE_NONE:
-	case SILOFS_MTYPE_BOOTREC:
+	case SILOFS_MTYPE_MBR:
 	case SILOFS_MTYPE_SUPER:
 	case SILOFS_MTYPE_SPNODE:
 	case SILOFS_MTYPE_SPLEAF:

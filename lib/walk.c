@@ -16,7 +16,7 @@
  */
 #include "configs.h"
 #include "infra.h"
-#include "bootrec.h"
+#include "mbr.h"
 #include "fs.h"
 #include "env.h"
 #include "walk.h"
@@ -898,12 +898,12 @@ static int inspc_walk_super(struct silofs_inspect_ctx *insp_ctx)
 
 static int inspc_walk_boot(struct silofs_inspect_ctx *insp_ctx)
 {
-	struct silofs_uaddr bootrec_uaddr = { .voff = -1 };
+	struct silofs_uaddr mbr_uaddr = { .voff = -1 };
 	const struct silofs_laddr *sb_laddr = silofs_sbi_laddr(insp_ctx->sbi);
-	const struct silofs_laddr *laddr = &bootrec_uaddr.laddr;
+	const struct silofs_laddr *laddr = &mbr_uaddr.laddr;
 	size_t len;
 
-	silofs_make_bootrec_uaddr(&sb_laddr->lsid.blobid, &bootrec_uaddr);
+	silofs_make_mbr_uaddr(&sb_laddr->lsid.blobid, &mbr_uaddr);
 	len = silofs_laddr_len(laddr);
 	return insp_ctx->cb(insp_ctx->user_ctx, laddr, len);
 }

@@ -55,8 +55,8 @@ expect_ctype(const struct silofs_caddr *caddr, enum silofs_ctype ctype_expect)
 
 	if (caddr->ctype != ctype_expect) {
 		switch (ctype_expect) {
-		case SILOFS_CTYPE_BOOTREC:
-			err = -SILOFS_EBADBOOTREC;
+		case SILOFS_CTYPE_MBR:
+			err = -SILOFS_EBADMBR;
 			break;
 		case SILOFS_CTYPE_PACKIDX:
 			err = -SILOFS_EBADPACK;

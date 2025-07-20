@@ -2405,7 +2405,7 @@ static void fill_query_boot(const struct silofs_inode_info *ii,
 	struct silofs_query_boot *qboot = &query->u.boot;
 	struct silofs_strspan ss;
 
-	silofs_env_bootrec_caddr(silofs_ii_env(ii), &caddr);
+	silofs_env_mbr_caddr(silofs_ii_env(ii), &caddr);
 	silofs_sbi_self_blobid(silofs_ii_sbi(ii), &blobid);
 	bootpath_of(ii, &bootpath);
 
@@ -2620,13 +2620,13 @@ static void forget_and_relax_post_forkfs(const struct silofs_task_ctx *task,
 	silofs_lcache_relax(task->t_lcache, SILOFS_CTLF_NOW);
 }
 
-static int fill_bootrec_caddrs(const struct silofs_task_ctx *task,
-                               struct silofs_bootrec_caddrs *out_caddrs)
+static int fill_mbr_caddrs(const struct silofs_task_ctx *task,
+                           struct silofs_mbr_caddrs *out_caddrs)
 {
 	const struct silofs_env *env = task->t_env;
 	int err;
 
-	err = silofs_env_bootrec_caddr(env, &out_caddrs->curr);
+	err = silofs_env_mbr_caddr(env, &out_caddrs->curr);
 	if (err) {
 		return err;
 	}
@@ -2643,7 +2643,7 @@ static int fill_bootrec_caddrs(const struct silofs_task_ctx *task,
 
 static int do_forkfs_and_relex(struct silofs_task_ctx *task,
                                struct silofs_inode_info *dir_ii, int flags,
-                               struct silofs_bootrec_caddrs *out_caddrs)
+                               struct silofs_mbr_caddrs *out_caddrs)
 {
 	struct silofs_sb_info *sbi_cur = silofs_get_sbi(task);
 	int err;
@@ -2652,7 +2652,7 @@ static int do_forkfs_and_relex(struct silofs_task_ctx *task,
 	if (err) {
 		return err;
 	}
-	err = fill_bootrec_caddrs(task, out_caddrs);
+	err = fill_mbr_caddrs(task, out_caddrs);
 	if (err) {
 		return err;
 	}
@@ -2662,7 +2662,7 @@ static int do_forkfs_and_relex(struct silofs_task_ctx *task,
 
 int silofs_do_forkfs(struct silofs_task_ctx *task,
                      struct silofs_inode_info *dir_ii, int flags,
-                     struct silofs_bootrec_caddrs *out_caddrs)
+                     struct silofs_mbr_caddrs *out_caddrs)
 {
 	int err;
 

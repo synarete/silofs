@@ -160,7 +160,7 @@ int silofs_exec_query(struct silofs_task_ctx *task, ino_t ino,
                       struct silofs_ioc_query *out_qry);
 
 int silofs_exec_forkfs(struct silofs_task_ctx *task, ino_t ino, int flags,
-                       struct silofs_bootrec_caddrs *out_caddrs);
+                       struct silofs_mbr_caddrs *out_caddrs);
 
 int silofs_exec_tune(struct silofs_task_ctx *task, ino_t ino, int iflags_want,
                      int iflags_dont);

@@ -492,7 +492,7 @@ static int flusher_resolve_llink_of_uni(const struct silofs_flusher *flusher,
 {
 	int ret = 0;
 
-	silofs_llink_of_uni(flusher->bootrec, uni, out_llink);
+	silofs_llink_of_uni(flusher->mbr, uni, out_llink);
 	if (!uni_issuper(uni)) {
 		ret = flusher_require_mutable_llink(flusher, out_llink);
 	}
@@ -908,13 +908,13 @@ static void flusher_unbind(struct silofs_flusher *flusher)
 }
 
 int silofs_flusher_init(struct silofs_flusher *flusher,
-                        const struct silofs_bootrec *bootrec,
+                        const struct silofs_mbr *mbr,
                         struct silofs_submitq *submitq)
 {
 	silofs_memzero(flusher, sizeof(*flusher));
 	flusher_init_dsets(flusher);
 	flusher_init_txq(flusher);
-	flusher->bootrec = bootrec;
+	flusher->mbr = mbr;
 	flusher->submitq = submitq;
 	flusher->task = NULL;
 	flusher->sbi = NULL;
@@ -929,7 +929,7 @@ void silofs_flusher_fini(struct silofs_flusher *flusher)
 	if (flusher->submitq != NULL) {
 		flusher_fini_dsets(flusher);
 		flusher_fini_txq(flusher);
-		flusher->bootrec = NULL;
+		flusher->mbr = NULL;
 		flusher->submitq = NULL;
 	}
 }

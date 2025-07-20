@@ -68,7 +68,7 @@ int silofs_decrypt_uni_view(const struct silofs_env *env,
 {
 	struct silofs_llink llink;
 
-	silofs_llink_of_uni(env->base.bootrec, uni, &llink);
+	silofs_llink_of_uni(env->base.mbr, uni, &llink);
 	return decrypt_view_inplace(env, &llink, uni->un_lni.ln_view);
 }
 
@@ -77,27 +77,27 @@ int silofs_decrypt_vni_view(const struct silofs_env *env,
 {
 	struct silofs_llink llink;
 
-	silofs_llink_of_vni(env->base.bootrec, vni, &llink);
+	silofs_llink_of_vni(env->base.mbr, vni, &llink);
 	return decrypt_view_inplace(env, &llink, vni->vn_lni.ln_view);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_llink_of_uni(const struct silofs_bootrec *bootrec,
+void silofs_llink_of_uni(const struct silofs_mbr *mbr,
                          const struct silofs_unode_info *uni,
                          struct silofs_llink *out_llink)
 {
 	const struct silofs_laddr *laddr = silofs_uni_laddr(uni);
-	const struct silofs_ivkey *ivkey = &bootrec->main_ivkey;
+	const struct silofs_ivkey *ivkey = &mbr->main_ivkey;
 
 	silofs_llink_setup2(out_llink, laddr, &ivkey->key, &ivkey->iv);
 }
 
-void silofs_llink_of_vni(const struct silofs_bootrec *bootrec,
+void silofs_llink_of_vni(const struct silofs_mbr *mbr,
                          const struct silofs_vnode_info *vni,
                          struct silofs_llink *out_llink)
 {
-	silofs_unused(bootrec);
+	silofs_unused(mbr);
 	silofs_llink_assign(out_llink, &vni->vn_llink);
 }
 

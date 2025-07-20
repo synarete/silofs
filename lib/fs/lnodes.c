@@ -1372,7 +1372,7 @@ view_verify_sub(const struct silofs_view *view, enum silofs_mtype mtype)
 	case SILOFS_MTYPE_BLDESC:
 	case SILOFS_MTYPE_BTNODE:
 
-	case SILOFS_MTYPE_BOOTREC:
+	case SILOFS_MTYPE_MBR:
 		return 0;
 	case SILOFS_MTYPE_SUPER:
 		return silofs_verify_super_block(&view->u.sb);
@@ -1444,7 +1444,7 @@ silofs_new_unode(struct silofs_alloc *alloc, const struct silofs_uaddr *uaddr)
 		break;
 	case SILOFS_MTYPE_BLDESC:
 	case SILOFS_MTYPE_BTNODE:
-	case SILOFS_MTYPE_BOOTREC:
+	case SILOFS_MTYPE_MBR:
 	case SILOFS_MTYPE_LSMAP:
 	case SILOFS_MTYPE_INODE:
 	case SILOFS_MTYPE_XANODE:
@@ -1480,7 +1480,7 @@ void silofs_del_unode(struct silofs_unode_info *uni,
 		break;
 	case SILOFS_MTYPE_BLDESC:
 	case SILOFS_MTYPE_BTNODE:
-	case SILOFS_MTYPE_BOOTREC:
+	case SILOFS_MTYPE_MBR:
 	case SILOFS_MTYPE_LSMAP:
 	case SILOFS_MTYPE_INODE:
 	case SILOFS_MTYPE_XANODE:
@@ -1532,7 +1532,7 @@ silofs_new_vnode(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 		break;
 	case SILOFS_MTYPE_BLDESC:
 	case SILOFS_MTYPE_BTNODE:
-	case SILOFS_MTYPE_BOOTREC:
+	case SILOFS_MTYPE_MBR:
 	case SILOFS_MTYPE_SUPER:
 	case SILOFS_MTYPE_SPNODE:
 	case SILOFS_MTYPE_SPLEAF:
@@ -1576,7 +1576,7 @@ void silofs_del_vnode(struct silofs_vnode_info *vni,
 		break;
 	case SILOFS_MTYPE_BLDESC:
 	case SILOFS_MTYPE_BTNODE:
-	case SILOFS_MTYPE_BOOTREC:
+	case SILOFS_MTYPE_MBR:
 	case SILOFS_MTYPE_SUPER:
 	case SILOFS_MTYPE_SPNODE:
 	case SILOFS_MTYPE_SPLEAF:

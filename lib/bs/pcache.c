@@ -341,7 +341,7 @@ pcache_evict_by(struct silofs_pcache *pcache, struct silofs_pnode_info *pni)
 		silofs_pcache_evict_bni(pcache, silofs_bni_from_pni(pni));
 		break;
 	case SILOFS_MTYPE_NONE:
-	case SILOFS_MTYPE_BOOTREC:
+	case SILOFS_MTYPE_MBR:
 	case SILOFS_MTYPE_SUPER:
 	case SILOFS_MTYPE_SPNODE:
 	case SILOFS_MTYPE_SPLEAF:

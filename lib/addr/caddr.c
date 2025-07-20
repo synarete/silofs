@@ -95,7 +95,7 @@ static int check_ctype(enum silofs_ctype ctype)
 	int ret;
 
 	switch (ctype) {
-	case SILOFS_CTYPE_BOOTREC:
+	case SILOFS_CTYPE_MBR:
 	case SILOFS_CTYPE_ENCSEG:
 	case SILOFS_CTYPE_PACKIDX:
 		ret = 0;

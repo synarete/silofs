@@ -20,7 +20,7 @@
 #include <sys/statvfs.h>
 #include <fcntl.h>
 #include <time.h>
-#include "bootrec.h"
+#include "mbr.h"
 #include "fs.h"
 #include "ar.h"
 #include "walk.h"
@@ -1520,7 +1520,7 @@ out:
 }
 
 int silofs_exec_forkfs(struct silofs_task_ctx *task, ino_t ino, int flags,
-                       struct silofs_bootrec_caddrs *out_caddrs)
+                       struct silofs_mbr_caddrs *out_caddrs)
 {
 	struct silofs_inode_info *dir_ii = NULL;
 	int err;

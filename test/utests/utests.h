@@ -33,7 +33,7 @@
 #include <silofs/silofs.h>
 #include "fs.h"
 #include "ar.h"
-#include "bootrec.h"
+#include "mbr.h"
 #include "opexec.h"
 #include "walk.h"
 
@@ -133,7 +133,7 @@ struct ut_args {
 struct ut_env {
 	struct silofs_prandgen      prng;
 	struct silofs_password      passwd;
-	struct silofs_xref          bootrec_xref[2];
+	struct silofs_xref          mbr_xref[2];
 	struct silofs_xref          pack_xref;
 	struct ut_args             *args;
 	struct silofs_env          *env;

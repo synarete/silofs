@@ -32,8 +32,8 @@
 /* repo meta-file magic-signature (ASCII: "#SILOFS#") */
 #define SILOFS_REPO_META_MAGIC (0x2353464F4C495323L)
 
-/* boot-record magic-signature (ASCII: "@SILOFS@") */
-#define SILOFS_BOOTREC_MAGIC (0x4053464F4C495340L)
+/* main-boot-record magic-signature (ASCII: "@SILOFS@") */
+#define SILOFS_MBR_MAGIC (0x4053464F4C495340L)
 
 /* pack-index header magic-signature (ASCII: "%silofs%") */
 #define SILOFS_AR_INDEX_MAGIC (0x2573666F6C697325L)
@@ -102,8 +102,8 @@
 /* max number of supplementary groups per each uid (same as NFS) */
 #define SILOFS_NSGRP_MAX (16)
 
-/* size of boot-record */
-#define SILOFS_BOOTREC_SIZE (1024)
+/* size of main-boot-record */
+#define SILOFS_MBR_SIZE (1024)
 
 /* number of octets in UUID */
 #define SILOFS_UUID_SIZE (16)
@@ -334,9 +334,9 @@
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-/* bootrec-block flags */
-enum silofs_bootrecf {
-	SILOFS_BOOTRECF_NONE = 0x00,
+/* main-boot-record flags */
+enum silofs_mbrf {
+	SILOFS_MBRF_NONE = 0x00,
 };
 
 /* common-header flags */
@@ -360,29 +360,29 @@ enum silofs_pnodef {
 
 /* meta elements types */
 enum silofs_mtype {
-	SILOFS_MTYPE_NONE    = 0,
-	SILOFS_MTYPE_BLDESC  = 1,
-	SILOFS_MTYPE_BTNODE  = 2,
-	SILOFS_MTYPE_BOOTREC = 3,
-	SILOFS_MTYPE_SUPER   = 4,
-	SILOFS_MTYPE_SPNODE  = 5,
-	SILOFS_MTYPE_SPLEAF  = 6,
-	SILOFS_MTYPE_LSMAP   = 7,
-	SILOFS_MTYPE_INODE   = 8,
-	SILOFS_MTYPE_XANODE  = 9,
-	SILOFS_MTYPE_DTNODE  = 10,
-	SILOFS_MTYPE_SYMVAL  = 11,
-	SILOFS_MTYPE_FTNODE  = 12,
-	SILOFS_MTYPE_DATA1K  = 13,
-	SILOFS_MTYPE_DATA4K  = 14,
-	SILOFS_MTYPE_DATABK  = 15,
+	SILOFS_MTYPE_NONE   = 0,
+	SILOFS_MTYPE_BLDESC = 1,
+	SILOFS_MTYPE_BTNODE = 2,
+	SILOFS_MTYPE_MBR    = 3,
+	SILOFS_MTYPE_SUPER  = 4,
+	SILOFS_MTYPE_SPNODE = 5,
+	SILOFS_MTYPE_SPLEAF = 6,
+	SILOFS_MTYPE_LSMAP  = 7,
+	SILOFS_MTYPE_INODE  = 8,
+	SILOFS_MTYPE_XANODE = 9,
+	SILOFS_MTYPE_DTNODE = 10,
+	SILOFS_MTYPE_SYMVAL = 11,
+	SILOFS_MTYPE_FTNODE = 12,
+	SILOFS_MTYPE_DATA1K = 13,
+	SILOFS_MTYPE_DATA4K = 14,
+	SILOFS_MTYPE_DATABK = 15,
 	SILOFS_MTYPE_LAST, /* keep last */
 };
 
 /* content-addressable sub-types */
 enum silofs_ctype {
 	SILOFS_CTYPE_NONE    = 0,
-	SILOFS_CTYPE_BOOTREC = 1,
+	SILOFS_CTYPE_MBR     = 1,
 	SILOFS_CTYPE_PACKIDX = 2,
 	SILOFS_CTYPE_ENCSEG  = 3,
 };
@@ -577,20 +577,20 @@ struct silofs_vaddr64 {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-struct silofs_bootrec1k {
-	uint64_t               br_magic;
-	uint64_t               br_version;
-	struct silofs_uuid     br_uuid;
-	uint64_t               br_flags;
-	uint32_t               br_chiper_algo;
-	uint32_t               br_chiper_mode;
-	struct silofs_iv       br_main_iv;
-	struct silofs_key      br_main_key;
-	struct silofs_uaddr96b br_sb_uaddr;
-	uint8_t                br_reserved1[32];
-	uint8_t                br_reserved2[64];
-	uint8_t                br_reserved3[672];
-	struct silofs_hash256  br_hash;
+struct silofs_mbr1k {
+	uint64_t               mbr_magic;
+	uint64_t               mbr_version;
+	struct silofs_uuid     mbr_uuid;
+	uint64_t               mbr_flags;
+	uint32_t               mbr_chiper_algo;
+	uint32_t               mbr_chiper_mode;
+	struct silofs_iv       mbr_main_iv;
+	struct silofs_key      mbr_main_key;
+	struct silofs_uaddr96b mbr_sb_uaddr;
+	uint8_t                mbr_reserved1[32];
+	uint8_t                mbr_reserved2[64];
+	uint8_t                mbr_reserved3[672];
+	struct silofs_hash256  mbr_hash;
 } silofs_attr_aligned64;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -996,7 +996,7 @@ union silofs_view_u {
 	struct silofs_header       hdr;
 	struct silofs_blob_desc    bd;
 	struct silofs_btree_node   btn;
-	struct silofs_bootrec1k    brec;
+	struct silofs_mbr1k        brec;
 	struct silofs_super_block  sb;
 	struct silofs_spmap_node   sn;
 	struct silofs_spmap_leaf   sl;

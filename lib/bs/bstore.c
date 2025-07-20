@@ -413,7 +413,11 @@ static int bstore_commit_pnode(struct silofs_bstore *bstore,
 	int ret = -SILOFS_EINVAL;
 
 	switch (mtype) {
-	case SILOFS_MTYPE_BLDESC:
+	case SILOFS_MTYPE_UBER:
+		/* XXX */
+		silofs_assert_ok(ret);
+		break;
+	case SILOFS_MTYPE_BDESC:
 		ret = bstore_commit_bdesc(bstore, silofs_bdi_from_pni(pni));
 		break;
 	case SILOFS_MTYPE_BTNODE:

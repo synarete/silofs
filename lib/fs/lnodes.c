@@ -1369,11 +1369,13 @@ view_verify_sub(const struct silofs_view *view, enum silofs_mtype mtype)
 {
 	switch (mtype) {
 		// XXX
-	case SILOFS_MTYPE_BLDESC:
+	case SILOFS_MTYPE_UBER:
+	case SILOFS_MTYPE_BDESC:
 	case SILOFS_MTYPE_BTNODE:
-
+		silofs_assert_null(view);
+		break;
 	case SILOFS_MTYPE_MBR:
-		return 0;
+		break;
 	case SILOFS_MTYPE_SUPER:
 		return silofs_verify_super_block(&view->u.sb);
 	case SILOFS_MTYPE_SPNODE:
@@ -1442,7 +1444,8 @@ silofs_new_unode(struct silofs_alloc *alloc, const struct silofs_uaddr *uaddr)
 	case SILOFS_MTYPE_SPLEAF:
 		uni = sli_to_uni(sli_new(alloc, uaddr));
 		break;
-	case SILOFS_MTYPE_BLDESC:
+	case SILOFS_MTYPE_UBER:
+	case SILOFS_MTYPE_BDESC:
 	case SILOFS_MTYPE_BTNODE:
 	case SILOFS_MTYPE_MBR:
 	case SILOFS_MTYPE_LSMAP:
@@ -1478,7 +1481,8 @@ void silofs_del_unode(struct silofs_unode_info *uni,
 	case SILOFS_MTYPE_SPLEAF:
 		sli_del(sli_from_uni(uni), alloc, flags);
 		break;
-	case SILOFS_MTYPE_BLDESC:
+	case SILOFS_MTYPE_UBER:
+	case SILOFS_MTYPE_BDESC:
 	case SILOFS_MTYPE_BTNODE:
 	case SILOFS_MTYPE_MBR:
 	case SILOFS_MTYPE_LSMAP:
@@ -1530,7 +1534,8 @@ silofs_new_vnode(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 	case SILOFS_MTYPE_DATABK:
 		vni = fli_to_vni(fli_new(alloc, vaddr));
 		break;
-	case SILOFS_MTYPE_BLDESC:
+	case SILOFS_MTYPE_UBER:
+	case SILOFS_MTYPE_BDESC:
 	case SILOFS_MTYPE_BTNODE:
 	case SILOFS_MTYPE_MBR:
 	case SILOFS_MTYPE_SUPER:
@@ -1574,7 +1579,8 @@ void silofs_del_vnode(struct silofs_vnode_info *vni,
 	case SILOFS_MTYPE_DATABK:
 		fli_del(fli_from_vni(vni), alloc, flags);
 		break;
-	case SILOFS_MTYPE_BLDESC:
+	case SILOFS_MTYPE_UBER:
+	case SILOFS_MTYPE_BDESC:
 	case SILOFS_MTYPE_BTNODE:
 	case SILOFS_MTYPE_MBR:
 	case SILOFS_MTYPE_SUPER:

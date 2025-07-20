@@ -221,7 +221,8 @@ sb_mainsilofs_lsid_by(const struct silofs_super_block *sb,
 		ret = &sb->sb_main_lsid.sb_silofs_lsid_databk;
 		break;
 	case SILOFS_MTYPE_NONE:
-	case SILOFS_MTYPE_BLDESC:
+	case SILOFS_MTYPE_UBER:
+	case SILOFS_MTYPE_BDESC:
 	case SILOFS_MTYPE_BTNODE:
 	case SILOFS_MTYPE_MBR:
 	case SILOFS_MTYPE_SUPER:
@@ -315,7 +316,8 @@ sb_sproot_by(const struct silofs_super_block *sb, enum silofs_mtype mtype)
 		ret = &sb->sb_sproots.sb_sproot_databk;
 		break;
 	case SILOFS_MTYPE_NONE:
-	case SILOFS_MTYPE_BLDESC:
+	case SILOFS_MTYPE_UBER:
+	case SILOFS_MTYPE_BDESC:
 	case SILOFS_MTYPE_BTNODE:
 	case SILOFS_MTYPE_MBR:
 	case SILOFS_MTYPE_SUPER:

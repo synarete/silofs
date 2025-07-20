@@ -166,6 +166,7 @@ static void affirm_ondisk_base_types(void)
 static void affirm_ondisk_addrs(void)
 {
 	REQUIRE_SIZEOF(struct silofs_blobid, 32);
+	REQUIRE_SIZEOF(struct silofs_blobref64b, 64);
 	REQUIRE_SIZEOF(struct silofs_vaddr56, 7);
 	REQUIRE_SIZEOF(struct silofs_vaddr64, 8);
 	REQUIRE_SIZEOF(struct silofs_lrange128, 16);
@@ -225,6 +226,18 @@ static void affirm_ondisk_mbr(void)
 	REQUIRE_OFFSET64(struct silofs_mbr1k, mbr_main_key, 64);
 	REQUIRE_OFFSET64(struct silofs_mbr1k, mbr_sb_uaddr, 128);
 	REQUIRE_SIZEOF(struct silofs_mbr1k, SILOFS_MBR_SIZE);
+}
+
+static void affirm_ondisk_uber(void)
+{
+	REQUIRE_OFFSET64(struct silofs_uber_block, ub_hdr, 0);
+	REQUIRE_OFFSET64(struct silofs_uber_block, ub_btime, 32);
+	REQUIRE_OFFSET64(struct silofs_uber_block, ub_ctime, 48);
+	REQUIRE_OFFSET64(struct silofs_uber_block, ub_generation, 64);
+	REQUIRE_OFFSET64(struct silofs_uber_block, ub_blog_refs, 128);
+	REQUIRE_GT(MEMBER_NELEMS(struct silofs_uber_block, ub_blog_refs),
+	           SILOFS_MTYPE_LAST);
+	REQUIRE_SIZEOF_4K(struct silofs_uber_block);
 }
 
 static void affirm_ondisk_super(void)
@@ -426,6 +439,7 @@ void silofs_affirm_ondisk_format(void)
 	affirm_ondisk_headers();
 	affirm_ondisk_spmaps();
 	affirm_ondisk_mbr();
+	affirm_ondisk_uber();
 	affirm_ondisk_super();
 	affirm_ondisk_lsmap();
 	affirm_ondisk_inode();

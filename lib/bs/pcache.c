@@ -165,7 +165,7 @@ silofs_pcache_lookup_bdi(struct silofs_pcache *pcache,
 {
 	struct silofs_pnode_info *pni;
 
-	silofs_assert_eq(paddr->mtype, SILOFS_MTYPE_BLDESC);
+	silofs_assert_eq(paddr->mtype, SILOFS_MTYPE_BDESC);
 
 	pni = pcache_lookup(pcache, paddr);
 	return silofs_bdi_from_pni(pni);
@@ -334,7 +334,11 @@ pcache_evict_by(struct silofs_pcache *pcache, struct silofs_pnode_info *pni)
 	const enum silofs_mtype mtype = silofs_pni_mtype(pni);
 
 	switch (mtype) {
-	case SILOFS_MTYPE_BLDESC:
+	case SILOFS_MTYPE_UBER:
+		/* XXX */
+		silofs_assert_null(pni);
+		break;
+	case SILOFS_MTYPE_BDESC:
 		silofs_pcache_evict_bdi(pcache, silofs_bdi_from_pni(pni));
 		break;
 	case SILOFS_MTYPE_BTNODE:

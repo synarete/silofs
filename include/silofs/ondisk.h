@@ -361,21 +361,22 @@ enum silofs_pnodef {
 /* meta elements types */
 enum silofs_mtype {
 	SILOFS_MTYPE_NONE   = 0,
-	SILOFS_MTYPE_BLDESC = 1,
-	SILOFS_MTYPE_BTNODE = 2,
-	SILOFS_MTYPE_MBR    = 3,
-	SILOFS_MTYPE_SUPER  = 4,
-	SILOFS_MTYPE_SPNODE = 5,
-	SILOFS_MTYPE_SPLEAF = 6,
-	SILOFS_MTYPE_LSMAP  = 7,
-	SILOFS_MTYPE_INODE  = 8,
-	SILOFS_MTYPE_XANODE = 9,
-	SILOFS_MTYPE_DTNODE = 10,
-	SILOFS_MTYPE_SYMVAL = 11,
-	SILOFS_MTYPE_FTNODE = 12,
-	SILOFS_MTYPE_DATA1K = 13,
-	SILOFS_MTYPE_DATA4K = 14,
-	SILOFS_MTYPE_DATABK = 15,
+	SILOFS_MTYPE_MBR    = 1,
+	SILOFS_MTYPE_UBER   = 2,
+	SILOFS_MTYPE_BDESC  = 3,
+	SILOFS_MTYPE_BTNODE = 4,
+	SILOFS_MTYPE_SUPER  = 5,
+	SILOFS_MTYPE_SPNODE = 6,
+	SILOFS_MTYPE_SPLEAF = 7,
+	SILOFS_MTYPE_LSMAP  = 8,
+	SILOFS_MTYPE_INODE  = 9,
+	SILOFS_MTYPE_XANODE = 10,
+	SILOFS_MTYPE_DTNODE = 11,
+	SILOFS_MTYPE_SYMVAL = 12,
+	SILOFS_MTYPE_FTNODE = 13,
+	SILOFS_MTYPE_DATA1K = 14,
+	SILOFS_MTYPE_DATA4K = 15,
+	SILOFS_MTYPE_DATABK = 16,
 	SILOFS_MTYPE_LAST, /* keep last */
 };
 
@@ -519,6 +520,12 @@ struct silofs_blobid {
 		struct silofs_hash256 hash;
 		uint8_t               bid[32];
 	} u;
+} silofs_attr_aligned16;
+
+struct silofs_blobref64b {
+	struct silofs_blobid blobid;
+	uint64_t             blobsz;
+	uint8_t              reserved[24];
 } silofs_attr_aligned16;
 
 /* content address (by hash) */
@@ -962,6 +969,17 @@ struct silofs_btree_node {
 	uint8_t                btn_reserved2[584];
 } silofs_attr_aligned64;
 
+/* uber-block */
+struct silofs_uber_block {
+	struct silofs_header     ub_hdr;
+	struct silofs_timespec   ub_btime;
+	struct silofs_timespec   ub_ctime;
+	uint64_t                 ub_generation;
+	uint8_t                  ub_reserved1[56];
+	struct silofs_blobref64b ub_blog_refs[30];
+	uint8_t                  ub_reserved2[2048];
+} silofs_attr_aligned64;
+
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 /* minimal pack-archive index total size in bytes */
@@ -994,6 +1012,7 @@ struct silofs_ar_hdr1k {
 /* semantic "view" into meta elements */
 union silofs_view_u {
 	struct silofs_header       hdr;
+	struct silofs_uber_block   ub;
 	struct silofs_blob_desc    bd;
 	struct silofs_btree_node   btn;
 	struct silofs_mbr1k        brec;

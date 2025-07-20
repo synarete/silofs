@@ -22,7 +22,7 @@
 
 static void bd_setup_hdr(struct silofs_blob_desc *bd)
 {
-	silofs_hdr_setup(&bd->bd_hdr, SILOFS_MTYPE_BLDESC, sizeof(*bd));
+	silofs_hdr_setup(&bd->bd_hdr, SILOFS_MTYPE_BDESC, sizeof(*bd));
 }
 
 static void
@@ -372,7 +372,7 @@ static void
 bdi_init(struct silofs_bdesc_info *bdi, const struct silofs_paddr *paddr)
 {
 	silofs_assert(!silofs_paddr_isnull(paddr));
-	silofs_assert_eq(paddr->mtype, SILOFS_MTYPE_BLDESC);
+	silofs_assert_eq(paddr->mtype, SILOFS_MTYPE_BDESC);
 
 	silofs_pni_init(&bdi->bd_pni, paddr);
 	bdi->bd = NULL;
@@ -439,7 +439,7 @@ silofs_bdi_from_pni(const struct silofs_pnode_info *pni)
 	const struct silofs_bdesc_info *bdi = NULL;
 
 	if (pni != NULL) {
-		silofs_assert_eq(pni->pn_paddr.mtype, SILOFS_MTYPE_BLDESC);
+		silofs_assert_eq(pni->pn_paddr.mtype, SILOFS_MTYPE_BDESC);
 		bdi = container_of2(pni, struct silofs_bdesc_info, bd_pni);
 	}
 	return bdi_unconst(bdi);

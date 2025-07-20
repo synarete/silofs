@@ -1282,8 +1282,10 @@ static void ii_update_inode_attr(struct silofs_inode_info *ii,
 	}
 	if (flags & (SILOFS_IATTR_LAZY | SILOFS_IATTR_ATIME)) {
 		ts = timespec_of(&iattr->ia_t.atime, ts_now);
-		ii_update_atime(ii, ts);
-		flags &= ~SILOFS_IATTR_ATIME;
+		if (ts != NULL) {
+			ii_update_atime(ii, ts);
+			flags &= ~SILOFS_IATTR_ATIME;
+		}
 	}
 	flags &= ~SILOFS_IATTR_LAZY;
 	if (!flags) {
@@ -1317,20 +1319,28 @@ static void ii_update_inode_attr(struct silofs_inode_info *ii,
 	}
 	if (flags & SILOFS_IATTR_BTIME) {
 		ts = timespec_of(&iattr->ia_t.btime, ts_now);
-		inode_set_btime(inode, ts);
+		if (ts != NULL) {
+			inode_set_btime(inode, ts);
+		}
 	}
 	if (flags & SILOFS_IATTR_MTIME) {
 		ts = timespec_of(&iattr->ia_t.mtime, ts_now);
-		inode_set_mtime(inode, ts);
+		if (ts != NULL) {
+			inode_set_mtime(inode, ts);
+		}
 	}
 	if (flags & SILOFS_IATTR_CTIME) {
 		ts = timespec_of(&iattr->ia_t.ctime, ts_now);
-		inode_set_ctime(inode, ts);
+		if (ts != NULL) {
+			inode_set_ctime(inode, ts);
+		}
 	}
 	if (flags & SILOFS_IATTR_ATIME) {
 		ts = timespec_of(&iattr->ia_t.atime, ts_now);
-		inode_set_atime(inode, ts);
-		silofs_ii_refresh_atime(ii, true);
+		if (ts != NULL) {
+			inode_set_atime(inode, ts);
+			silofs_ii_refresh_atime(ii, true);
+		}
 	} else if (flags & SILOFS_IATTR_TIMES) {
 		silofs_ii_refresh_atime(ii, false);
 	}

@@ -42,8 +42,9 @@
 struct silofs_backtrace_args {
 	const char *sym;
 	const void *ip;
-	long sp;
-	long off;
+	int64_t sp;
+	int64_t off;
+	int step;
 };
 
 typedef int (*silofs_backtrace_cb)(const struct silofs_backtrace_args *);
@@ -76,46 +77,52 @@ static int silofs_backtrace_calls(silofs_backtrace_cb bt_cb)
 	int err;
 
 	memset(&bt_ctx, 0, sizeof(bt_ctx));
-	bt_ctx.args.sym = bt_ctx.sym;
-
 	err = unw_getcontext(&bt_ctx.context);
 	if (err != UNW_ESUCCESS) {
-		return err;
+		goto out;
 	}
 	err = unw_init_local(&bt_ctx.cursor, &bt_ctx.context);
 	if (err != UNW_ESUCCESS) {
-		return err;
+		goto out;
 	}
 	for (int step = 0; step < 80; ++step) {
 		bt_ctx.ip = 0;
 		bt_ctx.sp = 0;
 		bt_ctx.off = 0;
+		memset(bt_ctx.sym, 0, sizeof(bt_ctx.sym));
 		err = unw_step(&bt_ctx.cursor);
 		if (err <= 0) {
 			break;
 		}
+		if (step < 2) {
+			continue;
+		}
 		err = unw_get_reg(&bt_ctx.cursor, UNW_REG_IP, &bt_ctx.ip);
 		if (err) {
-			return err;
+			goto out;
 		}
 		err = unw_get_reg(&bt_ctx.cursor, UNW_REG_SP, &bt_ctx.sp);
 		if (err) {
-			return err;
+			goto out;
 		}
 		err = unw_get_proc_name(&bt_ctx.cursor, bt_ctx.sym,
 		                        sizeof(bt_ctx.sym) - 1, &bt_ctx.off);
 		if (err) {
-			bt_ctx.sym[0] = '\0';
+			memset(bt_ctx.sym, '?', 8);
 		}
 		bt_ctx.args.ip = unw_word_to_ptr(bt_ctx.ip);
-		bt_ctx.args.sp = (long)bt_ctx.sp;
-		bt_ctx.args.off = (long)bt_ctx.off;
+		bt_ctx.args.sp = (int64_t)bt_ctx.sp;
+		bt_ctx.args.off = (int64_t)bt_ctx.off;
+		bt_ctx.args.sym = bt_ctx.sym;
+		bt_ctx.args.step = step - 1;
 		err = bt_cb(&bt_ctx.args);
 		if (err) {
-			return err;
+			goto out;
 		}
 	}
-	return 0;
+	err = 0;
+out:
+	return err;
 }
 #else
 static int silofs_backtrace_calls(silofs_backtrace_cb bt_cb)
@@ -131,8 +138,9 @@ static bool silofs_backtrace_enabled = true;
 
 static int backtrace_log_err(const struct silofs_backtrace_args *bt_args)
 {
-	silofs_logf(SILOFS_LOG_ERROR, NULL, 0, "[<%p>] 0x%lx %s+0x%lx",
-	            bt_args->ip, bt_args->sp, bt_args->sym, bt_args->off);
+	silofs_logf(SILOFS_LOG_ERROR, NULL, 0, "#%-2d [<%p>] 0x%lx %s+0x%lx",
+	            bt_args->step, bt_args->ip, bt_args->sp, bt_args->sym,
+	            bt_args->off);
 	return 0;
 }
 

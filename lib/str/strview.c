@@ -143,7 +143,7 @@ static size_t strview_xoffset(const struct silofs_strview *sv, const char *p)
 {
 	const size_t pos = silofs_strview_offset(sv, p);
 
-	return (pos < sv->len) ? pos : sv->len;
+	return (pos == strview_npos()) ? sv->len : pos;
 }
 
 const char *silofs_strview_at(const struct silofs_strview *sv, size_t n)

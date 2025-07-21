@@ -142,10 +142,12 @@ void silofs_strspan_vsub(const struct silofs_strspan *ss,
                          const struct silofs_strview *sv,
                          struct silofs_strspan *out_ss)
 {
+	const size_t npos = silofs_strview_npos();
 	const size_t i = silofs_strview_offset(&ss->v, sv->str);
-	const size_t n = (i < ss->v.len) ? sv->len : 0;
+	const size_t j = (i == npos) ? ss->v.len : i;
+	const size_t n = (j < ss->v.len) ? sv->len : 0;
 
-	silofs_strspan_sub(ss, i, n, out_ss);
+	silofs_strspan_sub(ss, j, n, out_ss);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

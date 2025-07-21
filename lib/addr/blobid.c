@@ -22,7 +22,7 @@
 #include "meta.h"
 #include "blobid.h"
 
-static const struct silofs_blobid s_silofs_blobid_none = {};
+static const struct silofs_blobid s_silofs_blobid_none;
 
 const struct silofs_blobid *silofs_blobid_none(void)
 {

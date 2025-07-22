@@ -53,4 +53,27 @@ int silofs_blobid_from_str(struct silofs_blobid        *blobid,
 uint64_t
 silofs_blobid_hash64(const struct silofs_blobid *blobid, uint64_t seed);
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+struct silofs_blobref {
+	struct silofs_blobid blobid;
+	size_t               blobsz;
+};
+
+const struct silofs_blobref *silofs_blobref_none(void);
+
+void silofs_blobref_setup(struct silofs_blobref      *blobref,
+                          const struct silofs_blobid *blobid, size_t blobsz);
+
+void silofs_blobref_reset(struct silofs_blobref *blobref);
+
+void silofs_blobref_assign(struct silofs_blobref       *blobref,
+                           const struct silofs_blobref *other);
+
+void silofs_blobref64b_htox(struct silofs_blobref64b    *blobref64b,
+                            const struct silofs_blobref *blobref);
+
+void silofs_blobref64b_xtoh(const struct silofs_blobref64b *blobref64b,
+                            struct silofs_blobref          *blobref);
+
 #endif /* SILOFS_BLOBID_H_ */

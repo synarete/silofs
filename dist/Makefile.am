@@ -13,3 +13,5 @@ EXTRA_DIST += deb/rules
 EXTRA_DIST += rpm/install-rpm-deps.sh
 EXTRA_DIST += rpm/packagize-rpm.sh
 EXTRA_DIST += rpm/silofs.spec.in
+EXTRA_DIST += img/buildimg.sh
+EXTRA_DIST += img/Containerfile

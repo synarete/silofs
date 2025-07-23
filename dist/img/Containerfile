@@ -1,0 +1,21 @@
+FROM debian:latest AS builder
+ARG DISTNAME="silofs-0.0.0"
+WORKDIR /scratch
+RUN apt-get update -y
+RUN apt-get upgrade -y
+COPY $DISTNAME.tar.gz .
+RUN tar xvfz $DISTNAME.tar.gz
+RUN $DISTNAME/dist/deb/install-deb-deps.sh --base
+RUN $DISTNAME/dist/deb/packagize-deb.sh
+RUN cp $DISTNAME/build/dist/silofs_*.deb /scratch/
+RUN rm -rf /scratch/$DISTNAME/*
+
+FROM debian:latest
+WORKDIR /tmp
+COPY --from=builder /scratch/silofs_*.deb /tmp/
+RUN apt-get update -y
+RUN apt-get upgrade -y
+RUN apt-get install -y -f /tmp/silofs_*.deb
+RUN silofs --version
+
+ENTRYPOINT ["/bin/bash"]

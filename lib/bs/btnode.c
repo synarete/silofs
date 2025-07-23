@@ -426,6 +426,16 @@ void silofs_bni_set_dq(struct silofs_btnode_info *bni,
 	silofs_pni_set_dq(&bni->bn_pni, dq);
 }
 
+void silofs_bni_dirtify(struct silofs_btnode_info *bni)
+{
+	silofs_pni_dirtify(&bni->bn_pni);
+}
+
+void silofs_bni_undirtify(struct silofs_btnode_info *bni)
+{
+	silofs_pni_undirtify(&bni->bn_pni);
+}
+
 void silofs_bni_mark_root(struct silofs_btnode_info *bni)
 {
 	btn_add_flags(bni->bn, SILOFS_PNODEF_META | SILOFS_PNODEF_BTROOT);
@@ -534,16 +544,6 @@ void silofs_bni_set_final(struct silofs_btnode_info *bni,
 	const size_t slot = btn_nkeys(bni->bn);
 
 	btn_set_child_at(bni->bn, slot, paddr);
-}
-
-void silofs_bni_dirtify(struct silofs_btnode_info *bni)
-{
-	silofs_pni_dirtify(&bni->bn_pni);
-}
-
-void silofs_bni_undirtify(struct silofs_btnode_info *bni)
-{
-	silofs_pni_undirtify(&bni->bn_pni);
 }
 
 void silofs_bni_dup_by(struct silofs_btnode_info *bni,

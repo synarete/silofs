@@ -25,4 +25,15 @@ struct silofs_ub_info {
 	struct silofs_uber_block *ub;
 };
 
+struct silofs_ub_info *
+silofs_ubi_new(const struct silofs_paddr *paddr, struct silofs_alloc *alloc);
+
+void silofs_ubi_del(struct silofs_ub_info *ubi, struct silofs_alloc *alloc);
+
+void silofs_ubi_set_dq(struct silofs_ub_info *ubi, struct silofs_dirtyq *dq);
+
+void silofs_ubi_dirtify(struct silofs_ub_info *ubi);
+
+void silofs_ubi_undirtify(struct silofs_ub_info *ubi);
+
 #endif /* SILOFS_UBER_H_ */

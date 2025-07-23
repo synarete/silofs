@@ -976,7 +976,7 @@ struct silofs_uber_block {
 	struct silofs_timespec   ub_ctime;
 	uint64_t                 ub_generation;
 	uint8_t                  ub_reserved1[56];
-	struct silofs_blobref64b ub_blog_refs[30];
+	struct silofs_blobref64b ub_blobref[30];
 	uint8_t                  ub_reserved2[2048];
 } silofs_attr_aligned64;
 

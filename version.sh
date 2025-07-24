@@ -25,8 +25,8 @@ print() {
   echo -n "$@" | tr -d ' \t\v\n' ;
 }
 
-version=${SILOFS_VERSION:-1}
-if [ -e "${base}/VERSION" ]; then
+version=${SILOFS_VERSION:-"0.0.0"}
+if [ "${version}" = "0.0.0" ] && [ -f "${base}/VERSION" ]; then
   version=$(head -1 "${base}"/VERSION)
 fi
 version_major=$(echo "${version}" | awk -F . '{print $1}')
@@ -34,18 +34,14 @@ version_minor=$(echo "${version}" | awk -F . '{print $2}')
 version_sublevel=$(echo "${version}" | awk -F . '{print $3}')
 
 release=${SILOFS_RELEASE:-${datenow}}
-if [ -e "${base}/RELEASE" ]; then
+if [ -f "${base}/RELEASE" ]; then
   release=$(head -1 "${base}/RELEASE")
 fi
 
-revision=${SILOFS_REVISION:-1}
-if [ -e "${base}/REVISION" ]; then
+revision=${SILOFS_REVISION:-"${gitrevision}"}
+if [ -f "${base}/REVISION" ]; then
   revision=$(head -1 "${base}"/REVISION)
 fi
-if [ -n "${gitrevision}" ]; then
-  revision=${gitrevision}
-fi
-
 
 arg=${1:-}
 case "$arg" in

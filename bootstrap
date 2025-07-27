@@ -6,11 +6,12 @@ export LC_ALL=C
 unset CDPATH
 
 self=$(basename "${BASH_SOURCE[0]}")
+pre() { echo "$self:${BASH_LINENO[1]}: $*" >&2; }
 msg() { echo "$self: $*" >&2; }
 die() { msg "$*"; exit 1; }
 exe() { ( "$@" ) || die "failed: $*"; }
-run() { echo "$self: $*" >&2; exe "$@"; }
-cdx() { echo "$self: cd $*" >&2; cd "$@" || die "failed: cd $*"; }
+run() { pre "$*"; exe "$@"; }
+cdx() { pre "cd $*"; cd "$@" || die "failed: cd $*"; }
 
 basedir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
 macrodir="${basedir}/m4"

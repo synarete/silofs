@@ -6,8 +6,9 @@ self=$(basename "${BASH_SOURCE[0]}")
 msg() { echo "$self: $*" >&2; }
 die() { msg "$*"; exit 1; }
 exe() { ( "$@" ) || die "failed: $*"; }
-run() { echo "$self:" "$@" >&2; exe "$@"; }
-cdx() { echo "$self: cd $*" >&2; cd "$@" || die "failed: cd $*"; }
+pre() { echo -n "$self:${BASH_LINENO[1]}: " >&2; }
+run() { pre; echo "$@" >&2; exe "$@"; }
+cdx() { pre; echo "cd $*" >&2; cd "$@" || die "failed: cd $*"; }
 
 # Common variables
 name=silofs
@@ -38,18 +39,18 @@ run "${basedir}/configure" \
     "--enable-utests=0" \
     "--enable-compile-warnings=error"
 run make dist
-run stat "${autotoolsdir}/${disttgz}"
+run stat -c "%s" "${autotoolsdir}/${disttgz}"
 
 # Extract Containerfile from dist
 contfile="Containerfile"
 cdx "${workdir}"
 run mv "${autotoolsdir}/${disttgz}" "${workdir}"
-run tar --extract --to-stdout --file="${disttgz}" \
-    "${distname}/dist/img/Containerfile" > "${contfile}"
+run tar --extract --to-command="tee ${contfile}" \
+    --file="${disttgz}" "${distname}/dist/img/Containerfile"
 
 # Build image using Containerfile and dist tar
-imagetag="v${version}"
-imagename="${name}:${imagetag}"
+imagetag=${SILOFS_IMAGETAG:-"v${version}"}
+imagename=${SILOFS_IMAGENAME:-"${name}:${imagetag}"}
 cdx "${workdir}"
 run "${conteng}" build \
     --tag "${imagename}" \

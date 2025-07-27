@@ -17,5 +17,4 @@ RUN apt-get update -y
 RUN apt-get upgrade -y
 RUN apt-get install -y -f /tmp/silofs_*.deb
 RUN silofs --version
-
-ENTRYPOINT ["/bin/bash"]
+RUN rm -f /tmp/silofs_*.deb

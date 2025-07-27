@@ -6,11 +6,13 @@ export LC_ALL=C
 unset CDPATH
 
 self=$(basename "${BASH_SOURCE[0]}")
+pre() { echo "$self:${BASH_LINENO[1]}: $*" >&2; }
 msg() { echo "$self: $*" >&2; }
 die() { msg "$*"; exit 1; }
 exe() { ( "$@" ) || die "failed: $*"; }
-run() { echo "$self:" "$@" >&2; exe "$@"; }
-cdx() { echo "$self: cd $*" >&2; cd "$@" || die "failed: cd $*"; }
+pre() { echo -n "$self:${BASH_LINENO[1]}: " >&2; }
+run() { pre "$@"; exe "$@"; }
+cdx() { pre "cd $*"; cd "$@" || die "failed: cd $*"; }
 
 # Common variables
 name=silofs
@@ -40,7 +42,7 @@ run stat "${autotoolsdir}/${disttgz}"
 
 # Run CI tests on local work-dir
 msg "start running (${version})"
-run sh "${selfdir}/silofs-cicd-all.sh" \
+run sh "${selfdir}/exec-cicd-all.sh" \
   "${autotoolsdir}/${disttgz}" "${workdir}"
 
 # Post-op cleanups

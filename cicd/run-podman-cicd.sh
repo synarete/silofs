@@ -1,66 +1,47 @@
 #!/usr/bin/env bash
-set -o errexit
-set -o nounset
-set -o pipefail
 export LC_ALL=C
 unset CDPATH
 
 self=$(basename "${BASH_SOURCE[0]}")
+pre() { echo "$self:${BASH_LINENO[1]}: $*" >&2; }
 msg() { echo "$self: $*" >&2; }
 die() { msg "$*"; exit 1; }
 exe() { ( "$@" ) || die "failed: $*"; }
-run() { echo "$self:" "$@" >&2; exe "$@"; }
-cdx() { echo "$self: cd $*" >&2; cd "$@" || die "failed: cd $*"; }
+run() { pre "$@"; exe "$@"; }
+cdx() { pre "cd $*"; cd "$@" || die "failed: cd $*"; }
+
+# Do nothing if podman is missing
+command -v podman > /dev/null || exit 0
 
 # Common variables
-osflavor=${1:-centos}
-contfile="Containerfile.${osflavor}"
 name=silofs
+selfpid="$$"
 selfdir="$(realpath "$(dirname "${BASH_SOURCE[0]}")")"
 basedir="$(realpath "${selfdir}"/../)"
-workdir="${basedir}/build/cicd-${osflavor}"
-autotoolsdir="${workdir}/autotools/"
+workdir="${basedir}/build/cicd/"
 version_sh="${basedir}"/version.sh
 
 # Prerequisites checks + prepare
+set -o errexit
+set -o nounset
+set -o pipefail
 run "${version_sh}"
-run command -v podman
-run mkdir -p "${workdir}"
-run mkdir -p "${autotoolsdir}"
 
-# Use autotools build to create dist
+# Use unique image tag
 version=$("${version_sh}" --version)
-distname="${name}-${version}"
-disttgz="${distname}.tar.gz"
-run mkdir -p "${autotoolsdir}"
-cdx "${autotoolsdir}"
-run "${basedir}"/bootstrap
-run "${basedir}"/configure \
-  "--enable-utests=0" \
-  "--enable-compile-warnings=error"
-run make dist
-run stat "${autotoolsdir}/${disttgz}"
+imagetag="${version}.${selfpid}"
+imagename="${name}.${imagetag}"
 
-# Build image using Containerfile and installation scripts
-imagesdir="${workdir}/images/"
-imagetag="v${version}"
-imagename="${name}-cicd-${osflavor}:${imagetag}"
-run mkdir -p "${imagesdir}"
-run cp "${basedir}/dist/rpm/install-rpm-deps.sh" "${imagesdir}"
-run cp "${basedir}/dist/deb/install-deb-deps.sh" "${imagesdir}"
-run cp "${selfdir}/${contfile}" "${imagesdir}"
+# Create unique image
+run mkdir -p "${workdir}"
+cdx "${workdir}"
 
-cdx "${imagesdir}"
-run podman build \
-  --tag "${imagename}" --file "${imagesdir}/${contfile}" "${imagesdir}"
-run podman inspect "${imagename}"
+run env SILOFS_IMAGENAME="${imagename}" "${basedir}/dist/img/buildimg.sh"
 
-# Run CI build-and-test cycle using local user and scratch dir
+# Execute unit-tests via image
 scratchdir="${workdir}/scratch/"
 run mkdir -p "${scratchdir}"
-run cp "${selfdir}/silofs-cicd-build.sh" "${scratchdir}"
-run chmod +x "${scratchdir}/silofs-cicd-build.sh"
-run mv "${autotoolsdir}/${disttgz}" "${scratchdir}"
+run rm -rf "${scratchdir}/*"
 
 run podman run --rm \
   --userns keep-id:"uid=$(id -u),gid=$(id -g)" \
@@ -70,17 +51,15 @@ run podman run --rm \
   --volume="/etc/shadow:/etc/shadow:ro" \
   --volume="${scratchdir}:/scratch:rw" \
   --workdir="/scratch" \
-  "${imagename}" "./silofs-cicd-build.sh" "${disttgz}" "/scratch/cicd"
+  "${imagename}" "silofs-utests" "/scratch"
 
 # Remove test image
 run podman rmi "${imagename}"
 
 # Post-op cleanups
 cdx "${basedir}"
-run rm -rf "${autotoolsdir}"
 run rm -rf "${scratchdir}"
-run rm -rf "${workdir}"
 
 # Goodby ;)
-msg "completed successfully for '${osflavor}'"
+msg "completed successfully"
 exit 0

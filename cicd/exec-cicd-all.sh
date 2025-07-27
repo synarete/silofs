@@ -5,11 +5,12 @@ export LC_ALL=C
 unset CDPATH
 
 self=$(basename "${BASH_SOURCE[0]}")
-msg() { echo "$self: $*" >&2; }
-die() { msg "$*"; kill -s 2 $$; }
+pre() { echo "$self:${BASH_LINENO[1]}: $*" >&2; }
+msg() { echo "$*" >&2; }
+die() { pre; msg "$*"; kill -s 2 $$; }
 exe() { ( "$@" ) || die "failed: $*"; }
-run() { msg "$@" ; exe "$@"; }
-cdx() { msg "cd $*"; cd "$@" || die "failed: cd $*"; }
+run() { pre "$@" ; exe "$@"; }
+cdx() { pre "cd $*"; cd "$@" || die "failed: cd $*"; }
 
 ###
 if [ "$#" -ne 2 ]; then die "usage: '$self <archive-file> <citests-dir>'"; fi

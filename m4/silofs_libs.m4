@@ -90,12 +90,6 @@ AC_DEFUN([AX_SILOFS_NEED_LIB_GCRYPT],
 [
   AX_LIB_GCRYPT
 
-  AM_PATH_LIBGCRYPT(1.11.0,
-    [
-      AC_DEFINE([HAVE_LIBGCRYPT_FIPS], [1])
-      AH_TEMPLATE([HAVE_LIBGCRYPT_FIPS], [Allow FIPS mode in libgcrypt])
-    ])
-
   AM_PATH_LIBGCRYPT(1.10.0, :,
     AC_MSG_ERROR([Unable to find libgcrypt]))
 ])

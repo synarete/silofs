@@ -6,10 +6,11 @@ export LC_ALL=C
 unset CDPATH
 
 self=$(basename "${BASH_SOURCE[0]}")
+pre() { echo "$self:${BASH_LINENO[1]}: $*" >&2; }
 msg() { echo "$self: $*" >&2; }
 die() { msg "$*"; exit 1; }
 try() { ( "$@" ) || die "failed: $*"; }
-run() { echo "$self:" "$@" >&2; try "$@"; }
+run() { pre "$@"; try "$@"; }
 
 name=silofs
 selfdir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
@@ -54,7 +55,7 @@ run "${basedir}"/bootstrap
 run mkdir -p "${autotoolsdir}"
 cd "${autotoolsdir}"
 run "${basedir}"/configure \
-    "--enable-utests=1" "--enable-compile-warnings=yes"
+    "--enable-utests=1" "--enable-compile-warnings=error"
 run make
 run make distcheck
 

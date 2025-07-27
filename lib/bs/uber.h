@@ -25,6 +25,14 @@ struct silofs_ub_info {
 	struct silofs_uber_block *ub;
 };
 
+/* blob-descriptor cursor */
+struct silofs_bdcur {
+	struct silofs_paddr paddr;
+	size_t              blobsz;
+};
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 struct silofs_ub_info *
 silofs_ubi_new(const struct silofs_paddr *paddr, struct silofs_alloc *alloc);
 
@@ -35,5 +43,15 @@ void silofs_ubi_set_dq(struct silofs_ub_info *ubi, struct silofs_dirtyq *dq);
 void silofs_ubi_dirtify(struct silofs_ub_info *ubi);
 
 void silofs_ubi_undirtify(struct silofs_ub_info *ubi);
+
+void silofs_ubi_setup_spawned(struct silofs_ub_info *ubi);
+
+int silofs_ubi_bdcur_of(const struct silofs_ub_info *ubi,
+                        enum silofs_mtype            mtype,
+                        struct silofs_bdcur         *out_bdcur);
+
+int silofs_ubi_update_bdcur(struct silofs_ub_info     *ubi,
+                            enum silofs_mtype          mtype,
+                            const struct silofs_bdcur *bdcur);
 
 #endif /* SILOFS_UBER_H_ */

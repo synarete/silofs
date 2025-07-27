@@ -142,17 +142,3 @@ void silofs_blobref_assign(struct silofs_blobref *blobref,
 	silofs_blobid_assign(&blobref->blobid, &other->blobid);
 	blobref->blobsz = other->blobsz;
 }
-
-void silofs_blobref64b_htox(struct silofs_blobref64b *blobref64b,
-                            const struct silofs_blobref *blobref)
-{
-	silofs_blobid_assign(&blobref64b->blobid, &blobref->blobid);
-	blobref64b->blobsz = silofs_cpu_to_le64(blobref->blobsz);
-}
-
-void silofs_blobref64b_xtoh(const struct silofs_blobref64b *blobref64b,
-                            struct silofs_blobref *blobref)
-{
-	silofs_blobid_assign(&blobref->blobid, &blobref64b->blobid);
-	blobref->blobsz = silofs_le64_to_cpu(blobref64b->blobsz);
-}

@@ -5,14 +5,8 @@ set -o pipefail
 export LC_ALL=C
 unset CDPATH
 
-self=$(basename "${BASH_SOURCE[0]}")
-pre() { echo "$self:${BASH_LINENO[1]}: $*" >&2; }
-msg() { echo "$self: $*" >&2; }
-die() { msg "$*"; exit 1; }
-exe() { ( "$@" ) || die "failed: $*"; }
-run() { pre "$*"; exe "$@"; }
-cdx() { pre "cd $*"; cd "$@" || die "failed: cd $*"; }
 
+self=$(basename "${BASH_SOURCE[0]}")
 basedir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
 macrodir="${basedir}/m4"
 builddir="${basedir}/build"
@@ -21,26 +15,28 @@ autom4te_cfg_in="${buildaux}/autom4te.cfg.in"
 autom4te_cfg="${basedir}/.autom4te.cfg"
 autom4te_cachedir="${buildaux}/autom4te.cache"
 
-
-do_requirebin() {
-  run command -v "$@"
-}
+source "${basedir}/bash_functions"
 
 do_prerequisite() {
-  do_requirebin make
-  do_requirebin autoheader
-  do_requirebin autoconf
-  do_requirebin automake
-  do_requirebin pkg-config
+  inc_lineno_depth
+  commandv make
+  commandv autoheader
+  commandv autoconf
+  commandv automake
+  commandv pkg-config
+  dec_lineno_depth
 }
 
 do_autom4te_cfg() {
+  inc_lineno_depth
   msg "create" "${autom4te_cfg}"
   sed -e "s,[@]AUTOM4TE_CACHEDIR[@],${autom4te_cachedir},g" \
-    < "${autom4te_cfg_in}" > "${autom4te_cfg}"
+      < "${autom4te_cfg_in}" > "${autom4te_cfg}"
+  dec_lineno_depth
 }
 
 do_autogen() {
+  inc_lineno_depth
   cdx "${basedir}"
   run mkdir -p "${builddir}"
   do_autom4te_cfg
@@ -50,9 +46,11 @@ do_autogen() {
   run autoconf --warnings=all
   run automake --add-missing --copy -Woverride --warnings=all
   run env LIBTOOLIZE=true autoreconf --install -I m4 --warnings=all
+  dec_lineno_depth
 }
 
 do_autoclean() {
+  inc_lineno_depth
   cdx "${basedir}"
   run mkdir -p "${builddir}"
   run rm -f "${autom4te_cfg}"
@@ -88,6 +86,7 @@ do_autoclean() {
   run rm -f "${basedir}/tags"
   run rm -f "${basedir}/TAGS"
   run rm -f "${basedir}/compile_commands.json"
+  dec_lineno_depth
 }
 
 do_autoregen() {

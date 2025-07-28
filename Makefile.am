@@ -3,6 +3,7 @@ SUBDIRS = . include lib cmd mntd test py man docs scripts dist cicd
 
 EXTRA_DIST = $(NULL)
 EXTRA_DIST += README.md
+EXTRA_DIST += bash_functions
 EXTRA_DIST += bootstrap
 EXTRA_DIST += version.sh
 EXTRA_DIST += cstylefmt.sh

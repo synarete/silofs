@@ -276,6 +276,15 @@ static int silofs_derive_ivkey(const struct silofs_mdigest *md,
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
+/*
+ * TODO-0061: Use ARGON2 KDF
+ *
+ * ARGON2 is considered stronger (GPU-resistant) then PBKDF2 (see [1]) but
+ * requires extra wrapping over libgcrypt APIs. Use it.
+ *
+ * [1] https://fedoraproject.org/wiki/Changes/ \
+ *       RemoveFipsModeSetup#Context_information_on_FIPS
+ */
 static const struct silofs_kdf_descs s_kdf_descs_default = {
 	.kdf_key = {
 		.kd_iterations = 8192,

@@ -526,7 +526,8 @@ struct silofs_blobid {
 struct silofs_caddr64b {
 	struct silofs_blobid blobid;
 	uint16_t             ctype;
-	uint8_t              reserved[30];
+	uint8_t              reserved[29];
+	uint8_t              btype;
 } silofs_attr_aligned64;
 
 /* persistent object address */
@@ -534,8 +535,20 @@ struct silofs_paddr64b {
 	struct silofs_blobid blobid;
 	int64_t              pos;
 	uint16_t             mtype;
-	uint8_t              pad[22];
-} silofs_attr_aligned16;
+	uint8_t              pad[21];
+	uint8_t              btype;
+} silofs_attr_aligned64;
+
+/* blob addressing */
+union silofs_baddr64b {
+	struct silofs_blobid   blobid;
+	struct silofs_caddr64b caddr;
+	struct silofs_paddr64b paddr;
+	struct {
+		uint8_t dat[59];
+		uint8_t btype;
+	} b;
+} silofs_attr_aligned64;
 
 /* logical volume's segment identifier */
 struct silofs_lsid48b {

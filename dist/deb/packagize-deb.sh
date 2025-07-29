@@ -1,24 +1,20 @@
 #!/usr/bin/env bash
+export LC_ALL=C
+unset CDPATH
 set -o errexit
 set -o nounset
 set -o pipefail
-export LC_ALL=C
-unset CDPATH
 
-self=$(basename "${BASH_SOURCE[0]}")
-pre() { echo "$self:${BASH_LINENO[1]}: $*" >&2; }
-msg() { echo "$self: $*" >&2; }
-die() { msg "$*"; exit 1; }
-try() { ( "$@" ) || die "failed: $*"; }
-run() { pre "$@"; try "$@"; }
+self="$(basename "${BASH_SOURCE[0]}")"
+selfdir="$(realpath "$(dirname "${BASH_SOURCE[0]}")")"
+basedir="$(realpath "${selfdir}"/../../)"
+source "${basedir}/bash_functions"
 
 name=silofs
-selfdir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
-basedir=$(realpath "${selfdir}"/../../)
 version_sh=${basedir}/version.sh
-version=$(try "${version_sh}" --version)
-release=$(try "${version_sh}" --release)
-revision=$(try "${version_sh}" --revision)
+version=$(run "${version_sh}" --version)
+release=$(run "${version_sh}" --release)
+revision=$(run "${version_sh}" --revision)
 archive_tgz=${name}-${version}.tar.gz
 
 builddir=${basedir}/build

@@ -2,18 +2,13 @@
 export LC_ALL=C
 unset CDPATH
 
-self=$(basename "${BASH_SOURCE[0]}")
-msg() { echo "$self: $*" >&2; }
-die() { msg "$*"; exit 1; }
-exe() { ( "$@" ) || die "failed: $*"; }
-pre() { echo -n "$self:${BASH_LINENO[1]}: " >&2; }
-run() { pre; echo "$@" >&2; exe "$@"; }
-cdx() { pre; echo "cd $*" >&2; cd "$@" || die "failed: cd $*"; }
+self="$(basename "${BASH_SOURCE[0]}")"
+selfdir="$(realpath "$(dirname "${BASH_SOURCE[0]}")")"
+basedir="$(realpath "${selfdir}"/../../)"
+source "${basedir}/bash_functions"
 
 # Common variables
 name=silofs
-selfdir="$(realpath "$(dirname "${BASH_SOURCE[0]}")")"
-basedir="$(realpath "${selfdir}"/../../)"
 workdir="${basedir}/build/dist/img"
 autotoolsdir="${workdir}/autotools/"
 version_sh="${basedir}"/version.sh
@@ -24,7 +19,7 @@ set -o errexit
 set -o nounset
 set -o pipefail
 run "${version_sh}"
-run command -v "${conteng}"
+commandv "${conteng}"
 run mkdir -p "${workdir}"
 run mkdir -p "${autotoolsdir}"
 

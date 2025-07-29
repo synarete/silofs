@@ -1,16 +1,14 @@
 #!/usr/bin/env bash
-set -o nounset
-set -o pipefail
 export LC_ALL=C
 unset CDPATH
+set -o nounset
+set -o pipefail
 
-self=$(basename "${BASH_SOURCE[0]}")
-pre() { echo "$self:${BASH_LINENO[1]}: $*" >&2; }
-msg() { echo "$*" >&2; }
-die() { pre; msg "$*"; kill -s 2 $$; }
-exe() { ( "$@" ) || die "failed: $*"; }
-run() { pre "$@" ; exe "$@"; }
-cdx() { pre "cd $*"; cd "$@" || die "failed: cd $*"; }
+###
+self="$(basename "${BASH_SOURCE[0]}")"
+selfdir="$(realpath "$(dirname "${BASH_SOURCE[0]}")")"
+basedir="$(realpath "${selfdir}"/../)"
+source "${basedir}/bash_functions"
 
 ###
 if [ "$#" -ne 2 ]; then die "usage: '$self <archive-file> <citests-dir>'"; fi

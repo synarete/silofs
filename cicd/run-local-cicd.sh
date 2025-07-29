@@ -1,26 +1,18 @@
 #!/usr/bin/env bash
+export LC_ALL=C
+unset CDPATH
 set -o errexit
 set -o nounset
 set -o pipefail
-export LC_ALL=C
-unset CDPATH
 
-self=$(basename "${BASH_SOURCE[0]}")
-pre() { echo "$self:${BASH_LINENO[1]}: $*" >&2; }
-msg() { echo "$self: $*" >&2; }
-die() { msg "$*"; exit 1; }
-exe() { ( "$@" ) || die "failed: $*"; }
-pre() { echo -n "$self:${BASH_LINENO[1]}: " >&2; }
-run() { pre "$@"; exe "$@"; }
-cdx() { pre "cd $*"; cd "$@" || die "failed: cd $*"; }
-
-# Common variables
+# Common
 name=silofs
 selfdir="$(realpath "$(dirname "${BASH_SOURCE[0]}")")"
 basedir="$(realpath "${selfdir}"/../)"
 workdir="${basedir}/build/cicd"
 autotoolsdir="${workdir}/autotools/"
 version_sh="${basedir}"/version.sh
+source "${basedir}/bash_functions"
 
 # Prerequisites checks + prepare
 run "${version_sh}"

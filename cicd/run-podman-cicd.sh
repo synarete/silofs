@@ -2,14 +2,6 @@
 export LC_ALL=C
 unset CDPATH
 
-self=$(basename "${BASH_SOURCE[0]}")
-pre() { echo "$self:${BASH_LINENO[1]}: $*" >&2; }
-msg() { echo "$self: $*" >&2; }
-die() { msg "$*"; exit 1; }
-exe() { ( "$@" ) || die "failed: $*"; }
-run() { pre "$@"; exe "$@"; }
-cdx() { pre "cd $*"; cd "$@" || die "failed: cd $*"; }
-
 # Do nothing if podman is missing
 command -v podman > /dev/null || exit 0
 
@@ -18,13 +10,15 @@ name=silofs
 selfpid="$$"
 selfdir="$(realpath "$(dirname "${BASH_SOURCE[0]}")")"
 basedir="$(realpath "${selfdir}"/../)"
-workdir="${basedir}/build/cicd/"
+workdir="${basedir}/build/cicd"
+autotoolsdir="${workdir}/autotools/"
 version_sh="${basedir}"/version.sh
 
 # Prerequisites checks + prepare
 set -o errexit
 set -o nounset
 set -o pipefail
+source "${basedir}/bash_functions"
 run "${version_sh}"
 
 # Use unique image tag

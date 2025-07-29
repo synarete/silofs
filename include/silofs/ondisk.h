@@ -556,6 +556,13 @@ union silofs_baddr64b {
 	} b;
 } silofs_attr_aligned64;
 
+/* cursor within blob */
+struct silofs_bcursor128b {
+	union silofs_baddr64b bc_baddr;
+	uint64_t              bc_blobsz;
+	uint8_t               bc_reserved[56];
+} silofs_attr_aligned64;
+
 /* logical volume's segment identifier */
 struct silofs_lsid48b {
 	struct silofs_blobid blobid;

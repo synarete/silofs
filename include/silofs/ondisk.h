@@ -512,6 +512,12 @@ struct silofs_uuid {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+enum silofs_adt {
+	SILOFS_ADT_NONE  = 0,
+	SILOFS_ADT_PADDR = 1,
+	SILOFS_ADT_CADDR = 2,
+};
+
 /* unique blob identifier */
 struct silofs_blobid {
 	union {
@@ -527,7 +533,7 @@ struct silofs_caddr64b {
 	struct silofs_blobid blobid;
 	uint16_t             ctype;
 	uint8_t              reserved[29];
-	uint8_t              btype;
+	uint8_t              adt;
 } silofs_attr_aligned64;
 
 /* persistent object address */
@@ -536,7 +542,7 @@ struct silofs_paddr64b {
 	int64_t              pos;
 	uint16_t             mtype;
 	uint8_t              pad[21];
-	uint8_t              btype;
+	uint8_t              adt;
 } silofs_attr_aligned64;
 
 /* blob addressing */
@@ -546,7 +552,7 @@ union silofs_baddr64b {
 	struct silofs_paddr64b paddr;
 	struct {
 		uint8_t dat[59];
-		uint8_t btype;
+		uint8_t adt;
 	} b;
 } silofs_attr_aligned64;
 

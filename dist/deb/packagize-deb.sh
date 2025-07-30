@@ -31,7 +31,7 @@ debbuild_debiandir=${debbuild_distdir}/debian
 
 # System info
 run uname --all
-run gcc --version
+run gcc --version | head -1
 
 # Prerequisites checks
 run command -v aclocal

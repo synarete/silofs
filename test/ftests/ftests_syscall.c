@@ -299,6 +299,7 @@ void ft_do_open_err(const char *path, int flags, mode_t mode, int err,
 	int res;
 
 	res = silofs_sys_open(path, flags, mode, &fd);
+	ft_pclose(&fd);
 	ft_expect_sys_err(res, err, fl, ln);
 }
 
@@ -318,6 +319,7 @@ void ft_do_openat_err(int dirfd, const char *name, int flags, mode_t mode,
 	int res;
 
 	res = silofs_sys_openat(dirfd, name, flags, mode, &fd);
+	ft_pclose(&fd);
 	ft_expect_sys_err(res, err, fl, ln);
 }
 
@@ -340,7 +342,7 @@ void ft_do_close(int fd, const char *fl, int ln)
 
 void ft_do_pclose(int *fd, const char *fl, int ln)
 {
-	if (fd != NULL) {
+	if ((fd != NULL) && (*fd >= 0)) {
 		ft_do_close(*fd, fl, ln);
 		*fd = -1;
 	}

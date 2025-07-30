@@ -55,6 +55,11 @@ size_t silofs_strview_npos(void)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static bool strview_has_pos(const struct silofs_strview *sv, size_t i)
+{
+	return (i != strview_npos()) && (i < sv->len);
+}
+
 void silofs_strview_init(struct silofs_strview *sv, const char *s)
 {
 	silofs_strview_initn(sv, s, silofs_str_length(s));
@@ -468,7 +473,7 @@ void silofs_strview_sub(const struct silofs_strview *sv, size_t i, size_t n,
                         struct silofs_strview *out_sv)
 {
 	const size_t sz = sv->len;
-	const size_t j = (i != strview_npos()) ? silofs_min(i, sz) : sz;
+	const size_t j = strview_has_pos(sv, i) ? silofs_min(i, sz) : sz;
 	const size_t k = silofs_min(n, sz - j);
 
 	silofs_strview_initn(out_sv, sv->str + j, k);
@@ -539,14 +544,16 @@ void silofs_strview_nsplit(const struct silofs_strview *sv, const char *seps,
                            size_t n, struct silofs_strview_pair *out_sv_pair)
 {
 	const size_t sz = sv->len;
-	size_t i, j = sz;
+	size_t i, j, k;
 
 	i = silofs_strview_nfind_first_of(sv, 0UL, seps, n);
-	if (i < sz) {
+	if (!strview_has_pos(sv, i)) {
+		i = k = sz;
+	} else {
 		j = silofs_strview_nfind_first_not_of(sv, i, seps, n);
+		k = strview_has_pos(sv, j) ? j : sz;
 	}
-
-	strview_make_split_pair(sv, 0UL, i, j, sz, out_sv_pair);
+	strview_make_split_pair(sv, 0UL, i, k, sz, out_sv_pair);
 }
 
 void silofs_strview_split_chr(const struct silofs_strview *sv, char sep,
@@ -554,7 +561,7 @@ void silofs_strview_split_chr(const struct silofs_strview *sv, char sep,
 {
 	const size_t sz = sv->len;
 	const size_t i = silofs_strview_find_chr(sv, 0UL, sep);
-	const size_t j = (i < sz) ? i + 1 : sz;
+	const size_t j = strview_has_pos(sv, i) ? i + 1 : sz;
 
 	strview_make_split_pair(sv, 0UL, i, j, sz, out_sv_pair);
 }
@@ -562,9 +569,10 @@ void silofs_strview_split_chr(const struct silofs_strview *sv, char sep,
 void silofs_strview_split_str(const struct silofs_strview *sv, const char *str,
                               struct silofs_strview_pair *out_sv_pair)
 {
+	const size_t len = silofs_str_length(str);
 	const size_t sz = sv->len;
 	const size_t i = silofs_strview_find(sv, str);
-	const size_t j = (i < sz) ? i + silofs_str_length(str) : sz;
+	const size_t j = strview_has_pos(sv, i) ? (i + len) : sz;
 
 	strview_make_split_pair(sv, 0UL, i, j, sz, out_sv_pair);
 }
@@ -581,18 +589,18 @@ void silofs_strview_nrsplit(const struct silofs_strview *sv, const char *seps,
                             size_t n, struct silofs_strview_pair *out_ss_pair)
 {
 	const size_t sz = sv->len;
-	size_t i = 0;
-	size_t j = sz;
+	size_t i, j;
 
 	i = silofs_strview_nfind_last_of(sv, sz, seps, n);
-	if (i < sz) {
+	if (!strview_has_pos(sv, i)) {
+		i = j = sz;
+	} else {
 		j = silofs_strview_nfind_last_not_of(sv, i, seps, n);
-
-		if (j < sz) {
+		if (!strview_has_pos(sv, j)) {
+			i = j = sz;
+		} else {
 			++i;
 			++j;
-		} else {
-			i = j = sz;
 		}
 	}
 	strview_make_split_pair(sv, 0UL, j, i, sz, out_ss_pair);
@@ -603,7 +611,7 @@ void silofs_strview_rsplit_chr(const struct silofs_strview *sv, char sep,
 {
 	const size_t sz = sv->len;
 	const size_t i = silofs_strview_rfind_chr(sv, sz, sep);
-	const size_t j = (i < sz) ? i + 1 : sz;
+	const size_t j = strview_has_pos(sv, i) ? i + 1 : sz;
 
 	strview_make_split_pair(sv, 0UL, i, j, sz, out_ss_pair);
 }
@@ -628,8 +636,9 @@ void silofs_strview_ntrim_any_of(const struct silofs_strview *sv,
 {
 	const size_t sz = sv->len;
 	const size_t i = silofs_strview_nfind_first_not_of(sv, 0UL, set, n);
+	const size_t j = strview_has_pos(sv, i) ? i : sz;
 
-	silofs_strview_sub(sv, i, sz, out_sv);
+	silofs_strview_sub(sv, j, sz, out_sv);
 }
 
 void silofs_strview_trim_chr(const struct silofs_strview *sv, char c,
@@ -637,8 +646,9 @@ void silofs_strview_trim_chr(const struct silofs_strview *sv, char c,
 {
 	const size_t sz = sv->len;
 	const size_t i = silofs_strview_find_first_not(sv, 0UL, c);
+	const size_t j = strview_has_pos(sv, i) ? i : sz;
 
-	silofs_strview_sub(sv, i, sz, out_sv);
+	silofs_strview_sub(sv, j, sz, out_sv);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -665,8 +675,9 @@ void silofs_strview_nchop_any_of(const struct silofs_strview *sv,
 {
 	const size_t sz = sv->len;
 	const size_t j = silofs_strview_nfind_last_not_of(sv, sz, set, n);
+	const size_t k = strview_has_pos(sv, j) ? j + 1 : 0;
 
-	silofs_strview_sub(sv, 0UL, ((j < sz) ? j + 1 : 0), out_sv);
+	silofs_strview_sub(sv, 0UL, k, out_sv);
 }
 
 void silofs_strview_chop_chr(const struct silofs_strview *sv, char c,
@@ -674,8 +685,9 @@ void silofs_strview_chop_chr(const struct silofs_strview *sv, char c,
 {
 	const size_t sz = sv->len;
 	const size_t j = silofs_strview_find_last_not(sv, sz, c);
+	const size_t k = strview_has_pos(sv, j) ? j + 1 : 0;
 
-	silofs_strview_sub(sv, 0UL, ((j < sz) ? j + 1 : 0), out_sv);
+	silofs_strview_sub(sv, 0UL, k, out_sv);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

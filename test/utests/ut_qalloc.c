@@ -200,7 +200,7 @@ static void ut_del_mrecords(struct ut_env *ute, struct silofs_list_head *lst)
 	struct silofs_list_head *lnk = NULL;
 	int cnt = 0;
 
-	lnk = (cnt++ & 1) ? lst->next : lst->prev;
+	lnk = lst->next;
 	while (lnk != lst) {
 		silofs_list_head_remove(lnk);
 		mr = link_to_mrecord(lnk);

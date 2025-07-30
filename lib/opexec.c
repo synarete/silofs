@@ -234,11 +234,30 @@ op_rmap_stat(const struct silofs_task_ctx *task, struct silofs_stat *st)
 	gid_t gid_out = (gid_t)(-1);
 	int ret;
 
+	/*
+	 * TODO-0062: Have fine-grained rmap for uid and for gid
+	 *
+	 * Separate into fine-grained functions (silofs_idsmap_rmap_uid and
+	 * silofs_idsmap_rmap_gid). In case of rmap failure, emit 'nobody' only
+	 * for the relevant id.
+	 */
 	ret = silofs_idsmap_rmap_uidgid(task->t_idsm, uid_in, gid_in, &uid_out,
 	                                &gid_out);
 	st->st.st_uid = st->stx.stx_uid = uid_out;
 	st->st.st_gid = st->stx.stx_gid = gid_out;
 	return (ret == -SILOFS_ENOENT) ? 0 : ret;
+}
+
+static void
+op_rmap_stat_any(const struct silofs_task_ctx *task, struct silofs_stat *st)
+{
+	int err;
+
+	err = op_rmap_stat(task, st);
+	if (err) {
+		st->st.st_uid = st->stx.stx_uid = silofs_uid_nobody();
+		st->st.st_gid = st->stx.stx_gid = silofs_gid_nobody();
+	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -715,7 +734,7 @@ static int readdirplus_actor(struct silofs_readdir_ctx *rd_ctx,
 	} else {
 		/* case2: copy attr to local and re-map uid-gid */
 		memcpy(&rdi2, rdi, sizeof(rdi2));
-		op_rmap_stat(rdf_ctx->task, &rdi2.attr);
+		op_rmap_stat_any(rdf_ctx->task, &rdi2.attr);
 		rdf_ctx->rd_ctx_orig->pos = rdf_ctx->rd_ctx.pos;
 		ret = rdf_ctx->rd_ctx_orig->actor(rdf_ctx->rd_ctx_orig, &rdi2);
 	}

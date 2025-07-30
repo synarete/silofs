@@ -38,7 +38,7 @@ static void view_init_by(struct silofs_view *view, enum silofs_mtype mtype)
 	if (!silofs_mtype_isdata(mtype)) {
 		size = silofs_mtype_size(mtype);
 		silofs_memzero(view, size);
-		silofs_hdr_setup(&view->u.hdr, (uint16_t)mtype, size);
+		silofs_hdr_setup(&view->u.hdr[0], (uint16_t)mtype, size);
 	}
 }
 
@@ -332,7 +332,7 @@ void silofs_uni_seal_view(struct silofs_unode_info *uni)
 {
 	uni_verify(uni);
 
-	silofs_hdr_seal(&uni->un_lni.ln_view->u.hdr);
+	silofs_hdr_seal(&uni->un_lni.ln_view->u.hdr[0]);
 }
 
 static void uni_del_view(struct silofs_unode_info *uni,
@@ -529,7 +529,7 @@ struct silofs_vnode_info *silofs_vni_from_dqe(struct silofs_dq_elem *dqe)
 void silofs_vni_seal_view(struct silofs_vnode_info *vni)
 {
 	silofs_assert_not_null(vni->vn_lni.ln_view);
-	silofs_hdr_seal(&vni->vn_lni.ln_view->u.hdr);
+	silofs_hdr_seal(&vni->vn_lni.ln_view->u.hdr[0]);
 }
 
 static bool
@@ -1358,7 +1358,7 @@ struct silofs_fileaf_info *silofs_fli_from_vni(struct silofs_vnode_info *vni)
 static int
 view_verify_by_hdr(const struct silofs_view *view, enum silofs_mtype mtype)
 {
-	const struct silofs_header *hdr = &view->u.hdr;
+	const struct silofs_header *hdr = &view->u.hdr[0];
 
 	return silofs_hdr_verify(hdr, (uint8_t)mtype, silofs_mtype_size(mtype),
 	                         SILOFS_HDRF_CSUM);

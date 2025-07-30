@@ -1037,7 +1037,7 @@ struct silofs_ar_hdr1k {
 
 /* semantic "view" into meta elements */
 union silofs_view_u {
-	struct silofs_header       hdr;
+	struct silofs_header       hdr[2];
 	struct silofs_uber_block   ub;
 	struct silofs_blob_desc    bd;
 	struct silofs_btree_node   btn;

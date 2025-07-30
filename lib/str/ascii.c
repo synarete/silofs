@@ -20,45 +20,10 @@
 
 char silofs_nibble_to_ascii(int n)
 {
-	const int a = n & 0xF;
+	const char xdigs[] = "0123456789abcdef";
+	const uint8_t idx = (uint8_t)(n & 0xF);
 
-	switch (a) {
-	case 0x0:
-		return '0';
-	case 0x1:
-		return '1';
-	case 0x2:
-		return '2';
-	case 0x3:
-		return '3';
-	case 0x4:
-		return '4';
-	case 0x5:
-		return '5';
-	case 0x6:
-		return '6';
-	case 0x7:
-		return '7';
-	case 0x8:
-		return '8';
-	case 0x9:
-		return '9';
-	case 0xa:
-		return 'a';
-	case 0xb:
-		return 'b';
-	case 0xc:
-		return 'c';
-	case 0xd:
-		return 'd';
-	case 0xe:
-		return 'e';
-	case 0xf:
-		return 'f';
-	default:
-		break;
-	}
-	return (char)-1;
+	return xdigs[idx];
 }
 
 int silofs_ascii_to_nibble(char a)

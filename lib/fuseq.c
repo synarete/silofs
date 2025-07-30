@@ -2946,7 +2946,7 @@ static int do_ioc_query(const struct silofs_fuseq_cmd_ctx *fcc)
 	fcc->args->in.query.ino = fcc->ino;
 	fcc->args->in.query.qtype = (enum silofs_query_type)qry_in->qtype;
 
-	if (!bsz_out && (flags | FUSE_IOCTL_RETRY)) {
+	if (!bsz_out && (flags & FUSE_IOCTL_RETRY)) {
 		err = -SILOFS_ENOSYS;
 		goto out;
 	}
@@ -2984,7 +2984,7 @@ static int do_ioc_clone(const struct silofs_fuseq_cmd_ctx *fcc)
 	const int flags = (int)(fcc->in->u.ioctl.arg.flags);
 	int err;
 
-	if (!bsz_out && (flags | FUSE_IOCTL_RETRY)) {
+	if (!bsz_out && (flags & FUSE_IOCTL_RETRY)) {
 		err = -SILOFS_ENOSYS;
 		goto out;
 	}

@@ -249,6 +249,7 @@ char *cmd_getpwuid(uid_t uid)
 	struct passwd pwd = { .pw_uid = (uid_t)(-1) };
 	struct passwd *pw = NULL;
 	char *buf = NULL;
+	char *ret = NULL;
 	size_t bsz;
 	int err;
 
@@ -256,12 +257,16 @@ char *cmd_getpwuid(uid_t uid)
 	buf = cmd_zalloc(bsz);
 	err = getpwuid_r(uid, &pwd, buf, bsz, &pw);
 	if (err) {
+		cmd_zfree(buf, bsz);
 		cmd_diez("failed to resolve uid: %u", uid);
 	}
 	if ((pw == NULL) || (pw->pw_name == NULL)) {
+		cmd_zfree(buf, bsz);
 		cmd_diez("unknown uid: %u", uid);
 	}
-	return cmd_strdup(pw->pw_name);
+	ret = cmd_strdup(pw->pw_name);
+	cmd_zfree(buf, bsz);
+	return ret;
 }
 
 static char *cmd_getpwuid_self(void)

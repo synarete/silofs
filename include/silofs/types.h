@@ -19,6 +19,7 @@
 
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <unistd.h>
 #include <silofs/macros.h>
 #include <silofs/ondisk.h>

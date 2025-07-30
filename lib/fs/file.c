@@ -135,7 +135,7 @@ static loff_t off_in_data(loff_t off, enum silofs_mtype mtype)
 {
 	const ssize_t len = silofs_mtype_ssize(mtype);
 
-	return off % len;
+	return likely(len > 0) ? off % len : off;
 }
 
 static size_t len_to_next(loff_t off, enum silofs_mtype mtype)
@@ -149,7 +149,7 @@ static size_t len_to_next(loff_t off, enum silofs_mtype mtype)
 static size_t len_of_data(loff_t off, loff_t end, enum silofs_mtype mtype)
 {
 	const ssize_t len = silofs_mtype_ssize(mtype);
-	const loff_t next = silofs_off_next(off, len);
+	const loff_t next = likely(len > 0) ? silofs_off_next(off, len) : off;
 
 	return (next < end) ? silofs_off_ulen(off, next) :
 	                      silofs_off_ulen(off, end);
@@ -157,11 +157,11 @@ static size_t len_of_data(loff_t off, loff_t end, enum silofs_mtype mtype)
 
 static bool off_is_partial(loff_t off, loff_t end, enum silofs_mtype mtype)
 {
-	const ssize_t data_len = silofs_mtype_ssize(mtype);
-	const loff_t off_start = silofs_off_align(off, data_len);
+	const ssize_t len = silofs_mtype_ssize(mtype);
+	const loff_t beg = likely(len > 0) ? silofs_off_align(off, len) : off;
 	const ssize_t io_len = silofs_off_len(off, end);
 
-	return (off != off_start) || (io_len < data_len);
+	return (off != beg) || (io_len < len);
 }
 
 static bool off_is_partial_head1(loff_t off, loff_t end)

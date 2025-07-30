@@ -2976,11 +2976,27 @@ static int check_itype(const struct silofs_task_ctx *task, mode_t mode)
 	/*
 	 * TODO-0031: Filter supported modes based on mount flags
 	 */
-	const mode_t sup = S_IFDIR | S_IFREG | S_IFLNK | S_IFSOCK | S_IFIFO |
-	                   S_IFCHR | S_IFBLK;
+	const mode_t itype = mode & S_IFMT;
+	const bool no_ispecial = task->t_env->base.args->no_ispecial;
+	int ret;
 
-	silofs_unused(task);
-	return (((mode & S_IFMT) | sup) == sup) ? 0 : -SILOFS_EOPNOTSUPP;
+	switch (itype) {
+	case S_IFDIR:
+	case S_IFREG:
+	case S_IFLNK:
+		ret = 0;
+		break;
+	case S_IFSOCK:
+	case S_IFIFO:
+		ret = no_ispecial ? -SILOFS_EOPNOTSUPP : 0;
+		break;
+	case S_IFCHR:
+	case S_IFBLK:
+	default:
+		ret = -SILOFS_EOPNOTSUPP;
+		break;
+	}
+	return ret;
 }
 
 static int

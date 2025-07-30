@@ -99,6 +99,7 @@ struct silofs_args {
 	mode_t                  umask;
 	size_t                  capacity;
 	size_t                  memwant;
+	bool                    no_ispecial;
 };
 
 /* in-use versions */

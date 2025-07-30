@@ -888,21 +888,28 @@ static void cmd_read(int fd, void *buf, size_t cnt, size_t *nrd)
 	}
 }
 
+static size_t cmd_readfile_stepsize(void)
+{
+	const long pgsz = silofs_sc_page_size();
+
+	return (size_t)(pgsz < 4096 ? 4096 : 65536);
+}
+
 static void cmd_readfile(int fd, char *buf, size_t bsz, size_t *out_nrd)
 {
-	size_t cnt;
-	size_t nrd = 0;
+	const size_t step = cmd_readfile_stepsize();
 	size_t len = 0;
-	const size_t pgsz = (size_t)silofs_sc_page_size();
 
 	while (len < bsz) {
-		cnt = bsz - len;
-		cmd_read(fd, buf + len, (cnt < pgsz) ? cnt : pgsz, &nrd);
+		const size_t rem = bsz - len;
+		const size_t cnt = rem < step ? rem : step;
+		size_t nrd = 0;
+
+		cmd_read(fd, buf + len, cnt, &nrd);
 		if (!nrd) {
 			break;
 		}
 		len += nrd;
-		nrd = 0;
 	}
 	*out_nrd = len;
 }

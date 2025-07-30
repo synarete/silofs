@@ -63,7 +63,7 @@ static void cmd_lockfile_mknames(struct cmd_lockfile_ctx *lf_ctx)
 	snprintf(lf_ctx->lockname, sizeof(lf_ctx->lockname) - 1, ".%s.lock",
 	         lf_ctx->name);
 	snprintf(lf_ctx->tempname, sizeof(lf_ctx->tempname) - 1,
-	         ".%s_%08x.lock~", lf_ctx->name, (int)lf_ctx->now);
+	         ".%s_%08lx.lock~", lf_ctx->name, (long)lf_ctx->now);
 }
 
 static void cmd_lockfile_mkdata(struct cmd_lockfile_ctx *lf_ctx)

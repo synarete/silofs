@@ -492,10 +492,6 @@ static int laddr_repr_from_str(struct silofs_laddr_repr *repr,
 		return err;
 	}
 	laddr_repr_meta_from_str(repr, &meta);
-
-	if (err) {
-		return err;
-	}
 	return 0;
 }
 

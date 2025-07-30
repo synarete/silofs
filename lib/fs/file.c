@@ -141,7 +141,7 @@ static loff_t off_in_data(loff_t off, enum silofs_mtype mtype)
 static size_t len_to_next(loff_t off, enum silofs_mtype mtype)
 {
 	const ssize_t len = silofs_mtype_ssize(mtype);
-	const loff_t next = silofs_off_next(off, len);
+	const loff_t next = likely(len > 0) ? silofs_off_next(off, len) : off;
 
 	return silofs_off_ulen(off, next);
 }

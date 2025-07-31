@@ -989,21 +989,14 @@ struct silofs_btree_node {
 	uint8_t                btn_reserved2[584];
 } silofs_attr_aligned64;
 
-/* blob-descriptor cursor */
-struct silofs_bdcur128b {
-	struct silofs_paddr64b bdc_paddr;
-	uint64_t               bdc_blobsz;
-	uint8_t                bdc_reserved[56];
-} silofs_attr_aligned16;
-
 /* uber-block */
 struct silofs_uber_block {
-	struct silofs_header    ub_hdr;
-	struct silofs_timespec  ub_btime;
-	struct silofs_timespec  ub_ctime;
-	uint64_t                ub_generation;
-	uint8_t                 ub_reserved1[56];
-	struct silofs_bdcur128b ub_bdcur[31];
+	struct silofs_header      ub_hdr;
+	struct silofs_timespec    ub_btime;
+	struct silofs_timespec    ub_ctime;
+	uint64_t                  ub_generation;
+	uint8_t                   ub_reserved1[56];
+	struct silofs_bcursor128b ub_bcursor[31];
 } silofs_attr_aligned64;
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

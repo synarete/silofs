@@ -29,6 +29,12 @@ struct silofs_baddr {
 	enum silofs_adt adt;
 };
 
+/* blob cursor */
+struct silofs_bcursor {
+	struct silofs_baddr baddr;
+	size_t              blobsz;
+};
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_baddr_reset(struct silofs_baddr *baddr);
@@ -46,5 +52,17 @@ void silofs_baddr64b_htox(union silofs_baddr64b     *baddr64,
 
 void silofs_baddr64b_xtoh(const union silofs_baddr64b *baddr64,
                           struct silofs_baddr         *baddr);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+const struct silofs_bcursor *silofs_cursor_none(void);
+
+void silofs_bcursor128b_reset(struct silofs_bcursor128b *bcur128);
+
+void silofs_bcursor128b_xtoh(const struct silofs_bcursor128b *bcur128,
+                             struct silofs_bcursor           *bcur);
+
+void silofs_bcursor128b_htox(struct silofs_bcursor128b   *bcur128,
+                             const struct silofs_bcursor *bcur);
 
 #endif /* SILOFS_BADDR_H_ */

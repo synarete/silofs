@@ -96,3 +96,33 @@ void silofs_baddr64b_xtoh(const union silofs_baddr64b *baddr64,
 		break;
 	}
 }
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static const struct silofs_bcursor s_silofs_cursor_none = {
+	.blobsz = 0,
+};
+
+const struct silofs_bcursor *silofs_cursor_none(void)
+{
+	return &s_silofs_cursor_none;
+}
+
+void silofs_bcursor128b_reset(struct silofs_bcursor128b *bcur128)
+{
+	silofs_bcursor128b_htox(bcur128, silofs_cursor_none());
+}
+
+void silofs_bcursor128b_xtoh(const struct silofs_bcursor128b *bcur128,
+                             struct silofs_bcursor *bcur)
+{
+	silofs_baddr64b_xtoh(&bcur128->bc_baddr, &bcur->baddr);
+	bcur->blobsz = silofs_le64_to_cpu(bcur128->bc_blobsz);
+}
+
+void silofs_bcursor128b_htox(struct silofs_bcursor128b *bcur128,
+                             const struct silofs_bcursor *bcur)
+{
+	silofs_baddr64b_htox(&bcur128->bc_baddr, &bcur->baddr);
+	bcur128->bc_blobsz = silofs_cpu_to_le64(bcur->blobsz);
+}

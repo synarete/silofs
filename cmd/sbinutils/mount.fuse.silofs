@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Silofs mounting helper script. Checks for the following conditions:
 #
@@ -12,6 +12,9 @@
 # To enable linger for specific user, run:
 #   $ sudo loginctl enable-linger $USER
 #
+export LC_ALL=C
+unset CDPATH
+unset LD_PRELOAD
 
 _status() {
   echo -n "$1"
@@ -64,7 +67,7 @@ _check_user_cap_linger() {
 
   loginctl_cmd=$(_locate_loginctl)
   cap_linger=$(${loginctl_cmd} show-user "${USER}" | \
-               grep Linger | awk -F= '{print $2}' | tr -d '[:space:]')
+                 grep Linger | awk -F= '{print $2}' | tr -d '[:space:]')
   [[ "${cap_linger}" == "yes" ]] && _status_ok
 }
 
@@ -106,4 +109,3 @@ _mount_silofs() {
 }
 
 _mount_silofs "$@"
-

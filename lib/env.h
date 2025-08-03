@@ -41,26 +41,31 @@ struct silofs_env_base {
 	struct silofs_pcache  *pcache;
 	struct silofs_bstore  *bstore;
 	struct silofs_lcache  *lcache;
-	struct silofs_mbr     *mbr;
 	struct silofs_submitq *submitq;
 	struct silofs_flusher *flusher;
 	struct silofs_idsmap  *idsmap;
 	struct silofs_fuseq   *fuseq;
 };
 
+/* main boot-record state */
+struct silofs_env_boot {
+	struct silofs_mbr    mbr;
+	struct silofs_cipher cipher;
+	struct silofs_ivkey  ivkey;
+	struct silofs_caddr  main_addr;
+	struct silofs_caddr  base_addr;
+	struct silofs_caddr  fork_addr;
+};
+
 /* top-level environment object */
 struct silofs_env {
 	struct silofs_env_base   base;
+	struct silofs_env_boot   boot;
 	struct silofs_rwlock     rwlock;
 	struct silofs_mutex      mutex;
 	struct silofs_cipher     enc_cipher;
 	struct silofs_cipher     dec_cipher;
 	struct silofs_mdigest    mdigest;
-	struct silofs_cipher     mbr_cipher;
-	struct silofs_ivkey      mbr_ivkey;
-	struct silofs_caddr      mbr_caddr;
-	struct silofs_caddr      mbr_base_caddr;
-	struct silofs_caddr      mbr_fork_caddr;
 	struct silofs_caddr      pack_caddr;
 	struct silofs_env_opstat opstat;
 	struct silofs_sb_info   *sbi;
@@ -80,7 +85,8 @@ int silofs_env_init(struct silofs_env            *env,
 
 void silofs_env_fini(struct silofs_env *env);
 
-int silofs_env_setup(struct silofs_env *env, const struct silofs_password *pw);
+int silofs_env_setup_passwd(struct silofs_env            *env,
+                            const struct silofs_password *pw);
 
 void silofs_env_lock(struct silofs_env *env);
 
@@ -127,17 +133,17 @@ void silofs_env_drop_caches(struct silofs_env *env);
 
 bool silofs_env_hasflag(const struct silofs_env *env, enum silofs_flags f);
 
-int silofs_env_mbr_caddr(const struct silofs_env *env,
+int silofs_env_mbr_main_addr(const struct silofs_env *env,
+                             struct silofs_caddr     *out_caddr);
+
+int silofs_env_set_mbr_main_addr(struct silofs_env         *env,
+                                 const struct silofs_caddr *caddr);
+
+int silofs_env_base_addr(const struct silofs_env *env,
                          struct silofs_caddr     *out_caddr);
 
-int silofs_env_set_mbr_caddr(struct silofs_env         *env,
-                             const struct silofs_caddr *caddr);
-
-int silofs_env_base_caddr(const struct silofs_env *env,
-                          struct silofs_caddr     *out_caddr);
-
-int silofs_env_fork_caddr(const struct silofs_env *env,
-                          struct silofs_caddr     *out_caddr);
+int silofs_env_fork_addr(const struct silofs_env *env,
+                         struct silofs_caddr     *out_caddr);
 
 int silofs_env_pack_caddr(const struct silofs_env *env,
                           struct silofs_caddr     *out_caddr);

@@ -439,16 +439,16 @@ int silofs_encode_mbr(const struct silofs_env *env,
                       const struct silofs_mbr *mbr,
                       struct silofs_mbr1k *out_mbr1k)
 {
-	return mbr_encode(mbr, &env->mdigest, &env->mbr_cipher,
-	                  &env->mbr_ivkey, out_mbr1k);
+	return mbr_encode(mbr, &env->mdigest, &env->boot.cipher,
+	                  &env->boot.ivkey, out_mbr1k);
 }
 
 int silofs_decode_mbr(const struct silofs_env *env,
                       const struct silofs_mbr1k *mbr1k_enc,
                       struct silofs_mbr *out_mbr)
 {
-	return mbr_decode(out_mbr, &env->mdigest, &env->mbr_cipher,
-	                  &env->mbr_ivkey, mbr1k_enc);
+	return mbr_decode(out_mbr, &env->mdigest, &env->boot.cipher,
+	                  &env->boot.ivkey, mbr1k_enc);
 }
 
 static void calc_mbr1k_caddr(const struct silofs_env *env,

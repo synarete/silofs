@@ -880,7 +880,7 @@ out:
 static int arc_fs_mbr_caddr(const struct silofs_ar_ctx *ar_ctx,
                             struct silofs_caddr *out_caddr)
 {
-	return silofs_env_mbr_caddr(ar_ctx->env, out_caddr);
+	return silofs_env_mbr_main_addr(ar_ctx->env, out_caddr);
 }
 
 static int arc_export_mbr(const struct silofs_ar_ctx *ar_ctx,
@@ -1198,7 +1198,7 @@ static int arc_import_post(struct silofs_ar_ctx *ar_ctx)
 	if (nmbrs != 1) {
 		return -SILOFS_EBADPACK;
 	}
-	silofs_env_set_mbr_caddr(ar_ctx->env, &caddr);
+	silofs_env_set_mbr_main_addr(ar_ctx->env, &caddr);
 	return 0;
 }
 

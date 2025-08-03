@@ -373,7 +373,7 @@ static int reload_mbr(const struct silofs_task_ctx *task)
 	struct silofs_caddr caddr = { .ctype = SILOFS_CTYPE_NONE };
 	int err;
 
-	err = silofs_env_mbr_caddr(task->t_env, &caddr);
+	err = silofs_env_mbr_main_addr(task->t_env, &caddr);
 	if (err) {
 		return err;
 	}
@@ -417,7 +417,7 @@ static int appexec_fork_fs(struct silofs_task_ctx *task)
 	struct silofs_mbr_caddrs caddrs;
 	int err;
 
-	err = silofs_env_mbr_caddr(task->t_env, &caddrs.curr);
+	err = silofs_env_mbr_main_addr(task->t_env, &caddrs.curr);
 	if (err) {
 		return err;
 	}
@@ -759,7 +759,7 @@ static int require_mbr_caddr(const struct silofs_env *env)
 {
 	struct silofs_caddr caddr = { .ctype = SILOFS_CTYPE_NONE };
 
-	return silofs_env_mbr_caddr(env, &caddr);
+	return silofs_env_mbr_main_addr(env, &caddr);
 }
 
 static int require_no_mbr_caddr(const struct silofs_env *env)
@@ -767,7 +767,7 @@ static int require_no_mbr_caddr(const struct silofs_env *env)
 	struct silofs_caddr caddr = { .ctype = SILOFS_CTYPE_NONE };
 	int err;
 
-	err = silofs_env_mbr_caddr(env, &caddr);
+	err = silofs_env_mbr_main_addr(env, &caddr);
 	return err ? 0 : -SILOFS_EEXIST;
 }
 
@@ -1086,7 +1086,7 @@ int silofs_get_fs_xref(struct silofs_env *env, struct silofs_xref *out_xref)
 	int ret;
 
 	silofs_env_lock(env);
-	ret = silofs_env_mbr_caddr(env, &caddr);
+	ret = silofs_env_mbr_main_addr(env, &caddr);
 	silofs_env_unlock(env);
 	caddr_to_xref(&caddr, ret, out_xref);
 	return ret;
@@ -1099,7 +1099,7 @@ int silofs_get_fs_base_xref(struct silofs_env *env,
 	int ret;
 
 	silofs_env_lock(env);
-	ret = silofs_env_base_caddr(env, &caddr);
+	ret = silofs_env_base_addr(env, &caddr);
 	silofs_env_unlock(env);
 	caddr_to_xref(&caddr, ret, out_xref);
 	return ret;
@@ -1112,7 +1112,7 @@ int silofs_get_fs_fork_xref(struct silofs_env *env,
 	int ret;
 
 	silofs_env_lock(env);
-	ret = silofs_env_fork_caddr(env, &caddr);
+	ret = silofs_env_fork_addr(env, &caddr);
 	silofs_env_unlock(env);
 	caddr_to_xref(&caddr, ret, out_xref);
 	return ret;
@@ -1126,7 +1126,7 @@ int silofs_set_fs_xref(struct silofs_env *env, const struct silofs_xref *xref)
 	silofs_env_lock(env);
 	err = silofs_xref_to_caddr(xref, &caddr);
 	if (!err) {
-		err = silofs_env_set_mbr_caddr(env, &caddr);
+		err = silofs_env_set_mbr_main_addr(env, &caddr);
 	}
 	silofs_env_unlock(env);
 	return err;

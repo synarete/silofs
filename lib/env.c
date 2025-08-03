@@ -37,10 +37,10 @@ env_bind_sbi(struct silofs_env *env, struct silofs_sb_info *sbi_new)
 	env->sbi = sbi_new;
 }
 
-static void env_update_mbr_sb_uaddr(struct silofs_env *env)
+static void env_update_mbr_sb_addr(struct silofs_env *env)
 {
 	const struct silofs_uaddr *uaddr = NULL;
-	struct silofs_mbr *mbr = env->base.mbr;
+	struct silofs_mbr *mbr = &env->boot.mbr;
 
 	if (env->sbi != NULL) {
 		uaddr = silofs_sbi_uaddr(env->sbi);
@@ -54,7 +54,7 @@ static void env_update_mbr_sb_uaddr(struct silofs_env *env)
 static void env_rebind_sbi(struct silofs_env *env, struct silofs_sb_info *sbi)
 {
 	env_bind_sbi(env, sbi);
-	env_update_mbr_sb_uaddr(env);
+	env_update_mbr_sb_addr(env);
 }
 
 static void env_update_owner(struct silofs_env *env)
@@ -116,7 +116,7 @@ static int env_update_base_caddr(struct silofs_env *env)
 	}
 	switch (caddr.ctype) {
 	case SILOFS_CTYPE_MBR:
-		silofs_env_set_mbr_caddr(env, &caddr);
+		silofs_env_set_mbr_main_addr(env, &caddr);
 		break;
 	case SILOFS_CTYPE_PACKIDX:
 		silofs_env_set_pack_caddr(env, &caddr);
@@ -163,10 +163,6 @@ static void
 env_init_commons(struct silofs_env *env, const struct silofs_env_base *base)
 {
 	memcpy(&env->base, base, sizeof(env->base));
-	silofs_ivkey_init(&env->mbr_ivkey);
-	silofs_caddr_reset(&env->mbr_caddr);
-	silofs_caddr_reset(&env->mbr_base_caddr);
-	silofs_caddr_reset(&env->mbr_fork_caddr);
 	silofs_caddr_reset(&env->pack_caddr);
 	env->init_time = silofs_time_mono_now();
 	env->iconv_set = false;
@@ -177,12 +173,32 @@ env_init_commons(struct silofs_env *env, const struct silofs_env_base *base)
 static void env_fini_commons(struct silofs_env *env)
 {
 	memset(&env->base, 0, sizeof(env->base));
-	silofs_ivkey_reset(&env->mbr_ivkey);
-	silofs_caddr_reset(&env->mbr_caddr);
-	silofs_caddr_reset(&env->mbr_base_caddr);
-	silofs_caddr_reset(&env->mbr_fork_caddr);
 	env->sbi = NULL;
 	env->ms_flags = 0;
+}
+
+static int env_init_boot(struct silofs_env *env)
+{
+	struct silofs_env_boot *boot = &env->boot;
+
+	silofs_mbr_init(&boot->mbr);
+	silofs_ivkey_init(&boot->ivkey);
+	silofs_caddr_reset(&boot->main_addr);
+	silofs_caddr_reset(&boot->base_addr);
+	silofs_caddr_reset(&boot->fork_addr);
+	return silofs_cipher_init(&boot->cipher);
+}
+
+static void env_fini_boot(struct silofs_env *env)
+{
+	struct silofs_env_boot *boot = &env->boot;
+
+	silofs_cipher_fini(&boot->cipher);
+	silofs_caddr_reset(&boot->fork_addr);
+	silofs_caddr_reset(&boot->base_addr);
+	silofs_caddr_reset(&boot->main_addr);
+	silofs_ivkey_reset(&boot->ivkey);
+	silofs_mbr_fini(&boot->mbr);
 }
 
 static int env_init_locks(struct silofs_env *env)
@@ -211,7 +227,6 @@ static void env_fini_crypto(struct silofs_env *env)
 {
 	silofs_cipher_fini(&env->dec_cipher);
 	silofs_cipher_fini(&env->enc_cipher);
-	silofs_cipher_fini(&env->mbr_cipher);
 	silofs_mdigest_fini(&env->mdigest);
 }
 
@@ -222,10 +237,6 @@ static int env_init_crypto(struct silofs_env *env)
 	err = silofs_mdigest_init(&env->mdigest);
 	if (err) {
 		return err;
-	}
-	err = silofs_cipher_init(&env->mbr_cipher);
-	if (err) {
-		goto out_err;
 	}
 	err = silofs_cipher_init(&env->enc_cipher);
 	if (err) {
@@ -267,6 +278,10 @@ int silofs_env_init(struct silofs_env *env, const struct silofs_env_base *base)
 	env_init_commons(env, base);
 	env_init_opstat(env);
 
+	err = env_init_boot(env);
+	if (err) {
+		return err;
+	}
 	err = env_update_by_env_args(env);
 	if (err) {
 		return err;
@@ -295,6 +310,7 @@ void silofs_env_fini(struct silofs_env *env)
 	env_fini_iconv(env);
 	env_fini_crypto(env);
 	env_fini_locks(env);
+	env_fini_boot(env);
 	env_fini_commons(env);
 }
 
@@ -322,13 +338,15 @@ void silofs_env_rwunlock(struct silofs_env *env)
 	silofs_rwlock_unlock(&env->rwlock);
 }
 
-int silofs_env_setup(struct silofs_env *env, const struct silofs_password *pw)
+int silofs_env_setup_passwd(struct silofs_env *env,
+                            const struct silofs_password *pw)
 {
 	const struct silofs_mdigest *md = &env->mdigest;
+	struct silofs_env_boot *boot = &env->boot;
 	int ret = 0;
 
 	if ((pw != NULL) && (pw->passlen > 0)) {
-		ret = silofs_derive_default_ivkey(md, pw, &env->mbr_ivkey);
+		ret = silofs_derive_default_ivkey(md, pw, &boot->ivkey);
 	}
 	return ret;
 }
@@ -343,34 +361,34 @@ static bool caddr_ismbr(const struct silofs_caddr *caddr)
 	return (caddr->ctype == SILOFS_CTYPE_MBR);
 }
 
-int silofs_env_mbr_caddr(const struct silofs_env *env,
-                         struct silofs_caddr *out_caddr)
+int silofs_env_mbr_main_addr(const struct silofs_env *env,
+                             struct silofs_caddr *out_caddr)
 {
-	silofs_caddr_assign(out_caddr, &env->mbr_caddr);
+	silofs_caddr_assign(out_caddr, &env->boot.main_addr);
 	return caddr_ismbr(out_caddr) ? 0 : -SILOFS_ENOENT;
 }
 
-int silofs_env_set_mbr_caddr(struct silofs_env *env,
-                             const struct silofs_caddr *caddr)
+int silofs_env_set_mbr_main_addr(struct silofs_env *env,
+                                 const struct silofs_caddr *caddr)
 {
 	if (!caddr_ismbr(caddr)) {
 		return -SILOFS_EINVAL;
 	}
-	silofs_caddr_assign(&env->mbr_caddr, caddr);
+	silofs_caddr_assign(&env->boot.main_addr, caddr);
 	return 0;
 }
 
-int silofs_env_base_caddr(const struct silofs_env *env,
-                          struct silofs_caddr *out_caddr)
+int silofs_env_base_addr(const struct silofs_env *env,
+                         struct silofs_caddr *out_caddr)
 {
-	silofs_caddr_assign(out_caddr, &env->mbr_base_caddr);
+	silofs_caddr_assign(out_caddr, &env->boot.base_addr);
 	return caddr_ismbr(out_caddr) ? 0 : -SILOFS_ENOENT;
 }
 
-int silofs_env_fork_caddr(const struct silofs_env *env,
-                          struct silofs_caddr *out_caddr)
+int silofs_env_fork_addr(const struct silofs_env *env,
+                         struct silofs_caddr *out_caddr)
 {
-	silofs_caddr_assign(out_caddr, &env->mbr_fork_caddr);
+	silofs_caddr_assign(out_caddr, &env->boot.fork_addr);
 	return caddr_ismbr(out_caddr) ? 0 : -SILOFS_ENOENT;
 }
 
@@ -410,7 +428,7 @@ int silofs_env_sense_mbr(struct silofs_env *env)
 	struct silofs_caddr caddr = { .ctype = SILOFS_CTYPE_NONE };
 	int err;
 
-	err = silofs_env_mbr_caddr(env, &caddr);
+	err = silofs_env_mbr_main_addr(env, &caddr);
 	if (err) {
 		return err;
 	}
@@ -426,11 +444,11 @@ int silofs_env_reload_mbr(struct silofs_env *env)
 	struct silofs_caddr caddr = { .ctype = SILOFS_CTYPE_NONE };
 	int err;
 
-	err = silofs_env_mbr_caddr(env, &caddr);
+	err = silofs_env_mbr_main_addr(env, &caddr);
 	if (err) {
 		return err;
 	}
-	err = silofs_reload_mbr(env, &caddr, env->base.mbr);
+	err = silofs_reload_mbr(env, &caddr, &env->boot.mbr);
 	if (err) {
 		return err;
 	}
@@ -442,7 +460,7 @@ int silofs_env_unlink_mbr(struct silofs_env *env)
 	struct silofs_caddr caddr = { .ctype = SILOFS_CTYPE_NONE };
 	int err;
 
-	err = silofs_env_mbr_caddr(env, &caddr);
+	err = silofs_env_mbr_main_addr(env, &caddr);
 	if (err) {
 		return err;
 	}
@@ -473,9 +491,9 @@ static void make_super_uaddr(const struct silofs_lsid *lsid,
 	silofs_uaddr_setup(out_uaddr, lsid, 0, 0);
 }
 
-static const struct silofs_uaddr *env_sb_uaddr(const struct silofs_env *env)
+static const struct silofs_uaddr *env_sb_addr(const struct silofs_env *env)
 {
-	return &env->base.mbr->sb_uaddr;
+	return &env->boot.mbr.sb_uaddr;
 }
 
 static void env_make_super_uaddr(const struct silofs_env *env,
@@ -491,7 +509,7 @@ static void env_make_super_uaddr(const struct silofs_env *env,
 static void env_resolve_super_uaddr(const struct silofs_env *env,
                                     struct silofs_uaddr *out_uaddr)
 {
-	silofs_uaddr_assign(out_uaddr, env_sb_uaddr(env));
+	silofs_uaddr_assign(out_uaddr, env_sb_addr(env));
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -599,7 +617,7 @@ int silofs_env_reload_super(struct silofs_env *env)
 
 static const struct silofs_lsid *env_sb_lsid(const struct silofs_env *env)
 {
-	const struct silofs_uaddr *sb_uaddr = env_sb_uaddr(env);
+	const struct silofs_uaddr *sb_uaddr = env_sb_addr(env);
 
 	return &sb_uaddr->laddr.lsid;
 }
@@ -706,8 +724,8 @@ static int env_update_mbr(struct silofs_env *env, const struct silofs_mbr *mbr)
 	if (err) {
 		return err;
 	}
-	silofs_env_set_mbr_caddr(env, &caddr);
-	silofs_mbr_assign(env->base.mbr, mbr);
+	silofs_env_set_mbr_main_addr(env, &caddr);
+	silofs_mbr_assign(&env->boot.mbr, mbr);
 	return 0;
 }
 
@@ -747,7 +765,7 @@ int silofs_env_setup_mbr(struct silofs_env *env)
 static void
 env_pre_commit_mbr(const struct silofs_env *env, struct silofs_mbr *mbr)
 {
-	silofs_mbr_assign(mbr, env->base.mbr);
+	silofs_mbr_assign(mbr, &env->boot.mbr);
 	silofs_mbr_set_sb_addr(mbr, silofs_sbi_uaddr(env->sbi));
 }
 
@@ -774,11 +792,11 @@ env_resave_mbr(struct silofs_env *env, struct silofs_caddr *out_caddr)
 {
 	int err;
 
-	err = silofs_save_mbr(env, env->base.mbr, out_caddr);
+	err = silofs_save_mbr(env, &env->boot.mbr, out_caddr);
 	if (err) {
 		return err;
 	}
-	silofs_env_set_mbr_caddr(env, out_caddr);
+	silofs_env_set_mbr_main_addr(env, out_caddr);
 	return 0;
 }
 
@@ -818,7 +836,7 @@ static int env_do_forkfs(struct silofs_env *env)
 	struct silofs_sb_info *sbi_cur = env->sbi;
 	int err;
 
-	err = silofs_env_mbr_caddr(env, &env->mbr_base_caddr);
+	err = silofs_env_mbr_main_addr(env, &env->boot.base_addr);
 	if (err) {
 		return err;
 	}
@@ -827,7 +845,7 @@ static int env_do_forkfs(struct silofs_env *env)
 	if (err) {
 		return err;
 	}
-	err = env_resave_mbr(env, &env->mbr_fork_caddr);
+	err = env_resave_mbr(env, &env->boot.fork_addr);
 	if (err) {
 		return err;
 	}
@@ -836,7 +854,7 @@ static int env_do_forkfs(struct silofs_env *env)
 	if (err) {
 		return err;
 	}
-	err = env_resave_mbr(env, &env->mbr_caddr);
+	err = env_resave_mbr(env, &env->boot.main_addr);
 	if (err) {
 		return err;
 	}

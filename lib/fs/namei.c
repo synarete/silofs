@@ -2405,7 +2405,7 @@ static void fill_query_boot(const struct silofs_inode_info *ii,
 	struct silofs_query_boot *qboot = &query->u.boot;
 	struct silofs_strspan ss;
 
-	silofs_env_mbr_caddr(silofs_ii_env(ii), &caddr);
+	silofs_env_mbr_main_addr(silofs_ii_env(ii), &caddr);
 	silofs_sbi_self_blobid(silofs_ii_sbi(ii), &blobid);
 	bootpath_of(ii, &bootpath);
 
@@ -2626,15 +2626,15 @@ static int fill_mbr_caddrs(const struct silofs_task_ctx *task,
 	const struct silofs_env *env = task->t_env;
 	int err;
 
-	err = silofs_env_mbr_caddr(env, &out_caddrs->curr);
+	err = silofs_env_mbr_main_addr(env, &out_caddrs->curr);
 	if (err) {
 		return err;
 	}
-	err = silofs_env_base_caddr(env, &out_caddrs->base);
+	err = silofs_env_base_addr(env, &out_caddrs->base);
 	if (err) {
 		return err;
 	}
-	err = silofs_env_fork_caddr(env, &out_caddrs->fork);
+	err = silofs_env_fork_addr(env, &out_caddrs->fork);
 	if (err) {
 		return err;
 	}

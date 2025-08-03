@@ -68,7 +68,6 @@ struct silofs_flusher {
 	struct silofs_submit_ref  sref[SILOFS_SQENT_NREFS_MAX];
 	struct silofs_dset        dset[3];
 	struct silofs_listq       txq;
-	const struct silofs_mbr  *mbr;
 	struct silofs_submitq    *submitq;
 	struct silofs_task_ctx   *task;
 	struct silofs_sb_info    *sbi;
@@ -137,9 +136,8 @@ void silofs_submitq_del_sqe(struct silofs_submitq     *smq,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_flusher_init(struct silofs_flusher   *flusher,
-                        const struct silofs_mbr *mbr,
-                        struct silofs_submitq   *submitq);
+int silofs_flusher_init(struct silofs_flusher *flusher,
+                        struct silofs_submitq *submitq);
 
 void silofs_flusher_fini(struct silofs_flusher *flusher);
 

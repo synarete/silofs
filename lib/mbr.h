@@ -30,9 +30,9 @@ struct silofs_mbr {
 	struct silofs_uuid  uuid;
 	struct silofs_uaddr sb_uaddr;
 	struct silofs_caddr aridx_caddr;
-	int32_t             cipher_algo;
-	int32_t             cipher_mode;
 	enum silofs_mbrf    flags;
+	int                 cipher_algo;
+	int                 cipher_mode;
 };
 
 /* a tuple of content-addressable references to mbr blocks */

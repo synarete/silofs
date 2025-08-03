@@ -47,7 +47,7 @@ static void env_update_mbr_sb_uaddr(struct silofs_env *env)
 	} else {
 		uaddr = silofs_uaddr_none();
 	}
-	silofs_mbr_set_sb_uaddr(mbr, uaddr);
+	silofs_mbr_set_sb_addr(mbr, uaddr);
 	silofs_mbr_gen_uuid(mbr);
 }
 
@@ -748,7 +748,7 @@ static void
 env_pre_commit_mbr(const struct silofs_env *env, struct silofs_mbr *mbr)
 {
 	silofs_mbr_assign(mbr, env->base.mbr);
-	silofs_mbr_set_sb_uaddr(mbr, silofs_sbi_uaddr(env->sbi));
+	silofs_mbr_set_sb_addr(mbr, silofs_sbi_uaddr(env->sbi));
 }
 
 int silofs_env_commit_mbr(struct silofs_env *env)

@@ -29,6 +29,7 @@ struct silofs_mbr {
 	struct silofs_ivkey main_ivkey;
 	struct silofs_uuid  uuid;
 	struct silofs_uaddr sb_uaddr;
+	struct silofs_caddr ar_index;
 	int32_t             cipher_algo;
 	int32_t             cipher_mode;
 	enum silofs_mbrf    flags;
@@ -40,24 +41,6 @@ struct silofs_mbr_caddrs {
 	struct silofs_caddr curr;
 	struct silofs_caddr fork;
 };
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-void silofs_mbr1k_init(struct silofs_mbr1k *mbr1k);
-
-void silofs_mbr1k_fini(struct silofs_mbr1k *mbr1k);
-
-void silofs_mbr1k_stamp(struct silofs_mbr1k         *mbr1k,
-                        const struct silofs_mdigest *md);
-
-int silofs_mbr1k_verify(const struct silofs_mbr1k   *mbr1k,
-                        const struct silofs_mdigest *md);
-
-void silofs_mbr1k_xtoh(const struct silofs_mbr1k *mbr1k,
-                       struct silofs_mbr         *mbr);
-
-void silofs_mbr1k_htox(struct silofs_mbr1k     *mbr1k,
-                       const struct silofs_mbr *mbr);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -81,8 +64,11 @@ void silofs_mbr_sb_uaddr(const struct silofs_mbr *mbr,
 void silofs_mbr_set_sb_uaddr(struct silofs_mbr         *mbr,
                              const struct silofs_uaddr *sb_uaddr);
 
-void silofs_mbr_blobid(const struct silofs_mbr *mbr,
-                       struct silofs_blobid    *out_vid);
+void silofs_mbr_ar_index(const struct silofs_mbr *mbr,
+                         struct silofs_caddr     *out_caddr);
+
+void silofs_mbr_set_ar_index(struct silofs_mbr         *mbr,
+                             const struct silofs_caddr *caddr);
 
 void silofs_make_mbr_uaddr(const struct silofs_blobid *blobid,
                            struct silofs_uaddr        *out_uaddr);

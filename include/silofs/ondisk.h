@@ -337,6 +337,7 @@
 /* main-boot-record flags */
 enum silofs_mbrf {
 	SILOFS_MBRF_NONE = 0x00,
+	SILOFS_MBRF_ARCH = 0x01,
 };
 
 /* common-header flags */
@@ -615,7 +616,7 @@ struct silofs_mbr1k {
 	struct silofs_key      mbr_main_key;
 	struct silofs_uaddr96b mbr_sb_uaddr;
 	uint8_t                mbr_reserved1[32];
-	uint8_t                mbr_reserved2[64];
+	struct silofs_caddr64b mbr_ar_index;
 	uint8_t                mbr_reserved3[672];
 	struct silofs_hash256  mbr_hash;
 } silofs_attr_aligned64;
@@ -1031,10 +1032,10 @@ struct silofs_ar_hdr1k {
 /* semantic "view" into meta elements */
 union silofs_view_u {
 	struct silofs_header       hdr[2];
+	struct silofs_mbr1k        mbr;
 	struct silofs_uber_block   ub;
 	struct silofs_blob_desc    bd;
 	struct silofs_btree_node   btn;
-	struct silofs_mbr1k        brec;
 	struct silofs_super_block  sb;
 	struct silofs_spmap_node   sn;
 	struct silofs_spmap_leaf   sl;

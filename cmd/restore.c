@@ -18,7 +18,7 @@
 #include "cmd.h"
 
 static const char *const cmd_restore_help_desc =
-	"restore <repodir/fsname> --from=<arname>                          \n"
+	"restore <repodir/fsname> --from=<arname>                        \n"
 	"                                                                \n"
 	"options:                                                        \n"
 	"  -n, --from=arname            Source archive name              \n"
@@ -36,7 +36,7 @@ struct cmd_restore_in_args {
 
 struct cmd_restore_ctx {
 	struct cmd_restore_in_args in_args;
-	struct silofs_args env_args;
+	struct silofs_env_args env_args;
 	struct silofs_env *env;
 	bool has_lockfile;
 };
@@ -169,18 +169,18 @@ static void cmd_restore_getpass(struct cmd_restore_ctx *ctx)
 
 static void cmd_restore_setup_env_args(struct cmd_restore_ctx *ctx)
 {
-	struct silofs_args *env_args = &ctx->env_args;
+	struct silofs_env_args *env_args = &ctx->env_args;
 
 	cmd_setup_env_args(env_args);
-	env_args->boot.repodir = ctx->in_args.repodir_real;
-	env_args->boot.fsname = ctx->in_args.fsname;
-	env_args->boot.arname = ctx->in_args.arname;
-	env_args->boot.passwd = ctx->in_args.password;
+	env_args->boot_args.repodir = ctx->in_args.repodir_real;
+	env_args->boot_args.fs_name = ctx->in_args.fsname;
+	env_args->boot_args.ar_name = ctx->in_args.arname;
+	env_args->boot_args.passwd = ctx->in_args.password;
 }
 
 static void cmd_restore_load_xref(struct cmd_restore_ctx *ctx)
 {
-	cmd_load_ar_xref(&ctx->env_args.boot);
+	cmd_load_ar_xref(&ctx->env_args.boot_args);
 }
 
 static void cmd_restore_setup_env(struct cmd_restore_ctx *ctx)
@@ -207,11 +207,11 @@ static void cmd_restore_execute(struct cmd_restore_ctx *ctx)
 {
 	struct silofs_boot_args boot_args = {
 		.repodir = ctx->in_args.repodir_real,
-		.fsname = ctx->in_args.fsname,
-		.arname = ctx->in_args.arname,
+		.fs_name = ctx->in_args.fsname,
+		.ar_name = ctx->in_args.arname,
 	};
 
-	cmd_restore_fs(ctx->env, &boot_args.xref);
+	cmd_restore_fs(ctx->env, &boot_args.fs_xref);
 	cmd_save_fs_xref(&boot_args);
 }
 

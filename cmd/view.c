@@ -35,7 +35,7 @@ struct cmd_view_in_args {
 
 struct cmd_view_ctx {
 	struct cmd_view_in_args in_args;
-	struct silofs_args env_args;
+	struct silofs_env_args env_args;
 	struct silofs_env *env;
 	FILE *out_fp;
 	bool has_lockfile;
@@ -166,12 +166,12 @@ static void cmd_view_getpass(struct cmd_view_ctx *ctx)
 
 static void cmd_view_setup_env_args(struct cmd_view_ctx *ctx)
 {
-	struct silofs_args *env_args = &ctx->env_args;
+	struct silofs_env_args *env_args = &ctx->env_args;
 
 	cmd_setup_env_args(env_args);
-	env_args->boot.repodir = ctx->in_args.repodir_real;
-	env_args->boot.fsname = ctx->in_args.fsname;
-	env_args->boot.passwd = ctx->in_args.password;
+	env_args->boot_args.repodir = ctx->in_args.repodir_real;
+	env_args->boot_args.fs_name = ctx->in_args.fsname;
+	env_args->boot_args.passwd = ctx->in_args.password;
 }
 
 static void cmd_view_setup_fs_ids(struct cmd_view_ctx *ctx)
@@ -179,9 +179,9 @@ static void cmd_view_setup_fs_ids(struct cmd_view_ctx *ctx)
 	cmd_load_fsids(&ctx->env_args.ugids, ctx->in_args.repodir_real);
 }
 
-static void cmd_view_load_xref(struct cmd_view_ctx *ctx)
+static void cmd_view_load_fs_xref(struct cmd_view_ctx *ctx)
 {
-	cmd_load_fs_xref(&ctx->env_args.boot);
+	cmd_load_fs_xref(&ctx->env_args.boot_args);
 }
 
 static void cmd_view_setup_env(struct cmd_view_ctx *ctx)
@@ -201,12 +201,12 @@ static void cmd_view_close_repo(struct cmd_view_ctx *ctx)
 
 static void cmd_view_sense_fs(struct cmd_view_ctx *ctx)
 {
-	cmd_sense_fs(ctx->env);
+	cmd_sense_fs(ctx->env, &ctx->env_args.boot_args.fs_xref);
 }
 
 static void cmd_view_open_fs(struct cmd_view_ctx *ctx)
 {
-	cmd_open_fs(ctx->env);
+	cmd_open_fs(ctx->env, &ctx->env_args.boot_args.fs_xref);
 }
 
 static void cmd_view_close_fs(struct cmd_view_ctx *ctx)
@@ -253,7 +253,7 @@ void cmd_execute_view(void)
 	cmd_view_setup_fs_ids(&ctx);
 
 	/* Require fs boot-reference */
-	cmd_view_load_xref(&ctx);
+	cmd_view_load_fs_xref(&ctx);
 
 	/* Setup execution environment */
 	cmd_view_setup_env(&ctx);

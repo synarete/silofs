@@ -36,7 +36,7 @@ struct cmd_archive_in_args {
 
 struct cmd_archive_ctx {
 	struct cmd_archive_in_args in_args;
-	struct silofs_args env_args;
+	struct silofs_env_args env_args;
 	struct silofs_env *env;
 	bool has_lockfile;
 };
@@ -170,13 +170,13 @@ static void cmd_archive_getpass(struct cmd_archive_ctx *ctx)
 
 static void cmd_archive_setup_env_args(struct cmd_archive_ctx *ctx)
 {
-	struct silofs_args *env_args = &ctx->env_args;
+	struct silofs_env_args *env_args = &ctx->env_args;
 
 	cmd_setup_env_args(env_args);
-	env_args->boot.repodir = ctx->in_args.repodir_real;
-	env_args->boot.fsname = ctx->in_args.fsname;
-	env_args->boot.arname = ctx->in_args.arname;
-	env_args->boot.passwd = ctx->in_args.password;
+	env_args->boot_args.repodir = ctx->in_args.repodir_real;
+	env_args->boot_args.fs_name = ctx->in_args.fsname;
+	env_args->boot_args.ar_name = ctx->in_args.arname;
+	env_args->boot_args.passwd = ctx->in_args.password;
 }
 
 static void cmd_archive_setup_fs_ids(struct cmd_archive_ctx *ctx)
@@ -186,7 +186,7 @@ static void cmd_archive_setup_fs_ids(struct cmd_archive_ctx *ctx)
 
 static void cmd_archive_load_xref(struct cmd_archive_ctx *ctx)
 {
-	cmd_load_fs_xref(&ctx->env_args.boot);
+	cmd_load_fs_xref(&ctx->env_args.boot_args);
 }
 
 static void cmd_archive_setup_env(struct cmd_archive_ctx *ctx)
@@ -206,12 +206,12 @@ static void cmd_archive_close_repo(struct cmd_archive_ctx *ctx)
 
 static void cmd_archive_sense_fs(struct cmd_archive_ctx *ctx)
 {
-	cmd_sense_fs(ctx->env);
+	cmd_sense_fs(ctx->env, &ctx->env_args.boot_args.fs_xref);
 }
 
 static void cmd_archive_open_fs(struct cmd_archive_ctx *ctx)
 {
-	cmd_open_fs(ctx->env);
+	cmd_open_fs(ctx->env, &ctx->env_args.boot_args.fs_xref);
 }
 
 static void cmd_archive_close_fs(struct cmd_archive_ctx *ctx)
@@ -223,11 +223,11 @@ static void cmd_archive_execute(struct cmd_archive_ctx *ctx)
 {
 	struct silofs_boot_args boot_args = {
 		.repodir = ctx->in_args.repodir_real,
-		.fsname = ctx->in_args.fsname,
-		.arname = ctx->in_args.arname,
+		.fs_name = ctx->in_args.fsname,
+		.ar_name = ctx->in_args.arname,
 	};
 
-	cmd_archive_fs(ctx->env, &boot_args.xref);
+	cmd_archive_fs(ctx->env, &boot_args.ar_xref);
 	cmd_save_ar_xref(&boot_args);
 }
 

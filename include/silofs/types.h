@@ -51,12 +51,13 @@ struct silofs_xref {
 
 /* file-system's boot arguments */
 struct silofs_boot_args {
-	struct silofs_xref xref;
+	struct silofs_xref fs_xref;
+	struct silofs_xref ar_xref;
+	const char        *fs_name;
+	const char        *ar_name;
 	const char        *repodir;
-	const char        *fsname;
-	const char        *arname;
-	const char        *passwd;
 	const char        *mntdir;
+	const char        *passwd;
 };
 
 /* user-id host-to-fs bidirectional-mapping */
@@ -90,8 +91,8 @@ struct silofs_ugids {
 };
 
 /* input arguments */
-struct silofs_args {
-	struct silofs_boot_args boot;
+struct silofs_env_args {
+	struct silofs_boot_args boot_args;
 	struct silofs_ugids     ugids;
 	enum silofs_flags       flags;
 	uid_t                   uid;

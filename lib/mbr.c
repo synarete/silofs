@@ -256,7 +256,7 @@ mbr1k_xtoh(const struct silofs_mbr1k *mbr1k, struct silofs_mbr *mbr)
 	mbr1k_uuid(mbr1k, &mbr->uuid);
 	mbr1k_main_ivkey(mbr1k, &mbr->main_ivkey);
 	mbr1k_sb_addr(mbr1k, &mbr->sb_addr);
-	mbr1k_arix_addr(mbr1k, &mbr->arix_addr);
+	mbr1k_arix_addr(mbr1k, &mbr->ar_addr);
 	mbr->flags = mbr1k_flags(mbr1k);
 	mbr->cipher_algo = (int32_t)mbr1k_chiper_algo(mbr1k);
 	mbr->cipher_mode = (int32_t)mbr1k_chiper_mode(mbr1k);
@@ -267,7 +267,7 @@ mbr1k_htox(struct silofs_mbr1k *mbr1k, const struct silofs_mbr *mbr)
 {
 	mbr1k_setup(mbr1k);
 	mbr1k_set_sb_addr(mbr1k, &mbr->sb_addr);
-	mbr1k_set_arix_addr(mbr1k, &mbr->arix_addr);
+	mbr1k_set_arix_addr(mbr1k, &mbr->ar_addr);
 	mbr1k_set_flags(mbr1k, mbr->flags);
 	mbr1k_set_uuid(mbr1k, &mbr->uuid);
 	mbr1k_set_main_ivkey(mbr1k, &mbr->main_ivkey);
@@ -280,7 +280,7 @@ void silofs_mbr_init(struct silofs_mbr *mbr)
 {
 	silofs_memzero(mbr, sizeof(*mbr));
 	silofs_uaddr_reset(&mbr->sb_addr);
-	silofs_caddr_reset(&mbr->arix_addr);
+	silofs_caddr_reset(&mbr->ar_addr);
 	mbr->flags = SILOFS_MBRF_NONE;
 	mbr->cipher_algo = SILOFS_CIPHER_AES256;
 	mbr->cipher_mode = SILOFS_CIPHER_MODE_XTS;
@@ -290,7 +290,7 @@ void silofs_mbr_fini(struct silofs_mbr *mbr)
 {
 	silofs_ivkey_reset(&mbr->main_ivkey);
 	silofs_uaddr_reset(&mbr->sb_addr);
-	silofs_caddr_reset(&mbr->arix_addr);
+	silofs_caddr_reset(&mbr->ar_addr);
 	mbr->flags = SILOFS_MBRF_NONE;
 }
 
@@ -299,7 +299,7 @@ void silofs_mbr_assign(struct silofs_mbr *mbr, const struct silofs_mbr *other)
 	silofs_uuid_assign(&mbr->uuid, &other->uuid);
 	silofs_ivkey_assign(&mbr->main_ivkey, &other->main_ivkey);
 	silofs_uaddr_assign(&mbr->sb_addr, &other->sb_addr);
-	silofs_caddr_assign(&mbr->arix_addr, &other->arix_addr);
+	silofs_caddr_assign(&mbr->ar_addr, &other->ar_addr);
 	mbr->cipher_algo = other->cipher_algo;
 	mbr->cipher_mode = other->cipher_mode;
 	mbr->flags = other->flags;
@@ -362,10 +362,10 @@ mbr_update_flags(struct silofs_mbr *mbr, enum silofs_mbrf mask, bool set)
 	}
 }
 
-void silofs_mbr_set_arix_addr(struct silofs_mbr *mbr,
-                              const struct silofs_caddr *caddr)
+void silofs_mbr_set_ar_addr(struct silofs_mbr *mbr,
+                            const struct silofs_caddr *caddr)
 {
-	silofs_caddr_assign(&mbr->arix_addr, caddr);
+	silofs_caddr_assign(&mbr->ar_addr, caddr);
 	mbr_update_flags(mbr, SILOFS_MBRF_ARCH, !silofs_caddr_isnone(caddr));
 }
 
@@ -380,7 +380,7 @@ void silofs_make_mbr_uaddr(const struct silofs_blobid *blobid,
 	silofs_uaddr_setup(out_uaddr, &lsid, 0, 0);
 }
 
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int
 encrypt_mbr1k(const struct silofs_cipher *ci, const struct silofs_ivkey *ivkey,
@@ -433,22 +433,115 @@ mbr_decode(struct silofs_mbr *mbr, const struct silofs_mdigest *mdigest,
 	return 0;
 }
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_mbrctl_init(struct silofs_mbrctl *mbrc)
+{
+	int err;
+
+	silofs_caddr_reset(&mbrc->mref);
+	silofs_mbr_init(&mbrc->mbr);
+	silofs_ivkey_init(&mbrc->ivkey);
+
+	err = silofs_cipher_init(&mbrc->cipher);
+	if (err) {
+		return err;
+	}
+	err = silofs_mdigest_init(&mbrc->mdigest);
+	if (err) {
+		silofs_cipher_fini(&mbrc->cipher);
+		return err;
+	}
+	return 0;
+}
+
+void silofs_mbrctl_fini(struct silofs_mbrctl *mbrc)
+{
+	silofs_caddr_reset(&mbrc->mref);
+	silofs_mdigest_fini(&mbrc->mdigest);
+	silofs_cipher_fini(&mbrc->cipher);
+	silofs_ivkey_reset(&mbrc->ivkey);
+	silofs_mbr_fini(&mbrc->mbr);
+}
+
+static int
+mbrctl_encode(const struct silofs_mbrctl *mbrc, struct silofs_mbr1k *out_mbr1k)
+{
+	const struct silofs_mbr *mbr = &mbrc->mbr;
+
+	return mbr_encode(mbr, &mbrc->mdigest, &mbrc->cipher, &mbrc->ivkey,
+	                  out_mbr1k);
+}
+
+static int mbrctl_calc_ref(struct silofs_mbrctl *mbrc)
+{
+	struct silofs_mbr1k mbr1k_enc = { .mbr_magic = UINT64_MAX };
+
+	return silofs_mbrctl_encode(mbrc, &mbr1k_enc, &mbrc->mref);
+}
+
+int silofs_mbrctl_regen(struct silofs_mbrctl *mbrc)
+{
+	struct silofs_mbr *mbr = &mbrc->mbr;
+	int err;
+
+	silofs_mbr_gen_uuid(mbr);
+	err = silofs_mbr_gen_ivkey(mbr, &mbrc->mdigest);
+	if (err) {
+		return err;
+	}
+	err = mbrctl_calc_ref(mbrc);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+int silofs_mbrctl_update_sb(struct silofs_mbrctl *mbrc,
+                            const struct silofs_uaddr *sb_uaddr)
+{
+	struct silofs_mbr *mbr = &mbrc->mbr;
+
+	silofs_mbr_set_sb_addr(mbr, sb_uaddr);
+	return mbrctl_calc_ref(mbrc);
+}
+
+int silofs_mbrctl_encode(const struct silofs_mbrctl *mbrc,
+                         struct silofs_mbr1k *out_mbr1k_enc,
+                         struct silofs_caddr *out_caddr)
+{
+	const struct iovec iov = {
+		.iov_base = out_mbr1k_enc,
+		.iov_len = sizeof(*out_mbr1k_enc),
+	};
+	const enum silofs_ctype ctype = SILOFS_CTYPE_MBR;
+	int err;
+
+	err = mbrctl_encode(mbrc, out_mbr1k_enc);
+	if (err) {
+		log_err("failed to encode mbr: err=%d", err);
+		return err;
+	}
+	silofs_calc_caddr_of(&mbrc->mdigest, &iov, 1, ctype, out_caddr);
+	return 0;
+}
+
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 int silofs_encode_mbr(const struct silofs_env *env,
                       const struct silofs_mbr *mbr,
                       struct silofs_mbr1k *out_mbr1k)
 {
-	return mbr_encode(mbr, &env->mdigest, &env->boot.cipher,
-	                  &env->boot.ivkey, out_mbr1k);
+	return mbr_encode(mbr, &env->mbrctl.mdigest, &env->mbrctl.cipher,
+	                  &env->mbrctl.ivkey, out_mbr1k);
 }
 
 int silofs_decode_mbr(const struct silofs_env *env,
                       const struct silofs_mbr1k *mbr1k_enc,
                       struct silofs_mbr *out_mbr)
 {
-	return mbr_decode(out_mbr, &env->mdigest, &env->boot.cipher,
-	                  &env->boot.ivkey, mbr1k_enc);
+	return mbr_decode(out_mbr, &env->mbrctl.mdigest, &env->mbrctl.cipher,
+	                  &env->mbrctl.ivkey, mbr1k_enc);
 }
 
 static void calc_mbr1k_caddr(const struct silofs_env *env,

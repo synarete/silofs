@@ -705,7 +705,7 @@ static bool dtn_may_insert(const struct silofs_dtree_node *dtn, size_t nlen)
 	return (nwant + nused) <= limit;
 }
 
-static void dtn_de_assing_name(struct silofs_dtree_node *dtn,
+static void dtn_de_assign_name(struct silofs_dtree_node *dtn,
                                const struct silofs_dir_entry *de,
                                const struct silofs_namestr *name)
 {
@@ -747,7 +747,7 @@ static void dtn_insert(struct silofs_dtree_node *dtn,
 
 	de = dtn_resolve_insert_de(dtn);
 	de_assign_meta(de, ino, dt, name->hash, name_len, name_pos);
-	dtn_de_assing_name(dtn, de, name);
+	dtn_de_assign_name(dtn, de, name);
 
 	if (de == dtn_de_end(dtn)) {
 		dtn_inc_nde(dtn);

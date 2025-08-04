@@ -20,11 +20,11 @@
 #include "cmd.h"
 
 static const char *const cmd_clone_help_desc =
-	"clone -n <clonename> [<pathname>]                                 \n"
-	"clone -n <clonename> --offline <repodir/fsname>                   \n"
+	"clone -n <forkname> [<pathname>]                                \n"
+	"clone -n <forkname> --offline <repodir/fsname>                  \n"
 	"                                                                \n"
 	"options:                                                        \n"
-	"  -n, --name=clonename          Result cloneshot name             \n"
+	"  -n, --name=forkname          Result fork name                 \n"
 	"  -X, --offline                Operate on non-mounted fs        \n"
 	"  -L, --loglevel=level         Logging level (rfc5424)          \n";
 
@@ -33,7 +33,7 @@ struct cmd_clone_in_args {
 	char *repodir;
 	char *repodir_real;
 	char *fsname;
-	char *clonename;
+	char *forkname;
 	char *dirpath;
 	char *dirpath_real;
 	char *password;
@@ -43,7 +43,7 @@ struct cmd_clone_in_args {
 
 struct cmd_clone_ctx {
 	struct cmd_clone_in_args in_args;
-	struct silofs_args env_args;
+	struct silofs_env_args env_args;
 	struct silofs_env *env;
 	union silofs_ioc_u *ioc;
 	struct silofs_xref xref_new;
@@ -77,7 +77,7 @@ static void cmd_clone_parse_optargs(struct cmd_clone_ctx *ctx)
 		opt_chr = cmd_optargs_parse(&opa);
 		switch (opt_chr) {
 		case 'n':
-			ctx->in_args.clonename =
+			ctx->in_args.forkname =
 				cmd_optarg_dupoptarg(&opa, "name");
 			break;
 		case 'X':
@@ -100,7 +100,7 @@ static void cmd_clone_parse_optargs(struct cmd_clone_ctx *ctx)
 			break;
 		}
 	}
-	cmd_require_arg("name", ctx->in_args.clonename);
+	cmd_require_arg("name", ctx->in_args.forkname);
 
 	if (ctx->in_args.offline) {
 		ctx->in_args.repodir_fsname =
@@ -127,7 +127,7 @@ static void cmd_clone_finalize(struct cmd_clone_ctx *ctx)
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
 	cmd_pstrfree(&ctx->in_args.fsname);
-	cmd_pstrfree(&ctx->in_args.clonename);
+	cmd_pstrfree(&ctx->in_args.forkname);
 	cmd_pstrfree(&ctx->in_args.dirpath);
 	cmd_pstrfree(&ctx->in_args.dirpath_real);
 	cmd_del_iocp(&ctx->ioc);
@@ -170,14 +170,13 @@ static void cmd_clone_prepare_by_query(struct cmd_clone_ctx *ctx)
 static void cmd_clone_prepare_online(struct cmd_clone_ctx *ctx)
 {
 	cmd_realpath_dir(ctx->in_args.dirpath, &ctx->in_args.dirpath_real);
-	cmd_check_fsname(ctx->in_args.clonename);
+	cmd_check_fsname(ctx->in_args.forkname);
 	cmd_check_fusefs(ctx->in_args.dirpath_real);
 	cmd_clone_prepare_by_query(ctx);
 	cmd_realpath_dir(ctx->in_args.repodir, &ctx->in_args.repodir_real);
 	cmd_check_repodir_fsname(ctx->in_args.repodir_real,
 	                         ctx->in_args.fsname);
-	cmd_check_notexists2(ctx->in_args.repodir_real,
-	                     ctx->in_args.clonename);
+	cmd_check_notexists2(ctx->in_args.repodir_real, ctx->in_args.forkname);
 }
 
 static void cmd_clone_prepare_offline(struct cmd_clone_ctx *ctx)
@@ -189,9 +188,8 @@ static void cmd_clone_prepare_offline(struct cmd_clone_ctx *ctx)
 	cmd_realpath_dir(ctx->in_args.repodir, &ctx->in_args.repodir_real);
 	cmd_check_repodir_fsname(ctx->in_args.repodir_real,
 	                         ctx->in_args.fsname);
-	cmd_check_fsname(ctx->in_args.clonename);
-	cmd_check_notexists2(ctx->in_args.repodir_real,
-	                     ctx->in_args.clonename);
+	cmd_check_fsname(ctx->in_args.forkname);
+	cmd_check_notexists2(ctx->in_args.repodir_real, ctx->in_args.forkname);
 }
 
 static void cmd_clone_prepare(struct cmd_clone_ctx *ctx)
@@ -289,12 +287,12 @@ static void cmd_clone_do_ioctl_syncfs(struct cmd_clone_ctx *ctx)
 
 static void cmd_clone_setup_env_args(struct cmd_clone_ctx *ctx)
 {
-	struct silofs_args *env_args = &ctx->env_args;
+	struct silofs_env_args *env_args = &ctx->env_args;
 
 	cmd_setup_env_args(env_args);
-	env_args->boot.repodir = ctx->in_args.repodir_real;
-	env_args->boot.fsname = ctx->in_args.fsname;
-	env_args->boot.passwd = ctx->in_args.password;
+	env_args->boot_args.repodir = ctx->in_args.repodir_real;
+	env_args->boot_args.fs_name = ctx->in_args.fsname;
+	env_args->boot_args.passwd = ctx->in_args.password;
 }
 
 static void cmd_clone_setup_fs_ids(struct cmd_clone_ctx *ctx)
@@ -302,9 +300,9 @@ static void cmd_clone_setup_fs_ids(struct cmd_clone_ctx *ctx)
 	cmd_load_fsids(&ctx->env_args.ugids, ctx->in_args.repodir_real);
 }
 
-static void cmd_clone_load_xref(struct cmd_clone_ctx *ctx)
+static void cmd_clone_load_fs_xref(struct cmd_clone_ctx *ctx)
 {
-	cmd_load_fs_xref(&ctx->env_args.boot);
+	cmd_load_fs_xref(&ctx->env_args.boot_args);
 }
 
 static void cmd_clone_setup_env(struct cmd_clone_ctx *ctx)
@@ -324,17 +322,17 @@ static void cmd_clone_close_repo(struct cmd_clone_ctx *ctx)
 
 static void cmd_clone_sense_fs(struct cmd_clone_ctx *ctx)
 {
-	cmd_sense_fs(ctx->env);
+	cmd_sense_fs(ctx->env, &ctx->env_args.boot_args.fs_xref);
 }
 
 static void cmd_clone_open_fs(struct cmd_clone_ctx *ctx)
 {
-	cmd_open_fs(ctx->env);
+	cmd_open_fs(ctx->env, &ctx->env_args.boot_args.fs_xref);
 }
 
 static void cmd_clone_do_clonefs(struct cmd_clone_ctx *ctx)
 {
-	cmd_clone_fs(ctx->env, &ctx->xref_new, &ctx->xref_alt);
+	cmd_fork_fs(ctx->env, &ctx->xref_new, &ctx->xref_alt);
 }
 
 static void cmd_clone_close_fs(struct cmd_clone_ctx *ctx)
@@ -342,25 +340,25 @@ static void cmd_clone_close_fs(struct cmd_clone_ctx *ctx)
 	cmd_close_fs(ctx->env);
 }
 
-static void cmd_clone_save_clone_xref(struct cmd_clone_ctx *ctx)
+static void cmd_clone_save_fork_xref(struct cmd_clone_ctx *ctx)
 {
 	struct silofs_boot_args boot_args = {
 		.repodir = ctx->in_args.repodir_real,
-		.fsname = ctx->in_args.clonename,
+		.fs_name = ctx->in_args.forkname,
 	};
 
-	memcpy(&boot_args.xref, &ctx->xref_alt, sizeof(boot_args.xref));
+	memcpy(&boot_args.fs_xref, &ctx->xref_alt, sizeof(boot_args.fs_xref));
 	cmd_save_fs_xref(&boot_args);
 }
 
-static void cmd_clone_save_curr_xref(struct cmd_clone_ctx *ctx)
+static void cmd_clone_save_main_xref(struct cmd_clone_ctx *ctx)
 {
 	struct silofs_boot_args boot_args = {
 		.repodir = ctx->in_args.repodir_real,
-		.fsname = ctx->in_args.fsname,
+		.fs_name = ctx->in_args.fsname,
 	};
 
-	memcpy(&boot_args.xref, &ctx->xref_new, sizeof(boot_args.xref));
+	memcpy(&boot_args.fs_xref, &ctx->xref_new, sizeof(boot_args.fs_xref));
 	cmd_save_fs_xref(&boot_args);
 }
 
@@ -426,7 +424,7 @@ void cmd_execute_clone(void)
 	cmd_clone_setup_env_args(&ctx);
 
 	/* Load fs boot-reference */
-	cmd_clone_load_xref(&ctx);
+	cmd_clone_load_fs_xref(&ctx);
 
 	/* Load fs-ids mapping */
 	cmd_clone_setup_fs_ids(&ctx);
@@ -447,10 +445,10 @@ void cmd_execute_clone(void)
 	cmd_clone_close_repo(&ctx);
 
 	/* Save new clone bconf */
-	cmd_clone_save_clone_xref(&ctx);
+	cmd_clone_save_fork_xref(&ctx);
 
 	/* Re-save (overwrite) original bconf */
-	cmd_clone_save_curr_xref(&ctx);
+	cmd_clone_save_main_xref(&ctx);
 
 	/* Delete environment */
 	cmd_clone_destroy_env(&ctx);

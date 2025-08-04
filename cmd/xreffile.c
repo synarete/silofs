@@ -76,7 +76,7 @@ void cmd_save_fs_xref(const struct silofs_boot_args *boot_args)
 	int dfd = -1;
 
 	cmd_open_repodir(boot_args, &dfd);
-	cmd_save_xref_at(dfd, boot_args->fsname, boot_args->xref.s);
+	cmd_save_xref_at(dfd, boot_args->fs_name, boot_args->fs_xref.s);
 	silofs_sys_closefd(&dfd);
 }
 
@@ -85,7 +85,7 @@ void cmd_save_ar_xref(const struct silofs_boot_args *boot_args)
 	int dfd = -1;
 
 	cmd_open_repodir(boot_args, &dfd);
-	cmd_save_xref_at(dfd, boot_args->arname, boot_args->xref.s);
+	cmd_save_xref_at(dfd, boot_args->ar_name, boot_args->ar_xref.s);
 	silofs_sys_closefd(&dfd);
 }
 
@@ -94,7 +94,7 @@ void cmd_unlink_fs_xref(const struct silofs_boot_args *boot_args)
 	int dfd = -1;
 
 	cmd_open_repodir(boot_args, &dfd);
-	silofs_sys_unlinkat(dfd, boot_args->fsname, 0);
+	silofs_sys_unlinkat(dfd, boot_args->fs_name, 0);
 	silofs_sys_closefd(&dfd);
 }
 
@@ -134,59 +134,58 @@ static char *cmd_load_xref_at(int dfd, const char *name)
 	return cmd_strdup(txt);
 }
 
-static void
-cmd_assign_xref(struct silofs_boot_args *boot_args, const char *txt)
+static void cmd_assign_xref(struct silofs_xref *xref, const char *txt)
 {
 	const size_t len = strlen(txt);
-	;
 
 	if (len == 0) {
 		cmd_diez("empty xref");
 	}
-	if (len >= sizeof(boot_args->xref.s)) {
+	if (len >= sizeof(xref->s)) {
 		cmd_diez("bad xref: '%s'", txt);
 	}
-	memcpy(boot_args->xref.s, txt, len);
+	strncpy(xref->s, txt, sizeof(xref->s));
 }
 
 void cmd_load_fs_xref(struct silofs_boot_args *boot_args)
 {
+	struct silofs_xref *xref = &boot_args->fs_xref;
 	char *txt = NULL;
 	int dfd = -1;
 	int err;
 
 	cmd_open_repodir(boot_args, &dfd);
-	txt = cmd_load_xref_at(dfd, boot_args->fsname);
+	txt = cmd_load_xref_at(dfd, boot_args->fs_name);
 	silofs_sys_closefd(&dfd);
 
-	cmd_assign_xref(boot_args, txt);
-	err = silofs_check_fs_xref(&boot_args->xref);
+	cmd_assign_xref(xref, txt);
+	err = silofs_check_fs_xref(xref);
 	if (err == -SILOFS_EBADMBR) {
-		cmd_diez("not a fs xref: %s (%s)", boot_args->fsname,
-		         boot_args->xref.s);
+		cmd_diez("not a fs xref: %s (%s)", boot_args->fs_name,
+		         xref->s);
 	} else if (err) {
-		cmd_diez("bad fs xref: %s (%s)", boot_args->fsname,
-		         boot_args->xref.s);
+		cmd_diez("bad fs xref: %s (%s)", boot_args->fs_name, xref->s);
 	}
 }
 
 void cmd_load_ar_xref(struct silofs_boot_args *boot_args)
 {
+	struct silofs_xref *xref = &boot_args->ar_xref;
 	char *txt = NULL;
 	int dfd = -1;
 	int err;
 
 	cmd_open_repodir(boot_args, &dfd);
-	txt = cmd_load_xref_at(dfd, boot_args->arname);
+	txt = cmd_load_xref_at(dfd, boot_args->ar_name);
 	silofs_sys_closefd(&dfd);
 
-	cmd_assign_xref(boot_args, txt);
-	err = silofs_check_ar_xref(&boot_args->xref);
+	cmd_assign_xref(xref, txt);
+	err = silofs_check_ar_xref(xref);
 	if (err == -SILOFS_EBADPACK) {
-		cmd_diez("not an archive xref: %s (%s)", boot_args->fsname,
-		         boot_args->xref.s);
+		cmd_diez("not an archive xref: %s (%s)", boot_args->ar_name,
+		         xref->s);
 	} else if (err) {
-		cmd_diez("bad archive xref: %s (%s)", boot_args->fsname,
-		         boot_args->xref.s);
+		cmd_diez("bad archive xref: %s (%s)", boot_args->ar_name,
+		         xref->s);
 	}
 }

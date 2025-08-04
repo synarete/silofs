@@ -26,7 +26,7 @@ struct silofs_sb_info;
 struct silofs_ioc_query;
 struct silofs_inew_params;
 struct silofs_laddr_visitor;
-struct silofs_mbr_caddrs;
+struct silofs_mrefs;
 
 /* name-string: a pair of string-view and (optional) 64-bits hash */
 struct silofs_namestr {
@@ -137,7 +137,7 @@ int silofs_do_query(struct silofs_task_ctx *task, struct silofs_inode_info *ii,
 
 int silofs_do_forkfs(struct silofs_task_ctx   *task,
                      struct silofs_inode_info *dir_ii, int flags,
-                     struct silofs_mbr_caddrs *out_caddrs);
+                     struct silofs_mrefs *out_caddrs);
 
 int silofs_do_tune(struct silofs_task_ctx   *task,
                    struct silofs_inode_info *dir_ii, int iflags_want,

@@ -126,15 +126,15 @@ struct ut_malloc_chunk {
 };
 
 struct ut_args {
-	struct silofs_args env_args;
-	const char        *program;
+	struct silofs_env_args env_args;
+	const char            *program;
 };
 
 struct ut_env {
 	struct silofs_prandgen      prng;
 	struct silofs_password      passwd;
-	struct silofs_xref          mbr_xref[2];
-	struct silofs_xref          pack_xref;
+	struct silofs_xref          fs_xref[2];
+	struct silofs_xref          ar_xref;
 	struct ut_args             *args;
 	struct silofs_env          *env;
 	struct timespec             ts_start;

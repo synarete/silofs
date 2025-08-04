@@ -60,7 +60,7 @@ struct cmd_mount_in_args {
 
 struct cmd_mount_ctx {
 	struct cmd_mount_in_args in_args;
-	struct silofs_args env_args;
+	struct silofs_env_args env_args;
 	struct silofs_env *env;
 	pid_t child_pid;
 	time_t start_time;
@@ -255,14 +255,14 @@ static void cmd_mount_parse_optargs(struct cmd_mount_ctx *ctx)
 static void cmd_mount_setup_env_args(struct cmd_mount_ctx *ctx)
 {
 	const struct cmd_mount_in_args *in_args = &ctx->in_args;
-	struct silofs_args *env_args = &ctx->env_args;
+	struct silofs_env_args *env_args = &ctx->env_args;
 
 	cmd_setup_env_args(env_args);
 	env_args->flags = (enum silofs_flags)in_args->flags;
-	env_args->boot.repodir = in_args->repodir_real;
-	env_args->boot.fsname = in_args->fsname;
-	env_args->boot.passwd = in_args->password;
-	env_args->boot.mntdir = in_args->mntpoint_real;
+	env_args->boot_args.repodir = in_args->repodir_real;
+	env_args->boot_args.fs_name = in_args->fsname;
+	env_args->boot_args.passwd = in_args->password;
+	env_args->boot_args.mntdir = in_args->mntpoint_real;
 }
 
 static void cmd_mount_setup_fs_ids(struct cmd_mount_ctx *ctx)
@@ -270,9 +270,9 @@ static void cmd_mount_setup_fs_ids(struct cmd_mount_ctx *ctx)
 	cmd_load_fsids(&ctx->env_args.ugids, ctx->in_args.repodir_real);
 }
 
-static void cmd_mount_load_xref(struct cmd_mount_ctx *ctx)
+static void cmd_mount_load_fs_xref(struct cmd_mount_ctx *ctx)
 {
-	cmd_load_fs_xref(&ctx->env_args.boot);
+	cmd_load_fs_xref(&ctx->env_args.boot_args);
 }
 
 static void cmd_mount_setup_env(struct cmd_mount_ctx *ctx)
@@ -404,12 +404,12 @@ static void cmd_mount_close_repo(struct cmd_mount_ctx *ctx)
 
 static void cmd_mount_sense_fs(struct cmd_mount_ctx *ctx)
 {
-	cmd_sense_fs(ctx->env);
+	cmd_sense_fs(ctx->env, &ctx->env_args.boot_args.fs_xref);
 }
 
 static void cmd_mount_open_fs(struct cmd_mount_ctx *ctx)
 {
-	cmd_open_fs(ctx->env);
+	cmd_open_fs(ctx->env, &ctx->env_args.boot_args.fs_xref);
 }
 
 static void cmd_mount_execute_fs(struct cmd_mount_ctx *ctx)
@@ -707,7 +707,7 @@ void cmd_execute_mount(void)
 	cmd_mount_setup_fs_ids(&ctx);
 
 	/* Load fs boot-reference */
-	cmd_mount_load_xref(&ctx);
+	cmd_mount_load_fs_xref(&ctx);
 
 	/* Execute pre-mount as command-line process */
 	cmd_mount_exec_phase1(&ctx);

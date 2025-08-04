@@ -36,7 +36,7 @@ struct cmd_init_in_args {
 
 struct cmd_init_ctx {
 	struct cmd_init_in_args in_args;
-	struct silofs_args env_args;
+	struct silofs_env_args env_args;
 	struct silofs_env *env;
 };
 
@@ -146,13 +146,13 @@ static void cmd_init_resolve_owner(struct cmd_init_ctx *ctx)
 
 static void cmd_init_setup_env_args(struct cmd_init_ctx *ctx)
 {
-	struct silofs_args *env_args = &ctx->env_args;
+	struct silofs_env_args *env_args = &ctx->env_args;
 	const char *username = ctx->in_args.username;
 
 	cmd_setup_env_args(env_args);
 	cmd_resolve_uidgid(username, &env_args->uid, &env_args->gid);
-	env_args->boot.repodir = ctx->in_args.repodir_real;
-	env_args->boot.fsname = "silofs";
+	env_args->boot_args.repodir = ctx->in_args.repodir_real;
+	env_args->boot_args.fs_name = "silofs";
 }
 
 static void cmd_init_setup_fs_ids(struct cmd_init_ctx *ctx)
@@ -187,7 +187,7 @@ static void cmd_init_close_repo(const struct cmd_init_ctx *ctx)
 
 static void cmd_init_save_idsconf(const struct cmd_init_ctx *ctx)
 {
-	cmd_save_fsids(&ctx->env_args.ugids, ctx->env_args.boot.repodir);
+	cmd_save_fsids(&ctx->env_args.ugids, ctx->env_args.boot_args.repodir);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

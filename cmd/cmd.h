@@ -281,20 +281,20 @@ void cmd_close_repo(struct silofs_env *env);
 
 void cmd_format_fs(struct silofs_env *env, struct silofs_xref *out_xref);
 
-void cmd_close_fs(struct silofs_env *env);
-
-void cmd_sense_fs(struct silofs_env *env);
+void cmd_sense_fs(struct silofs_env *env, struct silofs_xref *xref);
 
 void cmd_sense_ar(struct silofs_env *env);
 
-void cmd_open_fs(struct silofs_env *env);
+void cmd_open_fs(struct silofs_env *env, const struct silofs_xref *xref);
+
+void cmd_close_fs(struct silofs_env *env);
 
 void cmd_exec_fs(struct silofs_env *env);
 
-void cmd_clone_fs(struct silofs_env *env, struct silofs_xref *out_curr_xrefs,
-                  struct silofs_xref *out_clone_xrefs);
+void cmd_fork_fs(struct silofs_env *env, struct silofs_xref *out_main,
+                 struct silofs_xref *out_fork);
 
-void cmd_remove_fs(struct silofs_env *env);
+void cmd_remove_fs(struct silofs_env *env, const struct silofs_xref *xref);
 
 void cmd_inspect_fs(struct silofs_env *env, bool view);
 
@@ -315,8 +315,8 @@ void cmd_del_iocp(union silofs_ioc_u **pioc);
 void cmd_reset_ioc(union silofs_ioc_u *ioc);
 
 /* file-system environment */
-void cmd_new_env(const struct silofs_args *env_args,
-                 struct silofs_env       **p_env);
+void cmd_new_env(const struct silofs_env_args *env_args,
+                 struct silofs_env           **p_env);
 
 void cmd_del_env(struct silofs_env **p_env);
 
@@ -348,9 +348,9 @@ void cmd_load_fs_xref(struct silofs_boot_args *boot_args);
 void cmd_load_ar_xref(struct silofs_boot_args *boot_args);
 
 /* fs input arguments */
-void cmd_setup_env_args(struct silofs_args *env_args);
+void cmd_setup_env_args(struct silofs_env_args *env_args);
 
-void cmd_destroy_env_args(struct silofs_args *env_args);
+void cmd_destroy_env_args(struct silofs_env_args *env_args);
 
 /* fs-ids config */
 void cmd_setup_fsids(struct silofs_ugids *ids);

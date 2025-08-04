@@ -37,7 +37,7 @@ struct cmd_mkfs_in_args {
 
 struct cmd_mkfs_ctx {
 	struct cmd_mkfs_in_args in_args;
-	struct silofs_args env_args;
+	struct silofs_env_args env_args;
 	struct silofs_env *env;
 	bool has_lockfile;
 };
@@ -175,18 +175,18 @@ static void cmd_mkfs_getpass(struct cmd_mkfs_ctx *ctx)
 
 static void cmd_mkfs_setup_env_args(struct cmd_mkfs_ctx *ctx)
 {
-	struct silofs_args *env_args = &ctx->env_args;
+	struct silofs_env_args *env_args = &ctx->env_args;
 
 	cmd_setup_env_args(env_args);
-	env_args->boot.repodir = ctx->in_args.repodir_real;
-	env_args->boot.fsname = ctx->in_args.fsname;
-	env_args->boot.passwd = ctx->in_args.password;
+	env_args->boot_args.repodir = ctx->in_args.repodir_real;
+	env_args->boot_args.fs_name = ctx->in_args.fsname;
+	env_args->boot_args.passwd = ctx->in_args.password;
 	env_args->capacity = (size_t)ctx->in_args.fs_size;
 }
 
 static void cmd_mkfs_setup_fs_ids(struct cmd_mkfs_ctx *ctx)
 {
-	struct silofs_args *env_args = &ctx->env_args;
+	struct silofs_env_args *env_args = &ctx->env_args;
 	struct silofs_ugids *ids = &env_args->ugids;
 	const char *username = ctx->in_args.username;
 
@@ -211,12 +211,14 @@ static void cmd_mkfs_close_repo(const struct cmd_mkfs_ctx *ctx)
 
 static void cmd_mkfs_format_fs(struct cmd_mkfs_ctx *ctx)
 {
-	cmd_format_fs(ctx->env, &ctx->env_args.boot.xref);
+	struct silofs_xref *xref = &ctx->env_args.boot_args.fs_xref;
+
+	cmd_format_fs(ctx->env, xref);
 }
 
 static void cmd_mkfs_save_xref(struct cmd_mkfs_ctx *ctx)
 {
-	cmd_save_fs_xref(&ctx->env_args.boot);
+	cmd_save_fs_xref(&ctx->env_args.boot_args);
 }
 
 static void cmd_mkfs_close_fs(struct cmd_mkfs_ctx *ctx)

@@ -37,7 +37,7 @@ struct cmd_rmfs_ctx {
 	struct silofs_ioc_query ioc_qry;
 	long pad;
 	struct cmd_rmfs_in_args in_args;
-	struct silofs_args env_args;
+	struct silofs_env_args env_args;
 	struct silofs_env *env;
 	bool has_lockfile;
 };
@@ -180,12 +180,12 @@ static void cmd_rmfs_check_nomnt(struct cmd_rmfs_ctx *ctx)
 
 static void cmd_rmfs_setup_env_args(struct cmd_rmfs_ctx *ctx)
 {
-	struct silofs_args *env_args = &ctx->env_args;
+	struct silofs_env_args *env_args = &ctx->env_args;
 
 	cmd_setup_env_args(env_args);
-	env_args->boot.repodir = ctx->in_args.repodir_real;
-	env_args->boot.fsname = ctx->in_args.fsname;
-	env_args->boot.passwd = ctx->in_args.password;
+	env_args->boot_args.repodir = ctx->in_args.repodir_real;
+	env_args->boot_args.fs_name = ctx->in_args.fsname;
+	env_args->boot_args.passwd = ctx->in_args.password;
 }
 
 static void cmd_rmfs_setup_fs_ids(struct cmd_rmfs_ctx *ctx)
@@ -193,9 +193,9 @@ static void cmd_rmfs_setup_fs_ids(struct cmd_rmfs_ctx *ctx)
 	cmd_load_fsids(&ctx->env_args.ugids, ctx->in_args.repodir_real);
 }
 
-static void cmd_rmfs_load_xref(struct cmd_rmfs_ctx *ctx)
+static void cmd_rmfs_load_fs_xref(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_load_fs_xref(&ctx->env_args.boot);
+	cmd_load_fs_xref(&ctx->env_args.boot_args);
 }
 
 static void cmd_rmfs_setup_env(struct cmd_rmfs_ctx *ctx)
@@ -215,17 +215,17 @@ static void cmd_rmfs_close_repo(struct cmd_rmfs_ctx *ctx)
 
 static void cmd_rmfs_sense_fs(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_sense_fs(ctx->env);
+	cmd_sense_fs(ctx->env, &ctx->env_args.boot_args.fs_xref);
 }
 
 static void cmd_rmfs_execute(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_remove_fs(ctx->env);
+	cmd_remove_fs(ctx->env, &ctx->env_args.boot_args.fs_xref);
 }
 
 static void cmd_rmfs_unlink_xref(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_unlink_fs_xref(&ctx->env_args.boot);
+	cmd_unlink_fs_xref(&ctx->env_args.boot_args);
 }
 
 static void cmd_rmfs_destroy_env(struct cmd_rmfs_ctx *ctx)
@@ -315,7 +315,7 @@ void cmd_execute_rmfs(void)
 	cmd_rmfs_setup_fs_ids(&ctx);
 
 	/* Load fs boot-reference */
-	cmd_rmfs_load_xref(&ctx);
+	cmd_rmfs_load_fs_xref(&ctx);
 
 	/* Setup execution context */
 	cmd_rmfs_setup_env(&ctx);

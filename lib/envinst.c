@@ -47,7 +47,7 @@ union silofs_alloc_u {
 /* actual environment instance object (internal) */
 struct silofs_env_inst {
 	struct silofs_password passwd;
-	struct silofs_args args;
+	struct silofs_env_args args;
 	union silofs_alloc_u alloc_u;
 	struct silofs_repo repo;
 	struct silofs_pcache pcache;
@@ -107,10 +107,10 @@ static int calc_mem_size(size_t mem_want, size_t *out_mem_size)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static int check_bootpath(const struct silofs_args *args)
+static int check_bootpath(const struct silofs_env_args *args)
 {
 	struct silofs_namestr nstr;
-	const struct silofs_boot_args *boot_args = &args->boot;
+	const struct silofs_boot_args *boot_args = &args->boot_args;
 	const size_t len = silofs_str_length(boot_args->repodir);
 	int err;
 
@@ -118,31 +118,31 @@ static int check_bootpath(const struct silofs_args *args)
 		log_dbg("illegal repodir length: %s", boot_args->repodir);
 		return -SILOFS_EINVAL;
 	}
-	if (boot_args->fsname != NULL) {
-		err = silofs_make_namestr(&nstr, boot_args->fsname);
+	if (boot_args->fs_name != NULL) {
+		err = silofs_make_namestr(&nstr, boot_args->fs_name);
 		if (err) {
-			log_dbg("illegal fsname: %s", boot_args->fsname);
+			log_dbg("illegal fsname: %s", boot_args->fs_name);
 			return err;
 		}
 	}
-	if (boot_args->arname != NULL) {
-		err = silofs_make_namestr(&nstr, boot_args->arname);
+	if (boot_args->ar_name != NULL) {
+		err = silofs_make_namestr(&nstr, boot_args->ar_name);
 		if (err) {
-			log_dbg("illegal arname: %s", boot_args->arname);
+			log_dbg("illegal arname: %s", boot_args->ar_name);
 			return err;
 		}
 	}
 	return 0;
 }
 
-static int check_password(const struct silofs_args *args)
+static int check_password(const struct silofs_env_args *args)
 {
 	struct silofs_password passwd;
 
-	return silofs_password_setup(&passwd, args->boot.passwd);
+	return silofs_password_setup(&passwd, args->boot_args.passwd);
 }
 
-static int check_args(const struct silofs_args *args)
+static int check_args(const struct silofs_env_args *args)
 {
 	int err;
 
@@ -262,7 +262,7 @@ static void envi_make_repo_base(const struct silofs_env_inst *envi,
 	if (envi->args.flags & SILOFS_F_RDONLY) {
 		re_base->flags |= SILOFS_REPOF_RDONLY;
 	}
-	silofs_strview_init(&re_base->repodir, envi->args.boot.repodir);
+	silofs_strview_init(&re_base->repodir, envi->args.boot_args.repodir);
 }
 
 static int envi_init_repo(struct silofs_env_inst *envi)
@@ -529,7 +529,8 @@ static void envi_fini_env(struct silofs_env_inst *envi)
 
 static int envi_init_passwd(struct silofs_env_inst *envi)
 {
-	return silofs_password_setup(&envi->passwd, envi->args.boot.passwd);
+	return silofs_password_setup(&envi->passwd,
+	                             envi->args.boot_args.passwd);
 }
 
 static void envi_fini_passwd(struct silofs_env_inst *envi)
@@ -552,8 +553,8 @@ static void envi_fini(struct silofs_env_inst *envi)
 	envi_fini_passwd(envi);
 }
 
-static int
-envi_init_args(struct silofs_env_inst *envi, const struct silofs_args *args)
+static int envi_init_args(struct silofs_env_inst *envi,
+                          const struct silofs_env_args *args)
 {
 	int err;
 
@@ -566,7 +567,7 @@ envi_init_args(struct silofs_env_inst *envi, const struct silofs_args *args)
 }
 
 static int
-envi_init(struct silofs_env_inst *envi, const struct silofs_args *args)
+envi_init(struct silofs_env_inst *envi, const struct silofs_env_args *args)
 {
 	int err;
 
@@ -633,7 +634,7 @@ static size_t envi_memsize(const struct silofs_env_inst *envi)
 }
 
 static int
-envi_new(const struct silofs_args *args, struct silofs_env_inst **out_envi)
+envi_new(const struct silofs_env_args *args, struct silofs_env_inst **out_envi)
 {
 	struct silofs_env_inst *envi = NULL;
 	const size_t msz = envi_memsize(envi);
@@ -663,7 +664,7 @@ static void envi_del(struct silofs_env_inst *envi)
 	silofs_zfree(mem, msz);
 }
 
-int silofs_create_env(const struct silofs_args *args,
+int silofs_create_env(const struct silofs_env_args *args,
                       struct silofs_env **out_env)
 {
 	struct silofs_env_inst *envi = NULL;

@@ -20,7 +20,8 @@
 #include <stdarg.h>
 #include "cmd.h"
 
-void cmd_new_env(const struct silofs_args *env_args, struct silofs_env **p_env)
+void cmd_new_env(const struct silofs_env_args *env_args,
+                 struct silofs_env **p_env)
 {
 	int err;
 
@@ -42,11 +43,11 @@ void cmd_del_env(struct silofs_env **p_env)
 
 static char *cmd_repodir_name(const struct silofs_env *env)
 {
-	struct silofs_args args;
+	const struct silofs_env_args *env_args = silofs_get_env_args(env);
 	char *ret = NULL;
 
-	silofs_get_args(env, &args);
-	cmd_join_path(args.boot.repodir, args.boot.fsname, &ret);
+	cmd_join_path(env_args->boot_args.repodir, env_args->boot_args.fs_name,
+	              &ret);
 	return ret;
 }
 
@@ -145,6 +146,22 @@ cmd_require_ok(const struct silofs_env *env, int status, const char *msg)
 	}
 }
 
+silofs_attr_printf(3, 4) static void cmd_requiref_ok(
+	const struct silofs_env *env, int status, const char *restrict fmt,
+	...)
+{
+	char msg[2048] = "";
+	va_list ap;
+
+	if (status != 0) {
+		va_start(ap, fmt);
+		vsnprintf(msg, sizeof(msg) - 1, fmt, ap);
+		va_end(ap);
+
+		cmd_report_err_and_die(env, status, msg);
+	}
+}
+
 void cmd_format_repo(struct silofs_env *env)
 {
 	int err;
@@ -169,12 +186,12 @@ void cmd_close_repo(struct silofs_env *env)
 	cmd_require_ok(env, err, "failed to close repo");
 }
 
-void cmd_sense_fs(struct silofs_env *env)
+void cmd_sense_fs(struct silofs_env *env, struct silofs_xref *xref)
 {
 	int err;
 
-	err = silofs_sense_fs(env);
-	cmd_require_ok(env, err, "can not sense fs");
+	err = silofs_sense_fs(env, xref);
+	cmd_requiref_ok(env, err, "can not sense fs: xref=%s", xref->s);
 }
 
 void cmd_sense_ar(struct silofs_env *env)
@@ -189,10 +206,16 @@ void cmd_format_fs(struct silofs_env *env, struct silofs_xref *out_xref)
 {
 	int err;
 
-	err = silofs_format_fs(env);
+	err = silofs_format_fs(env, out_xref);
 	cmd_require_ok(env, err, "failed to format fs");
-	err = silofs_get_fs_xref(env, out_xref);
-	cmd_require_ok(env, err, "post format-fs failure");
+}
+
+void cmd_open_fs(struct silofs_env *env, const struct silofs_xref *xref)
+{
+	int err;
+
+	err = silofs_open_fs(env, xref);
+	cmd_requiref_ok(env, err, "failed to open fs: xref=%s", xref->s);
 }
 
 void cmd_close_fs(struct silofs_env *env)
@@ -203,41 +226,29 @@ void cmd_close_fs(struct silofs_env *env)
 	cmd_require_ok(env, err, "failed to close fs");
 }
 
-void cmd_open_fs(struct silofs_env *env)
-{
-	int err;
-
-	err = silofs_open_fs(env);
-	cmd_require_ok(env, err, "failed to open fs");
-}
-
 void cmd_exec_fs(struct silofs_env *env)
 {
 	int err;
 
-	err = silofs_run_fs(env);
+	err = silofs_exec_fs(env);
 	cmd_require_ok(env, err, "failed to exec fs");
 }
 
-void cmd_clone_fs(struct silofs_env *env, struct silofs_xref *out_curr_xref,
-                  struct silofs_xref *out_fork_xref)
+void cmd_fork_fs(struct silofs_env *env, struct silofs_xref *out_main,
+                 struct silofs_xref *out_fork)
 {
 	int err;
 
-	err = silofs_fork_fs(env);
+	err = silofs_fork_fs(env, out_main, out_fork);
 	cmd_require_ok(env, err, "failed to fork fs");
-	err = silofs_get_fs_xref(env, out_curr_xref);
-	cmd_require_ok(env, err, "post fork-fs failure");
-	err = silofs_get_fs_fork_xref(env, out_fork_xref);
-	cmd_require_ok(env, err, "post fork-fs failure");
 }
 
-void cmd_remove_fs(struct silofs_env *env)
+void cmd_remove_fs(struct silofs_env *env, const struct silofs_xref *xref)
 {
 	int err;
 
-	err = silofs_remove_fs(env);
-	cmd_require_ok(env, err, "failed to unref fs");
+	err = silofs_remove_fs(env, xref);
+	cmd_requiref_ok(env, err, "failed to remove fs: xref=%s", xref->s);
 }
 
 void cmd_inspect_fs(struct silofs_env *env, bool view)
@@ -245,43 +256,39 @@ void cmd_inspect_fs(struct silofs_env *env, bool view)
 	int err;
 
 	err = silofs_inspect_fs(env, view);
-	cmd_require_ok(env, err, "inspect-fs error");
+	cmd_require_ok(env, err, "failed to inspect fs");
 }
 
 void cmd_archive_fs(struct silofs_env *env, struct silofs_xref *out_xref)
 {
 	int err;
 
-	err = silofs_archive_fs(env);
+	err = silofs_archive_fs(env, out_xref);
 	cmd_require_ok(env, err, "failed to archive");
-	err = silofs_get_ar_xref(env, out_xref);
-	cmd_require_ok(env, err, "post archive failure");
 }
 
 void cmd_restore_fs(struct silofs_env *env, struct silofs_xref *out_xref)
 {
 	int err;
 
-	err = silofs_restore_fs(env);
+	err = silofs_restore_fs(env, out_xref);
 	cmd_require_ok(env, err, "failed to restore");
-	err = silofs_get_fs_xref(env, out_xref);
-	cmd_require_ok(env, err, "post restore failure");
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void cmd_setup_env_args(struct silofs_args *args)
+void cmd_setup_env_args(struct silofs_env_args *env_args)
 {
-	memset(args, 0, sizeof(*args));
-	cmd_setup_fsids(&args->ugids);
-	args->uid = getuid();
-	args->gid = getgid();
-	args->pid = getpid();
-	args->umask = 0022;
+	memset(env_args, 0, sizeof(*env_args));
+	cmd_setup_fsids(&env_args->ugids);
+	env_args->uid = getuid();
+	env_args->gid = getgid();
+	env_args->pid = getpid();
+	env_args->umask = 0022;
 }
 
-void cmd_destroy_env_args(struct silofs_args *args)
+void cmd_destroy_env_args(struct silofs_env_args *env_args)
 {
-	cmd_reset_fsids(&args->ugids);
-	memset(args, 0, sizeof(*args));
+	cmd_reset_fsids(&env_args->ugids);
+	memset(env_args, 0, sizeof(*env_args));
 }

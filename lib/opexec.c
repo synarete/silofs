@@ -1539,7 +1539,7 @@ out:
 }
 
 int silofs_exec_forkfs(struct silofs_task_ctx *task, ino_t ino, int flags,
-                       struct silofs_mbr_caddrs *out_caddrs)
+                       struct silofs_mrefs *out_mrefs)
 {
 	struct silofs_inode_info *dir_ii = NULL;
 	int err;
@@ -1556,7 +1556,7 @@ int silofs_exec_forkfs(struct silofs_task_ctx *task, ino_t ino, int flags,
 	err = op_stage_cur_inode(task, ino, &dir_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_forkfs(task, dir_ii, flags, out_caddrs);
+	err = silofs_do_forkfs(task, dir_ii, flags, out_mrefs);
 	ok_or_goto_out(err);
 out:
 	return op_finish(task, err);
@@ -1652,7 +1652,8 @@ out:
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_exec_archive(struct silofs_task_ctx *task)
+int silofs_exec_archive(struct silofs_task_ctx *task,
+                        struct silofs_caddr *out_caddr)
 {
 	int err;
 
@@ -1665,7 +1666,7 @@ int silofs_exec_archive(struct silofs_task_ctx *task)
 	err = op_map_creds(task);
 	ok_or_goto_out(err);
 
-	err = silofs_do_archive_fs(task);
+	err = silofs_do_archive_fs(task, out_caddr);
 	ok_or_goto_out(err);
 out:
 	return op_finish(task, err);

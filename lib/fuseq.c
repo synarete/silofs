@@ -2965,7 +2965,7 @@ out:
 	                       sizeof(fcc->args->out.query.qry), err);
 }
 
-static void assing_ioc_xref(int8_t *xref, const struct silofs_caddr *caddr)
+static void assign_ioc_xref(int8_t *xref, const struct silofs_caddr *caddr)
 {
 	silofs_caddr_to_str(caddr, (char *)xref, SILOFS_XREFLEN_MAX + 1);
 }
@@ -2973,7 +2973,7 @@ static void assing_ioc_xref(int8_t *xref, const struct silofs_caddr *caddr)
 static int do_ioc_clone(const struct silofs_fuseq_cmd_ctx *fcc)
 {
 	union silofs_ioc_u ioc_u;
-	const struct silofs_mbr_caddrs *caddrs = &fcc->args->out.clone.caddrs;
+	const struct silofs_mrefs *mrefs = &fcc->args->out.clone.mrefs;
 	void *buf_out = fcc->fqs->fqs_outb->u.iob.b;
 	struct silofs_ioc_forkfs *cl_out = &ioc_u.forkfs;
 	const size_t bsz_in_min = 1;
@@ -3005,9 +3005,9 @@ static int do_ioc_clone(const struct silofs_fuseq_cmd_ctx *fcc)
 	}
 
 	memset(cl_out, 0, sizeof(*cl_out));
-	assing_ioc_xref(cl_out->xref_base, &caddrs->base);
-	assing_ioc_xref(cl_out->xref_new, &caddrs->curr);
-	assing_ioc_xref(cl_out->xref_alt, &caddrs->fork);
+	assign_ioc_xref(cl_out->xref_base, &mrefs->base);
+	assign_ioc_xref(cl_out->xref_new, &mrefs->main);
+	assign_ioc_xref(cl_out->xref_alt, &mrefs->fork);
 	memcpy(buf_out, cl_out, sizeof(*cl_out));
 out:
 	return fqs_reply_ioctl(fcc->fqs, fcc->task, 0, cl_out, sizeof(*cl_out),
@@ -4374,7 +4374,7 @@ static void fqs_setup_self_task(const struct silofs_fuseq_sub *fqs,
                                 struct silofs_task_ctx *task)
 {
 	const struct silofs_fuseq *fq = fqs_fuseq(fqs);
-	const struct silofs_args *args = fq->fq_env->base.args;
+	const struct silofs_env_args *args = fq->fq_env->base.args;
 
 	silofs_task_init(task, fq->fq_env);
 	silofs_task_set_creds(task, args->uid, args->gid, args->umask);

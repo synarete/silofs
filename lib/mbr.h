@@ -29,17 +29,26 @@ struct silofs_mbr {
 	struct silofs_ivkey main_ivkey;
 	struct silofs_uuid  uuid;
 	struct silofs_uaddr sb_addr;
-	struct silofs_caddr arix_addr;
+	struct silofs_caddr ar_addr;
 	enum silofs_mbrf    flags;
 	int                 cipher_algo;
 	int                 cipher_mode;
 };
 
-/* a tuple of content-addressable references to mbr blocks */
-struct silofs_mbr_caddrs {
+/* a tuple of content-addressable references to main boot-records */
+struct silofs_mrefs {
+	struct silofs_caddr main;
 	struct silofs_caddr base;
-	struct silofs_caddr curr;
 	struct silofs_caddr fork;
+};
+
+/* main boot-record controller */
+struct silofs_mbrctl {
+	struct silofs_mbr     mbr;
+	struct silofs_cipher  cipher;
+	struct silofs_mdigest mdigest;
+	struct silofs_ivkey   ivkey;
+	struct silofs_caddr   mref;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -61,11 +70,26 @@ int silofs_mbr_gen_ivkey(struct silofs_mbr           *mbr,
 void silofs_mbr_set_sb_addr(struct silofs_mbr         *mbr,
                             const struct silofs_uaddr *sb_uaddr);
 
-void silofs_mbr_set_arix_addr(struct silofs_mbr         *mbr,
-                              const struct silofs_caddr *caddr);
+void silofs_mbr_set_ar_addr(struct silofs_mbr         *mbr,
+                            const struct silofs_caddr *caddr);
 
 void silofs_make_mbr_uaddr(const struct silofs_blobid *blobid,
                            struct silofs_uaddr        *out_uaddr);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_mbrctl_init(struct silofs_mbrctl *mbrc);
+
+void silofs_mbrctl_fini(struct silofs_mbrctl *mbrc);
+
+int silofs_mbrctl_regen(struct silofs_mbrctl *mbrc);
+
+int silofs_mbrctl_update_sb(struct silofs_mbrctl      *mbrc,
+                            const struct silofs_uaddr *sb_uaddr);
+
+int silofs_mbrctl_encode(const struct silofs_mbrctl *mbrc,
+                         struct silofs_mbr1k        *out_mbr1k_enc,
+                         struct silofs_caddr        *out_caddr);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

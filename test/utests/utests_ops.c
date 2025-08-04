@@ -45,7 +45,7 @@ static uint64_t ut_unique_opid(struct ut_env *ute)
 
 void ut_setup_task(struct ut_env *ute, struct silofs_task_ctx *task)
 {
-	const struct silofs_args *args = &ute->args->env_args;
+	const struct silofs_env_args *args = &ute->args->env_args;
 
 	silofs_task_init(task, ute->env);
 	silofs_task_set_creds(task, args->uid, args->gid, 0002);
@@ -1977,9 +1977,7 @@ void ut_format_fs(struct ut_env *ute)
 {
 	int err;
 
-	err = silofs_format_fs(ute->env);
-	ut_expect_ok(err);
-	err = silofs_get_fs_xref(ute->env, &ute->mbr_xref[0]);
+	err = silofs_format_fs(ute->env, &ute->fs_xref[0]);
 	ut_expect_ok(err);
 }
 
@@ -1987,10 +1985,10 @@ void ut_open_fs(struct ut_env *ute)
 {
 	int err;
 
-	err = silofs_set_fs_xref(ute->env, &ute->mbr_xref[0]);
+	err = silofs_set_fs_xref(ute->env, &ute->fs_xref[0]);
 	ut_expect_ok(err);
 
-	err = silofs_open_fs(ute->env);
+	err = silofs_open_fs(ute->env, &ute->fs_xref[0]);
 	ut_expect_ok(err);
 }
 
@@ -1998,10 +1996,10 @@ void ut_open_fs2(struct ut_env *ute)
 {
 	int err;
 
-	err = silofs_set_fs_xref(ute->env, &ute->mbr_xref[1]);
+	err = silofs_set_fs_xref(ute->env, &ute->fs_xref[1]);
 	ut_expect_ok(err);
 
-	err = silofs_open_fs(ute->env);
+	err = silofs_open_fs(ute->env, &ute->fs_xref[1]);
 	ut_expect_ok(err);
 }
 
@@ -2025,10 +2023,10 @@ void ut_unref_fs(struct ut_env *ute)
 {
 	int err;
 
-	err = silofs_set_fs_xref(ute->env, &ute->mbr_xref[0]);
+	err = silofs_set_fs_xref(ute->env, &ute->fs_xref[0]);
 	ut_expect_ok(err);
 
-	err = silofs_remove_fs(ute->env);
+	err = silofs_remove_fs(ute->env, &ute->fs_xref[0]);
 	ut_expect_ok(err);
 }
 
@@ -2036,10 +2034,10 @@ void ut_unref_fs2(struct ut_env *ute)
 {
 	int err;
 
-	err = silofs_set_fs_xref(ute->env, &ute->mbr_xref[1]);
+	err = silofs_set_fs_xref(ute->env, &ute->fs_xref[1]);
 	ut_expect_ok(err);
 
-	err = silofs_remove_fs(ute->env);
+	err = silofs_remove_fs(ute->env, &ute->fs_xref[1]);
 	ut_expect_ok(err);
 }
 
@@ -2055,13 +2053,7 @@ void ut_fork_fs(struct ut_env *ute)
 {
 	int err;
 
-	err = silofs_fork_fs(ute->env);
-	ut_expect_ok(err);
-
-	err = silofs_get_fs_xref(ute->env, &ute->mbr_xref[0]);
-	ut_expect_ok(err);
-
-	err = silofs_get_fs_fork_xref(ute->env, &ute->mbr_xref[1]);
+	err = silofs_fork_fs(ute->env, &ute->fs_xref[0], &ute->fs_xref[1]);
 	ut_expect_ok(err);
 }
 
@@ -2069,9 +2061,7 @@ void ut_archive_fs(struct ut_env *ute)
 {
 	int err;
 
-	err = silofs_archive_fs(ute->env);
-	ut_expect_ok(err);
-	err = silofs_get_ar_xref(ute->env, &ute->pack_xref);
+	err = silofs_archive_fs(ute->env, &ute->ar_xref);
 	ut_expect_ok(err);
 }
 
@@ -2079,8 +2069,6 @@ void ut_restore_fs(struct ut_env *ute)
 {
 	int err;
 
-	err = silofs_restore_fs(ute->env);
-	ut_expect_ok(err);
-	err = silofs_get_fs_xref(ute->env, &ute->mbr_xref[0]);
+	err = silofs_restore_fs(ute->env, &ute->fs_xref[0]);
 	ut_expect_ok(err);
 }

@@ -28,8 +28,8 @@ struct silofs_env;
 struct silofs_mbr {
 	struct silofs_ivkey main_ivkey;
 	struct silofs_uuid  uuid;
-	struct silofs_uaddr sb_uaddr;
-	struct silofs_caddr aridx_caddr;
+	struct silofs_uaddr sb_addr;
+	struct silofs_caddr arix_addr;
 	enum silofs_mbrf    flags;
 	int                 cipher_algo;
 	int                 cipher_mode;
@@ -61,8 +61,8 @@ int silofs_mbr_gen_ivkey(struct silofs_mbr           *mbr,
 void silofs_mbr_set_sb_addr(struct silofs_mbr         *mbr,
                             const struct silofs_uaddr *sb_uaddr);
 
-void silofs_mbr_set_aridx_addr(struct silofs_mbr         *mbr,
-                               const struct silofs_caddr *caddr);
+void silofs_mbr_set_arix_addr(struct silofs_mbr         *mbr,
+                              const struct silofs_caddr *caddr);
 
 void silofs_make_mbr_uaddr(const struct silofs_blobid *blobid,
                            struct silofs_uaddr        *out_uaddr);

@@ -52,9 +52,9 @@ struct silofs_env_boot {
 	struct silofs_mbr    mbr;
 	struct silofs_cipher cipher;
 	struct silofs_ivkey  ivkey;
-	struct silofs_caddr  main_addr;
-	struct silofs_caddr  base_addr;
-	struct silofs_caddr  fork_addr;
+	struct silofs_caddr  main_mbr_addr;
+	struct silofs_caddr  base_mbr_addr;
+	struct silofs_caddr  fork_mbr_addr;
 };
 
 /* top-level environment object */
@@ -66,7 +66,7 @@ struct silofs_env {
 	struct silofs_cipher     enc_cipher;
 	struct silofs_cipher     dec_cipher;
 	struct silofs_mdigest    mdigest;
-	struct silofs_caddr      pack_caddr;
+	struct silofs_caddr      arix_addr;
 	struct silofs_env_opstat opstat;
 	struct silofs_sb_info   *sbi;
 	struct silofs_cred       owner_cred;

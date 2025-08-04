@@ -616,7 +616,7 @@ struct silofs_mbr1k {
 	struct silofs_key      mbr_main_key;
 	struct silofs_uaddr96b mbr_sb_addr;
 	uint8_t                mbr_reserved1[32];
-	struct silofs_caddr64b mbr_aridx_addr;
+	struct silofs_caddr64b mbr_arix_addr;
 	uint8_t                mbr_reserved3[672];
 	struct silofs_hash256  mbr_hash;
 } silofs_attr_aligned64;

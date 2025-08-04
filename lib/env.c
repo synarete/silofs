@@ -163,7 +163,7 @@ static void
 env_init_commons(struct silofs_env *env, const struct silofs_env_base *base)
 {
 	memcpy(&env->base, base, sizeof(env->base));
-	silofs_caddr_reset(&env->pack_caddr);
+	silofs_caddr_reset(&env->arix_addr);
 	env->init_time = silofs_time_mono_now();
 	env->iconv_set = false;
 	env->sbi = NULL;
@@ -183,9 +183,9 @@ static int env_init_boot(struct silofs_env *env)
 
 	silofs_mbr_init(&boot->mbr);
 	silofs_ivkey_init(&boot->ivkey);
-	silofs_caddr_reset(&boot->main_addr);
-	silofs_caddr_reset(&boot->base_addr);
-	silofs_caddr_reset(&boot->fork_addr);
+	silofs_caddr_reset(&boot->main_mbr_addr);
+	silofs_caddr_reset(&boot->base_mbr_addr);
+	silofs_caddr_reset(&boot->fork_mbr_addr);
 	return silofs_cipher_init(&boot->cipher);
 }
 
@@ -194,9 +194,9 @@ static void env_fini_boot(struct silofs_env *env)
 	struct silofs_env_boot *boot = &env->boot;
 
 	silofs_cipher_fini(&boot->cipher);
-	silofs_caddr_reset(&boot->fork_addr);
-	silofs_caddr_reset(&boot->base_addr);
-	silofs_caddr_reset(&boot->main_addr);
+	silofs_caddr_reset(&boot->fork_mbr_addr);
+	silofs_caddr_reset(&boot->base_mbr_addr);
+	silofs_caddr_reset(&boot->main_mbr_addr);
 	silofs_ivkey_reset(&boot->ivkey);
 	silofs_mbr_fini(&boot->mbr);
 }
@@ -364,7 +364,7 @@ static bool caddr_ismbr(const struct silofs_caddr *caddr)
 int silofs_env_mbr_main_addr(const struct silofs_env *env,
                              struct silofs_caddr *out_caddr)
 {
-	silofs_caddr_assign(out_caddr, &env->boot.main_addr);
+	silofs_caddr_assign(out_caddr, &env->boot.main_mbr_addr);
 	return caddr_ismbr(out_caddr) ? 0 : -SILOFS_ENOENT;
 }
 
@@ -374,28 +374,28 @@ int silofs_env_set_mbr_main_addr(struct silofs_env *env,
 	if (!caddr_ismbr(caddr)) {
 		return -SILOFS_EINVAL;
 	}
-	silofs_caddr_assign(&env->boot.main_addr, caddr);
+	silofs_caddr_assign(&env->boot.main_mbr_addr, caddr);
 	return 0;
 }
 
 int silofs_env_base_addr(const struct silofs_env *env,
                          struct silofs_caddr *out_caddr)
 {
-	silofs_caddr_assign(out_caddr, &env->boot.base_addr);
+	silofs_caddr_assign(out_caddr, &env->boot.base_mbr_addr);
 	return caddr_ismbr(out_caddr) ? 0 : -SILOFS_ENOENT;
 }
 
 int silofs_env_fork_addr(const struct silofs_env *env,
                          struct silofs_caddr *out_caddr)
 {
-	silofs_caddr_assign(out_caddr, &env->boot.fork_addr);
+	silofs_caddr_assign(out_caddr, &env->boot.fork_mbr_addr);
 	return caddr_ismbr(out_caddr) ? 0 : -SILOFS_ENOENT;
 }
 
 int silofs_env_pack_caddr(const struct silofs_env *env,
                           struct silofs_caddr *out_caddr)
 {
-	const struct silofs_caddr *caddr = &env->pack_caddr;
+	const struct silofs_caddr *caddr = &env->arix_addr;
 
 	silofs_caddr_assign(out_caddr, caddr);
 	return (caddr->ctype == SILOFS_CTYPE_PACKIDX) ? 0 : -SILOFS_ENOENT;
@@ -407,7 +407,7 @@ int silofs_env_set_pack_caddr(struct silofs_env *env,
 	if (caddr->ctype != SILOFS_CTYPE_PACKIDX) {
 		return -SILOFS_EINVAL;
 	}
-	silofs_caddr_assign(&env->pack_caddr, caddr);
+	silofs_caddr_assign(&env->arix_addr, caddr);
 	return 0;
 }
 
@@ -493,7 +493,7 @@ static void make_super_uaddr(const struct silofs_lsid *lsid,
 
 static const struct silofs_uaddr *env_sb_addr(const struct silofs_env *env)
 {
-	return &env->boot.mbr.sb_uaddr;
+	return &env->boot.mbr.sb_addr;
 }
 
 static void env_make_super_uaddr(const struct silofs_env *env,
@@ -836,7 +836,7 @@ static int env_do_forkfs(struct silofs_env *env)
 	struct silofs_sb_info *sbi_cur = env->sbi;
 	int err;
 
-	err = silofs_env_mbr_main_addr(env, &env->boot.base_addr);
+	err = silofs_env_mbr_main_addr(env, &env->boot.base_mbr_addr);
 	if (err) {
 		return err;
 	}
@@ -845,7 +845,7 @@ static int env_do_forkfs(struct silofs_env *env)
 	if (err) {
 		return err;
 	}
-	err = env_resave_mbr(env, &env->boot.fork_addr);
+	err = env_resave_mbr(env, &env->boot.fork_mbr_addr);
 	if (err) {
 		return err;
 	}
@@ -854,7 +854,7 @@ static int env_do_forkfs(struct silofs_env *env)
 	if (err) {
 		return err;
 	}
-	err = env_resave_mbr(env, &env->boot.main_addr);
+	err = env_resave_mbr(env, &env->boot.main_mbr_addr);
 	if (err) {
 		return err;
 	}

@@ -381,20 +381,10 @@ resolve_xref(const struct silofs_xref *xref, struct silofs_caddr *out_caddr)
 	return 0;
 }
 
-static int reload_mbr(const struct silofs_task_ctx *task)
+static int reload_mbr(const struct silofs_task_ctx *task,
+                      const struct silofs_caddr *caddr)
 {
-	struct silofs_caddr caddr = { .ctype = SILOFS_CTYPE_NONE };
-	int err;
-
-	err = silofs_env_mbr_addr(task->t_env, &caddr);
-	if (err) {
-		return err;
-	}
-	err = silofs_env_reload_mbr(task->t_env);
-	if (err) {
-		return err;
-	}
-	return 0;
+	return silofs_env_reload_mbr(task->t_env, caddr);
 }
 
 static int
@@ -407,7 +397,7 @@ appexec_open_fs(struct silofs_task_ctx *task, const struct silofs_xref *xref)
 	if (err) {
 		return err;
 	}
-	err = reload_mbr(task);
+	err = reload_mbr(task, &caddr);
 	if (err) {
 		return err;
 	}

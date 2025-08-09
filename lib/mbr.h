@@ -87,9 +87,14 @@ int silofs_mbrctl_regen(struct silofs_mbrctl *mbrc);
 int silofs_mbrctl_update_sb(struct silofs_mbrctl      *mbrc,
                             const struct silofs_uaddr *sb_uaddr);
 
-int silofs_mbrctl_encode(const struct silofs_mbrctl *mbrc,
-                         struct silofs_mbr1k        *out_mbr1k_enc,
-                         struct silofs_caddr        *out_caddr);
+int silofs_mbrctl_encode(struct silofs_mbrctl *mbrc,
+                         struct silofs_mbr1k  *out_mbr1k_enc);
+
+int silofs_mbrctl_decode(struct silofs_mbrctl      *mbrc,
+                         const struct silofs_mbr1k *mbr1k_enc);
+
+bool silofs_mbrctl_has_ref(const struct silofs_mbrctl *mbrc,
+                           const struct silofs_caddr  *caddr);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -101,18 +106,12 @@ int silofs_decode_mbr(const struct silofs_env   *env,
                       const struct silofs_mbr1k *mbr1k_enc,
                       struct silofs_mbr         *out_mbr);
 
-int silofs_stat_mbr(const struct silofs_env   *env,
-                    const struct silofs_caddr *caddr);
-
 int silofs_save_mbr(const struct silofs_env *env, const struct silofs_mbr *mbr,
                     struct silofs_caddr *out_caddr);
 
 int silofs_load_mbr(const struct silofs_env   *env,
                     const struct silofs_caddr *caddr,
                     struct silofs_mbr         *out_mbr);
-
-int silofs_reload_mbr(struct silofs_env *env, const struct silofs_caddr *caddr,
-                      struct silofs_mbr *out_mbr);
 
 int silofs_unlink_mbr(const struct silofs_env   *env,
                       const struct silofs_caddr *caddr);

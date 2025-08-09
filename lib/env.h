@@ -97,7 +97,8 @@ int silofs_env_commit_mbr(struct silofs_env *env);
 int silofs_env_sense_mbr(struct silofs_env         *env,
                          const struct silofs_caddr *caddr);
 
-int silofs_env_reload_mbr(struct silofs_env *env);
+int silofs_env_reload_mbr(struct silofs_env         *env,
+                          const struct silofs_caddr *caddr);
 
 int silofs_env_unlink_mbr(struct silofs_env *env);
 
@@ -115,8 +116,6 @@ void silofs_env_uptime(const struct silofs_env *env, time_t *out_uptime);
 
 void silofs_env_allocstat(const struct silofs_env  *env,
                           struct silofs_alloc_stat *out_alst);
-
-int silofs_env_update_by(struct silofs_env *env, const struct silofs_mbr *mbr);
 
 int silofs_env_sense_ar(struct silofs_env *env);
 

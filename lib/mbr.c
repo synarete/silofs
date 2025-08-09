@@ -147,6 +147,9 @@ static int mbr1k_check_uaddr_sb(const struct silofs_mbr1k *mbr1k)
 	enum silofs_mtype mtype;
 
 	mbr1k_sb_addr(mbr1k, &uaddr);
+	if (silofs_uaddr_isnull(&uaddr)) {
+		return 0;
+	}
 	height = silofs_uaddr_height(&uaddr);
 	mtype = silofs_uaddr_mtype(&uaddr);
 	if ((mtype != SILOFS_MTYPE_SUPER) || (height != SILOFS_HEIGHT_SUPER) ||
@@ -467,21 +470,34 @@ void silofs_mbrctl_fini(struct silofs_mbrctl *mbrc)
 static int
 mbrctl_encode(const struct silofs_mbrctl *mbrc, struct silofs_mbr1k *out_mbr1k)
 {
-	const struct silofs_mbr *mbr = &mbrc->mbr;
-
-	return mbr_encode(mbr, &mbrc->mdigest, &mbrc->cipher, &mbrc->ivkey,
-	                  out_mbr1k);
+	return mbr_encode(&mbrc->mbr, &mbrc->mdigest, &mbrc->cipher,
+	                  &mbrc->ivkey, out_mbr1k);
 }
 
-static int mbrctl_calc_ref(struct silofs_mbrctl *mbrc)
+static int
+mbrctl_decode(struct silofs_mbrctl *mbrc, const struct silofs_mbr1k *mbr1k)
 {
-	struct silofs_mbr1k mbr1k_enc = { .mbr_magic = UINT64_MAX };
+	return mbr_decode(&mbrc->mbr, &mbrc->mdigest, &mbrc->cipher,
+	                  &mbrc->ivkey, mbr1k);
+}
 
-	return silofs_mbrctl_encode(mbrc, &mbr1k_enc, &mbrc->mref);
+static void
+mbrctl_set_ref(struct silofs_mbrctl *mbrc, const struct silofs_caddr *caddr)
+{
+	silofs_caddr_assign(&mbrc->mref, caddr);
+}
+
+bool silofs_mbrctl_has_ref(const struct silofs_mbrctl *mbrc,
+                           const struct silofs_caddr *caddr)
+{
+	return silofs_caddr_isequal(&mbrc->mref, caddr);
 }
 
 int silofs_mbrctl_regen(struct silofs_mbrctl *mbrc)
 {
+	struct silofs_mbr1k mbr1k = {
+		.mbr_magic = UINT64_MAX,
+	};
 	struct silofs_mbr *mbr = &mbrc->mbr;
 	int err;
 
@@ -490,7 +506,11 @@ int silofs_mbrctl_regen(struct silofs_mbrctl *mbrc)
 	if (err) {
 		return err;
 	}
-	err = mbrctl_calc_ref(mbrc);
+	err = silofs_mbrctl_encode(mbrc, &mbr1k);
+	if (err) {
+		return err;
+	}
+	err = silofs_mbrctl_decode(mbrc, &mbr1k);
 	if (err) {
 		return err;
 	}
@@ -500,21 +520,31 @@ int silofs_mbrctl_regen(struct silofs_mbrctl *mbrc)
 int silofs_mbrctl_update_sb(struct silofs_mbrctl *mbrc,
                             const struct silofs_uaddr *sb_uaddr)
 {
-	struct silofs_mbr *mbr = &mbrc->mbr;
+	struct silofs_mbr1k mbr1k = {
+		.mbr_magic = UINT64_MAX,
+	};
 
-	silofs_mbr_set_sb_addr(mbr, sb_uaddr);
-	return mbrctl_calc_ref(mbrc);
+	silofs_mbr_set_sb_addr(&mbrc->mbr, sb_uaddr);
+	return silofs_mbrctl_encode(mbrc, &mbr1k);
 }
 
-int silofs_mbrctl_encode(const struct silofs_mbrctl *mbrc,
-                         struct silofs_mbr1k *out_mbr1k_enc,
-                         struct silofs_caddr *out_caddr)
+static void mbrctl_calc_addr_of(const struct silofs_mbrctl *mbrc,
+                                const struct silofs_mbr1k *mbr1k_enc,
+                                struct silofs_caddr *out_caddr)
 {
 	const struct iovec iov = {
-		.iov_base = out_mbr1k_enc,
-		.iov_len = sizeof(*out_mbr1k_enc),
+		.iov_base = silofs_unconst(mbr1k_enc),
+		.iov_len = sizeof(*mbr1k_enc),
 	};
 	const enum silofs_ctype ctype = SILOFS_CTYPE_MBR;
+
+	silofs_calc_caddr_of(&mbrc->mdigest, &iov, 1, ctype, out_caddr);
+}
+
+int silofs_mbrctl_encode(struct silofs_mbrctl *mbrc,
+                         struct silofs_mbr1k *out_mbr1k_enc)
+{
+	struct silofs_caddr caddr;
 	int err;
 
 	err = mbrctl_encode(mbrc, out_mbr1k_enc);
@@ -522,7 +552,26 @@ int silofs_mbrctl_encode(const struct silofs_mbrctl *mbrc,
 		log_err("failed to encode mbr: err=%d", err);
 		return err;
 	}
-	silofs_calc_caddr_of(&mbrc->mdigest, &iov, 1, ctype, out_caddr);
+	mbrctl_calc_addr_of(mbrc, out_mbr1k_enc, &caddr);
+	mbrctl_set_ref(mbrc, &caddr);
+	return 0;
+}
+
+int silofs_mbrctl_decode(struct silofs_mbrctl *mbrc,
+                         const struct silofs_mbr1k *mbr1k_enc)
+{
+	struct silofs_caddr caddr = {
+		.ctype = SILOFS_CTYPE_NONE,
+	};
+	int err;
+
+	mbrctl_calc_addr_of(mbrc, mbr1k_enc, &caddr);
+	err = mbrctl_decode(mbrc, mbr1k_enc);
+	if (err) {
+		log_dbg("failed to encode mbr: err=%d", err);
+		return err;
+	}
+	mbrctl_set_ref(mbrc, &caddr);
 	return 0;
 }
 
@@ -647,49 +696,6 @@ int silofs_load_mbr(const struct silofs_env *env,
 	err = silofs_decode_mbr(env, &mbr1k_enc, out_mbr);
 	if (err) {
 		log_dbg("failed to decode mbr: err=%d", err);
-		return err;
-	}
-	return 0;
-}
-
-int silofs_stat_mbr(const struct silofs_env *env,
-                    const struct silofs_caddr *caddr)
-{
-	size_t sz = 0;
-	int err;
-
-	err = silofs_repo_lookup_ref(env->base.repo, caddr);
-	if (err) {
-		log_err("failed to lookup ref: err=%d", err);
-		return err;
-	}
-	err = silofs_repo_stat_cobj(env->base.repo, caddr, &sz);
-	if (err) {
-		log_err("failed to stat mbr: err=%d", err);
-		return err;
-	}
-	if (sz != SILOFS_MBR_SIZE) {
-		log_warn("bad mbr: size=%zu", sz);
-		return -SILOFS_EBADMBR;
-	}
-	return 0;
-}
-
-int silofs_reload_mbr(struct silofs_env *env, const struct silofs_caddr *caddr,
-                      struct silofs_mbr *out_mbr)
-{
-	int err;
-
-	err = silofs_stat_mbr(env, caddr);
-	if (err) {
-		return err;
-	}
-	err = silofs_load_mbr(env, caddr, out_mbr);
-	if (err) {
-		return err;
-	}
-	err = silofs_env_update_by(env, out_mbr);
-	if (err) {
 		return err;
 	}
 	return 0;

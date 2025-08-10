@@ -563,6 +563,11 @@ static int envi_init_args(struct silofs_env_inst *envi,
 	return 0;
 }
 
+static void envi_post_init(struct silofs_env_inst *envi)
+{
+	envi_fini_passwd(envi);
+}
+
 static int
 envi_init(struct silofs_env_inst *envi, const struct silofs_env_args *args)
 {
@@ -616,6 +621,7 @@ envi_init(struct silofs_env_inst *envi, const struct silofs_env_args *args)
 	if (err) {
 		goto out_err;
 	}
+	envi_post_init(envi);
 	return 0;
 out_err:
 	envi_fini(envi);

@@ -37,6 +37,7 @@ struct cmd_restore_in_args {
 struct cmd_restore_ctx {
 	struct cmd_restore_in_args in_args;
 	struct silofs_env_args env_args;
+	struct silofs_xref fs_xref;
 	struct silofs_env *env;
 	bool has_lockfile;
 };
@@ -211,8 +212,8 @@ static void cmd_restore_execute(struct cmd_restore_ctx *ctx)
 		.ar_name = ctx->in_args.arname,
 	};
 
-	cmd_restore_fs(ctx->env, &boot_args.fs_xref);
-	cmd_save_fs_xref(&boot_args);
+	cmd_restore_fs(ctx->env, &ctx->fs_xref);
+	cmd_save_fs_xref(&boot_args, &ctx->fs_xref);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

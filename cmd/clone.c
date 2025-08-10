@@ -44,10 +44,11 @@ struct cmd_clone_in_args {
 struct cmd_clone_ctx {
 	struct cmd_clone_in_args in_args;
 	struct silofs_env_args env_args;
+	struct silofs_xref fs_xref;
+	struct silofs_xref fs_xref_main;
+	struct silofs_xref fs_xref_fork;
 	struct silofs_env *env;
 	union silofs_ioc_u *ioc;
-	struct silofs_xref xref_new;
-	struct silofs_xref xref_alt;
 };
 
 static struct cmd_clone_ctx *cmd_clone_ctx_p;
@@ -238,9 +239,9 @@ static void cmd_clone_do_ioctl_clonefs(struct cmd_clone_ctx *ctx)
 	int dfd = -1;
 	int err;
 
-	SILOFS_STATICASSERT_EQ(sizeof(ctx->xref_new.s),
+	SILOFS_STATICASSERT_EQ(sizeof(ctx->fs_xref_main.s),
 	                       sizeof(ioc->forkfs.xref_new));
-	SILOFS_STATICASSERT_EQ(sizeof(ctx->xref_alt.s),
+	SILOFS_STATICASSERT_EQ(sizeof(ctx->fs_xref_fork.s),
 	                       sizeof(ioc->forkfs.xref_alt));
 
 	cmd_reset_ioc(ctx->ioc);
@@ -261,8 +262,10 @@ static void cmd_clone_do_ioctl_clonefs(struct cmd_clone_ctx *ctx)
 		        ctx->in_args.repodir_fsname);
 	}
 
-	memcpy(ctx->xref_new.s, ioc->forkfs.xref_new, sizeof(ctx->xref_new.s));
-	memcpy(ctx->xref_alt.s, ioc->forkfs.xref_alt, sizeof(ctx->xref_alt.s));
+	memcpy(ctx->fs_xref_main.s, ioc->forkfs.xref_new,
+	       sizeof(ctx->fs_xref_main.s));
+	memcpy(ctx->fs_xref_fork.s, ioc->forkfs.xref_alt,
+	       sizeof(ctx->fs_xref_fork.s));
 }
 
 static void cmd_clone_do_ioctl_syncfs(struct cmd_clone_ctx *ctx)
@@ -302,7 +305,7 @@ static void cmd_clone_setup_fs_ids(struct cmd_clone_ctx *ctx)
 
 static void cmd_clone_load_fs_xref(struct cmd_clone_ctx *ctx)
 {
-	cmd_load_fs_xref(&ctx->env_args.boot_args);
+	cmd_load_fs_xref(&ctx->env_args.boot_args, &ctx->fs_xref);
 }
 
 static void cmd_clone_setup_env(struct cmd_clone_ctx *ctx)
@@ -322,17 +325,17 @@ static void cmd_clone_close_repo(struct cmd_clone_ctx *ctx)
 
 static void cmd_clone_sense_fs(struct cmd_clone_ctx *ctx)
 {
-	cmd_sense_fs(ctx->env, &ctx->env_args.boot_args.fs_xref);
+	cmd_sense_fs(ctx->env, &ctx->fs_xref);
 }
 
 static void cmd_clone_open_fs(struct cmd_clone_ctx *ctx)
 {
-	cmd_open_fs(ctx->env, &ctx->env_args.boot_args.fs_xref);
+	cmd_open_fs(ctx->env, &ctx->fs_xref);
 }
 
 static void cmd_clone_do_clonefs(struct cmd_clone_ctx *ctx)
 {
-	cmd_fork_fs(ctx->env, &ctx->xref_new, &ctx->xref_alt);
+	cmd_fork_fs(ctx->env, &ctx->fs_xref_main, &ctx->fs_xref_fork);
 }
 
 static void cmd_clone_close_fs(struct cmd_clone_ctx *ctx)
@@ -347,8 +350,7 @@ static void cmd_clone_save_fork_xref(struct cmd_clone_ctx *ctx)
 		.fs_name = ctx->in_args.forkname,
 	};
 
-	memcpy(&boot_args.fs_xref, &ctx->xref_alt, sizeof(boot_args.fs_xref));
-	cmd_save_fs_xref(&boot_args);
+	cmd_save_fs_xref(&boot_args, &ctx->fs_xref_fork);
 }
 
 static void cmd_clone_save_main_xref(struct cmd_clone_ctx *ctx)
@@ -358,8 +360,7 @@ static void cmd_clone_save_main_xref(struct cmd_clone_ctx *ctx)
 		.fs_name = ctx->in_args.fsname,
 	};
 
-	memcpy(&boot_args.fs_xref, &ctx->xref_new, sizeof(boot_args.fs_xref));
-	cmd_save_fs_xref(&boot_args);
+	cmd_save_fs_xref(&boot_args, &ctx->fs_xref_main);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

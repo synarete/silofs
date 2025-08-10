@@ -51,7 +51,6 @@ struct silofs_xref {
 
 /* file-system's boot arguments */
 struct silofs_boot_args {
-	struct silofs_xref fs_xref;
 	struct silofs_xref ar_xref;
 	const char        *fs_name;
 	const char        *ar_name;

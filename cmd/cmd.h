@@ -337,13 +337,15 @@ void cmd_delpass(char **pass);
 void cmd_checkpass(const char *pass);
 
 /* x-reference */
-void cmd_save_fs_xref(const struct silofs_boot_args *boot_args);
+void cmd_save_fs_xref(const struct silofs_boot_args *boot_args,
+                      const struct silofs_xref      *fs_xref);
 
 void cmd_save_ar_xref(const struct silofs_boot_args *boot_args);
 
-void cmd_unlink_fs_xref(const struct silofs_boot_args *boot_args);
+void cmd_load_fs_xref(const struct silofs_boot_args *boot_args,
+                      struct silofs_xref            *out_xref);
 
-void cmd_load_fs_xref(struct silofs_boot_args *boot_args);
+void cmd_unlink_fs_xref(const struct silofs_boot_args *boot_args);
 
 void cmd_load_ar_xref(struct silofs_boot_args *boot_args);
 

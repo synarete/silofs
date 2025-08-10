@@ -101,42 +101,11 @@ static void env_update_mntflags(struct silofs_env *env)
 	env->ms_flags &= ~ms_flag_dont;
 }
 
-static int env_update_base_caddr(struct silofs_env *env)
-{
-	const struct silofs_xref *xref = &env->base.args->boot_args.fs_xref;
-	struct silofs_caddr caddr = { .ctype = SILOFS_CTYPE_NONE };
-	int err = 0;
-
-	if (silofs_xref_isnull(xref)) {
-		goto out;
-	}
-	err = silofs_xref_to_caddr(xref, &caddr);
-	if (err) {
-		goto out;
-	}
-	switch (caddr.ctype) {
-	case SILOFS_CTYPE_MBR:
-		silofs_env_set_mbr_addr(env, &caddr);
-		break;
-	case SILOFS_CTYPE_PACKIDX:
-		silofs_env_set_arix_addr(env, &caddr);
-		break;
-	case SILOFS_CTYPE_NONE:
-	case SILOFS_CTYPE_ENCSEG:
-	default:
-		log_err("invalid xref: '%s'", xref->s);
-		err = -SILOFS_EINVAL;
-		break;
-	}
-out:
-	return err;
-}
-
 static int env_update_by_env_args(struct silofs_env *env)
 {
 	env_update_owner(env);
 	env_update_mntflags(env);
-	return env_update_base_caddr(env);
+	return 0;
 }
 
 static size_t env_calc_iopen_limit(const struct silofs_env *env)

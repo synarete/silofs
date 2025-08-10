@@ -36,6 +36,7 @@ struct cmd_view_in_args {
 struct cmd_view_ctx {
 	struct cmd_view_in_args in_args;
 	struct silofs_env_args env_args;
+	struct silofs_xref fs_xref;
 	struct silofs_env *env;
 	FILE *out_fp;
 	bool has_lockfile;
@@ -181,7 +182,7 @@ static void cmd_view_setup_fs_ids(struct cmd_view_ctx *ctx)
 
 static void cmd_view_load_fs_xref(struct cmd_view_ctx *ctx)
 {
-	cmd_load_fs_xref(&ctx->env_args.boot_args);
+	cmd_load_fs_xref(&ctx->env_args.boot_args, &ctx->fs_xref);
 }
 
 static void cmd_view_setup_env(struct cmd_view_ctx *ctx)
@@ -201,12 +202,12 @@ static void cmd_view_close_repo(struct cmd_view_ctx *ctx)
 
 static void cmd_view_sense_fs(struct cmd_view_ctx *ctx)
 {
-	cmd_sense_fs(ctx->env, &ctx->env_args.boot_args.fs_xref);
+	cmd_sense_fs(ctx->env, &ctx->fs_xref);
 }
 
 static void cmd_view_open_fs(struct cmd_view_ctx *ctx)
 {
-	cmd_open_fs(ctx->env, &ctx->env_args.boot_args.fs_xref);
+	cmd_open_fs(ctx->env, &ctx->fs_xref);
 }
 
 static void cmd_view_close_fs(struct cmd_view_ctx *ctx)

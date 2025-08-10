@@ -22,7 +22,7 @@
 #include "infra.h"
 #include "crypt.h"
 #include "addr.h"
-#include "mbr.h"
+#include "mrec.h"
 
 /* top-level operations counters/stats */
 struct silofs_env_opstat {
@@ -50,7 +50,7 @@ struct silofs_env_base {
 /* top-level environment object */
 struct silofs_env {
 	struct silofs_env_base   base;
-	struct silofs_mbrctl     mbrctl;
+	struct silofs_mrectl     mrectl;
 	struct silofs_rwlock     rwlock;
 	struct silofs_mutex      mutex;
 	struct silofs_cipher     enc_cipher;
@@ -90,17 +90,17 @@ int silofs_env_shut(struct silofs_env *env);
 
 int silofs_env_format_bstore(struct silofs_env *env);
 
-int silofs_env_setup_mbr(struct silofs_env *env);
+int silofs_env_setup_mrec(struct silofs_env *env);
 
-int silofs_env_commit_mbr(struct silofs_env *env);
+int silofs_env_commit_mrec(struct silofs_env *env);
 
-int silofs_env_sense_mbr(struct silofs_env         *env,
-                         const struct silofs_caddr *caddr);
-
-int silofs_env_reload_mbr(struct silofs_env         *env,
+int silofs_env_sense_mrec(struct silofs_env         *env,
                           const struct silofs_caddr *caddr);
 
-int silofs_env_unlink_mbr(struct silofs_env *env);
+int silofs_env_reload_mrec(struct silofs_env         *env,
+                           const struct silofs_caddr *caddr);
+
+int silofs_env_unlink_mrec(struct silofs_env *env);
 
 int silofs_env_format_super(struct silofs_env *env, size_t capacity);
 
@@ -123,11 +123,11 @@ void silofs_env_drop_caches(struct silofs_env *env);
 
 bool silofs_env_hasflag(const struct silofs_env *env, enum silofs_flags f);
 
-int silofs_env_mbr_addr(const struct silofs_env *env,
-                        struct silofs_caddr     *out_caddr);
+int silofs_env_mrec_addr(const struct silofs_env *env,
+                         struct silofs_caddr     *out_caddr);
 
-int silofs_env_set_mbr_addr(struct silofs_env         *env,
-                            const struct silofs_caddr *caddr);
+int silofs_env_set_mrec_addr(struct silofs_env         *env,
+                             const struct silofs_caddr *caddr);
 
 int silofs_env_arix_addr(const struct silofs_env *env,
                          struct silofs_caddr     *out_caddr);

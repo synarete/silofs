@@ -21,7 +21,7 @@
 #include <silofs/ioctls.h>
 #include <silofs/appexec.h>
 #include "bs.h"
-#include "mbr.h"
+#include "mrec.h"
 #include "fs.h"
 #include "env.h"
 #include "opexec.h"
@@ -314,21 +314,21 @@ static int format_rootdir(struct silofs_task_ctx *task)
 	return 0;
 }
 
-static int setup_mbr(struct silofs_task_ctx *task)
+static int setup_mrec(struct silofs_task_ctx *task)
 {
-	return silofs_env_setup_mbr(task->t_env);
+	return silofs_env_setup_mrec(task->t_env);
 }
 
-static int commit_mbr(struct silofs_task_ctx *task)
+static int commit_mrec(struct silofs_task_ctx *task)
 {
-	return silofs_env_commit_mbr(task->t_env);
+	return silofs_env_commit_mrec(task->t_env);
 }
 
 static int appexec_format_meta(struct silofs_task_ctx *task)
 {
 	int err;
 
-	err = setup_mbr(task);
+	err = setup_mrec(task);
 	if (err) {
 		return err;
 	}
@@ -360,7 +360,7 @@ static int appexec_format_meta(struct silofs_task_ctx *task)
 	if (err) {
 		return err;
 	}
-	err = commit_mbr(task);
+	err = commit_mrec(task);
 	if (err) {
 		return err;
 	}
@@ -381,10 +381,10 @@ resolve_xref(const struct silofs_xref *xref, struct silofs_caddr *out_caddr)
 	return 0;
 }
 
-static int reload_mbr(const struct silofs_task_ctx *task,
-                      const struct silofs_caddr *caddr)
+static int reload_mrec(const struct silofs_task_ctx *task,
+                       const struct silofs_caddr *caddr)
 {
-	return silofs_env_reload_mbr(task->t_env, caddr);
+	return silofs_env_reload_mrec(task->t_env, caddr);
 }
 
 static int
@@ -397,7 +397,7 @@ appexec_open_fs(struct silofs_task_ctx *task, const struct silofs_xref *xref)
 	if (err) {
 		return err;
 	}
-	err = reload_mbr(task, &caddr);
+	err = reload_mrec(task, &caddr);
 	if (err) {
 		return err;
 	}
@@ -409,11 +409,11 @@ appexec_open_fs(struct silofs_task_ctx *task, const struct silofs_xref *xref)
 	return 0;
 }
 
-static int unlink_mbr(struct silofs_task_ctx *task)
+static int unlink_mrec(struct silofs_task_ctx *task)
 {
 	int err;
 
-	err = silofs_env_unlink_mbr(task->t_env);
+	err = silofs_env_unlink_mrec(task->t_env);
 	if (err) {
 		return err;
 	}
@@ -436,7 +436,7 @@ appexec_fork_fs(struct silofs_task_ctx *task, struct silofs_xref *out_main,
 	struct silofs_mrefs mrefs;
 	int err;
 
-	err = silofs_env_mbr_addr(task->t_env, &mrefs.main);
+	err = silofs_env_mrec_addr(task->t_env, &mrefs.main);
 	if (err) {
 		return err;
 	}
@@ -495,7 +495,7 @@ static int appexec_remove_fs(struct silofs_task_ctx *task)
 	if (err) {
 		return err;
 	}
-	err = unlink_mbr(task);
+	err = unlink_mrec(task);
 	if (err) {
 		return err;
 	}
@@ -519,8 +519,8 @@ static int caddr_to_xref(const struct silofs_caddr *caddr, int status,
 	return status;
 }
 
-static int caddr_to_mbr_xref(const struct silofs_caddr *caddr,
-                             struct silofs_xref *out_xref)
+static int caddr_to_mrec_xref(const struct silofs_caddr *caddr,
+                              struct silofs_xref *out_xref)
 {
 	const int ret = caddr->ctype == SILOFS_CTYPE_MBR ? 0 : -SILOFS_ENOENT;
 
@@ -582,7 +582,7 @@ static int make_task(struct silofs_env *env, struct silofs_task_ctx *task)
 	silofs_task_init(task, env);
 	silofs_task_set_ts(task, true);
 	silofs_task_set_creds(task, args->uid, args->gid, args->umask);
-	task->t_mbr_op = true;
+	task->t_mrec_op = true;
 	return map_task_creds(task);
 }
 
@@ -784,19 +784,19 @@ int silofs_open_repo(struct silofs_env *env)
 	return ret;
 }
 
-static int require_mbr_caddr(const struct silofs_env *env)
+static int require_mrec_caddr(const struct silofs_env *env)
 {
 	struct silofs_caddr caddr = { .ctype = SILOFS_CTYPE_NONE };
 
-	return silofs_env_mbr_addr(env, &caddr);
+	return silofs_env_mrec_addr(env, &caddr);
 }
 
-static int require_no_mbr_caddr(const struct silofs_env *env)
+static int require_no_mrec_caddr(const struct silofs_env *env)
 {
 	struct silofs_caddr caddr = { .ctype = SILOFS_CTYPE_NONE };
 	int err;
 
-	err = silofs_env_mbr_addr(env, &caddr);
+	err = silofs_env_mrec_addr(env, &caddr);
 	return err ? 0 : -SILOFS_EEXIST;
 }
 
@@ -819,7 +819,7 @@ static int check_format_fs(struct silofs_env *env)
 	if (err) {
 		return err;
 	}
-	err = require_no_mbr_caddr(env);
+	err = require_no_mrec_caddr(env);
 	if (err) {
 		return err;
 	}
@@ -829,7 +829,7 @@ static int check_format_fs(struct silofs_env *env)
 static int
 resolve_fs_xref(struct silofs_env *env, struct silofs_xref *out_xref)
 {
-	return caddr_to_mbr_xref(&env->mbrctl.mref, out_xref);
+	return caddr_to_mrec_xref(&env->mrectl.mref, out_xref);
 }
 
 static int do_format_fs(struct silofs_env *env, struct silofs_xref *out_xref)
@@ -880,9 +880,9 @@ static int do_sense_fs(struct silofs_env *env, const struct silofs_xref *xref)
 		log_dbg("illegal xref: %s", xref->s);
 		return err;
 	}
-	err = silofs_env_sense_mbr(env, &caddr);
+	err = silofs_env_sense_mrec(env, &caddr);
 	if (err) {
-		log_dbg("failed to sense mbr: xref=%s err=%d", xref->s, err);
+		log_dbg("failed to sense mrec: xref=%s err=%d", xref->s, err);
 		return err;
 	}
 	return 0;
@@ -1066,7 +1066,7 @@ exec_archive_fs(struct silofs_env *env, struct silofs_caddr *out_caddr)
 static int
 resolve_ar_xref(const struct silofs_caddr *caddr, struct silofs_xref *out_xref)
 {
-	return caddr_to_mbr_xref(caddr, out_xref);
+	return caddr_to_mrec_xref(caddr, out_xref);
 }
 
 static int do_archive_fs(struct silofs_env *env, struct silofs_xref *out_xref)
@@ -1074,7 +1074,7 @@ static int do_archive_fs(struct silofs_env *env, struct silofs_xref *out_xref)
 	struct silofs_caddr caddr = { .ctype = SILOFS_CTYPE_NONE };
 	int err;
 
-	err = require_mbr_caddr(env);
+	err = require_mrec_caddr(env);
 	if (err) {
 		return err;
 	}
@@ -1153,7 +1153,7 @@ int silofs_set_fs_xref(struct silofs_env *env, const struct silofs_xref *xref)
 	silofs_env_lock(env);
 	err = silofs_xref_to_caddr(xref, &caddr);
 	if (!err) {
-		err = silofs_env_set_mbr_addr(env, &caddr);
+		err = silofs_env_set_mrec_addr(env, &caddr);
 	}
 	silofs_env_unlock(env);
 	return err;

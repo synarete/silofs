@@ -16,7 +16,7 @@
  */
 #include "configs.h"
 #include <linux/fuse_kernel.h>
-#include "mbr.h"
+#include "mrec.h"
 #include "fs.h"
 #include "walk.h"
 #include "env.h"

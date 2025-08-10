@@ -20,7 +20,7 @@
 #include <sys/statvfs.h>
 #include <fcntl.h>
 #include <time.h>
-#include "mbr.h"
+#include "mrec.h"
 #include "fs.h"
 #include "ar.h"
 #include "walk.h"

@@ -335,9 +335,9 @@
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 /* main-boot-record flags */
-enum silofs_mbrf {
-	SILOFS_MBRF_NONE = 0x00,
-	SILOFS_MBRF_ARCH = 0x01,
+enum silofs_mrecf {
+	SILOFS_MRECF_NONE = 0x00,
+	SILOFS_MRECF_ARCH = 0x01,
 };
 
 /* common-header flags */
@@ -605,20 +605,20 @@ struct silofs_vaddr64 {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-struct silofs_mbr1k {
-	uint64_t               mbr_magic;
-	uint64_t               mbr_version;
-	struct silofs_uuid     mbr_uuid;
-	uint64_t               mbr_flags;
-	uint32_t               mbr_chiper_algo;
-	uint32_t               mbr_chiper_mode;
-	struct silofs_iv       mbr_main_iv;
-	struct silofs_key      mbr_main_key;
-	struct silofs_uaddr96b mbr_sb_addr;
-	uint8_t                mbr_reserved1[32];
-	struct silofs_caddr64b mbr_arix_addr;
-	uint8_t                mbr_reserved3[672];
-	struct silofs_hash256  mbr_hash;
+struct silofs_mrec1k {
+	uint64_t               mrec_magic;
+	uint64_t               mrec_version;
+	struct silofs_uuid     mrec_uuid;
+	uint64_t               mrec_flags;
+	uint32_t               mrec_chiper_algo;
+	uint32_t               mrec_chiper_mode;
+	struct silofs_iv       mrec_main_iv;
+	struct silofs_key      mrec_main_key;
+	struct silofs_uaddr96b mrec_sb_addr;
+	uint8_t                mrec_reserved1[32];
+	struct silofs_caddr64b mrec_arix_addr;
+	uint8_t                mrec_reserved3[672];
+	struct silofs_hash256  mrec_hash;
 } silofs_attr_aligned64;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1032,7 +1032,7 @@ struct silofs_ar_hdr1k {
 /* semantic "view" into meta elements */
 union silofs_view_u {
 	struct silofs_header       hdr[2];
-	struct silofs_mbr1k        mbr;
+	struct silofs_mrec1k       mrec;
 	struct silofs_uber_block   ub;
 	struct silofs_blob_desc    bd;
 	struct silofs_btree_node   btn;

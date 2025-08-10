@@ -33,7 +33,7 @@
 #include <silofs/silofs.h>
 #include "fs.h"
 #include "ar.h"
-#include "mbr.h"
+#include "mrec.h"
 #include "opexec.h"
 #include "walk.h"
 

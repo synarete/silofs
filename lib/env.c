@@ -20,7 +20,7 @@
 #include <sys/mount.h>
 #include "bs.h"
 #include "fs.h"
-#include "mbr.h"
+#include "mrec.h"
 #include "env.h"
 
 static void
@@ -37,24 +37,24 @@ env_bind_sbi(struct silofs_env *env, struct silofs_sb_info *sbi_new)
 	env->sbi = sbi_new;
 }
 
-static void env_update_mbr_sb_addr(struct silofs_env *env)
+static void env_update_mrec_sb_addr(struct silofs_env *env)
 {
 	const struct silofs_uaddr *uaddr = NULL;
-	struct silofs_mbr *mbr = &env->mbrctl.mbr;
+	struct silofs_mrec *mrec = &env->mrectl.mrec;
 
 	if (env->sbi != NULL) {
 		uaddr = silofs_sbi_uaddr(env->sbi);
 	} else {
 		uaddr = silofs_uaddr_none();
 	}
-	silofs_mbr_set_sb_addr(mbr, uaddr);
-	silofs_mbr_gen_uuid(mbr);
+	silofs_mrec_set_sb_addr(mrec, uaddr);
+	silofs_mrec_gen_uuid(mrec);
 }
 
 static void env_rebind_sbi(struct silofs_env *env, struct silofs_sb_info *sbi)
 {
 	env_bind_sbi(env, sbi);
-	env_update_mbr_sb_addr(env);
+	env_update_mrec_sb_addr(env);
 }
 
 static void env_update_owner(struct silofs_env *env)
@@ -116,7 +116,7 @@ static int env_update_base_caddr(struct silofs_env *env)
 	}
 	switch (caddr.ctype) {
 	case SILOFS_CTYPE_MBR:
-		silofs_env_set_mbr_addr(env, &caddr);
+		silofs_env_set_mrec_addr(env, &caddr);
 		break;
 	case SILOFS_CTYPE_PACKIDX:
 		silofs_env_set_arix_addr(env, &caddr);
@@ -177,14 +177,14 @@ static void env_fini_commons(struct silofs_env *env)
 	env->ms_flags = 0;
 }
 
-static int env_init_mbrctl(struct silofs_env *env)
+static int env_init_mrectl(struct silofs_env *env)
 {
-	return silofs_mbrctl_init(&env->mbrctl);
+	return silofs_mrectl_init(&env->mrectl);
 }
 
-static void env_fini_mbrc(struct silofs_env *env)
+static void env_fini_mrectl(struct silofs_env *env)
 {
-	silofs_mbrctl_fini(&env->mbrctl);
+	silofs_mrectl_fini(&env->mrectl);
 }
 
 static int env_init_locks(struct silofs_env *env)
@@ -264,7 +264,7 @@ int silofs_env_init(struct silofs_env *env, const struct silofs_env_base *base)
 	env_init_commons(env, base);
 	env_init_opstat(env);
 
-	err = env_init_mbrctl(env);
+	err = env_init_mrectl(env);
 	if (err) {
 		return err;
 	}
@@ -296,7 +296,7 @@ void silofs_env_fini(struct silofs_env *env)
 	env_fini_iconv(env);
 	env_fini_crypto(env);
 	env_fini_locks(env);
-	env_fini_mbrc(env);
+	env_fini_mrectl(env);
 	env_fini_commons(env);
 }
 
@@ -328,11 +328,11 @@ int silofs_env_setup_passwd(struct silofs_env *env,
                             const struct silofs_password *pw)
 {
 	const struct silofs_mdigest *md = &env->mdigest;
-	struct silofs_mbrctl *mbrc = &env->mbrctl;
+	struct silofs_mrectl *mrectl = &env->mrectl;
 	int ret = 0;
 
 	if ((pw != NULL) && (pw->passlen > 0)) {
-		ret = silofs_derive_default_ivkey(md, pw, &mbrc->ivkey);
+		ret = silofs_derive_default_ivkey(md, pw, &mrectl->ivkey);
 	}
 	return ret;
 }
@@ -342,25 +342,25 @@ bool silofs_env_hasflag(const struct silofs_env *env, enum silofs_flags f)
 	return (env->base.args->flags & f) == f;
 }
 
-static bool caddr_ismbr(const struct silofs_caddr *caddr)
+static bool caddr_ismrec(const struct silofs_caddr *caddr)
 {
 	return (caddr->ctype == SILOFS_CTYPE_MBR);
 }
 
-int silofs_env_mbr_addr(const struct silofs_env *env,
-                        struct silofs_caddr *out_caddr)
+int silofs_env_mrec_addr(const struct silofs_env *env,
+                         struct silofs_caddr *out_caddr)
 {
-	silofs_caddr_assign(out_caddr, &env->mbrctl.mref);
-	return caddr_ismbr(out_caddr) ? 0 : -SILOFS_ENOENT;
+	silofs_caddr_assign(out_caddr, &env->mrectl.mref);
+	return caddr_ismrec(out_caddr) ? 0 : -SILOFS_ENOENT;
 }
 
-int silofs_env_set_mbr_addr(struct silofs_env *env,
-                            const struct silofs_caddr *caddr)
+int silofs_env_set_mrec_addr(struct silofs_env *env,
+                             const struct silofs_caddr *caddr)
 {
-	if (!caddr_ismbr(caddr)) {
+	if (!caddr_ismrec(caddr)) {
 		return -SILOFS_EINVAL;
 	}
-	silofs_caddr_assign(&env->mbrctl.mref, caddr);
+	silofs_caddr_assign(&env->mrectl.mref, caddr);
 	return 0;
 }
 
@@ -380,7 +380,7 @@ int silofs_env_set_arix_addr(struct silofs_env *env,
 		return -SILOFS_EINVAL;
 	}
 	silofs_caddr_assign(&env->arix_addr, caddr);
-	silofs_mbr_set_ar_addr(&env->mbrctl.mbr, caddr);
+	silofs_mrec_set_ar_addr(&env->mrectl.mrec, caddr);
 	return 0;
 }
 
@@ -396,106 +396,106 @@ int silofs_env_format_bstore(struct silofs_env *env)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static int
-env_stat_mbr_at(const struct silofs_env *env, const struct silofs_caddr *caddr)
+static int env_stat_mrec_at(const struct silofs_env *env,
+                            const struct silofs_caddr *caddr)
 {
-	size_t mbr_size = 0;
+	size_t mrec_size = 0;
 	int err;
 
 	err = silofs_repo_lookup_ref(env->base.repo, caddr);
 	if (err) {
 		return err;
 	}
-	err = silofs_repo_stat_cobj(env->base.repo, caddr, &mbr_size);
+	err = silofs_repo_stat_cobj(env->base.repo, caddr, &mrec_size);
 	if (err) {
 		return err;
 	}
-	if (mbr_size != SILOFS_MBR_SIZE) {
-		log_warn("bad mbr: size=%zu", mbr_size);
+	if (mrec_size != SILOFS_MBR_SIZE) {
+		log_warn("bad mrec: size=%zu", mrec_size);
 		return -SILOFS_EBADMBR;
 	}
 	return 0;
 }
 
-int silofs_env_sense_mbr(struct silofs_env *env,
-                         const struct silofs_caddr *caddr)
+int silofs_env_sense_mrec(struct silofs_env *env,
+                          const struct silofs_caddr *caddr)
 {
-	return env_stat_mbr_at(env, caddr);
+	return env_stat_mrec_at(env, caddr);
 }
 
-static int
-env_load_mbr_at(const struct silofs_env *env, const struct silofs_caddr *caddr,
-                struct silofs_mbr1k *out_mbr1k_enc)
+static int env_load_mrec_at(const struct silofs_env *env,
+                            const struct silofs_caddr *caddr,
+                            struct silofs_mrec1k *out_mrec1k_enc)
 {
 	struct silofs_rwvec rwvec = {
-		.rwv_base = out_mbr1k_enc,
-		.rwv_len = sizeof(*out_mbr1k_enc),
+		.rwv_base = out_mrec1k_enc,
+		.rwv_len = sizeof(*out_mrec1k_enc),
 	};
 	int err;
 
-	err = env_stat_mbr_at(env, caddr);
+	err = env_stat_mrec_at(env, caddr);
 	if (err) {
 		log_dbg("failed to lookup ref: err=%d", err);
 		return (err == -ENOENT) ? -SILOFS_ENOREF : err;
 	}
 	err = silofs_repo_load_cobj(env->base.repo, caddr, &rwvec);
 	if (err) {
-		log_dbg("failed to load mbr: err=%d", err);
+		log_dbg("failed to load mrec: err=%d", err);
 		return (err == -ENOENT) ? -SILOFS_ENOMBR : err;
 	}
 	return 0;
 }
 
 static int
-env_decode_mbr(struct silofs_env *env, const struct silofs_mbr1k *mbr1k_enc)
+env_decode_mrec(struct silofs_env *env, const struct silofs_mrec1k *mrec1k_enc)
 {
-	return silofs_mbrctl_decode(&env->mbrctl, mbr1k_enc);
+	return silofs_mrectl_decode(&env->mrectl, mrec1k_enc);
 }
 
-static int env_require_mbr_with(const struct silofs_env *env,
-                                const struct silofs_caddr *caddr)
+static int env_require_mrec_with(const struct silofs_env *env,
+                                 const struct silofs_caddr *caddr)
 {
-	return silofs_mbrctl_has_ref(&env->mbrctl, caddr) ? 0 :
+	return silofs_mrectl_has_ref(&env->mrectl, caddr) ? 0 :
 	                                                    -SILOFS_EBADMBR;
 }
 
-int silofs_env_reload_mbr(struct silofs_env *env,
-                          const struct silofs_caddr *caddr)
+int silofs_env_reload_mrec(struct silofs_env *env,
+                           const struct silofs_caddr *caddr)
 {
-	struct silofs_mbr1k mbr1k_enc = {
-		.mbr_magic = UINT64_MAX,
+	struct silofs_mrec1k mrec1k_enc = {
+		.mrec_magic = UINT64_MAX,
 	};
 	int err;
 
-	err = env_stat_mbr_at(env, caddr);
+	err = env_stat_mrec_at(env, caddr);
 	if (err) {
 		return err;
 	}
-	err = env_load_mbr_at(env, caddr, &mbr1k_enc);
+	err = env_load_mrec_at(env, caddr, &mrec1k_enc);
 	if (err) {
 		return err;
 	}
-	err = env_decode_mbr(env, &mbr1k_enc);
+	err = env_decode_mrec(env, &mrec1k_enc);
 	if (err) {
 		return err;
 	}
-	err = env_require_mbr_with(env, caddr);
+	err = env_require_mrec_with(env, caddr);
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-int silofs_env_unlink_mbr(struct silofs_env *env)
+int silofs_env_unlink_mrec(struct silofs_env *env)
 {
 	struct silofs_caddr caddr = { .ctype = SILOFS_CTYPE_NONE };
 	int err;
 
-	err = silofs_env_mbr_addr(env, &caddr);
+	err = silofs_env_mrec_addr(env, &caddr);
 	if (err) {
 		return err;
 	}
-	err = silofs_unlink_mbr(env, &caddr);
+	err = silofs_unlink_mrec(env, &caddr);
 	if (err) {
 		return err;
 	}
@@ -524,7 +524,7 @@ static void make_super_uaddr(const struct silofs_lsid *lsid,
 
 static const struct silofs_uaddr *env_sb_addr(const struct silofs_env *env)
 {
-	return &env->mbrctl.mbr.sb_addr;
+	return &env->mrectl.mrec.sb_addr;
 }
 
 static void env_make_super_uaddr(const struct silofs_env *env,
@@ -737,63 +737,63 @@ static int env_reinit_ciphers(struct silofs_env *env, int algo, int mode)
 	return 0;
 }
 
-static int env_reinit_ciphers_by_mbr(struct silofs_env *env)
+static int env_reinit_ciphers_by_mrec(struct silofs_env *env)
 {
-	const struct silofs_mbr *mbr = &env->mbrctl.mbr;
-	const int algo = mbr->cipher_algo;
-	const int mode = mbr->cipher_mode;
+	const struct silofs_mrec *mrec = &env->mrectl.mrec;
+	const int algo = mrec->cipher_algo;
+	const int mode = mrec->cipher_mode;
 
 	return env_reinit_ciphers(env, algo, mode);
 }
 
-static int env_regen_mbr(struct silofs_env *env)
+static int env_regen_mrec(struct silofs_env *env)
 {
-	return silofs_mbrctl_regen(&env->mbrctl);
+	return silofs_mrectl_regen(&env->mrectl);
 }
 
-int silofs_env_setup_mbr(struct silofs_env *env)
+int silofs_env_setup_mrec(struct silofs_env *env)
 {
 	int err;
 
-	err = env_regen_mbr(env);
+	err = env_regen_mrec(env);
 	if (err) {
 		return err;
 	}
-	err = env_reinit_ciphers_by_mbr(env);
+	err = env_reinit_ciphers_by_mrec(env);
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-static int env_pre_commit_mbr(struct silofs_env *env)
+static int env_pre_commit_mrec(struct silofs_env *env)
 {
 	const struct silofs_uaddr *sb_uaddr = silofs_sbi_uaddr(env->sbi);
 
-	return silofs_mbrctl_update_sb(&env->mbrctl, sb_uaddr);
+	return silofs_mrectl_update_sb(&env->mrectl, sb_uaddr);
 }
 
-static int env_save_mbr(struct silofs_env *env)
+static int env_save_mrec(struct silofs_env *env)
 {
-	struct silofs_mbr1k mbr1k_enc = {
-		.mbr_magic = UINT64_MAX,
+	struct silofs_mrec1k mrec1k_enc = {
+		.mrec_magic = UINT64_MAX,
 	};
 	const struct silofs_rovec rovec = {
-		.rov_base = &mbr1k_enc,
-		.rov_len = sizeof(mbr1k_enc),
+		.rov_base = &mrec1k_enc,
+		.rov_len = sizeof(mrec1k_enc),
 	};
 	int err;
 
-	err = silofs_mbrctl_encode(&env->mbrctl, &mbr1k_enc);
+	err = silofs_mrectl_encode(&env->mrectl, &mrec1k_enc);
 	if (err) {
 		return err;
 	}
-	err = silofs_repo_save_cobj(env->base.repo, &env->mbrctl.mref, &rovec);
+	err = silofs_repo_save_cobj(env->base.repo, &env->mrectl.mref, &rovec);
 	if (err) {
-		log_err("failed to save mbr: err=%d", err);
+		log_err("failed to save mrec: err=%d", err);
 		return err;
 	}
-	err = silofs_repo_create_ref(env->base.repo, &env->mbrctl.mref);
+	err = silofs_repo_create_ref(env->base.repo, &env->mrectl.mref);
 	if (err) {
 		log_err("failed to create ref: err=%d", err);
 		return err;
@@ -801,15 +801,15 @@ static int env_save_mbr(struct silofs_env *env)
 	return 0;
 }
 
-int silofs_env_commit_mbr(struct silofs_env *env)
+int silofs_env_commit_mrec(struct silofs_env *env)
 {
 	int err;
 
-	err = env_pre_commit_mbr(env);
+	err = env_pre_commit_mrec(env);
 	if (err) {
 		return err;
 	}
-	err = env_save_mbr(env);
+	err = env_save_mrec(env);
 	if (err) {
 		return err;
 	}
@@ -848,7 +848,7 @@ static void sbi_mark_fossil(struct silofs_sb_info *sbi)
 static void
 env_main_ref(const struct silofs_env *env, struct silofs_caddr *out_caddr)
 {
-	silofs_caddr_assign(out_caddr, &env->mbrctl.mref);
+	silofs_caddr_assign(out_caddr, &env->mrectl.mref);
 }
 
 static int
@@ -864,7 +864,7 @@ env_do_forkfs(struct silofs_env *env, struct silofs_mrefs *out_mrefs)
 	if (err) {
 		return err;
 	}
-	err = silofs_env_commit_mbr(env);
+	err = silofs_env_commit_mrec(env);
 	if (err) {
 		return err;
 	}
@@ -873,7 +873,7 @@ env_do_forkfs(struct silofs_env *env, struct silofs_mrefs *out_mrefs)
 	if (err) {
 		return err;
 	}
-	err = silofs_env_commit_mbr(env);
+	err = silofs_env_commit_mrec(env);
 	if (err) {
 		return err;
 	}

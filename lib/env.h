@@ -22,7 +22,7 @@
 #include "infra.h"
 #include "crypt.h"
 #include "addr.h"
-#include "mrec.h"
+#include "mbr.h"
 
 /* top-level operations counters/stats */
 struct silofs_env_opstat {
@@ -35,6 +35,7 @@ struct silofs_env_opstat {
 
 /* base members of env-block (provided) */
 struct silofs_env_base {
+	const struct silofs_password *passwd;
 	const struct silofs_env_args *args;
 	struct silofs_alloc          *alloc;
 	struct silofs_repo           *repo;
@@ -50,7 +51,7 @@ struct silofs_env_base {
 /* top-level environment object */
 struct silofs_env {
 	struct silofs_env_base   base;
-	struct silofs_mrecinfo   mreci;
+	struct silofs_mbrinfo    mbri;
 	struct silofs_rwlock     rwlock;
 	struct silofs_mutex      mutex;
 	struct silofs_cipher     enc_cipher;
@@ -75,9 +76,6 @@ int silofs_env_init(struct silofs_env            *env,
 
 void silofs_env_fini(struct silofs_env *env);
 
-int silofs_env_setup_passwd(struct silofs_env            *env,
-                            const struct silofs_password *pw);
-
 void silofs_env_lock(struct silofs_env *env);
 
 void silofs_env_unlock(struct silofs_env *env);
@@ -89,18 +87,6 @@ void silofs_env_rwunlock(struct silofs_env *env);
 int silofs_env_shut(struct silofs_env *env);
 
 int silofs_env_format_bstore(struct silofs_env *env);
-
-int silofs_env_setup_mrec(struct silofs_env *env);
-
-int silofs_env_commit_mrec(struct silofs_env *env);
-
-int silofs_env_sense_mrec(struct silofs_env         *env,
-                          const struct silofs_caddr *caddr);
-
-int silofs_env_reload_mrec(struct silofs_env         *env,
-                           const struct silofs_caddr *caddr);
-
-int silofs_env_unlink_mrec(struct silofs_env *env);
 
 int silofs_env_format_super(struct silofs_env *env, size_t capacity);
 
@@ -123,16 +109,32 @@ void silofs_env_drop_caches(struct silofs_env *env);
 
 bool silofs_env_hasflag(const struct silofs_env *env, enum silofs_flags f);
 
-int silofs_env_mrec_addr(const struct silofs_env *env,
-                         struct silofs_caddr     *out_caddr);
+/* XXX */
 
-int silofs_env_set_mrec_addr(struct silofs_env         *env,
-                             const struct silofs_caddr *caddr);
+int silofs_env_set_mbr_addr(struct silofs_env         *env,
+                            const struct silofs_caddr *caddr);
 
 int silofs_env_arix_addr(const struct silofs_env *env,
                          struct silofs_caddr     *out_caddr);
 
 int silofs_env_set_arix_addr(struct silofs_env         *env,
                              const struct silofs_caddr *caddr);
+
+int silofs_env_mbr_addr(const struct silofs_env *env,
+                        struct silofs_caddr     *out_caddr);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_env_setup_mbr(struct silofs_env *env);
+
+int silofs_env_commit_mbr(struct silofs_env *env);
+
+int silofs_env_sense_mbr(struct silofs_env         *env,
+                         const struct silofs_caddr *caddr);
+int silofs_env_reload_mbr(struct silofs_env         *env,
+                          const struct silofs_caddr *caddr);
+
+int silofs_env_unlink_mbr(struct silofs_env         *env,
+                          const struct silofs_caddr *caddr);
 
 #endif /* SILOFS_ENV_H_ */

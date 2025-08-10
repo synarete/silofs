@@ -442,7 +442,7 @@ void silofs_task_init(struct silofs_task_ctx *task, struct silofs_env *env)
 	task->t_fs_locked = false;
 	task->t_ex_locked = false;
 	task->t_exclusive = false;
-	task->t_mrec_op = false;
+	task->t_mbr_op = false;
 	task->t_kwrite = false;
 	task->t_runnable = true;
 }
@@ -524,7 +524,7 @@ static void task_purge(struct silofs_task_ctx *task)
 
 void silofs_lock_fs_by(struct silofs_task_ctx *task)
 {
-	if (!task->t_fs_locked && !task->t_mrec_op) {
+	if (!task->t_fs_locked && !task->t_mbr_op) {
 		silofs_env_lock(task->t_env);
 		task->t_fs_locked = true;
 	}
@@ -532,7 +532,7 @@ void silofs_lock_fs_by(struct silofs_task_ctx *task)
 
 void silofs_unlock_fs_by(struct silofs_task_ctx *task)
 {
-	if (task->t_fs_locked && !task->t_mrec_op) {
+	if (task->t_fs_locked && !task->t_mbr_op) {
 		silofs_env_unlock(task->t_env);
 		task->t_fs_locked = false;
 	}

@@ -32,7 +32,7 @@
 #include <silofs/ioctls.h>
 #include <silofs/mntsvc.h>
 #include "infra.h"
-#include "mrec.h"
+#include "mbr.h"
 #include "fs.h"
 #include "env.h"
 #include "opcall.h"

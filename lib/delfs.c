@@ -18,8 +18,8 @@
 #include <silofs/ioctls.h>
 #include "infra.h"
 #include "bs.h"
-#include "mrec.h"
 #include "fs.h"
+#include "mbr.h"
 #include "env.h"
 #include "walk.h"
 

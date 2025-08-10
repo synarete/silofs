@@ -1985,9 +1985,6 @@ void ut_open_fs(struct ut_env *ute)
 {
 	int err;
 
-	err = silofs_set_fs_xref(ute->env, &ute->fs_xref[0]);
-	ut_expect_ok(err);
-
 	err = silofs_open_fs(ute->env, &ute->fs_xref[0]);
 	ut_expect_ok(err);
 }
@@ -1995,9 +1992,6 @@ void ut_open_fs(struct ut_env *ute)
 void ut_open_fs2(struct ut_env *ute)
 {
 	int err;
-
-	err = silofs_set_fs_xref(ute->env, &ute->fs_xref[1]);
-	ut_expect_ok(err);
 
 	err = silofs_open_fs(ute->env, &ute->fs_xref[1]);
 	ut_expect_ok(err);
@@ -2019,23 +2013,17 @@ void ut_inspect_fs(struct ut_env *ute)
 	ut_expect_ok(err);
 }
 
-void ut_unref_fs(struct ut_env *ute)
+void ut_remove_fs(struct ut_env *ute)
 {
 	int err;
-
-	err = silofs_set_fs_xref(ute->env, &ute->fs_xref[0]);
-	ut_expect_ok(err);
 
 	err = silofs_remove_fs(ute->env, &ute->fs_xref[0]);
 	ut_expect_ok(err);
 }
 
-void ut_unref_fs2(struct ut_env *ute)
+void ut_remove_fs2(struct ut_env *ute)
 {
 	int err;
-
-	err = silofs_set_fs_xref(ute->env, &ute->fs_xref[1]);
-	ut_expect_ok(err);
 
 	err = silofs_remove_fs(ute->env, &ute->fs_xref[1]);
 	ut_expect_ok(err);

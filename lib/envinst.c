@@ -19,7 +19,7 @@
 #include <silofs/ioctls.h>
 #include "bs.h"
 #include "fs.h"
-#include "mrec.h"
+#include "mbr.h"
 #include "env.h"
 #include "fuseq.h"
 
@@ -491,6 +491,7 @@ static void envi_fini_fuseq(struct silofs_env_inst *envi)
 static int envi_init_env(struct silofs_env_inst *envi)
 {
 	const struct silofs_env_base env_base = {
+		.passwd = &envi->passwd,
 		.args = &envi->args,
 		.alloc = envi->alloc,
 		.repo = &envi->repo,
@@ -510,10 +511,6 @@ static int envi_init_env(struct silofs_env_inst *envi)
 		return err;
 	}
 	envi->initf |= SILOFS_ENVIF_ENV;
-	err = silofs_env_setup_passwd(env, &envi->passwd);
-	if (err) {
-		return err;
-	}
 	return 0;
 }
 

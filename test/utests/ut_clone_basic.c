@@ -166,7 +166,7 @@ static void ut_clone_reload_other(struct ut_env *ute)
 	ut_write_read_str(ute, ino2, str2, off2[1]);
 	ut_release(ute, ino2);
 	ut_close_fs(ute);
-	ut_unref_fs2(ute);
+	ut_remove_fs2(ute);
 	ut_open_fs(ute);
 	ut_open_rdonly(ute, ino1);
 	ut_read_verify_str(ute, ino1, str1, off1[0]);

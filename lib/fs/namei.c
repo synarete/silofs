@@ -2406,7 +2406,7 @@ static void fill_query_boot(const struct silofs_inode_info *ii,
 	struct silofs_query_boot *qboot = &query->u.boot;
 	struct silofs_strspan ss;
 
-	silofs_env_mrec_addr(silofs_ii_env(ii), &caddr);
+	silofs_env_mbr_addr(silofs_ii_env(ii), &caddr);
 	silofs_sbi_self_blobid(silofs_ii_sbi(ii), &blobid);
 	bootpath_of(ii, &bootpath);
 

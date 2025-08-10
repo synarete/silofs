@@ -33,7 +33,7 @@
 #include <silofs/silofs.h>
 #include "fs.h"
 #include "ar.h"
-#include "mrec.h"
+#include "mbr.h"
 #include "opexec.h"
 #include "walk.h"
 
@@ -536,9 +536,9 @@ void ut_open_fs2(struct ut_env *ute);
 
 void ut_inspect_fs(struct ut_env *ute);
 
-void ut_unref_fs(struct ut_env *ute);
+void ut_remove_fs(struct ut_env *ute);
 
-void ut_unref_fs2(struct ut_env *ute);
+void ut_remove_fs2(struct ut_env *ute);
 
 void ut_fork_fs(struct ut_env *ute);
 

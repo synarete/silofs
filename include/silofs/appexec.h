@@ -72,6 +72,9 @@ int silofs_create_env(const struct silofs_env_args *args,
 
 void silofs_destroy_env(struct silofs_env *env);
 
+const struct silofs_env_args *
+silofs_get_env_args(const struct silofs_env *env);
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_format_repo(struct silofs_env *env);
@@ -79,13 +82,6 @@ int silofs_format_repo(struct silofs_env *env);
 int silofs_open_repo(struct silofs_env *env);
 
 int silofs_close_repo(struct silofs_env *env);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-const struct silofs_env_args *
-silofs_get_env_args(const struct silofs_env *env);
-
-int silofs_set_fs_xref(struct silofs_env *env, const struct silofs_xref *xref);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

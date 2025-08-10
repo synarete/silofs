@@ -259,7 +259,7 @@ static void adi_update_caddr(struct silofs_ar_desc_info *adi,
 	ard_update_caddr(&adi->ard, caddr);
 }
 
-static bool adi_ismrec(const struct silofs_ar_desc_info *adi)
+static bool adi_ismbr(const struct silofs_ar_desc_info *adi)
 {
 	const enum silofs_mtype mtype = silofs_laddr_mtype(&adi->ard.laddr);
 
@@ -763,40 +763,40 @@ arc_save_seg(const struct silofs_ar_ctx *ar_ctx,
 	return 0;
 }
 
-static int arc_load_fs_mrec(const struct silofs_ar_ctx *ar_ctx,
-                            const struct silofs_caddr *caddr,
-                            struct silofs_mrec1k *out_mrec1k)
+static int arc_load_fs_mbr(const struct silofs_ar_ctx *ar_ctx,
+                           const struct silofs_caddr *caddr,
+                           struct silofs_mbr1k *out_mbr1k)
 {
-	struct silofs_mrec mrec = { .flags = SILOFS_MRECF_NONE };
+	struct silofs_mbr mbr = { .flags = SILOFS_MBRF_NONE };
 	int err;
 
-	err = silofs_load_mrec(ar_ctx->env, caddr, &mrec);
+	err = silofs_load_mbr(ar_ctx->env, caddr, &mbr);
 	if (err) {
-		log_err("failed to load mrec: err=%d", err);
+		log_err("failed to load mbr: err=%d", err);
 		return err;
 	}
-	err = silofs_encode_mrec(ar_ctx->env, &mrec, out_mrec1k);
+	err = silofs_encode_mbr(ar_ctx->env, &mbr, out_mbr1k);
 	if (err) {
-		log_err("failed to encode mrec: err=%d", err);
+		log_err("failed to encode mbr: err=%d", err);
 		return err;
 	}
 	return 0;
 }
 
-static int arc_restore_fs_mrec(const struct silofs_ar_ctx *ar_ctx,
-                               const struct silofs_caddr *caddr,
-                               struct silofs_mrec1k *mrec1k)
+static int arc_restore_fs_mbr(const struct silofs_ar_ctx *ar_ctx,
+                              const struct silofs_caddr *caddr,
+                              struct silofs_mbr1k *mbr1k)
 {
-	struct silofs_mrec mrec = { .flags = SILOFS_MRECF_NONE };
+	struct silofs_mbr mbr = { .flags = SILOFS_MBRF_NONE };
 	struct silofs_caddr caddr2;
 	int err;
 
-	err = silofs_decode_mrec(ar_ctx->env, mrec1k, &mrec);
+	err = silofs_decode_mbr(ar_ctx->env, mbr1k, &mbr);
 	if (err) {
 		return err;
 	}
 	/* TODO: check proper caddr before save */
-	err = silofs_save_mrec(ar_ctx->env, &mrec, &caddr2);
+	err = silofs_save_mbr(ar_ctx->env, &mbr, &caddr2);
 	if (err) {
 		return err;
 	}
@@ -874,70 +874,70 @@ out:
 	return err;
 }
 
-static int arc_fs_mrec_caddr(const struct silofs_ar_ctx *ar_ctx,
-                             struct silofs_caddr *out_caddr)
+static int arc_fs_mbr_caddr(const struct silofs_ar_ctx *ar_ctx,
+                            struct silofs_caddr *out_caddr)
 {
-	return silofs_env_mrec_addr(ar_ctx->env, out_caddr);
+	return silofs_env_mbr_addr(ar_ctx->env, out_caddr);
 }
 
-static int arc_archive_mrec(const struct silofs_ar_ctx *ar_ctx,
-                            struct silofs_ar_desc_info *adi)
+static int arc_archive_mbr(const struct silofs_ar_ctx *ar_ctx,
+                           struct silofs_ar_desc_info *adi)
 {
-	struct silofs_mrec1k mrec1k = { .mrec_magic = 0xff };
+	struct silofs_mbr1k mbr1k = { .mbr_magic = 0xff };
 	struct silofs_caddr caddr = { .ctype = SILOFS_CTYPE_NONE };
 	int err;
 
-	err = arc_fs_mrec_caddr(ar_ctx, &caddr);
+	err = arc_fs_mbr_caddr(ar_ctx, &caddr);
 	if (err) {
 		return err;
 	}
-	err = arc_load_fs_mrec(ar_ctx, &caddr, &mrec1k);
+	err = arc_load_fs_mbr(ar_ctx, &caddr, &mbr1k);
 	if (err) {
 		return err;
 	}
 	adi_update_caddr(adi, &caddr);
 
-	err = arc_send_pack(ar_ctx, &adi->ard.caddr, &mrec1k, sizeof(mrec1k));
+	err = arc_send_pack(ar_ctx, &adi->ard.caddr, &mbr1k, sizeof(mbr1k));
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-static int arc_archive_mrec2(const struct silofs_ar_ctx *ar_ctx,
-                             struct silofs_caddr *out_caddr)
+static int arc_archive_mbr2(const struct silofs_ar_ctx *ar_ctx,
+                            struct silofs_caddr *out_caddr)
 {
-	struct silofs_mrec1k mrec1k = { .mrec_magic = 0xff };
-	const struct silofs_mrec *mrec = &ar_ctx->env->mreci.mrec;
+	struct silofs_mbr1k mbr1k = { .mbr_magic = 0xff };
+	const struct silofs_mbr *mbr = &ar_ctx->env->mbri.mbr;
 	int err;
 
-	err = silofs_calc_mrec_caddr(ar_ctx->env, mrec, out_caddr);
+	err = silofs_calc_mbr_caddr(ar_ctx->env, mbr, out_caddr);
 	if (err) {
 		return err;
 	}
-	err = silofs_encode_mrec(ar_ctx->env, mrec, &mrec1k);
+	err = silofs_encode_mbr(ar_ctx->env, mbr, &mbr1k);
 	if (err) {
 		return err;
 	}
-	err = arc_send_pack(ar_ctx, out_caddr, &mrec1k, sizeof(mrec1k));
+	err = arc_send_pack(ar_ctx, out_caddr, &mbr1k, sizeof(mbr1k));
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-static int arc_restore_mrec(const struct silofs_ar_ctx *ar_ctx,
-                            const struct silofs_ar_desc_info *adi)
+static int arc_restore_mbr(const struct silofs_ar_ctx *ar_ctx,
+                           const struct silofs_ar_desc_info *adi)
 {
-	struct silofs_mrec1k mrec1k = { .mrec_magic = 0xff };
+	struct silofs_mbr1k mbr1k = { .mbr_magic = 0xff };
 	const struct silofs_caddr *caddr = &adi->ard.caddr;
 	int err;
 
-	err = arc_recv_pack(ar_ctx, caddr, &mrec1k, sizeof(mrec1k));
+	err = arc_recv_pack(ar_ctx, caddr, &mbr1k, sizeof(mbr1k));
 	if (err) {
 		return err;
 	}
-	err = arc_restore_fs_mrec(ar_ctx, caddr, &mrec1k);
+	err = arc_restore_fs_mbr(ar_ctx, caddr, &mbr1k);
 	if (err) {
 		return err;
 	}
@@ -949,8 +949,8 @@ static int arc_archive_by_desc(struct silofs_ar_ctx *ar_ctx,
 {
 	int err;
 
-	if (adi_ismrec(adi)) {
-		err = arc_archive_mrec(ar_ctx, adi);
+	if (adi_ismbr(adi)) {
+		err = arc_archive_mbr(ar_ctx, adi);
 	} else {
 		err = arc_archive_segdata(ar_ctx, adi);
 	}
@@ -1055,7 +1055,7 @@ arc_archive_post(struct silofs_ar_ctx *ar_ctx, struct silofs_caddr *out_caddr)
 {
 	int err;
 
-	err = arc_archive_mrec2(ar_ctx, out_caddr);
+	err = arc_archive_mbr2(ar_ctx, out_caddr);
 	if (err) {
 		return err;
 	}
@@ -1187,8 +1187,8 @@ static int arc_restore_by_desc(const struct silofs_ar_ctx *ar_ctx,
 {
 	int err;
 
-	if (adi_ismrec(adi)) {
-		err = arc_restore_mrec(ar_ctx, adi);
+	if (adi_ismbr(adi)) {
+		err = arc_restore_mbr(ar_ctx, adi);
 	} else {
 		err = arc_restore_segdata(ar_ctx, adi);
 	}
@@ -1215,21 +1215,21 @@ static int arc_restore_post(struct silofs_ar_ctx *ar_ctx)
 {
 	struct silofs_caddr caddr = { .ctype = SILOFS_CTYPE_NONE };
 	const struct silofs_ar_desc_info *adi = NULL;
-	size_t nmrecs = 0;
+	size_t nmbrs = 0;
 
 	adi = arix_next_desc(&ar_ctx->arix, adi);
 	while (adi != NULL) {
-		if (adi_ismrec(adi)) {
+		if (adi_ismbr(adi)) {
 			adi_caddr(adi, &caddr);
-			nmrecs++;
+			nmbrs++;
 		}
 		adi = arix_next_desc(&ar_ctx->arix, adi);
 	}
-	if (nmrecs != 1) {
+	if (nmbrs != 1) {
 		return -SILOFS_EBADPACK;
 	}
 
-	silofs_env_set_mrec_addr(ar_ctx->env, &caddr);
+	silofs_env_set_mbr_addr(ar_ctx->env, &caddr);
 	return 0;
 }
 

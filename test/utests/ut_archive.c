@@ -48,7 +48,7 @@ static void ut_archive_data(struct ut_env *ute)
 	ut_reload_fs(ute);
 	ut_archive_fs(ute);
 	ut_close_fs(ute);
-	ut_unref_fs(ute);
+	ut_remove_fs(ute);
 	ut_restore_fs(ute);
 	ut_open_fs(ute);
 	ut_getattr_reg(ute, ino, &st);
@@ -84,7 +84,7 @@ static void ut_archive_nfiles(struct ut_env *ute)
 	}
 	ut_archive_fs(ute);
 	ut_close_fs(ute);
-	ut_unref_fs(ute);
+	ut_remove_fs(ute);
 	ut_restore_fs(ute);
 	ut_open_fs(ute);
 	for (size_t i = 0; i < cnt; ++i) {
@@ -126,7 +126,7 @@ static void ut_archive_twice(struct ut_env *ute)
 	ut_release_flush(ute, ino2);
 	ut_archive_fs(ute);
 	ut_close_fs(ute);
-	ut_unref_fs(ute);
+	ut_remove_fs(ute);
 	ut_restore_fs(ute);
 	ut_open_fs(ute);
 	ut_open_rdonly(ute, ino1);
@@ -138,7 +138,7 @@ static void ut_archive_twice(struct ut_env *ute)
 	ut_rename_exchange(ute, dino, name1, dino, name2);
 	ut_archive_fs(ute);
 	ut_close_fs(ute);
-	ut_unref_fs(ute);
+	ut_remove_fs(ute);
 	ut_restore_fs(ute);
 	ut_open_fs(ute);
 	ut_open_rdonly(ute, ino1);

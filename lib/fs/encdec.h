@@ -18,7 +18,7 @@
 #define SILOFS_ENCDEC_H_
 
 struct silofs_laddr;
-struct silofs_mrec;
+struct silofs_mbr;
 struct silofs_unode_info;
 struct silofs_vnode_info;
 struct silofs_env;
@@ -33,11 +33,11 @@ int silofs_decrypt_uni_view(const struct silofs_env  *env,
 int silofs_decrypt_vni_view(const struct silofs_env  *env,
                             struct silofs_vnode_info *vni);
 
-void silofs_llink_of_uni(const struct silofs_mrec       *mrec,
+void silofs_llink_of_uni(const struct silofs_mbr        *mbr,
                          const struct silofs_unode_info *uni,
                          struct silofs_llink            *out_llink);
 
-void silofs_llink_of_vni(const struct silofs_mrec       *mrec,
+void silofs_llink_of_vni(const struct silofs_mbr        *mbr,
                          const struct silofs_vnode_info *vni,
                          struct silofs_llink            *out_llink);
 

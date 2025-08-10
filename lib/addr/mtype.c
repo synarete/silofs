@@ -156,7 +156,7 @@ uint32_t silofs_mtype_size(enum silofs_mtype mtype)
 	case SILOFS_MTYPE_BTNODE:
 		return sizeof(struct silofs_btree_node);
 	case SILOFS_MTYPE_MBR:
-		return sizeof(struct silofs_mrec1k);
+		return sizeof(struct silofs_mbr1k);
 	case SILOFS_MTYPE_SUPER:
 		return sizeof(struct silofs_super_block);
 	case SILOFS_MTYPE_SPNODE:

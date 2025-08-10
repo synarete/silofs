@@ -908,7 +908,7 @@ static int arc_archive_mrec2(const struct silofs_ar_ctx *ar_ctx,
                              struct silofs_caddr *out_caddr)
 {
 	struct silofs_mrec1k mrec1k = { .mrec_magic = 0xff };
-	const struct silofs_mrec *mrec = &ar_ctx->env->mrectl.mrec;
+	const struct silofs_mrec *mrec = &ar_ctx->env->mreci.mrec;
 	int err;
 
 	err = silofs_calc_mrec_caddr(ar_ctx->env, mrec, out_caddr);

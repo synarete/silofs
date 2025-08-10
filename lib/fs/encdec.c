@@ -68,7 +68,7 @@ int silofs_decrypt_uni_view(const struct silofs_env *env,
 {
 	struct silofs_llink llink;
 
-	silofs_llink_of_uni(&env->mrectl.mrec, uni, &llink);
+	silofs_llink_of_uni(&env->mreci.mrec, uni, &llink);
 	return decrypt_view_inplace(env, &llink, uni->un_lni.ln_view);
 }
 
@@ -77,7 +77,7 @@ int silofs_decrypt_vni_view(const struct silofs_env *env,
 {
 	struct silofs_llink llink;
 
-	silofs_llink_of_vni(&env->mrectl.mrec, vni, &llink);
+	silofs_llink_of_vni(&env->mreci.mrec, vni, &llink);
 	return decrypt_view_inplace(env, &llink, vni->vn_lni.ln_view);
 }
 

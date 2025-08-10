@@ -829,7 +829,7 @@ static int check_format_fs(struct silofs_env *env)
 static int
 resolve_fs_xref(struct silofs_env *env, struct silofs_xref *out_xref)
 {
-	return caddr_to_mrec_xref(&env->mrectl.mref, out_xref);
+	return caddr_to_mrec_xref(&env->mreci.mref, out_xref);
 }
 
 static int do_format_fs(struct silofs_env *env, struct silofs_xref *out_xref)

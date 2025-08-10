@@ -50,7 +50,7 @@ struct silofs_env_base {
 /* top-level environment object */
 struct silofs_env {
 	struct silofs_env_base   base;
-	struct silofs_mrectl     mrectl;
+	struct silofs_mrecinfo   mreci;
 	struct silofs_rwlock     rwlock;
 	struct silofs_mutex      mutex;
 	struct silofs_cipher     enc_cipher;

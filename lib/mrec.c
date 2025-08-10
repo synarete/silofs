@@ -441,99 +441,99 @@ mrec_decode(struct silofs_mrec *mrec, const struct silofs_mdigest *mdigest,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_mrectl_init(struct silofs_mrectl *mrectl)
+int silofs_mrecinfo_init(struct silofs_mrecinfo *mreci)
 {
 	int err;
 
-	silofs_caddr_reset(&mrectl->mref);
-	silofs_mrec_init(&mrectl->mrec);
-	silofs_ivkey_init(&mrectl->ivkey);
+	silofs_caddr_reset(&mreci->mref);
+	silofs_mrec_init(&mreci->mrec);
+	silofs_ivkey_init(&mreci->ivkey);
 
-	err = silofs_cipher_init(&mrectl->cipher);
+	err = silofs_cipher_init(&mreci->cipher);
 	if (err) {
 		return err;
 	}
-	err = silofs_mdigest_init(&mrectl->mdigest);
+	err = silofs_mdigest_init(&mreci->mdigest);
 	if (err) {
-		silofs_cipher_fini(&mrectl->cipher);
+		silofs_cipher_fini(&mreci->cipher);
 		return err;
 	}
 	return 0;
 }
 
-void silofs_mrectl_fini(struct silofs_mrectl *mrectl)
+void silofs_mrecinfo_fini(struct silofs_mrecinfo *mreci)
 {
-	silofs_caddr_reset(&mrectl->mref);
-	silofs_mdigest_fini(&mrectl->mdigest);
-	silofs_cipher_fini(&mrectl->cipher);
-	silofs_ivkey_reset(&mrectl->ivkey);
-	silofs_mrec_fini(&mrectl->mrec);
+	silofs_caddr_reset(&mreci->mref);
+	silofs_mdigest_fini(&mreci->mdigest);
+	silofs_cipher_fini(&mreci->cipher);
+	silofs_ivkey_reset(&mreci->ivkey);
+	silofs_mrec_fini(&mreci->mrec);
 }
 
-static int mrectl_encode(const struct silofs_mrectl *mrectl,
-                         struct silofs_mrec1k *out_mrec1k)
+static int mreci_encode(const struct silofs_mrecinfo *mreci,
+                        struct silofs_mrec1k *out_mrec1k)
 {
-	return mrec_encode(&mrectl->mrec, &mrectl->mdigest, &mrectl->cipher,
-	                   &mrectl->ivkey, out_mrec1k);
+	return mrec_encode(&mreci->mrec, &mreci->mdigest, &mreci->cipher,
+	                   &mreci->ivkey, out_mrec1k);
 }
 
 static int
-mrectl_decode(struct silofs_mrectl *mrectl, const struct silofs_mrec1k *mrec1k)
+mreci_decode(struct silofs_mrecinfo *mreci, const struct silofs_mrec1k *mrec1k)
 {
-	return mrec_decode(&mrectl->mrec, &mrectl->mdigest, &mrectl->cipher,
-	                   &mrectl->ivkey, mrec1k);
+	return mrec_decode(&mreci->mrec, &mreci->mdigest, &mreci->cipher,
+	                   &mreci->ivkey, mrec1k);
 }
 
 static void
-mrectl_set_ref(struct silofs_mrectl *mrectl, const struct silofs_caddr *caddr)
+mreci_set_ref(struct silofs_mrecinfo *mreci, const struct silofs_caddr *caddr)
 {
-	silofs_caddr_assign(&mrectl->mref, caddr);
+	silofs_caddr_assign(&mreci->mref, caddr);
 }
 
-bool silofs_mrectl_has_ref(const struct silofs_mrectl *mrectl,
-                           const struct silofs_caddr *caddr)
+bool silofs_mrecinfo_has_ref(const struct silofs_mrecinfo *mreci,
+                             const struct silofs_caddr *caddr)
 {
-	return silofs_caddr_isequal(&mrectl->mref, caddr);
+	return silofs_caddr_isequal(&mreci->mref, caddr);
 }
 
-int silofs_mrectl_regen(struct silofs_mrectl *mrectl)
+int silofs_mrecinfo_regen(struct silofs_mrecinfo *mreci)
 {
 	struct silofs_mrec1k mrec1k = {
 		.mrec_magic = UINT64_MAX,
 	};
-	struct silofs_mrec *mrec = &mrectl->mrec;
+	struct silofs_mrec *mrec = &mreci->mrec;
 	int err;
 
 	silofs_mrec_gen_uuid(mrec);
-	err = silofs_mrec_gen_ivkey(mrec, &mrectl->mdigest);
+	err = silofs_mrec_gen_ivkey(mrec, &mreci->mdigest);
 	if (err) {
 		return err;
 	}
-	err = silofs_mrectl_encode(mrectl, &mrec1k);
+	err = silofs_mrecinfo_encode(mreci, &mrec1k);
 	if (err) {
 		return err;
 	}
-	err = silofs_mrectl_decode(mrectl, &mrec1k);
+	err = silofs_mrecinfo_decode(mreci, &mrec1k);
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-int silofs_mrectl_update_sb(struct silofs_mrectl *mrectl,
-                            const struct silofs_uaddr *sb_uaddr)
+int silofs_mrecinfo_update_sb(struct silofs_mrecinfo *mreci,
+                              const struct silofs_uaddr *sb_uaddr)
 {
 	struct silofs_mrec1k mrec1k = {
 		.mrec_magic = UINT64_MAX,
 	};
 
-	silofs_mrec_set_sb_addr(&mrectl->mrec, sb_uaddr);
-	return silofs_mrectl_encode(mrectl, &mrec1k);
+	silofs_mrec_set_sb_addr(&mreci->mrec, sb_uaddr);
+	return silofs_mrecinfo_encode(mreci, &mrec1k);
 }
 
-static void mrectl_calc_addr_of(const struct silofs_mrectl *mrectl,
-                                const struct silofs_mrec1k *mrec1k_enc,
-                                struct silofs_caddr *out_caddr)
+static void mreci_calc_addr_of(const struct silofs_mrecinfo *mreci,
+                               const struct silofs_mrec1k *mrec1k_enc,
+                               struct silofs_caddr *out_caddr)
 {
 	const struct iovec iov = {
 		.iov_base = silofs_unconst(mrec1k_enc),
@@ -541,40 +541,40 @@ static void mrectl_calc_addr_of(const struct silofs_mrectl *mrectl,
 	};
 	const enum silofs_ctype ctype = SILOFS_CTYPE_MBR;
 
-	silofs_calc_caddr_of(&mrectl->mdigest, &iov, 1, ctype, out_caddr);
+	silofs_calc_caddr_of(&mreci->mdigest, &iov, 1, ctype, out_caddr);
 }
 
-int silofs_mrectl_encode(struct silofs_mrectl *mrectl,
-                         struct silofs_mrec1k *out_mrec1k_enc)
+int silofs_mrecinfo_encode(struct silofs_mrecinfo *mreci,
+                           struct silofs_mrec1k *out_mrec1k_enc)
 {
 	struct silofs_caddr caddr;
 	int err;
 
-	err = mrectl_encode(mrectl, out_mrec1k_enc);
+	err = mreci_encode(mreci, out_mrec1k_enc);
 	if (err) {
 		log_err("failed to encode mrec: err=%d", err);
 		return err;
 	}
-	mrectl_calc_addr_of(mrectl, out_mrec1k_enc, &caddr);
-	mrectl_set_ref(mrectl, &caddr);
+	mreci_calc_addr_of(mreci, out_mrec1k_enc, &caddr);
+	mreci_set_ref(mreci, &caddr);
 	return 0;
 }
 
-int silofs_mrectl_decode(struct silofs_mrectl *mrectl,
-                         const struct silofs_mrec1k *mrec1k_enc)
+int silofs_mrecinfo_decode(struct silofs_mrecinfo *mreci,
+                           const struct silofs_mrec1k *mrec1k_enc)
 {
 	struct silofs_caddr caddr = {
 		.ctype = SILOFS_CTYPE_NONE,
 	};
 	int err;
 
-	mrectl_calc_addr_of(mrectl, mrec1k_enc, &caddr);
-	err = mrectl_decode(mrectl, mrec1k_enc);
+	mreci_calc_addr_of(mreci, mrec1k_enc, &caddr);
+	err = mreci_decode(mreci, mrec1k_enc);
 	if (err) {
 		log_dbg("failed to encode mrec: err=%d", err);
 		return err;
 	}
-	mrectl_set_ref(mrectl, &caddr);
+	mreci_set_ref(mreci, &caddr);
 	return 0;
 }
 
@@ -584,16 +584,16 @@ int silofs_encode_mrec(const struct silofs_env *env,
                        const struct silofs_mrec *mrec,
                        struct silofs_mrec1k *out_mrec1k)
 {
-	return mrec_encode(mrec, &env->mrectl.mdigest, &env->mrectl.cipher,
-	                   &env->mrectl.ivkey, out_mrec1k);
+	return mrec_encode(mrec, &env->mreci.mdigest, &env->mreci.cipher,
+	                   &env->mreci.ivkey, out_mrec1k);
 }
 
 int silofs_decode_mrec(const struct silofs_env *env,
                        const struct silofs_mrec1k *mrec1k_enc,
                        struct silofs_mrec *out_mrec)
 {
-	return mrec_decode(out_mrec, &env->mrectl.mdigest, &env->mrectl.cipher,
-	                   &env->mrectl.ivkey, mrec1k_enc);
+	return mrec_decode(out_mrec, &env->mreci.mdigest, &env->mreci.cipher,
+	                   &env->mreci.ivkey, mrec1k_enc);
 }
 
 static void calc_mrec1k_caddr(const struct silofs_env *env,

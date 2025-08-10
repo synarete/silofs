@@ -43,7 +43,7 @@ struct silofs_mrefs {
 };
 
 /* main boot-record controller */
-struct silofs_mrectl {
+struct silofs_mrecinfo {
 	struct silofs_mrec    mrec;
 	struct silofs_cipher  cipher;
 	struct silofs_mdigest mdigest;
@@ -79,23 +79,23 @@ void silofs_make_mrec_uaddr(const struct silofs_blobid *blobid,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_mrectl_init(struct silofs_mrectl *mrectl);
+int silofs_mrecinfo_init(struct silofs_mrecinfo *mreci);
 
-void silofs_mrectl_fini(struct silofs_mrectl *mrectl);
+void silofs_mrecinfo_fini(struct silofs_mrecinfo *mreci);
 
-int silofs_mrectl_regen(struct silofs_mrectl *mrectl);
+int silofs_mrecinfo_regen(struct silofs_mrecinfo *mreci);
 
-int silofs_mrectl_update_sb(struct silofs_mrectl      *mrectl,
-                            const struct silofs_uaddr *sb_uaddr);
+int silofs_mrecinfo_update_sb(struct silofs_mrecinfo    *mreci,
+                              const struct silofs_uaddr *sb_uaddr);
 
-int silofs_mrectl_encode(struct silofs_mrectl *mrectl,
-                         struct silofs_mrec1k *out_mrec1k_enc);
+int silofs_mrecinfo_encode(struct silofs_mrecinfo *mreci,
+                           struct silofs_mrec1k   *out_mrec1k_enc);
 
-int silofs_mrectl_decode(struct silofs_mrectl       *mrectl,
-                         const struct silofs_mrec1k *mrec1k_enc);
+int silofs_mrecinfo_decode(struct silofs_mrecinfo     *mreci,
+                           const struct silofs_mrec1k *mrec1k_enc);
 
-bool silofs_mrectl_has_ref(const struct silofs_mrectl *mrectl,
-                           const struct silofs_caddr  *caddr);
+bool silofs_mrecinfo_has_ref(const struct silofs_mrecinfo *mreci,
+                             const struct silofs_caddr    *caddr);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

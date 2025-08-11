@@ -351,16 +351,6 @@ int silofs_env_set_arix_addr(struct silofs_env *env,
 	return 0;
 }
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-int silofs_env_format_bstore(struct silofs_env *env)
-{
-	// XXX FIXME
-	silofs_unused(env);
-
-	return 0;
-}
-
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static void make_super_lsid(struct silofs_lsid *out_lsid)

@@ -281,9 +281,9 @@ void cmd_close_repo(struct silofs_env *env);
 
 void cmd_format_fs(struct silofs_env *env, struct silofs_xref *out_xref);
 
-void cmd_sense_fs(struct silofs_env *env, struct silofs_xref *xref);
+void cmd_sense_fs(struct silofs_env *env, const struct silofs_xref *xref);
 
-void cmd_sense_ar(struct silofs_env *env);
+void cmd_sense_ar(struct silofs_env *env, const struct silofs_xref *xref);
 
 void cmd_open_fs(struct silofs_env *env, const struct silofs_xref *xref);
 
@@ -298,9 +298,11 @@ void cmd_remove_fs(struct silofs_env *env, const struct silofs_xref *xref);
 
 void cmd_inspect_fs(struct silofs_env *env, bool view);
 
-void cmd_archive_fs(struct silofs_env *env, struct silofs_xref *out_xref);
+void cmd_archive_fs(struct silofs_env *env, const struct silofs_xref *fs_xref,
+                    struct silofs_xref *out_ar_xref);
 
-void cmd_restore_fs(struct silofs_env *env, struct silofs_xref *out_xref);
+void cmd_restore_fs(struct silofs_env *env, const struct silofs_xref *ar_xref,
+                    struct silofs_xref *out_fs_xref);
 
 /* mount-info */
 struct silofs_mntinfos *cmd_parse_mountinfo(void);
@@ -340,14 +342,16 @@ void cmd_checkpass(const char *pass);
 void cmd_save_fs_xref(const struct silofs_boot_args *boot_args,
                       const struct silofs_xref      *fs_xref);
 
-void cmd_save_ar_xref(const struct silofs_boot_args *boot_args);
+void cmd_save_ar_xref(const struct silofs_boot_args *boot_args,
+                      const struct silofs_xref      *ar_xref);
 
 void cmd_load_fs_xref(const struct silofs_boot_args *boot_args,
                       struct silofs_xref            *out_xref);
 
 void cmd_unlink_fs_xref(const struct silofs_boot_args *boot_args);
 
-void cmd_load_ar_xref(struct silofs_boot_args *boot_args);
+void cmd_load_ar_xref(struct silofs_boot_args *boot_args,
+                      struct silofs_xref      *out_xref);
 
 /* fs input arguments */
 void cmd_setup_env_args(struct silofs_env_args *env_args);

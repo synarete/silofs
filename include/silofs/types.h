@@ -51,12 +51,11 @@ struct silofs_xref {
 
 /* file-system's boot arguments */
 struct silofs_boot_args {
-	struct silofs_xref ar_xref;
-	const char        *fs_name;
-	const char        *ar_name;
-	const char        *repodir;
-	const char        *mntdir;
-	const char        *passwd;
+	const char *fs_name;
+	const char *ar_name;
+	const char *repodir;
+	const char *mntdir;
+	const char *passwd;
 };
 
 /* user-id host-to-fs bidirectional-mapping */

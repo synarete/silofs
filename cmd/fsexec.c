@@ -186,7 +186,7 @@ void cmd_close_repo(struct silofs_env *env)
 	cmd_require_ok(env, err, "failed to close repo");
 }
 
-void cmd_sense_fs(struct silofs_env *env, struct silofs_xref *xref)
+void cmd_sense_fs(struct silofs_env *env, const struct silofs_xref *xref)
 {
 	int err;
 
@@ -194,12 +194,12 @@ void cmd_sense_fs(struct silofs_env *env, struct silofs_xref *xref)
 	cmd_requiref_ok(env, err, "can not sense fs: xref=%s", xref->s);
 }
 
-void cmd_sense_ar(struct silofs_env *env)
+void cmd_sense_ar(struct silofs_env *env, const struct silofs_xref *xref)
 {
 	int err;
 
-	err = silofs_sense_ar(env);
-	cmd_require_ok(env, err, "failed to sense archive");
+	err = silofs_sense_ar(env, xref);
+	cmd_requiref_ok(env, err, "failed to sense archive: xref=%s", xref->s);
 }
 
 void cmd_format_fs(struct silofs_env *env, struct silofs_xref *out_xref)
@@ -259,20 +259,22 @@ void cmd_inspect_fs(struct silofs_env *env, bool view)
 	cmd_require_ok(env, err, "failed to inspect fs");
 }
 
-void cmd_archive_fs(struct silofs_env *env, struct silofs_xref *out_xref)
+void cmd_archive_fs(struct silofs_env *env, const struct silofs_xref *fs_xref,
+                    struct silofs_xref *out_ar_xref)
 {
 	int err;
 
-	err = silofs_archive_fs(env, out_xref);
-	cmd_require_ok(env, err, "failed to archive");
+	err = silofs_archive_fs(env, fs_xref, out_ar_xref);
+	cmd_requiref_ok(env, err, "failed to archive: xref=%s", fs_xref->s);
 }
 
-void cmd_restore_fs(struct silofs_env *env, struct silofs_xref *out_xref)
+void cmd_restore_fs(struct silofs_env *env, const struct silofs_xref *ar_xref,
+                    struct silofs_xref *out_fs_xref)
 {
 	int err;
 
-	err = silofs_restore_fs(env, out_xref);
-	cmd_require_ok(env, err, "failed to restore");
+	err = silofs_restore_fs(env, ar_xref, out_fs_xref);
+	cmd_requiref_ok(env, err, "failed to restore: xref=%s", ar_xref->s);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

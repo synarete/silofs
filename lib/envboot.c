@@ -118,10 +118,6 @@ env_stat_mbr_at(const struct silofs_env *env, const struct silofs_caddr *caddr)
 	size_t mbr_size = 0;
 	int err;
 
-	err = silofs_repo_lookup_ref(env->base.repo, caddr);
-	if (err) {
-		return err;
-	}
 	err = silofs_repo_stat_cobj(env->base.repo, caddr, &mbr_size);
 	if (err) {
 		return err;

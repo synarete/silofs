@@ -86,8 +86,6 @@ void silofs_env_rwunlock(struct silofs_env *env);
 
 int silofs_env_shut(struct silofs_env *env);
 
-int silofs_env_format_bstore(struct silofs_env *env);
-
 int silofs_env_format_super(struct silofs_env *env, size_t capacity);
 
 int silofs_env_reload_super(struct silofs_env *env);

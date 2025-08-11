@@ -38,6 +38,7 @@ struct cmd_archive_ctx {
 	struct cmd_archive_in_args in_args;
 	struct silofs_env_args env_args;
 	struct silofs_xref fs_xref;
+	struct silofs_xref ar_xref;
 	struct silofs_env *env;
 	bool has_lockfile;
 };
@@ -185,7 +186,7 @@ static void cmd_archive_setup_fs_ids(struct cmd_archive_ctx *ctx)
 	cmd_load_fsids(&ctx->env_args.ugids, ctx->in_args.repodir_real);
 }
 
-static void cmd_archive_load_xref(struct cmd_archive_ctx *ctx)
+static void cmd_archive_load_fs_xref(struct cmd_archive_ctx *ctx)
 {
 	cmd_load_fs_xref(&ctx->env_args.boot_args, &ctx->fs_xref);
 }
@@ -228,8 +229,8 @@ static void cmd_archive_execute(struct cmd_archive_ctx *ctx)
 		.ar_name = ctx->in_args.arname,
 	};
 
-	cmd_archive_fs(ctx->env, &boot_args.ar_xref);
-	cmd_save_ar_xref(&boot_args);
+	cmd_archive_fs(ctx->env, &ctx->fs_xref, &ctx->ar_xref);
+	cmd_save_ar_xref(&boot_args, &ctx->ar_xref);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -262,7 +263,7 @@ void cmd_execute_archive(void)
 	cmd_archive_setup_fs_ids(&ctx);
 
 	/* Load fs boot-reference */
-	cmd_archive_load_xref(&ctx);
+	cmd_archive_load_fs_xref(&ctx);
 
 	/* Setup execution environment */
 	cmd_archive_setup_env(&ctx);

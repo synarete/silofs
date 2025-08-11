@@ -22,8 +22,9 @@
 struct silofs_task_ctx;
 
 int silofs_do_archive_fs(struct silofs_task_ctx *task,
-                         struct silofs_caddr    *out_caddr);
+                         struct silofs_caddr    *out_ar_caddr);
 
-int silofs_do_restore_fs(struct silofs_task_ctx *task);
+int silofs_do_restore_fs(struct silofs_task_ctx *task,
+                         struct silofs_caddr    *out_fs_caddr);
 
 #endif /* SILOFS_ARRE_H_ */

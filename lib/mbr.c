@@ -494,6 +494,13 @@ bool silofs_mbri_has_ref(const struct silofs_mbrinfo *mbri,
 	return silofs_caddr_isequal(&mbri->mref, caddr);
 }
 
+int silofs_mbri_get_ref(const struct silofs_mbrinfo *mbri,
+                        struct silofs_caddr *out_caddr)
+{
+	silofs_caddr_assign(out_caddr, &mbri->mref);
+	return silofs_caddr_isnone(out_caddr) ? -SILOFS_ENOENT : 0;
+}
+
 int silofs_mbri_regen(struct silofs_mbrinfo *mbri)
 {
 	struct silofs_mbr1k mbr1k = {

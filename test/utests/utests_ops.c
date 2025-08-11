@@ -2049,7 +2049,7 @@ void ut_archive_fs(struct ut_env *ute)
 {
 	int err;
 
-	err = silofs_archive_fs(ute->env, &ute->ar_xref);
+	err = silofs_archive_fs(ute->env, &ute->fs_xref[0], &ute->ar_xref);
 	ut_expect_ok(err);
 }
 
@@ -2057,6 +2057,6 @@ void ut_restore_fs(struct ut_env *ute)
 {
 	int err;
 
-	err = silofs_restore_fs(ute->env, &ute->fs_xref[0]);
+	err = silofs_restore_fs(ute->env, &ute->ar_xref, &ute->fs_xref[0]);
 	ut_expect_ok(err);
 }

@@ -96,6 +96,9 @@ int silofs_mbri_decode(struct silofs_mbrinfo     *mbri,
 bool silofs_mbri_has_ref(const struct silofs_mbrinfo *mbri,
                          const struct silofs_caddr   *caddr);
 
+int silofs_mbri_get_ref(const struct silofs_mbrinfo *mbri,
+                        struct silofs_caddr         *out_caddr);
+
 int silofs_mbri_derive_ivkey(struct silofs_mbrinfo        *mbri,
                              const struct silofs_password *pw);
 

@@ -1653,7 +1653,7 @@ out:
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_exec_archive(struct silofs_task_ctx *task,
-                        struct silofs_caddr *out_caddr)
+                        struct silofs_caddr *out_ar_caddr)
 {
 	int err;
 
@@ -1666,13 +1666,14 @@ int silofs_exec_archive(struct silofs_task_ctx *task,
 	err = op_map_creds(task);
 	ok_or_goto_out(err);
 
-	err = silofs_do_archive_fs(task, out_caddr);
+	err = silofs_do_archive_fs(task, out_ar_caddr);
 	ok_or_goto_out(err);
 out:
 	return op_finish(task, err);
 }
 
-int silofs_exec_restore(struct silofs_task_ctx *task)
+int silofs_exec_restore(struct silofs_task_ctx *task,
+                        struct silofs_caddr *out_fs_caddr)
 {
 	int err;
 
@@ -1685,7 +1686,7 @@ int silofs_exec_restore(struct silofs_task_ctx *task)
 	err = op_map_creds(task);
 	ok_or_goto_out(err);
 
-	err = silofs_do_restore_fs(task);
+	err = silofs_do_restore_fs(task, out_fs_caddr);
 	ok_or_goto_out(err);
 out:
 	return op_finish(task, err);

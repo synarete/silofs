@@ -877,7 +877,9 @@ out:
 static int arc_fs_mbr_caddr(const struct silofs_ar_ctx *ar_ctx,
                             struct silofs_caddr *out_caddr)
 {
-	return silofs_env_mbr_addr(ar_ctx->env, out_caddr);
+	struct silofs_mbr1k mbr1k;
+
+	return silofs_mbri_encode_fs(&ar_ctx->env->mbri, out_caddr, &mbr1k);
 }
 
 static int arc_archive_mbr(const struct silofs_ar_ctx *ar_ctx,
@@ -908,7 +910,7 @@ static int arc_archive_mbr2(const struct silofs_ar_ctx *ar_ctx,
                             struct silofs_caddr *out_caddr)
 {
 	struct silofs_mbr1k mbr1k = { .mbr_magic = 0xff };
-	const struct silofs_mbr *mbr = &ar_ctx->env->mbri.mbr;
+	const struct silofs_mbr *mbr = &ar_ctx->env->mbri.fs_mbr;
 	int err;
 
 	err = silofs_calc_mbr_caddr(ar_ctx->env, mbr, out_caddr);
@@ -1229,7 +1231,7 @@ static int arc_restore_post(struct silofs_ar_ctx *ar_ctx,
 		return -SILOFS_EBADPACK;
 	}
 
-	silofs_env_set_mbr_addr(ar_ctx->env, out_fs_caddr);
+	// XXX silofs_env_set_mbr_addr(ar_ctx->env, out_fs_caddr);
 	return 0;
 }
 

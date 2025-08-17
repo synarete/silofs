@@ -40,7 +40,7 @@ env_bind_sbi(struct silofs_env *env, struct silofs_sb_info *sbi_new)
 static void env_update_mbr_sb_addr(struct silofs_env *env)
 {
 	const struct silofs_uaddr *uaddr = NULL;
-	struct silofs_mbr *mbr = &env->mbri.mbr;
+	struct silofs_mbr *mbr = &env->mbri.fs_mbr;
 
 	if (env->sbi != NULL) {
 		uaddr = silofs_sbi_uaddr(env->sbi);
@@ -48,7 +48,6 @@ static void env_update_mbr_sb_addr(struct silofs_env *env)
 		uaddr = silofs_uaddr_none();
 	}
 	silofs_mbr_set_sb_addr(mbr, uaddr);
-	silofs_mbr_gen_uuid(mbr);
 }
 
 static void env_rebind_sbi(struct silofs_env *env, struct silofs_sb_info *sbi)
@@ -309,28 +308,6 @@ bool silofs_env_hasflag(const struct silofs_env *env, enum silofs_flags f)
 	return (env->base.args->flags & f) == f;
 }
 
-static bool caddr_ismbr(const struct silofs_caddr *caddr)
-{
-	return (caddr->ctype == SILOFS_CTYPE_MBR);
-}
-
-int silofs_env_mbr_addr(const struct silofs_env *env,
-                        struct silofs_caddr *out_caddr)
-{
-	silofs_caddr_assign(out_caddr, &env->mbri.mref);
-	return caddr_ismbr(out_caddr) ? 0 : -SILOFS_ENOENT;
-}
-
-int silofs_env_set_mbr_addr(struct silofs_env *env,
-                            const struct silofs_caddr *caddr)
-{
-	if (!caddr_ismbr(caddr)) {
-		return -SILOFS_EINVAL;
-	}
-	silofs_caddr_assign(&env->mbri.mref, caddr);
-	return 0;
-}
-
 int silofs_env_arix_addr(const struct silofs_env *env,
                          struct silofs_caddr *out_caddr)
 {
@@ -347,7 +324,7 @@ int silofs_env_set_arix_addr(struct silofs_env *env,
 		return -SILOFS_EINVAL;
 	}
 	silofs_caddr_assign(&env->arix_addr, caddr);
-	silofs_mbr_set_ar_addr(&env->mbri.mbr, caddr);
+	silofs_mbr_set_ar_addr(&env->mbri.fs_mbr, caddr);
 	return 0;
 }
 
@@ -373,7 +350,7 @@ static void make_super_uaddr(const struct silofs_lsid *lsid,
 
 static const struct silofs_uaddr *env_sb_addr(const struct silofs_env *env)
 {
-	return &env->mbri.mbr.sb_addr;
+	return &env->mbri.fs_mbr.sb_addr;
 }
 
 static void env_make_super_uaddr(const struct silofs_env *env,
@@ -600,10 +577,12 @@ static void sbi_mark_fossil(struct silofs_sb_info *sbi)
 	silofs_sbi_add_flags(sbi, SILOFS_SUPERF_FOSSIL);
 }
 
-static void
-env_main_ref(const struct silofs_env *env, struct silofs_caddr *out_caddr)
+static int
+env_recalc_fs_mref(struct silofs_env *env, struct silofs_caddr *out_caddr)
 {
-	silofs_caddr_assign(out_caddr, &env->mbri.mref);
+	struct silofs_mbr1k mbr1k = { .mbr_magic = UINT64_MAX };
+
+	return silofs_mbri_encode_fs(&env->mbri, out_caddr, &mbr1k);
 }
 
 static int
@@ -614,25 +593,28 @@ env_do_forkfs(struct silofs_env *env, struct silofs_mrefs *out_mrefs)
 	struct silofs_sb_info *sbi_cur = env->sbi;
 	int err;
 
-	env_main_ref(env, &out_mrefs->base);
+	err = env_recalc_fs_mref(env, &out_mrefs->base);
+	if (err) {
+		return err;
+	}
+
 	err = env_fork_rebind_super(env, sbi_cur, &sbi_alt);
 	if (err) {
 		return err;
 	}
-	err = silofs_env_commit_mbr(env);
+	err = silofs_env_commit_mbr(env, &out_mrefs->fork);
 	if (err) {
 		return err;
 	}
-	env_main_ref(env, &out_mrefs->fork);
+
 	err = env_fork_rebind_super(env, sbi_cur, &sbi_new);
 	if (err) {
 		return err;
 	}
-	err = silofs_env_commit_mbr(env);
+	err = silofs_env_commit_mbr(env, &out_mrefs->main);
 	if (err) {
 		return err;
 	}
-	env_main_ref(env, &out_mrefs->main);
 
 	sbi_mark_fossil(sbi_cur);
 	return 0;

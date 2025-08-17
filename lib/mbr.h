@@ -44,28 +44,13 @@ struct silofs_mrefs {
 
 /* main boot-record controller */
 struct silofs_mbrinfo {
-	struct silofs_mbr     mbr;
+	struct silofs_mbr     fs_mbr;
 	struct silofs_cipher  cipher;
 	struct silofs_mdigest mdigest;
 	struct silofs_ivkey   ivkey;
-	struct silofs_caddr   mref;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-void silofs_mbr_init(struct silofs_mbr *mbr);
-
-void silofs_mbr_fini(struct silofs_mbr *mbr);
-
-void silofs_mbr_assign(struct silofs_mbr *mbr, const struct silofs_mbr *other);
-
-void silofs_mbr_gen_uuid(struct silofs_mbr *mbr);
-
-void silofs_mbr_set_ivkey(struct silofs_mbr         *mbr,
-                          const struct silofs_ivkey *ivkey);
-
-int silofs_mbr_gen_ivkey(struct silofs_mbr           *mbr,
-                         const struct silofs_mdigest *md);
 
 void silofs_mbr_set_sb_addr(struct silofs_mbr         *mbr,
                             const struct silofs_uaddr *sb_uaddr);
@@ -87,17 +72,13 @@ int silofs_mbri_regen(struct silofs_mbrinfo *mbri);
 int silofs_mbri_update_sb(struct silofs_mbrinfo     *mbri,
                           const struct silofs_uaddr *sb_uaddr);
 
-int silofs_mbri_encode(struct silofs_mbrinfo *mbri,
-                       struct silofs_mbr1k   *out_mbr1k);
+int silofs_mbri_encode_fs(const struct silofs_mbrinfo *mbri,
+                          struct silofs_caddr         *out_mref,
+                          struct silofs_mbr1k         *out_mbr1k);
 
-int silofs_mbri_decode(struct silofs_mbrinfo     *mbri,
-                       const struct silofs_mbr1k *mbr1k);
-
-bool silofs_mbri_has_ref(const struct silofs_mbrinfo *mbri,
-                         const struct silofs_caddr   *caddr);
-
-int silofs_mbri_get_ref(const struct silofs_mbrinfo *mbri,
-                        struct silofs_caddr         *out_caddr);
+int silofs_mbri_decode_fs(struct silofs_mbrinfo     *mbri,
+                          const struct silofs_caddr *mref,
+                          const struct silofs_mbr1k *mbr1k);
 
 int silofs_mbri_derive_ivkey(struct silofs_mbrinfo        *mbri,
                              const struct silofs_password *pw);

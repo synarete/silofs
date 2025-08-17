@@ -2397,25 +2397,52 @@ static void fill_query_repo(const struct silofs_inode_info *ii,
 	str_to_buf(&bootpath.repodir, query->u.repo.path, bsz);
 }
 
+static void fill_query_boot_xref(const struct silofs_inode_info *ii,
+                                 struct silofs_ioc_query *query)
+{
+	struct silofs_mbr1k mbr1k;
+	struct silofs_caddr mref = { .ctype = SILOFS_CTYPE_NONE };
+	struct silofs_env *env = silofs_ii_env(ii);
+	struct silofs_query_boot *qboot = &query->u.boot;
+	int err;
+
+	err = silofs_mbri_encode_fs(&env->mbri, &mref, &mbr1k);
+	if (silofs_unlikely(err)) {
+		silofs_memzero(qboot->xref, sizeof(qboot->xref));
+	} else {
+		silofs_caddr_to_name2(&mref, qboot->xref);
+	}
+}
+
+static void fill_query_boot_name(const struct silofs_inode_info *ii,
+                                 struct silofs_ioc_query *query)
+{
+	struct silofs_bootpath bootpath = { .fsname.len = 0 };
+	struct silofs_query_boot *qboot = &query->u.boot;
+
+	bootpath_of(ii, &bootpath);
+	str_to_buf(&bootpath.fsname, qboot->name, sizeof(qboot->name));
+}
+
+static void fill_query_boot_root(const struct silofs_inode_info *ii,
+                                 struct silofs_ioc_query *query)
+{
+	struct silofs_blobid blobid;
+	struct silofs_strspan ss;
+	struct silofs_query_boot *qboot = &query->u.boot;
+
+	silofs_sbi_self_blobid(silofs_ii_sbi(ii), &blobid);
+	silofs_strspan_initk(&ss, qboot->root_blobid, 0,
+	                     sizeof(qboot->root_blobid));
+	silofs_blobid_to_str(&blobid, &ss);
+}
+
 static void fill_query_boot(const struct silofs_inode_info *ii,
                             struct silofs_ioc_query *query)
 {
-	struct silofs_caddr caddr;
-	struct silofs_blobid blobid;
-	struct silofs_bootpath bootpath = { .repodir.len = 0 };
-	struct silofs_query_boot *qboot = &query->u.boot;
-	struct silofs_strspan ss;
-
-	silofs_env_mbr_addr(silofs_ii_env(ii), &caddr);
-	silofs_sbi_self_blobid(silofs_ii_sbi(ii), &blobid);
-	bootpath_of(ii, &bootpath);
-
-	str_to_buf(&bootpath.fsname, qboot->name, sizeof(qboot->name));
-	silofs_caddr_to_name2(&caddr, query->u.boot.xref);
-
-	silofs_strspan_initk(&ss, query->u.boot.root_blobid, 0,
-	                     sizeof(query->u.boot.root_blobid));
-	silofs_blobid_to_str(&blobid, &ss);
+	fill_query_boot_xref(ii, query);
+	fill_query_boot_name(ii, query);
+	fill_query_boot_root(ii, query);
 }
 
 static void fill_query_proc(const struct silofs_inode_info *ii,

@@ -109,23 +109,18 @@ bool silofs_env_hasflag(const struct silofs_env *env, enum silofs_flags f);
 
 /* XXX */
 
-int silofs_env_set_mbr_addr(struct silofs_env         *env,
-                            const struct silofs_caddr *caddr);
-
 int silofs_env_arix_addr(const struct silofs_env *env,
                          struct silofs_caddr     *out_caddr);
 
 int silofs_env_set_arix_addr(struct silofs_env         *env,
                              const struct silofs_caddr *caddr);
 
-int silofs_env_mbr_addr(const struct silofs_env *env,
-                        struct silofs_caddr     *out_caddr);
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_env_setup_mbr(struct silofs_env *env);
 
-int silofs_env_commit_mbr(struct silofs_env *env);
+int silofs_env_commit_mbr(struct silofs_env   *env,
+                          struct silofs_caddr *out_mref);
 
 int silofs_env_sense_mbr(struct silofs_env         *env,
                          const struct silofs_caddr *caddr);

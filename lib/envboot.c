@@ -44,16 +44,11 @@ static int env_reinit_ciphers_by_mbr(struct silofs_env *env)
 	return env_reinit_ciphers(env, algo, mode);
 }
 
-static int env_generate_mbr(struct silofs_env *env)
-{
-	return silofs_mbri_regen(&env->mbri);
-}
-
-int silofs_env_setup_mbr(struct silofs_env *env)
+int silofs_env_setup_fs_mbr(struct silofs_env *env)
 {
 	int err;
 
-	err = env_generate_mbr(env);
+	err = silofs_mbri_regenerate_fs_mbr(&env->mbri);
 	if (err) {
 		return err;
 	}
@@ -66,7 +61,9 @@ int silofs_env_setup_mbr(struct silofs_env *env)
 
 static int env_pre_commit_mbr(struct silofs_env *env)
 {
-	return silofs_mbri_update_sb(&env->mbri, silofs_sbi_uaddr(env->sbi));
+	const struct silofs_uaddr *sb_uaddr = silofs_sbi_uaddr(env->sbi);
+
+	return silofs_mbri_update_sb_addr(&env->mbri, sb_uaddr);
 }
 
 static int env_save_mbr(struct silofs_env *env, struct silofs_caddr *out_mref)
@@ -80,7 +77,8 @@ static int env_save_mbr(struct silofs_env *env, struct silofs_caddr *out_mref)
 	};
 	int err;
 
-	err = silofs_mbri_encode_fs(&env->mbri, out_mref, &mbr1k);
+	err = silofs_mbri_encode_mbr(&env->mbri, SILOFS_MBR_FS, out_mref,
+	                             &mbr1k);
 	if (err) {
 		return err;
 	}
@@ -163,7 +161,7 @@ static int
 env_decode_mbr(struct silofs_env *env, const struct silofs_caddr *mref,
                const struct silofs_mbr1k *mbr1k)
 {
-	return silofs_mbri_decode_fs(&env->mbri, mref, mbr1k);
+	return silofs_mbri_decode_mbr(&env->mbri, SILOFS_MBR_FS, mref, mbr1k);
 }
 
 int silofs_env_reload_mbr(struct silofs_env *env,

@@ -352,7 +352,7 @@ static int format_rootdir(struct silofs_task_ctx *task)
 
 static int setup_mbr(struct silofs_task_ctx *task)
 {
-	return silofs_env_setup_mbr(task->t_env);
+	return silofs_env_setup_fs_mbr(task->t_env);
 }
 
 static int

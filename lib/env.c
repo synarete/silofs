@@ -40,14 +40,13 @@ env_bind_sbi(struct silofs_env *env, struct silofs_sb_info *sbi_new)
 static void env_update_mbr_sb_addr(struct silofs_env *env)
 {
 	const struct silofs_uaddr *uaddr = NULL;
-	struct silofs_mbr *mbr = &env->mbri.fs_mbr;
 
 	if (env->sbi != NULL) {
 		uaddr = silofs_sbi_uaddr(env->sbi);
 	} else {
 		uaddr = silofs_uaddr_none();
 	}
-	silofs_mbr_set_sb_addr(mbr, uaddr);
+	silofs_mbri_update_sb_addr(&env->mbri, uaddr);
 }
 
 static void env_rebind_sbi(struct silofs_env *env, struct silofs_sb_info *sbi)
@@ -582,7 +581,8 @@ env_recalc_fs_mref(struct silofs_env *env, struct silofs_caddr *out_caddr)
 {
 	struct silofs_mbr1k mbr1k = { .mbr_magic = UINT64_MAX };
 
-	return silofs_mbri_encode_fs(&env->mbri, out_caddr, &mbr1k);
+	return silofs_mbri_encode_mbr(&env->mbri, SILOFS_MBR_FS, out_caddr,
+	                              &mbr1k);
 }
 
 static int

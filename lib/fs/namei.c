@@ -2406,7 +2406,7 @@ static void fill_query_boot_xref(const struct silofs_inode_info *ii,
 	struct silofs_query_boot *qboot = &query->u.boot;
 	int err;
 
-	err = silofs_mbri_encode_fs(&env->mbri, &mref, &mbr1k);
+	err = silofs_mbri_encode_mbr(&env->mbri, SILOFS_MBR_FS, &mref, &mbr1k);
 	if (silofs_unlikely(err)) {
 		silofs_memzero(qboot->xref, sizeof(qboot->xref));
 	} else {

@@ -26,13 +26,14 @@ struct silofs_env;
 
 /* main boot-record, in-memory representation */
 struct silofs_mbr {
-	struct silofs_ivkey main_ivkey;
-	struct silofs_uuid  uuid;
-	struct silofs_uaddr sb_addr;
-	struct silofs_caddr ar_addr;
-	enum silofs_mbrf    flags;
-	int                 cipher_algo;
-	int                 cipher_mode;
+	struct silofs_ivkey     main_ivkey;
+	struct silofs_uuid      uuid;
+	struct silofs_uaddr     sb_addr;
+	struct silofs_caddr     ar_addr;
+	enum silofs_mbr_flavour flavour;
+	uint32_t                flags;
+	int                     cipher_algo;
+	int                     cipher_mode;
 };
 
 /* a tuple of content-addressable references to main boot-records */
@@ -45,15 +46,13 @@ struct silofs_mrefs {
 /* main boot-record controller */
 struct silofs_mbrinfo {
 	struct silofs_mbr     fs_mbr;
+	struct silofs_mbr     ar_mbr;
 	struct silofs_cipher  cipher;
 	struct silofs_mdigest mdigest;
 	struct silofs_ivkey   ivkey;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-void silofs_mbr_set_sb_addr(struct silofs_mbr         *mbr,
-                            const struct silofs_uaddr *sb_uaddr);
 
 void silofs_mbr_set_ar_addr(struct silofs_mbr         *mbr,
                             const struct silofs_caddr *caddr);
@@ -67,21 +66,23 @@ int silofs_mbri_init(struct silofs_mbrinfo *mbri);
 
 void silofs_mbri_fini(struct silofs_mbrinfo *mbri);
 
-int silofs_mbri_regen(struct silofs_mbrinfo *mbri);
-
-int silofs_mbri_update_sb(struct silofs_mbrinfo     *mbri,
-                          const struct silofs_uaddr *sb_uaddr);
-
-int silofs_mbri_encode_fs(const struct silofs_mbrinfo *mbri,
-                          struct silofs_caddr         *out_mref,
-                          struct silofs_mbr1k         *out_mbr1k);
-
-int silofs_mbri_decode_fs(struct silofs_mbrinfo     *mbri,
-                          const struct silofs_caddr *mref,
-                          const struct silofs_mbr1k *mbr1k);
-
 int silofs_mbri_derive_ivkey(struct silofs_mbrinfo        *mbri,
                              const struct silofs_password *pw);
+
+int silofs_mbri_update_sb_addr(struct silofs_mbrinfo     *mbri,
+                               const struct silofs_uaddr *sb_uaddr);
+
+int silofs_mbri_regenerate_fs_mbr(struct silofs_mbrinfo *mbri);
+
+int silofs_mbri_encode_mbr(const struct silofs_mbrinfo *mbri,
+                           enum silofs_mbr_flavour      flavour,
+                           struct silofs_caddr         *out_mref,
+                           struct silofs_mbr1k         *out_mbr1k);
+
+int silofs_mbri_decode_mbr(struct silofs_mbrinfo     *mbri,
+                           enum silofs_mbr_flavour    flavour,
+                           const struct silofs_caddr *mref,
+                           const struct silofs_mbr1k *mbr1k);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

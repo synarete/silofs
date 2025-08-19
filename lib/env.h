@@ -117,7 +117,7 @@ int silofs_env_set_arix_addr(struct silofs_env         *env,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_env_setup_mbr(struct silofs_env *env);
+int silofs_env_setup_fs_mbr(struct silofs_env *env);
 
 int silofs_env_commit_mbr(struct silofs_env   *env,
                           struct silofs_caddr *out_mref);

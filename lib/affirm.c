@@ -220,7 +220,8 @@ static void affirm_ondisk_mbr(void)
 	REQUIRE_OFFSET64(struct silofs_mbr1k, mbr_magic, 0);
 	REQUIRE_OFFSET64(struct silofs_mbr1k, mbr_version, 8);
 	REQUIRE_OFFSET64(struct silofs_mbr1k, mbr_uuid, 16);
-	REQUIRE_OFFSET64(struct silofs_mbr1k, mbr_flags, 32);
+	REQUIRE_OFFSET64(struct silofs_mbr1k, mbr_flavour, 32);
+	REQUIRE_OFFSET32(struct silofs_mbr1k, mbr_flags, 36);
 	REQUIRE_OFFSET64(struct silofs_mbr1k, mbr_chiper_algo, 40);
 	REQUIRE_OFFSET32(struct silofs_mbr1k, mbr_chiper_mode, 44);
 	REQUIRE_OFFSET64(struct silofs_mbr1k, mbr_main_iv, 48);

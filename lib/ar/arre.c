@@ -767,7 +767,7 @@ static int arc_load_fs_mbr(const struct silofs_ar_ctx *ar_ctx,
                            const struct silofs_caddr *caddr,
                            struct silofs_mbr1k *out_mbr1k)
 {
-	struct silofs_mbr mbr = { .flags = SILOFS_MBRF_NONE };
+	struct silofs_mbr mbr = { .flavour = SILOFS_MBR_NONE };
 	int err;
 
 	err = silofs_load_mbr(ar_ctx->env, caddr, &mbr);
@@ -787,7 +787,7 @@ static int arc_restore_fs_mbr(const struct silofs_ar_ctx *ar_ctx,
                               const struct silofs_caddr *caddr,
                               struct silofs_mbr1k *mbr1k)
 {
-	struct silofs_mbr mbr = { .flags = SILOFS_MBRF_NONE };
+	struct silofs_mbr mbr = { .flavour = SILOFS_MBR_NONE };
 	struct silofs_caddr caddr2;
 	int err;
 
@@ -879,7 +879,8 @@ static int arc_fs_mbr_caddr(const struct silofs_ar_ctx *ar_ctx,
 {
 	struct silofs_mbr1k mbr1k;
 
-	return silofs_mbri_encode_fs(&ar_ctx->env->mbri, out_caddr, &mbr1k);
+	return silofs_mbri_encode_mbr(&ar_ctx->env->mbri, SILOFS_MBR_FS,
+	                              out_caddr, &mbr1k);
 }
 
 static int arc_archive_mbr(const struct silofs_ar_ctx *ar_ctx,

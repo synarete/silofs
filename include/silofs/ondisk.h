@@ -334,10 +334,11 @@
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-/* main-boot-record flags */
-enum silofs_mbrf {
-	SILOFS_MBRF_NONE = 0x00,
-	SILOFS_MBRF_ARCH = 0x01,
+/* main-boot-record sub-flavour */
+enum silofs_mbr_flavour {
+	SILOFS_MBR_NONE = 0,
+	SILOFS_MBR_FS   = 1,
+	SILOFS_MBR_AR   = 2,
 };
 
 /* common-header flags */
@@ -609,7 +610,8 @@ struct silofs_mbr1k {
 	uint64_t               mbr_magic;
 	uint64_t               mbr_version;
 	struct silofs_uuid     mbr_uuid;
-	uint64_t               mbr_flags;
+	uint32_t               mbr_flavour;
+	uint32_t               mbr_flags;
 	uint32_t               mbr_chiper_algo;
 	uint32_t               mbr_chiper_mode;
 	struct silofs_iv       mbr_main_iv;

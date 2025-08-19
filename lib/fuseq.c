@@ -3156,21 +3156,19 @@ static void fqt_fini(struct silofs_fuseq_thread *fqt)
 }
 
 static void fqt_make_thread_name(const struct silofs_fuseq_thread *fqt,
-                                 const char *s, struct silofs_strbuf *out_name)
+                                 struct silofs_strbuf *out_name)
 {
 	silofs_strbuf_reset(out_name);
-	if (s != NULL) {
-		silofs_strbuf_sprintf(out_name, "silofs-%s%u", s, fqt->idx);
-	}
+	silofs_strbuf_sprintf(out_name, "silofs-t%u", fqt->idx);
 }
 
-static int fqt_exec_thread(struct silofs_fuseq_thread *fqt,
-                           silofs_threadexec_fn start_fn, const char *s)
+static int
+fqt_exec_thread(struct silofs_fuseq_thread *fqt, silofs_threadexec_fn start_fn)
 {
 	struct silofs_strbuf name;
 	int err;
 
-	fqt_make_thread_name(fqt, s, &name);
+	fqt_make_thread_name(fqt, &name);
 	err = silofs_thread_create(&fqt->th, start_fn, NULL, name.str);
 	if (err) {
 		fuseq_log_err("failed to create thread: name=%s err=%d",
@@ -4463,7 +4461,7 @@ static int fqs_start(struct silofs_thread *th)
 
 static int fqs_exec_thread(struct silofs_fuseq_sub *fqs)
 {
-	return fqt_exec_thread(&fqs->fqs_th, fqs_start, "s");
+	return fqt_exec_thread(&fqs->fqs_th, fqs_start);
 }
 
 static bool fqs_try_join_thread(struct silofs_fuseq_sub *fqs)

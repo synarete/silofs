@@ -29,7 +29,7 @@ struct silofs_mbr {
 	struct silofs_ivkey     main_ivkey;
 	struct silofs_uuid      uuid;
 	struct silofs_uaddr     sb_addr;
-	struct silofs_caddr     ar_addr;
+	struct silofs_caddr     arix_addr;
 	enum silofs_mbr_flavour flavour;
 	uint32_t                flags;
 	int                     cipher_algo;
@@ -69,8 +69,11 @@ void silofs_mbri_fini(struct silofs_mbrinfo *mbri);
 int silofs_mbri_derive_ivkey(struct silofs_mbrinfo        *mbri,
                              const struct silofs_password *pw);
 
-int silofs_mbri_update_sb_addr(struct silofs_mbrinfo     *mbri,
-                               const struct silofs_uaddr *sb_uaddr);
+void silofs_mbri_update_sb_addr(struct silofs_mbrinfo     *mbri,
+                                const struct silofs_uaddr *sb_uaddr);
+
+void silofs_mbri_update_arix_addr(struct silofs_mbrinfo     *mbri,
+                                  const struct silofs_caddr *arix_caddr);
 
 int silofs_mbri_regenerate_fs_mbr(struct silofs_mbrinfo *mbri);
 
@@ -84,28 +87,7 @@ int silofs_mbri_decode_mbr(struct silofs_mbrinfo     *mbri,
                            const struct silofs_caddr *mref,
                            const struct silofs_mbr1k *mbr1k);
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-int silofs_encode_mbr(const struct silofs_env *env,
-                      const struct silofs_mbr *mbr,
-                      struct silofs_mbr1k     *out_mbr1k);
-
-int silofs_decode_mbr(const struct silofs_env   *env,
-                      const struct silofs_mbr1k *mbr1k,
-                      struct silofs_mbr         *out_mbr);
-
-int silofs_save_mbr(const struct silofs_env *env, const struct silofs_mbr *mbr,
-                    struct silofs_caddr *out_caddr);
-
-int silofs_load_mbr(const struct silofs_env   *env,
-                    const struct silofs_caddr *caddr,
-                    struct silofs_mbr         *out_mbr);
-
-int silofs_unlink_mbr(const struct silofs_env   *env,
-                      const struct silofs_caddr *caddr);
-
-int silofs_calc_mbr_caddr(const struct silofs_env *env,
-                          const struct silofs_mbr *mbr,
-                          struct silofs_caddr     *out_caddr);
+int silofs_mbri_sync_mbrs(struct silofs_mbrinfo  *mbri,
+                          enum silofs_mbr_flavour dst_flavour);
 
 #endif /* SILOFS_MBR_H_ */

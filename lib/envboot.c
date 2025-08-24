@@ -59,13 +59,6 @@ int silofs_env_setup_fs_mbr(struct silofs_env *env)
 	return 0;
 }
 
-static int env_pre_commit_mbr(struct silofs_env *env)
-{
-	const struct silofs_uaddr *sb_uaddr = silofs_sbi_uaddr(env->sbi);
-
-	return silofs_mbri_update_sb_addr(&env->mbri, sb_uaddr);
-}
-
 static int env_save_mbr(struct silofs_env *env, struct silofs_caddr *out_mref)
 {
 	struct silofs_mbr1k mbr1k = {
@@ -95,15 +88,19 @@ static int env_save_mbr(struct silofs_env *env, struct silofs_caddr *out_mref)
 	return 0;
 }
 
-int silofs_env_commit_mbr(struct silofs_env *env,
-                          struct silofs_caddr *out_mref)
+static void env_pre_commit_fs_mbr(struct silofs_env *env)
+{
+	const struct silofs_uaddr *sb_uaddr = silofs_sbi_uaddr(env->sbi);
+
+	silofs_mbri_update_sb_addr(&env->mbri, sb_uaddr);
+}
+
+int silofs_env_commit_fs_mbr(struct silofs_env *env,
+                             struct silofs_caddr *out_mref)
 {
 	int err;
 
-	err = env_pre_commit_mbr(env);
-	if (err) {
-		return err;
-	}
+	env_pre_commit_fs_mbr(env);
 	err = env_save_mbr(env, out_mref);
 	if (err) {
 		return err;
@@ -158,14 +155,14 @@ env_load_mbr_at(const struct silofs_env *env, const struct silofs_caddr *caddr,
 }
 
 static int
-env_decode_mbr(struct silofs_env *env, const struct silofs_caddr *mref,
-               const struct silofs_mbr1k *mbr1k)
+env_decode_fs_mbr(struct silofs_env *env, const struct silofs_caddr *mref,
+                  const struct silofs_mbr1k *mbr1k)
 {
 	return silofs_mbri_decode_mbr(&env->mbri, SILOFS_MBR_FS, mref, mbr1k);
 }
 
-int silofs_env_reload_mbr(struct silofs_env *env,
-                          const struct silofs_caddr *caddr)
+int silofs_env_reload_fs_mbr(struct silofs_env *env,
+                             const struct silofs_caddr *caddr)
 {
 	struct silofs_mbr1k mbr1k = {
 		.mbr_magic = UINT64_MAX,
@@ -180,7 +177,37 @@ int silofs_env_reload_mbr(struct silofs_env *env,
 	if (err) {
 		return err;
 	}
-	err = env_decode_mbr(env, caddr, &mbr1k);
+	err = env_decode_fs_mbr(env, caddr, &mbr1k);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+static int
+env_decode_ar_mbr(struct silofs_env *env, const struct silofs_caddr *mref,
+                  const struct silofs_mbr1k *mbr1k)
+{
+	return silofs_mbri_decode_mbr(&env->mbri, SILOFS_MBR_AR, mref, mbr1k);
+}
+
+int silofs_env_reload_ar_mbr(struct silofs_env *env,
+                             const struct silofs_caddr *caddr)
+{
+	struct silofs_mbr1k mbr1k = {
+		.mbr_magic = UINT64_MAX,
+	};
+	int err;
+
+	err = env_stat_mbr_at(env, caddr);
+	if (err) {
+		return err;
+	}
+	err = env_load_mbr_at(env, caddr, &mbr1k);
+	if (err) {
+		return err;
+	}
+	err = env_decode_ar_mbr(env, caddr, &mbr1k);
 	if (err) {
 		return err;
 	}

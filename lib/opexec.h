@@ -180,7 +180,8 @@ int silofs_exec_unrefs(struct silofs_task_ctx *task);
 int silofs_exec_archive(struct silofs_task_ctx *task,
                         struct silofs_caddr    *out_ar_caddr);
 
-int silofs_exec_restore(struct silofs_task_ctx *task,
-                        struct silofs_caddr    *out_fs_caddr);
+int silofs_exec_restore(struct silofs_task_ctx    *task,
+                        const struct silofs_caddr *ar_mref,
+                        struct silofs_caddr       *out_fs_mref);
 
 #endif /* SILOFS_OPEXEC_H_ */

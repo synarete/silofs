@@ -316,17 +316,6 @@ int silofs_env_arix_addr(const struct silofs_env *env,
 	return (caddr->ctype == SILOFS_CTYPE_PACKIDX) ? 0 : -SILOFS_ENOENT;
 }
 
-int silofs_env_set_arix_addr(struct silofs_env *env,
-                             const struct silofs_caddr *caddr)
-{
-	if (caddr->ctype != SILOFS_CTYPE_PACKIDX) {
-		return -SILOFS_EINVAL;
-	}
-	silofs_caddr_assign(&env->arix_addr, caddr);
-	silofs_mbr_set_ar_addr(&env->mbri.fs_mbr, caddr);
-	return 0;
-}
-
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static void make_super_lsid(struct silofs_lsid *out_lsid)
@@ -602,7 +591,7 @@ env_do_forkfs(struct silofs_env *env, struct silofs_mrefs *out_mrefs)
 	if (err) {
 		return err;
 	}
-	err = silofs_env_commit_mbr(env, &out_mrefs->fork);
+	err = silofs_env_commit_fs_mbr(env, &out_mrefs->fork);
 	if (err) {
 		return err;
 	}
@@ -611,7 +600,7 @@ env_do_forkfs(struct silofs_env *env, struct silofs_mrefs *out_mrefs)
 	if (err) {
 		return err;
 	}
-	err = silofs_env_commit_mbr(env, &out_mrefs->main);
+	err = silofs_env_commit_fs_mbr(env, &out_mrefs->main);
 	if (err) {
 		return err;
 	}

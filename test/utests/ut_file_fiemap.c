@@ -18,7 +18,7 @@
 
 static struct fiemap *new_fiemap(struct ut_env *ute, size_t cnt)
 {
-	struct fiemap *fm = NULL;
+	struct fiemap *fm = nullptr;
 	const size_t sz = sizeof(*fm) + (cnt * sizeof(fm->fm_extents[0]));
 
 	fm = ut_zerobuf(ute, sz);
@@ -37,8 +37,8 @@ ut_fiemap_of(struct ut_env *ute, ino_t ino, loff_t off, size_t len)
 		.fm_extent_count = 0,
 	};
 	const uint32_t magic = SILOFS_FSID_MAGIC;
-	struct fiemap *fm = NULL;
-	const struct fiemap_extent *fm_ext = NULL;
+	struct fiemap *fm = nullptr;
+	const struct fiemap_extent *fm_ext = nullptr;
 	loff_t pos = -1;
 
 	ut_fiemap(ute, ino, &fm0);
@@ -73,8 +73,8 @@ static void ut_file_fiemap_simple_(struct ut_env *ute, loff_t off, size_t len)
 {
 	const char *name = UT_NAME;
 	void *buf = ut_randbuf(ute, len);
-	const struct fiemap *fm = NULL;
-	const struct fiemap_extent *fm_ext = NULL;
+	const struct fiemap *fm = nullptr;
+	const struct fiemap_extent *fm_ext = nullptr;
 	ino_t dino = 0;
 	ino_t ino = 0;
 
@@ -119,7 +119,7 @@ static void ut_file_fiemap_simple(struct ut_env *ute)
 static void
 ut_file_fiemap_twoext_(struct ut_env *ute, loff_t off1, loff_t off2)
 {
-	const struct fiemap *fm = NULL;
+	const struct fiemap *fm = nullptr;
 	const char *name = UT_NAME;
 	ino_t dino = 0;
 	ino_t ino = 0;
@@ -171,8 +171,8 @@ static void ut_file_fiemap_sparse_(struct ut_env *ute, loff_t off_base,
 	size_t len;
 	char b = 'b';
 	const char *name = UT_NAME;
-	const struct fiemap *fm = NULL;
-	const struct fiemap_extent *fm_ext = NULL;
+	const struct fiemap *fm = nullptr;
+	const struct fiemap_extent *fm_ext = nullptr;
 	const loff_t bk_size = UT_BK_SIZE;
 	const loff_t off_end = off_base + (step * (loff_t)cnt);
 

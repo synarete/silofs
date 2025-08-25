@@ -153,7 +153,7 @@ static int fetch_cached_uni(const struct silofs_env *env,
                             struct silofs_unode_info **out_uni)
 {
 	*out_uni = silofs_lcache_lookup_uni(env->base.lcache, uaddr);
-	return (*out_uni == NULL) ? -SILOFS_ENOENT : 0;
+	return (*out_uni == nullptr) ? -SILOFS_ENOENT : 0;
 }
 
 static void
@@ -167,7 +167,7 @@ create_cached_uni(struct silofs_env *env, const struct silofs_uaddr *uaddr,
                   struct silofs_unode_info **out_uni)
 {
 	*out_uni = silofs_lcache_create_uni(env->base.lcache, uaddr);
-	if (*out_uni == NULL) {
+	if (*out_uni == nullptr) {
 		return -SILOFS_ENOMEM;
 	}
 	bind_spawned_uni(env, *out_uni);
@@ -201,7 +201,7 @@ static bool silofs_lsid_rw_mode(const struct silofs_env *env,
 	const struct silofs_sb_info *sbi = env->sbi;
 	bool rw_mode;
 
-	if (unlikely(sbi == NULL) || silofs_sbi_ismutable_lsid(sbi, lsid)) {
+	if (unlikely(sbi == nullptr) || silofs_sbi_ismutable_lsid(sbi, lsid)) {
 		rw_mode = true;
 	} else {
 		/*
@@ -212,7 +212,7 @@ static bool silofs_lsid_rw_mode(const struct silofs_env *env,
 		 * logic has an issue with (off-line) snapshots, thus forcing
 		 * read-write mode.
 		 */
-		rw_mode = likely(env != NULL) ? true : false;
+		rw_mode = likely(env != nullptr) ? true : false;
 	}
 	return rw_mode;
 }
@@ -309,7 +309,7 @@ decrypt_uni_view(const struct silofs_env *env, struct silofs_unode_info *uni)
 static void
 forget_cached_sbi(const struct silofs_env *env, struct silofs_sb_info *sbi)
 {
-	if (sbi != NULL) {
+	if (sbi != nullptr) {
 		forget_cached_uni(env, &sbi->sb_uni);
 	}
 }
@@ -318,7 +318,7 @@ static int
 require_cached_sbi(struct silofs_env *env, const struct silofs_uaddr *uaddr,
                    struct silofs_sb_info **out_sbi)
 {
-	struct silofs_unode_info *uni = NULL;
+	struct silofs_unode_info *uni = nullptr;
 	int err;
 
 	err = require_cached_uni(env, uaddr, &uni);
@@ -334,7 +334,7 @@ static int
 spawn_super_at(struct silofs_env *env, const struct silofs_uaddr *uaddr,
                struct silofs_sb_info **out_sbi)
 {
-	struct silofs_sb_info *sbi = NULL;
+	struct silofs_sb_info *sbi = nullptr;
 	int err;
 
 	err = require_cached_sbi(env, uaddr, &sbi);
@@ -351,7 +351,7 @@ spawn_super_at(struct silofs_env *env, const struct silofs_uaddr *uaddr,
 	return 0;
 out_err:
 	forget_cached_sbi(env, sbi);
-	*out_sbi = NULL;
+	*out_sbi = nullptr;
 	return err;
 }
 
@@ -379,7 +379,7 @@ static int
 stage_super_at(struct silofs_env *env, const struct silofs_uaddr *uaddr,
                struct silofs_sb_info **out_sbi)
 {
-	struct silofs_sb_info *sbi = NULL;
+	struct silofs_sb_info *sbi = nullptr;
 	int err;
 
 	err = require_cached_sbi(env, uaddr, &sbi);
@@ -416,7 +416,7 @@ out_ok:
 	return 0;
 out_err:
 	forget_cached_sbi(env, sbi);
-	*out_sbi = NULL;
+	*out_sbi = nullptr;
 	return err;
 }
 
@@ -432,7 +432,7 @@ int silofs_stage_super(struct silofs_env *env,
 static void
 forget_cached_sni(const struct silofs_env *env, struct silofs_spnode_info *sni)
 {
-	if (sni != NULL) {
+	if (sni != nullptr) {
 		forget_cached_uni(env, &sni->sn_uni);
 	}
 }
@@ -441,7 +441,7 @@ static int
 require_cached_sni(struct silofs_env *env, const struct silofs_uaddr *uaddr,
                    struct silofs_spnode_info **out_sni)
 {
-	struct silofs_unode_info *uni = NULL;
+	struct silofs_unode_info *uni = nullptr;
 	int err;
 
 	err = require_cached_uni(env, uaddr, &uni);
@@ -457,7 +457,7 @@ static int
 spawn_spnode_at(struct silofs_env *env, const struct silofs_uaddr *uaddr,
                 struct silofs_spnode_info **out_sni)
 {
-	struct silofs_spnode_info *sni = NULL;
+	struct silofs_spnode_info *sni = nullptr;
 	int err;
 
 	err = require_cached_sni(env, uaddr, &sni);
@@ -477,7 +477,7 @@ out_ok:
 	return 0;
 out_err:
 	forget_cached_sni(env, sni);
-	*out_sni = NULL;
+	*out_sni = nullptr;
 	return err;
 }
 
@@ -505,7 +505,7 @@ static int
 stage_spnode_at(struct silofs_env *env, const struct silofs_uaddr *uaddr,
                 struct silofs_spnode_info **out_sni)
 {
-	struct silofs_spnode_info *sni = NULL;
+	struct silofs_spnode_info *sni = nullptr;
 	int err;
 
 	err = require_cached_sni(env, uaddr, &sni);
@@ -537,7 +537,7 @@ out_ok:
 	return 0;
 out_err:
 	forget_cached_sni(env, sni);
-	*out_sni = NULL;
+	*out_sni = nullptr;
 	return err;
 }
 
@@ -553,7 +553,7 @@ int silofs_stage_spnode(struct silofs_env *env,
 static void
 forget_cached_sli(const struct silofs_env *env, struct silofs_spleaf_info *sli)
 {
-	if (sli != NULL) {
+	if (sli != nullptr) {
 		forget_cached_uni(env, &sli->sl_uni);
 	}
 }
@@ -562,7 +562,7 @@ static int
 require_cached_sli(struct silofs_env *env, const struct silofs_uaddr *uaddr,
                    struct silofs_spleaf_info **out_sli)
 {
-	struct silofs_unode_info *uni = NULL;
+	struct silofs_unode_info *uni = nullptr;
 	int err;
 
 	err = require_cached_uni(env, uaddr, &uni);
@@ -578,7 +578,7 @@ static int
 spawn_spleaf_at(struct silofs_env *env, const struct silofs_uaddr *uaddr,
                 struct silofs_spleaf_info **out_sli)
 {
-	struct silofs_spleaf_info *sli = NULL;
+	struct silofs_spleaf_info *sli = nullptr;
 	int err;
 
 	err = require_cached_sli(env, uaddr, &sli);
@@ -598,7 +598,7 @@ out_ok:
 	return 0;
 out_err:
 	forget_cached_sli(env, sli);
-	*out_sli = NULL;
+	*out_sli = nullptr;
 	return err;
 }
 
@@ -626,7 +626,7 @@ static int
 stage_spleaf_at(struct silofs_env *env, const struct silofs_uaddr *uaddr,
                 struct silofs_spleaf_info **out_sli)
 {
-	struct silofs_spleaf_info *sli = NULL;
+	struct silofs_spleaf_info *sli = nullptr;
 	int err;
 
 	err = require_cached_sli(env, uaddr, &sli);
@@ -658,7 +658,7 @@ out_ok:
 	return 0;
 out_err:
 	forget_cached_sli(env, sli);
-	*out_sli = NULL;
+	*out_sli = nullptr;
 	return err;
 }
 

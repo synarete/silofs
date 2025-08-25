@@ -37,7 +37,7 @@ static void ii_update_itimes(struct silofs_inode_info *ii,
 
 bool silofs_ino_isnull(ino_t ino)
 {
-	return (ino == SILOFS_INO_NULL);
+	return (ino == SILOFS_INO_nullptr);
 }
 
 bool silofs_user_cap_fowner(const struct silofs_cred *cred)
@@ -559,7 +559,7 @@ void silofs_ii_dirtify(struct silofs_inode_info *ii)
 	silofs_assert_not_null(ii);
 
 	if (!silofs_ii_isloose(ii)) {
-		silofs_vni_dirtify(silofs_ii_to_vni(ii), NULL);
+		silofs_vni_dirtify(silofs_ii_to_vni(ii), nullptr);
 	}
 }
 
@@ -579,14 +579,14 @@ bool silofs_ii_isdirty(const struct silofs_inode_info *ii)
 
 void silofs_ii_incref(struct silofs_inode_info *ii)
 {
-	if (ii != NULL) {
+	if (ii != nullptr) {
 		silofs_vni_incref(silofs_ii_to_vni(ii));
 	}
 }
 
 void silofs_ii_decref(struct silofs_inode_info *ii)
 {
-	if (ii != NULL) {
+	if (ii != nullptr) {
 		silofs_vni_decref(silofs_ii_to_vni(ii));
 	}
 }
@@ -728,7 +728,7 @@ check_waccess(const struct silofs_task_ctx *task, struct silofs_inode_info *ii)
 static int check_xaccess_parent(struct silofs_task_ctx *task,
                                 const struct silofs_inode_info *ii)
 {
-	struct silofs_inode_info *parent_ii = NULL;
+	struct silofs_inode_info *parent_ii = nullptr;
 	ino_t parent;
 	int err;
 
@@ -1035,7 +1035,7 @@ int silofs_do_utimens(const struct silofs_task_ctx *task,
 static int check_parent_dir_ii(struct silofs_task_ctx *task,
                                const struct silofs_inode_info *ii)
 {
-	struct silofs_inode_info *parent_ii = NULL;
+	struct silofs_inode_info *parent_ii = nullptr;
 	ino_t parent;
 	int err;
 
@@ -1255,7 +1255,7 @@ timespec_of(const struct timespec *ts_in, const struct timespec *ts_now)
 	if (ts_in->tv_nsec == UTIME_NOW) {
 		ts = ts_now;
 	} else if (ts_in->tv_nsec == UTIME_OMIT) {
-		ts = NULL;
+		ts = nullptr;
 	}
 	return ts;
 }
@@ -1263,7 +1263,7 @@ timespec_of(const struct timespec *ts_in, const struct timespec *ts_now)
 static void
 ii_update_atime(struct silofs_inode_info *ii, const struct timespec *atime)
 {
-	if (atime != NULL) {
+	if (atime != nullptr) {
 		memcpy(&ii->i_atime_lazy, atime, sizeof(ii->i_atime_lazy));
 	}
 }
@@ -1277,12 +1277,12 @@ static void ii_update_inode_attr(struct silofs_inode_info *ii,
 	struct silofs_inode *inode;
 	const struct timespec *ts;
 
-	if (ii == NULL) {
+	if (ii == nullptr) {
 		return; /* e.g., rename */
 	}
 	if (flags & (SILOFS_IATTR_LAZY | SILOFS_IATTR_ATIME)) {
 		ts = timespec_of(&iattr->ia_t.atime, ts_now);
-		if (ts != NULL) {
+		if (ts != nullptr) {
 			ii_update_atime(ii, ts);
 			flags &= ~SILOFS_IATTR_ATIME;
 		}
@@ -1319,25 +1319,25 @@ static void ii_update_inode_attr(struct silofs_inode_info *ii,
 	}
 	if (flags & SILOFS_IATTR_BTIME) {
 		ts = timespec_of(&iattr->ia_t.btime, ts_now);
-		if (ts != NULL) {
+		if (ts != nullptr) {
 			inode_set_btime(inode, ts);
 		}
 	}
 	if (flags & SILOFS_IATTR_MTIME) {
 		ts = timespec_of(&iattr->ia_t.mtime, ts_now);
-		if (ts != NULL) {
+		if (ts != nullptr) {
 			inode_set_mtime(inode, ts);
 		}
 	}
 	if (flags & SILOFS_IATTR_CTIME) {
 		ts = timespec_of(&iattr->ia_t.ctime, ts_now);
-		if (ts != NULL) {
+		if (ts != nullptr) {
 			inode_set_ctime(inode, ts);
 		}
 	}
 	if (flags & SILOFS_IATTR_ATIME) {
 		ts = timespec_of(&iattr->ia_t.atime, ts_now);
-		if (ts != NULL) {
+		if (ts != nullptr) {
 			inode_set_atime(inode, ts);
 			silofs_ii_refresh_atime(ii, true);
 		}
@@ -1433,7 +1433,7 @@ void silofs_ii_undirtify_vnis(struct silofs_inode_info *ii)
 	struct silofs_dirtyq *dq = &ii->i_dq_vnis;
 
 	dqe = silofs_dirtyq_front(dq);
-	while (dqe != NULL) {
+	while (dqe != nullptr) {
 		silofs_assert_gt(dq->dq.sz, 0);
 		vni = silofs_vni_from_dqe(dqe);
 		silofs_vni_undirtify(vni);

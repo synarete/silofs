@@ -42,8 +42,8 @@ int silofs_bstore_init(struct silofs_bstore *bstore,
 void silofs_bstore_fini(struct silofs_bstore *bstore)
 {
 	silofs_btree_fini(&bstore->btree);
-	bstore->repo = NULL;
-	bstore->pcache = NULL;
+	bstore->repo = nullptr;
+	bstore->pcache = nullptr;
 }
 
 static int bstore_validate_paddr(const struct silofs_bstore *bstore,
@@ -105,7 +105,7 @@ static int bstore_create_cached_bdi(struct silofs_bstore *bstore,
 	struct silofs_bdesc_info *bdi;
 
 	bdi = silofs_pcache_create_bdi(bstore->pcache, paddr);
-	if (bdi == NULL) {
+	if (bdi == nullptr) {
 		return -SILOFS_ENOMEM;
 	}
 	*out_bdi = bdi;
@@ -172,14 +172,14 @@ static int bstore_lookup_cached_bdesc(struct silofs_bstore *bstore,
                                       struct silofs_bdesc_info **out_bdi)
 {
 	*out_bdi = silofs_pcache_lookup_bdi(bstore->pcache, paddr);
-	return (*out_bdi == NULL) ? -SILOFS_ENOENT : 0;
+	return (*out_bdi == nullptr) ? -SILOFS_ENOENT : 0;
 }
 
 static int bstore_stage_bdesc(struct silofs_bstore *bstore,
                               const struct silofs_paddr *paddr,
                               struct silofs_bdesc_info **out_bdi)
 {
-	struct silofs_bdesc_info *bdi = NULL;
+	struct silofs_bdesc_info *bdi = nullptr;
 	int err;
 
 	err = bstore_lookup_cached_bdesc(bstore, paddr, out_bdi);
@@ -246,7 +246,7 @@ static int bstore_create_cached_bni(struct silofs_bstore *bstore,
 	struct silofs_btnode_info *bni;
 
 	bni = silofs_pcache_create_bni(bstore->pcache, paddr);
-	if (bni == NULL) {
+	if (bni == nullptr) {
 		return -SILOFS_ENOMEM;
 	}
 	*out_bni = bni;
@@ -276,7 +276,7 @@ static int bstore_spawn_btnode(struct silofs_bstore *bstore, bool create,
 static int bstore_create_btroot_at(struct silofs_bstore *bstore,
                                    const struct silofs_paddr *paddr)
 {
-	struct silofs_btnode_info *bni = NULL;
+	struct silofs_btnode_info *bni = nullptr;
 	int err;
 
 	err = bstore_spawn_btnode(bstore, false, paddr, &bni);
@@ -308,7 +308,7 @@ static int bstore_spawn_btroot(struct silofs_bstore *bstore)
 static int bstore_spawn_next_bdesc(struct silofs_bstore *bstore)
 {
 	struct silofs_paddr paddr;
-	struct silofs_bdesc_info *bdi = NULL;
+	struct silofs_bdesc_info *bdi = nullptr;
 
 	// XXX FIXME
 	silofs_paddr_reset(&paddr);
@@ -352,7 +352,7 @@ static int bstore_update_btree_root_by(struct silofs_bstore *bstore,
 static int bstore_stage_last_bdesc(struct silofs_bstore *bstore)
 {
 	struct silofs_paddr paddr;
-	struct silofs_bdesc_info *bdi = NULL;
+	struct silofs_bdesc_info *bdi = nullptr;
 	int err;
 
 	// XXX FIXME
@@ -456,7 +456,7 @@ static void bstore_drop_dirty(struct silofs_bstore *bstore)
 	struct silofs_pnode_info *pni;
 
 	pni = bstore_dirtyq_front(bstore);
-	while (pni != NULL) {
+	while (pni != nullptr) {
 		silofs_pni_undirtify(pni);
 		pni = bstore_dirtyq_front(bstore);
 	}
@@ -468,7 +468,7 @@ int silofs_bstore_flush_dirty(struct silofs_bstore *bstore)
 	int err;
 
 	pni = bstore_dirtyq_front(bstore);
-	while (pni != NULL) {
+	while (pni != nullptr) {
 		err = bstore_commit_pnode(bstore, pni);
 		if (err) {
 			return err;

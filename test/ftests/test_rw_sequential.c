@@ -27,7 +27,7 @@ static void test_rw_sequencial_(struct ft_env *fte, loff_t from, size_t len,
 {
 	void *buf2 = ft_new_buf_zeros(fte, len);
 	char *path = ft_new_path_unique(fte);
-	void *buf1 = NULL;
+	void *buf1 = nullptr;
 	const size_t nitr = rewrite ? 2 : 1;
 	loff_t pos = -1;
 	size_t nwr = 0;

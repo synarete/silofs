@@ -55,7 +55,7 @@ static void cmd_restore_parse_optargs(struct cmd_restore_ctx *ctx)
 		{ "no-prompt", 'P', 0 }, //
 		{ "loglevel", 'L', 1 },  //
 		{ "help", 'h', 0 },      //
-		{ NULL, 0, 0 },          //
+		{ nullptr, 0, 0 },       //
 	};
 	struct cmd_optargs opa;
 	int opt_chr = 1;
@@ -125,14 +125,14 @@ static void cmd_restore_finalize(struct cmd_restore_ctx *ctx)
 	cmd_pstrfree(&ctx->in_args.fsname);
 	cmd_delpass(&ctx->in_args.password);
 	cmd_destroy_env_args(&ctx->env_args);
-	cmd_restore_ctx_p = NULL;
+	cmd_restore_ctx_p = nullptr;
 }
 
 static void cmd_restore_atexit(void)
 {
 	struct cmd_restore_ctx *ctx = cmd_restore_ctx_p;
 
-	if (ctx != NULL) {
+	if (ctx != nullptr) {
 		cmd_restore_release_lockfile(ctx);
 		cmd_restore_finalize(ctx);
 	}
@@ -146,7 +146,7 @@ static void cmd_restore_start(struct cmd_restore_ctx *ctx)
 
 static void cmd_restore_enable_signals(void)
 {
-	cmd_register_sigactions(NULL);
+	cmd_register_sigactions(nullptr);
 }
 
 static void cmd_restore_prepare(struct cmd_restore_ctx *ctx)
@@ -163,7 +163,7 @@ static void cmd_restore_prepare(struct cmd_restore_ctx *ctx)
 
 static void cmd_restore_getpass(struct cmd_restore_ctx *ctx)
 {
-	if (ctx->in_args.password == NULL) {
+	if (ctx->in_args.password == nullptr) {
 		cmd_getpass_simple(ctx->in_args.no_prompt,
 		                   &ctx->in_args.password);
 	}
@@ -222,7 +222,7 @@ static void cmd_restore_execute(struct cmd_restore_ctx *ctx)
 void cmd_execute_restore(void)
 {
 	struct cmd_restore_ctx ctx = {
-		.env = NULL,
+		.env = nullptr,
 	};
 
 	/* Do all cleanups upon exits */

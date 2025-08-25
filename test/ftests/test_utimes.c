@@ -64,10 +64,10 @@ static void test_utime_now(struct ft_env *fte)
 	int fd = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
-	ft_utime(path, NULL);
+	ft_utime(path, nullptr);
 	ft_stat(path, &st[0]);
 	ft_write(fd, path, ft_strlen(path), &nwr);
-	ft_utime(path, NULL);
+	ft_utime(path, nullptr);
 	ft_stat(path, &st[1]);
 	ft_expect_st_ctime_ge(&st[0], &st[1]);
 	ft_close(fd);
@@ -218,12 +218,12 @@ static void test_futimens_ctime(struct ft_env *fte)
 	ft_expect_ts_eq(&st[1].st_mtim, &tm[1]);
 
 	ft_fstat(fd, &st[0]);
-	ft_futimens(fd, NULL);
+	ft_futimens(fd, nullptr);
 	ft_fstat(fd, &st[1]);
 	ft_expect_st_ctime_gt(&st[0], &st[1]);
 
 	ft_fstat(dfd, &st[0]);
-	ft_futimens(dfd, NULL);
+	ft_futimens(dfd, nullptr);
 	ft_fstat(dfd, &st[1]);
 	ft_expect_st_ctime_gt(&st[0], &st[1]);
 

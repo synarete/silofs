@@ -47,6 +47,8 @@
 
 #define ft_expect_eqm(a_, b_, n_) ft_do_expect_eqm(a_, b_, n_, FT_FL_LN_)
 
+#define ft_expect(cond_) ft_expect_true(cond_)
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 #define ft_expect_st_dir(st_) ft_do_expect_st_dir(st_, FT_FL_LN_)

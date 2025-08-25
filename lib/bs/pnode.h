@@ -20,7 +20,7 @@
 #include "addr.h"
 #include "hmdq.h"
 
-#define SILOFS_BTREE_KEY_NULL (0)
+#define SILOFS_BTREE_KEY_nullptr (0)
 
 struct silofs_paddr;
 struct silofs_bstore;

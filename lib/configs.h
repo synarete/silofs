@@ -18,7 +18,7 @@
 #error "HAVE_CONFIG_H is not defined"
 #endif
 
-#ifdef NULL
+#ifdef nullptr
 #error "this header file must be included before system headers"
 #endif
 

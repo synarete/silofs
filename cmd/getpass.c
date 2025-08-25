@@ -126,7 +126,7 @@ read_password_from_tty(int fd, void *buf, size_t bsz, size_t *out_len)
 {
 	struct termios tr_old;
 	struct termios tr_new;
-	char *pass = NULL;
+	char *pass = nullptr;
 	int read_err;
 	int err;
 
@@ -191,7 +191,7 @@ static int open_password_fd(const char *path)
 	int err;
 	int fd = -1;
 
-	if (path == NULL) {
+	if (path == nullptr) {
 		return STDIN_FILENO;
 	}
 	err = silofs_sys_access(path, R_OK);
@@ -209,7 +209,7 @@ static void close_password_fd(int fd, const char *path)
 {
 	int err;
 
-	if (path != NULL) {
+	if (path != nullptr) {
 		err = silofs_sys_close(fd);
 		if (err) {
 			cmd_die(err, "close failed: %s", path);
@@ -231,8 +231,8 @@ static char *getpass_from(const char *path)
 
 static char *do_getpass(const char *path, bool with_prompt, bool repeat)
 {
-	char *pass = NULL;
-	char *pass2 = NULL;
+	char *pass = nullptr;
+	char *pass2 = nullptr;
 
 	if (path) {
 		return getpass_from(path);
@@ -240,14 +240,14 @@ static char *do_getpass(const char *path, bool with_prompt, bool repeat)
 	if (with_prompt) {
 		write_stdout("enter password: ");
 	}
-	pass = getpass_from(NULL);
+	pass = getpass_from(nullptr);
 	if (!repeat) {
 		return pass;
 	}
 	if (with_prompt) {
 		write_stdout("re-enter password: ");
 	}
-	pass2 = getpass_from(NULL);
+	pass2 = getpass_from(nullptr);
 	if (strcmp(pass, pass2) != 0) {
 		cmd_delpass(&pass);
 		cmd_delpass(&pass2);
@@ -269,7 +269,7 @@ void cmd_getpass2(const char *path, bool with_prompt, char **out_pass)
 
 void cmd_getpass_simple(bool no_prompt, char **out_pass)
 {
-	cmd_getpass(NULL, !no_prompt, out_pass);
+	cmd_getpass(nullptr, !no_prompt, out_pass);
 }
 
 char *cmd_duppass(const char *pass)
@@ -289,7 +289,7 @@ void cmd_checkpass(const char *pass)
 {
 	const size_t min = SILOFS_PASSWORD_MIN;
 	const size_t max = SILOFS_PASSWORD_MAX;
-	const size_t len = (pass != NULL) ? strlen(pass) : 0;
+	const size_t len = (pass != nullptr) ? strlen(pass) : 0;
 
 	if (len < min) {
 		cmd_diez("password is not FIPS 140-2 compliant "

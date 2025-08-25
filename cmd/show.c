@@ -50,7 +50,7 @@ static void cmd_show_parse_optargs(struct cmd_show_ctx *ctx)
 {
 	const struct cmd_optdesc ods[] = {
 		{ "help", 'h', 0 },
-		{ NULL, 0, 0 },
+		{ nullptr, 0, 0 },
 	};
 	struct cmd_optargs opa;
 	int opt_chr = 1;
@@ -87,7 +87,7 @@ static enum silofs_query_type cmd_show_qtype_by_subcmd(const char *subcmd)
 	const int nelems = (int)SILOFS_ARRAY_SIZE(cmd_show_subcommands);
 
 	for (int qtype = 0; qtype < nelems; ++qtype) {
-		if ((cmd_show_subcommands[qtype] != NULL) &&
+		if ((cmd_show_subcommands[qtype] != nullptr) &&
 		    !strcmp(cmd_show_subcommands[qtype], subcmd)) {
 			return (enum silofs_query_type)qtype;
 		}
@@ -103,14 +103,14 @@ static void cmd_show_finalize(struct cmd_show_ctx *ctx)
 	cmd_pstrfree(&ctx->in_args.subcmd);
 	cmd_pstrfree(&ctx->in_args.pathname);
 	cmd_del_iocp(&ctx->ioc);
-	cmd_show_ctx_p = NULL;
+	cmd_show_ctx_p = nullptr;
 }
 
 static void cmd_show_atexit(void)
 {
 	struct cmd_show_ctx *ctx = cmd_show_ctx_p;
 
-	if (ctx != NULL) {
+	if (ctx != nullptr) {
 		cmd_show_finalize(ctx);
 	}
 }
@@ -123,7 +123,7 @@ static void cmd_show_start(struct cmd_show_ctx *ctx)
 
 static void cmd_show_enable_signals(void)
 {
-	cmd_register_sigactions(NULL);
+	cmd_register_sigactions(nullptr);
 }
 
 static void cmd_show_prepare(struct cmd_show_ctx *ctx)
@@ -174,9 +174,9 @@ static void cmd_show_repo(struct cmd_show_ctx *ctx)
 static void cmd_show_boot(struct cmd_show_ctx *ctx)
 {
 	struct silofs_ioc_query *qry = &ctx->ioc->query;
-	char *name = NULL;
-	char *xref = NULL;
-	char *root_blobid = NULL;
+	char *name = nullptr;
+	char *xref = nullptr;
+	char *root_blobid = nullptr;
 
 	cmd_show_do_ioctl_query(ctx);
 
@@ -197,7 +197,7 @@ struct silofs_msflag_name {
 static void msflags_str(unsigned long msflags, char *buf, size_t bsz)
 {
 	const char *end = buf + bsz;
-	const struct silofs_msflag_name *ms_name = NULL;
+	const struct silofs_msflag_name *ms_name = nullptr;
 	const struct silofs_msflag_name ms_names[] = {
 		{ MS_RDONLY, "rdonly" },     { MS_NODEV, "nodev" },
 		{ MS_NOSUID, "nosuid" },     { MS_NOEXEC, "noexec" },
@@ -282,7 +282,7 @@ static void cmd_show_spacestats(const struct cmd_show_ctx *ctx)
 {
 	const struct silofs_space_stats1k *spst =
 		&ctx->ioc->query.u.spstats.spst;
-	const char *prefix = NULL;
+	const char *prefix = nullptr;
 
 	prefix = "";
 	cmd_show_time(ctx, "btime", (time_t)spst->sp_btime);
@@ -384,7 +384,7 @@ void cmd_execute_show(void)
 {
 	struct cmd_show_ctx ctx = {
 		.qtype = SILOFS_QUERY_NONE,
-		.ioc = NULL,
+		.ioc = nullptr,
 		.out_fp = stdout,
 	};
 

@@ -23,8 +23,8 @@
 static const struct silofs_uaddr s_uaddr_none = {
 	.laddr.lsid.lsize = 0,
 	.laddr.lsid.mtype = SILOFS_MTYPE_NONE,
-	.laddr.pos = SILOFS_OFF_NULL,
-	.voff = SILOFS_OFF_NULL,
+	.laddr.pos = SILOFS_OFF_nullptr,
+	.voff = SILOFS_OFF_nullptr,
 };
 
 const struct silofs_uaddr *silofs_uaddr_none(void)
@@ -49,7 +49,7 @@ void silofs_uaddr_setup(struct silofs_uaddr *uaddr,
 void silofs_uaddr_reset(struct silofs_uaddr *uaddr)
 {
 	silofs_laddr_reset(&uaddr->laddr);
-	uaddr->voff = SILOFS_OFF_NULL;
+	uaddr->voff = SILOFS_OFF_nullptr;
 }
 
 void silofs_uaddr_assign(struct silofs_uaddr *uaddr,
@@ -105,7 +105,7 @@ enum silofs_height silofs_uaddr_height(const struct silofs_uaddr *uaddr)
 void silofs_uaddr96b_reset(struct silofs_uaddr96b *uaddr96)
 {
 	silofs_laddr64b_reset(&uaddr96->laddr);
-	uaddr96->voff = silofs_off_to_cpu(SILOFS_OFF_NULL);
+	uaddr96->voff = silofs_off_to_cpu(SILOFS_OFF_nullptr);
 }
 
 void silofs_uaddr96b_htox(struct silofs_uaddr96b *uaddr96,

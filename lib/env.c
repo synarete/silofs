@@ -28,10 +28,10 @@ env_bind_sbi(struct silofs_env *env, struct silofs_sb_info *sbi_new)
 {
 	struct silofs_sb_info *sbi_cur = env->sbi;
 
-	if (sbi_cur != NULL) {
+	if (sbi_cur != nullptr) {
 		silofs_sbi_decref(sbi_cur);
 	}
-	if (sbi_new != NULL) {
+	if (sbi_new != nullptr) {
 		silofs_sbi_incref(sbi_new);
 	}
 	env->sbi = sbi_new;
@@ -39,9 +39,9 @@ env_bind_sbi(struct silofs_env *env, struct silofs_sb_info *sbi_new)
 
 static void env_update_mbr_sb_addr(struct silofs_env *env)
 {
-	const struct silofs_uaddr *uaddr = NULL;
+	const struct silofs_uaddr *uaddr = nullptr;
 
-	if (env->sbi != NULL) {
+	if (env->sbi != nullptr) {
 		uaddr = silofs_sbi_uaddr(env->sbi);
 	} else {
 		uaddr = silofs_uaddr_none();
@@ -133,14 +133,14 @@ env_init_commons(struct silofs_env *env, const struct silofs_env_base *base)
 	silofs_caddr_reset(&env->arix_addr);
 	env->init_time = silofs_time_mono_now();
 	env->iconv_set = false;
-	env->sbi = NULL;
+	env->sbi = nullptr;
 	env->ms_flags = 0;
 }
 
 static void env_fini_commons(struct silofs_env *env)
 {
 	memset(&env->base, 0, sizeof(env->base));
-	env->sbi = NULL;
+	env->sbi = nullptr;
 	env->ms_flags = 0;
 }
 
@@ -270,7 +270,7 @@ out_err:
 
 void silofs_env_fini(struct silofs_env *env)
 {
-	env_bind_sbi(env, NULL);
+	env_bind_sbi(env, nullptr);
 	env_fini_iconv(env);
 	env_fini_crypto(env);
 	env_fini_locks(env);
@@ -392,7 +392,7 @@ env_spawn_super_of(struct silofs_env *env, struct silofs_sb_info **out_sbi)
 static int env_spawn_super(struct silofs_env *env, size_t capacity,
                            struct silofs_sb_info **out_sbi)
 {
-	struct silofs_sb_info *sbi = NULL;
+	struct silofs_sb_info *sbi = nullptr;
 	int err;
 
 	err = env_spawn_super_of(env, &sbi);
@@ -406,7 +406,7 @@ static int env_spawn_super(struct silofs_env *env, size_t capacity,
 
 int silofs_env_format_super(struct silofs_env *env, size_t capacity)
 {
-	struct silofs_sb_info *sbi = NULL;
+	struct silofs_sb_info *sbi = nullptr;
 	int err;
 
 	err = env_spawn_super(env, capacity, &sbi);
@@ -444,7 +444,7 @@ env_check_sb(const struct silofs_env *env, const struct silofs_sb_info *sbi)
 int silofs_env_reload_super(struct silofs_env *env)
 {
 	struct silofs_uaddr uaddr;
-	struct silofs_sb_info *sbi = NULL;
+	struct silofs_sb_info *sbi = nullptr;
 	int err;
 
 	env_resolve_super_uaddr(env, &uaddr);
@@ -488,7 +488,7 @@ static int env_shut_sb(struct silofs_env *env)
 	if (err) {
 		return err;
 	}
-	env_rebind_sbi(env, NULL);
+	env_rebind_sbi(env, nullptr);
 	return 0;
 }
 
@@ -545,7 +545,7 @@ static int env_fork_rebind_super(struct silofs_env *env,
                                  const struct silofs_sb_info *sbi_cur,
                                  struct silofs_sb_info **out_sbi)
 {
-	struct silofs_sb_info *sbi = NULL;
+	struct silofs_sb_info *sbi = nullptr;
 	int err;
 
 	env_drop_uamap(env);
@@ -577,8 +577,8 @@ env_recalc_fs_mref(struct silofs_env *env, struct silofs_caddr *out_caddr)
 static int
 env_do_forkfs(struct silofs_env *env, struct silofs_mrefs *out_mrefs)
 {
-	struct silofs_sb_info *sbi_alt = NULL;
-	struct silofs_sb_info *sbi_new = NULL;
+	struct silofs_sb_info *sbi_alt = nullptr;
+	struct silofs_sb_info *sbi_new = nullptr;
 	struct silofs_sb_info *sbi_cur = env->sbi;
 	int err;
 

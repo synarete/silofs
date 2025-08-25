@@ -105,7 +105,7 @@ static char *cmd_load_xref_at(int dfd, const char *name)
 	char txt[SILOFS_XREFLEN_MAX + 2] = "";
 	struct stat st = { .st_mode = 0 };
 	size_t len = 0;
-	char *end = NULL;
+	char *end = nullptr;
 	int fd = -1;
 	int err;
 
@@ -130,7 +130,7 @@ static char *cmd_load_xref_at(int dfd, const char *name)
 		cmd_die(err, "failed to read xref: %s", name);
 	}
 	end = strchr(txt, '\n');
-	if (end != NULL) {
+	if (end != nullptr) {
 		*end = '\0';
 	}
 	return cmd_strdup(txt);
@@ -152,7 +152,7 @@ static void cmd_assign_xref(struct silofs_xref *xref, const char *txt)
 void cmd_load_fs_xref(const struct silofs_boot_args *boot_args,
                       struct silofs_xref *out_xref)
 {
-	char *txt = NULL;
+	char *txt = nullptr;
 	int dfd = -1;
 	int err;
 
@@ -174,7 +174,7 @@ void cmd_load_fs_xref(const struct silofs_boot_args *boot_args,
 void cmd_load_ar_xref(struct silofs_boot_args *boot_args,
                       struct silofs_xref *out_xref)
 {
-	char *txt = NULL;
+	char *txt = nullptr;
 	int dfd = -1;
 	int err;
 

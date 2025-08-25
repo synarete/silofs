@@ -68,7 +68,7 @@ static void cmd_clone_parse_optargs(struct cmd_clone_ctx *ctx)
 		{ "password", 'p', 1 },  //
 		{ "loglevel", 'L', 1 },  //
 		{ "help", 'h', 0 },      //
-		{ NULL, 0, 0 },          //
+		{ nullptr, 0, 0 },       //
 	};
 	struct cmd_optargs opa;
 	int opt_chr = 1;
@@ -133,14 +133,14 @@ static void cmd_clone_finalize(struct cmd_clone_ctx *ctx)
 	cmd_pstrfree(&ctx->in_args.dirpath_real);
 	cmd_del_iocp(&ctx->ioc);
 	cmd_destroy_env_args(&ctx->env_args);
-	cmd_clone_ctx_p = NULL;
+	cmd_clone_ctx_p = nullptr;
 }
 
 static void cmd_clone_atexit(void)
 {
 	struct cmd_clone_ctx *ctx = cmd_clone_ctx_p;
 
-	if (ctx != NULL) {
+	if (ctx != nullptr) {
 		cmd_clone_finalize(ctx);
 	}
 }
@@ -209,7 +209,7 @@ static void cmd_clone_restrict_process(struct cmd_clone_ctx *ctx)
 
 static void cmd_clone_getpass(struct cmd_clone_ctx *ctx)
 {
-	if (ctx->in_args.password == NULL) {
+	if (ctx->in_args.password == nullptr) {
 		cmd_getpass_simple(ctx->in_args.no_prompt,
 		                   &ctx->in_args.password);
 	}
@@ -402,8 +402,8 @@ static void cmd_clone_execute(struct cmd_clone_ctx *ctx)
 void cmd_execute_clone(void)
 {
 	struct cmd_clone_ctx ctx = {
-		.env = NULL,
-		.ioc = NULL,
+		.env = nullptr,
+		.ioc = nullptr,
 	};
 
 	/* Do all cleanups upon exits */

@@ -118,8 +118,8 @@ void silofs_expect_noop_(long a, long b);
 
 #define silofs_panic_if_null(ptr_)                                          \
 	do {                                                                \
-		if (silofs_unlikely(ptr_ == NULL)) {                        \
-			silofs_panic("NULL pointer: %s", SILOFS_STR(ptr_)); \
+		if (silofs_unlikely(ptr_ == nullptr)) {                     \
+			silofs_panic("null pointer: %s", SILOFS_STR(ptr_)); \
 		}                                                           \
 	} while (0)
 

@@ -126,7 +126,7 @@ btn_set_key_at(struct silofs_btree_node *btn, size_t slot, uint64_t key)
 
 static void btn_reset_key_at(struct silofs_btree_node *btn, size_t slot)
 {
-	btn_set_key_at(btn, slot, SILOFS_BTREE_KEY_NULL);
+	btn_set_key_at(btn, slot, SILOFS_BTREE_KEY_nullptr);
 }
 
 static void btn_reset_keys(struct silofs_btree_node *btn)
@@ -346,7 +346,7 @@ static struct silofs_btree_node *btn_new(struct silofs_alloc *alloc)
 	struct silofs_btree_node *btn;
 
 	btn = btn_malloc(alloc);
-	if (btn != NULL) {
+	if (btn != nullptr) {
 		btn_init(btn);
 	}
 	return btn;
@@ -362,7 +362,7 @@ static void btn_del(struct silofs_btree_node *btn, struct silofs_alloc *alloc)
 
 static struct silofs_btnode_info *bni_malloc(struct silofs_alloc *alloc)
 {
-	struct silofs_btnode_info *bni = NULL;
+	struct silofs_btnode_info *bni = nullptr;
 
 	bni = silofs_memalloc(alloc, sizeof(*bni), 0);
 	return bni;
@@ -381,30 +381,30 @@ bni_init(struct silofs_btnode_info *bni, const struct silofs_paddr *paddr)
 	silofs_assert_eq(paddr->mtype, SILOFS_MTYPE_BTNODE);
 
 	silofs_pni_init(&bni->bn_pni, paddr);
-	bni->bn = NULL;
+	bni->bn = nullptr;
 	bni->bn_rdonly = false;
 }
 
 static void bni_fini(struct silofs_btnode_info *bni)
 {
 	silofs_pni_fini(&bni->bn_pni);
-	bni->bn = NULL;
+	bni->bn = nullptr;
 }
 
 struct silofs_btnode_info *
 silofs_bni_new(const struct silofs_paddr *paddr, struct silofs_alloc *alloc)
 {
-	struct silofs_btree_node *btn = NULL;
-	struct silofs_btnode_info *bni = NULL;
+	struct silofs_btree_node *btn = nullptr;
+	struct silofs_btnode_info *bni = nullptr;
 
 	btn = btn_new(alloc);
-	if (btn == NULL) {
-		return NULL;
+	if (btn == nullptr) {
+		return nullptr;
 	}
 	bni = bni_malloc(alloc);
-	if (bni == NULL) {
+	if (bni == nullptr) {
 		btn_del(btn, alloc);
-		return NULL;
+		return nullptr;
 	}
 	bni_init(bni, paddr);
 	bni->bn = btn;
@@ -485,7 +485,7 @@ uint64_t silofs_bni_median_key(const struct silofs_btnode_info *bni)
 	uint64_t mkey;
 
 	if (nkeys == 0) {
-		mkey = SILOFS_BTREE_KEY_NULL;
+		mkey = SILOFS_BTREE_KEY_nullptr;
 	} else if (nkeys % 2 == 1) {
 		mkey = btn_key_at(bni->bn, nkeys / 2);
 	} else {
@@ -498,7 +498,7 @@ uint64_t silofs_bni_median_key(const struct silofs_btnode_info *bni)
 
 static bool btkey_isvalid(uint64_t key)
 {
-	return (key != SILOFS_BTREE_KEY_NULL);
+	return (key != SILOFS_BTREE_KEY_nullptr);
 }
 
 int silofs_bni_resolve(const struct silofs_btnode_info *bni, uint64_t key,
@@ -588,9 +588,9 @@ bni_unconst(const struct silofs_btnode_info *p)
 struct silofs_btnode_info *
 silofs_bni_from_pni(const struct silofs_pnode_info *pni)
 {
-	const struct silofs_btnode_info *bni = NULL;
+	const struct silofs_btnode_info *bni = nullptr;
 
-	if (pni != NULL) {
+	if (pni != nullptr) {
 		silofs_assert_eq(pni->pn_paddr.mtype, SILOFS_MTYPE_BTNODE);
 		bni = container_of2(pni, struct silofs_btnode_info, bn_pni);
 	}

@@ -30,12 +30,12 @@
 
 #define BITS_SIZE(a) (CHAR_BIT * sizeof(a))
 
-#define MEMBER_SIZE(type, member) sizeof(((const type *)NULL)->member)
+#define MEMBER_SIZE(type, member) sizeof(((const type *)nullptr)->member)
 
 #define MEMBER_NELEMS(type, member) \
-	SILOFS_ARRAY_SIZE(((const type *)NULL)->member)
+	SILOFS_ARRAY_SIZE(((const type *)nullptr)->member)
 
-#define MEMBER_NBITS(type, member) BITS_SIZE(((const type *)NULL)->member)
+#define MEMBER_NBITS(type, member) BITS_SIZE(((const type *)nullptr)->member)
 
 #define SWORD(a) ((long)(a))
 

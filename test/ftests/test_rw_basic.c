@@ -116,7 +116,7 @@ static void test_rw_basic_seq_long(struct ft_env *fte)
 static void test_rw_basic_multi_(struct ft_env *fte, loff_t off, size_t len)
 {
 	struct stat st = { .st_size = -1 };
-	void *buf1 = NULL;
+	void *buf1 = nullptr;
 	void *buf2 = ft_new_buf_rands(fte, len);
 	const char *path = ft_new_path_unique(fte);
 	int fd = -1;
@@ -168,8 +168,8 @@ static void test_rw_basic_space(struct ft_env *fte)
 {
 	const char *path = ft_new_path_unique(fte);
 	size_t bsz = FT_1M;
-	void *buf1 = NULL;
-	void *buf2 = NULL;
+	void *buf1 = nullptr;
+	void *buf2 = nullptr;
 	loff_t off = -1;
 	int fd = -1;
 
@@ -282,8 +282,8 @@ static void
 test_rw_basic_steps_(struct ft_env *fte, loff_t pos, loff_t lim, loff_t step)
 {
 	size_t bsz = FT_64K;
-	void *buf1 = NULL;
-	void *buf2 = NULL;
+	void *buf1 = nullptr;
+	void *buf2 = nullptr;
 	const char *path = ft_new_path_unique(fte);
 	int fd = -1;
 

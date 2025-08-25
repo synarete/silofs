@@ -54,7 +54,7 @@ static int cipher_open(struct silofs_cipher *ci, int algo, int mode)
 static void cipher_close(struct silofs_cipher *ci)
 {
 	gcry_cipher_close(ci->cipher_hd);
-	ci->cipher_hd = NULL;
+	ci->cipher_hd = nullptr;
 	ci->cipher_algo = GCRY_CIPHER_NONE;
 	ci->cipher_mode = GCRY_CIPHER_MODE_NONE;
 }
@@ -102,7 +102,7 @@ int silofs_cipher_reinit(struct silofs_cipher *ci, int algo, int mode)
 
 void silofs_cipher_fini(struct silofs_cipher *ci)
 {
-	if (ci->cipher_hd != NULL) {
+	if (ci->cipher_hd != nullptr) {
 		cipher_close(ci);
 	}
 }

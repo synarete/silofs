@@ -186,7 +186,7 @@ static void test_unlinked_nfiles_(struct ft_env *fte, loff_t off, size_t len)
 	void *buf2 = ft_new_buf_rands(fte, len);
 	const size_t nfds = 500;
 	loff_t pos = 0;
-	int *fds = NULL;
+	int *fds = nullptr;
 	int fd = -1;
 
 	fds = ft_new_buf_zeros(fte, nfds * sizeof(fd));
@@ -298,7 +298,7 @@ static void test_unlinked_same_path_(struct ft_env *fte, size_t cnt)
 {
 	const char *path = ft_new_path_unique(fte);
 	loff_t pos = -1;
-	int *fds = NULL;
+	int *fds = nullptr;
 	int dat = -1;
 	int fd = -1;
 

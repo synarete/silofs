@@ -55,7 +55,7 @@ static size_t str_length(const char *s)
 
 size_t silofs_str_length(const char *s)
 {
-	return (s != NULL) ? str_length(s) : 0;
+	return (s != nullptr) ? str_length(s) : 0;
 }
 
 static size_t str_nlength(const char *s, size_t n)
@@ -65,7 +65,7 @@ static size_t str_nlength(const char *s, size_t n)
 
 size_t silofs_str_nlength(const char *s, size_t n)
 {
-	return (s != NULL) ? str_nlength(s, n) : 0;
+	return (s != nullptr) ? str_nlength(s, n) : 0;
 }
 
 int silofs_str_compare(const char *s1, const char *s2, size_t n)
@@ -96,7 +96,7 @@ silofs_str_find(const char *s1, size_t n1, const char *s2, size_t n2)
 	const char *q;
 
 	if (!n2 || (n1 < n2)) {
-		return NULL;
+		return nullptr;
 	}
 	q = s1 + (n1 - n2 + 1);
 	for (const char *p = s1; p != q; ++p) {
@@ -104,21 +104,21 @@ silofs_str_find(const char *s1, size_t n1, const char *s2, size_t n2)
 			return p;
 		}
 	}
-	return NULL;
+	return nullptr;
 }
 
 const char *
 silofs_str_rfind(const char *s1, size_t n1, const char *s2, size_t n2)
 {
 	if (!n2 || (n1 < n2)) {
-		return NULL;
+		return nullptr;
 	}
 	for (const char *p = s1 + (n1 - n2); p >= s1; --p) {
 		if (!silofs_str_compare(p, s2, n2)) {
 			return p;
 		}
 	}
-	return NULL;
+	return nullptr;
 }
 
 const char *silofs_str_rfind_chr(const char *s, size_t n, char c)
@@ -128,7 +128,7 @@ const char *silofs_str_rfind_chr(const char *s, size_t n, char c)
 			return p;
 		}
 	}
-	return NULL;
+	return nullptr;
 }
 
 const char *
@@ -137,11 +137,11 @@ silofs_str_find_first_of(const char *s1, size_t n1, const char *s2, size_t n2)
 	const char *q = s1 + n1;
 
 	for (const char *p = s1; p < q; ++p) {
-		if (silofs_str_find_chr(s2, n2, *p) != NULL) {
+		if (silofs_str_find_chr(s2, n2, *p) != nullptr) {
 			return p;
 		}
 	}
-	return NULL;
+	return nullptr;
 }
 
 const char *silofs_str_find_first_not_of(const char *s1, size_t n1,
@@ -150,11 +150,11 @@ const char *silofs_str_find_first_not_of(const char *s1, size_t n1,
 	const char *q = s1 + n1;
 
 	for (const char *p = s1; p < q; ++p) {
-		if (silofs_str_find_chr(s2, n2, *p) == NULL) {
+		if (silofs_str_find_chr(s2, n2, *p) == nullptr) {
 			return p;
 		}
 	}
-	return NULL;
+	return nullptr;
 }
 
 const char *silofs_str_find_first_not_eq(const char *s, size_t n, char c)
@@ -166,7 +166,7 @@ const char *silofs_str_find_first_not_eq(const char *s, size_t n, char c)
 			return p;
 		}
 	}
-	return NULL;
+	return nullptr;
 }
 
 const char *
@@ -175,11 +175,11 @@ silofs_str_find_last_of(const char *s1, size_t n1, const char *s2, size_t n2)
 	const char *q = s1 + n1;
 
 	for (const char *p = q; p > s1;) {
-		if (silofs_str_find_chr(s2, n2, *--p) != NULL) {
+		if (silofs_str_find_chr(s2, n2, *--p) != nullptr) {
 			return p;
 		}
 	}
-	return NULL;
+	return nullptr;
 }
 
 const char *silofs_str_find_last_not_of(const char *s1, size_t n1,
@@ -188,11 +188,11 @@ const char *silofs_str_find_last_not_of(const char *s1, size_t n1,
 	const char *q = s1 + n1;
 
 	for (const char *p = q; p > s1;) {
-		if (silofs_str_find_chr(s2, n2, *--p) == NULL) {
+		if (silofs_str_find_chr(s2, n2, *--p) == nullptr) {
 			return p;
 		}
 	}
-	return NULL;
+	return nullptr;
 }
 
 const char *silofs_str_find_last_not_eq(const char *s, size_t n, char c)
@@ -202,7 +202,7 @@ const char *silofs_str_find_last_not_eq(const char *s, size_t n, char c)
 			return p;
 		}
 	}
-	return NULL;
+	return nullptr;
 }
 
 size_t silofs_str_common_prefix(const char *s1, const char *s2, size_t n)

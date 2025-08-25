@@ -37,7 +37,7 @@ static size_t record_size(const struct ut_record *rec, size_t size)
 static struct ut_record *record_new(struct ut_env *ute, size_t size)
 {
 	size_t rec_size;
-	struct ut_record *rec = NULL;
+	struct ut_record *rec = nullptr;
 
 	rec_size = record_size(rec, size);
 	rec = (struct ut_record *)ut_zerobuf(ute, sizeof(*rec));
@@ -148,7 +148,7 @@ static void
 ut_file_records_seq_(struct ut_env *ute, loff_t off, size_t len, size_t cnt)
 {
 	const char *name = UT_NAME;
-	struct ut_record *rec = NULL;
+	struct ut_record *rec = nullptr;
 	loff_t pos = -1;
 	ino_t dino = 0;
 	ino_t ino = 0;
@@ -203,7 +203,7 @@ static void
 ut_file_records_rand_(struct ut_env *ute, loff_t off, size_t len, size_t cnt)
 {
 	const size_t niter = 2;
-	struct ut_record *rec = NULL;
+	struct ut_record *rec = nullptr;
 	const char *name = UT_NAME;
 	const long *poss = ut_randseq(ute, cnt, 0);
 	loff_t pos = -1;
@@ -263,7 +263,7 @@ static void ut_file_records_rand_unaligned1(struct ut_env *ute)
 static void ut_file_records_rand_unaligned2(struct ut_env *ute)
 {
 	const loff_t off[] = { UT_64K - 2, UT_1M - 2, UT_1G - 2, UT_1T - 2 };
-	const size_t size_rec = record_base_size(NULL);
+	const size_t size_rec = record_base_size(nullptr);
 	const size_t size_max = UT_IOSIZE_MAX - size_rec;
 
 	for (size_t i = 0; i < UT_ARRAY_SIZE(off); ++i) {

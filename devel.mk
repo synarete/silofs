@@ -190,6 +190,7 @@ CFLAGS += -Wold-style-definition
 CFLAGS += -Wpointer-sign
 CFLAGS += -Wstrict-prototypes
 CFLAGS += -Wuninitialized
+CFLAGS += -std=gnu23
 
 # Debug flags
 CFLAGS += -DDEBUG=$(D)
@@ -242,7 +243,6 @@ CFLAGS += -Wunused-const-variable=2
 CFLAGS += -Wjump-misses-init
 CFLAGS += -Wold-style-declaration
 CFLAGS += -Wunsuffixed-float-constants
-CFLAGS += -std=gnu23
 ifeq ($(O), 0)
 CFLAGS += -Wunsafe-loop-optimizations
 CFLAGS += -fasynchronous-unwind-tables

@@ -138,9 +138,9 @@ static bool silofs_backtrace_enabled = true;
 
 static int backtrace_log_err(const struct silofs_backtrace_args *bt_args)
 {
-	silofs_logf(SILOFS_LOG_ERROR, NULL, 0, "#%-2d [<%p>] 0x%lx %s+0x%lx",
-	            bt_args->step, bt_args->ip, bt_args->sp, bt_args->sym,
-	            bt_args->off);
+	silofs_logf(SILOFS_LOG_ERROR, nullptr, 0,
+	            "#%-2d [<%p>] 0x%lx %s+0x%lx", bt_args->step, bt_args->ip,
+	            bt_args->sp, bt_args->sym, bt_args->off);
 	return 0;
 }
 
@@ -174,7 +174,7 @@ backtrace_addrs_to_str(char *buf, size_t bsz, void **bt_arr, int bt_len)
 
 static void silofs_dump_addr2line(void)
 {
-	void *bt_arr[64] = { NULL };
+	void *bt_arr[64] = { nullptr };
 	char bt_addrs[1024] = "";
 	const int bt_cnt = (int)(SILOFS_ARRAY_SIZE(bt_arr));
 	int bt_len;
@@ -378,25 +378,25 @@ void silofs_expect_err_(int err, int exp, const char *file, int line)
 
 void silofs_expect_not_null_(const void *ptr, const char *file, int line)
 {
-	if (silofs_unlikely(ptr == NULL)) {
+	if (silofs_unlikely(ptr == nullptr)) {
 		const struct silofs_fileline fl = {
 			.file = file,
 			.line = line,
 		};
 
-		silofs_fatal_at_("NULL pointer", &fl);
+		silofs_fatal_at_("nullptr pointer", &fl);
 	}
 }
 
 void silofs_expect_null_(const void *ptr, const char *file, int line)
 {
-	if (silofs_unlikely(ptr != NULL)) {
+	if (silofs_unlikely(ptr != nullptr)) {
 		struct silofs_fatal_msg fm = {
 			.fl.file = file,
 			.fl.line = line,
 		};
 
-		fmtmsg(&fm, "not NULL ptr=%p", ptr);
+		fmtmsg(&fm, "not nullptr ptr=%p", ptr);
 		silofs_fatal_by_(&fm);
 	}
 }
@@ -463,24 +463,24 @@ static const char *basename_of(const char *path)
 {
 	const char *name = strrchr(path, '/');
 
-	return (name == NULL) ? path : (name + 1);
+	return (name == nullptr) ? path : (name + 1);
 }
 
 static void
 silofs_dump_panic_msg(const char *file, int line, const char *msg, int errnum)
 {
-	const char *base = NULL;
+	const char *base = nullptr;
 	const char *tag = "[:panic:]";
 	const enum silofs_log_level ll = SILOFS_LOG_CRIT;
 
-	silofs_logf(ll, NULL, 0, " ");
+	silofs_logf(ll, nullptr, 0, " ");
 	base = basename_of(file);
 	if (errnum) {
 		silofs_logf(ll, base, line, "%s %s %d", tag, msg, errnum);
 	} else {
 		silofs_logf(ll, base, line, "%s %s", tag, msg);
 	}
-	silofs_logf(ll, NULL, 0, " ");
+	silofs_logf(ll, nullptr, 0, " ");
 }
 
 void silofs_panicf(const char *file, int line, const char *fmt, ...)

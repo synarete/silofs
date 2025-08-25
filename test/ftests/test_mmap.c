@@ -29,14 +29,15 @@
 static void test_mmap_basic_(struct ft_env *fte, loff_t off, size_t len)
 {
 	const char *path = ft_new_path_unique(fte);
-	void *buf = NULL;
-	void *addr = NULL;
+	void *buf = nullptr;
+	void *addr = nullptr;
 	int fd = -1;
 
 	buf = ft_new_buf_rands(fte, len);
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_pwriten(fd, buf, len, off);
-	ft_mmap(NULL, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, off, &addr);
+	ft_mmap(nullptr, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, off,
+	        &addr);
 	ft_expect_eqm(addr, buf, len);
 	buf = ft_new_buf_rands(fte, len);
 	ft_memcpy(addr, buf, len);
@@ -63,18 +64,19 @@ static void test_mmap_simple_(struct ft_env *fte, loff_t off, size_t len)
 {
 	const char *path = ft_new_path_unique(fte);
 	void *mbuf = ft_new_buf_rands(fte, len);
-	void *addr = NULL;
+	void *addr = nullptr;
 	int fd = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_fallocate(fd, 0, off, (loff_t)len);
-	ft_mmap(NULL, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, off, &addr);
+	ft_mmap(nullptr, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, off,
+	        &addr);
 	ft_memcpy(addr, mbuf, len);
 	ft_expect_eqm(addr, mbuf, len);
 	ft_munmap(addr, len);
 	ft_close(fd);
 	ft_open(path, O_RDONLY, 0600, &fd);
-	ft_mmap(NULL, len, PROT_READ, MAP_SHARED, fd, off, &addr);
+	ft_mmap(nullptr, len, PROT_READ, MAP_SHARED, fd, off, &addr);
 	ft_expect_eqm(addr, mbuf, len);
 	ft_munmap(addr, len);
 	ft_close(fd);
@@ -102,14 +104,15 @@ static void test_mmap_simple(struct ft_env *fte)
 static void test_mmap_mctime_(struct ft_env *fte, loff_t off, size_t len)
 {
 	struct stat st[2];
-	void *addr = NULL;
+	void *addr = nullptr;
 	void *mbuf = ft_new_buf_rands(fte, len);
 	const char *path = ft_new_path_unique(fte);
 	int fd = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_ftruncate(fd, off + (loff_t)len);
-	ft_mmap(NULL, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, off, &addr);
+	ft_mmap(nullptr, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, off,
+	        &addr);
 	ft_fstat(fd, &st[0]);
 	ft_suspend1(fte);
 	ft_memcpy(addr, mbuf, len / 2);
@@ -142,13 +145,14 @@ static void test_mmap_fallocate_(struct ft_env *fte, loff_t off, size_t len)
 	void *data = ft_new_buf_rands(fte, len);
 	void *zero = ft_new_buf_zeros(fte, len);
 	const char *path = ft_new_path_unique(fte);
-	void *addr = NULL;
+	void *addr = nullptr;
 	int mode = 0;
 	int fd = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_fallocate(fd, mode, off, (loff_t)len);
-	ft_mmap(NULL, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, off, &addr);
+	ft_mmap(nullptr, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, off,
+	        &addr);
 	ft_memcpy(addr, data, len);
 	ft_expect_eqm(addr, data, len);
 
@@ -185,14 +189,15 @@ static void test_mmap_sequential_(struct ft_env *fte, loff_t off, size_t len)
 	const size_t bsz = FT_64K;
 	const char *path = ft_new_path_unique(fte);
 	const size_t cnt = len / bsz;
-	uint8_t *ptr = NULL;
-	void *addr = NULL;
-	void *buf = NULL;
+	uint8_t *ptr = nullptr;
+	void *addr = nullptr;
+	void *buf = nullptr;
 	int fd = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_fallocate(fd, 0, off, (loff_t)len);
-	ft_mmap(NULL, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, off, &addr);
+	ft_mmap(nullptr, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, off,
+	        &addr);
 
 	for (size_t i = 0; i < cnt; ++i) {
 		buf = ft_new_buf_nums(fte, (long)(i * 1000), bsz);
@@ -229,13 +234,14 @@ static void test_mmap_sparse_(struct ft_env *fte, loff_t off, size_t len)
 	const size_t nsteps = len / stepsz;
 	const long *buf = ft_new_buf_randseq(fte, nsteps, off);
 	const char *path = ft_new_path_unique(fte);
-	long *ptr = NULL;
-	void *addr = NULL;
+	long *ptr = nullptr;
+	void *addr = nullptr;
 	int fd = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_fallocate(fd, 0, off, (loff_t)len);
-	ft_mmap(NULL, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, off, &addr);
+	ft_mmap(nullptr, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, off,
+	        &addr);
 
 	for (size_t i = 0; i < nsteps; ++i) {
 		ptr = (long *)addr + (i * (stepsz / sizeof(*ptr)));
@@ -271,16 +277,18 @@ static void test_mmap_msync_at(struct ft_env *fte, loff_t step)
 	const loff_t off = step * (loff_t)page_size;
 	void *buf = ft_new_buf_rands(fte, len);
 	const char *path = ft_new_path_unique(fte);
-	void *addr = NULL;
+	void *addr = nullptr;
 	int fd = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_fallocate(fd, 0, off, (loff_t)len);
-	ft_mmap(NULL, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, off, &addr);
+	ft_mmap(nullptr, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, off,
+	        &addr);
 	ft_memcpy(addr, buf, len);
 	ft_msync(addr, len, MS_SYNC);
 	ft_munmap(addr, len);
-	ft_mmap(NULL, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, off, &addr);
+	ft_mmap(nullptr, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, off,
+	        &addr);
 	ft_expect_eqm(addr, buf, len);
 	ft_munmap(addr, len);
 	ft_close(fd);
@@ -304,15 +312,16 @@ static void test_mmap_msync(struct ft_env *fte)
 static void test_mmap_unlinked_(struct ft_env *fte, loff_t off, size_t len)
 {
 	const char *path = ft_new_path_unique(fte);
-	long *dat = NULL;
-	void *addr = NULL;
+	long *dat = nullptr;
+	void *addr = nullptr;
 	const size_t cnt = len / sizeof(*dat);
 	long val = 0;
 	int fd = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_fallocate(fd, 0, off, (loff_t)len);
-	ft_mmap(NULL, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, off, &addr);
+	ft_mmap(nullptr, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, off,
+	        &addr);
 	ft_unlink(path);
 
 	for (size_t i = 0; i < cnt; ++i) {
@@ -352,15 +361,16 @@ static void test_mmap_unlinked(struct ft_env *fte)
  */
 static void test_mmap_twice_(struct ft_env *fte, loff_t off, size_t len)
 {
-	long *dat = NULL;
+	long *dat = nullptr;
 	const size_t cnt = len / sizeof(*dat);
 	const char *path = ft_new_path_unique(fte);
-	void *addr = NULL;
+	void *addr = nullptr;
 	int fd = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_fallocate(fd, 0, off, (loff_t)len);
-	ft_mmap(NULL, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, off, &addr);
+	ft_mmap(nullptr, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, off,
+	        &addr);
 	dat = (long *)addr;
 	for (size_t i = 0; i < cnt; i += 64) {
 		dat[i] = (long)i + off;
@@ -368,7 +378,7 @@ static void test_mmap_twice_(struct ft_env *fte, loff_t off, size_t len)
 	ft_munmap(addr, len);
 	ft_close(fd);
 	ft_open(path, O_RDONLY, 0, &fd);
-	ft_mmap(NULL, len, PROT_READ, MAP_SHARED, fd, off, &addr);
+	ft_mmap(nullptr, len, PROT_READ, MAP_SHARED, fd, off, &addr);
 	dat = (long *)addr;
 	for (size_t i = 0; i < cnt; i += 64) {
 		ft_expect_eq((long)i + off, dat[i]);
@@ -400,7 +410,7 @@ static void test_mmap_after_write_(struct ft_env *fte, loff_t off, size_t len)
 {
 	void *buf = ft_new_buf_rands(fte, len);
 	const char *path = ft_new_path_unique(fte);
-	void *mem = NULL;
+	void *mem = nullptr;
 	size_t nwr = 0;
 	int fd = -1;
 
@@ -409,7 +419,7 @@ static void test_mmap_after_write_(struct ft_env *fte, loff_t off, size_t len)
 	ft_expect_eq(len, nwr);
 	ft_close(fd);
 	ft_open(path, O_RDONLY, 0600, &fd);
-	ft_mmap(NULL, len, PROT_READ, MAP_SHARED, fd, off, &mem);
+	ft_mmap(nullptr, len, PROT_READ, MAP_SHARED, fd, off, &mem);
 	ft_expect_eqm(buf, mem, len);
 	ft_munmap(mem, len);
 	ft_close(fd);
@@ -435,14 +445,14 @@ static void test_mmap_before_write_(struct ft_env *fte, loff_t off, size_t len)
 {
 	void *buf = ft_new_buf_rands(fte, len);
 	const char *path = ft_new_path_unique(fte);
-	void *mem = NULL;
+	void *mem = nullptr;
 	size_t nwr = 0;
 	int fd1 = -1;
 	int fd2 = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd1);
 	ft_ftruncate(fd1, off + (loff_t)len);
-	ft_mmap(NULL, len, PROT_READ, MAP_SHARED, fd1, off, &mem);
+	ft_mmap(nullptr, len, PROT_READ, MAP_SHARED, fd1, off, &mem);
 	ft_open(path, O_RDWR, 0600, &fd2);
 	ft_pwrite(fd2, buf, len, off, &nwr);
 	ft_expect_eq(len, nwr);
@@ -477,14 +487,14 @@ static void test_mmap_on_holes_(struct ft_env *fte, loff_t off, size_t len)
 	const char *path = ft_new_path_unique(fte);
 	void *buf = ft_new_buf_rands(fte, len);
 	const size_t nsteps = 10;
-	uint8_t *dat = NULL;
+	uint8_t *dat = nullptr;
 	uint64_t num1 = 0;
 	uint64_t num2 = 0;
 	loff_t pos = 0;
 	loff_t npos = 0;
 	size_t nwr = 0;
-	void *mem = NULL;
-	void *pnum = NULL;
+	void *mem = nullptr;
+	void *pnum = nullptr;
 	size_t msz = 0;
 	int fd = -1;
 
@@ -496,7 +506,7 @@ static void test_mmap_on_holes_(struct ft_env *fte, loff_t off, size_t len)
 		ft_pwrite(fd, buf, len, pos, &nwr);
 		ft_expect_eq(len, nwr);
 	}
-	ft_mmap(NULL, msz, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0, &mem);
+	ft_mmap(nullptr, msz, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0, &mem);
 	dat = mem;
 	for (size_t i = 0; i < nsteps; ++i) {
 		pos = off + (ssize_t)(2 * i * len);
@@ -549,8 +559,8 @@ static void test_mmap_rw_mixed_(struct ft_env *fte, size_t len)
 	char *buf2 = ft_new_buf_rands(fte, len);
 	size_t nrd = 0;
 	loff_t off = -1;
-	void *addr = NULL;
-	char *data = NULL;
+	void *addr = nullptr;
+	char *data = nullptr;
 	const size_t mlen = 4 * FT_1M;
 	const int prot = PROT_READ | PROT_WRITE;
 	const int flag = MAP_SHARED;
@@ -558,8 +568,8 @@ static void test_mmap_rw_mixed_(struct ft_env *fte, size_t len)
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_fallocate(fd, 0, 0, (loff_t)mlen);
-	ft_mmap(NULL, mlen, prot, flag, fd, 0, &addr);
-	ft_expect_ne(addr, NULL);
+	ft_mmap(nullptr, mlen, prot, flag, fd, 0, &addr);
+	ft_expect(addr != nullptr);
 	data = addr;
 
 	off = 0;
@@ -599,8 +609,8 @@ static void test_mmap_private_(struct ft_env *fte, size_t mlen)
 {
 	uint8_t *data = ft_new_buf_rands(fte, mlen);
 	const char *path = ft_new_path_unique(fte);
-	void *addr = NULL;
-	uint8_t *dptr = NULL;
+	void *addr = nullptr;
+	uint8_t *dptr = nullptr;
 	size_t nwr = 0;
 	const int prot = PROT_READ | PROT_WRITE;
 	const int flag = MAP_PRIVATE;
@@ -608,7 +618,7 @@ static void test_mmap_private_(struct ft_env *fte, size_t mlen)
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_write(fd, data, mlen, &nwr);
-	ft_mmap(NULL, mlen, prot, flag, fd, 0, &addr);
+	ft_mmap(nullptr, mlen, prot, flag, fd, 0, &addr);
 	dptr = (uint8_t *)addr;
 	ft_expect_eqm(dptr, data, mlen);
 	ft_munmap(addr, mlen);
@@ -629,18 +639,18 @@ static void test_mmap_private2_(struct ft_env *fte, size_t mlen)
 	size_t nwr = 0;
 	const int prot = PROT_READ | PROT_WRITE;
 	const int flag = MAP_PRIVATE;
-	void *addr1 = NULL;
-	void *addr2 = NULL;
-	uint8_t *dptr1 = NULL;
-	uint8_t *dptr2 = NULL;
+	void *addr1 = nullptr;
+	void *addr2 = nullptr;
+	uint8_t *dptr1 = nullptr;
+	uint8_t *dptr2 = nullptr;
 	uint8_t *data = ft_new_buf_rands(fte, mlen);
 	const char *path = ft_new_path_unique(fte);
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd1);
 	ft_open(path, O_RDWR, 0600, &fd2);
 	ft_write(fd1, data, mlen, &nwr);
-	ft_mmap(NULL, mlen, prot, flag, fd1, 0, &addr1);
-	ft_mmap(NULL, mlen, prot, flag, fd2, 0, &addr2);
+	ft_mmap(nullptr, mlen, prot, flag, fd1, 0, &addr1);
+	ft_mmap(nullptr, mlen, prot, flag, fd2, 0, &addr2);
 	dptr1 = (uint8_t *)addr1;
 	dptr2 = (uint8_t *)addr2;
 	ft_expect_eqm(dptr1, dptr2, mlen);
@@ -664,8 +674,8 @@ static void test_mmap_madvise_simple_(struct ft_env *fte, size_t mlen)
 	int fd1 = -1;
 	int fd2 = -1;
 	size_t nwr = 0;
-	void *addr1 = NULL;
-	void *addr2 = NULL;
+	void *addr1 = nullptr;
+	void *addr2 = nullptr;
 	void *data = ft_new_buf_rands(fte, mlen);
 	const char *path = ft_new_path_unique(fte);
 	const int prot = PROT_READ | PROT_WRITE;
@@ -673,8 +683,8 @@ static void test_mmap_madvise_simple_(struct ft_env *fte, size_t mlen)
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd1);
 	ft_open(path, O_RDWR, 0600, &fd2);
 	ft_write(fd1, data, mlen, &nwr);
-	ft_mmap(NULL, mlen, prot, MAP_SHARED, fd1, 0, &addr1);
-	ft_mmap(NULL, mlen, prot, MAP_SHARED, fd2, 0, &addr2);
+	ft_mmap(nullptr, mlen, prot, MAP_SHARED, fd1, 0, &addr1);
+	ft_mmap(nullptr, mlen, prot, MAP_SHARED, fd2, 0, &addr2);
 	ft_madvise(addr1, mlen, MADV_RANDOM);
 	ft_madvise(addr2, mlen, MADV_SEQUENTIAL);
 	ft_expect_eqm(addr1, addr2, mlen);
@@ -697,16 +707,16 @@ static void test_mmap_madvise_dontneed_(struct ft_env *fte, size_t mlen)
 	const char *path = ft_new_path_unique(fte);
 	const int prot = PROT_READ | PROT_WRITE;
 	size_t nwr = 0;
-	void *addr1 = NULL;
-	void *addr2 = NULL;
+	void *addr1 = nullptr;
+	void *addr2 = nullptr;
 	int fd1 = -1;
 	int fd2 = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd1);
 	ft_open(path, O_RDWR, 0600, &fd2);
 	ft_write(fd1, data, mlen, &nwr);
-	ft_mmap(NULL, mlen, prot, MAP_SHARED, fd1, 0, &addr1);
-	ft_mmap(NULL, mlen, prot, MAP_SHARED, fd2, 0, &addr2);
+	ft_mmap(nullptr, mlen, prot, MAP_SHARED, fd1, 0, &addr1);
+	ft_mmap(nullptr, mlen, prot, MAP_SHARED, fd2, 0, &addr2);
 	ft_expect_eqm(addr1, addr2, mlen);
 	ft_madvise(addr1, mlen, MADV_DONTNEED);
 	ft_madvise(addr2, mlen, MADV_DONTNEED);
@@ -737,8 +747,8 @@ static void test_mmap_vlarge_(struct ft_env *fte, loff_t off, size_t len)
 	const size_t msz = len;
 	const size_t bsz = FT_1M;
 	void *buf = ft_new_buf_rands(fte, bsz);
-	void *mem1 = NULL;
-	void *mem2 = NULL;
+	void *mem1 = nullptr;
+	void *mem2 = nullptr;
 	loff_t pos = -1;
 	size_t cnt = 0;
 	size_t nwr = 0;
@@ -755,8 +765,8 @@ static void test_mmap_vlarge_(struct ft_env *fte, loff_t off, size_t len)
 	}
 	ft_open(path2, O_CREAT | O_RDWR, 0600, &fd2);
 	ft_ftruncate(fd2, end);
-	ft_mmap(NULL, msz, PROT_READ, MAP_SHARED, fd1, off, &mem1);
-	ft_mmap(NULL, msz, PROT_WRITE, MAP_SHARED, fd2, off, &mem2);
+	ft_mmap(nullptr, msz, PROT_READ, MAP_SHARED, fd1, off, &mem1);
+	ft_mmap(nullptr, msz, PROT_WRITE, MAP_SHARED, fd2, off, &mem2);
 	memcpy(mem2, mem1, len);
 	ft_munmap(mem1, msz);
 	ft_munmap(mem2, msz);
@@ -766,8 +776,8 @@ static void test_mmap_vlarge_(struct ft_env *fte, loff_t off, size_t len)
 	ft_open(path2, O_RDONLY, 0, &fd2);
 	ft_unlink(path1);
 	ft_unlink(path2);
-	ft_mmap(NULL, msz, PROT_READ, MAP_SHARED, fd1, off, &mem1);
-	ft_mmap(NULL, msz, PROT_READ, MAP_SHARED, fd2, off, &mem2);
+	ft_mmap(nullptr, msz, PROT_READ, MAP_SHARED, fd1, off, &mem1);
+	ft_mmap(nullptr, msz, PROT_READ, MAP_SHARED, fd2, off, &mem2);
 	cmp = memcmp(mem1, mem2, msz);
 	ft_expect_eq(cmp, 0);
 	ft_munmap(mem1, msz);

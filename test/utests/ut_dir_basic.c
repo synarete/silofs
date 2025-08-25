@@ -321,7 +321,7 @@ static void ut_dir_create_seq_(struct ut_env *ute, size_t cnt)
 	struct stat st = { .st_size = -1 };
 	const struct ut_namesarr *na = make_names_ulongs_seq(ute, cnt);
 	const char *name = UT_NAME;
-	const char *fname = NULL;
+	const char *fname = nullptr;
 	ino_t dino = 0;
 	ino_t ino = 0;
 
@@ -385,7 +385,7 @@ static void ut_dir_link_long_names_(struct ut_env *ute, size_t cnt)
 {
 	const struct ut_namesarr *na = make_names_max_len(ute, cnt);
 	const char *name = UT_NAME;
-	long *idx = NULL;
+	long *idx = nullptr;
 	ino_t dino = 0;
 	ino_t ino = 0;
 
@@ -431,7 +431,7 @@ static void ut_dir_link_unlink_mixed_(struct ut_env *ute, size_t nfiles)
 	struct stat st = { .st_size = -1 };
 	const char *dname = UT_NAME;
 	const char *fname = UT_NAME;
-	const char *lname = NULL;
+	const char *lname = nullptr;
 	size_t len = 0;
 	ino_t dino = 0;
 	ino_t ino = 0;
@@ -492,7 +492,7 @@ static void ut_dir_stat_(struct ut_env *ute, size_t cnt)
 	struct stat st = { .st_size = -1 };
 	const blkcnt_t nfrg = UT_BK_SIZE / 512;
 	const char *dname = UT_NAME;
-	const char *xname = NULL;
+	const char *xname = nullptr;
 	const loff_t empty_size = SILOFS_DIR_EMPTY_SIZE;
 	blkcnt_t blocks = 0;
 	loff_t dsize = -1;

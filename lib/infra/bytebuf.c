@@ -36,14 +36,14 @@ void silofs_bytebuf_init2(struct silofs_bytebuf *bb, void *p, size_t n)
 
 void silofs_bytebuf_fini(struct silofs_bytebuf *bb)
 {
-	bb->ptr = NULL;
+	bb->ptr = nullptr;
 	bb->cap = 0;
 	bb->len = 0;
 }
 
 void silofs_bytebuf_reset(struct silofs_bytebuf *bb)
 {
-	bb->ptr = NULL;
+	bb->ptr = nullptr;
 	bb->cap = 0;
 	bb->len = 0;
 }

@@ -50,7 +50,7 @@ static void cmd_fsck_parse_optargs(struct cmd_fsck_ctx *ctx)
 		{ "no-prompt", 'P', 0 },
 		{ "loglevel", 'L', 1 },
 		{ "help", 'h', 0 },
-		{ NULL, 0, 0 },
+		{ nullptr, 0, 0 },
 	};
 	struct cmd_optargs opa;
 	int opt_chr = 1;
@@ -95,7 +95,7 @@ static void cmd_fsck_finalize(struct cmd_fsck_ctx *ctx)
 	cmd_pstrfree(&ctx->in_args.name);
 	cmd_delpass(&ctx->in_args.password);
 	cmd_destroy_env_args(&ctx->env_args);
-	cmd_fsck_ctx_p = NULL;
+	cmd_fsck_ctx_p = nullptr;
 }
 
 static void cmd_fsck_acquire_lockfile(struct cmd_fsck_ctx *ctx)
@@ -118,7 +118,7 @@ static void cmd_fsck_atexit(void)
 {
 	struct cmd_fsck_ctx *ctx = cmd_fsck_ctx_p;
 
-	if (ctx != NULL) {
+	if (ctx != nullptr) {
 		cmd_fsck_release_lockfile(ctx);
 		cmd_fsck_finalize(ctx);
 	}
@@ -142,7 +142,7 @@ static void cmd_fsck_prepare(struct cmd_fsck_ctx *ctx)
 
 static void cmd_fsck_getpass(struct cmd_fsck_ctx *ctx)
 {
-	if (ctx->in_args.password == NULL) {
+	if (ctx->in_args.password == nullptr) {
 		cmd_getpass_simple(ctx->in_args.no_prompt,
 		                   &ctx->in_args.password);
 	}
@@ -208,7 +208,7 @@ static void cmd_fsck_close_repo(struct cmd_fsck_ctx *ctx)
 void cmd_execute_fsck(void)
 {
 	struct cmd_fsck_ctx ctx = {
-		.env = NULL,
+		.env = nullptr,
 	};
 
 	/* Do all cleanups upon exits */

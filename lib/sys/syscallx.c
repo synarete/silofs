@@ -234,7 +234,7 @@ int silofs_sys_closefd(int *pfd)
 {
 	int err = 0;
 
-	if ((pfd != NULL) && (*pfd > 0)) {
+	if ((pfd != nullptr) && (*pfd > 0)) {
 		err = silofs_sys_close(*pfd);
 		if (!err) {
 			*pfd = -1;
@@ -247,10 +247,10 @@ int silofs_sys_munmapp(void **p_addr, size_t length)
 {
 	int err = 0;
 
-	if ((*p_addr != NULL) && (length > 0)) {
+	if ((*p_addr != nullptr) && (length > 0)) {
 		err = silofs_sys_munmap(*p_addr, length);
 		if (!err) {
-			*p_addr = NULL;
+			*p_addr = nullptr;
 		}
 	}
 	return err;
@@ -283,7 +283,8 @@ int silofs_sys_pselect_rfd(int fd, const struct timespec *ts)
 	}
 	FD_ZERO(&rfds);
 	FD_SET(fd, &rfds);
-	err = silofs_sys_pselect(fd + 1, &rfds, NULL, NULL, ts, NULL, &nfds);
+	err = silofs_sys_pselect(fd + 1, &rfds, nullptr, nullptr, ts, nullptr,
+	                         &nfds);
 	if (err) {
 		return err;
 	}
@@ -363,7 +364,7 @@ static int sys_readproc_long(const char *pathname, long *out_value)
 {
 	char buf[128];
 	size_t nrd = 0;
-	char *end = NULL;
+	char *end = nullptr;
 	int err;
 
 	memset(buf, 0, sizeof(buf));

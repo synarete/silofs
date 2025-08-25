@@ -145,9 +145,9 @@ static void
 ut_file_trunc_hole_(struct ut_env *ute, loff_t off1, loff_t off2, size_t len)
 {
 	const char *name = UT_NAME;
-	void *buf1 = NULL;
-	void *buf2 = NULL;
-	void *zeros = NULL;
+	void *buf1 = nullptr;
+	void *buf2 = nullptr;
+	void *zeros = nullptr;
 	loff_t hole_off1 = -1;
 	loff_t hole_off2 = -1;
 	size_t hole_len = 0;

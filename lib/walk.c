@@ -103,11 +103,11 @@ static void
 wac_resetup(struct silofs_walk_ctx *wa_ctx, enum silofs_mtype vspace)
 {
 	wa_ctx->vspace = vspace;
-	wa_ctx->sni4 = NULL;
-	wa_ctx->sni3 = NULL;
-	wa_ctx->sni2 = NULL;
-	wa_ctx->sni1 = NULL;
-	wa_ctx->sli = NULL;
+	wa_ctx->sni4 = nullptr;
+	wa_ctx->sni3 = nullptr;
+	wa_ctx->sni2 = nullptr;
+	wa_ctx->sni1 = nullptr;
+	wa_ctx->sli = nullptr;
 	wa_ctx->voff = 0;
 }
 
@@ -302,7 +302,7 @@ static int wac_traverse_spleaf(struct silofs_walk_ctx *wa_ctx)
 
 static void wac_depart_spleaf(struct silofs_walk_ctx *wa_ctx)
 {
-	wa_ctx->sli = NULL;
+	wa_ctx->sli = nullptr;
 }
 
 static int wac_do_traverse_spnode1_child(struct silofs_walk_ctx *wa_ctx)
@@ -378,7 +378,7 @@ static int wac_traverse_at_spnode1(struct silofs_walk_ctx *wa_ctx)
 
 static void wac_depart_spnode1(struct silofs_walk_ctx *wa_ctx)
 {
-	wa_ctx->sni1 = NULL;
+	wa_ctx->sni1 = nullptr;
 }
 
 static int wac_do_traverse_spnode2_child(struct silofs_walk_ctx *wa_ctx)
@@ -454,7 +454,7 @@ static int wac_traverse_at_spnode2(struct silofs_walk_ctx *wa_ctx)
 
 static void wac_depart_spnode2(struct silofs_walk_ctx *wa_ctx)
 {
-	wa_ctx->sni2 = NULL;
+	wa_ctx->sni2 = nullptr;
 }
 
 static int wac_do_traverse_spnode3_child(struct silofs_walk_ctx *wa_ctx)
@@ -530,7 +530,7 @@ static int wac_traverse_at_spnode3(struct silofs_walk_ctx *wa_ctx)
 
 static void wac_depart_spnode3(struct silofs_walk_ctx *wa_ctx)
 {
-	wa_ctx->sni3 = NULL;
+	wa_ctx->sni3 = nullptr;
 }
 
 static int wac_do_traverse_spnode4_child(struct silofs_walk_ctx *wa_ctx)
@@ -606,7 +606,7 @@ static int wac_traverse_at_spnode4(struct silofs_walk_ctx *wa_ctx)
 
 static void wac_depart_spnode4(struct silofs_walk_ctx *wa_ctx)
 {
-	wa_ctx->sni4 = NULL;
+	wa_ctx->sni4 = nullptr;
 }
 
 static int wac_do_traverse_super_child(struct silofs_walk_ctx *wa_ctx)
@@ -739,7 +739,7 @@ struct silofs_inspect_ctx {
 
 static int inspc_exec_lmap(const struct silofs_inspect_ctx *insp_ctx)
 {
-	const struct silofs_laddr *laddr = NULL;
+	const struct silofs_laddr *laddr = nullptr;
 	size_t len;
 	int err;
 
@@ -855,10 +855,10 @@ static struct silofs_inspect_ctx *
 inspc_new(struct silofs_alloc *alloc, struct silofs_task_ctx *task,
           struct silofs_sb_info *sbi, silofs_visit_laddr_fn cb, void *user_ctx)
 {
-	struct silofs_inspect_ctx *insp_ctx = NULL;
+	struct silofs_inspect_ctx *insp_ctx = nullptr;
 
 	insp_ctx = silofs_memalloc(alloc, sizeof(*insp_ctx), 0);
-	if (insp_ctx != NULL) {
+	if (insp_ctx != nullptr) {
 		inspc_init(insp_ctx, task, sbi, cb, user_ctx);
 	}
 	return insp_ctx;
@@ -931,11 +931,11 @@ int silofs_walkfs_at(struct silofs_task_ctx *task, struct silofs_sb_info *sbi,
                      const struct silofs_laddr_visitor *lvis)
 {
 	struct silofs_alloc *alloc = task->t_env->base.alloc;
-	struct silofs_inspect_ctx *insp_ctx = NULL;
+	struct silofs_inspect_ctx *insp_ctx = nullptr;
 	int ret;
 
 	insp_ctx = inspc_new(alloc, task, sbi, lvis->hook, lvis->userp);
-	if (insp_ctx == NULL) {
+	if (insp_ctx == nullptr) {
 		return -SILOFS_ENOMEM;
 	}
 	ret = inspc_walk_fs(insp_ctx);

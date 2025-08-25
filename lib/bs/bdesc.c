@@ -158,7 +158,7 @@ static bool bd_is_valid_slot(const struct silofs_blob_desc *bd, size_t slot)
 
 static loff_t bd_slot_to_pos(const struct silofs_blob_desc *bd, size_t slot)
 {
-	loff_t pos = SILOFS_OFF_NULL;
+	loff_t pos = SILOFS_OFF_nullptr;
 
 	if (likely(bd_is_valid_slot(bd, slot))) {
 		pos = silofs_off_end(0, slot * bd_objsize(bd));
@@ -332,7 +332,7 @@ static struct silofs_blob_desc *bd_new(struct silofs_alloc *alloc)
 	struct silofs_blob_desc *bd;
 
 	bd = bd_malloc(alloc);
-	if (bd != NULL) {
+	if (bd != nullptr) {
 		bd_init(bd);
 	}
 	return bd;
@@ -348,7 +348,7 @@ static void bd_paddr_at(const struct silofs_blob_desc *bd, loff_t pos,
                         struct silofs_paddr *out_paddr)
 {
 	if (!bd_is_valid_pos(bd, pos)) {
-		pos = SILOFS_OFF_NULL;
+		pos = SILOFS_OFF_nullptr;
 	}
 	silofs_paddr_init(out_paddr, bd_refblob(bd), bd_refmtype(bd), pos);
 }
@@ -357,7 +357,7 @@ static void bd_paddr_at(const struct silofs_blob_desc *bd, loff_t pos,
 
 static struct silofs_bdesc_info *bdi_malloc(struct silofs_alloc *alloc)
 {
-	struct silofs_bdesc_info *bdi = NULL;
+	struct silofs_bdesc_info *bdi = nullptr;
 
 	bdi = silofs_memalloc(alloc, sizeof(*bdi), 0);
 	return bdi;
@@ -375,29 +375,29 @@ bdi_init(struct silofs_bdesc_info *bdi, const struct silofs_paddr *paddr)
 	silofs_assert_eq(paddr->mtype, SILOFS_MTYPE_BDESC);
 
 	silofs_pni_init(&bdi->bd_pni, paddr);
-	bdi->bd = NULL;
+	bdi->bd = nullptr;
 }
 
 static void bdi_fini(struct silofs_bdesc_info *bdi)
 {
 	silofs_pni_fini(&bdi->bd_pni);
-	bdi->bd = NULL;
+	bdi->bd = nullptr;
 }
 
 struct silofs_bdesc_info *
 silofs_bdi_new(const struct silofs_paddr *paddr, struct silofs_alloc *alloc)
 {
-	struct silofs_blob_desc *bd = NULL;
-	struct silofs_bdesc_info *bdi = NULL;
+	struct silofs_blob_desc *bd = nullptr;
+	struct silofs_bdesc_info *bdi = nullptr;
 
 	bd = bd_new(alloc);
-	if (bd == NULL) {
-		return NULL;
+	if (bd == nullptr) {
+		return nullptr;
 	}
 	bdi = bdi_malloc(alloc);
-	if (bdi == NULL) {
+	if (bdi == nullptr) {
 		bd_del(bd, alloc);
-		return NULL;
+		return nullptr;
 	}
 	bdi_init(bdi, paddr);
 	bdi->bd = bd;
@@ -436,9 +436,9 @@ static struct silofs_bdesc_info *bdi_unconst(const struct silofs_bdesc_info *p)
 struct silofs_bdesc_info *
 silofs_bdi_from_pni(const struct silofs_pnode_info *pni)
 {
-	const struct silofs_bdesc_info *bdi = NULL;
+	const struct silofs_bdesc_info *bdi = nullptr;
 
-	if (pni != NULL) {
+	if (pni != nullptr) {
 		silofs_assert_eq(pni->pn_paddr.mtype, SILOFS_MTYPE_BDESC);
 		bdi = container_of2(pni, struct silofs_bdesc_info, bd_pni);
 	}

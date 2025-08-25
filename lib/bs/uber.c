@@ -53,7 +53,7 @@ static void ub_inc_generation(struct silofs_uber_block *ub)
 static struct silofs_bcursor128b *
 ub_bcursor_at(struct silofs_uber_block *ub, size_t slot)
 {
-	struct silofs_bcursor128b *bcursor = NULL;
+	struct silofs_bcursor128b *bcursor = nullptr;
 
 	if (likely(slot < ARRAY_SIZE(ub->ub_bcursor))) {
 		bcursor = &ub->ub_bcursor[slot];
@@ -64,7 +64,7 @@ ub_bcursor_at(struct silofs_uber_block *ub, size_t slot)
 static const struct silofs_bcursor128b *
 ub_bcursor_at2(const struct silofs_uber_block *ub, size_t slot)
 {
-	const struct silofs_bcursor128b *bcursor = NULL;
+	const struct silofs_bcursor128b *bcursor = nullptr;
 
 	if (likely(slot < ARRAY_SIZE(ub->ub_bcursor))) {
 		bcursor = &ub->ub_bcursor[slot];
@@ -94,7 +94,7 @@ static void ub_reset_bcursor_at(struct silofs_uber_block *ub, size_t slot)
 {
 	struct silofs_bcursor128b *bcur = ub_bcursor_at(ub, slot);
 
-	if (likely(bcur != NULL)) {
+	if (likely(bcur != nullptr)) {
 		silofs_bcursor128b_reset(bcur);
 	}
 }
@@ -136,7 +136,7 @@ static struct silofs_uber_block *ub_new(struct silofs_alloc *alloc)
 	struct silofs_uber_block *ub;
 
 	ub = ub_malloc(alloc);
-	if (ub != NULL) {
+	if (ub != nullptr) {
 		ub_init(ub);
 	}
 	return ub;
@@ -152,7 +152,7 @@ static void ub_del(struct silofs_uber_block *ub, struct silofs_alloc *alloc)
 
 static struct silofs_ub_info *ubi_malloc(struct silofs_alloc *alloc)
 {
-	struct silofs_ub_info *ubi = NULL;
+	struct silofs_ub_info *ubi = nullptr;
 
 	ubi = silofs_memalloc(alloc, sizeof(*ubi), 0);
 	return ubi;
@@ -170,7 +170,7 @@ ubi_init(struct silofs_ub_info *ubi, const struct silofs_paddr *paddr)
 	silofs_assert_eq(paddr->mtype, SILOFS_MTYPE_BTNODE);
 
 	silofs_pni_init(&ubi->ub_pni, paddr);
-	ubi->ub = NULL;
+	ubi->ub = nullptr;
 }
 
 static void ubi_fini(struct silofs_ub_info *ubi)
@@ -181,17 +181,17 @@ static void ubi_fini(struct silofs_ub_info *ubi)
 struct silofs_ub_info *
 silofs_ubi_new(const struct silofs_paddr *paddr, struct silofs_alloc *alloc)
 {
-	struct silofs_uber_block *ub = NULL;
-	struct silofs_ub_info *ubi = NULL;
+	struct silofs_uber_block *ub = nullptr;
+	struct silofs_ub_info *ubi = nullptr;
 
 	ub = ub_new(alloc);
-	if (ub == NULL) {
-		return NULL;
+	if (ub == nullptr) {
+		return nullptr;
 	}
 	ubi = ubi_malloc(alloc);
-	if (ubi == NULL) {
+	if (ubi == nullptr) {
 		ub_del(ub, alloc);
-		return NULL;
+		return nullptr;
 	}
 	ubi_init(ubi, paddr);
 	ubi->ub = ub;
@@ -240,7 +240,7 @@ int silofs_ubi_bcursor_of(const struct silofs_ub_info *ubi,
 	const struct silofs_bcursor128b *bcur;
 
 	bcur = ub_bcursor_of2(ubi->ub, mtype);
-	if (unlikely(bcur == NULL)) {
+	if (unlikely(bcur == nullptr)) {
 		return -SILOFS_ENOENT;
 	}
 	silofs_bcursor128b_xtoh(bcur, out_bcursor);
@@ -264,7 +264,7 @@ int silofs_ubi_update_bcursor(struct silofs_ub_info *ubi,
 	struct silofs_bcursor128b *bcur;
 
 	bcur = ub_bcursor_of(ubi->ub, mtype);
-	if (unlikely(bcur == NULL)) {
+	if (unlikely(bcur == nullptr)) {
 		return -SILOFS_ENOENT;
 	}
 	silofs_bcursor128b_htox(bcur, bcursor);

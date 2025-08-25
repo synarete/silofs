@@ -68,14 +68,14 @@ void ut_release_task(struct ut_env *ute, struct silofs_task_ctx *task)
 
 static void assign_stat(struct stat *st, const struct silofs_stat *sst)
 {
-	if (st != NULL) {
+	if (st != nullptr) {
 		memcpy(st, &sst->st, sizeof(*st));
 	}
 }
 
 static void assign_statx(struct statx *stx, const struct silofs_stat *sst)
 {
-	if (stx != NULL) {
+	if (stx != nullptr) {
 		memcpy(stx, &sst->stx, sizeof(*stx));
 	}
 }
@@ -962,7 +962,7 @@ void ut_mkdir(struct ut_env *ute, ino_t parent, const char *name,
 
 	dino = out_st->st_ino;
 	ut_expect_ne(dino, parent);
-	ut_expect_ne(dino, SILOFS_INO_NULL);
+	ut_expect_ne(dino, SILOFS_INO_nullptr);
 
 	err = ut_do_getattr(ute, dino, &st);
 	ut_expect_ok(err);
@@ -991,7 +991,7 @@ void ut_mkdir2(struct ut_env *ute, ino_t parent, const char *name,
 
 void ut_mkdir_err(struct ut_env *ute, ino_t parent, const char *name, int err)
 {
-	ut_mkdir_status(ute, parent, name, NULL, err);
+	ut_mkdir_status(ute, parent, name, nullptr, err);
 }
 
 void ut_mkdir_at_root(struct ut_env *ute, const char *name, ino_t *out_ino)
@@ -1138,7 +1138,7 @@ void ut_link(struct ut_env *ute, ino_t ino, ino_t parent, const char *name,
 void ut_link_err(struct ut_env *ute, ino_t ino, ino_t parent, const char *name,
                  int err)
 {
-	ut_link_status(ute, ino, parent, name, NULL, err);
+	ut_link_status(ute, ino, parent, name, nullptr, err);
 }
 
 static void ut_unlink_status(struct ut_env *ute, ino_t parent,
@@ -1284,7 +1284,7 @@ static void ut_create2(struct ut_env *ute, ino_t parent, const char *name,
 	ut_create(ute, parent, name, mode, &st);
 	ino = st.st_ino;
 	ut_expect_ne(ino, parent);
-	ut_expect_ne(ino, SILOFS_INO_NULL);
+	ut_expect_ne(ino, SILOFS_INO_nullptr);
 	ut_expect_eq(st.st_nlink, 1);
 	ut_expect_eq(st.st_mode & S_IFMT, mode & S_IFMT);
 	*out_ino = ino;
@@ -1305,7 +1305,7 @@ void ut_create_special(struct ut_env *ute, ino_t parent, const char *name,
 
 void ut_create_noent(struct ut_env *ute, ino_t parent, const char *name)
 {
-	ut_create_status(ute, parent, name, S_IFREG | 0600, NULL, -ENOENT);
+	ut_create_status(ute, parent, name, S_IFREG | 0600, nullptr, -ENOENT);
 }
 
 void ut_release(struct ut_env *ute, ino_t ino)
@@ -1349,7 +1349,7 @@ void ut_create_only(struct ut_env *ute, ino_t parent, const char *name,
 	ut_create(ute, parent, name, S_IFREG | 0600, &st);
 	ino = st.st_ino;
 	ut_expect_ne(ino, parent);
-	ut_expect_ne(ino, SILOFS_INO_NULL);
+	ut_expect_ne(ino, SILOFS_INO_nullptr);
 
 	ut_release(ute, ino);
 	ut_lookup(ute, parent, name, &st);
@@ -1490,7 +1490,7 @@ void ut_read_zero(struct ut_env *ute, ino_t ino, loff_t off)
 
 void ut_read_zeros(struct ut_env *ute, ino_t ino, loff_t off, size_t len)
 {
-	const void *zeros = NULL;
+	const void *zeros = nullptr;
 
 	if (len > 0) {
 		zeros = ut_zerobuf(ute, len);
@@ -1642,7 +1642,7 @@ void ut_setxattr_rereplace(struct ut_env *ute, ino_t ino,
 
 void ut_setxattr_all(struct ut_env *ute, ino_t ino, const struct ut_kvl *kvl)
 {
-	const struct ut_keyval *kv = NULL;
+	const struct ut_keyval *kv = nullptr;
 
 	for (size_t i = 0; i < kvl->count; ++i) {
 		kv = kvl->list[i];
@@ -1654,12 +1654,12 @@ void ut_setxattr_all(struct ut_env *ute, ino_t ino, const struct ut_kvl *kvl)
 void ut_getxattr_value(struct ut_env *ute, ino_t ino,
                        const struct ut_keyval *kv)
 {
-	void *val = NULL;
+	void *val = nullptr;
 	size_t vsz;
 	int err;
 
 	vsz = 0;
-	err = ut_do_getxattr(ute, ino, kv->name, NULL, 0, &vsz);
+	err = ut_do_getxattr(ute, ino, kv->name, nullptr, 0, &vsz);
 	ut_expect_ok(err);
 	ut_expect_eq(vsz, kv->size);
 
@@ -1695,7 +1695,7 @@ void ut_removexattr(struct ut_env *ute, ino_t ino, const struct ut_keyval *kv)
 
 static struct ut_keyval *kvl_search(const struct ut_kvl *kvl, const char *name)
 {
-	struct ut_keyval *kv = NULL;
+	struct ut_keyval *kv = nullptr;
 
 	for (size_t i = 0; i < kvl->count; ++i) {
 		kv = kvl->list[i];
@@ -1703,14 +1703,14 @@ static struct ut_keyval *kvl_search(const struct ut_kvl *kvl, const char *name)
 			return kv;
 		}
 	}
-	return NULL;
+	return nullptr;
 }
 
 void ut_listxattr(struct ut_env *ute, ino_t ino, const struct ut_kvl *kvl)
 {
 	struct ut_listxattr_ctx ut_lxa_ctx;
-	const struct ut_keyval *kv = NULL;
-	const char *name = NULL;
+	const struct ut_keyval *kv = nullptr;
+	const char *name = nullptr;
 	int err;
 
 	err = ut_do_listxattr(ute, ino, &ut_lxa_ctx);

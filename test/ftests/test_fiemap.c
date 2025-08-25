@@ -20,7 +20,7 @@
 
 static struct fiemap *new_fiemap(struct ft_env *fte, size_t cnt)
 {
-	struct fiemap *fm = NULL;
+	struct fiemap *fm = nullptr;
 	const size_t sz = sizeof(*fm) + (cnt * sizeof(fm->fm_extents[0]));
 
 	fm = ft_new_buf_zeros(fte, sz);
@@ -35,7 +35,7 @@ static void test_fiemap_simple_(struct ft_env *fte, loff_t off, size_t bsz)
 {
 	const char *path = ft_new_path_unique(fte);
 	void *buf = ft_new_buf_rands(fte, bsz);
-	struct fiemap *fm = NULL;
+	struct fiemap *fm = nullptr;
 	int fd = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);

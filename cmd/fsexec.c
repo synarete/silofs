@@ -35,7 +35,7 @@ void cmd_del_env(struct silofs_env **p_env)
 {
 	if (p_env && *p_env) {
 		silofs_destroy_env(*p_env);
-		*p_env = NULL;
+		*p_env = nullptr;
 	}
 }
 
@@ -44,7 +44,7 @@ void cmd_del_env(struct silofs_env **p_env)
 static char *cmd_repodir_name(const struct silofs_env *env)
 {
 	const struct silofs_env_args *env_args = silofs_get_env_args(env);
-	char *ret = NULL;
+	char *ret = nullptr;
 
 	cmd_join_path(env_args->boot_args.repodir, env_args->boot_args.fs_name,
 	              &ret);
@@ -54,7 +54,7 @@ static char *cmd_repodir_name(const struct silofs_env *env)
 static void cmd_report_err_and_die(const struct silofs_env *env, int status,
                                    const char *msg)
 {
-	char *rname = NULL;
+	char *rname = nullptr;
 	const char *xmsg = msg ? msg : "";
 	const char *xtag = msg ? ": " : "";
 	int err;

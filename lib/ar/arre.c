@@ -185,9 +185,9 @@ static void ardsc256b_xtoh(const struct silofs_ar_desc256b *ard256,
 static struct silofs_ar_desc_info *
 adi_from_lh(const struct silofs_list_head *lh)
 {
-	const struct silofs_ar_desc_info *adi = NULL;
+	const struct silofs_ar_desc_info *adi = nullptr;
 
-	if (lh != NULL) {
+	if (lh != nullptr) {
 		adi = container_of2(lh, struct silofs_ar_desc_info, lh);
 	}
 	return unconst(adi);
@@ -195,7 +195,7 @@ adi_from_lh(const struct silofs_list_head *lh)
 
 static struct silofs_ar_desc_info *adi_malloc(struct silofs_alloc *alloc)
 {
-	struct silofs_ar_desc_info *adi = NULL;
+	struct silofs_ar_desc_info *adi = nullptr;
 
 	adi = silofs_memalloc(alloc, sizeof(*adi), 0);
 	return adi;
@@ -227,7 +227,7 @@ adi_new(const struct silofs_laddr *laddr, size_t len,
 	struct silofs_ar_desc_info *adi;
 
 	adi = adi_malloc(alloc);
-	if (adi != NULL) {
+	if (adi != nullptr) {
 		adi_init(adi, laddr, len);
 	}
 	return adi;
@@ -236,7 +236,7 @@ adi_new(const struct silofs_laddr *laddr, size_t len,
 static void
 adi_del(struct silofs_ar_desc_info *adi, struct silofs_alloc *alloc)
 {
-	if (adi != NULL) {
+	if (adi != nullptr) {
 		adi_fini(adi);
 		adi_free(adi, alloc);
 	}
@@ -380,7 +380,7 @@ arix_add_desc(struct silofs_ar_index *arix, const struct silofs_laddr *laddr,
 	struct silofs_ar_desc_info *adi;
 
 	adi = adi_new(laddr, len, arix->alloc);
-	if (adi != NULL) {
+	if (adi != nullptr) {
 		arix_link_desc(arix, adi, front);
 	}
 	return adi;
@@ -396,10 +396,10 @@ arix_rm_desc(struct silofs_ar_index *arix, struct silofs_ar_desc_info *adi)
 static struct silofs_ar_desc_info *arix_pop_desc(struct silofs_ar_index *arix)
 {
 	struct silofs_list_head *lh;
-	struct silofs_ar_desc_info *adi = NULL;
+	struct silofs_ar_desc_info *adi = nullptr;
 
 	lh = silofs_listq_pop_front(&arix->descq);
-	if (lh != NULL) {
+	if (lh != nullptr) {
 		adi = adi_from_lh(lh);
 	}
 	return adi;
@@ -411,7 +411,7 @@ arix_next_desc(const struct silofs_ar_index *arix,
 {
 	const struct silofs_list_head *lh;
 
-	if (curr == NULL) {
+	if (curr == nullptr) {
 		lh = silofs_listq_front(&arix->descq);
 	} else {
 		lh = silofs_listq_next(&arix->descq, &curr->lh);
@@ -424,7 +424,7 @@ static void arix_clear_descq(struct silofs_ar_index *arix)
 	struct silofs_ar_desc_info *adi;
 
 	adi = arix_pop_desc(arix);
-	while (adi != NULL) {
+	while (adi != nullptr) {
 		adi_del(adi, arix->alloc);
 		adi = arix_pop_desc(arix);
 	}
@@ -458,7 +458,7 @@ static void arix_fini(struct silofs_ar_index *arix)
 	arix_clear_descq(arix);
 	silofs_listq_fini(&arix->descq);
 	silofs_mdigest_fini(&arix->mdigest);
-	arix->alloc = NULL;
+	arix->alloc = nullptr;
 }
 
 static size_t arix_encsize(const struct silofs_ar_index *arix)
@@ -469,14 +469,14 @@ static size_t arix_encsize(const struct silofs_ar_index *arix)
 static int arix_encode_descs(const struct silofs_ar_index *arix,
                              struct silofs_ar_index_view *aiview)
 {
-	const struct silofs_list_head *itr = NULL;
-	const struct silofs_ar_desc_info *adi = NULL;
+	const struct silofs_list_head *itr = nullptr;
+	const struct silofs_ar_desc_info *adi = nullptr;
 	const struct silofs_listq *descq = &arix->descq;
-	struct silofs_ar_desc256b *pdx = NULL;
+	struct silofs_ar_desc256b *pdx = nullptr;
 
 	aiview->ndescs = 0;
 	itr = silofs_listq_front(descq);
-	while (itr != NULL) {
+	while (itr != nullptr) {
 		if (aiview->ndescs >= aiview->ndescs_max) {
 			return -SILOFS_EINVAL;
 		}
@@ -491,13 +491,13 @@ static int arix_encode_descs(const struct silofs_ar_index *arix,
 static int arix_decode_descs(struct silofs_ar_index *arix,
                              const struct silofs_ar_index_view *aiview)
 {
-	struct silofs_ar_desc_info *adi = NULL;
-	const struct silofs_ar_desc256b *pd256 = NULL;
+	struct silofs_ar_desc_info *adi = nullptr;
+	const struct silofs_ar_desc256b *pd256 = nullptr;
 
 	for (size_t i = 0; i < aiview->ndescs; ++i) {
 		pd256 = &aiview->descs[i];
 		adi = arix_add_desc(arix, silofs_laddr_none(), 0, false);
-		if (adi == NULL) {
+		if (adi == nullptr) {
 			return -SILOFS_ENOMEM;
 		}
 		ardsc256b_xtoh(pd256, &adi->ard);
@@ -536,7 +536,8 @@ static void arix_calc_caddr_of(const struct silofs_ar_index *arix,
 static int arix_encode(struct silofs_ar_index *arix, struct silofs_rwvec *rwv,
                        struct silofs_caddr *out_caddr)
 {
-	struct silofs_ar_index_view aiview = { .hdr = NULL, .descs = NULL };
+	struct silofs_ar_index_view aiview = { .hdr = nullptr,
+		                               .descs = nullptr };
 	const size_t esz = arix_encsize(arix);
 	int err;
 
@@ -570,7 +571,8 @@ static int
 arix_decode(struct silofs_ar_index *arix, const struct silofs_caddr *caddr,
             const struct silofs_rovec *rov)
 {
-	struct silofs_ar_index_view aiview = { .hdr = NULL, .descs = NULL };
+	struct silofs_ar_index_view aiview = { .hdr = nullptr,
+		                               .descs = nullptr };
 	int err;
 
 	err = check_ar_index_size(rov->rov_len);
@@ -614,7 +616,7 @@ static int arc_acquire_buf(const struct silofs_ar_ctx *ar_ctx, size_t len,
 	void *dat;
 
 	dat = silofs_memalloc(arc_alloc(ar_ctx), len, SILOFS_ALLOCF_BZERO);
-	if (dat == NULL) {
+	if (dat == nullptr) {
 		return -SILOFS_ENOMEM;
 	}
 	silofs_bytebuf_init2(out_bbuf, dat, len);
@@ -643,8 +645,8 @@ static int arc_init(struct silofs_ar_ctx *ar_ctx, struct silofs_task_ctx *task)
 static void arc_fini(struct silofs_ar_ctx *ar_ctx)
 {
 	arix_fini(&ar_ctx->arix);
-	ar_ctx->task = NULL;
-	ar_ctx->env = NULL;
+	ar_ctx->task = nullptr;
+	ar_ctx->env = nullptr;
 }
 
 static int arc_stat_pack(const struct silofs_ar_ctx *ar_ctx,
@@ -757,11 +759,11 @@ static int arc_archive_segdata(const struct silofs_ar_ctx *ar_ctx,
 {
 	const struct silofs_laddr *laddr = &adi->ard.laddr;
 	const size_t len = adi->ard.len;
-	void *seg = NULL;
+	void *seg = nullptr;
 	int err;
 
 	seg = silofs_memalloc(arc_alloc(ar_ctx), len, 0);
-	if (seg == NULL) {
+	if (seg == nullptr) {
 		return -SILOFS_ENOMEM;
 	}
 	err = arc_load_seg(ar_ctx, laddr, seg, len);
@@ -786,11 +788,11 @@ static int arc_restore_segdata(const struct silofs_ar_ctx *ar_ctx,
 {
 	const struct silofs_laddr *laddr = &adi->ard.laddr;
 	const size_t len = adi->ard.len;
-	void *seg = NULL;
+	void *seg = nullptr;
 	int err;
 
 	seg = silofs_memalloc(arc_alloc(ar_ctx), len, 0);
-	if (seg == NULL) {
+	if (seg == nullptr) {
 		return -SILOFS_ENOMEM;
 	}
 	err = arc_recv_pack(ar_ctx, &adi->ard.caddr, seg, len);
@@ -810,14 +812,14 @@ out:
 static int arc_archive_by_laddr(struct silofs_ar_ctx *ar_ctx,
                                 const struct silofs_laddr *laddr, size_t len)
 {
-	struct silofs_ar_desc_info *adi = NULL;
+	struct silofs_ar_desc_info *adi = nullptr;
 	int err;
 
 	if (laddr->lsid.mtype == SILOFS_MTYPE_MBR) {
 		return 0; /* no-op */
 	}
 	adi = arix_add_desc(&ar_ctx->arix, laddr, len, true);
-	if (adi == NULL) {
+	if (adi == nullptr) {
 		return -SILOFS_ENOMEM;
 	}
 	err = arc_archive_segdata(ar_ctx, adi);
@@ -882,7 +884,7 @@ static int arc_acquire_enc_buf(const struct silofs_ar_ctx *ar_ctx,
 static int arc_archive_arix(struct silofs_ar_ctx *ar_ctx,
                             struct silofs_caddr *out_arix_addr)
 {
-	struct silofs_bytebuf bb = { .ptr = NULL, .cap = 0 };
+	struct silofs_bytebuf bb = { .ptr = nullptr, .cap = 0 };
 	int err;
 
 	err = arc_acquire_enc_buf(ar_ctx, &bb);
@@ -1037,8 +1039,8 @@ arc_ar_packidx_caddr(const struct silofs_ar_ctx *ar_ctx)
 
 static int arc_restore_arix(struct silofs_ar_ctx *ar_ctx)
 {
-	struct silofs_bytebuf bb = { .ptr = NULL, .cap = 0 };
-	const struct silofs_caddr *caddr = NULL;
+	struct silofs_bytebuf bb = { .ptr = nullptr, .cap = 0 };
+	const struct silofs_caddr *caddr = nullptr;
 	size_t sz = 0;
 	int err;
 
@@ -1062,11 +1064,11 @@ out:
 
 static int arc_restore_fs(struct silofs_ar_ctx *ar_ctx)
 {
-	const struct silofs_ar_desc_info *adi = NULL;
+	const struct silofs_ar_desc_info *adi = nullptr;
 	int err;
 
 	adi = arix_next_desc(&ar_ctx->arix, adi);
-	while (adi != NULL) {
+	while (adi != nullptr) {
 		err = arc_restore_segdata(ar_ctx, adi);
 		if (err) {
 			return err;

@@ -52,9 +52,9 @@ int silofs_mdigest_init(struct silofs_mdigest *md)
 
 void silofs_mdigest_fini(struct silofs_mdigest *md)
 {
-	if (md->md_hd != NULL) {
+	if (md->md_hd != nullptr) {
 		gcry_md_close(md->md_hd);
-		md->md_hd = NULL;
+		md->md_hd = nullptr;
 	}
 }
 
@@ -172,7 +172,7 @@ void silofs_crc32_of(const struct silofs_mdigest *md, const void *buf,
 {
 	const int algo = GCRY_MD_CRC32;
 	const size_t hlen = sizeof(*out_crc32);
-	const void *ptr = NULL;
+	const void *ptr = nullptr;
 
 	require_algo_dlen(algo, hlen);
 	gcry_md_reset(md->md_hd);

@@ -477,7 +477,7 @@ test_copy_file_range_nfiles_(struct ft_env *fte, loff_t off, size_t len)
 	uint8_t *buf_alt = ft_new_buf_rands(fte, len);
 	const char *path = ft_new_path_unique(fte);
 	const char *name_src = ft_new_name_unique(fte);
-	const char *name_dst = NULL;
+	const char *name_dst = nullptr;
 	const size_t nfiles = 256;
 	int dfd = -1;
 	int fd_src = -1;

@@ -474,7 +474,7 @@ int silofs_mbri_derive_ivkey(struct silofs_mbrinfo *mbri,
 {
 	int ret = 0;
 
-	if ((pw != NULL) && (pw->passlen > 0)) {
+	if ((pw != nullptr) && (pw->passlen > 0)) {
 		ret = silofs_derive_default_ivkey(&mbri->mdigest, pw,
 		                                  &mbri->ivkey);
 	} else {

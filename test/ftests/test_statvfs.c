@@ -176,7 +176,7 @@ static void test_statvfs_ffree_nseq(struct ft_env *fte, size_t n)
 {
 	int fd = -1;
 	struct statvfs stv[2];
-	const char *fpath = NULL;
+	const char *fpath = nullptr;
 	const char *dpath = ft_new_path_unique(fte);
 
 	ft_mkdir(dpath, 0700);

@@ -33,7 +33,7 @@ sqe_setup_iov_at(struct silofs_submitq_ent *sqe, size_t idx, size_t len)
 	silofs_assert_null(sqe->iov[idx].iov_base);
 
 	sqe->iov[idx].iov_base = silofs_memalloc(sqe->alloc, len, 0);
-	if (sqe->iov[idx].iov_base == NULL) {
+	if (sqe->iov[idx].iov_base == nullptr) {
 		return -SILOFS_ENOMEM;
 	}
 	sqe->iov[idx].iov_len = len;
@@ -45,7 +45,7 @@ static void sqe_reset_iovs(struct silofs_submitq_ent *sqe)
 	for (size_t idx = 0; idx < sqe->cnt; ++idx) {
 		silofs_memfree(sqe->alloc, sqe->iov[idx].iov_base,
 		               sqe->iov[idx].iov_len, SILOFS_ALLOCF_NOPUNCH);
-		sqe->iov[idx].iov_base = NULL;
+		sqe->iov[idx].iov_base = nullptr;
 		sqe->iov[idx].iov_len = 0;
 	}
 }
@@ -127,7 +127,7 @@ static int sqe_setup_iovs(struct silofs_submitq_ent *sqe,
 static int sqe_encrypted_iovs(struct silofs_submitq_ent *sqe,
                               const struct silofs_submit_ref *refs_arr)
 {
-	const struct silofs_submit_ref *ref = NULL;
+	const struct silofs_submit_ref *ref = nullptr;
 	int err;
 
 	for (size_t i = 0; i < sqe->cnt; ++i) {
@@ -193,7 +193,7 @@ static void sqe_init(struct silofs_submitq_ent *sqe,
 	silofs_list_head_init(&sqe->qlh);
 	silofs_laddr_reset(&sqe->laddr_base);
 	sqe->alloc = alloc;
-	sqe->env = NULL;
+	sqe->env = nullptr;
 	sqe->uniq_id = uniq_id;
 	sqe->len = 0;
 	sqe->cnt = 0;
@@ -208,7 +208,7 @@ static void sqe_fini(struct silofs_submitq_ent *sqe)
 	sqe_reset_iovs(sqe);
 	sqe->len = 0;
 	sqe->cnt = 0;
-	sqe->alloc = NULL;
+	sqe->alloc = nullptr;
 	sqe->status = -1;
 }
 
@@ -220,7 +220,7 @@ sqe_new(struct silofs_alloc *alloc, uint64_t uniq_id)
 	STATICASSERT_LE(sizeof(*sqe), 1024);
 
 	sqe = silofs_memalloc(alloc, sizeof(*sqe), 0);
-	if (likely(sqe != NULL)) {
+	if (likely(sqe != nullptr)) {
 		sqe_init(sqe, alloc, uniq_id);
 	}
 	return sqe;
@@ -234,9 +234,9 @@ static void sqe_del(struct silofs_submitq_ent *sqe, struct silofs_alloc *alloc)
 
 struct silofs_submitq_ent *silofs_sqe_from_qlh(struct silofs_list_head *qlh)
 {
-	struct silofs_submitq_ent *sqe = NULL;
+	struct silofs_submitq_ent *sqe = nullptr;
 
-	if (qlh != NULL) {
+	if (qlh != nullptr) {
 		sqe = container_of(qlh, struct silofs_submitq_ent, qlh);
 	}
 	return sqe;
@@ -300,11 +300,11 @@ submitq_get_sqe(struct silofs_submitq *smq, uint64_t id)
 	struct silofs_submitq_ent *sqe;
 
 	sqe = submitq_front_sqe(smq);
-	if (sqe == NULL) {
-		return NULL;
+	if (sqe == nullptr) {
+		return nullptr;
 	}
 	if (sqe->uniq_id > id) {
-		return NULL;
+		return nullptr;
 	}
 	return sqe;
 }
@@ -317,7 +317,7 @@ static int submitq_apply_one(struct silofs_submitq *smq, uint64_t id,
 
 	silofs_mutex_lock(&smq->smq_mutex);
 	sqe = submitq_get_sqe(smq, id);
-	if (sqe != NULL) {
+	if (sqe != nullptr) {
 		submitq_unlink_sqe(smq, sqe);
 		ret = sqe_apply(sqe);
 	}
@@ -328,13 +328,13 @@ static int submitq_apply_one(struct silofs_submitq *smq, uint64_t id,
 
 static int submitq_apply(struct silofs_submitq *smq, uint64_t id)
 {
-	struct silofs_submitq_ent *sqe = NULL;
+	struct silofs_submitq_ent *sqe = nullptr;
 	int ret = 0;
 
 	while (ret == 0) {
-		sqe = NULL;
+		sqe = nullptr;
 		ret = submitq_apply_one(smq, id, &sqe);
-		if (sqe == NULL) {
+		if (sqe == nullptr) {
 			break;
 		}
 		silofs_submitq_del_sqe(smq, sqe);
@@ -346,7 +346,7 @@ int silofs_submitq_new_sqe(struct silofs_submitq *smq,
                            struct silofs_submitq_ent **out_sqe)
 {
 	*out_sqe = sqe_new(smq->smq_alloc, smq->smq_upper_id++);
-	return likely(*out_sqe != NULL) ? 0 : -SILOFS_ENOMEM;
+	return likely(*out_sqe != nullptr) ? 0 : -SILOFS_ENOMEM;
 }
 
 void silofs_submitq_del_sqe(struct silofs_submitq *smq,
@@ -436,7 +436,7 @@ void silofs_task_init(struct silofs_task_ctx *task, struct silofs_env *env)
 	task->t_repo = env->base.repo;
 	task->t_lcache = env->base.lcache;
 	task->t_submitq = env->base.submitq;
-	task->t_looseq = NULL;
+	task->t_looseq = nullptr;
 	task->t_upper_id = 0;
 	task->t_interrupt = 0;
 	task->t_fs_locked = false;
@@ -452,11 +452,11 @@ void silofs_task_fini(struct silofs_task_ctx *task)
 	silofs_assert_null(task->t_looseq);
 	silofs_assert_eq(task->t_fs_locked, false);
 
-	task->t_env = NULL;
-	task->t_idsm = NULL;
-	task->t_repo = NULL;
-	task->t_lcache = NULL;
-	task->t_submitq = NULL;
+	task->t_env = nullptr;
+	task->t_idsm = nullptr;
+	task->t_repo = nullptr;
+	task->t_lcache = nullptr;
+	task->t_submitq = nullptr;
 	task->t_runnable = false;
 }
 
@@ -476,12 +476,12 @@ void silofs_task_enq_loose(struct silofs_task_ctx *task,
 
 static struct silofs_inode_info *task_deq_loose(struct silofs_task_ctx *task)
 {
-	struct silofs_inode_info *ii = NULL;
+	struct silofs_inode_info *ii = nullptr;
 
-	if (task->t_looseq != NULL) {
+	if (task->t_looseq != nullptr) {
 		ii = task->t_looseq;
 		task->t_looseq = ii->i_looseq_next;
-		ii->i_looseq_next = NULL;
+		ii->i_looseq_next = nullptr;
 		ii->i_in_looseq = false;
 		silofs_ii_decref(ii);
 	}
@@ -494,7 +494,7 @@ static void task_forget_looseq(struct silofs_task_ctx *task)
 	int err;
 
 	ii = task_deq_loose(task);
-	while (ii != NULL) {
+	while (ii != nullptr) {
 		err = silofs_forget_loose_ii(task, ii);
 		if (err) {
 			/* TODO: maybe have retry loop ? */
@@ -509,7 +509,7 @@ static void task_forget_looseq(struct silofs_task_ctx *task)
 
 static void task_purge(struct silofs_task_ctx *task)
 {
-	if (task->t_looseq != NULL) {
+	if (task->t_looseq != nullptr) {
 		if (task->t_fs_locked) {
 			/* case 1: already fs-locked; keep it locked post op */
 			task_forget_looseq(task);
@@ -556,7 +556,7 @@ void silofs_rwunlock_fs_by(struct silofs_task_ctx *task)
 
 static bool task_has_looseq(const struct silofs_task_ctx *task)
 {
-	return (task->t_looseq != NULL);
+	return (task->t_looseq != nullptr);
 }
 
 int silofs_task_submit(struct silofs_task_ctx *task, bool all)

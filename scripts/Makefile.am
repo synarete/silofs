@@ -1,8 +1,8 @@
 EXTRA_DIST = $(NULL)
 EXTRA_DIST += checkcodefmt.sh
-EXTRA_DIST += checkcstyle.py
 EXTRA_DIST += clangscanbuild.sh
 EXTRA_DIST += clangtidy.sh
+EXTRA_DIST += cstylelint.py
 EXTRA_DIST += ddreadwrite.sh
 EXTRA_DIST += fio-exec-to-json.sh
 EXTRA_DIST += fio-json-to-plot.py

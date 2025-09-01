@@ -25,5 +25,5 @@ clang-format -i --style=file:"${c_conf}" ${c_srcs}
 clang-format -i --style=file:"${h_conf}" ${h_srcs}
 
 # lint-check code style via python helper script
-checkcstyle_py="${root}/scripts/checkcstyle.py"
-${checkcstyle_py} ${h_srcs} ${c_srcs}
+cstylelint_py="${root}/scripts/cstylelint.py"
+${cstylelint_py} ${h_srcs} ${c_srcs}

@@ -23,32 +23,31 @@
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 /*
-    See: Corman, Leiserson, Rivest, Stein, "INTRODUCTION TO ALGORITHMS",
-    2nd ed., The MIT Press, Ch. 12 "Binary Search Trees".
-
-    Rotate-Left-Right:
-		|                               |
-		a                               c
-	       / \                             / \
-	      /   \        ==>                /   \
-	     b    [g]                        b     a
-	    / \                             / \   / \
-	  [d]  c                          [d] e  f  [g]
-	      / \
-	     e   f
-
-
-    Rotate-Right-Left:
-		|                               |
-		a                               c
-	       / \                             / \
-	      /   \                           /   \
-	    [d]   b        ==>               a     b
-		 / \                        / \   / \
-		c  [g]                    [d] e  f  [g]
-	       / \
-	      e  f
-
+ * See: Corman, Leiserson, Rivest, Stein, "INTRODUCTION TO ALGORITHMS",
+ * 2nd ed., The MIT Press, Ch. 12 "Binary Search Trees".
+ *
+ * Rotate-Left-Right:
+ *               |                               |
+ *               a                               c
+ *              / \                             / \
+ *             /   \        ==>                /   \
+ *            b    [g]                        b     a
+ *           / \                             / \   / \
+ *         [d]  c                          [d] e  f  [g]
+ *         /     \
+ *        e       f
+ *
+ *
+ * Rotate-Right-Left:
+ *              |                               |
+ *              a                               c
+ *             / \                             / \
+ *            /   \                           /   \
+ *          [d]    b        ==>              a     b
+ *                / \                       / \   / \
+ *               c  [g]                   [d] e  f  [g]
+ *              / \
+ *             e  f
  */
 
 struct silofs_avl_pos {

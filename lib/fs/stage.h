@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_VSTAGE_H_
-#define SILOFS_VSTAGE_H_
+#ifndef SILOFS_STAGE_H_
+#define SILOFS_STAGE_H_
 
 struct silofs_vaddr;
 struct silofs_llink;
@@ -143,4 +143,4 @@ int silofs_remove_inode(struct silofs_task_ctx   *task,
 int silofs_refresh_llink(struct silofs_task_ctx   *task,
                          struct silofs_vnode_info *vni);
 
-#endif /* SILOFS_VSTAGE_H_ */
+#endif /* SILOFS_STAGE_H_ */

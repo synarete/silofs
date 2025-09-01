@@ -652,29 +652,21 @@ static void arc_fini(struct silofs_ar_ctx *ar_ctx)
 static int arc_stat_pack(const struct silofs_ar_ctx *ar_ctx,
                          const struct silofs_caddr *caddr, size_t *out_sz)
 {
-	ssize_t sz = -1;
-	int err;
-
-	err = silofs_repo_stat_pack(arc_repo(ar_ctx), caddr, &sz);
-	if (err) {
-		return err;
-	}
-	*out_sz = (size_t)sz;
-	return 0;
+	return silofs_repo_stat_cobj(arc_repo(ar_ctx), caddr, out_sz);
 }
 
 static int arc_send_to_repo(const struct silofs_ar_ctx *ar_ctx,
                             const struct silofs_caddr *caddr,
                             const struct silofs_rovec *rov)
 {
-	return silofs_repo_save_pack(arc_repo(ar_ctx), caddr, rov);
+	return silofs_repo_save_cobj(arc_repo(ar_ctx), caddr, rov);
 }
 
-static int arc_recv_from_repo(const struct silofs_ar_ctx *ar_ctx,
-                              const struct silofs_caddr *caddr,
-                              const struct silofs_rwvec *rwv)
+static int
+arc_recv_from_repo(const struct silofs_ar_ctx *ar_ctx,
+                   const struct silofs_caddr *caddr, struct silofs_rwvec *rwv)
 {
-	return silofs_repo_load_pack(arc_repo(ar_ctx), caddr, rwv);
+	return silofs_repo_load_cobj(arc_repo(ar_ctx), caddr, rwv);
 }
 
 static int
@@ -696,7 +688,7 @@ static int
 arc_recv_pack(const struct silofs_ar_ctx *ar_ctx,
               const struct silofs_caddr *caddr, void *dat, size_t len)
 {
-	const struct silofs_rwvec rwv = { .rwv_base = dat, .rwv_len = len };
+	struct silofs_rwvec rwv = { .rwv_base = dat, .rwv_len = len };
 
 	return arc_recv_from_repo(ar_ctx, caddr, &rwv);
 }

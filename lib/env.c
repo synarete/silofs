@@ -620,7 +620,7 @@ int silofs_env_forkfs(struct silofs_env *env, struct silofs_mrefs *out_mrefs)
 	return err;
 }
 
-static int check_par_index_size(ssize_t sz)
+static int check_par_index_size(size_t sz)
 {
 	if ((sz < SILOFS_AR_INDEX_SIZE_MIN) ||
 	    (sz > SILOFS_AR_INDEX_SIZE_MAX)) {
@@ -632,14 +632,14 @@ static int check_par_index_size(ssize_t sz)
 int silofs_env_sense_ar(struct silofs_env *env)
 {
 	struct silofs_caddr caddr = { .ctype = SILOFS_CTYPE_NONE };
-	ssize_t sz = -1;
+	size_t sz = 0;
 	int err;
 
 	err = silofs_env_arix_addr(env, &caddr);
 	if (err) {
 		return err;
 	}
-	err = silofs_repo_stat_pack(env->base.repo, &caddr, &sz);
+	err = silofs_repo_stat_cobj(env->base.repo, &caddr, &sz);
 	if (err) {
 		return err;
 	}

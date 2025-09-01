@@ -49,7 +49,7 @@ struct silofs_repo {
 	struct silofs_mdigest          re_mdigest;
 	int                            re_root_dfd;
 	int                            re_dots_dfd;
-	int                            re_objs_dfd;
+	int                            re_blobs_dfd;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -150,18 +150,5 @@ int silofs_repo_save_pobj(struct silofs_repo        *repo,
 int silofs_repo_load_pobj(struct silofs_repo        *repo,
                           const struct silofs_paddr *paddr,
                           const struct silofs_rwvec *rwvec);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-int silofs_repo_stat_pack(struct silofs_repo        *repo,
-                          const struct silofs_caddr *caddr, ssize_t *out_sz);
-
-int silofs_repo_save_pack(struct silofs_repo        *repo,
-                          const struct silofs_caddr *caddr,
-                          const struct silofs_rovec *rov);
-
-int silofs_repo_load_pack(struct silofs_repo        *repo,
-                          const struct silofs_caddr *caddr,
-                          const struct silofs_rwvec *rwv);
 
 #endif /* SILOFS_REPO_H_ */

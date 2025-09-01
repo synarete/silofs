@@ -84,15 +84,6 @@
 /* repository blobs sub-directory */
 #define SILOFS_REPO_BLOBS_DIRNAME "blobs"
 
-/* repository pack-archive sub-directory */
-#define SILOFS_REPO_PACK_DIRNAME "pack"
-
-/* repository objects sub-directory */
-#define SILOFS_REPO_OBJS_DIRNAME "objs"
-
-/* number of sub-dirs within objects directories */
-#define SILOFS_REPO_OBJS_NSUBS (256)
-
 /* max number of hard-links to file or sub-directories */
 #define SILOFS_LINK_MAX ((1L << 15) - 1)
 

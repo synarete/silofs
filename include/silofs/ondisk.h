@@ -335,7 +335,7 @@
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 /* main-boot-record sub-flavour */
-enum silofs_mbr_flavour {
+enum silofs_mbr_kind {
 	SILOFS_MBR_NONE = 0,
 	SILOFS_MBR_FS   = 1,
 	SILOFS_MBR_AR   = 2,
@@ -610,7 +610,7 @@ struct silofs_mbr1k {
 	uint64_t               mbr_magic;
 	uint64_t               mbr_version;
 	struct silofs_uuid     mbr_uuid;
-	uint32_t               mbr_flavour;
+	uint32_t               mbr_kind;
 	uint32_t               mbr_flags;
 	uint32_t               mbr_chiper_algo;
 	uint32_t               mbr_chiper_mode;

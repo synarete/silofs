@@ -52,17 +52,17 @@ static void mbr1k_set_flags(struct silofs_mbr1k *mbr1k, uint32_t flags)
 	mbr1k->mbr_flags = silofs_cpu_to_le32(flags);
 }
 
-static enum silofs_mbr_flavour mbr1k_flavour(const struct silofs_mbr1k *mbr1k)
+static enum silofs_mbr_kind mbr1k_flavour(const struct silofs_mbr1k *mbr1k)
 {
-	const uint32_t flavour = silofs_le32_to_cpu(mbr1k->mbr_flavour);
+	const uint32_t flavour = silofs_le32_to_cpu(mbr1k->mbr_kind);
 
-	return (enum silofs_mbr_flavour)flavour;
+	return (enum silofs_mbr_kind)flavour;
 }
 
 static void
-mbr1k_set_flavour(struct silofs_mbr1k *mbr1k, enum silofs_mbr_flavour flavour)
+mbr1k_set_kind(struct silofs_mbr1k *mbr1k, enum silofs_mbr_kind mbr_kind)
 {
-	mbr1k->mbr_flavour = silofs_cpu_to_le32((uint32_t)flavour);
+	mbr1k->mbr_kind = silofs_cpu_to_le32((uint32_t)mbr_kind);
 }
 
 static int32_t mbr1k_chiper_algo(const struct silofs_mbr1k *mbr1k)
@@ -87,7 +87,7 @@ static void mbr1k_setup(struct silofs_mbr1k *mbr1k)
 	silofs_memzero(mbr1k, sizeof(*mbr1k));
 	mbr1k_set_magic(mbr1k, SILOFS_MBR_MAGIC);
 	mbr1k_set_version(mbr1k, SILOFS_FMT_VERSION);
-	mbr1k_set_flavour(mbr1k, SILOFS_MBR_NONE);
+	mbr1k_set_kind(mbr1k, SILOFS_MBR_NONE);
 	mbr1k_set_flags(mbr1k, 0);
 	mbr1k_set_cipher(mbr1k, SILOFS_CIPHER_ALGO_DEFAULT,
 	                 SILOFS_CIPHER_MODE_DEFAULT);
@@ -272,7 +272,7 @@ mbr1k_xtoh(const struct silofs_mbr1k *mbr1k, struct silofs_mbr *mbr)
 	mbr1k_main_ivkey(mbr1k, &mbr->main_ivkey);
 	mbr1k_sb_addr(mbr1k, &mbr->sb_addr);
 	mbr1k_arix_addr(mbr1k, &mbr->arix_addr);
-	mbr->flavour = mbr1k_flavour(mbr1k);
+	mbr->kind = mbr1k_flavour(mbr1k);
 	mbr->flags = mbr1k_flags(mbr1k);
 	mbr->cipher_algo = (int32_t)mbr1k_chiper_algo(mbr1k);
 	mbr->cipher_mode = (int32_t)mbr1k_chiper_mode(mbr1k);
@@ -284,7 +284,7 @@ mbr1k_htox(struct silofs_mbr1k *mbr1k, const struct silofs_mbr *mbr)
 	mbr1k_setup(mbr1k);
 	mbr1k_set_sb_addr(mbr1k, &mbr->sb_addr);
 	mbr1k_set_arix_addr(mbr1k, &mbr->arix_addr);
-	mbr1k_set_flavour(mbr1k, mbr->flavour);
+	mbr1k_set_kind(mbr1k, mbr->kind);
 	mbr1k_set_flags(mbr1k, mbr->flags);
 	mbr1k_set_uuid(mbr1k, &mbr->uuid);
 	mbr1k_set_main_ivkey(mbr1k, &mbr->main_ivkey);
@@ -293,12 +293,12 @@ mbr1k_htox(struct silofs_mbr1k *mbr1k, const struct silofs_mbr *mbr)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void mbr_init(struct silofs_mbr *mbr, enum silofs_mbr_flavour flavour)
+static void mbr_init(struct silofs_mbr *mbr, enum silofs_mbr_kind flavour)
 {
 	silofs_memzero(mbr, sizeof(*mbr));
 	silofs_uaddr_reset(&mbr->sb_addr);
 	silofs_caddr_reset(&mbr->arix_addr);
-	mbr->flavour = flavour;
+	mbr->kind = flavour;
 	mbr->flags = 0;
 	mbr->cipher_algo = SILOFS_CIPHER_AES256;
 	mbr->cipher_mode = SILOFS_CIPHER_MODE_XTS;
@@ -621,13 +621,13 @@ static int mbri_decode_ar_mbr(struct silofs_mbrinfo *mbri,
 }
 
 int silofs_mbri_encode_mbr(const struct silofs_mbrinfo *mbri,
-                           enum silofs_mbr_flavour flavour,
+                           enum silofs_mbr_kind mkind,
                            struct silofs_caddr *out_mref,
                            struct silofs_mbr1k *out_mbr1k)
 {
 	int err;
 
-	switch (flavour) {
+	switch (mkind) {
 	case SILOFS_MBR_FS:
 		err = mbri_encode_fs_mbr(mbri, out_mref, out_mbr1k);
 		break;
@@ -643,13 +643,13 @@ int silofs_mbri_encode_mbr(const struct silofs_mbrinfo *mbri,
 }
 
 int silofs_mbri_decode_mbr(struct silofs_mbrinfo *mbri,
-                           enum silofs_mbr_flavour flavour,
+                           enum silofs_mbr_kind mkind,
                            const struct silofs_caddr *mref,
                            const struct silofs_mbr1k *mbr1k)
 {
 	int err;
 
-	switch (flavour) {
+	switch (mkind) {
 	case SILOFS_MBR_FS:
 		err = mbri_decode_fs_mbr(mbri, mref, mbr1k);
 		break;
@@ -675,11 +675,11 @@ static void mbri_sync_ar_mbr(struct silofs_mbrinfo *mbri)
 }
 
 int silofs_mbri_sync_mbrs(struct silofs_mbrinfo *mbri,
-                          enum silofs_mbr_flavour dst_flavour)
+                          enum silofs_mbr_kind dst_mkind)
 {
 	int err = 0;
 
-	switch (dst_flavour) {
+	switch (dst_mkind) {
 	case SILOFS_MBR_FS:
 		mbri_sync_fs_mbr(mbri);
 		break;

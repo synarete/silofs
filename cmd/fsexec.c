@@ -74,12 +74,6 @@ static void cmd_report_err_and_die(const struct silofs_env *env, int status,
 	case SILOFS_EBADREPO:
 		cmd_die(err, "%s%sbad repo: %s", xmsg, xtag, rname);
 		break;
-	case SILOFS_ENOREF:
-		cmd_die(err, "%s%smissing ref: %s", xmsg, xtag, rname);
-		break;
-	case SILOFS_EBADREF:
-		cmd_die(err, "%s%sbad ref: %s", xmsg, xtag, rname);
-		break;
 	case SILOFS_ENOMBR:
 		cmd_die(err, "%s%smissing boot: %s", xmsg, xtag, rname);
 		break;

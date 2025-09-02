@@ -130,7 +130,6 @@ static void
 env_init_commons(struct silofs_env *env, const struct silofs_env_base *base)
 {
 	memcpy(&env->base, base, sizeof(env->base));
-	silofs_caddr_reset(&env->arix_addr);
 	env->init_time = silofs_time_mono_now();
 	env->iconv_set = false;
 	env->sbi = nullptr;
@@ -305,15 +304,6 @@ void silofs_env_rwunlock(struct silofs_env *env)
 bool silofs_env_hasflag(const struct silofs_env *env, enum silofs_flags f)
 {
 	return (env->base.args->flags & f) == f;
-}
-
-int silofs_env_arix_addr(const struct silofs_env *env,
-                         struct silofs_caddr *out_caddr)
-{
-	const struct silofs_caddr *caddr = &env->arix_addr;
-
-	silofs_caddr_assign(out_caddr, caddr);
-	return (caddr->ctype == SILOFS_CTYPE_PACKIDX) ? 0 : -SILOFS_ENOENT;
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -629,13 +619,19 @@ static int check_par_index_size(size_t sz)
 	return 0;
 }
 
+static int
+env_arix_addr(const struct silofs_env *env, struct silofs_caddr *out_caddr)
+{
+	return silofs_mbri_arix_addr(&env->mbri, out_caddr);
+}
+
 int silofs_env_sense_ar(struct silofs_env *env)
 {
 	struct silofs_caddr caddr = { .ctype = SILOFS_CTYPE_NONE };
 	size_t sz = 0;
 	int err;
 
-	err = silofs_env_arix_addr(env, &caddr);
+	err = env_arix_addr(env, &caddr);
 	if (err) {
 		return err;
 	}

@@ -368,6 +368,12 @@ mbr_set_sb_addr(struct silofs_mbr *mbr, const struct silofs_uaddr *uaddr)
 }
 
 static void
+mbr_arix_addr(const struct silofs_mbr *mbr, struct silofs_caddr *out_caddr)
+{
+	silofs_caddr_assign(out_caddr, &mbr->arix_addr);
+}
+
+static void
 mbr_set_arix_addr(struct silofs_mbr *mbr, const struct silofs_caddr *caddr)
 {
 	silofs_caddr_assign(&mbr->arix_addr, caddr);
@@ -493,6 +499,13 @@ void silofs_mbri_update_sb_addr(struct silofs_mbrinfo *mbri,
                                 const struct silofs_uaddr *sb_uaddr)
 {
 	mbr_set_sb_addr(&mbri->fs_mbr, sb_uaddr);
+}
+
+int silofs_mbri_arix_addr(const struct silofs_mbrinfo *mbri,
+                          struct silofs_caddr *out_arix_caddr)
+{
+	mbr_arix_addr(&mbri->ar_mbr, out_arix_caddr);
+	return silofs_caddr_isnone(out_arix_caddr) ? -SILOFS_ENOENT : 0;
 }
 
 void silofs_mbri_update_arix_addr(struct silofs_mbrinfo *mbri,

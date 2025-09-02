@@ -85,8 +85,11 @@ static int env_save_mbr(struct silofs_env *env, struct silofs_caddr *out_mref)
 
 static void env_pre_commit_fs_mbr(struct silofs_env *env)
 {
-	const struct silofs_uaddr *sb_uaddr = silofs_sbi_uaddr(env->sbi);
+	const struct silofs_uaddr *sb_uaddr = nullptr;
 
+	silofs_assert_not_null(env->sbi);
+
+	sb_uaddr = silofs_sbi_uaddr(env->sbi);
 	silofs_mbri_update_sb_addr(&env->mbri, sb_uaddr);
 }
 

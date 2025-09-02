@@ -72,6 +72,9 @@ int silofs_mbri_derive_ivkey(struct silofs_mbrinfo        *mbri,
 void silofs_mbri_update_sb_addr(struct silofs_mbrinfo     *mbri,
                                 const struct silofs_uaddr *sb_uaddr);
 
+int silofs_mbri_arix_addr(const struct silofs_mbrinfo *mbri,
+                          struct silofs_caddr         *out_arix_caddr);
+
 void silofs_mbri_update_arix_addr(struct silofs_mbrinfo     *mbri,
                                   const struct silofs_caddr *arix_caddr);
 

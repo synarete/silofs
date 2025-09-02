@@ -242,6 +242,11 @@ adi_del(struct silofs_ar_desc_info *adi, struct silofs_alloc *alloc)
 	}
 }
 
+static bool adi_is_super(const struct silofs_ar_desc_info *adi)
+{
+	return (adi->ard.laddr.lsid.mtype == SILOFS_MTYPE_SUPER);
+}
+
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static int check_ar_index_size(size_t sz)
@@ -1019,25 +1024,24 @@ static int arc_stat_arix(const struct silofs_ar_ctx *ar_ctx,
 	return 0;
 }
 
-static const struct silofs_caddr *
-arc_ar_packidx_caddr(const struct silofs_ar_ctx *ar_ctx)
+static int arc_arix_addr(const struct silofs_ar_ctx *ar_ctx,
+                         struct silofs_caddr *out_caddr)
 {
-	const struct silofs_env *env = ar_ctx->env;
-	const struct silofs_caddr *caddr = &env->arix_addr;
-
-	silofs_assert_eq(caddr->ctype, SILOFS_CTYPE_PACKIDX);
-	return caddr;
+	return silofs_mbri_arix_addr(&ar_ctx->env->mbri, out_caddr);
 }
 
 static int arc_restore_arix(struct silofs_ar_ctx *ar_ctx)
 {
 	struct silofs_bytebuf bb = { .ptr = nullptr, .cap = 0 };
-	const struct silofs_caddr *caddr = nullptr;
+	struct silofs_caddr caddr;
 	size_t sz = 0;
 	int err;
 
-	caddr = arc_ar_packidx_caddr(ar_ctx);
-	err = arc_stat_arix(ar_ctx, caddr, &sz);
+	err = arc_arix_addr(ar_ctx, &caddr);
+	if (err) {
+		goto out;
+	}
+	err = arc_stat_arix(ar_ctx, &caddr, &sz);
 	if (err) {
 		goto out;
 	}
@@ -1045,7 +1049,7 @@ static int arc_restore_arix(struct silofs_ar_ctx *ar_ctx)
 	if (err) {
 		goto out;
 	}
-	err = arc_load_decode_arix(ar_ctx, caddr, &bb);
+	err = arc_load_decode_arix(ar_ctx, &caddr, &bb);
 	if (err) {
 		goto out;
 	}
@@ -1070,8 +1074,73 @@ static int arc_restore_fs(struct silofs_ar_ctx *ar_ctx)
 	return 0;
 }
 
-static int arc_restore_mbr(const struct silofs_ar_ctx *ar_ctx,
-                           struct silofs_caddr *out_fs_mref)
+static const struct silofs_ar_desc_info *
+arc_find_sb_desc(const struct silofs_ar_ctx *ar_ctx)
+{
+	const struct silofs_ar_desc_info *adi = nullptr;
+
+	adi = arix_next_desc(&ar_ctx->arix, adi);
+	while (adi != nullptr) {
+		if (adi_is_super(adi)) {
+			return adi;
+		}
+		adi = arix_next_desc(&ar_ctx->arix, adi);
+	}
+	return nullptr;
+}
+
+/* XXX: Crap, move it elsewhere */
+static void
+sb_uaddr_of(const struct silofs_laddr *laddr, struct silofs_uaddr *out_uaddr)
+{
+	const struct silofs_lsid *lsid = &laddr->lsid;
+
+	silofs_assert_eq(laddr->pos, 0);
+	silofs_assert_eq(lsid->height, SILOFS_HEIGHT_SUPER);
+	silofs_assert_eq(lsid->mtype, SILOFS_MTYPE_SUPER);
+
+	silofs_uaddr_setup(out_uaddr, lsid, 0, 0);
+}
+
+static void sb_uaddr_by(const struct silofs_ar_desc_info *adi,
+                        struct silofs_uaddr *out_uaddr)
+{
+	sb_uaddr_of(&adi->ard.laddr, out_uaddr);
+}
+
+static int arc_restore_sb_addr(struct silofs_ar_ctx *ar_ctx)
+{
+	struct silofs_uaddr sb_uaddr = {
+		.voff = -1,
+	};
+	const struct silofs_ar_desc_info *adi = nullptr;
+
+	adi = arc_find_sb_desc(ar_ctx);
+	if (adi == nullptr) {
+		return -SILOFS_EBADPACK;
+	}
+	sb_uaddr_by(adi, &sb_uaddr);
+	silofs_mbri_update_sb_addr(&ar_ctx->env->mbri, &sb_uaddr);
+	return 0;
+}
+
+static int arc_restore_sb(struct silofs_ar_ctx *ar_ctx)
+{
+	int err;
+
+	err = arc_restore_sb_addr(ar_ctx);
+	if (err) {
+		return err;
+	}
+	err = silofs_env_reload_super(ar_ctx->env);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+static int arc_restore_fs_mbr(const struct silofs_ar_ctx *ar_ctx,
+                              struct silofs_caddr *out_fs_mref)
 {
 	return silofs_env_commit_fs_mbr(ar_ctx->env, out_fs_mref);
 }
@@ -1079,7 +1148,17 @@ static int arc_restore_mbr(const struct silofs_ar_ctx *ar_ctx,
 static int arc_restore_post(struct silofs_ar_ctx *ar_ctx,
                             struct silofs_caddr *out_fs_mref)
 {
-	return arc_restore_mbr(ar_ctx, out_fs_mref);
+	int err;
+
+	err = arc_restore_sb(ar_ctx);
+	if (err) {
+		return err;
+	}
+	err = arc_restore_fs_mbr(ar_ctx, out_fs_mref);
+	if (err) {
+		return err;
+	}
+	return 0;
 }
 
 static int arc_restore_prep(struct silofs_ar_ctx *ar_ctx,

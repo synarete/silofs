@@ -57,7 +57,6 @@ struct silofs_env {
 	struct silofs_cipher     enc_cipher;
 	struct silofs_cipher     dec_cipher;
 	struct silofs_mdigest    mdigest;
-	struct silofs_caddr      arix_addr;
 	struct silofs_env_opstat opstat;
 	struct silofs_sb_info   *sbi;
 	struct silofs_cred       owner_cred;
@@ -106,11 +105,6 @@ int silofs_env_sense_ar(struct silofs_env *env);
 void silofs_env_drop_caches(struct silofs_env *env);
 
 bool silofs_env_hasflag(const struct silofs_env *env, enum silofs_flags f);
-
-/* XXX */
-
-int silofs_env_arix_addr(const struct silofs_env *env,
-                         struct silofs_caddr     *out_caddr);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

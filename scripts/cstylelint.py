@@ -25,7 +25,6 @@ import typing
 from pathlib import Path
 
 # Globals:
-PROGNAME = Path(sys.argv[0]).name
 TOKENLEN_MAX = 40
 LINELEN_MAX = 79
 BLOCKSIZE_MAX = 100
@@ -239,6 +238,12 @@ CSOURCE_EXCLUDE = [
     "longjmp",
 ]
 
+MAP_TO_C23 = {
+    "NULL": "nullptr",
+    "TRUE": "true",
+    "FALSE": "false",
+}
+
 LIBS_PREFIX = [
     "ZSTD_",
     "LZ4_",
@@ -379,7 +384,7 @@ class LintEnv:
     """Lint context object for accumulating checkers state."""
 
     def __init__(self) -> None:
-        self.progname: str = str(PROGNAME)
+        self.progname = Path(sys.argv[0]).name
         self.err_count: int = 0
 
     def lerror(self, sl: SourceLine, msg: str) -> None:
@@ -466,6 +471,14 @@ def check_struct_union_name(env: LintEnv, sl: SourceLine) -> None:
         if check and not tok.islower():
             env.lerror(sl, f"Non-valid-name {tok}")
         check = tok in ("struct", "union")
+
+
+def check_c23_keywords(env: LintEnv, sl: SourceLine) -> None:
+    """Require usage of C23 keywords."""
+    for tok in sl.toks:
+        c23_tok = MAP_TO_C23.get(tok, "")
+        if len(c23_tok) > 0:
+            env.lerror(sl, f"Need to change to C23: '{tok} --> {c23_tok}'")
 
 
 def _is_private_name(tok: str) -> bool:
@@ -622,6 +635,7 @@ def check_source_line(env: LintEnv, sl: SourceLine) -> None:
     check_no_relative_include(env, sl)
     check_no_sizeof_address(env, sl)
     check_struct_union_name(env, sl)
+    check_c23_keywords(env, sl)
     check_no_mixed_case(env, sl)
     check_underscore_prefix(env, sl)
     check_no_insecure_functions(env, sl)

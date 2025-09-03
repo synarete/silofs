@@ -9,16 +9,16 @@ command -v podman > /dev/null || exit 0
 name=silofs
 selfpid="$$"
 selfdir="$(realpath "$(dirname "${BASH_SOURCE[0]}")")"
-basedir="$(realpath "${selfdir}"/../)"
-workdir="${basedir}/build/cicd"
+rootdir="$(realpath "${selfdir}"/../)"
+workdir="${rootdir}/build/cicd"
 autotoolsdir="${workdir}/autotools/"
-version_sh="${basedir}"/version.sh
+version_sh="${rootdir}"/version.sh
 
 # Prerequisites checks + prepare
 set -o errexit
 set -o nounset
 set -o pipefail
-source "${basedir}/bash_functions"
+source "${rootdir}/bash_functions"
 run "${version_sh}"
 
 # Use unique image tag
@@ -30,7 +30,7 @@ imagename="${name}.${imagetag}"
 run mkdir -p "${workdir}"
 cdx "${workdir}"
 
-run env SILOFS_IMAGENAME="${imagename}" "${basedir}/dist/img/buildimg.sh"
+run env SILOFS_IMAGENAME="${imagename}" "${rootdir}/dist/img/buildimg.sh"
 
 # Execute unit-tests via image
 scratchdir="${workdir}/scratch/"
@@ -52,7 +52,7 @@ run podman rmi "${imagename}"
 run podman image prune -f
 
 # Post-op cleanups
-cdx "${basedir}"
+cdx "${rootdir}"
 run rm -rf "${scratchdir}"
 
 # Goodby ;)

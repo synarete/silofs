@@ -8,11 +8,11 @@ set -o pipefail
 # Common
 name=silofs
 selfdir="$(realpath "$(dirname "${BASH_SOURCE[0]}")")"
-basedir="$(realpath "${selfdir}"/../)"
-workdir="${basedir}/build/cicd"
+rootdir="$(realpath "${selfdir}"/../)"
+workdir="${rootdir}/build/cicd"
 autotoolsdir="${workdir}/autotools/"
-version_sh="${basedir}"/version.sh
-source "${basedir}/bash_functions"
+version_sh="${rootdir}"/version.sh
+source "${rootdir}/bash_functions"
 
 # Prerequisites checks + prepare
 run "${version_sh}"
@@ -25,8 +25,8 @@ version_only=$("${version_sh}" --version)
 distname="${name}-${version_only}"
 disttgz="${distname}.tar.gz"
 cdx "${autotoolsdir}"
-run "${basedir}"/bootstrap
-run "${basedir}"/configure \
+run "${rootdir}"/bootstrap
+run "${rootdir}"/configure \
   "--enable-utests=0" \
   "--enable-compile-warnings=error"
 run make dist
@@ -38,7 +38,7 @@ run sh "${selfdir}/exec-cicd-all.sh" \
   "${autotoolsdir}/${disttgz}" "${workdir}"
 
 # Post-op cleanups
-cdx "${basedir}"
+cdx "${rootdir}"
 run rm -rf "${autotoolsdir}"
 run rm -rf "${workdir}"
 run sleep 2

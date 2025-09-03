@@ -7,8 +7,8 @@ set -o pipefail
 ###
 self="$(basename "${BASH_SOURCE[0]}")"
 selfdir="$(realpath "$(dirname "${BASH_SOURCE[0]}")")"
-basedir="$(realpath "${selfdir}"/../)"
-source "${basedir}/bash_functions"
+rootdir="$(realpath "${selfdir}"/../)"
+source "${rootdir}/bash_functions"
 
 ###
 if [ "$#" -ne 2 ]; then die "usage: '$self <archive-file> <citests-dir>'"; fi

@@ -4,14 +4,14 @@ unset CDPATH
 
 self="$(basename "${BASH_SOURCE[0]}")"
 selfdir="$(realpath "$(dirname "${BASH_SOURCE[0]}")")"
-basedir="$(realpath "${selfdir}"/../../)"
-source "${basedir}/bash_functions"
+rootdir="$(realpath "${selfdir}"/../../)"
+source "${rootdir}/bash_functions"
 
 # Common variables
 name=silofs
-workdir="${basedir}/build/dist/img"
+workdir="${rootdir}/build/dist/img"
 autotoolsdir="${workdir}/autotools/"
-version_sh="${basedir}"/version.sh
+version_sh="${rootdir}"/version.sh
 conteng=$(command -v docker || command -v podman || echo "no-docker-or-podman")
 
 # Prerequisites checks + prepare
@@ -29,8 +29,8 @@ distname="${name}-${version}"
 disttgz="${distname}.tar.gz"
 run mkdir -p "${autotoolsdir}"
 cdx "${autotoolsdir}"
-test -x "${basedir}/configure" || run "${basedir}/bootstrap"
-run "${basedir}/configure" \
+test -x "${rootdir}/configure" || run "${rootdir}/bootstrap"
+run "${rootdir}/configure" \
     "--enable-utests=0" \
     "--enable-compile-warnings=error"
 run make dist

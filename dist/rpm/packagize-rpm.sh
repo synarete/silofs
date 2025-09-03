@@ -7,19 +7,19 @@ set -o pipefail
 
 self="$(basename "${BASH_SOURCE[0]}")"
 selfdir="$(realpath "$(dirname "${BASH_SOURCE[0]}")")"
-basedir="$(realpath "${selfdir}"/../../)"
-source "${basedir}/bash_functions"
+rootdir="$(realpath "${selfdir}"/../../)"
+source "${rootdir}/bash_functions"
 
 name=silofs
 selfdir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
-basedir=$(realpath "${selfdir}"/../../)
-version_sh="${basedir}"/version.sh
+rootdir=$(realpath "${selfdir}"/../../)
+version_sh="${rootdir}"/version.sh
 version=$(run "${version_sh}" --version)
 release=$(run "${version_sh}" --release)
 revision=$(run "${version_sh}" --revision)
 archive_tgz=${name}-${version}.tar.gz
 
-builddir=${basedir}/build
+builddir=${rootdir}/build
 rpmdistdir=${builddir}/dist
 rpmhomedir=${rpmdistdir}/rpm
 autotoolsdir=${rpmhomedir}/autotools/
@@ -46,13 +46,13 @@ run command -v basename
 run command -v rpmbuild
 
 # Bootstrap
-cd "${basedir}"
-run "${basedir}"/bootstrap
+cd "${rootdir}"
+run "${rootdir}"/bootstrap
 
 # Autotools build
 run mkdir -p "${autotoolsdir}"
 cd "${autotoolsdir}"
-run "${basedir}"/configure \
+run "${rootdir}"/configure \
     "--enable-utests=1" "--enable-compile-warnings=error"
 run make distcheck
 
@@ -91,7 +91,7 @@ run env WITH_MYPY=0 rpmbuild -ba \
     "${rpmspec_out}"
 
 # Copy rpms to dist-dir
-cd "${basedir}"
+cd "${rootdir}"
 run mkdir -p "${rpmdistdir}"
 run find \
     "${rpmbuilddir}"/RPMS/ \

@@ -7,17 +7,17 @@ set -o pipefail
 
 self="$(basename "${BASH_SOURCE[0]}")"
 selfdir="$(realpath "$(dirname "${BASH_SOURCE[0]}")")"
-basedir="$(realpath "${selfdir}"/../../)"
-source "${basedir}/bash_functions"
+rootdir="$(realpath "${selfdir}"/../../)"
+source "${rootdir}/bash_functions"
 
 name=silofs
-version_sh=${basedir}/version.sh
+version_sh=${rootdir}/version.sh
 version=$(run "${version_sh}" --version)
 release=$(run "${version_sh}" --release)
 revision=$(run "${version_sh}" --revision)
 archive_tgz=${name}-${version}.tar.gz
 
-builddir=${basedir}/build
+builddir=${rootdir}/build
 buildauxdir=${builddir}/deb
 debdistdir=${builddir}/dist
 autotoolsdir=${buildauxdir}/autotools/
@@ -44,13 +44,13 @@ run command -v dpkg-buildpackage
 run command -v dh
 
 # Bootstrap
-cd "${basedir}"
-run "${basedir}"/bootstrap
+cd "${rootdir}"
+run "${rootdir}"/bootstrap
 
 # Autotools build
 run mkdir -p "${autotoolsdir}"
 cd "${autotoolsdir}"
-run "${basedir}"/configure \
+run "${rootdir}"/configure \
     "--enable-utests=1" "--enable-compile-warnings=error"
 run make
 run make distcheck
@@ -68,7 +68,7 @@ cd "${debbuilddir}"
 run tar xvfz "${archive_tgz}"
 
 # Prepare deb files
-cd "${basedir}"
+cd "${rootdir}"
 run mkdir -p "${debbuild_debiandir}"/source
 run cp "${debsourcedir}"/format "${debbuild_debiandir}"/source
 run cp "${debsourcedir}"/compat "${debbuild_debiandir}"
@@ -98,7 +98,7 @@ run find "${debbuilddir}/" \
     -exec cp {} "${debdistdir}" \;
 
 # Cleanup build staging area
-cd "${basedir}"
+cd "${rootdir}"
 run rm -rf "${buildauxdir}"
 
 # Show result deb files

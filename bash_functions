@@ -29,7 +29,11 @@ _base_tag() {
 }
 
 msg() {
-  echo "$(_base_tag): $*" >&2
+  local verbose="${VERBOSE:-1}"
+
+  if [ "${verbose}" == "1" ]; then
+    echo "$(_base_tag): $*" >&2
+  fi
 }
 
 die() {

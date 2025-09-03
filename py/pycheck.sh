@@ -47,7 +47,9 @@ run_pychecks() {
   run_black "${1}"
   run_flake8 "${1}"
   run_pylint "${1}"
-  [ "${with_mypy}" == "1" ] && run_mypy "${1}"
+  if [ "${with_mypy}" == "1" ]; then
+    run_mypy "${1}"
+  fi
 }
 
 main() {

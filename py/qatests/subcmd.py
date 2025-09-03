@@ -28,7 +28,7 @@ class SubcmdError(Exception):
         self.retcode = ret
 
 
-class _SubcmdExec:
+class SubcmdExec:
     """Generic wrapper over command-line executor."""
 
     def __init__(self, prog: str, xbin: typing.Optional[Path] = None) -> None:
@@ -117,12 +117,12 @@ class _SubcmdExec:
         log.printsl(f"{prefix}: {cmd}{suffix}")
 
 
-class _Shell(_SubcmdExec):
+class _Shell(SubcmdExec):
     """Wrapper over execution via shell command."""
 
     def __init__(self) -> None:
         """Execute command as sub shell."""
-        _SubcmdExec.__init__(self, "sh")
+        SubcmdExec.__init__(self, "sh")
         self.env = os.environ.copy()
 
     def run(
@@ -164,13 +164,13 @@ class _Shell(_SubcmdExec):
         return env
 
 
-class _Silofs(_SubcmdExec):
+class _Silofs(SubcmdExec):
     """Wrapper over silofs command-line front-end."""
 
     def __init__(
         self, use_stdalloc: bool = False, allow_coredump: bool = False
     ) -> None:
-        _SubcmdExec.__init__(self, "silofs")
+        SubcmdExec.__init__(self, "silofs")
         self.use_stdalloc = use_stdalloc
         self.allow_coredump = allow_coredump
         self.giga = 2**30
@@ -305,11 +305,11 @@ class _Silofs(_SubcmdExec):
         self.execute_sub(args, indat=password, timeout=600.0)
 
 
-class _Unitests(_SubcmdExec):
+class _Unitests(SubcmdExec):
     """Wrapper over silofs-utests command-line front-end."""
 
     def __init__(self) -> None:
-        _SubcmdExec.__init__(self, "silofs-utests")
+        SubcmdExec.__init__(self, "silofs-utests")
 
     def version(self) -> str:
         return self.execute_sub(["-v"])
@@ -331,11 +331,11 @@ class _Unitests(_SubcmdExec):
         self.execute_sub(args, timeout=1200)
 
 
-class _Fnctests(_SubcmdExec):
+class _Fnctests(SubcmdExec):
     """Wrapper over silofs-ftests command-line front-end."""
 
     def __init__(self) -> None:
-        _SubcmdExec.__init__(self, "silofs-ftests")
+        SubcmdExec.__init__(self, "silofs-ftests")
 
     def version(self) -> str:
         return self.execute_sub(["-v"])
@@ -357,11 +357,11 @@ class _Fnctests(_SubcmdExec):
         self.execute_sub(args, wdir=Path("/"), timeout=2400)
 
 
-class _Git(_SubcmdExec):
+class _Git(SubcmdExec):
     """Wrapper over git command-line utility."""
 
     def __init__(self) -> None:
-        _SubcmdExec.__init__(self, "git")
+        SubcmdExec.__init__(self, "git")
 
     def version(self) -> str:
         return self.execute_sub(["version"])

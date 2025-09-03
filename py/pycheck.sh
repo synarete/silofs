@@ -5,18 +5,11 @@ set -o pipefail
 export LC_ALL=C
 unset CDPATH
 
-self=$(basename "${BASH_SOURCE[0]}")
-selfdir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
-basedir=$(realpath "${selfdir}")
-verbose="${VERBOSE:-1}"
-with_mypy="${WITH_MYPY:-1}"
+selfdir="$(realpath "$(dirname "${BASH_SOURCE[0]}")")"
+rootdir="$(realpath "${selfdir}"/../)"
+basedir="$(realpath "${selfdir}")"
+source "${rootdir}/bash_functions"
 
-msg() { echo "$self: $*" >&2; }
-die() { msg "$*"; exit 1; }
-exe() { ( "$@" ) || die "failed: $*"; }
-log() { if [ "${verbose}" == "1" ]; then msg "$@" ; fi; }
-run() { log "$@" ; exe "$@"; }
-cdx() { log "cd $*"; cd "$@" || die "failed: cd $*"; }
 
 run_black() {
   if command -v black &> /dev/null ; then
@@ -48,13 +41,13 @@ run_mypy() {
 }
 
 run_pychecks() {
+  local with_mypy="${WITH_MYPY:-1}"
+
   cdx "${basedir}"
   run_black "${1}"
   run_flake8 "${1}"
   run_pylint "${1}"
-  if [ "${with_mypy}" == "1" ]; then
-    run_mypy "${1}"
-  fi
+  [ "${with_mypy}" == "1" ] && run_mypy "${1}"
 }
 
 main() {

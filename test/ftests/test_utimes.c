@@ -237,7 +237,7 @@ static void test_futimens_ctime(struct ft_env *fte)
 /*
  * Expects successful utimensat(3p) on regular file with I/O
  */
-static void test_utimensat_io_(struct ft_env *fte, loff_t off, size_t len)
+static void test_utimensat_io_(struct ft_env *fte, off_t off, size_t len)
 {
 	struct stat st = { .st_size = -1 };
 	struct timespec ts[2];

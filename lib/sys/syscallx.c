@@ -38,9 +38,9 @@ static void *buffer_at(const void *buf, size_t step)
 	return u.q;
 }
 
-static loff_t offset_at(loff_t base, size_t step)
+static off_t offset_at(off_t base, size_t step)
 {
-	return base + (loff_t)step;
+	return base + (off_t)step;
 }
 
 static int io_status(int err, size_t nexpected, size_t ncomplete)
@@ -76,10 +76,10 @@ int silofs_sys_readn(int fd, void *buf, size_t cnt)
 	return io_status(err, nrd, cnt);
 }
 
-int silofs_sys_preadn(int fd, void *buf, size_t cnt, loff_t off)
+int silofs_sys_preadn(int fd, void *buf, size_t cnt, off_t off)
 {
 	uint8_t *ptr;
-	loff_t pos;
+	off_t pos;
 	size_t nrd_cur;
 	size_t nrd = 0;
 	int err = 0;
@@ -122,10 +122,10 @@ int silofs_sys_writen(int fd, const void *buf, size_t cnt)
 	return io_status(err, nwr, cnt);
 }
 
-int silofs_sys_pwriten(int fd, const void *buf, size_t cnt, loff_t off)
+int silofs_sys_pwriten(int fd, const void *buf, size_t cnt, off_t off)
 {
 	const uint8_t *ptr;
-	loff_t pos;
+	off_t pos;
 	size_t nwr_cur;
 	size_t nwr = 0;
 	int err = 0;
@@ -165,8 +165,8 @@ static void iov_advance(struct iovec **p_iov, size_t len)
 	*p_iov = iov;
 }
 
-static int do_sys_pwritevn(int fd, struct iovec *iov, int cnt, loff_t off,
-                           loff_t *out_off)
+static int
+do_sys_pwritevn(int fd, struct iovec *iov, int cnt, off_t off, off_t *out_off)
 {
 	size_t nwr_cur;
 	size_t nwr = 0;
@@ -184,13 +184,13 @@ static int do_sys_pwritevn(int fd, struct iovec *iov, int cnt, loff_t off,
 		}
 		iov_advance(&iov, nwr_cur);
 		nwr += nwr_cur;
-		off += (loff_t)nwr_cur;
+		off += (off_t)nwr_cur;
 	}
 	*out_off = off;
 	return io_status(err, nwr, len);
 }
 
-int silofs_sys_pwritevn(int fd, const struct iovec *iov, int cnt, loff_t off)
+int silofs_sys_pwritevn(int fd, const struct iovec *iov, int cnt, off_t off)
 {
 	struct iovec iov2[128];
 	const int cnt_max = (int)(sizeof(iov2) / sizeof(iov2[0]));
@@ -256,9 +256,9 @@ int silofs_sys_munmapp(void **p_addr, size_t length)
 	return err;
 }
 
-int silofs_sys_llseek_data(int fd, loff_t off, loff_t *out_data_off)
+int silofs_sys_llseek_data(int fd, off_t off, off_t *out_data_off)
 {
-	loff_t pos = 0;
+	off_t pos = 0;
 	int err;
 
 	err = silofs_sys_llseek(fd, off, SEEK_SET, &pos);

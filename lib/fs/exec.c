@@ -56,8 +56,8 @@ static bool sqe_isappendable(const struct silofs_submitq_ent *sqe,
 	const struct silofs_laddr *sqe_laddr = &sqe->laddr_base;
 	const ssize_t len_max = SILOFS_COMMIT_LEN_MAX;
 	size_t len;
-	loff_t end;
-	loff_t nxt;
+	off_t end;
+	off_t nxt;
 
 	STATICASSERT_EQ(ARRAY_SIZE(sqe->iov), ARRAY_SIZE(sqe->lni));
 

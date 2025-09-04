@@ -20,21 +20,21 @@
 #include <stdio.h>
 #include "ftests.h"
 
-static blkcnt_t calc_nfrgs_of(loff_t off, loff_t len, blksize_t blksz)
+static blkcnt_t calc_nfrgs_of(off_t off, off_t len, blksize_t blksz)
 {
-	const loff_t frgsz = FT_FRGSIZE;
-	const loff_t beg = (off / blksz) * blksz;
-	const loff_t end = ((off + len + blksz - 1) / blksz) * blksz;
+	const off_t frgsz = FT_FRGSIZE;
+	const off_t beg = (off / blksz) * blksz;
+	const off_t end = ((off + len + blksz - 1) / blksz) * blksz;
 	const blkcnt_t nfrgs = (blkcnt_t)(end - beg) / frgsz;
 
 	return nfrgs;
 }
 
-static void ft_calc_stat_blkcnt(loff_t off, size_t nbytes, blkcnt_t *out_min,
+static void ft_calc_stat_blkcnt(off_t off, size_t nbytes, blkcnt_t *out_min,
                                 blkcnt_t *out_max)
 {
-	*out_min = calc_nfrgs_of(off, (loff_t)nbytes, 512);
-	*out_max = calc_nfrgs_of(off, (loff_t)nbytes, 65536);
+	*out_min = calc_nfrgs_of(off, (off_t)nbytes, 512);
+	*out_max = calc_nfrgs_of(off, (off_t)nbytes, 65536);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -42,7 +42,7 @@ static void ft_calc_stat_blkcnt(loff_t off, size_t nbytes, blkcnt_t *out_min,
  * Expects write to modify file's stat's size & blocks attributes properly.
  * Performs sequential write, followed by over-write on same region.
  */
-static void test_stat_write_(struct ft_env *fte, loff_t off, size_t len)
+static void test_stat_write_(struct ft_env *fte, off_t off, size_t len)
 {
 	struct stat st = { .st_ino = 0 };
 	const char *path = ft_new_path_unique(fte);
@@ -59,7 +59,7 @@ static void test_stat_write_(struct ft_env *fte, loff_t off, size_t len)
 	buf = ft_new_buf_rands(fte, len);
 	ft_pwriten(fd, buf, len, off);
 	ft_fstat(fd, &st);
-	ft_expect_eq(st.st_size, off + (loff_t)len);
+	ft_expect_eq(st.st_size, off + (off_t)len);
 	ft_calc_stat_blkcnt(off, len, &bcnt_min, &bcnt_max);
 	ft_expect_ge(st.st_blocks, bcnt_min);
 	ft_expect_le(st.st_blocks, bcnt_max);
@@ -67,7 +67,7 @@ static void test_stat_write_(struct ft_env *fte, loff_t off, size_t len)
 	buf = ft_new_buf_rands(fte, len);
 	ft_pwriten(fd, buf, len, off);
 	ft_fstat(fd, &st);
-	ft_expect_eq(st.st_size, off + (loff_t)len);
+	ft_expect_eq(st.st_size, off + (off_t)len);
 	ft_calc_stat_blkcnt(off, len, &bcnt_min, &bcnt_max);
 	ft_expect_ge(st.st_blocks, bcnt_min);
 	ft_expect_le(st.st_blocks, bcnt_max);
@@ -123,7 +123,7 @@ static void test_stat_write_unaligned(struct ft_env *fte)
  * properly. Performs sequential write, followed by fallocate-punch on same
  * data region.
  */
-static void test_stat_punch_(struct ft_env *fte, loff_t off, size_t len)
+static void test_stat_punch_(struct ft_env *fte, off_t off, size_t len)
 {
 	struct stat st = { .st_size = -1 };
 	const int mode = FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE;
@@ -139,13 +139,13 @@ static void test_stat_punch_(struct ft_env *fte, loff_t off, size_t len)
 	ft_expect_eq(st.st_blocks, 0);
 	ft_pwriten(fd, buf, len, off);
 	ft_fstat(fd, &st);
-	ft_expect_eq(st.st_size, off + (loff_t)len);
+	ft_expect_eq(st.st_size, off + (off_t)len);
 	ft_calc_stat_blkcnt(off, len, &bcnt_min, &bcnt_max);
 	ft_expect_ge(st.st_blocks, bcnt_min);
 	ft_expect_le(st.st_blocks, bcnt_max);
-	ft_fallocate(fd, mode, off, (loff_t)len);
+	ft_fallocate(fd, mode, off, (off_t)len);
 	ft_fstat(fd, &st);
-	ft_expect_eq(st.st_size, off + (loff_t)len);
+	ft_expect_eq(st.st_size, off + (off_t)len);
 	ft_close(fd);
 	ft_unlink(path);
 }
@@ -202,7 +202,7 @@ static void test_stat_write_ctime_(struct ft_env *fte, size_t nfiles)
 	struct stat st = { .st_size = -1 };
 	struct stat *sts = ft_new_buf_zeros(fte, nfiles * sizeof(st));
 	const char *path = ft_new_path_unique(fte);
-	loff_t off = -1;
+	off_t off = -1;
 	long dif = 0;
 	int dfd = -1;
 	int fd = -1;
@@ -210,7 +210,7 @@ static void test_stat_write_ctime_(struct ft_env *fte, size_t nfiles)
 	ft_mkdir(path, 0700);
 	ft_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);
 	for (size_t i = 0; i < nfiles; ++i) {
-		off = (loff_t)(i * nfiles);
+		off = (off_t)(i * nfiles);
 		snprintf(name, sizeof(name) - 1, "%lx-%ld", i, off);
 		ft_openat(dfd, name, O_CREAT | O_RDWR, 0600, &fd);
 		ft_fstat(fd, &st);
@@ -221,7 +221,7 @@ static void test_stat_write_ctime_(struct ft_env *fte, size_t nfiles)
 		ft_close(fd);
 	}
 	for (size_t i = 0; i < nfiles; ++i) {
-		off = (loff_t)(i * nfiles);
+		off = (off_t)(i * nfiles);
 		snprintf(name, sizeof(name) - 1, "%lx-%ld", i, off);
 		ft_openat(dfd, name, O_RDONLY, 0600, &fd);
 		ft_fstat(fd, &st);

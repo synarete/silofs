@@ -56,7 +56,7 @@ int silofs_call_setattr(struct silofs_task_ctx *task,
 		}
 	}
 	if (args->in.setattr.set_size) {
-		const loff_t size = args->in.setattr.size;
+		const off_t size = args->in.setattr.size;
 
 		err = silofs_exec_truncate(task, ino, size, out_st);
 		if (err) {

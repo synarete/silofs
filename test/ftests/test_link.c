@@ -375,7 +375,7 @@ static void test_linkat_with_io_(struct ft_env *fte, size_t cnt)
 	const char *path = ft_new_path_unique(fte);
 	const char *name = ft_new_name_unique(fte);
 	const char *link = nullptr;
-	loff_t off = -1;
+	off_t off = -1;
 	int dfd = -1;
 	int fd = -1;
 

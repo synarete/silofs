@@ -63,7 +63,7 @@ static void test_write_only(struct ft_env *fte)
 /*
  * Expects successful write(3p) to unlinked file
  */
-static void test_write_unlinked_(struct ft_env *fte, loff_t off, size_t len)
+static void test_write_unlinked_(struct ft_env *fte, off_t off, size_t len)
 {
 	const char *path = ft_new_path_unique(fte);
 	const void *wbuf = ft_new_buf_rands(fte, len);
@@ -155,7 +155,7 @@ static void test_write_lseek_read_(struct ft_env *fte, size_t len)
 	const char *path = ft_new_path_unique(fte);
 	void *buf1 = ft_new_buf_rands(fte, len);
 	void *buf2 = ft_new_buf_rands(fte, len);
-	loff_t pos = -1;
+	off_t pos = -1;
 	size_t nwr = 0;
 	size_t nrd = 0;
 	int fd = -1;
@@ -191,7 +191,7 @@ static void test_write_lseek_read(struct ft_env *fte)
  * modification and last file status change time-stamps of the file, only if
  * nbytes-written is greater than 0.
  */
-static void test_write_mctimes_(struct ft_env *fte, loff_t off, size_t len)
+static void test_write_mctimes_(struct ft_env *fte, off_t off, size_t len)
 {
 	struct stat st[2];
 	const char *path = ft_new_path_unique(fte);
@@ -251,7 +251,7 @@ static void test_write_mctimes(struct ft_env *fte)
 /*
  * Expects successful pwrite(3p) to clear SUID bit, pread(3p) to not change
  */
-static void test_write_read_suid_(struct ft_env *fte, loff_t off, size_t bsz)
+static void test_write_read_suid_(struct ft_env *fte, off_t off, size_t bsz)
 {
 	struct stat st = { .st_size = -1 };
 	const char *path = ft_new_path_unique(fte);
@@ -268,7 +268,7 @@ static void test_write_read_suid_(struct ft_env *fte, loff_t off, size_t bsz)
 	ft_fstat(fd, &st);
 	ft_expect_eq(st.st_mode & S_ISUID, S_ISUID);
 	ft_expect_eq(st.st_mode & mask, mode);
-	ft_pwriten(fd, buf, bsz, off + (loff_t)bsz);
+	ft_pwriten(fd, buf, bsz, off + (off_t)bsz);
 	ft_fstat(fd, &st);
 	ft_expect_eq(st.st_mode & S_ISUID, 0);
 	ft_expect_eq(st.st_mode & mask, mode);
@@ -303,7 +303,7 @@ static void test_write_read_suid(struct ft_env *fte)
 /*
  * Expects successful pwrite(3p) to clear SGID bit, pread(3p) to not change
  */
-static void test_write_read_sgid_(struct ft_env *fte, loff_t off, size_t len)
+static void test_write_read_sgid_(struct ft_env *fte, off_t off, size_t len)
 {
 	struct stat st = { .st_size = 0 };
 	const char *path = ft_new_path_unique(fte);

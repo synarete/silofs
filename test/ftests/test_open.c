@@ -130,7 +130,7 @@ static void test_open_isdir(struct ft_env *fte)
 /*
  * Expects open(3p) with O_TRUNC to reduce file-size to zero.
  */
-static void test_open_trunc_(struct ft_env *fte, loff_t off, size_t len)
+static void test_open_trunc_(struct ft_env *fte, off_t off, size_t len)
 {
 	struct stat st = { .st_size = -1 };
 	void *buf = ft_new_buf_zeros(fte, len);
@@ -179,7 +179,7 @@ static void test_open_trunc(struct ft_env *fte)
  * Expects open(3p) with O_APPEND to set the file offset to the end prior to
  * each write.
  */
-static void test_open_append_(struct ft_env *fte, loff_t off, size_t len)
+static void test_open_append_(struct ft_env *fte, off_t off, size_t len)
 {
 	struct stat st = { .st_size = -1 };
 	void *buf = ft_new_buf_zeros(fte, len);

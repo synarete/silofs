@@ -41,7 +41,7 @@ struct silofs_walk_iter {
 	struct silofs_spleaf_info *sli;
 	enum silofs_height         height;
 	enum silofs_mtype          vspace;
-	loff_t                     voff;
+	off_t                      voff;
 };
 
 struct silofs_visitor {

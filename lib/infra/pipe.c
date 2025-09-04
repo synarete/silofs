@@ -220,12 +220,12 @@ static size_t pipe_avail(const struct silofs_pipe *pipe)
 	return (size_t)(pipe->size - pipe->pend);
 }
 
-int silofs_pipe_splice_from_fd(struct silofs_pipe *pipe, int fd, loff_t *off,
+int silofs_pipe_splice_from_fd(struct silofs_pipe *pipe, int fd, off_t *off,
                                size_t len, unsigned int flags)
 {
 	size_t cnt;
 	size_t nsp = 0;
-	loff_t off_in = (off != nullptr) ? *off : 0;
+	off_t off_in = (off != nullptr) ? *off : 0;
 	const int fd_in = pipe->fd[1];
 	int err;
 
@@ -276,10 +276,10 @@ int silofs_pipe_vmsplice_from_iov(struct silofs_pipe *pipe,
 	return 0;
 }
 
-int silofs_pipe_splice_to_fd(struct silofs_pipe *pipe, int fd, loff_t *off,
+int silofs_pipe_splice_to_fd(struct silofs_pipe *pipe, int fd, off_t *off,
                              size_t len, unsigned int flags)
 {
-	loff_t off_out = (off != nullptr) ? *off : 0;
+	off_t off_out = (off != nullptr) ? *off : 0;
 	size_t cnt = 0;
 	size_t nsp = 0;
 	const int fd_in = pipe->fd[0];
@@ -410,7 +410,7 @@ int silofs_pipe_dispose(struct silofs_pipe *pipe,
 }
 
 int silofs_pipe_kcopy_by_splice(struct silofs_pipe *pipe, int fd_in,
-                                loff_t *off_in, int fd_out, loff_t *off_out,
+                                off_t *off_in, int fd_out, off_t *off_out,
                                 size_t len, unsigned int flags)
 {
 	int err;

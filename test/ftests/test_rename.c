@@ -482,7 +482,7 @@ static void test_rename_override_(struct ft_env *fte, size_t cnt, size_t bsz)
 		ft_creat(src_path1, 0600, &fd);
 		ft_close(fd);
 		ft_creat(tgt_path1, 0600, &fd);
-		ft_pwriten(fd, buf, bsz, (loff_t)i);
+		ft_pwriten(fd, buf, bsz, (off_t)i);
 		ft_close(fd);
 	}
 	for (size_t i = 0; i < cnt; ++i) {

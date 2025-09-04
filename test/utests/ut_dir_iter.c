@@ -150,7 +150,7 @@ ut_dir_iter_names_(struct ut_env *ute, const char *names[], size_t nnames)
 {
 	ino_t ino;
 	ino_t dino;
-	loff_t doff = 0;
+	off_t doff = 0;
 	size_t dcnt = 0;
 	const char *name = nullptr;
 	const char *dname = UT_NAME;
@@ -265,7 +265,7 @@ static void ut_dir_iter_links_(struct ut_env *ute, size_t cnt)
 	const char *dname2 = "AAA";
 	const struct ut_dirent_info *dei = nullptr;
 	struct ut_readdir_ctx *rd_ctx = nullptr;
-	loff_t doff = -1;
+	off_t doff = -1;
 	ino_t dino = 0;
 	ino_t dino2 = 0;
 	ino_t ino = 0;
@@ -328,7 +328,7 @@ static void ut_dir_iter_unlink_(struct ut_env *ute, size_t cnt)
 	const struct ut_dirent_info *dei = nullptr;
 	const char *fname = nullptr;
 	const char *dname = UT_NAME;
-	loff_t doff = 0;
+	off_t doff = 0;
 	size_t nde = 0;
 	ino_t dino = 0;
 	ino_t ino = 0;
@@ -374,7 +374,7 @@ static void ut_dir_iter_plus_(struct ut_env *ute, size_t cnt)
 	const struct ut_dirent_info *dei = nullptr;
 	const char *name = nullptr;
 	const char *dname = UT_NAME;
-	loff_t doff = 0;
+	off_t doff = 0;
 	ino_t dino = 0;
 	ino_t ino = 0;
 	uint8_t x = 1;
@@ -385,7 +385,7 @@ static void ut_dir_iter_plus_(struct ut_env *ute, size_t cnt)
 	for (size_t i = 0; i < cnt; ++i) {
 		name = ut_make_name(ute, dname, i);
 		ut_create_file(ute, dino, name, &ino);
-		ut_write_read(ute, ino, &x, 1, (loff_t)i);
+		ut_write_read(ute, ino, &x, 1, (off_t)i);
 		ut_release_file(ute, ino);
 	}
 	doff = 0;

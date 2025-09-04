@@ -25,7 +25,7 @@
 static void test_tmpfile_simple(struct ft_env *fte)
 {
 	int fd = -1;
-	loff_t pos = -1;
+	off_t pos = -1;
 	size_t dat = 0;
 	size_t nwr = 0;
 	size_t nrd = 0;

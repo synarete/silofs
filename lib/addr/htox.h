@@ -68,14 +68,14 @@ static inline ino_t silofs_ino_to_cpu(uint64_t ino)
 	return (ino_t)silofs_le64_to_cpu(ino);
 }
 
-static inline int64_t silofs_cpu_to_off(loff_t off)
+static inline int64_t silofs_cpu_to_off(off_t off)
 {
 	return (int64_t)silofs_cpu_to_le64((uint64_t)off);
 }
 
-static inline loff_t silofs_off_to_cpu(int64_t off)
+static inline off_t silofs_off_to_cpu(int64_t off)
 {
-	return (loff_t)silofs_le64_to_cpu((uint64_t)off);
+	return (off_t)silofs_le64_to_cpu((uint64_t)off);
 }
 
 static inline uint64_t silofs_cpu_to_time(time_t tm)

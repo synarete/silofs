@@ -46,9 +46,9 @@ struct silofs_file_ctx {
 	struct silofs_rwiter_ctx *rwi_ctx;
 	struct fiemap *fm;
 	size_t len;
-	loff_t beg;
-	loff_t off;
-	loff_t end;
+	off_t beg;
+	off_t off;
+	off_t end;
 	int op_mask;
 	int fl_mode;
 	int fm_flags;
@@ -65,7 +65,7 @@ struct silofs_fileaf_ref {
 	struct silofs_vaddr vaddr;
 	const struct silofs_inode_info *ii;
 	struct silofs_finode_info *parent_fni;
-	loff_t file_pos;
+	off_t file_pos;
 	size_t slot_idx;
 	size_t leaf_size;
 	bool head1;
@@ -111,109 +111,109 @@ static bool ii_isftype2(const struct silofs_inode_info *ii)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static loff_t silofs_off_max3(loff_t off1, loff_t off2, loff_t off3)
+static off_t silofs_off_max3(off_t off1, off_t off2, off_t off3)
 {
 	return silofs_off_max(silofs_off_max(off1, off2), off3);
 }
 
-static loff_t off_clamp(loff_t off1, loff_t off2, loff_t off3)
+static off_t off_clamp(off_t off1, off_t off2, off_t off3)
 {
 	return silofs_off_min(silofs_off_max(off1, off2), off3);
 }
 
-static bool off_is_within(loff_t off, loff_t beg, loff_t end)
+static bool off_is_within(off_t off, off_t beg, off_t end)
 {
 	return (beg <= off) && (off < end);
 }
 
-static bool off_is_lbk_aligned(loff_t off)
+static bool off_is_lbk_aligned(off_t off)
 {
 	return (off % SILOFS_LBK_SIZE) == 0;
 }
 
-static loff_t off_in_data(loff_t off, enum silofs_mtype mtype)
+static off_t off_in_data(off_t off, enum silofs_mtype mtype)
 {
 	const ssize_t len = silofs_mtype_ssize(mtype);
 
 	return likely(len > 0) ? off % len : off;
 }
 
-static size_t len_to_next(loff_t off, enum silofs_mtype mtype)
+static size_t len_to_next(off_t off, enum silofs_mtype mtype)
 {
 	const ssize_t len = silofs_mtype_ssize(mtype);
-	const loff_t next = likely(len > 0) ? silofs_off_next(off, len) : off;
+	const off_t next = likely(len > 0) ? silofs_off_next(off, len) : off;
 
 	return silofs_off_ulen(off, next);
 }
 
-static size_t len_of_data(loff_t off, loff_t end, enum silofs_mtype mtype)
+static size_t len_of_data(off_t off, off_t end, enum silofs_mtype mtype)
 {
 	const ssize_t len = silofs_mtype_ssize(mtype);
-	const loff_t next = likely(len > 0) ? silofs_off_next(off, len) : off;
+	const off_t next = likely(len > 0) ? silofs_off_next(off, len) : off;
 
 	return (next < end) ? silofs_off_ulen(off, next) :
 	                      silofs_off_ulen(off, end);
 }
 
-static bool off_is_partial(loff_t off, loff_t end, enum silofs_mtype mtype)
+static bool off_is_partial(off_t off, off_t end, enum silofs_mtype mtype)
 {
 	const ssize_t len = silofs_mtype_ssize(mtype);
-	const loff_t beg = likely(len > 0) ? silofs_off_align(off, len) : off;
+	const off_t beg = likely(len > 0) ? silofs_off_align(off, len) : off;
 	const ssize_t io_len = silofs_off_len(off, end);
 
 	return (off != beg) || (io_len < len);
 }
 
-static bool off_is_partial_head1(loff_t off, loff_t end)
+static bool off_is_partial_head1(off_t off, off_t end)
 {
 	return off_is_partial(off, end, SILOFS_MTYPE_DATA1K);
 }
 
-static bool off_is_partial_head2(loff_t off, loff_t end)
+static bool off_is_partial_head2(off_t off, off_t end)
 {
 	return off_is_partial(off, end, SILOFS_MTYPE_DATA4K);
 }
 
-static bool off_is_partial_leaf(loff_t off, loff_t end)
+static bool off_is_partial_leaf(off_t off, off_t end)
 {
 	return off_is_partial(off, end, SILOFS_MTYPE_DATABK);
 }
 
-static loff_t off_head1_end_of(size_t slot)
+static off_t off_head1_end_of(size_t slot)
 {
 	const size_t leaf_size = SILOFS_FILE_HEAD1_LEAF_SIZE;
 
 	return silofs_off_end(0, (slot + 1) * leaf_size);
 }
 
-static loff_t off_head1_max(void)
+static off_t off_head1_max(void)
 {
 	return off_head1_end_of(SILOFS_FILE_HEAD1_NLEAF - 1);
 }
 
-static loff_t off_head2_end_of(size_t slot)
+static off_t off_head2_end_of(size_t slot)
 {
 	const size_t leaf_size = (size_t)SILOFS_FILE_HEAD2_LEAF_SIZE;
 
 	return silofs_off_end(off_head1_max(), (slot + 1) * leaf_size);
 }
 
-static loff_t off_head2_max(void)
+static off_t off_head2_max(void)
 {
 	return off_head2_end_of(SILOFS_FILE_HEAD2_NLEAF - 1);
 }
 
-static bool off_is_head1(loff_t off)
+static bool off_is_head1(off_t off)
 {
 	return off_is_within(off, 0, off_head1_max());
 }
 
-static bool off_is_head2(loff_t off)
+static bool off_is_head2(off_t off)
 {
 	return off_is_within(off, off_head1_max(), off_head2_max());
 }
 
-static size_t off_to_head1_slot(loff_t off)
+static size_t off_to_head1_slot(off_t off)
 {
 	const size_t slot_size = SILOFS_FILE_HEAD1_LEAF_SIZE;
 	size_t slot;
@@ -225,14 +225,14 @@ static size_t off_to_head1_slot(loff_t off)
 	return slot;
 }
 
-static size_t off_to_head2_slot(loff_t off)
+static size_t off_to_head2_slot(off_t off)
 {
 	const size_t slot_size = (size_t)SILOFS_FILE_HEAD2_LEAF_SIZE;
 
 	return (size_t)(off - off_head1_max()) / slot_size;
 }
 
-static size_t off_to_leaf_slot(loff_t off)
+static size_t off_to_leaf_slot(off_t off)
 {
 	const size_t slot_size = SILOFS_FILE_TREE_LEAF_SIZE;
 	const size_t nchilds = SILOFS_FILE_NODE_NCHILDS;
@@ -240,12 +240,12 @@ static size_t off_to_leaf_slot(loff_t off)
 	return ((size_t)off / slot_size) % nchilds;
 }
 
-static size_t off_to_tree_height(loff_t off)
+static size_t off_to_tree_height(off_t off)
 {
 	const long leaf_size = SILOFS_FILE_TREE_LEAF_SIZE;
 	const int shift = SILOFS_FILE_MAP_SHIFT;
 	size_t height = 2;
-	loff_t xpos;
+	off_t xpos;
 
 	/* TODO: count bits */
 	if (off > leaf_size) {
@@ -333,7 +333,7 @@ static size_t fli_data_len(const struct silofs_fileaf_info *fli)
 	return silofs_mtype_size(fli_mtype(fli));
 }
 
-static void *fli_data_at(const struct silofs_fileaf_info *fli, loff_t pos)
+static void *fli_data_at(const struct silofs_fileaf_info *fli, off_t pos)
 {
 	size_t dat_size = 0;
 	uint8_t *dat_base = nullptr;
@@ -358,13 +358,13 @@ static void *fli_data_at(const struct silofs_fileaf_info *fli, loff_t pos)
 	return &dat_base[pos];
 }
 
-static loff_t fli_off_within(const struct silofs_fileaf_info *fli, loff_t off)
+static off_t fli_off_within(const struct silofs_fileaf_info *fli, off_t off)
 {
 	return off_in_data(off, fli_mtype(fli));
 }
 
 static size_t
-fli_len_within(const struct silofs_fileaf_info *fli, loff_t off, loff_t end)
+fli_len_within(const struct silofs_fileaf_info *fli, off_t off, off_t end)
 {
 	return len_of_data(off, end, fli_mtype(fli));
 }
@@ -427,22 +427,22 @@ static void ftn_set_ino(struct silofs_ftree_node *ftn, ino_t ino)
 	ftn->fn_ino = silofs_cpu_to_ino(ino);
 }
 
-static loff_t ftn_beg(const struct silofs_ftree_node *ftn)
+static off_t ftn_beg(const struct silofs_ftree_node *ftn)
 {
 	return silofs_off_to_cpu(ftn->fn_beg);
 }
 
-static void ftn_set_beg(struct silofs_ftree_node *ftn, loff_t beg)
+static void ftn_set_beg(struct silofs_ftree_node *ftn, off_t beg)
 {
 	ftn->fn_beg = silofs_cpu_to_off(beg);
 }
 
-static loff_t ftn_end(const struct silofs_ftree_node *ftn)
+static off_t ftn_end(const struct silofs_ftree_node *ftn)
 {
 	return silofs_off_to_cpu(ftn->fn_end);
 }
 
-static void ftn_set_end(struct silofs_ftree_node *ftn, loff_t end)
+static void ftn_set_end(struct silofs_ftree_node *ftn, off_t end)
 {
 	ftn->fn_end = silofs_cpu_to_off(end);
 }
@@ -478,7 +478,7 @@ static size_t ftn_nbytes_per_slot(const struct silofs_ftree_node *ftn)
 }
 
 static size_t
-ftn_slot_by_file_pos(const struct silofs_ftree_node *ftn, loff_t file_pos)
+ftn_slot_by_file_pos(const struct silofs_ftree_node *ftn, off_t file_pos)
 {
 	const size_t nslots = ftn_nchilds_max(ftn);
 	const int shift = SILOFS_FILE_MAP_SHIFT;
@@ -500,16 +500,16 @@ ftn_slot_by_file_pos(const struct silofs_ftree_node *ftn, loff_t file_pos)
 	return slot;
 }
 
-static loff_t ftn_child(const struct silofs_ftree_node *ftn, size_t slot)
+static off_t ftn_child(const struct silofs_ftree_node *ftn, size_t slot)
 {
-	loff_t off = 0;
+	off_t off = 0;
 
 	silofs_vaddr56_xtoh(&ftn->fn_child[slot], &off);
 	return off;
 }
 
 static void
-ftn_set_child(struct silofs_ftree_node *ftn, size_t slot, loff_t off)
+ftn_set_child(struct silofs_ftree_node *ftn, size_t slot, off_t off)
 {
 	silofs_vaddr56_htox(&ftn->fn_child[slot], off);
 }
@@ -521,7 +521,7 @@ static void ftn_reset_child(struct silofs_ftree_node *ftn, size_t slot)
 
 static bool ftn_has_child_at(const struct silofs_ftree_node *ftn, size_t slot)
 {
-	const loff_t voff = ftn_child(ftn, slot);
+	const off_t voff = ftn_child(ftn, slot);
 
 	return !silofs_off_isnull(voff);
 }
@@ -548,7 +548,7 @@ static void ftn_dec_nactive_childs(struct silofs_ftree_node *ftn)
 	ftn_set_nactive_childs(ftn, ftn_nactive_childs(ftn) - 1);
 }
 
-static bool ftn_isinrange(const struct silofs_ftree_node *ftn, loff_t pos)
+static bool ftn_isinrange(const struct silofs_ftree_node *ftn, off_t pos)
 {
 	return off_is_within(pos, ftn_beg(ftn), ftn_end(ftn));
 }
@@ -576,11 +576,11 @@ ftn_child_mtype_by_height(const struct silofs_ftree_node *ftn, size_t height,
 	silofs_unused(ftn);
 }
 
-static loff_t
+static off_t
 ftn_span_by_height(const struct silofs_ftree_node *ftn, size_t height)
 {
-	loff_t span = 0;
-	const loff_t bk_size = SILOFS_FILE_TREE_LEAF_SIZE;
+	off_t span = 0;
+	const off_t bk_size = SILOFS_FILE_TREE_LEAF_SIZE;
 	const size_t fm_shift = SILOFS_FILE_MAP_SHIFT;
 	const size_t height_max = SILOFS_FILE_HEIGHT_MAX;
 
@@ -591,28 +591,28 @@ ftn_span_by_height(const struct silofs_ftree_node *ftn, size_t height)
 	return likely(span) ? span : LONG_MAX; /* make clang-scan happy */
 }
 
-static void ftn_calc_range(const struct silofs_ftree_node *ftn, loff_t off,
-                           size_t height, loff_t *beg, loff_t *end)
+static void ftn_calc_range(const struct silofs_ftree_node *ftn, off_t off,
+                           size_t height, off_t *beg, off_t *end)
 {
-	const loff_t span = ftn_span_by_height(ftn, height);
+	const off_t span = ftn_span_by_height(ftn, height);
 
 	*beg = silofs_off_align(off, span);
 	*end = *beg + span;
 }
 
-static loff_t ftn_file_pos(const struct silofs_ftree_node *ftn, size_t slot)
+static off_t ftn_file_pos(const struct silofs_ftree_node *ftn, size_t slot)
 {
-	loff_t next_off;
+	off_t next_off;
 	const size_t nbps = ftn_nbytes_per_slot(ftn);
 
 	next_off = silofs_off_end(ftn_beg(ftn), slot * nbps);
 	return silofs_off_align_to_lbk(next_off);
 }
 
-static loff_t
+static off_t
 ftn_next_file_pos(const struct silofs_ftree_node *ftn, size_t slot)
 {
-	loff_t file_pos;
+	off_t file_pos;
 	const size_t nbps = ftn_nbytes_per_slot(ftn);
 
 	file_pos = ftn_file_pos(ftn, slot);
@@ -628,8 +628,8 @@ static void ftn_init_null_childs(struct silofs_ftree_node *ftn)
 	}
 }
 
-static void ftn_init(struct silofs_ftree_node *ftn, ino_t ino, loff_t beg,
-                     loff_t end, size_t height, enum silofs_mtype child_mtype)
+static void ftn_init(struct silofs_ftree_node *ftn, ino_t ino, off_t beg,
+                     off_t end, size_t height, enum silofs_mtype child_mtype)
 {
 	ftn_set_refcnt(ftn, 0);
 	ftn_set_ino(ftn, ino);
@@ -642,11 +642,11 @@ static void ftn_init(struct silofs_ftree_node *ftn, ino_t ino, loff_t beg,
 	silofs_memzero(ftn->fn_zeros, sizeof(ftn->fn_zeros));
 }
 
-static void ftn_init_by(struct silofs_ftree_node *ftn, ino_t ino, loff_t off,
-                        size_t height)
+static void
+ftn_init_by(struct silofs_ftree_node *ftn, ino_t ino, off_t off, size_t height)
 {
-	loff_t beg;
-	loff_t end;
+	off_t beg;
+	off_t end;
 	enum silofs_mtype child_mtype;
 
 	ftn_child_mtype_by_height(ftn, height, &child_mtype);
@@ -775,8 +775,7 @@ fni_vaddr(const struct silofs_finode_info *fni)
 	return silofs_vni_vaddr(&fni->fn_vni);
 }
 
-static bool
-fni_isinrange(const struct silofs_finode_info *fni, loff_t file_pos)
+static bool fni_isinrange(const struct silofs_finode_info *fni, off_t file_pos)
 {
 	return ftn_isinrange(fni->ftn, file_pos);
 }
@@ -797,7 +796,7 @@ static size_t fni_nchilds_max(const struct silofs_finode_info *fni)
 }
 
 static size_t
-fni_child_slot_of(const struct silofs_finode_info *fni, loff_t off)
+fni_child_slot_of(const struct silofs_finode_info *fni, off_t off)
 {
 	return ftn_slot_by_file_pos(fni->ftn, off);
 }
@@ -806,7 +805,7 @@ static void fni_assign_child_at(struct silofs_finode_info *fni, size_t slot,
                                 const struct silofs_vaddr *vaddr)
 {
 	struct silofs_ftree_node *ftn = fni->ftn;
-	const loff_t voff = vaddr->off;
+	const off_t voff = vaddr->off;
 
 	if (!ftn_has_child_at(ftn, slot)) {
 		if (!silofs_off_isnull(voff)) {
@@ -825,7 +824,7 @@ static void fni_assign_child_at(struct silofs_finode_info *fni, size_t slot,
 	}
 }
 
-static void fni_assign_child_by_pos(struct silofs_finode_info *fni, loff_t pos,
+static void fni_assign_child_by_pos(struct silofs_finode_info *fni, off_t pos,
                                     const struct silofs_vaddr *vaddr)
 {
 	size_t child_slot;
@@ -835,7 +834,7 @@ static void fni_assign_child_by_pos(struct silofs_finode_info *fni, loff_t pos,
 }
 
 static void fni_bind_child(struct silofs_finode_info *parent_fni,
-                           loff_t file_pos, const struct silofs_vaddr *vaddr)
+                           off_t file_pos, const struct silofs_vaddr *vaddr)
 {
 	if (parent_fni != nullptr) {
 		silofs_assert(!silofs_vaddr_isnull(vaddr));
@@ -844,7 +843,7 @@ static void fni_bind_child(struct silofs_finode_info *parent_fni,
 }
 
 static void fni_bind_finode(struct silofs_finode_info *parent_fni,
-                            loff_t file_pos, struct silofs_finode_info *fni)
+                            off_t file_pos, struct silofs_finode_info *fni)
 {
 	fni_bind_child(parent_fni, file_pos, fni_vaddr(fni));
 	ftn_inc_refcnt(fni->ftn);
@@ -861,7 +860,7 @@ fni_clear_subtree_mappings(struct silofs_finode_info *fni, size_t slot)
 
 static void
 fni_setup(struct silofs_finode_info *fni, const struct silofs_inode_info *ii,
-          loff_t off, size_t height)
+          off_t off, size_t height)
 {
 	ftn_init_by(fni->ftn, silofs_ii_ino(ii), off, height);
 }
@@ -870,7 +869,7 @@ static void fni_resolve_child_by_slot(const struct silofs_finode_info *fni,
                                       size_t slot, struct silofs_vaddr *vaddr)
 {
 	const struct silofs_ftree_node *ftn = fni->ftn;
-	const loff_t off = ftn_child(ftn, slot);
+	const off_t off = ftn_child(ftn, slot);
 
 	silofs_vaddr_setup(vaddr, ftn_child_mtype(ftn), off);
 }
@@ -898,7 +897,7 @@ static void filc_iovec_by_fileaf(const struct silofs_file_ctx *f_ctx,
                                  struct silofs_fileaf_info *fli, bool all,
                                  struct silofs_iovec *out_iov)
 {
-	loff_t off_within;
+	off_t off_within;
 	size_t len;
 
 	if (all) {
@@ -960,7 +959,7 @@ static void
 flref_setup(struct silofs_fileaf_ref *flref,
             const struct silofs_inode_info *ii,
             struct silofs_finode_info *parent_fni,
-            const struct silofs_vaddr *vaddr, loff_t file_pos, loff_t io_end)
+            const struct silofs_vaddr *vaddr, off_t file_pos, off_t io_end)
 {
 	const bool ftype2 = ii_isftype2(ii);
 
@@ -995,7 +994,7 @@ flref_setup(struct silofs_fileaf_ref *flref,
 
 static void
 flref_noent(struct silofs_fileaf_ref *flref,
-            const struct silofs_inode_info *ii, loff_t file_pos, loff_t io_end)
+            const struct silofs_inode_info *ii, off_t file_pos, off_t io_end)
 {
 	flref_setup(flref, ii, nullptr, silofs_vaddr_none(), file_pos, io_end);
 }
@@ -1016,7 +1015,7 @@ static bool filc_ftype1_mode(const struct silofs_file_ctx *f_ctx)
 
 static void
 filc_resolve_child_at(const struct silofs_file_ctx *f_ctx,
-                      struct silofs_finode_info *fni, loff_t file_pos,
+                      struct silofs_finode_info *fni, off_t file_pos,
                       size_t slot, struct silofs_fileaf_ref *out_flref)
 {
 	struct silofs_vaddr vaddr;
@@ -1026,7 +1025,7 @@ filc_resolve_child_at(const struct silofs_file_ctx *f_ctx,
 }
 
 static void filc_resolve_child(const struct silofs_file_ctx *f_ctx,
-                               struct silofs_finode_info *fni, loff_t file_pos,
+                               struct silofs_finode_info *fni, off_t file_pos,
                                struct silofs_fileaf_ref *out_flref)
 {
 	size_t slot;
@@ -1180,7 +1179,7 @@ static size_t filc_distance_to_next(const struct silofs_file_ctx *f_ctx)
 	return len_to_next(f_ctx->off, mtype);
 }
 
-static void filc_advance_to(struct silofs_file_ctx *f_ctx, loff_t off)
+static void filc_advance_to(struct silofs_file_ctx *f_ctx, off_t off)
 {
 	f_ctx->off = off_clamp(f_ctx->off, off, f_ctx->end);
 }
@@ -1244,8 +1243,8 @@ static int filc_check_isopen(const struct silofs_file_ctx *f_ctx)
 
 static int filc_check_seek_pos(const struct silofs_file_ctx *f_ctx)
 {
-	const loff_t isz = silofs_ii_size(f_ctx->ii);
-	const loff_t pos = f_ctx->off;
+	const off_t isz = silofs_ii_size(f_ctx->ii);
+	const off_t pos = f_ctx->off;
 	const int whence = f_ctx->whence;
 
 	if ((whence == SEEK_DATA) || (whence == SEEK_HOLE)) {
@@ -1258,8 +1257,8 @@ static int filc_check_seek_pos(const struct silofs_file_ctx *f_ctx)
 
 static int filc_check_io_range(const struct silofs_file_ctx *f_ctx)
 {
-	const loff_t off = f_ctx->beg;
-	const ssize_t slen = (loff_t)f_ctx->len;
+	const off_t off = f_ctx->beg;
+	const ssize_t slen = (off_t)f_ctx->len;
 	const ssize_t fsz_max = SILOFS_FILE_SIZE_MAX;
 
 	if (off < 0) {
@@ -1279,7 +1278,7 @@ static int filc_check_io_range(const struct silofs_file_ctx *f_ctx)
 
 static int filc_check_io_end(const struct silofs_file_ctx *f_ctx)
 {
-	const loff_t end = f_ctx->end;
+	const off_t end = f_ctx->end;
 	const ssize_t fsz_max = SILOFS_FILE_SIZE_MAX;
 
 	if (end < 0) {
@@ -1355,7 +1354,7 @@ static int filc_seek_tree_recursive(struct silofs_file_ctx *f_ctx,
 
 static bool filc_ismapping_boundaries(const struct silofs_file_ctx *f_ctx)
 {
-	const loff_t mapping_size =
+	const off_t mapping_size =
 		(SILOFS_FILE_TREE_LEAF_SIZE * SILOFS_FILE_NODE_NCHILDS);
 
 	return ((f_ctx->off % mapping_size) == 0);
@@ -1366,10 +1365,10 @@ filc_update_post_io(const struct silofs_file_ctx *f_ctx, bool kill_suid_sgid)
 {
 	struct silofs_iattr iattr = { .ia_size = -1 };
 	struct silofs_inode_info *ii = f_ctx->ii;
-	const loff_t isz = silofs_ii_size(ii);
-	const loff_t isp = silofs_ii_span(ii);
-	const loff_t off = f_ctx->off;
-	const loff_t end = f_ctx->end;
+	const off_t isz = silofs_ii_size(ii);
+	const off_t isp = silofs_ii_span(ii);
+	const off_t off = f_ctx->off;
+	const off_t end = f_ctx->end;
 	const size_t len = filc_io_length(f_ctx);
 
 	silofs_ii_mkiattr(ii, &iattr);
@@ -1470,7 +1469,7 @@ static void filc_dirtify_fileaf(const struct silofs_file_ctx *f_ctx,
 
 static void filc_zero_fileaf_sub(const struct silofs_file_ctx *f_ctx,
                                  struct silofs_fileaf_info *fli,
-                                 loff_t off_in_db, size_t len)
+                                 off_t off_in_db, size_t len)
 {
 	struct silofs_data_block64 *db = fli->flu.db;
 
@@ -1480,7 +1479,7 @@ static void filc_zero_fileaf_sub(const struct silofs_file_ctx *f_ctx,
 
 static int filc_zero_data_leaf_range(const struct silofs_file_ctx *f_ctx,
                                      const struct silofs_vaddr *vaddr,
-                                     loff_t off_in_bk, size_t len)
+                                     off_t off_in_bk, size_t len)
 {
 	struct silofs_fileaf_info *fli = nullptr;
 	int err;
@@ -2074,7 +2073,7 @@ static int read_iter_actor(struct silofs_rwiter_ctx *rwi,
 	return 0;
 }
 
-static loff_t rw_iter_end(const struct silofs_rwiter_ctx *rwi)
+static off_t rw_iter_end(const struct silofs_rwiter_ctx *rwi)
 {
 	return silofs_off_end(rwi->off, rwi->len);
 }
@@ -2082,8 +2081,8 @@ static loff_t rw_iter_end(const struct silofs_rwiter_ctx *rwi)
 static void filc_update_with_rw_iter(struct silofs_file_ctx *f_ctx,
                                      struct silofs_rwiter_ctx *rwi_ctx)
 {
-	const loff_t end = rw_iter_end(rwi_ctx);
-	const loff_t isz = silofs_ii_size(f_ctx->ii);
+	const off_t end = rw_iter_end(rwi_ctx);
+	const off_t isz = silofs_ii_size(f_ctx->ii);
 
 	f_ctx->rwi_ctx = rwi_ctx;
 	f_ctx->len = rwi_ctx->len;
@@ -2132,7 +2131,7 @@ int silofs_do_read_iter(struct silofs_task_ctx *task,
 }
 
 int silofs_do_read(struct silofs_task_ctx *task, struct silofs_inode_info *ii,
-                   void *buf, size_t len, loff_t off, int o_flags,
+                   void *buf, size_t len, off_t off, int o_flags,
                    size_t *out_len)
 {
 	struct silofs_read_iter rdi = {
@@ -2299,7 +2298,7 @@ static void filc_update_iblocks(const struct silofs_file_ctx *f_ctx,
 }
 
 static int
-filc_spawn_setup_finode(const struct silofs_file_ctx *f_ctx, loff_t off,
+filc_spawn_setup_finode(const struct silofs_file_ctx *f_ctx, off_t off,
                         size_t height, struct silofs_finode_info **out_fni)
 {
 	int err;
@@ -2326,7 +2325,7 @@ static int filc_spawn_bind_finode(const struct silofs_file_ctx *f_ctx,
                                   struct silofs_finode_info *parent_fni,
                                   struct silofs_finode_info **out_fni)
 {
-	const loff_t file_pos = f_ctx->off;
+	const off_t file_pos = f_ctx->off;
 	const size_t height = fni_height(parent_fni);
 	int err;
 
@@ -2891,7 +2890,7 @@ int silofs_do_write_iter(struct silofs_task_ctx *task,
 }
 
 int silofs_do_write(struct silofs_task_ctx *task, struct silofs_inode_info *ii,
-                    const void *buf, size_t len, loff_t off, int o_flags,
+                    const void *buf, size_t len, off_t off, int o_flags,
                     size_t *out_len)
 {
 	struct silofs_write_iter wri = {
@@ -3205,9 +3204,9 @@ static int filc_zero_data_leaf_range_by(const struct silofs_file_ctx *f_ctx,
                                         const struct silofs_fileaf_ref *flref)
 {
 	const struct silofs_vaddr *vaddr = &flref->vaddr;
-	const loff_t pos = flref->file_pos;
+	const off_t pos = flref->file_pos;
 	const size_t len = len_of_data(pos, f_ctx->end, vaddr->mtype);
-	const loff_t off_in_bk = off_in_data(pos, vaddr->mtype);
+	const off_t off_in_bk = off_in_data(pos, vaddr->mtype);
 	int err;
 
 	fni_incref(flref->parent_fni);
@@ -3366,7 +3365,7 @@ static int filc_discard_unused_meta(struct silofs_file_ctx *f_ctx)
 }
 
 static int
-filc_resolve_heads_end(const struct silofs_file_ctx *f_ctx, loff_t *out_end)
+filc_resolve_heads_end(const struct silofs_file_ctx *f_ctx, off_t *out_end)
 {
 	struct silofs_vaddr vaddr;
 	size_t slot;
@@ -3396,7 +3395,7 @@ out:
 }
 
 static int
-filc_resolve_tree_end(const struct silofs_file_ctx *f_ctx, loff_t *out_end)
+filc_resolve_tree_end(const struct silofs_file_ctx *f_ctx, off_t *out_end)
 {
 	struct silofs_finode_info *fni = nullptr;
 	int err;
@@ -3415,8 +3414,8 @@ filc_resolve_tree_end(const struct silofs_file_ctx *f_ctx, loff_t *out_end)
 
 static int filc_resolve_truncate_end(struct silofs_file_ctx *f_ctx)
 {
-	loff_t lend = 0;
-	loff_t tend = 0;
+	off_t lend = 0;
+	off_t tend = 0;
 	int err;
 
 	err = filc_resolve_heads_end(f_ctx, &lend);
@@ -3456,9 +3455,9 @@ static int filc_truncate(struct silofs_file_ctx *f_ctx)
 }
 
 int silofs_do_truncate(struct silofs_task_ctx *task,
-                       struct silofs_inode_info *ii, loff_t off)
+                       struct silofs_inode_info *ii, off_t off)
 {
-	const loff_t isp = silofs_ii_span(ii);
+	const off_t isp = silofs_ii_span(ii);
 	const size_t len = (off < isp) ? silofs_off_ulen(off, isp) : 0;
 	struct silofs_file_ctx f_ctx = {
 		.task = task,
@@ -3503,7 +3502,7 @@ static int filc_lseek_data_leaf(struct silofs_file_ctx *f_ctx,
 static int filc_lseek_data(struct silofs_file_ctx *f_ctx)
 {
 	struct silofs_fileaf_ref flref;
-	loff_t isz;
+	off_t isz;
 	int err;
 
 	isz = silofs_ii_size(f_ctx->ii);
@@ -3534,7 +3533,7 @@ static int filc_lseek_hole_noleaf(struct silofs_file_ctx *f_ctx,
 static int filc_lseek_hole(struct silofs_file_ctx *f_ctx)
 {
 	struct silofs_fileaf_ref flref = { .file_pos = -1 };
-	loff_t isz;
+	off_t isz;
 	int err;
 
 	isz = silofs_ii_size(f_ctx->ii);
@@ -3572,7 +3571,7 @@ static int filc_lseek(struct silofs_file_ctx *f_ctx)
 }
 
 int silofs_do_lseek(struct silofs_task_ctx *task, struct silofs_inode_info *ii,
-                    loff_t off, int whence, loff_t *out_off)
+                    off_t off, int whence, off_t *out_off)
 {
 	struct silofs_file_ctx f_ctx = {
 		.task = task,
@@ -3836,8 +3835,8 @@ static int filc_fallocate(struct silofs_file_ctx *f_ctx)
 }
 
 int silofs_do_fallocate(struct silofs_task_ctx *task,
-                        struct silofs_inode_info *ii, int mode, loff_t off,
-                        loff_t len)
+                        struct silofs_inode_info *ii, int mode, off_t off,
+                        off_t len)
 {
 	struct silofs_file_ctx f_ctx = {
 		.task = task,
@@ -3866,7 +3865,7 @@ static bool filc_emit_fiemap_ext(struct silofs_file_ctx *f_ctx,
                                  const struct silofs_vaddr *vaddr)
 {
 	size_t len;
-	loff_t end;
+	off_t end;
 	size_t dsz;
 	struct fiemap_extent *fm_ext;
 	struct fiemap *fm = f_ctx->fm;
@@ -4018,11 +4017,11 @@ static int filc_fiemap(struct silofs_file_ctx *f_ctx)
 	return 0;
 }
 
-static loff_t
-ii_silofs_off_end(const struct silofs_inode_info *ii, loff_t off, size_t len)
+static off_t
+ii_silofs_off_end(const struct silofs_inode_info *ii, off_t off, size_t len)
 {
-	const loff_t end = silofs_off_end(off, len);
-	const loff_t isz = silofs_ii_size(ii);
+	const off_t end = silofs_off_end(off, len);
+	const off_t isz = silofs_ii_size(ii);
 
 	return silofs_off_min(end, isz);
 }
@@ -4030,7 +4029,7 @@ ii_silofs_off_end(const struct silofs_inode_info *ii, loff_t off, size_t len)
 int silofs_do_fiemap(struct silofs_task_ctx *task,
                      struct silofs_inode_info *ii, struct fiemap *fm)
 {
-	const loff_t off = (loff_t)fm->fm_start;
+	const off_t off = (off_t)fm->fm_start;
 	const size_t len = (size_t)fm->fm_length;
 	struct silofs_file_ctx f_ctx = {
 		.task = task,
@@ -4105,7 +4104,7 @@ filc_do_resolve_fpos_recursive(struct silofs_file_ctx *f_ctx,
                                struct silofs_finode_info *parent_fni,
                                struct silofs_fileaf_ref *out_flref)
 {
-	const loff_t off = f_ctx->off;
+	const off_t off = f_ctx->off;
 	size_t slot;
 
 	if (!fni_isinrange(parent_fni, off)) {
@@ -4575,8 +4574,8 @@ static int filc_check_copy_range(const struct silofs_file_ctx *f_ctx_src,
                                  const struct silofs_file_ctx *f_ctx_dst)
 {
 	const long len = (long)(f_ctx_dst->len);
-	const loff_t off_src = f_ctx_src->off;
-	const loff_t off_dst = f_ctx_dst->off;
+	const off_t off_src = f_ctx_src->off;
+	const off_t off_dst = f_ctx_dst->off;
 	int err;
 
 	err = filc_check_file_io(f_ctx_src);
@@ -4596,7 +4595,7 @@ static int filc_check_copy_range(const struct silofs_file_ctx *f_ctx_src,
 }
 
 static int
-filc_lseek_data_pos(const struct silofs_file_ctx *f_ctx, loff_t *out_off)
+filc_lseek_data_pos(const struct silofs_file_ctx *f_ctx, off_t *out_off)
 {
 	struct silofs_fileaf_ref flref = {
 		.file_pos = -1,
@@ -4634,8 +4633,8 @@ static ssize_t min3(ssize_t a, ssize_t b, ssize_t c)
 static int filc_set_copy_range_start(struct silofs_file_ctx *f_ctx_src,
                                      struct silofs_file_ctx *f_ctx_dst)
 {
-	loff_t off_data_src = 0;
-	loff_t off_data_dst = 0;
+	off_t off_data_src = 0;
+	off_t off_data_dst = 0;
 	ssize_t skip_src = 0;
 	ssize_t skip_dst = 0;
 	ssize_t skip = 0;
@@ -4705,8 +4704,8 @@ static int filc_copy_range(struct silofs_file_ctx *f_ctx_src,
 
 int silofs_do_copy_file_range(struct silofs_task_ctx *task,
                               struct silofs_inode_info *ii_in,
-                              struct silofs_inode_info *ii_out, loff_t off_in,
-                              loff_t off_out, size_t len, int flags,
+                              struct silofs_inode_info *ii_out, off_t off_in,
+                              off_t off_out, size_t len, int flags,
                               size_t *out_ncp)
 {
 	struct silofs_file_ctx f_ctx_src = {
@@ -4761,8 +4760,8 @@ void silofs_ii_setup_reg(struct silofs_inode_info *ii)
 
 int silofs_verify_ftree_node(const struct silofs_ftree_node *ftn)
 {
-	loff_t spbh;
-	const loff_t span = ftn_span(ftn);
+	off_t spbh;
+	const off_t span = ftn_span(ftn);
 	const size_t height = ftn_height(ftn);
 	enum silofs_mtype child_mtype;
 	enum silofs_mtype expect_mtype;

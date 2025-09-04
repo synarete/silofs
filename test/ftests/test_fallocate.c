@@ -53,7 +53,7 @@ static void test_fallocate_basic(struct ft_env *fte)
 /*
  * Expects fallocate(2) to successfully allocate space for file's sub-ranges.
  */
-static void test_fallocate_(struct ft_env *fte, loff_t off, size_t ulen)
+static void test_fallocate_(struct ft_env *fte, off_t off, size_t ulen)
 {
 	struct stat st = { .st_size = -1 };
 	const char *path = ft_new_path_unique(fte);
@@ -106,7 +106,7 @@ static void test_fallocate_unaligned(struct ft_env *fte)
 /*
  * Expects fallocate(2) to report allocated space as zero
  */
-static void test_fallocate_zeros_(struct ft_env *fte, loff_t off, size_t ulen)
+static void test_fallocate_zeros_(struct ft_env *fte, off_t off, size_t ulen)
 {
 	struct stat st = { .st_size = -1 };
 	const char *path = ft_new_path_unique(fte);
@@ -157,12 +157,12 @@ static void test_fallocate_zeros(struct ft_env *fte)
  * Expects fallocate(2) and ftruncate(2) to be synchronized.
  */
 static void
-test_fallocate_truncate_(struct ft_env *fte, loff_t off, size_t ulen)
+test_fallocate_truncate_(struct ft_env *fte, off_t off, size_t ulen)
 {
 	const char *path = ft_new_path_unique(fte);
 	const ssize_t len = (ssize_t)ulen;
-	const loff_t mid = off + (len / 2);
-	const loff_t end = off + len;
+	const off_t mid = off + (len / 2);
+	const off_t end = off + len;
 	int fd = -1;
 	uint16_t abcd = 0xABCD;
 	uint8_t byte = 1;
@@ -216,7 +216,7 @@ static void test_fallocate_truncate(struct ft_env *fte)
 /*
  * Expects successful fallocate(2) beyond end-of-file.
  */
-static void test_fallocate_beyond_(struct ft_env *fte, loff_t off, size_t len)
+static void test_fallocate_beyond_(struct ft_env *fte, off_t off, size_t len)
 {
 	struct stat st = { .st_size = -1 };
 	const char *path = ft_new_path_unique(fte);
@@ -292,22 +292,22 @@ static void test_fallocate_beyond(struct ft_env *fte)
  * Expects fallocate(2) with FALLOC_FL_PUNCH_HOLE to return zeros on hole
  */
 static void
-test_fallocate_punch_hole_(struct ft_env *fte, loff_t data_off,
-                           size_t data_len, loff_t hole_off, size_t hole_len)
+test_fallocate_punch_hole_(struct ft_env *fte, off_t data_off, size_t data_len,
+                           off_t hole_off, size_t hole_len)
 {
 	const void *buf = ft_new_buf_rands(fte, data_len);
 	const char *path = ft_new_path_unique(fte);
 	const int mode = FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE;
-	loff_t pos = 0;
+	off_t pos = 0;
 	int fd = -1;
 	uint8_t byte;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_pwriten(fd, buf, data_len, data_off);
-	ft_fallocate(fd, mode, hole_off, (loff_t)hole_len);
+	ft_fallocate(fd, mode, hole_off, (off_t)hole_len);
 	ft_preadn(fd, &byte, 1, hole_off);
 	ft_expect_eq(byte, 0);
-	pos = hole_off + (loff_t)(hole_len - 1);
+	pos = hole_off + (off_t)(hole_len - 1);
 	ft_preadn(fd, &byte, 1, pos);
 	ft_expect_eq(byte, 0);
 	ft_close(fd);
@@ -327,14 +327,13 @@ static void test_fallocate_punch_hole(struct ft_env *fte)
 /*
  * Tests fallocate(2) with FALLOC_FL_PUNCH_HOLE on various corner cases
  */
-static void
-test_fallocate_punch_into_hole_(struct ft_env *fte, loff_t base_off)
+static void test_fallocate_punch_into_hole_(struct ft_env *fte, off_t base_off)
 {
 	struct stat st[2];
 	const size_t size = FT_1M;
-	const loff_t zlen = FT_1M / 4;
-	const loff_t off = base_off;
-	const loff_t off_end = base_off + (loff_t)size;
+	const off_t zlen = FT_1M / 4;
+	const off_t off = base_off;
+	const off_t off_end = base_off + (off_t)size;
 	void *buf1 = ft_new_buf_rands(fte, size);
 	void *buf2 = ft_new_buf_zeros(fte, size);
 	void *buf3 = ft_new_buf_rands(fte, size);
@@ -370,7 +369,7 @@ test_fallocate_punch_into_hole_(struct ft_env *fte, loff_t base_off)
 
 static void test_fallocate_punch_into_hole(struct ft_env *fte)
 {
-	const loff_t off[] = {
+	const off_t off[] = {
 		0,
 		FT_1M,
 		FT_1M - 1,
@@ -391,17 +390,17 @@ static void test_fallocate_punch_into_allocated(struct ft_env *fte)
 {
 	const size_t size = FT_1M;
 	const size_t nzeros = FT_64K;
-	const loff_t off = (loff_t)nzeros;
+	const off_t off = (off_t)nzeros;
 	const char *path = ft_new_path_unique(fte);
 	char *buf1 = ft_new_buf_rands(fte, size);
 	char *buf2 = ft_new_buf_zeros(fte, size);
 	const int mode = FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE;
 	size_t nrd = 0;
-	loff_t pos = -1;
+	off_t pos = -1;
 	int fd = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
-	ft_ftruncate(fd, (loff_t)size);
+	ft_ftruncate(fd, (off_t)size);
 	ft_pwriten(fd, buf2, nzeros, off);
 	ft_preadn(fd, buf1, size, 0);
 	ft_expect_eqm(buf1, buf2, size);
@@ -423,7 +422,7 @@ static void test_fallocate_punch_into_allocated(struct ft_env *fte)
  * with/without FALLOC_FL_KEEP_SIZE.
  */
 static void
-test_fallocate_zero_range_(struct ft_env *fte, loff_t off, size_t len)
+test_fallocate_zero_range_(struct ft_env *fte, off_t off, size_t len)
 {
 	struct stat st[2];
 	const char *path = ft_new_path_unique(fte);
@@ -537,15 +536,15 @@ static void test_fallocate_zero_range(struct ft_env *fte)
  * write-on-fallocated to change none.
  */
 static void
-test_fallocate_sparse_(struct ft_env *fte, loff_t base_off, size_t step_size)
+test_fallocate_sparse_(struct ft_env *fte, off_t base_off, size_t step_size)
 {
 	struct stat st;
 	const char *path = ft_new_path_unique(fte);
 	const size_t cnt = 1024;
 	blkcnt_t blocks = 0;
-	loff_t off = -1;
-	loff_t len = 0;
-	loff_t tmp = 0;
+	off_t off = -1;
+	off_t len = 0;
+	off_t tmp = 0;
 	int fd = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);

@@ -79,7 +79,7 @@ static void test_create_unlink(struct ft_env *fte)
 /*
  * Expects success for sequence of creat(3p) plus pwrite(3p) of regular file.
  */
-static void test_create_pwrite_(struct ft_env *fte, loff_t off, size_t len)
+static void test_create_pwrite_(struct ft_env *fte, off_t off, size_t len)
 {
 	void *buf = ft_new_buf_rands(fte, len);
 	const char *path0 = ft_new_path_unique(fte);

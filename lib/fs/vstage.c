@@ -32,7 +32,7 @@ struct silofs_vstage_ctx {
 	struct silofs_spleaf_info *sli;
 	struct silofs_lsmap_info *lsi;
 	const struct silofs_vaddr *vaddr;
-	loff_t voff;
+	off_t voff;
 	enum silofs_stg_mode stg_mode;
 	enum silofs_mtype vspace;
 	unsigned int retry;
@@ -47,19 +47,19 @@ static int vstgc_require_lsmap_of(struct silofs_vstage_ctx *vstg_ctx);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static loff_t ino_to_off(ino_t ino)
+static off_t ino_to_off(ino_t ino)
 {
-	loff_t off;
+	off_t off;
 
 	if (silofs_ino_isnull(ino)) {
 		off = SILOFS_OFF_nullptr;
 	} else {
-		off = (loff_t)(ino << SILOFS_INODE_SHIFT);
+		off = (off_t)(ino << SILOFS_INODE_SHIFT);
 	}
 	return off;
 }
 
-static ino_t off_to_ino(loff_t off)
+static ino_t off_to_ino(off_t off)
 {
 	ino_t ino;
 
@@ -154,7 +154,7 @@ sbi_bind_child_spnode(struct silofs_sb_info *sbi, enum silofs_mtype vspace,
 static void sni_bind_child_spnode(struct silofs_spnode_info *sni,
                                   const struct silofs_spnode_info *sni_child)
 {
-	const loff_t voff = silofs_sni_base_voff(sni_child);
+	const off_t voff = silofs_sni_base_voff(sni_child);
 
 	silofs_sni_bind_child(sni, voff, silofs_sni_uaddr(sni_child));
 }
@@ -162,12 +162,12 @@ static void sni_bind_child_spnode(struct silofs_spnode_info *sni,
 static void sni_bind_child_spleaf(struct silofs_spnode_info *sni,
                                   const struct silofs_spleaf_info *sli_child)
 {
-	const loff_t voff = silofs_sli_base_voff(sli_child);
+	const off_t voff = silofs_sli_base_voff(sli_child);
 
 	silofs_sni_bind_child(sni, voff, silofs_sli_uaddr(sli_child));
 }
 
-static bool sni_has_child_at(const struct silofs_spnode_info *sni, loff_t voff)
+static bool sni_has_child_at(const struct silofs_spnode_info *sni, off_t voff)
 {
 	struct silofs_uaddr uaddr;
 
@@ -438,10 +438,10 @@ static int vstgc_spawn_lseg(const struct silofs_vstage_ctx *vstg_ctx,
 	return err;
 }
 
-static void vstgc_make_silofs_lsid_of(const struct silofs_vstage_ctx *vstg_ctx,
-                                      loff_t voff, enum silofs_height height,
-                                      enum silofs_mtype mtype,
-                                      struct silofs_lsid *out_lsid)
+static void
+vstgc_make_silofs_lsid_of(const struct silofs_vstage_ctx *vstg_ctx, off_t voff,
+                          enum silofs_height height, enum silofs_mtype mtype,
+                          struct silofs_lsid *out_lsid)
 {
 	struct silofs_blobid lvid;
 
@@ -452,7 +452,7 @@ static void vstgc_make_silofs_lsid_of(const struct silofs_vstage_ctx *vstg_ctx,
 
 static void
 vstgc_make_silofs_lsid_of_spmaps(const struct silofs_vstage_ctx *vstg_ctx,
-                                 loff_t voff, enum silofs_height height,
+                                 off_t voff, enum silofs_height height,
                                  enum silofs_mtype mtype,
                                  struct silofs_lsid *out_lsid)
 {
@@ -463,7 +463,7 @@ vstgc_make_silofs_lsid_of_spmaps(const struct silofs_vstage_ctx *vstg_ctx,
 
 static void
 vstgc_make_silofs_lsid_of_vdata(const struct silofs_vstage_ctx *vstg_ctx,
-                                loff_t voff, enum silofs_mtype mtype,
+                                off_t voff, enum silofs_mtype mtype,
                                 struct silofs_lsid *out_lsid)
 {
 	silofs_assert_eq(mtype, vstg_ctx->vspace);
@@ -529,7 +529,7 @@ vstgc_spawn_spnode_main_lseg(const struct silofs_vstage_ctx *vstg_ctx,
                              struct silofs_spnode_info *sni)
 {
 	struct silofs_lsid lsid;
-	const loff_t voff = silofs_sni_base_voff(sni);
+	const off_t voff = silofs_sni_base_voff(sni);
 	const enum silofs_height height = sni_child_height(sni);
 	const enum silofs_mtype mtype = sni_child_mtype(sni);
 	int err;
@@ -635,7 +635,7 @@ static void vstgc_decrefs(const struct silofs_vstage_ctx *vstg_ctx,
 	}
 }
 
-static loff_t vstgc_lbk_voff(const struct silofs_vstage_ctx *vstg_ctx)
+static off_t vstgc_lbk_voff(const struct silofs_vstage_ctx *vstg_ctx)
 {
 	return silofs_off_align_to_lbk(vstg_ctx->voff);
 }
@@ -710,7 +710,7 @@ static int vstgc_resolve_spnode_child(const struct silofs_vstage_ctx *vstg_ctx,
                                       const struct silofs_spnode_info *sni,
                                       struct silofs_uaddr *out_uaddr)
 {
-	const loff_t lbk_voff = vstgc_lbk_voff(vstg_ctx);
+	const off_t lbk_voff = vstgc_lbk_voff(vstg_ctx);
 
 	return silofs_sni_resolve_child(sni, lbk_voff, out_uaddr);
 }
@@ -1595,7 +1595,7 @@ vstgc_require_spleaf_main_lseg(const struct silofs_vstage_ctx *vstg_ctx,
 {
 	struct silofs_lsid lsid = { .lsize = 0 };
 	const enum silofs_mtype mtype = vstg_ctx->vspace;
-	loff_t voff = -1;
+	off_t voff = -1;
 	int err;
 
 	silofs_sli_main_lseg(sli, &lsid);
@@ -2763,7 +2763,7 @@ static int resolve_iaddr(ino_t ino, struct silofs_vaddr *out_vaddr)
 {
 	const ino_t ino_max = SILOFS_INO_MAX;
 	const ino_t ino_root = SILOFS_INO_ROOT;
-	loff_t voff;
+	off_t voff;
 
 	if ((ino < ino_root) || (ino > ino_max)) {
 		return -SILOFS_EINVAL;

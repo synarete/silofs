@@ -213,7 +213,7 @@ static void test_statvfs_ffree_seq(struct ft_env *fte)
 /*
  * Expects statvfs(3p) to change statvfs.f_bfree upon write/trim.
  */
-static void test_statvfs_bfree_(struct ft_env *fte, loff_t off, size_t bsz)
+static void test_statvfs_bfree_(struct ft_env *fte, off_t off, size_t bsz)
 {
 	struct stat st[2];
 	struct statvfs stv[2];

@@ -33,7 +33,7 @@ static struct ut_dvecs *new_dvecs(struct ut_env *ute)
 static void assign(struct ut_env *ute, struct ut_dvecs *dvecs,
                    const struct ut_ranges *rngs)
 {
-	loff_t off;
+	off_t off;
 	size_t len;
 	struct ut_dvec *dvec;
 
@@ -101,7 +101,7 @@ ut_write_read_n(struct ut_env *ute, const struct ut_dvecs *dvecs, ino_t ino)
 {
 	const struct ut_dvec *dvec = nullptr;
 	void *buf = nullptr;
-	loff_t off = -1;
+	off_t off = -1;
 	size_t len = 0;
 
 	for (size_t i = 0; i < dvecs->count; ++i) {

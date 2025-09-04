@@ -21,40 +21,40 @@
 #include <stdbool.h>
 #include <unistd.h>
 
-typedef loff_t silofs_lba_t;
+typedef off_t silofs_lba_t;
 
-bool silofs_off_isnull(loff_t off);
+bool silofs_off_isnull(off_t off);
 
-loff_t silofs_off_min(loff_t off1, loff_t off2);
+off_t silofs_off_min(off_t off1, off_t off2);
 
-loff_t silofs_off_max(loff_t off1, loff_t off2);
+off_t silofs_off_max(off_t off1, off_t off2);
 
-loff_t silofs_off_end(loff_t off, size_t len);
+off_t silofs_off_end(off_t off, size_t len);
 
-loff_t silofs_off_align(loff_t off, ssize_t align);
+off_t silofs_off_align(off_t off, ssize_t align);
 
-loff_t silofs_off_align_to_lbk(loff_t off);
+off_t silofs_off_align_to_lbk(off_t off);
 
-loff_t silofs_off_next(loff_t off, ssize_t len);
+off_t silofs_off_next(off_t off, ssize_t len);
 
-ssize_t silofs_off_diff(loff_t beg, loff_t end);
+ssize_t silofs_off_diff(off_t beg, off_t end);
 
-ssize_t silofs_off_len(loff_t beg, loff_t end);
+ssize_t silofs_off_len(off_t beg, off_t end);
 
-size_t silofs_off_ulen(loff_t beg, loff_t end);
+size_t silofs_off_ulen(off_t beg, off_t end);
 
-silofs_lba_t silofs_off_to_lba(loff_t off);
+silofs_lba_t silofs_off_to_lba(off_t off);
 
-loff_t silofs_off_in_lbk(loff_t off);
+off_t silofs_off_in_lbk(off_t off);
 
-loff_t silofs_off_next_lbk(loff_t off);
+off_t silofs_off_next_lbk(off_t off);
 
-loff_t silofs_off_remainder(loff_t off, size_t len);
+off_t silofs_off_remainder(off_t off, size_t len);
 
 bool silofs_lba_isnull(silofs_lba_t lba);
 
-loff_t silofs_lba_to_off(silofs_lba_t lba);
+off_t silofs_lba_to_off(silofs_lba_t lba);
 
-int silofs_verify_off(loff_t off);
+int silofs_verify_off(off_t off);
 
 #endif /* SILOFS_OFFLBA_H_ */

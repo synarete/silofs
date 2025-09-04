@@ -137,7 +137,7 @@ static void test_unlinkat_simple(struct ft_env *fte)
 /*
  * Expects unlinkat(3p) to operate with I/O
  */
-static void test_unlinkat_io_(struct ft_env *fte, loff_t off, size_t len)
+static void test_unlinkat_io_(struct ft_env *fte, off_t off, size_t len)
 {
 	struct stat st = { .st_size = -1 };
 	const char *path = ft_new_path_unique(fte);
@@ -145,7 +145,7 @@ static void test_unlinkat_io_(struct ft_env *fte, loff_t off, size_t len)
 	void *buf1 = ft_new_buf_rands(fte, len);
 	void *buf2 = ft_new_buf_rands(fte, len);
 	void *data = ft_new_buf_zeros(fte, len);
-	const loff_t end = ft_off_end(off, len);
+	const off_t end = ft_off_end(off, len);
 	int dfd = -1;
 	int fd = -1;
 

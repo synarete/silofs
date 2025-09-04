@@ -620,9 +620,9 @@ void silofs_sbst_update_objs(struct silofs_sb_info *sbi,
 	}
 }
 
-loff_t silofs_sbst_vspace_end(const struct silofs_sb_info *sbi)
+off_t silofs_sbst_vspace_end(const struct silofs_sb_info *sbi)
 {
-	return (loff_t)(sbi->sb_spst_curr.vspacesize);
+	return (off_t)(sbi->sb_spst_curr.vspacesize);
 }
 
 static size_t sbst_bytes_used(const struct silofs_sb_info *sbi)

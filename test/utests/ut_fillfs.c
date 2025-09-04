@@ -39,7 +39,7 @@ static void ut_fillfs_simple(struct ut_env *ute)
 	ino_t dino;
 	size_t len;
 	size_t nwr;
-	loff_t off;
+	off_t off;
 	struct stat st;
 	struct statvfs stv[2];
 	struct statvfs stv2;
@@ -87,7 +87,7 @@ static void ut_fillfs_mixed(struct ut_env *ute)
 {
 	size_t idx = 0;
 	size_t idx_end = 0;
-	loff_t off;
+	off_t off;
 	ino_t ino;
 	ino_t dino;
 	size_t len = 0;
@@ -105,7 +105,7 @@ static void ut_fillfs_mixed(struct ut_env *ute)
 		ut_mkdir2(ute, dino, name, &ino);
 		ut_create_file(ute, ino, name, &ino);
 		len = calc_wr_size(&stv, bsz--);
-		off = (loff_t)idx;
+		off = (off_t)idx;
 		nwr = 0;
 		ut_write_nospc(ute, ino, buf, len, off, &nwr);
 		ut_release_file(ute, ino);

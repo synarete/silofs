@@ -17,7 +17,7 @@
 #include "utests.h"
 
 struct ut_ioparams {
-	loff_t offset;
+	off_t offset;
 	size_t length;
 	size_t nskip;
 	size_t count;
@@ -40,7 +40,7 @@ new_dvecs(struct ut_env *ute, const struct ut_ioparams *params)
 
 	list = (struct ut_dvec **)ut_zerobuf(ute, size);
 	for (size_t i = 0; i < params->count; ++i) {
-		const loff_t off = params->offset + (loff_t)(i * step);
+		const off_t off = params->offset + (off_t)(i * step);
 
 		list[i] = ut_new_dvec(ute, off, params->length);
 	}
@@ -227,7 +227,7 @@ static void ut_file_random_random(struct ut_env *ute)
 
 	for (size_t i = 0; i < 10; i++) {
 		ut_randfill(ute, &rand, sizeof(rand));
-		params.offset = (loff_t)(rand % UT_FILESIZE_MAX) / 13;
+		params.offset = (off_t)(rand % UT_FILESIZE_MAX) / 13;
 		params.length = (rand % UT_1M) + UT_BK_SIZE;
 		params.nskip = (rand % UT_1G) / 11;
 		params.count = (rand % 16) + 1;

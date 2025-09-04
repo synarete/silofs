@@ -134,7 +134,7 @@ int silofs_sys_openat(int dirfd, const char *pathname, int flags, mode_t mode,
 
 int silofs_sys_close(int fd);
 
-int silofs_sys_llseek(int fd, loff_t off, int whence, loff_t *pos);
+int silofs_sys_llseek(int fd, off_t off, int whence, off_t *pos);
 
 int silofs_sys_syncfs(int fd);
 
@@ -142,13 +142,13 @@ int silofs_sys_fsync(int fd);
 
 int silofs_sys_fdatasync(int fd);
 
-int silofs_sys_sync_file_range(int fd, loff_t off, loff_t nb, unsigned int fl);
+int silofs_sys_sync_file_range(int fd, off_t off, off_t nb, unsigned int fl);
 
-int silofs_sys_fallocate(int fd, int mode, loff_t off, loff_t len);
+int silofs_sys_fallocate(int fd, int mode, off_t off, off_t len);
 
-int silofs_sys_truncate(const char *path, loff_t len);
+int silofs_sys_truncate(const char *path, off_t len);
 
-int silofs_sys_ftruncate(int fd, loff_t len);
+int silofs_sys_ftruncate(int fd, off_t len);
 
 int silofs_sys_readlink(const char *path, char *buf, size_t bsz, size_t *cnt);
 
@@ -169,7 +169,7 @@ int silofs_sys_mknodat(int dirfd, const char *pathname, mode_t mode,
                        dev_t dev);
 
 int silofs_sys_mmap(void *addr, size_t length, int prot, int flags, int fd,
-                    loff_t offset, void **out_addr);
+                    off_t offset, void **out_addr);
 
 int silofs_sys_mmap_anon(size_t length, int flags, void **out_addr);
 
@@ -195,17 +195,17 @@ int silofs_sys_sbrk(intptr_t increment, void **out_addr);
 
 int silofs_sys_ioctl_blkgetsize64(int fd, size_t *sz);
 
-int silofs_sys_copy_file_range(int fd_in, loff_t *off_in, int fd_out,
-                               loff_t *off_out, size_t len, unsigned int flags,
+int silofs_sys_copy_file_range(int fd_in, off_t *off_in, int fd_out,
+                               off_t *off_out, size_t len, unsigned int flags,
                                size_t *out_ncp);
 
 int silofs_sys_read(int fd, void *buf, size_t cnt, size_t *nrd);
 
-int silofs_sys_pread(int fd, void *buf, size_t cnt, loff_t off, size_t *);
+int silofs_sys_pread(int fd, void *buf, size_t cnt, off_t off, size_t *);
 
 int silofs_sys_write(int fd, const void *buf, size_t cnt, size_t *nwr);
 
-int silofs_sys_pwrite(int fd, const void *buf, size_t cnt, loff_t off,
+int silofs_sys_pwrite(int fd, const void *buf, size_t cnt, off_t off,
                       size_t *nwr);
 
 int silofs_sys_readv(int fd, const struct iovec *iov, int iovcnt, size_t *nrd);
@@ -225,7 +225,7 @@ int silofs_sys_preadv2(int fd, const struct iovec *iov, int iovcnt, off_t off,
 int silofs_sys_pwritev2(int fd, const struct iovec *iov, int iovcnt, off_t off,
                         int flags, size_t *nwr);
 
-int silofs_sys_splice(int fd_in, loff_t *off_in, int fd_out, loff_t *off_out,
+int silofs_sys_splice(int fd_in, off_t *off_in, int fd_out, off_t *off_out,
                       size_t len, unsigned int flags, size_t *nsp);
 
 int silofs_sys_vmsplice(int fd, const struct iovec *iov, size_t nr_segs,
@@ -353,13 +353,13 @@ int silofs_sys_sched_yield(void);
 /* syscallx */
 int silofs_sys_readn(int fd, void *buf, size_t cnt);
 
-int silofs_sys_preadn(int fd, void *buf, size_t cnt, loff_t offset);
+int silofs_sys_preadn(int fd, void *buf, size_t cnt, off_t offset);
 
 int silofs_sys_writen(int fd, const void *buf, size_t cnt);
 
-int silofs_sys_pwriten(int fd, const void *buf, size_t cnt, loff_t offset);
+int silofs_sys_pwriten(int fd, const void *buf, size_t cnt, off_t offset);
 
-int silofs_sys_pwritevn(int fd, const struct iovec *iov, int cnt, loff_t off);
+int silofs_sys_pwritevn(int fd, const struct iovec *iov, int cnt, off_t off);
 
 int silofs_sys_opendir(const char *path, int *out_fd);
 
@@ -369,7 +369,7 @@ int silofs_sys_closefd(int *pfd);
 
 int silofs_sys_munmapp(void **p_addr, size_t length);
 
-int silofs_sys_llseek_data(int fd, loff_t off, loff_t *out_data_off);
+int silofs_sys_llseek_data(int fd, off_t off, off_t *out_data_off);
 
 int silofs_sys_pselect_rfd(int fd, const struct timespec *ts);
 

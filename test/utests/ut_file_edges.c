@@ -30,15 +30,15 @@ static uint8_t dvec_last_byte(const struct ut_dvec *dvec)
 	return dvec->dat[dvec->len - 1];
 }
 
-static loff_t dvec_last_off(const struct ut_dvec *dvec)
+static off_t dvec_last_off(const struct ut_dvec *dvec)
 {
-	return dvec->off + (loff_t)dvec->len - 1;
+	return dvec->off + (off_t)dvec->len - 1;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void
-ut_rw_plus_minus_1_(struct ut_env *ute, ino_t ino, loff_t off, size_t len)
+ut_rw_plus_minus_1_(struct ut_env *ute, ino_t ino, off_t off, size_t len)
 {
 	uint8_t byte;
 	struct ut_dvec *dv1;
@@ -56,17 +56,17 @@ ut_rw_plus_minus_1_(struct ut_env *ute, ino_t ino, loff_t off, size_t len)
 	ut_write_dvec(ute, ino, dv3);
 	byte = dvec_last_byte(dv2);
 	ut_read(ute, ino, &byte, 1, dvec_last_off(dv2));
-	ut_fallocate_punch_hole(ute, ino, off, (loff_t)len);
+	ut_fallocate_punch_hole(ute, ino, off, (off_t)len);
 	ut_read_zeros(ute, ino, off, len);
 	byte = dvec_first_byte(dv3);
 	ut_read(ute, ino, &byte, 1, dv3->off);
 	dv4 = ut_new_dvec(ute, off, len);
 	ut_write_dvec(ute, ino, dv4);
-	ut_fallocate_punch_hole(ute, ino, off - 1, (loff_t)len + 2);
+	ut_fallocate_punch_hole(ute, ino, off - 1, (off_t)len + 2);
 	ut_read_zeros(ute, ino, off - 1, len + 2);
 }
 
-static void ut_file_edges_1_(struct ut_env *ute, loff_t off, size_t len)
+static void ut_file_edges_1_(struct ut_env *ute, off_t off, size_t len)
 {
 	ino_t ino;
 	ino_t dino;
@@ -133,12 +133,12 @@ static void ut_file_edges_special(struct ut_env *ute)
 /* Test I/O on file-mapping boundaries, where each operation falls on two
  * distinguished file mappings */
 static void
-ut_file_edges_fmapping_(struct ut_env *ute, const loff_t *off_arr, size_t cnt)
+ut_file_edges_fmapping_(struct ut_env *ute, const off_t *off_arr, size_t cnt)
 {
 	const size_t bsz = 512;
 	uint8_t *buf = ut_randbuf(ute, bsz);
 	const char *name = UT_NAME;
-	loff_t off = -1;
+	off_t off = -1;
 	ino_t dino = 0;
 	ino_t ino = 0;
 

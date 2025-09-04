@@ -31,7 +31,7 @@ static struct fiemap *new_fiemap(struct ft_env *fte, size_t cnt)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void test_fiemap_simple_(struct ft_env *fte, loff_t off, size_t bsz)
+static void test_fiemap_simple_(struct ft_env *fte, off_t off, size_t bsz)
 {
 	const char *path = ft_new_path_unique(fte);
 	void *buf = ft_new_buf_rands(fte, bsz);

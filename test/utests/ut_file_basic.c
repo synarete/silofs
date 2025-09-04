@@ -16,7 +16,7 @@
  */
 #include "utests.h"
 
-static void ut_file_simple1_(struct ut_env *ute, loff_t off)
+static void ut_file_simple1_(struct ut_env *ute, off_t off)
 {
 	struct statvfs stv[2];
 	const char *name = UT_NAME;
@@ -32,7 +32,7 @@ static void ut_file_simple1_(struct ut_env *ute, loff_t off)
 	ut_expect_statvfs(&stv[0], &stv[1]);
 }
 
-static void ut_file_simple2_(struct ut_env *ute, loff_t off, size_t bsz)
+static void ut_file_simple2_(struct ut_env *ute, off_t off, size_t bsz)
 {
 	const char *name = UT_NAME;
 	void *buf = ut_randbuf(ute, bsz);
@@ -47,7 +47,7 @@ static void ut_file_simple2_(struct ut_env *ute, loff_t off, size_t bsz)
 	ut_rmdir_at_root(ute, name);
 }
 
-static void ut_file_simple3_(struct ut_env *ute, loff_t off, size_t bsz)
+static void ut_file_simple3_(struct ut_env *ute, off_t off, size_t bsz)
 {
 	const char *name = UT_NAME;
 	void *buf = ut_randbuf(ute, bsz);
@@ -66,7 +66,7 @@ static void ut_file_simple3_(struct ut_env *ute, loff_t off, size_t bsz)
 	ut_rmdir_at_root(ute, name);
 }
 
-static void ut_file_simple_(struct ut_env *ute, loff_t off, size_t len)
+static void ut_file_simple_(struct ut_env *ute, off_t off, size_t len)
 {
 	ut_file_simple1_(ute, off);
 	ut_file_simple2_(ute, off, len);
@@ -112,7 +112,7 @@ static void ut_file_simple(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_file_minio_(struct ut_env *ute, loff_t off, size_t len)
+static void ut_file_minio_(struct ut_env *ute, off_t off, size_t len)
 {
 	uint8_t bytes[8] = { 1, 2, 3, 4, 5, 6, 7, 8 };
 	const char *name = UT_NAME;
@@ -151,7 +151,7 @@ static void ut_file_minio_unaligned(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_file_data_(struct ut_env *ute, loff_t off, size_t len)
+static void ut_file_data_(struct ut_env *ute, off_t off, size_t len)
 {
 	const char *name = UT_NAME;
 	void *buf = ut_randbuf(ute, len);
@@ -206,7 +206,7 @@ static void ut_file_iosize_max(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_file_unlinked_(struct ut_env *ute, loff_t off, size_t len)
+static void ut_file_unlinked_(struct ut_env *ute, off_t off, size_t len)
 {
 	const char *name = UT_NAME;
 	void *buf = ut_randbuf(ute, len);
@@ -244,8 +244,8 @@ static void ut_file_unlinked(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_file_multi_(struct ut_env *ute, size_t bsz, loff_t off1,
-                           loff_t off2, loff_t off3, loff_t off4)
+static void ut_file_multi_(struct ut_env *ute, size_t bsz, off_t off1,
+                           off_t off2, off_t off3, off_t off4)
 {
 	const char *name = UT_NAME;
 	void *buf1 = ut_randbuf(ute, bsz);
@@ -284,11 +284,11 @@ static void ut_file_multi(struct ut_env *ute)
 static void ut_file_tricky(struct ut_env *ute)
 {
 	const size_t bsz = UT_BK_SIZE;
-	const loff_t nch = (loff_t)UT_FILEMAP_NCHILDS;
-	const loff_t off1 = (loff_t)(UT_BK_SIZE * UT_FILEMAP_NCHILDS);
-	const loff_t off2 = off1 * nch;
-	const loff_t off3 = (loff_t)UT_FILESIZE_MAX / 2;
-	const loff_t off4 = (loff_t)UT_FILESIZE_MAX - (loff_t)bsz;
+	const off_t nch = (off_t)UT_FILEMAP_NCHILDS;
+	const off_t off1 = (off_t)(UT_BK_SIZE * UT_FILEMAP_NCHILDS);
+	const off_t off2 = off1 * nch;
+	const off_t off3 = (off_t)UT_FILESIZE_MAX / 2;
+	const off_t off4 = (off_t)UT_FILESIZE_MAX - (off_t)bsz;
 
 	ut_file_multi_(ute, bsz, off1, 2 * off1, 4 * off1, 8 * off1);
 	ut_relax_mem(ute);
@@ -305,7 +305,7 @@ static void ut_file_tricky(struct ut_env *ute)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void
-ut_file_overwrite_simple_(struct ut_env *ute, loff_t off, size_t len)
+ut_file_overwrite_simple_(struct ut_env *ute, off_t off, size_t len)
 {
 	const char *name = UT_NAME;
 	void *buf1 = ut_randbuf(ute, len);
@@ -348,21 +348,21 @@ static void ut_file_overwrite_simple(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_file_overwrite_complex_(struct ut_env *ute, loff_t off1,
-                                       loff_t off2, size_t len)
+static void ut_file_overwrite_complex_(struct ut_env *ute, off_t off1,
+                                       off_t off2, size_t len)
 {
 	uint8_t *buf1 = ut_randbuf(ute, len);
 	uint8_t *buf2 = ut_randbuf(ute, len);
 	const char *name = UT_NAME;
-	const loff_t diff = off2 - off1;
-	const loff_t offx = off2 + (loff_t)len;
+	const off_t diff = off2 - off1;
+	const off_t offx = off2 + (off_t)len;
 	const size_t bszx = len - (size_t)(offx - off2);
 	const size_t step = (size_t)(offx - off2);
 	ino_t dino = 0;
 	ino_t ino = 0;
 
 	ut_expect_lt(off1, off2);
-	ut_expect_le(off2 - off1, (loff_t)len);
+	ut_expect_le(off2 - off1, (off_t)len);
 	ut_expect_le(step, len);
 
 	ut_mkdir_at_root(ute, name, &dino);
@@ -402,25 +402,25 @@ static void ut_file_overwrite_complex(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_file_sequence_(struct ut_env *ute, loff_t off, size_t len)
+static void ut_file_sequence_(struct ut_env *ute, off_t off, size_t len)
 {
 	const char *name = UT_NAME;
 	uint64_t num = 0;
 	const size_t nsz = sizeof(num);
 	const size_t cnt = len / nsz;
-	loff_t pos = -1;
+	off_t pos = -1;
 	ino_t dino = 0;
 	ino_t ino = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
 	for (size_t i = 0; i < cnt; ++i) {
-		pos = off + (loff_t)(i * nsz);
+		pos = off + (off_t)(i * nsz);
 		num = (uint64_t)pos;
 		ut_write_read(ute, ino, &num, nsz, pos);
 	}
 	for (size_t j = 0; j < cnt; ++j) {
-		pos = off + (loff_t)(j * nsz);
+		pos = off + (off_t)(j * nsz);
 		num = (uint64_t)pos;
 		ut_read_verify(ute, ino, &num, nsz, pos);
 		num = ~num;
@@ -504,25 +504,25 @@ static struct ut_urecord *new_urecord(struct ut_env *ute, uint64_t num)
 	return urec;
 }
 
-static void ut_file_unaligned_(struct ut_env *ute, loff_t off, size_t len)
+static void ut_file_unaligned_(struct ut_env *ute, off_t off, size_t len)
 {
 	struct ut_urecord *urec = nullptr;
 	const char *name = UT_NAME;
 	const size_t nsz = sizeof(*urec) - 1;
 	const size_t cnt = len / nsz;
-	loff_t pos = -1;
+	off_t pos = -1;
 	ino_t dino = 0;
 	ino_t ino = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
 	for (size_t i = 0; i < cnt; ++i) {
-		pos = off + (loff_t)(i * nsz);
+		pos = off + (off_t)(i * nsz);
 		urec = new_urecord(ute, (uint64_t)pos);
 		ut_write_read(ute, ino, urec, nsz, pos);
 	}
 	for (size_t j = 0; j < cnt; ++j) {
-		pos = off + (loff_t)(j * nsz);
+		pos = off + (off_t)(j * nsz);
 		urec = new_urecord(ute, (uint64_t)pos);
 		ut_read_verify(ute, ino, urec, nsz, pos);
 		urec = new_urecord(ute, ~j);
@@ -561,13 +561,13 @@ static void ut_file_unaligned_at_end(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_file_firstlast_(struct ut_env *ute, loff_t off, size_t len)
+static void ut_file_firstlast_(struct ut_env *ute, off_t off, size_t len)
 {
 	const char *name = UT_NAME;
 	uint64_t num = 0;
 	const size_t nsz = sizeof(num);
-	const loff_t end = off + (loff_t)len;
-	loff_t pos = -1;
+	const off_t end = off + (off_t)len;
+	off_t pos = -1;
 	ino_t dino = 0;
 	ino_t ino = 0;
 
@@ -576,13 +576,13 @@ static void ut_file_firstlast_(struct ut_env *ute, loff_t off, size_t len)
 	pos = off;
 	num = (uint64_t)pos;
 	ut_write_read(ute, ino, &num, nsz, pos);
-	pos = end - (loff_t)nsz;
+	pos = end - (off_t)nsz;
 	num = (uint64_t)pos;
 	ut_write_read(ute, ino, &num, nsz, pos);
 	pos = off;
 	num = (uint64_t)pos;
 	ut_read_verify(ute, ino, &num, nsz, pos);
-	pos = end - (loff_t)nsz;
+	pos = end - (off_t)nsz;
 	num = (uint64_t)pos;
 	ut_read_verify(ute, ino, &num, nsz, pos);
 	ut_remove_file(ute, dino, name, ino);
@@ -620,34 +620,34 @@ static void ut_file_firstlast(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_file_zigzag_(struct ut_env *ute, loff_t off, size_t len)
+static void ut_file_zigzag_(struct ut_env *ute, off_t off, size_t len)
 {
 	uint64_t num = 0;
 	const char *name = UT_NAME;
 	const size_t nsz = sizeof(num);
 	const size_t cnt = len / nsz;
-	const loff_t end = off + (loff_t)len;
-	loff_t pos = -1;
+	const off_t end = off + (off_t)len;
+	off_t pos = -1;
 	ino_t dino = 0;
 	ino_t ino = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
 	for (size_t i = 0; i < cnt / 2; ++i) {
-		pos = off + (loff_t)(i * nsz);
+		pos = off + (off_t)(i * nsz);
 		num = (uint64_t)pos + 1;
 		ut_write_read(ute, ino, &num, nsz, pos);
 
-		pos = end - (loff_t)((i + 1) * nsz);
+		pos = end - (off_t)((i + 1) * nsz);
 		num = (uint64_t)pos + 1;
 		ut_write_read(ute, ino, &num, nsz, pos);
 	}
 	for (size_t i = 0; i < cnt / 2; ++i) {
-		pos = off + (loff_t)(i * nsz);
+		pos = off + (off_t)(i * nsz);
 		num = (uint64_t)pos + 1;
 		ut_read_verify(ute, ino, &num, nsz, pos);
 
-		pos = end - (loff_t)((i + 1) * nsz);
+		pos = end - (off_t)((i + 1) * nsz);
 		num = (uint64_t)pos + 1;
 		ut_read_verify(ute, ino, &num, nsz, pos);
 	}
@@ -681,13 +681,13 @@ static void ut_file_zigzag(struct ut_env *ute)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void
-ut_file_with_hole_(struct ut_env *ute, loff_t off1, loff_t off2, size_t len)
+ut_file_with_hole_(struct ut_env *ute, off_t off1, off_t off2, size_t len)
 {
 	const char *name = UT_NAME;
-	const loff_t hole_off1 = off1 + (loff_t)len;
+	const off_t hole_off1 = off1 + (off_t)len;
 	const size_t hole_len = (size_t)(off2 - hole_off1);
 	const size_t nzeros = (hole_len < UT_1M) ? hole_len : UT_1M;
-	const loff_t hole_off2 = off2 - (loff_t)nzeros;
+	const off_t hole_off2 = off2 - (off_t)nzeros;
 	void *buf1 = ut_randbuf(ute, len);
 	void *buf2 = ut_randbuf(ute, len);
 	void *zeros = ut_zerobuf(ute, nzeros);
@@ -695,7 +695,7 @@ ut_file_with_hole_(struct ut_env *ute, loff_t off1, loff_t off2, size_t len)
 	ino_t ino = 0;
 
 	ut_expect_gt(off2, off1);
-	ut_expect_gt((off2 - off1), (loff_t)len);
+	ut_expect_gt((off2 - off1), (off_t)len);
 	ut_expect_gt(off2, hole_off1);
 
 	ut_mkdir_at_root(ute, name, &dino);
@@ -737,25 +737,25 @@ static void ut_file_with_hole(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_file_backward_(struct ut_env *ute, loff_t off, size_t cnt)
+static void ut_file_backward_(struct ut_env *ute, off_t off, size_t cnt)
 {
 	const char *name = UT_NAME;
 	uint64_t val = 0;
 	const size_t vsz = sizeof(val);
-	loff_t pos = -1;
+	off_t pos = -1;
 	ino_t dino = 0;
 	ino_t ino = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
 	for (size_t i = cnt; i > 0; --i) {
-		pos = off + (loff_t)(i * cnt);
+		pos = off + (off_t)(i * cnt);
 		val = i;
 		ut_write_read(ute, ino, &val, vsz, pos);
 		ut_read_verify(ute, ino, &val, vsz, pos);
 	}
 	for (size_t i = cnt; i > 0; --i) {
-		pos = off + (loff_t)(i * cnt);
+		pos = off + (off_t)(i * cnt);
 		val = i;
 		ut_read_verify(ute, ino, &val, vsz, pos);
 	}
@@ -765,7 +765,7 @@ static void ut_file_backward_(struct ut_env *ute, loff_t off, size_t cnt)
 
 static void ut_file_backward(struct ut_env *ute)
 {
-	const loff_t off[] = { 0, 1, 1111, 11111, 111111, 1111111, 11111111 };
+	const off_t off[] = { 0, 1, 1111, 11111, 111111, 1111111, 11111111 };
 	const size_t cnt[] = { 10, 1000 };
 
 	for (size_t i = 0; i < UT_ARRAY_SIZE(off); ++i) {
@@ -778,14 +778,14 @@ static void ut_file_backward(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_file_read_behind_(struct ut_env *ute, loff_t off, size_t len)
+static void ut_file_read_behind_(struct ut_env *ute, off_t off, size_t len)
 {
 	const ssize_t bsz = SILOFS_MEGA;
 	const char *name = UT_NAME;
 	uint8_t *buf = ut_randbuf(ute, (size_t)bsz);
 	uint8_t da = 0xDA;
 	ssize_t idx = -1;
-	loff_t pos = -1;
+	off_t pos = -1;
 	ino_t dino = 0;
 	ino_t ino = 0;
 

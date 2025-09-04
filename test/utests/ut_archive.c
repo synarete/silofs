@@ -36,7 +36,7 @@ static void ut_archive_data(struct ut_env *ute)
 	struct stat st = { .st_ino = 0 };
 	const char *name = UT_NAME;
 	const size_t len = UT_1M;
-	const loff_t off = 1;
+	const off_t off = 1;
 	void *buf = ut_randbuf(ute, len);
 	ino_t dino = 0;
 	ino_t ino = 0;
@@ -69,13 +69,13 @@ static void ut_archive_nfiles(struct ut_env *ute)
 	const char *name = nullptr;
 	const size_t cnt = 100;
 	const size_t len = UT_1M;
-	loff_t off = -1;
+	off_t off = -1;
 	void *buf = ut_randbuf(ute, len);
 	ino_t dino = 0;
 	ino_t ino = 0;
 
 	for (size_t i = 0; i < cnt; ++i) {
-		off = (loff_t)((i * len) + (i * UT_1G) + i);
+		off = (off_t)((i * len) + (i * UT_1G) + i);
 		name = ut_make_name(ute, pref, i);
 		ut_mkdir2(ute, root_ino, name, &dino);
 		ut_create_file(ute, dino, name, &ino);
@@ -88,7 +88,7 @@ static void ut_archive_nfiles(struct ut_env *ute)
 	ut_restore_fs(ute);
 	ut_open_fs(ute);
 	for (size_t i = 0; i < cnt; ++i) {
-		off = (loff_t)((i * len) + (i * UT_1G) + i);
+		off = (off_t)((i * len) + (i * UT_1G) + i);
 		name = ut_make_name(ute, pref, i);
 		ut_lookup_ino(ute, root_ino, name, &dino);
 		ut_lookup_ino(ute, dino, name, &ino);
@@ -109,8 +109,8 @@ static void ut_archive_twice(struct ut_env *ute)
 	const char *name1 = UT_NAME_AT;
 	const char *name2 = UT_NAME_AT;
 	const size_t len = UT_1M;
-	const loff_t off1 = UT_1G - 1;
-	const loff_t off2 = UT_1T - UT_1M - 2;
+	const off_t off1 = UT_1G - 1;
+	const off_t off2 = UT_1T - UT_1M - 2;
 	void *buf1 = ut_randbuf(ute, len);
 	void *buf2 = ut_randbuf(ute, len);
 	ino_t dino = 0;

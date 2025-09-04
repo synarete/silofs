@@ -26,7 +26,7 @@ static void test_truncate_basic_(struct ft_env *fte, size_t cnt)
 	struct stat st = { .st_size = -1 };
 	const char *path = ft_new_path_unique(fte);
 	size_t nwr = 0;
-	loff_t off = -1;
+	off_t off = -1;
 	int fd = -1;
 
 	ft_creat(path, 0600, &fd);
@@ -34,13 +34,13 @@ static void test_truncate_basic_(struct ft_env *fte, size_t cnt)
 		ft_write(fd, path, ft_strlen(path), &nwr);
 	}
 	for (size_t i = cnt; i > 0; i--) {
-		off = (loff_t)(19 * i);
+		off = (off_t)(19 * i);
 		ft_ftruncate(fd, off);
 		ft_fstat(fd, &st);
 		ft_expect_eq(st.st_size, off);
 	}
 	for (size_t i = 0; i < cnt; i++) {
-		off = (loff_t)(1811 * i);
+		off = (off_t)(1811 * i);
 		ft_ftruncate(fd, off);
 		ft_fstat(fd, &st);
 		ft_expect_eq(st.st_size, off);
@@ -63,23 +63,23 @@ static void test_truncate_basic(struct ft_env *fte)
 /*
  * Expects truncate(3p) to create zeros at the truncated tail-range.
  */
-static void test_truncate_tail_(struct ft_env *fte, loff_t base_off,
+static void test_truncate_tail_(struct ft_env *fte, off_t base_off,
                                 size_t data_sz, size_t tail_sz)
 {
 	struct stat st = { .st_size = -1 };
 	void *buf1 = ft_new_buf_rands(fte, data_sz);
 	void *buf2 = ft_new_buf_zeros(fte, data_sz);
 	const char *path = ft_new_path_unique(fte);
-	loff_t off[2] = { 0, 0 };
+	off_t off[2] = { 0, 0 };
 	int fd = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_pwriten(fd, buf1, data_sz, base_off);
 	ft_fstat(fd, &st);
-	ft_expect_eq(st.st_size, base_off + (loff_t)data_sz);
-	off[0] = base_off + (loff_t)(data_sz - tail_sz);
+	ft_expect_eq(st.st_size, base_off + (off_t)data_sz);
+	off[0] = base_off + (off_t)(data_sz - tail_sz);
 	ft_ftruncate(fd, off[0]);
-	off[1] = off[0] + (loff_t)data_sz;
+	off[1] = off[0] + (off_t)data_sz;
 	ft_ftruncate(fd, off[1]);
 	ft_preadn(fd, buf1, data_sz, off[0]);
 	ft_expect_eqm(buf1, buf2, data_sz);
@@ -103,23 +103,23 @@ static void test_truncate_tail(struct ft_env *fte)
 /*
  * Expects truncate(3p) to create zeros at extended area without written data
  */
-static void test_truncate_extend_(struct ft_env *fte, loff_t off, size_t len)
+static void test_truncate_extend_(struct ft_env *fte, off_t off, size_t len)
 {
 	struct stat st = { .st_size = -1 };
 	void *buf1 = ft_new_buf_rands(fte, len);
 	void *buf2 = ft_new_buf_zeros(fte, len);
 	const char *path = ft_new_path_unique(fte);
-	loff_t pos1 = -1;
-	loff_t pos2 = -1;
+	off_t pos1 = -1;
+	off_t pos2 = -1;
 	int fd = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_pwriten(fd, buf1, len, off);
 	ft_fstat(fd, &st);
-	ft_expect_eq(st.st_size, off + (loff_t)len);
-	pos1 = off + (loff_t)(2 * len);
+	ft_expect_eq(st.st_size, off + (off_t)len);
+	pos1 = off + (off_t)(2 * len);
 	ft_ftruncate(fd, pos1);
-	pos2 = off + (loff_t)(len);
+	pos2 = off + (off_t)(len);
 	ft_preadn(fd, buf1, len, pos2);
 	ft_expect_eqm(buf1, buf2, len);
 	ft_close(fd);
@@ -146,11 +146,11 @@ static void test_truncate_extend(struct ft_env *fte)
 /*
  * Expects successful truncate(3p) to yield zero bytes
  */
-static void test_truncate_zeros_(struct ft_env *fte, loff_t off, size_t len)
+static void test_truncate_zeros_(struct ft_env *fte, off_t off, size_t len)
 {
 	struct stat st = { .st_size = -1 };
 	const char *path = ft_new_path_unique(fte);
-	const loff_t end = off + (ssize_t)len;
+	const off_t end = off + (ssize_t)len;
 	int fd = -1;
 	uint8_t byte = 1;
 

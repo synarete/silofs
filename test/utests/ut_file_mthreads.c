@@ -18,7 +18,7 @@
 
 struct ut_thread_args {
 	ino_t dino;
-	loff_t off;
+	off_t off;
 	size_t len;
 	size_t cnt;
 };
@@ -87,7 +87,7 @@ ut_file_mt_exec(struct ut_env *ute, const struct ut_thread_args *args)
 	const size_t bsz = args->len;
 	void *buf = ut_randbuf(ute, bsz);
 	const char *name = ut_randstr(ute, 100);
-	loff_t off = -1;
+	off_t off = -1;
 	ino_t ino = 0;
 
 	ut_create_file(ute, dino, name, &ino);
@@ -105,7 +105,7 @@ ut_file_mt_exec(struct ut_env *ute, const struct ut_thread_args *args)
 }
 
 static void
-ut_file_mt_simple_(struct ut_env *ute, size_t nth, loff_t off, size_t len)
+ut_file_mt_simple_(struct ut_env *ute, size_t nth, off_t off, size_t len)
 {
 	const char *name = UT_NAME;
 	struct silofs_thread *th_arr = ute_malloc_threads(ute, nth);
@@ -142,7 +142,7 @@ static void ut_file_mt_simple(struct ut_env *ute)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void
-ut_file_mt_many_(struct ut_env *ute, size_t nth, loff_t off, size_t len)
+ut_file_mt_many_(struct ut_env *ute, size_t nth, off_t off, size_t len)
 {
 	const char *name = UT_NAME;
 	struct silofs_thread *th_arr = ute_malloc_threads(ute, nth);

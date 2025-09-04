@@ -115,7 +115,7 @@ read_password_from_file(int fd, void *buf, size_t bsz, size_t *out_len)
 	if (!st.st_size) {
 		cmd_die(-EINVAL, "zero-length password file");
 	}
-	if (st.st_size > (loff_t)bsz) {
+	if (st.st_size > (off_t)bsz) {
 		cmd_die(-EFBIG, "illegal password file size");
 	}
 	read_password_buf_from_fd(fd, buf, (size_t)st.st_size, out_len);

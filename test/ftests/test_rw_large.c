@@ -17,7 +17,7 @@
 #include "ftests.h"
 
 struct ft_rw_large_args {
-	loff_t off_base;
+	off_t off_base;
 	size_t nskip;
 };
 
@@ -28,24 +28,24 @@ struct ft_rw_large_args {
 static void test_rw_ngiga_by_(struct ft_env *fte, int fd,
                               const struct ft_rw_large_args *args)
 {
-	const loff_t off_base = args->off_base;
+	const off_t off_base = args->off_base;
 	const size_t nskip = args->nskip;
 	const size_t bsz = FT_1M;
 	const size_t cnt = FT_1G / bsz;
 	void *buf = ft_new_buf_rands(fte, bsz);
 	size_t num = 0;
-	loff_t off = -1;
+	off_t off = -1;
 
 	for (size_t i = 0; i < cnt; ++i) {
 		num = i + 1;
-		off = off_base + (loff_t)(i * (bsz + nskip));
+		off = off_base + (off_t)(i * (bsz + nskip));
 
 		ft_pwriten(fd, buf, bsz, off);
 		ft_pwriten(fd, &num, sizeof(num), off);
 	}
 	for (size_t i = 0; i < cnt; ++i) {
 		num = 0;
-		off = off_base + (loff_t)(i * (bsz + nskip));
+		off = off_base + (off_t)(i * (bsz + nskip));
 
 		ft_preadn(fd, &num, sizeof(num), off);
 		ft_expect_eq(num, i + 1);

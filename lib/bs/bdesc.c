@@ -156,9 +156,9 @@ static bool bd_is_valid_slot(const struct silofs_blob_desc *bd, size_t slot)
 	return (slot < bd_nobjs_max(bd));
 }
 
-static loff_t bd_slot_to_pos(const struct silofs_blob_desc *bd, size_t slot)
+static off_t bd_slot_to_pos(const struct silofs_blob_desc *bd, size_t slot)
 {
-	loff_t pos = SILOFS_OFF_nullptr;
+	off_t pos = SILOFS_OFF_nullptr;
 
 	if (likely(bd_is_valid_slot(bd, slot))) {
 		pos = silofs_off_end(0, slot * bd_objsize(bd));
@@ -166,12 +166,12 @@ static loff_t bd_slot_to_pos(const struct silofs_blob_desc *bd, size_t slot)
 	return pos;
 }
 
-static loff_t bd_pos_max(const struct silofs_blob_desc *bd)
+static off_t bd_pos_max(const struct silofs_blob_desc *bd)
 {
 	return silofs_off_end(0, bd_nobjs_max(bd) * bd_objsize(bd));
 }
 
-static bool bd_is_valid_pos(const struct silofs_blob_desc *bd, loff_t pos)
+static bool bd_is_valid_pos(const struct silofs_blob_desc *bd, off_t pos)
 {
 	size_t objsz;
 
@@ -188,7 +188,7 @@ static bool bd_is_valid_pos(const struct silofs_blob_desc *bd, loff_t pos)
 	return true;
 }
 
-static size_t bd_pos_to_slot(const struct silofs_blob_desc *bd, loff_t pos)
+static size_t bd_pos_to_slot(const struct silofs_blob_desc *bd, off_t pos)
 {
 	size_t slot;
 
@@ -224,7 +224,7 @@ static bool bd_has_free_slot_at(const struct silofs_blob_desc *bd, size_t slot)
 	return bd_obj_state_at(bd, slot) == SILOFS_OBJSTATEF_NONE;
 }
 
-static bool bd_has_free_slot_by(const struct silofs_blob_desc *bd, loff_t pos)
+static bool bd_has_free_slot_by(const struct silofs_blob_desc *bd, off_t pos)
 {
 	return bd_has_free_slot_at(bd, bd_pos_to_slot(bd, pos));
 }
@@ -239,7 +239,7 @@ static bool bd_has_used_slot_at(const struct silofs_blob_desc *bd, size_t slot)
 	return (bd_obj_state_at(bd, slot) & SILOFS_OBJSTATEF_USED) > 0;
 }
 
-static bool bd_has_used_slot_by(const struct silofs_blob_desc *bd, loff_t pos)
+static bool bd_has_used_slot_by(const struct silofs_blob_desc *bd, off_t pos)
 {
 	return bd_has_used_slot_at(bd, bd_pos_to_slot(bd, pos));
 }
@@ -268,7 +268,7 @@ static size_t bd_find_free_slot(const struct silofs_blob_desc *bd)
 	return nobjs_max;
 }
 
-static loff_t bd_find_free_pos(const struct silofs_blob_desc *bd)
+static off_t bd_find_free_pos(const struct silofs_blob_desc *bd)
 {
 	return bd_slot_to_pos(bd, bd_find_free_slot(bd));
 }
@@ -278,7 +278,7 @@ static void bd_mark_free_slot(struct silofs_blob_desc *bd, size_t slot)
 	bd_set_obj_state_at(bd, slot, SILOFS_OBJSTATEF_NONE);
 }
 
-static void bd_mark_free_slot_by(struct silofs_blob_desc *bd, loff_t pos)
+static void bd_mark_free_slot_by(struct silofs_blob_desc *bd, off_t pos)
 {
 	bd_mark_free_slot(bd, bd_pos_to_slot(bd, pos));
 }
@@ -288,7 +288,7 @@ static void bd_mark_used_slot(struct silofs_blob_desc *bd, size_t slot)
 	bd_set_obj_state_at(bd, slot, SILOFS_OBJSTATEF_USED);
 }
 
-static void bd_mark_used_slot_by(struct silofs_blob_desc *bd, loff_t pos)
+static void bd_mark_used_slot_by(struct silofs_blob_desc *bd, off_t pos)
 {
 	bd_mark_used_slot(bd, bd_pos_to_slot(bd, pos));
 }
@@ -344,7 +344,7 @@ static void bd_del(struct silofs_blob_desc *bd, struct silofs_alloc *alloc)
 	bd_free(bd, alloc);
 }
 
-static void bd_paddr_at(const struct silofs_blob_desc *bd, loff_t pos,
+static void bd_paddr_at(const struct silofs_blob_desc *bd, off_t pos,
                         struct silofs_paddr *out_paddr)
 {
 	if (!bd_is_valid_pos(bd, pos)) {
@@ -481,7 +481,7 @@ int silofs_bdi_find_free(const struct silofs_bdesc_info *bdi,
                          struct silofs_paddr *out_paddr)
 {
 	const struct silofs_blob_desc *bd = bdi->bd;
-	loff_t pos;
+	off_t pos;
 
 	silofs_paddr_reset(out_paddr);
 	if (!bd_has_free_slot(bd)) {

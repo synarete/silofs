@@ -166,7 +166,7 @@ static void ut_symlink_to_reg(struct ut_env *ute)
 
 static void ut_symlink_and_io_(struct ut_env *ute, size_t cnt)
 {
-	loff_t off = -1;
+	off_t off = -1;
 	ino_t dino = 0;
 	ino_t fino = 0;
 	ino_t sino = 0;
@@ -185,7 +185,7 @@ static void ut_symlink_and_io_(struct ut_env *ute, size_t cnt)
 		ut_create_file(ute, dino, fname, &fino);
 		ut_symlink(ute, dino, sname, symval, &sino);
 
-		off = (loff_t)(i * UT_1M + i);
+		off = (off_t)(i * UT_1M + i);
 		ut_write_read_str(ute, fino, symval, off);
 	}
 	for (size_t i = 0; i < cnt; ++i) {
@@ -196,7 +196,7 @@ static void ut_symlink_and_io_(struct ut_env *ute, size_t cnt)
 		ut_readlink_expect(ute, sino, symval);
 
 		ut_lookup_ino(ute, dino, fname, &fino);
-		off = (loff_t)(i * UT_1M + i);
+		off = (off_t)(i * UT_1M + i);
 		ut_read_verify_str(ute, fino, symval, off);
 	}
 	for (size_t i = 0; i < cnt; ++i) {
@@ -221,7 +221,7 @@ static void ut_symlink_and_io(struct ut_env *ute)
 
 static void ut_symlink_and_io2_(struct ut_env *ute, size_t cnt)
 {
-	loff_t off = -1;
+	off_t off = -1;
 	ino_t dino = 0;
 	ino_t fino = 0;
 	ino_t sino = 0;
@@ -242,7 +242,7 @@ static void ut_symlink_and_io2_(struct ut_env *ute, size_t cnt)
 		ut_create_file(ute, dino, fname, &fino);
 		ut_symlink(ute, dino, sname, symval, &sino);
 
-		off = (loff_t)(i * cnt);
+		off = (off_t)(i * cnt);
 		ut_write_read_str(ute, fino, symval, off);
 		ut_release_file(ute, fino);
 	}
@@ -256,7 +256,7 @@ static void ut_symlink_and_io2_(struct ut_env *ute, size_t cnt)
 		ut_lookup_ino(ute, dino, fname, &fino);
 
 		ut_open_rdonly(ute, fino);
-		off = (loff_t)((j - 1) * cnt);
+		off = (off_t)((j - 1) * cnt);
 		ut_read_verify_str(ute, fino, symval, off);
 		ut_release_file(ute, fino);
 		ut_unlink(ute, dino, fname);

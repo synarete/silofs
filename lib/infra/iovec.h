@@ -36,7 +36,7 @@ struct silofs_rwvec {
 struct silofs_iovec {
 	struct iovec iov;
 	void        *iov_backref;
-	loff_t       iov_off;
+	off_t        iov_off;
 	int          iov_fd;
 };
 

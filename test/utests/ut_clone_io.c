@@ -18,7 +18,7 @@
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_clone_write_sparse_(struct ut_env *ute, const loff_t *offs,
+static void ut_clone_write_sparse_(struct ut_env *ute, const off_t *offs,
                                    size_t cnt, size_t bsz)
 {
 	const char *name = UT_NAME;
@@ -46,7 +46,7 @@ static void ut_clone_write_sparse_(struct ut_env *ute, const loff_t *offs,
 
 static void ut_clone_write_sparse(struct ut_env *ute)
 {
-	const loff_t offs[] = {
+	const off_t offs[] = {
 		1,              //
 		2 * UT_1K - 1,  //
 		8 * UT_1K - 1,  //
@@ -62,12 +62,12 @@ static void ut_clone_write_sparse(struct ut_env *ute)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void
-ut_clone_copy_file_range_(struct ut_env *ute, loff_t off, size_t len)
+ut_clone_copy_file_range_(struct ut_env *ute, off_t off, size_t len)
 {
 	const char *name = UT_NAME;
 	const char *name_src = UT_NAME_AT;
 	const char *name_dst = UT_NAME_AT;
-	const loff_t end = ut_off_end(off, len);
+	const off_t end = ut_off_end(off, len);
 	void *buf1 = ut_randbuf(ute, len);
 	void *buf2 = ut_randbuf(ute, len);
 	ino_t ino_src = 0;
@@ -130,7 +130,7 @@ static void ut_clone_copy_file_range(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_clone_rename_io_(struct ut_env *ute, loff_t off, size_t bsz)
+static void ut_clone_rename_io_(struct ut_env *ute, off_t off, size_t bsz)
 {
 	const char *dname = UT_NAME;
 	const char *name1 = UT_NAME_AT;

@@ -56,7 +56,7 @@ int silofs_exec_chown(struct silofs_task_ctx *task, ino_t ino, uid_t uid,
                       gid_t gid, const struct stat *st,
                       struct silofs_stat *out_stat);
 
-int silofs_exec_truncate(struct silofs_task_ctx *task, ino_t ino, loff_t len,
+int silofs_exec_truncate(struct silofs_task_ctx *task, ino_t ino, off_t len,
                          struct silofs_stat *out_stat);
 
 int silofs_exec_utimens(struct silofs_task_ctx *task, ino_t ino,
@@ -126,23 +126,23 @@ int silofs_exec_removexattr(struct silofs_task_ctx *task, ino_t ino,
                             const char *name);
 
 int silofs_exec_fallocate(struct silofs_task_ctx *task, ino_t ino, int mode,
-                          loff_t offset, loff_t length);
+                          off_t offset, off_t length);
 
-int silofs_exec_lseek(struct silofs_task_ctx *task, ino_t ino, loff_t off,
-                      int whence, loff_t *out_off);
+int silofs_exec_lseek(struct silofs_task_ctx *task, ino_t ino, off_t off,
+                      int whence, off_t *out_off);
 
 int silofs_exec_copy_file_range(struct silofs_task_ctx *task, ino_t ino_in,
-                                loff_t off_in, ino_t ino_out, loff_t off_out,
+                                off_t off_in, ino_t ino_out, off_t off_out,
                                 size_t len, int flags, size_t *out_ncp);
 
 int silofs_exec_read(struct silofs_task_ctx *task, ino_t ino, void *buf,
-                     size_t len, loff_t off, int o_flags, size_t *out_len);
+                     size_t len, off_t off, int o_flags, size_t *out_len);
 
 int silofs_exec_read_iter(struct silofs_task_ctx *task, ino_t ino, int o_flags,
                           struct silofs_rwiter_ctx *rwi_ctx);
 
 int silofs_exec_write(struct silofs_task_ctx *task, ino_t ino, const void *buf,
-                      size_t len, loff_t off, int o_flags, size_t *out_len);
+                      size_t len, off_t off, int o_flags, size_t *out_len);
 
 int silofs_exec_write_iter(struct silofs_task_ctx *task, ino_t ino,
                            int o_flags, struct silofs_rwiter_ctx *rwi_ctx);

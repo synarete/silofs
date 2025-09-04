@@ -62,14 +62,14 @@ void silofs_pipe_close(struct silofs_pipe *pipe);
 
 int silofs_pipe_grow(struct silofs_pipe *pipe, size_t sz);
 
-int silofs_pipe_splice_from_fd(struct silofs_pipe *pipe, int fd, loff_t *off,
+int silofs_pipe_splice_from_fd(struct silofs_pipe *pipe, int fd, off_t *off,
                                size_t len, unsigned int flags);
 
 int silofs_pipe_vmsplice_from_iov(struct silofs_pipe *pipe,
                                   const struct iovec *iov, size_t niov,
                                   unsigned int flags);
 
-int silofs_pipe_splice_to_fd(struct silofs_pipe *pipe, int fd, loff_t *off,
+int silofs_pipe_splice_to_fd(struct silofs_pipe *pipe, int fd, off_t *off,
                              size_t len, unsigned int flags);
 
 int silofs_pipe_vmsplice_to_iov(struct silofs_pipe *pipe,
@@ -88,7 +88,7 @@ int silofs_pipe_dispose(struct silofs_pipe        *pipe,
                         const struct silofs_nilfd *nfd);
 
 int silofs_pipe_kcopy_by_splice(struct silofs_pipe *pipe, int fd_in,
-                                loff_t *off_in, int fd_out, loff_t *off_out,
+                                off_t *off_in, int fd_out, off_t *off_out,
                                 size_t len, unsigned int flags);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

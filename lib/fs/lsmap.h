@@ -29,7 +29,7 @@ void silofs_lsi_get_lrange(const struct silofs_lsmap_info *lsi,
                            struct silofs_lrange           *out_lrange);
 
 void silofs_lsi_setup_spawned(struct silofs_lsmap_info *lsi,
-                              enum silofs_mtype refmtype, loff_t beg);
+                              enum silofs_mtype refmtype, off_t beg);
 
 void silofs_lsi_update_nused(struct silofs_lsmap_info *lsi);
 

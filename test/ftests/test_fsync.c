@@ -20,18 +20,18 @@
 /*
  * Expects fsync(3p) to return 0 after regular file write/read operation.
  */
-static void test_fsync_reg_(struct ft_env *fte, loff_t base_off, size_t bsz,
-                            loff_t step, size_t cnt)
+static void test_fsync_reg_(struct ft_env *fte, off_t base_off, size_t bsz,
+                            off_t step, size_t cnt)
 {
 	const char *path = ft_new_path_unique(fte);
 	void *buf1 = ft_new_buf_rands(fte, bsz);
 	void *buf2 = ft_new_buf_rands(fte, bsz);
-	loff_t off = -1;
+	off_t off = -1;
 	int fd = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	for (size_t i = 0; i < cnt; ++i) {
-		off = base_off + ((loff_t)i * step);
+		off = base_off + ((off_t)i * step);
 		ft_pwriten(fd, buf1, bsz, off);
 		ft_fsync(fd);
 		ft_preadn(fd, buf2, bsz, off);
@@ -101,7 +101,7 @@ static void test_fsync_dir(struct ft_env *fte)
  * Expects successful fsync(3p) and stat(3p) on directory-fd in combination
  * with openat(2), renameat(2) and I/O calls.
  */
-static void test_fsync_dir_io_(struct ft_env *fte, loff_t off_base, size_t cnt)
+static void test_fsync_dir_io_(struct ft_env *fte, off_t off_base, size_t cnt)
 {
 	struct stat st = { .st_size = -1 };
 	const char *path = ft_new_path_unique(fte);
@@ -109,7 +109,7 @@ static void test_fsync_dir_io_(struct ft_env *fte, loff_t off_base, size_t cnt)
 	const char *name2 = nullptr;
 	void *buf;
 	size_t len;
-	loff_t off;
+	off_t off;
 	int dfd = -1;
 	int fd = -1;
 
@@ -148,7 +148,7 @@ static void test_fsync_dir_io_(struct ft_env *fte, loff_t off_base, size_t cnt)
 
 static void test_fsync_dir_io(struct ft_env *fte)
 {
-	const loff_t off[] = { 0, FT_64K, FT_1M, FT_1T };
+	const off_t off[] = { 0, FT_64K, FT_1M, FT_1T };
 	size_t cnt = 10;
 
 	for (size_t i = 0; i < FT_ARRAY_SIZE(off); ++i) {

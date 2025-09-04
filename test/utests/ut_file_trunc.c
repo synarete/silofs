@@ -16,12 +16,12 @@
  */
 #include "utests.h"
 
-static void ut_file_trunc_data_(struct ut_env *ute, loff_t off, size_t len)
+static void ut_file_trunc_data_(struct ut_env *ute, off_t off, size_t len)
 {
 	struct stat st = { .st_ino = 0 };
 	const char *name = UT_NAME;
-	const loff_t bk_size = (loff_t)UT_BK_SIZE;
-	const loff_t off_bk_start = (off / bk_size) * bk_size;
+	const off_t bk_size = (off_t)UT_BK_SIZE;
+	const off_t off_bk_start = (off / bk_size) * bk_size;
 	char *buf = ut_randbuf(ute, len);
 	ino_t dino = 0;
 	ino_t ino = 0;
@@ -94,11 +94,11 @@ static void ut_file_trunc_unaligned(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_file_trunc_mixed_(struct ut_env *ute, loff_t off, size_t len)
+static void ut_file_trunc_mixed_(struct ut_env *ute, off_t off, size_t len)
 {
 	const char *name = UT_NAME;
-	const loff_t eoff = off + (loff_t)len;
-	const loff_t zoff = off - (loff_t)len;
+	const off_t eoff = off + (off_t)len;
+	const off_t zoff = off - (off_t)len;
 	const size_t bsz = 2 * len;
 	uint8_t *buf = ut_randbuf(ute, bsz);
 	ino_t dino = 0;
@@ -142,23 +142,23 @@ static void ut_file_trunc_mixed(struct ut_env *ute)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void
-ut_file_trunc_hole_(struct ut_env *ute, loff_t off1, loff_t off2, size_t len)
+ut_file_trunc_hole_(struct ut_env *ute, off_t off1, off_t off2, size_t len)
 {
 	const char *name = UT_NAME;
 	void *buf1 = nullptr;
 	void *buf2 = nullptr;
 	void *zeros = nullptr;
-	loff_t hole_off1 = -1;
-	loff_t hole_off2 = -1;
+	off_t hole_off1 = -1;
+	off_t hole_off2 = -1;
 	size_t hole_len = 0;
 	size_t nzeros = 0;
 	ino_t dino = 0;
 	ino_t ino = 0;
 
-	hole_off1 = off1 + (loff_t)len;
+	hole_off1 = off1 + (off_t)len;
 	hole_len = (size_t)(off2 - hole_off1);
 	nzeros = (hole_len < UT_1M) ? hole_len : UT_1M;
-	hole_off2 = off2 - (loff_t)nzeros;
+	hole_off2 = off2 - (off_t)nzeros;
 	buf1 = ut_randbuf(ute, len);
 	buf2 = ut_randbuf(ute, len);
 	zeros = ut_zerobuf(ute, nzeros);
@@ -202,7 +202,7 @@ static void ut_file_trunc_hole(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_read_zero_byte(struct ut_env *ute, ino_t ino, loff_t off)
+static void ut_read_zero_byte(struct ut_env *ute, ino_t ino, off_t off)
 {
 	const uint8_t zero[1] = { 0 };
 
@@ -212,11 +212,11 @@ static void ut_read_zero_byte(struct ut_env *ute, ino_t ino, loff_t off)
 }
 
 static void ut_file_trunc_single_byte_(struct ut_env *ute,
-                                       const loff_t *off_arr, size_t cnt)
+                                       const off_t *off_arr, size_t cnt)
 {
 	const char *name = UT_NAME;
 	const uint8_t one[1] = { 1 };
-	loff_t off = -1;
+	off_t off = -1;
 	ino_t dino = 0;
 	ino_t ino = 0;
 
@@ -243,13 +243,13 @@ static void ut_file_trunc_single_byte_(struct ut_env *ute,
 
 static void ut_file_trunc_single_byte(struct ut_env *ute)
 {
-	const loff_t off1[] = {
+	const off_t off1[] = {
 		0, UT_BK_SIZE, UT_1M, UT_1G, UT_1T,
 	};
-	const loff_t off2[] = {
+	const off_t off2[] = {
 		1, UT_BK_SIZE + 1, UT_1M + 1, UT_1G + 1, UT_1T + 1,
 	};
-	const loff_t off3[] = {
+	const off_t off3[] = {
 		77, 777, 7777, 77777, 777777, 7777777,
 	};
 
@@ -263,11 +263,11 @@ static void ut_file_trunc_single_byte(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_file_trunc_tail_(struct ut_env *ute, loff_t off, size_t ulen)
+static void ut_file_trunc_tail_(struct ut_env *ute, off_t off, size_t ulen)
 {
 	const char *name = UT_NAME;
 	void *buf = ut_randbuf(ute, ulen);
-	const ssize_t len = (loff_t)ulen;
+	const ssize_t len = (off_t)ulen;
 	ino_t dino = 0;
 	ino_t ino = 0;
 
@@ -302,12 +302,12 @@ static void ut_file_trunc_tail(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_file_trunc_void_(struct ut_env *ute, loff_t off, size_t ulen)
+static void ut_file_trunc_void_(struct ut_env *ute, off_t off, size_t ulen)
 {
 	struct stat st = { .st_size = -1 };
 	const char *name = UT_NAME;
-	const ssize_t len = (loff_t)ulen;
-	const loff_t end = off + len;
+	const ssize_t len = (off_t)ulen;
+	const off_t end = off + len;
 	uint8_t dat = 67;
 	ino_t dino = 0;
 	ino_t ino = 0;
@@ -344,8 +344,7 @@ static void ut_file_trunc_void(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void
-ut_file_trunc_zero_size_(struct ut_env *ute, loff_t off, size_t len)
+static void ut_file_trunc_zero_size_(struct ut_env *ute, off_t off, size_t len)
 {
 	struct stat st[3];
 	struct statvfs stv[3];
@@ -361,7 +360,7 @@ ut_file_trunc_zero_size_(struct ut_env *ute, loff_t off, size_t len)
 	ut_write_read(ute, ino, buf, len, off);
 	ut_getattr(ute, ino, &st[1]);
 	ut_statfs(ute, ino, &stv[1]);
-	ut_expect_eq(st[1].st_size, off + (loff_t)len);
+	ut_expect_eq(st[1].st_size, off + (off_t)len);
 	ut_expect_gt(st[1].st_blocks, st[0].st_blocks);
 	ut_expect_lt(stv[1].f_bfree, stv[0].f_bfree);
 	ut_trunacate_file(ute, ino, 0);
@@ -395,7 +394,7 @@ static void ut_file_trunc_zero_size(struct ut_env *ute)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void
-ut_file_trunc_null_data_(struct ut_env *ute, loff_t off, size_t unused_len)
+ut_file_trunc_null_data_(struct ut_env *ute, off_t off, size_t unused_len)
 {
 	uint8_t rnd[256];
 	uint8_t dat[1] = { 0xC7 };

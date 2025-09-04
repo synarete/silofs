@@ -134,7 +134,7 @@ static void ut_statfs_dirs(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_statfs_bfree_(struct ut_env *ute, loff_t off, size_t bsz)
+static void ut_statfs_bfree_(struct ut_env *ute, off_t off, size_t bsz)
 {
 	ino_t ino = 0;
 	ino_t dino = 0;

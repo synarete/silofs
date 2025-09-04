@@ -39,8 +39,8 @@ static struct ft_getdents_ctx *ft_new_getdents_ctx(struct ft_env *fte)
 static void
 ft_verify_getdents_ctx(struct ft_env *fte, struct ft_getdents_ctx *gd_ctx)
 {
-	loff_t off_curr;
-	loff_t off_prev = -1;
+	off_t off_curr;
+	off_t off_prev = -1;
 	const struct dirent64 *dent;
 
 	for (size_t i = 0; i < gd_ctx->ndents; ++i) {
@@ -67,10 +67,10 @@ static void ft_getdents2(int fd, struct ft_getdents_ctx *gd_ctx)
 	gd_ctx->ndents = ndents;
 }
 
-static void ft_getdents_from(struct ft_env *fte, int fd, loff_t off,
+static void ft_getdents_from(struct ft_env *fte, int fd, off_t off,
                              struct ft_getdents_ctx *gd_ctx)
 {
-	loff_t pos = -1;
+	off_t pos = -1;
 
 	ft_llseek(fd, off, SEEK_SET, &pos);
 	ft_expect_eq(off, pos);
@@ -88,8 +88,8 @@ static void test_readdir_basic_(struct ft_env *fte, size_t lim)
 	struct dirent64 dent = { .d_ino = 0 };
 	const char *path1 = nullptr;
 	const char *path0 = ft_new_path_unique(fte);
-	loff_t pos = -1;
-	loff_t off = 0;
+	off_t pos = -1;
+	off_t off = 0;
 	size_t cnt = 0;
 	size_t itr = 0;
 	int dfd = -1;
@@ -150,8 +150,8 @@ static void test_readdir_unlink_(struct ft_env *fte, size_t lim)
 	struct dirent64 dent = { .d_ino = 0 };
 	const char *path1 = nullptr;
 	const char *path0 = ft_new_path_unique(fte);
-	loff_t pos = -1;
-	loff_t off = 0;
+	off_t pos = -1;
+	off_t off = 0;
 	size_t cnt = 0;
 	int dfd = -1;
 	int fd = -1;
@@ -224,8 +224,8 @@ static void test_readdir_getdents_(struct ft_env *fte, size_t lim)
 	const char *path1 = nullptr;
 	const char *prefix = ft_new_name_unique(fte);
 	const struct dirent64 *dent = nullptr;
-	loff_t pos = -1;
-	loff_t off = 0;
+	off_t pos = -1;
+	off_t off = 0;
 	size_t nde = 0;
 	size_t cnt = 0;
 	int cmp = 0;
@@ -291,7 +291,7 @@ static void test_readdir_counted_(struct ft_env *fte, size_t lim)
 	const char *path1 = nullptr;
 	const char *name = nullptr;
 	const struct dirent64 *dent = nullptr;
-	loff_t off = 0;
+	off_t off = 0;
 	size_t cnt = 0;
 	int dfd = -1;
 
@@ -359,7 +359,7 @@ static void test_readdir_unlinkat_(struct ft_env *fte, size_t lim)
 	struct ft_getdents_ctx *gd_ctx = ft_new_getdents_ctx(fte);
 	const struct dirent64 *dent = nullptr;
 	const char *name = nullptr;
-	loff_t doff = 0;
+	off_t doff = 0;
 	size_t cnt = 0;
 	size_t itr = 0;
 	int dfd1 = -1;
@@ -486,7 +486,7 @@ static void test_readdir_unlink_names_arr_(struct ft_env *fte,
 	struct ft_getdents_ctx *gd_ctx = ft_new_getdents_ctx(fte);
 	const char *path = ft_new_path_unique(fte);
 	const struct dirent64 *dent = nullptr;
-	loff_t doff = 0;
+	off_t doff = 0;
 	size_t dcnt = 0;
 	int dfd = -1;
 	int fd = -1;

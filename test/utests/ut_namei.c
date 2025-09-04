@@ -74,7 +74,7 @@ static void ut_create_unlink_simple(struct ut_env *ute)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void ut_create_write_release(struct ut_env *ute, ino_t dino,
-                                    const char *name, size_t bsz, loff_t off)
+                                    const char *name, size_t bsz, off_t off)
 {
 	void *buf = ut_randbuf(ute, bsz);
 	ino_t ino = 0;
@@ -85,7 +85,7 @@ static void ut_create_write_release(struct ut_env *ute, ino_t dino,
 }
 
 static void ut_create_unlink_random_(struct ut_env *ute, size_t nfiles,
-                                     size_t bsz, loff_t off)
+                                     size_t bsz, off_t off)
 {
 	const char *name = UT_NAME;
 	const char **fname = nullptr;

@@ -24,7 +24,7 @@ static void test_rw_sparse_simple_(struct ft_env *fte, size_t cnt)
 {
 	const char *path = ft_new_path_unique(fte);
 	const size_t step = 524287;
-	loff_t pos = -1;
+	off_t pos = -1;
 	size_t nsz = 0;
 	size_t num = 0;
 	size_t num2 = 0;
@@ -33,7 +33,7 @@ static void test_rw_sparse_simple_(struct ft_env *fte, size_t cnt)
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	for (size_t i = 0; i < cnt; ++i) {
 		num = (i * step);
-		pos = (loff_t)num;
+		pos = (off_t)num;
 		nsz = sizeof(num);
 		ft_pwriten(fd, &num, nsz, pos);
 	}
@@ -41,7 +41,7 @@ static void test_rw_sparse_simple_(struct ft_env *fte, size_t cnt)
 	ft_open(path, O_RDONLY, 0, &fd);
 	for (size_t j = 0; j < cnt; ++j) {
 		num = (j * step);
-		pos = (loff_t)num;
+		pos = (off_t)num;
 		nsz = sizeof(num2);
 		ft_preadn(fd, &num2, nsz, pos);
 		ft_expect_eq(num, num2);
@@ -68,7 +68,7 @@ static void test_rw_sparse_repeat_(struct ft_env *fte, size_t cnt)
 {
 	const char *path = ft_new_path_unique(fte);
 	const size_t step = 524287;
-	loff_t pos = -1;
+	off_t pos = -1;
 	size_t nsz = 0;
 	size_t num = 0;
 	size_t num2 = 0;
@@ -80,7 +80,7 @@ static void test_rw_sparse_repeat_(struct ft_env *fte, size_t cnt)
 		for (size_t j = 0; j < cnt; ++j) {
 			ft_open(path, O_RDWR, 0, &fd);
 			num = i + (j * step);
-			pos = (loff_t)num;
+			pos = (off_t)num;
 			nsz = sizeof(num);
 			ft_pwriten(fd, &num, nsz, pos);
 			ft_fdatasync(fd);
@@ -106,7 +106,7 @@ static void test_rw_sparse_repeat(struct ft_env *fte)
 /*
  * Tests read-write data-consistency over sparse file with overwrites.
  */
-static void test_rw_sparse_overwrite_(struct ft_env *fte, loff_t base_off)
+static void test_rw_sparse_overwrite_(struct ft_env *fte, off_t base_off)
 {
 	const size_t len1 = 10037;
 	const size_t len2 = 10039;
@@ -114,12 +114,12 @@ static void test_rw_sparse_overwrite_(struct ft_env *fte, loff_t base_off)
 	uint8_t *buf2 = ft_new_buf_rands(fte, len2);
 	uint8_t *buf3 = ft_new_buf_rands(fte, len1 + len2);
 	char *path = ft_new_path_unique(fte);
-	const loff_t offs[] = {
+	const off_t offs[] = {
 		737717, 280411, 10007, 31033,  42043,   53113, 161881,  375533,
 		86767,  97171,  75353, 611999, 1108007, 64601, 1272211, 20323,
 	};
 	const size_t noffs = FT_ARRAY_SIZE(offs);
-	loff_t off = -1;
+	off_t off = -1;
 	uint8_t byte = 0;
 	int fd = -1;
 
@@ -145,7 +145,7 @@ static void test_rw_sparse_overwrite_(struct ft_env *fte, loff_t base_off)
 
 static void test_rw_sparse_overwrite(struct ft_env *fte)
 {
-	const loff_t base_off[] = { 0, 1, FT_1M - 2, FT_1G - 3 };
+	const off_t base_off[] = { 0, 1, FT_1M - 2, FT_1G - 3 };
 
 	for (size_t i = 0; i < FT_ARRAY_SIZE(base_off); ++i) {
 		test_rw_sparse_overwrite_(fte, base_off[i]);

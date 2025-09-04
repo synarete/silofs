@@ -194,7 +194,7 @@ static void test_symlink_with_io_(struct ft_env *fte, size_t cnt)
 	const char *path1 = ft_new_path_under(fte, path0);
 	const mode_t ifmt = S_IFMT;
 	size_t nch = 0;
-	loff_t off = -1;
+	off_t off = -1;
 	int dfd = -1;
 	int fd = -1;
 
@@ -207,7 +207,7 @@ static void test_symlink_with_io_(struct ft_env *fte, size_t cnt)
 		ft_symlinkat(symval, dfd, name);
 		ft_fstatat(dfd, name, &st, AT_SYMLINK_NOFOLLOW);
 		ft_expect_st_lnk(&st);
-		off = (loff_t)(i * cnt);
+		off = (off_t)(i * cnt);
 		ft_pwriten(fd, symval, i, off);
 	}
 	for (size_t i = 1; i < cnt; ++i) {
@@ -217,7 +217,7 @@ static void test_symlink_with_io_(struct ft_env *fte, size_t cnt)
 		symval = ft_new_path_dummy(fte, i + 1);
 		ft_readlinkat(dfd, name, symval, i + 1, &nch);
 		ft_expect_eq(nch, i);
-		off = (loff_t)(i * cnt);
+		off = (off_t)(i * cnt);
 		ft_preadn(fd, buf, i, off);
 		ft_expect_eqm(buf, symval, i);
 	}

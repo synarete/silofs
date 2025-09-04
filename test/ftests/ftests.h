@@ -114,7 +114,7 @@ struct ft_env {
 
 /* I/O range to test */
 struct ft_range {
-	loff_t off;
+	off_t  off;
 	size_t len;
 };
 
@@ -209,7 +209,7 @@ size_t ft_page_size(void);
 	ft_exec_with_ranges_(fte_, fn_, args_, FT_ARRAY_SIZE(args_))
 
 void ft_exec_with_ranges_(struct ft_env *fte,
-                          void (*fn)(struct ft_env *, loff_t, size_t),
+                          void (*fn)(struct ft_env *, off_t, size_t),
                           const struct ft_range *range, size_t na);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -226,19 +226,19 @@ struct ft_sub_exec {
 	const char          *path;
 	const char          *path2;
 	size_t               niter;
-	loff_t               off;
+	off_t                off;
 	size_t               len;
-	loff_t               end;
+	off_t                end;
 	int                  keep_run;
 };
 
 void ft_sub_run(struct ft_sub_exec *se_arr, size_t n, ft_sub_exec_fn fn);
 
 void ft_sub_setup(struct ft_sub_exec *se_arr, size_t n, struct ft_env *fte,
-                  size_t niter, loff_t off, size_t len);
+                  size_t niter, off_t off, size_t len);
 
 void ft_sub_setup2(struct ft_sub_exec *se_arr, size_t n, struct ft_env *fte,
-                   size_t niter, loff_t off, size_t len);
+                   size_t niter, off_t off, size_t len);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

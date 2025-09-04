@@ -348,7 +348,7 @@ void ft_do_pclose(int *fd, const char *fl, int ln)
 	}
 }
 
-void ft_do_truncate(const char *path, loff_t len, const char *fl, int ln)
+void ft_do_truncate(const char *path, off_t len, const char *fl, int ln)
 {
 	int res;
 
@@ -356,7 +356,7 @@ void ft_do_truncate(const char *path, loff_t len, const char *fl, int ln)
 	ft_expect_sys_ok(res, fl, ln);
 }
 
-void ft_do_ftruncate(int fd, loff_t len, const char *fl, int ln)
+void ft_do_ftruncate(int fd, off_t len, const char *fl, int ln)
 {
 	int res;
 
@@ -364,7 +364,7 @@ void ft_do_ftruncate(int fd, loff_t len, const char *fl, int ln)
 	ft_expect_sys_ok(res, fl, ln);
 }
 
-void ft_do_llseek(int fd, loff_t off, int whence, loff_t *out_pos,
+void ft_do_llseek(int fd, off_t off, int whence, off_t *out_pos,
                   const char *fl, int ln)
 {
 	int res;
@@ -373,10 +373,10 @@ void ft_do_llseek(int fd, loff_t off, int whence, loff_t *out_pos,
 	ft_expect_sys_ok(res, fl, ln);
 }
 
-void ft_do_llseek_err(int fd, loff_t off, int whence, int err, const char *fl,
+void ft_do_llseek_err(int fd, off_t off, int whence, int err, const char *fl,
                       int ln)
 {
-	loff_t pos = -1;
+	off_t pos = -1;
 	int res;
 
 	res = silofs_sys_llseek(fd, off, whence, &pos);
@@ -402,7 +402,7 @@ void ft_do_write_err(int fd, const void *buf, size_t cnt, int err,
 	ft_expect_sys_err(res, err, fl, ln);
 }
 
-void ft_do_pwrite(int fd, const void *buf, size_t cnt, loff_t off,
+void ft_do_pwrite(int fd, const void *buf, size_t cnt, off_t off,
                   size_t *out_nwr, const char *fl, int ln)
 {
 	int res;
@@ -411,7 +411,7 @@ void ft_do_pwrite(int fd, const void *buf, size_t cnt, loff_t off,
 	ft_expect_sys_ok(res, fl, ln);
 }
 
-void ft_do_pwrite_err(int fd, const void *buf, size_t cnt, loff_t off, int err,
+void ft_do_pwrite_err(int fd, const void *buf, size_t cnt, off_t off, int err,
                       const char *fl, int ln)
 {
 	size_t nwr = 0;
@@ -440,7 +440,7 @@ void ft_do_read_err(int fd, void *buf, size_t cnt, int err, const char *fl,
 	ft_expect_sys_err(res, err, fl, ln);
 }
 
-void ft_do_pread(int fd, void *buf, size_t cnt, loff_t off, size_t *out_nrd,
+void ft_do_pread(int fd, void *buf, size_t cnt, off_t off, size_t *out_nrd,
                  const char *fl, int ln)
 {
 	int res;
@@ -449,7 +449,7 @@ void ft_do_pread(int fd, void *buf, size_t cnt, loff_t off, size_t *out_nrd,
 	ft_expect_sys_ok(res, fl, ln);
 }
 
-void ft_do_fallocate(int fd, int mode, loff_t off, loff_t len, const char *fl,
+void ft_do_fallocate(int fd, int mode, off_t off, off_t len, const char *fl,
                      int ln)
 {
 	int res;
@@ -458,7 +458,7 @@ void ft_do_fallocate(int fd, int mode, loff_t off, loff_t len, const char *fl,
 	ft_expect_sys_ok(res, fl, ln);
 }
 
-void ft_do_fallocate_err(int fd, int mode, loff_t off, loff_t len, int err,
+void ft_do_fallocate_err(int fd, int mode, off_t off, off_t len, int err,
                          const char *fl, int ln)
 {
 	int res;
@@ -690,7 +690,7 @@ void ft_do_access_err(const char *path, int mode, int err, const char *fl,
 }
 
 void ft_do_mmap(void *addr, size_t len, int prot, int flags, int fd,
-                loff_t offset, void **out, const char *fl, int ln)
+                off_t offset, void **out, const char *fl, int ln)
 {
 	int res;
 
@@ -868,8 +868,8 @@ void ft_do_flistxattr_err(int fd, char *list, size_t size, int err,
 	ft_expect_sys_err(res, err, fl, ln);
 }
 
-void ft_do_copy_file_range(int fd_in, loff_t *off_in, int fd_out,
-                           loff_t *off_out, size_t len, size_t *out_ncp,
+void ft_do_copy_file_range(int fd_in, off_t *off_in, int fd_out,
+                           off_t *off_out, size_t len, size_t *out_ncp,
                            const char *fl, int ln)
 {
 	int res;
@@ -924,17 +924,17 @@ void ft_do_readn(int fd, void *buf, size_t cnt, const char *fl, int ln)
 	ft_expect_eq(nrd, cnt);
 }
 
-void ft_do_preadn(int fd, void *buf, size_t cnt, loff_t off, const char *fl,
+void ft_do_preadn(int fd, void *buf, size_t cnt, off_t off, const char *fl,
                   int ln)
 {
 	uint8_t *ptr = nullptr;
-	loff_t pos = 0;
+	off_t pos = 0;
 	size_t nrd = 0;
 	size_t nrd_cur = 0;
 
 	while (nrd < cnt) {
 		ptr = (uint8_t *)buf + nrd;
-		pos = off + (loff_t)nrd;
+		pos = off + (off_t)nrd;
 		nrd_cur = 0;
 		ft_do_pread(fd, ptr, cnt - nrd, pos, &nrd_cur, fl, ln);
 		if (!nrd_cur) {
@@ -963,17 +963,17 @@ void ft_do_writen(int fd, const void *buf, size_t cnt, const char *fl, int ln)
 	ft_expect_eq(nwr, cnt);
 }
 
-void ft_do_pwriten(int fd, const void *buf, size_t cnt, loff_t off,
+void ft_do_pwriten(int fd, const void *buf, size_t cnt, off_t off,
                    const char *fl, int ln)
 {
 	const uint8_t *ptr = nullptr;
-	loff_t pos = 0;
+	off_t pos = 0;
 	size_t nwr = 0;
 	size_t nwr_cur = 0;
 
 	while (nwr < cnt) {
 		ptr = (const uint8_t *)buf + nwr;
-		pos = off + (loff_t)nwr;
+		pos = off + (off_t)nwr;
 		nwr_cur = 0;
 		ft_do_pwrite(fd, ptr, cnt - nwr, pos, &nwr_cur, fl, ln);
 		if (!nwr_cur) {
@@ -984,14 +984,14 @@ void ft_do_pwriten(int fd, const void *buf, size_t cnt, loff_t off,
 	ft_expect_eq(nwr, cnt);
 }
 
-void ft_do_copy_file_rangen(int fd_src, loff_t off_in, int fd_dst,
-                            loff_t off_out, size_t len, const char *fl, int ln)
+void ft_do_copy_file_rangen(int fd_src, off_t off_in, int fd_dst,
+                            off_t off_out, size_t len, const char *fl, int ln)
 {
 	size_t ncp = 0;
 	size_t ncp_want = 0;
 	size_t ncp_total = 0;
-	loff_t off_src = off_in;
-	loff_t off_dst = off_out;
+	off_t off_src = off_in;
+	off_t off_dst = off_out;
 
 	while (ncp_total < len) {
 		ncp_want = len - ncp_total;

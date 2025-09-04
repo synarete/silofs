@@ -33,13 +33,13 @@ struct silofs_readdir_info {
 	const char        *name;
 	size_t             namelen;
 	ino_t              ino;
-	loff_t             off;
+	off_t              off;
 	mode_t             dt;
 };
 
 struct silofs_readdir_ctx {
 	silofs_filldir_fn actor;
-	loff_t            pos;
+	off_t             pos;
 };
 
 /* pair of ino and dir-type */

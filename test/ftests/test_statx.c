@@ -61,7 +61,7 @@ static void test_statx_simple(struct ft_env *fte)
 /*
  * Expects statx(2) to return valid and constant birth time.
  */
-static void test_statx_btime_(struct ft_env *fte, loff_t off, size_t len)
+static void test_statx_btime_(struct ft_env *fte, off_t off, size_t len)
 {
 	struct statx stx[2];
 	struct timespec ts[2];
@@ -118,7 +118,7 @@ static void test_statx_btime(struct ft_env *fte)
 /*
  * Expects statx(2) to return valid attributes with ENCRYPTED
  */
-static void test_statx_attributes_(struct ft_env *fte, loff_t off, size_t len)
+static void test_statx_attributes_(struct ft_env *fte, off_t off, size_t len)
 {
 	struct statx stx[2];
 	void *buf = ft_new_buf_rands(fte, len);

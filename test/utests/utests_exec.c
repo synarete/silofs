@@ -702,7 +702,7 @@ char *ut_strfmt(struct ut_env *ute, const char *fmt, ...)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-struct ut_dvec *ut_new_dvec(struct ut_env *ute, loff_t off, size_t len)
+struct ut_dvec *ut_new_dvec(struct ut_env *ute, off_t off, size_t len)
 {
 	size_t size;
 	struct ut_dvec *dvec;
@@ -797,7 +797,7 @@ bool ut_not_dot_or_dotdot(const char *s)
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 void ut_exec_with_ranges_(struct ut_env *ute,
-                          void (*fn)(struct ut_env *, loff_t, size_t),
+                          void (*fn)(struct ut_env *, off_t, size_t),
                           const struct ut_range *range, size_t na)
 {
 	for (size_t i = 0; i < na; ++i) {

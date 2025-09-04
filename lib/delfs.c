@@ -31,7 +31,7 @@ struct silofs_delfs_ctx {
 };
 
 static int sli_resolve_lseg_of(const struct silofs_spleaf_info *sli,
-                               loff_t voff, struct silofs_lsid *out_lsid)
+                               off_t voff, struct silofs_lsid *out_lsid)
 {
 	struct silofs_laddr laddr;
 	int err;
@@ -86,7 +86,7 @@ static int delfc_try_remove_lseg_of(const struct silofs_delfs_ctx *delf_ctx,
 
 static int
 delfc_post_at_lseg_of(struct silofs_delfs_ctx *delf_ctx,
-                      const struct silofs_spleaf_info *sli, loff_t voff)
+                      const struct silofs_spleaf_info *sli, off_t voff)
 {
 	struct silofs_lsid lsid;
 	int err;
@@ -106,7 +106,7 @@ static int delfc_post_at_spleaf(struct silofs_delfs_ctx *delf_ctx,
                                 const struct silofs_spleaf_info *sli)
 {
 	struct silofs_lrange lrange = { .beg = -1 };
-	loff_t voff = -1;
+	off_t voff = -1;
 	int err;
 
 	silofs_sli_get_lrange(sli, &lrange);
@@ -132,7 +132,7 @@ static int delfc_post_at_spnode(struct silofs_delfs_ctx *delf_ctx,
 {
 	struct silofs_uaddr uaddr;
 	struct silofs_lrange lrange;
-	loff_t voff;
+	off_t voff;
 	int err;
 
 	silofs_sni_vspace_range(sni, &lrange);

@@ -21,14 +21,14 @@
  * Tests read-write data-consistency for a sequence of IOs at pseudo random
  * offsets.
  */
-static void test_rw_random_(struct ft_env *fte, loff_t from, size_t len,
+static void test_rw_random_(struct ft_env *fte, off_t from, size_t len,
                             size_t cnt, int unlinked)
 {
 	const char *path = ft_new_path_unique(fte);
 	const long *pseq = ft_new_buf_randseq(fte, cnt, 0);
 	void *buf1 = nullptr;
 	void *buf2 = ft_new_buf_zeros(fte, len);
-	loff_t pos = 0;
+	off_t pos = 0;
 	long seed = 0;
 	int fd = -1;
 
@@ -63,7 +63,7 @@ static void test_rw_random_aligned_64k(struct ft_env *fte)
 {
 	const size_t len = FT_64K;
 	const size_t cnt[] = { 1, 2, 64 };
-	const loff_t from[] = {
+	const off_t from[] = {
 		0,
 		FT_64K,
 		FT_1M,
@@ -92,7 +92,7 @@ static void test_rw_random_aligned_1m(struct ft_env *fte)
 {
 	const size_t len = FT_1M;
 	const size_t cnt[] = { 1, 2, 4 };
-	const loff_t from[] = {
+	const off_t from[] = {
 		0,
 		FT_1M,
 		FT_1G,
@@ -119,7 +119,7 @@ static void test_rw_random_unaligned_64k(struct ft_env *fte)
 {
 	const size_t len = FT_64K;
 	const size_t cnt[] = { 1, 2, 4 };
-	const loff_t from[] = {
+	const off_t from[] = {
 		1,
 		FT_64K - 11,
 		FT_64K + 11,
@@ -148,7 +148,7 @@ static void test_rw_random_unaligned_1m(struct ft_env *fte)
 {
 	const size_t len = FT_1M;
 	const size_t cnt[] = { 1, 2, 3 };
-	const loff_t from[] = {
+	const off_t from[] = {
 		11,
 		FT_64K - 11,
 		FT_1M - 11,
@@ -176,7 +176,7 @@ static void test_rw_random_unaligned_1m(struct ft_env *fte)
 static void test_rw_random_unaligned_some_(struct ft_env *fte, size_t len)
 {
 	const size_t cnt[] = { 1, 7, 77 };
-	const loff_t from[] = {
+	const off_t from[] = {
 		7,
 		1023,
 		FT_64K - 7,

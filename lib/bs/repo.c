@@ -204,7 +204,7 @@ static int do_fsync(int fd)
 }
 
 static int
-do_sync_file_range(int fd, loff_t off, loff_t nbytes, unsigned int flags)
+do_sync_file_range(int fd, off_t off, off_t nbytes, unsigned int flags)
 {
 	int err;
 
@@ -217,7 +217,7 @@ do_sync_file_range(int fd, loff_t off, loff_t nbytes, unsigned int flags)
 	return err;
 }
 
-static int do_pwriten(int fd, const void *buf, size_t cnt, loff_t off)
+static int do_pwriten(int fd, const void *buf, size_t cnt, off_t off)
 {
 	int err;
 
@@ -229,7 +229,7 @@ static int do_pwriten(int fd, const void *buf, size_t cnt, loff_t off)
 	return err;
 }
 
-static int do_pwritevn(int fd, const struct iovec *iov, size_t cnt, loff_t off)
+static int do_pwritevn(int fd, const struct iovec *iov, size_t cnt, off_t off)
 {
 	int err;
 
@@ -241,7 +241,7 @@ static int do_pwritevn(int fd, const struct iovec *iov, size_t cnt, loff_t off)
 	return err;
 }
 
-static int do_preadn(int fd, void *buf, size_t cnt, loff_t off)
+static int do_preadn(int fd, void *buf, size_t cnt, off_t off)
 {
 	int err;
 
@@ -253,7 +253,7 @@ static int do_preadn(int fd, void *buf, size_t cnt, loff_t off)
 	return err;
 }
 
-static int do_ftruncate(int fd, loff_t len)
+static int do_ftruncate(int fd, off_t len)
 {
 	int err;
 
@@ -265,7 +265,7 @@ static int do_ftruncate(int fd, loff_t len)
 	return err;
 }
 
-static int do_fallocate(int fd, int mode, loff_t off, loff_t len)
+static int do_fallocate(int fd, int mode, off_t off, off_t len)
 {
 	int err;
 
@@ -278,7 +278,7 @@ static int do_fallocate(int fd, int mode, loff_t off, loff_t len)
 	return err;
 }
 
-static int do_fallocate_punch_hole(int fd, loff_t off, loff_t len)
+static int do_fallocate_punch_hole(int fd, off_t off, off_t len)
 {
 	const int mode = FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE;
 
@@ -571,14 +571,14 @@ static int blobf_fsync(const struct silofs_blobf *blobf)
 	return do_fsync(blobf->blf_fd);
 }
 
-static int blobf_pwriten(const struct silofs_blobf *blobf, loff_t off,
+static int blobf_pwriten(const struct silofs_blobf *blobf, off_t off,
                          const void *buf, size_t len)
 {
 	return do_pwriten(blobf->blf_fd, buf, len, off);
 }
 
-static int blobf_preadn(const struct silofs_blobf *blobf, loff_t off,
-                        void *buf, size_t len)
+static int blobf_preadn(const struct silofs_blobf *blobf, off_t off, void *buf,
+                        size_t len)
 {
 	return do_preadn(blobf->blf_fd, buf, len, off);
 }
@@ -669,10 +669,10 @@ static void lsegf_bindto(struct silofs_lsegf *lsegf, int fd, bool rw)
 }
 
 static int
-lsegf_check_range(const struct silofs_lsegf *lsegf, loff_t off, size_t len)
+lsegf_check_range(const struct silofs_lsegf *lsegf, off_t off, size_t len)
 {
-	const loff_t end = silofs_off_end(off, len);
-	const loff_t cap = lsegf_capacity(lsegf);
+	const off_t end = silofs_off_end(off, len);
+	const off_t cap = lsegf_capacity(lsegf);
 
 	if (off < 0) {
 		return -SILOFS_EINVAL;
@@ -717,7 +717,7 @@ static int lsegf_check_writable(const struct silofs_lsegf *lsegf)
 	return lsegf->lsf_rdonly ? -SILOFS_ERDONLY : 0;
 }
 
-static int lsegf_reassign_size(struct silofs_lsegf *lsegf, loff_t off)
+static int lsegf_reassign_size(struct silofs_lsegf *lsegf, off_t off)
 {
 	ssize_t len;
 	int err;
@@ -740,10 +740,10 @@ static int lsegf_reassign_size(struct silofs_lsegf *lsegf, loff_t off)
 }
 
 static int
-lsegf_require_size_ge(struct silofs_lsegf *lsegf, loff_t off, size_t len)
+lsegf_require_size_ge(struct silofs_lsegf *lsegf, off_t off, size_t len)
 {
-	const loff_t end = silofs_off_end(off, len);
-	const loff_t nxt = silofs_off_next_lbk(off);
+	const off_t end = silofs_off_end(off, len);
+	const off_t nxt = silofs_off_next_lbk(off);
 	const ssize_t want_size = silofs_off_max(end, nxt);
 	const ssize_t curr_size = lsegf_size(lsegf);
 
@@ -761,15 +761,15 @@ static int lsegf_require_laddr(struct silofs_lsegf *lsegf,
 }
 
 static int
-lsegf_check_size_ge(const struct silofs_lsegf *lsegf, loff_t off, size_t len)
+lsegf_check_size_ge(const struct silofs_lsegf *lsegf, off_t off, size_t len)
 {
-	const loff_t end = silofs_off_end(off, len);
+	const off_t end = silofs_off_end(off, len);
 	const ssize_t bsz = lsegf_size(lsegf);
 
 	return (bsz >= end) ? 0 : -SILOFS_ERANGE;
 }
 
-static void lsegf_make_iovec(const struct silofs_lsegf *lsegf, loff_t off,
+static void lsegf_make_iovec(const struct silofs_lsegf *lsegf, off_t off,
                              size_t len, struct silofs_iovec *iov)
 {
 	iov->iov.iov_len = len;
@@ -779,7 +779,7 @@ static void lsegf_make_iovec(const struct silofs_lsegf *lsegf, loff_t off,
 	iov->iov_backref = nullptr;
 }
 
-static int lsegf_iovec_at(const struct silofs_lsegf *lsegf, loff_t off,
+static int lsegf_iovec_at(const struct silofs_lsegf *lsegf, off_t off,
                           size_t len, struct silofs_iovec *siov)
 {
 	int err;
@@ -799,11 +799,11 @@ static int lsegf_iovec_of(const struct silofs_lsegf *lsegf,
 }
 
 static int
-lsegf_sync_range(const struct silofs_lsegf *lsegf, loff_t off, size_t len)
+lsegf_sync_range(const struct silofs_lsegf *lsegf, off_t off, size_t len)
 {
 	int err;
 
-	err = do_sync_file_range(lsegf->lsf_fd, off, (loff_t)len,
+	err = do_sync_file_range(lsegf->lsf_fd, off, (off_t)len,
 	                         SYNC_FILE_RANGE_WAIT_BEFORE |
 	                                 SYNC_FILE_RANGE_WRITE |
 	                                 SYNC_FILE_RANGE_WAIT_AFTER);
@@ -813,7 +813,7 @@ lsegf_sync_range(const struct silofs_lsegf *lsegf, loff_t off, size_t len)
 	return 0;
 }
 
-static int lsegf_pwriten(struct silofs_lsegf *lsegf, loff_t off,
+static int lsegf_pwriten(struct silofs_lsegf *lsegf, off_t off,
                          const void *buf, size_t len)
 {
 	int err;
@@ -843,7 +843,7 @@ static size_t length_of(const struct iovec *iov, size_t cnt)
 	return len;
 }
 
-static int lsegf_pwritevn(struct silofs_lsegf *lsegf, loff_t off,
+static int lsegf_pwritevn(struct silofs_lsegf *lsegf, off_t off,
                           const struct iovec *iov, size_t cnt)
 {
 	const size_t len = length_of(iov, cnt);
@@ -864,7 +864,7 @@ static int lsegf_pwritevn(struct silofs_lsegf *lsegf, loff_t off,
 	return 0;
 }
 
-static int lsegf_writev(struct silofs_lsegf *lsegf, loff_t off,
+static int lsegf_writev(struct silofs_lsegf *lsegf, off_t off,
                         const struct iovec *iov, size_t cnt, bool sync)
 {
 	size_t len = 0;
@@ -889,7 +889,7 @@ static int lsegf_load_bb(const struct silofs_lsegf *lsegf,
 {
 	struct silofs_iovec iovec = { .iov_off = -1 };
 	struct stat st;
-	loff_t end;
+	off_t end;
 	void *bobj;
 	int err;
 
@@ -953,7 +953,7 @@ static int lsegf_punch_with_ftruncate(const struct silofs_lsegf *lsegf)
 }
 
 static int lsegf_punch_with_fallocate(const struct silofs_lsegf *lsegf,
-                                      loff_t from, loff_t to)
+                                      off_t from, off_t to)
 {
 	return do_fallocate_punch_hole(lsegf->lsf_fd, from,
 	                               silofs_off_len(from, to));
@@ -1689,7 +1689,7 @@ repo_objs_stat_lseg(const struct silofs_repo *repo,
 		return (err == -ENOENT) ? -SILOFS_ENOENT : err;
 	}
 	len = silofs_lsid_size(lsid);
-	if (out_st->st_size > (loff_t)(len + SILOFS_LBK_SIZE)) {
+	if (out_st->st_size > (off_t)(len + SILOFS_LBK_SIZE)) {
 		log_warn("lseg-size mismatch: %s len=%lu st_size=%ld",
 		         sbuf.str, len, out_st->st_size);
 		return -SILOFS_EIO;
@@ -1864,7 +1864,7 @@ static int repo_create_skel_subdir(const struct silofs_repo *repo,
 }
 
 static int repo_create_skel_subfile(const struct silofs_repo *repo,
-                                    const char *name, mode_t mode, loff_t len)
+                                    const char *name, mode_t mode, off_t len)
 {
 	int fd = -1;
 	int err;
@@ -1892,7 +1892,7 @@ static int repo_create_skel_subfile(const struct silofs_repo *repo,
 static int repo_create_skel(const struct silofs_repo *repo)
 {
 	const char *name = nullptr;
-	loff_t size = 0;
+	off_t size = 0;
 	int err;
 
 	name = repo->re_defs->re_blobs_name;
@@ -1925,7 +1925,7 @@ repo_require_skel_subdir(const struct silofs_repo *repo, const char *name)
 }
 
 static int repo_require_skel_subfile(const struct silofs_repo *repo,
-                                     const char *name, loff_t min_size)
+                                     const char *name, off_t min_size)
 {
 	struct stat st = { .st_size = 0 };
 	int err;
@@ -1948,7 +1948,7 @@ static int repo_require_skel_subfile(const struct silofs_repo *repo,
 static int repo_require_skel(const struct silofs_repo *repo)
 {
 	const char *name = nullptr;
-	loff_t size;
+	off_t size;
 	int err;
 
 	err = do_access(repo->re.repodir.str, R_OK | W_OK | X_OK);

@@ -21,7 +21,7 @@
 
 /* short lifo of previously-allocated now-free space-addresses */
 struct silofs_spalifo {
-	loff_t   sal_lifo[63];
+	off_t    sal_lifo[63];
 	uint32_t sal_size;
 	uint32_t sal_ulen;
 };
@@ -31,7 +31,7 @@ struct silofs_spamap {
 	struct silofs_spalifo spa_lifo;
 	struct silofs_alloc  *spa_alloc;
 	struct silofs_avl     spa_avl;
-	loff_t                spa_hint;
+	off_t                 spa_hint;
 	unsigned int          spa_cap_max;
 	enum silofs_mtype     spa_mtype;
 };
@@ -51,7 +51,7 @@ struct silofs_spamaps {
 
 /* key of in-memory uaddress-mapping */
 struct silofs_uakey {
-	loff_t             voff;
+	off_t              voff;
 	enum silofs_height height;
 	enum silofs_mtype  vspace;
 };
@@ -75,19 +75,19 @@ void silofs_spamaps_fini(struct silofs_spamaps *spam);
 void silofs_spamaps_drop(struct silofs_spamaps *spam);
 
 int silofs_spamaps_trypop(struct silofs_spamaps *spam, enum silofs_mtype mtype,
-                          size_t len, loff_t *out_voff);
+                          size_t len, off_t *out_voff);
 
 int silofs_spamaps_store(struct silofs_spamaps *spam, enum silofs_mtype mtype,
-                         loff_t voff, size_t len);
+                         off_t voff, size_t len);
 
 int silofs_spamaps_baseof(const struct silofs_spamaps *spam,
-                          enum silofs_mtype mtype, loff_t voff, loff_t *out);
+                          enum silofs_mtype mtype, off_t voff, off_t *out);
 
-loff_t silofs_spamaps_get_hint(const struct silofs_spamaps *spam,
-                               enum silofs_mtype            mtype);
+off_t silofs_spamaps_get_hint(const struct silofs_spamaps *spam,
+                              enum silofs_mtype            mtype);
 
 void silofs_spamaps_set_hint(struct silofs_spamaps *spam,
-                             enum silofs_mtype mtype, loff_t off);
+                             enum silofs_mtype mtype, off_t off);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

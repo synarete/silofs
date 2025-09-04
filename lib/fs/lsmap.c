@@ -325,12 +325,12 @@ lbm_find_free(const struct silofs_lbk_meta *lbm, size_t nkb, size_t *out_kbn)
 
 static void
 lbm_make_vaddrs(const struct silofs_lbk_meta *lbm, enum silofs_mtype mtype,
-                loff_t off_base, struct silofs_vaddrs *out_vaddrs)
+                off_t off_base, struct silofs_vaddrs *out_vaddrs)
 {
 	struct silofs_lbk_state lbk_st;
 	const size_t nkb = silofs_mtype_nkbs(mtype);
 	const size_t nkb_in_bk = SILOFS_NKB_IN_LBK;
-	loff_t off;
+	off_t off;
 
 	lbm_allocated(lbm, &lbk_st);
 	out_vaddrs->count = 0;
@@ -443,19 +443,19 @@ lsmap_slot_by_lba(const struct silofs_lsmap *lsm, silofs_lba_t lba)
 	return (size_t)lba % ARRAY_SIZE(lsm->lsm_lbms);
 }
 
-static size_t lsmap_slot_by_off(const struct silofs_lsmap *lsm, loff_t voff)
+static size_t lsmap_slot_by_off(const struct silofs_lsmap *lsm, off_t voff)
 {
 	return lsmap_slot_by_lba(lsm, silofs_off_to_lba(voff));
 }
 
 static struct silofs_lbk_meta *
-lsmpa_lbm_by_off(struct silofs_lsmap *lsm, loff_t off)
+lsmpa_lbm_by_off(struct silofs_lsmap *lsm, off_t off)
 {
 	return lsmap_lbm_at(lsm, lsmap_slot_by_off(lsm, off));
 }
 
 static const struct silofs_lbk_meta *
-lsmpa_lbm_by_off2(const struct silofs_lsmap *lsm, loff_t off)
+lsmpa_lbm_by_off2(const struct silofs_lsmap *lsm, off_t off)
 {
 	return lsmap_lbm_at2(lsm, lsmap_slot_by_off(lsm, off));
 }
@@ -635,7 +635,7 @@ static void lsmap_make_vaddrs_of(const struct silofs_lsmap *lsm,
                                  struct silofs_vaddrs *out_vaddrs)
 {
 	const struct silofs_lbk_meta *lbm = lsmap_lbm_by_vaddr2(lsm, vaddr);
-	const loff_t off_base = silofs_off_align_to_lbk(vaddr->off);
+	const off_t off_base = silofs_off_align_to_lbk(vaddr->off);
 
 	lbm_make_vaddrs(lbm, lsmap_refmtype(lsm), off_base, out_vaddrs);
 }
@@ -653,18 +653,18 @@ lsmap_key_at2(const struct silofs_lsmap *lsm, size_t slot)
 	return &lsm->lsm_keys[slot];
 }
 
-static struct silofs_key *lsmap_key_of(struct silofs_lsmap *lsm, loff_t off)
+static struct silofs_key *lsmap_key_of(struct silofs_lsmap *lsm, off_t off)
 {
 	return lsmap_key_at(lsm, lsmap_slot_by_off(lsm, off));
 }
 
 static const struct silofs_key *
-lsmap_key_of2(const struct silofs_lsmap *lsm, loff_t off)
+lsmap_key_of2(const struct silofs_lsmap *lsm, off_t off)
 {
 	return lsmap_key_at2(lsm, lsmap_slot_by_off(lsm, off));
 }
 
-static void lsmap_get_key_of(const struct silofs_lsmap *lsm, loff_t off,
+static void lsmap_get_key_of(const struct silofs_lsmap *lsm, off_t off,
                              struct silofs_key *out_key)
 {
 	const struct silofs_key *key = lsmap_key_of2(lsm, off);
@@ -672,7 +672,7 @@ static void lsmap_get_key_of(const struct silofs_lsmap *lsm, loff_t off,
 	silofs_key_assign(out_key, key);
 }
 
-static void lsmap_set_key_of(struct silofs_lsmap *lsm, loff_t off,
+static void lsmap_set_key_of(struct silofs_lsmap *lsm, off_t off,
                              const struct silofs_key *key)
 {
 	struct silofs_key *lsm_key = lsmap_key_of(lsm, off);
@@ -736,9 +736,9 @@ void silofs_lsi_decref(struct silofs_lsmap_info *lsi)
 	}
 }
 
-static void lrange_of(struct silofs_lrange *lrange, loff_t beg, size_t nlbk)
+static void lrange_of(struct silofs_lrange *lrange, off_t beg, size_t nlbk)
 {
-	const loff_t end = silofs_off_end(beg, nlbk * SILOFS_LBK_SIZE);
+	const off_t end = silofs_off_end(beg, nlbk * SILOFS_LBK_SIZE);
 
 	silofs_lrange_setup(lrange, SILOFS_HEIGHT_SPLEAF, beg, end);
 }
@@ -762,7 +762,7 @@ static size_t lsi_lrange_len(const struct silofs_lsmap_info *lsi)
 	return silofs_lrange_len(&lrange);
 }
 
-static loff_t lsi_start_off(const struct silofs_lsmap_info *lsi)
+static off_t lsi_start_off(const struct silofs_lsmap_info *lsi)
 {
 	struct silofs_lrange lrange;
 
@@ -770,9 +770,9 @@ static loff_t lsi_start_off(const struct silofs_lsmap_info *lsi)
 	return lrange.beg;
 }
 
-static size_t lsi_off_to_bn(const struct silofs_lsmap_info *lsi, loff_t off)
+static size_t lsi_off_to_bn(const struct silofs_lsmap_info *lsi, off_t off)
 {
-	const loff_t beg = lsi_start_off(lsi);
+	const off_t beg = lsi_start_off(lsi);
 
 	return (size_t)silofs_off_to_lba(off - beg);
 }
@@ -784,7 +784,7 @@ void silofs_lsi_get_lrange(const struct silofs_lsmap_info *lsi,
 }
 
 void silofs_lsi_setup_spawned(struct silofs_lsmap_info *lsi,
-                              enum silofs_mtype refmtype, loff_t beg)
+                              enum silofs_mtype refmtype, off_t beg)
 {
 	struct silofs_lrange lrange;
 
@@ -802,7 +802,7 @@ void silofs_lsi_update_nused(struct silofs_lsmap_info *lsi)
 	silofs_assert_le(lsi->ls_nused_bytes, SILOFS_LSEG_SIZE_MAX);
 }
 
-static bool lsi_is_off_within(const struct silofs_lsmap_info *lsi, loff_t off)
+static bool lsi_is_off_within(const struct silofs_lsmap_info *lsi, off_t off)
 {
 	struct silofs_lrange lrange;
 
@@ -836,7 +836,7 @@ static size_t lsi_refmtype_size(const struct silofs_lsmap_info *lsi)
 static void lsi_vaddr_at(const struct silofs_lsmap_info *lsi, size_t bn,
                          size_t kbn, struct silofs_vaddr *out_vaddr)
 {
-	const loff_t beg = lsi_start_off(lsi);
+	const off_t beg = lsi_start_off(lsi);
 
 	silofs_vaddr_by_spleaf(out_vaddr, silofs_lsi_refmtype(lsi), beg, bn,
 	                       kbn);
@@ -845,7 +845,7 @@ static void lsi_vaddr_at(const struct silofs_lsmap_info *lsi, size_t bn,
 static size_t lsi_start_bn(const struct silofs_lsmap_info *lsi)
 {
 	struct silofs_lrange lrange;
-	loff_t off_beg = lsi->ls_off_hint;
+	off_t off_beg = lsi->ls_off_hint;
 
 	lsi_lrange(lsi, &lrange);
 	if (!silofs_lrange_within(&lrange, off_beg)) {
@@ -918,7 +918,7 @@ void silofs_lsi_update_off_hint(struct silofs_lsmap_info *lsi,
                                 const struct silofs_vaddr *vaddr)
 {
 	struct silofs_lrange lrange;
-	const loff_t off = vaddr->off;
+	const off_t off = vaddr->off;
 
 	lsi_lrange(lsi, &lrange);
 	if (silofs_lrange_within(&lrange, off)) {

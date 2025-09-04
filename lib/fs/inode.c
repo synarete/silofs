@@ -149,22 +149,22 @@ static void inode_set_mode(struct silofs_inode *inode, mode_t mode)
 	inode->i_mode = silofs_cpu_to_le32(mode);
 }
 
-static loff_t inode_size(const struct silofs_inode *inode)
+static off_t inode_size(const struct silofs_inode *inode)
 {
 	return silofs_off_to_cpu(inode->i_size);
 }
 
-static void inode_set_size(struct silofs_inode *inode, loff_t off)
+static void inode_set_size(struct silofs_inode *inode, off_t off)
 {
 	inode->i_size = silofs_cpu_to_off(off);
 }
 
-static loff_t inode_span(const struct silofs_inode *inode)
+static off_t inode_span(const struct silofs_inode *inode)
 {
 	return silofs_off_to_cpu(inode->i_span);
 }
 
-static void inode_set_span(struct silofs_inode *inode, loff_t off)
+static void inode_set_span(struct silofs_inode *inode, off_t off)
 {
 	inode->i_span = silofs_cpu_to_off(off);
 }
@@ -403,12 +403,12 @@ nlink_t silofs_ii_nlink(const struct silofs_inode_info *ii)
 	return inode_nlink(ii->inode);
 }
 
-loff_t silofs_ii_size(const struct silofs_inode_info *ii)
+off_t silofs_ii_size(const struct silofs_inode_info *ii)
 {
 	return inode_size(ii->inode);
 }
 
-loff_t silofs_ii_span(const struct silofs_inode_info *ii)
+off_t silofs_ii_span(const struct silofs_inode_info *ii)
 {
 	return inode_span(ii->inode);
 }
@@ -1494,7 +1494,7 @@ static int verify_inode_specific(const struct silofs_inode *inode)
 static int verify_inode_head(const struct silofs_inode *inode)
 {
 	ino_t ino;
-	loff_t size;
+	off_t size;
 	nlink_t nlink;
 	mode_t mode;
 	int err;

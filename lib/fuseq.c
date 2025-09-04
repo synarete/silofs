@@ -365,7 +365,7 @@ struct silofs_fuseq_diter {
 	size_t bsz;
 	size_t len;
 	size_t ndes;
-	loff_t de_off;
+	off_t de_off;
 	size_t de_nlen;
 	ino_t de_ino;
 	mode_t de_dt;
@@ -541,7 +541,7 @@ fuse_setattr_to_stat(const struct fuse_setattr_in *attr, struct stat *st)
 	st->st_mode = attr->mode;
 	st->st_uid = attr->uid;
 	st->st_gid = attr->gid;
-	st->st_size = (loff_t)attr->size;
+	st->st_size = (off_t)attr->size;
 	fuse_attr_to_timespec(attr->atime, attr->atimensec, &st->st_atim);
 	fuse_attr_to_timespec(attr->mtime, attr->mtimensec, &st->st_mtim);
 	fuse_attr_to_timespec(attr->ctime, attr->ctimensec, &st->st_ctim);
@@ -1036,7 +1036,7 @@ static int fqs_reply_write_ok(struct silofs_fuseq_sub *fqs,
 }
 
 static int fqs_reply_lseek_ok(struct silofs_fuseq_sub *fqs,
-                              const struct silofs_task_ctx *task, loff_t off)
+                              const struct silofs_task_ctx *task, off_t off)
 {
 	const struct fuse_lseek_out arg = { .offset = (uint64_t)off };
 
@@ -1289,7 +1289,7 @@ static int fqs_reply_readdir(struct silofs_fuseq_sub *fqs,
 
 static int
 fqs_reply_lseek(struct silofs_fuseq_sub *fqs,
-                const struct silofs_task_ctx *task, loff_t off, int err)
+                const struct silofs_task_ctx *task, off_t off, int err)
 {
 	int ret;
 
@@ -1404,9 +1404,9 @@ iovec_assign(struct silofs_iovec *iov, const struct silofs_iovec *other)
 static bool iovec_isfdseq(const struct silofs_iovec *iovec1,
                           const struct silofs_iovec *iovec2)
 {
-	const loff_t end1 =
+	const off_t end1 =
 		silofs_off_end(iovec1->iov_off, iovec1->iov.iov_len);
-	const loff_t beg2 = iovec2->iov_off;
+	const off_t beg2 = iovec2->iov_off;
 	const int fd1 = iovec1->iov_fd;
 	const int fd2 = iovec2->iov_fd;
 
@@ -1607,7 +1607,7 @@ static void xiter_done(struct silofs_fuseq_xiter *xi)
 
 static int
 emit_direntonly(void *buf, size_t bsz, const char *name, size_t nlen,
-                ino_t ino, mode_t dt, loff_t off, size_t *out_sz)
+                ino_t ino, mode_t dt, off_t off, size_t *out_sz)
 {
 	struct fuse_dirent *fde = buf;
 	size_t entlen;
@@ -1632,7 +1632,7 @@ emit_direntonly(void *buf, size_t bsz, const char *name, size_t nlen,
 
 static int
 emit_direntplus(void *buf, size_t bsz, const char *name, size_t nlen,
-                const struct silofs_stat *st, loff_t off, size_t *out_sz)
+                const struct silofs_stat *st, off_t off, size_t *out_sz)
 {
 	struct fuse_direntplus *fdp = buf;
 	struct fuse_dirent *fde = &fdp->dirent;
@@ -1659,7 +1659,7 @@ emit_direntplus(void *buf, size_t bsz, const char *name, size_t nlen,
 	return 0;
 }
 
-static int emit_dirent(struct silofs_fuseq_diter *di, loff_t off)
+static int emit_dirent(struct silofs_fuseq_diter *di, off_t off)
 {
 	uint8_t *buf = di->buf + di->len;
 	const size_t rem = di->bsz - di->len;
@@ -1730,7 +1730,7 @@ static int filldir(struct silofs_readdir_ctx *rd_ctx,
 }
 
 static void
-diter_prep(struct silofs_fuseq_diter *di, size_t bsz, loff_t pos, int plus)
+diter_prep(struct silofs_fuseq_diter *di, size_t bsz, off_t pos, int plus)
 {
 	di->ndes = 0;
 	di->de_off = 0;
@@ -2377,7 +2377,7 @@ static int do_readdir(const struct silofs_fuseq_cmd_ctx *fcc)
 {
 	struct silofs_fuseq_diter *dit = &fcc->fqs->fqs_outb->u.dit;
 	const size_t size = fcc->in->u.readdir.arg.size;
-	const loff_t off = (loff_t)(fcc->in->u.readdir.arg.offset);
+	const off_t off = (off_t)(fcc->in->u.readdir.arg.offset);
 	int ret;
 	int err;
 
@@ -2395,7 +2395,7 @@ static int do_readdirplus(const struct silofs_fuseq_cmd_ctx *fcc)
 {
 	struct silofs_fuseq_diter *dit = &fcc->fqs->fqs_outb->u.dit;
 	const size_t size = fcc->in->u.readdir.arg.size;
-	const loff_t off = (loff_t)(fcc->in->u.readdir.arg.offset);
+	const off_t off = (off_t)(fcc->in->u.readdir.arg.offset);
 	int ret;
 	int err;
 
@@ -2465,10 +2465,8 @@ static int do_fallocate(const struct silofs_fuseq_cmd_ctx *fcc)
 	check_fh_of(fcc->task, fcc->ino, fcc->in->u.fallocate.arg.fh);
 	fcc->args->in.fallocate.ino = fcc->ino;
 	fcc->args->in.fallocate.mode = (int)(fcc->in->u.fallocate.arg.mode);
-	fcc->args->in.fallocate.off =
-		(loff_t)(fcc->in->u.fallocate.arg.offset);
-	fcc->args->in.fallocate.len =
-		(loff_t)(fcc->in->u.fallocate.arg.length);
+	fcc->args->in.fallocate.off = (off_t)(fcc->in->u.fallocate.arg.offset);
+	fcc->args->in.fallocate.len = (off_t)(fcc->in->u.fallocate.arg.length);
 	err = do_exec_op(fcc);
 	return fqs_reply_status(fcc->fqs, fcc->task, err);
 }
@@ -2493,7 +2491,7 @@ static int do_lseek(const struct silofs_fuseq_cmd_ctx *fcc)
 
 	check_fh_of(fcc->task, fcc->ino, fcc->in->u.lseek.arg.fh);
 	fcc->args->in.lseek.ino = fcc->ino;
-	fcc->args->in.lseek.off = (loff_t)(fcc->in->u.lseek.arg.offset);
+	fcc->args->in.lseek.off = (off_t)(fcc->in->u.lseek.arg.offset);
 	fcc->args->in.lseek.whence = (int)(fcc->in->u.lseek.arg.whence);
 	fcc->args->out.lseek.off = -1;
 	err = do_exec_op(fcc);
@@ -2512,11 +2510,11 @@ static int do_copy_file_range(const struct silofs_fuseq_cmd_ctx *fcc)
 	                 FUSEQ_COPY_FILE_RANGE_MAX);
 	fcc->args->in.copy_file_range.ino_in = fcc->ino;
 	fcc->args->in.copy_file_range.off_in =
-		(loff_t)fcc->in->u.copy_file_range.arg.off_in;
+		(off_t)fcc->in->u.copy_file_range.arg.off_in;
 	fcc->args->in.copy_file_range.ino_out =
 		(ino_t)fcc->in->u.copy_file_range.arg.nodeid_out;
 	fcc->args->in.copy_file_range.off_out =
-		(loff_t)fcc->in->u.copy_file_range.arg.off_out;
+		(off_t)fcc->in->u.copy_file_range.arg.off_out;
 	fcc->args->in.copy_file_range.len = len;
 	fcc->args->in.copy_file_range.flags =
 		(int)fcc->in->u.copy_file_range.arg.flags;
@@ -2578,7 +2576,7 @@ fq_rdi_actor(struct silofs_rwiter_ctx *rwi, const struct silofs_iovec *iovec)
 
 static void
 fqs_setup_rd_iter(struct silofs_fuseq_sub *fqs, struct silofs_task_ctx *task,
-                  struct silofs_fuseq_rd_iter *fq_rdi, size_t len, loff_t off)
+                  struct silofs_fuseq_rd_iter *fq_rdi, size_t len, off_t off)
 {
 	fq_rdi->fqs = fqs;
 	fq_rdi->task = task;
@@ -2606,7 +2604,7 @@ static int do_read_iter(const struct silofs_fuseq_cmd_ctx *fcc)
 
 	len = silofs_min(fcc->in->u.read.arg.size, fcc->fq->fq_coni.max_read);
 	fcc->args->in.read.ino = fcc->ino;
-	fcc->args->in.read.off = (loff_t)(fcc->in->u.read.arg.offset);
+	fcc->args->in.read.off = (off_t)(fcc->in->u.read.arg.offset);
 	fcc->args->in.read.len = len;
 	fcc->args->in.read.buf = nullptr;
 	fcc->args->in.read.rwi_ctx = &fq_rdi->rwi;
@@ -2627,7 +2625,7 @@ static int do_read_buf(const struct silofs_fuseq_cmd_ctx *fcc)
 
 	len = silofs_min(fcc->in->u.read.arg.size, fcc->fq->fq_coni.max_read);
 	fcc->args->in.read.ino = fcc->ino;
-	fcc->args->in.read.off = (loff_t)(fcc->in->u.read.arg.offset);
+	fcc->args->in.read.off = (off_t)(fcc->in->u.read.arg.offset);
 	fcc->args->in.read.len = len;
 	fcc->args->in.read.buf = dab->buf;
 	fcc->args->in.read.rwi_ctx = nullptr;
@@ -2671,7 +2669,7 @@ static int fqs_extract_from_pipe_by_fd(struct silofs_fuseq_sub *fqs,
                                        const struct silofs_iovec *iovec)
 {
 	struct silofs_pipe *pipe = fqs_cur_pipe(fqs);
-	loff_t off = iovec->iov_off;
+	off_t off = iovec->iov_off;
 
 	return silofs_pipe_splice_to_fd(pipe, iovec->iov_fd, &off,
 	                                iovec->iov.iov_len,
@@ -2803,7 +2801,7 @@ static bool fqs_asyncwr_mode(const struct silofs_fuseq_sub *fqs)
 
 static void
 fqs_setup_wr_iter(struct silofs_fuseq_sub *fqs,
-                  struct silofs_fuseq_wr_iter *fq_rwi, size_t len, loff_t off)
+                  struct silofs_fuseq_wr_iter *fq_rwi, size_t len, off_t off)
 {
 	fq_rwi->fqs = fqs;
 	fq_rwi->nwr = 0;
@@ -2832,7 +2830,7 @@ static int do_write_buf(const struct silofs_fuseq_cmd_ctx *fcc)
 	check_fh_of(fcc->task, fcc->ino, fcc->in->u.write.arg.fh);
 	fcc->args->in.write.ino = fcc->ino;
 	fcc->args->in.write.len = fcc->in->u.write.arg.size;
-	fcc->args->in.write.off = (loff_t)(fcc->in->u.write.arg.offset);
+	fcc->args->in.write.off = (off_t)(fcc->in->u.write.arg.offset);
 	fcc->args->in.write.buf = tail_of(fcc->in, sizeof(fcc->in->u.write));
 	fcc->args->in.write.rwi_ctx = nullptr;
 	fcc->args->in.write.o_flags = (int)(fcc->in->u.write.arg.flags);
@@ -2856,7 +2854,7 @@ static int do_write_iter(const struct silofs_fuseq_cmd_ctx *fcc)
 	len = silofs_min(fcc->in->u.write.arg.size, con_max_write);
 	fcc->args->in.write.ino = fcc->ino;
 	fcc->args->in.write.len = len;
-	fcc->args->in.write.off = (loff_t)(fcc->in->u.write.arg.offset);
+	fcc->args->in.write.off = (off_t)(fcc->in->u.write.arg.offset);
 	fcc->args->in.write.buf = nullptr;
 	fcc->args->in.write.rwi_ctx = &fq_wri->rwi;
 	fcc->args->in.write.o_flags = (int)(fcc->in->u.write.arg.flags);
@@ -3387,9 +3385,9 @@ static int fqs_check_perm(const struct silofs_fuseq_sub *fqs, uid_t op_uid,
 	return -EACCES;
 }
 
-static bool is_large_io(loff_t off, size_t size)
+static bool is_large_io(off_t off, size_t size)
 {
-	loff_t end;
+	off_t end;
 
 	if (size <= SILOFS_PAGE_SIZE_MIN) {
 		return false;
@@ -3405,12 +3403,12 @@ static bool fqs_has_large_write_in(const struct silofs_fuseq_sub *fqs)
 {
 	const struct silofs_fuseq_in *in = nullptr;
 	const uint32_t opcode = fqs_in_opcode(fqs);
-	loff_t off = 0;
+	off_t off = 0;
 	bool ret = false;
 
 	if (opcode == FUSE_WRITE) {
 		in = fqs_in_of2(fqs);
-		off = (loff_t)in->u.write.arg.offset;
+		off = (off_t)in->u.write.arg.offset;
 		ret = is_large_io(off, in->u.write.arg.size);
 	}
 	return ret;
@@ -3420,12 +3418,12 @@ static bool fqs_has_large_read_in(const struct silofs_fuseq_sub *fqs)
 {
 	const struct silofs_fuseq_in *in = nullptr;
 	const uint32_t opcode = fqs_in_opcode(fqs);
-	loff_t off = 0;
+	off_t off = 0;
 	bool ret = false;
 
 	if (opcode == FUSE_READ) {
 		in = fqs_in_of2(fqs);
-		off = (loff_t)in->u.read.arg.offset;
+		off = (off_t)in->u.read.arg.offset;
 		ret = is_large_io(off, in->u.read.arg.size);
 	}
 	return ret;

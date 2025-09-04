@@ -302,7 +302,7 @@ static int ut_do_release(struct ut_env *ute, ino_t ino, bool flush)
 	return sanitize_status(ret);
 }
 
-static int ut_do_truncate(struct ut_env *ute, ino_t ino, loff_t length,
+static int ut_do_truncate(struct ut_env *ute, ino_t ino, off_t length,
                           struct stat *out_st)
 {
 	struct silofs_task_ctx task;
@@ -352,7 +352,7 @@ static int ut_do_fiemap(struct ut_env *ute, ino_t ino, struct fiemap *fm)
 }
 
 static int
-ut_do_lseek(struct ut_env *ute, ino_t ino, loff_t off, int whence, loff_t *out)
+ut_do_lseek(struct ut_env *ute, ino_t ino, off_t off, int whence, off_t *out)
 {
 	struct silofs_task_ctx task;
 	int ret;
@@ -364,7 +364,7 @@ ut_do_lseek(struct ut_env *ute, ino_t ino, loff_t off, int whence, loff_t *out)
 }
 
 static int ut_do_copy_file_range(struct ut_env *ute, ino_t ino_in,
-                                 loff_t off_in, ino_t ino_out, loff_t off_out,
+                                 off_t off_in, ino_t ino_out, off_t off_out,
                                  size_t len, size_t *out_len)
 {
 	struct silofs_task_ctx task;
@@ -402,7 +402,7 @@ static int ut_do_flush(struct ut_env *ute, ino_t ino, bool now)
 }
 
 static int ut_do_read(struct ut_env *ute, ino_t ino, void *buf, size_t len,
-                      loff_t off, size_t *out_len)
+                      off_t off, size_t *out_len)
 {
 	struct silofs_task_ctx task;
 	int ret;
@@ -414,7 +414,7 @@ static int ut_do_read(struct ut_env *ute, ino_t ino, void *buf, size_t len,
 }
 
 static int ut_do_fallocate(struct ut_env *ute, ino_t ino, int mode,
-                           loff_t offset, loff_t len)
+                           off_t offset, off_t len)
 {
 	struct silofs_task_ctx task;
 	int ret;
@@ -599,7 +599,7 @@ static int filldir(struct silofs_readdir_ctx *rd_ctx,
 	return 0;
 }
 
-static int ut_do_readdir(struct ut_env *ute, ino_t ino, loff_t doff,
+static int ut_do_readdir(struct ut_env *ute, ino_t ino, off_t doff,
                          struct ut_readdir_ctx *ut_rd_ctx)
 {
 	struct silofs_task_ctx task;
@@ -617,7 +617,7 @@ static int ut_do_readdir(struct ut_env *ute, ino_t ino, loff_t doff,
 	return sanitize_status(ret);
 }
 
-static int ut_do_readdirplus(struct ut_env *ute, ino_t ino, loff_t doff,
+static int ut_do_readdirplus(struct ut_env *ute, ino_t ino, off_t doff,
                              struct ut_readdir_ctx *ut_rd_ctx)
 {
 	struct silofs_task_ctx task;
@@ -826,7 +826,7 @@ void ut_getattr_dir(struct ut_env *ute, ino_t ino, struct stat *st)
 	ut_expect(S_ISDIR(st->st_mode));
 }
 
-void ut_getattr_dirsize(struct ut_env *ute, ino_t ino, loff_t size)
+void ut_getattr_dirsize(struct ut_env *ute, ino_t ino, off_t size)
 {
 	struct stat st;
 
@@ -1087,7 +1087,7 @@ void ut_fsyncdir(struct ut_env *ute, ino_t ino)
 	ut_expect_ok(err);
 }
 
-void ut_readdir(struct ut_env *ute, ino_t ino, loff_t doff,
+void ut_readdir(struct ut_env *ute, ino_t ino, off_t doff,
                 struct ut_readdir_ctx *ut_rd_ctx)
 {
 	int err;
@@ -1096,7 +1096,7 @@ void ut_readdir(struct ut_env *ute, ino_t ino, loff_t doff,
 	ut_expect_ok(err);
 }
 
-void ut_readdirplus(struct ut_env *ute, ino_t ino, loff_t doff,
+void ut_readdirplus(struct ut_env *ute, ino_t ino, off_t doff,
                     struct ut_readdir_ctx *ut_rd_ctx)
 {
 	int err;
@@ -1400,7 +1400,7 @@ void ut_flush(struct ut_env *ute, ino_t ino, bool now)
 }
 
 void ut_write(struct ut_env *ute, ino_t ino, const void *buf, size_t bsz,
-              loff_t off)
+              off_t off)
 {
 	size_t nwr = 0;
 	int err;
@@ -1422,7 +1422,7 @@ void ut_write_iter(struct ut_env *ute, ino_t ino, const void *buf, size_t bsz,
 }
 
 void ut_write_nospc(struct ut_env *ute, ino_t ino, const void *buf, size_t bsz,
-                    loff_t off, size_t *out_nwr)
+                    off_t off, size_t *out_nwr)
 {
 	int err;
 
@@ -1434,13 +1434,13 @@ void ut_write_nospc(struct ut_env *ute, ino_t ino, const void *buf, size_t bsz,
 }
 
 void ut_write_read(struct ut_env *ute, ino_t ino, const void *buf, size_t bsz,
-                   loff_t off)
+                   off_t off)
 {
 	ut_write(ute, ino, buf, bsz, off);
 	ut_read_verify(ute, ino, buf, bsz, off);
 }
 
-void ut_write_read1(struct ut_env *ute, ino_t ino, loff_t off)
+void ut_write_read1(struct ut_env *ute, ino_t ino, off_t off)
 {
 	const uint8_t dat[1] = { 1 };
 
@@ -1448,13 +1448,13 @@ void ut_write_read1(struct ut_env *ute, ino_t ino, loff_t off)
 }
 
 void ut_write_read_str(struct ut_env *ute, ino_t ino, const char *str,
-                       loff_t off)
+                       off_t off)
 {
 	ut_write_read(ute, ino, str, strlen(str), off);
 }
 
 void ut_read_verify(struct ut_env *ute, ino_t ino, const void *buf, size_t bsz,
-                    loff_t off)
+                    off_t off)
 {
 	char tmp[1024];
 	void *dat = (bsz > sizeof(tmp)) ? ut_randbuf(ute, bsz) : tmp;
@@ -1464,12 +1464,12 @@ void ut_read_verify(struct ut_env *ute, ino_t ino, const void *buf, size_t bsz,
 }
 
 void ut_read_verify_str(struct ut_env *ute, ino_t ino, const char *str,
-                        loff_t off)
+                        off_t off)
 {
 	ut_read_verify(ute, ino, str, strlen(str), off);
 }
 
-void ut_read(struct ut_env *ute, ino_t ino, void *buf, size_t bsz, loff_t off)
+void ut_read(struct ut_env *ute, ino_t ino, void *buf, size_t bsz, off_t off)
 {
 	size_t nrd;
 	int err;
@@ -1479,7 +1479,7 @@ void ut_read(struct ut_env *ute, ino_t ino, void *buf, size_t bsz, loff_t off)
 	ut_expect_eq(nrd, bsz);
 }
 
-void ut_read_zero(struct ut_env *ute, ino_t ino, loff_t off)
+void ut_read_zero(struct ut_env *ute, ino_t ino, off_t off)
 {
 	uint8_t zero[1] = { 0 };
 
@@ -1488,7 +1488,7 @@ void ut_read_zero(struct ut_env *ute, ino_t ino, loff_t off)
 	}
 }
 
-void ut_read_zeros(struct ut_env *ute, ino_t ino, loff_t off, size_t len)
+void ut_read_zeros(struct ut_env *ute, ino_t ino, off_t off, size_t len)
 {
 	const void *zeros = nullptr;
 
@@ -1498,7 +1498,7 @@ void ut_read_zeros(struct ut_env *ute, ino_t ino, loff_t off, size_t len)
 	}
 }
 
-void ut_trunacate_file(struct ut_env *ute, ino_t ino, loff_t off)
+void ut_trunacate_file(struct ut_env *ute, ino_t ino, off_t off)
 {
 	struct stat st;
 	size_t nrd;
@@ -1524,8 +1524,7 @@ void ut_trunacate_zero(struct ut_env *ute, ino_t ino)
 	ut_expect_eq(st.st_blocks, 0);
 }
 
-void ut_fallocate_reserve(struct ut_env *ute, ino_t ino, loff_t off,
-                          loff_t len)
+void ut_fallocate_reserve(struct ut_env *ute, ino_t ino, off_t off, off_t len)
 {
 	struct stat st;
 	int err;
@@ -1538,8 +1537,8 @@ void ut_fallocate_reserve(struct ut_env *ute, ino_t ino, loff_t off,
 	ut_expect_ge(st.st_size, off + len);
 }
 
-void ut_fallocate_keep_size(struct ut_env *ute, ino_t ino, loff_t off,
-                            loff_t len)
+void ut_fallocate_keep_size(struct ut_env *ute, ino_t ino, off_t off,
+                            off_t len)
 {
 	struct stat st[2];
 	const int mode = FALLOC_FL_KEEP_SIZE;
@@ -1560,8 +1559,8 @@ void ut_fallocate_keep_size(struct ut_env *ute, ino_t ino, loff_t off,
 	}
 }
 
-void ut_fallocate_punch_hole(struct ut_env *ute, ino_t ino, loff_t off,
-                             loff_t len)
+void ut_fallocate_punch_hole(struct ut_env *ute, ino_t ino, off_t off,
+                             off_t len)
 {
 	struct stat st[2];
 	const int mode = FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE;
@@ -1579,11 +1578,11 @@ void ut_fallocate_punch_hole(struct ut_env *ute, ino_t ino, loff_t off,
 	ut_expect_le(st[1].st_blocks, st[0].st_blocks);
 }
 
-void ut_fallocate_zero_range(struct ut_env *ute, ino_t ino, loff_t off,
-                             loff_t len, bool keep_size)
+void ut_fallocate_zero_range(struct ut_env *ute, ino_t ino, off_t off,
+                             off_t len, bool keep_size)
 {
 	struct stat st[2];
-	const loff_t end = off + len;
+	const off_t end = off + len;
 	int mode = FALLOC_FL_ZERO_RANGE;
 	int err;
 
@@ -1766,8 +1765,8 @@ void ut_fiemap(struct ut_env *ute, ino_t ino, struct fiemap *fm)
 	}
 }
 
-static void ut_lseek(struct ut_env *ute, ino_t ino, loff_t off, int whence,
-                     loff_t *out_off)
+static void
+ut_lseek(struct ut_env *ute, ino_t ino, off_t off, int whence, off_t *out_off)
 {
 	struct stat st;
 	int err;
@@ -1781,19 +1780,19 @@ static void ut_lseek(struct ut_env *ute, ino_t ino, loff_t off, int whence,
 	ut_expect_le(*out_off, st.st_size);
 }
 
-void ut_lseek_data(struct ut_env *ute, ino_t ino, loff_t off, loff_t *out_off)
+void ut_lseek_data(struct ut_env *ute, ino_t ino, off_t off, off_t *out_off)
 {
 	ut_lseek(ute, ino, off, SEEK_DATA, out_off);
 }
 
-void ut_lseek_hole(struct ut_env *ute, ino_t ino, loff_t off, loff_t *out_off)
+void ut_lseek_hole(struct ut_env *ute, ino_t ino, off_t off, off_t *out_off)
 {
 	ut_lseek(ute, ino, off, SEEK_HOLE, out_off);
 }
 
-void ut_lseek_nodata(struct ut_env *ute, ino_t ino, loff_t off)
+void ut_lseek_nodata(struct ut_env *ute, ino_t ino, off_t off)
 {
-	loff_t res_off = -1;
+	off_t res_off = -1;
 	int err;
 
 	err = ut_do_lseek(ute, ino, off, SEEK_DATA, &res_off);
@@ -1801,8 +1800,8 @@ void ut_lseek_nodata(struct ut_env *ute, ino_t ino, loff_t off)
 }
 
 static void
-ut_copy_file_range1(struct ut_env *ute, ino_t ino_in, loff_t off_in,
-                    ino_t ino_out, loff_t off_out, size_t len, size_t *out_ncp)
+ut_copy_file_range1(struct ut_env *ute, ino_t ino_in, off_t off_in,
+                    ino_t ino_out, off_t off_out, size_t len, size_t *out_ncp)
 {
 	int err;
 
@@ -1813,8 +1812,8 @@ ut_copy_file_range1(struct ut_env *ute, ino_t ino_in, loff_t off_in,
 	ut_expect_le(*out_ncp, len);
 }
 
-void ut_copy_file_range(struct ut_env *ute, ino_t ino_in, loff_t off_in,
-                        ino_t ino_out, loff_t off_out, size_t len)
+void ut_copy_file_range(struct ut_env *ute, ino_t ino_in, off_t off_in,
+                        ino_t ino_out, off_t off_out, size_t len)
 {
 	size_t cnt = 0;
 	size_t ncp;

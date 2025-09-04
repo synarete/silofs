@@ -183,7 +183,7 @@ static int
 do_claim_reclaim(struct silofs_task_ctx *task, enum silofs_mtype mtype)
 {
 	struct silofs_vaddr vaddr;
-	const loff_t voff_exp = 0;
+	const off_t voff_exp = 0;
 	int err;
 
 	err = silofs_claim_vspace(task, mtype, &vaddr);
@@ -274,7 +274,7 @@ static int format_spmaps(struct silofs_task_ctx *task)
 	return 0;
 }
 
-static loff_t vni_offset(const struct silofs_vnode_info *vni)
+static off_t vni_offset(const struct silofs_vnode_info *vni)
 {
 	const struct silofs_vaddr *vaddr = silofs_vni_vaddr(vni);
 
@@ -285,7 +285,7 @@ static int
 claim_offset_zero(struct silofs_task_ctx *task, enum silofs_mtype mtype)
 {
 	struct silofs_vnode_info *vni = nullptr;
-	loff_t off = -1;
+	off_t off = -1;
 	int err;
 
 	err = silofs_spawn_vnode(task, nullptr, mtype, &vni);

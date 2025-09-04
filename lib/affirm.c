@@ -104,7 +104,7 @@ static void affirm_fundamental_types(void)
 	REQUIRE_SIZEOF(int32_t, 4);
 	REQUIRE_SIZEOF(int64_t, 8);
 	REQUIRE_SIZEOF(size_t, 8);
-	REQUIRE_SIZEOF(loff_t, 8);
+	REQUIRE_SIZEOF(off_t, 8);
 	REQUIRE_SIZEOF(ino_t, 8);
 }
 

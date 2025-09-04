@@ -62,7 +62,7 @@ static void test_rdwr_trunc(struct ft_sub_exec *se)
 	ft_close(fd2);
 }
 
-static void test_mt_rw_trunc_(struct ft_env *fte, loff_t off, size_t len)
+static void test_mt_rw_trunc_(struct ft_env *fte, off_t off, size_t len)
 {
 	struct ft_sub_exec se[10];
 	const size_t nse = FT_ARRAY_SIZE(se);
@@ -123,7 +123,7 @@ static void test_rewrite_over(struct ft_sub_exec *se)
 	ft_close(fd);
 }
 
-static void test_mt_rw_over_(struct ft_env *fte, loff_t off, size_t len)
+static void test_mt_rw_over_(struct ft_env *fte, off_t off, size_t len)
 {
 	struct ft_sub_exec se[10];
 	const size_t nse = FT_ARRAY_SIZE(se);
@@ -197,7 +197,7 @@ static void test_rdwr_with_xattr(struct ft_sub_exec *se)
 	ft_close(fd);
 }
 
-static void test_mt_rw_xattr_(struct ft_env *fte, loff_t off, size_t len)
+static void test_mt_rw_xattr_(struct ft_env *fte, off_t off, size_t len)
 {
 	struct ft_sub_exec se[10];
 	const size_t nse = FT_ARRAY_SIZE(se);

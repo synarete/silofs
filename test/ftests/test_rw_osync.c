@@ -20,7 +20,7 @@
 /*
  * Expects read-write data-consistency when file is opened with O_SYNC.
  */
-static void test_osync_simple_(struct ft_env *fte, loff_t off, size_t len)
+static void test_osync_simple_(struct ft_env *fte, off_t off, size_t len)
 {
 	void *buf0 = ft_new_buf_zeros(fte, len);
 	void *buf1 = ft_new_buf_rands(fte, len);
@@ -65,7 +65,7 @@ static void test_osync_simple(struct ft_env *fte)
  * Expects read-write data-consistency when multiple files are opened with
  * O_SYNC.
  */
-static void test_osync_multi_(struct ft_env *fte, size_t bsz, loff_t off)
+static void test_osync_multi_(struct ft_env *fte, size_t bsz, off_t off)
 {
 	void *buf0 = ft_new_buf_zeros(fte, bsz);
 	void *buf1 = ft_new_buf_rands(fte, bsz);

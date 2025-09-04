@@ -20,7 +20,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-static inline loff_t ft_off_end(loff_t off, size_t len)
+static inline off_t ft_off_end(off_t off, size_t len)
 {
 	return off + (long)len;
 }

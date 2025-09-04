@@ -103,16 +103,16 @@ static void ut_reload_mixed(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static loff_t make_offset(size_t idx, size_t step)
+static off_t make_offset(size_t idx, size_t step)
 {
-	return (loff_t)((idx * step) + idx);
+	return (off_t)((idx * step) + idx);
 }
 
 static void ut_reload_io_(struct ut_env *ute, size_t nfiles, size_t step)
 {
 	ino_t fino;
 	ino_t dino;
-	loff_t off;
+	off_t off;
 	size_t len;
 	const char *fname;
 	const char *dname = UT_NAME;
@@ -164,7 +164,7 @@ static void ut_reload_unlinked_(struct ut_env *ute, size_t nfiles, size_t step)
 {
 	ino_t fino;
 	ino_t dino;
-	loff_t off;
+	off_t off;
 	size_t len;
 	const char *fname;
 	const char *dname = UT_NAME;
@@ -200,7 +200,7 @@ static void ut_reload_unlinked(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_reload_xattr_(struct ut_env *ute, loff_t off, size_t value_size)
+static void ut_reload_xattr_(struct ut_env *ute, off_t off, size_t value_size)
 {
 	const char *name = UT_NAME;
 	struct ut_keyval kv = {

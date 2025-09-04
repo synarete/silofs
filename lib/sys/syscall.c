@@ -150,7 +150,7 @@ static int size_or_errno(ssize_t res, size_t *out_cnt)
 	return err;
 }
 
-static int off_or_errno(loff_t off, loff_t *out)
+static int off_or_errno(off_t off, off_t *out)
 {
 	int err;
 
@@ -347,7 +347,7 @@ int silofs_sys_renameat2(int olddirfd, const char *oldpath, int newdirfd,
 	                             flags));
 }
 
-int silofs_sys_llseek(int fd, loff_t off, int whence, loff_t *pos)
+int silofs_sys_llseek(int fd, off_t off, int whence, off_t *pos)
 {
 	return off_or_errno(lseek64(fd, off, whence), pos);
 }
@@ -367,22 +367,22 @@ int silofs_sys_fdatasync(int fd)
 	return ok_or_errno(fdatasync(fd));
 }
 
-int silofs_sys_sync_file_range(int fd, loff_t off, loff_t nb, unsigned int fl)
+int silofs_sys_sync_file_range(int fd, off_t off, off_t nb, unsigned int fl)
 {
 	return ok_or_errno(sync_file_range(fd, off, nb, fl));
 }
 
-int silofs_sys_fallocate(int fd, int mode, loff_t off, loff_t len)
+int silofs_sys_fallocate(int fd, int mode, off_t off, off_t len)
 {
 	return ok_or_errno(fallocate(fd, mode, off, len));
 }
 
-int silofs_sys_truncate(const char *path, loff_t len)
+int silofs_sys_truncate(const char *path, off_t len)
 {
 	return ok_or_errno(truncate(path, len));
 }
 
-int silofs_sys_ftruncate(int fd, loff_t len)
+int silofs_sys_ftruncate(int fd, off_t len)
 {
 	return ok_or_errno(ftruncate(fd, len));
 }
@@ -485,7 +485,7 @@ int silofs_sys_read(int fd, void *buf, size_t cnt, size_t *nrd)
 	return size_or_errno(read(fd, buf, cnt), nrd);
 }
 
-int silofs_sys_pread(int fd, void *buf, size_t cnt, loff_t off, size_t *nrd)
+int silofs_sys_pread(int fd, void *buf, size_t cnt, off_t off, size_t *nrd)
 {
 	return size_or_errno(pread(fd, buf, cnt, off), nrd);
 }
@@ -495,7 +495,7 @@ int silofs_sys_write(int fd, const void *buf, size_t cnt, size_t *nwr)
 	return size_or_errno(write(fd, buf, cnt), nwr);
 }
 
-int silofs_sys_pwrite(int fd, const void *buf, size_t cnt, loff_t off,
+int silofs_sys_pwrite(int fd, const void *buf, size_t cnt, off_t off,
                       size_t *nwr)
 {
 	return size_or_errno(pwrite(fd, buf, cnt, off), nwr);
@@ -535,7 +535,7 @@ int silofs_sys_pwritev2(int fd, const struct iovec *iov, int iovcnt, off_t off,
 	return size_or_errno(pwritev2(fd, iov, iovcnt, off, flags), nwr);
 }
 
-int silofs_sys_splice(int fd_in, loff_t *off_in, int fd_out, loff_t *off_out,
+int silofs_sys_splice(int fd_in, off_t *off_in, int fd_out, off_t *off_out,
                       size_t len, unsigned int flags, size_t *nsp)
 {
 	return size_or_errno(
@@ -627,7 +627,7 @@ int silofs_sys_flistxattr(int fd, char *list, size_t size, size_t *out_size)
 }
 
 int silofs_sys_mmap(void *addr, size_t length, int prot, int flags, int fd,
-                    loff_t offset, void **out_addr)
+                    off_t offset, void **out_addr)
 {
 	return differ_or_errno(mmap(addr, length, prot, flags, fd, offset),
 	                       MAP_FAILED, out_addr);
@@ -709,8 +709,8 @@ int silofs_sys_prctl(int option, unsigned long arg2, unsigned long arg3,
 	return val_or_errno(prctl(option, arg2, arg3, arg4, arg5));
 }
 
-int silofs_sys_copy_file_range(int fd_in, loff_t *off_in, int fd_out,
-                               loff_t *off_out, size_t len, unsigned int flags,
+int silofs_sys_copy_file_range(int fd_in, off_t *off_in, int fd_out,
+                               off_t *off_out, size_t len, unsigned int flags,
                                size_t *out_ncp)
 {
 	return size_or_errno(copy_file_range(fd_in, off_in, fd_out, off_out,
@@ -773,7 +773,7 @@ int silofs_sys_getdents(int fd, void *buf, size_t bsz, struct dirent64 *dents,
 		}
 		memset(dent, 0, sizeof(*dent));
 		dent->d_ino = d->d_ino;
-		dent->d_off = (loff_t)d->d_off;
+		dent->d_off = (off_t)d->d_off;
 		dent->d_type = d->d_type;
 		memcpy(dent->d_name, d->d_name, len);
 

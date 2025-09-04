@@ -71,7 +71,7 @@ dir_list(struct ut_env *ute, ino_t dino, size_t expected_nents)
 	const struct ut_dirent_info *dei = nullptr;
 	size_t ndents = 1;
 	size_t dots = 0;
-	loff_t doff = 0;
+	off_t doff = 0;
 	int partial = 0;
 
 	ut_opendir(ute, dino);
@@ -109,10 +109,10 @@ static struct ut_dirlist *dir_list_all(struct ut_env *ute, ino_t dino)
 }
 
 static struct ut_dirlist *
-dir_list_some(struct ut_env *ute, ino_t dino, loff_t off, size_t max_nents)
+dir_list_some(struct ut_env *ute, ino_t dino, off_t off, size_t max_nents)
 {
 	bool keep_iter = true;
-	loff_t doff = off;
+	off_t doff = off;
 	const struct ut_dirent_info *dei;
 	struct ut_dirlist *dl = new_dirlist(ute, dino);
 	struct ut_readdir_ctx *rd_ctx = ut_new_readdir_ctx(ute);
@@ -281,7 +281,7 @@ static void create_nfiles_sparse(struct ut_env *ute, ino_t dino,
 static void ut_dir_list_sparse_(struct ut_env *ute, size_t count)
 {
 	ino_t dino;
-	loff_t doff = (loff_t)count;
+	off_t doff = (off_t)count;
 	const char *dname = UT_NAME;
 	struct ut_dirlist *dl = nullptr;
 

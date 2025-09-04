@@ -21,7 +21,7 @@ static void test_copy_file_range_simple(struct ft_sub_exec *se)
 	const uint64_t tail = 0xCAFEBEB;
 	uint8_t *buf_src = ft_new_buf_rands(se->fte, se->len);
 	uint8_t *buf_dst = ft_new_buf_rands(se->fte, se->len);
-	loff_t tail_pos = ft_off_end(se->off, se->len);
+	off_t tail_pos = ft_off_end(se->off, se->len);
 	size_t iter = 0;
 	int fd_src = -1;
 	int fd_dst = -1;
@@ -48,7 +48,7 @@ static void test_copy_file_range_simple(struct ft_sub_exec *se)
 }
 
 static void
-test_mt_copy_file_range_simple_(struct ft_env *fte, loff_t off, size_t len)
+test_mt_copy_file_range_simple_(struct ft_env *fte, off_t off, size_t len)
 {
 	struct ft_sub_exec se[10];
 	const size_t nse = FT_ARRAY_SIZE(se);
@@ -113,7 +113,7 @@ static void test_copy_file_range_toggle(struct ft_sub_exec *se)
 }
 
 static void
-test_mt_copy_file_range_toggle_(struct ft_env *fte, loff_t off, size_t len)
+test_mt_copy_file_range_toggle_(struct ft_env *fte, off_t off, size_t len)
 {
 	struct ft_sub_exec se[10];
 	const size_t nse = FT_ARRAY_SIZE(se);

@@ -471,12 +471,12 @@ static void ut_xattr_replace_multi(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_xattr_with_io_(struct ut_env *ute, loff_t base_off,
+static void ut_xattr_with_io_(struct ut_env *ute, off_t base_off,
                               size_t name_len, size_t value_size)
 {
 	ino_t ino = 0;
 	ino_t dino = 0;
-	loff_t off = -1;
+	off_t off = -1;
 	const char *name = UT_NAME;
 	const struct ut_keyval *kv = nullptr;
 	struct ut_kvl *kvl = kvl_new(ute, 3);

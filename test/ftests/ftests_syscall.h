@@ -106,14 +106,14 @@ void ft_do_close(int fd, const char *fl, int ln);
 
 void ft_do_pclose(int *fd, const char *fl, int ln);
 
-void ft_do_truncate(const char *path, loff_t len, const char *fl, int ln);
+void ft_do_truncate(const char *path, off_t len, const char *fl, int ln);
 
-void ft_do_ftruncate(int fd, loff_t len, const char *fl, int ln);
+void ft_do_ftruncate(int fd, off_t len, const char *fl, int ln);
 
-void ft_do_llseek(int fd, loff_t off, int whence, loff_t *out_pos,
+void ft_do_llseek(int fd, off_t off, int whence, off_t *out_pos,
                   const char *fl, int ln);
 
-void ft_do_llseek_err(int fd, loff_t off, int whence, int err, const char *fl,
+void ft_do_llseek_err(int fd, off_t off, int whence, int err, const char *fl,
                       int ln);
 
 void ft_do_write(int fd, const void *buf, size_t cnt, size_t *out_nwr,
@@ -122,10 +122,10 @@ void ft_do_write(int fd, const void *buf, size_t cnt, size_t *out_nwr,
 void ft_do_write_err(int fd, const void *buf, size_t cnt, int err,
                      const char *fl, int ln);
 
-void ft_do_pwrite(int fd, const void *buf, size_t cnt, loff_t off,
+void ft_do_pwrite(int fd, const void *buf, size_t cnt, off_t off,
                   size_t *out_nwr, const char *fl, int ln);
 
-void ft_do_pwrite_err(int fd, const void *buf, size_t cnt, loff_t off, int err,
+void ft_do_pwrite_err(int fd, const void *buf, size_t cnt, off_t off, int err,
                       const char *fl, int ln);
 
 void ft_do_read(int fd, void *buf, size_t cnt, size_t *out_nrd, const char *fl,
@@ -134,13 +134,13 @@ void ft_do_read(int fd, void *buf, size_t cnt, size_t *out_nrd, const char *fl,
 void ft_do_read_err(int fd, void *buf, size_t cnt, int err, const char *fl,
                     int ln);
 
-void ft_do_pread(int fd, void *buf, size_t cnt, loff_t off, size_t *out_nrd,
+void ft_do_pread(int fd, void *buf, size_t cnt, off_t off, size_t *out_nrd,
                  const char *fl, int ln);
 
-void ft_do_fallocate(int fd, int mode, loff_t off, loff_t len, const char *fl,
+void ft_do_fallocate(int fd, int mode, off_t off, off_t len, const char *fl,
                      int ln);
 
-void ft_do_fallocate_err(int fd, int mode, loff_t off, loff_t len, int err,
+void ft_do_fallocate_err(int fd, int mode, off_t off, off_t len, int err,
                          const char *fl, int ln);
 
 void ft_do_fdatasync(int fd, const char *fl, int ln);
@@ -214,7 +214,7 @@ void ft_do_access_err(const char *path, int mode, int err, const char *fl,
                       int ln);
 
 void ft_do_mmap(void *addr, size_t len, int prot, int flags, int fd,
-                loff_t offset, void **out, const char *fl, int ln);
+                off_t offset, void **out, const char *fl, int ln);
 
 void ft_do_munmap(void *addr, size_t len, const char *fl, int ln);
 
@@ -269,8 +269,8 @@ void ft_do_flistxattr(int fd, char *list, size_t size, size_t *out,
 void ft_do_flistxattr_err(int fd, char *list, size_t size, int err,
                           const char *fl, int ln);
 
-void ft_do_copy_file_range(int fd_in, loff_t *off_in, int fd_out,
-                           loff_t *off_out, size_t len, size_t *out_ncp,
+void ft_do_copy_file_range(int fd_in, off_t *off_in, int fd_out,
+                           off_t *off_out, size_t len, size_t *out_ncp,
                            const char *fl, int ln);
 
 void ft_do_fiemap(int fd, struct fiemap *fm, const char *fl, int ln);
@@ -283,17 +283,16 @@ void ft_do_getdent(int fd, struct dirent64 *dent, const char *fl, int ln);
 /* complex wrappers */
 void ft_do_readn(int fd, void *buf, size_t cnt, const char *fl, int ln);
 
-void ft_do_preadn(int fd, void *buf, size_t cnt, loff_t off, const char *fl,
+void ft_do_preadn(int fd, void *buf, size_t cnt, off_t off, const char *fl,
                   int ln);
 
 void ft_do_writen(int fd, const void *buf, size_t cnt, const char *fl, int ln);
 
-void ft_do_pwriten(int fd, const void *buf, size_t cnt, loff_t off,
+void ft_do_pwriten(int fd, const void *buf, size_t cnt, off_t off,
                    const char *fl, int ln);
 
-void ft_do_copy_file_rangen(int fd_src, loff_t off_in, int fd_dst,
-                            loff_t off_out, size_t len, const char *fl,
-                            int ln);
+void ft_do_copy_file_rangen(int fd_src, off_t off_in, int fd_dst,
+                            off_t off_out, size_t len, const char *fl, int ln);
 
 void ft_do_creat_resize(const char *path, size_t len, const char *fl, int ln);
 

@@ -18,7 +18,7 @@
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_file_write_iter_(struct ut_env *ute, loff_t off, size_t len)
+static void ut_file_write_iter_(struct ut_env *ute, off_t off, size_t len)
 {
 	const char *name = UT_NAME;
 	void *buf = ut_randbuf(ute, len);
@@ -82,11 +82,11 @@ static void ut_file_write_iter_unaligned(struct ut_env *ute)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void
-ut_file_write_iter_sparse_(struct ut_env *ute, const loff_t *offs, size_t cnt)
+ut_file_write_iter_sparse_(struct ut_env *ute, const off_t *offs, size_t cnt)
 {
 	const char *name = UT_NAME;
 	uint64_t val = 0;
-	loff_t off = -1;
+	off_t off = -1;
 	ino_t dino = 0;
 	ino_t ino = 0;
 
@@ -118,7 +118,7 @@ ut_file_write_iter_sparse_(struct ut_env *ute, const loff_t *offs, size_t cnt)
 
 static void ut_file_write_iter_sparse(struct ut_env *ute)
 {
-	const loff_t offs[] = {
+	const off_t offs[] = {
 		8 * UT_BK_SIZE,
 		UT_1G / 5 - 5,
 		UT_BK_SIZE - 1,

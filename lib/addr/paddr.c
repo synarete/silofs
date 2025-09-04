@@ -42,7 +42,7 @@ bool silofs_paddr_isnull(const struct silofs_paddr *paddr)
 
 void silofs_paddr_init(struct silofs_paddr *paddr,
                        const struct silofs_blobid *blobid,
-                       enum silofs_mtype mtype, loff_t off)
+                       enum silofs_mtype mtype, off_t off)
 {
 	silofs_blobid_assign(&paddr->blobid, blobid);
 	paddr->pos = off;

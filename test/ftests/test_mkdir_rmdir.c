@@ -257,8 +257,8 @@ makename(struct ft_env *fte, const char *prefix, size_t depth, size_t id)
 static void test_walktree_recursive(struct ft_env *fte, const char *base)
 {
 	int fd = -1;
-	loff_t pos = -1;
-	loff_t off = 0;
+	off_t pos = -1;
+	off_t off = 0;
 	const char *path = nullptr;
 	struct dirent64 dent = { .d_ino = 0 };
 
@@ -445,7 +445,7 @@ static void test_mkdirat_nested_io_(struct ft_env *fte, size_t cnt)
 	void *buf1 = ft_new_buf_rands(fte, len);
 	void *buf2 = ft_new_buf_rands(fte, len);
 	const size_t cnt_inner = (cnt > 10) ? 10 : cnt;
-	loff_t off = -1;
+	off_t off = -1;
 	int dfd = -1;
 	int fd = -1;
 
@@ -573,7 +573,7 @@ static void test_rmdir_getdents(struct ft_env *fte)
 	const char *name3 = ft_new_name_unique(fte);
 	const char *path1 = ft_new_path_unique(fte);
 	const char *path2 = ft_new_path_nested(fte, path1, name2);
-	loff_t pos = -1;
+	off_t pos = -1;
 	int dfd1 = -1;
 	int dfd2 = -1;
 	int fd3 = -1;

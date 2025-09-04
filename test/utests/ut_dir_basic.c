@@ -208,7 +208,7 @@ static void ut_mkdir_multi_(struct ut_env *ute, size_t cnt)
 	const char *dname = UT_NAME;
 	struct ut_namesarr *na = make_names(ute, cnt + 1);
 	blkcnt_t blkcnt = 0;
-	loff_t size = 0;
+	off_t size = 0;
 	ino_t dino = 0;
 	ino_t child_ino = 0;
 
@@ -493,9 +493,9 @@ static void ut_dir_stat_(struct ut_env *ute, size_t cnt)
 	const blkcnt_t nfrg = UT_BK_SIZE / 512;
 	const char *dname = UT_NAME;
 	const char *xname = nullptr;
-	const loff_t empty_size = SILOFS_DIR_EMPTY_SIZE;
+	const off_t empty_size = SILOFS_DIR_EMPTY_SIZE;
 	blkcnt_t blocks = 0;
-	loff_t dsize = -1;
+	off_t dsize = -1;
 	ino_t dino = 0;
 	ino_t ino = 0;
 
@@ -508,7 +508,7 @@ static void ut_dir_stat_(struct ut_env *ute, size_t cnt)
 		xname = make_xname(ute, i);
 		ut_create_only(ute, dino, xname, &ino);
 		ut_getattr(ute, dino, &st);
-		ut_expect_ge(st.st_size, (loff_t)i + 1);
+		ut_expect_ge(st.st_size, (off_t)i + 1);
 		ut_expect_gt(st.st_size, empty_size);
 		ut_expect_ge(st.st_size, dsize);
 		ut_expect_ge(st.st_blocks, blocks);
@@ -526,7 +526,7 @@ static void ut_dir_stat_(struct ut_env *ute, size_t cnt)
 		xname = make_xname(ute, i);
 		ut_remove_link(ute, dino, xname);
 		ut_getattr(ute, dino, &st);
-		ut_expect_ge(st.st_size, (loff_t)(cnt - i) - 1);
+		ut_expect_ge(st.st_size, (off_t)(cnt - i) - 1);
 		ut_expect_le(st.st_size, dsize);
 		dsize = st.st_size;
 	}

@@ -39,8 +39,7 @@ bool silofs_uaddr_isnull(const struct silofs_uaddr *uaddr)
 }
 
 void silofs_uaddr_setup(struct silofs_uaddr *uaddr,
-                        const struct silofs_lsid *lsid, loff_t pos,
-                        loff_t voff)
+                        const struct silofs_lsid *lsid, off_t pos, off_t voff)
 {
 	silofs_laddr_setup(&uaddr->laddr, lsid, pos);
 	uaddr->voff = voff;

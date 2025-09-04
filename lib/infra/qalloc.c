@@ -171,7 +171,7 @@ memfd_setup(struct silofs_memfd *memfd, const char *name, size_t size)
 	if (err) {
 		return err;
 	}
-	err = silofs_sys_ftruncate(fd, (loff_t)size);
+	err = silofs_sys_ftruncate(fd, (off_t)size);
 	if (err) {
 		silofs_sys_close(fd);
 		return err;
@@ -597,7 +597,7 @@ qpool_alloc_multi_pg(struct silofs_qpool *qpool, size_t nbytes, void **out_ptr)
 	return err;
 }
 
-static loff_t
+static off_t
 qpool_ptr_to_off(const struct silofs_qpool *qpool, const void *ptr)
 {
 	return (const char *)ptr - (const char *)qpool->data.mem;
@@ -606,7 +606,7 @@ qpool_ptr_to_off(const struct silofs_qpool *qpool, const void *ptr)
 static size_t
 qpool_ptr_to_pgn(const struct silofs_qpool *qpool, const void *ptr)
 {
-	const loff_t off = qpool_ptr_to_off(qpool, ptr);
+	const off_t off = qpool_ptr_to_off(qpool, ptr);
 
 	return (size_t)off / QALLOC_PAGE_SIZE;
 }
@@ -614,10 +614,10 @@ qpool_ptr_to_pgn(const struct silofs_qpool *qpool, const void *ptr)
 static bool
 qpool_isinrange(const struct silofs_qpool *qpool, const void *ptr, size_t nb)
 {
-	const loff_t off = qpool_ptr_to_off(qpool, ptr);
-	const loff_t end = off + (loff_t)nb;
+	const off_t off = qpool_ptr_to_off(qpool, ptr);
+	const off_t end = off + (off_t)nb;
 
-	return (off >= 0) && (end <= (loff_t)qpool->data.msz);
+	return (off >= 0) && (end <= (off_t)qpool->data.msz);
 }
 
 static struct silofs_qpage_info *
@@ -633,7 +633,7 @@ static struct silofs_slab_seg *
 qpool_slab_seg_of(const struct silofs_qpool *qpool, const void *ptr)
 {
 	struct silofs_slab_seg *seg;
-	loff_t off;
+	off_t off;
 	size_t idx;
 
 	seg = qpool->data.mem;
@@ -679,7 +679,7 @@ static int qpool_check_by_page(const struct silofs_qpool *qpool,
 static bool qpool_punch_hole_at(const struct silofs_qpool *qpool,
                                 struct silofs_qpage_info *qpgi, size_t npgs)
 {
-	const loff_t off = npgs_to_nbytes(qpgi->qpg_index);
+	const off_t off = npgs_to_nbytes(qpgi->qpg_index);
 	const ssize_t len = npgs_to_nbytes(npgs);
 	const int mode = FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE;
 	const int fd = qpool->data.fd;

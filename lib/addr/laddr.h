@@ -34,7 +34,7 @@ struct silofs_lsid {
 /* logical-address within specific volume's mapping extend */
 struct silofs_laddr {
 	struct silofs_lsid lsid;
-	loff_t             pos;
+	off_t              pos;
 };
 
 /* logical-address and its associate IV-key */
@@ -45,8 +45,8 @@ struct silofs_llink {
 
 /* logical-space address-range [beg, end) */
 struct silofs_lrange {
-	loff_t             beg;
-	loff_t             end;
+	off_t              beg;
+	off_t              end;
 	enum silofs_height height;
 };
 
@@ -64,7 +64,7 @@ bool silofs_lsid_has_blobid(const struct silofs_lsid   *lsid,
 void silofs_lsid_reset(struct silofs_lsid *lsid);
 
 void silofs_lsid_setup(struct silofs_lsid         *lsid,
-                       const struct silofs_blobid *blobid, loff_t voff,
+                       const struct silofs_blobid *blobid, off_t voff,
                        enum silofs_mtype vspace, enum silofs_height height,
                        enum silofs_mtype mtype);
 
@@ -76,7 +76,7 @@ bool silofs_lsid_isequal(const struct silofs_lsid *lsid,
 
 uint64_t silofs_lsid_hash64(const struct silofs_lsid *lsid);
 
-loff_t silofs_lsid_pos(const struct silofs_lsid *lsid, loff_t off);
+off_t silofs_lsid_pos(const struct silofs_lsid *lsid, off_t off);
 
 void silofs_lsid48b_reset(struct silofs_lsid48b *lsid48);
 
@@ -90,13 +90,13 @@ void silofs_lsid48b_xtoh(const struct silofs_lsid48b *lsid48,
 
 const struct silofs_laddr *silofs_laddr_none(void);
 
-void silofs_laddr_setpos(struct silofs_laddr *laddr, loff_t off);
+void silofs_laddr_setpos(struct silofs_laddr *laddr, off_t off);
 
 void silofs_laddr_setup(struct silofs_laddr      *laddr,
-                        const struct silofs_lsid *lsid, loff_t off);
+                        const struct silofs_lsid *lsid, off_t off);
 
 void silofs_laddr_setup_lbk(struct silofs_laddr      *laddr,
-                            const struct silofs_lsid *lsid, loff_t off);
+                            const struct silofs_lsid *lsid, off_t off);
 
 void silofs_laddr_reset(struct silofs_laddr *laddr);
 
@@ -159,23 +159,23 @@ bool silofs_lrange_isvalid(const struct silofs_lrange *lrange);
 
 size_t silofs_lrange_len(const struct silofs_lrange *lrange);
 
-bool silofs_lrange_within(const struct silofs_lrange *lrange, loff_t off);
+bool silofs_lrange_within(const struct silofs_lrange *lrange, off_t off);
 
 void silofs_lrange_setup(struct silofs_lrange *lrange,
-                         enum silofs_height height, loff_t beg, loff_t end);
+                         enum silofs_height height, off_t beg, off_t end);
 
 void silofs_lrange_setup_sub(struct silofs_lrange       *lrange,
-                             const struct silofs_lrange *other, loff_t beg);
+                             const struct silofs_lrange *other, off_t beg);
 
 void silofs_lrange_of_space(struct silofs_lrange *lrange,
-                            enum silofs_height height, loff_t voff_base);
+                            enum silofs_height height, off_t voff_base);
 
 void silofs_lrange_of_spmap(struct silofs_lrange *lrange,
-                            enum silofs_height height, loff_t voff_base);
+                            enum silofs_height height, off_t voff_base);
 
-loff_t silofs_lrange_voff_at(const struct silofs_lrange *lrange, size_t slot);
+off_t silofs_lrange_voff_at(const struct silofs_lrange *lrange, size_t slot);
 
-loff_t silofs_lrange_next(const struct silofs_lrange *lrange, loff_t voff);
+off_t silofs_lrange_next(const struct silofs_lrange *lrange, off_t voff);
 
 void silofs_lrange128_reset(struct silofs_lrange128 *vrng);
 

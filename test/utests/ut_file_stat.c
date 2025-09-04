@@ -51,7 +51,7 @@ static void ut_getattr_blocks(struct ut_env *ute, ino_t ino, size_t dsz)
 	ut_expect_le(blocks, blocks_max);
 }
 
-static void ut_file_stat_blocks_at_(struct ut_env *ute, size_t bsz, loff_t off)
+static void ut_file_stat_blocks_at_(struct ut_env *ute, size_t bsz, off_t off)
 {
 	ino_t ino;
 	ino_t dino;
@@ -66,7 +66,7 @@ static void ut_file_stat_blocks_at_(struct ut_env *ute, size_t bsz, loff_t off)
 	ut_getattr_blocks(ute, ino, 0);
 	ut_trunacate_file(ute, ino, off);
 	ut_getattr_blocks(ute, ino, 0);
-	ut_trunacate_file(ute, ino, off + (loff_t)bsz);
+	ut_trunacate_file(ute, ino, off + (off_t)bsz);
 	ut_getattr_blocks(ute, ino, 0);
 	ut_trunacate_file(ute, ino, off / 2);
 	ut_getattr_blocks(ute, ino, 0);
@@ -76,7 +76,7 @@ static void ut_file_stat_blocks_at_(struct ut_env *ute, size_t bsz, loff_t off)
 	ut_rmdir_at_root(ute, name);
 }
 
-static void ut_file_stat_blocks_(struct ut_env *ute, loff_t off)
+static void ut_file_stat_blocks_(struct ut_env *ute, off_t off)
 {
 	ut_file_stat_blocks_at_(ute, 1, off);
 	ut_file_stat_blocks_at_(ute, UT_BK_SIZE, off);
@@ -88,7 +88,7 @@ static void ut_file_stat_blocks_(struct ut_env *ute, loff_t off)
 
 static void ut_file_stat_blocks(struct ut_env *ute)
 {
-	const loff_t off[] = { 0, UT_1M, UT_1G, UT_1T };
+	const off_t off[] = { 0, UT_1M, UT_1G, UT_1T };
 
 	for (size_t i = 0; i < UT_ARRAY_SIZE(off); ++i) {
 		ut_file_stat_blocks_(ute, off[i]);
@@ -98,7 +98,7 @@ static void ut_file_stat_blocks(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_file_statvfs_(struct ut_env *ute, loff_t off, size_t len)
+static void ut_file_statvfs_(struct ut_env *ute, off_t off, size_t len)
 {
 	struct statvfs stv[2];
 	const char *name = UT_NAME;
@@ -125,7 +125,7 @@ static void ut_file_statvfs_(struct ut_env *ute, loff_t off, size_t len)
 
 	ut_trunacate_file(ute, ino, off);
 	ut_statfs(ute, ino, &stv[0]);
-	ut_trunacate_file(ute, ino, off + (loff_t)len);
+	ut_trunacate_file(ute, ino, off + (off_t)len);
 	ut_statfs(ute, ino, &stv[1]);
 	ut_expect_eq(stv[0].f_bfree, stv[1].f_bfree);
 

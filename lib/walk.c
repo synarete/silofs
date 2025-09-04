@@ -39,7 +39,7 @@ struct silofs_walk_ctx {
 	struct silofs_spleaf_info *sli;
 	enum silofs_height height;
 	enum silofs_mtype vspace;
-	loff_t voff;
+	off_t voff;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -47,13 +47,13 @@ struct silofs_walk_ctx {
 static void
 sbi_lrange(const struct silofs_sb_info *sbi, struct silofs_lrange *out_lrange)
 {
-	const loff_t vsilofs_off_end = silofs_sbst_vspace_end(sbi);
+	const off_t vsilofs_off_end = silofs_sbst_vspace_end(sbi);
 
 	silofs_lrange_setup(out_lrange, SILOFS_HEIGHT_SUPER, 0,
 	                    vsilofs_off_end);
 }
 
-static bool sni_has_subref(const struct silofs_spnode_info *sni, loff_t voff)
+static bool sni_has_subref(const struct silofs_spnode_info *sni, off_t voff)
 {
 	struct silofs_uaddr uaddr;
 
@@ -332,7 +332,7 @@ static int wac_traverse_spnode1_child(struct silofs_walk_ctx *wa_ctx)
 static int wac_do_traverse_spnode1(struct silofs_walk_ctx *wa_ctx)
 {
 	struct silofs_lrange lrange;
-	loff_t voff;
+	off_t voff;
 	int err = 0;
 
 	silofs_sni_vspace_range(wa_ctx->sni1, &lrange);
@@ -408,7 +408,7 @@ static int wac_traverse_spnode2_child(struct silofs_walk_ctx *wa_ctx)
 static int wac_do_traverse_spnode2(struct silofs_walk_ctx *wa_ctx)
 {
 	struct silofs_lrange lrange;
-	loff_t voff;
+	off_t voff;
 	int err = 0;
 
 	silofs_sni_vspace_range(wa_ctx->sni2, &lrange);
@@ -484,7 +484,7 @@ static int wac_traverse_spnode3_child(struct silofs_walk_ctx *wa_ctx)
 static int wac_do_traverse_spnode3(struct silofs_walk_ctx *wa_ctx)
 {
 	struct silofs_lrange lrange;
-	loff_t voff;
+	off_t voff;
 	int err = 0;
 
 	silofs_sni_vspace_range(wa_ctx->sni3, &lrange);
@@ -560,7 +560,7 @@ static int wac_traverse_spnode4_child(struct silofs_walk_ctx *wa_ctx)
 static int wac_do_traverse_spnode4(struct silofs_walk_ctx *wa_ctx)
 {
 	struct silofs_lrange lrange;
-	loff_t voff;
+	off_t voff;
 	int err = 0;
 
 	silofs_sni_vspace_range(wa_ctx->sni4, &lrange);

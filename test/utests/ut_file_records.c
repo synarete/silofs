@@ -108,7 +108,7 @@ static void record_stamp_encode(struct ut_record *rec, size_t index)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void ut_write_record(struct ut_env *ute, ino_t ino,
-                            const struct ut_record *rec, loff_t off)
+                            const struct ut_record *rec, off_t off)
 {
 	const size_t bsz = record_size(rec, rec->size);
 
@@ -116,7 +116,7 @@ static void ut_write_record(struct ut_env *ute, ino_t ino,
 }
 
 static void ut_read_record(struct ut_env *ute, ino_t ino,
-                           const struct ut_record *rec, loff_t off)
+                           const struct ut_record *rec, off_t off)
 {
 	const size_t bsz = record_size(rec, rec->size);
 
@@ -124,7 +124,7 @@ static void ut_read_record(struct ut_env *ute, ino_t ino,
 }
 
 static void ut_read_record_verify(struct ut_env *ute, ino_t ino,
-                                  struct ut_record *rec, loff_t off)
+                                  struct ut_record *rec, off_t off)
 {
 	int err;
 
@@ -136,20 +136,20 @@ static void ut_read_record_verify(struct ut_env *ute, ino_t ino,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static loff_t
-offset_of(const struct ut_record *rec, size_t index, loff_t base_off)
+static off_t
+offset_of(const struct ut_record *rec, size_t index, off_t base_off)
 {
 	const size_t rec_size = record_size(rec, rec->size);
 
-	return base_off + (loff_t)(index * rec_size);
+	return base_off + (off_t)(index * rec_size);
 }
 
 static void
-ut_file_records_seq_(struct ut_env *ute, loff_t off, size_t len, size_t cnt)
+ut_file_records_seq_(struct ut_env *ute, off_t off, size_t len, size_t cnt)
 {
 	const char *name = UT_NAME;
 	struct ut_record *rec = nullptr;
-	loff_t pos = -1;
+	off_t pos = -1;
 	ino_t dino = 0;
 	ino_t ino = 0;
 
@@ -175,7 +175,7 @@ ut_file_records_seq_(struct ut_env *ute, loff_t off, size_t len, size_t cnt)
 
 static void ut_file_records_seq(struct ut_env *ute)
 {
-	const loff_t off[] = { 0, 111, 11111, 1111111, 111111111 };
+	const off_t off[] = { 0, 111, 11111, 1111111, 111111111 };
 	const size_t len[] = { 111, 1111, 11111 };
 
 	for (size_t i = 0; i < UT_ARRAY_SIZE(off); ++i) {
@@ -190,23 +190,22 @@ static void ut_file_records_seq(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static loff_t
-resolve_offset(const struct ut_record *rec, long pos, loff_t base)
+static off_t resolve_offset(const struct ut_record *rec, long pos, off_t base)
 {
 	const size_t factor = 11;
 	const size_t recsize = record_size(rec, rec->size);
 
-	return base + pos * (loff_t)(factor * recsize);
+	return base + pos * (off_t)(factor * recsize);
 }
 
 static void
-ut_file_records_rand_(struct ut_env *ute, loff_t off, size_t len, size_t cnt)
+ut_file_records_rand_(struct ut_env *ute, off_t off, size_t len, size_t cnt)
 {
 	const size_t niter = 2;
 	struct ut_record *rec = nullptr;
 	const char *name = UT_NAME;
 	const long *poss = ut_randseq(ute, cnt, 0);
-	loff_t pos = -1;
+	off_t pos = -1;
 	ino_t dino = 0;
 	ino_t ino = 0;
 
@@ -234,7 +233,7 @@ ut_file_records_rand_(struct ut_env *ute, loff_t off, size_t len, size_t cnt)
 
 static void ut_file_records_rand_aligned(struct ut_env *ute)
 {
-	const loff_t off[] = { 0, UT_64K, UT_1M, UT_1G, UT_1T };
+	const off_t off[] = { 0, UT_64K, UT_1M, UT_1G, UT_1T };
 
 	for (size_t i = 0; i < UT_ARRAY_SIZE(off); ++i) {
 		ut_file_records_rand_(ute, off[i], UT_64K, 1000);
@@ -248,7 +247,7 @@ static void ut_file_records_rand_aligned(struct ut_env *ute)
 
 static void ut_file_records_rand_unaligned1(struct ut_env *ute)
 {
-	const loff_t off[] = { 1, 111, 11111, 1111111, 111111111 };
+	const off_t off[] = { 1, 111, 11111, 1111111, 111111111 };
 
 	for (size_t i = 0; i < UT_ARRAY_SIZE(off); ++i) {
 		ut_file_records_rand_(ute, off[i], 111, 1111);
@@ -262,7 +261,7 @@ static void ut_file_records_rand_unaligned1(struct ut_env *ute)
 
 static void ut_file_records_rand_unaligned2(struct ut_env *ute)
 {
-	const loff_t off[] = { UT_64K - 2, UT_1M - 2, UT_1G - 2, UT_1T - 2 };
+	const off_t off[] = { UT_64K - 2, UT_1M - 2, UT_1G - 2, UT_1T - 2 };
 	const size_t size_rec = record_base_size(nullptr);
 	const size_t size_max = UT_IOSIZE_MAX - size_rec;
 

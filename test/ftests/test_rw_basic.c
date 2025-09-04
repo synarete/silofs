@@ -25,7 +25,7 @@ static void test_rw_basic_simple_(struct ft_env *fte, size_t bsz, size_t cnt)
 	struct stat st = { .st_size = -1 };
 	void *buf = ft_new_buf_zeros(fte, bsz);
 	const char *path = ft_new_path_unique(fte);
-	loff_t pos = -1;
+	off_t pos = -1;
 	size_t num = 0;
 	int fd = -1;
 
@@ -69,17 +69,17 @@ static void test_rw_basic_seq_(struct ft_env *fte, size_t cnt)
 	const char *path = ft_new_path_unique(fte);
 	uint64_t num = 0;
 	const size_t bsz = sizeof(num);
-	loff_t off = 0;
+	off_t off = 0;
 	int fd = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	for (size_t i = 0; i < cnt; ++i) {
 		num = i;
-		off = (loff_t)(i * bsz);
+		off = (off_t)(i * bsz);
 		ft_pwriten(fd, &num, bsz, off);
 	}
 	for (size_t i = 0; i < cnt; ++i) {
-		off = (loff_t)(i * bsz);
+		off = (off_t)(i * bsz);
 		ft_preadn(fd, &num, bsz, off);
 		ft_expect_eq(i, num);
 	}
@@ -113,7 +113,7 @@ static void test_rw_basic_seq_long(struct ft_env *fte)
 /*
  * Expects pwrite-pread data-consistency with multiple overwrites
  */
-static void test_rw_basic_multi_(struct ft_env *fte, loff_t off, size_t len)
+static void test_rw_basic_multi_(struct ft_env *fte, off_t off, size_t len)
 {
 	struct stat st = { .st_size = -1 };
 	void *buf1 = nullptr;
@@ -170,11 +170,11 @@ static void test_rw_basic_space(struct ft_env *fte)
 	size_t bsz = FT_1M;
 	void *buf1 = nullptr;
 	void *buf2 = nullptr;
-	loff_t off = -1;
+	off_t off = -1;
 	int fd = -1;
 
 	for (size_t i = 0; i < 256; ++i) {
-		off = (loff_t)i;
+		off = (off_t)i;
 		buf1 = ft_new_buf_rands(fte, bsz);
 		buf2 = ft_new_buf_rands(fte, bsz);
 		ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
@@ -191,12 +191,12 @@ static void test_rw_basic_space(struct ft_env *fte)
  * Expects read-write data-consistency, reverse over-writes.
  */
 static void
-test_rw_basic_reserve_overwrite_(struct ft_env *fte, loff_t off, size_t len)
+test_rw_basic_reserve_overwrite_(struct ft_env *fte, off_t off, size_t len)
 {
 	void *buf1 = ft_new_buf_rands(fte, len);
 	void *buf2 = ft_new_buf_zeros(fte, len);
 	const char *path = ft_new_path_unique(fte);
-	loff_t pos = -1;
+	off_t pos = -1;
 	int fd = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0644, &fd);
@@ -244,7 +244,7 @@ static void test_rw_basic_overlap(struct ft_env *fte)
 	void *buf2 = ft_new_buf_rands(fte, bsz);
 	void *buf3 = ft_new_buf_zeros(fte, bsz);
 	const char *path = ft_new_path_unique(fte);
-	loff_t off = -1;
+	off_t off = -1;
 	int fd = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
@@ -279,7 +279,7 @@ static void test_rw_basic_overlap(struct ft_env *fte)
  * Expects read-write data-consistency when I/O in complex patterns
  */
 static void
-test_rw_basic_steps_(struct ft_env *fte, loff_t pos, loff_t lim, loff_t step)
+test_rw_basic_steps_(struct ft_env *fte, off_t pos, off_t lim, off_t step)
 {
 	size_t bsz = FT_64K;
 	void *buf1 = nullptr;
@@ -288,7 +288,7 @@ test_rw_basic_steps_(struct ft_env *fte, loff_t pos, loff_t lim, loff_t step)
 	int fd = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
-	for (loff_t off = pos; off < lim; off += step) {
+	for (off_t off = pos; off < lim; off += step) {
 		buf1 = ft_new_buf_rands(fte, bsz);
 		buf2 = ft_new_buf_rands(fte, bsz);
 		ft_pwriten(fd, buf1, bsz, off);
@@ -303,7 +303,7 @@ test_rw_basic_steps_(struct ft_env *fte, loff_t pos, loff_t lim, loff_t step)
 
 static void test_rw_basic_aligned_steps(struct ft_env *fte)
 {
-	const loff_t step = FT_64K;
+	const off_t step = FT_64K;
 
 	test_rw_basic_steps_(fte, 0, FT_1M, step);
 	test_rw_basic_steps_(fte, 0, 2 * FT_1M, step);
@@ -312,8 +312,8 @@ static void test_rw_basic_aligned_steps(struct ft_env *fte)
 
 static void test_rw_basic_unaligned_steps(struct ft_env *fte)
 {
-	const loff_t step1 = FT_64K + 1;
-	const loff_t step2 = FT_64K - 1;
+	const off_t step1 = FT_64K + 1;
+	const off_t step2 = FT_64K - 1;
 
 	test_rw_basic_steps_(fte, 0, FT_1M, step1);
 	ft_relax_mem(fte);
@@ -332,7 +332,7 @@ static void test_rw_basic_unaligned_steps(struct ft_env *fte)
 /*
  * Expects successful write-read of single full large-chunk to regular file
  */
-static void test_rw_basic_chunk_(struct ft_env *fte, loff_t off, size_t len)
+static void test_rw_basic_chunk_(struct ft_env *fte, off_t off, size_t len)
 {
 	void *buf1 = ft_new_buf_rands(fte, len);
 	void *buf2 = ft_new_buf_rands(fte, len);
@@ -376,17 +376,17 @@ static void test_rw_basic_chunk_unaligned(struct ft_env *fte)
  * Expects successful write-read of ascending files-offsets
  */
 static void
-test_rw_basic_backward_byte_(struct ft_env *fte, loff_t off, size_t len)
+test_rw_basic_backward_byte_(struct ft_env *fte, off_t off, size_t len)
 {
 	uint8_t val = 0;
 	const size_t vsz = sizeof(val);
 	const char *path = ft_new_path_unique(fte);
-	loff_t pos = 0;
+	off_t pos = 0;
 	int fd = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	for (size_t i = len; i > 0; --i) {
-		pos = off + (loff_t)(i - 1);
+		pos = off + (off_t)(i - 1);
 		val = (uint8_t)i;
 		ft_pwriten(fd, &val, vsz, pos);
 		val = 0;
@@ -394,7 +394,7 @@ test_rw_basic_backward_byte_(struct ft_env *fte, loff_t off, size_t len)
 		ft_expect_eq(0xFF & i, val);
 	}
 	for (size_t i = len; i > 0; --i) {
-		pos = off + (loff_t)(i - 1);
+		pos = off + (off_t)(i - 1);
 		ft_preadn(fd, &val, vsz, pos);
 		ft_expect_eq(0xFF & i, val);
 	}
@@ -425,14 +425,14 @@ static void test_rw_basic_backward_u64_(struct ft_env *fte, size_t cnt)
 	uint64_t val = 0;
 	const size_t vsz = sizeof(val);
 	const char *path = ft_new_path_unique(fte);
-	loff_t pos = 0;
+	off_t pos = 0;
 	int fd1 = -1;
 	int fd2 = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd1);
 	ft_open(path, O_RDONLY, 0, &fd2);
 	for (size_t i = cnt; i > 0; --i) {
-		pos = (loff_t)(i * cnt);
+		pos = (off_t)(i * cnt);
 		val = i;
 		ft_pwriten(fd1, &val, vsz, pos);
 		val = 0;
@@ -440,12 +440,12 @@ static void test_rw_basic_backward_u64_(struct ft_env *fte, size_t cnt)
 		ft_expect_eq(i, val);
 	}
 	for (size_t i = cnt; i > 0; --i) {
-		pos = (loff_t)(i * cnt);
+		pos = (off_t)(i * cnt);
 		ft_preadn(fd1, &val, vsz, pos);
 		ft_expect_eq(i, val);
 	}
 	for (size_t i = cnt; i > 0; --i) {
-		pos = (loff_t)(i * cnt);
+		pos = (off_t)(i * cnt);
 		ft_preadn(fd2, &val, vsz, pos);
 		ft_expect_eq(i, val);
 	}

@@ -16,13 +16,13 @@
  */
 #include "utests.h"
 
-static void ut_file_lseek_simple_(struct ut_env *ute, loff_t off)
+static void ut_file_lseek_simple_(struct ut_env *ute, off_t off)
 {
 	struct stat st = { .st_size = -1 };
 	const char *name = UT_NAME;
-	const loff_t step = 2 * UT_64K;
-	loff_t off_data = -1;
-	loff_t off_hole = -1;
+	const off_t step = 2 * UT_64K;
+	off_t off_data = -1;
+	off_t off_hole = -1;
 	ino_t dino = 0;
 	ino_t ino = 0;
 	char d = 'd';
@@ -47,7 +47,7 @@ static void ut_file_lseek_simple_(struct ut_env *ute, loff_t off)
 
 static void ut_file_lseek_simple(struct ut_env *ute)
 {
-	const loff_t off[] = {
+	const off_t off[] = {
 		0, UT_64K,     UT_1M,       UT_1G,        UT_1T,
 		1, UT_64K + 1, UT_1M + 111, UT_1G - 1111, UT_1T + 11111,
 	};
@@ -60,34 +60,34 @@ static void ut_file_lseek_simple(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_file_lseek_holes_(struct ut_env *ute, loff_t off)
+static void ut_file_lseek_holes_(struct ut_env *ute, off_t off)
 {
 	struct stat st = { .st_size = -1 };
 	const char *name = UT_NAME;
 	const size_t len = UT_64K;
 	const size_t cnt = 1000;
 	void *buf = ut_randbuf(ute, len);
-	loff_t pos_data = -1;
-	loff_t pos_hole = -1;
-	loff_t pos = -1;
+	off_t pos_data = -1;
+	off_t pos_hole = -1;
+	off_t pos = -1;
 	ino_t dino = 0;
 	ino_t ino = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
 	for (size_t i = 0; i < cnt; ++i) {
-		pos = off + (loff_t)(2 * len * (i + 1));
+		pos = off + (off_t)(2 * len * (i + 1));
 		ut_write_read(ute, ino, buf, len, pos);
 		ut_getattr_reg(ute, ino, &st);
 		ut_lseek_hole(ute, ino, pos, &pos_hole);
 		ut_expect_eq(pos_hole, st.st_size);
 	}
 	for (size_t i = 0; i < cnt; ++i) {
-		pos = off + (loff_t)(2 * len * (i + 1));
+		pos = off + (off_t)(2 * len * (i + 1));
 		ut_lseek_data(ute, ino, pos, &pos_data);
 		ut_expect_eq(pos_data, pos);
 		ut_lseek_hole(ute, ino, pos, &pos_hole);
-		ut_expect_eq(pos_hole, pos + (loff_t)len);
+		ut_expect_eq(pos_hole, pos + (off_t)len);
 	}
 	ut_remove_file(ute, dino, name, ino);
 	ut_rmdir_at_root(ute, name);
@@ -95,7 +95,7 @@ static void ut_file_lseek_holes_(struct ut_env *ute, loff_t off)
 
 static void ut_file_lseek_holes(struct ut_env *ute)
 {
-	const loff_t off[] = { 0, UT_64K, UT_1M, UT_1G, UT_1T };
+	const off_t off[] = { 0, UT_64K, UT_1M, UT_1G, UT_1T };
 
 	for (size_t i = 0; i < UT_ARRAY_SIZE(off); ++i) {
 		ut_file_lseek_holes_(ute, off[i]);
@@ -105,17 +105,17 @@ static void ut_file_lseek_holes(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_file_lseek_sparse_(struct ut_env *ute, loff_t off, size_t len)
+static void ut_file_lseek_sparse_(struct ut_env *ute, off_t off, size_t len)
 {
 	const char *name = UT_NAME;
 	const size_t nsteps = (len < UT_1M) ? 1000 : 100;
 	const ssize_t head1_lsize = (ssize_t)SILOFS_FILE_HEAD1_LEAF_SIZE;
 	const ssize_t head2_lsize = (ssize_t)SILOFS_FILE_HEAD2_LEAF_SIZE;
 	const ssize_t tree_lsize = (ssize_t)SILOFS_FILE_TREE_LEAF_SIZE;
-	loff_t pos_data = -1;
-	loff_t pos_hole = -1;
-	loff_t pos_next = -1;
-	loff_t pos = -1;
+	off_t pos_data = -1;
+	off_t pos_hole = -1;
+	off_t pos_next = -1;
+	off_t pos = -1;
 	ino_t dino = 0;
 	ino_t ino = 0;
 

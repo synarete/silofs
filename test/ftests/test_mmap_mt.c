@@ -57,18 +57,18 @@ test_mmap_mt_seq_at_(struct ft_env *fte, const struct ft_mmap_mt_ctx *mmtc)
 	uint8_t *dst = nullptr;
 	uint8_t dat = (uint8_t)('A' + (int)indx);
 	size_t seg;
-	loff_t pos;
+	off_t pos;
 
 	memset(buf, dat, bsz);
 	for (size_t i = 0; i < nsegs; ++i) {
 		seg = (i + indx) % nsegs;
-		pos = (loff_t)(seg * mmtc->sgsz);
+		pos = (off_t)(seg * mmtc->sgsz);
 		dst = mmtc->addr + pos;
 		ft_memcpy(dst, buf, bsz - indx);
 	}
 	for (size_t i = 0; i < nsegs; ++i) {
 		seg = (i + indx + 1) % nsegs;
-		pos = (loff_t)(seg * mmtc->sgsz);
+		pos = (off_t)(seg * mmtc->sgsz);
 		src = mmtc->addr + pos;
 		ft_memcpy(buf, src, bsz - indx);
 		dat = buf[0];
@@ -85,7 +85,7 @@ static int start_test_mmap_mt_seq(struct silofs_thread *th)
 }
 
 static void
-test_mmap_mt_seq_(struct ft_env *fte, loff_t off, size_t msz, size_t sgsz)
+test_mmap_mt_seq_(struct ft_env *fte, off_t off, size_t msz, size_t sgsz)
 {
 	struct ft_mmap_mt_ctx mmt_ctx[16];
 	const char *path = ft_new_path_unique(fte);

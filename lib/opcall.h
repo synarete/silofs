@@ -62,7 +62,7 @@ struct silofs_setattr_in {
 	uid_t       uid;
 	gid_t       gid;
 	mode_t      mode;
-	loff_t      size;
+	off_t       size;
 	bool        set_mode;
 	bool        set_size;
 	bool        set_uid_gid;
@@ -243,27 +243,27 @@ struct silofs_create_out {
 };
 
 struct silofs_fallocate_in {
-	ino_t  ino;
-	int    mode;
-	loff_t off;
-	loff_t len;
+	ino_t ino;
+	int   mode;
+	off_t off;
+	off_t len;
 };
 
 struct silofs_lseek_in {
-	ino_t  ino;
-	loff_t off;
-	int    whence;
+	ino_t ino;
+	off_t off;
+	int   whence;
 };
 
 struct silofs_lseek_out {
-	loff_t off;
+	off_t off;
 };
 
 struct silofs_copy_file_range_in {
 	ino_t  ino_in;
-	loff_t off_in;
+	off_t  off_in;
 	ino_t  ino_out;
-	loff_t off_out;
+	off_t  off_out;
 	size_t len;
 	int    flags;
 };
@@ -275,7 +275,7 @@ struct silofs_copy_file_range_out {
 struct silofs_read_in {
 	ino_t                     ino;
 	size_t                    len;
-	loff_t                    off;
+	off_t                     off;
 	void                     *buf;
 	struct silofs_rwiter_ctx *rwi_ctx;
 	int                       o_flags;
@@ -288,7 +288,7 @@ struct silofs_read_out {
 struct silofs_write_in {
 	ino_t                     ino;
 	size_t                    len;
-	loff_t                    off;
+	off_t                     off;
 	const void               *buf;
 	struct silofs_rwiter_ctx *rwi_ctx;
 	int                       o_flags;

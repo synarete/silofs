@@ -22,14 +22,14 @@
 /*
  * Tests data-consistency of sequential writes followed by sequential reads.
  */
-static void test_rw_sequencial_(struct ft_env *fte, loff_t from, size_t len,
+static void test_rw_sequencial_(struct ft_env *fte, off_t from, size_t len,
                                 size_t cnt, int rewrite)
 {
 	void *buf2 = ft_new_buf_zeros(fte, len);
 	char *path = ft_new_path_unique(fte);
 	void *buf1 = nullptr;
 	const size_t nitr = rewrite ? 2 : 1;
-	loff_t pos = -1;
+	off_t pos = -1;
 	size_t nwr = 0;
 	size_t nrd = 0;
 	int fd = -1;
@@ -60,7 +60,7 @@ static void test_rw_sequencial_aligned_64k(struct ft_env *fte)
 {
 	const size_t len = FT_64K;
 	const size_t cnt[] = { 1, 2, 63 };
-	const loff_t from[] = {
+	const off_t from[] = {
 		0,
 		FT_64K,
 		FT_1M,
@@ -89,7 +89,7 @@ static void test_rw_sequencial_aligned_1m(struct ft_env *fte)
 {
 	const size_t len = FT_1M;
 	const size_t cnt[] = { 1, 2, 4 };
-	const loff_t from[] = {
+	const off_t from[] = {
 		0,
 		FT_1M,
 		FT_1G,
@@ -116,7 +116,7 @@ static void test_rw_sequencial_unaligned_64k(struct ft_env *fte)
 {
 	const size_t len = FT_64K;
 	const size_t cnt[] = { 1, 2, 4 };
-	const loff_t from[] = {
+	const off_t from[] = {
 		1,
 		FT_64K - 11,
 		FT_64K + 11,
@@ -145,7 +145,7 @@ static void test_rw_sequencial_unaligned_1m(struct ft_env *fte)
 {
 	const size_t len = FT_1M;
 	const size_t cnt[] = { 1, 2, 3 };
-	const loff_t from[] = {
+	const off_t from[] = {
 		11,
 		FT_64K - 11,
 		FT_1M - 11,
@@ -173,7 +173,7 @@ static void test_rw_sequencial_unaligned_1m(struct ft_env *fte)
 static void test_sequencial_unaligned_(struct ft_env *fte, size_t len)
 {
 	const size_t cnt[] = { 1, 2, 3 };
-	const loff_t from[] = {
+	const off_t from[] = {
 		7,
 		FT_64K - 7,
 		FT_1M - 7,
@@ -211,12 +211,12 @@ static void test_rw_sequencial_unaligned_some(struct ft_env *fte)
  * of variable length strings
  */
 static void
-test_sequencial_strings_(struct ft_env *fte, loff_t start_off, size_t cnt)
+test_sequencial_strings_(struct ft_env *fte, off_t start_off, size_t cnt)
 {
 	char buf1[128] = "";
 	char buf2[128] = "";
 	const char *path = ft_new_path_unique(fte);
-	loff_t pos = -1;
+	off_t pos = -1;
 	size_t nu = 0;
 	size_t nwr = 0;
 	size_t nrd = 0;
@@ -248,7 +248,7 @@ test_sequencial_strings_(struct ft_env *fte, loff_t start_off, size_t cnt)
 static void test_rw_sequencial_strings(struct ft_env *fte)
 {
 	const size_t cnt[] = { 10, 100, 1000, 10000 };
-	const loff_t from[] = {
+	const off_t from[] = {
 		0,
 		FT_1K,
 		FT_4K,

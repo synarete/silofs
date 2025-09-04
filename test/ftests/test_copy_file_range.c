@@ -17,9 +17,9 @@
 #include "ftests.h"
 
 struct ft_copy_range_args {
-	loff_t off_src;
+	off_t off_src;
 	size_t len_src;
-	loff_t off_dst;
+	off_t off_dst;
 	size_t len_dst;
 };
 
@@ -54,9 +54,9 @@ struct ft_copy_range_args {
 #define ft_copy_range3(fte_, fn_, args_) \
 	ft_copy_range3_(fte_, fn_, args_, FT_ARRAY_SIZE(args_))
 
-static void ft_copy_range1_(struct ft_env *fte,
-                            void (*fn)(struct ft_env *, loff_t, size_t),
-                            const struct ft_copy_range_args *args, size_t na)
+static void
+ft_copy_range1_(struct ft_env *fte, void (*fn)(struct ft_env *, off_t, size_t),
+                const struct ft_copy_range_args *args, size_t na)
 {
 	for (size_t i = 0; i < na; ++i) {
 		fn(fte, args[i].off_src, args[i].len_src);
@@ -66,7 +66,7 @@ static void ft_copy_range1_(struct ft_env *fte,
 
 static void
 ft_copy_range2_(struct ft_env *fte,
-                void (*fn)(struct ft_env *, loff_t, size_t, loff_t, size_t),
+                void (*fn)(struct ft_env *, off_t, size_t, off_t, size_t),
                 const struct ft_copy_range_args *args, size_t na)
 {
 	for (size_t i = 0; i < na; ++i) {
@@ -76,10 +76,9 @@ ft_copy_range2_(struct ft_env *fte,
 	}
 }
 
-static void
-ft_copy_range3_(struct ft_env *fte,
-                void (*fn)(struct ft_env *, size_t, loff_t, loff_t),
-                const struct ft_copy_range_args *args, size_t na)
+static void ft_copy_range3_(struct ft_env *fte,
+                            void (*fn)(struct ft_env *, size_t, off_t, off_t),
+                            const struct ft_copy_range_args *args, size_t na)
 {
 	for (size_t i = 0; i < na; ++i) {
 		fn(fte, args[i].len_src, args[i].off_src, args[i].off_dst);
@@ -93,8 +92,8 @@ ft_copy_range3_(struct ft_env *fte,
  * between two files.
  */
 static void
-test_copy_file_range_(struct ft_env *fte, loff_t off_src, size_t len_src,
-                      loff_t off_dst, size_t len_dst)
+test_copy_file_range_(struct ft_env *fte, off_t off_src, size_t len_src,
+                      off_t off_dst, size_t len_dst)
 {
 	const char *path_src = ft_new_path_unique(fte);
 	const char *path_dst = ft_new_path_unique(fte);
@@ -182,13 +181,13 @@ static void test_copy_file_range_unaligned(struct ft_env *fte)
  * between regions within same file.
  */
 static void
-test_copy_file_range_self_(struct ft_env *fte, loff_t off_src, size_t len_src,
-                           loff_t off_dst, size_t len_dst)
+test_copy_file_range_self_(struct ft_env *fte, off_t off_src, size_t len_src,
+                           off_t off_dst, size_t len_dst)
 {
 	const char *path = ft_new_path_unique(fte);
 	const size_t len = ft_max(len_src, len_dst);
 	const size_t len_max = ft_max(len_src, len_dst);
-	const loff_t off_max = ft_off_end(ft_lmax(off_src, off_dst), len_max);
+	const off_t off_max = ft_off_end(ft_lmax(off_src, off_dst), len_max);
 	void *buf_src = ft_new_buf_rands(fte, len);
 	void *buf_dst = ft_new_buf_rands(fte, len);
 	int fd_src = -1;
@@ -213,8 +212,8 @@ test_copy_file_range_self_(struct ft_env *fte, loff_t off_src, size_t len_src,
 	ft_unlink(path);
 }
 
-static void test_copy_file_range_self2_(struct ft_env *fte, loff_t off1,
-                                        size_t len1, loff_t off2, size_t len2)
+static void test_copy_file_range_self2_(struct ft_env *fte, off_t off1,
+                                        size_t len1, off_t off2, size_t len2)
 {
 	test_copy_file_range_self_(fte, off1, len1, off2, len2);
 	test_copy_file_range_self_(fte, off2, len2, off1, len1);
@@ -247,8 +246,8 @@ static void test_copy_file_range_self(struct ft_env *fte)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void
-test_copy_file_range_between_(struct ft_env *fte, loff_t off_src,
-                              size_t len_src, loff_t off_dst, size_t len_dst)
+test_copy_file_range_between_(struct ft_env *fte, off_t off_src,
+                              size_t len_src, off_t off_dst, size_t len_dst)
 {
 	const char *path_src = ft_new_path_unique(fte);
 	const char *path_dst = ft_new_path_unique(fte);
@@ -326,13 +325,13 @@ static void test_copy_file_range_between(struct ft_env *fte)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void
-test_copy_file_range_truncate_(struct ft_env *fte, loff_t off, size_t len)
+test_copy_file_range_truncate_(struct ft_env *fte, off_t off, size_t len)
 {
 	const char *path_src = ft_new_path_unique(fte);
 	const char *path_dst = ft_new_path_unique(fte);
 	uint8_t *buf_src = ft_new_buf_rands(fte, len);
 	uint8_t *buf_alt = ft_new_buf_rands(fte, len);
-	const loff_t end = ft_off_end(off, len);
+	const off_t end = ft_off_end(off, len);
 	int fd_src = -1;
 	int fd_dst = -1;
 	uint8_t byte = 0;
@@ -392,14 +391,14 @@ static void test_copy_file_range_truncate(struct ft_env *fte)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void
-test_copy_file_range_overwrite_(struct ft_env *fte, loff_t off, size_t len)
+test_copy_file_range_overwrite_(struct ft_env *fte, off_t off, size_t len)
 {
 	const char *path_src = ft_new_path_unique(fte);
 	const char *path_dst = ft_new_path_unique(fte);
 	uint8_t *buf_src = ft_new_buf_rands(fte, len);
 	uint8_t *buf_dst = ft_new_buf_rands(fte, len);
 	uint8_t *buf_alt = ft_new_buf_rands(fte, len);
-	const loff_t end = ft_off_end(off, len);
+	const off_t end = ft_off_end(off, len);
 	int fd_src = -1;
 	int fd_dst = -1;
 
@@ -470,9 +469,9 @@ static void test_copy_file_range_overwrite(struct ft_env *fte)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void
-test_copy_file_range_nfiles_(struct ft_env *fte, loff_t off, size_t len)
+test_copy_file_range_nfiles_(struct ft_env *fte, off_t off, size_t len)
 {
-	const loff_t end = ft_off_end(off, len);
+	const off_t end = ft_off_end(off, len);
 	uint8_t *buf_src = ft_new_buf_rands(fte, len);
 	uint8_t *buf_alt = ft_new_buf_rands(fte, len);
 	const char *path = ft_new_path_unique(fte);
@@ -536,7 +535,7 @@ static void test_copy_file_range_nfiles(struct ft_env *fte)
  * successful completion.
  */
 static void test_copy_file_range_mtime_(struct ft_env *fte, size_t len,
-                                        loff_t off_src, loff_t off_dst)
+                                        off_t off_src, off_t off_dst)
 {
 	struct stat st[3];
 	void *buf_src = ft_new_buf_rands(fte, len);
@@ -602,14 +601,14 @@ static void test_copy_file_range_mtime(struct ft_env *fte)
  * upon successful completion.
  */
 static void
-test_copy_file_range_extend_(struct ft_env *fte, loff_t off, size_t len)
+test_copy_file_range_extend_(struct ft_env *fte, off_t off, size_t len)
 {
 	struct stat st[2];
 	void *buf_src = ft_new_buf_rands(fte, len);
 	void *buf_dst = ft_new_buf_rands(fte, len);
 	const char *path_src = ft_new_path_unique(fte);
 	const char *path_dst = ft_new_path_unique(fte);
-	const loff_t end = ft_off_end(off, len);
+	const off_t end = ft_off_end(off, len);
 	int fd_src = -1;
 	int fd_dst = -1;
 
@@ -669,7 +668,7 @@ static void test_copy_file_range_extend(struct ft_env *fte)
  * Note that FUSE limit the size of single copy_file_range to UINT32_MAX.
  */
 static void
-test_copy_file_range_sparse_(struct ft_env *fte, loff_t off, size_t len)
+test_copy_file_range_sparse_(struct ft_env *fte, off_t off, size_t len)
 {
 	void *buf_src1 = ft_new_buf_rands(fte, len);
 	void *buf_dst1 = ft_new_buf_rands(fte, len);
@@ -730,11 +729,11 @@ static void test_copy_file_range_sparse(struct ft_env *fte)
  * copy data properly.
  */
 static void
-test_copy_file_range_sparser_(struct ft_env *fte, loff_t off, size_t len)
+test_copy_file_range_sparser_(struct ft_env *fte, off_t off, size_t len)
 {
 	const char *path_src = ft_new_path_unique(fte);
 	const char *path_dst = ft_new_path_unique(fte);
-	const loff_t end = ft_off_end(off, len);
+	const off_t end = ft_off_end(off, len);
 	uint8_t b[8] = { 'A', 'B', 'x', 'y', 'z' };
 	int fd_src = -1;
 	int fd_dst = -1;
@@ -807,7 +806,7 @@ static void test_copy_file_range_empty_(struct ft_env *fte, ssize_t len)
 
 static void test_copy_file_range_empty(struct ft_env *fte)
 {
-	const loff_t len[] = {
+	const off_t len[] = {
 		FT_1M,             //
 		FT_1G,             //
 		4 * FT_1G,         //

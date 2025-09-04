@@ -27,7 +27,7 @@ static void test_unlinked_simple_(struct ft_env *fte, size_t len)
 	void *buf1 = ft_new_buf_rands(fte, len);
 	void *buf2 = ft_new_buf_rands(fte, len);
 	const size_t cnt = 100;
-	loff_t pos = -1;
+	off_t pos = -1;
 	size_t nwr = 0;
 	size_t nrd = 0;
 	int fd = -1;
@@ -69,24 +69,24 @@ static void test_unlinked_simple(struct ft_env *fte)
  * Tests data-consistency of I/O via fd where file's path is unlinked from
  * filesyatem's namespace and data is truncated implicitly upon close.
  */
-static void test_unlinked_complex_(struct ft_env *fte, loff_t off, size_t len)
+static void test_unlinked_complex_(struct ft_env *fte, off_t off, size_t len)
 {
 	const char *path = ft_new_path_unique(fte);
 	uint8_t *buf1 = ft_new_buf_rands(fte, len);
 	uint8_t *buf2 = ft_new_buf_rands(fte, len);
 	const size_t cnt = 100;
-	loff_t pos = 0;
+	off_t pos = 0;
 	int fd = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_unlink(path);
 	for (size_t i = 0; i < cnt; ++i) {
-		pos = off + (loff_t)(i * len);
+		pos = off + (off_t)(i * len);
 		buf1[0] = (uint8_t)i;
 		ft_pwriten(fd, buf1, len, pos);
 	}
 	for (size_t j = 0; j < cnt; ++j) {
-		pos = off + (loff_t)(j * len);
+		pos = off + (off_t)(j * len);
 		ft_preadn(fd, buf2, len, pos);
 		buf1[0] = (uint8_t)j;
 		ft_expect_eqm(buf1, buf2, len);
@@ -127,13 +127,13 @@ static void test_unlinked_complex(struct ft_env *fte)
  * Tests data-consistency of segments-I/O via two fds where file's path is
  * unlinked from filesyatem's namespace.
  */
-static void test_unlinked_segs_(struct ft_env *fte, loff_t off, size_t len)
+static void test_unlinked_segs_(struct ft_env *fte, off_t off, size_t len)
 {
 	const char *path = ft_new_path_unique(fte);
 	void *buf1 = ft_new_buf_rands(fte, len);
 	void *buf2 = ft_new_buf_rands(fte, len);
 	const size_t cnt = 100;
-	loff_t pos = 0;
+	off_t pos = 0;
 	int fd1 = -1;
 	int fd2 = -1;
 
@@ -141,11 +141,11 @@ static void test_unlinked_segs_(struct ft_env *fte, loff_t off, size_t len)
 	ft_open(path, O_RDONLY, 0, &fd2);
 	ft_unlink(path);
 	for (size_t i = 0; i < cnt; ++i) {
-		pos = off + (loff_t)(cnt * FT_1M);
+		pos = off + (off_t)(cnt * FT_1M);
 		ft_pwriten(fd1, buf1, len, pos);
 	}
 	for (size_t j = 0; j < cnt; ++j) {
-		pos = off + (loff_t)(cnt * FT_1M);
+		pos = off + (off_t)(cnt * FT_1M);
 		ft_preadn(fd2, buf2, len, pos);
 		ft_expect_eqm(buf1, buf2, len);
 	}
@@ -179,13 +179,13 @@ static void test_unlinked_segs(struct ft_env *fte)
  * Tests data-consistency of I/O via multiple fds where file's path is
  * unlinked from filesyatem's namespace.
  */
-static void test_unlinked_nfiles_(struct ft_env *fte, loff_t off, size_t len)
+static void test_unlinked_nfiles_(struct ft_env *fte, off_t off, size_t len)
 {
 	const char *path = ft_new_path_unique(fte);
 	void *buf1 = ft_new_buf_rands(fte, len);
 	void *buf2 = ft_new_buf_rands(fte, len);
 	const size_t nfds = 500;
-	loff_t pos = 0;
+	off_t pos = 0;
 	int *fds = nullptr;
 	int fd = -1;
 
@@ -247,7 +247,7 @@ static void test_unlinked_nfiles(struct ft_env *fte)
  */
 static void test_unlinked_rename_(struct ft_env *fte, size_t cnt)
 {
-	loff_t pos = 0;
+	off_t pos = 0;
 	size_t val = 0;
 	const size_t vsz = sizeof(val);
 	const char *path1 = ft_new_path_unique(fte);
@@ -257,19 +257,19 @@ static void test_unlinked_rename_(struct ft_env *fte, size_t cnt)
 
 	ft_open(path1, O_CREAT | O_RDWR, 0600, &fd1);
 	for (size_t i = cnt; i > 0; --i) {
-		pos = (loff_t)(i * cnt);
+		pos = (off_t)(i * cnt);
 		val = i;
 		ft_pwriten(fd1, &val, vsz, pos);
 	}
 	ft_rename(path1, path2);
 	for (size_t i = cnt; i > 0; --i) {
-		pos = (loff_t)(i * cnt);
+		pos = (off_t)(i * cnt);
 		ft_preadn(fd1, &val, vsz, pos);
 		ft_expect_eq(i, val);
 	}
 	ft_open(path2, O_RDONLY, 0, &fd2);
 	for (size_t i = cnt; i > 0; --i) {
-		pos = (loff_t)(i * cnt);
+		pos = (off_t)(i * cnt);
 		ft_preadn(fd2, &val, vsz, pos);
 		ft_expect_eq(i, val);
 	}
@@ -297,7 +297,7 @@ static void test_unlinked_rename(struct ft_env *fte)
 static void test_unlinked_same_path_(struct ft_env *fte, size_t cnt)
 {
 	const char *path = ft_new_path_unique(fte);
-	loff_t pos = -1;
+	off_t pos = -1;
 	int *fds = nullptr;
 	int dat = -1;
 	int fd = -1;
@@ -307,12 +307,12 @@ static void test_unlinked_same_path_(struct ft_env *fte, size_t cnt)
 		ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 		ft_unlink(path);
 		fds[i] = fd;
-		pos = (loff_t)((i * FT_1M) + i);
+		pos = (off_t)((i * FT_1M) + i);
 		ft_pwriten(fd, &fd, sizeof(fd), pos);
 	}
 	for (size_t i = 0; i < cnt; ++i) {
 		fd = fds[i];
-		pos = (loff_t)((i * FT_1M) + i);
+		pos = (off_t)((i * FT_1M) + i);
 		ft_preadn(fd, &dat, sizeof(dat), pos);
 		ft_expect_eq(fd, dat);
 	}

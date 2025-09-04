@@ -22,7 +22,7 @@
 
 /* logical addressing of virtual nodes */
 struct silofs_vaddr {
-	loff_t            off;
+	off_t             off;
 	enum silofs_mtype mtype;
 };
 
@@ -45,13 +45,13 @@ bool silofs_vaddr_isequal(const struct silofs_vaddr *vaddr1,
                           const struct silofs_vaddr *vaddr2);
 
 void silofs_vaddr_setup(struct silofs_vaddr *vaddr, enum silofs_mtype mtype,
-                        loff_t off);
+                        off_t off);
 
 void silofs_vaddr_setup2(struct silofs_vaddr *vaddr, enum silofs_mtype mtype,
                          silofs_lba_t lba);
 
 void silofs_vaddr_of_lsmap(struct silofs_vaddr *vaddr,
-                           enum silofs_mtype refmtype, loff_t off);
+                           enum silofs_mtype refmtype, off_t off);
 
 void silofs_vaddr_assign(struct silofs_vaddr       *vaddr,
                          const struct silofs_vaddr *other);
@@ -67,12 +67,12 @@ bool silofs_vaddr_isdatabk(const struct silofs_vaddr *vaddr);
 bool silofs_vaddr_isinode(const struct silofs_vaddr *vaddr);
 
 void silofs_vaddr_by_spleaf(struct silofs_vaddr *vaddr,
-                            enum silofs_mtype mtype, loff_t voff_base,
+                            enum silofs_mtype mtype, off_t voff_base,
                             size_t bn, size_t kbn);
 
-void silofs_vaddr56_htox(struct silofs_vaddr56 *va, loff_t off);
+void silofs_vaddr56_htox(struct silofs_vaddr56 *va, off_t off);
 
-void silofs_vaddr56_xtoh(const struct silofs_vaddr56 *va, loff_t *out_off);
+void silofs_vaddr56_xtoh(const struct silofs_vaddr56 *va, off_t *out_off);
 
 void silofs_vaddr64_htox(struct silofs_vaddr64     *vadr,
                          const struct silofs_vaddr *vaddr);

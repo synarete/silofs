@@ -112,9 +112,9 @@ mode_t silofs_ii_mode(const struct silofs_inode_info *ii);
 
 nlink_t silofs_ii_nlink(const struct silofs_inode_info *ii);
 
-loff_t silofs_ii_size(const struct silofs_inode_info *ii);
+off_t silofs_ii_size(const struct silofs_inode_info *ii);
 
-loff_t silofs_ii_span(const struct silofs_inode_info *ii);
+off_t silofs_ii_span(const struct silofs_inode_info *ii);
 
 blkcnt_t silofs_ii_blocks(const struct silofs_inode_info *ii);
 

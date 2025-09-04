@@ -96,7 +96,7 @@ void silofs_sbi_bind_main_lseg(struct silofs_sb_info    *sbi,
 bool silofs_sbi_has_main_lseg(const struct silofs_sb_info *sbi,
                               enum silofs_mtype            vspace);
 
-void silofs_sbi_resolve_main_at(const struct silofs_sb_info *sbi, loff_t voff,
+void silofs_sbi_resolve_main_at(const struct silofs_sb_info *sbi, off_t voff,
                                 enum silofs_mtype    vspace,
                                 struct silofs_uaddr *out_uaddr);
 
@@ -126,7 +126,7 @@ void silofs_sbst_account_super(struct silofs_sb_info *sbi);
 
 void silofs_sbst_set_capacity(struct silofs_sb_info *sbi, size_t capacity);
 
-loff_t silofs_sbst_vspace_end(const struct silofs_sb_info *sbi);
+off_t silofs_sbst_vspace_end(const struct silofs_sb_info *sbi);
 
 uint64_t silofs_sbst_next_generation(struct silofs_sb_info *sbi);
 

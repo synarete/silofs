@@ -95,7 +95,7 @@ static mode_t dttoif(mode_t dt)
 	return mode;
 }
 
-static void vaddr_of_dnode(struct silofs_vaddr *vaddr, loff_t off)
+static void vaddr_of_dnode(struct silofs_vaddr *vaddr, off_t off)
 {
 	silofs_vaddr_setup(vaddr, SILOFS_MTYPE_DTNODE, off);
 }
@@ -218,17 +218,17 @@ decode_doffset(uint64_t doff, uint64_t *out_dtn_index, uint64_t *out_slot)
 	*out_slot = (doff & mask);
 }
 
-static loff_t make_doffset(size_t dtn_index, size_t slot)
+static off_t make_doffset(size_t dtn_index, size_t slot)
 {
 	uint64_t doff;
 
 	STATICASSERT_EQ(SILOFS_DIR_NODE_SIZE, 1 << DTREE_OFF_SHIFT);
 
 	encode_doffset(dtn_index, slot, &doff);
-	return (loff_t)((doff << 2) | 2);
+	return (off_t)((doff << 2) | 2);
 }
 
-static silofs_dtn_index_t doff_to_dtn_index(loff_t doff)
+static silofs_dtn_index_t doff_to_dtn_index(off_t doff)
 {
 	silofs_dtn_index_t dtn_index;
 	uint64_t slot;
@@ -238,7 +238,7 @@ static silofs_dtn_index_t doff_to_dtn_index(loff_t doff)
 	                                        DTREE_INDEX_nullptr;
 }
 
-static size_t doff_to_slot(loff_t doff)
+static size_t doff_to_slot(off_t doff)
 {
 	uint64_t dtn_index;
 	uint64_t slot;
@@ -404,12 +404,12 @@ static void dtn_set_ino(struct silofs_dtree_node *dtn, ino_t ino)
 	dtn->dn_ino = silofs_cpu_to_ino(ino);
 }
 
-static loff_t dtn_parent(const struct silofs_dtree_node *dtn)
+static off_t dtn_parent(const struct silofs_dtree_node *dtn)
 {
 	return silofs_off_to_cpu(dtn->dn_parent);
 }
 
-static void dtn_set_parent(struct silofs_dtree_node *dtn, loff_t parent)
+static void dtn_set_parent(struct silofs_dtree_node *dtn, off_t parent)
 {
 	dtn->dn_parent = silofs_cpu_to_off(parent);
 }
@@ -499,10 +499,10 @@ static void dtn_dec_nactive_childs(struct silofs_dtree_node *dtn)
 	dtn_set_nactive_childs(dtn, dtn_nactive_childs(dtn) - 1);
 }
 
-static loff_t
+static off_t
 dtn_child_off(const struct silofs_dtree_node *dtn, silofs_dtn_ord_t ord)
 {
-	loff_t off = 0;
+	off_t off = 0;
 
 	silofs_vaddr56_xtoh(&dtn->dn_child[ord], &off);
 	return off;
@@ -511,7 +511,7 @@ dtn_child_off(const struct silofs_dtree_node *dtn, silofs_dtn_ord_t ord)
 static void dtn_child(const struct silofs_dtree_node *dtn,
                       silofs_dtn_ord_t ord, struct silofs_vaddr *out_vaddr)
 {
-	const loff_t off = dtn_child_off(dtn, ord);
+	const off_t off = dtn_child_off(dtn, ord);
 
 	silofs_vaddr_setup(out_vaddr, SILOFS_MTYPE_DTNODE, off);
 }
@@ -541,7 +541,7 @@ static void dtn_reset_childs(struct silofs_dtree_node *dtn)
 }
 
 static void dtn_setup(struct silofs_dtree_node *dtn, ino_t ino,
-                      silofs_dtn_index_t dtn_index, loff_t parent_off)
+                      silofs_dtn_index_t dtn_index, off_t parent_off)
 {
 	silofs_assert_le(dtn_index, DTREE_INDEX_MAX);
 
@@ -658,8 +658,8 @@ static size_t dtn_slot_of(const struct silofs_dtree_node *dtn,
 	return (size_t)(de - de_base);
 }
 
-static loff_t dtn_doffset_of(const struct silofs_dtree_node *dtn,
-                             const struct silofs_dir_entry *de)
+static off_t dtn_doffset_of(const struct silofs_dtree_node *dtn,
+                            const struct silofs_dir_entry *de)
 {
 	const size_t dtn_index = dtn_node_index(dtn);
 	const size_t slot = dtn_slot_of(dtn, de);
@@ -676,13 +676,13 @@ dtn_de_at_slot(const struct silofs_dtree_node *dtn, size_t slot)
 }
 
 static const struct silofs_dir_entry *
-dtn_scan(const struct silofs_dtree_node *dtn, loff_t pos)
+dtn_scan(const struct silofs_dtree_node *dtn, off_t pos)
 {
 	const size_t slot = doff_to_slot(pos);
 	const struct silofs_dir_entry *de_from = dtn_de_at_slot(dtn, slot);
 	const struct silofs_dir_entry *de_end = dtn_de_end(dtn);
 	const struct silofs_dir_entry *de = nullptr;
-	loff_t doff;
+	off_t doff;
 
 	for (de = de_from; de < de_end; ++de) {
 		if (!de_isactive(de)) {
@@ -851,7 +851,7 @@ dtn_remove(struct silofs_dtree_node *dtn, struct silofs_dir_entry *de)
 	dtn_trim_nonactive_des(dtn);
 }
 
-static loff_t dtn_next_doffset(const struct silofs_dtree_node *dtn)
+static off_t dtn_next_doffset(const struct silofs_dtree_node *dtn)
 {
 	const size_t dtn_index = dtn_node_index(dtn);
 
@@ -2001,7 +2001,7 @@ dirc_isindex_inrange(const struct silofs_dir_ctx *d_ctx, size_t index)
 
 static bool dirc_inrange(const struct silofs_dir_ctx *d_ctx)
 {
-	const loff_t doff = d_ctx->rd_ctx->pos;
+	const off_t doff = d_ctx->rd_ctx->pos;
 	bool ret = false;
 
 	if (doff >= 0) {
@@ -2040,7 +2040,7 @@ dirc_emit(struct silofs_dir_ctx *d_ctx, const char *name, size_t nlen,
 
 static bool dirc_emit_dirent(struct silofs_dir_ctx *d_ctx,
                              const struct silofs_dtree_node *dtn,
-                             const struct silofs_dir_entry *de, loff_t doff,
+                             const struct silofs_dir_entry *de, off_t doff,
                              const struct silofs_inode_info *ii)
 {
 	struct silofs_stat st = { .gen = 0 };
@@ -2089,7 +2089,7 @@ static int dirc_iterate_node(struct silofs_dir_ctx *d_ctx,
 {
 	const struct silofs_dir_entry *de = nullptr;
 	struct silofs_inode_info *ii = nullptr;
-	loff_t off;
+	off_t off;
 	int err;
 	bool ok;
 

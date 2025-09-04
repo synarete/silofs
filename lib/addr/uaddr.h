@@ -23,7 +23,7 @@
 /* logical addressing of space-mapping nodes */
 struct silofs_uaddr {
 	struct silofs_laddr laddr;
-	loff_t              voff;
+	off_t               voff;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -53,8 +53,8 @@ enum silofs_mtype silofs_uaddr_mtype(const struct silofs_uaddr *uaddr);
 enum silofs_height silofs_uaddr_height(const struct silofs_uaddr *uaddr);
 
 void silofs_uaddr_setup(struct silofs_uaddr      *uaddr,
-                        const struct silofs_lsid *lsid, loff_t bpos,
-                        loff_t voff);
+                        const struct silofs_lsid *lsid, off_t bpos,
+                        off_t voff);
 
 void silofs_uaddr96b_reset(struct silofs_uaddr96b *uaddr96);
 

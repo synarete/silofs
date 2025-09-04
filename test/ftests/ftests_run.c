@@ -430,7 +430,7 @@ void ft_sub_run(struct ft_sub_exec *se_arr, size_t n, ft_sub_exec_fn fn)
 
 static void
 ft_sub_do_setup(struct ft_sub_exec *se, struct ft_env *fte, const char *path,
-                const char *path2, size_t niter, loff_t off, size_t len)
+                const char *path2, size_t niter, off_t off, size_t len)
 {
 	silofs_memzero(se, sizeof(*se));
 	se->fte = fte;
@@ -444,7 +444,7 @@ ft_sub_do_setup(struct ft_sub_exec *se, struct ft_env *fte, const char *path,
 }
 
 static void ft_sub_do_setup1(struct ft_sub_exec *se, struct ft_env *fte,
-                             size_t niter, loff_t off, size_t len)
+                             size_t niter, off_t off, size_t len)
 {
 	const char *path = ft_new_path_unique(fte);
 
@@ -452,7 +452,7 @@ static void ft_sub_do_setup1(struct ft_sub_exec *se, struct ft_env *fte,
 }
 
 void ft_sub_setup(struct ft_sub_exec *se_arr, size_t n, struct ft_env *fte,
-                  size_t niter, loff_t off, size_t len)
+                  size_t niter, off_t off, size_t len)
 {
 	for (size_t i = 0; i < n; ++i) {
 		ft_sub_do_setup1(&se_arr[i], fte, niter, off, len);
@@ -460,7 +460,7 @@ void ft_sub_setup(struct ft_sub_exec *se_arr, size_t n, struct ft_env *fte,
 }
 
 static void ft_sub_do_setup2(struct ft_sub_exec *se, struct ft_env *fte,
-                             size_t niter, loff_t off, size_t len)
+                             size_t niter, off_t off, size_t len)
 {
 	const char *path = ft_new_path_unique(fte);
 	const char *path2 = ft_new_path_unique(fte);
@@ -469,7 +469,7 @@ static void ft_sub_do_setup2(struct ft_sub_exec *se, struct ft_env *fte,
 }
 
 void ft_sub_setup2(struct ft_sub_exec *se_arr, size_t n, struct ft_env *fte,
-                   size_t niter, loff_t off, size_t len)
+                   size_t niter, off_t off, size_t len)
 {
 	for (size_t i = 0; i < n; ++i) {
 		ft_sub_do_setup2(&se_arr[i], fte, niter, off, len);
@@ -479,7 +479,7 @@ void ft_sub_setup2(struct ft_sub_exec *se_arr, size_t n, struct ft_env *fte,
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 void ft_exec_with_ranges_(struct ft_env *fte,
-                          void (*fn)(struct ft_env *, loff_t, size_t),
+                          void (*fn)(struct ft_env *, off_t, size_t),
                           const struct ft_range *range, size_t na)
 {
 	for (size_t i = 0; i < na; ++i) {

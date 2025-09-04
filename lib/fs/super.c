@@ -635,7 +635,7 @@ bool silofs_sbi_has_main_lseg(const struct silofs_sb_info *sbi,
 	return (silofs_lsid_size(&lseg_id) > 0);
 }
 
-static size_t sb_slot_of(const struct silofs_super_block *sb, loff_t voff)
+static size_t sb_slot_of(const struct silofs_super_block *sb, off_t voff)
 {
 	struct silofs_lrange lrange;
 	ssize_t span;
@@ -645,15 +645,15 @@ static size_t sb_slot_of(const struct silofs_super_block *sb, loff_t voff)
 	return (size_t)(voff / span);
 }
 
-static loff_t sbi_bpos_of_child(const struct silofs_sb_info *sbi, loff_t voff)
+static off_t sbi_bpos_of_child(const struct silofs_sb_info *sbi, off_t voff)
 {
 	const size_t slot = sb_slot_of(sbi->sb, voff);
 
 	return (long)slot * SILOFS_SPMAP_SIZE;
 }
 
-static loff_t
-sbi_base_voff_of_child(const struct silofs_sb_info *sbi, loff_t voff)
+static off_t
+sbi_base_voff_of_child(const struct silofs_sb_info *sbi, off_t voff)
 {
 	struct silofs_lrange lrange;
 
@@ -670,12 +670,12 @@ sbi_sproot_of(const struct silofs_sb_info *sbi, enum silofs_mtype mtype,
 }
 
 static void
-sbi_main_uaddr(const struct silofs_sb_info *sbi, loff_t voff,
+sbi_main_uaddr(const struct silofs_sb_info *sbi, off_t voff,
                enum silofs_mtype vspace, struct silofs_uaddr *out_uaddr)
 {
 	struct silofs_lsid lsid;
-	const loff_t bpos = sbi_bpos_of_child(sbi, voff);
-	const loff_t base = sbi_base_voff_of_child(sbi, voff);
+	const off_t bpos = sbi_bpos_of_child(sbi, voff);
+	const off_t base = sbi_base_voff_of_child(sbi, voff);
 
 	silofs_sbi_main_lseg(sbi, vspace, &lsid);
 	silofs_assert_eq(lsid.mtype, SILOFS_MTYPE_SPNODE);
@@ -684,7 +684,7 @@ sbi_main_uaddr(const struct silofs_sb_info *sbi, loff_t voff,
 	silofs_assert_eq(lsid.height, SILOFS_HEIGHT_SUPER - 1);
 }
 
-void silofs_sbi_resolve_main_at(const struct silofs_sb_info *sbi, loff_t voff,
+void silofs_sbi_resolve_main_at(const struct silofs_sb_info *sbi, off_t voff,
                                 enum silofs_mtype vspace,
                                 struct silofs_uaddr *out_uaddr)
 {

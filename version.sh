@@ -10,10 +10,9 @@ export GIT_DIR="${base}/.git"
 gittop=$(git rev-parse --show-toplevel > /dev/null 2>&1 && echo -n "git-repo")
 
 if [ -n "${gittop}" ]; then
-  gitrevision=$(git describe --abbrev=8 --always --dirty=+)
-  # gitrevision=$(git rev-parse --short=7 HEAD)
+	gitrevision=$(git describe --abbrev=8 --always --dirty=+)
 else
-  gitrevision=""
+	gitrevision=""
 fi
 
 # Detect version string sub-components
@@ -22,12 +21,12 @@ set -o nounset
 set -o pipefail
 
 print() {
-  echo -n "$@" | tr -d ' \t\v\n' ;
+	echo -n "$@" | tr -d ' \t\v\n' ;
 }
 
 version=${SILOFS_VERSION:-"0.0.0"}
 if [ "${version}" = "0.0.0" ] && [ -f "${base}/VERSION" ]; then
-  version=$(head -1 "${base}"/VERSION)
+	version=$(head -1 "${base}"/VERSION)
 fi
 version_major=$(echo "${version}" | awk -F . '{print $1}')
 version_minor=$(echo "${version}" | awk -F . '{print $2}')
@@ -35,39 +34,40 @@ version_sublevel=$(echo "${version}" | awk -F . '{print $3}')
 
 release=${SILOFS_RELEASE:-${datenow}}
 if [ -f "${base}/RELEASE" ]; then
-  release=$(head -1 "${base}/RELEASE")
+	release=$(head -1 "${base}/RELEASE")
 fi
 
 revision=${SILOFS_REVISION:-"${gitrevision}"}
 if [ -f "${base}/REVISION" ]; then
-  revision=$(head -1 "${base}"/REVISION)
+	revision=$(head -1 "${base}"/REVISION)
 fi
 
 arg=${1:-}
 case "$arg" in
-  -h|--help)
-    echo "${self}" "[--version|--major|--minor|--sublevel|--release|--revision]"
-    ;;
-  -v|--version)
-    print "${version}"
-    ;;
-  -m|--major)
-    print "${version_major}"
-    ;;
-  -n|--minor)
-    print "${version_minor}"
-    ;;
-  -k|--sublevel)
-    print "${version_sublevel}"
-    ;;
-  -r|--release)
-    print "${release}"
-    ;;
-  -g|--revision)
-    print "${revision}"
-    ;;
-  *)
-    print "${version}-${release}.${revision}"
-    echo
-    ;;
+	-h|--help)
+		echo "${self}" "[--version | --major | --minor " \
+		"| --sublevel | --release | --revision]"
+		;;
+	-v|--version)
+		print "${version}"
+		;;
+	-m|--major)
+		print "${version_major}"
+		;;
+	-n|--minor)
+		print "${version_minor}"
+		;;
+	-k|--sublevel)
+		print "${version_sublevel}"
+		;;
+	-r|--release)
+		print "${release}"
+		;;
+	-g|--revision)
+		print "${revision}"
+		;;
+	*)
+		print "${version}-${release}.${revision}"
+		echo
+		;;
 esac

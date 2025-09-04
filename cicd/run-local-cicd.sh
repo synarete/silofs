@@ -27,15 +27,15 @@ disttgz="${distname}.tar.gz"
 cdx "${autotoolsdir}"
 run "${rootdir}"/bootstrap
 run "${rootdir}"/configure \
-  "--enable-utests=0" \
-  "--enable-compile-warnings=error"
+    "--enable-utests=0" \
+    "--enable-compile-warnings=error"
 run make dist
 run stat "${autotoolsdir}/${disttgz}"
 
 # Run CI tests on local work-dir
 msg "start running (${version})"
 run sh "${selfdir}/exec-cicd-all.sh" \
-  "${autotoolsdir}/${disttgz}" "${workdir}"
+    "${autotoolsdir}/${disttgz}" "${workdir}"
 
 # Post-op cleanups
 cdx "${rootdir}"

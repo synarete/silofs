@@ -18,108 +18,108 @@ autom4te_cachedir="${buildaux}/autom4te.cache"
 source "${basedir}/bash_functions"
 
 do_prerequisite() {
-  inc_lineno_depth
-  commandv make
-  commandv autoheader
-  commandv autoconf
-  commandv automake
-  commandv pkg-config
-  dec_lineno_depth
+	inc_lineno_depth
+	commandv make
+	commandv autoheader
+	commandv autoconf
+	commandv automake
+	commandv pkg-config
+	dec_lineno_depth
 }
 
 do_autom4te_cfg() {
-  inc_lineno_depth
-  msg "create" "${autom4te_cfg}"
-  sed -e "s,[@]AUTOM4TE_CACHEDIR[@],${autom4te_cachedir},g" \
-      < "${autom4te_cfg_in}" > "${autom4te_cfg}"
-  dec_lineno_depth
+	inc_lineno_depth
+	msg "create" "${autom4te_cfg}"
+	sed -e "s,[@]AUTOM4TE_CACHEDIR[@],${autom4te_cachedir},g" \
+	    < "${autom4te_cfg_in}" > "${autom4te_cfg}"
+	dec_lineno_depth
 }
 
 do_autogen() {
-  inc_lineno_depth
-  cdx "${basedir}"
-  run mkdir -p "${builddir}"
-  do_autom4te_cfg
-  run libtoolize --automake --copy --install --force
-  run aclocal -I m4 --warnings=all
-  run autoheader --warnings=all
-  run autoconf --warnings=all
-  run automake --add-missing --copy -Woverride --warnings=all
-  run env LIBTOOLIZE=true autoreconf --install -I m4 --warnings=all
-  dec_lineno_depth
+	inc_lineno_depth
+	cdx "${basedir}"
+	run mkdir -p "${builddir}"
+	do_autom4te_cfg
+	run libtoolize --automake --copy --install --force
+	run aclocal -I m4 --warnings=all
+	run autoheader --warnings=all
+	run autoconf --warnings=all
+	run automake --add-missing --copy -Woverride --warnings=all
+	run env LIBTOOLIZE=true autoreconf --install -I m4 --warnings=all
+	dec_lineno_depth
 }
 
 do_autoclean() {
-  inc_lineno_depth
-  cdx "${basedir}"
-  run mkdir -p "${builddir}"
-  run rm -f "${autom4te_cfg}"
-  run rm -rf "${autom4te_cachedir}"
-  run rm -f "${basedir}/configure"
-  run rm -f "${basedir}/configure~"
-  run rm -f "${basedir}/aclocal.m4"
-  run rm -f "${basedir}/config.log"
-  run rm -f "${basedir}/config.status"
-  run rm -f "${basedir}/include/config.h.in"
-  run rm -f "${basedir}/include/config.h"
-  run rm -f "${basedir}/include/stamp-h1"
-  run rm -f "${buildaux}/compile"
-  run rm -f "${buildaux}/config.guess"
-  run rm -f "${buildaux}/config.sub"
-  run rm -f "${buildaux}/depcomp"
-  run rm -f "${buildaux}/install-sh"
-  run rm -f "${buildaux}/ltmain.sh"
-  run rm -f "${buildaux}/missing"
-  run rm -f "${buildaux}/py-compile"
-  run rm -f "${macrodir}/lt~obsolete.m4"
-  run rm -f "${macrodir}/ltoptions.m4"
-  run rm -f "${macrodir}/ltsugar.m4"
-  run rm -f "${macrodir}/ltversion.m4"
-  run rm -f "${macrodir}/libtool.m4"
-  run find "${basedir}" -type f -name Makefile.in -exec rm -f {} +
-  run find "${basedir}" -type f -name Makefile -exec rm -f {} +
-  run find "${basedir}" -type d -name __pycache__ -exec rm -rf {} +
-  run find "${basedir}" -type d -name .mypy_cache -exec rm -rf {} +
-  run find "${basedir}" -type d -name .deps -exec rm -rf {} +
-  run find "${builddir}/" -depth -mindepth 1 -exec rm -rf {} +
-  run rm -rf "${basedir}/.cache"
-  run rm -f "${basedir}/tags"
-  run rm -f "${basedir}/TAGS"
-  run rm -f "${basedir}/compile_commands.json"
-  dec_lineno_depth
+	inc_lineno_depth
+	cdx "${basedir}"
+	run mkdir -p "${builddir}"
+	run rm -f "${autom4te_cfg}"
+	run rm -rf "${autom4te_cachedir}"
+	run rm -f "${basedir}/configure"
+	run rm -f "${basedir}/configure~"
+	run rm -f "${basedir}/aclocal.m4"
+	run rm -f "${basedir}/config.log"
+	run rm -f "${basedir}/config.status"
+	run rm -f "${basedir}/include/config.h.in"
+	run rm -f "${basedir}/include/config.h"
+	run rm -f "${basedir}/include/stamp-h1"
+	run rm -f "${buildaux}/compile"
+	run rm -f "${buildaux}/config.guess"
+	run rm -f "${buildaux}/config.sub"
+	run rm -f "${buildaux}/depcomp"
+	run rm -f "${buildaux}/install-sh"
+	run rm -f "${buildaux}/ltmain.sh"
+	run rm -f "${buildaux}/missing"
+	run rm -f "${buildaux}/py-compile"
+	run rm -f "${macrodir}/lt~obsolete.m4"
+	run rm -f "${macrodir}/ltoptions.m4"
+	run rm -f "${macrodir}/ltsugar.m4"
+	run rm -f "${macrodir}/ltversion.m4"
+	run rm -f "${macrodir}/libtool.m4"
+	run find "${basedir}" -type f -name Makefile.in -exec rm -f {} +
+	run find "${basedir}" -type f -name Makefile -exec rm -f {} +
+	run find "${basedir}" -type d -name __pycache__ -exec rm -rf {} +
+	run find "${basedir}" -type d -name .mypy_cache -exec rm -rf {} +
+	run find "${basedir}" -type d -name .deps -exec rm -rf {} +
+	run find "${builddir}/" -depth -mindepth 1 -exec rm -rf {} +
+	run rm -rf "${basedir}/.cache"
+	run rm -f "${basedir}/tags"
+	run rm -f "${basedir}/TAGS"
+	run rm -f "${basedir}/compile_commands.json"
+	dec_lineno_depth
 }
 
 do_autoregen() {
-  do_autoclean
-  do_autogen
+	do_autoclean
+	do_autogen
 }
 
 do_version() {
-  "${basedir}/version.sh"
+	"${basedir}/version.sh"
 }
 
 
 arg=${1:-}
 case "$arg" in
-  -h|--help)
-    echo "${self} [--autogen|--autoclean|--version]"
-    ;;
-  -c|--autoclean)
-    do_autoclean
-    ;;
-  -g|--autogen)
-    do_prerequisite
-    do_autogen
-    ;;
-  -r|--autoregen)
-    do_prerequisite
-    do_autoregen
-    ;;
-  -v|--version)
-    do_version
-    ;;
-  *)
-    do_prerequisite
-    do_autogen
-    ;;
+	-h|--help)
+		echo "${self} [--autogen|--autoclean|--version]"
+		;;
+	-c|--autoclean)
+		do_autoclean
+		;;
+	-g|--autogen)
+		do_prerequisite
+		do_autogen
+		;;
+	-r|--autoregen)
+		do_prerequisite
+		do_autoregen
+		;;
+	-v|--version)
+		do_version
+		;;
+	*)
+		do_prerequisite
+		do_autogen
+		;;
 esac

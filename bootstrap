@@ -19,11 +19,7 @@ source "${basedir}/bash_functions"
 
 do_prerequisite() {
 	inc_lineno_depth
-	commandv make
-	commandv autoheader
-	commandv autoconf
-	commandv automake
-	commandv pkg-config
+	commandv make autoheader autoconf automake pkg-config
 	dec_lineno_depth
 }
 

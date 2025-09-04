@@ -52,5 +52,7 @@ cdx() {
 }
 
 commandv() {
-	run command -v "$@"
+	for cmd in "$@"; do
+		run command -v "${cmd}"
+	done
 }

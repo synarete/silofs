@@ -8,15 +8,12 @@ rootdir="$(realpath "${selfdir}"/../)"
 source "${rootdir}/bash_functions"
 
 # require clang-tidy & bear (generates compilation database for clang tooling)
-commandv clang-tidy
-commandv bear
+commandv clang-tidy bear
 
-# no-fail from here
+# run from project's root dir, no-fail from here
 set -o errexit
 set -o nounset
 set -o pipefail
-
-# run from project's root dir
 cdx "${rootdir}"
 
 # require compilation database

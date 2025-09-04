@@ -43,12 +43,12 @@
 #define silofs_container_of2(ptr_, type_, member_) \
 	SILOFS_CONTAINER_OF2(ptr_, type_, member_)
 
-#define silofs_unused(x_) ((void)x_)
+#define silofs_unused(x_) ((void)(x_))
 
 /* numeric operations */
-#define SILOFS_DIV_ROUND_UP(n, d) ((n + d - 1) / d)
-#define SILOFS_ROUND_TO(n, k)     (SILOFS_DIV_ROUND_UP(n, k) * k)
-#define SILOFS_BIT(n)             (1 << n)
+#define SILOFS_DIV_ROUND_UP(n_, d_) (((n_) + (d_) - 1) / (d_))
+#define SILOFS_ROUND_TO(n_, k_)     (SILOFS_DIV_ROUND_UP((n_), (k_)) * (k_))
+#define SILOFS_BIT(n_)              (1 << (n_))
 
 /* branch-predictor helpers */
 #define silofs_likely(x_)   __builtin_expect(!!(x_), 1)
@@ -59,10 +59,10 @@
 
 /* compile-time assertions */
 #define SILOFS_STATICASSERT(expr_)     _Static_assert(expr_, #expr_)
-#define SILOFS_STATICASSERT_EQ(a_, b_) SILOFS_STATICASSERT(a_ == b_)
-#define SILOFS_STATICASSERT_LE(a_, b_) SILOFS_STATICASSERT(a_ <= b_)
-#define SILOFS_STATICASSERT_LT(a_, b_) SILOFS_STATICASSERT(a_ < b_)
-#define SILOFS_STATICASSERT_GE(a_, b_) SILOFS_STATICASSERT(a_ >= b_)
-#define SILOFS_STATICASSERT_GT(a_, b_) SILOFS_STATICASSERT(a_ > b_)
+#define SILOFS_STATICASSERT_EQ(a_, b_) SILOFS_STATICASSERT((a_) == (b_))
+#define SILOFS_STATICASSERT_LE(a_, b_) SILOFS_STATICASSERT((a_) <= (b_))
+#define SILOFS_STATICASSERT_LT(a_, b_) SILOFS_STATICASSERT((a_) < (b_))
+#define SILOFS_STATICASSERT_GE(a_, b_) SILOFS_STATICASSERT((a_) >= (b_))
+#define SILOFS_STATICASSERT_GT(a_, b_) SILOFS_STATICASSERT((a_) > (b_))
 
 #endif /* SILOFS_MACROS_H_ */

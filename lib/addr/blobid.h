@@ -17,6 +17,7 @@
 #ifndef SILOFS_BLOBID_H_
 #define SILOFS_BLOBID_H_
 
+#include <stdlib.h>
 #include <silofs/ondisk.h>
 
 struct silofs_strview;

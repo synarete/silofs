@@ -17,6 +17,7 @@
 #ifndef SILOFS_HAMMING_H_
 #define SILOFS_HAMMING_H_
 
+#include <stdlib.h>
 #include <stdint.h>
 
 int silofs_hamming12_encode(uint8_t octect, uint16_t *out_codeword12);

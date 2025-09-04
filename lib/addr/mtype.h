@@ -17,8 +17,9 @@
 #ifndef SILOFS_MTYPE_H_
 #define SILOFS_MTYPE_H_
 
-#include <silofs/ondisk.h>
+#include <stdlib.h>
 #include <stdbool.h>
+#include <silofs/ondisk.h>
 
 bool silofs_mtype_isnone(enum silofs_mtype mtype);
 

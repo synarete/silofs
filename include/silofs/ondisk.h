@@ -367,7 +367,7 @@ enum silofs_mtype {
 	SILOFS_MTYPE_DATA1K = 14,
 	SILOFS_MTYPE_DATA4K = 15,
 	SILOFS_MTYPE_DATABK = 16,
-	SILOFS_MTYPE_LAST, /* keep last */
+	SILOFS_MTYPE_LAST   = 17, /* keep last */
 };
 
 /* content-addressable sub-types */
@@ -389,7 +389,7 @@ enum silofs_height {
 	SILOFS_HEIGHT_SPNODE4 = 6,
 	SILOFS_HEIGHT_SUPER   = 7,
 	SILOFS_HEIGHT_BOOT    = 8,
-	SILOFS_HEIGHT_LAST, /* keep last */
+	SILOFS_HEIGHT_LAST    = 9, /* keep last */
 };
 
 /* name-to-hash functions */

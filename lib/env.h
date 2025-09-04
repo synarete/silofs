@@ -22,6 +22,7 @@
 #include "infra.h"
 #include "crypt.h"
 #include "addr.h"
+#include "fs.h"
 #include "mbr.h"
 
 /* top-level operations counters/stats */

@@ -24,5 +24,7 @@ fi
 
 # run clang-tidy
 conf="${rootdir}/.clang-tidy.yaml"
-srcs=$(find "${rootdir}/" -type f -name '*.c')
-run clang-tidy --config-file="${conf}" ${srcs}
+cfiles=$(find "${rootdir}/"{lib,cmd,mntd,test} -type f -name "*.c")
+hfiles=$(find "${rootdir}/"{include,lib,cmd,mntd,test} -type f \
+	-not -name "fuse_kernel.h" -not -name "config*.h" -name "*.h")
+run clang-tidy --config-file="${conf}" ${cfiles} ${hfiles}

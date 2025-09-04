@@ -17,8 +17,10 @@
 #ifndef SILOFS_STAGE_H_
 #define SILOFS_STAGE_H_
 
-struct silofs_vaddr;
-struct silofs_llink;
+#include <silofs/macros.h>
+#include "infra.h"
+#include "addr.h"
+
 struct silofs_task_ctx;
 struct silofs_spnode_info;
 struct silofs_spleaf_info;

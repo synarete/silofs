@@ -17,6 +17,9 @@
 #ifndef SILOFS_FTESTS_SYSCALL_H_
 #define SILOFS_FTESTS_SYSCALL_H_
 
+#include <stdlib.h>
+#include <unistd.h>
+
 /* wrappers over system calls */
 void ft_do_syncfs(int fd, const char *fl, int ln);
 

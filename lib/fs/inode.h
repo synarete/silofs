@@ -17,9 +17,14 @@
 #ifndef SILOFS_INODE_H_
 #define SILOFS_INODE_H_
 
+#include <linux/stat.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <unistd.h>
+#include <stdint.h>
 #include <silofs/macros.h>
+#include <silofs/ondisk.h>
+#include "uidgid.h"
 
 struct silofs_task_ctx;
 

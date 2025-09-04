@@ -19,6 +19,10 @@
 
 #include <sys/stat.h>
 #include <sys/statvfs.h>
+#include "infra.h"
+#include "addr.h"
+#include "fs.h"
+#include "mbr.h"
 
 struct silofs_lookup_in {
 	ino_t       parent;

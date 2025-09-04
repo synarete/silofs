@@ -302,14 +302,14 @@ extern const struct ft_tests ft_mt_copy_file_range;
 
 #define FT_MKRANGE0(off_)    \
 	{                    \
-		.off = off_, \
+		.off = (off_),			\
 		.len = 0,    \
 	}
 
 #define FT_MKRANGE(off_, len_) \
 	{                      \
-		.off = off_,   \
-		.len = len_,   \
+		.off = (off_), \
+			.len = (len_),		\
 	}
 
 /* common inline utility functions */

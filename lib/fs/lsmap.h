@@ -17,6 +17,8 @@
 #ifndef SILOFS_LSMAP_H_
 #define SILOFS_LSMAP_H_
 
+#include "addr.h"
+
 struct silofs_lsmap_info *silofs_lsi_from_vni(struct silofs_vnode_info *vni);
 
 void silofs_lsi_incref(struct silofs_lsmap_info *lsi);

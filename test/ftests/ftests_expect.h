@@ -17,13 +17,14 @@
 #ifndef SILOFS_FTESTS_EXPECT_H_
 #define SILOFS_FTESTS_EXPECT_H_
 
+#include <stdlib.h>
 #include <stdint.h>
 
 #define ft_expect_true(cond_) \
 	ft_do_expect_cond((cond_), FT_STR(cond_), FT_FL_LN_)
 
 #define ft_expect_false(cond_) \
-	ft_do_expect_cond(!(cond_), FT_STR(!cond_), FT_FL_LN_)
+	ft_do_expect_cond(!(cond_), FT_STR(!(cond_)), FT_FL_LN_)
 
 #define ft_expect_ok(err_) ft_do_expect_ok(err_, FT_FL_LN_)
 

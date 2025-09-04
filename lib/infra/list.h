@@ -19,8 +19,7 @@
 
 #include <stdlib.h>
 #include <stdbool.h>
-
-struct silofs_alloc;
+#include <silofs/memalloc.h>
 
 /* linked-list */
 struct silofs_list_head {

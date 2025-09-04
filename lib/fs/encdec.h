@@ -17,6 +17,8 @@
 #ifndef SILOFS_ENCDEC_H_
 #define SILOFS_ENCDEC_H_
 
+#include <stdlib.h>
+
 struct silofs_laddr;
 struct silofs_mbr;
 struct silofs_unode_info;

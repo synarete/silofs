@@ -17,9 +17,12 @@
 #ifndef SILOFS_QALLOC_H_
 #define SILOFS_QALLOC_H_
 
+#include <stdlib.h>
 #include <stdint.h>
-
-struct silofs_iovec;
+#include <silofs/memalloc.h>
+#include <silofs/thread.h>
+#include "iovec.h"
+#include "list.h"
 
 /* quick memory allocator */
 enum silofs_qallocf {

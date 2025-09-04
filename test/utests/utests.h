@@ -624,9 +624,9 @@ void ut_expect_statvfs(const struct statvfs *stv1, const struct statvfs *stv2);
 
 #define UT_DEFTESTF(fn_, flags_)          \
 	{                                 \
-		.hook  = fn_,             \
+		.hook  = (fn_),		  \
 		.name  = SILOFS_STR(fn_), \
-		.flags = flags_,          \
+		.flags = (flags_),	\
 	}
 
 #define UT_DEFTEST(fn_)  UT_DEFTESTF(fn_, 0)

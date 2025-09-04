@@ -19,6 +19,7 @@
 
 #include <stddef.h>
 #include <stdbool.h>
+#include "strchr.h"
 
 /*
  * String-view: reference to immutable (read-only) characters-array with

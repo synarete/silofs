@@ -17,11 +17,10 @@
 #ifndef SILOFS_SUPER_H_
 #define SILOFS_SUPER_H_
 
+#include <stdlib.h>
 #include <silofs/ondisk.h>
+#include "addr.h"
 
-struct silofs_laddr;
-struct silofs_uaddr;
-struct silofs_vaddr;
 struct silofs_task_ctx;
 struct silofs_spnode_info;
 struct silofs_spleaf_info;

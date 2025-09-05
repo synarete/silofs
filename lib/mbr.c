@@ -504,8 +504,14 @@ void silofs_mbri_update_sb_addr(struct silofs_mbrinfo *mbri,
 int silofs_mbri_arix_addr(const struct silofs_mbrinfo *mbri,
                           struct silofs_caddr *out_arix_caddr)
 {
-	mbr_arix_addr(&mbri->ar_mbr, out_arix_caddr);
-	return silofs_caddr_isnone(out_arix_caddr) ? -SILOFS_ENOENT : 0;
+	struct silofs_caddr caddr;
+
+	mbr_arix_addr(&mbri->ar_mbr, &caddr);
+	if (silofs_blobid_isnone(&caddr.blobid)) {
+		return -SILOFS_ENOENT;
+	}
+	silofs_caddr_assign(out_arix_caddr, &caddr);
+	return 0;
 }
 
 void silofs_mbri_update_arix_addr(struct silofs_mbrinfo *mbri,
@@ -522,18 +528,15 @@ static void mbri_calc_addr_of(const struct silofs_mbrinfo *mbri,
 		.iov_base = silofs_unconst(mbr1k),
 		.iov_len = sizeof(*mbr1k),
 	};
-	const enum silofs_ctype ctype = SILOFS_CTYPE_MBR;
 
-	silofs_calc_caddr_of(&mbri->mdigest, &iov, 1, ctype, out_caddr);
+	silofs_calc_caddr_of(&mbri->mdigest, &iov, 1, out_caddr);
 }
 
 static int mbri_verify_mref(const struct silofs_mbrinfo *mbri,
                             const struct silofs_caddr *mref,
                             const struct silofs_mbr1k *mbr1k)
 {
-	struct silofs_caddr caddr = {
-		.ctype = SILOFS_CTYPE_NONE,
-	};
+	struct silofs_caddr caddr;
 
 	mbri_calc_addr_of(mbri, mbr1k, &caddr);
 	return silofs_caddr_isequal(mref, &caddr) ? 0 : -SILOFS_EBADMBR;

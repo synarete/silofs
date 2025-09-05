@@ -45,7 +45,6 @@ void silofs_llink_of_vni(const struct silofs_mbr        *mbr,
 
 void silofs_calc_caddr_of(const struct silofs_mdigest *md,
                           const struct iovec *iov, size_t iov_cnt,
-                          enum silofs_ctype    ctype,
                           struct silofs_caddr *out_caddr);
 
 #endif /* SILOFS_ENCDEC_H_ */

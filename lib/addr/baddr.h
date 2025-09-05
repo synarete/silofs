@@ -23,8 +23,9 @@
 /* blob address */
 struct silofs_baddr {
 	union {
-		struct silofs_paddr paddr;
-		struct silofs_caddr caddr;
+		struct silofs_paddr  paddr;
+		struct silofs_caddr  caddr;
+		struct silofs_blobid blobid;
 	} ad;
 	enum silofs_adt adt;
 };

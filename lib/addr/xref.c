@@ -47,39 +47,3 @@ int silofs_xref_to_caddr(const struct silofs_xref *xref,
 	}
 	return ret;
 }
-
-static int
-expect_ctype(const struct silofs_caddr *caddr, enum silofs_ctype ctype_expect)
-{
-	int err = 0;
-
-	if (caddr->ctype != ctype_expect) {
-		switch (ctype_expect) {
-		case SILOFS_CTYPE_MBR:
-			err = -SILOFS_EBADMBR;
-			break;
-		case SILOFS_CTYPE_PACKIDX:
-			err = -SILOFS_EBADPACK;
-			break;
-		case SILOFS_CTYPE_ENCSEG:
-		case SILOFS_CTYPE_NONE:
-		default:
-			err = -SILOFS_EINVAL;
-			break;
-		}
-	}
-	return err;
-}
-
-int silofs_xref_to_caddr_with(const struct silofs_xref *xref,
-                              enum silofs_ctype ctype_expect,
-                              struct silofs_caddr *out_caddr)
-{
-	int err;
-
-	err = silofs_xref_to_caddr(xref, out_caddr);
-	if (!err) {
-		err = expect_ctype(out_caddr, ctype_expect);
-	}
-	return err;
-}

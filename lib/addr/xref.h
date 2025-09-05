@@ -30,8 +30,4 @@ void silofs_xref_from_caddr(struct silofs_xref        *xref,
 int silofs_xref_to_caddr(const struct silofs_xref *xref,
                          struct silofs_caddr      *out_caddr);
 
-int silofs_xref_to_caddr_with(const struct silofs_xref *xref,
-                              enum silofs_ctype         ctype_expect,
-                              struct silofs_caddr      *out_caddr);
-
 #endif /* SILOFS_XREF_H_ */

@@ -25,7 +25,6 @@ struct silofs_strview;
 /* content-addressable identifier */
 struct silofs_caddr {
 	struct silofs_blobid blobid;
-	enum silofs_ctype    ctype;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -37,25 +36,16 @@ int silofs_caddr_to_str(const struct silofs_caddr *caddr, char *s, size_t n);
 void silofs_caddr_reset(struct silofs_caddr *caddr);
 
 void silofs_caddr_setup(struct silofs_caddr         *caddr,
-                        const struct silofs_hash256 *hash,
-                        enum silofs_ctype            ctype);
+                        const struct silofs_hash256 *hash);
 
 void silofs_caddr_assign(struct silofs_caddr       *caddr,
                          const struct silofs_caddr *other);
 
-bool silofs_caddr_isnone(const struct silofs_caddr *caddr);
-
 bool silofs_caddr_isequal(const struct silofs_caddr *caddr,
                           const struct silofs_caddr *other);
 
-void silofs_caddr_to_name(const struct silofs_caddr *caddr,
-                          struct silofs_strbuf      *out_name);
-
 void silofs_caddr_to_name2(const struct silofs_caddr *caddr,
                            char s[SILOFS_XREFLEN_MAX + 1]);
-
-int silofs_caddr_by_name(struct silofs_caddr        *caddr,
-                         const struct silofs_strbuf *name);
 
 int silofs_caddr_by_name2(struct silofs_caddr         *caddr,
                           const struct silofs_strview *name);

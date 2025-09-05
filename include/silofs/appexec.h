@@ -35,9 +35,7 @@ int silofs_remap_status_code(int status);
 
 int silofs_check_fsname(const char *s);
 
-int silofs_check_fs_xref(const struct silofs_xref *xref);
-
-int silofs_check_ar_xref(const struct silofs_xref *xref);
+int silofs_check_xref(const struct silofs_xref *xref);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

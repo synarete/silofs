@@ -47,7 +47,7 @@ void silofs_blobid_assign(struct silofs_blobid *blobid,
 void silofs_blobid_assign_hash(struct silofs_blobid *blobid,
                                const struct silofs_hash256 *hash)
 {
-	silofs_hash256_assign(&blobid->u.hash, hash);
+	silofs_hash256_assign(&blobid->u.cas_hash, hash);
 }
 
 void silofs_blobid_reset(struct silofs_blobid *blobid)
@@ -65,6 +65,11 @@ bool silofs_blobid_isequal(const struct silofs_blobid *blobid1,
                            const struct silofs_blobid *blobid2)
 {
 	return (silofs_blobid_compare(blobid1, blobid2) == 0);
+}
+
+bool silofs_blobid_isnone(const struct silofs_blobid *blobid)
+{
+	return silofs_blobid_isequal(blobid, &s_silofs_blobid_none);
 }
 
 void silofs_blobid_to_sbuf(const struct silofs_blobid *blobid,

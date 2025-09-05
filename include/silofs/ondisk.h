@@ -370,14 +370,6 @@ enum silofs_mtype {
 	SILOFS_MTYPE_LAST   = 17, /* keep last */
 };
 
-/* content-addressable sub-types */
-enum silofs_ctype {
-	SILOFS_CTYPE_NONE    = 0,
-	SILOFS_CTYPE_MBR     = 1,
-	SILOFS_CTYPE_PACKIDX = 2,
-	SILOFS_CTYPE_ENCSEG  = 3,
-};
-
 /* logical heights of unode mappings */
 enum silofs_height {
 	SILOFS_HEIGHT_NONE    = 0,
@@ -505,7 +497,7 @@ struct silofs_uuid {
 enum silofs_adt {
 	SILOFS_ADT_NONE  = 0,
 	SILOFS_ADT_PADDR = 1,
-	SILOFS_ADT_CADDR = 2,
+	SILOFS_ADT_CAS   = 2,
 };
 
 /* unique blob identifier */
@@ -513,7 +505,7 @@ struct silofs_blobid {
 	union {
 		uint64_t              d[4];
 		struct silofs_uuid    uuid[2];
-		struct silofs_hash256 hash;
+		struct silofs_hash256 cas_hash;
 		uint8_t               bid[32];
 	} u;
 } silofs_attr_aligned16;
@@ -521,8 +513,7 @@ struct silofs_blobid {
 /* content address (by hash) */
 struct silofs_caddr64b {
 	struct silofs_blobid blobid;
-	uint16_t             ctype;
-	uint8_t              reserved[29];
+	uint8_t              reserved[31];
 	uint8_t              adt;
 } silofs_attr_aligned64;
 

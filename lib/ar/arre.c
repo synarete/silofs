@@ -148,13 +148,13 @@ static void ard_update_caddr_by(struct silofs_ar_desc *ard,
                                 const struct silofs_mdigest *md,
                                 const struct silofs_rovec *rov)
 {
-	struct silofs_caddr caddr = { .ctype = SILOFS_CTYPE_NONE };
+	struct silofs_caddr caddr;
 	const struct iovec iov = {
 		.iov_base = unconst(rov->rov_base),
 		.iov_len = rov->rov_len,
 	};
 
-	silofs_calc_caddr_of(md, &iov, 1, SILOFS_CTYPE_ENCSEG, &caddr);
+	silofs_calc_caddr_of(md, &iov, 1, &caddr);
 	ard_update_caddr(ard, &caddr);
 }
 
@@ -357,7 +357,7 @@ static void aiview_calc_caddr(const struct silofs_ar_index_view *aiv,
 	iov[1].iov_base = unconst(descs);
 	iov[1].iov_len = aiv->ndescs_max * sizeof(*descs);
 
-	silofs_calc_caddr_of(md, iov, 2, SILOFS_CTYPE_PACKIDX, out_caddr);
+	silofs_calc_caddr_of(md, iov, 2, out_caddr);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

@@ -42,6 +42,8 @@ long silofs_blobid_compare(const struct silofs_blobid *blobid1,
 bool silofs_blobid_isequal(const struct silofs_blobid *blobid1,
                            const struct silofs_blobid *blobid2);
 
+bool silofs_blobid_isnone(const struct silofs_blobid *blobid);
+
 void silofs_blobid_to_sbuf(const struct silofs_blobid *blobid,
                            struct silofs_strbuf       *sbuf);
 

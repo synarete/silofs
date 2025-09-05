@@ -627,7 +627,7 @@ env_arix_addr(const struct silofs_env *env, struct silofs_caddr *out_caddr)
 
 int silofs_env_sense_ar(struct silofs_env *env)
 {
-	struct silofs_caddr caddr = { .ctype = SILOFS_CTYPE_NONE };
+	struct silofs_caddr caddr;
 	size_t sz = 0;
 	int err;
 

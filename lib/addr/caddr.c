@@ -28,48 +28,37 @@
 void silofs_caddr_reset(struct silofs_caddr *caddr)
 {
 	silofs_blobid_reset(&caddr->blobid);
-	caddr->ctype = SILOFS_CTYPE_NONE;
 }
 
 void silofs_caddr_setup(struct silofs_caddr *caddr,
-                        const struct silofs_hash256 *hash,
-                        enum silofs_ctype ctype)
+                        const struct silofs_hash256 *hash)
 {
 	silofs_blobid_assign_hash(&caddr->blobid, hash);
-	caddr->ctype = ctype;
 }
 
 void silofs_caddr_assign(struct silofs_caddr *caddr,
                          const struct silofs_caddr *other)
 {
 	silofs_blobid_assign(&caddr->blobid, &other->blobid);
-	caddr->ctype = other->ctype;
-}
-
-bool silofs_caddr_isnone(const struct silofs_caddr *caddr)
-{
-	return (caddr->ctype == SILOFS_CTYPE_NONE);
 }
 
 bool silofs_caddr_isequal(const struct silofs_caddr *caddr,
                           const struct silofs_caddr *other)
 {
-	return (caddr->ctype == other->ctype) &&
-	       silofs_blobid_isequal(&caddr->blobid, &other->blobid);
+	return silofs_blobid_isequal(&caddr->blobid, &other->blobid);
 }
 
 static size_t caddr_to_str(const struct silofs_caddr *caddr, char *s, size_t n)
 {
 	struct silofs_strbuf sbuf;
 	const int vers = SILOFS_FMT_VERSION;
-	const int ctype = (int)(caddr->ctype);
 	size_t hn = 0;
 	size_t pn = 0;
 	char *d = s;
 
 	silofs_blobid_to_sbuf(&caddr->blobid, &sbuf);
 	hn = silofs_str_length(sbuf.str);
-	pn = (size_t)snprintf(d, n, "silofs.v%d.%d:", vers, ctype);
+	pn = (size_t)snprintf(d, n, "silofs.v%d:", vers);
 	if ((pn + hn) < n) {
 		d += pn;
 		strncpy(d, sbuf.str, hn);
@@ -90,32 +79,12 @@ int silofs_caddr_to_str(const struct silofs_caddr *caddr, char *s, size_t n)
 	return (k < n) ? 0 : -SILOFS_ERANGE;
 }
 
-static int check_ctype(enum silofs_ctype ctype)
-{
-	int ret;
-
-	switch (ctype) {
-	case SILOFS_CTYPE_MBR:
-	case SILOFS_CTYPE_ENCSEG:
-	case SILOFS_CTYPE_PACKIDX:
-		ret = 0;
-		break;
-	case SILOFS_CTYPE_NONE:
-	default:
-		ret = -SILOFS_EPROTO;
-		break;
-	}
-	return ret;
-}
-
 int silofs_caddr_from_str(struct silofs_caddr *caddr, const char *s, size_t n)
 {
 	struct silofs_strbuf sbuf;
 	struct silofs_strbuf hname;
 	struct silofs_hash256 hash;
-	enum silofs_ctype ctype;
 	int vers = 0;
-	int ctyp = 0;
 	int k = 0;
 	int err = 0;
 
@@ -125,23 +94,18 @@ int silofs_caddr_from_str(struct silofs_caddr *caddr, const char *s, size_t n)
 	silofs_strbuf_setup_by2(&sbuf, s, n);
 
 	silofs_strbuf_reset(&hname);
-	k = sscanf(sbuf.str, "silofs.v%d.%d:%64s", &vers, &ctyp, hname.str);
-	if (k != 3) {
+	k = sscanf(sbuf.str, "silofs.v%d:%64s", &vers, hname.str);
+	if (k != 2) {
 		return -SILOFS_EINVAL;
 	}
 	if (vers != SILOFS_FMT_VERSION) {
 		return -SILOFS_EPROTO;
 	}
-	ctype = (enum silofs_ctype)ctyp;
-	err = check_ctype(ctype);
-	if (err) {
-		return err;
-	}
 	err = silofs_hash256_by_name(&hash, &hname);
 	if (err) {
 		return err;
 	}
-	silofs_caddr_setup(caddr, &hash, ctype);
+	silofs_caddr_setup(caddr, &hash);
 	return 0;
 }
 
@@ -158,28 +122,10 @@ caddr_from_strview(struct silofs_caddr *caddr, const struct silofs_strview *sv)
 	return ret;
 }
 
-void silofs_caddr_to_name(const struct silofs_caddr *caddr,
-                          struct silofs_strbuf *out_name)
-{
-	const size_t n = sizeof(out_name->str);
-
-	caddr_to_str(caddr, out_name->str, n);
-	out_name->str[n - 1] = '\0';
-}
-
 void silofs_caddr_to_name2(const struct silofs_caddr *caddr,
                            char s[SILOFS_XREFLEN_MAX + 1])
 {
-	caddr_to_str(caddr, s, SILOFS_XREFLEN_MAX + 1);
-}
-
-int silofs_caddr_by_name(struct silofs_caddr *caddr,
-                         const struct silofs_strbuf *name)
-{
-	struct silofs_strview sv;
-
-	silofs_strbuf_as_sv(name, &sv);
-	return silofs_caddr_by_name2(caddr, &sv);
+	silofs_caddr_to_str(caddr, s, SILOFS_XREFLEN_MAX + 1);
 }
 
 int silofs_caddr_by_name2(struct silofs_caddr *caddr,
@@ -210,12 +156,10 @@ void silofs_caddr64b_htox(struct silofs_caddr64b *caddr64b,
 {
 	memset(caddr64b, 0, sizeof(*caddr64b));
 	silofs_blobid_assign(&caddr64b->blobid, &caddr->blobid);
-	caddr64b->ctype = silofs_cpu_to_le16((uint16_t)caddr->ctype);
 }
 
 void silofs_caddr64b_xtoh(const struct silofs_caddr64b *caddr64b,
                           struct silofs_caddr *caddr)
 {
 	silofs_blobid_assign(&caddr->blobid, &caddr64b->blobid);
-	caddr->ctype = silofs_le16_to_cpu(caddr64b->ctype);
 }

@@ -37,7 +37,7 @@ void silofs_baddr_setup2(struct silofs_baddr *baddr,
                          const struct silofs_caddr *caddr)
 {
 	silofs_caddr_assign(&baddr->ad.caddr, caddr);
-	baddr->adt = SILOFS_ADT_CADDR;
+	baddr->adt = SILOFS_ADT_CAS;
 }
 
 static enum silofs_adt baddr64_adt(const union silofs_baddr64b *baddr64)
@@ -65,9 +65,9 @@ void silofs_baddr64b_htox(union silofs_baddr64b *baddr64,
 		silofs_paddr64b_htox(&baddr64->paddr, &baddr->ad.paddr);
 		baddr64_set_type(baddr64, SILOFS_ADT_PADDR);
 		break;
-	case SILOFS_ADT_CADDR:
+	case SILOFS_ADT_CAS:
 		silofs_caddr64b_htox(&baddr64->caddr, &baddr->ad.caddr);
-		baddr64_set_type(baddr64, SILOFS_ADT_CADDR);
+		baddr64_set_type(baddr64, SILOFS_ADT_CAS);
 		break;
 	case SILOFS_ADT_NONE:
 	default:
@@ -86,9 +86,9 @@ void silofs_baddr64b_xtoh(const union silofs_baddr64b *baddr64,
 		silofs_paddr64b_xtoh(&baddr64->paddr, &baddr->ad.paddr);
 		baddr->adt = SILOFS_ADT_PADDR;
 		break;
-	case SILOFS_ADT_CADDR:
+	case SILOFS_ADT_CAS:
 		silofs_caddr64b_xtoh(&baddr64->caddr, &baddr->ad.caddr);
-		baddr->adt = SILOFS_ADT_CADDR;
+		baddr->adt = SILOFS_ADT_CAS;
 		break;
 	case SILOFS_ADT_NONE:
 	default:

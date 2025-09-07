@@ -126,7 +126,7 @@ btn_set_key_at(struct silofs_btree_node *btn, size_t slot, uint64_t key)
 
 static void btn_reset_key_at(struct silofs_btree_node *btn, size_t slot)
 {
-	btn_set_key_at(btn, slot, SILOFS_BTREE_KEY_nullptr);
+	btn_set_key_at(btn, slot, SILOFS_BTREE_KEY_NULL);
 }
 
 static void btn_reset_keys(struct silofs_btree_node *btn)
@@ -485,7 +485,7 @@ uint64_t silofs_bni_median_key(const struct silofs_btnode_info *bni)
 	uint64_t mkey;
 
 	if (nkeys == 0) {
-		mkey = SILOFS_BTREE_KEY_nullptr;
+		mkey = SILOFS_BTREE_KEY_NULL;
 	} else if (nkeys % 2 == 1) {
 		mkey = btn_key_at(bni->bn, nkeys / 2);
 	} else {
@@ -498,7 +498,7 @@ uint64_t silofs_bni_median_key(const struct silofs_btnode_info *bni)
 
 static bool btkey_isvalid(uint64_t key)
 {
-	return (key != SILOFS_BTREE_KEY_nullptr);
+	return (key != SILOFS_BTREE_KEY_NULL);
 }
 
 int silofs_bni_resolve(const struct silofs_btnode_info *bni, uint64_t key,

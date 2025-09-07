@@ -25,7 +25,7 @@
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct silofs_paddr s_silofs_paddr_none = {
-	.pos = SILOFS_OFF_nullptr,
+	.pos = SILOFS_OFF_NULL,
 	.mtype = SILOFS_MTYPE_NONE,
 };
 
@@ -52,7 +52,7 @@ void silofs_paddr_init(struct silofs_paddr *paddr,
 void silofs_paddr_fini(struct silofs_paddr *paddr)
 {
 	silofs_blobid_reset(&paddr->blobid);
-	paddr->pos = SILOFS_OFF_nullptr;
+	paddr->pos = SILOFS_OFF_NULL;
 	paddr->mtype = SILOFS_MTYPE_NONE;
 }
 

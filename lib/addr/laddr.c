@@ -230,7 +230,7 @@ void silofs_lsid48b_xtoh(const struct silofs_lsid48b *lsid48,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct silofs_laddr s_laddr_none = {
-	.pos = SILOFS_OFF_nullptr,
+	.pos = SILOFS_OFF_NULL,
 };
 
 const struct silofs_laddr *silofs_laddr_none(void)
@@ -245,7 +245,7 @@ void silofs_laddr_setpos(struct silofs_laddr *laddr, off_t off)
 	if (lsid->lsize && !silofs_off_isnull(off)) {
 		laddr->pos = silofs_lsid_pos(lsid, off);
 	} else {
-		laddr->pos = SILOFS_OFF_nullptr;
+		laddr->pos = SILOFS_OFF_NULL;
 	}
 }
 
@@ -268,7 +268,7 @@ void silofs_laddr_setup_lbk(struct silofs_laddr *laddr,
 void silofs_laddr_reset(struct silofs_laddr *laddr)
 {
 	silofs_lsid_reset(&laddr->lsid);
-	laddr->pos = SILOFS_OFF_nullptr;
+	laddr->pos = SILOFS_OFF_NULL;
 }
 
 void silofs_laddr_assign(struct silofs_laddr *laddr,
@@ -687,8 +687,8 @@ off_t silofs_lrange_next(const struct silofs_lrange *lrange, off_t voff)
 void silofs_lrange128_reset(struct silofs_lrange128 *vrng)
 {
 	struct silofs_lrange lrange = {
-		.beg = SILOFS_OFF_nullptr,
-		.end = SILOFS_OFF_nullptr,
+		.beg = SILOFS_OFF_NULL,
+		.end = SILOFS_OFF_NULL,
 		.height = SILOFS_HEIGHT_VDATA,
 	};
 

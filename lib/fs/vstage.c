@@ -52,7 +52,7 @@ static off_t ino_to_off(ino_t ino)
 	off_t off;
 
 	if (silofs_ino_isnull(ino)) {
-		off = SILOFS_OFF_nullptr;
+		off = SILOFS_OFF_NULL;
 	} else {
 		off = (off_t)(ino << SILOFS_INODE_SHIFT);
 	}
@@ -64,7 +64,7 @@ static ino_t off_to_ino(off_t off)
 	ino_t ino;
 
 	if (silofs_off_isnull(off)) {
-		ino = SILOFS_INO_nullptr;
+		ino = SILOFS_INO_NULL;
 	} else {
 		ino = (ino_t)(off >> SILOFS_INODE_SHIFT);
 	}

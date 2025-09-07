@@ -105,7 +105,7 @@ static void spe_init(struct silofs_spa_entry *spe, off_t voff, size_t len)
 static void spe_fini(struct silofs_spa_entry *spe)
 {
 	silofs_avl_node_fini(&spe->spe_an);
-	spe->spe_voff = SILOFS_OFF_nullptr;
+	spe->spe_voff = SILOFS_OFF_NULL;
 	spe->spe_len = 0;
 }
 

@@ -50,7 +50,7 @@ static void voff_mtype_to_cpu(uint64_t voff_mtype, off_t *out_voff,
 		*out_voff = (off_t)uoff;
 		*out_mtype = (enum silofs_mtype)umtype;
 	} else {
-		*out_voff = SILOFS_OFF_nullptr;
+		*out_voff = SILOFS_OFF_NULL;
 		*out_mtype = SILOFS_MTYPE_NONE;
 	}
 }
@@ -58,7 +58,7 @@ static void voff_mtype_to_cpu(uint64_t voff_mtype, off_t *out_voff,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct silofs_vaddr s_silofs_vaddr_none = {
-	.off = SILOFS_OFF_nullptr,
+	.off = SILOFS_OFF_NULL,
 	.mtype = SILOFS_MTYPE_NONE,
 };
 
@@ -143,7 +143,7 @@ void silofs_vaddr_assign(struct silofs_vaddr *vaddr,
 void silofs_vaddr_reset(struct silofs_vaddr *vaddr)
 {
 	vaddr->mtype = SILOFS_MTYPE_NONE;
-	vaddr->off = SILOFS_OFF_nullptr;
+	vaddr->off = SILOFS_OFF_NULL;
 }
 
 bool silofs_vaddr_isnull(const struct silofs_vaddr *vaddr)
@@ -228,7 +228,7 @@ void silofs_vaddr56_xtoh(const struct silofs_vaddr56 *vadr, off_t *out_off)
 		off |= (off_t)(vadr->b[5]) << 48;
 		off |= (off_t)(vadr->b[6]) << 56;
 	} else {
-		off = SILOFS_OFF_nullptr;
+		off = SILOFS_OFF_NULL;
 	}
 	*out_off = off;
 }

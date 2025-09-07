@@ -37,7 +37,7 @@ static void ii_update_itimes(struct silofs_inode_info *ii,
 
 bool silofs_ino_isnull(ino_t ino)
 {
-	return (ino == SILOFS_INO_nullptr);
+	return (ino == SILOFS_INO_NULL);
 }
 
 bool silofs_user_cap_fowner(const struct silofs_cred *cred)

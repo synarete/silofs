@@ -298,7 +298,7 @@ static int spac_claim_vspace_from_cache(struct silofs_spalloc_ctx *spa_ctx,
 	struct silofs_spamaps *spam = spac_spamaps(spa_ctx);
 	const enum silofs_mtype mtype = spa_ctx->mtype;
 	const size_t len = silofs_mtype_size(mtype);
-	off_t voff = SILOFS_OFF_nullptr;
+	off_t voff = SILOFS_OFF_NULL;
 	int err;
 
 	err = silofs_spamaps_trypop(spam, mtype, len, &voff);

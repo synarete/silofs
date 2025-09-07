@@ -139,16 +139,16 @@
 #define SILOFS_LSEG_SIZE_MAX (SILOFS_SPMAP_NCHILDS * SILOFS_LBK_SIZE)
 
 /* non-valid ("NIL") logical byte address */
-#define SILOFS_OFF_nullptr (-1)
+#define SILOFS_OFF_NULL (-1)
 
 /* max bit-shift of LBA value */
 #define SILOFS_LBA_SHIFT_MAX (56)
 
 /* non-valid ("NIL") logical block address */
-#define SILOFS_LBA_nullptr ((1L << SILOFS_LBA_SHIFT_MAX) - 1)
+#define SILOFS_LBA_NULL ((1L << SILOFS_LBA_SHIFT_MAX) - 1)
 
 /* "nil" inode number */
-#define SILOFS_INO_nullptr (0)
+#define SILOFS_INO_NULL (0)
 
 /* export ino towards vfs of root inode */
 #define SILOFS_INO_ROOT (1)
@@ -209,7 +209,7 @@
 	((1L << (SILOFS_DIR_NODE_SHIFT * SILOFS_DIR_TREE_DEPTH_MAX)))
 
 /* non-valid dir's tree-mapping node-index */
-#define SILOFS_DIR_TREE_INDEX_nullptr (0)
+#define SILOFS_DIR_TREE_INDEX_NULL (0)
 
 /* node-index of dir's tree-mapping root */
 #define SILOFS_DIR_TREE_INDEX_ROOT (1)

@@ -158,7 +158,7 @@ static bool bd_is_valid_slot(const struct silofs_blob_desc *bd, size_t slot)
 
 static off_t bd_slot_to_pos(const struct silofs_blob_desc *bd, size_t slot)
 {
-	off_t pos = SILOFS_OFF_nullptr;
+	off_t pos = SILOFS_OFF_NULL;
 
 	if (likely(bd_is_valid_slot(bd, slot))) {
 		pos = silofs_off_end(0, slot * bd_objsize(bd));
@@ -348,7 +348,7 @@ static void bd_paddr_at(const struct silofs_blob_desc *bd, off_t pos,
                         struct silofs_paddr *out_paddr)
 {
 	if (!bd_is_valid_pos(bd, pos)) {
-		pos = SILOFS_OFF_nullptr;
+		pos = SILOFS_OFF_NULL;
 	}
 	silofs_paddr_init(out_paddr, bd_refblob(bd), bd_refmtype(bd), pos);
 }

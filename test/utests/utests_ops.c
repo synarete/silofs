@@ -962,7 +962,7 @@ void ut_mkdir(struct ut_env *ute, ino_t parent, const char *name,
 
 	dino = out_st->st_ino;
 	ut_expect_ne(dino, parent);
-	ut_expect_ne(dino, SILOFS_INO_nullptr);
+	ut_expect_ne(dino, SILOFS_INO_NULL);
 
 	err = ut_do_getattr(ute, dino, &st);
 	ut_expect_ok(err);
@@ -1284,7 +1284,7 @@ static void ut_create2(struct ut_env *ute, ino_t parent, const char *name,
 	ut_create(ute, parent, name, mode, &st);
 	ino = st.st_ino;
 	ut_expect_ne(ino, parent);
-	ut_expect_ne(ino, SILOFS_INO_nullptr);
+	ut_expect_ne(ino, SILOFS_INO_NULL);
 	ut_expect_eq(st.st_nlink, 1);
 	ut_expect_eq(st.st_mode & S_IFMT, mode & S_IFMT);
 	*out_ino = ino;
@@ -1349,7 +1349,7 @@ void ut_create_only(struct ut_env *ute, ino_t parent, const char *name,
 	ut_create(ute, parent, name, S_IFREG | 0600, &st);
 	ino = st.st_ino;
 	ut_expect_ne(ino, parent);
-	ut_expect_ne(ino, SILOFS_INO_nullptr);
+	ut_expect_ne(ino, SILOFS_INO_NULL);
 
 	ut_release(ute, ino);
 	ut_lookup(ute, parent, name, &st);

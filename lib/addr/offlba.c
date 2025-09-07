@@ -23,7 +23,7 @@
 
 bool silofs_off_isnull(off_t off)
 {
-	SILOFS_STATICASSERT_LT(SILOFS_OFF_nullptr, 0);
+	SILOFS_STATICASSERT_LT(SILOFS_OFF_NULL, 0);
 
 	return (off < 0);
 }
@@ -46,7 +46,7 @@ off_t silofs_off_end(off_t off, size_t len)
 silofs_lba_t silofs_off_to_lba(off_t off)
 {
 	return !silofs_off_isnull(off) ? (off / SILOFS_LBK_SIZE) :
-	                                 SILOFS_LBA_nullptr;
+	                                 SILOFS_LBA_NULL;
 }
 
 off_t silofs_off_in_lbk(off_t off)
@@ -109,11 +109,11 @@ static bool lba_isequal(silofs_lba_t lba1, silofs_lba_t lba2)
 
 bool silofs_lba_isnull(silofs_lba_t lba)
 {
-	return lba_isequal(lba, SILOFS_LBA_nullptr);
+	return lba_isequal(lba, SILOFS_LBA_NULL);
 }
 
 off_t silofs_lba_to_off(silofs_lba_t lba)
 {
 	return !silofs_lba_isnull(lba) ? (lba * SILOFS_LBK_SIZE) :
-	                                 SILOFS_OFF_nullptr;
+	                                 SILOFS_OFF_NULL;
 }

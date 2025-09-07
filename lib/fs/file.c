@@ -516,7 +516,7 @@ ftn_set_child(struct silofs_ftree_node *ftn, size_t slot, off_t off)
 
 static void ftn_reset_child(struct silofs_ftree_node *ftn, size_t slot)
 {
-	ftn_set_child(ftn, slot, SILOFS_OFF_nullptr);
+	ftn_set_child(ftn, slot, SILOFS_OFF_NULL);
 }
 
 static bool ftn_has_child_at(const struct silofs_ftree_node *ftn, size_t slot)

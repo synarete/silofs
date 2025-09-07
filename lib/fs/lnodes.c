@@ -898,7 +898,7 @@ static void ii_init(struct silofs_inode_info *ii,
 	silofs_dirtyq_init(&ii->i_dq_vnis);
 	ii->inode = &view->u.in;
 	ii->i_looseq_next = nullptr;
-	ii->i_ino = SILOFS_INO_nullptr;
+	ii->i_ino = SILOFS_INO_NULL;
 	ii->i_nopen = 0;
 	ii->i_nlookup = 0;
 	ii->i_in_looseq = false;
@@ -914,7 +914,7 @@ static void ii_fini(struct silofs_inode_info *ii)
 	vni_fini(&ii->i_vni);
 	silofs_dirtyq_fini(&ii->i_dq_vnis);
 	ii->inode = nullptr;
-	ii->i_ino = SILOFS_INO_nullptr;
+	ii->i_ino = SILOFS_INO_NULL;
 	ii->i_nopen = INT_MIN;
 }
 

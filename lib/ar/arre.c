@@ -23,7 +23,7 @@
 #include "arre.h"
 
 struct silofs_ar_desc {
-	struct silofs_caddr caddr;
+	struct silofs_baddr baddr;
 	struct silofs_laddr laddr;
 	size_t len;
 };
@@ -133,29 +133,29 @@ static void ard_init(struct silofs_ar_desc *ard,
 
 static void ard_fini(struct silofs_ar_desc *ard)
 {
-	silofs_caddr_reset(&ard->caddr);
+	silofs_baddr_reset(&ard->baddr);
 	silofs_laddr_reset(&ard->laddr);
 	ard->len = 0;
 }
 
 static void
-ard_update_caddr(struct silofs_ar_desc *ard, const struct silofs_caddr *caddr)
+ard_update_baddr(struct silofs_ar_desc *ard, const struct silofs_baddr *baddr)
 {
-	silofs_caddr_assign(&ard->caddr, caddr);
+	silofs_baddr_assign(&ard->baddr, baddr);
 }
 
-static void ard_update_caddr_by(struct silofs_ar_desc *ard,
+static void ard_update_baddr_by(struct silofs_ar_desc *ard,
                                 const struct silofs_mdigest *md,
                                 const struct silofs_rovec *rov)
 {
-	struct silofs_caddr caddr;
+	struct silofs_baddr baddr;
 	const struct iovec iov = {
 		.iov_base = unconst(rov->rov_base),
 		.iov_len = rov->rov_len,
 	};
 
-	silofs_calc_caddr_of(md, &iov, 1, &caddr);
-	ard_update_caddr(ard, &caddr);
+	silofs_calc_baddr_of(md, &iov, 1, &baddr);
+	ard_update_baddr(ard, &baddr);
 }
 
 static void ardsc256b_reset(struct silofs_ar_desc256b *ard256)
@@ -167,7 +167,7 @@ static void ardsc256b_htox(struct silofs_ar_desc256b *ard256,
                            const struct silofs_ar_desc *ard)
 {
 	ardsc256b_reset(ard256);
-	silofs_caddr64b_htox(&ard256->pd_caddr, &ard->caddr);
+	silofs_baddr64b_htox(&ard256->pd_baddr, &ard->baddr);
 	silofs_laddr64b_htox(&ard256->pd_laddr, &ard->laddr);
 	ard256->pd_len = silofs_cpu_to_le64(ard->len);
 }
@@ -175,7 +175,7 @@ static void ardsc256b_htox(struct silofs_ar_desc256b *ard256,
 static void ardsc256b_xtoh(const struct silofs_ar_desc256b *ard256,
                            struct silofs_ar_desc *ard)
 {
-	silofs_caddr64b_xtoh(&ard256->pd_caddr, &ard->caddr);
+	silofs_baddr64b_xtoh(&ard256->pd_baddr, &ard->baddr);
 	silofs_laddr64b_xtoh(&ard256->pd_laddr, &ard->laddr);
 	ard->len = silofs_le64_to_cpu(ard256->pd_len);
 }
@@ -344,9 +344,9 @@ static int aiview_check_hdr(const struct silofs_ar_index_view *aiv)
 	return 0;
 }
 
-static void aiview_calc_caddr(const struct silofs_ar_index_view *aiv,
+static void aiview_calc_baddr(const struct silofs_ar_index_view *aiv,
                               const struct silofs_mdigest *md,
-                              struct silofs_caddr *out_caddr)
+                              struct silofs_baddr *out_baddr)
 {
 	const struct silofs_ar_desc256b *descs = aiv->descs;
 	const struct silofs_ar_hdr1k *ah1k = aiv->hdr;
@@ -357,7 +357,7 @@ static void aiview_calc_caddr(const struct silofs_ar_index_view *aiv,
 	iov[1].iov_base = unconst(descs);
 	iov[1].iov_len = aiv->ndescs_max * sizeof(*descs);
 
-	silofs_calc_caddr_of(md, iov, 2, out_caddr);
+	silofs_calc_baddr_of(md, iov, 2, out_baddr);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -531,15 +531,15 @@ static int arix_decode_meta(struct silofs_ar_index *arix,
 	return 0;
 }
 
-static void arix_calc_caddr_of(const struct silofs_ar_index *arix,
+static void arix_calc_baddr_of(const struct silofs_ar_index *arix,
                                const struct silofs_ar_index_view *aiview,
-                               struct silofs_caddr *out_caddr)
+                               struct silofs_baddr *out_baddr)
 {
-	aiview_calc_caddr(aiview, &arix->mdigest, out_caddr);
+	aiview_calc_baddr(aiview, &arix->mdigest, out_baddr);
 }
 
 static int arix_encode(struct silofs_ar_index *arix, struct silofs_rwvec *rwv,
-                       struct silofs_caddr *out_caddr)
+                       struct silofs_baddr *out_baddr)
 {
 	struct silofs_ar_index_view aiview = { .hdr = nullptr,
 		                               .descs = nullptr };
@@ -558,22 +558,22 @@ static int arix_encode(struct silofs_ar_index *arix, struct silofs_rwvec *rwv,
 		return err;
 	}
 	arix_encode_meta(arix, &aiview);
-	arix_calc_caddr_of(arix, &aiview, out_caddr);
+	arix_calc_baddr_of(arix, &aiview, out_baddr);
 	return 0;
 }
 
-static int arix_check_caddr(const struct silofs_ar_index *arix,
-                            const struct silofs_caddr *caddr,
+static int arix_check_baddr(const struct silofs_ar_index *arix,
+                            const struct silofs_baddr *baddr,
                             const struct silofs_ar_index_view *aiview)
 {
-	struct silofs_caddr caddr_calc;
+	struct silofs_baddr baddr_calc;
 
-	aiview_calc_caddr(aiview, &arix->mdigest, &caddr_calc);
-	return silofs_caddr_isequal(caddr, &caddr_calc) ? 0 : -SILOFS_ECSUM;
+	aiview_calc_baddr(aiview, &arix->mdigest, &baddr_calc);
+	return silofs_baddr_isequal(baddr, &baddr_calc) ? 0 : -SILOFS_ECSUM;
 }
 
 static int
-arix_decode(struct silofs_ar_index *arix, const struct silofs_caddr *caddr,
+arix_decode(struct silofs_ar_index *arix, const struct silofs_baddr *baddr,
             const struct silofs_rovec *rov)
 {
 	struct silofs_ar_index_view aiview = { .hdr = nullptr,
@@ -588,7 +588,7 @@ arix_decode(struct silofs_ar_index *arix, const struct silofs_caddr *caddr,
 	if (err) {
 		return err;
 	}
-	err = arix_check_caddr(arix, caddr, &aiview);
+	err = arix_check_baddr(arix, baddr, &aiview);
 	if (err) {
 		return err;
 	}
@@ -655,47 +655,47 @@ static void arc_fini(struct silofs_ar_ctx *ar_ctx)
 }
 
 static int arc_stat_pack(const struct silofs_ar_ctx *ar_ctx,
-                         const struct silofs_caddr *caddr, size_t *out_sz)
+                         const struct silofs_baddr *baddr, size_t *out_sz)
 {
-	return silofs_repo_stat_cobj(arc_repo(ar_ctx), caddr, out_sz);
+	return silofs_repo_stat_cobj(arc_repo(ar_ctx), baddr, out_sz);
 }
 
 static int arc_send_to_repo(const struct silofs_ar_ctx *ar_ctx,
-                            const struct silofs_caddr *caddr,
+                            const struct silofs_baddr *baddr,
                             const struct silofs_rovec *rov)
 {
-	return silofs_repo_save_cobj(arc_repo(ar_ctx), caddr, rov);
+	return silofs_repo_save_cobj(arc_repo(ar_ctx), baddr, rov);
 }
 
 static int
 arc_recv_from_repo(const struct silofs_ar_ctx *ar_ctx,
-                   const struct silofs_caddr *caddr, struct silofs_rwvec *rwv)
+                   const struct silofs_baddr *baddr, struct silofs_rwvec *rwv)
 {
-	return silofs_repo_load_cobj(arc_repo(ar_ctx), caddr, rwv);
+	return silofs_repo_load_cobj(arc_repo(ar_ctx), baddr, rwv);
 }
 
 static int
 arc_send_pack(const struct silofs_ar_ctx *ar_ctx,
-              const struct silofs_caddr *caddr, const void *dat, size_t len)
+              const struct silofs_baddr *baddr, const void *dat, size_t len)
 {
 	const struct silofs_rovec rov = { .rov_base = dat, .rov_len = len };
 	size_t sz = 0;
 	int err;
 
-	err = arc_stat_pack(ar_ctx, caddr, &sz);
+	err = arc_stat_pack(ar_ctx, baddr, &sz);
 	if ((err == -ENOENT) || (!err && (sz != len))) {
-		err = arc_send_to_repo(ar_ctx, caddr, &rov);
+		err = arc_send_to_repo(ar_ctx, baddr, &rov);
 	}
 	return err;
 }
 
 static int
 arc_recv_pack(const struct silofs_ar_ctx *ar_ctx,
-              const struct silofs_caddr *caddr, void *dat, size_t len)
+              const struct silofs_baddr *baddr, void *dat, size_t len)
 {
 	struct silofs_rwvec rwv = { .rwv_base = dat, .rwv_len = len };
 
-	return arc_recv_from_repo(ar_ctx, caddr, &rwv);
+	return arc_recv_from_repo(ar_ctx, baddr, &rwv);
 }
 
 static int
@@ -747,7 +747,7 @@ static int arc_update_hash_of(const struct silofs_ar_ctx *ar_ctx,
 	};
 	const struct silofs_mdigest *md = &ar_ctx->arix.mdigest;
 
-	ard_update_caddr_by(&adi->ard, md, &rov);
+	ard_update_baddr_by(&adi->ard, md, &rov);
 	return 0;
 }
 
@@ -771,7 +771,7 @@ static int arc_archive_segdata(const struct silofs_ar_ctx *ar_ctx,
 	if (err) {
 		goto out;
 	}
-	err = arc_send_pack(ar_ctx, &adi->ard.caddr, seg, len);
+	err = arc_send_pack(ar_ctx, &adi->ard.baddr, seg, len);
 	if (err) {
 		goto out;
 	}
@@ -792,11 +792,11 @@ static int arc_restore_segdata(const struct silofs_ar_ctx *ar_ctx,
 	if (seg == nullptr) {
 		return -SILOFS_ENOMEM;
 	}
-	err = arc_recv_pack(ar_ctx, &adi->ard.caddr, seg, len);
+	err = arc_recv_pack(ar_ctx, &adi->ard.baddr, seg, len);
 	if (err) {
 		goto out;
 	}
-	/* TODO: recheck caddr by content */
+	/* TODO: recheck baddr by content */
 	err = arc_save_seg(ar_ctx, laddr, seg, len);
 	if (err) {
 		goto out;
@@ -848,17 +848,17 @@ static int arc_archive_fs(struct silofs_ar_ctx *ar_ctx)
 
 static int
 arc_encode_save_arix(struct silofs_ar_ctx *ar_ctx, struct silofs_bytebuf *bb,
-                     struct silofs_caddr *out_caddr)
+                     struct silofs_baddr *out_baddr)
 {
 	struct silofs_rwvec rwv = { .rwv_base = bb->ptr, .rwv_len = bb->len };
 	struct silofs_rovec rov = { .rov_base = bb->ptr, .rov_len = bb->len };
 	int err;
 
-	err = arix_encode(&ar_ctx->arix, &rwv, out_caddr);
+	err = arix_encode(&ar_ctx->arix, &rwv, out_baddr);
 	if (err) {
 		return err;
 	}
-	err = arc_send_to_repo(ar_ctx, out_caddr, &rov);
+	err = arc_send_to_repo(ar_ctx, out_baddr, &rov);
 	if (err) {
 		return err;
 	}
@@ -879,7 +879,7 @@ static int arc_acquire_enc_buf(const struct silofs_ar_ctx *ar_ctx,
 }
 
 static int arc_archive_arix(struct silofs_ar_ctx *ar_ctx,
-                            struct silofs_caddr *out_arix_addr)
+                            struct silofs_baddr *out_arix_addr)
 {
 	struct silofs_bytebuf bb = { .ptr = nullptr, .cap = 0 };
 	int err;
@@ -898,7 +898,7 @@ out:
 }
 
 static int arc_archive_mbr(const struct silofs_ar_ctx *ar_ctx,
-                           struct silofs_caddr *out_mref)
+                           struct silofs_baddr *out_mref)
 {
 	struct silofs_mbr1k mbr1k = { .mbr_magic = 0xff };
 	const struct silofs_mbrinfo *mbri = &ar_ctx->env->mbri;
@@ -916,14 +916,14 @@ static int arc_archive_mbr(const struct silofs_ar_ctx *ar_ctx,
 }
 
 static void arc_update_arix_addr(struct silofs_ar_ctx *ar_ctx,
-                                 const struct silofs_caddr *caddr)
+                                 const struct silofs_baddr *baddr)
 {
-	silofs_mbri_update_arix_addr(&ar_ctx->env->mbri, caddr);
+	silofs_mbri_update_arix_addr(&ar_ctx->env->mbri, baddr);
 }
 
 static int arc_archive_post(struct silofs_ar_ctx *ar_ctx,
-                            const struct silofs_caddr *arix_addr,
-                            struct silofs_caddr *out_mref)
+                            const struct silofs_baddr *arix_addr,
+                            struct silofs_baddr *out_mref)
 {
 	arc_update_arix_addr(ar_ctx, arix_addr);
 	return arc_archive_mbr(ar_ctx, out_mref);
@@ -935,9 +935,9 @@ static int arc_archive_prep(struct silofs_ar_ctx *ar_ctx)
 }
 
 static int
-arc_do_archive(struct silofs_ar_ctx *ar_ctx, struct silofs_caddr *out_mref)
+arc_do_archive(struct silofs_ar_ctx *ar_ctx, struct silofs_baddr *out_mref)
 {
-	struct silofs_caddr arix_addr;
+	struct silofs_baddr arix_addr;
 	int err;
 
 	err = arc_archive_prep(ar_ctx);
@@ -960,7 +960,7 @@ arc_do_archive(struct silofs_ar_ctx *ar_ctx, struct silofs_caddr *out_mref)
 }
 
 int silofs_do_archive_fs(struct silofs_task_ctx *task,
-                         struct silofs_caddr *out_ar_mref)
+                         struct silofs_baddr *out_ar_mref)
 {
 	struct silofs_ar_ctx ar_ctx;
 	int err;
@@ -989,18 +989,18 @@ static int arc_acquire_dec_buf(const struct silofs_ar_ctx *ar_ctx, size_t sz,
 }
 
 static int arc_load_decode_arix(struct silofs_ar_ctx *ar_ctx,
-                                const struct silofs_caddr *caddr,
+                                const struct silofs_baddr *baddr,
                                 struct silofs_bytebuf *bb)
 {
 	struct silofs_rwvec rwv = { .rwv_base = bb->ptr, .rwv_len = bb->len };
 	struct silofs_rovec rov = { .rov_base = bb->ptr, .rov_len = bb->len };
 	int err;
 
-	err = arc_recv_from_repo(ar_ctx, caddr, &rwv);
+	err = arc_recv_from_repo(ar_ctx, baddr, &rwv);
 	if (err) {
 		return err;
 	}
-	err = arix_decode(&ar_ctx->arix, caddr, &rov);
+	err = arix_decode(&ar_ctx->arix, baddr, &rov);
 	if (err) {
 		return err;
 	}
@@ -1008,11 +1008,11 @@ static int arc_load_decode_arix(struct silofs_ar_ctx *ar_ctx,
 }
 
 static int arc_stat_arix(const struct silofs_ar_ctx *ar_ctx,
-                         const struct silofs_caddr *caddr, size_t *out_sz)
+                         const struct silofs_baddr *baddr, size_t *out_sz)
 {
 	int err;
 
-	err = arc_stat_pack(ar_ctx, caddr, out_sz);
+	err = arc_stat_pack(ar_ctx, baddr, out_sz);
 	if (err) {
 		return err;
 	}
@@ -1025,23 +1025,23 @@ static int arc_stat_arix(const struct silofs_ar_ctx *ar_ctx,
 }
 
 static int arc_arix_addr(const struct silofs_ar_ctx *ar_ctx,
-                         struct silofs_caddr *out_caddr)
+                         struct silofs_baddr *out_baddr)
 {
-	return silofs_mbri_arix_addr(&ar_ctx->env->mbri, out_caddr);
+	return silofs_mbri_arix_addr(&ar_ctx->env->mbri, out_baddr);
 }
 
 static int arc_restore_arix(struct silofs_ar_ctx *ar_ctx)
 {
 	struct silofs_bytebuf bb = { .ptr = nullptr, .cap = 0 };
-	struct silofs_caddr caddr;
+	struct silofs_baddr baddr;
 	size_t sz = 0;
 	int err;
 
-	err = arc_arix_addr(ar_ctx, &caddr);
+	err = arc_arix_addr(ar_ctx, &baddr);
 	if (err) {
 		goto out;
 	}
-	err = arc_stat_arix(ar_ctx, &caddr, &sz);
+	err = arc_stat_arix(ar_ctx, &baddr, &sz);
 	if (err) {
 		goto out;
 	}
@@ -1049,7 +1049,7 @@ static int arc_restore_arix(struct silofs_ar_ctx *ar_ctx)
 	if (err) {
 		goto out;
 	}
-	err = arc_load_decode_arix(ar_ctx, &caddr, &bb);
+	err = arc_load_decode_arix(ar_ctx, &baddr, &bb);
 	if (err) {
 		goto out;
 	}
@@ -1140,13 +1140,13 @@ static int arc_restore_sb(struct silofs_ar_ctx *ar_ctx)
 }
 
 static int arc_restore_fs_mbr(const struct silofs_ar_ctx *ar_ctx,
-                              struct silofs_caddr *out_fs_mref)
+                              struct silofs_baddr *out_fs_mref)
 {
 	return silofs_env_commit_fs_mbr(ar_ctx->env, out_fs_mref);
 }
 
 static int arc_restore_post(struct silofs_ar_ctx *ar_ctx,
-                            struct silofs_caddr *out_fs_mref)
+                            struct silofs_baddr *out_fs_mref)
 {
 	int err;
 
@@ -1162,7 +1162,7 @@ static int arc_restore_post(struct silofs_ar_ctx *ar_ctx,
 }
 
 static int arc_restore_prep(struct silofs_ar_ctx *ar_ctx,
-                            const struct silofs_caddr *ar_mref)
+                            const struct silofs_baddr *ar_mref)
 {
 	struct silofs_env *env = ar_ctx->env;
 	int err;
@@ -1179,8 +1179,8 @@ static int arc_restore_prep(struct silofs_ar_ctx *ar_ctx,
 }
 
 static int arc_do_restore(struct silofs_ar_ctx *ar_ctx,
-                          const struct silofs_caddr *ar_mref,
-                          struct silofs_caddr *out_fs_mref)
+                          const struct silofs_baddr *ar_mref,
+                          struct silofs_baddr *out_fs_mref)
 {
 	int err;
 
@@ -1204,8 +1204,8 @@ static int arc_do_restore(struct silofs_ar_ctx *ar_ctx,
 }
 
 int silofs_do_restore_fs(struct silofs_task_ctx *task,
-                         const struct silofs_caddr *ar_mref,
-                         struct silofs_caddr *out_fs_mref)
+                         const struct silofs_baddr *ar_mref,
+                         struct silofs_baddr *out_fs_mref)
 {
 	struct silofs_ar_ctx ar_ctx;
 	int err;

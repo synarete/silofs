@@ -43,8 +43,8 @@ void silofs_llink_of_vni(const struct silofs_mbr        *mbr,
                          const struct silofs_vnode_info *vni,
                          struct silofs_llink            *out_llink);
 
-void silofs_calc_caddr_of(const struct silofs_mdigest *md,
+void silofs_calc_baddr_of(const struct silofs_mdigest *md,
                           const struct iovec *iov, size_t iov_cnt,
-                          struct silofs_caddr *out_caddr);
+                          struct silofs_baddr *out_baddr);
 
 #endif /* SILOFS_ENCDEC_H_ */

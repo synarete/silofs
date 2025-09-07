@@ -2963,9 +2963,9 @@ out:
 	                       sizeof(fcc->args->out.query.qry), err);
 }
 
-static void assign_ioc_xref(int8_t *xref, const struct silofs_caddr *caddr)
+static void assign_ioc_xref(int8_t *xref, const struct silofs_baddr *baddr)
 {
-	silofs_caddr_to_str(caddr, (char *)xref, SILOFS_XREFLEN_MAX + 1);
+	silofs_baddr_to_str(baddr, (char *)xref, SILOFS_XREFLEN_MAX + 1);
 }
 
 static int do_ioc_clone(const struct silofs_fuseq_cmd_ctx *fcc)

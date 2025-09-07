@@ -505,17 +505,10 @@ struct silofs_blobid {
 	union {
 		uint64_t              d[4];
 		struct silofs_uuid    uuid[2];
-		struct silofs_hash256 cas_hash;
+		struct silofs_hash256 hash;
 		uint8_t               bid[32];
 	} u;
 } silofs_attr_aligned16;
-
-/* content address (by hash) */
-struct silofs_caddr64b {
-	struct silofs_blobid blobid;
-	uint8_t              reserved[31];
-	uint8_t              adt;
-} silofs_attr_aligned64;
 
 /* persistent object address */
 struct silofs_paddr64b {
@@ -529,7 +522,6 @@ struct silofs_paddr64b {
 /* blob addressing */
 union silofs_baddr64b {
 	struct silofs_blobid   blobid;
-	struct silofs_caddr64b caddr;
 	struct silofs_paddr64b paddr;
 	struct {
 		uint8_t dat[59];
@@ -597,7 +589,7 @@ struct silofs_mbr1k {
 	struct silofs_key      mbr_main_key;
 	struct silofs_uaddr96b mbr_sb_addr;
 	uint8_t                mbr_reserved1[32];
-	struct silofs_caddr64b mbr_arix_addr;
+	union silofs_baddr64b  mbr_arix_addr;
 	uint8_t                mbr_reserved3[672];
 	struct silofs_hash256  mbr_hash;
 } silofs_attr_aligned64;
@@ -991,7 +983,7 @@ struct silofs_uber_block {
 
 /* archive descriptor */
 struct silofs_ar_desc256b {
-	struct silofs_caddr64b pd_caddr;
+	union silofs_baddr64b  pd_baddr;
 	struct silofs_laddr64b pd_laddr;
 	uint64_t               pd_len;
 	uint8_t                pd_reserved[120];

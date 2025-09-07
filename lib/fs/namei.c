@@ -2402,7 +2402,7 @@ static void fill_query_boot_xref(const struct silofs_inode_info *ii,
                                  struct silofs_ioc_query *query)
 {
 	struct silofs_mbr1k mbr1k;
-	struct silofs_caddr mref;
+	struct silofs_baddr mref;
 	struct silofs_env *env = silofs_ii_env(ii);
 	struct silofs_query_boot *qboot = &query->u.boot;
 	int err;
@@ -2411,7 +2411,7 @@ static void fill_query_boot_xref(const struct silofs_inode_info *ii,
 	if (silofs_unlikely(err)) {
 		silofs_memzero(qboot->xref, sizeof(qboot->xref));
 	} else {
-		silofs_caddr_to_str(&mref, qboot->xref, sizeof(qboot->xref));
+		silofs_baddr_to_str(&mref, qboot->xref, sizeof(qboot->xref));
 	}
 }
 

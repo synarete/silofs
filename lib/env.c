@@ -556,11 +556,11 @@ static void sbi_mark_fossil(struct silofs_sb_info *sbi)
 }
 
 static int
-env_recalc_fs_mref(struct silofs_env *env, struct silofs_caddr *out_caddr)
+env_recalc_fs_mref(struct silofs_env *env, struct silofs_baddr *out_baddr)
 {
 	struct silofs_mbr1k mbr1k = { .mbr_magic = UINT64_MAX };
 
-	return silofs_mbri_encode_mbr(&env->mbri, SILOFS_MBR_FS, out_caddr,
+	return silofs_mbri_encode_mbr(&env->mbri, SILOFS_MBR_FS, out_baddr,
 	                              &mbr1k);
 }
 
@@ -620,22 +620,22 @@ static int check_par_index_size(size_t sz)
 }
 
 static int
-env_arix_addr(const struct silofs_env *env, struct silofs_caddr *out_caddr)
+env_arix_addr(const struct silofs_env *env, struct silofs_baddr *out_baddr)
 {
-	return silofs_mbri_arix_addr(&env->mbri, out_caddr);
+	return silofs_mbri_arix_addr(&env->mbri, out_baddr);
 }
 
 int silofs_env_sense_ar(struct silofs_env *env)
 {
-	struct silofs_caddr caddr;
+	struct silofs_baddr baddr;
 	size_t sz = 0;
 	int err;
 
-	err = env_arix_addr(env, &caddr);
+	err = env_arix_addr(env, &baddr);
 	if (err) {
 		return err;
 	}
-	err = silofs_repo_stat_cobj(env->base.repo, &caddr, &sz);
+	err = silofs_repo_stat_cobj(env->base.repo, &baddr, &sz);
 	if (err) {
 		return err;
 	}

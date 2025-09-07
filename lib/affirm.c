@@ -173,7 +173,6 @@ static void affirm_ondisk_addrs(void)
 	REQUIRE_SIZEOF(struct silofs_laddr64b, 64);
 	REQUIRE_SIZEOF(struct silofs_uaddr96b, 96);
 	REQUIRE_SIZEOF(struct silofs_paddr64b, 64);
-	REQUIRE_SIZEOF(struct silofs_caddr64b, 64);
 	REQUIRE_SIZEOF(union silofs_baddr64b, 64);
 	REQUIRE_SIZEOF(struct silofs_bcursor128b, 128);
 }

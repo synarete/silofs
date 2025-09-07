@@ -110,20 +110,20 @@ bool silofs_env_hasflag(const struct silofs_env *env, enum silofs_flags f);
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_env_sense_mbr(struct silofs_env         *env,
-                         const struct silofs_caddr *caddr);
+                         const struct silofs_baddr *baddr);
 
 int silofs_env_setup_fs_mbr(struct silofs_env *env);
 
 int silofs_env_commit_fs_mbr(struct silofs_env   *env,
-                             struct silofs_caddr *out_mref);
+                             struct silofs_baddr *out_mref);
 
 int silofs_env_reload_fs_mbr(struct silofs_env         *env,
-                             const struct silofs_caddr *caddr);
+                             const struct silofs_baddr *baddr);
 
 int silofs_env_reload_ar_mbr(struct silofs_env         *env,
-                             const struct silofs_caddr *caddr);
+                             const struct silofs_baddr *baddr);
 
 int silofs_env_unlink_mbr(struct silofs_env         *env,
-                          const struct silofs_caddr *caddr);
+                          const struct silofs_baddr *baddr);
 
 #endif /* SILOFS_ENV_H_ */

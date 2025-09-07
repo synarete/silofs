@@ -103,12 +103,12 @@ void silofs_llink_of_vni(const struct silofs_mbr *mbr,
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-void silofs_calc_caddr_of(const struct silofs_mdigest *md,
+void silofs_calc_baddr_of(const struct silofs_mdigest *md,
                           const struct iovec *iov, size_t iov_cnt,
-                          struct silofs_caddr *out_caddr)
+                          struct silofs_baddr *out_baddr)
 {
 	struct silofs_hash256 hash;
 
 	silofs_sha256_ofv(md, iov, iov_cnt, &hash);
-	silofs_caddr_setup(out_caddr, &hash);
+	silofs_baddr_setup(out_baddr, &hash);
 }

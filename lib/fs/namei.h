@@ -137,7 +137,7 @@ int silofs_do_query(struct silofs_task_ctx *task, struct silofs_inode_info *ii,
 
 int silofs_do_forkfs(struct silofs_task_ctx   *task,
                      struct silofs_inode_info *dir_ii, int flags,
-                     struct silofs_mrefs *out_caddrs);
+                     struct silofs_mrefs *out_baddrs);
 
 int silofs_do_tune(struct silofs_task_ctx   *task,
                    struct silofs_inode_info *dir_ii, int iflags_want,

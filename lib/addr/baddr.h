@@ -18,13 +18,12 @@
 #define SILOFS_BADDR_H_
 
 #include "paddr.h"
-#include "caddr.h"
+#include "baddr.h"
 
 /* blob address */
 struct silofs_baddr {
 	union {
 		struct silofs_paddr  paddr;
-		struct silofs_caddr  caddr;
 		struct silofs_blobid blobid;
 	} ba;
 	enum silofs_ba_mode ba_mode;
@@ -40,11 +39,19 @@ struct silofs_bcursor {
 
 void silofs_baddr_reset(struct silofs_baddr *baddr);
 
+void silofs_baddr_setup(struct silofs_baddr         *baddr,
+                        const struct silofs_hash256 *hash);
+
 void silofs_baddr_setup1(struct silofs_baddr       *baddr,
                          const struct silofs_paddr *paddr);
 
-void silofs_baddr_setup2(struct silofs_baddr       *baddr,
-                         const struct silofs_caddr *caddr);
+void silofs_baddr_assign(struct silofs_baddr       *baddr,
+                         const struct silofs_baddr *other);
+
+bool silofs_baddr_isequal(const struct silofs_baddr *baddr,
+                          const struct silofs_baddr *other);
+
+bool silofs_baddr_isnone(const struct silofs_baddr *baddr);
 
 int silofs_baddr_to_str(const struct silofs_baddr *baddr, char *s, size_t n);
 

@@ -2596,11 +2596,11 @@ int silofs_repo_read_at(struct silofs_repo *repo,
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static void repo_cobj_pathname(const struct silofs_repo *repo,
-                               const struct silofs_caddr *caddr,
+                               const struct silofs_baddr *baddr,
                                struct silofs_strbuf *out_sbuf)
 {
 	silofs_unused(repo);
-	silofs_blobid_to_sbuf(&caddr->blobid, out_sbuf);
+	silofs_blobid_to_sbuf(&baddr->ba.blobid, out_sbuf);
 }
 
 static int
@@ -2634,87 +2634,87 @@ static int repo_unlink_cobj_at(const struct silofs_repo *repo,
 
 static int
 repo_stat_cobj(const struct silofs_repo *repo,
-               const struct silofs_caddr *caddr, struct stat *out_st)
+               const struct silofs_baddr *baddr, struct stat *out_st)
 {
 	struct silofs_strbuf sbuf;
 
-	repo_cobj_pathname(repo, caddr, &sbuf);
+	repo_cobj_pathname(repo, baddr, &sbuf);
 	return repo_stat_blob_at(repo, &sbuf, out_st);
 }
 
 int silofs_repo_stat_cobj(struct silofs_repo *repo,
-                          const struct silofs_caddr *caddr, size_t *out_sz)
+                          const struct silofs_baddr *baddr, size_t *out_sz)
 {
 	struct stat st = { .st_size = -1 };
 	int err;
 
 	repo_lock(repo);
-	err = repo_stat_cobj(repo, caddr, &st);
+	err = repo_stat_cobj(repo, baddr, &st);
 	repo_unlock(repo);
 	*out_sz = (size_t)(st.st_size);
 	return err;
 }
 
 static int
-repo_save_cobj(struct silofs_repo *repo, const struct silofs_caddr *caddr,
+repo_save_cobj(struct silofs_repo *repo, const struct silofs_baddr *baddr,
                const struct silofs_rovec *rovec)
 {
 	struct silofs_strbuf sbuf;
 
-	repo_cobj_pathname(repo, caddr, &sbuf);
+	repo_cobj_pathname(repo, baddr, &sbuf);
 	return repo_save_cobj_at(repo, &sbuf, rovec);
 }
 
 int silofs_repo_save_cobj(struct silofs_repo *repo,
-                          const struct silofs_caddr *caddr,
+                          const struct silofs_baddr *baddr,
                           const struct silofs_rovec *rovec)
 {
 	int err;
 
 	repo_lock(repo);
-	err = repo_save_cobj(repo, caddr, rovec);
+	err = repo_save_cobj(repo, baddr, rovec);
 	repo_unlock(repo);
 	return err;
 }
 
 static int
-repo_load_cobj(struct silofs_repo *repo, const struct silofs_caddr *caddr,
+repo_load_cobj(struct silofs_repo *repo, const struct silofs_baddr *baddr,
                struct silofs_rwvec *rwvec)
 {
 	struct silofs_strbuf sbuf;
 
-	repo_cobj_pathname(repo, caddr, &sbuf);
+	repo_cobj_pathname(repo, baddr, &sbuf);
 	return repo_load_cobj_at(repo, &sbuf, rwvec);
 }
 
 int silofs_repo_load_cobj(struct silofs_repo *repo,
-                          const struct silofs_caddr *caddr,
+                          const struct silofs_baddr *baddr,
                           struct silofs_rwvec *rwvec)
 {
 	int err;
 
 	repo_lock(repo);
-	err = repo_load_cobj(repo, caddr, rwvec);
+	err = repo_load_cobj(repo, baddr, rwvec);
 	repo_unlock(repo);
 	return err;
 }
 
 static int
-repo_unlink_cobj(struct silofs_repo *repo, const struct silofs_caddr *caddr)
+repo_unlink_cobj(struct silofs_repo *repo, const struct silofs_baddr *baddr)
 {
 	struct silofs_strbuf sbuf;
 
-	repo_cobj_pathname(repo, caddr, &sbuf);
+	repo_cobj_pathname(repo, baddr, &sbuf);
 	return repo_unlink_cobj_at(repo, &sbuf);
 }
 
 int silofs_repo_unlink_cobj(struct silofs_repo *repo,
-                            const struct silofs_caddr *caddr)
+                            const struct silofs_baddr *baddr)
 {
 	int err;
 
 	repo_lock(repo);
-	err = repo_unlink_cobj(repo, caddr);
+	err = repo_unlink_cobj(repo, baddr);
 	repo_unlock(repo);
 	return err;
 }

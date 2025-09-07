@@ -35,6 +35,15 @@ baddr_setup(struct silofs_baddr *baddr, const struct silofs_blobid *blobid)
 	baddr->ba_mode = SILOFS_BA_CAS;
 }
 
+void silofs_baddr_setup(struct silofs_baddr *baddr,
+                        const struct silofs_hash256 *hash)
+{
+	struct silofs_blobid blobid;
+
+	silofs_blobid_assign_hash(&blobid, hash);
+	baddr_setup(baddr, &blobid);
+}
+
 void silofs_baddr_setup1(struct silofs_baddr *baddr,
                          const struct silofs_paddr *paddr)
 {
@@ -42,11 +51,52 @@ void silofs_baddr_setup1(struct silofs_baddr *baddr,
 	baddr->ba_mode = SILOFS_BA_RAW;
 }
 
-void silofs_baddr_setup2(struct silofs_baddr *baddr,
-                         const struct silofs_caddr *caddr)
+void silofs_baddr_assign(struct silofs_baddr *baddr,
+                         const struct silofs_baddr *other)
 {
-	silofs_caddr_assign(&baddr->ba.caddr, caddr);
-	baddr->ba_mode = SILOFS_BA_CAS;
+	/* XXX FIXME */
+	silofs_blobid_assign(&baddr->ba.blobid, &other->ba.blobid);
+	baddr->ba_mode = other->ba_mode;
+}
+
+static bool baddr_isequal_raw(const struct silofs_baddr *baddr,
+                              const struct silofs_baddr *other)
+{
+	return silofs_paddr_isequal(&baddr->ba.paddr, &other->ba.paddr);
+}
+
+static bool baddr_isequal_cas(const struct silofs_baddr *baddr,
+                              const struct silofs_baddr *other)
+{
+	return silofs_blobid_isequal(&baddr->ba.blobid, &other->ba.blobid);
+}
+
+bool silofs_baddr_isequal(const struct silofs_baddr *baddr,
+                          const struct silofs_baddr *other)
+{
+	bool res = false;
+
+	if (baddr->ba_mode == other->ba_mode) {
+		switch (baddr->ba_mode) {
+		case SILOFS_BA_RAW:
+			res = baddr_isequal_raw(baddr, other);
+			break;
+		case SILOFS_BA_CAS:
+			res = baddr_isequal_cas(baddr, other);
+			break;
+		case SILOFS_BA_NONE:
+		default:
+			res = false;
+			break;
+		}
+	}
+	return res;
+}
+
+bool silofs_baddr_isnone(const struct silofs_baddr *baddr)
+{
+	return (baddr->ba_mode == SILOFS_BA_NONE) ||
+	       silofs_blobid_isnone(&baddr->ba.blobid);
 }
 
 int silofs_baddr_to_str(const struct silofs_baddr *baddr, char *s, size_t n)
@@ -124,7 +174,7 @@ void silofs_baddr64b_htox(union silofs_baddr64b *baddr64,
 		baddr64_set_type(baddr64, SILOFS_BA_RAW);
 		break;
 	case SILOFS_BA_CAS:
-		silofs_caddr64b_htox(&baddr64->caddr, &baddr->ba.caddr);
+		silofs_blobid_assign(&baddr64->blobid, &baddr->ba.blobid);
 		baddr64_set_type(baddr64, SILOFS_BA_CAS);
 		break;
 	case SILOFS_BA_NONE:
@@ -145,7 +195,7 @@ void silofs_baddr64b_xtoh(const union silofs_baddr64b *baddr64,
 		baddr->ba_mode = SILOFS_BA_RAW;
 		break;
 	case SILOFS_BA_CAS:
-		silofs_caddr64b_xtoh(&baddr64->caddr, &baddr->ba.caddr);
+		silofs_blobid_assign(&baddr->ba.blobid, &baddr64->blobid);
 		baddr->ba_mode = SILOFS_BA_CAS;
 		break;
 	case SILOFS_BA_NONE:

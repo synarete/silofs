@@ -24,10 +24,10 @@ void silofs_xref_reset(struct silofs_xref *xref);
 
 bool silofs_xref_isnull(const struct silofs_xref *xref);
 
-void silofs_xref_from_caddr(struct silofs_xref        *xref,
-                            const struct silofs_caddr *caddr);
+void silofs_xref_from_baddr(struct silofs_xref        *xref,
+                            const struct silofs_baddr *baddr);
 
-int silofs_xref_to_caddr(const struct silofs_xref *xref,
-                         struct silofs_caddr      *out_caddr);
+int silofs_xref_to_baddr(const struct silofs_xref *xref,
+                         struct silofs_baddr      *out_baddr);
 
 #endif /* SILOFS_XREF_H_ */

@@ -48,12 +48,13 @@ bool silofs_caddr_isequal(const struct silofs_caddr *caddr,
 	return silofs_blobid_isequal(&caddr->blobid, &other->blobid);
 }
 
-static size_t caddr_to_str(const struct silofs_caddr *caddr, char *s, size_t n)
+int silofs_caddr_to_str(const struct silofs_caddr *caddr, char *s, size_t n)
 {
 	struct silofs_strbuf sbuf;
 	const int vers = SILOFS_FMT_VERSION;
 	size_t hn = 0;
 	size_t pn = 0;
+	size_t k = 0;
 	char *d = s;
 
 	silofs_blobid_to_sbuf(&caddr->blobid, &sbuf);
@@ -68,14 +69,8 @@ static size_t caddr_to_str(const struct silofs_caddr *caddr, char *s, size_t n)
 	} else {
 		d += silofs_min(n, pn);
 	}
-	return (size_t)(d - s);
-}
 
-int silofs_caddr_to_str(const struct silofs_caddr *caddr, char *s, size_t n)
-{
-	size_t k;
-
-	k = caddr_to_str(caddr, s, n);
+	k = (size_t)(d - s);
 	return (k < n) ? 0 : -SILOFS_ERANGE;
 }
 
@@ -107,48 +102,6 @@ int silofs_caddr_from_str(struct silofs_caddr *caddr, const char *s, size_t n)
 	}
 	silofs_caddr_setup(caddr, &hash);
 	return 0;
-}
-
-static int
-caddr_from_strview(struct silofs_caddr *caddr, const struct silofs_strview *sv)
-{
-	struct silofs_strview sv2;
-	int ret = -SILOFS_EILLSTR;
-
-	silofs_strview_strip_ws(sv, &sv2);
-	if (silofs_strview_isascii(&sv2)) {
-		ret = silofs_caddr_from_str(caddr, sv2.str, sv2.len);
-	}
-	return ret;
-}
-
-void silofs_caddr_to_name2(const struct silofs_caddr *caddr,
-                           char s[SILOFS_XREFLEN_MAX + 1])
-{
-	silofs_caddr_to_str(caddr, s, SILOFS_XREFLEN_MAX + 1);
-}
-
-int silofs_caddr_by_name2(struct silofs_caddr *caddr,
-                          const struct silofs_strview *name)
-{
-	return caddr_from_strview(caddr, name);
-}
-
-uint64_t silofs_caddr_to_u64(const struct silofs_caddr *caddr)
-{
-	union {
-		struct silofs_caddr64b caddr64b;
-		uint8_t d[64];
-	} u;
-	uint64_t n = 0;
-
-	STATICASSERT_EQ(sizeof(u), 64);
-
-	silofs_caddr64b_htox(&u.caddr64b, caddr);
-	for (size_t i = 0; i < sizeof(u); i += 8) {
-		n ^= silofs_u8b_as_u64(&u.d[i]);
-	}
-	return n;
 }
 
 void silofs_caddr64b_htox(struct silofs_caddr64b *caddr64b,

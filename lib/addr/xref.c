@@ -35,15 +35,31 @@ void silofs_xref_from_caddr(struct silofs_xref *xref,
 	silofs_caddr_to_str(caddr, xref->s, sizeof(xref->s));
 }
 
+static int
+xref_to_strview(const struct silofs_xref *xref, struct silofs_strview *out_sv)
+{
+	struct silofs_strview sv;
+
+	silofs_strview_init(&sv, xref->s);
+	silofs_strview_strip_ws(&sv, out_sv);
+	return silofs_strview_isascii(out_sv) ? 0 : -SILOFS_EILLSTR;
+}
+
+static int strview_to_caddr(const struct silofs_strview *sv,
+                            struct silofs_caddr *out_caddr)
+{
+	return silofs_caddr_from_str(out_caddr, sv->str, sv->len);
+}
+
 int silofs_xref_to_caddr(const struct silofs_xref *xref,
                          struct silofs_caddr *out_caddr)
 {
-	const size_t lim = sizeof(xref->s);
-	const size_t n = silofs_str_nlength(xref->s, lim);
-	int ret = -SILOFS_EINVAL;
+	struct silofs_strview sv = { .len = 0 };
+	int err;
 
-	if (n < lim) {
-		ret = silofs_caddr_from_str(out_caddr, xref->s, n);
+	err = xref_to_strview(xref, &sv);
+	if (!err) {
+		err = strview_to_caddr(&sv, out_caddr);
 	}
-	return ret;
+	return err;
 }

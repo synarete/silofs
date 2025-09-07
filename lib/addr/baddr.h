@@ -26,8 +26,8 @@ struct silofs_baddr {
 		struct silofs_paddr  paddr;
 		struct silofs_caddr  caddr;
 		struct silofs_blobid blobid;
-	} ad;
-	enum silofs_adt adt;
+	} ba;
+	enum silofs_ba_mode ba_mode;
 };
 
 /* blob cursor */

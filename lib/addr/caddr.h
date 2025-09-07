@@ -44,14 +44,6 @@ void silofs_caddr_assign(struct silofs_caddr       *caddr,
 bool silofs_caddr_isequal(const struct silofs_caddr *caddr,
                           const struct silofs_caddr *other);
 
-void silofs_caddr_to_name2(const struct silofs_caddr *caddr,
-                           char s[SILOFS_XREFLEN_MAX + 1]);
-
-int silofs_caddr_by_name2(struct silofs_caddr         *caddr,
-                          const struct silofs_strview *name);
-
-uint64_t silofs_caddr_to_u64(const struct silofs_caddr *caddr);
-
 void silofs_caddr64b_htox(struct silofs_caddr64b    *caddr64b,
                           const struct silofs_caddr *caddr);
 

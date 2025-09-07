@@ -494,10 +494,10 @@ struct silofs_uuid {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-enum silofs_adt {
-	SILOFS_ADT_NONE  = 0,
-	SILOFS_ADT_PADDR = 1,
-	SILOFS_ADT_CAS   = 2,
+enum silofs_ba_mode {
+	SILOFS_BA_NONE = 0,
+	SILOFS_BA_RAW  = 1,
+	SILOFS_BA_CAS  = 2,
 };
 
 /* unique blob identifier */

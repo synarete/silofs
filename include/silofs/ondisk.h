@@ -533,7 +533,7 @@ union silofs_baddr64b {
 	struct silofs_paddr64b paddr;
 	struct {
 		uint8_t dat[59];
-		uint8_t adt;
+		uint8_t mode;
 	} b;
 } silofs_attr_aligned64;
 

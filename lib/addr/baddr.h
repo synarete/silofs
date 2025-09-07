@@ -40,11 +40,15 @@ struct silofs_bcursor {
 
 void silofs_baddr_reset(struct silofs_baddr *baddr);
 
-void silofs_baddr_setup(struct silofs_baddr       *baddr,
-                        const struct silofs_paddr *paddr);
+void silofs_baddr_setup1(struct silofs_baddr       *baddr,
+                         const struct silofs_paddr *paddr);
 
 void silofs_baddr_setup2(struct silofs_baddr       *baddr,
                          const struct silofs_caddr *caddr);
+
+int silofs_baddr_to_str(const struct silofs_baddr *baddr, char *s, size_t n);
+
+int silofs_baddr_from_str(struct silofs_baddr *baddr, const char *s, size_t n);
 
 void silofs_baddr64b_reset(union silofs_baddr64b *baddr64);
 

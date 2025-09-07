@@ -15,9 +15,11 @@
  * GNU General Public License for more details.
  */
 #include "configs.h"
+#include <stdio.h>
 #include "infra.h"
 #include "str.h"
 #include "htox.h"
+#include "blobid.h"
 #include "baddr.h"
 
 void silofs_baddr_reset(struct silofs_baddr *baddr)
@@ -26,8 +28,15 @@ void silofs_baddr_reset(struct silofs_baddr *baddr)
 	baddr->ba_mode = SILOFS_BA_NONE;
 }
 
-void silofs_baddr_setup(struct silofs_baddr *baddr,
-                        const struct silofs_paddr *paddr)
+static void
+baddr_setup(struct silofs_baddr *baddr, const struct silofs_blobid *blobid)
+{
+	silofs_blobid_assign(&baddr->ba.blobid, blobid);
+	baddr->ba_mode = SILOFS_BA_CAS;
+}
+
+void silofs_baddr_setup1(struct silofs_baddr *baddr,
+                         const struct silofs_paddr *paddr)
 {
 	silofs_paddr_assign(&baddr->ba.paddr, paddr);
 	baddr->ba_mode = SILOFS_BA_RAW;
@@ -40,15 +49,64 @@ void silofs_baddr_setup2(struct silofs_baddr *baddr,
 	baddr->ba_mode = SILOFS_BA_CAS;
 }
 
-static enum silofs_ba_mode baddr64_adt(const union silofs_baddr64b *baddr64)
+int silofs_baddr_to_str(const struct silofs_baddr *baddr, char *s, size_t n)
 {
-	return baddr64->b.adt;
+	struct silofs_strbuf sbuf;
+	const int vers = SILOFS_FMT_VERSION;
+	const int mode = baddr->ba_mode;
+	int k;
+
+	silofs_blobid_to_sbuf(&baddr->ba.blobid, &sbuf);
+	k = snprintf(s, n, "silofs.v%d:%d:%s", vers, mode, sbuf.str);
+
+	return ((k > 0) && (k < (int)n)) ? 0 : -SILOFS_ERANGE;
+}
+
+int silofs_baddr_from_str(struct silofs_baddr *baddr, const char *s, size_t n)
+{
+	struct silofs_strbuf sbuf;
+	struct silofs_strbuf hname;
+	struct silofs_strview sv;
+	struct silofs_blobid blobid;
+	int vers = 0;
+	int mode = 0;
+	int k = 0;
+	int err = 0;
+
+	if (n >= sizeof(sbuf.str)) {
+		return -SILOFS_EINVAL;
+	}
+	silofs_strbuf_setup_by2(&sbuf, s, n);
+
+	silofs_strbuf_reset(&hname);
+	k = sscanf(sbuf.str, "silofs.v%d:%d:%64s", &vers, &mode, hname.str);
+	if (k != 3) {
+		return -SILOFS_EINVAL;
+	}
+	if (vers != SILOFS_FMT_VERSION) {
+		return -SILOFS_EPROTO;
+	}
+	if ((mode != SILOFS_BA_RAW) && (mode != SILOFS_BA_CAS)) {
+		return -SILOFS_EPROTO;
+	}
+	silofs_strview_init(&sv, hname.str);
+	err = silofs_blobid_from_str(&blobid, &sv);
+	if (err) {
+		return err;
+	}
+	baddr_setup(baddr, &blobid);
+	return 0;
+}
+
+static enum silofs_ba_mode baddr64_mode(const union silofs_baddr64b *baddr64)
+{
+	return baddr64->b.mode;
 }
 
 static void
 baddr64_set_type(union silofs_baddr64b *baddr64, enum silofs_ba_mode adt)
 {
-	baddr64->b.adt = (uint8_t)adt;
+	baddr64->b.mode = (uint8_t)adt;
 }
 
 void silofs_baddr64b_reset(union silofs_baddr64b *baddr64)
@@ -79,7 +137,7 @@ void silofs_baddr64b_htox(union silofs_baddr64b *baddr64,
 void silofs_baddr64b_xtoh(const union silofs_baddr64b *baddr64,
                           struct silofs_baddr *baddr)
 {
-	enum silofs_ba_mode adt = baddr64_adt(baddr64);
+	enum silofs_ba_mode adt = baddr64_mode(baddr64);
 
 	switch (adt) {
 	case SILOFS_BA_RAW:

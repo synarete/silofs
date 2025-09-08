@@ -722,10 +722,9 @@ def check_nodup_includes(env: LintEnv, sf: SourceFile) -> None:
             env.lerror(sl, "Bad include")
             continue
         inc = lsp[1].strip('"<>')
-        cnt = includes.get(inc, 0)
+        cnt = includes[inc] = includes.get(inc, 0) + 1
         if cnt > 1:
             env.lerror(sl, f"Duplicated include '{inc}'")
-        includes[inc] = cnt + 1
 
 
 def check_consecutive_empty_lines(env: LintEnv, sf: SourceFile) -> None:

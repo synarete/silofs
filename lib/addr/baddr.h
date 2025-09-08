@@ -17,16 +17,16 @@
 #ifndef SILOFS_BADDR_H_
 #define SILOFS_BADDR_H_
 
-#include "paddr.h"
-#include "baddr.h"
+#include <stdlib.h>
+#include <silofs/ondisk.h>
+#include "blobid.h"
 
 /* blob address */
 struct silofs_baddr {
-	union {
-		struct silofs_paddr  paddr;
-		struct silofs_blobid blobid;
-	} ba;
-	enum silofs_ba_mode ba_mode;
+	struct silofs_blobid blobid;
+	off_t                pos;
+	enum silofs_mtype    mtype;
+	enum silofs_bmode    bmode;
 };
 
 /* blob cursor */
@@ -37,13 +37,20 @@ struct silofs_bcursor {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+const struct silofs_baddr *silofs_baddr_none(void);
+
+void silofs_baddr_init(struct silofs_baddr        *baddr,
+                       const struct silofs_blobid *blobid,
+                       enum silofs_bmode bmode, enum silofs_mtype mtype,
+                       off_t pos);
+
+void silofs_baddr_init_raw(struct silofs_baddr        *baddr,
+                           const struct silofs_blobid *blobid,
+                           enum silofs_mtype mtype, off_t pos);
+
+void silofs_baddr_fini(struct silofs_baddr *baddr);
+
 void silofs_baddr_reset(struct silofs_baddr *baddr);
-
-void silofs_baddr_setup(struct silofs_baddr         *baddr,
-                        const struct silofs_hash256 *hash);
-
-void silofs_baddr_setup1(struct silofs_baddr       *baddr,
-                         const struct silofs_paddr *paddr);
 
 void silofs_baddr_assign(struct silofs_baddr       *baddr,
                          const struct silofs_baddr *other);
@@ -51,19 +58,22 @@ void silofs_baddr_assign(struct silofs_baddr       *baddr,
 bool silofs_baddr_isequal(const struct silofs_baddr *baddr,
                           const struct silofs_baddr *other);
 
-bool silofs_baddr_isnone(const struct silofs_baddr *baddr);
+bool silofs_baddr_isnull(const struct silofs_baddr *baddr);
+
+long silofs_baddr_compare(const struct silofs_baddr *baddr1,
+                          const struct silofs_baddr *baddr2);
 
 int silofs_baddr_to_str(const struct silofs_baddr *baddr, char *s, size_t n);
 
 int silofs_baddr_from_str(struct silofs_baddr *baddr, const char *s, size_t n);
 
-void silofs_baddr64b_reset(union silofs_baddr64b *baddr64);
+void silofs_baddr64b_reset(struct silofs_baddr64b *baddr64);
 
-void silofs_baddr64b_htox(union silofs_baddr64b     *baddr64,
+void silofs_baddr64b_htox(struct silofs_baddr64b    *baddr64,
                           const struct silofs_baddr *baddr);
 
-void silofs_baddr64b_xtoh(const union silofs_baddr64b *baddr64,
-                          struct silofs_baddr         *baddr);
+void silofs_baddr64b_xtoh(const struct silofs_baddr64b *baddr64,
+                          struct silofs_baddr          *baddr);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

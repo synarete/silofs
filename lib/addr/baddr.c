@@ -19,95 +19,113 @@
 #include "infra.h"
 #include "str.h"
 #include "htox.h"
+#include "mtype.h"
 #include "blobid.h"
 #include "baddr.h"
 
+static const struct silofs_baddr s_silofs_baddr_none = {
+	.pos = SILOFS_OFF_NULL,
+	.mtype = SILOFS_MTYPE_NONE,
+	.bmode = SILOFS_BMODE_NONE,
+};
+
+const struct silofs_baddr *silofs_baddr_none(void)
+{
+	return &s_silofs_baddr_none;
+}
+
+void silofs_baddr_init(struct silofs_baddr *baddr,
+                       const struct silofs_blobid *blobid,
+                       enum silofs_bmode bmode, enum silofs_mtype mtype,
+                       off_t pos)
+{
+	silofs_blobid_assign(&baddr->blobid, blobid);
+	baddr->pos = pos;
+	baddr->mtype = mtype;
+	baddr->bmode = bmode;
+}
+
+void silofs_baddr_init_raw(struct silofs_baddr *baddr,
+                           const struct silofs_blobid *blobid,
+                           enum silofs_mtype mtype, off_t pos)
+{
+	silofs_baddr_init(baddr, blobid, SILOFS_BMODE_RAW, mtype, pos);
+}
+
+void silofs_baddr_fini(struct silofs_baddr *baddr)
+{
+	silofs_baddr_reset(baddr);
+}
+
 void silofs_baddr_reset(struct silofs_baddr *baddr)
 {
-	silofs_memffff(baddr, sizeof(*baddr));
-	baddr->ba_mode = SILOFS_BA_NONE;
-}
-
-static void
-baddr_setup(struct silofs_baddr *baddr, const struct silofs_blobid *blobid)
-{
-	silofs_blobid_assign(&baddr->ba.blobid, blobid);
-	baddr->ba_mode = SILOFS_BA_CAS;
-}
-
-void silofs_baddr_setup(struct silofs_baddr *baddr,
-                        const struct silofs_hash256 *hash)
-{
-	struct silofs_blobid blobid;
-
-	silofs_blobid_assign_hash(&blobid, hash);
-	baddr_setup(baddr, &blobid);
-}
-
-void silofs_baddr_setup1(struct silofs_baddr *baddr,
-                         const struct silofs_paddr *paddr)
-{
-	silofs_paddr_assign(&baddr->ba.paddr, paddr);
-	baddr->ba_mode = SILOFS_BA_RAW;
+	silofs_blobid_reset(&baddr->blobid);
+	baddr->pos = SILOFS_OFF_NULL;
+	baddr->mtype = SILOFS_MTYPE_NONE;
+	baddr->bmode = SILOFS_BMODE_NONE;
 }
 
 void silofs_baddr_assign(struct silofs_baddr *baddr,
                          const struct silofs_baddr *other)
 {
-	/* XXX FIXME */
-	silofs_blobid_assign(&baddr->ba.blobid, &other->ba.blobid);
-	baddr->ba_mode = other->ba_mode;
-}
-
-static bool baddr_isequal_raw(const struct silofs_baddr *baddr,
-                              const struct silofs_baddr *other)
-{
-	return silofs_paddr_isequal(&baddr->ba.paddr, &other->ba.paddr);
-}
-
-static bool baddr_isequal_cas(const struct silofs_baddr *baddr,
-                              const struct silofs_baddr *other)
-{
-	return silofs_blobid_isequal(&baddr->ba.blobid, &other->ba.blobid);
+	silofs_blobid_assign(&baddr->blobid, &other->blobid);
+	baddr->pos = other->pos;
+	baddr->mtype = other->mtype;
+	baddr->bmode = other->bmode;
 }
 
 bool silofs_baddr_isequal(const struct silofs_baddr *baddr,
                           const struct silofs_baddr *other)
 {
-	bool res = false;
-
-	if (baddr->ba_mode == other->ba_mode) {
-		switch (baddr->ba_mode) {
-		case SILOFS_BA_RAW:
-			res = baddr_isequal_raw(baddr, other);
-			break;
-		case SILOFS_BA_CAS:
-			res = baddr_isequal_cas(baddr, other);
-			break;
-		case SILOFS_BA_NONE:
-		default:
-			res = false;
-			break;
-		}
-	}
-	return res;
+	return (baddr->pos == other->pos) && (baddr->mtype == other->mtype) &&
+	       (baddr->bmode == other->bmode) &&
+	       silofs_blobid_isequal(&baddr->blobid, &other->blobid);
 }
 
-bool silofs_baddr_isnone(const struct silofs_baddr *baddr)
+bool silofs_baddr_isnull(const struct silofs_baddr *baddr)
 {
-	return (baddr->ba_mode == SILOFS_BA_NONE) ||
-	       silofs_blobid_isnone(&baddr->ba.blobid);
+	return (baddr->bmode == SILOFS_BMODE_NONE) ||
+	       (baddr->mtype == SILOFS_MTYPE_NONE) ||
+	       (baddr->pos == SILOFS_OFF_NULL);
+}
+
+long silofs_baddr_compare(const struct silofs_baddr *baddr1,
+                          const struct silofs_baddr *baddr2)
+{
+	long cmp;
+
+	cmp = (long)(baddr1->bmode - baddr2->bmode);
+	if (cmp) {
+		return cmp;
+	}
+	cmp = (long)(baddr1->mtype - baddr2->mtype);
+	if (cmp) {
+		return cmp;
+	}
+	cmp = (long)(baddr1->pos - baddr2->pos);
+	if (cmp) {
+		return cmp;
+	}
+	cmp = silofs_blobid_compare(&baddr1->blobid, &baddr2->blobid);
+	if (cmp) {
+		return cmp;
+	}
+	return 0;
 }
 
 int silofs_baddr_to_str(const struct silofs_baddr *baddr, char *s, size_t n)
 {
 	struct silofs_strbuf sbuf;
 	const int vers = SILOFS_FMT_VERSION;
-	const int mode = baddr->ba_mode;
+	const int mtype = baddr->mtype;
 	int k;
 
-	silofs_blobid_to_sbuf(&baddr->ba.blobid, &sbuf);
-	k = snprintf(s, n, "silofs.v%d:%d:%s", vers, mode, sbuf.str);
+	if ((baddr->bmode != SILOFS_BMODE_CAS) || (baddr->pos != 0)) {
+		return -SILOFS_EOPNOTSUPP;
+	}
+
+	silofs_blobid_to_sbuf(&baddr->blobid, &sbuf);
+	k = snprintf(s, n, "silofs.v%d:%d:%s", vers, mtype, sbuf.str);
 
 	return ((k > 0) && (k < (int)n)) ? 0 : -SILOFS_ERANGE;
 }
@@ -119,7 +137,7 @@ int silofs_baddr_from_str(struct silofs_baddr *baddr, const char *s, size_t n)
 	struct silofs_strview sv;
 	struct silofs_blobid blobid;
 	int vers = 0;
-	int mode = 0;
+	int mtype = 0;
 	int k = 0;
 	int err = 0;
 
@@ -129,14 +147,14 @@ int silofs_baddr_from_str(struct silofs_baddr *baddr, const char *s, size_t n)
 	silofs_strbuf_setup_by2(&sbuf, s, n);
 
 	silofs_strbuf_reset(&hname);
-	k = sscanf(sbuf.str, "silofs.v%d:%d:%64s", &vers, &mode, hname.str);
+	k = sscanf(sbuf.str, "silofs.v%d:%d:%64s", &vers, &mtype, hname.str);
 	if (k != 3) {
 		return -SILOFS_EINVAL;
 	}
 	if (vers != SILOFS_FMT_VERSION) {
 		return -SILOFS_EPROTO;
 	}
-	if ((mode != SILOFS_BA_RAW) && (mode != SILOFS_BA_CAS)) {
+	if (!silofs_mtype_size(mtype)) {
 		return -SILOFS_EPROTO;
 	}
 	silofs_strview_init(&sv, hname.str);
@@ -144,65 +162,36 @@ int silofs_baddr_from_str(struct silofs_baddr *baddr, const char *s, size_t n)
 	if (err) {
 		return err;
 	}
-	baddr_setup(baddr, &blobid);
+	silofs_baddr_init(baddr, &blobid, SILOFS_BMODE_CAS, mtype, 0);
 	return 0;
 }
 
-static enum silofs_ba_mode baddr64_mode(const union silofs_baddr64b *baddr64)
-{
-	return baddr64->b.mode;
-}
-
-static void
-baddr64_set_type(union silofs_baddr64b *baddr64, enum silofs_ba_mode adt)
-{
-	baddr64->b.mode = (uint8_t)adt;
-}
-
-void silofs_baddr64b_reset(union silofs_baddr64b *baddr64)
+void silofs_baddr64b_reset(struct silofs_baddr64b *baddr64)
 {
 	silofs_memzero(baddr64, sizeof(*baddr64));
-	baddr64_set_type(baddr64, SILOFS_BA_NONE);
 }
 
-void silofs_baddr64b_htox(union silofs_baddr64b *baddr64,
+void silofs_baddr64b_htox(struct silofs_baddr64b *baddr64,
                           const struct silofs_baddr *baddr)
 {
-	switch (baddr->ba_mode) {
-	case SILOFS_BA_RAW:
-		silofs_paddr64b_htox(&baddr64->paddr, &baddr->ba.paddr);
-		baddr64_set_type(baddr64, SILOFS_BA_RAW);
-		break;
-	case SILOFS_BA_CAS:
-		silofs_blobid_assign(&baddr64->blobid, &baddr->ba.blobid);
-		baddr64_set_type(baddr64, SILOFS_BA_CAS);
-		break;
-	case SILOFS_BA_NONE:
-	default:
-		silofs_baddr64b_reset(baddr64);
-		break;
-	}
+	silofs_baddr64b_reset(baddr64);
+	silofs_blobid_assign(&baddr64->blobid, &baddr->blobid);
+	baddr64->pos = silofs_cpu_to_off(baddr->pos);
+	baddr64->mtype = silofs_cpu_to_le16((uint16_t)(baddr->mtype));
+	baddr64->bmode = silofs_cpu_to_le16((uint16_t)(baddr->bmode));
 }
 
-void silofs_baddr64b_xtoh(const union silofs_baddr64b *baddr64,
+void silofs_baddr64b_xtoh(const struct silofs_baddr64b *baddr64,
                           struct silofs_baddr *baddr)
 {
-	enum silofs_ba_mode adt = baddr64_mode(baddr64);
+	uint16_t m;
 
-	switch (adt) {
-	case SILOFS_BA_RAW:
-		silofs_paddr64b_xtoh(&baddr64->paddr, &baddr->ba.paddr);
-		baddr->ba_mode = SILOFS_BA_RAW;
-		break;
-	case SILOFS_BA_CAS:
-		silofs_blobid_assign(&baddr->ba.blobid, &baddr64->blobid);
-		baddr->ba_mode = SILOFS_BA_CAS;
-		break;
-	case SILOFS_BA_NONE:
-	default:
-		silofs_baddr_reset(baddr);
-		break;
-	}
+	silofs_blobid_assign(&baddr->blobid, &baddr64->blobid);
+	baddr->pos = silofs_off_to_cpu(baddr64->pos);
+	m = silofs_le16_to_cpu(baddr64->mtype);
+	baddr->mtype = (enum silofs_mtype)m;
+	m = silofs_le16_to_cpu(baddr64->bmode);
+	baddr->bmode = (enum silofs_bmode)m;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

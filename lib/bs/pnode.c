@@ -20,22 +20,22 @@
 #include "pnode.h"
 
 void silofs_pni_init(struct silofs_pnode_info *pni,
-                     const struct silofs_paddr *paddr)
+                     const struct silofs_baddr *baddr)
 {
-	silofs_paddr_assign(&pni->pn_paddr, paddr);
-	silofs_hmqe_init(&pni->pn_hmqe, silofs_mtype_size(paddr->mtype));
-	silofs_hkey_by_paddr(&pni->pn_hmqe.hme_key, &pni->pn_paddr);
+	silofs_baddr_assign(&pni->pn_baddr, baddr);
+	silofs_hmqe_init(&pni->pn_hmqe, silofs_mtype_size(baddr->mtype));
+	silofs_hkey_by_baddr(&pni->pn_hmqe.hme_key, &pni->pn_baddr);
 }
 
 void silofs_pni_fini(struct silofs_pnode_info *pni)
 {
-	silofs_paddr_fini(&pni->pn_paddr);
+	silofs_baddr_fini(&pni->pn_baddr);
 	silofs_hmqe_fini(&pni->pn_hmqe);
 }
 
 enum silofs_mtype silofs_pni_mtype(const struct silofs_pnode_info *pni)
 {
-	return pni->pn_paddr.mtype;
+	return pni->pn_baddr.mtype;
 }
 
 static struct silofs_dq_elem *pni_dqe(struct silofs_pnode_info *pni)

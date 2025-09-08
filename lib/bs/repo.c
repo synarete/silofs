@@ -2600,7 +2600,7 @@ static void repo_cobj_pathname(const struct silofs_repo *repo,
                                struct silofs_strbuf *out_sbuf)
 {
 	silofs_unused(repo);
-	silofs_blobid_to_sbuf(&baddr->ba.blobid, out_sbuf);
+	silofs_blobid_to_sbuf(&baddr->blobid, out_sbuf);
 }
 
 static int
@@ -2905,9 +2905,9 @@ static int repo_check_has_blob(const struct silofs_repo *repo,
 }
 
 static int repo_check_has_blob_of(const struct silofs_repo *repo,
-                                  const struct silofs_paddr *paddr)
+                                  const struct silofs_baddr *baddr)
 {
-	return repo_check_has_blob(repo, &paddr->blobid);
+	return repo_check_has_blob(repo, &baddr->blobid);
 }
 
 static int
@@ -2945,10 +2945,10 @@ static int repo_do_stage_blob(struct silofs_repo *repo,
 }
 
 static int
-repo_stage_blob_of(struct silofs_repo *repo, const struct silofs_paddr *paddr,
+repo_stage_blob_of(struct silofs_repo *repo, const struct silofs_baddr *baddr,
                    struct silofs_blobf **out_blobf)
 {
-	return repo_do_stage_blob(repo, &paddr->blobid, out_blobf);
+	return repo_do_stage_blob(repo, &baddr->blobid, out_blobf);
 }
 
 static int
@@ -2985,7 +2985,7 @@ int silofs_repo_stage_blob(struct silofs_repo *repo,
 }
 
 static int
-repo_save_pobj(struct silofs_repo *repo, const struct silofs_paddr *paddr,
+repo_save_pobj(struct silofs_repo *repo, const struct silofs_baddr *baddr,
                const struct silofs_rovec *rovec)
 {
 	struct silofs_blobf *blobf = nullptr;
@@ -2995,15 +2995,15 @@ repo_save_pobj(struct silofs_repo *repo, const struct silofs_paddr *paddr,
 	if (err) {
 		return err;
 	}
-	err = repo_check_has_blob_of(repo, paddr);
+	err = repo_check_has_blob_of(repo, baddr);
 	if (err) {
 		return err;
 	}
-	err = repo_stage_blob_of(repo, paddr, &blobf);
+	err = repo_stage_blob_of(repo, baddr, &blobf);
 	if (err) {
 		return err;
 	}
-	err = blobf_pwriten(blobf, paddr->pos, rovec->rov_base,
+	err = blobf_pwriten(blobf, baddr->pos, rovec->rov_base,
 	                    rovec->rov_len);
 	if (err) {
 		return err;
@@ -3012,19 +3012,19 @@ repo_save_pobj(struct silofs_repo *repo, const struct silofs_paddr *paddr,
 }
 
 int silofs_repo_save_pobj(struct silofs_repo *repo,
-                          const struct silofs_paddr *paddr,
+                          const struct silofs_baddr *baddr,
                           const struct silofs_rovec *rovec)
 {
 	int err;
 
 	repo_lock(repo);
-	err = repo_save_pobj(repo, paddr, rovec);
+	err = repo_save_pobj(repo, baddr, rovec);
 	repo_unlock(repo);
 	return err;
 }
 
 static int
-repo_load_pobj(struct silofs_repo *repo, const struct silofs_paddr *paddr,
+repo_load_pobj(struct silofs_repo *repo, const struct silofs_baddr *baddr,
                const struct silofs_rwvec *rwvec)
 {
 	struct silofs_blobf *blobf = nullptr;
@@ -3034,15 +3034,15 @@ repo_load_pobj(struct silofs_repo *repo, const struct silofs_paddr *paddr,
 	if (err) {
 		return err;
 	}
-	err = repo_check_has_blob_of(repo, paddr);
+	err = repo_check_has_blob_of(repo, baddr);
 	if (err) {
 		return err;
 	}
-	err = repo_stage_blob_of(repo, paddr, &blobf);
+	err = repo_stage_blob_of(repo, baddr, &blobf);
 	if (err) {
 		return err;
 	}
-	err = blobf_preadn(blobf, paddr->pos, rwvec->rwv_base, rwvec->rwv_len);
+	err = blobf_preadn(blobf, baddr->pos, rwvec->rwv_base, rwvec->rwv_len);
 	if (err) {
 		return err;
 	}
@@ -3050,13 +3050,13 @@ repo_load_pobj(struct silofs_repo *repo, const struct silofs_paddr *paddr,
 }
 
 int silofs_repo_load_pobj(struct silofs_repo *repo,
-                          const struct silofs_paddr *paddr,
+                          const struct silofs_baddr *baddr,
                           const struct silofs_rwvec *rwvec)
 {
 	int err;
 
 	repo_lock(repo);
-	err = repo_load_pobj(repo, paddr, rwvec);
+	err = repo_load_pobj(repo, baddr, rwvec);
 	repo_unlock(repo);
 	return err;
 }

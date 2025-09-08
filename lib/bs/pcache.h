@@ -20,7 +20,7 @@
 #include "hmdq.h"
 
 struct silofs_alloc;
-struct silofs_paddr;
+struct silofs_baddr;
 
 struct silofs_pcache {
 	struct silofs_hmapq  pc_hmapq;
@@ -46,22 +46,22 @@ silofs_pcache_dq_front(const struct silofs_pcache *pcache);
 
 struct silofs_bdesc_info *
 silofs_pcache_lookup_bdi(struct silofs_pcache      *pcache,
-                         const struct silofs_paddr *paddr);
+                         const struct silofs_baddr *baddr);
 
 struct silofs_bdesc_info *
 silofs_pcache_create_bdi(struct silofs_pcache      *pcache,
-                         const struct silofs_paddr *paddr);
+                         const struct silofs_baddr *baddr);
 
 void silofs_pcache_evict_bdi(struct silofs_pcache     *pcache,
                              struct silofs_bdesc_info *bdi);
 
 struct silofs_btnode_info *
 silofs_pcache_lookup_bni(struct silofs_pcache      *pcache,
-                         const struct silofs_paddr *paddr);
+                         const struct silofs_baddr *baddr);
 
 struct silofs_btnode_info *
 silofs_pcache_create_bni(struct silofs_pcache      *pcache,
-                         const struct silofs_paddr *paddr);
+                         const struct silofs_baddr *baddr);
 
 void silofs_pcache_evict_bni(struct silofs_pcache      *pcache,
                              struct silofs_btnode_info *bni);

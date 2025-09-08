@@ -164,12 +164,12 @@ static void ubi_free(struct silofs_ub_info *ubi, struct silofs_alloc *alloc)
 }
 
 static void
-ubi_init(struct silofs_ub_info *ubi, const struct silofs_paddr *paddr)
+ubi_init(struct silofs_ub_info *ubi, const struct silofs_baddr *baddr)
 {
-	silofs_assert(!silofs_paddr_isnull(paddr));
-	silofs_assert_eq(paddr->mtype, SILOFS_MTYPE_BTNODE);
+	silofs_assert(!silofs_baddr_isnull(baddr));
+	silofs_assert_eq(baddr->mtype, SILOFS_MTYPE_BTNODE);
 
-	silofs_pni_init(&ubi->ub_pni, paddr);
+	silofs_pni_init(&ubi->ub_pni, baddr);
 	ubi->ub = nullptr;
 }
 
@@ -179,7 +179,7 @@ static void ubi_fini(struct silofs_ub_info *ubi)
 }
 
 struct silofs_ub_info *
-silofs_ubi_new(const struct silofs_paddr *paddr, struct silofs_alloc *alloc)
+silofs_ubi_new(const struct silofs_baddr *baddr, struct silofs_alloc *alloc)
 {
 	struct silofs_uber_block *ub = nullptr;
 	struct silofs_ub_info *ubi = nullptr;
@@ -193,7 +193,7 @@ silofs_ubi_new(const struct silofs_paddr *paddr, struct silofs_alloc *alloc)
 		ub_del(ub, alloc);
 		return nullptr;
 	}
-	ubi_init(ubi, paddr);
+	ubi_init(ubi, baddr);
 	ubi->ub = ub;
 	return ubi;
 }

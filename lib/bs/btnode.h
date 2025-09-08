@@ -29,7 +29,7 @@ struct silofs_btnode_info {
 };
 
 struct silofs_btnode_info *
-silofs_bni_new(const struct silofs_paddr *paddr, struct silofs_alloc *alloc);
+silofs_bni_new(const struct silofs_baddr *baddr, struct silofs_alloc *alloc);
 
 void silofs_bni_del(struct silofs_btnode_info *bni,
                     struct silofs_alloc       *alloc);
@@ -59,19 +59,19 @@ uint64_t silofs_bni_median_key(const struct silofs_btnode_info *bni);
 size_t silofs_bni_nchilds(const struct silofs_btnode_info *bni);
 
 void silofs_bni_child_at(const struct silofs_btnode_info *bni, size_t slot,
-                         struct silofs_paddr *out_paddr);
+                         struct silofs_baddr *out_baddr);
 
 int silofs_bni_resolve(const struct silofs_btnode_info *bni, uint64_t key,
-                       struct silofs_paddr *out_paddr);
+                       struct silofs_baddr *out_baddr);
 
 int silofs_bni_update_child(struct silofs_btnode_info *bni, uint64_t key,
-                            const struct silofs_paddr *paddr);
+                            const struct silofs_baddr *baddr);
 
 int silofs_bni_expand(struct silofs_btnode_info *bni, uint64_t key,
-                      const struct silofs_paddr *paddr);
+                      const struct silofs_baddr *baddr);
 
 void silofs_bni_set_final(struct silofs_btnode_info *bni,
-                          const struct silofs_paddr *paddr);
+                          const struct silofs_baddr *baddr);
 
 struct silofs_btnode_info *
 silofs_bni_from_pni(const struct silofs_pnode_info *pni);

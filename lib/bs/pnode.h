@@ -22,19 +22,19 @@
 
 #define SILOFS_BTREE_KEY_NULL (0)
 
-struct silofs_paddr;
+struct silofs_baddr;
 struct silofs_bstore;
 
 /* base of all persistent-segment nodes */
 struct silofs_pnode_info {
-	struct silofs_paddr      pn_paddr;
+	struct silofs_baddr      pn_baddr;
 	struct silofs_hmapq_elem pn_hmqe;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_pni_init(struct silofs_pnode_info  *pni,
-                     const struct silofs_paddr *paddr);
+                     const struct silofs_baddr *baddr);
 
 void silofs_pni_fini(struct silofs_pnode_info *pni);
 

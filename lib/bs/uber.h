@@ -28,7 +28,7 @@ struct silofs_ub_info {
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 struct silofs_ub_info *
-silofs_ubi_new(const struct silofs_paddr *paddr, struct silofs_alloc *alloc);
+silofs_ubi_new(const struct silofs_baddr *baddr, struct silofs_alloc *alloc);
 
 void silofs_ubi_del(struct silofs_ub_info *ubi, struct silofs_alloc *alloc);
 

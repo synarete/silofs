@@ -344,13 +344,13 @@ static void bd_del(struct silofs_blob_desc *bd, struct silofs_alloc *alloc)
 	bd_free(bd, alloc);
 }
 
-static void bd_paddr_at(const struct silofs_blob_desc *bd, off_t pos,
-                        struct silofs_paddr *out_paddr)
+static void bd_baddr_at(const struct silofs_blob_desc *bd, off_t pos,
+                        struct silofs_baddr *out_baddr)
 {
 	if (!bd_is_valid_pos(bd, pos)) {
 		pos = SILOFS_OFF_NULL;
 	}
-	silofs_paddr_init(out_paddr, bd_refblob(bd), bd_refmtype(bd), pos);
+	silofs_baddr_init_raw(out_baddr, bd_refblob(bd), bd_refmtype(bd), pos);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -369,12 +369,12 @@ static void bdi_free(struct silofs_bdesc_info *bdi, struct silofs_alloc *alloc)
 }
 
 static void
-bdi_init(struct silofs_bdesc_info *bdi, const struct silofs_paddr *paddr)
+bdi_init(struct silofs_bdesc_info *bdi, const struct silofs_baddr *baddr)
 {
-	silofs_assert(!silofs_paddr_isnull(paddr));
-	silofs_assert_eq(paddr->mtype, SILOFS_MTYPE_BDESC);
+	silofs_assert(!silofs_baddr_isnull(baddr));
+	silofs_assert_eq(baddr->mtype, SILOFS_MTYPE_BDESC);
 
-	silofs_pni_init(&bdi->bd_pni, paddr);
+	silofs_pni_init(&bdi->bd_pni, baddr);
 	bdi->bd = nullptr;
 }
 
@@ -385,7 +385,7 @@ static void bdi_fini(struct silofs_bdesc_info *bdi)
 }
 
 struct silofs_bdesc_info *
-silofs_bdi_new(const struct silofs_paddr *paddr, struct silofs_alloc *alloc)
+silofs_bdi_new(const struct silofs_baddr *baddr, struct silofs_alloc *alloc)
 {
 	struct silofs_blob_desc *bd = nullptr;
 	struct silofs_bdesc_info *bdi = nullptr;
@@ -399,7 +399,7 @@ silofs_bdi_new(const struct silofs_paddr *paddr, struct silofs_alloc *alloc)
 		bd_del(bd, alloc);
 		return nullptr;
 	}
-	bdi_init(bdi, paddr);
+	bdi_init(bdi, baddr);
 	bdi->bd = bd;
 	return bdi;
 }
@@ -439,7 +439,7 @@ silofs_bdi_from_pni(const struct silofs_pnode_info *pni)
 	const struct silofs_bdesc_info *bdi = nullptr;
 
 	if (pni != nullptr) {
-		silofs_assert_eq(pni->pn_paddr.mtype, SILOFS_MTYPE_BDESC);
+		silofs_assert_eq(pni->pn_baddr.mtype, SILOFS_MTYPE_BDESC);
 		bdi = container_of2(pni, struct silofs_bdesc_info, bd_pni);
 	}
 	return bdi_unconst(bdi);
@@ -478,12 +478,12 @@ void silofs_bdi_set_refblob(struct silofs_bdesc_info *bdi,
 }
 
 int silofs_bdi_find_free(const struct silofs_bdesc_info *bdi,
-                         struct silofs_paddr *out_paddr)
+                         struct silofs_baddr *out_baddr)
 {
 	const struct silofs_blob_desc *bd = bdi->bd;
 	off_t pos;
 
-	silofs_paddr_reset(out_paddr);
+	silofs_baddr_reset(out_baddr);
 	if (!bd_has_free_slot(bd)) {
 		return -SILOFS_ENOSPC;
 	}
@@ -491,71 +491,71 @@ int silofs_bdi_find_free(const struct silofs_bdesc_info *bdi,
 	if (silofs_off_isnull(pos)) {
 		return -SILOFS_ENOSPC;
 	}
-	bd_paddr_at(bdi->bd, pos, out_paddr);
+	bd_baddr_at(bdi->bd, pos, out_baddr);
 	return 0;
 }
 
-static bool bdi_is_valid_paddr(const struct silofs_bdesc_info *bdi,
-                               const struct silofs_paddr *paddr)
+static bool bdi_is_valid_baddr(const struct silofs_bdesc_info *bdi,
+                               const struct silofs_baddr *baddr)
 {
-	if (!bd_has_refmtype(bdi->bd, paddr->mtype)) {
+	if (!bd_has_refmtype(bdi->bd, baddr->mtype)) {
 		return false;
 	}
-	if (!bd_is_valid_pos(bdi->bd, paddr->pos)) {
+	if (!bd_is_valid_pos(bdi->bd, baddr->pos)) {
 		return false;
 	}
-	if (!bd_has_refblob(bdi->bd, &paddr->blobid)) {
+	if (!bd_has_refblob(bdi->bd, &baddr->blobid)) {
 		return false;
 	}
 	return true;
 }
 
 int silofs_bdi_test_free(const struct silofs_bdesc_info *bdi,
-                         const struct silofs_paddr *paddr)
+                         const struct silofs_baddr *baddr)
 {
-	if (!bdi_is_valid_paddr(bdi, paddr)) {
+	if (!bdi_is_valid_baddr(bdi, baddr)) {
 		return -SILOFS_EINVAL;
 	}
 	if (!bd_has_free_slot(bdi->bd)) {
 		return -SILOFS_ENOSPC;
 	}
-	if (!bd_has_free_slot_by(bdi->bd, paddr->pos)) {
+	if (!bd_has_free_slot_by(bdi->bd, baddr->pos)) {
 		return -SILOFS_ENOENT;
 	}
 	return 0;
 }
 
 int silofs_bdi_mark_free(struct silofs_bdesc_info *bdi,
-                         const struct silofs_paddr *paddr)
+                         const struct silofs_baddr *baddr)
 {
-	if (!bdi_is_valid_paddr(bdi, paddr)) {
+	if (!bdi_is_valid_baddr(bdi, baddr)) {
 		return -SILOFS_EINVAL;
 	}
 	if (!bd_has_used_slot(bdi->bd)) {
 		return -SILOFS_ENOENT;
 	}
-	if (!bd_has_free_slot_by(bdi->bd, paddr->pos)) {
+	if (!bd_has_free_slot_by(bdi->bd, baddr->pos)) {
 		return -SILOFS_ENOENT;
 	}
-	bd_mark_used_slot_by(bdi->bd, paddr->pos);
+	bd_mark_used_slot_by(bdi->bd, baddr->pos);
 	bd_inc_nobjs(bdi->bd);
 	silofs_bdi_dirtify(bdi);
 	return 0;
 }
 
 int silofs_bdi_mark_used(struct silofs_bdesc_info *bdi,
-                         const struct silofs_paddr *paddr)
+                         const struct silofs_baddr *baddr)
 {
-	if (!bdi_is_valid_paddr(bdi, paddr)) {
+	if (!bdi_is_valid_baddr(bdi, baddr)) {
 		return -SILOFS_EINVAL;
 	}
 	if (!bd_has_free_slot(bdi->bd)) {
 		return -SILOFS_ENOENT;
 	}
-	if (!bd_has_used_slot_by(bdi->bd, paddr->pos)) {
+	if (!bd_has_used_slot_by(bdi->bd, baddr->pos)) {
 		return -SILOFS_ENOENT;
 	}
-	bd_mark_free_slot_by(bdi->bd, paddr->pos);
+	bd_mark_free_slot_by(bdi->bd, baddr->pos);
 	bd_dec_nobjs(bdi->bd);
 	silofs_bdi_dirtify(bdi);
 	return 0;

@@ -32,7 +32,7 @@ struct silofs_btree_base {
 /* b+tree in-memory control object */
 struct silofs_btree {
 	struct silofs_btree_base bt_base;
-	struct silofs_paddr      bt_root;
+	struct silofs_baddr      bt_root;
 };
 
 void silofs_btree_init(struct silofs_btree            *btree,
@@ -41,16 +41,16 @@ void silofs_btree_init(struct silofs_btree            *btree,
 void silofs_btree_fini(struct silofs_btree *btree);
 
 void silofs_btree_update_root(struct silofs_btree       *btree,
-                              const struct silofs_paddr *paddr);
+                              const struct silofs_baddr *baddr);
 
 int silofs_btree_format(struct silofs_btree *btree);
 
 int silofs_btree_lookup(struct silofs_btree       *btree,
                         const struct silofs_vaddr *vaddr,
-                        struct silofs_paddr       *out_paddr);
+                        struct silofs_baddr       *out_baddr);
 
 int silofs_btree_insert(struct silofs_btree       *btree,
                         const struct silofs_vaddr *vaddr,
-                        const struct silofs_paddr *paddr);
+                        const struct silofs_baddr *baddr);
 
 #endif /* SILOFS_BTREE_H_ */

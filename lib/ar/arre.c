@@ -153,8 +153,9 @@ static void ard_update_baddr_by(struct silofs_ar_desc *ard,
 		.iov_base = unconst(rov->rov_base),
 		.iov_len = rov->rov_len,
 	};
+	const enum silofs_mtype mtype = ard->laddr.lsid.mtype;
 
-	silofs_calc_baddr_of(md, &iov, 1, &baddr);
+	silofs_calc_baddr_of(md, mtype, &iov, 1, &baddr);
 	ard_update_baddr(ard, &baddr);
 }
 
@@ -357,7 +358,7 @@ static void aiview_calc_baddr(const struct silofs_ar_index_view *aiv,
 	iov[1].iov_base = unconst(descs);
 	iov[1].iov_len = aiv->ndescs_max * sizeof(*descs);
 
-	silofs_calc_baddr_of(md, iov, 2, out_baddr);
+	silofs_calc_baddr_of(md, 0 /* XXX */, iov, 2, out_baddr);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

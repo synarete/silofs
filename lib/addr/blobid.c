@@ -32,10 +32,14 @@ const struct silofs_blobid *silofs_blobid_none(void)
 void silofs_blobid_generate(struct silofs_blobid *blobid)
 {
 	struct silofs_uuid *uu = &blobid->u.uuid[0];
+	const uint64_t now = (uint64_t)silofs_time_mono_now();
+	uint64_t u;
 
 	silofs_uuid_generate(uu);
-	blobid->u.d[2] = silofs_hash_xxh64(uu->uu, sizeof(uu->uu), uu->uu[0]);
-	blobid->u.d[3] = silofs_twang_mix64(blobid->u.d[2]);
+	u = silofs_hash_xxh64(uu->uu, sizeof(uu->uu), uu->uu[0]);
+	silofs_u8b_from_u64(&blobid->u.bid[16], u);
+	u = silofs_twang_mix64(u ^ now);
+	silofs_u8b_from_u64(&blobid->u.bid[24], u);
 }
 
 void silofs_blobid_assign(struct silofs_blobid *blobid,

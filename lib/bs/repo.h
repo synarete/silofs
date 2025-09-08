@@ -144,11 +144,11 @@ int silofs_repo_flush_blob(struct silofs_repo         *repo,
                            const struct silofs_blobid *blobid);
 
 int silofs_repo_save_pobj(struct silofs_repo        *repo,
-                          const struct silofs_paddr *paddr,
+                          const struct silofs_baddr *baddr,
                           const struct silofs_rovec *rovec);
 
 int silofs_repo_load_pobj(struct silofs_repo        *repo,
-                          const struct silofs_paddr *paddr,
+                          const struct silofs_baddr *baddr,
                           const struct silofs_rwvec *rwvec);
 
 #endif /* SILOFS_REPO_H_ */

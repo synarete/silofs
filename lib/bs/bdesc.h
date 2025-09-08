@@ -31,7 +31,7 @@ struct silofs_bdesc_info *
 silofs_bdi_from_pni(const struct silofs_pnode_info *pni);
 
 struct silofs_bdesc_info *
-silofs_bdi_new(const struct silofs_paddr *paddr, struct silofs_alloc *alloc);
+silofs_bdi_new(const struct silofs_baddr *baddr, struct silofs_alloc *alloc);
 
 void silofs_bdi_del(struct silofs_bdesc_info *bdi, struct silofs_alloc *alloc);
 
@@ -49,15 +49,15 @@ void silofs_bdi_set_refblob(struct silofs_bdesc_info   *bdi,
                             const struct silofs_blobid *blobid);
 
 int silofs_bdi_find_free(const struct silofs_bdesc_info *bdi,
-                         struct silofs_paddr            *out_paddr);
+                         struct silofs_baddr            *out_baddr);
 
 int silofs_bdi_test_free(const struct silofs_bdesc_info *bdi,
-                         const struct silofs_paddr      *paddr);
+                         const struct silofs_baddr      *baddr);
 
 int silofs_bdi_mark_free(struct silofs_bdesc_info  *bdi,
-                         const struct silofs_paddr *paddr);
+                         const struct silofs_baddr *baddr);
 
 int silofs_bdi_mark_used(struct silofs_bdesc_info  *bdi,
-                         const struct silofs_paddr *paddr);
+                         const struct silofs_baddr *baddr);
 
 #endif /* SILOFS_BDESC_H_ */

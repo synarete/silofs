@@ -384,20 +384,25 @@ class LintEnv:
     """Lint context object for accumulating checkers state."""
 
     def __init__(self) -> None:
+        self.wordir = Path.cwd()
         self.progname = Path(sys.argv[0]).name
         self.err_count: int = 0
 
     def lerror(self, sl: SourceLine, msg: str) -> None:
-        src = str(sl.path)
-        lno = str(sl.lnum)
-        self._error(f"{src}:{lno}", msg)
+        rpath = self._rpath(sl.path)
+        self._error(f"{rpath}:{sl.lnum}: ", msg)
 
     def ferror(self, sf: SourceFile, msg: str) -> None:
-        self._error(str(sf.path), msg)
+        rpath = self._rpath(sf.path)
+        self._error(f"{rpath}: ", msg)
 
     def _error(self, meta: str, msg: str) -> None:
-        print(f"{self.progname}: {meta}: {msg}")
+        print(f"{self.progname}: {meta}{msg}")
         self.err_count = self.err_count + 1
+
+    def _rpath(self, path: Path) -> Path:
+        rpath = path.relative_to(self.wordir)
+        return rpath if str(rpath) != "" else path
 
 
 # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .

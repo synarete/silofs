@@ -422,6 +422,14 @@ static void affirm_ondisk_archive(void)
 {
 	REQUIRE_SIZEOF(struct silofs_ar_desc256b, 256);
 	REQUIRE_SIZEOF_1K(struct silofs_ar_hdr1k);
+
+	REQUIRE_OFFSET64(struct silofs_arix_block, ab_hdr, 0);
+	REQUIRE_OFFSET64(struct silofs_arix_block, ab_btime, 32);
+	REQUIRE_OFFSET64(struct silofs_arix_block, ab_flags, 48);
+	REQUIRE_OFFSET32(struct silofs_arix_block, ab_ndescs, 52);
+	REQUIRE_OFFSET32(struct silofs_arix_block, ab_next, 64);
+	REQUIRE_OFFSET64(struct silofs_arix_block, ab_descs, 256);
+	REQUIRE_SIZEOF_64K(struct silofs_arix_block);
 }
 
 static void affirm_ioctl_types(void)

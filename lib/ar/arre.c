@@ -20,13 +20,8 @@
 #include "fs.h"
 #include "env.h"
 #include "walk.h"
+#include "index.h"
 #include "arre.h"
-
-struct silofs_ar_desc {
-	struct silofs_baddr baddr;
-	struct silofs_laddr laddr;
-	size_t len;
-};
 
 struct silofs_ar_desc_info {
 	struct silofs_list_head lh;
@@ -113,72 +108,11 @@ static void arhdr1k_init(struct silofs_ar_hdr1k *ah1k)
 {
 	silofs_memzero(ah1k, sizeof(*ah1k));
 	arhdr1k_set_magic(ah1k, SILOFS_AR_INDEX_MAGIC);
-	arhdr1k_set_version(ah1k, SILOFS_PACK_VERSION);
+	arhdr1k_set_version(ah1k, SILOFS_FMT_VERSION);
 	arhdr1k_set_flags(ah1k, 0);
 	arhdr1k_set_ndescs(ah1k, 0);
 	arhdr1k_set_descs_csum(ah1k, 0);
 	arhdr1k_set_hdr_csum(ah1k, 0);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static void ard_init(struct silofs_ar_desc *ard,
-                     const struct silofs_laddr *laddr, size_t len)
-
-{
-	silofs_memzero(ard, sizeof(*ard));
-	silofs_laddr_assign(&ard->laddr, laddr);
-	ard->len = len;
-}
-
-static void ard_fini(struct silofs_ar_desc *ard)
-{
-	silofs_baddr_reset(&ard->baddr);
-	silofs_laddr_reset(&ard->laddr);
-	ard->len = 0;
-}
-
-static void
-ard_update_baddr(struct silofs_ar_desc *ard, const struct silofs_baddr *baddr)
-{
-	silofs_baddr_assign(&ard->baddr, baddr);
-}
-
-static void ard_update_baddr_by(struct silofs_ar_desc *ard,
-                                const struct silofs_mdigest *md,
-                                const struct silofs_rovec *rov)
-{
-	struct silofs_baddr baddr;
-	const struct iovec iov = {
-		.iov_base = unconst(rov->rov_base),
-		.iov_len = rov->rov_len,
-	};
-	const enum silofs_mtype mtype = ard->laddr.lsid.mtype;
-
-	silofs_calc_baddr_of(md, mtype, &iov, 1, &baddr);
-	ard_update_baddr(ard, &baddr);
-}
-
-static void ardsc256b_reset(struct silofs_ar_desc256b *ard256)
-{
-	memset(ard256, 0, sizeof(*ard256));
-}
-
-static void ardsc256b_htox(struct silofs_ar_desc256b *ard256,
-                           const struct silofs_ar_desc *ard)
-{
-	ardsc256b_reset(ard256);
-	silofs_baddr64b_htox(&ard256->pd_baddr, &ard->baddr);
-	silofs_laddr64b_htox(&ard256->pd_laddr, &ard->laddr);
-	ard256->pd_len = silofs_cpu_to_le64(ard->len);
-}
-
-static void ardsc256b_xtoh(const struct silofs_ar_desc256b *ard256,
-                           struct silofs_ar_desc *ard)
-{
-	silofs_baddr64b_xtoh(&ard256->pd_baddr, &ard->baddr);
-	silofs_laddr64b_xtoh(&ard256->pd_laddr, &ard->laddr);
-	ard->len = silofs_le64_to_cpu(ard256->pd_len);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -212,13 +146,13 @@ static void adi_init(struct silofs_ar_desc_info *adi,
                      const struct silofs_laddr *laddr, size_t len)
 {
 	silofs_list_head_init(&adi->lh);
-	ard_init(&adi->ard, laddr, len);
+	silofs_ard_init(&adi->ard, laddr, len);
 }
 
 static void adi_fini(struct silofs_ar_desc_info *adi)
 {
 	silofs_list_head_fini(&adi->lh);
-	ard_fini(&adi->ard);
+	silofs_ard_fini(&adi->ard);
 }
 
 static struct silofs_ar_desc_info *
@@ -329,7 +263,7 @@ static int aiview_check_hdr(const struct silofs_ar_index_view *aiv)
 	if (arhdr1k_magic(ah1k) != SILOFS_AR_INDEX_MAGIC) {
 		return -SILOFS_EFSCORRUPTED;
 	}
-	if (arhdr1k_version(ah1k) != SILOFS_PACK_VERSION) {
+	if (arhdr1k_version(ah1k) != SILOFS_FMT_VERSION) {
 		return -SILOFS_EPROTO;
 	}
 	csum_set = arhdr1k_hdr_csum(ah1k);
@@ -488,7 +422,7 @@ static int arix_encode_descs(const struct silofs_ar_index *arix,
 		}
 		adi = adi_from_lh(itr);
 		pdx = &aiview->descs[aiview->ndescs++];
-		ardsc256b_htox(pdx, &adi->ard);
+		silofs_ard256b_htox(pdx, &adi->ard);
 		itr = silofs_listq_next(descq, itr);
 	}
 	return 0;
@@ -506,7 +440,7 @@ static int arix_decode_descs(struct silofs_ar_index *arix,
 		if (adi == nullptr) {
 			return -SILOFS_ENOMEM;
 		}
-		ardsc256b_xtoh(pd256, &adi->ard);
+		silofs_ard256b_xtoh(pd256, &adi->ard);
 	}
 	return 0;
 }
@@ -748,7 +682,7 @@ static int arc_update_hash_of(const struct silofs_ar_ctx *ar_ctx,
 	};
 	const struct silofs_mdigest *md = &ar_ctx->arix.mdigest;
 
-	ard_update_baddr_by(&adi->ard, md, &rov);
+	silofs_ard_update_baddr(&adi->ard, md, &rov);
 	return 0;
 }
 

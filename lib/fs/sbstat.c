@@ -126,6 +126,7 @@ spgs256_gauge_of(const struct silofs_space_gauges256 *spgs256,
 		ret = &spgs256->sg_ndatabk;
 		break;
 	case SILOFS_MTYPE_UBER:
+	case SILOFS_MTYPE_ARIX:
 	case SILOFS_MTYPE_BDESC:
 	case SILOFS_MTYPE_BTNODE:
 	case SILOFS_MTYPE_MBR:
@@ -350,6 +351,7 @@ spgs_gauge_of(const struct silofs_space_gauges *spgs, enum silofs_mtype mtype)
 		ret = &spgs->ndatabk;
 		break;
 	case SILOFS_MTYPE_UBER:
+	case SILOFS_MTYPE_ARIX:
 	case SILOFS_MTYPE_BDESC:
 	case SILOFS_MTYPE_BTNODE:
 	case SILOFS_MTYPE_MBR:

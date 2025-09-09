@@ -22,9 +22,6 @@
 
 #define SILOFS_BTREE_KEY_NULL (0)
 
-struct silofs_baddr;
-struct silofs_bstore;
-
 /* base of all persistent-segment nodes */
 struct silofs_pnode_info {
 	struct silofs_baddr      pn_baddr;

@@ -414,6 +414,7 @@ static int bstore_commit_pnode(struct silofs_bstore *bstore,
 
 	switch (mtype) {
 	case SILOFS_MTYPE_UBER:
+	case SILOFS_MTYPE_ARIX:
 		/* XXX */
 		silofs_assert_ok(ret);
 		break;

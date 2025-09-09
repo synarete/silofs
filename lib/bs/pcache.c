@@ -335,6 +335,7 @@ pcache_evict_by(struct silofs_pcache *pcache, struct silofs_pnode_info *pni)
 
 	switch (mtype) {
 	case SILOFS_MTYPE_UBER:
+	case SILOFS_MTYPE_ARIX:
 		/* XXX */
 		silofs_assert_null(pni);
 		break;

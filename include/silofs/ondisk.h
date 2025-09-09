@@ -26,9 +26,6 @@
 /* current repo format version number */
 #define SILOFS_REPO_VERSION (1)
 
-/* current pack format version number */
-#define SILOFS_PACK_VERSION (1)
-
 /* repo meta-file magic-signature (ASCII: "#SILOFS#") */
 #define SILOFS_REPO_META_MAGIC (0x2353464F4C495323L)
 
@@ -353,21 +350,22 @@ enum silofs_mtype {
 	SILOFS_MTYPE_NONE   = 0,
 	SILOFS_MTYPE_MBR    = 1,
 	SILOFS_MTYPE_UBER   = 2,
-	SILOFS_MTYPE_BDESC  = 3,
-	SILOFS_MTYPE_BTNODE = 4,
-	SILOFS_MTYPE_SUPER  = 5,
-	SILOFS_MTYPE_SPNODE = 6,
-	SILOFS_MTYPE_SPLEAF = 7,
-	SILOFS_MTYPE_LSMAP  = 8,
-	SILOFS_MTYPE_INODE  = 9,
-	SILOFS_MTYPE_XANODE = 10,
-	SILOFS_MTYPE_DTNODE = 11,
-	SILOFS_MTYPE_SYMVAL = 12,
-	SILOFS_MTYPE_FTNODE = 13,
-	SILOFS_MTYPE_DATA1K = 14,
-	SILOFS_MTYPE_DATA4K = 15,
-	SILOFS_MTYPE_DATABK = 16,
-	SILOFS_MTYPE_LAST   = 17, /* keep last */
+	SILOFS_MTYPE_ARIX   = 3,
+	SILOFS_MTYPE_BDESC  = 4,
+	SILOFS_MTYPE_BTNODE = 5,
+	SILOFS_MTYPE_SUPER  = 6,
+	SILOFS_MTYPE_SPNODE = 7,
+	SILOFS_MTYPE_SPLEAF = 8,
+	SILOFS_MTYPE_LSMAP  = 9,
+	SILOFS_MTYPE_INODE  = 10,
+	SILOFS_MTYPE_XANODE = 11,
+	SILOFS_MTYPE_DTNODE = 12,
+	SILOFS_MTYPE_SYMVAL = 13,
+	SILOFS_MTYPE_FTNODE = 14,
+	SILOFS_MTYPE_DATA1K = 15,
+	SILOFS_MTYPE_DATA4K = 16,
+	SILOFS_MTYPE_DATABK = 17,
+	SILOFS_MTYPE_LAST   = 18, /* keep last */
 };
 
 /* logical heights of unode mappings */
@@ -972,13 +970,13 @@ struct silofs_uber_block {
 
 /* archive descriptor */
 struct silofs_ar_desc256b {
-	struct silofs_baddr64b pd_baddr;
-	struct silofs_laddr64b pd_laddr;
-	uint64_t               pd_len;
-	uint8_t                pd_reserved[120];
+	struct silofs_baddr64b ad_baddr;
+	struct silofs_laddr64b ad_laddr;
+	uint64_t               ad_len;
+	uint8_t                ad_reserved[120];
 } silofs_attr_aligned64;
 
-/* pac-archive header */
+/* archive header */
 struct silofs_ar_hdr1k {
 	uint64_t ph_magic;
 	uint32_t ph_version;
@@ -989,6 +987,18 @@ struct silofs_ar_hdr1k {
 	uint64_t ph_hdr_csum;
 } silofs_attr_aligned64;
 
+/* archive-index block */
+struct silofs_arix_block {
+	struct silofs_header      ab_hdr;
+	struct silofs_timespec    ab_btime;
+	uint32_t                  ab_flags;
+	uint32_t                  ab_ndescs;
+	uint8_t                   ab_reserved1[8];
+	struct silofs_baddr64b    ab_next;
+	uint8_t                   ab_reserved2[128];
+	struct silofs_ar_desc256b ab_descs[255];
+} silofs_attr_aligned64;
+
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 /* semantic "view" into meta elements */
@@ -996,6 +1006,7 @@ union silofs_view_u {
 	struct silofs_header       hdr[2];
 	struct silofs_mbr1k        mbr;
 	struct silofs_uber_block   ub;
+	struct silofs_arix_block   ab;
 	struct silofs_blob_desc    bd;
 	struct silofs_btree_node   btn;
 	struct silofs_super_block  sb;

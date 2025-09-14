@@ -930,7 +930,7 @@ static int inspc_walk_fs(struct silofs_inspect_ctx *insp_ctx)
 int silofs_walkfs_at(struct silofs_task_ctx *task, struct silofs_sb_info *sbi,
                      const struct silofs_laddr_visitor *lvis)
 {
-	struct silofs_alloc *alloc = task->t_env->base.alloc;
+	struct silofs_alloc *alloc = task->t_env->meta.alloc;
 	struct silofs_inspect_ctx *insp_ctx = nullptr;
 	int ret;
 

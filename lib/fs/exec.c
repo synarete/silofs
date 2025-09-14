@@ -132,8 +132,8 @@ static int sqe_encrypted_iovs(struct silofs_submitq_ent *sqe,
 
 	for (size_t i = 0; i < sqe->cnt; ++i) {
 		ref = &refs_arr[i];
-		err = silofs_encrypt_view(sqe->env, &ref->llink, ref->view,
-		                          sqe->iov[i].iov_base);
+		err = silofs_encrypt_lview(sqe->env, &ref->llink, ref->view,
+		                           sqe->iov[i].iov_base);
 		if (err) {
 			return err;
 		}
@@ -162,7 +162,7 @@ out_err:
 
 static int sqe_do_write(const struct silofs_submitq_ent *sqe)
 {
-	return silofs_repo_writev_at(sqe->env->base.repo, &sqe->laddr_base,
+	return silofs_repo_writev_at(sqe->env->meta.repo, &sqe->laddr_base,
 	                             sqe->iov, sqe->cnt);
 }
 
@@ -432,10 +432,10 @@ void silofs_task_init(struct silofs_task_ctx *task, struct silofs_env *env)
 	cred_init(&task->t_auth.creds.host_cred);
 	task->t_env = env;
 	task->t_creds = &task->t_auth.creds;
-	task->t_idsm = env->base.idsmap;
-	task->t_repo = env->base.repo;
-	task->t_lcache = env->base.lcache;
-	task->t_submitq = env->base.submitq;
+	task->t_idsm = env->meta.idsmap;
+	task->t_repo = env->meta.repo;
+	task->t_lcache = env->meta.lcache;
+	task->t_submitq = env->meta.submitq;
 	task->t_looseq = nullptr;
 	task->t_upper_id = 0;
 	task->t_interrupt = 0;

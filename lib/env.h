@@ -34,8 +34,8 @@ struct silofs_env_opstat {
 	/* TODO: Have counter per-operation */
 };
 
-/* base members of env-block (provided) */
-struct silofs_env_base {
+/* environment meta settings */
+struct silofs_env_meta {
 	const struct silofs_password *passwd;
 	const struct silofs_env_args *args;
 	struct silofs_alloc          *alloc;
@@ -51,7 +51,7 @@ struct silofs_env_base {
 
 /* top-level environment object */
 struct silofs_env {
-	struct silofs_env_base   base;
+	struct silofs_env_meta   meta;
 	struct silofs_mbrinfo    mbri;
 	struct silofs_rwlock     rwlock;
 	struct silofs_mutex      mutex;
@@ -72,7 +72,7 @@ struct silofs_env {
 void silofs_affirm_ondisk_format(void);
 
 int silofs_env_init(struct silofs_env            *env,
-                    const struct silofs_env_base *base);
+                    const struct silofs_env_meta *base);
 
 void silofs_env_fini(struct silofs_env *env);
 

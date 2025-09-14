@@ -152,7 +152,7 @@ static int fetch_cached_uni(const struct silofs_env *env,
                             const struct silofs_uaddr *uaddr,
                             struct silofs_unode_info **out_uni)
 {
-	*out_uni = silofs_lcache_lookup_uni(env->base.lcache, uaddr);
+	*out_uni = silofs_lcache_lookup_uni(env->meta.lcache, uaddr);
 	return (*out_uni == nullptr) ? -SILOFS_ENOENT : 0;
 }
 
@@ -166,7 +166,7 @@ static int
 create_cached_uni(struct silofs_env *env, const struct silofs_uaddr *uaddr,
                   struct silofs_unode_info **out_uni)
 {
-	*out_uni = silofs_lcache_create_uni(env->base.lcache, uaddr);
+	*out_uni = silofs_lcache_create_uni(env->meta.lcache, uaddr);
 	if (*out_uni == nullptr) {
 		return -SILOFS_ENOMEM;
 	}
@@ -190,7 +190,7 @@ require_cached_uni(struct silofs_env *env, const struct silofs_uaddr *uaddr,
 static void
 forget_cached_uni(const struct silofs_env *env, struct silofs_unode_info *uni)
 {
-	silofs_lcache_forget_uni(env->base.lcache, uni);
+	silofs_lcache_forget_uni(env->meta.lcache, uni);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -222,7 +222,7 @@ lookup_lseg(const struct silofs_env *env, const struct silofs_lsid *lsid)
 {
 	struct stat st;
 
-	return silofs_repo_stat_lseg(env->base.repo, lsid, true, &st);
+	return silofs_repo_stat_lseg(env->meta.repo, lsid, true, &st);
 }
 
 static int
@@ -231,7 +231,7 @@ stage_lseg(const struct silofs_env *env, const struct silofs_lsid *lsid)
 	int err;
 	const bool rw = silofs_lsid_rw_mode(env, lsid);
 
-	err = silofs_repo_stage_lseg(env->base.repo, rw, lsid);
+	err = silofs_repo_stage_lseg(env->meta.repo, rw, lsid);
 	if (err && (err != -SILOFS_ENOENT)) {
 		log_dbg("stage lseg failed: err=%d", err);
 	}
@@ -243,7 +243,7 @@ spawn_lseg(const struct silofs_env *env, const struct silofs_lsid *lsid)
 {
 	int err;
 
-	err = silofs_repo_spawn_lseg(env->base.repo, lsid);
+	err = silofs_repo_spawn_lseg(env->meta.repo, lsid);
 	if (err && (err != -SILOFS_ENOENT)) {
 		log_dbg("spawn lseg failed: err=%d", err);
 	}
@@ -276,7 +276,7 @@ load_view_at(const struct silofs_env *env, const struct silofs_laddr *laddr,
 {
 	const size_t len = silofs_laddr_len(laddr);
 
-	return silofs_repo_read_at(env->base.repo, laddr, view, len);
+	return silofs_repo_read_at(env->meta.repo, laddr, view, len);
 }
 
 static int

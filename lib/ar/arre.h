@@ -17,9 +17,11 @@
 #ifndef SILOFS_ARRE_H_
 #define SILOFS_ARRE_H_
 
+#include <silofs/ondisk.h>
 #include "infra.h"
-
-struct silofs_task_ctx;
+#include "addr.h"
+#include "fs.h"
+#include "index.h"
 
 int silofs_do_archive_fs(struct silofs_task_ctx *task,
                          struct silofs_baddr    *out_ar_mref);

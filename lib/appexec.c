@@ -144,7 +144,7 @@ static void drop_relax_caches(struct silofs_task_ctx *task)
 
 static size_t calc_aligned_fs_cap(const struct silofs_task_ctx *task)
 {
-	const size_t fs_cap_want = task->t_env->base.args->capacity;
+	const size_t fs_cap_want = task->t_env->meta.args->capacity;
 	const size_t align_size = SILOFS_LSEG_SIZE_MAX;
 
 	return (fs_cap_want / align_size) * align_size;
@@ -555,7 +555,7 @@ static int appexec_restore_fs(struct silofs_task_ctx *task,
 
 int silofs_post_exec_fs(struct silofs_env *env)
 {
-	const struct silofs_fuseq *fuseq = env->base.fuseq;
+	const struct silofs_fuseq *fuseq = env->meta.fuseq;
 	int ret = 0;
 
 	if ((fuseq != nullptr) && fuseq->fq_got_init) {
@@ -587,7 +587,7 @@ static int map_task_creds(struct silofs_task_ctx *task)
 
 static int make_task(struct silofs_env *env, struct silofs_task_ctx *task)
 {
-	const struct silofs_env_args *args = env->base.args;
+	const struct silofs_env_args *args = env->meta.args;
 
 	silofs_task_init(task, env);
 	silofs_task_set_ts(task, true);
@@ -637,15 +637,15 @@ int silofs_close_repo(struct silofs_env *env)
 	int ret;
 
 	silofs_env_lock(env);
-	ret = silofs_repo_close(env->base.repo);
+	ret = silofs_repo_close(env->meta.repo);
 	silofs_env_unlock(env);
 	return ret;
 }
 
 static int do_mount_and_exec(struct silofs_env *env)
 {
-	const struct silofs_env_args *args = env->base.args;
-	struct silofs_fuseq *fuseq = env->base.fuseq;
+	const struct silofs_env_args *args = env->meta.args;
+	struct silofs_fuseq *fuseq = env->meta.fuseq;
 	int err;
 
 	err = silofs_fuseq_mount(fuseq, env, args->boot_args.mntdir);
@@ -661,7 +661,7 @@ static int do_mount_and_exec(struct silofs_env *env)
 
 static bool run_with_fuse(const struct silofs_env *env)
 {
-	const struct silofs_fuseq *fuseq = env->base.fuseq;
+	const struct silofs_fuseq *fuseq = env->meta.fuseq;
 
 	return (fuseq != nullptr) &&
 	       silofs_env_hasflag(env, SILOFS_F_WITHFUSE);
@@ -669,7 +669,7 @@ static bool run_with_fuse(const struct silofs_env *env)
 
 int silofs_exec_fs(struct silofs_env *env)
 {
-	struct silofs_fuseq *fuseq = env->base.fuseq;
+	struct silofs_fuseq *fuseq = env->meta.fuseq;
 	int err;
 
 	if (!run_with_fuse(env)) {
@@ -686,8 +686,8 @@ int silofs_exec_fs(struct silofs_env *env)
 void silofs_halt_fs(struct silofs_env *env)
 {
 	silofs_env_lock(env);
-	if (env->base.fuseq != nullptr) {
-		env->base.fuseq->fq_active = 0;
+	if (env->meta.fuseq != nullptr) {
+		env->meta.fuseq->fq_active = 0;
 	}
 	silofs_env_unlock(env);
 }
@@ -708,8 +708,8 @@ void silofs_stat_fs(const struct silofs_env *env,
                     struct silofs_cache_stats *cst)
 {
 	struct silofs_alloc_stat alst = { .nbytes_use = 0 };
-	const struct silofs_alloc *alloc = env->base.alloc;
-	const struct silofs_lcache *lcache = env->base.lcache;
+	const struct silofs_alloc *alloc = env->meta.alloc;
+	const struct silofs_lcache *lcache = env->meta.lcache;
 
 	silofs_memzero(cst, sizeof(*cst));
 	silofs_memstat(alloc, &alst);
@@ -733,7 +733,7 @@ static int check_fs_capacity(size_t cap_size)
 
 static int check_want_capacity(const struct silofs_env *env)
 {
-	const size_t cap_want = env->base.args->capacity;
+	const size_t cap_want = env->meta.args->capacity;
 	int err;
 
 	err = check_fs_capacity(cap_want);
@@ -747,14 +747,14 @@ static int check_want_capacity(const struct silofs_env *env)
 
 static int check_owner_ids(const struct silofs_env *env)
 {
-	const struct silofs_env_args *args = env->base.args;
+	const struct silofs_env_args *args = env->meta.args;
 	const uid_t owner_uid = args->uid;
 	const gid_t owner_gid = args->gid;
 	uid_t suid;
 	gid_t sgid;
 	int err;
 
-	err = silofs_idsmap_map_uidgid(env->base.idsmap, owner_uid, owner_gid,
+	err = silofs_idsmap_map_uidgid(env->meta.idsmap, owner_uid, owner_gid,
 	                               &suid, &sgid);
 	if (err) {
 		log_err("unable to map owner credentials: uid=%ld gid=%ld",
@@ -782,7 +782,7 @@ int silofs_format_repo(struct silofs_env *env)
 	int ret;
 
 	silofs_env_lock(env);
-	ret = silofs_repo_format(env->base.repo);
+	ret = silofs_repo_format(env->meta.repo);
 	silofs_env_unlock(env);
 	return ret;
 }
@@ -792,7 +792,7 @@ int silofs_open_repo(struct silofs_env *env)
 	int ret;
 
 	silofs_env_lock(env);
-	ret = silofs_repo_open(env->base.repo);
+	ret = silofs_repo_open(env->meta.repo);
 	silofs_env_unlock(env);
 	return ret;
 }
@@ -1082,7 +1082,7 @@ int silofs_restore_fs(struct silofs_env *env,
 
 const struct silofs_env_args *silofs_get_env_args(const struct silofs_env *env)
 {
-	return env->base.args;
+	return env->meta.args;
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

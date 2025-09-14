@@ -1359,10 +1359,7 @@ struct silofs_fileaf_info *silofs_fli_from_vni(struct silofs_vnode_info *vni)
 static int
 view_verify_by_hdr(const struct silofs_view *view, enum silofs_mtype mtype)
 {
-	const struct silofs_header *hdr = &view->u.hdr[0];
-
-	return silofs_hdr_verify(hdr, (uint8_t)mtype, silofs_mtype_size(mtype),
-	                         SILOFS_HDRF_CSUM);
+	return silofs_hdr_verify2(&view->u.hdr[0], mtype);
 }
 
 static int

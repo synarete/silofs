@@ -26,9 +26,9 @@ encrypt_view_with(const struct silofs_env *env,
 	return silofs_encrypt_buf(&env->enc_cipher, ivkey, view, ptr, len);
 }
 
-int silofs_encrypt_view(const struct silofs_env *env,
-                        const struct silofs_llink *llink,
-                        const struct silofs_view *view, void *ptr)
+int silofs_encrypt_lview(const struct silofs_env *env,
+                         const struct silofs_llink *llink,
+                         const struct silofs_view *view, void *ptr)
 {
 	const struct silofs_ivkey *ivkey = &llink->ivkey;
 	const size_t len = silofs_laddr_len(&llink->laddr);

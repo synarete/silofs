@@ -57,7 +57,7 @@ static void env_rebind_sbi(struct silofs_env *env, struct silofs_sb_info *sbi)
 
 static void env_update_owner(struct silofs_env *env)
 {
-	const struct silofs_env_args *args = env->base.args;
+	const struct silofs_env_args *args = env->meta.args;
 
 	env->owner_cred.uid = args->uid;
 	env->owner_cred.gid = args->gid;
@@ -66,7 +66,7 @@ static void env_update_owner(struct silofs_env *env)
 
 static void env_update_mntflags(struct silofs_env *env)
 {
-	const enum silofs_flags flags = env->base.args->flags;
+	const enum silofs_flags flags = env->meta.args->flags;
 	unsigned long ms_flag_with = 0;
 	unsigned long ms_flag_dont = 0;
 
@@ -112,7 +112,7 @@ static size_t env_calc_iopen_limit(const struct silofs_env *env)
 	const size_t align = 128;
 	size_t lim;
 
-	silofs_memstat(env->base.alloc, &st);
+	silofs_memstat(env->meta.alloc, &st);
 	lim = (st.nbytes_max / (2 * SILOFS_LBK_SIZE));
 	return silofs_div_round_up(lim, align) * align;
 }
@@ -127,9 +127,9 @@ static void env_init_opstat(struct silofs_env *env)
 }
 
 static void
-env_init_commons(struct silofs_env *env, const struct silofs_env_base *base)
+env_init_commons(struct silofs_env *env, const struct silofs_env_meta *base)
 {
-	memcpy(&env->base, base, sizeof(env->base));
+	memcpy(&env->meta, base, sizeof(env->meta));
 	env->init_time = silofs_time_mono_now();
 	env->iconv_set = false;
 	env->sbi = nullptr;
@@ -138,7 +138,7 @@ env_init_commons(struct silofs_env *env, const struct silofs_env_base *base)
 
 static void env_fini_commons(struct silofs_env *env)
 {
-	memset(&env->base, 0, sizeof(env->base));
+	memset(&env->meta, 0, sizeof(env->meta));
 	env->sbi = nullptr;
 	env->ms_flags = 0;
 }
@@ -151,7 +151,7 @@ static int env_init_mbri(struct silofs_env *env)
 	if (err) {
 		return err;
 	}
-	err = silofs_mbri_derive_ivkey(&env->mbri, env->base.passwd);
+	err = silofs_mbri_derive_ivkey(&env->mbri, env->meta.passwd);
 	if (err) {
 		silofs_mbri_fini(&env->mbri);
 		return err;
@@ -234,7 +234,7 @@ static void env_fini_iconv(struct silofs_env *env)
 	}
 }
 
-int silofs_env_init(struct silofs_env *env, const struct silofs_env_base *base)
+int silofs_env_init(struct silofs_env *env, const struct silofs_env_meta *base)
 {
 	int err;
 
@@ -303,7 +303,7 @@ void silofs_env_rwunlock(struct silofs_env *env)
 
 bool silofs_env_hasflag(const struct silofs_env *env, enum silofs_flags f)
 {
-	return (env->base.args->flags & f) == f;
+	return (env->meta.args->flags & f) == f;
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -351,9 +351,9 @@ static void env_resolve_super_uaddr(const struct silofs_env *env,
 
 void silofs_env_drop_caches(struct silofs_env *env)
 {
-	silofs_lcache_drop(env->base.lcache);
-	silofs_pcache_drop(env->base.pcache);
-	silofs_repo_drop_some(env->base.repo);
+	silofs_lcache_drop(env->meta.lcache);
+	silofs_pcache_drop(env->meta.pcache);
+	silofs_repo_drop_some(env->meta.repo);
 }
 
 static int
@@ -506,10 +506,10 @@ int silofs_env_shut(struct silofs_env *env)
 
 void silofs_env_relax_caches(const struct silofs_env *env, int flags)
 {
-	silofs_pcache_relax(env->base.pcache, flags);
-	silofs_lcache_relax(env->base.lcache, flags);
+	silofs_pcache_relax(env->meta.pcache, flags);
+	silofs_lcache_relax(env->meta.lcache, flags);
 	if (flags & SILOFS_CTLF_IDLE) {
-		silofs_repo_relax(env->base.repo);
+		silofs_repo_relax(env->meta.repo);
 	}
 }
 
@@ -523,12 +523,12 @@ void silofs_env_uptime(const struct silofs_env *env, time_t *out_uptime)
 void silofs_env_allocstat(const struct silofs_env *env,
                           struct silofs_alloc_stat *out_alst)
 {
-	silofs_memstat(env->base.alloc, out_alst);
+	silofs_memstat(env->meta.alloc, out_alst);
 }
 
 static void env_drop_uamap(struct silofs_env *env)
 {
-	silofs_lcache_drop_uamap(env->base.lcache);
+	silofs_lcache_drop_uamap(env->meta.lcache);
 }
 
 static int env_fork_rebind_super(struct silofs_env *env,
@@ -614,7 +614,7 @@ static int check_par_index_size(size_t sz)
 {
 	if ((sz < SILOFS_AR_INDEX_SIZE_MIN) ||
 	    (sz > SILOFS_AR_INDEX_SIZE_MAX)) {
-		return -SILOFS_EBADPACK;
+		return -SILOFS_EBADARIX;
 	}
 	return 0;
 }
@@ -635,7 +635,7 @@ int silofs_env_sense_ar(struct silofs_env *env)
 	if (err) {
 		return err;
 	}
-	err = silofs_repo_stat_cobj(env->base.repo, &baddr, &sz);
+	err = silofs_repo_stat_cobj(env->meta.repo, &baddr, &sz);
 	if (err) {
 		return err;
 	}

@@ -1,0 +1,354 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+/*
+ * This file is part of silofs.
+ *
+ * Copyright (C) 2020-2025 Shachar Sharon
+ *
+ * Silofs is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Silofs is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ */
+#include "configs.h"
+#include "infra.h"
+#include "bs.h"
+#include "fs.h"
+#include "env.h"
+#include "walk.h"
+#include "index.h"
+#include "arre.h"
+
+struct silofs_ar_ctx {
+	struct timespec now;
+	struct silofs_task_ctx *task;
+	struct silofs_env *env;
+	struct silofs_alloc *alloc;
+	struct silofs_ab_info *abi;
+	struct silofs_repo *repo;
+};
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+static void
+arc_rebind_abi(struct silofs_ar_ctx *ar_ctx, struct silofs_ab_info *abi)
+{
+	if (ar_ctx->abi != nullptr) {
+		silofs_abi_del(ar_ctx->abi, ar_ctx->alloc);
+		ar_ctx->abi = nullptr;
+	}
+	if (abi != nullptr) {
+		ar_ctx->abi = abi;
+	}
+}
+
+static void arc_setup_ab_meta(struct silofs_ar_ctx *ar_ctx,
+                              struct silofs_ab_meta *out_ab_meta)
+{
+	struct silofs_env *env = ar_ctx->env;
+
+	out_ab_meta->enc_cipher = &env->enc_cipher;
+	out_ab_meta->dec_cipher = &env->dec_cipher;
+	out_ab_meta->mdigest = &env->mdigest;
+	out_ab_meta->repo = ar_ctx->repo;
+}
+
+static int arc_renew_abi(struct silofs_ar_ctx *ar_ctx)
+{
+	struct silofs_ab_meta ab_meta;
+	struct silofs_ab_info *abi = nullptr;
+
+	arc_setup_ab_meta(ar_ctx, &ab_meta);
+	abi = silofs_abi_new(ar_ctx->alloc, &ab_meta);
+	if (abi == nullptr) {
+		return -SILOFS_ENOMEM;
+	}
+	silofs_abi_set_btime(abi, &ar_ctx->now);
+	silofs_abi_chain(abi, ar_ctx->abi);
+
+	arc_rebind_abi(ar_ctx, abi);
+	return 0;
+}
+
+static int arc_init(struct silofs_ar_ctx *ar_ctx, struct silofs_task_ctx *task)
+{
+	silofs_memzero(ar_ctx, sizeof(*ar_ctx));
+	silofs_clock_real_now(&ar_ctx->now);
+	ar_ctx->task = task;
+	ar_ctx->env = task->t_env;
+	ar_ctx->abi = nullptr;
+	ar_ctx->alloc = ar_ctx->env->meta.alloc;
+	ar_ctx->repo = ar_ctx->env->meta.repo;
+
+	return arc_renew_abi(ar_ctx);
+}
+
+static void arc_fini(struct silofs_ar_ctx *ar_ctx)
+{
+	arc_rebind_abi(ar_ctx, nullptr);
+	ar_ctx->task = nullptr;
+	ar_ctx->env = nullptr;
+	ar_ctx->repo = nullptr;
+	ar_ctx->alloc = nullptr;
+}
+
+static int arc_stat_pack(const struct silofs_ar_ctx *ar_ctx,
+                         const struct silofs_baddr *baddr, size_t *out_sz)
+{
+	return silofs_repo_stat_cobj(ar_ctx->repo, baddr, out_sz);
+}
+
+static int arc_send_to_repo(const struct silofs_ar_ctx *ar_ctx,
+                            const struct silofs_baddr *baddr,
+                            const struct silofs_rovec *rov)
+{
+	return silofs_repo_save_cobj(ar_ctx->repo, baddr, rov);
+}
+
+static int
+arc_send_pack(const struct silofs_ar_ctx *ar_ctx,
+              const struct silofs_baddr *baddr, const void *dat, size_t len)
+{
+	const struct silofs_rovec rov = { .rov_base = dat, .rov_len = len };
+	size_t sz = 0;
+	int err;
+
+	err = arc_stat_pack(ar_ctx, baddr, &sz);
+	if ((err == -ENOENT) || (!err && (sz != len))) {
+		err = arc_send_to_repo(ar_ctx, baddr, &rov);
+	}
+	return err;
+}
+
+static int
+arc_load_seg(const struct silofs_ar_ctx *ar_ctx,
+             const struct silofs_laddr *laddr, void *seg, size_t len)
+{
+	int err;
+
+	err = silofs_repo_read_at(ar_ctx->repo, laddr, seg, len);
+	if (err) {
+		log_err("failed to read: mtype=%d pos=%ld len=%zu err=%d",
+		        silofs_laddr_mtype(laddr), laddr->pos, len, err);
+	}
+	return err;
+}
+
+static void
+arc_calc_seg_desc(const struct silofs_ar_ctx *ar_ctx,
+                  const struct silofs_laddr *laddr, const void *seg,
+                  size_t seg_len, struct silofs_ar_desc *out_ard)
+{
+	const struct silofs_rovec rovec = {
+		.rov_base = seg,
+		.rov_len = seg_len,
+	};
+
+	silofs_assert_not_null(ar_ctx->abi);
+
+	silofs_abi_calc_desc(ar_ctx->abi, laddr, &rovec, out_ard);
+}
+
+static int arc_archive_segdata(const struct silofs_ar_ctx *ar_ctx,
+                               const struct silofs_laddr *laddr, size_t len,
+                               struct silofs_ar_desc *out_ard)
+{
+	void *seg = nullptr;
+	int err;
+
+	seg = silofs_memalloc(ar_ctx->alloc, len, 0);
+	if (seg == nullptr) {
+		return -SILOFS_ENOMEM;
+	}
+	err = arc_load_seg(ar_ctx, laddr, seg, len);
+	if (err) {
+		goto out;
+	}
+	arc_calc_seg_desc(ar_ctx, laddr, seg, len, out_ard);
+
+	err = arc_send_pack(ar_ctx, &out_ard->baddr, seg, len);
+	if (err) {
+		goto out;
+	}
+out:
+	silofs_memfree(ar_ctx->alloc, seg, len, 0);
+	return err;
+}
+
+static const struct silofs_ivkey *
+arc_arix_ivkey(const struct silofs_ar_ctx *ar_ctx)
+{
+	const struct silofs_mbrinfo *mbri = &ar_ctx->env->mbri;
+
+	return &mbri->ar_mbr.main_ivkey;
+}
+
+static int arc_store_arix_block(struct silofs_ar_ctx *ar_ctx)
+{
+	const struct silofs_ivkey *ivkey = arc_arix_ivkey(ar_ctx);
+
+	return silofs_store_arix_block(ar_ctx->abi, ivkey);
+}
+
+static int arc_require_room(struct silofs_ar_ctx *ar_ctx)
+{
+	int err;
+
+	if (!silofs_abi_isfull(ar_ctx->abi)) {
+		return 0;
+	}
+	err = arc_store_arix_block(ar_ctx);
+	if (err) {
+		return err;
+	}
+	err = arc_renew_abi(ar_ctx);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+static int
+arc_append_desc(struct silofs_ar_ctx *ar_ctx, const struct silofs_ar_desc *ard)
+{
+	return silofs_abi_append_desc(ar_ctx->abi, ard);
+}
+
+static int arc_archive_by_laddr(struct silofs_ar_ctx *ar_ctx,
+                                const struct silofs_laddr *laddr, size_t len)
+{
+	struct silofs_ar_desc ard;
+	int err;
+
+	if (laddr->lsid.mtype == SILOFS_MTYPE_MBR) {
+		return 0; /* no-op */
+	}
+	err = arc_require_room(ar_ctx);
+	if (err) {
+		return err;
+	}
+	err = arc_archive_segdata(ar_ctx, laddr, len, &ard);
+	if (err) {
+		return err;
+	}
+	err = arc_append_desc(ar_ctx, &ard);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+static int
+arc_visit_laddr_cb(void *ctx, const struct silofs_laddr *laddr, size_t len)
+{
+	struct silofs_ar_ctx *ar_ctx = ctx;
+
+	return arc_archive_by_laddr(ar_ctx, laddr, len);
+}
+
+static int arc_archive_fs(struct silofs_ar_ctx *ar_ctx)
+{
+	const struct silofs_laddr_visitor lvis = {
+		.hook = arc_visit_laddr_cb,
+		.userp = ar_ctx,
+	};
+	struct silofs_task_ctx *task = ar_ctx->task;
+
+	return silofs_walkfs_at(task, silofs_get_sbi(task), &lvis);
+}
+
+static int arc_archive_apex(struct silofs_ar_ctx *ar_ctx,
+                            struct silofs_baddr *out_arix_addr)
+{
+	int err;
+
+	err = arc_store_arix_block(ar_ctx);
+	if (err) {
+		return err;
+	}
+	silofs_abi_get_baddr(ar_ctx->abi, out_arix_addr);
+	return 0;
+}
+
+static int arc_archive_mbr(const struct silofs_ar_ctx *ar_ctx,
+                           struct silofs_baddr *out_mref)
+{
+	struct silofs_mbr1k mbr1k = { .mbr_magic = 0xff };
+	const struct silofs_mbrinfo *mbri = &ar_ctx->env->mbri;
+	int err;
+
+	err = silofs_mbri_encode_mbr(mbri, SILOFS_MBR_AR, out_mref, &mbr1k);
+	if (err) {
+		return err;
+	}
+	err = arc_send_pack(ar_ctx, out_mref, &mbr1k, sizeof(mbr1k));
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+static int arc_archive_post(struct silofs_ar_ctx *ar_ctx,
+                            const struct silofs_baddr *arix_addr,
+                            struct silofs_baddr *out_mref)
+{
+	silofs_mbri_update_arix_addr(&ar_ctx->env->mbri, arix_addr);
+	return arc_archive_mbr(ar_ctx, out_mref);
+}
+
+static int arc_archive_prep(struct silofs_ar_ctx *ar_ctx)
+{
+	return silofs_mbri_sync_mbrs(&ar_ctx->env->mbri, SILOFS_MBR_AR);
+}
+
+static int
+arc_do_archive(struct silofs_ar_ctx *ar_ctx, struct silofs_baddr *out_mref)
+{
+	struct silofs_baddr arix_addr;
+	int err;
+
+	err = arc_archive_prep(ar_ctx);
+	if (err) {
+		return err;
+	}
+	err = arc_archive_fs(ar_ctx);
+	if (err) {
+		return err;
+	}
+	err = arc_archive_apex(ar_ctx, &arix_addr);
+	if (err) {
+		return err;
+	}
+	err = arc_archive_post(ar_ctx, &arix_addr, out_mref);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+int silofs_do_archive_fs(struct silofs_task_ctx *task,
+                         struct silofs_baddr *out_ar_mref)
+{
+	struct silofs_ar_ctx ar_ctx;
+	int err;
+
+	err = silofs_flush_dirty_now(task);
+	if (err) {
+		return err;
+	}
+	err = arc_init(&ar_ctx, task);
+	if (err) {
+		goto out;
+	}
+	err = arc_do_archive(&ar_ctx, out_ar_mref);
+	if (err) {
+		goto out;
+	}
+out:
+	arc_fini(&ar_ctx);
+	return err;
+}

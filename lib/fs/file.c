@@ -888,7 +888,7 @@ static void filc_decref(const struct silofs_file_ctx *f_ctx)
 
 static void *filc_nil_block(const struct silofs_file_ctx *f_ctx)
 {
-	struct silofs_lblock *nil_bk = f_ctx->env->base.lcache->lc_nil_lbk;
+	struct silofs_lblock *nil_bk = f_ctx->env->meta.lcache->lc_nil_lbk;
 
 	return nil_bk->u.bk;
 }

@@ -20,6 +20,7 @@
 #include "infra.h"
 #include "str.h"
 #include "htox.h"
+#include "mtype.h"
 #include "meta.h"
 
 bool silofs_hash256_isequal(const struct silofs_hash256 *hash,
@@ -259,4 +260,11 @@ int silofs_hdr_verify(const struct silofs_header *hdr, uint16_t type,
 		return err;
 	}
 	return 0;
+}
+
+int silofs_hdr_verify2(const struct silofs_header *hdr,
+                       enum silofs_mtype mtype)
+{
+	return silofs_hdr_verify(hdr, (uint16_t)mtype,
+	                         silofs_mtype_size(mtype), SILOFS_HDRF_CSUM);
 }

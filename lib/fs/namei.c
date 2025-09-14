@@ -2310,14 +2310,14 @@ fill_proc(const struct silofs_env *env, struct silofs_query_proc *qpr)
 	silofs_memzero(qpr, sizeof(*qpr));
 	qpr->uid = env->owner_cred.uid;
 	qpr->gid = env->owner_cred.gid;
-	qpr->pid = env->base.args->pid;
+	qpr->pid = env->meta.args->pid;
 	qpr->msflags = env->ms_flags;
 	qpr->uptime = uptime;
 	qpr->iopen_max = env->opstat.op_iopen_max;
 	qpr->iopen_cur = env->opstat.op_iopen;
 	qpr->memsz_max = alst.nbytes_max;
 	qpr->memsz_cur = alst.nbytes_use;
-	qpr->bopen_cur = env->base.repo->re_htbl.rh_size;
+	qpr->bopen_cur = env->meta.repo->re_htbl.rh_size;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -2381,7 +2381,7 @@ static void bootpath_of(const struct silofs_inode_info *ii,
                         struct silofs_bootpath *out_bootpath)
 {
 	const struct silofs_env *env = silofs_ii_env(ii);
-	const struct silofs_env_args *env_args = env->base.args;
+	const struct silofs_env_args *env_args = env->meta.args;
 
 	make_bootpath(out_bootpath, env_args->boot_args.repodir,
 	              env_args->boot_args.fs_name);
@@ -2598,7 +2598,7 @@ static int flush_and_sync(struct silofs_task_ctx *task)
 	if (err) {
 		return err;
 	}
-	err = silofs_repo_fsync_all(task->t_env->base.repo);
+	err = silofs_repo_fsync_all(task->t_env->meta.repo);
 	if (err) {
 		return err;
 	}

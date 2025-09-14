@@ -420,8 +420,10 @@ static void affirm_ondisk_bdesc(void)
 
 static void affirm_ondisk_archive(void)
 {
+	REQUIRE_OFFSET64(struct silofs_ar_desc256b, ad_baddr, 0);
+	REQUIRE_OFFSET64(struct silofs_ar_desc256b, ad_laddr, 64);
+	REQUIRE_OFFSET64(struct silofs_ar_desc256b, ad_len, 128);
 	REQUIRE_SIZEOF(struct silofs_ar_desc256b, 256);
-	REQUIRE_SIZEOF_1K(struct silofs_ar_hdr1k);
 
 	REQUIRE_OFFSET64(struct silofs_arix_block, ab_hdr, 0);
 	REQUIRE_OFFSET64(struct silofs_arix_block, ab_btime, 32);

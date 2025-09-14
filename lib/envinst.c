@@ -490,7 +490,7 @@ static void envi_fini_fuseq(struct silofs_env_inst *envi)
 
 static int envi_init_env(struct silofs_env_inst *envi)
 {
-	const struct silofs_env_base env_base = {
+	const struct silofs_env_meta env_base = {
 		.passwd = &envi->passwd,
 		.args = &envi->args,
 		.alloc = envi->alloc,

@@ -19,6 +19,8 @@
 
 #include <silofs/ondisk.h>
 #include <silofs/memalloc.h>
+#include "infra.h"
+#include "crypt.h"
 #include "addr.h"
 
 struct silofs_ar_desc {
@@ -27,34 +29,82 @@ struct silofs_ar_desc {
 	size_t              len;
 };
 
+struct silofs_ab_meta {
+	const struct silofs_cipher  *enc_cipher;
+	const struct silofs_cipher  *dec_cipher;
+	const struct silofs_mdigest *mdigest;
+	struct silofs_repo          *repo;
+};
+
 struct silofs_ab_info {
+	struct silofs_ab_meta     ab_meta;
 	struct silofs_baddr       ab_baddr;
-	struct silofs_list_head   ab_lh;
 	struct silofs_arix_block *ab;
+	struct silofs_arix_block *ab_enc;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_ard_init(struct silofs_ar_desc     *ard,
-		     const struct silofs_laddr *laddr, size_t len);
+                     const struct silofs_laddr *laddr, size_t len);
 
 void silofs_ard_fini(struct silofs_ar_desc *ard);
 
+void silofs_ard_reset(struct silofs_ar_desc *ard);
+
 void silofs_ard_update_baddr(struct silofs_ar_desc       *ard,
-			     const struct silofs_mdigest *md,
-			     const struct silofs_rovec   *rov);
+                             const struct silofs_mdigest *md,
+                             const struct silofs_rovec   *rov);
 
 void silofs_ard256b_htox(struct silofs_ar_desc256b   *ard256,
-			 const struct silofs_ar_desc *ard);
+                         const struct silofs_ar_desc *ard);
 
 void silofs_ard256b_xtoh(const struct silofs_ar_desc256b *ard256,
-			 struct silofs_ar_desc           *ard);
+                         struct silofs_ar_desc           *ard);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 struct silofs_ab_info *
-silofs_abi_new(struct silofs_alloc *alloc, const struct silofs_baddr *baddr);
+silofs_abi_new(struct silofs_alloc *alloc, const struct silofs_ab_meta *meta);
 
 void silofs_abi_del(struct silofs_ab_info *abi, struct silofs_alloc *alloc);
+
+size_t silofs_abi_ndescs(const struct silofs_ab_info *abi);
+
+bool silofs_abi_isfull(const struct silofs_ab_info *abi);
+
+void silofs_abi_set_btime(struct silofs_ab_info *abi,
+                          const struct timespec *ts);
+
+void silofs_abi_get_baddr(const struct silofs_ab_info *abi,
+                          struct silofs_baddr         *out_baddr);
+
+void silofs_abi_set_baddr(struct silofs_ab_info     *abi,
+                          const struct silofs_baddr *baddr);
+
+void silofs_abi_chain(struct silofs_ab_info       *abi,
+                      const struct silofs_ab_info *abi_next);
+
+void silofs_abi_next_chain(const struct silofs_ab_info *abi,
+                           struct silofs_baddr         *out_baddr);
+
+void silofs_abi_calc_desc(const struct silofs_ab_info *abi,
+                          const struct silofs_laddr   *laddr,
+                          const struct silofs_rovec   *rovec,
+                          struct silofs_ar_desc       *out_ard);
+
+int silofs_abi_append_desc(struct silofs_ab_info       *abi,
+                           const struct silofs_ar_desc *ard);
+
+int silofs_abi_fetch_desc(const struct silofs_ab_info *abi, size_t slot,
+                          struct silofs_ar_desc *out_ard);
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+int silofs_store_arix_block(struct silofs_ab_info     *abi,
+                            const struct silofs_ivkey *ivkey);
+
+int silofs_fetch_arix_block(struct silofs_ab_info     *abi,
+                            const struct silofs_ivkey *ivkey);
 
 #endif /* SILOFS_INDEX_H_ */

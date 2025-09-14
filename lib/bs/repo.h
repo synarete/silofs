@@ -25,7 +25,7 @@
 /* repository control flags */
 #define SILOFS_REPOF_RDONLY (1)
 
-/* repository base config */
+/* repository meta settings */
 struct silofs_repo_base {
 	struct silofs_strview repodir;
 	struct silofs_alloc  *alloc;

@@ -438,7 +438,7 @@ static int abi_verify_baddr(const struct silofs_ab_info *abi)
 	struct silofs_baddr baddr;
 
 	abi_calc_baddr(abi, &baddr);
-	return abi_has_baddr(abi, &baddr) ? SILOFS_EBADARIX : 0;
+	return abi_has_baddr(abi, &baddr) ? 0 : -SILOFS_EBADARIX;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

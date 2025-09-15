@@ -29,7 +29,7 @@ struct silofs_ar_desc {
 	size_t              len;
 };
 
-struct silofs_ab_meta {
+struct silofs_ab_base {
 	const struct silofs_cipher  *enc_cipher;
 	const struct silofs_cipher  *dec_cipher;
 	const struct silofs_mdigest *mdigest;
@@ -37,7 +37,7 @@ struct silofs_ab_meta {
 };
 
 struct silofs_ab_info {
-	struct silofs_ab_meta     ab_meta;
+	struct silofs_ab_base     ab_base;
 	struct silofs_baddr       ab_baddr;
 	struct silofs_arix_block *ab;
 	struct silofs_arix_block *ab_enc;
@@ -46,7 +46,7 @@ struct silofs_ab_info {
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 struct silofs_ab_info *
-silofs_abi_new(struct silofs_alloc *alloc, const struct silofs_ab_meta *meta);
+silofs_abi_new(struct silofs_alloc *alloc, const struct silofs_ab_base *base);
 
 void silofs_abi_del(struct silofs_ab_info *abi, struct silofs_alloc *alloc);
 

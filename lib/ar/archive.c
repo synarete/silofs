@@ -45,7 +45,7 @@ arc_rebind_abi(struct silofs_ar_ctx *ar_ctx, struct silofs_ab_info *abi)
 }
 
 static void arc_setup_ab_meta(struct silofs_ar_ctx *ar_ctx,
-                              struct silofs_ab_meta *out_ab_meta)
+                              struct silofs_ab_base *out_ab_meta)
 {
 	struct silofs_env *env = ar_ctx->env;
 
@@ -57,7 +57,7 @@ static void arc_setup_ab_meta(struct silofs_ar_ctx *ar_ctx,
 
 static int arc_renew_abi(struct silofs_ar_ctx *ar_ctx)
 {
-	struct silofs_ab_meta ab_meta;
+	struct silofs_ab_base ab_meta;
 	struct silofs_ab_info *abi = nullptr;
 
 	arc_setup_ab_meta(ar_ctx, &ab_meta);

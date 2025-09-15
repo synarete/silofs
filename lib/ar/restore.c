@@ -45,7 +45,7 @@ rec_rebind_abi(struct silofs_re_ctx *re_ctx, struct silofs_ab_info *abi)
 }
 
 static void rec_setup_ab_meta(struct silofs_re_ctx *re_ctx,
-                              struct silofs_ab_meta *out_ab_meta)
+                              struct silofs_ab_base *out_ab_meta)
 {
 	struct silofs_env *env = re_ctx->env;
 
@@ -58,7 +58,7 @@ static void rec_setup_ab_meta(struct silofs_re_ctx *re_ctx,
 static int
 rec_renew_abi(struct silofs_re_ctx *re_ctx, const struct silofs_baddr *baddr)
 {
-	struct silofs_ab_meta ab_meta;
+	struct silofs_ab_base ab_meta;
 	struct silofs_ab_info *abi = nullptr;
 
 	rec_setup_ab_meta(re_ctx, &ab_meta);

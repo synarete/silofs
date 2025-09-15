@@ -226,9 +226,9 @@ static void abi_free(struct silofs_ab_info *abi, struct silofs_alloc *alloc)
 }
 
 static void
-abi_init(struct silofs_ab_info *abi, const struct silofs_ab_meta *meta)
+abi_init(struct silofs_ab_info *abi, const struct silofs_ab_base *base)
 {
-	memcpy(&abi->ab_meta, meta, sizeof(abi->ab_meta));
+	memcpy(&abi->ab_base, base, sizeof(abi->ab_base));
 	silofs_baddr_reset(&abi->ab_baddr);
 	abi->ab = nullptr;
 	abi->ab_enc = nullptr;
@@ -242,7 +242,7 @@ static void abi_fini(struct silofs_ab_info *abi)
 }
 
 struct silofs_ab_info *
-silofs_abi_new(struct silofs_alloc *alloc, const struct silofs_ab_meta *meta)
+silofs_abi_new(struct silofs_alloc *alloc, const struct silofs_ab_base *base)
 {
 	struct silofs_arix_block *ab = nullptr;
 	struct silofs_arix_block *ab_enc = nullptr;
@@ -260,7 +260,7 @@ silofs_abi_new(struct silofs_alloc *alloc, const struct silofs_ab_meta *meta)
 	if (abi == nullptr) {
 		goto out_err;
 	}
-	abi_init(abi, meta);
+	abi_init(abi, base);
 	abi->ab = ab;
 	abi->ab_enc = ab_enc;
 	return abi;
@@ -343,7 +343,7 @@ void silofs_abi_calc_desc(const struct silofs_ab_info *abi,
                           const struct silofs_rovec *rovec,
                           struct silofs_ar_desc *out_ard)
 {
-	const struct silofs_mdigest *md = abi->ab_meta.mdigest;
+	const struct silofs_mdigest *md = abi->ab_base.mdigest;
 	struct silofs_baddr baddr = {
 		.pos = -1,
 	};
@@ -381,7 +381,7 @@ int silofs_abi_fetch_desc(const struct silofs_ab_info *abi, size_t slot,
 static void abi_calc_baddr(const struct silofs_ab_info *abi,
                            struct silofs_baddr *out_baddr)
 {
-	const struct silofs_mdigest *md = abi->ab_meta.mdigest;
+	const struct silofs_mdigest *md = abi->ab_base.mdigest;
 	const struct iovec iov = {
 		.iov_base = abi->ab_enc,
 		.iov_len = sizeof(*abi->ab_enc),
@@ -424,7 +424,7 @@ abi_encrypt(struct silofs_ab_info *abi, const struct silofs_ivkey *ivkey)
 {
 	const struct silofs_arix_block *ab = abi->ab;
 	struct silofs_arix_block *ab_enc = abi->ab_enc;
-	const struct silofs_cipher *ci = abi->ab_meta.enc_cipher;
+	const struct silofs_cipher *ci = abi->ab_base.enc_cipher;
 
 	return silofs_encrypt_buf(ci, ivkey, ab, ab_enc, sizeof(*ab_enc));
 }
@@ -451,7 +451,7 @@ static int abi_save(const struct silofs_ab_info *abi)
 		.rov_len = sizeof(*ab_enc),
 	};
 
-	return silofs_repo_save_cobj(abi->ab_meta.repo, &abi->ab_baddr, &rov);
+	return silofs_repo_save_cobj(abi->ab_base.repo, &abi->ab_baddr, &rov);
 }
 
 int silofs_store_arix_block(struct silofs_ab_info *abi,
@@ -480,7 +480,7 @@ static int abi_load(const struct silofs_ab_info *abi)
 		.rwv_len = sizeof(*ab_enc),
 	};
 
-	return silofs_repo_load_cobj(abi->ab_meta.repo, &abi->ab_baddr, &rwv);
+	return silofs_repo_load_cobj(abi->ab_base.repo, &abi->ab_baddr, &rwv);
 }
 
 static int
@@ -488,7 +488,7 @@ abi_decrypt(struct silofs_ab_info *abi, const struct silofs_ivkey *ivkey)
 {
 	struct silofs_arix_block *ab = abi->ab;
 	const struct silofs_arix_block *ab_enc = abi->ab_enc;
-	const struct silofs_cipher *ci = abi->ab_meta.dec_cipher;
+	const struct silofs_cipher *ci = abi->ab_base.dec_cipher;
 
 	return silofs_decrypt_buf(ci, ivkey, ab_enc, ab, sizeof(*ab));
 }

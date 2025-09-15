@@ -32,8 +32,6 @@ struct silofs_ar_ctx {
 	struct silofs_repo *repo;
 };
 
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-
 static void
 arc_rebind_abi(struct silofs_ar_ctx *ar_ctx, struct silofs_ab_info *abi)
 {
@@ -68,7 +66,7 @@ static int arc_renew_abi(struct silofs_ar_ctx *ar_ctx)
 		return -SILOFS_ENOMEM;
 	}
 	silofs_abi_set_btime(abi, &ar_ctx->now);
-	silofs_abi_chain(abi, ar_ctx->abi);
+	silofs_abi_set_next(abi, ar_ctx->abi);
 
 	arc_rebind_abi(ar_ctx, abi);
 	return 0;

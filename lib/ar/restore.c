@@ -24,7 +24,6 @@
 #include "arre.h"
 
 struct silofs_re_ctx {
-	struct timespec now;
 	struct silofs_task_ctx *task;
 	struct silofs_env *env;
 	struct silofs_ab_info *abi;
@@ -32,8 +31,6 @@ struct silofs_re_ctx {
 	struct silofs_repo *repo;
 	struct silofs_laddr sb_laddr;
 };
-
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static void
 rec_rebind_abi(struct silofs_re_ctx *re_ctx, struct silofs_ab_info *abi)
@@ -78,7 +75,6 @@ rec_renew_abi(struct silofs_re_ctx *re_ctx, const struct silofs_baddr *baddr)
 static int rec_init(struct silofs_re_ctx *re_ctx, struct silofs_task_ctx *task)
 {
 	silofs_memzero(re_ctx, sizeof(*re_ctx));
-	silofs_clock_real_now(&re_ctx->now);
 	silofs_laddr_reset(&re_ctx->sb_laddr);
 	re_ctx->task = task;
 	re_ctx->env = task->t_env;
@@ -246,7 +242,7 @@ static int rec_restore_descs(struct silofs_re_ctx *re_ctx)
 	int err;
 
 	for (size_t slot = 0; slot < ndescs; ++slot) {
-		silofs_ard_reset(&ard);
+		ard.len = 0;
 		err = silofs_abi_fetch_desc(abi, slot, &ard);
 		if (err) {
 			return err;
@@ -270,7 +266,7 @@ static int rec_restore_next(struct silofs_re_ctx *re_ctx)
 
 	silofs_assert_not_null(re_ctx->abi);
 
-	silofs_abi_next_chain(re_ctx->abi, &baddr);
+	silofs_abi_get_next(re_ctx->abi, &baddr);
 	if (silofs_baddr_isnull(&baddr)) {
 		rec_rebind_abi(re_ctx, nullptr);
 		return 0; /* end-of-chain */

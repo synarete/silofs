@@ -22,51 +22,22 @@
 #include "index.h"
 
 static void
-ard_init2(struct silofs_ar_desc *ard, const struct silofs_baddr *baddr,
-          const struct silofs_laddr *laddr, size_t len)
+ard_init(struct silofs_ar_desc *ard, const struct silofs_baddr *baddr,
+         const struct silofs_laddr *laddr, size_t len)
 {
 	silofs_baddr_assign(&ard->baddr, baddr);
 	silofs_laddr_assign(&ard->laddr, laddr);
 	ard->len = len;
 }
 
-void silofs_ard_init(struct silofs_ar_desc *ard,
-                     const struct silofs_laddr *laddr, size_t len)
-{
-	ard_init2(ard, silofs_baddr_none(), laddr, len);
-}
-
-void silofs_ard_reset(struct silofs_ar_desc *ard)
+static void ard_reset(struct silofs_ar_desc *ard)
 {
 	silofs_baddr_reset(&ard->baddr);
 	silofs_laddr_reset(&ard->laddr);
 	ard->len = SIZE_MAX;
 }
 
-void silofs_ard_fini(struct silofs_ar_desc *ard)
-{
-	silofs_ard_reset(ard);
-	ard->len = 0;
-}
-
-static enum silofs_mtype ard_mtype(const struct silofs_ar_desc *ard)
-{
-	return ard->laddr.lsid.mtype;
-}
-
-void silofs_ard_update_baddr(struct silofs_ar_desc *ard,
-                             const struct silofs_mdigest *md,
-                             const struct silofs_rovec *rov)
-{
-	const struct iovec iov = {
-		.iov_base = unconst(rov->rov_base),
-		.iov_len = rov->rov_len,
-	};
-
-	silofs_calc_baddr_of(md, ard_mtype(ard), &iov, 1, &ard->baddr);
-}
-
-void silofs_ard256b_htox(struct silofs_ar_desc256b *ard256,
+static void ard256b_htox(struct silofs_ar_desc256b *ard256,
                          const struct silofs_ar_desc *ard)
 {
 	silofs_memzero(ard256, sizeof(*ard256));
@@ -75,7 +46,7 @@ void silofs_ard256b_htox(struct silofs_ar_desc256b *ard256,
 	ard256->ad_len = silofs_cpu_to_le64(ard->len);
 }
 
-void silofs_ard256b_xtoh(const struct silofs_ar_desc256b *ard256,
+static void ard256b_xtoh(const struct silofs_ar_desc256b *ard256,
                          struct silofs_ar_desc *ard)
 {
 	silofs_baddr64b_xtoh(&ard256->ad_baddr, &ard->baddr);
@@ -162,7 +133,7 @@ static void ab_desc(const struct silofs_arix_block *ab, size_t slot,
 {
 	silofs_assert_lt(slot, ARRAY_SIZE(ab->ab_descs));
 
-	silofs_ard256b_xtoh(&ab->ab_descs[slot], out_ard);
+	ard256b_xtoh(&ab->ab_descs[slot], out_ard);
 }
 
 static void ab_set_desc(struct silofs_arix_block *ab, size_t slot,
@@ -170,7 +141,7 @@ static void ab_set_desc(struct silofs_arix_block *ab, size_t slot,
 {
 	silofs_assert_lt(slot, ARRAY_SIZE(ab->ab_descs));
 
-	silofs_ard256b_htox(&ab->ab_descs[slot], ard);
+	ard256b_htox(&ab->ab_descs[slot], ard);
 }
 
 static void
@@ -184,7 +155,7 @@ static void ab_reset_descs(struct silofs_arix_block *ab)
 {
 	struct silofs_ar_desc ard_none;
 
-	silofs_ard_reset(&ard_none);
+	ard_reset(&ard_none);
 	for (size_t slot = 0; slot < ARRAY_SIZE(ab->ab_descs); ++slot) {
 		ab_set_desc(ab, slot, &ard_none);
 	}
@@ -351,8 +322,8 @@ abi_set_next(struct silofs_ab_info *abi, const struct silofs_baddr *baddr)
 	}
 }
 
-void silofs_abi_chain(struct silofs_ab_info *abi,
-                      const struct silofs_ab_info *abi_next)
+void silofs_abi_set_next(struct silofs_ab_info *abi,
+                         const struct silofs_ab_info *abi_next)
 {
 	if (abi_next != nullptr) {
 		abi_set_next(abi, &abi_next->ab_baddr);
@@ -361,8 +332,8 @@ void silofs_abi_chain(struct silofs_ab_info *abi,
 	}
 }
 
-void silofs_abi_next_chain(const struct silofs_ab_info *abi,
-                           struct silofs_baddr *out_baddr)
+void silofs_abi_get_next(const struct silofs_ab_info *abi,
+                         struct silofs_baddr *out_baddr)
 {
 	ab_next(abi->ab, out_baddr);
 }
@@ -382,7 +353,7 @@ void silofs_abi_calc_desc(const struct silofs_ab_info *abi,
 	};
 	silofs_calc_baddr_of(md, laddr->lsid.mtype, &iov, 1, &baddr);
 
-	ard_init2(out_ard, &baddr, laddr, iov.iov_len);
+	ard_init(out_ard, &baddr, laddr, iov.iov_len);
 }
 
 int silofs_abi_append_desc(struct silofs_ab_info *abi,

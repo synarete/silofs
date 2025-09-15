@@ -45,25 +45,6 @@ struct silofs_ab_info {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_ard_init(struct silofs_ar_desc     *ard,
-                     const struct silofs_laddr *laddr, size_t len);
-
-void silofs_ard_fini(struct silofs_ar_desc *ard);
-
-void silofs_ard_reset(struct silofs_ar_desc *ard);
-
-void silofs_ard_update_baddr(struct silofs_ar_desc       *ard,
-                             const struct silofs_mdigest *md,
-                             const struct silofs_rovec   *rov);
-
-void silofs_ard256b_htox(struct silofs_ar_desc256b   *ard256,
-                         const struct silofs_ar_desc *ard);
-
-void silofs_ard256b_xtoh(const struct silofs_ar_desc256b *ard256,
-                         struct silofs_ar_desc           *ard);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 struct silofs_ab_info *
 silofs_abi_new(struct silofs_alloc *alloc, const struct silofs_ab_meta *meta);
 
@@ -82,11 +63,11 @@ void silofs_abi_get_baddr(const struct silofs_ab_info *abi,
 void silofs_abi_set_baddr(struct silofs_ab_info     *abi,
                           const struct silofs_baddr *baddr);
 
-void silofs_abi_chain(struct silofs_ab_info       *abi,
-                      const struct silofs_ab_info *abi_next);
+void silofs_abi_set_next(struct silofs_ab_info       *abi,
+                         const struct silofs_ab_info *abi_next);
 
-void silofs_abi_next_chain(const struct silofs_ab_info *abi,
-                           struct silofs_baddr         *out_baddr);
+void silofs_abi_get_next(const struct silofs_ab_info *abi,
+                         struct silofs_baddr         *out_baddr);
 
 void silofs_abi_calc_desc(const struct silofs_ab_info *abi,
                           const struct silofs_laddr   *laddr,

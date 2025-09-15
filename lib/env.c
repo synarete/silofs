@@ -610,13 +610,11 @@ int silofs_env_forkfs(struct silofs_env *env, struct silofs_mrefs *out_mrefs)
 	return err;
 }
 
-static int check_par_index_size(size_t sz)
+static int check_arix_size(size_t sz)
 {
-	if ((sz < SILOFS_AR_INDEX_SIZE_MIN) ||
-	    (sz > SILOFS_AR_INDEX_SIZE_MAX)) {
-		return -SILOFS_EBADARIX;
-	}
-	return 0;
+	const size_t arix_size = silofs_mtype_size(SILOFS_MTYPE_ARIX);
+
+	return (arix_size == sz) ? 0 : -SILOFS_EBADARIX;
 }
 
 static int
@@ -639,7 +637,7 @@ int silofs_env_sense_ar(struct silofs_env *env)
 	if (err) {
 		return err;
 	}
-	err = check_par_index_size(sz);
+	err = check_arix_size(sz);
 	if (err) {
 		return err;
 	}

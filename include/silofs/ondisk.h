@@ -32,9 +32,6 @@
 /* main-boot-record magic-signature (ASCII: "@SILOFS@") */
 #define SILOFS_MBR_MAGIC (0x4053464F4C495340L)
 
-/* pack-index header magic-signature (ASCII: "%silofs%") */
-#define SILOFS_AR_INDEX_MAGIC (0x2573666F6C697325L)
-
 /* super-block special magic-signature (ASCII: "@silofs@") */
 #define SILOFS_SUPER_MAGIC (0x4073666F6C697340L)
 
@@ -962,29 +959,12 @@ struct silofs_uber_block {
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-/* minimal pack-archive index total size in bytes */
-#define SILOFS_AR_INDEX_SIZE_MIN SILOFS_LBK_SIZE
-
-/* maximal pack-archive index total size in bytes */
-#define SILOFS_AR_INDEX_SIZE_MAX (256 * SILOFS_MEGA)
-
 /* archive descriptor */
 struct silofs_ar_desc256b {
 	struct silofs_baddr64b ad_baddr;
 	struct silofs_laddr64b ad_laddr;
 	uint64_t               ad_len;
 	uint8_t                ad_reserved[120];
-} silofs_attr_aligned64;
-
-/* archive header */
-struct silofs_ar_hdr1k {
-	uint64_t ph_magic;
-	uint32_t ph_version;
-	uint32_t ph_flags;
-	uint64_t ph_ndescs;
-	uint64_t ph_descs_csum;
-	uint64_t ph_reserved2[123];
-	uint64_t ph_hdr_csum;
 } silofs_attr_aligned64;
 
 /* archive-index block */

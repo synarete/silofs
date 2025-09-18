@@ -14,7 +14,7 @@ _base_source() {
 	local idx=$((${#BASH_SOURCE[@]} - 1))
 	local src="${BASH_SOURCE[$idx]}"
 
-	echo -n "$(basename ${src})"
+	echo -n "$(basename "${src}")"
 }
 
 _base_lineno() {

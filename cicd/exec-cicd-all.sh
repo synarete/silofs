@@ -76,17 +76,18 @@ run make -f devel.mk reset
 
 ###
 msg "run sanitizer check"
+lsan_suppressions_file="${workdir}/test/utests/lsan_suppressions.txt"
 run make -f devel.mk O=1 SANITIZER=1
 run env ASAN_OPTIONS=detect_leaks=1 \
-    LSAN_OPTIONS=suppressions="${workdir}/test/utests/lsan_suppressions.txt" \
-    "${utestsdir}/silofs-utests" "${utestsdir}/ut" -M -l1
+	LSAN_OPTIONS=suppressions="${lsan_suppressions_file}" \
+	"${utestsdir}/silofs-utests" "${utestsdir}/ut" -M -l1
 run make -f devel.mk reset
 
 ###
 msg "run valgrind check"
 run make -f devel.mk
 run valgrind --tool=memcheck --error-exitcode=1 \
-    "${utestsdir}/silofs-utests" "${utestsdir}/ut" -M -l1
+	"${utestsdir}/silofs-utests" "${utestsdir}/ut" -M -l1
 run make -f devel.mk reset
 
 ###
@@ -96,12 +97,12 @@ run ./bootstrap
 run mkdir -p "${workdir}/build/local/tmp"
 cdx "${workdir}/build"
 run ../configure --prefix="${workdir}/build/local" \
-    --enable-compile-warnings=error --with-tcmalloc
+	--enable-compile-warnings=error --with-tcmalloc
 run make install
-# this one fails on ubuntu, so just execute it without die-upon-failure
-env HEAPCHECK=normal HEAP_CHECK_TEST_POINTER_ALIGNMENT=1 \
-    "${workdir}/build/local/bin/silofs-utests" \
-    -M -l2 "${workdir}/build/local/tmp"
+# TODO: fails on ubuntu; why?
+run env HEAPCHECK=normal HEAP_CHECK_TEST_POINTER_ALIGNMENT=1 \
+	"${workdir}/build/local/bin/silofs-utests" \
+	-M -l2 "${workdir}/build/local/tmp"
 cdx "${currdir}"
 run rm -rf "${workdir}"
 

@@ -80,14 +80,16 @@ lsan_suppressions_file="${workdir}/test/utests/lsan_suppressions.txt"
 run make -f devel.mk O=1 SANITIZER=1
 run env ASAN_OPTIONS=detect_leaks=1 \
 	LSAN_OPTIONS=suppressions="${lsan_suppressions_file}" \
-	"${utestsdir}/silofs-utests" "${utestsdir}/ut" -M -l1
+	"${utestsdir}/silofs-utests" "${utestsdir}/ut" \
+	--malloc --level=1 --silent
 run make -f devel.mk reset
 
 ###
 msg "run valgrind check"
 run make -f devel.mk
 run valgrind --tool=memcheck --error-exitcode=1 \
-	"${utestsdir}/silofs-utests" "${utestsdir}/ut" -M -l1
+	"${utestsdir}/silofs-utests" "${utestsdir}/ut" \
+	--malloc --level=1 --silent
 run make -f devel.mk reset
 
 ###
@@ -102,7 +104,8 @@ run make install
 # TODO: fails on ubuntu; why?
 run env HEAPCHECK=normal HEAP_CHECK_TEST_POINTER_ALIGNMENT=1 \
 	"${workdir}/build/local/bin/silofs-utests" \
-	-M -l2 "${workdir}/build/local/tmp"
+	"${workdir}/build/local/tmp" \
+	--malloc --level=2 --silent
 cdx "${currdir}"
 run rm -rf "${workdir}"
 

@@ -27,6 +27,17 @@ enum silofs_file_type {
 	SILOFS_FILE_TYPE2     = 2,
 };
 
+/* regual-file sub-operations */
+enum silofs_file_op {
+	SILOFS_FILE_OP_READ       = 1,
+	SILOFS_FILE_OP_WRITE      = 2,
+	SILOFS_FILE_OP_TRUNC      = 3,
+	SILOFS_FILE_OP_FALLOC     = 4,
+	SILOFS_FILE_OP_FIEMAP     = 5,
+	SILOFS_FILE_OP_LSEEK      = 6,
+	SILOFS_FILE_OP_COPY_RANGE = 7,
+};
+
 /* call-back context for read-write operations */
 struct silofs_rwiter_ctx;
 

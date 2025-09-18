@@ -849,9 +849,17 @@ do_add_dentry(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
 	return err;
 }
 
+static void post_create_open(struct silofs_inode_info *ii, bool kill_suidgid)
+{
+	update_nopen(ii, 1);
+	if (kill_suidgid) {
+		silofs_ii_kill_suidgid(ii);
+	}
+}
+
 static int
 do_create(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
-          const struct silofs_namestr *name, mode_t mode,
+          const struct silofs_namestr *name, mode_t mode, bool kill_suidgid,
           struct silofs_inode_info **out_ii)
 {
 	struct silofs_inode_info *ii = nullptr;
@@ -869,7 +877,7 @@ do_create(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
 	if (err) {
 		return err;
 	}
-	update_nopen(ii, 1);
+	post_create_open(ii, kill_suidgid);
 	silofs_update_itimes_of(task, dir_ii, SILOFS_IATTR_MCTIME);
 
 	*out_ii = ii;
@@ -879,12 +887,12 @@ do_create(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
 int silofs_do_create(struct silofs_task_ctx *task,
                      struct silofs_inode_info *dir_ii,
                      const struct silofs_namestr *name, mode_t mode,
-                     struct silofs_inode_info **out_ii)
+                     bool kill_suidgid, struct silofs_inode_info **out_ii)
 {
 	int err;
 
 	silofs_ii_incref(dir_ii);
-	err = do_create(task, dir_ii, name, mode, out_ii);
+	err = do_create(task, dir_ii, name, mode, kill_suidgid, out_ii);
 	ii_inc_nlookup(*out_ii, err);
 	silofs_ii_decref(dir_ii);
 	return err;
@@ -946,7 +954,7 @@ do_mknod_reg(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
 	int err;
 	struct silofs_inode_info *ii = nullptr;
 
-	err = do_create(task, dir_ii, name, mode, &ii);
+	err = do_create(task, dir_ii, name, mode, false, &ii);
 	if (err) {
 		return err;
 	}
@@ -1069,20 +1077,37 @@ static int check_open(const struct silofs_task_ctx *task,
 	return 0;
 }
 
-static int
-trunc_data(struct silofs_task_ctx *task, struct silofs_inode_info *ii)
+static int trunc_data(struct silofs_task_ctx *task,
+                      struct silofs_inode_info *ii, bool kill_suidgid)
 {
-	return silofs_ii_isreg(ii) ? silofs_do_truncate(task, ii, 0) : 0;
+	int ret = 0;
+
+	if (silofs_ii_isreg(ii)) {
+		ret = silofs_do_truncate(task, ii, 0, kill_suidgid);
+	}
+	return ret;
 }
 
-static int post_open(struct silofs_task_ctx *task,
-                     struct silofs_inode_info *ii, int o_flags)
+static int
+post_open(struct silofs_task_ctx *task, struct silofs_inode_info *ii,
+          int o_flags, bool kill_suidgid)
 {
-	return (o_flags & O_TRUNC) ? trunc_data(task, ii) : 0;
+	int err;
+
+	if (o_flags & O_TRUNC) {
+		err = trunc_data(task, ii, kill_suidgid);
+		if (err) {
+			return err;
+		}
+	}
+	if (kill_suidgid) {
+		silofs_ii_kill_suidgid(ii);
+	}
+	return 0;
 }
 
 static int do_open(struct silofs_task_ctx *task, struct silofs_inode_info *ii,
-                   int o_flags)
+                   int o_flags, bool kill_suidgid)
 {
 	int err;
 
@@ -1090,21 +1115,21 @@ static int do_open(struct silofs_task_ctx *task, struct silofs_inode_info *ii,
 	if (err) {
 		return err;
 	}
-	err = post_open(task, ii, o_flags);
+	err = post_open(task, ii, o_flags, kill_suidgid);
 	if (err) {
 		return err;
 	}
-	update_nopen(ii, 1);
+	post_create_open(ii, kill_suidgid);
 	return 0;
 }
 
 int silofs_do_open(struct silofs_task_ctx *task, struct silofs_inode_info *ii,
-                   int o_flags)
+                   int o_flags, bool kill_suidgid)
 {
 	int err;
 
 	silofs_ii_incref(ii);
-	err = do_open(task, ii, o_flags);
+	err = do_open(task, ii, o_flags, kill_suidgid);
 	silofs_ii_decref(ii);
 	return err;
 }

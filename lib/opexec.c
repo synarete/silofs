@@ -828,7 +828,7 @@ out:
 }
 
 int silofs_exec_chown(struct silofs_task_ctx *task, ino_t ino, uid_t uid,
-                      gid_t gid, const struct stat *st,
+                      gid_t gid, bool kill_suidgid, const struct stat *st,
                       struct silofs_stat *out_stat)
 {
 	struct silofs_itimes itimes;
@@ -851,7 +851,7 @@ int silofs_exec_chown(struct silofs_task_ctx *task, ino_t ino, uid_t uid,
 	ok_or_goto_out(err);
 
 	stat_to_itimes(st, &itimes);
-	err = silofs_do_chown(task, ii, uid, gid, &itimes);
+	err = silofs_do_chown(task, ii, uid, gid, kill_suidgid, &itimes);
 	ok_or_goto_out(err);
 
 	err = silofs_do_getattr(task, ii, out_stat);
@@ -896,7 +896,7 @@ out:
 }
 
 int silofs_exec_truncate(struct silofs_task_ctx *task, ino_t ino, off_t len,
-                         struct silofs_stat *out_stat)
+                         bool kill_suidgid, struct silofs_stat *out_stat)
 {
 	struct silofs_inode_info *ii = nullptr;
 	int err;
@@ -916,7 +916,7 @@ int silofs_exec_truncate(struct silofs_task_ctx *task, ino_t ino, off_t len,
 	err = op_try_flush(task, ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_truncate(task, ii, len);
+	err = silofs_do_truncate(task, ii, len, kill_suidgid);
 	ok_or_goto_out(err);
 
 	err = silofs_do_getattr(task, ii, out_stat);
@@ -930,7 +930,7 @@ out:
 
 int silofs_exec_create(struct silofs_task_ctx *task, ino_t parent,
                        const char *name, int o_flags, mode_t mode,
-                       struct silofs_stat *out_stat)
+                       bool kill_suidgid, struct silofs_stat *out_stat)
 {
 	struct silofs_namestr nstr;
 	struct silofs_inode_info *ii = nullptr;
@@ -957,7 +957,7 @@ int silofs_exec_create(struct silofs_task_ctx *task, ino_t parent,
 	err = op_try_flush(task, dir_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_create(task, dir_ii, &nstr, mode, &ii);
+	err = silofs_do_create(task, dir_ii, &nstr, mode, kill_suidgid, &ii);
 	ok_or_goto_out(err);
 
 	err = silofs_do_getattr(task, ii, out_stat);
@@ -969,7 +969,8 @@ out:
 	return op_finish(task, err);
 }
 
-int silofs_exec_open(struct silofs_task_ctx *task, ino_t ino, int o_flags)
+int silofs_exec_open(struct silofs_task_ctx *task, ino_t ino, int o_flags,
+                     bool kill_suidgid)
 {
 	struct silofs_inode_info *ii = nullptr;
 	const int mutf = o_flags & (O_RDWR | O_WRONLY | O_TRUNC | O_APPEND);
@@ -987,7 +988,7 @@ int silofs_exec_open(struct silofs_task_ctx *task, ino_t ino, int o_flags)
 	err = op_stage_inode(task, ino, mutf > 0, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_open(task, ii, o_flags);
+	err = silofs_do_open(task, ii, o_flags, kill_suidgid);
 	ok_or_goto_out(err);
 out:
 	return op_finish(task, err);
@@ -1191,7 +1192,8 @@ out:
 }
 
 int silofs_exec_write(struct silofs_task_ctx *task, ino_t ino, const void *buf,
-                      size_t len, off_t off, int o_flags, size_t *out_len)
+                      size_t len, off_t off, int o_flags, bool kill_suidgid,
+                      size_t *out_len)
 {
 	struct silofs_inode_info *ii = nullptr;
 	int err;
@@ -1211,14 +1213,16 @@ int silofs_exec_write(struct silofs_task_ctx *task, ino_t ino, const void *buf,
 	err = op_try_flush(task, ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_write(task, ii, buf, len, off, o_flags, out_len);
+	err = silofs_do_write(task, ii, buf, len, off, o_flags, kill_suidgid,
+	                      out_len);
 	ok_or_goto_out(err);
 out:
 	return op_finish(task, err);
 }
 
 int silofs_exec_write_iter(struct silofs_task_ctx *task, ino_t ino,
-                           int o_flags, struct silofs_rwiter_ctx *rwi_ctx)
+                           int o_flags, bool kill_suidgid,
+                           struct silofs_rwiter_ctx *rwi_ctx)
 {
 	struct silofs_inode_info *ii = nullptr;
 	int err;
@@ -1238,7 +1242,7 @@ int silofs_exec_write_iter(struct silofs_task_ctx *task, ino_t ino,
 	err = op_try_flush(task, ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_write_iter(task, ii, o_flags, rwi_ctx);
+	err = silofs_do_write_iter(task, ii, o_flags, kill_suidgid, rwi_ctx);
 	ok_or_goto_out(err);
 out:
 	return op_finish(task, err);

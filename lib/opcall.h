@@ -73,6 +73,7 @@ struct silofs_setattr_in {
 	bool        set_amtime_now;
 	bool        set_amctime;
 	bool        set_nontime;
+	bool        kill_suidgid;
 };
 
 struct silofs_setattr_out {
@@ -154,6 +155,7 @@ struct silofs_open_in {
 	ino_t ino;
 	int   o_flags;
 	int   noflush;
+	bool  kill_suidgid;
 };
 
 struct silofs_statfs_in {
@@ -240,6 +242,7 @@ struct silofs_create_in {
 	int         o_flags;
 	mode_t      mode;
 	mode_t      umask;
+	bool        kill_suidgid;
 };
 
 struct silofs_create_out {
@@ -296,6 +299,7 @@ struct silofs_write_in {
 	const void               *buf;
 	struct silofs_rwiter_ctx *rwi_ctx;
 	int                       o_flags;
+	bool                      kill_suidgid;
 };
 
 struct silofs_write_out {

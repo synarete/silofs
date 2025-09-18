@@ -1345,7 +1345,7 @@ void silofs_ii_setup_dir(struct silofs_inode_info *dir_ii, mode_t parent_mode,
 	};
 
 	indr_setup(indr_of(dir_ii->inode), unique_seed());
-	silofs_ii_update_diattrs(dir_ii, &iattr);
+	silofs_ii_update_iattrs(dir_ii, &iattr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

@@ -53,11 +53,11 @@ int silofs_exec_chmod(struct silofs_task_ctx *task, ino_t ino, mode_t mode,
                       const struct stat *st, struct silofs_stat *out_stat);
 
 int silofs_exec_chown(struct silofs_task_ctx *task, ino_t ino, uid_t uid,
-                      gid_t gid, const struct stat *st,
+                      gid_t gid, bool kill_suidgid, const struct stat *st,
                       struct silofs_stat *out_stat);
 
 int silofs_exec_truncate(struct silofs_task_ctx *task, ino_t ino, off_t len,
-                         struct silofs_stat *out_stat);
+                         bool kill_suidgid, struct silofs_stat *out_stat);
 
 int silofs_exec_utimens(struct silofs_task_ctx *task, ino_t ino,
                         const struct stat  *times,
@@ -96,9 +96,10 @@ int silofs_exec_fsyncdir(struct silofs_task_ctx *task, ino_t ino,
 
 int silofs_exec_create(struct silofs_task_ctx *task, ino_t parent,
                        const char *name, int o_flags, mode_t mode,
-                       struct silofs_stat *out_stat);
+                       bool kill_suidgid, struct silofs_stat *out_stat);
 
-int silofs_exec_open(struct silofs_task_ctx *task, ino_t ino, int o_flags);
+int silofs_exec_open(struct silofs_task_ctx *task, ino_t ino, int o_flags,
+                     bool kill_suidgid);
 
 int silofs_exec_mknod(struct silofs_task_ctx *task, ino_t parent,
                       const char *name, mode_t mode, dev_t rdev,
@@ -142,10 +143,12 @@ int silofs_exec_read_iter(struct silofs_task_ctx *task, ino_t ino, int o_flags,
                           struct silofs_rwiter_ctx *rwi_ctx);
 
 int silofs_exec_write(struct silofs_task_ctx *task, ino_t ino, const void *buf,
-                      size_t len, off_t off, int o_flags, size_t *out_len);
+                      size_t len, off_t off, int o_flags, bool kill_suidgid,
+                      size_t *out_len);
 
 int silofs_exec_write_iter(struct silofs_task_ctx *task, ino_t ino,
-                           int o_flags, struct silofs_rwiter_ctx *rwi_ctx);
+                           int o_flags, bool kill_suidgid,
+                           struct silofs_rwiter_ctx *rwi_ctx);
 
 int silofs_exec_statx(struct silofs_task_ctx *task, ino_t ino,
                       uint32_t sx_want_mask, struct silofs_stat *out_st);

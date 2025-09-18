@@ -30,25 +30,27 @@ struct silofs_task_ctx;
 
 /* inode's attributes masks */
 enum silofs_iattr_flags {
-	SILOFS_IATTR_PARENT    = SILOFS_BIT(0),
-	SILOFS_IATTR_LAZY      = SILOFS_BIT(1),
-	SILOFS_IATTR_SIZE      = SILOFS_BIT(2),
-	SILOFS_IATTR_SPAN      = SILOFS_BIT(3),
-	SILOFS_IATTR_NLINK     = SILOFS_BIT(4),
-	SILOFS_IATTR_BLOCKS    = SILOFS_BIT(5),
-	SILOFS_IATTR_MODE      = SILOFS_BIT(6),
-	SILOFS_IATTR_UID       = SILOFS_BIT(7),
-	SILOFS_IATTR_GID       = SILOFS_BIT(8),
-	SILOFS_IATTR_KILL_SUID = SILOFS_BIT(9),
-	SILOFS_IATTR_KILL_SGID = SILOFS_BIT(10),
-	SILOFS_IATTR_BTIME     = SILOFS_BIT(11),
-	SILOFS_IATTR_ATIME     = SILOFS_BIT(12),
-	SILOFS_IATTR_MTIME     = SILOFS_BIT(13),
-	SILOFS_IATTR_CTIME     = SILOFS_BIT(14),
-	SILOFS_IATTR_NOW       = SILOFS_BIT(15),
-	SILOFS_IATTR_MCTIME    = SILOFS_IATTR_MTIME | SILOFS_IATTR_CTIME,
-	SILOFS_IATTR_TIMES     = SILOFS_IATTR_BTIME | SILOFS_IATTR_ATIME |
-	                     SILOFS_IATTR_MTIME | SILOFS_IATTR_CTIME
+	SILOFS_IATTR_PARENT       = SILOFS_BIT(0),
+	SILOFS_IATTR_LAZY         = SILOFS_BIT(1),
+	SILOFS_IATTR_SIZE         = SILOFS_BIT(2),
+	SILOFS_IATTR_SPAN         = SILOFS_BIT(3),
+	SILOFS_IATTR_NLINK        = SILOFS_BIT(4),
+	SILOFS_IATTR_BLOCKS       = SILOFS_BIT(5),
+	SILOFS_IATTR_MODE         = SILOFS_BIT(6),
+	SILOFS_IATTR_UID          = SILOFS_BIT(7),
+	SILOFS_IATTR_GID          = SILOFS_BIT(8),
+	SILOFS_IATTR_KILL_SUID    = SILOFS_BIT(9),
+	SILOFS_IATTR_KILL_SGID    = SILOFS_BIT(10),
+	SILOFS_IATTR_BTIME        = SILOFS_BIT(11),
+	SILOFS_IATTR_ATIME        = SILOFS_BIT(12),
+	SILOFS_IATTR_MTIME        = SILOFS_BIT(13),
+	SILOFS_IATTR_CTIME        = SILOFS_BIT(14),
+	SILOFS_IATTR_NOW          = SILOFS_BIT(15),
+	SILOFS_IATTR_KILL_SUIDGID = SILOFS_IATTR_KILL_SUID |
+	                            SILOFS_IATTR_KILL_SGID,
+	SILOFS_IATTR_MCTIME = SILOFS_IATTR_MTIME | SILOFS_IATTR_CTIME,
+	SILOFS_IATTR_TIMES  = SILOFS_IATTR_BTIME | SILOFS_IATTR_ATIME |
+	                     SILOFS_IATTR_MTIME | SILOFS_IATTR_CTIME,
 };
 
 /* extended inode stat */
@@ -146,8 +148,10 @@ void silofs_ii_fixup_as_rootdir(struct silofs_inode_info *ii);
 void silofs_ii_update_iflags(struct silofs_inode_info *ii, int iflags_want,
                              int iflags_dont);
 
-void silofs_ii_update_diattrs(struct silofs_inode_info  *ii,
-                              const struct silofs_iattr *iattr);
+void silofs_ii_update_iattrs(struct silofs_inode_info  *ii,
+                             const struct silofs_iattr *iattr);
+
+void silofs_ii_kill_suidgid(struct silofs_inode_info *ii);
 
 void silofs_ii_refresh_atime(struct silofs_inode_info *ii, bool to_volatile);
 
@@ -205,7 +209,7 @@ int silofs_do_chmod(struct silofs_task_ctx *task, struct silofs_inode_info *ii,
 
 int silofs_do_chown(const struct silofs_task_ctx *task,
                     struct silofs_inode_info *ii, uid_t uid, gid_t gid,
-                    const struct silofs_itimes *itimes);
+                    bool kill_suidgid, const struct silofs_itimes *itimes);
 
 int silofs_do_utimens(const struct silofs_task_ctx *task,
                       struct silofs_inode_info     *ii,

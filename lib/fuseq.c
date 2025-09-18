@@ -1825,13 +1825,12 @@ static void do_init_capabilities(const struct silofs_fuseq_cmd_ctx *fcc)
 	update_cap_want(coni, FUSE_SPLICE_WRITE);
 	update_cap_want(coni, FUSE_SPLICE_READ);
 	update_cap_want(coni, FUSE_PARALLEL_DIROPS);
-	update_cap_want(coni, FUSE_HANDLE_KILLPRIV);
 	update_cap_want(coni, FUSE_MAX_PAGES);
 	update_cap_want(coni, FUSE_CACHE_SYMLINKS);
 	update_cap_want(coni, FUSE_DO_READDIRPLUS);
 	update_cap_want(coni, FUSE_READDIRPLUS_AUTO);
 	update_cap_want(coni, FUSE_ASYNC_DIO);
-
+	update_cap_want(coni, FUSE_HANDLE_KILLPRIV_V2);
 	update_cap_want(coni, FUSE_SETXATTR_EXT);
 	if (writeback_cache) {
 		update_cap_want(coni, FUSE_AUTO_INVAL_DATA);
@@ -1971,7 +1970,7 @@ static int do_exec_op(const struct silofs_fuseq_cmd_ctx *fcc)
 #define FATTR_MASK                                                       \
 	(FATTR_MODE | FATTR_UID | FATTR_GID | FATTR_SIZE | FATTR_ATIME | \
 	 FATTR_MTIME | FATTR_FH | FATTR_ATIME_NOW | FATTR_MTIME_NOW |    \
-	 FATTR_LOCKOWNER | FATTR_CTIME)
+	 FATTR_LOCKOWNER | FATTR_CTIME | FATTR_KILL_SUIDGID)
 
 #define FATTR_AMTIME_NOW (FATTR_ATIME_NOW | FATTR_MTIME_NOW)
 
@@ -1979,34 +1978,40 @@ static int do_exec_op(const struct silofs_fuseq_cmd_ctx *fcc)
 
 #define FATTR_NONTIME (FATTR_MODE | FATTR_UID | FATTR_GID | FATTR_SIZE)
 
-static int
-uid_gid_of(const struct stat *attr, int to_set, uid_t *uid, gid_t *gid)
+static bool testf(uint32_t flags, uint32_t mask)
 {
-	*uid = (to_set & FATTR_UID) ? attr->st_uid : (uid_t)(-1);
-	*gid = (to_set & FATTR_GID) ? attr->st_gid : (gid_t)(-1);
+	return (flags & mask) > 0;
+}
+
+static int
+uid_gid_of(const struct stat *attr, uint32_t to_set, uid_t *uid, gid_t *gid)
+{
+	*uid = testf(to_set, FATTR_UID) ? attr->st_uid : (uid_t)(-1);
+	*gid = testf(to_set, FATTR_GID) ? attr->st_gid : (gid_t)(-1);
 	return 0; /* TODO: Check valid ranges */
 }
 
-static void utimens_of(const struct stat *st, int to_set, struct stat *times)
+static void
+utimens_of(const struct stat *st, unsigned to_set, struct stat *times)
 {
-	const int set_ctime_now = FATTR_AMTIME_NOW | FATTR_AMCTIME |
-	                          FATTR_MODE | FATTR_UID | FATTR_GID |
-	                          FATTR_SIZE;
+	const uint32_t set_ctime_now = //
+		FATTR_AMTIME_NOW | FATTR_AMCTIME | FATTR_MODE | FATTR_UID |
+		FATTR_GID | FATTR_SIZE;
 
 	silofs_memzero(times, sizeof(*times));
 	times->st_atim.tv_nsec = UTIME_OMIT;
 	times->st_mtim.tv_nsec = UTIME_OMIT;
 	times->st_ctim.tv_nsec = UTIME_OMIT;
 
-	if (to_set & FATTR_ATIME) {
+	if (testf(to_set, FATTR_ATIME)) {
 		silofs_ts_copy(&times->st_atim, &st->st_atim);
 	}
-	if (to_set & FATTR_MTIME) {
+	if (testf(to_set, FATTR_MTIME)) {
 		silofs_ts_copy(&times->st_mtim, &st->st_mtim);
 	}
-	if (to_set & FATTR_CTIME) {
+	if (testf(to_set, FATTR_CTIME)) {
 		silofs_ts_copy(&times->st_ctim, &st->st_ctim);
-	} else if (to_set & set_ctime_now) {
+	} else if (testf(to_set, set_ctime_now)) {
 		times->st_ctim.tv_nsec = UTIME_NOW;
 	}
 }
@@ -2014,34 +2019,37 @@ static void utimens_of(const struct stat *st, int to_set, struct stat *times)
 static int do_setattr(const struct silofs_fuseq_cmd_ctx *fcc)
 {
 	struct stat attr = { .st_size = -1 };
-	const int to_set = (int)(fcc->in->u.setattr.arg.valid & FATTR_MASK);
+	const unsigned to_set = fcc->in->u.setattr.arg.valid & FATTR_MASK;
 	int err;
 
 	silofs_memzero(&fcc->args->in.setattr, sizeof(fcc->args->in.setattr));
 	fuse_setattr_to_stat(&fcc->in->u.setattr.arg, &attr);
 
 	utimens_of(&attr, to_set, &fcc->args->in.setattr.tims);
-	if (to_set & (FATTR_UID | FATTR_GID)) {
+	if (testf(to_set, FATTR_UID | FATTR_GID)) {
 		uid_gid_of(&attr, to_set, &fcc->args->in.setattr.uid,
 		           &fcc->args->in.setattr.gid);
 		fcc->args->in.setattr.set_uid_gid = true;
 	}
-	if (to_set & FATTR_AMTIME_NOW) {
+	if (testf(to_set, FATTR_AMTIME_NOW)) {
 		fcc->args->in.setattr.set_amtime_now = true;
 	}
-	if (to_set & FATTR_MODE) {
+	if (testf(to_set, FATTR_MODE)) {
 		fcc->args->in.setattr.mode = attr.st_mode;
 		fcc->args->in.setattr.set_mode = true;
 	}
-	if (to_set & FATTR_SIZE) {
+	if (testf(to_set, FATTR_SIZE)) {
 		fcc->args->in.setattr.size = attr.st_size;
 		fcc->args->in.setattr.set_size = true;
 	}
-	if (to_set & FATTR_AMCTIME) {
+	if (testf(to_set, FATTR_AMCTIME)) {
 		fcc->args->in.setattr.set_amctime = true;
 	}
-	if (to_set & FATTR_NONTIME) {
+	if (testf(to_set, FATTR_NONTIME)) {
 		fcc->args->in.setattr.set_nontime = true;
+	}
+	if (testf(to_set, FATTR_KILL_SUIDGID)) {
+		fcc->args->in.setattr.kill_suidgid = true;
 	}
 	fcc->args->in.setattr.ino = fcc->ino;
 	err = do_exec_op(fcc);
@@ -2232,6 +2240,8 @@ static int do_open(const struct silofs_fuseq_cmd_ctx *fcc)
 
 	fcc->args->in.open.ino = fcc->ino;
 	fcc->args->in.open.o_flags = (int)(fcc->in->u.open.arg.flags);
+	fcc->args->in.open.kill_suidgid =
+		testf(fcc->in->u.open.arg.open_flags, FUSE_OPEN_KILL_SUIDGID);
 	noflush = (fcc->args->in.open.o_flags & O_ACCMODE) == O_RDONLY;
 	fcc->args->in.open.noflush = noflush;
 	err = do_exec_op(fcc);
@@ -2452,6 +2462,9 @@ static int do_create(const struct silofs_fuseq_cmd_ctx *fcc)
 	fcc->args->in.create.o_flags = (int)(fcc->in->u.create.arg.flags);
 	fcc->args->in.create.mode = (mode_t)(fcc->in->u.create.arg.mode);
 	fcc->args->in.create.umask = (mode_t)(fcc->in->u.create.arg.umask);
+	fcc->args->in.create.kill_suidgid =
+		testf(fcc->in->u.create.arg.open_flags,
+	              FUSE_OPEN_KILL_SUIDGID);
 	silofs_task_update_umask(fcc->task, fcc->args->in.create.umask);
 	err = do_exec_op(fcc);
 	return fqs_reply_create(fcc->fqs, fcc->task, &fcc->args->out.create.st,
@@ -2834,6 +2847,9 @@ static int do_write_buf(const struct silofs_fuseq_cmd_ctx *fcc)
 	fcc->args->in.write.buf = tail_of(fcc->in, sizeof(fcc->in->u.write));
 	fcc->args->in.write.rwi_ctx = nullptr;
 	fcc->args->in.write.o_flags = (int)(fcc->in->u.write.arg.flags);
+	fcc->args->in.write.kill_suidgid =
+		testf(fcc->in->u.write.arg.write_flags,
+	              FUSE_WRITE_KILL_SUIDGID);
 	fcc->args->out.write.nwr = 0;
 	err = do_exec_op(fcc);
 	ret = fqs_reply_write(fcc->fqs, fcc->task, fcc->args->out.write.nwr,
@@ -2858,6 +2874,9 @@ static int do_write_iter(const struct silofs_fuseq_cmd_ctx *fcc)
 	fcc->args->in.write.buf = nullptr;
 	fcc->args->in.write.rwi_ctx = &fq_wri->rwi;
 	fcc->args->in.write.o_flags = (int)(fcc->in->u.write.arg.flags);
+	fcc->args->in.write.kill_suidgid =
+		testf(fcc->in->u.write.arg.write_flags,
+	              FUSE_WRITE_KILL_SUIDGID);
 	fcc->args->out.write.nwr = 0;
 	fqs_setup_wr_iter(fcc->fqs, fq_wri, len, fcc->args->in.write.off);
 	err1 = do_exec_op(fcc);

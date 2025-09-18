@@ -910,15 +910,14 @@ update_post_chown(const struct silofs_task_ctx *task,
 
 	iattr->ia_flags |= SILOFS_IATTR_CTIME;
 	if (mode & mask) {
-		iattr->ia_flags |= SILOFS_IATTR_KILL_SUID;
-		iattr->ia_flags |= SILOFS_IATTR_KILL_SGID;
+		iattr->ia_flags |= SILOFS_IATTR_KILL_SUIDGID;
 	}
 	silofs_update_iattrs_of(task, ii, iattr);
 }
 
-static int
-do_chown(const struct silofs_task_ctx *task, struct silofs_inode_info *ii,
-         uid_t uid, gid_t gid, const struct silofs_itimes *itimes)
+static int do_chown(const struct silofs_task_ctx *task,
+                    struct silofs_inode_info *ii, uid_t uid, gid_t gid,
+                    bool kill_suidgid, const struct silofs_itimes *itimes)
 {
 	struct silofs_iattr iattr = { .ia_flags = 0 };
 	bool chown_uid = !silofs_uid_isnull(uid);
@@ -941,18 +940,21 @@ do_chown(const struct silofs_task_ctx *task, struct silofs_inode_info *ii,
 		iattr.ia_gid = gid;
 		iattr.ia_flags |= SILOFS_IATTR_GID;
 	}
+	if (kill_suidgid) {
+		iattr.ia_flags |= SILOFS_IATTR_KILL_SUIDGID;
+	}
 	update_post_chown(task, ii, &iattr);
 	return 0;
 }
 
 int silofs_do_chown(const struct silofs_task_ctx *task,
                     struct silofs_inode_info *ii, uid_t uid, gid_t gid,
-                    const struct silofs_itimes *itimes)
+                    bool kill_suidgid, const struct silofs_itimes *itimes)
 {
 	int err;
 
 	silofs_ii_incref(ii);
-	err = do_chown(task, ii, uid, gid, itimes);
+	err = do_chown(task, ii, uid, gid, kill_suidgid, itimes);
 	silofs_ii_decref(ii);
 	return err;
 }
@@ -1344,7 +1346,7 @@ static void ii_update_inode_attr(struct silofs_inode_info *ii,
 	} else if (flags & SILOFS_IATTR_TIMES) {
 		silofs_ii_refresh_atime(ii, false);
 	}
-	if (flags & (SILOFS_IATTR_KILL_SUID | SILOFS_IATTR_KILL_SGID)) {
+	if (flags & SILOFS_IATTR_KILL_SUIDGID) {
 		kill_suid_sgid(ii, flags);
 	}
 	inode_inc_revision(inode);
@@ -1358,12 +1360,21 @@ static void ii_update_iattrs(struct silofs_inode_info *ii,
 	ii_update_inode_attr(ii, iattr, iattr->ia_flags, ts_now);
 }
 
-void silofs_ii_update_diattrs(struct silofs_inode_info *ii,
-                              const struct silofs_iattr *iattr)
+void silofs_ii_update_iattrs(struct silofs_inode_info *ii,
+                             const struct silofs_iattr *iattr)
 {
 	const struct timespec ts = { .tv_nsec = UTIME_OMIT };
 
 	ii_update_iattrs(ii, iattr, &ts);
+}
+
+void silofs_ii_kill_suidgid(struct silofs_inode_info *ii)
+{
+	const struct silofs_iattr iattr = {
+		.ia_flags = SILOFS_IATTR_KILL_SUIDGID,
+	};
+
+	silofs_ii_update_iattrs(ii, &iattr);
 }
 
 static void ii_update_itimes(struct silofs_inode_info *ii,

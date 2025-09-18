@@ -48,11 +48,11 @@ int silofs_drop_reg(struct silofs_task_ctx   *task,
 
 int silofs_do_write(struct silofs_task_ctx *task, struct silofs_inode_info *ii,
                     const void *buf, size_t len, off_t off, int o_flags,
-                    size_t *out_len);
+                    bool kill_suidgid, size_t *out_len);
 
 int silofs_do_write_iter(struct silofs_task_ctx   *task,
                          struct silofs_inode_info *ii, int o_flags,
-                         struct silofs_rwiter_ctx *rwi_ctx);
+                         bool kill_suidgid, struct silofs_rwiter_ctx *rwi_ctx);
 
 int silofs_do_read(struct silofs_task_ctx *task, struct silofs_inode_info *ii,
                    void *buf, size_t len, off_t off, int o_flags,
@@ -70,7 +70,8 @@ int silofs_do_fallocate(struct silofs_task_ctx   *task,
                         off_t length);
 
 int silofs_do_truncate(struct silofs_task_ctx   *task,
-                       struct silofs_inode_info *ii, off_t off);
+                       struct silofs_inode_info *ii, off_t off,
+                       bool kill_suidgid);
 
 int silofs_do_fiemap(struct silofs_task_ctx   *task,
                      struct silofs_inode_info *ii, struct fiemap *fm);

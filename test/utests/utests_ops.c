@@ -274,7 +274,7 @@ static int ut_do_create(struct ut_env *ute, ino_t parent, const char *name,
 	int ret;
 
 	ut_setup_task(ute, &task);
-	ret = silofs_exec_create(&task, parent, name, 0, mode, &st);
+	ret = silofs_exec_create(&task, parent, name, 0, mode, false, &st);
 	ut_release_task(ute, &task);
 	assign_stat(out_st, &st);
 	return sanitize_status(ret);
@@ -286,7 +286,7 @@ static int ut_do_open(struct ut_env *ute, ino_t ino, int flags)
 	int ret;
 
 	ut_setup_task(ute, &task);
-	ret = silofs_exec_open(&task, ino, flags);
+	ret = silofs_exec_open(&task, ino, flags, true);
 	ut_release_task(ute, &task);
 	return sanitize_status(ret);
 }
@@ -310,7 +310,7 @@ static int ut_do_truncate(struct ut_env *ute, ino_t ino, off_t length,
 	int ret;
 
 	ut_setup_task(ute, &task);
-	ret = silofs_exec_truncate(&task, ino, length, &st);
+	ret = silofs_exec_truncate(&task, ino, length, false, &st);
 	ut_release_task(ute, &task);
 	assign_stat(out_st, &st);
 	return sanitize_status(ret);
@@ -432,7 +432,7 @@ static int ut_do_write(struct ut_env *ute, ino_t ino, const void *buf,
 	int ret;
 
 	ut_setup_task(ute, &task);
-	ret = silofs_exec_write(&task, ino, buf, len, off, 0, out_len);
+	ret = silofs_exec_write(&task, ino, buf, len, off, 0, false, out_len);
 	ut_release_task(ute, &task);
 	return sanitize_status(ret);
 }
@@ -550,7 +550,7 @@ static int ut_do_write_iter(struct ut_env *ute, ino_t ino, const void *buf,
 	int err3;
 
 	ut_setup_task(ute, &task);
-	err1 = silofs_exec_write_iter(&task, ino, 0, &wri.rwi);
+	err1 = silofs_exec_write_iter(&task, ino, 0, false, &wri.rwi);
 	ut_release_task(ute, &task);
 
 	err2 = ut_write_iter_copy_rem(&wri);

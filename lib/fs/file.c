@@ -58,6 +58,7 @@ struct silofs_file_ctx {
 	int with_backref;
 	int o_flags;
 	enum silofs_stg_mode stg_mode;
+	bool kill_suidgid;
 };
 
 struct silofs_fileaf_ref {
@@ -1361,7 +1362,14 @@ static bool filc_ismapping_boundaries(const struct silofs_file_ctx *f_ctx)
 }
 
 static void
-filc_update_post_io(const struct silofs_file_ctx *f_ctx, bool kill_suid_sgid)
+filc_update_kill_suidgid(struct silofs_file_ctx *f_ctx, int dont_kill_suidgid)
+{
+	if (dont_kill_suidgid) {
+		f_ctx->kill_suidgid = false;
+	}
+}
+
+static void filc_update_post_io(const struct silofs_file_ctx *f_ctx)
 {
 	struct silofs_iattr iattr = { .ia_size = -1 };
 	struct silofs_inode_info *ii = f_ctx->ii;
@@ -1380,9 +1388,8 @@ filc_update_post_io(const struct silofs_file_ctx *f_ctx, bool kill_suid_sgid)
 		iattr.ia_span = silofs_off_max(off, isp);
 		if (len > 0) {
 			iattr.ia_flags |= SILOFS_IATTR_MCTIME;
-			if (kill_suid_sgid) {
-				iattr.ia_flags |= SILOFS_IATTR_KILL_SUID;
-				iattr.ia_flags |= SILOFS_IATTR_KILL_SGID;
+			if (f_ctx->kill_suidgid) {
+				iattr.ia_flags |= SILOFS_IATTR_KILL_SUIDGID;
 			}
 		}
 	} else if (f_ctx->op_mask & FILE_OP_FALLOC) {
@@ -1398,9 +1405,8 @@ filc_update_post_io(const struct silofs_file_ctx *f_ctx, bool kill_suid_sgid)
 		iattr.ia_span = f_ctx->beg;
 		if (isz != f_ctx->beg) {
 			iattr.ia_flags |= SILOFS_IATTR_MCTIME;
-			if (kill_suid_sgid) {
-				iattr.ia_flags |= SILOFS_IATTR_KILL_SUID;
-				iattr.ia_flags |= SILOFS_IATTR_KILL_SGID;
+			if (f_ctx->kill_suidgid) {
+				iattr.ia_flags |= SILOFS_IATTR_KILL_SUIDGID;
 			}
 		}
 	}
@@ -2102,7 +2108,7 @@ static int filc_read_iter(struct silofs_file_ctx *f_ctx)
 	err = filc_check_file_io(f_ctx);
 	if (!err) {
 		err = filc_read_data(f_ctx);
-		filc_update_post_io(f_ctx, false);
+		filc_update_post_io(f_ctx);
 	}
 	return err;
 }
@@ -2861,13 +2867,14 @@ static int filc_write_iter(struct silofs_file_ctx *f_ctx)
 		goto out;
 	}
 out:
-	filc_update_post_io(f_ctx, !err && (f_ctx->off > f_ctx->beg));
+	filc_update_kill_suidgid(f_ctx, err || (f_ctx->off <= f_ctx->beg));
+	filc_update_post_io(f_ctx);
 	return err;
 }
 
 int silofs_do_write_iter(struct silofs_task_ctx *task,
                          struct silofs_inode_info *ii, int o_flags,
-                         struct silofs_rwiter_ctx *rwi)
+                         bool kill_suidgid, struct silofs_rwiter_ctx *rwi)
 {
 	struct silofs_file_ctx f_ctx = {
 		.task = task,
@@ -2878,6 +2885,7 @@ int silofs_do_write_iter(struct silofs_task_ctx *task,
 		.with_backref = 1,
 		.o_flags = o_flags,
 		.stg_mode = SILOFS_STG_COW,
+		.kill_suidgid = kill_suidgid,
 	};
 	int ret;
 
@@ -2891,7 +2899,7 @@ int silofs_do_write_iter(struct silofs_task_ctx *task,
 
 int silofs_do_write(struct silofs_task_ctx *task, struct silofs_inode_info *ii,
                     const void *buf, size_t len, off_t off, int o_flags,
-                    size_t *out_len)
+                    bool kill_suidgid, size_t *out_len)
 {
 	struct silofs_write_iter wri = {
 		.rwi.actor = write_iter_actor,
@@ -2910,6 +2918,7 @@ int silofs_do_write(struct silofs_task_ctx *task, struct silofs_inode_info *ii,
 		.with_backref = 0,
 		.o_flags = o_flags,
 		.stg_mode = SILOFS_STG_COW,
+		.kill_suidgid = kill_suidgid,
 	};
 	int ret;
 
@@ -3450,12 +3459,15 @@ static int filc_truncate(struct silofs_file_ctx *f_ctx)
 	if (err) {
 		return err;
 	}
-	filc_update_post_io(f_ctx, err == 0);
+
+	filc_update_kill_suidgid(f_ctx, err);
+	filc_update_post_io(f_ctx);
 	return 0;
 }
 
 int silofs_do_truncate(struct silofs_task_ctx *task,
-                       struct silofs_inode_info *ii, off_t off)
+                       struct silofs_inode_info *ii, off_t off,
+                       bool kill_suidgid)
 {
 	const off_t isp = silofs_ii_span(ii);
 	const size_t len = (off < isp) ? silofs_off_ulen(off, isp) : 0;
@@ -3470,6 +3482,7 @@ int silofs_do_truncate(struct silofs_task_ctx *task,
 		.end = silofs_off_end(off, len),
 		.op_mask = FILE_OP_TRUNC,
 		.stg_mode = SILOFS_STG_COW,
+		.kill_suidgid = kill_suidgid,
 	};
 	int ret;
 
@@ -3830,7 +3843,7 @@ static int filc_fallocate(struct silofs_file_ctx *f_ctx)
 	if (err) {
 		return err;
 	}
-	filc_update_post_io(f_ctx, true);
+	filc_update_post_io(f_ctx);
 	return 0;
 }
 
@@ -3850,6 +3863,7 @@ int silofs_do_fallocate(struct silofs_task_ctx *task,
 		.op_mask = FILE_OP_FALLOC,
 		.fl_mode = mode,
 		.stg_mode = SILOFS_STG_COW,
+		.kill_suidgid = true,
 	};
 	int ret;
 
@@ -4696,7 +4710,7 @@ static int filc_copy_range(struct silofs_file_ctx *f_ctx_src,
 	if (err) {
 		return err;
 	}
-	filc_update_post_io(f_ctx_dst, false);
+	filc_update_post_io(f_ctx_dst);
 	*out_ncp = filc_io_length(f_ctx_dst);
 
 	return 0;
@@ -4721,6 +4735,7 @@ int silofs_do_copy_file_range(struct silofs_task_ctx *task,
 		.cp_flags = flags,
 		.with_backref = 0,
 		.stg_mode = SILOFS_STG_CUR,
+		.kill_suidgid = false,
 	};
 	struct silofs_file_ctx f_ctx_dst = {
 		.task = task,
@@ -4735,6 +4750,7 @@ int silofs_do_copy_file_range(struct silofs_task_ctx *task,
 		.cp_flags = flags,
 		.with_backref = 0,
 		.stg_mode = SILOFS_STG_COW,
+		.kill_suidgid = false,
 	};
 	int ret;
 

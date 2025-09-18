@@ -65,7 +65,7 @@ int silofs_do_access(const struct silofs_task_ctx *task,
                      struct silofs_inode_info *ii, int mode);
 
 int silofs_do_open(struct silofs_task_ctx *task, struct silofs_inode_info *ii,
-                   int flags);
+                   int o_flags, bool kill_suidgid);
 
 int silofs_do_release(struct silofs_task_ctx   *task,
                       struct silofs_inode_info *ii, bool flush);
@@ -103,7 +103,7 @@ int silofs_do_unlink(struct silofs_task_ctx      *task,
 int silofs_do_create(struct silofs_task_ctx      *task,
                      struct silofs_inode_info    *dir_ii,
                      const struct silofs_namestr *name, mode_t mode,
-                     struct silofs_inode_info **out_ii);
+                     bool kill_suidgid, struct silofs_inode_info **out_ii);
 
 int silofs_do_mknod(struct silofs_task_ctx      *task,
                     struct silofs_inode_info    *dir_ii,

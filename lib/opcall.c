@@ -49,16 +49,20 @@ int silofs_call_setattr(struct silofs_task_ctx *task,
 	if (args->in.setattr.set_uid_gid) {
 		const uid_t uid = args->in.setattr.uid;
 		const gid_t gid = args->in.setattr.gid;
+		const bool kill_suidgid = args->in.setattr.kill_suidgid;
 
-		err = silofs_exec_chown(task, ino, uid, gid, tms, out_st);
+		err = silofs_exec_chown(task, ino, uid, gid, kill_suidgid, tms,
+		                        out_st);
 		if (err) {
 			return err;
 		}
 	}
 	if (args->in.setattr.set_size) {
 		const off_t size = args->in.setattr.size;
+		const bool kill_suidgid = args->in.setattr.kill_suidgid;
 
-		err = silofs_exec_truncate(task, ino, size, out_st);
+		err = silofs_exec_truncate(task, ino, size, kill_suidgid,
+		                           out_st);
 		if (err) {
 			return err;
 		}
@@ -69,6 +73,7 @@ int silofs_call_setattr(struct silofs_task_ctx *task,
 			return err;
 		}
 	}
+
 	if (!out_st->gen) {
 		err = silofs_exec_getattr(task, ino, out_st);
 		if (err) {
@@ -188,8 +193,8 @@ int silofs_call_link(struct silofs_task_ctx *task,
 int silofs_call_open(struct silofs_task_ctx *task,
                      struct silofs_call_args *args)
 {
-	return silofs_exec_open(task, args->in.open.ino,
-	                        args->in.open.o_flags);
+	return silofs_exec_open(task, args->in.open.ino, args->in.open.o_flags,
+	                        args->in.open.kill_suidgid);
 }
 
 int silofs_call_statfs(struct silofs_task_ctx *task,
@@ -299,10 +304,10 @@ int silofs_call_access(struct silofs_task_ctx *task,
 int silofs_call_create(struct silofs_task_ctx *task,
                        struct silofs_call_args *args)
 {
-	return silofs_exec_create(task, args->in.create.parent,
-	                          args->in.create.name,
-	                          args->in.create.o_flags,
-	                          args->in.create.mode, &args->out.create.st);
+	return silofs_exec_create(
+		task, args->in.create.parent, args->in.create.name,
+		args->in.create.o_flags, args->in.create.mode,
+		args->in.create.kill_suidgid, &args->out.create.st);
 }
 
 int silofs_call_fallocate(struct silofs_task_ctx *task,
@@ -363,7 +368,9 @@ call_write_buf(struct silofs_task_ctx *task, struct silofs_call_args *args)
 {
 	return silofs_exec_write(task, args->in.write.ino, args->in.write.buf,
 	                         args->in.write.len, args->in.write.off,
-	                         args->in.write.o_flags, &args->out.write.nwr);
+	                         args->in.write.o_flags,
+	                         args->in.write.kill_suidgid,
+	                         &args->out.write.nwr);
 }
 
 static int
@@ -371,6 +378,7 @@ call_write_iter(struct silofs_task_ctx *task, struct silofs_call_args *args)
 {
 	return silofs_exec_write_iter(task, args->in.write.ino,
 	                              args->in.write.o_flags,
+	                              args->in.write.kill_suidgid,
 	                              args->in.write.rwi_ctx);
 }
 

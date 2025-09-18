@@ -16,7 +16,7 @@ try ls ${basedir}/.git > /dev/null
 cd ${basedir}
 try git status HEAD > /dev/null
 run git archive \
-  --format=tar.gz \
-  --output=${output} \
-  --prefix=${name}/ \
-  HEAD
+	--format=tar.gz \
+	--output=${output} \
+	--prefix=${name}/ \
+	HEAD

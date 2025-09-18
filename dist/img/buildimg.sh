@@ -31,8 +31,8 @@ run mkdir -p "${autotoolsdir}"
 cdx "${autotoolsdir}"
 test -x "${rootdir}/configure" || run "${rootdir}/bootstrap"
 run "${rootdir}/configure" \
-    "--enable-utests=0" \
-    "--enable-compile-warnings=error"
+	"--enable-utests=0" \
+	"--enable-compile-warnings=error"
 run make dist
 run stat -c "%s" "${autotoolsdir}/${disttgz}"
 
@@ -41,15 +41,15 @@ contfile="Containerfile"
 cdx "${workdir}"
 run mv "${autotoolsdir}/${disttgz}" "${workdir}"
 run tar --extract --to-command="tee ${contfile}" \
-    --file="${disttgz}" "${distname}/dist/img/Containerfile"
+	--file="${disttgz}" "${distname}/dist/img/Containerfile"
 
 # Build image using Containerfile and dist tar
 imagetag=${SILOFS_IMAGETAG:-"v${version}"}
 imagename=${SILOFS_IMAGENAME:-"${name}:${imagetag}"}
 cdx "${workdir}"
 run "${conteng}" build \
-    --tag "${imagename}" \
-    --file "${contfile}" \
-    --build-arg=DISTNAME="${distname}" \
-    "${workdir}"
+	--tag "${imagename}" \
+	--file "${contfile}" \
+	--build-arg=DISTNAME="${distname}" \
+	"${workdir}"
 run "${conteng}" inspect "${imagename}" --format="{{.ID}}"

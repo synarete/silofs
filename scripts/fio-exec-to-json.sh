@@ -23,62 +23,62 @@ RW=${RW:-readwrite}
 # TODO: echo 1 > /sys/block/<dev>/queue/iostats
 
 _fio_to_json() {
-  local testdir=$1
-  local nj=$2
-  local bs=$3
-  local base
-  local name
-  local jout
+	local testdir=$1
+	local nj=$2
+	local bs=$3
+	local base
+	local name
+	local jout
 
-  base=$(basename "${testdir}")
-  name="${base}-${bs}k-${nj}j"
-  jout="${name}.json"
+	base=$(basename "${testdir}")
+	name="${base}-${bs}k-${nj}j"
+	jout="${name}.json"
 
-  run fio \
-      --name="${name}" \
-      --directory="${testdir}" \
-      --numjobs="${nj}" \
-      --bs=$((bs * 1024)) \
-      --size="${DATASIZE}" \
-      --fallocate=none \
-      --rw="${RW}" \
-      --rwmixwrite="${RWMIX}" \
-      --ioengine=pvsync2 \
-      --sync=0 \
-      --direct=0 \
-      --time_based \
-      --runtime="${RUNTIME}" \
-      --thinktime=0 \
-      --norandommap \
-      --group_reporting \
-      --randrepeat=1 \
-      --unlink=1 \
-      --fsync_on_close=0 \
-      --output-format=json > "${jout}" ;
+	run fio \
+		--name="${name}" \
+		--directory="${testdir}" \
+		--numjobs="${nj}" \
+		--bs=$((bs * 1024)) \
+		--size="${DATASIZE}" \
+		--fallocate=none \
+		--rw="${RW}" \
+		--rwmixwrite="${RWMIX}" \
+		--ioengine=pvsync2 \
+		--sync=0 \
+		--direct=0 \
+		--time_based \
+		--runtime="${RUNTIME}" \
+		--thinktime=0 \
+		--norandommap \
+		--group_reporting \
+		--randrepeat=1 \
+		--unlink=1 \
+		--fsync_on_close=0 \
+		--output-format=json > "${jout}" ;
 }
 
 _fio_execat() {
-  local testdir="$1"
-  local jobs=(1 2 4 8)
-  local bss=(64 256)
+	local testdir="$1"
+	local jobs=(1 2 4 8)
+	local bss=(64 256)
 
-  for nj in "${jobs[@]}"; do
-    for bs in "${bss[@]}"; do
-      _fio_to_json "${testdir}" "${nj}" "${bs}"
-    done
-  done
+	for nj in "${jobs[@]}"; do
+		for bs in "${bss[@]}"; do
+			_fio_to_json "${testdir}" "${nj}" "${bs}"
+		done
+	done
 }
 
 # main
 _fio_exec_main() {
-  local testdir
+	local testdir
 
-  for td in "$@"; do
-    testdir="$(realpath "${td}")"
-    if [[ -d "${testdir}" ]]; then
-      _fio_execat "${testdir}"
-    fi
-  done
+	for td in "$@"; do
+		testdir="$(realpath "${td}")"
+		if [[ -d "${testdir}" ]]; then
+			_fio_execat "${testdir}"
+		fi
+	done
 }
 
 _fio_exec_main "$@"

@@ -46,7 +46,7 @@ arg=${1:-}
 case "$arg" in
 	-h|--help)
 		echo "${self}" "[--version | --major | --minor " \
-		"| --sublevel | --release | --revision]"
+			"| --sublevel | --release | --revision]"
 		;;
 	-v|--version)
 		print "${version}"

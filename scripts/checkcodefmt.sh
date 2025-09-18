@@ -14,27 +14,27 @@ msg() { echo "$self: $*" >&2; }
 die() { msg "$*"; exit 1; }
 
 _calc_c_sources_hsum() {
-  find . -type f -name '*.[ch]' -print \
-    | sort -u \
-    | xargs sha256sum \
-    | sha256sum \
-    | awk '{print $1}'
+	find . -type f -name '*.[ch]' -print \
+		| sort -u \
+		| xargs sha256sum \
+		| sha256sum \
+		| awk '{print $1}'
 }
 
 _calc_py_sources_hsum() {
-  find . -type f -name '*.py' -print \
-    | sort -u \
-    | xargs sha256sum \
-    | sha256sum \
-    | awk '{print $1}'
+	find . -type f -name '*.py' -print \
+		| sort -u \
+		| xargs sha256sum \
+		| sha256sum \
+		| awk '{print $1}'
 }
 
 _exec_c_code_fmt() {
-  ./cstylefmt.sh
+	./cstylefmt.sh
 }
 
 _exec_py_code_fmt() {
-  ./py/pycheck.sh ./py/qatests &> /dev/null
+	./py/pycheck.sh ./py/qatests &> /dev/null
 }
 
 cd "${rootdir}"

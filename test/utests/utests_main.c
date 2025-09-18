@@ -97,7 +97,7 @@ static void ut_setup_logging(void)
 	ut_globals.log_params.level = SILOFS_LOG_WARN;
 	ut_globals.log_params.flags = SILOFS_LOGF_STDOUT;
 
-	if (ut_globals.run_level >= 2) {
+	if (!ut_globals.silent) {
 		ut_globals.log_params.level = SILOFS_LOG_INFO;
 		ut_globals.log_params.flags |= SILOFS_LOGF_VERBOSE;
 	}
@@ -116,6 +116,7 @@ silofs_attr_noreturn static void ut_show_help_and_exit(void)
 	puts(" -l, --level=0|1|2     Run level");
 	puts(" -M, --malloc          Use standard malloc functions");
 	puts(" -p, --pedantic        Run in pedantic mode");
+	puts(" -S, --silent          Do not log progress");
 	puts(" -T, --timestamp       Add timestamps to output logs");
 	puts(" -v, --version         Show version info");
 	exit(EXIT_SUCCESS);
@@ -148,6 +149,7 @@ static void ut_parse_args(void)
 		{ "level", required_argument, nullptr, 'l' },
 		{ "malloc", no_argument, nullptr, 'M' },
 		{ "pedantic", no_argument, nullptr, 'p' },
+		{ "silent", no_argument, nullptr, 'S' },
 		{ "timestamp", no_argument, nullptr, 'T' },
 		{ "version", no_argument, nullptr, 'v' },
 		{ "help", no_argument, nullptr, 'h' },
@@ -157,13 +159,15 @@ static void ut_parse_args(void)
 	while (opt_chr > 0) {
 		opt_index = 0;
 		opt_chr = getopt_long(ut_globals.argc, ut_globals.argv,
-		                      "l:MpTvh", long_opts, &opt_index);
+		                      "l:MpSTvh", long_opts, &opt_index);
 		if (opt_chr == 'l') {
 			ut_set_run_level(optarg);
 		} else if (opt_chr == 'M') {
 			ut_globals.stdalloc = true;
 		} else if (opt_chr == 'p') {
 			ut_globals.pedantic = true;
+		} else if (opt_chr == 'S') {
+			ut_globals.silent = true;
 		} else if (opt_chr == 'T') {
 			ut_globals.timestamp = true;
 		} else if (opt_chr == 'v') {

@@ -189,6 +189,7 @@ struct ut_globals {
 	bool                     asyncwr;
 	bool                     stdalloc;
 	bool                     pedantic;
+	bool                     silent;
 	bool                     timestamp;
 };
 

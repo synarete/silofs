@@ -61,19 +61,19 @@ struct silofs_statx_out {
 };
 
 struct silofs_setattr_in {
-	struct stat tims;
-	ino_t       ino;
-	uid_t       uid;
-	gid_t       gid;
-	mode_t      mode;
-	off_t       size;
-	bool        set_mode;
-	bool        set_size;
-	bool        set_uid_gid;
-	bool        set_amtime_now;
-	bool        set_amctime;
-	bool        set_nontime;
-	bool        kill_suidgid;
+	struct silofs_itimes itimes;
+	ino_t                ino;
+	uid_t                uid;
+	gid_t                gid;
+	mode_t               mode;
+	off_t                size;
+	bool                 set_mode;
+	bool                 set_size;
+	bool                 set_uid_gid;
+	bool                 set_amtime_now;
+	bool                 set_amctime;
+	bool                 set_nontime;
+	bool                 kill_suidgid;
 };
 
 struct silofs_setattr_out {

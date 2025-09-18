@@ -143,15 +143,26 @@ static int ut_do_lookup(struct ut_env *ute, ino_t parent, const char *name,
 	return sanitize_status(ret);
 }
 
-static int ut_do_utimens(struct ut_env *ute, ino_t ino,
-                         const struct stat *utimes, struct stat *out_st)
+static void
+stat_to_itimes(const struct stat *times, struct silofs_itimes *itimes)
+{
+	silofs_ts_copy(&itimes->atime, &times->st_atim);
+	silofs_ts_copy(&itimes->mtime, &times->st_mtim);
+	silofs_ts_copy(&itimes->ctime, &times->st_ctim);
+	silofs_ts_omit(&itimes->btime);
+}
+
+static int ut_do_utimens(struct ut_env *ute, ino_t ino, const struct stat *tms,
+                         struct stat *out_st)
 {
 	struct silofs_task_ctx task;
+	struct silofs_itimes itimes;
 	struct silofs_stat st;
 	int ret;
 
+	stat_to_itimes(tms, &itimes);
 	ut_setup_task(ute, &task);
-	ret = silofs_exec_utimens(&task, ino, utimes, &st);
+	ret = silofs_exec_utimens(&task, ino, &itimes, &st);
 	ut_release_task(ute, &task);
 	assign_stat(out_st, &st);
 	return sanitize_status(ret);

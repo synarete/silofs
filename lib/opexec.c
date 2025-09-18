@@ -104,16 +104,6 @@ static int op_finish(struct silofs_task_ctx *task, int err)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void
-stat_to_itimes(const struct stat *times, struct silofs_itimes *itimes)
-{
-	silofs_ts_copy(&itimes->atime, &times->st_atim);
-	silofs_ts_copy(&itimes->mtime, &times->st_mtim);
-	silofs_ts_copy(&itimes->ctime, &times->st_ctim);
-	/* birth _must_not_ be set from outside */
-	silofs_ts_omit(&itimes->btime);
-}
-
 static int symval_to_str(const char *symval, struct silofs_strview *out_sv)
 {
 	size_t symlen;
@@ -796,9 +786,9 @@ out:
 }
 
 int silofs_exec_chmod(struct silofs_task_ctx *task, ino_t ino, mode_t mode,
-                      const struct stat *st, struct silofs_stat *out_stat)
+                      const struct silofs_itimes *itimes,
+                      struct silofs_stat *out_stat)
 {
-	struct silofs_itimes itimes;
 	struct silofs_inode_info *ii = nullptr;
 	int err;
 
@@ -814,8 +804,7 @@ int silofs_exec_chmod(struct silofs_task_ctx *task, ino_t ino, mode_t mode,
 	err = op_stage_mut_inode(task, ino, nullptr, &ii);
 	ok_or_goto_out(err);
 
-	stat_to_itimes(st, &itimes);
-	err = silofs_do_chmod(task, ii, mode, &itimes);
+	err = silofs_do_chmod(task, ii, mode, itimes);
 	ok_or_goto_out(err);
 
 	err = silofs_do_getattr(task, ii, out_stat);
@@ -828,10 +817,10 @@ out:
 }
 
 int silofs_exec_chown(struct silofs_task_ctx *task, ino_t ino, uid_t uid,
-                      gid_t gid, bool kill_suidgid, const struct stat *st,
+                      gid_t gid, bool kill_suidgid,
+                      const struct silofs_itimes *itimes,
                       struct silofs_stat *out_stat)
 {
-	struct silofs_itimes itimes;
 	struct silofs_inode_info *ii = nullptr;
 	int err;
 
@@ -850,8 +839,7 @@ int silofs_exec_chown(struct silofs_task_ctx *task, ino_t ino, uid_t uid,
 	err = op_stage_mut_inode(task, ino, nullptr, &ii);
 	ok_or_goto_out(err);
 
-	stat_to_itimes(st, &itimes);
-	err = silofs_do_chown(task, ii, uid, gid, kill_suidgid, &itimes);
+	err = silofs_do_chown(task, ii, uid, gid, kill_suidgid, itimes);
 	ok_or_goto_out(err);
 
 	err = silofs_do_getattr(task, ii, out_stat);
@@ -864,9 +852,9 @@ out:
 }
 
 int silofs_exec_utimens(struct silofs_task_ctx *task, ino_t ino,
-                        const struct stat *times, struct silofs_stat *out_stat)
+                        const struct silofs_itimes *itimes,
+                        struct silofs_stat *out_stat)
 {
-	struct silofs_itimes itimes;
 	struct silofs_inode_info *ii = nullptr;
 	int err;
 
@@ -882,8 +870,7 @@ int silofs_exec_utimens(struct silofs_task_ctx *task, ino_t ino,
 	err = op_stage_mut_inode(task, ino, nullptr, &ii);
 	ok_or_goto_out(err);
 
-	stat_to_itimes(times, &itimes);
-	err = silofs_do_utimens(task, ii, &itimes);
+	err = silofs_do_utimens(task, ii, itimes);
 	ok_or_goto_out(err);
 
 	err = silofs_do_getattr(task, ii, out_stat);

@@ -27,13 +27,13 @@ int silofs_call_setattr(struct silofs_task_ctx *task,
                         struct silofs_call_args *args)
 {
 	struct silofs_stat *out_st = &args->out.setattr.st;
-	const struct stat *tms = &args->in.setattr.tims;
+	const struct silofs_itimes *itimes = &args->in.setattr.itimes;
 	const ino_t ino = args->in.setattr.ino;
 	int err = 0;
 
 	out_st->gen = 0;
 	if (args->in.setattr.set_amtime_now) {
-		err = silofs_exec_utimens(task, ino, tms, out_st);
+		err = silofs_exec_utimens(task, ino, itimes, out_st);
 		if (err) {
 			return err;
 		}
@@ -41,7 +41,7 @@ int silofs_call_setattr(struct silofs_task_ctx *task,
 	if (args->in.setattr.set_mode) {
 		const mode_t mode = args->in.setattr.mode;
 
-		err = silofs_exec_chmod(task, ino, mode, tms, out_st);
+		err = silofs_exec_chmod(task, ino, mode, itimes, out_st);
 		if (err) {
 			return err;
 		}
@@ -51,8 +51,8 @@ int silofs_call_setattr(struct silofs_task_ctx *task,
 		const gid_t gid = args->in.setattr.gid;
 		const bool kill_suidgid = args->in.setattr.kill_suidgid;
 
-		err = silofs_exec_chown(task, ino, uid, gid, kill_suidgid, tms,
-		                        out_st);
+		err = silofs_exec_chown(task, ino, uid, gid, kill_suidgid,
+		                        itimes, out_st);
 		if (err) {
 			return err;
 		}
@@ -68,7 +68,7 @@ int silofs_call_setattr(struct silofs_task_ctx *task,
 		}
 	}
 	if (args->in.setattr.set_amctime && !args->in.setattr.set_nontime) {
-		err = silofs_exec_utimens(task, ino, tms, out_st);
+		err = silofs_exec_utimens(task, ino, itimes, out_st);
 		if (err) {
 			return err;
 		}

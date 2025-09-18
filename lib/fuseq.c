@@ -1991,28 +1991,28 @@ uid_gid_of(const struct stat *attr, uint32_t to_set, uid_t *uid, gid_t *gid)
 	return 0; /* TODO: Check valid ranges */
 }
 
-static void
-utimens_of(const struct stat *st, unsigned to_set, struct stat *times)
+static void utimens_of(const struct stat *st, unsigned to_set,
+                       struct silofs_itimes *itimes)
 {
 	const uint32_t set_ctime_now = //
 		FATTR_AMTIME_NOW | FATTR_AMCTIME | FATTR_MODE | FATTR_UID |
 		FATTR_GID | FATTR_SIZE;
 
-	silofs_memzero(times, sizeof(*times));
-	times->st_atim.tv_nsec = UTIME_OMIT;
-	times->st_mtim.tv_nsec = UTIME_OMIT;
-	times->st_ctim.tv_nsec = UTIME_OMIT;
+	silofs_ts_omit(&itimes->btime);
+	silofs_ts_omit(&itimes->atime);
+	silofs_ts_omit(&itimes->mtime);
+	silofs_ts_omit(&itimes->ctime);
 
 	if (testf(to_set, FATTR_ATIME)) {
-		silofs_ts_copy(&times->st_atim, &st->st_atim);
+		silofs_ts_copy(&itimes->atime, &st->st_atim);
 	}
 	if (testf(to_set, FATTR_MTIME)) {
-		silofs_ts_copy(&times->st_mtim, &st->st_mtim);
+		silofs_ts_copy(&itimes->mtime, &st->st_mtim);
 	}
 	if (testf(to_set, FATTR_CTIME)) {
-		silofs_ts_copy(&times->st_ctim, &st->st_ctim);
+		silofs_ts_copy(&itimes->ctime, &st->st_ctim);
 	} else if (testf(to_set, set_ctime_now)) {
-		times->st_ctim.tv_nsec = UTIME_NOW;
+		itimes->ctime.tv_nsec = UTIME_NOW;
 	}
 }
 
@@ -2025,7 +2025,8 @@ static int do_setattr(const struct silofs_fuseq_cmd_ctx *fcc)
 	silofs_memzero(&fcc->args->in.setattr, sizeof(fcc->args->in.setattr));
 	fuse_setattr_to_stat(&fcc->in->u.setattr.arg, &attr);
 
-	utimens_of(&attr, to_set, &fcc->args->in.setattr.tims);
+	utimens_of(&attr, to_set, &fcc->args->in.setattr.itimes);
+
 	if (testf(to_set, FATTR_UID | FATTR_GID)) {
 		uid_gid_of(&attr, to_set, &fcc->args->in.setattr.uid,
 		           &fcc->args->in.setattr.gid);

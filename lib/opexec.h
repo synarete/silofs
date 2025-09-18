@@ -50,18 +50,20 @@ int silofs_exec_rmdir(struct silofs_task_ctx *task, ino_t parent,
 int silofs_exec_access(struct silofs_task_ctx *task, ino_t ino, int mode);
 
 int silofs_exec_chmod(struct silofs_task_ctx *task, ino_t ino, mode_t mode,
-                      const struct stat *st, struct silofs_stat *out_stat);
+                      const struct silofs_itimes *itimes,
+                      struct silofs_stat         *out_stat);
 
 int silofs_exec_chown(struct silofs_task_ctx *task, ino_t ino, uid_t uid,
-                      gid_t gid, bool kill_suidgid, const struct stat *st,
-                      struct silofs_stat *out_stat);
+                      gid_t gid, bool kill_suidgid,
+                      const struct silofs_itimes *itimes,
+                      struct silofs_stat         *out_stat);
 
 int silofs_exec_truncate(struct silofs_task_ctx *task, ino_t ino, off_t len,
                          bool kill_suidgid, struct silofs_stat *out_stat);
 
 int silofs_exec_utimens(struct silofs_task_ctx *task, ino_t ino,
-                        const struct stat  *times,
-                        struct silofs_stat *out_stat);
+                        const struct silofs_itimes *itimes,
+                        struct silofs_stat         *out_stat);
 
 int silofs_exec_symlink(struct silofs_task_ctx *task, ino_t parent,
                         const char *name, const char *symval,

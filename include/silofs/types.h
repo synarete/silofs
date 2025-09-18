@@ -144,4 +144,12 @@ struct silofs_cache_stats {
 	size_t ncache_vnodes;
 };
 
+/* inode's time-stamps (birth, access, modify, change) */
+struct silofs_itimes {
+	struct timespec btime;
+	struct timespec atime;
+	struct timespec mtime;
+	struct timespec ctime;
+};
+
 #endif /* SILOFS_TYPES_H_ */

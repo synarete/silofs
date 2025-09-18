@@ -60,14 +60,6 @@ struct silofs_stat {
 	uint64_t     gen;
 };
 
-/* inode's time-stamps (birth, access, modify, change) */
-struct silofs_itimes {
-	struct timespec btime;
-	struct timespec atime;
-	struct timespec mtime;
-	struct timespec ctime;
-};
-
 /* inode's attributes */
 struct silofs_iattr {
 	enum silofs_iattr_flags ia_flags;

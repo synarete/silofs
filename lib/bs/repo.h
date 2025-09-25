@@ -21,6 +21,7 @@
 #include "str.h"
 #include "crypt.h"
 #include "addr.h"
+#include "locos.h"
 
 /* repository control flags */
 #define SILOFS_REPOF_RDONLY (1)
@@ -47,6 +48,7 @@ struct silofs_repo {
 	struct silofs_repo_htbl        re_htbl;
 	struct silofs_listq            re_lruq;
 	struct silofs_mdigest          re_mdigest;
+	struct silofs_locos            re_locos;
 	int                            re_root_dfd;
 	int                            re_dots_dfd;
 	int                            re_blobs_dfd;

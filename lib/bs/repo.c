@@ -325,25 +325,6 @@ static int do_fstatat_dir(int dirfd, const char *pathname, struct stat *out_st)
 	return 0;
 }
 
-static int do_fstatat_reg(int dirfd, const char *pathname, struct stat *out_st)
-{
-	mode_t mode;
-	int err;
-
-	err = do_fstatat(dirfd, pathname, out_st, 0);
-	if (err) {
-		return err;
-	}
-	mode = out_st->st_mode;
-	if (S_ISDIR(mode)) {
-		return -SILOFS_EISDIR;
-	}
-	if (!S_ISREG(mode)) {
-		return -SILOFS_ENOENT;
-	}
-	return 0;
-}
-
 static int do_opendirat(int dirfd, const char *pathname, int *out_fd)
 {
 	int err;
@@ -388,72 +369,6 @@ static int do_mkdirat(int dirfd, const char *pathname, mode_t mode)
 		log_warn("mkdirat error: dirfd=%d pathname=%s mode=0%o err=%d",
 		         dirfd, pathname, mode, err);
 	}
-	return err;
-}
-
-static int do_fchmodat(int dirfd, const char *pathname, mode_t mode, int flags)
-{
-	int err;
-
-	err = silofs_sys_fchmodat(dirfd, pathname, mode, flags);
-	if (err && (err != -ENOENT)) {
-		log_warn("fchmodat error: dirfd=%d pathname=%s mode=0%o "
-		         "err=%d",
-		         dirfd, pathname, mode, err);
-	}
-	return err;
-}
-
-static int
-do_save_obj(int dirfd, const char *pathname, const void *dat, size_t len)
-{
-	const int o_flags = O_RDWR | O_CREAT;
-	int fd = -1;
-	int err;
-
-	err = do_fchmodat(dirfd, pathname, 0600, 0);
-	if (err && (err != -ENOENT)) {
-		return err;
-	}
-	err = do_openat(dirfd, pathname, o_flags, 0600, &fd);
-	if (err) {
-		goto out;
-	}
-	err = do_fchmod(fd, 0400);
-	if (err) {
-		goto out;
-	}
-	if (len == 0) {
-		goto out; /* ok -- zero length object */
-	}
-	err = do_pwriten(fd, dat, len, 0);
-	if (err) {
-		goto out;
-	}
-	err = do_fdatasync(fd);
-	if (err) {
-		goto out;
-	}
-out:
-	do_closefd(&fd);
-	return err;
-}
-
-static int do_load_obj(int dirfd, const char *pathname, void *dat, size_t len)
-{
-	int fd = -1;
-	int err;
-
-	err = do_openat(dirfd, pathname, O_RDONLY, 0, &fd);
-	if (err) {
-		goto out;
-	}
-	err = do_preadn(fd, dat, len, 0);
-	if (err) {
-		goto out;
-	}
-out:
-	do_closefd(&fd);
 	return err;
 }
 
@@ -1443,6 +1358,7 @@ void silofs_repo_relax(struct silofs_repo *repo)
 {
 	repo_lock(repo);
 	repo_evict_some(repo, 1);
+	silofs_locos_relax_cache(&repo->re_locos);
 	repo_unlock(repo);
 }
 
@@ -1789,6 +1705,16 @@ static void repo_fini_mutex(struct silofs_repo *repo)
 	silofs_mutex_fini(&repo->re_mutex);
 }
 
+static int repo_init_locos(struct silofs_repo *repo)
+{
+	return silofs_locos_init(&repo->re_locos, repo->re.alloc);
+}
+
+static void repo_fini_locos(struct silofs_repo *repo)
+{
+	silofs_locos_fini(&repo->re_locos);
+}
+
 int silofs_repo_init(struct silofs_repo *repo,
                      const struct silofs_repo_base *re_base)
 {
@@ -1805,6 +1731,10 @@ int silofs_repo_init(struct silofs_repo *repo,
 	if (err) {
 		return err;
 	}
+	err = repo_init_locos(repo);
+	if (err) {
+		goto out_err;
+	}
 	err = repo_htbl_init(repo);
 	if (err) {
 		goto out_err;
@@ -1815,6 +1745,7 @@ int silofs_repo_init(struct silofs_repo *repo,
 	}
 	return 0;
 out_err:
+	repo_fini_locos(repo);
 	repo_fini_mutex(repo);
 	repo_fini_mdigest(repo);
 	return err;
@@ -1825,6 +1756,7 @@ void silofs_repo_fini(struct silofs_repo *repo)
 	repo_close(repo);
 	repo_evict_all(repo);
 	repo_htbl_fini(repo);
+	repo_fini_locos(repo);
 	repo_fini_mdigest(repo);
 	repo_fini_mutex(repo);
 	listq_fini(&repo->re_lruq);
@@ -1835,6 +1767,7 @@ void silofs_repo_drop_some(struct silofs_repo *repo)
 	repo_lock(repo);
 	repo_do_fsync_all(repo);
 	repo_evict_many(repo);
+	silofs_locos_drop_cache(&repo->re_locos);
 	repo_unlock(repo);
 }
 
@@ -2110,6 +2043,11 @@ static int repo_open_blobs_dir(struct silofs_repo *repo)
 	                    &repo->re_blobs_dfd);
 }
 
+static int repo_open_locos(struct silofs_repo *repo)
+{
+	return silofs_locos_open(&repo->re_locos, &repo->re.repodir);
+}
+
 static int repo_do_format(struct silofs_repo *repo)
 {
 	int err;
@@ -2131,6 +2069,10 @@ static int repo_do_format(struct silofs_repo *repo)
 		return err;
 	}
 	err = repo_open_blobs_dir(repo);
+	if (err) {
+		return err;
+	}
+	err = repo_open_locos(repo);
 	if (err) {
 		return err;
 	}
@@ -2183,6 +2125,10 @@ static int repo_do_open(struct silofs_repo *repo)
 	if (err) {
 		return err;
 	}
+	err = repo_open_locos(repo);
+	if (err) {
+		return err;
+	}
 	return 0;
 }
 
@@ -2211,10 +2157,16 @@ static int repo_close_objs_dir(struct silofs_repo *repo)
 	return do_closefd(&repo->re_blobs_dfd);
 }
 
+static void repo_close_locos(struct silofs_repo *repo)
+{
+	silofs_locos_close(&repo->re_locos);
+}
+
 static int repo_close(struct silofs_repo *repo)
 {
 	int err;
 
+	repo_close_locos(repo);
 	err = repo_close_objs_dir(repo);
 	if (err) {
 		return err;
@@ -2595,74 +2547,15 @@ int silofs_repo_read_at(struct silofs_repo *repo,
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static void repo_cobj_pathname(const struct silofs_repo *repo,
-                               const struct silofs_baddr *baddr,
-                               struct silofs_strbuf *out_sbuf)
-{
-	silofs_unused(repo);
-	silofs_blobid_to_sbuf(&baddr->blobid, out_sbuf);
-}
-
-static int
-repo_stat_blob_at(const struct silofs_repo *repo,
-                  const struct silofs_strbuf *sbuf, struct stat *out_st)
-{
-	return do_fstatat_reg(repo->re_blobs_dfd, sbuf->str, out_st);
-}
-
-static int repo_save_cobj_at(const struct silofs_repo *repo,
-                             const struct silofs_strbuf *sbuf,
-                             const struct silofs_rovec *rovec)
-{
-	return do_save_obj(repo->re_blobs_dfd, sbuf->str, rovec->rov_base,
-	                   rovec->rov_len);
-}
-
-static int
-repo_load_cobj_at(const struct silofs_repo *repo,
-                  const struct silofs_strbuf *sbuf, struct silofs_rwvec *rwvec)
-{
-	return do_load_obj(repo->re_blobs_dfd, sbuf->str, rwvec->rwv_base,
-	                   rwvec->rwv_len);
-}
-
-static int repo_unlink_cobj_at(const struct silofs_repo *repo,
-                               const struct silofs_strbuf *sbuf)
-{
-	return do_unlinkat(repo->re_blobs_dfd, sbuf->str, 0);
-}
-
-static int
-repo_stat_cobj(const struct silofs_repo *repo,
-               const struct silofs_baddr *baddr, struct stat *out_st)
-{
-	struct silofs_strbuf sbuf;
-
-	repo_cobj_pathname(repo, baddr, &sbuf);
-	return repo_stat_blob_at(repo, &sbuf, out_st);
-}
-
 int silofs_repo_stat_cobj(struct silofs_repo *repo,
                           const struct silofs_baddr *baddr, size_t *out_sz)
 {
-	struct stat st = { .st_size = -1 };
 	int err;
 
 	repo_lock(repo);
-	err = repo_stat_cobj(repo, baddr, &st);
+	err = silofs_locos_stat_blob(&repo->re_locos, &baddr->blobid, out_sz);
 	repo_unlock(repo);
-	*out_sz = (size_t)(st.st_size);
 	return err;
-}
-
-static int
-repo_save_cobj(struct silofs_repo *repo, const struct silofs_baddr *baddr,
-               const struct silofs_rovec *rovec)
-{
-	struct silofs_strbuf sbuf;
-
-	repo_cobj_pathname(repo, baddr, &sbuf);
-	return repo_save_cobj_at(repo, &sbuf, rovec);
 }
 
 int silofs_repo_save_cobj(struct silofs_repo *repo,
@@ -2672,19 +2565,12 @@ int silofs_repo_save_cobj(struct silofs_repo *repo,
 	int err;
 
 	repo_lock(repo);
-	err = repo_save_cobj(repo, baddr, rovec);
+	err = silofs_locos_require_blob(&repo->re_locos, &baddr->blobid);
+	if (!err) {
+		err = silofs_locos_write_blob(&repo->re_locos, baddr, rovec);
+	}
 	repo_unlock(repo);
 	return err;
-}
-
-static int
-repo_load_cobj(struct silofs_repo *repo, const struct silofs_baddr *baddr,
-               struct silofs_rwvec *rwvec)
-{
-	struct silofs_strbuf sbuf;
-
-	repo_cobj_pathname(repo, baddr, &sbuf);
-	return repo_load_cobj_at(repo, &sbuf, rwvec);
 }
 
 int silofs_repo_load_cobj(struct silofs_repo *repo,
@@ -2694,18 +2580,9 @@ int silofs_repo_load_cobj(struct silofs_repo *repo,
 	int err;
 
 	repo_lock(repo);
-	err = repo_load_cobj(repo, baddr, rwvec);
+	err = silofs_locos_read_blob(&repo->re_locos, baddr, rwvec);
 	repo_unlock(repo);
 	return err;
-}
-
-static int
-repo_unlink_cobj(struct silofs_repo *repo, const struct silofs_baddr *baddr)
-{
-	struct silofs_strbuf sbuf;
-
-	repo_cobj_pathname(repo, baddr, &sbuf);
-	return repo_unlink_cobj_at(repo, &sbuf);
 }
 
 int silofs_repo_unlink_cobj(struct silofs_repo *repo,
@@ -2714,7 +2591,7 @@ int silofs_repo_unlink_cobj(struct silofs_repo *repo,
 	int err;
 
 	repo_lock(repo);
-	err = repo_unlink_cobj(repo, baddr);
+	err = silofs_locos_remove_blob(&repo->re_locos, &baddr->blobid);
 	repo_unlock(repo);
 	return err;
 }

@@ -79,8 +79,8 @@ static int rec_init(struct silofs_re_ctx *re_ctx, struct silofs_task_ctx *task)
 	re_ctx->task = task;
 	re_ctx->env = task->t_env;
 	re_ctx->abi = nullptr;
-	re_ctx->alloc = re_ctx->env->meta.alloc;
-	re_ctx->repo = re_ctx->env->meta.repo;
+	re_ctx->alloc = re_ctx->env->base.alloc;
+	re_ctx->repo = re_ctx->env->base.repo;
 	return 0;
 }
 

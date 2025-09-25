@@ -471,7 +471,7 @@ flusher_dirtyqs_from_task(const struct silofs_flusher *flusher)
 {
 	const struct silofs_env *env = flusher_env(flusher);
 
-	return &env->meta.lcache->lc_dirtyqs;
+	return &env->base.lcache->lc_dirtyqs;
 }
 
 static int flusher_require_mutable_llink(const struct silofs_flusher *flusher,
@@ -554,7 +554,7 @@ static void flusher_relax_cache_now(const struct silofs_flusher *flusher)
 {
 	struct silofs_env *env = flusher_env(flusher);
 
-	silofs_lcache_relax(env->meta.lcache, SILOFS_CTLF_NOW);
+	silofs_lcache_relax(env->base.lcache, SILOFS_CTLF_NOW);
 }
 
 static int flusher_do_make_sqe(struct silofs_flusher *flusher,
@@ -967,7 +967,7 @@ static bool need_flush_now(const struct silofs_task_ctx *task, int flags)
 	if (flags & SILOFS_CTLF_NOW) {
 		return true;
 	}
-	silofs_memstat(task->t_env->meta.alloc, &alst);
+	silofs_memstat(task->t_env->base.alloc, &alst);
 	if (alst.nbytes_use > (alst.nbytes_max / 2)) {
 		return true;
 	}
@@ -986,7 +986,7 @@ static bool need_flush_by_ii(const struct silofs_inode_info *ii, int flags)
 
 static bool need_flush_by_env(const struct silofs_env *env, int flags)
 {
-	const struct silofs_lcache *lcache = env->meta.lcache;
+	const struct silofs_lcache *lcache = env->base.lcache;
 	const struct silofs_dirtyqs *dqs = &lcache->lc_dirtyqs;
 	size_t ndirty;
 	size_t thresh;
@@ -1015,7 +1015,7 @@ static bool need_flush_by(const struct silofs_task_ctx *task,
 static int do_flush_dirty(struct silofs_task_ctx *task,
                           struct silofs_inode_info *ii, int flags)
 {
-	struct silofs_flusher *flusher = task->t_env->meta.flusher;
+	struct silofs_flusher *flusher = task->t_env->base.flusher;
 	int err;
 
 	flusher_rebind(flusher, task, ii, flags);

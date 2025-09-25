@@ -237,6 +237,8 @@ silofs_lista_new(struct silofs_alloc *alloc, size_t nelems)
 void silofs_lista_del(struct silofs_list_head *lista, size_t nelems,
                       struct silofs_alloc *alloc)
 {
-	silofs_list_head_finin(lista, nelems);
-	silofs_memfree(alloc, lista, sizeof(*lista) * nelems, 0);
+	if (lista != nullptr) {
+		silofs_list_head_finin(lista, nelems);
+		silofs_memfree(alloc, lista, sizeof(*lista) * nelems, 0);
+	}
 }

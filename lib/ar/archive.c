@@ -79,8 +79,8 @@ static int arc_init(struct silofs_ar_ctx *ar_ctx, struct silofs_task_ctx *task)
 	ar_ctx->task = task;
 	ar_ctx->env = task->t_env;
 	ar_ctx->abi = nullptr;
-	ar_ctx->alloc = ar_ctx->env->meta.alloc;
-	ar_ctx->repo = ar_ctx->env->meta.repo;
+	ar_ctx->alloc = ar_ctx->env->base.alloc;
+	ar_ctx->repo = ar_ctx->env->base.repo;
 
 	return arc_renew_abi(ar_ctx);
 }

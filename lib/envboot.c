@@ -75,7 +75,7 @@ static int env_save_mbr(struct silofs_env *env, struct silofs_baddr *out_mref)
 	if (err) {
 		return err;
 	}
-	err = silofs_repo_save_cobj(env->meta.repo, out_mref, &rovec);
+	err = silofs_repo_save_cobj(env->base.repo, out_mref, &rovec);
 	if (err) {
 		log_err("failed to save mbr: err=%d", err);
 		return err;
@@ -112,7 +112,7 @@ env_stat_mbr_at(const struct silofs_env *env, const struct silofs_baddr *baddr)
 	size_t mbr_size = 0;
 	int err;
 
-	err = silofs_repo_stat_cobj(env->meta.repo, baddr, &mbr_size);
+	err = silofs_repo_stat_cobj(env->base.repo, baddr, &mbr_size);
 	if (err) {
 		return err;
 	}
@@ -144,7 +144,7 @@ env_load_mbr_at(const struct silofs_env *env, const struct silofs_baddr *baddr,
 		log_dbg("failed to lookup ref: err=%d", err);
 		return (err == -ENOENT) ? -SILOFS_ENOMBR : err;
 	}
-	err = silofs_repo_load_cobj(env->meta.repo, baddr, &rwvec);
+	err = silofs_repo_load_cobj(env->base.repo, baddr, &rwvec);
 	if (err) {
 		log_dbg("failed to load mbr: err=%d", err);
 		return (err == -ENOENT) ? -SILOFS_ENOMBR : err;
@@ -217,7 +217,7 @@ static int env_unlink_mbr_at(const struct silofs_env *env,
 {
 	int err;
 
-	err = silofs_repo_unlink_cobj(env->meta.repo, baddr);
+	err = silofs_repo_unlink_cobj(env->base.repo, baddr);
 	if (err) {
 		log_err("failed to unlink mbr: err=%d", err);
 		return err;

@@ -66,14 +66,14 @@
 /* size of repository meta-files  */
 #define SILOFS_REPO_METAFILE_SIZE (1024)
 
-/* repository meta sub-dir name */
-#define SILOFS_REPO_DOTS_DIRNAME ".silofs"
-
 /* repository meta descriptor-file name */
 #define SILOFS_REPO_META_FILENAME "meta"
 
 /* repository global lock file name */
 #define SILOFS_REPO_LOCK_FILENAME "lock"
+
+/* repository meta sub-dir name */
+#define SILOFS_REPO_DOTS_DIRNAME ".silofs"
 
 /* repository blobs sub-directory */
 #define SILOFS_REPO_BLOBS_DIRNAME "blobs"

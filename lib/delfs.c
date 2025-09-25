@@ -233,7 +233,7 @@ delfc_init(struct silofs_delfs_ctx *delf_ctx, const struct silofs_sb_info *sbi)
 	delf_ctx->vis.exec_hook = delfc_visit_exec_hook;
 	delf_ctx->vis.post_hook = delfc_visit_post_hook;
 	delf_ctx->env = silofs_sbi_env(sbi);
-	delf_ctx->repo = delf_ctx->env->meta.repo;
+	delf_ctx->repo = delf_ctx->env->base.repo;
 	silofs_uaddr_assign(&delf_ctx->sb_uaddr, uaddr);
 }
 

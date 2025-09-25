@@ -234,7 +234,7 @@ int silofs_sys_closefd(int *pfd)
 {
 	int err = 0;
 
-	if ((pfd != nullptr) && (*pfd > 0)) {
+	if ((pfd != nullptr) && (*pfd >= 0)) {
 		err = silofs_sys_close(*pfd);
 		if (!err) {
 			*pfd = -1;

@@ -120,34 +120,3 @@ silofs_blobid_hash64(const struct silofs_blobid *blobid, uint64_t seed)
 {
 	return silofs_hash_xxh64(blobid->u.bid, sizeof(blobid->u.bid), seed);
 }
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static const struct silofs_blobref s_silofs_blobref_none = {
-	.blobsz = 0,
-};
-
-const struct silofs_blobref *silofs_blobref_none(void)
-{
-	return &s_silofs_blobref_none;
-}
-
-void silofs_blobref_setup(struct silofs_blobref *blobref,
-                          const struct silofs_blobid *blobid, size_t blobsz)
-{
-	silofs_blobid_assign(&blobref->blobid, blobid);
-	blobref->blobsz = blobsz;
-}
-
-void silofs_blobref_reset(struct silofs_blobref *blobref)
-{
-	silofs_blobid_reset(&blobref->blobid);
-	blobref->blobsz = 0;
-}
-
-void silofs_blobref_assign(struct silofs_blobref *blobref,
-                           const struct silofs_blobref *other)
-{
-	silofs_blobid_assign(&blobref->blobid, &other->blobid);
-	blobref->blobsz = other->blobsz;
-}

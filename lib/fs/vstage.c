@@ -187,7 +187,7 @@ static bool sni_has_main_lseg(const struct silofs_spnode_info *sni)
 static struct silofs_lcache *
 vstgc_lcache(const struct silofs_vstage_ctx *vstg_ctx)
 {
-	return vstg_ctx->env->meta.lcache;
+	return vstg_ctx->env->base.lcache;
 }
 
 static void vstgc_log_cache_stat(const struct silofs_vstage_ctx *vstg_ctx)
@@ -2095,7 +2095,7 @@ static int
 vstgc_load_view_at(const struct silofs_vstage_ctx *vstg_ctx,
                    const struct silofs_laddr *laddr, struct silofs_view *view)
 {
-	struct silofs_repo *repo = vstg_ctx->env->meta.repo;
+	struct silofs_repo *repo = vstg_ctx->env->base.repo;
 	enum silofs_stg_mode stg_mode = vstg_ctx->stg_mode;
 	const size_t len = silofs_laddr_len(laddr);
 	int ret = 0;
@@ -2113,7 +2113,7 @@ vstgc_load_view_at(const struct silofs_vstage_ctx *vstg_ctx,
 static int vstgc_require_laddr(const struct silofs_vstage_ctx *vstg_ctx,
                                const struct silofs_laddr *laddr)
 {
-	struct silofs_repo *repo = vstg_ctx->env->meta.repo;
+	struct silofs_repo *repo = vstg_ctx->env->base.repo;
 	int err;
 
 	err = silofs_repo_require_lseg(repo, &laddr->lsid);
@@ -2978,7 +2978,7 @@ static int check_itype(const struct silofs_task_ctx *task, mode_t mode)
 	 * TODO-0031: Filter supported modes based on mount flags
 	 */
 	const mode_t itype = mode & S_IFMT;
-	const bool no_ispecial = task->t_env->meta.args->no_ispecial;
+	const bool no_ispecial = task->t_env->base.args->no_ispecial;
 	int ret;
 
 	switch (itype) {

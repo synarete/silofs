@@ -4390,7 +4390,7 @@ static void fqs_setup_self_task(const struct silofs_fuseq_sub *fqs,
                                 struct silofs_task_ctx *task)
 {
 	const struct silofs_fuseq *fq = fqs_fuseq(fqs);
-	const struct silofs_env_args *args = fq->fq_env->meta.args;
+	const struct silofs_env_args *args = fq->fq_env->base.args;
 
 	silofs_task_init(task, fq->fq_env);
 	silofs_task_set_creds(task, args->uid, args->gid, args->umask);

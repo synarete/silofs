@@ -73,6 +73,18 @@ do_openat(int dfd, const char *pathname, int o_flags, mode_t mode, int *out_fd)
 	return err;
 }
 
+static int do_unlinkat(int dfd, const char *pathname, int flags)
+{
+	int err;
+
+	err = silofs_sys_unlinkat(dfd, pathname, flags);
+	if (err && (err != -ENOENT)) {
+		log_warn("unlinkat error: dfd=%d pathname=%s err=%d", dfd,
+		         pathname, err);
+	}
+	return err;
+}
+
 static int do_pwriten(int fd, const void *buf, size_t cnt, off_t off)
 {
 	int err;
@@ -138,11 +150,17 @@ bf_from_lru_link(const struct silofs_list_head *lh)
 	return bf_unconst(bf);
 }
 
+static void
+bf_name(const struct silofs_blobfile *bf, struct silofs_strbuf *out_name)
+{
+	silofs_blobid_to_sbuf(&bf->bf_blobid, out_name);
+}
+
 static int bf_open(struct silofs_blobfile *bf, int dfd)
 {
 	struct silofs_strbuf sbuf;
 
-	silofs_blobid_to_sbuf(&bf->bf_blobid, &sbuf);
+	bf_name(bf, &sbuf);
 	return do_openat(dfd, sbuf.str, O_RDWR, 0, &bf->bf_fd);
 }
 
@@ -150,13 +168,28 @@ static int bf_create(struct silofs_blobfile *bf, int dfd)
 {
 	struct silofs_strbuf sbuf;
 
-	silofs_blobid_to_sbuf(&bf->bf_blobid, &sbuf);
+	bf_name(bf, &sbuf);
 	return do_openat(dfd, sbuf.str, O_RDWR | O_CREAT, 0, &bf->bf_fd);
+}
+
+static int bf_unlink(const struct silofs_blobfile *bf, int dfd)
+{
+	struct silofs_strbuf sbuf;
+
+	bf_name(bf, &sbuf);
+	return do_unlinkat(dfd, sbuf.str, 0);
+}
+
+static bool bf_isopen(const struct silofs_blobfile *bf)
+{
+	return (bf->bf_fd >= 0);
 }
 
 static void bf_close(struct silofs_blobfile *bf)
 {
-	do_closefd(&bf->bf_fd);
+	if (bf_isopen(bf)) {
+		do_closefd(&bf->bf_fd);
+	}
 }
 
 static bool bf_has_blobid(const struct silofs_blobfile *bf,
@@ -389,7 +422,15 @@ locos_new_bf(struct silofs_locos *locos, const struct silofs_blobid *blobid)
 static void
 locos_del_bf(struct silofs_locos *locos, struct silofs_blobfile *bf)
 {
+	bf_close(bf);
 	bf_del(bf, locos->los_alloc);
+}
+
+static void
+locos_forget_cached_bf(struct silofs_locos *locos, struct silofs_blobfile *bf)
+{
+	locos_remove_cached_bf(locos, bf);
+	locos_del_bf(locos, bf);
 }
 
 static void locos_drop_cache(struct silofs_locos *locos)
@@ -398,8 +439,7 @@ static void locos_drop_cache(struct silofs_locos *locos)
 
 	bf = lhq_get_lru_tail(&locos->los_hq);
 	while (bf != nullptr) {
-		locos_remove_cached_bf(locos, bf);
-		locos_del_bf(locos, bf);
+		locos_forget_cached_bf(locos, bf);
 		bf = lhq_get_lru_tail(&locos->los_hq);
 	}
 }
@@ -526,6 +566,24 @@ static int locos_stage_blob(struct silofs_locos *locos,
 out:
 	*out_bf = bf;
 	return err;
+}
+
+int silofs_locos_remove_blob(struct silofs_locos *locos,
+                             const struct silofs_blobid *blobid)
+{
+	struct silofs_blobfile *bf = nullptr;
+	int err = 0;
+
+	err = locos_stage_blob(locos, blobid, &bf);
+	if (err) {
+		return err;
+	}
+	err = bf_unlink(bf, locos->los_dfd);
+	if (err) {
+		return err;
+	}
+	locos_forget_cached_bf(locos, bf);
+	return 0;
 }
 
 int silofs_locos_write_blob(struct silofs_locos *locos,

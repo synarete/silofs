@@ -49,6 +49,9 @@ void silofs_locos_close(struct silofs_locos *locos);
 int silofs_locos_create_blob(struct silofs_locos        *locos,
                              const struct silofs_blobid *blobid);
 
+int silofs_locos_remove_blob(struct silofs_locos        *locos,
+                             const struct silofs_blobid *blobid);
+
 int silofs_locos_write_blob(struct silofs_locos       *locos,
                             const struct silofs_baddr *baddr,
                             const struct silofs_rovec *rovec);

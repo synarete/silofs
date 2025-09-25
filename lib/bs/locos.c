@@ -488,18 +488,29 @@ static void locos_drop_cache(struct silofs_locos *locos)
 	}
 }
 
-static bool locos_cache_need_relax(const struct silofs_locos *locos)
+static bool locos_cache_overpop(const struct silofs_locos *locos)
 {
 	return (locos->los_hq.lhq_lru.sz > SILOFS_LACOS_CACHE_LIM);
 }
 
-static void locos_relax_cache(struct silofs_locos *locos)
+static struct silofs_blobfile *locos_get_overpop_bf(struct silofs_locos *locos)
 {
 	struct silofs_blobfile *bf = nullptr;
 
-	while (locos_cache_need_relax(locos)) {
+	if (locos_cache_overpop(locos)) {
 		bf = lhq_get_lru_tail(&locos->los_hq);
+	}
+	return bf;
+}
+
+static void locos_relax_cache(struct silofs_locos *locos)
+{
+	struct silofs_blobfile *bf;
+
+	bf = locos_get_overpop_bf(locos);
+	while (bf != nullptr) {
 		locos_forget_cached_bf(locos, bf);
+		bf = locos_get_overpop_bf(locos);
 	}
 }
 

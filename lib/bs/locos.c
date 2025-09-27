@@ -356,6 +356,11 @@ static void lhq_insert(struct silofs_locos_hq *lhq, struct silofs_blobfile *bf)
 	}
 }
 
+static size_t lhq_get_lru_size(const struct silofs_locos_hq *lhq)
+{
+	return silofs_listq_size(&lhq->lhq_lru);
+}
+
 static void
 lhq_promote_lru(struct silofs_locos_hq *lhq, struct silofs_blobfile *bf)
 {
@@ -386,7 +391,7 @@ lhq_lookup_htb(const struct silofs_locos_hq *lhq,
 
 	lst = lhq_htb_list_of(lhq, blobid);
 	itr = lst->next;
-	while (itr != lst) {
+	while ((itr != lst) && (itr != nullptr)) {
 		bf = bf_from_htb_link(itr);
 		if (bf_has_blobid(bf, blobid)) {
 			return bf_unconst(bf);
@@ -401,7 +406,7 @@ lhq_lookup(struct silofs_locos_hq *lhq, const struct silofs_blobid *blobid)
 {
 	struct silofs_blobfile *bf = nullptr;
 
-	if (silofs_listq_isempty(&lhq->lhq_lru)) {
+	if (!lhq_get_lru_size(lhq)) {
 		goto out;
 	}
 	bf = lhq_lookup_htb(lhq, blobid);

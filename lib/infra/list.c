@@ -203,8 +203,12 @@ struct silofs_list_head *silofs_listq_next(const struct silofs_listq *lsq,
 {
 	struct silofs_list_head *nxt = nullptr;
 
-	if ((lsq->sz > 0) && (lnk->next != &lsq->ls)) {
-		nxt = lnk->next;
+	if (lsq->sz > 0) {
+		if (lnk == nullptr) {
+			nxt = lsq->ls.next;
+		} else if (lnk->next != &lsq->ls) {
+			nxt = lnk->next;
+		}
 	}
 	return nxt;
 }
@@ -214,8 +218,12 @@ struct silofs_list_head *silofs_listq_prev(const struct silofs_listq *lsq,
 {
 	struct silofs_list_head *prv = nullptr;
 
-	if ((lsq->sz > 0) && (lnk->prev != &lsq->ls)) {
-		prv = lnk->prev;
+	if (lsq->sz > 0) {
+		if (lnk == nullptr) {
+			prv = lsq->ls.prev;
+		} else if (lnk->prev != &lsq->ls) {
+			prv = lnk->prev;
+		}
 	}
 	return prv;
 }

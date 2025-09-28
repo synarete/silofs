@@ -97,14 +97,22 @@ static void arc_fini(struct silofs_ar_ctx *ar_ctx)
 static int arc_stat_pack(const struct silofs_ar_ctx *ar_ctx,
                          const struct silofs_baddr *baddr, size_t *out_sz)
 {
-	return silofs_repo_stat_cobj(ar_ctx->repo, baddr, out_sz);
+	struct stat st;
+	int err;
+
+	err = silofs_repo_stat_blob(ar_ctx->repo, &baddr->blobid, &st);
+	if (err) {
+		return err;
+	}
+	*out_sz = (size_t)st.st_size;
+	return 0;
 }
 
 static int arc_send_to_repo(const struct silofs_ar_ctx *ar_ctx,
                             const struct silofs_baddr *baddr,
                             const struct silofs_rovec *rov)
 {
-	return silofs_repo_save_cobj(ar_ctx->repo, baddr, rov);
+	return silofs_repo_save_bseg(ar_ctx->repo, baddr, rov);
 }
 
 static int

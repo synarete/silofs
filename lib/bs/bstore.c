@@ -71,7 +71,7 @@ static int bstore_save_bdesc(const struct silofs_bstore *bstore,
 		.rov_len = sizeof(*bdi->bd),
 	};
 
-	return silofs_repo_save_pobj(bstore->repo, bdi_baddr(bdi), &rov);
+	return silofs_repo_save_bseg(bstore->repo, bdi_baddr(bdi), &rov);
 }
 
 static int bstore_load_bdesc(const struct silofs_bstore *bstore,
@@ -82,7 +82,7 @@ static int bstore_load_bdesc(const struct silofs_bstore *bstore,
 		.rwv_len = sizeof(*bdi->bd),
 	};
 
-	return silofs_repo_load_pobj(bstore->repo, bdi_baddr(bdi), &rwv);
+	return silofs_repo_load_bseg(bstore->repo, bdi_baddr(bdi), &rwv);
 }
 
 static int bstore_commit_bdesc(const struct silofs_bstore *bstore,
@@ -223,7 +223,7 @@ static int bstore_save_btnode(const struct silofs_bstore *bstore,
 		.rov_len = sizeof(*bni->bn),
 	};
 
-	return silofs_repo_save_pobj(bstore->repo, bni_baddr(bni), &rov);
+	return silofs_repo_save_bseg(bstore->repo, bni_baddr(bni), &rov);
 }
 
 static int bstore_commit_btnode(const struct silofs_bstore *bstore,

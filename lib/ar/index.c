@@ -451,7 +451,7 @@ static int abi_save(const struct silofs_ab_info *abi)
 		.rov_len = sizeof(*ab_enc),
 	};
 
-	return silofs_repo_save_cobj(abi->ab_base.repo, &abi->ab_baddr, &rov);
+	return silofs_repo_save_bseg(abi->ab_base.repo, &abi->ab_baddr, &rov);
 }
 
 int silofs_store_arix_block(struct silofs_ab_info *abi,
@@ -480,7 +480,7 @@ static int abi_load(const struct silofs_ab_info *abi)
 		.rwv_len = sizeof(*ab_enc),
 	};
 
-	return silofs_repo_load_cobj(abi->ab_base.repo, &abi->ab_baddr, &rwv);
+	return silofs_repo_load_bseg(abi->ab_base.repo, &abi->ab_baddr, &rwv);
 }
 
 static int

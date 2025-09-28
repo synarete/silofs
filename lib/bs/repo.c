@@ -402,15 +402,6 @@ rce_from_lru_link(const struct silofs_list_head *lh)
 }
 
 static void
-rce_init1(struct silofs_repo_ce *rce, const struct silofs_blobid *blobid)
-{
-	silofs_list_head_init(&rce->rce_htb_lh);
-	silofs_list_head_init(&rce->rce_lru_lh);
-	silofs_blobid_assign(&rce->rce_key.u.blobid, blobid);
-	rce->rce_key.kind = RCEK_BLOBID;
-}
-
-static void
 rce_init2(struct silofs_repo_ce *rce, const struct silofs_lsid *lsid)
 {
 	silofs_list_head_init(&rce->rce_htb_lh);
@@ -425,13 +416,6 @@ static void rce_fini(struct silofs_repo_ce *rce)
 	silofs_list_head_fini(&rce->rce_lru_lh);
 	silofs_lsid_reset(&rce->rce_key.u.lsid);
 	rce->rce_key.kind = -1;
-}
-
-static bool rce_has_blobid(const struct silofs_repo_ce *rce,
-                           const struct silofs_blobid *blobid)
-{
-	return (rce->rce_key.kind == RCEK_BLOBID) &&
-	       silofs_blobid_isequal(&rce->rce_key.u.blobid, blobid);
 }
 
 static bool
@@ -451,29 +435,11 @@ static struct silofs_blobf *blobf_from_rce(const struct silofs_repo_ce *rce)
 	return unconst(blobf);
 }
 
-static int
-blobf_init(struct silofs_blobf *blobf, const struct silofs_blobid *blobid)
-{
-	rce_init1(&blobf->blf_rce, blobid);
-	blobf->blf_size = 0;
-	blobf->blf_fd = -1;
-	return 0;
-}
-
 static void blobf_fini(struct silofs_blobf *blobf)
 {
 	rce_fini(&blobf->blf_rce);
 	blobf->blf_size = -1;
 	blobf->blf_fd = -1;
-}
-
-static int blobf_openat(struct silofs_blobf *blobf, int dfd, const char *name,
-                        bool creat_mode)
-{
-	const int o_flags = creat_mode ? (O_CREAT | O_RDWR | O_TRUNC) : O_RDWR;
-
-	silofs_assert_eq(blobf->blf_fd, -1);
-	return do_openat(dfd, name, o_flags, 0600, &blobf->blf_fd);
 }
 
 static int blobf_close(struct silofs_blobf *blobf)
@@ -484,46 +450,6 @@ static int blobf_close(struct silofs_blobf *blobf)
 static int blobf_fsync(const struct silofs_blobf *blobf)
 {
 	return do_fsync(blobf->blf_fd);
-}
-
-static int blobf_pwriten(const struct silofs_blobf *blobf, off_t off,
-                         const void *buf, size_t len)
-{
-	return do_pwriten(blobf->blf_fd, buf, len, off);
-}
-
-static int blobf_preadn(const struct silofs_blobf *blobf, off_t off, void *buf,
-                        size_t len)
-{
-	return do_preadn(blobf->blf_fd, buf, len, off);
-}
-
-static int blobf_truncate(const struct silofs_blobf *blobf, ssize_t len)
-{
-	return do_ftruncate(blobf->blf_fd, len);
-}
-
-static int blobf_sync(const struct silofs_blobf *blobf)
-{
-	return do_fsync(blobf->blf_fd);
-}
-
-static struct silofs_blobf *
-blobf_new(struct silofs_alloc *alloc, const struct silofs_blobid *blobid)
-{
-	struct silofs_blobf *blobf;
-	int err;
-
-	blobf = silofs_memalloc(alloc, sizeof(*blobf), SILOFS_ALLOCF_BZERO);
-	if (blobf == nullptr) {
-		return nullptr;
-	}
-	err = blobf_init(blobf, blobid);
-	if (err) {
-		silofs_memfree(alloc, blobf, sizeof(*blobf), 0);
-		return nullptr;
-	}
-	return blobf;
 }
 
 static void blobf_del(struct silofs_blobf *blobf, struct silofs_alloc *alloc)
@@ -980,14 +906,6 @@ static void repo_htbl_fini(struct silofs_repo *repo)
 	}
 }
 
-static size_t repo_htbl_slot_of_blobid(const struct silofs_repo *repo,
-                                       const struct silofs_blobid *blobid)
-{
-	const uint64_t hash = silofs_blobid_hash64(blobid, 0);
-
-	return hash % repo->re_htbl.rh_nelems;
-}
-
 static size_t repo_htbl_slot_of_lsid(const struct silofs_repo *repo,
                                      const struct silofs_lsid *lsid)
 {
@@ -1007,43 +925,12 @@ repo_htbl_list_at(const struct silofs_repo *repo, size_t slot)
 }
 
 static struct silofs_list_head *
-repo_htbl_list_of_blobid(const struct silofs_repo *repo,
-                         const struct silofs_blobid *blobid)
-{
-	const size_t slot = repo_htbl_slot_of_blobid(repo, blobid);
-
-	return repo_htbl_list_at(repo, slot);
-}
-
-static struct silofs_list_head *
 repo_htbl_list_of_lsid(const struct silofs_repo *repo,
                        const struct silofs_lsid *lsid)
 {
 	const size_t slot = repo_htbl_slot_of_lsid(repo, lsid);
 
 	return repo_htbl_list_at(repo, slot);
-}
-
-static struct silofs_blobf *
-repo_htbl_lookup_blobf(const struct silofs_repo *repo,
-                       const struct silofs_blobid *blobid)
-{
-	const struct silofs_list_head *lst;
-	const struct silofs_list_head *itr;
-	const struct silofs_repo_ce *rce;
-	const struct silofs_blobf *blobf;
-
-	lst = repo_htbl_list_of_blobid(repo, blobid);
-	itr = lst->next;
-	while (itr != lst) {
-		rce = rce_from_htb_link(itr);
-		if (rce_has_blobid(rce, blobid)) {
-			blobf = blobf_from_rce(rce);
-			return unconst(blobf);
-		}
-		itr = itr->next;
-	}
-	return nullptr;
 }
 
 static struct silofs_lsegf *
@@ -1066,17 +953,6 @@ repo_htbl_lookup_lsegf(const struct silofs_repo *repo,
 		itr = itr->next;
 	}
 	return nullptr;
-}
-
-static void
-repo_htbl_insert_blobf(struct silofs_repo *repo, struct silofs_blobf *blobf)
-{
-	struct silofs_repo_ce *rce = &blobf->blf_rce;
-	struct silofs_list_head *lst;
-
-	lst = repo_htbl_list_of_blobid(repo, &rce->rce_key.u.blobid);
-	list_push_front(lst, &rce->rce_htb_lh);
-	repo->re_htbl.rh_size += 1;
 }
 
 static void
@@ -1120,12 +996,6 @@ repo_lruq_insert(struct silofs_repo *repo, struct silofs_repo_ce *rce)
 }
 
 static void
-repo_lruq_insert_blobf(struct silofs_repo *repo, struct silofs_blobf *blobf)
-{
-	repo_lruq_insert(repo, &blobf->blf_rce);
-}
-
-static void
 repo_lruq_insert_lsegf(struct silofs_repo *repo, struct silofs_lsegf *lsegf)
 {
 	repo_lruq_insert(repo, &lsegf->lsf_rce);
@@ -1165,12 +1035,6 @@ repo_lruq_requeue(struct silofs_repo *repo, struct silofs_repo_ce *rce)
 		listq_remove(&repo->re_lruq, &rce->rce_lru_lh);
 		listq_push_front(&repo->re_lruq, &rce->rce_lru_lh);
 	}
-}
-
-static void
-repo_lruq_requeue_blobf(struct silofs_repo *repo, struct silofs_blobf *blobf)
-{
-	repo_lruq_requeue(repo, &blobf->blf_rce);
 }
 
 static void
@@ -1308,12 +1172,6 @@ static void repo_evict_all(struct silofs_repo *repo)
 }
 
 static void
-repo_requeue_blobf(struct silofs_repo *repo, struct silofs_blobf *blobf)
-{
-	repo_lruq_requeue_blobf(repo, blobf);
-}
-
-static void
 repo_requeue_lsegf(struct silofs_repo *repo, struct silofs_lsegf *lsegf)
 {
 	repo_lruq_requeue_lsegf(repo, lsegf);
@@ -1364,36 +1222,12 @@ void silofs_repo_relax(struct silofs_repo *repo)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int
-repo_create_blobf(struct silofs_repo *repo, const struct silofs_blobid *blobid,
-                  struct silofs_blobf **out_blobf)
-{
-	struct silofs_blobf *blobf = nullptr;
-
-	blobf = blobf_new(repo->re.alloc, blobid);
-	if (blobf == nullptr) {
-		return -SILOFS_ENOMEM;
-	}
-	repo_htbl_insert_blobf(repo, blobf);
-	repo_lruq_insert_blobf(repo, blobf);
-	*out_blobf = blobf;
-	return 0;
-}
-
 static void
 repo_evict_blobf(struct silofs_repo *repo, struct silofs_blobf *blobf)
 {
 	repo_htbl_remove_blobf(repo, blobf);
 	repo_lruq_remove_blobf(repo, blobf);
 	blobf_del(blobf, repo->re.alloc);
-}
-
-static int repo_create_cached_blobf(struct silofs_repo *repo,
-                                    const struct silofs_blobid *blobid,
-                                    struct silofs_blobf **out_blobf)
-{
-	repo_try_evict_overpop(repo);
-	return repo_create_blobf(repo, blobid, out_blobf);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1671,16 +1505,6 @@ static int repo_check_open(const struct silofs_repo *repo, bool rw)
 		return err;
 	}
 	return 0;
-}
-
-static int repo_check_wopen(const struct silofs_repo *repo)
-{
-	return repo_check_open(repo, true);
-}
-
-static int repo_check_ropen(const struct silofs_repo *repo)
-{
-	return repo_check_open(repo, false);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -2547,35 +2371,55 @@ int silofs_repo_read_at(struct silofs_repo *repo,
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-int silofs_repo_stat_cobj(struct silofs_repo *repo,
-                          const struct silofs_baddr *baddr, size_t *out_sz)
+int silofs_repo_stat_blob(struct silofs_repo *repo,
+                          const struct silofs_blobid *blobid,
+                          struct stat *out_st)
 {
 	int err;
 
 	repo_lock(repo);
-	err = silofs_locos_stat_blob(&repo->re_locos, &baddr->blobid, out_sz);
+	err = silofs_locos_stat_blob(&repo->re_locos, blobid, out_st);
 	repo_unlock(repo);
 	return err;
 }
 
-int silofs_repo_save_cobj(struct silofs_repo *repo,
+int silofs_repo_spawn_blob(struct silofs_repo *repo,
+                           const struct silofs_blobid *blobid)
+{
+	int err;
+
+	repo_lock(repo);
+	err = silofs_locos_create_blob(&repo->re_locos, blobid);
+	repo_unlock(repo);
+	return err;
+}
+
+int silofs_repo_stage_blob(struct silofs_repo *repo,
+                           const struct silofs_blobid *blobid)
+{
+	int err;
+
+	repo_lock(repo);
+	err = silofs_locos_require_blob(&repo->re_locos, blobid);
+	repo_unlock(repo);
+	return err;
+}
+
+int silofs_repo_save_bseg(struct silofs_repo *repo,
                           const struct silofs_baddr *baddr,
                           const struct silofs_rovec *rovec)
 {
 	int err;
 
 	repo_lock(repo);
-	err = silofs_locos_require_blob(&repo->re_locos, &baddr->blobid);
-	if (!err) {
-		err = silofs_locos_write_blob(&repo->re_locos, baddr, rovec);
-	}
+	err = silofs_locos_write_blob(&repo->re_locos, baddr, rovec);
 	repo_unlock(repo);
 	return err;
 }
 
-int silofs_repo_load_cobj(struct silofs_repo *repo,
+int silofs_repo_load_bseg(struct silofs_repo *repo,
                           const struct silofs_baddr *baddr,
-                          struct silofs_rwvec *rwvec)
+                          const struct silofs_rwvec *rwvec)
 {
 	int err;
 
@@ -2585,432 +2429,15 @@ int silofs_repo_load_cobj(struct silofs_repo *repo,
 	return err;
 }
 
-int silofs_repo_unlink_cobj(struct silofs_repo *repo,
-                            const struct silofs_baddr *baddr)
-{
-	int err;
-
-	repo_lock(repo);
-	err = silofs_locos_remove_blob(&repo->re_locos, &baddr->blobid);
-	repo_unlock(repo);
-	return err;
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static void repo_blob_pathname(const struct silofs_repo *repo,
-                               const struct silofs_blobid *blobid,
-                               struct silofs_strbuf *out_sbuf)
-{
-	struct silofs_strbuf sbuf;
-	const char *dname = repo->re_defs->re_blobs_name;
-
-	silofs_blobid_to_sbuf(blobid, &sbuf);
-	silofs_strbuf_sprintf(out_sbuf, "%s/%s", dname, sbuf.str);
-}
-
-static void repo_blobf_pathname(const struct silofs_repo *repo,
-                                const struct silofs_blobf *blobf,
-                                struct silofs_strbuf *out_sbuf)
-{
-	const struct silofs_blobid *blobid = &blobf->blf_rce.rce_key.u.blobid;
-
-	repo_blob_pathname(repo, blobid, out_sbuf);
-}
-
-static int repo_fetch_cached_blobf(const struct silofs_repo *repo,
-                                   const struct silofs_blobid *blobid,
-                                   struct silofs_blobf **out_blobf)
-{
-	*out_blobf = repo_htbl_lookup_blobf(repo, blobid);
-	return (*out_blobf != nullptr) ? 0 : -SILOFS_ENOENT;
-}
-
-static int repo_fetch_cached_blobf2(struct silofs_repo *repo,
-                                    const struct silofs_blobid *blobid,
-                                    struct silofs_blobf **out_blobf)
-{
-	int err;
-
-	err = repo_fetch_cached_blobf(repo, blobid, out_blobf);
-	if (!err) {
-		repo_requeue_blobf(repo, *out_blobf);
-	}
-	return err;
-}
-
-static int
-repo_stat_blob(const struct silofs_repo *repo,
-               const struct silofs_blobid *blobid, struct stat *out_st)
-{
-	struct silofs_strbuf sbuf;
-	int err;
-
-	repo_blob_pathname(repo, blobid, &sbuf);
-	err = do_fstatat(repo->re_dots_dfd, sbuf.str, out_st, 0);
-	if (err) {
-		return (err == -ENOENT) ? -SILOFS_ENOENT : err;
-	}
-	if (!S_ISREG(out_st->st_mode)) {
-		return -SILOFS_EBADREPO;
-	}
-	return 0;
-}
-
-int silofs_repo_stat_blob(struct silofs_repo *repo,
-                          const struct silofs_blobid *blobid,
-                          struct stat *out_st)
-{
-	int err;
-
-	repo_lock(repo);
-	err = repo_stat_blob(repo, blobid, out_st);
-	repo_unlock(repo);
-	return err;
-}
-
-static int repo_stat_no_blob(const struct silofs_repo *repo,
-                             const struct silofs_blobid *blobid)
-{
-	struct stat st;
-	int ret = 0;
-	int err;
-
-	err = repo_stat_blob(repo, blobid, &st);
-	if (!err) {
-		ret = -SILOFS_EEXIST;
-	} else if (err != -SILOFS_ENOENT) {
-		ret = err;
-	}
-	return ret;
-}
-
-static int
-repo_create_blob_of(const struct silofs_repo *repo, struct silofs_blobf *blobf)
-{
-	struct silofs_strbuf sbuf;
-
-	repo_blobf_pathname(repo, blobf, &sbuf);
-	return blobf_openat(blobf, repo->re_dots_dfd, sbuf.str, true);
-}
-
-static int repo_do_spawn_blob(struct silofs_repo *repo,
-                              const struct silofs_blobid *blobid,
-                              struct silofs_blobf **out_blobf)
-{
-	struct silofs_blobf *blobf = nullptr;
-	int err;
-
-	err = repo_create_cached_blobf(repo, blobid, &blobf);
-	if (err) {
-		return err;
-	}
-	err = repo_create_blob_of(repo, blobf);
-	if (err) {
-		repo_evict_blobf(repo, blobf);
-		return err;
-	}
-	*out_blobf = blobf;
-	return 0;
-}
-
-static int repo_check_no_blob(const struct silofs_repo *repo,
-                              const struct silofs_blobid *blobid)
-{
-	struct silofs_blobf *blobf = nullptr;
-	int err;
-
-	err = repo_fetch_cached_blobf(repo, blobid, &blobf);
-	if (!err) {
-		return -SILOFS_EEXIST;
-	}
-	err = repo_stat_no_blob(repo, blobid);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
-static int
-repo_spawn_blob(struct silofs_repo *repo, const struct silofs_blobid *blobid)
-{
-	struct silofs_blobf *blobf = nullptr;
-	int err;
-
-	err = repo_check_wopen(repo);
-	if (err) {
-		return err;
-	}
-	err = repo_check_no_blob(repo, blobid);
-	if (err) {
-		return err;
-	}
-	err = repo_do_spawn_blob(repo, blobid, &blobf);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
-int silofs_repo_spawn_blob(struct silofs_repo *repo,
-                           const struct silofs_blobid *blobid)
-{
-	int err;
-
-	repo_lock(repo);
-	err = repo_spawn_blob(repo, blobid);
-	repo_unlock(repo);
-	return err;
-}
-
-static int repo_check_has_blob(const struct silofs_repo *repo,
-                               const struct silofs_blobid *blobid)
-{
-	struct stat st;
-	struct silofs_blobf *blobf = nullptr;
-	int err;
-
-	err = repo_fetch_cached_blobf(repo, blobid, &blobf);
-	if (!err) {
-		return 0; /* ok -- cached */
-	}
-	err = repo_stat_blob(repo, blobid, &st);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
-static int repo_check_has_blob_of(const struct silofs_repo *repo,
-                                  const struct silofs_baddr *baddr)
-{
-	return repo_check_has_blob(repo, &baddr->blobid);
-}
-
-static int
-repo_open_blob_of(const struct silofs_repo *repo, struct silofs_blobf *blobf)
-{
-	struct silofs_strbuf sbuf;
-
-	repo_blobf_pathname(repo, blobf, &sbuf);
-	return blobf_openat(blobf, repo->re_dots_dfd, sbuf.str, false);
-}
-
-static int repo_do_stage_blob(struct silofs_repo *repo,
-                              const struct silofs_blobid *blobid,
-                              struct silofs_blobf **out_blobf)
-{
-	struct silofs_blobf *blobf = nullptr;
-	int err;
-
-	err = repo_fetch_cached_blobf2(repo, blobid, out_blobf);
-	if (!err) {
-		repo_requeue_blobf(repo, *out_blobf);
-		return 0; /* OK -- cached */
-	}
-	err = repo_create_cached_blobf(repo, blobid, &blobf);
-	if (err) {
-		return err;
-	}
-	err = repo_open_blob_of(repo, blobf);
-	if (err) {
-		repo_evict_blobf(repo, blobf);
-		return err;
-	}
-	*out_blobf = blobf;
-	return 0;
-}
-
-static int
-repo_stage_blob_of(struct silofs_repo *repo, const struct silofs_baddr *baddr,
-                   struct silofs_blobf **out_blobf)
-{
-	return repo_do_stage_blob(repo, &baddr->blobid, out_blobf);
-}
-
-static int
-repo_stage_blob(struct silofs_repo *repo, const struct silofs_blobid *blobid,
-                struct silofs_blobf **out_blobf)
-{
-	int err;
-
-	err = repo_check_wopen(repo);
-	if (err) {
-		return err;
-	}
-	err = repo_check_has_blob(repo, blobid);
-	if (err) {
-		return err;
-	}
-	err = repo_do_stage_blob(repo, blobid, out_blobf);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
-int silofs_repo_stage_blob(struct silofs_repo *repo,
-                           const struct silofs_blobid *blobid)
-{
-	struct silofs_blobf *blobf = nullptr;
-	int err;
-
-	repo_lock(repo);
-	err = repo_stage_blob(repo, blobid, &blobf);
-	repo_unlock(repo);
-	return err;
-}
-
-static int
-repo_save_pobj(struct silofs_repo *repo, const struct silofs_baddr *baddr,
-               const struct silofs_rovec *rovec)
-{
-	struct silofs_blobf *blobf = nullptr;
-	int err;
-
-	err = repo_check_wopen(repo);
-	if (err) {
-		return err;
-	}
-	err = repo_check_has_blob_of(repo, baddr);
-	if (err) {
-		return err;
-	}
-	err = repo_stage_blob_of(repo, baddr, &blobf);
-	if (err) {
-		return err;
-	}
-	err = blobf_pwriten(blobf, baddr->pos, rovec->rov_base,
-	                    rovec->rov_len);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
-int silofs_repo_save_pobj(struct silofs_repo *repo,
-                          const struct silofs_baddr *baddr,
-                          const struct silofs_rovec *rovec)
-{
-	int err;
-
-	repo_lock(repo);
-	err = repo_save_pobj(repo, baddr, rovec);
-	repo_unlock(repo);
-	return err;
-}
-
-static int
-repo_load_pobj(struct silofs_repo *repo, const struct silofs_baddr *baddr,
-               const struct silofs_rwvec *rwvec)
-{
-	struct silofs_blobf *blobf = nullptr;
-	int err;
-
-	err = repo_check_ropen(repo);
-	if (err) {
-		return err;
-	}
-	err = repo_check_has_blob_of(repo, baddr);
-	if (err) {
-		return err;
-	}
-	err = repo_stage_blob_of(repo, baddr, &blobf);
-	if (err) {
-		return err;
-	}
-	err = blobf_preadn(blobf, baddr->pos, rwvec->rwv_base, rwvec->rwv_len);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
-int silofs_repo_load_pobj(struct silofs_repo *repo,
-                          const struct silofs_baddr *baddr,
-                          const struct silofs_rwvec *rwvec)
-{
-	int err;
-
-	repo_lock(repo);
-	err = repo_load_pobj(repo, baddr, rwvec);
-	repo_unlock(repo);
-	return err;
-}
-
-static int
-repo_unlink_blob_of(struct silofs_repo *repo, const struct silofs_blobf *blobf)
-{
-	struct silofs_strbuf sbuf;
-
-	repo_blobf_pathname(repo, blobf, &sbuf);
-	return do_unlinkat(repo->re_dots_dfd, sbuf.str, 0);
-}
-
-static int
-repo_remove_blob(struct silofs_repo *repo, const struct silofs_blobid *blobid)
-{
-	struct silofs_blobf *blobf = nullptr;
-	int err;
-
-	err = repo_check_wopen(repo);
-	if (err) {
-		return err;
-	}
-	err = repo_check_has_blob(repo, blobid);
-	if (err) {
-		return err;
-	}
-	err = repo_do_stage_blob(repo, blobid, &blobf);
-	if (err) {
-		return err;
-	}
-	err = blobf_truncate(blobf, 0);
-	if (err) {
-		return err;
-	}
-	err = repo_unlink_blob_of(repo, blobf);
-	if (err) {
-		return err;
-	}
-	repo_evict_blobf(repo, blobf);
-	return 0;
-}
-
 int silofs_repo_remove_blob(struct silofs_repo *repo,
                             const struct silofs_blobid *blobid)
 {
 	int err;
 
 	repo_lock(repo);
-	err = repo_remove_blob(repo, blobid);
+	err = silofs_locos_remove_blob(&repo->re_locos, blobid);
 	repo_unlock(repo);
 	return err;
-}
-
-static int
-repo_flush_blob(struct silofs_repo *repo, const struct silofs_blobid *blobid)
-{
-	struct silofs_blobf *blobf = nullptr;
-	int err;
-
-	err = repo_check_wopen(repo);
-	if (err) {
-		return err;
-	}
-	err = repo_check_has_blob(repo, blobid);
-	if (err) {
-		return err;
-	}
-	err = repo_do_stage_blob(repo, blobid, &blobf);
-	if (err) {
-		return err;
-	}
-	err = blobf_sync(blobf);
-	if (err) {
-		return err;
-	}
-	return 0;
 }
 
 int silofs_repo_flush_blob(struct silofs_repo *repo,
@@ -3019,7 +2446,7 @@ int silofs_repo_flush_blob(struct silofs_repo *repo,
 	int err;
 
 	repo_lock(repo);
-	err = repo_flush_blob(repo, blobid);
+	err = silofs_locos_flush_blob(&repo->re_locos, blobid);
 	repo_unlock(repo);
 	return err;
 }

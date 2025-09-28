@@ -97,7 +97,7 @@ static int
 rec_recv_from_repo(const struct silofs_re_ctx *re_ctx,
                    const struct silofs_baddr *baddr, struct silofs_rwvec *rwv)
 {
-	return silofs_repo_load_cobj(re_ctx->repo, baddr, rwv);
+	return silofs_repo_load_bseg(re_ctx->repo, baddr, rwv);
 }
 
 static int

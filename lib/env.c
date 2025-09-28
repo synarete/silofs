@@ -610,9 +610,9 @@ int silofs_env_forkfs(struct silofs_env *env, struct silofs_mrefs *out_mrefs)
 	return err;
 }
 
-static int check_arix_size(size_t sz)
+static int check_arix_size(ssize_t sz)
 {
-	const size_t arix_size = silofs_mtype_size(SILOFS_MTYPE_ARIX);
+	const ssize_t arix_size = silofs_mtype_ssize(SILOFS_MTYPE_ARIX);
 
 	return (arix_size == sz) ? 0 : -SILOFS_EBADARIX;
 }
@@ -626,18 +626,18 @@ env_arix_addr(const struct silofs_env *env, struct silofs_baddr *out_baddr)
 int silofs_env_sense_ar(struct silofs_env *env)
 {
 	struct silofs_baddr baddr;
-	size_t sz = 0;
+	struct stat st;
 	int err;
 
 	err = env_arix_addr(env, &baddr);
 	if (err) {
 		return err;
 	}
-	err = silofs_repo_stat_cobj(env->base.repo, &baddr, &sz);
+	err = silofs_repo_stat_blob(env->base.repo, &baddr.blobid, &st);
 	if (err) {
 		return err;
 	}
-	err = check_arix_size(sz);
+	err = check_arix_size(st.st_size);
 	if (err) {
 		return err;
 	}

@@ -260,7 +260,7 @@ static int btc_load_btnode(const struct silofs_btree_ctx *btc,
 		.rwv_len = sizeof(*bni->bn),
 	};
 
-	return silofs_repo_load_pobj(btc->repo, bni_baddr(bni), &rwv);
+	return silofs_repo_load_bseg(btc->repo, bni_baddr(bni), &rwv);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

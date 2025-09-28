@@ -100,6 +100,17 @@ static int do_fstat(int fd, struct stat *st)
 	return err;
 }
 
+static int do_fsync(int fd)
+{
+	int err;
+
+	err = silofs_sys_fsync(fd);
+	if (err && (err != -ENOSYS)) {
+		log_warn("fsync error: fd=%d err=%d", fd, err);
+	}
+	return err;
+}
+
 static int do_pwriten(int fd, const void *buf, size_t cnt, off_t off)
 {
 	int err;
@@ -231,6 +242,11 @@ static int bf_stat(const struct silofs_blobfile *bf, struct stat *out_st)
 		return -SILOFS_ENOENT;
 	}
 	return 0;
+}
+
+static int bf_sync(const struct silofs_blobfile *bf)
+{
+	return do_fsync(bf->bf_fd);
 }
 
 static int bf_write(const struct silofs_blobfile *bf, off_t pos,
@@ -632,9 +648,9 @@ static int locos_spawn_blob(struct silofs_locos *locos,
 	return 0;
 }
 
-static int locos_spawn_cached_bf(struct silofs_locos *locos,
-                                 const struct silofs_blobid *blobid,
-                                 struct silofs_blobfile **out_bf)
+static int locos_spawn_and_cache_bf(struct silofs_locos *locos,
+                                    const struct silofs_blobid *blobid,
+                                    struct silofs_blobfile **out_bf)
 {
 	int err;
 
@@ -672,9 +688,9 @@ static int locos_stage_blob(struct silofs_locos *locos,
 	return err;
 }
 
-static int locos_stage_cached_bf(struct silofs_locos *locos,
-                                 const struct silofs_blobid *blobid,
-                                 struct silofs_blobfile **out_bf)
+static int locos_stage_and_cache_bf(struct silofs_locos *locos,
+                                    const struct silofs_blobid *blobid,
+                                    struct silofs_blobfile **out_bf)
 {
 	int err;
 
@@ -697,7 +713,7 @@ int silofs_locos_create_blob(struct silofs_locos *locos,
 {
 	struct silofs_blobfile *bf = nullptr;
 
-	return locos_spawn_cached_bf(locos, blobid, &bf);
+	return locos_spawn_and_cache_bf(locos, blobid, &bf);
 }
 
 int silofs_locos_remove_blob(struct silofs_locos *locos,
@@ -706,7 +722,7 @@ int silofs_locos_remove_blob(struct silofs_locos *locos,
 	struct silofs_blobfile *bf = nullptr;
 	int err = 0;
 
-	err = locos_stage_cached_bf(locos, blobid, &bf);
+	err = locos_stage_and_cache_bf(locos, blobid, &bf);
 	if (err) {
 		return err;
 	}
@@ -719,35 +735,51 @@ int silofs_locos_remove_blob(struct silofs_locos *locos,
 }
 
 int silofs_locos_stat_blob(struct silofs_locos *locos,
-                           const struct silofs_blobid *blobid, size_t *out_sz)
+                           const struct silofs_blobid *blobid,
+                           struct stat *out_st)
 {
-	struct stat st = { .st_size = -1 };
 	struct silofs_blobfile *bf = nullptr;
 	int err = 0;
 
-	err = locos_stage_cached_bf(locos, blobid, &bf);
+	err = locos_stage_and_cache_bf(locos, blobid, &bf);
 	if (err) {
 		return err;
 	}
-	err = bf_stat(bf, &st);
+	err = bf_stat(bf, out_st);
 	if (err) {
 		return err;
 	}
-	*out_sz = (size_t)st.st_size;
 	return 0;
 }
 
 int silofs_locos_require_blob(struct silofs_locos *locos,
                               const struct silofs_blobid *blobid)
 {
-	size_t sz = 0;
+	struct stat st;
 	int err;
 
-	err = silofs_locos_stat_blob(locos, blobid, &sz);
+	err = silofs_locos_stat_blob(locos, blobid, &st);
 	if (err && (err == -ENOENT)) {
 		err = silofs_locos_create_blob(locos, blobid);
 	}
 	return err;
+}
+
+int silofs_locos_flush_blob(struct silofs_locos *locos,
+                            const struct silofs_blobid *blobid)
+{
+	struct silofs_blobfile *bf = nullptr;
+	int err = 0;
+
+	err = locos_stage_and_cache_bf(locos, blobid, &bf);
+	if (err) {
+		return err;
+	}
+	err = bf_sync(bf);
+	if (err) {
+		return err;
+	}
+	return 0;
 }
 
 int silofs_locos_write_blob(struct silofs_locos *locos,
@@ -757,7 +789,7 @@ int silofs_locos_write_blob(struct silofs_locos *locos,
 	struct silofs_blobfile *bf = nullptr;
 	int err = 0;
 
-	err = locos_stage_cached_bf(locos, &baddr->blobid, &bf);
+	err = locos_stage_and_cache_bf(locos, &baddr->blobid, &bf);
 	if (err) {
 		return err;
 	}
@@ -770,12 +802,12 @@ int silofs_locos_write_blob(struct silofs_locos *locos,
 
 int silofs_locos_read_blob(struct silofs_locos *locos,
                            const struct silofs_baddr *baddr,
-                           struct silofs_rwvec *rwvec)
+                           const struct silofs_rwvec *rwvec)
 {
 	struct silofs_blobfile *bf = nullptr;
 	int err = 0;
 
-	err = locos_stage_cached_bf(locos, &baddr->blobid, &bf);
+	err = locos_stage_and_cache_bf(locos, &baddr->blobid, &bf);
 	if (err) {
 		return err;
 	}

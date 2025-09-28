@@ -54,7 +54,8 @@ int silofs_locos_create_blob(struct silofs_locos        *locos,
                              const struct silofs_blobid *blobid);
 
 int silofs_locos_stat_blob(struct silofs_locos        *locos,
-                           const struct silofs_blobid *blobid, size_t *out_sz);
+                           const struct silofs_blobid *blobid,
+                           struct stat                *out_st);
 
 int silofs_locos_require_blob(struct silofs_locos        *locos,
                               const struct silofs_blobid *blobid);
@@ -62,12 +63,15 @@ int silofs_locos_require_blob(struct silofs_locos        *locos,
 int silofs_locos_remove_blob(struct silofs_locos        *locos,
                              const struct silofs_blobid *blobid);
 
+int silofs_locos_flush_blob(struct silofs_locos        *locos,
+                            const struct silofs_blobid *blobid);
+
 int silofs_locos_write_blob(struct silofs_locos       *locos,
                             const struct silofs_baddr *baddr,
                             const struct silofs_rovec *rovec);
 
 int silofs_locos_read_blob(struct silofs_locos       *locos,
                            const struct silofs_baddr *baddr,
-                           struct silofs_rwvec       *rwvec);
+                           const struct silofs_rwvec *rwvec);
 
 #endif /* SILOFS_LOCOS_H_ */

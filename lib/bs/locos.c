@@ -135,6 +135,18 @@ static int do_preadn(int fd, void *buf, size_t cnt, off_t off)
 	return err;
 }
 
+static int do_ftruncate(int fd, off_t len)
+{
+	int err;
+
+	err = silofs_sys_ftruncate(fd, len);
+	if (err) {
+		log_warn("ftruncate error: fd=%d len=%ld err=%d", fd, len,
+		         err);
+	}
+	return err;
+}
+
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 struct silofs_blobfile {
@@ -259,6 +271,30 @@ static int bf_read(const struct silofs_blobfile *bf, off_t pos,
                    const struct silofs_rwvec *rwv)
 {
 	return do_preadn(bf->bf_fd, rwv->rwv_base, rwv->rwv_len, pos);
+}
+
+static int bf_punch(const struct silofs_blobfile *bf)
+{
+	struct stat st = { .st_size = -1 };
+	int err;
+
+	err = bf_stat(bf, &st);
+	if (err) {
+		goto out;
+	}
+	if (!st.st_blocks || !st.st_size) {
+		goto out; /* ok */
+	}
+	err = do_ftruncate(bf->bf_fd, 0);
+	if (err) {
+		goto out;
+	}
+	err = do_ftruncate(bf->bf_fd, st.st_size);
+	if (err) {
+		goto out;
+	}
+out:
+	return err;
 }
 
 static void
@@ -776,6 +812,23 @@ int silofs_locos_flush_blob(struct silofs_locos *locos,
 		return err;
 	}
 	err = bf_sync(bf);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+int silofs_locos_punch_blob(struct silofs_locos *locos,
+                            const struct silofs_blobid *blobid)
+{
+	struct silofs_blobfile *bf = nullptr;
+	int err = 0;
+
+	err = locos_stage_and_cache_bf(locos, blobid, &bf);
+	if (err) {
+		return err;
+	}
+	err = bf_punch(bf);
 	if (err) {
 		return err;
 	}

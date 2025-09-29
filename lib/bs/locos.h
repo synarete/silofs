@@ -66,6 +66,9 @@ int silofs_locos_remove_blob(struct silofs_locos        *locos,
 int silofs_locos_flush_blob(struct silofs_locos        *locos,
                             const struct silofs_blobid *blobid);
 
+int silofs_locos_punch_blob(struct silofs_locos        *locos,
+                            const struct silofs_blobid *blobid);
+
 int silofs_locos_write_blob(struct silofs_locos       *locos,
                             const struct silofs_baddr *baddr,
                             const struct silofs_rovec *rovec);

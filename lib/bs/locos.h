@@ -73,6 +73,10 @@ int silofs_locos_write_blob(struct silofs_locos       *locos,
                             const struct silofs_baddr *baddr,
                             const struct silofs_rovec *rovec);
 
+int silofs_locos_writev_blob(struct silofs_locos       *locos,
+                             const struct silofs_baddr *baddr,
+                             const struct iovec *iov, size_t cnt);
+
 int silofs_locos_read_blob(struct silofs_locos       *locos,
                            const struct silofs_baddr *baddr,
                            const struct silofs_rwvec *rwvec);

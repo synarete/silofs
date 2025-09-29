@@ -123,6 +123,18 @@ static int do_pwriten(int fd, const void *buf, size_t cnt, off_t off)
 	return err;
 }
 
+static int do_pwritevn(int fd, const struct iovec *iov, size_t cnt, off_t off)
+{
+	int err;
+
+	err = silofs_sys_pwritevn(fd, iov, (int)cnt, off);
+	if (err) {
+		log_warn("pwritevn error: fd=%d cnt=%lu off=%ld err=%d", fd,
+		         cnt, off, err);
+	}
+	return err;
+}
+
 static int do_preadn(int fd, void *buf, size_t cnt, off_t off)
 {
 	int err;
@@ -265,6 +277,12 @@ static int bf_write(const struct silofs_blobfile *bf, off_t pos,
                     const struct silofs_rovec *rov)
 {
 	return do_pwriten(bf->bf_fd, rov->rov_base, rov->rov_len, pos);
+}
+
+static int bf_writev(const struct silofs_blobfile *bf, off_t pos,
+                     const struct iovec *iov, size_t cnt)
+{
+	return do_pwritevn(bf->bf_fd, iov, cnt, pos);
 }
 
 static int bf_read(const struct silofs_blobfile *bf, off_t pos,
@@ -847,6 +865,24 @@ int silofs_locos_write_blob(struct silofs_locos *locos,
 		return err;
 	}
 	err = bf_write(bf, baddr->pos, rovec);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+int silofs_locos_writev_blob(struct silofs_locos *locos,
+                             const struct silofs_baddr *baddr,
+                             const struct iovec *iov, size_t cnt)
+{
+	struct silofs_blobfile *bf = nullptr;
+	int err = 0;
+
+	err = locos_stage_and_cache_bf(locos, &baddr->blobid, &bf);
+	if (err) {
+		return err;
+	}
+	err = bf_writev(bf, baddr->pos, iov, cnt);
 	if (err) {
 		return err;
 	}

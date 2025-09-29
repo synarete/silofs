@@ -450,8 +450,19 @@ static int abi_save(const struct silofs_ab_info *abi)
 		.rov_base = ab_enc,
 		.rov_len = sizeof(*ab_enc),
 	};
+	int err;
 
-	return silofs_repo_save_bseg(abi->ab_base.repo, &abi->ab_baddr, &rov);
+	err = silofs_repo_spawn_blob(abi->ab_base.repo, &abi->ab_baddr.blobid);
+	if (err) {
+		log_err("failed to spawn archive-index: err=%d", err);
+		return err;
+	}
+	err = silofs_repo_save_bseg(abi->ab_base.repo, &abi->ab_baddr, &rov);
+	if (err) {
+		log_err("failed to save archive-index: err=%d", err);
+		return err;
+	}
+	return 0;
 }
 
 int silofs_store_arix_block(struct silofs_ab_info *abi,

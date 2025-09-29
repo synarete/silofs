@@ -112,7 +112,19 @@ static int arc_send_to_repo(const struct silofs_ar_ctx *ar_ctx,
                             const struct silofs_baddr *baddr,
                             const struct silofs_rovec *rov)
 {
-	return silofs_repo_save_bseg(ar_ctx->repo, baddr, rov);
+	int err;
+
+	err = silofs_repo_spawn_blob(ar_ctx->repo, &baddr->blobid);
+	if (err) {
+		log_err("failed to create archive blob: err=%d", err);
+		return err;
+	}
+	err = silofs_repo_save_bseg(ar_ctx->repo, baddr, rov);
+	if (err) {
+		log_err("failed to save blob: err=%d", err);
+		return err;
+	}
+	return 0;
 }
 
 static int

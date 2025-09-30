@@ -278,12 +278,14 @@ static bool qpool_nofail_mode(const struct silofs_qpool *qpool)
 #define qpool_error(qpool_, fmt_, ...) \
 	qpool_errorf(qpool_, __FILE__, __LINE__, fmt_, __VA_ARGS__)
 
-silofs_attr_printf(4, 5) static void qpool_errorf(
-	const struct silofs_qpool *qpool, const char *file, int line,
-	const char *fmt, ...)
+#define attr_printf45 silofs_attr_printf(4, 5)
+
+attr_printf45 static void
+qpool_errorf(const struct silofs_qpool *qpool, const char *file, int line,
+             const char *fmt, ...)
 {
 	char msg[256] = "";
-	va_list ap;
+	va_list ap = { 0 };
 
 	va_start(ap, fmt);
 	(void)vsnprintf(msg, sizeof(msg) - 1, fmt, ap);
@@ -831,13 +833,12 @@ qpool_base_of(const struct silofs_qpool *qpool, void *ptr, size_t len)
 #define slab_error(slab_, fmt_, ...) \
 	slab_errorf(slab_, __FILE__, __LINE__, fmt_, __VA_ARGS__)
 
-silofs_attr_printf(4,
-                   5) static void slab_errorf(const struct silofs_slab *slab,
-                                              const char *file, int line,
-                                              const char *fmt, ...)
+attr_printf45 static void
+slab_errorf(const struct silofs_slab *slab, const char *file, int line,
+            const char *fmt, ...)
 {
 	char msg[256] = "";
-	va_list ap;
+	va_list ap = { 0 };
 
 	va_start(ap, fmt);
 	(void)vsnprintf(msg, sizeof(msg) - 1, fmt, ap);

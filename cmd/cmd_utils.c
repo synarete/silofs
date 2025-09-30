@@ -47,7 +47,7 @@ static int cmd_errnum_of(int err)
 void cmd_die(int err, const char *restrict fmt, ...)
 {
 	char msg[1024] = "";
-	va_list ap;
+	va_list ap = { 0 };
 
 	va_start(ap, fmt);
 	vsnprintf(msg, sizeof(msg) - 1, fmt, ap);
@@ -59,7 +59,7 @@ void cmd_die(int err, const char *restrict fmt, ...)
 void cmd_diez(const char *restrict fmt, ...)
 {
 	char msg[1024] = "";
-	va_list ap;
+	va_list ap = { 0 };
 
 	va_start(ap, fmt);
 	vsnprintf(msg, sizeof(msg) - 1, fmt, ap);
@@ -817,11 +817,11 @@ char *cmd_struuid(const uint8_t uu[16])
 
 char *cmd_mkpathf(const char *fmt, ...)
 {
-	va_list ap;
-	int n;
+	va_list ap = { 0 };
 	size_t path_size = PATH_MAX;
 	char *path = cmd_zalloc(path_size);
-	char *path_dup;
+	char *path_dup = nullptr;
+	int n = 0;
 
 	va_start(ap, fmt);
 	n = vsnprintf(path, path_size - 1, fmt, ap);

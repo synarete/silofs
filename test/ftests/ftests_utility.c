@@ -288,8 +288,8 @@ char *ft_new_path_under(struct ft_env *fte, const char *base)
 
 char *ft_new_namef(struct ft_env *fte, const char *fmt, ...)
 {
-	va_list ap;
 	char name[NAME_MAX + 1] = "";
+	va_list ap = { 0 };
 
 	va_start(ap, fmt);
 	vsnprintf(name, sizeof(name) - 1, fmt, ap);
@@ -299,8 +299,8 @@ char *ft_new_namef(struct ft_env *fte, const char *fmt, ...)
 
 char *ft_new_pathf(struct ft_env *fte, const char *p, const char *fmt, ...)
 {
-	va_list ap;
 	char buf[PATH_MAX / 2] = "";
+	va_list ap = { 0 };
 
 	va_start(ap, fmt);
 	vsnprintf(buf, sizeof(buf) - 1, fmt, ap);
@@ -408,7 +408,7 @@ void *ft_new_buf_nums(struct ft_env *fte, long base, size_t bsz)
 char *ft_strfmt(struct ft_env *fte, const char *fmt, ...)
 {
 	char str[2000] = "";
-	va_list ap;
+	va_list ap = { 0 };
 	int len;
 
 	va_start(ap, fmt);

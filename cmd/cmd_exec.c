@@ -145,7 +145,7 @@ silofs_attr_printf(3, 4) static void cmd_requiref_ok(
 	...)
 {
 	char msg[2048] = "";
-	va_list ap;
+	va_list ap = { 0 };
 
 	if (status != 0) {
 		va_start(ap, fmt);

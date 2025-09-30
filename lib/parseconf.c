@@ -221,7 +221,7 @@ cpr_printf static int
 cpr_bad_input(const struct silofs_conf_parser *cpr, const char *fmt, ...)
 {
 	char msg[256] = "";
-	va_list ap;
+	va_list ap = { 0 };
 	const int ret = errno ? -errno : -SILOFS_EINVAL;
 
 	va_start(ap, fmt);

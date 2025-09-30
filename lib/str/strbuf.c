@@ -102,13 +102,12 @@ void silofs_strbuf_setup_by2(struct silofs_strbuf *sbuf, const char *s,
 
 size_t silofs_strbuf_sprintf(struct silofs_strbuf *sbuf, const char *fmt, ...)
 {
-	va_list ap;
-	size_t k;
+	va_list ap = { 0 };
+	size_t k = sizeof(sbuf->str);
 	int n;
 
 	silofs_strbuf_reset(sbuf);
 	va_start(ap, fmt);
-	k = sizeof(sbuf->str);
 	n = vsnprintf(sbuf->str, k - 1, fmt, ap);
 	va_end(ap);
 	return (n < (int)k) ? (size_t)n : k;

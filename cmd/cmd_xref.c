@@ -15,9 +15,61 @@
  * GNU General Public License for more details.
  */
 #define _GNU_SOURCE 1
-#include "cmd.h"
 #include <string.h>
 #include <limits.h>
+#include <errno.h>
+#include <jansson.h>
+#include "cmd.h"
+
+static char *xref_to_json(const char *txt)
+{
+	json_t *root = nullptr;
+	json_t *jstr = nullptr;
+	char *out = nullptr;
+	int err;
+
+	root = json_object();
+	if (root == nullptr) {
+		cmd_diez("json: failed to create root");
+	}
+	jstr = json_string(txt);
+	if (jstr == nullptr) {
+		cmd_diez("json: failed to create string");
+	}
+	err = json_object_set_new(root, "xref", jstr);
+	if (err) {
+		cmd_diez("json: failed to set xref: err=%d", err);
+	}
+	out = json_dumps(root, JSON_INDENT(4));
+	if (out == nullptr) {
+		cmd_diez("json: failed to set dumps");
+	}
+	json_decref(root);
+	return out;
+}
+
+static char *json_to_xref(const char *jtxt)
+{
+	json_t *root = nullptr;
+	json_t *jstr = nullptr;
+	json_error_t jerr;
+	char *out = nullptr;
+
+	root = json_loads(jtxt, 0, &jerr);
+	if (root == nullptr) {
+		cmd_diez("json: failed to parse: text='%s' line=%d column=%d",
+		         jerr.text, jerr.line, jerr.column);
+	}
+	jstr = json_object_get(root, "xref");
+	if (!json_is_string(jstr)) {
+		cmd_diez("json: failed to parse xref as string");
+	}
+	out = cmd_strdup(json_string_value(jstr));
+	json_decref(root);
+	return out;
+}
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static void
 cmd_open_repodir(const struct silofs_boot_args *boot_args, int *out_dfd)
@@ -33,7 +85,7 @@ cmd_open_repodir(const struct silofs_boot_args *boot_args, int *out_dfd)
 	*out_dfd = dfd;
 }
 
-static void cmd_save_xref_at(int dfd, const char *name, const char *txt)
+static void cmd_save_jref_at(int dfd, const char *name, const char *jtxt)
 {
 	char tmpname[NAME_MAX + 1] = "";
 	int fd = -1;
@@ -49,7 +101,7 @@ static void cmd_save_xref_at(int dfd, const char *name, const char *txt)
 	if (err) {
 		cmd_die(err, "failed to change-mode: %s", tmpname);
 	}
-	err = silofs_sys_writen(fd, txt, strlen(txt));
+	err = silofs_sys_writen(fd, jtxt, strlen(jtxt));
 	if (err) {
 		cmd_die(err, "failed to write: %s", tmpname);
 	}
@@ -69,6 +121,15 @@ static void cmd_save_xref_at(int dfd, const char *name, const char *txt)
 	if (err) {
 		cmd_die(err, "failed to change-mode: %s", name);
 	}
+}
+
+static void cmd_save_xref_at(int dfd, const char *name, const char *txt)
+{
+	char *jtxt = nullptr;
+
+	jtxt = xref_to_json(txt);
+	cmd_save_jref_at(dfd, name, jtxt);
+	free(jtxt);
 }
 
 void cmd_save_fs_xref(const struct silofs_boot_args *boot_args,
@@ -100,12 +161,12 @@ void cmd_unlink_fs_xref(const struct silofs_boot_args *boot_args)
 	silofs_sys_closefd(&dfd);
 }
 
-static char *cmd_load_xref_at(int dfd, const char *name)
+static char *cmd_load_jref_at(int dfd, const char *name)
 {
-	char txt[SILOFS_XREFLEN_MAX + 2] = "";
 	struct stat st = { .st_mode = 0 };
+	const size_t jtxt_size_max = 1 << 20;
+	char *jtxt = nullptr;
 	size_t len = 0;
-	char *end = nullptr;
 	int fd = -1;
 	int err;
 
@@ -117,23 +178,32 @@ static char *cmd_load_xref_at(int dfd, const char *name)
 		cmd_diez("not a regular file: %s", name);
 	}
 	len = (size_t)st.st_size;
-	if (len >= sizeof(txt)) {
+	if (len >= jtxt_size_max) {
 		cmd_die(-EFBIG, "illegal xref: %s", name);
 	}
 	err = silofs_sys_openat(dfd, name, O_RDONLY, 0, &fd);
 	if (err) {
 		cmd_die(err, "failed to open: %s", name);
 	}
-	err = silofs_sys_readn(fd, txt, len - 1);
+	jtxt = cmd_zalloc(len + 1);
+	err = silofs_sys_readn(fd, jtxt, len);
 	silofs_sys_closefd(&fd);
 	if (err) {
 		cmd_die(err, "failed to read xref: %s", name);
 	}
-	end = strchr(txt, '\n');
-	if (end != nullptr) {
-		*end = '\0';
-	}
-	return cmd_strdup(txt);
+	return jtxt;
+}
+
+static char *cmd_load_xref_at(int dfd, const char *name)
+{
+	char *jtxt = nullptr;
+	char *xref = nullptr;
+
+	jtxt = cmd_load_jref_at(dfd, name);
+	xref = json_to_xref(jtxt);
+	cmd_pstrfree(&jtxt);
+
+	return xref;
 }
 
 static void cmd_assign_xref(struct silofs_xref *xref, const char *txt)

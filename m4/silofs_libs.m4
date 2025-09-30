@@ -16,6 +16,7 @@ AC_DEFUN([AX_SILOFS_NEED_HEADERS],
   AX_SILOFS_NEED_HEADER([getopt.h])
   AX_SILOFS_NEED_HEADER([grp.h])
   AX_SILOFS_NEED_HEADER([iconv.h])
+  AX_SILOFS_NEED_HEADER([jansson.h])
   AX_SILOFS_NEED_HEADER([limits.h])
   AX_SILOFS_NEED_HEADER([linux/falloc.h])
   AX_SILOFS_NEED_HEADER([linux/fiemap.h])
@@ -78,6 +79,9 @@ AC_DEFUN([AX_SILOFS_NEED_LIBS],
 
   AC_SEARCH_LIBS([cap_clear], [cap], :,
     AC_MSG_ERROR([Unable to find libcap]))
+
+  AC_SEARCH_LIBS([json_object], [jansson], :,
+    AC_MSG_ERROR([Unable to find libjansson]))
 
   AC_SEARCH_LIBS([XXH32], [xxhash], :,
     AC_MSG_ERROR([Unable to find libxxhash]))

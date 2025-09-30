@@ -1216,7 +1216,7 @@ void silofs_repo_relax(struct silofs_repo *repo)
 {
 	repo_lock(repo);
 	repo_evict_some(repo, 1);
-	silofs_locos_relax_cache(&repo->re_locos);
+	silofs_locos_relax(&repo->re_locos);
 	repo_unlock(repo);
 }
 
@@ -1591,7 +1591,7 @@ void silofs_repo_drop_some(struct silofs_repo *repo)
 	repo_lock(repo);
 	repo_do_fsync_all(repo);
 	repo_evict_many(repo);
-	silofs_locos_drop_cache(&repo->re_locos);
+	silofs_locos_drop(&repo->re_locos);
 	repo_unlock(repo);
 }
 
@@ -2389,7 +2389,7 @@ int silofs_repo_spawn_blob(struct silofs_repo *repo,
 	int err;
 
 	repo_lock(repo);
-	err = silofs_locos_create_blob(&repo->re_locos, blobid);
+	err = silofs_locos_spawn_blob(&repo->re_locos, blobid);
 	repo_unlock(repo);
 	return err;
 }

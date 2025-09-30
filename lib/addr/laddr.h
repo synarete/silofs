@@ -107,6 +107,8 @@ enum silofs_mtype silofs_laddr_mtype(const struct silofs_laddr *laddr);
 
 size_t silofs_laddr_len(const struct silofs_laddr *laddr);
 
+off_t silofs_laddr_end(const struct silofs_laddr *laddr);
+
 long silofs_laddr_compare(const struct silofs_laddr *laddr1,
                           const struct silofs_laddr *laddr2);
 

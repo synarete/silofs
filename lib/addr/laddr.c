@@ -288,6 +288,11 @@ size_t silofs_laddr_len(const struct silofs_laddr *laddr)
 	return silofs_mtype_size(silofs_laddr_mtype(laddr));
 }
 
+off_t silofs_laddr_end(const struct silofs_laddr *laddr)
+{
+	return silofs_off_end(laddr->pos, silofs_laddr_len(laddr));
+}
+
 long silofs_laddr_compare(const struct silofs_laddr *laddr1,
                           const struct silofs_laddr *laddr2)
 {

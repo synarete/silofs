@@ -3,6 +3,7 @@
 base_deps=(
 	autoconf
 	automake
+	jansson-devel
 	gcc
 	libtool
 	libattr-devel

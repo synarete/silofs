@@ -12,6 +12,7 @@ base_deps=(
 	gcc
 	g++
 	libcap-dev
+	libjansson-dev
 	libgcrypt-dev
 	libtool
 	libunwind-dev

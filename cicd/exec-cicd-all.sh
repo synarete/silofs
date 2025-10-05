@@ -9,6 +9,7 @@ self="$(basename "${BASH_SOURCE[0]}")"
 selfdir="$(realpath "$(dirname "${BASH_SOURCE[0]}")")"
 rootdir="$(realpath "${selfdir}"/../)"
 source "${rootdir}/bash_functions"
+sep() { msg "$*" ; echo "# # # # # # # # # # # # # # # # " ; }
 
 ###
 if [ "$#" -ne 2 ]; then die "usage: '$self <archive-file> <citests-dir>'"; fi
@@ -22,6 +23,7 @@ cdx "${currdir}"
 run test -f "${archive_file}"
 run mkdir -p "${citests_dir}"
 run ls "${citests_dir}"
+sep "input OK"
 
 ###
 msg "prepare workdir: $*"
@@ -31,6 +33,7 @@ workdir="${citests_dir}/${dist_name}"
 utestsdir="${workdir}/build/test/utests/"
 run mkdir -p "${workdir}"
 run rm -rf "${workdir}"
+sep "workdir OK: ${workdir}"
 
 ###
 msg "build from source: ${archive_file}"
@@ -48,6 +51,7 @@ run make distcheck
 run make clean
 cdx "${currdir}"
 run rm -rf "${workdir}"
+sep "source build OK: ${archive_file}"
 
 ###
 msg "run developer's checks"
@@ -68,11 +72,13 @@ run make -f devel.mk reset
 msg "run clang-scan"
 run make -f devel.mk V=1 O=2 clangscan
 run make -f devel.mk reset
+sep "developer's build OK"
 
 ###
 msg "run clang-tidy"
 run ./scripts/clangtidy.sh
 run make -f devel.mk reset
+sep "clang-tidy OK"
 
 ###
 msg "run sanitizer check"
@@ -83,6 +89,7 @@ run env ASAN_OPTIONS=detect_leaks=1 \
 	"${utestsdir}/silofs-utests" "${utestsdir}/ut" \
 	--malloc --level=1 --silent
 run make -f devel.mk reset
+sep "sanitizer OK"
 
 ###
 msg "run valgrind check"
@@ -91,6 +98,7 @@ run valgrind --tool=memcheck --error-exitcode=1 \
 	"${utestsdir}/silofs-utests" "${utestsdir}/ut" \
 	--malloc --level=1 --silent
 run make -f devel.mk reset
+sep "valgrind OK"
 
 ###
 cdx "${workdir}"
@@ -108,6 +116,7 @@ run env HEAPCHECK=normal HEAP_CHECK_TEST_POINTER_ALIGNMENT=1 \
 	--malloc --level=2 --silent
 cdx "${currdir}"
 run rm -rf "${workdir}"
+sep "heapcheck OK"
 
 ###
 msg "build dist-package"
@@ -119,6 +128,7 @@ cdx "${workdir}"
 run ./dist/packagize.sh
 cdx "${currdir}"
 run rm -rf "${workdir}"
+sep "dist-package OK"
 
 ###
 cdx "${currdir}"

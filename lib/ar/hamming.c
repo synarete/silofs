@@ -68,12 +68,12 @@ static uint16_t ham12_getbit(uint16_t w, unsigned n)
 
 static void ham12_setbit(uint16_t *w, unsigned n, uint16_t v)
 {
-	*w |= (v << (n - 1));
+	*w |= (uint16_t)(v << (n - 1));
 }
 
 static void ham12_flipbit(uint16_t *w, unsigned n)
 {
-	*w ^= (1 << (n - 1));
+	*w ^= (uint16_t)(1 << (n - 1));
 }
 
 static uint16_t ham12_encode(uint8_t n)

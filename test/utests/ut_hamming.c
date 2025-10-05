@@ -18,12 +18,12 @@
 
 static void flipbit8(uint8_t *v, unsigned n)
 {
-	*v ^= (1 << n);
+	*v ^= (uint8_t)(1 << n);
 }
 
 static void flipbit16(uint16_t *v, unsigned n)
 {
-	*v ^= (1 << n);
+	*v ^= (uint8_t)(1 << n);
 }
 
 static void ut_hamming12_simple(struct ut_env *ute)

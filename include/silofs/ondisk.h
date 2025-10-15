@@ -52,7 +52,7 @@
 #define SILOFS_FSNAME_MAX (127)
 
 /* max size of exported reference string (not including null terminator) */
-#define SILOFS_XREFLEN_MAX (127)
+#define SILOFS_BLOBREFLEN_MAX (127)
 
 /* max size of path (symbolic link value, including null) */
 #define SILOFS_PATH_MAX (4096)
@@ -494,6 +494,11 @@ enum silofs_bmode {
 	SILOFS_BMODE_RAW  = 1,
 	SILOFS_BMODE_CAS  = 2,
 };
+
+/* blob-identifier as external string */
+struct silofs_blobref {
+	char bid[SILOFS_BLOBREFLEN_MAX + 1];
+} silofs_attr_aligned64;
 
 /* unique blob identifier */
 struct silofs_blobid {

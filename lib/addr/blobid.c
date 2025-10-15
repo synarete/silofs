@@ -76,16 +76,42 @@ bool silofs_blobid_isnone(const struct silofs_blobid *blobid)
 	return silofs_blobid_isequal(blobid, &s_silofs_blobid_none);
 }
 
-void silofs_blobid_to_sbuf(const struct silofs_blobid *blobid,
-                           struct silofs_strbuf *sbuf)
+int silofs_blobid_to_ascii(const struct silofs_blobid *blobid, char *s,
+                           size_t n)
 {
 	size_t cnt = 0;
 
-	silofs_mem_to_ascii(blobid->u.bid, sizeof(blobid->u.bid), sbuf->str,
-	                    sizeof(sbuf->str) - 1, &cnt);
-	if (silofs_likely(cnt < sizeof(sbuf->str))) {
-		sbuf->str[cnt] = '\0';
+	silofs_mem_to_ascii(blobid->u.bid, sizeof(blobid->u.bid), s, n, &cnt);
+
+	if (cnt >= n) {
+		return -1;
 	}
+	s[cnt] = '\0';
+	return 0;
+}
+
+int silofs_blobid_from_ascii(struct silofs_blobid *blobid, const char *s,
+                             size_t n)
+{
+	size_t cnt = 0;
+	int err;
+
+	err = silofs_ascii_to_mem(blobid->u.bid, sizeof(blobid->u.bid), s, n,
+	                          &cnt);
+	if (err) {
+		return err;
+	}
+	if (cnt != sizeof(blobid->u.bid)) {
+		return -1;
+	}
+	return 0;
+}
+
+void silofs_blobid_to_sbuf(const struct silofs_blobid *blobid,
+                           struct silofs_strbuf *sbuf)
+{
+	silofs_strbuf_reset(sbuf);
+	silofs_blobid_to_ascii(blobid, sbuf->str, sizeof(sbuf->str) - 1);
 }
 
 void silofs_blobid_to_str(const struct silofs_blobid *blobid,
@@ -119,4 +145,42 @@ uint64_t
 silofs_blobid_hash64(const struct silofs_blobid *blobid, uint64_t seed)
 {
 	return silofs_hash_xxh64(blobid->u.bid, sizeof(blobid->u.bid), seed);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_blobref_reset(struct silofs_blobref *blobref)
+{
+	silofs_memzero(blobref, sizeof(*blobref));
+}
+
+bool silofs_blobref_isnull(const struct silofs_blobref *blobref)
+{
+	return (blobref->bid[0] == '\0');
+}
+
+int silofs_blobref_verify(const struct silofs_blobref *blobref)
+{
+	struct silofs_blobid blobid;
+
+	return silofs_blobref_to_blobid(blobref, &blobid);
+}
+
+void silofs_blobref_from_blobid(struct silofs_blobref *blobref,
+                                const struct silofs_blobid *blobid)
+{
+	memset(blobref, 0, sizeof(*blobref));
+	silofs_blobid_to_ascii(blobid, blobref->bid, sizeof(blobref->bid));
+}
+
+int silofs_blobref_to_blobid(const struct silofs_blobref *blobref,
+                             struct silofs_blobid *out_blobid)
+{
+	size_t len;
+
+	len = silofs_str_nlength(blobref->bid, sizeof(blobref->bid));
+	if (!len || (len >= sizeof(blobref->bid))) {
+		return -SILOFS_EBLOBREF;
+	}
+	return silofs_blobid_from_ascii(out_blobid, blobref->bid, len);
 }

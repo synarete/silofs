@@ -133,8 +133,8 @@ struct ut_args {
 struct ut_env {
 	struct silofs_prandgen      prng;
 	struct silofs_password      passwd;
-	struct silofs_xref          fs_xref[2];
-	struct silofs_xref          ar_xref;
+	struct silofs_blobref       fs_blobref[2];
+	struct silofs_blobref       ar_blobref;
 	struct ut_args             *args;
 	struct silofs_env          *env;
 	struct timespec             ts_start;

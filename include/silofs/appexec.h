@@ -35,7 +35,9 @@ int silofs_remap_status_code(int status);
 
 int silofs_check_fsname(const char *s);
 
-int silofs_check_xref(const struct silofs_xref *xref);
+int silofs_check_blobref(const struct silofs_blobref *blobref);
+
+int silofs_assign_blobref(struct silofs_blobref *blobref, const char *s);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -83,13 +85,17 @@ int silofs_close_repo(struct silofs_env *env);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_format_fs(struct silofs_env *env, struct silofs_xref *out_xref);
+int silofs_format_fs(struct silofs_env     *env,
+                     struct silofs_blobref *out_blobref);
 
-int silofs_sense_fs(struct silofs_env *env, const struct silofs_xref *fs_xref);
+int silofs_sense_fs(struct silofs_env           *env,
+                    const struct silofs_blobref *fs_blobref);
 
-int silofs_sense_ar(struct silofs_env *env, const struct silofs_xref *ar_xref);
+int silofs_sense_ar(struct silofs_env           *env,
+                    const struct silofs_blobref *ar_blobref);
 
-int silofs_open_fs(struct silofs_env *env, const struct silofs_xref *fs_xref);
+int silofs_open_fs(struct silofs_env           *env,
+                   const struct silofs_blobref *fs_blobref);
 
 int silofs_close_fs(struct silofs_env *env);
 
@@ -99,10 +105,11 @@ void silofs_halt_fs(struct silofs_env *env);
 
 int silofs_post_exec_fs(struct silofs_env *env);
 
-int silofs_fork_fs(struct silofs_env *env, struct silofs_xref *out_main,
-                   struct silofs_xref *out_fork);
+int silofs_fork_fs(struct silofs_env *env, struct silofs_blobref *out_main,
+                   struct silofs_blobref *out_fork);
 
-int silofs_remove_fs(struct silofs_env *env, const struct silofs_xref *xref);
+int silofs_remove_fs(struct silofs_env           *env,
+                     const struct silofs_blobref *blobref);
 
 int silofs_sync_fs(struct silofs_env *env, bool drop);
 
@@ -111,12 +118,12 @@ void silofs_stat_fs(const struct silofs_env   *env,
 
 int silofs_inspect_fs(struct silofs_env *env, bool show);
 
-int silofs_archive_fs(struct silofs_env        *env,
-                      const struct silofs_xref *fs_xref,
-                      struct silofs_xref       *out_ar_xref);
+int silofs_archive_fs(struct silofs_env           *env,
+                      const struct silofs_blobref *fs_blobref,
+                      struct silofs_blobref       *out_ar_blobref);
 
-int silofs_restore_fs(struct silofs_env        *env,
-                      const struct silofs_xref *ar_xref,
-                      struct silofs_xref       *out_fs_xref);
+int silofs_restore_fs(struct silofs_env           *env,
+                      const struct silofs_blobref *ar_blobref,
+                      struct silofs_blobref       *out_fs_blobref);
 
 #endif /* SILOFS_APPEXEC_H_ */

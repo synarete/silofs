@@ -180,36 +180,39 @@ void cmd_close_repo(struct silofs_env *env)
 	cmd_require_ok(env, err, "failed to close repo");
 }
 
-void cmd_sense_fs(struct silofs_env *env, const struct silofs_xref *xref)
+void cmd_sense_fs(struct silofs_env *env, const struct silofs_blobref *blobref)
 {
 	int err;
 
-	err = silofs_sense_fs(env, xref);
-	cmd_requiref_ok(env, err, "can not sense fs: xref=%s", xref->s);
+	err = silofs_sense_fs(env, blobref);
+	cmd_requiref_ok(env, err, "can not sense fs: blobref=%s",
+	                blobref->bid);
 }
 
-void cmd_sense_ar(struct silofs_env *env, const struct silofs_xref *xref)
+void cmd_sense_ar(struct silofs_env *env, const struct silofs_blobref *blobref)
 {
 	int err;
 
-	err = silofs_sense_ar(env, xref);
-	cmd_requiref_ok(env, err, "failed to sense archive: xref=%s", xref->s);
+	err = silofs_sense_ar(env, blobref);
+	cmd_requiref_ok(env, err, "failed to sense archive: blobref=%s",
+	                blobref->bid);
 }
 
-void cmd_format_fs(struct silofs_env *env, struct silofs_xref *out_xref)
+void cmd_format_fs(struct silofs_env *env, struct silofs_blobref *out_blobref)
 {
 	int err;
 
-	err = silofs_format_fs(env, out_xref);
+	err = silofs_format_fs(env, out_blobref);
 	cmd_require_ok(env, err, "failed to format fs");
 }
 
-void cmd_open_fs(struct silofs_env *env, const struct silofs_xref *xref)
+void cmd_open_fs(struct silofs_env *env, const struct silofs_blobref *blobref)
 {
 	int err;
 
-	err = silofs_open_fs(env, xref);
-	cmd_requiref_ok(env, err, "failed to open fs: xref=%s", xref->s);
+	err = silofs_open_fs(env, blobref);
+	cmd_requiref_ok(env, err, "failed to open fs: blobref=%s",
+	                blobref->bid);
 }
 
 void cmd_close_fs(struct silofs_env *env)
@@ -228,8 +231,8 @@ void cmd_exec_fs(struct silofs_env *env)
 	cmd_require_ok(env, err, "failed to exec fs");
 }
 
-void cmd_fork_fs(struct silofs_env *env, struct silofs_xref *out_main,
-                 struct silofs_xref *out_fork)
+void cmd_fork_fs(struct silofs_env *env, struct silofs_blobref *out_main,
+                 struct silofs_blobref *out_fork)
 {
 	int err;
 
@@ -237,12 +240,14 @@ void cmd_fork_fs(struct silofs_env *env, struct silofs_xref *out_main,
 	cmd_require_ok(env, err, "failed to fork fs");
 }
 
-void cmd_remove_fs(struct silofs_env *env, const struct silofs_xref *xref)
+void cmd_remove_fs(struct silofs_env *env,
+                   const struct silofs_blobref *blobref)
 {
 	int err;
 
-	err = silofs_remove_fs(env, xref);
-	cmd_requiref_ok(env, err, "failed to remove fs: xref=%s", xref->s);
+	err = silofs_remove_fs(env, blobref);
+	cmd_requiref_ok(env, err, "failed to remove fs: blobref=%s",
+	                blobref->bid);
 }
 
 void cmd_inspect_fs(struct silofs_env *env, bool view)
@@ -253,22 +258,26 @@ void cmd_inspect_fs(struct silofs_env *env, bool view)
 	cmd_require_ok(env, err, "failed to inspect fs");
 }
 
-void cmd_archive_fs(struct silofs_env *env, const struct silofs_xref *fs_xref,
-                    struct silofs_xref *out_ar_xref)
+void cmd_archive_fs(struct silofs_env *env,
+                    const struct silofs_blobref *fs_blobref,
+                    struct silofs_blobref *out_ar_blobref)
 {
 	int err;
 
-	err = silofs_archive_fs(env, fs_xref, out_ar_xref);
-	cmd_requiref_ok(env, err, "failed to archive: xref=%s", fs_xref->s);
+	err = silofs_archive_fs(env, fs_blobref, out_ar_blobref);
+	cmd_requiref_ok(env, err, "failed to archive: blobref=%s",
+	                fs_blobref->bid);
 }
 
-void cmd_restore_fs(struct silofs_env *env, const struct silofs_xref *ar_xref,
-                    struct silofs_xref *out_fs_xref)
+void cmd_restore_fs(struct silofs_env *env,
+                    const struct silofs_blobref *ar_blobref,
+                    struct silofs_blobref *out_fs_blobref)
 {
 	int err;
 
-	err = silofs_restore_fs(env, ar_xref, out_fs_xref);
-	cmd_requiref_ok(env, err, "failed to restore: xref=%s", ar_xref->s);
+	err = silofs_restore_fs(env, ar_blobref, out_fs_blobref);
+	cmd_requiref_ok(env, err, "failed to restore: blobref=%s",
+	                ar_blobref->bid);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

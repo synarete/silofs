@@ -29,6 +29,5 @@
 #include "addr/laddr.h"
 #include "addr/uaddr.h"
 #include "addr/vaddr.h"
-#include "addr/xref.h"
 
 #endif /* SILOFS_ADDR_H_ */

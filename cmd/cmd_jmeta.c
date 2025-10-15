@@ -1,0 +1,367 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+/*
+ * This file is part of silofs.
+ *
+ * Copyright (C) 2020-2025 Shachar Sharon
+ *
+ * Silofs is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Silofs is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ */
+#define _GNU_SOURCE 1
+#include <string.h>
+#include <limits.h>
+#include <errno.h>
+#include <time.h>
+#include <jansson.h>
+#include "cmd.h"
+
+static char *cmd_current_time(void)
+{
+	char ts[80] = "";
+	time_t curr_tm;
+	struct tm tm;
+
+	time(&curr_tm);
+	if (localtime_r(&curr_tm, &tm) == nullptr) {
+		cmd_diez("json: failed get local time");
+	}
+	if (strftime(ts, sizeof(ts), "%Y-%m-%d %H:%M:%S", &tm) == 0) {
+		cmd_diez("json: failed format time");
+	}
+	return cmd_strdup(ts);
+}
+
+static json_t *cmd_json_object(void)
+{
+	json_t *jobj;
+
+	jobj = json_object();
+	if (jobj == nullptr) {
+		cmd_diez("json: failed to create object");
+	}
+	return jobj;
+}
+
+static json_t *cmd_json_string(const char *s)
+{
+	json_t *jstr;
+
+	jstr = json_string(s);
+	if (jstr == nullptr) {
+		cmd_diez("json: failed to create string: '%s'", s);
+	}
+	return jstr;
+}
+
+static json_t *cmd_json_integer(long n)
+{
+	json_t *jint;
+
+	jint = json_integer(n);
+	if (jint == nullptr) {
+		cmd_diez("json: failed to create integer: %ld", n);
+	}
+	return jint;
+}
+
+static void cmd_json_object_set_new(json_t *jobj, const char *key, json_t *val)
+{
+	int err;
+
+	err = json_object_set_new(jobj, key, val);
+	if (err) {
+		cmd_diez("json: failed to set new: key='%s' err=%d", key, err);
+	}
+}
+
+static char *cmd_json_dumps(json_t *root)
+{
+	char *out;
+
+	out = json_dumps(root, JSON_INDENT(4));
+	if (out == nullptr) {
+		cmd_diez("json: failed to dumps");
+	}
+	return out;
+}
+
+static json_t *cmd_json_loads(const char *jtxt)
+{
+	json_t *jobj;
+	json_error_t jerr;
+
+	jobj = json_loads(jtxt, 0, &jerr);
+	if (jobj == nullptr) {
+		cmd_diez("json: failed to parse: text='%s' line=%d column=%d",
+		         jerr.text, jerr.line, jerr.column);
+	}
+	return jobj;
+}
+
+static json_t *cmd_json_object_get(const json_t *jobj, const char *key)
+{
+	json_t *jsub;
+
+	jsub = json_object_get(jobj, key);
+	if (jsub == nullptr) {
+		cmd_diez("json: failed to parse: key='%s'", key);
+	}
+	return jsub;
+}
+
+static json_t *cmd_json_object_get_string(const json_t *jobj, const char *key)
+{
+	json_t *jstr;
+
+	jstr = cmd_json_object_get(jobj, key);
+	if (!json_is_string(jstr)) {
+		cmd_diez("json: failed to parse string: key='%s'", key);
+	}
+	return jstr;
+}
+
+static void cmd_json_decref(json_t *root)
+{
+	json_decref(root);
+}
+
+static void
+cmd_encode_meta_json(const struct silofs_blobref *blobref, char **out_json)
+{
+	json_t *root = nullptr;
+	json_t *meta = nullptr;
+	json_t *jobj = nullptr;
+	char *tms = nullptr;
+
+	root = cmd_json_object();
+	meta = cmd_json_object();
+
+	jobj = cmd_json_integer(SILOFS_FMT_VERSION);
+	cmd_json_object_set_new(meta, "format", jobj);
+
+	jobj = cmd_json_string(silofs_version.string);
+	cmd_json_object_set_new(meta, "version", jobj);
+
+	tms = cmd_current_time();
+	jobj = cmd_json_string(tms);
+	cmd_json_object_set_new(meta, "timestamp", jobj);
+	cmd_pstrfree(&tms);
+
+	jobj = cmd_json_string(blobref->bid);
+	cmd_json_object_set_new(meta, "blobref", jobj);
+
+	cmd_json_object_set_new(root, "silofs", meta);
+
+	*out_json = cmd_json_dumps(root);
+	cmd_json_decref(root);
+}
+
+static void cmd_decode_blobref(const char *str, struct silofs_blobref *out)
+{
+	int err;
+
+	err = silofs_assign_blobref(out, str);
+	if (err) {
+		cmd_die(err, "json: illegal blobref: '%s'", str);
+	}
+}
+
+static void
+cmd_decode_meta_json(const char *jtxt, struct silofs_blobref *out_blobref)
+{
+	json_t *root = nullptr;
+	json_t *meta = nullptr;
+	json_t *jstr = nullptr;
+
+	root = cmd_json_loads(jtxt);
+	meta = cmd_json_object_get(root, "silofs");
+
+	cmd_json_object_get_string(meta, "version");
+
+	cmd_json_object_get_string(meta, "timestamp");
+
+	jstr = cmd_json_object_get_string(meta, "blobref");
+	cmd_decode_blobref(json_string_value(jstr), out_blobref);
+
+	cmd_json_decref(root);
+}
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+static void
+cmd_open_repodir(const struct silofs_boot_args *boot_args, int *out_dfd)
+{
+	const char *repodir = boot_args->repodir;
+	int dfd = -1;
+	int err;
+
+	err = silofs_sys_open(repodir, O_DIRECTORY | O_RDONLY, 0, &dfd);
+	if (err) {
+		cmd_die(err, "failed to open repodir: %s", repodir);
+	}
+	*out_dfd = dfd;
+}
+
+static void cmd_save_jref_at(int dfd, const char *name, const char *jtxt)
+{
+	char tmpname[NAME_MAX + 1] = "";
+	int fd = -1;
+	int err;
+
+	snprintf(tmpname, sizeof(tmpname) - 1, "%s~", name);
+	err = silofs_sys_openat(dfd, tmpname, O_CREAT | O_RDWR | O_TRUNC,
+	                        S_IRUSR | S_IWUSR, &fd);
+	if (err) {
+		cmd_die(err, "failed to create: %s", tmpname);
+	}
+	err = silofs_sys_fchmod(fd, S_IRUSR);
+	if (err) {
+		cmd_die(err, "failed to change-mode: %s", tmpname);
+	}
+	err = silofs_sys_writen(fd, jtxt, strlen(jtxt));
+	if (err) {
+		cmd_die(err, "failed to write: %s", tmpname);
+	}
+	err = silofs_sys_writen(fd, "\n", 1);
+	if (err) {
+		cmd_die(err, "failed to write: %s", tmpname);
+	}
+	silofs_sys_closefd(&fd);
+
+	silofs_sys_fchmodat(dfd, name, S_IRUSR | S_IWUSR, 0);
+	err = silofs_sys_renameat(dfd, tmpname, dfd, name);
+	if (err) {
+		silofs_sys_fchmodat(dfd, name, S_IRUSR, 0);
+		cmd_die(err, "failed to rename: %s", name);
+	}
+	err = silofs_sys_fchmodat(dfd, name, S_IRUSR, 0);
+	if (err) {
+		cmd_die(err, "failed to change-mode: %s", name);
+	}
+}
+
+static void cmd_save_blobref_as_json(int dfd, const char *name,
+                                     const struct silofs_blobref *blobref)
+{
+	char *jtxt = nullptr;
+
+	cmd_encode_meta_json(blobref, &jtxt);
+	cmd_save_jref_at(dfd, name, jtxt);
+	free(jtxt);
+}
+
+void cmd_save_fs_blobref(const struct silofs_boot_args *boot_args,
+                         const struct silofs_blobref *fs_blobref)
+{
+	int dfd = -1;
+
+	cmd_open_repodir(boot_args, &dfd);
+	cmd_save_blobref_as_json(dfd, boot_args->fs_name, fs_blobref);
+	silofs_sys_closefd(&dfd);
+}
+
+void cmd_save_ar_blobref(const struct silofs_boot_args *boot_args,
+                         const struct silofs_blobref *ar_blobref)
+{
+	int dfd = -1;
+
+	cmd_open_repodir(boot_args, &dfd);
+	cmd_save_blobref_as_json(dfd, boot_args->ar_name, ar_blobref);
+	silofs_sys_closefd(&dfd);
+}
+
+static char *cmd_load_jref_at(int dfd, const char *name)
+{
+	struct stat st = { .st_mode = 0 };
+	const size_t jtxt_size_max = 1 << 20;
+	char *jtxt = nullptr;
+	size_t len = 0;
+	int fd = -1;
+	int err;
+
+	err = silofs_sys_fstatat(dfd, name, &st, 0);
+	if (err) {
+		cmd_die(err, "stat failure: %s", name);
+	}
+	if (!S_ISREG(st.st_mode)) {
+		cmd_diez("not a regular file: %s", name);
+	}
+	len = (size_t)st.st_size;
+	if (len >= jtxt_size_max) {
+		cmd_die(-EFBIG, "illegal blobref: %s", name);
+	}
+	err = silofs_sys_openat(dfd, name, O_RDONLY, 0, &fd);
+	if (err) {
+		cmd_die(err, "failed to open: %s", name);
+	}
+	jtxt = cmd_zalloc(len + 1);
+	err = silofs_sys_readn(fd, jtxt, len);
+	silofs_sys_closefd(&fd);
+	if (err) {
+		cmd_die(err, "failed to read blobref: %s", name);
+	}
+	return jtxt;
+}
+
+static void cmd_load_blobref_from_json(int dfd, const char *name,
+                                       struct silofs_blobref *out_blobref)
+{
+	char *jtxt = nullptr;
+
+	jtxt = cmd_load_jref_at(dfd, name);
+	cmd_decode_meta_json(jtxt, out_blobref);
+	cmd_pstrfree(&jtxt);
+}
+
+static void
+cmd_verify_blobref(const struct silofs_blobref *blobref, const char *name)
+{
+	int err;
+
+	err = silofs_check_blobref(blobref);
+	if (err == -SILOFS_EPROTO) {
+		cmd_diez("unknown blobref format: %s", name);
+	} else if (err) {
+		cmd_diez("bad blobref: %s", name);
+	}
+}
+
+static void cmd_load_blobref_of(const struct silofs_boot_args *boot_args,
+                                bool fs, struct silofs_blobref *out_blobref)
+{
+	const char *name = fs ? boot_args->fs_name : boot_args->ar_name;
+	int dfd = -1;
+
+	cmd_open_repodir(boot_args, &dfd);
+	cmd_load_blobref_from_json(dfd, name, out_blobref);
+	silofs_sys_closefd(&dfd);
+	cmd_verify_blobref(out_blobref, name);
+}
+
+void cmd_load_fs_blobref(const struct silofs_boot_args *boot_args,
+                         struct silofs_blobref *out_blobref)
+{
+	cmd_load_blobref_of(boot_args, true, out_blobref);
+}
+
+void cmd_load_ar_blobref(struct silofs_boot_args *boot_args,
+                         struct silofs_blobref *out_blobref)
+{
+	cmd_load_blobref_of(boot_args, false, out_blobref);
+}
+
+void cmd_unlink_fs_blobref(const struct silofs_boot_args *boot_args)
+{
+	int dfd = -1;
+
+	cmd_open_repodir(boot_args, &dfd);
+	silofs_sys_unlinkat(dfd, boot_args->fs_name, 0);
+	silofs_sys_closefd(&dfd);
+}

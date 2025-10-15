@@ -44,6 +44,12 @@ bool silofs_blobid_isequal(const struct silofs_blobid *blobid1,
 
 bool silofs_blobid_isnone(const struct silofs_blobid *blobid);
 
+int silofs_blobid_to_ascii(const struct silofs_blobid *blobid, char *s,
+                           size_t n);
+
+int silofs_blobid_from_ascii(struct silofs_blobid *blobid, const char *s,
+                             size_t n);
+
 void silofs_blobid_to_sbuf(const struct silofs_blobid *blobid,
                            struct silofs_strbuf       *sbuf);
 
@@ -55,5 +61,19 @@ int silofs_blobid_from_str(struct silofs_blobid        *blobid,
 
 uint64_t
 silofs_blobid_hash64(const struct silofs_blobid *blobid, uint64_t seed);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_blobref_reset(struct silofs_blobref *blobref);
+
+bool silofs_blobref_isnull(const struct silofs_blobref *blobref);
+
+int silofs_blobref_verify(const struct silofs_blobref *blobref);
+
+void silofs_blobref_from_blobid(struct silofs_blobref      *blobref,
+                                const struct silofs_blobid *blobid);
+
+int silofs_blobref_to_blobid(const struct silofs_blobref *blobref,
+                             struct silofs_blobid        *out_blobid);
 
 #endif /* SILOFS_BLOBID_H_ */

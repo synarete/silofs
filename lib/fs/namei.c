@@ -2423,8 +2423,18 @@ static void fill_query_repo(const struct silofs_inode_info *ii,
 	str_to_buf(&bootpath.repodir, query->u.repo.path, bsz);
 }
 
-static void fill_query_boot_xref(const struct silofs_inode_info *ii,
+static void fill_query_boot_name(const struct silofs_inode_info *ii,
                                  struct silofs_ioc_query *query)
+{
+	struct silofs_bootpath bootpath = { .fsname.len = 0 };
+	struct silofs_query_boot *qboot = &query->u.boot;
+
+	bootpath_of(ii, &bootpath);
+	str_to_buf(&bootpath.fsname, qboot->name, sizeof(qboot->name));
+}
+
+static void fill_query_boot_blobref(const struct silofs_inode_info *ii,
+                                    struct silofs_ioc_query *query)
 {
 	struct silofs_mbr1k mbr1k;
 	struct silofs_baddr mref;
@@ -2434,20 +2444,11 @@ static void fill_query_boot_xref(const struct silofs_inode_info *ii,
 
 	err = silofs_mbri_encode_mbr(&env->mbri, SILOFS_MBR_FS, &mref, &mbr1k);
 	if (silofs_unlikely(err)) {
-		silofs_memzero(qboot->xref, sizeof(qboot->xref));
+		silofs_memzero(qboot->blobref, sizeof(qboot->blobref));
 	} else {
-		silofs_baddr_to_str(&mref, qboot->xref, sizeof(qboot->xref));
+		silofs_baddr_to_str(&mref, qboot->blobref,
+		                    sizeof(qboot->blobref));
 	}
-}
-
-static void fill_query_boot_name(const struct silofs_inode_info *ii,
-                                 struct silofs_ioc_query *query)
-{
-	struct silofs_bootpath bootpath = { .fsname.len = 0 };
-	struct silofs_query_boot *qboot = &query->u.boot;
-
-	bootpath_of(ii, &bootpath);
-	str_to_buf(&bootpath.fsname, qboot->name, sizeof(qboot->name));
 }
 
 static void fill_query_boot_root(const struct silofs_inode_info *ii,
@@ -2466,8 +2467,8 @@ static void fill_query_boot_root(const struct silofs_inode_info *ii,
 static void fill_query_boot(const struct silofs_inode_info *ii,
                             struct silofs_ioc_query *query)
 {
-	fill_query_boot_xref(ii, query);
 	fill_query_boot_name(ii, query);
+	fill_query_boot_blobref(ii, query);
 	fill_query_boot_root(ii, query);
 }
 

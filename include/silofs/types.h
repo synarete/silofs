@@ -44,11 +44,6 @@ enum silofs_flags {
 	SILOFS_F_STDALLOC     = SILOFS_BIT(15),
 };
 
-/* exported-reference address string */
-struct silofs_xref {
-	char s[SILOFS_XREFLEN_MAX + 1];
-};
-
 /* file-system's boot arguments */
 struct silofs_boot_args {
 	const char *fs_name;

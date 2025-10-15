@@ -279,30 +279,35 @@ void cmd_open_repo(struct silofs_env *env);
 
 void cmd_close_repo(struct silofs_env *env);
 
-void cmd_format_fs(struct silofs_env *env, struct silofs_xref *out_xref);
+void cmd_format_fs(struct silofs_env *env, struct silofs_blobref *out_blobref);
 
-void cmd_sense_fs(struct silofs_env *env, const struct silofs_xref *xref);
+void cmd_sense_fs(struct silofs_env           *env,
+                  const struct silofs_blobref *blobref);
 
-void cmd_sense_ar(struct silofs_env *env, const struct silofs_xref *xref);
+void cmd_sense_ar(struct silofs_env           *env,
+                  const struct silofs_blobref *blobref);
 
-void cmd_open_fs(struct silofs_env *env, const struct silofs_xref *xref);
+void cmd_open_fs(struct silofs_env *env, const struct silofs_blobref *blobref);
 
 void cmd_close_fs(struct silofs_env *env);
 
 void cmd_exec_fs(struct silofs_env *env);
 
-void cmd_fork_fs(struct silofs_env *env, struct silofs_xref *out_main,
-                 struct silofs_xref *out_fork);
+void cmd_fork_fs(struct silofs_env *env, struct silofs_blobref *out_main,
+                 struct silofs_blobref *out_fork);
 
-void cmd_remove_fs(struct silofs_env *env, const struct silofs_xref *xref);
+void cmd_remove_fs(struct silofs_env           *env,
+                   const struct silofs_blobref *blobref);
 
 void cmd_inspect_fs(struct silofs_env *env, bool view);
 
-void cmd_archive_fs(struct silofs_env *env, const struct silofs_xref *fs_xref,
-                    struct silofs_xref *out_ar_xref);
+void cmd_archive_fs(struct silofs_env           *env,
+                    const struct silofs_blobref *fs_blobref,
+                    struct silofs_blobref       *out_ar_blobref);
 
-void cmd_restore_fs(struct silofs_env *env, const struct silofs_xref *ar_xref,
-                    struct silofs_xref *out_fs_xref);
+void cmd_restore_fs(struct silofs_env           *env,
+                    const struct silofs_blobref *ar_blobref,
+                    struct silofs_blobref       *out_fs_blobref);
 
 /* mount-info */
 struct silofs_mntinfos *cmd_parse_mountinfo(void);
@@ -339,19 +344,19 @@ void cmd_delpass(char **pass);
 void cmd_checkpass(const char *pass);
 
 /* x-reference */
-void cmd_save_fs_xref(const struct silofs_boot_args *boot_args,
-                      const struct silofs_xref      *fs_xref);
+void cmd_save_fs_blobref(const struct silofs_boot_args *boot_args,
+                         const struct silofs_blobref   *fs_blobref);
 
-void cmd_save_ar_xref(const struct silofs_boot_args *boot_args,
-                      const struct silofs_xref      *ar_xref);
+void cmd_save_ar_blobref(const struct silofs_boot_args *boot_args,
+                         const struct silofs_blobref   *ar_blobref);
 
-void cmd_load_fs_xref(const struct silofs_boot_args *boot_args,
-                      struct silofs_xref            *out_xref);
+void cmd_load_fs_blobref(const struct silofs_boot_args *boot_args,
+                         struct silofs_blobref         *out_blobref);
 
-void cmd_unlink_fs_xref(const struct silofs_boot_args *boot_args);
+void cmd_load_ar_blobref(struct silofs_boot_args *boot_args,
+                         struct silofs_blobref   *out_blobref);
 
-void cmd_load_ar_xref(struct silofs_boot_args *boot_args,
-                      struct silofs_xref      *out_xref);
+void cmd_unlink_fs_blobref(const struct silofs_boot_args *boot_args);
 
 /* fs input arguments */
 void cmd_setup_env_args(struct silofs_env_args *env_args);

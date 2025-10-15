@@ -16,6 +16,7 @@
  */
 #include "configs.h"
 #include <ctype.h>
+#include <silofs/errors.h>
 #include "ascii.h"
 
 char silofs_nibble_to_ascii(int n)
@@ -84,13 +85,15 @@ int silofs_ascii_to_byte(const char *a, uint8_t *b)
 
 	ret = silofs_ascii_to_nibble(a[0]);
 	if (ret == -1) {
-		return -1;
+		return -SILOFS_EILLSTR;
+		;
 	}
 	nib[0] = (uint32_t)ret;
 
 	ret = silofs_ascii_to_nibble(a[1]);
 	if (ret == -1) {
-		return -1;
+		return -SILOFS_EILLSTR;
+		;
 	}
 	nib[1] = (uint32_t)ret;
 

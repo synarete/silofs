@@ -113,61 +113,6 @@ long silofs_baddr_compare(const struct silofs_baddr *baddr1,
 	return 0;
 }
 
-int silofs_baddr_to_str(const struct silofs_baddr *baddr, char *s, size_t n)
-{
-	struct silofs_strbuf sbuf;
-	const int vers = SILOFS_FMT_VERSION;
-	const int mtype = (int)(baddr->mtype);
-	int k;
-
-	if ((baddr->bmode != SILOFS_BMODE_CAS) || (baddr->pos != 0)) {
-		return -SILOFS_EOPNOTSUPP;
-	}
-
-	silofs_blobid_to_sbuf(&baddr->blobid, &sbuf);
-	k = snprintf(s, n, "silofs.v%d:%d:%s", vers, mtype, sbuf.str);
-
-	return ((k > 0) && (k < (int)n)) ? 0 : -SILOFS_ERANGE;
-}
-
-int silofs_baddr_from_str(struct silofs_baddr *baddr, const char *s, size_t n)
-{
-	struct silofs_strbuf sbuf;
-	struct silofs_strbuf hname;
-	struct silofs_strview sv;
-	struct silofs_blobid blobid;
-	enum silofs_mtype mtype;
-	int vers = 0;
-	int mt = 0;
-	int k = 0;
-	int err = 0;
-
-	if (n >= sizeof(sbuf.str)) {
-		return -SILOFS_EINVAL;
-	}
-	silofs_strbuf_setup_by2(&sbuf, s, n);
-
-	silofs_strbuf_reset(&hname);
-	k = sscanf(sbuf.str, "silofs.v%d:%d:%64s", &vers, &mt, hname.str);
-	if (k != 3) {
-		return -SILOFS_EINVAL;
-	}
-	if (vers != SILOFS_FMT_VERSION) {
-		return -SILOFS_EPROTO;
-	}
-	mtype = (enum silofs_mtype)mt;
-	if (!silofs_mtype_size(mtype)) {
-		return -SILOFS_EPROTO;
-	}
-	silofs_strview_init(&sv, hname.str);
-	err = silofs_blobid_from_str(&blobid, &sv);
-	if (err) {
-		return err;
-	}
-	silofs_baddr_init(baddr, &blobid, SILOFS_BMODE_CAS, mtype, 0);
-	return 0;
-}
-
 void silofs_baddr64b_reset(struct silofs_baddr64b *baddr64)
 {
 	silofs_memzero(baddr64, sizeof(*baddr64));

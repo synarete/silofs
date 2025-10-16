@@ -2446,8 +2446,8 @@ static void fill_query_boot_blobref(const struct silofs_inode_info *ii,
 	if (silofs_unlikely(err)) {
 		silofs_memzero(qboot->blobref, sizeof(qboot->blobref));
 	} else {
-		silofs_baddr_to_str(&mref, qboot->blobref,
-		                    sizeof(qboot->blobref));
+		silofs_blobid_to_str2(&mref.blobid, qboot->blobref,
+		                      sizeof(qboot->blobref));
 	}
 }
 

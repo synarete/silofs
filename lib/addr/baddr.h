@@ -63,10 +63,6 @@ bool silofs_baddr_isnull(const struct silofs_baddr *baddr);
 long silofs_baddr_compare(const struct silofs_baddr *baddr1,
                           const struct silofs_baddr *baddr2);
 
-int silofs_baddr_to_str(const struct silofs_baddr *baddr, char *s, size_t n);
-
-int silofs_baddr_from_str(struct silofs_baddr *baddr, const char *s, size_t n);
-
 void silofs_baddr64b_reset(struct silofs_baddr64b *baddr64);
 
 void silofs_baddr64b_htox(struct silofs_baddr64b    *baddr64,

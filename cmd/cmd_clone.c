@@ -240,9 +240,9 @@ static void cmd_clone_do_ioctl_clonefs(struct cmd_clone_ctx *ctx)
 	int err;
 
 	SILOFS_STATICASSERT_EQ(sizeof(ctx->fs_blobref_main.bid),
-	                       sizeof(ioc->forkfs.blobref_new));
+	                       sizeof(ioc->forkfs.main));
 	SILOFS_STATICASSERT_EQ(sizeof(ctx->fs_blobref_fork.bid),
-	                       sizeof(ioc->forkfs.blobref_alt));
+	                       sizeof(ioc->forkfs.fork));
 
 	cmd_reset_ioc(ctx->ioc);
 	err = silofs_sys_opendir(dirpath, &dfd);
@@ -262,9 +262,9 @@ static void cmd_clone_do_ioctl_clonefs(struct cmd_clone_ctx *ctx)
 		        ctx->in_args.repodir_fsname);
 	}
 
-	memcpy(ctx->fs_blobref_main.bid, ioc->forkfs.blobref_new,
+	memcpy(ctx->fs_blobref_main.bid, ioc->forkfs.main,
 	       sizeof(ctx->fs_blobref_main.bid));
-	memcpy(ctx->fs_blobref_fork.bid, ioc->forkfs.blobref_alt,
+	memcpy(ctx->fs_blobref_fork.bid, ioc->forkfs.fork,
 	       sizeof(ctx->fs_blobref_fork.bid));
 }
 

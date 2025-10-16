@@ -2986,7 +2986,9 @@ out:
 static void
 assign_ioc_blobref(int8_t *blobref, const struct silofs_baddr *baddr)
 {
-	silofs_baddr_to_str(baddr, (char *)blobref, SILOFS_BLOBREFLEN_MAX + 1);
+	const size_t lim = SILOFS_BLOBREFLEN_MAX + 1;
+
+	silofs_blobid_to_str2(&baddr->blobid, (char *)blobref, lim);
 }
 
 static int do_ioc_clone(const struct silofs_fuseq_cmd_ctx *fcc)
@@ -3024,9 +3026,9 @@ static int do_ioc_clone(const struct silofs_fuseq_cmd_ctx *fcc)
 	}
 
 	memset(cl_out, 0, sizeof(*cl_out));
-	assign_ioc_blobref(cl_out->blobref_base, &mrefs->base);
-	assign_ioc_blobref(cl_out->blobref_new, &mrefs->main);
-	assign_ioc_blobref(cl_out->blobref_alt, &mrefs->fork);
+	assign_ioc_blobref(cl_out->base, &mrefs->base);
+	assign_ioc_blobref(cl_out->main, &mrefs->main);
+	assign_ioc_blobref(cl_out->fork, &mrefs->fork);
 	memcpy(buf_out, cl_out, sizeof(*cl_out));
 out:
 	return fqs_reply_ioctl(fcc->fqs, fcc->task, 0, cl_out, sizeof(*cl_out),

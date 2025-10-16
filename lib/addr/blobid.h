@@ -53,8 +53,11 @@ int silofs_blobid_from_ascii(struct silofs_blobid *blobid, const char *s,
 void silofs_blobid_to_sbuf(const struct silofs_blobid *blobid,
                            struct silofs_strbuf       *sbuf);
 
-void silofs_blobid_to_str(const struct silofs_blobid *blobid,
-                          struct silofs_strspan      *ss);
+int silofs_blobid_to_str(const struct silofs_blobid *blobid,
+                         struct silofs_strspan      *ss);
+
+int silofs_blobid_to_str2(const struct silofs_blobid *blobid, char *s,
+                          size_t n);
 
 int silofs_blobid_from_str(struct silofs_blobid        *blobid,
                            const struct silofs_strview *sv);
@@ -70,8 +73,8 @@ bool silofs_blobref_isnull(const struct silofs_blobref *blobref);
 
 int silofs_blobref_verify(const struct silofs_blobref *blobref);
 
-void silofs_blobref_from_blobid(struct silofs_blobref      *blobref,
-                                const struct silofs_blobid *blobid);
+int silofs_blobref_from_blobid(struct silofs_blobref      *blobref,
+                               const struct silofs_blobid *blobid);
 
 int silofs_blobref_to_blobid(const struct silofs_blobref *blobref,
                              struct silofs_blobid        *out_blobid);

@@ -114,14 +114,25 @@ void silofs_blobid_to_sbuf(const struct silofs_blobid *blobid,
 	silofs_blobid_to_ascii(blobid, sbuf->str, sizeof(sbuf->str) - 1);
 }
 
-void silofs_blobid_to_str(const struct silofs_blobid *blobid,
-                          struct silofs_strspan *ss)
+int silofs_blobid_to_str(const struct silofs_blobid *blobid,
+                         struct silofs_strspan *ss)
 {
 	struct silofs_strbuf sbuf;
+	size_t n;
 
 	silofs_strbuf_reset(&sbuf);
 	silofs_blobid_to_sbuf(blobid, &sbuf);
-	silofs_strspan_assign(ss, sbuf.str);
+	n = silofs_strspan_assign(ss, sbuf.str);
+	return (n < ss->n) ? 0 : -SILOFS_EINVAL;
+}
+
+int silofs_blobid_to_str2(const struct silofs_blobid *blobid, char *s,
+                          size_t n)
+{
+	struct silofs_strspan ss;
+
+	silofs_strspan_initk(&ss, s, 0, n);
+	return silofs_blobid_to_str(blobid, &ss);
 }
 
 int silofs_blobid_from_str(struct silofs_blobid *blobid,
@@ -166,21 +177,25 @@ int silofs_blobref_verify(const struct silofs_blobref *blobref)
 	return silofs_blobref_to_blobid(blobref, &blobid);
 }
 
-void silofs_blobref_from_blobid(struct silofs_blobref *blobref,
-                                const struct silofs_blobid *blobid)
+int silofs_blobref_from_blobid(struct silofs_blobref *blobref,
+                               const struct silofs_blobid *blobid)
 {
-	memset(blobref, 0, sizeof(*blobref));
-	silofs_blobid_to_ascii(blobid, blobref->bid, sizeof(blobref->bid));
+	struct silofs_strspan ss;
+
+	silofs_blobref_reset(blobref);
+	silofs_strspan_initk(&ss, blobref->bid, 0, sizeof(blobref->bid));
+	return silofs_blobid_to_str(blobid, &ss);
 }
 
 int silofs_blobref_to_blobid(const struct silofs_blobref *blobref,
                              struct silofs_blobid *out_blobid)
 {
-	size_t len;
+	struct silofs_strview sv;
+	int err = -SILOFS_EBLOBREF;
 
-	len = silofs_str_nlength(blobref->bid, sizeof(blobref->bid));
-	if (!len || (len >= sizeof(blobref->bid))) {
-		return -SILOFS_EBLOBREF;
+	silofs_strview_init(&sv, blobref->bid);
+	if (sv.len && (sv.len < sizeof(blobref->bid))) {
+		err = silofs_blobid_from_str(out_blobid, &sv);
 	}
-	return silofs_blobid_from_ascii(out_blobid, blobref->bid, len);
+	return err;
 }

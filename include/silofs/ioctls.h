@@ -104,9 +104,9 @@ struct silofs_ioc_query {
 };
 
 struct silofs_ioc_forkfs {
-	int8_t blobref_base[SILOFS_BLOBREFLEN_MAX + 1];
-	int8_t blobref_new[SILOFS_BLOBREFLEN_MAX + 1];
-	int8_t blobref_alt[SILOFS_BLOBREFLEN_MAX + 1];
+	int8_t base[SILOFS_BLOBREFLEN_MAX + 1];
+	int8_t main[SILOFS_BLOBREFLEN_MAX + 1];
+	int8_t fork[SILOFS_BLOBREFLEN_MAX + 1];
 	int8_t reserved[SILOFS_BLOBREFLEN_MAX + 1];
 };
 

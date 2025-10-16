@@ -2367,11 +2367,13 @@ int silofs_do_statvfs(const struct silofs_task_ctx *task,
 	return err;
 }
 
-static void str_to_buf(const struct silofs_strview *s, char *buf, size_t bsz)
+static void str_to_buf(const struct silofs_strview *sv, void *buf, size_t bsz)
 {
-	if ((s != nullptr) && (bsz > 0)) {
-		silofs_strview_copyto(s, buf, bsz);
-		buf[bsz - 1] = '\0';
+	if ((sv != nullptr) && (bsz > 0)) {
+		char *s = buf;
+
+		silofs_strview_copyto(sv, s, bsz);
+		s[bsz - 1] = '\0';
 	}
 }
 
@@ -2446,7 +2448,7 @@ static void fill_query_boot_blobref(const struct silofs_inode_info *ii,
 	if (silofs_unlikely(err)) {
 		silofs_memzero(qboot->blobref, sizeof(qboot->blobref));
 	} else {
-		silofs_blobid_to_str2(&mref.blobid, qboot->blobref,
+		silofs_blobid_to_str2(&mref.blobid, (char *)qboot->blobref,
 		                      sizeof(qboot->blobref));
 	}
 }
@@ -2459,7 +2461,7 @@ static void fill_query_boot_root(const struct silofs_inode_info *ii,
 	struct silofs_query_boot *qboot = &query->u.boot;
 
 	silofs_sbi_self_blobid(silofs_ii_sbi(ii), &blobid);
-	silofs_strspan_initk(&ss, qboot->root_blobid, 0,
+	silofs_strspan_initk(&ss, (char *)qboot->root_blobid, 0,
 	                     sizeof(qboot->root_blobid));
 	silofs_blobid_to_str(&blobid, &ss);
 }

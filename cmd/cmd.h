@@ -242,6 +242,8 @@ char *cmd_strdup(const char *s);
 
 char *cmd_strndup(const char *s, size_t n);
 
+char *cmd_strvdup(const void *p);
+
 char *cmd_struuid(const uint8_t uu[16]);
 
 silofs_attr_printf(1, 2) char *cmd_mkpathf(const char *fmt, ...);

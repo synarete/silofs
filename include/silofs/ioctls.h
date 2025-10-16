@@ -47,20 +47,20 @@ enum silofs_query_type {
 };
 
 struct silofs_query_version {
-	char     string[SILOFS_NAME_MAX + 1];
+	int8_t   string[SILOFS_NAME_MAX + 1];
 	uint32_t major;
 	uint32_t minor;
 	uint32_t sublevel;
 };
 
 struct silofs_query_repo {
-	char path[SILOFS_REPOPATH_MAX];
+	int8_t path[SILOFS_REPOPATH_MAX];
 };
 
 struct silofs_query_boot {
-	char name[SILOFS_NAME_MAX + 1];
-	char blobref[SILOFS_BLOBREFLEN_MAX + 1];
-	char root_blobid[SILOFS_NAME_MAX + 1];
+	int8_t name[SILOFS_NAME_MAX + 1];
+	int8_t blobref[SILOFS_BLOBREFLEN_MAX + 1];
+	int8_t root_blobid[SILOFS_NAME_MAX + 1];
 };
 
 struct silofs_query_proc {

@@ -127,7 +127,7 @@ cmd_lsmnt_long(struct cmd_lsmnt_ctx *ctx, const struct silofs_mntinfo *mi)
 	if (err) {
 		goto out;
 	}
-	repo_path = cmd_strdup(qry->u.repo.path);
+	repo_path = cmd_strvdup(qry->u.repo.path);
 
 	silofs_memzero(qry, sizeof(*qry));
 	qry->qtype = SILOFS_QUERY_BOOT;
@@ -135,9 +135,9 @@ cmd_lsmnt_long(struct cmd_lsmnt_ctx *ctx, const struct silofs_mntinfo *mi)
 	if (err) {
 		goto out;
 	}
-	boot_name = cmd_strdup(qry->u.boot.name);
-	boot_addr = cmd_strdup(qry->u.boot.blobref);
-	root_blobid = cmd_strdup(qry->u.boot.root_blobid);
+	boot_name = cmd_strvdup(qry->u.boot.name);
+	boot_addr = cmd_strvdup(qry->u.boot.blobref);
+	root_blobid = cmd_strvdup(qry->u.boot.root_blobid);
 
 	fprintf(ctx->out_fp, "%s %s/%s %s %s", mntd_path, repo_path, boot_name,
 	        boot_addr, root_blobid);

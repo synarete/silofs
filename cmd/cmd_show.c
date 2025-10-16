@@ -180,9 +180,9 @@ static void cmd_show_boot(struct cmd_show_ctx *ctx)
 
 	cmd_show_do_ioctl_query(ctx);
 
-	name = cmd_strdup(qry->u.boot.name);
-	blobref = cmd_strdup(qry->u.boot.blobref);
-	root_blobid = cmd_strdup(qry->u.boot.root_blobid);
+	name = cmd_strvdup(qry->u.boot.name);
+	blobref = cmd_strvdup(qry->u.boot.blobref);
+	root_blobid = cmd_strvdup(qry->u.boot.root_blobid);
 	fprintf(ctx->out_fp, "%s %s %s\n", name, blobref, root_blobid);
 	cmd_pstrfree(&name);
 	cmd_pstrfree(&blobref);

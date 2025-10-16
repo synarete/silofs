@@ -161,11 +161,11 @@ static void cmd_clone_prepare_by_query(struct cmd_clone_ctx *ctx)
 	silofs_memzero(qry, sizeof(*qry));
 	qry->qtype = SILOFS_QUERY_REPO;
 	cmd_clone_ioctl_query(args->dirpath_real, qry);
-	args->repodir = cmd_strdup(qry->u.repo.path);
+	args->repodir = cmd_strvdup(qry->u.repo.path);
 
 	qry->qtype = SILOFS_QUERY_BOOT;
 	cmd_clone_ioctl_query(args->dirpath_real, qry);
-	args->fsname = cmd_strdup(qry->u.boot.name);
+	args->fsname = cmd_strvdup(qry->u.boot.name);
 }
 
 static void cmd_clone_prepare_online(struct cmd_clone_ctx *ctx)

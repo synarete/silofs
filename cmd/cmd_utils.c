@@ -805,6 +805,19 @@ char *cmd_strndup(const char *s, size_t n)
 	return d;
 }
 
+char *cmd_strvdup(const void *p)
+{
+	const char *s = p;
+	const size_t lmax = SILOFS_MEGA;
+	size_t len;
+
+	len = strnlen(s, lmax);
+	if (len >= lmax) {
+		cmd_die(0, "cannot strdup: len=%zu", len);
+	}
+	return cmd_strdup(s);
+}
+
 char *cmd_struuid(const uint8_t uu[16])
 {
 	char str[40] = "";

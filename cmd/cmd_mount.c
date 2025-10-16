@@ -532,43 +532,48 @@ static void cmd_mount_update_log_params(const struct cmd_mount_ctx *ctx)
  *
  *   $ journalctl -b -n 60 -f -t silofs
  */
-#define silofs_log_iarg(fmt_, ...) silofs_log_info("inarg: " fmt_, __VA_ARGS__)
+#define cmd_mount_log_arg(fmt_, ...) \
+	silofs_log_info("inarg: " fmt_, __VA_ARGS__)
 
 static int cmd_mount_testf(const struct cmd_mount_ctx *ctx, int mask)
 {
 	return ((ctx->in_args.flags & mask) == mask);
 }
 
-static void cmd_mount_trace_start(const struct cmd_mount_ctx *ctx)
+static void cmd_mount_log_start(const struct cmd_mount_ctx *ctx)
 {
 	silofs_log_meta_banner(cmd_global_params.name, 1);
 	silofs_log_info("executable: %s", cmd_global_params.prog);
 	silofs_log_info("nprocs: %ld", silofs_sc_nproc_onln());
-	silofs_log_iarg("mountpoint=%s", ctx->in_args.mntpoint_real);
-	silofs_log_iarg("repodir=%s", ctx->in_args.repodir_real);
-	silofs_log_iarg("rdonly=%d", cmd_mount_testf(ctx, SILOFS_F_RDONLY));
-	silofs_log_iarg("noexec=%d", cmd_mount_testf(ctx, SILOFS_F_NOEXEC));
-	silofs_log_iarg("nosuid=%d", cmd_mount_testf(ctx, SILOFS_F_NOSUID));
-	silofs_log_iarg("nodev=%d", cmd_mount_testf(ctx, SILOFS_F_NODEV));
-	silofs_log_iarg("asyncwr=%d", cmd_mount_testf(ctx, SILOFS_F_ASYNCWR));
-	silofs_log_iarg("allow_admin=%d",
-	                cmd_mount_testf(ctx, SILOFS_F_ALLOWADMIN));
-	silofs_log_iarg("allow_other=%d",
-	                cmd_mount_testf(ctx, SILOFS_F_ALLOWOTHER));
-	silofs_log_iarg("allow_hostids=%d",
-	                cmd_mount_testf(ctx, SILOFS_F_ALLOWHOSTIDS));
-	silofs_log_iarg("allow_xattr_acl=%d",
-	                cmd_mount_testf(ctx, SILOFS_F_ALLOWXACL));
-	silofs_log_iarg("writeback_cache=%d",
-	                !cmd_mount_testf(ctx, SILOFS_F_NOWRITEBACK));
-	silofs_log_iarg("may_splice=%d",
-	                cmd_mount_testf(ctx, SILOFS_F_MAYSPLICE));
-	silofs_log_iarg("lazytime=%d",
-	                cmd_mount_testf(ctx, SILOFS_F_LAZYTIME));
+
+	cmd_mount_log_arg("mountpoint=%s", ctx->in_args.mntpoint_real);
+	cmd_mount_log_arg("repodir=%s", ctx->in_args.repodir_real);
+	cmd_mount_log_arg("rdonly=%d", cmd_mount_testf(ctx, SILOFS_F_RDONLY));
+	cmd_mount_log_arg("noexec=%d", cmd_mount_testf(ctx, SILOFS_F_NOEXEC));
+	cmd_mount_log_arg("nosuid=%d", cmd_mount_testf(ctx, SILOFS_F_NOSUID));
+	cmd_mount_log_arg("nodev=%d", cmd_mount_testf(ctx, SILOFS_F_NODEV));
+	cmd_mount_log_arg("asyncwr=%d",
+	                  cmd_mount_testf(ctx, SILOFS_F_ASYNCWR));
+	cmd_mount_log_arg("allow_admin=%d",
+	                  cmd_mount_testf(ctx, SILOFS_F_ALLOWADMIN));
+	cmd_mount_log_arg("allow_other=%d",
+	                  cmd_mount_testf(ctx, SILOFS_F_ALLOWOTHER));
+	cmd_mount_log_arg("allow_hostids=%d",
+	                  cmd_mount_testf(ctx, SILOFS_F_ALLOWHOSTIDS));
+	cmd_mount_log_arg("allow_xattr_acl=%d",
+	                  cmd_mount_testf(ctx, SILOFS_F_ALLOWXACL));
+	cmd_mount_log_arg("writeback_cache=%d",
+	                  !cmd_mount_testf(ctx, SILOFS_F_NOWRITEBACK));
+	cmd_mount_log_arg("auto_inval_data=%d",
+	                  cmd_mount_testf(ctx, SILOFS_F_AUTOINVAL));
+	cmd_mount_log_arg("may_splice=%d",
+	                  cmd_mount_testf(ctx, SILOFS_F_MAYSPLICE));
+	cmd_mount_log_arg("lazytime=%d",
+	                  cmd_mount_testf(ctx, SILOFS_F_LAZYTIME));
 	cmd_trace_versions();
 }
 
-static void cmd_mount_trace_finish(const struct cmd_mount_ctx *ctx)
+static void cmd_mount_log_finish(const struct cmd_mount_ctx *ctx)
 {
 	const time_t exec_time = time(nullptr) - ctx->start_time;
 
@@ -653,7 +658,7 @@ static void cmd_mount_exec_phase2(struct cmd_mount_ctx *ctx)
 	cmd_mount_open_fs(ctx);
 
 	/* Report beginning-of-mount */
-	cmd_mount_trace_start(ctx);
+	cmd_mount_log_start(ctx);
 
 	/* Allow halt by signal */
 	cmd_mount_enable_signals();
@@ -671,7 +676,7 @@ static void cmd_mount_exec_phase2(struct cmd_mount_ctx *ctx)
 	cmd_mount_release_lockfile(ctx);
 
 	/* Report end-of-mount */
-	cmd_mount_trace_finish(ctx);
+	cmd_mount_log_finish(ctx);
 
 	/* Destroy main environment instance */
 	cmd_mount_destroy_env(ctx);

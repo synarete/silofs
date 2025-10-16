@@ -470,7 +470,7 @@ static void
 silofs_dump_panic_msg(const char *file, int line, const char *msg, int errnum)
 {
 	const char *base = nullptr;
-	const char *tag = "[:panic:]";
+	const char *tag = "<panic>";
 	const enum silofs_log_level ll = SILOFS_LOG_CRIT;
 
 	silofs_logf(ll, nullptr, 0, " ");

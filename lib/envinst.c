@@ -449,29 +449,19 @@ static bool envi_with_fuse(const struct silofs_env_inst *envi)
 	return (flags & SILOFS_F_WITHFUSE) > 0;
 }
 
-static void
-envi_update_fuseq(const struct silofs_env_inst *envi, struct silofs_fuseq *fq)
-{
-	const enum silofs_flags flags = envi->args.flags;
-
-	fq->fq_writeback_cache = (flags & SILOFS_F_WRITEBACK) > 0;
-	fq->fq_may_splice = (flags & SILOFS_F_MAYSPLICE) > 0;
-}
-
 static int envi_init_fuseq(struct silofs_env_inst *envi)
 {
 	struct silofs_fuseq *fq = nullptr;
-	int err;
 
 	if (!envi_with_fuse(envi)) {
 		return 0;
 	}
-	err = silofs_fuseq_new(envi->alloc, &fq);
-	if (err) {
-		return err;
+	fq = silofs_fuseq_new(envi->alloc, envi->args.flags);
+	if (fq == nullptr) {
+		log_warn("failed to create new fuseq: mode_flags=0x%x",
+		         envi->args.flags);
+		return -SILOFS_ENOMEM;
 	}
-	envi_update_fuseq(envi, fq);
-
 	envi->initf |= SILOFS_ENVIF_FUSEQ;
 	envi->fuseq = fq;
 	return 0;

@@ -36,7 +36,7 @@ static const char *const cmd_mount_help_desc =
 	"  -i  --allow-hostids          Use local host uid/gid             \n"
 	"  -E  --allow-xattr-acl        ACLs via extended attributes       \n"
 	"  -A  --no-allow-other         Do not allow other users           \n"
-	"  -W  --writeback-cache=0|1    Write-back cache mode              \n"
+	"  -W  --writeback-cache=0|1|2  Write-back cache mode              \n"
 	"  -B  --buffer-copy-mode       Set FUSE with copy-to-buffer mode  \n"
 	"  -D, --nodaemon               Do not run as daemon process       \n"
 	"  -C, --coredump               Allow core-dumps upon fatal errors \n"
@@ -161,7 +161,7 @@ static void cmd_mount_parse_optargs(struct cmd_mount_ctx *ctx)
 		{ "allow-hostids", 'i', 0 },
 		{ "allow-xattr-acl", 'E', 0 },
 		{ "no-allow-other", 'A', 0 },
-		{ "writeback-cache", 'W', 1 },
+		{ "writeback-cache", 'W', 2 },
 		{ "buffer-copy-mode", 'B', 0 },
 		{ "nodaemon", 'D', 0 },
 		{ "coredump", 'C', 0 },
@@ -176,6 +176,7 @@ static void cmd_mount_parse_optargs(struct cmd_mount_ctx *ctx)
 	};
 	struct cmd_optargs opa;
 	int opt_chr = 1;
+	uint32_t uarg;
 	bool barg;
 
 	cmd_optargs_init(&opa, ods);
@@ -195,11 +196,16 @@ static void cmd_mount_parse_optargs(struct cmd_mount_ctx *ctx)
 			ctx->in_args.flags |= SILOFS_F_ALLOWXACL;
 			break;
 		case 'W':
-			barg = cmd_optargs_curr_as_bool(&opa);
-			if (barg) {
-				ctx->in_args.flags |= SILOFS_F_WRITEBACK;
+			uarg = cmd_optargs_curr_as_u32v(&opa, 0, 2);
+			if (uarg == 0) {
+				ctx->in_args.flags |= SILOFS_F_NOWRITEBACK;
+				ctx->in_args.flags |= SILOFS_F_AUTOINVAL;
+			} else if (uarg == 1) {
+				ctx->in_args.flags |= SILOFS_F_NOWRITEBACK;
+				ctx->in_args.flags &= ~SILOFS_F_AUTOINVAL;
 			} else {
-				ctx->in_args.flags &= ~SILOFS_F_WRITEBACK;
+				ctx->in_args.flags &= ~SILOFS_F_NOWRITEBACK;
+				ctx->in_args.flags &= ~SILOFS_F_AUTOINVAL;
 			}
 			break;
 		case 'B':
@@ -356,7 +362,6 @@ static void cmd_mount_mkdefaults(struct cmd_mount_ctx *ctx)
 	ctx->in_args.flags |= SILOFS_F_ASYNCWR;
 	ctx->in_args.flags |= SILOFS_F_ALLOWOTHER;
 	ctx->in_args.flags |= SILOFS_F_ALLOWADMIN;
-	ctx->in_args.flags |= SILOFS_F_WRITEBACK;
 	ctx->in_args.flags |= SILOFS_F_MAYSPLICE;
 }
 
@@ -555,7 +560,7 @@ static void cmd_mount_trace_start(const struct cmd_mount_ctx *ctx)
 	silofs_log_iarg("allow_xattr_acl=%d",
 	                cmd_mount_testf(ctx, SILOFS_F_ALLOWXACL));
 	silofs_log_iarg("writeback_cache=%d",
-	                cmd_mount_testf(ctx, SILOFS_F_WRITEBACK));
+	                !cmd_mount_testf(ctx, SILOFS_F_NOWRITEBACK));
 	silofs_log_iarg("may_splice=%d",
 	                cmd_mount_testf(ctx, SILOFS_F_MAYSPLICE));
 	silofs_log_iarg("lazytime=%d",

@@ -90,7 +90,8 @@ struct silofs_fuseq {
 	struct silofs_fuseq_subs      fq_subs;
 	struct silofs_listq           fq_pipes_freeq;
 	struct silofs_listq           fq_curr_opers;
-	size_t                        fq_selfsize;
+	enum silofs_flags             fq_mode_flags;
+	uint32_t                      fq_selfsize;
 	uint32_t                      fq_pagesize;
 	uint32_t                      fq_nprocs;
 	int64_t                       fq_nexecs;
@@ -106,11 +107,10 @@ struct silofs_fuseq {
 	bool                          fq_deny_others;
 	bool                          fq_mount;
 	bool                          fq_umount;
-	bool                          fq_writeback_cache;
-	bool                          fq_may_splice;
 } silofs_attr_aligned64;
 
-int silofs_fuseq_new(struct silofs_alloc *alloc, struct silofs_fuseq **out_fq);
+struct silofs_fuseq *
+silofs_fuseq_new(struct silofs_alloc *alloc, enum silofs_flags mode_flags);
 
 void silofs_fuseq_del(struct silofs_fuseq *fq, struct silofs_alloc *alloc);
 

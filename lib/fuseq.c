@@ -80,6 +80,8 @@ enum silofs_fuseq_consts {
 static void fqs_interrupt_op(struct silofs_fuseq_sub *fqs, uint64_t uq);
 static bool fqs_has_large_write_in(const struct silofs_fuseq_sub *fqs);
 static bool fqs_has_large_read_in(const struct silofs_fuseq_sub *fqs);
+static bool fuseq_may(const struct silofs_fuseq *fq, enum silofs_flags mode);
+static bool fuseq_may_splice(const struct silofs_fuseq *fq);
 static void fuseq_lock_ctl(struct silofs_fuseq *fq);
 static void fuseq_unlock_ctl(struct silofs_fuseq *fq);
 static void fuseq_update_nexecs(struct silofs_fuseq *fq, int n);
@@ -1815,7 +1817,6 @@ static void do_init_capabilities(const struct silofs_fuseq_cmd_ctx *fcc)
 {
 	struct silofs_fuseq_conn_info *coni = &fcc->fq->fq_coni;
 	const uint32_t in_flags = fcc->in->u.init.arg.flags;
-	const bool writeback_cache = fcc->fq->fq_writeback_cache;
 
 	coni->kern_cap = in_flags;
 	coni->want_cap |= FUSE_BIG_WRITES; /* same as in libfuse */
@@ -1832,9 +1833,11 @@ static void do_init_capabilities(const struct silofs_fuseq_cmd_ctx *fcc)
 	update_cap_want(coni, FUSE_ASYNC_DIO);
 	update_cap_want(coni, FUSE_HANDLE_KILLPRIV_V2);
 	update_cap_want(coni, FUSE_SETXATTR_EXT);
-	if (writeback_cache) {
-		update_cap_want(coni, FUSE_AUTO_INVAL_DATA);
+	if (!fuseq_may(fcc->fq, SILOFS_F_NOWRITEBACK)) {
 		update_cap_want(coni, FUSE_WRITEBACK_CACHE);
+	}
+	if (fuseq_may(fcc->fq, SILOFS_F_AUTOINVAL)) {
+		update_cap_want(coni, FUSE_AUTO_INVAL_DATA);
 	}
 }
 
@@ -1859,7 +1862,7 @@ static void do_init_log_conn_info(const struct silofs_fuseq_cmd_ctx *fcc)
 	fuseq_log_info("init: time_gran=%u", coni->time_gran);
 	fuseq_log_info("init: max_pages=%u", coni->max_pages);
 	fuseq_log_info("init: oper_mode=%s",
-	               fq->fq_may_splice ? "pipe-splice" : "buffer-copy");
+	               fuseq_may_splice(fq) ? "pipe-splice" : "buffer-copy");
 }
 
 static int do_init(const struct silofs_fuseq_cmd_ctx *fcc)
@@ -1917,11 +1920,6 @@ static bool fuseq_is_normal(const struct silofs_fuseq *fq)
 	       !fq->fq_got_destroy && (fq->fq_nopers > 1);
 }
 
-static bool fuseq_may_splice(const struct silofs_fuseq *fq)
-{
-	return fq->fq_may_splice && fuseq_is_normal(fq) && (fq->fq_nopers > 2);
-}
-
 static bool fuseq_cap_splice(const struct silofs_fuseq *fq)
 {
 	return fuseq_has_cap(fq, FUSE_SPLICE_READ | FUSE_SPLICE_WRITE);
@@ -1929,7 +1927,12 @@ static bool fuseq_cap_splice(const struct silofs_fuseq *fq)
 
 static bool fuseq_allowed_splice(const struct silofs_fuseq *fq)
 {
-	return fuseq_may_splice(fq) && fuseq_cap_splice(fq);
+	bool ret = false;
+
+	if ((fq->fq_nopers > 2) && fuseq_is_normal(fq)) {
+		ret = (fuseq_may_splice(fq) && fuseq_cap_splice(fq));
+	}
+	return ret;
 }
 
 static bool fuseq_has_nactive_disptch(const struct silofs_fuseq *fq)
@@ -2808,9 +2811,7 @@ static int fq_wri_copy_iov(struct silofs_fuseq_wr_iter *fq_wri)
 
 static bool fqs_asyncwr_mode(const struct silofs_fuseq_sub *fqs)
 {
-	const struct silofs_fuseq *fq = fqs_fuseq(fqs);
-
-	return silofs_env_hasflag(fq->fq_env, SILOFS_F_ASYNCWR);
+	return fuseq_may(fqs_fuseq(fqs), SILOFS_F_ASYNCWR);
 }
 
 static void
@@ -4533,16 +4534,18 @@ static void fuseq_set_non_active(struct silofs_fuseq *fq)
 
 static int fuseq_update_pipes(struct silofs_fuseq *fq)
 {
-	int err;
+	int mode_flags = fq->fq_mode_flags;
+	int err = 0;
 
-	if (fq->fq_may_splice) {
+	if (fuseq_may_splice(fq) && fuseq_cap_splice(fq)) {
 		err = fuseq_open_pipes(fq);
 		if (err) {
 			fuseq_log_warn("failed to open pipes: err=%d", err);
-			fq->fq_may_splice = false;
+			mode_flags &= ~SILOFS_F_MAYSPLICE;
 		}
 	}
-	return 0;
+	fq->fq_mode_flags = (enum silofs_flags)mode_flags;
+	return err;
 }
 
 static int fuseq_init_nilfd(struct silofs_fuseq *fq)
@@ -4647,9 +4650,8 @@ fuseq_init_common(struct silofs_fuseq *fq, struct silofs_alloc *alloc,
 	fq->fq_deny_others = false;
 	fq->fq_mount = false;
 	fq->fq_umount = false;
-	fq->fq_writeback_cache = false;
-	fq->fq_may_splice = true;
 	fq->fq_fs_owner = (uid_t)(-1);
+	fq->fq_mode_flags = SILOFS_F_MAYSPLICE;
 }
 
 static int fuseq_init_subs(struct silofs_fuseq *fq)
@@ -4677,6 +4679,16 @@ static void fuseq_fini_subs(struct silofs_fuseq *fq)
 	}
 }
 
+static bool fuseq_may(const struct silofs_fuseq *fq, enum silofs_flags mode)
+{
+	return (fq->fq_mode_flags & mode) == mode;
+}
+
+static bool fuseq_may_splice(const struct silofs_fuseq *fq)
+{
+	return fuseq_may(fq, SILOFS_F_MAYSPLICE);
+}
+
 static size_t fuseq_bufsize_max(const struct silofs_fuseq *fq)
 {
 	const struct silofs_fuseq_sub *fqs = &fq->fq_subs.fq_subs[0];
@@ -4700,7 +4712,7 @@ fuseq_resolve_bufsize(const struct silofs_fuseq *fq, size_t *out_bufsize)
 
 	bufsize_min = silofs_min(FUSE_MIN_READ_BUFFER, 2 * SILOFS_LBK_SIZE);
 	bufsize_max = fuseq_bufsize_max(fq);
-	if (fq->fq_may_splice) {
+	if (fuseq_may_splice(fq)) {
 		bufsize_may = silofs_pipe_size_of(bufsize_max);
 	} else {
 		bufsize_may = bufsize_max;
@@ -4866,29 +4878,24 @@ static void fuseq_fini(struct silofs_fuseq *fq)
 
 int silofs_fuseq_update(struct silofs_fuseq *fq)
 {
-	const bool may_splice = fq->fq_may_splice;
 	int err;
 
 	err = fuseq_update_conn_info(fq);
 	if (err) {
-		return err;
+		goto out;
 	}
 	err = fuseq_update_pipes(fq);
-	if (err) {
-		return err;
+	if (!err) {
+		goto out; /* OK */
 	}
 	/*
 	 * Special case: fallback from pipe-splice mode to buffer-copy mode due
 	 * to insufficient resources to create big-enough pipes. Need to update
 	 * connection-info settings.
 	 */
-	if (may_splice != fq->fq_may_splice) {
-		err = fuseq_update_conn_info(fq);
-		if (err) {
-			return err;
-		}
-	}
-	return 0;
+	err = fuseq_update_conn_info(fq);
+out:
+	return err;
 }
 
 int silofs_fuseq_mount(struct silofs_fuseq *fq, struct silofs_env *env,
@@ -4906,7 +4913,7 @@ int silofs_fuseq_mount(struct silofs_fuseq *fq, struct silofs_env *env,
 	uid = env->owner_cred.uid;
 	gid = env->owner_cred.gid;
 	ms_flags = env->ms_flags;
-	allow_other = silofs_env_hasflag(env, SILOFS_F_ALLOWOTHER);
+	allow_other = fuseq_may(fq, SILOFS_F_ALLOWOTHER);
 
 	err = silofs_mntrpc_handshake(uid, gid);
 	if (err) {
@@ -5131,7 +5138,8 @@ fuseq_resolve_subx(struct silofs_fuseq *fq, struct silofs_fuseq_subs *subx)
 	subx->fq_subs = address_at(fq, sizeof(*fq));
 }
 
-int silofs_fuseq_new(struct silofs_alloc *alloc, struct silofs_fuseq **out_fq)
+struct silofs_fuseq *
+silofs_fuseq_new(struct silofs_alloc *alloc, enum silofs_flags mode_flags)
 {
 	struct silofs_fuseq *fq = nullptr;
 	struct silofs_fuseq_subs fq_subs = {
@@ -5146,7 +5154,7 @@ int silofs_fuseq_new(struct silofs_alloc *alloc, struct silofs_fuseq **out_fq)
 	fq_msz = fuseq_calc_selfsize(fq, &fq_subs);
 	fq_mem = silofs_memalloc(alloc, fq_msz, SILOFS_ALLOCF_BZERO);
 	if (fq_mem == nullptr) {
-		return -SILOFS_ENOMEM;
+		return nullptr;
 	}
 
 	fq = fq_mem;
@@ -5154,12 +5162,11 @@ int silofs_fuseq_new(struct silofs_alloc *alloc, struct silofs_fuseq **out_fq)
 	err = fuseq_init(fq, alloc, &fq_subs);
 	if (err) {
 		silofs_memfree(alloc, fq_mem, fq_msz, 0);
-		return err;
+		return nullptr;
 	}
-	fq->fq_selfsize = fq_msz;
-
-	*out_fq = fq;
-	return 0;
+	fq->fq_selfsize = (uint32_t)fq_msz;
+	fq->fq_mode_flags = mode_flags;
+	return fq;
 }
 
 void silofs_fuseq_del(struct silofs_fuseq *fq, struct silofs_alloc *alloc)

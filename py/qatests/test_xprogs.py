@@ -2,10 +2,10 @@
 from pathlib import Path
 
 from . import utils
-from .ctx import TestEnv
+from .ctx import TestDef, TestEnv
 
 
-def test_postgresql(env: TestEnv) -> None:
+def _test_postgresql(env: TestEnv) -> None:
     url = env.cfg.remotes.postgresql_repo_url
     if not url:
         return
@@ -26,7 +26,7 @@ def _test_postgresql_at(env: TestEnv, base: Path) -> None:
     env.subcmd.sh.run_ok("make clean", base)
 
 
-def test_rsync(env: TestEnv) -> None:
+def _test_rsync(env: TestEnv) -> None:
     url = env.cfg.remotes.rsync_repo_url
     if not url:
         return
@@ -56,7 +56,7 @@ def _test_rsync_at(env: TestEnv, base: Path) -> None:
     env.subcmd.sh.run_ok("make clean", base)
 
 
-def test_findutils(env: TestEnv) -> None:
+def _test_findutils(env: TestEnv) -> None:
     url = env.cfg.remotes.findutils_repo_url
     if not url:
         return
@@ -85,7 +85,7 @@ def _test_findutils_at(env: TestEnv, base: Path) -> None:
     env.subcmd.sh.run_ok("make clean", base)
 
 
-def test_gitscm(env: TestEnv) -> None:
+def _test_gitscm(env: TestEnv) -> None:
     url = env.cfg.remotes.git_repo_url
     if not url:
         return
@@ -107,7 +107,7 @@ def _test_gitscm_at(env: TestEnv, base: Path) -> None:
     env.subcmd.sh.run_ok("make clean", base)
 
 
-def test_git_archive_untar(env: TestEnv) -> None:
+def _test_git_archive_untar(env: TestEnv) -> None:
     url = env.cfg.remotes.silofs_repo_url
     if not url:
         return
@@ -134,7 +134,7 @@ def _test_git_archive_untar_at(env: TestEnv, base: Path) -> None:
     env.subcmd.sh.run_ok(subcmd, base)
 
 
-def test_rpmbuild(env: TestEnv) -> None:
+def _test_rpmbuild(env: TestEnv) -> None:
     url = env.cfg.remotes.silofs_repo_url
     if not url:
         return
@@ -152,3 +152,14 @@ def test_rpmbuild(env: TestEnv) -> None:
 def _test_rpmbuild_at(env: TestEnv, base: Path) -> None:
     env.subcmd.sh.run_ok("make -f devel.mk rpm", base)
     env.subcmd.sh.run_ok("make -f devel.mk reset", base)
+
+
+def list_tests() -> list[TestDef]:
+    return [
+        TestDef(_test_postgresql),
+        TestDef(_test_rsync),
+        TestDef(_test_findutils),
+        TestDef(_test_gitscm),
+        TestDef(_test_git_archive_untar),
+        TestDef(_test_rpmbuild),
+    ]

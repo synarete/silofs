@@ -1,23 +1,23 @@
 # SPDX-License-Identifier: GPL-3.0
 
-from .ctx import TestEnv
+from .ctx import TestDef, TestEnv
 
 
-def test_version(env: TestEnv) -> None:
+def _test_version(env: TestEnv) -> None:
     version = env.subcmd.silofs.version()
     env.expect.gt(len(version), 0)
 
 
-def test_init(env: TestEnv) -> None:
+def _test_init(env: TestEnv) -> None:
     env.exec_init()
 
 
-def test_mkfs(env: TestEnv) -> None:
+def _test_mkfs(env: TestEnv) -> None:
     env.exec_init()
     env.exec_mkfs()
 
 
-def test_mount(env: TestEnv) -> None:
+def _test_mount(env: TestEnv) -> None:
     env.exec_init()
     env.exec_mkfs()
     env.exec_mount()
@@ -26,7 +26,7 @@ def test_mount(env: TestEnv) -> None:
     env.exec_rmfs()
 
 
-def test_hello_world(env: TestEnv) -> None:
+def _test_hello_world(env: TestEnv) -> None:
     env.exec_init()
     env.exec_mkfs()
     env.exec_mount()
@@ -44,14 +44,14 @@ def test_hello_world(env: TestEnv) -> None:
     env.exec_rmfs()
 
 
-def test_fscapacity(env: TestEnv) -> None:
+def _test_fscapacity(env: TestEnv) -> None:
     env.exec_init()
-    _test_fscapacity(env, 2)  # minimal capacity
-    _test_fscapacity(env, 256)  # normal capacity
-    _test_fscapacity(env, 64 * 1024)  # maximal capacity
+    _do_test_fscapacity(env, 2)  # minimal capacity
+    _do_test_fscapacity(env, 256)  # normal capacity
+    _do_test_fscapacity(env, 64 * 1024)  # maximal capacity
 
 
-def _test_fscapacity(env: TestEnv, cap: int) -> None:
+def _do_test_fscapacity(env: TestEnv, cap: int) -> None:
     name = f"{env.name}-{cap}"
     env.exec_mkfs(cap, name)
     env.exec_mount(name)
@@ -67,7 +67,7 @@ def _test_fscapacity(env: TestEnv, cap: int) -> None:
     env.exec_umount()
 
 
-def test_show(env: TestEnv) -> None:
+def _test_show(env: TestEnv) -> None:
     env.exec_setup_fs()
     base = env.make_basepath()
     base.mkdir()
@@ -91,7 +91,7 @@ def test_show(env: TestEnv) -> None:
     env.exec_teardown_fs()
 
 
-def test_mkfs_mount_with_opts(env: TestEnv) -> None:
+def _test_mkfs_mount_with_opts(env: TestEnv) -> None:
     fsname = "0123456789abcdef"
     env.exec_init(sup_groups=True, allow_root=True)
     env.exec_mkfs(gsize=123, name=fsname)
@@ -102,3 +102,16 @@ def test_mkfs_mount_with_opts(env: TestEnv) -> None:
     tds.do_read()
     tds.do_unlink()
     env.exec_umount()
+
+
+def list_tests() -> list[TestDef]:
+    return [
+        TestDef(_test_version),
+        TestDef(_test_init),
+        TestDef(_test_mkfs),
+        TestDef(_test_mount),
+        TestDef(_test_hello_world),
+        TestDef(_test_fscapacity),
+        TestDef(_test_show),
+        TestDef(_test_mkfs_mount_with_opts),
+    ]

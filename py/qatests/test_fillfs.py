@@ -2,7 +2,7 @@
 import errno
 from pathlib import Path
 
-from .ctx import TestEnv
+from .ctx import TestDef, TestEnv
 
 
 def _expect_enospc(ex: OSError) -> None:
@@ -15,7 +15,7 @@ def _unlink_all(pathnames: list[Path]) -> None:
         path.unlink()
 
 
-def test_fill_data(env: TestEnv) -> None:
+def _test_fill_data(env: TestEnv) -> None:
     env.exec_setup_fs(2)
     enospc = 0
     for prefix in _subdirs_list(8, 1):
@@ -37,7 +37,7 @@ def test_fill_data(env: TestEnv) -> None:
     env.exec_teardown_fs()
 
 
-def test_fill_meta(env: TestEnv) -> None:
+def _test_fill_meta(env: TestEnv) -> None:
     env.exec_setup_fs(2)
     enospc = 0
     for prefix in _subdirs_list(16, 64):
@@ -65,3 +65,10 @@ def _subdirs_list(level1: int, level2: int) -> list[str]:
         for idx2 in range(1, level2):
             ret.extend([f"A{idx1}/B{idx2}"])
     return ret
+
+
+def list_tests() -> list[TestDef]:
+    return [
+        TestDef(_test_fill_data),
+        TestDef(_test_fill_meta),
+    ]

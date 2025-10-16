@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0
 
-from .ctx import TestEnv
+from .ctx import TestDef, TestEnv
 
 
-def test_archive_basic(env: TestEnv) -> None:
+def _test_archive_basic(env: TestEnv) -> None:
     env.exec_setup_fs()
     tds = env.create_data(10, "A", 2**20)
     tds.do_read()
@@ -19,7 +19,7 @@ def test_archive_basic(env: TestEnv) -> None:
     env.exec_rmfs()
 
 
-def test_archive_twice(env: TestEnv) -> None:
+def _test_archive_twice(env: TestEnv) -> None:
     env.exec_setup_fs(gsize=100)
     tds1 = env.create_data(100, "A", 2**21)
     env.exec_umount()
@@ -42,3 +42,10 @@ def test_archive_twice(env: TestEnv) -> None:
     tds2.do_unlink()
     env.exec_umount()
     env.exec_rmfs()
+
+
+def list_tests() -> list[TestDef]:
+    return [
+        TestDef(_test_archive_basic),
+        TestDef(_test_archive_twice),
+    ]

@@ -5,7 +5,7 @@ from pathlib import Path
 from . import log
 from . import subcmd
 from . import utils
-from .ctx import TestEnv
+from .ctx import TestDef, TestEnv
 
 
 # pylint: disable=R0902,R0903
@@ -88,7 +88,7 @@ class FioExec(subcmd.SubcmdExec):
         return fio_out
 
 
-def test_fio_simple(env: TestEnv) -> None:
+def _test_fio_simple(env: TestEnv) -> None:
     name = env.uniq_name()
     env.exec_setup_fs(8)
     base = env.create_fstree(name)
@@ -101,7 +101,7 @@ def test_fio_simple(env: TestEnv) -> None:
     env.exec_teardown_fs()
 
 
-def test_fio_njobs(env: TestEnv) -> None:
+def _test_fio_njobs(env: TestEnv) -> None:
     name = env.uniq_name()
     env.exec_setup_fs(64)
     base = env.create_fstree(name)
@@ -122,3 +122,10 @@ def _print_fio_in(fio_in: FioInput) -> None:
 def _print_fio_out(fio_out: FioOutput) -> None:
     fio_out_repr = utils.pformat(fio_out)
     log.printsl(f"FIO-OUT: {fio_out_repr}")
+
+
+def list_tests() -> list[TestDef]:
+    return [
+        TestDef(_test_fio_simple),
+        TestDef(_test_fio_njobs),
+    ]

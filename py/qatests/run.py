@@ -90,7 +90,7 @@ def _exec_test(td: TestDef, env: TestEnv) -> None:
 
 def _do_run_tests(args: RunArgs) -> None:
     _pre_run_tests(args)
-    for td in test_all.get_tests_defs():
+    for td in test_all.list_tests():
         env = TestEnv(td.name, args.config)
         _pre_test(env)
         _exec_test(td, env)

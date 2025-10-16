@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0
 import string
 
-from .ctx import TestEnv
+from .ctx import TestDef, TestEnv
 
 
-def test_view_minimal(env: TestEnv) -> None:
+def _test_view_minimal(env: TestEnv) -> None:
     env.exec_init()
     env.exec_mkfs()
     env.exec_mount()
@@ -19,7 +19,7 @@ def test_view_minimal(env: TestEnv) -> None:
     env.exec_rmfs()
 
 
-def test_view_data(env: TestEnv) -> None:
+def _test_view_data(env: TestEnv) -> None:
     env.exec_setup_fs(8)
     tds = env.make_tds(2, "C", 2**20)
     tds.do_makedirs()
@@ -33,3 +33,10 @@ def test_view_data(env: TestEnv) -> None:
     view = env.exec_view()
     env.expect.gt(len(view), 10)
     env.exec_rmfs()
+
+
+def list_tests() -> list[TestDef]:
+    return [
+        TestDef(_test_view_minimal),
+        TestDef(_test_view_data),
+    ]

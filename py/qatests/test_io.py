@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0
-from .ctx import TestDataSet, TestEnv
+from .ctx import TestDataSet, TestDef, TestEnv
 
 
-def test_rw_text(env: TestEnv) -> None:
+def _test_rw_text(env: TestEnv) -> None:
     env.exec_setup_fs()
     path = env.make_path("text")
     data = ["abcdefghijklmnopqrstuvwxyz\n", "0123456789\n"]
@@ -16,7 +16,7 @@ def test_rw_text(env: TestEnv) -> None:
     env.exec_teardown_fs()
 
 
-def test_rw_rands(env: TestEnv) -> None:
+def _test_rw_rands(env: TestEnv) -> None:
     env.exec_setup_fs()
     tds = env.make_tds(1, "A", 2**20)
     tds.do_makedirs()
@@ -40,7 +40,7 @@ def test_rw_rands(env: TestEnv) -> None:
     env.exec_teardown_fs()
 
 
-def test_reload(env: TestEnv) -> None:
+def _test_reload(env: TestEnv) -> None:
     env.exec_setup_fs(8)
     tds = env.make_tds(2, "C", 2**20)
     tds.do_makedirs()
@@ -65,7 +65,7 @@ def test_reload(env: TestEnv) -> None:
     env.exec_teardown_fs()
 
 
-def test_reload_n(env: TestEnv) -> None:
+def _test_reload_n(env: TestEnv) -> None:
     tds_all: list[TestDataSet] = []
     env.exec_setup_fs(64)
     env.exec_umount()
@@ -86,7 +86,7 @@ def test_reload_n(env: TestEnv) -> None:
     env.exec_teardown_fs()
 
 
-def run_async_io(tds: TestDataSet, cnt: int) -> None:
+def _run_async_io(tds: TestDataSet, cnt: int) -> None:
     while cnt > 0:
         tds.do_makedirs()
         tds.do_write()
@@ -96,14 +96,24 @@ def run_async_io(tds: TestDataSet, cnt: int) -> None:
         cnt = cnt - 1
 
 
-def test_async_io(env: TestEnv) -> None:
+def _test_async_io(env: TestEnv) -> None:
     env.exec_setup_fs(64)
     fus = []
     for i in range(0, 64):
         sub = f"async-io{i}"
         tds = env.make_tds(16, sub, i + 2**20)
-        fui = env.executor.submit(run_async_io, tds, i + 1)
+        fui = env.executor.submit(_run_async_io, tds, i + 1)
         fus.append(fui)
     for fui in fus:
         fui.result()
     env.exec_teardown_fs()
+
+
+def list_tests() -> list[TestDef]:
+    return [
+        TestDef(_test_rw_text),
+        TestDef(_test_rw_rands),
+        TestDef(_test_reload),
+        TestDef(_test_reload_n),
+        TestDef(_test_async_io),
+    ]

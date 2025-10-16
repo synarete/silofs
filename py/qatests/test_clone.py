@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0
 import copy
 
-from .ctx import TestEnv
+from .ctx import TestDef, TestEnv
 
 
-def test_clone_basic(env: TestEnv) -> None:
+def _test_clone_basic(env: TestEnv) -> None:
     env.exec_setup_fs()
     tds = env.create_data(128, "A", 2**20)
     env.exec_clone("clone1")
@@ -18,7 +18,7 @@ def test_clone_basic(env: TestEnv) -> None:
     env.exec_teardown_fs()
 
 
-def test_clone_reload_twice(env: TestEnv) -> None:
+def _test_clone_reload_twice(env: TestEnv) -> None:
     env.exec_init()
     env.exec_mkfs(32, "main")
     env.exec_mount("main")
@@ -47,7 +47,7 @@ def test_clone_reload_twice(env: TestEnv) -> None:
     env.exec_rmfs("clone2")
 
 
-def test_clone_reload_multi(env: TestEnv) -> None:
+def _test_clone_reload_multi(env: TestEnv) -> None:
     name = "main"
     name_prev = ""
     env.exec_init()
@@ -70,7 +70,7 @@ def test_clone_reload_multi(env: TestEnv) -> None:
     env.exec_rmfs(name)
 
 
-def test_clone_offline(env: TestEnv) -> None:
+def _test_clone_offline(env: TestEnv) -> None:
     env.exec_init()
     env.exec_mkfs(10, "main")
     env.exec_mount("main")
@@ -98,7 +98,7 @@ def test_clone_offline(env: TestEnv) -> None:
     env.exec_rmfs("clone3")
 
 
-def test_clone_repeated(env: TestEnv) -> None:
+def _test_clone_repeated(env: TestEnv) -> None:
     clones = []
     clone_tds = []
     name = "main"
@@ -119,3 +119,13 @@ def test_clone_repeated(env: TestEnv) -> None:
             tds.do_unlink()
         env.exec_umount()
         env.exec_rmfs(clone_name)
+
+
+def list_tests() -> list[TestDef]:
+    return [
+        TestDef(_test_clone_basic),
+        TestDef(_test_clone_reload_twice),
+        TestDef(_test_clone_reload_multi),
+        TestDef(_test_clone_offline),
+        TestDef(_test_clone_repeated),
+    ]

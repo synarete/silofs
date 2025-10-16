@@ -3,10 +3,10 @@
 from pathlib import Path
 
 from . import utils
-from .ctx import TestEnv
+from .ctx import TestDef, TestEnv
 
 
-def test_utests(env: TestEnv) -> None:
+def _test_utests(env: TestEnv) -> None:
     ut_pre_dname = "pre-uniests"
     env.exec_setup_fs(64, writeback_cache=False)
     tds = env.make_tds(128, ut_pre_dname, 2**20)
@@ -28,7 +28,7 @@ def test_utests(env: TestEnv) -> None:
     env.exec_teardown_fs()
 
 
-def test_ftests(env: TestEnv) -> None:
+def _test_ftests(env: TestEnv) -> None:
     ff_pre_dname = "pre-ftests"
     ff_dname = "ftests"
     ff_clone_name = "ftests-clone"
@@ -50,7 +50,7 @@ def test_ftests(env: TestEnv) -> None:
     env.exec_teardown_fs()
 
 
-def test_ftests_nosplice(env: TestEnv) -> None:
+def _test_ftests_nosplice(env: TestEnv) -> None:
     ff_dname = "ftests_nosplice"
     env.exec_init()
     env.exec_mkfs(40)
@@ -66,7 +66,7 @@ def test_ftests_nosplice(env: TestEnv) -> None:
     env.exec_teardown_fs()
 
 
-def test_ftests_tune2(env: TestEnv) -> None:
+def _test_ftests_tune2(env: TestEnv) -> None:
     ff_dname = "ftests2"
     env.exec_setup_fs(64, writeback_cache=False)
     tds = env.make_tds(64, ff_dname, 2**22)
@@ -89,7 +89,7 @@ def _run_ftests(env: TestEnv, base: Path) -> None:
     env.subcmd.ftests.run(base, rand=True, nostatvfs=True, noflaky=True)
 
 
-def test_ftests_mt(env: TestEnv) -> None:
+def _test_ftests_mt(env: TestEnv) -> None:
     ff_pre_dname = "pre-ftests"
     ff_dname1 = "ftests1"
     ff_dname2 = "ftests2"
@@ -127,24 +127,35 @@ def _is_active_url(url: str) -> bool:
     return True
 
 
-def test_local_cicd(env: TestEnv) -> None:
+def _test_local_cicd(env: TestEnv) -> None:
     url = env.cfg.remotes.silofs_repo_url
     if _is_active_url(url):
-        _test_local_cicd(env)
+        _do_test_local_cicd(env)
 
 
-def _test_local_cicd(env: TestEnv) -> None:
+def _do_test_local_cicd(env: TestEnv) -> None:
     url = env.cfg.remotes.silofs_repo_url
     name = env.uniq_name()
     env.exec_setup_fs(60)
     base = env.create_fstree(name)
     ret = env.subcmd.git.clone(url, base, branch="next")
     if ret == 0:
-        _test_local_cicd_at(env, base)
+        _do_test_local_cicd_at(env, base)
     env.remove_fstree(name)
     env.exec_teardown_fs()
 
 
-def _test_local_cicd_at(env: TestEnv, base: Path) -> None:
+def _do_test_local_cicd_at(env: TestEnv, base: Path) -> None:
     cicd_dir = base / "cicd"
     env.subcmd.sh.run_ok("./run-local-cicd.sh", cicd_dir)
+
+
+def list_tests() -> list[TestDef]:
+    return [
+        TestDef(_test_utests),
+        TestDef(_test_ftests),
+        TestDef(_test_ftests_nosplice),
+        TestDef(_test_ftests_tune2),
+        TestDef(_test_ftests_mt),
+        TestDef(_test_local_cicd),
+    ]

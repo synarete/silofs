@@ -3180,7 +3180,7 @@ static void fqt_make_thread_name(const struct silofs_fuseq_thread *fqt,
                                  struct silofs_strbuf *out_name)
 {
 	silofs_strbuf_reset(out_name);
-	silofs_strbuf_sprintf(out_name, "silofs-t%u", fqt->idx);
+	silofs_strbuf_sprintf(out_name, "silofs%u", fqt->idx + 1);
 }
 
 static int

@@ -40,7 +40,7 @@ bd_set_ctime(struct silofs_blob_desc *bd, const struct timespec *ts)
 static void
 bd_set_prev(struct silofs_blob_desc *bd, const struct silofs_blobid *blobid)
 {
-	silofs_blobid_assign(&bd->bd_prev, blobid);
+	silofs_blobid32b_htox(&bd->bd_prev, blobid);
 }
 
 static void bd_reset_prev(struct silofs_blob_desc *bd)
@@ -48,16 +48,16 @@ static void bd_reset_prev(struct silofs_blob_desc *bd)
 	bd_set_prev(bd, silofs_blobid_none());
 }
 
-static const struct silofs_blobid *
-bd_refblob(const struct silofs_blob_desc *bd)
+static void
+bd_refblob(const struct silofs_blob_desc *bd, struct silofs_blobid *out_blobid)
 {
-	return &bd->bd_refblob;
+	silofs_blobid32b_xtoh(&bd->bd_prev, out_blobid);
 }
 
 static void
 bd_set_refblob(struct silofs_blob_desc *bd, const struct silofs_blobid *blobid)
 {
-	silofs_blobid_assign(&bd->bd_refblob, blobid);
+	silofs_blobid32b_htox(&bd->bd_refblob, blobid);
 }
 
 static void bd_reset_refblob(struct silofs_blob_desc *bd)
@@ -68,7 +68,10 @@ static void bd_reset_refblob(struct silofs_blob_desc *bd)
 static bool bd_has_refblob(const struct silofs_blob_desc *bd,
                            const struct silofs_blobid *blobid)
 {
-	return silofs_blobid_isequal(bd_refblob(bd), blobid);
+	struct silofs_blobid ref;
+
+	bd_refblob(bd, &ref);
+	return silofs_blobid_isequal(&ref, blobid);
 }
 
 static void bd_set_blobsize(struct silofs_blob_desc *bd, size_t sz)
@@ -347,10 +350,13 @@ static void bd_del(struct silofs_blob_desc *bd, struct silofs_alloc *alloc)
 static void bd_baddr_at(const struct silofs_blob_desc *bd, off_t pos,
                         struct silofs_baddr *out_baddr)
 {
+	struct silofs_blobid blobid;
+
 	if (!bd_is_valid_pos(bd, pos)) {
 		pos = SILOFS_OFF_NULL;
 	}
-	silofs_baddr_init_raw(out_baddr, bd_refblob(bd), bd_refmtype(bd), pos);
+	bd_refblob(bd, &blobid);
+	silofs_baddr_init_raw(out_baddr, &blobid, bd_refmtype(bd), pos);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

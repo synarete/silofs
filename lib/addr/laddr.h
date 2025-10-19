@@ -18,6 +18,7 @@
 #define SILOFS_LADDR_H_
 
 #include "crypt.h"
+#include "blobid.h"
 
 struct silofs_strbuf;
 

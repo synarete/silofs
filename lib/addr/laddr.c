@@ -208,7 +208,7 @@ void silofs_lsid48b_htox(struct silofs_lsid48b *lsid48,
                          const struct silofs_lsid *lsid)
 {
 	memset(lsid48, 0, sizeof(*lsid48));
-	silofs_blobid_assign(&lsid48->blobid, &lsid->blobid);
+	silofs_blobid32b_htox(&lsid48->blobid, &lsid->blobid);
 	lsid48->vindex = silofs_cpu_to_le32(lsid->vindex);
 	lsid48->lsize = silofs_cpu_to_le32((uint32_t)lsid->lsize);
 	lsid48->vspace = (uint8_t)lsid->vspace;
@@ -219,7 +219,7 @@ void silofs_lsid48b_htox(struct silofs_lsid48b *lsid48,
 void silofs_lsid48b_xtoh(const struct silofs_lsid48b *lsid48,
                          struct silofs_lsid *lsid)
 {
-	silofs_blobid_assign(&lsid->blobid, &lsid48->blobid);
+	silofs_blobid32b_xtoh(&lsid48->blobid, &lsid->blobid);
 	lsid->vindex = silofs_le32_to_cpu(lsid48->vindex);
 	lsid->lsize = silofs_le32_to_cpu(lsid48->lsize);
 	lsid->vspace = (enum silofs_mtype)lsid48->vspace;

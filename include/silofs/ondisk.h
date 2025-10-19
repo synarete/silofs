@@ -501,21 +501,17 @@ struct silofs_blobref {
 } silofs_attr_aligned64;
 
 /* unique blob identifier */
-struct silofs_blobid {
-	union {
-		uint8_t               bid[32];
-		struct silofs_uuid    uuid[2];
-		struct silofs_hash256 hash;
-	} u;
+struct silofs_blobid32b {
+	uint8_t bid[32];
 } silofs_attr_aligned16;
 
 /* blob addressing */
 struct silofs_baddr64b {
-	struct silofs_blobid blobid;
-	int64_t              pos;
-	uint16_t             mtype;
-	uint16_t             bmode;
-	uint8_t              pad[20];
+	struct silofs_blobid32b blobid;
+	int64_t                 pos;
+	uint16_t                mtype;
+	uint16_t                bmode;
+	uint8_t                 pad[20];
 } silofs_attr_aligned64;
 
 /* cursor within blob */
@@ -527,13 +523,13 @@ struct silofs_bcursor128b {
 
 /* logical volume's segment identifier */
 struct silofs_lsid48b {
-	struct silofs_blobid blobid;
-	uint32_t             lsize;
-	uint32_t             vindex;
-	uint8_t              vspace;
-	uint8_t              height;
-	uint8_t              mtype;
-	uint8_t              pad[5];
+	struct silofs_blobid32b blobid;
+	uint32_t                lsize;
+	uint32_t                vindex;
+	uint8_t                 vspace;
+	uint8_t                 height;
+	uint8_t                 mtype;
+	uint8_t                 pad[5];
 } silofs_attr_aligned16;
 
 /* logical address */
@@ -663,9 +659,9 @@ struct silofs_super_block {
 	struct silofs_tm64b         sb_btime_curr;
 	struct silofs_tm64b         sb_btime_prev;
 	struct silofs_tm64b         sb_btime_base;
-	struct silofs_blobid        sb_lv_curr;
-	struct silofs_blobid        sb_lv_prev;
-	struct silofs_blobid        sb_lv_base;
+	struct silofs_blobid32b     sb_lv_curr;
+	struct silofs_blobid32b     sb_lv_prev;
+	struct silofs_blobid32b     sb_lv_base;
 	struct silofs_lrange128     sb_lrange;
 	uint8_t                     sb_reserved4[208];
 	/* 1K..2K */
@@ -923,19 +919,19 @@ enum silofs_objstatef {
 
 /* blob's meta descriptor */
 struct silofs_blob_desc {
-	struct silofs_header   bd_hdr;
-	struct silofs_timespec bd_btime;
-	struct silofs_timespec bd_ctime;
-	struct silofs_blobid   bd_prev;
-	struct silofs_blobid   bd_refblob;
-	uint64_t               bd_blobsize;
-	uint32_t               bd_objsize;
-	uint32_t               bd_nobjs_max;
-	uint32_t               bd_nobjs;
-	uint32_t               bd_flags;
-	uint16_t               bd_refmtype;
-	uint8_t                bd_reserved1[102];
-	uint8_t                bd_obj_state[7936];
+	struct silofs_header    bd_hdr;
+	struct silofs_timespec  bd_btime;
+	struct silofs_timespec  bd_ctime;
+	struct silofs_blobid32b bd_prev;
+	struct silofs_blobid32b bd_refblob;
+	uint64_t                bd_blobsize;
+	uint32_t                bd_objsize;
+	uint32_t                bd_nobjs_max;
+	uint32_t                bd_nobjs;
+	uint32_t                bd_flags;
+	uint16_t                bd_refmtype;
+	uint8_t                 bd_reserved1[102];
+	uint8_t                 bd_obj_state[7936];
 } silofs_attr_aligned64;
 
 /* b+tree node of persistent volume mapping */

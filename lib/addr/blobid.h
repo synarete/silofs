@@ -24,6 +24,14 @@ struct silofs_strview;
 struct silofs_strspan;
 struct silofs_strbuf;
 
+struct silofs_blobid {
+	union {
+		uint8_t               bid[32];
+		struct silofs_uuid    uuid[2];
+		struct silofs_hash256 hash;
+	} u;
+};
+
 const struct silofs_blobid *silofs_blobid_none(void);
 
 void silofs_blobid_generate(struct silofs_blobid *blobid);
@@ -64,6 +72,12 @@ int silofs_blobid_from_str(struct silofs_blobid        *blobid,
 
 uint64_t
 silofs_blobid_hash64(const struct silofs_blobid *blobid, uint64_t seed);
+
+void silofs_blobid32b_htox(struct silofs_blobid32b    *blobid32,
+                           const struct silofs_blobid *blobid);
+
+void silofs_blobid32b_xtoh(const struct silofs_blobid32b *blobid32,
+                           struct silofs_blobid          *blobid);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

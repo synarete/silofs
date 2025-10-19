@@ -158,6 +158,22 @@ silofs_blobid_hash64(const struct silofs_blobid *blobid, uint64_t seed)
 	return silofs_hash_xxh64(blobid->u.bid, sizeof(blobid->u.bid), seed);
 }
 
+void silofs_blobid32b_htox(struct silofs_blobid32b *blobid32,
+                           const struct silofs_blobid *blobid)
+{
+	STATICASSERT_EQ(sizeof(blobid32->bid), sizeof(blobid->u.bid));
+
+	memcpy(blobid32->bid, blobid->u.bid, sizeof(blobid32->bid));
+}
+
+void silofs_blobid32b_xtoh(const struct silofs_blobid32b *blobid32,
+                           struct silofs_blobid *blobid)
+{
+	STATICASSERT_EQ(sizeof(blobid32->bid), sizeof(blobid->u.bid));
+
+	memcpy(blobid->u.bid, blobid32->bid, sizeof(blobid->u.bid));
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_blobref_reset(struct silofs_blobref *blobref)

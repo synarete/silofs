@@ -140,48 +140,48 @@ static enum silofs_height sb_height(const struct silofs_super_block *sb)
 	return lrange.height;
 }
 
-static void
-sb_lv_base(const struct silofs_super_block *sb, struct silofs_blobid *out_vid)
+static void sb_lv_base(const struct silofs_super_block *sb,
+                       struct silofs_blobid *out_blobid)
 {
-	silofs_blobid_assign(out_vid, &sb->sb_lv_base);
+	silofs_blobid32b_xtoh(&sb->sb_lv_base, out_blobid);
 }
 
-static void
-sb_set_lv_base(struct silofs_super_block *sb, const struct silofs_blobid *vid)
+static void sb_set_lv_base(struct silofs_super_block *sb,
+                           const struct silofs_blobid *blobid)
 {
-	silofs_blobid_assign(&sb->sb_lv_base, vid);
+	silofs_blobid32b_htox(&sb->sb_lv_base, blobid);
 }
 
-static void
-sb_lv_prev(const struct silofs_super_block *sb, struct silofs_blobid *out_vid)
+static void sb_lv_prev(const struct silofs_super_block *sb,
+                       struct silofs_blobid *out_blobid)
 {
-	silofs_blobid_assign(out_vid, &sb->sb_lv_prev);
+	silofs_blobid32b_xtoh(&sb->sb_lv_prev, out_blobid);
 }
 
-static void
-sb_set_lv_prev(struct silofs_super_block *sb, const struct silofs_blobid *vid)
+static void sb_set_lv_prev(struct silofs_super_block *sb,
+                           const struct silofs_blobid *blobid)
 {
-	silofs_blobid_assign(&sb->sb_lv_prev, vid);
+	silofs_blobid32b_htox(&sb->sb_lv_prev, blobid);
 }
 
-static void
-sb_lv_curr(const struct silofs_super_block *sb, struct silofs_blobid *out_vid)
+static void sb_lv_curr(const struct silofs_super_block *sb,
+                       struct silofs_blobid *out_blobid)
 {
-	silofs_blobid_assign(out_vid, &sb->sb_lv_curr);
+	silofs_blobid32b_xtoh(&sb->sb_lv_curr, out_blobid);
 }
 
-static void
-sb_set_lv_curr(struct silofs_super_block *sb, const struct silofs_blobid *vid)
+static void sb_set_lv_curr(struct silofs_super_block *sb,
+                           const struct silofs_blobid *blobid)
 {
-	silofs_blobid_assign(&sb->sb_lv_curr, vid);
+	silofs_blobid32b_htox(&sb->sb_lv_curr, blobid);
 }
 
-static void
-sb_set_lv_ids(struct silofs_super_block *sb, const struct silofs_blobid *vid)
+static void sb_set_lv_ids(struct silofs_super_block *sb,
+                          const struct silofs_blobid *blobid)
 {
-	sb_set_lv_base(sb, vid);
-	sb_set_lv_prev(sb, vid);
-	sb_set_lv_curr(sb, vid);
+	sb_set_lv_base(sb, blobid);
+	sb_set_lv_prev(sb, blobid);
+	sb_set_lv_curr(sb, blobid);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

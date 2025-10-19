@@ -143,6 +143,13 @@ static void cmd_json_decref(json_t *root)
 	json_decref(root);
 }
 
+static const char cmd_jkey_silofs_version[] = "silofs_version";
+static const char cmd_jkey_fmt_revision[] = "fmt_revision";
+static const char cmd_jkey_meta[] = "meta";
+static const char cmd_jkey_btime[] = "birth_time";
+static const char cmd_jkey_mode[] = "mode";
+static const char cmd_jkey_blobid[] = "blobid";
+
 static void cmd_encode_meta_json(const struct silofs_blobref *blobref,
                                  bool is_archive, char **out_json)
 {
@@ -152,26 +159,27 @@ static void cmd_encode_meta_json(const struct silofs_blobref *blobref,
 	char *tms = nullptr;
 
 	root = cmd_json_object();
-	meta = cmd_json_object();
-
-	jobj = cmd_json_integer(SILOFS_FMT_REVISION);
-	cmd_json_object_set_new(meta, "fmtrev", jobj);
 
 	jobj = cmd_json_string(silofs_version.string);
-	cmd_json_object_set_new(meta, "version", jobj);
+	cmd_json_object_set_new(root, cmd_jkey_silofs_version, jobj);
+
+	jobj = cmd_json_integer(SILOFS_FMT_REVISION);
+	cmd_json_object_set_new(root, cmd_jkey_fmt_revision, jobj);
+
+	meta = cmd_json_object();
 
 	tms = cmd_current_time();
 	jobj = cmd_json_string(tms);
-	cmd_json_object_set_new(meta, "timestamp", jobj);
+	cmd_json_object_set_new(meta, cmd_jkey_btime, jobj);
 	cmd_pstrfree(&tms);
 
 	jobj = cmd_json_string(is_archive ? "archive" : "filesystem");
-	cmd_json_object_set_new(meta, "subtype", jobj);
+	cmd_json_object_set_new(meta, cmd_jkey_mode, jobj);
 
 	jobj = cmd_json_string(blobref->bid);
-	cmd_json_object_set_new(meta, "blobref", jobj);
+	cmd_json_object_set_new(meta, cmd_jkey_blobid, jobj);
 
-	cmd_json_object_set_new(root, "silofs", meta);
+	cmd_json_object_set_new(root, cmd_jkey_meta, meta);
 
 	*out_json = cmd_json_dumps(root);
 	cmd_json_decref(root);
@@ -187,7 +195,7 @@ static void cmd_decode_blobref(const char *str, struct silofs_blobref *out)
 	}
 }
 
-static void cmd_decode_subtype(const char *str, bool want_archive)
+static void cmd_decode_meta_mode(const char *str, bool want_archive)
 {
 	const int ar = !strcmp(str, "archive");
 	const int fs = !strcmp(str, "filesystem");
@@ -211,18 +219,18 @@ static void cmd_decode_meta_json(const char *jtxt, bool want_archive,
 	json_t *jobj = nullptr;
 
 	root = cmd_json_loads(jtxt);
-	meta = cmd_json_object_get(root, "silofs");
+	meta = cmd_json_object_get(root, cmd_jkey_meta);
 
-	jobj = cmd_json_object_get_integer(meta, "fmtrev");
+	jobj = cmd_json_object_get_string(root, cmd_jkey_silofs_version);
 
-	jobj = cmd_json_object_get_string(meta, "version");
+	jobj = cmd_json_object_get_integer(root, cmd_jkey_fmt_revision);
 
-	jobj = cmd_json_object_get_string(meta, "timestamp");
+	jobj = cmd_json_object_get_string(meta, cmd_jkey_btime);
 
-	jobj = cmd_json_object_get_string(meta, "subtype");
-	cmd_decode_subtype(json_string_value(jobj), want_archive);
+	jobj = cmd_json_object_get_string(meta, cmd_jkey_mode);
+	cmd_decode_meta_mode(json_string_value(jobj), want_archive);
 
-	jobj = cmd_json_object_get_string(meta, "blobref");
+	jobj = cmd_json_object_get_string(meta, cmd_jkey_blobid);
 	cmd_decode_blobref(json_string_value(jobj), out_blobref);
 
 	cmd_json_decref(root);
@@ -387,13 +395,13 @@ cmd_load_metaref_of(const struct silofs_boot_args *boot_args,
 void cmd_load_fs_metaref(const struct silofs_boot_args *boot_args,
                          struct silofs_blobref *out_blobref)
 {
-	cmd_load_metaref_of(boot_args, true, out_blobref);
+	cmd_load_metaref_of(boot_args, false, out_blobref);
 }
 
 void cmd_load_ar_metaref(struct silofs_boot_args *boot_args,
                          struct silofs_blobref *out_blobref)
 {
-	cmd_load_metaref_of(boot_args, false, out_blobref);
+	cmd_load_metaref_of(boot_args, true, out_blobref);
 }
 
 void cmd_unlink_fs_metaref(const struct silofs_boot_args *boot_args)

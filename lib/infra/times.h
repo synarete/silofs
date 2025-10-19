@@ -21,6 +21,8 @@
 
 int silofs_init_times(void);
 
+void silofs_uptime(struct timespec *out_ts);
+
 int silofs_localtime_now(struct tm *res);
 
 time_t silofs_time_real_now(void);

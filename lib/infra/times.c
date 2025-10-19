@@ -25,6 +25,8 @@
 #include <silofs/panic.h>
 #include "times.h"
 
+static struct timespec silofs_start_ts_mono;
+
 static void do_clock_gettime(clockid_t clock_id, struct timespec *tp)
 {
 	int err;
@@ -145,9 +147,23 @@ int silofs_suspend_ts(const struct timespec *ts)
 int silofs_init_times(void)
 {
 	struct tm res = { .tm_zone = nullptr };
+	int err;
 
 	tzset();
-	return silofs_localtime_now(&res);
+	err = silofs_localtime_now(&res);
+	if (err) {
+		return err;
+	}
+	silofs_clock_mono_now(&silofs_start_ts_mono);
+	return 0;
+}
+
+void silofs_uptime(struct timespec *out_ts)
+{
+	struct timespec ts_now;
+
+	silofs_clock_mono_now(&ts_now);
+	silofs_ts_diff(&silofs_start_ts_mono, &ts_now, out_ts);
 }
 
 int silofs_localtime_now(struct tm *res)

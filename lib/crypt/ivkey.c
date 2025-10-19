@@ -20,17 +20,19 @@
 #include "gcry.h"
 #include "ivkey.h"
 
-static void randomize_by_gcry(void *ptr, size_t len, bool very_strong)
+static enum gcry_random_level random_level(bool strong)
 {
-	enum gcry_random_level level = very_strong ? GCRY_VERY_STRONG_RANDOM :
-	                                             GCRY_STRONG_RANDOM;
-
-	gcry_randomize(ptr, len, level);
+	return strong ? GCRY_VERY_STRONG_RANDOM : GCRY_STRONG_RANDOM;
 }
 
-static void randomize(void *ptr, size_t len, bool very_strong)
+static void randomize_by_gcry(void *ptr, size_t len, bool strong)
 {
-	randomize_by_gcry(ptr, len, very_strong);
+	gcry_randomize(ptr, len, random_level(strong));
+}
+
+static void randomize(void *ptr, size_t len, bool strong)
+{
+	randomize_by_gcry(ptr, len, strong);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

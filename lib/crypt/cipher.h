@@ -26,7 +26,7 @@ struct silofs_password;
 
 enum silofs_cipher_consts {
 	SILOFS_CIPHER_ALGO_DEFAULT = SILOFS_CIPHER_AES256,
-	SILOFS_CIPHER_MODE_DEFAULT = SILOFS_CIPHER_MODE_XTS,
+	SILOFS_CIPHER_MODE_DEFAULT = SILOFS_CIPHER_MODE_GCM,
 };
 
 struct silofs_kdf_desc {

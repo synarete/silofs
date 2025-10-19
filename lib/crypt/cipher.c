@@ -29,7 +29,8 @@ int silofs_check_cipher_args(int algo, int mode)
 		silofs_log_warn("unsupported chipher-algo: %d", algo);
 		return -SILOFS_EOPNOTSUPP;
 	}
-	if ((mode != GCRY_CIPHER_MODE_GCM) && (mode != GCRY_CIPHER_MODE_CBC) &&
+	if ((mode != GCRY_CIPHER_MODE_GCM) && //
+	    (mode != GCRY_CIPHER_MODE_CBC) && //
 	    (mode != GCRY_CIPHER_MODE_XTS)) {
 		silofs_log_warn("unsupported chipher-mode: %d", mode);
 		return -SILOFS_EOPNOTSUPP;
@@ -61,13 +62,13 @@ static void cipher_close(struct silofs_cipher *ci)
 
 int silofs_cipher_init(struct silofs_cipher *ci)
 {
-	const int algo = GCRY_CIPHER_AES256;
-	const int mode = GCRY_CIPHER_MODE_XTS;
+	const int algo = SILOFS_CIPHER_ALGO_DEFAULT;
+	const int mode = SILOFS_CIPHER_MODE_DEFAULT;
 	int err;
 
 	SILOFS_STATICASSERT_EQ(GCRY_CIPHER_AES256,
 	                       (int)SILOFS_CIPHER_ALGO_DEFAULT);
-	SILOFS_STATICASSERT_EQ(GCRY_CIPHER_MODE_XTS,
+	SILOFS_STATICASSERT_EQ(GCRY_CIPHER_MODE_GCM,
 	                       (int)SILOFS_CIPHER_MODE_DEFAULT);
 
 	err = silofs_check_cipher_args(algo, mode);
@@ -107,12 +108,32 @@ void silofs_cipher_fini(struct silofs_cipher *ci)
 	}
 }
 
+static size_t
+cipher_keysize(const struct silofs_cipher *ci, size_t keysize_want)
+{
+	size_t keysize;
+
+	switch (ci->cipher_mode) {
+	case GCRY_CIPHER_MODE_CBC:
+	case GCRY_CIPHER_MODE_GCM:
+		keysize = silofs_min(keysize_want, 32);
+		break;
+	case GCRY_CIPHER_MODE_XTS:
+		keysize = silofs_min(keysize_want, 64);
+		break;
+	default:
+		keysize = keysize_want;
+		break;
+	}
+	return keysize;
+}
+
 static int cipher_prepare(const struct silofs_cipher *ci,
                           const struct silofs_ivkey *ivkey)
 {
 	const struct silofs_iv *iv = &ivkey->iv;
 	const struct silofs_key *key = &ivkey->key;
-	size_t blklen;
+	size_t blklen, keysize;
 	gcry_error_t err;
 
 	blklen = gcry_cipher_get_algo_blklen(ci->cipher_algo);
@@ -124,7 +145,8 @@ static int cipher_prepare(const struct silofs_cipher *ci,
 	if (err) {
 		return silofs_gcrypt_status(err, "gcry_cipher_reset");
 	}
-	err = gcry_cipher_setkey(ci->cipher_hd, key->key, sizeof(key->key));
+	keysize = cipher_keysize(ci, sizeof(key->key));
+	err = gcry_cipher_setkey(ci->cipher_hd, key->key, keysize);
 	if (err) {
 		return silofs_gcrypt_status(err, "gcry_cipher_setkey");
 	}

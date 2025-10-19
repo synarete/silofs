@@ -60,7 +60,13 @@ uint64_t silofs_twang_mix64(uint64_t n)
 
 void silofs_xrand_by_hash(void *ptr, size_t len, uint64_t seed)
 {
-	uint64_t u[5] = { seed, seed, seed, seed, seed };
+	uint64_t u[5] = {
+		seed,        //
+		seed + 1,    //
+		seed / 11,   //
+		seed * 111,  //
+		seed + 1111, //
+	};
 	uint64_t *itr = ptr;
 	uint64_t xx = *itr;
 	const size_t ns = len / sizeof(*itr);
@@ -76,7 +82,7 @@ void silofs_xrand_by_hash(void *ptr, size_t len, uint64_t seed)
 	u[4] ^= (uint64_t)t.tv_nsec;
 
 	for (uint32_t i = 0; i < ns; ++i) {
-		u[(i + 1) % nu] ^= silofs_twang_mix64(xx);
+		u[(i + 1) % nu] ^= silofs_twang_mix64(xx + i);
 		u[(i + 2) % nu] ^= xx / (i | 1);
 		u[(i + 3) % nu] ^= ~xx + i;
 		u[(i + 4) % nu] ^= xx * (i + 11);

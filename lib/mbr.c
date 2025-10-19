@@ -300,8 +300,8 @@ static void mbr_init(struct silofs_mbr *mbr, enum silofs_mbr_kind flavour)
 	silofs_baddr_reset(&mbr->arix_addr);
 	mbr->kind = flavour;
 	mbr->flags = 0;
-	mbr->cipher_algo = SILOFS_CIPHER_AES256;
-	mbr->cipher_mode = SILOFS_CIPHER_MODE_XTS;
+	mbr->cipher_algo = SILOFS_CIPHER_ALGO_DEFAULT;
+	mbr->cipher_mode = SILOFS_CIPHER_MODE_DEFAULT;
 }
 
 static void mbr_fini(struct silofs_mbr *mbr)

@@ -188,7 +188,7 @@ static void cmd_archive_setup_fs_ids(struct cmd_archive_ctx *ctx)
 
 static void cmd_archive_load_fs_blobref(struct cmd_archive_ctx *ctx)
 {
-	cmd_load_fs_blobref(&ctx->env_args.boot_args, &ctx->fs_blobref);
+	cmd_load_fs_metaref(&ctx->env_args.boot_args, &ctx->fs_blobref);
 }
 
 static void cmd_archive_setup_env(struct cmd_archive_ctx *ctx)
@@ -230,7 +230,7 @@ static void cmd_archive_execute(struct cmd_archive_ctx *ctx)
 	};
 
 	cmd_archive_fs(ctx->env, &ctx->fs_blobref, &ctx->ar_blobref);
-	cmd_save_ar_blobref(&boot_args, &ctx->ar_blobref);
+	cmd_save_ar_metaref(&boot_args, &ctx->ar_blobref);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

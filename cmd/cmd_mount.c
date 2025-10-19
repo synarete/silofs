@@ -279,7 +279,7 @@ static void cmd_mount_setup_fs_ids(struct cmd_mount_ctx *ctx)
 
 static void cmd_mount_load_fs_blobref(struct cmd_mount_ctx *ctx)
 {
-	cmd_load_fs_blobref(&ctx->env_args.boot_args, &ctx->fs_blobref);
+	cmd_load_fs_metaref(&ctx->env_args.boot_args, &ctx->fs_blobref);
 }
 
 static void cmd_mount_setup_env(struct cmd_mount_ctx *ctx)

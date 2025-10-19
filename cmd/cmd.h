@@ -345,20 +345,20 @@ void cmd_delpass(char **pass);
 
 void cmd_checkpass(const char *pass);
 
-/* x-reference */
-void cmd_save_fs_blobref(const struct silofs_boot_args *boot_args,
+/* meta-reference */
+void cmd_save_fs_metaref(const struct silofs_boot_args *boot_args,
                          const struct silofs_blobref   *fs_blobref);
 
-void cmd_save_ar_blobref(const struct silofs_boot_args *boot_args,
+void cmd_save_ar_metaref(const struct silofs_boot_args *boot_args,
                          const struct silofs_blobref   *ar_blobref);
 
-void cmd_load_fs_blobref(const struct silofs_boot_args *boot_args,
+void cmd_load_fs_metaref(const struct silofs_boot_args *boot_args,
                          struct silofs_blobref         *out_blobref);
 
-void cmd_load_ar_blobref(struct silofs_boot_args *boot_args,
+void cmd_load_ar_metaref(struct silofs_boot_args *boot_args,
                          struct silofs_blobref   *out_blobref);
 
-void cmd_unlink_fs_blobref(const struct silofs_boot_args *boot_args);
+void cmd_unlink_fs_metaref(const struct silofs_boot_args *boot_args);
 
 /* fs input arguments */
 void cmd_setup_env_args(struct silofs_env_args *env_args);

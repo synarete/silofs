@@ -247,7 +247,7 @@ static void cmd_save_jref_at(int dfd, const char *name, const char *jtxt)
 	}
 }
 
-static void cmd_save_blobref_as_json(int dfd, const char *name,
+static void cmd_save_metaref_as_json(int dfd, const char *name,
                                      const struct silofs_blobref *blobref)
 {
 	char *jtxt = nullptr;
@@ -257,23 +257,23 @@ static void cmd_save_blobref_as_json(int dfd, const char *name,
 	free(jtxt);
 }
 
-void cmd_save_fs_blobref(const struct silofs_boot_args *boot_args,
+void cmd_save_fs_metaref(const struct silofs_boot_args *boot_args,
                          const struct silofs_blobref *fs_blobref)
 {
 	int dfd = -1;
 
 	cmd_open_repodir(boot_args, &dfd);
-	cmd_save_blobref_as_json(dfd, boot_args->fs_name, fs_blobref);
+	cmd_save_metaref_as_json(dfd, boot_args->fs_name, fs_blobref);
 	silofs_sys_closefd(&dfd);
 }
 
-void cmd_save_ar_blobref(const struct silofs_boot_args *boot_args,
+void cmd_save_ar_metaref(const struct silofs_boot_args *boot_args,
                          const struct silofs_blobref *ar_blobref)
 {
 	int dfd = -1;
 
 	cmd_open_repodir(boot_args, &dfd);
-	cmd_save_blobref_as_json(dfd, boot_args->ar_name, ar_blobref);
+	cmd_save_metaref_as_json(dfd, boot_args->ar_name, ar_blobref);
 	silofs_sys_closefd(&dfd);
 }
 
@@ -310,7 +310,7 @@ static char *cmd_load_jref_at(int dfd, const char *name)
 	return jtxt;
 }
 
-static void cmd_load_blobref_from_json(int dfd, const char *name,
+static void cmd_load_metaref_from_json(int dfd, const char *name,
                                        struct silofs_blobref *out_blobref)
 {
 	char *jtxt = nullptr;
@@ -333,31 +333,31 @@ cmd_verify_blobref(const struct silofs_blobref *blobref, const char *name)
 	}
 }
 
-static void cmd_load_blobref_of(const struct silofs_boot_args *boot_args,
+static void cmd_load_metaref_of(const struct silofs_boot_args *boot_args,
                                 bool fs, struct silofs_blobref *out_blobref)
 {
 	const char *name = fs ? boot_args->fs_name : boot_args->ar_name;
 	int dfd = -1;
 
 	cmd_open_repodir(boot_args, &dfd);
-	cmd_load_blobref_from_json(dfd, name, out_blobref);
+	cmd_load_metaref_from_json(dfd, name, out_blobref);
 	silofs_sys_closefd(&dfd);
 	cmd_verify_blobref(out_blobref, name);
 }
 
-void cmd_load_fs_blobref(const struct silofs_boot_args *boot_args,
+void cmd_load_fs_metaref(const struct silofs_boot_args *boot_args,
                          struct silofs_blobref *out_blobref)
 {
-	cmd_load_blobref_of(boot_args, true, out_blobref);
+	cmd_load_metaref_of(boot_args, true, out_blobref);
 }
 
-void cmd_load_ar_blobref(struct silofs_boot_args *boot_args,
+void cmd_load_ar_metaref(struct silofs_boot_args *boot_args,
                          struct silofs_blobref *out_blobref)
 {
-	cmd_load_blobref_of(boot_args, false, out_blobref);
+	cmd_load_metaref_of(boot_args, false, out_blobref);
 }
 
-void cmd_unlink_fs_blobref(const struct silofs_boot_args *boot_args)
+void cmd_unlink_fs_metaref(const struct silofs_boot_args *boot_args)
 {
 	int dfd = -1;
 

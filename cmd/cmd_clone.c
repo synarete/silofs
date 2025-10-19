@@ -305,7 +305,7 @@ static void cmd_clone_setup_fs_ids(struct cmd_clone_ctx *ctx)
 
 static void cmd_clone_load_fs_blobref(struct cmd_clone_ctx *ctx)
 {
-	cmd_load_fs_blobref(&ctx->env_args.boot_args, &ctx->fs_blobref);
+	cmd_load_fs_metaref(&ctx->env_args.boot_args, &ctx->fs_blobref);
 }
 
 static void cmd_clone_setup_env(struct cmd_clone_ctx *ctx)
@@ -350,7 +350,7 @@ static void cmd_clone_save_fork_blobref(struct cmd_clone_ctx *ctx)
 		.fs_name = ctx->in_args.forkname,
 	};
 
-	cmd_save_fs_blobref(&boot_args, &ctx->fs_blobref_fork);
+	cmd_save_fs_metaref(&boot_args, &ctx->fs_blobref_fork);
 }
 
 static void cmd_clone_save_main_blobref(struct cmd_clone_ctx *ctx)
@@ -360,7 +360,7 @@ static void cmd_clone_save_main_blobref(struct cmd_clone_ctx *ctx)
 		.fs_name = ctx->in_args.fsname,
 	};
 
-	cmd_save_fs_blobref(&boot_args, &ctx->fs_blobref_main);
+	cmd_save_fs_metaref(&boot_args, &ctx->fs_blobref_main);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

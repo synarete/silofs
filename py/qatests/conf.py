@@ -7,14 +7,17 @@ import pydantic
 
 import tomllib
 
-from .expect import ExpectException
-
 _DEFAULT_REPO_URL = "@default"
 _POSTGRESQL_REPO_URL = "https://git.postgresql.org/git/postgresql.git"
 _RSYNC_REPO_URL = "git://git.samba.org/rsync.git"
 _FINDUTILS_REPO_URL = "https://git.savannah.gnu.org/git/findutils.git"
 _GITSCM_REPO_URL = "https://github.com/git/git.git"
 _SILOFS_REPO_URL = "https://github.com/synarete/silofs"
+
+
+class ConfException(Exception):
+    def __init__(self, msg: str) -> None:
+        Exception.__init__(self, msg)
 
 
 class ConfigParams(pydantic.BaseModel):
@@ -38,8 +41,16 @@ class Config(pydantic.BaseModel):
     remotes: ConfigRemotes = ConfigRemotes()
 
 
-class FsBootRef(pydantic.BaseModel):
-    bref: str
+class MeteRefInfo(pydantic.BaseModel):
+    birth_type: str = ""
+    mode: str = ""
+    blobid: str = ""
+
+
+class MetaRef(pydantic.BaseModel):
+    silofs_version: str = ""
+    fmt_revision: int = 0
+    meta: MeteRefInfo
 
 
 class FsIdsConf(pydantic.BaseModel):
@@ -58,9 +69,9 @@ def _load_config(path: Path) -> Config:
         json_conf = json.loads(_load_toml_as_json(path))
         return Config(**json_conf)
     except tomllib.TOMLDecodeError as tde:
-        raise ExpectException(f"bad configuration toml: {path}") from tde
+        raise ConfException(f"bad configuration toml: {path}") from tde
     except pydantic.ValidationError as ve:
-        raise ExpectException(f"non-valid configuration: {path}") from ve
+        raise ConfException(f"non-valid configuration: {path}") from ve
 
 
 def _use_default_url(url: str) -> bool:
@@ -93,21 +104,29 @@ def load_fsids(repodir: Path) -> FsIdsConf:
         json_conf = json.loads(_load_toml_as_json(path))
         return FsIdsConf(**json_conf)
     except tomllib.TOMLDecodeError as tde:
-        raise ExpectException(f"bad fs-ids conf: {path}") from tde
+        raise ConfException(f"bad fs-ids conf: {path}") from tde
     except pydantic.ValidationError as ve:
-        raise ExpectException(f"non-valid fs-ids conf: {path}") from ve
+        raise ConfException(f"non-valid fs-ids conf: {path}") from ve
 
 
-def load_bref(path: Path) -> FsBootRef:
-    with open(path, "r", encoding="utf-8") as f:
-        lines = f.readlines()
-    if len(lines) != 1:
-        raise ExpectException(f"bad fs boot-ref: {path}")
-    dat = str(lines[0]).strip()
-    if not dat.isascii():
-        raise ExpectException(f"non-ascii fs boot-ref: {path}")
+def _verify_metaref(metaref: MetaRef) -> None:
+    if not metaref.silofs_version:
+        raise ConfException(f"non-valid metaref version: {metaref}")
+    if metaref.fmt_revision != 1:
+        raise ConfException(f"non-valid metaref format-revision: {metaref}")
+    if metaref.meta.mode not in ("filesystem", "archive"):
+        raise ConfException(f"non-valid metaref mode: {metaref}")
+    if len(metaref.meta.blobid) != 64:
+        raise ConfException(f"non-valid metaref blobref: {metaref}")
+
+
+def load_metaref(path: Path) -> MetaRef:
+    """Load and verify meta-ref json file into internal representation."""
+    with open(path, "rb") as f:
+        json_conf = json.load(f)
     try:
-        bref = FsBootRef(bref=dat)
+        metaref = MetaRef(**json_conf)
     except pydantic.ValidationError as ve:
-        raise ExpectException(f"non-valid fs boot-ref: {path}") from ve
-    return bref
+        raise ConfException(f"non-valid metaref at: {path}") from ve
+    _verify_metaref(metaref)
+    return metaref

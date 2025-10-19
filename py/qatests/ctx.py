@@ -183,7 +183,7 @@ class TestEnv:
             size=gsize * gibi,
             password=self._passwd(),
         )
-        self._require_bref(name)
+        self._require_metaref(name)
 
     # pylint: disable=R0917
     def exec_mount(
@@ -194,7 +194,7 @@ class TestEnv:
         writeback_cache: bool = True,
         buffer_copy_mode: bool = False,
     ) -> None:
-        self._require_bref(name)
+        self._require_metaref(name)
         repodir_name = self._repodir_name(name)
         self.subcmd.silofs.mount(
             repodir_name=repodir_name,
@@ -229,13 +229,13 @@ class TestEnv:
 
     def exec_clone(self, name: str) -> None:
         self.subcmd.silofs.clone(name, self.mntpoint(), self._passwd())
-        self._require_bref(name)
+        self._require_metaref(name)
 
     def exec_clone_offline(self, mainname: str, clonename: str) -> None:
         self.subcmd.silofs.clone_offline(
             clonename, self._repodir_name(mainname), self._passwd()
         )
-        self._require_bref(clonename)
+        self._require_metaref(clonename)
 
     def exec_tune(self, path: Path, ftype: int = 2) -> None:
         self.subcmd.silofs.tune(path, ftype)
@@ -245,22 +245,22 @@ class TestEnv:
             self.subcmd.silofs.tune(path, 2)
 
     def exec_rmfs(self, name: str = "") -> None:
-        self._require_bref(name)
+        self._require_metaref(name)
         repodir_name = self._repodir_name(name)
         self.subcmd.silofs.rmfs(repodir_name, self._passwd())
 
     def exec_fsck(self, name: str = "") -> None:
-        self._require_bref(name)
+        self._require_metaref(name)
         repodir_name = self._repodir_name(name)
         self.subcmd.silofs.fsck(repodir_name, self._passwd())
 
     def exec_view(self, name: str = "") -> list[str]:
-        self._require_bref(name)
+        self._require_metaref(name)
         repodir_name = self._repodir_name(name)
         return list(self.subcmd.silofs.view(repodir_name, self._passwd()))
 
     def exec_archive(self, arname: str, name: str = "") -> None:
-        self._require_bref(name)
+        self._require_metaref(name)
         repodir_name = self._repodir_name(name)
         self.subcmd.silofs.archive(repodir_name, arname, self._passwd())
 
@@ -276,8 +276,8 @@ class TestEnv:
     def _update_fsids(self) -> None:
         self.fsids = conf.load_fsids(self.repodir())
 
-    def _require_bref(self, name: str = "") -> None:
-        conf.load_bref(self._repodir_name(name))
+    def _require_metaref(self, name: str = "") -> None:
+        conf.load_metaref(self._repodir_name(name))
 
 
 # pylint: disable=R0903

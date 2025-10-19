@@ -74,6 +74,7 @@ void silofs_password_mkrand(struct silofs_password *pw)
 	union {
 		uint8_t d[128];
 		struct {
+			struct timespec ts;
 			struct sysinfo si;
 			pid_t pid;
 			uid_t uid;
@@ -83,10 +84,11 @@ void silofs_password_mkrand(struct silofs_password *pw)
 	STATICASSERT_LT(sizeof(u), sizeof(pw->pass));
 
 	silofs_memzero(&u, sizeof(u));
+	silofs_ts_gettime(&u.s.ts, false);
 	sysinfo(&u.s.si);
 	u.s.pid = getpid();
 	u.s.uid = getuid();
 
-	silofs_xrand_by_hash(&u, sizeof(u), (uint64_t)silofs_time_real_now());
+	silofs_xrand_by_hash(&u, sizeof(u), 0);
 	silofs_password_setup2(pw, &u, sizeof(u));
 }

@@ -77,7 +77,7 @@ void silofs_xrand_by_hash(void *ptr, size_t len, uint64_t seed)
 	u[0] ^= (uint64_t)t.tv_sec;
 	u[1] ^= (uint64_t)t.tv_nsec;
 	u[2] ^= (uint64_t)gettid();
-	silofs_clock_real_now(&t);
+	silofs_uptime(&t);
 	u[3] ^= (uint64_t)t.tv_sec;
 	u[4] ^= (uint64_t)t.tv_nsec;
 

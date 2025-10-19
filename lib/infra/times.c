@@ -92,8 +92,7 @@ int silofs_ts_gettime(struct timespec *ts, int realtime)
 	if (realtime) {
 		err = silofs_sys_clock_gettime(CLOCK_REALTIME, ts);
 	} else {
-		ts->tv_sec = silofs_time_real_now();
-		ts->tv_nsec = 0;
+		err = silofs_sys_clock_gettime(CLOCK_MONOTONIC, ts);
 	}
 	return err;
 }

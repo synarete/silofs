@@ -106,7 +106,7 @@ int silofs_sb_check_version(const struct silofs_super_block *sb)
 	if (sb_magic(sb) != SILOFS_SUPER_MAGIC) {
 		return -SILOFS_EFSCORRUPTED;
 	}
-	if (sb_version(sb) != SILOFS_FMT_VERSION) {
+	if (sb_version(sb) != SILOFS_FMT_REVISION) {
 		return -SILOFS_EFSCORRUPTED;
 	}
 	return 0;
@@ -398,7 +398,7 @@ static void
 sb_init(struct silofs_super_block *sb, const struct silofs_blobid *vid)
 {
 	sb_set_magic(sb, SILOFS_SUPER_MAGIC);
-	sb_set_version(sb, SILOFS_FMT_VERSION);
+	sb_set_version(sb, SILOFS_FMT_REVISION);
 	sb_set_flags(sb, SILOFS_SUPERF_NONE);
 	sb_set_swversion(sb, silofs_version.string);
 	sb_set_lv_ids(sb, vid);

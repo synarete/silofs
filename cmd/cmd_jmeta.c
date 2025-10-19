@@ -127,13 +127,24 @@ static json_t *cmd_json_object_get_string(const json_t *jobj, const char *key)
 	return jstr;
 }
 
+static json_t *cmd_json_object_get_integer(const json_t *jobj, const char *key)
+{
+	json_t *jstr;
+
+	jstr = cmd_json_object_get(jobj, key);
+	if (!json_is_integer(jstr)) {
+		cmd_diez("json: failed to parse integer: key='%s'", key);
+	}
+	return jstr;
+}
+
 static void cmd_json_decref(json_t *root)
 {
 	json_decref(root);
 }
 
-static void
-cmd_encode_meta_json(const struct silofs_blobref *blobref, char **out_json)
+static void cmd_encode_meta_json(const struct silofs_blobref *blobref,
+                                 bool is_archive, char **out_json)
 {
 	json_t *root = nullptr;
 	json_t *meta = nullptr;
@@ -143,8 +154,8 @@ cmd_encode_meta_json(const struct silofs_blobref *blobref, char **out_json)
 	root = cmd_json_object();
 	meta = cmd_json_object();
 
-	jobj = cmd_json_integer(SILOFS_FMT_VERSION);
-	cmd_json_object_set_new(meta, "format", jobj);
+	jobj = cmd_json_integer(SILOFS_FMT_REVISION);
+	cmd_json_object_set_new(meta, "fmtrev", jobj);
 
 	jobj = cmd_json_string(silofs_version.string);
 	cmd_json_object_set_new(meta, "version", jobj);
@@ -153,6 +164,9 @@ cmd_encode_meta_json(const struct silofs_blobref *blobref, char **out_json)
 	jobj = cmd_json_string(tms);
 	cmd_json_object_set_new(meta, "timestamp", jobj);
 	cmd_pstrfree(&tms);
+
+	jobj = cmd_json_string(is_archive ? "archive" : "filesystem");
+	cmd_json_object_set_new(meta, "subtype", jobj);
 
 	jobj = cmd_json_string(blobref->bid);
 	cmd_json_object_set_new(meta, "blobref", jobj);
@@ -173,22 +187,43 @@ static void cmd_decode_blobref(const char *str, struct silofs_blobref *out)
 	}
 }
 
-static void
-cmd_decode_meta_json(const char *jtxt, struct silofs_blobref *out_blobref)
+static void cmd_decode_subtype(const char *str, bool want_archive)
+{
+	const int ar = !strcmp(str, "archive");
+	const int fs = !strcmp(str, "filesystem");
+
+	if (!ar && !fs) {
+		cmd_diez("json: illegal subtype: '%s'", str);
+	}
+	if (fs && want_archive) {
+		cmd_diez("json: bad subtype for filesystem: '%s'", str);
+	}
+	if (ar && !want_archive) {
+		cmd_diez("json: bad subtype for archive: '%s'", str);
+	}
+}
+
+static void cmd_decode_meta_json(const char *jtxt, bool want_archive,
+                                 struct silofs_blobref *out_blobref)
 {
 	json_t *root = nullptr;
 	json_t *meta = nullptr;
-	json_t *jstr = nullptr;
+	json_t *jobj = nullptr;
 
 	root = cmd_json_loads(jtxt);
 	meta = cmd_json_object_get(root, "silofs");
 
-	cmd_json_object_get_string(meta, "version");
+	jobj = cmd_json_object_get_integer(meta, "fmtrev");
 
-	cmd_json_object_get_string(meta, "timestamp");
+	jobj = cmd_json_object_get_string(meta, "version");
 
-	jstr = cmd_json_object_get_string(meta, "blobref");
-	cmd_decode_blobref(json_string_value(jstr), out_blobref);
+	jobj = cmd_json_object_get_string(meta, "timestamp");
+
+	jobj = cmd_json_object_get_string(meta, "subtype");
+	cmd_decode_subtype(json_string_value(jobj), want_archive);
+
+	jobj = cmd_json_object_get_string(meta, "blobref");
+	cmd_decode_blobref(json_string_value(jobj), out_blobref);
 
 	cmd_json_decref(root);
 }
@@ -247,12 +282,13 @@ static void cmd_save_jref_at(int dfd, const char *name, const char *jtxt)
 	}
 }
 
-static void cmd_save_metaref_as_json(int dfd, const char *name,
-                                     const struct silofs_blobref *blobref)
+static void
+cmd_save_metaref_as_json(int dfd, const char *name,
+                         const struct silofs_blobref *blobref, bool is_archive)
 {
 	char *jtxt = nullptr;
 
-	cmd_encode_meta_json(blobref, &jtxt);
+	cmd_encode_meta_json(blobref, is_archive, &jtxt);
 	cmd_save_jref_at(dfd, name, jtxt);
 	free(jtxt);
 }
@@ -263,7 +299,7 @@ void cmd_save_fs_metaref(const struct silofs_boot_args *boot_args,
 	int dfd = -1;
 
 	cmd_open_repodir(boot_args, &dfd);
-	cmd_save_metaref_as_json(dfd, boot_args->fs_name, fs_blobref);
+	cmd_save_metaref_as_json(dfd, boot_args->fs_name, fs_blobref, false);
 	silofs_sys_closefd(&dfd);
 }
 
@@ -273,7 +309,7 @@ void cmd_save_ar_metaref(const struct silofs_boot_args *boot_args,
 	int dfd = -1;
 
 	cmd_open_repodir(boot_args, &dfd);
-	cmd_save_metaref_as_json(dfd, boot_args->ar_name, ar_blobref);
+	cmd_save_metaref_as_json(dfd, boot_args->ar_name, ar_blobref, true);
 	silofs_sys_closefd(&dfd);
 }
 
@@ -310,13 +346,14 @@ static char *cmd_load_jref_at(int dfd, const char *name)
 	return jtxt;
 }
 
-static void cmd_load_metaref_from_json(int dfd, const char *name,
-                                       struct silofs_blobref *out_blobref)
+static void
+cmd_load_metaref_from_json(int dfd, const char *name, bool want_archive,
+                           struct silofs_blobref *out_blobref)
 {
 	char *jtxt = nullptr;
 
 	jtxt = cmd_load_jref_at(dfd, name);
-	cmd_decode_meta_json(jtxt, out_blobref);
+	cmd_decode_meta_json(jtxt, want_archive, out_blobref);
 	cmd_pstrfree(&jtxt);
 }
 
@@ -333,14 +370,16 @@ cmd_verify_blobref(const struct silofs_blobref *blobref, const char *name)
 	}
 }
 
-static void cmd_load_metaref_of(const struct silofs_boot_args *boot_args,
-                                bool fs, struct silofs_blobref *out_blobref)
+static void
+cmd_load_metaref_of(const struct silofs_boot_args *boot_args,
+                    bool want_archive, struct silofs_blobref *out_blobref)
 {
-	const char *name = fs ? boot_args->fs_name : boot_args->ar_name;
+	const char *name;
 	int dfd = -1;
 
+	name = want_archive ? boot_args->ar_name : boot_args->fs_name;
 	cmd_open_repodir(boot_args, &dfd);
-	cmd_load_metaref_from_json(dfd, name, out_blobref);
+	cmd_load_metaref_from_json(dfd, name, want_archive, out_blobref);
 	silofs_sys_closefd(&dfd);
 	cmd_verify_blobref(out_blobref, name);
 }

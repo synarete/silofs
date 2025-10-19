@@ -86,7 +86,7 @@ static void mbr1k_setup(struct silofs_mbr1k *mbr1k)
 {
 	silofs_memzero(mbr1k, sizeof(*mbr1k));
 	mbr1k_set_magic(mbr1k, SILOFS_MBR_MAGIC);
-	mbr1k_set_version(mbr1k, SILOFS_FMT_VERSION);
+	mbr1k_set_version(mbr1k, SILOFS_FMT_REVISION);
 	mbr1k_set_kind(mbr1k, SILOFS_MBR_NONE);
 	mbr1k_set_flags(mbr1k, 0);
 	mbr1k_set_cipher(mbr1k, SILOFS_CIPHER_ALGO_DEFAULT,
@@ -138,14 +138,14 @@ static int mbr1k_check_base(const struct silofs_mbr1k *mbr1k)
 
 	/* When both magic and version are no valid, we are likely to assume it
 	 * is due to bad password provided by user. */
-	if ((magic != SILOFS_MBR_MAGIC) && (version != SILOFS_FMT_VERSION)) {
+	if ((magic != SILOFS_MBR_MAGIC) && (version != SILOFS_FMT_REVISION)) {
 		return -SILOFS_EKEYEXPIRED;
 	}
 	if (magic != SILOFS_MBR_MAGIC) {
 		log_dbg("bad mbr magic: 0x%lx", magic);
 		return -SILOFS_EBADMBR;
 	}
-	if (version != SILOFS_FMT_VERSION) {
+	if (version != SILOFS_FMT_REVISION) {
 		log_dbg("bad mbr version: %lu", version);
 		return -SILOFS_EBADMBR;
 	}

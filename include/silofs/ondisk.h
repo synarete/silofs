@@ -20,8 +20,8 @@
 #include <silofs/ccattr.h>
 #include <stdint.h>
 
-/* current on-disk format version number */
-#define SILOFS_FMT_VERSION (1)
+/* current on-disk format revision number */
+#define SILOFS_FMT_REVISION (1)
 
 /* current repo format version number */
 #define SILOFS_REPO_VERSION (1)

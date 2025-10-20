@@ -99,6 +99,17 @@ void silofs_gen_random_ivs(struct silofs_iv *ivs, size_t nivs)
 	randomize_ivs(ivs, nivs);
 }
 
+void silofs_derive_iv_by_hash256(struct silofs_iv *iv,
+                                 const struct silofs_hash256 *hash)
+{
+	STATICASSERT_EQ(2 * ARRAY_SIZE(iv->iv), ARRAY_SIZE(hash->hash));
+
+	silofs_iv_reset(iv);
+	for (size_t i = 0; i < ARRAY_SIZE(hash->hash); ++i) {
+		iv->iv[i % ARRAY_SIZE(hash->hash)] ^= hash->hash[i];
+	}
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_key_reset(struct silofs_key *key)

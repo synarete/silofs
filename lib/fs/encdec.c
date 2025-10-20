@@ -90,7 +90,7 @@ void silofs_llink_of_uni(const struct silofs_mbr *mbr,
 	const struct silofs_laddr *laddr = silofs_uni_laddr(uni);
 	const struct silofs_ivkey *ivkey = &mbr->main_ivkey;
 
-	silofs_llink_setup2(out_llink, laddr, &ivkey->key, &ivkey->iv);
+	silofs_llink_setup(out_llink, laddr, &ivkey->key, &ivkey->iv);
 }
 
 void silofs_llink_of_vni(const struct silofs_mbr *mbr,

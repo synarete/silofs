@@ -52,6 +52,9 @@ void silofs_gen_random_iv(struct silofs_iv *iv);
 
 void silofs_gen_random_ivs(struct silofs_iv *ivs, size_t nivs);
 
+void silofs_derive_iv_by_hash256(struct silofs_iv            *iv,
+                                 const struct silofs_hash256 *hash);
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_key_reset(struct silofs_key *key);

@@ -137,19 +137,16 @@ void silofs_laddr_to_ascii(const struct silofs_laddr *laddr,
 int silofs_laddr_from_ascii(struct silofs_laddr        *laddr,
                             const struct silofs_strbuf *sbuf);
 
-void silofs_laddr_to_base64(const struct silofs_laddr *laddr,
-                            struct silofs_strbuf      *sbuf);
+void silofs_derive_iv_by_laddr(const struct silofs_mdigest *md,
+                               const struct silofs_laddr   *laddr,
+                               struct silofs_iv            *out_iv);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_llink_setup(struct silofs_llink       *llink,
                         const struct silofs_laddr *laddr,
-                        const struct silofs_key   *key);
-
-void silofs_llink_setup2(struct silofs_llink       *llink,
-                         const struct silofs_laddr *laddr,
-                         const struct silofs_key   *key,
-                         const struct silofs_iv    *iv);
+                        const struct silofs_key   *key,
+                        const struct silofs_iv    *iv);
 
 void silofs_llink_assign(struct silofs_llink       *llink,
                          const struct silofs_llink *other);

@@ -528,42 +528,32 @@ int silofs_laddr_from_ascii(struct silofs_laddr *laddr,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-union silofs_laddr_repr_u {
-	struct silofs_laddr64b laddr64;
-	uint8_t d[64];
-} silofs_attr_aligned16;
-
-void silofs_laddr_to_base64(const struct silofs_laddr *laddr,
-                            struct silofs_strbuf *sbuf)
+static void
+laddr_to_hash(const struct silofs_laddr *laddr,
+              const struct silofs_mdigest *md, struct silofs_hash256 *out_hash)
 {
-	union silofs_laddr_repr_u repr;
-	size_t len = 0;
+	struct silofs_laddr64b laddr64 = {};
 
-	STATICASSERT_EQ(sizeof(repr), 64);
+	silofs_laddr64b_htox(&laddr64, laddr);
+	silofs_sha256_of(md, &laddr64, sizeof(laddr64), out_hash);
+}
 
-	silofs_memzero(&repr, sizeof(repr));
-	silofs_laddr64b_htox(&repr.laddr64, laddr);
-	silofs_base64_encode(repr.d, sizeof(repr.d), sbuf->str,
-	                     sizeof(sbuf->str) - 1, &len);
-	sbuf->str[len] = '\0';
+void silofs_derive_iv_by_laddr(const struct silofs_mdigest *md,
+                               const struct silofs_laddr *laddr,
+                               struct silofs_iv *out_iv)
+{
+	struct silofs_hash256 hash = {};
+
+	laddr_to_hash(laddr, md, &hash);
+	silofs_derive_iv_by_hash256(out_iv, &hash);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_llink_setup(struct silofs_llink *llink,
                         const struct silofs_laddr *laddr,
-                        const struct silofs_key *key)
-{
-	struct silofs_iv iv;
-
-	silofs_laddr_as_iv(laddr, &iv);
-	silofs_llink_setup2(llink, laddr, key, &iv);
-}
-
-void silofs_llink_setup2(struct silofs_llink *llink,
-                         const struct silofs_laddr *laddr,
-                         const struct silofs_key *key,
-                         const struct silofs_iv *iv)
+                        const struct silofs_key *key,
+                        const struct silofs_iv *iv)
 {
 	silofs_laddr_assign(&llink->laddr, laddr);
 	silofs_ivkey_setup(&llink->ivkey, key, iv);

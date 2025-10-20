@@ -1878,6 +1878,7 @@ static int vstgc_resolve_llink_of(const struct silofs_vstage_ctx *vstg_ctx,
 {
 	struct silofs_laddr laddr;
 	struct silofs_key key;
+	struct silofs_iv iv;
 	int err;
 
 	err = vstgc_resolve_child_of(vstg_ctx, &laddr);
@@ -1889,7 +1890,8 @@ static int vstgc_resolve_llink_of(const struct silofs_vstage_ctx *vstg_ctx,
 		return err;
 	}
 	silofs_laddr_setpos(&laddr, vstg_ctx->voff);
-	silofs_llink_setup(out_llink, &laddr, &key);
+	silofs_derive_iv_by_laddr(&vstg_ctx->env->mdigest, &laddr, &iv);
+	silofs_llink_setup(out_llink, &laddr, &key, &iv);
 	return 0;
 }
 

@@ -35,7 +35,7 @@ static int check_ascii_fs_name(const struct silofs_strview *sv)
 {
 	const char *allowed = "abcdefghijklmnopqrstuvwxyz"
 			      "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-			      "0123456789_-+.";
+			      "0123456789_-";
 	size_t n;
 
 	if (!silofs_strview_isprint(sv)) {
@@ -2435,8 +2435,8 @@ static void fill_query_boot_name(const struct silofs_inode_info *ii,
 	str_to_buf(&bootpath.fsname, qboot->name, sizeof(qboot->name));
 }
 
-static void fill_query_boot_blobref(const struct silofs_inode_info *ii,
-                                    struct silofs_ioc_query *query)
+static void fill_query_boot_main_blobid(const struct silofs_inode_info *ii,
+                                        struct silofs_ioc_query *query)
 {
 	struct silofs_mbr1k mbr1k;
 	struct silofs_baddr mref;
@@ -2445,11 +2445,8 @@ static void fill_query_boot_blobref(const struct silofs_inode_info *ii,
 	int err;
 
 	err = silofs_mbri_encode_mbr(&env->mbri, SILOFS_MBR_FS, &mref, &mbr1k);
-	if (silofs_unlikely(err)) {
-		silofs_memzero(qboot->blobref, sizeof(qboot->blobref));
-	} else {
-		silofs_blobid_to_str2(&mref.blobid, (char *)qboot->blobref,
-		                      sizeof(qboot->blobref));
+	if (!err) {
+		silofs_blobid_export(&mref.blobid, &qboot->main_blobid);
 	}
 }
 
@@ -2457,20 +2454,18 @@ static void fill_query_boot_root(const struct silofs_inode_info *ii,
                                  struct silofs_ioc_query *query)
 {
 	union silofs_blobidu blobid;
-	struct silofs_strspan ss;
 	struct silofs_query_boot *qboot = &query->u.boot;
 
 	silofs_sbi_self_blobid(silofs_ii_sbi(ii), &blobid);
-	silofs_strspan_initk(&ss, (char *)qboot->root_blobid, 0,
-	                     sizeof(qboot->root_blobid));
-	silofs_blobid_to_str(&blobid, &ss);
+	silofs_blobid_export(&blobid, &qboot->root_blobid);
 }
 
 static void fill_query_boot(const struct silofs_inode_info *ii,
                             struct silofs_ioc_query *query)
 {
+	silofs_memzero(query, sizeof(*query));
 	fill_query_boot_name(ii, query);
-	fill_query_boot_blobref(ii, query);
+	fill_query_boot_main_blobid(ii, query);
 	fill_query_boot_root(ii, query);
 }
 

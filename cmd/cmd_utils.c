@@ -828,6 +828,18 @@ char *cmd_struuid(const uint8_t uu[16])
 	return cmd_strdup(str);
 }
 
+char *cmd_strblobid(const struct silofs_blobid *blobid)
+{
+	char bid[256] = "";
+	int err;
+
+	err = silofs_encode_blobid(blobid, bid, sizeof(bid) - 1);
+	if (err) {
+		cmd_die(err, "cannot encode blobid");
+	}
+	return cmd_strdup(bid);
+}
+
 char *cmd_mkpathf(const char *fmt, ...)
 {
 	va_list ap = { 0 };

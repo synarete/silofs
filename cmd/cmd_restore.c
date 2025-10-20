@@ -37,8 +37,8 @@ struct cmd_restore_in_args {
 struct cmd_restore_ctx {
 	struct cmd_restore_in_args in_args;
 	struct silofs_env_args env_args;
-	struct silofs_blobref ar_blobref;
-	struct silofs_blobref fs_blobref;
+	struct silofs_blobid ar_blobid;
+	struct silofs_blobid fs_blobid;
 	struct silofs_env *env;
 	bool has_lockfile;
 };
@@ -180,9 +180,9 @@ static void cmd_restore_setup_env_args(struct cmd_restore_ctx *ctx)
 	env_args->boot_args.passwd = ctx->in_args.password;
 }
 
-static void cmd_restore_load_ar_blobref(struct cmd_restore_ctx *ctx)
+static void cmd_restore_load_ar_blobid(struct cmd_restore_ctx *ctx)
 {
-	cmd_load_ar_metaref(&ctx->env_args.boot_args, &ctx->ar_blobref);
+	cmd_load_ar_metaref(&ctx->env_args.boot_args, &ctx->ar_blobid);
 }
 
 static void cmd_restore_setup_env(struct cmd_restore_ctx *ctx)
@@ -202,7 +202,7 @@ static void cmd_restore_close_repo(struct cmd_restore_ctx *ctx)
 
 static void cmd_restore_sense_archive(struct cmd_restore_ctx *ctx)
 {
-	cmd_sense_ar(ctx->env, &ctx->ar_blobref);
+	cmd_sense_ar(ctx->env, &ctx->ar_blobid);
 }
 
 static void cmd_restore_execute(struct cmd_restore_ctx *ctx)
@@ -213,8 +213,8 @@ static void cmd_restore_execute(struct cmd_restore_ctx *ctx)
 		.ar_name = ctx->in_args.arname,
 	};
 
-	cmd_restore_fs(ctx->env, &ctx->ar_blobref, &ctx->fs_blobref);
-	cmd_save_fs_metaref(&boot_args, &ctx->fs_blobref);
+	cmd_restore_fs(ctx->env, &ctx->ar_blobid, &ctx->fs_blobid);
+	cmd_save_fs_metaref(&boot_args, &ctx->fs_blobid);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -244,7 +244,7 @@ void cmd_execute_restore(void)
 	cmd_restore_setup_env_args(&ctx);
 
 	/* Load archive boot-reference */
-	cmd_restore_load_ar_blobref(&ctx);
+	cmd_restore_load_ar_blobid(&ctx);
 
 	/* Setup execution environment */
 	cmd_restore_setup_env(&ctx);

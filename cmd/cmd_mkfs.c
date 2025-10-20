@@ -38,7 +38,7 @@ struct cmd_mkfs_in_args {
 struct cmd_mkfs_ctx {
 	struct cmd_mkfs_in_args in_args;
 	struct silofs_env_args env_args;
-	struct silofs_blobref fs_blobref;
+	struct silofs_blobid fs_blobid;
 	struct silofs_env *env;
 	bool has_lockfile;
 };
@@ -212,12 +212,12 @@ static void cmd_mkfs_close_repo(const struct cmd_mkfs_ctx *ctx)
 
 static void cmd_mkfs_format_fs(struct cmd_mkfs_ctx *ctx)
 {
-	cmd_format_fs(ctx->env, &ctx->fs_blobref);
+	cmd_format_fs(ctx->env, &ctx->fs_blobid);
 }
 
-static void cmd_mkfs_save_blobref(struct cmd_mkfs_ctx *ctx)
+static void cmd_mkfs_save_blobid(struct cmd_mkfs_ctx *ctx)
 {
-	cmd_save_fs_metaref(&ctx->env_args.boot_args, &ctx->fs_blobref);
+	cmd_save_fs_metaref(&ctx->env_args.boot_args, &ctx->fs_blobid);
 }
 
 static void cmd_mkfs_close_fs(struct cmd_mkfs_ctx *ctx)
@@ -271,7 +271,7 @@ void cmd_execute_mkfs(void)
 	cmd_mkfs_format_fs(&ctx);
 
 	/* Save top-level fs boot-ref */
-	cmd_mkfs_save_blobref(&ctx);
+	cmd_mkfs_save_blobid(&ctx);
 
 	/* Post-format cleanups */
 	cmd_mkfs_close_fs(&ctx);

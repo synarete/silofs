@@ -2984,12 +2984,10 @@ out:
 	                       sizeof(fcc->args->out.query.qry), err);
 }
 
-static void
-assign_ioc_blobref(int8_t *blobref, const struct silofs_baddr *baddr)
+static void assign_ioc_blobid(struct silofs_blobid *blobid,
+                              const struct silofs_baddr *baddr)
 {
-	const size_t lim = SILOFS_BLOBREFLEN_MAX + 1;
-
-	silofs_blobid_to_str2(&baddr->blobid, (char *)blobref, lim);
+	silofs_blobid_export(&baddr->blobid, blobid);
 }
 
 static int do_ioc_clone(const struct silofs_fuseq_cmd_ctx *fcc)
@@ -3027,9 +3025,9 @@ static int do_ioc_clone(const struct silofs_fuseq_cmd_ctx *fcc)
 	}
 
 	memset(cl_out, 0, sizeof(*cl_out));
-	assign_ioc_blobref(cl_out->base, &mrefs->base);
-	assign_ioc_blobref(cl_out->main, &mrefs->main);
-	assign_ioc_blobref(cl_out->fork, &mrefs->fork);
+	assign_ioc_blobid(&cl_out->base, &mrefs->base);
+	assign_ioc_blobid(&cl_out->main, &mrefs->main);
+	assign_ioc_blobid(&cl_out->fork, &mrefs->fork);
 	memcpy(buf_out, cl_out, sizeof(*cl_out));
 out:
 	return fqs_reply_ioctl(fcc->fqs, fcc->task, 0, cl_out, sizeof(*cl_out),

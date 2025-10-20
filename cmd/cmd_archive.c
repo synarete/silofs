@@ -37,8 +37,8 @@ struct cmd_archive_in_args {
 struct cmd_archive_ctx {
 	struct cmd_archive_in_args in_args;
 	struct silofs_env_args env_args;
-	struct silofs_blobref fs_blobref;
-	struct silofs_blobref ar_blobref;
+	struct silofs_blobid fs_blobid;
+	struct silofs_blobid ar_blobid;
 	struct silofs_env *env;
 	bool has_lockfile;
 };
@@ -186,9 +186,9 @@ static void cmd_archive_setup_fs_ids(struct cmd_archive_ctx *ctx)
 	cmd_load_fsids(&ctx->env_args.ugids, ctx->in_args.repodir_real);
 }
 
-static void cmd_archive_load_fs_blobref(struct cmd_archive_ctx *ctx)
+static void cmd_archive_load_fs_blobid(struct cmd_archive_ctx *ctx)
 {
-	cmd_load_fs_metaref(&ctx->env_args.boot_args, &ctx->fs_blobref);
+	cmd_load_fs_metaref(&ctx->env_args.boot_args, &ctx->fs_blobid);
 }
 
 static void cmd_archive_setup_env(struct cmd_archive_ctx *ctx)
@@ -208,12 +208,12 @@ static void cmd_archive_close_repo(struct cmd_archive_ctx *ctx)
 
 static void cmd_archive_sense_fs(struct cmd_archive_ctx *ctx)
 {
-	cmd_sense_fs(ctx->env, &ctx->fs_blobref);
+	cmd_sense_fs(ctx->env, &ctx->fs_blobid);
 }
 
 static void cmd_archive_open_fs(struct cmd_archive_ctx *ctx)
 {
-	cmd_open_fs(ctx->env, &ctx->fs_blobref);
+	cmd_open_fs(ctx->env, &ctx->fs_blobid);
 }
 
 static void cmd_archive_close_fs(struct cmd_archive_ctx *ctx)
@@ -229,8 +229,8 @@ static void cmd_archive_execute(struct cmd_archive_ctx *ctx)
 		.ar_name = ctx->in_args.arname,
 	};
 
-	cmd_archive_fs(ctx->env, &ctx->fs_blobref, &ctx->ar_blobref);
-	cmd_save_ar_metaref(&boot_args, &ctx->ar_blobref);
+	cmd_archive_fs(ctx->env, &ctx->fs_blobid, &ctx->ar_blobid);
+	cmd_save_ar_metaref(&boot_args, &ctx->ar_blobid);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -263,7 +263,7 @@ void cmd_execute_archive(void)
 	cmd_archive_setup_fs_ids(&ctx);
 
 	/* Load fs boot-reference */
-	cmd_archive_load_fs_blobref(&ctx);
+	cmd_archive_load_fs_blobid(&ctx);
 
 	/* Setup execution environment */
 	cmd_archive_setup_env(&ctx);

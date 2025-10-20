@@ -140,9 +140,11 @@ cmd_require_ok(const struct silofs_env *env, int status, const char *msg)
 	}
 }
 
-silofs_attr_printf(3, 4) static void cmd_requiref_ok(
-	const struct silofs_env *env, int status, const char *restrict fmt,
-	...)
+#define attr_printf34 silofs_attr_printf(3, 4)
+
+attr_printf34 static void
+cmd_requiref_ok(const struct silofs_env *env, int status,
+                const char *restrict fmt, ...)
 {
 	char msg[2048] = "";
 	va_list ap = { 0 };
@@ -180,39 +182,46 @@ void cmd_close_repo(struct silofs_env *env)
 	cmd_require_ok(env, err, "failed to close repo");
 }
 
-void cmd_sense_fs(struct silofs_env *env, const struct silofs_blobref *blobref)
+static void cmd_require_blobid_ok(const struct silofs_env *env, int err,
+                                  const char *prefix_msg,
+                                  const struct silofs_blobid *blobid)
 {
-	int err;
+	char bid[256] = "";
 
-	err = silofs_sense_fs(env, blobref);
-	cmd_requiref_ok(env, err, "can not sense fs: blobref=%s",
-	                blobref->bid);
+	silofs_encode_blobid(blobid, bid, sizeof(bid) - 1);
+	cmd_requiref_ok(env, err, "%s: blobid=%s", prefix_msg, bid);
 }
 
-void cmd_sense_ar(struct silofs_env *env, const struct silofs_blobref *blobref)
+void cmd_sense_fs(struct silofs_env *env, const struct silofs_blobid *blobid)
 {
 	int err;
 
-	err = silofs_sense_ar(env, blobref);
-	cmd_requiref_ok(env, err, "failed to sense archive: blobref=%s",
-	                blobref->bid);
+	err = silofs_sense_fs(env, blobid);
+	cmd_require_blobid_ok(env, err, "can not sense fs", blobid);
 }
 
-void cmd_format_fs(struct silofs_env *env, struct silofs_blobref *out_blobref)
+void cmd_sense_ar(struct silofs_env *env, const struct silofs_blobid *blobid)
 {
 	int err;
 
-	err = silofs_format_fs(env, out_blobref);
+	err = silofs_sense_ar(env, blobid);
+	cmd_require_blobid_ok(env, err, "failed to sense archive", blobid);
+}
+
+void cmd_format_fs(struct silofs_env *env, struct silofs_blobid *out_blobid)
+{
+	int err;
+
+	err = silofs_format_fs(env, out_blobid);
 	cmd_require_ok(env, err, "failed to format fs");
 }
 
-void cmd_open_fs(struct silofs_env *env, const struct silofs_blobref *blobref)
+void cmd_open_fs(struct silofs_env *env, const struct silofs_blobid *blobid)
 {
 	int err;
 
-	err = silofs_open_fs(env, blobref);
-	cmd_requiref_ok(env, err, "failed to open fs: blobref=%s",
-	                blobref->bid);
+	err = silofs_open_fs(env, blobid);
+	cmd_require_blobid_ok(env, err, "failed to open fs", blobid);
 }
 
 void cmd_close_fs(struct silofs_env *env)
@@ -231,8 +240,8 @@ void cmd_exec_fs(struct silofs_env *env)
 	cmd_require_ok(env, err, "failed to exec fs");
 }
 
-void cmd_fork_fs(struct silofs_env *env, struct silofs_blobref *out_main,
-                 struct silofs_blobref *out_fork)
+void cmd_fork_fs(struct silofs_env *env, struct silofs_blobid *out_main,
+                 struct silofs_blobid *out_fork)
 {
 	int err;
 
@@ -240,14 +249,12 @@ void cmd_fork_fs(struct silofs_env *env, struct silofs_blobref *out_main,
 	cmd_require_ok(env, err, "failed to fork fs");
 }
 
-void cmd_remove_fs(struct silofs_env *env,
-                   const struct silofs_blobref *blobref)
+void cmd_remove_fs(struct silofs_env *env, const struct silofs_blobid *blobid)
 {
 	int err;
 
-	err = silofs_remove_fs(env, blobref);
-	cmd_requiref_ok(env, err, "failed to remove fs: blobref=%s",
-	                blobref->bid);
+	err = silofs_remove_fs(env, blobid);
+	cmd_require_blobid_ok(env, err, "failed to remove fs", blobid);
 }
 
 void cmd_inspect_fs(struct silofs_env *env, bool view)
@@ -259,25 +266,23 @@ void cmd_inspect_fs(struct silofs_env *env, bool view)
 }
 
 void cmd_archive_fs(struct silofs_env *env,
-                    const struct silofs_blobref *fs_blobref,
-                    struct silofs_blobref *out_ar_blobref)
+                    const struct silofs_blobid *fs_blobid,
+                    struct silofs_blobid *out_ar_blobid)
 {
 	int err;
 
-	err = silofs_archive_fs(env, fs_blobref, out_ar_blobref);
-	cmd_requiref_ok(env, err, "failed to archive: blobref=%s",
-	                fs_blobref->bid);
+	err = silofs_archive_fs(env, fs_blobid, out_ar_blobid);
+	cmd_require_blobid_ok(env, err, "failed to archive", fs_blobid);
 }
 
 void cmd_restore_fs(struct silofs_env *env,
-                    const struct silofs_blobref *ar_blobref,
-                    struct silofs_blobref *out_fs_blobref)
+                    const struct silofs_blobid *ar_blobid,
+                    struct silofs_blobid *out_fs_blobid)
 {
 	int err;
 
-	err = silofs_restore_fs(env, ar_blobref, out_fs_blobref);
-	cmd_requiref_ok(env, err, "failed to restore: blobref=%s",
-	                ar_blobref->bid);
+	err = silofs_restore_fs(env, ar_blobid, out_fs_blobid);
+	cmd_require_blobid_ok(env, err, "failed to restore", ar_blobid);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

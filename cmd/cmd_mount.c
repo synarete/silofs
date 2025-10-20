@@ -61,7 +61,7 @@ struct cmd_mount_in_args {
 struct cmd_mount_ctx {
 	struct cmd_mount_in_args in_args;
 	struct silofs_env_args env_args;
-	struct silofs_blobref fs_blobref;
+	struct silofs_blobid fs_blobid;
 	struct silofs_env *env;
 	pid_t child_pid;
 	time_t start_time;
@@ -277,9 +277,9 @@ static void cmd_mount_setup_fs_ids(struct cmd_mount_ctx *ctx)
 	cmd_load_fsids(&ctx->env_args.ugids, ctx->in_args.repodir_real);
 }
 
-static void cmd_mount_load_fs_blobref(struct cmd_mount_ctx *ctx)
+static void cmd_mount_load_fs_blobid(struct cmd_mount_ctx *ctx)
 {
-	cmd_load_fs_metaref(&ctx->env_args.boot_args, &ctx->fs_blobref);
+	cmd_load_fs_metaref(&ctx->env_args.boot_args, &ctx->fs_blobid);
 }
 
 static void cmd_mount_setup_env(struct cmd_mount_ctx *ctx)
@@ -410,12 +410,12 @@ static void cmd_mount_close_repo(struct cmd_mount_ctx *ctx)
 
 static void cmd_mount_sense_fs(struct cmd_mount_ctx *ctx)
 {
-	cmd_sense_fs(ctx->env, &ctx->fs_blobref);
+	cmd_sense_fs(ctx->env, &ctx->fs_blobid);
 }
 
 static void cmd_mount_open_fs(struct cmd_mount_ctx *ctx)
 {
-	cmd_open_fs(ctx->env, &ctx->fs_blobref);
+	cmd_open_fs(ctx->env, &ctx->fs_blobid);
 }
 
 static void cmd_mount_execute_fs(struct cmd_mount_ctx *ctx)
@@ -718,7 +718,7 @@ void cmd_execute_mount(void)
 	cmd_mount_setup_fs_ids(&ctx);
 
 	/* Load fs boot-reference */
-	cmd_mount_load_fs_blobref(&ctx);
+	cmd_mount_load_fs_blobid(&ctx);
 
 	/* Execute pre-mount as command-line process */
 	cmd_mount_exec_phase1(&ctx);

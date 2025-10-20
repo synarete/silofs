@@ -58,9 +58,9 @@ struct silofs_query_repo {
 };
 
 struct silofs_query_boot {
-	int8_t name[SILOFS_NAME_MAX + 1];
-	int8_t blobref[SILOFS_BLOBREFLEN_MAX + 1];
-	int8_t root_blobid[SILOFS_NAME_MAX + 1];
+	int8_t               name[SILOFS_NAME_MAX + 1];
+	struct silofs_blobid main_blobid;
+	struct silofs_blobid root_blobid;
 };
 
 struct silofs_query_proc {
@@ -104,10 +104,10 @@ struct silofs_ioc_query {
 };
 
 struct silofs_ioc_forkfs {
-	int8_t base[SILOFS_BLOBREFLEN_MAX + 1];
-	int8_t main[SILOFS_BLOBREFLEN_MAX + 1];
-	int8_t fork[SILOFS_BLOBREFLEN_MAX + 1];
-	int8_t reserved[SILOFS_BLOBREFLEN_MAX + 1];
+	struct silofs_blobid base;
+	struct silofs_blobid main;
+	struct silofs_blobid fork;
+	struct silofs_blobid reserved;
 };
 
 struct silofs_ioc_syncfs {

@@ -71,6 +71,18 @@ static json_t *cmd_json_integer(long n)
 	return jint;
 }
 
+static json_t *cmd_json_blobid(const struct silofs_blobid *blobid)
+{
+	char bid[256] = "";
+	int err;
+
+	err = silofs_encode_blobid(blobid, bid, sizeof(bid) - 1);
+	if (err) {
+		cmd_die(err, "json: failed to encode blobid");
+	}
+	return cmd_json_string(bid);
+}
+
 static void cmd_json_object_set_new(json_t *jobj, const char *key, json_t *val)
 {
 	int err;
@@ -150,7 +162,7 @@ static const char cmd_jkey_btime[] = "birth_time";
 static const char cmd_jkey_mode[] = "mode";
 static const char cmd_jkey_blobid[] = "blobid";
 
-static void cmd_encode_meta_json(const struct silofs_blobref *blobref,
+static void cmd_encode_meta_json(const struct silofs_blobid *blobid,
                                  bool is_archive, char **out_json)
 {
 	json_t *root = nullptr;
@@ -176,7 +188,7 @@ static void cmd_encode_meta_json(const struct silofs_blobref *blobref,
 	jobj = cmd_json_string(is_archive ? "archive" : "filesystem");
 	cmd_json_object_set_new(meta, cmd_jkey_mode, jobj);
 
-	jobj = cmd_json_string(blobref->bid);
+	jobj = cmd_json_blobid(blobid);
 	cmd_json_object_set_new(meta, cmd_jkey_blobid, jobj);
 
 	cmd_json_object_set_new(root, cmd_jkey_meta, meta);
@@ -185,13 +197,13 @@ static void cmd_encode_meta_json(const struct silofs_blobref *blobref,
 	cmd_json_decref(root);
 }
 
-static void cmd_decode_blobref(const char *str, struct silofs_blobref *out)
+static void cmd_decode_blobid(const char *str, struct silofs_blobid *out)
 {
 	int err;
 
-	err = silofs_assign_blobref(out, str);
+	err = silofs_decode_blobid(out, str);
 	if (err) {
-		cmd_die(err, "json: illegal blobref: '%s'", str);
+		cmd_die(err, "json: illegal blobid: '%s'", str);
 	}
 }
 
@@ -212,7 +224,7 @@ static void cmd_decode_meta_mode(const char *str, bool want_archive)
 }
 
 static void cmd_decode_meta_json(const char *jtxt, bool want_archive,
-                                 struct silofs_blobref *out_blobref)
+                                 struct silofs_blobid *out_blobid)
 {
 	json_t *root = nullptr;
 	json_t *meta = nullptr;
@@ -231,7 +243,7 @@ static void cmd_decode_meta_json(const char *jtxt, bool want_archive,
 	cmd_decode_meta_mode(json_string_value(jobj), want_archive);
 
 	jobj = cmd_json_object_get_string(meta, cmd_jkey_blobid);
-	cmd_decode_blobref(json_string_value(jobj), out_blobref);
+	cmd_decode_blobid(json_string_value(jobj), out_blobid);
 
 	cmd_json_decref(root);
 }
@@ -292,32 +304,32 @@ static void cmd_save_jref_at(int dfd, const char *name, const char *jtxt)
 
 static void
 cmd_save_metaref_as_json(int dfd, const char *name,
-                         const struct silofs_blobref *blobref, bool is_archive)
+                         const struct silofs_blobid *blobid, bool is_archive)
 {
 	char *jtxt = nullptr;
 
-	cmd_encode_meta_json(blobref, is_archive, &jtxt);
+	cmd_encode_meta_json(blobid, is_archive, &jtxt);
 	cmd_save_jref_at(dfd, name, jtxt);
 	free(jtxt);
 }
 
 void cmd_save_fs_metaref(const struct silofs_boot_args *boot_args,
-                         const struct silofs_blobref *fs_blobref)
+                         const struct silofs_blobid *fs_blobid)
 {
 	int dfd = -1;
 
 	cmd_open_repodir(boot_args, &dfd);
-	cmd_save_metaref_as_json(dfd, boot_args->fs_name, fs_blobref, false);
+	cmd_save_metaref_as_json(dfd, boot_args->fs_name, fs_blobid, false);
 	silofs_sys_closefd(&dfd);
 }
 
 void cmd_save_ar_metaref(const struct silofs_boot_args *boot_args,
-                         const struct silofs_blobref *ar_blobref)
+                         const struct silofs_blobid *ar_blobid)
 {
 	int dfd = -1;
 
 	cmd_open_repodir(boot_args, &dfd);
-	cmd_save_metaref_as_json(dfd, boot_args->ar_name, ar_blobref, true);
+	cmd_save_metaref_as_json(dfd, boot_args->ar_name, ar_blobid, true);
 	silofs_sys_closefd(&dfd);
 }
 
@@ -339,7 +351,7 @@ static char *cmd_load_jref_at(int dfd, const char *name)
 	}
 	len = (size_t)st.st_size;
 	if (len >= jtxt_size_max) {
-		cmd_die(-EFBIG, "illegal blobref: %s", name);
+		cmd_die(-EFBIG, "illegal blobid: %s", name);
 	}
 	err = silofs_sys_openat(dfd, name, O_RDONLY, 0, &fd);
 	if (err) {
@@ -349,59 +361,45 @@ static char *cmd_load_jref_at(int dfd, const char *name)
 	err = silofs_sys_readn(fd, jtxt, len);
 	silofs_sys_closefd(&fd);
 	if (err) {
-		cmd_die(err, "failed to read blobref: %s", name);
+		cmd_die(err, "failed to read blobid: %s", name);
 	}
 	return jtxt;
 }
 
 static void
 cmd_load_metaref_from_json(int dfd, const char *name, bool want_archive,
-                           struct silofs_blobref *out_blobref)
+                           struct silofs_blobid *out_blobid)
 {
 	char *jtxt = nullptr;
 
 	jtxt = cmd_load_jref_at(dfd, name);
-	cmd_decode_meta_json(jtxt, want_archive, out_blobref);
+	cmd_decode_meta_json(jtxt, want_archive, out_blobid);
 	cmd_pstrfree(&jtxt);
 }
 
 static void
-cmd_verify_blobref(const struct silofs_blobref *blobref, const char *name)
-{
-	int err;
-
-	err = silofs_check_blobref(blobref);
-	if (err == -SILOFS_EPROTO) {
-		cmd_diez("unknown blobref format: %s", name);
-	} else if (err) {
-		cmd_diez("bad blobref: %s", name);
-	}
-}
-
-static void
 cmd_load_metaref_of(const struct silofs_boot_args *boot_args,
-                    bool want_archive, struct silofs_blobref *out_blobref)
+                    bool want_archive, struct silofs_blobid *out_blobid)
 {
 	const char *name;
 	int dfd = -1;
 
 	name = want_archive ? boot_args->ar_name : boot_args->fs_name;
 	cmd_open_repodir(boot_args, &dfd);
-	cmd_load_metaref_from_json(dfd, name, want_archive, out_blobref);
+	cmd_load_metaref_from_json(dfd, name, want_archive, out_blobid);
 	silofs_sys_closefd(&dfd);
-	cmd_verify_blobref(out_blobref, name);
 }
 
 void cmd_load_fs_metaref(const struct silofs_boot_args *boot_args,
-                         struct silofs_blobref *out_blobref)
+                         struct silofs_blobid *out_blobid)
 {
-	cmd_load_metaref_of(boot_args, false, out_blobref);
+	cmd_load_metaref_of(boot_args, false, out_blobid);
 }
 
 void cmd_load_ar_metaref(struct silofs_boot_args *boot_args,
-                         struct silofs_blobref *out_blobref)
+                         struct silofs_blobid *out_blobid)
 {
-	cmd_load_metaref_of(boot_args, true, out_blobref);
+	cmd_load_metaref_of(boot_args, true, out_blobid);
 }
 
 void cmd_unlink_fs_metaref(const struct silofs_boot_args *boot_args)

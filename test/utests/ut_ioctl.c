@@ -131,17 +131,25 @@ ut_query_boot(struct ut_env *ute, ino_t ino, struct silofs_ioc_query *ioc_qry)
 	ut_query(ute, ino, SILOFS_QUERY_BOOT, ioc_qry);
 }
 
+static void ut_expect_blobid(const struct silofs_blobid *blobid)
+{
+	char str[256] = "";
+	int err;
+
+	err = silofs_encode_blobid(blobid, str, sizeof(str) - 1);
+	silofs_assert_ok(err);
+}
+
 static void ut_ioctl_query_boot(struct ut_env *ute)
 {
 	const char *name = UT_NAME;
 	struct silofs_ioc_query *ioc_qry = ut_new_ioc_query(ute);
 	struct silofs_query_boot *qbt = &ioc_qry->u.boot;
-	const char *root_blobid = (const char *)qbt->root_blobid;
 	ino_t dino = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_query_boot(ute, dino, ioc_qry);
-	ut_expect_eq(strlen(root_blobid), 64);
+	ut_expect_blobid(&qbt->root_blobid);
 	ut_rmdir_at_root(ute, name);
 }
 

@@ -165,7 +165,6 @@ static void affirm_ondisk_base_types(void)
 
 static void affirm_ondisk_addrs(void)
 {
-	REQUIRE_SIZEOF(struct silofs_blobref, 128);
 	REQUIRE_SIZEOF(struct silofs_blobid, 32);
 	REQUIRE_SIZEOF(struct silofs_vaddr56, 7);
 	REQUIRE_SIZEOF(struct silofs_vaddr64, 8);
@@ -439,7 +438,7 @@ static void affirm_ioctl_types(void)
 {
 	REQUIRE_SIZEOF(struct silofs_ioc_query, 2048);
 	REQUIRE_SIZEOF_LE(struct silofs_ioc_query, SILOFS_IOC_SIZE_MAX);
-	REQUIRE_SIZEOF(struct silofs_ioc_forkfs, 512);
+	REQUIRE_SIZEOF(struct silofs_ioc_forkfs, 128);
 	REQUIRE_SIZEOF_LE(struct silofs_ioc_forkfs, SILOFS_IOC_SIZE_MAX);
 }
 

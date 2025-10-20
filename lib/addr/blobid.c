@@ -130,15 +130,6 @@ int silofs_blobid_to_str(const union silofs_blobidu *blobid,
 	return (n < ss->n) ? 0 : -SILOFS_EINVAL;
 }
 
-int silofs_blobid_to_str2(const union silofs_blobidu *blobid, char *s,
-                          size_t n)
-{
-	struct silofs_strspan ss;
-
-	silofs_strspan_initk(&ss, s, 0, n);
-	return silofs_blobid_to_str(blobid, &ss);
-}
-
 int silofs_blobid_from_str(union silofs_blobidu *blobid,
                            const struct silofs_strview *sv)
 {
@@ -162,56 +153,15 @@ silofs_blobid_hash64(const union silofs_blobidu *blobid, uint64_t seed)
 	return silofs_hash_xxh64(blobid->bid.b, sizeof(blobid->bid.b), seed);
 }
 
-void silofs_blobid_import(union silofs_blobidu *blobid,
-                          const struct silofs_blobid *other)
+int silofs_blobid_import(union silofs_blobidu *blobid,
+                         const struct silofs_blobid *other)
 {
 	memcpy(&blobid->bid, other, sizeof(blobid->bid));
+	return !silofs_blobid_isnone(blobid) ? 0 : -SILOFS_EBLOBID;
 }
 
 void silofs_blobid_export(const union silofs_blobidu *blobid,
                           struct silofs_blobid *other)
 {
 	memcpy(other, &blobid->bid, sizeof(*other));
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-void silofs_blobref_reset(struct silofs_blobref *blobref)
-{
-	silofs_memzero(blobref, sizeof(*blobref));
-}
-
-bool silofs_blobref_isnull(const struct silofs_blobref *blobref)
-{
-	return (blobref->bid[0] == '\0');
-}
-
-int silofs_blobref_verify(const struct silofs_blobref *blobref)
-{
-	union silofs_blobidu blobid;
-
-	return silofs_blobref_to_blobid(blobref, &blobid);
-}
-
-int silofs_blobref_from_blobid(struct silofs_blobref *blobref,
-                               const union silofs_blobidu *blobid)
-{
-	struct silofs_strspan ss;
-
-	silofs_blobref_reset(blobref);
-	silofs_strspan_initk(&ss, blobref->bid, 0, sizeof(blobref->bid));
-	return silofs_blobid_to_str(blobid, &ss);
-}
-
-int silofs_blobref_to_blobid(const struct silofs_blobref *blobref,
-                             union silofs_blobidu *out_blobid)
-{
-	struct silofs_strview sv;
-	int err = -SILOFS_EBLOBREF;
-
-	silofs_strview_init(&sv, blobref->bid);
-	if (sv.len && (sv.len < sizeof(blobref->bid))) {
-		err = silofs_blobid_from_str(out_blobid, &sv);
-	}
-	return err;
 }

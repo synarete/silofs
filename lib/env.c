@@ -310,7 +310,7 @@ bool silofs_env_hasflag(const struct silofs_env *env, enum silofs_flags f)
 
 static void make_super_lsid(struct silofs_lsid *out_lsid)
 {
-	struct silofs_blobid blobid;
+	union silofs_blobidu blobid;
 
 	silofs_blobid_generate(&blobid);
 	silofs_lsid_setup(out_lsid, &blobid, 0, SILOFS_MTYPE_SUPER,

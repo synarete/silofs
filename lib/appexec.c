@@ -28,7 +28,7 @@
 #include "fuseq.h"
 #include "walk.h"
 
-static void setup_mbr_addr(const struct silofs_blobid *blobid,
+static void setup_mbr_addr(const union silofs_blobidu *blobid,
                            struct silofs_baddr *out_baddr)
 {
 	silofs_baddr_init(out_baddr, blobid, SILOFS_BMODE_CAS,
@@ -36,7 +36,7 @@ static void setup_mbr_addr(const struct silofs_blobid *blobid,
 }
 
 static int blobref_to_blobid(const struct silofs_blobref *blobref,
-                             struct silofs_blobid *out_blobid)
+                             union silofs_blobidu *out_blobid)
 {
 	int err;
 
@@ -47,7 +47,7 @@ static int blobref_to_blobid(const struct silofs_blobref *blobref,
 	return err;
 }
 
-static void blobid_to_blobref(const struct silofs_blobid *blobid,
+static void blobid_to_blobref(const union silofs_blobidu *blobid,
                               struct silofs_blobref *out_blobref)
 {
 	silofs_blobref_from_blobid(out_blobref, blobid);
@@ -56,7 +56,7 @@ static void blobid_to_blobref(const struct silofs_blobid *blobid,
 static int decode_fs_blobref(const struct silofs_blobref *blobref,
                              struct silofs_baddr *out_baddr)
 {
-	struct silofs_blobid blobid;
+	union silofs_blobidu blobid;
 	int err;
 
 	err = blobref_to_blobid(blobref, &blobid);
@@ -71,7 +71,7 @@ static int decode_fs_blobref(const struct silofs_blobref *blobref,
 static int decode_ar_blobref(const struct silofs_blobref *blobref,
                              struct silofs_baddr *out_baddr)
 {
-	struct silofs_blobid blobid;
+	union silofs_blobidu blobid;
 	int err;
 
 	err = blobref_to_blobid(blobref, &blobid);

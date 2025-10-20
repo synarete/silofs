@@ -113,7 +113,7 @@ static int bstore_create_cached_bdi(struct silofs_bstore *bstore,
 }
 
 static int bstore_require_blob(struct silofs_bstore *bstore, bool create,
-                               const struct silofs_blobid *blobid)
+                               const union silofs_blobidu *blobid)
 
 {
 	int err;

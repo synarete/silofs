@@ -24,7 +24,7 @@ struct silofs_strbuf;
 
 /* logical-segment id within specific volume mapping */
 struct silofs_lsid {
-	struct silofs_blobid blobid;
+	union silofs_blobidu blobid;
 	size_t               lsize;
 	uint32_t             vindex;
 	enum silofs_mtype    vspace;
@@ -60,12 +60,12 @@ size_t silofs_lsid_size(const struct silofs_lsid *lsid);
 bool silofs_lsid_isnull(const struct silofs_lsid *lsid);
 
 bool silofs_lsid_has_blobid(const struct silofs_lsid   *lsid,
-                            const struct silofs_blobid *blobid);
+                            const union silofs_blobidu *blobid);
 
 void silofs_lsid_reset(struct silofs_lsid *lsid);
 
 void silofs_lsid_setup(struct silofs_lsid         *lsid,
-                       const struct silofs_blobid *blobid, off_t voff,
+                       const union silofs_blobidu *blobid, off_t voff,
                        enum silofs_mtype vspace, enum silofs_height height,
                        enum silofs_mtype mtype);
 

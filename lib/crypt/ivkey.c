@@ -35,6 +35,11 @@ static void randomize(void *ptr, size_t len, bool strong)
 	randomize_by_gcry(ptr, len, strong);
 }
 
+void silofs_gcrypt_random(void *ptr, size_t len)
+{
+	randomize_by_gcry(ptr, len, false);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_iv_reset(struct silofs_iv *iv)

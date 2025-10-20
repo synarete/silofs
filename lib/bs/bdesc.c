@@ -38,9 +38,9 @@ bd_set_ctime(struct silofs_blob_desc *bd, const struct timespec *ts)
 }
 
 static void
-bd_set_prev(struct silofs_blob_desc *bd, const struct silofs_blobid *blobid)
+bd_set_prev(struct silofs_blob_desc *bd, const union silofs_blobidu *blobid)
 {
-	silofs_blobid32b_htox(&bd->bd_prev, blobid);
+	silofs_blobid_export(blobid, &bd->bd_prev);
 }
 
 static void bd_reset_prev(struct silofs_blob_desc *bd)
@@ -49,15 +49,15 @@ static void bd_reset_prev(struct silofs_blob_desc *bd)
 }
 
 static void
-bd_refblob(const struct silofs_blob_desc *bd, struct silofs_blobid *out_blobid)
+bd_refblob(const struct silofs_blob_desc *bd, union silofs_blobidu *out_blobid)
 {
-	silofs_blobid32b_xtoh(&bd->bd_prev, out_blobid);
+	silofs_blobid_import(out_blobid, &bd->bd_prev);
 }
 
 static void
-bd_set_refblob(struct silofs_blob_desc *bd, const struct silofs_blobid *blobid)
+bd_set_refblob(struct silofs_blob_desc *bd, const union silofs_blobidu *blobid)
 {
-	silofs_blobid32b_htox(&bd->bd_refblob, blobid);
+	silofs_blobid_export(blobid, &bd->bd_refblob);
 }
 
 static void bd_reset_refblob(struct silofs_blob_desc *bd)
@@ -66,9 +66,9 @@ static void bd_reset_refblob(struct silofs_blob_desc *bd)
 }
 
 static bool bd_has_refblob(const struct silofs_blob_desc *bd,
-                           const struct silofs_blobid *blobid)
+                           const union silofs_blobidu *blobid)
 {
-	struct silofs_blobid ref;
+	union silofs_blobidu ref;
 
 	bd_refblob(bd, &ref);
 	return silofs_blobid_isequal(&ref, blobid);
@@ -350,7 +350,7 @@ static void bd_del(struct silofs_blob_desc *bd, struct silofs_alloc *alloc)
 static void bd_baddr_at(const struct silofs_blob_desc *bd, off_t pos,
                         struct silofs_baddr *out_baddr)
 {
-	struct silofs_blobid blobid;
+	union silofs_blobidu blobid;
 
 	if (!bd_is_valid_pos(bd, pos)) {
 		pos = SILOFS_OFF_NULL;
@@ -477,7 +477,7 @@ void silofs_bdi_setup_spawned(struct silofs_bdesc_info *bdi,
 }
 
 void silofs_bdi_set_refblob(struct silofs_bdesc_info *bdi,
-                            const struct silofs_blobid *blobid)
+                            const union silofs_blobidu *blobid)
 {
 	bd_set_refblob(bdi->bd, blobid);
 	silofs_bdi_dirtify(bdi);

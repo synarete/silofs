@@ -379,7 +379,7 @@ mbr_set_arix_addr(struct silofs_mbr *mbr, const struct silofs_baddr *baddr)
 	silofs_baddr_assign(&mbr->arix_addr, baddr);
 }
 
-void silofs_make_mbr_uaddr(const struct silofs_blobid *blobid,
+void silofs_make_mbr_uaddr(const union silofs_blobidu *blobid,
                            struct silofs_uaddr *out_uaddr)
 {
 	struct silofs_lsid lsid;

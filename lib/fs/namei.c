@@ -2456,7 +2456,7 @@ static void fill_query_boot_blobref(const struct silofs_inode_info *ii,
 static void fill_query_boot_root(const struct silofs_inode_info *ii,
                                  struct silofs_ioc_query *query)
 {
-	struct silofs_blobid blobid;
+	union silofs_blobidu blobid;
 	struct silofs_strspan ss;
 	struct silofs_query_boot *qboot = &query->u.boot;
 

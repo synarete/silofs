@@ -98,7 +98,7 @@ bool silofs_lsid_isnull(const struct silofs_lsid *lsid)
 }
 
 bool silofs_lsid_has_blobid(const struct silofs_lsid *lsid,
-                            const struct silofs_blobid *blobid)
+                            const union silofs_blobidu *blobid)
 {
 	return silofs_blobid_isequal(&lsid->blobid, blobid);
 }
@@ -180,7 +180,7 @@ uint64_t silofs_lsid_hash64(const struct silofs_lsid *lsid)
 }
 
 void silofs_lsid_setup(struct silofs_lsid *lsid,
-                       const struct silofs_blobid *blobid, off_t voff,
+                       const union silofs_blobidu *blobid, off_t voff,
                        enum silofs_mtype vspace, enum silofs_height height,
                        enum silofs_mtype mtype)
 {
@@ -208,7 +208,7 @@ void silofs_lsid48b_htox(struct silofs_lsid48b *lsid48,
                          const struct silofs_lsid *lsid)
 {
 	memset(lsid48, 0, sizeof(*lsid48));
-	silofs_blobid32b_htox(&lsid48->blobid, &lsid->blobid);
+	silofs_blobid_export(&lsid->blobid, &lsid48->blobid);
 	lsid48->vindex = silofs_cpu_to_le32(lsid->vindex);
 	lsid48->lsize = silofs_cpu_to_le32((uint32_t)lsid->lsize);
 	lsid48->vspace = (uint8_t)lsid->vspace;
@@ -219,7 +219,7 @@ void silofs_lsid48b_htox(struct silofs_lsid48b *lsid48,
 void silofs_lsid48b_xtoh(const struct silofs_lsid48b *lsid48,
                          struct silofs_lsid *lsid)
 {
-	silofs_blobid32b_xtoh(&lsid48->blobid, &lsid->blobid);
+	silofs_blobid_import(&lsid->blobid, &lsid48->blobid);
 	lsid->vindex = silofs_le32_to_cpu(lsid48->vindex);
 	lsid->lsize = silofs_le32_to_cpu(lsid48->lsize);
 	lsid->vspace = (enum silofs_mtype)lsid48->vspace;
@@ -376,7 +376,7 @@ void silofs_laddr64b_xtoh(const struct silofs_laddr64b *laddr64,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 struct silofs_laddr_repr {
-	struct silofs_blobid blobid;
+	union silofs_blobidu blobid;
 	uint32_t lsize;
 	int32_t pos;
 	uint32_t vindex;

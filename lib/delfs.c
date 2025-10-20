@@ -50,7 +50,7 @@ static bool delfc_is_silofs_lsid_of(const struct silofs_delfs_ctx *delf_ctx,
                                     const struct silofs_lsid *lsid)
 {
 	const struct silofs_uaddr *sb_uaddr = &delf_ctx->sb_uaddr;
-	const struct silofs_blobid *blobid = &sb_uaddr->laddr.lsid.blobid;
+	const union silofs_blobidu *blobid = &sb_uaddr->laddr.lsid.blobid;
 
 	return silofs_lsid_has_blobid(lsid, blobid);
 }

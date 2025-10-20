@@ -35,7 +35,7 @@ const struct silofs_baddr *silofs_baddr_none(void)
 }
 
 void silofs_baddr_init(struct silofs_baddr *baddr,
-                       const struct silofs_blobid *blobid,
+                       const union silofs_blobidu *blobid,
                        enum silofs_bmode bmode, enum silofs_mtype mtype,
                        off_t pos)
 {
@@ -46,7 +46,7 @@ void silofs_baddr_init(struct silofs_baddr *baddr,
 }
 
 void silofs_baddr_init_raw(struct silofs_baddr *baddr,
-                           const struct silofs_blobid *blobid,
+                           const union silofs_blobidu *blobid,
                            enum silofs_mtype mtype, off_t pos)
 {
 	silofs_baddr_init(baddr, blobid, SILOFS_BMODE_RAW, mtype, pos);
@@ -122,7 +122,7 @@ void silofs_baddr64b_htox(struct silofs_baddr64b *baddr64,
                           const struct silofs_baddr *baddr)
 {
 	silofs_baddr64b_reset(baddr64);
-	silofs_blobid32b_htox(&baddr64->blobid, &baddr->blobid);
+	silofs_blobid_export(&baddr->blobid, &baddr64->blobid);
 	baddr64->pos = silofs_cpu_to_off(baddr->pos);
 	baddr64->mtype = silofs_cpu_to_le16((uint16_t)(baddr->mtype));
 	baddr64->bmode = silofs_cpu_to_le16((uint16_t)(baddr->bmode));
@@ -133,7 +133,7 @@ void silofs_baddr64b_xtoh(const struct silofs_baddr64b *baddr64,
 {
 	uint16_t m;
 
-	silofs_blobid32b_xtoh(&baddr64->blobid, &baddr->blobid);
+	silofs_blobid_import(&baddr->blobid, &baddr64->blobid);
 	baddr->pos = silofs_off_to_cpu(baddr64->pos);
 	m = silofs_le16_to_cpu(baddr64->mtype);
 	baddr->mtype = (enum silofs_mtype)m;

@@ -114,20 +114,20 @@ int silofs_repo_read_at(struct silofs_repo        *repo,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_repo_stat_blob(struct silofs_repo         *repo,
-                          const struct silofs_blobid *blobid,
+                          const union silofs_blobidu *blobid,
                           struct stat                *out_st);
 
 int silofs_repo_spawn_blob(struct silofs_repo         *repo,
-                           const struct silofs_blobid *blobid);
+                           const union silofs_blobidu *blobid);
 
 int silofs_repo_stage_blob(struct silofs_repo         *repo,
-                           const struct silofs_blobid *blobid);
+                           const union silofs_blobidu *blobid);
 
 int silofs_repo_remove_blob(struct silofs_repo         *repo,
-                            const struct silofs_blobid *blobid);
+                            const union silofs_blobidu *blobid);
 
 int silofs_repo_flush_blob(struct silofs_repo         *repo,
-                           const struct silofs_blobid *blobid);
+                           const union silofs_blobidu *blobid);
 
 int silofs_repo_save_bseg(struct silofs_repo        *repo,
                           const struct silofs_baddr *baddr,

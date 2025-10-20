@@ -29,4 +29,6 @@ int silofs_gcrypt_status_(gcry_error_t gcry_err, const char *fn,
 #define silofs_gcrypt_status(gcry_err_, fn_) \
 	silofs_gcrypt_status_(gcry_err_, fn_, SILOFS_FL_LN_)
 
+void silofs_gcrypt_random(void *ptr, size_t len);
+
 #endif /* SILOFS_GCRY_H_ */

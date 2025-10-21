@@ -535,7 +535,7 @@ laddr_to_hash(const struct silofs_laddr *laddr,
 	struct silofs_laddr64b laddr64 = {};
 
 	silofs_laddr64b_htox(&laddr64, laddr);
-	silofs_sha256_of(md, &laddr64, sizeof(laddr64), out_hash);
+	silofs_sha3_256_of(md, &laddr64, sizeof(laddr64), out_hash);
 }
 
 void silofs_derive_iv_by_laddr(const struct silofs_mdigest *md,

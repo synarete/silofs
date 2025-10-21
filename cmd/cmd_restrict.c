@@ -156,7 +156,7 @@ static bool has_landlock(void)
 
 void cmd_restrict_process(const char *repodir, bool allow_mkdir)
 {
-	if (has_landlock()) {
+	if (!cmd_global_params.developer_mode && has_landlock()) {
 		restrict_process_at(repodir, allow_mkdir);
 	}
 }

@@ -165,6 +165,7 @@ static void cmd_mount_parse_optargs(struct cmd_mount_ctx *ctx)
 		{ "buffer-copy-mode", 'B', 0 },
 		{ "nodaemon", 'D', 0 },
 		{ "coredump", 'C', 0 },
+		{ "developer-mode", 'X', 0 },
 		{ "asyncwr", 'a', 1 },
 		{ "stdalloc", 'M', 0 },
 		{ "no-prompt", 'P', 0 },
@@ -216,6 +217,9 @@ static void cmd_mount_parse_optargs(struct cmd_mount_ctx *ctx)
 			break;
 		case 'C':
 			cmd_global_params.allow_coredump = true;
+			break;
+		case 'X':
+			cmd_global_params.developer_mode = true;
 			break;
 		case 'a':
 			barg = cmd_optargs_curr_as_bool(&opa);
@@ -488,7 +492,9 @@ static void cmd_mount_start_daemon(struct cmd_mount_ctx *ctx)
 
 static void cmd_mount_boostrap_process(struct cmd_mount_ctx *ctx)
 {
-	cmd_chdir("/");
+	if (!cmd_global_params.developer_mode) {
+		cmd_chdir("/");
+	}
 	if (!cmd_global_params.dont_daemonize) {
 		cmd_mount_start_daemon(ctx);
 	}

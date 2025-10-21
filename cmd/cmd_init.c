@@ -47,9 +47,13 @@ static struct cmd_init_ctx *cmd_init_ctx_p;
 static void cmd_init_parse_optargs(struct cmd_init_ctx *ctx)
 {
 	const struct cmd_optdesc ods[] = {
-		{ "user", 'u', 1 },       { "sup-groups", 'G', 0 },
-		{ "allow-root", 'R', 0 }, { "loglevel", 'L', 1 },
-		{ "help", 'h', 0 },       { nullptr, 0, 0 },
+		{ "user", 'u', 1 },           //
+		{ "sup-groups", 'G', 0 },     //
+		{ "allow-root", 'R', 0 },     //
+		{ "developer-mode", 'X', 0 }, //
+		{ "loglevel", 'L', 1 },       //
+		{ "help", 'h', 0 },           //
+		{ nullptr, 0, 0 },            //
 	};
 	struct cmd_optargs opa;
 	int opt_chr = 1;
@@ -67,6 +71,9 @@ static void cmd_init_parse_optargs(struct cmd_init_ctx *ctx)
 			break;
 		case 'R':
 			ctx->in_args.with_root_user = true;
+			break;
+		case 'X':
+			cmd_global_params.developer_mode = true;
 			break;
 		case 'L':
 			cmd_optargs_set_loglevel(&opa);

@@ -74,12 +74,11 @@ struct cmd_globals {
 	gid_t  gid;
 	mode_t umsk;
 
-	/* common process settings */
-	bool dont_daemonize;
+	/* process settings */
+	bool developer_mode;
 	bool allow_coredump;
-
-	/* capability */
 	bool cap_sys_admin;
+	bool dont_daemonize;
 
 	/* signals info */
 	int sig_halt;

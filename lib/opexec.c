@@ -48,7 +48,7 @@ static int op_start(struct silofs_task_ctx *task)
 	struct silofs_env *env = task->t_env;
 
 	silofs_lock_fs_by(task);
-	env->opstat.op_time = task->t_auth.ts.tv_sec;
+	env->opstat.op_time = task->t_op_start_time = silofs_time_mono_now();
 	env->opstat.op_count++;
 	return 0;
 }
@@ -59,17 +59,14 @@ op_try_flush(struct silofs_task_ctx *task, struct silofs_inode_info *ii)
 	return silofs_flush_dirty(task, ii, SILOFS_CTLF_OPSTART);
 }
 
-static void op_probe_duration(const struct silofs_task_ctx *task, int status)
+static void op_probe_duration(const struct silofs_task_ctx *task, int res)
 {
-	const time_t now = silofs_time_real_now();
-	const time_t beg = task->t_auth.ts.tv_sec;
-	const time_t dif = now - beg;
+	const time_t time_dif = silofs_time_mono_now() - task->t_op_start_time;
 	const uint32_t op_code = task->t_auth.opcode;
-	const unsigned long id = task->t_env->opstat.op_count;
 
-	if (op_code && (beg < now) && (dif > 30)) {
-		log_warn("slow-oper: id=%ld op_code=%u duration=%ld status=%d",
-		         id, op_code, dif, status);
+	if (op_code && (time_dif > 30)) {
+		log_warn("slow-oper: op_count=%zu op_code=%u dif=%ld res=%d",
+		         task->t_env->opstat.op_count, op_code, time_dif, res);
 	}
 }
 

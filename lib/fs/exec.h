@@ -97,6 +97,7 @@ struct silofs_task_ctx {
 	struct silofs_submitq      *t_submitq;
 	struct silofs_inode_info   *t_looseq;
 	uint64_t                    t_upper_id;
+	time_t                      t_op_start_time;
 	volatile int8_t             t_interrupt;
 	volatile bool               t_fs_locked;
 	bool                        t_ex_locked;

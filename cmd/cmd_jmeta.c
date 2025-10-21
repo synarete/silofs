@@ -233,11 +233,11 @@ static void cmd_decode_meta_json(const char *jtxt, bool want_archive,
 	root = cmd_json_loads(jtxt);
 	meta = cmd_json_object_get(root, cmd_jkey_meta);
 
-	jobj = cmd_json_object_get_string(root, cmd_jkey_silofs_version);
+	cmd_json_object_get_string(root, cmd_jkey_silofs_version);
 
-	jobj = cmd_json_object_get_integer(root, cmd_jkey_fmt_revision);
+	cmd_json_object_get_integer(root, cmd_jkey_fmt_revision);
 
-	jobj = cmd_json_object_get_string(meta, cmd_jkey_btime);
+	cmd_json_object_get_string(meta, cmd_jkey_btime);
 
 	jobj = cmd_json_object_get_string(meta, cmd_jkey_mode);
 	cmd_decode_meta_mode(json_string_value(jobj), want_archive);

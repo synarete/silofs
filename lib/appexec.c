@@ -902,13 +902,15 @@ int silofs_format_fs(struct silofs_env *env,
                      struct silofs_blobid *out_fs_blobid)
 {
 	struct silofs_baddr baddr;
-	int ret;
+	int err;
 
 	silofs_env_lock(env);
-	ret = do_format_fs(env, &baddr);
+	err = do_format_fs(env, &baddr);
+	if (!err) {
+		encode_fs_blobid(&baddr, out_fs_blobid);
+	}
 	silofs_env_unlock(env);
-	encode_fs_blobid(&baddr, out_fs_blobid);
-	return ret;
+	return err;
 }
 
 static int
@@ -930,12 +932,12 @@ int silofs_sense_fs(struct silofs_env *env,
 	struct silofs_baddr baddr;
 	int err;
 
+	silofs_env_lock(env);
 	err = decode_fs_blobid(fs_blobid, &baddr);
 	if (!err) {
-		silofs_env_lock(env);
 		err = exec_sense_fs(env, &baddr);
-		silofs_env_unlock(env);
 	}
+	silofs_env_unlock(env);
 	return err;
 }
 
@@ -945,12 +947,12 @@ int silofs_sense_ar(struct silofs_env *env,
 	struct silofs_baddr baddr;
 	int err;
 
+	silofs_env_lock(env);
 	err = decode_ar_blobid(ar_blobid, &baddr);
 	if (!err) {
-		silofs_env_lock(env);
 		err = exec_sense_fs(env, &baddr);
-		silofs_env_unlock(env);
 	}
+	silofs_env_unlock(env);
 	return err;
 }
 
@@ -959,12 +961,12 @@ int silofs_open_fs(struct silofs_env *env, const struct silofs_blobid *blobid)
 	struct silofs_baddr baddr;
 	int err;
 
+	silofs_env_lock(env);
 	err = decode_fs_blobid(blobid, &baddr);
 	if (!err) {
-		silofs_env_lock(env);
 		err = exec_open_fs(env, &baddr);
-		silofs_env_unlock(env);
 	}
+	silofs_env_unlock(env);
 	return err;
 }
 
@@ -1011,9 +1013,11 @@ int silofs_fork_fs(struct silofs_env *env,
 
 	silofs_env_lock(env);
 	err = exec_fork_fs(env, &mrefs);
+	if (!err) {
+		encode_fs_blobid(&mrefs.main, out_main_blobid);
+		encode_fs_blobid(&mrefs.fork, out_fork_blobid);
+	}
 	silofs_env_unlock(env);
-	encode_fs_blobid(&mrefs.main, out_main_blobid);
-	encode_fs_blobid(&mrefs.fork, out_fork_blobid);
 	return err;
 }
 
@@ -1045,12 +1049,12 @@ int silofs_remove_fs(struct silofs_env *env,
 	struct silofs_baddr baddr;
 	int err;
 
+	silofs_env_lock(env);
 	err = decode_fs_blobid(blobid, &baddr);
 	if (!err) {
-		silofs_env_lock(env);
 		err = exec_reload_remove_fs(env, &baddr);
-		silofs_env_unlock(env);
 	}
+	silofs_env_unlock(env);
 	return err;
 }
 
@@ -1114,13 +1118,18 @@ int silofs_archive_fs(struct silofs_env *env,
 	struct silofs_baddr ar_baddr;
 	int err;
 
+	silofs_env_lock(env);
 	err = decode_fs_blobid(fs_blobid, &fs_baddr);
-	if (!err) {
-		silofs_env_lock(env);
-		err = exec_archive_fs(env, &fs_baddr, &ar_baddr);
-		silofs_env_unlock(env);
-		encode_ar_blobid(&ar_baddr, out_ar_blobid);
+	if (err) {
+		goto out;
 	}
+	err = exec_archive_fs(env, &fs_baddr, &ar_baddr);
+	if (err) {
+		goto out;
+	}
+	encode_ar_blobid(&ar_baddr, out_ar_blobid);
+out:
+	silofs_env_unlock(env);
 	return err;
 }
 
@@ -1146,13 +1155,18 @@ int silofs_restore_fs(struct silofs_env *env,
 	struct silofs_baddr fs_mref;
 	int err;
 
+	silofs_env_lock(env);
 	err = decode_ar_blobid(ar_blobid, &ar_mref);
-	if (!err) {
-		silofs_env_lock(env);
-		err = exec_restore_fs(env, &ar_mref, &fs_mref);
-		silofs_env_unlock(env);
-		encode_fs_blobid(&fs_mref, out_fs_blobid);
+	if (err) {
+		goto out;
 	}
+	err = exec_restore_fs(env, &ar_mref, &fs_mref);
+	if (err) {
+		goto out;
+	}
+	encode_fs_blobid(&fs_mref, out_fs_blobid);
+out:
+	silofs_env_unlock(env);
 	return err;
 }
 

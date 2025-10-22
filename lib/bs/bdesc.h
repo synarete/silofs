@@ -46,7 +46,7 @@ void silofs_bdi_setup_spawned(struct silofs_bdesc_info *bdi,
                               enum silofs_mtype         refmtype);
 
 void silofs_bdi_set_refblob(struct silofs_bdesc_info   *bdi,
-                            const union silofs_blobidu *blobid);
+                            const struct silofs_blobid *blobid);
 
 int silofs_bdi_find_free(const struct silofs_bdesc_info *bdi,
                          struct silofs_baddr            *out_baddr);

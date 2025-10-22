@@ -495,7 +495,7 @@ enum silofs_bmode {
 	SILOFS_BMODE_CAS  = 2,
 };
 
-/* unique blob identifier */
+/* blob identifier */
 struct silofs_blobid {
 	uint8_t b[SILOFS_BLOBID_SIZE];
 } silofs_attr_aligned16;

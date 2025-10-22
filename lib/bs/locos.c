@@ -183,7 +183,7 @@ static int do_sync_file_range(int fd, off_t off, off_t nbytes, unsigned flags)
 struct silofs_blobfile {
 	struct silofs_list_head bf_htb_lh;
 	struct silofs_list_head bf_lru_lh;
-	union silofs_blobidu bf_blobid;
+	struct silofs_blobid bf_blobid;
 	int bf_fd;
 	bool bf_mapped;
 };
@@ -263,7 +263,7 @@ static void bf_close(struct silofs_blobfile *bf)
 }
 
 static bool bf_has_blobid(const struct silofs_blobfile *bf,
-                          const union silofs_blobidu *bid)
+                          const struct silofs_blobid *bid)
 {
 	return silofs_blobid_isequal(&bf->bf_blobid, bid);
 }
@@ -355,11 +355,11 @@ bf_sync_range(const struct silofs_blobfile *bf, off_t off, size_t len)
 }
 
 static void
-bf_init(struct silofs_blobfile *bf, const union silofs_blobidu *bid)
+bf_init(struct silofs_blobfile *bf, const struct silofs_blobid *blobid)
 {
 	silofs_list_head_init(&bf->bf_htb_lh);
 	silofs_list_head_init(&bf->bf_lru_lh);
-	silofs_blobid_assign(&bf->bf_blobid, bid);
+	silofs_blobid_copyto(blobid, &bf->bf_blobid);
 	bf->bf_fd = -1;
 	bf->bf_mapped = false;
 }
@@ -375,7 +375,7 @@ static void bf_fini(struct silofs_blobfile *bf)
 }
 
 static struct silofs_blobfile *
-bf_new(const union silofs_blobidu *bid, struct silofs_alloc *alloc)
+bf_new(const struct silofs_blobid *bid, struct silofs_alloc *alloc)
 {
 	struct silofs_blobfile *bf;
 
@@ -417,7 +417,7 @@ static void lhq_fini(struct silofs_locos_hq *lhq, struct silofs_alloc *alloc)
 }
 
 static size_t lhq_htb_slot_of(const struct silofs_locos_hq *lhq,
-                              const union silofs_blobidu *blobid)
+                              const struct silofs_blobid *blobid)
 {
 	const uint64_t hash = silofs_blobid_hash64(blobid, 0);
 
@@ -426,7 +426,7 @@ static size_t lhq_htb_slot_of(const struct silofs_locos_hq *lhq,
 
 static const struct silofs_list_head *
 lhq_htb_list_of(const struct silofs_locos_hq *lhq,
-                const union silofs_blobidu *blobid)
+                const struct silofs_blobid *blobid)
 {
 	const size_t slot = lhq_htb_slot_of(lhq, blobid);
 
@@ -435,7 +435,7 @@ lhq_htb_list_of(const struct silofs_locos_hq *lhq,
 
 static struct silofs_list_head *
 lhq_htb_list_of2(struct silofs_locos_hq *lhq,
-                 const union silofs_blobidu *blobid)
+                 const struct silofs_blobid *blobid)
 {
 	const size_t slot = lhq_htb_slot_of(lhq, blobid);
 
@@ -516,7 +516,7 @@ lhq_get_lru_tail(const struct silofs_locos_hq *lhq)
 
 static struct silofs_blobfile *
 lhq_lookup_htb(const struct silofs_locos_hq *lhq,
-               const union silofs_blobidu *blobid)
+               const struct silofs_blobid *blobid)
 {
 	const struct silofs_list_head *lst = nullptr;
 	const struct silofs_list_head *itr = nullptr;
@@ -535,7 +535,7 @@ lhq_lookup_htb(const struct silofs_locos_hq *lhq,
 }
 
 static struct silofs_blobfile *
-lhq_lookup(struct silofs_locos_hq *lhq, const union silofs_blobidu *blobid)
+lhq_lookup(struct silofs_locos_hq *lhq, const struct silofs_blobid *blobid)
 {
 	struct silofs_blobfile *bf = nullptr;
 
@@ -578,7 +578,7 @@ static void lhq_remove(struct silofs_locos_hq *lhq, struct silofs_blobfile *bf)
 
 static struct silofs_blobfile *
 locos_lookup_cached_bf(struct silofs_locos *locos,
-                       const union silofs_blobidu *blobid)
+                       const struct silofs_blobid *blobid)
 {
 	return lhq_lookup(&locos->los_hq, blobid);
 }
@@ -596,7 +596,7 @@ locos_remove_cached_bf(struct silofs_locos *locos, struct silofs_blobfile *bf)
 }
 
 static struct silofs_blobfile *
-locos_new_bf(struct silofs_locos *locos, const union silofs_blobidu *blobid)
+locos_new_bf(struct silofs_locos *locos, const struct silofs_blobid *blobid)
 {
 	return bf_new(blobid, locos->los_alloc);
 }
@@ -769,7 +769,7 @@ int silofs_locos_sync(const struct silofs_locos *locos)
 }
 
 static int locos_spawn_blob(struct silofs_locos *locos,
-                            const union silofs_blobidu *blobid,
+                            const struct silofs_blobid *blobid,
                             struct silofs_blobfile **out_bf)
 {
 	struct silofs_blobfile *bf = nullptr;
@@ -793,7 +793,7 @@ static int locos_spawn_blob(struct silofs_locos *locos,
 }
 
 static int locos_spawn_and_cache_bf(struct silofs_locos *locos,
-                                    const union silofs_blobidu *blobid,
+                                    const struct silofs_blobid *blobid,
                                     struct silofs_blobfile **out_bf)
 {
 	int err;
@@ -813,7 +813,7 @@ static int locos_spawn_and_cache_bf(struct silofs_locos *locos,
 }
 
 static int locos_stage_blob(struct silofs_locos *locos,
-                            const union silofs_blobidu *blobid,
+                            const struct silofs_blobid *blobid,
                             struct silofs_blobfile **out_bf)
 {
 	struct silofs_blobfile *bf = nullptr;
@@ -833,7 +833,7 @@ static int locos_stage_blob(struct silofs_locos *locos,
 }
 
 static int locos_stage_and_cache_bf(struct silofs_locos *locos,
-                                    const union silofs_blobidu *blobid,
+                                    const struct silofs_blobid *blobid,
                                     struct silofs_blobfile **out_bf)
 {
 	int err;
@@ -853,7 +853,7 @@ static int locos_stage_and_cache_bf(struct silofs_locos *locos,
 }
 
 int silofs_locos_spawn_blob(struct silofs_locos *locos,
-                            const union silofs_blobidu *blobid)
+                            const struct silofs_blobid *blobid)
 {
 	struct silofs_blobfile *bf = nullptr;
 
@@ -861,7 +861,7 @@ int silofs_locos_spawn_blob(struct silofs_locos *locos,
 }
 
 int silofs_locos_remove_blob(struct silofs_locos *locos,
-                             const union silofs_blobidu *blobid)
+                             const struct silofs_blobid *blobid)
 {
 	struct silofs_blobfile *bf = nullptr;
 	int err = 0;
@@ -879,7 +879,7 @@ int silofs_locos_remove_blob(struct silofs_locos *locos,
 }
 
 int silofs_locos_stat_blob(struct silofs_locos *locos,
-                           const union silofs_blobidu *blobid,
+                           const struct silofs_blobid *blobid,
                            struct stat *out_st)
 {
 	struct silofs_blobfile *bf = nullptr;
@@ -897,7 +897,7 @@ int silofs_locos_stat_blob(struct silofs_locos *locos,
 }
 
 int silofs_locos_stage_blob(struct silofs_locos *locos,
-                            const union silofs_blobidu *blobid)
+                            const struct silofs_blobid *blobid)
 {
 	struct stat st;
 
@@ -905,7 +905,7 @@ int silofs_locos_stage_blob(struct silofs_locos *locos,
 }
 
 int silofs_locos_require_blob(struct silofs_locos *locos,
-                              const union silofs_blobidu *blobid)
+                              const struct silofs_blobid *blobid)
 {
 	struct stat st;
 	int err;
@@ -918,7 +918,7 @@ int silofs_locos_require_blob(struct silofs_locos *locos,
 }
 
 int silofs_locos_require_bpos(struct silofs_locos *locos,
-                              const union silofs_blobidu *blobid, loff_t pos)
+                              const struct silofs_blobid *blobid, loff_t pos)
 {
 	struct stat st = { .st_size = -1 };
 	struct silofs_blobfile *bf = nullptr;
@@ -947,7 +947,7 @@ int silofs_locos_require_bpos(struct silofs_locos *locos,
 }
 
 int silofs_locos_flush_blob(struct silofs_locos *locos,
-                            const union silofs_blobidu *blobid)
+                            const struct silofs_blobid *blobid)
 {
 	struct silofs_blobfile *bf = nullptr;
 	int err = 0;
@@ -964,7 +964,7 @@ int silofs_locos_flush_blob(struct silofs_locos *locos,
 }
 
 int silofs_locos_punch_blob(struct silofs_locos *locos,
-                            const union silofs_blobidu *blobid)
+                            const struct silofs_blobid *blobid)
 {
 	struct silofs_blobfile *bf = nullptr;
 	int err = 0;

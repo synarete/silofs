@@ -55,29 +55,29 @@ int silofs_locos_sync(const struct silofs_locos *locos);
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_locos_spawn_blob(struct silofs_locos        *locos,
-                            const union silofs_blobidu *blobid);
+                            const struct silofs_blobid *blobid);
 
 int silofs_locos_stage_blob(struct silofs_locos        *locos,
-                            const union silofs_blobidu *blobid);
+                            const struct silofs_blobid *blobid);
 
 int silofs_locos_stat_blob(struct silofs_locos        *locos,
-                           const union silofs_blobidu *blobid,
+                           const struct silofs_blobid *blobid,
                            struct stat                *out_st);
 
 int silofs_locos_require_blob(struct silofs_locos        *locos,
-                              const union silofs_blobidu *blobid);
+                              const struct silofs_blobid *blobid);
 
 int silofs_locos_require_bpos(struct silofs_locos        *locos,
-                              const union silofs_blobidu *blobid, loff_t pos);
+                              const struct silofs_blobid *blobid, loff_t pos);
 
 int silofs_locos_remove_blob(struct silofs_locos        *locos,
-                             const union silofs_blobidu *blobid);
+                             const struct silofs_blobid *blobid);
 
 int silofs_locos_flush_blob(struct silofs_locos        *locos,
-                            const union silofs_blobidu *blobid);
+                            const struct silofs_blobid *blobid);
 
 int silofs_locos_punch_blob(struct silofs_locos        *locos,
-                            const union silofs_blobidu *blobid);
+                            const struct silofs_blobid *blobid);
 
 int silofs_locos_write_blob(struct silofs_locos       *locos,
                             const struct silofs_baddr *baddr,

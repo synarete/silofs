@@ -107,10 +107,12 @@ void silofs_calc_baddr_of(const struct silofs_mdigest *md,
                           enum silofs_mtype mtype, const struct iovec *iov,
                           size_t iov_cnt, struct silofs_baddr *out_baddr)
 {
-	union silofs_blobidu blobid;
+	struct silofs_hash256 hash;
+	struct silofs_blobid blobid;
 
 	silofs_assert_ne(mtype, 0);
 
-	silofs_sha256_ofv(md, iov, iov_cnt, &blobid.hash);
+	silofs_sha256_ofv(md, iov, iov_cnt, &hash);
+	silofs_blobid_from_hash(&blobid, &hash);
 	silofs_baddr_init(out_baddr, &blobid, SILOFS_BMODE_CAS, mtype, 0);
 }

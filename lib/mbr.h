@@ -57,7 +57,7 @@ struct silofs_mbrinfo {
 void silofs_mbr_set_ar_addr(struct silofs_mbr         *mbr,
                             const struct silofs_baddr *baddr);
 
-void silofs_make_mbr_uaddr(const union silofs_blobidu *blobid,
+void silofs_make_mbr_uaddr(const struct silofs_blobid *blobid,
                            struct silofs_uaddr        *out_uaddr);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

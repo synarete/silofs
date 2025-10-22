@@ -31,7 +31,7 @@ enum {
 struct silofs_repo_cek {
 	union {
 		struct silofs_lsid lsid;
-		union silofs_blobidu blobid;
+		struct silofs_blobid blobid;
 	} u;
 	short kind;
 };
@@ -2372,7 +2372,7 @@ int silofs_repo_read_at(struct silofs_repo *repo,
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 int silofs_repo_stat_blob(struct silofs_repo *repo,
-                          const union silofs_blobidu *blobid,
+                          const struct silofs_blobid *blobid,
                           struct stat *out_st)
 {
 	int err;
@@ -2384,7 +2384,7 @@ int silofs_repo_stat_blob(struct silofs_repo *repo,
 }
 
 int silofs_repo_spawn_blob(struct silofs_repo *repo,
-                           const union silofs_blobidu *blobid)
+                           const struct silofs_blobid *blobid)
 {
 	int err;
 
@@ -2395,7 +2395,7 @@ int silofs_repo_spawn_blob(struct silofs_repo *repo,
 }
 
 int silofs_repo_stage_blob(struct silofs_repo *repo,
-                           const union silofs_blobidu *blobid)
+                           const struct silofs_blobid *blobid)
 {
 	int err;
 
@@ -2430,7 +2430,7 @@ int silofs_repo_load_bseg(struct silofs_repo *repo,
 }
 
 int silofs_repo_remove_blob(struct silofs_repo *repo,
-                            const union silofs_blobidu *blobid)
+                            const struct silofs_blobid *blobid)
 {
 	int err;
 
@@ -2441,7 +2441,7 @@ int silofs_repo_remove_blob(struct silofs_repo *repo,
 }
 
 int silofs_repo_flush_blob(struct silofs_repo *repo,
-                           const union silofs_blobidu *blobid)
+                           const struct silofs_blobid *blobid)
 {
 	int err;
 

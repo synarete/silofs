@@ -403,7 +403,7 @@ silofs_uni_laddr(const struct silofs_unode_info *uni)
 	return &uni->un_uaddr.laddr;
 }
 
-const union silofs_blobidu *
+const struct silofs_blobid *
 silofs_uni_lvid(const struct silofs_unode_info *uni)
 {
 	return &uni->un_uaddr.laddr.lsid.blobid;

@@ -23,7 +23,7 @@
 
 /* blob address */
 struct silofs_baddr {
-	union silofs_blobidu blobid;
+	struct silofs_blobid blobid;
 	off_t                pos;
 	enum silofs_mtype    mtype;
 	enum silofs_bmode    bmode;
@@ -40,12 +40,12 @@ struct silofs_bcursor {
 const struct silofs_baddr *silofs_baddr_none(void);
 
 void silofs_baddr_init(struct silofs_baddr        *baddr,
-                       const union silofs_blobidu *blobid,
+                       const struct silofs_blobid *blobid,
                        enum silofs_bmode bmode, enum silofs_mtype mtype,
                        off_t pos);
 
 void silofs_baddr_init_raw(struct silofs_baddr        *baddr,
-                           const union silofs_blobidu *blobid,
+                           const struct silofs_blobid *blobid,
                            enum silofs_mtype mtype, off_t pos);
 
 void silofs_baddr_fini(struct silofs_baddr *baddr);
@@ -62,8 +62,6 @@ bool silofs_baddr_isnull(const struct silofs_baddr *baddr);
 
 long silofs_baddr_compare(const struct silofs_baddr *baddr1,
                           const struct silofs_baddr *baddr2);
-
-void silofs_baddr64b_reset(struct silofs_baddr64b *baddr64);
 
 void silofs_baddr64b_htox(struct silofs_baddr64b    *baddr64,
                           const struct silofs_baddr *baddr);

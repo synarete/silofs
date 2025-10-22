@@ -75,6 +75,9 @@
 /* repository blobs sub-directory */
 #define SILOFS_REPO_BLOBS_DIRNAME "blobs"
 
+/* blob-identifier octets-size */
+#define SILOFS_BLOBID_SIZE (32)
+
 /* max number of hard-links to file or sub-directories */
 #define SILOFS_LINK_MAX ((1L << 15) - 1)
 
@@ -494,7 +497,7 @@ enum silofs_bmode {
 
 /* unique blob identifier */
 struct silofs_blobid {
-	uint8_t b[32];
+	uint8_t b[SILOFS_BLOBID_SIZE];
 } silofs_attr_aligned16;
 
 /* blob addressing */

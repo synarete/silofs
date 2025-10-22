@@ -131,12 +131,6 @@ void silofs_laddr64b_xtoh(const struct silofs_laddr64b *laddr64,
 
 void silofs_laddr64b_reset(struct silofs_laddr64b *laddr64);
 
-void silofs_laddr_to_ascii(const struct silofs_laddr *laddr,
-                           struct silofs_strbuf      *sbuf);
-
-int silofs_laddr_from_ascii(struct silofs_laddr        *laddr,
-                            const struct silofs_strbuf *sbuf);
-
 void silofs_derive_iv_by_laddr(const struct silofs_mdigest *md,
                                const struct silofs_laddr   *laddr,
                                struct silofs_iv            *out_iv);

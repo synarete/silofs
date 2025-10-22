@@ -1076,8 +1076,8 @@ inspect_view(void *ctx, const struct silofs_laddr *laddr, size_t len)
 {
 	struct silofs_strbuf sbuf;
 
-	silofs_laddr_to_ascii(laddr, &sbuf);
-	silofs_log_info("%s:%zu", sbuf.str, len);
+	silofs_blobid_to_sbuf(&laddr->lsid.blobid, &sbuf);
+	silofs_log_info("%s %ld:%zu", sbuf.str, laddr->pos, len);
 	silofs_unused(ctx);
 	return 0;
 }

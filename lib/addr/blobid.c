@@ -23,6 +23,14 @@
 #include "meta.h"
 #include "blobid.h"
 
+static void generate_random(uint8_t *p, size_t n, uint64_t seed)
+{
+	silofs_gcrypt_random(p, n);
+	silofs_xrand_by_hash(p, n, seed);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 static const struct silofs_blobid s_silofs_blobid_none;
 
 const struct silofs_blobid *silofs_blobid_none(void)
@@ -30,57 +38,78 @@ const struct silofs_blobid *silofs_blobid_none(void)
 	return &s_silofs_blobid_none;
 }
 
+static uint64_t blobid_base_seed(void)
+{
+	struct timespec ts;
+	const pid_t pid = getpid();
+
+	silofs_clock_real_now(&ts);
+
+	return ((uint64_t)pid * (uint64_t)ts.tv_nsec) ^ (uint64_t)ts.tv_sec;
+}
+
 static uint64_t blobid_seed(void)
 {
 	static uint64_t s_blobid_seed;
 
 	if (s_blobid_seed == 0) {
-		s_blobid_seed = (uint64_t)getpid();
+		s_blobid_seed = blobid_base_seed();
 	}
 	return ++s_blobid_seed;
 }
 
 void silofs_blobid_generate(struct silofs_blobid *blobid)
 {
-	silofs_gcrypt_random(blobid->b, sizeof(blobid->b));
-	silofs_xrand_by_hash(blobid->b, sizeof(blobid->b), blobid_seed());
+	generate_random(blobid->id, sizeof(blobid->id), blobid_seed());
+}
+
+void silofs_blobid_generate2(struct silofs_blobid *blobid,
+			     const struct silofs_svolid *svolid)
+{
+	const size_t svid_size = sizeof(svolid->id);
+	const size_t rand_size = sizeof(blobid->id) - svid_size;
+
+	STATICASSERT_EQ(sizeof(blobid->id) / 2, sizeof(svolid->id));
+
+	generate_random(&blobid->id[0], rand_size, blobid_seed());
+	memcpy(&blobid->id[rand_size], svolid->id, svid_size);
 }
 
 void silofs_blobid_copyto(const struct silofs_blobid *blobid,
-                          struct silofs_blobid *other)
+			  struct silofs_blobid *other)
 {
-	memcpy(other->b, blobid->b, sizeof(other->b));
+	memcpy(other->id, blobid->id, sizeof(other->id));
 }
 
 void silofs_blobid_from_hash(struct silofs_blobid *blobid,
-                             const struct silofs_hash256 *hash)
+			     const struct silofs_hash256 *hash)
 {
-	STATICASSERT_EQ(sizeof(blobid->b), sizeof(hash->hash));
+	STATICASSERT_EQ(sizeof(blobid->id), sizeof(hash->hash));
 
-	memcpy(blobid->b, hash->hash, sizeof(blobid->b));
+	memcpy(blobid->id, hash->hash, sizeof(blobid->id));
 }
 
 void silofs_blobid_to_hash(const struct silofs_blobid *blobid,
-                           struct silofs_hash256 *out_hash)
+			   struct silofs_hash256 *out_hash)
 {
-	STATICASSERT_EQ(sizeof(blobid->b), sizeof(out_hash->hash));
+	STATICASSERT_EQ(sizeof(blobid->id), sizeof(out_hash->hash));
 
-	memcpy(out_hash->hash, blobid->b, sizeof(out_hash->hash));
+	memcpy(out_hash->hash, blobid->id, sizeof(out_hash->hash));
 }
 
 void silofs_blobid_reset(struct silofs_blobid *blobid)
 {
-	memset(blobid->b, 0, sizeof(blobid->b));
+	memset(blobid->id, 0, sizeof(blobid->id));
 }
 
 long silofs_blobid_compare(const struct silofs_blobid *blobid,
-                           const struct silofs_blobid *other)
+			   const struct silofs_blobid *other)
 {
-	return memcmp(blobid->b, other->b, sizeof(blobid->b));
+	return memcmp(blobid->id, other->id, sizeof(blobid->id));
 }
 
 bool silofs_blobid_isequal(const struct silofs_blobid *blobid1,
-                           const struct silofs_blobid *blobid2)
+			   const struct silofs_blobid *blobid2)
 {
 	return (silofs_blobid_compare(blobid1, blobid2) == 0);
 }
@@ -91,11 +120,11 @@ bool silofs_blobid_isnone(const struct silofs_blobid *blobid)
 }
 
 int silofs_blobid_to_ascii(const struct silofs_blobid *blobid, char *s,
-                           size_t n)
+			   size_t n)
 {
 	size_t cnt = 0;
 
-	silofs_mem_to_ascii(blobid->b, sizeof(blobid->b), s, n, &cnt);
+	silofs_mem_to_ascii(blobid->id, sizeof(blobid->id), s, n, &cnt);
 
 	if (cnt >= n) {
 		return -1;
@@ -105,30 +134,30 @@ int silofs_blobid_to_ascii(const struct silofs_blobid *blobid, char *s,
 }
 
 int silofs_blobid_from_ascii(struct silofs_blobid *blobid, const char *s,
-                             size_t n)
+			     size_t n)
 {
 	size_t cnt = 0;
 	int err;
 
-	err = silofs_ascii_to_mem(blobid->b, sizeof(blobid->b), s, n, &cnt);
+	err = silofs_ascii_to_mem(blobid->id, sizeof(blobid->id), s, n, &cnt);
 	if (err) {
 		return err;
 	}
-	if (cnt != sizeof(blobid->b)) {
+	if (cnt != sizeof(blobid->id)) {
 		return -1;
 	}
 	return 0;
 }
 
 void silofs_blobid_to_sbuf(const struct silofs_blobid *blobid,
-                           struct silofs_strbuf *sbuf)
+			   struct silofs_strbuf *sbuf)
 {
 	silofs_strbuf_reset(sbuf);
 	silofs_blobid_to_ascii(blobid, sbuf->str, sizeof(sbuf->str) - 1);
 }
 
 int silofs_blobid_to_str(const struct silofs_blobid *blobid,
-                         struct silofs_strspan *ss)
+			 struct silofs_strspan *ss)
 {
 	struct silofs_strbuf sbuf;
 	size_t n;
@@ -140,17 +169,17 @@ int silofs_blobid_to_str(const struct silofs_blobid *blobid,
 }
 
 int silofs_blobid_from_str(struct silofs_blobid *blobid,
-                           const struct silofs_strview *sv)
+			   const struct silofs_strview *sv)
 {
 	size_t cnt = 0;
 	int err;
 
-	err = silofs_ascii_to_mem(blobid->b, sizeof(blobid->b), sv->str,
-	                          sv->len, &cnt);
+	err = silofs_ascii_to_mem(blobid->id, sizeof(blobid->id), sv->str,
+				  sv->len, &cnt);
 	if (err) {
 		return err;
 	}
-	if (cnt != sizeof(blobid->b)) {
+	if (cnt != sizeof(blobid->id)) {
 		return -1;
 	}
 	return 0;
@@ -159,5 +188,5 @@ int silofs_blobid_from_str(struct silofs_blobid *blobid,
 uint64_t
 silofs_blobid_hash64(const struct silofs_blobid *blobid, uint64_t seed)
 {
-	return silofs_hash_xxh64(blobid->b, sizeof(blobid->b), seed);
+	return silofs_hash_xxh64(blobid->id, sizeof(blobid->id), seed);
 }

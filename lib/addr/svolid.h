@@ -14,21 +14,18 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_ADDR_H_
-#define SILOFS_ADDR_H_
+#ifndef SILOFS_SVOLID_H_
+#define SILOFS_SVOLID_H_
 
 #include <silofs/ondisk.h>
-#include <silofs/errors.h>
-#include "addr/offlba.h"
-#include "addr/htox.h"
-#include "addr/uuid.h"
-#include "addr/meta.h"
-#include "addr/mtype.h"
-#include "addr/svolid.h"
-#include "addr/blobid.h"
-#include "addr/baddr.h"
-#include "addr/laddr.h"
-#include "addr/uaddr.h"
-#include "addr/vaddr.h"
 
-#endif /* SILOFS_ADDR_H_ */
+const struct silofs_svolid *silofs_svolid_none(void);
+
+void silofs_svolid_reset(struct silofs_svolid *svolid);
+
+void silofs_svolid_generate(struct silofs_svolid *svolid);
+
+void silofs_svolid_copyto(const struct silofs_svolid *svolid,
+                          struct silofs_svolid       *other);
+
+#endif /* SILOFS_SVOLID_H_ */

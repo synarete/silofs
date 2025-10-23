@@ -24,38 +24,38 @@
 
 void silofs_uuid_generate(struct silofs_uuid *uu)
 {
-	SILOFS_STATICASSERT_EQ(sizeof(uu->uu), sizeof(uuid_t));
+	SILOFS_STATICASSERT_EQ(sizeof(uu->id), sizeof(uuid_t));
 
-	uuid_generate_random(uu->uu);
+	uuid_generate_random(uu->id);
 }
 
 void silofs_uuid_assign(struct silofs_uuid *uu,
                         const struct silofs_uuid *other)
 {
-	silofs_uuid_assign2(uu, other->uu);
+	silofs_uuid_assign2(uu, other->id);
 }
 
 void silofs_uuid_assign2(struct silofs_uuid *uu, const uint8_t u[16])
 {
-	uuid_copy(uu->uu, u);
+	uuid_copy(uu->id, u);
 }
 
 void silofs_uuid_copyto(const struct silofs_uuid *uu, uint8_t u[16])
 {
-	uuid_copy(u, uu->uu);
+	uuid_copy(u, uu->id);
 }
 
 long silofs_uuid_compare(const struct silofs_uuid *uu1,
                          const struct silofs_uuid *uu2)
 {
-	return uuid_compare(uu1->uu, uu2->uu);
+	return uuid_compare(uu1->id, uu2->id);
 }
 
 void silofs_uuid_unparse(const struct silofs_uuid *uu,
                          struct silofs_strbuf *sbuf)
 {
 	silofs_strbuf_reset(sbuf);
-	uuid_unparse_lower(uu->uu, sbuf->str);
+	uuid_unparse_lower(uu->id, sbuf->str);
 }
 
 int silofs_uuid_parse(struct silofs_uuid *uu, const struct silofs_strview *sv)
@@ -66,16 +66,16 @@ int silofs_uuid_parse(struct silofs_uuid *uu, const struct silofs_strview *sv)
 	silofs_strview_strip_ws(sv, &sv2);
 	if (sv2.len == 36) {
 		ret = uuid_parse_range(silofs_strview_begin(&sv2),
-		                       silofs_strview_end(&sv2), uu->uu);
+		                       silofs_strview_end(&sv2), uu->id);
 	}
 	return ret;
 }
 
 void silofs_uuid_as_u64s(const struct silofs_uuid *uu, uint64_t u[2])
 {
-	const uint8_t *p = uu->uu;
+	const uint8_t *p = uu->id;
 
-	SILOFS_STATICASSERT_EQ(sizeof(uu->uu), 16);
+	SILOFS_STATICASSERT_EQ(sizeof(uu->id), 16);
 
 	u[0] = silofs_u8b_as_u64(p);
 	u[1] = silofs_u8b_as_u64(p + 8);

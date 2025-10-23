@@ -20,44 +20,48 @@
 #include <stdlib.h>
 #include <silofs/ondisk.h>
 #include "str.h"
+#include "svolid.h"
 
 const struct silofs_blobid *silofs_blobid_none(void);
 
 void silofs_blobid_generate(struct silofs_blobid *blobid);
 
+void silofs_blobid_generate2(struct silofs_blobid *blobid,
+			     const struct silofs_svolid *svolid);
+
 void silofs_blobid_reset(struct silofs_blobid *blobid);
 
 void silofs_blobid_copyto(const struct silofs_blobid *blobid,
-                          struct silofs_blobid       *other);
+			  struct silofs_blobid       *other);
 
 void silofs_blobid_from_hash(struct silofs_blobid        *blobid,
-                             const struct silofs_hash256 *hash);
+			     const struct silofs_hash256 *hash);
 
 void silofs_blobid_to_hash(const struct silofs_blobid *blobid,
-                           struct silofs_hash256      *out_hash);
+			   struct silofs_hash256      *out_hash);
 
 long silofs_blobid_compare(const struct silofs_blobid *blobid1,
-                           const struct silofs_blobid *blobid2);
+			   const struct silofs_blobid *blobid2);
 
 bool silofs_blobid_isequal(const struct silofs_blobid *blobid1,
-                           const struct silofs_blobid *blobid2);
+			   const struct silofs_blobid *blobid2);
 
 bool silofs_blobid_isnone(const struct silofs_blobid *blobid);
 
 int silofs_blobid_to_ascii(const struct silofs_blobid *blobid, char *s,
-                           size_t n);
+			   size_t n);
 
 int silofs_blobid_from_ascii(struct silofs_blobid *blobid, const char *s,
-                             size_t n);
+			     size_t n);
 
 void silofs_blobid_to_sbuf(const struct silofs_blobid *blobid,
-                           struct silofs_strbuf       *sbuf);
+			   struct silofs_strbuf       *sbuf);
 
 int silofs_blobid_to_str(const struct silofs_blobid *blobid,
-                         struct silofs_strspan      *ss);
+			 struct silofs_strspan      *ss);
 
 int silofs_blobid_from_str(struct silofs_blobid        *blobid,
-                           const struct silofs_strview *sv);
+			   const struct silofs_strview *sv);
 
 uint64_t
 silofs_blobid_hash64(const struct silofs_blobid *blobid, uint64_t seed);

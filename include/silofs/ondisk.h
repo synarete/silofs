@@ -75,7 +75,10 @@
 /* repository blobs sub-directory */
 #define SILOFS_REPO_BLOBS_DIRNAME "blobs"
 
-/* blob-identifier octets-size */
+/* sub-volume identifier size */
+#define SILOFS_SVOLID_SIZE (16)
+
+/* blob identifier size */
 #define SILOFS_BLOBID_SIZE (32)
 
 /* max number of hard-links to file or sub-directories */
@@ -335,6 +338,12 @@ enum silofs_endianness {
 	SILOFS_ENDIANNESS_BE = 2,
 };
 
+enum silofs_bmode {
+	SILOFS_BMODE_NONE = 0,
+	SILOFS_BMODE_RAW  = 1,
+	SILOFS_BMODE_CAS  = 2,
+};
+
 /* persistent nodes' flags */
 enum silofs_pnodef {
 	SILOFS_PNODEF_NONE   = 0x00,
@@ -484,20 +493,19 @@ struct silofs_iv {
 } silofs_attr_aligned8;
 
 struct silofs_uuid {
-	uint8_t uu[SILOFS_UUID_SIZE];
+	uint8_t id[SILOFS_UUID_SIZE];
 } silofs_attr_aligned16;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-enum silofs_bmode {
-	SILOFS_BMODE_NONE = 0,
-	SILOFS_BMODE_RAW  = 1,
-	SILOFS_BMODE_CAS  = 2,
-};
+/* sub-volume identifier */
+struct silofs_svolid {
+	uint8_t id[SILOFS_SVOLID_SIZE];
+} silofs_attr_aligned16;
 
 /* blob identifier */
 struct silofs_blobid {
-	uint8_t b[SILOFS_BLOBID_SIZE];
+	uint8_t id[SILOFS_BLOBID_SIZE];
 } silofs_attr_aligned16;
 
 /* blob addressing */

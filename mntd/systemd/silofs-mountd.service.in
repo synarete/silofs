@@ -1,6 +1,7 @@
 [Unit]
 After=syslog.target
 Description=silofs mounting service
+Documentation=man:silofs-mountd(8) man:silofs(1)
 
 [Install]
 WantedBy=multi-user.target

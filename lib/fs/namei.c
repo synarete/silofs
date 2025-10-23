@@ -2446,7 +2446,7 @@ static void fill_query_boot_main_blobid(const struct silofs_inode_info *ii,
 
 	err = silofs_mbri_encode_mbr(&env->mbri, SILOFS_MBR_FS, &mref, &mbr1k);
 	if (!err) {
-		silofs_blobid_copyto(&qboot->main_blobid, &mref.blobid);
+		silofs_blobid_copyto(&mref.blobid, &qboot->main_blobid);
 	}
 }
 
@@ -2457,7 +2457,7 @@ static void fill_query_boot_root(const struct silofs_inode_info *ii,
 	struct silofs_query_boot *qboot = &query->u.boot;
 
 	silofs_sbi_self_blobid(silofs_ii_sbi(ii), &blobid);
-	silofs_blobid_copyto(&qboot->root_blobid, &blobid);
+	silofs_blobid_copyto(&blobid, &qboot->root_blobid);
 }
 
 static void fill_query_boot(const struct silofs_inode_info *ii,

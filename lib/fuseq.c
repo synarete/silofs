@@ -4532,7 +4532,7 @@ static void fuseq_set_non_active(struct silofs_fuseq *fq)
 
 static int fuseq_update_pipes(struct silofs_fuseq *fq)
 {
-	int mode_flags = fq->fq_mode_flags;
+	int mode_flags = (int)(fq->fq_mode_flags);
 	int err = 0;
 
 	if (fuseq_may_splice(fq) && fuseq_cap_splice(fq)) {

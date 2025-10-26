@@ -173,11 +173,11 @@ static void sb_set_lv_ids(struct silofs_super_block *sb,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static const struct silofs_lsid48b *
+static const struct silofs_lsid64b *
 sb_mainsilofs_lsid_by(const struct silofs_super_block *sb,
                       enum silofs_mtype mtype)
 {
-	const struct silofs_lsid48b *ret;
+	const struct silofs_lsid64b *ret;
 
 	switch (mtype) {
 	case SILOFS_MTYPE_LSMAP:
@@ -224,21 +224,21 @@ sb_mainsilofs_lsid_by(const struct silofs_super_block *sb,
 	return ret;
 }
 
-static struct silofs_lsid48b *
+static struct silofs_lsid64b *
 sb_mainsilofs_lsid_by2(struct silofs_super_block *sb, enum silofs_mtype mtype)
 {
-	const struct silofs_lsid48b *lsid48 = sb_mainsilofs_lsid_by(sb, mtype);
+	const struct silofs_lsid64b *lsid64 = sb_mainsilofs_lsid_by(sb, mtype);
 
-	return unconst(lsid48);
+	return unconst(lsid64);
 }
 
 static void sb_main_lsid(const struct silofs_super_block *sb,
                          enum silofs_mtype mtype, struct silofs_lsid *out_lsid)
 {
-	const struct silofs_lsid48b *lsid48 = sb_mainsilofs_lsid_by(sb, mtype);
+	const struct silofs_lsid64b *lsid64 = sb_mainsilofs_lsid_by(sb, mtype);
 
-	if (likely(lsid48 != nullptr)) {
-		silofs_lsid48b_xtoh(lsid48, out_lsid);
+	if (likely(lsid64 != nullptr)) {
+		silofs_lsid64b_xtoh(lsid64, out_lsid);
 	} else {
 		silofs_lsid_reset(out_lsid);
 	}
@@ -248,22 +248,22 @@ static void
 sb_set_main_lsid(struct silofs_super_block *sb, enum silofs_mtype mtype,
                  const struct silofs_lsid *lsid)
 {
-	struct silofs_lsid48b *bid = sb_mainsilofs_lsid_by2(sb, mtype);
+	struct silofs_lsid64b *bid = sb_mainsilofs_lsid_by2(sb, mtype);
 
 	if (likely(bid != nullptr)) {
-		silofs_lsid48b_htox(bid, lsid);
+		silofs_lsid64b_htox(bid, lsid);
 	}
 }
 
 static void sb_reset_main_lsids(struct silofs_super_block *sb)
 {
-	struct silofs_lsid48b *bid;
+	struct silofs_lsid64b *bid;
 	enum silofs_mtype mtype = SILOFS_MTYPE_NONE;
 
 	while (++mtype < SILOFS_MTYPE_LAST) {
 		bid = sb_mainsilofs_lsid_by2(sb, mtype);
 		if (bid != nullptr) {
-			silofs_lsid48b_reset(bid);
+			silofs_lsid64b_reset(bid);
 		}
 	}
 }

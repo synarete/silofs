@@ -79,12 +79,12 @@ uint64_t silofs_lsid_hash64(const struct silofs_lsid *lsid);
 
 off_t silofs_lsid_pos(const struct silofs_lsid *lsid, off_t off);
 
-void silofs_lsid48b_reset(struct silofs_lsid48b *lsid48);
+void silofs_lsid64b_reset(struct silofs_lsid64b *lsid64);
 
-void silofs_lsid48b_htox(struct silofs_lsid48b    *lsid48,
+void silofs_lsid64b_htox(struct silofs_lsid64b    *lsid64,
                          const struct silofs_lsid *lsid);
 
-void silofs_lsid48b_xtoh(const struct silofs_lsid48b *lsid48,
+void silofs_lsid64b_xtoh(const struct silofs_lsid64b *lsid64,
                          struct silofs_lsid          *lsid);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

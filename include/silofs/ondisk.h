@@ -664,7 +664,7 @@ struct silofs_super_block {
 	struct silofs_tm64b         sb_btime_base;
 	struct silofs_blobid        sb_lv_curr;
 	struct silofs_blobid        sb_lv_prev;
-	struct silofs_blobid        sb_lv_base;
+	uint8_t                     sb_reserved4a[32];
 	struct silofs_lrange128     sb_lrange;
 	uint8_t                     sb_reserved4[208];
 	/* 1K..2K */

@@ -108,7 +108,6 @@ bool silofs_sbi_ismutable_laddr(const struct silofs_sb_info *sbi,
 struct silofs_sb_refs {
 	struct silofs_uaddr curr;
 	struct silofs_uaddr prev;
-	struct silofs_uaddr base;
 };
 
 void silofs_sbi_resolve_refs(const struct silofs_sb_info *sbi,

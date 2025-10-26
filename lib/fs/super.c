@@ -140,18 +140,6 @@ static enum silofs_height sb_height(const struct silofs_super_block *sb)
 	return lrange.height;
 }
 
-static void sb_lv_base(const struct silofs_super_block *sb,
-                       struct silofs_blobid *out_blobid)
-{
-	silofs_blobid_copyto(&sb->sb_lv_base, out_blobid);
-}
-
-static void sb_set_lv_base(struct silofs_super_block *sb,
-                           const struct silofs_blobid *blobid)
-{
-	silofs_blobid_copyto(blobid, &sb->sb_lv_base);
-}
-
 static void sb_lv_prev(const struct silofs_super_block *sb,
                        struct silofs_blobid *out_blobid)
 {
@@ -179,7 +167,6 @@ static void sb_set_lv_curr(struct silofs_super_block *sb,
 static void sb_set_lv_ids(struct silofs_super_block *sb,
                           const struct silofs_blobid *blobid)
 {
-	sb_set_lv_base(sb, blobid);
 	sb_set_lv_prev(sb, blobid);
 	sb_set_lv_curr(sb, blobid);
 }
@@ -465,8 +452,6 @@ static void sb_clone_raw(struct silofs_super_block *sb,
 	sb_set_lv_curr(sb, &vid);
 	sb_lv_curr(sb_other, &vid);
 	sb_set_lv_prev(sb, &vid);
-	sb_lv_base(sb_other, &vid);
-	sb_set_lv_base(sb, &vid);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -598,8 +583,6 @@ void silofs_sbi_resolve_refs(const struct silofs_sb_info *sbi,
 {
 	struct silofs_blobid vid;
 
-	sb_lv_base(sbi->sb, &vid);
-	uaddr_setup_super(&out_refs->base, &vid);
 	sb_lv_prev(sbi->sb, &vid);
 	uaddr_setup_super(&out_refs->prev, &vid);
 	sb_lv_curr(sbi->sb, &vid);

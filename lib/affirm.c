@@ -254,7 +254,6 @@ static void affirm_ondisk_super(void)
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_btime_base, 640);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_lv_curr, 704);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_lv_prev, 736);
-	REQUIRE_OFFSET64(struct silofs_super_block, sb_lv_base, 768);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_lrange, 800);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_sproots, 1024);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_main_lsid, 2048);

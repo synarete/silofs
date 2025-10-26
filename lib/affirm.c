@@ -171,7 +171,7 @@ static void affirm_ondisk_addrs(void)
 	REQUIRE_SIZEOF(struct silofs_vaddr64, 8);
 	REQUIRE_SIZEOF(struct silofs_lrange128, 16);
 	REQUIRE_SIZEOF(struct silofs_lsid48b, 48);
-	REQUIRE_SIZEOF(struct silofs_laddr64b, 64);
+	REQUIRE_SIZEOF(struct silofs_laddr96b, 96);
 	REQUIRE_SIZEOF(struct silofs_uaddr128b, 128);
 	REQUIRE_SIZEOF(struct silofs_baddr64b, 64);
 	REQUIRE_SIZEOF(struct silofs_bcursor128b, 128);
@@ -197,7 +197,7 @@ static void affirm_ondisk_spmaps(void)
 	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_main_lsid, 32);
 	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_lrange, 80);
 	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_parent, 128);
-	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_self, 224 + 32);
+	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_self, 256);
 	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_subrefs, 2048);
 	REQUIRE_SIZEOF(struct silofs_spmap_node, SILOFS_SPMAP_SIZE);
 	REQUIRE_OFFSET64(struct silofs_lbk_ref, lbr_subref, 0);
@@ -421,7 +421,7 @@ static void affirm_ondisk_archive(void)
 {
 	REQUIRE_OFFSET64(struct silofs_ar_desc256b, ad_baddr, 0);
 	REQUIRE_OFFSET64(struct silofs_ar_desc256b, ad_laddr, 64);
-	REQUIRE_OFFSET64(struct silofs_ar_desc256b, ad_len, 128);
+	REQUIRE_OFFSET64(struct silofs_ar_desc256b, ad_len, 160);
 	REQUIRE_SIZEOF(struct silofs_ar_desc256b, 256);
 
 	REQUIRE_OFFSET64(struct silofs_arix_block, ab_hdr, 0);

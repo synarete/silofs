@@ -536,18 +536,18 @@ struct silofs_lsid48b {
 } silofs_attr_aligned16;
 
 /* logical address */
-struct silofs_laddr64b {
+struct silofs_laddr96b {
 	struct silofs_lsid48b lsid;
-	uint32_t              pos;
-	uint8_t               reserved[12];
+	int64_t               pos;
+	uint8_t               reserved[40];
 } silofs_attr_aligned32;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 struct silofs_uaddr128b {
-	struct silofs_laddr64b laddr;
+	struct silofs_laddr96b laddr;
 	int64_t                voff;
-	uint8_t                pad[56];
+	uint8_t                pad[24];
 } silofs_attr_aligned32;
 
 struct silofs_lrange128 {
@@ -696,8 +696,8 @@ struct silofs_spmap_node {
 } silofs_attr_aligned64;
 
 struct silofs_lbk_ref {
-	struct silofs_laddr64b lbr_subref;
-	uint8_t                lbr_reserved[96];
+	struct silofs_laddr96b lbr_subref;
+	uint8_t                lbr_reserved[64];
 } silofs_attr_aligned16;
 
 struct silofs_spmap_leaf {
@@ -963,9 +963,9 @@ struct silofs_uber_block {
 /* archive descriptor */
 struct silofs_ar_desc256b {
 	struct silofs_baddr64b ad_baddr;
-	struct silofs_laddr64b ad_laddr;
+	struct silofs_laddr96b ad_laddr;
 	uint64_t               ad_len;
-	uint8_t                ad_reserved[120];
+	uint8_t                ad_reserved[56];
 } silofs_attr_aligned64;
 
 /* archive-index block */

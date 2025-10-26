@@ -333,16 +333,16 @@ void silofs_laddr_as_iv(const struct silofs_laddr *laddr,
                         struct silofs_iv *out_iv)
 {
 	union {
-		struct silofs_laddr64b laddr64;
-		uint8_t d[64];
+		struct silofs_laddr96b laddr96;
+		uint8_t d[96];
 	} u;
 
-	STATICASSERT_EQ(sizeof(u), 64);
-	STATICASSERT_EQ(4 * sizeof(out_iv->iv), sizeof(u.laddr64));
-	STATICASSERT_EQ(4 * sizeof(out_iv->iv), sizeof(u));
-	STATICASSERT_EQ(4 * ARRAY_SIZE(out_iv->iv), sizeof(u));
+	STATICASSERT_EQ(sizeof(u), 96);
+	STATICASSERT_EQ(6 * sizeof(out_iv->iv), sizeof(u.laddr96));
+	STATICASSERT_EQ(6 * sizeof(out_iv->iv), sizeof(u));
+	STATICASSERT_EQ(6 * ARRAY_SIZE(out_iv->iv), sizeof(u));
 
-	silofs_laddr64b_htox(&u.laddr64, laddr);
+	silofs_laddr96b_htox(&u.laddr96, laddr);
 	for (size_t i = 0; i < ARRAY_SIZE(out_iv->iv); ++i) {
 		const size_t j = i % 8;
 
@@ -351,26 +351,26 @@ void silofs_laddr_as_iv(const struct silofs_laddr *laddr,
 	}
 }
 
-void silofs_laddr64b_reset(struct silofs_laddr64b *laddr64)
+void silofs_laddr96b_reset(struct silofs_laddr96b *laddr96)
 {
-	memset(laddr64, 0, sizeof(*laddr64));
-	silofs_lsid48b_reset(&laddr64->lsid);
-	laddr64->pos = 0;
+	memset(laddr96, 0, sizeof(*laddr96));
+	silofs_lsid48b_reset(&laddr96->lsid);
+	laddr96->pos = 0;
 }
 
-void silofs_laddr64b_htox(struct silofs_laddr64b *laddr64,
+void silofs_laddr96b_htox(struct silofs_laddr96b *laddr96,
                           const struct silofs_laddr *laddr)
 {
-	memset(laddr64, 0, sizeof(*laddr64));
-	silofs_lsid48b_htox(&laddr64->lsid, &laddr->lsid);
-	laddr64->pos = silofs_cpu_to_le32((uint32_t)(laddr->pos));
+	memset(laddr96, 0, sizeof(*laddr96));
+	silofs_lsid48b_htox(&laddr96->lsid, &laddr->lsid);
+	laddr96->pos = silofs_cpu_to_off(laddr->pos);
 }
 
-void silofs_laddr64b_xtoh(const struct silofs_laddr64b *laddr64,
+void silofs_laddr96b_xtoh(const struct silofs_laddr96b *laddr96,
                           struct silofs_laddr *laddr)
 {
-	silofs_lsid48b_xtoh(&laddr64->lsid, &laddr->lsid);
-	laddr->pos = (off_t)silofs_le32_to_cpu(laddr64->pos);
+	silofs_lsid48b_xtoh(&laddr96->lsid, &laddr->lsid);
+	laddr->pos = silofs_off_to_cpu(laddr96->pos);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -379,10 +379,10 @@ static void
 laddr_to_hash(const struct silofs_laddr *laddr,
               const struct silofs_mdigest *md, struct silofs_hash256 *out_hash)
 {
-	struct silofs_laddr64b laddr64 = {};
+	struct silofs_laddr96b laddr96 = {};
 
-	silofs_laddr64b_htox(&laddr64, laddr);
-	silofs_sha3_256_of(md, &laddr64, sizeof(laddr64), out_hash);
+	silofs_laddr96b_htox(&laddr96, laddr);
+	silofs_sha3_256_of(md, &laddr96, sizeof(laddr96), out_hash);
 }
 
 void silofs_derive_iv_by_laddr(const struct silofs_mdigest *md,

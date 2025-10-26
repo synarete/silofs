@@ -246,19 +246,19 @@ static struct silofs_lbk_ref *lbr_unconst(const struct silofs_lbk_ref *lbr)
 static void
 lbr_subref(const struct silofs_lbk_ref *lbr, struct silofs_laddr *out_laddr)
 {
-	silofs_laddr64b_xtoh(&lbr->lbr_subref, out_laddr);
+	silofs_laddr96b_xtoh(&lbr->lbr_subref, out_laddr);
 }
 
 static void
 lbr_set_subref(struct silofs_lbk_ref *lbr, const struct silofs_laddr *laddr)
 {
-	silofs_laddr64b_htox(&lbr->lbr_subref, laddr);
+	silofs_laddr96b_htox(&lbr->lbr_subref, laddr);
 }
 
 static void lbr_reset(struct silofs_lbk_ref *lbr)
 {
 	memset(lbr, 0, sizeof(*lbr));
-	silofs_laddr64b_reset(&lbr->lbr_subref);
+	silofs_laddr96b_reset(&lbr->lbr_subref);
 }
 
 static void lbr_init(struct silofs_lbk_ref *lbr)

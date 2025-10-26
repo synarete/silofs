@@ -123,13 +123,13 @@ bool silofs_laddr_isvalid(const struct silofs_laddr *laddr);
 bool silofs_laddr_isequal(const struct silofs_laddr *laddr,
                           const struct silofs_laddr *other);
 
-void silofs_laddr64b_htox(struct silofs_laddr64b    *laddr64,
+void silofs_laddr96b_htox(struct silofs_laddr96b    *laddr96,
                           const struct silofs_laddr *laddr);
 
-void silofs_laddr64b_xtoh(const struct silofs_laddr64b *laddr64,
+void silofs_laddr96b_xtoh(const struct silofs_laddr96b *laddr96,
                           struct silofs_laddr          *laddr);
 
-void silofs_laddr64b_reset(struct silofs_laddr64b *laddr64);
+void silofs_laddr96b_reset(struct silofs_laddr96b *laddr96);
 
 void silofs_derive_iv_by_laddr(const struct silofs_mdigest *md,
                                const struct silofs_laddr   *laddr,

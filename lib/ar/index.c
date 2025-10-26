@@ -42,7 +42,7 @@ static void ard256b_htox(struct silofs_ar_desc256b *ard256,
 {
 	silofs_memzero(ard256, sizeof(*ard256));
 	silofs_baddr64b_htox(&ard256->ad_baddr, &ard->baddr);
-	silofs_laddr64b_htox(&ard256->ad_laddr, &ard->laddr);
+	silofs_laddr96b_htox(&ard256->ad_laddr, &ard->laddr);
 	ard256->ad_len = silofs_cpu_to_le64(ard->len);
 }
 
@@ -50,7 +50,7 @@ static void ard256b_xtoh(const struct silofs_ar_desc256b *ard256,
                          struct silofs_ar_desc *ard)
 {
 	silofs_baddr64b_xtoh(&ard256->ad_baddr, &ard->baddr);
-	silofs_laddr64b_xtoh(&ard256->ad_laddr, &ard->laddr);
+	silofs_laddr96b_xtoh(&ard256->ad_laddr, &ard->laddr);
 	ard->len = silofs_le64_to_cpu(ard256->ad_len);
 }
 

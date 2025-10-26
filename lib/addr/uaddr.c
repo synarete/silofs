@@ -103,20 +103,20 @@ enum silofs_height silofs_uaddr_height(const struct silofs_uaddr *uaddr)
 
 void silofs_uaddr128b_reset(struct silofs_uaddr128b *uaddr128)
 {
-	silofs_laddr64b_reset(&uaddr128->laddr);
+	silofs_laddr96b_reset(&uaddr128->laddr);
 	uaddr128->voff = silofs_off_to_cpu(SILOFS_OFF_NULL);
 }
 
 void silofs_uaddr128b_htox(struct silofs_uaddr128b *uaddr128,
                            const struct silofs_uaddr *uaddr)
 {
-	silofs_laddr64b_htox(&uaddr128->laddr, &uaddr->laddr);
+	silofs_laddr96b_htox(&uaddr128->laddr, &uaddr->laddr);
 	uaddr128->voff = silofs_cpu_to_off(uaddr->voff);
 }
 
 void silofs_uaddr128b_xtoh(const struct silofs_uaddr128b *uaddr128,
                            struct silofs_uaddr *uaddr)
 {
-	silofs_laddr64b_xtoh(&uaddr128->laddr, &uaddr->laddr);
+	silofs_laddr96b_xtoh(&uaddr128->laddr, &uaddr->laddr);
 	uaddr->voff = silofs_off_to_cpu(uaddr128->voff);
 }

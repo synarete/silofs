@@ -512,16 +512,16 @@ struct silofs_blobid {
 struct silofs_baddr64b {
 	struct silofs_blobid blobid;
 	int64_t              pos;
-	uint16_t             mtype;
-	uint16_t             bmode;
-	uint8_t              pad[20];
+	uint8_t              mtype;
+	uint8_t              bmode;
+	uint8_t              pad[22];
 } silofs_attr_aligned64;
 
 /* cursor within blob */
 struct silofs_bcursor128b {
-	struct silofs_baddr64b bc_baddr;
-	uint64_t               bc_blobsz;
-	uint8_t                bc_reserved[56];
+	struct silofs_baddr64b baddr;
+	uint64_t               blobsz;
+	uint8_t                reserved[56];
 } silofs_attr_aligned64;
 
 /* logical volume's segment identifier */

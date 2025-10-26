@@ -119,21 +119,17 @@ void silofs_baddr64b_htox(struct silofs_baddr64b *baddr64,
 	memset(baddr64, 0, sizeof(*baddr64));
 	silofs_blobid_copyto(&baddr->blobid, &baddr64->blobid);
 	baddr64->pos = silofs_cpu_to_off(baddr->pos);
-	baddr64->mtype = silofs_cpu_to_le16((uint16_t)(baddr->mtype));
-	baddr64->bmode = silofs_cpu_to_le16((uint16_t)(baddr->bmode));
+	baddr64->mtype = (uint8_t)baddr->mtype;
+	baddr64->bmode = (uint8_t)baddr->bmode;
 }
 
 void silofs_baddr64b_xtoh(const struct silofs_baddr64b *baddr64,
                           struct silofs_baddr *baddr)
 {
-	uint16_t m;
-
 	silofs_blobid_copyto(&baddr64->blobid, &baddr->blobid);
 	baddr->pos = silofs_off_to_cpu(baddr64->pos);
-	m = silofs_le16_to_cpu(baddr64->mtype);
-	baddr->mtype = (enum silofs_mtype)m;
-	m = silofs_le16_to_cpu(baddr64->bmode);
-	baddr->bmode = (enum silofs_bmode)m;
+	baddr->mtype = (enum silofs_mtype)(baddr64->mtype);
+	baddr->bmode = (enum silofs_bmode)(baddr64->bmode);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -155,13 +151,13 @@ void silofs_bcursor128b_reset(struct silofs_bcursor128b *bcur128)
 void silofs_bcursor128b_xtoh(const struct silofs_bcursor128b *bcur128,
                              struct silofs_bcursor *bcur)
 {
-	silofs_baddr64b_xtoh(&bcur128->bc_baddr, &bcur->baddr);
-	bcur->blobsz = silofs_le64_to_cpu(bcur128->bc_blobsz);
+	silofs_baddr64b_xtoh(&bcur128->baddr, &bcur->baddr);
+	bcur->blobsz = silofs_le64_to_cpu(bcur128->blobsz);
 }
 
 void silofs_bcursor128b_htox(struct silofs_bcursor128b *bcur128,
                              const struct silofs_bcursor *bcur)
 {
-	silofs_baddr64b_htox(&bcur128->bc_baddr, &bcur->baddr);
-	bcur128->bc_blobsz = silofs_cpu_to_le64(bcur->blobsz);
+	silofs_baddr64b_htox(&bcur128->baddr, &bcur->baddr);
+	bcur128->blobsz = silofs_cpu_to_le64(bcur->blobsz);
 }

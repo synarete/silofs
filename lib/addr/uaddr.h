@@ -56,12 +56,12 @@ void silofs_uaddr_setup(struct silofs_uaddr      *uaddr,
                         const struct silofs_lsid *lsid, off_t bpos,
                         off_t voff);
 
-void silofs_uaddr96b_reset(struct silofs_uaddr96b *uaddr96);
+void silofs_uaddr128b_reset(struct silofs_uaddr128b *uaddr128);
 
-void silofs_uaddr96b_htox(struct silofs_uaddr96b    *uaddr96,
-                          const struct silofs_uaddr *uaddr);
+void silofs_uaddr128b_htox(struct silofs_uaddr128b   *uaddr128,
+                           const struct silofs_uaddr *uaddr);
 
-void silofs_uaddr96b_xtoh(const struct silofs_uaddr96b *uaddr96,
-                          struct silofs_uaddr          *uaddr);
+void silofs_uaddr128b_xtoh(const struct silofs_uaddr128b *uaddr128,
+                           struct silofs_uaddr           *uaddr);
 
 #endif /* SILOFS_UADDR_H_ */

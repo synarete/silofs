@@ -270,10 +270,10 @@ static void sb_reset_main_lsids(struct silofs_super_block *sb)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static const struct silofs_uaddr96b *
+static const struct silofs_uaddr128b *
 sb_sproot_by(const struct silofs_super_block *sb, enum silofs_mtype mtype)
 {
-	const struct silofs_uaddr96b *ret;
+	const struct silofs_uaddr128b *ret;
 
 	switch (mtype) {
 	case SILOFS_MTYPE_LSMAP:
@@ -320,22 +320,22 @@ sb_sproot_by(const struct silofs_super_block *sb, enum silofs_mtype mtype)
 	return ret;
 }
 
-static struct silofs_uaddr96b *
+static struct silofs_uaddr128b *
 sb_sproot_by2(struct silofs_super_block *sb, enum silofs_mtype mtype)
 {
-	const struct silofs_uaddr96b *uaddr96 = sb_sproot_by(sb, mtype);
+	const struct silofs_uaddr128b *uaddr128 = sb_sproot_by(sb, mtype);
 
-	return unconst(uaddr96);
+	return unconst(uaddr128);
 }
 
 static void
 sb_sproot_of(const struct silofs_super_block *sb, enum silofs_mtype mtype,
              struct silofs_uaddr *out_uaddr)
 {
-	const struct silofs_uaddr96b *uaddr96 = sb_sproot_by(sb, mtype);
+	const struct silofs_uaddr128b *uaddr128 = sb_sproot_by(sb, mtype);
 
-	if (likely(uaddr96 != nullptr)) {
-		silofs_uaddr96b_xtoh(uaddr96, out_uaddr);
+	if (likely(uaddr128 != nullptr)) {
+		silofs_uaddr128b_xtoh(uaddr128, out_uaddr);
 	} else {
 		silofs_uaddr_reset(out_uaddr);
 	}
@@ -345,22 +345,22 @@ static void
 sb_set_sproot_of(struct silofs_super_block *sb, enum silofs_mtype mtype,
                  const struct silofs_uaddr *uaddr)
 {
-	struct silofs_uaddr96b *uaddr96 = sb_sproot_by2(sb, mtype);
+	struct silofs_uaddr128b *uaddr128 = sb_sproot_by2(sb, mtype);
 
-	if (likely(uaddr96 != nullptr)) {
-		silofs_uaddr96b_htox(uaddr96, uaddr);
+	if (likely(uaddr128 != nullptr)) {
+		silofs_uaddr128b_htox(uaddr128, uaddr);
 	}
 }
 
 static void sb_reset_sproots(struct silofs_super_block *sb)
 {
-	struct silofs_uaddr96b *uaddr96;
+	struct silofs_uaddr128b *uaddr128;
 	enum silofs_mtype mtype = SILOFS_MTYPE_NONE;
 
 	while (++mtype < SILOFS_MTYPE_LAST) {
-		uaddr96 = sb_sproot_by2(sb, mtype);
-		if (uaddr96 != nullptr) {
-			silofs_uaddr96b_htox(uaddr96, silofs_uaddr_none());
+		uaddr128 = sb_sproot_by2(sb, mtype);
+		if (uaddr128 != nullptr) {
+			silofs_uaddr128b_htox(uaddr128, silofs_uaddr_none());
 		}
 	}
 }

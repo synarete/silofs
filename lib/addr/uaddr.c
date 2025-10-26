@@ -101,22 +101,22 @@ enum silofs_height silofs_uaddr_height(const struct silofs_uaddr *uaddr)
 	return uaddr->laddr.lsid.height;
 }
 
-void silofs_uaddr96b_reset(struct silofs_uaddr96b *uaddr96)
+void silofs_uaddr128b_reset(struct silofs_uaddr128b *uaddr128)
 {
-	silofs_laddr64b_reset(&uaddr96->laddr);
-	uaddr96->voff = silofs_off_to_cpu(SILOFS_OFF_NULL);
+	silofs_laddr64b_reset(&uaddr128->laddr);
+	uaddr128->voff = silofs_off_to_cpu(SILOFS_OFF_NULL);
 }
 
-void silofs_uaddr96b_htox(struct silofs_uaddr96b *uaddr96,
-                          const struct silofs_uaddr *uaddr)
+void silofs_uaddr128b_htox(struct silofs_uaddr128b *uaddr128,
+                           const struct silofs_uaddr *uaddr)
 {
-	silofs_laddr64b_htox(&uaddr96->laddr, &uaddr->laddr);
-	uaddr96->voff = silofs_cpu_to_off(uaddr->voff);
+	silofs_laddr64b_htox(&uaddr128->laddr, &uaddr->laddr);
+	uaddr128->voff = silofs_cpu_to_off(uaddr->voff);
 }
 
-void silofs_uaddr96b_xtoh(const struct silofs_uaddr96b *uaddr96,
-                          struct silofs_uaddr *uaddr)
+void silofs_uaddr128b_xtoh(const struct silofs_uaddr128b *uaddr128,
+                           struct silofs_uaddr *uaddr)
 {
-	silofs_laddr64b_xtoh(&uaddr96->laddr, &uaddr->laddr);
-	uaddr->voff = silofs_off_to_cpu(uaddr96->voff);
+	silofs_laddr64b_xtoh(&uaddr128->laddr, &uaddr->laddr);
+	uaddr->voff = silofs_off_to_cpu(uaddr128->voff);
 }

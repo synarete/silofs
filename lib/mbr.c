@@ -96,13 +96,13 @@ static void mbr1k_setup(struct silofs_mbr1k *mbr1k)
 static void mbr1k_sb_addr(const struct silofs_mbr1k *mbr1k,
                           struct silofs_uaddr *out_sb_addr)
 {
-	silofs_uaddr96b_xtoh(&mbr1k->mbr_sb_addr, out_sb_addr);
+	silofs_uaddr128b_xtoh(&mbr1k->mbr_sb_addr, out_sb_addr);
 }
 
 static void mbr1k_set_sb_addr(struct silofs_mbr1k *mbr1k,
                               const struct silofs_uaddr *sb_addr)
 {
-	silofs_uaddr96b_htox(&mbr1k->mbr_sb_addr, sb_addr);
+	silofs_uaddr128b_htox(&mbr1k->mbr_sb_addr, sb_addr);
 }
 
 static void mbr1k_arix_addr(const struct silofs_mbr1k *mbr1k,

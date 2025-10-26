@@ -544,10 +544,10 @@ struct silofs_laddr64b {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-struct silofs_uaddr96b {
+struct silofs_uaddr128b {
 	struct silofs_laddr64b laddr;
 	int64_t                voff;
-	uint8_t                pad[24];
+	uint8_t                pad[56];
 } silofs_attr_aligned32;
 
 struct silofs_lrange128 {
@@ -566,20 +566,19 @@ struct silofs_vaddr64 {
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 struct silofs_mbr1k {
-	uint64_t               mbr_magic;
-	uint64_t               mbr_version;
-	struct silofs_uuid     mbr_uuid;
-	uint32_t               mbr_kind;
-	uint32_t               mbr_flags;
-	uint32_t               mbr_chiper_algo;
-	uint32_t               mbr_chiper_mode;
-	struct silofs_iv       mbr_main_iv;
-	struct silofs_key      mbr_main_key;
-	struct silofs_uaddr96b mbr_sb_addr;
-	uint8_t                mbr_reserved1[32];
-	struct silofs_baddr64b mbr_arix_addr;
-	uint8_t                mbr_reserved3[672];
-	struct silofs_hash256  mbr_hash;
+	uint64_t                mbr_magic;
+	uint64_t                mbr_version;
+	struct silofs_uuid      mbr_uuid;
+	uint32_t                mbr_kind;
+	uint32_t                mbr_flags;
+	uint32_t                mbr_chiper_algo;
+	uint32_t                mbr_chiper_mode;
+	struct silofs_iv        mbr_main_iv;
+	struct silofs_key       mbr_main_key;
+	struct silofs_uaddr128b mbr_sb_addr;
+	struct silofs_baddr64b  mbr_arix_addr;
+	uint8_t                 mbr_reserved3[672];
+	struct silofs_hash256   mbr_hash;
 } silofs_attr_aligned64;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -594,16 +593,16 @@ struct silofs_header {
 } silofs_attr_aligned32;
 
 struct silofs_sb_sproots {
-	struct silofs_uaddr96b sb_sproot_lsmap;
-	struct silofs_uaddr96b sb_sproot_inode;
-	struct silofs_uaddr96b sb_sproot_xanode;
-	struct silofs_uaddr96b sb_sproot_dtnode;
-	struct silofs_uaddr96b sb_sproot_ftnode;
-	struct silofs_uaddr96b sb_sproot_symval;
-	struct silofs_uaddr96b sb_sproot_data1k;
-	struct silofs_uaddr96b sb_sproot_data4k;
-	struct silofs_uaddr96b sb_sproot_databk;
-	uint8_t                sb_reserved[160];
+	struct silofs_uaddr128b sb_sproot_lsmap;
+	struct silofs_uaddr128b sb_sproot_inode;
+	struct silofs_uaddr128b sb_sproot_xanode;
+	struct silofs_uaddr128b sb_sproot_dtnode;
+	struct silofs_uaddr128b sb_sproot_ftnode;
+	struct silofs_uaddr128b sb_sproot_symval;
+	struct silofs_uaddr128b sb_sproot_data1k;
+	struct silofs_uaddr128b sb_sproot_data4k;
+	struct silofs_uaddr128b sb_sproot_databk;
+	uint8_t                 sb_reserved[896];
 } silofs_attr_aligned64;
 
 struct silofs_sb_lsids {
@@ -667,12 +666,10 @@ struct silofs_super_block {
 	uint8_t                     sb_reserved4a[32];
 	struct silofs_lrange128     sb_lrange;
 	uint8_t                     sb_reserved4[208];
-	/* 1K..2K */
+	/* 1K..3K */
 	struct silofs_sb_sproots    sb_sproots;
-	/* 2K..3K */
-	struct silofs_sb_lsids      sb_main_lsid;
 	/* 3K..4K */
-	uint8_t                     sb_reserved5[1024];
+	struct silofs_sb_lsids      sb_main_lsid;
 	/* 4K..6K */
 	struct silofs_space_stats1k sb_space_stats_curr;
 	struct silofs_space_stats1k sb_space_stats_prev;
@@ -682,7 +679,7 @@ struct silofs_super_block {
 } silofs_attr_aligned64;
 
 struct silofs_spmap_ref {
-	struct silofs_uaddr96b sr_uaddr;
+	struct silofs_uaddr128b sr_uaddr;
 } silofs_attr_aligned32;
 
 struct silofs_spmap_node {
@@ -690,12 +687,12 @@ struct silofs_spmap_node {
 	struct silofs_lsid48b   sn_main_lsid;
 	struct silofs_lrange128 sn_lrange;
 	uint8_t                 sn_reserved2[16];
-	struct silofs_uaddr96b  sn_parent;
-	struct silofs_uaddr96b  sn_self;
-	uint8_t                 sn_reserved3[704];
+	struct silofs_uaddr128b sn_parent;
+	struct silofs_uaddr128b sn_self;
+	uint8_t                 sn_reserved3[704 - 64];
 	uint8_t                 sn_reserved4[1024];
 	struct silofs_spmap_ref sn_subrefs[SILOFS_SPMAP_NCHILDS];
-	uint8_t                 sl_reserved5[8192];
+	uint8_t                 sl_reserved5[6144];
 } silofs_attr_aligned64;
 
 struct silofs_lbk_ref {
@@ -710,9 +707,9 @@ struct silofs_spmap_leaf {
 	uint8_t                 sl_reserved1[14];
 	struct silofs_lsid48b   sl_main_lsid;
 	uint8_t                 sl_reserved2[16];
-	struct silofs_uaddr96b  sl_parent;
-	struct silofs_uaddr96b  sl_self;
-	uint8_t                 sl_reserved3[704];
+	struct silofs_uaddr128b sl_parent;
+	struct silofs_uaddr128b sl_self;
+	uint8_t                 sl_reserved3[640];
 	struct silofs_lbk_ref   sl_lbrs[SILOFS_SPMAP_NCHILDS];
 	uint8_t                 sl_reserved4[5120];
 } silofs_attr_aligned64;

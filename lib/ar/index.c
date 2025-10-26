@@ -351,7 +351,10 @@ void silofs_abi_calc_desc(const struct silofs_ab_info *abi,
 		.iov_base = unconst(rovec->rov_base),
 		.iov_len = rovec->rov_len,
 	};
-	silofs_calc_baddr_of(md, laddr->lsid.mtype, &iov, 1, &baddr);
+	enum silofs_mtype mtype;
+
+	mtype = silofs_blobid_get_mtype(&laddr->lsid.blobid);
+	silofs_calc_baddr_of(md, mtype, &iov, 1, &baddr);
 
 	ard_init(out_ard, &baddr, laddr, iov.iov_len);
 }

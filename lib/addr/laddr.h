@@ -18,6 +18,7 @@
 #define SILOFS_LADDR_H_
 
 #include "crypt.h"
+#include "svolid.h"
 #include "blobid.h"
 
 struct silofs_strbuf;
@@ -27,9 +28,6 @@ struct silofs_lsid {
 	struct silofs_blobid blobid;
 	size_t               lsize;
 	uint32_t             vindex;
-	enum silofs_mtype    vspace;
-	enum silofs_height   height;
-	enum silofs_mtype    mtype;
 };
 
 /* logical-address within specific volume's mapping extend */
@@ -62,12 +60,13 @@ bool silofs_lsid_isnull(const struct silofs_lsid *lsid);
 bool silofs_lsid_has_blobid(const struct silofs_lsid   *lsid,
                             const struct silofs_blobid *blobid);
 
+bool silofs_lsid_has_svolid(const struct silofs_lsid   *lsid,
+                            const struct silofs_svolid *svolid);
+
 void silofs_lsid_reset(struct silofs_lsid *lsid);
 
 void silofs_lsid_setup(struct silofs_lsid         *lsid,
-                       const struct silofs_blobid *blobid, off_t voff,
-                       enum silofs_mtype vspace, enum silofs_height height,
-                       enum silofs_mtype mtype);
+                       const struct silofs_blobid *blobid, off_t off);
 
 void silofs_lsid_assign(struct silofs_lsid       *lsid,
                         const struct silofs_lsid *other);

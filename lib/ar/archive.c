@@ -242,9 +242,6 @@ static int arc_archive_by_laddr(struct silofs_ar_ctx *ar_ctx,
 	struct silofs_ar_desc ard;
 	int err;
 
-	if (laddr->lsid.mtype == SILOFS_MTYPE_MBR) {
-		return 0; /* no-op */
-	}
 	err = arc_require_room(ar_ctx);
 	if (err) {
 		return err;

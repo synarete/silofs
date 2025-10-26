@@ -28,4 +28,7 @@ void silofs_svolid_generate(struct silofs_svolid *svolid);
 void silofs_svolid_copyto(const struct silofs_svolid *svolid,
                           struct silofs_svolid       *other);
 
+bool silofs_svolid_isequal(const struct silofs_svolid *svolid,
+                           const struct silofs_svolid *other);
+
 #endif /* SILOFS_SVOLID_H_ */

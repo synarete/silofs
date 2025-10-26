@@ -119,8 +119,6 @@ void silofs_baddr64b_htox(struct silofs_baddr64b *baddr64,
 	memset(baddr64, 0, sizeof(*baddr64));
 	silofs_blobid_copyto(&baddr->blobid, &baddr64->blobid);
 	baddr64->pos = silofs_cpu_to_off(baddr->pos);
-	baddr64->mtype = (uint8_t)baddr->mtype;
-	baddr64->bmode = (uint8_t)baddr->bmode;
 }
 
 void silofs_baddr64b_xtoh(const struct silofs_baddr64b *baddr64,
@@ -128,8 +126,6 @@ void silofs_baddr64b_xtoh(const struct silofs_baddr64b *baddr64,
 {
 	silofs_blobid_copyto(&baddr64->blobid, &baddr->blobid);
 	baddr->pos = silofs_off_to_cpu(baddr64->pos);
-	baddr->mtype = (enum silofs_mtype)(baddr64->mtype);
-	baddr->bmode = (enum silofs_bmode)(baddr64->bmode);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

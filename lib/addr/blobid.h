@@ -24,21 +24,35 @@
 
 const struct silofs_blobid *silofs_blobid_none(void);
 
-void silofs_blobid_generate(struct silofs_blobid *blobid);
+void silofs_blobid_setup_raw(struct silofs_blobid       *blobid,
+                             const struct silofs_svolid *svolid,
+                             enum silofs_mtype           mtype);
 
-void silofs_blobid_generate2(struct silofs_blobid       *blobid,
-                             const struct silofs_svolid *svolid);
+void silofs_blobid_setup_raw2(struct silofs_blobid       *blobid,
+                              const struct silofs_svolid *svolid,
+                              enum silofs_mtype           mtype,
+                              enum silofs_mtype           vspace,
+                              enum silofs_height          height);
+
+void silofs_blobid_setup_cas(struct silofs_blobid        *blobid,
+                             const struct silofs_svolid  *svolid,
+                             const struct silofs_hash256 *hash,
+                             enum silofs_mtype            mtype);
+
+void silofs_blobid_get_svolid(const struct silofs_blobid *blobid,
+                              struct silofs_svolid       *out_svolid);
+
+enum silofs_mtype silofs_blobid_get_mtype(const struct silofs_blobid *blobid);
+
+enum silofs_mtype silofs_blobid_get_vspace(const struct silofs_blobid *blobid);
+
+enum silofs_height
+silofs_blobid_get_height(const struct silofs_blobid *blobid);
 
 void silofs_blobid_reset(struct silofs_blobid *blobid);
 
 void silofs_blobid_copyto(const struct silofs_blobid *blobid,
                           struct silofs_blobid       *other);
-
-void silofs_blobid_from_hash(struct silofs_blobid        *blobid,
-                             const struct silofs_hash256 *hash);
-
-void silofs_blobid_to_hash(const struct silofs_blobid *blobid,
-                           struct silofs_hash256      *out_hash);
 
 long silofs_blobid_compare(const struct silofs_blobid *blobid1,
                            const struct silofs_blobid *blobid2);

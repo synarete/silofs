@@ -22,7 +22,6 @@
 
 static const struct silofs_uaddr s_uaddr_none = {
 	.laddr.lsid.lsize = 0,
-	.laddr.lsid.mtype = SILOFS_MTYPE_NONE,
 	.laddr.pos = SILOFS_OFF_NULL,
 	.voff = SILOFS_OFF_NULL,
 };
@@ -98,7 +97,7 @@ enum silofs_mtype silofs_uaddr_mtype(const struct silofs_uaddr *uaddr)
 
 enum silofs_height silofs_uaddr_height(const struct silofs_uaddr *uaddr)
 {
-	return uaddr->laddr.lsid.height;
+	return silofs_blobid_get_height(&uaddr->laddr.lsid.blobid);
 }
 
 void silofs_uaddr128b_reset(struct silofs_uaddr128b *uaddr128)

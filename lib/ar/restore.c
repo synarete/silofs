@@ -215,7 +215,10 @@ static int rec_restore_apex(struct silofs_re_ctx *re_ctx)
 
 static bool is_super(const struct silofs_ar_desc *ard)
 {
-	return (ard->laddr.lsid.mtype == SILOFS_MTYPE_SUPER);
+	enum silofs_mtype mtype;
+
+	mtype = silofs_blobid_get_mtype(&ard->laddr.lsid.blobid);
+	return (mtype == SILOFS_MTYPE_SUPER);
 }
 
 static int rec_update_by_desc(struct silofs_re_ctx *re_ctx,
@@ -299,13 +302,8 @@ static int rec_restore_fs(struct silofs_re_ctx *re_ctx)
 static void
 sb_uaddr_of(const struct silofs_laddr *laddr, struct silofs_uaddr *out_uaddr)
 {
-	const struct silofs_lsid *lsid = &laddr->lsid;
-
 	silofs_assert_eq(laddr->pos, 0);
-	silofs_assert_eq(lsid->height, SILOFS_HEIGHT_SUPER);
-	silofs_assert_eq(lsid->mtype, SILOFS_MTYPE_SUPER);
-
-	silofs_uaddr_setup(out_uaddr, lsid, 0, 0);
+	silofs_uaddr_setup(out_uaddr, &laddr->lsid, 0, 0);
 }
 
 static int rec_restore_sb_addr(struct silofs_re_ctx *re_ctx)

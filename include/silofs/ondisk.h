@@ -79,7 +79,7 @@
 #define SILOFS_SVOLID_SIZE (16)
 
 /* blob identifier size */
-#define SILOFS_BLOBID_SIZE (32)
+#define SILOFS_BLOBID_SIZE (56)
 
 /* max number of hard-links to file or sub-directories */
 #define SILOFS_LINK_MAX ((1L << 15) - 1)
@@ -501,20 +501,17 @@ struct silofs_uuid {
 /* sub-volume identifier */
 struct silofs_svolid {
 	uint8_t id[SILOFS_SVOLID_SIZE];
-} silofs_attr_aligned16;
+} silofs_attr_aligned8;
 
 /* blob identifier */
 struct silofs_blobid {
 	uint8_t id[SILOFS_BLOBID_SIZE];
-} silofs_attr_aligned16;
+} silofs_attr_aligned8;
 
 /* blob addressing */
 struct silofs_baddr64b {
 	struct silofs_blobid blobid;
 	int64_t              pos;
-	uint8_t              mtype;
-	uint8_t              bmode;
-	uint8_t              pad[22];
 } silofs_attr_aligned64;
 
 /* cursor within blob */
@@ -529,10 +526,6 @@ struct silofs_lsid64b {
 	struct silofs_blobid blobid;
 	uint32_t             lsize;
 	uint32_t             vindex;
-	uint8_t              vspace;
-	uint8_t              height;
-	uint8_t              mtype;
-	uint8_t              pad[21];
 } silofs_attr_aligned16;
 
 /* logical address */
@@ -663,9 +656,8 @@ struct silofs_super_block {
 	struct silofs_tm64b         sb_btime_base;
 	struct silofs_blobid        sb_lv_curr;
 	struct silofs_blobid        sb_lv_prev;
-	uint8_t                     sb_reserved4a[32];
 	struct silofs_lrange128     sb_lrange;
-	uint8_t                     sb_reserved4[208];
+	uint8_t                     sb_reserved4[192];
 	/* 1K..3K */
 	struct silofs_sb_sproots    sb_sproots;
 	/* 3K..4K */
@@ -928,7 +920,7 @@ struct silofs_blob_desc {
 	uint32_t               bd_nobjs;
 	uint32_t               bd_flags;
 	uint16_t               bd_refmtype;
-	uint8_t                bd_reserved1[102];
+	uint8_t                bd_reserved1[54];
 	uint8_t                bd_obj_state[7936];
 } silofs_attr_aligned64;
 

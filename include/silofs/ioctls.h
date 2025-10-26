@@ -105,9 +105,11 @@ struct silofs_ioc_query {
 
 struct silofs_ioc_forkfs {
 	struct silofs_blobid base;
+	uint8_t              reserved1[8];
 	struct silofs_blobid main;
+	uint8_t              reserved2[8];
 	struct silofs_blobid fork;
-	struct silofs_blobid reserved;
+	uint8_t              reserved3[8 + 64];
 };
 
 struct silofs_ioc_syncfs {

@@ -23,13 +23,81 @@
 #include "meta.h"
 #include "blobid.h"
 
-static void generate_random(uint8_t *p, size_t n, uint64_t seed)
+static uint64_t seed(void)
+{
+	struct timespec ts;
+
+	silofs_clock_real_now(&ts);
+	return ((uint64_t)ts.tv_nsec) ^ ((uint64_t)ts.tv_sec);
+}
+
+static void generate_random(uint8_t *p, size_t n)
 {
 	silofs_gcrypt_random(p, n);
-	silofs_xrand_by_hash(p, n, seed);
+	silofs_xrand_by_hash(p, n, seed());
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+/* semantic "view" into blobid */
+struct silofs_blobidv {
+	struct silofs_svolid svolid;
+	union {
+		struct silofs_hash256 hash;
+		uint8_t raw[32];
+	} u;
+	uint8_t mtype;
+	uint8_t bmode;
+	/* XXX REMOVE ME */
+	uint8_t vspace;
+	uint8_t height;
+	uint8_t reserved[12];
+
+} silofs_attr_aligned64;
+
+static void blobid_to_view(const struct silofs_blobid *blobid,
+                           struct silofs_blobidv *out_blobidv)
+{
+	STATICASSERT_LE(sizeof(*blobid), sizeof(*out_blobidv));
+
+	memset(out_blobidv, 0, sizeof(*out_blobidv));
+	memcpy(out_blobidv, blobid, sizeof(*blobid));
+}
+
+static void blobid_from_view(struct silofs_blobid *blobid,
+                             const struct silofs_blobidv *blobidv)
+{
+	STATICASSERT_EQ(sizeof(*blobid), 56);
+	STATICASSERT_EQ(sizeof(*blobidv), 64);
+	STATICASSERT_LE(sizeof(*blobid), sizeof(*blobidv));
+
+	memcpy(blobid, blobidv, sizeof(*blobid));
+}
+
+static void
+blobidv_setup_raw(struct silofs_blobidv *blobidv,
+                  const struct silofs_svolid *svolid, enum silofs_mtype mtype)
+{
+	memset(blobidv, 0, sizeof(*blobidv));
+	silofs_svolid_copyto(svolid, &blobidv->svolid);
+	blobidv->mtype = (uint8_t)mtype;
+	blobidv->bmode = (uint8_t)SILOFS_BMODE_RAW;
+	generate_random(blobidv->u.raw, sizeof(blobidv->u.raw));
+}
+
+static void
+blobidv_setup_cas(struct silofs_blobidv *blobidv,
+                  const struct silofs_svolid *svolid,
+                  const struct silofs_hash256 *hash, enum silofs_mtype mtype)
+{
+	memset(blobidv, 0, sizeof(*blobidv));
+	silofs_svolid_copyto(svolid, &blobidv->svolid);
+	blobidv->mtype = (uint8_t)mtype;
+	blobidv->bmode = (uint8_t)SILOFS_BMODE_CAS;
+	silofs_hash256_copyto(hash, &blobidv->u.hash);
+}
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static const struct silofs_blobid s_silofs_blobid_none;
 
@@ -38,63 +106,78 @@ const struct silofs_blobid *silofs_blobid_none(void)
 	return &s_silofs_blobid_none;
 }
 
-static uint64_t blobid_base_seed(void)
+void silofs_blobid_setup_raw(struct silofs_blobid *blobid,
+                             const struct silofs_svolid *svolid,
+                             enum silofs_mtype mtype)
 {
-	struct timespec ts;
-	const pid_t pid = getpid();
+	struct silofs_blobidv blobidv;
 
-	silofs_clock_real_now(&ts);
-
-	return ((uint64_t)pid * (uint64_t)ts.tv_nsec) ^ (uint64_t)ts.tv_sec;
+	blobidv_setup_raw(&blobidv, svolid, mtype);
+	blobid_from_view(blobid, &blobidv);
 }
 
-static uint64_t blobid_seed(void)
+void silofs_blobid_setup_raw2(struct silofs_blobid *blobid,
+                              const struct silofs_svolid *svolid,
+                              enum silofs_mtype mtype,
+                              enum silofs_mtype vspace,
+                              enum silofs_height height)
 {
-	static uint64_t s_blobid_seed;
+	struct silofs_blobidv blobidv;
 
-	if (s_blobid_seed == 0) {
-		s_blobid_seed = blobid_base_seed();
-	}
-	return ++s_blobid_seed;
+	blobidv_setup_raw(&blobidv, svolid, mtype);
+	blobidv.vspace = (uint8_t)vspace;
+	blobidv.height = (uint8_t)height;
+	blobid_from_view(blobid, &blobidv);
 }
 
-void silofs_blobid_generate(struct silofs_blobid *blobid)
+void silofs_blobid_setup_cas(struct silofs_blobid *blobid,
+                             const struct silofs_svolid *svolid,
+                             const struct silofs_hash256 *hash,
+                             enum silofs_mtype mtype)
 {
-	generate_random(blobid->id, sizeof(blobid->id), blobid_seed());
+	struct silofs_blobidv blobidv;
+
+	blobidv_setup_cas(&blobidv, svolid, hash, mtype);
+	blobid_from_view(blobid, &blobidv);
 }
 
-void silofs_blobid_generate2(struct silofs_blobid *blobid,
-                             const struct silofs_svolid *svolid)
+void silofs_blobid_get_svolid(const struct silofs_blobid *blobid,
+                              struct silofs_svolid *out_svolid)
 {
-	const size_t svid_size = sizeof(svolid->id);
-	const size_t rand_size = sizeof(blobid->id) - svid_size;
+	struct silofs_blobidv blobidv;
 
-	STATICASSERT_EQ(sizeof(blobid->id) / 2, sizeof(svolid->id));
+	blobid_to_view(blobid, &blobidv);
+	silofs_svolid_copyto(&blobidv.svolid, out_svolid);
+}
 
-	generate_random(&blobid->id[0], rand_size, blobid_seed());
-	memcpy(&blobid->id[rand_size], svolid->id, svid_size);
+enum silofs_height silofs_blobid_get_height(const struct silofs_blobid *blobid)
+{
+	struct silofs_blobidv blobidv;
+
+	blobid_to_view(blobid, &blobidv);
+	return blobidv.height;
+}
+
+enum silofs_mtype silofs_blobid_get_mtype(const struct silofs_blobid *blobid)
+{
+	struct silofs_blobidv blobidv;
+
+	blobid_to_view(blobid, &blobidv);
+	return blobidv.mtype;
+}
+
+enum silofs_mtype silofs_blobid_get_vspace(const struct silofs_blobid *blobid)
+{
+	struct silofs_blobidv blobidv;
+
+	blobid_to_view(blobid, &blobidv);
+	return blobidv.vspace;
 }
 
 void silofs_blobid_copyto(const struct silofs_blobid *blobid,
                           struct silofs_blobid *other)
 {
 	memcpy(other->id, blobid->id, sizeof(other->id));
-}
-
-void silofs_blobid_from_hash(struct silofs_blobid *blobid,
-                             const struct silofs_hash256 *hash)
-{
-	STATICASSERT_EQ(sizeof(blobid->id), sizeof(hash->hash));
-
-	memcpy(blobid->id, hash->hash, sizeof(blobid->id));
-}
-
-void silofs_blobid_to_hash(const struct silofs_blobid *blobid,
-                           struct silofs_hash256 *out_hash)
-{
-	STATICASSERT_EQ(sizeof(blobid->id), sizeof(out_hash->hash));
-
-	memcpy(out_hash->hash, blobid->id, sizeof(out_hash->hash));
 }
 
 void silofs_blobid_reset(struct silofs_blobid *blobid)

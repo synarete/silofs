@@ -569,12 +569,11 @@ int silofs_sbi_shut(struct silofs_sb_info *sbi)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void uaddr_setup_super(struct silofs_uaddr *out_uaddr,
-                              const struct silofs_blobid *vid)
+                              const struct silofs_blobid *blobid)
 {
 	struct silofs_lsid lsid;
 
-	silofs_lsid_setup(&lsid, vid, 0, SILOFS_MTYPE_SUPER,
-	                  SILOFS_HEIGHT_SUPER, SILOFS_MTYPE_SUPER);
+	silofs_lsid_setup(&lsid, blobid, 0);
 	silofs_uaddr_setup(out_uaddr, &lsid, 0, 0);
 }
 
@@ -590,9 +589,18 @@ void silofs_sbi_resolve_refs(const struct silofs_sb_info *sbi,
 }
 
 void silofs_sbi_self_blobid(const struct silofs_sb_info *sbi,
-                            struct silofs_blobid *out_vid)
+                            struct silofs_blobid *out_blobid)
 {
-	sb_lv_curr(sbi->sb, out_vid);
+	sb_lv_curr(sbi->sb, out_blobid);
+}
+
+void silofs_sbi_self_svolid(const struct silofs_sb_info *sbi,
+                            struct silofs_svolid *out_svolid)
+{
+	struct silofs_blobid blobid;
+
+	silofs_sbi_self_blobid(sbi, &blobid);
+	silofs_blobid_get_svolid(&blobid, out_svolid);
 }
 
 int silofs_sbi_main_lseg(const struct silofs_sb_info *sbi,
@@ -663,10 +671,7 @@ sbi_main_uaddr(const struct silofs_sb_info *sbi, off_t voff,
 	const off_t base = sbi_base_voff_of_child(sbi, voff);
 
 	silofs_sbi_main_lseg(sbi, vspace, &lsid);
-	silofs_assert_eq(lsid.mtype, SILOFS_MTYPE_SPNODE);
-
 	silofs_uaddr_setup(out_uaddr, &lsid, bpos, base);
-	silofs_assert_eq(lsid.height, SILOFS_HEIGHT_SUPER - 1);
 }
 
 void silofs_sbi_resolve_main_at(const struct silofs_sb_info *sbi, off_t voff,
@@ -702,10 +707,10 @@ void silofs_sbi_bind_child(struct silofs_sb_info *sbi, enum silofs_mtype mtype,
 bool silofs_sbi_ismutable_lsid(const struct silofs_sb_info *sbi,
                                const struct silofs_lsid *lsid)
 {
-	struct silofs_blobid blobid;
+	struct silofs_svolid svolid;
 
-	silofs_sbi_self_blobid(sbi, &blobid);
-	return silofs_lsid_has_blobid(lsid, &blobid);
+	silofs_sbi_self_svolid(sbi, &svolid);
+	return silofs_lsid_has_svolid(lsid, &svolid);
 }
 
 bool silofs_sbi_ismutable_laddr(const struct silofs_sb_info *sbi,

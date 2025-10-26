@@ -46,3 +46,9 @@ void silofs_svolid_copyto(const struct silofs_svolid *svolid,
 {
 	memcpy(other->id, svolid->id, sizeof(other->id));
 }
+
+bool silofs_svolid_isequal(const struct silofs_svolid *svolid,
+                           const struct silofs_svolid *other)
+{
+	return (memcmp(svolid->id, other->id, sizeof(svolid->id)) == 0);
+}

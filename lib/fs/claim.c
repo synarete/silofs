@@ -716,12 +716,14 @@ static int spac_resolve_main_range(const struct silofs_spalloc_ctx *spa_ctx,
                                    struct silofs_lrange *out_lrange)
 {
 	struct silofs_spleaf_info *sli = spa_ctx->sli;
+	enum silofs_mtype mtype;
 
 	silofs_sli_main_lseg(sli, out_lsid);
 	if (silofs_lsid_isnull(out_lsid)) {
 		return -SILOFS_ENOENT;
 	}
-	if (out_lsid->mtype != spa_ctx->mtype) {
+	mtype = silofs_blobid_get_mtype(&out_lsid->blobid);
+	if (mtype != spa_ctx->mtype) {
 		return -SILOFS_EBUG;
 	}
 	silofs_sli_get_lrange(sli, out_lrange);

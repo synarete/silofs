@@ -896,18 +896,6 @@ static int inspc_walk_super(struct silofs_inspect_ctx *insp_ctx)
 	return 0;
 }
 
-static int inspc_walk_boot(struct silofs_inspect_ctx *insp_ctx)
-{
-	struct silofs_uaddr mbr_uaddr = { .voff = -1 };
-	const struct silofs_laddr *sb_laddr = silofs_sbi_laddr(insp_ctx->sbi);
-	const struct silofs_laddr *laddr = &mbr_uaddr.laddr;
-	size_t len;
-
-	silofs_make_mbr_uaddr(&sb_laddr->lsid.blobid, &mbr_uaddr);
-	len = silofs_laddr_len(laddr);
-	return insp_ctx->cb(insp_ctx->user_ctx, laddr, len);
-}
-
 static int inspc_walk_fs(struct silofs_inspect_ctx *insp_ctx)
 {
 	int err;
@@ -917,10 +905,6 @@ static int inspc_walk_fs(struct silofs_inspect_ctx *insp_ctx)
 		return err;
 	}
 	err = inspc_walk_super(insp_ctx);
-	if (err) {
-		return err;
-	}
-	err = inspc_walk_boot(insp_ctx);
 	if (err) {
 		return err;
 	}

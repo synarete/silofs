@@ -27,8 +27,8 @@ struct silofs_strbuf;
 bool silofs_hash256_isequal(const struct silofs_hash256 *hash,
                             const struct silofs_hash256 *other);
 
-void silofs_hash256_assign(struct silofs_hash256       *hash,
-                           const struct silofs_hash256 *other);
+void silofs_hash256_copyto(const struct silofs_hash256 *hash,
+                           struct silofs_hash256       *other);
 
 void silofs_hash256_to_u64s(const struct silofs_hash256 *hash, uint64_t u[4]);
 

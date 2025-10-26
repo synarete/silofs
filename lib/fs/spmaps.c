@@ -414,7 +414,7 @@ static void spleaf_set_main_lsid(struct silofs_spmap_leaf *spl,
 static void spleaf_main_child_at(const struct silofs_spmap_leaf *spl,
                                  size_t slot, struct silofs_laddr *out_laddr)
 {
-	struct silofs_lsid lsid = { .height = SILOFS_HEIGHT_NONE };
+	struct silofs_lsid lsid = { .lsize = 0 };
 	const off_t pos = silofs_lba_to_off((silofs_lba_t)slot);
 
 	spleaf_main_lsid(spl, &lsid);
@@ -937,7 +937,6 @@ void silofs_sni_resolve_main(const struct silofs_spnode_info *sni, off_t voff,
 	enum silofs_mtype child_mtype = sni_child_mtype(sni);
 
 	silofs_sni_main_lseg(sni, &lsid);
-	silofs_assert_eq(child_mtype, lsid.mtype);
 
 	silofs_uaddr_setup(out_uaddr, &lsid, bpos, base);
 

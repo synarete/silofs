@@ -136,17 +136,17 @@ static void affirm_ondisk_defs(void)
 	REQUIRE_EQ(SILOFS_FILE_SIZE_MAX, 64 * SILOFS_PETA - 1);
 	REQUIRE_EQ(SILOFS_LSEG_SIZE_MAX, 4 * SILOFS_MEGA);
 	REQUIRE_EQ(SILOFS_LSEG_SIZE_MAX,
-	           SILOFS_LBK_SIZE * SILOFS_SPMAP_NCHILDS);
+		   SILOFS_LBK_SIZE * SILOFS_SPMAP_NCHILDS);
 	REQUIRE_EQ(SILOFS_CAPACITY_SIZE_MIN, 2 * SILOFS_GIGA);
 	REQUIRE_EQ(SILOFS_CAPACITY_SIZE_MAX, 64 * SILOFS_TERA);
 	REQUIRE_LT(SILOFS_CAPACITY_SIZE_MAX, SILOFS_VSPACE_SIZE_MAX / 2);
 	REQUIRE_EQ(SILOFS_VSPACE_SIZE_MAX, 256 * SILOFS_PETA);
 	REQUIRE_EQ(SILOFS_FILE_HEAD1_LEAF_SIZE * SILOFS_FILE_HEAD1_NLEAF,
-	           SILOFS_FILE_HEAD2_LEAF_SIZE);
+		   SILOFS_FILE_HEAD2_LEAF_SIZE);
 	REQUIRE_EQ((SILOFS_FILE_HEAD1_LEAF_SIZE * SILOFS_FILE_HEAD1_NLEAF) +
-	                   (SILOFS_FILE_HEAD2_LEAF_SIZE *
-	                    SILOFS_FILE_HEAD2_NLEAF),
-	           SILOFS_FILE_TREE_LEAF_SIZE);
+			   (SILOFS_FILE_HEAD2_LEAF_SIZE *
+			    SILOFS_FILE_HEAD2_NLEAF),
+		   SILOFS_FILE_TREE_LEAF_SIZE);
 }
 
 static void affirm_ondisk_base_types(void)
@@ -166,7 +166,7 @@ static void affirm_ondisk_base_types(void)
 static void affirm_ondisk_addrs(void)
 {
 	REQUIRE_SIZEOF(struct silofs_svolid, 16);
-	REQUIRE_SIZEOF(struct silofs_blobid, 32);
+	REQUIRE_SIZEOF(struct silofs_blobid, 56);
 	REQUIRE_SIZEOF(struct silofs_vaddr56, 7);
 	REQUIRE_SIZEOF(struct silofs_vaddr64, 8);
 	REQUIRE_SIZEOF(struct silofs_lrange128, 16);
@@ -207,7 +207,7 @@ static void affirm_ondisk_spmaps(void)
 	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_refmtype, 48);
 	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_main_lsid, 64);
 	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_parent, 128);
-	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_self, 224 + 32);
+	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_self, 256);
 	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_lbrs, 1024);
 	REQUIRE_SIZEOF(struct silofs_spmap_leaf, SILOFS_SPMAP_SIZE);
 	REQUIRE_SIZEOF_16K(struct silofs_spmap_node);
@@ -239,7 +239,7 @@ static void affirm_ondisk_uber(void)
 	REQUIRE_OFFSET64(struct silofs_uber_block, ub_generation, 64);
 	REQUIRE_OFFSET64(struct silofs_uber_block, ub_bcursor, 128);
 	REQUIRE_GT(MEMBER_NELEMS(struct silofs_uber_block, ub_bcursor),
-	           SILOFS_MTYPE_LAST);
+		   SILOFS_MTYPE_LAST);
 	REQUIRE_SIZEOF_4K(struct silofs_uber_block);
 }
 
@@ -253,8 +253,8 @@ static void affirm_ondisk_super(void)
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_btime_prev, 576);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_btime_base, 640);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_lv_curr, 704);
-	REQUIRE_OFFSET64(struct silofs_super_block, sb_lv_prev, 736);
-	REQUIRE_OFFSET64(struct silofs_super_block, sb_lrange, 800);
+	REQUIRE_OFFSET64(struct silofs_super_block, sb_lv_prev, 760);
+	REQUIRE_OFFSET64(struct silofs_super_block, sb_lrange, 816);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_sproots, 1024);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_main_lsid, 3072);
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_space_stats_curr, 4096);
@@ -279,9 +279,9 @@ static void affirm_ondisk_super(void)
 static void affirm_ondisk_lsmap(void)
 {
 	REQUIRE_NBITS(struct silofs_lbk_meta, lbm_allocated,
-	              SILOFS_NKB_IN_LBK);
+		      SILOFS_NKB_IN_LBK);
 	REQUIRE_NBITS(struct silofs_lbk_meta, lbm_unwritten,
-	              SILOFS_NKB_IN_LBK);
+		      SILOFS_NKB_IN_LBK);
 	REQUIRE_MEMBER_SIZE(struct silofs_lbk_meta, lbm_refcnt, 8);
 	REQUIRE_SIZEOF(struct silofs_lbk_state, 8);
 	REQUIRE_OFFSET64(struct silofs_lbk_meta, lbm_allocated, 0);
@@ -339,7 +339,7 @@ static void affirm_ondisk_dir(void)
 	REQUIRE_OFFSET64(struct silofs_dtree_node, dn_child, 7744);
 	REQUIRE_NELEMS(union silofs_dtree_data, de, SILOFS_DIR_NODE_NENTS);
 	REQUIRE_NELEMS(struct silofs_dtree_node, dn_child,
-	               SILOFS_DIR_NODE_NCHILDS);
+		       SILOFS_DIR_NODE_NCHILDS);
 	REQUIRE_SIZEOF(union silofs_dtree_data, SILOFS_DIR_NODE_NBSIZE);
 	REQUIRE_SIZEOF(struct silofs_dtree_node, SILOFS_DIR_NODE_SIZE);
 	REQUIRE_SIZEOF_8K(struct silofs_dtree_node);
@@ -348,7 +348,7 @@ static void affirm_ondisk_dir(void)
 static void affirm_ondisk_file(void)
 {
 	REQUIRE_NELEMS(struct silofs_ftree_node, fn_child,
-	               SILOFS_FILE_NODE_NCHILDS);
+		       SILOFS_FILE_NODE_NCHILDS);
 	REQUIRE_OFFSET64(struct silofs_ftree_node, fn_hdr, 0);
 	REQUIRE_OFFSET64(struct silofs_ftree_node, fn_refcnt, 32);
 	REQUIRE_OFFSET64(struct silofs_ftree_node, fn_ino, 40);
@@ -406,13 +406,13 @@ static void affirm_ondisk_bdesc(void)
 	REQUIRE_OFFSET64(struct silofs_blob_desc, bd_btime, 32);
 	REQUIRE_OFFSET64(struct silofs_blob_desc, bd_ctime, 48);
 	REQUIRE_OFFSET64(struct silofs_blob_desc, bd_prev, 64);
-	REQUIRE_OFFSET64(struct silofs_blob_desc, bd_refblob, 96);
-	REQUIRE_OFFSET64(struct silofs_blob_desc, bd_blobsize, 128);
-	REQUIRE_OFFSET64(struct silofs_blob_desc, bd_objsize, 136);
-	REQUIRE_OFFSET32(struct silofs_blob_desc, bd_nobjs_max, 140);
-	REQUIRE_OFFSET32(struct silofs_blob_desc, bd_nobjs, 144);
-	REQUIRE_OFFSET32(struct silofs_blob_desc, bd_flags, 148);
-	REQUIRE_OFFSET32(struct silofs_blob_desc, bd_refmtype, 152);
+	REQUIRE_OFFSET64(struct silofs_blob_desc, bd_refblob, 120);
+	REQUIRE_OFFSET64(struct silofs_blob_desc, bd_blobsize, 176);
+	REQUIRE_OFFSET64(struct silofs_blob_desc, bd_objsize, 184);
+	REQUIRE_OFFSET32(struct silofs_blob_desc, bd_nobjs_max, 188);
+	REQUIRE_OFFSET32(struct silofs_blob_desc, bd_nobjs, 192);
+	REQUIRE_OFFSET32(struct silofs_blob_desc, bd_flags, 196);
+	REQUIRE_OFFSET32(struct silofs_blob_desc, bd_refmtype, 200);
 	REQUIRE_OFFSET64(struct silofs_blob_desc, bd_obj_state, 256);
 	REQUIRE_SIZEOF_8K(struct silofs_blob_desc);
 }
@@ -437,7 +437,7 @@ static void affirm_ioctl_types(void)
 {
 	REQUIRE_SIZEOF(struct silofs_ioc_query, 2048);
 	REQUIRE_SIZEOF_LE(struct silofs_ioc_query, SILOFS_IOC_SIZE_MAX);
-	REQUIRE_SIZEOF(struct silofs_ioc_forkfs, 128);
+	REQUIRE_SIZEOF(struct silofs_ioc_forkfs, 256);
 	REQUIRE_SIZEOF_LE(struct silofs_ioc_forkfs, SILOFS_IOC_SIZE_MAX);
 }
 

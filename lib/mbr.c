@@ -211,13 +211,13 @@ static int mbr1k_check(const struct silofs_mbr1k *mbr1k)
 static void
 mbr1k_hash(const struct silofs_mbr1k *mbr1k, struct silofs_hash256 *hash)
 {
-	silofs_hash256_assign(hash, &mbr1k->mbr_hash);
+	silofs_hash256_copyto(&mbr1k->mbr_hash, hash);
 }
 
 static void
 mbr1k_set_hash(struct silofs_mbr1k *mbr1k, const struct silofs_hash256 *hash)
 {
-	silofs_hash256_assign(&mbr1k->mbr_hash, hash);
+	silofs_hash256_copyto(hash, &mbr1k->mbr_hash);
 }
 
 static void mbr1k_calc_hash(const struct silofs_mbr1k *mbr1k,
@@ -377,17 +377,6 @@ static void
 mbr_set_arix_addr(struct silofs_mbr *mbr, const struct silofs_baddr *baddr)
 {
 	silofs_baddr_assign(&mbr->arix_addr, baddr);
-}
-
-void silofs_make_mbr_uaddr(const struct silofs_blobid *blobid,
-                           struct silofs_uaddr *out_uaddr)
-{
-	struct silofs_lsid lsid;
-	const enum silofs_mtype mtype = SILOFS_MTYPE_MBR;
-	const enum silofs_height height = SILOFS_HEIGHT_BOOT;
-
-	silofs_lsid_setup(&lsid, blobid, 0, mtype, height, mtype);
-	silofs_uaddr_setup(out_uaddr, &lsid, 0, 0);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

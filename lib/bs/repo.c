@@ -1274,14 +1274,6 @@ static void repo_try_evict_cached_lsegf(struct silofs_repo *repo,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void repo_blobs_pathname(const struct silofs_repo *repo,
-                                const struct silofs_hash256 *hash,
-                                struct silofs_strbuf *out_sbuf)
-{
-	silofs_unused(repo);
-	silofs_hash256_to_name(hash, out_sbuf);
-}
-
 static void
 repo_hash_lsid(const struct silofs_repo *repo, const struct silofs_lsid *lsid,
                struct silofs_hash256 *out_hash)
@@ -1300,7 +1292,7 @@ static void repo_objs_pathname_of(const struct silofs_repo *repo,
 	struct silofs_hash256 hash;
 
 	repo_hash_lsid(repo, lsid, &hash);
-	repo_blobs_pathname(repo, &hash, out_sbuf);
+	silofs_hash256_to_name(&hash, out_sbuf);
 }
 
 static void repo_objs_pathname_by(const struct silofs_repo *repo,

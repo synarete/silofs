@@ -18,6 +18,7 @@
 #define SILOFS_LOCOS_H_
 
 #include "infra.h"
+#include "crypt.h"
 #include "str.h"
 #include "addr.h"
 
@@ -31,6 +32,7 @@ struct silofs_locos_hq {
 /* local object-store */
 struct silofs_locos {
 	struct silofs_locos_hq los_hq;
+	struct silofs_mdigest  los_md;
 	struct silofs_alloc   *los_alloc;
 	int                    los_dfd;
 };

@@ -184,6 +184,7 @@ struct silofs_blobfile {
 	struct silofs_list_head bf_htb_lh;
 	struct silofs_list_head bf_lru_lh;
 	struct silofs_blobid bf_blobid;
+	struct silofs_strbuf bf_blobid_name;
 	int bf_fd;
 	bool bf_mapped;
 };
@@ -220,34 +221,24 @@ bf_from_lru_link(const struct silofs_list_head *lh)
 	return bf_unconst(bf);
 }
 
-static void
-bf_name(const struct silofs_blobfile *bf, struct silofs_strbuf *out_name)
+static const char *bf_name(const struct silofs_blobfile *bf)
 {
-	silofs_blobid_to_sbuf(&bf->bf_blobid, out_name);
+	return bf->bf_blobid_name.str;
 }
 
 static int bf_open(struct silofs_blobfile *bf, int dfd)
 {
-	struct silofs_strbuf sbuf;
-
-	bf_name(bf, &sbuf);
-	return do_openat(dfd, sbuf.str, O_RDWR, 0, &bf->bf_fd);
+	return do_openat(dfd, bf_name(bf), O_RDWR, 0, &bf->bf_fd);
 }
 
 static int bf_create(struct silofs_blobfile *bf, int dfd)
 {
-	struct silofs_strbuf sbuf;
-
-	bf_name(bf, &sbuf);
-	return do_openat(dfd, sbuf.str, O_RDWR | O_CREAT, 0600, &bf->bf_fd);
+	return do_openat(dfd, bf_name(bf), O_RDWR | O_CREAT, 0600, &bf->bf_fd);
 }
 
 static int bf_unlink(const struct silofs_blobfile *bf, int dfd)
 {
-	struct silofs_strbuf sbuf;
-
-	bf_name(bf, &sbuf);
-	return do_unlinkat(dfd, sbuf.str, 0);
+	return do_unlinkat(dfd, bf_name(bf), 0);
 }
 
 static bool bf_isopen(const struct silofs_blobfile *bf)
@@ -355,11 +346,13 @@ bf_sync_range(const struct silofs_blobfile *bf, off_t off, size_t len)
 }
 
 static void
-bf_init(struct silofs_blobfile *bf, const struct silofs_blobid *blobid)
+bf_init(struct silofs_blobfile *bf, const struct silofs_blobid *blobid,
+        const struct silofs_strview *name)
 {
 	silofs_list_head_init(&bf->bf_htb_lh);
 	silofs_list_head_init(&bf->bf_lru_lh);
 	silofs_blobid_copyto(blobid, &bf->bf_blobid);
+	silofs_strbuf_setup(&bf->bf_blobid_name, name);
 	bf->bf_fd = -1;
 	bf->bf_mapped = false;
 }
@@ -375,13 +368,14 @@ static void bf_fini(struct silofs_blobfile *bf)
 }
 
 static struct silofs_blobfile *
-bf_new(const struct silofs_blobid *bid, struct silofs_alloc *alloc)
+bf_new(const struct silofs_blobid *blobid, const struct silofs_strview *name,
+       struct silofs_alloc *alloc)
 {
 	struct silofs_blobfile *bf;
 
 	bf = silofs_memalloc(alloc, sizeof(*bf), 0);
 	if (bf != nullptr) {
-		bf_init(bf, bid);
+		bf_init(bf, blobid, name);
 	}
 	return bf;
 }
@@ -595,10 +589,26 @@ locos_remove_cached_bf(struct silofs_locos *locos, struct silofs_blobfile *bf)
 	lhq_remove(&locos->los_hq, bf);
 }
 
+static void locos_name_of(const struct silofs_locos *locos,
+                          const struct silofs_blobid *blobid,
+                          struct silofs_strbuf *out_name)
+{
+	struct silofs_hash256 hash;
+	const struct silofs_mdigest *md = &locos->los_md;
+
+	silofs_sha3_256_of(md, blobid->id, sizeof(blobid->id), &hash);
+	silofs_hash256_to_name(&hash, out_name);
+}
+
 static struct silofs_blobfile *
 locos_new_bf(struct silofs_locos *locos, const struct silofs_blobid *blobid)
 {
-	return bf_new(blobid, locos->los_alloc);
+	struct silofs_strbuf name;
+	struct silofs_strview sv;
+
+	locos_name_of(locos, blobid, &name);
+	silofs_strview_init(&sv, name.str);
+	return bf_new(blobid, &sv, locos->los_alloc);
 }
 
 static void
@@ -678,9 +688,20 @@ static void locos_close(struct silofs_locos *locos)
 
 int silofs_locos_init(struct silofs_locos *locos, struct silofs_alloc *alloc)
 {
+	int err;
+
 	locos->los_alloc = alloc;
 	locos->los_dfd = -1;
-	return lhq_init(&locos->los_hq, locos->los_alloc);
+	err = silofs_mdigest_init(&locos->los_md);
+	if (err) {
+		return err;
+	}
+	err = lhq_init(&locos->los_hq, locos->los_alloc);
+	if (err) {
+		silofs_mdigest_fini(&locos->los_md);
+		return err;
+	}
+	return 0;
 }
 
 void silofs_locos_fini(struct silofs_locos *locos)

@@ -20,7 +20,7 @@
 #include "addr.h"
 #include "repo.h"
 #include "btnode.h"
-#include "pcache.h"
+#include "bcache.h"
 #include "btree.h"
 
 struct silofs_btree_path {
@@ -31,7 +31,7 @@ struct silofs_btree_path {
 struct silofs_btree_ctx {
 	struct silofs_btree_path bpath;
 	struct silofs_btree *btree;
-	struct silofs_pcache *pcache;
+	struct silofs_bcache *bcache;
 	struct silofs_repo *repo;
 	uint64_t key;
 };
@@ -269,7 +269,7 @@ static int btc_create_cached_bni(const struct silofs_btree_ctx *btc,
                                  const struct silofs_baddr *baddr,
                                  struct silofs_btnode_info **out_bni)
 {
-	*out_bni = silofs_pcache_create_bni(btc->pcache, baddr);
+	*out_bni = silofs_bcache_create_bni(btc->bcache, baddr);
 	if (*out_bni == nullptr) {
 		return -SILOFS_ENOMEM;
 	}
@@ -280,14 +280,14 @@ static int btc_create_cached_bni(const struct silofs_btree_ctx *btc,
 static void btc_evict_cached_bni(const struct silofs_btree *btree,
                                  struct silofs_btnode_info *bni)
 {
-	silofs_pcache_evict_bni(btree->bt_base.pcache, bni);
+	silofs_bcache_evict_bni(btree->bt_base.bcache, bni);
 }
 
 static int btc_lookup_cached_bni(const struct silofs_btree_ctx *btc,
                                  const struct silofs_baddr *baddr,
                                  struct silofs_btnode_info **out_bni)
 {
-	*out_bni = silofs_pcache_lookup_bni(btc->pcache, baddr);
+	*out_bni = silofs_bcache_lookup_bni(btc->bcache, baddr);
 	if (*out_bni == nullptr) {
 		return -SILOFS_ENOENT;
 	}
@@ -669,7 +669,7 @@ static int btc_init(struct silofs_btree_ctx *btc, struct silofs_btree *btree,
 
 	silofs_memzero(btc, sizeof(*btc));
 	btc->btree = btree;
-	btc->pcache = btree->bt_base.pcache;
+	btc->bcache = btree->bt_base.bcache;
 	btc->repo = btree->bt_base.repo;
 	bpath_init(&btc->bpath);
 	if (vaddr == nullptr) {
@@ -686,7 +686,7 @@ static void btc_fini(struct silofs_btree_ctx *btc)
 {
 	bpath_fini(&btc->bpath);
 	btc->btree = nullptr;
-	btc->pcache = nullptr;
+	btc->bcache = nullptr;
 	btc->repo = nullptr;
 }
 

@@ -20,15 +20,15 @@
 #include "flags.h"
 #include "bdesc.h"
 #include "btnode.h"
-#include "pcache.h"
+#include "bcache.h"
 
 enum {
-	PCACHE_RETRY_MAX = 4,
+	BCACHE_RETRY_MAX = 4,
 };
 
 /* local functions */
 static size_t
-pcache_evict_some(struct silofs_pcache *pcache, size_t niter, bool iterall);
+bcache_evict_some(struct silofs_bcache *bcache, size_t niter, bool iterall);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -72,264 +72,264 @@ static bool pni_isevictable(const struct silofs_pnode_info *pni)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-int silofs_pcache_init(struct silofs_pcache *pcache,
+int silofs_bcache_init(struct silofs_bcache *bcache,
                        struct silofs_alloc *alloc)
 {
 	const size_t nslots = silofs_hmapq_nslots_by(alloc, 1);
 	int err;
 
-	silofs_memzero(pcache, sizeof(*pcache));
-	err = silofs_hmapq_init(&pcache->pc_hmapq, alloc, nslots);
+	silofs_memzero(bcache, sizeof(*bcache));
+	err = silofs_hmapq_init(&bcache->pc_hmapq, alloc, nslots);
 	if (err) {
 		return err;
 	}
-	silofs_dirtyq_init(&pcache->pc_dirtyq);
-	pcache->pc_alloc = alloc;
+	silofs_dirtyq_init(&bcache->pc_dirtyq);
+	bcache->pc_alloc = alloc;
 	return 0;
 }
 
-void silofs_pcache_fini(struct silofs_pcache *pcache)
+void silofs_bcache_fini(struct silofs_bcache *bcache)
 {
-	silofs_hmapq_fini(&pcache->pc_hmapq, pcache->pc_alloc);
-	silofs_dirtyq_fini(&pcache->pc_dirtyq);
-	pcache->pc_alloc = nullptr;
+	silofs_hmapq_fini(&bcache->pc_hmapq, bcache->pc_alloc);
+	silofs_dirtyq_fini(&bcache->pc_dirtyq);
+	bcache->pc_alloc = nullptr;
 }
 
 static struct silofs_pnode_info *
-pcache_search(const struct silofs_pcache *pcache,
+bcache_search(const struct silofs_bcache *bcache,
               const struct silofs_baddr *baddr)
 {
 	struct silofs_hkey hkey;
 	struct silofs_hmapq_elem *hmqe;
 
 	silofs_hkey_by_baddr(&hkey, baddr);
-	hmqe = silofs_hmapq_lookup(&pcache->pc_hmapq, &hkey);
+	hmqe = silofs_hmapq_lookup(&bcache->pc_hmapq, &hkey);
 	return pni_from_hmqe(hmqe);
 }
 
 static void
-pcache_promote(struct silofs_pcache *pcache, struct silofs_pnode_info *pni)
+bcache_promote(struct silofs_bcache *bcache, struct silofs_pnode_info *pni)
 {
-	silofs_hmapq_promote(&pcache->pc_hmapq, pni_to_hmqe(pni), false);
+	silofs_hmapq_promote(&bcache->pc_hmapq, pni_to_hmqe(pni), false);
 }
 
 static struct silofs_pnode_info *
-pcache_search_and_relru(struct silofs_pcache *pcache,
+bcache_search_and_relru(struct silofs_bcache *bcache,
                         const struct silofs_baddr *baddr)
 {
 	struct silofs_pnode_info *pni;
 
-	pni = pcache_search(pcache, baddr);
+	pni = bcache_search(bcache, baddr);
 	if (pni != nullptr) {
-		pcache_promote(pcache, pni);
+		bcache_promote(bcache, pni);
 	}
 	return pni;
 }
 
 static struct silofs_pnode_info *
-pcache_lookup(struct silofs_pcache *pcache, const struct silofs_baddr *baddr)
+bcache_lookup(struct silofs_bcache *bcache, const struct silofs_baddr *baddr)
 {
-	return pcache_search_and_relru(pcache, baddr);
+	return bcache_search_and_relru(bcache, baddr);
 }
 
 static void
-pcache_store(struct silofs_pcache *pcache, struct silofs_pnode_info *pni)
+bcache_store(struct silofs_bcache *bcache, struct silofs_pnode_info *pni)
 {
-	silofs_hmapq_store(&pcache->pc_hmapq, pni_to_hmqe(pni));
+	silofs_hmapq_store(&bcache->pc_hmapq, pni_to_hmqe(pni));
 }
 
 static void
-pcache_remove(struct silofs_pcache *pcache, struct silofs_pnode_info *pni)
+bcache_remove(struct silofs_bcache *bcache, struct silofs_pnode_info *pni)
 {
-	silofs_hmapq_remove(&pcache->pc_hmapq, pni_to_hmqe(pni));
+	silofs_hmapq_remove(&bcache->pc_hmapq, pni_to_hmqe(pni));
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static struct silofs_bdesc_info *
-pcache_new_bdi(const struct silofs_pcache *pcache,
+bcache_new_bdi(const struct silofs_bcache *bcache,
                const struct silofs_baddr *baddr)
 {
-	return silofs_bdi_new(baddr, pcache->pc_alloc);
+	return silofs_bdi_new(baddr, bcache->pc_alloc);
 }
 
-static void pcache_del_bdi(const struct silofs_pcache *pcache,
+static void bcache_del_bdi(const struct silofs_bcache *bcache,
                            struct silofs_bdesc_info *bdi)
 {
-	silofs_bdi_del(bdi, pcache->pc_alloc);
+	silofs_bdi_del(bdi, bcache->pc_alloc);
 }
 
 struct silofs_bdesc_info *
-silofs_pcache_lookup_bdi(struct silofs_pcache *pcache,
+silofs_bcache_lookup_bdi(struct silofs_bcache *bcache,
                          const struct silofs_baddr *baddr)
 {
 	struct silofs_pnode_info *pni;
 
 	silofs_assert_eq(baddr->mtype, SILOFS_MTYPE_BDESC);
 
-	pni = pcache_lookup(pcache, baddr);
+	pni = bcache_lookup(bcache, baddr);
 	return silofs_bdi_from_pni(pni);
 }
 
 static struct silofs_bdesc_info *
-pcache_require_bdi(struct silofs_pcache *pcache,
+bcache_require_bdi(struct silofs_bcache *bcache,
                    const struct silofs_baddr *baddr)
 {
 	struct silofs_bdesc_info *bdi = nullptr;
 
-	for (size_t i = 0; i < PCACHE_RETRY_MAX; ++i) {
-		bdi = pcache_new_bdi(pcache, baddr);
+	for (size_t i = 0; i < BCACHE_RETRY_MAX; ++i) {
+		bdi = bcache_new_bdi(bcache, baddr);
 		if (bdi != nullptr) {
 			break;
 		}
-		pcache_evict_some(pcache, i + 1, false);
+		bcache_evict_some(bcache, i + 1, false);
 	}
 	return bdi;
 }
 
 static void
-pcache_bind_bdi_dq(struct silofs_pcache *pcache, struct silofs_bdesc_info *bdi)
+bcache_bind_bdi_dq(struct silofs_bcache *bcache, struct silofs_bdesc_info *bdi)
 {
-	silofs_bdi_set_dq(bdi, &pcache->pc_dirtyq);
+	silofs_bdi_set_dq(bdi, &bcache->pc_dirtyq);
 }
 
 static void
-pcache_store_bdi(struct silofs_pcache *pcache, struct silofs_bdesc_info *bdi)
+bcache_store_bdi(struct silofs_bcache *bcache, struct silofs_bdesc_info *bdi)
 {
-	pcache_store(pcache, &bdi->bd_pni);
+	bcache_store(bcache, &bdi->bd_pni);
 }
 
 struct silofs_bdesc_info *
-silofs_pcache_create_bdi(struct silofs_pcache *pcache,
+silofs_bcache_create_bdi(struct silofs_bcache *bcache,
                          const struct silofs_baddr *baddr)
 {
 	struct silofs_bdesc_info *bdi;
 
-	bdi = pcache_require_bdi(pcache, baddr);
+	bdi = bcache_require_bdi(bcache, baddr);
 	if (bdi != nullptr) {
-		pcache_bind_bdi_dq(pcache, bdi);
-		pcache_store_bdi(pcache, bdi);
+		bcache_bind_bdi_dq(bcache, bdi);
+		bcache_store_bdi(bcache, bdi);
 	}
 	return bdi;
 }
 
 static void
-pcache_remove_bdi(struct silofs_pcache *pcache, struct silofs_bdesc_info *bdi)
+bcache_remove_bdi(struct silofs_bcache *bcache, struct silofs_bdesc_info *bdi)
 {
-	pcache_remove(pcache, &bdi->bd_pni);
+	bcache_remove(bcache, &bdi->bd_pni);
 }
 
 static void
-pcache_forget_bdi(struct silofs_pcache *pcache, struct silofs_bdesc_info *bdi)
+bcache_forget_bdi(struct silofs_bcache *bcache, struct silofs_bdesc_info *bdi)
 {
 	silofs_bdi_undirtify(bdi);
-	pcache_remove_bdi(pcache, bdi);
+	bcache_remove_bdi(bcache, bdi);
 }
 
-void silofs_pcache_evict_bdi(struct silofs_pcache *pcache,
+void silofs_bcache_evict_bdi(struct silofs_bcache *bcache,
                              struct silofs_bdesc_info *bdi)
 {
-	pcache_forget_bdi(pcache, bdi);
-	pcache_del_bdi(pcache, bdi);
+	bcache_forget_bdi(bcache, bdi);
+	bcache_del_bdi(bcache, bdi);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static struct silofs_btnode_info *
-pcache_new_bni(const struct silofs_pcache *pcache,
+bcache_new_bni(const struct silofs_bcache *bcache,
                const struct silofs_baddr *baddr)
 {
 	silofs_assert_eq(baddr->mtype, SILOFS_MTYPE_BTNODE);
 
-	return silofs_bni_new(baddr, pcache->pc_alloc);
+	return silofs_bni_new(baddr, bcache->pc_alloc);
 }
 
-static void pcache_del_bni(const struct silofs_pcache *pcache,
+static void bcache_del_bni(const struct silofs_bcache *bcache,
                            struct silofs_btnode_info *bni)
 {
 	silofs_assert_eq(bni->bn_pni.pn_baddr.mtype, SILOFS_MTYPE_BTNODE);
 
-	silofs_bni_del(bni, pcache->pc_alloc);
+	silofs_bni_del(bni, bcache->pc_alloc);
 }
 
 struct silofs_btnode_info *
-silofs_pcache_lookup_bni(struct silofs_pcache *pcache,
+silofs_bcache_lookup_bni(struct silofs_bcache *bcache,
                          const struct silofs_baddr *baddr)
 {
 	struct silofs_pnode_info *pni;
 
 	silofs_assert_eq(baddr->mtype, SILOFS_MTYPE_BTNODE);
 
-	pni = pcache_lookup(pcache, baddr);
+	pni = bcache_lookup(bcache, baddr);
 	return silofs_bni_from_pni(pni);
 }
 
 static struct silofs_btnode_info *
-pcache_require_bni(struct silofs_pcache *pcache,
+bcache_require_bni(struct silofs_bcache *bcache,
                    const struct silofs_baddr *baddr)
 {
 	struct silofs_btnode_info *bni = nullptr;
 
-	for (size_t i = 0; i < PCACHE_RETRY_MAX; ++i) {
-		bni = pcache_new_bni(pcache, baddr);
+	for (size_t i = 0; i < BCACHE_RETRY_MAX; ++i) {
+		bni = bcache_new_bni(bcache, baddr);
 		if (bni != nullptr) {
 			break;
 		}
-		pcache_evict_some(pcache, i + 1, false);
+		bcache_evict_some(bcache, i + 1, false);
 	}
 	return bni;
 }
 
-static void pcache_bind_bni_dq(struct silofs_pcache *pcache,
+static void bcache_bind_bni_dq(struct silofs_bcache *bcache,
                                struct silofs_btnode_info *bni)
 {
-	silofs_bni_set_dq(bni, &pcache->pc_dirtyq);
+	silofs_bni_set_dq(bni, &bcache->pc_dirtyq);
 }
 
 static void
-pcache_store_bni(struct silofs_pcache *pcache, struct silofs_btnode_info *bni)
+bcache_store_bni(struct silofs_bcache *bcache, struct silofs_btnode_info *bni)
 {
-	pcache_store(pcache, &bni->bn_pni);
+	bcache_store(bcache, &bni->bn_pni);
 }
 
 struct silofs_btnode_info *
-silofs_pcache_create_bni(struct silofs_pcache *pcache,
+silofs_bcache_create_bni(struct silofs_bcache *bcache,
                          const struct silofs_baddr *baddr)
 {
 	struct silofs_btnode_info *bni;
 
-	bni = pcache_require_bni(pcache, baddr);
+	bni = bcache_require_bni(bcache, baddr);
 	if (bni != nullptr) {
-		pcache_bind_bni_dq(pcache, bni);
-		pcache_store_bni(pcache, bni);
+		bcache_bind_bni_dq(bcache, bni);
+		bcache_store_bni(bcache, bni);
 	}
 	return bni;
 }
 
 static void
-pcache_remove_bni(struct silofs_pcache *pcache, struct silofs_btnode_info *bni)
+bcache_remove_bni(struct silofs_bcache *bcache, struct silofs_btnode_info *bni)
 {
-	pcache_remove(pcache, &bni->bn_pni);
+	bcache_remove(bcache, &bni->bn_pni);
 }
 
 static void
-pcache_forget_bni(struct silofs_pcache *pcache, struct silofs_btnode_info *bni)
+bcache_forget_bni(struct silofs_bcache *bcache, struct silofs_btnode_info *bni)
 {
 	silofs_bni_undirtify(bni);
-	pcache_remove_bni(pcache, bni);
+	bcache_remove_bni(bcache, bni);
 }
 
-void silofs_pcache_evict_bni(struct silofs_pcache *pcache,
+void silofs_bcache_evict_bni(struct silofs_bcache *bcache,
                              struct silofs_btnode_info *bni)
 {
-	pcache_forget_bni(pcache, bni);
-	pcache_del_bni(pcache, bni);
+	bcache_forget_bni(bcache, bni);
+	bcache_del_bni(bcache, bni);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void
-pcache_evict_by(struct silofs_pcache *pcache, struct silofs_pnode_info *pni)
+bcache_evict_by(struct silofs_bcache *bcache, struct silofs_pnode_info *pni)
 {
 	const enum silofs_mtype mtype = silofs_pni_mtype(pni);
 
@@ -340,10 +340,10 @@ pcache_evict_by(struct silofs_pcache *pcache, struct silofs_pnode_info *pni)
 		silofs_assert_null(pni);
 		break;
 	case SILOFS_MTYPE_BDESC:
-		silofs_pcache_evict_bdi(pcache, silofs_bdi_from_pni(pni));
+		silofs_bcache_evict_bdi(bcache, silofs_bdi_from_pni(pni));
 		break;
 	case SILOFS_MTYPE_BTNODE:
-		silofs_pcache_evict_bni(pcache, silofs_bni_from_pni(pni));
+		silofs_bcache_evict_bni(bcache, silofs_bni_from_pni(pni));
 		break;
 	case SILOFS_MTYPE_NONE:
 	case SILOFS_MTYPE_MBR:
@@ -361,7 +361,7 @@ pcache_evict_by(struct silofs_pcache *pcache, struct silofs_pnode_info *pni)
 	case SILOFS_MTYPE_DATABK:
 	case SILOFS_MTYPE_LAST:
 	default:
-		silofs_panic("corrupted pcache: mtype=%d", (int)mtype);
+		silofs_panic("corrupted bcache: mtype=%d", (int)mtype);
 		break;
 	}
 }
@@ -381,67 +381,67 @@ static int visit_evictable_pni(struct silofs_hmapq_elem *hmqe, void *arg)
 }
 
 static struct silofs_pnode_info *
-pcache_find_evictable(struct silofs_pcache *pcache, bool iterall)
+bcache_find_evictable(struct silofs_bcache *bcache, bool iterall)
 {
 	struct silofs_pnode_info *pni = nullptr;
 	struct silofs_pnode_info **p_pni = &pni;
 
-	silofs_hmapq_riterate(&pcache->pc_hmapq,
+	silofs_hmapq_riterate(&bcache->pc_hmapq,
 	                      iterall ? SILOFS_HMAPQ_ITERALL : 10,
 	                      visit_evictable_pni, (void *)p_pni);
 	return pni;
 }
 
 static size_t
-pcache_evict_some(struct silofs_pcache *pcache, size_t niter, bool iterall)
+bcache_evict_some(struct silofs_bcache *bcache, size_t niter, bool iterall)
 {
 	struct silofs_pnode_info *pni;
 	size_t cnt = 0;
 
 	while (niter-- > 0) {
-		pni = pcache_find_evictable(pcache, iterall);
+		pni = bcache_find_evictable(bcache, iterall);
 		if (pni == nullptr) {
 			break;
 		}
-		pcache_evict_by(pcache, pni);
+		bcache_evict_by(bcache, pni);
 		cnt++;
 	}
 	return cnt;
 }
 
-static size_t pcache_usage(const struct silofs_pcache *pcache)
+static size_t bcache_usage(const struct silofs_bcache *bcache)
 {
-	return silofs_hmapq_usage(&pcache->pc_hmapq);
+	return silofs_hmapq_usage(&bcache->pc_hmapq);
 }
 
-bool silofs_pcache_isempty(const struct silofs_pcache *pcache)
+bool silofs_bcache_isempty(const struct silofs_bcache *bcache)
 {
-	return (pcache_usage(pcache) == 0);
+	return (bcache_usage(bcache) == 0);
 }
 
-void silofs_pcache_drop(struct silofs_pcache *pcache)
+void silofs_bcache_drop(struct silofs_bcache *bcache)
 {
 	size_t cnt;
 
-	cnt = pcache_evict_some(pcache, 1, true);
+	cnt = bcache_evict_some(bcache, 1, true);
 	while (cnt > 0) {
-		cnt = pcache_evict_some(pcache, 1, true);
+		cnt = bcache_evict_some(bcache, 1, true);
 	}
 }
 
-static size_t pcache_memory_pressure(const struct silofs_pcache *pcache)
+static size_t bcache_memory_pressure(const struct silofs_bcache *bcache)
 {
 	struct silofs_alloc_stat st;
 	size_t mem_pres = 0;
 
-	silofs_memstat(pcache->pc_alloc, &st);
+	silofs_memstat(bcache->pc_alloc, &st);
 	if (likely(st.nbytes_max > 0)) {
 		mem_pres = ((100UL * st.nbytes_use) / st.nbytes_max);
 	}
 	return mem_pres; /* percentage of total available memory */
 }
 
-static void pcache_relax_args(const struct silofs_pcache *pcache, int flags,
+static void bcache_relax_args(const struct silofs_bcache *bcache, int flags,
                               size_t *out_niter, bool *out_iterall)
 {
 	size_t mem_pres;
@@ -456,27 +456,27 @@ static void pcache_relax_args(const struct silofs_pcache *pcache, int flags,
 		*out_niter += 1;
 		*out_iterall = false;
 	}
-	mem_pres = pcache_memory_pressure(pcache);
+	mem_pres = bcache_memory_pressure(bcache);
 	if (mem_pres > 50) {
 		*out_niter += mem_pres / 10;
 		*out_iterall = true;
 	}
 }
 
-void silofs_pcache_relax(struct silofs_pcache *pcache, int flags)
+void silofs_bcache_relax(struct silofs_bcache *bcache, int flags)
 {
 	size_t niter = 0;
 	bool iterall = false;
 
-	pcache_relax_args(pcache, flags, &niter, &iterall);
-	pcache_evict_some(pcache, niter, iterall);
+	bcache_relax_args(bcache, flags, &niter, &iterall);
+	bcache_evict_some(bcache, niter, iterall);
 }
 
 struct silofs_pnode_info *
-silofs_pcache_dq_front(const struct silofs_pcache *pcache)
+silofs_bcache_dq_front(const struct silofs_bcache *bcache)
 {
 	struct silofs_dq_elem *dqe;
 
-	dqe = silofs_dirtyq_front(&pcache->pc_dirtyq);
+	dqe = silofs_dirtyq_front(&bcache->pc_dirtyq);
 	return pni_from_dqe(dqe);
 }

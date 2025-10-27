@@ -20,12 +20,12 @@
 #include "infra.h"
 #include "addr.h"
 
-struct silofs_pcache;
+struct silofs_bcache;
 struct silofs_repo;
 
 /* b+tree base refs  */
 struct silofs_btree_base {
-	struct silofs_pcache *pcache;
+	struct silofs_bcache *bcache;
 	struct silofs_repo   *repo;
 };
 

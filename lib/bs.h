@@ -21,7 +21,7 @@
 #include "addr.h"
 #include "bs/repo.h"
 #include "bs/pnode.h"
-#include "bs/pcache.h"
+#include "bs/bcache.h"
 #include "bs/bdesc.h"
 #include "bs/btree.h"
 

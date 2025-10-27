@@ -28,7 +28,7 @@ enum silofs_env_initf {
 	SILOFS_ENVIF_QALLOC = SILOFS_BIT(0),
 	SILOFS_ENVIF_STDALLOC = SILOFS_BIT(1),
 	SILOFS_ENVIF_REPO = SILOFS_BIT(2),
-	SILOFS_ENVIF_PCACHE = SILOFS_BIT(3),
+	SILOFS_ENVIF_BCACHE = SILOFS_BIT(3),
 	SILOFS_ENVIF_LCACHE = SILOFS_BIT(4),
 	SILOFS_ENVIF_SUBMITQ = SILOFS_BIT(5),
 	SILOFS_ENVIF_IDSMAP = SILOFS_BIT(6),
@@ -49,7 +49,7 @@ struct silofs_env_inst {
 	struct silofs_env_args args;
 	union silofs_alloc_u alloc_u;
 	struct silofs_repo repo;
-	struct silofs_pcache pcache;
+	struct silofs_bcache bcache;
 	struct silofs_lcache lcache;
 	struct silofs_idsmap idsmap;
 	struct silofs_submitq submitq;
@@ -288,26 +288,26 @@ static void envi_fini_repo(struct silofs_env_inst *envi)
 	}
 }
 
-static int envi_init_pcache(struct silofs_env_inst *envi)
+static int envi_init_bcache(struct silofs_env_inst *envi)
 {
-	struct silofs_pcache *pcache = &envi->pcache;
+	struct silofs_bcache *bcache = &envi->bcache;
 	int err;
 
-	err = silofs_pcache_init(pcache, envi->alloc);
+	err = silofs_bcache_init(bcache, envi->alloc);
 	if (err) {
 		return err;
 	}
-	envi->initf |= SILOFS_ENVIF_PCACHE;
+	envi->initf |= SILOFS_ENVIF_BCACHE;
 	return 0;
 }
 
-static void envi_fini_pcache(struct silofs_env_inst *envi)
+static void envi_fini_bcache(struct silofs_env_inst *envi)
 {
-	struct silofs_pcache *pcache = &envi->pcache;
+	struct silofs_bcache *bcache = &envi->bcache;
 
-	if (envi->initf & SILOFS_ENVIF_PCACHE) {
-		silofs_pcache_fini(pcache);
-		envi->initf &= ~SILOFS_ENVIF_PCACHE;
+	if (envi->initf & SILOFS_ENVIF_BCACHE) {
+		silofs_bcache_fini(bcache);
+		envi->initf &= ~SILOFS_ENVIF_BCACHE;
 	}
 }
 
@@ -460,7 +460,7 @@ static int envi_init_env(struct silofs_env_inst *envi)
 		.args = &envi->args,
 		.alloc = envi->alloc,
 		.repo = &envi->repo,
-		.pcache = &envi->pcache,
+		.bcache = &envi->bcache,
 		.lcache = &envi->lcache,
 		.submitq = &envi->submitq,
 		.flusher = &envi->flusher,
@@ -507,7 +507,7 @@ static void envi_fini(struct silofs_env_inst *envi)
 	envi_fini_flusher(envi);
 	envi_fini_submitq(envi);
 	envi_fini_lcache(envi);
-	envi_fini_pcache(envi);
+	envi_fini_bcache(envi);
 	envi_fini_repo(envi);
 	envi_fini_alloc(envi);
 	envi_fini_passwd(envi);
@@ -552,7 +552,7 @@ envi_init(struct silofs_env_inst *envi, const struct silofs_env_args *args)
 	if (err) {
 		goto out_err;
 	}
-	err = envi_init_pcache(envi);
+	err = envi_init_bcache(envi);
 	if (err) {
 		goto out_err;
 	}

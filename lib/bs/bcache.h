@@ -14,15 +14,15 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_PCACHE_H_
-#define SILOFS_PCACHE_H_
+#ifndef SILOFS_BCACHE_H_
+#define SILOFS_BCACHE_H_
 
 #include "hmdq.h"
 
 struct silofs_alloc;
 struct silofs_baddr;
 
-struct silofs_pcache {
+struct silofs_bcache {
 	struct silofs_hmapq  pc_hmapq;
 	struct silofs_dirtyq pc_dirtyq;
 	struct silofs_alloc *pc_alloc;
@@ -30,40 +30,40 @@ struct silofs_pcache {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_pcache_init(struct silofs_pcache *pcache,
+int silofs_bcache_init(struct silofs_bcache *bcache,
                        struct silofs_alloc  *alloc);
 
-void silofs_pcache_fini(struct silofs_pcache *pcache);
+void silofs_bcache_fini(struct silofs_bcache *bcache);
 
-bool silofs_pcache_isempty(const struct silofs_pcache *pcache);
+bool silofs_bcache_isempty(const struct silofs_bcache *bcache);
 
-void silofs_pcache_drop(struct silofs_pcache *pcache);
+void silofs_bcache_drop(struct silofs_bcache *bcache);
 
-void silofs_pcache_relax(struct silofs_pcache *pcache, int flags);
+void silofs_bcache_relax(struct silofs_bcache *bcache, int flags);
 
 struct silofs_pnode_info *
-silofs_pcache_dq_front(const struct silofs_pcache *pcache);
+silofs_bcache_dq_front(const struct silofs_bcache *bcache);
 
 struct silofs_bdesc_info *
-silofs_pcache_lookup_bdi(struct silofs_pcache      *pcache,
+silofs_bcache_lookup_bdi(struct silofs_bcache      *bcache,
                          const struct silofs_baddr *baddr);
 
 struct silofs_bdesc_info *
-silofs_pcache_create_bdi(struct silofs_pcache      *pcache,
+silofs_bcache_create_bdi(struct silofs_bcache      *bcache,
                          const struct silofs_baddr *baddr);
 
-void silofs_pcache_evict_bdi(struct silofs_pcache     *pcache,
+void silofs_bcache_evict_bdi(struct silofs_bcache     *bcache,
                              struct silofs_bdesc_info *bdi);
 
 struct silofs_btnode_info *
-silofs_pcache_lookup_bni(struct silofs_pcache      *pcache,
+silofs_bcache_lookup_bni(struct silofs_bcache      *bcache,
                          const struct silofs_baddr *baddr);
 
 struct silofs_btnode_info *
-silofs_pcache_create_bni(struct silofs_pcache      *pcache,
+silofs_bcache_create_bni(struct silofs_bcache      *bcache,
                          const struct silofs_baddr *baddr);
 
-void silofs_pcache_evict_bni(struct silofs_pcache      *pcache,
+void silofs_bcache_evict_bni(struct silofs_bcache      *bcache,
                              struct silofs_btnode_info *bni);
 
-#endif /* SILOFS_PCACHE_H_ */
+#endif /* SILOFS_BCACHE_H_ */

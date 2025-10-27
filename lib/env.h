@@ -40,7 +40,7 @@ struct silofs_env_base {
 	const struct silofs_env_args *args;
 	struct silofs_alloc          *alloc;
 	struct silofs_repo           *repo;
-	struct silofs_pcache         *pcache;
+	struct silofs_bcache         *bcache;
 	struct silofs_bstore         *bstore;
 	struct silofs_lcache         *lcache;
 	struct silofs_submitq        *submitq;

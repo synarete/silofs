@@ -256,7 +256,7 @@ jobs:
       - name: Install deps
         run: sudo ./dist/deb/install-deb-deps.sh
       - name: Run clang static-analyzer
-        run: ./scripts/clangscanbuild.sh
+        run: ./scripts/clangscan.sh
   done:
     name: End workflow
     runs-on: ubuntu-24.04

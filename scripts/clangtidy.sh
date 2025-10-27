@@ -2,9 +2,9 @@
 export LC_ALL=C
 unset CDPATH
 
-self=$(basename "${BASH_SOURCE[0]}")
 selfdir="$(realpath "$(dirname "${BASH_SOURCE[0]}")")"
-rootdir="$(realpath "${selfdir}"/../)"
+basedir="$(realpath "${selfdir}"/../)"
+rootdir=${1:-"${basedir}"}
 source "${rootdir}/bash_functions"
 
 # require clang-tidy & bear (generates compilation database for clang tooling)
@@ -15,12 +15,6 @@ set -o errexit
 set -o nounset
 set -o pipefail
 cdx "${rootdir}"
-
-# require compilation database
-if [ ! -f "${rootdir}/compile_commands.json" ]; then
-	run make -f devel.mk reset
-	run bear -- make -f devel.mk CC=clang
-fi
 
 # run clang-tidy
 conf="${rootdir}/.clang-tidy.yaml"

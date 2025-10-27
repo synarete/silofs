@@ -342,9 +342,15 @@ compdb: configure tags
 	@(bear -- $(MAKE) $(MAKE_OPTS) V=$(V) \
 	  CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" -C $(BUILDDIR))
 
-clangscan:
+ifeq ($(CC), clang)
+clangtidy: reset compdb
 	$(call report, $@)
-	@$(TOP)/scripts/clangscanbuild.sh $(TOP)
+	@$(TOP)/scripts/clangtidy.sh $(TOP)
+
+clangscan: reset
+	$(call report, $@)
+	@$(TOP)/scripts/clangscan.sh $(TOP)
+endif
 
 rpm: reset
 	$(call report, $@)

@@ -5,19 +5,12 @@ set -o pipefail
 export LC_ALL=C
 unset CDPATH
 
-self=$(basename "${BASH_SOURCE[0]}")
 selfdir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
 basedir=$(realpath "${selfdir}"/../)
 rootdir=${1:-"${basedir}"}
 outdir="${rootdir}"/build/html
 
-
-# run-and-log helpers
-_msg() { echo "$self: $*" >&2; }
-_die() { _msg "$*"; exit 1; }
-_try() { ( "$@" ) || _die "failed: $*"; }
-_run() { echo "$self:" "$@" >&2; _try "$@"; }
-
+source "${rootdir}/bash_functions"
 
 _clang_scan_enabled_checkers_args() {
 	clang -cc1 -analyzer-checker-help \
@@ -32,9 +25,7 @@ _clang_scan_enabled_checkers_args() {
 }
 
 _clang_requires() {
-	command -v clang
-	command -v clang++
-	command -v scan-build
+	commandv clang clang++ scan-build
 }
 
 _clang_scan_env() {
@@ -55,12 +46,12 @@ _clang_scan_build() {
 	cd "${builddir}"
 	_clang_scan_env
 
-	_run scan-build \
+	run scan-build \
 		--use-cc="${CCC_CC}" \
 		--use-c++="${CCC_CXX}" \
 		"${topdir}/configure" CFLAGS='-O2 -pthread'
 
-	_run scan-build \
+	run scan-build \
 		--use-cc="${CCC_CC}" \
 		--use-c++="${CCC_CXX}" \
 		-maxloop 32 -k -v -o "${outdir}" \
@@ -69,7 +60,7 @@ _clang_scan_build() {
 }
 
 _rebootstrap() {
-	_run "${1}"/bootstrap -r
+	run "${rootdir}"/bootstrap -r
 }
 
 

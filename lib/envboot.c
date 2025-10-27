@@ -249,8 +249,5 @@ int silofs_env_unlink_mbr(struct silofs_env *env,
 		return err;
 	}
 	env_unlink_mbr_at(env, baddr);
-	if (err) {
-		return err;
-	}
 	return 0;
 }

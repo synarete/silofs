@@ -24,6 +24,5 @@
 #include "bs/pcache.h"
 #include "bs/bdesc.h"
 #include "bs/btree.h"
-#include "bs/bstore.h"
 
 #endif /* SILOFS_BS_H_ */

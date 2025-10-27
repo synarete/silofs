@@ -32,7 +32,6 @@ enum silofs_env_initf {
 	SILOFS_ENVIF_LCACHE = SILOFS_BIT(4),
 	SILOFS_ENVIF_SUBMITQ = SILOFS_BIT(5),
 	SILOFS_ENVIF_IDSMAP = SILOFS_BIT(6),
-	SILOFS_ENVIF_BSTORE = SILOFS_BIT(7),
 	SILOFS_ENVIF_FLUSHER = SILOFS_BIT(8),
 	SILOFS_ENVIF_FUSEQ = SILOFS_BIT(9),
 	SILOFS_ENVIF_ENV = SILOFS_BIT(10),
@@ -53,7 +52,6 @@ struct silofs_env_inst {
 	struct silofs_pcache pcache;
 	struct silofs_lcache lcache;
 	struct silofs_idsmap idsmap;
-	struct silofs_bstore bstore;
 	struct silofs_submitq submitq;
 	struct silofs_flusher flusher;
 	struct silofs_env env;
@@ -313,29 +311,6 @@ static void envi_fini_pcache(struct silofs_env_inst *envi)
 	}
 }
 
-static int envi_init_bstore(struct silofs_env_inst *envi)
-{
-	struct silofs_bstore *bstore = &envi->bstore;
-	int err;
-
-	err = silofs_bstore_init(bstore, &envi->pcache, &envi->repo);
-	if (err) {
-		return err;
-	}
-	envi->initf |= SILOFS_ENVIF_BSTORE;
-	return 0;
-}
-
-static void envi_fini_bstore(struct silofs_env_inst *envi)
-{
-	struct silofs_bstore *bstore = &envi->bstore;
-
-	if (envi->initf & SILOFS_ENVIF_BSTORE) {
-		silofs_bstore_fini(bstore);
-		envi->initf &= ~SILOFS_ENVIF_BSTORE;
-	}
-}
-
 static int envi_init_lcache(struct silofs_env_inst *envi)
 {
 	struct silofs_lcache *lcache = &envi->lcache;
@@ -486,7 +461,6 @@ static int envi_init_env(struct silofs_env_inst *envi)
 		.alloc = envi->alloc,
 		.repo = &envi->repo,
 		.pcache = &envi->pcache,
-		.bstore = &envi->bstore,
 		.lcache = &envi->lcache,
 		.submitq = &envi->submitq,
 		.flusher = &envi->flusher,
@@ -533,7 +507,6 @@ static void envi_fini(struct silofs_env_inst *envi)
 	envi_fini_flusher(envi);
 	envi_fini_submitq(envi);
 	envi_fini_lcache(envi);
-	envi_fini_bstore(envi);
 	envi_fini_pcache(envi);
 	envi_fini_repo(envi);
 	envi_fini_alloc(envi);
@@ -580,10 +553,6 @@ envi_init(struct silofs_env_inst *envi, const struct silofs_env_args *args)
 		goto out_err;
 	}
 	err = envi_init_pcache(envi);
-	if (err) {
-		goto out_err;
-	}
-	err = envi_init_bstore(envi);
 	if (err) {
 		goto out_err;
 	}

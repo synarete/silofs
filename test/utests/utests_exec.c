@@ -278,7 +278,7 @@ static size_t ualloc_nbytes_now(const struct ut_env *ute)
 {
 	struct silofs_cache_stats st;
 
-	silofs_stat_fs(ute->env, &st);
+	silofs_collect_stats(ute->env, &st);
 	return st.nalloc_bytes;
 }
 

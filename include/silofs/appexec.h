@@ -113,9 +113,6 @@ int silofs_remove_fs(struct silofs_env          *env,
 
 int silofs_sync_fs(struct silofs_env *env, bool drop);
 
-void silofs_stat_fs(const struct silofs_env   *env,
-                    struct silofs_cache_stats *cst);
-
 int silofs_inspect_fs(struct silofs_env *env, bool show);
 
 int silofs_archive_fs(struct silofs_env          *env,
@@ -125,5 +122,8 @@ int silofs_archive_fs(struct silofs_env          *env,
 int silofs_restore_fs(struct silofs_env          *env,
                       const struct silofs_blobid *ar_blobid,
                       struct silofs_blobid       *out_fs_blobid);
+
+void silofs_collect_stats(const struct silofs_env   *env,
+                          struct silofs_cache_stats *out_cstats);
 
 #endif /* SILOFS_APPEXEC_H_ */

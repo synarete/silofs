@@ -136,8 +136,7 @@ struct silofs_space_stats {
 /* file-system' internal cache stats */
 struct silofs_cache_stats {
 	size_t nalloc_bytes;
-	size_t ncache_unodes;
-	size_t ncache_vnodes;
+	size_t ncache_nodes;
 };
 
 /* inode's time-stamps (birth, access, modify, change) */

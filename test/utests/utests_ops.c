@@ -1865,12 +1865,11 @@ void ut_sync_drop(struct ut_env *ute)
 
 void ut_drop_caches_fully(struct ut_env *ute)
 {
-	struct silofs_cache_stats st;
+	struct silofs_cache_stats cstats;
 
 	ut_sync_drop(ute);
-	silofs_stat_fs(ute->env, &st);
-	ut_expect_eq(st.ncache_unodes, 1); /* sb not dropped */
-	ut_expect_eq(st.ncache_vnodes, 0);
+	silofs_collect_stats(ute->env, &cstats);
+	ut_expect_eq(cstats.ncache_nodes, 1); /* sb not dropped */
 }
 
 void ut_tune_ftype2(struct ut_env *ute, ino_t ino)

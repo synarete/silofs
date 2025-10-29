@@ -728,18 +728,17 @@ int silofs_sync_fs(struct silofs_env *env, bool drop)
 	return err;
 }
 
-void silofs_stat_fs(const struct silofs_env *env,
-                    struct silofs_cache_stats *cst)
+void silofs_collect_stats(const struct silofs_env *env,
+                          struct silofs_cache_stats *out_cstats)
 {
 	struct silofs_alloc_stat alst = { .nbytes_use = 0 };
 	const struct silofs_alloc *alloc = env->base.alloc;
 	const struct silofs_lcache *lcache = env->base.lcache;
 
-	silofs_memzero(cst, sizeof(*cst));
 	silofs_memstat(alloc, &alst);
-	cst->nalloc_bytes = alst.nbytes_use;
-	cst->ncache_unodes += lcache->lc_uni_hmapq.hmq_htbl_size;
-	cst->ncache_vnodes += lcache->lc_vni_hmapq.hmq_htbl_size;
+	out_cstats->nalloc_bytes = alst.nbytes_use;
+	out_cstats->ncache_nodes = lcache->lc_uni_hmapq.hmq_htbl_size +
+	                           lcache->lc_vni_hmapq.hmq_htbl_size;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

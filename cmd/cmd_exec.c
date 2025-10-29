@@ -43,12 +43,10 @@ void cmd_del_env(struct silofs_env **p_env)
 
 static char *cmd_repodir_name(const struct silofs_env *env)
 {
-	const struct silofs_env_args *env_args = silofs_get_env_args(env);
-	char *ret = nullptr;
+	struct silofs_boot_args boot_args = {};
 
-	cmd_join_path(env_args->boot_args.repodir, env_args->boot_args.fs_name,
-	              &ret);
-	return ret;
+	silofs_get_boot_args(env, &boot_args);
+	return cmd_join_path(boot_args.repodir, boot_args.fs_name);
 }
 
 static void cmd_report_err_and_die(const struct silofs_env *env, int status,

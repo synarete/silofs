@@ -143,14 +143,14 @@ static void cmd_rmfs_check_nomnt_at(struct cmd_rmfs_ctx *ctx, const char *mntp)
 	}
 	name = cmd_strvdup(qry->u.boot.name);
 
-	cmd_join_path(repodir, name, &path[0]);
+	path[0] = cmd_join_path(repodir, name);
 	err = silofs_sys_stat(path[0], &st[0]);
 	if (err) {
 		goto out;
 	}
 
-	cmd_join_path(ctx->in_args.repodir_real, ctx->in_args.fsname,
-	              &path[1]);
+	path[1] =
+		cmd_join_path(ctx->in_args.repodir_real, ctx->in_args.fsname);
 	err = silofs_sys_stat(path[1], &st[1]);
 	if (err) {
 		goto out;

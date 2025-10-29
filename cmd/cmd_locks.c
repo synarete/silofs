@@ -193,13 +193,15 @@ void cmd_unlock_fs(const char *repodir, const char *name)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static void cmd_repo_lockpath(const char *repodir, char **out_path)
+static char *cmd_repo_lockpath(const char *repodir)
 {
 	char *dotsdir = nullptr;
+	char *lockpath = nullptr;
 
-	cmd_join_path(repodir, SILOFS_REPO_DOTS_DIRNAME, &dotsdir);
-	cmd_join_path(dotsdir, SILOFS_REPO_LOCK_FILENAME, out_path);
+	dotsdir = cmd_join_path(repodir, SILOFS_REPO_DOTS_DIRNAME);
+	lockpath = cmd_join_path(dotsdir, SILOFS_REPO_LOCK_FILENAME);
 	cmd_pstrfree(&dotsdir);
+	return lockpath;
 }
 
 static void cmd_open_repo_lock(const char *path, int *out_fd)
@@ -283,7 +285,7 @@ static void cmd_lock_repo(const char *repodir, bool wrlck, int *out_fd)
 {
 	char *lockfile = nullptr;
 
-	cmd_repo_lockpath(repodir, &lockfile);
+	lockfile = cmd_repo_lockpath(repodir);
 	cmd_do_lock_repo(lockfile, wrlck, out_fd);
 	cmd_pstrfree(&lockfile);
 }
@@ -303,7 +305,7 @@ void cmd_unlock_repo(const char *repodir, int *pfd)
 	char *lockfile = nullptr;
 
 	if (repodir && pfd && (*pfd > 0)) {
-		cmd_repo_lockpath(repodir, &lockfile);
+		lockfile = cmd_repo_lockpath(repodir);
 		cmd_do_unlock_repo(lockfile, pfd);
 		cmd_pstrfree(&lockfile);
 	}

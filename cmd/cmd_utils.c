@@ -160,7 +160,7 @@ void cmd_check_isreg2(const char *dirpath, const char *name)
 {
 	char *path = nullptr;
 
-	cmd_join_path(dirpath, name, &path);
+	path = cmd_join_path(dirpath, name);
 	cmd_check_isreg(path);
 	cmd_pstrfree(&path);
 }
@@ -208,7 +208,7 @@ void cmd_check_notexists2(const char *dirpath, const char *name)
 {
 	char *path = nullptr;
 
-	cmd_join_path(dirpath, name, &path);
+	path = cmd_join_path(dirpath, name);
 	cmd_check_notexists(path);
 	cmd_pstrfree(&path);
 }
@@ -747,13 +747,16 @@ void cmd_remake_path2(const char *path, const char *suffix, char **out_head,
 	}
 }
 
-void cmd_join_path(const char *dirpath, const char *name, char **out_path)
+char *cmd_join_path(const char *dirpath, const char *name)
 {
+	char *ret = nullptr;
+
 	if (dirpath && name) {
-		*out_path = cmd_joinpath_safe(dirpath, name);
+		ret = cmd_joinpath_safe(dirpath, name);
 	} else {
-		*out_path = cmd_strdup("");
+		ret = cmd_strdup("");
 	}
+	return ret;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

@@ -155,10 +155,7 @@ void cmd_extend_fsids(struct silofs_ugids *ugids, const char *user,
 
 static char *cmd_fsids_confpath(const char *basedir)
 {
-	char *path = nullptr;
-
-	cmd_join_path(basedir, "fsids.conf", &path);
-	return path;
+	return cmd_join_path(basedir, "fsids.conf");
 }
 
 void cmd_load_fsids(struct silofs_ugids *ugids, const char *basedir)

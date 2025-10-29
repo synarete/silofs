@@ -219,7 +219,7 @@ void cmd_remake_path(const char *path, const char *suffix, char **out_head,
 void cmd_remake_path2(const char *path, const char *suffix, char **out_head,
                       char **out_tail);
 
-void cmd_join_path(const char *dirpath, const char *name, char **out_path);
+char *cmd_join_path(const char *dirpath, const char *name);
 
 void cmd_daemonize_process(pid_t *out_pid);
 

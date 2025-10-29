@@ -73,8 +73,11 @@ int silofs_create_env(const struct silofs_env_args *args,
 
 void silofs_destroy_env(struct silofs_env *env);
 
-const struct silofs_env_args *
-silofs_get_env_args(const struct silofs_env *env);
+void silofs_get_boot_args(const struct silofs_env *env,
+                          struct silofs_boot_args *out);
+
+void silofs_collect_stats(const struct silofs_env   *env,
+                          struct silofs_cache_stats *out);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -122,8 +125,5 @@ int silofs_archive_fs(struct silofs_env          *env,
 int silofs_restore_fs(struct silofs_env          *env,
                       const struct silofs_blobid *ar_blobid,
                       struct silofs_blobid       *out_fs_blobid);
-
-void silofs_collect_stats(const struct silofs_env   *env,
-                          struct silofs_cache_stats *out_cstats);
 
 #endif /* SILOFS_APPEXEC_H_ */

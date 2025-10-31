@@ -68,18 +68,10 @@ static struct silofs_repo *spac_repo(const struct silofs_spalloc_ctx *spa_ctx)
 	return spa_ctx->task->t_repo;
 }
 
-static struct silofs_lcache *
-spac_lcache(const struct silofs_spalloc_ctx *spa_ctx)
-{
-	return spa_ctx->task->t_lcache;
-}
-
 static struct silofs_spamaps *
 spac_spamaps(const struct silofs_spalloc_ctx *spa_ctx)
 {
-	struct silofs_lcache *cache = spac_lcache(spa_ctx);
-
-	return &cache->lc_spamaps;
+	return spa_ctx->env->base.spamaps;
 }
 
 static off_t spac_get_hint(const struct silofs_spalloc_ctx *spa_ctx)

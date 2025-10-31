@@ -18,7 +18,7 @@
 #include "lnodes.h"
 #include "spxmap.h"
 
-/* single entry of free vspace */
+/* single entry of free space */
 struct silofs_spa_entry {
 	struct silofs_avl_node spe_an;
 	off_t spe_voff;
@@ -45,7 +45,7 @@ static void spalifo_fini(struct silofs_spalifo *spal)
 }
 
 static int
-spalifo_pop_vspace(struct silofs_spalifo *spal, size_t len, off_t *out_off)
+spalifo_pop_space(struct silofs_spalifo *spal, size_t len, off_t *out_off)
 {
 	if (!spal->sal_size || (spal->sal_ulen != len)) {
 		return -SILOFS_ENOENT;
@@ -56,7 +56,7 @@ spalifo_pop_vspace(struct silofs_spalifo *spal, size_t len, off_t *out_off)
 }
 
 static int
-spalifo_add_vspace(struct silofs_spalifo *spal, off_t off, size_t len)
+spalifo_add_space(struct silofs_spalifo *spal, off_t off, size_t len)
 {
 	const size_t size_max = ARRAY_SIZE(spal->sal_lifo);
 
@@ -275,12 +275,12 @@ static int spamap_check_cap_add(const struct silofs_spamap *spa)
 }
 
 static int
-spamap_pop_vspace(struct silofs_spamap *spa, size_t len, off_t *out_off)
+spamap_pop_space(struct silofs_spamap *spa, size_t len, off_t *out_off)
 {
 	struct silofs_spa_entry *spe;
 	int err;
 
-	err = spalifo_pop_vspace(&spa->spa_lifo, len, out_off);
+	err = spalifo_pop_space(&spa->spa_lifo, len, out_off);
 	if (!err) {
 		return 0;
 	}
@@ -302,8 +302,7 @@ spamap_pop_vspace(struct silofs_spamap *spa, size_t len, off_t *out_off)
 	return 0;
 }
 
-static int
-spamap_merge_vspace(struct silofs_spamap *spa, off_t off, size_t len)
+static int spamap_merge_space(struct silofs_spamap *spa, off_t off, size_t len)
 {
 	struct silofs_spa_entry *spe = nullptr;
 	struct silofs_spa_entry *spe_prev = nullptr;
@@ -348,7 +347,7 @@ spamap_merge_vspace(struct silofs_spamap *spa, off_t off, size_t len)
 }
 
 static int
-spamap_insert_vspace(struct silofs_spamap *spa, off_t off, size_t len)
+spamap_insert_space(struct silofs_spamap *spa, off_t off, size_t len)
 {
 	struct silofs_spa_entry *spe;
 	struct silofs_spa_entry *spe_max = nullptr;
@@ -374,15 +373,15 @@ out_ok:
 	return 0;
 }
 
-static int spamap_add_vspace(struct silofs_spamap *spa, off_t off, size_t len)
+static int spamap_add_space(struct silofs_spamap *spa, off_t off, size_t len)
 {
 	int err;
 
-	err = spalifo_add_vspace(&spa->spa_lifo, off, len);
+	err = spalifo_add_space(&spa->spa_lifo, off, len);
 	if (!err) {
 		return 0;
 	}
-	err = spamap_merge_vspace(spa, off, len);
+	err = spamap_merge_space(spa, off, len);
 	if (err != -SILOFS_ENOENT) {
 		return err;
 	}
@@ -390,7 +389,7 @@ static int spamap_add_vspace(struct silofs_spamap *spa, off_t off, size_t len)
 	if (err) {
 		return err;
 	}
-	err = spamap_insert_vspace(spa, off, len);
+	err = spamap_insert_space(spa, off, len);
 	if (err) {
 		return err;
 	}
@@ -532,7 +531,7 @@ int silofs_spamaps_store(struct silofs_spamaps *spam, enum silofs_mtype mtype,
 
 	spa = spamaps_sub_map(spam, mtype);
 	if (spa != nullptr) {
-		err = spamap_add_vspace(spa, voff, len);
+		err = spamap_add_space(spa, voff, len);
 	}
 	return err;
 }
@@ -545,7 +544,7 @@ int silofs_spamaps_trypop(struct silofs_spamaps *spam, enum silofs_mtype mtype,
 
 	spa = spamaps_sub_map(spam, mtype);
 	if (spa != nullptr) {
-		err = spamap_pop_vspace(spa, len, out_voff);
+		err = spamap_pop_space(spa, len, out_voff);
 	}
 	return err;
 }

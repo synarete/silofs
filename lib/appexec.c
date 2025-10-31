@@ -731,14 +731,7 @@ int silofs_sync_fs(struct silofs_env *env, bool drop)
 void silofs_collect_stats(const struct silofs_env *env,
                           struct silofs_cache_stats *out_cstats)
 {
-	struct silofs_alloc_stat alst = { .nbytes_use = 0 };
-	const struct silofs_alloc *alloc = env->base.alloc;
-	const struct silofs_lcache *lcache = env->base.lcache;
-
-	silofs_memstat(alloc, &alst);
-	out_cstats->nalloc_bytes = alst.nbytes_use;
-	out_cstats->ncache_nodes = lcache->lc_uni_hmapq.hmq_htbl_size +
-	                           lcache->lc_vni_hmapq.hmq_htbl_size;
+	silofs_lcache_collect_stats(env->base.lcache, out_cstats);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

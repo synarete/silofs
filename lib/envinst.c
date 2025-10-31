@@ -30,8 +30,9 @@ enum silofs_env_initf {
 	SILOFS_ENVIF_REPO = SILOFS_BIT(2),
 	SILOFS_ENVIF_BCACHE = SILOFS_BIT(3),
 	SILOFS_ENVIF_LCACHE = SILOFS_BIT(4),
-	SILOFS_ENVIF_SUBMITQ = SILOFS_BIT(5),
-	SILOFS_ENVIF_IDSMAP = SILOFS_BIT(6),
+	SILOFS_ENVIF_SPAMAPS = SILOFS_BIT(5),
+	SILOFS_ENVIF_SUBMITQ = SILOFS_BIT(6),
+	SILOFS_ENVIF_IDSMAP = SILOFS_BIT(7),
 	SILOFS_ENVIF_FLUSHER = SILOFS_BIT(8),
 	SILOFS_ENVIF_FUSEQ = SILOFS_BIT(9),
 	SILOFS_ENVIF_ENV = SILOFS_BIT(10),
@@ -51,11 +52,13 @@ struct silofs_env_inst {
 	struct silofs_repo repo;
 	struct silofs_bcache bcache;
 	struct silofs_lcache lcache;
+	struct silofs_spamaps spamaps;
 	struct silofs_idsmap idsmap;
 	struct silofs_submitq submitq;
 	struct silofs_flusher flusher;
 	struct silofs_env env;
 	struct silofs_alloc *alloc;
+	struct silofs_lblock *nilbk;
 	struct silofs_fuseq *fuseq;
 	long initf;
 };
@@ -252,6 +255,29 @@ static void envi_fini_alloc(struct silofs_env_inst *envi)
 	}
 }
 
+static int envi_init_nil_bk(struct silofs_env_inst *envi)
+{
+	struct silofs_lblock *lbk;
+
+	lbk = silofs_memalloc(envi->alloc, sizeof(*lbk), SILOFS_ALLOCF_BZERO);
+	if (lbk == nullptr) {
+		return -SILOFS_ENOMEM;
+	}
+	envi->nilbk = lbk;
+	return 0;
+}
+
+static void envi_fini_nil_bk(struct silofs_env_inst *envi)
+{
+	struct silofs_lblock *lbk = envi->nilbk;
+
+	if (lbk != nullptr) {
+		silofs_memfree(envi->alloc, lbk, sizeof(*lbk),
+		               SILOFS_ALLOCF_TRYPUNCH);
+		envi->nilbk = nullptr;
+	}
+}
+
 static void envi_make_repo_base(const struct silofs_env_inst *envi,
                                 struct silofs_repo_base *re_base)
 {
@@ -266,11 +292,10 @@ static void envi_make_repo_base(const struct silofs_env_inst *envi,
 static int envi_init_repo(struct silofs_env_inst *envi)
 {
 	struct silofs_repo_base re_base = { .flags = 0 };
-	struct silofs_repo *repo = &envi->repo;
 	int err;
 
 	envi_make_repo_base(envi, &re_base);
-	err = silofs_repo_init(repo, &re_base);
+	err = silofs_repo_init(&envi->repo, &re_base);
 	if (err) {
 		return err;
 	}
@@ -280,20 +305,17 @@ static int envi_init_repo(struct silofs_env_inst *envi)
 
 static void envi_fini_repo(struct silofs_env_inst *envi)
 {
-	struct silofs_repo *repo = &envi->repo;
-
 	if (envi->initf & SILOFS_ENVIF_REPO) {
-		silofs_repo_fini(repo);
+		silofs_repo_fini(&envi->repo);
 		envi->initf &= ~SILOFS_ENVIF_REPO;
 	}
 }
 
 static int envi_init_bcache(struct silofs_env_inst *envi)
 {
-	struct silofs_bcache *bcache = &envi->bcache;
 	int err;
 
-	err = silofs_bcache_init(bcache, envi->alloc);
+	err = silofs_bcache_init(&envi->bcache, envi->alloc);
 	if (err) {
 		return err;
 	}
@@ -303,20 +325,17 @@ static int envi_init_bcache(struct silofs_env_inst *envi)
 
 static void envi_fini_bcache(struct silofs_env_inst *envi)
 {
-	struct silofs_bcache *bcache = &envi->bcache;
-
 	if (envi->initf & SILOFS_ENVIF_BCACHE) {
-		silofs_bcache_fini(bcache);
+		silofs_bcache_fini(&envi->bcache);
 		envi->initf &= ~SILOFS_ENVIF_BCACHE;
 	}
 }
 
 static int envi_init_lcache(struct silofs_env_inst *envi)
 {
-	struct silofs_lcache *lcache = &envi->lcache;
 	int err;
 
-	err = silofs_lcache_init(lcache, envi->alloc);
+	err = silofs_lcache_init(&envi->lcache, envi->alloc);
 	if (err) {
 		return err;
 	}
@@ -326,20 +345,37 @@ static int envi_init_lcache(struct silofs_env_inst *envi)
 
 static void envi_fini_lcache(struct silofs_env_inst *envi)
 {
-	struct silofs_lcache *lcache = &envi->lcache;
-
 	if (envi->initf & SILOFS_ENVIF_LCACHE) {
-		silofs_lcache_fini(lcache);
+		silofs_lcache_fini(&envi->lcache);
 		envi->initf &= ~SILOFS_ENVIF_LCACHE;
+	}
+}
+
+static int envi_init_spamaps(struct silofs_env_inst *envi)
+{
+	int err;
+
+	err = silofs_spamaps_init(&envi->spamaps, envi->alloc);
+	if (err) {
+		return err;
+	}
+	envi->initf |= SILOFS_ENVIF_SPAMAPS;
+	return 0;
+}
+
+static void envi_fini_spamaps(struct silofs_env_inst *envi)
+{
+	if (envi->initf & SILOFS_ENVIF_LCACHE) {
+		silofs_spamaps_fini(&envi->spamaps);
+		envi->initf &= ~SILOFS_ENVIF_SPAMAPS;
 	}
 }
 
 static int envi_init_submitq(struct silofs_env_inst *envi)
 {
-	struct silofs_submitq *submitq = &envi->submitq;
 	int err;
 
-	err = silofs_submitq_init(submitq, envi->alloc);
+	err = silofs_submitq_init(&envi->submitq, envi->alloc);
 	if (err) {
 		return err;
 	}
@@ -349,20 +385,17 @@ static int envi_init_submitq(struct silofs_env_inst *envi)
 
 static void envi_fini_submitq(struct silofs_env_inst *envi)
 {
-	struct silofs_submitq *submitq = &envi->submitq;
-
 	if (envi->initf & SILOFS_ENVIF_SUBMITQ) {
-		silofs_submitq_fini(submitq);
+		silofs_submitq_fini(&envi->submitq);
 		envi->initf &= ~SILOFS_ENVIF_SUBMITQ;
 	}
 }
 
 static int envi_init_flusher(struct silofs_env_inst *envi)
 {
-	struct silofs_flusher *flusher = &envi->flusher;
 	int err;
 
-	err = silofs_flusher_init(flusher, &envi->submitq);
+	err = silofs_flusher_init(&envi->flusher, &envi->submitq);
 	if (err) {
 		return err;
 	}
@@ -372,10 +405,8 @@ static int envi_init_flusher(struct silofs_env_inst *envi)
 
 static void envi_fini_flusher(struct silofs_env_inst *envi)
 {
-	struct silofs_flusher *flusher = &envi->flusher;
-
 	if (envi->initf & SILOFS_ENVIF_FLUSHER) {
-		silofs_flusher_fini(flusher);
+		silofs_flusher_fini(&envi->flusher);
 		envi->initf &= ~SILOFS_ENVIF_FLUSHER;
 	}
 }
@@ -459,9 +490,11 @@ static int envi_init_env(struct silofs_env_inst *envi)
 		.passwd = &envi->passwd,
 		.args = &envi->args,
 		.alloc = envi->alloc,
+		.nilbk = envi->nilbk,
 		.repo = &envi->repo,
 		.bcache = &envi->bcache,
 		.lcache = &envi->lcache,
+		.spamaps = &envi->spamaps,
 		.submitq = &envi->submitq,
 		.flusher = &envi->flusher,
 		.idsmap = &envi->idsmap,
@@ -507,8 +540,10 @@ static void envi_fini(struct silofs_env_inst *envi)
 	envi_fini_flusher(envi);
 	envi_fini_submitq(envi);
 	envi_fini_lcache(envi);
+	envi_fini_spamaps(envi);
 	envi_fini_bcache(envi);
 	envi_fini_repo(envi);
+	envi_fini_nil_bk(envi);
 	envi_fini_alloc(envi);
 	envi_fini_passwd(envi);
 }
@@ -548,6 +583,10 @@ envi_init(struct silofs_env_inst *envi, const struct silofs_env_args *args)
 	if (err) {
 		goto out_err;
 	}
+	err = envi_init_nil_bk(envi);
+	if (err) {
+		goto out_err;
+	}
 	err = envi_init_repo(envi);
 	if (err) {
 		goto out_err;
@@ -557,6 +596,10 @@ envi_init(struct silofs_env_inst *envi, const struct silofs_env_args *args)
 		goto out_err;
 	}
 	err = envi_init_lcache(envi);
+	if (err) {
+		goto out_err;
+	}
+	err = envi_init_spamaps(envi);
 	if (err) {
 		goto out_err;
 	}

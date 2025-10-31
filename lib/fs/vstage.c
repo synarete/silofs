@@ -1732,9 +1732,7 @@ static int vstgc_stage_spleaf_of(struct silofs_vstage_ctx *vstg_ctx)
 static struct silofs_spamaps *
 vstgc_spamaps(const struct silofs_vstage_ctx *vstg_ctx)
 {
-	struct silofs_lcache *cache = vstgc_lcache(vstg_ctx);
-
-	return &cache->lc_spamaps;
+	return vstg_ctx->env->base.spamaps;
 }
 
 static void

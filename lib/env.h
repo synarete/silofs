@@ -39,10 +39,12 @@ struct silofs_env_base {
 	const struct silofs_password *passwd;
 	const struct silofs_env_args *args;
 	struct silofs_alloc          *alloc;
+	struct silofs_lblock         *nilbk;
 	struct silofs_repo           *repo;
 	struct silofs_bcache         *bcache;
 	struct silofs_bstore         *bstore;
 	struct silofs_lcache         *lcache;
+	struct silofs_spamaps        *spamaps;
 	struct silofs_submitq        *submitq;
 	struct silofs_flusher        *flusher;
 	struct silofs_idsmap         *idsmap;

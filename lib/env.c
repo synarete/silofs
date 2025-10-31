@@ -351,6 +351,7 @@ static void env_resolve_super_uaddr(const struct silofs_env *env,
 void silofs_env_drop_caches(struct silofs_env *env)
 {
 	silofs_lcache_drop(env->base.lcache);
+	silofs_spamaps_drop(env->base.spamaps);
 	silofs_bcache_drop(env->base.bcache);
 	silofs_repo_drop_some(env->base.repo);
 }

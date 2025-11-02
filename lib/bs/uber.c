@@ -169,13 +169,13 @@ ubi_init(struct silofs_ub_info *ubi, const struct silofs_baddr *baddr)
 	silofs_assert(!silofs_baddr_isnull(baddr));
 	silofs_assert_eq(baddr->mtype, SILOFS_MTYPE_BTNODE);
 
-	silofs_pni_init(&ubi->ub_pni, baddr);
+	silofs_bni_init(&ubi->ub_bni, baddr);
 	ubi->ub = nullptr;
 }
 
 static void ubi_fini(struct silofs_ub_info *ubi)
 {
-	silofs_pni_fini(&ubi->ub_pni);
+	silofs_bni_fini(&ubi->ub_bni);
 }
 
 struct silofs_ub_info *
@@ -209,17 +209,17 @@ void silofs_ubi_del(struct silofs_ub_info *ubi, struct silofs_alloc *alloc)
 
 void silofs_ubi_set_dq(struct silofs_ub_info *ubi, struct silofs_dirtyq *dq)
 {
-	silofs_pni_set_dq(&ubi->ub_pni, dq);
+	silofs_bni_set_dq(&ubi->ub_bni, dq);
 }
 
 void silofs_ubi_dirtify(struct silofs_ub_info *ubi)
 {
-	silofs_pni_dirtify(&ubi->ub_pni);
+	silofs_bni_dirtify(&ubi->ub_bni);
 }
 
 void silofs_ubi_undirtify(struct silofs_ub_info *ubi)
 {
-	silofs_pni_undirtify(&ubi->ub_pni);
+	silofs_bni_undirtify(&ubi->ub_bni);
 }
 
 void silofs_ubi_setup_spawned(struct silofs_ub_info *ubi)

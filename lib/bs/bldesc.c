@@ -17,8 +17,7 @@
 #include "configs.h"
 #include "infra.h"
 #include "addr.h"
-#include "pnode.h"
-#include "bdesc.h"
+#include "bldesc.h"
 
 static void bd_setup_hdr(struct silofs_blob_desc *bd)
 {
@@ -361,40 +360,41 @@ static void bd_baddr_at(const struct silofs_blob_desc *bd, off_t pos,
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static struct silofs_bdesc_info *bdi_malloc(struct silofs_alloc *alloc)
+static struct silofs_bldesc_info *bdi_malloc(struct silofs_alloc *alloc)
 {
-	struct silofs_bdesc_info *bdi = nullptr;
+	struct silofs_bldesc_info *bdi = nullptr;
 
 	bdi = silofs_memalloc(alloc, sizeof(*bdi), 0);
 	return bdi;
 }
 
-static void bdi_free(struct silofs_bdesc_info *bdi, struct silofs_alloc *alloc)
+static void
+bdi_free(struct silofs_bldesc_info *bdi, struct silofs_alloc *alloc)
 {
 	silofs_memfree(alloc, bdi, sizeof(*bdi), 0);
 }
 
 static void
-bdi_init(struct silofs_bdesc_info *bdi, const struct silofs_baddr *baddr)
+bdi_init(struct silofs_bldesc_info *bdi, const struct silofs_baddr *baddr)
 {
 	silofs_assert(!silofs_baddr_isnull(baddr));
 	silofs_assert_eq(baddr->mtype, SILOFS_MTYPE_BDESC);
 
-	silofs_pni_init(&bdi->bd_pni, baddr);
+	silofs_bni_init(&bdi->bd_bni, baddr);
 	bdi->bd = nullptr;
 }
 
-static void bdi_fini(struct silofs_bdesc_info *bdi)
+static void bdi_fini(struct silofs_bldesc_info *bdi)
 {
-	silofs_pni_fini(&bdi->bd_pni);
+	silofs_bni_fini(&bdi->bd_bni);
 	bdi->bd = nullptr;
 }
 
-struct silofs_bdesc_info *
+struct silofs_bldesc_info *
 silofs_bdi_new(const struct silofs_baddr *baddr, struct silofs_alloc *alloc)
 {
 	struct silofs_blob_desc *bd = nullptr;
-	struct silofs_bdesc_info *bdi = nullptr;
+	struct silofs_bldesc_info *bdi = nullptr;
 
 	bd = bd_new(alloc);
 	if (bd == nullptr) {
@@ -410,7 +410,7 @@ silofs_bdi_new(const struct silofs_baddr *baddr, struct silofs_alloc *alloc)
 	return bdi;
 }
 
-void silofs_bdi_del(struct silofs_bdesc_info *bdi, struct silofs_alloc *alloc)
+void silofs_bdi_del(struct silofs_bldesc_info *bdi, struct silofs_alloc *alloc)
 {
 	struct silofs_blob_desc *bd = bdi->bd;
 
@@ -419,44 +419,46 @@ void silofs_bdi_del(struct silofs_bdesc_info *bdi, struct silofs_alloc *alloc)
 	bd_del(bd, alloc);
 }
 
-void silofs_bdi_dirtify(struct silofs_bdesc_info *bdi)
+void silofs_bdi_dirtify(struct silofs_bldesc_info *bdi)
 {
-	silofs_pni_dirtify(&bdi->bd_pni);
+	silofs_bni_dirtify(&bdi->bd_bni);
 }
 
-void silofs_bdi_undirtify(struct silofs_bdesc_info *bdi)
+void silofs_bdi_undirtify(struct silofs_bldesc_info *bdi)
 {
-	silofs_pni_undirtify(&bdi->bd_pni);
+	silofs_bni_undirtify(&bdi->bd_bni);
 }
 
-static struct silofs_bdesc_info *bdi_unconst(const struct silofs_bdesc_info *p)
+static struct silofs_bldesc_info *
+bdi_unconst(const struct silofs_bldesc_info *p)
 {
 	union {
-		const struct silofs_bdesc_info *p;
-		struct silofs_bdesc_info *q;
+		const struct silofs_bldesc_info *p;
+		struct silofs_bldesc_info *q;
 	} u = { .p = p };
 
 	return u.q;
 }
 
-struct silofs_bdesc_info *
-silofs_bdi_from_pni(const struct silofs_pnode_info *pni)
+struct silofs_bldesc_info *
+silofs_bdi_from_bni(const struct silofs_bnode_info *bni)
 {
-	const struct silofs_bdesc_info *bdi = nullptr;
+	const struct silofs_bldesc_info *bdi = nullptr;
 
-	if (pni != nullptr) {
-		silofs_assert_eq(pni->pn_baddr.mtype, SILOFS_MTYPE_BDESC);
-		bdi = container_of2(pni, struct silofs_bdesc_info, bd_pni);
+	if (bni != nullptr) {
+		silofs_assert_eq(bni->bn_baddr.mtype, SILOFS_MTYPE_BDESC);
+		bdi = container_of2(bni, struct silofs_bldesc_info, bd_bni);
 	}
 	return bdi_unconst(bdi);
 }
 
-void silofs_bdi_set_dq(struct silofs_bdesc_info *bdi, struct silofs_dirtyq *dq)
+void silofs_bdi_set_dq(struct silofs_bldesc_info *bdi,
+                       struct silofs_dirtyq *dq)
 {
-	silofs_pni_set_dq(&bdi->bd_pni, dq);
+	silofs_bni_set_dq(&bdi->bd_bni, dq);
 }
 
-void silofs_bdi_setup_spawned(struct silofs_bdesc_info *bdi,
+void silofs_bdi_setup_spawned(struct silofs_bldesc_info *bdi,
                               enum silofs_mtype refmtype)
 {
 	struct timespec now;
@@ -476,14 +478,14 @@ void silofs_bdi_setup_spawned(struct silofs_bdesc_info *bdi,
 	silofs_bdi_dirtify(bdi);
 }
 
-void silofs_bdi_set_refblob(struct silofs_bdesc_info *bdi,
+void silofs_bdi_set_refblob(struct silofs_bldesc_info *bdi,
                             const struct silofs_blobid *blobid)
 {
 	bd_set_refblob(bdi->bd, blobid);
 	silofs_bdi_dirtify(bdi);
 }
 
-int silofs_bdi_find_free(const struct silofs_bdesc_info *bdi,
+int silofs_bdi_find_free(const struct silofs_bldesc_info *bdi,
                          struct silofs_baddr *out_baddr)
 {
 	const struct silofs_blob_desc *bd = bdi->bd;
@@ -501,7 +503,7 @@ int silofs_bdi_find_free(const struct silofs_bdesc_info *bdi,
 	return 0;
 }
 
-static bool bdi_is_valid_baddr(const struct silofs_bdesc_info *bdi,
+static bool bdi_is_valid_baddr(const struct silofs_bldesc_info *bdi,
                                const struct silofs_baddr *baddr)
 {
 	if (!bd_has_refmtype(bdi->bd, baddr->mtype)) {
@@ -516,7 +518,7 @@ static bool bdi_is_valid_baddr(const struct silofs_bdesc_info *bdi,
 	return true;
 }
 
-int silofs_bdi_test_free(const struct silofs_bdesc_info *bdi,
+int silofs_bdi_test_free(const struct silofs_bldesc_info *bdi,
                          const struct silofs_baddr *baddr)
 {
 	if (!bdi_is_valid_baddr(bdi, baddr)) {
@@ -531,7 +533,7 @@ int silofs_bdi_test_free(const struct silofs_bdesc_info *bdi,
 	return 0;
 }
 
-int silofs_bdi_mark_free(struct silofs_bdesc_info *bdi,
+int silofs_bdi_mark_free(struct silofs_bldesc_info *bdi,
                          const struct silofs_baddr *baddr)
 {
 	if (!bdi_is_valid_baddr(bdi, baddr)) {
@@ -549,7 +551,7 @@ int silofs_bdi_mark_free(struct silofs_bdesc_info *bdi,
 	return 0;
 }
 
-int silofs_bdi_mark_used(struct silofs_bdesc_info *bdi,
+int silofs_bdi_mark_used(struct silofs_bldesc_info *bdi,
                          const struct silofs_baddr *baddr)
 {
 	if (!bdi_is_valid_baddr(bdi, baddr)) {

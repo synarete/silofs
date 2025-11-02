@@ -19,61 +19,61 @@
 
 #include "infra.h"
 #include "addr.h"
-#include "pnode.h"
+#include "bnode.h"
 
 /* btree-node */
 struct silofs_btnode_info {
-	struct silofs_pnode_info  bn_pni;
-	struct silofs_btree_node *bn;
-	bool                      bn_rdonly;
+	struct silofs_bnode_info  btn_bni;
+	struct silofs_btree_node *btn;
+	bool                      btn_rdonly;
 };
 
 struct silofs_btnode_info *
-silofs_bni_new(const struct silofs_baddr *baddr, struct silofs_alloc *alloc);
+silofs_bti_new(const struct silofs_baddr *baddr, struct silofs_alloc *alloc);
 
-void silofs_bni_del(struct silofs_btnode_info *bni,
+void silofs_bti_del(struct silofs_btnode_info *bti,
                     struct silofs_alloc       *alloc);
 
-void silofs_bni_set_dq(struct silofs_btnode_info *bni,
+void silofs_bti_set_dq(struct silofs_btnode_info *bti,
                        struct silofs_dirtyq      *dq);
 
-void silofs_bni_dirtify(struct silofs_btnode_info *bni);
+void silofs_bti_dirtify(struct silofs_btnode_info *bti);
 
-void silofs_bni_undirtify(struct silofs_btnode_info *bni);
+void silofs_bti_undirtify(struct silofs_btnode_info *bti);
 
-void silofs_bni_dup_by(struct silofs_btnode_info       *bni,
-                       const struct silofs_btnode_info *bni_other);
+void silofs_bti_dup_by(struct silofs_btnode_info       *bti,
+                       const struct silofs_btnode_info *bti_other);
 
-bool silofs_bni_isfull(const struct silofs_btnode_info *bni);
+bool silofs_bti_isfull(const struct silofs_btnode_info *bti);
 
-void silofs_bni_mark_root(struct silofs_btnode_info *bni);
+void silofs_bti_mark_root(struct silofs_btnode_info *bti);
 
-bool silofs_bni_marked_root(const struct silofs_btnode_info *bni);
+bool silofs_bti_marked_root(const struct silofs_btnode_info *bti);
 
-size_t silofs_bni_height(const struct silofs_btnode_info *bni);
+size_t silofs_bti_height(const struct silofs_btnode_info *bti);
 
-size_t silofs_bni_nkeys(const struct silofs_btnode_info *bni);
+size_t silofs_bti_nkeys(const struct silofs_btnode_info *bti);
 
-uint64_t silofs_bni_median_key(const struct silofs_btnode_info *bni);
+uint64_t silofs_bti_median_key(const struct silofs_btnode_info *bti);
 
-size_t silofs_bni_nchilds(const struct silofs_btnode_info *bni);
+size_t silofs_bti_nchilds(const struct silofs_btnode_info *bti);
 
-void silofs_bni_child_at(const struct silofs_btnode_info *bni, size_t slot,
+void silofs_bti_child_at(const struct silofs_btnode_info *bti, size_t slot,
                          struct silofs_baddr *out_baddr);
 
-int silofs_bni_resolve(const struct silofs_btnode_info *bni, uint64_t key,
+int silofs_bti_resolve(const struct silofs_btnode_info *bti, uint64_t key,
                        struct silofs_baddr *out_baddr);
 
-int silofs_bni_update_child(struct silofs_btnode_info *bni, uint64_t key,
+int silofs_bti_update_child(struct silofs_btnode_info *bti, uint64_t key,
                             const struct silofs_baddr *baddr);
 
-int silofs_bni_expand(struct silofs_btnode_info *bni, uint64_t key,
+int silofs_bti_expand(struct silofs_btnode_info *bti, uint64_t key,
                       const struct silofs_baddr *baddr);
 
-void silofs_bni_set_final(struct silofs_btnode_info *bni,
+void silofs_bti_set_final(struct silofs_btnode_info *bti,
                           const struct silofs_baddr *baddr);
 
 struct silofs_btnode_info *
-silofs_bni_from_pni(const struct silofs_pnode_info *pni);
+silofs_bti_from_bni(const struct silofs_bnode_info *bni);
 
 #endif /* SILOFS_BTNODE_H_ */

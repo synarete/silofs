@@ -20,9 +20,10 @@
 #include "infra.h"
 #include "addr.h"
 #include "bs/repo.h"
-#include "bs/pnode.h"
+#include "bs/bnode.h"
+#include "bs/bldesc.h"
+#include "bs/btnode.h"
 #include "bs/bcache.h"
-#include "bs/bdesc.h"
 #include "bs/btree.h"
 
 #endif /* SILOFS_BS_H_ */

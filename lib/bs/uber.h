@@ -17,11 +17,11 @@
 #ifndef SILOFS_UBER_H_
 #define SILOFS_UBER_H_
 
-#include "pnode.h"
+#include "bnode.h"
 
 /* uber-block in-memory state */
 struct silofs_ub_info {
-	struct silofs_pnode_info  ub_pni;
+	struct silofs_bnode_info  ub_bni;
 	struct silofs_uber_block *ub;
 };
 

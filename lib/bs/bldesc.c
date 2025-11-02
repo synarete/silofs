@@ -355,7 +355,7 @@ static void bd_baddr_at(const struct silofs_blob_desc *bd, off_t pos,
 		pos = SILOFS_OFF_NULL;
 	}
 	bd_refblob(bd, &blobid);
-	silofs_baddr_init_raw(out_baddr, &blobid, bd_refmtype(bd), pos);
+	silofs_baddr_init(out_baddr, &blobid, pos);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -378,7 +378,6 @@ static void
 bdi_init(struct silofs_bldesc_info *bdi, const struct silofs_baddr *baddr)
 {
 	silofs_assert(!silofs_baddr_isnull(baddr));
-	silofs_assert_eq(baddr->mtype, SILOFS_MTYPE_BDESC);
 
 	silofs_bni_init(&bdi->bd_bni, baddr);
 	bdi->bd = nullptr;
@@ -446,7 +445,6 @@ silofs_bdi_from_bni(const struct silofs_bnode_info *bni)
 	const struct silofs_bldesc_info *bdi = nullptr;
 
 	if (bni != nullptr) {
-		silofs_assert_eq(bni->bn_baddr.mtype, SILOFS_MTYPE_BDESC);
 		bdi = container_of2(bni, struct silofs_bldesc_info, bd_bni);
 	}
 	return bdi_unconst(bdi);

@@ -25,8 +25,6 @@
 
 static const struct silofs_baddr s_silofs_baddr_none = {
 	.pos = SILOFS_OFF_NULL,
-	.mtype = SILOFS_MTYPE_NONE,
-	.bmode = SILOFS_BMODE_NONE,
 };
 
 const struct silofs_baddr *silofs_baddr_none(void)
@@ -35,30 +33,12 @@ const struct silofs_baddr *silofs_baddr_none(void)
 }
 
 void silofs_baddr_init(struct silofs_baddr *baddr,
-                       const struct silofs_blobid *blobid,
-                       enum silofs_bmode bmode, enum silofs_mtype mtype,
-                       off_t pos)
+                       const struct silofs_blobid *blobid, off_t pos)
 {
 	silofs_blobid_copyto(blobid, &baddr->blobid);
 	baddr->pos = pos;
-	baddr->mtype = mtype;
-	baddr->bmode = bmode;
-}
-
-void silofs_baddr_init2(struct silofs_baddr *baddr,
-                        const struct silofs_blobid *blobid, off_t pos)
-{
-	const enum silofs_bmode bmode = silofs_blobid_get_bmode(blobid);
-	const enum silofs_mtype mtype = silofs_blobid_get_mtype(blobid);
-
-	silofs_baddr_init(baddr, blobid, bmode, mtype, pos);
-}
-
-void silofs_baddr_init_raw(struct silofs_baddr *baddr,
-                           const struct silofs_blobid *blobid,
-                           enum silofs_mtype mtype, off_t pos)
-{
-	silofs_baddr_init(baddr, blobid, SILOFS_BMODE_RAW, mtype, pos);
+	baddr->mtype = silofs_blobid_get_mtype(blobid);
+	baddr->bmode = silofs_blobid_get_bmode(blobid);
 }
 
 void silofs_baddr_fini(struct silofs_baddr *baddr)
@@ -70,8 +50,6 @@ void silofs_baddr_reset(struct silofs_baddr *baddr)
 {
 	silofs_blobid_reset(&baddr->blobid);
 	baddr->pos = SILOFS_OFF_NULL;
-	baddr->mtype = SILOFS_MTYPE_NONE;
-	baddr->bmode = SILOFS_BMODE_NONE;
 }
 
 void silofs_baddr_assign(struct silofs_baddr *baddr,
@@ -86,16 +64,13 @@ void silofs_baddr_assign(struct silofs_baddr *baddr,
 bool silofs_baddr_isequal(const struct silofs_baddr *baddr,
                           const struct silofs_baddr *other)
 {
-	return (baddr->pos == other->pos) && (baddr->mtype == other->mtype) &&
-	       (baddr->bmode == other->bmode) &&
+	return (baddr->pos == other->pos) &&
 	       silofs_blobid_isequal(&baddr->blobid, &other->blobid);
 }
 
 bool silofs_baddr_isnull(const struct silofs_baddr *baddr)
 {
-	return (baddr->bmode == SILOFS_BMODE_NONE) ||
-	       (baddr->mtype == SILOFS_MTYPE_NONE) ||
-	       (baddr->pos == SILOFS_OFF_NULL);
+	return (baddr->pos == SILOFS_OFF_NULL);
 }
 
 long silofs_baddr_compare(const struct silofs_baddr *baddr1,
@@ -103,14 +78,6 @@ long silofs_baddr_compare(const struct silofs_baddr *baddr1,
 {
 	long cmp;
 
-	cmp = (long)(baddr1->bmode - baddr2->bmode);
-	if (cmp) {
-		return cmp;
-	}
-	cmp = (long)(baddr1->mtype - baddr2->mtype);
-	if (cmp) {
-		return cmp;
-	}
 	cmp = (long)(baddr1->pos - baddr2->pos);
 	if (cmp) {
 		return cmp;

@@ -199,8 +199,6 @@ static const struct silofs_baddr *btree_root(const struct silofs_btree *btree)
 void silofs_btree_update_root(struct silofs_btree *btree,
                               const struct silofs_baddr *baddr)
 {
-	silofs_assert_eq(baddr->mtype, SILOFS_MTYPE_BTNODE);
-
 	silofs_baddr_assign(&btree->bt_root, baddr);
 }
 
@@ -303,8 +301,6 @@ static int btc_stage_btnode_at(const struct silofs_btree_ctx *btc,
 {
 	struct silofs_btnode_info *bti = nullptr;
 	int err;
-
-	silofs_assert_eq(baddr->mtype, SILOFS_MTYPE_BTNODE);
 
 	err = btc_stage_blob_of(btc, baddr);
 	if (err) {

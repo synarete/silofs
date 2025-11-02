@@ -376,9 +376,6 @@ bti_free(struct silofs_btnode_info *bti, struct silofs_alloc *alloc)
 static void
 bti_init(struct silofs_btnode_info *bti, const struct silofs_baddr *baddr)
 {
-	silofs_assert(!silofs_baddr_isnull(baddr));
-	silofs_assert_eq(baddr->mtype, SILOFS_MTYPE_BTNODE);
-
 	silofs_bni_init(&bti->btn_bni, baddr);
 	bti->btn = nullptr;
 	bti->btn_rdonly = false;
@@ -590,7 +587,6 @@ silofs_bti_from_bni(const struct silofs_bnode_info *bni)
 	const struct silofs_btnode_info *bti = nullptr;
 
 	if (bni != nullptr) {
-		silofs_assert_eq(bni->bn_baddr.mtype, SILOFS_MTYPE_BTNODE);
 		bti = container_of2(bni, struct silofs_btnode_info, btn_bni);
 	}
 	return bti_unconst(bti);

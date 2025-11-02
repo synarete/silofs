@@ -303,9 +303,6 @@ void silofs_abi_get_baddr(const struct silofs_ab_info *abi,
 void silofs_abi_set_baddr(struct silofs_ab_info *abi,
                           const struct silofs_baddr *baddr)
 {
-	silofs_assert(!silofs_baddr_isnull(baddr));
-	silofs_assert_eq(baddr->mtype, SILOFS_MTYPE_ARIX);
-
 	silofs_baddr_assign(&abi->ab_baddr, baddr);
 }
 
@@ -313,9 +310,6 @@ static void
 abi_set_next(struct silofs_ab_info *abi, const struct silofs_baddr *baddr)
 {
 	if (baddr != nullptr) {
-		silofs_assert(!silofs_baddr_isnull(baddr));
-		silofs_assert_eq(baddr->mtype, SILOFS_MTYPE_ARIX);
-
 		ab_set_next(abi->ab, baddr);
 	} else {
 		ab_reset_next(abi->ab);

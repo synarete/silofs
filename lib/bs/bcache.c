@@ -163,11 +163,8 @@ struct silofs_bldesc_info *
 silofs_bcache_lookup_bdi(struct silofs_bcache *bcache,
                          const struct silofs_baddr *baddr)
 {
-	struct silofs_bnode_info *bni;
+	struct silofs_bnode_info *bni = bcache_lookup(bcache, baddr);
 
-	silofs_assert_eq(baddr->mtype, SILOFS_MTYPE_BDESC);
-
-	bni = bcache_lookup(bcache, baddr);
 	return silofs_bdi_from_bni(bni);
 }
 
@@ -239,16 +236,12 @@ static struct silofs_btnode_info *
 bcache_new_bti(const struct silofs_bcache *bcache,
                const struct silofs_baddr *baddr)
 {
-	silofs_assert_eq(baddr->mtype, SILOFS_MTYPE_BTNODE);
-
 	return silofs_bti_new(baddr, bcache->pc_alloc);
 }
 
 static void bcache_del_bti(const struct silofs_bcache *bcache,
                            struct silofs_btnode_info *bti)
 {
-	silofs_assert_eq(bti->btn_bni.bn_baddr.mtype, SILOFS_MTYPE_BTNODE);
-
 	silofs_bti_del(bti, bcache->pc_alloc);
 }
 
@@ -256,11 +249,8 @@ struct silofs_btnode_info *
 silofs_bcache_lookup_bti(struct silofs_bcache *bcache,
                          const struct silofs_baddr *baddr)
 {
-	struct silofs_bnode_info *bni;
+	struct silofs_bnode_info *bni = bcache_lookup(bcache, baddr);
 
-	silofs_assert_eq(baddr->mtype, SILOFS_MTYPE_BTNODE);
-
-	bni = bcache_lookup(bcache, baddr);
 	return silofs_bti_from_bni(bni);
 }
 

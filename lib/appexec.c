@@ -35,18 +35,37 @@ static int validate_blobid(const struct silofs_blobid *blobid)
 	return silofs_blobid_isequal(blobid, none) ? -SILOFS_EBLOBID : 0;
 }
 
-static int setup_mbr_baddr(const struct silofs_blobid *blobid,
-                           struct silofs_baddr *out_baddr)
+static int validate_mbr_blobid(const struct silofs_blobid *blobid)
 {
-	const enum silofs_bmode bmode = SILOFS_BMODE_CAS;
-	const enum silofs_mtype mtype = SILOFS_MTYPE_MBR;
+	enum silofs_bmode bmode;
+	enum silofs_mtype mtype;
 	int err;
 
 	err = validate_blobid(blobid);
 	if (err) {
 		return err;
 	}
-	silofs_baddr_init(out_baddr, blobid, bmode, mtype, 0);
+	bmode = silofs_blobid_get_bmode(blobid);
+	if (bmode != SILOFS_BMODE_CAS) {
+		return -SILOFS_EBLOBID;
+	}
+	mtype = silofs_blobid_get_mtype(blobid);
+	if (mtype != SILOFS_MTYPE_MBR) {
+		return -SILOFS_EBLOBID;
+	}
+	return 0;
+}
+
+static int setup_mbr_baddr(const struct silofs_blobid *blobid,
+                           struct silofs_baddr *out_baddr)
+{
+	int err;
+
+	err = validate_mbr_blobid(blobid);
+	if (err) {
+		return err;
+	}
+	silofs_baddr_init(out_baddr, blobid, 0);
 	return 0;
 }
 

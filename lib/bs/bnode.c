@@ -19,11 +19,16 @@
 #include "addr.h"
 #include "bnode.h"
 
+static size_t baddr_size(const struct silofs_baddr *baddr)
+{
+	return silofs_mtype_size(baddr->mtype);
+}
+
 void silofs_bni_init(struct silofs_bnode_info *bni,
                      const struct silofs_baddr *baddr)
 {
 	silofs_baddr_assign(&bni->bn_baddr, baddr);
-	silofs_hmqe_init(&bni->bn_hmqe, silofs_mtype_size(baddr->mtype));
+	silofs_hmqe_init(&bni->bn_hmqe, baddr_size(baddr));
 	silofs_hkey_by_baddr(&bni->bn_hmqe.hme_key, &bni->bn_baddr);
 }
 

@@ -114,5 +114,5 @@ void silofs_calc_baddr_of(const struct silofs_mdigest *md,
 
 	silofs_sha256_ofv(md, iov, iov_cnt, &hash);
 	silofs_blobid_setup_cas(&blobid, silofs_svolid_none(), &hash, mtype);
-	silofs_baddr_init(out_baddr, &blobid, SILOFS_BMODE_CAS, mtype, 0);
+	silofs_baddr_init(out_baddr, &blobid, 0);
 }

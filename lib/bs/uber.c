@@ -166,9 +166,6 @@ static void ubi_free(struct silofs_ub_info *ubi, struct silofs_alloc *alloc)
 static void
 ubi_init(struct silofs_ub_info *ubi, const struct silofs_baddr *baddr)
 {
-	silofs_assert(!silofs_baddr_isnull(baddr));
-	silofs_assert_eq(baddr->mtype, SILOFS_MTYPE_BTNODE);
-
 	silofs_bni_init(&ubi->ub_bni, baddr);
 	ubi->ub = nullptr;
 }

@@ -158,6 +158,14 @@ enum silofs_height silofs_blobid_get_height(const struct silofs_blobid *blobid)
 	return blobidv.height;
 }
 
+enum silofs_bmode silofs_blobid_get_bmode(const struct silofs_blobid *blobid)
+{
+	struct silofs_blobidv blobidv;
+
+	blobid_to_view(blobid, &blobidv);
+	return blobidv.bmode;
+}
+
 enum silofs_mtype silofs_blobid_get_mtype(const struct silofs_blobid *blobid)
 {
 	struct silofs_blobidv blobidv;

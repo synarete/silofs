@@ -44,6 +44,9 @@ void silofs_baddr_init(struct silofs_baddr        *baddr,
                        enum silofs_bmode bmode, enum silofs_mtype mtype,
                        off_t pos);
 
+void silofs_baddr_init2(struct silofs_baddr        *baddr,
+                        const struct silofs_blobid *blobid, off_t pos);
+
 void silofs_baddr_init_raw(struct silofs_baddr        *baddr,
                            const struct silofs_blobid *blobid,
                            enum silofs_mtype mtype, off_t pos);

@@ -310,6 +310,15 @@ bool silofs_env_hasflag(const struct silofs_env *env, enum silofs_flags f)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
+/*
+#error "YOU ARE HERE"
+int silofs_env_format_uber(struct silofs_env *env)
+{
+}
+*/
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 static void make_super_lsid(struct silofs_lsid *out_lsid)
 {
 	struct silofs_svolid svolid;
@@ -348,37 +357,19 @@ static void env_resolve_super_uaddr(const struct silofs_env *env,
 	silofs_uaddr_assign(out_uaddr, env_sb_addr(env));
 }
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-void silofs_env_drop_caches(struct silofs_env *env)
-{
-	silofs_lcache_drop(env->base.lcache);
-	silofs_spamaps_drop(env->base.spamaps);
-	silofs_bcache_drop(env->base.bcache);
-	silofs_repo_drop_some(env->base.repo);
-}
-
 static int
-env_spawn_super_at(struct silofs_env *env, const struct silofs_uaddr *uaddr,
-                   struct silofs_sb_info **out_sbi)
+env_spawn_super_of(struct silofs_env *env, struct silofs_sb_info **out_sbi)
 {
+	struct silofs_uaddr uaddr = { .voff = -1 };
 	int err;
 
-	err = silofs_spawn_super(env, uaddr, out_sbi);
+	env_make_super_uaddr(env, &uaddr);
+	err = silofs_spawn_super(env, &uaddr, out_sbi);
 	if (err) {
 		return err;
 	}
 	silofs_sbi_setup_spawned(*out_sbi);
 	return 0;
-}
-
-static int
-env_spawn_super_of(struct silofs_env *env, struct silofs_sb_info **out_sbi)
-{
-	struct silofs_uaddr uaddr = { .voff = -1 };
-
-	env_make_super_uaddr(env, &uaddr);
-	return env_spawn_super_at(env, &uaddr, out_sbi);
 }
 
 static int env_spawn_super(struct silofs_env *env, size_t capacity,
@@ -470,6 +461,14 @@ int silofs_env_reload_sb_lseg(struct silofs_env *env)
 		return err;
 	}
 	return 0;
+}
+
+void silofs_env_drop_caches(struct silofs_env *env)
+{
+	silofs_lcache_drop(env->base.lcache);
+	silofs_spamaps_drop(env->base.spamaps);
+	silofs_bcache_drop(env->base.bcache);
+	silofs_repo_drop_some(env->base.repo);
 }
 
 static int env_shut_sb(struct silofs_env *env)

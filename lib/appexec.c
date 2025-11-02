@@ -844,15 +844,15 @@ static int do_format_fs(struct silofs_env *env, struct silofs_baddr *out_baddr)
 }
 
 int silofs_format_fs(struct silofs_env *env,
-                     struct silofs_blobid *out_fs_blobid)
+                     struct silofs_blobid *out_fs_mbr_addr)
 {
-	struct silofs_baddr baddr;
+	struct silofs_baddr fs_mbr_addr;
 	int err;
 
 	silofs_env_lock(env);
-	err = do_format_fs(env, &baddr);
+	err = do_format_fs(env, &fs_mbr_addr);
 	if (!err) {
-		export_mbr_blobid(&baddr, out_fs_blobid);
+		export_mbr_blobid(&fs_mbr_addr, out_fs_mbr_addr);
 	}
 	silofs_env_unlock(env);
 	return err;

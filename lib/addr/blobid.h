@@ -42,6 +42,8 @@ void silofs_blobid_setup_cas(struct silofs_blobid        *blobid,
 void silofs_blobid_get_svolid(const struct silofs_blobid *blobid,
                               struct silofs_svolid       *out_svolid);
 
+enum silofs_bmode silofs_blobid_get_bmode(const struct silofs_blobid *blobid);
+
 enum silofs_mtype silofs_blobid_get_mtype(const struct silofs_blobid *blobid);
 
 enum silofs_mtype silofs_blobid_get_vspace(const struct silofs_blobid *blobid);

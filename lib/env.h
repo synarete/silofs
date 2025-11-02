@@ -42,7 +42,6 @@ struct silofs_env_base {
 	struct silofs_lblock         *nilbk;
 	struct silofs_repo           *repo;
 	struct silofs_bcache         *bcache;
-	struct silofs_bstore         *bstore;
 	struct silofs_lcache         *lcache;
 	struct silofs_spamaps        *spamaps;
 	struct silofs_submitq        *submitq;
@@ -61,6 +60,7 @@ struct silofs_env {
 	struct silofs_cipher     dec_cipher;
 	struct silofs_mdigest    mdigest;
 	struct silofs_env_opstat opstat;
+	struct silofs_ub_info   *ubi;
 	struct silofs_sb_info   *sbi;
 	struct silofs_cred       owner_cred;
 	unsigned long            ms_flags;

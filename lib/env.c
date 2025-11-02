@@ -132,6 +132,7 @@ env_init_commons(struct silofs_env *env, const struct silofs_env_base *base)
 	memcpy(&env->base, base, sizeof(env->base));
 	env->init_time = silofs_time_mono_now();
 	env->iconv_set = false;
+	env->ubi = nullptr;
 	env->sbi = nullptr;
 	env->ms_flags = 0;
 }
@@ -139,6 +140,7 @@ env_init_commons(struct silofs_env *env, const struct silofs_env_base *base)
 static void env_fini_commons(struct silofs_env *env)
 {
 	memset(&env->base, 0, sizeof(env->base));
+	env->ubi = nullptr;
 	env->sbi = nullptr;
 	env->ms_flags = 0;
 }

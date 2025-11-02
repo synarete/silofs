@@ -53,4 +53,29 @@ int silofs_btree_insert(struct silofs_btree       *btree,
                         const struct silofs_vaddr *vaddr,
                         const struct silofs_baddr *baddr);
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+struct silofs_env;
+
+struct silofs_btmap_ctx {
+	struct silofs_locos  *locos;
+	struct silofs_bcache *bcache;
+	struct silofs_baddr   btree_root;
+};
+
+int silofs_format_mapping(struct silofs_env *env, enum silofs_mtype mtype);
+
+int silofs_resolve_ltob(struct silofs_env         *env,
+                        const struct silofs_vaddr *vaddr,
+                        struct silofs_baddr       *out_baddr);
+
+int silofs_map_ltob(struct silofs_env *env, const struct silofs_vaddr *vaddr,
+                    const struct silofs_baddr *baddr);
+
+int silofs_remap_ltob(struct silofs_env *env, const struct silofs_vaddr *vaddr,
+                      const struct silofs_baddr *baddr);
+
+int silofs_unmap_ltob(struct silofs_env *env, const struct silofs_vaddr *vaddr,
+                      const struct silofs_baddr *baddr);
+
 #endif /* SILOFS_BTREE_H_ */

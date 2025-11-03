@@ -27,6 +27,7 @@ static size_t baddr_size(const struct silofs_baddr *baddr)
 void silofs_bni_init(struct silofs_bnode_info *bni,
                      const struct silofs_baddr *baddr)
 {
+	silofs_ivkey_reset(&bni->bn_ivkey);
 	silofs_baddr_assign(&bni->bn_baddr, baddr);
 	silofs_hmqe_init(&bni->bn_hmqe, baddr_size(baddr));
 	silofs_hkey_by_baddr(&bni->bn_hmqe.hme_key, &bni->bn_baddr);
@@ -34,6 +35,7 @@ void silofs_bni_init(struct silofs_bnode_info *bni,
 
 void silofs_bni_fini(struct silofs_bnode_info *bni)
 {
+	silofs_ivkey_reset(&bni->bn_ivkey);
 	silofs_baddr_fini(&bni->bn_baddr);
 	silofs_hmqe_fini(&bni->bn_hmqe);
 }
@@ -86,4 +88,14 @@ void silofs_bni_incref(struct silofs_bnode_info *bni)
 void silofs_bni_decref(struct silofs_bnode_info *bni)
 {
 	silofs_hmqe_decref(&bni->bn_hmqe);
+}
+
+void silofs_bni_setup_ivkey(struct silofs_bnode_info *bni,
+                            const struct silofs_mdigest *md,
+                            const struct silofs_key *key)
+{
+	struct silofs_iv iv;
+
+	silofs_derive_iv_by_baddr(md, &bni->bn_baddr, &iv);
+	silofs_ivkey_setup(&bni->bn_ivkey, key, &iv);
 }

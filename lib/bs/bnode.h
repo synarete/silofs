@@ -19,11 +19,13 @@
 
 #include "addr.h"
 #include "hmdq.h"
+#include "crypt.h"
 
 #define SILOFS_BTREE_KEY_NULL (0)
 
 /* base of all blob-store nodes */
 struct silofs_bnode_info {
+	struct silofs_ivkey      bn_ivkey;
 	struct silofs_baddr      bn_baddr;
 	struct silofs_hmapq_elem bn_hmqe;
 };
@@ -47,5 +49,9 @@ void silofs_bni_decref(struct silofs_bnode_info *bni);
 
 void silofs_bni_set_dq(struct silofs_bnode_info *bni,
                        struct silofs_dirtyq     *dq);
+
+void silofs_bni_setup_ivkey(struct silofs_bnode_info    *bni,
+                            const struct silofs_mdigest *md,
+                            const struct silofs_key     *key);
 
 #endif /* SILOFS_BNODE_H_ */

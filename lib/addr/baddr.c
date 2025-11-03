@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include "infra.h"
 #include "str.h"
+#include "crypt.h"
 #include "htox.h"
 #include "mtype.h"
 #include "blobid.h"
@@ -102,6 +103,28 @@ void silofs_baddr64b_xtoh(const struct silofs_baddr64b *baddr64,
 {
 	silofs_blobid_copyto(&baddr64->blobid, &baddr->blobid);
 	baddr->pos = silofs_off_to_cpu(baddr64->pos);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static void
+baddr_to_hash(const struct silofs_baddr *baddr,
+              const struct silofs_mdigest *md, struct silofs_hash256 *out_hash)
+{
+	struct silofs_baddr64b baddr64 = {};
+
+	silofs_baddr64b_htox(&baddr64, baddr);
+	silofs_sha3_256_of(md, &baddr64, sizeof(baddr64), out_hash);
+}
+
+void silofs_derive_iv_by_baddr(const struct silofs_mdigest *md,
+                               const struct silofs_baddr *baddr,
+                               struct silofs_iv *out_iv)
+{
+	struct silofs_hash256 hash = {};
+
+	baddr_to_hash(baddr, md, &hash);
+	silofs_derive_iv_by_hash256(out_iv, &hash);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

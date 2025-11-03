@@ -19,6 +19,7 @@
 
 #include <stdlib.h>
 #include <silofs/ondisk.h>
+#include "crypt.h"
 #include "blobid.h"
 
 /* blob address */
@@ -62,6 +63,10 @@ void silofs_baddr64b_htox(struct silofs_baddr64b    *baddr64,
 
 void silofs_baddr64b_xtoh(const struct silofs_baddr64b *baddr64,
                           struct silofs_baddr          *baddr);
+
+void silofs_derive_iv_by_baddr(const struct silofs_mdigest *md,
+                               const struct silofs_baddr   *baddr,
+                               struct silofs_iv            *out_iv);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

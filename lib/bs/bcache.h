@@ -23,9 +23,9 @@ struct silofs_alloc;
 struct silofs_baddr;
 
 struct silofs_bcache {
-	struct silofs_hmapq  pc_hmapq;
-	struct silofs_dirtyq pc_dirtyq;
-	struct silofs_alloc *pc_alloc;
+	struct silofs_hmapq  bc_hmapq;
+	struct silofs_dirtyq bc_dirtyq;
+	struct silofs_alloc *bc_alloc;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -65,5 +65,16 @@ silofs_bcache_create_bti(struct silofs_bcache      *bcache,
 
 void silofs_bcache_evict_bti(struct silofs_bcache      *bcache,
                              struct silofs_btnode_info *bti);
+
+struct silofs_ub_info *
+silofs_bcache_lookup_ubi(struct silofs_bcache      *bcache,
+                         const struct silofs_baddr *baddr);
+
+struct silofs_ub_info *
+silofs_bcache_create_ubi(struct silofs_bcache      *bcache,
+                         const struct silofs_baddr *baddr);
+
+void silofs_bcache_evict_ubi(struct silofs_bcache  *bcache,
+                             struct silofs_ub_info *ubi);
 
 #endif /* SILOFS_BCACHE_H_ */

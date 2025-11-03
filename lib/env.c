@@ -310,12 +310,26 @@ bool silofs_env_hasflag(const struct silofs_env *env, enum silofs_flags f)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-/*
-#error "YOU ARE HERE"
+static void make_uber_addr(struct silofs_baddr *out_baddr)
+{
+	struct silofs_svolid svolid;
+	struct silofs_blobid blobid;
+
+	silofs_svolid_generate(&svolid);
+	silofs_blobid_setup_raw(&blobid, &svolid, SILOFS_MTYPE_UBER);
+	silofs_baddr_init(out_baddr, &blobid, 0);
+}
+
 int silofs_env_format_uber(struct silofs_env *env)
 {
+	struct silofs_baddr baddr;
+
+	make_uber_addr(&baddr);
+
+	/* YOU ARE HERE */
+	(void)env;
+	return 0;
 }
-*/
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

@@ -25,7 +25,8 @@ struct silofs_ub_info {
 	struct silofs_uber_block *ub;
 };
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+struct silofs_ub_info *
+silofs_ubi_from_bni(const struct silofs_bnode_info *bni);
 
 struct silofs_ub_info *
 silofs_ubi_new(const struct silofs_baddr *baddr, struct silofs_alloc *alloc);

@@ -204,6 +204,26 @@ void silofs_ubi_del(struct silofs_ub_info *ubi, struct silofs_alloc *alloc)
 	ub_del(ub, alloc);
 }
 
+static struct silofs_ub_info *ubi_unconst(const struct silofs_ub_info *p)
+{
+	union {
+		const struct silofs_ub_info *p;
+		struct silofs_ub_info *q;
+	} u = { .p = p };
+
+	return u.q;
+}
+
+struct silofs_ub_info *silofs_ubi_from_bni(const struct silofs_bnode_info *bni)
+{
+	const struct silofs_ub_info *ubi = nullptr;
+
+	if (ubi != nullptr) {
+		ubi = container_of2(bni, struct silofs_ub_info, ub_bni);
+	}
+	return ubi_unconst(ubi);
+}
+
 void silofs_ubi_set_dq(struct silofs_ub_info *ubi, struct silofs_dirtyq *dq)
 {
 	silofs_bni_set_dq(&ubi->ub_bni, dq);

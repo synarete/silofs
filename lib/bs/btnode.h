@@ -29,6 +29,9 @@ struct silofs_btnode_info {
 };
 
 struct silofs_btnode_info *
+silofs_bti_from_bni(const struct silofs_bnode_info *bni);
+
+struct silofs_btnode_info *
 silofs_bti_new(const struct silofs_baddr *baddr, struct silofs_alloc *alloc);
 
 void silofs_bti_del(struct silofs_btnode_info *bti,
@@ -72,8 +75,5 @@ int silofs_bti_expand(struct silofs_btnode_info *bti, uint64_t key,
 
 void silofs_bti_set_final(struct silofs_btnode_info *bti,
                           const struct silofs_baddr *baddr);
-
-struct silofs_btnode_info *
-silofs_bti_from_bni(const struct silofs_bnode_info *bni);
 
 #endif /* SILOFS_BTNODE_H_ */

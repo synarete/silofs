@@ -20,6 +20,7 @@
 #include "flags.h"
 #include "bldesc.h"
 #include "btnode.h"
+#include "uber.h"
 #include "bcache.h"
 
 enum {
@@ -79,20 +80,20 @@ int silofs_bcache_init(struct silofs_bcache *bcache,
 	int err;
 
 	silofs_memzero(bcache, sizeof(*bcache));
-	err = silofs_hmapq_init(&bcache->pc_hmapq, alloc, nslots);
+	err = silofs_hmapq_init(&bcache->bc_hmapq, alloc, nslots);
 	if (err) {
 		return err;
 	}
-	silofs_dirtyq_init(&bcache->pc_dirtyq);
-	bcache->pc_alloc = alloc;
+	silofs_dirtyq_init(&bcache->bc_dirtyq);
+	bcache->bc_alloc = alloc;
 	return 0;
 }
 
 void silofs_bcache_fini(struct silofs_bcache *bcache)
 {
-	silofs_hmapq_fini(&bcache->pc_hmapq, bcache->pc_alloc);
-	silofs_dirtyq_fini(&bcache->pc_dirtyq);
-	bcache->pc_alloc = nullptr;
+	silofs_hmapq_fini(&bcache->bc_hmapq, bcache->bc_alloc);
+	silofs_dirtyq_fini(&bcache->bc_dirtyq);
+	bcache->bc_alloc = nullptr;
 }
 
 static struct silofs_bnode_info *
@@ -103,14 +104,14 @@ bcache_search(const struct silofs_bcache *bcache,
 	struct silofs_hmapq_elem *hmqe;
 
 	silofs_hkey_by_baddr(&hkey, baddr);
-	hmqe = silofs_hmapq_lookup(&bcache->pc_hmapq, &hkey);
+	hmqe = silofs_hmapq_lookup(&bcache->bc_hmapq, &hkey);
 	return bni_from_hmqe(hmqe);
 }
 
 static void
 bcache_promote(struct silofs_bcache *bcache, struct silofs_bnode_info *bni)
 {
-	silofs_hmapq_promote(&bcache->pc_hmapq, bni_to_hmqe(bni), false);
+	silofs_hmapq_promote(&bcache->bc_hmapq, bni_to_hmqe(bni), false);
 }
 
 static struct silofs_bnode_info *
@@ -135,13 +136,13 @@ bcache_lookup(struct silofs_bcache *bcache, const struct silofs_baddr *baddr)
 static void
 bcache_store(struct silofs_bcache *bcache, struct silofs_bnode_info *bni)
 {
-	silofs_hmapq_store(&bcache->pc_hmapq, bni_to_hmqe(bni));
+	silofs_hmapq_store(&bcache->bc_hmapq, bni_to_hmqe(bni));
 }
 
 static void
 bcache_remove(struct silofs_bcache *bcache, struct silofs_bnode_info *bni)
 {
-	silofs_hmapq_remove(&bcache->pc_hmapq, bni_to_hmqe(bni));
+	silofs_hmapq_remove(&bcache->bc_hmapq, bni_to_hmqe(bni));
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -150,20 +151,20 @@ static struct silofs_bldesc_info *
 bcache_new_bdi(const struct silofs_bcache *bcache,
                const struct silofs_baddr *baddr)
 {
-	return silofs_bdi_new(baddr, bcache->pc_alloc);
+	return silofs_bdi_new(baddr, bcache->bc_alloc);
 }
 
 static void bcache_del_bdi(const struct silofs_bcache *bcache,
                            struct silofs_bldesc_info *bdi)
 {
-	silofs_bdi_del(bdi, bcache->pc_alloc);
+	silofs_bdi_del(bdi, bcache->bc_alloc);
 }
 
 struct silofs_bldesc_info *
 silofs_bcache_lookup_bdi(struct silofs_bcache *bcache,
                          const struct silofs_baddr *baddr)
 {
-	struct silofs_bnode_info *bni = bcache_lookup(bcache, baddr);
+	const struct silofs_bnode_info *bni = bcache_lookup(bcache, baddr);
 
 	return silofs_bdi_from_bni(bni);
 }
@@ -187,7 +188,7 @@ bcache_require_bdi(struct silofs_bcache *bcache,
 static void bcache_bind_bdi_dq(struct silofs_bcache *bcache,
                                struct silofs_bldesc_info *bdi)
 {
-	silofs_bdi_set_dq(bdi, &bcache->pc_dirtyq);
+	silofs_bdi_set_dq(bdi, &bcache->bc_dirtyq);
 }
 
 static void
@@ -236,20 +237,20 @@ static struct silofs_btnode_info *
 bcache_new_bti(const struct silofs_bcache *bcache,
                const struct silofs_baddr *baddr)
 {
-	return silofs_bti_new(baddr, bcache->pc_alloc);
+	return silofs_bti_new(baddr, bcache->bc_alloc);
 }
 
 static void bcache_del_bti(const struct silofs_bcache *bcache,
                            struct silofs_btnode_info *bti)
 {
-	silofs_bti_del(bti, bcache->pc_alloc);
+	silofs_bti_del(bti, bcache->bc_alloc);
 }
 
 struct silofs_btnode_info *
 silofs_bcache_lookup_bti(struct silofs_bcache *bcache,
                          const struct silofs_baddr *baddr)
 {
-	struct silofs_bnode_info *bni = bcache_lookup(bcache, baddr);
+	const struct silofs_bnode_info *bni = bcache_lookup(bcache, baddr);
 
 	return silofs_bti_from_bni(bni);
 }
@@ -273,7 +274,7 @@ bcache_require_bti(struct silofs_bcache *bcache,
 static void bcache_bind_bti_dq(struct silofs_bcache *bcache,
                                struct silofs_btnode_info *bti)
 {
-	silofs_bti_set_dq(bti, &bcache->pc_dirtyq);
+	silofs_bti_set_dq(bti, &bcache->bc_dirtyq);
 }
 
 static void
@@ -318,16 +319,104 @@ void silofs_bcache_evict_bti(struct silofs_bcache *bcache,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static struct silofs_ub_info *
+bcache_new_ubi(const struct silofs_bcache *bcache,
+               const struct silofs_baddr *baddr)
+{
+	return silofs_ubi_new(baddr, bcache->bc_alloc);
+}
+
+static void
+bcache_del_ubi(const struct silofs_bcache *bcache, struct silofs_ub_info *ubi)
+{
+	silofs_ubi_del(ubi, bcache->bc_alloc);
+}
+
+struct silofs_ub_info *
+silofs_bcache_lookup_ubi(struct silofs_bcache *bcache,
+                         const struct silofs_baddr *baddr)
+{
+	const struct silofs_bnode_info *bni = bcache_lookup(bcache, baddr);
+
+	return silofs_ubi_from_bni(bni);
+}
+
+static struct silofs_ub_info *
+bcache_require_ubi(struct silofs_bcache *bcache,
+                   const struct silofs_baddr *baddr)
+{
+	struct silofs_ub_info *ubi = nullptr;
+
+	for (size_t i = 0; i < BCACHE_RETRY_MAX; ++i) {
+		ubi = bcache_new_ubi(bcache, baddr);
+		if (ubi != nullptr) {
+			break;
+		}
+		bcache_evict_some(bcache, i + 1, false);
+	}
+	return ubi;
+}
+
+static void
+bcache_bind_ubi_dq(struct silofs_bcache *bcache, struct silofs_ub_info *ubi)
+{
+	silofs_ubi_set_dq(ubi, &bcache->bc_dirtyq);
+}
+
+static void
+bcache_store_ubi(struct silofs_bcache *bcache, struct silofs_ub_info *ubi)
+{
+	bcache_store(bcache, &ubi->ub_bni);
+}
+
+struct silofs_ub_info *
+silofs_bcache_create_ubi(struct silofs_bcache *bcache,
+                         const struct silofs_baddr *baddr)
+{
+	struct silofs_ub_info *ubi;
+
+	ubi = bcache_require_ubi(bcache, baddr);
+	if (ubi != nullptr) {
+		bcache_bind_ubi_dq(bcache, ubi);
+		bcache_store_ubi(bcache, ubi);
+	}
+	return ubi;
+}
+
+static void
+bcache_remove_ubi(struct silofs_bcache *bcache, struct silofs_ub_info *ubi)
+{
+	bcache_remove(bcache, &ubi->ub_bni);
+}
+
+static void
+bcache_forget_ubi(struct silofs_bcache *bcache, struct silofs_ub_info *ubi)
+{
+	silofs_ubi_undirtify(ubi);
+	bcache_remove_ubi(bcache, ubi);
+}
+
+void silofs_bcache_evict_ubi(struct silofs_bcache *bcache,
+                             struct silofs_ub_info *ubi)
+{
+	bcache_forget_ubi(bcache, ubi);
+	bcache_del_ubi(bcache, ubi);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 static void
 bcache_evict_by(struct silofs_bcache *bcache, struct silofs_bnode_info *bni)
 {
 	const enum silofs_mtype mtype = silofs_bni_mtype(bni);
 
 	switch (mtype) {
-	case SILOFS_MTYPE_UBER:
 	case SILOFS_MTYPE_ARIX:
 		/* XXX */
 		silofs_assert_null(bni);
+		break;
+	case SILOFS_MTYPE_UBER:
+		silofs_bcache_evict_ubi(bcache, silofs_ubi_from_bni(bni));
 		break;
 	case SILOFS_MTYPE_BDESC:
 		silofs_bcache_evict_bdi(bcache, silofs_bdi_from_bni(bni));
@@ -376,7 +465,7 @@ bcache_find_evictable(struct silofs_bcache *bcache, bool iterall)
 	struct silofs_bnode_info *bni = nullptr;
 	struct silofs_bnode_info **p_bni = &bni;
 
-	silofs_hmapq_riterate(&bcache->pc_hmapq,
+	silofs_hmapq_riterate(&bcache->bc_hmapq,
 	                      iterall ? SILOFS_HMAPQ_ITERALL : 10,
 	                      visit_evictable_bni, (void *)p_bni);
 	return bni;
@@ -401,7 +490,7 @@ bcache_evict_some(struct silofs_bcache *bcache, size_t niter, bool iterall)
 
 static size_t bcache_usage(const struct silofs_bcache *bcache)
 {
-	return silofs_hmapq_usage(&bcache->pc_hmapq);
+	return silofs_hmapq_usage(&bcache->bc_hmapq);
 }
 
 bool silofs_bcache_isempty(const struct silofs_bcache *bcache)
@@ -424,7 +513,7 @@ static size_t bcache_memory_pressure(const struct silofs_bcache *bcache)
 	struct silofs_alloc_stat st;
 	size_t mem_pres = 0;
 
-	silofs_memstat(bcache->pc_alloc, &st);
+	silofs_memstat(bcache->bc_alloc, &st);
 	if (likely(st.nbytes_max > 0)) {
 		mem_pres = ((100UL * st.nbytes_use) / st.nbytes_max);
 	}
@@ -467,6 +556,6 @@ silofs_bcache_dq_front(const struct silofs_bcache *bcache)
 {
 	struct silofs_dq_elem *dqe;
 
-	dqe = silofs_dirtyq_front(&bcache->pc_dirtyq);
+	dqe = silofs_dirtyq_front(&bcache->bc_dirtyq);
 	return bni_from_dqe(dqe);
 }

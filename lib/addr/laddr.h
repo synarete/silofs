@@ -112,9 +112,6 @@ off_t silofs_laddr_end(const struct silofs_laddr *laddr);
 long silofs_laddr_compare(const struct silofs_laddr *laddr1,
                           const struct silofs_laddr *laddr2);
 
-void silofs_laddr_as_iv(const struct silofs_laddr *laddr,
-                        struct silofs_iv          *out_iv);
-
 bool silofs_laddr_isnull(const struct silofs_laddr *laddr);
 
 bool silofs_laddr_isvalid(const struct silofs_laddr *laddr);

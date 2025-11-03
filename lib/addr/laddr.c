@@ -301,28 +301,6 @@ bool silofs_laddr_isequal(const struct silofs_laddr *laddr,
 	       silofs_lsid_isequal(&laddr->lsid, &other->lsid);
 }
 
-void silofs_laddr_as_iv(const struct silofs_laddr *laddr,
-                        struct silofs_iv *out_iv)
-{
-	union {
-		struct silofs_laddr96b laddr96;
-		uint8_t d[96];
-	} u;
-
-	STATICASSERT_EQ(sizeof(u), 96);
-	STATICASSERT_EQ(6 * sizeof(out_iv->iv), sizeof(u.laddr96));
-	STATICASSERT_EQ(6 * sizeof(out_iv->iv), sizeof(u));
-	STATICASSERT_EQ(6 * ARRAY_SIZE(out_iv->iv), sizeof(u));
-
-	silofs_laddr96b_htox(&u.laddr96, laddr);
-	for (size_t i = 0; i < ARRAY_SIZE(out_iv->iv); ++i) {
-		const size_t j = i % 8;
-
-		out_iv->iv[i] = //
-			u.d[j] ^ u.d[j + 16] ^ u.d[j + 32] ^ u.d[j + 48];
-	}
-}
-
 void silofs_laddr96b_reset(struct silofs_laddr96b *laddr96)
 {
 	memset(laddr96, 0, sizeof(*laddr96));

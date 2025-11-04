@@ -15,50 +15,29 @@
  * GNU General Public License for more details.
  */
 #include "configs.h"
-#include "fs.h"
+#include "addr.h"
+#include "cache.h"
 #include "env.h"
 
-static int
-encrypt_view_with(const struct silofs_env *env,
-                  const struct silofs_ivkey *ivkey,
-                  const struct silofs_view *view, void *ptr, size_t len)
+static enum silofs_mtype llink_mtype(const struct silofs_llink *llink)
 {
-	return silofs_encrypt_buf(&env->enc_cipher, ivkey, view, ptr, len);
+	return silofs_laddr_mtype(&llink->laddr);
 }
 
 int silofs_encrypt_lview(const struct silofs_env *env,
                          const struct silofs_llink *llink,
                          const struct silofs_view *view, void *ptr)
 {
-	const struct silofs_ivkey *ivkey = &llink->ivkey;
-	const size_t len = silofs_laddr_len(&llink->laddr);
-
-	return encrypt_view_with(env, ivkey, view, ptr, len);
+	return silofs_encrypt_view(&env->enc_cipher, &llink->ivkey, view,
+	                           llink_mtype(llink), ptr);
 }
 
-static int
-decrypt_view_with(const struct silofs_env *env,
-                  const struct silofs_ivkey *ivkey,
-                  const struct silofs_view *view, void *ptr, size_t len)
+static int decrypt_lview_inplace(const struct silofs_env *env,
+                                 const struct silofs_llink *llink,
+                                 struct silofs_view *view)
 {
-	return silofs_decrypt_buf(&env->dec_cipher, ivkey, view, ptr, len);
-}
-
-static int
-decrypt_view(const struct silofs_env *env, const struct silofs_llink *llink,
-             const struct silofs_view *view, void *ptr)
-{
-	const struct silofs_ivkey *ivkey = &llink->ivkey;
-	const size_t len = silofs_laddr_len(&llink->laddr);
-
-	return decrypt_view_with(env, ivkey, view, ptr, len);
-}
-
-static int decrypt_view_inplace(const struct silofs_env *env,
-                                const struct silofs_llink *llink,
-                                struct silofs_view *view)
-{
-	return decrypt_view(env, llink, view, view);
+	return silofs_decrypt_view_inplace(&env->dec_cipher, &llink->ivkey,
+	                                   view, llink_mtype(llink));
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -69,7 +48,7 @@ int silofs_decrypt_uni_view(const struct silofs_env *env,
 	struct silofs_llink llink;
 
 	silofs_llink_of_uni(&env->mbri.fs_mbr, uni, &llink);
-	return decrypt_view_inplace(env, &llink, uni->un_lni.ln_view);
+	return decrypt_lview_inplace(env, &llink, uni->un_lni.ln_view);
 }
 
 int silofs_decrypt_vni_view(const struct silofs_env *env,
@@ -78,7 +57,7 @@ int silofs_decrypt_vni_view(const struct silofs_env *env,
 	struct silofs_llink llink;
 
 	silofs_llink_of_vni(&env->mbri.fs_mbr, vni, &llink);
-	return decrypt_view_inplace(env, &llink, vni->vn_lni.ln_view);
+	return decrypt_lview_inplace(env, &llink, vni->vn_lni.ln_view);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

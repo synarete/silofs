@@ -18,12 +18,12 @@
 #define SILOFS_ENCDEC_H_
 
 #include <stdlib.h>
+#include "addr.h"
 
-struct silofs_laddr;
-struct silofs_mbr;
 struct silofs_unode_info;
 struct silofs_vnode_info;
 struct silofs_env;
+struct silofs_mbr;
 
 int silofs_encrypt_lview(const struct silofs_env   *env,
                          const struct silofs_llink *llink,

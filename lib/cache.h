@@ -20,5 +20,6 @@
 #include "infra.h"
 #include "cache/dirtyq.h"
 #include "cache/hmapq.h"
+#include "cache/view.h"
 
 #endif /* SILOFS_CACHE_H_ */

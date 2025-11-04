@@ -43,6 +43,10 @@ void silofs_sha256_ofv(const struct silofs_mdigest *md,
 void silofs_sha3_256_of(const struct silofs_mdigest *md, const void *buf,
                         size_t bsz, struct silofs_hash256 *out_hash);
 
+void silofs_sha3_256_ofv(const struct silofs_mdigest *md,
+                         const struct iovec *iov, size_t cnt,
+                         struct silofs_hash256 *out_hash);
+
 void silofs_sha3_512_of(const struct silofs_mdigest *md, const void *buf,
                         size_t bsz, struct silofs_hash512 *out_hash);
 

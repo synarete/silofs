@@ -348,7 +348,7 @@ void silofs_abi_calc_desc(const struct silofs_ab_info *abi,
 	enum silofs_mtype mtype;
 
 	mtype = silofs_blobid_get_mtype(&laddr->lsid.blobid);
-	silofs_calc_baddr_of(md, mtype, &iov, 1, &baddr);
+	silofs_calc_cas_baddr(md, mtype, &iov, 1, &baddr);
 
 	ard_init(out_ard, &baddr, laddr, iov.iov_len);
 }
@@ -384,7 +384,7 @@ static void abi_calc_baddr(const struct silofs_ab_info *abi,
 		.iov_len = sizeof(*abi->ab_enc),
 	};
 
-	silofs_calc_baddr_of(md, SILOFS_MTYPE_ARIX, &iov, 1, out_baddr);
+	silofs_calc_cas_baddr(md, SILOFS_MTYPE_ARIX, &iov, 1, out_baddr);
 }
 
 static void abi_update_baddr(struct silofs_ab_info *abi)

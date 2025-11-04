@@ -518,8 +518,8 @@ static void mbri_calc_addr_of(const struct silofs_mbrinfo *mbri,
 		.iov_len = sizeof(*mbr1k),
 	};
 
-	silofs_calc_baddr_of(&mbri->mdigest, SILOFS_MTYPE_MBR, &iov, 1,
-	                     out_baddr);
+	silofs_calc_cas_baddr(&mbri->mdigest, SILOFS_MTYPE_MBR, &iov, 1,
+	                      out_baddr);
 }
 
 static int mbri_verify_mref(const struct silofs_mbrinfo *mbri,

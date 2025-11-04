@@ -218,7 +218,7 @@ struct silofs_ub_info *silofs_ubi_from_bni(const struct silofs_bnode_info *bni)
 {
 	const struct silofs_ub_info *ubi = nullptr;
 
-	if (ubi != nullptr) {
+	if (bni != nullptr) {
 		ubi = container_of2(bni, struct silofs_ub_info, ub_bni);
 	}
 	return ubi_unconst(ubi);

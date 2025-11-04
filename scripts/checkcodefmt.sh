@@ -30,7 +30,7 @@ _calc_py_sources_hsum() {
 }
 
 _exec_c_code_fmt() {
-	./cstylefmt.sh
+	./cstylefmt.sh --all
 }
 
 _exec_py_code_fmt() {

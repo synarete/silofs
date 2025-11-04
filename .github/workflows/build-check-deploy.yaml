@@ -54,7 +54,7 @@ jobs:
       - name: Install deps
         run: sudo apt-get install -y clang-format python3
       - name: Verify code style
-        run: ./cstylefmt.sh
+        run: ./cstylefmt.sh --all
       - name: View any code-format changes
         run: git diff
       - name: Require clean code

@@ -21,9 +21,30 @@ h_srcs=$(find "${root}/"{include,lib,cmd,mntd,test} -type f \
 	      -not -name "fuse_kernel.h" -not -name "config*.h" -name "*.h")
 
 # do actual code formatting
-clang-format -i --style=file:"${c_conf}" ${c_srcs}
-clang-format -i --style=file:"${h_conf}" ${h_srcs}
+_do_clang_format() {
+	clang-format -i --style=file:"${c_conf}" ${c_srcs}
+	clang-format -i --style=file:"${h_conf}" ${h_srcs}
+}
 
 # lint-check code style via python helper script
-cstylelint_py="${root}/scripts/cstylelint.py"
-${cstylelint_py} ${h_srcs} ${c_srcs}
+_do_lint_check() {
+	cstylelint_py="${root}/scripts/cstylelint.py"
+	${cstylelint_py} ${h_srcs} ${c_srcs}
+}
+
+arg=${1:-}
+case "$arg" in
+	-h|--help)
+		echo "${self} [--all | --format | --lint ]"
+		;;
+	-a|--all)
+		_do_clang_format
+		_do_lint_check
+		;;
+	-l|--lint)
+		_do_lint_check
+		;;
+	-f|--format|*)
+		_do_clang_format
+		;;
+esac

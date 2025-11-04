@@ -20,14 +20,44 @@
 #include "store.h"
 
 struct silofs_store_ctx {
+	struct silofs_alloc *alloc;
 	struct silofs_locos *locos;
 	struct silofs_bcache *bcache;
+	struct silofs_cipher *enc_cipher;
+	struct silofs_cipher *dec_cipher;
+	struct silofs_view *view;
 };
 
-static void stc_setup(struct silofs_store_ctx *st_ctx, struct silofs_env *env)
+static void stc_init(struct silofs_store_ctx *st_ctx, struct silofs_env *env)
 {
+	st_ctx->alloc = env->base.alloc;
 	st_ctx->locos = &env->base.repo->re_locos;
 	st_ctx->bcache = env->base.bcache;
+	st_ctx->enc_cipher = &env->enc_cipher;
+	st_ctx->dec_cipher = &env->dec_cipher;
+	st_ctx->view = nullptr;
+}
+
+static int stc_init2(struct silofs_store_ctx *st_ctx, struct silofs_env *env)
+{
+	struct silofs_view *view = nullptr;
+
+	stc_init(st_ctx, env);
+	view = silofs_memalloc(st_ctx->alloc, sizeof(*view), 0);
+	if (view == nullptr) {
+		return -SILOFS_ENOENT;
+	}
+	st_ctx->view = view;
+	return 0;
+}
+
+static void stc_fini(struct silofs_store_ctx *st_ctx)
+{
+	struct silofs_view *view = st_ctx->view;
+
+	if (view != nullptr) {
+		silofs_memfree(st_ctx->alloc, view, sizeof(*view), 0);
+	}
 }
 
 static int stc_require_baddr(const struct silofs_store_ctx *st_ctx,
@@ -63,13 +93,59 @@ static int stc_spawn_uber(struct silofs_store_ctx *st_ctx,
 	return 0;
 }
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 int silofs_spawn_uber(struct silofs_env *env, const struct silofs_baddr *baddr,
                       struct silofs_ub_info **out_ubi)
 {
 	struct silofs_store_ctx st_ctx = {};
+	int err;
 
-	stc_setup(&st_ctx, env);
-	return stc_spawn_uber(&st_ctx, baddr, out_ubi);
+	stc_init(&st_ctx, env);
+	err = stc_spawn_uber(&st_ctx, baddr, out_ubi);
+	stc_fini(&st_ctx);
+	return err;
+}
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+static struct silofs_bnode_info *stc_get_dirty(struct silofs_store_ctx *st_ctx)
+{
+	return silofs_bcache_dq_front(st_ctx->bcache);
+}
+
+static int stc_destage_dirty_bnode(struct silofs_store_ctx *st_ctx,
+                                   const struct silofs_bnode_info *bni)
+{
+	(void)st_ctx;
+	(void)bni;
+	return 0;
+}
+
+static int stc_destage_dirty(struct silofs_store_ctx *st_ctx)
+{
+	struct silofs_bnode_info *bni;
+	int err;
+
+	bni = stc_get_dirty(st_ctx);
+	while (bni != nullptr) {
+		err = stc_destage_dirty_bnode(st_ctx, bni);
+		if (err) {
+			return err;
+		}
+		silofs_bni_undirtify(bni);
+		bni = stc_get_dirty(st_ctx);
+	}
+	return 0;
+}
+
+int silofs_destage_dirty(struct silofs_env *env)
+{
+	struct silofs_store_ctx st_ctx = {};
+	int err;
+
+	err = stc_init2(&st_ctx, env);
+	if (!err) {
+		err = stc_destage_dirty(&st_ctx);
+	}
+	stc_fini(&st_ctx);
+	return err;
 }

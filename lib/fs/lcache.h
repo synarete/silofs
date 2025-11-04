@@ -19,7 +19,7 @@
 
 #include "infra.h"
 #include "addr.h"
-#include "hmdq.h"
+#include "cache.h"
 #include "spxmap.h"
 
 /* dirty-queues of cached-elements by owner */

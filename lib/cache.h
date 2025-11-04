@@ -14,11 +14,11 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_HMDQ_H_
-#define SILOFS_HMDQ_H_
+#ifndef SILOFS_CACHE_H_
+#define SILOFS_CACHE_H_
 
 #include "infra.h"
-#include "hmdq/dirtyq.h"
-#include "hmdq/hmapq.h"
+#include "cache/dirtyq.h"
+#include "cache/hmapq.h"
 
-#endif /* SILOFS_HMDQ_H_ */
+#endif /* SILOFS_CACHE_H_ */

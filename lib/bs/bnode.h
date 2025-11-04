@@ -18,8 +18,8 @@
 #define SILOFS_BNODE_H_
 
 #include "addr.h"
-#include "hmdq.h"
 #include "crypt.h"
+#include "cache.h"
 
 #define SILOFS_BTREE_KEY_NULL (0)
 

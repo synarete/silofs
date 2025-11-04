@@ -17,10 +17,9 @@
 #ifndef SILOFS_BCACHE_H_
 #define SILOFS_BCACHE_H_
 
-#include "hmdq.h"
-
-struct silofs_alloc;
-struct silofs_baddr;
+#include "infra.h"
+#include "addr.h"
+#include "cache.h"
 
 struct silofs_bcache {
 	struct silofs_hmapq  bc_hmapq;

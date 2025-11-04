@@ -19,7 +19,7 @@
 
 #include <silofs/types.h>
 #include "addr.h"
-#include "hmdq.h"
+#include "cache.h"
 
 struct silofs_lnode_info;
 struct silofs_unode_info;

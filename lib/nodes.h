@@ -14,12 +14,14 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_CACHE_H_
-#define SILOFS_CACHE_H_
+#ifndef SILOFS_NODES_H_
+#define SILOFS_NODES_H_
 
+#include <silofs/ondisk.h>
 #include "infra.h"
-#include "cache/dirtyq.h"
-#include "cache/hmapq.h"
-#include "cache/view.h"
+#include "crypt.h"
+#include "nodes/dirtyq.h"
+#include "nodes/hmapq.h"
+#include "nodes/view.h"
 
 #endif /* SILOFS_CACHE_H_ */

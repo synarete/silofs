@@ -16,7 +16,7 @@
  */
 #include "configs.h"
 #include "addr.h"
-#include "cache.h"
+#include "nodes.h"
 #include "env.h"
 
 static enum silofs_mtype llink_mtype(const struct silofs_llink *llink)
@@ -25,25 +25,25 @@ static enum silofs_mtype llink_mtype(const struct silofs_llink *llink)
 }
 
 int silofs_encrypt_lview(const struct silofs_env *env,
-                         const struct silofs_llink *llink,
-                         const struct silofs_view *view, void *ptr)
+			 const struct silofs_llink *llink,
+			 const struct silofs_view *view, void *ptr)
 {
 	return silofs_encrypt_view(&env->enc_cipher, &llink->ivkey, view,
-	                           llink_mtype(llink), ptr);
+				   llink_mtype(llink), ptr);
 }
 
 static int decrypt_lview_inplace(const struct silofs_env *env,
-                                 const struct silofs_llink *llink,
-                                 struct silofs_view *view)
+				 const struct silofs_llink *llink,
+				 struct silofs_view *view)
 {
 	return silofs_decrypt_view_inplace(&env->dec_cipher, &llink->ivkey,
-	                                   view, llink_mtype(llink));
+					   view, llink_mtype(llink));
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_decrypt_uni_view(const struct silofs_env *env,
-                            struct silofs_unode_info *uni)
+			    struct silofs_unode_info *uni)
 {
 	struct silofs_llink llink;
 
@@ -52,7 +52,7 @@ int silofs_decrypt_uni_view(const struct silofs_env *env,
 }
 
 int silofs_decrypt_vni_view(const struct silofs_env *env,
-                            struct silofs_vnode_info *vni)
+			    struct silofs_vnode_info *vni)
 {
 	struct silofs_llink llink;
 
@@ -63,8 +63,8 @@ int silofs_decrypt_vni_view(const struct silofs_env *env,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_llink_of_uni(const struct silofs_mbr *mbr,
-                         const struct silofs_unode_info *uni,
-                         struct silofs_llink *out_llink)
+			 const struct silofs_unode_info *uni,
+			 struct silofs_llink *out_llink)
 {
 	const struct silofs_laddr *laddr = silofs_uni_laddr(uni);
 	const struct silofs_ivkey *ivkey = &mbr->main_ivkey;
@@ -73,8 +73,8 @@ void silofs_llink_of_uni(const struct silofs_mbr *mbr,
 }
 
 void silofs_llink_of_vni(const struct silofs_mbr *mbr,
-                         const struct silofs_vnode_info *vni,
-                         struct silofs_llink *out_llink)
+			 const struct silofs_vnode_info *vni,
+			 struct silofs_llink *out_llink)
 {
 	silofs_unused(mbr);
 	silofs_llink_assign(out_llink, &vni->vn_llink);
@@ -83,8 +83,8 @@ void silofs_llink_of_vni(const struct silofs_mbr *mbr,
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 void silofs_calc_cas_baddr(const struct silofs_mdigest *md,
-                           enum silofs_mtype mtype, const struct iovec *iov,
-                           size_t iov_cnt, struct silofs_baddr *out_baddr)
+			   enum silofs_mtype mtype, const struct iovec *iov,
+			   size_t iov_cnt, struct silofs_baddr *out_baddr)
 {
 	struct silofs_hash256 hash;
 	struct silofs_blobid blobid;

@@ -615,11 +615,6 @@ const struct silofs_vaddr *silofs_ii_vaddr(const struct silofs_inode_info *ii)
 	return silofs_vni_vaddr(silofs_ii_to_vni(ii));
 }
 
-struct silofs_sb_info *silofs_ii_sbi(const struct silofs_inode_info *ii)
-{
-	return silofs_vni_sbi(silofs_ii_to_vni(ii));
-}
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void ii_setup_ispecial(struct silofs_inode_info *ii, dev_t rdev)

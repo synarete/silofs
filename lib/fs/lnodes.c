@@ -576,16 +576,6 @@ silofs_vni_vaddr(const struct silofs_vnode_info *vni)
 	return &vni->vn_vaddr;
 }
 
-struct silofs_env *silofs_vni_env(const struct silofs_vnode_info *vni)
-{
-	return vni->vn_lni.ln_env;
-}
-
-struct silofs_sb_info *silofs_vni_sbi(const struct silofs_vnode_info *vni)
-{
-	return vni->vn_lni.ln_env->sbi;
-}
-
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static struct silofs_unode_info *sbi_to_uni(struct silofs_sb_info *sbi)

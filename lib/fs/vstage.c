@@ -108,24 +108,6 @@ static ino_t vaddr_to_ino(const struct silofs_vaddr *vaddr)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static bool
-ismutable(const struct silofs_env *env, const struct silofs_laddr *laddr)
-{
-	bool ret = false;
-
-	if (!silofs_laddr_isnull(laddr)) {
-		ret = silofs_sbi_ismutable_laddr(env->sbi, laddr);
-	}
-	return ret;
-}
-
-static bool vni_has_mutable_laddr(const struct silofs_vnode_info *vni)
-{
-	return ismutable(silofs_vni_env(vni), &vni->vn_llink.laddr);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 static void vni_bind_to(struct silofs_vnode_info *vni, struct silofs_env *env)
 {
 	vni->vn_lni.ln_env = env;
@@ -2641,6 +2623,18 @@ static int stage_stable_vnode_at(struct silofs_task_ctx *task,
 	return 0;
 }
 
+static bool has_mutable_laddr(const struct silofs_task_ctx *task,
+                              const struct silofs_vnode_info *vni)
+{
+	const struct silofs_laddr *laddr = &vni->vn_llink.laddr;
+	bool ret = false;
+
+	if (!silofs_laddr_isnull(laddr)) {
+		ret = silofs_sbi_ismutable_laddr(task->t_env->sbi, laddr);
+	}
+	return ret;
+}
+
 static int require_updated_cached_vni(struct silofs_task_ctx *task,
                                       struct silofs_vnode_info *vni,
                                       enum silofs_stg_mode stg_mode)
@@ -2652,7 +2646,7 @@ static int require_updated_cached_vni(struct silofs_task_ctx *task,
 	if (!(stg_mode & SILOFS_STG_COW)) {
 		return 0;
 	}
-	if (vni_has_mutable_laddr(vni)) {
+	if (has_mutable_laddr(task, vni)) {
 		return 0;
 	}
 	vaddr = silofs_vni_vaddr(vni);
@@ -2685,10 +2679,12 @@ static int do_resolve_stage_vnode(struct silofs_task_ctx *task,
 static int check_stage_mode(const struct silofs_task_ctx *task,
                             enum silofs_stg_mode stg_mode)
 {
-	return ((stg_mode & SILOFS_STG_COW) && //
-	        (silofs_env_isrdonlyfs(task->t_env))) ?
-	               -SILOFS_EROFS :
-	               0;
+	int ret = 0;
+
+	if (stg_mode & SILOFS_STG_COW) {
+		ret = silofs_env_isrdonlyfs(task->t_env) ? -SILOFS_EROFS : 0;
+	}
+	return ret;
 }
 
 static int check_stage_vnode(const struct silofs_task_ctx *task,
@@ -3167,7 +3163,7 @@ int silofs_refresh_llink(struct silofs_task_ctx *task,
 	const struct silofs_vaddr *vaddr = nullptr;
 	int err;
 
-	if (vni_has_mutable_laddr(vni)) {
+	if (has_mutable_laddr(task, vni)) {
 		return 0;
 	}
 	vaddr = silofs_vni_vaddr(vni);

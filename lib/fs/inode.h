@@ -174,8 +174,6 @@ ino_t silofs_ii_ino(const struct silofs_inode_info *ii);
 
 const struct silofs_vaddr *silofs_ii_vaddr(const struct silofs_inode_info *ii);
 
-struct silofs_sb_info *silofs_ii_sbi(const struct silofs_inode_info *ii);
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_ii_incref(struct silofs_inode_info *ii);

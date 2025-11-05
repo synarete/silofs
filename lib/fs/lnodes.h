@@ -232,10 +232,6 @@ enum silofs_mtype silofs_vni_mtype(const struct silofs_vnode_info *vni);
 const struct silofs_vaddr *
 silofs_vni_vaddr(const struct silofs_vnode_info *vni);
 
-struct silofs_env *silofs_vni_env(const struct silofs_vnode_info *vni);
-
-struct silofs_sb_info *silofs_vni_sbi(const struct silofs_vnode_info *vni);
-
 struct silofs_vnode_info *silofs_vni_from_dqe(struct silofs_dq_elem *dqe);
 
 struct silofs_vnode_info *

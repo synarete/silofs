@@ -2380,8 +2380,7 @@ static void str_to_buf(const struct silofs_strview *sv, void *buf, size_t bsz)
 	}
 }
 
-static void fill_query_version(const struct silofs_inode_info *ii,
-                               struct silofs_ioc_query *query)
+static void fill_query_version(struct silofs_ioc_query *query)
 {
 	struct silofs_strview s = { .str = nullptr };
 	const size_t bsz = sizeof(query->u.version.string);
@@ -2391,7 +2390,6 @@ static void fill_query_version(const struct silofs_inode_info *ii,
 	query->u.version.minor = silofs_version.minor;
 	query->u.version.sublevel = silofs_version.sublevel;
 	str_to_buf(&s, query->u.version.string, bsz);
-	unused(ii);
 }
 
 /* boot pathname: a pair of repo-directory & fsname */
@@ -2407,43 +2405,42 @@ static void make_bootpath(struct silofs_bootpath *bootpath,
 	silofs_strview_init(&bootpath->fsname, fsname);
 }
 
-static void bootpath_of(const struct silofs_inode_info *ii,
+static void bootpath_of(const struct silofs_task_ctx *task,
                         struct silofs_bootpath *out_bootpath)
 {
-	const struct silofs_env *env = silofs_ii_env(ii);
-	const struct silofs_env_args *env_args = env->base.args;
+	const struct silofs_env_args *env_args = task->t_env->base.args;
 
 	make_bootpath(out_bootpath, env_args->boot_args.repodir,
 	              env_args->boot_args.fs_name);
 }
 
-static void fill_query_repo(const struct silofs_inode_info *ii,
+static void fill_query_repo(const struct silofs_task_ctx *task,
                             struct silofs_ioc_query *query)
 {
 	struct silofs_bootpath bootpath;
 	size_t bsz;
 
-	bootpath_of(ii, &bootpath);
+	bootpath_of(task, &bootpath);
 	bsz = sizeof(query->u.repo.path);
 	str_to_buf(&bootpath.repodir, query->u.repo.path, bsz);
 }
 
-static void fill_query_boot_name(const struct silofs_inode_info *ii,
+static void fill_query_boot_name(const struct silofs_task_ctx *task,
                                  struct silofs_ioc_query *query)
 {
 	struct silofs_bootpath bootpath = { .fsname.len = 0 };
 	struct silofs_query_boot *qboot = &query->u.boot;
 
-	bootpath_of(ii, &bootpath);
+	bootpath_of(task, &bootpath);
 	str_to_buf(&bootpath.fsname, qboot->name, sizeof(qboot->name));
 }
 
-static void fill_query_boot_main_blobid(const struct silofs_inode_info *ii,
+static void fill_query_boot_main_blobid(const struct silofs_task_ctx *task,
                                         struct silofs_ioc_query *query)
 {
 	struct silofs_mbr1k mbr1k;
 	struct silofs_baddr mref;
-	struct silofs_env *env = silofs_ii_env(ii);
+	const struct silofs_env *env = task->t_env;
 	struct silofs_query_boot *qboot = &query->u.boot;
 	int err;
 
@@ -2453,23 +2450,23 @@ static void fill_query_boot_main_blobid(const struct silofs_inode_info *ii,
 	}
 }
 
-static void fill_query_boot_root(const struct silofs_inode_info *ii,
+static void fill_query_boot_root(const struct silofs_task_ctx *task,
                                  struct silofs_ioc_query *query)
 {
 	struct silofs_blobid blobid;
 	struct silofs_query_boot *qboot = &query->u.boot;
 
-	silofs_sbi_self_blobid(silofs_ii_sbi(ii), &blobid);
+	silofs_sbi_self_blobid(task->t_env->sbi, &blobid);
 	silofs_blobid_copyto(&blobid, &qboot->root_blobid);
 }
 
-static void fill_query_boot(const struct silofs_inode_info *ii,
+static void fill_query_boot(const struct silofs_task_ctx *task,
                             struct silofs_ioc_query *query)
 {
 	silofs_memzero(query, sizeof(*query));
-	fill_query_boot_name(ii, query);
-	fill_query_boot_main_blobid(ii, query);
-	fill_query_boot_root(ii, query);
+	fill_query_boot_name(task, query);
+	fill_query_boot_main_blobid(task, query);
+	fill_query_boot_root(task, query);
 }
 
 static void fill_query_proc(const struct silofs_inode_info *ii,
@@ -2478,10 +2475,10 @@ static void fill_query_proc(const struct silofs_inode_info *ii,
 	fill_proc(silofs_ii_env(ii), &query->u.proc);
 }
 
-static void fill_query_spstats(const struct silofs_inode_info *ii,
+static void fill_query_spstats(const struct silofs_task_ctx *task,
                                struct silofs_ioc_query *query)
 {
-	fill_spstats(silofs_ii_sbi(ii), &query->u.spstats);
+	fill_spstats(task->t_env->sbi, &query->u.spstats);
 }
 
 static int
@@ -2516,19 +2513,19 @@ do_query_subcmd(struct silofs_task_ctx *task, struct silofs_inode_info *ii,
 
 	switch (qtype) {
 	case SILOFS_QUERY_VERSION:
-		fill_query_version(ii, query);
+		fill_query_version(query);
 		break;
 	case SILOFS_QUERY_REPO:
-		fill_query_repo(ii, query);
+		fill_query_repo(task, query);
 		break;
 	case SILOFS_QUERY_BOOT:
-		fill_query_boot(ii, query);
+		fill_query_boot(task, query);
 		break;
 	case SILOFS_QUERY_PROC:
 		fill_query_proc(ii, query);
 		break;
 	case SILOFS_QUERY_SPSTATS:
-		fill_query_spstats(ii, query);
+		fill_query_spstats(task, query);
 		break;
 	case SILOFS_QUERY_STATX:
 		err = do_query_statx(task, ii, query);

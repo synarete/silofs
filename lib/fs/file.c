@@ -360,25 +360,18 @@ fli_len_within(const struct silofs_fileaf_info *fli, off_t off, off_t end)
 	return len_of_data(off, end, fli_mtype(fli));
 }
 
-static bool fli_asyncwr(const struct silofs_fileaf_info *fli)
-{
-	const struct silofs_env *env = silofs_vni_env(&fli->fl_vni);
-
-	return silofs_env_hasflag(env, SILOFS_F_ASYNCWR);
-}
-
-static void fli_pre_io(struct silofs_fileaf_info *fli, int wr_mode)
+static void fli_pre_io(struct silofs_fileaf_info *fli, bool asyncwr_mode)
 {
 	fli_incref(fli);
-	if (wr_mode && fli_asyncwr(fli)) {
+	if (asyncwr_mode) {
 		silofs_atomic_add(&fli->fl_vni.vn_asyncwr, 1);
 	}
 }
 
-static void fli_post_io(struct silofs_fileaf_info *fli, int wr_mode)
+static void fli_post_io(struct silofs_fileaf_info *fli, bool asyncwr_mode)
 {
 	fli_decref(fli);
-	if (wr_mode && fli_asyncwr(fli)) {
+	if (asyncwr_mode) {
 		silofs_atomic_sub(&fli->fl_vni.vn_asyncwr, 1);
 	}
 }
@@ -1735,22 +1728,28 @@ static void filc_resolve_iovec(const struct silofs_file_ctx *f_ctx,
 	}
 }
 
-static void iovref_pre(const struct silofs_iovec *iov, int wr_mode)
+static void iovref_pre(const struct silofs_iovec *iov, bool asyncwr_mode)
 {
 	struct silofs_fileaf_info *fli = iov->iov_backref;
 
 	if (fli != nullptr) {
-		fli_pre_io(fli, wr_mode);
+		fli_pre_io(fli, asyncwr_mode);
 	}
 }
 
-static void iovref_post(const struct silofs_iovec *iov, int wr_mode)
+static void iovref_post(const struct silofs_iovec *iov, bool asyncwr_mode)
 {
 	struct silofs_fileaf_info *fli = iov->iov_backref;
 
 	if (fli != nullptr) {
-		fli_post_io(fli, wr_mode);
+		fli_post_io(fli, asyncwr_mode);
 	}
+}
+
+static bool filc_asyncwr_mode(const struct silofs_file_ctx *f_ctx)
+{
+	return (f_ctx->op == SILOFS_FILE_OP_WRITE) &&
+	       silofs_env_hasflag(f_ctx->env, SILOFS_F_ASYNCWR);
 }
 
 static int filc_call_rw_actor(const struct silofs_file_ctx *f_ctx,
@@ -1763,15 +1762,15 @@ static int filc_call_rw_actor(const struct silofs_file_ctx *f_ctx,
 		.iov_off = -1,
 		.iov_fd = -1,
 	};
-	const int wr_mode = (f_ctx->op == SILOFS_FILE_OP_WRITE);
+	const bool asyncwr = filc_asyncwr_mode(f_ctx);
 	int err;
 
 	filc_resolve_iovec(f_ctx, fli, &iovec);
-	iovref_pre(&iovec, wr_mode);
+	iovref_pre(&iovec, asyncwr);
 	err = f_ctx->rwi_ctx->actor(f_ctx->rwi_ctx, &iovec);
 	*out_len = iovec.iov.iov_len;
 	if (err) {
-		iovref_post(&iovec, wr_mode);
+		iovref_post(&iovec, asyncwr);
 		return err;
 	}
 	return 0;

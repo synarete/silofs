@@ -33,7 +33,7 @@ struct silofs_bnode_info {
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_bni_init(struct silofs_bnode_info  *bni,
-		     const struct silofs_baddr *baddr);
+                     const struct silofs_baddr *baddr);
 
 void silofs_bni_fini(struct silofs_bnode_info *bni);
 
@@ -48,10 +48,10 @@ void silofs_bni_incref(struct silofs_bnode_info *bni);
 void silofs_bni_decref(struct silofs_bnode_info *bni);
 
 void silofs_bni_set_dq(struct silofs_bnode_info *bni,
-		       struct silofs_dirtyq     *dq);
+                       struct silofs_dirtyq     *dq);
 
 void silofs_bni_setup_ivkey(struct silofs_bnode_info    *bni,
-			    const struct silofs_mdigest *md,
-			    const struct silofs_key     *key);
+                            const struct silofs_mdigest *md,
+                            const struct silofs_key     *key);
 
 #endif /* SILOFS_BNODE_H_ */

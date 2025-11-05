@@ -111,6 +111,8 @@ void silofs_env_drop_caches(struct silofs_env *env);
 
 bool silofs_env_hasflag(const struct silofs_env *env, enum silofs_flags f);
 
+bool silofs_env_isrdonlyfs(const struct silofs_env *env);
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_env_sense_mbr(struct silofs_env         *env,

@@ -30,7 +30,7 @@ struct silofs_bcache {
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_bcache_init(struct silofs_bcache *bcache,
-		       struct silofs_alloc  *alloc);
+                       struct silofs_alloc  *alloc);
 
 void silofs_bcache_fini(struct silofs_bcache *bcache);
 
@@ -45,35 +45,35 @@ silofs_bcache_dq_front(const struct silofs_bcache *bcache);
 
 struct silofs_bldesc_info *
 silofs_bcache_lookup_bdi(struct silofs_bcache      *bcache,
-			 const struct silofs_baddr *baddr);
+                         const struct silofs_baddr *baddr);
 
 struct silofs_bldesc_info *
 silofs_bcache_create_bdi(struct silofs_bcache      *bcache,
-			 const struct silofs_baddr *baddr);
+                         const struct silofs_baddr *baddr);
 
 void silofs_bcache_evict_bdi(struct silofs_bcache      *bcache,
-			     struct silofs_bldesc_info *bdi);
+                             struct silofs_bldesc_info *bdi);
 
 struct silofs_btnode_info *
 silofs_bcache_lookup_bti(struct silofs_bcache      *bcache,
-			 const struct silofs_baddr *baddr);
+                         const struct silofs_baddr *baddr);
 
 struct silofs_btnode_info *
 silofs_bcache_create_bti(struct silofs_bcache      *bcache,
-			 const struct silofs_baddr *baddr);
+                         const struct silofs_baddr *baddr);
 
 void silofs_bcache_evict_bti(struct silofs_bcache      *bcache,
-			     struct silofs_btnode_info *bti);
+                             struct silofs_btnode_info *bti);
 
 struct silofs_ub_info *
 silofs_bcache_lookup_ubi(struct silofs_bcache      *bcache,
-			 const struct silofs_baddr *baddr);
+                         const struct silofs_baddr *baddr);
 
 struct silofs_ub_info *
 silofs_bcache_create_ubi(struct silofs_bcache      *bcache,
-			 const struct silofs_baddr *baddr);
+                         const struct silofs_baddr *baddr);
 
 void silofs_bcache_evict_ubi(struct silofs_bcache  *bcache,
-			     struct silofs_ub_info *ubi);
+                             struct silofs_ub_info *ubi);
 
 #endif /* SILOFS_BCACHE_H_ */

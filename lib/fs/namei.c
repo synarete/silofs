@@ -574,9 +574,9 @@ int silofs_do_access(const struct silofs_task_ctx *task,
 	return err;
 }
 
-static int check_on_writable_fs(const struct silofs_inode_info *ii)
+static int check_on_writable_fs(const struct silofs_task_ctx *task)
 {
-	return silof_sbi_check_mut_fs(silofs_ii_sbi(ii));
+	return silofs_env_isrdonlyfs(task->t_env) ? -SILOFS_ERDONLY : 0;
 }
 
 static int
@@ -602,7 +602,7 @@ static int check_dir_waccess(const struct silofs_task_ctx *task,
 {
 	int err;
 
-	err = check_on_writable_fs(ii);
+	err = check_on_writable_fs(task);
 	if (err) {
 		return err;
 	}
@@ -811,7 +811,7 @@ check_create(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
 {
 	int err;
 
-	err = check_on_writable_fs(dir_ii);
+	err = check_on_writable_fs(task);
 	if (err) {
 		return err;
 	}
@@ -1524,7 +1524,7 @@ static int check_rmdir_child(const struct silofs_task_ctx *task,
 {
 	int err;
 
-	err = check_on_writable_fs(parent_ii);
+	err = check_on_writable_fs(task);
 	if (err) {
 		return err;
 	}
@@ -2171,17 +2171,18 @@ static int rename_specific(struct silofs_task_ctx *task,
 	return err;
 }
 
-static int check_rename_exchange(const struct silofs_dentry_ref *cur_dref,
+static int check_rename_exchange(const struct silofs_task_ctx *task,
+                                 const struct silofs_dentry_ref *cur_dref,
                                  const struct silofs_dentry_ref *new_dref)
 {
-	int err;
 	const struct silofs_inode_info *ii = cur_dref->ii;
 	const struct silofs_inode_info *old_ii = new_dref->ii;
+	int err;
 
 	if (ii == nullptr) {
 		return -SILOFS_EINVAL;
 	}
-	err = check_on_writable_fs(ii);
+	err = check_on_writable_fs(task);
 	if (err) {
 		return err;
 	}
@@ -2200,10 +2201,10 @@ static int check_rename(const struct silofs_task_ctx *task,
                         const struct silofs_dentry_ref *cur_dref,
                         const struct silofs_dentry_ref *new_dref, int flags)
 {
-	int err = 0;
 	const struct silofs_inode_info *ii = cur_dref->ii;
 	const struct silofs_inode_info *old_ii = new_dref->ii;
 	const bool old_exists = (old_ii != nullptr);
+	int err = 0;
 
 	if (flags & RENAME_WHITEOUT) {
 		return -SILOFS_EINVAL;
@@ -2218,13 +2219,15 @@ static int check_rename(const struct silofs_task_ctx *task,
 		return -SILOFS_ENOENT;
 	}
 	if (flags & RENAME_EXCHANGE) {
-		return check_rename_exchange(cur_dref, new_dref);
+		return check_rename_exchange(task, cur_dref, new_dref);
 	}
 	if (old_exists && silofs_ii_isdir(old_ii) && (old_ii != ii)) {
-		err = (ii == nullptr) ?
-		              check_nomlink(new_dref->dir_ii) :
-		              check_rmdir_child(task, cur_dref->dir_ii,
-		                                old_ii);
+		if (ii == nullptr) {
+			err = check_nomlink(new_dref->dir_ii);
+		} else {
+			err = check_rmdir_child(task, cur_dref->dir_ii,
+			                        old_ii);
+		}
 	}
 	return err;
 }
@@ -2590,11 +2593,11 @@ static int check_clone(const struct silofs_task_ctx *task,
 {
 	int err;
 
-	err = check_isdir(ii);
+	err = check_on_writable_fs(task);
 	if (err) {
 		return err;
 	}
-	err = check_on_writable_fs(ii);
+	err = check_isdir(ii);
 	if (err) {
 		return err;
 	}

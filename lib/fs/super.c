@@ -543,25 +543,8 @@ bool silofs_sbi_test_flags(const struct silofs_sb_info *sbi,
 
 int silof_sbi_check_mut_fs(const struct silofs_sb_info *sbi)
 {
-	const struct silofs_env *env = silofs_sbi_env(sbi);
-	const unsigned long ms_mask = MS_RDONLY;
-
-	if ((env->ms_flags & ms_mask) == ms_mask) {
-		return -SILOFS_EROFS;
-	}
 	if (silofs_sb_test_flags(sbi->sb, SILOFS_SUPERF_FOSSIL)) {
 		return -SILOFS_EROFS;
-	}
-	return 0;
-}
-
-int silofs_sbi_shut(struct silofs_sb_info *sbi)
-{
-	const struct silofs_env *env = nullptr;
-
-	if (sbi != nullptr) {
-		env = silofs_sbi_env(sbi);
-		log_dbg("shut-super: op_count=%lu", env->opstat.op_count);
 	}
 	return 0;
 }
@@ -878,11 +861,6 @@ int silofs_test_shared_dbkref(struct silofs_task_ctx *task,
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-struct silofs_env *silofs_sbi_env(const struct silofs_sb_info *sbi)
-{
-	return sbi->sb_uni.un_lni.ln_env;
-}
 
 const struct silofs_uaddr *silofs_sbi_uaddr(const struct silofs_sb_info *sbi)
 {

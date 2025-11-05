@@ -2682,17 +2682,25 @@ static int do_resolve_stage_vnode(struct silofs_task_ctx *task,
 	return err;
 }
 
+static int check_stage_mode(const struct silofs_task_ctx *task,
+                            enum silofs_stg_mode stg_mode)
+{
+	return ((stg_mode & SILOFS_STG_COW) && //
+	        (silofs_env_isrdonlyfs(task->t_env))) ?
+	               -SILOFS_EROFS :
+	               0;
+}
+
 static int check_stage_vnode(const struct silofs_task_ctx *task,
                              const struct silofs_vaddr *vaddr,
                              enum silofs_stg_mode stg_mode)
 {
-	if (silofs_vaddr_isnull(vaddr)) {
-		return -SILOFS_ENOENT;
+	int err = -SILOFS_ENOENT;
+
+	if (!silofs_vaddr_isnull(vaddr)) {
+		err = check_stage_mode(task, stg_mode);
 	}
-	if ((stg_mode & SILOFS_STG_COW) == 0) {
-		return 0;
-	}
-	return silof_sbi_check_mut_fs(silofs_get_sbi(task));
+	return err;
 }
 
 static int
@@ -2783,13 +2791,12 @@ static int resolve_iaddr(ino_t ino, struct silofs_vaddr *out_vaddr)
 static int check_stage_inode(const struct silofs_task_ctx *task, ino_t ino,
                              enum silofs_stg_mode stg_mode)
 {
-	if (silofs_ino_isnull(ino)) {
-		return -SILOFS_ENOENT;
+	int err = -SILOFS_ENOENT;
+
+	if (!silofs_ino_isnull(ino)) {
+		err = check_stage_mode(task, stg_mode);
 	}
-	if ((stg_mode & SILOFS_STG_COW) == 0) {
-		return 0;
-	}
-	return silof_sbi_check_mut_fs(silofs_get_sbi(task));
+	return err;
 }
 
 static int resolve_stable_iaddr(struct silofs_task_ctx *task, ino_t ino,

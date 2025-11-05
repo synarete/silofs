@@ -225,16 +225,15 @@ static int delfc_visit_post_hook(struct silofs_visitor *vis,
 }
 
 static void
-delfc_init(struct silofs_delfs_ctx *delf_ctx, const struct silofs_sb_info *sbi)
+delfc_init(struct silofs_delfs_ctx *delf_ctx, struct silofs_task_ctx *task,
+           const struct silofs_sb_info *sbi)
 {
-	const struct silofs_uaddr *uaddr = silofs_sbi_uaddr(sbi);
-
 	silofs_memzero(delf_ctx, sizeof(*delf_ctx));
 	delf_ctx->vis.exec_hook = delfc_visit_exec_hook;
 	delf_ctx->vis.post_hook = delfc_visit_post_hook;
-	delf_ctx->env = silofs_sbi_env(sbi);
-	delf_ctx->repo = delf_ctx->env->base.repo;
-	silofs_uaddr_assign(&delf_ctx->sb_uaddr, uaddr);
+	delf_ctx->env = task->t_env;
+	delf_ctx->repo = task->t_env->base.repo;
+	silofs_uaddr_assign(&delf_ctx->sb_uaddr, silofs_sbi_uaddr(sbi));
 }
 
 static void delfc_fini(struct silofs_delfs_ctx *delf_ctx)
@@ -257,7 +256,7 @@ int silofs_unrefs_at(struct silofs_task_ctx *task, struct silofs_sb_info *sbi)
 	struct silofs_delfs_ctx delf_ctx;
 	int err;
 
-	delfc_init(&delf_ctx, sbi);
+	delfc_init(&delf_ctx, task, sbi);
 	err = silofs_visit_sptree(task, sbi, &delf_ctx.vis);
 	if (!err) {
 		err = delfc_remove_super(&delf_ctx);

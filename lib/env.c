@@ -308,6 +308,20 @@ bool silofs_env_hasflag(const struct silofs_env *env, enum silofs_flags f)
 	return (env->base.args->flags & f) == f;
 }
 
+bool silofs_env_isrdonlyfs(const struct silofs_env *env)
+{
+	bool ret = false;
+
+	if (silofs_env_hasflag(env, SILOFS_F_RDONLY)) {
+		ret = true;
+	} else if (env->ms_flags & MS_RDONLY) {
+		ret = true;
+	} else if (silofs_sbi_test_flags(env->sbi, SILOFS_SUPERF_FOSSIL)) {
+		ret = true;
+	}
+	return ret;
+}
+
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static void make_uber_addr(struct silofs_baddr *out_baddr)
@@ -487,12 +501,7 @@ void silofs_env_drop_caches(struct silofs_env *env)
 
 static int env_shut_sb(struct silofs_env *env)
 {
-	int err;
-
-	err = silofs_sbi_shut(env->sbi);
-	if (err) {
-		return err;
-	}
+	log_dbg("shut-sb: op_count=%lu", env->opstat.op_count);
 	env_rebind_sbi(env, nullptr);
 	return 0;
 }

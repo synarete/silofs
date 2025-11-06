@@ -19,8 +19,8 @@
 
 #include "infra.h"
 #include "addr.h"
+#include "nodes.h"
 #include "bs/repo.h"
-#include "bs/bnode.h"
 #include "bs/bldesc.h"
 #include "bs/btnode.h"
 #include "bs/bcache.h"

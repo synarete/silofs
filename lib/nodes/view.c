@@ -32,9 +32,9 @@ static size_t view_len(enum silofs_mtype mtype)
 }
 
 static struct silofs_view *
-view_malloc(struct silofs_alloc *alloc, enum silofs_mtype mtype)
+view_malloc(struct silofs_alloc *alloc, enum silofs_mtype mtype, int flags)
 {
-	return silofs_memalloc(alloc, view_len(mtype), 0);
+	return silofs_memalloc(alloc, view_len(mtype), flags);
 }
 
 static void view_free(struct silofs_view *view, struct silofs_alloc *alloc,
@@ -73,11 +73,11 @@ static void view_fini(struct silofs_view *view, enum silofs_mtype mtype)
 }
 
 struct silofs_view *
-silofs_view_new(struct silofs_alloc *alloc, enum silofs_mtype mtype)
+silofs_view_new(struct silofs_alloc *alloc, enum silofs_mtype mtype, int flags)
 {
 	struct silofs_view *view = nullptr;
 
-	view = view_malloc(alloc, mtype);
+	view = view_malloc(alloc, mtype, flags);
 	if (view != nullptr) {
 		view_init(view, mtype);
 	}

@@ -17,16 +17,7 @@
 #ifndef SILOFS_UBER_H_
 #define SILOFS_UBER_H_
 
-#include "bnode.h"
-
-/* uber-block in-memory state */
-struct silofs_ub_info {
-	struct silofs_bnode_info  ub_bni;
-	struct silofs_uber_block *ub;
-};
-
-struct silofs_ub_info *
-silofs_ubi_from_bni(const struct silofs_bnode_info *bni);
+#include "nodes.h"
 
 struct silofs_ub_info *
 silofs_ubi_new(const struct silofs_baddr *baddr, struct silofs_alloc *alloc);

@@ -19,17 +19,9 @@
 
 #include "infra.h"
 #include "addr.h"
-#include "bnode.h"
+#include "nodes.h"
 
-/* btree-node */
-struct silofs_btnode_info {
-	struct silofs_bnode_info  btn_bni;
-	struct silofs_btree_node *btn;
-	bool                      btn_rdonly;
-};
-
-struct silofs_btnode_info *
-silofs_bti_from_bni(const struct silofs_bnode_info *bni);
+#define SILOFS_BTREE_KEY_NULL (0)
 
 struct silofs_btnode_info *
 silofs_bti_new(const struct silofs_baddr *baddr, struct silofs_alloc *alloc);

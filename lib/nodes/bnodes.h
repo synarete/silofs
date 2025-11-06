@@ -14,14 +14,14 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_BNODE_H_
-#define SILOFS_BNODE_H_
+#ifndef SILOFS_BNODES_H_
+#define SILOFS_BNODES_H_
 
 #include "addr.h"
 #include "crypt.h"
-#include "nodes.h"
-
-#define SILOFS_BTREE_KEY_NULL (0)
+#include "dirtyq.h"
+#include "hmapq.h"
+#include "view.h"
 
 /* base of all blob-store nodes */
 struct silofs_bnode_info {
@@ -29,6 +29,25 @@ struct silofs_bnode_info {
 	struct silofs_baddr      bn_baddr;
 	struct silofs_hmapq_elem bn_hmqe;
 	struct silofs_view      *bn_view;
+};
+
+/* uber-block in-memory state */
+struct silofs_ub_info {
+	struct silofs_bnode_info  ub_bni;
+	struct silofs_uber_block *ub;
+};
+
+/* blob-descriptor node */
+struct silofs_bldesc_info {
+	struct silofs_bnode_info bd_bni;
+	struct silofs_blob_desc *bd;
+};
+
+/* btree-node */
+struct silofs_btnode_info {
+	struct silofs_bnode_info  btn_bni;
+	struct silofs_btree_node *btn;
+	bool                      btn_rdonly;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -55,4 +74,21 @@ void silofs_bni_setup_ivkey(struct silofs_bnode_info    *bni,
                             const struct silofs_mdigest *md,
                             const struct silofs_key     *key);
 
-#endif /* SILOFS_BNODE_H_ */
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+struct silofs_ub_info *
+silofs_ubi_from_bni(const struct silofs_bnode_info *bni);
+
+struct silofs_bldesc_info *
+silofs_bdi_from_bni(const struct silofs_bnode_info *bni);
+
+struct silofs_btnode_info *
+silofs_bti_from_bni(const struct silofs_bnode_info *bni);
+
+struct silofs_bnode_info *
+silofs_new_bnode(const struct silofs_baddr *baddr, struct silofs_alloc *alloc);
+
+void silofs_del_bnode(struct silofs_bnode_info *bni,
+                      struct silofs_alloc      *alloc);
+
+#endif /* SILOFS_BNODES_H_ */

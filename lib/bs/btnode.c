@@ -569,25 +569,3 @@ bool silofs_bti_isfull(const struct silofs_btnode_info *bti)
 {
 	return btn_nkeys(bti->btn) == btn_nkeys_max(bti->btn);
 }
-
-static struct silofs_btnode_info *
-bti_unconst(const struct silofs_btnode_info *p)
-{
-	union {
-		const struct silofs_btnode_info *p;
-		struct silofs_btnode_info *q;
-	} u = { .p = p };
-
-	return u.q;
-}
-
-struct silofs_btnode_info *
-silofs_bti_from_bni(const struct silofs_bnode_info *bni)
-{
-	const struct silofs_btnode_info *bti = nullptr;
-
-	if (bni != nullptr) {
-		bti = container_of2(bni, struct silofs_btnode_info, btn_bni);
-	}
-	return bti_unconst(bti);
-}

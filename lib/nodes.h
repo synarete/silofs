@@ -23,5 +23,6 @@
 #include "nodes/dirtyq.h"
 #include "nodes/hmapq.h"
 #include "nodes/view.h"
+#include "nodes/bnodes.h"
 
 #endif /* SILOFS_CACHE_H_ */

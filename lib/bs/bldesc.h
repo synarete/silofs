@@ -19,16 +19,7 @@
 
 #include "infra.h"
 #include "addr.h"
-#include "bnode.h"
-
-/* blob-descriptor node */
-struct silofs_bldesc_info {
-	struct silofs_bnode_info bd_bni;
-	struct silofs_blob_desc *bd;
-};
-
-struct silofs_bldesc_info *
-silofs_bdi_from_bni(const struct silofs_bnode_info *bni);
+#include "nodes.h"
 
 struct silofs_bldesc_info *
 silofs_bdi_new(const struct silofs_baddr *baddr, struct silofs_alloc *alloc);

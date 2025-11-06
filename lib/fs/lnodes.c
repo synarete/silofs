@@ -34,13 +34,13 @@ verify_view_by(const struct silofs_view *view, const enum silofs_mtype mtype);
 static struct silofs_view *
 view_new_by_uaddr(struct silofs_alloc *alloc, const struct silofs_uaddr *uaddr)
 {
-	return silofs_view_new(alloc, silofs_uaddr_mtype(uaddr));
+	return silofs_view_new(alloc, silofs_uaddr_mtype(uaddr), 0);
 }
 
 static struct silofs_view *
 view_new_by_vaddr(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 {
-	return silofs_view_new(alloc, vaddr->mtype);
+	return silofs_view_new(alloc, vaddr->mtype, 0);
 }
 
 static void

@@ -428,28 +428,6 @@ void silofs_bdi_undirtify(struct silofs_bldesc_info *bdi)
 	silofs_bni_undirtify(&bdi->bd_bni);
 }
 
-static struct silofs_bldesc_info *
-bdi_unconst(const struct silofs_bldesc_info *p)
-{
-	union {
-		const struct silofs_bldesc_info *p;
-		struct silofs_bldesc_info *q;
-	} u = { .p = p };
-
-	return u.q;
-}
-
-struct silofs_bldesc_info *
-silofs_bdi_from_bni(const struct silofs_bnode_info *bni)
-{
-	const struct silofs_bldesc_info *bdi = nullptr;
-
-	if (bni != nullptr) {
-		bdi = container_of2(bni, struct silofs_bldesc_info, bd_bni);
-	}
-	return bdi_unconst(bdi);
-}
-
 void silofs_bdi_set_dq(struct silofs_bldesc_info *bdi,
                        struct silofs_dirtyq *dq)
 {

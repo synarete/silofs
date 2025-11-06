@@ -364,7 +364,7 @@ int silofs_exec_lookup(struct silofs_task_ctx *task, ino_t parent,
 	err = op_stage_cur_inode(task, parent, &dir_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_make_namestr_by(&nstr, dir_ii, name);
+	err = silofs_make_linkname(task, dir_ii, name, &nstr);
 	ok_or_goto_out(err);
 
 	err = silofs_do_lookup(task, dir_ii, &nstr, &ii);
@@ -450,7 +450,7 @@ int silofs_exec_mkdir(struct silofs_task_ctx *task, ino_t parent,
 	err = op_stage_mut_inode(task, parent, nullptr, &dir_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_make_namestr_by(&nstr, dir_ii, name);
+	err = silofs_make_linkname(task, dir_ii, name, &nstr);
 	ok_or_goto_out(err);
 
 	err = op_try_flush(task, dir_ii);
@@ -487,7 +487,7 @@ int silofs_exec_rmdir(struct silofs_task_ctx *task, ino_t parent,
 	err = op_stage_mut_inode(task, parent, nullptr, &dir_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_make_namestr_by(&nstr, dir_ii, name);
+	err = silofs_make_linkname(task, dir_ii, name, &nstr);
 	ok_or_goto_out(err);
 
 	err = silofs_do_rmdir(task, dir_ii, &nstr);
@@ -518,7 +518,7 @@ int silofs_exec_symlink(struct silofs_task_ctx *task, ino_t parent,
 	err = op_stage_mut_inode(task, parent, nullptr, &dir_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_make_namestr_by(&nstr, dir_ii, name);
+	err = silofs_make_linkname(task, dir_ii, name, &nstr);
 	ok_or_goto_out(err);
 
 	err = symval_to_str(symval, &value);
@@ -582,7 +582,7 @@ int silofs_exec_unlink(struct silofs_task_ctx *task, ino_t parent,
 	err = op_stage_mut_inode(task, parent, nullptr, &dir_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_make_namestr_by(&nstr, dir_ii, name);
+	err = silofs_make_linkname(task, dir_ii, name, &nstr);
 	ok_or_goto_out(err);
 
 	err = silofs_do_unlink(task, dir_ii, &nstr);
@@ -614,7 +614,7 @@ int silofs_exec_link(struct silofs_task_ctx *task, ino_t ino, ino_t parent,
 	err = op_stage_mut_inode(task, ino, dir_ii, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_make_namestr_by(&nstr, dir_ii, name);
+	err = silofs_make_linkname(task, dir_ii, name, &nstr);
 	ok_or_goto_out(err);
 
 	err = silofs_do_link(task, dir_ii, &nstr, ii);
@@ -935,7 +935,7 @@ int silofs_exec_create(struct silofs_task_ctx *task, ino_t parent,
 	err = op_stage_mut_inode(task, parent, nullptr, &dir_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_make_namestr_by(&nstr, dir_ii, name);
+	err = silofs_make_linkname(task, dir_ii, name, &nstr);
 	ok_or_goto_out(err);
 
 	err = op_try_flush(task, dir_ii);
@@ -999,7 +999,7 @@ int silofs_exec_mknod(struct silofs_task_ctx *task, ino_t parent,
 	err = op_stage_mut_inode(task, parent, nullptr, &dir_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_make_namestr_by(&nstr, dir_ii, name);
+	err = silofs_make_linkname(task, dir_ii, name, &nstr);
 	ok_or_goto_out(err);
 
 	err = op_try_flush(task, dir_ii);
@@ -1115,10 +1115,10 @@ int silofs_exec_rename(struct silofs_task_ctx *task, ino_t parent_ino,
 	err = op_stage_mut_inode(task, newparent_ino, curd_ii, &newd_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_make_namestr_by(&nstr, curd_ii, name);
+	err = silofs_make_linkname(task, curd_ii, name, &nstr);
 	ok_or_goto_out(err);
 
-	err = silofs_make_namestr_by(&newnstr, newd_ii, newname);
+	err = silofs_make_linkname(task, newd_ii, newname, &newnstr);
 	ok_or_goto_out(err);
 
 	err = silofs_do_rename(task, curd_ii, &nstr, newd_ii, &newnstr, flags);
@@ -1336,7 +1336,7 @@ int silofs_exec_setxattr(struct silofs_task_ctx *task, ino_t ino,
 	err = op_try_flush(task, ii);
 	ok_or_goto_out(err);
 
-	err = silofs_make_namestr_by(&nstr, ii, name);
+	err = silofs_make_xattrname(task, ii, name, &nstr);
 	ok_or_goto_out(err);
 
 	err = silofs_do_setxattr(task, ii, &nstr, value, size, flags,
@@ -1366,7 +1366,7 @@ int silofs_exec_getxattr(struct silofs_task_ctx *task, ino_t ino,
 	err = op_stage_cur_inode(task, ino, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_make_namestr_by(&nstr, ii, name);
+	err = silofs_make_xattrname(task, ii, name, &nstr);
 	ok_or_goto_out(err);
 
 	err = silofs_do_getxattr(task, ii, &nstr, buf, size, out_size);
@@ -1418,7 +1418,7 @@ int silofs_exec_removexattr(struct silofs_task_ctx *task, ino_t ino,
 	err = op_stage_mut_inode(task, ino, nullptr, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_make_namestr_by(&nstr, ii, name);
+	err = silofs_make_xattrname(task, ii, name, &nstr);
 	ok_or_goto_out(err);
 
 	err = silofs_do_removexattr(task, ii, &nstr);

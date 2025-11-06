@@ -1278,6 +1278,14 @@ static int dir_check_utf8_name(const struct silofs_inode_info *dir_ii,
 	return 0;
 }
 
+bool silofs_dir_has_flags(const struct silofs_inode_info *dir_ii,
+                          enum silofs_dirf mask)
+{
+	const enum silofs_dirf flags = silofs_dir_flags(dir_ii);
+
+	return ((flags & mask) == mask);
+}
+
 int silofs_dir_check_name(const struct silofs_inode_info *dir_ii,
                           const struct silofs_namestr *nstr)
 {
@@ -1290,14 +1298,6 @@ int silofs_dir_check_name(const struct silofs_inode_info *dir_ii,
 		return 0;
 	}
 	return dir_check_utf8_name(dir_ii, nstr);
-}
-
-bool silofs_dir_has_flags(const struct silofs_inode_info *dir_ii,
-                          enum silofs_dirf mask)
-{
-	const enum silofs_dirf flags = silofs_dir_flags(dir_ii);
-
-	return ((flags & mask) == mask);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

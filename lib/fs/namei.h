@@ -47,8 +47,13 @@ int silofs_make_hnamestr(struct silofs_namestr       *nstr,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_make_namestr_by(struct silofs_namestr          *nstr,
-                           const struct silofs_inode_info *ii, const char *s);
+int silofs_make_xattrname(struct silofs_task_ctx         *task,
+                          const struct silofs_inode_info *ii, const char *s,
+                          struct silofs_namestr *out_nstr);
+
+int silofs_make_linkname(struct silofs_task_ctx         *task,
+                         const struct silofs_inode_info *dir_ii, const char *s,
+                         struct silofs_namestr *out_nstr);
 
 void silofs_inew_params_of(const struct silofs_task_ctx   *task,
                            const struct silofs_inode_info *parent_dii,
@@ -115,7 +120,7 @@ int silofs_do_lookup(struct silofs_task_ctx      *task,
                      const struct silofs_namestr *name,
                      struct silofs_inode_info   **out_ii);
 
-int silofs_do_opendir(const struct silofs_task_ctx *task,
+int silofs_do_opendir(struct silofs_task_ctx   *task,
                       struct silofs_inode_info *dir_ii, int o_flags);
 
 int silofs_do_releasedir(struct silofs_task_ctx   *task,

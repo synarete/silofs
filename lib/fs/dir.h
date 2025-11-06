@@ -90,14 +90,16 @@ bool silofs_dir_has_flags(const struct silofs_inode_info *dir_ii,
                           enum silofs_dirf                mask);
 
 int silofs_dir_make_hname(const struct silofs_inode_info *dir_ii,
+                          const struct silofs_mdigest    *mdigest,
                           const struct silofs_namestr    *nstr,
                           struct silofs_namestr          *out_nstr);
+
+int silofs_dir_check_name(const struct silofs_inode_info *dir_ii,
+                          const struct silofs_uconv      *uconv,
+                          const struct silofs_namestr    *nstr);
 
 int silofs_verify_dir_inode(const struct silofs_inode *inode);
 
 int silofs_verify_dtree_node(const struct silofs_dtree_node *dtn);
-
-int silofs_dir_check_name(const struct silofs_inode_info *dir_ii,
-                          const struct silofs_namestr    *nstr);
 
 #endif /* SILOFS_DIR_H_ */

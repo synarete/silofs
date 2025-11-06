@@ -1249,18 +1249,10 @@ union silofs_utf32_name_buf {
 	uint64_t n;
 } silofs_attr_aligned64;
 
-static struct silofs_uconv *uconv_by(const struct silofs_inode_info *dir_ii)
-{
-	struct silofs_env *env = silofs_ii_env(dir_ii);
-
-	return &env->uconv;
-}
-
-static int dir_check_utf8_name(const struct silofs_inode_info *dir_ii,
-                               const struct silofs_namestr *nstr)
+static int check_utf8_name(const struct silofs_namestr *nstr,
+                           const struct silofs_uconv *uconv)
 {
 	union silofs_utf32_name_buf unb = { .n = 0 };
-	struct silofs_uconv *uconv = uconv_by(dir_ii);
 	size_t convlen = 0;
 	size_t datlen;
 	int err;
@@ -1277,15 +1269,8 @@ static int dir_check_utf8_name(const struct silofs_inode_info *dir_ii,
 	return 0;
 }
 
-bool silofs_dir_has_flags(const struct silofs_inode_info *dir_ii,
-                          enum silofs_dirf mask)
-{
-	const enum silofs_dirf flags = silofs_dir_flags(dir_ii);
-
-	return ((flags & mask) == mask);
-}
-
 int silofs_dir_check_name(const struct silofs_inode_info *dir_ii,
+                          const struct silofs_uconv *uconv,
                           const struct silofs_namestr *nstr)
 {
 	const size_t namelen_max = silofs_min(SILOFS_NAME_MAX, NAME_MAX);
@@ -1296,29 +1281,26 @@ int silofs_dir_check_name(const struct silofs_inode_info *dir_ii,
 	if (!silofs_dir_has_flags(dir_ii, SILOFS_DIRF_NAME_UTF8)) {
 		return 0;
 	}
-	return dir_check_utf8_name(dir_ii, nstr);
+	return check_utf8_name(nstr, uconv);
 }
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static const struct silofs_mdigest *
-mdigest_of(const struct silofs_inode_info *dii)
+bool silofs_dir_has_flags(const struct silofs_inode_info *dir_ii,
+                          enum silofs_dirf mask)
 {
-	const struct silofs_env *env = silofs_ii_env(dii);
+	const enum silofs_dirf flags = silofs_dir_flags(dir_ii);
 
-	return &env->mdigest;
+	return ((flags & mask) == mask);
 }
 
 int silofs_dir_make_hname(const struct silofs_inode_info *dir_ii,
+                          const struct silofs_mdigest *mdigest,
                           const struct silofs_namestr *nstr,
                           struct silofs_namestr *out_nstr)
 {
-	const struct silofs_strview *sv = &nstr->sv;
-	const struct silofs_mdigest *md = mdigest_of(dir_ii);
 	const enum silofs_namehfn nhfn = dir_hfn(dir_ii);
 	const uint64_t seed = dir_seed(dir_ii);
 
-	return silofs_make_hnamestr(out_nstr, sv, md, nhfn, seed);
+	return silofs_make_hnamestr(out_nstr, &nstr->sv, mdigest, nhfn, seed);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

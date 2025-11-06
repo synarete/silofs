@@ -622,16 +622,22 @@ static int check_dir_waccess(const struct silofs_task_ctx *task,
 	return 0;
 }
 
-static int check_dir_and_name(const struct silofs_inode_info *ii,
+static const struct silofs_uconv *get_uconv(const struct silofs_task_ctx *task)
+{
+	return &task->t_env->uconv;
+}
+
+static int check_dir_and_name(const struct silofs_task_ctx *task,
+                              const struct silofs_inode_info *dir_ii,
                               const struct silofs_namestr *name)
 {
 	int err;
 
-	err = check_isdir(ii);
+	err = check_isdir(dir_ii);
 	if (err) {
 		return err;
 	}
-	err = silofs_dir_check_name(ii, name);
+	err = silofs_dir_check_name(dir_ii, get_uconv(task), name);
 	if (err) {
 		return err;
 	}
@@ -644,7 +650,7 @@ static int check_lookup(const struct silofs_task_ctx *task,
 {
 	int err;
 
-	err = check_dir_and_name(dir_ii, name);
+	err = check_dir_and_name(task, dir_ii, name);
 	if (err) {
 		return err;
 	}
@@ -655,7 +661,14 @@ static int check_lookup(const struct silofs_task_ctx *task,
 	return 0;
 }
 
-static int assign_namehash(const struct silofs_inode_info *dir_ii,
+static const struct silofs_mdigest *
+get_mdigest(const struct silofs_task_ctx *task)
+{
+	return &task->t_env->mdigest;
+}
+
+static int assign_namehash(const struct silofs_task_ctx *task,
+                           const struct silofs_inode_info *dir_ii,
                            const struct silofs_namestr *nstr,
                            struct silofs_namestr *out_nstr)
 {
@@ -665,7 +678,7 @@ static int assign_namehash(const struct silofs_inode_info *dir_ii,
 	if (err) {
 		return err;
 	}
-	err = silofs_dir_make_hname(dir_ii, nstr, out_nstr);
+	err = silofs_dir_make_hname(dir_ii, get_mdigest(task), nstr, out_nstr);
 	if (err) {
 		return err;
 	}
@@ -680,7 +693,7 @@ lookup_by_name(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
 	struct silofs_ino_dt ino_dt;
 	int err;
 
-	err = assign_namehash(dir_ii, nstr, &name);
+	err = assign_namehash(task, dir_ii, nstr, &name);
 	if (err) {
 		return err;
 	}
@@ -770,12 +783,13 @@ check_nodent(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
 	return (err == -SILOFS_ENOENT) ? 0 : err;
 }
 
-static int check_add_dentry(const struct silofs_inode_info *dir_ii,
+static int check_add_dentry(const struct silofs_task_ctx *task,
+                            const struct silofs_inode_info *dir_ii,
                             const struct silofs_namestr *name)
 {
 	int err;
 
-	err = check_dir_and_name(dir_ii, name);
+	err = check_dir_and_name(task, dir_ii, name);
 	if (err) {
 		return err;
 	}
@@ -803,7 +817,7 @@ static int check_dir_can_add(struct silofs_task_ctx *task,
 	if (err) {
 		return err;
 	}
-	err = check_add_dentry(dir_ii, name);
+	err = check_add_dentry(task, dir_ii, name);
 	if (err) {
 		return err;
 	}
@@ -843,7 +857,7 @@ do_add_dentry(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
 	struct silofs_namestr name;
 	int err;
 
-	err = assign_namehash(dir_ii, nstr, &name);
+	err = assign_namehash(task, dir_ii, nstr, &name);
 	if (err) {
 		return err;
 	}
@@ -1296,7 +1310,7 @@ static int remove_dentry_of(struct silofs_task_ctx *task,
 	struct silofs_namestr name;
 	int err;
 
-	err = assign_namehash(dir_ii, nstr, &name);
+	err = assign_namehash(task, dir_ii, nstr, &name);
 	if (err) {
 		return err;
 	}
@@ -1992,9 +2006,10 @@ struct silofs_dentry_ref {
 	struct silofs_inode_info *ii;
 };
 
-static int check_add_dentry_at(const struct silofs_dentry_ref *dref)
+static int check_add_dentry_at(const struct silofs_task_ctx *task,
+                               const struct silofs_dentry_ref *dref)
 {
-	return check_add_dentry(dref->dir_ii, dref->name);
+	return check_add_dentry(task, dref->dir_ii, dref->name);
 }
 
 static int
@@ -2045,7 +2060,7 @@ static int do_rename_move(struct silofs_task_ctx *task,
 	struct silofs_inode_info *ii = cur_dref->ii;
 	int err;
 
-	err = check_add_dentry_at(new_dref);
+	err = check_add_dentry_at(task, new_dref);
 	if (err) {
 		return err;
 	}
@@ -2877,12 +2892,7 @@ int silofs_make_linkname(struct silofs_task_ctx *task,
 	if (err) {
 		return err;
 	}
-	err = silofs_dir_check_name(dir_ii, out_nstr);
-	if (err) {
-		return err;
-	}
-	(void)task;
-	return 0;
+	return check_dir_and_name(task, dir_ii, out_nstr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

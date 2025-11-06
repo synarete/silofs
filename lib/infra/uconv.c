@@ -43,7 +43,7 @@ void silofs_uconv_fini(struct silofs_uconv *uconv)
 	}
 }
 
-int silofs_uconv_convert(struct silofs_uconv *uconv, const char *src,
+int silofs_uconv_convert(const struct silofs_uconv *uconv, const char *src,
                          size_t slen, char *dst, size_t dlen, size_t *out_conv)
 {
 	char *in = silofs_unconst(src);

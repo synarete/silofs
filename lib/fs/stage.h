@@ -21,6 +21,7 @@
 #include "infra.h"
 #include "addr.h"
 
+struct silofs_env;
 struct silofs_task_ctx;
 struct silofs_spnode_info;
 struct silofs_spleaf_info;

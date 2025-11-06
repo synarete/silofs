@@ -28,6 +28,7 @@ struct silofs_bnode_info {
 	struct silofs_ivkey      bn_ivkey;
 	struct silofs_baddr      bn_baddr;
 	struct silofs_hmapq_elem bn_hmqe;
+	struct silofs_view      *bn_view;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

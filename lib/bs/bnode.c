@@ -31,6 +31,7 @@ void silofs_bni_init(struct silofs_bnode_info *bni,
 	silofs_baddr_assign(&bni->bn_baddr, baddr);
 	silofs_hmqe_init(&bni->bn_hmqe, baddr_size(baddr));
 	silofs_hkey_by_baddr(&bni->bn_hmqe.hme_key, &bni->bn_baddr);
+	bni->bn_view = nullptr;
 }
 
 void silofs_bni_fini(struct silofs_bnode_info *bni)
@@ -38,6 +39,7 @@ void silofs_bni_fini(struct silofs_bnode_info *bni)
 	silofs_ivkey_reset(&bni->bn_ivkey);
 	silofs_baddr_fini(&bni->bn_baddr);
 	silofs_hmqe_fini(&bni->bn_hmqe);
+	bni->bn_view = nullptr;
 }
 
 enum silofs_mtype silofs_bni_mtype(const struct silofs_bnode_info *bni)

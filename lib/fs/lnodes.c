@@ -31,78 +31,30 @@ verify_view_by(const struct silofs_view *view, const enum silofs_mtype mtype);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void view_init_by(struct silofs_view *view, enum silofs_mtype mtype)
-{
-	size_t size;
-
-	if (!silofs_mtype_isdata(mtype)) {
-		size = silofs_mtype_size(mtype);
-		silofs_memzero(view, size);
-		silofs_hdr_setup(&view->u.hdr[0], (uint16_t)mtype, size);
-	}
-}
-
-static struct silofs_view *
-view_new_by(struct silofs_alloc *alloc, enum silofs_mtype mtype)
-{
-	struct silofs_view *view = nullptr;
-	int flags = silofs_mtype_issuper(mtype) ? SILOFS_ALLOCF_BZERO : 0;
-
-	view = silofs_memalloc(alloc, silofs_mtype_size(mtype), flags);
-	if (view != nullptr) {
-		view_init_by(view, mtype);
-	}
-	return view;
-}
-
 static struct silofs_view *
 view_new_by_uaddr(struct silofs_alloc *alloc, const struct silofs_uaddr *uaddr)
 {
-	return view_new_by(alloc, silofs_uaddr_mtype(uaddr));
+	return silofs_view_new(alloc, silofs_uaddr_mtype(uaddr));
 }
 
 static struct silofs_view *
 view_new_by_vaddr(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 {
-	return view_new_by(alloc, vaddr->mtype);
-}
-
-static void view_del(struct silofs_view *view, enum silofs_mtype mtype,
-                     struct silofs_alloc *alloc, int flags)
-{
-	const size_t size = silofs_mtype_size(mtype);
-	size_t nz;
-
-	if (silofs_mtype_issuper(mtype)) {
-		flags |= SILOFS_ALLOCF_TRYPUNCH;
-	}
-	if (!silofs_mtype_isdata(mtype)) {
-		nz = silofs_min(size, sizeof(struct silofs_header));
-		silofs_memzero(view, nz);
-	}
-	silofs_memfree(alloc, view, size, flags);
-}
-
-static void view_del_by(struct silofs_view *view, enum silofs_mtype mtype,
-                        struct silofs_alloc *alloc, int flags)
-{
-	if (likely(view != nullptr)) {
-		view_del(view, mtype, alloc, flags);
-	}
+	return silofs_view_new(alloc, vaddr->mtype);
 }
 
 static void
 view_del_by_uaddr(struct silofs_view *view, const struct silofs_uaddr *uaddr,
                   struct silofs_alloc *alloc, int flags)
 {
-	view_del_by(view, silofs_uaddr_mtype(uaddr), alloc, flags);
+	silofs_view_del(view, alloc, silofs_uaddr_mtype(uaddr), flags);
 }
 
 static void
 view_del_by_vaddr(struct silofs_view *view, const struct silofs_vaddr *vaddr,
                   struct silofs_alloc *alloc, int flags)
 {
-	view_del_by(view, vaddr->mtype, alloc, flags);
+	silofs_view_del(view, alloc, vaddr->mtype, flags);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

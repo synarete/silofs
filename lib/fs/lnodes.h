@@ -37,7 +37,6 @@ struct silofs_lnode_info {
 	struct silofs_hmapq_elem  ln_hmqe;
 	struct silofs_avl_node    ln_ds_avl_node;
 	struct silofs_lnode_info *ln_ds_next;
-	struct silofs_env        *ln_env;
 	struct silofs_view       *ln_view;
 	enum silofs_lnflags       ln_flags;
 	enum silofs_mtype         ln_mtype;

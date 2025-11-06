@@ -21,6 +21,14 @@
 #include "addr.h"
 #include "crypt.h"
 
+struct silofs_view *
+silofs_view_new(struct silofs_alloc *alloc, enum silofs_mtype mtype);
+
+void silofs_view_del(struct silofs_view *view, struct silofs_alloc *alloc,
+                     enum silofs_mtype mtype, int flags);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 int silofs_encrypt_view(const struct silofs_cipher *cipher,
                         const struct silofs_ivkey  *ivkey,
                         const struct silofs_view   *view,

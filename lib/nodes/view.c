@@ -21,10 +21,79 @@
 #include "crypt.h"
 #include "view.h"
 
+static bool view_isdata(enum silofs_mtype mtype)
+{
+	return silofs_mtype_isdata(mtype);
+}
+
 static size_t view_len(enum silofs_mtype mtype)
 {
 	return silofs_mtype_size(mtype);
 }
+
+static struct silofs_view *
+view_malloc(struct silofs_alloc *alloc, enum silofs_mtype mtype)
+{
+	return silofs_memalloc(alloc, view_len(mtype), 0);
+}
+
+static void view_free(struct silofs_view *view, struct silofs_alloc *alloc,
+                      enum silofs_mtype mtype, int flags)
+{
+	silofs_memfree(alloc, view, view_len(mtype), flags);
+}
+
+static void view_init_meta(struct silofs_view *view, enum silofs_mtype mtype)
+{
+	const size_t size = view_len(mtype);
+
+	memset(view, 0, size);
+	silofs_hdr_setup(&view->u.hdr[0], (uint16_t)mtype, size);
+}
+
+static void view_init(struct silofs_view *view, enum silofs_mtype mtype)
+{
+	if (!view_isdata(mtype)) {
+		view_init_meta(view, mtype);
+	}
+}
+
+static void view_fini_meta(struct silofs_view *view, enum silofs_mtype mtype)
+{
+	const size_t nz = silofs_min(view_len(mtype), sizeof(view->u.hdr[0]));
+
+	memset(view, 0, nz);
+}
+
+static void view_fini(struct silofs_view *view, enum silofs_mtype mtype)
+{
+	if (!view_isdata(mtype)) {
+		view_fini_meta(view, mtype);
+	}
+}
+
+struct silofs_view *
+silofs_view_new(struct silofs_alloc *alloc, enum silofs_mtype mtype)
+{
+	struct silofs_view *view = nullptr;
+
+	view = view_malloc(alloc, mtype);
+	if (view != nullptr) {
+		view_init(view, mtype);
+	}
+	return view;
+}
+
+void silofs_view_del(struct silofs_view *view, struct silofs_alloc *alloc,
+                     enum silofs_mtype mtype, int flags)
+{
+	if (likely(view != nullptr)) {
+		view_fini(view, mtype);
+		view_free(view, alloc, mtype, flags);
+	}
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_encrypt_view(const struct silofs_cipher *cipher,
                         const struct silofs_ivkey *ivkey,

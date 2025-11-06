@@ -41,6 +41,7 @@
 #include "infra/socket.h"
 #include "infra/times.h"
 #include "infra/qalloc.h"
+#include "infra/uconv.h"
 #include "infra/zcmpr.h"
 
 #ifdef SILOFS_USE_PRIVATE

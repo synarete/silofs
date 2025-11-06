@@ -1249,29 +1249,28 @@ union silofs_utf32_name_buf {
 	uint64_t n;
 } silofs_attr_aligned64;
 
-static iconv_t iconv_by(const struct silofs_inode_info *dir_ii)
+static struct silofs_uconv *uconv_by(const struct silofs_inode_info *dir_ii)
 {
-	const struct silofs_env *env = silofs_ii_env(dir_ii);
+	struct silofs_env *env = silofs_ii_env(dir_ii);
 
-	return env->iconv;
+	return &env->uconv;
 }
 
 static int dir_check_utf8_name(const struct silofs_inode_info *dir_ii,
                                const struct silofs_namestr *nstr)
 {
 	union silofs_utf32_name_buf unb = { .n = 0 };
-	char *in = unconst(nstr->sv.str);
-	char *out = unb.dat;
-	size_t len = nstr->sv.len;
-	size_t outlen = sizeof(unb.dat);
+	struct silofs_uconv *uconv = uconv_by(dir_ii);
+	size_t convlen = 0;
 	size_t datlen;
-	size_t ret;
+	int err;
 
-	ret = iconv(iconv_by(dir_ii), &in, &len, &out, &outlen);
-	if ((ret != 0) || len || (outlen % 4)) {
-		return errno ? -errno : -SILOFS_EINVAL;
+	err = silofs_uconv_convert(uconv, nstr->sv.str, nstr->sv.len, unb.dat,
+	                           sizeof(unb.dat), &convlen);
+	if (err) {
+		return err;
 	}
-	datlen = sizeof(unb.dat) - outlen;
+	datlen = sizeof(unb.dat) - convlen;
 	if (datlen == 0) {
 		return -SILOFS_EINVAL;
 	}

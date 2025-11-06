@@ -217,23 +217,14 @@ out_err:
 	return err;
 }
 
-static int env_init_iconv(struct silofs_env *env)
+static int env_init_uconv(struct silofs_env *env)
 {
-	/* Using UTF32LE to avoid BOM (byte-order-mark) character */
-	env->iconv = iconv_open("UTF32LE", "UTF8");
-	if (env->iconv == (iconv_t)(-1)) { // NOLINT
-		return errno ? -errno : -SILOFS_EOPNOTSUPP;
-	}
-	env->iconv_set = true;
-	return 0;
+	return silofs_uconv_init(&env->uconv);
 }
 
-static void env_fini_iconv(struct silofs_env *env)
+static void env_fini_uconv(struct silofs_env *env)
 {
-	if (env->iconv_set) {
-		iconv_close(env->iconv);
-		env->iconv_set = false;
-	}
+	silofs_uconv_fini(&env->uconv);
 }
 
 int silofs_env_init(struct silofs_env *env, const struct silofs_env_base *base)
@@ -259,7 +250,7 @@ int silofs_env_init(struct silofs_env *env, const struct silofs_env_base *base)
 	if (err) {
 		goto out_err;
 	}
-	err = env_init_iconv(env);
+	err = env_init_uconv(env);
 	if (err) {
 		goto out_err;
 	}
@@ -272,7 +263,7 @@ out_err:
 void silofs_env_fini(struct silofs_env *env)
 {
 	env_bind_sbi(env, nullptr);
-	env_fini_iconv(env);
+	env_fini_uconv(env);
 	env_fini_crypto(env);
 	env_fini_locks(env);
 	env_fini_mbri(env);

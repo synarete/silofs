@@ -17,7 +17,6 @@
 #ifndef SILOFS_ENV_H_
 #define SILOFS_ENV_H_
 
-#include <iconv.h>
 #include <silofs/appexec.h>
 #include "infra.h"
 #include "crypt.h"
@@ -63,8 +62,8 @@ struct silofs_env {
 	struct silofs_ub_info   *ubi;
 	struct silofs_sb_info   *sbi;
 	struct silofs_cred       owner_cred;
+	struct silofs_uconv      uconv;
 	unsigned long            ms_flags;
-	iconv_t                  iconv;
 	time_t                   init_time;
 	bool                     iconv_set;
 };

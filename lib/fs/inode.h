@@ -48,10 +48,10 @@ enum silofs_iattr_flags {
 	SILOFS_IATTR_CTIME        = SILOFS_BIT(14),
 	SILOFS_IATTR_NOW          = SILOFS_BIT(15),
 	SILOFS_IATTR_KILL_SUIDGID = SILOFS_IATTR_KILL_SUID |
-				    SILOFS_IATTR_KILL_SGID,
+	                            SILOFS_IATTR_KILL_SGID,
 	SILOFS_IATTR_MCTIME = SILOFS_IATTR_MTIME | SILOFS_IATTR_CTIME,
 	SILOFS_IATTR_TIMES  = SILOFS_IATTR_BTIME | SILOFS_IATTR_ATIME |
-			     SILOFS_IATTR_MTIME | SILOFS_IATTR_CTIME,
+	                     SILOFS_IATTR_MTIME | SILOFS_IATTR_CTIME,
 };
 
 /* extended inode stat */
@@ -137,23 +137,23 @@ bool silofs_ii_isevictable(const struct silofs_inode_info *ii);
 void silofs_ii_fixup_as_rootdir(struct silofs_inode_info *ii);
 
 void silofs_ii_update_iflags(struct silofs_inode_info *ii, int iflags_want,
-			     int iflags_dont);
+                             int iflags_dont);
 
 void silofs_ii_update_iattrs(struct silofs_inode_info  *ii,
-			     const struct silofs_iattr *iattr);
+                             const struct silofs_iattr *iattr);
 
 void silofs_ii_kill_suidgid(struct silofs_inode_info *ii);
 
 void silofs_ii_refresh_atime(struct silofs_inode_info *ii, bool to_volatile);
 
 void silofs_ii_setup_new(struct silofs_inode_info        *ii,
-			 const struct silofs_inew_params *inp, uint64_t gen);
+                         const struct silofs_inew_params *inp, uint64_t gen);
 
 void silofs_ii_stat_of(const struct silofs_inode_info *ii,
-		       uint32_t sx_want_mask, struct silofs_stat *st);
+                       uint32_t sx_want_mask, struct silofs_stat *st);
 
 void silofs_ii_mkiattr(const struct silofs_inode_info *ii,
-		       struct silofs_iattr            *out_iattr);
+                       struct silofs_iattr            *out_iattr);
 
 void silofs_ii_undirtify_vnis(struct silofs_inode_info *ii);
 
@@ -187,39 +187,39 @@ bool silofs_ii_isdirty(const struct silofs_inode_info *ii);
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_do_getattr(struct silofs_task_ctx   *task,
-		      struct silofs_inode_info *ii,
-		      struct silofs_stat       *out_st);
+                      struct silofs_inode_info *ii,
+                      struct silofs_stat       *out_st);
 
 int silofs_do_statx(struct silofs_task_ctx *task, struct silofs_inode_info *ii,
-		    uint32_t sx_want_mask, struct silofs_stat *out_st);
+                    uint32_t sx_want_mask, struct silofs_stat *out_st);
 
 int silofs_do_chmod(struct silofs_task_ctx *task, struct silofs_inode_info *ii,
-		    mode_t mode, const struct silofs_itimes *itimes);
+                    mode_t mode, const struct silofs_itimes *itimes);
 
 int silofs_do_chown(const struct silofs_task_ctx *task,
-		    struct silofs_inode_info *ii, uid_t uid, gid_t gid,
-		    bool kill_suidgid, const struct silofs_itimes *itimes);
+                    struct silofs_inode_info *ii, uid_t uid, gid_t gid,
+                    bool kill_suidgid, const struct silofs_itimes *itimes);
 
 int silofs_do_utimens(const struct silofs_task_ctx *task,
-		      struct silofs_inode_info     *ii,
-		      const struct silofs_itimes   *itimes);
+                      struct silofs_inode_info     *ii,
+                      const struct silofs_itimes   *itimes);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_update_itimes_of(const struct silofs_task_ctx *task,
-			     struct silofs_inode_info     *ii,
-			     enum silofs_iattr_flags       attr_flags);
+                             struct silofs_inode_info     *ii,
+                             enum silofs_iattr_flags       attr_flags);
 
 void silofs_update_iblocks_of(const struct silofs_task_ctx *task,
-			      struct silofs_inode_info     *ii,
-			      enum silofs_mtype mtype, long dif);
+                              struct silofs_inode_info     *ii,
+                              enum silofs_mtype mtype, long dif);
 
 void silofs_update_iattrs_of(const struct silofs_task_ctx *task,
-			     struct silofs_inode_info     *ii,
-			     const struct silofs_iattr    *iattr);
+                             struct silofs_inode_info     *ii,
+                             const struct silofs_iattr    *iattr);
 
 void silofs_update_isize_of(const struct silofs_task_ctx *task,
-			    struct silofs_inode_info *ii, ssize_t size);
+                            struct silofs_inode_info *ii, ssize_t size);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

@@ -22,31 +22,9 @@
 #include "fs.h"
 #include "env.h"
 
-static void uni_set_env(struct silofs_unode_info *uni, struct silofs_env *env)
-{
-	uni->un_lni.ln_env = env;
-}
-
 static int uni_verify_view(const struct silofs_unode_info *uni)
 {
 	return silofs_lni_verify_view(&uni->un_lni);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static void sbi_set_env(struct silofs_sb_info *sbi, struct silofs_env *env)
-{
-	uni_set_env(&sbi->sb_uni, env);
-}
-
-static void sni_set_env(struct silofs_spnode_info *sni, struct silofs_env *env)
-{
-	uni_set_env(&sni->sn_uni, env);
-}
-
-static void sli_set_env(struct silofs_spleaf_info *sli, struct silofs_env *env)
-{
-	uni_set_env(&sli->sl_uni, env);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -156,12 +134,6 @@ static int fetch_cached_uni(const struct silofs_env *env,
 	return (*out_uni == nullptr) ? -SILOFS_ENOENT : 0;
 }
 
-static void
-bind_spawned_uni(struct silofs_env *env, struct silofs_unode_info *uni)
-{
-	uni->un_lni.ln_env = env;
-}
-
 static int
 create_cached_uni(struct silofs_env *env, const struct silofs_uaddr *uaddr,
                   struct silofs_unode_info **out_uni)
@@ -170,7 +142,6 @@ create_cached_uni(struct silofs_env *env, const struct silofs_uaddr *uaddr,
 	if (*out_uni == nullptr) {
 		return -SILOFS_ENOMEM;
 	}
-	bind_spawned_uni(env, *out_uni);
 	return 0;
 }
 
@@ -326,7 +297,6 @@ require_cached_sbi(struct silofs_env *env, const struct silofs_uaddr *uaddr,
 		return err;
 	}
 	*out_sbi = silofs_sbi_from_uni(uni);
-	sbi_set_env(*out_sbi, env);
 	return 0;
 }
 
@@ -449,7 +419,6 @@ require_cached_sni(struct silofs_env *env, const struct silofs_uaddr *uaddr,
 		return err;
 	}
 	*out_sni = silofs_sni_from_uni(uni);
-	sni_set_env(*out_sni, env);
 	return 0;
 }
 
@@ -570,7 +539,6 @@ require_cached_sli(struct silofs_env *env, const struct silofs_uaddr *uaddr,
 		return err;
 	}
 	*out_sli = silofs_sli_from_uni(uni);
-	sli_set_env(*out_sli, env);
 	return 0;
 }
 

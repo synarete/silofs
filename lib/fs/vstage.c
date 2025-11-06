@@ -108,11 +108,6 @@ static ino_t vaddr_to_ino(const struct silofs_vaddr *vaddr)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void vni_bind_to(struct silofs_vnode_info *vni, struct silofs_env *env)
-{
-	vni->vn_lni.ln_env = env;
-}
-
 static void vni_update_llink(struct silofs_vnode_info *vni,
                              const struct silofs_llink *llink)
 {
@@ -285,7 +280,6 @@ static int vstgc_spawn_vni_at(const struct silofs_vstage_ctx *vstg_ctx,
 	if (err) {
 		return err;
 	}
-	vni_bind_to(*out_vni, vstg_ctx->env);
 	vni_update_llink(*out_vni, llink);
 	return err;
 }

@@ -124,7 +124,6 @@ static void lni_init(struct silofs_lnode_info *lni, enum silofs_mtype mtype,
 	silofs_avl_node_init(&lni->ln_ds_avl_node);
 	lni->ln_mtype = mtype;
 	lni->ln_ds_next = nullptr;
-	lni->ln_env = nullptr;
 	lni->ln_view = view;
 	lni->ln_flags = 0;
 }
@@ -134,7 +133,6 @@ static void lni_fini(struct silofs_lnode_info *lni)
 	silofs_hmqe_fini(&lni->ln_hmqe);
 	silofs_avl_node_fini(&lni->ln_ds_avl_node);
 	lni->ln_ds_next = nullptr;
-	lni->ln_env = nullptr;
 	lni->ln_view = nullptr;
 }
 

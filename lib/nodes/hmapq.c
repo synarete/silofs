@@ -87,18 +87,11 @@ static size_t htbl_calc_nslots(const struct silofs_alloc *alloc, uint8_t fac)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static uint64_t hash_of_blobid(const struct silofs_blobid *blobid)
-{
-	return silofs_blobid_hash64(blobid, 0);
-}
-
 static uint64_t hash_of_baddr(const struct silofs_baddr *baddr)
 {
-	const uint64_t uoff = (uint64_t)baddr->pos;
-	const uint64_t h1 = 0xc6a4a7935bd1e995ULL / (baddr->mtype + 1);
-	const uint64_t h2 = hash_of_blobid(&baddr->blobid);
+	const uint64_t seed = (uint64_t)baddr->pos;
 
-	return uoff ^ h1 ^ h2;
+	return silofs_blobid_hash64(&baddr->blobid, seed);
 }
 
 static uint64_t hash_of_lsid(const struct silofs_lsid *lsid)
@@ -118,9 +111,9 @@ static uint64_t hash_of_uaddr(const struct silofs_uaddr *uaddr)
 
 static uint64_t hash_of_vaddr(const struct silofs_vaddr *vaddr)
 {
-	const uint64_t uoff = (uint64_t)vaddr->off;
+	const uint64_t off = (uint64_t)vaddr->off;
 
-	return (uoff + vaddr->mtype) ^ 0x736f6d6570736575ULL;
+	return silofs_lrotate64(off + vaddr->mtype, 7) ^ 0x736f6d6570736575ULL;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

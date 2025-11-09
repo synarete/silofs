@@ -64,7 +64,7 @@ static bool bni_isevictable(const struct silofs_bnode_info *bni)
 int silofs_bcache_init(struct silofs_bcache *bcache,
                        struct silofs_alloc *alloc)
 {
-	const size_t nslots = silofs_hmapq_nslots_by(alloc, 1);
+	const size_t nslots = 1024; /* TODO: revisit */
 	int err;
 
 	silofs_memzero(bcache, sizeof(*bcache));

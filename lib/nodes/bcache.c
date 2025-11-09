@@ -61,27 +61,100 @@ static bool bni_isevictable(const struct silofs_bnode_info *bni)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
+static int bcache_init_hmapqs(struct silofs_bcache *bcache)
+{
+	struct silofs_alloc *alloc = bcache->bc_alloc;
+	const size_t nslots = 1024; /* TODO: revisit */
+	size_t i = 0, j = 0;
+	int err;
+
+	for (i = 0; i < ARRAY_SIZE(bcache->bc_hmapq); ++i) {
+		err = silofs_hmapq_init(&bcache->bc_hmapq[i], alloc, nslots);
+		if (err) {
+			goto out_err;
+		}
+	}
+	return 0;
+out_err:
+	for (j = 0; j < i; ++j) {
+		silofs_hmapq_fini(&bcache->bc_hmapq[j], alloc);
+	}
+	return err;
+}
+
+static void bcache_fini_hmapqs(struct silofs_bcache *bcache)
+{
+	struct silofs_alloc *alloc = bcache->bc_alloc;
+
+	for (size_t i = 0; i < ARRAY_SIZE(bcache->bc_hmapq); ++i) {
+		silofs_hmapq_fini(&bcache->bc_hmapq[i], alloc);
+	}
+}
+
 int silofs_bcache_init(struct silofs_bcache *bcache,
                        struct silofs_alloc *alloc)
 {
-	const size_t nslots = 1024; /* TODO: revisit */
-	int err;
-
 	silofs_memzero(bcache, sizeof(*bcache));
-	err = silofs_hmapq_init(&bcache->bc_hmapq, alloc, nslots);
-	if (err) {
-		return err;
-	}
-	silofs_dirtyq_init(&bcache->bc_dirtyq);
 	bcache->bc_alloc = alloc;
-	return 0;
+	silofs_dirtyq_init(&bcache->bc_dirtyq);
+	return bcache_init_hmapqs(bcache);
 }
 
 void silofs_bcache_fini(struct silofs_bcache *bcache)
 {
-	silofs_hmapq_fini(&bcache->bc_hmapq, bcache->bc_alloc);
+	bcache_fini_hmapqs(bcache);
 	silofs_dirtyq_fini(&bcache->bc_dirtyq);
 	bcache->bc_alloc = nullptr;
+}
+
+static const struct silofs_hmapq *
+bcache_hmapq_of(const struct silofs_bcache *bcache,
+                const struct silofs_baddr *baddr)
+{
+	const struct silofs_hmapq *hmapq = nullptr;
+
+	switch (baddr->mtype) {
+	case SILOFS_MTYPE_UBER:
+		hmapq = &bcache->bc_hmapq[0];
+		break;
+	case SILOFS_MTYPE_ARIX:
+		break;
+	case SILOFS_MTYPE_BDESC:
+		hmapq = &bcache->bc_hmapq[1];
+		break;
+	case SILOFS_MTYPE_BTNODE:
+		hmapq = &bcache->bc_hmapq[2];
+		break;
+	case SILOFS_MTYPE_NONE:
+	case SILOFS_MTYPE_MBR:
+	case SILOFS_MTYPE_SUPER:
+	case SILOFS_MTYPE_SPNODE:
+	case SILOFS_MTYPE_SPLEAF:
+	case SILOFS_MTYPE_LSMAP:
+	case SILOFS_MTYPE_INODE:
+	case SILOFS_MTYPE_XANODE:
+	case SILOFS_MTYPE_DTNODE:
+	case SILOFS_MTYPE_SYMVAL:
+	case SILOFS_MTYPE_FTNODE:
+	case SILOFS_MTYPE_DATA1K:
+	case SILOFS_MTYPE_DATA4K:
+	case SILOFS_MTYPE_DATABK:
+	case SILOFS_MTYPE_LAST:
+	default:
+		silofs_panic("bad bcache: mtype=%d", (int)baddr->mtype);
+		break;
+	}
+	return hmapq;
+}
+
+static struct silofs_hmapq *
+bcache_hmapq_of2(const struct silofs_bcache *bcache,
+                 const struct silofs_bnode_info *bni)
+{
+	const struct silofs_hmapq *hmapq;
+
+	hmapq = bcache_hmapq_of(bcache, &bni->bn_baddr);
+	return unconst(hmapq);
 }
 
 static struct silofs_bnode_info *
@@ -89,17 +162,25 @@ bcache_search(const struct silofs_bcache *bcache,
               const struct silofs_baddr *baddr)
 {
 	struct silofs_hkey hkey;
-	struct silofs_hmapq_elem *hmqe;
+	struct silofs_hmapq_elem *hmqe = nullptr;
+	const struct silofs_hmapq *hmapq = nullptr;
 
-	silofs_hkey_by_baddr(&hkey, baddr);
-	hmqe = silofs_hmapq_lookup(&bcache->bc_hmapq, &hkey);
+	hmapq = bcache_hmapq_of(bcache, baddr);
+	if (likely(hmapq != nullptr)) {
+		silofs_hkey_by_baddr(&hkey, baddr);
+		hmqe = silofs_hmapq_lookup(hmapq, &hkey);
+	}
 	return bni_from_hmqe(hmqe);
 }
 
 static void
 bcache_promote(struct silofs_bcache *bcache, struct silofs_bnode_info *bni)
 {
-	silofs_hmapq_promote(&bcache->bc_hmapq, bni_to_hmqe(bni), false);
+	struct silofs_hmapq *hmapq = bcache_hmapq_of2(bcache, bni);
+
+	if (likely(hmapq != nullptr)) {
+		silofs_hmapq_promote(hmapq, bni_to_hmqe(bni), false);
+	}
 }
 
 static struct silofs_bnode_info *
@@ -118,13 +199,21 @@ bcache_search_and_relru(struct silofs_bcache *bcache,
 static void
 bcache_map(struct silofs_bcache *bcache, struct silofs_bnode_info *bni)
 {
-	silofs_hmapq_store(&bcache->bc_hmapq, bni_to_hmqe(bni));
+	struct silofs_hmapq *hmapq = bcache_hmapq_of2(bcache, bni);
+
+	if (likely(hmapq != nullptr)) {
+		silofs_hmapq_store(hmapq, bni_to_hmqe(bni));
+	}
 }
 
 static void
 bcache_unmap(struct silofs_bcache *bcache, struct silofs_bnode_info *bni)
 {
-	silofs_hmapq_remove(&bcache->bc_hmapq, bni_to_hmqe(bni));
+	struct silofs_hmapq *hmapq = bcache_hmapq_of2(bcache, bni);
+
+	if (likely(hmapq != nullptr)) {
+		silofs_hmapq_remove(hmapq, bni_to_hmqe(bni));
+	}
 }
 
 static void
@@ -225,9 +314,14 @@ bcache_find_evictable(struct silofs_bcache *bcache, bool iterall)
 	struct silofs_bnode_info *bni = nullptr;
 	struct silofs_bnode_info **p_bni = &bni;
 
-	silofs_hmapq_riterate(&bcache->bc_hmapq,
-	                      iterall ? SILOFS_HMAPQ_ITERALL : 10,
-	                      visit_evictable_bni, (void *)p_bni);
+	for (size_t i = ARRAY_SIZE(bcache->bc_hmapq); i > 0; --i) {
+		silofs_hmapq_riterate(&bcache->bc_hmapq[i - 1],
+		                      iterall ? SILOFS_HMAPQ_ITERALL : 10,
+		                      visit_evictable_bni, (void *)p_bni);
+		if (bni != nullptr) {
+			break;
+		}
+	}
 	return bni;
 }
 
@@ -250,7 +344,12 @@ bcache_evict_some(struct silofs_bcache *bcache, size_t niter, bool iterall)
 
 static size_t bcache_usage(const struct silofs_bcache *bcache)
 {
-	return silofs_hmapq_usage(&bcache->bc_hmapq);
+	size_t usage = 0;
+
+	for (size_t i = 0; i < ARRAY_SIZE(bcache->bc_hmapq); ++i) {
+		usage += silofs_hmapq_usage(&bcache->bc_hmapq[i]);
+	}
+	return usage;
 }
 
 bool silofs_bcache_isempty(const struct silofs_bcache *bcache)

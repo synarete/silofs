@@ -22,7 +22,7 @@
 #include "nodes.h"
 
 struct silofs_bcache {
-	struct silofs_hmapq  bc_hmapq;
+	struct silofs_hmapq  bc_hmapq[3];
 	struct silofs_dirtyq bc_dirtyq;
 	struct silofs_alloc *bc_alloc;
 };

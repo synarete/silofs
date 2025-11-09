@@ -491,7 +491,7 @@ spawn_inode_by_mode(struct silofs_task_ctx *task,
                     const struct silofs_inode_info *parent_dii, mode_t mode,
                     dev_t rdev, struct silofs_inode_info **out_ii)
 {
-	int err;
+	int err = -SILOFS_EOPNOTSUPP;
 
 	if (S_ISREG(mode)) {
 		err = spawn_reg_inode(task, parent_dii, mode, out_ii);
@@ -501,8 +501,6 @@ spawn_inode_by_mode(struct silofs_task_ctx *task,
 		err = spawn_inode(task, parent_dii, mode, rdev, out_ii);
 	} else if (S_ISDIR(mode)) {
 		err = -SILOFS_EISDIR;
-	} else {
-		err = -SILOFS_EOPNOTSUPP;
 	}
 	return err;
 }
@@ -1503,24 +1501,23 @@ do_mkdir(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
          const struct silofs_namestr *name, mode_t mode,
          struct silofs_inode_info **out_ii)
 {
-	struct silofs_inode_info *ii = nullptr;
 	int err;
 
 	err = check_mkdir(task, dir_ii, name);
 	if (err) {
 		return err;
 	}
-	err = spawn_dir_inode(task, dir_ii, mode, &ii);
+	err = spawn_dir_inode(task, dir_ii, mode, out_ii);
 	if (err) {
 		return err;
 	}
-	err = do_add_dentry(task, dir_ii, name, ii, true);
+	silofs_dir_inherit_parent(*out_ii, dir_ii);
+
+	err = do_add_dentry(task, dir_ii, name, *out_ii, true);
 	if (err) {
 		return err;
 	}
 	silofs_update_itimes_of(task, dir_ii, SILOFS_IATTR_MCTIME);
-
-	*out_ii = ii;
 	return 0;
 }
 

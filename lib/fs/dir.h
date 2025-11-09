@@ -89,6 +89,9 @@ bool silofs_dir_may_add(const struct silofs_inode_info *dir_ii);
 bool silofs_dir_has_flags(const struct silofs_inode_info *dir_ii,
                           enum silofs_dirf                mask);
 
+void silofs_dir_inherit_parent(struct silofs_inode_info       *dir_ii,
+                               const struct silofs_inode_info *parentd_ii);
+
 int silofs_dir_make_hname(const struct silofs_inode_info *dir_ii,
                           const struct silofs_mdigest    *mdigest,
                           const struct silofs_namestr    *nstr,

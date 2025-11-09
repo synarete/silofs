@@ -1213,9 +1213,14 @@ static uint64_t dir_seed(const struct silofs_inode_info *dir_ii)
 	return indr_seed(dir_ispec_of(dir_ii));
 }
 
-enum silofs_dirf silofs_dir_flags(const struct silofs_inode_info *dir_ii)
+static enum silofs_dirf dir_flags(const struct silofs_inode_info *dir_ii)
 {
 	return indr_flags(dir_ispec_of(dir_ii));
+}
+
+enum silofs_dirf silofs_dir_flags(const struct silofs_inode_info *dir_ii)
+{
+	return dir_flags(dir_ii);
 }
 
 static enum silofs_namehfn dir_hfn(const struct silofs_inode_info *dir_ii)
@@ -1239,6 +1244,16 @@ bool silofs_dir_may_add(const struct silofs_inode_info *dir_ii)
 	const size_t ndents = dir_ndents(dir_ii);
 
 	return (ndents < SILOFS_DIR_ENTRIES_MAX);
+}
+
+void silofs_dir_inherit_parent(struct silofs_inode_info *dir_ii,
+                               const struct silofs_inode_info *parentd_ii)
+{
+	struct silofs_inode_dir *indr = dir_ispec_of(dir_ii);
+
+	indr_set_flags(indr, dir_flags(parentd_ii));
+	indr_set_hashfn(indr, dir_hfn(parentd_ii));
+	silofs_ii_dirtify(dir_ii);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

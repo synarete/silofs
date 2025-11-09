@@ -106,107 +106,24 @@ static void ub_reset_bcursors(struct silofs_uber_block *ub)
 	}
 }
 
-static void ub_init(struct silofs_uber_block *ub)
+static void ub_setup(struct silofs_uber_block *ub, const struct timespec *ts)
 {
 	ub_setup_hdr(ub);
-	ub_set_generation(ub, 0);
+	ub_set_generation(ub, 1);
+	ub_set_btime(ub, ts);
+	ub_set_ctime(ub, ts);
 	ub_reset_bcursors(ub);
-}
-
-static void ub_fini(struct silofs_uber_block *ub)
-{
-	ub_set_generation(ub, UINT64_MAX);
-}
-
-static struct silofs_uber_block *ub_malloc(struct silofs_alloc *alloc)
-{
-	struct silofs_uber_block *ub;
-
-	ub = silofs_memalloc(alloc, sizeof(*ub), SILOFS_ALLOCF_BZERO);
-	return ub;
-}
-
-static void ub_free(struct silofs_uber_block *ub, struct silofs_alloc *alloc)
-{
-	silofs_memfree(alloc, ub, sizeof(*ub), SILOFS_ALLOCF_TRYPUNCH);
-}
-
-static struct silofs_uber_block *ub_new(struct silofs_alloc *alloc)
-{
-	struct silofs_uber_block *ub;
-
-	ub = ub_malloc(alloc);
-	if (ub != nullptr) {
-		ub_init(ub);
-	}
-	return ub;
-}
-
-static void ub_del(struct silofs_uber_block *ub, struct silofs_alloc *alloc)
-{
-	ub_fini(ub);
-	ub_free(ub, alloc);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct silofs_uber_info *ubi_malloc(struct silofs_alloc *alloc)
+static void ubi_setup_spawned(struct silofs_uber_info *ubi)
 {
-	struct silofs_uber_info *ubi = nullptr;
+	struct timespec now;
 
-	ubi = silofs_memalloc(alloc, sizeof(*ubi), 0);
-	return ubi;
-}
-
-static void ubi_free(struct silofs_uber_info *ubi, struct silofs_alloc *alloc)
-{
-	silofs_memfree(alloc, ubi, sizeof(*ubi), 0);
-}
-
-static void
-ubi_init(struct silofs_uber_info *ubi, const struct silofs_baddr *baddr)
-{
-	silofs_bni_init(&ubi->ub_bni, baddr);
-	ubi->ub = nullptr;
-}
-
-static void ubi_fini(struct silofs_uber_info *ubi)
-{
-	silofs_bni_fini(&ubi->ub_bni);
-}
-
-struct silofs_uber_info *
-silofs_ubi_new(const struct silofs_baddr *baddr, struct silofs_alloc *alloc)
-{
-	struct silofs_uber_block *ub = nullptr;
-	struct silofs_uber_info *ubi = nullptr;
-
-	ub = ub_new(alloc);
-	if (ub == nullptr) {
-		return nullptr;
-	}
-	ubi = ubi_malloc(alloc);
-	if (ubi == nullptr) {
-		ub_del(ub, alloc);
-		return nullptr;
-	}
-	ubi_init(ubi, baddr);
-	ubi->ub = ub;
-	return ubi;
-}
-
-void silofs_ubi_del(struct silofs_uber_info *ubi, struct silofs_alloc *alloc)
-{
-	struct silofs_uber_block *ub = ubi->ub;
-
-	ubi_fini(ubi);
-	ubi_free(ubi, alloc);
-	ub_del(ub, alloc);
-}
-
-void silofs_ubi_set_dq(struct silofs_uber_info *ubi, struct silofs_dirtyq *dq)
-{
-	silofs_bni_set_dq(&ubi->ub_bni, dq);
+	silofs_clock_real_now(&now);
+	ub_setup(ubi->ub, &now);
+	silofs_ubi_dirtify(ubi);
 }
 
 void silofs_ubi_dirtify(struct silofs_uber_info *ubi)
@@ -217,17 +134,6 @@ void silofs_ubi_dirtify(struct silofs_uber_info *ubi)
 void silofs_ubi_undirtify(struct silofs_uber_info *ubi)
 {
 	silofs_bni_undirtify(&ubi->ub_bni);
-}
-
-void silofs_ubi_setup_spawned(struct silofs_uber_info *ubi)
-{
-	struct timespec now;
-
-	silofs_clock_real_now(&now);
-	ub_set_btime(ubi->ub, &now);
-	ub_set_ctime(ubi->ub, &now);
-	ub_inc_generation(ubi->ub);
-	silofs_ubi_dirtify(ubi);
 }
 
 int silofs_ubi_bcursor_of(const struct silofs_uber_info *ubi,
@@ -267,4 +173,28 @@ int silofs_ubi_update_bcursor(struct silofs_uber_info *ubi,
 	silofs_bcursor128b_htox(bcur, bcursor);
 	ubi_update_changed(ubi);
 	return 0;
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+struct silofs_uber_info *
+silofs_create_cached_uber(struct silofs_bcache *bcache,
+                          const struct silofs_baddr *baddr, bool spawn)
+{
+	struct silofs_bnode_info *bni;
+	struct silofs_uber_info *ubi;
+
+	silofs_assert_eq(baddr->mtype, SILOFS_MTYPE_UBER);
+	bni = silofs_bcache_create_bnode(bcache, baddr);
+	ubi = silofs_ubi_from_bni(bni);
+	if ((ubi != nullptr) && spawn) {
+		ubi_setup_spawned(ubi);
+	}
+	return ubi;
+}
+
+void silofs_forget_cached_uber(struct silofs_bcache *bcache,
+                               struct silofs_uber_info *ubi)
+{
+	silofs_bcache_delete_bnode(bcache, &ubi->ub_bni);
 }

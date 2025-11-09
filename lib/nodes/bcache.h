@@ -43,37 +43,15 @@ void silofs_bcache_relax(struct silofs_bcache *bcache, int flags);
 struct silofs_bnode_info *
 silofs_bcache_dq_front(const struct silofs_bcache *bcache);
 
-struct silofs_uber_info *
-silofs_bcache_lookup_ubi(struct silofs_bcache      *bcache,
-                         const struct silofs_baddr *baddr);
+struct silofs_bnode_info *
+silofs_bcache_lookup_bnode(struct silofs_bcache      *bcache,
+                           const struct silofs_baddr *baddr);
 
-struct silofs_uber_info *
-silofs_bcache_create_ubi(struct silofs_bcache      *bcache,
-                         const struct silofs_baddr *baddr);
+struct silofs_bnode_info *
+silofs_bcache_create_bnode(struct silofs_bcache      *bcache,
+                           const struct silofs_baddr *baddr);
 
-void silofs_bcache_remove_ubi(struct silofs_bcache    *bcache,
-                              struct silofs_uber_info *ubi);
-
-struct silofs_bldesc_info *
-silofs_bcache_lookup_bdi(struct silofs_bcache      *bcache,
-                         const struct silofs_baddr *baddr);
-
-struct silofs_bldesc_info *
-silofs_bcache_create_bdi(struct silofs_bcache      *bcache,
-                         const struct silofs_baddr *baddr);
-
-void silofs_bcache_remove_bdi(struct silofs_bcache      *bcache,
-                              struct silofs_bldesc_info *bdi);
-
-struct silofs_btnode_info *
-silofs_bcache_lookup_bti(struct silofs_bcache      *bcache,
-                         const struct silofs_baddr *baddr);
-
-struct silofs_btnode_info *
-silofs_bcache_create_bti(struct silofs_bcache      *bcache,
-                         const struct silofs_baddr *baddr);
-
-void silofs_bcache_remove_bti(struct silofs_bcache      *bcache,
-                              struct silofs_btnode_info *bti);
+void silofs_bcache_delete_bnode(struct silofs_bcache     *bcache,
+                                struct silofs_bnode_info *bni);
 
 #endif /* SILOFS_BCACHE_H_ */

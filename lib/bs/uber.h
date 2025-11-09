@@ -19,18 +19,9 @@
 
 #include "nodes.h"
 
-struct silofs_uber_info *
-silofs_ubi_new(const struct silofs_baddr *baddr, struct silofs_alloc *alloc);
-
-void silofs_ubi_del(struct silofs_uber_info *ubi, struct silofs_alloc *alloc);
-
-void silofs_ubi_set_dq(struct silofs_uber_info *ubi, struct silofs_dirtyq *dq);
-
 void silofs_ubi_dirtify(struct silofs_uber_info *ubi);
 
 void silofs_ubi_undirtify(struct silofs_uber_info *ubi);
-
-void silofs_ubi_setup_spawned(struct silofs_uber_info *ubi);
 
 int silofs_ubi_bcursor_of(const struct silofs_uber_info *ubi,
                           enum silofs_mtype              mtype,
@@ -39,5 +30,14 @@ int silofs_ubi_bcursor_of(const struct silofs_uber_info *ubi,
 int silofs_ubi_update_bcursor(struct silofs_uber_info     *ubi,
                               enum silofs_mtype            mtype,
                               const struct silofs_bcursor *bcursor);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+struct silofs_uber_info *
+silofs_create_cached_uber(struct silofs_bcache      *bcache,
+                          const struct silofs_baddr *baddr, bool spawn);
+
+void silofs_forget_cached_uber(struct silofs_bcache    *bcache,
+                               struct silofs_uber_info *ubi);
 
 #endif /* SILOFS_UBER_H_ */

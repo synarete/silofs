@@ -115,12 +115,6 @@ bcache_search_and_relru(struct silofs_bcache *bcache,
 	return bni;
 }
 
-static struct silofs_bnode_info *
-bcache_lookup(struct silofs_bcache *bcache, const struct silofs_baddr *baddr)
-{
-	return bcache_search_and_relru(bcache, baddr);
-}
-
 static void
 bcache_map(struct silofs_bcache *bcache, struct silofs_bnode_info *bni)
 {
@@ -160,18 +154,11 @@ static void bcache_del_bnode(const struct silofs_bcache *bcache,
 	silofs_del_bnode(bni, bcache->bc_alloc);
 }
 
-static struct silofs_bnode_info *
-bcache_create_bnode(struct silofs_bcache *bcache,
-                    const struct silofs_baddr *baddr)
+static void bcache_insert_bnode(struct silofs_bcache *bcache,
+                                struct silofs_bnode_info *bni)
 {
-	struct silofs_bnode_info *bni = nullptr;
-
-	bni = bcache_new_bnode(bcache, baddr);
-	if (bni != nullptr) {
-		bcache_bind_dirtyq(bcache, bni);
-		bcache_map(bcache, bni);
-	}
-	return bni;
+	bcache_bind_dirtyq(bcache, bni);
+	bcache_map(bcache, bni);
 }
 
 static void bcache_remove_bnode(struct silofs_bcache *bcache,
@@ -179,97 +166,35 @@ static void bcache_remove_bnode(struct silofs_bcache *bcache,
 {
 	bcache_unbind_dirtyq(bcache, bni);
 	bcache_unmap(bcache, bni);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+struct silofs_bnode_info *
+silofs_bcache_lookup_bnode(struct silofs_bcache *bcache,
+                           const struct silofs_baddr *baddr)
+{
+	return bcache_search_and_relru(bcache, baddr);
+}
+
+struct silofs_bnode_info *
+silofs_bcache_create_bnode(struct silofs_bcache *bcache,
+                           const struct silofs_baddr *baddr)
+{
+	struct silofs_bnode_info *bni = nullptr;
+
+	bni = bcache_new_bnode(bcache, baddr);
+	if (bni != nullptr) {
+		bcache_insert_bnode(bcache, bni);
+	}
+	return bni;
+}
+
+void silofs_bcache_delete_bnode(struct silofs_bcache *bcache,
+                                struct silofs_bnode_info *bni)
+{
+	bcache_remove_bnode(bcache, bni);
 	bcache_del_bnode(bcache, bni);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-struct silofs_uber_info *
-silofs_bcache_lookup_ubi(struct silofs_bcache *bcache,
-                         const struct silofs_baddr *baddr)
-{
-	struct silofs_bnode_info *bni;
-
-	silofs_assert_eq(baddr->mtype, SILOFS_MTYPE_UBER);
-	bni = bcache_lookup(bcache, baddr);
-	return silofs_ubi_from_bni(bni);
-}
-
-struct silofs_uber_info *
-silofs_bcache_create_ubi(struct silofs_bcache *bcache,
-                         const struct silofs_baddr *baddr)
-{
-	struct silofs_bnode_info *bni;
-
-	silofs_assert_eq(baddr->mtype, SILOFS_MTYPE_UBER);
-	bni = bcache_create_bnode(bcache, baddr);
-	return silofs_ubi_from_bni(bni);
-}
-
-void silofs_bcache_remove_ubi(struct silofs_bcache *bcache,
-                              struct silofs_uber_info *ubi)
-{
-	bcache_remove_bnode(bcache, &ubi->ub_bni);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-struct silofs_bldesc_info *
-silofs_bcache_lookup_bdi(struct silofs_bcache *bcache,
-                         const struct silofs_baddr *baddr)
-{
-	struct silofs_bnode_info *bni;
-
-	silofs_assert_eq(baddr->mtype, SILOFS_MTYPE_BDESC);
-	bni = bcache_lookup(bcache, baddr);
-	return silofs_bdi_from_bni(bni);
-}
-
-struct silofs_bldesc_info *
-silofs_bcache_create_bdi(struct silofs_bcache *bcache,
-                         const struct silofs_baddr *baddr)
-{
-	struct silofs_bnode_info *bni;
-
-	silofs_assert_eq(baddr->mtype, SILOFS_MTYPE_BDESC);
-	bni = bcache_create_bnode(bcache, baddr);
-	return silofs_bdi_from_bni(bni);
-}
-
-void silofs_bcache_remove_bdi(struct silofs_bcache *bcache,
-                              struct silofs_bldesc_info *bdi)
-{
-	bcache_remove_bnode(bcache, &bdi->bd_bni);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-struct silofs_btnode_info *
-silofs_bcache_lookup_bti(struct silofs_bcache *bcache,
-                         const struct silofs_baddr *baddr)
-{
-	struct silofs_bnode_info *bni;
-
-	silofs_assert_eq(baddr->mtype, SILOFS_MTYPE_BTNODE);
-	bni = bcache_lookup(bcache, baddr);
-	return silofs_bti_from_bni(bni);
-}
-
-struct silofs_btnode_info *
-silofs_bcache_create_bti(struct silofs_bcache *bcache,
-                         const struct silofs_baddr *baddr)
-{
-	struct silofs_bnode_info *bni;
-
-	silofs_assert_eq(baddr->mtype, SILOFS_MTYPE_BTNODE);
-	bni = bcache_create_bnode(bcache, baddr);
-	return silofs_bti_from_bni(bni);
-}
-
-void silofs_bcache_remove_bti(struct silofs_bcache *bcache,
-                              struct silofs_btnode_info *bti)
-{
-	bcache_remove_bnode(bcache, &bti->btn_bni);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -277,7 +202,7 @@ void silofs_bcache_remove_bti(struct silofs_bcache *bcache,
 static void
 bcache_evict_by(struct silofs_bcache *bcache, struct silofs_bnode_info *bni)
 {
-	bcache_remove_bnode(bcache, bni);
+	silofs_bcache_delete_bnode(bcache, bni);
 }
 
 static int visit_evictable_bni(struct silofs_hmapq_elem *hmqe, void *arg)

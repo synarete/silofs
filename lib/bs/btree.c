@@ -267,29 +267,36 @@ static int btc_create_cached_bti(const struct silofs_btree_ctx *btc,
                                  const struct silofs_baddr *baddr,
                                  struct silofs_btnode_info **out_bti)
 {
-	*out_bti = silofs_bcache_create_bti(btc->bcache, baddr);
+	*out_bti =
+		nullptr; // XXX silofs_bcache_create_bti(btc->bcache, baddr);
 	if (*out_bti == nullptr) {
 		return -SILOFS_ENOMEM;
 	}
 	btree_update_bti(btc->btree, *out_bti, false);
+	silofs_unused(baddr);
 	return 0;
 }
 
 static void btc_evict_cached_bti(const struct silofs_btree *btree,
                                  struct silofs_btnode_info *bti)
 {
-	silofs_bcache_remove_bti(btree->bt_base.bcache, bti);
+
+	// XXX silofs_bcache_remove_bti(btree->bt_base.bcache, bti);
+	(void)btree;
+	(void)bti;
 }
 
 static int btc_lookup_cached_bti(const struct silofs_btree_ctx *btc,
                                  const struct silofs_baddr *baddr,
                                  struct silofs_btnode_info **out_bti)
 {
-	*out_bti = silofs_bcache_lookup_bti(btc->bcache, baddr);
+	*out_bti =
+		nullptr; // XXX silofs_bcache_lookup_bti(btc->bcache, baddr);
 	if (*out_bti == nullptr) {
 		return -SILOFS_ENOENT;
 	}
 	btree_update_bti(btc->btree, *out_bti, false);
+	(void)baddr;
 	return 0;
 }
 

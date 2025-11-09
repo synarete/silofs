@@ -18,9 +18,9 @@
 #include <silofs/errors.h>
 #include <silofs/ondisk.h>
 #include "addr.h"
+#include "nodes.h"
 #include "repo.h"
 #include "btnode.h"
-#include "bcache.h"
 #include "btree.h"
 
 struct silofs_btree_path {

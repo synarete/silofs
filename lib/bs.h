@@ -23,7 +23,6 @@
 #include "bs/repo.h"
 #include "bs/bldesc.h"
 #include "bs/btnode.h"
-#include "bs/bcache.h"
 #include "bs/btree.h"
 
 #endif /* SILOFS_BS_H_ */

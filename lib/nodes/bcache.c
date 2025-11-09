@@ -18,20 +18,8 @@
 #include "infra.h"
 #include "addr.h"
 #include "flags.h"
-#include "bldesc.h"
-#include "btnode.h"
-#include "uber.h"
+#include "nodes.h"
 #include "bcache.h"
-
-enum {
-	BCACHE_RETRY_MAX = 4,
-};
-
-/* local functions */
-static size_t
-bcache_evict_some(struct silofs_bcache *bcache, size_t niter, bool iterall);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static struct silofs_bnode_info *bni_unconst(const struct silofs_bnode_info *p)
 {

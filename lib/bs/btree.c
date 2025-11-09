@@ -278,7 +278,7 @@ static int btc_create_cached_bti(const struct silofs_btree_ctx *btc,
 static void btc_evict_cached_bti(const struct silofs_btree *btree,
                                  struct silofs_btnode_info *bti)
 {
-	silofs_bcache_evict_bti(btree->bt_base.bcache, bti);
+	silofs_bcache_remove_bti(btree->bt_base.bcache, bti);
 }
 
 static int btc_lookup_cached_bti(const struct silofs_btree_ctx *btc,

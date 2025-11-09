@@ -428,12 +428,6 @@ void silofs_bdi_undirtify(struct silofs_bldesc_info *bdi)
 	silofs_bni_undirtify(&bdi->bd_bni);
 }
 
-void silofs_bdi_set_dq(struct silofs_bldesc_info *bdi,
-                       struct silofs_dirtyq *dq)
-{
-	silofs_bni_set_dq(&bdi->bd_bni, dq);
-}
-
 void silofs_bdi_setup_spawned(struct silofs_bldesc_info *bdi,
                               enum silofs_mtype refmtype)
 {

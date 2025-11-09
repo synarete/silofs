@@ -43,6 +43,17 @@ void silofs_bcache_relax(struct silofs_bcache *bcache, int flags);
 struct silofs_bnode_info *
 silofs_bcache_dq_front(const struct silofs_bcache *bcache);
 
+struct silofs_ub_info *
+silofs_bcache_lookup_ubi(struct silofs_bcache      *bcache,
+                         const struct silofs_baddr *baddr);
+
+struct silofs_ub_info *
+silofs_bcache_create_ubi(struct silofs_bcache      *bcache,
+                         const struct silofs_baddr *baddr);
+
+void silofs_bcache_remove_ubi(struct silofs_bcache  *bcache,
+                              struct silofs_ub_info *ubi);
+
 struct silofs_bldesc_info *
 silofs_bcache_lookup_bdi(struct silofs_bcache      *bcache,
                          const struct silofs_baddr *baddr);
@@ -51,8 +62,8 @@ struct silofs_bldesc_info *
 silofs_bcache_create_bdi(struct silofs_bcache      *bcache,
                          const struct silofs_baddr *baddr);
 
-void silofs_bcache_evict_bdi(struct silofs_bcache      *bcache,
-                             struct silofs_bldesc_info *bdi);
+void silofs_bcache_remove_bdi(struct silofs_bcache      *bcache,
+                              struct silofs_bldesc_info *bdi);
 
 struct silofs_btnode_info *
 silofs_bcache_lookup_bti(struct silofs_bcache      *bcache,
@@ -62,18 +73,7 @@ struct silofs_btnode_info *
 silofs_bcache_create_bti(struct silofs_bcache      *bcache,
                          const struct silofs_baddr *baddr);
 
-void silofs_bcache_evict_bti(struct silofs_bcache      *bcache,
-                             struct silofs_btnode_info *bti);
-
-struct silofs_ub_info *
-silofs_bcache_lookup_ubi(struct silofs_bcache      *bcache,
-                         const struct silofs_baddr *baddr);
-
-struct silofs_ub_info *
-silofs_bcache_create_ubi(struct silofs_bcache      *bcache,
-                         const struct silofs_baddr *baddr);
-
-void silofs_bcache_evict_ubi(struct silofs_bcache  *bcache,
-                             struct silofs_ub_info *ubi);
+void silofs_bcache_remove_bti(struct silofs_bcache      *bcache,
+                              struct silofs_btnode_info *bti);
 
 #endif /* SILOFS_BCACHE_H_ */

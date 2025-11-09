@@ -150,36 +150,36 @@ static void ub_del(struct silofs_uber_block *ub, struct silofs_alloc *alloc)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct silofs_ub_info *ubi_malloc(struct silofs_alloc *alloc)
+static struct silofs_uber_info *ubi_malloc(struct silofs_alloc *alloc)
 {
-	struct silofs_ub_info *ubi = nullptr;
+	struct silofs_uber_info *ubi = nullptr;
 
 	ubi = silofs_memalloc(alloc, sizeof(*ubi), 0);
 	return ubi;
 }
 
-static void ubi_free(struct silofs_ub_info *ubi, struct silofs_alloc *alloc)
+static void ubi_free(struct silofs_uber_info *ubi, struct silofs_alloc *alloc)
 {
 	silofs_memfree(alloc, ubi, sizeof(*ubi), 0);
 }
 
 static void
-ubi_init(struct silofs_ub_info *ubi, const struct silofs_baddr *baddr)
+ubi_init(struct silofs_uber_info *ubi, const struct silofs_baddr *baddr)
 {
 	silofs_bni_init(&ubi->ub_bni, baddr);
 	ubi->ub = nullptr;
 }
 
-static void ubi_fini(struct silofs_ub_info *ubi)
+static void ubi_fini(struct silofs_uber_info *ubi)
 {
 	silofs_bni_fini(&ubi->ub_bni);
 }
 
-struct silofs_ub_info *
+struct silofs_uber_info *
 silofs_ubi_new(const struct silofs_baddr *baddr, struct silofs_alloc *alloc)
 {
 	struct silofs_uber_block *ub = nullptr;
-	struct silofs_ub_info *ubi = nullptr;
+	struct silofs_uber_info *ubi = nullptr;
 
 	ub = ub_new(alloc);
 	if (ub == nullptr) {
@@ -195,7 +195,7 @@ silofs_ubi_new(const struct silofs_baddr *baddr, struct silofs_alloc *alloc)
 	return ubi;
 }
 
-void silofs_ubi_del(struct silofs_ub_info *ubi, struct silofs_alloc *alloc)
+void silofs_ubi_del(struct silofs_uber_info *ubi, struct silofs_alloc *alloc)
 {
 	struct silofs_uber_block *ub = ubi->ub;
 
@@ -204,22 +204,22 @@ void silofs_ubi_del(struct silofs_ub_info *ubi, struct silofs_alloc *alloc)
 	ub_del(ub, alloc);
 }
 
-void silofs_ubi_set_dq(struct silofs_ub_info *ubi, struct silofs_dirtyq *dq)
+void silofs_ubi_set_dq(struct silofs_uber_info *ubi, struct silofs_dirtyq *dq)
 {
 	silofs_bni_set_dq(&ubi->ub_bni, dq);
 }
 
-void silofs_ubi_dirtify(struct silofs_ub_info *ubi)
+void silofs_ubi_dirtify(struct silofs_uber_info *ubi)
 {
 	silofs_bni_dirtify(&ubi->ub_bni);
 }
 
-void silofs_ubi_undirtify(struct silofs_ub_info *ubi)
+void silofs_ubi_undirtify(struct silofs_uber_info *ubi)
 {
 	silofs_bni_undirtify(&ubi->ub_bni);
 }
 
-void silofs_ubi_setup_spawned(struct silofs_ub_info *ubi)
+void silofs_ubi_setup_spawned(struct silofs_uber_info *ubi)
 {
 	struct timespec now;
 
@@ -230,7 +230,7 @@ void silofs_ubi_setup_spawned(struct silofs_ub_info *ubi)
 	silofs_ubi_dirtify(ubi);
 }
 
-int silofs_ubi_bcursor_of(const struct silofs_ub_info *ubi,
+int silofs_ubi_bcursor_of(const struct silofs_uber_info *ubi,
                           enum silofs_mtype mtype,
                           struct silofs_bcursor *out_bcursor)
 {
@@ -244,7 +244,7 @@ int silofs_ubi_bcursor_of(const struct silofs_ub_info *ubi,
 	return 0;
 }
 
-static void ubi_update_changed(struct silofs_ub_info *ubi)
+static void ubi_update_changed(struct silofs_uber_info *ubi)
 {
 	struct timespec now;
 
@@ -254,7 +254,7 @@ static void ubi_update_changed(struct silofs_ub_info *ubi)
 	silofs_ubi_dirtify(ubi);
 }
 
-int silofs_ubi_update_bcursor(struct silofs_ub_info *ubi,
+int silofs_ubi_update_bcursor(struct silofs_uber_info *ubi,
                               enum silofs_mtype mtype,
                               const struct silofs_bcursor *bcursor)
 {

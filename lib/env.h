@@ -59,7 +59,7 @@ struct silofs_env {
 	struct silofs_cipher     dec_cipher;
 	struct silofs_mdigest    mdigest;
 	struct silofs_env_opstat opstat;
-	struct silofs_ub_info   *ubi;
+	struct silofs_uber_info *ubi;
 	struct silofs_sb_info   *sbi;
 	struct silofs_cred       owner_cred;
 	struct silofs_uconv      uconv;

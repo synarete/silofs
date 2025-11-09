@@ -69,7 +69,7 @@ static int stc_require_baddr(const struct silofs_store_ctx *st_ctx,
 
 static int stc_create_ubi(const struct silofs_store_ctx *st_ctx,
                           const struct silofs_baddr *baddr,
-                          struct silofs_ub_info **out_ubi)
+                          struct silofs_uber_info **out_ubi)
 {
 	*out_ubi = silofs_bcache_create_ubi(st_ctx->bcache, baddr);
 	return ((*out_ubi) == nullptr) ? -SILOFS_ENOMEM : 0;
@@ -77,7 +77,7 @@ static int stc_create_ubi(const struct silofs_store_ctx *st_ctx,
 
 static int stc_spawn_uber(struct silofs_store_ctx *st_ctx,
                           const struct silofs_baddr *baddr,
-                          struct silofs_ub_info **out_ubi)
+                          struct silofs_uber_info **out_ubi)
 {
 	int err;
 
@@ -94,7 +94,7 @@ static int stc_spawn_uber(struct silofs_store_ctx *st_ctx,
 }
 
 int silofs_spawn_uber(struct silofs_env *env, const struct silofs_baddr *baddr,
-                      struct silofs_ub_info **out_ubi)
+                      struct silofs_uber_info **out_ubi)
 {
 	struct silofs_store_ctx st_ctx = {};
 	int err;

@@ -43,16 +43,16 @@ void silofs_bcache_relax(struct silofs_bcache *bcache, int flags);
 struct silofs_bnode_info *
 silofs_bcache_dq_front(const struct silofs_bcache *bcache);
 
-struct silofs_ub_info *
+struct silofs_uber_info *
 silofs_bcache_lookup_ubi(struct silofs_bcache      *bcache,
                          const struct silofs_baddr *baddr);
 
-struct silofs_ub_info *
+struct silofs_uber_info *
 silofs_bcache_create_ubi(struct silofs_bcache      *bcache,
                          const struct silofs_baddr *baddr);
 
-void silofs_bcache_remove_ubi(struct silofs_bcache  *bcache,
-                              struct silofs_ub_info *ubi);
+void silofs_bcache_remove_ubi(struct silofs_bcache    *bcache,
+                              struct silofs_uber_info *ubi);
 
 struct silofs_bldesc_info *
 silofs_bcache_lookup_bdi(struct silofs_bcache      *bcache,

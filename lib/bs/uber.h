@@ -19,24 +19,24 @@
 
 #include "nodes.h"
 
-struct silofs_ub_info *
+struct silofs_uber_info *
 silofs_ubi_new(const struct silofs_baddr *baddr, struct silofs_alloc *alloc);
 
-void silofs_ubi_del(struct silofs_ub_info *ubi, struct silofs_alloc *alloc);
+void silofs_ubi_del(struct silofs_uber_info *ubi, struct silofs_alloc *alloc);
 
-void silofs_ubi_set_dq(struct silofs_ub_info *ubi, struct silofs_dirtyq *dq);
+void silofs_ubi_set_dq(struct silofs_uber_info *ubi, struct silofs_dirtyq *dq);
 
-void silofs_ubi_dirtify(struct silofs_ub_info *ubi);
+void silofs_ubi_dirtify(struct silofs_uber_info *ubi);
 
-void silofs_ubi_undirtify(struct silofs_ub_info *ubi);
+void silofs_ubi_undirtify(struct silofs_uber_info *ubi);
 
-void silofs_ubi_setup_spawned(struct silofs_ub_info *ubi);
+void silofs_ubi_setup_spawned(struct silofs_uber_info *ubi);
 
-int silofs_ubi_bcursor_of(const struct silofs_ub_info *ubi,
-                          enum silofs_mtype            mtype,
-                          struct silofs_bcursor       *out_bcursor);
+int silofs_ubi_bcursor_of(const struct silofs_uber_info *ubi,
+                          enum silofs_mtype              mtype,
+                          struct silofs_bcursor         *out_bcursor);
 
-int silofs_ubi_update_bcursor(struct silofs_ub_info       *ubi,
+int silofs_ubi_update_bcursor(struct silofs_uber_info     *ubi,
                               enum silofs_mtype            mtype,
                               const struct silofs_bcursor *bcursor);
 

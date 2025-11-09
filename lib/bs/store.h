@@ -23,7 +23,7 @@
 #include "env.h"
 
 int silofs_spawn_uber(struct silofs_env *env, const struct silofs_baddr *baddr,
-                      struct silofs_ub_info **out_ubi);
+                      struct silofs_uber_info **out_ubi);
 
 int silofs_destage_dirty(struct silofs_env *env);
 

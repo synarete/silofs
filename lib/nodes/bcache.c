@@ -184,7 +184,7 @@ static void bcache_remove_bnode(struct silofs_bcache *bcache,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-struct silofs_ub_info *
+struct silofs_uber_info *
 silofs_bcache_lookup_ubi(struct silofs_bcache *bcache,
                          const struct silofs_baddr *baddr)
 {
@@ -195,7 +195,7 @@ silofs_bcache_lookup_ubi(struct silofs_bcache *bcache,
 	return silofs_ubi_from_bni(bni);
 }
 
-struct silofs_ub_info *
+struct silofs_uber_info *
 silofs_bcache_create_ubi(struct silofs_bcache *bcache,
                          const struct silofs_baddr *baddr)
 {
@@ -207,7 +207,7 @@ silofs_bcache_create_ubi(struct silofs_bcache *bcache,
 }
 
 void silofs_bcache_remove_ubi(struct silofs_bcache *bcache,
-                              struct silofs_ub_info *ubi)
+                              struct silofs_uber_info *ubi)
 {
 	bcache_remove_bnode(bcache, &ubi->ub_bni);
 }

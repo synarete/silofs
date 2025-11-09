@@ -32,7 +32,7 @@ struct silofs_bnode_info {
 };
 
 /* uber-block in-memory state */
-struct silofs_ub_info {
+struct silofs_uber_info {
 	struct silofs_bnode_info  ub_bni;
 	struct silofs_uber_block *ub;
 };
@@ -76,7 +76,7 @@ void silofs_bni_setup_ivkey(struct silofs_bnode_info    *bni,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-struct silofs_ub_info *
+struct silofs_uber_info *
 silofs_ubi_from_bni(const struct silofs_bnode_info *bni);
 
 struct silofs_bldesc_info *

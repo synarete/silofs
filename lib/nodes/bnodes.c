@@ -140,30 +140,31 @@ bni_del_view(struct silofs_bnode_info *bni, struct silofs_alloc *alloc)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static struct silofs_ub_info *ubi_malloc(struct silofs_alloc *alloc)
+static struct silofs_uber_info *ubi_malloc(struct silofs_alloc *alloc)
 {
-	return silofs_memalloc(alloc, sizeof(struct silofs_ub_info), 0);
+	return silofs_memalloc(alloc, sizeof(struct silofs_uber_info), 0);
 }
 
-static void ubi_free(struct silofs_ub_info *ubi, struct silofs_alloc *alloc)
+static void ubi_free(struct silofs_uber_info *ubi, struct silofs_alloc *alloc)
 {
 	silofs_memfree(alloc, ubi, sizeof(*ubi), 0);
 }
 
 static void
-ubi_init(struct silofs_ub_info *ubi, const struct silofs_baddr *baddr)
+ubi_init(struct silofs_uber_info *ubi, const struct silofs_baddr *baddr)
 {
 	silofs_bni_init(&ubi->ub_bni, baddr);
 	ubi->ub = nullptr;
 }
 
-static void ubi_fini(struct silofs_ub_info *ubi)
+static void ubi_fini(struct silofs_uber_info *ubi)
 {
 	silofs_bni_fini(&ubi->ub_bni);
 	ubi->ub = nullptr;
 }
 
-static int ubi_new_view(struct silofs_ub_info *ubi, struct silofs_alloc *alloc)
+static int
+ubi_new_view(struct silofs_uber_info *ubi, struct silofs_alloc *alloc)
 {
 	int err;
 
@@ -174,10 +175,10 @@ static int ubi_new_view(struct silofs_ub_info *ubi, struct silofs_alloc *alloc)
 	return err;
 }
 
-static struct silofs_ub_info *
+static struct silofs_uber_info *
 ubi_new(const struct silofs_baddr *baddr, struct silofs_alloc *alloc)
 {
-	struct silofs_ub_info *ubi = nullptr;
+	struct silofs_uber_info *ubi = nullptr;
 	int err;
 
 	ubi = ubi_malloc(alloc);
@@ -196,13 +197,13 @@ ubi_new(const struct silofs_baddr *baddr, struct silofs_alloc *alloc)
 }
 
 static void
-ubi_del_view(struct silofs_ub_info *ubi, struct silofs_alloc *alloc)
+ubi_del_view(struct silofs_uber_info *ubi, struct silofs_alloc *alloc)
 {
 	bni_del_view(&ubi->ub_bni, alloc);
 	ubi->ub = nullptr;
 }
 
-static void ubi_del(struct silofs_ub_info *ubi, struct silofs_alloc *alloc)
+static void ubi_del(struct silofs_uber_info *ubi, struct silofs_alloc *alloc)
 {
 	if (ubi != nullptr) {
 		ubi_del_view(ubi, alloc);
@@ -211,7 +212,7 @@ static void ubi_del(struct silofs_ub_info *ubi, struct silofs_alloc *alloc)
 	}
 }
 
-static struct silofs_bnode_info *ubi_to_bni(struct silofs_ub_info *ubi)
+static struct silofs_bnode_info *ubi_to_bni(struct silofs_uber_info *ubi)
 {
 	struct silofs_bnode_info *bni = nullptr;
 
@@ -221,32 +222,33 @@ static struct silofs_bnode_info *ubi_to_bni(struct silofs_ub_info *ubi)
 	return bni;
 }
 
-static struct silofs_ub_info *ubi_from_bni(struct silofs_bnode_info *bni)
+static struct silofs_uber_info *ubi_from_bni(struct silofs_bnode_info *bni)
 {
-	struct silofs_ub_info *ubi = nullptr;
+	struct silofs_uber_info *ubi = nullptr;
 
 	if (bni != nullptr) {
-		ubi = container_of(bni, struct silofs_ub_info, ub_bni);
+		ubi = container_of(bni, struct silofs_uber_info, ub_bni);
 	}
 	return ubi;
 }
 
-static struct silofs_ub_info *ubi_unconst(const struct silofs_ub_info *p)
+static struct silofs_uber_info *ubi_unconst(const struct silofs_uber_info *p)
 {
 	union {
-		const struct silofs_ub_info *p;
-		struct silofs_ub_info *q;
+		const struct silofs_uber_info *p;
+		struct silofs_uber_info *q;
 	} u = { .p = p };
 
 	return u.q;
 }
 
-struct silofs_ub_info *silofs_ubi_from_bni(const struct silofs_bnode_info *bni)
+struct silofs_uber_info *
+silofs_ubi_from_bni(const struct silofs_bnode_info *bni)
 {
-	const struct silofs_ub_info *ubi = nullptr;
+	const struct silofs_uber_info *ubi = nullptr;
 
 	if (bni != nullptr) {
-		ubi = container_of2(bni, struct silofs_ub_info, ub_bni);
+		ubi = container_of2(bni, struct silofs_uber_info, ub_bni);
 	}
 	return ubi_unconst(ubi);
 }

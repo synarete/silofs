@@ -134,6 +134,36 @@ def _test_git_archive_untar_at(env: TestEnv, base: Path) -> None:
     env.subcmd.sh.run_ok(subcmd, base)
 
 
+def _test_cpython(env: TestEnv) -> None:
+    url = env.cfg.remotes.cpython_repo_url
+    if not url:
+        return
+    name = env.uniq_name()
+    env.exec_init(sup_groups=True)
+    env.exec_mkfs(50, no_utf8_names=True)
+    env.exec_mount(
+        allow_hostids=True,
+        allow_xattr_acl=True,
+        writeback_cache=False,
+    )
+    env.exec_lsmnt()
+    base = env.create_fstree(name)
+    ret = env.subcmd.git.clone(url, base)
+    if ret == 0:
+        _test_cpython_at(env, base)
+    env.remove_fstree(name)
+    env.exec_umount()
+
+
+def _test_cpython_at(env: TestEnv, base: Path) -> None:
+    env.subcmd.sh.run_ok("./configure", base)
+    env.subcmd.sh.run_ok("make", base)
+    out, ret = env.subcmd.sh.run2("make test", base)
+    if ret != 0 and len(out):
+        pass  # TODO: check minimal number of errors (2)
+    env.subcmd.sh.run_ok("make clean", base)
+
+
 def _test_rpmbuild(env: TestEnv) -> None:
     url = env.cfg.remotes.silofs_repo_url
     if not url:

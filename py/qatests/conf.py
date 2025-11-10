@@ -12,6 +12,7 @@ _POSTGRESQL_REPO_URL = "https://git.postgresql.org/git/postgresql.git"
 _RSYNC_REPO_URL = "git://git.samba.org/rsync.git"
 _FINDUTILS_REPO_URL = "https://git.savannah.gnu.org/git/findutils.git"
 _GITSCM_REPO_URL = "https://github.com/git/git.git"
+_CPYTHON_REPO_URL = "https://github.com/python/cpython.git"
 _SILOFS_REPO_URL = "https://github.com/synarete/silofs"
 
 
@@ -31,6 +32,7 @@ class ConfigRemotes(pydantic.BaseModel):
     rsync_repo_url: str = ""
     findutils_repo_url: str = ""
     git_repo_url: str = ""
+    cpython_repo_url: str = ""
     silofs_repo_url: str = ""
 
 
@@ -87,6 +89,8 @@ def _fixup_remotes(remotes: ConfigRemotes) -> ConfigRemotes:
         remotes.findutils_repo_url = _FINDUTILS_REPO_URL
     if _use_default_url(remotes.git_repo_url):
         remotes.git_repo_url = _GITSCM_REPO_URL
+    if _use_default_url(remotes.cpython_repo_url):
+        remotes.cpython_repo_url = _CPYTHON_REPO_URL
     if _use_default_url(remotes.silofs_repo_url):
         remotes.silofs_repo_url = _SILOFS_REPO_URL
     return remotes

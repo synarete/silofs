@@ -127,12 +127,13 @@ class _Shell(SubcmdExec):
 
     def run(
         self,
-        subcmd: str,
+        cmd: str,
         wdir: typing.Optional[Path] = None,
         xenv: typing.Optional[typing.Mapping[str, str]] = None,
     ) -> int:
+        self.logcmd("SH", cmd, wdir)
         with subprocess.Popen(
-            subcmd,
+            cmd,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             cwd=str(wdir),
@@ -143,13 +144,33 @@ class _Shell(SubcmdExec):
             ret = proc.wait()
         return ret
 
+    def run2(
+        self,
+        cmd: str,
+        wdir: typing.Optional[Path] = None,
+        xenv: typing.Optional[typing.Mapping[str, str]] = None,
+    ) -> typing.Tuple[str, int]:
+        self.logcmd("SH", cmd, wdir)
+        with subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            cwd=str(wdir),
+            shell=True,
+            universal_newlines=True,
+            env=self._mkenv(xenv),
+            text=True,
+        ) as proc:
+            out, _ = proc.communicate()
+            ret = proc.returncode
+        return (out, ret)
+
     def run_ok(
         self,
         cmd: str,
         wdir: typing.Optional[Path] = None,
         xenv: typing.Optional[typing.Mapping[str, str]] = None,
     ) -> None:
-        self.logcmd("SH", cmd, wdir)
         ret = self.run(cmd, wdir, xenv)
         if ret != 0:
             raise SubcmdError("failed: " + cmd, ret=ret)

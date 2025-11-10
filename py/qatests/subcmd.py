@@ -198,12 +198,15 @@ class _Silofs(SubcmdExec):
         repodir_name: Path,
         size: int,
         password: str,
+        no_utf8_names: bool,
     ) -> None:
         args = ["mkfs", repodir_name]
         srep = self._mkfssize(size)
         args = args + [f"--size={srep}"]
         if password:
             args = args + [f"--password={password}"]
+        if no_utf8_names:
+            args = args + ["--no-utf8-names"]
         self.execute_sub(args)
 
     def _mkfssize(self, size: int) -> str:

@@ -104,6 +104,23 @@ def _test_mkfs_mount_with_opts(env: TestEnv) -> None:
     env.exec_umount()
 
 
+def _test_mkfs_no_utf8_names(env: TestEnv) -> None:
+    env.exec_init()
+    env.exec_mkfs(no_utf8_names=True)
+    env.exec_mount()
+    env.exec_lsmnt()
+    name = "hello".encode("utf-32")
+    path = env.make_path(name)
+    data = "hello, world!"
+    with open(path, "w", encoding="utf-32") as f:
+        f.writelines(data)
+    with open(path, "r", encoding="utf-32") as f:
+        f.readlines()
+    path.unlink()
+    env.exec_umount()
+    env.exec_rmfs()
+
+
 def list_tests() -> list[TestDef]:
     return [
         TestDef(_test_version),
@@ -114,4 +131,5 @@ def list_tests() -> list[TestDef]:
         TestDef(_test_fscapacity),
         TestDef(_test_show),
         TestDef(_test_mkfs_mount_with_opts),
+        TestDef(_test_mkfs_no_utf8_names),
     ]

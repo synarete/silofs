@@ -176,12 +176,14 @@ class TestEnv:
         self,
         gsize: int = 2,
         name: str = "",
+        no_utf8_names: bool = False,
     ):
         gibi = 2**30
         self.subcmd.silofs.mkfs(
             repodir_name=self._repodir_name(name),
             size=gsize * gibi,
             password=self._passwd(),
+            no_utf8_names=no_utf8_names,
         )
         self._require_metaref(name)
 

@@ -105,7 +105,7 @@ def _test_mkfs_mount_with_opts(env: TestEnv) -> None:
 
 
 def _test_mkfs_no_utf8_names(env: TestEnv) -> None:
-    env.exec_init()
+    env.exec_init(sup_groups=True)
     env.exec_mkfs(no_utf8_names=True)
     env.exec_mount()
     env.exec_lsmnt()

@@ -1139,12 +1139,17 @@ dirin_set_hashfn(struct silofs_inode_dir *dirin, enum silofs_namehfn hfn)
 	dirin->d_hashfn = (uint8_t)hfn;
 }
 
-static void dirin_setup(struct silofs_inode_dir *dirin, uint64_t seed)
+static void dirin_setup_empty(struct silofs_inode_dir *dirin)
 {
 	dirin_set_tree_root(dirin, silofs_vaddr_none());
-	dirin_set_seed(dirin, seed);
 	dirin_set_last_index(dirin, DTREE_INDEX_NULL);
 	dirin_set_ndents(dirin, 0);
+}
+
+static void dirin_setup(struct silofs_inode_dir *dirin, uint64_t seed)
+{
+	dirin_setup_empty(dirin);
+	dirin_set_seed(dirin, seed);
 	dirin_set_flags(dirin, SILOFS_DIRF_NAME_UTF8);
 	dirin_set_hashfn(dirin, SILOFS_NAMEHASH_XXH64);
 }
@@ -1286,9 +1291,11 @@ void silofs_dir_inherit_parent(struct silofs_inode_info *dir_ii,
                                const struct silofs_inode_info *parentd_ii)
 {
 	struct silofs_inode_dir *dirin = dir_ispec_of(dir_ii);
+	const enum silofs_dirf parent_dirf = dir_flags(parentd_ii);
+	const enum silofs_namehfn parent_hfn = dir_hfn(parentd_ii);
 
-	dirin_set_flags(dirin, dir_flags(parentd_ii));
-	dirin_set_hashfn(dirin, dir_hfn(parentd_ii));
+	dirin_set_flags(dirin, parent_dirf);
+	dirin_set_hashfn(dirin, parent_hfn);
 	dir_ii_dirtify(dir_ii);
 }
 
@@ -1329,10 +1336,10 @@ int silofs_dir_check_name(const struct silofs_inode_info *dir_ii,
 	if (nstr->sv.len > namelen_max) {
 		return -SILOFS_ENAMETOOLONG;
 	}
-	if (!silofs_dir_has_flags(dir_ii, SILOFS_DIRF_NAME_UTF8)) {
-		return 0;
+	if (silofs_dir_has_flags(dir_ii, SILOFS_DIRF_NAME_UTF8)) {
+		return check_utf8_name(nstr, uconv);
 	}
-	return check_utf8_name(nstr, uconv);
+	return 0;
 }
 
 bool silofs_dir_has_flags(const struct silofs_inode_info *dir_ii,
@@ -1377,6 +1384,18 @@ void silofs_ii_setup_dir(struct silofs_inode_info *dir_ii, mode_t parent_mode,
 	};
 
 	dirin_setup(dirin_of(dir_ii->inode), unique_seed());
+	silofs_ii_update_iattrs(dir_ii, &iattr);
+}
+
+static void dir_resetup_empty(struct silofs_inode_info *dir_ii)
+{
+	struct silofs_iattr iattr = {
+		.ia_size = SILOFS_DIR_EMPTY_SIZE,
+		.ia_blocks = 0,
+		.ia_flags = SILOFS_IATTR_SIZE | SILOFS_IATTR_BLOCKS,
+	};
+
+	dirin_setup_empty(dirin_of(dir_ii->inode));
 	silofs_ii_update_iattrs(dir_ii, &iattr);
 }
 
@@ -2538,11 +2557,11 @@ static int dirc_discard_recursively(const struct silofs_dir_ctx *d_ctx,
 	return 0;
 }
 
-static void dirc_resetup_dir(const struct silofs_dir_ctx *d_ctx)
+static void dirc_resetup_empty_dir(const struct silofs_dir_ctx *d_ctx)
 {
 	struct silofs_inode_info *dir_ii = d_ctx->dir_ii;
 
-	silofs_ii_setup_dir(dir_ii, 0, silofs_ii_nlink(dir_ii));
+	dir_resetup_empty(dir_ii);
 	dir_ii_dirtify(dir_ii);
 }
 
@@ -2562,7 +2581,7 @@ static int dirc_drop_tree(const struct silofs_dir_ctx *d_ctx)
 	if (err) {
 		return err;
 	}
-	dirc_resetup_dir(d_ctx);
+	dirc_resetup_empty_dir(d_ctx);
 	return 0;
 }
 

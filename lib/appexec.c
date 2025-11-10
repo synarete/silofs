@@ -361,26 +361,46 @@ static int format_nil_space(struct silofs_task_ctx *task)
 static int
 spawn_rootdir(struct silofs_task_ctx *task, struct silofs_inode_info **out_ii)
 {
-	struct silofs_inew_params inp;
+	struct silofs_inew_params inp = { .flags = 0 };
+	struct silofs_inode_info *ii = nullptr;
+	int err;
 
 	silofs_inew_params_of(task, nullptr, S_IFDIR | 0755, 0, &inp);
-	return silofs_spawn_inode(task, &inp, out_ii);
+	err = silofs_spawn_inode(task, &inp, &ii);
+	if (err) {
+		return err;
+	}
+	if (ii->i_ino != SILOFS_INO_ROOT) {
+		log_err("failed to format root-dir: ino=%ld", ii->i_ino);
+		return -SILOFS_EFSCORRUPTED;
+	}
+	*out_ii = ii;
+	return 0;
+}
+
+static void update_rootdir(struct silofs_task_ctx *task,
+                           struct silofs_inode_info *rootd_ii)
+{
+	const struct silofs_env_args *env_args = task->t_env->base.args;
+
+	silofs_ii_fixup_as_rootdir(rootd_ii);
+	if (env_args->no_utf8_names) {
+		silofs_dir_unset_flag(rootd_ii, SILOFS_DIRF_NAME_UTF8);
+	} else {
+		silofs_dir_set_flag(rootd_ii, SILOFS_DIRF_NAME_UTF8);
+	}
 }
 
 static int format_rootdir(struct silofs_task_ctx *task)
 {
-	struct silofs_inode_info *root_ii = nullptr;
+	struct silofs_inode_info *rootd_ii = nullptr;
 	int err;
 
-	err = spawn_rootdir(task, &root_ii);
+	err = spawn_rootdir(task, &rootd_ii);
 	if (err) {
 		return err;
 	}
-	if (root_ii->i_ino != SILOFS_INO_ROOT) {
-		log_err("failed to format root-dir: ino=%ld", root_ii->i_ino);
-		return -SILOFS_EFSCORRUPTED;
-	}
-	silofs_ii_fixup_as_rootdir(root_ii);
+	update_rootdir(task, rootd_ii);
 	return 0;
 }
 

@@ -96,6 +96,7 @@ struct silofs_env_args {
 	size_t                  capacity;
 	size_t                  memwant;
 	bool                    no_ispecial;
+	bool                    no_utf8_names;
 };
 
 /* in-use versions */

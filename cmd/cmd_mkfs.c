@@ -23,6 +23,7 @@ static const char *const cmd_mkfs_help_desc =
 	"options:                                                        \n"
 	"  -s, --size=nbytes            Capacity size limit              \n"
 	"  -u, --user=username          Set username owner of root-dir   \n"
+	"  -N, --no-utf8-names          Do not force UTF8 file names     \n"
 	"  -L, --loglevel=level         Logging level (rfc5424)          \n";
 
 struct cmd_mkfs_in_args {
@@ -33,6 +34,7 @@ struct cmd_mkfs_in_args {
 	char *password;
 	char *username;
 	long fs_size;
+	bool no_utf8_names;
 };
 
 struct cmd_mkfs_ctx {
@@ -53,6 +55,7 @@ static void cmd_mkfs_parse_optargs(struct cmd_mkfs_ctx *ctx)
 		{ "size", 's', 1 },           //
 		{ "user", 'u', 1 },           //
 		{ "password", 'p', 1 },       //
+		{ "no-utf8-names", 'N', 0 },  //
 		{ "developer-mode", 'X', 0 }, //
 		{ "loglevel", 'L', 1 },       //
 		{ "help", 'h', 0 },           //
@@ -74,6 +77,9 @@ static void cmd_mkfs_parse_optargs(struct cmd_mkfs_ctx *ctx)
 			break;
 		case 'p':
 			ctx->in_args.password = cmd_optargs_getpass(&opa);
+			break;
+		case 'N':
+			ctx->in_args.no_utf8_names = true;
 			break;
 		case 'X':
 			cmd_global_params.developer_mode = true;
@@ -187,6 +193,7 @@ static void cmd_mkfs_setup_env_args(struct cmd_mkfs_ctx *ctx)
 	env_args->boot_args.fs_name = ctx->in_args.fsname;
 	env_args->boot_args.passwd = ctx->in_args.password;
 	env_args->capacity = (size_t)ctx->in_args.fs_size;
+	env_args->no_utf8_names = ctx->in_args.no_utf8_names;
 }
 
 static void cmd_mkfs_setup_fs_ids(struct cmd_mkfs_ctx *ctx)
@@ -234,7 +241,10 @@ static void cmd_mkfs_close_fs(struct cmd_mkfs_ctx *ctx)
 void cmd_execute_mkfs(void)
 {
 	struct cmd_mkfs_ctx ctx = {
-		.in_args = { .fs_size = -1, },
+		.in_args = {
+			.fs_size = -1,
+			.no_utf8_names = false,
+		},
 		.env = nullptr,
 	};
 

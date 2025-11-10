@@ -1228,6 +1228,7 @@ static void
 dir_set_flags(struct silofs_inode_info *dir_ii, enum silofs_dirf flags)
 {
 	dirin_set_flags(dir_ispec_of(dir_ii), flags);
+	dir_ii_dirtify(dir_ii);
 }
 
 enum silofs_dirf silofs_dir_flags(const struct silofs_inode_info *dir_ii)
@@ -1235,11 +1236,27 @@ enum silofs_dirf silofs_dir_flags(const struct silofs_inode_info *dir_ii)
 	return dir_flags(dir_ii);
 }
 
-void silofs_dir_add_flags(struct silofs_inode_info *dir_ii,
-                          enum silofs_dirf flags)
+void silofs_dir_set_flag(struct silofs_inode_info *dir_ii, enum silofs_dirf f)
 {
-	dir_set_flags(dir_ii, dir_flags(dir_ii) | flags);
-	dir_ii_dirtify(dir_ii);
+	enum silofs_dirf df = dir_flags(dir_ii);
+
+	if ((df & f) != f) {
+		const unsigned new_df = (unsigned)df | (unsigned)f;
+
+		dir_set_flags(dir_ii, (enum silofs_dirf)new_df);
+	}
+}
+
+void silofs_dir_unset_flag(struct silofs_inode_info *dir_ii,
+                           enum silofs_dirf f)
+{
+	enum silofs_dirf df = dir_flags(dir_ii);
+
+	if ((df & f) == f) {
+		const unsigned new_df = (unsigned)df & ~(unsigned)f;
+
+		dir_set_flags(dir_ii, (enum silofs_dirf)new_df);
+	}
 }
 
 static enum silofs_namehfn dir_hfn(const struct silofs_inode_info *dir_ii)

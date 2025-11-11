@@ -37,7 +37,7 @@ static int validate_blobid(const struct silofs_blobid *blobid)
 
 static int validate_mbr_blobid(const struct silofs_blobid *blobid)
 {
-	enum silofs_bmode bmode;
+	enum silofs_btype btype;
 	enum silofs_mtype mtype;
 	int err;
 
@@ -45,8 +45,8 @@ static int validate_mbr_blobid(const struct silofs_blobid *blobid)
 	if (err) {
 		return err;
 	}
-	bmode = silofs_blobid_get_bmode(blobid);
-	if (bmode != SILOFS_BMODE_CAS) {
+	btype = silofs_blobid_get_btype(blobid);
+	if (btype != SILOFS_BTYPE_CAS) {
 		return -SILOFS_EBLOBID;
 	}
 	mtype = silofs_blobid_get_mtype(blobid);

@@ -47,7 +47,7 @@ struct silofs_blobidv {
 		uint8_t raw[32];
 	} u;
 	uint8_t mtype;
-	uint8_t bmode;
+	uint8_t btype;
 	/* XXX REMOVE ME */
 	uint8_t vspace;
 	uint8_t height;
@@ -81,7 +81,7 @@ blobidv_setup_raw(struct silofs_blobidv *blobidv,
 	memset(blobidv, 0, sizeof(*blobidv));
 	silofs_svolid_copyto(svolid, &blobidv->svolid);
 	blobidv->mtype = (uint8_t)mtype;
-	blobidv->bmode = (uint8_t)SILOFS_BMODE_RAW;
+	blobidv->btype = (uint8_t)SILOFS_BTYPE_RAW;
 	generate_random(blobidv->u.raw, sizeof(blobidv->u.raw));
 }
 
@@ -93,7 +93,7 @@ blobidv_setup_cas(struct silofs_blobidv *blobidv,
 	memset(blobidv, 0, sizeof(*blobidv));
 	silofs_svolid_copyto(svolid, &blobidv->svolid);
 	blobidv->mtype = (uint8_t)mtype;
-	blobidv->bmode = (uint8_t)SILOFS_BMODE_CAS;
+	blobidv->btype = (uint8_t)SILOFS_BTYPE_CAS;
 	silofs_hash256_copyto(hash, &blobidv->u.hash);
 }
 
@@ -158,12 +158,12 @@ enum silofs_height silofs_blobid_get_height(const struct silofs_blobid *blobid)
 	return blobidv.height;
 }
 
-enum silofs_bmode silofs_blobid_get_bmode(const struct silofs_blobid *blobid)
+enum silofs_btype silofs_blobid_get_btype(const struct silofs_blobid *blobid)
 {
 	struct silofs_blobidv blobidv;
 
 	blobid_to_view(blobid, &blobidv);
-	return blobidv.bmode;
+	return blobidv.btype;
 }
 
 enum silofs_mtype silofs_blobid_get_mtype(const struct silofs_blobid *blobid)

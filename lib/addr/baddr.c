@@ -39,7 +39,7 @@ void silofs_baddr_init(struct silofs_baddr *baddr,
 	silofs_blobid_copyto(blobid, &baddr->blobid);
 	baddr->pos = pos;
 	baddr->mtype = silofs_blobid_get_mtype(blobid);
-	baddr->bmode = silofs_blobid_get_bmode(blobid);
+	baddr->btype = silofs_blobid_get_btype(blobid);
 }
 
 void silofs_baddr_fini(struct silofs_baddr *baddr)
@@ -59,7 +59,7 @@ void silofs_baddr_assign(struct silofs_baddr *baddr,
 	silofs_blobid_copyto(&other->blobid, &baddr->blobid);
 	baddr->pos = other->pos;
 	baddr->mtype = other->mtype;
-	baddr->bmode = other->bmode;
+	baddr->btype = other->btype;
 }
 
 bool silofs_baddr_isequal(const struct silofs_baddr *baddr,

@@ -338,10 +338,10 @@ enum silofs_endianness {
 	SILOFS_ENDIANNESS_BE = 2,
 };
 
-enum silofs_bmode {
-	SILOFS_BMODE_NONE = 0,
-	SILOFS_BMODE_RAW  = 1,
-	SILOFS_BMODE_CAS  = 2,
+enum silofs_btype {
+	SILOFS_BTYPE_NONE = 0,
+	SILOFS_BTYPE_RAW  = 1,
+	SILOFS_BTYPE_CAS  = 2,
 };
 
 /* persistent nodes' flags */

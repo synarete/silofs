@@ -530,7 +530,11 @@ size_t silofs_hmapq_usage(const struct silofs_hmapq *hmapq)
 static size_t hmapq_key_to_slot(const struct silofs_hmapq *hmapq,
                                 const struct silofs_hkey *hkey)
 {
-	const uint64_t hval = hkey->hash ^ (hkey->hash >> 32);
+	/*
+	 * 2654435761 is the closest prime number to (2**32)*golden_ratio
+	 * where golden_ratio = (sqrt(5) - 1)/2. Borrowed from sqlite.
+	 */
+	const uint64_t hval = (hkey->hash ^ (hkey->hash >> 32)) % 2654435761;
 
 	return hval % hmapq->hmq_htbl_nslots;
 }

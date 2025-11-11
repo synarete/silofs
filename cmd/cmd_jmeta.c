@@ -213,13 +213,13 @@ static void cmd_decode_meta_mode(const char *str, bool want_archive)
 	const int fs = !strcmp(str, "filesystem");
 
 	if (!ar && !fs) {
-		cmd_diez("json: illegal subtype: '%s'", str);
+		cmd_diez("json: illegal sub-type: '%s'", str);
 	}
 	if (fs && want_archive) {
-		cmd_diez("json: bad subtype for filesystem: '%s'", str);
+		cmd_diez("json: bad sub-type for filesystem: '%s'", str);
 	}
 	if (ar && !want_archive) {
-		cmd_diez("json: bad subtype for archive: '%s'", str);
+		cmd_diez("json: bad sub-type for archive: '%s'", str);
 	}
 }
 

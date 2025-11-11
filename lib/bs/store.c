@@ -18,11 +18,14 @@
 #include <sys/stat.h>
 #include "locos.h"
 #include "store.h"
+#include "mbr.h"
 
 struct silofs_store_ctx {
+	const struct silofs_mbrinfo *mbri;
 	struct silofs_alloc *alloc;
 	struct silofs_locos *locos;
 	struct silofs_bcache *bcache;
+	struct silofs_mdigest *mdigest;
 	struct silofs_cipher *enc_cipher;
 	struct silofs_cipher *dec_cipher;
 	struct silofs_view *view;
@@ -30,9 +33,11 @@ struct silofs_store_ctx {
 
 static void stc_init(struct silofs_store_ctx *st_ctx, struct silofs_env *env)
 {
+	st_ctx->mbri = &env->mbri;
 	st_ctx->alloc = env->base.alloc;
 	st_ctx->locos = &env->base.repo->re_locos;
 	st_ctx->bcache = env->base.bcache;
+	st_ctx->mdigest = &env->mdigest;
 	st_ctx->enc_cipher = &env->enc_cipher;
 	st_ctx->dec_cipher = &env->dec_cipher;
 	st_ctx->view = nullptr;
@@ -60,6 +65,12 @@ static void stc_fini(struct silofs_store_ctx *st_ctx)
 	}
 }
 
+static const struct silofs_key *
+stc_main_key(const struct silofs_store_ctx *st_ctx)
+{
+	return &st_ctx->mbri->fs_mbr.main_ivkey.key;
+}
+
 static int stc_require_baddr(const struct silofs_store_ctx *st_ctx,
                              const struct silofs_baddr *baddr)
 {
@@ -75,7 +86,23 @@ static int stc_create_cached_ubi(const struct silofs_store_ctx *st_ctx,
 	return ((*out_ubi) == nullptr) ? -SILOFS_ENOMEM : 0;
 }
 
-static int stc_spawn_uber(struct silofs_store_ctx *st_ctx,
+static void stc_update_spawned_bnode(const struct silofs_store_ctx *st_ctx,
+                                     const struct silofs_key *key,
+                                     struct silofs_bnode_info *bni)
+{
+	silofs_bni_setup_ivkey(bni, st_ctx->mdigest, key);
+	silofs_bni_dirtify(bni);
+}
+
+static void stc_update_spawned_uber(const struct silofs_store_ctx *st_ctx,
+                                    struct silofs_uber_info *ubi)
+{
+	const struct silofs_key *key = stc_main_key(st_ctx);
+
+	stc_update_spawned_bnode(st_ctx, key, &ubi->ub_bni);
+}
+
+static int stc_spawn_uber(const struct silofs_store_ctx *st_ctx,
                           const struct silofs_baddr *baddr,
                           struct silofs_uber_info **out_ubi)
 {
@@ -89,6 +116,7 @@ static int stc_spawn_uber(struct silofs_store_ctx *st_ctx,
 	if (err) {
 		return err;
 	}
+	stc_update_spawned_uber(st_ctx, *out_ubi);
 	return 0;
 }
 
@@ -106,6 +134,11 @@ int silofs_spawn_uber(struct silofs_env *env, const struct silofs_baddr *baddr,
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
+static size_t viewlen_of(const struct silofs_bnode_info *bni)
+{
+	return silofs_mtype_size(silofs_bni_mtype(bni));
+}
+
 static struct silofs_bnode_info *stc_get_dirty(struct silofs_store_ctx *st_ctx)
 {
 	return silofs_bcache_dq_front(st_ctx->bcache);
@@ -114,8 +147,20 @@ static struct silofs_bnode_info *stc_get_dirty(struct silofs_store_ctx *st_ctx)
 static int stc_destage_dirty_bnode(struct silofs_store_ctx *st_ctx,
                                    const struct silofs_bnode_info *bni)
 {
-	(void)st_ctx;
-	(void)bni;
+	const struct silofs_rovec rovec = {
+		.rov_base = st_ctx->view,
+		.rov_len = viewlen_of(bni),
+	};
+	int err;
+
+	err = silofs_encrypt_bnode(bni, st_ctx->enc_cipher, st_ctx->view);
+	if (err) {
+		return err;
+	}
+	err = silofs_locos_write_blob(st_ctx->locos, &bni->bn_baddr, &rovec);
+	if (err) {
+		return err;
+	}
 	return 0;
 }
 

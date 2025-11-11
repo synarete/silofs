@@ -565,3 +565,11 @@ void silofs_del_bnode(struct silofs_bnode_info *bni,
 		break;
 	}
 }
+
+int silofs_encrypt_bnode(const struct silofs_bnode_info *bni,
+                         const struct silofs_cipher *cipher,
+                         struct silofs_view *enc_view)
+{
+	return silofs_encrypt_view(cipher, &bni->bn_ivkey, bni->bn_view,
+	                           bni_mtype(bni), enc_view);
+}

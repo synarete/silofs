@@ -24,6 +24,13 @@
 
 struct silofs_env;
 
+/* a tuple of content-addressable references to main boot-records */
+struct silofs_mrefs {
+	struct silofs_baddr main;
+	struct silofs_baddr base;
+	struct silofs_baddr fork;
+};
+
 /* main boot-record, in-memory representation */
 struct silofs_mbr {
 	struct silofs_ivkey  main_ivkey;
@@ -34,13 +41,6 @@ struct silofs_mbr {
 	uint32_t             flags;
 	int                  cipher_algo;
 	int                  cipher_mode;
-};
-
-/* a tuple of content-addressable references to main boot-records */
-struct silofs_mrefs {
-	struct silofs_baddr main;
-	struct silofs_baddr base;
-	struct silofs_baddr fork;
 };
 
 /* main boot-record controller */

@@ -91,4 +91,8 @@ silofs_new_bnode(const struct silofs_baddr *baddr, struct silofs_alloc *alloc);
 void silofs_del_bnode(struct silofs_bnode_info *bni,
                       struct silofs_alloc      *alloc);
 
+int silofs_encrypt_bnode(const struct silofs_bnode_info *bni,
+                         const struct silofs_cipher     *cipher,
+                         struct silofs_view             *enc_view);
+
 #endif /* SILOFS_BNODES_H_ */

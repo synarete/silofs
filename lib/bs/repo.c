@@ -2398,25 +2398,25 @@ int silofs_repo_stage_blob(struct silofs_repo *repo,
 }
 
 int silofs_repo_save_bseg(struct silofs_repo *repo,
-                          const struct silofs_baddr *baddr,
+                          const struct silofs_paddr *paddr,
                           const struct silofs_rovec *rovec)
 {
 	int err;
 
 	repo_lock(repo);
-	err = silofs_locos_write_blob(&repo->re_locos, baddr, rovec);
+	err = silofs_locos_write_blob(&repo->re_locos, paddr, rovec);
 	repo_unlock(repo);
 	return err;
 }
 
 int silofs_repo_load_bseg(struct silofs_repo *repo,
-                          const struct silofs_baddr *baddr,
+                          const struct silofs_paddr *paddr,
                           const struct silofs_rwvec *rwvec)
 {
 	int err;
 
 	repo_lock(repo);
-	err = silofs_locos_read_blob(&repo->re_locos, baddr, rwvec);
+	err = silofs_locos_read_blob(&repo->re_locos, paddr, rwvec);
 	repo_unlock(repo);
 	return err;
 }

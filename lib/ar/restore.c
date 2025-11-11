@@ -56,7 +56,7 @@ static void rec_setup_ab_meta(struct silofs_re_ctx *re_ctx,
 }
 
 static int
-rec_renew_abi(struct silofs_re_ctx *re_ctx, const struct silofs_baddr *baddr)
+rec_renew_abi(struct silofs_re_ctx *re_ctx, const struct silofs_paddr *paddr)
 {
 	struct silofs_ab_base ab_meta;
 	struct silofs_ab_info *abi = nullptr;
@@ -66,7 +66,7 @@ rec_renew_abi(struct silofs_re_ctx *re_ctx, const struct silofs_baddr *baddr)
 	if (abi == nullptr) {
 		return -SILOFS_ENOMEM;
 	}
-	silofs_abi_set_baddr(abi, baddr);
+	silofs_abi_set_paddr(abi, paddr);
 
 	rec_rebind_abi(re_ctx, abi);
 	return 0;
@@ -95,18 +95,18 @@ static void rec_fini(struct silofs_re_ctx *re_ctx)
 
 static int
 rec_recv_from_repo(const struct silofs_re_ctx *re_ctx,
-                   const struct silofs_baddr *baddr, struct silofs_rwvec *rwv)
+                   const struct silofs_paddr *paddr, struct silofs_rwvec *rwv)
 {
-	return silofs_repo_load_bseg(re_ctx->repo, baddr, rwv);
+	return silofs_repo_load_bseg(re_ctx->repo, paddr, rwv);
 }
 
 static int
 rec_recv_pack(const struct silofs_re_ctx *re_ctx,
-              const struct silofs_baddr *baddr, void *dat, size_t len)
+              const struct silofs_paddr *paddr, void *dat, size_t len)
 {
 	struct silofs_rwvec rwv = { .rwv_base = dat, .rwv_len = len };
 
-	return rec_recv_from_repo(re_ctx, baddr, &rwv);
+	return rec_recv_from_repo(re_ctx, paddr, &rwv);
 }
 
 static int
@@ -146,11 +146,11 @@ static int rec_restore_segdata(const struct silofs_re_ctx *re_ctx,
 	if (seg == nullptr) {
 		return -SILOFS_ENOMEM;
 	}
-	err = rec_recv_pack(re_ctx, &ard->baddr, seg, len);
+	err = rec_recv_pack(re_ctx, &ard->paddr, seg, len);
 	if (err) {
 		goto out;
 	}
-	/* TODO: recheck baddr by content */
+	/* TODO: recheck paddr by content */
 	err = rec_save_seg(re_ctx, &ard->laddr, seg, len);
 	if (err) {
 		goto out;
@@ -176,17 +176,17 @@ static int rec_fetch_arix_block(struct silofs_re_ctx *re_ctx)
 }
 
 static int
-rec_resolve_apex(struct silofs_re_ctx *re_ctx, struct silofs_baddr *out_baddr)
+rec_resolve_apex(struct silofs_re_ctx *re_ctx, struct silofs_paddr *out_paddr)
 {
-	return silofs_mbri_arix_addr(&re_ctx->env->mbri, out_baddr);
+	return silofs_mbri_arix_addr(&re_ctx->env->mbri, out_paddr);
 }
 
 static int rec_restore_arix(struct silofs_re_ctx *re_ctx,
-                            const struct silofs_baddr *baddr)
+                            const struct silofs_paddr *paddr)
 {
 	int err;
 
-	err = rec_renew_abi(re_ctx, baddr);
+	err = rec_renew_abi(re_ctx, paddr);
 	if (err) {
 		return err;
 	}
@@ -199,14 +199,14 @@ static int rec_restore_arix(struct silofs_re_ctx *re_ctx,
 
 static int rec_restore_apex(struct silofs_re_ctx *re_ctx)
 {
-	struct silofs_baddr baddr = { .pos = -1 };
+	struct silofs_paddr paddr = { .pos = -1 };
 	int err;
 
-	err = rec_resolve_apex(re_ctx, &baddr);
+	err = rec_resolve_apex(re_ctx, &paddr);
 	if (err) {
 		return err;
 	}
-	err = rec_restore_arix(re_ctx, &baddr);
+	err = rec_restore_arix(re_ctx, &paddr);
 	if (err) {
 		return err;
 	}
@@ -264,17 +264,17 @@ static int rec_restore_descs(struct silofs_re_ctx *re_ctx)
 
 static int rec_restore_next(struct silofs_re_ctx *re_ctx)
 {
-	struct silofs_baddr baddr = { .pos = -1 };
+	struct silofs_paddr paddr = { .pos = -1 };
 	int err;
 
 	silofs_assert_not_null(re_ctx->abi);
 
-	silofs_abi_get_next(re_ctx->abi, &baddr);
-	if (silofs_baddr_isnull(&baddr)) {
+	silofs_abi_get_next(re_ctx->abi, &paddr);
+	if (silofs_paddr_isnull(&paddr)) {
 		rec_rebind_abi(re_ctx, nullptr);
 		return 0; /* end-of-chain */
 	}
-	err = rec_restore_arix(re_ctx, &baddr);
+	err = rec_restore_arix(re_ctx, &paddr);
 	if (err) {
 		return err;
 	}
@@ -335,13 +335,13 @@ static int rec_restore_sb(struct silofs_re_ctx *re_ctx)
 }
 
 static int rec_restore_fs_mbr(const struct silofs_re_ctx *re_ctx,
-                              struct silofs_baddr *out_fs_mref)
+                              struct silofs_paddr *out_fs_mref)
 {
 	return silofs_env_commit_fs_mbr(re_ctx->env, out_fs_mref);
 }
 
 static int rec_restore_post(struct silofs_re_ctx *re_ctx,
-                            struct silofs_baddr *out_fs_mref)
+                            struct silofs_paddr *out_fs_mref)
 {
 	int err;
 
@@ -357,7 +357,7 @@ static int rec_restore_post(struct silofs_re_ctx *re_ctx,
 }
 
 static int rec_restore_prep(struct silofs_re_ctx *re_ctx,
-                            const struct silofs_baddr *ar_mref)
+                            const struct silofs_paddr *ar_mref)
 {
 	struct silofs_env *env = re_ctx->env;
 	int err;
@@ -374,8 +374,8 @@ static int rec_restore_prep(struct silofs_re_ctx *re_ctx,
 }
 
 static int rec_do_restore(struct silofs_re_ctx *re_ctx,
-                          const struct silofs_baddr *ar_mref,
-                          struct silofs_baddr *out_fs_mref)
+                          const struct silofs_paddr *ar_mref,
+                          struct silofs_paddr *out_fs_mref)
 {
 	int err;
 
@@ -399,8 +399,8 @@ static int rec_do_restore(struct silofs_re_ctx *re_ctx,
 }
 
 int silofs_do_restore_fs(struct silofs_task_ctx *task,
-                         const struct silofs_baddr *ar_mref,
-                         struct silofs_baddr *out_fs_mref)
+                         const struct silofs_paddr *ar_mref,
+                         struct silofs_paddr *out_fs_mref)
 {
 	struct silofs_re_ctx re_ctx;
 	int err;

@@ -24,7 +24,7 @@
 #include "addr.h"
 
 struct silofs_ar_desc {
-	struct silofs_baddr baddr;
+	struct silofs_paddr paddr;
 	struct silofs_laddr laddr;
 	size_t              len;
 };
@@ -38,7 +38,7 @@ struct silofs_ab_base {
 
 struct silofs_ab_info {
 	struct silofs_ab_base     ab_base;
-	struct silofs_baddr       ab_baddr;
+	struct silofs_paddr       ab_paddr;
 	struct silofs_arix_block *ab;
 	struct silofs_arix_block *ab_enc;
 };
@@ -57,17 +57,17 @@ bool silofs_abi_isfull(const struct silofs_ab_info *abi);
 void silofs_abi_set_btime(struct silofs_ab_info *abi,
                           const struct timespec *ts);
 
-void silofs_abi_get_baddr(const struct silofs_ab_info *abi,
-                          struct silofs_baddr         *out_baddr);
+void silofs_abi_get_paddr(const struct silofs_ab_info *abi,
+                          struct silofs_paddr         *out_paddr);
 
-void silofs_abi_set_baddr(struct silofs_ab_info     *abi,
-                          const struct silofs_baddr *baddr);
+void silofs_abi_set_paddr(struct silofs_ab_info     *abi,
+                          const struct silofs_paddr *paddr);
 
 void silofs_abi_set_next(struct silofs_ab_info       *abi,
                          const struct silofs_ab_info *abi_next);
 
 void silofs_abi_get_next(const struct silofs_ab_info *abi,
-                         struct silofs_baddr         *out_baddr);
+                         struct silofs_paddr         *out_paddr);
 
 void silofs_abi_calc_desc(const struct silofs_ab_info *abi,
                           const struct silofs_laddr   *laddr,

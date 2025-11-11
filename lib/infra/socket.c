@@ -592,7 +592,7 @@ int silofs_socket_send(const struct silofs_socket *sock, const void *buf,
 }
 
 int silofs_socket_sendto(const struct silofs_socket *sock, const void *buf,
-                         size_t bsz, const struct silofs_sockaddr *sbaddr,
+                         size_t bsz, const struct silofs_sockaddr *spaddr,
                          size_t *out_sent)
 {
 	socklen_t len;
@@ -603,8 +603,8 @@ int silofs_socket_sendto(const struct silofs_socket *sock, const void *buf,
 	if (err) {
 		return err;
 	}
-	len = sockaddr_length(sbaddr);
-	err = silofs_sys_sendto(fd, buf, bsz, 0, &sbaddr->u.sa, len, out_sent);
+	len = sockaddr_length(spaddr);
+	err = silofs_sys_sendto(fd, buf, bsz, 0, &spaddr->u.sa, len, out_sent);
 	if (err) {
 		return err;
 	}

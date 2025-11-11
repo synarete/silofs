@@ -508,15 +508,15 @@ struct silofs_blobid {
 	uint8_t id[SILOFS_BLOBID_SIZE];
 } silofs_attr_aligned8;
 
-/* blob addressing */
-struct silofs_baddr64b {
+/* persistent blob addressing */
+struct silofs_paddr64b {
 	struct silofs_blobid blobid;
 	int64_t              pos;
 } silofs_attr_aligned64;
 
 /* cursor within blob */
 struct silofs_bcursor128b {
-	struct silofs_baddr64b baddr;
+	struct silofs_paddr64b paddr;
 	uint64_t               blobsz;
 	uint8_t                reserved[56];
 } silofs_attr_aligned64;
@@ -569,7 +569,7 @@ struct silofs_mbr1k {
 	struct silofs_iv        mbr_main_iv;
 	struct silofs_key       mbr_main_key;
 	struct silofs_uaddr128b mbr_sb_addr;
-	struct silofs_baddr64b  mbr_arix_addr;
+	struct silofs_paddr64b  mbr_arix_addr;
 	uint8_t                 mbr_reserved3[672];
 	struct silofs_hash256   mbr_hash;
 } silofs_attr_aligned64;
@@ -933,7 +933,7 @@ struct silofs_btree_node {
 	uint8_t                btn_nkeys;
 	uint8_t                btn_nchilds;
 	uint8_t                btn_reserved1[22];
-	struct silofs_baddr64b btn_child[SILOFS_BTREE_NODE_NCHILDS];
+	struct silofs_paddr64b btn_child[SILOFS_BTREE_NODE_NCHILDS];
 	uint64_t               btn_key[SILOFS_BTREE_NODE_NKEYS];
 	uint8_t                btn_reserved2[584];
 } silofs_attr_aligned64;
@@ -952,7 +952,7 @@ struct silofs_uber_block {
 
 /* archive descriptor */
 struct silofs_ar_desc256b {
-	struct silofs_baddr64b ad_baddr;
+	struct silofs_paddr64b ad_paddr;
 	struct silofs_laddr96b ad_laddr;
 	uint64_t               ad_len;
 	uint8_t                ad_reserved[56];
@@ -965,7 +965,7 @@ struct silofs_arix_block {
 	uint32_t                  ab_flags;
 	uint32_t                  ab_ndescs;
 	uint8_t                   ab_reserved1[8];
-	struct silofs_baddr64b    ab_next;
+	struct silofs_paddr64b    ab_next;
 	uint8_t                   ab_reserved2[128];
 	struct silofs_ar_desc256b ab_descs[255];
 } silofs_attr_aligned64;

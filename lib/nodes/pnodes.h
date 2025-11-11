@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_BNODES_H_
-#define SILOFS_BNODES_H_
+#ifndef SILOFS_PNODES_H_
+#define SILOFS_PNODES_H_
 
 #include "addr.h"
 #include "crypt.h"
@@ -23,76 +23,76 @@
 #include "hmapq.h"
 #include "view.h"
 
-/* base of all blob-store nodes */
-struct silofs_bnode_info {
-	struct silofs_ivkey      bn_ivkey;
-	struct silofs_baddr      bn_baddr;
-	struct silofs_hmapq_elem bn_hmqe;
-	struct silofs_view      *bn_view;
+/* base of all persistent nodes */
+struct silofs_pnode_info {
+	struct silofs_ivkey      pn_ivkey;
+	struct silofs_paddr      pn_paddr;
+	struct silofs_hmapq_elem pn_hmqe;
+	struct silofs_view      *pn_view;
 };
 
 /* uber-block in-memory state */
 struct silofs_uber_info {
-	struct silofs_bnode_info  ub_bni;
+	struct silofs_pnode_info  ub_pni;
 	struct silofs_uber_block *ub;
 };
 
 /* blob-descriptor node */
 struct silofs_bldesc_info {
-	struct silofs_bnode_info bd_bni;
+	struct silofs_pnode_info bd_pni;
 	struct silofs_blob_desc *bd;
 };
 
 /* btree-node */
 struct silofs_btnode_info {
-	struct silofs_bnode_info  btn_bni;
+	struct silofs_pnode_info  btn_pni;
 	struct silofs_btree_node *btn;
 	bool                      btn_rdonly;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_bni_init(struct silofs_bnode_info  *bni,
-                     const struct silofs_baddr *baddr);
+void silofs_pni_init(struct silofs_pnode_info  *pni,
+                     const struct silofs_paddr *paddr);
 
-void silofs_bni_fini(struct silofs_bnode_info *bni);
+void silofs_pni_fini(struct silofs_pnode_info *pni);
 
-enum silofs_mtype silofs_bni_mtype(const struct silofs_bnode_info *bni);
+enum silofs_mtype silofs_pni_mtype(const struct silofs_pnode_info *pni);
 
-void silofs_bni_dirtify(struct silofs_bnode_info *bni);
+void silofs_pni_dirtify(struct silofs_pnode_info *pni);
 
-void silofs_bni_undirtify(struct silofs_bnode_info *bni);
+void silofs_pni_undirtify(struct silofs_pnode_info *pni);
 
-void silofs_bni_incref(struct silofs_bnode_info *bni);
+void silofs_pni_incref(struct silofs_pnode_info *pni);
 
-void silofs_bni_decref(struct silofs_bnode_info *bni);
+void silofs_pni_decref(struct silofs_pnode_info *pni);
 
-void silofs_bni_set_dq(struct silofs_bnode_info *bni,
+void silofs_pni_set_dq(struct silofs_pnode_info *pni,
                        struct silofs_dirtyq     *dq);
 
-void silofs_bni_setup_ivkey(struct silofs_bnode_info    *bni,
+void silofs_pni_setup_ivkey(struct silofs_pnode_info    *pni,
                             const struct silofs_mdigest *md,
                             const struct silofs_key     *key);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 struct silofs_uber_info *
-silofs_ubi_from_bni(const struct silofs_bnode_info *bni);
+silofs_ubi_from_pni(const struct silofs_pnode_info *pni);
 
 struct silofs_bldesc_info *
-silofs_bdi_from_bni(const struct silofs_bnode_info *bni);
+silofs_bdi_from_pni(const struct silofs_pnode_info *pni);
 
 struct silofs_btnode_info *
-silofs_bti_from_bni(const struct silofs_bnode_info *bni);
+silofs_bti_from_pni(const struct silofs_pnode_info *pni);
 
-struct silofs_bnode_info *
-silofs_new_bnode(const struct silofs_baddr *baddr, struct silofs_alloc *alloc);
+struct silofs_pnode_info *
+silofs_new_pnode(const struct silofs_paddr *paddr, struct silofs_alloc *alloc);
 
-void silofs_del_bnode(struct silofs_bnode_info *bni,
+void silofs_del_pnode(struct silofs_pnode_info *pni,
                       struct silofs_alloc      *alloc);
 
-int silofs_encrypt_bnode(const struct silofs_bnode_info *bni,
+int silofs_encrypt_pnode(const struct silofs_pnode_info *pni,
                          const struct silofs_cipher     *cipher,
                          struct silofs_view             *enc_view);
 
-#endif /* SILOFS_BNODES_H_ */
+#endif /* SILOFS_PNODES_H_ */

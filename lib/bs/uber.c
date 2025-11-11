@@ -128,12 +128,12 @@ static void ubi_setup_spawned(struct silofs_uber_info *ubi)
 
 void silofs_ubi_dirtify(struct silofs_uber_info *ubi)
 {
-	silofs_bni_dirtify(&ubi->ub_bni);
+	silofs_pni_dirtify(&ubi->ub_pni);
 }
 
 void silofs_ubi_undirtify(struct silofs_uber_info *ubi)
 {
-	silofs_bni_undirtify(&ubi->ub_bni);
+	silofs_pni_undirtify(&ubi->ub_pni);
 }
 
 int silofs_ubi_bcursor_of(const struct silofs_uber_info *ubi,
@@ -179,14 +179,14 @@ int silofs_ubi_update_bcursor(struct silofs_uber_info *ubi,
 
 struct silofs_uber_info *
 silofs_create_cached_uber(struct silofs_bcache *bcache,
-                          const struct silofs_baddr *baddr, bool spawn)
+                          const struct silofs_paddr *paddr, bool spawn)
 {
-	struct silofs_bnode_info *bni;
+	struct silofs_pnode_info *pni;
 	struct silofs_uber_info *ubi;
 
-	silofs_assert_eq(baddr->mtype, SILOFS_MTYPE_UBER);
-	bni = silofs_bcache_create_bnode(bcache, baddr);
-	ubi = silofs_ubi_from_bni(bni);
+	silofs_assert_eq(paddr->mtype, SILOFS_MTYPE_UBER);
+	pni = silofs_bcache_create_pnode(bcache, paddr);
+	ubi = silofs_ubi_from_pni(pni);
 	if ((ubi != nullptr) && spawn) {
 		ubi_setup_spawned(ubi);
 	}
@@ -196,5 +196,5 @@ silofs_create_cached_uber(struct silofs_bcache *bcache,
 void silofs_forget_cached_uber(struct silofs_bcache *bcache,
                                struct silofs_uber_info *ubi)
 {
-	silofs_bcache_delete_bnode(bcache, &ubi->ub_bni);
+	silofs_bcache_delete_pnode(bcache, &ubi->ub_pni);
 }

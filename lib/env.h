@@ -115,20 +115,20 @@ bool silofs_env_isrdonlyfs(const struct silofs_env *env);
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_env_sense_mbr(struct silofs_env         *env,
-                         const struct silofs_baddr *baddr);
+                         const struct silofs_paddr *paddr);
 
 int silofs_env_setup_fs_mbr(struct silofs_env *env);
 
 int silofs_env_commit_fs_mbr(struct silofs_env   *env,
-                             struct silofs_baddr *out_mref);
+                             struct silofs_paddr *out_mref);
 
 int silofs_env_reload_fs_mbr(struct silofs_env         *env,
-                             const struct silofs_baddr *baddr);
+                             const struct silofs_paddr *paddr);
 
 int silofs_env_reload_ar_mbr(struct silofs_env         *env,
-                             const struct silofs_baddr *baddr);
+                             const struct silofs_paddr *paddr);
 
 int silofs_env_unlink_mbr(struct silofs_env         *env,
-                          const struct silofs_baddr *baddr);
+                          const struct silofs_paddr *paddr);
 
 #endif /* SILOFS_ENV_H_ */

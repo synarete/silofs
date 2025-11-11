@@ -82,15 +82,15 @@ int silofs_locos_punch_blob(struct silofs_locos        *locos,
                             const struct silofs_blobid *blobid);
 
 int silofs_locos_write_blob(struct silofs_locos       *locos,
-                            const struct silofs_baddr *baddr,
+                            const struct silofs_paddr *paddr,
                             const struct silofs_rovec *rovec);
 
 int silofs_locos_writev_blob(struct silofs_locos       *locos,
-                             const struct silofs_baddr *baddr,
+                             const struct silofs_paddr *paddr,
                              const struct iovec *iov, size_t cnt);
 
 int silofs_locos_read_blob(struct silofs_locos       *locos,
-                           const struct silofs_baddr *baddr,
+                           const struct silofs_paddr *paddr,
                            const struct silofs_rwvec *rwvec);
 
 #endif /* SILOFS_LOCOS_H_ */

@@ -2985,9 +2985,9 @@ out:
 }
 
 static void assign_ioc_blobid(struct silofs_blobid *blobid,
-                              const struct silofs_baddr *baddr)
+                              const struct silofs_paddr *paddr)
 {
-	silofs_blobid_copyto(&baddr->blobid, blobid);
+	silofs_blobid_copyto(&paddr->blobid, blobid);
 }
 
 static int do_ioc_clone(const struct silofs_fuseq_cmd_ctx *fcc)

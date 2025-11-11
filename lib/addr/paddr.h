@@ -14,16 +14,16 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_BADDR_H_
-#define SILOFS_BADDR_H_
+#ifndef SILOFS_PADDR_H_
+#define SILOFS_PADDR_H_
 
 #include <stdlib.h>
 #include <silofs/ondisk.h>
 #include "crypt.h"
 #include "blobid.h"
 
-/* blob address */
-struct silofs_baddr {
+/* persistent address with blob */
+struct silofs_paddr {
 	struct silofs_blobid blobid;
 	off_t                pos;
 	enum silofs_mtype    mtype;
@@ -32,40 +32,40 @@ struct silofs_baddr {
 
 /* blob cursor */
 struct silofs_bcursor {
-	struct silofs_baddr baddr;
+	struct silofs_paddr paddr;
 	size_t              blobsz;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-const struct silofs_baddr *silofs_baddr_none(void);
+const struct silofs_paddr *silofs_paddr_none(void);
 
-void silofs_baddr_init(struct silofs_baddr        *baddr,
+void silofs_paddr_init(struct silofs_paddr        *paddr,
                        const struct silofs_blobid *blobid, off_t pos);
 
-void silofs_baddr_fini(struct silofs_baddr *baddr);
+void silofs_paddr_fini(struct silofs_paddr *paddr);
 
-void silofs_baddr_reset(struct silofs_baddr *baddr);
+void silofs_paddr_reset(struct silofs_paddr *paddr);
 
-void silofs_baddr_assign(struct silofs_baddr       *baddr,
-                         const struct silofs_baddr *other);
+void silofs_paddr_assign(struct silofs_paddr       *paddr,
+                         const struct silofs_paddr *other);
 
-bool silofs_baddr_isequal(const struct silofs_baddr *baddr,
-                          const struct silofs_baddr *other);
+bool silofs_paddr_isequal(const struct silofs_paddr *paddr,
+                          const struct silofs_paddr *other);
 
-bool silofs_baddr_isnull(const struct silofs_baddr *baddr);
+bool silofs_paddr_isnull(const struct silofs_paddr *paddr);
 
-long silofs_baddr_compare(const struct silofs_baddr *baddr1,
-                          const struct silofs_baddr *baddr2);
+long silofs_paddr_compare(const struct silofs_paddr *paddr1,
+                          const struct silofs_paddr *paddr2);
 
-void silofs_baddr64b_htox(struct silofs_baddr64b    *baddr64,
-                          const struct silofs_baddr *baddr);
+void silofs_paddr64b_htox(struct silofs_paddr64b    *paddr64,
+                          const struct silofs_paddr *paddr);
 
-void silofs_baddr64b_xtoh(const struct silofs_baddr64b *baddr64,
-                          struct silofs_baddr          *baddr);
+void silofs_paddr64b_xtoh(const struct silofs_paddr64b *paddr64,
+                          struct silofs_paddr          *paddr);
 
-void silofs_derive_iv_by_baddr(const struct silofs_mdigest *md,
-                               const struct silofs_baddr   *baddr,
+void silofs_derive_iv_by_paddr(const struct silofs_mdigest *md,
+                               const struct silofs_paddr   *paddr,
                                struct silofs_iv            *out_iv);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -80,4 +80,4 @@ void silofs_bcursor128b_xtoh(const struct silofs_bcursor128b *bcur128,
 void silofs_bcursor128b_htox(struct silofs_bcursor128b   *bcur128,
                              const struct silofs_bcursor *bcur);
 
-#endif /* SILOFS_BADDR_H_ */
+#endif /* SILOFS_PADDR_H_ */

@@ -1002,17 +1002,17 @@ int silofs_locos_punch_blob(struct silofs_locos *locos,
 }
 
 int silofs_locos_write_blob(struct silofs_locos *locos,
-                            const struct silofs_baddr *baddr,
+                            const struct silofs_paddr *paddr,
                             const struct silofs_rovec *rovec)
 {
 	struct silofs_blobfile *bf = nullptr;
 	int err = 0;
 
-	err = locos_stage_and_cache_bf(locos, &baddr->blobid, &bf);
+	err = locos_stage_and_cache_bf(locos, &paddr->blobid, &bf);
 	if (err) {
 		return err;
 	}
-	err = bf_write(bf, baddr->pos, rovec);
+	err = bf_write(bf, paddr->pos, rovec);
 	if (err) {
 		return err;
 	}
@@ -1020,15 +1020,15 @@ int silofs_locos_write_blob(struct silofs_locos *locos,
 }
 
 int silofs_locos_writev_blob(struct silofs_locos *locos,
-                             const struct silofs_baddr *baddr,
+                             const struct silofs_paddr *paddr,
                              const struct iovec *iov, size_t cnt)
 {
 	struct silofs_blobfile *bf = nullptr;
-	const off_t pos = baddr->pos;
+	const off_t pos = paddr->pos;
 	int err = 0;
 	bool sync = false; /* TODO: revisit */
 
-	err = locos_stage_and_cache_bf(locos, &baddr->blobid, &bf);
+	err = locos_stage_and_cache_bf(locos, &paddr->blobid, &bf);
 	if (err) {
 		return err;
 	}
@@ -1040,17 +1040,17 @@ int silofs_locos_writev_blob(struct silofs_locos *locos,
 }
 
 int silofs_locos_read_blob(struct silofs_locos *locos,
-                           const struct silofs_baddr *baddr,
+                           const struct silofs_paddr *paddr,
                            const struct silofs_rwvec *rwvec)
 {
 	struct silofs_blobfile *bf = nullptr;
 	int err = 0;
 
-	err = locos_stage_and_cache_bf(locos, &baddr->blobid, &bf);
+	err = locos_stage_and_cache_bf(locos, &paddr->blobid, &bf);
 	if (err) {
 		return err;
 	}
-	err = bf_read(bf, baddr->pos, rwvec);
+	err = bf_read(bf, paddr->pos, rwvec);
 	if (err) {
 		return err;
 	}

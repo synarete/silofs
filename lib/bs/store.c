@@ -71,27 +71,27 @@ stc_main_key(const struct silofs_store_ctx *st_ctx)
 	return &st_ctx->mbri->fs_mbr.main_ivkey.key;
 }
 
-static int stc_require_baddr(const struct silofs_store_ctx *st_ctx,
-                             const struct silofs_baddr *baddr)
+static int stc_require_paddr(const struct silofs_store_ctx *st_ctx,
+                             const struct silofs_paddr *paddr)
 {
-	return silofs_locos_require_bpos(st_ctx->locos, &baddr->blobid,
-	                                 baddr->pos);
+	return silofs_locos_require_bpos(st_ctx->locos, &paddr->blobid,
+	                                 paddr->pos);
 }
 
 static int stc_create_cached_ubi(const struct silofs_store_ctx *st_ctx,
-                                 const struct silofs_baddr *baddr, bool spawn,
+                                 const struct silofs_paddr *paddr, bool spawn,
                                  struct silofs_uber_info **out_ubi)
 {
-	*out_ubi = silofs_create_cached_uber(st_ctx->bcache, baddr, spawn);
+	*out_ubi = silofs_create_cached_uber(st_ctx->bcache, paddr, spawn);
 	return ((*out_ubi) == nullptr) ? -SILOFS_ENOMEM : 0;
 }
 
-static void stc_update_spawned_bnode(const struct silofs_store_ctx *st_ctx,
+static void stc_update_spawned_pnode(const struct silofs_store_ctx *st_ctx,
                                      const struct silofs_key *key,
-                                     struct silofs_bnode_info *bni)
+                                     struct silofs_pnode_info *pni)
 {
-	silofs_bni_setup_ivkey(bni, st_ctx->mdigest, key);
-	silofs_bni_dirtify(bni);
+	silofs_pni_setup_ivkey(pni, st_ctx->mdigest, key);
+	silofs_pni_dirtify(pni);
 }
 
 static void stc_update_spawned_uber(const struct silofs_store_ctx *st_ctx,
@@ -99,20 +99,20 @@ static void stc_update_spawned_uber(const struct silofs_store_ctx *st_ctx,
 {
 	const struct silofs_key *key = stc_main_key(st_ctx);
 
-	stc_update_spawned_bnode(st_ctx, key, &ubi->ub_bni);
+	stc_update_spawned_pnode(st_ctx, key, &ubi->ub_pni);
 }
 
 static int stc_spawn_uber(const struct silofs_store_ctx *st_ctx,
-                          const struct silofs_baddr *baddr,
+                          const struct silofs_paddr *paddr,
                           struct silofs_uber_info **out_ubi)
 {
 	int err;
 
-	err = stc_require_baddr(st_ctx, baddr);
+	err = stc_require_paddr(st_ctx, paddr);
 	if (err) {
 		return err;
 	}
-	err = stc_create_cached_ubi(st_ctx, baddr, true, out_ubi);
+	err = stc_create_cached_ubi(st_ctx, paddr, true, out_ubi);
 	if (err) {
 		return err;
 	}
@@ -120,44 +120,44 @@ static int stc_spawn_uber(const struct silofs_store_ctx *st_ctx,
 	return 0;
 }
 
-int silofs_spawn_uber(struct silofs_env *env, const struct silofs_baddr *baddr,
+int silofs_spawn_uber(struct silofs_env *env, const struct silofs_paddr *paddr,
                       struct silofs_uber_info **out_ubi)
 {
 	struct silofs_store_ctx st_ctx = {};
 	int err;
 
 	stc_init(&st_ctx, env);
-	err = stc_spawn_uber(&st_ctx, baddr, out_ubi);
+	err = stc_spawn_uber(&st_ctx, paddr, out_ubi);
 	stc_fini(&st_ctx);
 	return err;
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static size_t viewlen_of(const struct silofs_bnode_info *bni)
+static size_t viewlen_of(const struct silofs_pnode_info *pni)
 {
-	return silofs_mtype_size(silofs_bni_mtype(bni));
+	return silofs_mtype_size(silofs_pni_mtype(pni));
 }
 
-static struct silofs_bnode_info *stc_get_dirty(struct silofs_store_ctx *st_ctx)
+static struct silofs_pnode_info *stc_get_dirty(struct silofs_store_ctx *st_ctx)
 {
 	return silofs_bcache_dq_front(st_ctx->bcache);
 }
 
-static int stc_destage_dirty_bnode(struct silofs_store_ctx *st_ctx,
-                                   const struct silofs_bnode_info *bni)
+static int stc_destage_dirty_pnode(struct silofs_store_ctx *st_ctx,
+                                   const struct silofs_pnode_info *pni)
 {
 	const struct silofs_rovec rovec = {
 		.rov_base = st_ctx->view,
-		.rov_len = viewlen_of(bni),
+		.rov_len = viewlen_of(pni),
 	};
 	int err;
 
-	err = silofs_encrypt_bnode(bni, st_ctx->enc_cipher, st_ctx->view);
+	err = silofs_encrypt_pnode(pni, st_ctx->enc_cipher, st_ctx->view);
 	if (err) {
 		return err;
 	}
-	err = silofs_locos_write_blob(st_ctx->locos, &bni->bn_baddr, &rovec);
+	err = silofs_locos_write_blob(st_ctx->locos, &pni->pn_paddr, &rovec);
 	if (err) {
 		return err;
 	}
@@ -166,17 +166,17 @@ static int stc_destage_dirty_bnode(struct silofs_store_ctx *st_ctx,
 
 static int stc_destage_dirty(struct silofs_store_ctx *st_ctx)
 {
-	struct silofs_bnode_info *bni;
+	struct silofs_pnode_info *pni;
 	int err;
 
-	bni = stc_get_dirty(st_ctx);
-	while (bni != nullptr) {
-		err = stc_destage_dirty_bnode(st_ctx, bni);
+	pni = stc_get_dirty(st_ctx);
+	while (pni != nullptr) {
+		err = stc_destage_dirty_pnode(st_ctx, pni);
 		if (err) {
 			return err;
 		}
-		silofs_bni_undirtify(bni);
-		bni = stc_get_dirty(st_ctx);
+		silofs_pni_undirtify(pni);
+		pni = stc_get_dirty(st_ctx);
 	}
 	return 0;
 }

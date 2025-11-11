@@ -26,7 +26,7 @@
 #include "addr/mtype.h"
 #include "addr/svolid.h"
 #include "addr/blobid.h"
-#include "addr/baddr.h"
+#include "addr/paddr.h"
 #include "addr/laddr.h"
 #include "addr/uaddr.h"
 #include "addr/vaddr.h"

@@ -82,9 +82,9 @@ void silofs_llink_of_vni(const struct silofs_mbr *mbr,
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-void silofs_calc_cas_baddr(const struct silofs_mdigest *md,
+void silofs_calc_cas_paddr(const struct silofs_mdigest *md,
                            enum silofs_mtype mtype, const struct iovec *iov,
-                           size_t iov_cnt, struct silofs_baddr *out_baddr)
+                           size_t iov_cnt, struct silofs_paddr *out_paddr)
 {
 	struct silofs_hash256 hash;
 	struct silofs_blobid blobid;
@@ -93,5 +93,5 @@ void silofs_calc_cas_baddr(const struct silofs_mdigest *md,
 
 	silofs_sha3_256_ofv(md, iov, iov_cnt, &hash);
 	silofs_blobid_setup_cas(&blobid, silofs_svolid_none(), &hash, mtype);
-	silofs_baddr_init(out_baddr, &blobid, 0);
+	silofs_paddr_init(out_paddr, &blobid, 0);
 }

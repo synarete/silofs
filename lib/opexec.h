@@ -183,10 +183,10 @@ int silofs_exec_unrefs(struct silofs_task_ctx *task);
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_exec_archive(struct silofs_task_ctx *task,
-                        struct silofs_baddr    *out_ar_baddr);
+                        struct silofs_paddr    *out_ar_paddr);
 
 int silofs_exec_restore(struct silofs_task_ctx    *task,
-                        const struct silofs_baddr *ar_mref,
-                        struct silofs_baddr       *out_fs_mref);
+                        const struct silofs_paddr *ar_mref,
+                        struct silofs_paddr       *out_fs_mref);
 
 #endif /* SILOFS_OPEXEC_H_ */

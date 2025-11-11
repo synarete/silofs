@@ -22,17 +22,17 @@
 #include "index.h"
 
 static void
-ard_init(struct silofs_ar_desc *ard, const struct silofs_baddr *baddr,
+ard_init(struct silofs_ar_desc *ard, const struct silofs_paddr *paddr,
          const struct silofs_laddr *laddr, size_t len)
 {
-	silofs_baddr_assign(&ard->baddr, baddr);
+	silofs_paddr_assign(&ard->paddr, paddr);
 	silofs_laddr_assign(&ard->laddr, laddr);
 	ard->len = len;
 }
 
 static void ard_reset(struct silofs_ar_desc *ard)
 {
-	silofs_baddr_reset(&ard->baddr);
+	silofs_paddr_reset(&ard->paddr);
 	silofs_laddr_reset(&ard->laddr);
 	ard->len = SIZE_MAX;
 }
@@ -41,7 +41,7 @@ static void ard256b_htox(struct silofs_ar_desc256b *ard256,
                          const struct silofs_ar_desc *ard)
 {
 	silofs_memzero(ard256, sizeof(*ard256));
-	silofs_baddr64b_htox(&ard256->ad_baddr, &ard->baddr);
+	silofs_paddr64b_htox(&ard256->ad_paddr, &ard->paddr);
 	silofs_laddr96b_htox(&ard256->ad_laddr, &ard->laddr);
 	ard256->ad_len = silofs_cpu_to_le64(ard->len);
 }
@@ -49,7 +49,7 @@ static void ard256b_htox(struct silofs_ar_desc256b *ard256,
 static void ard256b_xtoh(const struct silofs_ar_desc256b *ard256,
                          struct silofs_ar_desc *ard)
 {
-	silofs_baddr64b_xtoh(&ard256->ad_baddr, &ard->baddr);
+	silofs_paddr64b_xtoh(&ard256->ad_paddr, &ard->paddr);
 	silofs_laddr96b_xtoh(&ard256->ad_laddr, &ard->laddr);
 	ard->len = silofs_le64_to_cpu(ard256->ad_len);
 }
@@ -112,20 +112,20 @@ static bool ab_has_room(const struct silofs_arix_block *ab)
 }
 
 static void
-ab_next(const struct silofs_arix_block *ab, struct silofs_baddr *out_baddr)
+ab_next(const struct silofs_arix_block *ab, struct silofs_paddr *out_paddr)
 {
-	silofs_baddr64b_xtoh(&ab->ab_next, out_baddr);
+	silofs_paddr64b_xtoh(&ab->ab_next, out_paddr);
 }
 
 static void
-ab_set_next(struct silofs_arix_block *ab, const struct silofs_baddr *baddr)
+ab_set_next(struct silofs_arix_block *ab, const struct silofs_paddr *paddr)
 {
-	silofs_baddr64b_htox(&ab->ab_next, baddr);
+	silofs_paddr64b_htox(&ab->ab_next, paddr);
 }
 
 static void ab_reset_next(struct silofs_arix_block *ab)
 {
-	ab_set_next(ab, silofs_baddr_none());
+	ab_set_next(ab, silofs_paddr_none());
 }
 
 static void ab_desc(const struct silofs_arix_block *ab, size_t slot,
@@ -229,14 +229,14 @@ static void
 abi_init(struct silofs_ab_info *abi, const struct silofs_ab_base *base)
 {
 	memcpy(&abi->ab_base, base, sizeof(abi->ab_base));
-	silofs_baddr_reset(&abi->ab_baddr);
+	silofs_paddr_reset(&abi->ab_paddr);
 	abi->ab = nullptr;
 	abi->ab_enc = nullptr;
 }
 
 static void abi_fini(struct silofs_ab_info *abi)
 {
-	silofs_baddr_reset(&abi->ab_baddr);
+	silofs_paddr_reset(&abi->ab_paddr);
 	abi->ab = nullptr;
 	abi->ab_enc = nullptr;
 }
@@ -294,23 +294,23 @@ void silofs_abi_set_btime(struct silofs_ab_info *abi,
 	ab_set_btime(abi->ab, ts);
 }
 
-void silofs_abi_get_baddr(const struct silofs_ab_info *abi,
-                          struct silofs_baddr *out_baddr)
+void silofs_abi_get_paddr(const struct silofs_ab_info *abi,
+                          struct silofs_paddr *out_paddr)
 {
-	silofs_baddr_assign(out_baddr, &abi->ab_baddr);
+	silofs_paddr_assign(out_paddr, &abi->ab_paddr);
 }
 
-void silofs_abi_set_baddr(struct silofs_ab_info *abi,
-                          const struct silofs_baddr *baddr)
+void silofs_abi_set_paddr(struct silofs_ab_info *abi,
+                          const struct silofs_paddr *paddr)
 {
-	silofs_baddr_assign(&abi->ab_baddr, baddr);
+	silofs_paddr_assign(&abi->ab_paddr, paddr);
 }
 
 static void
-abi_set_next(struct silofs_ab_info *abi, const struct silofs_baddr *baddr)
+abi_set_next(struct silofs_ab_info *abi, const struct silofs_paddr *paddr)
 {
-	if (baddr != nullptr) {
-		ab_set_next(abi->ab, baddr);
+	if (paddr != nullptr) {
+		ab_set_next(abi->ab, paddr);
 	} else {
 		ab_reset_next(abi->ab);
 	}
@@ -320,16 +320,16 @@ void silofs_abi_set_next(struct silofs_ab_info *abi,
                          const struct silofs_ab_info *abi_next)
 {
 	if (abi_next != nullptr) {
-		abi_set_next(abi, &abi_next->ab_baddr);
+		abi_set_next(abi, &abi_next->ab_paddr);
 	} else {
 		abi_set_next(abi, nullptr);
 	}
 }
 
 void silofs_abi_get_next(const struct silofs_ab_info *abi,
-                         struct silofs_baddr *out_baddr)
+                         struct silofs_paddr *out_paddr)
 {
-	ab_next(abi->ab, out_baddr);
+	ab_next(abi->ab, out_paddr);
 }
 
 void silofs_abi_calc_desc(const struct silofs_ab_info *abi,
@@ -338,7 +338,7 @@ void silofs_abi_calc_desc(const struct silofs_ab_info *abi,
                           struct silofs_ar_desc *out_ard)
 {
 	const struct silofs_mdigest *md = abi->ab_base.mdigest;
-	struct silofs_baddr baddr = {
+	struct silofs_paddr paddr = {
 		.pos = -1,
 	};
 	const struct iovec iov = {
@@ -348,9 +348,9 @@ void silofs_abi_calc_desc(const struct silofs_ab_info *abi,
 	enum silofs_mtype mtype;
 
 	mtype = silofs_blobid_get_mtype(&laddr->lsid.blobid);
-	silofs_calc_cas_baddr(md, mtype, &iov, 1, &baddr);
+	silofs_calc_cas_paddr(md, mtype, &iov, 1, &paddr);
 
-	ard_init(out_ard, &baddr, laddr, iov.iov_len);
+	ard_init(out_ard, &paddr, laddr, iov.iov_len);
 }
 
 int silofs_abi_append_desc(struct silofs_ab_info *abi,
@@ -375,8 +375,8 @@ int silofs_abi_fetch_desc(const struct silofs_ab_info *abi, size_t slot,
 	return 0;
 }
 
-static void abi_calc_baddr(const struct silofs_ab_info *abi,
-                           struct silofs_baddr *out_baddr)
+static void abi_calc_paddr(const struct silofs_ab_info *abi,
+                           struct silofs_paddr *out_paddr)
 {
 	const struct silofs_mdigest *md = abi->ab_base.mdigest;
 	const struct iovec iov = {
@@ -384,29 +384,29 @@ static void abi_calc_baddr(const struct silofs_ab_info *abi,
 		.iov_len = sizeof(*abi->ab_enc),
 	};
 
-	silofs_calc_cas_baddr(md, SILOFS_MTYPE_ARIX, &iov, 1, out_baddr);
+	silofs_calc_cas_paddr(md, SILOFS_MTYPE_ARIX, &iov, 1, out_paddr);
 }
 
-static void abi_update_baddr(struct silofs_ab_info *abi)
+static void abi_update_paddr(struct silofs_ab_info *abi)
 {
-	struct silofs_baddr baddr;
+	struct silofs_paddr paddr;
 
-	abi_calc_baddr(abi, &baddr);
-	silofs_abi_set_baddr(abi, &baddr);
+	abi_calc_paddr(abi, &paddr);
+	silofs_abi_set_paddr(abi, &paddr);
 }
 
-static bool abi_has_baddr(const struct silofs_ab_info *abi,
-                          const struct silofs_baddr *baddr)
+static bool abi_has_paddr(const struct silofs_ab_info *abi,
+                          const struct silofs_paddr *paddr)
 {
-	return silofs_baddr_isequal(&abi->ab_baddr, baddr);
+	return silofs_paddr_isequal(&abi->ab_paddr, paddr);
 }
 
-static int abi_verify_baddr(const struct silofs_ab_info *abi)
+static int abi_verify_paddr(const struct silofs_ab_info *abi)
 {
-	struct silofs_baddr baddr;
+	struct silofs_paddr paddr;
 
-	abi_calc_baddr(abi, &baddr);
-	return abi_has_baddr(abi, &baddr) ? 0 : -SILOFS_EBADARIX;
+	abi_calc_paddr(abi, &paddr);
+	return abi_has_paddr(abi, &paddr) ? 0 : -SILOFS_EBADARIX;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -436,7 +436,7 @@ abi_seal(struct silofs_ab_info *abi, const struct silofs_ivkey *ivkey)
 	if (err) {
 		return err;
 	}
-	abi_update_baddr(abi);
+	abi_update_paddr(abi);
 	return 0;
 }
 
@@ -449,12 +449,12 @@ static int abi_save(const struct silofs_ab_info *abi)
 	};
 	int err;
 
-	err = silofs_repo_spawn_blob(abi->ab_base.repo, &abi->ab_baddr.blobid);
+	err = silofs_repo_spawn_blob(abi->ab_base.repo, &abi->ab_paddr.blobid);
 	if (err) {
 		log_err("failed to spawn archive-index: err=%d", err);
 		return err;
 	}
-	err = silofs_repo_save_bseg(abi->ab_base.repo, &abi->ab_baddr, &rov);
+	err = silofs_repo_save_bseg(abi->ab_base.repo, &abi->ab_paddr, &rov);
 	if (err) {
 		log_err("failed to save archive-index: err=%d", err);
 		return err;
@@ -488,7 +488,7 @@ static int abi_load(const struct silofs_ab_info *abi)
 		.rwv_len = sizeof(*ab_enc),
 	};
 
-	return silofs_repo_load_bseg(abi->ab_base.repo, &abi->ab_baddr, &rwv);
+	return silofs_repo_load_bseg(abi->ab_base.repo, &abi->ab_paddr, &rwv);
 }
 
 static int
@@ -512,7 +512,7 @@ abi_unseal(struct silofs_ab_info *abi, const struct silofs_ivkey *ivkey)
 {
 	int err;
 
-	err = abi_verify_baddr(abi);
+	err = abi_verify_paddr(abi);
 	if (err) {
 		return err;
 	}

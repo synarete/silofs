@@ -22,7 +22,7 @@
 #include "nodes.h"
 
 struct silofs_bldesc_info *
-silofs_bdi_new(const struct silofs_baddr *baddr, struct silofs_alloc *alloc);
+silofs_bdi_new(const struct silofs_paddr *paddr, struct silofs_alloc *alloc);
 
 void silofs_bdi_del(struct silofs_bldesc_info *bdi,
                     struct silofs_alloc       *alloc);
@@ -38,15 +38,15 @@ void silofs_bdi_set_refblob(struct silofs_bldesc_info  *bdi,
                             const struct silofs_blobid *blobid);
 
 int silofs_bdi_find_free(const struct silofs_bldesc_info *bdi,
-                         struct silofs_baddr             *out_baddr);
+                         struct silofs_paddr             *out_paddr);
 
 int silofs_bdi_test_free(const struct silofs_bldesc_info *bdi,
-                         const struct silofs_baddr       *baddr);
+                         const struct silofs_paddr       *paddr);
 
 int silofs_bdi_mark_free(struct silofs_bldesc_info *bdi,
-                         const struct silofs_baddr *baddr);
+                         const struct silofs_paddr *paddr);
 
 int silofs_bdi_mark_used(struct silofs_bldesc_info *bdi,
-                         const struct silofs_baddr *baddr);
+                         const struct silofs_paddr *paddr);
 
 #endif /* SILOFS_BLDESC_H_ */

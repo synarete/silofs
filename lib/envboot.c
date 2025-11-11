@@ -59,7 +59,7 @@ int silofs_env_setup_fs_mbr(struct silofs_env *env)
 	return 0;
 }
 
-static int env_save_mbr(struct silofs_env *env, struct silofs_baddr *out_mref)
+static int env_save_mbr(struct silofs_env *env, struct silofs_paddr *out_mref)
 {
 	struct silofs_mbr1k mbr1k = {
 		.mbr_magic = UINT64_MAX,
@@ -99,7 +99,7 @@ static void env_pre_commit_fs_mbr(struct silofs_env *env)
 }
 
 int silofs_env_commit_fs_mbr(struct silofs_env *env,
-                             struct silofs_baddr *out_mref)
+                             struct silofs_paddr *out_mref)
 {
 	int err;
 
@@ -112,13 +112,13 @@ int silofs_env_commit_fs_mbr(struct silofs_env *env,
 }
 
 static int
-env_stat_mbr_at(const struct silofs_env *env, const struct silofs_baddr *baddr)
+env_stat_mbr_at(const struct silofs_env *env, const struct silofs_paddr *paddr)
 {
 	struct stat st = { .st_size = -1 };
 	size_t mbr_size = 0;
 	int err;
 
-	err = silofs_repo_stat_blob(env->base.repo, &baddr->blobid, &st);
+	err = silofs_repo_stat_blob(env->base.repo, &paddr->blobid, &st);
 	if (err) {
 		return err;
 	}
@@ -131,13 +131,13 @@ env_stat_mbr_at(const struct silofs_env *env, const struct silofs_baddr *baddr)
 }
 
 int silofs_env_sense_mbr(struct silofs_env *env,
-                         const struct silofs_baddr *baddr)
+                         const struct silofs_paddr *paddr)
 {
-	return env_stat_mbr_at(env, baddr);
+	return env_stat_mbr_at(env, paddr);
 }
 
 static int
-env_load_mbr_at(const struct silofs_env *env, const struct silofs_baddr *baddr,
+env_load_mbr_at(const struct silofs_env *env, const struct silofs_paddr *paddr,
                 struct silofs_mbr1k *out_mbr1k)
 {
 	struct silofs_rwvec rwvec = {
@@ -146,12 +146,12 @@ env_load_mbr_at(const struct silofs_env *env, const struct silofs_baddr *baddr,
 	};
 	int err;
 
-	err = env_stat_mbr_at(env, baddr);
+	err = env_stat_mbr_at(env, paddr);
 	if (err) {
 		log_dbg("failed to lookup ref: err=%d", err);
 		return (err == -ENOENT) ? -SILOFS_ENOMBR : err;
 	}
-	err = silofs_repo_load_bseg(env->base.repo, baddr, &rwvec);
+	err = silofs_repo_load_bseg(env->base.repo, paddr, &rwvec);
 	if (err) {
 		log_dbg("failed to load mbr: err=%d", err);
 		return (err == -ENOENT) ? -SILOFS_ENOMBR : err;
@@ -160,29 +160,29 @@ env_load_mbr_at(const struct silofs_env *env, const struct silofs_baddr *baddr,
 }
 
 static int
-env_decode_fs_mbr(struct silofs_env *env, const struct silofs_baddr *mref,
+env_decode_fs_mbr(struct silofs_env *env, const struct silofs_paddr *mref,
                   const struct silofs_mbr1k *mbr1k)
 {
 	return silofs_mbri_decode_mbr(&env->mbri, SILOFS_MBR_FS, mref, mbr1k);
 }
 
 int silofs_env_reload_fs_mbr(struct silofs_env *env,
-                             const struct silofs_baddr *baddr)
+                             const struct silofs_paddr *paddr)
 {
 	struct silofs_mbr1k mbr1k = {
 		.mbr_magic = UINT64_MAX,
 	};
 	int err;
 
-	err = env_stat_mbr_at(env, baddr);
+	err = env_stat_mbr_at(env, paddr);
 	if (err) {
 		return err;
 	}
-	err = env_load_mbr_at(env, baddr, &mbr1k);
+	err = env_load_mbr_at(env, paddr, &mbr1k);
 	if (err) {
 		return err;
 	}
-	err = env_decode_fs_mbr(env, baddr, &mbr1k);
+	err = env_decode_fs_mbr(env, paddr, &mbr1k);
 	if (err) {
 		return err;
 	}
@@ -190,29 +190,29 @@ int silofs_env_reload_fs_mbr(struct silofs_env *env,
 }
 
 static int
-env_decode_ar_mbr(struct silofs_env *env, const struct silofs_baddr *mref,
+env_decode_ar_mbr(struct silofs_env *env, const struct silofs_paddr *mref,
                   const struct silofs_mbr1k *mbr1k)
 {
 	return silofs_mbri_decode_mbr(&env->mbri, SILOFS_MBR_AR, mref, mbr1k);
 }
 
 int silofs_env_reload_ar_mbr(struct silofs_env *env,
-                             const struct silofs_baddr *baddr)
+                             const struct silofs_paddr *paddr)
 {
 	struct silofs_mbr1k mbr1k = {
 		.mbr_magic = UINT64_MAX,
 	};
 	int err;
 
-	err = env_stat_mbr_at(env, baddr);
+	err = env_stat_mbr_at(env, paddr);
 	if (err) {
 		return err;
 	}
-	err = env_load_mbr_at(env, baddr, &mbr1k);
+	err = env_load_mbr_at(env, paddr, &mbr1k);
 	if (err) {
 		return err;
 	}
-	err = env_decode_ar_mbr(env, baddr, &mbr1k);
+	err = env_decode_ar_mbr(env, paddr, &mbr1k);
 	if (err) {
 		return err;
 	}
@@ -220,11 +220,11 @@ int silofs_env_reload_ar_mbr(struct silofs_env *env,
 }
 
 static int env_unlink_mbr_at(const struct silofs_env *env,
-                             const struct silofs_baddr *baddr)
+                             const struct silofs_paddr *paddr)
 {
 	int err;
 
-	err = silofs_repo_remove_blob(env->base.repo, &baddr->blobid);
+	err = silofs_repo_remove_blob(env->base.repo, &paddr->blobid);
 	if (err) {
 		log_err("failed to unlink mbr: err=%d", err);
 		return err;
@@ -233,21 +233,21 @@ static int env_unlink_mbr_at(const struct silofs_env *env,
 }
 
 int silofs_env_unlink_mbr(struct silofs_env *env,
-                          const struct silofs_baddr *baddr)
+                          const struct silofs_paddr *paddr)
 {
 	struct silofs_mbr1k mbr1k = {
 		.mbr_magic = UINT64_MAX,
 	};
 	int err;
 
-	err = env_stat_mbr_at(env, baddr);
+	err = env_stat_mbr_at(env, paddr);
 	if (err) {
 		return err;
 	}
-	err = env_load_mbr_at(env, baddr, &mbr1k);
+	err = env_load_mbr_at(env, paddr, &mbr1k);
 	if (err) {
 		return err;
 	}
-	env_unlink_mbr_at(env, baddr);
+	env_unlink_mbr_at(env, paddr);
 	return 0;
 }

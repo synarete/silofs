@@ -95,12 +95,12 @@ static void arc_fini(struct silofs_ar_ctx *ar_ctx)
 }
 
 static int arc_stat_pack(const struct silofs_ar_ctx *ar_ctx,
-                         const struct silofs_baddr *baddr, size_t *out_sz)
+                         const struct silofs_paddr *paddr, size_t *out_sz)
 {
 	struct stat st;
 	int err;
 
-	err = silofs_repo_stat_blob(ar_ctx->repo, &baddr->blobid, &st);
+	err = silofs_repo_stat_blob(ar_ctx->repo, &paddr->blobid, &st);
 	if (err) {
 		return err;
 	}
@@ -109,17 +109,17 @@ static int arc_stat_pack(const struct silofs_ar_ctx *ar_ctx,
 }
 
 static int arc_send_to_repo(const struct silofs_ar_ctx *ar_ctx,
-                            const struct silofs_baddr *baddr,
+                            const struct silofs_paddr *paddr,
                             const struct silofs_rovec *rov)
 {
 	int err;
 
-	err = silofs_repo_spawn_blob(ar_ctx->repo, &baddr->blobid);
+	err = silofs_repo_spawn_blob(ar_ctx->repo, &paddr->blobid);
 	if (err) {
 		log_err("failed to create archive blob: err=%d", err);
 		return err;
 	}
-	err = silofs_repo_save_bseg(ar_ctx->repo, baddr, rov);
+	err = silofs_repo_save_bseg(ar_ctx->repo, paddr, rov);
 	if (err) {
 		log_err("failed to save blob: err=%d", err);
 		return err;
@@ -129,15 +129,15 @@ static int arc_send_to_repo(const struct silofs_ar_ctx *ar_ctx,
 
 static int
 arc_send_pack(const struct silofs_ar_ctx *ar_ctx,
-              const struct silofs_baddr *baddr, const void *dat, size_t len)
+              const struct silofs_paddr *paddr, const void *dat, size_t len)
 {
 	const struct silofs_rovec rov = { .rov_base = dat, .rov_len = len };
 	size_t sz = 0;
 	int err;
 
-	err = arc_stat_pack(ar_ctx, baddr, &sz);
+	err = arc_stat_pack(ar_ctx, paddr, &sz);
 	if ((err == -ENOENT) || (!err && (sz != len))) {
-		err = arc_send_to_repo(ar_ctx, baddr, &rov);
+		err = arc_send_to_repo(ar_ctx, paddr, &rov);
 	}
 	return err;
 }
@@ -188,7 +188,7 @@ static int arc_archive_segdata(const struct silofs_ar_ctx *ar_ctx,
 	}
 	arc_calc_seg_desc(ar_ctx, laddr, seg, len, out_ard);
 
-	err = arc_send_pack(ar_ctx, &out_ard->baddr, seg, len);
+	err = arc_send_pack(ar_ctx, &out_ard->paddr, seg, len);
 	if (err) {
 		goto out;
 	}
@@ -277,7 +277,7 @@ static int arc_archive_fs(struct silofs_ar_ctx *ar_ctx)
 }
 
 static int arc_archive_apex(struct silofs_ar_ctx *ar_ctx,
-                            struct silofs_baddr *out_arix_addr)
+                            struct silofs_paddr *out_arix_addr)
 {
 	int err;
 
@@ -285,12 +285,12 @@ static int arc_archive_apex(struct silofs_ar_ctx *ar_ctx,
 	if (err) {
 		return err;
 	}
-	silofs_abi_get_baddr(ar_ctx->abi, out_arix_addr);
+	silofs_abi_get_paddr(ar_ctx->abi, out_arix_addr);
 	return 0;
 }
 
 static int arc_archive_mbr(const struct silofs_ar_ctx *ar_ctx,
-                           struct silofs_baddr *out_mref)
+                           struct silofs_paddr *out_mref)
 {
 	struct silofs_mbr1k mbr1k = { .mbr_magic = 0xff };
 	const struct silofs_mbrinfo *mbri = &ar_ctx->env->mbri;
@@ -308,8 +308,8 @@ static int arc_archive_mbr(const struct silofs_ar_ctx *ar_ctx,
 }
 
 static int arc_archive_post(struct silofs_ar_ctx *ar_ctx,
-                            const struct silofs_baddr *arix_addr,
-                            struct silofs_baddr *out_mref)
+                            const struct silofs_paddr *arix_addr,
+                            struct silofs_paddr *out_mref)
 {
 	silofs_mbri_update_arix_addr(&ar_ctx->env->mbri, arix_addr);
 	return arc_archive_mbr(ar_ctx, out_mref);
@@ -321,9 +321,9 @@ static int arc_archive_prep(struct silofs_ar_ctx *ar_ctx)
 }
 
 static int
-arc_do_archive(struct silofs_ar_ctx *ar_ctx, struct silofs_baddr *out_mref)
+arc_do_archive(struct silofs_ar_ctx *ar_ctx, struct silofs_paddr *out_mref)
 {
-	struct silofs_baddr arix_addr;
+	struct silofs_paddr arix_addr;
 	int err;
 
 	err = arc_archive_prep(ar_ctx);
@@ -346,7 +346,7 @@ arc_do_archive(struct silofs_ar_ctx *ar_ctx, struct silofs_baddr *out_mref)
 }
 
 int silofs_do_archive_fs(struct silofs_task_ctx *task,
-                         struct silofs_baddr *out_ar_mref)
+                         struct silofs_paddr *out_ar_mref)
 {
 	struct silofs_ar_ctx ar_ctx;
 	int err;

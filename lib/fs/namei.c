@@ -2457,7 +2457,7 @@ static void fill_query_boot_main_blobid(const struct silofs_task_ctx *task,
                                         struct silofs_ioc_query *query)
 {
 	struct silofs_mbr1k mbr1k;
-	struct silofs_baddr mref;
+	struct silofs_paddr mref;
 	const struct silofs_env *env = task->t_env;
 	struct silofs_query_boot *qboot = &query->u.boot;
 	int err;

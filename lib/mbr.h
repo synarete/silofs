@@ -26,9 +26,9 @@ struct silofs_env;
 
 /* a tuple of content-addressable references to main boot-records */
 struct silofs_mrefs {
-	struct silofs_baddr main;
-	struct silofs_baddr base;
-	struct silofs_baddr fork;
+	struct silofs_paddr main;
+	struct silofs_paddr base;
+	struct silofs_paddr fork;
 };
 
 /* main boot-record, in-memory representation */
@@ -36,7 +36,7 @@ struct silofs_mbr {
 	struct silofs_ivkey  main_ivkey;
 	struct silofs_uuid   uuid;
 	struct silofs_uaddr  sb_addr;
-	struct silofs_baddr  arix_addr;
+	struct silofs_paddr  arix_addr;
 	enum silofs_mbr_kind kind;
 	uint32_t             flags;
 	int                  cipher_algo;
@@ -65,21 +65,21 @@ void silofs_mbri_update_sb_addr(struct silofs_mbrinfo     *mbri,
                                 const struct silofs_uaddr *sb_uaddr);
 
 int silofs_mbri_arix_addr(const struct silofs_mbrinfo *mbri,
-                          struct silofs_baddr         *out_arix_baddr);
+                          struct silofs_paddr         *out_arix_paddr);
 
 void silofs_mbri_update_arix_addr(struct silofs_mbrinfo     *mbri,
-                                  const struct silofs_baddr *arix_baddr);
+                                  const struct silofs_paddr *arix_paddr);
 
 int silofs_mbri_regenerate_fs_mbr(struct silofs_mbrinfo *mbri);
 
 int silofs_mbri_encode_mbr(const struct silofs_mbrinfo *mbri,
                            enum silofs_mbr_kind         mkind,
-                           struct silofs_baddr         *out_mref,
+                           struct silofs_paddr         *out_mref,
                            struct silofs_mbr1k         *out_mbr1k);
 
 int silofs_mbri_decode_mbr(struct silofs_mbrinfo     *mbri,
                            enum silofs_mbr_kind       mkind,
-                           const struct silofs_baddr *mref,
+                           const struct silofs_paddr *mref,
                            const struct silofs_mbr1k *mbr1k);
 
 int silofs_mbri_sync_mbrs(struct silofs_mbrinfo *mbri,

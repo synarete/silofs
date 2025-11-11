@@ -40,18 +40,18 @@ void silofs_bcache_drop(struct silofs_bcache *bcache);
 
 void silofs_bcache_relax(struct silofs_bcache *bcache, int flags);
 
-struct silofs_bnode_info *
+struct silofs_pnode_info *
 silofs_bcache_dq_front(const struct silofs_bcache *bcache);
 
-struct silofs_bnode_info *
-silofs_bcache_lookup_bnode(struct silofs_bcache      *bcache,
-                           const struct silofs_baddr *baddr);
+struct silofs_pnode_info *
+silofs_bcache_lookup_pnode(struct silofs_bcache      *bcache,
+                           const struct silofs_paddr *paddr);
 
-struct silofs_bnode_info *
-silofs_bcache_create_bnode(struct silofs_bcache      *bcache,
-                           const struct silofs_baddr *baddr);
+struct silofs_pnode_info *
+silofs_bcache_create_pnode(struct silofs_bcache      *bcache,
+                           const struct silofs_paddr *paddr);
 
-void silofs_bcache_delete_bnode(struct silofs_bcache     *bcache,
-                                struct silofs_bnode_info *bni);
+void silofs_bcache_delete_pnode(struct silofs_bcache     *bcache,
+                                struct silofs_pnode_info *pni);
 
 #endif /* SILOFS_BCACHE_H_ */

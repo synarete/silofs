@@ -315,21 +315,21 @@ bool silofs_env_isrdonlyfs(const struct silofs_env *env)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static void make_uber_addr(struct silofs_baddr *out_baddr)
+static void make_uber_addr(struct silofs_paddr *out_paddr)
 {
 	struct silofs_svolid svolid;
 	struct silofs_blobid blobid;
 
 	silofs_svolid_generate(&svolid);
 	silofs_blobid_setup_raw(&blobid, &svolid, SILOFS_MTYPE_UBER);
-	silofs_baddr_init(out_baddr, &blobid, 0);
+	silofs_paddr_init(out_paddr, &blobid, 0);
 }
 
 int silofs_env_format_uber(struct silofs_env *env)
 {
-	struct silofs_baddr baddr;
+	struct silofs_paddr paddr;
 
-	make_uber_addr(&baddr);
+	make_uber_addr(&paddr);
 
 	/* YOU ARE HERE */
 	(void)env;
@@ -571,11 +571,11 @@ static void sbi_mark_fossil(struct silofs_sb_info *sbi)
 }
 
 static int
-env_recalc_fs_mref(struct silofs_env *env, struct silofs_baddr *out_baddr)
+env_recalc_fs_mref(struct silofs_env *env, struct silofs_paddr *out_paddr)
 {
 	struct silofs_mbr1k mbr1k = { .mbr_magic = UINT64_MAX };
 
-	return silofs_mbri_encode_mbr(&env->mbri, SILOFS_MBR_FS, out_baddr,
+	return silofs_mbri_encode_mbr(&env->mbri, SILOFS_MBR_FS, out_paddr,
 	                              &mbr1k);
 }
 
@@ -633,22 +633,22 @@ static int check_arix_size(ssize_t sz)
 }
 
 static int
-env_arix_addr(const struct silofs_env *env, struct silofs_baddr *out_baddr)
+env_arix_addr(const struct silofs_env *env, struct silofs_paddr *out_paddr)
 {
-	return silofs_mbri_arix_addr(&env->mbri, out_baddr);
+	return silofs_mbri_arix_addr(&env->mbri, out_paddr);
 }
 
 int silofs_env_sense_ar(struct silofs_env *env)
 {
-	struct silofs_baddr baddr;
+	struct silofs_paddr paddr;
 	struct stat st;
 	int err;
 
-	err = env_arix_addr(env, &baddr);
+	err = env_arix_addr(env, &paddr);
 	if (err) {
 		return err;
 	}
-	err = silofs_repo_stat_blob(env->base.repo, &baddr.blobid, &st);
+	err = silofs_repo_stat_blob(env->base.repo, &paddr.blobid, &st);
 	if (err) {
 		return err;
 	}

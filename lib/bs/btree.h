@@ -32,7 +32,7 @@ struct silofs_btree_base {
 /* b+tree in-memory control object */
 struct silofs_btree {
 	struct silofs_btree_base bt_base;
-	struct silofs_baddr      bt_root;
+	struct silofs_paddr      bt_root;
 };
 
 void silofs_btree_init(struct silofs_btree            *btree,
@@ -41,17 +41,17 @@ void silofs_btree_init(struct silofs_btree            *btree,
 void silofs_btree_fini(struct silofs_btree *btree);
 
 void silofs_btree_update_root(struct silofs_btree       *btree,
-                              const struct silofs_baddr *baddr);
+                              const struct silofs_paddr *paddr);
 
 int silofs_btree_format(struct silofs_btree *btree);
 
 int silofs_btree_lookup(struct silofs_btree       *btree,
                         const struct silofs_vaddr *vaddr,
-                        struct silofs_baddr       *out_baddr);
+                        struct silofs_paddr       *out_paddr);
 
 int silofs_btree_insert(struct silofs_btree       *btree,
                         const struct silofs_vaddr *vaddr,
-                        const struct silofs_baddr *baddr);
+                        const struct silofs_paddr *paddr);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -60,22 +60,22 @@ struct silofs_env;
 struct silofs_btmap_ctx {
 	struct silofs_locos  *locos;
 	struct silofs_bcache *bcache;
-	struct silofs_baddr   btree_root;
+	struct silofs_paddr   btree_root;
 };
 
 int silofs_format_mapping(struct silofs_env *env, enum silofs_mtype mtype);
 
 int silofs_resolve_ltob(struct silofs_env         *env,
                         const struct silofs_vaddr *vaddr,
-                        struct silofs_baddr       *out_baddr);
+                        struct silofs_paddr       *out_paddr);
 
 int silofs_map_ltob(struct silofs_env *env, const struct silofs_vaddr *vaddr,
-                    const struct silofs_baddr *baddr);
+                    const struct silofs_paddr *paddr);
 
 int silofs_remap_ltob(struct silofs_env *env, const struct silofs_vaddr *vaddr,
-                      const struct silofs_baddr *baddr);
+                      const struct silofs_paddr *paddr);
 
 int silofs_unmap_ltob(struct silofs_env *env, const struct silofs_vaddr *vaddr,
-                      const struct silofs_baddr *baddr);
+                      const struct silofs_paddr *paddr);
 
 #endif /* SILOFS_BTREE_H_ */

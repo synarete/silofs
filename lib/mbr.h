@@ -31,19 +31,25 @@ struct silofs_mrefs {
 	struct silofs_paddr fork;
 };
 
+/* root address based on mbr sub-type */
+union silofs_mbr_root {
+	struct silofs_paddr uber_addr;
+	struct silofs_paddr arix_addr;
+};
+
 /* main boot-record, in-memory representation */
 struct silofs_mbr {
 	struct silofs_ivkey  main_ivkey;
 	struct silofs_uuid   uuid;
+	struct silofs_paddr  root;
 	struct silofs_uaddr  sb_addr;
-	struct silofs_paddr  arix_addr;
 	enum silofs_mbr_kind kind;
 	uint32_t             flags;
 	int                  cipher_algo;
 	int                  cipher_mode;
 };
 
-/* main boot-record controller */
+/* main boot records controller */
 struct silofs_mbrinfo {
 	struct silofs_mbr     fs_mbr;
 	struct silofs_mbr     ar_mbr;
@@ -64,13 +70,16 @@ int silofs_mbri_derive_ivkey(struct silofs_mbrinfo        *mbri,
 void silofs_mbri_update_sb_addr(struct silofs_mbrinfo     *mbri,
                                 const struct silofs_uaddr *sb_uaddr);
 
-int silofs_mbri_arix_addr(const struct silofs_mbrinfo *mbri,
-                          struct silofs_paddr         *out_arix_paddr);
+int silofs_mbri_root(const struct silofs_mbrinfo *mbri,
+                     enum silofs_mbr_kind         mkind,
+                     struct silofs_paddr         *out_paddr);
 
-void silofs_mbri_update_arix_addr(struct silofs_mbrinfo     *mbri,
-                                  const struct silofs_paddr *arix_paddr);
+void silofs_mbri_set_root(struct silofs_mbrinfo     *mbri,
+                          enum silofs_mbr_kind       mkind,
+                          const struct silofs_paddr *paddr);
 
-int silofs_mbri_regenerate_fs_mbr(struct silofs_mbrinfo *mbri);
+int silofs_mbri_regen_mbr(struct silofs_mbrinfo *mbri,
+                          enum silofs_mbr_kind   mkind);
 
 int silofs_mbri_encode_mbr(const struct silofs_mbrinfo *mbri,
                            enum silofs_mbr_kind         mkind,
@@ -82,7 +91,7 @@ int silofs_mbri_decode_mbr(struct silofs_mbrinfo     *mbri,
                            const struct silofs_paddr *mref,
                            const struct silofs_mbr1k *mbr1k);
 
-int silofs_mbri_sync_mbrs(struct silofs_mbrinfo *mbri,
-                          enum silofs_mbr_kind   dst_mkind);
+int silofs_mbri_update_mbr(struct silofs_mbrinfo *mbri,
+                           enum silofs_mbr_kind   dst_mkind);
 
 #endif /* SILOFS_MBR_H_ */

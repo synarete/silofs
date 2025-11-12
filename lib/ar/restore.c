@@ -178,7 +178,7 @@ static int rec_fetch_arix_block(struct silofs_re_ctx *re_ctx)
 static int
 rec_resolve_apex(struct silofs_re_ctx *re_ctx, struct silofs_paddr *out_paddr)
 {
-	return silofs_mbri_arix_addr(&re_ctx->env->mbri, out_paddr);
+	return silofs_mbri_root(&re_ctx->env->mbri, SILOFS_MBR_AR, out_paddr);
 }
 
 static int rec_restore_arix(struct silofs_re_ctx *re_ctx,
@@ -366,7 +366,7 @@ static int rec_restore_prep(struct silofs_re_ctx *re_ctx,
 	if (err) {
 		return err;
 	}
-	err = silofs_mbri_sync_mbrs(&env->mbri, SILOFS_MBR_FS);
+	err = silofs_mbri_update_mbr(&env->mbri, SILOFS_MBR_FS);
 	if (err) {
 		return err;
 	}

@@ -19,12 +19,14 @@
 
 #include "infra.h"
 #include "addr.h"
-#include "uber.h"
-#include "env.h"
+#include "nodes.h"
+
+struct silofs_env;
+struct silofs_task_ctx;
 
 int silofs_spawn_uber(struct silofs_env *env, const struct silofs_paddr *paddr,
                       struct silofs_uber_info **out_ubi);
 
-int silofs_destage_dirty(struct silofs_env *env);
+int silofs_destage_dirty(struct silofs_task_ctx *task);
 
 #endif /* SILOFS_STORE_H_ */

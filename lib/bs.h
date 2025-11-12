@@ -24,5 +24,6 @@
 #include "bs/bldesc.h"
 #include "bs/btnode.h"
 #include "bs/btree.h"
+#include "bs/store.h"
 
 #endif /* SILOFS_BS_H_ */

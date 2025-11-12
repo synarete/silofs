@@ -16,9 +16,12 @@
  */
 #include "configs.h"
 #include <sys/stat.h>
+#include "nodes.h"
 #include "locos.h"
+#include "uber.h"
 #include "store.h"
 #include "mbr.h"
+#include "env.h"
 
 struct silofs_store_ctx {
 	const struct silofs_mbrinfo *mbri;
@@ -43,11 +46,12 @@ static void stc_init(struct silofs_store_ctx *st_ctx, struct silofs_env *env)
 	st_ctx->view = nullptr;
 }
 
-static int stc_init2(struct silofs_store_ctx *st_ctx, struct silofs_env *env)
+static int
+stc_init2(struct silofs_store_ctx *st_ctx, struct silofs_task_ctx *task)
 {
 	struct silofs_view *view = nullptr;
 
-	stc_init(st_ctx, env);
+	stc_init(st_ctx, task->t_env);
 	view = silofs_memalloc(st_ctx->alloc, sizeof(*view), 0);
 	if (view == nullptr) {
 		return -SILOFS_ENOENT;
@@ -181,12 +185,12 @@ static int stc_destage_dirty(struct silofs_store_ctx *st_ctx)
 	return 0;
 }
 
-int silofs_destage_dirty(struct silofs_env *env)
+int silofs_destage_dirty(struct silofs_task_ctx *task)
 {
 	struct silofs_store_ctx st_ctx = {};
 	int err;
 
-	err = stc_init2(&st_ctx, env);
+	err = stc_init2(&st_ctx, task);
 	if (!err) {
 		err = stc_destage_dirty(&st_ctx);
 	}

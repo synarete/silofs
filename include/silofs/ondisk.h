@@ -319,7 +319,7 @@
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-/* main-boot-record sub-flavour */
+/* main-boot-record sub-kind */
 enum silofs_mbr_kind {
 	SILOFS_MBR_NONE = 0,
 	SILOFS_MBR_FS   = 1,
@@ -569,7 +569,7 @@ struct silofs_mbr1k {
 	struct silofs_iv        mbr_main_iv;
 	struct silofs_key       mbr_main_key;
 	struct silofs_uaddr128b mbr_sb_addr;
-	struct silofs_paddr64b  mbr_arix_addr;
+	struct silofs_paddr64b  mbr_root;
 	uint8_t                 mbr_reserved3[672];
 	struct silofs_hash256   mbr_hash;
 } silofs_attr_aligned64;

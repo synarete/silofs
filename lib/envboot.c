@@ -48,7 +48,7 @@ int silofs_env_setup_fs_mbr(struct silofs_env *env)
 {
 	int err;
 
-	err = silofs_mbri_regenerate_fs_mbr(&env->mbri);
+	err = silofs_mbri_regen_mbr(&env->mbri, SILOFS_MBR_FS);
 	if (err) {
 		return err;
 	}
@@ -59,7 +59,8 @@ int silofs_env_setup_fs_mbr(struct silofs_env *env)
 	return 0;
 }
 
-static int env_save_mbr(struct silofs_env *env, struct silofs_paddr *out_mref)
+int silofs_env_commit_fs_mbr(struct silofs_env *env,
+                             struct silofs_paddr *out_mref)
 {
 	struct silofs_mbr1k mbr1k = {
 		.mbr_magic = UINT64_MAX,
@@ -83,29 +84,6 @@ static int env_save_mbr(struct silofs_env *env, struct silofs_paddr *out_mref)
 	err = silofs_repo_save_bseg(env->base.repo, out_mref, &rovec);
 	if (err) {
 		log_err("failed to save mbr: err=%d", err);
-		return err;
-	}
-	return 0;
-}
-
-static void env_pre_commit_fs_mbr(struct silofs_env *env)
-{
-	const struct silofs_uaddr *sb_uaddr = nullptr;
-
-	silofs_assert_not_null(env->sbi);
-
-	sb_uaddr = silofs_sbi_uaddr(env->sbi);
-	silofs_mbri_update_sb_addr(&env->mbri, sb_uaddr);
-}
-
-int silofs_env_commit_fs_mbr(struct silofs_env *env,
-                             struct silofs_paddr *out_mref)
-{
-	int err;
-
-	env_pre_commit_fs_mbr(env);
-	err = env_save_mbr(env, out_mref);
-	if (err) {
 		return err;
 	}
 	return 0;

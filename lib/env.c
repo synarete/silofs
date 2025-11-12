@@ -23,6 +23,8 @@
 #include "mbr.h"
 #include "env.h"
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 static void
 env_bind_sbi(struct silofs_env *env, struct silofs_sb_info *sbi_new)
 {
@@ -37,23 +39,21 @@ env_bind_sbi(struct silofs_env *env, struct silofs_sb_info *sbi_new)
 	env->sbi = sbi_new;
 }
 
-static void env_update_mbr_sb_addr(struct silofs_env *env)
+static void
+env_update_sb_addr(struct silofs_env *env, const struct silofs_uaddr *sb_addr)
 {
-	const struct silofs_uaddr *uaddr = nullptr;
-
-	if (env->sbi != nullptr) {
-		uaddr = silofs_sbi_uaddr(env->sbi);
-	} else {
-		uaddr = silofs_uaddr_none();
-	}
-	silofs_mbri_update_sb_addr(&env->mbri, uaddr);
+	silofs_mbri_update_sb_addr(&env->mbri, sb_addr);
 }
 
-static void env_rebind_sbi(struct silofs_env *env, struct silofs_sb_info *sbi)
+static void env_update_sb(struct silofs_env *env, struct silofs_sb_info *sbi)
 {
 	env_bind_sbi(env, sbi);
-	env_update_mbr_sb_addr(env);
+	if (sbi != nullptr) {
+		env_update_sb_addr(env, silofs_sbi_uaddr(sbi));
+	}
 }
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void env_update_owner(struct silofs_env *env)
 {
@@ -262,7 +262,7 @@ out_err:
 
 void silofs_env_fini(struct silofs_env *env)
 {
-	env_bind_sbi(env, nullptr);
+	env_update_sb(env, nullptr);
 	env_fini_uconv(env);
 	env_fini_crypto(env);
 	env_fini_locks(env);
@@ -328,11 +328,21 @@ static void make_uber_addr(struct silofs_paddr *out_paddr)
 int silofs_env_format_uber(struct silofs_env *env)
 {
 	struct silofs_paddr paddr;
+	struct silofs_uber_info *ubi = nullptr;
+	int err;
 
+	/* XXX FIXME */
+	if (ubi == nullptr) {
+		return 0;
+	}
+
+	silofs_assert_null(env->ubi);
 	make_uber_addr(&paddr);
-
-	/* YOU ARE HERE */
-	(void)env;
+	err = silofs_spawn_uber(env, &paddr, &ubi);
+	if (err) {
+		return err;
+	}
+	/* XXX: bind ubi */
 	return 0;
 }
 
@@ -416,7 +426,7 @@ int silofs_env_format_super(struct silofs_env *env, size_t capacity)
 		return err;
 	}
 	silofs_sbst_account_super(sbi);
-	env_bind_sbi(env, sbi);
+	env_update_sb(env, sbi);
 	return 0;
 }
 
@@ -458,7 +468,7 @@ int silofs_env_reload_super(struct silofs_env *env)
 	if (err) {
 		return err;
 	}
-	env_bind_sbi(env, sbi);
+	env_update_sb(env, sbi);
 	return 0;
 }
 
@@ -493,7 +503,7 @@ void silofs_env_drop_caches(struct silofs_env *env)
 static int env_shut_sb(struct silofs_env *env)
 {
 	log_dbg("shut-sb: op_count=%lu", env->opstat.op_count);
-	env_rebind_sbi(env, nullptr);
+	env_update_sb(env, nullptr);
 	return 0;
 }
 
@@ -559,7 +569,7 @@ static int env_fork_rebind_super(struct silofs_env *env,
 		return err;
 	}
 	silofs_sbi_make_fork_of(sbi, sbi_cur);
-	env_rebind_sbi(env, sbi);
+	env_update_sb(env, sbi);
 
 	*out_sbi = sbi;
 	return 0;
@@ -635,7 +645,7 @@ static int check_arix_size(ssize_t sz)
 static int
 env_arix_addr(const struct silofs_env *env, struct silofs_paddr *out_paddr)
 {
-	return silofs_mbri_arix_addr(&env->mbri, out_paddr);
+	return silofs_mbri_root(&env->mbri, SILOFS_MBR_AR, out_paddr);
 }
 
 int silofs_env_sense_ar(struct silofs_env *env)

@@ -311,13 +311,13 @@ static int arc_archive_post(struct silofs_ar_ctx *ar_ctx,
                             const struct silofs_paddr *arix_addr,
                             struct silofs_paddr *out_mref)
 {
-	silofs_mbri_update_arix_addr(&ar_ctx->env->mbri, arix_addr);
+	silofs_mbri_set_root(&ar_ctx->env->mbri, SILOFS_MBR_AR, arix_addr);
 	return arc_archive_mbr(ar_ctx, out_mref);
 }
 
 static int arc_archive_prep(struct silofs_ar_ctx *ar_ctx)
 {
-	return silofs_mbri_sync_mbrs(&ar_ctx->env->mbri, SILOFS_MBR_AR);
+	return silofs_mbri_update_mbr(&ar_ctx->env->mbri, SILOFS_MBR_AR);
 }
 
 static int

@@ -170,8 +170,14 @@ static int flush_dirty(struct silofs_task_ctx *task)
 	err = silofs_flush_dirty_now(task);
 	if (err) {
 		log_err("failed to flush dirty: err=%d", err);
+		return err;
 	}
-	return err;
+	err = silofs_destage_dirty(task);
+	if (err) {
+		log_err("failed to destage dirty: err=%d", err);
+		return err;
+	}
+	return 0;
 }
 
 static void drop_caches(struct silofs_task_ctx *task)
@@ -183,6 +189,11 @@ static void drop_relax_caches(struct silofs_task_ctx *task)
 {
 	drop_caches(task);
 	relax_caches(task, false);
+}
+
+static int format_uber(struct silofs_task_ctx *task)
+{
+	return silofs_env_format_uber(task->t_env);
 }
 
 static size_t calc_aligned_fs_cap(const struct silofs_task_ctx *task)
@@ -421,6 +432,10 @@ static int appexec_format_meta(struct silofs_task_ctx *task,
 	int err;
 
 	err = setup_mbr(task);
+	if (err) {
+		return err;
+	}
+	err = format_uber(task);
 	if (err) {
 		return err;
 	}

@@ -670,7 +670,7 @@ static int make_task(struct silofs_env *env, struct silofs_task_ctx *task)
 	silofs_task_init(task, env);
 	silofs_task_set_ts(task, true);
 	silofs_task_set_creds(task, args->uid, args->gid, args->umask);
-	task->t_mbr_op = true;
+	task->t_priv_op = true;
 	return map_task_creds(task);
 }
 

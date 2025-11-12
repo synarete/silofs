@@ -31,12 +31,6 @@ struct silofs_mrefs {
 	struct silofs_paddr fork;
 };
 
-/* root address based on mbr sub-type */
-union silofs_mbr_root {
-	struct silofs_paddr uber_addr;
-	struct silofs_paddr arix_addr;
-};
-
 /* main boot-record, in-memory representation */
 struct silofs_mbr {
 	struct silofs_ivkey  main_ivkey;

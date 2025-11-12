@@ -102,7 +102,7 @@ struct silofs_task_ctx {
 	volatile bool               t_fs_locked;
 	bool                        t_ex_locked;
 	bool                        t_exclusive;
-	bool                        t_mbr_op;
+	bool                        t_priv_op;
 	bool                        t_kwrite;
 	bool                        t_runnable;
 };

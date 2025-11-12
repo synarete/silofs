@@ -20,7 +20,7 @@
 #include <sys/mount.h>
 #include "bs.h"
 #include "fs.h"
-#include "mbr.h"
+#include "gbr.h"
 #include "env.h"
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -42,7 +42,7 @@ env_bind_sbi(struct silofs_env *env, struct silofs_sb_info *sbi_new)
 static void
 env_update_sb_addr(struct silofs_env *env, const struct silofs_uaddr *sb_addr)
 {
-	silofs_mbrs_update_sb_addr(&env->mbrs, sb_addr);
+	silofs_gbrs_update_sb_addr(&env->gbrs, sb_addr);
 }
 
 static void env_update_sb(struct silofs_env *env, struct silofs_sb_info *sbi)
@@ -145,25 +145,25 @@ static void env_fini_commons(struct silofs_env *env)
 	env->ms_flags = 0;
 }
 
-static int env_init_mbrs(struct silofs_env *env)
+static int env_init_gbrs(struct silofs_env *env)
 {
 	int err;
 
-	err = silofs_mbrs_init(&env->mbrs);
+	err = silofs_gbrs_init(&env->gbrs);
 	if (err) {
 		return err;
 	}
-	err = silofs_mbrs_derive_ivkey(&env->mbrs, env->base.passwd);
+	err = silofs_gbrs_derive_ivkey(&env->gbrs, env->base.passwd);
 	if (err) {
-		silofs_mbrs_fini(&env->mbrs);
+		silofs_gbrs_fini(&env->gbrs);
 		return err;
 	}
 	return 0;
 }
 
-static void env_fini_mbrs(struct silofs_env *env)
+static void env_fini_gbrs(struct silofs_env *env)
 {
-	silofs_mbrs_fini(&env->mbrs);
+	silofs_gbrs_fini(&env->gbrs);
 }
 
 static int env_init_locks(struct silofs_env *env)
@@ -234,7 +234,7 @@ int silofs_env_init(struct silofs_env *env, const struct silofs_env_base *base)
 	env_init_commons(env, base);
 	env_init_opstat(env);
 
-	err = env_init_mbrs(env);
+	err = env_init_gbrs(env);
 	if (err) {
 		return err;
 	}
@@ -266,7 +266,7 @@ void silofs_env_fini(struct silofs_env *env)
 	env_fini_uconv(env);
 	env_fini_crypto(env);
 	env_fini_locks(env);
-	env_fini_mbrs(env);
+	env_fini_gbrs(env);
 	env_fini_commons(env);
 }
 
@@ -367,7 +367,7 @@ static void make_super_uaddr(const struct silofs_lsid *lsid,
 
 static const struct silofs_uaddr *env_sb_addr(const struct silofs_env *env)
 {
-	return &env->mbrs.fs_mbr.sb_addr;
+	return &env->gbrs.fs_gbr.sb_addr;
 }
 
 static void env_make_super_uaddr(const struct silofs_env *env,
@@ -583,10 +583,10 @@ static void sbi_mark_fossil(struct silofs_sb_info *sbi)
 static int
 env_recalc_fs_mref(struct silofs_env *env, struct silofs_paddr *out_paddr)
 {
-	struct silofs_mbr1k mbr1k = { .mbr_magic = UINT64_MAX };
+	struct silofs_gbr1k gbr1k = { .gbr_magic = UINT64_MAX };
 
-	return silofs_mbrs_encode(&env->mbrs, SILOFS_MBR_FS, out_paddr,
-	                          &mbr1k);
+	return silofs_gbrs_encode(&env->gbrs, SILOFS_GBR_FS, out_paddr,
+	                          &gbr1k);
 }
 
 static int
@@ -606,7 +606,7 @@ env_do_forkfs(struct silofs_env *env, struct silofs_mrefs *out_mrefs)
 	if (err) {
 		return err;
 	}
-	err = silofs_env_commit_fs_mbr(env, &out_mrefs->fork);
+	err = silofs_env_commit_fs_gbr(env, &out_mrefs->fork);
 	if (err) {
 		return err;
 	}
@@ -615,7 +615,7 @@ env_do_forkfs(struct silofs_env *env, struct silofs_mrefs *out_mrefs)
 	if (err) {
 		return err;
 	}
-	err = silofs_env_commit_fs_mbr(env, &out_mrefs->main);
+	err = silofs_env_commit_fs_gbr(env, &out_mrefs->main);
 	if (err) {
 		return err;
 	}
@@ -645,7 +645,7 @@ static int check_arix_size(ssize_t sz)
 static int
 env_arix_addr(const struct silofs_env *env, struct silofs_paddr *out_paddr)
 {
-	return silofs_mbrs_root(&env->mbrs, SILOFS_MBR_AR, out_paddr);
+	return silofs_gbrs_root(&env->gbrs, SILOFS_GBR_AR, out_paddr);
 }
 
 int silofs_env_sense_ar(struct silofs_env *env)

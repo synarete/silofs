@@ -19,7 +19,7 @@
 #include <silofs/ioctls.h>
 #include "bs.h"
 #include "fs.h"
-#include "mbr.h"
+#include "gbr.h"
 #include "env.h"
 #include "fuseq.h"
 

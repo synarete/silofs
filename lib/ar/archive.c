@@ -200,9 +200,9 @@ out:
 static const struct silofs_ivkey *
 arc_arix_ivkey(const struct silofs_ar_ctx *ar_ctx)
 {
-	const struct silofs_mbrs *mbrs = &ar_ctx->env->mbrs;
+	const struct silofs_gbrs *gbrs = &ar_ctx->env->gbrs;
 
-	return &mbrs->ar_mbr.main_ivkey;
+	return &gbrs->ar_gbr.main_ivkey;
 }
 
 static int arc_store_arix_block(struct silofs_ar_ctx *ar_ctx)
@@ -289,18 +289,18 @@ static int arc_archive_apex(struct silofs_ar_ctx *ar_ctx,
 	return 0;
 }
 
-static int arc_archive_mbr(const struct silofs_ar_ctx *ar_ctx,
+static int arc_archive_gbr(const struct silofs_ar_ctx *ar_ctx,
                            struct silofs_paddr *out_mref)
 {
-	struct silofs_mbr1k mbr1k = { .mbr_magic = 0xff };
-	const struct silofs_mbrs *mbrs = &ar_ctx->env->mbrs;
+	struct silofs_gbr1k gbr1k = { .gbr_magic = 0xff };
+	const struct silofs_gbrs *gbrs = &ar_ctx->env->gbrs;
 	int err;
 
-	err = silofs_mbrs_encode(mbrs, SILOFS_MBR_AR, out_mref, &mbr1k);
+	err = silofs_gbrs_encode(gbrs, SILOFS_GBR_AR, out_mref, &gbr1k);
 	if (err) {
 		return err;
 	}
-	err = arc_send_pack(ar_ctx, out_mref, &mbr1k, sizeof(mbr1k));
+	err = arc_send_pack(ar_ctx, out_mref, &gbr1k, sizeof(gbr1k));
 	if (err) {
 		return err;
 	}
@@ -311,13 +311,13 @@ static int arc_archive_post(struct silofs_ar_ctx *ar_ctx,
                             const struct silofs_paddr *arix_addr,
                             struct silofs_paddr *out_mref)
 {
-	silofs_mbrs_set_root(&ar_ctx->env->mbrs, SILOFS_MBR_AR, arix_addr);
-	return arc_archive_mbr(ar_ctx, out_mref);
+	silofs_gbrs_set_root(&ar_ctx->env->gbrs, SILOFS_GBR_AR, arix_addr);
+	return arc_archive_gbr(ar_ctx, out_mref);
 }
 
 static int arc_archive_prep(struct silofs_ar_ctx *ar_ctx)
 {
-	return silofs_mbrs_update(&ar_ctx->env->mbrs, SILOFS_MBR_AR);
+	return silofs_gbrs_update(&ar_ctx->env->gbrs, SILOFS_GBR_AR);
 }
 
 static int

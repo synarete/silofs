@@ -2456,13 +2456,13 @@ static void fill_query_boot_name(const struct silofs_task_ctx *task,
 static void fill_query_boot_main_blobid(const struct silofs_task_ctx *task,
                                         struct silofs_ioc_query *query)
 {
-	struct silofs_mbr1k mbr1k;
+	struct silofs_gbr1k gbr1k;
 	struct silofs_paddr mref;
 	const struct silofs_env *env = task->t_env;
 	struct silofs_query_boot *qboot = &query->u.boot;
 	int err;
 
-	err = silofs_mbrs_encode(&env->mbrs, SILOFS_MBR_FS, &mref, &mbr1k);
+	err = silofs_gbrs_encode(&env->gbrs, SILOFS_GBR_FS, &mref, &gbr1k);
 	if (!err) {
 		silofs_blobid_copyto(&mref.blobid, &qboot->main_blobid);
 	}

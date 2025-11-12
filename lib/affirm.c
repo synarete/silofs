@@ -214,20 +214,20 @@ static void affirm_ondisk_spmaps(void)
 	REQUIRE_SIZEOF_16K(struct silofs_spmap_leaf);
 }
 
-static void affirm_ondisk_mbr(void)
+static void affirm_ondisk_gbr(void)
 {
-	REQUIRE_OFFSET64(struct silofs_mbr1k, mbr_magic, 0);
-	REQUIRE_OFFSET64(struct silofs_mbr1k, mbr_version, 8);
-	REQUIRE_OFFSET64(struct silofs_mbr1k, mbr_uuid, 16);
-	REQUIRE_OFFSET64(struct silofs_mbr1k, mbr_kind, 32);
-	REQUIRE_OFFSET32(struct silofs_mbr1k, mbr_flags, 36);
-	REQUIRE_OFFSET64(struct silofs_mbr1k, mbr_chiper_algo, 40);
-	REQUIRE_OFFSET32(struct silofs_mbr1k, mbr_chiper_mode, 44);
-	REQUIRE_OFFSET64(struct silofs_mbr1k, mbr_main_iv, 48);
-	REQUIRE_OFFSET64(struct silofs_mbr1k, mbr_main_key, 64);
-	REQUIRE_OFFSET64(struct silofs_mbr1k, mbr_sb_addr, 128);
-	REQUIRE_OFFSET64(struct silofs_mbr1k, mbr_root, 256);
-	REQUIRE_SIZEOF(struct silofs_mbr1k, SILOFS_MBR_SIZE);
+	REQUIRE_OFFSET64(struct silofs_gbr1k, gbr_magic, 0);
+	REQUIRE_OFFSET64(struct silofs_gbr1k, gbr_version, 8);
+	REQUIRE_OFFSET64(struct silofs_gbr1k, gbr_uuid, 16);
+	REQUIRE_OFFSET64(struct silofs_gbr1k, gbr_kind, 32);
+	REQUIRE_OFFSET32(struct silofs_gbr1k, gbr_flags, 36);
+	REQUIRE_OFFSET64(struct silofs_gbr1k, gbr_chiper_algo, 40);
+	REQUIRE_OFFSET32(struct silofs_gbr1k, gbr_chiper_mode, 44);
+	REQUIRE_OFFSET64(struct silofs_gbr1k, gbr_main_iv, 48);
+	REQUIRE_OFFSET64(struct silofs_gbr1k, gbr_main_key, 64);
+	REQUIRE_OFFSET64(struct silofs_gbr1k, gbr_sb_addr, 128);
+	REQUIRE_OFFSET64(struct silofs_gbr1k, gbr_root, 256);
+	REQUIRE_SIZEOF(struct silofs_gbr1k, SILOFS_MBR_SIZE);
 }
 
 static void affirm_ondisk_uber(void)
@@ -450,7 +450,7 @@ void silofs_affirm_ondisk_format(void)
 	affirm_ondisk_addrs();
 	affirm_ondisk_headers();
 	affirm_ondisk_spmaps();
-	affirm_ondisk_mbr();
+	affirm_ondisk_gbr();
 	affirm_ondisk_uber();
 	affirm_ondisk_super();
 	affirm_ondisk_lsmap();

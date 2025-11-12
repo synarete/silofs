@@ -163,9 +163,9 @@ out:
 static const struct silofs_ivkey *
 rec_arix_ivkey(const struct silofs_re_ctx *re_ctx)
 {
-	const struct silofs_mbrs *mbrs = &re_ctx->env->mbrs;
+	const struct silofs_gbrs *gbrs = &re_ctx->env->gbrs;
 
-	return &mbrs->ar_mbr.main_ivkey;
+	return &gbrs->ar_gbr.main_ivkey;
 }
 
 static int rec_fetch_arix_block(struct silofs_re_ctx *re_ctx)
@@ -178,7 +178,7 @@ static int rec_fetch_arix_block(struct silofs_re_ctx *re_ctx)
 static int
 rec_resolve_apex(struct silofs_re_ctx *re_ctx, struct silofs_paddr *out_paddr)
 {
-	return silofs_mbrs_root(&re_ctx->env->mbrs, SILOFS_MBR_AR, out_paddr);
+	return silofs_gbrs_root(&re_ctx->env->gbrs, SILOFS_GBR_AR, out_paddr);
 }
 
 static int rec_restore_arix(struct silofs_re_ctx *re_ctx,
@@ -315,7 +315,7 @@ static int rec_restore_sb_addr(struct silofs_re_ctx *re_ctx)
 		return -SILOFS_EBADARIX;
 	}
 	sb_uaddr_of(sb_laddr, &sb_uaddr);
-	silofs_mbrs_update_sb_addr(&re_ctx->env->mbrs, &sb_uaddr);
+	silofs_gbrs_update_sb_addr(&re_ctx->env->gbrs, &sb_uaddr);
 	return 0;
 }
 
@@ -334,10 +334,10 @@ static int rec_restore_sb(struct silofs_re_ctx *re_ctx)
 	return 0;
 }
 
-static int rec_restore_fs_mbr(const struct silofs_re_ctx *re_ctx,
+static int rec_restore_fs_gbr(const struct silofs_re_ctx *re_ctx,
                               struct silofs_paddr *out_fs_mref)
 {
-	return silofs_env_commit_fs_mbr(re_ctx->env, out_fs_mref);
+	return silofs_env_commit_fs_gbr(re_ctx->env, out_fs_mref);
 }
 
 static int rec_restore_post(struct silofs_re_ctx *re_ctx,
@@ -349,7 +349,7 @@ static int rec_restore_post(struct silofs_re_ctx *re_ctx,
 	if (err) {
 		return err;
 	}
-	err = rec_restore_fs_mbr(re_ctx, out_fs_mref);
+	err = rec_restore_fs_gbr(re_ctx, out_fs_mref);
 	if (err) {
 		return err;
 	}
@@ -362,11 +362,11 @@ static int rec_restore_prep(struct silofs_re_ctx *re_ctx,
 	struct silofs_env *env = re_ctx->env;
 	int err;
 
-	err = silofs_env_reload_ar_mbr(env, ar_mref);
+	err = silofs_env_reload_ar_gbr(env, ar_mref);
 	if (err) {
 		return err;
 	}
-	err = silofs_mbrs_update(&env->mbrs, SILOFS_MBR_FS);
+	err = silofs_gbrs_update(&env->gbrs, SILOFS_GBR_FS);
 	if (err) {
 		return err;
 	}

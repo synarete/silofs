@@ -22,7 +22,7 @@
 #include "infra.h"
 #include "addr.h"
 #include "fs.h"
-#include "mbr.h"
+#include "gbr.h"
 
 struct silofs_lookup_in {
 	ino_t       parent;

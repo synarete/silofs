@@ -319,11 +319,11 @@
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-/* main-boot-record sub-kind */
-enum silofs_mbr_kind {
-	SILOFS_MBR_NONE = 0,
-	SILOFS_MBR_FS   = 1,
-	SILOFS_MBR_AR   = 2,
+/* global boot-record sub-types */
+enum silofs_gbr_kind {
+	SILOFS_GBR_NONE = 0,
+	SILOFS_GBR_FS   = 1,
+	SILOFS_GBR_AR   = 2,
 };
 
 /* common-header flags */
@@ -354,7 +354,7 @@ enum silofs_pnodef {
 /* meta elements types */
 enum silofs_mtype {
 	SILOFS_MTYPE_NONE   = 0,
-	SILOFS_MTYPE_MBR    = 1,
+	SILOFS_MTYPE_GBR    = 1,
 	SILOFS_MTYPE_UBER   = 2,
 	SILOFS_MTYPE_ARIX   = 3,
 	SILOFS_MTYPE_BDESC  = 4,
@@ -558,20 +558,21 @@ struct silofs_vaddr64 {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-struct silofs_mbr1k {
-	uint64_t                mbr_magic;
-	uint64_t                mbr_version;
-	struct silofs_uuid      mbr_uuid;
-	uint32_t                mbr_kind;
-	uint32_t                mbr_flags;
-	uint32_t                mbr_chiper_algo;
-	uint32_t                mbr_chiper_mode;
-	struct silofs_iv        mbr_main_iv;
-	struct silofs_key       mbr_main_key;
-	struct silofs_uaddr128b mbr_sb_addr;
-	struct silofs_paddr64b  mbr_root;
-	uint8_t                 mbr_reserved3[672];
-	struct silofs_hash256   mbr_hash;
+/* global boot record */
+struct silofs_gbr1k {
+	uint64_t                gbr_magic;
+	uint64_t                gbr_version;
+	struct silofs_uuid      gbr_uuid;
+	uint32_t                gbr_kind;
+	uint32_t                gbr_flags;
+	uint32_t                gbr_chiper_algo;
+	uint32_t                gbr_chiper_mode;
+	struct silofs_iv        gbr_main_iv;
+	struct silofs_key       gbr_main_key;
+	struct silofs_uaddr128b gbr_sb_addr;
+	struct silofs_paddr64b  gbr_root;
+	uint8_t                 gbr_reserved3[672];
+	struct silofs_hash256   gbr_hash;
 } silofs_attr_aligned64;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -975,7 +976,7 @@ struct silofs_arix_block {
 /* semantic "view" into meta elements */
 union silofs_view_u {
 	struct silofs_header       hdr[2];
-	struct silofs_mbr1k        mbr;
+	struct silofs_gbr1k        gbr;
 	struct silofs_uber_block   ub;
 	struct silofs_arix_block   ab;
 	struct silofs_blob_desc    bd;

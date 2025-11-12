@@ -20,11 +20,11 @@
 #include "locos.h"
 #include "uber.h"
 #include "store.h"
-#include "mbr.h"
+#include "gbr.h"
 #include "env.h"
 
 struct silofs_store_ctx {
-	const struct silofs_mbrs *mbrs;
+	const struct silofs_gbrs *gbrs;
 	struct silofs_alloc *alloc;
 	struct silofs_locos *locos;
 	struct silofs_pcache *pcache;
@@ -36,7 +36,7 @@ struct silofs_store_ctx {
 
 static void stc_init(struct silofs_store_ctx *st_ctx, struct silofs_env *env)
 {
-	st_ctx->mbrs = &env->mbrs;
+	st_ctx->gbrs = &env->gbrs;
 	st_ctx->alloc = env->base.alloc;
 	st_ctx->locos = &env->base.repo->re_locos;
 	st_ctx->pcache = env->base.pcache;
@@ -72,7 +72,7 @@ static void stc_fini(struct silofs_store_ctx *st_ctx)
 static const struct silofs_key *
 stc_main_key(const struct silofs_store_ctx *st_ctx)
 {
-	return &st_ctx->mbrs->fs_mbr.main_ivkey.key;
+	return &st_ctx->gbrs->fs_gbr.main_ivkey.key;
 }
 
 static int stc_require_paddr(const struct silofs_store_ctx *st_ctx,

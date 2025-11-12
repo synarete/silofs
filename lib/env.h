@@ -23,7 +23,7 @@
 #include "addr.h"
 #include "bs.h"
 #include "fs.h"
-#include "mbr.h"
+#include "gbr.h"
 
 /* top-level operations counters/stats */
 struct silofs_env_opstat {
@@ -53,7 +53,7 @@ struct silofs_env_base {
 /* top-level environment object */
 struct silofs_env {
 	struct silofs_env_base   base;
-	struct silofs_mbrs       mbrs;
+	struct silofs_gbrs       gbrs;
 	struct silofs_rwlock     rwlock;
 	struct silofs_mutex      mutex;
 	struct silofs_cipher     enc_cipher;
@@ -115,21 +115,21 @@ bool silofs_env_isrdonlyfs(const struct silofs_env *env);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_env_sense_mbr(struct silofs_env         *env,
+int silofs_env_sense_gbr(struct silofs_env         *env,
                          const struct silofs_paddr *paddr);
 
-int silofs_env_setup_fs_mbr(struct silofs_env *env);
+int silofs_env_setup_fs_gbr(struct silofs_env *env);
 
-int silofs_env_commit_fs_mbr(struct silofs_env   *env,
+int silofs_env_commit_fs_gbr(struct silofs_env   *env,
                              struct silofs_paddr *out_mref);
 
-int silofs_env_reload_fs_mbr(struct silofs_env         *env,
+int silofs_env_reload_fs_gbr(struct silofs_env         *env,
                              const struct silofs_paddr *paddr);
 
-int silofs_env_reload_ar_mbr(struct silofs_env         *env,
+int silofs_env_reload_ar_gbr(struct silofs_env         *env,
                              const struct silofs_paddr *paddr);
 
-int silofs_env_unlink_mbr(struct silofs_env         *env,
+int silofs_env_unlink_gbr(struct silofs_env         *env,
                           const struct silofs_paddr *paddr);
 
 #endif /* SILOFS_ENV_H_ */

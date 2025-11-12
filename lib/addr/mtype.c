@@ -55,7 +55,7 @@ bool silofs_mtype_isunode(enum silofs_mtype mtype)
 	bool ret;
 
 	switch (mtype) {
-	case SILOFS_MTYPE_MBR:
+	case SILOFS_MTYPE_GBR:
 	case SILOFS_MTYPE_SUPER:
 	case SILOFS_MTYPE_SPNODE:
 	case SILOFS_MTYPE_SPLEAF:
@@ -103,7 +103,7 @@ bool silofs_mtype_isvnode(enum silofs_mtype mtype)
 	case SILOFS_MTYPE_ARIX:
 	case SILOFS_MTYPE_BDESC:
 	case SILOFS_MTYPE_BTNODE:
-	case SILOFS_MTYPE_MBR:
+	case SILOFS_MTYPE_GBR:
 	case SILOFS_MTYPE_SUPER:
 	case SILOFS_MTYPE_SPNODE:
 	case SILOFS_MTYPE_SPLEAF:
@@ -130,7 +130,7 @@ bool silofs_mtype_isdata(enum silofs_mtype mtype)
 	case SILOFS_MTYPE_ARIX:
 	case SILOFS_MTYPE_BDESC:
 	case SILOFS_MTYPE_BTNODE:
-	case SILOFS_MTYPE_MBR:
+	case SILOFS_MTYPE_GBR:
 	case SILOFS_MTYPE_SUPER:
 	case SILOFS_MTYPE_SPNODE:
 	case SILOFS_MTYPE_SPLEAF:
@@ -160,8 +160,8 @@ uint32_t silofs_mtype_size(enum silofs_mtype mtype)
 		return sizeof(struct silofs_blob_desc);
 	case SILOFS_MTYPE_BTNODE:
 		return sizeof(struct silofs_btree_node);
-	case SILOFS_MTYPE_MBR:
-		return sizeof(struct silofs_mbr1k);
+	case SILOFS_MTYPE_GBR:
+		return sizeof(struct silofs_gbr1k);
 	case SILOFS_MTYPE_SUPER:
 		return sizeof(struct silofs_super_block);
 	case SILOFS_MTYPE_SPNODE:

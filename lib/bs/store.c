@@ -24,7 +24,7 @@ struct silofs_store_ctx {
 	const struct silofs_mbrinfo *mbri;
 	struct silofs_alloc *alloc;
 	struct silofs_locos *locos;
-	struct silofs_bcache *bcache;
+	struct silofs_pcache *pcache;
 	struct silofs_mdigest *mdigest;
 	struct silofs_cipher *enc_cipher;
 	struct silofs_cipher *dec_cipher;
@@ -36,7 +36,7 @@ static void stc_init(struct silofs_store_ctx *st_ctx, struct silofs_env *env)
 	st_ctx->mbri = &env->mbri;
 	st_ctx->alloc = env->base.alloc;
 	st_ctx->locos = &env->base.repo->re_locos;
-	st_ctx->bcache = env->base.bcache;
+	st_ctx->pcache = env->base.pcache;
 	st_ctx->mdigest = &env->mdigest;
 	st_ctx->enc_cipher = &env->enc_cipher;
 	st_ctx->dec_cipher = &env->dec_cipher;
@@ -82,7 +82,7 @@ static int stc_create_cached_ubi(const struct silofs_store_ctx *st_ctx,
                                  const struct silofs_paddr *paddr, bool spawn,
                                  struct silofs_uber_info **out_ubi)
 {
-	*out_ubi = silofs_create_cached_uber(st_ctx->bcache, paddr, spawn);
+	*out_ubi = silofs_create_cached_uber(st_ctx->pcache, paddr, spawn);
 	return ((*out_ubi) == nullptr) ? -SILOFS_ENOMEM : 0;
 }
 
@@ -141,7 +141,7 @@ static size_t viewlen_of(const struct silofs_pnode_info *pni)
 
 static struct silofs_pnode_info *stc_get_dirty(struct silofs_store_ctx *st_ctx)
 {
-	return silofs_bcache_dq_front(st_ctx->bcache);
+	return silofs_pcache_dq_front(st_ctx->pcache);
 }
 
 static int stc_destage_dirty_pnode(struct silofs_store_ctx *st_ctx,

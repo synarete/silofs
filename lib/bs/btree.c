@@ -31,7 +31,7 @@ struct silofs_btree_path {
 struct silofs_btree_ctx {
 	struct silofs_btree_path bpath;
 	struct silofs_btree *btree;
-	struct silofs_bcache *bcache;
+	struct silofs_pcache *pcache;
 	struct silofs_repo *repo;
 	uint64_t key;
 };
@@ -268,7 +268,7 @@ static int btc_create_cached_bti(const struct silofs_btree_ctx *btc,
                                  struct silofs_btnode_info **out_bti)
 {
 	*out_bti =
-		nullptr; // XXX silofs_bcache_create_bti(btc->bcache, paddr);
+		nullptr; // XXX silofs_pcache_create_bti(btc->pcache, paddr);
 	if (*out_bti == nullptr) {
 		return -SILOFS_ENOMEM;
 	}
@@ -281,7 +281,7 @@ static void btc_evict_cached_bti(const struct silofs_btree *btree,
                                  struct silofs_btnode_info *bti)
 {
 
-	// XXX silofs_bcache_remove_bti(btree->bt_base.bcache, bti);
+	// XXX silofs_pcache_remove_bti(btree->bt_base.pcache, bti);
 	(void)btree;
 	(void)bti;
 }
@@ -291,7 +291,7 @@ static int btc_lookup_cached_bti(const struct silofs_btree_ctx *btc,
                                  struct silofs_btnode_info **out_bti)
 {
 	*out_bti =
-		nullptr; // XXX silofs_bcache_lookup_bti(btc->bcache, paddr);
+		nullptr; // XXX silofs_pcache_lookup_bti(btc->pcache, paddr);
 	if (*out_bti == nullptr) {
 		return -SILOFS_ENOENT;
 	}
@@ -672,7 +672,7 @@ static int btc_init(struct silofs_btree_ctx *btc, struct silofs_btree *btree,
 
 	silofs_memzero(btc, sizeof(*btc));
 	btc->btree = btree;
-	btc->bcache = btree->bt_base.bcache;
+	btc->pcache = btree->bt_base.pcache;
 	btc->repo = btree->bt_base.repo;
 	bpath_init(&btc->bpath);
 	if (vaddr == nullptr) {
@@ -689,7 +689,7 @@ static void btc_fini(struct silofs_btree_ctx *btc)
 {
 	bpath_fini(&btc->bpath);
 	btc->btree = nullptr;
-	btc->bcache = nullptr;
+	btc->pcache = nullptr;
 	btc->repo = nullptr;
 }
 

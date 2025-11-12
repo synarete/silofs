@@ -24,6 +24,6 @@
 #include "nodes/hmapq.h"
 #include "nodes/view.h"
 #include "nodes/pnodes.h"
-#include "nodes/bcache.h"
+#include "nodes/pcache.h"
 
 #endif /* SILOFS_CACHE_H_ */

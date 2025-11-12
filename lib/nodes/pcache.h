@@ -14,44 +14,44 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_BCACHE_H_
-#define SILOFS_BCACHE_H_
+#ifndef SILOFS_PCACHE_H_
+#define SILOFS_PCACHE_H_
 
 #include "infra.h"
 #include "addr.h"
 #include "nodes.h"
 
-struct silofs_bcache {
-	struct silofs_hmapq  bc_hmapq[3];
-	struct silofs_dirtyq bc_dirtyq;
-	struct silofs_alloc *bc_alloc;
+struct silofs_pcache {
+	struct silofs_hmapq  pc_hmapq[3];
+	struct silofs_dirtyq pc_dirtyq;
+	struct silofs_alloc *pc_alloc;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_bcache_init(struct silofs_bcache *bcache,
+int silofs_pcache_init(struct silofs_pcache *pcache,
                        struct silofs_alloc  *alloc);
 
-void silofs_bcache_fini(struct silofs_bcache *bcache);
+void silofs_pcache_fini(struct silofs_pcache *pcache);
 
-bool silofs_bcache_isempty(const struct silofs_bcache *bcache);
+bool silofs_pcache_isempty(const struct silofs_pcache *pcache);
 
-void silofs_bcache_drop(struct silofs_bcache *bcache);
+void silofs_pcache_drop(struct silofs_pcache *pcache);
 
-void silofs_bcache_relax(struct silofs_bcache *bcache, int flags);
-
-struct silofs_pnode_info *
-silofs_bcache_dq_front(const struct silofs_bcache *bcache);
+void silofs_pcache_relax(struct silofs_pcache *pcache, int flags);
 
 struct silofs_pnode_info *
-silofs_bcache_lookup_pnode(struct silofs_bcache      *bcache,
+silofs_pcache_dq_front(const struct silofs_pcache *pcache);
+
+struct silofs_pnode_info *
+silofs_pcache_lookup_pnode(struct silofs_pcache      *pcache,
                            const struct silofs_paddr *paddr);
 
 struct silofs_pnode_info *
-silofs_bcache_create_pnode(struct silofs_bcache      *bcache,
+silofs_pcache_create_pnode(struct silofs_pcache      *pcache,
                            const struct silofs_paddr *paddr);
 
-void silofs_bcache_delete_pnode(struct silofs_bcache     *bcache,
+void silofs_pcache_delete_pnode(struct silofs_pcache     *pcache,
                                 struct silofs_pnode_info *pni);
 
-#endif /* SILOFS_BCACHE_H_ */
+#endif /* SILOFS_PCACHE_H_ */

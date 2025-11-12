@@ -37,7 +37,7 @@ static int env_reinit_ciphers(struct silofs_env *env, int algo, int mode)
 
 static int env_reinit_ciphers_by_mbr(struct silofs_env *env)
 {
-	const struct silofs_mbr *mbr = &env->mbri.fs_mbr;
+	const struct silofs_mbr *mbr = &env->mbrs.fs_mbr;
 	const int algo = mbr->cipher_algo;
 	const int mode = mbr->cipher_mode;
 
@@ -48,7 +48,7 @@ int silofs_env_setup_fs_mbr(struct silofs_env *env)
 {
 	int err;
 
-	err = silofs_mbri_regen_mbr(&env->mbri, SILOFS_MBR_FS);
+	err = silofs_mbrs_regen(&env->mbrs, SILOFS_MBR_FS);
 	if (err) {
 		return err;
 	}
@@ -71,8 +71,7 @@ int silofs_env_commit_fs_mbr(struct silofs_env *env,
 	};
 	int err;
 
-	err = silofs_mbri_encode_mbr(&env->mbri, SILOFS_MBR_FS, out_mref,
-	                             &mbr1k);
+	err = silofs_mbrs_encode(&env->mbrs, SILOFS_MBR_FS, out_mref, &mbr1k);
 	if (err) {
 		return err;
 	}
@@ -141,7 +140,7 @@ static int
 env_decode_fs_mbr(struct silofs_env *env, const struct silofs_paddr *mref,
                   const struct silofs_mbr1k *mbr1k)
 {
-	return silofs_mbri_decode_mbr(&env->mbri, SILOFS_MBR_FS, mref, mbr1k);
+	return silofs_mbrs_decode(&env->mbrs, SILOFS_MBR_FS, mref, mbr1k);
 }
 
 int silofs_env_reload_fs_mbr(struct silofs_env *env,
@@ -171,7 +170,7 @@ static int
 env_decode_ar_mbr(struct silofs_env *env, const struct silofs_paddr *mref,
                   const struct silofs_mbr1k *mbr1k)
 {
-	return silofs_mbri_decode_mbr(&env->mbri, SILOFS_MBR_AR, mref, mbr1k);
+	return silofs_mbrs_decode(&env->mbrs, SILOFS_MBR_AR, mref, mbr1k);
 }
 
 int silofs_env_reload_ar_mbr(struct silofs_env *env,

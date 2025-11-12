@@ -163,9 +163,9 @@ out:
 static const struct silofs_ivkey *
 rec_arix_ivkey(const struct silofs_re_ctx *re_ctx)
 {
-	const struct silofs_mbrinfo *mbri = &re_ctx->env->mbri;
+	const struct silofs_mbrs *mbrs = &re_ctx->env->mbrs;
 
-	return &mbri->ar_mbr.main_ivkey;
+	return &mbrs->ar_mbr.main_ivkey;
 }
 
 static int rec_fetch_arix_block(struct silofs_re_ctx *re_ctx)
@@ -178,7 +178,7 @@ static int rec_fetch_arix_block(struct silofs_re_ctx *re_ctx)
 static int
 rec_resolve_apex(struct silofs_re_ctx *re_ctx, struct silofs_paddr *out_paddr)
 {
-	return silofs_mbri_root(&re_ctx->env->mbri, SILOFS_MBR_AR, out_paddr);
+	return silofs_mbrs_root(&re_ctx->env->mbrs, SILOFS_MBR_AR, out_paddr);
 }
 
 static int rec_restore_arix(struct silofs_re_ctx *re_ctx,
@@ -315,7 +315,7 @@ static int rec_restore_sb_addr(struct silofs_re_ctx *re_ctx)
 		return -SILOFS_EBADARIX;
 	}
 	sb_uaddr_of(sb_laddr, &sb_uaddr);
-	silofs_mbri_update_sb_addr(&re_ctx->env->mbri, &sb_uaddr);
+	silofs_mbrs_update_sb_addr(&re_ctx->env->mbrs, &sb_uaddr);
 	return 0;
 }
 
@@ -366,7 +366,7 @@ static int rec_restore_prep(struct silofs_re_ctx *re_ctx,
 	if (err) {
 		return err;
 	}
-	err = silofs_mbri_update_mbr(&env->mbri, SILOFS_MBR_FS);
+	err = silofs_mbrs_update(&env->mbrs, SILOFS_MBR_FS);
 	if (err) {
 		return err;
 	}

@@ -200,9 +200,9 @@ out:
 static const struct silofs_ivkey *
 arc_arix_ivkey(const struct silofs_ar_ctx *ar_ctx)
 {
-	const struct silofs_mbrinfo *mbri = &ar_ctx->env->mbri;
+	const struct silofs_mbrs *mbrs = &ar_ctx->env->mbrs;
 
-	return &mbri->ar_mbr.main_ivkey;
+	return &mbrs->ar_mbr.main_ivkey;
 }
 
 static int arc_store_arix_block(struct silofs_ar_ctx *ar_ctx)
@@ -293,10 +293,10 @@ static int arc_archive_mbr(const struct silofs_ar_ctx *ar_ctx,
                            struct silofs_paddr *out_mref)
 {
 	struct silofs_mbr1k mbr1k = { .mbr_magic = 0xff };
-	const struct silofs_mbrinfo *mbri = &ar_ctx->env->mbri;
+	const struct silofs_mbrs *mbrs = &ar_ctx->env->mbrs;
 	int err;
 
-	err = silofs_mbri_encode_mbr(mbri, SILOFS_MBR_AR, out_mref, &mbr1k);
+	err = silofs_mbrs_encode(mbrs, SILOFS_MBR_AR, out_mref, &mbr1k);
 	if (err) {
 		return err;
 	}
@@ -311,13 +311,13 @@ static int arc_archive_post(struct silofs_ar_ctx *ar_ctx,
                             const struct silofs_paddr *arix_addr,
                             struct silofs_paddr *out_mref)
 {
-	silofs_mbri_set_root(&ar_ctx->env->mbri, SILOFS_MBR_AR, arix_addr);
+	silofs_mbrs_set_root(&ar_ctx->env->mbrs, SILOFS_MBR_AR, arix_addr);
 	return arc_archive_mbr(ar_ctx, out_mref);
 }
 
 static int arc_archive_prep(struct silofs_ar_ctx *ar_ctx)
 {
-	return silofs_mbri_update_mbr(&ar_ctx->env->mbri, SILOFS_MBR_AR);
+	return silofs_mbrs_update(&ar_ctx->env->mbrs, SILOFS_MBR_AR);
 }
 
 static int

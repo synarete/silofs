@@ -42,7 +42,7 @@ env_bind_sbi(struct silofs_env *env, struct silofs_sb_info *sbi_new)
 static void
 env_update_sb_addr(struct silofs_env *env, const struct silofs_uaddr *sb_addr)
 {
-	silofs_mbri_update_sb_addr(&env->mbri, sb_addr);
+	silofs_mbrs_update_sb_addr(&env->mbrs, sb_addr);
 }
 
 static void env_update_sb(struct silofs_env *env, struct silofs_sb_info *sbi)
@@ -145,25 +145,25 @@ static void env_fini_commons(struct silofs_env *env)
 	env->ms_flags = 0;
 }
 
-static int env_init_mbri(struct silofs_env *env)
+static int env_init_mbrs(struct silofs_env *env)
 {
 	int err;
 
-	err = silofs_mbri_init(&env->mbri);
+	err = silofs_mbrs_init(&env->mbrs);
 	if (err) {
 		return err;
 	}
-	err = silofs_mbri_derive_ivkey(&env->mbri, env->base.passwd);
+	err = silofs_mbrs_derive_ivkey(&env->mbrs, env->base.passwd);
 	if (err) {
-		silofs_mbri_fini(&env->mbri);
+		silofs_mbrs_fini(&env->mbrs);
 		return err;
 	}
 	return 0;
 }
 
-static void env_fini_mbri(struct silofs_env *env)
+static void env_fini_mbrs(struct silofs_env *env)
 {
-	silofs_mbri_fini(&env->mbri);
+	silofs_mbrs_fini(&env->mbrs);
 }
 
 static int env_init_locks(struct silofs_env *env)
@@ -234,7 +234,7 @@ int silofs_env_init(struct silofs_env *env, const struct silofs_env_base *base)
 	env_init_commons(env, base);
 	env_init_opstat(env);
 
-	err = env_init_mbri(env);
+	err = env_init_mbrs(env);
 	if (err) {
 		return err;
 	}
@@ -266,7 +266,7 @@ void silofs_env_fini(struct silofs_env *env)
 	env_fini_uconv(env);
 	env_fini_crypto(env);
 	env_fini_locks(env);
-	env_fini_mbri(env);
+	env_fini_mbrs(env);
 	env_fini_commons(env);
 }
 
@@ -367,7 +367,7 @@ static void make_super_uaddr(const struct silofs_lsid *lsid,
 
 static const struct silofs_uaddr *env_sb_addr(const struct silofs_env *env)
 {
-	return &env->mbri.fs_mbr.sb_addr;
+	return &env->mbrs.fs_mbr.sb_addr;
 }
 
 static void env_make_super_uaddr(const struct silofs_env *env,
@@ -585,8 +585,8 @@ env_recalc_fs_mref(struct silofs_env *env, struct silofs_paddr *out_paddr)
 {
 	struct silofs_mbr1k mbr1k = { .mbr_magic = UINT64_MAX };
 
-	return silofs_mbri_encode_mbr(&env->mbri, SILOFS_MBR_FS, out_paddr,
-	                              &mbr1k);
+	return silofs_mbrs_encode(&env->mbrs, SILOFS_MBR_FS, out_paddr,
+	                          &mbr1k);
 }
 
 static int
@@ -645,7 +645,7 @@ static int check_arix_size(ssize_t sz)
 static int
 env_arix_addr(const struct silofs_env *env, struct silofs_paddr *out_paddr)
 {
-	return silofs_mbri_root(&env->mbri, SILOFS_MBR_AR, out_paddr);
+	return silofs_mbrs_root(&env->mbrs, SILOFS_MBR_AR, out_paddr);
 }
 
 int silofs_env_sense_ar(struct silofs_env *env)

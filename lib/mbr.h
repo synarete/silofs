@@ -50,7 +50,7 @@ struct silofs_mbr {
 };
 
 /* main boot records controller */
-struct silofs_mbrinfo {
+struct silofs_mbrs {
 	struct silofs_mbr     fs_mbr;
 	struct silofs_mbr     ar_mbr;
 	struct silofs_cipher  cipher;
@@ -60,38 +60,34 @@ struct silofs_mbrinfo {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_mbri_init(struct silofs_mbrinfo *mbri);
+int silofs_mbrs_init(struct silofs_mbrs *mbrs);
 
-void silofs_mbri_fini(struct silofs_mbrinfo *mbri);
+void silofs_mbrs_fini(struct silofs_mbrs *mbrs);
 
-int silofs_mbri_derive_ivkey(struct silofs_mbrinfo        *mbri,
+int silofs_mbrs_derive_ivkey(struct silofs_mbrs           *mbrs,
                              const struct silofs_password *pw);
 
-void silofs_mbri_update_sb_addr(struct silofs_mbrinfo     *mbri,
+void silofs_mbrs_update_sb_addr(struct silofs_mbrs        *mbrs,
                                 const struct silofs_uaddr *sb_uaddr);
 
-int silofs_mbri_root(const struct silofs_mbrinfo *mbri,
-                     enum silofs_mbr_kind         mkind,
-                     struct silofs_paddr         *out_paddr);
+int silofs_mbrs_root(const struct silofs_mbrs *mbrs,
+                     enum silofs_mbr_kind      mkind,
+                     struct silofs_paddr      *out_paddr);
 
-void silofs_mbri_set_root(struct silofs_mbrinfo     *mbri,
-                          enum silofs_mbr_kind       mkind,
+void silofs_mbrs_set_root(struct silofs_mbrs *mbrs, enum silofs_mbr_kind mkind,
                           const struct silofs_paddr *paddr);
 
-int silofs_mbri_regen_mbr(struct silofs_mbrinfo *mbri,
-                          enum silofs_mbr_kind   mkind);
+int silofs_mbrs_regen(struct silofs_mbrs *mbrs, enum silofs_mbr_kind mkind);
 
-int silofs_mbri_encode_mbr(const struct silofs_mbrinfo *mbri,
-                           enum silofs_mbr_kind         mkind,
-                           struct silofs_paddr         *out_mref,
-                           struct silofs_mbr1k         *out_mbr1k);
+int silofs_mbrs_encode(const struct silofs_mbrs *mbrs,
+                       enum silofs_mbr_kind      mkind,
+                       struct silofs_paddr      *out_mref,
+                       struct silofs_mbr1k      *out_mbr1k);
 
-int silofs_mbri_decode_mbr(struct silofs_mbrinfo     *mbri,
-                           enum silofs_mbr_kind       mkind,
-                           const struct silofs_paddr *mref,
-                           const struct silofs_mbr1k *mbr1k);
+int silofs_mbrs_decode(struct silofs_mbrs *mbrs, enum silofs_mbr_kind mkind,
+                       const struct silofs_paddr *mref,
+                       const struct silofs_mbr1k *mbr1k);
 
-int silofs_mbri_update_mbr(struct silofs_mbrinfo *mbri,
-                           enum silofs_mbr_kind   dst_mkind);
+int silofs_mbrs_update(struct silofs_mbrs *mbrs, enum silofs_mbr_kind mkind);
 
 #endif /* SILOFS_MBR_H_ */

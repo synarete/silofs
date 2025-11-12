@@ -20,7 +20,7 @@ enum {
 	UT_QALLOC_MAGIC = 0xBEDEAD,
 };
 
-struct ut_mbrord {
+struct ut_mrecord {
 	long magic;
 	struct silofs_qalloc *qal;
 	struct silofs_list_head link;
@@ -30,7 +30,7 @@ struct ut_mbrord {
 	char dat[8];
 };
 
-static void mbrord_setup(struct ut_mbrord *mr, void *mem, size_t len)
+static void mrecord_setup(struct ut_mrecord *mr, void *mem, size_t len)
 {
 	SILOFS_STATICASSERT_EQ(sizeof(*mr), 64);
 
@@ -39,37 +39,37 @@ static void mbrord_setup(struct ut_mbrord *mr, void *mem, size_t len)
 	mr->magic = UT_QALLOC_MAGIC;
 	mr->mem = mem;
 	mr->len = len;
-	mr->dat_len = len - offsetof(struct ut_mbrord, dat);
+	mr->dat_len = len - offsetof(struct ut_mrecord, dat);
 }
 
-static struct ut_mbrord *mbrord_of(void *mem, size_t len)
+static struct ut_mrecord *mrecord_of(void *mem, size_t len)
 {
-	struct ut_mbrord *mr = mem;
+	struct ut_mrecord *mr = mem;
 
-	mbrord_setup(mr, mem, len);
+	mrecord_setup(mr, mem, len);
 	return mr;
 }
 
-static void mbrord_check(const struct ut_mbrord *mr)
+static void mrecord_check(const struct ut_mrecord *mr)
 {
 	ut_expect_eq(mr->magic, UT_QALLOC_MAGIC);
 	ut_expect_ge(mr->len, sizeof(*mr));
 	ut_expect_not_null(mr->mem);
 }
 
-static struct ut_mbrord *link_to_mbrord(const struct silofs_list_head *link)
+static struct ut_mrecord *link_to_mrecord(const struct silofs_list_head *link)
 {
-	const struct ut_mbrord *mr =
-		ut_container_of2(link, struct ut_mbrord, link);
+	const struct ut_mrecord *mr =
+		ut_container_of2(link, struct ut_mrecord, link);
 
-	mbrord_check(mr);
+	mrecord_check(mr);
 	return silofs_unconst(mr);
 }
 
-static struct ut_mbrord *mbrord_new(struct silofs_qalloc *qal, size_t msz)
+static struct ut_mrecord *mrecord_new(struct silofs_qalloc *qal, size_t msz)
 {
 	struct silofs_iovec iovec = { .iov_fd = -1 };
-	struct ut_mbrord *mr = nullptr;
+	struct ut_mrecord *mr = nullptr;
 	void *mem = nullptr;
 	int err = 0;
 
@@ -83,30 +83,30 @@ static struct ut_mbrord *mbrord_new(struct silofs_qalloc *qal, size_t msz)
 	ut_expect_ok(err);
 	ut_expect_eq(mem, iovec.iov.iov_base);
 
-	mr = mbrord_of(mem, msz);
+	mr = mrecord_of(mem, msz);
 	mr->qal = qal;
 
 	return mr;
 }
 
-static void mbrord_del(struct ut_mbrord *mr)
+static void mrecord_del(struct ut_mrecord *mr)
 {
 	int err;
 	struct silofs_qalloc *qal = mr->qal;
 
-	mbrord_check(mr);
+	mrecord_check(mr);
 	err = silofs_qalloc_mcheck(qal, mr->mem, mr->len);
 	ut_expect_ok(err);
 	silofs_qalloc_free(qal, mr->mem, mr->len, 0);
 }
 
-static void link_mbrord_del(struct silofs_list_head *link)
+static void link_mrecord_del(struct silofs_list_head *link)
 {
-	struct ut_mbrord *mr;
+	struct ut_mrecord *mr;
 
-	mr = link_to_mbrord(link);
+	mr = link_to_mrecord(link);
 	silofs_list_head_remove(link);
-	mbrord_del(mr);
+	mrecord_del(mr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -194,17 +194,17 @@ static void ut_qalloc_simple3(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_del_mbrords(struct ut_env *ute, struct silofs_list_head *lst)
+static void ut_del_mrecords(struct ut_env *ute, struct silofs_list_head *lst)
 {
-	struct ut_mbrord *mr = nullptr;
+	struct ut_mrecord *mr = nullptr;
 	struct silofs_list_head *lnk = nullptr;
 	int cnt = 0;
 
 	lnk = lst->next;
 	while (lnk != lst) {
 		silofs_list_head_remove(lnk);
-		mr = link_to_mbrord(lnk);
-		mbrord_del(mr);
+		mr = link_to_mrecord(lnk);
+		mrecord_del(mr);
 		lnk = (cnt++ & 1) ? lst->next : lst->prev;
 	}
 	ut_unused(ute);
@@ -214,7 +214,7 @@ static void ut_qalloc_nbks_simple(struct ut_env *ute)
 {
 	struct silofs_list_head lst;
 	struct silofs_qalloc *qal;
-	struct ut_mbrord *mr = nullptr;
+	struct ut_mrecord *mr = nullptr;
 	const size_t sizes[] = {
 		UT_64K - 1,     //
 		UT_64K,         //
@@ -226,12 +226,12 @@ static void ut_qalloc_nbks_simple(struct ut_env *ute)
 	silofs_list_init(&lst);
 	qal = ut_new_qalloc(ute, 32 * UT_1M);
 	for (size_t i = 0; i < UT_ARRAY_SIZE(sizes); ++i) {
-		mr = mbrord_new(qal, sizes[i]);
+		mr = mrecord_new(qal, sizes[i]);
 		memset(mr->dat, (int)i, mr->dat_len);
 		silofs_list_push_back(&lst, &mr->link);
 	}
 
-	ut_del_mbrords(ute, &lst);
+	ut_del_mrecords(ute, &lst);
 	ut_del_qalloc(qal);
 }
 
@@ -247,7 +247,7 @@ static void ut_qalloc_free_nbks(struct ut_env *ute)
 	struct silofs_alloc_stat alst;
 	struct silofs_list_head lst;
 	struct silofs_qalloc *qal = nullptr;
-	struct ut_mbrord *mr = nullptr;
+	struct ut_mrecord *mr = nullptr;
 	const size_t bk_size = UT_BK_SIZE;
 	size_t total = 0;
 	size_t msz = 0;
@@ -261,14 +261,14 @@ static void ut_qalloc_free_nbks(struct ut_env *ute)
 		msz = sizeof(*mr) + (bk_size / 2) + (total % 10000);
 		msz = silofs_clamp_u64(msz, (bk_size / 2) + 1, rem);
 
-		mr = mbrord_new(qal, msz);
+		mr = mrecord_new(qal, msz);
 		silofs_list_push_back(&lst, &mr->link);
 
 		total += align_up(msz, bk_size);
 		silofs_qalloc_stat(qal, &alst);
 	}
 
-	ut_del_mbrords(ute, &lst);
+	ut_del_mrecords(ute, &lst);
 	ut_del_qalloc(qal);
 }
 
@@ -278,7 +278,7 @@ static void ut_qalloc_small_elems(struct ut_env *ute)
 {
 	struct silofs_list_head lst;
 	struct silofs_qalloc *qal = nullptr;
-	struct ut_mbrord *mr = nullptr;
+	struct ut_mrecord *mr = nullptr;
 	const size_t small_sz = UT_64K;
 	size_t val = 0;
 	size_t msz = 0;
@@ -288,15 +288,15 @@ static void ut_qalloc_small_elems(struct ut_env *ute)
 	for (size_t i = 0; i < 10000; ++i) {
 		val = (small_sz + i) % (small_sz / 2);
 		msz = silofs_clamp_u64(val, sizeof(*mr), (small_sz / 2));
-		mr = mbrord_new(qal, msz);
+		mr = mrecord_new(qal, msz);
 		memset(mr->dat, (int)i, mr->dat_len);
 		silofs_list_push_back(&lst, &mr->link);
 
 		if ((i % 7) == 1) {
-			link_mbrord_del(lst.next);
+			link_mrecord_del(lst.next);
 		}
 	}
-	ut_del_mbrords(ute, &lst);
+	ut_del_mrecords(ute, &lst);
 	ut_del_qalloc(qal);
 }
 
@@ -310,27 +310,27 @@ static void ut_qalloc_mixed(struct ut_env *ute)
 	size_t val_max = 100000;
 	struct silofs_qalloc *qal = nullptr;
 	const size_t bk_size = UT_BK_SIZE;
-	struct ut_mbrord *mr = nullptr;
+	struct ut_mrecord *mr = nullptr;
 	struct silofs_list_head lst;
 
 	silofs_list_init(&lst);
 	qal = ut_new_qalloc(ute, 256 * UT_1M);
 	for (val = 0; val < val_max; val += 100) {
 		msz = silofs_clamp_u64(val, sizeof(*mr), 11 * bk_size);
-		mr = mbrord_new(qal, msz);
+		mr = mrecord_new(qal, msz);
 		silofs_list_push_back(&lst, &mr->link);
 
 		if ((val % 11) == 1) {
-			link_mbrord_del(lst.next);
+			link_mrecord_del(lst.next);
 		}
 
 		val2 = (val_max - val) / 2;
 		msz = silofs_clamp_u64(val2, sizeof(*mr), 11 * bk_size);
-		mr = mbrord_new(qal, msz);
+		mr = mrecord_new(qal, msz);
 		silofs_list_push_back(&lst, &mr->link);
 	}
 
-	ut_del_mbrords(ute, &lst);
+	ut_del_mrecords(ute, &lst);
 	ut_del_qalloc(qal);
 }
 

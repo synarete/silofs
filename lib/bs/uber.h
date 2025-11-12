@@ -19,6 +19,13 @@
 
 #include "nodes.h"
 
+const struct silofs_paddr *
+silofs_ubi_paddr(const struct silofs_uber_info *ubi);
+
+void silofs_ubi_incref(struct silofs_uber_info *ubi);
+
+void silofs_ubi_decref(struct silofs_uber_info *ubi);
+
 void silofs_ubi_dirtify(struct silofs_uber_info *ubi);
 
 void silofs_ubi_undirtify(struct silofs_uber_info *ubi);

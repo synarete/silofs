@@ -26,6 +26,40 @@
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void
+env_bind_ubi(struct silofs_env *env, struct silofs_uber_info *ubi_new)
+{
+	struct silofs_uber_info *ubi_cur = env->ubi;
+
+	if (ubi_cur != nullptr) {
+		silofs_ubi_decref(ubi_cur);
+	}
+	if (ubi_new != nullptr) {
+		silofs_ubi_incref(ubi_new);
+	}
+	env->ubi = ubi_new;
+}
+
+static void env_update_root_uber(struct silofs_env *env,
+                                 const struct silofs_uber_info *ubi)
+{
+	const struct silofs_paddr *paddr = nullptr;
+
+	if (ubi != nullptr) {
+		paddr = silofs_ubi_paddr(ubi);
+		silofs_gbrs_set_root(&env->gbrs, SILOFS_GBR_FS, paddr);
+	}
+}
+
+static void
+env_update_uber(struct silofs_env *env, struct silofs_uber_info *ubi)
+{
+	env_bind_ubi(env, ubi);
+	env_update_root_uber(env, ubi);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static void
 env_bind_sbi(struct silofs_env *env, struct silofs_sb_info *sbi_new)
 {
 	struct silofs_sb_info *sbi_cur = env->sbi;
@@ -40,17 +74,20 @@ env_bind_sbi(struct silofs_env *env, struct silofs_sb_info *sbi_new)
 }
 
 static void
-env_update_sb_addr(struct silofs_env *env, const struct silofs_uaddr *sb_addr)
+env_update_root_sb(struct silofs_env *env, const struct silofs_sb_info *sbi)
 {
-	silofs_gbrs_update_sb_addr(&env->gbrs, sb_addr);
+	const struct silofs_uaddr *uaddr = nullptr;
+
+	if (sbi != nullptr) {
+		uaddr = silofs_sbi_uaddr(sbi);
+		silofs_gbrs_update_sb_addr(&env->gbrs, uaddr);
+	}
 }
 
 static void env_update_sb(struct silofs_env *env, struct silofs_sb_info *sbi)
 {
 	env_bind_sbi(env, sbi);
-	if (sbi != nullptr) {
-		env_update_sb_addr(env, silofs_sbi_uaddr(sbi));
-	}
+	env_update_root_sb(env, sbi);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -263,6 +300,7 @@ out_err:
 void silofs_env_fini(struct silofs_env *env)
 {
 	env_update_sb(env, nullptr);
+	env_update_uber(env, nullptr);
 	env_fini_uconv(env);
 	env_fini_crypto(env);
 	env_fini_locks(env);
@@ -331,18 +369,13 @@ int silofs_env_format_uber(struct silofs_env *env)
 	struct silofs_uber_info *ubi = nullptr;
 	int err;
 
-	/* XXX FIXME */
-	if (ubi == nullptr) {
-		return 0;
-	}
-
 	silofs_assert_null(env->ubi);
 	make_uber_addr(&paddr);
 	err = silofs_spawn_uber(env, &paddr, &ubi);
 	if (err) {
 		return err;
 	}
-	/* XXX: bind ubi */
+	env_update_uber(env, ubi);
 	return 0;
 }
 
@@ -500,32 +533,11 @@ void silofs_env_drop_caches(struct silofs_env *env)
 	silofs_repo_drop_some(env->base.repo);
 }
 
-static int env_shut_sb(struct silofs_env *env)
-{
-	log_dbg("shut-sb: op_count=%lu", env->opstat.op_count);
-	env_update_sb(env, nullptr);
-	return 0;
-}
-
-static int env_shut_bstore(struct silofs_env *env)
-{
-	// XXX
-	silofs_unused(env);
-	return 0;
-}
-
 int silofs_env_shut(struct silofs_env *env)
 {
-	int err;
-
-	err = env_shut_sb(env);
-	if (err) {
-		return err;
-	}
-	err = env_shut_bstore(env);
-	if (err) {
-		return err;
-	}
+	log_dbg("shut env: op_count=%lu", env->opstat.op_count);
+	env_update_sb(env, nullptr);
+	env_update_uber(env, nullptr);
 	return 0;
 }
 

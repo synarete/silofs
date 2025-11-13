@@ -93,6 +93,11 @@ void silofs_view_del(struct silofs_view *view, struct silofs_alloc *alloc,
 	}
 }
 
+int silofs_view_verify(const struct silofs_view *view, enum silofs_mtype mtype)
+{
+	return silofs_hdr_verify2(&view->u.hdr[0], mtype);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_encrypt_view(const struct silofs_cipher *cipher,

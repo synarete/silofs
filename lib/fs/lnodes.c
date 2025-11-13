@@ -1297,12 +1297,6 @@ struct silofs_fileaf_info *silofs_fli_from_vni(struct silofs_vnode_info *vni)
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static int
-view_verify_by_hdr(const struct silofs_view *view, enum silofs_mtype mtype)
-{
-	return silofs_hdr_verify2(&view->u.hdr[0], mtype);
-}
-
-static int
 view_verify_sub(const struct silofs_view *view, enum silofs_mtype mtype)
 {
 	switch (mtype) {
@@ -1354,7 +1348,7 @@ verify_view_by(const struct silofs_view *view, const enum silofs_mtype mtype)
 	if (silofs_mtype_isdata(mtype)) {
 		return 0;
 	}
-	err = view_verify_by_hdr(view, mtype);
+	err = silofs_view_verify(view, mtype);
 	if (err) {
 		return err;
 	}

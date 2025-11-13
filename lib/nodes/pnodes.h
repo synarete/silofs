@@ -95,4 +95,10 @@ int silofs_encrypt_pnode(const struct silofs_pnode_info *pni,
                          const struct silofs_cipher     *cipher,
                          struct silofs_view             *enc_view);
 
+int silofs_decrypt_pnode(struct silofs_pnode_info   *pni,
+                         const struct silofs_cipher *cipher,
+                         const struct silofs_view   *enc_view);
+
+int silofs_verify_pnode(const struct silofs_pnode_info *pni);
+
 #endif /* SILOFS_PNODES_H_ */

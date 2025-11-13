@@ -70,7 +70,10 @@ int silofs_locos_require_blob(struct silofs_locos        *locos,
                               const struct silofs_blobid *blobid);
 
 int silofs_locos_require_bpos(struct silofs_locos        *locos,
-                              const struct silofs_blobid *blobid, loff_t pos);
+                              const struct silofs_blobid *blobid, off_t pos);
+
+int silofs_locos_access_bpos(struct silofs_locos        *locos,
+                             const struct silofs_blobid *blobid, off_t pos);
 
 int silofs_locos_remove_blob(struct silofs_locos        *locos,
                              const struct silofs_blobid *blobid);

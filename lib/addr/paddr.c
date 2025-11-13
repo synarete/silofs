@@ -20,6 +20,7 @@
 #include "str.h"
 #include "crypt.h"
 #include "htox.h"
+#include "offlba.h"
 #include "mtype.h"
 #include "blobid.h"
 #include "paddr.h"
@@ -88,6 +89,13 @@ long silofs_paddr_compare(const struct silofs_paddr *paddr1,
 		return cmp;
 	}
 	return 0;
+}
+
+off_t silofs_paddr_next(const struct silofs_paddr *paddr)
+{
+	const size_t len = silofs_mtype_size(paddr->mtype);
+
+	return silofs_off_end(paddr->pos, len);
 }
 
 void silofs_paddr64b_htox(struct silofs_paddr64b *paddr64,

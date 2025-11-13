@@ -183,7 +183,7 @@ static void test_rw_sparse_stat_(struct ft_env *fte, off_t from_off,
 		ft_fstat(fd, &st);
 		ft_expect_eq(st.st_size, size);
 		ft_expect_lt(st.st_blocks * 512, size);
-		ft_ftruncate(fd, (loff_t)size + 1);
+		ft_ftruncate(fd, (off_t)size + 1);
 		ft_preadn(fd, buf2, data_size, off);
 		ft_expect_eqm(buf1, buf2, data_size);
 		ft_preadn(fd, &buf2[0], 1, (off_t)size);

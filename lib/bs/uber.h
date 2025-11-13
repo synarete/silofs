@@ -41,6 +41,10 @@ int silofs_ubi_update_bcursor(struct silofs_uber_info     *ubi,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 struct silofs_uber_info *
+silofs_lookup_cached_uber(struct silofs_pcache      *pcache,
+                          const struct silofs_paddr *paddr);
+
+struct silofs_uber_info *
 silofs_create_cached_uber(struct silofs_pcache      *pcache,
                           const struct silofs_paddr *paddr, bool spawn);
 

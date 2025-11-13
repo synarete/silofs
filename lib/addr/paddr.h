@@ -58,6 +58,8 @@ bool silofs_paddr_isnull(const struct silofs_paddr *paddr);
 long silofs_paddr_compare(const struct silofs_paddr *paddr1,
                           const struct silofs_paddr *paddr2);
 
+off_t silofs_paddr_next(const struct silofs_paddr *paddr);
+
 void silofs_paddr64b_htox(struct silofs_paddr64b    *paddr64,
                           const struct silofs_paddr *paddr);
 

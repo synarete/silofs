@@ -57,6 +57,12 @@ env_update_uber(struct silofs_env *env, struct silofs_uber_info *ubi)
 	env_update_root_uber(env, ubi);
 }
 
+static inline int env_resolve_root_uber(const struct silofs_env *env,
+                                        struct silofs_paddr *out_paddr)
+{
+	return silofs_gbrs_root(&env->gbrs, SILOFS_GBR_FS, out_paddr);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void
@@ -392,31 +398,17 @@ static void make_super_lsid(struct silofs_lsid *out_lsid)
 	silofs_lsid_setup(out_lsid, &blobid, 0);
 }
 
-static void make_super_uaddr(const struct silofs_lsid *lsid,
-                             struct silofs_uaddr *out_uaddr)
+static void make_super_uaddr(struct silofs_uaddr *out_uaddr)
 {
-	silofs_uaddr_setup(out_uaddr, lsid, 0, 0);
+	struct silofs_lsid lsid = { .lsize = 0 };
+
+	make_super_lsid(&lsid);
+	silofs_uaddr_setup(out_uaddr, &lsid, 0, 0);
 }
 
 static const struct silofs_uaddr *env_sb_addr(const struct silofs_env *env)
 {
 	return &env->gbrs.fs_gbr.sb_addr;
-}
-
-static void env_make_super_uaddr(const struct silofs_env *env,
-                                 struct silofs_uaddr *out_uaddr)
-{
-	struct silofs_lsid lsid = { .lsize = 0 };
-
-	make_super_lsid(&lsid);
-	make_super_uaddr(&lsid, out_uaddr);
-	silofs_unused(env);
-}
-
-static void env_resolve_super_uaddr(const struct silofs_env *env,
-                                    struct silofs_uaddr *out_uaddr)
-{
-	silofs_uaddr_assign(out_uaddr, env_sb_addr(env));
 }
 
 static int
@@ -425,7 +417,7 @@ env_spawn_super_of(struct silofs_env *env, struct silofs_sb_info **out_sbi)
 	struct silofs_uaddr uaddr = { .voff = -1 };
 	int err;
 
-	env_make_super_uaddr(env, &uaddr);
+	make_super_uaddr(&uaddr);
 	err = silofs_spawn_super(env, &uaddr, out_sbi);
 	if (err) {
 		return err;
@@ -488,12 +480,11 @@ env_check_sb(const struct silofs_env *env, const struct silofs_sb_info *sbi)
 
 int silofs_env_reload_super(struct silofs_env *env)
 {
-	struct silofs_uaddr uaddr;
+	const struct silofs_uaddr *sb_addr = env_sb_addr(env);
 	struct silofs_sb_info *sbi = nullptr;
 	int err;
 
-	env_resolve_super_uaddr(env, &uaddr);
-	err = silofs_stage_super(env, &uaddr, &sbi);
+	err = silofs_stage_super(env, sb_addr, &sbi);
 	if (err) {
 		return err;
 	}

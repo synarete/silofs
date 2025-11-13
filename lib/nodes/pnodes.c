@@ -570,6 +570,26 @@ int silofs_encrypt_pnode(const struct silofs_pnode_info *pni,
                          const struct silofs_cipher *cipher,
                          struct silofs_view *enc_view)
 {
-	return silofs_encrypt_view(cipher, &pni->pn_ivkey, pni->pn_view,
-	                           pni_mtype(pni), enc_view);
+	return silofs_encrypt_view(cipher,         //
+	                           &pni->pn_ivkey, //
+	                           pni->pn_view,   //
+	                           pni_mtype(pni), //
+	                           enc_view);
+}
+
+int silofs_decrypt_pnode(struct silofs_pnode_info *pni,
+                         const struct silofs_cipher *cipher,
+                         const struct silofs_view *enc_view)
+{
+	return silofs_decrypt_view(cipher,         //
+	                           &pni->pn_ivkey, //
+	                           enc_view,       //
+	                           pni_mtype(pni), //
+	                           pni->pn_view);
+}
+
+int silofs_verify_pnode(const struct silofs_pnode_info *pni)
+{
+	// TODO: verify sub-components
+	return silofs_view_verify(pni->pn_view, pni_mtype(pni));
 }

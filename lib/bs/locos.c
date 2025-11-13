@@ -939,7 +939,7 @@ int silofs_locos_require_blob(struct silofs_locos *locos,
 }
 
 int silofs_locos_require_bpos(struct silofs_locos *locos,
-                              const struct silofs_blobid *blobid, loff_t pos)
+                              const struct silofs_blobid *blobid, off_t pos)
 {
 	struct stat st = { .st_size = -1 };
 	struct silofs_blobfile *bf = nullptr;
@@ -963,6 +963,27 @@ int silofs_locos_require_bpos(struct silofs_locos *locos,
 	err = bf_truncate(bf, pos);
 	if (err) {
 		return err;
+	}
+	return 0;
+}
+
+int silofs_locos_access_bpos(struct silofs_locos *locos,
+                             const struct silofs_blobid *blobid, off_t pos)
+{
+	struct stat st = { .st_size = -1 };
+	struct silofs_blobfile *bf = nullptr;
+	int err;
+
+	err = locos_stage_and_cache_bf(locos, blobid, &bf);
+	if (err) {
+		return err;
+	}
+	err = bf_stat(bf, &st);
+	if (err) {
+		return err;
+	}
+	if (pos > st.st_size) {
+		return -SILOFS_ERANGE;
 	}
 	return 0;
 }

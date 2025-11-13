@@ -193,6 +193,17 @@ int silofs_ubi_update_bcursor(struct silofs_uber_info *ubi,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 struct silofs_uber_info *
+silofs_lookup_cached_uber(struct silofs_pcache *pcache,
+                          const struct silofs_paddr *paddr)
+{
+	struct silofs_pnode_info *pni;
+
+	silofs_assert_eq(paddr->mtype, SILOFS_MTYPE_UBER);
+	pni = silofs_pcache_lookup_pnode(pcache, paddr);
+	return silofs_ubi_from_pni(pni);
+}
+
+struct silofs_uber_info *
 silofs_create_cached_uber(struct silofs_pcache *pcache,
                           const struct silofs_paddr *paddr, bool spawn)
 {

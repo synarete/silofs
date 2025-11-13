@@ -172,7 +172,7 @@ static int flush_dirty(struct silofs_task_ctx *task)
 		log_err("failed to flush dirty: err=%d", err);
 		return err;
 	}
-	err = silofs_destage_dirty(task);
+	err = silofs_destage_dirty(task->t_env);
 	if (err) {
 		log_err("failed to destage dirty: err=%d", err);
 		return err;

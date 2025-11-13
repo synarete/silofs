@@ -19,7 +19,7 @@
 
 #include "infra.h"
 #include "addr.h"
-#include "nodes.h"
+#include "pnodes.h"
 
 struct silofs_pcache {
 	struct silofs_hmapq  pc_hmapq[3];
@@ -30,7 +30,7 @@ struct silofs_pcache {
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_pcache_init(struct silofs_pcache *pcache,
-                       struct silofs_alloc  *alloc);
+		       struct silofs_alloc  *alloc);
 
 void silofs_pcache_fini(struct silofs_pcache *pcache);
 
@@ -45,13 +45,13 @@ silofs_pcache_dq_front(const struct silofs_pcache *pcache);
 
 struct silofs_pnode_info *
 silofs_pcache_lookup_pnode(struct silofs_pcache      *pcache,
-                           const struct silofs_paddr *paddr);
+			   const struct silofs_paddr *paddr);
 
 struct silofs_pnode_info *
 silofs_pcache_create_pnode(struct silofs_pcache      *pcache,
-                           const struct silofs_paddr *paddr);
+			   const struct silofs_paddr *paddr);
 
 void silofs_pcache_delete_pnode(struct silofs_pcache     *pcache,
-                                struct silofs_pnode_info *pni);
+				struct silofs_pnode_info *pni);
 
 #endif /* SILOFS_PCACHE_H_ */

@@ -40,7 +40,7 @@ env_bind_ubi(struct silofs_env *env, struct silofs_uber_info *ubi_new)
 }
 
 static void env_update_root_uber(struct silofs_env *env,
-                                 const struct silofs_uber_info *ubi)
+				 const struct silofs_uber_info *ubi)
 {
 	const struct silofs_paddr *paddr = nullptr;
 
@@ -57,8 +57,8 @@ env_update_uber(struct silofs_env *env, struct silofs_uber_info *ubi)
 	env_update_root_uber(env, ubi);
 }
 
-static inline int env_resolve_root_uber(const struct silofs_env *env,
-                                        struct silofs_paddr *out_paddr)
+static int env_resolve_root_uber(const struct silofs_env *env,
+				 struct silofs_paddr *out_paddr)
 {
 	return silofs_gbrs_root(&env->gbrs, SILOFS_GBR_FS, out_paddr);
 }
@@ -345,16 +345,8 @@ bool silofs_env_hasflag(const struct silofs_env *env, enum silofs_flags f)
 
 bool silofs_env_isrdonlyfs(const struct silofs_env *env)
 {
-	bool ret = false;
-
-	if (silofs_env_hasflag(env, SILOFS_F_RDONLY)) {
-		ret = true;
-	} else if (env->ms_flags & MS_RDONLY) {
-		ret = true;
-	} else if (silofs_sbi_test_flags(env->sbi, SILOFS_SUPERF_FOSSIL)) {
-		ret = true;
-	}
-	return ret;
+	return (silofs_env_hasflag(env, SILOFS_F_RDONLY)) ||
+		(env->ms_flags & MS_RDONLY) || silofs_sbi_is_fossil(env->sbi);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -385,18 +377,17 @@ int silofs_env_format_uber(struct silofs_env *env)
 	return 0;
 }
 
-static const struct silofs_paddr *env_gbr_ub_addr(const struct silofs_env *env)
-{
-	return &env->gbrs.fs_gbr.root;
-}
-
 int silofs_env_reload_uber(struct silofs_env *env)
 {
-	const struct silofs_paddr *ub_addr = env_gbr_ub_addr(env);
+	struct silofs_paddr ub_addr = { .pos = -1 };
 	struct silofs_uber_info *ubi = nullptr;
 	int err;
 
-	err = silofs_stage_uber(env, ub_addr, &ubi);
+	err = env_resolve_root_uber(env, &ub_addr);
+	if (err) {
+		return err;
+	}
+	err = silofs_stage_uber(env, &ub_addr, &ubi);
 	if (err) {
 		return err;
 	}
@@ -413,7 +404,7 @@ static void make_super_lsid(struct silofs_lsid *out_lsid)
 
 	silofs_svolid_generate(&svolid);
 	silofs_blobid_setup_raw2(&blobid, &svolid, SILOFS_MTYPE_SUPER,
-	                         SILOFS_MTYPE_SUPER, SILOFS_HEIGHT_SUPER);
+				 SILOFS_MTYPE_SUPER, SILOFS_HEIGHT_SUPER);
 	silofs_lsid_setup(out_lsid, &blobid, 0);
 }
 
@@ -441,7 +432,7 @@ env_spawn_super_of(struct silofs_env *env, struct silofs_sb_info **out_sbi)
 }
 
 static int env_spawn_super(struct silofs_env *env, size_t capacity,
-                           struct silofs_sb_info **out_sbi)
+			   struct silofs_sb_info **out_sbi)
 {
 	struct silofs_sb_info *sbi = nullptr;
 	int err;
@@ -480,7 +471,7 @@ env_check_sb(const struct silofs_env *env, const struct silofs_sb_info *sbi)
 	err = silofs_sb_check_version(sb);
 	if (err) {
 		log_err("bad sb: magic=%lx version:=%ld err=%d", sb->sb_magic,
-		        sb->sb_version, err);
+			sb->sb_version, err);
 		return err;
 	}
 	fossil = silofs_sb_test_flags(sb, SILOFS_SUPERF_FOSSIL);
@@ -568,7 +559,7 @@ void silofs_env_uptime(const struct silofs_env *env, time_t *out_uptime)
 }
 
 void silofs_env_allocstat(const struct silofs_env *env,
-                          struct silofs_alloc_stat *out_alst)
+			  struct silofs_alloc_stat *out_alst)
 {
 	silofs_memstat(env->base.alloc, out_alst);
 }
@@ -579,8 +570,8 @@ static void env_drop_uamap(struct silofs_env *env)
 }
 
 static int env_fork_rebind_super(struct silofs_env *env,
-                                 const struct silofs_sb_info *sbi_cur,
-                                 struct silofs_sb_info **out_sbi)
+				 const struct silofs_sb_info *sbi_cur,
+				 struct silofs_sb_info **out_sbi)
 {
 	struct silofs_sb_info *sbi = nullptr;
 	int err;
@@ -608,7 +599,7 @@ env_recalc_fs_mref(struct silofs_env *env, struct silofs_paddr *out_paddr)
 	struct silofs_gbr1k gbr1k = { .gbr_magic = UINT64_MAX };
 
 	return silofs_gbrs_encode(&env->gbrs, SILOFS_GBR_FS, out_paddr,
-	                          &gbr1k);
+				  &gbr1k);
 }
 
 static int

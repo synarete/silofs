@@ -34,13 +34,18 @@ const struct silofs_paddr *silofs_paddr_none(void)
 	return &s_silofs_paddr_none;
 }
 
+static void paddr_init_by_self(struct silofs_paddr *paddr)
+{
+	paddr->mtype = silofs_blobid_get_mtype(&paddr->blobid);
+	paddr->btype = silofs_blobid_get_btype(&paddr->blobid);
+}
+
 void silofs_paddr_init(struct silofs_paddr *paddr,
                        const struct silofs_blobid *blobid, off_t pos)
 {
 	silofs_blobid_copyto(blobid, &paddr->blobid);
 	paddr->pos = pos;
-	paddr->mtype = silofs_blobid_get_mtype(blobid);
-	paddr->btype = silofs_blobid_get_btype(blobid);
+	paddr_init_by_self(paddr);
 }
 
 void silofs_paddr_fini(struct silofs_paddr *paddr)
@@ -111,6 +116,7 @@ void silofs_paddr64b_xtoh(const struct silofs_paddr64b *paddr64,
 {
 	silofs_blobid_copyto(&paddr64->blobid, &paddr->blobid);
 	paddr->pos = silofs_off_to_cpu(paddr64->pos);
+	paddr_init_by_self(paddr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

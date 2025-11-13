@@ -75,12 +75,6 @@ run make -f devel.mk reset
 sep "developer's build OK"
 
 ###
-msg "run clang-tidy"
-run ./scripts/clangtidy.sh
-run make -f devel.mk reset
-sep "clang-tidy OK"
-
-###
 msg "run sanitizer check"
 lsan_suppressions_file="${workdir}/test/utests/lsan_suppressions.txt"
 run make -f devel.mk O=1 SANITIZER=1

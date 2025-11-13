@@ -8,7 +8,7 @@ rootdir=${1:-"${basedir}"}
 source "${rootdir}/bash_functions"
 
 # require clang-tools
-commandv clang-tidy
+commandv clang-tidy bear
 
 # run from project's root dir, no-fail from here
 set -o errexit
@@ -21,4 +21,5 @@ conf="${rootdir}/.clang-tidy.yaml"
 cfiles=$(find "${rootdir}/"{lib,cmd,mntd,test} -type f -name "*.c")
 hfiles=$(find "${rootdir}/"{include,lib,cmd,mntd,test} -type f \
 	-not -name "fuse_kernel.h" -not -name "config*.h" -name "*.h")
-run clang-tidy --config-file="${conf}" ${cfiles} ${hfiles}
+run clang-tidy \
+	--config-file="${conf}" ${cfiles} ${hfiles}

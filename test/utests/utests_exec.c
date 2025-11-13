@@ -174,7 +174,7 @@ static void ute_del(struct ut_env *ute)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void ut_track_test(struct ut_env *ute, const struct ut_testdef *td,
-                          bool pre_execute)
+			  bool pre_execute)
 {
 	if (pre_execute) {
 		silofs_log_info("  %-40s =>", td->name);
@@ -219,7 +219,7 @@ ut_check_valid_space_gauges(const struct silofs_space_gauges256 *spg)
 }
 
 static void ut_expect_space_stats(const struct silofs_space_stats1k *spst1,
-                                  const struct silofs_space_stats1k *spst2)
+				  const struct silofs_space_stats1k *spst2)
 {
 	ut_expect_le(spst1->sp_lsegs.sg_nsuper, spst2->sp_lsegs.sg_nsuper);
 	ut_expect_le(spst1->sp_lsegs.sg_nspnode, spst2->sp_lsegs.sg_nspnode);
@@ -259,7 +259,7 @@ static void ut_expect_space_stats(const struct silofs_space_stats1k *spst1,
 }
 
 static void ut_check_spacestats(const struct silofs_space_stats1k *spst1,
-                                const struct silofs_space_stats1k *spst2)
+				const struct silofs_space_stats1k *spst2)
 {
 	ut_expect_le(spst1->sp_btime, spst2->sp_btime);
 	ut_expect_le(spst1->sp_ctime, spst2->sp_ctime);
@@ -739,23 +739,25 @@ static uint64_t ute_next_prandom(struct ut_env *ute)
 	return rnd;
 }
 
-void ut_prandom_shuffle(struct ut_env *ute, long *arr, size_t len)
+static void ut_do_prandom_shuffle(struct ut_env *ute, long *arr, size_t len)
 {
-	size_t j;
+	size_t i = 0, j = 0;
 	uint64_t rnd = 0;
 
-	if (len > 1) {
-		for (size_t i = 0; i < len - 1; i++) {
-			if ((i % 17) == 0) {
-				rnd = ute_next_prandom(ute);
-			} else {
-				rnd = rnd >> 1;
-			}
-			j = i + (rnd / (ULONG_MAX / (len - i) + 1));
-			swap_long(arr + i, arr + j);
-		}
+	for (i = 0; i < len - 1; i++) {
+		rnd = (i % 17) ? (rnd >> 1) : ute_next_prandom(ute);
+		j = i + (rnd / (ULONG_MAX / (len - i) + 1));
+		swap_long(arr + i, arr + j);
 	}
 }
+
+void ut_prandom_shuffle(struct ut_env *ute, long *arr, size_t len)
+{
+	if (len > 1) {
+		ut_do_prandom_shuffle(ute, arr, len);
+	}
+}
+
 static void create_seq(long *arr, size_t len, long base)
 {
 	for (size_t i = 0; i < len; ++i) {
@@ -797,8 +799,8 @@ bool ut_not_dot_or_dotdot(const char *s)
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 void ut_exec_with_ranges_(struct ut_env *ute,
-                          void (*fn)(struct ut_env *, off_t, size_t),
-                          const struct ut_range *range, size_t na)
+			  void (*fn)(struct ut_env *, off_t, size_t),
+			  const struct ut_range *range, size_t na)
 {
 	for (size_t i = 0; i < na; ++i) {
 		fn(ute, range[i].off, range[i].len);

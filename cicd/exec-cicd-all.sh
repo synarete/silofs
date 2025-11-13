@@ -70,7 +70,7 @@ msg "run unit-tests"
 run make -f devel.mk check
 run make -f devel.mk reset
 msg "run clang-scan"
-run make -f devel.mk V=1 O=2 clangscan
+run make -f devel.mk CC=clang V=1 O=2 clangscan
 run make -f devel.mk reset
 sep "developer's build OK"
 

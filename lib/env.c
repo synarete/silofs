@@ -385,6 +385,25 @@ int silofs_env_format_uber(struct silofs_env *env)
 	return 0;
 }
 
+static const struct silofs_paddr *env_gbr_ub_addr(const struct silofs_env *env)
+{
+	return &env->gbrs.fs_gbr.root;
+}
+
+int silofs_env_reload_uber(struct silofs_env *env)
+{
+	const struct silofs_paddr *ub_addr = env_gbr_ub_addr(env);
+	struct silofs_uber_info *ubi = nullptr;
+	int err;
+
+	err = silofs_stage_uber(env, ub_addr, &ubi);
+	if (err) {
+		return err;
+	}
+	env_update_uber(env, ubi);
+	return 0;
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void make_super_lsid(struct silofs_lsid *out_lsid)
@@ -404,11 +423,6 @@ static void make_super_uaddr(struct silofs_uaddr *out_uaddr)
 
 	make_super_lsid(&lsid);
 	silofs_uaddr_setup(out_uaddr, &lsid, 0, 0);
-}
-
-static const struct silofs_uaddr *env_sb_addr(const struct silofs_env *env)
-{
-	return &env->gbrs.fs_gbr.sb_addr;
 }
 
 static int
@@ -478,9 +492,14 @@ env_check_sb(const struct silofs_env *env, const struct silofs_sb_info *sbi)
 	return 0;
 }
 
+static const struct silofs_uaddr *env_gbr_sb_addr(const struct silofs_env *env)
+{
+	return &env->gbrs.fs_gbr.sb_addr;
+}
+
 int silofs_env_reload_super(struct silofs_env *env)
 {
-	const struct silofs_uaddr *sb_addr = env_sb_addr(env);
+	const struct silofs_uaddr *sb_addr = env_gbr_sb_addr(env);
 	struct silofs_sb_info *sbi = nullptr;
 	int err;
 
@@ -498,7 +517,7 @@ int silofs_env_reload_super(struct silofs_env *env)
 
 static const struct silofs_lsid *env_sb_lsid(const struct silofs_env *env)
 {
-	const struct silofs_uaddr *sb_uaddr = env_sb_addr(env);
+	const struct silofs_uaddr *sb_uaddr = env_gbr_sb_addr(env);
 
 	return &sb_uaddr->laddr.lsid;
 }

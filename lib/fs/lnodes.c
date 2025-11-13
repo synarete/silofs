@@ -281,8 +281,7 @@ silofs_uni_from_lni(const struct silofs_lnode_info *lni)
 void silofs_uni_seal_view(struct silofs_unode_info *uni)
 {
 	uni_verify(uni);
-
-	silofs_hdr_seal(&uni->un_lni.ln_view->u.hdr[0]);
+	silofs_view_seal(uni->un_lni.ln_view);
 }
 
 static void uni_del_view(struct silofs_unode_info *uni,
@@ -479,7 +478,7 @@ struct silofs_vnode_info *silofs_vni_from_dqe(struct silofs_dq_elem *dqe)
 void silofs_vni_seal_view(struct silofs_vnode_info *vni)
 {
 	silofs_assert_not_null(vni->vn_lni.ln_view);
-	silofs_hdr_seal(&vni->vn_lni.ln_view->u.hdr[0]);
+	silofs_view_seal(vni->vn_lni.ln_view);
 }
 
 static bool

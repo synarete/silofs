@@ -101,4 +101,6 @@ int silofs_decrypt_pnode(struct silofs_pnode_info   *pni,
 
 int silofs_verify_pnode(const struct silofs_pnode_info *pni);
 
+void silofs_seal_pnode(struct silofs_pnode_info *pni);
+
 #endif /* SILOFS_PNODES_H_ */

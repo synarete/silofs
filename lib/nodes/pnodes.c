@@ -593,3 +593,8 @@ int silofs_verify_pnode(const struct silofs_pnode_info *pni)
 	// TODO: verify sub-components
 	return silofs_view_verify(pni->pn_view, pni_mtype(pni));
 }
+
+void silofs_seal_pnode(struct silofs_pnode_info *pni)
+{
+	silofs_view_seal(pni->pn_view);
+}

@@ -240,7 +240,7 @@ int silofs_stage_uber(struct silofs_env *env, const struct silofs_paddr *paddr,
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static int stc_destage_dirty_pnode(struct silofs_store_ctx *st_ctx,
-                                   const struct silofs_pnode_info *pni)
+                                   struct silofs_pnode_info *pni)
 {
 	const struct silofs_rovec rovec = {
 		.rov_base = st_ctx->view,
@@ -248,6 +248,7 @@ static int stc_destage_dirty_pnode(struct silofs_store_ctx *st_ctx,
 	};
 	int err;
 
+	silofs_seal_pnode(pni);
 	err = silofs_encrypt_pnode(pni, st_ctx->enc_cipher, st_ctx->view);
 	if (err) {
 		return err;

@@ -27,6 +27,8 @@ struct silofs_view *silofs_view_new(struct silofs_alloc *alloc,
 void silofs_view_del(struct silofs_view *view, struct silofs_alloc *alloc,
                      enum silofs_mtype mtype, int flags);
 
+void silofs_view_seal(struct silofs_view *view);
+
 int silofs_view_verify(const struct silofs_view *view,
                        enum silofs_mtype         mtype);
 

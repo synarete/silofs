@@ -98,6 +98,11 @@ int silofs_decode_blobid(struct silofs_blobid *blobid, const char *s)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
+static int reload_uber(struct silofs_task_ctx *task)
+{
+	return silofs_env_reload_uber(task->t_env);
+}
+
 static int reload_super(struct silofs_task_ctx *task)
 {
 	int err;
@@ -133,25 +138,6 @@ static int reload_rootd(struct silofs_task_ctx *task)
 		log_err("root-inode is not-a-dir: mode=0%o",
 		        silofs_ii_mode(ii));
 		return -SILOFS_EFSCORRUPTED;
-	}
-	return 0;
-}
-
-static int reload_vmeta(struct silofs_task_ctx *task)
-{
-	int err;
-
-	err = reload_super(task);
-	if (err) {
-		return err;
-	}
-	err = reload_vspace(task);
-	if (err) {
-		return err;
-	}
-	err = reload_rootd(task);
-	if (err) {
-		return err;
 	}
 	return 0;
 }
@@ -476,15 +462,33 @@ static int appexec_format_meta(struct silofs_task_ctx *task,
 }
 
 static int
+reload_fs_gbr(struct silofs_task_ctx *task, const struct silofs_paddr *paddr)
+{
+	return silofs_env_reload_fs_gbr(task->t_env, paddr);
+}
+
+static int
 reload_fs(struct silofs_task_ctx *task, const struct silofs_paddr *paddr)
 {
 	int err;
 
-	err = silofs_env_reload_fs_gbr(task->t_env, paddr);
+	err = reload_fs_gbr(task, paddr);
 	if (err) {
 		return err;
 	}
-	err = reload_vmeta(task);
+	err = reload_uber(task);
+	if (err) {
+		return err;
+	}
+	err = reload_super(task);
+	if (err) {
+		return err;
+	}
+	err = reload_vspace(task);
+	if (err) {
+		return err;
+	}
+	err = reload_rootd(task);
 	if (err) {
 		return err;
 	}

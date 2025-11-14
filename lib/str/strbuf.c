@@ -74,11 +74,8 @@ void silofs_strbuf_assign(struct silofs_strbuf *sbuf,
 void silofs_strbuf_setup(struct silofs_strbuf *sbuf,
                          const struct silofs_strview *sv)
 {
-	struct silofs_strspan ss;
-
-	silofs_strbuf_as_ss(sbuf, &ss);
-	silofs_strspan_clear(&ss);
-	silofs_strspan_vassign(&ss, sv);
+	silofs_strbuf_reset(sbuf);
+	silofs_strview_copyto(sv, sbuf->str, sizeof(sbuf->str) - 1);
 }
 
 void silofs_strbuf_setup_by(struct silofs_strbuf *sbuf, const char *s)

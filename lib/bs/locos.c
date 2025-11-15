@@ -709,6 +709,7 @@ void silofs_locos_fini(struct silofs_locos *locos)
 	locos_drop_cached(locos);
 	locos_close(locos);
 	lhq_fini(&locos->los_hq, locos->los_alloc);
+	silofs_mdigest_fini(&locos->los_md);
 	locos->los_alloc = nullptr;
 }
 

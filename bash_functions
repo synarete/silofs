@@ -1,3 +1,4 @@
+# -*- mode: sh; sh-shell: bash; -*-
 # shellcheck shell=bash
 
 _LINENO_DEPTH=0
@@ -44,6 +45,11 @@ die() {
 run() {
 	msg "$*"
 	( "$@" ) || die "failed: $*"
+}
+
+try() {
+	msg "$*"
+	( "$@" ) || msg "failed: $*"
 }
 
 cdx() {

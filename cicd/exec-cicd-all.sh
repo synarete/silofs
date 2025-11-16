@@ -70,13 +70,13 @@ msg "run unit-tests"
 run make -f devel.mk check
 run make -f devel.mk reset
 msg "run clang-scan"
-run make -f devel.mk CC=clang V=1 O=2 clangscan
+run make -f devel.mk CC=clang V=1 O=2 scan
 run make -f devel.mk reset
 sep "developer's build OK"
 
 ###
 msg "run clang-tidy"
-run ./scripts/clangtidy.sh
+run make -f devel.mk CC=clang O=2 tidy
 run make -f devel.mk reset
 sep "clang-tidy OK"
 

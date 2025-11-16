@@ -343,11 +343,11 @@ compdb: configure tags
 	  CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" -C $(BUILDDIR))
 
 ifeq ($(CC), clang)
-clangtidy: reset compdb
+tidy: reset compdb
 	$(call report, $@)
 	@$(TOP)/scripts/clangtidy.sh $(TOP)
 
-clangscan: reset
+scan: reset
 	$(call report, $@)
 	@$(TOP)/scripts/clangscan.sh $(TOP)
 endif

@@ -34,7 +34,7 @@
 #include "infra/avl.h"
 #include "infra/base64.h"
 #include "infra/bytebuf.h"
-#include "infra/hash.h"
+#include "infra/hashfn.h"
 #include "infra/iovec.h"
 #include "infra/list.h"
 #include "infra/pipe.h"

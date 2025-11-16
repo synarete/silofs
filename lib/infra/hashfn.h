@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_HASH_H_
-#define SILOFS_HASH_H_
+#ifndef SILOFS_HASHFN_H_
+#define SILOFS_HASHFN_H_
 
 #include <silofs/ccattr.h>
 #include <stdlib.h>
@@ -31,4 +31,4 @@ silofs_attr_const uint64_t silofs_twang_mix64(uint64_t n);
 
 void silofs_xrand_by_hash(void *ptr, size_t len, uint64_t seed);
 
-#endif /* SILOFS_HASH_H_ */
+#endif /* SILOFS_HASHFN_H_ */

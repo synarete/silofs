@@ -19,7 +19,7 @@
 #include <xxhash.h>
 #include <silofs/macros.h>
 #include "times.h"
-#include "hash.h"
+#include "hashfn.h"
 
 uint64_t silofs_hash_fnv1a(const void *buf, size_t len, uint64_t seed)
 {

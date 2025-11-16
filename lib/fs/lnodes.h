@@ -18,12 +18,9 @@
 #define SILOFS_LNODES_H_
 
 #include <silofs/types.h>
+#include "infra.h"
 #include "addr.h"
 #include "nodes.h"
-
-struct silofs_lnode_info;
-struct silofs_unode_info;
-struct silofs_vnode_info;
 
 enum silofs_lnflags {
 	SILOFS_LNF_RECHECK = SILOFS_BIT(0),

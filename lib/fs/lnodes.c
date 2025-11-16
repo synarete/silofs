@@ -17,17 +17,12 @@
 #include "configs.h"
 #include <limits.h>
 #include "infra.h"
-#include "fs.h"
-#include "env.h"
+#include "lnodes.h"
 
 enum {
 	SILOFS_UI_MAGIC = 0xCAFEBEB,
 	SILOFS_VI_MAGIC = 0xDEDFACE,
 };
-
-/* local functions forward declarations */
-static int
-verify_view_by(const struct silofs_view *view, const enum silofs_mtype mtype);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -91,7 +86,7 @@ static void lni_fini(struct silofs_lnode_info *lni)
 int silofs_lni_verify_view(const struct silofs_lnode_info *lni)
 {
 	silofs_assert_not_null(lni->ln_view);
-	return verify_view_by(lni->ln_view, lni->ln_mtype);
+	return silofs_view_verify(lni->ln_view, lni->ln_mtype);
 }
 
 struct silofs_lnode_info *
@@ -760,7 +755,7 @@ static struct silofs_vnode_info *lsi_to_vni(struct silofs_lsmap_info *lsi)
 	return &lsi->ls_vni;
 }
 
-struct silofs_lsmap_info *silofs_lsi_from_vni(struct silofs_vnode_info *vni)
+static struct silofs_lsmap_info *lsi_from_vni(struct silofs_vnode_info *vni)
 {
 	return container_of(vni, struct silofs_lsmap_info, ls_vni);
 }
@@ -824,6 +819,11 @@ lsi_del(struct silofs_lsmap_info *lsi, struct silofs_alloc *alloc, int flags)
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static struct silofs_vnode_info *ii_to_vni(struct silofs_inode_info *ii)
+{
+	return &ii->i_vni;
+}
 
 static struct silofs_inode_info *ii_from_vni(struct silofs_vnode_info *vni)
 {
@@ -1295,71 +1295,6 @@ struct silofs_fileaf_info *silofs_fli_from_vni(struct silofs_vnode_info *vni)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static int
-view_verify_sub(const struct silofs_view *view, enum silofs_mtype mtype)
-{
-	switch (mtype) {
-		// XXX
-	case SILOFS_MTYPE_UBER:
-	case SILOFS_MTYPE_ARIX:
-	case SILOFS_MTYPE_BDESC:
-	case SILOFS_MTYPE_BTNODE:
-		silofs_assert_null(view);
-		break;
-	case SILOFS_MTYPE_GBR:
-		break;
-	case SILOFS_MTYPE_SUPER:
-		return silofs_verify_super_block(&view->u.sb);
-	case SILOFS_MTYPE_SPNODE:
-		return silofs_verify_spmap_node(&view->u.sn);
-	case SILOFS_MTYPE_SPLEAF:
-		return silofs_verify_spmap_leaf(&view->u.sl);
-	case SILOFS_MTYPE_LSMAP:
-		return silofs_verify_lsmap(&view->u.lsm);
-	case SILOFS_MTYPE_INODE:
-		return silofs_verify_inode(&view->u.in);
-	case SILOFS_MTYPE_XANODE:
-		return silofs_verify_xattr_node(&view->u.xan);
-	case SILOFS_MTYPE_SYMVAL:
-		return silofs_verify_symlnk_value(&view->u.syv);
-	case SILOFS_MTYPE_DTNODE:
-		return silofs_verify_dtree_node(&view->u.dtn);
-	case SILOFS_MTYPE_FTNODE:
-		return silofs_verify_ftree_node(&view->u.ftn);
-	case SILOFS_MTYPE_DATA1K:
-	case SILOFS_MTYPE_DATA4K:
-	case SILOFS_MTYPE_DATABK:
-		break;
-	case SILOFS_MTYPE_NONE:
-	case SILOFS_MTYPE_LAST:
-	default:
-		log_err("illegal sub-type: mtype=%d", (int)mtype);
-		return -SILOFS_EFSCORRUPTED;
-	}
-	return 0;
-}
-
-static int
-verify_view_by(const struct silofs_view *view, const enum silofs_mtype mtype)
-{
-	int err;
-
-	if (silofs_mtype_isdata(mtype)) {
-		return 0;
-	}
-	err = silofs_view_verify(view, mtype);
-	if (err) {
-		return err;
-	}
-	err = view_verify_sub(view, mtype);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-
 struct silofs_unode_info *
 silofs_new_unode(struct silofs_alloc *alloc, const struct silofs_uaddr *uaddr)
 {
@@ -1449,7 +1384,7 @@ silofs_new_vnode(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 		vni = lsi_to_vni(lsi_new(alloc, vaddr));
 		break;
 	case SILOFS_MTYPE_INODE:
-		vni = silofs_ii_to_vni(ii_new(alloc, vaddr));
+		vni = ii_to_vni(ii_new(alloc, vaddr));
 		break;
 	case SILOFS_MTYPE_XANODE:
 		vni = xai_to_vni(xai_new(alloc, vaddr));
@@ -1492,7 +1427,7 @@ void silofs_del_vnode(struct silofs_vnode_info *vni,
 
 	switch (mtype) {
 	case SILOFS_MTYPE_LSMAP:
-		lsi_del(silofs_lsi_from_vni(vni), alloc, flags);
+		lsi_del(lsi_from_vni(vni), alloc, flags);
 		break;
 	case SILOFS_MTYPE_INODE:
 		ii_del(ii_from_vni(vni), alloc, flags);

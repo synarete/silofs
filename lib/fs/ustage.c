@@ -22,9 +22,59 @@
 #include "fs.h"
 #include "env.h"
 
+static int ubi_verify_sub_view(const struct silofs_unode_info *uni)
+{
+	const struct silofs_view *view = uni->un_lni.ln_view;
+	const enum silofs_mtype mtype = silofs_uni_mtype(uni);
+	int ret = 0;
+
+	switch (mtype) {
+	case SILOFS_MTYPE_GBR:
+		break;
+	case SILOFS_MTYPE_SUPER:
+		ret = silofs_verify_super_block(&view->u.sb);
+		break;
+	case SILOFS_MTYPE_SPNODE:
+		ret = silofs_verify_spmap_node(&view->u.sn);
+		break;
+	case SILOFS_MTYPE_SPLEAF:
+		ret = silofs_verify_spmap_leaf(&view->u.sl);
+		break;
+	case SILOFS_MTYPE_LSMAP:
+	case SILOFS_MTYPE_INODE:
+	case SILOFS_MTYPE_XANODE:
+	case SILOFS_MTYPE_SYMVAL:
+	case SILOFS_MTYPE_DTNODE:
+	case SILOFS_MTYPE_FTNODE:
+	case SILOFS_MTYPE_UBER:
+	case SILOFS_MTYPE_ARIX:
+	case SILOFS_MTYPE_BDESC:
+	case SILOFS_MTYPE_BTNODE:
+	case SILOFS_MTYPE_DATA1K:
+	case SILOFS_MTYPE_DATA4K:
+	case SILOFS_MTYPE_DATABK:
+	case SILOFS_MTYPE_NONE:
+	case SILOFS_MTYPE_LAST:
+	default:
+		silofs_panic("non unode: mtype=%d", mtype);
+		break;
+	}
+	return ret;
+}
+
 static int uni_verify_view(const struct silofs_unode_info *uni)
 {
-	return silofs_lni_verify_view(&uni->un_lni);
+	int err;
+
+	err = silofs_lni_verify_view(&uni->un_lni);
+	if (err) {
+		return err;
+	}
+	err = ubi_verify_sub_view(uni);
+	if (err) {
+		return err;
+	}
+	return 0;
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

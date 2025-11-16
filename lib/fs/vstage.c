@@ -114,9 +114,65 @@ static void vni_update_llink(struct silofs_vnode_info *vni,
 	silofs_llink_assign(&vni->vn_llink, llink);
 }
 
+static int vni_verify_sub_view(const struct silofs_vnode_info *vni)
+{
+	const struct silofs_view *view = vni->vn_lni.ln_view;
+	const enum silofs_mtype mtype = silofs_vni_mtype(vni);
+	int ret = 0;
+
+	switch (mtype) {
+	case SILOFS_MTYPE_LSMAP:
+		ret = silofs_verify_lsmap(&view->u.lsm);
+		break;
+	case SILOFS_MTYPE_INODE:
+		ret = silofs_verify_inode(&view->u.in);
+		break;
+	case SILOFS_MTYPE_XANODE:
+		ret = silofs_verify_xattr_node(&view->u.xan);
+		break;
+	case SILOFS_MTYPE_SYMVAL:
+		ret = silofs_verify_symlnk_value(&view->u.syv);
+		break;
+	case SILOFS_MTYPE_DTNODE:
+		ret = silofs_verify_dtree_node(&view->u.dtn);
+		break;
+	case SILOFS_MTYPE_FTNODE:
+		ret = silofs_verify_ftree_node(&view->u.ftn);
+		break;
+	case SILOFS_MTYPE_DATA1K:
+	case SILOFS_MTYPE_DATA4K:
+	case SILOFS_MTYPE_DATABK:
+		break;
+	case SILOFS_MTYPE_NONE:
+	case SILOFS_MTYPE_GBR:
+	case SILOFS_MTYPE_UBER:
+	case SILOFS_MTYPE_ARIX:
+	case SILOFS_MTYPE_BDESC:
+	case SILOFS_MTYPE_BTNODE:
+	case SILOFS_MTYPE_SUPER:
+	case SILOFS_MTYPE_SPNODE:
+	case SILOFS_MTYPE_SPLEAF:
+	case SILOFS_MTYPE_LAST:
+	default:
+		silofs_panic("non vnode: mtype=%d", mtype);
+		break;
+	}
+	return ret;
+}
+
 static int vni_verify_view(const struct silofs_vnode_info *vni)
 {
-	return silofs_lni_verify_view(&vni->vn_lni);
+	int err;
+
+	err = silofs_lni_verify_view(&vni->vn_lni);
+	if (err) {
+		return err;
+	}
+	err = vni_verify_sub_view(vni);
+	if (err) {
+		return err;
+	}
+	return 0;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

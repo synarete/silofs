@@ -19,7 +19,7 @@
 #include <limits.h>
 #include <silofs/ioctls.h>
 #include "infra.h"
-#include "lnodes.h"
+#include "nodes.h"
 #include "super.h"
 
 /* local functions */

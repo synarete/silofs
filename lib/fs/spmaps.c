@@ -19,7 +19,7 @@
 #include <sys/stat.h>
 #include <limits.h>
 #include "infra.h"
-#include "lnodes.h"
+#include "nodes.h"
 #include "spmaps.h"
 
 static void lrange_of_spleaf(struct silofs_lrange *lrange, off_t voff)

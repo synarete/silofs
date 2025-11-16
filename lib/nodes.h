@@ -18,6 +18,7 @@
 #define SILOFS_NODES_H_
 
 #include <silofs/ondisk.h>
+#include <silofs/types.h>
 #include "infra.h"
 #include "crypt.h"
 #include "nodes/dirtyq.h"
@@ -25,5 +26,6 @@
 #include "nodes/view.h"
 #include "nodes/pnodes.h"
 #include "nodes/pcache.h"
+#include "nodes/lnodes.h"
 
 #endif /* SILOFS_CACHE_H_ */

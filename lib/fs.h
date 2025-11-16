@@ -19,9 +19,9 @@
 
 #include "infra.h"
 #include "addr.h"
+#include "nodes.h"
 #include "fs/uidgid.h"
 #include "fs/idsmap.h"
-#include "fs/lnodes.h"
 #include "fs/lsmap.h"
 #include "fs/inode.h"
 #include "fs/xattr.h"

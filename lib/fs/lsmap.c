@@ -22,7 +22,7 @@
 #include <silofs/panic.h>
 #include "infra.h"
 #include "addr.h"
-#include "lnodes.h"
+#include "nodes.h"
 #include "lsmap.h"
 
 static size_t nkbs_of(const struct silofs_vaddr *vaddr)

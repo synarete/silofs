@@ -20,7 +20,7 @@
 #include <silofs/types.h>
 #include "infra.h"
 #include "addr.h"
-#include "nodes.h"
+#include "hmapq.h"
 
 enum silofs_lnflags {
 	SILOFS_LNF_RECHECK = SILOFS_BIT(0),

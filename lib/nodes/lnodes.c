@@ -17,6 +17,7 @@
 #include "configs.h"
 #include <limits.h>
 #include "infra.h"
+#include "view.h"
 #include "lnodes.h"
 
 enum {

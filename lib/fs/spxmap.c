@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 #include "configs.h"
-#include "lnodes.h"
+#include "nodes.h"
 #include "spxmap.h"
 
 /* single entry of free space */

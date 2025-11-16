@@ -222,7 +222,7 @@ static uint32_t hdr_calc_chekcsum(const struct silofs_header *hdr)
 	const void *payload = hdr_payload(hdr);
 	const size_t pl_size = hdr_payload_size(hdr);
 
-	return silofs_hash_xxh32(payload, pl_size, SILOFS_META_MAGIC);
+	return silofs_xxh32(payload, pl_size, SILOFS_META_MAGIC);
 }
 
 void silofs_hdr_seal(struct silofs_header *hdr)

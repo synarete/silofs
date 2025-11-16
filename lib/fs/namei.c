@@ -191,7 +191,7 @@ namehash_by_sha256(const struct silofs_strview *sv,
 static uint64_t
 namehash_by_xxh64(const struct silofs_strview *sv, uint64_t seed)
 {
-	return silofs_hash_xxh64(sv->str, sv->len, seed);
+	return silofs_xxh64(sv->str, sv->len, seed);
 }
 
 static int

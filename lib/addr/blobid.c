@@ -279,5 +279,5 @@ int silofs_blobid_from_str(struct silofs_blobid *blobid,
 uint64_t
 silofs_blobid_hash64(const struct silofs_blobid *blobid, uint64_t seed)
 {
-	return silofs_hash_xxh64(blobid->id, sizeof(blobid->id), seed);
+	return silofs_xxh64(blobid->id, sizeof(blobid->id), seed);
 }

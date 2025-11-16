@@ -21,7 +21,7 @@
 #include "times.h"
 #include "hashfn.h"
 
-uint64_t silofs_hash_fnv1a(const void *buf, size_t len, uint64_t seed)
+uint64_t silofs_fnv1a(const void *buf, size_t len, uint64_t seed)
 {
 	const uint8_t *itr = (const uint8_t *)buf;
 	const uint8_t *end = itr + len;
@@ -35,12 +35,12 @@ uint64_t silofs_hash_fnv1a(const void *buf, size_t len, uint64_t seed)
 	return hval;
 }
 
-uint32_t silofs_hash_xxh32(const void *buf, size_t len, uint32_t seed)
+uint32_t silofs_xxh32(const void *buf, size_t len, uint32_t seed)
 {
 	return XXH32(buf, len, seed);
 }
 
-uint64_t silofs_hash_xxh64(const void *buf, size_t len, uint64_t seed)
+uint64_t silofs_xxh64(const void *buf, size_t len, uint64_t seed)
 {
 	return XXH64(buf, len, seed);
 }
@@ -87,7 +87,7 @@ void silofs_xrand_by_hash(void *ptr, size_t len, uint64_t seed)
 		u[(i + 3) % nu] ^= ~xx + i;
 		u[(i + 4) % nu] ^= xx * (i + 11);
 
-		xx = silofs_hash_xxh64(u, sizeof(u), xx);
+		xx = silofs_xxh64(u, sizeof(u), xx);
 		*itr++ ^= xx;
 	}
 }

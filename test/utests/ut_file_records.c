@@ -73,7 +73,7 @@ static void record_decode(struct ut_record *rec)
 
 static uint64_t ut_fnv1a(const void *buf, size_t len, uint64_t seed)
 {
-	return silofs_hash_fnv1a(buf, len, seed);
+	return silofs_fnv1a(buf, len, seed);
 }
 
 static uint64_t record_calchash(const struct ut_record *rec)

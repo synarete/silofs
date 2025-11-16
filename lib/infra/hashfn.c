@@ -16,6 +16,7 @@
  */
 #include "configs.h"
 #include <unistd.h>
+#include <string.h>
 #include <xxhash.h>
 #include <silofs/macros.h>
 #include "times.h"
@@ -45,7 +46,9 @@ uint64_t silofs_xxh64(const void *buf, size_t len, uint64_t seed)
 	return XXH64(buf, len, seed);
 }
 
-uint64_t silofs_twang_mix64(uint64_t n)
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static uint64_t twang_mix64(uint64_t n)
 {
 	n = ~n + (n << 21);
 	n = n ^ (n >> 24);
@@ -58,36 +61,36 @@ uint64_t silofs_twang_mix64(uint64_t n)
 	return n;
 }
 
-void silofs_xrand_by_hash(void *ptr, size_t len, uint64_t seed)
+static void setup_udata(uint64_t u[4])
 {
-	uint64_t u[5] = {
-		seed,        //
-		seed + 1,    //
-		seed / 11,   //
-		seed * 111,  //
-		seed + 1111, //
-	};
-	uint64_t *itr = ptr;
-	uint64_t xx = *itr;
-	const size_t ns = len / sizeof(*itr);
-	const size_t nu = SILOFS_ARRAY_SIZE(u);
 	struct timespec t;
 
 	silofs_clock_mono_now(&t);
-	u[0] ^= (uint64_t)t.tv_sec;
-	u[1] ^= (uint64_t)t.tv_nsec;
-	u[2] ^= (uint64_t)gettid();
+	u[0] = (uint64_t)t.tv_sec ^ 0xc6a4a7935bd1e995UL;
+	u[1] = (uint64_t)t.tv_nsec;
 	silofs_uptime(&t);
-	u[3] ^= (uint64_t)t.tv_sec;
-	u[4] ^= (uint64_t)t.tv_nsec;
+	u[3] = (uint64_t)t.tv_sec + (uint64_t)gettid();
+	u[4] = (uint64_t)t.tv_nsec ^ 0x5bd1e995UL;
+}
 
-	for (uint32_t i = 0; i < ns; ++i) {
-		u[(i + 1) % nu] ^= silofs_twang_mix64(xx + i);
+void silofs_prand_by_hash(void *dst, const void *src, size_t n)
+{
+	uint64_t u[4] = {};
+	const size_t nu = SILOFS_ARRAY_SIZE(u);
+	const uint64_t *s = src;
+	uint64_t *d = dst;
+	const size_t nd = n / sizeof(*d);
+	const size_t rem = n - (nd * sizeof(*d));
+
+	setup_udata(u);
+	for (uint32_t i = 0; i < nd; ++i) {
+		const uint64_t xx = *s++;
+
+		u[(i + 1) % nu] ^= twang_mix64(xx + i);
 		u[(i + 2) % nu] ^= xx / (i | 1);
 		u[(i + 3) % nu] ^= ~xx + i;
-		u[(i + 4) % nu] ^= xx * (i + 11);
 
-		xx = silofs_xxh64(u, sizeof(u), xx);
-		*itr++ ^= xx;
+		*d++ = silofs_xxh64(u, sizeof(u), xx);
 	}
+	memmove(d, u, rem);
 }

@@ -150,10 +150,11 @@ void silofs_key_xor_with1(struct silofs_key *key,
 	}
 }
 
-static void key_rerandomize(struct silofs_key *key, uint64_t seed)
+static void key_rerandomize(struct silofs_key *key, size_t i)
 {
 	/* add pseudo-randomness as protection from poor gcry_randomize */
-	silofs_xrand_by_hash(key->key, sizeof(key->key), seed);
+	silofs_prand_by_hash(key->key, key->key, sizeof(key->key));
+	key->key[i % ARRAY_SIZE(key->key)] ^= (uint8_t)i;
 }
 
 void silofs_generate_keys(struct silofs_key *keys, size_t nkeys, bool extra)

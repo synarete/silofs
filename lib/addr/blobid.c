@@ -23,18 +23,10 @@
 #include "meta.h"
 #include "blobid.h"
 
-static uint64_t seed(void)
-{
-	struct timespec ts;
-
-	silofs_clock_real_now(&ts);
-	return ((uint64_t)ts.tv_nsec) ^ ((uint64_t)ts.tv_sec);
-}
-
 static void generate_random(uint8_t *p, size_t n)
 {
 	silofs_gcrypt_random(p, n);
-	silofs_xrand_by_hash(p, n, seed());
+	silofs_prand_by_hash(p, p, n);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

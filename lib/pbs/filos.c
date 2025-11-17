@@ -23,7 +23,7 @@
 #include <silofs/syscall.h>
 #include "infra.h"
 #include "str.h"
-#include "locos.h"
+#include "filos.h"
 
 /*
  * TODO-0035: Define proper upper-bound.
@@ -388,7 +388,7 @@ static void bf_del(struct silofs_blobfile *bf, struct silofs_alloc *alloc)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static int lhq_init(struct silofs_locos_hq *lhq, struct silofs_alloc *alloc)
+static int lhq_init(struct silofs_filos_hq *lhq, struct silofs_alloc *alloc)
 {
 	const size_t nelems = 1024;
 
@@ -402,7 +402,7 @@ static int lhq_init(struct silofs_locos_hq *lhq, struct silofs_alloc *alloc)
 	return 0;
 }
 
-static void lhq_fini(struct silofs_locos_hq *lhq, struct silofs_alloc *alloc)
+static void lhq_fini(struct silofs_filos_hq *lhq, struct silofs_alloc *alloc)
 {
 	silofs_listq_fini(&lhq->lhq_lru);
 	silofs_lista_del(lhq->lhq_htb, lhq->lhq_htb_nelems, alloc);
@@ -410,7 +410,7 @@ static void lhq_fini(struct silofs_locos_hq *lhq, struct silofs_alloc *alloc)
 	lhq->lhq_htb_nelems = 0;
 }
 
-static size_t lhq_htb_slot_of(const struct silofs_locos_hq *lhq,
+static size_t lhq_htb_slot_of(const struct silofs_filos_hq *lhq,
                               const struct silofs_blobid *blobid)
 {
 	const uint64_t hash = silofs_blobid_hash64(blobid, 0);
@@ -419,7 +419,7 @@ static size_t lhq_htb_slot_of(const struct silofs_locos_hq *lhq,
 }
 
 static const struct silofs_list_head *
-lhq_htb_list_of(const struct silofs_locos_hq *lhq,
+lhq_htb_list_of(const struct silofs_filos_hq *lhq,
                 const struct silofs_blobid *blobid)
 {
 	const size_t slot = lhq_htb_slot_of(lhq, blobid);
@@ -428,7 +428,7 @@ lhq_htb_list_of(const struct silofs_locos_hq *lhq,
 }
 
 static struct silofs_list_head *
-lhq_htb_list_of2(struct silofs_locos_hq *lhq,
+lhq_htb_list_of2(struct silofs_filos_hq *lhq,
                  const struct silofs_blobid *blobid)
 {
 	const size_t slot = lhq_htb_slot_of(lhq, blobid);
@@ -437,7 +437,7 @@ lhq_htb_list_of2(struct silofs_locos_hq *lhq,
 }
 
 static void
-lhq_insert_htb(struct silofs_locos_hq *lhq, struct silofs_blobfile *bf)
+lhq_insert_htb(struct silofs_filos_hq *lhq, struct silofs_blobfile *bf)
 {
 	struct silofs_list_head *lst = lhq_htb_list_of2(lhq, &bf->bf_blobid);
 
@@ -445,12 +445,12 @@ lhq_insert_htb(struct silofs_locos_hq *lhq, struct silofs_blobfile *bf)
 }
 
 static void
-lhq_insert_lru(struct silofs_locos_hq *lhq, struct silofs_blobfile *bf)
+lhq_insert_lru(struct silofs_filos_hq *lhq, struct silofs_blobfile *bf)
 {
 	silofs_listq_push_front(&lhq->lhq_lru, &bf->bf_lru_lh);
 }
 
-static void lhq_insert(struct silofs_locos_hq *lhq, struct silofs_blobfile *bf)
+static void lhq_insert(struct silofs_filos_hq *lhq, struct silofs_blobfile *bf)
 {
 	if (!bf->bf_mapped) {
 		lhq_insert_htb(lhq, bf);
@@ -459,13 +459,13 @@ static void lhq_insert(struct silofs_locos_hq *lhq, struct silofs_blobfile *bf)
 	}
 }
 
-static size_t lhq_get_lru_size(const struct silofs_locos_hq *lhq)
+static size_t lhq_get_lru_size(const struct silofs_filos_hq *lhq)
 {
 	return silofs_listq_size(&lhq->lhq_lru);
 }
 
 static void
-lhq_promote_lru(struct silofs_locos_hq *lhq, struct silofs_blobfile *bf)
+lhq_promote_lru(struct silofs_filos_hq *lhq, struct silofs_blobfile *bf)
 {
 	struct silofs_listq *lru = &lhq->lhq_lru;
 	struct silofs_list_head *lh = &bf->bf_lru_lh;
@@ -478,7 +478,7 @@ lhq_promote_lru(struct silofs_locos_hq *lhq, struct silofs_blobfile *bf)
 }
 
 static struct silofs_blobfile *
-lhq_get_lru_head(const struct silofs_locos_hq *lhq)
+lhq_get_lru_head(const struct silofs_filos_hq *lhq)
 {
 	const struct silofs_listq *lru = &lhq->lhq_lru;
 
@@ -486,7 +486,7 @@ lhq_get_lru_head(const struct silofs_locos_hq *lhq)
 }
 
 static struct silofs_blobfile *
-lhq_get_lru_next(const struct silofs_locos_hq *lhq,
+lhq_get_lru_next(const struct silofs_filos_hq *lhq,
                  const struct silofs_blobfile *bf)
 {
 	const struct silofs_listq *lru = &lhq->lhq_lru;
@@ -501,7 +501,7 @@ lhq_get_lru_next(const struct silofs_locos_hq *lhq,
 }
 
 static struct silofs_blobfile *
-lhq_get_lru_tail(const struct silofs_locos_hq *lhq)
+lhq_get_lru_tail(const struct silofs_filos_hq *lhq)
 {
 	const struct silofs_listq *lru = &lhq->lhq_lru;
 
@@ -509,7 +509,7 @@ lhq_get_lru_tail(const struct silofs_locos_hq *lhq)
 }
 
 static struct silofs_blobfile *
-lhq_lookup_htb(const struct silofs_locos_hq *lhq,
+lhq_lookup_htb(const struct silofs_filos_hq *lhq,
                const struct silofs_blobid *blobid)
 {
 	const struct silofs_list_head *lst = nullptr;
@@ -529,7 +529,7 @@ lhq_lookup_htb(const struct silofs_locos_hq *lhq,
 }
 
 static struct silofs_blobfile *
-lhq_lookup(struct silofs_locos_hq *lhq, const struct silofs_blobid *blobid)
+lhq_lookup(struct silofs_filos_hq *lhq, const struct silofs_blobid *blobid)
 {
 	struct silofs_blobfile *bf = nullptr;
 
@@ -546,7 +546,7 @@ out:
 }
 
 static void
-lhq_remove_htb(struct silofs_locos_hq *lhq, struct silofs_blobfile *bf)
+lhq_remove_htb(struct silofs_filos_hq *lhq, struct silofs_blobfile *bf)
 {
 	silofs_assert_gt(lhq->lhq_lru.sz, 0);
 
@@ -554,12 +554,12 @@ lhq_remove_htb(struct silofs_locos_hq *lhq, struct silofs_blobfile *bf)
 }
 
 static void
-lhq_remove_lru(struct silofs_locos_hq *lhq, struct silofs_blobfile *bf)
+lhq_remove_lru(struct silofs_filos_hq *lhq, struct silofs_blobfile *bf)
 {
 	silofs_listq_remove(&lhq->lhq_lru, &bf->bf_lru_lh);
 }
 
-static void lhq_remove(struct silofs_locos_hq *lhq, struct silofs_blobfile *bf)
+static void lhq_remove(struct silofs_filos_hq *lhq, struct silofs_blobfile *bf)
 {
 	if (bf->bf_mapped) {
 		lhq_remove_htb(lhq, bf);
@@ -571,151 +571,151 @@ static void lhq_remove(struct silofs_locos_hq *lhq, struct silofs_blobfile *bf)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static struct silofs_blobfile *
-locos_lookup_cached_bf(struct silofs_locos *locos,
+filos_lookup_cached_bf(struct silofs_filos *filos,
                        const struct silofs_blobid *blobid)
 {
-	return lhq_lookup(&locos->los_hq, blobid);
+	return lhq_lookup(&filos->los_hq, blobid);
 }
 
 static void
-locos_insert_cached_bf(struct silofs_locos *locos, struct silofs_blobfile *bf)
+filos_insert_cached_bf(struct silofs_filos *filos, struct silofs_blobfile *bf)
 {
-	lhq_insert(&locos->los_hq, bf);
+	lhq_insert(&filos->los_hq, bf);
 }
 
 static void
-locos_remove_cached_bf(struct silofs_locos *locos, struct silofs_blobfile *bf)
+filos_remove_cached_bf(struct silofs_filos *filos, struct silofs_blobfile *bf)
 {
-	lhq_remove(&locos->los_hq, bf);
+	lhq_remove(&filos->los_hq, bf);
 }
 
-static void locos_name_of(const struct silofs_locos *locos,
+static void filos_name_of(const struct silofs_filos *filos,
                           const struct silofs_blobid *blobid,
                           struct silofs_strbuf *out_name)
 {
 	struct silofs_hash256 hash;
-	const struct silofs_mdigest *md = &locos->los_md;
+	const struct silofs_mdigest *md = &filos->los_md;
 
 	silofs_sha3_256_of(md, blobid->id, sizeof(blobid->id), &hash);
 	silofs_hash256_to_name(&hash, out_name);
 }
 
 static struct silofs_blobfile *
-locos_new_bf(struct silofs_locos *locos, const struct silofs_blobid *blobid)
+filos_new_bf(struct silofs_filos *filos, const struct silofs_blobid *blobid)
 {
 	struct silofs_strbuf name;
 	struct silofs_strview sv;
 
-	locos_name_of(locos, blobid, &name);
+	filos_name_of(filos, blobid, &name);
 	silofs_strview_init(&sv, name.str);
-	return bf_new(blobid, &sv, locos->los_alloc);
+	return bf_new(blobid, &sv, filos->los_alloc);
 }
 
 static void
-locos_del_bf(struct silofs_locos *locos, struct silofs_blobfile *bf)
+filos_del_bf(struct silofs_filos *filos, struct silofs_blobfile *bf)
 {
 	bf_close(bf);
-	bf_del(bf, locos->los_alloc);
+	bf_del(bf, filos->los_alloc);
 }
 
 static void
-locos_forget_cached_bf(struct silofs_locos *locos, struct silofs_blobfile *bf)
+filos_forget_cached_bf(struct silofs_filos *filos, struct silofs_blobfile *bf)
 {
-	locos_remove_cached_bf(locos, bf);
-	locos_del_bf(locos, bf);
+	filos_remove_cached_bf(filos, bf);
+	filos_del_bf(filos, bf);
 }
 
-static void locos_drop_cached(struct silofs_locos *locos)
+static void filos_drop_cached(struct silofs_filos *filos)
 {
 	struct silofs_blobfile *bf;
 
-	bf = lhq_get_lru_tail(&locos->los_hq);
+	bf = lhq_get_lru_tail(&filos->los_hq);
 	while (bf != nullptr) {
 		bf_sync(bf);
-		locos_forget_cached_bf(locos, bf);
-		bf = lhq_get_lru_tail(&locos->los_hq);
+		filos_forget_cached_bf(filos, bf);
+		bf = lhq_get_lru_tail(&filos->los_hq);
 	}
 }
 
-static int locos_sync_cached(const struct silofs_locos *locos)
+static int filos_sync_cached(const struct silofs_filos *filos)
 {
 	struct silofs_blobfile *bf;
 	int err = 0;
 
-	bf = lhq_get_lru_head(&locos->los_hq);
+	bf = lhq_get_lru_head(&filos->los_hq);
 	while (bf != nullptr) {
 		err = bf_sync(bf);
 		if (err) {
 			break;
 		}
-		bf = lhq_get_lru_next(&locos->los_hq, bf);
+		bf = lhq_get_lru_next(&filos->los_hq, bf);
 	}
 	return err;
 }
 
-static bool locos_has_overpop_cache(const struct silofs_locos *locos)
+static bool filos_has_overpop_cache(const struct silofs_filos *filos)
 {
-	return (locos->los_hq.lhq_lru.sz > SILOFS_LACOS_CACHE_LIM);
+	return (filos->los_hq.lhq_lru.sz > SILOFS_LACOS_CACHE_LIM);
 }
 
-static struct silofs_blobfile *locos_get_overpop_bf(struct silofs_locos *locos)
+static struct silofs_blobfile *filos_get_overpop_bf(struct silofs_filos *filos)
 {
 	struct silofs_blobfile *bf = nullptr;
 
-	if (locos_has_overpop_cache(locos)) {
-		bf = lhq_get_lru_tail(&locos->los_hq);
+	if (filos_has_overpop_cache(filos)) {
+		bf = lhq_get_lru_tail(&filos->los_hq);
 	}
 	return bf;
 }
 
-static void locos_relax_cache(struct silofs_locos *locos)
+static void filos_relax_cache(struct silofs_filos *filos)
 {
 	struct silofs_blobfile *bf;
 
-	bf = locos_get_overpop_bf(locos);
+	bf = filos_get_overpop_bf(filos);
 	while (bf != nullptr) {
-		locos_forget_cached_bf(locos, bf);
-		bf = locos_get_overpop_bf(locos);
+		filos_forget_cached_bf(filos, bf);
+		bf = filos_get_overpop_bf(filos);
 	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void locos_close(struct silofs_locos *locos)
+static void filos_close(struct silofs_filos *filos)
 {
-	do_closefd(&locos->los_dfd);
+	do_closefd(&filos->los_dfd);
 }
 
-int silofs_locos_init(struct silofs_locos *locos, struct silofs_alloc *alloc)
+int silofs_filos_init(struct silofs_filos *filos, struct silofs_alloc *alloc)
 {
 	int err;
 
-	locos->los_alloc = alloc;
-	locos->los_dfd = -1;
-	err = silofs_mdigest_init(&locos->los_md);
+	filos->los_alloc = alloc;
+	filos->los_dfd = -1;
+	err = silofs_mdigest_init(&filos->los_md);
 	if (err) {
 		return err;
 	}
-	err = lhq_init(&locos->los_hq, locos->los_alloc);
+	err = lhq_init(&filos->los_hq, filos->los_alloc);
 	if (err) {
-		silofs_mdigest_fini(&locos->los_md);
+		silofs_mdigest_fini(&filos->los_md);
 		return err;
 	}
 	return 0;
 }
 
-void silofs_locos_fini(struct silofs_locos *locos)
+void silofs_filos_fini(struct silofs_filos *filos)
 {
-	locos_drop_cached(locos);
-	locos_close(locos);
-	lhq_fini(&locos->los_hq, locos->los_alloc);
-	silofs_mdigest_fini(&locos->los_md);
-	locos->los_alloc = nullptr;
+	filos_drop_cached(filos);
+	filos_close(filos);
+	lhq_fini(&filos->los_hq, filos->los_alloc);
+	silofs_mdigest_fini(&filos->los_md);
+	filos->los_alloc = nullptr;
 }
 
-static bool locos_isopen(const struct silofs_locos *locos)
+static bool filos_isopen(const struct silofs_filos *filos)
 {
-	return locos->los_dfd >= 0;
+	return filos->los_dfd >= 0;
 }
 
 static void blobs_pathname(struct silofs_strbuf *sbuf)
@@ -727,7 +727,7 @@ static void blobs_pathname(struct silofs_strbuf *sbuf)
 }
 
 static int
-locos_open(struct silofs_locos *locos, const struct silofs_strview *repodir)
+filos_open(struct silofs_filos *filos, const struct silofs_strview *repodir)
 {
 	struct silofs_strbuf sbuf;
 	int root_dfd = -1;
@@ -738,7 +738,7 @@ locos_open(struct silofs_locos *locos, const struct silofs_strview *repodir)
 		goto out;
 	}
 	blobs_pathname(&sbuf);
-	err = do_opendirat(root_dfd, sbuf.str, &locos->los_dfd);
+	err = do_opendirat(root_dfd, sbuf.str, &filos->los_dfd);
 	if (err) {
 		goto out;
 	}
@@ -747,167 +747,167 @@ out:
 	return err;
 }
 
-int silofs_locos_open(struct silofs_locos *locos,
+int silofs_filos_open(struct silofs_filos *filos,
                       const struct silofs_strview *repodir)
 {
 	int ret = -SILOFS_EALREADY;
 
-	if (!locos_isopen(locos)) {
-		ret = locos_open(locos, repodir);
+	if (!filos_isopen(filos)) {
+		ret = filos_open(filos, repodir);
 	}
 	return ret;
 }
 
-void silofs_locos_close(struct silofs_locos *locos)
+void silofs_filos_close(struct silofs_filos *filos)
 {
-	locos_drop_cached(locos);
-	if (locos_isopen(locos)) {
-		locos_close(locos);
+	filos_drop_cached(filos);
+	if (filos_isopen(filos)) {
+		filos_close(filos);
 	}
 }
 
-void silofs_locos_relax(struct silofs_locos *locos)
+void silofs_filos_relax(struct silofs_filos *filos)
 {
-	if (locos_isopen(locos)) {
-		locos_relax_cache(locos);
+	if (filos_isopen(filos)) {
+		filos_relax_cache(filos);
 	}
 }
 
-void silofs_locos_drop(struct silofs_locos *locos)
+void silofs_filos_drop(struct silofs_filos *filos)
 {
-	if (locos_isopen(locos)) {
-		locos_drop_cached(locos);
+	if (filos_isopen(filos)) {
+		filos_drop_cached(filos);
 	}
 }
 
-int silofs_locos_sync(const struct silofs_locos *locos)
+int silofs_filos_sync(const struct silofs_filos *filos)
 {
 	int ret = 0;
 
-	if (locos_isopen(locos)) {
-		ret = locos_sync_cached(locos);
+	if (filos_isopen(filos)) {
+		ret = filos_sync_cached(filos);
 	}
 	return ret;
 }
 
-static int locos_spawn_blob(struct silofs_locos *locos,
+static int filos_spawn_blob(struct silofs_filos *filos,
                             const struct silofs_blobid *blobid,
                             struct silofs_blobfile **out_bf)
 {
 	struct silofs_blobfile *bf = nullptr;
 	int err;
 
-	bf = locos_lookup_cached_bf(locos, blobid);
+	bf = filos_lookup_cached_bf(filos, blobid);
 	if (bf != nullptr) {
 		return -SILOFS_EEXIST;
 	}
-	bf = locos_new_bf(locos, blobid);
+	bf = filos_new_bf(filos, blobid);
 	if (bf == nullptr) {
 		return -SILOFS_ENOMEM;
 	}
-	err = bf_create(bf, locos->los_dfd);
+	err = bf_create(bf, filos->los_dfd);
 	if (err) {
-		locos_del_bf(locos, bf);
+		filos_del_bf(filos, bf);
 		return err;
 	}
 	*out_bf = bf;
 	return 0;
 }
 
-static int locos_spawn_and_cache_bf(struct silofs_locos *locos,
+static int filos_spawn_and_cache_bf(struct silofs_filos *filos,
                                     const struct silofs_blobid *blobid,
                                     struct silofs_blobfile **out_bf)
 {
 	int err;
 
-	*out_bf = locos_lookup_cached_bf(locos, blobid);
+	*out_bf = filos_lookup_cached_bf(filos, blobid);
 	if (*out_bf != nullptr) {
 		return -SILOFS_EEXIST;
 	}
-	locos_relax_cache(locos);
+	filos_relax_cache(filos);
 
-	err = locos_spawn_blob(locos, blobid, out_bf);
+	err = filos_spawn_blob(filos, blobid, out_bf);
 	if (err) {
 		return err;
 	}
-	locos_insert_cached_bf(locos, *out_bf);
+	filos_insert_cached_bf(filos, *out_bf);
 	return 0;
 }
 
-static int locos_stage_blob(struct silofs_locos *locos,
+static int filos_stage_blob(struct silofs_filos *filos,
                             const struct silofs_blobid *blobid,
                             struct silofs_blobfile **out_bf)
 {
 	struct silofs_blobfile *bf = nullptr;
 	int err = 0;
 
-	bf = locos_new_bf(locos, blobid);
+	bf = filos_new_bf(filos, blobid);
 	if (bf == nullptr) {
 		return -SILOFS_ENOMEM;
 	}
-	err = bf_open(bf, locos->los_dfd);
+	err = bf_open(bf, filos->los_dfd);
 	if (err) {
-		locos_del_bf(locos, bf);
+		filos_del_bf(filos, bf);
 		return err;
 	}
 	*out_bf = bf;
 	return err;
 }
 
-static int locos_stage_and_cache_bf(struct silofs_locos *locos,
+static int filos_stage_and_cache_bf(struct silofs_filos *filos,
                                     const struct silofs_blobid *blobid,
                                     struct silofs_blobfile **out_bf)
 {
 	int err;
 
-	*out_bf = locos_lookup_cached_bf(locos, blobid);
+	*out_bf = filos_lookup_cached_bf(filos, blobid);
 	if (*out_bf != nullptr) {
 		return 0; /* cache hit */
 	}
-	locos_relax_cache(locos);
+	filos_relax_cache(filos);
 
-	err = locos_stage_blob(locos, blobid, out_bf);
+	err = filos_stage_blob(filos, blobid, out_bf);
 	if (err) {
 		return err;
 	}
-	locos_insert_cached_bf(locos, *out_bf);
+	filos_insert_cached_bf(filos, *out_bf);
 	return 0;
 }
 
-int silofs_locos_spawn_blob(struct silofs_locos *locos,
+int silofs_filos_spawn_blob(struct silofs_filos *filos,
                             const struct silofs_blobid *blobid)
 {
 	struct silofs_blobfile *bf = nullptr;
 
-	return locos_spawn_and_cache_bf(locos, blobid, &bf);
+	return filos_spawn_and_cache_bf(filos, blobid, &bf);
 }
 
-int silofs_locos_remove_blob(struct silofs_locos *locos,
+int silofs_filos_remove_blob(struct silofs_filos *filos,
                              const struct silofs_blobid *blobid)
 {
 	struct silofs_blobfile *bf = nullptr;
 	int err = 0;
 
-	err = locos_stage_and_cache_bf(locos, blobid, &bf);
+	err = filos_stage_and_cache_bf(filos, blobid, &bf);
 	if (err) {
 		return err;
 	}
-	err = bf_unlink(bf, locos->los_dfd);
+	err = bf_unlink(bf, filos->los_dfd);
 	if (err) {
 		return err;
 	}
-	locos_forget_cached_bf(locos, bf);
+	filos_forget_cached_bf(filos, bf);
 	return 0;
 }
 
-int silofs_locos_stat_blob(struct silofs_locos *locos,
+int silofs_filos_stat_blob(struct silofs_filos *filos,
                            const struct silofs_blobid *blobid,
                            struct stat *out_st)
 {
 	struct silofs_blobfile *bf = nullptr;
 	int err = 0;
 
-	err = locos_stage_and_cache_bf(locos, blobid, &bf);
+	err = filos_stage_and_cache_bf(filos, blobid, &bf);
 	if (err) {
 		return err;
 	}
@@ -918,39 +918,39 @@ int silofs_locos_stat_blob(struct silofs_locos *locos,
 	return 0;
 }
 
-int silofs_locos_stage_blob(struct silofs_locos *locos,
+int silofs_filos_stage_blob(struct silofs_filos *filos,
                             const struct silofs_blobid *blobid)
 {
 	struct stat st;
 
-	return silofs_locos_stat_blob(locos, blobid, &st);
+	return silofs_filos_stat_blob(filos, blobid, &st);
 }
 
-int silofs_locos_require_blob(struct silofs_locos *locos,
+int silofs_filos_require_blob(struct silofs_filos *filos,
                               const struct silofs_blobid *blobid)
 {
 	struct stat st;
 	int err;
 
-	err = silofs_locos_stat_blob(locos, blobid, &st);
+	err = silofs_filos_stat_blob(filos, blobid, &st);
 	if (err && (err == -ENOENT)) {
-		err = silofs_locos_spawn_blob(locos, blobid);
+		err = silofs_filos_spawn_blob(filos, blobid);
 	}
 	return err;
 }
 
-int silofs_locos_require_bpos(struct silofs_locos *locos,
+int silofs_filos_require_bpos(struct silofs_filos *filos,
                               const struct silofs_blobid *blobid, off_t pos)
 {
 	struct stat st = { .st_size = -1 };
 	struct silofs_blobfile *bf = nullptr;
 	int err;
 
-	err = silofs_locos_require_blob(locos, blobid);
+	err = silofs_filos_require_blob(filos, blobid);
 	if (err) {
 		return err;
 	}
-	err = locos_stage_and_cache_bf(locos, blobid, &bf);
+	err = filos_stage_and_cache_bf(filos, blobid, &bf);
 	if (err) {
 		return err;
 	}
@@ -968,14 +968,14 @@ int silofs_locos_require_bpos(struct silofs_locos *locos,
 	return 0;
 }
 
-int silofs_locos_access_bpos(struct silofs_locos *locos,
+int silofs_filos_access_bpos(struct silofs_filos *filos,
                              const struct silofs_blobid *blobid, off_t pos)
 {
 	struct stat st = { .st_size = -1 };
 	struct silofs_blobfile *bf = nullptr;
 	int err;
 
-	err = locos_stage_and_cache_bf(locos, blobid, &bf);
+	err = filos_stage_and_cache_bf(filos, blobid, &bf);
 	if (err) {
 		return err;
 	}
@@ -989,13 +989,13 @@ int silofs_locos_access_bpos(struct silofs_locos *locos,
 	return 0;
 }
 
-int silofs_locos_flush_blob(struct silofs_locos *locos,
+int silofs_filos_flush_blob(struct silofs_filos *filos,
                             const struct silofs_blobid *blobid)
 {
 	struct silofs_blobfile *bf = nullptr;
 	int err = 0;
 
-	err = locos_stage_and_cache_bf(locos, blobid, &bf);
+	err = filos_stage_and_cache_bf(filos, blobid, &bf);
 	if (err) {
 		return err;
 	}
@@ -1006,13 +1006,13 @@ int silofs_locos_flush_blob(struct silofs_locos *locos,
 	return 0;
 }
 
-int silofs_locos_punch_blob(struct silofs_locos *locos,
+int silofs_filos_punch_blob(struct silofs_filos *filos,
                             const struct silofs_blobid *blobid)
 {
 	struct silofs_blobfile *bf = nullptr;
 	int err = 0;
 
-	err = locos_stage_and_cache_bf(locos, blobid, &bf);
+	err = filos_stage_and_cache_bf(filos, blobid, &bf);
 	if (err) {
 		return err;
 	}
@@ -1023,14 +1023,14 @@ int silofs_locos_punch_blob(struct silofs_locos *locos,
 	return 0;
 }
 
-int silofs_locos_write_blob(struct silofs_locos *locos,
+int silofs_filos_write_blob(struct silofs_filos *filos,
                             const struct silofs_paddr *paddr,
                             const struct silofs_rovec *rovec)
 {
 	struct silofs_blobfile *bf = nullptr;
 	int err = 0;
 
-	err = locos_stage_and_cache_bf(locos, &paddr->blobid, &bf);
+	err = filos_stage_and_cache_bf(filos, &paddr->blobid, &bf);
 	if (err) {
 		return err;
 	}
@@ -1041,7 +1041,7 @@ int silofs_locos_write_blob(struct silofs_locos *locos,
 	return 0;
 }
 
-int silofs_locos_writev_blob(struct silofs_locos *locos,
+int silofs_filos_writev_blob(struct silofs_filos *filos,
                              const struct silofs_paddr *paddr,
                              const struct iovec *iov, size_t cnt)
 {
@@ -1050,7 +1050,7 @@ int silofs_locos_writev_blob(struct silofs_locos *locos,
 	int err = 0;
 	bool sync = false; /* TODO: revisit */
 
-	err = locos_stage_and_cache_bf(locos, &paddr->blobid, &bf);
+	err = filos_stage_and_cache_bf(filos, &paddr->blobid, &bf);
 	if (err) {
 		return err;
 	}
@@ -1061,14 +1061,14 @@ int silofs_locos_writev_blob(struct silofs_locos *locos,
 	return sync ? bf_sync_range(bf, pos, silofs_iov_length(iov, cnt)) : 0;
 }
 
-int silofs_locos_read_blob(struct silofs_locos *locos,
+int silofs_filos_read_blob(struct silofs_filos *filos,
                            const struct silofs_paddr *paddr,
                            const struct silofs_rwvec *rwvec)
 {
 	struct silofs_blobfile *bf = nullptr;
 	int err = 0;
 
-	err = locos_stage_and_cache_bf(locos, &paddr->blobid, &bf);
+	err = filos_stage_and_cache_bf(filos, &paddr->blobid, &bf);
 	if (err) {
 		return err;
 	}

@@ -303,7 +303,7 @@ static void btn_dup_by(struct silofs_btree_node *btn,
 	btn_dup_childs(btn, btn_other);
 }
 
-static void btn_init(struct silofs_btree_node *btn)
+static void btn_setup(struct silofs_btree_node *btn)
 {
 	btn_set_flags(btn, SILOFS_PNODEF_NONE);
 	btn_set_height(btn, 1);
@@ -313,107 +313,16 @@ static void btn_init(struct silofs_btree_node *btn)
 	btn_reset_keys(btn);
 }
 
-static void btn_fini(struct silofs_btree_node *btn)
-{
-	btn_set_nkeys(btn, 0);
-	btn_set_nchilds(btn, 0);
-	btn_reset_childs(btn);
-	btn_reset_keys(btn);
-}
-
-static struct silofs_btree_node *btn_malloc(struct silofs_alloc *alloc)
-{
-	struct silofs_btree_node *btn;
-
-	btn = silofs_memalloc(alloc, sizeof(*btn), SILOFS_ALLOCF_BZERO);
-	return btn;
-}
-
-static void btn_free(struct silofs_btree_node *btn, struct silofs_alloc *alloc)
-{
-	silofs_memfree(alloc, btn, sizeof(*btn), SILOFS_ALLOCF_TRYPUNCH);
-}
-
-static struct silofs_btree_node *btn_new(struct silofs_alloc *alloc)
-{
-	struct silofs_btree_node *btn;
-
-	btn = btn_malloc(alloc);
-	if (btn != nullptr) {
-		btn_init(btn);
-	}
-	return btn;
-}
-
-static void btn_del(struct silofs_btree_node *btn, struct silofs_alloc *alloc)
-{
-	btn_fini(btn);
-	btn_free(btn, alloc);
-}
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct silofs_btnode_info *bti_malloc(struct silofs_alloc *alloc)
+void silofs_bti_incref(struct silofs_btnode_info *bti)
 {
-	struct silofs_btnode_info *bti = nullptr;
-
-	bti = silofs_memalloc(alloc, sizeof(*bti), 0);
-	return bti;
+	silofs_pni_incref(&bti->btn_pni);
 }
 
-static void
-bti_free(struct silofs_btnode_info *bti, struct silofs_alloc *alloc)
+void silofs_bti_decref(struct silofs_btnode_info *bti)
 {
-	silofs_memfree(alloc, bti, sizeof(*bti), 0);
-}
-
-static void
-bti_init(struct silofs_btnode_info *bti, const struct silofs_paddr *paddr)
-{
-	silofs_pni_init(&bti->btn_pni, paddr);
-	bti->btn = nullptr;
-	bti->btn_rdonly = false;
-}
-
-static void bti_fini(struct silofs_btnode_info *bti)
-{
-	silofs_pni_fini(&bti->btn_pni);
-	bti->btn = nullptr;
-}
-
-struct silofs_btnode_info *
-silofs_bti_new(const struct silofs_paddr *paddr, struct silofs_alloc *alloc)
-{
-	struct silofs_btree_node *btn = nullptr;
-	struct silofs_btnode_info *bti = nullptr;
-
-	btn = btn_new(alloc);
-	if (btn == nullptr) {
-		return nullptr;
-	}
-	bti = bti_malloc(alloc);
-	if (bti == nullptr) {
-		btn_del(btn, alloc);
-		return nullptr;
-	}
-	bti_init(bti, paddr);
-	bti->btn = btn;
-	return bti;
-}
-
-void silofs_bti_del(struct silofs_btnode_info *bti, struct silofs_alloc *alloc)
-{
-	struct silofs_btree_node *btn = bti->btn;
-
-	bti_fini(bti);
-	bti_free(bti, alloc);
-	btn_del(btn, alloc);
-}
-
-void silofs_bti_set_dq(struct silofs_btnode_info *bti,
-                       struct silofs_dirtyq *dq)
-{
-	silofs_pni_set_dq(&bti->btn_pni, dq);
+	silofs_pni_decref(&bti->btn_pni);
 }
 
 void silofs_bti_dirtify(struct silofs_btnode_info *bti)
@@ -562,4 +471,45 @@ int silofs_bti_update_child(struct silofs_btnode_info *bti, uint64_t key,
 bool silofs_bti_isfull(const struct silofs_btnode_info *bti)
 {
 	return btn_nkeys(bti->btn) == btn_nkeys_max(bti->btn);
+}
+
+static void bti_setup_spawned(struct silofs_btnode_info *bti)
+{
+	btn_setup(bti->btn);
+	silofs_bti_dirtify(bti);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+struct silofs_btnode_info *
+silofs_lookup_cached_btnode(struct silofs_pcache *pcache,
+                            const struct silofs_paddr *paddr)
+{
+	struct silofs_pnode_info *pni;
+
+	silofs_assert_eq(paddr->mtype, SILOFS_MTYPE_BTNODE);
+	pni = silofs_pcache_lookup_pnode(pcache, paddr);
+	return silofs_bti_from_pni(pni);
+}
+
+struct silofs_btnode_info *
+silofs_create_cached_btnode(struct silofs_pcache *pcache,
+                            const struct silofs_paddr *paddr, bool spawn)
+{
+	struct silofs_pnode_info *pni;
+	struct silofs_btnode_info *bti;
+
+	silofs_assert_eq(paddr->mtype, SILOFS_MTYPE_BTNODE);
+	pni = silofs_pcache_create_pnode(pcache, paddr);
+	bti = silofs_bti_from_pni(pni);
+	if ((bti != nullptr) && spawn) {
+		bti_setup_spawned(bti);
+	}
+	return bti;
+}
+
+void silofs_forget_cached_btnode(struct silofs_pcache *pcache,
+                                 struct silofs_btnode_info *bti)
+{
+	silofs_pcache_delete_pnode(pcache, &bti->btn_pni);
 }

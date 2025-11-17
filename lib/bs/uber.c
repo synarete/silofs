@@ -111,11 +111,6 @@ static void ub_setup(struct silofs_uber_block *ub, const struct timespec *ts)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-const struct silofs_paddr *silofs_ubi_paddr(const struct silofs_uber_info *ubi)
-{
-	return &ubi->ub_pni.pn_paddr;
-}
-
 void silofs_ubi_incref(struct silofs_uber_info *ubi)
 {
 	silofs_pni_incref(&ubi->ub_pni);

@@ -22,13 +22,20 @@
 #include "nodes.h"
 
 struct silofs_env;
-struct silofs_task_ctx;
 
 int silofs_spawn_uber(struct silofs_env *env, const struct silofs_paddr *paddr,
                       struct silofs_uber_info **out_ubi);
 
 int silofs_stage_uber(struct silofs_env *env, const struct silofs_paddr *paddr,
                       struct silofs_uber_info **out_ubi);
+
+int silofs_spawn_btnode(struct silofs_env          *env,
+                        const struct silofs_paddr  *paddr,
+                        struct silofs_btnode_info **out_bti);
+
+int silofs_stage_btnode(struct silofs_env          *env,
+                        const struct silofs_paddr  *paddr,
+                        struct silofs_btnode_info **out_bti);
 
 int silofs_destage_dirty(struct silofs_env *env);
 

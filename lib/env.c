@@ -25,6 +25,11 @@
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static const struct silofs_paddr *ubi_paddr(const struct silofs_uber_info *ubi)
+{
+	return &ubi->ub_pni.pn_paddr;
+}
+
 static void
 env_bind_ubi(struct silofs_env *env, struct silofs_uber_info *ubi_new)
 {
@@ -45,7 +50,7 @@ static void env_update_root_uber(struct silofs_env *env,
 	const struct silofs_paddr *paddr = nullptr;
 
 	if (ubi != nullptr) {
-		paddr = silofs_ubi_paddr(ubi);
+		paddr = ubi_paddr(ubi);
 		silofs_gbrs_set_root(&env->gbrs, SILOFS_GBR_FS, paddr);
 	}
 }

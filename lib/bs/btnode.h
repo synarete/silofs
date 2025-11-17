@@ -23,14 +23,9 @@
 
 #define SILOFS_BTREE_KEY_NULL (0)
 
-struct silofs_btnode_info *
-silofs_bti_new(const struct silofs_paddr *paddr, struct silofs_alloc *alloc);
+void silofs_bti_incref(struct silofs_btnode_info *bti);
 
-void silofs_bti_del(struct silofs_btnode_info *bti,
-                    struct silofs_alloc       *alloc);
-
-void silofs_bti_set_dq(struct silofs_btnode_info *bti,
-                       struct silofs_dirtyq      *dq);
+void silofs_bti_decref(struct silofs_btnode_info *bti);
 
 void silofs_bti_dirtify(struct silofs_btnode_info *bti);
 
@@ -67,5 +62,18 @@ int silofs_bti_expand(struct silofs_btnode_info *bti, uint64_t key,
 
 void silofs_bti_set_final(struct silofs_btnode_info *bti,
                           const struct silofs_paddr *paddr);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+struct silofs_btnode_info *
+silofs_lookup_cached_btnode(struct silofs_pcache      *pcache,
+                            const struct silofs_paddr *paddr);
+
+struct silofs_btnode_info *
+silofs_create_cached_btnode(struct silofs_pcache      *pcache,
+                            const struct silofs_paddr *paddr, bool spawn);
+
+void silofs_forget_cached_btnode(struct silofs_pcache      *pcache,
+                                 struct silofs_btnode_info *bti);
 
 #endif /* SILOFS_BTNODE_H_ */

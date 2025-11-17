@@ -63,7 +63,7 @@ bool silofs_mtype_isunode(enum silofs_mtype mtype)
 		break;
 	case SILOFS_MTYPE_UBER:
 	case SILOFS_MTYPE_ARIX:
-	case SILOFS_MTYPE_BDESC:
+	case SILOFS_MTYPE_BLDESC:
 	case SILOFS_MTYPE_BTNODE:
 	case SILOFS_MTYPE_LSMAP:
 	case SILOFS_MTYPE_INODE:
@@ -101,7 +101,7 @@ bool silofs_mtype_isvnode(enum silofs_mtype mtype)
 		break;
 	case SILOFS_MTYPE_UBER:
 	case SILOFS_MTYPE_ARIX:
-	case SILOFS_MTYPE_BDESC:
+	case SILOFS_MTYPE_BLDESC:
 	case SILOFS_MTYPE_BTNODE:
 	case SILOFS_MTYPE_GBR:
 	case SILOFS_MTYPE_SUPER:
@@ -128,7 +128,7 @@ bool silofs_mtype_isdata(enum silofs_mtype mtype)
 		break;
 	case SILOFS_MTYPE_UBER:
 	case SILOFS_MTYPE_ARIX:
-	case SILOFS_MTYPE_BDESC:
+	case SILOFS_MTYPE_BLDESC:
 	case SILOFS_MTYPE_BTNODE:
 	case SILOFS_MTYPE_GBR:
 	case SILOFS_MTYPE_SUPER:
@@ -156,7 +156,7 @@ uint32_t silofs_mtype_size(enum silofs_mtype mtype)
 		return sizeof(struct silofs_uber_block);
 	case SILOFS_MTYPE_ARIX:
 		return sizeof(struct silofs_arix_block);
-	case SILOFS_MTYPE_BDESC:
+	case SILOFS_MTYPE_BLDESC:
 		return sizeof(struct silofs_blob_desc);
 	case SILOFS_MTYPE_BTNODE:
 		return sizeof(struct silofs_btree_node);

@@ -1314,7 +1314,7 @@ silofs_new_unode(struct silofs_alloc *alloc, const struct silofs_uaddr *uaddr)
 		break;
 	case SILOFS_MTYPE_UBER:
 	case SILOFS_MTYPE_ARIX:
-	case SILOFS_MTYPE_BDESC:
+	case SILOFS_MTYPE_BLDESC:
 	case SILOFS_MTYPE_BTNODE:
 	case SILOFS_MTYPE_GBR:
 	case SILOFS_MTYPE_LSMAP:
@@ -1352,7 +1352,7 @@ void silofs_del_unode(struct silofs_unode_info *uni,
 		break;
 	case SILOFS_MTYPE_UBER:
 	case SILOFS_MTYPE_ARIX:
-	case SILOFS_MTYPE_BDESC:
+	case SILOFS_MTYPE_BLDESC:
 	case SILOFS_MTYPE_BTNODE:
 	case SILOFS_MTYPE_GBR:
 	case SILOFS_MTYPE_LSMAP:
@@ -1406,7 +1406,7 @@ silofs_new_vnode(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 		break;
 	case SILOFS_MTYPE_UBER:
 	case SILOFS_MTYPE_ARIX:
-	case SILOFS_MTYPE_BDESC:
+	case SILOFS_MTYPE_BLDESC:
 	case SILOFS_MTYPE_BTNODE:
 	case SILOFS_MTYPE_GBR:
 	case SILOFS_MTYPE_SUPER:
@@ -1452,7 +1452,7 @@ void silofs_del_vnode(struct silofs_vnode_info *vni,
 		break;
 	case SILOFS_MTYPE_UBER:
 	case SILOFS_MTYPE_ARIX:
-	case SILOFS_MTYPE_BDESC:
+	case SILOFS_MTYPE_BLDESC:
 	case SILOFS_MTYPE_BTNODE:
 	case SILOFS_MTYPE_GBR:
 	case SILOFS_MTYPE_SUPER:

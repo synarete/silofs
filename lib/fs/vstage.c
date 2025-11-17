@@ -147,7 +147,7 @@ static int vni_verify_sub_view(const struct silofs_vnode_info *vni)
 	case SILOFS_MTYPE_GBR:
 	case SILOFS_MTYPE_UBER:
 	case SILOFS_MTYPE_ARIX:
-	case SILOFS_MTYPE_BDESC:
+	case SILOFS_MTYPE_BLDESC:
 	case SILOFS_MTYPE_BTNODE:
 	case SILOFS_MTYPE_SUPER:
 	case SILOFS_MTYPE_SPNODE:

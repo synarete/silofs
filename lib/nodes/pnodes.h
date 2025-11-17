@@ -39,8 +39,8 @@ struct silofs_uber_info {
 
 /* blob-descriptor node */
 struct silofs_bldesc_info {
-	struct silofs_pnode_info bd_pni;
-	struct silofs_blob_desc *bd;
+	struct silofs_pnode_info bld_pni;
+	struct silofs_blob_desc *bld;
 };
 
 /* btree-node */

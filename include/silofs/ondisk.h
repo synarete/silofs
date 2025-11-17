@@ -357,7 +357,7 @@ enum silofs_mtype {
 	SILOFS_MTYPE_GBR    = 1,
 	SILOFS_MTYPE_UBER   = 2,
 	SILOFS_MTYPE_ARIX   = 3,
-	SILOFS_MTYPE_BDESC  = 4,
+	SILOFS_MTYPE_BLDESC = 4,
 	SILOFS_MTYPE_BTNODE = 5,
 	SILOFS_MTYPE_SUPER  = 6,
 	SILOFS_MTYPE_SPNODE = 7,
@@ -911,19 +911,19 @@ enum silofs_objstatef {
 
 /* blob's meta descriptor */
 struct silofs_blob_desc {
-	struct silofs_header   bd_hdr;
-	struct silofs_timespec bd_btime;
-	struct silofs_timespec bd_ctime;
-	struct silofs_blobid   bd_prev;
-	struct silofs_blobid   bd_refblob;
-	uint64_t               bd_blobsize;
-	uint32_t               bd_objsize;
-	uint32_t               bd_nobjs_max;
-	uint32_t               bd_nobjs;
-	uint32_t               bd_flags;
-	uint8_t                bd_refmtype;
-	uint8_t                bd_reserved1[55];
-	uint8_t                bd_obj_state[7936];
+	struct silofs_header   bld_hdr;
+	struct silofs_timespec bld_btime;
+	struct silofs_timespec bld_ctime;
+	struct silofs_blobid   bld_prev;
+	struct silofs_blobid   bld_refblob;
+	uint64_t               bld_blobsize;
+	uint32_t               bld_objsize;
+	uint32_t               bld_nobjs_max;
+	uint32_t               bld_nobjs;
+	uint32_t               bld_flags;
+	uint8_t                bld_refmtype;
+	uint8_t                bld_reserved1[55];
+	uint8_t                bld_obj_state[7936];
 } silofs_attr_aligned64;
 
 /* b+tree node of persistent volume mapping */

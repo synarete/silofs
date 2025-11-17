@@ -49,4 +49,17 @@ int silofs_bdi_mark_free(struct silofs_bldesc_info *bdi,
 int silofs_bdi_mark_used(struct silofs_bldesc_info *bdi,
                          const struct silofs_paddr *paddr);
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+struct silofs_bldesc_info *
+silofs_lookup_cached_bldesc(struct silofs_pcache      *pcache,
+                            const struct silofs_paddr *paddr);
+
+struct silofs_bldesc_info *
+silofs_create_cached_bldesc(struct silofs_pcache      *pcache,
+                            const struct silofs_paddr *paddr, bool spawn);
+
+void silofs_forget_cached_bldesc(struct silofs_pcache      *pcache,
+                                 struct silofs_bldesc_info *bdi);
+
 #endif /* SILOFS_BLDESC_H_ */

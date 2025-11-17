@@ -119,7 +119,7 @@ pcache_hmapq_of(const struct silofs_pcache *pcache,
 		break;
 	case SILOFS_MTYPE_ARIX:
 		break;
-	case SILOFS_MTYPE_BDESC:
+	case SILOFS_MTYPE_BLDESC:
 		hmapq = &pcache->pc_hmapq[1];
 		break;
 	case SILOFS_MTYPE_BTNODE:

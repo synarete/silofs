@@ -210,7 +210,7 @@ sb_mainsilofs_lsid_by(const struct silofs_super_block *sb,
 	case SILOFS_MTYPE_NONE:
 	case SILOFS_MTYPE_UBER:
 	case SILOFS_MTYPE_ARIX:
-	case SILOFS_MTYPE_BDESC:
+	case SILOFS_MTYPE_BLDESC:
 	case SILOFS_MTYPE_BTNODE:
 	case SILOFS_MTYPE_GBR:
 	case SILOFS_MTYPE_SUPER:
@@ -306,7 +306,7 @@ sb_sproot_by(const struct silofs_super_block *sb, enum silofs_mtype mtype)
 	case SILOFS_MTYPE_NONE:
 	case SILOFS_MTYPE_UBER:
 	case SILOFS_MTYPE_ARIX:
-	case SILOFS_MTYPE_BDESC:
+	case SILOFS_MTYPE_BLDESC:
 	case SILOFS_MTYPE_BTNODE:
 	case SILOFS_MTYPE_GBR:
 	case SILOFS_MTYPE_SUPER:

@@ -29,6 +29,13 @@ int silofs_spawn_uber(struct silofs_env *env, const struct silofs_paddr *paddr,
 int silofs_stage_uber(struct silofs_env *env, const struct silofs_paddr *paddr,
                       struct silofs_uber_info **out_ubi);
 
+int silofs_spawn_bldesc(struct silofs_env          *env,
+                        const struct silofs_paddr  *paddr,
+                        struct silofs_bldesc_info **out_bdi);
+int silofs_stage_bldesc(struct silofs_env          *env,
+                        const struct silofs_paddr  *paddr,
+                        struct silofs_bldesc_info **out_bdi);
+
 int silofs_spawn_btnode(struct silofs_env          *env,
                         const struct silofs_paddr  *paddr,
                         struct silofs_btnode_info **out_bti);

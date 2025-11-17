@@ -269,14 +269,14 @@ bdi_free(struct silofs_bldesc_info *bdi, struct silofs_alloc *alloc)
 static void
 bdi_init(struct silofs_bldesc_info *bdi, const struct silofs_paddr *paddr)
 {
-	silofs_pni_init(&bdi->bd_pni, paddr);
-	bdi->bd = nullptr;
+	silofs_pni_init(&bdi->bld_pni, paddr);
+	bdi->bld = nullptr;
 }
 
 static void bdi_fini(struct silofs_bldesc_info *bdi)
 {
-	silofs_pni_fini(&bdi->bd_pni);
-	bdi->bd = nullptr;
+	silofs_pni_fini(&bdi->bld_pni);
+	bdi->bld = nullptr;
 }
 
 static int
@@ -284,9 +284,9 @@ bdi_new_view(struct silofs_bldesc_info *bdi, struct silofs_alloc *alloc)
 {
 	int err;
 
-	err = pni_new_view(&bdi->bd_pni, alloc);
+	err = pni_new_view(&bdi->bld_pni, alloc);
 	if (!err) {
-		bdi->bd = &bdi->bd_pni.pn_view->u.bd;
+		bdi->bld = &bdi->bld_pni.pn_view->u.bd;
 	}
 	return err;
 }
@@ -315,8 +315,8 @@ bdi_new(const struct silofs_paddr *paddr, struct silofs_alloc *alloc)
 static void
 bdi_del_view(struct silofs_bldesc_info *bdi, struct silofs_alloc *alloc)
 {
-	pni_del_view(&bdi->bd_pni, alloc);
-	bdi->bd = nullptr;
+	pni_del_view(&bdi->bld_pni, alloc);
+	bdi->bld = nullptr;
 }
 
 static void bdi_del(struct silofs_bldesc_info *bdi, struct silofs_alloc *alloc)
@@ -333,7 +333,7 @@ static struct silofs_pnode_info *bdi_to_pni(struct silofs_bldesc_info *bdi)
 	struct silofs_pnode_info *pni = nullptr;
 
 	if (bdi != nullptr) {
-		pni = &bdi->bd_pni;
+		pni = &bdi->bld_pni;
 	}
 	return pni;
 }
@@ -343,7 +343,7 @@ static struct silofs_bldesc_info *bdi_from_pni(struct silofs_pnode_info *pni)
 	struct silofs_bldesc_info *bdi = nullptr;
 
 	if (pni != nullptr) {
-		bdi = container_of(pni, struct silofs_bldesc_info, bd_pni);
+		bdi = container_of(pni, struct silofs_bldesc_info, bld_pni);
 	}
 	return bdi;
 }
@@ -365,7 +365,7 @@ silofs_bdi_from_pni(const struct silofs_pnode_info *pni)
 	const struct silofs_bldesc_info *bdi = nullptr;
 
 	if (pni != nullptr) {
-		bdi = container_of2(pni, struct silofs_bldesc_info, bd_pni);
+		bdi = container_of2(pni, struct silofs_bldesc_info, bld_pni);
 	}
 	return bdi_unconst(bdi);
 }
@@ -500,7 +500,7 @@ silofs_new_pnode(const struct silofs_paddr *paddr, struct silofs_alloc *alloc)
 	case SILOFS_MTYPE_UBER:
 		pni = ubi_to_pni(ubi_new(paddr, alloc));
 		break;
-	case SILOFS_MTYPE_BDESC:
+	case SILOFS_MTYPE_BLDESC:
 		pni = bdi_to_pni(bdi_new(paddr, alloc));
 		break;
 	case SILOFS_MTYPE_BTNODE:
@@ -538,7 +538,7 @@ void silofs_del_pnode(struct silofs_pnode_info *pni,
 	case SILOFS_MTYPE_UBER:
 		ubi_del(ubi_from_pni(pni), alloc);
 		break;
-	case SILOFS_MTYPE_BDESC:
+	case SILOFS_MTYPE_BLDESC:
 		bdi_del(bdi_from_pni(pni), alloc);
 		break;
 	case SILOFS_MTYPE_BTNODE:

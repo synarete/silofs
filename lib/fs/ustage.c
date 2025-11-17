@@ -18,7 +18,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mount.h>
-#include "bs.h"
+#include "pbs.h"
 #include "fs.h"
 #include "env.h"
 

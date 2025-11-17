@@ -14,17 +14,17 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_BS_H_
-#define SILOFS_BS_H_
+#ifndef SILOFS_PBS_H_
+#define SILOFS_PBS_H_
 
 #include "infra.h"
 #include "addr.h"
 #include "nodes.h"
-#include "bs/repo.h"
-#include "bs/bldesc.h"
-#include "bs/btnode.h"
-#include "bs/btree.h"
-#include "bs/uber.h"
-#include "bs/store.h"
+#include "pbs/repo.h"
+#include "pbs/bldesc.h"
+#include "pbs/btnode.h"
+#include "pbs/btree.h"
+#include "pbs/uber.h"
+#include "pbs/store.h"
 
-#endif /* SILOFS_BS_H_ */
+#endif /* SILOFS_PBS_H_ */

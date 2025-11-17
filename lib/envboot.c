@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 #include "configs.h"
-#include "bs.h"
+#include "pbs.h"
 #include "fs.h"
 #include "gbr.h"
 #include "env.h"

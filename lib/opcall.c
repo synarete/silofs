@@ -17,7 +17,7 @@
 #include "configs.h"
 #include <linux/fuse_kernel.h>
 #include "gbr.h"
-#include "fs.h"
+#include "vfs.h"
 #include "walk.h"
 #include "env.h"
 #include "opcall.h"

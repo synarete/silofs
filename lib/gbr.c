@@ -19,7 +19,7 @@
 #include "infra.h"
 #include "pbs.h"
 #include "gbr.h"
-#include "fs.h"
+#include "vfs.h"
 #include "env.h"
 
 static uint64_t gbr1k_magic(const struct silofs_gbr1k *gbr1k)

@@ -19,7 +19,7 @@
 #include <sys/stat.h>
 #include <sys/mount.h>
 #include "pbs.h"
-#include "fs.h"
+#include "vfs.h"
 #include "env.h"
 
 static int ubi_verify_sub_view(const struct silofs_unode_info *uni)

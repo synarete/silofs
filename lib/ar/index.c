@@ -18,7 +18,7 @@
 #include "infra.h"
 #include "addr.h"
 #include "pbs.h"
-#include "fs.h"
+#include "vfs.h"
 #include "index.h"
 
 static void

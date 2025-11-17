@@ -22,7 +22,7 @@
 #include <silofs/appexec.h>
 #include "infra.h"
 #include "pbs.h"
-#include "fs.h"
+#include "vfs.h"
 #include "gbr.h"
 #include "env.h"
 #include "opexec.h"

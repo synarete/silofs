@@ -31,7 +31,7 @@
 #include <dirent.h>
 
 #include <silofs/silofs.h>
-#include "fs.h"
+#include "vfs.h"
 #include "ar.h"
 #include "gbr.h"
 #include "opexec.h"

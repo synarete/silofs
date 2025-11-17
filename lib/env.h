@@ -22,7 +22,7 @@
 #include "crypt.h"
 #include "addr.h"
 #include "pbs.h"
-#include "fs.h"
+#include "vfs.h"
 #include "gbr.h"
 
 /* top-level operations counters/stats */

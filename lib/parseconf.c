@@ -28,7 +28,7 @@
 #include <silofs/appexec.h>
 #include "infra.h"
 #include "str.h"
-#include "fs.h"
+#include "vfs.h"
 
 static bool strview_isempty(const struct silofs_strview *sv)
 {

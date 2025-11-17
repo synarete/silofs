@@ -19,7 +19,7 @@
 #include <sys/stat.h>
 #include <sys/mount.h>
 #include "pbs.h"
-#include "fs.h"
+#include "vfs.h"
 #include "gbr.h"
 #include "env.h"
 

@@ -17,7 +17,7 @@
 #include "configs.h"
 #include "infra.h"
 #include "pbs.h"
-#include "fs.h"
+#include "vfs.h"
 #include "env.h"
 #include "walk.h"
 #include "index.h"

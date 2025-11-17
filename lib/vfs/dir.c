@@ -18,7 +18,7 @@
 #include <dirent.h>
 #include <errno.h>
 #include "infra.h"
-#include "fs.h"
+#include "vfs.h"
 #include "env.h"
 
 enum silofs_dtree_consts {

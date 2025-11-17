@@ -24,7 +24,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <limits.h>
-#include "fs.h"
+#include "vfs.h"
 #include "exec.h"
 #include "env.h"
 

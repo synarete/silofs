@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 #include "configs.h"
-#include "fs.h"
+#include "vfs.h"
 #include "exec.h"
 
 struct silofs_symval_desc {

@@ -26,7 +26,7 @@
 #include <limits.h>
 #include <silofs/ioctls.h>
 #include "pbs.h"
-#include "fs.h"
+#include "vfs.h"
 #include "exec.h"
 #include "env.h"
 #include "walk.h"

@@ -33,7 +33,7 @@
 #include <silofs/mntsvc.h>
 #include "infra.h"
 #include "gbr.h"
-#include "fs.h"
+#include "vfs.h"
 #include "env.h"
 #include "opcall.h"
 #include "opexec.h"

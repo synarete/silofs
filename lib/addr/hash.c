@@ -35,30 +35,6 @@ void silofs_hash256_copyto(const struct silofs_hash256 *hash,
 	memcpy(other->hash, hash->hash, sizeof(other->hash));
 }
 
-void silofs_hash256_to_u64s(const struct silofs_hash256 *hash, uint64_t u[4])
-{
-	const uint8_t *p = hash->hash;
-
-	SILOFS_STATICASSERT_EQ(sizeof(hash->hash), 4 * sizeof(uint64_t));
-
-	u[0] = silofs_u8b_as_u64(p);
-	u[1] = silofs_u8b_as_u64(p + 8);
-	u[2] = silofs_u8b_as_u64(p + 16);
-	u[3] = silofs_u8b_as_u64(p + 24);
-}
-
-void silofs_hash256_from_u64s(struct silofs_hash256 *hash, const uint64_t u[4])
-{
-	uint8_t *p = hash->hash;
-
-	SILOFS_STATICASSERT_EQ(sizeof(hash->hash), 4 * sizeof(uint64_t));
-
-	silofs_u8b_from_u64(p, u[0]);
-	silofs_u8b_from_u64(p + 8, u[1]);
-	silofs_u8b_from_u64(p + 16, u[2]);
-	silofs_u8b_from_u64(p + 24, u[3]);
-}
-
 size_t silofs_hash256_to_name(const struct silofs_hash256 *hash,
                               struct silofs_strbuf *out_name)
 {
@@ -68,23 +44,4 @@ size_t silofs_hash256_to_name(const struct silofs_hash256 *hash,
 	silofs_mem_to_ascii(hash->hash, sizeof(hash->hash), out_name->str,
 	                    sizeof(out_name->str) - 1, &cnt);
 	return cnt;
-}
-
-int silofs_hash256_by_name(struct silofs_hash256 *hash,
-                           const struct silofs_strbuf *name)
-{
-	struct silofs_strview sv;
-	size_t cnt = 0;
-	int err;
-
-	silofs_strbuf_as_sv(name, &sv);
-	err = silofs_ascii_to_mem(hash->hash, sizeof(hash->hash), sv.str,
-	                          sv.len, &cnt);
-	if (err) {
-		return err;
-	}
-	if (cnt != sizeof(hash->hash)) {
-		return -SILOFS_EILLSTR;
-	}
-	return 0;
 }

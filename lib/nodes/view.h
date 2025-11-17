@@ -21,6 +21,21 @@
 #include "addr.h"
 #include "crypt.h"
 
+void silofs_hdr_setup(struct silofs_header *hdr, uint16_t type, size_t size);
+
+void silofs_hdr_setup2(struct silofs_header *hdr, uint16_t type, size_t size,
+                       enum silofs_hdrf flags);
+
+int silofs_hdr_verify(const struct silofs_header *hdr, uint16_t type,
+                      size_t size, enum silofs_hdrf flags);
+
+int silofs_hdr_verify2(const struct silofs_header *hdr,
+                       enum silofs_mtype           mtype);
+
+void silofs_hdr_seal(struct silofs_header *hdr);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 struct silofs_view *silofs_view_new(struct silofs_alloc *alloc,
                                     enum silofs_mtype mtype, int flags);
 

@@ -36,7 +36,7 @@ def _test_rsync(env: TestEnv) -> None:
     env.exec_mount(
         allow_hostids=True,
         allow_xattr_acl=False,
-        writeback_cache=False,
+        no_writeback_cache=True,
     )
     env.exec_lsmnt()
     base = env.create_fstree(name)
@@ -66,7 +66,7 @@ def _test_findutils(env: TestEnv) -> None:
     env.exec_mount(
         allow_hostids=True,
         allow_xattr_acl=False,
-        writeback_cache=False,
+        no_writeback_cache=True,
     )
     env.exec_lsmnt()
     base = env.create_fstree(name)
@@ -144,7 +144,7 @@ def _test_cpython(env: TestEnv) -> None:
     env.exec_mount(
         allow_hostids=True,
         allow_xattr_acl=True,
-        writeback_cache=False,
+        no_writeback_cache=True,
     )
     env.exec_lsmnt()
     base = env.create_fstree(name)

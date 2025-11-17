@@ -8,7 +8,7 @@ from .ctx import TestDef, TestEnv
 
 def _test_utests(env: TestEnv) -> None:
     ut_pre_dname = "pre-uniests"
-    env.exec_setup_fs(64, writeback_cache=False)
+    env.exec_setup_fs(64, no_writeback_cache=True)
     tds = env.make_tds(128, ut_pre_dname, 2**20)
     tds.do_makedirs()
     tds.do_write()
@@ -32,7 +32,7 @@ def _test_ftests(env: TestEnv) -> None:
     ff_pre_dname = "pre-ftests"
     ff_dname = "ftests"
     ff_clone_name = "ftests-clone"
-    env.exec_setup_fs(64, allow_xattr_acl=True, writeback_cache=False)
+    env.exec_setup_fs(64, allow_xattr_acl=True, no_writeback_cache=True)
     tds = env.make_tds(64, ff_pre_dname, 2**22)
     tds.do_makedirs()
     tds.do_write()
@@ -54,7 +54,7 @@ def _test_ftests_nosplice(env: TestEnv) -> None:
     ff_dname = "ftests_nosplice"
     env.exec_init()
     env.exec_mkfs(40)
-    env.exec_mount(writeback_cache=False, buffer_copy_mode=True)
+    env.exec_mount(no_writeback_cache=True, buffer_copy_mode=True)
     tds = env.make_tds(40, ff_dname, 2**22)
     tds.do_makedirs()
     tds.do_write()
@@ -68,7 +68,7 @@ def _test_ftests_nosplice(env: TestEnv) -> None:
 
 def _test_ftests_tune2(env: TestEnv) -> None:
     ff_dname = "ftests2"
-    env.exec_setup_fs(64, writeback_cache=False)
+    env.exec_setup_fs(64, no_writeback_cache=True)
     tds = env.make_tds(64, ff_dname, 2**22)
     tds.do_makedirs()
     tds.do_write()
@@ -95,7 +95,7 @@ def _test_ftests_mt(env: TestEnv) -> None:
     ff_dname2 = "ftests2"
     ff_clone_name1 = "ftests-clone1"
     ff_clone_name2 = "ftests-clone2"
-    env.exec_setup_fs(64, writeback_cache=False)
+    env.exec_setup_fs(64, no_writeback_cache=True)
     tds = env.make_tds(32, ff_pre_dname, 2**20)
     tds.do_makedirs()
     tds.do_write()

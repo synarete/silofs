@@ -227,11 +227,10 @@ class _Silofs(SubcmdExec):
         password: str,
         allow_hostids: bool = False,
         allow_xattr_acl: bool = False,
-        writeback_cache: bool = False,
+        no_writeback_cache: bool = False,
         buffer_copy_mode: bool = False,
     ) -> None:
-        wb_mode = int(writeback_cache)
-        args = ["mount", "--no-prompt", f"--writeback-cache={wb_mode}"]
+        args = ["mount", "--no-prompt"]
         if self.allow_coredump:
             args = args + ["--coredump"]
         if self.use_stdalloc:
@@ -240,6 +239,8 @@ class _Silofs(SubcmdExec):
             args = args + ["--allow-hostids"]
         if allow_xattr_acl:
             args = args + ["--allow-xattr-acl"]
+        if no_writeback_cache:
+            args = args + ["--no-writeback-cache"]
         if buffer_copy_mode:
             args = args + ["--buffer-copy-mode"]
         args = args + [str(repodir_name), str(mntpoint)]

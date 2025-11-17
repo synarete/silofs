@@ -85,7 +85,7 @@ class LtpConfig:
 def test_ltp(env: TestEnv) -> None:
     url = "https://github.com/linux-test-project/ltp"
     name = env.uniq_name()
-    env.exec_setup_fs(64, writeback_cache=False)
+    env.exec_setup_fs(64, no_writeback_cache=True)
     base = env.create_fstree(name)
     config = LtpConfig(base)
     config.makedirs()

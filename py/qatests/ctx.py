@@ -193,7 +193,7 @@ class TestEnv:
         name: str = "",
         allow_hostids: bool = False,
         allow_xattr_acl: bool = False,
-        writeback_cache: bool = True,
+        no_writeback_cache: bool = False,
         buffer_copy_mode: bool = False,
     ) -> None:
         self._require_metaref(name)
@@ -204,7 +204,7 @@ class TestEnv:
             password=self._passwd(),
             allow_hostids=allow_hostids,
             allow_xattr_acl=allow_xattr_acl,
-            writeback_cache=writeback_cache,
+            no_writeback_cache=no_writeback_cache,
             buffer_copy_mode=buffer_copy_mode,
         )
 
@@ -215,12 +215,13 @@ class TestEnv:
         self,
         gsize: int = 2,
         allow_xattr_acl: bool = False,
-        writeback_cache: bool = True,
+        no_writeback_cache: bool = False,
     ) -> None:
         self.exec_init()
         self.exec_mkfs(gsize)
         self.exec_mount(
-            allow_xattr_acl=allow_xattr_acl, writeback_cache=writeback_cache
+            allow_xattr_acl=allow_xattr_acl,
+            no_writeback_cache=no_writeback_cache,
         )
         self.exec_lsmnt()
 

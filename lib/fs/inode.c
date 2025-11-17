@@ -1056,12 +1056,9 @@ static int check_parent_dir_ii(struct silofs_task_ctx *task,
  */
 static blksize_t ii_stat_blksize(const struct silofs_inode_info *ii)
 {
-	blksize_t bsz = SILOFS_LBK_SIZE;
+	const blksize_t lbksz = SILOFS_LBK_SIZE;
 
-	if (silofs_ii_isreg(ii) && (silofs_ii_size(ii) < bsz)) {
-		bsz = (blksize_t)SILOFS_FILE_HEAD2_LEAF_SIZE;
-	}
-	return bsz;
+	return silofs_ii_isdir(ii) ? (2 * lbksz) : lbksz;
 }
 
 static blkcnt_t ii_stat_blocks(const struct silofs_inode_info *ii)

@@ -33,14 +33,14 @@ static blkcnt_t datasize_to_nfrgs_max(size_t dsz)
 
 static void ut_getattr_blocks(struct ut_env *ute, ino_t ino, size_t dsz)
 {
-	struct stat st;
+	struct stat st = {};
 	blkcnt_t blocks;
 	blkcnt_t blocks_min;
 	blkcnt_t blocks_max;
 
 	ut_getattr(ute, ino, &st);
-	if (st.st_size < SILOFS_LBK_SIZE) {
-		ut_expect_eq(st.st_blksize, SILOFS_FILE_HEAD2_LEAF_SIZE);
+	if (S_ISDIR(st.st_mode)) {
+		ut_expect_eq(st.st_blksize, 2 * SILOFS_LBK_SIZE);
 	} else {
 		ut_expect_eq(st.st_blksize, SILOFS_LBK_SIZE);
 	}
@@ -53,10 +53,10 @@ static void ut_getattr_blocks(struct ut_env *ute, ino_t ino, size_t dsz)
 
 static void ut_file_stat_blocks_at_(struct ut_env *ute, size_t bsz, off_t off)
 {
-	ino_t ino;
-	ino_t dino;
 	const char *name = UT_NAME;
 	void *buf = ut_randbuf(ute, bsz);
+	ino_t dino;
+	ino_t ino;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);

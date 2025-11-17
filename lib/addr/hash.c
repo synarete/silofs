@@ -21,7 +21,7 @@
 #include "str.h"
 #include "htox.h"
 #include "mtype.h"
-#include "meta.h"
+#include "hash.h"
 
 bool silofs_hash256_isequal(const struct silofs_hash256 *hash,
                             const struct silofs_hash256 *other)

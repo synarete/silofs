@@ -20,7 +20,7 @@
 #include "crypt.h"
 #include "htox.h"
 #include "uuid.h"
-#include "meta.h"
+#include "hash.h"
 #include "blobid.h"
 
 static void generate_random(uint8_t *p, size_t n)

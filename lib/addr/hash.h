@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_META_H_
-#define SILOFS_META_H_
+#ifndef SILOFS_HASH_H_
+#define SILOFS_HASH_H_
 
 #include <stdlib.h>
 #include <stdint.h>
@@ -41,4 +41,4 @@ size_t silofs_hash256_to_name(const struct silofs_hash256 *hash,
 int silofs_hash256_by_name(struct silofs_hash256      *hash,
                            const struct silofs_strbuf *name);
 
-#endif /* SILOFS_META_H_ */
+#endif /* SILOFS_HASH_H_ */

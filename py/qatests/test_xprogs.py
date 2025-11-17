@@ -158,9 +158,19 @@ def _test_cpython(env: TestEnv) -> None:
 def _test_cpython_at(env: TestEnv, base: Path) -> None:
     env.subcmd.sh.run_ok("./configure", base)
     env.subcmd.sh.run_ok("make", base)
-    out, ret = env.subcmd.sh.run2("make test", base)
-    if ret != 0 and len(out):
-        pass  # TODO: check minimal number of errors (2)
+    tests = [
+        "test_os",
+        "test_io",
+        "test_gzip",
+        "test_mmap",
+        "test_bz2",
+        "test_fileutils",
+        "test_glob",
+        "test_filecmp",
+        "test_dbm",
+    ]
+    testopts = " ".join(tests)
+    env.subcmd.sh.run_ok(f'make test TESTOPTS="{testopts}"', base)
     env.subcmd.sh.run_ok("make clean", base)
 
 

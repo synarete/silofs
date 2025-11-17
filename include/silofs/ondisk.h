@@ -580,9 +580,10 @@ struct silofs_gbr1k {
 struct silofs_header {
 	uint32_t h_magic;
 	uint32_t h_size;
-	uint16_t h_type;
+	uint8_t  h_mtype;
+	uint8_t  h_reserved1;
 	uint16_t h_flags;
-	uint8_t  h_reserved[16];
+	uint8_t  h_reserved2[16];
 	uint32_t h_csum;
 } silofs_attr_aligned32;
 
@@ -719,8 +720,8 @@ struct silofs_lbk_meta {
 struct silofs_lsmap {
 	struct silofs_header    lsm_hdr;
 	struct silofs_lrange128 lsm_lrange;
-	uint16_t                lsm_refmtype;
-	uint8_t                 lsm_reserved1[14];
+	uint8_t                 lsm_refmtype;
+	uint8_t                 lsm_reserved1[15];
 	struct silofs_lbk_meta  lsm_lbms[SILOFS_SPMAP_NCHILDS];
 	uint8_t                 lsm_reserved2[448];
 	struct silofs_key       lsm_keys[SILOFS_SPMAP_NCHILDS];
@@ -920,8 +921,8 @@ struct silofs_blob_desc {
 	uint32_t               bd_nobjs_max;
 	uint32_t               bd_nobjs;
 	uint32_t               bd_flags;
-	uint16_t               bd_refmtype;
-	uint8_t                bd_reserved1[54];
+	uint8_t                bd_refmtype;
+	uint8_t                bd_reserved1[55];
 	uint8_t                bd_obj_state[7936];
 } silofs_attr_aligned64;
 
@@ -929,14 +930,15 @@ struct silofs_blob_desc {
 struct silofs_btree_node {
 	struct silofs_header   btn_hdr;
 	uint32_t               btn_flags;
-	uint16_t               btn_mtype;
+	uint8_t                btn_mtype;
+	uint8_t                btn_reserved1;
 	uint16_t               btn_height;
 	uint8_t                btn_nkeys;
 	uint8_t                btn_nchilds;
-	uint8_t                btn_reserved1[22];
+	uint8_t                btn_reserved2[22];
 	struct silofs_paddr64b btn_child[SILOFS_BTREE_NODE_NCHILDS];
 	uint64_t               btn_key[SILOFS_BTREE_NODE_NKEYS];
-	uint8_t                btn_reserved2[584];
+	uint8_t                btn_reserved3[584];
 } silofs_attr_aligned64;
 
 /* uber-block */

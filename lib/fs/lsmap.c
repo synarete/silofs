@@ -397,7 +397,7 @@ lsmap_set_lrange(struct silofs_lsmap *lsm, const struct silofs_lrange *lrange)
 
 static enum silofs_mtype lsmap_refmtype(const struct silofs_lsmap *lsm)
 {
-	const uint16_t refmtype = silofs_le16_to_cpu(lsm->lsm_refmtype);
+	const uint32_t refmtype = lsm->lsm_refmtype;
 
 	silofs_assert_ge(refmtype, SILOFS_MTYPE_INODE);
 	silofs_assert_le(refmtype, SILOFS_MTYPE_DATABK);
@@ -411,7 +411,7 @@ lsmap_set_refmtype(struct silofs_lsmap *lsm, enum silofs_mtype refmtype)
 	silofs_assert_ge(refmtype, SILOFS_MTYPE_INODE);
 	silofs_assert_le(refmtype, SILOFS_MTYPE_DATABK);
 
-	lsm->lsm_refmtype = silofs_cpu_to_le16((uint16_t)refmtype);
+	lsm->lsm_refmtype = (uint8_t)refmtype;
 }
 
 static void

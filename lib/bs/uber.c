@@ -18,11 +18,6 @@
 #include "addr.h"
 #include "uber.h"
 
-static void ub_setup_hdr(struct silofs_uber_block *ub)
-{
-	silofs_hdr_setup(&ub->ub_hdr, SILOFS_MTYPE_UBER, sizeof(*ub));
-}
-
 static void
 ub_set_btime(struct silofs_uber_block *ub, const struct timespec *ts)
 {
@@ -108,7 +103,6 @@ static void ub_reset_bcursors(struct silofs_uber_block *ub)
 
 static void ub_setup(struct silofs_uber_block *ub, const struct timespec *ts)
 {
-	ub_setup_hdr(ub);
 	ub_set_generation(ub, 1);
 	ub_set_btime(ub, ts);
 	ub_set_ctime(ub, ts);

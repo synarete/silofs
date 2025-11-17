@@ -19,11 +19,6 @@
 #include "addr.h"
 #include "btnode.h"
 
-static void btn_setup_hdr(struct silofs_btree_node *btn)
-{
-	silofs_hdr_setup(&btn->btn_hdr, SILOFS_MTYPE_BTNODE, sizeof(*btn));
-}
-
 static enum silofs_pnodef btn_flags(const struct silofs_btree_node *btn)
 {
 	const uint32_t f = silofs_le32_to_cpu(btn->btn_flags);
@@ -310,7 +305,6 @@ static void btn_dup_by(struct silofs_btree_node *btn,
 
 static void btn_init(struct silofs_btree_node *btn)
 {
-	btn_setup_hdr(btn);
 	btn_set_flags(btn, SILOFS_PNODEF_NONE);
 	btn_set_height(btn, 1);
 	btn_set_nkeys(btn, 0);

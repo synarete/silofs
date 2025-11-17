@@ -58,7 +58,7 @@ static void ard256b_xtoh(const struct silofs_ar_desc256b *ard256,
 
 static void ab_setup_hdr(struct silofs_arix_block *ab)
 {
-	silofs_hdr_setup(&ab->ab_hdr, SILOFS_MTYPE_ARIX, sizeof(*ab));
+	silofs_hdr_setup(&ab->ab_hdr, SILOFS_MTYPE_ARIX);
 }
 
 static void ab_seal_hdr(struct silofs_arix_block *ab)
@@ -68,7 +68,7 @@ static void ab_seal_hdr(struct silofs_arix_block *ab)
 
 static int ab_verify_hdr(const struct silofs_arix_block *ab)
 {
-	return silofs_hdr_verify2(&ab->ab_hdr, SILOFS_MTYPE_ARIX);
+	return silofs_hdr_verify(&ab->ab_hdr, SILOFS_MTYPE_ARIX);
 }
 
 static void

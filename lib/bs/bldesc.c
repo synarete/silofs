@@ -19,11 +19,6 @@
 #include "addr.h"
 #include "bldesc.h"
 
-static void bd_setup_hdr(struct silofs_blob_desc *bd)
-{
-	silofs_hdr_setup(&bd->bd_hdr, SILOFS_MTYPE_BDESC, sizeof(*bd));
-}
-
 static void
 bd_set_btime(struct silofs_blob_desc *bd, const struct timespec *ts)
 {
@@ -122,7 +117,7 @@ static void bd_dec_nobjs(struct silofs_blob_desc *bd)
 
 static enum silofs_mtype bd_refmtype(const struct silofs_blob_desc *bd)
 {
-	const uint16_t refmtype = silofs_le16_to_cpu(bd->bd_refmtype);
+	const uint8_t refmtype = bd->bd_refmtype;
 
 	return (enum silofs_mtype)refmtype;
 }
@@ -130,7 +125,7 @@ static enum silofs_mtype bd_refmtype(const struct silofs_blob_desc *bd)
 static void
 bd_set_refmtype(struct silofs_blob_desc *bd, enum silofs_mtype refmtype)
 {
-	bd->bd_refmtype = silofs_cpu_to_le16((uint16_t)refmtype);
+	bd->bd_refmtype = (uint8_t)refmtype;
 }
 
 static bool
@@ -297,7 +292,6 @@ static void bd_mark_used_slot_by(struct silofs_blob_desc *bd, off_t pos)
 
 static void bd_init(struct silofs_blob_desc *bd)
 {
-	bd_setup_hdr(bd);
 	bd_reset_prev(bd);
 	bd_reset_refblob(bd);
 	bd_set_blobsize(bd, 0);

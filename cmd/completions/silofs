@@ -10,11 +10,11 @@ _silofs_init() {
 
 	_init_completion || return
 	if [[ "$cur" == -* ]]; then
-		COMPREPLY+=( $(compgen -W '-u --user= ' -- "$cur") )
-		COMPREPLY+=( $(compgen -W '-G --sup-groups ' -- "$cur") )
-		COMPREPLY+=( $(compgen -W '-R --allow-root ' -- "$cur") )
-		COMPREPLY+=( $(compgen -W '-L --loglevel= ' -- "$cur") )
-		COMPREPLY+=( $(compgen -W '-h --help ' -- "$cur") )
+		COMPREPLY+=($(compgen -W '-u --user= ' -- "$cur"))
+		COMPREPLY+=($(compgen -W '-G --sup-groups ' -- "$cur"))
+		COMPREPLY+=($(compgen -W '-R --allow-root ' -- "$cur"))
+		COMPREPLY+=($(compgen -W '-L --loglevel= ' -- "$cur"))
+		COMPREPLY+=($(compgen -W '-h --help ' -- "$cur"))
 	fi
 }
 
@@ -23,11 +23,11 @@ _silofs_mkfs() {
 
 	_init_completion || return
 	if [[ "$cur" == -* ]]; then
-		COMPREPLY+=( $(compgen -W '-s --size= ' -- "$cur") )
-		COMPREPLY+=( $(compgen -W '-u --user= ' -- "$cur") )
-		COMPREPLY+=( $(compgen -W '-N --no-utf8-names ' -- "$cur") )
-		COMPREPLY+=( $(compgen -W '-L --loglevel= ' -- "$cur") )
-		COMPREPLY+=( $(compgen -W '-h --help ' -- "$cur") )
+		COMPREPLY+=($(compgen -W '-s --size= ' -- "$cur"))
+		COMPREPLY+=($(compgen -W '-u --user= ' -- "$cur"))
+		COMPREPLY+=($(compgen -W '-N --no-utf8-names ' -- "$cur"))
+		COMPREPLY+=($(compgen -W '-L --loglevel= ' -- "$cur"))
+		COMPREPLY+=($(compgen -W '-h --help ' -- "$cur"))
 	fi
 }
 
@@ -36,13 +36,13 @@ _silofs_mount() {
 
 	_init_completion || return
 	if [[ "$cur" == -* ]]; then
-		COMPREPLY+=( $(compgen -W '-o --opts= ' -- "$cur") )
-		COMPREPLY+=( $(compgen -W '-D --nodaemon ' -- "$cur") )
-		COMPREPLY+=( $(compgen -W '-C --coredump ' -- "$cur") )
-		COMPREPLY+=( $(compgen -W '-A --no-allow-other ' -- "$cur") )
-		COMPREPLY+=( $(compgen -W '-W --writeback-cache= ' -- "$cur") )
-		COMPREPLY+=( $(compgen -W '-L --loglevel= ' -- "$cur") )
-		COMPREPLY+=( $(compgen -W '-h --help ' -- "$cur") )
+		COMPREPLY+=($(compgen -W '-o --opts= ' -- "$cur"))
+		COMPREPLY+=($(compgen -W '-D --nodaemon ' -- "$cur"))
+		COMPREPLY+=($(compgen -W '-C --coredump ' -- "$cur"))
+		COMPREPLY+=($(compgen -W '-A --no-allow-other ' -- "$cur"))
+		COMPREPLY+=($(compgen -W '-W --no-writeback-cache ' -- "$cur"))
+		COMPREPLY+=($(compgen -W '-L --loglevel= ' -- "$cur"))
+		COMPREPLY+=($(compgen -W '-h --help ' -- "$cur"))
 	fi
 }
 
@@ -51,7 +51,7 @@ _silofs_umount() {
 
 	_init_completion || return
 	if [[ "$cur" == -* ]]; then
-		COMPREPLY+=( $(compgen -W '-h --help ' -- "$cur") )
+		COMPREPLY+=($(compgen -W '-h --help ' -- "$cur"))
 	fi
 }
 
@@ -60,8 +60,8 @@ _silofs_lsmnt() {
 
 	_init_completion || return
 	if [[ "$cur" == -* ]]; then
-		COMPREPLY+=( $(compgen -W '-l --long ' -- "$cur") )
-		COMPREPLY+=( $(compgen -W '-h --help ' -- "$cur") )
+		COMPREPLY+=($(compgen -W '-l --long ' -- "$cur"))
+		COMPREPLY+=($(compgen -W '-h --help ' -- "$cur"))
 	fi
 }
 
@@ -70,14 +70,14 @@ _silofs_show() {
 
 	_init_completion || return
 	if [[ "$cur" == -* ]]; then
-		COMPREPLY+=( $(compgen -W '-h' -- "$cur") )
+		COMPREPLY+=($(compgen -W '-h' -- "$cur"))
 	else
-		COMPREPLY+=( $(compgen -W 'version ' -- "$cur") )
-		COMPREPLY+=( $(compgen -W 'repo ' -- "$cur") )
-		COMPREPLY+=( $(compgen -W 'boot ' -- "$cur") )
-		COMPREPLY+=( $(compgen -W 'proc ' -- "$cur") )
-		COMPREPLY+=( $(compgen -W 'statx ' -- "$cur") )
-		COMPREPLY+=( $(compgen -W 'spstats ' -- "$cur") )
+		COMPREPLY+=($(compgen -W 'version ' -- "$cur"))
+		COMPREPLY+=($(compgen -W 'repo ' -- "$cur"))
+		COMPREPLY+=($(compgen -W 'boot ' -- "$cur"))
+		COMPREPLY+=($(compgen -W 'proc ' -- "$cur"))
+		COMPREPLY+=($(compgen -W 'statx ' -- "$cur"))
+		COMPREPLY+=($(compgen -W 'spstats ' -- "$cur"))
 	fi
 }
 
@@ -86,9 +86,9 @@ _silofs_clone() {
 
 	_init_completion || return
 	if [[ "$cur" == -* ]]; then
-		COMPREPLY+=( $(compgen -W '-X --offline ' -- "$cur") )
-		COMPREPLY+=( $(compgen -W '-n --name= ' -- "$cur") )
-		COMPREPLY+=( $(compgen -W '-h --help ' -- "$cur") )
+		COMPREPLY+=($(compgen -W '-X --offline ' -- "$cur"))
+		COMPREPLY+=($(compgen -W '-n --name= ' -- "$cur"))
+		COMPREPLY+=($(compgen -W '-h --help ' -- "$cur"))
 	fi
 }
 
@@ -97,7 +97,7 @@ _silofs_sync() {
 
 	_init_completion || return
 	if [[ "$cur" == -* ]]; then
-		COMPREPLY+=( $(compgen -W '-h --help ' -- "$cur") )
+		COMPREPLY+=($(compgen -W '-h --help ' -- "$cur"))
 	fi
 }
 
@@ -106,8 +106,8 @@ _silofs_tune() {
 
 	_init_completion || return
 	if [[ "$cur" == -* ]]; then
-		COMPREPLY+=( $(compgen -W '-t --ftype= ' -- "$cur") )
-		COMPREPLY+=( $(compgen -W '-h --help ' -- "$cur") )
+		COMPREPLY+=($(compgen -W '-t --ftype= ' -- "$cur"))
+		COMPREPLY+=($(compgen -W '-h --help ' -- "$cur"))
 	fi
 }
 
@@ -116,7 +116,7 @@ _silofs_rmfs() {
 
 	_init_completion || return
 	if [[ "$cur" == -* ]]; then
-		COMPREPLY+=( $(compgen -W '-h --help ' -- "$cur") )
+		COMPREPLY+=($(compgen -W '-h --help ' -- "$cur"))
 	fi
 }
 
@@ -125,7 +125,7 @@ _silofs_prune() {
 
 	_init_completion || return
 	if [[ "$cur" == -* ]]; then
-		COMPREPLY+=( $(compgen -W '-h --help ' -- "$cur") )
+		COMPREPLY+=($(compgen -W '-h --help ' -- "$cur"))
 	fi
 }
 
@@ -134,7 +134,7 @@ _silofs_fsck() {
 
 	_init_completion || return
 	if [[ "$cur" == -* ]]; then
-		COMPREPLY+=( $(compgen -W '-h --help ' -- "$cur") )
+		COMPREPLY+=($(compgen -W '-h --help ' -- "$cur"))
 	fi
 }
 
@@ -143,7 +143,7 @@ _silofs_view() {
 
 	_init_completion || return
 	if [[ "$cur" == -* ]]; then
-		COMPREPLY+=( $(compgen -W '-h --help ' -- "$cur") )
+		COMPREPLY+=($(compgen -W '-h --help ' -- "$cur"))
 	fi
 }
 
@@ -152,8 +152,8 @@ _silofs_archive() {
 
 	_init_completion || return
 	if [[ "$cur" == -* ]]; then
-		COMPREPLY+=( $(compgen -W '-n --into= ' -- "$cur") )
-		COMPREPLY+=( $(compgen -W '-h --help ' -- "$cur") )
+		COMPREPLY+=($(compgen -W '-n --into= ' -- "$cur"))
+		COMPREPLY+=($(compgen -W '-h --help ' -- "$cur"))
 	fi
 }
 
@@ -162,8 +162,8 @@ _silofs_restore() {
 
 	_init_completion || return
 	if [[ "$cur" == -* ]]; then
-		COMPREPLY+=( $(compgen -W '-n --from= ' -- "$cur") )
-		COMPREPLY+=( $(compgen -W '-h --help ' -- "$cur") )
+		COMPREPLY+=($(compgen -W '-n --from= ' -- "$cur"))
+		COMPREPLY+=($(compgen -W '-h --help ' -- "$cur"))
 	fi
 }
 
@@ -225,24 +225,24 @@ _silofs_main() {
 	_init_completion || return
 
 	if [[ "$cur" == -* ]]; then
-		COMPREPLY+=( $(compgen -W '-v --version ' -- "$cur") )
-		COMPREPLY+=( $(compgen -W '-h --help' -- "$cur") )
+		COMPREPLY+=($(compgen -W '-v --version ' -- "$cur"))
+		COMPREPLY+=($(compgen -W '-h --help' -- "$cur"))
 	else
-		COMPREPLY+=( $(compgen -W 'init ' -- "$cur") )
-		COMPREPLY+=( $(compgen -W 'mkfs ' -- "$cur") )
-		COMPREPLY+=( $(compgen -W 'mount ' -- "$cur") )
-		COMPREPLY+=( $(compgen -W 'umount ' -- "$cur") )
-		COMPREPLY+=( $(compgen -W 'lsmnt ' -- "$cur") )
-		COMPREPLY+=( $(compgen -W 'show ' -- "$cur") )
-		COMPREPLY+=( $(compgen -W 'clone ' -- "$cur") )
-		COMPREPLY+=( $(compgen -W 'sync ' -- "$cur") )
-		COMPREPLY+=( $(compgen -W 'tune ' -- "$cur") )
-		COMPREPLY+=( $(compgen -W 'rmfs ' -- "$cur") )
-		COMPREPLY+=( $(compgen -W 'prune ' -- "$cur") )
-		COMPREPLY+=( $(compgen -W 'fsck ' -- "$cur") )
-		COMPREPLY+=( $(compgen -W 'view ' -- "$cur") )
-		COMPREPLY+=( $(compgen -W 'archive ' -- "$cur") )
-		COMPREPLY+=( $(compgen -W 'restore ' -- "$cur") )
+		COMPREPLY+=($(compgen -W 'init ' -- "$cur"))
+		COMPREPLY+=($(compgen -W 'mkfs ' -- "$cur"))
+		COMPREPLY+=($(compgen -W 'mount ' -- "$cur"))
+		COMPREPLY+=($(compgen -W 'umount ' -- "$cur"))
+		COMPREPLY+=($(compgen -W 'lsmnt ' -- "$cur"))
+		COMPREPLY+=($(compgen -W 'show ' -- "$cur"))
+		COMPREPLY+=($(compgen -W 'clone ' -- "$cur"))
+		COMPREPLY+=($(compgen -W 'sync ' -- "$cur"))
+		COMPREPLY+=($(compgen -W 'tune ' -- "$cur"))
+		COMPREPLY+=($(compgen -W 'rmfs ' -- "$cur"))
+		COMPREPLY+=($(compgen -W 'prune ' -- "$cur"))
+		COMPREPLY+=($(compgen -W 'fsck ' -- "$cur"))
+		COMPREPLY+=($(compgen -W 'view ' -- "$cur"))
+		COMPREPLY+=($(compgen -W 'archive ' -- "$cur"))
+		COMPREPLY+=($(compgen -W 'restore ' -- "$cur"))
 	fi
 }
 

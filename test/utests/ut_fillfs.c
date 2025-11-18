@@ -34,7 +34,7 @@ static size_t calc_wr_size(const struct statvfs *stv, size_t limit)
 
 static void ut_fillfs_simple(struct ut_env *ute)
 {
-	void          *buf = nullptr;
+	void          *buf = NULL;
 	ino_t          ino;
 	ino_t          dino;
 	size_t         len;

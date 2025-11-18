@@ -59,7 +59,7 @@ void silofs_strview_initv(struct silofs_strview       *sv,
 void silofs_strview_init_by(struct silofs_strview       *sv,
                             const struct silofs_strview *other);
 
-/* Destructor: set to nullptr */
+/* Destructor: set to NULL */
 void silofs_strview_fini(struct silofs_strview *sv);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

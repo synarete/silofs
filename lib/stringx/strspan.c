@@ -89,7 +89,7 @@ void silofs_strspan_init_by(struct silofs_strspan       *ss,
 void silofs_strspan_fini(struct silofs_strspan *ss)
 {
 	silofs_strview_fini(&ss->v);
-	ss->s = nullptr;
+	ss->s = NULL;
 	ss->n = 0;
 }
 

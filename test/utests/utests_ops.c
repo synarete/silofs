@@ -68,14 +68,14 @@ void ut_release_task(struct ut_env *ute, struct silofs_task_ctx *task)
 
 static void assign_stat(struct stat *st, const struct silofs_stat *sst)
 {
-	if (st != nullptr) {
+	if (st != NULL) {
 		memcpy(st, &sst->st, sizeof(*st));
 	}
 }
 
 static void assign_statx(struct statx *stx, const struct silofs_stat *sst)
 {
-	if (stx != nullptr) {
+	if (stx != NULL) {
 		memcpy(stx, &sst->stx, sizeof(*stx));
 	}
 }
@@ -1003,7 +1003,7 @@ void ut_mkdir2(struct ut_env *ute, ino_t parent, const char *name,
 
 void ut_mkdir_err(struct ut_env *ute, ino_t parent, const char *name, int err)
 {
-	ut_mkdir_status(ute, parent, name, nullptr, err);
+	ut_mkdir_status(ute, parent, name, NULL, err);
 }
 
 void ut_mkdir_at_root(struct ut_env *ute, const char *name, ino_t *out_ino)
@@ -1150,7 +1150,7 @@ void ut_link(struct ut_env *ute, ino_t ino, ino_t parent, const char *name,
 void ut_link_err(struct ut_env *ute, ino_t ino, ino_t parent, const char *name,
                  int err)
 {
-	ut_link_status(ute, ino, parent, name, nullptr, err);
+	ut_link_status(ute, ino, parent, name, NULL, err);
 }
 
 static void ut_unlink_status(struct ut_env *ute, ino_t parent,
@@ -1317,7 +1317,7 @@ void ut_create_special(struct ut_env *ute, ino_t parent, const char *name,
 
 void ut_create_noent(struct ut_env *ute, ino_t parent, const char *name)
 {
-	ut_create_status(ute, parent, name, S_IFREG | 0600, nullptr, -ENOENT);
+	ut_create_status(ute, parent, name, S_IFREG | 0600, NULL, -ENOENT);
 }
 
 void ut_release(struct ut_env *ute, ino_t ino)
@@ -1502,7 +1502,7 @@ void ut_read_zero(struct ut_env *ute, ino_t ino, off_t off)
 
 void ut_read_zeros(struct ut_env *ute, ino_t ino, off_t off, size_t len)
 {
-	const void *zeros = nullptr;
+	const void *zeros = NULL;
 
 	if (len > 0) {
 		zeros = ut_zerobuf(ute, len);
@@ -1653,7 +1653,7 @@ void ut_setxattr_rereplace(struct ut_env *ute, ino_t ino,
 
 void ut_setxattr_all(struct ut_env *ute, ino_t ino, const struct ut_kvl *kvl)
 {
-	const struct ut_keyval *kv = nullptr;
+	const struct ut_keyval *kv = NULL;
 
 	for (size_t i = 0; i < kvl->count; ++i) {
 		kv = kvl->list[i];
@@ -1665,12 +1665,12 @@ void ut_setxattr_all(struct ut_env *ute, ino_t ino, const struct ut_kvl *kvl)
 void ut_getxattr_value(struct ut_env *ute, ino_t ino,
                        const struct ut_keyval *kv)
 {
-	void  *val = nullptr;
+	void  *val = NULL;
 	size_t vsz;
 	int    err;
 
 	vsz = 0;
-	err = ut_do_getxattr(ute, ino, kv->name, nullptr, 0, &vsz);
+	err = ut_do_getxattr(ute, ino, kv->name, NULL, 0, &vsz);
 	ut_expect_ok(err);
 	ut_expect_eq(vsz, kv->size);
 
@@ -1706,7 +1706,7 @@ void ut_removexattr(struct ut_env *ute, ino_t ino, const struct ut_keyval *kv)
 
 static struct ut_keyval *kvl_search(const struct ut_kvl *kvl, const char *name)
 {
-	struct ut_keyval *kv = nullptr;
+	struct ut_keyval *kv = NULL;
 
 	for (size_t i = 0; i < kvl->count; ++i) {
 		kv = kvl->list[i];
@@ -1714,14 +1714,14 @@ static struct ut_keyval *kvl_search(const struct ut_kvl *kvl, const char *name)
 			return kv;
 		}
 	}
-	return nullptr;
+	return NULL;
 }
 
 void ut_listxattr(struct ut_env *ute, ino_t ino, const struct ut_kvl *kvl)
 {
 	struct ut_listxattr_ctx ut_lxa_ctx;
-	const struct ut_keyval *kv   = nullptr;
-	const char             *name = nullptr;
+	const struct ut_keyval *kv   = NULL;
+	const char             *name = NULL;
 	int                     err;
 
 	err = ut_do_listxattr(ute, ino, &ut_lxa_ctx);

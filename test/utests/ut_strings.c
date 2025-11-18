@@ -18,11 +18,11 @@
 
 static struct silofs_strview *ut_new_strview(struct ut_env *ute)
 {
-	struct silofs_strview *sv = nullptr;
+	struct silofs_strview *sv = NULL;
 
 	sv      = ut_zalloc(ute, sizeof(*sv));
 	sv->len = 0;
-	sv->str = nullptr;
+	sv->str = NULL;
 	return sv;
 }
 
@@ -148,7 +148,7 @@ static void ut_strview_find_last_not_of(struct ut_env *ute)
 static void ut_strview_sub(struct ut_env *ute)
 {
 	struct silofs_strview *sv  = ut_new_strview(ute);
-	struct silofs_strview  sub = { .str = nullptr };
+	struct silofs_strview  sub = { .str = NULL };
 	const char            *abc = "abcdefghijklmnopqrstuvwxyz";
 	bool                   eq;
 
@@ -235,7 +235,7 @@ static void ut_strview_rsplit(struct ut_env *ute)
 static void ut_strview_trim(struct ut_env *ute)
 {
 	struct silofs_strview *sv  = ut_new_strview(ute);
-	struct silofs_strview  sub = { .str = nullptr };
+	struct silofs_strview  sub = { .str = NULL };
 	size_t                 sz  = 0;
 	bool                   eq;
 
@@ -262,7 +262,7 @@ static void ut_strview_trim(struct ut_env *ute)
 static void ut_strview_chop(struct ut_env *ute)
 {
 	struct silofs_strview *sv  = ut_new_strview(ute);
-	struct silofs_strview  sub = { .str = nullptr };
+	struct silofs_strview  sub = { .str = NULL };
 	size_t                 sz  = 0;
 	bool                   eq;
 
@@ -292,8 +292,8 @@ static void ut_strview_chop(struct ut_env *ute)
 static void ut_strview_strip(struct ut_env *ute)
 {
 	struct silofs_strview *sv  = ut_new_strview(ute);
-	struct silofs_strview  sub = { .str = nullptr };
-	const char            *s   = nullptr;
+	struct silofs_strview  sub = { .str = NULL };
+	const char            *s   = NULL;
 	const char            *s2  = "s ";
 	size_t                 sz  = 0;
 	bool                   eq;
@@ -331,7 +331,7 @@ static void ut_strview_strip(struct ut_env *ute)
 static void ut_strview_find_token(struct ut_env *ute)
 {
 	struct silofs_strview *sv   = ut_new_strview(ute);
-	struct silofs_strview  tok  = { .str = nullptr };
+	struct silofs_strview  tok  = { .str = NULL };
 	const char            *seps = " \t\n\v\r";
 	bool                   eq;
 
@@ -414,7 +414,7 @@ static void ut_strview_common_suffix(struct ut_env *ute)
 
 static struct silofs_strspan *ut_new_strspan(struct ut_env *ute)
 {
-	struct silofs_strspan *ss = nullptr;
+	struct silofs_strspan *ss = NULL;
 
 	ss = ut_zalloc(ute, sizeof(*ss));
 	silofs_strspan_initz(ss);
@@ -426,7 +426,7 @@ static void ut_strspan_assign(struct ut_env *ute)
 	struct silofs_strspan *ss = ut_new_strspan(ute);
 	struct silofs_strspan  sub;
 	char                   dat[] = "0123456789......";
-	const char            *s     = nullptr;
+	const char            *s     = NULL;
 	size_t                 sz    = 0;
 	bool                   eq;
 
@@ -655,7 +655,7 @@ static void ut_strspan_case(struct ut_env *ute)
 
 static struct silofs_strbuf *ut_new_strbuf(struct ut_env *ute)
 {
-	struct silofs_strbuf *sbuf = nullptr;
+	struct silofs_strbuf *sbuf = NULL;
 
 	sbuf = ut_zalloc(ute, sizeof(*sbuf));
 	silofs_strbuf_init(sbuf);
@@ -666,7 +666,7 @@ static void ut_strbuf_simple(struct ut_env *ute)
 {
 	struct silofs_strbuf *sbuf1 = ut_new_strbuf(ute);
 	struct silofs_strbuf *sbuf2 = ut_new_strbuf(ute);
-	struct silofs_strview sv    = { .str = nullptr };
+	struct silofs_strview sv    = { .str = NULL };
 	const char           *abc   = "abcdefghijklmnopqrstuvwxyz";
 	const char           *xdig  = "0123456789abcdef";
 	bool                  eq;

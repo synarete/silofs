@@ -91,7 +91,7 @@ ume_new(struct silofs_alloc *alloc, uid_t host_uid, uid_t fs_uid)
 	struct silofs_umap_entry *ume;
 
 	ume = silofs_memalloc(alloc, sizeof(*ume), 0);
-	if (ume != nullptr) {
+	if (ume != NULL) {
 		ume_init(ume, host_uid, fs_uid);
 	}
 	return ume;
@@ -156,7 +156,7 @@ gme_new(struct silofs_alloc *alloc, gid_t host_gid, gid_t fs_gid)
 	struct silofs_gmap_entry *gme;
 
 	gme = silofs_memalloc(alloc, sizeof(*gme), 0);
-	if (gme != nullptr) {
+	if (gme != NULL) {
 		gme_init(gme, host_gid, fs_gid);
 	}
 	return gme;
@@ -172,21 +172,21 @@ static void gme_del(struct silofs_gmap_entry *gme, struct silofs_alloc *alloc)
 
 static int idsmap_init_uhmaps(struct silofs_idsmap *idsm)
 {
-	struct silofs_list_head *uhtof = nullptr;
-	struct silofs_list_head *uftoh = nullptr;
+	struct silofs_list_head *uhtof = NULL;
+	struct silofs_list_head *uftoh = NULL;
 	const size_t             hcap  = SILOFS_IDSMAP_HCAP;
 
-	idsm->idm_uhtof = nullptr;
-	idsm->idm_uftoh = nullptr;
+	idsm->idm_uhtof = NULL;
+	idsm->idm_uftoh = NULL;
 	idsm->idm_uhcap = 0;
 	idsm->idm_usize = 0;
 
 	uhtof = silofs_lista_new(idsm->idm_alloc, hcap);
-	if (uhtof == nullptr) {
+	if (uhtof == NULL) {
 		return -SILOFS_ENOMEM;
 	}
 	uftoh = silofs_lista_new(idsm->idm_alloc, hcap);
-	if (uftoh == nullptr) {
+	if (uftoh == NULL) {
 		silofs_lista_del(uhtof, hcap, idsm->idm_alloc);
 		return -SILOFS_ENOMEM;
 	}
@@ -201,29 +201,29 @@ static void idsmap_fini_uhmaps(struct silofs_idsmap *idsm)
 {
 	silofs_lista_del(idsm->idm_uhtof, idsm->idm_uhcap, idsm->idm_alloc);
 	silofs_lista_del(idsm->idm_uftoh, idsm->idm_uhcap, idsm->idm_alloc);
-	idsm->idm_uhtof = nullptr;
-	idsm->idm_uftoh = nullptr;
+	idsm->idm_uhtof = NULL;
+	idsm->idm_uftoh = NULL;
 	idsm->idm_uhcap = 0;
 	idsm->idm_usize = 0;
 }
 
 static int idsmap_init_ghmaps(struct silofs_idsmap *idsm)
 {
-	struct silofs_list_head *ghtof = nullptr;
-	struct silofs_list_head *gftoh = nullptr;
+	struct silofs_list_head *ghtof = NULL;
+	struct silofs_list_head *gftoh = NULL;
 	const size_t             hcap  = SILOFS_IDSMAP_HCAP;
 
-	idsm->idm_ghtof = nullptr;
-	idsm->idm_gftoh = nullptr;
+	idsm->idm_ghtof = NULL;
+	idsm->idm_gftoh = NULL;
 	idsm->idm_ghcap = 0;
 	idsm->idm_gsize = 0;
 
 	ghtof = silofs_lista_new(idsm->idm_alloc, hcap);
-	if (ghtof == nullptr) {
+	if (ghtof == NULL) {
 		return -SILOFS_ENOMEM;
 	}
 	gftoh = silofs_lista_new(idsm->idm_alloc, hcap);
-	if (gftoh == nullptr) {
+	if (gftoh == NULL) {
 		silofs_lista_del(ghtof, hcap, idsm->idm_alloc);
 		return -SILOFS_ENOMEM;
 	}
@@ -238,8 +238,8 @@ static void idsmap_fini_ghmaps(struct silofs_idsmap *idsm)
 {
 	silofs_lista_del(idsm->idm_ghtof, idsm->idm_ghcap, idsm->idm_alloc);
 	silofs_lista_del(idsm->idm_gftoh, idsm->idm_ghcap, idsm->idm_alloc);
-	idsm->idm_ghtof = nullptr;
-	idsm->idm_gftoh = nullptr;
+	idsm->idm_ghtof = NULL;
+	idsm->idm_gftoh = NULL;
 	idsm->idm_ghcap = 0;
 	idsm->idm_gsize = 0;
 }
@@ -279,7 +279,7 @@ void silofs_idsmap_fini(struct silofs_idsmap *idsm)
 {
 	silofs_idsmap_clear(idsm);
 	idsmap_fini_hmaps(idsm);
-	idsm->idm_alloc = nullptr;
+	idsm->idm_alloc = NULL;
 }
 
 static int idsmap_noent_status(const struct silofs_idsmap *idsm)
@@ -337,11 +337,11 @@ idsmap_uftoh_bin_of(const struct silofs_idsmap *idsm, uid_t host_uid)
 static int
 idsmap_insert_umap(struct silofs_idsmap *idsm, uid_t host_uid, uid_t fs_uid)
 {
-	struct silofs_umap_entry *ume = nullptr;
-	struct silofs_list_head  *lst = nullptr;
+	struct silofs_umap_entry *ume = NULL;
+	struct silofs_list_head  *lst = NULL;
 
 	ume = idsmap_new_ume(idsm, host_uid, fs_uid);
-	if (ume == nullptr) {
+	if (ume == NULL) {
 		return -SILOFS_ENOMEM;
 	}
 
@@ -403,7 +403,7 @@ idsmap_lookup_uhtof(const struct silofs_idsmap *idsm, uid_t host_uid)
 		}
 		itr = itr->next;
 	}
-	return nullptr;
+	return NULL;
 }
 
 static const struct silofs_umap_entry *
@@ -424,7 +424,7 @@ idsmap_lookup_uftoh(const struct silofs_idsmap *idsm, uid_t fs_uid)
 		}
 		itr = itr->next;
 	}
-	return nullptr;
+	return NULL;
 }
 
 static int idsmap_resolve_uhtof(const struct silofs_idsmap *idsm,
@@ -434,7 +434,7 @@ static int idsmap_resolve_uhtof(const struct silofs_idsmap *idsm,
 	int                             ret;
 
 	ume = idsmap_lookup_uhtof(idsm, host_uid);
-	if (ume != nullptr) {
+	if (ume != NULL) {
 		*out_fs_uid = ume->um_uids.fs_uid;
 		ret         = 0;
 	} else {
@@ -451,7 +451,7 @@ static int idsmap_resolve_uftoh(const struct silofs_idsmap *idsm, uid_t fs_uid,
 	int                             ret;
 
 	ume = idsmap_lookup_uftoh(idsm, fs_uid);
-	if (ume != nullptr) {
+	if (ume != NULL) {
 		*out_host_uid = ume->um_uids.host_uid;
 		ret           = 0;
 	} else {
@@ -511,11 +511,11 @@ idsmap_gftoh_bin_of(const struct silofs_idsmap *idsm, gid_t host_gid)
 static int
 idsmap_insert_gmap(struct silofs_idsmap *idsm, gid_t host_gid, gid_t fs_gid)
 {
-	struct silofs_gmap_entry *gme = nullptr;
-	struct silofs_list_head  *lst = nullptr;
+	struct silofs_gmap_entry *gme = NULL;
+	struct silofs_list_head  *lst = NULL;
 
 	gme = idsmap_new_gme(idsm, host_gid, fs_gid);
-	if (gme == nullptr) {
+	if (gme == NULL) {
 		return -SILOFS_ENOMEM;
 	}
 
@@ -579,7 +579,7 @@ idsmap_lookup_ghtof(const struct silofs_idsmap *idsm, gid_t host_gid)
 		}
 		itr = itr->next;
 	}
-	return nullptr;
+	return NULL;
 }
 
 static const struct silofs_gmap_entry *
@@ -601,7 +601,7 @@ idsmap_lookup_gftoh(const struct silofs_idsmap *idsm, gid_t fs_gid)
 		}
 		itr = itr->next;
 	}
-	return nullptr;
+	return NULL;
 }
 
 static int idsmap_resolve_ghtof(const struct silofs_idsmap *idsm,
@@ -611,7 +611,7 @@ static int idsmap_resolve_ghtof(const struct silofs_idsmap *idsm,
 	int                             ret;
 
 	gme = idsmap_lookup_ghtof(idsm, host_gid);
-	if (gme != nullptr) {
+	if (gme != NULL) {
 		*out_fs_gid = gme->gm_gids.fs_gid;
 		ret         = 0;
 	} else {
@@ -628,7 +628,7 @@ static int idsmap_resolve_gftoh(const struct silofs_idsmap *idsm, gid_t fs_gid,
 	int                             ret;
 
 	gme = idsmap_lookup_gftoh(idsm, fs_gid);
-	if (gme != nullptr) {
+	if (gme != NULL) {
 		*out_host_gid = gme->gm_gids.host_gid;
 		ret           = 0;
 	} else {

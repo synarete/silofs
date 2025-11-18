@@ -63,7 +63,7 @@ static void timespec_dif(const struct timespec *beg,
 
 time_t silofs_time_real_now(void)
 {
-	return time(nullptr);
+	return time(NULL);
 }
 
 time_t silofs_time_mono_now(void)
@@ -146,7 +146,7 @@ int silofs_suspend_ts(const struct timespec *ts)
 
 int silofs_init_times(void)
 {
-	struct tm res = { .tm_zone = nullptr };
+	struct tm res = { .tm_zone = NULL };
 	int       err;
 
 	tzset();
@@ -169,7 +169,7 @@ void silofs_uptime(struct timespec *out_ts)
 int silofs_localtime_now(struct tm *res)
 {
 	const time_t     now = silofs_time_real_now();
-	const struct tm *ptm = nullptr;
+	const struct tm *ptm = NULL;
 
 	errno = 0;
 	ptm   = localtime_r(&now, res);

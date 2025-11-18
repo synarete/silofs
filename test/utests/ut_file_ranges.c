@@ -99,8 +99,8 @@ rzigzag(struct ut_env *ute, const struct ut_ranges *ranges)
 static void
 ut_write_read_n(struct ut_env *ute, const struct ut_dvecs *dvecs, ino_t ino)
 {
-	const struct ut_dvec *dvec = nullptr;
-	void                 *buf  = nullptr;
+	const struct ut_dvec *dvec = NULL;
+	void                 *buf  = NULL;
 	off_t                 off  = -1;
 	size_t                len  = 0;
 
@@ -240,8 +240,8 @@ static void ut_file_xranges_(struct ut_env *ute, const struct ut_ranges *r1,
 
 static void ut_file_xranges(struct ut_env *ute)
 {
-	const struct ut_ranges *r1 = nullptr;
-	const struct ut_ranges *r2 = nullptr;
+	const struct ut_ranges *r1 = NULL;
+	const struct ut_ranges *r2 = NULL;
 
 	for (size_t j = 0; j < UT_ARRAY_SIZE(s_ranges_defs) - 1; ++j) {
 		r1 = &s_ranges_defs[j];

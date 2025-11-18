@@ -239,8 +239,8 @@ delfc_init(struct silofs_delfs_ctx *delf_ctx, struct silofs_task_ctx *task,
 static void delfc_fini(struct silofs_delfs_ctx *delf_ctx)
 {
 	silofs_memffff(delf_ctx, sizeof(*delf_ctx));
-	delf_ctx->env  = nullptr;
-	delf_ctx->repo = nullptr;
+	delf_ctx->env  = NULL;
+	delf_ctx->repo = NULL;
 }
 
 static int delfc_remove_super(const struct silofs_delfs_ctx *delf_ctx)

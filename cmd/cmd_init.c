@@ -53,7 +53,7 @@ static void cmd_init_parse_optargs(struct cmd_init_ctx *ctx)
 		{ "developer-mode", 'X', 0 }, //
 		{ "loglevel", 'L', 1 },       //
 		{ "help", 'h', 0 },           //
-		{ nullptr, 0, 0 },            //
+		{ NULL, 0, 0 },               //
 	};
 	struct cmd_optargs opa;
 	int                opt_chr = 1;
@@ -100,14 +100,14 @@ static void cmd_init_finalize(struct cmd_init_ctx *ctx)
 	cmd_pstrfree(&ctx->in_args.repodir_real);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.username);
-	cmd_init_ctx_p = nullptr;
+	cmd_init_ctx_p = NULL;
 }
 
 static void cmd_init_atexit(void)
 {
 	struct cmd_init_ctx *ctx = cmd_init_ctx_p;
 
-	if (ctx != nullptr) {
+	if (ctx != NULL) {
 		cmd_init_finalize(ctx);
 	}
 }
@@ -146,7 +146,7 @@ static void cmd_init_restrict_process(struct cmd_init_ctx *ctx)
 
 static void cmd_init_resolve_owner(struct cmd_init_ctx *ctx)
 {
-	if (ctx->in_args.username == nullptr) {
+	if (ctx->in_args.username == NULL) {
 		ctx->in_args.username = cmd_getusername();
 	}
 }
@@ -201,7 +201,7 @@ static void cmd_init_save_idsconf(const struct cmd_init_ctx *ctx)
 
 void cmd_execute_init(void)
 {
-	struct cmd_init_ctx ctx = { .env = nullptr };
+	struct cmd_init_ctx ctx = { .env = NULL };
 
 	/* Do all cleanups upon exits */
 	cmd_init_start(&ctx);

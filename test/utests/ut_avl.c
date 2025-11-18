@@ -111,7 +111,7 @@ static void verify_node(struct silofs_avl_node *x, void *p)
 }
 
 static const struct silofs_avl_node_functor node_functor = { .fn = verify_node,
-	                                                     .ctx = nullptr };
+	                                                     .ctx = NULL };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -216,19 +216,19 @@ static void avl_remove_exists(struct silofs_avl *avl, long key)
 
 static void avl_remove_range(struct silofs_avl *avl, long key1, long key2)
 {
-	struct silofs_avl_node       *first = nullptr;
-	const struct silofs_avl_node *last  = nullptr;
+	struct silofs_avl_node       *first = NULL;
+	const struct silofs_avl_node *last  = NULL;
 
 	silofs_assert_le(key1, key2);
 
 	first = silofs_avl_lower_bound(avl, &key1);
-	if (first != nullptr) {
+	if (first != NULL) {
 		check_node_ge(first, key1);
 	} else {
 		first = silofs_avl_begin(avl);
 	}
 	last = silofs_avl_upper_bound(avl, &key2);
-	if (last != nullptr) {
+	if (last != NULL) {
 		check_node_gt(last, key2);
 	} else {
 		last = silofs_avl_end(avl);
@@ -409,7 +409,7 @@ static void ut_avl_random_(struct ut_env *ute, size_t cnt)
 {
 	const long         base = 100000;
 	const long        *keys = random_keys(ute, cnt, base);
-	struct silofs_avl *avl  = nullptr;
+	struct silofs_avl *avl  = NULL;
 	long               key;
 
 	avl = avl_new(ute);

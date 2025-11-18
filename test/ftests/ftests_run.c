@@ -103,7 +103,7 @@ static void ft_finish_test(struct ft_env *fte)
 {
 	silofs_log_info("%-40s OK", fte->currtest->name);
 	umask(fte->umsk);
-	fte->currtest = nullptr;
+	fte->currtest = NULL;
 	ft_freeall(fte);
 }
 
@@ -186,8 +186,7 @@ static bool ignore(const struct ft_tdef *tdef)
 
 static bool wanted(const struct ft_tdef *tdef, const char *wantname)
 {
-	return (wantname == nullptr) ||
-	       (strstr(tdef->name, wantname) != nullptr);
+	return (wantname == NULL) || (strstr(tdef->name, wantname) != NULL);
 }
 
 static void ft_run_tests(struct ft_env *fte)
@@ -230,7 +229,7 @@ static void *safe_malloc(size_t size)
 	void *ptr;
 
 	ptr = malloc(size);
-	if (ptr == nullptr) {
+	if (ptr == NULL) {
 		error(EXIT_FAILURE, errno, "malloc failed: size=%lu", size);
 		abort(); /* makes gcc '-fanalyzer' happy */
 	}
@@ -283,7 +282,7 @@ static void ft_clone_tests(struct ft_env *fte)
 {
 	size_t                len    = 0;
 	struct ft_tdef       *arr    = alloc_tests_arr();
-	const struct ft_tdef *tdef   = nullptr;
+	const struct ft_tdef *tdef   = NULL;
 	const size_t          nelems = FT_ARRAY_SIZE(ft_testsbl);
 
 	for (size_t i = 0; i < nelems; ++i) {
@@ -304,7 +303,7 @@ static void ft_free_tests(struct ft_env *fte)
 	void *arr = unconst_tdef(fte->tests.arr);
 
 	free(arr);
-	fte->tests.arr = nullptr;
+	fte->tests.arr = NULL;
 	fte->tests.len = 0;
 }
 
@@ -343,7 +342,7 @@ static void ft_sub_do_exec(struct ft_sub_exec *se, ft_sub_exec_fn exec_fn)
 
 	se->keep_run = 1;
 	se->exec_fn  = exec_fn;
-	err = silofs_thread_create(&se->th, ft_sub_exec_hook, se, nullptr);
+	err = silofs_thread_create(&se->th, ft_sub_exec_hook, se, NULL);
 	ft_expect_ok(err);
 }
 
@@ -392,7 +391,7 @@ static void ft_sub_join(struct ft_sub_exec *se_arr, size_t n)
 static void ft_sub_do_create_file(struct ft_sub_exec *se)
 {
 	ft_creat_resize(se->path, se->len);
-	if (se->path2 != nullptr) {
+	if (se->path2 != NULL) {
 		ft_creat_resize(se->path2, se->len);
 	}
 }
@@ -407,7 +406,7 @@ static void ft_sub_pre_run(struct ft_sub_exec *se_arr, size_t n)
 static void ft_sub_do_unlink_file(struct ft_sub_exec *se)
 {
 	ft_unlink(se->path);
-	if (se->path2 != nullptr) {
+	if (se->path2 != NULL) {
 		ft_unlink(se->path2);
 	}
 }
@@ -448,7 +447,7 @@ static void ft_sub_do_setup1(struct ft_sub_exec *se, struct ft_env *fte,
 {
 	const char *path = ft_new_path_unique(fte);
 
-	ft_sub_do_setup(se, fte, path, nullptr, niter, off, len);
+	ft_sub_do_setup(se, fte, path, NULL, niter, off, len);
 }
 
 void ft_sub_setup(struct ft_sub_exec *se_arr, size_t n, struct ft_env *fte,

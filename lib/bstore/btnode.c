@@ -491,7 +491,7 @@ silofs_create_cached_btnode(struct silofs_pcache      *pcache,
 
 	pni = silofs_pcache_create_pnode(pcache, pmeta);
 	bti = silofs_bti_from_pni(pni);
-	if ((bti != nullptr) && spawn) {
+	if ((bti != NULL) && spawn) {
 		bti_setup_spawned(bti);
 	}
 	return bti;

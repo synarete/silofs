@@ -173,7 +173,7 @@ static void test_rdwr_with_xattr(struct ft_sub_exec *se)
 		snprintf(name2, sizeof(name2) - 1, "user.xattr2-%lu", iter);
 		valsz = (iter % (valsz_max - 1)) + 1;
 		ft_fsetxattr(fd, name1, val1, valsz, 0);
-		ft_fgetxattr(fd, name1, nullptr, 0, &sz);
+		ft_fgetxattr(fd, name1, NULL, 0, &sz);
 		ft_expect_eq(sz, valsz);
 		ft_pwriten(fd, buf1, se->len, se->off);
 		ft_fgetxattr(fd, name1, val2, valsz, &sz);

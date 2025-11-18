@@ -26,7 +26,7 @@
  * run-time.
  */
 
-static void (*silofs_signal_callback_hook)(int) = nullptr;
+static void (*silofs_signal_callback_hook)(int) = NULL;
 
 static void sigaction_info_handler(int signum)
 {
@@ -37,7 +37,7 @@ static void sigaction_halt_handler(int signum)
 {
 	silofs_log_info("halt-signal: %d", signum);
 	cmd_global_params.sig_halt = signum;
-	if (silofs_signal_callback_hook != nullptr) {
+	if (silofs_signal_callback_hook != NULL) {
 		/* Call sub-program specific logic */
 		silofs_signal_callback_hook(signum);
 	} else {
@@ -92,7 +92,7 @@ static void register_sigaction(int signum, const struct sigaction *sa)
 {
 	int err;
 
-	err = silofs_sys_sigaction(signum, sa, nullptr);
+	err = silofs_sys_sigaction(signum, sa, NULL);
 	if (err) {
 		cmd_die(err, "sigaction error: signum=%d", signum);
 	}

@@ -26,7 +26,7 @@ safe_vsnprintf(char *buf, size_t bsz, const char *fmt, va_list ap)
 	va_list ap2;
 	int     ret;
 
-	if ((buf == nullptr) || (bsz == 0)) {
+	if ((buf == NULL) || (bsz == 0)) {
 		return 0;
 	}
 

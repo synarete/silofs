@@ -39,7 +39,7 @@ static void cmd_prune_parse_optargs(struct cmd_prune_ctx *ctx)
 {
 	const struct cmd_optdesc ods[] = {
 		{ "help", 'h', 0 },
-		{ nullptr, 0, 0 },
+		{ NULL, 0, 0 },
 	};
 	struct cmd_optargs opa;
 	int                opt_chr = 1;
@@ -68,14 +68,14 @@ static void cmd_prune_finalize(struct cmd_prune_ctx *ctx)
 	cmd_del_env(&ctx->env);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
 	cmd_pstrfree(&ctx->in_args.repodir);
-	cmd_prune_ctx_p = nullptr;
+	cmd_prune_ctx_p = NULL;
 }
 
 static void cmd_prune_atexit(void)
 {
 	struct cmd_prune_ctx *ctx = cmd_prune_ctx_p;
 
-	if (ctx != nullptr) {
+	if (ctx != NULL) {
 		cmd_prune_finalize(ctx);
 	}
 }
@@ -103,7 +103,7 @@ static void cmd_prune_prepare(struct cmd_prune_ctx *ctx)
 void cmd_execute_prune(void)
 {
 	struct cmd_prune_ctx ctx = {
-		.env = nullptr,
+		.env = NULL,
 	};
 
 	/* Do all cleanups upon exits */

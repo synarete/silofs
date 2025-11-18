@@ -44,7 +44,7 @@ static void cmd_lsmnt_parse_optargs(struct cmd_lsmnt_ctx *ctx)
 	const struct cmd_optdesc ods[] = {
 		{ "long", 'l', 0 },
 		{ "help", 'h', 0 },
-		{ nullptr, 0, 0 },
+		{ NULL, 0, 0 },
 	};
 	struct cmd_optargs opa;
 	int                opt_chr = 1;
@@ -73,14 +73,14 @@ static void cmd_lsmnt_parse_optargs(struct cmd_lsmnt_ctx *ctx)
 static void cmd_lsmnt_finalize(struct cmd_lsmnt_ctx *ctx)
 {
 	memset(&ctx->ioc_qry, 0, sizeof(ctx->ioc_qry));
-	cmd_lsmnt_ctx_p = nullptr;
+	cmd_lsmnt_ctx_p = NULL;
 }
 
 static void cmd_lsmnt_atexit(void)
 {
 	struct cmd_lsmnt_ctx *ctx = cmd_lsmnt_ctx_p;
 
-	if (ctx != nullptr) {
+	if (ctx != NULL) {
 		cmd_lsmnt_finalize(ctx);
 	}
 }
@@ -106,10 +106,10 @@ static void
 cmd_lsmnt_long(struct cmd_lsmnt_ctx *ctx, const struct silofs_mntinfo *mi)
 {
 	struct silofs_ioc_query *qry       = &ctx->ioc_qry;
-	char                    *mntd_path = nullptr;
-	char                    *repo_path = nullptr;
-	char                    *boot_name = nullptr;
-	char                    *boot_addr = nullptr;
+	char                    *mntd_path = NULL;
+	char                    *repo_path = NULL;
+	char                    *boot_name = NULL;
+	char                    *boot_addr = NULL;
 	const int o_flags = O_RDONLY | O_NONBLOCK | O_CLOEXEC | O_DIRECTORY;
 	int       dfd     = -1;
 	int       err     = 0;
@@ -151,7 +151,7 @@ out:
 
 static void cmd_lsmnt_execute(struct cmd_lsmnt_ctx *ctx)
 {
-	struct silofs_mntinfos *minfos = nullptr;
+	struct silofs_mntinfos *minfos = NULL;
 
 	minfos = cmd_parse_mountinfo();
 	for (size_t i = 0; i < minfos->ninfos; ++i) {

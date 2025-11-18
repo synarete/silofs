@@ -41,12 +41,12 @@ void fte_init(struct ft_env *fte, const struct ft_params *params)
 	memset(fte, 0, sizeof(*fte));
 	memcpy(&fte->params, params, sizeof(fte->params));
 	silofs_mutex_init(&fte->mutex);
-	fte->currtest     = nullptr;
-	fte->start        = time(nullptr);
+	fte->currtest     = NULL;
+	fte->start        = time(NULL);
 	fte->prngc        = 1;
 	fte->seqn         = 0;
 	fte->nbytes_alloc = 0;
-	fte->malloc_list  = nullptr;
+	fte->malloc_list  = NULL;
 	fte->pid          = getpid();
 	fte->uid          = geteuid();
 	fte->gid          = getegid();
@@ -78,7 +78,7 @@ static void *malloc_ok(size_t nbytes)
 	void *mem;
 
 	mem = malloc(nbytes);
-	if (mem == nullptr) {
+	if (mem == NULL) {
 		error(1, errno, "malloc failure: nbytes=%lu", nbytes);
 		abort(); /* make clang-scan happy */
 	}
@@ -87,7 +87,7 @@ static void *malloc_ok(size_t nbytes)
 
 static struct ft_mchunk *ft_malloc_chunk(struct ft_env *fte, size_t nbytes)
 {
-	struct ft_mchunk *mchunk = nullptr;
+	struct ft_mchunk *mchunk = NULL;
 
 	mchunk        = (struct ft_mchunk *)malloc_ok(sizeof(*mchunk));
 	mchunk->data  = malloc_ok(nbytes);
@@ -182,10 +182,10 @@ char *ft_strcat(struct ft_env *fte, const char *str1, const char *str2)
 
 static void ft_do_freeall(struct ft_env *fte)
 {
-	struct ft_mchunk *mnext  = nullptr;
+	struct ft_mchunk *mnext  = NULL;
 	struct ft_mchunk *mchunk = fte->malloc_list;
 
-	while (mchunk != nullptr) {
+	while (mchunk != NULL) {
 		mnext = mchunk->next;
 		ft_free_mchunk(fte, mchunk);
 		mchunk = mnext;
@@ -193,7 +193,7 @@ static void ft_do_freeall(struct ft_env *fte)
 	silofs_assert_eq(fte->nbytes_alloc, 0);
 
 	fte->nbytes_alloc = 0;
-	fte->malloc_list  = nullptr;
+	fte->malloc_list  = NULL;
 }
 
 void ft_freeall(struct ft_env *fte)
@@ -281,7 +281,7 @@ static char *ft_do_joinpath(struct ft_env *fte, const char *s1, const char *s2)
 	const size_t len1 = ft_strlen(s1);
 	const size_t len2 = ft_strlen(s2);
 	const size_t msz  = len1 + len2 + 2;
-	char        *path = nullptr;
+	char        *path = NULL;
 
 	path = (char *)ft_do_malloc(fte, msz);
 	strncpy(path, s1, len1 + 1);
@@ -403,12 +403,12 @@ static void swap(long *arr, size_t i, size_t j)
 
 long *ft_new_buf_randseq(struct ft_env *fte, size_t cnt, long base)
 {
-	long   *arr = nullptr;
+	long   *arr = NULL;
 	size_t *pos;
 
 	arr = ft_new_seq(fte, cnt, base);
 	pos = ft_new_buf_rands(fte, cnt * sizeof(*pos));
-	if (pos != nullptr) { /* make gcc-analyzer happy */
+	if (pos != NULL) { /* make gcc-analyzer happy */
 		for (size_t j = 0; j < cnt; ++j) {
 			swap(arr, j, pos[j] % cnt);
 		}
@@ -574,7 +574,7 @@ int ft_memcmp(const void *p, const void *q, size_t n)
 
 size_t ft_strlen(const char *s)
 {
-	return (s != nullptr) ? strlen(s) : 0;
+	return (s != NULL) ? strlen(s) : 0;
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

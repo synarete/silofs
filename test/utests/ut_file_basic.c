@@ -506,7 +506,7 @@ static struct ut_urecord *new_urecord(struct ut_env *ute, uint64_t num)
 
 static void ut_file_unaligned_(struct ut_env *ute, off_t off, size_t len)
 {
-	struct ut_urecord *urec = nullptr;
+	struct ut_urecord *urec = NULL;
 	const char        *name = UT_NAME;
 	const size_t       nsz  = sizeof(*urec) - 1;
 	const size_t       cnt  = len / nsz;

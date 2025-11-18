@@ -147,14 +147,14 @@ static void ut_parse_args(void)
 	int           opt_chr = 1;
 	int           opt_index;
 	struct option long_opts[] = {
-		{ "level", required_argument, nullptr, 'l' },
-		{ "malloc", no_argument, nullptr, 'M' },
-		{ "pedantic", no_argument, nullptr, 'p' },
-		{ "silent", no_argument, nullptr, 'S' },
-		{ "timestamp", no_argument, nullptr, 'T' },
-		{ "version", no_argument, nullptr, 'v' },
-		{ "help", no_argument, nullptr, 'h' },
-		{ nullptr, no_argument, nullptr, 0 },
+		{ "level", required_argument, NULL, 'l' },
+		{ "malloc", no_argument, NULL, 'M' },
+		{ "pedantic", no_argument, NULL, 'p' },
+		{ "silent", no_argument, NULL, 'S' },
+		{ "timestamp", no_argument, NULL, 'T' },
+		{ "version", no_argument, NULL, 'v' },
+		{ "help", no_argument, NULL, 'h' },
+		{ NULL, no_argument, NULL, 0 },
 	};
 
 	while (opt_chr > 0) {
@@ -198,7 +198,7 @@ static char *ut_join(const char *base, const char *name)
 	char        *path;
 
 	path = (char *)malloc(size);
-	if (path == nullptr) {
+	if (path == NULL) {
 		error(EXIT_FAILURE, errno, "malloc failed: size=%lu", size);
 		abort(); /* make gxx-analyzer happy */
 	}
@@ -214,8 +214,8 @@ static void ut_setup_args(void)
 	struct stat st;
 	int         err;
 
-	ut_globals.test_dir_real = realpath(ut_globals.test_dir, nullptr);
-	if (ut_globals.test_dir_real == nullptr) {
+	ut_globals.test_dir_real = realpath(ut_globals.test_dir, NULL);
+	if (ut_globals.test_dir_real == NULL) {
 		error(EXIT_FAILURE, errno, "no realpath: %s",
 		      ut_globals.test_dir);
 	}
@@ -259,9 +259,9 @@ static void ut_init_lib(void)
 
 static void ut_pfree(char **pp)
 {
-	if (*pp != nullptr) {
+	if (*pp != NULL) {
 		free(*pp);
-		*pp = nullptr;
+		*pp = NULL;
 	}
 }
 

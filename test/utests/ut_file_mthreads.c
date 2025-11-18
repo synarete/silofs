@@ -51,7 +51,7 @@ static void
 ut_create_threads(struct ut_env *ute, struct silofs_thread *th_arr, size_t nth,
                   ut_th_exec_fn exec, const struct ut_thread_args *args)
 {
-	struct ut_thread_xargs *xargs = nullptr;
+	struct ut_thread_xargs *xargs = NULL;
 	int                     err;
 
 	xargs       = ut_zalloc(ute, sizeof(*xargs));
@@ -60,8 +60,7 @@ ut_create_threads(struct ut_env *ute, struct silofs_thread *th_arr, size_t nth,
 	xargs->args = args;
 
 	for (size_t i = 0; i < nth; ++i) {
-		err = silofs_thread_create(&th_arr[i], do_start, xargs,
-		                           nullptr);
+		err = silofs_thread_create(&th_arr[i], do_start, xargs, NULL);
 		ut_expect_ok(err);
 	}
 }

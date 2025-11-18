@@ -53,7 +53,7 @@ static void cmd_rmfs_parse_optargs(struct cmd_rmfs_ctx *ctx)
 		{ "no-prompt", 'P', 0 }, //
 		{ "loglevel", 'L', 1 },  //
 		{ "help", 'h', 0 },      //
-		{ nullptr, 0, 0 },       //
+		{ NULL, 0, 0 },          //
 	};
 	struct cmd_optargs opa;
 	int                opt_chr = 1;
@@ -105,7 +105,7 @@ static void cmd_rmfs_restrict_process(struct cmd_rmfs_ctx *ctx)
 
 static void cmd_rmfs_getpass(struct cmd_rmfs_ctx *ctx)
 {
-	if (ctx->in_args.password == nullptr) {
+	if (ctx->in_args.password == NULL) {
 		cmd_getpass_simple(ctx->in_args.no_prompt,
 		                   &ctx->in_args.password);
 	}
@@ -114,9 +114,9 @@ static void cmd_rmfs_getpass(struct cmd_rmfs_ctx *ctx)
 static void cmd_rmfs_check_nomnt_at(struct cmd_rmfs_ctx *ctx, const char *mntp)
 {
 	struct stat              st[2];
-	char                    *path[2] = { nullptr, nullptr };
-	char                    *repodir = nullptr;
-	char                    *name    = nullptr;
+	char                    *path[2] = { NULL, NULL };
+	char                    *repodir = NULL;
+	char                    *name    = NULL;
 	struct silofs_ioc_query *qry     = &ctx->ioc_qry;
 	int o_flags = O_RDONLY | O_NONBLOCK | O_CLOEXEC | O_DIRECTORY;
 	int dfd     = -1;
@@ -169,7 +169,7 @@ out:
 
 static void cmd_rmfs_check_nomnt(struct cmd_rmfs_ctx *ctx)
 {
-	struct silofs_mntinfos *minfos = nullptr;
+	struct silofs_mntinfos *minfos = NULL;
 
 	minfos = cmd_parse_mountinfo();
 	for (size_t i = 0; i < minfos->ninfos; ++i) {
@@ -257,14 +257,14 @@ static void cmd_rmfs_finalize(struct cmd_rmfs_ctx *ctx)
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
 	cmd_pstrfree(&ctx->in_args.fsname);
-	cmd_rmfs_ctx_p = nullptr;
+	cmd_rmfs_ctx_p = NULL;
 }
 
 static void cmd_rmfs_atexit(void)
 {
 	struct cmd_rmfs_ctx *ctx = cmd_rmfs_ctx_p;
 
-	if (ctx != nullptr) {
+	if (ctx != NULL) {
 		cmd_rmfs_release_lockfile(ctx);
 		cmd_rmfs_finalize(ctx);
 	}
@@ -278,7 +278,7 @@ static void cmd_rmfs_start(struct cmd_rmfs_ctx *ctx)
 
 static void cmd_rmfs_enable_signals(void)
 {
-	cmd_register_sigactions(nullptr);
+	cmd_register_sigactions(NULL);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

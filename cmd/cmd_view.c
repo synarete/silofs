@@ -51,7 +51,7 @@ static void cmd_view_parse_optargs(struct cmd_view_ctx *ctx)
 	const struct cmd_optdesc ods[] = {
 		{ "password", 'p', 1 }, { "no-prompt", 'P', 0 },
 		{ "loglevel", 'L', 1 }, { "help", 'h', 0 },
-		{ nullptr, 0, 0 },
+		{ NULL, 0, 0 },
 	};
 	struct cmd_optargs opa;
 	int                opt_chr = 1;
@@ -117,14 +117,14 @@ static void cmd_view_finalize(struct cmd_view_ctx *ctx)
 	cmd_pstrfree(&ctx->in_args.outfile);
 	cmd_delpass(&ctx->in_args.password);
 	cmd_destroy_env_args(&ctx->env_args);
-	cmd_view_ctx_p = nullptr;
+	cmd_view_ctx_p = NULL;
 }
 
 static void cmd_view_atexit(void)
 {
 	struct cmd_view_ctx *ctx = cmd_view_ctx_p;
 
-	if (ctx != nullptr) {
+	if (ctx != NULL) {
 		cmd_view_release_lockfile(ctx);
 		cmd_view_finalize(ctx);
 	}
@@ -138,7 +138,7 @@ static void cmd_view_start(struct cmd_view_ctx *ctx)
 
 static void cmd_view_enable_signals(void)
 {
-	cmd_register_sigactions(nullptr);
+	cmd_register_sigactions(NULL);
 }
 
 static void cmd_view_prepare(struct cmd_view_ctx *ctx)
@@ -159,7 +159,7 @@ static void cmd_view_restrict_process(struct cmd_view_ctx *ctx)
 
 static void cmd_view_getpass(struct cmd_view_ctx *ctx)
 {
-	if (ctx->in_args.password == nullptr) {
+	if (ctx->in_args.password == NULL) {
 		cmd_getpass_simple(ctx->in_args.no_prompt,
 		                   &ctx->in_args.password);
 	}
@@ -225,7 +225,7 @@ static void cmd_view_execute(struct cmd_view_ctx *ctx)
 void cmd_execute_view(void)
 {
 	struct cmd_view_ctx ctx = {
-		.env    = nullptr,
+		.env    = NULL,
 		.out_fp = stdout,
 	};
 

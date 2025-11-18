@@ -54,7 +54,7 @@ static void ut_statfs_files_(struct ut_env *ute, size_t cnt)
 	ino_t          dino  = 0;
 	fsfilcnt_t     ffree = 0;
 	const char    *name  = UT_NAME;
-	const char    *fname = nullptr;
+	const char    *fname = NULL;
 	struct statvfs stv   = { .f_bsize = 0 };
 
 	ut_mkdir_at_root(ute, name, &dino);
@@ -97,7 +97,7 @@ static void ut_statfs_dirs_(struct ut_env *ute, size_t cnt)
 	ino_t          dino  = 0;
 	fsfilcnt_t     ffree = 0;
 	const char    *name  = UT_NAME;
-	const char    *dname = nullptr;
+	const char    *dname = NULL;
 	struct statvfs stv   = { .f_bsize = 0 };
 
 	ut_mkdir_at_root(ute, name, &dino);

@@ -35,7 +35,7 @@ static struct ut_keyval *kv_new(struct ut_env *ute, size_t nlen, size_t size)
 
 static struct ut_kvl *kvl_new(struct ut_env *ute, size_t limit)
 {
-	struct ut_kvl *kvl     = nullptr;
+	struct ut_kvl *kvl     = NULL;
 	const size_t   list_sz = limit * sizeof(struct ut_keyval *);
 
 	kvl        = ut_malloc(ute, sizeof(*kvl));
@@ -119,7 +119,7 @@ ut_xattr_simple_(struct ut_env *ute, size_t name_len, size_t value_size)
 	ino_t          ino  = 0;
 	ino_t          dino = 0;
 	const char    *name = UT_NAME;
-	struct ut_kvl *kvl  = nullptr;
+	struct ut_kvl *kvl  = NULL;
 
 	kvl = kvl_new(ute, 1);
 	kvl_populate(kvl, name_len, value_size);
@@ -165,7 +165,7 @@ static void ut_xattr_short_names(struct ut_env *ute)
 	ino_t          ino  = 0;
 	ino_t          dino = 0;
 	const char    *name = UT_NAME;
-	struct ut_kvl *kvl  = nullptr;
+	struct ut_kvl *kvl  = NULL;
 
 	kvl = kvl_new(ute, 16);
 	kvl_populate(kvl, 4, 32);
@@ -196,7 +196,7 @@ static void ut_xattr_long_names(struct ut_env *ute)
 	ino_t          ino      = 0;
 	const ino_t    root_ino = UT_ROOT_INO;
 	const char    *name     = UT_NAME;
-	struct ut_kvl *kvl      = nullptr;
+	struct ut_kvl *kvl      = NULL;
 
 	kvl = kvl_new(ute, 4);
 	kvl_populate(kvl, NAME_MAX, SILOFS_XATTR_VALUE_MAX);
@@ -264,7 +264,7 @@ static void
 fill_novalue_kv(struct ut_env *ute, struct ut_keyval *kv, size_t idx)
 {
 	size_t len = 0;
-	char  *str = nullptr;
+	char  *str = NULL;
 
 	str = ut_strfmt(ute, "%lx-%0255lx", idx, idx);
 	len = strlen(str);
@@ -274,7 +274,7 @@ fill_novalue_kv(struct ut_env *ute, struct ut_keyval *kv, size_t idx)
 		str[NAME_MAX] = '\0';
 	}
 	kv->name  = str;
-	kv->value = nullptr;
+	kv->value = NULL;
 	kv->size  = 0;
 }
 
@@ -321,7 +321,7 @@ static void ut_xattr_multi(struct ut_env *ute)
 	ino_t                    dino           = 0;
 	const char              *dname          = UT_NAME;
 	const char              *fname          = UT_NAME;
-	struct ut_kvl           *kvl            = nullptr;
+	struct ut_kvl           *kvl            = NULL;
 	const struct ut_kv_sizes kv_sizes_arr[] = {
 		{ 1, 1 },
 		{ NAME_MAX / 2, 2 },
@@ -370,7 +370,7 @@ static void ut_xattr_lookup_random(struct ut_env *ute)
 	ino_t          dino     = 0;
 	const ino_t    root_ino = UT_ROOT_INO;
 	const char    *dname    = UT_NAME;
-	const char    *xname    = nullptr;
+	const char    *xname    = NULL;
 	struct ut_kvl *kvl      = kvl_new(ute, 4);
 
 	kvl_populate_max(kvl);
@@ -478,7 +478,7 @@ static void ut_xattr_with_io_(struct ut_env *ute, off_t base_off,
 	ino_t                   dino = 0;
 	off_t                   off  = -1;
 	const char             *name = UT_NAME;
-	const struct ut_keyval *kv   = nullptr;
+	const struct ut_keyval *kv   = NULL;
 	struct ut_kvl          *kvl  = kvl_new(ute, 3);
 
 	kvl_populate(kvl, name_len, value_size);

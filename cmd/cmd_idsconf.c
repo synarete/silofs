@@ -57,7 +57,7 @@ static void cmd_load_idsconf_file(const char *pathname, char **out_txt)
 {
 	struct stat st   = { .st_mode = 0 };
 	size_t      size = 0;
-	char       *txt  = nullptr;
+	char       *txt  = NULL;
 	int         fd   = -1;
 	int         err;
 
@@ -110,9 +110,9 @@ static void cmd_save_idsconf_file(const char *pathname, const char *txt)
 
 void cmd_setup_fsids(struct silofs_ugids *ugids)
 {
-	ugids->users.uids   = nullptr;
+	ugids->users.uids   = NULL;
 	ugids->users.nuids  = 0;
-	ugids->groups.gids  = nullptr;
+	ugids->groups.gids  = NULL;
 	ugids->groups.ngids = 0;
 }
 
@@ -161,12 +161,12 @@ static char *cmd_fsids_confpath(const char *basedir)
 void cmd_load_fsids(struct silofs_ugids *ugids, const char *basedir)
 {
 	char *path = cmd_fsids_confpath(basedir);
-	char *text = nullptr;
+	char *text = NULL;
 	int   err;
 
 	cmd_reset_fsids(ugids);
 	cmd_load_idsconf_file(path, &text);
-	err = silofs_parse_fsids(ugids, nullptr, text);
+	err = silofs_parse_fsids(ugids, NULL, text);
 	if (err) {
 		cmd_die(err, "illegal fs-ids config: %s", path);
 	}
@@ -195,8 +195,8 @@ void cmd_save_fsids(const struct silofs_ugids *ugids, const char *basedir)
 void cmd_resolve_uidgid(const char *name, uid_t *out_uid, gid_t *out_gid)
 {
 	struct passwd  pwd = { .pw_uid = (uid_t)(-1) };
-	struct passwd *pw  = nullptr;
-	char          *buf = nullptr;
+	struct passwd *pw  = NULL;
+	char          *buf = NULL;
 	size_t         bsz;
 	int            err;
 
@@ -206,7 +206,7 @@ void cmd_resolve_uidgid(const char *name, uid_t *out_uid, gid_t *out_gid)
 	if (err) {
 		cmd_die(err, "getpwnam failed: %s", name);
 	}
-	if (pw == nullptr) {
+	if (pw == NULL) {
 		cmd_diez("unknown user name: %s", name);
 	}
 	*out_uid = pw->pw_uid;
@@ -233,10 +233,10 @@ static char *cmd_getlogin(void)
 
 	err = getlogin_r(name, sizeof(name) - 1);
 	if (err) {
-		return nullptr;
+		return NULL;
 	}
 	if (!strlen(name)) {
-		return nullptr;
+		return NULL;
 	}
 	return cmd_strdup(name);
 }
@@ -244,9 +244,9 @@ static char *cmd_getlogin(void)
 char *cmd_getpwuid(uid_t uid)
 {
 	struct passwd  pwd = { .pw_uid = (uid_t)(-1) };
-	struct passwd *pw  = nullptr;
-	char          *buf = nullptr;
-	char          *ret = nullptr;
+	struct passwd *pw  = NULL;
+	char          *buf = NULL;
+	char          *ret = NULL;
 	size_t         bsz;
 	int            err;
 
@@ -257,7 +257,7 @@ char *cmd_getpwuid(uid_t uid)
 		cmd_zfree(buf, bsz);
 		cmd_diez("failed to resolve uid: %u", uid);
 	}
-	if ((pw == nullptr) || (pw->pw_name == nullptr)) {
+	if ((pw == NULL) || (pw->pw_name == NULL)) {
 		cmd_zfree(buf, bsz);
 		cmd_diez("unknown uid: %u", uid);
 	}

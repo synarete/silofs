@@ -156,7 +156,7 @@ cipher_open(struct silofs_cipher *cipher, const struct silofs_ciargs *ciargs)
 static void cipher_close(struct silofs_cipher *cipher)
 {
 	gcry_cipher_close(cipher->ci_hd);
-	cipher->ci_hd = nullptr;
+	cipher->ci_hd = NULL;
 }
 
 int silofs_cipher_init(struct silofs_cipher *cipher)
@@ -195,7 +195,7 @@ int silofs_cipher_reinit(struct silofs_cipher       *cipher,
 
 void silofs_cipher_fini(struct silofs_cipher *cipher)
 {
-	if (cipher->ci_hd != nullptr) {
+	if (cipher->ci_hd != NULL) {
 		cipher_close(cipher);
 	}
 }

@@ -51,9 +51,9 @@ silofs_dirtyq_remove(struct silofs_dirtyq *dq, struct silofs_dq_elem *dqe)
 
 static struct silofs_dq_elem *dqe_from_lh(struct silofs_list_head *lh)
 {
-	struct silofs_dq_elem *dqe = nullptr;
+	struct silofs_dq_elem *dqe = NULL;
 
-	if (lh != nullptr) {
+	if (lh != NULL) {
 		dqe = silofs_container_of(lh, struct silofs_dq_elem, lh);
 	}
 	return dqe;
@@ -70,9 +70,9 @@ struct silofs_dq_elem *silofs_dirtyq_front(const struct silofs_dirtyq *dq)
 struct silofs_dq_elem *silofs_dirtyq_next_of(const struct silofs_dirtyq  *dq,
                                              const struct silofs_dq_elem *dqe)
 {
-	struct silofs_list_head *lh = nullptr;
+	struct silofs_list_head *lh = NULL;
 
-	if (dqe != nullptr) {
+	if (dqe != NULL) {
 		lh = listq_next(&dq->dq, &dqe->lh);
 	}
 	return dqe_from_lh(lh);
@@ -85,7 +85,7 @@ void silofs_dqe_init(struct silofs_dq_elem *dqe, size_t sz)
 	silofs_assert_gt(sz, 0);
 
 	silofs_list_head_init(&dqe->lh);
-	dqe->dq  = nullptr;
+	dqe->dq  = NULL;
 	dqe->sz  = (uint32_t)sz;
 	dqe->inq = false;
 }
@@ -96,7 +96,7 @@ void silofs_dqe_fini(struct silofs_dq_elem *dqe)
 	silofs_assert(!dqe->inq);
 
 	silofs_list_head_fini(&dqe->lh);
-	dqe->dq = nullptr;
+	dqe->dq = NULL;
 	dqe->sz = 0;
 }
 

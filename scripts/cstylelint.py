@@ -239,7 +239,7 @@ CSOURCE_EXCLUDE = [
 ]
 
 MAP_TO_C23 = {
-    "NULL": "nullptr",
+    # "NULL": "nullptr",
     "TRUE": "true",
     "FALSE": "false",
 }

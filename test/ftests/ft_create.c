@@ -49,7 +49,7 @@ static void test_create_simple(struct ft_env *fte)
 static void test_create_unlink_(struct ft_env *fte, size_t cnt)
 {
 	const char *path0 = ft_new_path_unique(fte);
-	const char *path1 = nullptr;
+	const char *path1 = NULL;
 	int         fd    = -1;
 
 	ft_mkdir(path0, 0700);

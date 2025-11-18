@@ -217,7 +217,7 @@ sb_mainsilofs_lsid_by(const struct silofs_super_block *sb,
 	case SILOFS_MTYPE_SPLEAF:
 	case SILOFS_MTYPE_LAST:
 	default:
-		ret = nullptr;
+		ret = NULL;
 		break;
 	}
 	return ret;
@@ -236,7 +236,7 @@ static void sb_main_lsid(const struct silofs_super_block *sb,
 {
 	const struct silofs_lsid64b *lsid64 = sb_mainsilofs_lsid_by(sb, mtype);
 
-	if (likely(lsid64 != nullptr)) {
+	if (likely(lsid64 != NULL)) {
 		silofs_lsid64b_xtoh(lsid64, out_lsid);
 	} else {
 		silofs_lsid_reset(out_lsid);
@@ -249,7 +249,7 @@ sb_set_main_lsid(struct silofs_super_block *sb, enum silofs_mtype mtype,
 {
 	struct silofs_lsid64b *bid = sb_mainsilofs_lsid_by2(sb, mtype);
 
-	if (likely(bid != nullptr)) {
+	if (likely(bid != NULL)) {
 		silofs_lsid64b_htox(bid, lsid);
 	}
 }
@@ -261,7 +261,7 @@ static void sb_reset_main_lsids(struct silofs_super_block *sb)
 
 	while (++mtype < SILOFS_MTYPE_LAST) {
 		bid = sb_mainsilofs_lsid_by2(sb, mtype);
-		if (bid != nullptr) {
+		if (bid != NULL) {
 			silofs_lsid64b_reset(bid);
 		}
 	}
@@ -313,7 +313,7 @@ sb_sproot_by(const struct silofs_super_block *sb, enum silofs_mtype mtype)
 	case SILOFS_MTYPE_SPLEAF:
 	case SILOFS_MTYPE_LAST:
 	default:
-		ret = nullptr;
+		ret = NULL;
 		break;
 	}
 	return ret;
@@ -333,7 +333,7 @@ sb_sproot_of(const struct silofs_super_block *sb, enum silofs_mtype mtype,
 {
 	const struct silofs_uaddr128b *uaddr128 = sb_sproot_by(sb, mtype);
 
-	if (likely(uaddr128 != nullptr)) {
+	if (likely(uaddr128 != NULL)) {
 		silofs_uaddr128b_xtoh(uaddr128, out_uaddr);
 	} else {
 		silofs_uaddr_reset(out_uaddr);
@@ -346,7 +346,7 @@ sb_set_sproot_of(struct silofs_super_block *sb, enum silofs_mtype mtype,
 {
 	struct silofs_uaddr128b *uaddr128 = sb_sproot_by2(sb, mtype);
 
-	if (likely(uaddr128 != nullptr)) {
+	if (likely(uaddr128 != NULL)) {
 		silofs_uaddr128b_htox(uaddr128, uaddr);
 	}
 }
@@ -358,7 +358,7 @@ static void sb_reset_sproots(struct silofs_super_block *sb)
 
 	while (++mtype < SILOFS_MTYPE_LAST) {
 		uaddr128 = sb_sproot_by2(sb, mtype);
-		if (uaddr128 != nullptr) {
+		if (uaddr128 != NULL) {
 			silofs_uaddr128b_htox(uaddr128, silofs_uaddr_none());
 		}
 	}
@@ -730,11 +730,11 @@ static int do_stage_lsmap_of(struct silofs_task_ctx          *task,
                              struct silofs_lsmap_info       **out_lsi)
 {
 	struct silofs_vaddr       vaddr;
-	struct silofs_vnode_info *vni = nullptr;
+	struct silofs_vnode_info *vni = NULL;
 	int                       err;
 
 	lsmap_vaddr_of(sli, &vaddr);
-	err = silofs_stage_vnode(task, nullptr, &vaddr, stg_mode, &vni);
+	err = silofs_stage_vnode(task, NULL, &vaddr, stg_mode, &vni);
 	if (err) {
 		return err;
 	}
@@ -779,7 +779,7 @@ static int
 stage_lsmap(struct silofs_task_ctx *task, const struct silofs_vaddr *vaddr,
             enum silofs_stg_mode stg_mode, struct silofs_lsmap_info **out_lsi)
 {
-	struct silofs_spleaf_info *sli = nullptr;
+	struct silofs_spleaf_info *sli = NULL;
 
 	return stage_spleaf_lsmap(task, vaddr, stg_mode, &sli, out_lsi);
 }
@@ -787,7 +787,7 @@ stage_lsmap(struct silofs_task_ctx *task, const struct silofs_vaddr *vaddr,
 int silofs_test_unwritten_at(struct silofs_task_ctx    *task,
                              const struct silofs_vaddr *vaddr, bool *out_res)
 {
-	struct silofs_lsmap_info *lsi = nullptr;
+	struct silofs_lsmap_info *lsi = NULL;
 	int                       err;
 
 	err = stage_lsmap(task, vaddr, SILOFS_STG_CUR, &lsi);
@@ -801,7 +801,7 @@ int silofs_test_unwritten_at(struct silofs_task_ctx    *task,
 int silofs_clear_unwritten_at(struct silofs_task_ctx    *task,
                               const struct silofs_vaddr *vaddr)
 {
-	struct silofs_lsmap_info *lsi = nullptr;
+	struct silofs_lsmap_info *lsi = NULL;
 	int                       err;
 
 	err = stage_lsmap(task, vaddr, SILOFS_STG_COW, &lsi);
@@ -815,7 +815,7 @@ int silofs_clear_unwritten_at(struct silofs_task_ctx    *task,
 int silofs_mark_unwritten_at(struct silofs_task_ctx    *task,
                              const struct silofs_vaddr *vaddr)
 {
-	struct silofs_lsmap_info *lsi = nullptr;
+	struct silofs_lsmap_info *lsi = NULL;
 	int                       err;
 
 	err = stage_lsmap(task, vaddr, SILOFS_STG_COW, &lsi);
@@ -829,7 +829,7 @@ int silofs_mark_unwritten_at(struct silofs_task_ctx    *task,
 int silofs_test_last_allocated(struct silofs_task_ctx    *task,
                                const struct silofs_vaddr *vaddr, bool *out_res)
 {
-	struct silofs_lsmap_info *lsi = nullptr;
+	struct silofs_lsmap_info *lsi = NULL;
 	int                       err;
 
 	err = stage_lsmap(task, vaddr, SILOFS_STG_CUR, &lsi);
@@ -843,8 +843,8 @@ int silofs_test_last_allocated(struct silofs_task_ctx    *task,
 int silofs_test_shared_dbkref(struct silofs_task_ctx    *task,
                               const struct silofs_vaddr *vaddr, bool *out_res)
 {
-	struct silofs_spleaf_info *sli    = nullptr;
-	struct silofs_lsmap_info  *lsi    = nullptr;
+	struct silofs_spleaf_info *sli    = NULL;
+	struct silofs_lsmap_info  *lsi    = NULL;
 	size_t                     refcnt = 0;
 	int                        err;
 
@@ -880,14 +880,14 @@ static const struct silofs_blobid *sbi_lvid(const struct silofs_sb_info *sbi)
 
 void silofs_sbi_incref(struct silofs_sb_info *sbi)
 {
-	if (likely(sbi != nullptr)) {
+	if (likely(sbi != NULL)) {
 		silofs_lni_incref(&sbi->sb_uni.un_lni);
 	}
 }
 
 void silofs_sbi_decref(struct silofs_sb_info *sbi)
 {
-	if (likely(sbi != nullptr)) {
+	if (likely(sbi != NULL)) {
 		silofs_lni_decref(&sbi->sb_uni.un_lni);
 	}
 }

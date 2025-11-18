@@ -112,10 +112,10 @@ static void cmd_mount_getsubopts(struct cmd_mount_ctx *ctx)
                 [CMD_MOUNT_OPT_NOEXEC]  = tok_noexec,  //
                 [CMD_MOUNT_OPT_HOSTIDS] = tok_hostids, //
                 [CMD_MOUNT_OPT_PASSWD]  = tok_passwd,  //
-                nullptr                                //
+                NULL                                   //
 	};
-	char  *sopt = nullptr;
-	char  *sval = nullptr;
+	char  *sopt = NULL;
+	char  *sval = NULL;
 	int    skey = 0;
 	size_t len;
 
@@ -126,7 +126,7 @@ static void cmd_mount_getsubopts(struct cmd_mount_ctx *ctx)
 	memcpy(subopts, optarg, len);
 	sopt = subopts;
 	while (*sopt != '\0') {
-		sval = nullptr;
+		sval = NULL;
 		skey = getsubopt(&sopt, toks, &sval);
 		if (skey == CMD_MOUNT_OPT_RO) {
 			ctx->in_args.flags |= SILOFS_F_RDONLY;
@@ -173,7 +173,7 @@ static void cmd_mount_parse_optargs(struct cmd_mount_ctx *ctx)
 		{ "loglevel", 'L', 1 },
 		{ "systemd-run", 'R', 0 },
 		{ "help", 'h', 0 },
-		{ nullptr, 0, 0 },
+		{ NULL, 0, 0 },
 	};
 	struct cmd_optargs opa;
 	int                opt_chr = 1;
@@ -290,7 +290,7 @@ static void cmd_mount_halt_by_signal(int signum)
 {
 	struct cmd_mount_ctx *ctx = cmd_mount_ctx_p;
 
-	if ((ctx != nullptr) && (ctx->env != nullptr)) {
+	if ((ctx != NULL) && (ctx->env != NULL)) {
 		silofs_halt_fs(ctx->env);
 		ctx->halt_signal = signum;
 	}
@@ -330,14 +330,14 @@ static void cmd_mount_finalize(struct cmd_mount_ctx *ctx)
 	cmd_delpass(&ctx->in_args.password);
 	cmd_destroy_env_args(&ctx->env_args);
 	cmd_close_syslog();
-	cmd_mount_ctx_p = nullptr;
+	cmd_mount_ctx_p = NULL;
 }
 
 static void cmd_mount_atexit(void)
 {
 	struct cmd_mount_ctx *ctx = cmd_mount_ctx_p;
 
-	if (ctx != nullptr) {
+	if (ctx != NULL) {
 		cmd_mount_release_lockfile(ctx);
 		cmd_mount_finalize(cmd_mount_ctx_p);
 	}
@@ -386,7 +386,7 @@ static void cmd_mount_restrict_process(struct cmd_mount_ctx *ctx)
 
 static void cmd_mount_getpass(struct cmd_mount_ctx *ctx)
 {
-	if (ctx->in_args.password == nullptr) {
+	if (ctx->in_args.password == NULL) {
 		cmd_getpass_simple(ctx->in_args.no_prompt,
 		                   &ctx->in_args.password);
 	}
@@ -414,7 +414,7 @@ static void cmd_mount_open_fs(struct cmd_mount_ctx *ctx)
 
 static void cmd_mount_execute_fs(struct cmd_mount_ctx *ctx)
 {
-	ctx->start_time = time(nullptr);
+	ctx->start_time = time(NULL);
 	cmd_exec_fs(ctx->env);
 	ctx->post_exec_status = silofs_post_exec_fs(ctx->env);
 }
@@ -571,7 +571,7 @@ static void cmd_mount_log_start(const struct cmd_mount_ctx *ctx)
 
 static void cmd_mount_log_finish(const struct cmd_mount_ctx *ctx)
 {
-	const time_t exec_time = time(nullptr) - ctx->start_time;
+	const time_t exec_time = time(NULL) - ctx->start_time;
 
 	silofs_log_info("mount done: %s", ctx->in_args.mntpoint_real);
 	silofs_log_info("execution time: %ld seconds", exec_time);
@@ -681,7 +681,7 @@ static void cmd_mount_exec_phase2(struct cmd_mount_ctx *ctx)
 void cmd_execute_mount(void)
 {
 	struct cmd_mount_ctx ctx = {
-		.env              = nullptr,
+		.env              = NULL,
 		.halt_signal      = -1,
 		.post_exec_status = 0,
 	};

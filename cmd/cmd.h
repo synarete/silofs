@@ -17,6 +17,7 @@
 #ifndef SILOFS_CMD_H_
 #define SILOFS_CMD_H_
 
+#include <config.h>
 #include <silofs/silofs.h>
 #include <stdlib.h>
 #include <string.h>

@@ -391,7 +391,7 @@ int silofs_derive_mbr_nmeta(const struct silofs_password *passwd,
 	int                   err;
 
 	silofs_nmeta_reset(out_nmeta);
-	if ((passwd == nullptr) || (passwd->passlen == 0)) {
+	if ((passwd == NULL) || (passwd->passlen == 0)) {
 		return 0;
 	}
 	err = silofs_mdigest_init(&mdigest);

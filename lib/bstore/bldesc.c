@@ -467,7 +467,7 @@ silofs_create_cached_bldesc(struct silofs_pcache      *pcache,
 
 	pni = silofs_pcache_create_pnode(pcache, pmeta);
 	bdi = silofs_bdi_from_pni(pni);
-	if ((bdi != nullptr) && spawn) {
+	if ((bdi != NULL) && spawn) {
 		bdi_setup_spawned(bdi);
 	}
 	return bdi;

@@ -35,7 +35,7 @@ void cmd_del_env(struct silofs_env **p_env)
 {
 	if (p_env && *p_env) {
 		silofs_destroy_env(*p_env);
-		*p_env = nullptr;
+		*p_env = NULL;
 	}
 }
 
@@ -52,7 +52,7 @@ static char *cmd_repodir_name(const struct silofs_env *env)
 static void cmd_report_err_and_die(const struct silofs_env *env, int status,
                                    const char *msg)
 {
-	char       *rname = nullptr;
+	char       *rname = NULL;
 	const char *xmsg  = msg ? msg : "";
 	const char *xtag  = msg ? ": " : "";
 	int         err;

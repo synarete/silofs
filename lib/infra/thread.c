@@ -57,7 +57,7 @@ int silofs_thread_sigblock_common(void)
 	sigaddset(&sigset_th, SIGWINCH);
 	sigaddset(&sigset_th, SIGIO);
 
-	return pthread_sigmask(SIG_BLOCK, &sigset_th, nullptr);
+	return pthread_sigmask(SIG_BLOCK, &sigset_th, NULL);
 }
 
 static void silofs_thread_prepare(struct silofs_thread *th)
@@ -98,7 +98,7 @@ int silofs_thread_create(struct silofs_thread *th, silofs_threadexec_fn exec,
 	size_t         nlen = 0;
 	int            err;
 
-	if (exec == nullptr) {
+	if (exec == NULL) {
 		return -EINVAL;
 	}
 	err = pthread_attr_init(&attr);
@@ -112,7 +112,7 @@ int silofs_thread_create(struct silofs_thread *th, silofs_threadexec_fn exec,
 	th->status      = 0;
 	th->exec        = exec;
 	th->arg         = arg;
-	if (name != nullptr) {
+	if (name != NULL) {
 		nlen = silofs_min(strlen(name), sizeof(th->name) - 1);
 		memcpy(th->name, name, nlen);
 	}
@@ -125,7 +125,7 @@ int silofs_thread_create(struct silofs_thread *th, silofs_threadexec_fn exec,
 
 int silofs_thread_join(struct silofs_thread *th)
 {
-	return pthread_join(th->pth, nullptr);
+	return pthread_join(th->pth, NULL);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

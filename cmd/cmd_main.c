@@ -75,8 +75,8 @@ static void cmd_error_print_progname(void)
 {
 	FILE *fp = stderr;
 
-	if ((cmd_global_params.cmdi == nullptr) ||
-	    (cmd_global_params.cmdi->name == nullptr)) {
+	if ((cmd_global_params.cmdi == NULL) ||
+	    (cmd_global_params.cmdi->name == NULL)) {
 		fprintf(fp, "%s: ", cmd_global_params.name);
 	} else {
 		fprintf(fp, "%s %s: ", cmd_global_params.name,
@@ -127,7 +127,7 @@ static void cmd_resolve_caps(void)
 	int              err  = 1;
 
 	cap = cap_get_pid(getpid());
-	if (cap != nullptr) {
+	if (cap != NULL) {
 		err = cap_get_flag(cap, CAP_SYS_ADMIN, CAP_EFFECTIVE, &flag);
 		cap_free(cap);
 	}
@@ -177,7 +177,7 @@ static bool equals2(const char *s, const char *s1, const char *s2)
 
 static const struct cmd_info *cmd_info_of(const char *cmd_name)
 {
-	const struct cmd_info *cmdi = nullptr;
+	const struct cmd_info *cmdi = NULL;
 
 	for (size_t i = 0; i < SILOFS_ARRAY_SIZE(g_cmd_info); ++i) {
 		cmdi = &g_cmd_info[i];
@@ -185,7 +185,7 @@ static const struct cmd_info *cmd_info_of(const char *cmd_name)
 			return cmdi;
 		}
 	}
-	return nullptr;
+	return NULL;
 }
 
 silofs_attr_noreturn static void show_main_help_and_exit(int exit_code)
@@ -231,7 +231,7 @@ static void cmd_parse_global_args(void)
 		show_main_help_and_exit(0);
 	}
 	cmd_global_params.cmdi = cmd_info_of(cmd_name);
-	if (cmd_global_params.cmdi == nullptr) {
+	if (cmd_global_params.cmdi == NULL) {
 		show_main_help_and_exit(1);
 	}
 }
@@ -240,7 +240,7 @@ static void cmd_execute_sub(void)
 {
 	const struct cmd_info *cmdi = cmd_global_params.cmdi;
 
-	if ((cmdi != nullptr) && (cmdi->subcmd != nullptr)) {
+	if ((cmdi != NULL) && (cmdi->subcmd != NULL)) {
 		cmdi->subcmd();
 	}
 }

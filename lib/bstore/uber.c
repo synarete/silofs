@@ -48,7 +48,7 @@ static void ub_inc_generation(struct silofs_uber_block *ub)
 static struct silofs_bcursor128b *
 ub_bcursor_at(struct silofs_uber_block *ub, size_t slot)
 {
-	struct silofs_bcursor128b *bcursor = nullptr;
+	struct silofs_bcursor128b *bcursor = NULL;
 
 	if (likely(slot < ARRAY_SIZE(ub->ub_bcursor))) {
 		bcursor = &ub->ub_bcursor[slot];
@@ -59,7 +59,7 @@ ub_bcursor_at(struct silofs_uber_block *ub, size_t slot)
 static const struct silofs_bcursor128b *
 ub_bcursor_at2(const struct silofs_uber_block *ub, size_t slot)
 {
-	const struct silofs_bcursor128b *bcursor = nullptr;
+	const struct silofs_bcursor128b *bcursor = NULL;
 
 	if (likely(slot < ARRAY_SIZE(ub->ub_bcursor))) {
 		bcursor = &ub->ub_bcursor[slot];
@@ -89,7 +89,7 @@ static void ub_reset_bcursor_at(struct silofs_uber_block *ub, size_t slot)
 {
 	struct silofs_bcursor128b *bcur = ub_bcursor_at(ub, slot);
 
-	if (likely(bcur != nullptr)) {
+	if (likely(bcur != NULL)) {
 		silofs_bcursor128b_reset(bcur);
 	}
 }
@@ -159,7 +159,7 @@ int silofs_ubi_bcursor_of(const struct silofs_uber_info *ubi,
 	const struct silofs_bcursor128b *bcur;
 
 	bcur = ub_bcursor_of2(ubi->ub, mtype);
-	if (unlikely(bcur == nullptr)) {
+	if (unlikely(bcur == NULL)) {
 		return -SILOFS_ENOENT;
 	}
 	silofs_bcursor128b_xtoh(bcur, out_bcursor);
@@ -183,7 +183,7 @@ int silofs_ubi_update_bcursor(struct silofs_uber_info     *ubi,
 	struct silofs_bcursor128b *bcur;
 
 	bcur = ub_bcursor_of(ubi->ub, mtype);
-	if (unlikely(bcur == nullptr)) {
+	if (unlikely(bcur == NULL)) {
 		return -SILOFS_ENOENT;
 	}
 	silofs_bcursor128b_htox(bcur, bcursor);
@@ -219,7 +219,7 @@ silofs_create_cached_uber(struct silofs_pcache      *pcache,
 
 	pni = silofs_pcache_create_pnode(pcache, pmeta);
 	ubi = silofs_ubi_from_pni(pni);
-	if ((ubi != nullptr) && spawn) {
+	if ((ubi != NULL) && spawn) {
 		ubi_setup_spawned(ubi);
 	}
 	return ubi;

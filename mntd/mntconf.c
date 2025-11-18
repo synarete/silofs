@@ -19,12 +19,13 @@
 #include <string.h>
 #include <stdio.h>
 #include <limits.h>
+#include <config.h>
 #include <silofs/silofs.h>
 #include "mountd.h"
 
 static void *zalloc(size_t n)
 {
-	void *p = nullptr;
+	void *p = NULL;
 	int   err;
 
 	err = silofs_zmalloc(n, &p);
@@ -41,7 +42,7 @@ static void zfree(void *p, size_t n)
 
 static void zfreestr(char *s)
 {
-	if (s != nullptr) {
+	if (s != NULL) {
 		zfree(s, strlen(s) + 1);
 	}
 }
@@ -52,7 +53,7 @@ static char *read_mntconf_file(const char *path)
 {
 	struct stat st   = { .st_size = -1 };
 	size_t      size = 0;
-	char       *conf = nullptr;
+	char       *conf = NULL;
 	int         fd   = -1;
 	int         err;
 
@@ -95,7 +96,7 @@ struct silofs_mntrules *mountd_parse_mntrules(const char *path)
 {
 	struct silofs_alloc    *alloc    = silofs_default_alloc;
 	struct silofs_mntrules *mntrules = new_mntrules();
-	char                   *conf     = nullptr;
+	char                   *conf     = NULL;
 	int                     err;
 
 	conf = read_mntconf_file(path);
@@ -111,7 +112,7 @@ void mountd_free_mntrules(struct silofs_mntrules *mntrules)
 {
 	struct silofs_alloc *alloc = silofs_default_alloc;
 
-	if (mntrules != nullptr) {
+	if (mntrules != NULL) {
 		silofs_release_mntrules(mntrules, alloc);
 		zfree(mntrules, sizeof(*mntrules));
 	}

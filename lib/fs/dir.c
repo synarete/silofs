@@ -646,7 +646,7 @@ dtn_search(const struct silofs_dtree_node *dtn,
 			return de;
 		}
 	}
-	return nullptr;
+	return NULL;
 }
 
 static size_t dtn_slot_of(const struct silofs_dtree_node *dtn,
@@ -680,7 +680,7 @@ dtn_scan(const struct silofs_dtree_node *dtn, off_t pos)
 	const size_t                   slot    = doff_to_slot(pos);
 	const struct silofs_dir_entry *de_from = dtn_de_at_slot(dtn, slot);
 	const struct silofs_dir_entry *de_end  = dtn_de_end(dtn);
-	const struct silofs_dir_entry *de      = nullptr;
+	const struct silofs_dir_entry *de      = NULL;
 	off_t                          doff;
 
 	for (de = de_from; de < de_end; ++de) {
@@ -692,7 +692,7 @@ dtn_scan(const struct silofs_dtree_node *dtn, off_t pos)
 			return de;
 		}
 	}
-	return nullptr;
+	return NULL;
 }
 
 static bool dtn_may_insert(const struct silofs_dtree_node *dtn, size_t nlen)
@@ -928,14 +928,14 @@ dni_dirtify(struct silofs_dtnode_info *dni, struct silofs_inode_info *ii)
 
 static void dni_incref(struct silofs_dtnode_info *dni)
 {
-	if (likely(dni != nullptr)) {
+	if (likely(dni != NULL)) {
 		silofs_vni_incref(&dni->dtn_vni);
 	}
 }
 
 static void dni_decref(struct silofs_dtnode_info *dni)
 {
-	if (likely(dni != nullptr)) {
+	if (likely(dni != NULL)) {
 		silofs_vni_decref(&dni->dtn_vni);
 	}
 }
@@ -1400,7 +1400,7 @@ static int search_dnode(const struct silofs_dtnode_info *dni,
 	const struct silofs_dir_entry *de;
 
 	de = dtn_search(dni->dtn, name);
-	if (de == nullptr) {
+	if (de == NULL) {
 		return -SILOFS_ENOENT;
 	}
 	dei_setup(out_dei, dni, de);
@@ -1439,8 +1439,8 @@ static int dirc_stage_dnode(const struct silofs_dir_ctx *d_ctx,
                             const struct silofs_vaddr   *vaddr,
                             struct silofs_dtnode_info  **out_dni)
 {
-	struct silofs_vnode_info  *vni = nullptr;
-	struct silofs_dtnode_info *dni = nullptr;
+	struct silofs_vnode_info  *vni = NULL;
+	struct silofs_dtnode_info *dni = NULL;
 	int                        err;
 
 	err = dirc_stage_vnode(d_ctx, vaddr, &vni);
@@ -1489,8 +1489,8 @@ dirc_spawn_vnode(const struct silofs_dir_ctx *d_ctx, enum silofs_mtype mtype,
 static int dirc_spawn_dnode(const struct silofs_dir_ctx *d_ctx,
                             struct silofs_dtnode_info  **out_dni)
 {
-	struct silofs_vnode_info  *vni = nullptr;
-	struct silofs_dtnode_info *dni = nullptr;
+	struct silofs_vnode_info  *vni = NULL;
+	struct silofs_dtnode_info *dni = NULL;
 	int                        err;
 
 	err = dirc_spawn_vnode(d_ctx, SILOFS_MTYPE_DTNODE, &vni);
@@ -1626,7 +1626,7 @@ static int dirc_do_lookup_by_tree(const struct silofs_dir_ctx  *d_ctx,
                                   struct silofs_dir_entry_info *dei)
 {
 	const struct silofs_namestr *name      = d_ctx->name;
-	struct silofs_dtnode_info   *child_dni = nullptr;
+	struct silofs_dtnode_info   *child_dni = NULL;
 	struct silofs_dtnode_info   *dni       = root_dni;
 	silofs_dtn_depth_t           depth;
 	int                          ret = -SILOFS_ENOENT;
@@ -1640,7 +1640,7 @@ static int dirc_do_lookup_by_tree(const struct silofs_dir_ctx  *d_ctx,
 		if (ret) {
 			break;
 		}
-		if (child_dni == nullptr) { /* make gcc-analyzer happy */
+		if (child_dni == NULL) { /* make gcc-analyzer happy */
 			ret = -SILOFS_ENOENT;
 			break;
 		}
@@ -1680,7 +1680,7 @@ static int dirc_check_may_lookup(const struct silofs_dir_ctx *d_ctx)
 static int dirc_lookup_by_name(const struct silofs_dir_ctx  *d_ctx,
                                struct silofs_dir_entry_info *dei)
 {
-	struct silofs_dtnode_info *dni = nullptr;
+	struct silofs_dtnode_info *dni = NULL;
 	int                        err;
 
 	err = dirc_stage_tree_root(d_ctx, &dni);
@@ -1960,7 +1960,7 @@ static int dirc_insert_dentry(struct silofs_dir_ctx     *d_ctx,
 
 static int dirc_do_add_dentry(struct silofs_dir_ctx *d_ctx)
 {
-	struct silofs_dtnode_info *root_dni = nullptr;
+	struct silofs_dtnode_info *root_dni = NULL;
 	int                        err;
 
 	err = dirc_require_tree_root(d_ctx, &root_dni);
@@ -2072,7 +2072,7 @@ dirc_emit(struct silofs_dir_ctx *d_ctx, const char *name, size_t nlen,
 	};
 	int err;
 
-	if ((attr != nullptr) && d_ctx->readdir_plus) {
+	if ((attr != NULL) && d_ctx->readdir_plus) {
 		memcpy(&rdi.attr, attr, sizeof(rdi.attr));
 	}
 	err              = rd_ctx->actor(rd_ctx, &rdi);
@@ -2090,9 +2090,9 @@ static bool dirc_emit_dirent(struct silofs_dir_ctx          *d_ctx,
 	const mode_t       dt   = de_dt(de);
 	const size_t       nlen = de_name_len(de);
 	const char        *name = dtn_name_of(dtn, de);
-	const struct stat *attr = nullptr;
+	const struct stat *attr = NULL;
 
-	if (ii != nullptr) {
+	if (ii != NULL) {
 		silofs_ii_stat_of(ii, 0, &st);
 		attr = &st.st;
 	}
@@ -2119,7 +2119,7 @@ static int dirc_stage_inode_of_de(const struct silofs_dir_ctx   *d_ctx,
 {
 	int err = 0;
 
-	*out_ii = nullptr;
+	*out_ii = NULL;
 	if (d_ctx->readdir_plus) {
 		err = dirc_stage_inode(d_ctx, de_ino(de), out_ii);
 	}
@@ -2129,8 +2129,8 @@ static int dirc_stage_inode_of_de(const struct silofs_dir_ctx   *d_ctx,
 static int dirc_iterate_node(struct silofs_dir_ctx           *d_ctx,
                              const struct silofs_dtnode_info *dni)
 {
-	const struct silofs_dir_entry *de = nullptr;
-	struct silofs_inode_info      *ii = nullptr;
+	const struct silofs_dir_entry *de = NULL;
+	struct silofs_inode_info      *ii = NULL;
 	off_t                          off;
 	int                            err;
 	bool                           ok;
@@ -2159,7 +2159,7 @@ static int dirc_iterate_node(struct silofs_dir_ctx           *d_ctx,
 static int dirc_readdir_eos(struct silofs_dir_ctx *d_ctx)
 {
 	d_ctx->rd_ctx->pos = -1;
-	dirc_emit(d_ctx, "", 0, SILOFS_INO_NULL, 0, nullptr);
+	dirc_emit(d_ctx, "", 0, SILOFS_INO_NULL, 0, NULL);
 
 	d_ctx->keep_iter = false;
 	return 0;
@@ -2227,7 +2227,7 @@ static int dirc_next_node(struct silofs_dir_ctx           *d_ctx,
                           silofs_dtn_index_t              *out_dtn_index)
 {
 	struct silofs_vaddr        vaddr      = { .off = -1 };
-	struct silofs_dtnode_info *parent_dni = nullptr;
+	struct silofs_dtnode_info *parent_dni = NULL;
 	silofs_dtn_index_t         next_dtn_index;
 	silofs_dtn_index_t         curr_dtn_index;
 	silofs_dtn_ord_t           ord;
@@ -2261,7 +2261,7 @@ static int
 dirc_do_iterate_tree_nodes(struct silofs_dir_ctx           *d_ctx,
                            const struct silofs_dtnode_info *root_dni)
 {
-	struct silofs_dtnode_info *dni = nullptr;
+	struct silofs_dtnode_info *dni = NULL;
 	silofs_dtn_index_t         dtn_index;
 	int                        ret = 0;
 
@@ -2303,7 +2303,7 @@ static int dirc_iterate_tree_nodes(struct silofs_dir_ctx     *d_ctx,
 
 static int dirc_iterate_tree(struct silofs_dir_ctx *d_ctx)
 {
-	struct silofs_dtnode_info *dni = nullptr;
+	struct silofs_dtnode_info *dni = NULL;
 	silofs_dtn_index_t         start_index;
 	int                        err;
 
@@ -2533,7 +2533,7 @@ static int dirc_discard_tree_at(const struct silofs_dir_ctx *d_ctx,
 static int dirc_discard_recursively(const struct silofs_dir_ctx *d_ctx,
                                     const struct silofs_vaddr   *vaddr)
 {
-	struct silofs_dtnode_info *dni = nullptr;
+	struct silofs_dtnode_info *dni = NULL;
 	int                        err;
 
 	if (silofs_vaddr_isnull(vaddr)) {
@@ -2560,7 +2560,7 @@ static void dirc_resetup_empty_dir(const struct silofs_dir_ctx *d_ctx)
 
 static int dirc_drop_tree(const struct silofs_dir_ctx *d_ctx)
 {
-	struct silofs_dtnode_info *dni = nullptr;
+	struct silofs_dtnode_info *dni = NULL;
 	int                        err;
 
 	if (!dirc_has_tree(d_ctx)) {

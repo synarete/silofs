@@ -106,12 +106,12 @@ alloc_to_stdalloc(const struct silofs_alloc *alloc)
 static void *
 stdalloc_malloc(struct silofs_stdalloc *stdal, size_t n, int flags)
 {
-	void *ptr = nullptr;
+	void *ptr = NULL;
 	int   err;
 
 	err = cstd_memalign(n, &ptr);
 	if (err) {
-		return nullptr;
+		return NULL;
 	}
 	silofs_atomic_addul(&stdal->nbytes_use, n);
 	silofs_unused(flags);
@@ -122,7 +122,7 @@ static void
 stdalloc_free(struct silofs_stdalloc *stdal, void *ptr, size_t n, int flags)
 {
 	silofs_unused(flags);
-	if ((ptr != nullptr) && (n > 0)) {
+	if ((ptr != NULL) && (n > 0)) {
 		cstd_memfree(ptr, n);
 		silofs_atomic_subul(&stdal->nbytes_use, n);
 	}
@@ -182,21 +182,21 @@ struct silofs_alloc *silofs_default_alloc = &g_stdalloc.alloc;
 
 static void post_malloc(void *ptr, size_t size, int flags)
 {
-	if ((ptr != nullptr) && (flags & SILOFS_ALLOCF_BZERO)) {
+	if ((ptr != NULL) && (flags & SILOFS_ALLOCF_BZERO)) {
 		silofs_memzero(ptr, size);
 	}
 }
 
 static void pre_free(void *ptr, size_t size, int flags)
 {
-	if ((ptr != nullptr) && (flags & SILOFS_ALLOCF_BZERO)) {
+	if ((ptr != NULL) && (flags & SILOFS_ALLOCF_BZERO)) {
 		silofs_memzero(ptr, size);
 	}
 }
 
 void *silofs_memalloc(struct silofs_alloc *alloc, size_t n, int flags)
 {
-	void *ptr = nullptr;
+	void *ptr = NULL;
 
 	if (silofs_likely(alloc->malloc_fn && n)) {
 		ptr = alloc->malloc_fn(alloc, n, flags);
@@ -207,7 +207,7 @@ void *silofs_memalloc(struct silofs_alloc *alloc, size_t n, int flags)
 
 void silofs_memfree(struct silofs_alloc *alloc, void *ptr, size_t n, int flags)
 {
-	if (silofs_likely((ptr != nullptr) && n && alloc->free_fn)) {
+	if (silofs_likely((ptr != NULL) && n && alloc->free_fn)) {
 		pre_free(ptr, n, flags);
 		alloc->free_fn(alloc, ptr, n, flags);
 	}
@@ -217,7 +217,7 @@ void silofs_memstat(const struct silofs_alloc *alloc,
                     struct silofs_alloc_stat  *out_stat)
 {
 	silofs_memzero(out_stat, sizeof(*out_stat));
-	if (alloc->stat_fn != nullptr) {
+	if (alloc->stat_fn != NULL) {
 		alloc->stat_fn(alloc, out_stat);
 	}
 }

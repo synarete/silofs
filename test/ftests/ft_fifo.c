@@ -39,7 +39,7 @@ static void test_mkfifoat_(struct ft_env *fte, size_t cnt)
 {
 	struct stat st   = { .st_mode = 0 };
 	const char *path = ft_new_path_unique(fte);
-	const char *name = nullptr;
+	const char *name = NULL;
 	int         dfd  = -1;
 
 	ft_mkdir(path, 0700);
@@ -197,7 +197,7 @@ static void test_fifo_nlinks_(struct ft_env *fte, nlink_t nlink, size_t bsz)
 	void       *buf2  = ft_new_buf_rands(fte, bsz);
 	const char *dpath = ft_new_path_unique(fte);
 	const char *fname = ft_make_ulong_name(fte, nlink);
-	const char *lname = nullptr;
+	const char *lname = NULL;
 	int         dfd   = -1;
 	int         fd    = -1;
 

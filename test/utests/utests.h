@@ -18,6 +18,7 @@
 #define SILOFS_UTESTS_H_
 
 #define _GNU_SOURCE 1
+#include <config.h>
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <sys/stat.h>

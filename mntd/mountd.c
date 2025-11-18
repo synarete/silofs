@@ -24,6 +24,7 @@
 #include <signal.h>
 #include <getopt.h>
 #include "mountd.h"
+#include <config.h>
 #include <silofs/silofs.h>
 
 /* global context */
@@ -178,7 +179,7 @@ static void mountd_require_cap_sys_admin(const struct mountd_ctx *ctx)
 
 	errno = 0;
 	cap   = cap_get_pid(getpid());
-	if (cap == nullptr) {
+	if (cap == NULL) {
 		silofs_die(errno, "failed to get cap");
 	}
 	err = cap_get_flag(cap, value, CAP_EFFECTIVE, &flag);
@@ -196,7 +197,7 @@ static void mountd_require_cap_sys_admin(const struct mountd_ctx *ctx)
 static void mountd_setup_env(struct mountd_ctx *ctx)
 {
 	struct silofs_ms_args ms_args = {
-		.runstatedir  = nullptr,
+		.runstatedir  = NULL,
 		.use_abstract = true,
 	};
 	int err;
@@ -224,17 +225,17 @@ static void mountd_load_mntrules(struct mountd_ctx *ctx)
 
 static void mountd_drop_mntrules(struct mountd_ctx *ctx)
 {
-	if (ctx->mntrules != nullptr) {
+	if (ctx->mntrules != NULL) {
 		mountd_free_mntrules(ctx->mntrules);
-		ctx->mntrules = nullptr;
+		ctx->mntrules = NULL;
 	}
 }
 
 static void mountd_del_env(struct mountd_ctx *ctx)
 {
-	if (ctx->mse != nullptr) {
+	if (ctx->mse != NULL) {
 		silofs_mse_del(ctx->mse);
-		ctx->mse = nullptr;
+		ctx->mse = NULL;
 	}
 }
 
@@ -242,14 +243,14 @@ static void mountd_finalize(struct mountd_ctx *ctx)
 {
 	mountd_del_env(ctx);
 	mountd_drop_mntrules(ctx);
-	mountd_ctx = nullptr;
+	mountd_ctx = NULL;
 
 	silofs_burnstack();
 }
 
 static void mountd_atexit(void)
 {
-	if (mountd_ctx != nullptr) {
+	if (mountd_ctx != NULL) {
 		mountd_finalize(mountd_ctx);
 	}
 }
@@ -296,7 +297,7 @@ static void mountd_sigaction_halt_handler(int signum)
 	struct mountd_ctx *ctx = mountd_ctx;
 
 	silofs_log_info("halt-signal: %d", signum);
-	if (ctx != nullptr) {
+	if (ctx != NULL) {
 		mountd_halt_by_signal(ctx, signum);
 	}
 }
@@ -306,7 +307,7 @@ silofs_attr_noreturn static void mountd_sigaction_term_handler(int signum)
 	struct mountd_ctx *ctx = mountd_ctx;
 
 	silofs_log_crit("term-signal: %d", signum);
-	if (ctx != nullptr) {
+	if (ctx != NULL) {
 		ctx->sig_halt  = signum;
 		ctx->sig_fatal = signum;
 	}
@@ -349,7 +350,7 @@ static void register_sigaction(int signum, const struct sigaction *sa)
 {
 	int err;
 
-	err = silofs_sys_sigaction(signum, sa, nullptr);
+	err = silofs_sys_sigaction(signum, sa, NULL);
 	if (err) {
 		silofs_die(err, "sigaction error: signum=%d", signum);
 	}
@@ -444,11 +445,11 @@ static void mountd_getopt(struct mountd_ctx *ctx)
 	int                 argc      = ctx->args.argc;
 	char              **argv      = ctx->args.argv;
 	const struct option lopts[]   = {
-                { "conf", required_argument, nullptr, 'f' },
-                { "loglevel", required_argument, nullptr, 'L' },
-                { "version", no_argument, nullptr, 'v' },
-                { "help", no_argument, nullptr, 'h' },
-                { nullptr, no_argument, nullptr, 0 },
+                { "conf", required_argument, NULL, 'f' },
+                { "loglevel", required_argument, NULL, 'L' },
+                { "version", no_argument, NULL, 'v' },
+                { "help", no_argument, NULL, 'h' },
+                { NULL, no_argument, NULL, 0 },
 	};
 
 	while (opt_chr > 0) {
@@ -473,7 +474,7 @@ static void mountd_getopt(struct mountd_ctx *ctx)
 	if (optind < argc) {
 		silofs_die(0, "redundant argument: %s", argv[optind]);
 	}
-	if (ctx->args.confpath == nullptr) {
+	if (ctx->args.confpath == NULL) {
 		silofs_die(0, "missing argument: %s", "conf");
 	}
 }

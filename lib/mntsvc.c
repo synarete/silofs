@@ -131,14 +131,14 @@ static const struct silofs_fsinfo fsinfo_allowed[] = {
 
 const struct silofs_fsinfo *silofs_fsinfo_by_vfstype(long vfstype)
 {
-	const struct silofs_fsinfo *fsinfo = nullptr;
+	const struct silofs_fsinfo *fsinfo = NULL;
 
 	for (size_t i = 0; i < SILOFS_ARRAY_SIZE(fsinfo_allowed); ++i) {
 		fsinfo = &fsinfo_allowed[i];
 		if (fsinfo->vfstype == vfstype) {
 			break;
 		}
-		fsinfo = nullptr;
+		fsinfo = NULL;
 	}
 	return fsinfo;
 }
@@ -148,7 +148,7 @@ static int check_mntdir_fstype(long vfstype)
 	const struct silofs_fsinfo *fsinfo;
 
 	fsinfo = silofs_fsinfo_by_vfstype(vfstype);
-	if (fsinfo == nullptr) {
+	if (fsinfo == NULL) {
 		return -SILOFS_EINVAL;
 	}
 	if (fsinfo->isfuse || !fsinfo->allowed) {
@@ -223,7 +223,7 @@ static void close_fd(int *pfd)
 {
 	int err;
 
-	if ((pfd != nullptr) && (*pfd > 0)) {
+	if ((pfd != NULL) && (*pfd > 0)) {
 		err = silofs_sys_close(*pfd);
 		if (err) {
 			silofs_panic("close-error: fd=%d err=%d", *pfd, err);
@@ -272,14 +272,14 @@ static bool equal_path_by_stat(const char *path1, const struct stat *st2)
 
 static int check_canonical_path(const char *path)
 {
-	char *cpath = nullptr;
+	char *cpath = NULL;
 	int   err   = 0;
 
 	if (!silofs_str_length(path)) {
 		return -SILOFS_EINVAL;
 	}
 	cpath = canonicalize_file_name(path);
-	if (cpath == nullptr) {
+	if (cpath == NULL) {
 		return -errno;
 	}
 	if (strcmp(path, cpath) != 0) {
@@ -449,7 +449,7 @@ static const char *mntmsg_path(const struct silofs_mntmsg *mmsg)
 	const size_t maxlen = sizeof(mmsg->mn_path);
 	const size_t len    = strnlen(path, maxlen);
 
-	return (len && (len < maxlen)) ? path : nullptr;
+	return (len && (len < maxlen)) ? path : NULL;
 }
 
 static int mntmsg_set_path(struct silofs_mntmsg *mmsg, const char *path)
@@ -591,7 +591,7 @@ do_sendmsg(const struct silofs_socket *sock, const struct msghdr *mh)
  */
 static void do_pack_fd(struct msghdr *mh, int fd)
 {
-	struct cmsghdr *cmh = nullptr;
+	struct cmsghdr *cmh = NULL;
 
 	if (fd > 0) {
 		cmh = silofs_cmsg_firsthdr(mh);
@@ -610,7 +610,7 @@ static int mntmsg_send(const struct silofs_mntmsg *mmsg,
 		.iov_len  = sizeof(*mmsg),
 	};
 	struct msghdr msg = {
-		.msg_name       = nullptr,
+		.msg_name       = NULL,
 		.msg_namelen    = 0,
 		.msg_iov        = &iov,
 		.msg_iovlen     = 1,
@@ -641,7 +641,7 @@ static int try_recvmsg(const struct silofs_socket *sock, struct msghdr *mh,
 static int
 check_post_recvmsg(struct msghdr *mh, size_t nbytes, bool allow_cmsg)
 {
-	struct cmsghdr *cmh = nullptr;
+	struct cmsghdr *cmh = NULL;
 
 	if (nbytes < sizeof(*mh)) {
 		return -SILOFS_ECOMM;
@@ -650,14 +650,14 @@ check_post_recvmsg(struct msghdr *mh, size_t nbytes, bool allow_cmsg)
 		return -SILOFS_ECOMM;
 	}
 	cmh = silofs_cmsg_firsthdr(mh);
-	if (cmh == nullptr) {
+	if (cmh == NULL) {
 		return 0;
 	}
 	if (!allow_cmsg) {
 		return -SILOFS_ECOMM;
 	}
 	cmh = silofs_cmsg_nexthdr(mh, cmh);
-	if (cmh != nullptr) {
+	if (cmh != NULL) {
 		return -SILOFS_ECOMM;
 	}
 	return 0;
@@ -683,7 +683,7 @@ static int do_unpack_fd(struct msghdr *mh, int *out_fd)
 
 	*out_fd = -1;
 	cmsg    = silofs_cmsg_firsthdr(mh);
-	if (cmsg != nullptr) {
+	if (cmsg != NULL) {
 		err = silofs_cmsg_unpack_fd(cmsg, out_fd);
 	}
 	return err;
@@ -700,7 +700,7 @@ static int mntmsg_recv(const struct silofs_mntmsg *mmsg,
 		.iov_len  = sizeof(*mmsg),
 	};
 	struct msghdr msg = {
-		.msg_name       = nullptr,
+		.msg_name       = NULL,
 		.msg_namelen    = 0,
 		.msg_iov        = &iov,
 		.msg_iovlen     = 1,
@@ -709,7 +709,7 @@ static int mntmsg_recv(const struct silofs_mntmsg *mmsg,
 		.msg_flags      = 0,
 	};
 	int  err;
-	bool want_fd = (out_fd != nullptr);
+	bool want_fd = (out_fd != NULL);
 
 	err = do_recvmsg(sock, &msg, want_fd);
 	if (!err && want_fd) {
@@ -723,7 +723,7 @@ static int mntmsg_recv2(const struct silofs_mntmsg *mmsg,
 {
 	int err;
 
-	err = mntmsg_recv(mmsg, sock, nullptr);
+	err = mntmsg_recv(mmsg, sock, NULL);
 	return err;
 }
 
@@ -744,7 +744,7 @@ static void mntsvc_init(struct silofs_mntsvc *msvc)
 	mntsvc_reset_peer_ucred(msvc);
 	msvc->ms_page_size = (uint32_t)silofs_sc_page_size();
 	msvc->ms_fuse_fd   = -1;
-	msvc->ms_srv       = nullptr;
+	msvc->ms_srv       = NULL;
 }
 
 static void mntsvc_close_fuse_fd(struct silofs_mntsvc *msvc)
@@ -763,7 +763,7 @@ static void mntsvc_fini(struct silofs_mntsvc *msvc)
 	mntsvc_close_sock(msvc);
 	mntsvc_close_fuse_fd(msvc);
 	mntsvc_reset_peer_ucred(msvc);
-	msvc->ms_srv = nullptr;
+	msvc->ms_srv = NULL;
 }
 
 static void mntsvc_format_peer_ids(struct silofs_mntsvc *msvc)
@@ -825,14 +825,14 @@ static int mntsvc_check_mount_mntrule(const struct silofs_mntsvc    *msvc,
                                       const struct silofs_mntparams *mntp)
 {
 	struct stat                   st       = { .st_size = -1 };
-	const struct silofs_mntrule  *mrule    = nullptr;
-	const struct silofs_mntrules *mrules   = nullptr;
+	const struct silofs_mntrule  *mrule    = NULL;
+	const struct silofs_mntrules *mrules   = NULL;
 	const uid_t                   uid_none = (uid_t)(-1);
 	const uid_t                   uid_peer = msvc->ms_peer_ucred.uid;
 	int                           err;
 
 	mrules = msvc->ms_srv->ms_rules;
-	if (mrules == nullptr) {
+	if (mrules == NULL) {
 		log_info("no rules for: '%s' peer=%s", mntp->path,
 		         msvc->ms_peer_ids);
 		return -SILOFS_EMOUNT;
@@ -848,9 +848,9 @@ static int mntsvc_check_mount_mntrule(const struct silofs_mntsvc    *msvc,
 		if (equal_path_by_stat(mrule->path, &st)) {
 			break;
 		}
-		mrule = nullptr;
+		mrule = NULL;
 	}
-	if (mrule == nullptr) {
+	if (mrule == NULL) {
 		log_info("no valid mount-rule for: '%s' peer=%s", mntp->path,
 		         msvc->ms_peer_ids);
 		return -SILOFS_EMOUNT;
@@ -871,8 +871,8 @@ static int mntsvc_check_mount_mntrule(const struct silofs_mntsvc    *msvc,
 static int mntsvc_check_umount_mntrule(const struct silofs_mntsvc    *msvc,
                                        const struct silofs_mntparams *mntp)
 {
-	const struct silofs_mntrule  *mrule    = nullptr;
-	const struct silofs_mntrules *mrules   = nullptr;
+	const struct silofs_mntrule  *mrule    = NULL;
+	const struct silofs_mntrules *mrules   = NULL;
 	const uid_t                   uid_none = (uid_t)(-1);
 	const uid_t                   uid_peer = msvc->ms_peer_ucred.uid;
 
@@ -886,9 +886,9 @@ static int mntsvc_check_umount_mntrule(const struct silofs_mntsvc    *msvc,
 		if (equal_mntpath(mrule->path, mntp->path)) {
 			break;
 		}
-		mrule = nullptr;
+		mrule = NULL;
 	}
-	if (mrule == nullptr) {
+	if (mrule == NULL) {
 		log_info("no rule with: '%s'", mntp->path);
 		return -SILOFS_EUMOUNT;
 	}
@@ -928,7 +928,7 @@ static int mntsvc_check_mount(const struct silofs_mntsvc    *msvc,
 	if (mntp->max_read > (512 * page_size)) {
 		return -SILOFS_EINVAL;
 	}
-	if (mntp->path == nullptr) {
+	if (mntp->path == NULL) {
 		return -SILOFS_EINVAL;
 	}
 	err = mntsvc_check_mount_mntrule(msvc, mntp);
@@ -1125,7 +1125,7 @@ mntsrv_init(struct silofs_mntsrv *msrv, const struct silofs_ms_args *ms_args)
 	memcpy(&msrv->ms_args, ms_args, sizeof(msrv->ms_args));
 	silofs_streamsock_initu(&msrv->ms_lsock);
 	mntsvc_init(&msrv->ms_svc);
-	msrv->ms_rules = nullptr;
+	msrv->ms_rules = NULL;
 }
 
 static void mntsrv_fini_sock(struct silofs_mntsrv *msrv)
@@ -1138,7 +1138,7 @@ static void mntsrv_fini(struct silofs_mntsrv *msrv)
 {
 	mntsrv_fini_sock(msrv);
 	mntsvc_fini(&msrv->ms_svc);
-	msrv->ms_rules = nullptr;
+	msrv->ms_rules = NULL;
 }
 
 static int mntsrv_setrules(struct silofs_mntsrv         *msrv,
@@ -1195,7 +1195,7 @@ static const char *mntsrv_runstatedir(const struct silofs_mntsrv *msrv)
 	const char *statedir_args = msrv->ms_args.runstatedir;
 	const char *statedir_conf = SILOFS_RUNSTATEDIR;
 
-	return (statedir_args != nullptr) ? statedir_args : statedir_conf;
+	return (statedir_args != NULL) ? statedir_args : statedir_conf;
 }
 
 static int
@@ -1324,9 +1324,9 @@ static void mse_fini(struct silofs_ms_env *mse)
 int silofs_mse_new(const struct silofs_ms_args *ms_args,
                    struct silofs_ms_env       **out_mse)
 {
-	void                     *mem     = nullptr;
-	struct silofs_ms_env     *mse     = nullptr;
-	struct silofs_ms_env_obj *mse_obj = nullptr;
+	void                     *mem     = NULL;
+	struct silofs_ms_env     *mse     = NULL;
+	struct silofs_ms_env_obj *mse_obj = NULL;
 	int                       err;
 
 	err = silofs_zmalloc(sizeof(*mse_obj), &mem);

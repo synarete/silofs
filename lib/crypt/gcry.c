@@ -26,7 +26,7 @@ enum {
 
 int silofs_init_gcrypt(bool with_fips)
 {
-	const char        *version          = nullptr;
+	const char        *version          = NULL;
 	const char        *expected_version = GCRYPT_VERSION;
 	enum gcry_ctl_cmds cmd;
 	gcry_error_t       err;
@@ -81,7 +81,7 @@ int silofs_gcrypt_status_(gcry_error_t gcry_err, const char *fn,
 {
 	const int err = (int)gcry_err;
 
-	if (gcry_err && (fn != nullptr)) {
+	if (gcry_err && (fn != NULL)) {
 		silofs_logf(SILOFS_LOG_ERROR, file, line, "%s: %s", fn,
 		            gcry_strerror(gcry_err));
 	}

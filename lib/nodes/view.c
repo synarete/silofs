@@ -243,10 +243,10 @@ static void view_fini(struct silofs_view *view, enum silofs_mtype mtype)
 struct silofs_view *
 silofs_view_new(struct silofs_alloc *alloc, enum silofs_mtype mtype, int flags)
 {
-	struct silofs_view *view = nullptr;
+	struct silofs_view *view = NULL;
 
 	view = view_malloc(alloc, mtype, flags);
-	if (view != nullptr) {
+	if (view != NULL) {
 		view_init(view, mtype);
 	}
 	return view;
@@ -255,7 +255,7 @@ silofs_view_new(struct silofs_alloc *alloc, enum silofs_mtype mtype, int flags)
 void silofs_view_del(struct silofs_view *view, struct silofs_alloc *alloc,
                      enum silofs_mtype mtype, int flags)
 {
-	if (likely(view != nullptr)) {
+	if (likely(view != NULL)) {
 		view_fini(view, mtype);
 		view_free(view, alloc, mtype, flags);
 	}

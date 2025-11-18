@@ -17,6 +17,7 @@
 #ifndef SILOFS_FTESTS_H_
 #define SILOFS_FTESTS_H_
 
+#include <config.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>

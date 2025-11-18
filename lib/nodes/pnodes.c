@@ -19,8 +19,6 @@
 #include "addr.h"
 #include "pnodes.h"
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 static void reduce_to_vaddr(const struct silofs_paddr *paddr,
                             struct silofs_vaddr *out_vaddr)
 {
@@ -38,6 +36,19 @@ calc_hash_of(const struct silofs_mdigest *mdigest,
 }
 
 static void
+derive_iv_by_hash256(struct silofs_iv *iv, const struct silofs_hash256 *hash)
+{
+	STATICASSERT_LE(ARRAY_SIZE(iv->iv), ARRAY_SIZE(hash->hash));
+
+	silofs_iv_reset(iv);
+	for (size_t i = 0; i < ARRAY_SIZE(hash->hash); ++i) {
+		const size_t j = i % ARRAY_SIZE(iv->iv);
+
+		iv->iv[j] ^= (hash->hash[i] ^ (uint8_t)i);
+	}
+}
+
+static void
 derive_iv_by(const struct silofs_mdigest *mdigest,
              const struct silofs_paddr *paddr, struct silofs_iv *out_iv)
 {
@@ -46,10 +57,10 @@ derive_iv_by(const struct silofs_mdigest *mdigest,
 
 	reduce_to_vaddr(paddr, &vaddr);
 	calc_hash_of(mdigest, &vaddr, &hash);
-	silofs_derive_iv_by_hash256(out_iv, &hash);
+	derive_iv_by_hash256(out_iv, &hash);
 }
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static struct silofs_view *
 new_view_of(struct silofs_alloc *alloc, enum silofs_mtype mtype)

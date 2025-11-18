@@ -335,6 +335,19 @@ laddr_to_hash(const struct silofs_laddr *laddr,
 	silofs_sha3_256_of(md, &laddr96, sizeof(laddr96), out_hash);
 }
 
+static void
+derive_iv_by_hash256(struct silofs_iv *iv, const struct silofs_hash256 *hash)
+{
+	STATICASSERT_LE(ARRAY_SIZE(iv->iv), ARRAY_SIZE(hash->hash));
+
+	silofs_iv_reset(iv);
+	for (size_t i = 0; i < ARRAY_SIZE(hash->hash); ++i) {
+		const size_t j = i % ARRAY_SIZE(iv->iv);
+
+		iv->iv[j] ^= (hash->hash[i] ^ (uint8_t)i);
+	}
+}
+
 void silofs_derive_iv_by_laddr(const struct silofs_mdigest *md,
                                const struct silofs_laddr *laddr,
                                struct silofs_iv *out_iv)
@@ -342,7 +355,7 @@ void silofs_derive_iv_by_laddr(const struct silofs_mdigest *md,
 	struct silofs_hash256 hash = {};
 
 	laddr_to_hash(laddr, md, &hash);
-	silofs_derive_iv_by_hash256(out_iv, &hash);
+	derive_iv_by_hash256(out_iv, &hash);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

@@ -121,28 +121,6 @@ void silofs_paddr64b_xtoh(const struct silofs_paddr64b *paddr64,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void
-paddr_to_hash(const struct silofs_paddr *paddr,
-              const struct silofs_mdigest *md, struct silofs_hash256 *out_hash)
-{
-	struct silofs_paddr64b paddr64 = {};
-
-	silofs_paddr64b_htox(&paddr64, paddr);
-	silofs_sha3_256_of(md, &paddr64, sizeof(paddr64), out_hash);
-}
-
-void silofs_derive_iv_by_paddr(const struct silofs_mdigest *md,
-                               const struct silofs_paddr *paddr,
-                               struct silofs_iv *out_iv)
-{
-	struct silofs_hash256 hash = {};
-
-	paddr_to_hash(paddr, md, &hash);
-	silofs_derive_iv_by_hash256(out_iv, &hash);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 static const struct silofs_bcursor s_silofs_cursor_none = {
 	.blobsz = 0,
 };

@@ -19,6 +19,38 @@
 #include "addr.h"
 #include "pnodes.h"
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static void reduce_to_vaddr(const struct silofs_paddr *paddr,
+                            struct silofs_vaddr *out_vaddr)
+{
+	silofs_vaddr_setup(out_vaddr, paddr->mtype, paddr->pos);
+}
+
+static void
+calc_hash_of(const struct silofs_mdigest *mdigest,
+             const struct silofs_vaddr *vaddr, struct silofs_hash256 *out_hash)
+{
+	struct silofs_vaddr64 vaddr64 = {};
+
+	silofs_vaddr64_htox(&vaddr64, vaddr);
+	silofs_sha3_256_of(mdigest, &vaddr64, sizeof(vaddr64), out_hash);
+}
+
+static void
+derive_iv_by(const struct silofs_mdigest *mdigest,
+             const struct silofs_paddr *paddr, struct silofs_iv *out_iv)
+{
+	struct silofs_hash256 hash;
+	struct silofs_vaddr vaddr;
+
+	reduce_to_vaddr(paddr, &vaddr);
+	calc_hash_of(mdigest, &vaddr, &hash);
+	silofs_derive_iv_by_hash256(out_iv, &hash);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 static struct silofs_view *
 new_view_of(struct silofs_alloc *alloc, enum silofs_mtype mtype)
 {
@@ -117,7 +149,7 @@ void silofs_pni_setup_ivkey(struct silofs_pnode_info *pni,
 {
 	struct silofs_iv iv;
 
-	silofs_derive_iv_by_paddr(md, &pni->pn_paddr, &iv);
+	derive_iv_by(md, &pni->pn_paddr, &iv);
 	silofs_ivkey_setup(&pni->pn_ivkey, key, &iv);
 }
 

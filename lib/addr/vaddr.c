@@ -21,36 +21,36 @@
 #include "htox.h"
 #include "vaddr.h"
 
-static uint64_t cpu_to_voff_mtype(off_t voff, enum silofs_mtype mtype)
+static uint64_t cpu_to_off_mtype(off_t off, enum silofs_mtype mtype)
 {
-	uint64_t voff_mtype;
+	uint64_t off_mtype;
 	const uint64_t mask = 0xFF;
-	const uint64_t uoff = (uint64_t)voff;
+	const uint64_t uoff = (uint64_t)off;
 	const uint64_t umtype = (uint64_t)mtype;
 
 	if (!silofs_mtype_isnone(mtype)) {
 		silofs_assert_eq(uoff & mask, 0);
 
-		voff_mtype = ((uoff & ~mask) | (umtype & mask));
-		voff_mtype = silofs_cpu_to_le64(voff_mtype);
+		off_mtype = ((uoff & ~mask) | (umtype & mask));
+		off_mtype = silofs_cpu_to_le64(off_mtype);
 	} else {
-		voff_mtype = 0;
+		off_mtype = 0;
 	}
-	return voff_mtype;
+	return off_mtype;
 }
 
-static void voff_mtype_to_cpu(uint64_t voff_mtype, off_t *out_voff,
+static void voff_mtype_to_cpu(uint64_t off_mtype, off_t *out_off,
                               enum silofs_mtype *out_mtype)
 {
 	const uint64_t mask = 0xFF;
-	const uint64_t uoff = voff_mtype & ~mask;
-	const uint64_t umtype = voff_mtype & mask;
+	const uint64_t uoff = off_mtype & ~mask;
+	const uint64_t umtype = off_mtype & mask;
 
-	if (voff_mtype > 0) {
-		*out_voff = (off_t)uoff;
+	if (off_mtype > 0) {
+		*out_off = (off_t)uoff;
 		*out_mtype = (enum silofs_mtype)umtype;
 	} else {
-		*out_voff = SILOFS_OFF_NULL;
+		*out_off = SILOFS_OFF_NULL;
 		*out_mtype = SILOFS_MTYPE_NONE;
 	}
 }
@@ -194,57 +194,57 @@ static const struct silofs_vaddr56 s_vaddr56_null = {
 	.b = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF },
 };
 
-void silofs_vaddr56_htox(struct silofs_vaddr56 *vadr, off_t off)
+void silofs_vaddr56_htox(struct silofs_vaddr56 *vaddr56, off_t off)
 {
 	const uint64_t uoff = (uint64_t)off;
 
 	if (!silofs_off_isnull(off)) {
 		silofs_assert_eq(uoff & 0xFFL, 0);
 
-		vadr->b[0] = (uint8_t)((uoff >> 8) & 0xFF);
-		vadr->b[1] = (uint8_t)((uoff >> 16) & 0xFF);
-		vadr->b[2] = (uint8_t)((uoff >> 24) & 0xFF);
-		vadr->b[3] = (uint8_t)((uoff >> 32) & 0xFF);
-		vadr->b[4] = (uint8_t)((uoff >> 40) & 0xFF);
-		vadr->b[5] = (uint8_t)((uoff >> 48) & 0xFF);
-		vadr->b[6] = (uint8_t)((uoff >> 56) & 0xFF);
+		vaddr56->b[0] = (uint8_t)((uoff >> 8) & 0xFF);
+		vaddr56->b[1] = (uint8_t)((uoff >> 16) & 0xFF);
+		vaddr56->b[2] = (uint8_t)((uoff >> 24) & 0xFF);
+		vaddr56->b[3] = (uint8_t)((uoff >> 32) & 0xFF);
+		vaddr56->b[4] = (uint8_t)((uoff >> 40) & 0xFF);
+		vaddr56->b[5] = (uint8_t)((uoff >> 48) & 0xFF);
+		vaddr56->b[6] = (uint8_t)((uoff >> 56) & 0xFF);
 	} else {
-		memcpy(vadr, &s_vaddr56_null, sizeof(*vadr));
+		memcpy(vaddr56, &s_vaddr56_null, sizeof(*vaddr56));
 	}
 }
 
-void silofs_vaddr56_xtoh(const struct silofs_vaddr56 *vadr, off_t *out_off)
+void silofs_vaddr56_xtoh(const struct silofs_vaddr56 *vaddr56, off_t *out_off)
 {
 	int cmp;
 	off_t off = 0;
 
-	cmp = memcmp(vadr, &s_vaddr56_null, sizeof(*vadr));
+	cmp = memcmp(vaddr56, &s_vaddr56_null, sizeof(*vaddr56));
 	if (cmp) {
-		off |= (off_t)(vadr->b[0]) << 8;
-		off |= (off_t)(vadr->b[1]) << 16;
-		off |= (off_t)(vadr->b[2]) << 24;
-		off |= (off_t)(vadr->b[3]) << 32;
-		off |= (off_t)(vadr->b[4]) << 40;
-		off |= (off_t)(vadr->b[5]) << 48;
-		off |= (off_t)(vadr->b[6]) << 56;
+		off |= (off_t)(vaddr56->b[0]) << 8;
+		off |= (off_t)(vaddr56->b[1]) << 16;
+		off |= (off_t)(vaddr56->b[2]) << 24;
+		off |= (off_t)(vaddr56->b[3]) << 32;
+		off |= (off_t)(vaddr56->b[4]) << 40;
+		off |= (off_t)(vaddr56->b[5]) << 48;
+		off |= (off_t)(vaddr56->b[6]) << 56;
 	} else {
 		off = SILOFS_OFF_NULL;
 	}
 	*out_off = off;
 }
 
-void silofs_vaddr64_htox(struct silofs_vaddr64 *vadr,
+void silofs_vaddr64_htox(struct silofs_vaddr64 *vaddr64,
                          const struct silofs_vaddr *vaddr)
 {
-	vadr->voff_mtype = cpu_to_voff_mtype(vaddr->off, vaddr->mtype);
+	vaddr64->off_mtype = cpu_to_off_mtype(vaddr->off, vaddr->mtype);
 }
 
-void silofs_vaddr64_xtoh(const struct silofs_vaddr64 *vadr,
+void silofs_vaddr64_xtoh(const struct silofs_vaddr64 *vaddr64,
                          struct silofs_vaddr *vaddr)
 {
 	off_t voff;
 	enum silofs_mtype mtype;
 
-	voff_mtype_to_cpu(vadr->voff_mtype, &voff, &mtype);
+	voff_mtype_to_cpu(vaddr64->off_mtype, &voff, &mtype);
 	silofs_vaddr_setup(vaddr, mtype, voff);
 }

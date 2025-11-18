@@ -19,7 +19,6 @@
 
 #include <stdlib.h>
 #include <silofs/ondisk.h>
-#include "crypt.h"
 #include "blobid.h"
 
 /* persistent address with blob */
@@ -65,10 +64,6 @@ void silofs_paddr64b_htox(struct silofs_paddr64b    *paddr64,
 
 void silofs_paddr64b_xtoh(const struct silofs_paddr64b *paddr64,
                           struct silofs_paddr          *paddr);
-
-void silofs_derive_iv_by_paddr(const struct silofs_mdigest *md,
-                               const struct silofs_paddr   *paddr,
-                               struct silofs_iv            *out_iv);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

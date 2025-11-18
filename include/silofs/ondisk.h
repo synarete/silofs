@@ -553,7 +553,7 @@ struct silofs_vaddr56 {
 };
 
 struct silofs_vaddr64 {
-	uint64_t voff_mtype;
+	uint64_t off_mtype;
 } silofs_attr_aligned8;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

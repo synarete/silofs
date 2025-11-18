@@ -70,14 +70,14 @@ void silofs_vaddr_by_spleaf(struct silofs_vaddr *vaddr,
                             enum silofs_mtype mtype, off_t voff_base,
                             size_t bn, size_t kbn);
 
-void silofs_vaddr56_htox(struct silofs_vaddr56 *va, off_t off);
+void silofs_vaddr56_htox(struct silofs_vaddr56 *vaddr56, off_t off);
 
-void silofs_vaddr56_xtoh(const struct silofs_vaddr56 *va, off_t *out_off);
+void silofs_vaddr56_xtoh(const struct silofs_vaddr56 *vaddr56, off_t *out_off);
 
-void silofs_vaddr64_htox(struct silofs_vaddr64     *vadr,
+void silofs_vaddr64_htox(struct silofs_vaddr64     *vaddr64,
                          const struct silofs_vaddr *vaddr);
 
-void silofs_vaddr64_xtoh(const struct silofs_vaddr64 *vadr,
+void silofs_vaddr64_xtoh(const struct silofs_vaddr64 *vaddr64,
                          struct silofs_vaddr         *vaddr);
 
 #endif /* SILOFS_VADDR_H_ */

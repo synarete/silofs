@@ -25,7 +25,7 @@
 #include <dirent.h>
 #include <limits.h>
 #include <silofs/ioctls.h>
-#include "pbs.h"
+#include "ubs.h"
 #include "vfs.h"
 #include "exec.h"
 #include "env.h"

@@ -20,7 +20,7 @@
 #include "infra.h"
 #include "crypt.h"
 #include "addr.h"
-#include "pbs.h"
+#include "ubs.h"
 
 struct silofs_env;
 

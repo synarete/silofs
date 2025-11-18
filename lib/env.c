@@ -385,7 +385,7 @@ int silofs_env_format_uber(struct silofs_env *env)
 
 	env_resolve_main_key(env, &key);
 	env_make_first_uber_addr(env, &ub_addr);
-	err = silofs_spawn_uber(env, &ub_addr, &key, &ubi);
+	err = silofs_spawn_uber_at(env, &ub_addr, &key, &ubi);
 	if (err) {
 		return err;
 	}
@@ -405,7 +405,7 @@ int silofs_env_reload_uber(struct silofs_env *env)
 	if (err) {
 		return err;
 	}
-	err = silofs_stage_uber(env, &ub_addr, &key, &ubi);
+	err = silofs_stage_uber_at(env, &ub_addr, &key, &ubi);
 	if (err) {
 		return err;
 	}

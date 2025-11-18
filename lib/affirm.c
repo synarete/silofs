@@ -237,9 +237,10 @@ static void affirm_ondisk_uber(void)
 	REQUIRE_OFFSET64(struct silofs_uber_block, ub_ctime, 48);
 	REQUIRE_OFFSET64(struct silofs_uber_block, ub_generation, 64);
 	REQUIRE_OFFSET64(struct silofs_uber_block, ub_bcursor, 128);
+	REQUIRE_OFFSET64(struct silofs_uber_block, ub_key, 4096);
 	REQUIRE_GT(MEMBER_NELEMS(struct silofs_uber_block, ub_bcursor),
 	           SILOFS_MTYPE_LAST);
-	REQUIRE_SIZEOF_4K(struct silofs_uber_block);
+	REQUIRE_SIZEOF_8K(struct silofs_uber_block);
 }
 
 static void affirm_ondisk_super(void)

@@ -949,6 +949,7 @@ struct silofs_uber_block {
 	uint64_t                  ub_generation;
 	uint8_t                   ub_reserved1[56];
 	struct silofs_bcursor128b ub_bcursor[31];
+	struct silofs_key         ub_key[64];
 } silofs_attr_aligned64;
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

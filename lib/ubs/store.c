@@ -84,16 +84,17 @@ static int stc_require_paddr(const struct silofs_store_ctx *st_ctx,
 }
 
 static void stc_update_spawned_pnode(const struct silofs_store_ctx *st_ctx,
-                                     const struct silofs_key *key,
-                                     struct silofs_pnode_info *pni)
+                                     struct silofs_pnode_info *pni,
+                                     const struct silofs_key *key)
+
 {
 	silofs_pni_setup_ivkey(pni, st_ctx->mdigest, key);
 	silofs_pni_dirtify(pni);
 }
 
 static void stc_update_pre_stage_pnode(const struct silofs_store_ctx *st_ctx,
-                                       const struct silofs_key *key,
-                                       struct silofs_pnode_info *pni)
+                                       struct silofs_pnode_info *pni,
+                                       const struct silofs_key *key)
 {
 	silofs_pni_setup_ivkey(pni, st_ctx->mdigest, key);
 }
@@ -169,20 +170,23 @@ static int stc_create_cached_ubi(const struct silofs_store_ctx *st_ctx,
 }
 
 static void stc_update_spawned_uber(const struct silofs_store_ctx *st_ctx,
-                                    struct silofs_uber_info *ubi)
+                                    struct silofs_uber_info *ubi,
+                                    const struct silofs_key *key)
 {
-	stc_update_spawned_pnode(st_ctx, stc_main_key(st_ctx), &ubi->ub_pni);
+	stc_update_spawned_pnode(st_ctx, &ubi->ub_pni, key);
 }
 
 static void stc_update_pre_stage_uber(const struct silofs_store_ctx *st_ctx,
-                                      struct silofs_uber_info *ubi)
+                                      struct silofs_uber_info *ubi,
+                                      const struct silofs_key *key)
 {
-	stc_update_pre_stage_pnode(st_ctx, stc_main_key(st_ctx), &ubi->ub_pni);
+	stc_update_pre_stage_pnode(st_ctx, &ubi->ub_pni, key);
 }
 
-static int stc_spawn_uber(const struct silofs_store_ctx *st_ctx,
-                          const struct silofs_paddr *paddr,
-                          struct silofs_uber_info **out_ubi)
+static int
+stc_spawn_uber(const struct silofs_store_ctx *st_ctx,
+               const struct silofs_paddr *paddr, const struct silofs_key *key,
+               struct silofs_uber_info **out_ubi)
 {
 	int err;
 
@@ -194,18 +198,19 @@ static int stc_spawn_uber(const struct silofs_store_ctx *st_ctx,
 	if (err) {
 		return err;
 	}
-	stc_update_spawned_uber(st_ctx, *out_ubi);
+	stc_update_spawned_uber(st_ctx, *out_ubi, key);
 	return 0;
 }
 
 int silofs_spawn_uber(struct silofs_env *env, const struct silofs_paddr *paddr,
+                      const struct silofs_key *key,
                       struct silofs_uber_info **out_ubi)
 {
 	struct silofs_store_ctx st_ctx = {};
 	int err;
 
 	stc_init(&st_ctx, env);
-	err = stc_spawn_uber(&st_ctx, paddr, out_ubi);
+	err = stc_spawn_uber(&st_ctx, paddr, key, out_ubi);
 	stc_fini(&st_ctx);
 	return err;
 }
@@ -218,9 +223,10 @@ static int stc_lookup_cached_ubi(const struct silofs_store_ctx *st_ctx,
 	return (*out_ubi == nullptr) ? -SILOFS_ENOENT : 0;
 }
 
-static int stc_stage_uber(struct silofs_store_ctx *st_ctx,
-                          const struct silofs_paddr *paddr,
-                          struct silofs_uber_info **out_ubi)
+static int
+stc_stage_uber(struct silofs_store_ctx *st_ctx,
+               const struct silofs_paddr *paddr, const struct silofs_key *key,
+               struct silofs_uber_info **out_ubi)
 {
 	struct silofs_uber_info *ubi = nullptr;
 	int err;
@@ -237,7 +243,7 @@ static int stc_stage_uber(struct silofs_store_ctx *st_ctx,
 	if (err) {
 		return err;
 	}
-	stc_update_pre_stage_uber(st_ctx, ubi);
+	stc_update_pre_stage_uber(st_ctx, ubi, key);
 
 	err = stc_stage_pnode(st_ctx, &ubi->ub_pni);
 	if (err) {
@@ -249,13 +255,14 @@ out_ok:
 }
 
 int silofs_stage_uber(struct silofs_env *env, const struct silofs_paddr *paddr,
+                      const struct silofs_key *key,
                       struct silofs_uber_info **out_ubi)
 {
 	struct silofs_store_ctx st_ctx = {};
 	int err;
 
 	stc_init(&st_ctx, env);
-	err = stc_stage_uber(&st_ctx, paddr, out_ubi);
+	err = stc_stage_uber(&st_ctx, paddr, key, out_ubi);
 	stc_fini(&st_ctx);
 	return err;
 }
@@ -273,7 +280,7 @@ static int stc_create_cached_bdi(const struct silofs_store_ctx *st_ctx,
 static void stc_update_spawned_bldesc(const struct silofs_store_ctx *st_ctx,
                                       struct silofs_bldesc_info *bdi)
 {
-	stc_update_spawned_pnode(st_ctx, stc_main_key(st_ctx), &bdi->bld_pni);
+	stc_update_spawned_pnode(st_ctx, &bdi->bld_pni, stc_main_key(st_ctx));
 }
 
 static int stc_spawn_bldesc(const struct silofs_store_ctx *st_ctx,
@@ -318,8 +325,8 @@ static int stc_lookup_cached_bdi(const struct silofs_store_ctx *st_ctx,
 static void stc_update_pre_stage_bldesc(const struct silofs_store_ctx *st_ctx,
                                         struct silofs_bldesc_info *bdi)
 {
-	stc_update_pre_stage_pnode(st_ctx, stc_main_key(st_ctx),
-	                           &bdi->bld_pni);
+	stc_update_pre_stage_pnode(st_ctx, &bdi->bld_pni,
+	                           stc_main_key(st_ctx));
 }
 
 static int stc_stage_bldesc(struct silofs_store_ctx *st_ctx,
@@ -378,7 +385,7 @@ static int stc_create_cached_bti(const struct silofs_store_ctx *st_ctx,
 static void stc_update_spawned_btnode(const struct silofs_store_ctx *st_ctx,
                                       struct silofs_btnode_info *bti)
 {
-	stc_update_spawned_pnode(st_ctx, stc_main_key(st_ctx), &bti->btn_pni);
+	stc_update_spawned_pnode(st_ctx, &bti->btn_pni, stc_main_key(st_ctx));
 }
 
 static int stc_spawn_btnode(const struct silofs_store_ctx *st_ctx,
@@ -423,8 +430,8 @@ static int stc_lookup_cached_bti(const struct silofs_store_ctx *st_ctx,
 static void stc_update_pre_stage_btnode(const struct silofs_store_ctx *st_ctx,
                                         struct silofs_btnode_info *bti)
 {
-	stc_update_pre_stage_pnode(st_ctx, stc_main_key(st_ctx),
-	                           &bti->btn_pni);
+	stc_update_pre_stage_pnode(st_ctx, &bti->btn_pni,
+	                           stc_main_key(st_ctx));
 }
 
 static int stc_stage_btnode(struct silofs_store_ctx *st_ctx,

@@ -356,7 +356,8 @@ bool silofs_env_isrdonlyfs(const struct silofs_env *env)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static void make_uber_addr(struct silofs_paddr *out_paddr)
+static void env_make_first_uber_addr(const struct silofs_env *env,
+                                     struct silofs_paddr *out_paddr)
 {
 	struct silofs_svolid svolid;
 	struct silofs_blobid blobid;
@@ -364,17 +365,27 @@ static void make_uber_addr(struct silofs_paddr *out_paddr)
 	silofs_svolid_generate(&svolid);
 	silofs_blobid_setup_raw(&blobid, &svolid, SILOFS_MTYPE_UBER);
 	silofs_paddr_init(out_paddr, &blobid, 0);
+	silofs_unused(env);
+}
+
+static void
+env_resolve_main_key(const struct silofs_env *env, struct silofs_key *out_key)
+{
+	const struct silofs_gbr *fs_gbr = &env->gbrs.fs_gbr;
+
+	silofs_key_assign(out_key, &fs_gbr->main_ivkey.key);
 }
 
 int silofs_env_format_uber(struct silofs_env *env)
 {
-	struct silofs_paddr paddr;
+	struct silofs_paddr ub_addr;
+	struct silofs_key key;
 	struct silofs_uber_info *ubi = nullptr;
 	int err;
 
-	silofs_assert_null(env->ubi);
-	make_uber_addr(&paddr);
-	err = silofs_spawn_uber(env, &paddr, &ubi);
+	env_resolve_main_key(env, &key);
+	env_make_first_uber_addr(env, &ub_addr);
+	err = silofs_spawn_uber(env, &ub_addr, &key, &ubi);
 	if (err) {
 		return err;
 	}
@@ -384,15 +395,17 @@ int silofs_env_format_uber(struct silofs_env *env)
 
 int silofs_env_reload_uber(struct silofs_env *env)
 {
-	struct silofs_paddr ub_addr = { .pos = -1 };
+	struct silofs_paddr ub_addr;
+	struct silofs_key key;
 	struct silofs_uber_info *ubi = nullptr;
 	int err;
 
+	env_resolve_main_key(env, &key);
 	err = env_resolve_root_uber(env, &ub_addr);
 	if (err) {
 		return err;
 	}
-	err = silofs_stage_uber(env, &ub_addr, &ubi);
+	err = silofs_stage_uber(env, &ub_addr, &key, &ubi);
 	if (err) {
 		return err;
 	}

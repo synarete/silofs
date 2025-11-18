@@ -108,7 +108,7 @@ void silofs_gen_random_ivs(struct silofs_iv *ivs, size_t nivs)
 
 void silofs_key_reset(struct silofs_key *key)
 {
-	memset(key, 0xff, sizeof(*key));
+	memset(key, 0, sizeof(*key));
 }
 
 void silofs_key_assign(struct silofs_key *key, const struct silofs_key *other)

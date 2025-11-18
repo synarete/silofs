@@ -101,12 +101,24 @@ static void ub_reset_bcursors(struct silofs_uber_block *ub)
 	}
 }
 
+static inline const struct silofs_key *
+ub_key_of(const struct silofs_uber_block *ub, size_t idx)
+{
+	return &ub->ub_key[idx % ARRAY_SIZE(ub->ub_key)];
+}
+
+static void ub_setup_keys(struct silofs_uber_block *ub)
+{
+	silofs_generate_keys(ub->ub_key, ARRAY_SIZE(ub->ub_key), true);
+}
+
 static void ub_setup(struct silofs_uber_block *ub, const struct timespec *ts)
 {
 	ub_set_generation(ub, 1);
 	ub_set_btime(ub, ts);
 	ub_set_ctime(ub, ts);
 	ub_reset_bcursors(ub);
+	ub_setup_keys(ub);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

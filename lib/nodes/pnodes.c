@@ -25,9 +25,9 @@ static void reduce_to_vaddr(const struct silofs_paddr *paddr,
 	silofs_vaddr_setup(out_vaddr, paddr->mtype, paddr->pos);
 }
 
-static void
-calc_hash_of(const struct silofs_mdigest *mdigest,
-             const struct silofs_vaddr *vaddr, struct silofs_hash256 *out_hash)
+static void calc_hash256_of(const struct silofs_mdigest *mdigest,
+                            const struct silofs_vaddr *vaddr,
+                            struct silofs_hash256 *out_hash)
 {
 	struct silofs_vaddr64 vaddr64 = {};
 
@@ -35,29 +35,64 @@ calc_hash_of(const struct silofs_mdigest *mdigest,
 	silofs_sha3_256_of(mdigest, &vaddr64, sizeof(vaddr64), out_hash);
 }
 
-static void
-derive_iv_by_hash256(struct silofs_iv *iv, const struct silofs_hash256 *hash)
+static void derive_iv_by_hash256(const struct silofs_hash256 *hash,
+                                 struct silofs_iv *out_iv)
 {
-	STATICASSERT_LE(ARRAY_SIZE(iv->iv), ARRAY_SIZE(hash->hash));
+	STATICASSERT_LE(ARRAY_SIZE(out_iv->iv), ARRAY_SIZE(hash->hash));
 
-	silofs_iv_reset(iv);
+	silofs_iv_reset(out_iv);
 	for (size_t i = 0; i < ARRAY_SIZE(hash->hash); ++i) {
-		const size_t j = i % ARRAY_SIZE(iv->iv);
+		const size_t j = i % ARRAY_SIZE(out_iv->iv);
 
-		iv->iv[j] ^= (hash->hash[i] ^ (uint8_t)i);
+		out_iv->iv[j] ^= (hash->hash[i] ^ (uint8_t)i);
 	}
 }
 
-static void
-derive_iv_by(const struct silofs_mdigest *mdigest,
-             const struct silofs_paddr *paddr, struct silofs_iv *out_iv)
+void silofs_derive_iv_by(const struct silofs_mdigest *mdigest,
+                         const struct silofs_paddr *paddr,
+                         struct silofs_iv *out_iv)
 {
 	struct silofs_hash256 hash;
 	struct silofs_vaddr vaddr;
 
 	reduce_to_vaddr(paddr, &vaddr);
-	calc_hash_of(mdigest, &vaddr, &hash);
-	derive_iv_by_hash256(out_iv, &hash);
+	calc_hash256_of(mdigest, &vaddr, &hash);
+	derive_iv_by_hash256(&hash, out_iv);
+}
+
+static void calc_hash512_of(const struct silofs_mdigest *mdigest,
+                            const struct silofs_vaddr *vaddr,
+                            struct silofs_hash512 *out_hash)
+{
+	struct silofs_vaddr64 vaddr64 = {};
+
+	silofs_vaddr64_htox(&vaddr64, vaddr);
+	silofs_sha3_512_of(mdigest, &vaddr64, sizeof(vaddr64), out_hash);
+}
+
+static void derive_key_by_hash512(const struct silofs_hash512 *hash,
+                                  struct silofs_key *out_key)
+{
+	STATICASSERT_LE(ARRAY_SIZE(out_key->key), ARRAY_SIZE(hash->hash));
+
+	silofs_key_reset(out_key);
+	for (size_t i = 0; i < ARRAY_SIZE(hash->hash); ++i) {
+		const size_t j = i % ARRAY_SIZE(out_key->key);
+
+		out_key->key[j] ^= (hash->hash[i] ^ (uint8_t)i);
+	}
+}
+
+void silofs_derive_key_by(const struct silofs_mdigest *mdigest,
+                          const struct silofs_paddr *paddr,
+                          struct silofs_key *out_key)
+{
+	struct silofs_hash512 hash;
+	struct silofs_vaddr vaddr;
+
+	reduce_to_vaddr(paddr, &vaddr);
+	calc_hash512_of(mdigest, &vaddr, &hash);
+	derive_key_by_hash512(&hash, out_key);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -160,7 +195,7 @@ void silofs_pni_setup_ivkey(struct silofs_pnode_info *pni,
 {
 	struct silofs_iv iv;
 
-	derive_iv_by(md, &pni->pn_paddr, &iv);
+	silofs_derive_iv_by(md, &pni->pn_paddr, &iv);
 	silofs_ivkey_setup(&pni->pn_ivkey, key, &iv);
 }
 

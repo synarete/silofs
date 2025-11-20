@@ -220,8 +220,8 @@ static void affirm_ondisk_gbr(void)
 	REQUIRE_OFFSET64(struct silofs_gbr1k, gbr_uuid, 16);
 	REQUIRE_OFFSET64(struct silofs_gbr1k, gbr_kind, 32);
 	REQUIRE_OFFSET32(struct silofs_gbr1k, gbr_flags, 36);
-	REQUIRE_OFFSET64(struct silofs_gbr1k, gbr_chiper_algo, 40);
-	REQUIRE_OFFSET32(struct silofs_gbr1k, gbr_chiper_mode, 44);
+	REQUIRE_OFFSET64(struct silofs_gbr1k, gbr_cipher_algo, 40);
+	REQUIRE_OFFSET32(struct silofs_gbr1k, gbr_cipher_mode, 44);
 	REQUIRE_OFFSET64(struct silofs_gbr1k, gbr_main_iv, 48);
 	REQUIRE_OFFSET64(struct silofs_gbr1k, gbr_main_key, 64);
 	REQUIRE_OFFSET64(struct silofs_gbr1k, gbr_sb_addr, 128);
@@ -388,16 +388,21 @@ static void affirm_ondisk_xattr(void)
 
 static void affirm_ondisk_btnode(void)
 {
+	REQUIRE_OFFSET64(struct silofs_btree_node_crypt, btc_key, 0);
+	REQUIRE_OFFSET64(struct silofs_btree_node_crypt, btc_iv, 64);
+	REQUIRE_OFFSET64(struct silofs_btree_node_crypt, btc_cipher_algo, 80);
+	REQUIRE_OFFSETXX(struct silofs_btree_node_crypt, btc_cipher_mode, 82);
+	REQUIRE_SIZEOF(struct silofs_btree_node_crypt, 96);
 	REQUIRE_OFFSET64(struct silofs_btree_node, btn_hdr, 0);
 	REQUIRE_OFFSET64(struct silofs_btree_node, btn_flags, 32);
 	REQUIRE_OFFSET32(struct silofs_btree_node, btn_mtype, 36);
 	REQUIRE_OFFSETXX(struct silofs_btree_node, btn_height, 38);
 	REQUIRE_OFFSETXX(struct silofs_btree_node, btn_nkeys, 40);
 	REQUIRE_OFFSETXX(struct silofs_btree_node, btn_nchilds, 41);
-	REQUIRE_OFFSET64(struct silofs_btree_node, btn_child, 64);
-	REQUIRE_OFFSET64(struct silofs_btree_node, btn_key, 3136);
+	REQUIRE_OFFSET64(struct silofs_btree_node, btn_key, 128);
+	REQUIRE_OFFSET64(struct silofs_btree_node, btn_child, 512);
 	REQUIRE_SIZEOF(struct silofs_btree_node, SILOFS_BTREE_NODE_SIZE);
-	REQUIRE_SIZEOF_4K(struct silofs_btree_node);
+	REQUIRE_SIZEOF_8K(struct silofs_btree_node);
 }
 
 static void affirm_ondisk_bldesc(void)

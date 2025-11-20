@@ -65,21 +65,21 @@ gbr1k_set_kind(struct silofs_gbr1k *gbr1k, enum silofs_gbr_kind gbr_kind)
 	gbr1k->gbr_kind = silofs_cpu_to_le32((uint32_t)gbr_kind);
 }
 
-static int32_t gbr1k_chiper_algo(const struct silofs_gbr1k *gbr1k)
+static int16_t gbr1k_cipher_algo(const struct silofs_gbr1k *gbr1k)
 {
-	return (int32_t)silofs_le32_to_cpu(gbr1k->gbr_chiper_algo);
+	return (int16_t)silofs_le32_to_cpu(gbr1k->gbr_cipher_algo);
 }
 
-static int32_t gbr1k_chiper_mode(const struct silofs_gbr1k *gbr1k)
+static int16_t gbr1k_cipher_mode(const struct silofs_gbr1k *gbr1k)
 {
-	return (int32_t)silofs_le32_to_cpu(gbr1k->gbr_chiper_mode);
+	return (int16_t)silofs_le32_to_cpu(gbr1k->gbr_cipher_mode);
 }
 
 static void gbr1k_set_cipher(struct silofs_gbr1k *gbr1k, int32_t cipher_algo,
                              int32_t cipher_mode)
 {
-	gbr1k->gbr_chiper_algo = silofs_cpu_to_le32((uint32_t)cipher_algo);
-	gbr1k->gbr_chiper_mode = silofs_cpu_to_le32((uint32_t)cipher_mode);
+	gbr1k->gbr_cipher_algo = silofs_cpu_to_le16((uint16_t)cipher_algo);
+	gbr1k->gbr_cipher_mode = silofs_cpu_to_le16((uint16_t)cipher_mode);
 }
 
 static void gbr1k_sb_addr(const struct silofs_gbr1k *gbr1k,
@@ -205,8 +205,8 @@ static int gbr1k_check(const struct silofs_gbr1k *gbr1k)
 	if (err) {
 		return err;
 	}
-	algo = gbr1k_chiper_algo(gbr1k);
-	mode = gbr1k_chiper_mode(gbr1k);
+	algo = gbr1k_cipher_algo(gbr1k);
+	mode = gbr1k_cipher_mode(gbr1k);
 	err = silofs_check_cipher_args(algo, mode);
 	if (err) {
 		return err;
@@ -280,8 +280,8 @@ gbr1k_xtoh(const struct silofs_gbr1k *gbr1k, struct silofs_gbr *gbr)
 	gbr1k_root(gbr1k, &gbr->root);
 	gbr->kind = gbr1k_kind(gbr1k);
 	gbr->flags = gbr1k_flags(gbr1k);
-	gbr->cipher_algo = (int32_t)gbr1k_chiper_algo(gbr1k);
-	gbr->cipher_mode = (int32_t)gbr1k_chiper_mode(gbr1k);
+	gbr->cipher_algo = gbr1k_cipher_algo(gbr1k);
+	gbr->cipher_mode = gbr1k_cipher_mode(gbr1k);
 }
 
 static void

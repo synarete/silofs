@@ -106,7 +106,7 @@
 #define SILOFS_BTREE_LEAF_NENTS (62)
 
 /* on-disk size of btree node */
-#define SILOFS_BTREE_NODE_SIZE (4096)
+#define SILOFS_BTREE_NODE_SIZE (8192)
 
 /* on-disk size of btree leaf */
 #define SILOFS_BTREE_LEAF_SIZE (4096)
@@ -565,8 +565,8 @@ struct silofs_gbr1k {
 	struct silofs_uuid      gbr_uuid;
 	uint32_t                gbr_kind;
 	uint32_t                gbr_flags;
-	uint32_t                gbr_chiper_algo;
-	uint32_t                gbr_chiper_mode;
+	uint32_t                gbr_cipher_algo;
+	uint32_t                gbr_cipher_mode;
 	struct silofs_iv        gbr_main_iv;
 	struct silofs_key       gbr_main_key;
 	struct silofs_uaddr128b gbr_sb_addr;
@@ -926,19 +926,29 @@ struct silofs_blob_desc {
 	uint8_t                bld_obj_state[7936];
 } silofs_attr_aligned64;
 
+/* b+tree node crypto settings */
+struct silofs_btree_node_crypt {
+	struct silofs_key btc_key;
+	struct silofs_iv  btc_iv;
+	uint16_t          btc_cipher_algo;
+	uint16_t          btc_cipher_mode;
+	uint8_t           btc_reserved[12];
+} silofs_attr_aligned32;
+
 /* b+tree node of persistent volume mapping */
 struct silofs_btree_node {
-	struct silofs_header   btn_hdr;
-	uint32_t               btn_flags;
-	uint8_t                btn_mtype;
-	uint8_t                btn_reserved1;
-	uint16_t               btn_height;
-	uint8_t                btn_nkeys;
-	uint8_t                btn_nchilds;
-	uint8_t                btn_reserved2[22];
-	struct silofs_paddr64b btn_child[SILOFS_BTREE_NODE_NCHILDS];
-	uint64_t               btn_key[SILOFS_BTREE_NODE_NKEYS];
-	uint8_t                btn_reserved3[584];
+	struct silofs_header           btn_hdr;
+	uint32_t                       btn_flags;
+	uint8_t                        btn_mtype;
+	uint8_t                        btn_reserved1;
+	uint16_t                       btn_height;
+	uint8_t                        btn_nkeys;
+	uint8_t                        btn_nchilds;
+	uint8_t                        btn_reserved2[86];
+	uint64_t                       btn_key[SILOFS_BTREE_NODE_NKEYS];
+	uint8_t                        btn_reserved3[8];
+	struct silofs_paddr64b         btn_child[SILOFS_BTREE_NODE_NCHILDS];
+	struct silofs_btree_node_crypt btn_crypt[SILOFS_BTREE_NODE_NCHILDS];
 } silofs_attr_aligned64;
 
 /* uber-block */

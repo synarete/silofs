@@ -424,13 +424,15 @@ enum silofs_xattr_ns {
 
 /* encryption cipher settings (libgcrypt values) */
 enum silofs_cipher_algo {
+	SILOFS_CIPHER_NONE   = 0,
 	SILOFS_CIPHER_AES256 = 9,
 };
 
 enum silofs_cipher_mode {
-	SILOFS_CIPHER_MODE_CBC = 3,
-	SILOFS_CIPHER_MODE_GCM = 9,
-	SILOFS_CIPHER_MODE_XTS = 13,
+	SILOFS_CIPHER_MODE_NONE = 0,
+	SILOFS_CIPHER_MODE_CBC  = 3,
+	SILOFS_CIPHER_MODE_GCM  = 9,
+	SILOFS_CIPHER_MODE_XTS  = 13,
 };
 
 /* hash-function type (libgcrypt values) */
@@ -565,8 +567,10 @@ struct silofs_gbr1k {
 	struct silofs_uuid      gbr_uuid;
 	uint32_t                gbr_kind;
 	uint32_t                gbr_flags;
-	uint32_t                gbr_cipher_algo;
-	uint32_t                gbr_cipher_mode;
+	uint16_t                gbr_cipher_algo;
+	uint8_t                 gbr_reserved1[2];
+	uint16_t                gbr_cipher_mode;
+	uint8_t                 gbr_reserved2[2];
 	struct silofs_iv        gbr_main_iv;
 	struct silofs_key       gbr_main_key;
 	struct silofs_uaddr128b gbr_sb_addr;
@@ -931,8 +935,9 @@ struct silofs_btree_node_crypt {
 	struct silofs_key btc_key;
 	struct silofs_iv  btc_iv;
 	uint16_t          btc_cipher_algo;
+	uint8_t           btc_reserved1[2];
 	uint16_t          btc_cipher_mode;
-	uint8_t           btc_reserved[12];
+	uint8_t           btc_reserved2[10];
 } silofs_attr_aligned32;
 
 /* b+tree node of persistent volume mapping */

@@ -23,27 +23,63 @@
 #include "mdigest.h"
 #include "cipher.h"
 
-int silofs_check_cipher_args(int algo, int mode)
+static int check_cipher_algo(enum silofs_cipher_algo algo)
 {
-	if (algo != GCRY_CIPHER_AES256) {
-		silofs_log_warn("unsupported chipher-algo: %d", algo);
-		return -SILOFS_EOPNOTSUPP;
+	int ret = 0;
+
+	switch (algo) {
+	case SILOFS_CIPHER_AES256:
+		break;
+	case SILOFS_CIPHER_NONE:
+	default:
+		silofs_log_warn("unsupported cipher-algo: %d", (int)algo);
+		ret = -SILOFS_EOPNOTSUPP;
+		break;
 	}
-	if ((mode != GCRY_CIPHER_MODE_GCM) && //
-	    (mode != GCRY_CIPHER_MODE_CBC) && //
-	    (mode != GCRY_CIPHER_MODE_XTS)) {
-		silofs_log_warn("unsupported chipher-mode: %d", mode);
-		return -SILOFS_EOPNOTSUPP;
+	return ret;
+}
+
+static int check_cipher_mode(enum silofs_cipher_mode mode)
+{
+	int ret = 0;
+
+	switch (mode) {
+	case SILOFS_CIPHER_MODE_CBC:
+	case SILOFS_CIPHER_MODE_GCM:
+	case SILOFS_CIPHER_MODE_XTS:
+		break;
+	case SILOFS_CIPHER_MODE_NONE:
+	default:
+		silofs_log_warn("unsupported cipher-mode: %d", (int)mode);
+		ret = -SILOFS_EOPNOTSUPP;
+		break;
+	}
+	return ret;
+}
+
+int silofs_check_cipher_args(enum silofs_cipher_algo algo,
+                             enum silofs_cipher_mode mode)
+{
+	int err;
+
+	err = check_cipher_algo(algo);
+	if (err) {
+		return err;
+	}
+	err = check_cipher_mode(mode);
+	if (err) {
+		return err;
 	}
 	return 0;
 }
 
-static int cipher_open(struct silofs_cipher *ci, int algo, int mode)
+static int cipher_open(struct silofs_cipher *ci, enum silofs_cipher_algo algo,
+                       enum silofs_cipher_mode mode)
 {
 	const unsigned int flags = 0; /* XXX GCRY_CIPHER_SECURE ? */
 	gcry_error_t err;
 
-	err = gcry_cipher_open(&ci->cipher_hd, algo, mode, flags);
+	err = gcry_cipher_open(&ci->cipher_hd, (int)algo, (int)mode, flags);
 	if (err) {
 		return silofs_gcrypt_status(err, "gcry_cipher_open");
 	}
@@ -56,14 +92,14 @@ static void cipher_close(struct silofs_cipher *ci)
 {
 	gcry_cipher_close(ci->cipher_hd);
 	ci->cipher_hd = nullptr;
-	ci->cipher_algo = GCRY_CIPHER_NONE;
-	ci->cipher_mode = GCRY_CIPHER_MODE_NONE;
+	ci->cipher_algo = SILOFS_CIPHER_NONE;
+	ci->cipher_mode = SILOFS_CIPHER_MODE_NONE;
 }
 
 int silofs_cipher_init(struct silofs_cipher *ci)
 {
-	const int algo = SILOFS_CIPHER_ALGO_DEFAULT;
-	const int mode = SILOFS_CIPHER_MODE_DEFAULT;
+	const enum silofs_cipher_algo algo = SILOFS_CIPHER_ALGO_DEFAULT;
+	const enum silofs_cipher_mode mode = SILOFS_CIPHER_MODE_DEFAULT;
 	int err;
 
 	SILOFS_STATICASSERT_EQ(GCRY_CIPHER_AES256,
@@ -114,13 +150,14 @@ cipher_keysize(const struct silofs_cipher *ci, size_t keysize_want)
 	size_t keysize;
 
 	switch (ci->cipher_mode) {
-	case GCRY_CIPHER_MODE_CBC:
-	case GCRY_CIPHER_MODE_GCM:
+	case SILOFS_CIPHER_MODE_CBC:
+	case SILOFS_CIPHER_MODE_GCM:
 		keysize = silofs_min(keysize_want, 32);
 		break;
-	case GCRY_CIPHER_MODE_XTS:
+	case SILOFS_CIPHER_MODE_XTS:
 		keysize = silofs_min(keysize_want, 64);
 		break;
+	case SILOFS_CIPHER_MODE_NONE:
 	default:
 		keysize = keysize_want;
 		break;

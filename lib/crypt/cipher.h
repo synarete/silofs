@@ -20,14 +20,11 @@
 #include <gcrypt.h>
 #include <silofs/ondisk.h>
 #include "ivkey.h"
+#include "mdigest.h"
+#include "passwd.h"
 
-struct silofs_mdigest;
-struct silofs_password;
-
-enum silofs_cipher_consts {
-	SILOFS_CIPHER_ALGO_DEFAULT = SILOFS_CIPHER_AES256,
-	SILOFS_CIPHER_MODE_DEFAULT = SILOFS_CIPHER_MODE_GCM,
-};
+#define SILOFS_CIPHER_ALGO_DEFAULT SILOFS_CIPHER_AES256
+#define SILOFS_CIPHER_MODE_DEFAULT SILOFS_CIPHER_MODE_GCM
 
 struct silofs_kdf_desc {
 	uint32_t kd_iterations;
@@ -42,15 +39,24 @@ struct silofs_kdf_descs {
 	struct silofs_kdf_desc kdf_key;
 };
 
+/* wrapper over libgcrypt cipher */
 struct silofs_cipher {
-	gcry_cipher_hd_t cipher_hd;
-	int              cipher_algo;
-	int              cipher_mode;
+	gcry_cipher_hd_t        cipher_hd;
+	enum silofs_cipher_algo cipher_algo;
+	enum silofs_cipher_mode cipher_mode;
+};
+
+/* cipher's input arguments */
+struct silofs_cipher_args {
+	struct silofs_ivkey     ivkey;
+	enum silofs_cipher_algo algo;
+	enum silofs_cipher_mode mode;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_check_cipher_args(int algo, int mode);
+int silofs_check_cipher_args(enum silofs_cipher_algo algo,
+                             enum silofs_cipher_mode mode);
 
 int silofs_cipher_init(struct silofs_cipher *ci);
 

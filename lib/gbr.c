@@ -67,16 +67,16 @@ gbr1k_set_kind(struct silofs_gbr1k *gbr1k, enum silofs_gbr_kind gbr_kind)
 
 static int16_t gbr1k_cipher_algo(const struct silofs_gbr1k *gbr1k)
 {
-	return (int16_t)silofs_le32_to_cpu(gbr1k->gbr_cipher_algo);
+	return (int16_t)silofs_le16_to_cpu(gbr1k->gbr_cipher_algo);
 }
 
 static int16_t gbr1k_cipher_mode(const struct silofs_gbr1k *gbr1k)
 {
-	return (int16_t)silofs_le32_to_cpu(gbr1k->gbr_cipher_mode);
+	return (int16_t)silofs_le16_to_cpu(gbr1k->gbr_cipher_mode);
 }
 
-static void gbr1k_set_cipher(struct silofs_gbr1k *gbr1k, int32_t cipher_algo,
-                             int32_t cipher_mode)
+static void gbr1k_set_cipher(struct silofs_gbr1k *gbr1k, int16_t cipher_algo,
+                             int16_t cipher_mode)
 {
 	gbr1k->gbr_cipher_algo = silofs_cpu_to_le16((uint16_t)cipher_algo);
 	gbr1k->gbr_cipher_mode = silofs_cpu_to_le16((uint16_t)cipher_mode);

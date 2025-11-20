@@ -159,7 +159,7 @@ stc_stage_pnode(struct silofs_store_ctx *st_ctx, struct silofs_pnode_info *pni)
 	return 0;
 }
 
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int stc_create_cached_ubi(const struct silofs_store_ctx *st_ctx,
                                  const struct silofs_paddr *paddr, bool spawn,
@@ -269,7 +269,7 @@ int silofs_stage_uber_at(struct silofs_env *env,
 	return err;
 }
 
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int stc_create_cached_bdi(const struct silofs_store_ctx *st_ctx,
                                  const struct silofs_paddr *paddr, bool spawn,
@@ -374,7 +374,7 @@ int silofs_stage_bldesc_at(struct silofs_env *env,
 	return err;
 }
 
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int stc_create_cached_bti(const struct silofs_store_ctx *st_ctx,
                                  const struct silofs_paddr *paddr, bool spawn,

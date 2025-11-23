@@ -23,6 +23,9 @@
 #include "mdigest.h"
 #include "cipher.h"
 
+#define SILOFS_CIPHER_ALGO_DEFAULT SILOFS_CIPHER_AES256
+#define SILOFS_CIPHER_MODE_DEFAULT SILOFS_CIPHER_MODE_GCM
+
 static int check_cipher_algo(enum silofs_cipher_algo algo)
 {
 	int ret = 0;
@@ -57,99 +60,45 @@ static int check_cipher_mode(enum silofs_cipher_mode mode)
 	return ret;
 }
 
-int silofs_check_cipher_args(enum silofs_cipher_algo algo,
-                             enum silofs_cipher_mode mode)
+int silofs_ciargs_check(const struct silofs_ciargs *ciargs)
 {
 	int err;
 
-	err = check_cipher_algo(algo);
+	err = check_cipher_algo(ciargs->algo);
 	if (err) {
 		return err;
 	}
-	err = check_cipher_mode(mode);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
-static int cipher_open(struct silofs_cipher *ci, enum silofs_cipher_algo algo,
-                       enum silofs_cipher_mode mode)
-{
-	const unsigned int flags = 0; /* XXX GCRY_CIPHER_SECURE ? */
-	gcry_error_t err;
-
-	err = gcry_cipher_open(&ci->cipher_hd, (int)algo, (int)mode, flags);
-	if (err) {
-		return silofs_gcrypt_status(err, "gcry_cipher_open");
-	}
-	ci->cipher_algo = algo;
-	ci->cipher_mode = mode;
-	return 0;
-}
-
-static void cipher_close(struct silofs_cipher *ci)
-{
-	gcry_cipher_close(ci->cipher_hd);
-	ci->cipher_hd = nullptr;
-	ci->cipher_algo = SILOFS_CIPHER_NONE;
-	ci->cipher_mode = SILOFS_CIPHER_MODE_NONE;
-}
-
-int silofs_cipher_init(struct silofs_cipher *ci)
-{
-	const enum silofs_cipher_algo algo = SILOFS_CIPHER_ALGO_DEFAULT;
-	const enum silofs_cipher_mode mode = SILOFS_CIPHER_MODE_DEFAULT;
-	int err;
-
-	SILOFS_STATICASSERT_EQ(GCRY_CIPHER_AES256,
-	                       (int)SILOFS_CIPHER_ALGO_DEFAULT);
-	SILOFS_STATICASSERT_EQ(GCRY_CIPHER_MODE_GCM,
-	                       (int)SILOFS_CIPHER_MODE_DEFAULT);
-
-	err = silofs_check_cipher_args(algo, mode);
-	if (err) {
-		return err;
-	}
-	err = cipher_open(ci, algo, mode);
+	err = check_cipher_mode(ciargs->mode);
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-int silofs_cipher_reinit(struct silofs_cipher *ci, int algo, int mode)
+void silofs_ciargs_assign(struct silofs_ciargs *ciargs,
+                          const struct silofs_ciargs *other)
 {
-	int err;
-
-	err = silofs_check_cipher_args(algo, mode);
-	if (err) {
-		return err;
-	}
-	if ((ci->cipher_algo == algo) && (ci->cipher_mode == mode)) {
-		return 0; /* no-op */
-	}
-	cipher_close(ci);
-	err = cipher_open(ci, algo, mode);
-	if (err) {
-		return err;
-	}
-	return 0;
+	ciargs->algo = other->algo;
+	ciargs->mode = other->mode;
 }
 
-void silofs_cipher_fini(struct silofs_cipher *ci)
+static void ciargs_setup(struct silofs_ciargs *ciargs)
 {
-	if (ci->cipher_hd != nullptr) {
-		cipher_close(ci);
-	}
+	silofs_ciargs_assign(ciargs, silofs_ciargs_default());
+}
+
+static bool ciargs_isequal(const struct silofs_ciargs *ciargs,
+                           const struct silofs_ciargs *other)
+{
+	return (ciargs->algo == other->algo) && (ciargs->mode == other->mode);
 }
 
 static size_t
-cipher_keysize(const struct silofs_cipher *ci, size_t keysize_want)
+ciargs_keysize(const struct silofs_ciargs *ciargs, size_t keysize_want)
 {
 	size_t keysize;
 
-	switch (ci->cipher_mode) {
+	switch (ciargs->mode) {
 	case SILOFS_CIPHER_MODE_CBC:
 	case SILOFS_CIPHER_MODE_GCM:
 		keysize = silofs_min(keysize_want, 32);
@@ -165,7 +114,97 @@ cipher_keysize(const struct silofs_cipher *ci, size_t keysize_want)
 	return keysize;
 }
 
-static int cipher_prepare(const struct silofs_cipher *ci,
+void silofs_ciargs_setup(struct silofs_ciargs *ciargs)
+{
+	SILOFS_STATICASSERT_EQ(GCRY_CIPHER_AES256,
+	                       (int)SILOFS_CIPHER_ALGO_DEFAULT);
+	SILOFS_STATICASSERT_EQ(GCRY_CIPHER_MODE_GCM,
+	                       (int)SILOFS_CIPHER_MODE_DEFAULT);
+
+	ciargs_setup(ciargs);
+}
+
+static const struct silofs_ciargs s_ciargs_default = {
+	.algo = SILOFS_CIPHER_ALGO_DEFAULT,
+	.mode = SILOFS_CIPHER_MODE_DEFAULT,
+};
+
+const struct silofs_ciargs *silofs_ciargs_default(void)
+{
+	return &s_ciargs_default;
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static int
+cipher_open(struct silofs_cipher *cipher, const struct silofs_ciargs *ciargs)
+{
+	const unsigned int flags = 0; /* XXX GCRY_CIPHER_SECURE ? */
+	gcry_error_t err;
+
+	err = gcry_cipher_open(&cipher->ci_hd, (int)ciargs->algo,
+	                       (int)ciargs->mode, flags);
+	if (err) {
+		return silofs_gcrypt_status(err, "gcry_cipher_open");
+	}
+	silofs_ciargs_assign(&cipher->ci_args, ciargs);
+	return 0;
+}
+
+static void cipher_close(struct silofs_cipher *cipher)
+{
+	gcry_cipher_close(cipher->ci_hd);
+	cipher->ci_hd = nullptr;
+}
+
+int silofs_cipher_init(struct silofs_cipher *cipher)
+{
+	struct silofs_ciargs ciargs;
+
+	ciargs_setup(&ciargs);
+	return cipher_open(cipher, &ciargs);
+}
+
+static bool cipher_has_args(const struct silofs_cipher *cipher,
+                            const struct silofs_ciargs *ciargs)
+{
+	return ciargs_isequal(&cipher->ci_args, ciargs);
+}
+
+int silofs_cipher_reinit(struct silofs_cipher *cipher,
+                         const struct silofs_ciargs *ciargs)
+{
+	int err;
+
+	err = silofs_ciargs_check(ciargs);
+	if (err) {
+		return err;
+	}
+	if (cipher_has_args(cipher, ciargs)) {
+		return 0; /* no-op */
+	}
+	cipher_close(cipher);
+	err = cipher_open(cipher, ciargs);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+void silofs_cipher_fini(struct silofs_cipher *cipher)
+{
+	if (cipher->ci_hd != nullptr) {
+		cipher_close(cipher);
+	}
+}
+
+int silofs_cipher_check(const struct silofs_cipher *cipher,
+                        const struct silofs_ciargs *ciargs)
+{
+	return cipher_has_args(cipher, ciargs) ? 0 : -SILOFS_EOPNOTSUPP;
+}
+
+static int cipher_prepare(const struct silofs_cipher *cipher,
                           const struct silofs_ivkey *ivkey)
 {
 	const struct silofs_iv *iv = &ivkey->iv;
@@ -173,21 +212,21 @@ static int cipher_prepare(const struct silofs_cipher *ci,
 	size_t blklen, keysize;
 	gcry_error_t err;
 
-	blklen = gcry_cipher_get_algo_blklen(ci->cipher_algo);
+	blklen = gcry_cipher_get_algo_blklen(cipher->ci_args.algo);
 	if (blklen > sizeof(iv->iv)) {
 		silofs_log_warn("bad blklen: %lu", blklen);
 		return -SILOFS_EINVAL;
 	}
-	err = gcry_cipher_reset(ci->cipher_hd);
+	err = gcry_cipher_reset(cipher->ci_hd);
 	if (err) {
 		return silofs_gcrypt_status(err, "gcry_cipher_reset");
 	}
-	keysize = cipher_keysize(ci, sizeof(key->key));
-	err = gcry_cipher_setkey(ci->cipher_hd, key->key, keysize);
+	keysize = ciargs_keysize(&cipher->ci_args, sizeof(key->key));
+	err = gcry_cipher_setkey(cipher->ci_hd, key->key, keysize);
 	if (err) {
 		return silofs_gcrypt_status(err, "gcry_cipher_setkey");
 	}
-	err = gcry_cipher_setiv(ci->cipher_hd, iv->iv, blklen);
+	err = gcry_cipher_setiv(cipher->ci_hd, iv->iv, blklen);
 	if (err) {
 		return silofs_gcrypt_status(err, "gcry_cipher_setiv");
 	}
@@ -199,12 +238,12 @@ static int cipher_encrypt(const struct silofs_cipher *ci, const void *in_dat,
 {
 	gcry_error_t err;
 
-	err = gcry_cipher_encrypt(ci->cipher_hd, out_dat, dat_len, in_dat,
+	err = gcry_cipher_encrypt(ci->ci_hd, out_dat, dat_len, in_dat,
 	                          dat_len);
 	if (err) {
 		return silofs_gcrypt_status(err, "gcry_cipher_encrypt");
 	}
-	err = gcry_cipher_final(ci->cipher_hd);
+	err = gcry_cipher_final(ci->ci_hd);
 	if (err) {
 		return silofs_gcrypt_status(err, "gcry_cipher_final");
 	}
@@ -216,12 +255,12 @@ static int cipher_decrypt(const struct silofs_cipher *ci, const void *in_dat,
 {
 	gcry_error_t err;
 
-	err = gcry_cipher_decrypt(ci->cipher_hd, out_dat, dat_len, in_dat,
+	err = gcry_cipher_decrypt(ci->ci_hd, out_dat, dat_len, in_dat,
 	                          dat_len);
 	if (err) {
 		return silofs_gcrypt_status(err, "gcry_cipher_decrypt");
 	}
-	err = gcry_cipher_final(ci->cipher_hd);
+	err = gcry_cipher_final(ci->ci_hd);
 	if (err) {
 		return silofs_gcrypt_status(err, "gcry_cipher_final");
 	}

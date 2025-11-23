@@ -165,7 +165,7 @@ rec_arix_ivkey(const struct silofs_re_ctx *re_ctx)
 {
 	const struct silofs_gbrs *gbrs = &re_ctx->env->gbrs;
 
-	return &gbrs->ar_gbr.main_ivkey;
+	return &gbrs->ar_gbr.ivkey;
 }
 
 static int rec_fetch_arix_block(struct silofs_re_ctx *re_ctx)

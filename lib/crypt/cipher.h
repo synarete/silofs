@@ -23,9 +23,6 @@
 #include "mdigest.h"
 #include "passwd.h"
 
-#define SILOFS_CIPHER_ALGO_DEFAULT SILOFS_CIPHER_AES256
-#define SILOFS_CIPHER_MODE_DEFAULT SILOFS_CIPHER_MODE_GCM
-
 struct silofs_kdf_desc {
 	uint32_t kd_iterations;
 	uint32_t kd_algo;
@@ -39,30 +36,38 @@ struct silofs_kdf_descs {
 	struct silofs_kdf_desc kdf_key;
 };
 
-/* wrapper over libgcrypt cipher */
-struct silofs_cipher {
-	gcry_cipher_hd_t        cipher_hd;
-	enum silofs_cipher_algo cipher_algo;
-	enum silofs_cipher_mode cipher_mode;
-};
-
-/* cipher's input arguments */
-struct silofs_cipher_args {
-	struct silofs_ivkey     ivkey;
+/* cipher's operation arguments */
+struct silofs_ciargs {
 	enum silofs_cipher_algo algo;
 	enum silofs_cipher_mode mode;
 };
 
+/* wrapper over libgcrypt cipher */
+struct silofs_cipher {
+	gcry_cipher_hd_t     ci_hd;
+	struct silofs_ciargs ci_args;
+};
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_check_cipher_args(enum silofs_cipher_algo algo,
-                             enum silofs_cipher_mode mode);
+const struct silofs_ciargs *silofs_ciargs_default(void);
 
-int silofs_cipher_init(struct silofs_cipher *ci);
+void silofs_ciargs_setup(struct silofs_ciargs *ciargs);
 
-int silofs_cipher_reinit(struct silofs_cipher *ci, int algo, int mode);
+void silofs_ciargs_assign(struct silofs_ciargs       *ciargs,
+                          const struct silofs_ciargs *other);
 
-void silofs_cipher_fini(struct silofs_cipher *ci);
+int silofs_ciargs_check(const struct silofs_ciargs *ciargs);
+
+int silofs_cipher_init(struct silofs_cipher *cipher);
+
+int silofs_cipher_reinit(struct silofs_cipher       *cipher,
+                         const struct silofs_ciargs *ciargs);
+
+void silofs_cipher_fini(struct silofs_cipher *cipher);
+
+int silofs_cipher_check(const struct silofs_cipher *cipher,
+                        const struct silofs_ciargs *ciargs);
 
 int silofs_encrypt_buf(const struct silofs_cipher *ci,
                        const struct silofs_ivkey *ivkey, const void *in_dat,

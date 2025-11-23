@@ -33,14 +33,13 @@ struct silofs_mrefs {
 
 /* global boot-record, in-memory representation */
 struct silofs_gbr {
-	struct silofs_ivkey     main_ivkey;
-	struct silofs_uuid      uuid;
-	struct silofs_paddr     root;
-	struct silofs_uaddr     sb_addr;
-	enum silofs_gbr_kind    kind;
-	unsigned                flags;
-	enum silofs_cipher_algo cipher_algo;
-	enum silofs_cipher_mode cipher_mode;
+	struct silofs_ivkey  ivkey;
+	struct silofs_ciargs ciargs;
+	struct silofs_uuid   uuid;
+	struct silofs_paddr  root;
+	struct silofs_uaddr  sb_addr;
+	enum silofs_gbr_kind kind;
+	unsigned             flags;
 };
 
 /* global boot records switch */

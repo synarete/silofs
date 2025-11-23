@@ -202,7 +202,7 @@ arc_arix_ivkey(const struct silofs_ar_ctx *ar_ctx)
 {
 	const struct silofs_gbrs *gbrs = &ar_ctx->env->gbrs;
 
-	return &gbrs->ar_gbr.main_ivkey;
+	return &gbrs->ar_gbr.ivkey;
 }
 
 static int arc_store_arix_block(struct silofs_ar_ctx *ar_ctx)

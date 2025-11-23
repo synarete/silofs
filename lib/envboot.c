@@ -20,15 +20,16 @@
 #include "gbr.h"
 #include "env.h"
 
-static int env_reinit_ciphers(struct silofs_env *env, int algo, int mode)
+static int
+env_reinit_ciphers(struct silofs_env *env, const struct silofs_ciargs *ciargs)
 {
 	int err;
 
-	err = silofs_cipher_reinit(&env->enc_cipher, algo, mode);
+	err = silofs_cipher_reinit(&env->enc_cipher, ciargs);
 	if (err) {
 		return err;
 	}
-	err = silofs_cipher_reinit(&env->dec_cipher, algo, mode);
+	err = silofs_cipher_reinit(&env->dec_cipher, ciargs);
 	if (err) {
 		return err;
 	}
@@ -38,10 +39,8 @@ static int env_reinit_ciphers(struct silofs_env *env, int algo, int mode)
 static int env_reinit_ciphers_by_gbr(struct silofs_env *env)
 {
 	const struct silofs_gbr *gbr = &env->gbrs.fs_gbr;
-	const int algo = gbr->cipher_algo;
-	const int mode = gbr->cipher_mode;
 
-	return env_reinit_ciphers(env, algo, mode);
+	return env_reinit_ciphers(env, &gbr->ciargs);
 }
 
 int silofs_env_setup_fs_gbr(struct silofs_env *env)

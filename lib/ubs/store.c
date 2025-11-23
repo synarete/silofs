@@ -73,7 +73,7 @@ static int stc_require_view(struct silofs_store_ctx *st_ctx)
 static const struct silofs_key *
 stc_main_key(const struct silofs_store_ctx *st_ctx)
 {
-	return &st_ctx->gbrs->fs_gbr.main_ivkey.key;
+	return &st_ctx->gbrs->fs_gbr.ivkey.key;
 }
 
 static int stc_require_paddr(const struct silofs_store_ctx *st_ctx,

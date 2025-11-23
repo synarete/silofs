@@ -70,16 +70,33 @@ static int16_t gbr1k_cipher_algo(const struct silofs_gbr1k *gbr1k)
 	return (int16_t)silofs_le16_to_cpu(gbr1k->gbr_cipher_algo);
 }
 
+static void gbr1k_set_cipher_algo(struct silofs_gbr1k *gbr1k, int16_t algo)
+{
+	gbr1k->gbr_cipher_algo = silofs_cpu_to_le16((uint16_t)algo);
+}
+
 static int16_t gbr1k_cipher_mode(const struct silofs_gbr1k *gbr1k)
 {
 	return (int16_t)silofs_le16_to_cpu(gbr1k->gbr_cipher_mode);
 }
 
-static void gbr1k_set_cipher(struct silofs_gbr1k *gbr1k, int16_t cipher_algo,
-                             int16_t cipher_mode)
+static void gbr1k_set_cipher_mode(struct silofs_gbr1k *gbr1k, int16_t mode)
 {
-	gbr1k->gbr_cipher_algo = silofs_cpu_to_le16((uint16_t)cipher_algo);
-	gbr1k->gbr_cipher_mode = silofs_cpu_to_le16((uint16_t)cipher_mode);
+	gbr1k->gbr_cipher_mode = silofs_cpu_to_le16((uint16_t)mode);
+}
+
+static void gbr1k_ciargs(const struct silofs_gbr1k *gbr1k,
+                         struct silofs_ciargs *out_ciargs)
+{
+	out_ciargs->algo = gbr1k_cipher_algo(gbr1k);
+	out_ciargs->mode = gbr1k_cipher_mode(gbr1k);
+}
+
+static void gbr1k_set_ciargs(struct silofs_gbr1k *gbr1k,
+                             const struct silofs_ciargs *ciargs)
+{
+	gbr1k_set_cipher_algo(gbr1k, ciargs->algo);
+	gbr1k_set_cipher_mode(gbr1k, ciargs->mode);
 }
 
 static void gbr1k_sb_addr(const struct silofs_gbr1k *gbr1k,
@@ -118,8 +135,7 @@ static void gbr1k_setup(struct silofs_gbr1k *gbr1k)
 	gbr1k_set_version(gbr1k, SILOFS_FMT_REVISION);
 	gbr1k_set_kind(gbr1k, SILOFS_GBR_NONE);
 	gbr1k_set_flags(gbr1k, 0);
-	gbr1k_set_cipher(gbr1k, SILOFS_CIPHER_ALGO_DEFAULT,
-	                 SILOFS_CIPHER_MODE_DEFAULT);
+	gbr1k_set_ciargs(gbr1k, silofs_ciargs_default());
 	gbr1k_reset_root(gbr1k);
 }
 
@@ -193,8 +209,7 @@ gbr1k_set_uuid(struct silofs_gbr1k *gbr1k, const struct silofs_uuid *uuid)
 
 static int gbr1k_check(const struct silofs_gbr1k *gbr1k)
 {
-	int algo;
-	int mode;
+	struct silofs_ciargs ciargs;
 	int err;
 
 	err = gbr1k_check_base(gbr1k);
@@ -205,9 +220,8 @@ static int gbr1k_check(const struct silofs_gbr1k *gbr1k)
 	if (err) {
 		return err;
 	}
-	algo = gbr1k_cipher_algo(gbr1k);
-	mode = gbr1k_cipher_mode(gbr1k);
-	err = silofs_check_cipher_args(algo, mode);
+	gbr1k_ciargs(gbr1k, &ciargs);
+	err = silofs_ciargs_check(&ciargs);
 	if (err) {
 		return err;
 	}
@@ -275,13 +289,12 @@ static void
 gbr1k_xtoh(const struct silofs_gbr1k *gbr1k, struct silofs_gbr *gbr)
 {
 	gbr1k_uuid(gbr1k, &gbr->uuid);
-	gbr1k_main_ivkey(gbr1k, &gbr->main_ivkey);
+	gbr1k_main_ivkey(gbr1k, &gbr->ivkey);
 	gbr1k_sb_addr(gbr1k, &gbr->sb_addr);
 	gbr1k_root(gbr1k, &gbr->root);
 	gbr->kind = gbr1k_kind(gbr1k);
 	gbr->flags = gbr1k_flags(gbr1k);
-	gbr->cipher_algo = gbr1k_cipher_algo(gbr1k);
-	gbr->cipher_mode = gbr1k_cipher_mode(gbr1k);
+	gbr1k_ciargs(gbr1k, &gbr->ciargs);
 }
 
 static void
@@ -293,8 +306,8 @@ gbr1k_htox(struct silofs_gbr1k *gbr1k, const struct silofs_gbr *gbr)
 	gbr1k_set_kind(gbr1k, gbr->kind);
 	gbr1k_set_flags(gbr1k, gbr->flags);
 	gbr1k_set_uuid(gbr1k, &gbr->uuid);
-	gbr1k_set_main_ivkey(gbr1k, &gbr->main_ivkey);
-	gbr1k_set_cipher(gbr1k, gbr->cipher_algo, gbr->cipher_mode);
+	gbr1k_set_main_ivkey(gbr1k, &gbr->ivkey);
+	gbr1k_set_ciargs(gbr1k, &gbr->ciargs);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -304,15 +317,14 @@ static void gbr_init(struct silofs_gbr *gbr, enum silofs_gbr_kind flavour)
 	silofs_memzero(gbr, sizeof(*gbr));
 	silofs_paddr_reset(&gbr->root);
 	silofs_uaddr_reset(&gbr->sb_addr);
+	silofs_ciargs_setup(&gbr->ciargs);
 	gbr->kind = flavour;
 	gbr->flags = 0;
-	gbr->cipher_algo = SILOFS_CIPHER_ALGO_DEFAULT;
-	gbr->cipher_mode = SILOFS_CIPHER_MODE_DEFAULT;
 }
 
 static void gbr_fini(struct silofs_gbr *gbr)
 {
-	silofs_ivkey_reset(&gbr->main_ivkey);
+	silofs_ivkey_reset(&gbr->ivkey);
 	silofs_uaddr_reset(&gbr->sb_addr);
 	silofs_paddr_reset(&gbr->root);
 }
@@ -325,15 +337,20 @@ static void gbr_gen_uuid(struct silofs_gbr *gbr)
 static void
 gbr_set_ivkey(struct silofs_gbr *gbr, const struct silofs_ivkey *ivkey)
 {
-	silofs_ivkey_assign(&gbr->main_ivkey, ivkey);
+	silofs_ivkey_assign(&gbr->ivkey, ivkey);
+}
+
+static void
+gbr_set_ciargs(struct silofs_gbr *gbr, const struct silofs_ciargs *ciargs)
+{
+	silofs_ciargs_assign(&gbr->ciargs, ciargs);
 }
 
 static void
 gbr_update_from(struct silofs_gbr *gbr, const struct silofs_gbr *other)
 {
-	gbr_set_ivkey(gbr, &other->main_ivkey);
-	gbr->cipher_algo = other->cipher_algo;
-	gbr->cipher_mode = other->cipher_mode;
+	gbr_set_ivkey(gbr, &other->ivkey);
+	gbr_set_ciargs(gbr, &other->ciargs);
 }
 
 /*

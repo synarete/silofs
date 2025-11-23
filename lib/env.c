@@ -373,7 +373,7 @@ env_resolve_main_key(const struct silofs_env *env, struct silofs_key *out_key)
 {
 	const struct silofs_gbr *fs_gbr = &env->gbrs.fs_gbr;
 
-	silofs_key_assign(out_key, &fs_gbr->main_ivkey.key);
+	silofs_key_assign(out_key, &fs_gbr->ivkey.key);
 }
 
 int silofs_env_format_uber(struct silofs_env *env)

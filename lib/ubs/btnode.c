@@ -227,31 +227,77 @@ static void btn_reset_childs(struct silofs_btree_node *btn)
 	}
 }
 
+static void btn_meta_at(const struct silofs_btree_node *btn, size_t slot,
+                        struct silofs_btnode_meta *out_meta)
+{
+	const struct silofs_btree_node_meta *btn_meta = &btn->btn_meta[slot];
+	uint16_t algo, mode;
+
+	silofs_assert_lt(slot, ARRAY_SIZE(btn->btn_meta));
+
+	silofs_iv_assign(&out_meta->ivkey.iv, &btn_meta->btm_cipher_iv);
+	silofs_key_assign(&out_meta->ivkey.key, &btn_meta->btm_cipher_key);
+	algo = silofs_le16_to_cpu(btn_meta->btm_cipher_algo);
+	mode = silofs_le16_to_cpu(btn_meta->btm_cipher_mode);
+	silofs_ciargs_setup(&out_meta->ciargs, algo, mode);
+}
+
+static void btn_set_meta_at(struct silofs_btree_node *btn, size_t slot,
+                            const struct silofs_btnode_meta *meta)
+{
+	struct silofs_btree_node_meta *btn_meta = &btn->btn_meta[slot];
+	uint16_t algo, mode;
+
+	silofs_assert_lt(slot, ARRAY_SIZE(btn->btn_meta));
+
+	silofs_iv_assign(&btn_meta->btm_cipher_iv, &meta->ivkey.iv);
+	silofs_key_assign(&btn_meta->btm_cipher_key, &meta->ivkey.key);
+	algo = meta->ciargs.algo;
+	mode = meta->ciargs.mode;
+	btn_meta->btm_cipher_algo = silofs_cpu_to_le16(algo);
+	btn_meta->btm_cipher_mode = silofs_cpu_to_le16(mode);
+}
+
+static void btn_reset_meta(struct silofs_btree_node *btn)
+{
+	struct silofs_btnode_meta meta;
+
+	silofs_ivkey_reset(&meta.ivkey);
+	silofs_ciargs_reset(&meta.ciargs);
+
+	for (size_t slot = 0; slot < ARRAY_SIZE(btn->btn_meta); ++slot) {
+		btn_set_meta_at(btn, slot, &meta);
+	}
+}
+
 static void
 btn_resolve_internal_child(const struct silofs_btree_node *btn, uint64_t key,
-                           struct silofs_paddr *out_paddr)
+                           struct silofs_btnode_child *out_child)
 {
 	const size_t slot = btn_find_slot_ge(btn, key);
 
-	btn_child_at(btn, slot, out_paddr);
+	btn_child_at(btn, slot, &out_child->addr);
+	btn_meta_at(btn, slot, &out_child->meta);
 }
 
 static void
 btn_resolve_leaf_child(const struct silofs_btree_node *btn, uint64_t key,
-                       struct silofs_paddr *out_paddr)
+                       struct silofs_btnode_child *out_child)
 {
 	const size_t slot = btn_find_slot_eq(btn, key);
 
-	btn_child_at(btn, slot, out_paddr);
+	btn_child_at(btn, slot, &out_child->addr);
+	btn_meta_at(btn, slot, &out_child->meta);
 }
 
-static void btn_resolve_child(const struct silofs_btree_node *btn,
-                              uint64_t key, struct silofs_paddr *out_paddr)
+static void
+btn_resolve_child(const struct silofs_btree_node *btn, uint64_t key,
+                  struct silofs_btnode_child *out_child)
 {
 	if (btn_isleaf(btn)) {
-		btn_resolve_leaf_child(btn, key, out_paddr);
+		btn_resolve_leaf_child(btn, key, out_child);
 	} else {
-		btn_resolve_internal_child(btn, key, out_paddr);
+		btn_resolve_internal_child(btn, key, out_child);
 	}
 }
 
@@ -310,6 +356,7 @@ static void btn_setup(struct silofs_btree_node *btn)
 	btn_set_nkeys(btn, 0);
 	btn_set_nchilds(btn, 0);
 	btn_reset_childs(btn);
+	btn_reset_meta(btn);
 	btn_reset_keys(btn);
 }
 
@@ -401,18 +448,19 @@ static bool btkey_isvalid(uint64_t key)
 }
 
 int silofs_bti_resolve(const struct silofs_btnode_info *bti, uint64_t key,
-                       struct silofs_paddr *out_paddr)
+                       struct silofs_btnode_child *out_child)
 {
 	const size_t nkeys = btn_nkeys(bti->btn);
 
+	silofs_paddr_reset(&out_child->addr);
 	if (!btkey_isvalid(key)) {
 		return -SILOFS_EINVAL;
 	}
 	if (!nkeys) {
 		return -SILOFS_ENOENT;
 	}
-	btn_resolve_child(bti->btn, key, out_paddr);
-	if (silofs_paddr_isnull(out_paddr)) {
+	btn_resolve_child(bti->btn, key, out_child);
+	if (silofs_paddr_isnull(&out_child->addr)) {
 		return -SILOFS_ENOENT;
 	}
 	return 0;

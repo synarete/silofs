@@ -930,30 +930,30 @@ struct silofs_blob_desc {
 	uint8_t                bld_obj_state[7936];
 } silofs_attr_aligned64;
 
-/* b+tree node crypto settings */
-struct silofs_btree_node_crypt {
-	struct silofs_key btc_key;
-	struct silofs_iv  btc_iv;
-	uint16_t          btc_cipher_algo;
-	uint8_t           btc_reserved1[2];
-	uint16_t          btc_cipher_mode;
-	uint8_t           btc_reserved2[10];
+/* b+tree node child's meta parameters */
+struct silofs_btree_node_meta {
+	struct silofs_key btm_cipher_key;
+	struct silofs_iv  btm_cipher_iv;
+	uint16_t          btm_cipher_algo;
+	uint8_t           btm_reserved1[2];
+	uint16_t          btm_cipher_mode;
+	uint8_t           btm_reserved2[10];
 } silofs_attr_aligned32;
 
 /* b+tree node of persistent volume mapping */
 struct silofs_btree_node {
-	struct silofs_header           btn_hdr;
-	uint32_t                       btn_flags;
-	uint8_t                        btn_mtype;
-	uint8_t                        btn_reserved1;
-	uint16_t                       btn_height;
-	uint8_t                        btn_nkeys;
-	uint8_t                        btn_nchilds;
-	uint8_t                        btn_reserved2[86];
-	uint64_t                       btn_key[SILOFS_BTREE_NODE_NKEYS];
-	uint8_t                        btn_reserved3[8];
-	struct silofs_paddr64b         btn_child[SILOFS_BTREE_NODE_NCHILDS];
-	struct silofs_btree_node_crypt btn_crypt[SILOFS_BTREE_NODE_NCHILDS];
+	struct silofs_header          btn_hdr;
+	uint32_t                      btn_flags;
+	uint8_t                       btn_mtype;
+	uint8_t                       btn_reserved1;
+	uint16_t                      btn_height;
+	uint8_t                       btn_nkeys;
+	uint8_t                       btn_nchilds;
+	uint8_t                       btn_reserved2[86];
+	uint64_t                      btn_key[SILOFS_BTREE_NODE_NKEYS];
+	uint8_t                       btn_reserved3[8];
+	struct silofs_paddr64b        btn_child[SILOFS_BTREE_NODE_NCHILDS];
+	struct silofs_btree_node_meta btn_meta[SILOFS_BTREE_NODE_NCHILDS];
 } silofs_attr_aligned64;
 
 /* uber-block */

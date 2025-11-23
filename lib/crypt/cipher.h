@@ -52,10 +52,14 @@ struct silofs_cipher {
 
 const struct silofs_ciargs *silofs_ciargs_default(void);
 
-void silofs_ciargs_setup(struct silofs_ciargs *ciargs);
+void silofs_ciargs_setup(struct silofs_ciargs   *ciargs,
+                         enum silofs_cipher_algo algo,
+                         enum silofs_cipher_mode mode);
 
 void silofs_ciargs_assign(struct silofs_ciargs       *ciargs,
                           const struct silofs_ciargs *other);
+
+void silofs_ciargs_reset(struct silofs_ciargs *ciargs);
 
 int silofs_ciargs_check(const struct silofs_ciargs *ciargs);
 

@@ -75,14 +75,21 @@ int silofs_ciargs_check(const struct silofs_ciargs *ciargs)
 	return 0;
 }
 
+void silofs_ciargs_setup(struct silofs_ciargs *ciargs,
+                         enum silofs_cipher_algo algo,
+                         enum silofs_cipher_mode mode)
+{
+	ciargs->algo = algo;
+	ciargs->mode = mode;
+}
+
 void silofs_ciargs_assign(struct silofs_ciargs *ciargs,
                           const struct silofs_ciargs *other)
 {
-	ciargs->algo = other->algo;
-	ciargs->mode = other->mode;
+	silofs_ciargs_setup(ciargs, other->algo, other->mode);
 }
 
-static void ciargs_setup(struct silofs_ciargs *ciargs)
+void silofs_ciargs_reset(struct silofs_ciargs *ciargs)
 {
 	silofs_ciargs_assign(ciargs, silofs_ciargs_default());
 }
@@ -91,6 +98,21 @@ static bool ciargs_isequal(const struct silofs_ciargs *ciargs,
                            const struct silofs_ciargs *other)
 {
 	return (ciargs->algo == other->algo) && (ciargs->mode == other->mode);
+}
+
+static const struct silofs_ciargs s_ciargs_default = {
+	.algo = SILOFS_CIPHER_ALGO_DEFAULT,
+	.mode = SILOFS_CIPHER_MODE_DEFAULT,
+};
+
+const struct silofs_ciargs *silofs_ciargs_default(void)
+{
+	SILOFS_STATICASSERT_EQ(GCRY_CIPHER_AES256,
+	                       (int)SILOFS_CIPHER_ALGO_DEFAULT);
+	SILOFS_STATICASSERT_EQ(GCRY_CIPHER_MODE_GCM,
+	                       (int)SILOFS_CIPHER_MODE_DEFAULT);
+
+	return &s_ciargs_default;
 }
 
 static size_t
@@ -112,26 +134,6 @@ ciargs_keysize(const struct silofs_ciargs *ciargs, size_t keysize_want)
 		break;
 	}
 	return keysize;
-}
-
-void silofs_ciargs_setup(struct silofs_ciargs *ciargs)
-{
-	SILOFS_STATICASSERT_EQ(GCRY_CIPHER_AES256,
-	                       (int)SILOFS_CIPHER_ALGO_DEFAULT);
-	SILOFS_STATICASSERT_EQ(GCRY_CIPHER_MODE_GCM,
-	                       (int)SILOFS_CIPHER_MODE_DEFAULT);
-
-	ciargs_setup(ciargs);
-}
-
-static const struct silofs_ciargs s_ciargs_default = {
-	.algo = SILOFS_CIPHER_ALGO_DEFAULT,
-	.mode = SILOFS_CIPHER_MODE_DEFAULT,
-};
-
-const struct silofs_ciargs *silofs_ciargs_default(void)
-{
-	return &s_ciargs_default;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -161,7 +163,7 @@ int silofs_cipher_init(struct silofs_cipher *cipher)
 {
 	struct silofs_ciargs ciargs;
 
-	ciargs_setup(&ciargs);
+	silofs_ciargs_reset(&ciargs);
 	return cipher_open(cipher, &ciargs);
 }
 

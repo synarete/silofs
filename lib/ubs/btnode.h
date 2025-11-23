@@ -23,6 +23,16 @@
 
 #define SILOFS_BTREE_KEY_NULL (0)
 
+struct silofs_btnode_meta {
+	struct silofs_ivkey  ivkey;
+	struct silofs_ciargs ciargs;
+};
+
+struct silofs_btnode_child {
+	struct silofs_btnode_meta meta;
+	struct silofs_paddr       addr;
+};
+
 void silofs_bti_incref(struct silofs_btnode_info *bti);
 
 void silofs_bti_decref(struct silofs_btnode_info *bti);
@@ -52,7 +62,7 @@ void silofs_bti_child_at(const struct silofs_btnode_info *bti, size_t slot,
                          struct silofs_paddr *out_paddr);
 
 int silofs_bti_resolve(const struct silofs_btnode_info *bti, uint64_t key,
-                       struct silofs_paddr *out_paddr);
+                       struct silofs_btnode_child *out_child);
 
 int silofs_bti_update_child(struct silofs_btnode_info *bti, uint64_t key,
                             const struct silofs_paddr *paddr);

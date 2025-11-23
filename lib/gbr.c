@@ -317,7 +317,7 @@ static void gbr_init(struct silofs_gbr *gbr, enum silofs_gbr_kind flavour)
 	silofs_memzero(gbr, sizeof(*gbr));
 	silofs_paddr_reset(&gbr->root);
 	silofs_uaddr_reset(&gbr->sb_addr);
-	silofs_ciargs_setup(&gbr->ciargs);
+	silofs_ciargs_assign(&gbr->ciargs, silofs_ciargs_default());
 	gbr->kind = flavour;
 	gbr->flags = 0;
 }

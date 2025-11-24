@@ -388,11 +388,12 @@ static void validate_ondisk_xattr(void)
 
 static void validate_ondisk_btnode(void)
 {
-	REQUIRE_OFFSET64(struct silofs_btree_node_meta, btm_cipher_key, 0);
-	REQUIRE_OFFSET64(struct silofs_btree_node_meta, btm_cipher_iv, 64);
-	REQUIRE_OFFSET64(struct silofs_btree_node_meta, btm_cipher_algo, 80);
-	REQUIRE_OFFSET32(struct silofs_btree_node_meta, btm_cipher_mode, 84);
-	REQUIRE_SIZEOF(struct silofs_btree_node_meta, 96);
+	REQUIRE_OFFSET64(struct silofs_btchild192b, btc_paddr, 0);
+	REQUIRE_OFFSET64(struct silofs_btchild192b, btc_cipher_key, 64);
+	REQUIRE_OFFSET64(struct silofs_btchild192b, btc_cipher_iv, 128);
+	REQUIRE_OFFSET64(struct silofs_btchild192b, btc_cipher_algo, 144);
+	REQUIRE_OFFSET32(struct silofs_btchild192b, btc_cipher_mode, 148);
+	REQUIRE_SIZEOF(struct silofs_btchild192b, 192);
 	REQUIRE_OFFSET64(struct silofs_btree_node, btn_hdr, 0);
 	REQUIRE_OFFSET64(struct silofs_btree_node, btn_flags, 32);
 	REQUIRE_OFFSET32(struct silofs_btree_node, btn_mtype, 36);

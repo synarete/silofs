@@ -394,15 +394,15 @@ static int btc_stage_child_btnode(const struct silofs_btree_ctx *btc,
                                   struct silofs_btnode_info *parent_bti,
                                   struct silofs_btnode_info **out_bti)
 {
-	struct silofs_btnode_child child;
+	struct silofs_btchild btchild;
 	struct silofs_btnode_info *bti = nullptr;
 	int err;
 
-	err = silofs_bti_resolve(parent_bti, btc->key, &child);
+	err = silofs_bti_resolve(parent_bti, btc->key, &btchild);
 	if (err) {
 		return err;
 	}
-	err = btc_stage_btnode(btc, &child.addr, &bti);
+	err = btc_stage_btnode(btc, &btchild.paddr, &bti);
 	if (err) {
 		return err;
 	}
@@ -590,7 +590,9 @@ static int btc_relinked_path(struct silofs_btree_ctx *btc)
 		bti = bpath_at(&btc->bpath, i);
 		child_bti = bpath_at(&btc->bpath, i + 1);
 		paddr = bti_paddr(child_bti);
-		err = silofs_bti_update_child(bti, btc->key, paddr);
+		(void)paddr;
+		/* XXX */
+		err = silofs_bti_update_child(bti, btc->key, nullptr);
 		if (err) {
 			return err;
 		}
@@ -643,7 +645,7 @@ static int btc_require_path(struct silofs_btree_ctx *btc)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int btc_resolve_rdonly(struct silofs_btree_ctx *btc,
-                              struct silofs_btnode_child *out_child)
+                              struct silofs_btchild *out_child)
 {
 	const struct silofs_btnode_info *bti = nullptr;
 	int err;
@@ -710,7 +712,7 @@ int silofs_btree_format(struct silofs_btree *btree)
 
 int silofs_btree_lookup(struct silofs_btree *btree,
                         const struct silofs_vaddr *vaddr,
-                        struct silofs_btnode_child *out_child)
+                        struct silofs_btchild *out_child)
 {
 	struct silofs_btree_ctx btc;
 	int err;

@@ -1395,7 +1395,7 @@ int silofs_init_once(void)
 	if (ret != 0) {
 		goto out;
 	}
-	silofs_affirm_ondisk_format();
+	silofs_validate_ondisk_format();
 	g_initlib_once_done = true;
 out:
 	return ret;

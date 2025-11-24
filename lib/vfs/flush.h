@@ -14,15 +14,15 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_EXEC_H_
-#define SILOFS_EXEC_H_
+#ifndef SILOFS_FLUSH_H_
+#define SILOFS_FLUSH_H_
 
 #include "infra.h"
 #include "addr.h"
-#include "flags.h"
-#include "uidgid.h"
 
 #define SILOFS_SQENT_NREFS_MAX (32)
+#define SILOFS_COMMIT_LEN_MAX SILOFS_MEGA
+#define SILOFS_CID_ALL        UINT64_MAX
 
 /* submit reference into view within underlying block */
 struct silofs_submit_ref {
@@ -75,36 +75,6 @@ struct silofs_flusher {
 	struct silofs_inode_info *ii;
 	uint32_t                  tx_count;
 	int                       flags;
-} silofs_attr_aligned64;
-
-/* execution-context authentication */
-struct silofs_task_auth {
-	struct silofs_creds creds;
-	struct timespec     ts;
-	uint64_t            unique;
-	uint32_t            opcode;
-	pid_t               pid;
-};
-
-/* execution-context */
-struct silofs_task_ctx {
-	struct silofs_task_auth     t_auth;
-	struct silofs_env          *t_env;
-	const struct silofs_idsmap *t_idsm;
-	const struct silofs_creds  *t_creds;
-	struct silofs_repo         *t_repo;
-	struct silofs_lcache       *t_lcache;
-	struct silofs_submitq      *t_submitq;
-	struct silofs_inode_info   *t_looseq;
-	uint64_t                    t_upper_id;
-	time_t                      t_op_start_time;
-	volatile int8_t             t_interrupt;
-	volatile bool               t_fs_locked;
-	bool                        t_ex_locked;
-	bool                        t_exclusive;
-	bool                        t_priv_op;
-	bool                        t_kwrite;
-	bool                        t_runnable;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -136,6 +106,8 @@ int silofs_submitq_new_sqe(struct silofs_submitq      *smq,
 void silofs_submitq_del_sqe(struct silofs_submitq     *smq,
                             struct silofs_submitq_ent *sqe);
 
+int silofs_submitq_apply(struct silofs_submitq *smq, uint64_t id);
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_flusher_init(struct silofs_flusher *flusher,
@@ -148,35 +120,4 @@ int silofs_flush_dirty(struct silofs_task_ctx   *task,
 
 int silofs_flush_dirty_now(struct silofs_task_ctx *task);
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-void silofs_task_init(struct silofs_task_ctx *task, struct silofs_env *env);
-
-void silofs_task_fini(struct silofs_task_ctx *task);
-
-void silofs_task_set_creds(struct silofs_task_ctx *task, uid_t uid, gid_t gid,
-                           mode_t umsk);
-
-void silofs_task_update_umask(struct silofs_task_ctx *task, mode_t umask);
-
-void silofs_task_set_ts(struct silofs_task_ctx *task, bool rt);
-
-void silofs_task_update_by(struct silofs_task_ctx    *task,
-                           struct silofs_submitq_ent *sqe);
-
-int silofs_task_submit(struct silofs_task_ctx *task, bool all);
-
-void silofs_task_enq_loose(struct silofs_task_ctx   *task,
-                           struct silofs_inode_info *ii);
-
-void silofs_lock_fs_by(struct silofs_task_ctx *task);
-
-void silofs_unlock_fs_by(struct silofs_task_ctx *task);
-
-void silofs_rwlock_fs_by(struct silofs_task_ctx *task);
-
-void silofs_rwunlock_fs_by(struct silofs_task_ctx *task);
-
-struct silofs_sb_info *silofs_get_sbi(const struct silofs_task_ctx *task);
-
-#endif /* SILOFS_EXEC_H_ */
+#endif /* SILOFS_FLUSH_H_ */

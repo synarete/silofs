@@ -34,6 +34,6 @@
 #include "vfs/spmaps.h"
 #include "vfs/stage.h"
 #include "vfs/encdec.h"
-#include "vfs/exec.h"
+#include "vfs/task.h"
 
 #endif /* SILOFS_VFS_H_ */

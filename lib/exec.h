@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_OPEXEC_H_
-#define SILOFS_OPEXEC_H_
+#ifndef SILOFS_EXEC_H_
+#define SILOFS_EXEC_H_
 
 #include <sys/stat.h>
 #include <sys/statvfs.h>
@@ -189,4 +189,4 @@ int silofs_exec_restore(struct silofs_task_ctx    *task,
                         const struct silofs_paddr *ar_mref,
                         struct silofs_paddr       *out_fs_mref);
 
-#endif /* SILOFS_OPEXEC_H_ */
+#endif /* SILOFS_EXEC_H_ */

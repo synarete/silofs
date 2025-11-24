@@ -24,7 +24,7 @@
 #include "vfs.h"
 #include "ar.h"
 #include "walk.h"
-#include "opexec.h"
+#include "exec.h"
 #include "env.h"
 
 #define status_ok(err_) ((err_) == 0)

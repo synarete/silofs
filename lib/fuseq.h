@@ -19,7 +19,7 @@
 
 #include <stdint.h>
 #include "infra.h"
-#include "opcall.h"
+#include "call.h"
 
 /* high-limit for pipes in splice-mode */
 #define SILOFS_FUSEQ_PIPES_MAX (8)

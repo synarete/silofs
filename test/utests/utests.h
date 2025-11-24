@@ -34,7 +34,7 @@
 #include "vfs.h"
 #include "ar.h"
 #include "gbr.h"
-#include "opexec.h"
+#include "exec.h"
 #include "walk.h"
 
 #ifndef SILOFS_UNITEST

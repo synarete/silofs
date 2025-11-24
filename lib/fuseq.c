@@ -35,8 +35,8 @@
 #include "gbr.h"
 #include "vfs.h"
 #include "env.h"
-#include "opcall.h"
-#include "opexec.h"
+#include "call.h"
+#include "exec.h"
 #include "fuseq.h"
 
 #if FUSE_KERNEL_VERSION != 7

@@ -1045,3 +1045,338 @@ int silofs_flush_dirty_now(struct silofs_task_ctx *task)
 {
 	return silofs_flush_dirty(task, nullptr, SILOFS_CTLF_NOW);
 }
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+static int
+sqe_setup_iov_at(struct silofs_submitq_ent *sqe, size_t idx, size_t len)
+{
+	STATICASSERT_LE(ARRAY_SIZE(sqe->iov), SILOFS_IOV_MAX);
+
+	silofs_assert_lt(idx, ARRAY_SIZE(sqe->iov));
+	silofs_assert_null(sqe->iov[idx].iov_base);
+
+	sqe->iov[idx].iov_base = silofs_memalloc(sqe->alloc, len, 0);
+	if (sqe->iov[idx].iov_base == nullptr) {
+		return -SILOFS_ENOMEM;
+	}
+	sqe->iov[idx].iov_len = len;
+	return 0;
+}
+
+static void sqe_reset_iovs(struct silofs_submitq_ent *sqe)
+{
+	for (size_t idx = 0; idx < sqe->cnt; ++idx) {
+		silofs_memfree(sqe->alloc, sqe->iov[idx].iov_base,
+		               sqe->iov[idx].iov_len, SILOFS_ALLOCF_NOPUNCH);
+		sqe->iov[idx].iov_base = nullptr;
+		sqe->iov[idx].iov_len = 0;
+	}
+}
+
+static bool sqe_isappendable(const struct silofs_submitq_ent *sqe,
+                             const struct silofs_laddr *laddr)
+{
+	const struct silofs_laddr *sqe_laddr = &sqe->laddr_base;
+	const ssize_t len_max = SILOFS_COMMIT_LEN_MAX;
+	size_t len;
+	off_t end;
+	off_t nxt;
+
+	STATICASSERT_EQ(ARRAY_SIZE(sqe->iov), ARRAY_SIZE(sqe->lni));
+
+	if (sqe->cnt == 0) {
+		return true;
+	}
+	if (sqe->cnt == ARRAY_SIZE(sqe->iov)) {
+		return false;
+	}
+	if (!silofs_lsid_isequal(&sqe_laddr->lsid, &laddr->lsid)) {
+		return false;
+	}
+	end = silofs_off_end(sqe_laddr->pos, sqe->len);
+	if (laddr->pos != end) {
+		return false;
+	}
+	len = sqe->len + silofs_laddr_len(laddr);
+	if (len > (size_t)len_max) {
+		return false;
+	}
+	if (!silofs_mtype_isinode(sqe->mtype)) {
+		return true;
+	}
+	/* for inodes require alignment on commit-len boundaries */
+	nxt = silofs_off_next(sqe_laddr->pos, len_max);
+	end = silofs_off_end(sqe_laddr->pos, len);
+	if (end > nxt) {
+		return false;
+	}
+	return true;
+}
+
+bool silofs_sqe_append_ref(struct silofs_submitq_ent *sqe,
+                           const struct silofs_laddr *laddr,
+                           struct silofs_lnode_info *lni)
+{
+	if (!sqe_isappendable(sqe, laddr)) {
+		return false;
+	}
+	if (sqe->cnt == 0) {
+		silofs_laddr_assign(&sqe->laddr_base, laddr);
+		sqe->mtype = lni->ln_mtype;
+	}
+	sqe->len += silofs_laddr_len(laddr);
+	sqe->lni[sqe->cnt++] = lni;
+	return true;
+}
+
+static int sqe_setup_iovs(struct silofs_submitq_ent *sqe,
+                          const struct silofs_submit_ref *refs_arr)
+{
+	const struct silofs_submit_ref *ref;
+	size_t len;
+	int err;
+
+	for (size_t i = 0; i < sqe->cnt; ++i) {
+		ref = &refs_arr[i];
+		len = silofs_laddr_len(&ref->llink.laddr);
+		err = sqe_setup_iov_at(sqe, i, len);
+		if (err) {
+			return err;
+		}
+	}
+	return 0;
+}
+
+static int sqe_encrypted_iovs(struct silofs_submitq_ent *sqe,
+                              const struct silofs_submit_ref *refs_arr)
+{
+	const struct silofs_submit_ref *ref = nullptr;
+	int err;
+
+	for (size_t i = 0; i < sqe->cnt; ++i) {
+		ref = &refs_arr[i];
+		err = silofs_encrypt_lview(sqe->env, &ref->llink, ref->view,
+		                           sqe->iov[i].iov_base);
+		if (err) {
+			return err;
+		}
+	}
+	return 0;
+}
+
+int silofs_sqe_assign_iovs(struct silofs_submitq_ent *sqe,
+                           const struct silofs_submit_ref *refs_arr)
+{
+	int err;
+
+	err = sqe_setup_iovs(sqe, refs_arr);
+	if (err) {
+		goto out_err;
+	}
+	err = sqe_encrypted_iovs(sqe, refs_arr);
+	if (err) {
+		goto out_err;
+	}
+	return 0;
+out_err:
+	sqe_reset_iovs(sqe);
+	return err;
+}
+
+static int sqe_do_write(const struct silofs_submitq_ent *sqe)
+{
+	return silofs_repo_writev_at(sqe->env->base.repo, &sqe->laddr_base,
+	                             sqe->iov, sqe->cnt);
+}
+
+void silofs_sqe_increfs(struct silofs_submitq_ent *sqe)
+{
+	if (!sqe->hold_refs) {
+		for (size_t i = 0; i < sqe->cnt; ++i) {
+			silofs_lni_incref(sqe->lni[i]);
+		}
+		sqe->hold_refs = 1;
+	}
+}
+
+static void sqe_decrefs(struct silofs_submitq_ent *sqe)
+{
+	if (sqe->hold_refs) {
+		for (size_t i = 0; i < sqe->cnt; ++i) {
+			silofs_lni_decref(sqe->lni[i]);
+		}
+		sqe->hold_refs = 0;
+	}
+}
+
+static void sqe_init(struct silofs_submitq_ent *sqe,
+                     struct silofs_alloc *alloc, uint64_t uniq_id)
+{
+	memset(sqe, 0, sizeof(*sqe));
+	silofs_list_head_init(&sqe->qlh);
+	silofs_laddr_reset(&sqe->laddr_base);
+	sqe->alloc = alloc;
+	sqe->env = nullptr;
+	sqe->uniq_id = uniq_id;
+	sqe->len = 0;
+	sqe->cnt = 0;
+	sqe->hold_refs = 0;
+	sqe->status = 0;
+}
+
+static void sqe_fini(struct silofs_submitq_ent *sqe)
+{
+	silofs_list_head_fini(&sqe->qlh);
+	silofs_laddr_reset(&sqe->laddr_base);
+	sqe_reset_iovs(sqe);
+	sqe->len = 0;
+	sqe->cnt = 0;
+	sqe->alloc = nullptr;
+	sqe->status = -1;
+}
+
+static struct silofs_submitq_ent *
+sqe_new(struct silofs_alloc *alloc, uint64_t uniq_id)
+{
+	struct silofs_submitq_ent *sqe;
+
+	STATICASSERT_LE(sizeof(*sqe), 1024);
+
+	sqe = silofs_memalloc(alloc, sizeof(*sqe), 0);
+	if (likely(sqe != nullptr)) {
+		sqe_init(sqe, alloc, uniq_id);
+	}
+	return sqe;
+}
+
+static void sqe_del(struct silofs_submitq_ent *sqe, struct silofs_alloc *alloc)
+{
+	sqe_fini(sqe);
+	silofs_memfree(alloc, sqe, sizeof(*sqe), SILOFS_ALLOCF_NOPUNCH);
+}
+
+struct silofs_submitq_ent *silofs_sqe_from_qlh(struct silofs_list_head *qlh)
+{
+	struct silofs_submitq_ent *sqe = nullptr;
+
+	if (qlh != nullptr) {
+		sqe = container_of(qlh, struct silofs_submitq_ent, qlh);
+	}
+	return sqe;
+}
+
+static int sqe_apply(struct silofs_submitq_ent *sqe)
+{
+	sqe->status = sqe_do_write(sqe);
+	return sqe->status;
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_submitq_init(struct silofs_submitq *smq, struct silofs_alloc *alloc)
+{
+	memset(smq, 0, sizeof(*smq));
+	silofs_listq_init(&smq->smq_listq);
+	smq->smq_alloc = alloc;
+	smq->smq_upper_id = 1;
+	return silofs_mutex_init(&smq->smq_mutex);
+}
+
+void silofs_submitq_fini(struct silofs_submitq *smq)
+{
+	silofs_mutex_fini(&smq->smq_mutex);
+	silofs_listq_fini(&smq->smq_listq);
+	smq->smq_upper_id = 0;
+}
+
+static struct silofs_submitq_ent *submitq_front_sqe(struct silofs_submitq *smq)
+{
+	struct silofs_list_head *lh;
+
+	lh = listq_front(&smq->smq_listq);
+	return silofs_sqe_from_qlh(lh);
+}
+
+static void
+submitq_unlink_sqe(struct silofs_submitq *smq, struct silofs_submitq_ent *sqe)
+{
+	listq_remove(&smq->smq_listq, &sqe->qlh);
+}
+
+static void
+submitq_push_sqe(struct silofs_submitq *smq, struct silofs_submitq_ent *sqe)
+{
+	listq_push_back(&smq->smq_listq, &sqe->qlh);
+}
+
+void silofs_submitq_enqueue(struct silofs_submitq *smq,
+                            struct silofs_submitq_ent *sqe)
+{
+	silofs_mutex_lock(&smq->smq_mutex);
+	submitq_push_sqe(smq, sqe);
+	silofs_mutex_unlock(&smq->smq_mutex);
+}
+
+static struct silofs_submitq_ent *
+submitq_get_sqe(struct silofs_submitq *smq, uint64_t id)
+{
+	struct silofs_submitq_ent *sqe;
+
+	sqe = submitq_front_sqe(smq);
+	if (sqe == nullptr) {
+		return nullptr;
+	}
+	if (sqe->uniq_id > id) {
+		return nullptr;
+	}
+	return sqe;
+}
+
+static int submitq_apply_one(struct silofs_submitq *smq, uint64_t id,
+                             struct silofs_submitq_ent **out_sqe)
+{
+	struct silofs_submitq_ent *sqe;
+	int ret = 0;
+
+	silofs_mutex_lock(&smq->smq_mutex);
+	sqe = submitq_get_sqe(smq, id);
+	if (sqe != nullptr) {
+		submitq_unlink_sqe(smq, sqe);
+		ret = sqe_apply(sqe);
+	}
+	silofs_mutex_unlock(&smq->smq_mutex);
+	*out_sqe = sqe;
+	return ret;
+}
+
+int silofs_submitq_apply(struct silofs_submitq *smq, uint64_t id)
+{
+	struct silofs_submitq_ent *sqe = nullptr;
+	int ret = 0;
+
+	while (ret == 0) {
+		sqe = nullptr;
+		ret = submitq_apply_one(smq, id, &sqe);
+		if (sqe == nullptr) {
+			break;
+		}
+		silofs_submitq_del_sqe(smq, sqe);
+	}
+	return ret;
+}
+
+int silofs_submitq_new_sqe(struct silofs_submitq *smq,
+                           struct silofs_submitq_ent **out_sqe)
+{
+	*out_sqe = sqe_new(smq->smq_alloc, smq->smq_upper_id++);
+	return likely(*out_sqe != nullptr) ? 0 : -SILOFS_ENOMEM;
+}
+
+void silofs_submitq_del_sqe(struct silofs_submitq *smq,
+                            struct silofs_submitq_ent *sqe)
+{
+	sqe_decrefs(sqe);
+	sqe_reset_iovs(sqe);
+	sqe_del(sqe, smq->smq_alloc);
+}

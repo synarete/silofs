@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_OPCALL_H_
-#define SILOFS_OPCALL_H_
+#ifndef SILOFS_CALL_H_
+#define SILOFS_CALL_H_
 
 #include <sys/stat.h>
 #include <sys/statvfs.h>
@@ -519,4 +519,4 @@ int silofs_call_syncfs(struct silofs_task_ctx  *task,
 int silofs_call_ioctl(struct silofs_task_ctx  *task,
                       struct silofs_call_args *args);
 
-#endif /* SILOFS_OPCALL_H_ */
+#endif /* SILOFS_CALL_H_ */

@@ -25,7 +25,7 @@
 #include "vfs.h"
 #include "gbr.h"
 #include "env.h"
-#include "opexec.h"
+#include "exec.h"
 #include "fuseq.h"
 #include "walk.h"
 

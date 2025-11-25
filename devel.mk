@@ -329,7 +329,7 @@ bootstrap:
 
 
 # Special targets
-.PHONY: tags compdb clangscan rpm deb reset params
+.PHONY: tags compdb rpm deb reset params
 
 tags:
 	$(call report, $@)
@@ -343,6 +343,8 @@ compdb: configure tags
 	  CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" -C $(BUILDDIR))
 
 ifeq ($(CC), clang)
+.PHONY: tidy scan
+
 tidy: reset compdb
 	$(call report, $@)
 	@$(TOP)/scripts/clangtidy.sh $(TOP)

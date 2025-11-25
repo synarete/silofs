@@ -115,6 +115,14 @@ void silofs_pmeta_reset(struct silofs_pmeta *pmeta)
 	silofs_ciargs_reset(&pmeta->ciargs);
 }
 
+void silofs_pmeta_assign(struct silofs_pmeta *pmeta,
+                         const struct silofs_pmeta *other)
+{
+	silofs_paddr_assign(&pmeta->paddr, &other->paddr);
+	silofs_ivkey_assign(&pmeta->ivkey, &other->ivkey);
+	silofs_ciargs_assign(&pmeta->ciargs, &other->ciargs);
+}
+
 bool silofs_pmeta_isnull(const struct silofs_pmeta *pmeta)
 {
 	return silofs_paddr_isnull(&pmeta->paddr);

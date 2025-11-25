@@ -73,6 +73,9 @@ const struct silofs_pmeta *silofs_pmeta_none(void);
 
 void silofs_pmeta_reset(struct silofs_pmeta *pmeta);
 
+void silofs_pmeta_assign(struct silofs_pmeta       *pmeta,
+                         const struct silofs_pmeta *other);
+
 bool silofs_pmeta_isnull(const struct silofs_pmeta *pmeta);
 
 void silofs_pmeta192b_htox(struct silofs_pmeta192b   *pmeta192,

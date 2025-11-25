@@ -179,24 +179,23 @@ static size_t paddr_size(const struct silofs_paddr *paddr)
 static void
 pni_init(struct silofs_pnode_info *pni, const struct silofs_paddr *paddr)
 {
-	silofs_ivkey_reset(&pni->pn_ivkey);
-	silofs_paddr_assign(&pni->pn_paddr, paddr);
+	silofs_pmeta_reset(&pni->pn_meta);
+	silofs_paddr_assign(&pni->pn_meta.paddr, paddr);
 	silofs_hmqe_init(&pni->pn_hmqe, paddr_size(paddr));
-	silofs_hkey_by_paddr(&pni->pn_hmqe.hme_key, &pni->pn_paddr);
+	silofs_hkey_by_paddr(&pni->pn_hmqe.hme_key, &pni->pn_meta.paddr);
 	pni->pn_view = nullptr;
 }
 
 static void pni_fini(struct silofs_pnode_info *pni)
 {
-	silofs_ivkey_reset(&pni->pn_ivkey);
-	silofs_paddr_fini(&pni->pn_paddr);
+	silofs_pmeta_reset(&pni->pn_meta);
 	silofs_hmqe_fini(&pni->pn_hmqe);
 	pni->pn_view = nullptr;
 }
 
 static enum silofs_mtype pni_mtype(const struct silofs_pnode_info *pni)
 {
-	return pni->pn_paddr.mtype;
+	return pni->pn_meta.paddr.mtype;
 }
 
 enum silofs_mtype silofs_pni_mtype(const struct silofs_pnode_info *pni)
@@ -255,8 +254,8 @@ void silofs_pni_setup_ivkey(struct silofs_pnode_info *pni,
 {
 	struct silofs_iv iv;
 
-	silofs_derive_iv_by(md, &pni->pn_paddr, &iv);
-	silofs_ivkey_setup(&pni->pn_ivkey, key, &iv);
+	silofs_derive_iv_by(md, &pni->pn_meta.paddr, &iv);
+	silofs_ivkey_setup(&pni->pn_meta.ivkey, key, &iv);
 }
 
 static int
@@ -708,10 +707,10 @@ int silofs_encrypt_pnode(const struct silofs_pnode_info *pni,
                          const struct silofs_cipher *cipher,
                          struct silofs_view *enc_view)
 {
-	return silofs_encrypt_view(cipher,         //
-	                           &pni->pn_ivkey, //
-	                           pni->pn_view,   //
-	                           pni_mtype(pni), //
+	return silofs_encrypt_view(cipher,              //
+	                           &pni->pn_meta.ivkey, //
+	                           pni->pn_view,        //
+	                           pni_mtype(pni),      //
 	                           enc_view);
 }
 
@@ -719,10 +718,10 @@ int silofs_decrypt_pnode(struct silofs_pnode_info *pni,
                          const struct silofs_cipher *cipher,
                          const struct silofs_view *enc_view)
 {
-	return silofs_decrypt_view(cipher,         //
-	                           &pni->pn_ivkey, //
-	                           enc_view,       //
-	                           pni_mtype(pni), //
+	return silofs_decrypt_view(cipher,              //
+	                           &pni->pn_meta.ivkey, //
+	                           enc_view,            //
+	                           pni_mtype(pni),      //
 	                           pni->pn_view);
 }
 

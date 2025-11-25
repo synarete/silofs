@@ -32,8 +32,7 @@ struct silofs_pmeta {
 
 /* base of all persistent nodes */
 struct silofs_pnode_info {
-	struct silofs_ivkey      pn_ivkey;
-	struct silofs_paddr      pn_paddr;
+	struct silofs_pmeta      pn_meta;
 	struct silofs_hmapq_elem pn_hmqe;
 	struct silofs_view      *pn_view;
 };

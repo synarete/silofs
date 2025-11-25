@@ -119,8 +119,9 @@ stc_read_pnode(struct silofs_store_ctx *st_ctx, struct silofs_pnode_info *pni)
 		.rwv_base = st_ctx->view,
 		.rwv_len = viewlen_of(pni),
 	};
+	const struct silofs_paddr *paddr = &pni->pn_meta.paddr;
 
-	return silofs_filos_read_blob(st_ctx->filos, &pni->pn_paddr, &rwvec);
+	return silofs_filos_read_blob(st_ctx->filos, paddr, &rwvec);
 }
 
 static int stc_decrypt_verify_pnode(struct silofs_store_ctx *st_ctx,
@@ -488,8 +489,9 @@ static int stc_write_pnode(struct silofs_store_ctx *st_ctx,
 		.rov_base = st_ctx->view,
 		.rov_len = viewlen_of(pni),
 	};
+	const struct silofs_paddr *paddr = &pni->pn_meta.paddr;
 
-	return silofs_filos_write_blob(st_ctx->filos, &pni->pn_paddr, &rovec);
+	return silofs_filos_write_blob(st_ctx->filos, paddr, &rovec);
 }
 
 static int stc_seal_encrypt_pnode(struct silofs_store_ctx *st_ctx,

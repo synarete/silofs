@@ -27,7 +27,7 @@
 
 static const struct silofs_paddr *ubi_paddr(const struct silofs_uber_info *ubi)
 {
-	return &ubi->ub_pni.pn_paddr;
+	return &ubi->ub_pni.pn_meta.paddr;
 }
 
 static void

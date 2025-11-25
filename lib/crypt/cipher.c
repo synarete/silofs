@@ -214,7 +214,7 @@ static int cipher_prepare(const struct silofs_cipher *cipher,
 	size_t blklen, keysize;
 	gcry_error_t err;
 
-	blklen = gcry_cipher_get_algo_blklen(cipher->ci_args.algo);
+	blklen = gcry_cipher_get_algo_blklen((int)cipher->ci_args.algo);
 	if (blklen > sizeof(iv->iv)) {
 		silofs_log_warn("bad blklen: %lu", blklen);
 		return -SILOFS_EINVAL;

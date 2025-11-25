@@ -56,11 +56,9 @@ static void silofs_getentropy(void *p, size_t n)
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 /* Blum-Blum-Shub pseudo-random number generator, using p=383 q=503 */
-static uint64_t blum_blum_shub_prng(uint64_t n)
+static uint64_t blum_blum_shub(uint64_t n)
 {
-	const uint64_t m = 383 * 503;
-
-	return (n * n) % m;
+	return (n * n) % 192649UL;
 }
 
 static uint64_t twang_mix64(uint64_t n)
@@ -104,9 +102,9 @@ void silofs_prandom(void *p, size_t n)
 
 	xx = prandom_seed();
 	for (size_t i = 0; i < (n / sizeof(*d)); ++i) {
-		bbs = blum_blum_shub_prng(xx);
+		bbs = blum_blum_shub(xx);
 		d[i] = (uint16_t)bbs;
-		xx = twang_mix64(xx + i) ^ bbs;
+		xx = twang_mix64(xx + bbs);
 	}
 	if (n & 1) {
 		q[n - 1] = (uint8_t)xx;

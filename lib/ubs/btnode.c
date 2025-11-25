@@ -42,22 +42,28 @@ static bool btchild_isnull(const struct silofs_btchild *btchild)
 void silofs_btchild192b_htox(struct silofs_btchild192b *btc192,
                              const struct silofs_btchild *btc)
 {
+	const uint16_t algo = (uint16_t)(btc->ciargs.algo);
+	const uint16_t mode = (uint16_t)(btc->ciargs.mode);
+
 	memset(btc192, 0, sizeof(*btc192));
 	silofs_paddr64b_htox(&btc192->btc_paddr, &btc->paddr);
 	silofs_key_assign(&btc192->btc_cipher_key, &btc->ivkey.key);
 	silofs_iv_assign(&btc192->btc_cipher_iv, &btc->ivkey.iv);
-	btc192->btc_cipher_algo = silofs_cpu_to_le16(btc->ciargs.algo);
-	btc192->btc_cipher_mode = silofs_cpu_to_le16(btc->ciargs.mode);
+	btc192->btc_cipher_algo = silofs_cpu_to_le16(algo);
+	btc192->btc_cipher_mode = silofs_cpu_to_le16(mode);
 }
 
 void silofs_btchild192b_xtoh(const struct silofs_btchild192b *btc192,
                              struct silofs_btchild *btc)
 {
+	const uint16_t algo = silofs_le16_to_cpu(btc192->btc_cipher_algo);
+	const uint16_t mode = silofs_le16_to_cpu(btc192->btc_cipher_mode);
+
 	silofs_paddr64b_xtoh(&btc192->btc_paddr, &btc->paddr);
 	silofs_key_assign(&btc->ivkey.key, &btc192->btc_cipher_key);
 	silofs_iv_assign(&btc->ivkey.iv, &btc192->btc_cipher_iv);
-	btc->ciargs.algo = silofs_le16_to_cpu(btc192->btc_cipher_algo);
-	btc->ciargs.mode = silofs_le16_to_cpu(btc192->btc_cipher_mode);
+	btc->ciargs.algo = (enum silofs_cipher_algo)algo;
+	btc->ciargs.mode = (enum silofs_cipher_mode)mode;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

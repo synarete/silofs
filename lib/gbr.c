@@ -88,15 +88,15 @@ static void gbr1k_set_cipher_mode(struct silofs_gbr1k *gbr1k, int16_t mode)
 static void gbr1k_ciargs(const struct silofs_gbr1k *gbr1k,
                          struct silofs_ciargs *out_ciargs)
 {
-	out_ciargs->algo = gbr1k_cipher_algo(gbr1k);
-	out_ciargs->mode = gbr1k_cipher_mode(gbr1k);
+	out_ciargs->algo = (enum silofs_cipher_algo)(gbr1k_cipher_algo(gbr1k));
+	out_ciargs->mode = (enum silofs_cipher_mode)(gbr1k_cipher_mode(gbr1k));
 }
 
 static void gbr1k_set_ciargs(struct silofs_gbr1k *gbr1k,
                              const struct silofs_ciargs *ciargs)
 {
-	gbr1k_set_cipher_algo(gbr1k, ciargs->algo);
-	gbr1k_set_cipher_mode(gbr1k, ciargs->mode);
+	gbr1k_set_cipher_algo(gbr1k, (int16_t)(ciargs->algo));
+	gbr1k_set_cipher_mode(gbr1k, (int16_t)(ciargs->mode));
 }
 
 static void gbr1k_sb_addr(const struct silofs_gbr1k *gbr1k,

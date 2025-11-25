@@ -35,7 +35,7 @@ static void do_getentropy(void *buf, size_t len)
 	}
 }
 
-void silofs_getentropy(void *p, size_t n)
+static void silofs_getentropy(void *p, size_t n)
 {
 	uint8_t *ptr = p;
 	const uint8_t *end = ptr + n;
@@ -115,99 +115,71 @@ void silofs_prandom(void *p, size_t n)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void prandgen_refill(struct silofs_prandgen *prng)
+static void prandgen_refill_prandom(struct silofs_prandgen *prng)
 {
-	silofs_getentropy(prng->rands, sizeof(prng->rands));
+	silofs_prandom(prng->prandom, sizeof(prng->prandom));
+}
+
+static void prandgen_refill_entropy(struct silofs_prandgen *prng)
+{
+	silofs_getentropy(prng->entropy, sizeof(prng->entropy));
 }
 
 void silofs_prandgen_init(struct silofs_prandgen *prng)
 {
-	prng->used_slots = 0;
-	prng->take_cycle = 0;
-	prandgen_refill(prng);
+	prng->slot = 0;
+	prng->cycle = 0;
+	prandgen_refill_prandom(prng);
+	prandgen_refill_entropy(prng);
 }
 
-static size_t prandgen_avail_bytes(const struct silofs_prandgen *prng)
+void silofs_prandgen_fini(struct silofs_prandgen *prng)
 {
-	const size_t nslots_max = SILOFS_ARRAY_SIZE(prng->rands);
-
-	return (nslots_max - prng->used_slots) * sizeof(prng->rands[0]);
-}
-
-static const uint64_t *prandgen_tip(const struct silofs_prandgen *prng)
-{
-	return &prng->rands[prng->used_slots];
-}
-
-static size_t
-prandgen_nslots_of(const struct silofs_prandgen *prng, size_t nbytes)
-{
-	const size_t slot_size = sizeof(prng->rands[0]);
-
-	return (nbytes + slot_size - 1) / slot_size;
-}
-
-static void prandgen_rotate_some(struct silofs_prandgen *prng, size_t nslots)
-{
-	struct timespec ts;
-	uint32_t rot;
-	uint64_t val;
-	uint64_t rnd;
-	uint64_t *tip;
-
-	silofs_ts_gettime(&ts, 1);
-	tip = &prng->rands[prng->used_slots];
-	rnd = (tip > prng->rands) ? tip[-1] : tip[nslots - 1];
-	for (size_t i = 0; i < nslots; ++i) {
-		val = *tip ^ (uint64_t)(ts.tv_nsec);
-		rnd ^= val;
-		rot = (uint32_t)(rnd + i) % 31;
-		*tip++ = silofs_lrotate64(val, rot);
-	}
+	memset(prng->prandom, 0, sizeof(prng->prandom));
+	memset(prng->entropy, 0, sizeof(prng->entropy));
+	prng->cycle = 0;
+	prng->slot = 0;
 }
 
 static size_t
 prandgen_take_some(struct silofs_prandgen *prng, void *buf, size_t len)
 {
-	const size_t nbytes = silofs_min(prandgen_avail_bytes(prng), len);
-	const size_t nslots = prandgen_nslots_of(prng, nbytes);
+	const size_t np_max = SILOFS_ARRAY_SIZE(prng->prandom);
+	const size_t ne_max = SILOFS_ARRAY_SIZE(prng->entropy);
+	uint8_t *p = buf;
+	size_t cnt = 0;
 
-	memcpy(buf, prandgen_tip(prng), nbytes);
-	prandgen_rotate_some(prng, nslots);
-	prng->used_slots += (uint32_t)nslots;
-	prng->take_cycle++;
-	return nbytes;
-}
-
-static uint64_t prandgen_take_uint64(struct silofs_prandgen *prng)
-{
-	uint64_t ret;
-
-	ret = *prandgen_tip(prng);
-	prandgen_rotate_some(prng, 1);
-	prng->used_slots += 1;
-	prng->take_cycle++;
-	return ret;
+	while ((cnt < len) && (prng->slot < np_max)) {
+		p[cnt++] = prng->prandom[prng->slot] ^
+		           prng->entropy[prng->slot % ne_max];
+		prng->slot++;
+	}
+	return cnt;
 }
 
 static void prandgen_prepare(struct silofs_prandgen *prng)
 {
-	const size_t nslots_max = SILOFS_ARRAY_SIZE(prng->rands);
+	const size_t nslots_max = SILOFS_ARRAY_SIZE(prng->prandom);
 
-	if (prng->used_slots == nslots_max) {
-		if (prng->take_cycle >= (64 * nslots_max)) {
-			prandgen_refill(prng);
-			prng->take_cycle = 0;
-		}
-		prng->used_slots = 0;
+	if (prng->slot < nslots_max) {
+		return;
 	}
+	prandgen_refill_prandom(prng);
+
+	prng->slot = 0;
+	prng->cycle++;
+
+	if (prng->cycle < (31 * nslots_max)) {
+		return;
+	}
+	prandgen_refill_entropy(prng);
 }
 
 void silofs_prandgen_take(struct silofs_prandgen *prng, void *buf, size_t bsz)
 {
-	size_t cnt;
 	uint8_t *cur = buf;
 	const uint8_t *end = cur + bsz;
+	size_t cnt = 0;
 
 	while (cur < end) {
 		prandgen_prepare(prng);
@@ -217,10 +189,9 @@ void silofs_prandgen_take(struct silofs_prandgen *prng, void *buf, size_t bsz)
 	}
 }
 
-void silofs_prandgen_take_u64(struct silofs_prandgen *prng, uint64_t *out)
+void silofs_prandgen_take_u64(struct silofs_prandgen *prng, uint64_t *out_u64)
 {
-	prandgen_prepare(prng);
-	*out = prandgen_take_uint64(prng);
+	silofs_prandgen_take(prng, out_u64, sizeof(*out_u64));
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

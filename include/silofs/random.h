@@ -21,16 +21,17 @@
 #include <stdint.h>
 
 struct silofs_prandgen {
-	uint32_t used_slots;
-	uint32_t take_cycle;
-	uint64_t rands[127];
+	uint32_t slot;
+	uint32_t cycle;
+	uint8_t  prandom[504];
+	uint8_t  entropy[512];
 };
-
-void silofs_getentropy(void *p, size_t n);
 
 void silofs_prandom(void *p, size_t n);
 
 void silofs_prandgen_init(struct silofs_prandgen *prng);
+
+void silofs_prandgen_fini(struct silofs_prandgen *prng);
 
 void silofs_prandgen_take(struct silofs_prandgen *prng, void *buf, size_t bsz);
 

@@ -46,6 +46,7 @@ union silofs_alloc_u {
 
 /* actual environment instance object (internal) */
 struct silofs_env_inst {
+	struct silofs_prandgen prandgen;
 	struct silofs_password passwd;
 	struct silofs_env_args args;
 	union silofs_alloc_u alloc_u;
@@ -489,6 +490,7 @@ static int envi_init_env(struct silofs_env_inst *envi)
 	const struct silofs_env_base env_base = {
 		.passwd = &envi->passwd,
 		.args = &envi->args,
+		.prng = &envi->prandgen,
 		.alloc = envi->alloc,
 		.nilbk = envi->nilbk,
 		.repo = &envi->repo,
@@ -532,6 +534,16 @@ static void envi_fini_passwd(struct silofs_env_inst *envi)
 	silofs_password_reset(&envi->passwd);
 }
 
+static void envi_init_prandgen(struct silofs_env_inst *envi)
+{
+	silofs_prandgen_init(&envi->prandgen);
+}
+
+static void envi_fini_prandgen(struct silofs_env_inst *envi)
+{
+	silofs_prandgen_fini(&envi->prandgen);
+}
+
 static void envi_fini(struct silofs_env_inst *envi)
 {
 	envi_fini_env(envi);
@@ -546,6 +558,7 @@ static void envi_fini(struct silofs_env_inst *envi)
 	envi_fini_nil_bk(envi);
 	envi_fini_alloc(envi);
 	envi_fini_passwd(envi);
+	envi_fini_prandgen(envi);
 }
 
 static int envi_init_args(struct silofs_env_inst *envi,
@@ -571,6 +584,7 @@ envi_init(struct silofs_env_inst *envi, const struct silofs_env_args *args)
 {
 	int err;
 
+	envi_init_prandgen(envi);
 	err = envi_init_args(envi, args);
 	if (err) {
 		goto out_err;

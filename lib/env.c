@@ -356,14 +356,23 @@ bool silofs_env_isrdonlyfs(const struct silofs_env *env)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static void env_make_first_uber_addr(const struct silofs_env *env,
+static void
+env_make_uniqid(struct silofs_env *env, struct silofs_uniqid *out_uniqid)
+{
+	silofs_prandgen_take(env->base.prng, out_uniqid->u.raw,
+	                     sizeof(out_uniqid->u.raw));
+}
+
+static void env_make_first_uber_addr(struct silofs_env *env,
                                      struct silofs_paddr *out_paddr)
 {
 	struct silofs_svolid svolid;
+	struct silofs_uniqid uniqid;
 	struct silofs_blobid blobid;
 
 	silofs_svolid_generate(&svolid);
-	silofs_blobid_setup_raw(&blobid, &svolid, SILOFS_MTYPE_UBER);
+	env_make_uniqid(env, &uniqid);
+	silofs_blobid_setup_raw3(&blobid, &svolid, &uniqid, SILOFS_MTYPE_UBER);
 	silofs_paddr_init(out_paddr, &blobid, 0);
 	silofs_unused(env);
 }

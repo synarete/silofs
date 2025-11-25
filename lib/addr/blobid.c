@@ -51,10 +51,7 @@ static void generate_random(uint8_t *p, size_t n)
 /* semantic "view" into blobid */
 struct silofs_blobidv {
 	struct silofs_svolid svolid;
-	union {
-		struct silofs_hash256 hash;
-		uint8_t raw[32];
-	} u;
+	struct silofs_uniqid uniqid;
 	uint8_t mtype;
 	uint8_t btype;
 	/* XXX REMOVE ME */
@@ -91,7 +88,19 @@ blobidv_setup_raw(struct silofs_blobidv *blobidv,
 	silofs_svolid_copyto(svolid, &blobidv->svolid);
 	blobidv->mtype = (uint8_t)mtype;
 	blobidv->btype = (uint8_t)SILOFS_BTYPE_RAW;
-	generate_random(blobidv->u.raw, sizeof(blobidv->u.raw));
+	generate_random(blobidv->uniqid.u.raw, sizeof(blobidv->uniqid.u.raw));
+}
+
+static void
+blobidv_setup_uniq(struct silofs_blobidv *blobidv,
+                   const struct silofs_svolid *svolid,
+                   const struct silofs_uniqid *uniq, enum silofs_mtype mtype)
+{
+	memset(blobidv, 0, sizeof(*blobidv));
+	silofs_svolid_copyto(svolid, &blobidv->svolid);
+	blobidv->mtype = (uint8_t)mtype;
+	blobidv->btype = (uint8_t)SILOFS_BTYPE_RAW;
+	memcpy(&blobidv->uniqid, uniq, sizeof(blobidv->uniqid));
 }
 
 static void
@@ -103,7 +112,7 @@ blobidv_setup_cas(struct silofs_blobidv *blobidv,
 	silofs_svolid_copyto(svolid, &blobidv->svolid);
 	blobidv->mtype = (uint8_t)mtype;
 	blobidv->btype = (uint8_t)SILOFS_BTYPE_CAS;
-	silofs_hash256_copyto(hash, &blobidv->u.hash);
+	silofs_hash256_copyto(hash, &blobidv->uniqid.u.hash);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -136,6 +145,17 @@ void silofs_blobid_setup_raw2(struct silofs_blobid *blobid,
 	blobidv_setup_raw(&blobidv, svolid, mtype);
 	blobidv.vspace = (uint8_t)vspace;
 	blobidv.height = (uint8_t)height;
+	blobid_from_view(blobid, &blobidv);
+}
+
+void silofs_blobid_setup_raw3(struct silofs_blobid *blobid,
+                              const struct silofs_svolid *svolid,
+                              const struct silofs_uniqid *uniq,
+                              enum silofs_mtype mtype)
+{
+	struct silofs_blobidv blobidv;
+
+	blobidv_setup_uniq(&blobidv, svolid, uniq, mtype);
 	blobid_from_view(blobid, &blobidv);
 }
 

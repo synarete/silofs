@@ -22,6 +22,13 @@
 #include "str.h"
 #include "svolid.h"
 
+struct silofs_uniqid {
+	union {
+		struct silofs_hash256 hash;
+		uint8_t               raw[32];
+	} u;
+};
+
 const struct silofs_blobid *silofs_blobid_none(void);
 
 void silofs_blobid_setup_raw(struct silofs_blobid       *blobid,
@@ -33,6 +40,11 @@ void silofs_blobid_setup_raw2(struct silofs_blobid       *blobid,
                               enum silofs_mtype           mtype,
                               enum silofs_mtype           vspace,
                               enum silofs_height          height);
+
+void silofs_blobid_setup_raw3(struct silofs_blobid       *blobid,
+                              const struct silofs_svolid *svolid,
+                              const struct silofs_uniqid *uniq,
+                              enum silofs_mtype           mtype);
 
 void silofs_blobid_setup_cas(struct silofs_blobid        *blobid,
                              const struct silofs_svolid  *svolid,

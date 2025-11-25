@@ -38,6 +38,7 @@ struct silofs_env_opstat {
 struct silofs_env_base {
 	const struct silofs_password *passwd;
 	const struct silofs_env_args *args;
+	struct silofs_prandgen       *prng;
 	struct silofs_alloc          *alloc;
 	struct silofs_lblock         *nilbk;
 	struct silofs_repo           *repo;

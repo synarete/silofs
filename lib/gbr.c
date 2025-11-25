@@ -88,8 +88,11 @@ static void gbr1k_set_cipher_mode(struct silofs_gbr1k *gbr1k, int16_t mode)
 static void gbr1k_ciargs(const struct silofs_gbr1k *gbr1k,
                          struct silofs_ciargs *out_ciargs)
 {
-	out_ciargs->algo = (enum silofs_cipher_algo)(gbr1k_cipher_algo(gbr1k));
-	out_ciargs->mode = (enum silofs_cipher_mode)(gbr1k_cipher_mode(gbr1k));
+	const int16_t algo = gbr1k_cipher_algo(gbr1k);
+	const int16_t mode = gbr1k_cipher_mode(gbr1k);
+
+	out_ciargs->algo = (enum silofs_cipher_algo)algo;
+	out_ciargs->mode = (enum silofs_cipher_mode)mode;
 }
 
 static void gbr1k_set_ciargs(struct silofs_gbr1k *gbr1k,

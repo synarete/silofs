@@ -23,27 +23,6 @@
 
 #define SILOFS_BTREE_KEY_NULL (0)
 
-struct silofs_btnode_meta {
-	struct silofs_ivkey  ivkey;
-	struct silofs_ciargs ciargs;
-};
-
-struct silofs_btchild {
-	struct silofs_paddr  paddr;
-	struct silofs_ivkey  ivkey;
-	struct silofs_ciargs ciargs;
-};
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-void silofs_btchild192b_htox(struct silofs_btchild192b   *btc192,
-                             const struct silofs_btchild *btc);
-
-void silofs_btchild192b_xtoh(const struct silofs_btchild192b *btc192,
-                             struct silofs_btchild           *btc);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 void silofs_bti_incref(struct silofs_btnode_info *bti);
 
 void silofs_bti_decref(struct silofs_btnode_info *bti);
@@ -70,19 +49,19 @@ uint64_t silofs_bti_median_key(const struct silofs_btnode_info *bti);
 size_t silofs_bti_nchilds(const struct silofs_btnode_info *bti);
 
 void silofs_bti_child_at(const struct silofs_btnode_info *bti, size_t slot,
-                         struct silofs_btchild *out_btchild);
+                         struct silofs_pmeta *out_pmeta);
 
 int silofs_bti_resolve(const struct silofs_btnode_info *bti, uint64_t key,
-                       struct silofs_btchild *out_btchild);
+                       struct silofs_pmeta *out_pmeta);
 
 int silofs_bti_update_child(struct silofs_btnode_info *bti, uint64_t key,
-                            const struct silofs_btchild *btchild);
+                            const struct silofs_pmeta *pmeta);
 
 int silofs_bti_expand(struct silofs_btnode_info *bti, uint64_t key,
-                      const struct silofs_btchild *btchild);
+                      const struct silofs_pmeta *pmeta);
 
-void silofs_bti_set_final(struct silofs_btnode_info   *bti,
-                          const struct silofs_btchild *btchild);
+void silofs_bti_set_final(struct silofs_btnode_info *bti,
+                          const struct silofs_pmeta *pmeta);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

@@ -177,6 +177,16 @@ static void validate_ondisk_addrs(void)
 	REQUIRE_SIZEOF(struct silofs_bcursor128b, 128);
 }
 
+static void validate_ondisk_pmeta(void)
+{
+	REQUIRE_OFFSET64(struct silofs_pmeta192b, btc_paddr, 0);
+	REQUIRE_OFFSET64(struct silofs_pmeta192b, btc_cipher_key, 64);
+	REQUIRE_OFFSET64(struct silofs_pmeta192b, btc_cipher_iv, 128);
+	REQUIRE_OFFSET64(struct silofs_pmeta192b, btc_cipher_algo, 144);
+	REQUIRE_OFFSET32(struct silofs_pmeta192b, btc_cipher_mode, 148);
+	REQUIRE_SIZEOF(struct silofs_pmeta192b, 192);
+}
+
 static void validate_ondisk_headers(void)
 {
 	REQUIRE_OFFSET32(struct silofs_header, h_magic, 0);
@@ -388,12 +398,6 @@ static void validate_ondisk_xattr(void)
 
 static void validate_ondisk_btnode(void)
 {
-	REQUIRE_OFFSET64(struct silofs_btchild192b, btc_paddr, 0);
-	REQUIRE_OFFSET64(struct silofs_btchild192b, btc_cipher_key, 64);
-	REQUIRE_OFFSET64(struct silofs_btchild192b, btc_cipher_iv, 128);
-	REQUIRE_OFFSET64(struct silofs_btchild192b, btc_cipher_algo, 144);
-	REQUIRE_OFFSET32(struct silofs_btchild192b, btc_cipher_mode, 148);
-	REQUIRE_SIZEOF(struct silofs_btchild192b, 192);
 	REQUIRE_OFFSET64(struct silofs_btree_node, btn_hdr, 0);
 	REQUIRE_OFFSET64(struct silofs_btree_node, btn_flags, 32);
 	REQUIRE_OFFSET32(struct silofs_btree_node, btn_mtype, 36);
@@ -454,6 +458,7 @@ void silofs_validate_ondisk_format(void)
 	validate_ondisk_defs();
 	validate_ondisk_base_types();
 	validate_ondisk_addrs();
+	validate_ondisk_pmeta();
 	validate_ondisk_headers();
 	validate_ondisk_spmaps();
 	validate_ondisk_gbr();

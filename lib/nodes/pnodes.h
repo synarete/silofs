@@ -23,6 +23,13 @@
 #include "hmapq.h"
 #include "view.h"
 
+/* persistent nodes meta params */
+struct silofs_pmeta {
+	struct silofs_paddr  paddr;
+	struct silofs_ivkey  ivkey;
+	struct silofs_ciargs ciargs;
+};
+
 /* base of all persistent nodes */
 struct silofs_pnode_info {
 	struct silofs_ivkey      pn_ivkey;
@@ -59,6 +66,20 @@ void silofs_derive_iv_by(const struct silofs_mdigest *mdigest,
 void silofs_derive_key_by(const struct silofs_mdigest *mdigest,
                           const struct silofs_paddr   *paddr,
                           struct silofs_key           *out_key);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+const struct silofs_pmeta *silofs_pmeta_none(void);
+
+void silofs_pmeta_reset(struct silofs_pmeta *pmeta);
+
+bool silofs_pmeta_isnull(const struct silofs_pmeta *pmeta);
+
+void silofs_pmeta192b_htox(struct silofs_pmeta192b   *pmeta192,
+                           const struct silofs_pmeta *pmeta);
+
+void silofs_pmeta192b_xtoh(const struct silofs_pmeta192b *pmeta192,
+                           struct silofs_pmeta           *pmeta);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

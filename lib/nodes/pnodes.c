@@ -95,6 +95,58 @@ void silofs_derive_key_by(const struct silofs_mdigest *mdigest,
 	derive_key_by_hash512(&hash, out_key);
 }
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static const struct silofs_pmeta s_pmeta_none = {
+	.ciargs.algo = SILOFS_CIPHER_NONE,
+	.ciargs.mode = SILOFS_CIPHER_MODE_NONE,
+};
+
+const struct silofs_pmeta *silofs_pmeta_none(void)
+{
+	return &s_pmeta_none;
+}
+
+void silofs_pmeta_reset(struct silofs_pmeta *pmeta)
+{
+	silofs_paddr_reset(&pmeta->paddr);
+	silofs_key_reset(&pmeta->ivkey.key);
+	silofs_iv_reset(&pmeta->ivkey.iv);
+	silofs_ciargs_reset(&pmeta->ciargs);
+}
+
+bool silofs_pmeta_isnull(const struct silofs_pmeta *pmeta)
+{
+	return silofs_paddr_isnull(&pmeta->paddr);
+}
+
+void silofs_pmeta192b_htox(struct silofs_pmeta192b *pmeta192,
+                           const struct silofs_pmeta *pmeta)
+{
+	const uint16_t algo = (uint16_t)(pmeta->ciargs.algo);
+	const uint16_t mode = (uint16_t)(pmeta->ciargs.mode);
+
+	memset(pmeta192, 0, sizeof(*pmeta192));
+	silofs_paddr64b_htox(&pmeta192->btc_paddr, &pmeta->paddr);
+	silofs_key_assign(&pmeta192->btc_cipher_key, &pmeta->ivkey.key);
+	silofs_iv_assign(&pmeta192->btc_cipher_iv, &pmeta->ivkey.iv);
+	pmeta192->btc_cipher_algo = silofs_cpu_to_le16(algo);
+	pmeta192->btc_cipher_mode = silofs_cpu_to_le16(mode);
+}
+
+void silofs_pmeta192b_xtoh(const struct silofs_pmeta192b *pmeta192,
+                           struct silofs_pmeta *pmeta)
+{
+	const uint16_t algo = silofs_le16_to_cpu(pmeta192->btc_cipher_algo);
+	const uint16_t mode = silofs_le16_to_cpu(pmeta192->btc_cipher_mode);
+
+	silofs_paddr64b_xtoh(&pmeta192->btc_paddr, &pmeta->paddr);
+	silofs_key_assign(&pmeta->ivkey.key, &pmeta192->btc_cipher_key);
+	silofs_iv_assign(&pmeta->ivkey.iv, &pmeta192->btc_cipher_iv);
+	pmeta->ciargs.algo = (enum silofs_cipher_algo)algo;
+	pmeta->ciargs.mode = (enum silofs_cipher_mode)mode;
+}
+
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static struct silofs_view *

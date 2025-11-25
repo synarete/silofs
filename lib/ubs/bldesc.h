@@ -21,12 +21,6 @@
 #include "addr.h"
 #include "nodes.h"
 
-struct silofs_bldesc_info *
-silofs_bdi_new(const struct silofs_paddr *paddr, struct silofs_alloc *alloc);
-
-void silofs_bdi_del(struct silofs_bldesc_info *bdi,
-                    struct silofs_alloc       *alloc);
-
 void silofs_bdi_dirtify(struct silofs_bldesc_info *bdi);
 
 void silofs_bdi_undirtify(struct silofs_bldesc_info *bdi);

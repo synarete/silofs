@@ -292,56 +292,6 @@ static void bld_mark_used_slot_by(struct silofs_blob_desc *bld, off_t pos)
 	bld_mark_used_slot(bld, bld_pos_to_slot(bld, pos));
 }
 
-static void bld_init(struct silofs_blob_desc *bld)
-{
-	bld_reset_prev(bld);
-	bld_reset_refblob(bld);
-	bld_set_blobsize(bld, 0);
-	bld_set_objsize(bld, 0);
-	bld_set_nobjs_max(bld, 0);
-	bld_set_nobjs(bld, 0);
-	bld_set_refmtype(bld, SILOFS_MTYPE_NONE);
-	bld_reset_obj_state(bld);
-}
-
-static void bld_fini(struct silofs_blob_desc *bld)
-{
-	bld_reset_prev(bld);
-	bld_reset_refblob(bld);
-	bld_set_nobjs(bld, 0);
-	bld_reset_obj_state(bld);
-}
-
-static struct silofs_blob_desc *bld_malloc(struct silofs_alloc *alloc)
-{
-	struct silofs_blob_desc *bld;
-
-	bld = silofs_memalloc(alloc, sizeof(*bld), SILOFS_ALLOCF_BZERO);
-	return bld;
-}
-
-static void bld_free(struct silofs_blob_desc *bld, struct silofs_alloc *alloc)
-{
-	silofs_memfree(alloc, bld, sizeof(*bld), SILOFS_ALLOCF_TRYPUNCH);
-}
-
-static struct silofs_blob_desc *bld_new(struct silofs_alloc *alloc)
-{
-	struct silofs_blob_desc *bld;
-
-	bld = bld_malloc(alloc);
-	if (bld != nullptr) {
-		bld_init(bld);
-	}
-	return bld;
-}
-
-static void bld_del(struct silofs_blob_desc *bld, struct silofs_alloc *alloc)
-{
-	bld_fini(bld);
-	bld_free(bld, alloc);
-}
-
 static void bld_paddr_at(const struct silofs_blob_desc *bld, off_t pos,
                          struct silofs_paddr *out_paddr)
 {
@@ -367,64 +317,6 @@ static void bld_setup(struct silofs_blob_desc *bld)
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-
-static struct silofs_bldesc_info *bdi_malloc(struct silofs_alloc *alloc)
-{
-	struct silofs_bldesc_info *bdi = nullptr;
-
-	bdi = silofs_memalloc(alloc, sizeof(*bdi), 0);
-	return bdi;
-}
-
-static void
-bdi_free(struct silofs_bldesc_info *bdi, struct silofs_alloc *alloc)
-{
-	silofs_memfree(alloc, bdi, sizeof(*bdi), 0);
-}
-
-static void
-bdi_init(struct silofs_bldesc_info *bdi, const struct silofs_paddr *paddr)
-{
-	silofs_assert(!silofs_paddr_isnull(paddr));
-
-	silofs_pni_init(&bdi->bld_pni, paddr);
-	bdi->bld = nullptr;
-}
-
-static void bdi_fini(struct silofs_bldesc_info *bdi)
-{
-	silofs_pni_fini(&bdi->bld_pni);
-	bdi->bld = nullptr;
-}
-
-struct silofs_bldesc_info *
-silofs_bdi_new(const struct silofs_paddr *paddr, struct silofs_alloc *alloc)
-{
-	struct silofs_blob_desc *bld = nullptr;
-	struct silofs_bldesc_info *bdi = nullptr;
-
-	bld = bld_new(alloc);
-	if (bld == nullptr) {
-		return nullptr;
-	}
-	bdi = bdi_malloc(alloc);
-	if (bdi == nullptr) {
-		bld_del(bld, alloc);
-		return nullptr;
-	}
-	bdi_init(bdi, paddr);
-	bdi->bld = bld;
-	return bdi;
-}
-
-void silofs_bdi_del(struct silofs_bldesc_info *bdi, struct silofs_alloc *alloc)
-{
-	struct silofs_blob_desc *bld = bdi->bld;
-
-	bdi_fini(bdi);
-	bdi_free(bdi, alloc);
-	bld_del(bld, alloc);
-}
 
 static void bdi_setup_spawned(struct silofs_bldesc_info *bdi)
 {

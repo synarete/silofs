@@ -692,7 +692,7 @@ lsmap_renew_key_at(struct silofs_lsmap *lsm, const struct silofs_vaddr *vaddr)
 	struct silofs_key *key = lsmap_key_of(lsm, vaddr->off);
 
 	silofs_key_mkrand(&rkey);
-	silofs_key_xor_with1(key, &rkey);
+	silofs_key_xor_with2(key, &rkey);
 }
 
 static void

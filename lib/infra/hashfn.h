@@ -27,6 +27,4 @@ uint32_t silofs_xxh32(const void *buf, size_t len, uint32_t seed);
 
 uint64_t silofs_xxh64(const void *buf, size_t len, uint64_t seed);
 
-void silofs_prand_by_hash(void *dst, const void *src, size_t n);
-
 #endif /* SILOFS_HASHFN_H_ */

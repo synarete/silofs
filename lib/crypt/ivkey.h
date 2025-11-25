@@ -62,7 +62,7 @@ void silofs_key_mkrand(struct silofs_key *key);
 
 void silofs_key_xor_with(struct silofs_key *key, const void *buf, size_t len);
 
-void silofs_key_xor_with1(struct silofs_key       *key,
+void silofs_key_xor_with2(struct silofs_key       *key,
                           const struct silofs_key *key1);
 
 void silofs_generate_keys(struct silofs_key *keys, size_t nkeys, bool extra);

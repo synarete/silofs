@@ -22,6 +22,7 @@
 #include <silofs/panic.h>
 #include <silofs/random.h>
 #include "utility.h"
+#include "hashfn.h"
 #include "times.h"
 
 static void do_getentropy(void *buf, size_t len)
@@ -34,10 +35,10 @@ static void do_getentropy(void *buf, size_t len)
 	}
 }
 
-void silofs_getentropy(void *buf, size_t len)
+void silofs_getentropy(void *p, size_t n)
 {
-	uint8_t *ptr = buf;
-	const uint8_t *end = ptr + len;
+	uint8_t *ptr = p;
+	const uint8_t *end = ptr + n;
 	const size_t getentropy_max = 256;
 
 	while (ptr < end) {
@@ -53,6 +54,66 @@ void silofs_getentropy(void *buf, size_t len)
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+/* Blum-Blum-Shub pseudo-random number generator, using p=383 q=503 */
+static uint64_t blum_blum_shub_prng(uint64_t n)
+{
+	const uint64_t m = 383 * 503;
+
+	return (n * n) % m;
+}
+
+static uint64_t twang_mix64(uint64_t n)
+{
+	n = ~n + (n << 21);
+	n = n ^ (n >> 24);
+	n = n + (n << 3) + (n << 8);
+	n = n ^ (n >> 14);
+	n = n + (n << 2) + (n << 4);
+	n = n ^ (n >> 28);
+	n = n + (n << 31);
+
+	return n;
+}
+
+static void setup_udata(uint64_t u[4])
+{
+	struct timespec t;
+
+	silofs_clock_mono_now(&t);
+	u[0] = (uint64_t)t.tv_sec % 2654435761;
+	u[1] = (uint64_t)t.tv_nsec ^ 0xc6a4a7935bd1e995UL;
+	silofs_uptime(&t);
+	u[2] = (uint64_t)t.tv_sec;
+	u[3] = (uint64_t)t.tv_nsec ^ 0x5bd1e995UL;
+}
+
+static uint64_t prandom_seed(void)
+{
+	uint64_t u[4] = {};
+
+	setup_udata(u);
+	return silofs_xxh64(u, sizeof(u), (uint64_t)gettid());
+}
+
+void silofs_prandom(void *p, size_t n)
+{
+	uint16_t *d = p;
+	uint8_t *q = p;
+	uint64_t xx, bbs;
+
+	xx = prandom_seed();
+	for (size_t i = 0; i < (n / sizeof(*d)); ++i) {
+		bbs = blum_blum_shub_prng(xx);
+		d[i] = (uint16_t)bbs;
+		xx = twang_mix64(xx + i) ^ bbs;
+	}
+	if (n & 1) {
+		q[n - 1] = (uint8_t)xx;
+	}
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void prandgen_refill(struct silofs_prandgen *prng)
 {

@@ -23,10 +23,27 @@
 #include "hash.h"
 #include "blobid.h"
 
+static void xor_prandom(uint8_t *p, size_t n)
+{
+	uint8_t d[64];
+	size_t r = n;
+	size_t k;
+
+	while (r > 0) {
+		k = silofs_min(r, sizeof(d));
+		silofs_prandom(d, k);
+		for (size_t i = 0; i < k; ++i) {
+			p[i] ^= d[i];
+		}
+		p += k;
+		r -= k;
+	}
+}
+
 static void generate_random(uint8_t *p, size_t n)
 {
 	silofs_gcrypt_random(p, n);
-	silofs_prand_by_hash(p, p, n);
+	xor_prandom(p, n);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

@@ -131,18 +131,21 @@ void silofs_key_xor_with(struct silofs_key *key, const void *buf, size_t len)
 	}
 }
 
-void silofs_key_xor_with1(struct silofs_key *key,
-                          const struct silofs_key *key1)
+void silofs_key_xor_with2(struct silofs_key *key,
+                          const struct silofs_key *key2)
 {
 	for (size_t i = 0; i < ARRAY_SIZE(key->key); ++i) {
-		key->key[i] ^= key1->key[i];
+		key->key[i] ^= key2->key[i];
 	}
 }
 
 static void key_rerandomize(struct silofs_key *key, size_t i)
 {
+	struct silofs_key key2;
+
 	/* add pseudo-randomness as protection from poor gcry_randomize */
-	silofs_prand_by_hash(key->key, key->key, sizeof(key->key));
+	silofs_prandom(key2.key, sizeof(key2.key));
+	silofs_key_xor_with2(key, &key2);
 	key->key[i % ARRAY_SIZE(key->key)] ^= (uint8_t)i;
 }
 
@@ -192,6 +195,6 @@ void silofs_ivkey_assign(struct silofs_ivkey *ivkey,
 void silofs_ivkey_xor_with(struct silofs_ivkey *ivkey,
                            const struct silofs_ivkey *other)
 {
-	silofs_key_xor_with1(&ivkey->key, &other->key);
+	silofs_key_xor_with2(&ivkey->key, &other->key);
 	silofs_iv_xor_with1(&ivkey->iv, &other->iv);
 }

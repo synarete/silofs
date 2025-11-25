@@ -26,7 +26,9 @@ struct silofs_prandgen {
 	uint64_t rands[127];
 };
 
-void silofs_getentropy(void *buf, size_t len);
+void silofs_getentropy(void *p, size_t n);
+
+void silofs_prandom(void *p, size_t n);
 
 void silofs_prandgen_init(struct silofs_prandgen *prng);
 

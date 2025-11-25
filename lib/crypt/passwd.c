@@ -71,23 +71,13 @@ void silofs_password_reset(struct silofs_password *pw)
 
 void silofs_password_mkrand(struct silofs_password *pw)
 {
-	struct {
-		struct timespec ts;
-		struct sysinfo si;
-		pid_t pid;
-		uid_t uid;
-	} u;
-	uint8_t d[128] = {};
+	char str[128] = "";
+	uint8_t d[60] = {};
+	size_t cnt = 0;
 
-	STATICASSERT_LT(sizeof(u), sizeof(pw->pass));
-	STATICASSERT_LT(sizeof(d), sizeof(pw->pass));
+	silofs_prandom(d, sizeof(d));
+	silofs_mem_to_ascii(d, sizeof(d), str, sizeof(str) - 1, &cnt);
+	str[cnt] = '\0';
 
-	silofs_memzero(&u, sizeof(u));
-	silofs_ts_gettime(&u.ts, false);
-	sysinfo(&u.si);
-	u.pid = getpid();
-	u.uid = getuid();
-
-	silofs_prand_by_hash(&d, &u, sizeof(u));
-	silofs_password_setup2(pw, d, sizeof(d));
+	silofs_password_setup(pw, str);
 }

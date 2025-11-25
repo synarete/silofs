@@ -176,8 +176,8 @@ static size_t paddr_size(const struct silofs_paddr *paddr)
 	return silofs_mtype_size(paddr->mtype);
 }
 
-void silofs_pni_init(struct silofs_pnode_info *pni,
-                     const struct silofs_paddr *paddr)
+static void
+pni_init(struct silofs_pnode_info *pni, const struct silofs_paddr *paddr)
 {
 	silofs_ivkey_reset(&pni->pn_ivkey);
 	silofs_paddr_assign(&pni->pn_paddr, paddr);
@@ -186,7 +186,7 @@ void silofs_pni_init(struct silofs_pnode_info *pni,
 	pni->pn_view = nullptr;
 }
 
-void silofs_pni_fini(struct silofs_pnode_info *pni)
+static void pni_fini(struct silofs_pnode_info *pni)
 {
 	silofs_ivkey_reset(&pni->pn_ivkey);
 	silofs_paddr_fini(&pni->pn_paddr);
@@ -291,13 +291,13 @@ static void ubi_free(struct silofs_uber_info *ubi, struct silofs_alloc *alloc)
 static void
 ubi_init(struct silofs_uber_info *ubi, const struct silofs_paddr *paddr)
 {
-	silofs_pni_init(&ubi->ub_pni, paddr);
+	pni_init(&ubi->ub_pni, paddr);
 	ubi->ub = nullptr;
 }
 
 static void ubi_fini(struct silofs_uber_info *ubi)
 {
-	silofs_pni_fini(&ubi->ub_pni);
+	pni_fini(&ubi->ub_pni);
 	ubi->ub = nullptr;
 }
 
@@ -407,13 +407,13 @@ bdi_free(struct silofs_bldesc_info *bdi, struct silofs_alloc *alloc)
 static void
 bdi_init(struct silofs_bldesc_info *bdi, const struct silofs_paddr *paddr)
 {
-	silofs_pni_init(&bdi->bld_pni, paddr);
+	pni_init(&bdi->bld_pni, paddr);
 	bdi->bld = nullptr;
 }
 
 static void bdi_fini(struct silofs_bldesc_info *bdi)
 {
-	silofs_pni_fini(&bdi->bld_pni);
+	pni_fini(&bdi->bld_pni);
 	bdi->bld = nullptr;
 }
 
@@ -524,14 +524,14 @@ bti_free(struct silofs_btnode_info *bti, struct silofs_alloc *alloc)
 static void
 bti_init(struct silofs_btnode_info *bti, const struct silofs_paddr *paddr)
 {
-	silofs_pni_init(&bti->btn_pni, paddr);
+	pni_init(&bti->btn_pni, paddr);
 	bti->btn = nullptr;
 	bti->btn_rdonly = false;
 }
 
 static void bti_fini(struct silofs_btnode_info *bti)
 {
-	silofs_pni_fini(&bti->btn_pni);
+	pni_fini(&bti->btn_pni);
 	bti->btn = nullptr;
 }
 

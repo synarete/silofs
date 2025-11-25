@@ -86,11 +86,6 @@ void silofs_pmeta192b_xtoh(const struct silofs_pmeta192b *pmeta192,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_pni_init(struct silofs_pnode_info  *pni,
-                     const struct silofs_paddr *paddr);
-
-void silofs_pni_fini(struct silofs_pnode_info *pni);
-
 enum silofs_mtype silofs_pni_mtype(const struct silofs_pnode_info *pni);
 
 void silofs_pni_dirtify(struct silofs_pnode_info *pni);

@@ -18,10 +18,8 @@
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
-#include <silofs/macros.h>
-#include <silofs/panic.h>
-#include <silofs/random.h>
 #include "infra.h"
+#include "prandom.h"
 
 static void do_getentropy(void *buf, size_t len)
 {
@@ -182,31 +180,5 @@ void silofs_prandgen_take(struct silofs_prandgen *prng, void *buf, size_t bsz)
 		cnt = prandgen_take_some(prng, cur, (size_t)(end - cur));
 		silofs_expect_gt(cnt, 0);
 		cur += cnt;
-	}
-}
-
-void silofs_prandgen_take_u64(struct silofs_prandgen *prng, uint64_t *out_u64)
-{
-	silofs_prandgen_take(prng, out_u64, sizeof(*out_u64));
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-void silofs_prandgen_ascii(struct silofs_prandgen *prng, char *str, size_t n)
-{
-	uint64_t rnd = 0;
-	const int base = 33;
-	const int last = 126;
-	int print_ch;
-
-	silofs_prandgen_take_u64(prng, &rnd);
-	for (size_t i = 0; i < n; ++i) {
-		if (i % 53) {
-			rnd = rnd >> 1;
-		} else {
-			silofs_prandgen_take_u64(prng, &rnd);
-		}
-		print_ch = abs((int)(rnd % (uint64_t)(last - base)) + base);
-		str[i] = (char)print_ch;
 	}
 }

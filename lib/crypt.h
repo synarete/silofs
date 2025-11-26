@@ -17,12 +17,12 @@
 #ifndef SILOFS_CRYPT_H_
 #define SILOFS_CRYPT_H_
 
-#include <silofs/random.h>
 #include "infra.h"
 #include "crypt/passwd.h"
 #include "crypt/ivkey.h"
 #include "crypt/mdigest.h"
 #include "crypt/cipher.h"
+#include "crypt/prandom.h"
 #include "crypt/gcry.h"
 
 #endif /* SILOFS_CRYPT_H_ */

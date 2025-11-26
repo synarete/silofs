@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_RANDOM_H_
-#define SILOFS_RANDOM_H_
+#ifndef SILOFS_PRANDOM_H_
+#define SILOFS_PRANDOM_H_
 
 #include <stdlib.h>
 #include <stdint.h>
@@ -35,8 +35,4 @@ void silofs_prandgen_fini(struct silofs_prandgen *prng);
 
 void silofs_prandgen_take(struct silofs_prandgen *prng, void *buf, size_t bsz);
 
-void silofs_prandgen_take_u64(struct silofs_prandgen *prng, uint64_t *out);
-
-void silofs_prandgen_ascii(struct silofs_prandgen *prng, char *str, size_t n);
-
-#endif /* SILOFS_RANDOM_H_ */
+#endif /* SILOFS_PRANDOM_H_ */

@@ -17,7 +17,6 @@ nobase_include_HEADERS += silofs/memalloc.h
 nobase_include_HEADERS += silofs/mntsvc.h
 nobase_include_HEADERS += silofs/ondisk.h
 nobase_include_HEADERS += silofs/panic.h
-nobase_include_HEADERS += silofs/random.h
 nobase_include_HEADERS += silofs/silofs.h
 nobase_include_HEADERS += silofs/syscall.h
 nobase_include_HEADERS += silofs/thread.h

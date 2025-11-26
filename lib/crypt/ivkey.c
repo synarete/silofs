@@ -16,10 +16,10 @@
  */
 #include "configs.h"
 #include <gcrypt.h>
-#include <silofs/random.h>
 #include "infra.h"
 #include "gcry.h"
 #include "ivkey.h"
+#include "prandom.h"
 
 static enum gcry_random_level random_level(bool strong)
 {

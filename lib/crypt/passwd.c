@@ -16,9 +16,9 @@
  */
 #include "configs.h"
 #include <silofs/errors.h>
-#include <silofs/random.h>
 #include "infra.h"
 #include "str.h"
+#include "prandom.h"
 #include "passwd.h"
 #include "ivkey.h"
 

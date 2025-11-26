@@ -82,10 +82,10 @@ int silofs_abi_fetch_desc(const struct silofs_ab_info *abi, size_t slot,
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-int silofs_store_arix_block(struct silofs_ab_info     *abi,
-                            const struct silofs_ivkey *ivkey);
+int silofs_store_arix_block(struct silofs_ab_info      *abi,
+                            const struct silofs_civkey *civkey);
 
-int silofs_fetch_arix_block(struct silofs_ab_info     *abi,
-                            const struct silofs_ivkey *ivkey);
+int silofs_fetch_arix_block(struct silofs_ab_info      *abi,
+                            const struct silofs_civkey *civkey);
 
 #endif /* SILOFS_INDEX_H_ */

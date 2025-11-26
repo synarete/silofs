@@ -417,22 +417,22 @@ static void abi_pre_encrypt(struct silofs_ab_info *abi)
 }
 
 static int
-abi_encrypt(struct silofs_ab_info *abi, const struct silofs_ivkey *ivkey)
+abi_encrypt(struct silofs_ab_info *abi, const struct silofs_civkey *civkey)
 {
 	const struct silofs_arix_block *ab = abi->ab;
 	struct silofs_arix_block *ab_enc = abi->ab_enc;
 	const struct silofs_cipher *ci = abi->ab_base.enc_cipher;
 
-	return silofs_encrypt_buf(ci, ivkey, ab, ab_enc, sizeof(*ab_enc));
+	return silofs_encrypt_buf(ci, civkey, ab, ab_enc, sizeof(*ab_enc));
 }
 
 static int
-abi_seal(struct silofs_ab_info *abi, const struct silofs_ivkey *ivkey)
+abi_seal(struct silofs_ab_info *abi, const struct silofs_civkey *civkey)
 {
 	int err;
 
 	abi_pre_encrypt(abi);
-	err = abi_encrypt(abi, ivkey);
+	err = abi_encrypt(abi, civkey);
 	if (err) {
 		return err;
 	}
@@ -463,11 +463,11 @@ static int abi_save(const struct silofs_ab_info *abi)
 }
 
 int silofs_store_arix_block(struct silofs_ab_info *abi,
-                            const struct silofs_ivkey *ivkey)
+                            const struct silofs_civkey *civkey)
 {
 	int err;
 
-	err = abi_seal(abi, ivkey);
+	err = abi_seal(abi, civkey);
 	if (err) {
 		return err;
 	}
@@ -492,13 +492,13 @@ static int abi_load(const struct silofs_ab_info *abi)
 }
 
 static int
-abi_decrypt(struct silofs_ab_info *abi, const struct silofs_ivkey *ivkey)
+abi_decrypt(struct silofs_ab_info *abi, const struct silofs_civkey *civkey)
 {
 	struct silofs_arix_block *ab = abi->ab;
 	const struct silofs_arix_block *ab_enc = abi->ab_enc;
 	const struct silofs_cipher *ci = abi->ab_base.dec_cipher;
 
-	return silofs_decrypt_buf(ci, ivkey, ab_enc, ab, sizeof(*ab));
+	return silofs_decrypt_buf(ci, civkey, ab_enc, ab, sizeof(*ab));
 }
 
 static int abi_post_decrypt(struct silofs_ab_info *abi)
@@ -508,7 +508,7 @@ static int abi_post_decrypt(struct silofs_ab_info *abi)
 }
 
 static int
-abi_unseal(struct silofs_ab_info *abi, const struct silofs_ivkey *ivkey)
+abi_unseal(struct silofs_ab_info *abi, const struct silofs_civkey *civkey)
 {
 	int err;
 
@@ -516,7 +516,7 @@ abi_unseal(struct silofs_ab_info *abi, const struct silofs_ivkey *ivkey)
 	if (err) {
 		return err;
 	}
-	err = abi_decrypt(abi, ivkey);
+	err = abi_decrypt(abi, civkey);
 	if (err) {
 		return err;
 	}
@@ -528,7 +528,7 @@ abi_unseal(struct silofs_ab_info *abi, const struct silofs_ivkey *ivkey)
 }
 
 int silofs_fetch_arix_block(struct silofs_ab_info *abi,
-                            const struct silofs_ivkey *ivkey)
+                            const struct silofs_civkey *civkey)
 {
 	int err;
 
@@ -536,7 +536,7 @@ int silofs_fetch_arix_block(struct silofs_ab_info *abi,
 	if (err) {
 		return err;
 	}
-	err = abi_unseal(abi, ivkey);
+	err = abi_unseal(abi, civkey);
 	if (err) {
 		return err;
 	}

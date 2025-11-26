@@ -22,7 +22,7 @@
 #include "crypt/ivkey.h"
 #include "crypt/mdigest.h"
 #include "crypt/cipher.h"
-#include "crypt/prandom.h"
+#include "crypt/random.h"
 #include "crypt/gcry.h"
 
 #endif /* SILOFS_CRYPT_H_ */

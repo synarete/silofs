@@ -101,7 +101,7 @@ static void ub_reset_bcursors(struct silofs_uber_block *ub)
 	}
 }
 
-static const struct silofs_key *
+static const struct silofs_ckey *
 ub_key_of(const struct silofs_uber_block *ub, uint32_t idx)
 {
 	return &ub->ub_key[idx % ARRAY_SIZE(ub->ub_key)];
@@ -109,7 +109,7 @@ ub_key_of(const struct silofs_uber_block *ub, uint32_t idx)
 
 static void ub_setup_keys(struct silofs_uber_block *ub)
 {
-	silofs_generate_keys(ub->ub_key, ARRAY_SIZE(ub->ub_key), true);
+	silofs_generate_keys(ub->ub_key, ARRAY_SIZE(ub->ub_key));
 }
 
 static void ub_setup(struct silofs_uber_block *ub, const struct timespec *ts)
@@ -192,9 +192,9 @@ int silofs_ubi_update_bcursor(struct silofs_uber_info *ubi,
 }
 
 void silofs_ubi_key_of(const struct silofs_uber_info *ubi,
-                       enum silofs_mtype mtype, struct silofs_key *out_key)
+                       enum silofs_mtype mtype, struct silofs_ckey *out_key)
 {
-	silofs_key_assign(out_key, ub_key_of(ubi->ub, (uint32_t)mtype));
+	silofs_ckey_assign(out_key, ub_key_of(ubi->ub, (uint32_t)mtype));
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

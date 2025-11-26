@@ -26,7 +26,7 @@
 /* persistent nodes meta params */
 struct silofs_pmeta {
 	struct silofs_paddr  paddr;
-	struct silofs_ivkey  ivkey;
+	struct silofs_civkey civkey;
 	struct silofs_ciargs ciargs;
 };
 
@@ -60,11 +60,11 @@ struct silofs_btnode_info {
 
 void silofs_derive_iv_by(const struct silofs_mdigest *mdigest,
                          const struct silofs_paddr   *paddr,
-                         struct silofs_iv            *out_iv);
+                         struct silofs_civ           *out_iv);
 
 void silofs_derive_key_by(const struct silofs_mdigest *mdigest,
                           const struct silofs_paddr   *paddr,
-                          struct silofs_key           *out_key);
+                          struct silofs_ckey          *out_key);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -98,9 +98,9 @@ void silofs_pni_decref(struct silofs_pnode_info *pni);
 void silofs_pni_set_dq(struct silofs_pnode_info *pni,
                        struct silofs_dirtyq     *dq);
 
-void silofs_pni_setup_ivkey(struct silofs_pnode_info    *pni,
-                            const struct silofs_mdigest *md,
-                            const struct silofs_key     *key);
+void silofs_pni_setup_civkey(struct silofs_pnode_info    *pni,
+                             const struct silofs_mdigest *md,
+                             const struct silofs_ckey    *key);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

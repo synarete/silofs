@@ -160,19 +160,19 @@ out:
 	return err;
 }
 
-static const struct silofs_ivkey *
-rec_arix_ivkey(const struct silofs_re_ctx *re_ctx)
+static const struct silofs_civkey *
+rec_arix_civkey(const struct silofs_re_ctx *re_ctx)
 {
 	const struct silofs_gbrs *gbrs = &re_ctx->env->gbrs;
 
-	return &gbrs->ar_gbr.ivkey;
+	return &gbrs->ar_gbr.civkey;
 }
 
 static int rec_fetch_arix_block(struct silofs_re_ctx *re_ctx)
 {
-	const struct silofs_ivkey *ivkey = rec_arix_ivkey(re_ctx);
+	const struct silofs_civkey *civkey = rec_arix_civkey(re_ctx);
 
-	return silofs_fetch_arix_block(re_ctx->abi, ivkey);
+	return silofs_fetch_arix_block(re_ctx->abi, civkey);
 }
 
 static int

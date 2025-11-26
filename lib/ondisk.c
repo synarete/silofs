@@ -157,8 +157,8 @@ static void validate_ondisk_base_types(void)
 	REQUIRE_SIZEOF(struct silofs_hash128, 16);
 	REQUIRE_SIZEOF(struct silofs_hash256, 32);
 	REQUIRE_SIZEOF(struct silofs_hash512, 64);
-	REQUIRE_SIZEOF(struct silofs_iv, SILOFS_IV_SIZE);
-	REQUIRE_SIZEOF(struct silofs_key, SILOFS_KEY_SIZE);
+	REQUIRE_SIZEOF(struct silofs_civ, SILOFS_CRYPTO_IV_SIZE);
+	REQUIRE_SIZEOF(struct silofs_ckey, SILOFS_CRYPTO_KEY_SIZE);
 	REQUIRE_SIZEOF(struct silofs_uuid, SILOFS_UUID_SIZE);
 	REQUIRE_SIZEOF(struct silofs_lblock, SILOFS_LBK_SIZE);
 }

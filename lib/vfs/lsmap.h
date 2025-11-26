@@ -73,11 +73,11 @@ void silofs_lsi_mark_unwritten_at(struct silofs_lsmap_info  *lsi,
 
 int silofs_lsi_resolve_key(const struct silofs_lsmap_info *lsi,
                            const struct silofs_vaddr      *vaddr,
-                           struct silofs_key              *out_key);
+                           struct silofs_ckey             *out_key);
 
 int silofs_lsi_rebind_key(struct silofs_lsmap_info  *lsi,
                           const struct silofs_vaddr *vaddr,
-                          const struct silofs_key   *key);
+                          const struct silofs_ckey  *key);
 
 void silofs_lsi_vaddrs_at(const struct silofs_lsmap_info *lsi,
                           const struct silofs_vaddr      *vaddr,

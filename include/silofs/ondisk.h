@@ -293,11 +293,11 @@
 /* max size of single I/O operation (2M - 64K) */
 #define SILOFS_IO_SIZE_MAX ((1UL << 21) - SILOFS_LBK_SIZE)
 
-/* cryptographic key size */
-#define SILOFS_KEY_SIZE (64)
+/* cryptographic key (max) size */
+#define SILOFS_CRYPTO_KEY_SIZE (64)
 
-/* initialization vector size (for AES256) */
-#define SILOFS_IV_SIZE (16)
+/* cryptographic initialization vector size */
+#define SILOFS_CRYPTO_IV_SIZE (16)
 
 /* cryptographic hash-128-bits bytes-size */
 #define SILOFS_HASH128_LEN (16)
@@ -486,12 +486,12 @@ struct silofs_name {
 	uint8_t name[SILOFS_NAME_MAX + 1];
 } silofs_attr_aligned64;
 
-struct silofs_key {
-	uint8_t key[SILOFS_KEY_SIZE];
+struct silofs_ckey {
+	uint8_t key[SILOFS_CRYPTO_KEY_SIZE];
 } silofs_attr_aligned32;
 
-struct silofs_iv {
-	uint8_t iv[SILOFS_IV_SIZE];
+struct silofs_civ {
+	uint8_t iv[SILOFS_CRYPTO_IV_SIZE];
 } silofs_attr_aligned8;
 
 struct silofs_uuid {
@@ -563,8 +563,8 @@ struct silofs_vaddr64 {
 /* pnode meta parameters (address + encryption) */
 struct silofs_pmeta192b {
 	struct silofs_paddr64b btc_paddr;
-	struct silofs_key      btc_cipher_key;
-	struct silofs_iv       btc_cipher_iv;
+	struct silofs_ckey     btc_cipher_key;
+	struct silofs_civ      btc_cipher_iv;
 	uint16_t               btc_cipher_algo;
 	uint8_t                btc_reserved1[2];
 	uint16_t               btc_cipher_mode;
@@ -584,8 +584,8 @@ struct silofs_gbr1k {
 	uint8_t                 gbr_reserved1[2];
 	uint16_t                gbr_cipher_mode;
 	uint8_t                 gbr_reserved2[2];
-	struct silofs_iv        gbr_main_iv;
-	struct silofs_key       gbr_main_key;
+	struct silofs_civ       gbr_main_iv;
+	struct silofs_ckey      gbr_main_key;
 	struct silofs_uaddr128b gbr_sb_addr;
 	struct silofs_paddr64b  gbr_root;
 	uint8_t                 gbr_reserved3[672];
@@ -741,7 +741,7 @@ struct silofs_lsmap {
 	uint8_t                 lsm_reserved1[15];
 	struct silofs_lbk_meta  lsm_lbms[SILOFS_SPMAP_NCHILDS];
 	uint8_t                 lsm_reserved2[448];
-	struct silofs_key       lsm_keys[SILOFS_SPMAP_NCHILDS];
+	struct silofs_ckey      lsm_keys[SILOFS_SPMAP_NCHILDS];
 	uint8_t                 lsm_reserved3[57344];
 } silofs_attr_aligned64;
 
@@ -966,7 +966,7 @@ struct silofs_uber_block {
 	uint64_t                  ub_generation;
 	uint8_t                   ub_reserved1[56];
 	struct silofs_bcursor128b ub_bcursor[31];
-	struct silofs_key         ub_key[64];
+	struct silofs_ckey        ub_key[64];
 } silofs_attr_aligned64;
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

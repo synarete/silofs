@@ -36,7 +36,7 @@ int silofs_ubi_update_bcursor(struct silofs_uber_info     *ubi,
                               const struct silofs_bcursor *bcursor);
 
 void silofs_ubi_key_of(const struct silofs_uber_info *ubi,
-                       enum silofs_mtype mtype, struct silofs_key *out_key);
+                       enum silofs_mtype mtype, struct silofs_ckey *out_key);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

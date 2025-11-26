@@ -36,11 +36,11 @@ static void calc_hash256_of(const struct silofs_mdigest *mdigest,
 }
 
 static void derive_iv_by_hash256(const struct silofs_hash256 *hash,
-                                 struct silofs_iv *out_iv)
+                                 struct silofs_civ *out_iv)
 {
 	STATICASSERT_LE(ARRAY_SIZE(out_iv->iv), ARRAY_SIZE(hash->hash));
 
-	silofs_iv_reset(out_iv);
+	silofs_civ_reset(out_iv);
 	for (size_t i = 0; i < ARRAY_SIZE(hash->hash); ++i) {
 		const size_t j = i % ARRAY_SIZE(out_iv->iv);
 
@@ -50,7 +50,7 @@ static void derive_iv_by_hash256(const struct silofs_hash256 *hash,
 
 void silofs_derive_iv_by(const struct silofs_mdigest *mdigest,
                          const struct silofs_paddr *paddr,
-                         struct silofs_iv *out_iv)
+                         struct silofs_civ *out_iv)
 {
 	struct silofs_hash256 hash;
 	struct silofs_vaddr vaddr;
@@ -71,11 +71,11 @@ static void calc_hash512_of(const struct silofs_mdigest *mdigest,
 }
 
 static void derive_key_by_hash512(const struct silofs_hash512 *hash,
-                                  struct silofs_key *out_key)
+                                  struct silofs_ckey *out_key)
 {
 	STATICASSERT_LE(ARRAY_SIZE(out_key->key), ARRAY_SIZE(hash->hash));
 
-	silofs_key_reset(out_key);
+	silofs_ckey_reset(out_key);
 	for (size_t i = 0; i < ARRAY_SIZE(hash->hash); ++i) {
 		const size_t j = i % ARRAY_SIZE(out_key->key);
 
@@ -85,7 +85,7 @@ static void derive_key_by_hash512(const struct silofs_hash512 *hash,
 
 void silofs_derive_key_by(const struct silofs_mdigest *mdigest,
                           const struct silofs_paddr *paddr,
-                          struct silofs_key *out_key)
+                          struct silofs_ckey *out_key)
 {
 	struct silofs_hash512 hash;
 	struct silofs_vaddr vaddr;
@@ -110,8 +110,8 @@ const struct silofs_pmeta *silofs_pmeta_none(void)
 void silofs_pmeta_reset(struct silofs_pmeta *pmeta)
 {
 	silofs_paddr_reset(&pmeta->paddr);
-	silofs_key_reset(&pmeta->ivkey.key);
-	silofs_iv_reset(&pmeta->ivkey.iv);
+	silofs_ckey_reset(&pmeta->civkey.key);
+	silofs_civ_reset(&pmeta->civkey.iv);
 	silofs_ciargs_reset(&pmeta->ciargs);
 }
 
@@ -119,7 +119,7 @@ void silofs_pmeta_assign(struct silofs_pmeta *pmeta,
                          const struct silofs_pmeta *other)
 {
 	silofs_paddr_assign(&pmeta->paddr, &other->paddr);
-	silofs_ivkey_assign(&pmeta->ivkey, &other->ivkey);
+	silofs_civkey_assign(&pmeta->civkey, &other->civkey);
 	silofs_ciargs_assign(&pmeta->ciargs, &other->ciargs);
 }
 
@@ -136,8 +136,8 @@ void silofs_pmeta192b_htox(struct silofs_pmeta192b *pmeta192,
 
 	memset(pmeta192, 0, sizeof(*pmeta192));
 	silofs_paddr64b_htox(&pmeta192->btc_paddr, &pmeta->paddr);
-	silofs_key_assign(&pmeta192->btc_cipher_key, &pmeta->ivkey.key);
-	silofs_iv_assign(&pmeta192->btc_cipher_iv, &pmeta->ivkey.iv);
+	silofs_ckey_assign(&pmeta192->btc_cipher_key, &pmeta->civkey.key);
+	silofs_civ_assign(&pmeta192->btc_cipher_iv, &pmeta->civkey.iv);
 	pmeta192->btc_cipher_algo = silofs_cpu_to_le16(algo);
 	pmeta192->btc_cipher_mode = silofs_cpu_to_le16(mode);
 }
@@ -149,8 +149,8 @@ void silofs_pmeta192b_xtoh(const struct silofs_pmeta192b *pmeta192,
 	const uint16_t mode = silofs_le16_to_cpu(pmeta192->btc_cipher_mode);
 
 	silofs_paddr64b_xtoh(&pmeta192->btc_paddr, &pmeta->paddr);
-	silofs_key_assign(&pmeta->ivkey.key, &pmeta192->btc_cipher_key);
-	silofs_iv_assign(&pmeta->ivkey.iv, &pmeta192->btc_cipher_iv);
+	silofs_ckey_assign(&pmeta->civkey.key, &pmeta192->btc_cipher_key);
+	silofs_civ_assign(&pmeta->civkey.iv, &pmeta192->btc_cipher_iv);
 	pmeta->ciargs.algo = (enum silofs_cipher_algo)algo;
 	pmeta->ciargs.mode = (enum silofs_cipher_mode)mode;
 }
@@ -248,14 +248,14 @@ void silofs_pni_decref(struct silofs_pnode_info *pni)
 	silofs_hmqe_decref(&pni->pn_hmqe);
 }
 
-void silofs_pni_setup_ivkey(struct silofs_pnode_info *pni,
-                            const struct silofs_mdigest *md,
-                            const struct silofs_key *key)
+void silofs_pni_setup_civkey(struct silofs_pnode_info *pni,
+                             const struct silofs_mdigest *md,
+                             const struct silofs_ckey *key)
 {
-	struct silofs_iv iv;
+	struct silofs_civ iv;
 
 	silofs_derive_iv_by(md, &pni->pn_meta.paddr, &iv);
-	silofs_ivkey_setup(&pni->pn_meta.ivkey, key, &iv);
+	silofs_civkey_setup(&pni->pn_meta.civkey, key, &iv);
 }
 
 static int
@@ -707,10 +707,10 @@ int silofs_encrypt_pnode(const struct silofs_pnode_info *pni,
                          const struct silofs_cipher *cipher,
                          struct silofs_view *enc_view)
 {
-	return silofs_encrypt_view(cipher,              //
-	                           &pni->pn_meta.ivkey, //
-	                           pni->pn_view,        //
-	                           pni_mtype(pni),      //
+	return silofs_encrypt_view(cipher,               //
+	                           &pni->pn_meta.civkey, //
+	                           pni->pn_view,         //
+	                           pni_mtype(pni),       //
 	                           enc_view);
 }
 
@@ -718,10 +718,10 @@ int silofs_decrypt_pnode(struct silofs_pnode_info *pni,
                          const struct silofs_cipher *cipher,
                          const struct silofs_view *enc_view)
 {
-	return silofs_decrypt_view(cipher,              //
-	                           &pni->pn_meta.ivkey, //
-	                           enc_view,            //
-	                           pni_mtype(pni),      //
+	return silofs_decrypt_view(cipher,               //
+	                           &pni->pn_meta.civkey, //
+	                           enc_view,             //
+	                           pni_mtype(pni),       //
 	                           pni->pn_view);
 }
 

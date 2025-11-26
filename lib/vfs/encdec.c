@@ -28,7 +28,7 @@ int silofs_encrypt_lview(const struct silofs_env *env,
                          const struct silofs_llink *llink,
                          const struct silofs_view *view, void *ptr)
 {
-	return silofs_encrypt_view(&env->enc_cipher, &llink->ivkey, view,
+	return silofs_encrypt_view(&env->enc_cipher, &llink->civkey, view,
 	                           llink_mtype(llink), ptr);
 }
 
@@ -36,7 +36,7 @@ static int decrypt_lview_inplace(const struct silofs_env *env,
                                  const struct silofs_llink *llink,
                                  struct silofs_view *view)
 {
-	return silofs_decrypt_view_inplace(&env->dec_cipher, &llink->ivkey,
+	return silofs_decrypt_view_inplace(&env->dec_cipher, &llink->civkey,
 	                                   view, llink_mtype(llink));
 }
 
@@ -67,9 +67,9 @@ void silofs_llink_of_uni(const struct silofs_gbr *gbr,
                          struct silofs_llink *out_llink)
 {
 	const struct silofs_laddr *laddr = silofs_uni_laddr(uni);
-	const struct silofs_ivkey *ivkey = &gbr->ivkey;
+	const struct silofs_civkey *civkey = &gbr->civkey;
 
-	silofs_llink_setup(out_llink, laddr, &ivkey->key, &ivkey->iv);
+	silofs_llink_setup(out_llink, laddr, &civkey->key, &civkey->iv);
 }
 
 void silofs_llink_of_vni(const struct silofs_gbr *gbr,

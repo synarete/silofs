@@ -25,12 +25,12 @@ struct silofs_env;
 
 int silofs_spawn_uber_at(struct silofs_env         *env,
                          const struct silofs_paddr *paddr,
-                         const struct silofs_key   *key,
+                         const struct silofs_ckey  *key,
                          struct silofs_uber_info  **out_ubi);
 
 int silofs_stage_uber_at(struct silofs_env         *env,
                          const struct silofs_paddr *paddr,
-                         const struct silofs_key   *key,
+                         const struct silofs_ckey  *key,
                          struct silofs_uber_info  **out_ubi);
 
 int silofs_spawn_bldesc_at(struct silofs_env          *env,

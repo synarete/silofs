@@ -20,7 +20,7 @@
 #include <errno.h>
 #include <silofs/ondisk.h>
 #include "infra.h"
-#include "prandom.h"
+#include "random.h"
 
 static void do_getentropy(void *buf, size_t len)
 {
@@ -166,6 +166,8 @@ int silofs_prandgen_init(struct silofs_prandgen *prng)
 	int err;
 
 	memset(prng, 0, sizeof(*prng));
+	prng->cycle = 0;
+	prng->slot = 0;
 	err = silofs_mdigest_init(&prng->mdigest);
 	if (err) {
 		return err;
@@ -233,12 +235,23 @@ void silofs_prandgen_take(struct silofs_prandgen *prng, void *p, size_t n)
 	}
 }
 
-void silofs_prandgen_key(struct silofs_prandgen *prng, struct silofs_key *key)
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_gen_prandom_ckey(struct silofs_prandgen *prng,
+                             struct silofs_ckey *out_ckey)
 {
-	silofs_prandgen_take(prng, key->key, sizeof(key->key));
+	silofs_prandgen_take(prng, out_ckey->key, sizeof(out_ckey->key));
 }
 
-void silofs_prandgen_iv(struct silofs_prandgen *prng, struct silofs_iv *iv)
+void silofs_gen_prandom_civ(struct silofs_prandgen *prng,
+                            struct silofs_civ *out_civ)
 {
-	silofs_prandgen_take(prng, iv->iv, sizeof(iv->iv));
+	silofs_prandgen_take(prng, out_civ->iv, sizeof(out_civ->iv));
+}
+
+void silofs_gen_prandom_civkey(struct silofs_prandgen *prng,
+                               struct silofs_civkey *out_civkey)
+{
+	silofs_gen_prandom_ckey(prng, &out_civkey->key);
+	silofs_gen_prandom_civ(prng, &out_civkey->iv);
 }

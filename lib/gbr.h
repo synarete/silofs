@@ -33,7 +33,7 @@ struct silofs_mrefs {
 
 /* global boot-record, in-memory representation */
 struct silofs_gbr {
-	struct silofs_ivkey  ivkey;
+	struct silofs_civkey civkey;
 	struct silofs_ciargs ciargs;
 	struct silofs_uuid   uuid;
 	struct silofs_paddr  root;
@@ -48,7 +48,7 @@ struct silofs_gbrs {
 	struct silofs_gbr     ar_gbr;
 	struct silofs_cipher  cipher;
 	struct silofs_mdigest mdigest;
-	struct silofs_ivkey   ivkey;
+	struct silofs_civkey  civkey;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -57,8 +57,8 @@ int silofs_gbrs_init(struct silofs_gbrs *gbrs);
 
 void silofs_gbrs_fini(struct silofs_gbrs *gbrs);
 
-int silofs_gbrs_derive_ivkey(struct silofs_gbrs           *gbrs,
-                             const struct silofs_password *pw);
+int silofs_gbrs_derive_civkey(struct silofs_gbrs           *gbrs,
+                              const struct silofs_password *pw);
 
 void silofs_gbrs_update_sb_addr(struct silofs_gbrs        *gbrs,
                                 const struct silofs_uaddr *sb_uaddr);

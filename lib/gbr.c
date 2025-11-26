@@ -142,18 +142,18 @@ static void gbr1k_setup(struct silofs_gbr1k *gbr1k)
 	gbr1k_reset_root(gbr1k);
 }
 
-static void gbr1k_main_ivkey(const struct silofs_gbr1k *gbr1k,
-                             struct silofs_ivkey *out_ivkey)
+static void gbr1k_main_civkey(const struct silofs_gbr1k *gbr1k,
+                              struct silofs_civkey *out_civkey)
 {
-	silofs_ivkey_setup(out_ivkey, &gbr1k->gbr_main_key,
-	                   &gbr1k->gbr_main_iv);
+	silofs_civkey_setup(out_civkey, &gbr1k->gbr_main_key,
+	                    &gbr1k->gbr_main_iv);
 }
 
-static void gbr1k_set_main_ivkey(struct silofs_gbr1k *gbr1k,
-                                 const struct silofs_ivkey *ivkey)
+static void gbr1k_set_main_civkey(struct silofs_gbr1k *gbr1k,
+                                  const struct silofs_civkey *civkey)
 {
-	silofs_key_assign(&gbr1k->gbr_main_key, &ivkey->key);
-	silofs_iv_assign(&gbr1k->gbr_main_iv, &ivkey->iv);
+	silofs_ckey_assign(&gbr1k->gbr_main_key, &civkey->key);
+	silofs_civ_assign(&gbr1k->gbr_main_iv, &civkey->iv);
 }
 
 static int gbr1k_check_base(const struct silofs_gbr1k *gbr1k)
@@ -292,7 +292,7 @@ static void
 gbr1k_xtoh(const struct silofs_gbr1k *gbr1k, struct silofs_gbr *gbr)
 {
 	gbr1k_uuid(gbr1k, &gbr->uuid);
-	gbr1k_main_ivkey(gbr1k, &gbr->ivkey);
+	gbr1k_main_civkey(gbr1k, &gbr->civkey);
 	gbr1k_sb_addr(gbr1k, &gbr->sb_addr);
 	gbr1k_root(gbr1k, &gbr->root);
 	gbr->kind = gbr1k_kind(gbr1k);
@@ -309,7 +309,7 @@ gbr1k_htox(struct silofs_gbr1k *gbr1k, const struct silofs_gbr *gbr)
 	gbr1k_set_kind(gbr1k, gbr->kind);
 	gbr1k_set_flags(gbr1k, gbr->flags);
 	gbr1k_set_uuid(gbr1k, &gbr->uuid);
-	gbr1k_set_main_ivkey(gbr1k, &gbr->ivkey);
+	gbr1k_set_main_civkey(gbr1k, &gbr->civkey);
 	gbr1k_set_ciargs(gbr1k, &gbr->ciargs);
 }
 
@@ -327,7 +327,7 @@ static void gbr_init(struct silofs_gbr *gbr, enum silofs_gbr_kind flavour)
 
 static void gbr_fini(struct silofs_gbr *gbr)
 {
-	silofs_ivkey_reset(&gbr->ivkey);
+	silofs_civkey_reset(&gbr->civkey);
 	silofs_uaddr_reset(&gbr->sb_addr);
 	silofs_paddr_reset(&gbr->root);
 }
@@ -338,9 +338,9 @@ static void gbr_gen_uuid(struct silofs_gbr *gbr)
 }
 
 static void
-gbr_set_ivkey(struct silofs_gbr *gbr, const struct silofs_ivkey *ivkey)
+gbr_set_civkey(struct silofs_gbr *gbr, const struct silofs_civkey *civkey)
 {
-	silofs_ivkey_assign(&gbr->ivkey, ivkey);
+	silofs_civkey_assign(&gbr->civkey, civkey);
 }
 
 static void
@@ -352,37 +352,24 @@ gbr_set_ciargs(struct silofs_gbr *gbr, const struct silofs_ciargs *ciargs)
 static void
 gbr_update_from(struct silofs_gbr *gbr, const struct silofs_gbr *other)
 {
-	gbr_set_ivkey(gbr, &other->ivkey);
+	gbr_set_civkey(gbr, &other->civkey);
 	gbr_set_ciargs(gbr, &other->ciargs);
 }
 
-/*
- * Try to add some pseudo-randomness for the rare (yet, possible) case where
- * '/dev/urandom' does not provide good-enough random  bits stream.
- */
-static int
-ivkey_make_prand(struct silofs_ivkey *ivkey, const struct silofs_mdigest *md)
+static int gbr_gen_civkey(struct silofs_gbr *gbr)
 {
-	struct silofs_password pw = { .passlen = 0 };
-
-	silofs_password_mkrand(&pw);
-	return silofs_derive_default_ivkey(md, &pw, ivkey);
-}
-
-static int
-gbr_gen_ivkey(struct silofs_gbr *gbr, const struct silofs_mdigest *md)
-{
-	struct silofs_ivkey ivkey[2];
+	struct silofs_prandgen prng;
+	struct silofs_civkey civkey;
 	int err;
 
-	silofs_ivkey_mkrand(&ivkey[0]);
-	err = ivkey_make_prand(&ivkey[1], md);
+	err = silofs_prandgen_init(&prng);
 	if (err) {
-		log_dbg("failed to make prandom ivkey: err=%d", err);
+		log_dbg("failed to int prand-generator: err=%d", err);
 		return err;
 	}
-	silofs_ivkey_xor_with(&ivkey[0], &ivkey[1]);
-	gbr_set_ivkey(gbr, &ivkey[0]);
+	silofs_gen_prandom_civkey(&prng, &civkey);
+	silofs_prandgen_fini(&prng);
+	gbr_set_civkey(gbr, &civkey);
 	return 0;
 }
 
@@ -412,47 +399,47 @@ gbr_set_root(struct silofs_gbr *gbr, const struct silofs_paddr *paddr)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int
-encrypt_gbr1k(const struct silofs_cipher *ci, const struct silofs_ivkey *ivkey,
-              const struct silofs_gbr1k *gbr1k_in,
-              struct silofs_gbr1k *gbr1k_out)
+static int encrypt_gbr1k(const struct silofs_cipher *ci,
+                         const struct silofs_civkey *civkey,
+                         const struct silofs_gbr1k *gbr1k_in,
+                         struct silofs_gbr1k *gbr1k_out)
 {
-	return silofs_encrypt_buf(ci, ivkey, gbr1k_in, gbr1k_out,
+	return silofs_encrypt_buf(ci, civkey, gbr1k_in, gbr1k_out,
 	                          sizeof(*gbr1k_out));
 }
 
-static int
-decrypt_gbr1k(const struct silofs_cipher *ci, const struct silofs_ivkey *ivkey,
-              const struct silofs_gbr1k *gbr1k_in,
-              struct silofs_gbr1k *gbr1k_out)
+static int decrypt_gbr1k(const struct silofs_cipher *ci,
+                         const struct silofs_civkey *civkey,
+                         const struct silofs_gbr1k *gbr1k_in,
+                         struct silofs_gbr1k *gbr1k_out)
 {
-	return silofs_decrypt_buf(ci, ivkey, gbr1k_in, gbr1k_out,
+	return silofs_decrypt_buf(ci, civkey, gbr1k_in, gbr1k_out,
 	                          sizeof(*gbr1k_out));
 }
 
-static int gbr_encode(const struct silofs_gbr *gbr,     //
+static int gbr_encode(const struct silofs_gbr *gbr,       //
                       const struct silofs_mdigest *mdigest,
                       const struct silofs_cipher *cipher,
-                      const struct silofs_ivkey *ivkey, //
+                      const struct silofs_civkey *civkey, //
                       struct silofs_gbr1k *out_gbr1k)
 {
 	struct silofs_gbr1k gbr1k;
 
 	gbr1k_htox(&gbr1k, gbr);
 	gbr1k_stamp(&gbr1k, mdigest);
-	return encrypt_gbr1k(cipher, ivkey, &gbr1k, out_gbr1k);
+	return encrypt_gbr1k(cipher, civkey, &gbr1k, out_gbr1k);
 }
 
 static int gbr_decode(struct silofs_gbr *gbr, //
                       const struct silofs_mdigest *mdigest,
                       const struct silofs_cipher *cipher,
-                      const struct silofs_ivkey *ivkey,
+                      const struct silofs_civkey *civkey,
                       const struct silofs_gbr1k *enc_gbr1k)
 {
 	struct silofs_gbr1k gbr1k = { .gbr_magic = 1 };
 	int err;
 
-	err = decrypt_gbr1k(cipher, ivkey, enc_gbr1k, &gbr1k);
+	err = decrypt_gbr1k(cipher, civkey, enc_gbr1k, &gbr1k);
 	if (err) {
 		return err;
 	}
@@ -472,7 +459,7 @@ int silofs_gbrs_init(struct silofs_gbrs *gbrs)
 
 	gbr_init(&gbrs->fs_gbr, SILOFS_GBR_FS);
 	gbr_init(&gbrs->ar_gbr, SILOFS_GBR_AR);
-	silofs_ivkey_init(&gbrs->ivkey);
+	silofs_civkey_init(&gbrs->civkey);
 
 	err = silofs_cipher_init(&gbrs->cipher);
 	if (err) {
@@ -490,20 +477,20 @@ void silofs_gbrs_fini(struct silofs_gbrs *gbrs)
 {
 	silofs_mdigest_fini(&gbrs->mdigest);
 	silofs_cipher_fini(&gbrs->cipher);
-	silofs_ivkey_reset(&gbrs->ivkey);
+	silofs_civkey_reset(&gbrs->civkey);
 	gbr_fini(&gbrs->fs_gbr);
 	gbr_fini(&gbrs->ar_gbr);
 }
 
-int silofs_gbrs_derive_ivkey(struct silofs_gbrs *gbrs,
-                             const struct silofs_password *pw)
+int silofs_gbrs_derive_civkey(struct silofs_gbrs *gbrs,
+                              const struct silofs_password *pw)
 {
 	const struct silofs_mdigest *md = &gbrs->mdigest;
 	int ret = 0;
 
-	silofs_ivkey_reset(&gbrs->ivkey);
+	silofs_civkey_reset(&gbrs->civkey);
 	if ((pw != nullptr) && (pw->passlen > 0)) {
-		ret = silofs_derive_default_ivkey(md, pw, &gbrs->ivkey);
+		ret = silofs_derive_default_civkey(md, pw, &gbrs->civkey);
 	}
 	return ret;
 }
@@ -515,11 +502,11 @@ int silofs_gbrs_regen(struct silofs_gbrs *gbrs, enum silofs_gbr_kind gdr_kind)
 	switch (gdr_kind) {
 	case SILOFS_GBR_FS:
 		gbr_gen_uuid(&gbrs->fs_gbr);
-		ret = gbr_gen_ivkey(&gbrs->fs_gbr, &gbrs->mdigest);
+		ret = gbr_gen_civkey(&gbrs->fs_gbr);
 		break;
 	case SILOFS_GBR_AR:
 		gbr_gen_uuid(&gbrs->ar_gbr);
-		ret = gbr_gen_ivkey(&gbrs->ar_gbr, &gbrs->mdigest);
+		ret = gbr_gen_civkey(&gbrs->ar_gbr);
 		break;
 	case SILOFS_GBR_NONE:
 	default:
@@ -600,7 +587,7 @@ static int
 gbrs_encode_fs(const struct silofs_gbrs *gbrs, struct silofs_gbr1k *out_gbr1k)
 {
 	return gbr_encode(&gbrs->fs_gbr, &gbrs->mdigest, &gbrs->cipher,
-	                  &gbrs->ivkey, out_gbr1k);
+	                  &gbrs->civkey, out_gbr1k);
 }
 
 static int gbrs_encode_fs_gbr(const struct silofs_gbrs *gbrs,
@@ -622,7 +609,7 @@ static int
 gbrs_decode_fs(struct silofs_gbrs *gbrs, const struct silofs_gbr1k *gbr1k)
 {
 	return gbr_decode(&gbrs->fs_gbr, &gbrs->mdigest, &gbrs->cipher,
-	                  &gbrs->ivkey, gbr1k);
+	                  &gbrs->civkey, gbr1k);
 }
 
 static int
@@ -647,7 +634,7 @@ static int
 gbrs_encode_ar(const struct silofs_gbrs *gbrs, struct silofs_gbr1k *out_gbr1k)
 {
 	return gbr_encode(&gbrs->ar_gbr, &gbrs->mdigest, &gbrs->cipher,
-	                  &gbrs->ivkey, out_gbr1k);
+	                  &gbrs->civkey, out_gbr1k);
 }
 
 static int gbrs_encode_ar_gbr(const struct silofs_gbrs *gbrs,
@@ -669,7 +656,7 @@ static int
 gbrs_decode_ar(struct silofs_gbrs *gbrs, const struct silofs_gbr1k *gbr1k)
 {
 	return gbr_decode(&gbrs->ar_gbr, &gbrs->mdigest, &gbrs->cipher,
-	                  &gbrs->ivkey, gbr1k);
+	                  &gbrs->civkey, gbr1k);
 }
 
 static int

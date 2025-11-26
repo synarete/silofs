@@ -70,10 +70,10 @@ static int stc_require_view(struct silofs_store_ctx *st_ctx)
 	return 0;
 }
 
-static const struct silofs_key *
+static const struct silofs_ckey *
 stc_main_key(const struct silofs_store_ctx *st_ctx)
 {
-	return &st_ctx->gbrs->fs_gbr.ivkey.key;
+	return &st_ctx->gbrs->fs_gbr.civkey.key;
 }
 
 static int stc_require_paddr(const struct silofs_store_ctx *st_ctx,
@@ -85,18 +85,18 @@ static int stc_require_paddr(const struct silofs_store_ctx *st_ctx,
 
 static void stc_update_spawned_pnode(const struct silofs_store_ctx *st_ctx,
                                      struct silofs_pnode_info *pni,
-                                     const struct silofs_key *key)
+                                     const struct silofs_ckey *key)
 
 {
-	silofs_pni_setup_ivkey(pni, st_ctx->mdigest, key);
+	silofs_pni_setup_civkey(pni, st_ctx->mdigest, key);
 	silofs_pni_dirtify(pni);
 }
 
 static void stc_update_pre_stage_pnode(const struct silofs_store_ctx *st_ctx,
                                        struct silofs_pnode_info *pni,
-                                       const struct silofs_key *key)
+                                       const struct silofs_ckey *key)
 {
-	silofs_pni_setup_ivkey(pni, st_ctx->mdigest, key);
+	silofs_pni_setup_civkey(pni, st_ctx->mdigest, key);
 }
 
 static int stc_access_pnode(const struct silofs_store_ctx *st_ctx,
@@ -172,21 +172,21 @@ static int stc_create_cached_ubi(const struct silofs_store_ctx *st_ctx,
 
 static void stc_update_spawned_uber(const struct silofs_store_ctx *st_ctx,
                                     struct silofs_uber_info *ubi,
-                                    const struct silofs_key *key)
+                                    const struct silofs_ckey *key)
 {
 	stc_update_spawned_pnode(st_ctx, &ubi->ub_pni, key);
 }
 
 static void stc_update_pre_stage_uber(const struct silofs_store_ctx *st_ctx,
                                       struct silofs_uber_info *ubi,
-                                      const struct silofs_key *key)
+                                      const struct silofs_ckey *key)
 {
 	stc_update_pre_stage_pnode(st_ctx, &ubi->ub_pni, key);
 }
 
 static int
 stc_spawn_uber(const struct silofs_store_ctx *st_ctx,
-               const struct silofs_paddr *paddr, const struct silofs_key *key,
+               const struct silofs_paddr *paddr, const struct silofs_ckey *key,
                struct silofs_uber_info **out_ubi)
 {
 	int err;
@@ -205,7 +205,7 @@ stc_spawn_uber(const struct silofs_store_ctx *st_ctx,
 
 int silofs_spawn_uber_at(struct silofs_env *env,
                          const struct silofs_paddr *paddr,
-                         const struct silofs_key *key,
+                         const struct silofs_ckey *key,
                          struct silofs_uber_info **out_ubi)
 {
 	struct silofs_store_ctx st_ctx = {};
@@ -227,7 +227,7 @@ static int stc_lookup_cached_ubi(const struct silofs_store_ctx *st_ctx,
 
 static int
 stc_stage_uber(struct silofs_store_ctx *st_ctx,
-               const struct silofs_paddr *paddr, const struct silofs_key *key,
+               const struct silofs_paddr *paddr, const struct silofs_ckey *key,
                struct silofs_uber_info **out_ubi)
 {
 	struct silofs_uber_info *ubi = nullptr;
@@ -258,7 +258,7 @@ out_ok:
 
 int silofs_stage_uber_at(struct silofs_env *env,
                          const struct silofs_paddr *paddr,
-                         const struct silofs_key *key,
+                         const struct silofs_ckey *key,
                          struct silofs_uber_info **out_ubi)
 {
 	struct silofs_store_ctx st_ctx = {};

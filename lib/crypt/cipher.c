@@ -207,10 +207,10 @@ int silofs_cipher_check(const struct silofs_cipher *cipher,
 }
 
 static int cipher_prepare(const struct silofs_cipher *cipher,
-                          const struct silofs_ivkey *ivkey)
+                          const struct silofs_civkey *civkey)
 {
-	const struct silofs_iv *iv = &ivkey->iv;
-	const struct silofs_key *key = &ivkey->key;
+	const struct silofs_civ *iv = &civkey->iv;
+	const struct silofs_ckey *key = &civkey->key;
 	size_t blklen, keysize;
 	gcry_error_t err;
 
@@ -270,12 +270,12 @@ static int cipher_decrypt(const struct silofs_cipher *ci, const void *in_dat,
 }
 
 int silofs_encrypt_buf(const struct silofs_cipher *ci,
-                       const struct silofs_ivkey *ivkey, const void *in_dat,
+                       const struct silofs_civkey *civkey, const void *in_dat,
                        void *out_dat, size_t dat_len)
 {
 	int err;
 
-	err = cipher_prepare(ci, ivkey);
+	err = cipher_prepare(ci, civkey);
 	if (err) {
 		return err;
 	}
@@ -287,12 +287,12 @@ int silofs_encrypt_buf(const struct silofs_cipher *ci,
 }
 
 int silofs_decrypt_buf(const struct silofs_cipher *ci,
-                       const struct silofs_ivkey *ivkey, const void *in_dat,
+                       const struct silofs_civkey *civkey, const void *in_dat,
                        void *out_dat, size_t dat_len)
 {
 	int err;
 
-	err = cipher_prepare(ci, ivkey);
+	err = cipher_prepare(ci, civkey);
 	if (err) {
 		return err;
 	}
@@ -307,7 +307,7 @@ int silofs_decrypt_buf(const struct silofs_cipher *ci,
 
 static int
 derive_iv(const struct silofs_mdigest *md, const struct silofs_password *pw,
-          const struct silofs_kdf_desc *kdf, struct silofs_iv *out_iv)
+          const struct silofs_kdf_desc *kdf, struct silofs_civ *out_iv)
 {
 	struct silofs_hash256 salt;
 	gpg_error_t gcry_err;
@@ -325,7 +325,7 @@ derive_iv(const struct silofs_mdigest *md, const struct silofs_password *pw,
 
 static int
 derive_key(const struct silofs_mdigest *md, const struct silofs_password *pw,
-           const struct silofs_kdf_desc *kdf, struct silofs_key *out_key)
+           const struct silofs_kdf_desc *kdf, struct silofs_ckey *out_key)
 {
 	struct silofs_hash512 salt;
 	gpg_error_t gcry_err;
@@ -351,23 +351,23 @@ static int check_passlen(size_t len)
 	return ret;
 }
 
-static int silofs_derive_ivkey(const struct silofs_mdigest *md,
-                               const struct silofs_password *pw,
-                               const struct silofs_kdf_descs *kdf,
-                               struct silofs_ivkey *out_ivkey)
+static int silofs_derive_civkey(const struct silofs_mdigest *md,
+                                const struct silofs_password *pw,
+                                const struct silofs_kdf_descs *kdf,
+                                struct silofs_civkey *out_civkey)
 {
 	int err;
 
-	silofs_memzero(out_ivkey, sizeof(*out_ivkey));
+	silofs_memzero(out_civkey, sizeof(*out_civkey));
 	err = check_passlen(pw->passlen);
 	if (err) {
 		return err;
 	}
-	err = derive_iv(md, pw, &kdf->kdf_iv, &out_ivkey->iv);
+	err = derive_iv(md, pw, &kdf->kdf_iv, &out_civkey->iv);
 	if (err) {
 		return err;
 	}
-	err = derive_key(md, pw, &kdf->kdf_key, &out_ivkey->key);
+	err = derive_key(md, pw, &kdf->kdf_key, &out_civkey->key);
 	if (err) {
 		return err;
 	}
@@ -400,9 +400,9 @@ static const struct silofs_kdf_descs s_kdf_descs_default = {
 	},
 };
 
-int silofs_derive_default_ivkey(const struct silofs_mdigest *md,
-                                const struct silofs_password *pw,
-                                struct silofs_ivkey *out_ivkey)
+int silofs_derive_default_civkey(const struct silofs_mdigest *md,
+                                 const struct silofs_password *pw,
+                                 struct silofs_civkey *out_civkey)
 {
-	return silofs_derive_ivkey(md, pw, &s_kdf_descs_default, out_ivkey);
+	return silofs_derive_civkey(md, pw, &s_kdf_descs_default, out_civkey);
 }

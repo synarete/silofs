@@ -197,19 +197,19 @@ out:
 	return err;
 }
 
-static const struct silofs_ivkey *
-arc_arix_ivkey(const struct silofs_ar_ctx *ar_ctx)
+static const struct silofs_civkey *
+arc_arix_civkey(const struct silofs_ar_ctx *ar_ctx)
 {
 	const struct silofs_gbrs *gbrs = &ar_ctx->env->gbrs;
 
-	return &gbrs->ar_gbr.ivkey;
+	return &gbrs->ar_gbr.civkey;
 }
 
 static int arc_store_arix_block(struct silofs_ar_ctx *ar_ctx)
 {
-	const struct silofs_ivkey *ivkey = arc_arix_ivkey(ar_ctx);
+	const struct silofs_civkey *civkey = arc_arix_civkey(ar_ctx);
 
-	return silofs_store_arix_block(ar_ctx->abi, ivkey);
+	return silofs_store_arix_block(ar_ctx->abi, civkey);
 }
 
 static int arc_require_room(struct silofs_ar_ctx *ar_ctx)

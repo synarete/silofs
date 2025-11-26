@@ -640,65 +640,65 @@ static void lsmap_make_vaddrs_of(const struct silofs_lsmap *lsm,
 	lbm_make_vaddrs(lbm, lsmap_refmtype(lsm), off_base, out_vaddrs);
 }
 
-static struct silofs_key *lsmap_key_at(struct silofs_lsmap *lsm, size_t slot)
+static struct silofs_ckey *lsmap_key_at(struct silofs_lsmap *lsm, size_t slot)
 {
 	silofs_assert_lt(slot, ARRAY_SIZE(lsm->lsm_keys));
 	return &lsm->lsm_keys[slot];
 }
 
-static const struct silofs_key *
+static const struct silofs_ckey *
 lsmap_key_at2(const struct silofs_lsmap *lsm, size_t slot)
 {
 	silofs_assert_lt(slot, ARRAY_SIZE(lsm->lsm_keys));
 	return &lsm->lsm_keys[slot];
 }
 
-static struct silofs_key *lsmap_key_of(struct silofs_lsmap *lsm, off_t off)
+static struct silofs_ckey *lsmap_key_of(struct silofs_lsmap *lsm, off_t off)
 {
 	return lsmap_key_at(lsm, lsmap_slot_by_off(lsm, off));
 }
 
-static const struct silofs_key *
+static const struct silofs_ckey *
 lsmap_key_of2(const struct silofs_lsmap *lsm, off_t off)
 {
 	return lsmap_key_at2(lsm, lsmap_slot_by_off(lsm, off));
 }
 
 static void lsmap_get_key_of(const struct silofs_lsmap *lsm, off_t off,
-                             struct silofs_key *out_key)
+                             struct silofs_ckey *out_key)
 {
-	const struct silofs_key *key = lsmap_key_of2(lsm, off);
+	const struct silofs_ckey *key = lsmap_key_of2(lsm, off);
 
-	silofs_key_assign(out_key, key);
+	silofs_ckey_assign(out_key, key);
 }
 
 static void lsmap_set_key_of(struct silofs_lsmap *lsm, off_t off,
-                             const struct silofs_key *key)
+                             const struct silofs_ckey *key)
 {
-	struct silofs_key *lsm_key = lsmap_key_of(lsm, off);
+	struct silofs_ckey *lsm_key = lsmap_key_of(lsm, off);
 
-	silofs_key_assign(lsm_key, key);
+	silofs_ckey_assign(lsm_key, key);
 }
 
 static void lsmap_gen_keys(struct silofs_lsmap *lsm)
 {
-	silofs_generate_keys(lsm->lsm_keys, ARRAY_SIZE(lsm->lsm_keys), true);
+	silofs_generate_keys(lsm->lsm_keys, ARRAY_SIZE(lsm->lsm_keys));
 }
 
 static void
 lsmap_renew_key_at(struct silofs_lsmap *lsm, const struct silofs_vaddr *vaddr)
 {
-	struct silofs_key rkey;
-	struct silofs_key *key = lsmap_key_of(lsm, vaddr->off);
+	struct silofs_ckey rkey;
+	struct silofs_ckey *key = lsmap_key_of(lsm, vaddr->off);
 
-	silofs_key_mkrand(&rkey);
-	silofs_key_xor_with2(key, &rkey);
+	silofs_ckey_mkrand(&rkey);
+	silofs_ckey_xor_with2(key, &rkey);
 }
 
 static void
-key_clone_from(struct silofs_key *key, const struct silofs_key *key_other)
+key_clone_from(struct silofs_ckey *key, const struct silofs_ckey *key_other)
 {
-	silofs_key_assign(key, key_other);
+	silofs_ckey_assign(key, key_other);
 }
 
 static void lsmap_clone_from(struct silofs_lsmap *lsm,
@@ -1079,7 +1079,7 @@ void silofs_lsi_clone_from(struct silofs_lsmap_info *lsi,
 
 int silofs_lsi_resolve_key(const struct silofs_lsmap_info *lsi,
                            const struct silofs_vaddr *vaddr,
-                           struct silofs_key *out_key)
+                           struct silofs_ckey *out_key)
 {
 	if (!lsi_is_subref(lsi, vaddr)) {
 		return -SILOFS_ERANGE;
@@ -1090,7 +1090,7 @@ int silofs_lsi_resolve_key(const struct silofs_lsmap_info *lsi,
 
 int silofs_lsi_rebind_key(struct silofs_lsmap_info *lsi,
                           const struct silofs_vaddr *vaddr,
-                          const struct silofs_key *key)
+                          const struct silofs_ckey *key)
 {
 	if (!lsi_is_subref(lsi, vaddr)) {
 		return -SILOFS_ERANGE;

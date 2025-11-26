@@ -1879,20 +1879,20 @@ static int vstgc_resolve_child_of(const struct silofs_vstage_ctx *vstg_ctx,
 	                                out_laddr);
 }
 
-static const struct silofs_key *
+static const struct silofs_ckey *
 vstgc_main_key(const struct silofs_vstage_ctx *vstg_ctx)
 {
-	return &vstg_ctx->env->gbrs.fs_gbr.ivkey.key;
+	return &vstg_ctx->env->gbrs.fs_gbr.civkey.key;
 }
 
 static void vstgc_resolve_main_key(const struct silofs_vstage_ctx *vstg_ctx,
-                                   struct silofs_key *out_key)
+                                   struct silofs_ckey *out_key)
 {
-	silofs_key_assign(out_key, vstgc_main_key(vstg_ctx));
+	silofs_ckey_assign(out_key, vstgc_main_key(vstg_ctx));
 }
 
 static int vstgc_resolve_key_of(const struct silofs_vstage_ctx *vstg_ctx,
-                                struct silofs_key *out_key)
+                                struct silofs_ckey *out_key)
 {
 	int ret = 0;
 
@@ -1911,8 +1911,8 @@ static int vstgc_resolve_llink_of(const struct silofs_vstage_ctx *vstg_ctx,
                                   struct silofs_llink *out_llink)
 {
 	struct silofs_laddr laddr;
-	struct silofs_key key;
-	struct silofs_iv iv;
+	struct silofs_ckey key;
+	struct silofs_civ iv;
 	int err;
 
 	err = vstgc_resolve_child_of(vstg_ctx, &laddr);
@@ -2243,7 +2243,7 @@ out_err:
 
 static int vstgc_require_lbk_llink(const struct silofs_vstage_ctx *vstg_ctx,
                                    struct silofs_laddr *out_dst_laddr,
-                                   struct silofs_key *out_dst_key)
+                                   struct silofs_ckey *out_dst_key)
 {
 	int err;
 
@@ -2265,7 +2265,7 @@ static int vstgc_require_lbk_llink(const struct silofs_vstage_ctx *vstg_ctx,
 
 static void vstgc_rebind_lbk_llink(const struct silofs_vstage_ctx *vstg_ctx,
                                    const struct silofs_laddr *laddr,
-                                   const struct silofs_key *key)
+                                   const struct silofs_ckey *key)
 {
 
 	silofs_sli_bind_child(vstg_ctx->sli, vstg_ctx->vaddr->off, laddr);
@@ -2279,7 +2279,7 @@ static int vstgc_clone_rebind_lbk(const struct silofs_vstage_ctx *vstg_ctx,
                                   const struct silofs_laddr *src_laddr)
 {
 	struct silofs_laddr dst_laddr;
-	struct silofs_key dst_key;
+	struct silofs_ckey dst_key;
 	int err;
 
 	err = vstgc_require_lbk_llink(vstg_ctx, &dst_laddr, &dst_key);

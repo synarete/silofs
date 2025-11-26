@@ -38,8 +38,8 @@ struct silofs_laddr {
 
 /* logical-address and its associate IV-key */
 struct silofs_llink {
-	struct silofs_laddr laddr;
-	struct silofs_ivkey ivkey;
+	struct silofs_laddr  laddr;
+	struct silofs_civkey civkey;
 };
 
 /* logical-space address-range [beg, end) */
@@ -129,14 +129,14 @@ void silofs_laddr96b_reset(struct silofs_laddr96b *laddr96);
 
 void silofs_derive_iv_by_laddr(const struct silofs_mdigest *md,
                                const struct silofs_laddr   *laddr,
-                               struct silofs_iv            *out_iv);
+                               struct silofs_civ           *out_iv);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_llink_setup(struct silofs_llink       *llink,
                         const struct silofs_laddr *laddr,
-                        const struct silofs_key   *key,
-                        const struct silofs_iv    *iv);
+                        const struct silofs_ckey  *key,
+                        const struct silofs_civ   *iv);
 
 void silofs_llink_assign(struct silofs_llink       *llink,
                          const struct silofs_llink *other);

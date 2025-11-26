@@ -336,11 +336,11 @@ laddr_to_hash(const struct silofs_laddr *laddr,
 }
 
 static void
-derive_iv_by_hash256(struct silofs_iv *iv, const struct silofs_hash256 *hash)
+derive_iv_by_hash256(struct silofs_civ *iv, const struct silofs_hash256 *hash)
 {
 	STATICASSERT_LE(ARRAY_SIZE(iv->iv), ARRAY_SIZE(hash->hash));
 
-	silofs_iv_reset(iv);
+	silofs_civ_reset(iv);
 	for (size_t i = 0; i < ARRAY_SIZE(hash->hash); ++i) {
 		const size_t j = i % ARRAY_SIZE(iv->iv);
 
@@ -350,7 +350,7 @@ derive_iv_by_hash256(struct silofs_iv *iv, const struct silofs_hash256 *hash)
 
 void silofs_derive_iv_by_laddr(const struct silofs_mdigest *md,
                                const struct silofs_laddr *laddr,
-                               struct silofs_iv *out_iv)
+                               struct silofs_civ *out_iv)
 {
 	struct silofs_hash256 hash = {};
 
@@ -362,24 +362,24 @@ void silofs_derive_iv_by_laddr(const struct silofs_mdigest *md,
 
 void silofs_llink_setup(struct silofs_llink *llink,
                         const struct silofs_laddr *laddr,
-                        const struct silofs_key *key,
-                        const struct silofs_iv *iv)
+                        const struct silofs_ckey *key,
+                        const struct silofs_civ *iv)
 {
 	silofs_laddr_assign(&llink->laddr, laddr);
-	silofs_ivkey_setup(&llink->ivkey, key, iv);
+	silofs_civkey_setup(&llink->civkey, key, iv);
 }
 
 void silofs_llink_assign(struct silofs_llink *llink,
                          const struct silofs_llink *other)
 {
 	silofs_laddr_assign(&llink->laddr, &other->laddr);
-	silofs_ivkey_assign(&llink->ivkey, &other->ivkey);
+	silofs_civkey_assign(&llink->civkey, &other->civkey);
 }
 
 void silofs_llink_reset(struct silofs_llink *llink)
 {
 	silofs_laddr_reset(&llink->laddr);
-	silofs_ivkey_reset(&llink->ivkey);
+	silofs_civkey_reset(&llink->civkey);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

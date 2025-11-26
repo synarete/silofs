@@ -201,7 +201,7 @@ static int env_init_gbrs(struct silofs_env *env)
 	if (err) {
 		return err;
 	}
-	err = silofs_gbrs_derive_ivkey(&env->gbrs, env->base.passwd);
+	err = silofs_gbrs_derive_civkey(&env->gbrs, env->base.passwd);
 	if (err) {
 		silofs_gbrs_fini(&env->gbrs);
 		return err;
@@ -378,17 +378,17 @@ static void env_make_first_uber_addr(struct silofs_env *env,
 }
 
 static void
-env_resolve_main_key(const struct silofs_env *env, struct silofs_key *out_key)
+env_resolve_main_key(const struct silofs_env *env, struct silofs_ckey *out_key)
 {
 	const struct silofs_gbr *fs_gbr = &env->gbrs.fs_gbr;
 
-	silofs_key_assign(out_key, &fs_gbr->ivkey.key);
+	silofs_ckey_assign(out_key, &fs_gbr->civkey.key);
 }
 
 int silofs_env_format_uber(struct silofs_env *env)
 {
 	struct silofs_paddr ub_addr;
-	struct silofs_key key;
+	struct silofs_ckey key;
 	struct silofs_uber_info *ubi = nullptr;
 	int err;
 
@@ -405,7 +405,7 @@ int silofs_env_format_uber(struct silofs_env *env)
 int silofs_env_reload_uber(struct silofs_env *env)
 {
 	struct silofs_paddr ub_addr;
-	struct silofs_key key;
+	struct silofs_ckey key;
 	struct silofs_uber_info *ubi = nullptr;
 	int err;
 

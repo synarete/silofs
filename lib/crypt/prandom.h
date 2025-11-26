@@ -19,6 +19,7 @@
 
 #include <stdlib.h>
 #include <stdint.h>
+#include "ivkey.h"
 #include "mdigest.h"
 
 struct silofs_prandgen {
@@ -39,5 +40,9 @@ int silofs_prandgen_init(struct silofs_prandgen *prng);
 void silofs_prandgen_fini(struct silofs_prandgen *prng);
 
 void silofs_prandgen_take(struct silofs_prandgen *prng, void *buf, size_t bsz);
+
+void silofs_prandgen_key(struct silofs_prandgen *prng, struct silofs_key *key);
+
+void silofs_prandgen_iv(struct silofs_prandgen *prng, struct silofs_iv *iv);
 
 #endif /* SILOFS_PRANDOM_H_ */

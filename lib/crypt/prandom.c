@@ -217,17 +217,28 @@ static void prandgen_prepare(struct silofs_prandgen *prng)
 	}
 }
 
-void silofs_prandgen_take(struct silofs_prandgen *prng, void *buf, size_t bsz)
+void silofs_prandgen_take(struct silofs_prandgen *prng, void *p, size_t n)
 {
-	uint8_t *m = buf;
 	uint64_t u;
-	size_t k, cnt = 0;
+	uint8_t *q = p;
+	size_t k = 0;
 
-	while (cnt < bsz) {
+	while (k < n) {
+		const size_t r = silofs_min(n - k, sizeof(u));
+
 		prandgen_prepare(prng);
 		u = prandgen_take_u64(prng);
-		k = silofs_min(bsz - cnt, sizeof(u));
-		memcpy(&m[cnt], &u, k);
-		cnt += k;
+		memcpy(&q[k], &u, r);
+		k += r;
 	}
+}
+
+void silofs_prandgen_key(struct silofs_prandgen *prng, struct silofs_key *key)
+{
+	silofs_prandgen_take(prng, key->key, sizeof(key->key));
+}
+
+void silofs_prandgen_iv(struct silofs_prandgen *prng, struct silofs_iv *iv)
+{
+	silofs_prandgen_take(prng, iv->iv, sizeof(iv->iv));
 }

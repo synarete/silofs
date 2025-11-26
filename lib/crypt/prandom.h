@@ -22,8 +22,8 @@
 #include "mdigest.h"
 
 struct silofs_prandgen {
-	uint8_t               entropy[96];
-	uint8_t               prandom[904];
+	uint64_t              entropy[12];
+	uint8_t               prandom[113];
 	uint64_t              cycle;
 	uint32_t              slot;
 	uint32_t              xxprev;

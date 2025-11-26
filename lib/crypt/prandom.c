@@ -134,16 +134,22 @@ prandgen_mkhash(struct silofs_prandgen *prng, struct silofs_hash256 *out_hash)
 	prng->xxprev = silofs_xxh32(d, sizeof(d), prng->xxprev);
 }
 
+static void *prandgen_prandom_buf(struct silofs_prandgen *prng)
+{
+	return prng->prandom;
+}
+
 static void prandgen_refill_prandom(struct silofs_prandgen *prng)
 {
 	struct silofs_hash256 hash;
-	const size_t len = sizeof(prng->prandom);
+	const size_t psz = sizeof(prng->prandom);
+	uint8_t *p = prandgen_prandom_buf(prng);
 	size_t k, cnt = 0;
 
-	while (cnt < len) {
+	while (cnt < psz) {
 		prandgen_mkhash(prng, &hash);
-		k = silofs_min(sizeof(hash.hash), len - cnt);
-		memcpy(&prng->prandom[cnt], hash.hash, k);
+		k = silofs_min(sizeof(hash.hash), psz - cnt);
+		memcpy(&p[cnt], hash.hash, k);
 		cnt += k;
 	}
 }
@@ -173,20 +179,15 @@ void silofs_prandgen_fini(struct silofs_prandgen *prng)
 	memset(prng, 0, sizeof(*prng));
 }
 
-static size_t
-prandgen_take_some(struct silofs_prandgen *prng, void *buf, size_t len)
+static uint64_t prandgen_take_u64(struct silofs_prandgen *prng)
 {
-	const size_t np_max = SILOFS_ARRAY_SIZE(prng->prandom);
-	const size_t ne_max = SILOFS_ARRAY_SIZE(prng->entropy);
-	uint8_t *p = buf;
-	size_t cnt = 0;
+	const size_t np = SILOFS_ARRAY_SIZE(prng->prandom);
+	const size_t ne = SILOFS_ARRAY_SIZE(prng->entropy);
+	uint64_t u;
 
-	while ((cnt < len) && (prng->slot < np_max)) {
-		p[cnt++] = prng->prandom[prng->slot] ^
-		           prng->entropy[prng->slot % ne_max];
-		prng->slot++;
-	}
-	return cnt;
+	u = prng->prandom[prng->slot % np] ^ prng->entropy[prng->slot % ne];
+	prng->slot++;
+	return u;
 }
 
 static void prandgen_prepare(struct silofs_prandgen *prng)
@@ -212,12 +213,14 @@ static void prandgen_prepare(struct silofs_prandgen *prng)
 void silofs_prandgen_take(struct silofs_prandgen *prng, void *buf, size_t bsz)
 {
 	uint8_t *m = buf;
+	uint64_t u;
 	size_t k, cnt = 0;
 
 	while (cnt < bsz) {
 		prandgen_prepare(prng);
-		k = prandgen_take_some(prng, &m[cnt], bsz - cnt);
-		silofs_expect_gt(k, 0);
+		u = prandgen_take_u64(prng);
+		k = silofs_min(bsz - cnt, sizeof(u));
+		memcpy(&m[cnt], &u, k);
 		cnt += k;
 	}
 }

@@ -179,15 +179,22 @@ void silofs_prandgen_fini(struct silofs_prandgen *prng)
 	memset(prng, 0, sizeof(*prng));
 }
 
+static uint64_t lrotate(uint64_t n)
+{
+	return silofs_lrotate64(n, 1);
+}
+
 static uint64_t prandgen_take_u64(struct silofs_prandgen *prng)
 {
-	const size_t np = SILOFS_ARRAY_SIZE(prng->prandom);
-	const size_t ne = SILOFS_ARRAY_SIZE(prng->entropy);
-	uint64_t u;
+	const size_t i = prng->slot % ARRAY_SIZE(prng->prandom);
+	const size_t j = prng->slot % ARRAY_SIZE(prng->entropy);
+	uint64_t e, r;
 
-	u = prng->prandom[prng->slot % np] ^ prng->entropy[prng->slot % ne];
+	r = prng->prandom[i];
+	e = prng->entropy[j];
+	prng->entropy[j] = lrotate(e ^ r);
 	prng->slot++;
-	return u;
+	return r ^ e;
 }
 
 static void prandgen_prepare(struct silofs_prandgen *prng)

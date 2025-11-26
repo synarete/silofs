@@ -17,6 +17,7 @@
 #ifndef SILOFS_CRYPT_H_
 #define SILOFS_CRYPT_H_
 
+#include <silofs/random.h>
 #include "infra.h"
 #include "crypt/passwd.h"
 #include "crypt/ivkey.h"

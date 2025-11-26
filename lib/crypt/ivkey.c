@@ -16,6 +16,7 @@
  */
 #include "configs.h"
 #include <gcrypt.h>
+#include <silofs/random.h>
 #include "infra.h"
 #include "gcry.h"
 #include "ivkey.h"

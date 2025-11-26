@@ -21,9 +21,7 @@
 #include <silofs/macros.h>
 #include <silofs/panic.h>
 #include <silofs/random.h>
-#include "utility.h"
-#include "hashfn.h"
-#include "times.h"
+#include "infra.h"
 
 static void do_getentropy(void *buf, size_t len)
 {

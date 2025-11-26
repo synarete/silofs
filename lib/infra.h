@@ -26,7 +26,6 @@
 #include <silofs/logging.h>
 #include <silofs/panic.h>
 #include <silofs/memalloc.h>
-#include <silofs/random.h>
 #include <silofs/thread.h>
 
 #include "infra/utility.h"

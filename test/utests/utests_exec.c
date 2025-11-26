@@ -102,14 +102,14 @@ static void ut_free_safe(void *ptr, size_t size)
 static void ute_init(struct ut_env *ute, struct ut_args *args)
 {
 	memset(ute, 0, sizeof(*ute));
+	silofs_mutex_init(&ute->mutex);
 	ute->args = args;
 	ute->malloc_list = nullptr;
 	ute->nbytes_alloc = 0;
 	ute->unique_opid = 1;
 	ute->ftype = SILOFS_FILE_TYPE1;
 	ute->run_level = ut_globals.run_level;
-	silofs_prandgen_init(&ute->prng);
-	silofs_mutex_init(&ute->mutex);
+	ute->prngc = 1;
 }
 
 static void ute_cleanup(struct ut_env *ute)
@@ -138,16 +138,6 @@ static void ute_unlock(struct ut_env *ute)
 	silofs_mutex_unlock(&ute->mutex);
 }
 
-static void ute_setup_random_passwd(struct ut_env *ute)
-{
-	struct silofs_env_args *env_args = &ute->args->env_args;
-	struct silofs_password *pp = &ute->passwd;
-
-	pp->passlen = sizeof(pp->pass) - 1;
-	silofs_prandgen_ascii(&ute->prng, (char *)pp->pass, pp->passlen);
-	env_args->boot_args.passwd = (const char *)(pp->pass);
-}
-
 static void ute_setup(struct ut_env *ute)
 {
 	int err;
@@ -169,6 +159,79 @@ static void ute_del(struct ut_env *ute)
 {
 	ute_fini(ute);
 	ut_free_safe(ute, sizeof(*ute));
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+/* Blum-Blum-Shub pseudo-random number generator, using p=383 q=503 */
+static uint64_t blum_blum_shub(uint64_t n)
+{
+	return (n * n) % 192649UL;
+}
+
+static uint64_t blum_blum_shub_u64(uint64_t n)
+{
+	uint64_t u = 0;
+
+	n = blum_blum_shub(n);
+	u = (n & 0xFF);
+	n = blum_blum_shub(n);
+	u = (u << 16) | (n & 0xFF);
+	n = blum_blum_shub(n);
+	u = (u << 16) | (n & 0xFF);
+	n = blum_blum_shub(n);
+	u = (u << 16) | (n & 0xFF);
+	return u;
+}
+
+static uint64_t ute_prandom_u64(struct ut_env *ute)
+{
+	const uint64_t start = (uint64_t)ute->ts_start.tv_nsec;
+
+	return blum_blum_shub_u64(start + ute->prngc++);
+}
+
+static void ute_prandom(struct ut_env *ute, void *buf, size_t bsz)
+{
+	uint64_t u;
+	uint8_t *m = buf;
+	size_t k, cnt = 0;
+
+	while (cnt < bsz) {
+		u = ute_prandom_u64(ute);
+		k = ut_min(bsz - cnt, sizeof(u));
+		memcpy(&m[cnt], &u, k);
+		cnt += k;
+	}
+}
+
+static void ute_prandom_ascii(struct ut_env *ute, char *str, size_t n)
+{
+	uint64_t rnd = 0;
+	const int base = 33;
+	const int last = 126;
+	int print_ch;
+
+	rnd = ute_prandom_u64(ute);
+	for (size_t i = 0; i < n; ++i) {
+		if (i % 53) {
+			rnd = rnd >> 1;
+		} else {
+			rnd = ute_prandom_u64(ute);
+		}
+		print_ch = abs((int)(rnd % (uint64_t)(last - base)) + base);
+		str[i] = (char)print_ch;
+	}
+}
+
+static void ute_setup_random_passwd(struct ut_env *ute)
+{
+	struct silofs_env_args *env_args = &ute->args->env_args;
+	struct silofs_password *pp = &ute->passwd;
+
+	pp->passlen = sizeof(pp->pass) - 1;
+	ute_prandom_ascii(ute, (char *)pp->pass, pp->passlen);
+	env_args->boot_args.passwd = (const char *)(pp->pass);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -616,7 +679,7 @@ void *ut_zerobuf(struct ut_env *ute, size_t bsz)
 void ut_randfill(struct ut_env *ute, void *buf, size_t bsz)
 {
 	ute_lock(ute);
-	silofs_prandgen_take(&ute->prng, buf, bsz);
+	ute_prandom(ute, buf, bsz);
 	ute_unlock(ute);
 }
 
@@ -734,7 +797,7 @@ static uint64_t ute_next_prandom(struct ut_env *ute)
 	uint64_t rnd;
 
 	ute_lock(ute);
-	silofs_prandgen_take_u64(&ute->prng, &rnd);
+	rnd = ute_prandom_u64(ute);
 	ute_unlock(ute);
 	return rnd;
 }

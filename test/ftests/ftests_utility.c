@@ -43,7 +43,7 @@ void fte_init(struct ft_env *fte, const struct ft_params *params)
 	silofs_mutex_init(&fte->mutex);
 	fte->currtest = nullptr;
 	fte->start = time(nullptr);
-	fte->prngc = 0;
+	fte->prngc = 1;
 	fte->seqn = 0;
 	fte->nbytes_alloc = 0;
 	fte->malloc_list = nullptr;
@@ -231,15 +231,21 @@ static uint64_t blum_blum_shub_u64(uint64_t n)
 	return u;
 }
 
-static void ft_do_fill_prandom(struct ft_env *fte, void *buf, size_t bsz)
+static uint64_t ft_prandom_u64(struct ft_env *fte)
 {
 	const uint64_t start = (uint64_t)fte->start;
+
+	return blum_blum_shub_u64(start + fte->prngc++);
+}
+
+static void ft_prandom(struct ft_env *fte, void *buf, size_t bsz)
+{
 	uint64_t u;
 	uint8_t *m = buf;
 	size_t k, cnt = 0;
 
 	while (cnt < bsz) {
-		u = blum_blum_shub_u64(start + fte->prngc++);
+		u = ft_prandom_u64(fte);
 		k = ft_min(bsz - cnt, sizeof(u));
 		memcpy(&m[cnt], &u, k);
 		cnt += k;
@@ -355,7 +361,7 @@ void *ft_new_buf_rands(struct ft_env *fte, size_t bsz)
 
 	fte_lock(fte);
 	buf = ft_do_malloc(fte, bsz);
-	ft_do_fill_prandom(fte, buf, bsz);
+	ft_prandom(fte, buf, bsz);
 	fte_unlock(fte);
 	return buf;
 }
@@ -365,7 +371,7 @@ long ft_lrand(struct ft_env *fte)
 	long r = 0;
 
 	fte_lock(fte);
-	ft_do_fill_prandom(fte, &r, sizeof(r));
+	ft_prandom(fte, &r, sizeof(r));
 	fte_unlock(fte);
 	return r;
 }

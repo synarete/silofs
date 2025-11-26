@@ -131,7 +131,6 @@ struct ut_args {
 };
 
 struct ut_env {
-	struct silofs_prandgen      prng;
 	struct silofs_password      passwd;
 	struct silofs_blobid        fs_blobid[2];
 	struct silofs_blobid        ar_blobid;
@@ -146,6 +145,7 @@ struct ut_env {
 	size_t                      ualloc_start;
 	size_t                      nbytes_alloc;
 	long                        unique_opid;
+	uint64_t                    prngc;
 	int                         run_level;
 	enum silofs_file_type       ftype;
 };

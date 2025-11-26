@@ -19,17 +19,22 @@
 
 #include <stdlib.h>
 #include <stdint.h>
+#include "mdigest.h"
 
 struct silofs_prandgen {
-	uint32_t slot;
-	uint32_t cycle;
-	uint8_t  prandom[504];
-	uint8_t  entropy[512];
+	uint8_t               entropy[96];
+	uint8_t               prandom[904];
+	uint64_t              cycle;
+	uint32_t              slot;
+	uint32_t              xxprev;
+	struct silofs_mdigest mdigest;
 };
+
+void silofs_getentropy(void *p, size_t n);
 
 void silofs_prandom(void *p, size_t n);
 
-void silofs_prandgen_init(struct silofs_prandgen *prng);
+int silofs_prandgen_init(struct silofs_prandgen *prng);
 
 void silofs_prandgen_fini(struct silofs_prandgen *prng);
 

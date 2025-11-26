@@ -25,17 +25,18 @@
 
 /* env initialization-state flags */
 enum silofs_env_initf {
-	SILOFS_ENVIF_QALLOC = SILOFS_BIT(0),
-	SILOFS_ENVIF_STDALLOC = SILOFS_BIT(1),
-	SILOFS_ENVIF_REPO = SILOFS_BIT(2),
-	SILOFS_ENVIF_PCACHE = SILOFS_BIT(3),
-	SILOFS_ENVIF_LCACHE = SILOFS_BIT(4),
-	SILOFS_ENVIF_SPAMAPS = SILOFS_BIT(5),
-	SILOFS_ENVIF_SUBMITQ = SILOFS_BIT(6),
-	SILOFS_ENVIF_IDSMAP = SILOFS_BIT(7),
-	SILOFS_ENVIF_FLUSHER = SILOFS_BIT(8),
-	SILOFS_ENVIF_FUSEQ = SILOFS_BIT(9),
-	SILOFS_ENVIF_ENV = SILOFS_BIT(10),
+	SILOFS_ENVIF_PRANDGEN = SILOFS_BIT(0),
+	SILOFS_ENVIF_QALLOC = SILOFS_BIT(1),
+	SILOFS_ENVIF_STDALLOC = SILOFS_BIT(2),
+	SILOFS_ENVIF_REPO = SILOFS_BIT(3),
+	SILOFS_ENVIF_PCACHE = SILOFS_BIT(4),
+	SILOFS_ENVIF_LCACHE = SILOFS_BIT(5),
+	SILOFS_ENVIF_SPAMAPS = SILOFS_BIT(6),
+	SILOFS_ENVIF_SUBMITQ = SILOFS_BIT(7),
+	SILOFS_ENVIF_IDSMAP = SILOFS_BIT(8),
+	SILOFS_ENVIF_FLUSHER = SILOFS_BIT(9),
+	SILOFS_ENVIF_FUSEQ = SILOFS_BIT(10),
+	SILOFS_ENVIF_ENV = SILOFS_BIT(11),
 };
 
 /* memory allocator of choice */
@@ -488,8 +489,8 @@ static void envi_fini_fuseq(struct silofs_env_inst *envi)
 static int envi_init_env(struct silofs_env_inst *envi)
 {
 	const struct silofs_env_base env_base = {
-		.passwd = &envi->passwd,
 		.args = &envi->args,
+		.passwd = &envi->passwd,
 		.prng = &envi->prandgen,
 		.alloc = envi->alloc,
 		.nilbk = envi->nilbk,
@@ -534,14 +535,24 @@ static void envi_fini_passwd(struct silofs_env_inst *envi)
 	silofs_password_reset(&envi->passwd);
 }
 
-static void envi_init_prandgen(struct silofs_env_inst *envi)
+static int envi_init_prandgen(struct silofs_env_inst *envi)
 {
-	silofs_prandgen_init(&envi->prandgen);
+	int err;
+
+	err = silofs_prandgen_init(&envi->prandgen);
+	if (err) {
+		return err;
+	}
+	envi->initf |= SILOFS_ENVIF_PRANDGEN;
+	return 0;
 }
 
 static void envi_fini_prandgen(struct silofs_env_inst *envi)
 {
-	silofs_prandgen_fini(&envi->prandgen);
+	if (envi->initf & SILOFS_ENVIF_PRANDGEN) {
+		silofs_prandgen_fini(&envi->prandgen);
+		envi->initf &= ~SILOFS_ENVIF_PRANDGEN;
+	}
 }
 
 static void envi_fini(struct silofs_env_inst *envi)
@@ -584,8 +595,11 @@ envi_init(struct silofs_env_inst *envi, const struct silofs_env_args *args)
 {
 	int err;
 
-	envi_init_prandgen(envi);
 	err = envi_init_args(envi, args);
+	if (err) {
+		goto out_err;
+	}
+	err = envi_init_prandgen(envi);
 	if (err) {
 		goto out_err;
 	}

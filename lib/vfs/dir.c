@@ -1367,7 +1367,7 @@ static uint64_t unique_seed(void)
 {
 	uint64_t s;
 
-	silofs_prandom(&s, sizeof(s));
+	silofs_getentropy(&s, sizeof(s));
 	return s;
 }
 

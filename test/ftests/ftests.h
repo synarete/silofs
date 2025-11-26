@@ -96,20 +96,20 @@ struct ft_params {
 
 /* tests execution environment context */
 struct ft_env {
-	struct silofs_mutex    mutex;
-	struct silofs_prandgen prng;
-	struct ft_params       params;
-	const struct ft_tdef  *currtest;
-	struct statvfs         stvfs;
-	uint64_t               seqn;
-	time_t                 start;
-	pid_t                  pid;
-	uid_t                  uid;
-	gid_t                  gid;
-	mode_t                 umsk;
-	size_t                 nbytes_alloc;
-	struct ft_mchunk      *malloc_list;
-	struct ft_tests        tests;
+	struct silofs_mutex   mutex;
+	struct ft_params      params;
+	const struct ft_tdef *currtest;
+	struct statvfs        stvfs;
+	uint64_t              seqn;
+	time_t                start;
+	uint64_t              prngc;
+	pid_t                 pid;
+	uid_t                 uid;
+	gid_t                 gid;
+	mode_t                umsk;
+	size_t                nbytes_alloc;
+	struct ft_mchunk     *malloc_list;
+	struct ft_tests       tests;
 };
 
 /* I/O range to test */

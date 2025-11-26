@@ -40,10 +40,10 @@ void fte_init(struct ft_env *fte, const struct ft_params *params)
 {
 	memset(fte, 0, sizeof(*fte));
 	memcpy(&fte->params, params, sizeof(fte->params));
-	silofs_prandgen_init(&fte->prng);
 	silofs_mutex_init(&fte->mutex);
 	fte->currtest = nullptr;
 	fte->start = time(nullptr);
+	fte->prngc = 0;
 	fte->seqn = 0;
 	fte->nbytes_alloc = 0;
 	fte->malloc_list = nullptr;
@@ -210,9 +210,40 @@ void ft_relax_mem(struct ft_env *fte)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ft_do_fill_random(struct ft_env *fte, void *buf, size_t bsz)
+/* Blum-Blum-Shub pseudo-random number generator, using p=383 q=503 */
+static uint64_t blum_blum_shub(uint64_t n)
 {
-	silofs_prandgen_take(&fte->prng, buf, bsz);
+	return (n * n) % 192649UL;
+}
+
+static uint64_t blum_blum_shub_u64(uint64_t n)
+{
+	uint64_t u = 0;
+
+	n = blum_blum_shub(n);
+	u = (n & 0xFF);
+	n = blum_blum_shub(n);
+	u = (u << 16) | (n & 0xFF);
+	n = blum_blum_shub(n);
+	u = (u << 16) | (n & 0xFF);
+	n = blum_blum_shub(n);
+	u = (u << 16) | (n & 0xFF);
+	return u;
+}
+
+static void ft_do_fill_prandom(struct ft_env *fte, void *buf, size_t bsz)
+{
+	const uint64_t start = (uint64_t)fte->start;
+	uint64_t u;
+	uint8_t *m = buf;
+	size_t k, cnt = 0;
+
+	while (cnt < bsz) {
+		u = blum_blum_shub_u64(start + fte->prngc++);
+		k = ft_min(bsz - cnt, sizeof(u));
+		memcpy(&m[cnt], &u, k);
+		cnt += k;
+	}
 }
 
 void ft_suspend(const struct ft_env *fte, int sec, int part)
@@ -324,7 +355,7 @@ void *ft_new_buf_rands(struct ft_env *fte, size_t bsz)
 
 	fte_lock(fte);
 	buf = ft_do_malloc(fte, bsz);
-	ft_do_fill_random(fte, buf, bsz);
+	ft_do_fill_prandom(fte, buf, bsz);
 	fte_unlock(fte);
 	return buf;
 }
@@ -334,7 +365,7 @@ long ft_lrand(struct ft_env *fte)
 	long r = 0;
 
 	fte_lock(fte);
-	ft_do_fill_random(fte, &r, sizeof(r));
+	ft_do_fill_prandom(fte, &r, sizeof(r));
 	fte_unlock(fte);
 	return r;
 }

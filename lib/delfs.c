@@ -17,7 +17,7 @@
 #include "configs.h"
 #include <silofs/ioctls.h>
 #include "infra.h"
-#include "ubs.h"
+#include "bstore.h"
 #include "vfs.h"
 #include "gbr.h"
 #include "env.h"

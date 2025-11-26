@@ -17,7 +17,7 @@
 #include "configs.h"
 #include <errno.h>
 #include <silofs/ioctls.h>
-#include "ubs.h"
+#include "bstore.h"
 #include "vfs.h"
 #include "exec.h"
 #include "env.h"

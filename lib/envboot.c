@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 #include "configs.h"
-#include "ubs.h"
+#include "bstore.h"
 #include "vfs.h"
 #include "gbr.h"
 #include "env.h"

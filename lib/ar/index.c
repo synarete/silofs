@@ -17,7 +17,7 @@
 #include <stdint.h>
 #include "infra.h"
 #include "addr.h"
-#include "ubs.h"
+#include "bstore.h"
 #include "vfs.h"
 #include "index.h"
 

@@ -21,6 +21,7 @@
 #include "crypt/passwd.h"
 #include "crypt/ivkey.h"
 #include "crypt/mdigest.h"
+#include "crypt/kdf.h"
 #include "crypt/cipher.h"
 #include "crypt/random.h"
 #include "crypt/gcry.h"

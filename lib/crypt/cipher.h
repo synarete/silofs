@@ -23,19 +23,6 @@
 #include "mdigest.h"
 #include "passwd.h"
 
-struct silofs_kdf_desc {
-	uint32_t kd_iterations;
-	uint32_t kd_algo;
-	uint16_t kd_subalgo;
-	uint16_t kd_salt_md;
-	uint32_t kd_reserved;
-};
-
-struct silofs_kdf_descs {
-	struct silofs_kdf_desc kdf_iv;
-	struct silofs_kdf_desc kdf_key;
-};
-
 /* cipher's operation arguments */
 struct silofs_ciargs {
 	enum silofs_cipher_algo algo;
@@ -80,11 +67,5 @@ int silofs_encrypt_buf(const struct silofs_cipher *ci,
 int silofs_decrypt_buf(const struct silofs_cipher *ci,
                        const struct silofs_civkey *civkey, const void *in_dat,
                        void *out_dat, size_t dat_len);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-int silofs_derive_default_civkey(const struct silofs_mdigest  *md,
-                                 const struct silofs_password *pw,
-                                 struct silofs_civkey         *out_civkey);
 
 #endif /* SILOFS_CIPHER_H_ */

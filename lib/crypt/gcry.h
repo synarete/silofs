@@ -18,6 +18,7 @@
 #define SILOFS_GCRY_H_
 
 #include <gcrypt.h>
+#include <silofs/macros.h>
 
 const char *silofs_gcrypt_version(void);
 

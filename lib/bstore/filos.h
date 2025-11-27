@@ -19,7 +19,6 @@
 
 #include "infra.h"
 #include "crypt.h"
-#include "str.h"
 #include "addr.h"
 
 /* hash-map + LRU-queue of open blob-refs */

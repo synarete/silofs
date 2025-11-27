@@ -17,8 +17,8 @@
 #ifndef SILOFS_NAMEI_H_
 #define SILOFS_NAMEI_H_
 
+#include <silofs/string.h>
 #include <silofs/ioctls.h>
-#include "str.h"
 
 struct silofs_mdigest;
 struct silofs_task_ctx;

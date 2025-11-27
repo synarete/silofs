@@ -24,10 +24,10 @@
 #include <grp.h>
 #include <silofs/types.h>
 #include <silofs/errors.h>
+#include <silofs/string.h>
 #include <silofs/mntsvc.h>
 #include <silofs/appexec.h>
 #include "infra.h"
-#include "str.h"
 #include "vfs.h"
 
 static bool strview_isempty(const struct silofs_strview *sv)

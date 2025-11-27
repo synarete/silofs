@@ -18,7 +18,6 @@
 #define SILOFS_REPO_H_
 
 #include "infra.h"
-#include "str.h"
 #include "crypt.h"
 #include "addr.h"
 #include "filos.h"

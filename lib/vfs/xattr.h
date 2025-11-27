@@ -18,7 +18,6 @@
 #define SILOFS_XATTR_H_
 
 #include "infra.h"
-#include "str.h"
 
 struct silofs_task_ctx;
 struct silofs_namestr;

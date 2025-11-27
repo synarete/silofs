@@ -19,7 +19,7 @@
 
 #include <stdlib.h>
 #include <silofs/ondisk.h>
-#include "str.h"
+#include <silofs/string.h>
 #include "svolid.h"
 
 struct silofs_uniqid {

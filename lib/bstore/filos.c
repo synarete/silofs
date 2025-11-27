@@ -22,7 +22,6 @@
 #include <silofs/errors.h>
 #include <silofs/syscall.h>
 #include "infra.h"
-#include "str.h"
 #include "filos.h"
 
 /*

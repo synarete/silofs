@@ -17,8 +17,8 @@
 #include "configs.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <silofs/string.h>
 #include "infra.h"
-#include "str.h"
 #include "crypt.h"
 #include "offlba.h"
 #include "htox.h"

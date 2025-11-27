@@ -15,9 +15,10 @@
  * GNU General Public License for more details.
  */
 #include "configs.h"
+#include <silofs/macros.h>
 #include <silofs/errors.h>
+#include <silofs/string.h>
 #include "infra.h"
-#include "str.h"
 #include "passwd.h"
 
 static void

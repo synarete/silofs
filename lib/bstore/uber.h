@@ -46,7 +46,7 @@ silofs_lookup_cached_uber(struct silofs_pcache      *pcache,
 
 struct silofs_uber_info *
 silofs_create_cached_uber(struct silofs_pcache      *pcache,
-                          const struct silofs_paddr *paddr, bool spawn);
+                          const struct silofs_pmeta *pmeta, bool spawn);
 
 void silofs_forget_cached_uber(struct silofs_pcache    *pcache,
                                struct silofs_uber_info *ubi);

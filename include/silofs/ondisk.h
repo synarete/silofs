@@ -500,6 +500,14 @@ struct silofs_uuid {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+/* unique identifier within blob-id */
+struct silofs_uniqid {
+	union {
+		struct silofs_hash256 hash;
+		uint8_t               raw[32];
+	} u;
+} silofs_attr_aligned8;
+
 /* sub-volume identifier */
 struct silofs_svolid {
 	uint8_t id[SILOFS_SVOLID_SIZE];
@@ -580,15 +588,10 @@ struct silofs_gbr1k {
 	struct silofs_uuid      gbr_uuid;
 	uint32_t                gbr_kind;
 	uint32_t                gbr_flags;
-	uint16_t                gbr_cipher_algo;
-	uint8_t                 gbr_reserved1[2];
-	uint16_t                gbr_cipher_mode;
-	uint8_t                 gbr_reserved2[2];
-	struct silofs_civ       gbr_main_iv;
-	struct silofs_ckey      gbr_main_key;
+	uint8_t                 gbr_reserved1[24];
+	struct silofs_pmeta192b gbr_root;
 	struct silofs_uaddr128b gbr_sb_addr;
-	struct silofs_paddr64b  gbr_root;
-	uint8_t                 gbr_reserved3[672];
+	uint8_t                 gbr_reserved3[608];
 	struct silofs_hash256   gbr_hash;
 } silofs_attr_aligned64;
 

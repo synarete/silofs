@@ -163,9 +163,9 @@ out:
 static const struct silofs_civkey *
 rec_arix_civkey(const struct silofs_re_ctx *re_ctx)
 {
-	const struct silofs_gbrs *gbrs = &re_ctx->env->gbrs;
+	const struct silofs_gbrctl *gbrctl = &re_ctx->env->gbrctl;
 
-	return &gbrs->ar_gbr.civkey;
+	return &gbrctl->ar_gbr.root.civkey;
 }
 
 static int rec_fetch_arix_block(struct silofs_re_ctx *re_ctx)
@@ -176,9 +176,10 @@ static int rec_fetch_arix_block(struct silofs_re_ctx *re_ctx)
 }
 
 static int
-rec_resolve_apex(struct silofs_re_ctx *re_ctx, struct silofs_paddr *out_paddr)
+rec_resolve_apex(struct silofs_re_ctx *re_ctx, struct silofs_pmeta *out_pmeta)
 {
-	return silofs_gbrs_root(&re_ctx->env->gbrs, SILOFS_GBR_AR, out_paddr);
+	return silofs_gbrctl_root(&re_ctx->env->gbrctl, SILOFS_GBR_AR,
+	                          out_pmeta);
 }
 
 static int rec_restore_arix(struct silofs_re_ctx *re_ctx,
@@ -199,14 +200,14 @@ static int rec_restore_arix(struct silofs_re_ctx *re_ctx,
 
 static int rec_restore_apex(struct silofs_re_ctx *re_ctx)
 {
-	struct silofs_paddr paddr = { .pos = -1 };
+	struct silofs_pmeta pmeta;
 	int err;
 
-	err = rec_resolve_apex(re_ctx, &paddr);
+	err = rec_resolve_apex(re_ctx, &pmeta);
 	if (err) {
 		return err;
 	}
-	err = rec_restore_arix(re_ctx, &paddr);
+	err = rec_restore_arix(re_ctx, &pmeta.paddr);
 	if (err) {
 		return err;
 	}
@@ -315,7 +316,7 @@ static int rec_restore_sb_addr(struct silofs_re_ctx *re_ctx)
 		return -SILOFS_EBADARIX;
 	}
 	sb_uaddr_of(sb_laddr, &sb_uaddr);
-	silofs_gbrs_update_sb_addr(&re_ctx->env->gbrs, &sb_uaddr);
+	silofs_gbrctl_update_sb_addr(&re_ctx->env->gbrctl, &sb_uaddr);
 	return 0;
 }
 
@@ -366,7 +367,7 @@ static int rec_restore_prep(struct silofs_re_ctx *re_ctx,
 	if (err) {
 		return err;
 	}
-	err = silofs_gbrs_update(&env->gbrs, SILOFS_GBR_FS);
+	err = silofs_gbrctl_update(&env->gbrctl, SILOFS_GBR_FS);
 	if (err) {
 		return err;
 	}

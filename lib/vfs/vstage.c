@@ -1882,7 +1882,7 @@ static int vstgc_resolve_child_of(const struct silofs_vstage_ctx *vstg_ctx,
 static const struct silofs_ckey *
 vstgc_main_key(const struct silofs_vstage_ctx *vstg_ctx)
 {
-	return &vstg_ctx->env->gbrs.fs_gbr.civkey.key;
+	return &vstg_ctx->env->gbrctl.fs_gbr.root.civkey.key;
 }
 
 static void vstgc_resolve_main_key(const struct silofs_vstage_ctx *vstg_ctx,

@@ -165,6 +165,7 @@ static void validate_ondisk_base_types(void)
 
 static void validate_ondisk_addrs(void)
 {
+	REQUIRE_SIZEOF(struct silofs_uniqid, 32);
 	REQUIRE_SIZEOF(struct silofs_svolid, 16);
 	REQUIRE_SIZEOF(struct silofs_blobid, 56);
 	REQUIRE_SIZEOF(struct silofs_vaddr56, 7);
@@ -230,12 +231,9 @@ static void validate_ondisk_gbr(void)
 	REQUIRE_OFFSET64(struct silofs_gbr1k, gbr_uuid, 16);
 	REQUIRE_OFFSET64(struct silofs_gbr1k, gbr_kind, 32);
 	REQUIRE_OFFSET32(struct silofs_gbr1k, gbr_flags, 36);
-	REQUIRE_OFFSET64(struct silofs_gbr1k, gbr_cipher_algo, 40);
-	REQUIRE_OFFSET32(struct silofs_gbr1k, gbr_cipher_mode, 44);
-	REQUIRE_OFFSET64(struct silofs_gbr1k, gbr_main_iv, 48);
-	REQUIRE_OFFSET64(struct silofs_gbr1k, gbr_main_key, 64);
-	REQUIRE_OFFSET64(struct silofs_gbr1k, gbr_sb_addr, 128);
-	REQUIRE_OFFSET64(struct silofs_gbr1k, gbr_root, 256);
+	REQUIRE_OFFSET64(struct silofs_gbr1k, gbr_root, 64);
+	REQUIRE_OFFSET64(struct silofs_gbr1k, gbr_sb_addr, 256);
+	REQUIRE_SIZEOF_1K(struct silofs_gbr1k);
 	REQUIRE_SIZEOF(struct silofs_gbr1k, SILOFS_MBR_SIZE);
 }
 

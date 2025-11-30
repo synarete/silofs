@@ -22,13 +22,6 @@
 #include <silofs/string.h>
 #include "svolid.h"
 
-struct silofs_uniqid {
-	union {
-		struct silofs_hash256 hash;
-		uint8_t               raw[32];
-	} u;
-};
-
 const struct silofs_blobid *silofs_blobid_none(void);
 
 void silofs_blobid_setup_raw(struct silofs_blobid       *blobid,

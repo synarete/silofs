@@ -484,13 +484,12 @@ silofs_lookup_cached_btnode(struct silofs_pcache *pcache,
 
 struct silofs_btnode_info *
 silofs_create_cached_btnode(struct silofs_pcache *pcache,
-                            const struct silofs_paddr *paddr, bool spawn)
+                            const struct silofs_pmeta *pmeta, bool spawn)
 {
 	struct silofs_pnode_info *pni;
 	struct silofs_btnode_info *bti;
 
-	silofs_assert_eq(paddr->mtype, SILOFS_MTYPE_BTNODE);
-	pni = silofs_pcache_create_pnode(pcache, paddr);
+	pni = silofs_pcache_create_pnode(pcache, pmeta);
 	bti = silofs_bti_from_pni(pni);
 	if ((bti != nullptr) && spawn) {
 		bti_setup_spawned(bti);

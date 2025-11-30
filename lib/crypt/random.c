@@ -181,21 +181,21 @@ void silofs_prandgen_fini(struct silofs_prandgen *prng)
 	memset(prng, 0, sizeof(*prng));
 }
 
-static uint64_t lrotate(uint64_t n)
-{
-	return silofs_lrotate64(n, 1);
-}
-
 static uint64_t prandgen_take_u64(struct silofs_prandgen *prng)
 {
 	const size_t i = prng->slot % ARRAY_SIZE(prng->prandom);
 	const size_t j = prng->slot % ARRAY_SIZE(prng->entropy);
-	uint64_t e, r;
+	const uint64_t r = prng->prandom[i];
+	const uint64_t e = prng->entropy[j];
+	uint64_t x;
 
-	r = prng->prandom[i];
-	e = prng->entropy[j];
-	prng->entropy[j] = lrotate(e ^ r);
+	/* move to next slot */
 	prng->slot++;
+
+	/* refresh entropy a bit */
+	x = r * (prng->xxprev / prng->slot);
+	prng->entropy[j] ^= twang_mix64(x);
+
 	return r ^ e;
 }
 
@@ -237,21 +237,28 @@ void silofs_prandgen_take(struct silofs_prandgen *prng, void *p, size_t n)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_gen_prandom_ckey(struct silofs_prandgen *prng,
-                             struct silofs_ckey *out_ckey)
+static void
+make_prandom_ckey(struct silofs_prandgen *prng, struct silofs_ckey *out_ckey)
 {
 	silofs_prandgen_take(prng, out_ckey->key, sizeof(out_ckey->key));
 }
 
-void silofs_gen_prandom_civ(struct silofs_prandgen *prng,
-                            struct silofs_civ *out_civ)
+static void
+make_prandom_civ(struct silofs_prandgen *prng, struct silofs_civ *out_civ)
 {
 	silofs_prandgen_take(prng, out_civ->iv, sizeof(out_civ->iv));
 }
 
-void silofs_gen_prandom_civkey(struct silofs_prandgen *prng,
-                               struct silofs_civkey *out_civkey)
+void silofs_generate_civkey(struct silofs_prandgen *prng,
+                            struct silofs_civkey *out_civkey)
 {
-	silofs_gen_prandom_ckey(prng, &out_civkey->key);
-	silofs_gen_prandom_civ(prng, &out_civkey->iv);
+	make_prandom_ckey(prng, &out_civkey->key);
+	make_prandom_civ(prng, &out_civkey->iv);
+}
+
+void silofs_generate_uniqid(struct silofs_prandgen *prng,
+                            struct silofs_uniqid *out_uniqid)
+{
+	silofs_prandgen_take(prng, out_uniqid->u.raw,
+	                     sizeof(out_uniqid->u.raw));
 }

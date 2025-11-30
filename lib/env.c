@@ -25,9 +25,9 @@
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static const struct silofs_paddr *ubi_paddr(const struct silofs_uber_info *ubi)
+static const struct silofs_pmeta *ubi_pmeta(const struct silofs_uber_info *ubi)
 {
-	return &ubi->ub_pni.pn_meta.paddr;
+	return &ubi->ub_pni.pn_meta;
 }
 
 static void
@@ -47,11 +47,9 @@ env_bind_ubi(struct silofs_env *env, struct silofs_uber_info *ubi_new)
 static void env_update_root_uber(struct silofs_env *env,
                                  const struct silofs_uber_info *ubi)
 {
-	const struct silofs_paddr *paddr = nullptr;
-
 	if (ubi != nullptr) {
-		paddr = ubi_paddr(ubi);
-		silofs_gbrs_set_root(&env->gbrs, SILOFS_GBR_FS, paddr);
+		silofs_gbrctl_set_root(&env->gbrctl, SILOFS_GBR_FS,
+		                       ubi_pmeta(ubi));
 	}
 }
 
@@ -63,9 +61,9 @@ env_update_uber(struct silofs_env *env, struct silofs_uber_info *ubi)
 }
 
 static int env_resolve_root_uber(const struct silofs_env *env,
-                                 struct silofs_paddr *out_paddr)
+                                 struct silofs_pmeta *out_pmeta)
 {
-	return silofs_gbrs_root(&env->gbrs, SILOFS_GBR_FS, out_paddr);
+	return silofs_gbrctl_root(&env->gbrctl, SILOFS_GBR_FS, out_pmeta);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -91,7 +89,7 @@ env_update_root_sb(struct silofs_env *env, const struct silofs_sb_info *sbi)
 
 	if (sbi != nullptr) {
 		uaddr = silofs_sbi_uaddr(sbi);
-		silofs_gbrs_update_sb_addr(&env->gbrs, uaddr);
+		silofs_gbrctl_update_sb_addr(&env->gbrctl, uaddr);
 	}
 }
 
@@ -193,25 +191,25 @@ static void env_fini_commons(struct silofs_env *env)
 	env->ms_flags = 0;
 }
 
-static int env_init_gbrs(struct silofs_env *env)
+static int env_init_gbrctl(struct silofs_env *env)
 {
 	int err;
 
-	err = silofs_gbrs_init(&env->gbrs);
+	err = silofs_gbrctl_init(&env->gbrctl);
 	if (err) {
 		return err;
 	}
-	err = silofs_gbrs_derive_civkey(&env->gbrs, env->base.passwd);
+	err = silofs_gbrctl_derive_civkey(&env->gbrctl, env->base.passwd);
 	if (err) {
-		silofs_gbrs_fini(&env->gbrs);
+		silofs_gbrctl_fini(&env->gbrctl);
 		return err;
 	}
 	return 0;
 }
 
-static void env_fini_gbrs(struct silofs_env *env)
+static void env_fini_gbrctl(struct silofs_env *env)
 {
-	silofs_gbrs_fini(&env->gbrs);
+	silofs_gbrctl_fini(&env->gbrctl);
 }
 
 static int env_init_locks(struct silofs_env *env)
@@ -282,7 +280,7 @@ int silofs_env_init(struct silofs_env *env, const struct silofs_env_base *base)
 	env_init_commons(env, base);
 	env_init_opstat(env);
 
-	err = env_init_gbrs(env);
+	err = env_init_gbrctl(env);
 	if (err) {
 		return err;
 	}
@@ -315,7 +313,7 @@ void silofs_env_fini(struct silofs_env *env)
 	env_fini_uconv(env);
 	env_fini_crypto(env);
 	env_fini_locks(env);
-	env_fini_gbrs(env);
+	env_fini_gbrctl(env);
 	env_fini_commons(env);
 }
 
@@ -359,12 +357,17 @@ bool silofs_env_isrdonlyfs(const struct silofs_env *env)
 static void
 env_make_uniqid(struct silofs_env *env, struct silofs_uniqid *out_uniqid)
 {
-	silofs_prandgen_take(env->base.prng, out_uniqid->u.raw,
-	                     sizeof(out_uniqid->u.raw));
+	silofs_generate_uniqid(env->base.prng, out_uniqid);
 }
 
-static void env_make_first_uber_addr(struct silofs_env *env,
-                                     struct silofs_paddr *out_paddr)
+static void
+env_make_civkey(struct silofs_env *env, struct silofs_civkey *out_civkey)
+{
+	silofs_generate_civkey(env->base.prng, out_civkey);
+}
+
+static void env_make_first_uber_paddr(struct silofs_env *env,
+                                      struct silofs_paddr *out_paddr)
 {
 	struct silofs_svolid svolid;
 	struct silofs_uniqid uniqid;
@@ -374,27 +377,27 @@ static void env_make_first_uber_addr(struct silofs_env *env,
 	env_make_uniqid(env, &uniqid);
 	silofs_blobid_setup_raw3(&blobid, &svolid, &uniqid, SILOFS_MTYPE_UBER);
 	silofs_paddr_init(out_paddr, &blobid, 0);
-	silofs_unused(env);
 }
 
-static void
-env_resolve_main_key(const struct silofs_env *env, struct silofs_ckey *out_key)
+static void env_make_first_uber_pmeta(struct silofs_env *env,
+                                      struct silofs_pmeta *out_pmeta)
 {
-	const struct silofs_gbr *fs_gbr = &env->gbrs.fs_gbr;
+	struct silofs_paddr paddr;
+	struct silofs_civkey civkey;
 
-	silofs_ckey_assign(out_key, &fs_gbr->civkey.key);
+	env_make_first_uber_paddr(env, &paddr);
+	env_make_civkey(env, &civkey);
+	silofs_pmeta_setup(out_pmeta, &paddr, &civkey);
 }
 
 int silofs_env_format_uber(struct silofs_env *env)
 {
-	struct silofs_paddr ub_addr;
-	struct silofs_ckey key;
+	struct silofs_pmeta pmeta;
 	struct silofs_uber_info *ubi = nullptr;
 	int err;
 
-	env_resolve_main_key(env, &key);
-	env_make_first_uber_addr(env, &ub_addr);
-	err = silofs_spawn_uber_at(env, &ub_addr, &key, &ubi);
+	env_make_first_uber_pmeta(env, &pmeta);
+	err = silofs_spawn_uber(env, &pmeta, &ubi);
 	if (err) {
 		return err;
 	}
@@ -404,17 +407,15 @@ int silofs_env_format_uber(struct silofs_env *env)
 
 int silofs_env_reload_uber(struct silofs_env *env)
 {
-	struct silofs_paddr ub_addr;
-	struct silofs_ckey key;
+	struct silofs_pmeta pmeta;
 	struct silofs_uber_info *ubi = nullptr;
 	int err;
 
-	env_resolve_main_key(env, &key);
-	err = env_resolve_root_uber(env, &ub_addr);
+	err = env_resolve_root_uber(env, &pmeta);
 	if (err) {
 		return err;
 	}
-	err = silofs_stage_uber_at(env, &ub_addr, &key, &ubi);
+	err = silofs_stage_uber(env, &pmeta, &ubi);
 	if (err) {
 		return err;
 	}
@@ -512,7 +513,7 @@ env_check_sb(const struct silofs_env *env, const struct silofs_sb_info *sbi)
 
 static const struct silofs_uaddr *env_gbr_sb_addr(const struct silofs_env *env)
 {
-	return &env->gbrs.fs_gbr.sb_addr;
+	return &env->gbrctl.fs_gbr.sb_addr;
 }
 
 int silofs_env_reload_super(struct silofs_env *env)
@@ -625,8 +626,8 @@ env_recalc_fs_mref(struct silofs_env *env, struct silofs_paddr *out_paddr)
 {
 	struct silofs_gbr1k gbr1k = { .gbr_magic = UINT64_MAX };
 
-	return silofs_gbrs_encode(&env->gbrs, SILOFS_GBR_FS, out_paddr,
-	                          &gbr1k);
+	return silofs_gbrctl_encode(&env->gbrctl, SILOFS_GBR_FS, out_paddr,
+	                            &gbr1k);
 }
 
 static int
@@ -683,22 +684,22 @@ static int check_arix_size(ssize_t sz)
 }
 
 static int
-env_arix_addr(const struct silofs_env *env, struct silofs_paddr *out_paddr)
+env_arix_addr(const struct silofs_env *env, struct silofs_pmeta *out_pmeta)
 {
-	return silofs_gbrs_root(&env->gbrs, SILOFS_GBR_AR, out_paddr);
+	return silofs_gbrctl_root(&env->gbrctl, SILOFS_GBR_AR, out_pmeta);
 }
 
 int silofs_env_sense_ar(struct silofs_env *env)
 {
-	struct silofs_paddr paddr;
+	struct silofs_pmeta pmeta;
 	struct stat st;
 	int err;
 
-	err = env_arix_addr(env, &paddr);
+	err = env_arix_addr(env, &pmeta);
 	if (err) {
 		return err;
 	}
-	err = silofs_repo_stat_blob(env->base.repo, &paddr.blobid, &st);
+	err = silofs_repo_stat_blob(env->base.repo, &pmeta.paddr.blobid, &st);
 	if (err) {
 		return err;
 	}

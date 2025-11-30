@@ -70,10 +70,17 @@ void silofs_derive_key_by(const struct silofs_mdigest *mdigest,
 
 const struct silofs_pmeta *silofs_pmeta_none(void);
 
+void silofs_pmeta_setup(struct silofs_pmeta        *pmeta,
+                        const struct silofs_paddr  *paddr,
+                        const struct silofs_civkey *civkey);
+
 void silofs_pmeta_reset(struct silofs_pmeta *pmeta);
 
 void silofs_pmeta_assign(struct silofs_pmeta       *pmeta,
                          const struct silofs_pmeta *other);
+
+void silofs_pmeta_assign_crypto(struct silofs_pmeta       *pmeta,
+                                const struct silofs_pmeta *other);
 
 bool silofs_pmeta_isnull(const struct silofs_pmeta *pmeta);
 
@@ -114,7 +121,7 @@ struct silofs_btnode_info *
 silofs_bti_from_pni(const struct silofs_pnode_info *pni);
 
 struct silofs_pnode_info *
-silofs_new_pnode(const struct silofs_paddr *paddr, struct silofs_alloc *alloc);
+silofs_new_pnode(const struct silofs_pmeta *pmeta, struct silofs_alloc *alloc);
 
 void silofs_del_pnode(struct silofs_pnode_info *pni,
                       struct silofs_alloc      *alloc);

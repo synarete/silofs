@@ -20,6 +20,7 @@
 #include "infra.h"
 #include "crypt.h"
 #include "addr.h"
+#include "nodes.h"
 #include "bstore.h"
 
 struct silofs_env;
@@ -33,17 +34,15 @@ struct silofs_mrefs {
 
 /* global boot-record, in-memory representation */
 struct silofs_gbr {
-	struct silofs_civkey civkey;
-	struct silofs_ciargs ciargs;
+	struct silofs_pmeta  root;
 	struct silofs_uuid   uuid;
-	struct silofs_paddr  root;
 	struct silofs_uaddr  sb_addr;
 	enum silofs_gbr_kind kind;
 	unsigned             flags;
 };
 
-/* global boot records switch */
-struct silofs_gbrs {
+/* global boot-records controller */
+struct silofs_gbrctl {
 	struct silofs_gbr     fs_gbr;
 	struct silofs_gbr     ar_gbr;
 	struct silofs_cipher  cipher;
@@ -53,36 +52,35 @@ struct silofs_gbrs {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_gbrs_init(struct silofs_gbrs *gbrs);
+int silofs_gbrctl_init(struct silofs_gbrctl *gbrctl);
 
-void silofs_gbrs_fini(struct silofs_gbrs *gbrs);
+void silofs_gbrctl_fini(struct silofs_gbrctl *gbrctl);
 
-int silofs_gbrs_derive_civkey(struct silofs_gbrs           *gbrs,
-                              const struct silofs_password *pw);
+int silofs_gbrctl_derive_civkey(struct silofs_gbrctl         *gbrctl,
+                                const struct silofs_password *pw);
 
-void silofs_gbrs_update_sb_addr(struct silofs_gbrs        *gbrs,
-                                const struct silofs_uaddr *sb_uaddr);
+void silofs_gbrctl_update_sb_addr(struct silofs_gbrctl      *gbrctl,
+                                  const struct silofs_uaddr *sb_uaddr);
 
-int silofs_gbrs_root(const struct silofs_gbrs *gbrs,
-                     enum silofs_gbr_kind      gdr_kind,
-                     struct silofs_paddr      *out_paddr);
+int silofs_gbrctl_root(const struct silofs_gbrctl *gbrctl,
+                       enum silofs_gbr_kind        gdr_kind,
+                       struct silofs_pmeta        *out_pmeta);
 
-void silofs_gbrs_set_root(struct silofs_gbrs        *gbrs,
-                          enum silofs_gbr_kind       gdr_kind,
-                          const struct silofs_paddr *paddr);
+void silofs_gbrctl_set_root(struct silofs_gbrctl      *gbrctl,
+                            enum silofs_gbr_kind       gdr_kind,
+                            const struct silofs_pmeta *pmeta);
 
-int silofs_gbrs_regen(struct silofs_gbrs *gbrs, enum silofs_gbr_kind gdr_kind);
+int silofs_gbrctl_encode(const struct silofs_gbrctl *gbrctl,
+                         enum silofs_gbr_kind        gdr_kind,
+                         struct silofs_paddr        *out_mref,
+                         struct silofs_gbr1k        *out_gbr1k);
 
-int silofs_gbrs_encode(const struct silofs_gbrs *gbrs,
-                       enum silofs_gbr_kind      gdr_kind,
-                       struct silofs_paddr      *out_mref,
-                       struct silofs_gbr1k      *out_gbr1k);
+int silofs_gbrctl_decode(struct silofs_gbrctl      *gbrctl,
+                         enum silofs_gbr_kind       gdr_kind,
+                         const struct silofs_paddr *mref,
+                         const struct silofs_gbr1k *gbr1k);
 
-int silofs_gbrs_decode(struct silofs_gbrs *gbrs, enum silofs_gbr_kind gdr_kind,
-                       const struct silofs_paddr *mref,
-                       const struct silofs_gbr1k *gbr1k);
-
-int silofs_gbrs_update(struct silofs_gbrs  *gbrs,
-                       enum silofs_gbr_kind gdr_kind);
+int silofs_gbrctl_update(struct silofs_gbrctl *gbrctl,
+                         enum silofs_gbr_kind  gdr_kind);
 
 #endif /* SILOFS_GBR_H_ */

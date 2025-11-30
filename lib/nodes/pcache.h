@@ -44,11 +44,11 @@ struct silofs_pnode_info *
 silofs_pcache_dq_front(const struct silofs_pcache *pcache);
 
 struct silofs_pnode_info *
-silofs_pcache_lookup_pnode(struct silofs_pcache      *pcache,
-                           const struct silofs_paddr *paddr);
+silofs_pcache_create_pnode(struct silofs_pcache      *pcache,
+                           const struct silofs_pmeta *pmeta);
 
 struct silofs_pnode_info *
-silofs_pcache_create_pnode(struct silofs_pcache      *pcache,
+silofs_pcache_lookup_pnode(struct silofs_pcache      *pcache,
                            const struct silofs_paddr *paddr);
 
 void silofs_pcache_delete_pnode(struct silofs_pcache     *pcache,

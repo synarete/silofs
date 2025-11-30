@@ -40,7 +40,7 @@ static int env_reinit_ciphers_by_gbr(struct silofs_env *env)
 {
 	const struct silofs_gbr *gbr = &env->gbrctl.fs_gbr;
 
-	return env_reinit_ciphers(env, &gbr->root.ciargs);
+	return env_reinit_ciphers(env, &gbr->root.cmeta.ciargs);
 }
 
 int silofs_env_setup_fs_gbr(struct silofs_env *env)

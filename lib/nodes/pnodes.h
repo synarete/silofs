@@ -23,13 +23,6 @@
 #include "hmapq.h"
 #include "view.h"
 
-/* persistent nodes meta params */
-struct silofs_pmeta {
-	struct silofs_paddr  paddr;
-	struct silofs_civkey civkey;
-	struct silofs_ciargs ciargs;
-};
-
 /* base of all persistent nodes */
 struct silofs_pnode_info {
 	struct silofs_pmeta      pn_meta;
@@ -68,30 +61,6 @@ void silofs_derive_key_by(const struct silofs_mdigest *mdigest,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-const struct silofs_pmeta *silofs_pmeta_none(void);
-
-void silofs_pmeta_setup(struct silofs_pmeta        *pmeta,
-                        const struct silofs_paddr  *paddr,
-                        const struct silofs_civkey *civkey);
-
-void silofs_pmeta_reset(struct silofs_pmeta *pmeta);
-
-void silofs_pmeta_assign(struct silofs_pmeta       *pmeta,
-                         const struct silofs_pmeta *other);
-
-void silofs_pmeta_assign_crypto(struct silofs_pmeta       *pmeta,
-                                const struct silofs_pmeta *other);
-
-bool silofs_pmeta_isnull(const struct silofs_pmeta *pmeta);
-
-void silofs_pmeta192b_htox(struct silofs_pmeta192b   *pmeta192,
-                           const struct silofs_pmeta *pmeta);
-
-void silofs_pmeta192b_xtoh(const struct silofs_pmeta192b *pmeta192,
-                           struct silofs_pmeta           *pmeta);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 enum silofs_mtype silofs_pni_mtype(const struct silofs_pnode_info *pni);
 
 void silofs_pni_dirtify(struct silofs_pnode_info *pni);
@@ -104,10 +73,6 @@ void silofs_pni_decref(struct silofs_pnode_info *pni);
 
 void silofs_pni_set_dq(struct silofs_pnode_info *pni,
                        struct silofs_dirtyq     *dq);
-
-void silofs_pni_setup_civkey(struct silofs_pnode_info    *pni,
-                             const struct silofs_mdigest *md,
-                             const struct silofs_ckey    *key);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

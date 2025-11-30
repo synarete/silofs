@@ -171,7 +171,7 @@ static int gbr1k_check(const struct silofs_gbr1k *gbr1k)
 		return err;
 	}
 	gbr1k_root(gbr1k, &pmeta);
-	err = silofs_ciargs_check(&pmeta.ciargs);
+	err = silofs_ciargs_check(&pmeta.cmeta.ciargs);
 	if (err) {
 		return err;
 	}
@@ -266,7 +266,7 @@ static void gbr_gen_uuid(struct silofs_gbr *gbr)
 static void
 gbr_update_from(struct silofs_gbr *gbr, const struct silofs_gbr *other)
 {
-	silofs_pmeta_assign_crypto(&gbr->root, &other->root);
+	silofs_cmeta_assign(&gbr->root.cmeta, &other->root.cmeta);
 }
 
 static bool

@@ -67,7 +67,7 @@ void silofs_llink_of_uni(const struct silofs_gbr *gbr,
                          struct silofs_llink *out_llink)
 {
 	const struct silofs_laddr *laddr = silofs_uni_laddr(uni);
-	const struct silofs_civkey *civkey = &gbr->root.civkey;
+	const struct silofs_civkey *civkey = &gbr->root.cmeta.civkey;
 
 	silofs_llink_setup(out_llink, laddr, &civkey->key, &civkey->iv);
 }

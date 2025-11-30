@@ -180,11 +180,13 @@ static void validate_ondisk_addrs(void)
 
 static void validate_ondisk_pmeta(void)
 {
-	REQUIRE_OFFSET64(struct silofs_pmeta192b, btc_paddr, 0);
-	REQUIRE_OFFSET64(struct silofs_pmeta192b, btc_cipher_key, 64);
-	REQUIRE_OFFSET64(struct silofs_pmeta192b, btc_cipher_iv, 128);
-	REQUIRE_OFFSET64(struct silofs_pmeta192b, btc_cipher_algo, 144);
-	REQUIRE_OFFSET32(struct silofs_pmeta192b, btc_cipher_mode, 148);
+	REQUIRE_OFFSET64(struct silofs_cmeta96b, cm_cipher_key, 0);
+	REQUIRE_OFFSET64(struct silofs_cmeta96b, cm_cipher_iv, 64);
+	REQUIRE_OFFSET64(struct silofs_cmeta96b, cm_cipher_algo, 80);
+	REQUIRE_OFFSET32(struct silofs_cmeta96b, cm_cipher_mode, 84);
+	REQUIRE_SIZEOF(struct silofs_cmeta96b, 96);
+	REQUIRE_OFFSET64(struct silofs_pmeta192b, pm_paddr, 0);
+	REQUIRE_OFFSET64(struct silofs_pmeta192b, pm_cmeta, 64);
 	REQUIRE_SIZEOF(struct silofs_pmeta192b, 192);
 }
 

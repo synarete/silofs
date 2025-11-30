@@ -95,81 +95,6 @@ void silofs_derive_key_by(const struct silofs_mdigest *mdigest,
 	derive_key_by_hash512(&hash, out_key);
 }
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static const struct silofs_pmeta s_pmeta_none = {
-	.ciargs.algo = SILOFS_CIPHER_NONE,
-	.ciargs.mode = SILOFS_CIPHER_MODE_NONE,
-};
-
-const struct silofs_pmeta *silofs_pmeta_none(void)
-{
-	return &s_pmeta_none;
-}
-
-void silofs_pmeta_setup(struct silofs_pmeta *pmeta,
-                        const struct silofs_paddr *paddr,
-                        const struct silofs_civkey *civkey)
-{
-	silofs_paddr_assign(&pmeta->paddr, paddr);
-	silofs_civkey_assign(&pmeta->civkey, civkey);
-	silofs_ciargs_assign(&pmeta->ciargs, silofs_ciargs_default());
-}
-
-void silofs_pmeta_reset(struct silofs_pmeta *pmeta)
-{
-	silofs_paddr_reset(&pmeta->paddr);
-	silofs_ckey_reset(&pmeta->civkey.key);
-	silofs_civ_reset(&pmeta->civkey.iv);
-	silofs_ciargs_reset(&pmeta->ciargs);
-}
-
-void silofs_pmeta_assign(struct silofs_pmeta *pmeta,
-                         const struct silofs_pmeta *other)
-{
-	silofs_paddr_assign(&pmeta->paddr, &other->paddr);
-	silofs_pmeta_assign_crypto(pmeta, other);
-}
-
-void silofs_pmeta_assign_crypto(struct silofs_pmeta *pmeta,
-                                const struct silofs_pmeta *other)
-{
-	silofs_civkey_assign(&pmeta->civkey, &other->civkey);
-	silofs_ciargs_assign(&pmeta->ciargs, &other->ciargs);
-}
-
-bool silofs_pmeta_isnull(const struct silofs_pmeta *pmeta)
-{
-	return silofs_paddr_isnull(&pmeta->paddr);
-}
-
-void silofs_pmeta192b_htox(struct silofs_pmeta192b *pmeta192,
-                           const struct silofs_pmeta *pmeta)
-{
-	const uint16_t algo = (uint16_t)(pmeta->ciargs.algo);
-	const uint16_t mode = (uint16_t)(pmeta->ciargs.mode);
-
-	memset(pmeta192, 0, sizeof(*pmeta192));
-	silofs_paddr64b_htox(&pmeta192->btc_paddr, &pmeta->paddr);
-	silofs_ckey_assign(&pmeta192->btc_cipher_key, &pmeta->civkey.key);
-	silofs_civ_assign(&pmeta192->btc_cipher_iv, &pmeta->civkey.iv);
-	pmeta192->btc_cipher_algo = silofs_cpu_to_le16(algo);
-	pmeta192->btc_cipher_mode = silofs_cpu_to_le16(mode);
-}
-
-void silofs_pmeta192b_xtoh(const struct silofs_pmeta192b *pmeta192,
-                           struct silofs_pmeta *pmeta)
-{
-	const uint16_t algo = silofs_le16_to_cpu(pmeta192->btc_cipher_algo);
-	const uint16_t mode = silofs_le16_to_cpu(pmeta192->btc_cipher_mode);
-
-	silofs_paddr64b_xtoh(&pmeta192->btc_paddr, &pmeta->paddr);
-	silofs_ckey_assign(&pmeta->civkey.key, &pmeta192->btc_cipher_key);
-	silofs_civ_assign(&pmeta->civkey.iv, &pmeta192->btc_cipher_iv);
-	pmeta->ciargs.algo = (enum silofs_cipher_algo)algo;
-	pmeta->ciargs.mode = (enum silofs_cipher_mode)mode;
-}
-
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static struct silofs_view *
@@ -265,16 +190,6 @@ void silofs_pni_incref(struct silofs_pnode_info *pni)
 void silofs_pni_decref(struct silofs_pnode_info *pni)
 {
 	silofs_hmqe_decref(&pni->pn_hmqe);
-}
-
-void silofs_pni_setup_civkey(struct silofs_pnode_info *pni,
-                             const struct silofs_mdigest *md,
-                             const struct silofs_ckey *key)
-{
-	struct silofs_civ iv;
-
-	silofs_derive_iv_by(md, &pni->pn_meta.paddr, &iv);
-	silofs_civkey_setup(&pni->pn_meta.civkey, key, &iv);
 }
 
 static int
@@ -722,14 +637,20 @@ void silofs_del_pnode(struct silofs_pnode_info *pni,
 	}
 }
 
+static const struct silofs_civkey *
+pni_civkey(const struct silofs_pnode_info *pni)
+{
+	return &pni->pn_meta.cmeta.civkey;
+}
+
 int silofs_encrypt_pnode(const struct silofs_pnode_info *pni,
                          const struct silofs_cipher *cipher,
                          struct silofs_view *enc_view)
 {
-	return silofs_encrypt_view(cipher,               //
-	                           &pni->pn_meta.civkey, //
-	                           pni->pn_view,         //
-	                           pni_mtype(pni),       //
+	return silofs_encrypt_view(cipher,          //
+	                           pni_civkey(pni), //
+	                           pni->pn_view,    //
+	                           pni_mtype(pni),  //
 	                           enc_view);
 }
 
@@ -737,10 +658,10 @@ int silofs_decrypt_pnode(struct silofs_pnode_info *pni,
                          const struct silofs_cipher *cipher,
                          const struct silofs_view *enc_view)
 {
-	return silofs_decrypt_view(cipher,               //
-	                           &pni->pn_meta.civkey, //
-	                           enc_view,             //
-	                           pni_mtype(pni),       //
+	return silofs_decrypt_view(cipher,          //
+	                           pni_civkey(pni), //
+	                           enc_view,        //
+	                           pni_mtype(pni),  //
 	                           pni->pn_view);
 }
 

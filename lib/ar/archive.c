@@ -202,7 +202,7 @@ arc_arix_civkey(const struct silofs_ar_ctx *ar_ctx)
 {
 	const struct silofs_gbrctl *gbrctl = &ar_ctx->env->gbrctl;
 
-	return &gbrctl->ar_gbr.root.civkey;
+	return &gbrctl->ar_gbr.root.cmeta.civkey;
 }
 
 static int arc_store_arix_block(struct silofs_ar_ctx *ar_ctx)

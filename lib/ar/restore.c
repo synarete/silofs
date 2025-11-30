@@ -165,7 +165,7 @@ rec_arix_civkey(const struct silofs_re_ctx *re_ctx)
 {
 	const struct silofs_gbrctl *gbrctl = &re_ctx->env->gbrctl;
 
-	return &gbrctl->ar_gbr.root.civkey;
+	return &gbrctl->ar_gbr.root.cmeta.civkey;
 }
 
 static int rec_fetch_arix_block(struct silofs_re_ctx *re_ctx)

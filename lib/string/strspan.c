@@ -18,7 +18,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <limits.h>
-#include "infra.h"
+#include <silofs/panic.h>
 #include "strchr.h"
 #include "strspan.h"
 
@@ -33,6 +33,11 @@
 			strspan_out_of_range(ss_, pos_); \
 		}                                        \
 	} while (0)
+
+static size_t min(size_t a, size_t b)
+{
+	return (a < b) ? a : b;
+}
 
 size_t silofs_strspan_max_size(void)
 {
@@ -61,7 +66,7 @@ void silofs_strspan_initn(struct silofs_strspan *ss, char *s, size_t n)
 void silofs_strspan_initk(struct silofs_strspan *ss, char *s, size_t k,
                           size_t n)
 {
-	silofs_strview_initn(&ss->v, s, silofs_min(n, k));
+	silofs_strview_initn(&ss->v, s, min(n, k));
 	ss->s = s;
 	ss->n = n;
 }
@@ -116,11 +121,11 @@ void silofs_strspan_sub(const struct silofs_strspan *ss, size_t i, size_t n,
                         struct silofs_strspan *out_ss)
 {
 	const size_t sz = ss->v.len;
-	const size_t j = silofs_min(i, sz);
-	const size_t n1 = silofs_min(n, sz - j);
+	const size_t j = min(i, sz);
+	const size_t n1 = min(n, sz - j);
 	const size_t wr = ss->n;
-	const size_t k = silofs_min(i, wr);
-	const size_t n2 = silofs_min(n, wr - k);
+	const size_t k = min(i, wr);
+	const size_t n2 = min(n, wr - k);
 
 	silofs_strspan_initk(out_ss, ss->s + j, n1, n2);
 }
@@ -129,10 +134,10 @@ void silofs_strspan_rsub(const struct silofs_strspan *ss, size_t n,
                          struct silofs_strspan *out_ss)
 {
 	const size_t sz = ss->v.len;
-	const size_t n1 = silofs_min(n, sz);
+	const size_t n1 = min(n, sz);
 	const size_t j = sz - n1;
 	const size_t wr = ss->n;
-	const size_t k = silofs_min(j, wr);
+	const size_t k = min(j, wr);
 	const size_t n2 = wr - k;
 
 	silofs_strspan_initk(out_ss, ss->s + j, n1, n2);
@@ -171,7 +176,7 @@ strspan_insert(struct silofs_strspan *ss, size_t pos, const char *s, size_t n)
 {
 	/* start insertion before position j */
 	const size_t sz = ss->v.len;
-	const size_t j = silofs_min(pos, sz);
+	const size_t j = min(pos, sz);
 
 	/* number of writable elements after j */
 	const size_t wr = ss->n;
@@ -197,7 +202,7 @@ strspan_insert_fill(struct silofs_strspan *ss, size_t pos, size_t n, char c)
 {
 	/* start insertion before position j */
 	const size_t sz = ss->v.len;
-	const size_t j = silofs_min(pos, sz);
+	const size_t j = min(pos, sz);
 
 	/* number of writable elements after j */
 	const size_t wr = ss->n;
@@ -225,10 +230,10 @@ static size_t strspan_replace(struct silofs_strspan *ss, size_t pos, size_t n1,
 {
 	/* pos beyond end-of-string is append */
 	const size_t sz = ss->v.len;
-	const size_t j = silofs_min(pos, sz);
+	const size_t j = min(pos, sz);
 
 	/* number of elements to replace */
-	const size_t k = silofs_min(sz - j, n1);
+	const size_t k = min(sz - j, n1);
 
 	/* number of mutable elements */
 	const size_t wr = ss->n;
@@ -251,10 +256,10 @@ static size_t strspan_replace_fill(struct silofs_strspan *ss, size_t pos,
 {
 	/* pos beyond end-of-string is append */
 	const size_t sz = ss->v.len;
-	const size_t j = silofs_min(pos, sz);
+	const size_t j = min(pos, sz);
 
 	/* number of elements to replace */
-	const size_t k = silofs_min(sz - j, n1);
+	const size_t k = min(sz - j, n1);
 
 	/* number of mutable elements */
 	const size_t wr = ss->n;

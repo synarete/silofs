@@ -16,9 +16,10 @@
  */
 #include "configs.h"
 #include <string.h>
+#include <stdint.h>
 #include <stdbool.h>
 #include <limits.h>
-#include "infra.h"
+#include <silofs/panic.h>
 #include "strchr.h"
 #include "strview.h"
 
@@ -32,6 +33,11 @@
 			strview_out_of_range(sv_, pos_); \
 		}                                        \
 	} while (0)
+
+static size_t min(size_t a, size_t b)
+{
+	return (a < b) ? a : b;
+}
 
 static bool chr_eq(char c1, char c2)
 {
@@ -163,7 +169,7 @@ bool silofs_strview_haspos(const struct silofs_strview *sv, size_t pos)
 size_t
 silofs_strview_copyto(const struct silofs_strview *sv, void *buf, size_t n)
 {
-	const size_t len = silofs_min(n, sv->len);
+	const size_t len = min(n, sv->len);
 	char *str = buf;
 
 	silofs_str_copy(str, sv->str, len);
@@ -473,8 +479,8 @@ void silofs_strview_sub(const struct silofs_strview *sv, size_t i, size_t n,
                         struct silofs_strview *out_sv)
 {
 	const size_t sz = sv->len;
-	const size_t j = strview_has_pos(sv, i) ? silofs_min(i, sz) : sz;
-	const size_t k = silofs_min(n, sz - j);
+	const size_t j = strview_has_pos(sv, i) ? min(i, sz) : sz;
+	const size_t k = min(n, sz - j);
 
 	silofs_strview_initn(out_sv, sv->str + j, k);
 }
@@ -483,7 +489,7 @@ void silofs_strview_rsub(const struct silofs_strview *sv, size_t n,
                          struct silofs_strview *out_sv)
 {
 	const size_t sz = sv->len;
-	const size_t k = silofs_min(n, sz);
+	const size_t k = min(n, sz);
 	const size_t j = sz - n;
 
 	silofs_strview_initn(out_sv, sv->str + j, k);
@@ -658,7 +664,7 @@ void silofs_strview_chop(const struct silofs_strview *sv, size_t n,
 {
 	const char *dat = sv->str;
 	const size_t sz = sv->len;
-	const size_t k = silofs_min(sz, n);
+	const size_t k = min(sz, n);
 
 	silofs_strview_initn(out_sv, dat, sz - k);
 }
@@ -740,9 +746,9 @@ void silofs_strview_nfind_token(const struct silofs_strview *sv,
 {
 	const size_t sz = sv->len;
 	const size_t ki = silofs_strview_nfind_first_not_of(sv, 0UL, seps, n);
-	const size_t i = silofs_min(ki, sz);
+	const size_t i = min(ki, sz);
 	const size_t kj = silofs_strview_nfind_first_of(sv, i, seps, n);
-	const size_t j = silofs_min(kj, sz);
+	const size_t j = min(kj, sz);
 
 	silofs_strview_sub(sv, i, j - i, out_sv);
 }
@@ -752,9 +758,9 @@ void silofs_strview_find_token_chr(const struct silofs_strview *sv, char sep,
 {
 	const size_t sz = sv->len;
 	const size_t ki = silofs_strview_find_first_not(sv, 0UL, sep);
-	const size_t i = silofs_min(ki, sz);
+	const size_t i = min(ki, sz);
 	const size_t kj = silofs_strview_find_chr(sv, i, sep);
-	const size_t j = silofs_min(kj, sz);
+	const size_t j = min(kj, sz);
 
 	silofs_strview_sub(sv, i, j - i, out_sv);
 }
@@ -864,7 +870,7 @@ size_t silofs_strview_ncommon_prefix(const struct silofs_strview *sv,
                                      const char *s, size_t n)
 {
 	const size_t sz = sv->len;
-	const size_t nn = silofs_min(n, sz);
+	const size_t nn = min(n, sz);
 
 	return silofs_str_common_prefix(sv->str, s, nn);
 }

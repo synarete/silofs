@@ -20,7 +20,6 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <silofs/macros.h>
-#include "infra.h"
 #include "strchr.h"
 #include "strbuf.h"
 
@@ -56,7 +55,9 @@ void silofs_strbuf_reset(struct silofs_strbuf *sbuf)
 
 void silofs_strbuf_bzero(struct silofs_strbuf *sbuf, size_t n)
 {
-	memset(sbuf, 0, silofs_min(n, sizeof(*sbuf)));
+	const size_t m = sizeof(sbuf->str);
+
+	memset(sbuf->str, 0, (n < m) ? n : m);
 }
 
 void silofs_strbuf_assign(struct silofs_strbuf *sbuf,

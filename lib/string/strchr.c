@@ -19,8 +19,13 @@
 #include <stdbool.h>
 #include <ctype.h>
 #include <limits.h>
-#include "infra.h"
+#include <silofs/macros.h>
 #include "strchr.h"
+
+static size_t min(size_t a, size_t b)
+{
+	return (a < b) ? a : b;
+}
 
 static void chr_assign(char *c1, char c2)
 {
@@ -75,7 +80,7 @@ int silofs_str_compare(const char *s1, const char *s2, size_t n)
 
 int silofs_str_ncompare(const char *s1, size_t n1, const char *s2, size_t n2)
 {
-	const size_t n = silofs_min(n1, n2);
+	const size_t n = min(n1, n2);
 	int res;
 
 	res = silofs_str_compare(s1, s2, n);
@@ -314,8 +319,8 @@ void silofs_str_reverse(char *s, size_t n)
 static size_t
 str_insert_no_overlap(char *p, size_t sz, size_t n1, const char *s, size_t n2)
 {
-	const size_t k = silofs_min(n2, sz);
-	const size_t m = silofs_min(n1, sz - k);
+	const size_t k = min(n2, sz);
+	const size_t m = min(n1, sz - k);
 
 	silofs_str_copy(p + k, p, m);
 	silofs_str_copy(p, s, k);
@@ -337,10 +342,10 @@ static size_t str_insert_with_overlap(char *p, size_t sz, size_t n1,
 	size_t d;
 
 	n = n1;
-	q = s + silofs_min(n2, sz);
+	q = s + min(n2, sz);
 	d = (size_t)(q - s);
 	while (d > 0) {
-		k = silofs_min(d, SILOFS_ARRAY_SIZE(buf));
+		k = min(d, SILOFS_ARRAY_SIZE(buf));
 		silofs_str_copy(buf, q - k, k);
 		n = str_insert_no_overlap(p, sz, n, buf, k);
 		d -= k;
@@ -390,10 +395,9 @@ silofs_str_insert(char *p, size_t sz, size_t n1, const char *s, size_t n2)
  */
 size_t silofs_str_insert_chr(char *p, size_t sz, size_t n1, size_t n2, char c)
 {
-	size_t m;
-	const size_t k = silofs_min(n2, sz);
+	const size_t k = min(n2, sz);
+	const size_t m = min(n1, sz - k);
 
-	m = silofs_min(n1, sz - k);
 	silofs_str_copy(p + k, p, m);
 	silofs_str_fill(p, k, c);
 

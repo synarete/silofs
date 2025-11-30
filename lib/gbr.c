@@ -329,11 +329,10 @@ static int decrypt_gbr1k(const struct silofs_cipher *ci,
 	                          sizeof(*gbr1k_out));
 }
 
-static int gbr_encode(const struct silofs_gbr *gbr,       //
-                      const struct silofs_mdigest *mdigest,
-                      const struct silofs_cipher *cipher,
-                      const struct silofs_civkey *civkey, //
-                      struct silofs_gbr1k *out_gbr1k)
+static int
+gbr_encode(const struct silofs_gbr *gbr, const struct silofs_mdigest *mdigest,
+           const struct silofs_cipher *cipher,
+           const struct silofs_civkey *civkey, struct silofs_gbr1k *out_gbr1k)
 {
 	struct silofs_gbr1k gbr1k;
 

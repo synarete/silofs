@@ -85,6 +85,12 @@ static int stc_require_paddr(const struct silofs_store_ctx *st_ctx,
 	                                 paddr->pos);
 }
 
+static int stc_require_paddr_of(const struct silofs_store_ctx *st_ctx,
+                                const struct silofs_pmeta *pmeta)
+{
+	return stc_require_paddr(st_ctx, &pmeta->paddr);
+}
+
 static void stc_update_spawned_pnode(const struct silofs_store_ctx *st_ctx,
                                      struct silofs_pnode_info *pni,
                                      const struct silofs_ckey *key)
@@ -107,6 +113,12 @@ static int stc_access_pnode(const struct silofs_store_ctx *st_ctx,
 	const off_t off = silofs_paddr_next(paddr);
 
 	return silofs_filos_access_bpos(st_ctx->filos, &paddr->blobid, off);
+}
+
+static int stc_access_pnode_of(const struct silofs_store_ctx *st_ctx,
+                               const struct silofs_pmeta *pmeta)
+{
+	return stc_access_pnode(st_ctx, &pmeta->paddr);
 }
 
 static size_t viewlen_of(const struct silofs_pnode_info *pni)
@@ -178,7 +190,7 @@ static int stc_spawn_uber(const struct silofs_store_ctx *st_ctx,
 {
 	int err;
 
-	err = stc_require_paddr(st_ctx, &pmeta->paddr);
+	err = stc_require_paddr_of(st_ctx, pmeta);
 	if (err) {
 		return err;
 	}
@@ -220,7 +232,7 @@ static int stc_stage_uber(struct silofs_store_ctx *st_ctx,
 	if (!err) {
 		goto out_ok; /* OK -- cache hit */
 	}
-	err = stc_access_pnode(st_ctx, &pmeta->paddr);
+	err = stc_access_pnode_of(st_ctx, pmeta);
 	if (err) {
 		return err;
 	}
@@ -271,7 +283,7 @@ static int stc_spawn_bldesc(const struct silofs_store_ctx *st_ctx,
 {
 	int err;
 
-	err = stc_require_paddr(st_ctx, &pmeta->paddr);
+	err = stc_require_paddr_of(st_ctx, pmeta);
 	if (err) {
 		return err;
 	}
@@ -283,19 +295,15 @@ static int stc_spawn_bldesc(const struct silofs_store_ctx *st_ctx,
 	return 0;
 }
 
-int silofs_spawn_bldesc_at(struct silofs_env *env,
-                           const struct silofs_paddr *paddr,
-                           struct silofs_bldesc_info **out_bdi)
+int silofs_spawn_bldesc(struct silofs_env *env,
+                        const struct silofs_pmeta *pmeta,
+                        struct silofs_bldesc_info **out_bdi)
 {
 	struct silofs_store_ctx st_ctx = {};
-	struct silofs_pmeta pmeta = {};
 	int err;
 
-	/* XXX */
-	silofs_paddr_assign(&pmeta.paddr, paddr);
-
 	stc_init(&st_ctx, env);
-	err = stc_spawn_bldesc(&st_ctx, &pmeta, out_bdi);
+	err = stc_spawn_bldesc(&st_ctx, pmeta, out_bdi);
 	stc_fini(&st_ctx);
 	return err;
 }
@@ -326,7 +334,7 @@ static int stc_stage_bldesc(struct silofs_store_ctx *st_ctx,
 	if (!err) {
 		goto out_ok; /* OK -- cache hit */
 	}
-	err = stc_access_pnode(st_ctx, &pmeta->paddr);
+	err = stc_access_pnode_of(st_ctx, pmeta);
 	if (err) {
 		return err;
 	}
@@ -345,19 +353,15 @@ out_ok:
 	return 0;
 }
 
-int silofs_stage_bldesc_at(struct silofs_env *env,
-                           const struct silofs_paddr *paddr,
-                           struct silofs_bldesc_info **out_bdi)
+int silofs_stage_bldesc(struct silofs_env *env,
+                        const struct silofs_pmeta *pmeta,
+                        struct silofs_bldesc_info **out_bdi)
 {
 	struct silofs_store_ctx st_ctx = {};
-	struct silofs_pmeta pmeta = {};
 	int err;
 
-	/* XXX */
-	silofs_paddr_assign(&pmeta.paddr, paddr);
-
 	stc_init(&st_ctx, env);
-	err = stc_stage_bldesc(&st_ctx, &pmeta, out_bdi);
+	err = stc_stage_bldesc(&st_ctx, pmeta, out_bdi);
 	stc_fini(&st_ctx);
 	return err;
 }
@@ -396,19 +400,15 @@ static int stc_spawn_btnode(const struct silofs_store_ctx *st_ctx,
 	return 0;
 }
 
-int silofs_spawn_btnode_at(struct silofs_env *env,
-                           const struct silofs_paddr *paddr,
-                           struct silofs_btnode_info **out_bti)
+int silofs_spawn_btnode(struct silofs_env *env,
+                        const struct silofs_pmeta *pmeta,
+                        struct silofs_btnode_info **out_bti)
 {
 	struct silofs_store_ctx st_ctx = {};
-	struct silofs_pmeta pmeta = {};
 	int err;
 
-	/* XXX */
-	silofs_paddr_assign(&pmeta.paddr, paddr);
-
 	stc_init(&st_ctx, env);
-	err = stc_spawn_btnode(&st_ctx, &pmeta, out_bti);
+	err = stc_spawn_btnode(&st_ctx, pmeta, out_bti);
 	stc_fini(&st_ctx);
 	return err;
 }
@@ -439,7 +439,7 @@ static int stc_stage_btnode(struct silofs_store_ctx *st_ctx,
 	if (!err) {
 		goto out_ok; /* OK -- cache hit */
 	}
-	err = stc_access_pnode(st_ctx, &pmeta->paddr);
+	err = stc_access_pnode_of(st_ctx, pmeta);
 	if (err) {
 		return err;
 	}
@@ -458,19 +458,15 @@ out_ok:
 	return 0;
 }
 
-int silofs_stage_btnode_at(struct silofs_env *env,
-                           const struct silofs_paddr *paddr,
-                           struct silofs_btnode_info **out_bti)
+int silofs_stage_btnode(struct silofs_env *env,
+                        const struct silofs_pmeta *pmeta,
+                        struct silofs_btnode_info **out_bti)
 {
 	struct silofs_store_ctx st_ctx = {};
-	struct silofs_pmeta pmeta = {};
 	int err;
 
-	// XXX
-	silofs_paddr_assign(&pmeta.paddr, paddr);
-
 	stc_init(&st_ctx, env);
-	err = stc_stage_btnode(&st_ctx, &pmeta, out_bti);
+	err = stc_stage_btnode(&st_ctx, pmeta, out_bti);
 	stc_fini(&st_ctx);
 	return err;
 }

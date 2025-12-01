@@ -2649,7 +2649,7 @@ static int flush_and_sync(struct silofs_task_ctx *task)
 
 static int
 do_forkfs(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
-          int flags, struct silofs_mrefs *out_mrefs)
+          int flags, struct silofs_gbrefs *out_gbrefs)
 {
 	struct silofs_env *env = task->t_env;
 	int err;
@@ -2662,7 +2662,7 @@ do_forkfs(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
 	if (err) {
 		return err;
 	}
-	err = silofs_env_forkfs(env, out_mrefs);
+	err = silofs_env_forkfs(env, out_gbrefs);
 	if (err) {
 		return err;
 	}
@@ -2676,12 +2676,12 @@ do_forkfs(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
 static int
 do_forkfs_of(struct silofs_task_ctx *task, struct silofs_sb_info *sbi_cur,
              struct silofs_inode_info *dir_ii, int flags,
-             struct silofs_mrefs *out_mrefs)
+             struct silofs_gbrefs *out_gbrefs)
 {
 	int err;
 
 	silofs_sbi_incref(sbi_cur);
-	err = do_forkfs(task, dir_ii, flags, out_mrefs);
+	err = do_forkfs(task, dir_ii, flags, out_gbrefs);
 	silofs_sbi_decref(sbi_cur);
 	return err;
 }
@@ -2695,12 +2695,12 @@ static void forget_and_relax_post_forkfs(const struct silofs_task_ctx *task,
 
 static int do_forkfs_and_relex(struct silofs_task_ctx *task,
                                struct silofs_inode_info *dir_ii, int flags,
-                               struct silofs_mrefs *out_mrefs)
+                               struct silofs_gbrefs *out_gbrefs)
 {
 	struct silofs_sb_info *sbi_cur = silofs_get_sbi(task);
 	int err;
 
-	err = do_forkfs_of(task, sbi_cur, dir_ii, flags, out_mrefs);
+	err = do_forkfs_of(task, sbi_cur, dir_ii, flags, out_gbrefs);
 	if (err) {
 		return err;
 	}
@@ -2710,12 +2710,12 @@ static int do_forkfs_and_relex(struct silofs_task_ctx *task,
 
 int silofs_do_forkfs(struct silofs_task_ctx *task,
                      struct silofs_inode_info *dir_ii, int flags,
-                     struct silofs_mrefs *out_mrefs)
+                     struct silofs_gbrefs *out_gbrefs)
 {
 	int err;
 
 	silofs_ii_incref(dir_ii);
-	err = do_forkfs_and_relex(task, dir_ii, flags, out_mrefs);
+	err = do_forkfs_and_relex(task, dir_ii, flags, out_gbrefs);
 	silofs_ii_decref(dir_ii);
 	return err;
 }

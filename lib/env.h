@@ -99,7 +99,8 @@ int silofs_env_reload_super(struct silofs_env *env);
 
 int silofs_env_reload_sb_lseg(struct silofs_env *env);
 
-int silofs_env_forkfs(struct silofs_env *env, struct silofs_mrefs *out_mrefs);
+int silofs_env_forkfs(struct silofs_env    *env,
+                      struct silofs_gbrefs *out_gbrefs);
 
 void silofs_env_relax_caches(const struct silofs_env *env, int flags);
 

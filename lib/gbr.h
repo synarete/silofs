@@ -25,8 +25,8 @@
 
 struct silofs_env;
 
-/* a tuple of content-addressable references to main boot-records */
-struct silofs_mrefs {
+/* a tuple of references (CAS) to global boot-records */
+struct silofs_gbrefs {
 	struct silofs_paddr main;
 	struct silofs_paddr base;
 	struct silofs_paddr fork;

@@ -2993,7 +2993,7 @@ static void assign_ioc_blobid(struct silofs_blobid *blobid,
 static int do_ioc_clone(const struct silofs_fuseq_cmd_ctx *fcc)
 {
 	union silofs_ioc_u ioc_u;
-	const struct silofs_mrefs *mrefs = &fcc->args->out.clone.mrefs;
+	const struct silofs_gbrefs *gbrefs = &fcc->args->out.clone.gbrefs;
 	void *buf_out = fcc->fqs->fqs_outb->u.iob.b;
 	struct silofs_ioc_forkfs *cl_out = &ioc_u.forkfs;
 	const size_t bsz_in_min = 1;
@@ -3025,9 +3025,9 @@ static int do_ioc_clone(const struct silofs_fuseq_cmd_ctx *fcc)
 	}
 
 	memset(cl_out, 0, sizeof(*cl_out));
-	assign_ioc_blobid(&cl_out->base, &mrefs->base);
-	assign_ioc_blobid(&cl_out->main, &mrefs->main);
-	assign_ioc_blobid(&cl_out->fork, &mrefs->fork);
+	assign_ioc_blobid(&cl_out->base, &gbrefs->base);
+	assign_ioc_blobid(&cl_out->main, &gbrefs->main);
+	assign_ioc_blobid(&cl_out->fork, &gbrefs->fork);
 	memcpy(buf_out, cl_out, sizeof(*cl_out));
 out:
 	return fqs_reply_ioctl(fcc->fqs, fcc->task, 0, cl_out, sizeof(*cl_out),

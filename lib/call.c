@@ -409,7 +409,7 @@ call_ioctl_clone(struct silofs_task_ctx *task, struct silofs_call_args *args)
 {
 	return silofs_exec_forkfs(task, args->in.clone.ino,
 	                          args->in.clone.flags,
-	                          &args->out.clone.mrefs);
+	                          &args->out.clone.gbrefs);
 }
 
 static int

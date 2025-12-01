@@ -321,7 +321,7 @@ struct silofs_clone_in {
 };
 
 struct silofs_clone_out {
-	struct silofs_mrefs mrefs;
+	struct silofs_gbrefs gbrefs;
 };
 
 struct silofs_syncfs_in {

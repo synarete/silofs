@@ -1527,7 +1527,7 @@ out:
 }
 
 int silofs_exec_forkfs(struct silofs_task_ctx *task, ino_t ino, int flags,
-                       struct silofs_mrefs *out_mrefs)
+                       struct silofs_gbrefs *out_gbrefs)
 {
 	struct silofs_inode_info *dir_ii = nullptr;
 	int err;
@@ -1544,7 +1544,7 @@ int silofs_exec_forkfs(struct silofs_task_ctx *task, ino_t ino, int flags,
 	err = op_stage_cur_inode(task, ino, &dir_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_forkfs(task, dir_ii, flags, out_mrefs);
+	err = silofs_do_forkfs(task, dir_ii, flags, out_gbrefs);
 	ok_or_goto_out(err);
 out:
 	return op_finish(task, err);

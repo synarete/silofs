@@ -630,14 +630,14 @@ env_recalc_fs_mref(struct silofs_env *env, struct silofs_paddr *out_paddr)
 }
 
 static int
-env_do_forkfs(struct silofs_env *env, struct silofs_mrefs *out_mrefs)
+env_do_forkfs(struct silofs_env *env, struct silofs_gbrefs *out_gbrefs)
 {
 	struct silofs_sb_info *sbi_alt = nullptr;
 	struct silofs_sb_info *sbi_new = nullptr;
 	struct silofs_sb_info *sbi_cur = env->sbi;
 	int err;
 
-	err = env_recalc_fs_mref(env, &out_mrefs->base);
+	err = env_recalc_fs_mref(env, &out_gbrefs->base);
 	if (err) {
 		return err;
 	}
@@ -646,7 +646,7 @@ env_do_forkfs(struct silofs_env *env, struct silofs_mrefs *out_mrefs)
 	if (err) {
 		return err;
 	}
-	err = silofs_env_commit_fs_gbr(env, &out_mrefs->fork);
+	err = silofs_env_commit_fs_gbr(env, &out_gbrefs->fork);
 	if (err) {
 		return err;
 	}
@@ -655,7 +655,7 @@ env_do_forkfs(struct silofs_env *env, struct silofs_mrefs *out_mrefs)
 	if (err) {
 		return err;
 	}
-	err = silofs_env_commit_fs_gbr(env, &out_mrefs->main);
+	err = silofs_env_commit_fs_gbr(env, &out_gbrefs->main);
 	if (err) {
 		return err;
 	}
@@ -664,13 +664,13 @@ env_do_forkfs(struct silofs_env *env, struct silofs_mrefs *out_mrefs)
 	return 0;
 }
 
-int silofs_env_forkfs(struct silofs_env *env, struct silofs_mrefs *out_mrefs)
+int silofs_env_forkfs(struct silofs_env *env, struct silofs_gbrefs *out_gbrefs)
 {
 	struct silofs_sb_info *sbi = env->sbi;
 	int err;
 
 	silofs_sbi_incref(sbi);
-	err = env_do_forkfs(env, out_mrefs);
+	err = env_do_forkfs(env, out_gbrefs);
 	silofs_sbi_decref(sbi);
 	return err;
 }

@@ -2457,15 +2457,15 @@ static void fill_query_boot_main_blobid(const struct silofs_task_ctx *task,
                                         struct silofs_ioc_query *query)
 {
 	struct silofs_gbr1k gbr1k;
-	struct silofs_paddr mref;
+	struct silofs_paddr gbref;
 	const struct silofs_env *env = task->t_env;
 	struct silofs_query_boot *qboot = &query->u.boot;
 	int err;
 
-	err = silofs_gbrinfo_encode(&env->gbrinfo, SILOFS_GBR_FS, &mref,
-	                            &gbr1k);
+	err = silofs_gbr_encode_by(&env->gbrs.fs_gbr, &env->gbrs.cmeta, &gbref,
+	                           &gbr1k);
 	if (!err) {
-		silofs_blobid_copyto(&mref.blobid, &qboot->main_blobid);
+		silofs_blobid_copyto(&gbref.blobid, &qboot->main_blobid);
 	}
 }
 

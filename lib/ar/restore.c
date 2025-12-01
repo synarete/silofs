@@ -163,9 +163,9 @@ out:
 static const struct silofs_civkey *
 rec_arix_civkey(const struct silofs_re_ctx *re_ctx)
 {
-	const struct silofs_gbrinfo *gbrinfo = &re_ctx->env->gbrinfo;
+	const struct silofs_gbr *ar_gbr = &re_ctx->env->gbrs.ar_gbr;
 
-	return &gbrinfo->ar_gbr.root.cmeta.civkey;
+	return &ar_gbr->root.cmeta.civkey;
 }
 
 static int rec_fetch_arix_block(struct silofs_re_ctx *re_ctx)
@@ -178,7 +178,10 @@ static int rec_fetch_arix_block(struct silofs_re_ctx *re_ctx)
 static int
 rec_resolve_apex(struct silofs_re_ctx *re_ctx, struct silofs_pmeta *out_pmeta)
 {
-	return silofs_gbrinfo_ar_root(&re_ctx->env->gbrinfo, out_pmeta);
+	const struct silofs_gbr *ar_gbr = &re_ctx->env->gbrs.ar_gbr;
+
+	silofs_gbr_root(ar_gbr, out_pmeta);
+	return silofs_pmeta_isnull(out_pmeta) ? -SILOFS_ENOENT : 0;
 }
 
 static int rec_restore_arix(struct silofs_re_ctx *re_ctx,
@@ -309,13 +312,14 @@ sb_uaddr_of(const struct silofs_laddr *laddr, struct silofs_uaddr *out_uaddr)
 static int rec_restore_sb_addr(struct silofs_re_ctx *re_ctx)
 {
 	const struct silofs_laddr *sb_laddr = &re_ctx->sb_laddr;
+	struct silofs_gbr *fs_gbr = &re_ctx->env->gbrs.fs_gbr;
 	struct silofs_uaddr sb_uaddr = { .voff = -1 };
 
 	if (silofs_laddr_isnull(sb_laddr)) {
 		return -SILOFS_EBADARIX;
 	}
 	sb_uaddr_of(sb_laddr, &sb_uaddr);
-	silofs_gbrinfo_update_sb_addr(&re_ctx->env->gbrinfo, &sb_uaddr);
+	silofs_gbr_update_sb(fs_gbr, &sb_uaddr);
 	return 0;
 }
 
@@ -335,13 +339,13 @@ static int rec_restore_sb(struct silofs_re_ctx *re_ctx)
 }
 
 static int rec_restore_fs_gbr(const struct silofs_re_ctx *re_ctx,
-                              struct silofs_paddr *out_fs_mref)
+                              struct silofs_paddr *out_fs_gbref)
 {
-	return silofs_env_commit_fs_gbr(re_ctx->env, out_fs_mref);
+	return silofs_env_commit_fs_gbr(re_ctx->env, out_fs_gbref);
 }
 
 static int rec_restore_post(struct silofs_re_ctx *re_ctx,
-                            struct silofs_paddr *out_fs_mref)
+                            struct silofs_paddr *out_fs_gbref)
 {
 	int err;
 
@@ -349,37 +353,42 @@ static int rec_restore_post(struct silofs_re_ctx *re_ctx,
 	if (err) {
 		return err;
 	}
-	err = rec_restore_fs_gbr(re_ctx, out_fs_mref);
+	err = rec_restore_fs_gbr(re_ctx, out_fs_gbref);
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
+static void rec_restore_prep_update(struct silofs_re_ctx *re_ctx)
+{
+	const struct silofs_gbr *ar_gbr = &re_ctx->env->gbrs.ar_gbr;
+	struct silofs_gbr *fs_gbr = &re_ctx->env->gbrs.fs_gbr;
+
+	silofs_gbr_set_rootc_by(fs_gbr, ar_gbr);
+}
+
 static int rec_restore_prep(struct silofs_re_ctx *re_ctx,
-                            const struct silofs_paddr *ar_mref)
+                            const struct silofs_paddr *ar_gbref)
 {
 	struct silofs_env *env = re_ctx->env;
 	int err;
 
-	err = silofs_env_reload_ar_gbr(env, ar_mref);
+	err = silofs_env_reload_ar_gbr(env, ar_gbref);
 	if (err) {
 		return err;
 	}
-	err = silofs_gbrinfo_update(&env->gbrinfo, SILOFS_GBR_FS);
-	if (err) {
-		return err;
-	}
+	rec_restore_prep_update(re_ctx);
 	return 0;
 }
 
 static int rec_do_restore(struct silofs_re_ctx *re_ctx,
-                          const struct silofs_paddr *ar_mref,
-                          struct silofs_paddr *out_fs_mref)
+                          const struct silofs_paddr *ar_gbref,
+                          struct silofs_paddr *out_fs_gbref)
 {
 	int err;
 
-	err = rec_restore_prep(re_ctx, ar_mref);
+	err = rec_restore_prep(re_ctx, ar_gbref);
 	if (err) {
 		return err;
 	}
@@ -391,7 +400,7 @@ static int rec_do_restore(struct silofs_re_ctx *re_ctx,
 	if (err) {
 		return err;
 	}
-	err = rec_restore_post(re_ctx, out_fs_mref);
+	err = rec_restore_post(re_ctx, out_fs_gbref);
 	if (err) {
 		return err;
 	}
@@ -399,8 +408,8 @@ static int rec_do_restore(struct silofs_re_ctx *re_ctx,
 }
 
 int silofs_do_restore_fs(struct silofs_task_ctx *task,
-                         const struct silofs_paddr *ar_mref,
-                         struct silofs_paddr *out_fs_mref)
+                         const struct silofs_paddr *ar_gbref,
+                         struct silofs_paddr *out_fs_gbref)
 {
 	struct silofs_re_ctx re_ctx;
 	int err;
@@ -413,7 +422,7 @@ int silofs_do_restore_fs(struct silofs_task_ctx *task,
 	if (err) {
 		goto out;
 	}
-	err = rec_do_restore(&re_ctx, ar_mref, out_fs_mref);
+	err = rec_do_restore(&re_ctx, ar_gbref, out_fs_gbref);
 	if (err) {
 		goto out;
 	}

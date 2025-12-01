@@ -54,7 +54,7 @@ struct silofs_env_base {
 /* top-level environment object */
 struct silofs_env {
 	struct silofs_env_base   base;
-	struct silofs_gbrinfo    gbrinfo;
+	struct silofs_gbrstate   gbrs;
 	struct silofs_rwlock     rwlock;
 	struct silofs_mutex      mutex;
 	struct silofs_cipher     enc_cipher;
@@ -125,7 +125,7 @@ int silofs_env_sense_gbr(struct silofs_env         *env,
 int silofs_env_setup_fs_gbr(struct silofs_env *env);
 
 int silofs_env_commit_fs_gbr(struct silofs_env   *env,
-                             struct silofs_paddr *out_mref);
+                             struct silofs_paddr *out_gbref);
 
 int silofs_env_reload_fs_gbr(struct silofs_env         *env,
                              const struct silofs_paddr *paddr);

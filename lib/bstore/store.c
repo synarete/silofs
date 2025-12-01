@@ -24,7 +24,6 @@
 #include "env.h"
 
 struct silofs_store_ctx {
-	const struct silofs_gbrinfo *gbrinfo;
 	struct silofs_alloc *alloc;
 	struct silofs_filos *filos;
 	struct silofs_pcache *pcache;
@@ -36,7 +35,6 @@ struct silofs_store_ctx {
 
 static void stc_init(struct silofs_store_ctx *st_ctx, struct silofs_env *env)
 {
-	st_ctx->gbrinfo = &env->gbrinfo;
 	st_ctx->alloc = env->base.alloc;
 	st_ctx->filos = &env->base.repo->re_filos;
 	st_ctx->pcache = env->base.pcache;

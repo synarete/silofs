@@ -186,7 +186,7 @@ int silofs_exec_archive(struct silofs_task_ctx *task,
                         struct silofs_paddr    *out_ar_paddr);
 
 int silofs_exec_restore(struct silofs_task_ctx    *task,
-                        const struct silofs_paddr *ar_mref,
-                        struct silofs_paddr       *out_fs_mref);
+                        const struct silofs_paddr *ar_gbref,
+                        struct silofs_paddr       *out_fs_gbref);
 
 #endif /* SILOFS_EXEC_H_ */

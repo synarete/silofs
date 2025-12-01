@@ -51,16 +51,6 @@ struct silofs_btnode_info {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_derive_iv_by(const struct silofs_mdigest *mdigest,
-                         const struct silofs_paddr   *paddr,
-                         struct silofs_civ           *out_iv);
-
-void silofs_derive_key_by(const struct silofs_mdigest *mdigest,
-                          const struct silofs_paddr   *paddr,
-                          struct silofs_ckey          *out_key);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 enum silofs_mtype silofs_pni_mtype(const struct silofs_pnode_info *pni);
 
 void silofs_pni_dirtify(struct silofs_pnode_info *pni);

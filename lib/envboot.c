@@ -38,7 +38,7 @@ env_reinit_ciphers(struct silofs_env *env, const struct silofs_ciargs *ciargs)
 
 static int env_reinit_ciphers_by_gbr(struct silofs_env *env)
 {
-	const struct silofs_gbr *gbr = &env->gbrctl.fs_gbr;
+	const struct silofs_gbr *gbr = &env->gbrinfo.fs_gbr;
 
 	return env_reinit_ciphers(env, &gbr->root.cmeta.ciargs);
 }
@@ -66,8 +66,8 @@ int silofs_env_commit_fs_gbr(struct silofs_env *env,
 	};
 	int err;
 
-	err = silofs_gbrctl_encode(&env->gbrctl, SILOFS_GBR_FS, out_mref,
-	                           &gbr1k);
+	err = silofs_gbrinfo_encode(&env->gbrinfo, SILOFS_GBR_FS, out_mref,
+	                            &gbr1k);
 	if (err) {
 		return err;
 	}
@@ -136,7 +136,8 @@ static int
 env_decode_fs_gbr(struct silofs_env *env, const struct silofs_paddr *mref,
                   const struct silofs_gbr1k *gbr1k)
 {
-	return silofs_gbrctl_decode(&env->gbrctl, SILOFS_GBR_FS, mref, gbr1k);
+	return silofs_gbrinfo_decode(&env->gbrinfo, SILOFS_GBR_FS, mref,
+	                             gbr1k);
 }
 
 int silofs_env_reload_fs_gbr(struct silofs_env *env,
@@ -166,7 +167,8 @@ static int
 env_decode_ar_gbr(struct silofs_env *env, const struct silofs_paddr *mref,
                   const struct silofs_gbr1k *gbr1k)
 {
-	return silofs_gbrctl_decode(&env->gbrctl, SILOFS_GBR_AR, mref, gbr1k);
+	return silofs_gbrinfo_decode(&env->gbrinfo, SILOFS_GBR_AR, mref,
+	                             gbr1k);
 }
 
 int silofs_env_reload_ar_gbr(struct silofs_env *env,

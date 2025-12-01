@@ -200,9 +200,9 @@ out:
 static const struct silofs_civkey *
 arc_arix_civkey(const struct silofs_ar_ctx *ar_ctx)
 {
-	const struct silofs_gbrctl *gbrctl = &ar_ctx->env->gbrctl;
+	const struct silofs_gbrinfo *gbrinfo = &ar_ctx->env->gbrinfo;
 
-	return &gbrctl->ar_gbr.root.cmeta.civkey;
+	return &gbrinfo->ar_gbr.root.cmeta.civkey;
 }
 
 static int arc_store_arix_block(struct silofs_ar_ctx *ar_ctx)
@@ -293,10 +293,10 @@ static int arc_archive_gbr(const struct silofs_ar_ctx *ar_ctx,
                            struct silofs_paddr *out_mref)
 {
 	struct silofs_gbr1k gbr1k = { .gbr_magic = 0xff };
-	const struct silofs_gbrctl *gbrctl = &ar_ctx->env->gbrctl;
+	const struct silofs_gbrinfo *gbrinfo = &ar_ctx->env->gbrinfo;
 	int err;
 
-	err = silofs_gbrctl_encode(gbrctl, SILOFS_GBR_AR, out_mref, &gbr1k);
+	err = silofs_gbrinfo_encode(gbrinfo, SILOFS_GBR_AR, out_mref, &gbr1k);
 	if (err) {
 		return err;
 	}
@@ -313,15 +313,15 @@ static int arc_archive_post(struct silofs_ar_ctx *ar_ctx,
 {
 	struct silofs_pmeta pmeta;
 
-	silofs_pmeta_setup(&pmeta, paddr, &ar_ctx->env->gbrctl.civkey);
+	silofs_pmeta_setup(&pmeta, paddr, &ar_ctx->env->gbrinfo.civkey);
 
-	silofs_gbrctl_set_root(&ar_ctx->env->gbrctl, SILOFS_GBR_AR, &pmeta);
+	silofs_gbrinfo_set_ar_root(&ar_ctx->env->gbrinfo, &pmeta);
 	return arc_archive_gbr(ar_ctx, out_mref);
 }
 
 static int arc_archive_prep(struct silofs_ar_ctx *ar_ctx)
 {
-	return silofs_gbrctl_update(&ar_ctx->env->gbrctl, SILOFS_GBR_AR);
+	return silofs_gbrinfo_update(&ar_ctx->env->gbrinfo, SILOFS_GBR_AR);
 }
 
 static int

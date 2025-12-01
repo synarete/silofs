@@ -48,8 +48,7 @@ static void env_update_root_uber(struct silofs_env *env,
                                  const struct silofs_uber_info *ubi)
 {
 	if (ubi != nullptr) {
-		silofs_gbrctl_set_root(&env->gbrctl, SILOFS_GBR_FS,
-		                       ubi_pmeta(ubi));
+		silofs_gbrinfo_set_fs_root(&env->gbrinfo, ubi_pmeta(ubi));
 	}
 }
 
@@ -63,7 +62,7 @@ env_update_uber(struct silofs_env *env, struct silofs_uber_info *ubi)
 static int env_resolve_root_uber(const struct silofs_env *env,
                                  struct silofs_pmeta *out_pmeta)
 {
-	return silofs_gbrctl_root(&env->gbrctl, SILOFS_GBR_FS, out_pmeta);
+	return silofs_gbrinfo_fs_root(&env->gbrinfo, out_pmeta);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -89,7 +88,7 @@ env_update_root_sb(struct silofs_env *env, const struct silofs_sb_info *sbi)
 
 	if (sbi != nullptr) {
 		uaddr = silofs_sbi_uaddr(sbi);
-		silofs_gbrctl_update_sb_addr(&env->gbrctl, uaddr);
+		silofs_gbrinfo_update_sb_addr(&env->gbrinfo, uaddr);
 	}
 }
 
@@ -191,25 +190,25 @@ static void env_fini_commons(struct silofs_env *env)
 	env->ms_flags = 0;
 }
 
-static int env_init_gbrctl(struct silofs_env *env)
+static int env_init_gbrinfo(struct silofs_env *env)
 {
 	int err;
 
-	err = silofs_gbrctl_init(&env->gbrctl);
+	err = silofs_gbrinfo_init(&env->gbrinfo);
 	if (err) {
 		return err;
 	}
-	err = silofs_gbrctl_derive_civkey(&env->gbrctl, env->base.passwd);
+	err = silofs_gbrinfo_derive_civkey(&env->gbrinfo, env->base.passwd);
 	if (err) {
-		silofs_gbrctl_fini(&env->gbrctl);
+		silofs_gbrinfo_fini(&env->gbrinfo);
 		return err;
 	}
 	return 0;
 }
 
-static void env_fini_gbrctl(struct silofs_env *env)
+static void env_fini_gbrinfo(struct silofs_env *env)
 {
-	silofs_gbrctl_fini(&env->gbrctl);
+	silofs_gbrinfo_fini(&env->gbrinfo);
 }
 
 static int env_init_locks(struct silofs_env *env)
@@ -280,7 +279,7 @@ int silofs_env_init(struct silofs_env *env, const struct silofs_env_base *base)
 	env_init_commons(env, base);
 	env_init_opstat(env);
 
-	err = env_init_gbrctl(env);
+	err = env_init_gbrinfo(env);
 	if (err) {
 		return err;
 	}
@@ -313,7 +312,7 @@ void silofs_env_fini(struct silofs_env *env)
 	env_fini_uconv(env);
 	env_fini_crypto(env);
 	env_fini_locks(env);
-	env_fini_gbrctl(env);
+	env_fini_gbrinfo(env);
 	env_fini_commons(env);
 }
 
@@ -513,7 +512,7 @@ env_check_sb(const struct silofs_env *env, const struct silofs_sb_info *sbi)
 
 static const struct silofs_uaddr *env_gbr_sb_addr(const struct silofs_env *env)
 {
-	return &env->gbrctl.fs_gbr.sb_addr;
+	return &env->gbrinfo.fs_gbr.sb_addr;
 }
 
 int silofs_env_reload_super(struct silofs_env *env)
@@ -626,8 +625,8 @@ env_recalc_fs_mref(struct silofs_env *env, struct silofs_paddr *out_paddr)
 {
 	struct silofs_gbr1k gbr1k = { .gbr_magic = UINT64_MAX };
 
-	return silofs_gbrctl_encode(&env->gbrctl, SILOFS_GBR_FS, out_paddr,
-	                            &gbr1k);
+	return silofs_gbrinfo_encode(&env->gbrinfo, SILOFS_GBR_FS, out_paddr,
+	                             &gbr1k);
 }
 
 static int
@@ -686,7 +685,7 @@ static int check_arix_size(ssize_t sz)
 static int
 env_arix_addr(const struct silofs_env *env, struct silofs_pmeta *out_pmeta)
 {
-	return silofs_gbrctl_root(&env->gbrctl, SILOFS_GBR_AR, out_pmeta);
+	return silofs_gbrinfo_ar_root(&env->gbrinfo, out_pmeta);
 }
 
 int silofs_env_sense_ar(struct silofs_env *env)

@@ -491,7 +491,7 @@ flusher_gbr(const struct silofs_flusher *flusher)
 {
 	silofs_assert_not_null(flusher->task);
 
-	return &flusher->task->t_env->gbrctl.fs_gbr;
+	return &flusher->task->t_env->gbrinfo.fs_gbr;
 }
 
 static int flusher_resolve_llink_of_uni(const struct silofs_flusher *flusher,

@@ -2462,7 +2462,8 @@ static void fill_query_boot_main_blobid(const struct silofs_task_ctx *task,
 	struct silofs_query_boot *qboot = &query->u.boot;
 	int err;
 
-	err = silofs_gbrctl_encode(&env->gbrctl, SILOFS_GBR_FS, &mref, &gbr1k);
+	err = silofs_gbrinfo_encode(&env->gbrinfo, SILOFS_GBR_FS, &mref,
+	                            &gbr1k);
 	if (!err) {
 		silofs_blobid_copyto(&mref.blobid, &qboot->main_blobid);
 	}

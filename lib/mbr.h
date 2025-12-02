@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_GBR_H_
-#define SILOFS_GBR_H_
+#ifndef SILOFS_MBR_H_
+#define SILOFS_MBR_H_
 
 #include "infra.h"
 #include "crypt.h"
@@ -26,60 +26,60 @@
 struct silofs_env;
 
 /* a tuple of references (CAS) to global boot-records */
-struct silofs_gbrefs {
+struct silofs_mbrefs {
 	struct silofs_paddr main;
 	struct silofs_paddr base;
 	struct silofs_paddr fork;
 };
 
 /* global boot-record, in-memory representation */
-struct silofs_gbr {
+struct silofs_mbr {
 	struct silofs_pmeta  root;
 	struct silofs_uuid   uuid;
 	struct silofs_uaddr  sb_addr;
-	enum silofs_gbr_kind kind;
+	enum silofs_mbr_kind kind;
 	unsigned             flags;
 };
 
 /* global boot-records state */
-struct silofs_gbrstate {
-	struct silofs_gbr   fs_gbr;
-	struct silofs_gbr   ar_gbr;
+struct silofs_mbrstate {
+	struct silofs_mbr   fs_mbr;
+	struct silofs_mbr   ar_mbr;
 	struct silofs_cmeta cmeta;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_gbr_init(struct silofs_gbr *gbr, enum silofs_gbr_kind kind);
+void silofs_mbr_init(struct silofs_mbr *mbr, enum silofs_mbr_kind kind);
 
-void silofs_gbr_fini(struct silofs_gbr *gbr);
+void silofs_mbr_fini(struct silofs_mbr *mbr);
 
-int silofs_gbr_root(const struct silofs_gbr *gbr,
+int silofs_mbr_root(const struct silofs_mbr *mbr,
                     struct silofs_pmeta     *out_pmeta);
 
-void silofs_gbr_set_root(struct silofs_gbr         *gbr,
+void silofs_mbr_set_root(struct silofs_mbr         *mbr,
                          const struct silofs_pmeta *pmeta);
 
-void silofs_gbr_set_rootc(struct silofs_gbr         *gbr,
+void silofs_mbr_set_rootc(struct silofs_mbr         *mbr,
                           const struct silofs_cmeta *cmeta);
 
-void silofs_gbr_set_rootc_by(struct silofs_gbr       *gbr,
-                             const struct silofs_gbr *other);
+void silofs_mbr_set_rootc_by(struct silofs_mbr       *mbr,
+                             const struct silofs_mbr *other);
 
-void silofs_gbr_update_sb(struct silofs_gbr         *gbr,
+void silofs_mbr_update_sb(struct silofs_mbr         *mbr,
                           const struct silofs_uaddr *sb_uaddr);
 
-int silofs_gbr_encode_by(const struct silofs_gbr   *gbr,
+int silofs_mbr_encode_by(const struct silofs_mbr   *mbr,
                          const struct silofs_cmeta *cmeta,
                          struct silofs_paddr       *out_paddr,
-                         struct silofs_gbr1k       *out_gbr1k);
+                         struct silofs_mbr1k       *out_mbr1k);
 
-int silofs_gbr_decode_by(struct silofs_gbr         *gbr,
+int silofs_mbr_decode_by(struct silofs_mbr         *mbr,
                          const struct silofs_cmeta *cmeta,
                          const struct silofs_paddr *paddr,
-                         const struct silofs_gbr1k *gbr1k);
+                         const struct silofs_mbr1k *mbr1k);
 
-int silofs_derive_gbr_cmeta(const struct silofs_password *passwd,
+int silofs_derive_mbr_cmeta(const struct silofs_password *passwd,
                             struct silofs_cmeta          *out_cmeta);
 
-#endif /* SILOFS_GBR_H_ */
+#endif /* SILOFS_MBR_H_ */

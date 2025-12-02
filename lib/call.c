@@ -16,7 +16,7 @@
  */
 #include "configs.h"
 #include <linux/fuse_kernel.h>
-#include "gbr.h"
+#include "mbr.h"
 #include "vfs.h"
 #include "walk.h"
 #include "env.h"
@@ -409,7 +409,7 @@ call_ioctl_clone(struct silofs_task_ctx *task, struct silofs_call_args *args)
 {
 	return silofs_exec_forkfs(task, args->in.clone.ino,
 	                          args->in.clone.flags,
-	                          &args->out.clone.gbrefs);
+	                          &args->out.clone.mbrefs);
 }
 
 static int

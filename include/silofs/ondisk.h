@@ -320,10 +320,10 @@
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 /* global boot-record sub-types */
-enum silofs_gbr_kind {
-	SILOFS_GBR_NONE = 0,
-	SILOFS_GBR_FS   = 1,
-	SILOFS_GBR_AR   = 2,
+enum silofs_mbr_kind {
+	SILOFS_MBR_NONE = 0,
+	SILOFS_MBR_FS   = 1,
+	SILOFS_MBR_AR   = 2,
 };
 
 /* common-header flags */
@@ -354,7 +354,7 @@ enum silofs_pnodef {
 /* meta elements types */
 enum silofs_mtype {
 	SILOFS_MTYPE_NONE   = 0,
-	SILOFS_MTYPE_GBR    = 1,
+	SILOFS_MTYPE_MBR    = 1,
 	SILOFS_MTYPE_UBER   = 2,
 	SILOFS_MTYPE_ARIX   = 3,
 	SILOFS_MTYPE_BLDESC = 4,
@@ -588,17 +588,17 @@ struct silofs_pmeta192b {
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 /* global boot record */
-struct silofs_gbr1k {
-	uint64_t                gbr_magic;
-	uint64_t                gbr_version;
-	struct silofs_uuid      gbr_uuid;
-	uint32_t                gbr_kind;
-	uint32_t                gbr_flags;
-	uint8_t                 gbr_reserved1[24];
-	struct silofs_pmeta192b gbr_root;
-	struct silofs_uaddr128b gbr_sb_addr;
-	uint8_t                 gbr_reserved3[608];
-	struct silofs_hash256   gbr_hash;
+struct silofs_mbr1k {
+	uint64_t                mbr_magic;
+	uint64_t                mbr_version;
+	struct silofs_uuid      mbr_uuid;
+	uint32_t                mbr_kind;
+	uint32_t                mbr_flags;
+	uint8_t                 mbr_reserved1[24];
+	struct silofs_pmeta192b mbr_root;
+	struct silofs_uaddr128b mbr_sb_addr;
+	uint8_t                 mbr_reserved3[608];
+	struct silofs_hash256   mbr_hash;
 } silofs_attr_aligned64;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1005,7 +1005,7 @@ struct silofs_arix_block {
 /* semantic "view" into meta elements */
 union silofs_view_u {
 	struct silofs_header       hdr[2];
-	struct silofs_gbr1k        gbr;
+	struct silofs_mbr1k        mbr;
 	struct silofs_uber_block   ub;
 	struct silofs_arix_block   ab;
 	struct silofs_blob_desc    bd;

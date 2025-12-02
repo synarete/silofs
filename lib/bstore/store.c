@@ -20,7 +20,7 @@
 #include "filos.h"
 #include "uber.h"
 #include "store.h"
-#include "gbr.h"
+#include "mbr.h"
 #include "env.h"
 
 struct silofs_store_ctx {

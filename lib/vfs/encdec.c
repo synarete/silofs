@@ -47,7 +47,7 @@ int silofs_decrypt_uni_view(const struct silofs_env *env,
 {
 	struct silofs_llink llink;
 
-	silofs_llink_of_uni(&env->gbrs.fs_gbr, uni, &llink);
+	silofs_llink_of_uni(&env->mbrs.fs_mbr, uni, &llink);
 	return decrypt_lview_inplace(env, &llink, uni->un_lni.ln_view);
 }
 
@@ -56,27 +56,27 @@ int silofs_decrypt_vni_view(const struct silofs_env *env,
 {
 	struct silofs_llink llink;
 
-	silofs_llink_of_vni(&env->gbrs.fs_gbr, vni, &llink);
+	silofs_llink_of_vni(&env->mbrs.fs_mbr, vni, &llink);
 	return decrypt_lview_inplace(env, &llink, vni->vn_lni.ln_view);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_llink_of_uni(const struct silofs_gbr *gbr,
+void silofs_llink_of_uni(const struct silofs_mbr *mbr,
                          const struct silofs_unode_info *uni,
                          struct silofs_llink *out_llink)
 {
 	const struct silofs_laddr *laddr = silofs_uni_laddr(uni);
-	const struct silofs_civkey *civkey = &gbr->root.cmeta.civkey;
+	const struct silofs_civkey *civkey = &mbr->root.cmeta.civkey;
 
 	silofs_llink_setup(out_llink, laddr, &civkey->key, &civkey->iv);
 }
 
-void silofs_llink_of_vni(const struct silofs_gbr *gbr,
+void silofs_llink_of_vni(const struct silofs_mbr *mbr,
                          const struct silofs_vnode_info *vni,
                          struct silofs_llink *out_llink)
 {
-	silofs_unused(gbr);
+	silofs_unused(mbr);
 	silofs_llink_assign(out_llink, &vni->vn_llink);
 }
 

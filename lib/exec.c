@@ -20,7 +20,7 @@
 #include <sys/statvfs.h>
 #include <fcntl.h>
 #include <time.h>
-#include "gbr.h"
+#include "mbr.h"
 #include "vfs.h"
 #include "ar.h"
 #include "walk.h"
@@ -1527,7 +1527,7 @@ out:
 }
 
 int silofs_exec_forkfs(struct silofs_task_ctx *task, ino_t ino, int flags,
-                       struct silofs_gbrefs *out_gbrefs)
+                       struct silofs_mbrefs *out_mbrefs)
 {
 	struct silofs_inode_info *dir_ii = nullptr;
 	int err;
@@ -1544,7 +1544,7 @@ int silofs_exec_forkfs(struct silofs_task_ctx *task, ino_t ino, int flags,
 	err = op_stage_cur_inode(task, ino, &dir_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_forkfs(task, dir_ii, flags, out_gbrefs);
+	err = silofs_do_forkfs(task, dir_ii, flags, out_mbrefs);
 	ok_or_goto_out(err);
 out:
 	return op_finish(task, err);
@@ -1661,8 +1661,8 @@ out:
 }
 
 int silofs_exec_restore(struct silofs_task_ctx *task,
-                        const struct silofs_paddr *ar_gbref,
-                        struct silofs_paddr *out_fs_gbref)
+                        const struct silofs_paddr *ar_mbref,
+                        struct silofs_paddr *out_fs_mbref)
 {
 	int err;
 
@@ -1675,7 +1675,7 @@ int silofs_exec_restore(struct silofs_task_ctx *task,
 	err = op_map_creds(task);
 	ok_or_goto_out(err);
 
-	err = silofs_do_restore_fs(task, ar_gbref, out_fs_gbref);
+	err = silofs_do_restore_fs(task, ar_mbref, out_fs_mbref);
 	ok_or_goto_out(err);
 out:
 	return op_finish(task, err);

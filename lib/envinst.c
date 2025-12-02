@@ -19,7 +19,7 @@
 #include <silofs/ioctls.h>
 #include "bstore.h"
 #include "vfs.h"
-#include "gbr.h"
+#include "mbr.h"
 #include "env.h"
 #include "fuseq.h"
 

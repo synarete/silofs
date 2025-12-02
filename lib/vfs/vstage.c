@@ -144,7 +144,7 @@ static int vni_verify_sub_view(const struct silofs_vnode_info *vni)
 	case SILOFS_MTYPE_DATABK:
 		break;
 	case SILOFS_MTYPE_NONE:
-	case SILOFS_MTYPE_GBR:
+	case SILOFS_MTYPE_MBR:
 	case SILOFS_MTYPE_UBER:
 	case SILOFS_MTYPE_ARIX:
 	case SILOFS_MTYPE_BLDESC:
@@ -1882,7 +1882,7 @@ static int vstgc_resolve_child_of(const struct silofs_vstage_ctx *vstg_ctx,
 static const struct silofs_ckey *
 vstgc_main_key(const struct silofs_vstage_ctx *vstg_ctx)
 {
-	return &vstg_ctx->env->gbrs.fs_gbr.root.cmeta.civkey.key;
+	return &vstg_ctx->env->mbrs.fs_mbr.root.cmeta.civkey.key;
 }
 
 static void vstgc_resolve_main_key(const struct silofs_vstage_ctx *vstg_ctx,

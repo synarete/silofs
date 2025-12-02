@@ -29,7 +29,7 @@ static int ubi_verify_sub_view(const struct silofs_unode_info *uni)
 	int ret = 0;
 
 	switch (mtype) {
-	case SILOFS_MTYPE_GBR:
+	case SILOFS_MTYPE_MBR:
 		break;
 	case SILOFS_MTYPE_SUPER:
 		ret = silofs_verify_super_block(&view->u.sb);

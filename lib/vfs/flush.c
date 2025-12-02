@@ -486,20 +486,20 @@ static int flusher_require_mutable_llink(const struct silofs_flusher *flusher,
 	return mut ? 0 : -SILOFS_EROFS;
 }
 
-static const struct silofs_gbr *
-flusher_gbr(const struct silofs_flusher *flusher)
+static const struct silofs_mbr *
+flusher_mbr(const struct silofs_flusher *flusher)
 {
-	return &flusher->task->t_env->gbrs.fs_gbr;
+	return &flusher->task->t_env->mbrs.fs_mbr;
 }
 
 static int flusher_resolve_llink_of_uni(const struct silofs_flusher *flusher,
                                         const struct silofs_unode_info *uni,
                                         struct silofs_llink *out_llink)
 {
-	const struct silofs_gbr *gbr = flusher_gbr(flusher);
+	const struct silofs_mbr *mbr = flusher_mbr(flusher);
 	int ret = 0;
 
-	silofs_llink_of_uni(gbr, uni, out_llink);
+	silofs_llink_of_uni(mbr, uni, out_llink);
 	if (!uni_issuper(uni)) {
 		ret = flusher_require_mutable_llink(flusher, out_llink);
 	}

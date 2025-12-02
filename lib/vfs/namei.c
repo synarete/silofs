@@ -2456,16 +2456,16 @@ static void fill_query_boot_name(const struct silofs_task_ctx *task,
 static void fill_query_boot_main_blobid(const struct silofs_task_ctx *task,
                                         struct silofs_ioc_query *query)
 {
-	struct silofs_gbr1k gbr1k;
-	struct silofs_paddr gbref;
+	struct silofs_mbr1k mbr1k;
+	struct silofs_paddr mbref;
 	const struct silofs_env *env = task->t_env;
 	struct silofs_query_boot *qboot = &query->u.boot;
 	int err;
 
-	err = silofs_gbr_encode_by(&env->gbrs.fs_gbr, &env->gbrs.cmeta, &gbref,
-	                           &gbr1k);
+	err = silofs_mbr_encode_by(&env->mbrs.fs_mbr, &env->mbrs.cmeta, &mbref,
+	                           &mbr1k);
 	if (!err) {
-		silofs_blobid_copyto(&gbref.blobid, &qboot->main_blobid);
+		silofs_blobid_copyto(&mbref.blobid, &qboot->main_blobid);
 	}
 }
 
@@ -2649,7 +2649,7 @@ static int flush_and_sync(struct silofs_task_ctx *task)
 
 static int
 do_forkfs(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
-          int flags, struct silofs_gbrefs *out_gbrefs)
+          int flags, struct silofs_mbrefs *out_mbrefs)
 {
 	struct silofs_env *env = task->t_env;
 	int err;
@@ -2662,7 +2662,7 @@ do_forkfs(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
 	if (err) {
 		return err;
 	}
-	err = silofs_env_forkfs(env, out_gbrefs);
+	err = silofs_env_forkfs(env, out_mbrefs);
 	if (err) {
 		return err;
 	}
@@ -2676,12 +2676,12 @@ do_forkfs(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
 static int
 do_forkfs_of(struct silofs_task_ctx *task, struct silofs_sb_info *sbi_cur,
              struct silofs_inode_info *dir_ii, int flags,
-             struct silofs_gbrefs *out_gbrefs)
+             struct silofs_mbrefs *out_mbrefs)
 {
 	int err;
 
 	silofs_sbi_incref(sbi_cur);
-	err = do_forkfs(task, dir_ii, flags, out_gbrefs);
+	err = do_forkfs(task, dir_ii, flags, out_mbrefs);
 	silofs_sbi_decref(sbi_cur);
 	return err;
 }
@@ -2695,12 +2695,12 @@ static void forget_and_relax_post_forkfs(const struct silofs_task_ctx *task,
 
 static int do_forkfs_and_relex(struct silofs_task_ctx *task,
                                struct silofs_inode_info *dir_ii, int flags,
-                               struct silofs_gbrefs *out_gbrefs)
+                               struct silofs_mbrefs *out_mbrefs)
 {
 	struct silofs_sb_info *sbi_cur = silofs_get_sbi(task);
 	int err;
 
-	err = do_forkfs_of(task, sbi_cur, dir_ii, flags, out_gbrefs);
+	err = do_forkfs_of(task, sbi_cur, dir_ii, flags, out_mbrefs);
 	if (err) {
 		return err;
 	}
@@ -2710,12 +2710,12 @@ static int do_forkfs_and_relex(struct silofs_task_ctx *task,
 
 int silofs_do_forkfs(struct silofs_task_ctx *task,
                      struct silofs_inode_info *dir_ii, int flags,
-                     struct silofs_gbrefs *out_gbrefs)
+                     struct silofs_mbrefs *out_mbrefs)
 {
 	int err;
 
 	silofs_ii_incref(dir_ii);
-	err = do_forkfs_and_relex(task, dir_ii, flags, out_gbrefs);
+	err = do_forkfs_and_relex(task, dir_ii, flags, out_mbrefs);
 	silofs_ii_decref(dir_ii);
 	return err;
 }

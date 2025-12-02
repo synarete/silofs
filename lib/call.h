@@ -22,7 +22,7 @@
 #include "infra.h"
 #include "addr.h"
 #include "vfs.h"
-#include "gbr.h"
+#include "mbr.h"
 
 struct silofs_lookup_in {
 	ino_t       parent;
@@ -321,7 +321,7 @@ struct silofs_clone_in {
 };
 
 struct silofs_clone_out {
-	struct silofs_gbrefs gbrefs;
+	struct silofs_mbrefs mbrefs;
 };
 
 struct silofs_syncfs_in {

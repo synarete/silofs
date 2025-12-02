@@ -126,7 +126,7 @@ pcache_hmapq_of(const struct silofs_pcache *pcache,
 		hmapq = &pcache->pc_hmapq[2];
 		break;
 	case SILOFS_MTYPE_NONE:
-	case SILOFS_MTYPE_GBR:
+	case SILOFS_MTYPE_MBR:
 	case SILOFS_MTYPE_SUPER:
 	case SILOFS_MTYPE_SPNODE:
 	case SILOFS_MTYPE_SPLEAF:

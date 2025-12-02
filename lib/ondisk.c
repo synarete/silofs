@@ -226,17 +226,17 @@ static void validate_ondisk_spmaps(void)
 	REQUIRE_SIZEOF_16K(struct silofs_spmap_leaf);
 }
 
-static void validate_ondisk_gbr(void)
+static void validate_ondisk_mbr(void)
 {
-	REQUIRE_OFFSET64(struct silofs_gbr1k, gbr_magic, 0);
-	REQUIRE_OFFSET64(struct silofs_gbr1k, gbr_version, 8);
-	REQUIRE_OFFSET64(struct silofs_gbr1k, gbr_uuid, 16);
-	REQUIRE_OFFSET64(struct silofs_gbr1k, gbr_kind, 32);
-	REQUIRE_OFFSET32(struct silofs_gbr1k, gbr_flags, 36);
-	REQUIRE_OFFSET64(struct silofs_gbr1k, gbr_root, 64);
-	REQUIRE_OFFSET64(struct silofs_gbr1k, gbr_sb_addr, 256);
-	REQUIRE_SIZEOF_1K(struct silofs_gbr1k);
-	REQUIRE_SIZEOF(struct silofs_gbr1k, SILOFS_MBR_SIZE);
+	REQUIRE_OFFSET64(struct silofs_mbr1k, mbr_magic, 0);
+	REQUIRE_OFFSET64(struct silofs_mbr1k, mbr_version, 8);
+	REQUIRE_OFFSET64(struct silofs_mbr1k, mbr_uuid, 16);
+	REQUIRE_OFFSET64(struct silofs_mbr1k, mbr_kind, 32);
+	REQUIRE_OFFSET32(struct silofs_mbr1k, mbr_flags, 36);
+	REQUIRE_OFFSET64(struct silofs_mbr1k, mbr_root, 64);
+	REQUIRE_OFFSET64(struct silofs_mbr1k, mbr_sb_addr, 256);
+	REQUIRE_SIZEOF_1K(struct silofs_mbr1k);
+	REQUIRE_SIZEOF(struct silofs_mbr1k, SILOFS_MBR_SIZE);
 }
 
 static void validate_ondisk_uber(void)
@@ -461,7 +461,7 @@ void silofs_validate_ondisk_format(void)
 	validate_ondisk_pmeta();
 	validate_ondisk_headers();
 	validate_ondisk_spmaps();
-	validate_ondisk_gbr();
+	validate_ondisk_mbr();
 	validate_ondisk_uber();
 	validate_ondisk_super();
 	validate_ondisk_lsmap();

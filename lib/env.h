@@ -23,7 +23,7 @@
 #include "addr.h"
 #include "bstore.h"
 #include "vfs.h"
-#include "gbr.h"
+#include "mbr.h"
 
 /* top-level operations counters/stats */
 struct silofs_env_opstat {
@@ -54,7 +54,7 @@ struct silofs_env_base {
 /* top-level environment object */
 struct silofs_env {
 	struct silofs_env_base   base;
-	struct silofs_gbrstate   gbrs;
+	struct silofs_mbrstate   mbrs;
 	struct silofs_rwlock     rwlock;
 	struct silofs_mutex      mutex;
 	struct silofs_cipher     enc_cipher;
@@ -100,7 +100,7 @@ int silofs_env_reload_super(struct silofs_env *env);
 int silofs_env_reload_sb_lseg(struct silofs_env *env);
 
 int silofs_env_forkfs(struct silofs_env    *env,
-                      struct silofs_gbrefs *out_gbrefs);
+                      struct silofs_mbrefs *out_mbrefs);
 
 void silofs_env_relax_caches(const struct silofs_env *env, int flags);
 
@@ -119,21 +119,21 @@ bool silofs_env_isrdonlyfs(const struct silofs_env *env);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_env_sense_gbr(struct silofs_env         *env,
+int silofs_env_sense_mbr(struct silofs_env         *env,
                          const struct silofs_paddr *paddr);
 
-int silofs_env_setup_fs_gbr(struct silofs_env *env);
+int silofs_env_setup_fs_mbr(struct silofs_env *env);
 
-int silofs_env_commit_fs_gbr(struct silofs_env   *env,
-                             struct silofs_paddr *out_gbref);
+int silofs_env_commit_fs_mbr(struct silofs_env   *env,
+                             struct silofs_paddr *out_mbref);
 
-int silofs_env_reload_fs_gbr(struct silofs_env         *env,
+int silofs_env_reload_fs_mbr(struct silofs_env         *env,
                              const struct silofs_paddr *paddr);
 
-int silofs_env_reload_ar_gbr(struct silofs_env         *env,
+int silofs_env_reload_ar_mbr(struct silofs_env         *env,
                              const struct silofs_paddr *paddr);
 
-int silofs_env_unlink_gbr(struct silofs_env         *env,
+int silofs_env_unlink_mbr(struct silofs_env         *env,
                           const struct silofs_paddr *paddr);
 
 #endif /* SILOFS_ENV_H_ */

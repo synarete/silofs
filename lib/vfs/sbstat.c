@@ -129,7 +129,7 @@ spgs256_gauge_of(const struct silofs_space_gauges256 *spgs256,
 	case SILOFS_MTYPE_ARIX:
 	case SILOFS_MTYPE_BLDESC:
 	case SILOFS_MTYPE_BTNODE:
-	case SILOFS_MTYPE_GBR:
+	case SILOFS_MTYPE_MBR:
 	case SILOFS_MTYPE_NONE:
 	case SILOFS_MTYPE_LAST:
 	default:
@@ -354,7 +354,7 @@ spgs_gauge_of(const struct silofs_space_gauges *spgs, enum silofs_mtype mtype)
 	case SILOFS_MTYPE_ARIX:
 	case SILOFS_MTYPE_BLDESC:
 	case SILOFS_MTYPE_BTNODE:
-	case SILOFS_MTYPE_GBR:
+	case SILOFS_MTYPE_MBR:
 	case SILOFS_MTYPE_NONE:
 	case SILOFS_MTYPE_LAST:
 	default:

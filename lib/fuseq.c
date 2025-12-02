@@ -32,7 +32,7 @@
 #include <silofs/ioctls.h>
 #include <silofs/mntsvc.h>
 #include "infra.h"
-#include "gbr.h"
+#include "mbr.h"
 #include "vfs.h"
 #include "env.h"
 #include "call.h"
@@ -2993,7 +2993,7 @@ static void assign_ioc_blobid(struct silofs_blobid *blobid,
 static int do_ioc_clone(const struct silofs_fuseq_cmd_ctx *fcc)
 {
 	union silofs_ioc_u ioc_u;
-	const struct silofs_gbrefs *gbrefs = &fcc->args->out.clone.gbrefs;
+	const struct silofs_mbrefs *mbrefs = &fcc->args->out.clone.mbrefs;
 	void *buf_out = fcc->fqs->fqs_outb->u.iob.b;
 	struct silofs_ioc_forkfs *cl_out = &ioc_u.forkfs;
 	const size_t bsz_in_min = 1;
@@ -3025,9 +3025,9 @@ static int do_ioc_clone(const struct silofs_fuseq_cmd_ctx *fcc)
 	}
 
 	memset(cl_out, 0, sizeof(*cl_out));
-	assign_ioc_blobid(&cl_out->base, &gbrefs->base);
-	assign_ioc_blobid(&cl_out->main, &gbrefs->main);
-	assign_ioc_blobid(&cl_out->fork, &gbrefs->fork);
+	assign_ioc_blobid(&cl_out->base, &mbrefs->base);
+	assign_ioc_blobid(&cl_out->main, &mbrefs->main);
+	assign_ioc_blobid(&cl_out->fork, &mbrefs->fork);
 	memcpy(buf_out, cl_out, sizeof(*cl_out));
 out:
 	return fqs_reply_ioctl(fcc->fqs, fcc->task, 0, cl_out, sizeof(*cl_out),

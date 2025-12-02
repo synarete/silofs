@@ -165,7 +165,7 @@ int silofs_exec_query(struct silofs_task_ctx *task, ino_t ino,
                       struct silofs_ioc_query *out_qry);
 
 int silofs_exec_forkfs(struct silofs_task_ctx *task, ino_t ino, int flags,
-                       struct silofs_gbrefs *out_gbrefs);
+                       struct silofs_mbrefs *out_mbrefs);
 
 int silofs_exec_tune(struct silofs_task_ctx *task, ino_t ino, int iflags_want,
                      int iflags_dont);
@@ -186,7 +186,7 @@ int silofs_exec_archive(struct silofs_task_ctx *task,
                         struct silofs_paddr    *out_ar_paddr);
 
 int silofs_exec_restore(struct silofs_task_ctx    *task,
-                        const struct silofs_paddr *ar_gbref,
-                        struct silofs_paddr       *out_fs_gbref);
+                        const struct silofs_paddr *ar_mbref,
+                        struct silofs_paddr       *out_fs_mbref);
 
 #endif /* SILOFS_EXEC_H_ */

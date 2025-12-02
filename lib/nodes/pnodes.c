@@ -503,7 +503,7 @@ silofs_new_pnode(const struct silofs_pmeta *pmeta, struct silofs_alloc *alloc)
 	case SILOFS_MTYPE_SPNODE:
 	case SILOFS_MTYPE_SPLEAF:
 	case SILOFS_MTYPE_ARIX:
-	case SILOFS_MTYPE_GBR:
+	case SILOFS_MTYPE_MBR:
 	case SILOFS_MTYPE_LSMAP:
 	case SILOFS_MTYPE_INODE:
 	case SILOFS_MTYPE_XANODE:
@@ -541,7 +541,7 @@ void silofs_del_pnode(struct silofs_pnode_info *pni,
 	case SILOFS_MTYPE_SPNODE:
 	case SILOFS_MTYPE_SPLEAF:
 	case SILOFS_MTYPE_ARIX:
-	case SILOFS_MTYPE_GBR:
+	case SILOFS_MTYPE_MBR:
 	case SILOFS_MTYPE_LSMAP:
 	case SILOFS_MTYPE_INODE:
 	case SILOFS_MTYPE_XANODE:

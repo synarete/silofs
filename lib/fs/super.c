@@ -19,7 +19,7 @@
 #include <sys/stat.h>
 #include <sys/mount.h>
 #include "infra.h"
-#include "vfs.h"
+#include "fs.h"
 #include "exec.h"
 #include "env.h"
 

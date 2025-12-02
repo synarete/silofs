@@ -14,26 +14,26 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_VFS_H_
-#define SILOFS_VFS_H_
+#ifndef SILOFS_FS_H_
+#define SILOFS_FS_H_
 
 #include "infra.h"
 #include "addr.h"
 #include "nodes.h"
-#include "vfs/uidgid.h"
-#include "vfs/idsmap.h"
-#include "vfs/lsmap.h"
-#include "vfs/inode.h"
-#include "vfs/xattr.h"
-#include "vfs/dir.h"
-#include "vfs/file.h"
-#include "vfs/symlink.h"
-#include "vfs/super.h"
-#include "vfs/lcache.h"
-#include "vfs/namei.h"
-#include "vfs/spmaps.h"
-#include "vfs/stage.h"
-#include "vfs/encdec.h"
-#include "vfs/task.h"
+#include "fs/uidgid.h"
+#include "fs/idsmap.h"
+#include "fs/lsmap.h"
+#include "fs/inode.h"
+#include "fs/xattr.h"
+#include "fs/dir.h"
+#include "fs/file.h"
+#include "fs/symlink.h"
+#include "fs/super.h"
+#include "fs/lcache.h"
+#include "fs/namei.h"
+#include "fs/spmaps.h"
+#include "fs/stage.h"
+#include "fs/encdec.h"
+#include "fs/task.h"
 
-#endif /* SILOFS_VFS_H_ */
+#endif /* SILOFS_FS_H_ */

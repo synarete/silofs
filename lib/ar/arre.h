@@ -20,7 +20,7 @@
 #include <silofs/ondisk.h>
 #include "infra.h"
 #include "addr.h"
-#include "vfs.h"
+#include "fs.h"
 #include "index.h"
 
 int silofs_do_archive_fs(struct silofs_task_ctx *task,

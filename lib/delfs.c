@@ -18,7 +18,7 @@
 #include <silofs/ioctls.h>
 #include "infra.h"
 #include "bstore.h"
-#include "vfs.h"
+#include "fs.h"
 #include "mbr.h"
 #include "env.h"
 #include "walk.h"

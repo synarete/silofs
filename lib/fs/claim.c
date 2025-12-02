@@ -18,7 +18,7 @@
 #include <errno.h>
 #include <silofs/ioctls.h>
 #include "bstore.h"
-#include "vfs.h"
+#include "fs.h"
 #include "exec.h"
 #include "env.h"
 

@@ -18,7 +18,7 @@
 #include <sys/resource.h>
 #include <silofs/ioctls.h>
 #include "bstore.h"
-#include "vfs.h"
+#include "fs.h"
 #include "mbr.h"
 #include "env.h"
 #include "fuseq.h"

@@ -21,7 +21,7 @@
 #include <fcntl.h>
 #include <time.h>
 #include "mbr.h"
-#include "vfs.h"
+#include "fs.h"
 #include "ar.h"
 #include "walk.h"
 #include "exec.h"

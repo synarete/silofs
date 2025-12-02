@@ -17,7 +17,7 @@
 #include "configs.h"
 #include "infra.h"
 #include "bstore.h"
-#include "vfs.h"
+#include "fs.h"
 #include "exec.h"
 #include "env.h"
 

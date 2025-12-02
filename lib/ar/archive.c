@@ -17,7 +17,7 @@
 #include "configs.h"
 #include "infra.h"
 #include "bstore.h"
-#include "vfs.h"
+#include "fs.h"
 #include "env.h"
 #include "walk.h"
 #include "index.h"

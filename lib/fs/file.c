@@ -24,7 +24,7 @@
 #include <stdio.h>
 #include <limits.h>
 #include "infra.h"
-#include "vfs.h"
+#include "fs.h"
 #include "exec.h"
 #include "env.h"
 

@@ -18,7 +18,7 @@
 #include "infra.h"
 #include "addr.h"
 #include "bstore.h"
-#include "vfs.h"
+#include "fs.h"
 #include "index.h"
 
 static void

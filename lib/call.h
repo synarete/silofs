@@ -21,7 +21,7 @@
 #include <sys/statvfs.h>
 #include "infra.h"
 #include "addr.h"
-#include "vfs.h"
+#include "fs.h"
 #include "mbr.h"
 
 struct silofs_lookup_in {

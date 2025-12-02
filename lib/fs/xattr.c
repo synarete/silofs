@@ -19,7 +19,7 @@
 #include <sys/xattr.h>
 #include <linux/xattr.h>
 #include <limits.h>
-#include "vfs.h"
+#include "fs.h"
 #include "exec.h"
 #include "env.h"
 

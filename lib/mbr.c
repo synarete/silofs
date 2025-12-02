@@ -20,7 +20,7 @@
 #include "crypt.h"
 #include "bstore.h"
 #include "mbr.h"
-#include "vfs.h"
+#include "fs.h"
 #include "env.h"
 
 static uint64_t mbr1k_magic(const struct silofs_mbr1k *mbr1k)

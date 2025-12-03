@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0
 import json
-from pathlib import Path
+import tomllib  # noqa
+from pathlib import Path  # noqa
 from typing import Dict, Optional
 
 import pydantic
 
-import tomllib
 
 _DEFAULT_REPO_URL = "@default"
 _POSTGRESQL_REPO_URL = "https://git.postgresql.org/git/postgresql.git"

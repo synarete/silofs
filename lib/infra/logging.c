@@ -192,10 +192,13 @@ int silofs_logf(enum silofs_log_level log_level, const char *file, int line,
 	const char *filename = nullptr;
 	const int saved_errno = errno;
 	enum silofs_log_flags log_flags;
-	int n;
+	int n, ret = 0;
+
+	va_start(ap, fmt);
 
 	if (!log_enabled_with(log_level)) {
-		return -1;
+		ret = -1;
+		goto out;
 	}
 
 	log_flags = log_ctrl_flags_by(log_level);
@@ -203,9 +206,7 @@ int silofs_logf(enum silofs_log_level log_level, const char *file, int line,
 		filename = basename_of(file);
 	}
 
-	va_start(ap, fmt);
 	n = vsnprintf(msg, sizeof(msg), fmt, ap);
-	va_end(ap);
 	if (n >= (int)sizeof(msg)) {
 		msg[sizeof(msg) - 1] = '\0';
 	}
@@ -213,7 +214,9 @@ int silofs_logf(enum silofs_log_level log_level, const char *file, int line,
 	log_msg(log_level, log_flags, msg, filename, line);
 
 	errno = saved_errno;
-	return 0;
+out:
+	va_end(ap);
+	return ret;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

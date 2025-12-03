@@ -19,6 +19,7 @@ _clang_scan_enabled_checkers_args() {
 		| grep -Ev 'osx|fuchsia|cplusplus|optin|strcpy|webkit' \
 		| grep -Ev '^Check|^Warn|^Reports' \
 		| grep -Ev 'DeprecatedOrUnsafeBufferHandling' \
+		| grep -Ev 'valist\.Uninitialized' \
 		| awk '{print $1}' \
 		| sed '/^$/d' \
 		| awk '{print " -enable-checker "$1""} '

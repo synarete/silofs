@@ -220,16 +220,15 @@ static int cpr_bad_val(const struct silofs_conf_parser *cpr,
 cpr_printf static int
 cpr_bad_input(const struct silofs_conf_parser *cpr, const char *fmt, ...)
 {
-	char msg[256] = "";
 	va_list ap = { 0 };
-	const int ret = errno ? -errno : -SILOFS_EINVAL;
+	char msg[256] = "";
 
 	va_start(ap, fmt);
 	(void)vsnprintf(msg, sizeof(msg) - 1, fmt, ap);
 	va_end(ap);
 
 	log_err("%s (line: %d)", msg, cpr->line_no);
-	return ret;
+	return errno ? -errno : -SILOFS_EINVAL;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

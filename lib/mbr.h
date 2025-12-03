@@ -25,20 +25,26 @@
 
 struct silofs_env;
 
-/* a tuple of references (CAS) to global boot-records */
+/* a tuple of references (CAS) to main boot-records */
 struct silofs_mbrefs {
 	struct silofs_paddr main;
 	struct silofs_paddr base;
 	struct silofs_paddr fork;
 };
 
-/* global boot-record, in-memory representation */
+/* main boot-record, in-memory representation */
 struct silofs_mbr {
 	struct silofs_pmeta  root;
 	struct silofs_uuid   uuid;
 	struct silofs_uaddr  sb_addr;
 	enum silofs_mbr_kind kind;
 	unsigned             flags;
+};
+
+/* main boot-record, in-memory representation */
+struct silofs_mbr_info {
+	struct silofs_cmeta mb_cmeta;
+	struct silofs_mbr1k mb_mbr1k;
 };
 
 /* global boot-records state */
@@ -60,9 +66,6 @@ int silofs_mbr_root(const struct silofs_mbr *mbr,
 void silofs_mbr_set_root(struct silofs_mbr         *mbr,
                          const struct silofs_pmeta *pmeta);
 
-void silofs_mbr_set_rootc(struct silofs_mbr         *mbr,
-                          const struct silofs_cmeta *cmeta);
-
 void silofs_mbr_set_rootc_by(struct silofs_mbr       *mbr,
                              const struct silofs_mbr *other);
 
@@ -81,5 +84,37 @@ int silofs_mbr_decode_by(struct silofs_mbr         *mbr,
 
 int silofs_derive_mbr_cmeta(const struct silofs_password *passwd,
                             struct silofs_cmeta          *out_cmeta);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_mbi_init(struct silofs_mbr_info *mbi, enum silofs_mbr_kind kind);
+
+void silofs_mbi_fini(struct silofs_mbr_info *mbi);
+
+int silofs_mbi_update_cmeta_by(struct silofs_mbr_info       *mbi,
+                               const struct silofs_password *pw);
+
+int silofs_mbi_uber_root(const struct silofs_mbr_info *mbi,
+                         struct silofs_pmeta          *out_pmeta);
+
+int silofs_mbi_arix_root(const struct silofs_mbr_info *mbi,
+                         struct silofs_pmeta          *out_pmeta);
+
+int silofs_mbi_set_root(struct silofs_mbr_info    *mbi,
+                        const struct silofs_pmeta *pmeta);
+
+int silofs_mbi_set_sbaddr(struct silofs_mbr_info    *mbi,
+                          const struct silofs_uaddr *sb_uaddr);
+
+void silofs_mbi_align_cmeta(struct silofs_mbr_info       *mbi,
+                            const struct silofs_mbr_info *other);
+
+int silofs_mbi_stamp_export(struct silofs_mbr_info *mbi,
+                            struct silofs_paddr    *out_paddr,
+                            struct silofs_mbr1k    *out_mbr1k);
+
+int silofs_mbi_verify_import(struct silofs_mbr_info    *mbi,
+                             const struct silofs_paddr *paddr,
+                             const struct silofs_mbr1k *mbr1k);
 
 #endif /* SILOFS_MBR_H_ */

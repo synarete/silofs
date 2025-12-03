@@ -157,6 +157,14 @@ mbr1k_set_uuid(struct silofs_mbr1k *mbr1k, const struct silofs_uuid *uuid)
 	silofs_uuid_assign(&mbr1k->mbr_uuid, uuid);
 }
 
+static void mbr1k_gen_uuid(struct silofs_mbr1k *mbr1k)
+{
+	struct silofs_uuid uuid;
+
+	silofs_uuid_generate(&uuid);
+	mbr1k_set_uuid(mbr1k, &uuid);
+}
+
 static int mbr1k_check(const struct silofs_mbr1k *mbr1k)
 {
 	struct silofs_pmeta pmeta;
@@ -256,6 +264,40 @@ mbr1k_htox(struct silofs_mbr1k *mbr1k, const struct silofs_mbr *mbr)
 	mbr1k_set_uuid(mbr1k, &mbr->uuid);
 }
 
+static void mbr1k_init(struct silofs_mbr1k *mbr1k, enum silofs_mbr_kind kind)
+{
+	silofs_memzero(mbr1k, sizeof(*mbr1k));
+	mbr1k_set_magic(mbr1k, SILOFS_MBR_MAGIC);
+	mbr1k_set_version(mbr1k, SILOFS_FMT_REVISION);
+	mbr1k_reset_root(mbr1k);
+	mbr1k_set_kind(mbr1k, kind);
+	mbr1k_set_flags(mbr1k, 0);
+	mbr1k_gen_uuid(mbr1k);
+}
+
+static void mbr1k_fini(struct silofs_mbr1k *mbr1k)
+{
+	silofs_memffff(mbr1k, sizeof(*mbr1k));
+}
+
+static int mbr1k_encrypt(const struct silofs_mbr1k *mbr1k,
+                         const struct silofs_cipher *cipher,
+                         const struct silofs_civkey *civkey,
+                         struct silofs_mbr1k *out_mbr1k)
+{
+	return silofs_encrypt_buf(cipher, civkey, mbr1k, out_mbr1k,
+	                          sizeof(*out_mbr1k));
+}
+
+static int mbr1k_decrypt(const struct silofs_mbr1k *mbr1k,
+                         const struct silofs_cipher *cipher,
+                         const struct silofs_civkey *civkey,
+                         struct silofs_mbr1k *out_mbr1k)
+{
+	return silofs_decrypt_buf(cipher, civkey, mbr1k, out_mbr1k,
+	                          sizeof(*out_mbr1k));
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void mbr_gen_uuid(struct silofs_mbr *mbr)
@@ -288,8 +330,8 @@ void silofs_mbr_set_root(struct silofs_mbr *mbr,
 	silofs_pmeta_assign(&mbr->root, pmeta);
 }
 
-void silofs_mbr_set_rootc(struct silofs_mbr *mbr,
-                          const struct silofs_cmeta *cmeta)
+static void
+mbr_set_rootc(struct silofs_mbr *mbr, const struct silofs_cmeta *cmeta)
 {
 	silofs_cmeta_assign(&mbr->root.cmeta, cmeta);
 }
@@ -297,7 +339,7 @@ void silofs_mbr_set_rootc(struct silofs_mbr *mbr,
 void silofs_mbr_set_rootc_by(struct silofs_mbr *mbr,
                              const struct silofs_mbr *other)
 {
-	silofs_mbr_set_rootc(mbr, &other->root.cmeta);
+	mbr_set_rootc(mbr, &other->root.cmeta);
 }
 
 void silofs_mbr_init(struct silofs_mbr *mbr, enum silofs_mbr_kind kind)
@@ -319,24 +361,6 @@ void silofs_mbr_fini(struct silofs_mbr *mbr)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int encrypt_mbr1k(const struct silofs_cipher *ci,
-                         const struct silofs_civkey *civkey,
-                         const struct silofs_mbr1k *mbr1k_in,
-                         struct silofs_mbr1k *mbr1k_out)
-{
-	return silofs_encrypt_buf(ci, civkey, mbr1k_in, mbr1k_out,
-	                          sizeof(*mbr1k_out));
-}
-
-static int decrypt_mbr1k(const struct silofs_cipher *ci,
-                         const struct silofs_civkey *civkey,
-                         const struct silofs_mbr1k *mbr1k_in,
-                         struct silofs_mbr1k *mbr1k_out)
-{
-	return silofs_decrypt_buf(ci, civkey, mbr1k_in, mbr1k_out,
-	                          sizeof(*mbr1k_out));
-}
-
 static int
 mbr_encode(const struct silofs_mbr *mbr, const struct silofs_mdigest *mdigest,
            const struct silofs_cipher *cipher,
@@ -346,7 +370,7 @@ mbr_encode(const struct silofs_mbr *mbr, const struct silofs_mdigest *mdigest,
 
 	mbr1k_htox(&mbr1k, mbr);
 	mbr1k_stamp(&mbr1k, mdigest);
-	return encrypt_mbr1k(cipher, civkey, &mbr1k, out_mbr1k);
+	return mbr1k_encrypt(&mbr1k, cipher, civkey, out_mbr1k);
 }
 
 static int mbr_decode(struct silofs_mbr *mbr, //
@@ -358,7 +382,7 @@ static int mbr_decode(struct silofs_mbr *mbr, //
 	struct silofs_mbr1k mbr1k = { .mbr_magic = 1 };
 	int err;
 
-	err = decrypt_mbr1k(cipher, civkey, enc_mbr1k, &mbr1k);
+	err = mbr1k_decrypt(enc_mbr1k, cipher, civkey, &mbr1k);
 	if (err) {
 		return err;
 	}
@@ -421,6 +445,15 @@ mbraux_encode_mbr(struct silofs_mbraux *aux, const struct silofs_mbr *mbr,
 	                  out_mbr1k);
 }
 
+static int
+mbraux_encode_mbr1k(struct silofs_mbraux *aux, struct silofs_mbr1k *mbr1k,
+                    struct silofs_mbr1k *out_mbr1k)
+{
+	mbr1k_stamp(mbr1k, &aux->mdigest);
+	return mbr1k_encrypt(mbr1k, &aux->cipher, &aux->cmeta.civkey,
+	                     out_mbr1k);
+}
+
 static void mbraux_calc_paddr_of(struct silofs_mbraux *aux,
                                  const struct silofs_mbr1k *mbr1k,
                                  struct silofs_paddr *out_paddr)
@@ -432,6 +465,41 @@ static void mbraux_calc_paddr_of(struct silofs_mbraux *aux,
 
 	silofs_calc_cas_paddr(&aux->mdigest, SILOFS_MTYPE_MBR, &iov, 1,
 	                      out_paddr);
+}
+
+static int mbraux_verify_paddr(struct silofs_mbraux *aux,
+                               const struct silofs_paddr *paddr,
+                               const struct silofs_mbr1k *mbr1k)
+{
+	struct silofs_paddr calc_paddr;
+
+	mbraux_calc_paddr_of(aux, mbr1k, &calc_paddr);
+	return silofs_paddr_isequal(paddr, &calc_paddr) ? 0 : -SILOFS_EBADMBR;
+}
+
+static int mbraux_decode_mbr(struct silofs_mbraux *aux, struct silofs_mbr *mbr,
+                             const struct silofs_mbr1k *mbr1k)
+{
+	return mbr_decode(mbr, &aux->mdigest, &aux->cipher, &aux->cmeta.civkey,
+	                  mbr1k);
+}
+
+static int mbraux_decode_mbr1k(struct silofs_mbraux *aux,
+                               const struct silofs_mbr1k *mbr1k,
+                               struct silofs_mbr1k *out_mbr1k)
+{
+	int err;
+
+	err = mbr1k_decrypt(mbr1k, &aux->cipher, &aux->cmeta.civkey,
+	                    out_mbr1k);
+	if (err) {
+		return err;
+	}
+	err = mbr1k_verify(mbr1k, &aux->mdigest);
+	if (err) {
+		return err;
+	}
+	return 0;
 }
 
 int silofs_mbr_encode_by(const struct silofs_mbr *mbr,
@@ -454,23 +522,6 @@ int silofs_mbr_encode_by(const struct silofs_mbr *mbr,
 out:
 	mbraux_fini(&aux);
 	return err;
-}
-
-static int mbraux_verify_paddr(struct silofs_mbraux *aux,
-                               const struct silofs_paddr *paddr,
-                               const struct silofs_mbr1k *mbr1k)
-{
-	struct silofs_paddr calc_paddr;
-
-	mbraux_calc_paddr_of(aux, mbr1k, &calc_paddr);
-	return silofs_paddr_isequal(paddr, &calc_paddr) ? 0 : -SILOFS_EBADMBR;
-}
-
-static int mbraux_decode_mbr(struct silofs_mbraux *aux, struct silofs_mbr *mbr,
-                             const struct silofs_mbr1k *mbr1k)
-{
-	return mbr_decode(mbr, &aux->mdigest, &aux->cipher, &aux->cmeta.civkey,
-	                  mbr1k);
 }
 
 int silofs_mbr_decode_by(struct silofs_mbr *mbr,
@@ -519,5 +570,152 @@ int silofs_derive_mbr_cmeta(const struct silofs_password *passwd,
 	silofs_cmeta_setup(out_cmeta, &civkey);
 out:
 	silofs_mdigest_fini(&mdigest);
+	return err;
+}
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+static enum silofs_mtype pmeta_mtype(const struct silofs_pmeta *pmeta)
+{
+	return pmeta->paddr.mtype;
+}
+
+static bool pmeta_isuber(const struct silofs_pmeta *pmeta)
+{
+	return (pmeta_mtype(pmeta) == SILOFS_MTYPE_UBER);
+}
+
+static bool pmeta_isarix(const struct silofs_pmeta *pmeta)
+{
+	return (pmeta_mtype(pmeta) == SILOFS_MTYPE_ARIX);
+}
+
+void silofs_mbi_init(struct silofs_mbr_info *mbi, enum silofs_mbr_kind kind)
+{
+	silofs_cmeta_reset(&mbi->mb_cmeta);
+	mbr1k_init(&mbi->mb_mbr1k, kind);
+}
+
+void silofs_mbi_fini(struct silofs_mbr_info *mbi)
+{
+	silofs_cmeta_reset(&mbi->mb_cmeta);
+	mbr1k_fini(&mbi->mb_mbr1k);
+}
+
+int silofs_mbi_update_cmeta_by(struct silofs_mbr_info *mbi,
+                               const struct silofs_password *pw)
+{
+	return silofs_derive_mbr_cmeta(pw, &mbi->mb_cmeta);
+}
+
+int silofs_mbi_uber_root(const struct silofs_mbr_info *mbi,
+                         struct silofs_pmeta *out_pmeta)
+{
+	const struct silofs_mbr1k *mbr1k = &mbi->mb_mbr1k;
+	const enum silofs_mbr_kind kind = mbr1k_kind(mbr1k);
+
+	if (kind != SILOFS_MBR_FS) {
+		return -SILOFS_ENOENT;
+	}
+	mbr1k_root(mbr1k, out_pmeta);
+	if (!pmeta_isuber(out_pmeta)) {
+		return -SILOFS_ENOENT;
+	}
+	return 0;
+}
+
+int silofs_mbi_arix_root(const struct silofs_mbr_info *mbi,
+                         struct silofs_pmeta *out_pmeta)
+{
+	const struct silofs_mbr1k *mbr1k = &mbi->mb_mbr1k;
+	const enum silofs_mbr_kind kind = mbr1k_kind(mbr1k);
+
+	if (kind != SILOFS_MBR_FS) {
+		return -SILOFS_ENOENT;
+	}
+	mbr1k_root(mbr1k, out_pmeta);
+	if (!pmeta_isarix(out_pmeta)) {
+		return -SILOFS_ENOENT;
+	}
+	return 0;
+}
+
+int silofs_mbi_set_root(struct silofs_mbr_info *mbi,
+                        const struct silofs_pmeta *pmeta)
+{
+	struct silofs_mbr1k *mbr1k = &mbi->mb_mbr1k;
+	const enum silofs_mbr_kind kind = mbr1k_kind(mbr1k);
+
+	if ((kind == SILOFS_MBR_FS) && !pmeta_isuber(pmeta)) {
+		return -SILOFS_EINVAL;
+	}
+	if ((kind == SILOFS_MBR_AR) && !pmeta_isarix(pmeta)) {
+		return -SILOFS_EINVAL;
+	}
+	mbr1k_set_root(mbr1k, pmeta);
+	return 0;
+}
+
+int silofs_mbi_set_sbaddr(struct silofs_mbr_info *mbi,
+                          const struct silofs_uaddr *sb_uaddr)
+{
+	struct silofs_mbr1k *mbr1k = &mbi->mb_mbr1k;
+	const enum silofs_mbr_kind kind = mbr1k_kind(mbr1k);
+
+	if (kind != SILOFS_MBR_FS) {
+		return -SILOFS_EINVAL;
+	}
+	mbr1k_set_sb_addr(&mbi->mb_mbr1k, sb_uaddr);
+	return 0;
+}
+
+void silofs_mbi_align_cmeta(struct silofs_mbr_info *mbi,
+                            const struct silofs_mbr_info *other)
+{
+	silofs_cmeta_assign(&mbi->mb_cmeta, &other->mb_cmeta);
+}
+
+int silofs_mbi_stamp_export(struct silofs_mbr_info *mbi,
+                            struct silofs_paddr *out_paddr,
+                            struct silofs_mbr1k *out_mbr1k)
+{
+	struct silofs_mbraux aux;
+	int err;
+
+	err = mbraux_init(&aux, &mbi->mb_cmeta);
+	if (err) {
+		return err;
+	}
+	err = mbraux_encode_mbr1k(&aux, &mbi->mb_mbr1k, out_mbr1k);
+	if (err) {
+		goto out;
+	}
+	mbraux_calc_paddr_of(&aux, out_mbr1k, out_paddr);
+out:
+	mbraux_fini(&aux);
+	return err;
+}
+
+int silofs_mbi_verify_import(struct silofs_mbr_info *mbi,
+                             const struct silofs_paddr *paddr,
+                             const struct silofs_mbr1k *mbr1k)
+{
+	struct silofs_mbraux aux;
+	int err;
+
+	err = mbraux_init(&aux, &mbi->mb_cmeta);
+	if (err) {
+		return err;
+	}
+	err = mbraux_verify_paddr(&aux, paddr, mbr1k);
+	if (err) {
+		return err;
+	}
+	err = mbraux_decode_mbr1k(&aux, mbr1k, &mbi->mb_mbr1k);
+	if (err) {
+		goto out;
+	}
+out:
+	mbraux_fini(&aux);
 	return err;
 }

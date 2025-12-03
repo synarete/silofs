@@ -582,9 +582,9 @@ static struct ut_readdir_ctx *ut_readdir_ctx_of(struct silofs_readdir_ctx *ptr)
 static int filldir(struct silofs_readdir_ctx *rd_ctx,
                    const struct silofs_readdir_info *rdi)
 {
-	size_t ndents_max;
 	struct ut_dirent_info *dei;
 	struct ut_readdir_ctx *ut_rd_ctx;
+	size_t ndents_max, namelen;
 
 	ut_rd_ctx = ut_readdir_ctx_of(rd_ctx);
 	ndents_max = UT_ARRAY_SIZE(ut_rd_ctx->dei);
@@ -598,8 +598,9 @@ static int filldir(struct silofs_readdir_ctx *rd_ctx,
 	dei = &ut_rd_ctx->dei[ut_rd_ctx->nde++];
 
 	ut_expect(rdi->namelen < sizeof(dei->de.d_name));
-	memcpy(dei->de.d_name, rdi->name, rdi->namelen);
-	dei->de.d_name[rdi->namelen] = '\0';
+	namelen = ut_min(rdi->namelen, sizeof(dei->de.d_name) - 1);
+	memcpy(dei->de.d_name, rdi->name, namelen);
+	dei->de.d_name[namelen] = '\0';
 	dei->de.d_reclen = (uint16_t)rdi->namelen;
 	dei->de.d_ino = rdi->ino;
 	dei->de.d_type = (uint8_t)rdi->dt;

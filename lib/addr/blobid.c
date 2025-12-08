@@ -32,14 +32,14 @@ static void generate_random(uint8_t *p, size_t n)
 
 /* semantic "view" into blobid */
 struct silofs_blobidv {
-	struct silofs_svolid svolid;
-	struct silofs_uniqid uniqid;
 	uint8_t mtype;
 	uint8_t btype;
 	/* XXX REMOVE ME */
 	uint8_t vspace;
 	uint8_t height;
 	uint8_t reserved[12];
+	struct silofs_svolid svolid;
+	struct silofs_uniqid uniqid;
 
 } silofs_attr_aligned64;
 

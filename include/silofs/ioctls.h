@@ -59,8 +59,7 @@ struct silofs_query_repo {
 
 struct silofs_query_boot {
 	int8_t               name[SILOFS_NAME_MAX + 1];
-	struct silofs_blobid main_blobid;
-	struct silofs_blobid root_blobid;
+	struct silofs_blobid mblobid;
 };
 
 struct silofs_query_proc {

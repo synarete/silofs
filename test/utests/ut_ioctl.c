@@ -149,7 +149,7 @@ static void ut_ioctl_query_boot(struct ut_env *ute)
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_query_boot(ute, dino, ioc_qry);
-	ut_expect_blobid(&qbt->root_blobid);
+	ut_expect_blobid(&qbt->mblobid);
 	ut_rmdir_at_root(ute, name);
 }
 

@@ -35,10 +35,9 @@ struct silofs_kdf_descs {
 	struct silofs_kdf_desc kdf_key;
 };
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-int silofs_derive_default_civkey(const struct silofs_mdigest  *md,
-                                 const struct silofs_password *pw,
-                                 struct silofs_civkey         *out_civkey);
+int silofs_derive_civkey(const struct silofs_mdigest   *md,
+                         const struct silofs_password  *pw,
+                         const struct silofs_kdf_descs *kdf,
+                         struct silofs_civkey          *out_civkey);
 
 #endif /* SILOFS_KDF_H_ */

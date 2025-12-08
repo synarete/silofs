@@ -197,19 +197,21 @@ out:
 	return err;
 }
 
-static const struct silofs_civkey *
-arc_arix_civkey(const struct silofs_ar_ctx *ar_ctx)
+static void arc_arix_cmeta(const struct silofs_ar_ctx *ar_ctx,
+                           struct silofs_cmeta *out_cmeta)
 {
-	const struct silofs_mbr *ar_mbr = &ar_ctx->env->mbrs.ar_mbr;
+	struct silofs_pmeta pmeta;
 
-	return &ar_mbr->root.cmeta.civkey;
+	silofs_mbi_arix_root(&ar_ctx->env->mbis.ar_mbi, &pmeta);
+	silofs_cmeta_assign(out_cmeta, &pmeta.cmeta);
 }
 
-static int arc_store_arix_block(struct silofs_ar_ctx *ar_ctx)
+static int arc_store_arix(struct silofs_ar_ctx *ar_ctx)
 {
-	const struct silofs_civkey *civkey = arc_arix_civkey(ar_ctx);
+	struct silofs_cmeta cmeta;
 
-	return silofs_store_arix_block(ar_ctx->abi, civkey);
+	arc_arix_cmeta(ar_ctx, &cmeta);
+	return silofs_store_arix_block(ar_ctx->abi, &cmeta.civkey);
 }
 
 static int arc_require_room(struct silofs_ar_ctx *ar_ctx)
@@ -219,7 +221,7 @@ static int arc_require_room(struct silofs_ar_ctx *ar_ctx)
 	if (!silofs_abi_isfull(ar_ctx->abi)) {
 		return 0;
 	}
-	err = arc_store_arix_block(ar_ctx);
+	err = arc_store_arix(ar_ctx);
 	if (err) {
 		return err;
 	}
@@ -281,7 +283,7 @@ static int arc_archive_apex(struct silofs_ar_ctx *ar_ctx,
 {
 	int err;
 
-	err = arc_store_arix_block(ar_ctx);
+	err = arc_store_arix(ar_ctx);
 	if (err) {
 		return err;
 	}
@@ -289,15 +291,22 @@ static int arc_archive_apex(struct silofs_ar_ctx *ar_ctx,
 	return 0;
 }
 
+static int arc_export_ar_mbr(const struct silofs_ar_ctx *ar_ctx,
+                             struct silofs_paddr *out_paddr,
+                             struct silofs_mbr1k *out_mbr1k)
+{
+	const struct silofs_mbr_info *ar_mbi = &ar_ctx->env->mbis.ar_mbi;
+
+	return silofs_mbi_export(ar_mbi, out_paddr, out_mbr1k);
+}
+
 static int arc_archive_mbr(const struct silofs_ar_ctx *ar_ctx,
                            struct silofs_paddr *out_paddr)
 {
 	struct silofs_mbr1k mbr1k = { .mbr_magic = 0xff };
-	const struct silofs_mbr *ar_mbr = &ar_ctx->env->mbrs.ar_mbr;
-	const struct silofs_cmeta *cmeta = &ar_ctx->env->mbrs.cmeta;
 	int err;
 
-	err = silofs_mbr_encode_by(ar_mbr, cmeta, out_paddr, &mbr1k);
+	err = arc_export_ar_mbr(ar_ctx, out_paddr, &mbr1k);
 	if (err) {
 		return err;
 	}
@@ -308,25 +317,34 @@ static int arc_archive_mbr(const struct silofs_ar_ctx *ar_ctx,
 	return 0;
 }
 
+static int arc_update_mbr_root(struct silofs_ar_ctx *ar_ctx,
+                               const struct silofs_paddr *paddr)
+{
+	struct silofs_mbr_info *ar_mbi = &ar_ctx->env->mbis.ar_mbi;
+
+	return silofs_mbi_update_root(ar_mbi, paddr);
+}
+
 static int arc_archive_post(struct silofs_ar_ctx *ar_ctx,
                             const struct silofs_paddr *paddr,
                             struct silofs_paddr *out_paddr)
 {
-	struct silofs_pmeta pmeta = {};
-	struct silofs_mbr *ar_mbr = &ar_ctx->env->mbrs.ar_mbr;
-	const struct silofs_cmeta *cmeta = &ar_ctx->env->mbrs.cmeta;
+	int err;
 
-	silofs_pmeta_setup(&pmeta, paddr, &cmeta->civkey);
-	silofs_mbr_set_root(ar_mbr, &pmeta);
-	return arc_archive_mbr(ar_ctx, out_paddr);
+	err = arc_update_mbr_root(ar_ctx, paddr);
+	if (err) {
+		return err;
+	}
+	err = arc_archive_mbr(ar_ctx, out_paddr);
+	if (err) {
+		return err;
+	}
+	return 0;
 }
 
 static void arc_archive_prep(struct silofs_ar_ctx *ar_ctx)
 {
-	const struct silofs_mbr *fs_mbr = &ar_ctx->env->mbrs.fs_mbr;
-	struct silofs_mbr *ar_mbr = &ar_ctx->env->mbrs.ar_mbr;
-
-	silofs_mbr_set_rootc_by(ar_mbr, fs_mbr);
+	unused(ar_ctx);
 }
 
 static int

@@ -1879,16 +1879,22 @@ static int vstgc_resolve_child_of(const struct silofs_vstage_ctx *vstg_ctx,
 	                                out_laddr);
 }
 
-static const struct silofs_ckey *
-vstgc_main_key(const struct silofs_vstage_ctx *vstg_ctx)
+static void vstgc_root_cmeta(const struct silofs_vstage_ctx *vstg_ctx,
+                             struct silofs_cmeta *out_cmeta)
 {
-	return &vstg_ctx->env->mbrs.fs_mbr.root.cmeta.civkey.key;
+	struct silofs_pmeta pmeta = {};
+
+	silofs_mbi_uber_root(&vstg_ctx->env->mbis.fs_mbi, &pmeta);
+	silofs_cmeta_assign(out_cmeta, &pmeta.cmeta);
 }
 
 static void vstgc_resolve_main_key(const struct silofs_vstage_ctx *vstg_ctx,
                                    struct silofs_ckey *out_key)
 {
-	silofs_ckey_assign(out_key, vstgc_main_key(vstg_ctx));
+	struct silofs_cmeta cmeta;
+
+	vstgc_root_cmeta(vstg_ctx, &cmeta);
+	silofs_ckey_assign(out_key, &cmeta.civkey.key);
 }
 
 static int vstgc_resolve_key_of(const struct silofs_vstage_ctx *vstg_ctx,

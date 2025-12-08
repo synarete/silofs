@@ -96,6 +96,14 @@ void silofs_pmeta_setup(struct silofs_pmeta *pmeta,
 	silofs_cmeta_setup(&pmeta->cmeta, civkey);
 }
 
+void silofs_pmeta_setup2(struct silofs_pmeta *pmeta,
+                         const struct silofs_paddr *paddr,
+                         const struct silofs_cmeta *cmeta)
+{
+	silofs_paddr_assign(&pmeta->paddr, paddr);
+	silofs_cmeta_assign(&pmeta->cmeta, cmeta);
+}
+
 void silofs_pmeta_reset(struct silofs_pmeta *pmeta)
 {
 	silofs_paddr_reset(&pmeta->paddr);

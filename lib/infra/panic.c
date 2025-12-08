@@ -230,7 +230,7 @@ silofs_attr_noreturn static void silofs_abort(void)
 silofs_attr_noreturn static void
 silofs_fatal_at_(const char *msg, const struct silofs_fileline *fl)
 {
-	silofs_panicf(fl->file, fl->line, "fatal: '%s'", msg);
+	silofs_panicf(fl->file, fl->line, "%s", msg);
 	silofs_unreachable();
 }
 

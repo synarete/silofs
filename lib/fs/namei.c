@@ -2453,30 +2453,18 @@ static void fill_query_boot_name(const struct silofs_task_ctx *task,
 	str_to_buf(&bootpath.fsname, qboot->name, sizeof(qboot->name));
 }
 
-static void fill_query_boot_main_blobid(const struct silofs_task_ctx *task,
-                                        struct silofs_ioc_query *query)
+static void fill_query_boot_mblobid(const struct silofs_task_ctx *task,
+                                    struct silofs_ioc_query *query)
 {
 	struct silofs_mbr1k mbr1k;
 	struct silofs_paddr mbref;
-	const struct silofs_env *env = task->t_env;
-	struct silofs_query_boot *qboot = &query->u.boot;
+	const struct silofs_mbr_info *fs_mbi = &task->t_env->mbis.fs_mbi;
 	int err;
 
-	err = silofs_mbr_encode_by(&env->mbrs.fs_mbr, &env->mbrs.cmeta, &mbref,
-	                           &mbr1k);
+	err = silofs_mbi_export(fs_mbi, &mbref, &mbr1k);
 	if (!err) {
-		silofs_blobid_copyto(&mbref.blobid, &qboot->main_blobid);
+		silofs_blobid_copyto(&mbref.blobid, &query->u.boot.mblobid);
 	}
-}
-
-static void fill_query_boot_root(const struct silofs_task_ctx *task,
-                                 struct silofs_ioc_query *query)
-{
-	struct silofs_blobid blobid;
-	struct silofs_query_boot *qboot = &query->u.boot;
-
-	silofs_sbi_self_blobid(task->t_env->sbi, &blobid);
-	silofs_blobid_copyto(&blobid, &qboot->root_blobid);
 }
 
 static void fill_query_boot(const struct silofs_task_ctx *task,
@@ -2484,8 +2472,7 @@ static void fill_query_boot(const struct silofs_task_ctx *task,
 {
 	silofs_memzero(query, sizeof(*query));
 	fill_query_boot_name(task, query);
-	fill_query_boot_main_blobid(task, query);
-	fill_query_boot_root(task, query);
+	fill_query_boot_mblobid(task, query);
 }
 
 static void fill_query_proc(const struct silofs_task_ctx *task,

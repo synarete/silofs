@@ -58,6 +58,10 @@ void silofs_pmeta_setup(struct silofs_pmeta        *pmeta,
                         const struct silofs_paddr  *paddr,
                         const struct silofs_civkey *civkey);
 
+void silofs_pmeta_setup2(struct silofs_pmeta       *pmeta,
+                         const struct silofs_paddr *paddr,
+                         const struct silofs_cmeta *cmeta);
+
 void silofs_pmeta_reset(struct silofs_pmeta *pmeta);
 
 void silofs_pmeta_assign(struct silofs_pmeta       *pmeta,

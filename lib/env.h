@@ -51,10 +51,16 @@ struct silofs_env_base {
 	struct silofs_fuseq          *fuseq;
 };
 
+/* main boot-records info */
+struct silofs_env_mbis {
+	struct silofs_mbr_info fs_mbi;
+	struct silofs_mbr_info ar_mbi;
+};
+
 /* top-level environment object */
 struct silofs_env {
 	struct silofs_env_base   base;
-	struct silofs_mbrstate   mbrs;
+	struct silofs_env_mbis   mbis;
 	struct silofs_rwlock     rwlock;
 	struct silofs_mutex      mutex;
 	struct silofs_cipher     enc_cipher;

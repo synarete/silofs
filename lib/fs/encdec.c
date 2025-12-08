@@ -42,12 +42,24 @@ static int decrypt_lview_inplace(const struct silofs_env *env,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+void silofs_resolve_unode_cmeta(const struct silofs_env *env,
+                                struct silofs_cmeta *out_cmeta)
+{
+	struct silofs_pmeta pmeta;
+	const struct silofs_mbr_info *fs_mbi = &env->mbis.fs_mbi;
+
+	silofs_mbi_uber_root(fs_mbi, &pmeta);
+	silofs_cmeta_assign(out_cmeta, &pmeta.cmeta);
+}
+
 int silofs_decrypt_uni_view(const struct silofs_env *env,
                             struct silofs_unode_info *uni)
 {
 	struct silofs_llink llink;
+	struct silofs_cmeta cmeta;
 
-	silofs_llink_of_uni(&env->mbrs.fs_mbr, uni, &llink);
+	silofs_resolve_unode_cmeta(env, &cmeta);
+	silofs_llink_of_uni(uni, &cmeta, &llink);
 	return decrypt_lview_inplace(env, &llink, uni->un_lni.ln_view);
 }
 
@@ -56,27 +68,25 @@ int silofs_decrypt_vni_view(const struct silofs_env *env,
 {
 	struct silofs_llink llink;
 
-	silofs_llink_of_vni(&env->mbrs.fs_mbr, vni, &llink);
+	silofs_llink_of_vni(vni, &llink);
 	return decrypt_lview_inplace(env, &llink, vni->vn_lni.ln_view);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_llink_of_uni(const struct silofs_mbr *mbr,
-                         const struct silofs_unode_info *uni,
+void silofs_llink_of_uni(const struct silofs_unode_info *uni,
+                         const struct silofs_cmeta *cmeta,
                          struct silofs_llink *out_llink)
 {
 	const struct silofs_laddr *laddr = silofs_uni_laddr(uni);
-	const struct silofs_civkey *civkey = &mbr->root.cmeta.civkey;
+	const struct silofs_civkey *civkey = &cmeta->civkey;
 
 	silofs_llink_setup(out_llink, laddr, &civkey->key, &civkey->iv);
 }
 
-void silofs_llink_of_vni(const struct silofs_mbr *mbr,
-                         const struct silofs_vnode_info *vni,
+void silofs_llink_of_vni(const struct silofs_vnode_info *vni,
                          struct silofs_llink *out_llink)
 {
-	silofs_unused(mbr);
 	silofs_llink_assign(out_llink, &vni->vn_llink);
 }
 

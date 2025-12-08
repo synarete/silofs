@@ -21,32 +21,6 @@
 #include "gcry.h"
 #include "kdf.h"
 
-/*
- * TODO-0061: Use ARGON2 KDF
- *
- * ARGON2 is considered stronger (GPU-resistant) then PBKDF2 (see [1]) but
- * requires extra wrapping over libgcrypt APIs. Use it.
- *
- * [1] https://fedoraproject.org/wiki/Changes/ \
- *       RemoveFipsModeSetup#Context_information_on_FIPS
- */
-static const struct silofs_kdf_descs s_kdf_descs_default = {
-	.kdf_key = {
-		.kd_iterations = 8192,
-		.kd_algo = SILOFS_KDF_PBKDF2,
-		.kd_subalgo = SILOFS_MD_SHA256,
-		.kd_salt_md = SILOFS_MD_SHA3_512,
-	},
-	.kdf_iv = {
-		.kd_iterations = 2048,
-		.kd_algo = SILOFS_KDF_SCRYPT,
-		.kd_subalgo = 8,
-		.kd_salt_md = SILOFS_MD_SHA3_256,
-	},
-};
-
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-
 static int
 derive_iv(const struct silofs_mdigest *md, const struct silofs_password *pw,
           const struct silofs_kdf_desc *kdf, struct silofs_civ *out_iv)
@@ -93,7 +67,7 @@ static int check_passlen(size_t len)
 	return ret;
 }
 
-static int derive_civkey(const struct silofs_mdigest *md,
+int silofs_derive_civkey(const struct silofs_mdigest *md,
                          const struct silofs_password *pw,
                          const struct silofs_kdf_descs *kdf,
                          struct silofs_civkey *out_civkey)
@@ -114,11 +88,4 @@ static int derive_civkey(const struct silofs_mdigest *md,
 		return err;
 	}
 	return 0;
-}
-
-int silofs_derive_default_civkey(const struct silofs_mdigest *md,
-                                 const struct silofs_password *pw,
-                                 struct silofs_civkey *out_civkey)
-{
-	return derive_civkey(md, pw, &s_kdf_descs_default, out_civkey);
 }

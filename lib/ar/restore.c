@@ -160,28 +160,30 @@ out:
 	return err;
 }
 
-static const struct silofs_civkey *
-rec_arix_civkey(const struct silofs_re_ctx *re_ctx)
+static void rec_arix_cmeta(const struct silofs_re_ctx *re_ctx,
+                           struct silofs_cmeta *out_cmeta)
 {
-	const struct silofs_mbr *ar_mbr = &re_ctx->env->mbrs.ar_mbr;
+	struct silofs_pmeta pmeta;
+	const struct silofs_mbr_info *ar_mbi = &re_ctx->env->mbis.ar_mbi;
 
-	return &ar_mbr->root.cmeta.civkey;
+	silofs_mbi_arix_root(ar_mbi, &pmeta);
+	silofs_cmeta_assign(out_cmeta, &pmeta.cmeta);
 }
 
 static int rec_fetch_arix_block(struct silofs_re_ctx *re_ctx)
 {
-	const struct silofs_civkey *civkey = rec_arix_civkey(re_ctx);
+	struct silofs_cmeta cmeta;
 
-	return silofs_fetch_arix_block(re_ctx->abi, civkey);
+	rec_arix_cmeta(re_ctx, &cmeta);
+	return silofs_fetch_arix_block(re_ctx->abi, &cmeta.civkey);
 }
 
 static int
-rec_resolve_apex(struct silofs_re_ctx *re_ctx, struct silofs_pmeta *out_pmeta)
+rec_resolve_root(struct silofs_re_ctx *re_ctx, struct silofs_pmeta *out_pmeta)
 {
-	const struct silofs_mbr *ar_mbr = &re_ctx->env->mbrs.ar_mbr;
+	const struct silofs_mbr_info *ar_mbi = &re_ctx->env->mbis.ar_mbi;
 
-	silofs_mbr_root(ar_mbr, out_pmeta);
-	return silofs_pmeta_isnull(out_pmeta) ? -SILOFS_ENOENT : 0;
+	return silofs_mbi_arix_root(ar_mbi, out_pmeta);
 }
 
 static int rec_restore_arix(struct silofs_re_ctx *re_ctx,
@@ -205,7 +207,7 @@ static int rec_restore_apex(struct silofs_re_ctx *re_ctx)
 	struct silofs_pmeta pmeta;
 	int err;
 
-	err = rec_resolve_apex(re_ctx, &pmeta);
+	err = rec_resolve_root(re_ctx, &pmeta);
 	if (err) {
 		return err;
 	}
@@ -312,14 +314,13 @@ sb_uaddr_of(const struct silofs_laddr *laddr, struct silofs_uaddr *out_uaddr)
 static int rec_restore_sb_addr(struct silofs_re_ctx *re_ctx)
 {
 	const struct silofs_laddr *sb_laddr = &re_ctx->sb_laddr;
-	struct silofs_mbr *fs_mbr = &re_ctx->env->mbrs.fs_mbr;
 	struct silofs_uaddr sb_uaddr = { .voff = -1 };
 
 	if (silofs_laddr_isnull(sb_laddr)) {
 		return -SILOFS_EBADARIX;
 	}
 	sb_uaddr_of(sb_laddr, &sb_uaddr);
-	silofs_mbr_update_sb(fs_mbr, &sb_uaddr);
+	silofs_mbi_set_sbaddr(&re_ctx->env->mbis.fs_mbi, &sb_uaddr);
 	return 0;
 }
 
@@ -360,26 +361,10 @@ static int rec_restore_post(struct silofs_re_ctx *re_ctx,
 	return 0;
 }
 
-static void rec_restore_prep_update(struct silofs_re_ctx *re_ctx)
-{
-	const struct silofs_mbr *ar_mbr = &re_ctx->env->mbrs.ar_mbr;
-	struct silofs_mbr *fs_mbr = &re_ctx->env->mbrs.fs_mbr;
-
-	silofs_mbr_set_rootc_by(fs_mbr, ar_mbr);
-}
-
 static int rec_restore_prep(struct silofs_re_ctx *re_ctx,
                             const struct silofs_paddr *ar_mbref)
 {
-	struct silofs_env *env = re_ctx->env;
-	int err;
-
-	err = silofs_env_reload_ar_mbr(env, ar_mbref);
-	if (err) {
-		return err;
-	}
-	rec_restore_prep_update(re_ctx);
-	return 0;
+	return silofs_env_reload_ar_mbr(re_ctx->env, ar_mbref);
 }
 
 static int rec_do_restore(struct silofs_re_ctx *re_ctx,

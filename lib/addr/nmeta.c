@@ -19,68 +19,68 @@
 #include "crypt.h"
 #include "htox.h"
 #include "paddr.h"
-#include "cmeta.h"
+#include "nmeta.h"
 
-static const struct silofs_cmeta s_cmeta_none = {
+static const struct silofs_nmeta s_nmeta_none = {
 	.ciargs.algo = SILOFS_CIPHER_NONE,
 	.ciargs.mode = SILOFS_CIPHER_MODE_NONE,
 };
 
-const struct silofs_cmeta *silofs_cmeta_none(void)
+const struct silofs_nmeta *silofs_nmeta_none(void)
 {
-	return &s_cmeta_none;
+	return &s_nmeta_none;
 }
 
-void silofs_cmeta_setup(struct silofs_cmeta *cmeta,
+void silofs_nmeta_setup(struct silofs_nmeta *nmeta,
                         const struct silofs_civkey *civkey)
 {
-	silofs_civkey_assign(&cmeta->civkey, civkey);
-	silofs_ciargs_assign(&cmeta->ciargs, silofs_ciargs_default());
+	silofs_civkey_assign(&nmeta->civkey, civkey);
+	silofs_ciargs_assign(&nmeta->ciargs, silofs_ciargs_default());
 }
 
-void silofs_cmeta_reset(struct silofs_cmeta *cmeta)
+void silofs_nmeta_reset(struct silofs_nmeta *nmeta)
 {
-	silofs_civkey_reset(&cmeta->civkey);
-	silofs_ciargs_reset(&cmeta->ciargs);
+	silofs_civkey_reset(&nmeta->civkey);
+	silofs_ciargs_reset(&nmeta->ciargs);
 }
 
-void silofs_cmeta_assign(struct silofs_cmeta *cmeta,
-                         const struct silofs_cmeta *other)
+void silofs_nmeta_assign(struct silofs_nmeta *nmeta,
+                         const struct silofs_nmeta *other)
 {
-	silofs_civkey_assign(&cmeta->civkey, &other->civkey);
-	silofs_ciargs_assign(&cmeta->ciargs, &other->ciargs);
+	silofs_civkey_assign(&nmeta->civkey, &other->civkey);
+	silofs_ciargs_assign(&nmeta->ciargs, &other->ciargs);
 }
 
-void silofs_cmeta96b_htox(struct silofs_cmeta96b *cmeta96,
-                          const struct silofs_cmeta *cmeta)
+void silofs_nmeta128b_htox(struct silofs_nmeta128b *nmeta128,
+                           const struct silofs_nmeta *nmeta)
 {
-	const uint16_t algo = (uint16_t)(cmeta->ciargs.algo);
-	const uint16_t mode = (uint16_t)(cmeta->ciargs.mode);
+	const uint16_t algo = (uint16_t)(nmeta->ciargs.algo);
+	const uint16_t mode = (uint16_t)(nmeta->ciargs.mode);
 
-	memset(cmeta96, 0, sizeof(*cmeta96));
-	silofs_ckey_assign(&cmeta96->cm_cipher_key, &cmeta->civkey.key);
-	silofs_civ_assign(&cmeta96->cm_cipher_iv, &cmeta->civkey.iv);
-	cmeta96->cm_cipher_algo = silofs_cpu_to_le16(algo);
-	cmeta96->cm_cipher_mode = silofs_cpu_to_le16(mode);
+	memset(nmeta128, 0, sizeof(*nmeta128));
+	silofs_ckey_assign(&nmeta128->nm_cipher_key, &nmeta->civkey.key);
+	silofs_civ_assign(&nmeta128->nm_cipher_iv, &nmeta->civkey.iv);
+	nmeta128->nm_cipher_algo = silofs_cpu_to_le16(algo);
+	nmeta128->nm_cipher_mode = silofs_cpu_to_le16(mode);
 }
 
-void silofs_cmeta96b_xtoh(const struct silofs_cmeta96b *cmeta96,
-                          struct silofs_cmeta *cmeta)
+void silofs_nmeta128b_xtoh(const struct silofs_nmeta128b *nmeta128,
+                           struct silofs_nmeta *nmeta)
 {
-	const uint16_t algo = silofs_le16_to_cpu(cmeta96->cm_cipher_algo);
-	const uint16_t mode = silofs_le16_to_cpu(cmeta96->cm_cipher_mode);
+	const uint16_t algo = silofs_le16_to_cpu(nmeta128->nm_cipher_algo);
+	const uint16_t mode = silofs_le16_to_cpu(nmeta128->nm_cipher_mode);
 
-	silofs_ckey_assign(&cmeta->civkey.key, &cmeta96->cm_cipher_key);
-	silofs_civ_assign(&cmeta->civkey.iv, &cmeta96->cm_cipher_iv);
-	cmeta->ciargs.algo = (enum silofs_cipher_algo)algo;
-	cmeta->ciargs.mode = (enum silofs_cipher_mode)mode;
+	silofs_ckey_assign(&nmeta->civkey.key, &nmeta128->nm_cipher_key);
+	silofs_civ_assign(&nmeta->civkey.iv, &nmeta128->nm_cipher_iv);
+	nmeta->ciargs.algo = (enum silofs_cipher_algo)algo;
+	nmeta->ciargs.mode = (enum silofs_cipher_mode)mode;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct silofs_pmeta s_pmeta_none = {
-	.cmeta.ciargs.algo = SILOFS_CIPHER_NONE,
-	.cmeta.ciargs.mode = SILOFS_CIPHER_MODE_NONE,
+	.nmeta.ciargs.algo = SILOFS_CIPHER_NONE,
+	.nmeta.ciargs.mode = SILOFS_CIPHER_MODE_NONE,
 };
 
 const struct silofs_pmeta *silofs_pmeta_none(void)
@@ -93,28 +93,28 @@ void silofs_pmeta_setup(struct silofs_pmeta *pmeta,
                         const struct silofs_civkey *civkey)
 {
 	silofs_paddr_assign(&pmeta->paddr, paddr);
-	silofs_cmeta_setup(&pmeta->cmeta, civkey);
+	silofs_nmeta_setup(&pmeta->nmeta, civkey);
 }
 
 void silofs_pmeta_setup2(struct silofs_pmeta *pmeta,
                          const struct silofs_paddr *paddr,
-                         const struct silofs_cmeta *cmeta)
+                         const struct silofs_nmeta *nmeta)
 {
 	silofs_paddr_assign(&pmeta->paddr, paddr);
-	silofs_cmeta_assign(&pmeta->cmeta, cmeta);
+	silofs_nmeta_assign(&pmeta->nmeta, nmeta);
 }
 
 void silofs_pmeta_reset(struct silofs_pmeta *pmeta)
 {
 	silofs_paddr_reset(&pmeta->paddr);
-	silofs_cmeta_reset(&pmeta->cmeta);
+	silofs_nmeta_reset(&pmeta->nmeta);
 }
 
 void silofs_pmeta_assign(struct silofs_pmeta *pmeta,
                          const struct silofs_pmeta *other)
 {
 	silofs_paddr_assign(&pmeta->paddr, &other->paddr);
-	silofs_cmeta_assign(&pmeta->cmeta, &other->cmeta);
+	silofs_nmeta_assign(&pmeta->nmeta, &other->nmeta);
 }
 
 bool silofs_pmeta_isnull(const struct silofs_pmeta *pmeta)
@@ -127,12 +127,12 @@ void silofs_pmeta192b_htox(struct silofs_pmeta192b *pmeta192,
 {
 	memset(pmeta192, 0, sizeof(*pmeta192));
 	silofs_paddr64b_htox(&pmeta192->pm_paddr, &pmeta->paddr);
-	silofs_cmeta96b_htox(&pmeta192->pm_cmeta, &pmeta->cmeta);
+	silofs_nmeta128b_htox(&pmeta192->pm_nmeta, &pmeta->nmeta);
 }
 
 void silofs_pmeta192b_xtoh(const struct silofs_pmeta192b *pmeta192,
                            struct silofs_pmeta *pmeta)
 {
 	silofs_paddr64b_xtoh(&pmeta192->pm_paddr, &pmeta->paddr);
-	silofs_cmeta96b_xtoh(&pmeta192->pm_cmeta, &pmeta->cmeta);
+	silofs_nmeta128b_xtoh(&pmeta192->pm_nmeta, &pmeta->nmeta);
 }

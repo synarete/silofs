@@ -159,7 +159,7 @@ static int mbr1k_check_root(const struct silofs_mbr1k *mbr1k)
 	struct silofs_pmeta pmeta;
 
 	mbr1k_root(mbr1k, &pmeta);
-	return silofs_ciargs_check(&pmeta.cmeta.ciargs);
+	return silofs_ciargs_check(&pmeta.nmeta.ciargs);
 }
 
 static int mbr1k_check(const struct silofs_mbr1k *mbr1k)
@@ -278,11 +278,11 @@ static int mbr1k_decrypt(const struct silofs_mbr1k *mbr1k,
 struct silofs_mbraux {
 	struct silofs_mdigest mdigest;
 	struct silofs_cipher cipher;
-	struct silofs_cmeta cmeta;
+	struct silofs_nmeta nmeta;
 };
 
 static int
-mbraux_init(struct silofs_mbraux *aux, const struct silofs_cmeta *cmeta)
+mbraux_init(struct silofs_mbraux *aux, const struct silofs_nmeta *nmeta)
 {
 	int err;
 
@@ -295,13 +295,13 @@ mbraux_init(struct silofs_mbraux *aux, const struct silofs_cmeta *cmeta)
 		silofs_mdigest_fini(&aux->mdigest);
 		return err;
 	}
-	silofs_cmeta_assign(&aux->cmeta, cmeta);
+	silofs_nmeta_assign(&aux->nmeta, nmeta);
 	return 0;
 }
 
 static void mbraux_fini(struct silofs_mbraux *aux)
 {
-	silofs_cmeta_reset(&aux->cmeta);
+	silofs_nmeta_reset(&aux->nmeta);
 	silofs_cipher_fini(&aux->cipher);
 	silofs_mdigest_fini(&aux->mdigest);
 }
@@ -311,7 +311,7 @@ mbraux_encode_mbr1k(struct silofs_mbraux *aux, struct silofs_mbr1k *mbr1k,
                     struct silofs_mbr1k *out_mbr1k)
 {
 	mbr1k_stamp(mbr1k, &aux->mdigest);
-	return mbr1k_encrypt(mbr1k, &aux->cipher, &aux->cmeta.civkey,
+	return mbr1k_encrypt(mbr1k, &aux->cipher, &aux->nmeta.civkey,
 	                     out_mbr1k);
 }
 
@@ -344,7 +344,7 @@ static int mbraux_decode_mbr1k(struct silofs_mbraux *aux,
 {
 	int err;
 
-	err = mbr1k_decrypt(mbr1k, &aux->cipher, &aux->cmeta.civkey,
+	err = mbr1k_decrypt(mbr1k, &aux->cipher, &aux->nmeta.civkey,
 	                    out_mbr1k);
 	if (err) {
 		return err;
@@ -389,14 +389,14 @@ static int derive_mbr_civkey(const struct silofs_mdigest *md,
 	return silofs_derive_civkey(md, pw, &s_mbr_kdf_descs, out_civkey);
 }
 
-int silofs_derive_mbr_cmeta(const struct silofs_password *passwd,
-                            struct silofs_cmeta *out_cmeta)
+int silofs_derive_mbr_nmeta(const struct silofs_password *passwd,
+                            struct silofs_nmeta *out_nmeta)
 {
 	struct silofs_civkey civkey;
 	struct silofs_mdigest mdigest;
 	int err;
 
-	silofs_cmeta_reset(out_cmeta);
+	silofs_nmeta_reset(out_nmeta);
 	if ((passwd == nullptr) || (passwd->passlen == 0)) {
 		return 0;
 	}
@@ -408,7 +408,7 @@ int silofs_derive_mbr_cmeta(const struct silofs_password *passwd,
 	if (err) {
 		goto out;
 	}
-	silofs_cmeta_setup(out_cmeta, &civkey);
+	silofs_nmeta_setup(out_nmeta, &civkey);
 out:
 	silofs_mdigest_fini(&mdigest);
 	return err;
@@ -432,16 +432,16 @@ static bool pmeta_isarix(const struct silofs_pmeta *pmeta)
 }
 
 void silofs_mbi_init(struct silofs_mbr_info *mbi,
-                     const struct silofs_cmeta *cmeta,
+                     const struct silofs_nmeta *nmeta,
                      enum silofs_mbr_kind kind)
 {
-	silofs_cmeta_assign(&mbi->mb_cmeta, cmeta);
+	silofs_nmeta_assign(&mbi->mb_nmeta, nmeta);
 	mbr1k_init(&mbi->mb_mbr1k, kind);
 }
 
 void silofs_mbi_fini(struct silofs_mbr_info *mbi)
 {
-	silofs_cmeta_reset(&mbi->mb_cmeta);
+	silofs_nmeta_reset(&mbi->mb_nmeta);
 	mbr1k_fini(&mbi->mb_mbr1k);
 }
 
@@ -547,7 +547,7 @@ int silofs_mbi_export(const struct silofs_mbr_info *mbi,
 	int err;
 
 	mbi_get_mbr1k(mbi, &mbr1k);
-	err = mbraux_init(&aux, &mbi->mb_cmeta);
+	err = mbraux_init(&aux, &mbi->mb_nmeta);
 	if (err) {
 		return err;
 	}
@@ -569,7 +569,7 @@ int silofs_mbi_import(struct silofs_mbr_info *mbi,
 	struct silofs_mbraux aux;
 	int err;
 
-	err = mbraux_init(&aux, &mbi->mb_cmeta);
+	err = mbraux_init(&aux, &mbi->mb_nmeta);
 	if (err) {
 		return err;
 	}

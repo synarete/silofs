@@ -562,7 +562,7 @@ void silofs_del_pnode(struct silofs_pnode_info *pni,
 static const struct silofs_civkey *
 pni_civkey(const struct silofs_pnode_info *pni)
 {
-	return &pni->pn_meta.cmeta.civkey;
+	return &pni->pn_meta.nmeta.civkey;
 }
 
 int silofs_encrypt_pnode(const struct silofs_pnode_info *pni,

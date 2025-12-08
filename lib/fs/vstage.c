@@ -1879,22 +1879,22 @@ static int vstgc_resolve_child_of(const struct silofs_vstage_ctx *vstg_ctx,
 	                                out_laddr);
 }
 
-static void vstgc_root_cmeta(const struct silofs_vstage_ctx *vstg_ctx,
-                             struct silofs_cmeta *out_cmeta)
+static void vstgc_root_nmeta(const struct silofs_vstage_ctx *vstg_ctx,
+                             struct silofs_nmeta *out_nmeta)
 {
 	struct silofs_pmeta pmeta = {};
 
 	silofs_mbi_uber_root(&vstg_ctx->env->mbis.fs_mbi, &pmeta);
-	silofs_cmeta_assign(out_cmeta, &pmeta.cmeta);
+	silofs_nmeta_assign(out_nmeta, &pmeta.nmeta);
 }
 
 static void vstgc_resolve_main_key(const struct silofs_vstage_ctx *vstg_ctx,
                                    struct silofs_ckey *out_key)
 {
-	struct silofs_cmeta cmeta;
+	struct silofs_nmeta nmeta;
 
-	vstgc_root_cmeta(vstg_ctx, &cmeta);
-	silofs_ckey_assign(out_key, &cmeta.civkey.key);
+	vstgc_root_nmeta(vstg_ctx, &nmeta);
+	silofs_ckey_assign(out_key, &nmeta.civkey.key);
 }
 
 static int vstgc_resolve_key_of(const struct silofs_vstage_ctx *vstg_ctx,

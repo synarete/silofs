@@ -34,14 +34,14 @@ struct silofs_mbrefs {
 
 /* main boot-record, in-memory representation */
 struct silofs_mbr_info {
-	struct silofs_cmeta mb_cmeta;
+	struct silofs_nmeta mb_nmeta;
 	struct silofs_mbr1k mb_mbr1k;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_mbi_init(struct silofs_mbr_info    *mbi,
-                     const struct silofs_cmeta *cmeta,
+                     const struct silofs_nmeta *nmeta,
                      enum silofs_mbr_kind       kind);
 
 void silofs_mbi_fini(struct silofs_mbr_info *mbi);
@@ -72,7 +72,7 @@ int silofs_mbi_import(struct silofs_mbr_info    *mbi,
                       const struct silofs_paddr *paddr,
                       const struct silofs_mbr1k *mbr1k);
 
-int silofs_derive_mbr_cmeta(const struct silofs_password *passwd,
-                            struct silofs_cmeta          *out_cmeta);
+int silofs_derive_mbr_nmeta(const struct silofs_password *passwd,
+                            struct silofs_nmeta          *out_nmeta);
 
 #endif /* SILOFS_MBR_H_ */

@@ -25,8 +25,8 @@ struct silofs_vnode_info;
 struct silofs_env;
 struct silofs_mbr;
 
-void silofs_resolve_unode_cmeta(const struct silofs_env *env,
-                                struct silofs_cmeta     *out_cmeta);
+void silofs_resolve_unode_nmeta(const struct silofs_env *env,
+                                struct silofs_nmeta     *out_nmeta);
 
 int silofs_encrypt_lview(const struct silofs_env   *env,
                          const struct silofs_llink *llink,
@@ -39,7 +39,7 @@ int silofs_decrypt_vni_view(const struct silofs_env  *env,
                             struct silofs_vnode_info *vni);
 
 void silofs_llink_of_uni(const struct silofs_unode_info *uni,
-                         const struct silofs_cmeta      *cmeta,
+                         const struct silofs_nmeta      *nmeta,
                          struct silofs_llink            *out_llink);
 
 void silofs_llink_of_vni(const struct silofs_vnode_info *vni,

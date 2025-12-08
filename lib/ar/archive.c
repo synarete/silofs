@@ -197,21 +197,21 @@ out:
 	return err;
 }
 
-static void arc_arix_cmeta(const struct silofs_ar_ctx *ar_ctx,
-                           struct silofs_cmeta *out_cmeta)
+static void arc_arix_nmeta(const struct silofs_ar_ctx *ar_ctx,
+                           struct silofs_nmeta *out_nmeta)
 {
 	struct silofs_pmeta pmeta;
 
 	silofs_mbi_arix_root(&ar_ctx->env->mbis.ar_mbi, &pmeta);
-	silofs_cmeta_assign(out_cmeta, &pmeta.cmeta);
+	silofs_nmeta_assign(out_nmeta, &pmeta.nmeta);
 }
 
 static int arc_store_arix(struct silofs_ar_ctx *ar_ctx)
 {
-	struct silofs_cmeta cmeta;
+	struct silofs_nmeta nmeta;
 
-	arc_arix_cmeta(ar_ctx, &cmeta);
-	return silofs_store_arix_block(ar_ctx->abi, &cmeta.civkey);
+	arc_arix_nmeta(ar_ctx, &nmeta);
+	return silofs_store_arix_block(ar_ctx->abi, &nmeta.civkey);
 }
 
 static int arc_require_room(struct silofs_ar_ctx *ar_ctx)

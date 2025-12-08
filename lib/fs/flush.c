@@ -486,21 +486,21 @@ static int flusher_require_mutable_llink(const struct silofs_flusher *flusher,
 	return mut ? 0 : -SILOFS_EROFS;
 }
 
-static void flusher_unode_cmeta(const struct silofs_flusher *flusher,
-                                struct silofs_cmeta *out_cmeta)
+static void flusher_unode_nmeta(const struct silofs_flusher *flusher,
+                                struct silofs_nmeta *out_nmeta)
 {
-	silofs_resolve_unode_cmeta(flusher->task->t_env, out_cmeta);
+	silofs_resolve_unode_nmeta(flusher->task->t_env, out_nmeta);
 }
 
 static int flusher_resolve_llink_of_uni(const struct silofs_flusher *flusher,
                                         const struct silofs_unode_info *uni,
                                         struct silofs_llink *out_llink)
 {
-	struct silofs_cmeta cmeta;
+	struct silofs_nmeta nmeta;
 	int ret = 0;
 
-	flusher_unode_cmeta(flusher, &cmeta);
-	silofs_llink_of_uni(uni, &cmeta, out_llink);
+	flusher_unode_nmeta(flusher, &nmeta);
+	silofs_llink_of_uni(uni, &nmeta, out_llink);
 	if (!uni_issuper(uni)) {
 		ret = flusher_require_mutable_llink(flusher, out_llink);
 	}

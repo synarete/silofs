@@ -160,22 +160,22 @@ out:
 	return err;
 }
 
-static void rec_arix_cmeta(const struct silofs_re_ctx *re_ctx,
-                           struct silofs_cmeta *out_cmeta)
+static void rec_arix_nmeta(const struct silofs_re_ctx *re_ctx,
+                           struct silofs_nmeta *out_nmeta)
 {
 	struct silofs_pmeta pmeta;
 	const struct silofs_mbr_info *ar_mbi = &re_ctx->env->mbis.ar_mbi;
 
 	silofs_mbi_arix_root(ar_mbi, &pmeta);
-	silofs_cmeta_assign(out_cmeta, &pmeta.cmeta);
+	silofs_nmeta_assign(out_nmeta, &pmeta.nmeta);
 }
 
 static int rec_fetch_arix_block(struct silofs_re_ctx *re_ctx)
 {
-	struct silofs_cmeta cmeta;
+	struct silofs_nmeta nmeta;
 
-	rec_arix_cmeta(re_ctx, &cmeta);
-	return silofs_fetch_arix_block(re_ctx->abi, &cmeta.civkey);
+	rec_arix_nmeta(re_ctx, &nmeta);
+	return silofs_fetch_arix_block(re_ctx->abi, &nmeta.civkey);
 }
 
 static int

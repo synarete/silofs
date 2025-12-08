@@ -569,20 +569,19 @@ struct silofs_vaddr64 {
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 /* nodes' crypto meta parameters */
-struct silofs_cmeta96b {
-	struct silofs_ckey cm_cipher_key;
-	struct silofs_civ  cm_cipher_iv;
-	uint16_t           cm_cipher_algo;
-	uint8_t            cm_reserved1[2];
-	uint16_t           cm_cipher_mode;
-	uint8_t            cm_reserved2[8];
+struct silofs_nmeta128b {
+	struct silofs_ckey nm_cipher_key;
+	struct silofs_civ  nm_cipher_iv;
+	uint16_t           nm_cipher_algo;
+	uint8_t            nm_reserved1[2];
+	uint16_t           nm_cipher_mode;
+	uint8_t            nm_reserved2[40];
 } silofs_attr_aligned32;
 
 /* pnode meta parameters (address + encryption) */
 struct silofs_pmeta192b {
-	struct silofs_paddr64b pm_paddr;
-	struct silofs_cmeta96b pm_cmeta;
-	uint8_t                pm_reserved[32];
+	struct silofs_paddr64b  pm_paddr;
+	struct silofs_nmeta128b pm_nmeta;
 } silofs_attr_aligned64;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

@@ -42,24 +42,24 @@ static int decrypt_lview_inplace(const struct silofs_env *env,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_resolve_unode_cmeta(const struct silofs_env *env,
-                                struct silofs_cmeta *out_cmeta)
+void silofs_resolve_unode_nmeta(const struct silofs_env *env,
+                                struct silofs_nmeta *out_nmeta)
 {
 	struct silofs_pmeta pmeta;
 	const struct silofs_mbr_info *fs_mbi = &env->mbis.fs_mbi;
 
 	silofs_mbi_uber_root(fs_mbi, &pmeta);
-	silofs_cmeta_assign(out_cmeta, &pmeta.cmeta);
+	silofs_nmeta_assign(out_nmeta, &pmeta.nmeta);
 }
 
 int silofs_decrypt_uni_view(const struct silofs_env *env,
                             struct silofs_unode_info *uni)
 {
 	struct silofs_llink llink;
-	struct silofs_cmeta cmeta;
+	struct silofs_nmeta nmeta;
 
-	silofs_resolve_unode_cmeta(env, &cmeta);
-	silofs_llink_of_uni(uni, &cmeta, &llink);
+	silofs_resolve_unode_nmeta(env, &nmeta);
+	silofs_llink_of_uni(uni, &nmeta, &llink);
 	return decrypt_lview_inplace(env, &llink, uni->un_lni.ln_view);
 }
 
@@ -75,11 +75,11 @@ int silofs_decrypt_vni_view(const struct silofs_env *env,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_llink_of_uni(const struct silofs_unode_info *uni,
-                         const struct silofs_cmeta *cmeta,
+                         const struct silofs_nmeta *nmeta,
                          struct silofs_llink *out_llink)
 {
 	const struct silofs_laddr *laddr = silofs_uni_laddr(uni);
-	const struct silofs_civkey *civkey = &cmeta->civkey;
+	const struct silofs_civkey *civkey = &nmeta->civkey;
 
 	silofs_llink_setup(out_llink, laddr, &civkey->key, &civkey->iv);
 }

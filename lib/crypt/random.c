@@ -115,23 +115,25 @@ prandgen_mkhash(struct silofs_prandgen *prng, struct silofs_hash256 *out_hash)
 {
 	uint32_t d[8];
 	uint64_t u;
+	size_t eidx;
 	struct timespec t;
 
+	eidx = prng->slot % ARRAY_SIZE(prng->entropy);
+	d[0] = prng->entropy[eidx];
 	silofs_clock_mono_now(&t);
-	d[0] = (uint32_t)t.tv_sec * 0xc2b2ae35;
-	d[1] = (uint32_t)t.tv_nsec;
-	d[2] = (uint32_t)prng->cycle;
-	silofs_uptime(&t);
-	d[3] = (uint32_t)t.tv_sec * 0x85ebca6b;
-	d[4] = (uint32_t)t.tv_nsec * 0x5bd1e995;
+	d[1] = (uint32_t)t.tv_sec * 0xc2b2ae35;
+	d[2] = prng->xseed;
+	d[3] = (uint32_t)t.tv_nsec;
 	u = (uint64_t)t.tv_nsec ^ 0xc6a4a7935bd1e995UL;
-	u = twang_mix64(u);
+	silofs_uptime(&t);
+	u ^= twang_mix64((uint64_t)t.tv_nsec);
+	d[4] = (uint32_t)t.tv_sec * 0x85ebca6b;
 	d[5] = (uint32_t)u;
-	d[6] = (uint32_t)gettid() ^ prng->xxprev;
+	d[6] = (uint32_t)t.tv_nsec * 0x5bd1e995;
 	d[7] = (uint32_t)(u >> 32);
 
 	silofs_sha3_256_of(&prng->mdigest, d, sizeof(d), out_hash);
-	prng->xxprev = silofs_xxh32(d, sizeof(d), prng->xxprev);
+	prng->xseed = silofs_xxh32(d, sizeof(d), prng->xseed);
 }
 
 static void *prandgen_prandom_buf(struct silofs_prandgen *prng)
@@ -149,7 +151,7 @@ static void prandgen_refill_prandom(struct silofs_prandgen *prng)
 	while (cnt < psz) {
 		prandgen_mkhash(prng, &hash);
 		k = silofs_min(sizeof(hash.hash), psz - cnt);
-		memcpy(&p[cnt], hash.hash, k);
+		memcpy(p + cnt, hash.hash, k);
 		cnt += k;
 	}
 }
@@ -183,20 +185,9 @@ void silofs_prandgen_fini(struct silofs_prandgen *prng)
 
 static uint64_t prandgen_take_u64(struct silofs_prandgen *prng)
 {
-	const size_t i = prng->slot % ARRAY_SIZE(prng->prandom);
-	const size_t j = prng->slot % ARRAY_SIZE(prng->entropy);
-	const uint64_t r = prng->prandom[i];
-	const uint64_t e = prng->entropy[j];
-	uint64_t x;
+	const size_t i = prng->slot++ % ARRAY_SIZE(prng->prandom);
 
-	/* move to next slot */
-	prng->slot++;
-
-	/* refresh entropy a bit */
-	x = r * (prng->xxprev / prng->slot);
-	prng->entropy[j] ^= twang_mix64(x);
-
-	return r ^ e;
+	return prng->prandom[i];
 }
 
 static void prandgen_prepare(struct silofs_prandgen *prng)
@@ -219,18 +210,28 @@ static void prandgen_prepare(struct silofs_prandgen *prng)
 	}
 }
 
+static void prandgen_remix_xseed(struct silofs_prandgen *prng, uint64_t u)
+{
+	const uint64_t t = twang_mix64(u);
+
+	prng->xseed ^= (uint32_t)t;
+	prng->xseed ^= (uint32_t)(t >> 32);
+}
+
 void silofs_prandgen_take(struct silofs_prandgen *prng, void *p, size_t n)
 {
 	uint64_t u;
 	uint8_t *q = p;
-	size_t k = 0;
+	size_t nb, k = 0;
 
 	while (k < n) {
-		const size_t r = silofs_min(n - k, sizeof(u));
+		nb = silofs_min(n - k, sizeof(u));
 
 		prandgen_prepare(prng);
 		u = prandgen_take_u64(prng);
-		memcpy(&q[k], &u, r);
-		k += r;
+		prandgen_remix_xseed(prng, u);
+
+		memcpy(&q[k], &u, nb);
+		k += nb;
 	}
 }

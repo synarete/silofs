@@ -23,11 +23,11 @@
 #include "mdigest.h"
 
 struct silofs_prandgen {
-	uint64_t              entropy[12];
-	uint8_t               prandom[113];
+	uint32_t              entropy[24];
+	uint64_t              prandom[113];
 	uint64_t              cycle;
 	uint32_t              slot;
-	uint32_t              xxprev;
+	uint32_t              xseed;
 	struct silofs_mdigest mdigest;
 };
 

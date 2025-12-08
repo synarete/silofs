@@ -43,12 +43,4 @@ void silofs_prandgen_fini(struct silofs_prandgen *prng);
 
 void silofs_prandgen_take(struct silofs_prandgen *prng, void *buf, size_t bsz);
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-void silofs_generate_civkey(struct silofs_prandgen *prng,
-                            struct silofs_civkey   *out_civkey);
-
-void silofs_generate_uniqid(struct silofs_prandgen *prng,
-                            struct silofs_uniqid   *out_uniqid);
-
 #endif /* SILOFS_RANDOM_H_ */

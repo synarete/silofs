@@ -14,23 +14,15 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_ADDR_H_
-#define SILOFS_ADDR_H_
+#ifndef SILOFS_GENID_H_
+#define SILOFS_GENID_H_
 
-#include <silofs/ondisk.h>
-#include <silofs/errors.h>
-#include "addr/offlba.h"
-#include "addr/htox.h"
-#include "addr/uuid.h"
-#include "addr/mtype.h"
-#include "addr/hash.h"
-#include "addr/svolid.h"
-#include "addr/blobid.h"
-#include "addr/paddr.h"
-#include "addr/cmeta.h"
-#include "addr/laddr.h"
-#include "addr/uaddr.h"
-#include "addr/vaddr.h"
-#include "addr/genid.h"
+#include "crypt.h"
 
-#endif /* SILOFS_ADDR_H_ */
+void silofs_generate_civkey(struct silofs_prandgen *prng,
+                            struct silofs_civkey   *out_civkey);
+
+void silofs_generate_uniqid(struct silofs_prandgen *prng,
+                            struct silofs_uniqid   *out_uniqid);
+
+#endif /* SILOFS_RANDOM_H_ */

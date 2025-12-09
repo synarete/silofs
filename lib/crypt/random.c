@@ -20,33 +20,26 @@
 #include <errno.h>
 #include <silofs/ondisk.h>
 #include "infra.h"
+#include "gcry.h"
 #include "random.h"
 
 static void do_getentropy(void *buf, size_t len)
 {
-	int err;
-
-	err = getentropy(buf, len);
-	if (err) {
-		silofs_panic("getentropy: err=%d", errno);
+	if (getentropy(buf, len) != 0) {
+		silofs_gcrypt_random(buf, len);
 	}
 }
 
-void silofs_getentropy(void *p, size_t n)
+void silofs_getentropy(void *buf, size_t len)
 {
-	uint8_t *ptr = p;
-	const uint8_t *end = ptr + n;
 	const size_t getentropy_max = 256;
+	uint8_t *ptr = buf;
+	size_t rnd, cnt = 0;
 
-	while (ptr < end) {
-		size_t cnt;
-
-		cnt = (size_t)(end - ptr);
-		if (cnt > getentropy_max) {
-			cnt = getentropy_max;
-		}
-		do_getentropy(ptr, cnt);
-		ptr += cnt;
+	while (cnt < len) {
+		rnd = silofs_min(len - cnt, getentropy_max);
+		do_getentropy(ptr + cnt, rnd);
+		cnt += rnd;
 	}
 }
 

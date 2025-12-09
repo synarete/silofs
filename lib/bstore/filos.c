@@ -232,7 +232,9 @@ static int bf_open(struct silofs_blobfile *bf, int dfd)
 
 static int bf_create(struct silofs_blobfile *bf, int dfd)
 {
-	return do_openat(dfd, bf_name(bf), O_RDWR | O_CREAT, 0600, &bf->bf_fd);
+	const int o_flags = O_CREAT | O_EXCL | O_RDWR;
+
+	return do_openat(dfd, bf_name(bf), o_flags, 0600, &bf->bf_fd);
 }
 
 static int bf_unlink(const struct silofs_blobfile *bf, int dfd)

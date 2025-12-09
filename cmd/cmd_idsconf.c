@@ -93,7 +93,7 @@ static void cmd_save_idsconf_file(const char *pathname, const char *txt)
 	int fd = -1;
 	int err;
 
-	err = silofs_sys_open(pathname, O_CREAT | O_RDWR | O_TRUNC,
+	err = silofs_sys_open(pathname, O_CREAT | O_EXCL | O_RDWR | O_TRUNC,
 	                      S_IRUSR | S_IWUSR | S_IRGRP, &fd);
 	if (err) {
 		cmd_die(err, "failed to create ids-config: %s", pathname);

@@ -136,7 +136,7 @@ static void cmd_lockfile_mktemp(const struct cmd_lockfile_ctx *lf_ctx)
 	int err;
 
 	err = silofs_sys_openat(lf_ctx->dfd, lf_ctx->tempname,
-	                        O_CREAT | O_RDWR, 0600, &fd);
+	                        O_CREAT | O_EXCL | O_RDWR, 0600, &fd);
 	if (err) {
 		cmd_die(err, "failed to create temp lock-file: %s/%s",
 		        lf_ctx->repodir, lf_ctx->tempname);

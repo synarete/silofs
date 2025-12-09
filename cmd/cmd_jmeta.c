@@ -266,32 +266,32 @@ cmd_open_repodir(const struct silofs_boot_args *boot_args, int *out_dfd)
 
 static void cmd_save_jref_at(int dfd, const char *name, const char *jtxt)
 {
-	char tmpname[NAME_MAX + 1] = "";
+	char tmp[NAME_MAX + 1] = "";
 	int fd = -1;
 	int err;
 
-	snprintf(tmpname, sizeof(tmpname) - 1, "%s~", name);
-	err = silofs_sys_openat(dfd, tmpname, O_CREAT | O_RDWR | O_TRUNC,
+	snprintf(tmp, sizeof(tmp) - 1, "%s~", name);
+	err = silofs_sys_openat(dfd, tmp, O_CREAT | O_EXCL | O_RDWR | O_TRUNC,
 	                        S_IRUSR | S_IWUSR, &fd);
 	if (err) {
-		cmd_die(err, "failed to create: %s", tmpname);
+		cmd_die(err, "failed to create: %s", tmp);
 	}
 	err = silofs_sys_fchmod(fd, S_IRUSR);
 	if (err) {
-		cmd_die(err, "failed to change-mode: %s", tmpname);
+		cmd_die(err, "failed to change-mode: %s", tmp);
 	}
 	err = silofs_sys_writen(fd, jtxt, strlen(jtxt));
 	if (err) {
-		cmd_die(err, "failed to write: %s", tmpname);
+		cmd_die(err, "failed to write: %s", tmp);
 	}
 	err = silofs_sys_writen(fd, "\n", 1);
 	if (err) {
-		cmd_die(err, "failed to write: %s", tmpname);
+		cmd_die(err, "failed to write: %s", tmp);
 	}
 	silofs_sys_closefd(&fd);
 
 	silofs_sys_fchmodat(dfd, name, S_IRUSR | S_IWUSR, 0);
-	err = silofs_sys_renameat(dfd, tmpname, dfd, name);
+	err = silofs_sys_renameat(dfd, tmp, dfd, name);
 	if (err) {
 		silofs_sys_fchmodat(dfd, name, S_IRUSR, 0);
 		cmd_die(err, "failed to rename: %s", name);

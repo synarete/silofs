@@ -38,6 +38,7 @@
 #include "infra/list.h"
 #include "infra/pipe.h"
 #include "infra/socket.h"
+#include "infra/snprintf.h"
 #include "infra/times.h"
 #include "infra/qalloc.h"
 #include "infra/uconv.h"

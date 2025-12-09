@@ -28,6 +28,7 @@
 #include <silofs/panic.h>
 #include <silofs/logging.h>
 #include "utility.h"
+#include "snprintf.h"
 
 #ifdef SILOFS_WITH_LIBUNWIND
 #ifndef HAVE_LIBUNWIND_H
@@ -204,19 +205,16 @@ struct silofs_fatal_msg {
 	struct silofs_fileline fl;
 };
 
-silofs_attr_printf(2, 3) static void fmtmsg(struct silofs_fatal_msg *msg,
-                                            const char *fmt, ...)
+#define fmtmsg_attr silofs_attr_printf(2, 3)
+
+fmtmsg_attr static void
+fmtmsg(struct silofs_fatal_msg *msg, const char *fmt, ...)
 {
 	va_list ap = { 0 };
-	size_t len;
-	int n;
 
 	va_start(ap, fmt);
-	n = vsnprintf(msg->str, sizeof(msg->str) - 1, fmt, ap);
+	silofs_vsnprintf(msg->str, sizeof(msg->str), fmt, ap);
 	va_end(ap);
-
-	len = silofs_min(sizeof(msg->str) - 1, (size_t)n);
-	msg->str[len] = '\0';
 }
 
 silofs_attr_noreturn static void silofs_abort(void)
@@ -490,7 +488,7 @@ void silofs_panicf(const char *file, int line, const char *fmt, ...)
 	const int errnum = errno;
 
 	va_start(ap, fmt);
-	vsnprintf(msg, sizeof(msg) - 1, fmt, ap);
+	silofs_vsnprintf(msg, sizeof(msg), fmt, ap);
 	va_end(ap);
 
 	silofs_dump_panic_msg(file, line, msg, errnum);
@@ -507,7 +505,7 @@ void silofs_die(int errnum, const char *fmt, ...)
 	va_list ap = { 0 };
 
 	va_start(ap, fmt);
-	vsnprintf(msg, sizeof(msg) - 1, fmt, ap);
+	silofs_vsnprintf(msg, sizeof(msg), fmt, ap);
 	va_end(ap);
 
 	error(EXIT_FAILURE, abs(errnum), "%s", msg);
@@ -521,7 +519,7 @@ void silofs_die_at(int errnum, const char *fl, int ln, const char *fmt, ...)
 	va_list ap = { 0 };
 
 	va_start(ap, fmt);
-	vsnprintf(msg, sizeof(msg) - 1, fmt, ap);
+	silofs_vsnprintf(msg, sizeof(msg), fmt, ap);
 	va_end(ap);
 
 	error_at_line(EXIT_FAILURE, abs(errnum), fl, (uint32_t)ln, "%s", msg);

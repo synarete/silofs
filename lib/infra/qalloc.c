@@ -39,6 +39,7 @@
 #include "utility.h"
 #include "iovec.h"
 #include "atomic.h"
+#include "snprintf.h"
 #include "qalloc.h"
 
 #ifndef ARRAY_SIZE
@@ -288,7 +289,7 @@ qpool_errorf(const struct silofs_qpool *qpool, const char *file, int line,
 	va_list ap = { 0 };
 
 	va_start(ap, fmt);
-	(void)vsnprintf(msg, sizeof(msg) - 1, fmt, ap);
+	silofs_vsnprintf(msg, sizeof(msg), fmt, ap);
 	va_end(ap);
 
 	if (qpool_nofail_mode(qpool)) {
@@ -841,7 +842,7 @@ slab_errorf(const struct silofs_slab *slab, const char *file, int line,
 	va_list ap = { 0 };
 
 	va_start(ap, fmt);
-	(void)vsnprintf(msg, sizeof(msg) - 1, fmt, ap);
+	silofs_vsnprintf(msg, sizeof(msg), fmt, ap);
 	va_end(ap);
 
 	if (qpool_nofail_mode(slab->qpool)) {

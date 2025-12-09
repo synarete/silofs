@@ -44,27 +44,43 @@ static int cmd_errnum_of(int err)
 	return (abs_err < SILOFS_ERRBASE) ? abs_err : 0;
 }
 
-void cmd_die(int err, const char *restrict fmt, ...)
+void cmd_vdie(int err, const char *restrict fmt, va_list ap)
 {
 	char msg[1024] = "";
+	va_list ap2 = { 0 };
+	int ret;
+
+	va_copy(ap2, ap);
+	ret = vsnprintf(msg, sizeof(msg), fmt, ap2);
+	va_end(ap2);
+
+	if (ret < 0) {                           /* formatting error */
+		msg[0] = '\0';
+	} else if ((size_t)ret >= sizeof(msg)) { /* truncated */
+		msg[sizeof(msg) - 1] = '\0';
+	}
+
+	error(EXIT_FAILURE, cmd_errnum_of(err), "%s", msg);
+	exit(EXIT_FAILURE); /* never gets here, but makes clang-scan happy */
+}
+
+void cmd_die(int err, const char *restrict fmt, ...)
+{
 	va_list ap = { 0 };
 
 	va_start(ap, fmt);
-	vsnprintf(msg, sizeof(msg) - 1, fmt, ap);
+	cmd_vdie(err, fmt, ap);
 	va_end(ap);
-	error(EXIT_FAILURE, cmd_errnum_of(err), "%s", msg);
 	exit(EXIT_FAILURE); /* never gets here, but makes clang-scan happy */
 }
 
 void cmd_diez(const char *restrict fmt, ...)
 {
-	char msg[1024] = "";
 	va_list ap = { 0 };
 
 	va_start(ap, fmt);
-	vsnprintf(msg, sizeof(msg) - 1, fmt, ap);
+	cmd_vdie(0, fmt, ap);
 	va_end(ap);
-	error(EXIT_FAILURE, 0, "%s", msg);
 	exit(EXIT_FAILURE); /* never gets here, but makes clang-scan happy */
 }
 

@@ -157,9 +157,13 @@ void cmd_require_arg_size(const char *arg_name, long val);
 void cmd_atexit(void (*fn)(void));
 
 /* fatal-error handling */
-silofs_attr_dief(2, 3) void cmd_die(int errnum, const char *restrict fmt, ...);
 
-silofs_attr_dief(1, 2) void cmd_diez(const char *restrict fmt, ...);
+silofs_attr_dief(2, 0) void cmd_vdie(int     err, const char *restrict,
+                                     va_list ap);
+
+silofs_attr_dief(2, 3) void cmd_die(int err, const char *restrict, ...);
+
+silofs_attr_dief(1, 2) void cmd_diez(const char *restrict, ...);
 
 /* common utilities */
 

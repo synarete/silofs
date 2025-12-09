@@ -18,8 +18,10 @@
 #include <stdio.h>
 #include "snprintf.h"
 
-silofs_attr_printf(3, 0) static size_t
-	safe_vsnprintf(char *buf, size_t bsz, const char *fmt, va_list ap)
+#define attr_printf silofs_attr_printf(3, 0)
+
+attr_printf static size_t
+safe_vsnprintf(char *buf, size_t bsz, const char *fmt, va_list ap)
 {
 	va_list ap2;
 	int ret;

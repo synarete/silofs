@@ -144,13 +144,20 @@ attr_printf34 static void
 cmd_requiref_ok(const struct silofs_env *env, int status,
                 const char *restrict fmt, ...)
 {
-	char msg[2048] = "";
+	char msg[1024];
 	va_list ap = { 0 };
+	int ret;
 
 	if (status != 0) {
 		va_start(ap, fmt);
-		vsnprintf(msg, sizeof(msg) - 1, fmt, ap);
+		ret = vsnprintf(msg, sizeof(msg), fmt, ap);
 		va_end(ap);
+
+		if (ret < 0) {
+			msg[0] = '\0';
+		} else if (ret >= (int)sizeof(msg)) {
+			msg[sizeof(msg) - 1] = '\0';
+		}
 
 		cmd_report_err_and_die(env, status, msg);
 	}

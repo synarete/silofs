@@ -28,15 +28,15 @@ struct silofs_ar_ctx {
 	struct silofs_task_ctx *task;
 	struct silofs_env *env;
 	struct silofs_alloc *alloc;
-	struct silofs_ab_info *abi;
+	struct silofs_arnode_info *abi;
 	struct silofs_repo *repo;
 };
 
 static void
-arc_rebind_abi(struct silofs_ar_ctx *ar_ctx, struct silofs_ab_info *abi)
+arc_rebind_abi(struct silofs_ar_ctx *ar_ctx, struct silofs_arnode_info *abi)
 {
 	if (ar_ctx->abi != nullptr) {
-		silofs_abi_del(ar_ctx->abi, ar_ctx->alloc);
+		silofs_ari_del(ar_ctx->abi, ar_ctx->alloc);
 		ar_ctx->abi = nullptr;
 	}
 	if (abi != nullptr) {
@@ -45,7 +45,7 @@ arc_rebind_abi(struct silofs_ar_ctx *ar_ctx, struct silofs_ab_info *abi)
 }
 
 static void arc_setup_ab_meta(struct silofs_ar_ctx *ar_ctx,
-                              struct silofs_ab_base *out_ab_meta)
+                              struct silofs_arn_base *out_ab_meta)
 {
 	struct silofs_env *env = ar_ctx->env;
 
@@ -57,16 +57,16 @@ static void arc_setup_ab_meta(struct silofs_ar_ctx *ar_ctx,
 
 static int arc_renew_abi(struct silofs_ar_ctx *ar_ctx)
 {
-	struct silofs_ab_base ab_meta;
-	struct silofs_ab_info *abi = nullptr;
+	struct silofs_arn_base ab_meta;
+	struct silofs_arnode_info *abi = nullptr;
 
 	arc_setup_ab_meta(ar_ctx, &ab_meta);
-	abi = silofs_abi_new(ar_ctx->alloc, &ab_meta);
+	abi = silofs_ari_new(ar_ctx->alloc, &ab_meta);
 	if (abi == nullptr) {
 		return -SILOFS_ENOMEM;
 	}
-	silofs_abi_set_btime(abi, &ar_ctx->now);
-	silofs_abi_set_next(abi, ar_ctx->abi);
+	silofs_ari_set_btime(abi, &ar_ctx->now);
+	silofs_ari_set_next(abi, ar_ctx->abi);
 
 	arc_rebind_abi(ar_ctx, abi);
 	return 0;
@@ -168,7 +168,7 @@ arc_calc_seg_desc(const struct silofs_ar_ctx *ar_ctx,
 
 	silofs_assert_not_null(ar_ctx->abi);
 
-	silofs_abi_calc_desc(ar_ctx->abi, laddr, &rovec, out_ard);
+	silofs_ari_calc_desc(ar_ctx->abi, laddr, &rovec, out_ard);
 }
 
 static int arc_archive_segdata(const struct silofs_ar_ctx *ar_ctx,
@@ -206,22 +206,31 @@ static void arc_arix_nmeta(const struct silofs_ar_ctx *ar_ctx,
 	silofs_nmeta_assign(out_nmeta, &pmeta.nmeta);
 }
 
-static int arc_store_arix(struct silofs_ar_ctx *ar_ctx)
+static int arc_store_arix_node(struct silofs_ar_ctx *ar_ctx)
 {
 	struct silofs_nmeta nmeta;
+	int err;
 
 	arc_arix_nmeta(ar_ctx, &nmeta);
-	return silofs_store_arix_block(ar_ctx->abi, &nmeta.civkey);
+	err = silofs_export_arix_node(ar_ctx->abi, &nmeta.civkey);
+	if (err) {
+		return err;
+	}
+	err = silofs_save_arix_block(ar_ctx->abi);
+	if (err) {
+		return err;
+	}
+	return 0;
 }
 
 static int arc_require_room(struct silofs_ar_ctx *ar_ctx)
 {
 	int err;
 
-	if (!silofs_abi_isfull(ar_ctx->abi)) {
+	if (!silofs_ari_isfull(ar_ctx->abi)) {
 		return 0;
 	}
-	err = arc_store_arix(ar_ctx);
+	err = arc_store_arix_node(ar_ctx);
 	if (err) {
 		return err;
 	}
@@ -235,7 +244,7 @@ static int arc_require_room(struct silofs_ar_ctx *ar_ctx)
 static int
 arc_append_desc(struct silofs_ar_ctx *ar_ctx, const struct silofs_ar_desc *ard)
 {
-	return silofs_abi_append_desc(ar_ctx->abi, ard);
+	return silofs_ari_append_desc(ar_ctx->abi, ard);
 }
 
 static int arc_archive_by_laddr(struct silofs_ar_ctx *ar_ctx,
@@ -283,11 +292,11 @@ static int arc_archive_apex(struct silofs_ar_ctx *ar_ctx,
 {
 	int err;
 
-	err = arc_store_arix(ar_ctx);
+	err = arc_store_arix_node(ar_ctx);
 	if (err) {
 		return err;
 	}
-	silofs_abi_get_paddr(ar_ctx->abi, out_arix_addr);
+	silofs_ari_get_paddr(ar_ctx->abi, out_arix_addr);
 	return 0;
 }
 

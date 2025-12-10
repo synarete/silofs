@@ -29,63 +29,68 @@ struct silofs_ar_desc {
 	size_t              len;
 };
 
-struct silofs_ab_base {
+struct silofs_arn_base {
 	const struct silofs_cipher  *enc_cipher;
 	const struct silofs_cipher  *dec_cipher;
 	const struct silofs_mdigest *mdigest;
 	struct silofs_repo          *repo;
 };
 
-struct silofs_ab_info {
-	struct silofs_ab_base     ab_base;
-	struct silofs_paddr       ab_paddr;
-	struct silofs_arix_block *ab;
-	struct silofs_arix_block *ab_enc;
+struct silofs_arnode_info {
+	struct silofs_arn_base   arn_base;
+	struct silofs_paddr      arn_paddr;
+	struct silofs_arix_node *arn;
+	struct silofs_arix_node *arn_enc;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-struct silofs_ab_info *
-silofs_abi_new(struct silofs_alloc *alloc, const struct silofs_ab_base *base);
+struct silofs_arnode_info *
+silofs_ari_new(struct silofs_alloc *alloc, const struct silofs_arn_base *base);
 
-void silofs_abi_del(struct silofs_ab_info *abi, struct silofs_alloc *alloc);
+void silofs_ari_del(struct silofs_arnode_info *ari,
+                    struct silofs_alloc       *alloc);
 
-size_t silofs_abi_ndescs(const struct silofs_ab_info *abi);
+size_t silofs_ari_ndescs(const struct silofs_arnode_info *ari);
 
-bool silofs_abi_isfull(const struct silofs_ab_info *abi);
+bool silofs_ari_isfull(const struct silofs_arnode_info *ari);
 
-void silofs_abi_set_btime(struct silofs_ab_info *abi,
-                          const struct timespec *ts);
+void silofs_ari_set_btime(struct silofs_arnode_info *ari,
+                          const struct timespec     *ts);
 
-void silofs_abi_get_paddr(const struct silofs_ab_info *abi,
-                          struct silofs_paddr         *out_paddr);
+void silofs_ari_get_paddr(const struct silofs_arnode_info *ari,
+                          struct silofs_paddr             *out_paddr);
 
-void silofs_abi_set_paddr(struct silofs_ab_info     *abi,
+void silofs_ari_set_paddr(struct silofs_arnode_info *ari,
                           const struct silofs_paddr *paddr);
 
-void silofs_abi_set_next(struct silofs_ab_info       *abi,
-                         const struct silofs_ab_info *abi_next);
+void silofs_ari_set_next(struct silofs_arnode_info       *ari,
+                         const struct silofs_arnode_info *ari_next);
 
-void silofs_abi_get_next(const struct silofs_ab_info *abi,
-                         struct silofs_paddr         *out_paddr);
+void silofs_ari_get_next(const struct silofs_arnode_info *ari,
+                         struct silofs_paddr             *out_paddr);
 
-void silofs_abi_calc_desc(const struct silofs_ab_info *abi,
-                          const struct silofs_laddr   *laddr,
-                          const struct silofs_rovec   *rovec,
-                          struct silofs_ar_desc       *out_ard);
+void silofs_ari_calc_desc(const struct silofs_arnode_info *ari,
+                          const struct silofs_laddr       *laddr,
+                          const struct silofs_rovec       *rovec,
+                          struct silofs_ar_desc           *out_ard);
 
-int silofs_abi_append_desc(struct silofs_ab_info       *abi,
+int silofs_ari_append_desc(struct silofs_arnode_info   *ari,
                            const struct silofs_ar_desc *ard);
 
-int silofs_abi_fetch_desc(const struct silofs_ab_info *abi, size_t slot,
+int silofs_ari_fetch_desc(const struct silofs_arnode_info *ari, size_t slot,
                           struct silofs_ar_desc *out_ard);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-int silofs_store_arix_block(struct silofs_ab_info      *abi,
+int silofs_export_arix_node(struct silofs_arnode_info  *ari,
                             const struct silofs_civkey *civkey);
 
-int silofs_fetch_arix_block(struct silofs_ab_info      *abi,
+int silofs_save_arix_block(struct silofs_arnode_info *ari);
+
+int silofs_load_arix_node(const struct silofs_arnode_info *ari);
+
+int silofs_import_arix_node(struct silofs_arnode_info  *ari,
                             const struct silofs_civkey *civkey);
 
 #endif /* SILOFS_INDEX_H_ */

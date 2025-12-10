@@ -429,18 +429,18 @@ static void validate_ondisk_bldesc(void)
 
 static void validate_ondisk_archive(void)
 {
-	REQUIRE_OFFSET64(struct silofs_ar_desc256b, ad_paddr, 0);
-	REQUIRE_OFFSET64(struct silofs_ar_desc256b, ad_laddr, 64);
-	REQUIRE_OFFSET64(struct silofs_ar_desc256b, ad_len, 160);
+	REQUIRE_OFFSET64(struct silofs_ar_desc256b, ard_paddr, 0);
+	REQUIRE_OFFSET64(struct silofs_ar_desc256b, ard_laddr, 64);
+	REQUIRE_OFFSET64(struct silofs_ar_desc256b, ard_len, 160);
 	REQUIRE_SIZEOF(struct silofs_ar_desc256b, 256);
 
-	REQUIRE_OFFSET64(struct silofs_arix_block, ab_hdr, 0);
-	REQUIRE_OFFSET64(struct silofs_arix_block, ab_btime, 32);
-	REQUIRE_OFFSET64(struct silofs_arix_block, ab_flags, 48);
-	REQUIRE_OFFSET32(struct silofs_arix_block, ab_ndescs, 52);
-	REQUIRE_OFFSET32(struct silofs_arix_block, ab_next, 64);
-	REQUIRE_OFFSET64(struct silofs_arix_block, ab_descs, 256);
-	REQUIRE_SIZEOF_64K(struct silofs_arix_block);
+	REQUIRE_OFFSET64(struct silofs_arix_node, arn_hdr, 0);
+	REQUIRE_OFFSET64(struct silofs_arix_node, arn_btime, 32);
+	REQUIRE_OFFSET64(struct silofs_arix_node, arn_flags, 48);
+	REQUIRE_OFFSET32(struct silofs_arix_node, arn_ndescs, 52);
+	REQUIRE_OFFSET32(struct silofs_arix_node, arn_next, 64);
+	REQUIRE_OFFSET64(struct silofs_arix_node, arn_descs, 256);
+	REQUIRE_SIZEOF_64K(struct silofs_arix_node);
 }
 
 static void validate_ioctl_types(void)

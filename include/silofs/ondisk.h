@@ -981,22 +981,22 @@ struct silofs_uber_block {
 
 /* archive descriptor */
 struct silofs_ar_desc256b {
-	struct silofs_paddr64b ad_paddr;
-	struct silofs_laddr96b ad_laddr;
-	uint64_t               ad_len;
-	uint8_t                ad_reserved[56];
+	struct silofs_paddr64b ard_paddr;
+	struct silofs_laddr96b ard_laddr;
+	uint64_t               ard_len;
+	uint8_t                ard_reserved[56];
 } silofs_attr_aligned64;
 
-/* archive-index block */
-struct silofs_arix_block {
-	struct silofs_header      ab_hdr;
-	struct silofs_timespec    ab_btime;
-	uint32_t                  ab_flags;
-	uint32_t                  ab_ndescs;
-	uint8_t                   ab_reserved1[8];
-	struct silofs_paddr64b    ab_next;
-	uint8_t                   ab_reserved2[128];
-	struct silofs_ar_desc256b ab_descs[255];
+/* archive-index */
+struct silofs_arix_node {
+	struct silofs_header      arn_hdr;
+	struct silofs_timespec    arn_btime;
+	uint32_t                  arn_flags;
+	uint32_t                  arn_ndescs;
+	uint8_t                   arn_reserved1[8];
+	struct silofs_paddr64b    arn_next;
+	uint8_t                   arn_reserved2[128];
+	struct silofs_ar_desc256b arn_descs[255];
 } silofs_attr_aligned64;
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -1006,7 +1006,7 @@ union silofs_view_u {
 	struct silofs_header       hdr[2];
 	struct silofs_mbr1k        mbr;
 	struct silofs_uber_block   ub;
-	struct silofs_arix_block   ab;
+	struct silofs_arix_node    arn;
 	struct silofs_blob_desc    bd;
 	struct silofs_btree_node   btn;
 	struct silofs_super_block  sb;

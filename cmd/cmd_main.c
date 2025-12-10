@@ -97,7 +97,6 @@ static void cmd_setup_globals(int argc, char *argv[])
 	cmd_global_params.pid = getpid();
 	cmd_global_params.uid = getuid();
 	cmd_global_params.gid = getgid();
-	cmd_global_params.umsk = 0022;
 	cmd_global_params.allow_coredump = false;
 	cmd_global_params.developer_mode = false;
 	cmd_global_params.dont_daemonize = false;
@@ -105,7 +104,7 @@ static void cmd_setup_globals(int argc, char *argv[])
 	cmd_global_params.log_params.level = SILOFS_LOG_INFO;
 	cmd_global_params.log_params.flags = SILOFS_LOGF_DEFAULT;
 
-	umask(cmd_global_params.umsk);
+	umask(0077);
 	setlocale(LC_ALL, "");
 	error_print_progname = cmd_error_print_progname;
 }

@@ -69,10 +69,9 @@ struct cmd_globals {
 	struct silofs_log_params log_params;
 
 	/* process ids */
-	pid_t  pid;
-	uid_t  uid;
-	gid_t  gid;
-	mode_t umsk;
+	pid_t pid;
+	uid_t uid;
+	gid_t gid;
 
 	/* process settings */
 	bool developer_mode;

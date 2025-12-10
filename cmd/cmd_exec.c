@@ -299,7 +299,7 @@ void cmd_setup_env_args(struct silofs_env_args *env_args)
 	env_args->uid = getuid();
 	env_args->gid = getgid();
 	env_args->pid = getpid();
-	env_args->umask = 0022;
+	env_args->umask = 0077;
 }
 
 void cmd_destroy_env_args(struct silofs_env_args *env_args)

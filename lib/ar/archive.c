@@ -33,6 +33,36 @@ struct silofs_ar_ctx {
 	struct silofs_filos       *filos;
 };
 
+static void arc_arix_nmeta(const struct silofs_ar_ctx *ar_ctx,
+                           struct silofs_nmeta        *out_nmeta)
+{
+	struct silofs_pmeta pmeta;
+
+	silofs_mbi_arix_root(&ar_ctx->env->mbis.ar_mbi, &pmeta);
+	silofs_nmeta_assign(out_nmeta, &pmeta.nmeta);
+}
+
+static void arc_default_arix_pmeta(const struct silofs_ar_ctx *ar_ctx,
+                                   struct silofs_pmeta        *out_pmeta)
+{
+	arc_arix_nmeta(ar_ctx, &out_pmeta->nmeta);
+	silofs_paddr_reset(&out_pmeta->paddr);
+}
+
+static const struct silofs_mdigest *
+arc_mdigest(const struct silofs_ar_ctx *ar_ctx)
+{
+	return &ar_ctx->env->mdigest;
+}
+
+static void arc_arix_cargs(const struct silofs_ar_ctx *ar_ctx,
+                           struct silofs_ar_cargs     *out_ar_cargs)
+{
+	out_ar_cargs->cipher  = &ar_ctx->env->enc_cipher;
+	out_ar_cargs->mdigest = arc_mdigest(ar_ctx);
+	arc_arix_nmeta(ar_ctx, &out_ar_cargs->nmeta);
+}
+
 static void
 arc_rebind_ari(struct silofs_ar_ctx *ar_ctx, struct silofs_arnode_info *abi)
 {
@@ -45,16 +75,20 @@ arc_rebind_ari(struct silofs_ar_ctx *ar_ctx, struct silofs_arnode_info *abi)
 	}
 }
 
-static int arc_renew_abi(struct silofs_ar_ctx *ar_ctx)
+static int arc_renew_ari(struct silofs_ar_ctx *ar_ctx)
 {
+	struct silofs_pmeta        pmeta;
 	struct silofs_arnode_info *ari = nullptr;
 
-	ari = silofs_ari_new(ar_ctx->alloc);
+	arc_default_arix_pmeta(ar_ctx, &pmeta);
+	ari = silofs_ari_new(ar_ctx->alloc, &pmeta);
 	if (ari == nullptr) {
 		return -SILOFS_ENOMEM;
 	}
 	silofs_ari_set_btime(ari, &ar_ctx->now);
-	silofs_ari_set_next(ari, ar_ctx->ari);
+	if (ar_ctx->ari != nullptr) {
+		silofs_ari_set_next(ari, &ar_ctx->ari->arn_pmeta);
+	}
 
 	arc_rebind_ari(ar_ctx, ari);
 	return 0;
@@ -71,7 +105,7 @@ static int arc_init(struct silofs_ar_ctx *ar_ctx, struct silofs_task_ctx *task)
 	ar_ctx->repo  = ar_ctx->env->base.repo;
 	ar_ctx->filos = &ar_ctx->env->base.repo->re_filos;
 
-	return arc_renew_abi(ar_ctx);
+	return arc_renew_ari(ar_ctx);
 }
 
 static void arc_fini(struct silofs_ar_ctx *ar_ctx)
@@ -185,29 +219,6 @@ out:
 	return err;
 }
 
-static void arc_arix_nmeta(const struct silofs_ar_ctx *ar_ctx,
-                           struct silofs_nmeta        *out_nmeta)
-{
-	struct silofs_pmeta pmeta;
-
-	silofs_mbi_arix_root(&ar_ctx->env->mbis.ar_mbi, &pmeta);
-	silofs_nmeta_assign(out_nmeta, &pmeta.nmeta);
-}
-
-static const struct silofs_mdigest *
-arc_mdigest(const struct silofs_ar_ctx *ar_ctx)
-{
-	return &ar_ctx->env->mdigest;
-}
-
-static void arc_arix_cargs(const struct silofs_ar_ctx *ar_ctx,
-                           struct silofs_ar_cargs     *out_ar_cargs)
-{
-	out_ar_cargs->cipher  = &ar_ctx->env->enc_cipher;
-	out_ar_cargs->mdigest = arc_mdigest(ar_ctx);
-	arc_arix_nmeta(ar_ctx, &out_ar_cargs->nmeta);
-}
-
 static struct silofs_arix_node *arc_new_arix_node(struct silofs_ar_ctx *ar_ctx)
 {
 	struct silofs_arix_node *arn = nullptr;
@@ -262,7 +273,7 @@ static int arc_require_room(struct silofs_ar_ctx *ar_ctx)
 	if (err) {
 		return err;
 	}
-	err = arc_renew_abi(ar_ctx);
+	err = arc_renew_ari(ar_ctx);
 	if (err) {
 		return err;
 	}

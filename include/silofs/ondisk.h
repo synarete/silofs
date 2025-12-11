@@ -994,8 +994,7 @@ struct silofs_arix_node {
 	uint32_t                  arn_flags;
 	uint32_t                  arn_ndescs;
 	uint8_t                   arn_reserved1[8];
-	struct silofs_paddr64b    arn_next;
-	uint8_t                   arn_reserved2[128];
+	struct silofs_pmeta192b   arn_next;
 	struct silofs_ar_desc256b arn_descs[255];
 } silofs_attr_aligned64;
 

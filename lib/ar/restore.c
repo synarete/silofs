@@ -46,16 +46,14 @@ rec_rebind_ari(struct silofs_re_ctx *re_ctx, struct silofs_arnode_info *ari)
 }
 
 static int
-rec_renew_ari(struct silofs_re_ctx *re_ctx, const struct silofs_paddr *paddr)
+rec_renew_ari(struct silofs_re_ctx *re_ctx, const struct silofs_pmeta *pmeta)
 {
 	struct silofs_arnode_info *ari = nullptr;
 
-	ari = silofs_ari_new(re_ctx->alloc);
+	ari = silofs_ari_new(re_ctx->alloc, pmeta);
 	if (ari == nullptr) {
 		return -SILOFS_ENOMEM;
 	}
-	silofs_ari_set_paddr(ari, paddr);
-
 	rec_rebind_ari(re_ctx, ari);
 	return 0;
 }
@@ -227,11 +225,11 @@ rec_resolve_root(struct silofs_re_ctx *re_ctx, struct silofs_pmeta *out_pmeta)
 }
 
 static int rec_restore_arix(struct silofs_re_ctx      *re_ctx,
-                            const struct silofs_paddr *paddr)
+                            const struct silofs_pmeta *pmeta)
 {
 	int err;
 
-	err = rec_renew_ari(re_ctx, paddr);
+	err = rec_renew_ari(re_ctx, pmeta);
 	if (err) {
 		return err;
 	}
@@ -251,7 +249,7 @@ static int rec_restore_apex(struct silofs_re_ctx *re_ctx)
 	if (err) {
 		return err;
 	}
-	err = rec_restore_arix(re_ctx, &pmeta.paddr);
+	err = rec_restore_arix(re_ctx, &pmeta);
 	if (err) {
 		return err;
 	}
@@ -285,13 +283,13 @@ static int rec_update_by_desc(struct silofs_re_ctx        *re_ctx,
 static int rec_restore_descs(struct silofs_re_ctx *re_ctx)
 {
 	struct silofs_ar_desc            ard;
-	const struct silofs_arnode_info *abi    = re_ctx->ari;
-	const size_t                     ndescs = silofs_ari_ndescs(abi);
+	const struct silofs_arnode_info *ari    = re_ctx->ari;
+	const size_t                     ndescs = silofs_ari_ndescs(ari);
 	int                              err;
 
 	for (size_t slot = 0; slot < ndescs; ++slot) {
 		ard.len = 0;
-		err     = silofs_ari_fetch_desc(abi, slot, &ard);
+		err     = silofs_ari_fetch_desc(ari, slot, &ard);
 		if (err) {
 			return err;
 		}
@@ -309,17 +307,15 @@ static int rec_restore_descs(struct silofs_re_ctx *re_ctx)
 
 static int rec_restore_next(struct silofs_re_ctx *re_ctx)
 {
-	struct silofs_paddr paddr = { .pos = -1 };
+	struct silofs_pmeta pmeta;
 	int                 err;
 
-	silofs_assert_not_null(re_ctx->ari);
-
-	silofs_ari_get_next(re_ctx->ari, &paddr);
-	if (silofs_paddr_isnull(&paddr)) {
+	silofs_ari_get_next(re_ctx->ari, &pmeta);
+	if (silofs_pmeta_isnull(&pmeta)) {
 		rec_rebind_ari(re_ctx, nullptr);
 		return 0; /* end-of-chain */
 	}
-	err = rec_restore_arix(re_ctx, &paddr);
+	err = rec_restore_arix(re_ctx, &pmeta);
 	if (err) {
 		return err;
 	}

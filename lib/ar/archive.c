@@ -28,7 +28,7 @@ struct silofs_ar_ctx {
 	struct silofs_task_ctx    *task;
 	struct silofs_env         *env;
 	struct silofs_alloc       *alloc;
-	struct silofs_arnode_info *abi;
+	struct silofs_arnode_info *ari;
 	struct silofs_repo        *repo;
 	struct silofs_filos       *filos;
 };
@@ -36,12 +36,12 @@ struct silofs_ar_ctx {
 static void
 arc_rebind_ari(struct silofs_ar_ctx *ar_ctx, struct silofs_arnode_info *abi)
 {
-	if (ar_ctx->abi != nullptr) {
-		silofs_ari_del(ar_ctx->abi, ar_ctx->alloc);
-		ar_ctx->abi = nullptr;
+	if (ar_ctx->ari != nullptr) {
+		silofs_ari_del(ar_ctx->ari, ar_ctx->alloc);
+		ar_ctx->ari = nullptr;
 	}
 	if (abi != nullptr) {
-		ar_ctx->abi = abi;
+		ar_ctx->ari = abi;
 	}
 }
 
@@ -54,7 +54,7 @@ static int arc_renew_abi(struct silofs_ar_ctx *ar_ctx)
 		return -SILOFS_ENOMEM;
 	}
 	silofs_ari_set_btime(ari, &ar_ctx->now);
-	silofs_ari_set_next(ari, ar_ctx->abi);
+	silofs_ari_set_next(ari, ar_ctx->ari);
 
 	arc_rebind_ari(ar_ctx, ari);
 	return 0;
@@ -66,7 +66,7 @@ static int arc_init(struct silofs_ar_ctx *ar_ctx, struct silofs_task_ctx *task)
 	silofs_clock_real_now(&ar_ctx->now);
 	ar_ctx->task  = task;
 	ar_ctx->env   = task->t_env;
-	ar_ctx->abi   = nullptr;
+	ar_ctx->ari   = nullptr;
 	ar_ctx->alloc = ar_ctx->env->base.alloc;
 	ar_ctx->repo  = ar_ctx->env->base.repo;
 	ar_ctx->filos = &ar_ctx->env->base.repo->re_filos;
@@ -194,31 +194,68 @@ static void arc_arix_nmeta(const struct silofs_ar_ctx *ar_ctx,
 	silofs_nmeta_assign(out_nmeta, &pmeta.nmeta);
 }
 
+static const struct silofs_mdigest *
+arc_mdigest(const struct silofs_ar_ctx *ar_ctx)
+{
+	return &ar_ctx->env->mdigest;
+}
+
+static void arc_arix_cargs(const struct silofs_ar_ctx *ar_ctx,
+                           struct silofs_ar_cargs     *out_ar_cargs)
+{
+	out_ar_cargs->cipher  = &ar_ctx->env->enc_cipher;
+	out_ar_cargs->mdigest = arc_mdigest(ar_ctx);
+	arc_arix_nmeta(ar_ctx, &out_ar_cargs->nmeta);
+}
+
+static struct silofs_arix_node *arc_new_arix_node(struct silofs_ar_ctx *ar_ctx)
+{
+	struct silofs_arix_node *arn = nullptr;
+
+	arn = silofs_memalloc(ar_ctx->alloc, sizeof(*arn),
+	                      SILOFS_ALLOCF_BZERO);
+	return arn;
+}
+
+static void
+arc_del_arix_node(struct silofs_ar_ctx *ar_ctx, struct silofs_arix_node *arn)
+{
+	silofs_memfree(ar_ctx->alloc, arn, sizeof(*arn), 0);
+}
+
 static int arc_store_arix_node(struct silofs_ar_ctx *ar_ctx)
 {
-	struct silofs_ar_cargs ar_cargs = {
-		.cipher  = &ar_ctx->env->enc_cipher,
-		.mdigest = &ar_ctx->env->mdigest,
-	};
-	int err;
+	struct silofs_ar_cargs   ar_cargs;
+	struct silofs_paddr      paddr;
+	struct silofs_arix_node *arn_enc;
+	int                      err = -SILOFS_ENOMEM;
 
-	arc_arix_nmeta(ar_ctx, &ar_cargs.nmeta);
-	err = silofs_export_arix_node(ar_ctx->abi, &ar_cargs);
-	if (err) {
-		return err;
+	arc_arix_cargs(ar_ctx, &ar_cargs);
+	arn_enc = arc_new_arix_node(ar_ctx);
+	if (arn_enc == nullptr) {
+		goto out;
 	}
-	err = silofs_save_arix_node(ar_ctx->abi, ar_ctx->filos);
+	err = silofs_export_arix_node(ar_ctx->ari, &ar_cargs, arn_enc);
 	if (err) {
-		return err;
+		goto out;
 	}
-	return 0;
+	silofs_calc_arix_paddr(arn_enc, arc_mdigest(ar_ctx), &paddr);
+
+	err = silofs_save_arix_node(ar_ctx->filos, &paddr, arn_enc);
+	if (err) {
+		goto out;
+	}
+	silofs_ari_set_paddr(ar_ctx->ari, &paddr);
+out:
+	arc_del_arix_node(ar_ctx, arn_enc);
+	return err;
 }
 
 static int arc_require_room(struct silofs_ar_ctx *ar_ctx)
 {
 	int err;
 
-	if (!silofs_ari_isfull(ar_ctx->abi)) {
+	if (!silofs_ari_isfull(ar_ctx->ari)) {
 		return 0;
 	}
 	err = arc_store_arix_node(ar_ctx);
@@ -235,7 +272,7 @@ static int arc_require_room(struct silofs_ar_ctx *ar_ctx)
 static int
 arc_append_desc(struct silofs_ar_ctx *ar_ctx, const struct silofs_ar_desc *ard)
 {
-	return silofs_ari_append_desc(ar_ctx->abi, ard);
+	return silofs_ari_append_desc(ar_ctx->ari, ard);
 }
 
 static int arc_archive_by_laddr(struct silofs_ar_ctx      *ar_ctx,
@@ -287,7 +324,7 @@ static int arc_archive_apex(struct silofs_ar_ctx *ar_ctx,
 	if (err) {
 		return err;
 	}
-	silofs_ari_get_paddr(ar_ctx->abi, out_arix_addr);
+	silofs_ari_get_paddr(ar_ctx->ari, out_arix_addr);
 	return 0;
 }
 

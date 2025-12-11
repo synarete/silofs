@@ -23,7 +23,7 @@
 
 static void
 ard_init(struct silofs_ar_desc *ard, const struct silofs_paddr *paddr,
-         const struct silofs_laddr *laddr, size_t len)
+	 const struct silofs_laddr *laddr, size_t len)
 {
 	silofs_paddr_assign(&ard->paddr, paddr);
 	silofs_laddr_assign(&ard->laddr, laddr);
@@ -38,7 +38,7 @@ static void ard_reset(struct silofs_ar_desc *ard)
 }
 
 static void ard256b_htox(struct silofs_ar_desc256b   *ard256,
-                         const struct silofs_ar_desc *ard)
+			 const struct silofs_ar_desc *ard)
 {
 	silofs_memzero(ard256, sizeof(*ard256));
 	silofs_paddr64b_htox(&ard256->ard_paddr, &ard->paddr);
@@ -47,7 +47,7 @@ static void ard256b_htox(struct silofs_ar_desc256b   *ard256,
 }
 
 static void ard256b_xtoh(const struct silofs_ar_desc256b *ard256,
-                         struct silofs_ar_desc           *ard)
+			 struct silofs_ar_desc           *ard)
 {
 	silofs_paddr64b_xtoh(&ard256->ard_paddr, &ard->paddr);
 	silofs_laddr96b_xtoh(&ard256->ard_laddr, &ard->laddr);
@@ -129,7 +129,7 @@ static void arn_reset_next(struct silofs_arix_node *arn)
 }
 
 static void arn_desc(const struct silofs_arix_node *arn, size_t slot,
-                     struct silofs_ar_desc *out_ard)
+		     struct silofs_ar_desc *out_ard)
 {
 	silofs_assert_lt(slot, ARRAY_SIZE(arn->arn_descs));
 
@@ -137,7 +137,7 @@ static void arn_desc(const struct silofs_arix_node *arn, size_t slot,
 }
 
 static void arn_set_desc(struct silofs_arix_node *arn, size_t slot,
-                         const struct silofs_ar_desc *ard)
+			 const struct silofs_ar_desc *ard)
 {
 	silofs_assert_lt(slot, ARRAY_SIZE(arn->arn_descs));
 
@@ -230,48 +230,36 @@ static void ari_init(struct silofs_arnode_info *abi)
 {
 	silofs_paddr_reset(&abi->arn_paddr);
 	abi->arn     = nullptr;
-	abi->arn_enc = nullptr;
 }
 
 static void abi_fini(struct silofs_arnode_info *abi)
 {
 	silofs_paddr_reset(&abi->arn_paddr);
 	abi->arn     = nullptr;
-	abi->arn_enc = nullptr;
 }
 
 struct silofs_arnode_info *silofs_ari_new(struct silofs_alloc *alloc)
 {
 	struct silofs_arix_node   *arn     = nullptr;
-	struct silofs_arix_node   *arn_enc = nullptr;
 	struct silofs_arnode_info *ari     = nullptr;
 
 	arn = arn_new(alloc);
 	if (arn == nullptr) {
-		goto out_err;
-	}
-	arn_enc = arn_new(alloc);
-	if (arn_enc == nullptr) {
-		goto out_err;
+		return nullptr;
 	}
 	ari = ari_malloc(alloc);
 	if (ari == nullptr) {
-		goto out_err;
+		arn_del(arn, alloc);
+		return nullptr;
 	}
 	ari_init(ari);
 	ari->arn     = arn;
-	ari->arn_enc = arn_enc;
 	return ari;
-out_err:
-	arn_del(arn, alloc);
-	arn_del(arn_enc, alloc);
-	return nullptr;
 }
 
 void silofs_ari_del(struct silofs_arnode_info *ari, struct silofs_alloc *alloc)
 {
 	arn_del(ari->arn, alloc);
-	arn_del(ari->arn_enc, alloc);
 	abi_fini(ari);
 	abi_free(ari, alloc);
 }
@@ -287,19 +275,19 @@ bool silofs_ari_isfull(const struct silofs_arnode_info *ari)
 }
 
 void silofs_ari_set_btime(struct silofs_arnode_info *ari,
-                          const struct timespec     *ts)
+			  const struct timespec     *ts)
 {
 	arn_set_btime(ari->arn, ts);
 }
 
 void silofs_ari_get_paddr(const struct silofs_arnode_info *ari,
-                          struct silofs_paddr             *out_paddr)
+			  struct silofs_paddr             *out_paddr)
 {
 	silofs_paddr_assign(out_paddr, &ari->arn_paddr);
 }
 
 void silofs_ari_set_paddr(struct silofs_arnode_info *ari,
-                          const struct silofs_paddr *paddr)
+			  const struct silofs_paddr *paddr)
 {
 	silofs_paddr_assign(&ari->arn_paddr, paddr);
 }
@@ -315,7 +303,7 @@ ari_set_next(struct silofs_arnode_info *ari, const struct silofs_paddr *paddr)
 }
 
 void silofs_ari_set_next(struct silofs_arnode_info       *ari,
-                         const struct silofs_arnode_info *abi_next)
+			 const struct silofs_arnode_info *abi_next)
 {
 	if (abi_next != nullptr) {
 		ari_set_next(ari, &abi_next->arn_paddr);
@@ -325,13 +313,13 @@ void silofs_ari_set_next(struct silofs_arnode_info       *ari,
 }
 
 void silofs_ari_get_next(const struct silofs_arnode_info *ari,
-                         struct silofs_paddr             *out_paddr)
+			 struct silofs_paddr             *out_paddr)
 {
 	arn_next(ari->arn, out_paddr);
 }
 
 int silofs_ari_append_desc(struct silofs_arnode_info   *ari,
-                           const struct silofs_ar_desc *ard)
+			   const struct silofs_ar_desc *ard)
 {
 	if (!arn_has_room(ari->arn)) {
 		return -SILOFS_ENOSPC;
@@ -341,7 +329,7 @@ int silofs_ari_append_desc(struct silofs_arnode_info   *ari,
 }
 
 int silofs_ari_fetch_desc(const struct silofs_arnode_info *ari, size_t slot,
-                          struct silofs_ar_desc *out_ard)
+			  struct silofs_ar_desc *out_ard)
 {
 	const size_t ndescs = arn_ndescs(ari->arn);
 
@@ -352,87 +340,47 @@ int silofs_ari_fetch_desc(const struct silofs_arnode_info *ari, size_t slot,
 	return 0;
 }
 
-static void ari_calc_paddr(const struct silofs_arnode_info *ari,
-                           const struct silofs_mdigest     *mdigest,
-                           struct silofs_paddr             *out_paddr)
-{
-	const struct iovec iov = {
-		.iov_base = ari->arn_enc,
-		.iov_len  = sizeof(*ari->arn_enc),
-	};
-
-	silofs_calc_cas_paddr(mdigest, SILOFS_MTYPE_ARIX, &iov, 1, out_paddr);
-}
-
-static void ari_update_paddr(struct silofs_arnode_info   *ari,
-                             const struct silofs_mdigest *mdigest)
-{
-	struct silofs_paddr paddr;
-
-	ari_calc_paddr(ari, mdigest, &paddr);
-	silofs_ari_set_paddr(ari, &paddr);
-}
-
-static bool ari_has_paddr(const struct silofs_arnode_info *ari,
-                          const struct silofs_paddr       *paddr)
-{
-	return silofs_paddr_isequal(&ari->arn_paddr, paddr);
-}
-
-static int ari_verify_paddr(const struct silofs_arnode_info *ari,
-                            const struct silofs_mdigest     *mdigest)
-{
-	struct silofs_paddr paddr;
-
-	ari_calc_paddr(ari, mdigest, &paddr);
-	return ari_has_paddr(ari, &paddr) ? 0 : -SILOFS_EBADARIX;
-}
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ari_pre_encrypt(struct silofs_arnode_info *ari)
+static void ari_pre_encrypt(const struct silofs_arnode_info *ari,
+			    struct silofs_arix_node         *arn)
 {
-	arn_seal_hdr(ari->arn);
+	memcpy(arn, ari->arn, sizeof(*arn));
+	arn_seal_hdr(arn);
 }
 
-static int ari_encrypt(struct silofs_arnode_info    *ari,
-                       const struct silofs_ar_cargs *ar_cargs)
+static int ari_encrypt(const struct silofs_arnode_info *ari,
+		       const struct silofs_ar_cargs    *ar_cargs,
+		       struct silofs_arix_node         *arn_enc)
 {
-	struct silofs_arix_node *arn_enc = ari->arn_enc;
-
 	return silofs_encrypt_buf(ar_cargs->cipher, &ar_cargs->nmeta.civkey,
-	                          ari->arn, arn_enc, sizeof(*arn_enc));
+				  ari->arn, arn_enc, sizeof(*arn_enc));
 }
 
-int silofs_export_arix_node(struct silofs_arnode_info    *ari,
-                            const struct silofs_ar_cargs *ar_cargs)
+int silofs_export_arix_node(const struct silofs_arnode_info *ari,
+			    const struct silofs_ar_cargs    *ar_cargs,
+			    struct silofs_arix_node         *arn_enc)
 {
-	int err;
-
-	ari_pre_encrypt(ari);
-	err = ari_encrypt(ari, ar_cargs);
-	if (err) {
-		return err;
-	}
-	ari_update_paddr(ari, ar_cargs->mdigest);
-	return 0;
+	ari_pre_encrypt(ari, arn_enc);
+	return ari_encrypt(ari, ar_cargs, arn_enc);
 }
 
-int silofs_save_arix_node(struct silofs_arnode_info *ari,
-                          struct silofs_filos       *filos)
+int silofs_save_arix_node(struct silofs_filos           *filos,
+			  const struct silofs_paddr     *paddr,
+			  const struct silofs_arix_node *arn_enc)
 {
 	const struct silofs_rovec rov = {
-		.rov_base = ari->arn_enc,
-		.rov_len  = sizeof(*ari->arn_enc),
+		.rov_base = arn_enc,
+		.rov_len  = sizeof(*arn_enc),
 	};
 	int err;
 
-	err = silofs_filos_spawn_blob(filos, &ari->arn_paddr.blobid);
+	err = silofs_filos_spawn_blob(filos, &paddr->blobid);
 	if (err) {
 		log_err("failed to spawn archive-index: err=%d", err);
 		return err;
 	}
-	err = silofs_filos_write_blob(filos, &ari->arn_paddr, &rov);
+	err = silofs_filos_write_blob(filos, paddr, &rov);
 	if (err) {
 		log_err("failed to save archive-index: err=%d", err);
 		return err;
@@ -442,25 +390,24 @@ int silofs_save_arix_node(struct silofs_arnode_info *ari,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_load_arix_node(const struct silofs_arnode_info *ari,
-                          struct silofs_filos             *filos)
+int silofs_load_arix_node(struct silofs_filos       *filos,
+			  const struct silofs_paddr *paddr,
+			  struct silofs_arix_node   *arn_enc)
 {
-	struct silofs_arix_node *arn_enc = ari->arn_enc;
-	struct silofs_rwvec      rwv     = {
-			 .rwv_base = arn_enc,
-			 .rwv_len  = sizeof(*arn_enc),
+	struct silofs_rwvec rwv = {
+		.rwv_base = arn_enc,
+		.rwv_len  = sizeof(*arn_enc),
 	};
 
-	return silofs_filos_read_blob(filos, &ari->arn_paddr, &rwv);
+	return silofs_filos_read_blob(filos, paddr, &rwv);
 }
 
-static int ari_decrypt(struct silofs_arnode_info    *ari,
-                       const struct silofs_ar_cargs *ar_cargs)
+static int ari_decrypt(struct silofs_arnode_info     *ari,
+		       const struct silofs_ar_cargs  *ar_cargs,
+		       const struct silofs_arix_node *arn_enc)
 {
-	const struct silofs_arix_node *arn_enc = ari->arn_enc;
-
 	return silofs_decrypt_buf(ar_cargs->cipher, &ar_cargs->nmeta.civkey,
-	                          arn_enc, ari->arn, sizeof(*ari->arn));
+				  arn_enc, ari->arn, sizeof(*ari->arn));
 }
 
 static int ari_post_decrypt(struct silofs_arnode_info *ari)
@@ -469,16 +416,13 @@ static int ari_post_decrypt(struct silofs_arnode_info *ari)
 	return arn_verify_hdr(ari->arn);
 }
 
-int silofs_import_arix_node(struct silofs_arnode_info    *ari,
-                            const struct silofs_ar_cargs *ar_cargs)
+int silofs_import_arix_node(struct silofs_arnode_info     *ari,
+			    const struct silofs_ar_cargs  *ar_cargs,
+			    const struct silofs_arix_node *arn_enc)
 {
 	int err;
 
-	err = ari_verify_paddr(ari, ar_cargs->mdigest);
-	if (err) {
-		return err;
-	}
-	err = ari_decrypt(ari, ar_cargs);
+	err = ari_decrypt(ari, ar_cargs, arn_enc);
 	if (err) {
 		return err;
 	}
@@ -490,9 +434,9 @@ int silofs_import_arix_node(struct silofs_arnode_info    *ari,
 }
 
 void silofs_calc_ar_desc(const struct silofs_mdigest *mdigest,
-                         const struct silofs_laddr   *laddr,
-                         const struct silofs_rovec   *rovec,
-                         struct silofs_ar_desc       *out_ard)
+			 const struct silofs_laddr   *laddr,
+			 const struct silofs_rovec   *rovec,
+			 struct silofs_ar_desc       *out_ard)
 {
 	struct silofs_paddr paddr = {
 		.pos = -1,
@@ -507,4 +451,26 @@ void silofs_calc_ar_desc(const struct silofs_mdigest *mdigest,
 	silofs_calc_cas_paddr(mdigest, mtype, &iov, 1, &paddr);
 
 	ard_init(out_ard, &paddr, laddr, iov.iov_len);
+}
+
+void silofs_calc_arix_paddr(const struct silofs_arix_node *arn_enc,
+			    const struct silofs_mdigest   *mdigest,
+			    struct silofs_paddr           *out_paddr)
+{
+	const struct iovec iov = {
+		.iov_base = unconst(arn_enc),
+		.iov_len  = sizeof(*arn_enc),
+	};
+
+	silofs_calc_cas_paddr(mdigest, SILOFS_MTYPE_ARIX, &iov, 1, out_paddr);
+}
+
+int silofs_verify_arix_paddr(const struct silofs_arix_node *arn_enc,
+			     const struct silofs_mdigest   *mdigest,
+			     const struct silofs_paddr     *paddr)
+{
+	struct silofs_paddr paddr2;
+
+	silofs_calc_arix_paddr(arn_enc, mdigest, &paddr2);
+	return silofs_paddr_isequal(paddr, &paddr2) ? 0 : -SILOFS_EBADARIX;
 }

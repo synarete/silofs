@@ -159,24 +159,63 @@ static void rec_arix_nmeta(const struct silofs_re_ctx *re_ctx,
 	silofs_nmeta_assign(out_nmeta, &pmeta.nmeta);
 }
 
+static const struct silofs_mdigest *
+rec_mdigest(const struct silofs_re_ctx *re_ctx)
+{
+	return &re_ctx->env->mdigest;
+}
+
+static void rec_arix_cargs(const struct silofs_re_ctx *re_ctx,
+                           struct silofs_ar_cargs     *out_ar_cargs)
+{
+	out_ar_cargs->cipher  = &re_ctx->env->enc_cipher;
+	out_ar_cargs->mdigest = rec_mdigest(re_ctx);
+	rec_arix_nmeta(re_ctx, &out_ar_cargs->nmeta);
+}
+
+static struct silofs_arix_node *rec_new_arix_node(struct silofs_re_ctx *re_ctx)
+{
+	struct silofs_arix_node *arn = nullptr;
+
+	arn = silofs_memalloc(re_ctx->alloc, sizeof(*arn),
+	                      SILOFS_ALLOCF_BZERO);
+	return arn;
+}
+
+static void
+rec_del_arix_node(struct silofs_re_ctx *re_ctx, struct silofs_arix_node *arn)
+{
+	silofs_memfree(re_ctx->alloc, arn, sizeof(*arn), 0);
+}
+
 static int rec_fetch_arix_node(struct silofs_re_ctx *re_ctx)
 {
-	struct silofs_ar_cargs ar_cargs = {
-		.cipher  = &re_ctx->env->enc_cipher,
-		.mdigest = &re_ctx->env->mdigest,
-	};
-	int err;
+	struct silofs_ar_cargs   ar_cargs;
+	struct silofs_paddr      paddr;
+	struct silofs_arix_node *arn_enc;
+	int                      err = -SILOFS_ENOMEM;
 
-	rec_arix_nmeta(re_ctx, &ar_cargs.nmeta);
-	err = silofs_load_arix_node(re_ctx->ari, re_ctx->filos);
-	if (err) {
-		return err;
+	rec_arix_cargs(re_ctx, &ar_cargs);
+	arn_enc = rec_new_arix_node(re_ctx);
+	if (arn_enc == nullptr) {
+		goto out;
 	}
-	err = silofs_import_arix_node(re_ctx->ari, &ar_cargs);
+	silofs_ari_get_paddr(re_ctx->ari, &paddr);
+	err = silofs_load_arix_node(re_ctx->filos, &paddr, arn_enc);
 	if (err) {
-		return err;
+		goto out;
 	}
-	return 0;
+	err = silofs_verify_arix_paddr(arn_enc, rec_mdigest(re_ctx), &paddr);
+	if (err) {
+		goto out;
+	}
+	err = silofs_import_arix_node(re_ctx->ari, &ar_cargs, arn_enc);
+	if (err) {
+		goto out;
+	}
+out:
+	rec_del_arix_node(re_ctx, arn_enc);
+	return err;
 }
 
 static int

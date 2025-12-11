@@ -30,6 +30,7 @@ struct silofs_ar_ctx {
 	struct silofs_alloc *alloc;
 	struct silofs_arnode_info *abi;
 	struct silofs_repo *repo;
+	struct silofs_filos *filos;
 };
 
 static void
@@ -52,7 +53,6 @@ static void arc_setup_ab_meta(struct silofs_ar_ctx *ar_ctx,
 	out_ab_meta->enc_cipher = &env->enc_cipher;
 	out_ab_meta->dec_cipher = &env->dec_cipher;
 	out_ab_meta->mdigest = &env->mdigest;
-	out_ab_meta->repo = ar_ctx->repo;
 }
 
 static int arc_renew_abi(struct silofs_ar_ctx *ar_ctx)
@@ -81,6 +81,7 @@ static int arc_init(struct silofs_ar_ctx *ar_ctx, struct silofs_task_ctx *task)
 	ar_ctx->abi = nullptr;
 	ar_ctx->alloc = ar_ctx->env->base.alloc;
 	ar_ctx->repo = ar_ctx->env->base.repo;
+	ar_ctx->filos = &ar_ctx->env->base.repo->re_filos;
 
 	return arc_renew_abi(ar_ctx);
 }
@@ -91,6 +92,7 @@ static void arc_fini(struct silofs_ar_ctx *ar_ctx)
 	ar_ctx->task = nullptr;
 	ar_ctx->env = nullptr;
 	ar_ctx->repo = nullptr;
+	ar_ctx->filos = nullptr;
 	ar_ctx->alloc = nullptr;
 }
 
@@ -208,15 +210,18 @@ static void arc_arix_nmeta(const struct silofs_ar_ctx *ar_ctx,
 
 static int arc_store_arix_node(struct silofs_ar_ctx *ar_ctx)
 {
-	struct silofs_nmeta nmeta;
+	struct silofs_ar_cargs ar_cargs = {
+		.cipher = &ar_ctx->env->enc_cipher,
+		.mdigest = &ar_ctx->env->mdigest,
+	};
 	int err;
 
-	arc_arix_nmeta(ar_ctx, &nmeta);
-	err = silofs_export_arix_node(ar_ctx->abi, &nmeta.civkey);
+	arc_arix_nmeta(ar_ctx, &ar_cargs.nmeta);
+	err = silofs_export_arix_node(ar_ctx->abi, &ar_cargs);
 	if (err) {
 		return err;
 	}
-	err = silofs_save_arix_block(ar_ctx->abi);
+	err = silofs_save_arix_node(ar_ctx->abi, ar_ctx->filos);
 	if (err) {
 		return err;
 	}

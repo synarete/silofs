@@ -22,6 +22,13 @@
 #include "infra.h"
 #include "crypt.h"
 #include "addr.h"
+#include "bstore.h"
+
+struct silofs_ar_cargs {
+	struct silofs_nmeta          nmeta;
+	const struct silofs_cipher  *cipher;
+	const struct silofs_mdigest *mdigest;
+};
 
 struct silofs_ar_desc {
 	struct silofs_paddr paddr;
@@ -33,7 +40,6 @@ struct silofs_arn_base {
 	const struct silofs_cipher  *enc_cipher;
 	const struct silofs_cipher  *dec_cipher;
 	const struct silofs_mdigest *mdigest;
-	struct silofs_repo          *repo;
 };
 
 struct silofs_arnode_info {
@@ -83,14 +89,16 @@ int silofs_ari_fetch_desc(const struct silofs_arnode_info *ari, size_t slot,
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-int silofs_export_arix_node(struct silofs_arnode_info  *ari,
-                            const struct silofs_civkey *civkey);
+int silofs_export_arix_node(struct silofs_arnode_info    *ari,
+                            const struct silofs_ar_cargs *ar_cargs);
 
-int silofs_save_arix_block(struct silofs_arnode_info *ari);
+int silofs_import_arix_node(struct silofs_arnode_info    *ari,
+                            const struct silofs_ar_cargs *ar_cargs);
 
-int silofs_load_arix_node(const struct silofs_arnode_info *ari);
+int silofs_save_arix_node(struct silofs_arnode_info *ari,
+                          struct silofs_filos       *filos);
 
-int silofs_import_arix_node(struct silofs_arnode_info  *ari,
-                            const struct silofs_civkey *civkey);
+int silofs_load_arix_node(const struct silofs_arnode_info *ari,
+                          struct silofs_filos             *filos);
 
 #endif /* SILOFS_INDEX_H_ */

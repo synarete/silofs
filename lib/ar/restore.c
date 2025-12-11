@@ -29,6 +29,7 @@ struct silofs_re_ctx {
 	struct silofs_arnode_info *ari;
 	struct silofs_alloc *alloc;
 	struct silofs_repo *repo;
+	struct silofs_filos *filos;
 	struct silofs_laddr sb_laddr;
 };
 
@@ -52,7 +53,6 @@ static void rec_setup_ab_meta(struct silofs_re_ctx *re_ctx,
 	out_ab_meta->enc_cipher = &env->enc_cipher;
 	out_ab_meta->dec_cipher = &env->dec_cipher;
 	out_ab_meta->mdigest = &env->mdigest;
-	out_ab_meta->repo = re_ctx->repo;
 }
 
 static int
@@ -81,6 +81,7 @@ static int rec_init(struct silofs_re_ctx *re_ctx, struct silofs_task_ctx *task)
 	re_ctx->ari = nullptr;
 	re_ctx->alloc = re_ctx->env->base.alloc;
 	re_ctx->repo = re_ctx->env->base.repo;
+	re_ctx->filos = &re_ctx->env->base.repo->re_filos;
 	return 0;
 }
 
@@ -172,15 +173,18 @@ static void rec_arix_nmeta(const struct silofs_re_ctx *re_ctx,
 
 static int rec_fetch_arix_node(struct silofs_re_ctx *re_ctx)
 {
-	struct silofs_nmeta nmeta;
+	struct silofs_ar_cargs ar_cargs = {
+		.cipher = &re_ctx->env->enc_cipher,
+		.mdigest = &re_ctx->env->mdigest,
+	};
 	int err;
 
-	rec_arix_nmeta(re_ctx, &nmeta);
-	err = silofs_load_arix_node(re_ctx->ari);
+	rec_arix_nmeta(re_ctx, &ar_cargs.nmeta);
+	err = silofs_load_arix_node(re_ctx->ari, re_ctx->filos);
 	if (err) {
 		return err;
 	}
-	err = silofs_import_arix_node(re_ctx->ari, &nmeta.civkey);
+	err = silofs_import_arix_node(re_ctx->ari, &ar_cargs);
 	if (err) {
 		return err;
 	}

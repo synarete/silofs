@@ -46,14 +46,14 @@ void silofs_uconv_fini(struct silofs_uconv *uconv)
 int silofs_uconv_convert(const struct silofs_uconv *uconv, const char *src,
                          size_t slen, char *dst, size_t dlen, size_t *out_conv)
 {
-	char *in = silofs_unconst(src);
-	char *out = dst;
-	size_t inlen = slen;
+	char  *in     = silofs_unconst(src);
+	char  *out    = dst;
+	size_t inlen  = slen;
 	size_t outlen = dlen;
 	size_t ret;
 
 	errno = 0;
-	ret = iconv(uconv->iconv, &in, &inlen, &out, &outlen);
+	ret   = iconv(uconv->iconv, &in, &inlen, &out, &outlen);
 	if (ret != 0) { // NOLINT
 		return errno ? -errno : -SILOFS_EINVAL;
 	}

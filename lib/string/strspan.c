@@ -78,7 +78,7 @@ void silofs_strspan_initz(struct silofs_strspan *ss)
 	silofs_strspan_initk(ss, z, 0, 0);
 }
 
-void silofs_strspan_init_by(struct silofs_strspan *ss,
+void silofs_strspan_init_by(struct silofs_strspan       *ss,
                             const struct silofs_strspan *other)
 {
 	silofs_strview_init_by(&ss->v, &other->v);
@@ -110,7 +110,7 @@ silofs_strspan_view(const struct silofs_strspan *ss)
 }
 
 void silofs_strspan_mkview(const struct silofs_strspan *ss,
-                           struct silofs_strview *out_sv)
+                           struct silofs_strview       *out_sv)
 {
 	silofs_strview_init_by(out_sv, &ss->v);
 }
@@ -121,10 +121,10 @@ void silofs_strspan_sub(const struct silofs_strspan *ss, size_t i, size_t n,
                         struct silofs_strspan *out_ss)
 {
 	const size_t sz = ss->v.len;
-	const size_t j = min(i, sz);
+	const size_t j  = min(i, sz);
 	const size_t n1 = min(n, sz - j);
 	const size_t wr = ss->n;
-	const size_t k = min(i, wr);
+	const size_t k  = min(i, wr);
 	const size_t n2 = min(n, wr - k);
 
 	silofs_strspan_initk(out_ss, ss->s + j, n1, n2);
@@ -135,9 +135,9 @@ void silofs_strspan_rsub(const struct silofs_strspan *ss, size_t n,
 {
 	const size_t sz = ss->v.len;
 	const size_t n1 = min(n, sz);
-	const size_t j = sz - n1;
+	const size_t j  = sz - n1;
 	const size_t wr = ss->n;
-	const size_t k = min(j, wr);
+	const size_t k  = min(j, wr);
 	const size_t n2 = wr - k;
 
 	silofs_strspan_initk(out_ss, ss->s + j, n1, n2);
@@ -145,12 +145,12 @@ void silofs_strspan_rsub(const struct silofs_strspan *ss, size_t n,
 
 void silofs_strspan_vsub(const struct silofs_strspan *ss,
                          const struct silofs_strview *sv,
-                         struct silofs_strspan *out_ss)
+                         struct silofs_strspan       *out_ss)
 {
 	const size_t npos = silofs_strview_npos();
-	const size_t i = silofs_strview_offset(&ss->v, sv->str);
-	const size_t j = (i == npos) ? ss->v.len : i;
-	const size_t n = (j < ss->v.len) ? sv->len : 0;
+	const size_t i    = silofs_strview_offset(&ss->v, sv->str);
+	const size_t j    = (i == npos) ? ss->v.len : i;
+	const size_t n    = (j < ss->v.len) ? sv->len : 0;
 
 	silofs_strspan_sub(ss, j, n, out_ss);
 }
@@ -176,10 +176,10 @@ strspan_insert(struct silofs_strspan *ss, size_t pos, const char *s, size_t n)
 {
 	/* start insertion before position j */
 	const size_t sz = ss->v.len;
-	const size_t j = min(pos, sz);
+	const size_t j  = min(pos, sz);
 
 	/* number of writable elements after j */
-	const size_t wr = ss->n;
+	const size_t wr  = ss->n;
 	const size_t rem = (j < wr) ? (wr - j) : 0;
 
 	/* number of elements after j (to be moved fwd) */
@@ -202,10 +202,10 @@ strspan_insert_fill(struct silofs_strspan *ss, size_t pos, size_t n, char c)
 {
 	/* start insertion before position j */
 	const size_t sz = ss->v.len;
-	const size_t j = min(pos, sz);
+	const size_t j  = min(pos, sz);
 
 	/* number of writable elements after j */
-	const size_t wr = ss->n;
+	const size_t wr  = ss->n;
 	const size_t rem = (j < wr) ? (wr - j) : 0;
 
 	/* number of elements after j (to be moved fwd) */
@@ -230,13 +230,13 @@ static size_t strspan_replace(struct silofs_strspan *ss, size_t pos, size_t n1,
 {
 	/* pos beyond end-of-string is append */
 	const size_t sz = ss->v.len;
-	const size_t j = min(pos, sz);
+	const size_t j  = min(pos, sz);
 
 	/* number of elements to replace */
 	const size_t k = min(sz - j, n1);
 
 	/* number of mutable elements */
-	const size_t wr = ss->n;
+	const size_t wr  = ss->n;
 	const size_t rem = (j < wr) ? (wr - j) : 0;
 
 	/* replace k elements after pos with s; truncate tail in case of
@@ -256,13 +256,13 @@ static size_t strspan_replace_fill(struct silofs_strspan *ss, size_t pos,
 {
 	/* pos beyond end-of-string is append */
 	const size_t sz = ss->v.len;
-	const size_t j = min(pos, sz);
+	const size_t j  = min(pos, sz);
 
 	/* number of elements to replace */
 	const size_t k = min(sz - j, n1);
 
 	/* number of mutable elements */
-	const size_t wr = ss->n;
+	const size_t wr  = ss->n;
 	const size_t rem = (j < wr) ? (wr - j) : 0;
 
 	/* replace k elements after pos with n2 copies of c; truncate tail in
@@ -290,7 +290,7 @@ silofs_strspan_nassign(struct silofs_strspan *ss, const char *s, size_t len)
 	return silofs_strspan_nreplace(ss, 0, ss->v.len, s, len);
 }
 
-size_t silofs_strspan_vassign(struct silofs_strspan *ss,
+size_t silofs_strspan_vassign(struct silofs_strspan       *ss,
                               const struct silofs_strview *sv)
 {
 	return silofs_strspan_nassign(ss, sv->str, sv->len);
@@ -412,7 +412,7 @@ void silofs_strspan_reverse(struct silofs_strspan *ss)
 
 void silofs_strspan_foreach(struct silofs_strspan *ss, silofs_chr_modify_fn fn)
 {
-	char *p = ss->s;
+	char       *p = ss->s;
 	const char *q = p + ss->n;
 
 	while (p < q) {

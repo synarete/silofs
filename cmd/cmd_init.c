@@ -30,14 +30,14 @@ struct cmd_init_in_args {
 	char *repodir;
 	char *repodir_real;
 	char *username;
-	bool with_sup_groups;
-	bool with_root_user;
+	bool  with_sup_groups;
+	bool  with_root_user;
 };
 
 struct cmd_init_ctx {
 	struct cmd_init_in_args in_args;
-	struct silofs_env_args env_args;
-	struct silofs_env *env;
+	struct silofs_env_args  env_args;
+	struct silofs_env      *env;
 };
 
 static struct cmd_init_ctx *cmd_init_ctx_p;
@@ -56,7 +56,7 @@ static void cmd_init_parse_optargs(struct cmd_init_ctx *ctx)
 		{ nullptr, 0, 0 },            //
 	};
 	struct cmd_optargs opa;
-	int opt_chr = 1;
+	int                opt_chr = 1;
 
 	cmd_optargs_init(&opa, ods);
 	while (!opa.opa_done && (opt_chr > 0)) {
@@ -121,7 +121,7 @@ static void cmd_init_start(struct cmd_init_ctx *ctx)
 static void cmd_init_prepare_repodir(const struct cmd_init_ctx *ctx)
 {
 	struct stat st = { .st_mode = 0 };
-	int err;
+	int         err;
 
 	err = silofs_sys_stat(ctx->in_args.repodir, &st);
 	if (err == -ENOENT) {
@@ -154,7 +154,7 @@ static void cmd_init_resolve_owner(struct cmd_init_ctx *ctx)
 static void cmd_init_setup_env_args(struct cmd_init_ctx *ctx)
 {
 	struct silofs_env_args *env_args = &ctx->env_args;
-	const char *username = ctx->in_args.username;
+	const char             *username = ctx->in_args.username;
 
 	cmd_setup_env_args(env_args);
 	cmd_resolve_uidgid(username, &env_args->uid, &env_args->gid);
@@ -164,11 +164,11 @@ static void cmd_init_setup_env_args(struct cmd_init_ctx *ctx)
 
 static void cmd_init_setup_fs_ids(struct cmd_init_ctx *ctx)
 {
-	struct silofs_ugids *ids = &ctx->env_args.ugids;
-	const char *username = ctx->in_args.username;
-	const bool with_sup_groups = ctx->in_args.with_sup_groups;
-	const bool with_root_user = ctx->in_args.with_root_user;
-	char *rootname = cmd_getpwuid(0);
+	struct silofs_ugids *ids             = &ctx->env_args.ugids;
+	const char          *username        = ctx->in_args.username;
+	const bool           with_sup_groups = ctx->in_args.with_sup_groups;
+	const bool           with_root_user  = ctx->in_args.with_root_user;
+	char                *rootname        = cmd_getpwuid(0);
 
 	cmd_extend_fsids(ids, username, with_sup_groups);
 	if (with_root_user && (strcmp(rootname, username) != 0)) {

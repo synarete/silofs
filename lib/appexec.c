@@ -40,7 +40,7 @@ static int validate_mbr_blobid(const struct silofs_blobid *blobid)
 {
 	enum silofs_btype btype;
 	enum silofs_mtype mtype;
-	int err;
+	int               err;
 
 	err = validate_blobid(blobid);
 	if (err) {
@@ -58,7 +58,7 @@ static int validate_mbr_blobid(const struct silofs_blobid *blobid)
 }
 
 static int setup_mbr_paddr(const struct silofs_blobid *blobid,
-                           struct silofs_paddr *out_paddr)
+                           struct silofs_paddr        *out_paddr)
 {
 	int err;
 
@@ -71,7 +71,7 @@ static int setup_mbr_paddr(const struct silofs_blobid *blobid,
 }
 
 static void export_mbr_blobid(const struct silofs_paddr *paddr,
-                              struct silofs_blobid *out_blobid)
+                              struct silofs_blobid      *out_blobid)
 {
 	silofs_blobid_copyto(&paddr->blobid, out_blobid);
 }
@@ -79,7 +79,7 @@ static void export_mbr_blobid(const struct silofs_paddr *paddr,
 int silofs_encode_blobid(const struct silofs_blobid *blobid, char *s, size_t n)
 {
 	struct silofs_strspan ss;
-	int err;
+	int                   err;
 
 	err = validate_blobid(blobid);
 	if (err) {
@@ -126,9 +126,9 @@ static int reload_vspace(struct silofs_task_ctx *task)
 
 static int reload_rootd(struct silofs_task_ctx *task)
 {
-	struct silofs_inode_info *ii = nullptr;
-	const ino_t ino = SILOFS_INO_ROOT;
-	int err;
+	struct silofs_inode_info *ii  = nullptr;
+	const ino_t               ino = SILOFS_INO_ROOT;
+	int                       err;
 
 	err = silofs_stage_inode(task, ino, SILOFS_STG_CUR, &ii);
 	if (err) {
@@ -186,7 +186,7 @@ static int format_uber(struct silofs_task_ctx *task)
 static size_t calc_aligned_fs_cap(const struct silofs_task_ctx *task)
 {
 	const size_t fs_cap_want = task->t_env->base.args->capacity;
-	const size_t align_size = SILOFS_LSEG_SIZE_MAX;
+	const size_t align_size  = SILOFS_LSEG_SIZE_MAX;
 
 	return (fs_cap_want / align_size) * align_size;
 }
@@ -215,8 +215,8 @@ static int
 do_claim_reclaim(struct silofs_task_ctx *task, enum silofs_mtype mtype)
 {
 	struct silofs_vaddr vaddr;
-	const off_t voff_exp = 0;
-	int err;
+	const off_t         voff_exp = 0;
+	int                 err;
 
 	err = silofs_claim_vspace(task, mtype, &vaddr);
 	if (err) {
@@ -240,7 +240,7 @@ do_claim_reclaim(struct silofs_task_ctx *task, enum silofs_mtype mtype)
 static int retry_claim(struct silofs_task_ctx *task)
 {
 	enum silofs_mtype mtype = SILOFS_MTYPE_NONE;
-	int err;
+	int               err;
 
 	while (++mtype < SILOFS_MTYPE_LAST) {
 		if (!silofs_mtype_isvnode(mtype) ||
@@ -263,7 +263,7 @@ static int retry_claim(struct silofs_task_ctx *task)
 static int
 require_spmaps_of(struct silofs_task_ctx *task, enum silofs_mtype mtype)
 {
-	struct silofs_vaddr vaddr;
+	struct silofs_vaddr        vaddr;
 	struct silofs_spleaf_info *sli = nullptr;
 
 	silofs_vaddr_setup(&vaddr, mtype, 0);
@@ -291,7 +291,7 @@ format_spmaps_of(struct silofs_task_ctx *task, enum silofs_mtype mtype)
 static int format_spmaps(struct silofs_task_ctx *task)
 {
 	enum silofs_mtype mtype = SILOFS_MTYPE_NONE;
-	int err;
+	int               err;
 
 	while (++mtype < SILOFS_MTYPE_LAST) {
 		if (!silofs_mtype_isvnode(mtype)) {
@@ -317,8 +317,8 @@ static int
 claim_offset_zero(struct silofs_task_ctx *task, enum silofs_mtype mtype)
 {
 	struct silofs_vnode_info *vni = nullptr;
-	off_t off = -1;
-	int err;
+	off_t                     off = -1;
+	int                       err;
 
 	err = silofs_spawn_vnode(task, nullptr, mtype, &vni);
 	if (err) {
@@ -336,7 +336,7 @@ claim_offset_zero(struct silofs_task_ctx *task, enum silofs_mtype mtype)
 static int format_nil_space(struct silofs_task_ctx *task)
 {
 	enum silofs_mtype mtype = SILOFS_MTYPE_NONE;
-	int err;
+	int               err;
 
 	while (++mtype < SILOFS_MTYPE_LAST) {
 		if (!silofs_mtype_isvnode(mtype) ||
@@ -360,8 +360,8 @@ static int
 spawn_rootdir(struct silofs_task_ctx *task, struct silofs_inode_info **out_ii)
 {
 	struct silofs_inew_params inp = { .flags = 0 };
-	struct silofs_inode_info *ii = nullptr;
-	int err;
+	struct silofs_inode_info *ii  = nullptr;
+	int                       err;
 
 	silofs_inew_params_of(task, nullptr, S_IFDIR | 0755, 0, &inp);
 	err = silofs_spawn_inode(task, &inp, &ii);
@@ -376,7 +376,7 @@ spawn_rootdir(struct silofs_task_ctx *task, struct silofs_inode_info **out_ii)
 	return 0;
 }
 
-static void update_rootdir(struct silofs_task_ctx *task,
+static void update_rootdir(struct silofs_task_ctx   *task,
                            struct silofs_inode_info *rootd_ii)
 {
 	const struct silofs_env_args *env_args = task->t_env->base.args;
@@ -392,7 +392,7 @@ static void update_rootdir(struct silofs_task_ctx *task,
 static int format_rootdir(struct silofs_task_ctx *task)
 {
 	struct silofs_inode_info *rootd_ii = nullptr;
-	int err;
+	int                       err;
 
 	err = spawn_rootdir(task, &rootd_ii);
 	if (err) {
@@ -414,7 +414,7 @@ commit_mbr(struct silofs_task_ctx *task, struct silofs_paddr *out_paddr)
 }
 
 static int appexec_format_meta(struct silofs_task_ctx *task,
-                               struct silofs_paddr *out_paddr)
+                               struct silofs_paddr    *out_paddr)
 {
 	int err;
 
@@ -565,7 +565,7 @@ remove_mbr(struct silofs_task_ctx *task, const struct silofs_paddr *paddr)
 	return silofs_env_unlink_mbr(task->t_env, paddr);
 }
 
-static int appexec_remove_fs(struct silofs_task_ctx *task,
+static int appexec_remove_fs(struct silofs_task_ctx    *task,
                              const struct silofs_paddr *paddr)
 {
 	int err;
@@ -589,7 +589,7 @@ static int appexec_remove_fs(struct silofs_task_ctx *task,
 	return 0;
 }
 
-static int appexec_sense_fs(struct silofs_task_ctx *task,
+static int appexec_sense_fs(struct silofs_task_ctx    *task,
                             const struct silofs_paddr *paddr)
 {
 	int err;
@@ -602,9 +602,9 @@ static int appexec_sense_fs(struct silofs_task_ctx *task,
 	return 0;
 }
 
-static int appexec_archive_fs(struct silofs_task_ctx *task,
+static int appexec_archive_fs(struct silofs_task_ctx    *task,
                               const struct silofs_paddr *fs_paddr,
-                              struct silofs_paddr *out_ar_paddr)
+                              struct silofs_paddr       *out_ar_paddr)
 {
 	int err;
 
@@ -620,9 +620,9 @@ static int appexec_archive_fs(struct silofs_task_ctx *task,
 	return 0;
 }
 
-static int appexec_restore_fs(struct silofs_task_ctx *task,
+static int appexec_restore_fs(struct silofs_task_ctx    *task,
                               const struct silofs_paddr *ar_mbref,
-                              struct silofs_paddr *out_fs_mbref)
+                              struct silofs_paddr       *out_fs_mbref)
 {
 	int err;
 
@@ -639,7 +639,7 @@ static int appexec_restore_fs(struct silofs_task_ctx *task,
 int silofs_post_exec_fs(struct silofs_env *env)
 {
 	const struct silofs_fuseq *fuseq = env->base.fuseq;
-	int ret = 0;
+	int                        ret   = 0;
 
 	if ((fuseq != nullptr) && fuseq->fq_got_init) {
 		ret = fuseq->fq_got_destroy ? 0 : -SILOFS_ENOTDONE;
@@ -650,7 +650,7 @@ int silofs_post_exec_fs(struct silofs_env *env)
 static int do_map_task_creds(struct silofs_task_ctx *task)
 {
 	const struct silofs_cred *xcred = &task->t_auth.creds.host_cred;
-	struct silofs_cred *icred = &task->t_auth.creds.fs_cred;
+	struct silofs_cred       *icred = &task->t_auth.creds.fs_cred;
 
 	return silofs_idsmap_map_uidgid(task->t_idsm, xcred->uid, xcred->gid,
 	                                &icred->uid, &icred->gid);
@@ -659,7 +659,7 @@ static int do_map_task_creds(struct silofs_task_ctx *task)
 static int map_task_creds(struct silofs_task_ctx *task)
 {
 	const struct silofs_idsmap *idsm = task->t_idsm;
-	int err = 0;
+	int                         err  = 0;
 
 	if (idsm->idm_usize || idsm->idm_gsize) {
 		err = do_map_task_creds(task);
@@ -694,7 +694,7 @@ static int
 exec_open_fs(struct silofs_env *env, const struct silofs_paddr *paddr)
 {
 	struct silofs_task_ctx task;
-	int err;
+	int                    err;
 
 	err = make_task(env, &task);
 	if (!err) {
@@ -706,7 +706,7 @@ exec_open_fs(struct silofs_env *env, const struct silofs_paddr *paddr)
 static int exec_resync_vmeta(struct silofs_env *env, bool drop)
 {
 	struct silofs_task_ctx task;
-	int err;
+	int                    err;
 
 	err = make_task(env, &task);
 	if (!err) {
@@ -727,9 +727,9 @@ int silofs_close_repo(struct silofs_env *env)
 
 static int do_mount_and_exec(struct silofs_env *env)
 {
-	const struct silofs_env_args *args = env->base.args;
-	struct silofs_fuseq *fuseq = env->base.fuseq;
-	int err;
+	const struct silofs_env_args *args  = env->base.args;
+	struct silofs_fuseq          *fuseq = env->base.fuseq;
+	int                           err;
 
 	err = silofs_fuseq_mount(fuseq, env, args->boot_args.mntdir);
 	if (err) {
@@ -753,7 +753,7 @@ static bool run_with_fuse(const struct silofs_env *env)
 int silofs_exec_fs(struct silofs_env *env)
 {
 	struct silofs_fuseq *fuseq = env->base.fuseq;
-	int err;
+	int                  err;
 
 	if (!run_with_fuse(env)) {
 		return -SILOFS_EINVAL;
@@ -787,7 +787,7 @@ int silofs_sync_fs(struct silofs_env *env, bool drop)
 	return err;
 }
 
-void silofs_collect_stats(const struct silofs_env *env,
+void silofs_collect_stats(const struct silofs_env   *env,
                           struct silofs_cache_stats *out_cstats)
 {
 	silofs_lcache_collect_stats(env->base.lcache, out_cstats);
@@ -809,7 +809,7 @@ static int check_fs_capacity(size_t cap_size)
 static int check_want_capacity(const struct silofs_env *env)
 {
 	const size_t cap_want = env->base.args->capacity;
-	int err;
+	int          err;
 
 	err = check_fs_capacity(cap_want);
 	if (err) {
@@ -822,12 +822,12 @@ static int check_want_capacity(const struct silofs_env *env)
 
 static int check_owner_ids(const struct silofs_env *env)
 {
-	const struct silofs_env_args *args = env->base.args;
-	const uid_t owner_uid = args->uid;
-	const gid_t owner_gid = args->gid;
-	uid_t suid;
-	gid_t sgid;
-	int err;
+	const struct silofs_env_args *args      = env->base.args;
+	const uid_t                   owner_uid = args->uid;
+	const gid_t                   owner_gid = args->gid;
+	uid_t                         suid;
+	gid_t                         sgid;
+	int                           err;
 
 	err = silofs_idsmap_map_uidgid(env->base.idsmap, owner_uid, owner_gid,
 	                               &suid, &sgid);
@@ -843,7 +843,7 @@ static int
 exec_format_meta(struct silofs_env *env, struct silofs_paddr *out_paddr)
 {
 	struct silofs_task_ctx task;
-	int err;
+	int                    err;
 
 	err = make_task(env, &task);
 	if (!err) {
@@ -902,11 +902,11 @@ static int do_format_fs(struct silofs_env *env, struct silofs_paddr *out_paddr)
 	return 0;
 }
 
-int silofs_format_fs(struct silofs_env *env,
+int silofs_format_fs(struct silofs_env    *env,
                      struct silofs_blobid *out_fs_mbr_addr)
 {
 	struct silofs_paddr fs_mbr_addr;
-	int err;
+	int                 err;
 
 	silofs_env_lock(env);
 	err = do_format_fs(env, &fs_mbr_addr);
@@ -921,7 +921,7 @@ static int
 exec_sense_fs(struct silofs_env *env, const struct silofs_paddr *paddr)
 {
 	struct silofs_task_ctx task;
-	int err;
+	int                    err;
 
 	err = make_task(env, &task);
 	if (!err) {
@@ -930,11 +930,11 @@ exec_sense_fs(struct silofs_env *env, const struct silofs_paddr *paddr)
 	return term_task(&task, err);
 }
 
-int silofs_sense_fs(struct silofs_env *env,
+int silofs_sense_fs(struct silofs_env          *env,
                     const struct silofs_blobid *fs_blobid)
 {
 	struct silofs_paddr paddr;
-	int err;
+	int                 err;
 
 	silofs_env_lock(env);
 	err = setup_mbr_paddr(fs_blobid, &paddr);
@@ -945,11 +945,11 @@ int silofs_sense_fs(struct silofs_env *env,
 	return err;
 }
 
-int silofs_sense_ar(struct silofs_env *env,
+int silofs_sense_ar(struct silofs_env          *env,
                     const struct silofs_blobid *ar_blobid)
 {
 	struct silofs_paddr paddr;
-	int err;
+	int                 err;
 
 	silofs_env_lock(env);
 	err = setup_mbr_paddr(ar_blobid, &paddr);
@@ -963,7 +963,7 @@ int silofs_sense_ar(struct silofs_env *env,
 int silofs_open_fs(struct silofs_env *env, const struct silofs_blobid *blobid)
 {
 	struct silofs_paddr paddr;
-	int err;
+	int                 err;
 
 	silofs_env_lock(env);
 	err = setup_mbr_paddr(blobid, &paddr);
@@ -977,7 +977,7 @@ int silofs_open_fs(struct silofs_env *env, const struct silofs_blobid *blobid)
 static int exec_unload_fs(struct silofs_env *env)
 {
 	struct silofs_task_ctx task;
-	int err;
+	int                    err;
 
 	err = make_task(env, &task);
 	if (!err) {
@@ -1000,7 +1000,7 @@ static int
 exec_fork_fs(struct silofs_env *env, struct silofs_mbrefs *out_mbrefs)
 {
 	struct silofs_task_ctx task;
-	int err;
+	int                    err;
 
 	err = make_task(env, &task);
 	if (!err) {
@@ -1009,12 +1009,12 @@ exec_fork_fs(struct silofs_env *env, struct silofs_mbrefs *out_mbrefs)
 	return term_task(&task, err);
 }
 
-int silofs_fork_fs(struct silofs_env *env,
+int silofs_fork_fs(struct silofs_env    *env,
                    struct silofs_blobid *out_main_blobid,
                    struct silofs_blobid *out_fork_blobid)
 {
 	struct silofs_mbrefs mbrefs;
-	int err;
+	int                  err;
 
 	silofs_env_lock(env);
 	err = exec_fork_fs(env, &mbrefs);
@@ -1030,7 +1030,7 @@ static int
 exec_reload_remove_fs(struct silofs_env *env, const struct silofs_paddr *paddr)
 {
 	struct silofs_task_ctx task;
-	int err;
+	int                    err;
 
 	err = make_task(env, &task);
 	if (err) {
@@ -1048,11 +1048,11 @@ out:
 	return term_task(&task, err);
 }
 
-int silofs_remove_fs(struct silofs_env *env,
+int silofs_remove_fs(struct silofs_env          *env,
                      const struct silofs_blobid *blobid)
 {
 	struct silofs_paddr paddr;
-	int err;
+	int                 err;
 
 	silofs_env_lock(env);
 	err = setup_mbr_paddr(blobid, &paddr);
@@ -1063,11 +1063,11 @@ int silofs_remove_fs(struct silofs_env *env,
 	return err;
 }
 
-static int exec_inspect_fs(struct silofs_env *env,
+static int exec_inspect_fs(struct silofs_env                 *env,
                            const struct silofs_laddr_visitor *lvis)
 {
 	struct silofs_task_ctx task;
-	int err;
+	int                    err;
 
 	err = make_task(env, &task);
 	if (!err) {
@@ -1090,7 +1090,7 @@ inspect_view(void *ctx, const struct silofs_laddr *laddr, size_t len)
 int silofs_inspect_fs(struct silofs_env *env, bool view)
 {
 	const struct silofs_laddr_visitor lvis = {
-		.hook = view ? inspect_view : nullptr,
+		.hook  = view ? inspect_view : nullptr,
 		.userp = nullptr,
 	};
 	int err;
@@ -1106,7 +1106,7 @@ exec_archive_fs(struct silofs_env *env, const struct silofs_paddr *fs_paddr,
                 struct silofs_paddr *out_ar_paddr)
 {
 	struct silofs_task_ctx task;
-	int err;
+	int                    err;
 
 	err = make_task(env, &task);
 	if (!err) {
@@ -1115,13 +1115,13 @@ exec_archive_fs(struct silofs_env *env, const struct silofs_paddr *fs_paddr,
 	return term_task(&task, err);
 }
 
-int silofs_archive_fs(struct silofs_env *env,
+int silofs_archive_fs(struct silofs_env          *env,
                       const struct silofs_blobid *fs_blobid,
-                      struct silofs_blobid *out_ar_blobid)
+                      struct silofs_blobid       *out_ar_blobid)
 {
 	struct silofs_paddr fs_paddr;
 	struct silofs_paddr ar_paddr;
-	int err;
+	int                 err;
 
 	silofs_env_lock(env);
 	err = setup_mbr_paddr(fs_blobid, &fs_paddr);
@@ -1143,7 +1143,7 @@ exec_restore_fs(struct silofs_env *env, const struct silofs_paddr *ar_mbref,
                 struct silofs_paddr *out_fs_mbref)
 {
 	struct silofs_task_ctx task;
-	int err;
+	int                    err;
 
 	err = make_task(env, &task);
 	if (!err) {
@@ -1152,13 +1152,13 @@ exec_restore_fs(struct silofs_env *env, const struct silofs_paddr *ar_mbref,
 	return term_task(&task, err);
 }
 
-int silofs_restore_fs(struct silofs_env *env,
+int silofs_restore_fs(struct silofs_env          *env,
                       const struct silofs_blobid *ar_blobid,
-                      struct silofs_blobid *out_fs_blobid)
+                      struct silofs_blobid       *out_fs_blobid)
 {
 	struct silofs_paddr ar_mbref;
 	struct silofs_paddr fs_mbref;
-	int err;
+	int                 err;
 
 	silofs_env_lock(env);
 	err = setup_mbr_paddr(ar_blobid, &ar_mbref);
@@ -1192,8 +1192,8 @@ static int errno_or_errnum(int errnum)
 
 static int check_endianess32(uint32_t val, const char *str)
 {
-	char buf[16] = "";
-	const uint32_t val_le = htole32(val);
+	char           buf[16] = "";
+	const uint32_t val_le  = htole32(val);
 
 	for (size_t i = 0; i < 4; ++i) {
 		buf[i] = (char)(val_le >> (i * 8));
@@ -1203,8 +1203,8 @@ static int check_endianess32(uint32_t val, const char *str)
 
 static int check_endianess64(uint64_t val, const char *str)
 {
-	char buf[16] = "";
-	const uint64_t val_le = htole64(val);
+	char           buf[16] = "";
+	const uint64_t val_le  = htole64(val);
 
 	for (size_t i = 0; i < 8; ++i) {
 		buf[i] = (char)(val_le >> (i * 8));
@@ -1241,16 +1241,16 @@ static int check_endianess(void)
 
 static int check_sysconf(void)
 {
-	long val;
-	long page_shift = 0;
-	const long page_size_min = SILOFS_PAGE_SIZE_MIN;
+	long       val;
+	long       page_shift     = 0;
+	const long page_size_min  = SILOFS_PAGE_SIZE_MIN;
 	const long page_shift_min = SILOFS_PAGE_SHIFT_MIN;
 	const long page_shift_max = SILOFS_PAGE_SHIFT_MAX;
-	const long cl_size_min = SILOFS_CACHELINE_SIZE_MIN;
-	const long cl_size_max = SILOFS_CACHELINE_SIZE_MAX;
+	const long cl_size_min    = SILOFS_CACHELINE_SIZE_MIN;
+	const long cl_size_max    = SILOFS_CACHELINE_SIZE_MAX;
 
 	errno = 0;
-	val = silofs_sc_phys_pages();
+	val   = silofs_sc_phys_pages();
 	if (val <= 0) {
 		return errno_or_errnum(SILOFS_ENOMEM);
 	}
@@ -1288,7 +1288,7 @@ static int check_sysconf(void)
 
 static int check_system_page_size(void)
 {
-	long page_size;
+	long         page_size;
 	const size_t page_shift[] = { 12, 13, 14, 16 };
 
 	page_size = silofs_sc_page_size();
@@ -1306,8 +1306,8 @@ static int check_system_page_size(void)
 static int check_proc_rlimits(void)
 {
 	struct rlimit rlim;
-	const rlim_t nofiles_min = 512;
-	int err;
+	const rlim_t  nofiles_min = 512;
+	int           err;
 
 	err = silofs_sys_getrlimit(RLIMIT_AS, &rlim);
 	if (err) {
@@ -1368,13 +1368,13 @@ static bool g_initlib_once_done;
 
 static bool init_with_fips(void)
 {
-	const char *name = "SILOFS_FIPS";
+	const char *name  = "SILOFS_FIPS";
 	const char *value = nullptr;
-	size_t len = 0;
-	bool ret = false;
+	size_t      len   = 0;
+	bool        ret   = false;
 
 	value = secure_getenv(name);
-	len = silofs_str_length(value);
+	len   = silofs_str_length(value);
 	if (len == 1) {
 		ret = silofs_str_compare(value, "1", len);
 	}
@@ -1406,7 +1406,7 @@ void silofs_getversions(struct silofs_versions *out_vers)
 {
 	out_vers->silofs_version = silofs_version.string;
 	out_vers->gcrypt_version = silofs_gcrypt_version();
-	out_vers->zstd_version = silofs_zstd_version();
+	out_vers->zstd_version   = silofs_zstd_version();
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

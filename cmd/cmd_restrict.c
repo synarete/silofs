@@ -22,8 +22,8 @@
 static int open_dirfd(const char *dirpath)
 {
 	const int o_flags = O_PATH | O_CLOEXEC | O_DIRECTORY;
-	int dirfd = -1;
-	int err;
+	int       dirfd   = -1;
+	int       err;
 
 	err = silofs_sys_open(dirpath, o_flags, 0, &dirfd);
 	if (err) {
@@ -68,7 +68,7 @@ static void restrict_beneath(int ruleset_fd, const char *dirpath,
 {
 	struct landlock_path_beneath_attr path_beneath = {
 		.allowed_access = allowed_access_mask,
-		.parent_fd = -1,
+		.parent_fd      = -1,
 	};
 	int err;
 

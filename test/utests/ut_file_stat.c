@@ -34,9 +34,9 @@ static blkcnt_t datasize_to_nfrgs_max(size_t dsz)
 static void ut_getattr_blocks(struct ut_env *ute, ino_t ino, size_t dsz)
 {
 	struct stat st = {};
-	blkcnt_t blocks;
-	blkcnt_t blocks_min;
-	blkcnt_t blocks_max;
+	blkcnt_t    blocks;
+	blkcnt_t    blocks_min;
+	blkcnt_t    blocks_max;
 
 	ut_getattr(ute, ino, &st);
 	if (S_ISDIR(st.st_mode)) {
@@ -44,7 +44,7 @@ static void ut_getattr_blocks(struct ut_env *ute, ino_t ino, size_t dsz)
 	} else {
 		ut_expect_eq(st.st_blksize, SILOFS_LBK_SIZE);
 	}
-	blocks = st.st_blocks;
+	blocks     = st.st_blocks;
 	blocks_min = datasize_to_nfrgs_min(dsz);
 	blocks_max = datasize_to_nfrgs_max(dsz);
 	ut_expect_ge(blocks, blocks_min);
@@ -54,9 +54,9 @@ static void ut_getattr_blocks(struct ut_env *ute, ino_t ino, size_t dsz)
 static void ut_file_stat_blocks_at_(struct ut_env *ute, size_t bsz, off_t off)
 {
 	const char *name = UT_NAME;
-	void *buf = ut_randbuf(ute, bsz);
-	ino_t dino;
-	ino_t ino;
+	void       *buf  = ut_randbuf(ute, bsz);
+	ino_t       dino;
+	ino_t       ino;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -101,11 +101,11 @@ static void ut_file_stat_blocks(struct ut_env *ute)
 static void ut_file_statvfs_(struct ut_env *ute, off_t off, size_t len)
 {
 	struct statvfs stv[2];
-	const char *name = UT_NAME;
-	void *buf = ut_randbuf(ute, len);
-	fsblkcnt_t bcnt = 0;
-	ino_t dino = 0;
-	ino_t ino = 0;
+	const char    *name = UT_NAME;
+	void          *buf  = ut_randbuf(ute, len);
+	fsblkcnt_t     bcnt = 0;
+	ino_t          dino = 0;
+	ino_t          ino  = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_statfs(ute, dino, &stv[0]);

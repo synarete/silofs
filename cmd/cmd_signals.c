@@ -50,7 +50,7 @@ silofs_attr_noreturn static void sigaction_term_handler(int signum)
 {
 	silofs_backtrace();
 	silofs_log_crit("term-signal: %d", signum);
-	cmd_global_params.sig_halt = signum;
+	cmd_global_params.sig_halt  = signum;
 	cmd_global_params.sig_fatal = signum;
 	exit(EXIT_FAILURE);
 }
@@ -63,7 +63,7 @@ silofs_attr_noreturn static void sigaction_abort_handler(int signum)
 
 	silofs_backtrace();
 	silofs_log_crit("abort-signal: %d", signum);
-	cmd_global_params.sig_halt = signum;
+	cmd_global_params.sig_halt  = signum;
 	cmd_global_params.sig_fatal = signum;
 	abort(); /* Re-raise to _exit */
 }

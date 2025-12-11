@@ -21,7 +21,7 @@
 #include "cmd.h"
 
 void cmd_new_env(const struct silofs_env_args *env_args,
-                 struct silofs_env **p_env)
+                 struct silofs_env           **p_env)
 {
 	int err;
 
@@ -52,10 +52,10 @@ static char *cmd_repodir_name(const struct silofs_env *env)
 static void cmd_report_err_and_die(const struct silofs_env *env, int status,
                                    const char *msg)
 {
-	char *rname = nullptr;
-	const char *xmsg = msg ? msg : "";
-	const char *xtag = msg ? ": " : "";
-	int err;
+	char       *rname = nullptr;
+	const char *xmsg  = msg ? msg : "";
+	const char *xtag  = msg ? ": " : "";
+	int         err;
 
 	/* no error */
 	if (status == 0) {
@@ -144,9 +144,9 @@ attr_printf34 static void
 cmd_requiref_ok(const struct silofs_env *env, int status,
                 const char *restrict fmt, ...)
 {
-	char msg[1024];
+	char    msg[1024];
 	va_list ap = { 0 };
-	int ret;
+	int     ret;
 
 	if (status != 0) {
 		va_start(ap, fmt);
@@ -188,7 +188,7 @@ void cmd_close_repo(struct silofs_env *env)
 }
 
 static void cmd_require_blobid_ok(const struct silofs_env *env, int err,
-                                  const char *prefix_msg,
+                                  const char                 *prefix_msg,
                                   const struct silofs_blobid *blobid)
 {
 	char bid[256] = "";
@@ -270,9 +270,9 @@ void cmd_inspect_fs(struct silofs_env *env, bool view)
 	cmd_require_ok(env, err, "failed to inspect fs");
 }
 
-void cmd_archive_fs(struct silofs_env *env,
+void cmd_archive_fs(struct silofs_env          *env,
                     const struct silofs_blobid *fs_blobid,
-                    struct silofs_blobid *out_ar_blobid)
+                    struct silofs_blobid       *out_ar_blobid)
 {
 	int err;
 
@@ -280,9 +280,9 @@ void cmd_archive_fs(struct silofs_env *env,
 	cmd_require_blobid_ok(env, err, "failed to archive", fs_blobid);
 }
 
-void cmd_restore_fs(struct silofs_env *env,
+void cmd_restore_fs(struct silofs_env          *env,
                     const struct silofs_blobid *ar_blobid,
-                    struct silofs_blobid *out_fs_blobid)
+                    struct silofs_blobid       *out_fs_blobid)
 {
 	int err;
 
@@ -296,9 +296,9 @@ void cmd_setup_env_args(struct silofs_env_args *env_args)
 {
 	memset(env_args, 0, sizeof(*env_args));
 	cmd_setup_fsids(&env_args->ugids);
-	env_args->uid = getuid();
-	env_args->gid = getgid();
-	env_args->pid = getpid();
+	env_args->uid   = getuid();
+	env_args->gid   = getgid();
+	env_args->pid   = getpid();
 	env_args->umask = 0077;
 }
 

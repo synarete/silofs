@@ -22,12 +22,12 @@
  */
 static void test_osync_simple_(struct ft_env *fte, off_t off, size_t len)
 {
-	void *buf0 = ft_new_buf_zeros(fte, len);
-	void *buf1 = ft_new_buf_rands(fte, len);
-	void *buf2 = ft_new_buf_rands(fte, len);
+	void       *buf0 = ft_new_buf_zeros(fte, len);
+	void       *buf1 = ft_new_buf_rands(fte, len);
+	void       *buf2 = ft_new_buf_rands(fte, len);
 	const char *path = ft_new_path_unique(fte);
-	int fd1 = -1;
-	int fd2 = -1;
+	int         fd1  = -1;
+	int         fd2  = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0644, &fd1);
 	ft_pwriten(fd1, buf1, len, off);
@@ -67,11 +67,11 @@ static void test_osync_simple(struct ft_env *fte)
  */
 static void test_osync_multi_(struct ft_env *fte, size_t bsz, off_t off)
 {
-	void *buf0 = ft_new_buf_zeros(fte, bsz);
-	void *buf1 = ft_new_buf_rands(fte, bsz);
-	void *buf2 = ft_new_buf_rands(fte, bsz);
+	void       *buf0 = ft_new_buf_zeros(fte, bsz);
+	void       *buf1 = ft_new_buf_rands(fte, bsz);
+	void       *buf2 = ft_new_buf_rands(fte, bsz);
 	const char *path[16];
-	int fd[16];
+	int         fd[16];
 
 	for (size_t i = 0; i < FT_ARRAY_SIZE(path); ++i) {
 		path[i] = ft_new_path_unique(fte);

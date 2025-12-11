@@ -48,7 +48,7 @@ void silofs_civ_reset(struct silofs_civ *iv)
 	memset(iv, 0, sizeof(*iv));
 }
 
-void silofs_civ_assign(struct silofs_civ *iv,
+void silofs_civ_assign(struct silofs_civ       *iv,
                        const struct silofs_civ *iv_other)
 {
 	memcpy(iv, iv_other, sizeof(*iv));
@@ -69,7 +69,7 @@ long silofs_civ_compare(const struct silofs_civ *iv,
 void silofs_civ_xor_with(struct silofs_civ *iv, const void *buf, size_t len)
 {
 	const uint8_t *p = buf;
-	const size_t n = silofs_min(len, ARRAY_SIZE(iv->iv));
+	const size_t   n = silofs_min(len, ARRAY_SIZE(iv->iv));
 
 	for (size_t i = 0; i < n; ++i) {
 		iv->iv[i] ^= p[i];
@@ -113,7 +113,7 @@ void silofs_ckey_reset(struct silofs_ckey *key)
 	memset(key, 0, sizeof(*key));
 }
 
-void silofs_ckey_assign(struct silofs_ckey *key,
+void silofs_ckey_assign(struct silofs_ckey       *key,
                         const struct silofs_ckey *other)
 {
 	memcpy(key, other, sizeof(*key));
@@ -127,14 +127,14 @@ void silofs_ckey_mkrand(struct silofs_ckey *key)
 void silofs_ckey_xor_with(struct silofs_ckey *key, const void *buf, size_t len)
 {
 	const uint8_t *p = buf;
-	const size_t n = silofs_min(len, ARRAY_SIZE(key->key));
+	const size_t   n = silofs_min(len, ARRAY_SIZE(key->key));
 
 	for (size_t i = 0; i < n; ++i) {
 		key->key[i] ^= p[i];
 	}
 }
 
-void silofs_ckey_xor_with2(struct silofs_ckey *key,
+void silofs_ckey_xor_with2(struct silofs_ckey       *key,
                            const struct silofs_ckey *key2)
 {
 	for (size_t i = 0; i < ARRAY_SIZE(key->key); ++i) {
@@ -168,21 +168,21 @@ void silofs_civkey_mkrand(struct silofs_civkey *civkey)
 	silofs_civ_mkrand(&civkey->iv);
 }
 
-void silofs_civkey_setup(struct silofs_civkey *civkey,
+void silofs_civkey_setup(struct silofs_civkey     *civkey,
                          const struct silofs_ckey *key,
-                         const struct silofs_civ *iv)
+                         const struct silofs_civ  *iv)
 {
 	silofs_ckey_assign(&civkey->key, key);
 	silofs_civ_assign(&civkey->iv, iv);
 }
 
-void silofs_civkey_assign(struct silofs_civkey *civkey,
+void silofs_civkey_assign(struct silofs_civkey       *civkey,
                           const struct silofs_civkey *other)
 {
 	silofs_civkey_setup(civkey, &other->key, &other->iv);
 }
 
-void silofs_civkey_xor_with(struct silofs_civkey *civkey,
+void silofs_civkey_xor_with(struct silofs_civkey       *civkey,
                             const struct silofs_civkey *other)
 {
 	silofs_ckey_xor_with2(&civkey->key, &other->key);

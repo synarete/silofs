@@ -31,7 +31,7 @@ const struct silofs_nmeta *silofs_nmeta_none(void)
 	return &s_nmeta_none;
 }
 
-void silofs_nmeta_setup(struct silofs_nmeta *nmeta,
+void silofs_nmeta_setup(struct silofs_nmeta        *nmeta,
                         const struct silofs_civkey *civkey)
 {
 	silofs_civkey_assign(&nmeta->civkey, civkey);
@@ -44,14 +44,14 @@ void silofs_nmeta_reset(struct silofs_nmeta *nmeta)
 	silofs_ciargs_reset(&nmeta->ciargs);
 }
 
-void silofs_nmeta_assign(struct silofs_nmeta *nmeta,
+void silofs_nmeta_assign(struct silofs_nmeta       *nmeta,
                          const struct silofs_nmeta *other)
 {
 	silofs_civkey_assign(&nmeta->civkey, &other->civkey);
 	silofs_ciargs_assign(&nmeta->ciargs, &other->ciargs);
 }
 
-void silofs_nmeta128b_htox(struct silofs_nmeta128b *nmeta128,
+void silofs_nmeta128b_htox(struct silofs_nmeta128b   *nmeta128,
                            const struct silofs_nmeta *nmeta)
 {
 	const uint16_t algo = (uint16_t)(nmeta->ciargs.algo);
@@ -65,7 +65,7 @@ void silofs_nmeta128b_htox(struct silofs_nmeta128b *nmeta128,
 }
 
 void silofs_nmeta128b_xtoh(const struct silofs_nmeta128b *nmeta128,
-                           struct silofs_nmeta *nmeta)
+                           struct silofs_nmeta           *nmeta)
 {
 	const uint16_t algo = silofs_le16_to_cpu(nmeta128->nm_cipher_algo);
 	const uint16_t mode = silofs_le16_to_cpu(nmeta128->nm_cipher_mode);
@@ -88,15 +88,15 @@ const struct silofs_pmeta *silofs_pmeta_none(void)
 	return &s_pmeta_none;
 }
 
-void silofs_pmeta_setup(struct silofs_pmeta *pmeta,
-                        const struct silofs_paddr *paddr,
+void silofs_pmeta_setup(struct silofs_pmeta        *pmeta,
+                        const struct silofs_paddr  *paddr,
                         const struct silofs_civkey *civkey)
 {
 	silofs_paddr_assign(&pmeta->paddr, paddr);
 	silofs_nmeta_setup(&pmeta->nmeta, civkey);
 }
 
-void silofs_pmeta_setup2(struct silofs_pmeta *pmeta,
+void silofs_pmeta_setup2(struct silofs_pmeta       *pmeta,
                          const struct silofs_paddr *paddr,
                          const struct silofs_nmeta *nmeta)
 {
@@ -110,7 +110,7 @@ void silofs_pmeta_reset(struct silofs_pmeta *pmeta)
 	silofs_nmeta_reset(&pmeta->nmeta);
 }
 
-void silofs_pmeta_assign(struct silofs_pmeta *pmeta,
+void silofs_pmeta_assign(struct silofs_pmeta       *pmeta,
                          const struct silofs_pmeta *other)
 {
 	silofs_paddr_assign(&pmeta->paddr, &other->paddr);
@@ -122,7 +122,7 @@ bool silofs_pmeta_isnull(const struct silofs_pmeta *pmeta)
 	return silofs_paddr_isnull(&pmeta->paddr);
 }
 
-void silofs_pmeta192b_htox(struct silofs_pmeta192b *pmeta192,
+void silofs_pmeta192b_htox(struct silofs_pmeta192b   *pmeta192,
                            const struct silofs_pmeta *pmeta)
 {
 	memset(pmeta192, 0, sizeof(*pmeta192));
@@ -131,7 +131,7 @@ void silofs_pmeta192b_htox(struct silofs_pmeta192b *pmeta192,
 }
 
 void silofs_pmeta192b_xtoh(const struct silofs_pmeta192b *pmeta192,
-                           struct silofs_pmeta *pmeta)
+                           struct silofs_pmeta           *pmeta)
 {
 	silofs_paddr64b_xtoh(&pmeta192->pm_paddr, &pmeta->paddr);
 	silofs_nmeta128b_xtoh(&pmeta192->pm_nmeta, &pmeta->nmeta);

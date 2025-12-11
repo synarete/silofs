@@ -26,10 +26,10 @@ enum {
 
 int silofs_init_gcrypt(bool with_fips)
 {
-	const char *version = nullptr;
-	const char *expected_version = GCRYPT_VERSION;
+	const char        *version          = nullptr;
+	const char        *expected_version = GCRYPT_VERSION;
 	enum gcry_ctl_cmds cmd;
-	gcry_error_t err;
+	gcry_error_t       err;
 
 	if (with_fips) {
 		/* FIPS force-mode _must_ come first */

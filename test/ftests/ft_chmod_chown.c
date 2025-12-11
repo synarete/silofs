@@ -22,12 +22,12 @@
  */
 static void test_chmod_basic(struct ft_env *fte)
 {
-	struct stat st = { .st_size = -1 };
-	const mode_t ifmt = S_IFMT;
-	const char *path0 = ft_new_path_unique(fte);
-	const char *path1 = ft_new_path_unique(fte);
-	const char *path2 = ft_new_path_unique(fte);
-	int fd = -1;
+	struct stat  st    = { .st_size = -1 };
+	const mode_t ifmt  = S_IFMT;
+	const char  *path0 = ft_new_path_unique(fte);
+	const char  *path1 = ft_new_path_unique(fte);
+	const char  *path2 = ft_new_path_unique(fte);
+	int          fd    = -1;
 
 	ft_creat(path0, 0644, &fd);
 	ft_close(fd);
@@ -70,7 +70,7 @@ static void test_chmod_ctime(struct ft_env *fte)
 	const char *path0 = ft_new_path_unique(fte);
 	const char *path1 = ft_new_path_unique(fte);
 	const char *path2 = ft_new_path_unique(fte);
-	int fd = -1;
+	int         fd    = -1;
 
 	ft_creat(path0, 0644, &fd);
 	ft_fstat(fd, &st[0]);
@@ -104,10 +104,10 @@ static void test_chmod_ctime(struct ft_env *fte)
  */
 static void test_chmod_fchmod(struct ft_env *fte)
 {
-	struct stat st = { .st_size = -1 };
-	const char *path = ft_new_path_unique(fte);
+	struct stat  st   = { .st_size = -1 };
+	const char  *path = ft_new_path_unique(fte);
 	const mode_t ifmt = S_IFMT;
-	int fd = -1;
+	int          fd   = -1;
 
 	ft_creat(path, 0600, &fd);
 	ft_fstat(fd, &st);
@@ -129,10 +129,10 @@ static void test_chmod_fchmod(struct ft_env *fte)
  */
 static void test_chmod_unlinked(struct ft_env *fte)
 {
-	struct stat st = { .st_size = -1 };
-	const char *path = ft_new_path_unique(fte);
+	struct stat  st   = { .st_size = -1 };
+	const char  *path = ft_new_path_unique(fte);
 	const mode_t ifmt = S_IFMT;
-	int fd = -1;
+	int          fd   = -1;
 
 	ft_creat(path, 0600, &fd);
 	ft_unlink(path);
@@ -156,12 +156,12 @@ static void test_chmod_unlinked(struct ft_env *fte)
  */
 static void test_chmod_suid_sgid(struct ft_env *fte)
 {
-	struct stat st = { .st_size = -1 };
-	const char *path = ft_new_path_unique(fte);
-	const mode_t ifmt = S_IFMT;
+	struct stat  st    = { .st_size = -1 };
+	const char  *path  = ft_new_path_unique(fte);
+	const mode_t ifmt  = S_IFMT;
 	const mode_t isuid = S_ISUID;
 	const mode_t isgid = S_ISGID;
-	int fd = -1;
+	int          fd    = -1;
 
 	ft_creat(path, 0755, &fd);
 	ft_fstat(fd, &st);
@@ -203,7 +203,7 @@ static void test_chown_ctime(struct ft_env *fte)
 {
 	struct stat st[2];
 	const char *path = ft_new_path_unique(fte);
-	int fd = -1;
+	int         fd   = -1;
 
 	ft_creat(path, 0600, &fd);
 	ft_stat(path, &st[0]);
@@ -228,7 +228,7 @@ static void test_chown_unlinked(struct ft_env *fte)
 {
 	struct stat st[2];
 	const char *path = ft_new_path_unique(fte);
-	int fd = -1;
+	int         fd   = -1;
 
 	ft_creat(path, 0600, &fd);
 	ft_unlink(path);
@@ -247,9 +247,9 @@ static void test_chown_unlinked(struct ft_env *fte)
  */
 static void test_chown_suid_sgid(struct ft_env *fte)
 {
-	struct stat st = { .st_size = -1 };
+	struct stat st   = { .st_size = -1 };
 	const char *path = ft_new_path_unique(fte);
-	int fd = -1;
+	int         fd   = -1;
 
 	ft_creat(path, S_IFREG | S_IXUSR | S_IWUSR | S_IRUSR, &fd);
 	ft_fstat(fd, &st);

@@ -44,7 +44,7 @@ env_bind_ubi(struct silofs_env *env, struct silofs_uber_info *ubi_new)
 	env->ubi = ubi_new;
 }
 
-static void env_update_root_uber(struct silofs_env *env,
+static void env_update_root_uber(struct silofs_env             *env,
                                  const struct silofs_uber_info *ubi)
 {
 	if (ubi != nullptr) {
@@ -60,7 +60,7 @@ env_update_uber(struct silofs_env *env, struct silofs_uber_info *ubi)
 }
 
 static int env_resolve_root_uber(const struct silofs_env *env,
-                                 struct silofs_pmeta *out_pmeta)
+                                 struct silofs_pmeta     *out_pmeta)
 {
 	return silofs_mbi_uber_root(&env->mbis.fs_mbi, out_pmeta);
 }
@@ -102,16 +102,16 @@ static void env_update_owner(struct silofs_env *env)
 {
 	const struct silofs_env_args *args = env->base.args;
 
-	env->owner_cred.uid = args->uid;
-	env->owner_cred.gid = args->gid;
+	env->owner_cred.uid   = args->uid;
+	env->owner_cred.gid   = args->gid;
 	env->owner_cred.umask = args->umask;
 }
 
 static void env_update_mntflags(struct silofs_env *env)
 {
-	const enum silofs_flags flags = env->base.args->flags;
-	unsigned long ms_flag_with = 0;
-	unsigned long ms_flag_dont = 0;
+	const enum silofs_flags flags        = env->base.args->flags;
+	unsigned long           ms_flag_with = 0;
+	unsigned long           ms_flag_dont = 0;
 
 	if (flags & SILOFS_F_LAZYTIME) {
 		ms_flag_with |= MS_LAZYTIME;
@@ -152,8 +152,8 @@ static int env_update_by_env_args(struct silofs_env *env)
 static size_t env_calc_iopen_limit(const struct silofs_env *env)
 {
 	struct silofs_alloc_stat st;
-	const size_t align = 128;
-	size_t lim;
+	const size_t             align = 128;
+	size_t                   lim;
 
 	silofs_memstat(env->base.alloc, &st);
 	lim = (st.nbytes_max / (2 * SILOFS_LBK_SIZE));
@@ -163,9 +163,9 @@ static size_t env_calc_iopen_limit(const struct silofs_env *env)
 static void env_init_opstat(struct silofs_env *env)
 {
 	env->opstat.op_iopen_max = 0;
-	env->opstat.op_iopen = 0;
-	env->opstat.op_time = silofs_time_real_now();
-	env->opstat.op_count = 0;
+	env->opstat.op_iopen     = 0;
+	env->opstat.op_time      = silofs_time_real_now();
+	env->opstat.op_count     = 0;
 	env->opstat.op_iopen_max = env_calc_iopen_limit(env);
 }
 
@@ -175,23 +175,23 @@ env_init_commons(struct silofs_env *env, const struct silofs_env_base *base)
 	memcpy(&env->base, base, sizeof(env->base));
 	env->init_time = silofs_time_mono_now();
 	env->iconv_set = false;
-	env->ubi = nullptr;
-	env->sbi = nullptr;
-	env->ms_flags = 0;
+	env->ubi       = nullptr;
+	env->sbi       = nullptr;
+	env->ms_flags  = 0;
 }
 
 static void env_fini_commons(struct silofs_env *env)
 {
 	memset(&env->base, 0, sizeof(env->base));
-	env->ubi = nullptr;
-	env->sbi = nullptr;
+	env->ubi      = nullptr;
+	env->sbi      = nullptr;
 	env->ms_flags = 0;
 }
 
 static int env_init_mbis(struct silofs_env *env)
 {
 	struct silofs_nmeta nmeta;
-	int err;
+	int                 err;
 
 	err = silofs_derive_mbr_nmeta(env->base.passwd, &nmeta);
 	if (err) {
@@ -362,7 +362,7 @@ env_make_civkey(struct silofs_env *env, struct silofs_civkey *out_civkey)
 	silofs_generate_civkey(env->base.prng, out_civkey);
 }
 
-static void env_make_first_uber_paddr(struct silofs_env *env,
+static void env_make_first_uber_paddr(struct silofs_env   *env,
                                       struct silofs_paddr *out_paddr)
 {
 	struct silofs_svolid svolid;
@@ -375,10 +375,10 @@ static void env_make_first_uber_paddr(struct silofs_env *env,
 	silofs_paddr_init(out_paddr, &blobid, 0);
 }
 
-static void env_make_first_uber_pmeta(struct silofs_env *env,
+static void env_make_first_uber_pmeta(struct silofs_env   *env,
                                       struct silofs_pmeta *out_pmeta)
 {
-	struct silofs_paddr paddr;
+	struct silofs_paddr  paddr;
 	struct silofs_civkey civkey;
 
 	env_make_first_uber_paddr(env, &paddr);
@@ -388,9 +388,9 @@ static void env_make_first_uber_pmeta(struct silofs_env *env,
 
 int silofs_env_format_uber(struct silofs_env *env)
 {
-	struct silofs_pmeta pmeta;
+	struct silofs_pmeta      pmeta;
 	struct silofs_uber_info *ubi = nullptr;
-	int err;
+	int                      err;
 
 	env_make_first_uber_pmeta(env, &pmeta);
 	err = silofs_spawn_uber(env, &pmeta, &ubi);
@@ -403,9 +403,9 @@ int silofs_env_format_uber(struct silofs_env *env)
 
 int silofs_env_reload_uber(struct silofs_env *env)
 {
-	struct silofs_pmeta pmeta;
+	struct silofs_pmeta      pmeta;
 	struct silofs_uber_info *ubi = nullptr;
-	int err;
+	int                      err;
 
 	err = env_resolve_root_uber(env, &pmeta);
 	if (err) {
@@ -444,7 +444,7 @@ static int
 env_spawn_super_of(struct silofs_env *env, struct silofs_sb_info **out_sbi)
 {
 	struct silofs_uaddr uaddr = { .voff = -1 };
-	int err;
+	int                 err;
 
 	make_super_uaddr(&uaddr);
 	err = silofs_spawn_super(env, &uaddr, out_sbi);
@@ -459,7 +459,7 @@ static int env_spawn_super(struct silofs_env *env, size_t capacity,
                            struct silofs_sb_info **out_sbi)
 {
 	struct silofs_sb_info *sbi = nullptr;
-	int err;
+	int                    err;
 
 	err = env_spawn_super_of(env, &sbi);
 	if (err) {
@@ -473,7 +473,7 @@ static int env_spawn_super(struct silofs_env *env, size_t capacity,
 int silofs_env_format_super(struct silofs_env *env, size_t capacity)
 {
 	struct silofs_sb_info *sbi = nullptr;
-	int err;
+	int                    err;
 
 	err = env_spawn_super(env, capacity, &sbi);
 	if (err) {
@@ -488,9 +488,9 @@ static int
 env_check_sb(const struct silofs_env *env, const struct silofs_sb_info *sbi)
 {
 	const struct silofs_super_block *sb = sbi->sb;
-	int err;
-	bool fossil;
-	bool rdonly;
+	int                              err;
+	bool                             fossil;
+	bool                             rdonly;
 
 	err = silofs_sb_check_version(sb);
 	if (err) {
@@ -508,16 +508,16 @@ env_check_sb(const struct silofs_env *env, const struct silofs_sb_info *sbi)
 }
 
 static void env_mbr_sb_addr(const struct silofs_env *env,
-                            struct silofs_uaddr *out_sb_uabbr)
+                            struct silofs_uaddr     *out_sb_uabbr)
 {
 	silofs_mbi_sbaddr(&env->mbis.fs_mbi, out_sb_uabbr);
 }
 
 int silofs_env_reload_super(struct silofs_env *env)
 {
-	struct silofs_uaddr sb_uaddr;
+	struct silofs_uaddr    sb_uaddr;
 	struct silofs_sb_info *sbi = nullptr;
-	int err;
+	int                    err;
 
 	env_mbr_sb_addr(env, &sb_uaddr);
 	err = silofs_stage_super(env, &sb_uaddr, &sbi);
@@ -535,7 +535,7 @@ int silofs_env_reload_super(struct silofs_env *env)
 int silofs_env_reload_sb_lseg(struct silofs_env *env)
 {
 	struct silofs_uaddr sb_uaddr;
-	int err;
+	int                 err;
 
 	env_mbr_sb_addr(env, &sb_uaddr);
 	err = silofs_stage_lseg(env, &sb_uaddr.laddr.lsid);
@@ -578,7 +578,7 @@ void silofs_env_uptime(const struct silofs_env *env, time_t *out_uptime)
 	*out_uptime = now - env->init_time;
 }
 
-void silofs_env_allocstat(const struct silofs_env *env,
+void silofs_env_allocstat(const struct silofs_env  *env,
                           struct silofs_alloc_stat *out_alst)
 {
 	silofs_memstat(env->base.alloc, out_alst);
@@ -589,12 +589,12 @@ static void env_drop_uamap(struct silofs_env *env)
 	silofs_lcache_drop_uamap(env->base.lcache);
 }
 
-static int env_fork_rebind_super(struct silofs_env *env,
+static int env_fork_rebind_super(struct silofs_env           *env,
                                  const struct silofs_sb_info *sbi_cur,
-                                 struct silofs_sb_info **out_sbi)
+                                 struct silofs_sb_info      **out_sbi)
 {
 	struct silofs_sb_info *sbi = nullptr;
-	int err;
+	int                    err;
 
 	env_drop_uamap(env);
 	err = env_spawn_super(env, 0, &sbi);
@@ -627,7 +627,7 @@ env_do_forkfs(struct silofs_env *env, struct silofs_mbrefs *out_mbrefs)
 	struct silofs_sb_info *sbi_alt = nullptr;
 	struct silofs_sb_info *sbi_new = nullptr;
 	struct silofs_sb_info *sbi_cur = env->sbi;
-	int err;
+	int                    err;
 
 	err = env_recalc_fs_mbref(env, &out_mbrefs->base);
 	if (err) {
@@ -659,7 +659,7 @@ env_do_forkfs(struct silofs_env *env, struct silofs_mbrefs *out_mbrefs)
 int silofs_env_forkfs(struct silofs_env *env, struct silofs_mbrefs *out_mbrefs)
 {
 	struct silofs_sb_info *sbi = env->sbi;
-	int err;
+	int                    err;
 
 	silofs_sbi_incref(sbi);
 	err = env_do_forkfs(env, out_mbrefs);
@@ -683,8 +683,8 @@ env_arix_pmeta(const struct silofs_env *env, struct silofs_pmeta *out_pmeta)
 int silofs_env_sense_ar(struct silofs_env *env)
 {
 	struct silofs_pmeta pmeta;
-	struct stat st;
-	int err;
+	struct stat         st;
+	int                 err;
 
 	err = env_arix_pmeta(env, &pmeta);
 	if (err) {

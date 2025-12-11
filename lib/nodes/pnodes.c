@@ -172,7 +172,7 @@ static struct silofs_uber_info *
 ubi_new(const struct silofs_pmeta *pmeta, struct silofs_alloc *alloc)
 {
 	struct silofs_uber_info *ubi = nullptr;
-	int err;
+	int                      err;
 
 	ubi = ubi_malloc(alloc);
 	if (ubi == nullptr) {
@@ -229,7 +229,7 @@ static struct silofs_uber_info *ubi_unconst(const struct silofs_uber_info *p)
 {
 	union {
 		const struct silofs_uber_info *p;
-		struct silofs_uber_info *q;
+		struct silofs_uber_info       *q;
 	} u = { .p = p };
 
 	return u.q;
@@ -288,7 +288,7 @@ static struct silofs_bldesc_info *
 bdi_new(const struct silofs_pmeta *pmeta, struct silofs_alloc *alloc)
 {
 	struct silofs_bldesc_info *bdi = nullptr;
-	int err;
+	int                        err;
 
 	bdi = bdi_malloc(alloc);
 	if (bdi == nullptr) {
@@ -346,7 +346,7 @@ bdi_unconst(const struct silofs_bldesc_info *p)
 {
 	union {
 		const struct silofs_bldesc_info *p;
-		struct silofs_bldesc_info *q;
+		struct silofs_bldesc_info       *q;
 	} u = { .p = p };
 
 	return u.q;
@@ -380,7 +380,7 @@ static void
 bti_init(struct silofs_btnode_info *bti, const struct silofs_pmeta *pmeta)
 {
 	pni_init(&bti->btn_pni, pmeta);
-	bti->btn = nullptr;
+	bti->btn        = nullptr;
 	bti->btn_rdonly = false;
 }
 
@@ -406,7 +406,7 @@ static struct silofs_btnode_info *
 bti_new(const struct silofs_pmeta *pmeta, struct silofs_alloc *alloc)
 {
 	struct silofs_btnode_info *bti = nullptr;
-	int err;
+	int                        err;
 
 	bti = bti_malloc(alloc);
 	if (bti == nullptr) {
@@ -464,7 +464,7 @@ bti_unconst(const struct silofs_btnode_info *p)
 {
 	union {
 		const struct silofs_btnode_info *p;
-		struct silofs_btnode_info *q;
+		struct silofs_btnode_info       *q;
 	} u = { .p = p };
 
 	return u.q;
@@ -486,8 +486,8 @@ silofs_bti_from_pni(const struct silofs_pnode_info *pni)
 struct silofs_pnode_info *
 silofs_new_pnode(const struct silofs_pmeta *pmeta, struct silofs_alloc *alloc)
 {
-	struct silofs_pnode_info *pni = nullptr;
-	const enum silofs_mtype mtype = pmeta_mtype(pmeta);
+	struct silofs_pnode_info *pni   = nullptr;
+	const enum silofs_mtype   mtype = pmeta_mtype(pmeta);
 
 	switch (mtype) {
 	case SILOFS_MTYPE_UBER:
@@ -523,7 +523,7 @@ silofs_new_pnode(const struct silofs_pmeta *pmeta, struct silofs_alloc *alloc)
 }
 
 void silofs_del_pnode(struct silofs_pnode_info *pni,
-                      struct silofs_alloc *alloc)
+                      struct silofs_alloc      *alloc)
 {
 	const enum silofs_mtype mtype = pni_mtype(pni);
 
@@ -566,8 +566,8 @@ pni_civkey(const struct silofs_pnode_info *pni)
 }
 
 int silofs_encrypt_pnode(const struct silofs_pnode_info *pni,
-                         const struct silofs_cipher *cipher,
-                         struct silofs_view *enc_view)
+                         const struct silofs_cipher     *cipher,
+                         struct silofs_view             *enc_view)
 {
 	return silofs_encrypt_view(cipher,          //
 	                           pni_civkey(pni), //
@@ -576,9 +576,9 @@ int silofs_encrypt_pnode(const struct silofs_pnode_info *pni,
 	                           enc_view);
 }
 
-int silofs_decrypt_pnode(struct silofs_pnode_info *pni,
+int silofs_decrypt_pnode(struct silofs_pnode_info   *pni,
                          const struct silofs_cipher *cipher,
-                         const struct silofs_view *enc_view)
+                         const struct silofs_view   *enc_view)
 {
 	return silofs_decrypt_view(cipher,          //
 	                           pni_civkey(pni), //

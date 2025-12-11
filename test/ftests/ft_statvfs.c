@@ -27,8 +27,8 @@
 static void test_statvfs_simple(struct ft_env *fte)
 {
 	struct statvfs stv;
-	const char *name = ft_new_name_unique(fte);
-	const char *path = ft_new_path_name(fte, name);
+	const char    *name = ft_new_name_unique(fte);
+	const char    *path = ft_new_path_name(fte, name);
 
 	ft_statvfs(fte->params.testdir, &stv);
 	ft_expect_gt(stv.f_bsize, 0);
@@ -46,9 +46,9 @@ static void test_statvfs_simple(struct ft_env *fte)
  */
 static void test_statvfs_reg(struct ft_env *fte)
 {
-	int fd = -1;
+	int            fd = -1;
 	struct statvfs stv;
-	const char *path = ft_new_path_unique(fte);
+	const char    *path = ft_new_path_unique(fte);
 
 	ft_creat(path, 0644, &fd);
 	ft_fstatvfs(fd, &stv);
@@ -71,9 +71,9 @@ static void test_statvfs_reg(struct ft_env *fte)
  */
 static void test_statvfs_dir(struct ft_env *fte)
 {
-	int dfd = -1;
+	int            dfd = -1;
 	struct statvfs stv;
-	const char *path = ft_new_path_unique(fte);
+	const char    *path = ft_new_path_unique(fte);
 
 	ft_mkdir(path, 0700);
 	ft_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);
@@ -97,11 +97,11 @@ static void test_statvfs_dir(struct ft_env *fte)
  */
 static void test_statvfs_notdir(struct ft_env *fte)
 {
-	int fd = -1;
+	int            fd = -1;
 	struct statvfs stv[2];
-	const char *path0 = ft_new_path_unique(fte);
-	const char *path1 = ft_new_path_under(fte, path0);
-	const char *path2 = ft_new_path_under(fte, path1);
+	const char    *path0 = ft_new_path_unique(fte);
+	const char    *path1 = ft_new_path_under(fte, path0);
+	const char    *path2 = ft_new_path_under(fte, path1);
 
 	ft_mkdir(path0, 0700);
 	ft_statvfs(path0, &stv[0]);
@@ -119,13 +119,13 @@ static void test_statvfs_notdir(struct ft_env *fte)
  */
 static void test_statvfs_ffree(struct ft_env *fte)
 {
-	int fd = -1;
+	int            fd = -1;
 	struct statvfs stv[2];
-	char *dpath = ft_new_path_unique(fte);
-	char *path0 = ft_new_path_under(fte, dpath);
-	char *path1 = ft_new_path_under(fte, dpath);
-	char *path2 = ft_new_path_under(fte, dpath);
-	char *path3 = ft_new_path_under(fte, dpath);
+	char          *dpath = ft_new_path_unique(fte);
+	char          *path0 = ft_new_path_under(fte, dpath);
+	char          *path1 = ft_new_path_under(fte, dpath);
+	char          *path2 = ft_new_path_under(fte, dpath);
+	char          *path3 = ft_new_path_under(fte, dpath);
 
 	ft_mkdir(dpath, 0700);
 	ft_statvfs(dpath, &stv[0]);
@@ -174,10 +174,10 @@ static void test_statvfs_ffree(struct ft_env *fte)
  */
 static void test_statvfs_ffree_nseq(struct ft_env *fte, size_t n)
 {
-	int fd = -1;
+	int            fd = -1;
 	struct statvfs stv[2];
-	const char *fpath = nullptr;
-	const char *dpath = ft_new_path_unique(fte);
+	const char    *fpath = nullptr;
+	const char    *dpath = ft_new_path_unique(fte);
 
 	ft_mkdir(dpath, 0700);
 	ft_statvfs(dpath, &stv[0]);
@@ -215,13 +215,13 @@ static void test_statvfs_ffree_seq(struct ft_env *fte)
  */
 static void test_statvfs_bfree_(struct ft_env *fte, off_t off, size_t bsz)
 {
-	struct stat st[2];
+	struct stat    st[2];
 	struct statvfs stv[2];
-	const char *path0 = ft_new_path_unique(fte);
-	const char *path1 = ft_new_path_under(fte, path0);
-	void *buf1 = ft_new_buf_rands(fte, bsz);
-	void *buf2 = ft_new_buf_rands(fte, bsz);
-	int fd = -1;
+	const char    *path0 = ft_new_path_unique(fte);
+	const char    *path1 = ft_new_path_under(fte, path0);
+	void          *buf1  = ft_new_buf_rands(fte, bsz);
+	void          *buf2  = ft_new_buf_rands(fte, bsz);
+	int            fd    = -1;
 
 	ft_mkdir(path0, 0700);
 	ft_open(path1, O_CREAT | O_RDWR, 0600, &fd);

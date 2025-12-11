@@ -26,7 +26,7 @@ derive_iv(const struct silofs_mdigest *md, const struct silofs_password *pw,
           const struct silofs_kdf_desc *kdf, struct silofs_civ *out_iv)
 {
 	struct silofs_hash256 salt;
-	gpg_error_t gcry_err;
+	gpg_error_t           gcry_err;
 
 	if (kdf->kd_salt_md != SILOFS_MD_SHA3_256) {
 		return -SILOFS_EOPNOTSUPP;
@@ -44,7 +44,7 @@ derive_key(const struct silofs_mdigest *md, const struct silofs_password *pw,
            const struct silofs_kdf_desc *kdf, struct silofs_ckey *out_key)
 {
 	struct silofs_hash512 salt;
-	gpg_error_t gcry_err;
+	gpg_error_t           gcry_err;
 
 	if (kdf->kd_salt_md != SILOFS_MD_SHA3_512) {
 		return -SILOFS_EOPNOTSUPP;
@@ -67,10 +67,10 @@ static int check_passlen(size_t len)
 	return ret;
 }
 
-int silofs_derive_civkey(const struct silofs_mdigest *md,
-                         const struct silofs_password *pw,
+int silofs_derive_civkey(const struct silofs_mdigest   *md,
+                         const struct silofs_password  *pw,
                          const struct silofs_kdf_descs *kdf,
-                         struct silofs_civkey *out_civkey)
+                         struct silofs_civkey          *out_civkey)
 {
 	int err;
 

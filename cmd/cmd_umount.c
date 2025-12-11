@@ -30,15 +30,15 @@ static const char *const cmd_umount_help_desc =
 struct cmd_umount_in_args {
 	char *mntpoint;
 	char *mntpoint_real;
-	int force;
-	int lazy;
+	int   force;
+	int   lazy;
 };
 
 struct cmd_umount_ctx {
 	struct cmd_umount_in_args in_args;
-	struct silofs_ioc_query query;
-	pid_t server_pid;
-	bool notconn;
+	struct silofs_ioc_query   query;
+	pid_t                     server_pid;
+	bool                      notconn;
 };
 
 static struct cmd_umount_ctx *cmd_umount_ctx_p;
@@ -54,7 +54,7 @@ static void cmd_umount_parse_optargs(struct cmd_umount_ctx *ctx)
 		{ nullptr, 0, 0 },
 	};
 	struct cmd_optargs opa;
-	int opt_chr = 1;
+	int                opt_chr = 1;
 
 	cmd_optargs_init(&opa, ods);
 	while (!opa.opa_done && (opt_chr > 0)) {
@@ -125,7 +125,7 @@ static void cmd_umount_probe_proc(struct cmd_umount_ctx *ctx)
 static void cmd_umount_prepare(struct cmd_umount_ctx *ctx)
 {
 	struct statfs stfs;
-	int err;
+	int           err;
 
 	cmd_check_mntsrv_conn();
 	err = silofs_sys_statfs(ctx->in_args.mntpoint, &stfs);
@@ -164,13 +164,13 @@ static uint32_t cmd_umount_mnt_flags(const struct cmd_umount_ctx *ctx)
 static void cmd_umount_send_recv(const struct cmd_umount_ctx *ctx)
 {
 	const char *mntpath = cmd_umount_dirpath(ctx);
-	const uid_t uid = getuid();
-	const gid_t gid = getgid();
-	uint32_t mnt_flags;
-	int err;
+	const uid_t uid     = getuid();
+	const gid_t gid     = getgid();
+	uint32_t    mnt_flags;
+	int         err;
 
 	mnt_flags = cmd_umount_mnt_flags(ctx);
-	err = silofs_mntrpc_umount(mntpath, uid, gid, mnt_flags);
+	err       = silofs_mntrpc_umount(mntpath, uid, gid, mnt_flags);
 	if (err == -SILOFS_EUMOUNT) {
 		cmd_die(err, "umount not permitted by caller: %s", mntpath);
 	} else if (err) {
@@ -181,16 +181,16 @@ static void cmd_umount_send_recv(const struct cmd_umount_ctx *ctx)
 
 static void cmd_umount_probe_post(const struct cmd_umount_ctx *ctx)
 {
-	struct statfs stfs = { .f_type = 0 };
-	const char *path = cmd_umount_dirpath(ctx);
-	const int retry_max = 5;
-	long fstype = 0;
-	int retry = 0;
-	int err;
+	struct statfs stfs      = { .f_type = 0 };
+	const char   *path      = cmd_umount_dirpath(ctx);
+	const int     retry_max = 5;
+	long          fstype    = 0;
+	int           retry     = 0;
+	int           err;
 
 	while (retry++ < retry_max) {
 		stfs.f_type = 0;
-		err = silofs_sys_statfs(path, &stfs);
+		err         = silofs_sys_statfs(path, &stfs);
 		if (err) {
 			break;
 		}
@@ -210,11 +210,11 @@ static void cmd_umount_probe_post(const struct cmd_umount_ctx *ctx)
 
 static void cmd_umount_wait_nopid(const struct cmd_umount_ctx *ctx)
 {
-	char procfs_path[256] = "";
-	struct stat st = { .st_size = -1 };
-	const int retry_max = ctx->in_args.lazy ? 2 : 120;
-	int retry = 0;
-	int err;
+	char        procfs_path[256] = "";
+	struct stat st               = { .st_size = -1 };
+	const int   retry_max        = ctx->in_args.lazy ? 2 : 120;
+	int         retry            = 0;
+	int         err;
 
 	snprintf(procfs_path, sizeof(procfs_path) - 1, "/proc/%ld/fdinfo",
 	         (long)(ctx->server_pid));
@@ -236,10 +236,10 @@ static void cmd_umount_wait_nopid(const struct cmd_umount_ctx *ctx)
 void cmd_execute_umount(void)
 {
 	struct cmd_umount_ctx ctx = {
-		.query.qtype = 0,
+		.query.qtype      = 0,
 		.query.u.proc.pid = 0,
-		.server_pid = 0,
-		.notconn = false,
+		.server_pid       = 0,
+		.notconn          = false,
 	};
 
 	/* Do all cleanups upon exits */

@@ -75,7 +75,7 @@ int silofs_ciargs_check(const struct silofs_ciargs *ciargs)
 	return 0;
 }
 
-void silofs_ciargs_setup(struct silofs_ciargs *ciargs,
+void silofs_ciargs_setup(struct silofs_ciargs   *ciargs,
                          enum silofs_cipher_algo algo,
                          enum silofs_cipher_mode mode)
 {
@@ -83,7 +83,7 @@ void silofs_ciargs_setup(struct silofs_ciargs *ciargs,
 	ciargs->mode = mode;
 }
 
-void silofs_ciargs_assign(struct silofs_ciargs *ciargs,
+void silofs_ciargs_assign(struct silofs_ciargs       *ciargs,
                           const struct silofs_ciargs *other)
 {
 	silofs_ciargs_setup(ciargs, other->algo, other->mode);
@@ -142,7 +142,7 @@ static int
 cipher_open(struct silofs_cipher *cipher, const struct silofs_ciargs *ciargs)
 {
 	const unsigned int flags = 0; /* XXX GCRY_CIPHER_SECURE ? */
-	gcry_error_t err;
+	gcry_error_t       err;
 
 	err = gcry_cipher_open(&cipher->ci_hd, (int)ciargs->algo,
 	                       (int)ciargs->mode, flags);
@@ -173,7 +173,7 @@ static bool cipher_has_args(const struct silofs_cipher *cipher,
 	return ciargs_isequal(&cipher->ci_args, ciargs);
 }
 
-int silofs_cipher_reinit(struct silofs_cipher *cipher,
+int silofs_cipher_reinit(struct silofs_cipher       *cipher,
                          const struct silofs_ciargs *ciargs)
 {
 	int err;
@@ -209,10 +209,10 @@ int silofs_cipher_check(const struct silofs_cipher *cipher,
 static int cipher_prepare(const struct silofs_cipher *cipher,
                           const struct silofs_civkey *civkey)
 {
-	const struct silofs_civ *iv = &civkey->iv;
+	const struct silofs_civ  *iv  = &civkey->iv;
 	const struct silofs_ckey *key = &civkey->key;
-	size_t blklen, keysize;
-	gcry_error_t err;
+	size_t                    blklen, keysize;
+	gcry_error_t              err;
 
 	blklen = gcry_cipher_get_algo_blklen((int)cipher->ci_args.algo);
 	if (blklen > sizeof(iv->iv)) {
@@ -224,7 +224,7 @@ static int cipher_prepare(const struct silofs_cipher *cipher,
 		return silofs_gcrypt_status(err, "gcry_cipher_reset");
 	}
 	keysize = ciargs_keysize(&cipher->ci_args, sizeof(key->key));
-	err = gcry_cipher_setkey(cipher->ci_hd, key->key, keysize);
+	err     = gcry_cipher_setkey(cipher->ci_hd, key->key, keysize);
 	if (err) {
 		return silofs_gcrypt_status(err, "gcry_cipher_setkey");
 	}

@@ -22,12 +22,12 @@
  */
 static void test_rw_basic_simple_(struct ft_env *fte, size_t bsz, size_t cnt)
 {
-	struct stat st = { .st_size = -1 };
-	void *buf = ft_new_buf_zeros(fte, bsz);
+	struct stat st   = { .st_size = -1 };
+	void       *buf  = ft_new_buf_zeros(fte, bsz);
 	const char *path = ft_new_path_unique(fte);
-	off_t pos = -1;
-	size_t num = 0;
-	int fd = -1;
+	off_t       pos  = -1;
+	size_t      num  = 0;
+	int         fd   = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0644, &fd);
 	for (size_t i = 0; i < cnt; ++i) {
@@ -66,11 +66,11 @@ static void test_rw_basic_simple(struct ft_env *fte)
  */
 static void test_rw_basic_seq_(struct ft_env *fte, size_t cnt)
 {
-	const char *path = ft_new_path_unique(fte);
-	uint64_t num = 0;
-	const size_t bsz = sizeof(num);
-	off_t off = 0;
-	int fd = -1;
+	const char  *path = ft_new_path_unique(fte);
+	uint64_t     num  = 0;
+	const size_t bsz  = sizeof(num);
+	off_t        off  = 0;
+	int          fd   = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	for (size_t i = 0; i < cnt; ++i) {
@@ -115,11 +115,11 @@ static void test_rw_basic_seq_long(struct ft_env *fte)
  */
 static void test_rw_basic_multi_(struct ft_env *fte, off_t off, size_t len)
 {
-	struct stat st = { .st_size = -1 };
-	void *buf1 = nullptr;
-	void *buf2 = ft_new_buf_rands(fte, len);
+	struct stat st   = { .st_size = -1 };
+	void       *buf1 = nullptr;
+	void       *buf2 = ft_new_buf_rands(fte, len);
 	const char *path = ft_new_path_unique(fte);
-	int fd = -1;
+	int         fd   = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	for (size_t i = 0; i < 10; ++i) {
@@ -167,14 +167,14 @@ static void test_rw_basic_multi(struct ft_env *fte)
 static void test_rw_basic_space(struct ft_env *fte)
 {
 	const char *path = ft_new_path_unique(fte);
-	size_t bsz = FT_1M;
-	void *buf1 = nullptr;
-	void *buf2 = nullptr;
-	off_t off = -1;
-	int fd = -1;
+	size_t      bsz  = FT_1M;
+	void       *buf1 = nullptr;
+	void       *buf2 = nullptr;
+	off_t       off  = -1;
+	int         fd   = -1;
 
 	for (size_t i = 0; i < 256; ++i) {
-		off = (off_t)i;
+		off  = (off_t)i;
 		buf1 = ft_new_buf_rands(fte, bsz);
 		buf2 = ft_new_buf_rands(fte, bsz);
 		ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
@@ -193,11 +193,11 @@ static void test_rw_basic_space(struct ft_env *fte)
 static void
 test_rw_basic_reserve_overwrite_(struct ft_env *fte, off_t off, size_t len)
 {
-	void *buf1 = ft_new_buf_rands(fte, len);
-	void *buf2 = ft_new_buf_zeros(fte, len);
+	void       *buf1 = ft_new_buf_rands(fte, len);
+	void       *buf2 = ft_new_buf_zeros(fte, len);
 	const char *path = ft_new_path_unique(fte);
-	off_t pos = -1;
-	int fd = -1;
+	off_t       pos  = -1;
+	int         fd   = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0644, &fd);
 	for (size_t i = 0; i < len; ++i) {
@@ -238,14 +238,14 @@ static void test_rw_basic_reserve_overwrite(struct ft_env *fte)
  */
 static void test_rw_basic_overlap(struct ft_env *fte)
 {
-	size_t cnt = 0;
-	size_t bsz = FT_1M;
-	void *buf1 = ft_new_buf_rands(fte, bsz);
-	void *buf2 = ft_new_buf_rands(fte, bsz);
-	void *buf3 = ft_new_buf_zeros(fte, bsz);
+	size_t      cnt  = 0;
+	size_t      bsz  = FT_1M;
+	void       *buf1 = ft_new_buf_rands(fte, bsz);
+	void       *buf2 = ft_new_buf_rands(fte, bsz);
+	void       *buf3 = ft_new_buf_zeros(fte, bsz);
 	const char *path = ft_new_path_unique(fte);
-	off_t off = -1;
-	int fd = -1;
+	off_t       off  = -1;
+	int         fd   = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_pwriten(fd, buf1, bsz, 0);
@@ -281,11 +281,11 @@ static void test_rw_basic_overlap(struct ft_env *fte)
 static void
 test_rw_basic_steps_(struct ft_env *fte, off_t pos, off_t lim, off_t step)
 {
-	size_t bsz = FT_64K;
-	void *buf1 = nullptr;
-	void *buf2 = nullptr;
+	size_t      bsz  = FT_64K;
+	void       *buf1 = nullptr;
+	void       *buf2 = nullptr;
 	const char *path = ft_new_path_unique(fte);
-	int fd = -1;
+	int         fd   = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	for (off_t off = pos; off < lim; off += step) {
@@ -334,10 +334,10 @@ static void test_rw_basic_unaligned_steps(struct ft_env *fte)
  */
 static void test_rw_basic_chunk_(struct ft_env *fte, off_t off, size_t len)
 {
-	void *buf1 = ft_new_buf_rands(fte, len);
-	void *buf2 = ft_new_buf_rands(fte, len);
+	void       *buf1 = ft_new_buf_rands(fte, len);
+	void       *buf2 = ft_new_buf_rands(fte, len);
 	const char *path = ft_new_path_unique(fte);
-	int fd = -1;
+	int         fd   = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_pwriten(fd, buf1, len, off);
@@ -378,11 +378,11 @@ static void test_rw_basic_chunk_unaligned(struct ft_env *fte)
 static void
 test_rw_basic_backward_byte_(struct ft_env *fte, off_t off, size_t len)
 {
-	uint8_t val = 0;
-	const size_t vsz = sizeof(val);
-	const char *path = ft_new_path_unique(fte);
-	off_t pos = 0;
-	int fd = -1;
+	uint8_t      val  = 0;
+	const size_t vsz  = sizeof(val);
+	const char  *path = ft_new_path_unique(fte);
+	off_t        pos  = 0;
+	int          fd   = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	for (size_t i = len; i > 0; --i) {
@@ -422,12 +422,12 @@ static void test_rw_basic_backward_byte(struct ft_env *fte)
 
 static void test_rw_basic_backward_u64_(struct ft_env *fte, size_t cnt)
 {
-	uint64_t val = 0;
-	const size_t vsz = sizeof(val);
-	const char *path = ft_new_path_unique(fte);
-	off_t pos = 0;
-	int fd1 = -1;
-	int fd2 = -1;
+	uint64_t     val  = 0;
+	const size_t vsz  = sizeof(val);
+	const char  *path = ft_new_path_unique(fte);
+	off_t        pos  = 0;
+	int          fd1  = -1;
+	int          fd2  = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd1);
 	ft_open(path, O_RDONLY, 0, &fd2);

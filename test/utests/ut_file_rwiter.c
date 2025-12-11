@@ -21,9 +21,9 @@
 static void ut_file_write_iter_(struct ut_env *ute, off_t off, size_t len)
 {
 	const char *name = UT_NAME;
-	void *buf = ut_randbuf(ute, len);
-	ino_t dino = 0;
-	ino_t ino = 0;
+	void       *buf  = ut_randbuf(ute, len);
+	ino_t       dino = 0;
+	ino_t       ino  = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -85,10 +85,10 @@ static void
 ut_file_write_iter_sparse_(struct ut_env *ute, const off_t *offs, size_t cnt)
 {
 	const char *name = UT_NAME;
-	uint64_t val = 0;
-	off_t off = -1;
-	ino_t dino = 0;
-	ino_t ino = 0;
+	uint64_t    val  = 0;
+	off_t       off  = -1;
+	ino_t       dino = 0;
+	ino_t       ino  = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);

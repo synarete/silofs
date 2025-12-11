@@ -27,20 +27,20 @@
 
 struct ft_global_settings {
 	struct silofs_log_params log_params;
-	int argc;
-	char **argv;
-	char *curr_workdir;
-	char *testdir_path;
-	char *testdir_real;
-	char *test_name;
-	long repeat_count;
-	int tests_mask;
-	int tests_xmask;
-	bool quiet_mode;
-	bool without_statvfs;
-	bool without_flaky;
-	bool random_order;
-	bool list_tests;
+	int                      argc;
+	char                   **argv;
+	char                    *curr_workdir;
+	char                    *testdir_path;
+	char                    *testdir_real;
+	char                    *test_name;
+	long                     repeat_count;
+	int                      tests_mask;
+	int                      tests_xmask;
+	bool                     quiet_mode;
+	bool                     without_statvfs;
+	bool                     without_flaky;
+	bool                     random_order;
+	bool                     list_tests;
 };
 
 /* Global settings */
@@ -120,9 +120,9 @@ static void ft_setup_globals(int argc, char *argv[])
 	atexit(ft_atexit_cleanup);
 	error_print_progname = ft_error_print_progname;
 
-	ft_globals.argc = argc;
-	ft_globals.argv = argv;
-	ft_globals.repeat_count = 1;
+	ft_globals.argc             = argc;
+	ft_globals.argv             = argv;
+	ft_globals.repeat_count     = 1;
 	ft_globals.log_params.level = SILOFS_LOG_INFO;
 	ft_globals.log_params.flags = SILOFS_LOGF_STDOUT |
 	                              SILOFS_LOGF_PROGNAME |
@@ -132,7 +132,7 @@ static void ft_setup_globals(int argc, char *argv[])
 
 static void ft_tests_mask(int *out_mask, int *out_xmask)
 {
-	*out_mask = FT_F_NORMAL;
+	*out_mask  = FT_F_NORMAL;
 	*out_xmask = 0;
 
 	if (ft_globals.without_statvfs) {
@@ -185,13 +185,13 @@ static void ft_post_execute(void)
 static void ft_execute_all(void)
 {
 	struct ft_params params = {
-		.progname = program_invocation_short_name,
-		.testdir = ft_globals.testdir_real,
-		.testname = ft_globals.test_name,
-		.tests_mask = ft_globals.tests_mask,
+		.progname    = program_invocation_short_name,
+		.testdir     = ft_globals.testdir_real,
+		.testname    = ft_globals.test_name,
+		.tests_mask  = ft_globals.tests_mask,
 		.tests_xmask = ft_globals.tests_xmask,
-		.repeatn = ft_globals.repeat_count,
-		.listtests = ft_globals.list_tests,
+		.repeatn     = ft_globals.repeat_count,
+		.listtests   = ft_globals.list_tests,
 	};
 
 	fte_init(ft_g_env, &params);
@@ -273,11 +273,11 @@ silofs_attr_noreturn static void show_version_and_exit(void)
 
 static long ft_strtol_safe(const char *nptr)
 {
-	long ret = 0;
+	long  ret    = 0;
 	char *endptr = nullptr;
 
 	errno = 0;
-	ret = strtol(nptr, &endptr, 10);
+	ret   = strtol(nptr, &endptr, 10);
 	if ((ret == LONG_MAX) || (ret == LONG_MIN)) {
 		error(EXIT_FAILURE, errno, "bad numeric: %s", nptr);
 	}
@@ -286,8 +286,8 @@ static long ft_strtol_safe(const char *nptr)
 
 static void ft_parse_args(void)
 {
-	int opt_chr = 1;
-	int opt_index = 0;
+	int           opt_chr     = 1;
+	int           opt_index   = 0;
 	struct option long_opts[] = {
 		{ "test", required_argument, nullptr, 't' },
 		{ "repeat", required_argument, nullptr, 'n' },
@@ -303,8 +303,8 @@ static void ft_parse_args(void)
 
 	while (opt_chr > 0) {
 		opt_index = 0;
-		opt_chr = getopt_long(ft_globals.argc, ft_globals.argv,
-		                      "t:n:erQCFlvh", long_opts, &opt_index);
+		opt_chr   = getopt_long(ft_globals.argc, ft_globals.argv,
+		                        "t:n:erQCFlvh", long_opts, &opt_index);
 		if (opt_chr == 't') {
 			ft_globals.test_name = optarg;
 		} else if (opt_chr == 'n') {
@@ -348,9 +348,9 @@ static void ft_parse_args(void)
 
 static void ft_verify_args(void)
 {
-	struct stat st = { .st_size = -1 };
+	struct stat st   = { .st_size = -1 };
 	const char *base = ft_globals.testdir_path;
-	int err;
+	int         err;
 
 	if (ft_globals.list_tests) {
 		return;

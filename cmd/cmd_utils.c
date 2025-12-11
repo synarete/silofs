@@ -46,9 +46,9 @@ static int cmd_errnum_of(int err)
 
 void cmd_vdie(int err, const char *restrict fmt, va_list ap)
 {
-	char msg[1024] = "";
-	va_list ap2 = { 0 };
-	int ret;
+	char    msg[1024] = "";
+	va_list ap2       = { 0 };
+	int     ret;
 
 	va_copy(ap2, ap);
 	ret = vsnprintf(msg, sizeof(msg), fmt, ap2);
@@ -140,8 +140,8 @@ static void cmd_stat_ok(const char *path, struct stat *st)
 static void cmd_check_isdir(const char *path, bool w_ok)
 {
 	struct stat st;
-	int access_mode = R_OK | X_OK | (w_ok ? W_OK : 0);
-	int err;
+	int         access_mode = R_OK | X_OK | (w_ok ? W_OK : 0);
+	int         err;
 
 	cmd_stat_ok(path, &st);
 	if (!S_ISDIR(st.st_mode)) {
@@ -155,9 +155,9 @@ static void cmd_check_isdir(const char *path, bool w_ok)
 
 void cmd_check_isreg(const char *path)
 {
-	struct stat st = { .st_mode = 0 };
-	const int access_mode = R_OK;
-	int err;
+	struct stat st          = { .st_mode = 0 };
+	const int   access_mode = R_OK;
+	int         err;
 
 	cmd_stat_ok(path, &st);
 	if (S_ISDIR(st.st_mode)) {
@@ -194,7 +194,7 @@ void cmd_check_reg_or_dir(const char *path)
 void cmd_check_notdir(const char *path)
 {
 	struct stat st;
-	int err;
+	int         err;
 
 	err = silofs_sys_stat(path, &st);
 	if (!err && S_ISDIR(st.st_mode)) {
@@ -205,7 +205,7 @@ void cmd_check_notdir(const char *path)
 void cmd_check_notexists(const char *path)
 {
 	struct stat st;
-	int err;
+	int         err;
 
 	err = silofs_sys_stat(path, &st);
 	if (!err) {
@@ -231,14 +231,14 @@ void cmd_check_notexists2(const char *dirpath, const char *name)
 
 static char *cmd_joinpath_safe(const char *path, const char *name)
 {
-	char *xpath;
+	char        *xpath;
 	const size_t plen = strlen(path);
 	const size_t nlen = strlen(name);
 
 	xpath = cmd_zalloc(plen + nlen + 2);
 	memcpy(xpath, path, plen);
 	memcpy(xpath + 1 + plen, name, nlen);
-	xpath[plen] = '/';
+	xpath[plen]            = '/';
 	xpath[plen + nlen + 1] = '\0';
 	return xpath;
 }
@@ -277,7 +277,7 @@ void cmd_check_mntsrv_conn(void)
 {
 	const uid_t uid = getuid();
 	const gid_t gid = getgid();
-	int err;
+	int         err;
 
 	err = silofs_mntrpc_handshake(uid, gid);
 	if (err) {
@@ -290,11 +290,11 @@ void cmd_check_mntsrv_conn(void)
 
 void cmd_check_mntsrv_perm(const char *path)
 {
-	const uid_t uid = getuid();
-	const gid_t gid = getgid();
+	const uid_t  uid  = getuid();
+	const gid_t  gid  = getgid();
 	const size_t rdsz = SILOFS_MEGA;
-	int fd = -1;
-	int err;
+	int          fd   = -1;
+	int          err;
 
 	err = silofs_mntrpc_mount(path, uid, gid, rdsz, 0, false, true, &fd);
 	if (err == -SILOFS_EMOUNT) {
@@ -306,12 +306,12 @@ void cmd_check_mntsrv_perm(const char *path)
 
 void cmd_check_nonemptydir(const char *path, bool w_ok)
 {
-	char buf[1024] = "";
+	char            buf[1024] = "";
 	struct dirent64 de[8];
-	const size_t nde = SILOFS_ARRAY_SIZE(de);
-	size_t ndes = 0;
-	int dfd = -1;
-	int err;
+	const size_t    nde  = SILOFS_ARRAY_SIZE(de);
+	size_t          ndes = 0;
+	int             dfd  = -1;
+	int             err;
 
 	cmd_check_isdir(path, w_ok);
 	err = silofs_sys_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);
@@ -333,12 +333,12 @@ void cmd_check_nonemptydir(const char *path, bool w_ok)
 
 void cmd_check_emptydir(const char *path, bool w_ok)
 {
-	int err;
-	int dfd = -1;
-	size_t ndes = 0;
+	int             err;
+	int             dfd  = -1;
+	size_t          ndes = 0;
 	struct dirent64 de[8];
-	const size_t nde = SILOFS_ARRAY_SIZE(de);
-	char buf[1024] = "";
+	const size_t    nde       = SILOFS_ARRAY_SIZE(de);
+	char            buf[1024] = "";
 
 	cmd_check_isdir(path, w_ok);
 	err = silofs_sys_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);
@@ -405,9 +405,9 @@ static void cmd_statfs_ok(const char *path, struct statfs *stfs)
 
 void cmd_check_mntdir(const char *path, bool mount)
 {
-	long fstype;
-	struct stat st;
-	struct statfs stfs;
+	long                        fstype;
+	struct stat                 st;
+	struct statfs               stfs;
 	const struct silofs_fsinfo *fsi = nullptr;
 
 	if (strlen(path) >= SILOFS_MNTPATH_MAX) {
@@ -418,7 +418,7 @@ void cmd_check_mntdir(const char *path, bool mount)
 	if (mount) {
 		cmd_statfs_ok(path, &stfs);
 		fstype = (long)stfs.f_type;
-		fsi = silofs_fsinfo_by_vfstype(fstype);
+		fsi    = silofs_fsinfo_by_vfstype(fstype);
 		if (fsi == nullptr) {
 			cmd_diez("unknown fstype at: %s fstype=0x%lx", path,
 			         fstype);
@@ -436,7 +436,7 @@ void cmd_check_mntdir(const char *path, bool mount)
 	} else {
 		cmd_statfs_ok(path, &stfs);
 		fstype = (long)stfs.f_type;
-		fsi = silofs_fsinfo_by_vfstype(fstype);
+		fsi    = silofs_fsinfo_by_vfstype(fstype);
 		if (fsi == nullptr) {
 			cmd_diez("unknown fstype at: %s fstype=0x%lx", path,
 			         fstype);
@@ -475,13 +475,13 @@ static char *cmd_getcwd(void)
 
 long cmd_parse_str_as_size(const char *str)
 {
-	long mul = 0;
-	char *endptr = nullptr;
+	long        mul    = 0;
+	char       *endptr = nullptr;
 	long double val;
 	long double iz;
 
 	errno = 0;
-	val = strtold(str, &endptr);
+	val   = strtold(str, &endptr);
 	if ((endptr == str) || (errno == ERANGE) || isnan(val)) {
 		goto illegal_value;
 	}
@@ -524,10 +524,10 @@ illegal_value:
 static long cmd_parse_str_as_long(const char *str)
 {
 	char *endptr = nullptr;
-	long val;
+	long  val;
 
 	errno = 0;
-	val = strtol(str, &endptr, 0);
+	val   = strtol(str, &endptr, 0);
 	if ((endptr == str) || (errno == ERANGE)) {
 		cmd_die(errno, "bad integer value: %s", str);
 	}
@@ -655,7 +655,7 @@ void cmd_close_syslog(void)
 static void cmd_setup_dumpable(void)
 {
 	const unsigned int state = 1;
-	int err;
+	int                err;
 
 	err = silofs_sys_prctl(PR_SET_DUMPABLE, state, 0, 0, 0);
 	if (err) {
@@ -666,7 +666,7 @@ static void cmd_setup_dumpable(void)
 void cmd_setup_coredump_mode(bool enable_coredump)
 {
 	struct rlimit rlim = { .rlim_cur = 0, .rlim_max = 0 };
-	int err;
+	int           err;
 
 	err = silofs_sys_getrlimit(RLIMIT_CORE, &rlim);
 	if (err) {
@@ -720,8 +720,8 @@ void cmd_stat_dir(const char *path, struct stat *st)
 void cmd_split_path(const char *path, char **out_head, char **out_tail)
 {
 	const char *sep;
-	size_t head_len;
-	size_t tail_len;
+	size_t      head_len;
+	size_t      tail_len;
 
 	sep = strrchr(path, '/');
 	if (sep == nullptr) {
@@ -735,7 +735,7 @@ void cmd_split_path(const char *path, char **out_head, char **out_tail)
 		if (sep == path) {
 			cmd_diez("missing basename: %s", path);
 		}
-		head_len = (size_t)(sep - path);
+		head_len  = (size_t)(sep - path);
 		*out_head = cmd_strndup(path, head_len);
 		*out_tail = cmd_strndup(sep + 1, tail_len);
 	}
@@ -780,7 +780,7 @@ char *cmd_join_path(const char *dirpath, const char *name)
 void *cmd_zalloc(size_t nbytes)
 {
 	void *mem = nullptr;
-	int err;
+	int   err;
 
 	err = silofs_zmalloc(nbytes, &mem);
 	if (err) {
@@ -826,9 +826,9 @@ char *cmd_strndup(const char *s, size_t n)
 
 char *cmd_strvdup(const void *p)
 {
-	const char *s = p;
+	const char  *s    = p;
 	const size_t lmax = SILOFS_MEGA;
-	size_t len;
+	size_t       len;
 
 	len = strnlen(s, lmax);
 	if (len >= lmax) {
@@ -839,7 +839,7 @@ char *cmd_strvdup(const void *p)
 
 char *cmd_struuid(const uint8_t uu[16])
 {
-	char str[40] = "";
+	char   str[40] = "";
 	uuid_t uuid;
 
 	memcpy(uuid, uu, sizeof(uuid));
@@ -850,7 +850,7 @@ char *cmd_struuid(const uint8_t uu[16])
 char *cmd_strblobid(const struct silofs_blobid *blobid)
 {
 	char bid[256] = "";
-	int err;
+	int  err;
 
 	err = silofs_encode_blobid(blobid, bid, sizeof(bid) - 1);
 	if (err) {
@@ -861,11 +861,11 @@ char *cmd_strblobid(const struct silofs_blobid *blobid)
 
 char *cmd_mkpathf(const char *fmt, ...)
 {
-	va_list ap = { 0 };
-	size_t path_size = PATH_MAX;
-	char *path = cmd_zalloc(path_size);
-	char *path_dup = nullptr;
-	int n = 0;
+	va_list ap        = { 0 };
+	size_t  path_size = PATH_MAX;
+	char   *path      = cmd_zalloc(path_size);
+	char   *path_dup  = nullptr;
+	int     n         = 0;
 
 	va_start(ap, fmt);
 	n = vsnprintf(path, path_size - 1, fmt, ap);
@@ -883,7 +883,7 @@ char *cmd_mkpathf(const char *fmt, ...)
 
 void cmd_print_help_and_exit(const char *help_string)
 {
-	FILE *fp = stdout;
+	FILE       *fp   = stdout;
 	const char *name = cmd_global_params.name;
 
 	if (strlen(name) > 0) {
@@ -942,12 +942,12 @@ static size_t cmd_readfile_stepsize(void)
 static void cmd_readfile(int fd, char *buf, size_t bsz, size_t *out_nrd)
 {
 	const size_t step = cmd_readfile_stepsize();
-	size_t len = 0;
+	size_t       len  = 0;
 
 	while (len < bsz) {
 		const size_t rem = bsz - len;
 		const size_t cnt = rem < step ? rem : step;
-		size_t nrd = 0;
+		size_t       nrd = 0;
 
 		cmd_read(fd, buf + len, cnt, &nrd);
 		if (!nrd) {
@@ -972,11 +972,11 @@ static void cmd_closefd(int *pfd)
 
 static char *cmd_read_proc_mountinfo(void)
 {
-	const size_t bsz = 1UL << 20;
-	char *buf = cmd_zalloc(bsz);
-	size_t size = 0;
-	int dfd = -1;
-	int fd = -1;
+	const size_t bsz  = 1UL << 20;
+	char        *buf  = cmd_zalloc(bsz);
+	size_t       size = 0;
+	int          dfd  = -1;
+	int          fd   = -1;
 
 	cmd_opendir("/proc/self", &dfd);
 	cmd_openat(dfd, "mountinfo", O_RDONLY, &fd);
@@ -989,12 +989,12 @@ static char *cmd_read_proc_mountinfo(void)
 struct silofs_mntinfos *cmd_parse_mountinfo(void)
 {
 	struct silofs_mntinfos *minfos = nullptr;
-	char *midata = nullptr;
-	int err;
+	char                   *midata = nullptr;
+	int                     err;
 
 	midata = cmd_read_proc_mountinfo();
 	minfos = cmd_zalloc(sizeof(*minfos));
-	err = silofs_parse_mntinfos(minfos, nullptr, midata);
+	err    = silofs_parse_mntinfos(minfos, nullptr, midata);
 	if (err) {
 		cmd_die(err, "failed to parse mountinfo");
 	}

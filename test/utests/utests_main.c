@@ -79,13 +79,13 @@ int main(int argc, char *argv[])
 
 static void ut_setup_globals(int argc, char *argv[])
 {
-	ut_globals.argc = argc;
-	ut_globals.argv = argv;
-	ut_globals.program = program_invocation_short_name;
-	ut_globals.pedantic = false;
+	ut_globals.argc      = argc;
+	ut_globals.argv      = argv;
+	ut_globals.program   = program_invocation_short_name;
+	ut_globals.pedantic  = false;
 	ut_globals.run_level = 1;
-	ut_globals.asyncwr = true;
-	ut_globals.stdalloc = false;
+	ut_globals.asyncwr   = true;
+	ut_globals.stdalloc  = false;
 
 	umask(0002);
 	setlocale(LC_ALL, "");
@@ -143,8 +143,8 @@ static void ut_set_run_level(const char *level)
 
 static void ut_parse_args(void)
 {
-	int opt_chr = 1;
-	int opt_index;
+	int           opt_chr = 1;
+	int           opt_index;
 	struct option long_opts[] = {
 		{ "level", required_argument, nullptr, 'l' },
 		{ "malloc", no_argument, nullptr, 'M' },
@@ -158,8 +158,8 @@ static void ut_parse_args(void)
 
 	while (opt_chr > 0) {
 		opt_index = 0;
-		opt_chr = getopt_long(ut_globals.argc, ut_globals.argv,
-		                      "l:MpSTvh", long_opts, &opt_index);
+		opt_chr   = getopt_long(ut_globals.argc, ut_globals.argv,
+		                        "l:MpSTvh", long_opts, &opt_index);
 		if (opt_chr == 'l') {
 			ut_set_run_level(optarg);
 		} else if (opt_chr == 'M') {
@@ -194,7 +194,7 @@ static char *ut_join(const char *base, const char *name)
 	const size_t len1 = strlen(base);
 	const size_t len2 = strlen(name);
 	const size_t size = len1 + len2 + 2;
-	char *path;
+	char        *path;
 
 	path = (char *)malloc(size);
 	if (path == nullptr) {
@@ -211,7 +211,7 @@ static char *ut_join(const char *base, const char *name)
 static void ut_setup_args(void)
 {
 	struct stat st;
-	int err;
+	int         err;
 
 	ut_globals.test_dir_real = realpath(ut_globals.test_dir, nullptr);
 	if (ut_globals.test_dir_real == nullptr) {
@@ -238,7 +238,7 @@ static void ut_setup_args(void)
 static void ut_prepare(void)
 {
 	const char *path = ut_globals.test_dir_repo;
-	int err;
+	int         err;
 
 	err = silofs_sys_mkdir(path, 0700);
 	if (err && (err != -EEXIST)) {

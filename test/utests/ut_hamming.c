@@ -28,13 +28,13 @@ static void flipbit16(uint16_t *v, unsigned n)
 
 static void ut_hamming12_simple(struct ut_env *ute)
 {
-	uint8_t octet, data;
+	uint8_t  octet, data;
 	uint16_t codeword = 0;
-	int err;
+	int      err;
 
 	for (unsigned i = 0; i < 0xFF; ++i) {
 		octet = (uint8_t)i;
-		err = silofs_hamming12_encode(octet, &codeword);
+		err   = silofs_hamming12_encode(octet, &codeword);
 		ut_expect_ok(err);
 		err = silofs_hamming12_decode(codeword, &data);
 		ut_expect_ok(err);
@@ -48,14 +48,14 @@ static void ut_hamming12_simple(struct ut_env *ute)
 
 static void ut_hamming12_error1(struct ut_env *ute)
 {
-	uint8_t octet, data;
+	uint8_t  octet, data;
 	uint16_t codeword = 0;
-	int err;
+	int      err;
 
 	for (unsigned i = 0; i < 0xFF; ++i) {
 		for (unsigned j = 0; j < 12; ++j) {
 			octet = (uint8_t)i;
-			err = silofs_hamming12_encode(octet, &codeword);
+			err   = silofs_hamming12_encode(octet, &codeword);
 			ut_expect_ok(err);
 			flipbit16(&codeword, j);
 			err = silofs_hamming12_decode(codeword, &data);
@@ -71,10 +71,10 @@ static void ut_hamming12_error1(struct ut_env *ute)
 static void ut_hamming12_buf_simple_(struct ut_env *ute, size_t len)
 {
 	const size_t enclen = (len * 12) / 8;
-	void *dat = ut_randbuf(ute, len);
-	void *res = ut_zerobuf(ute, len);
-	void *enc = ut_zerobuf(ute, enclen);
-	int err;
+	void        *dat    = ut_randbuf(ute, len);
+	void        *res    = ut_zerobuf(ute, len);
+	void        *enc    = ut_zerobuf(ute, enclen);
+	int          err;
 
 	err = silofs_hamming12_encode_buf(dat, len, enc, enclen);
 	ut_expect_ok(err);
@@ -97,10 +97,10 @@ static void ut_hamming12_buf_simple(struct ut_env *ute)
 static void ut_hamming12_buf_error1_(struct ut_env *ute, size_t len)
 {
 	const size_t enclen = (len * 12) / 8;
-	void *dat = ut_randbuf(ute, len);
-	void *res = ut_zerobuf(ute, len);
-	uint8_t *enc = ut_zerobuf(ute, enclen);
-	int err;
+	void        *dat    = ut_randbuf(ute, len);
+	void        *res    = ut_zerobuf(ute, len);
+	uint8_t     *enc    = ut_zerobuf(ute, enclen);
+	int          err;
 
 	err = silofs_hamming12_encode_buf(dat, len, enc, enclen);
 	ut_expect_ok(err);

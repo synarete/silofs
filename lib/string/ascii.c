@@ -21,8 +21,8 @@
 
 char silofs_nibble_to_ascii(int n)
 {
-	const char xdigs[] = "0123456789abcdef";
-	const uint8_t idx = (uint8_t)(n & 0xF);
+	const char    xdigs[] = "0123456789abcdef";
+	const uint8_t idx     = (uint8_t)(n & 0xF);
 
 	return xdigs[idx];
 }
@@ -81,7 +81,7 @@ void silofs_byte_to_ascii(uint8_t b, char *a)
 int silofs_ascii_to_byte(const char *a, uint8_t *b)
 {
 	uint32_t nib[2];
-	int ret;
+	int      ret;
 
 	ret = silofs_ascii_to_nibble(a[0]);
 	if (ret == -1) {
@@ -103,7 +103,7 @@ int silofs_ascii_to_byte(const char *a, uint8_t *b)
 
 void silofs_uint64_to_ascii(uint64_t u, char *a)
 {
-	int shift;
+	int     shift;
 	uint8_t b;
 
 	shift = 64;
@@ -118,8 +118,8 @@ void silofs_uint64_to_ascii(uint64_t u, char *a)
 int silofs_ascii_to_uint64(const char *a, uint64_t *out_u)
 {
 	uint64_t u = 0;
-	uint8_t b = 0;
-	int err;
+	uint8_t  b = 0;
+	int      err;
 
 	for (size_t i = 0; i < 8; ++i) {
 		err = silofs_ascii_to_byte(a, &b);
@@ -136,8 +136,8 @@ int silofs_ascii_to_uint64(const char *a, uint64_t *out_u)
 void silofs_mem_to_ascii(const void *mem, size_t msz, char *asb, size_t asz,
                          size_t *out_cnt)
 {
-	const uint8_t *b = mem;
-	size_t cnt = 0;
+	const uint8_t *b   = mem;
+	size_t         cnt = 0;
 
 	for (size_t i = 0; i < msz; ++i) {
 		if ((cnt + 2) > asz) {
@@ -152,9 +152,9 @@ void silofs_mem_to_ascii(const void *mem, size_t msz, char *asb, size_t asz,
 int silofs_ascii_to_mem(void *mem, size_t msz, const char *asb, size_t asz,
                         size_t *out_cnt)
 {
-	uint8_t *b = mem;
-	size_t cnt = 0;
-	int err = 0;
+	uint8_t *b   = mem;
+	size_t   cnt = 0;
+	int      err = 0;
 
 	for (size_t i = 0; (i + 1) < asz; i += 2) {
 		if (cnt >= msz) {

@@ -23,20 +23,20 @@
 void silofs_iovec_reset(struct silofs_iovec *iov)
 {
 	iov->iov.iov_base = nullptr;
-	iov->iov.iov_len = 0;
-	iov->iov_backref = nullptr;
-	iov->iov_off = 0;
-	iov->iov_fd = -1;
+	iov->iov.iov_len  = 0;
+	iov->iov_backref  = nullptr;
+	iov->iov_off      = 0;
+	iov->iov_fd       = -1;
 }
 
-void silofs_iovec_assign(struct silofs_iovec *iov,
+void silofs_iovec_assign(struct silofs_iovec       *iov,
                          const struct silofs_iovec *other)
 {
 	iov->iov.iov_base = other->iov.iov_base;
-	iov->iov.iov_len = other->iov.iov_len;
-	iov->iov_backref = other->iov_backref;
-	iov->iov_off = other->iov_off;
-	iov->iov_fd = other->iov_fd;
+	iov->iov.iov_len  = other->iov.iov_len;
+	iov->iov_backref  = other->iov_backref;
+	iov->iov_off      = other->iov_off;
+	iov->iov_fd       = other->iov_fd;
 }
 
 int silofs_iovec_copy_into(const struct silofs_iovec *iov, void *buf)

@@ -30,16 +30,16 @@ struct cmd_rmfs_in_args {
 	char *repodir_real;
 	char *fsname;
 	char *password;
-	bool no_prompt;
+	bool  no_prompt;
 };
 
 struct cmd_rmfs_ctx {
 	struct silofs_ioc_query ioc_qry;
 	struct cmd_rmfs_in_args in_args;
-	struct silofs_env_args env_args;
-	struct silofs_blobid fs_blobid;
-	struct silofs_env *env;
-	bool has_lockfile;
+	struct silofs_env_args  env_args;
+	struct silofs_blobid    fs_blobid;
+	struct silofs_env      *env;
+	bool                    has_lockfile;
 };
 
 static struct cmd_rmfs_ctx *cmd_rmfs_ctx_p;
@@ -56,7 +56,7 @@ static void cmd_rmfs_parse_optargs(struct cmd_rmfs_ctx *ctx)
 		{ nullptr, 0, 0 },       //
 	};
 	struct cmd_optargs opa;
-	int opt_chr = 1;
+	int                opt_chr = 1;
 
 	cmd_optargs_init(&opa, ods);
 	while (!opa.opa_done && (opt_chr > 0)) {
@@ -113,14 +113,14 @@ static void cmd_rmfs_getpass(struct cmd_rmfs_ctx *ctx)
 
 static void cmd_rmfs_check_nomnt_at(struct cmd_rmfs_ctx *ctx, const char *mntp)
 {
-	struct stat st[2];
-	char *path[2] = { nullptr, nullptr };
-	char *repodir = nullptr;
-	char *name = nullptr;
-	struct silofs_ioc_query *qry = &ctx->ioc_qry;
+	struct stat              st[2];
+	char                    *path[2] = { nullptr, nullptr };
+	char                    *repodir = nullptr;
+	char                    *name    = nullptr;
+	struct silofs_ioc_query *qry     = &ctx->ioc_qry;
 	int o_flags = O_RDONLY | O_NONBLOCK | O_CLOEXEC | O_DIRECTORY;
-	int dfd = -1;
-	int err = 0;
+	int dfd     = -1;
+	int err     = 0;
 
 	err = silofs_sys_openat(AT_FDCWD, mntp, o_flags, 0, &dfd);
 	if (err) {
@@ -129,7 +129,7 @@ static void cmd_rmfs_check_nomnt_at(struct cmd_rmfs_ctx *ctx, const char *mntp)
 
 	silofs_memzero(qry, sizeof(*qry));
 	qry->qtype = SILOFS_QUERY_REPO;
-	err = silofs_sys_ioctlp(dfd, SILOFS_IOC_QUERY, qry);
+	err        = silofs_sys_ioctlp(dfd, SILOFS_IOC_QUERY, qry);
 	if (err) {
 		goto out;
 	}
@@ -137,14 +137,14 @@ static void cmd_rmfs_check_nomnt_at(struct cmd_rmfs_ctx *ctx, const char *mntp)
 
 	silofs_memzero(qry, sizeof(*qry));
 	qry->qtype = SILOFS_QUERY_BOOT;
-	err = silofs_sys_ioctlp(dfd, SILOFS_IOC_QUERY, qry);
+	err        = silofs_sys_ioctlp(dfd, SILOFS_IOC_QUERY, qry);
 	if (err) {
 		goto out;
 	}
 	name = cmd_strvdup(qry->u.boot.name);
 
 	path[0] = cmd_join_path(repodir, name);
-	err = silofs_sys_stat(path[0], &st[0]);
+	err     = silofs_sys_stat(path[0], &st[0]);
 	if (err) {
 		goto out;
 	}
@@ -185,7 +185,7 @@ static void cmd_rmfs_setup_env_args(struct cmd_rmfs_ctx *ctx)
 	cmd_setup_env_args(env_args);
 	env_args->boot_args.repodir = ctx->in_args.repodir_real;
 	env_args->boot_args.fs_name = ctx->in_args.fsname;
-	env_args->boot_args.passwd = ctx->in_args.password;
+	env_args->boot_args.passwd  = ctx->in_args.password;
 }
 
 static void cmd_rmfs_setup_fs_ids(struct cmd_rmfs_ctx *ctx)

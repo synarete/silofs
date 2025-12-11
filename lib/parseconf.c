@@ -52,7 +52,7 @@ strview_copyto(const struct silofs_strview *sv, void *buf, size_t n)
 }
 
 static void strview_strip_ws(const struct silofs_strview *sv,
-                             struct silofs_strview *out_sv)
+                             struct silofs_strview       *out_sv)
 {
 	silofs_strview_strip_ws(sv, out_sv);
 }
@@ -93,11 +93,11 @@ strspan_append(struct silofs_strspan *ss, const struct silofs_strview *sv)
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 struct silofs_conf_parser {
-	struct silofs_alloc *alloc;
+	struct silofs_alloc  *alloc;
 	struct silofs_strspan wcfg;
 	struct silofs_strview rcfg;
 	struct silofs_strview line;
-	int line_no;
+	int                   line_no;
 };
 
 static void cpr_rsetup(struct silofs_conf_parser *cpr,
@@ -106,7 +106,7 @@ static void cpr_rsetup(struct silofs_conf_parser *cpr,
 	silofs_strspan_initz(&cpr->wcfg);
 	silofs_strview_init(&cpr->rcfg, data);
 	silofs_strview_initz(&cpr->line);
-	cpr->alloc = (alloc != nullptr) ? alloc : silofs_default_alloc;
+	cpr->alloc   = (alloc != nullptr) ? alloc : silofs_default_alloc;
 	cpr->line_no = 0;
 }
 
@@ -116,7 +116,7 @@ static void cpr_wsetup(struct silofs_conf_parser *cpr,
 	silofs_strspan_initk(&cpr->wcfg, buf, 0, n);
 	silofs_strview_initz(&cpr->rcfg);
 	silofs_strview_initz(&cpr->line);
-	cpr->alloc = (alloc != nullptr) ? alloc : silofs_default_alloc;
+	cpr->alloc   = (alloc != nullptr) ? alloc : silofs_default_alloc;
 	cpr->line_no = 0;
 }
 
@@ -126,7 +126,7 @@ static void cpr_reset_line(struct silofs_conf_parser *cpr)
 	cpr->line_no = 0;
 }
 
-static void cpr_update_line(struct silofs_conf_parser *cpr,
+static void cpr_update_line(struct silofs_conf_parser   *cpr,
                             const struct silofs_strview *line)
 {
 	if (line != nullptr) {
@@ -136,7 +136,7 @@ static void cpr_update_line(struct silofs_conf_parser *cpr,
 	}
 }
 
-static void cpr_update_next_line(struct silofs_conf_parser *cpr,
+static void cpr_update_next_line(struct silofs_conf_parser   *cpr,
                                  const struct silofs_strview *line)
 {
 	cpr_update_line(cpr, line);
@@ -170,8 +170,8 @@ static int cpr_strdup(const struct silofs_conf_parser *cpr,
                       const struct silofs_strview *sv, char **out_str)
 {
 	const size_t n = sv->len + 1;
-	void *p = nullptr;
-	int err;
+	void        *p = nullptr;
+	int          err;
 
 	err = cpr_zalloc(cpr, n, &p);
 	if (err) {
@@ -220,8 +220,8 @@ static int cpr_bad_val(const struct silofs_conf_parser *cpr,
 cpr_printf static int
 cpr_bad_input(const struct silofs_conf_parser *cpr, const char *fmt, ...)
 {
-	va_list ap = { 0 };
-	char msg[256] = "";
+	va_list ap       = { 0 };
+	char    msg[256] = "";
 
 	va_start(ap, fmt);
 	(void)vsnprintf(msg, sizeof(msg) - 1, fmt, ap);
@@ -250,9 +250,9 @@ static int cpr_parse_bool(const struct silofs_conf_parser *cpr,
 static int cpr_parse_long(const struct silofs_conf_parser *cpr,
                           const struct silofs_strview *sv, long *out_val)
 {
-	char str[80] = "";
-	char *endptr = nullptr;
-	long val = 0;
+	char  str[80] = "";
+	char *endptr  = nullptr;
+	long  val     = 0;
 
 	if (sv->len >= sizeof(str)) {
 		return cpr_bad_val(cpr, sv, "integer");
@@ -260,7 +260,7 @@ static int cpr_parse_long(const struct silofs_conf_parser *cpr,
 	strview_copyto(sv, str, sizeof(str));
 
 	errno = 0;
-	val = strtol(str, &endptr, 0);
+	val   = strtol(str, &endptr, 0);
 	if ((endptr == str) || (errno == ERANGE)) {
 		return cpr_bad_val(cpr, sv, "integer");
 	}
@@ -276,7 +276,7 @@ static int cpr_parse_int(const struct silofs_conf_parser *cpr,
 
 {
 	long num = 0;
-	int err;
+	int  err;
 
 	err = cpr_parse_long(cpr, sv, &num);
 	if (err) {
@@ -345,10 +345,10 @@ static int sysconf_u32(int key, uint32_t *out_val)
 static int getxx_bsz(size_t *out_bsz)
 {
 	const size_t align = 1024;
-	uint32_t bsz1 = 0;
-	uint32_t bsz2 = 0;
-	uint32_t bsz;
-	int err;
+	uint32_t     bsz1  = 0;
+	uint32_t     bsz2  = 0;
+	uint32_t     bsz;
+	int          err;
 
 	err = sysconf_u32(_SC_GETPW_R_SIZE_MAX, &bsz1);
 	if (err) {
@@ -359,7 +359,7 @@ static int getxx_bsz(size_t *out_bsz)
 		return err;
 	}
 
-	bsz = (bsz1 > bsz2) ? bsz1 : bsz2;
+	bsz      = (bsz1 > bsz2) ? bsz1 : bsz2;
 	*out_bsz = (((size_t)bsz + align - 1) / align) * align;
 	return 0;
 }
@@ -367,11 +367,11 @@ static int getxx_bsz(size_t *out_bsz)
 static int cpr_resolve_uid_by_name(const struct silofs_conf_parser *cpr,
                                    const char *name, uid_t *out_uid)
 {
-	struct passwd pwd = { .pw_uid = (uid_t)(-1) };
-	struct passwd *pw = nullptr;
-	void *buf = nullptr;
-	size_t bsz = 0;
-	int err;
+	struct passwd  pwd = { .pw_uid = (uid_t)(-1) };
+	struct passwd *pw  = nullptr;
+	void          *buf = nullptr;
+	size_t         bsz = 0;
+	int            err;
 
 	err = getxx_bsz(&bsz);
 	if (err) {
@@ -382,7 +382,7 @@ static int cpr_resolve_uid_by_name(const struct silofs_conf_parser *cpr,
 		goto out;
 	}
 	errno = 0;
-	err = getpwnam_r(name, &pwd, buf, bsz, &pw);
+	err   = getpwnam_r(name, &pwd, buf, bsz, &pw);
 	if (err) {
 		err = cpr_bad_input(cpr, "failed to resolve user: %s", name);
 		goto out;
@@ -400,12 +400,12 @@ out:
 static int cpr_resolve_uid_to_name(const struct silofs_conf_parser *cpr,
                                    uid_t uid, char *name, size_t nsz)
 {
-	struct passwd pwd = { .pw_uid = (uid_t)(-1) };
-	struct passwd *pw = nullptr;
-	void *buf = nullptr;
-	size_t bsz = 0;
-	size_t len = 0;
-	int err;
+	struct passwd  pwd = { .pw_uid = (uid_t)(-1) };
+	struct passwd *pw  = nullptr;
+	void          *buf = nullptr;
+	size_t         bsz = 0;
+	size_t         len = 0;
+	int            err;
 
 	err = getxx_bsz(&bsz);
 	if (err) {
@@ -416,7 +416,7 @@ static int cpr_resolve_uid_to_name(const struct silofs_conf_parser *cpr,
 		goto out;
 	}
 	errno = 0;
-	err = getpwuid_r(uid, &pwd, buf, bsz, &pw);
+	err   = getpwuid_r(uid, &pwd, buf, bsz, &pw);
 	if (err) {
 		err = cpr_bad_input(cpr, "failed to resolve uid: %u", uid);
 		goto out;
@@ -440,11 +440,11 @@ out:
 static int cpr_resolve_gid_by_name(const struct silofs_conf_parser *cpr,
                                    const char *name, gid_t *out_gid)
 {
-	struct group grp = { .gr_gid = (gid_t)(-1) };
-	struct group *gr = nullptr;
-	void *buf = nullptr;
-	size_t bsz = 0;
-	int err;
+	struct group  grp = { .gr_gid = (gid_t)(-1) };
+	struct group *gr  = nullptr;
+	void         *buf = nullptr;
+	size_t        bsz = 0;
+	int           err;
 
 	err = getxx_bsz(&bsz);
 	if (err) {
@@ -455,7 +455,7 @@ static int cpr_resolve_gid_by_name(const struct silofs_conf_parser *cpr,
 		goto out;
 	}
 	errno = 0;
-	err = getgrnam_r(name, &grp, buf, bsz, &gr);
+	err   = getgrnam_r(name, &grp, buf, bsz, &gr);
 	if (err) {
 		err = cpr_bad_input(cpr, "failed to resolve group: %s", name);
 		goto out;
@@ -473,12 +473,12 @@ out:
 static int cpr_resolve_gid_to_name(const struct silofs_conf_parser *cpr,
                                    gid_t gid, char *name, size_t nsz)
 {
-	struct group grp = { .gr_gid = (gid_t)(-1) };
-	struct group *gr = nullptr;
-	void *buf = nullptr;
-	size_t bsz = 0;
-	size_t len = 0;
-	int err;
+	struct group  grp = { .gr_gid = (gid_t)(-1) };
+	struct group *gr  = nullptr;
+	void         *buf = nullptr;
+	size_t        bsz = 0;
+	size_t        len = 0;
+	int           err;
 
 	err = getxx_bsz(&bsz);
 	if (err) {
@@ -489,7 +489,7 @@ static int cpr_resolve_gid_to_name(const struct silofs_conf_parser *cpr,
 		goto out;
 	}
 	errno = 0;
-	err = getgrgid_r(gid, &grp, buf, bsz, &gr);
+	err   = getgrgid_r(gid, &grp, buf, bsz, &gr);
 	if (err) {
 		err = cpr_bad_input(cpr, "failed to resolve gid: %u", gid);
 		goto out;
@@ -513,11 +513,11 @@ out:
 static int cpr_resolve_uidgid(const struct silofs_conf_parser *cpr,
                               const char *name, uid_t *out_uid, gid_t *out_gid)
 {
-	struct passwd pwd = { .pw_uid = (uid_t)(-1) };
-	struct passwd *pw = nullptr;
-	void *buf = nullptr;
-	size_t bsz = 0;
-	int err;
+	struct passwd  pwd = { .pw_uid = (uid_t)(-1) };
+	struct passwd *pw  = nullptr;
+	void          *buf = nullptr;
+	size_t         bsz = 0;
+	int            err;
 
 	err = getxx_bsz(&bsz);
 	if (err) {
@@ -528,7 +528,7 @@ static int cpr_resolve_uidgid(const struct silofs_conf_parser *cpr,
 		goto out;
 	}
 	errno = 0;
-	err = getpwnam_r(name, &pwd, buf, bsz, &pw);
+	err   = getpwnam_r(name, &pwd, buf, bsz, &pw);
 	if (err) {
 		err = cpr_bad_input(cpr, "failed to resolve user: %s", name);
 		goto out;
@@ -565,19 +565,19 @@ static void mcp_setup(struct silofs_mntconf_parser *mcp,
 }
 
 static int mcp_parse_rule_args(const struct silofs_mntconf_parser *mcp,
-                               const struct silofs_strview *args,
-                               struct silofs_mntrule *mntrule)
+                               const struct silofs_strview        *args,
+                               struct silofs_mntrule              *mntrule)
 {
 	struct silofs_strview_pair key_val;
 	struct silofs_strview_pair ss_pair;
-	struct silofs_strview *key = &key_val.first;
-	struct silofs_strview *val = &key_val.second;
-	struct silofs_strview *carg = &ss_pair.first;
-	struct silofs_strview *tail = &ss_pair.second;
-	const char *seps = " \t";
-	int err = 0;
+	struct silofs_strview     *key  = &key_val.first;
+	struct silofs_strview     *val  = &key_val.second;
+	struct silofs_strview     *carg = &ss_pair.first;
+	struct silofs_strview     *tail = &ss_pair.second;
+	const char                *seps = " \t";
+	int                        err  = 0;
 
-	mntrule->uid = (uid_t)(-1);
+	mntrule->uid       = (uid_t)(-1);
 	mntrule->recursive = false;
 
 	strview_split(args, seps, &ss_pair);
@@ -607,7 +607,7 @@ static int mcp_parse_rule_args(const struct silofs_mntconf_parser *mcp,
 }
 
 static int mcp_check_rule_path(const struct silofs_mntconf_parser *mcp,
-                               const struct silofs_strview *path)
+                               const struct silofs_strview        *path)
 {
 	const char *tag = "path";
 
@@ -641,27 +641,27 @@ mcp_parse_rule_path(const struct silofs_mntconf_parser *mcp,
 }
 
 static void mcp_release_rule(const struct silofs_mntconf_parser *mcp,
-                             struct silofs_mntrule *mntrule)
+                             struct silofs_mntrule              *mntrule)
 {
 	cpr_strfree(&mcp->cpr, &mntrule->path);
 	mntrule->uid = silofs_uid_nobody();
 }
 
 static int mcp_parse_rule(const struct silofs_mntconf_parser *mcp,
-                          const struct silofs_strview *path,
-                          const struct silofs_strview *args,
-                          struct silofs_mntrules *mrules)
+                          const struct silofs_strview        *path,
+                          const struct silofs_strview        *args,
+                          struct silofs_mntrules             *mrules)
 {
-	const size_t max_rules = ARRAY_SIZE(mrules->rules);
-	struct silofs_mntrule *mntrule = nullptr;
-	int err;
+	const size_t           max_rules = ARRAY_SIZE(mrules->rules);
+	struct silofs_mntrule *mntrule   = nullptr;
+	int                    err;
 
 	if (mrules->nrules >= max_rules) {
 		return cpr_bad_conf(&mcp->cpr, nullptr,
 		                    "too many mount-rules");
 	}
 	mntrule = &mrules->rules[mrules->nrules];
-	err = mcp_parse_rule_path(mcp, path, &mntrule->path);
+	err     = mcp_parse_rule_path(mcp, path, &mntrule->path);
 	if (err) {
 		return err;
 	}
@@ -675,9 +675,9 @@ static int mcp_parse_rule(const struct silofs_mntconf_parser *mcp,
 }
 
 static int mcp_parse_line(const struct silofs_mntconf_parser *mcp,
-                          struct silofs_mntrules *mrules)
+                          struct silofs_mntrules             *mrules)
 {
-	struct silofs_strview sline;
+	struct silofs_strview      sline;
 	struct silofs_strview_pair svp;
 
 	strview_split_chr(&mcp->cpr.line, '#', &svp);
@@ -690,12 +690,12 @@ static int mcp_parse_line(const struct silofs_mntconf_parser *mcp,
 }
 
 static int mcp_parse_rules(struct silofs_mntconf_parser *mcp,
-                           struct silofs_mntrules *mrules)
+                           struct silofs_mntrules       *mrules)
 {
-	struct silofs_strview_pair svp;
+	struct silofs_strview_pair   svp;
 	const struct silofs_strview *line = &svp.first;
 	const struct silofs_strview *tail = &svp.second;
-	int err;
+	int                          err;
 
 	cpr_reset_line(&mcp->cpr);
 	strview_split_chr(&mcp->cpr.rcfg, '\n', &svp);
@@ -711,7 +711,7 @@ static int mcp_parse_rules(struct silofs_mntconf_parser *mcp,
 }
 
 static void mcp_release_rules(const struct silofs_mntconf_parser *mcp,
-                              struct silofs_mntrules *mrules)
+                              struct silofs_mntrules             *mrules)
 {
 	for (size_t i = 0; i < mrules->nrules; ++i) {
 		mcp_release_rule(mcp, &mrules->rules[i]);
@@ -723,7 +723,7 @@ int silofs_parse_mntrules(struct silofs_mntrules *mrules,
                           struct silofs_alloc *alloc, const char *conf)
 {
 	struct silofs_mntconf_parser mcp;
-	int err;
+	int                          err;
 
 	mcp_setup(&mcp, alloc, conf);
 	err = mcp_parse_rules(&mcp, mrules);
@@ -735,7 +735,7 @@ int silofs_parse_mntrules(struct silofs_mntrules *mrules,
 }
 
 void silofs_release_mntrules(struct silofs_mntrules *mrules,
-                             struct silofs_alloc *alloc)
+                             struct silofs_alloc    *alloc)
 {
 	struct silofs_mntconf_parser mcp;
 
@@ -752,8 +752,8 @@ enum silofs_idsconf_sec {
 };
 
 static const char *s_idsconf_sec_name[] = {
-	[SILOFS_IDSCONF_SEC_NIL] = "",
-	[SILOFS_IDSCONF_SEC_USERS] = "users",
+	[SILOFS_IDSCONF_SEC_NIL]    = "",
+	[SILOFS_IDSCONF_SEC_USERS]  = "users",
 	[SILOFS_IDSCONF_SEC_GROUPS] = "groups",
 };
 
@@ -785,7 +785,7 @@ static const char *idsconf_sec_to_name(enum silofs_idsconf_sec sec)
 
 struct silofs_idsconf_parser {
 	struct silofs_conf_parser cpr;
-	enum silofs_idsconf_sec sec;
+	enum silofs_idsconf_sec   sec;
 };
 
 static void idp_rsetup(struct silofs_idsconf_parser *idp,
@@ -806,7 +806,7 @@ static int idp_malloc_uids(const struct silofs_idsconf_parser *idp,
                            size_t nuids, struct silofs_uids **out_uids)
 {
 	void *ptr = nullptr;
-	int err;
+	int   err;
 
 	err = cpr_zalloc(&idp->cpr, nuids * sizeof((*out_uids)[0]), &ptr);
 	if (err) {
@@ -827,12 +827,12 @@ static void idp_pfree_uids(const struct silofs_idsconf_parser *idp,
 {
 	if ((*puids != nullptr) && (*pnuids > 0)) {
 		idp_free_uids(idp, *puids, *pnuids);
-		*puids = nullptr;
+		*puids  = nullptr;
 		*pnuids = 0;
 	}
 }
 
-static void copy_uids(struct silofs_uids *uids_dst,
+static void copy_uids(struct silofs_uids       *uids_dst,
                       const struct silofs_uids *uids_src, size_t nuids)
 {
 	if (uids_src && nuids) {
@@ -844,9 +844,9 @@ static int
 idp_extend_uids(const struct silofs_idsconf_parser *idp,
                 struct silofs_uids **puids, size_t *pnuids, size_t cnt)
 {
-	struct silofs_uids *uids = nullptr;
-	size_t nuids = *pnuids + cnt;
-	int err;
+	struct silofs_uids *uids  = nullptr;
+	size_t              nuids = *pnuids + cnt;
+	int                 err;
 
 	err = idp_malloc_uids(idp, nuids, &uids);
 	if (err) {
@@ -854,7 +854,7 @@ idp_extend_uids(const struct silofs_idsconf_parser *idp,
 	}
 	copy_uids(uids, *puids, *pnuids);
 	idp_pfree_uids(idp, puids, pnuids);
-	*puids = uids;
+	*puids  = uids;
 	*pnuids = nuids;
 	return 0;
 }
@@ -877,7 +877,7 @@ static int idp_malloc_gids(const struct silofs_idsconf_parser *idp,
                            size_t ngids, struct silofs_gids **out_gids)
 {
 	void *ptr = nullptr;
-	int err;
+	int   err;
 
 	err = cpr_zalloc(&idp->cpr, ngids * sizeof((*out_gids)[0]), &ptr);
 	if (err) {
@@ -898,12 +898,12 @@ static void idp_pfree_gids(const struct silofs_idsconf_parser *idp,
 {
 	if ((*pgids != nullptr) && (*pngids > 0)) {
 		idp_free_gids(idp, *pgids, *pngids);
-		*pgids = nullptr;
+		*pgids  = nullptr;
 		*pngids = 0;
 	}
 }
 
-static void copy_gids(struct silofs_gids *gids_dst,
+static void copy_gids(struct silofs_gids       *gids_dst,
                       const struct silofs_gids *gids_src, size_t ngids)
 {
 	if (gids_src && ngids) {
@@ -915,9 +915,9 @@ static int
 idp_extend_gids(const struct silofs_idsconf_parser *idp,
                 struct silofs_gids **pgids, size_t *pngids, size_t cnt)
 {
-	struct silofs_gids *gids = nullptr;
-	size_t ngids = *pngids + cnt;
-	int err;
+	struct silofs_gids *gids  = nullptr;
+	size_t              ngids = *pngids + cnt;
+	int                 err;
 
 	err = idp_malloc_gids(idp, ngids, &gids);
 	if (err) {
@@ -925,7 +925,7 @@ idp_extend_gids(const struct silofs_idsconf_parser *idp,
 	}
 	copy_gids(gids, *pgids, *pngids);
 	idp_pfree_gids(idp, pgids, pngids);
-	*pgids = gids;
+	*pgids  = gids;
 	*pngids = ngids;
 	return 0;
 }
@@ -951,7 +951,7 @@ idp_parse_uid_by_name(const struct silofs_idsconf_parser *idp,
                       const struct silofs_strview *name, uid_t *out_uid)
 {
 	char buf[NAME_MAX + 1] = "";
-	int ret;
+	int  ret;
 
 	errno = 0;
 	if (name->len < sizeof(buf)) {
@@ -976,7 +976,7 @@ idp_parse_gid_by_name(const struct silofs_idsconf_parser *idp,
                       const struct silofs_strview *name, gid_t *out_gid)
 {
 	char buf[NAME_MAX + 1] = "";
-	int ret;
+	int  ret;
 
 	if (name->len < sizeof(buf)) {
 		strview_copyto(name, buf, sizeof(buf) - 1);
@@ -997,7 +997,7 @@ idp_parse_gid_by_value(const struct silofs_idsconf_parser *idp,
 
 static int
 idp_parse_uids(const struct silofs_idsconf_parser *idp,
-               const struct silofs_strview *name,
+               const struct silofs_strview        *name,
                const struct silofs_strview *suid, struct silofs_uids *out_uids)
 {
 	int err;
@@ -1015,7 +1015,7 @@ idp_parse_uids(const struct silofs_idsconf_parser *idp,
 
 static int
 idp_parse_gids(const struct silofs_idsconf_parser *idp,
-               const struct silofs_strview *name,
+               const struct silofs_strview        *name,
                const struct silofs_strview *sgid, struct silofs_gids *out_gids)
 {
 	int err;
@@ -1051,8 +1051,8 @@ static int idp_parse_user_conf(const struct silofs_idsconf_parser *idp,
 {
 	struct silofs_strview name;
 	struct silofs_strview suid;
-	struct silofs_uids uids;
-	int err;
+	struct silofs_uids    uids;
+	int                   err;
 
 	idp_split_line(idp, '=', &name, &suid);
 	if (strview_isempty(&name) || strview_isempty(&suid)) {
@@ -1074,8 +1074,8 @@ static int idp_parse_group_conf(const struct silofs_idsconf_parser *idp,
 {
 	struct silofs_strview name;
 	struct silofs_strview sgid;
-	struct silofs_gids gids;
-	int err;
+	struct silofs_gids    gids;
+	int                   err;
 
 	idp_split_line(idp, '=', &name, &sgid);
 	if (strview_isempty(&name) || strview_isempty(&sgid)) {
@@ -1093,11 +1093,11 @@ static int idp_parse_group_conf(const struct silofs_idsconf_parser *idp,
 }
 
 static int idp_parse_curr_line(const struct silofs_idsconf_parser *idp,
-                               struct silofs_ugids *ugids)
+                               struct silofs_ugids                *ugids)
 {
-	struct silofs_users_ids *users = &ugids->users;
+	struct silofs_users_ids  *users  = &ugids->users;
 	struct silofs_groups_ids *groups = &ugids->groups;
-	int ret = 0;
+	int                       ret    = 0;
 
 	switch (idp->sec) {
 	case SILOFS_IDSCONF_SEC_NIL:
@@ -1118,7 +1118,7 @@ static int idp_parse_curr_line(const struct silofs_idsconf_parser *idp,
 static enum silofs_idsconf_sec
 idp_parse_sec_state(const struct silofs_idsconf_parser *idp)
 {
-	struct silofs_strview sv = { .str = nullptr };
+	struct silofs_strview   sv  = { .str = nullptr };
 	enum silofs_idsconf_sec sec = SILOFS_IDSCONF_SEC_NIL;
 
 	strview_strip_ws(&idp->cpr.line, &sv);
@@ -1134,7 +1134,7 @@ idp_parse_sec_state(const struct silofs_idsconf_parser *idp)
 static void idp_split_data(struct silofs_idsconf_parser *idp)
 {
 	struct silofs_strview_pair svp;
-	struct silofs_strview sline;
+	struct silofs_strview      sline;
 
 	strview_split_chr(&idp->cpr.rcfg, '\n', &svp);
 	strview_strip_ws(&svp.second, &idp->cpr.rcfg);
@@ -1148,7 +1148,7 @@ static int
 idp_parse_ugids(struct silofs_idsconf_parser *idp, struct silofs_ugids *ugids)
 {
 	enum silofs_idsconf_sec sec_next;
-	int err = 0;
+	int                     err = 0;
 
 	idp_split_data(idp);
 	while (strview_hasdata(&idp->cpr.line) ||
@@ -1169,7 +1169,7 @@ idp_parse_ugids(struct silofs_idsconf_parser *idp, struct silofs_ugids *ugids)
 }
 
 static void idp_release_ugids(struct silofs_idsconf_parser *idp,
-                              struct silofs_ugids *ugids)
+                              struct silofs_ugids          *ugids)
 {
 	idp_pfree_uids(idp, &ugids->users.uids, &ugids->users.nuids);
 	idp_pfree_gids(idp, &ugids->groups.gids, &ugids->groups.ngids);
@@ -1177,7 +1177,7 @@ static void idp_release_ugids(struct silofs_idsconf_parser *idp,
 
 static int check_empty_ugids(const struct silofs_ugids *ugids)
 {
-	const struct silofs_users_ids *users = &ugids->users;
+	const struct silofs_users_ids  *users  = &ugids->users;
 	const struct silofs_groups_ids *groups = &ugids->groups;
 
 	if ((users->uids != nullptr) || (users->nuids != 0)) {
@@ -1193,7 +1193,7 @@ int silofs_parse_fsids(struct silofs_ugids *ugids, struct silofs_alloc *alloc,
                        const char *data)
 {
 	struct silofs_idsconf_parser idp;
-	int err;
+	int                          err;
 
 	err = check_empty_ugids(ugids);
 	if (err) {
@@ -1225,10 +1225,10 @@ void silofs_release_fsids(struct silofs_ugids *ugids,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int idp_append_cfgline(struct silofs_idsconf_parser *idp,
-                              const struct silofs_strview *sv)
+                              const struct silofs_strview  *sv)
 {
 	struct silofs_strview nl;
-	int err;
+	int                   err;
 
 	silofs_strview_init(&nl, "\n");
 	err = strspan_append(&idp->cpr.wcfg, sv);
@@ -1251,9 +1251,9 @@ static int idp_append_newline(struct silofs_idsconf_parser *idp)
 }
 
 static int idp_append_section(struct silofs_idsconf_parser *idp,
-                              enum silofs_idsconf_sec sec_id)
+                              enum silofs_idsconf_sec       sec_id)
 {
-	char sec[64] = { 0 };
+	char                  sec[64] = { 0 };
 	struct silofs_strview sv;
 
 	snprintf(sec, sizeof(sec) - 1, "[%s]", idsconf_sec_to_name(sec_id));
@@ -1264,7 +1264,7 @@ static int idp_append_section(struct silofs_idsconf_parser *idp,
 static int
 idp_append_id(struct silofs_idsconf_parser *idp, const char *name, uint32_t id)
 {
-	char dat[512] = { 0 };
+	char                  dat[512] = { 0 };
 	struct silofs_strview sv;
 
 	snprintf(dat, sizeof(dat) - 1, "%s = %u", name, id);
@@ -1273,27 +1273,27 @@ idp_append_id(struct silofs_idsconf_parser *idp, const char *name, uint32_t id)
 }
 
 static int idp_append_user(struct silofs_idsconf_parser *idp,
-                           const struct silofs_uids *uids)
+                           const struct silofs_uids     *uids)
 {
 	char s[NAME_MAX + 1] = { 0 };
-	int err;
+	int  err;
 
 	err = cpr_resolve_uid_to_name(&idp->cpr, uids->host_uid, s, sizeof(s));
 	return err ? err : idp_append_id(idp, s, uids->fs_uid);
 }
 
 static int idp_append_group(struct silofs_idsconf_parser *idp,
-                            const struct silofs_gids *gids)
+                            const struct silofs_gids     *gids)
 {
 	char s[NAME_MAX + 1] = { 0 };
-	int err;
+	int  err;
 
 	err = cpr_resolve_gid_to_name(&idp->cpr, gids->host_gid, s, sizeof(s));
 	return err ? err : idp_append_id(idp, s, gids->fs_gid);
 }
 
 static int idp_unparse_users(struct silofs_idsconf_parser *idp,
-                             const struct silofs_ugids *ugids)
+                             const struct silofs_ugids    *ugids)
 
 {
 	int err;
@@ -1306,7 +1306,7 @@ static int idp_unparse_users(struct silofs_idsconf_parser *idp,
 }
 
 static int idp_unparse_groups(struct silofs_idsconf_parser *idp,
-                              const struct silofs_ugids *ugids)
+                              const struct silofs_ugids    *ugids)
 
 {
 	int err;
@@ -1319,7 +1319,7 @@ static int idp_unparse_groups(struct silofs_idsconf_parser *idp,
 }
 
 static int idp_unparse_ugids(struct silofs_idsconf_parser *idp,
-                             const struct silofs_ugids *ugids)
+                             const struct silofs_ugids    *ugids)
 
 {
 	int err;
@@ -1360,7 +1360,7 @@ static int idp_resolve_uids_gids(const struct silofs_idsconf_parser *idp,
 {
 	uid_t uid = (uid_t)(-1);
 	gid_t gid = (gid_t)(-1);
-	int err;
+	int   err;
 
 	err = cpr_resolve_uidgid(&idp->cpr, user, &uid, &gid);
 	if (err) {
@@ -1376,7 +1376,7 @@ static int idp_extend_ugids(struct silofs_idsconf_parser *idp,
 {
 	struct silofs_uids uids;
 	struct silofs_gids gids;
-	int err;
+	int                err;
 
 	err = idp_resolve_uids_gids(idp, user, &uids, &gids);
 	if (err) {
@@ -1399,13 +1399,13 @@ static int idp_extend_supgr(struct silofs_idsconf_parser *idp,
                             struct silofs_ugids *ugids, const char *user)
 {
 	struct silofs_gids gids;
-	gid_t groups[64] = { (gid_t)(-1) };
-	gid_t gid = (gid_t)(-1);
-	int ngroups = (int)ARRAY_SIZE(groups);
-	int err;
+	gid_t              groups[64] = { (gid_t)(-1) };
+	gid_t              gid        = (gid_t)(-1);
+	int                ngroups    = (int)ARRAY_SIZE(groups);
+	int                err;
 
 	errno = 0;
-	err = getgrouplist(user, gid, groups, &ngroups);
+	err   = getgrouplist(user, gid, groups, &ngroups);
 	if (err < 0) {
 		return cpr_bad_input(&idp->cpr, "getgrouplist failure");
 	}
@@ -1431,7 +1431,7 @@ int silofs_extend_fsids(struct silofs_ugids *ugids, struct silofs_alloc *alloc,
                         const char *user, bool with_sup_groups)
 {
 	struct silofs_idsconf_parser idp;
-	int err;
+	int                          err;
 
 	idp_rsetup(&idp, alloc, "");
 	err = idp_extend_ugids(&idp, ugids, user);
@@ -1457,8 +1457,8 @@ static void mip_parse_field(const struct silofs_mountinfo_parser *mip,
                             size_t idx, struct silofs_strview *out_field)
 {
 	struct silofs_strview_pair svp;
-	struct silofs_strview *word = &svp.first;
-	struct silofs_strview *tail = &svp.second;
+	struct silofs_strview     *word = &svp.first;
+	struct silofs_strview     *tail = &svp.second;
 
 	silofs_strview_init(out_field, "");
 	strview_split(&mip->cpr.line, " \t\v", &svp);
@@ -1479,12 +1479,12 @@ static bool mip_isfusesilofs_line(const struct silofs_mountinfo_parser *mip)
 }
 
 static int mip_parse_mntinfo(const struct silofs_mountinfo_parser *mip,
-                             struct silofs_mntinfos *minfos)
+                             struct silofs_mntinfos               *minfos)
 {
-	const size_t max_infos = ARRAY_SIZE(minfos->infos);
-	struct silofs_mntinfo *mntinfo = nullptr;
-	struct silofs_strview mntdir;
-	int err;
+	const size_t           max_infos = ARRAY_SIZE(minfos->infos);
+	struct silofs_mntinfo *mntinfo   = nullptr;
+	struct silofs_strview  mntdir;
+	int                    err;
 
 	if (minfos->ninfos >= max_infos) {
 		return cpr_bad_conf(&mip->cpr, nullptr,
@@ -1504,9 +1504,9 @@ static int mip_parse_mntinfo(const struct silofs_mountinfo_parser *mip,
 }
 
 static int mip_parse_line(struct silofs_mountinfo_parser *mip,
-                          struct silofs_mntinfos *minfos)
+                          struct silofs_mntinfos         *minfos)
 {
-	struct silofs_strview sline;
+	struct silofs_strview      sline;
 	struct silofs_strview_pair svp;
 
 	strview_split_chr(&mip->cpr.line, '#', &svp);
@@ -1522,12 +1522,12 @@ static int mip_parse_line(struct silofs_mountinfo_parser *mip,
 }
 
 static int mip_parse_infos(struct silofs_mountinfo_parser *mip,
-                           struct silofs_mntinfos *minfos)
+                           struct silofs_mntinfos         *minfos)
 {
-	struct silofs_strview_pair svp;
+	struct silofs_strview_pair   svp;
 	const struct silofs_strview *line = &svp.first;
 	const struct silofs_strview *tail = &svp.second;
-	int err;
+	int                          err;
 
 	cpr_reset_line(&mip->cpr);
 	strview_split_chr(&mip->cpr.rcfg, '\n', &svp);
@@ -1543,13 +1543,13 @@ static int mip_parse_infos(struct silofs_mountinfo_parser *mip,
 }
 
 static void mip_release_info(const struct silofs_mountinfo_parser *mip,
-                             struct silofs_mntinfo *minfo)
+                             struct silofs_mntinfo                *minfo)
 {
 	cpr_strfree(&mip->cpr, &minfo->mntdir);
 }
 
 static void mip_release_infos(const struct silofs_mountinfo_parser *mip,
-                              struct silofs_mntinfos *minfos)
+                              struct silofs_mntinfos               *minfos)
 {
 	for (size_t i = 0; i < minfos->ninfos; ++i) {
 		mip_release_info(mip, &minfos->infos[i]);
@@ -1567,7 +1567,7 @@ int silofs_parse_mntinfos(struct silofs_mntinfos *minfos,
 }
 
 void silofs_release_mntinfos(struct silofs_mntinfos *minfos,
-                             struct silofs_alloc *alloc)
+                             struct silofs_alloc    *alloc)
 {
 	struct silofs_mountinfo_parser mip;
 

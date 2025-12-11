@@ -58,8 +58,8 @@ static uint64_t htbl_prime_of(size_t nelems)
 static uint64_t htbl_nslots_by_memsize(const struct silofs_alloc *alloc)
 {
 	struct silofs_alloc_stat al_st = { .nbytes_max = 0 };
-	size_t memsize_ngigs;
-	size_t nslots_factor;
+	size_t                   memsize_ngigs;
+	size_t                   nslots_factor;
 
 	/* available memory as 1G units */
 	silofs_memstat(alloc, &al_st);
@@ -103,8 +103,8 @@ static uint64_t hash_of_uaddr(const struct silofs_uaddr *uaddr)
 {
 	const uint64_t uoff = (uint64_t)uaddr->voff;
 	const uint64_t upos = (uint64_t)uaddr->laddr.pos;
-	const uint64_t h1 = 0x646f72616e646f6dULL - upos;
-	const uint64_t h2 = hash_of_lsid(&uaddr->laddr.lsid);
+	const uint64_t h1   = 0x646f72616e646f6dULL - upos;
+	const uint64_t h2   = hash_of_lsid(&uaddr->laddr.lsid);
 
 	return uoff ^ h1 ^ h2;
 }
@@ -122,15 +122,15 @@ static void hkey_setup(struct silofs_hkey *hkey, enum silofs_hkey_type type,
                        const void *key, uint64_t hash)
 {
 	hkey->keyu.key = key;
-	hkey->hash = hash;
-	hkey->type = type;
+	hkey->hash     = hash;
+	hkey->type     = type;
 }
 
 static void hkey_reset(struct silofs_hkey *hkey)
 {
 	hkey->keyu.key = nullptr;
-	hkey->hash = 0;
-	hkey->type = SILOFS_HKEY_NONE;
+	hkey->hash     = 0;
+	hkey->type     = SILOFS_HKEY_NONE;
 }
 
 static long hkey_compare_as_paddr(const struct silofs_hkey *hkey1,
@@ -221,19 +221,19 @@ static void hkey_setup_by(struct silofs_hkey *hkey, enum silofs_hkey_type type,
 	hkey_setup(hkey, type, key, hkey_hash_of(type, key));
 }
 
-void silofs_hkey_by_paddr(struct silofs_hkey *hkey,
+void silofs_hkey_by_paddr(struct silofs_hkey        *hkey,
                           const struct silofs_paddr *paddr)
 {
 	hkey_setup_by(hkey, SILOFS_HKEY_PADDR, paddr);
 }
 
-void silofs_hkey_by_uaddr(struct silofs_hkey *hkey,
+void silofs_hkey_by_uaddr(struct silofs_hkey        *hkey,
                           const struct silofs_uaddr *uaddr)
 {
 	hkey_setup_by(hkey, SILOFS_HKEY_UADDR, uaddr);
 }
 
-void silofs_hkey_by_vaddr(struct silofs_hkey *hkey,
+void silofs_hkey_by_vaddr(struct silofs_hkey        *hkey,
                           const struct silofs_vaddr *vaddr)
 {
 	hkey_setup_by(hkey, SILOFS_HKEY_VADDR, vaddr);
@@ -259,7 +259,7 @@ hmqe_unconst(const struct silofs_hmapq_elem *hmqe)
 {
 	union {
 		const void *p;
-		void *q;
+		void       *q;
 	} u = { .p = hmqe };
 	return u.q;
 }
@@ -290,12 +290,12 @@ void silofs_hmqe_init(struct silofs_hmapq_elem *hmqe, size_t sz)
 	hkey_reset(&hmqe->hme_key);
 	list_head_init(&hmqe->hme_htb_lh);
 	list_head_init(&hmqe->hme_lru_lh);
-	hmqe->hme_magic = SILOFS_HMQE_MAGIC;
-	hmqe->hme_refcnt = 0;
+	hmqe->hme_magic      = SILOFS_HMQE_MAGIC;
+	hmqe->hme_refcnt     = 0;
 	hmqe->hme_htb_hitcnt = 0;
 	hmqe->hme_lru_hitcnt = 0;
-	hmqe->hme_mapped = false;
-	hmqe->hme_forgot = false;
+	hmqe->hme_mapped     = false;
+	hmqe->hme_forgot     = false;
 }
 
 void silofs_hmqe_fini(struct silofs_hmapq_elem *hmqe)
@@ -307,10 +307,10 @@ void silofs_hmqe_fini(struct silofs_hmapq_elem *hmqe)
 	hkey_reset(&hmqe->hme_key);
 	list_head_fini(&hmqe->hme_htb_lh);
 	list_head_fini(&hmqe->hme_lru_lh);
-	hmqe->hme_refcnt = INT_MIN;
+	hmqe->hme_refcnt     = INT_MIN;
 	hmqe->hme_htb_hitcnt = -1;
 	hmqe->hme_lru_hitcnt = -1;
-	hmqe->hme_magic = INT32_MIN;
+	hmqe->hme_magic      = INT32_MIN;
 }
 
 static void
@@ -327,12 +327,12 @@ static void hmqe_hunmap(struct silofs_hmapq_elem *hmqe)
 }
 
 static bool hmqe_need_promote_hmap(const struct silofs_hmapq_elem *hmqe,
-                                   const struct silofs_list_head *hlst)
+                                   const struct silofs_list_head  *hlst)
 {
-	const struct silofs_list_head *hlnk = &hmqe->hme_htb_lh;
-	const struct silofs_list_head *next = hlst->next;
+	const struct silofs_list_head  *hlnk     = &hmqe->hme_htb_lh;
+	const struct silofs_list_head  *next     = hlst->next;
 	const struct silofs_hmapq_elem *lme_next = nullptr;
-	bool ret = false;
+	bool                            ret      = false;
 
 	if ((next != hlnk) && (next->next != hlnk)) {
 		lme_next = hmqe_from_htb_link(next);
@@ -353,7 +353,7 @@ static void hmqe_sanitize_mapped(const struct silofs_hmapq_elem *hmqe)
 }
 
 static void hmqe_promote_hmap(struct silofs_hmapq_elem *hmqe,
-                              struct silofs_list_head *hlst)
+                              struct silofs_list_head  *hlst)
 {
 	struct silofs_list_head *hlnk = &hmqe->hme_htb_lh;
 
@@ -386,18 +386,18 @@ hmqe_unlru(struct silofs_hmapq_elem *hmqe, struct silofs_listq *lru)
 }
 
 static bool hmqe_is_lru_front(const struct silofs_hmapq_elem *hmqe,
-                              const struct silofs_listq *lru)
+                              const struct silofs_listq      *lru)
 {
-	const struct silofs_list_head *lru_front = listq_front(lru);
+	const struct silofs_list_head *lru_front   = listq_front(lru);
 	const struct silofs_list_head *lme_lru_lnk = hmqe_lru_link2(hmqe);
 
 	return (lru_front == lme_lru_lnk);
 }
 
 static bool hmqe_need_relru(const struct silofs_hmapq_elem *hmqe,
-                            const struct silofs_listq *lru)
+                            const struct silofs_listq      *lru)
 {
-	const struct silofs_list_head *lru_front = listq_front(lru);
+	const struct silofs_list_head *lru_front   = listq_front(lru);
 	const struct silofs_list_head *lme_lru_lnk = hmqe_lru_link2(hmqe);
 
 	if (unlikely(lru_front == nullptr)) {
@@ -503,9 +503,9 @@ int silofs_hmapq_init(struct silofs_hmapq *hmapq, struct silofs_alloc *alloc,
 		return -SILOFS_ENOMEM;
 	}
 	listq_init(&hmapq->hmq_lru);
-	hmapq->hmq_htbl = htbl;
+	hmapq->hmq_htbl        = htbl;
 	hmapq->hmq_htbl_nslots = nslots;
-	hmapq->hmq_htbl_size = 0;
+	hmapq->hmq_htbl_size   = 0;
 	return 0;
 }
 
@@ -517,9 +517,9 @@ void silofs_hmapq_fini(struct silofs_hmapq *hmapq, struct silofs_alloc *alloc)
 		silofs_lista_del(hmapq->hmq_htbl, nslots, alloc);
 	}
 	listq_fini(&hmapq->hmq_lru);
-	hmapq->hmq_htbl = nullptr;
+	hmapq->hmq_htbl        = nullptr;
 	hmapq->hmq_htbl_nslots = 0;
-	hmapq->hmq_htbl_size = 0;
+	hmapq->hmq_htbl_size   = 0;
 }
 
 size_t silofs_hmapq_usage(const struct silofs_hmapq *hmapq)
@@ -528,7 +528,7 @@ size_t silofs_hmapq_usage(const struct silofs_hmapq *hmapq)
 }
 
 static size_t hmapq_key_to_slot(const struct silofs_hmapq *hmapq,
-                                const struct silofs_hkey *hkey)
+                                const struct silofs_hkey  *hkey)
 {
 	/*
 	 * 2654435761 is the closest prime number to (2**32)*golden_ratio
@@ -541,17 +541,17 @@ static size_t hmapq_key_to_slot(const struct silofs_hmapq *hmapq,
 
 static struct silofs_list_head *
 hmapq_hlist_of(const struct silofs_hmapq *hmapq,
-               const struct silofs_hkey *hkey)
+               const struct silofs_hkey  *hkey)
 {
 	const size_t slot = hmapq_key_to_slot(hmapq, hkey);
 
 	return &hmapq->hmq_htbl[slot];
 }
 
-void silofs_hmapq_store(struct silofs_hmapq *hmapq,
+void silofs_hmapq_store(struct silofs_hmapq      *hmapq,
                         struct silofs_hmapq_elem *hmqe)
 {
-	struct silofs_listq *lru = &hmapq->hmq_lru;
+	struct silofs_listq     *lru  = &hmapq->hmq_lru;
 	struct silofs_list_head *hlst = hmapq_hlist_of(hmapq, &hmqe->hme_key);
 
 	hmqe_lru(hmqe, lru);
@@ -562,12 +562,12 @@ void silofs_hmapq_store(struct silofs_hmapq *hmapq,
 static const struct silofs_hmapq_elem *
 hmapq_find(const struct silofs_hmapq *hmapq, const struct silofs_hkey *hkey)
 {
-	const struct silofs_list_head *hlst;
-	const struct silofs_list_head *itr;
+	const struct silofs_list_head  *hlst;
+	const struct silofs_list_head  *itr;
 	const struct silofs_hmapq_elem *hmqe;
 
 	hlst = hmapq_hlist_of(hmapq, hkey);
-	itr = hlst->next;
+	itr  = hlst->next;
 	while (itr != hlst) {
 		hmqe = hmqe_from_htb_link(itr);
 		if (hkey_isequal(&hmqe->hme_key, hkey)) {
@@ -579,7 +579,7 @@ hmapq_find(const struct silofs_hmapq *hmapq, const struct silofs_hkey *hkey)
 }
 
 struct silofs_hmapq_elem *silofs_hmapq_lookup(const struct silofs_hmapq *hmapq,
-                                              const struct silofs_hkey *hkey)
+                                              const struct silofs_hkey  *hkey)
 {
 	const struct silofs_hmapq_elem *hmqe;
 
@@ -603,7 +603,7 @@ hmapq_unlru(struct silofs_hmapq *hmapq, struct silofs_hmapq_elem *hmqe)
 	hmqe_unlru(hmqe, &hmapq->hmq_lru);
 }
 
-void silofs_hmapq_unmap(struct silofs_hmapq *hmapq,
+void silofs_hmapq_unmap(struct silofs_hmapq      *hmapq,
                         struct silofs_hmapq_elem *hmqe)
 {
 	if (hmqe->hme_mapped) {
@@ -611,7 +611,7 @@ void silofs_hmapq_unmap(struct silofs_hmapq *hmapq,
 	}
 }
 
-void silofs_hmapq_remove(struct silofs_hmapq *hmapq,
+void silofs_hmapq_remove(struct silofs_hmapq      *hmapq,
                          struct silofs_hmapq_elem *hmqe)
 {
 	if (hmqe->hme_mapped) {
@@ -620,11 +620,11 @@ void silofs_hmapq_remove(struct silofs_hmapq *hmapq,
 	hmapq_unlru(hmapq, hmqe);
 }
 
-static void hmapq_promote_lru(struct silofs_hmapq *hmapq,
+static void hmapq_promote_lru(struct silofs_hmapq      *hmapq,
                               struct silofs_hmapq_elem *hmqe, bool now)
 {
-	struct silofs_listq *lru = &hmapq->hmq_lru;
-	const bool first = hmqe_is_lru_front(hmqe, lru);
+	struct silofs_listq *lru   = &hmapq->hmq_lru;
+	const bool           first = hmqe_is_lru_front(hmqe, lru);
 
 	hmqe->hme_lru_hitcnt++;
 	if (!first && (now || hmqe_need_relru(hmqe, lru))) {
@@ -644,7 +644,7 @@ hmapq_promote_hlnk(struct silofs_hmapq *hmapq, struct silofs_hmapq_elem *hmqe)
 	}
 }
 
-void silofs_hmapq_promote(struct silofs_hmapq *hmapq,
+void silofs_hmapq_promote(struct silofs_hmapq      *hmapq,
                           struct silofs_hmapq_elem *hmqe, bool now)
 {
 	hmapq_promote_lru(hmapq, hmqe, now);
@@ -669,17 +669,17 @@ typedef int (*silofs_hmapq_elem_fn)(struct silofs_hmapq_elem *, void *);
 void silofs_hmapq_riterate(struct silofs_hmapq *hmapq, size_t limit,
                            silofs_hmapq_elem_fn cb, void *arg)
 {
-	struct silofs_list_head *itr = nullptr;
+	struct silofs_list_head  *itr  = nullptr;
 	struct silofs_hmapq_elem *hmqe = nullptr;
-	struct silofs_listq *lru = &hmapq->hmq_lru;
-	size_t cnt = silofs_min(limit, lru->sz);
-	int ret = 0;
+	struct silofs_listq      *lru  = &hmapq->hmq_lru;
+	size_t                    cnt  = silofs_min(limit, lru->sz);
+	int                       ret  = 0;
 
 	itr = lru->ls.prev; /* backward iteration */
 	while (!ret && cnt-- && (itr != &lru->ls)) {
 		hmqe = hmqe_from_lru_link(itr);
-		itr = itr->prev;
-		ret = cb(hmqe, arg);
+		itr  = itr->prev;
+		ret  = cb(hmqe, arg);
 	}
 }
 

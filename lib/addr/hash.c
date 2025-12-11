@@ -30,13 +30,13 @@ bool silofs_hash256_isequal(const struct silofs_hash256 *hash,
 }
 
 void silofs_hash256_copyto(const struct silofs_hash256 *hash,
-                           struct silofs_hash256 *other)
+                           struct silofs_hash256       *other)
 {
 	memcpy(other->hash, hash->hash, sizeof(other->hash));
 }
 
 size_t silofs_hash256_to_name(const struct silofs_hash256 *hash,
-                              struct silofs_strbuf *out_name)
+                              struct silofs_strbuf        *out_name)
 {
 	size_t cnt = 0;
 

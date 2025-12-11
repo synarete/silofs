@@ -28,7 +28,7 @@
 static void test_fallocate_basic_(struct ft_env *fte, ssize_t len)
 {
 	const char *path = ft_new_path_unique(fte);
-	int fd = -1;
+	int         fd   = -1;
 
 	ft_creat(path, 0600, &fd);
 	ft_fallocate(fd, 0, 0, len);
@@ -55,10 +55,10 @@ static void test_fallocate_basic(struct ft_env *fte)
  */
 static void test_fallocate_(struct ft_env *fte, off_t off, size_t ulen)
 {
-	struct stat st = { .st_size = -1 };
+	struct stat st   = { .st_size = -1 };
 	const char *path = ft_new_path_unique(fte);
-	ssize_t len = (ssize_t)ulen;
-	int fd = -1;
+	ssize_t     len  = (ssize_t)ulen;
+	int         fd   = -1;
 
 	ft_creat(path, 0600, &fd);
 	ft_fstat(fd, &st);
@@ -108,13 +108,13 @@ static void test_fallocate_unaligned(struct ft_env *fte)
  */
 static void test_fallocate_zeros_(struct ft_env *fte, off_t off, size_t ulen)
 {
-	struct stat st = { .st_size = -1 };
-	const char *path = ft_new_path_unique(fte);
-	const ssize_t len = (ssize_t)ulen;
-	int fd = -1;
-	uint8_t byte = 1;
-	uint8_t zero = 0;
-	uint8_t ab = 0xAB;
+	struct stat   st   = { .st_size = -1 };
+	const char   *path = ft_new_path_unique(fte);
+	const ssize_t len  = (ssize_t)ulen;
+	int           fd   = -1;
+	uint8_t       byte = 1;
+	uint8_t       zero = 0;
+	uint8_t       ab   = 0xAB;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_fallocate(fd, 0, off, len);
@@ -159,14 +159,14 @@ static void test_fallocate_zeros(struct ft_env *fte)
 static void
 test_fallocate_truncate_(struct ft_env *fte, off_t off, size_t ulen)
 {
-	const char *path = ft_new_path_unique(fte);
-	const ssize_t len = (ssize_t)ulen;
-	const off_t mid = off + (len / 2);
-	const off_t end = off + len;
-	int fd = -1;
-	uint16_t abcd = 0xABCD;
-	uint8_t byte = 1;
-	uint8_t zero = 0;
+	const char   *path = ft_new_path_unique(fte);
+	const ssize_t len  = (ssize_t)ulen;
+	const off_t   mid  = off + (len / 2);
+	const off_t   end  = off + len;
+	int           fd   = -1;
+	uint16_t      abcd = 0xABCD;
+	uint8_t       byte = 1;
+	uint8_t       zero = 0;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_fallocate(fd, 0, off, len);
@@ -218,16 +218,16 @@ static void test_fallocate_truncate(struct ft_env *fte)
  */
 static void test_fallocate_beyond_(struct ft_env *fte, off_t off, size_t len)
 {
-	struct stat st = { .st_size = -1 };
-	const char *path = ft_new_path_unique(fte);
-	const ssize_t ssz = (ssize_t)len;
-	void *data = ft_new_buf_rands(fte, len);
-	void *rand = ft_new_buf_rands(fte, len);
-	void *zero = ft_new_buf_zeros(fte, len);
-	const int mode = FALLOC_FL_KEEP_SIZE;
-	blkcnt_t blocks = 0;
-	int fd = -1;
-	uint8_t byte = 1;
+	struct stat   st     = { .st_size = -1 };
+	const char   *path   = ft_new_path_unique(fte);
+	const ssize_t ssz    = (ssize_t)len;
+	void         *data   = ft_new_buf_rands(fte, len);
+	void         *rand   = ft_new_buf_rands(fte, len);
+	void         *zero   = ft_new_buf_zeros(fte, len);
+	const int     mode   = FALLOC_FL_KEEP_SIZE;
+	blkcnt_t      blocks = 0;
+	int           fd     = -1;
+	uint8_t       byte   = 1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_fallocate(fd, 0, off, ssz);
@@ -295,12 +295,12 @@ static void
 test_fallocate_punch_hole_(struct ft_env *fte, off_t data_off, size_t data_len,
                            off_t hole_off, size_t hole_len)
 {
-	const void *buf = ft_new_buf_rands(fte, data_len);
+	const void *buf  = ft_new_buf_rands(fte, data_len);
 	const char *path = ft_new_path_unique(fte);
-	const int mode = FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE;
-	off_t pos = 0;
-	int fd = -1;
-	uint8_t byte;
+	const int   mode = FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE;
+	off_t       pos  = 0;
+	int         fd   = -1;
+	uint8_t     byte;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_pwriten(fd, buf, data_len, data_off);
@@ -329,18 +329,18 @@ static void test_fallocate_punch_hole(struct ft_env *fte)
  */
 static void test_fallocate_punch_into_hole_(struct ft_env *fte, off_t base_off)
 {
-	struct stat st[2];
-	const size_t size = FT_1M;
-	const off_t zlen = FT_1M / 4;
-	const off_t off = base_off;
-	const off_t off_end = base_off + (off_t)size;
-	void *buf1 = ft_new_buf_rands(fte, size);
-	void *buf2 = ft_new_buf_zeros(fte, size);
-	void *buf3 = ft_new_buf_rands(fte, size);
-	const char *path = ft_new_path_unique(fte);
-	const int mode = FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE;
-	size_t nrd = 0;
-	int fd = -1;
+	struct stat  st[2];
+	const size_t size    = FT_1M;
+	const off_t  zlen    = FT_1M / 4;
+	const off_t  off     = base_off;
+	const off_t  off_end = base_off + (off_t)size;
+	void        *buf1    = ft_new_buf_rands(fte, size);
+	void        *buf2    = ft_new_buf_zeros(fte, size);
+	void        *buf3    = ft_new_buf_rands(fte, size);
+	const char  *path    = ft_new_path_unique(fte);
+	const int    mode    = FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE;
+	size_t       nrd     = 0;
+	int          fd      = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_ftruncate(fd, off_end);
@@ -388,16 +388,16 @@ static void test_fallocate_punch_into_hole(struct ft_env *fte)
 
 static void test_fallocate_punch_into_allocated(struct ft_env *fte)
 {
-	const size_t size = FT_1M;
+	const size_t size   = FT_1M;
 	const size_t nzeros = FT_64K;
-	const off_t off = (off_t)nzeros;
-	const char *path = ft_new_path_unique(fte);
-	char *buf1 = ft_new_buf_rands(fte, size);
-	char *buf2 = ft_new_buf_zeros(fte, size);
-	const int mode = FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE;
-	size_t nrd = 0;
-	off_t pos = -1;
-	int fd = -1;
+	const off_t  off    = (off_t)nzeros;
+	const char  *path   = ft_new_path_unique(fte);
+	char        *buf1   = ft_new_buf_rands(fte, size);
+	char        *buf2   = ft_new_buf_zeros(fte, size);
+	const int    mode   = FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE;
+	size_t       nrd    = 0;
+	off_t        pos    = -1;
+	int          fd     = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_ftruncate(fd, (off_t)size);
@@ -424,14 +424,14 @@ static void test_fallocate_punch_into_allocated(struct ft_env *fte)
 static void
 test_fallocate_zero_range_(struct ft_env *fte, off_t off, size_t len)
 {
-	struct stat st[2];
-	const char *path = ft_new_path_unique(fte);
-	uint8_t *data_buf = ft_new_buf_rands(fte, len);
-	uint8_t *read_buf = ft_new_buf_rands(fte, len);
-	uint8_t *zero_buf = ft_new_buf_zeros(fte, len);
-	const ssize_t ssz = (ssize_t)len;
-	int fd = -1;
-	int mode;
+	struct stat   st[2];
+	const char   *path     = ft_new_path_unique(fte);
+	uint8_t      *data_buf = ft_new_buf_rands(fte, len);
+	uint8_t      *read_buf = ft_new_buf_rands(fte, len);
+	uint8_t      *zero_buf = ft_new_buf_zeros(fte, len);
+	const ssize_t ssz      = (ssize_t)len;
+	int           fd       = -1;
+	int           mode;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	mode = FALLOC_FL_ZERO_RANGE | FALLOC_FL_KEEP_SIZE;
@@ -538,14 +538,14 @@ static void test_fallocate_zero_range(struct ft_env *fte)
 static void
 test_fallocate_sparse_(struct ft_env *fte, off_t base_off, size_t step_size)
 {
-	struct stat st;
-	const char *path = ft_new_path_unique(fte);
-	const size_t cnt = 1024;
-	blkcnt_t blocks = 0;
-	off_t off = -1;
-	off_t len = 0;
-	off_t tmp = 0;
-	int fd = -1;
+	struct stat  st;
+	const char  *path   = ft_new_path_unique(fte);
+	const size_t cnt    = 1024;
+	blkcnt_t     blocks = 0;
+	off_t        off    = -1;
+	off_t        len    = 0;
+	off_t        tmp    = 0;
+	int          fd     = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_fstat(fd, &st);
@@ -553,7 +553,7 @@ test_fallocate_sparse_(struct ft_env *fte, off_t base_off, size_t step_size)
 	ft_expect_eq(st.st_blocks, 0);
 
 	blocks = 0;
-	off = base_off;
+	off    = base_off;
 	for (size_t i = 0; i < cnt; ++i) {
 		off = base_off + (ssize_t)(i * step_size);
 		len = (int)sizeof(off);

@@ -23,14 +23,14 @@
  */
 static void test_unlinked_simple_(struct ft_env *fte, size_t len)
 {
-	const char *path = ft_new_path_unique(fte);
-	void *buf1 = ft_new_buf_rands(fte, len);
-	void *buf2 = ft_new_buf_rands(fte, len);
-	const size_t cnt = 100;
-	off_t pos = -1;
-	size_t nwr = 0;
-	size_t nrd = 0;
-	int fd = -1;
+	const char  *path = ft_new_path_unique(fte);
+	void        *buf1 = ft_new_buf_rands(fte, len);
+	void        *buf2 = ft_new_buf_rands(fte, len);
+	const size_t cnt  = 100;
+	off_t        pos  = -1;
+	size_t       nwr  = 0;
+	size_t       nrd  = 0;
+	int          fd   = -1;
 
 	ft_unlink_noent(path);
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
@@ -71,17 +71,17 @@ static void test_unlinked_simple(struct ft_env *fte)
  */
 static void test_unlinked_complex_(struct ft_env *fte, off_t off, size_t len)
 {
-	const char *path = ft_new_path_unique(fte);
-	uint8_t *buf1 = ft_new_buf_rands(fte, len);
-	uint8_t *buf2 = ft_new_buf_rands(fte, len);
-	const size_t cnt = 100;
-	off_t pos = 0;
-	int fd = -1;
+	const char  *path = ft_new_path_unique(fte);
+	uint8_t     *buf1 = ft_new_buf_rands(fte, len);
+	uint8_t     *buf2 = ft_new_buf_rands(fte, len);
+	const size_t cnt  = 100;
+	off_t        pos  = 0;
+	int          fd   = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_unlink(path);
 	for (size_t i = 0; i < cnt; ++i) {
-		pos = off + (off_t)(i * len);
+		pos     = off + (off_t)(i * len);
 		buf1[0] = (uint8_t)i;
 		ft_pwriten(fd, buf1, len, pos);
 	}
@@ -129,13 +129,13 @@ static void test_unlinked_complex(struct ft_env *fte)
  */
 static void test_unlinked_segs_(struct ft_env *fte, off_t off, size_t len)
 {
-	const char *path = ft_new_path_unique(fte);
-	void *buf1 = ft_new_buf_rands(fte, len);
-	void *buf2 = ft_new_buf_rands(fte, len);
-	const size_t cnt = 100;
-	off_t pos = 0;
-	int fd1 = -1;
-	int fd2 = -1;
+	const char  *path = ft_new_path_unique(fte);
+	void        *buf1 = ft_new_buf_rands(fte, len);
+	void        *buf2 = ft_new_buf_rands(fte, len);
+	const size_t cnt  = 100;
+	off_t        pos  = 0;
+	int          fd1  = -1;
+	int          fd2  = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd1);
 	ft_open(path, O_RDONLY, 0, &fd2);
@@ -181,13 +181,13 @@ static void test_unlinked_segs(struct ft_env *fte)
  */
 static void test_unlinked_nfiles_(struct ft_env *fte, off_t off, size_t len)
 {
-	const char *path = ft_new_path_unique(fte);
-	void *buf1 = ft_new_buf_rands(fte, len);
-	void *buf2 = ft_new_buf_rands(fte, len);
+	const char  *path = ft_new_path_unique(fte);
+	void        *buf1 = ft_new_buf_rands(fte, len);
+	void        *buf2 = ft_new_buf_rands(fte, len);
 	const size_t nfds = 500;
-	off_t pos = 0;
-	int *fds = nullptr;
-	int fd = -1;
+	off_t        pos  = 0;
+	int         *fds  = nullptr;
+	int          fd   = -1;
 
 	fds = ft_new_buf_zeros(fte, nfds * sizeof(fd));
 	for (size_t i = 0; i < nfds; ++i) {
@@ -200,20 +200,20 @@ static void test_unlinked_nfiles_(struct ft_env *fte, off_t off, size_t len)
 	}
 	for (size_t i = 0; i < nfds; ++i) {
 		pos = off + (ssize_t)i;
-		fd = fds[i];
+		fd  = fds[i];
 		ft_preadn(fd, buf2, len, pos);
 		ft_expect_eqm(buf1, buf2, len);
 		ft_unlink_noent(path);
 	}
 	for (size_t i = 0; i < nfds; ++i) {
 		pos = off + (ssize_t)i;
-		fd = fds[i];
+		fd  = fds[i];
 		ft_pwriten(fd, &fd, sizeof(fd), pos);
 		ft_unlink_noent(path);
 	}
 	for (size_t i = 0; i < nfds; ++i) {
 		pos = off + (ssize_t)i;
-		fd = fds[i];
+		fd  = fds[i];
 		ft_preadn(fd, buf2, sizeof(fd), pos);
 		ft_expect_eqm(&fd, buf2, sizeof(fd));
 		ft_unlink_noent(path);
@@ -247,13 +247,13 @@ static void test_unlinked_nfiles(struct ft_env *fte)
  */
 static void test_unlinked_rename_(struct ft_env *fte, size_t cnt)
 {
-	off_t pos = 0;
-	size_t val = 0;
-	const size_t vsz = sizeof(val);
-	const char *path1 = ft_new_path_unique(fte);
-	const char *path2 = ft_new_path_unique(fte);
-	int fd1 = -1;
-	int fd2 = -1;
+	off_t        pos   = 0;
+	size_t       val   = 0;
+	const size_t vsz   = sizeof(val);
+	const char  *path1 = ft_new_path_unique(fte);
+	const char  *path2 = ft_new_path_unique(fte);
+	int          fd1   = -1;
+	int          fd2   = -1;
 
 	ft_open(path1, O_CREAT | O_RDWR, 0600, &fd1);
 	for (size_t i = cnt; i > 0; --i) {
@@ -297,21 +297,21 @@ static void test_unlinked_rename(struct ft_env *fte)
 static void test_unlinked_same_path_(struct ft_env *fte, size_t cnt)
 {
 	const char *path = ft_new_path_unique(fte);
-	off_t pos = -1;
-	int *fds = nullptr;
-	int dat = -1;
-	int fd = -1;
+	off_t       pos  = -1;
+	int        *fds  = nullptr;
+	int         dat  = -1;
+	int         fd   = -1;
 
 	fds = ft_new_buf_zeros(fte, cnt * sizeof(fd));
 	for (size_t i = 0; i < cnt; ++i) {
 		ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 		ft_unlink(path);
 		fds[i] = fd;
-		pos = (off_t)((i * FT_1M) + i);
+		pos    = (off_t)((i * FT_1M) + i);
 		ft_pwriten(fd, &fd, sizeof(fd), pos);
 	}
 	for (size_t i = 0; i < cnt; ++i) {
-		fd = fds[i];
+		fd  = fds[i];
 		pos = (off_t)((i * FT_1M) + i);
 		ft_preadn(fd, &dat, sizeof(dat), pos);
 		ft_expect_eq(fd, dat);

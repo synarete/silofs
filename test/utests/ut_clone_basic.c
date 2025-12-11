@@ -20,11 +20,11 @@
 
 static void ut_clone_mkdir_rmdir(struct ut_env *ute)
 {
-	struct statvfs stvfs[2];
+	struct statvfs              stvfs[2];
 	struct silofs_space_stats1k spst[2];
-	const ino_t rootd_ino = SILOFS_INO_ROOT;
-	ino_t dino = 0;
-	const char *name = UT_NAME;
+	const ino_t                 rootd_ino = SILOFS_INO_ROOT;
+	ino_t                       dino      = 0;
+	const char                 *name      = UT_NAME;
 
 	ut_statfs(ute, rootd_ino, &stvfs[0]);
 	ut_statsp(ute, rootd_ino, &spst[0]);
@@ -41,8 +41,8 @@ static void ut_clone_mkdir_rmdir(struct ut_env *ute)
 static void ut_clone_create_remove(struct ut_env *ute)
 {
 	const char *name = UT_NAME;
-	ino_t dino = 0;
-	ino_t ino = 0;
+	ino_t       dino = 0;
+	ino_t       ino  = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -55,11 +55,11 @@ static void ut_clone_create_remove(struct ut_env *ute)
 
 static void ut_clone_write_read(struct ut_env *ute)
 {
-	time_t val = silofs_time_real_now();
+	time_t      val  = silofs_time_real_now();
 	const char *name = UT_NAME;
-	const off_t off = (off_t)(val & 0xFFFFFF);
-	ino_t dino = 0;
-	ino_t ino = 0;
+	const off_t off  = (off_t)(val & 0xFFFFFF);
+	ino_t       dino = 0;
+	ino_t       ino  = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -75,9 +75,9 @@ static void ut_clone_write_read(struct ut_env *ute)
 static void ut_clone_write_post(struct ut_env *ute)
 {
 	const char *name = UT_NAME;
-	const off_t off = UT_1M;
-	ino_t dino = 0;
-	ino_t ino = 0;
+	const off_t off  = UT_1M;
+	ino_t       dino = 0;
+	ino_t       ino  = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -91,12 +91,12 @@ static void ut_clone_write_post(struct ut_env *ute)
 
 static void ut_clone_overwrite(struct ut_env *ute)
 {
-	uint64_t val1 = (uint64_t)silofs_time_real_now();
-	uint64_t val2 = ~val1;
+	uint64_t    val1 = (uint64_t)silofs_time_real_now();
+	uint64_t    val2 = ~val1;
 	const char *name = UT_NAME;
-	const off_t off = UT_1G;
-	ino_t dino = 0;
-	ino_t ino = 0;
+	const off_t off  = UT_1G;
+	ino_t       dino = 0;
+	ino_t       ino  = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -114,8 +114,8 @@ static void ut_clone_overwrite(struct ut_env *ute)
 static void ut_clone_reload(struct ut_env *ute)
 {
 	const char *name = UT_NAME;
-	ino_t dino = 0;
-	ino_t ino = 0;
+	ino_t       dino = 0;
+	ino_t       ino  = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -141,12 +141,12 @@ static void ut_clone_reload_other(struct ut_env *ute)
 {
 	const off_t off1[] = { 0, UT_1G };
 	const off_t off2[] = { UT_1M, UT_1K };
-	const char *name = UT_NAME;
-	const char *str1 = ut_randstr(ute, UT_1K);
-	const char *str2 = ut_randstr(ute, UT_4K);
-	ino_t dino = 0;
-	ino_t ino1 = 0;
-	ino_t ino2 = 0;
+	const char *name   = UT_NAME;
+	const char *str1   = ut_randstr(ute, UT_1K);
+	const char *str2   = ut_randstr(ute, UT_4K);
+	ino_t       dino   = 0;
+	ino_t       ino1   = 0;
+	ino_t       ino2   = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino1);

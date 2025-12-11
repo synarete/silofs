@@ -52,23 +52,23 @@ struct cmd_mount_in_args {
 	char *mntpoint_real;
 	char *uhelper;
 	char *password;
-	int flags;
-	bool explicit_log_level;
-	bool systemd_run;
-	bool no_prompt;
+	int   flags;
+	bool  explicit_log_level;
+	bool  systemd_run;
+	bool  no_prompt;
 };
 
 struct cmd_mount_ctx {
 	struct cmd_mount_in_args in_args;
-	struct silofs_env_args env_args;
-	struct silofs_blobid fs_blobid;
-	struct silofs_env *env;
-	pid_t child_pid;
-	time_t start_time;
-	int halt_signal;
-	int post_exec_status;
-	bool has_lockfile;
-	bool with_progname; /* XXX: TODO: allow set */
+	struct silofs_env_args   env_args;
+	struct silofs_blobid     fs_blobid;
+	struct silofs_env       *env;
+	pid_t                    child_pid;
+	time_t                   start_time;
+	int                      halt_signal;
+	int                      post_exec_status;
+	bool                     has_lockfile;
+	bool                     with_progname; /* XXX: TODO: allow set */
 };
 
 static struct cmd_mount_ctx *cmd_mount_ctx_p;
@@ -90,33 +90,33 @@ enum cmd_mount_subopts {
 
 static void cmd_mount_getsubopts(struct cmd_mount_ctx *ctx)
 {
-	char subopts[256] = "";
-	char tok_ro[] = "ro";
-	char tok_rw[] = "rw";
-	char tok_dev[] = "dev";
-	char tok_nodev[] = "nodev";
-	char tok_suid[] = "suid";
-	char tok_nosuid[] = "nosuid";
-	char tok_exec[] = "exec";
-	char tok_noexec[] = "noexec";
-	char tok_hostids[] = "hostids";
-	char tok_passwd[] = "passwd";
-	char *const toks[] = {
-		[CMD_MOUNT_OPT_RO] = tok_ro,           //
-		[CMD_MOUNT_OPT_RW] = tok_rw,           //
-		[CMD_MOUNT_OPT_DEV] = tok_dev,         //
-		[CMD_MOUNT_OPT_NODEV] = tok_nodev,     //
-		[CMD_MOUNT_OPT_SUID] = tok_suid,       //
-		[CMD_MOUNT_OPT_NOSUID] = tok_nosuid,   //
-		[CMD_MOUNT_OPT_EXEC] = tok_exec,       //
-		[CMD_MOUNT_OPT_NOEXEC] = tok_noexec,   //
-		[CMD_MOUNT_OPT_HOSTIDS] = tok_hostids, //
-		[CMD_MOUNT_OPT_PASSWD] = tok_passwd,   //
-		nullptr                                //
+	char        subopts[256]  = "";
+	char        tok_ro[]      = "ro";
+	char        tok_rw[]      = "rw";
+	char        tok_dev[]     = "dev";
+	char        tok_nodev[]   = "nodev";
+	char        tok_suid[]    = "suid";
+	char        tok_nosuid[]  = "nosuid";
+	char        tok_exec[]    = "exec";
+	char        tok_noexec[]  = "noexec";
+	char        tok_hostids[] = "hostids";
+	char        tok_passwd[]  = "passwd";
+	char *const toks[]        = {
+                [CMD_MOUNT_OPT_RO]      = tok_ro,      //
+                [CMD_MOUNT_OPT_RW]      = tok_rw,      //
+                [CMD_MOUNT_OPT_DEV]     = tok_dev,     //
+                [CMD_MOUNT_OPT_NODEV]   = tok_nodev,   //
+                [CMD_MOUNT_OPT_SUID]    = tok_suid,    //
+                [CMD_MOUNT_OPT_NOSUID]  = tok_nosuid,  //
+                [CMD_MOUNT_OPT_EXEC]    = tok_exec,    //
+                [CMD_MOUNT_OPT_NOEXEC]  = tok_noexec,  //
+                [CMD_MOUNT_OPT_HOSTIDS] = tok_hostids, //
+                [CMD_MOUNT_OPT_PASSWD]  = tok_passwd,  //
+                nullptr                                //
 	};
-	char *sopt = nullptr;
-	char *sval = nullptr;
-	int skey = 0;
+	char  *sopt = nullptr;
+	char  *sval = nullptr;
+	int    skey = 0;
 	size_t len;
 
 	len = strlen(optarg);
@@ -176,8 +176,8 @@ static void cmd_mount_parse_optargs(struct cmd_mount_ctx *ctx)
 		{ nullptr, 0, 0 },
 	};
 	struct cmd_optargs opa;
-	int opt_chr = 1;
-	bool barg;
+	int                opt_chr = 1;
+	bool               barg;
 
 	cmd_optargs_init(&opa, ods);
 	while (!opa.opa_done && (opt_chr > 0)) {
@@ -255,15 +255,15 @@ static void cmd_mount_parse_optargs(struct cmd_mount_ctx *ctx)
 
 static void cmd_mount_setup_env_args(struct cmd_mount_ctx *ctx)
 {
-	const struct cmd_mount_in_args *in_args = &ctx->in_args;
-	struct silofs_env_args *env_args = &ctx->env_args;
+	const struct cmd_mount_in_args *in_args  = &ctx->in_args;
+	struct silofs_env_args         *env_args = &ctx->env_args;
 
 	cmd_setup_env_args(env_args);
-	env_args->flags = (enum silofs_flags)in_args->flags;
+	env_args->flags             = (enum silofs_flags)in_args->flags;
 	env_args->boot_args.repodir = in_args->repodir_real;
 	env_args->boot_args.fs_name = in_args->fsname;
-	env_args->boot_args.passwd = in_args->password;
-	env_args->boot_args.mntdir = in_args->mntpoint_real;
+	env_args->boot_args.passwd  = in_args->password;
+	env_args->boot_args.mntdir  = in_args->mntpoint_real;
 }
 
 static void cmd_mount_setup_fs_ids(struct cmd_mount_ctx *ctx)
@@ -435,9 +435,9 @@ static void cmd_mount_close_fs(struct cmd_mount_ctx *ctx)
 silofs_attr_noreturn static void
 cmd_mount_finish_parent(struct cmd_mount_ctx *ctx)
 {
-	struct stat st = { .st_ino = 0 };
-	int retry = 20;
-	bool ready = false;
+	struct stat st    = { .st_ino = 0 };
+	int         retry = 20;
+	bool        ready = false;
 
 	while ((retry-- > 0) && !ready) {
 		cmd_stat_dir(ctx->in_args.mntpoint_real, &st);
@@ -450,15 +450,15 @@ cmd_mount_finish_parent(struct cmd_mount_ctx *ctx)
 static void cmd_mount_wait_child_pid(struct cmd_mount_ctx *ctx)
 {
 	pid_t ret;
-	int wstatus = 0;
-	int exited;
-	int exit_status;
+	int   wstatus = 0;
+	int   exited;
+	int   exit_status;
 
 	ret = waitpid(ctx->child_pid, &wstatus, WNOHANG);
 	if (ret == -1) {
 		exit(errno);
 	}
-	exited = WIFEXITED(wstatus);
+	exited      = WIFEXITED(wstatus);
 	exit_status = WEXITSTATUS(wstatus);
 	if (exited && exit_status) {
 		exit(exit_status);
@@ -681,8 +681,8 @@ static void cmd_mount_exec_phase2(struct cmd_mount_ctx *ctx)
 void cmd_execute_mount(void)
 {
 	struct cmd_mount_ctx ctx = {
-		.env = nullptr,
-		.halt_signal = -1,
+		.env              = nullptr,
+		.halt_signal      = -1,
 		.post_exec_status = 0,
 	};
 

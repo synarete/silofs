@@ -43,7 +43,7 @@ static int zcmpr_init_cctx(struct silofs_zcmpr *zc)
 	if (cctx == nullptr) {
 		return -SILOFS_ENOMEM;
 	}
-	zc->ctx = cctx;
+	zc->ctx  = cctx;
 	zc->mode = ZCOMP_ZSTD_CCTX;
 	return 0;
 }
@@ -56,7 +56,7 @@ static int zcmpr_init_dctx(struct silofs_zcmpr *zc)
 	if (dctx == nullptr) {
 		return -SILOFS_ENOMEM;
 	}
-	zc->ctx = dctx;
+	zc->ctx  = dctx;
 	zc->mode = ZCOMP_ZSTD_DCTX;
 	return 0;
 }
@@ -71,7 +71,7 @@ static void zcmpr_fini_cctx(struct silofs_zcmpr *zc)
 	ZSTD_CCtx *cctx = zc->ctx;
 
 	ZSTD_freeCCtx(cctx);
-	zc->ctx = nullptr;
+	zc->ctx  = nullptr;
 	zc->mode = 0;
 }
 
@@ -106,12 +106,12 @@ int silofs_zcmpr_compress(const struct silofs_zcmpr *zc, void *dst,
                           int cl_in, size_t *out_sz)
 {
 	size_t ret;
-	int cl;
+	int    cl;
 
 	if (zc->mode != ZCOMP_ZSTD_CCTX) {
 		return -SILOFS_EINVAL;
 	}
-	cl = compress_level_of(cl_in);
+	cl  = compress_level_of(cl_in);
 	ret = ZSTD_compressCCtx(zc->ctx, dst, dst_cap, src, src_size, cl);
 	if (ZSTD_isError(ret)) {
 		return -SILOFS_ECOMPRESS;

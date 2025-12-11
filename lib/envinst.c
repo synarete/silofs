@@ -26,22 +26,22 @@
 /* env initialization-state flags */
 enum silofs_env_initf {
 	SILOFS_ENVIF_PRANDGEN = SILOFS_BIT(0),
-	SILOFS_ENVIF_QALLOC = SILOFS_BIT(1),
+	SILOFS_ENVIF_QALLOC   = SILOFS_BIT(1),
 	SILOFS_ENVIF_STDALLOC = SILOFS_BIT(2),
-	SILOFS_ENVIF_REPO = SILOFS_BIT(3),
-	SILOFS_ENVIF_PCACHE = SILOFS_BIT(4),
-	SILOFS_ENVIF_LCACHE = SILOFS_BIT(5),
-	SILOFS_ENVIF_SPAMAPS = SILOFS_BIT(6),
-	SILOFS_ENVIF_SUBMITQ = SILOFS_BIT(7),
-	SILOFS_ENVIF_IDSMAP = SILOFS_BIT(8),
-	SILOFS_ENVIF_FLUSHER = SILOFS_BIT(9),
-	SILOFS_ENVIF_FUSEQ = SILOFS_BIT(10),
-	SILOFS_ENVIF_ENV = SILOFS_BIT(11),
+	SILOFS_ENVIF_REPO     = SILOFS_BIT(3),
+	SILOFS_ENVIF_PCACHE   = SILOFS_BIT(4),
+	SILOFS_ENVIF_LCACHE   = SILOFS_BIT(5),
+	SILOFS_ENVIF_SPAMAPS  = SILOFS_BIT(6),
+	SILOFS_ENVIF_SUBMITQ  = SILOFS_BIT(7),
+	SILOFS_ENVIF_IDSMAP   = SILOFS_BIT(8),
+	SILOFS_ENVIF_FLUSHER  = SILOFS_BIT(9),
+	SILOFS_ENVIF_FUSEQ    = SILOFS_BIT(10),
+	SILOFS_ENVIF_ENV      = SILOFS_BIT(11),
 };
 
 /* memory allocator of choice */
 union silofs_alloc_u {
-	struct silofs_qalloc qalloc;
+	struct silofs_qalloc   qalloc;
 	struct silofs_stdalloc stdalloc;
 };
 
@@ -50,19 +50,19 @@ struct silofs_env_inst {
 	struct silofs_prandgen prandgen;
 	struct silofs_password passwd;
 	struct silofs_env_args args;
-	union silofs_alloc_u alloc_u;
-	struct silofs_repo repo;
-	struct silofs_pcache pcache;
-	struct silofs_lcache lcache;
-	struct silofs_spamaps spamaps;
-	struct silofs_idsmap idsmap;
-	struct silofs_submitq submitq;
-	struct silofs_flusher flusher;
-	struct silofs_env env;
-	struct silofs_alloc *alloc;
-	struct silofs_lblock *nilbk;
-	struct silofs_fuseq *fuseq;
-	long initf;
+	union silofs_alloc_u   alloc_u;
+	struct silofs_repo     repo;
+	struct silofs_pcache   pcache;
+	struct silofs_lcache   lcache;
+	struct silofs_spamaps  spamaps;
+	struct silofs_idsmap   idsmap;
+	struct silofs_submitq  submitq;
+	struct silofs_flusher  flusher;
+	struct silofs_env      env;
+	struct silofs_alloc   *alloc;
+	struct silofs_lblock  *nilbk;
+	struct silofs_fuseq   *fuseq;
+	long                   initf;
 };
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -80,12 +80,12 @@ static uint64_t minu64(uint64_t x, uint64_t y, uint64_t z)
 static int calc_mem_size(size_t mem_want, size_t *out_mem_size)
 {
 	const size_t mem_floor = SILOFS_UGIGA / 4;
-	const size_t mem_glim = 64 * SILOFS_UGIGA;
-	size_t mem_total = 0;
-	size_t mem_rlim = 0;
-	size_t mem_ceil = 0;
-	size_t mem_uget = 0;
-	int err;
+	const size_t mem_glim  = 64 * SILOFS_UGIGA;
+	size_t       mem_total = 0;
+	size_t       mem_rlim  = 0;
+	size_t       mem_ceil  = 0;
+	size_t       mem_uget  = 0;
+	int          err;
 
 	/* zero implies default value */
 	if (mem_want == 0) {
@@ -102,8 +102,8 @@ static int calc_mem_size(size_t mem_want, size_t *out_mem_size)
 	if (mem_rlim < mem_floor) {
 		return -SILOFS_ENOMEM;
 	}
-	mem_ceil = minu64(mem_glim, mem_rlim, mem_total / 4);
-	mem_uget = silofs_clamp_u64(mem_want, mem_floor, mem_ceil);
+	mem_ceil      = minu64(mem_glim, mem_rlim, mem_total / 4);
+	mem_uget      = silofs_clamp_u64(mem_want, mem_floor, mem_ceil);
 	*out_mem_size = align_down(mem_uget, 2 * SILOFS_UMEGA);
 	return 0;
 }
@@ -112,10 +112,10 @@ static int calc_mem_size(size_t mem_want, size_t *out_mem_size)
 
 static int check_bootpath(const struct silofs_env_args *args)
 {
-	struct silofs_namestr nstr;
+	struct silofs_namestr          nstr;
 	const struct silofs_boot_args *boot_args = &args->boot_args;
 	const size_t len = silofs_str_length(boot_args->repodir);
-	int err;
+	int          err;
 
 	if (!len || (len >= SILOFS_REPOPATH_MAX)) {
 		log_dbg("illegal repodir length: %s", boot_args->repodir);
@@ -170,10 +170,10 @@ envi_has_flag(const struct silofs_env_inst *envi, enum silofs_flags f)
 
 static int envi_init_qalloc(struct silofs_env_inst *envi)
 {
-	struct silofs_qalloc *qalloc = nullptr;
-	size_t memsize = 0;
-	enum silofs_qallocf qaflags = SILOFS_QALLOCF_NOFAIL;
-	int err;
+	struct silofs_qalloc *qalloc  = nullptr;
+	size_t                memsize = 0;
+	enum silofs_qallocf   qaflags = SILOFS_QALLOCF_NOFAIL;
+	int                   err;
 
 	err = calc_mem_size(envi->args.memwant, &memsize);
 	if (err) {
@@ -183,7 +183,7 @@ static int envi_init_qalloc(struct silofs_env_inst *envi)
 		qaflags |= SILOFS_QALLOCF_DEMASK;
 	}
 	qalloc = &envi->alloc_u.qalloc;
-	err = silofs_qalloc_init(qalloc, memsize, qaflags);
+	err    = silofs_qalloc_init(qalloc, memsize, qaflags);
 	if (err) {
 		return err;
 	}
@@ -207,15 +207,15 @@ static void envi_fini_qalloc(struct silofs_env_inst *envi)
 static int envi_init_stdalloc(struct silofs_env_inst *envi)
 {
 	struct silofs_stdalloc *stdalloc = nullptr;
-	size_t memsize = 0;
-	int err;
+	size_t                  memsize  = 0;
+	int                     err;
 
 	err = calc_mem_size(envi->args.memwant, &memsize);
 	if (err) {
 		return err;
 	}
 	stdalloc = &envi->alloc_u.stdalloc;
-	err = silofs_stdalloc_init(stdalloc, memsize);
+	err      = silofs_stdalloc_init(stdalloc, memsize);
 	if (err) {
 		return err;
 	}
@@ -281,7 +281,7 @@ static void envi_fini_nil_bk(struct silofs_env_inst *envi)
 }
 
 static void envi_make_repo_base(const struct silofs_env_inst *envi,
-                                struct silofs_repo_base *re_base)
+                                struct silofs_repo_base      *re_base)
 {
 	silofs_memzero(re_base, sizeof(*re_base));
 	re_base->alloc = envi->alloc;
@@ -294,7 +294,7 @@ static void envi_make_repo_base(const struct silofs_env_inst *envi,
 static int envi_init_repo(struct silofs_env_inst *envi)
 {
 	struct silofs_repo_base re_base = { .flags = 0 };
-	int err;
+	int                     err;
 
 	envi_make_repo_base(envi, &re_base);
 	err = silofs_repo_init(&envi->repo, &re_base);
@@ -415,13 +415,13 @@ static void envi_fini_flusher(struct silofs_env_inst *envi)
 
 static int envi_init_idsmap(struct silofs_env_inst *envi)
 {
-	const struct silofs_ugids *ids = &envi->args.ugids;
-	struct silofs_idsmap *idsmap = &envi->idsmap;
-	bool allow_hostids;
-	int err;
+	const struct silofs_ugids *ids    = &envi->args.ugids;
+	struct silofs_idsmap      *idsmap = &envi->idsmap;
+	bool                       allow_hostids;
+	int                        err;
 
 	allow_hostids = envi_has_flag(envi, SILOFS_F_ALLOWHOSTIDS);
-	err = silofs_idsmap_init(idsmap, envi->alloc, allow_hostids);
+	err           = silofs_idsmap_init(idsmap, envi->alloc, allow_hostids);
 	if (err) {
 		return err;
 	}
@@ -489,22 +489,22 @@ static void envi_fini_fuseq(struct silofs_env_inst *envi)
 static int envi_init_env(struct silofs_env_inst *envi)
 {
 	const struct silofs_env_base env_base = {
-		.args = &envi->args,
-		.passwd = &envi->passwd,
-		.prng = &envi->prandgen,
-		.alloc = envi->alloc,
-		.nilbk = envi->nilbk,
-		.repo = &envi->repo,
-		.pcache = &envi->pcache,
-		.lcache = &envi->lcache,
+		.args    = &envi->args,
+		.passwd  = &envi->passwd,
+		.prng    = &envi->prandgen,
+		.alloc   = envi->alloc,
+		.nilbk   = envi->nilbk,
+		.repo    = &envi->repo,
+		.pcache  = &envi->pcache,
+		.lcache  = &envi->lcache,
 		.spamaps = &envi->spamaps,
 		.submitq = &envi->submitq,
 		.flusher = &envi->flusher,
-		.idsmap = &envi->idsmap,
-		.fuseq = envi->fuseq,
+		.idsmap  = &envi->idsmap,
+		.fuseq   = envi->fuseq,
 	};
 	struct silofs_env *env = &envi->env;
-	int err;
+	int                err;
 
 	err = silofs_env_init(env, &env_base);
 	if (err) {
@@ -572,7 +572,7 @@ static void envi_fini(struct silofs_env_inst *envi)
 	envi_fini_prandgen(envi);
 }
 
-static int envi_init_args(struct silofs_env_inst *envi,
+static int envi_init_args(struct silofs_env_inst       *envi,
                           const struct silofs_env_args *args)
 {
 	int err;
@@ -670,16 +670,16 @@ static int
 envi_new(const struct silofs_env_args *args, struct silofs_env_inst **out_envi)
 {
 	struct silofs_env_inst *envi = nullptr;
-	const size_t msz = envi_memsize(envi);
-	void *mem = nullptr;
-	int err;
+	const size_t            msz  = envi_memsize(envi);
+	void                   *mem  = nullptr;
+	int                     err;
 
 	err = silofs_zmalloc(msz, &mem);
 	if (err) {
 		return err;
 	}
 	envi = mem;
-	err = envi_init(envi, args);
+	err  = envi_init(envi, args);
 	if (err) {
 		silofs_zfree(mem, msz);
 		return err;
@@ -691,17 +691,17 @@ envi_new(const struct silofs_env_args *args, struct silofs_env_inst **out_envi)
 static void envi_del(struct silofs_env_inst *envi)
 {
 	const size_t msz = envi_memsize(envi);
-	void *mem = envi;
+	void        *mem = envi;
 
 	envi_fini(envi);
 	silofs_zfree(mem, msz);
 }
 
 int silofs_create_env(const struct silofs_env_args *args,
-                      struct silofs_env **out_env)
+                      struct silofs_env           **out_env)
 {
 	struct silofs_env_inst *envi = nullptr;
-	int err = 0;
+	int                     err  = 0;
 
 	STATICASSERT_LE(sizeof(*envi), 32 * SILOFS_KILO);
 

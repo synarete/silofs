@@ -25,10 +25,10 @@
  */
 static void test_stat_simple(struct ft_env *fte)
 {
-	struct stat st = { .st_size = -1 };
-	const char *path0 = ft_new_path_unique(fte);
-	const char *path1 = ft_new_path_unique(fte);
-	const mode_t ifmt = S_IFMT;
+	struct stat  st    = { .st_size = -1 };
+	const char  *path0 = ft_new_path_unique(fte);
+	const char  *path1 = ft_new_path_unique(fte);
+	const mode_t ifmt  = S_IFMT;
 
 	ft_mkdir(path0, 0700);
 	ft_stat(path0, &st);
@@ -47,11 +47,11 @@ static void test_stat_simple(struct ft_env *fte)
  */
 static void test_stat_notdir(struct ft_env *fte)
 {
-	struct stat st = { .st_size = -1 };
+	struct stat st    = { .st_size = -1 };
 	const char *path0 = ft_new_path_unique(fte);
 	const char *path1 = ft_new_path_under(fte, path0);
 	const char *path2 = ft_new_path_under(fte, path1);
-	int fd = -1;
+	int         fd    = -1;
 
 	ft_mkdir(path0, 0700);
 	ft_stat(path0, &st);
@@ -75,11 +75,11 @@ static void test_stat_notdir(struct ft_env *fte)
 static void test_stat_statvfs(struct ft_env *fte)
 {
 	struct statvfs stv[2];
-	const char *path0 = ft_new_path_unique(fte);
-	const char *path1 = ft_new_path_under(fte, path0);
-	const char *path2 = ft_new_path_under(fte, path1);
-	const char *path3 = ft_new_path_under(fte, path0);
-	int fd = -1;
+	const char    *path0 = ft_new_path_unique(fte);
+	const char    *path1 = ft_new_path_under(fte, path0);
+	const char    *path2 = ft_new_path_under(fte, path1);
+	const char    *path3 = ft_new_path_under(fte, path0);
+	int            fd    = -1;
 
 	ft_mkdir(path0, 0750);
 	ft_creat(path1, 0644, &fd);
@@ -102,12 +102,12 @@ static void test_stat_statvfs(struct ft_env *fte)
  */
 static void test_fstatat_simple(struct ft_env *fte)
 {
-	struct stat st = { .st_size = -1 };
-	const char *path = ft_new_path_unique(fte);
+	struct stat st    = { .st_size = -1 };
+	const char *path  = ft_new_path_unique(fte);
 	const char *dname = ft_new_name_unique(fte);
 	const char *fname = ft_new_name_unique(fte);
-	int dfd = -1;
-	int fd = -1;
+	int         dfd   = -1;
+	int         fd    = -1;
 
 	ft_mkdir(path, 0700);
 	ft_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);

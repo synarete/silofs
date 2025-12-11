@@ -30,14 +30,14 @@ make_prandom_civ(struct silofs_prandgen *prng, struct silofs_civ *out_civ)
 }
 
 void silofs_generate_civkey(struct silofs_prandgen *prng,
-                            struct silofs_civkey *out_civkey)
+                            struct silofs_civkey   *out_civkey)
 {
 	make_prandom_ckey(prng, &out_civkey->key);
 	make_prandom_civ(prng, &out_civkey->iv);
 }
 
 void silofs_generate_uniqid(struct silofs_prandgen *prng,
-                            struct silofs_uniqid *out_uniqid)
+                            struct silofs_uniqid   *out_uniqid)
 {
 	silofs_prandgen_take(prng, out_uniqid->u.raw,
 	                     sizeof(out_uniqid->u.raw));

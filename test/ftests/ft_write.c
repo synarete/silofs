@@ -25,9 +25,9 @@
 static void test_write_only_(struct ft_env *fte, size_t len)
 {
 	const char *path = ft_new_path_unique(fte);
-	void *buf = ft_new_buf_rands(fte, len);
-	size_t nwr = 0;
-	int fd = -1;
+	void       *buf  = ft_new_buf_rands(fte, len);
+	size_t      nwr  = 0;
+	int         fd   = -1;
 
 	ft_open(path, O_CREAT | O_WRONLY, 0600, &fd);
 	ft_write(fd, buf, len, &nwr);
@@ -67,9 +67,9 @@ static void test_write_unlinked_(struct ft_env *fte, off_t off, size_t len)
 {
 	const char *path = ft_new_path_unique(fte);
 	const void *wbuf = ft_new_buf_rands(fte, len);
-	void *rbuf = ft_new_buf_rands(fte, len);
-	int wfd = -1;
-	int rfd = -1;
+	void       *rbuf = ft_new_buf_rands(fte, len);
+	int         wfd  = -1;
+	int         rfd  = -1;
 
 	ft_open(path, O_CREAT | O_WRONLY, 0600, &wfd);
 	ft_open(path, O_RDONLY, 0600, &rfd);
@@ -135,9 +135,9 @@ static void test_write_unlinked(struct ft_env *fte)
  */
 static void test_write_espipe(struct ft_env *fte)
 {
-	const char *path = ft_new_path_unique(fte);
-	uint8_t dat[] = { 1, 2, 3, 4, 5 };
-	int fd = -1;
+	const char *path  = ft_new_path_unique(fte);
+	uint8_t     dat[] = { 1, 2, 3, 4, 5 };
+	int         fd    = -1;
 
 	ft_mkfifo(path, 0777);
 	ft_open(path, O_RDWR, 0, &fd);
@@ -153,12 +153,12 @@ static void test_write_espipe(struct ft_env *fte)
 static void test_write_lseek_read_(struct ft_env *fte, size_t len)
 {
 	const char *path = ft_new_path_unique(fte);
-	void *buf1 = ft_new_buf_rands(fte, len);
-	void *buf2 = ft_new_buf_rands(fte, len);
-	off_t pos = -1;
-	size_t nwr = 0;
-	size_t nrd = 0;
-	int fd = -1;
+	void       *buf1 = ft_new_buf_rands(fte, len);
+	void       *buf2 = ft_new_buf_rands(fte, len);
+	off_t       pos  = -1;
+	size_t      nwr  = 0;
+	size_t      nrd  = 0;
+	int         fd   = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_write(fd, buf1, len, &nwr);
@@ -195,9 +195,9 @@ static void test_write_mctimes_(struct ft_env *fte, off_t off, size_t len)
 {
 	struct stat st[2];
 	const char *path = ft_new_path_unique(fte);
-	const void *buf = ft_new_buf_rands(fte, len);
-	size_t nwr = 0;
-	int fd = -1;
+	const void *buf  = ft_new_buf_rands(fte, len);
+	size_t      nwr  = 0;
+	int         fd   = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_fstat(fd, &st[0]);
@@ -253,12 +253,12 @@ static void test_write_mctimes(struct ft_env *fte)
  */
 static void test_write_read_suid_(struct ft_env *fte, off_t off, size_t bsz)
 {
-	struct stat st = { .st_size = -1 };
-	const char *path = ft_new_path_unique(fte);
-	void *buf = ft_new_buf_rands(fte, bsz);
+	struct stat  st   = { .st_size = -1 };
+	const char  *path = ft_new_path_unique(fte);
+	void        *buf  = ft_new_buf_rands(fte, bsz);
 	const mode_t mode = 0610;
 	const mode_t mask = S_IRWXU | S_IRWXG | S_IRWXO;
-	int fd = -1;
+	int          fd   = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, mode, &fd);
 	ft_pwriten(fd, buf, bsz, off);
@@ -305,12 +305,12 @@ static void test_write_read_suid(struct ft_env *fte)
  */
 static void test_write_read_sgid_(struct ft_env *fte, off_t off, size_t len)
 {
-	struct stat st = { .st_size = 0 };
-	const char *path = ft_new_path_unique(fte);
-	void *buf = ft_new_buf_rands(fte, len);
+	struct stat  st   = { .st_size = 0 };
+	const char  *path = ft_new_path_unique(fte);
+	void        *buf  = ft_new_buf_rands(fte, len);
 	const mode_t mode = 0710;
 	const mode_t mask = S_IRWXU | S_IRWXG | S_IRWXO;
-	int fd = -1;
+	int          fd   = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, mode, &fd);
 	ft_fstat(fd, &st);

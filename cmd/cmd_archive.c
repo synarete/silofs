@@ -31,16 +31,16 @@ struct cmd_archive_in_args {
 	char *fsname;
 	char *arname;
 	char *password;
-	bool no_prompt;
+	bool  no_prompt;
 };
 
 struct cmd_archive_ctx {
 	struct cmd_archive_in_args in_args;
-	struct silofs_env_args env_args;
-	struct silofs_blobid fs_blobid;
-	struct silofs_blobid ar_blobid;
-	struct silofs_env *env;
-	bool has_lockfile;
+	struct silofs_env_args     env_args;
+	struct silofs_blobid       fs_blobid;
+	struct silofs_blobid       ar_blobid;
+	struct silofs_env         *env;
+	bool                       has_lockfile;
 };
 
 static struct cmd_archive_ctx *cmd_archive_ctx_p;
@@ -58,7 +58,7 @@ static void cmd_archive_parse_optargs(struct cmd_archive_ctx *ctx)
 		{ nullptr, 0, 0 },
 	};
 	struct cmd_optargs opa;
-	int opt_chr = 1;
+	int                opt_chr = 1;
 
 	cmd_optargs_init(&opa, ods);
 	while (!opa.opa_done && (opt_chr > 0)) {
@@ -178,7 +178,7 @@ static void cmd_archive_setup_env_args(struct cmd_archive_ctx *ctx)
 	env_args->boot_args.repodir = ctx->in_args.repodir_real;
 	env_args->boot_args.fs_name = ctx->in_args.fsname;
 	env_args->boot_args.ar_name = ctx->in_args.arname;
-	env_args->boot_args.passwd = ctx->in_args.password;
+	env_args->boot_args.passwd  = ctx->in_args.password;
 }
 
 static void cmd_archive_setup_fs_ids(struct cmd_archive_ctx *ctx)

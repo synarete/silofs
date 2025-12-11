@@ -18,8 +18,8 @@
 
 static void ut_reload_nfiles_(struct ut_env *ute, size_t nfiles)
 {
-	ino_t ino;
-	ino_t dino;
+	ino_t       ino;
+	ino_t       dino;
 	const char *fname;
 	const char *dname = UT_NAME;
 
@@ -54,10 +54,10 @@ static void ut_reload_nfiles(struct ut_env *ute)
 
 static void ut_reload_mixed_(struct ut_env *ute, size_t nfiles)
 {
-	ino_t fino;
-	ino_t sino;
-	ino_t dino;
-	ino_t tino;
+	ino_t       fino;
+	ino_t       sino;
+	ino_t       dino;
+	ino_t       tino;
 	const char *name;
 	const char *tname = UT_NAME;
 	struct stat st;
@@ -110,10 +110,10 @@ static off_t make_offset(size_t idx, size_t step)
 
 static void ut_reload_io_(struct ut_env *ute, size_t nfiles, size_t step)
 {
-	ino_t fino;
-	ino_t dino;
-	off_t off;
-	size_t len;
+	ino_t       fino;
+	ino_t       dino;
+	off_t       off;
+	size_t      len;
 	const char *fname;
 	const char *dname = UT_NAME;
 	struct stat st;
@@ -162,29 +162,29 @@ static void ut_reload_io(struct ut_env *ute)
 
 static void ut_reload_unlinked_(struct ut_env *ute, size_t nfiles, size_t step)
 {
-	ino_t fino;
-	ino_t dino;
-	off_t off;
-	size_t len;
+	ino_t       fino;
+	ino_t       dino;
+	off_t       off;
+	size_t      len;
 	const char *fname;
-	const char *dname = UT_NAME;
-	ino_t *fino_arr = ut_zalloc(ute, nfiles * sizeof(ino_t));
+	const char *dname    = UT_NAME;
+	ino_t      *fino_arr = ut_zalloc(ute, nfiles * sizeof(ino_t));
 
 	ut_mkdir_at_root(ute, dname, &dino);
 	for (size_t i = 0; i < nfiles; ++i) {
 		fname = ut_make_name(ute, "f", i);
 		ut_create_file(ute, dino, fname, &fino);
 		fino_arr[i] = fino;
-		len = strlen(fname);
-		off = make_offset(i, step);
+		len         = strlen(fname);
+		off         = make_offset(i, step);
 		ut_write_read(ute, fino, fname, len, off);
 		ut_unlink_file(ute, dino, fname);
 	}
 	for (size_t i = 0; i < nfiles; ++i) {
 		fname = ut_make_name(ute, "f", i);
-		fino = fino_arr[i];
-		len = strlen(fname);
-		off = make_offset(i, step);
+		fino  = fino_arr[i];
+		len   = strlen(fname);
+		off   = make_offset(i, step);
 		ut_read_verify(ute, fino, fname, len, off);
 		ut_release_file(ute, fino);
 	}
@@ -202,14 +202,14 @@ static void ut_reload_unlinked(struct ut_env *ute)
 
 static void ut_reload_xattr_(struct ut_env *ute, off_t off, size_t value_size)
 {
-	const char *name = UT_NAME;
-	struct ut_keyval kv = {
-		.name = name,
-		.value = ut_randbuf(ute, value_size),
-		.size = value_size,
+	const char      *name = UT_NAME;
+	struct ut_keyval kv   = {
+		  .name  = name,
+		  .value = ut_randbuf(ute, value_size),
+		  .size  = value_size,
 	};
 	ino_t dino = 0;
-	ino_t ino = 0;
+	ino_t ino  = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_setxattr_create(ute, dino, &kv);

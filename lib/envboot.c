@@ -60,7 +60,7 @@ env_save_mbr_at(struct silofs_env *env, const struct silofs_paddr *paddr,
 {
 	const struct silofs_rovec rovec = {
 		.rov_base = mbr1k,
-		.rov_len = sizeof(*mbr1k),
+		.rov_len  = sizeof(*mbr1k),
 	};
 	int err;
 
@@ -78,7 +78,7 @@ env_load_mbr_at(const struct silofs_env *env, const struct silofs_paddr *paddr,
 {
 	struct silofs_rwvec rwvec = {
 		.rwv_base = out_mbr1k,
-		.rwv_len = sizeof(*out_mbr1k),
+		.rwv_len  = sizeof(*out_mbr1k),
 	};
 	int err;
 
@@ -97,7 +97,7 @@ env_export_fs_mbr(struct silofs_env *env, struct silofs_paddr *out_mbref,
 	return silofs_mbi_export(&env->mbis.fs_mbi, out_mbref, out_mbr1k);
 }
 
-int silofs_env_commit_fs_mbr(struct silofs_env *env,
+int silofs_env_commit_fs_mbr(struct silofs_env   *env,
                              struct silofs_paddr *out_mbref)
 {
 	struct silofs_mbr1k mbr1k = {
@@ -125,9 +125,9 @@ int silofs_env_commit_fs_mbr(struct silofs_env *env,
 static int
 env_stat_mbr_at(const struct silofs_env *env, const struct silofs_paddr *paddr)
 {
-	struct stat st = { .st_size = -1 };
-	size_t mbr_size = 0;
-	int err;
+	struct stat st       = { .st_size = -1 };
+	size_t      mbr_size = 0;
+	int         err;
 
 	err = silofs_repo_stat_blob(env->base.repo, &paddr->blobid, &st);
 	if (err) {
@@ -141,7 +141,7 @@ env_stat_mbr_at(const struct silofs_env *env, const struct silofs_paddr *paddr)
 	return 0;
 }
 
-int silofs_env_sense_mbr(struct silofs_env *env,
+int silofs_env_sense_mbr(struct silofs_env         *env,
                          const struct silofs_paddr *paddr)
 {
 	return env_stat_mbr_at(env, paddr);
@@ -154,7 +154,7 @@ env_import_fs_mbr(struct silofs_env *env, const struct silofs_paddr *mbref,
 	return silofs_mbi_import(&env->mbis.fs_mbi, mbref, mbr1k);
 }
 
-int silofs_env_reload_fs_mbr(struct silofs_env *env,
+int silofs_env_reload_fs_mbr(struct silofs_env         *env,
                              const struct silofs_paddr *paddr)
 {
 	struct silofs_mbr1k mbr1k = {
@@ -184,7 +184,7 @@ env_import_ar_mbr(struct silofs_env *env, const struct silofs_paddr *mbref,
 	return silofs_mbi_import(&env->mbis.ar_mbi, mbref, mbr1k);
 }
 
-int silofs_env_reload_ar_mbr(struct silofs_env *env,
+int silofs_env_reload_ar_mbr(struct silofs_env         *env,
                              const struct silofs_paddr *paddr)
 {
 	struct silofs_mbr1k mbr1k = {
@@ -207,7 +207,7 @@ int silofs_env_reload_ar_mbr(struct silofs_env *env,
 	return 0;
 }
 
-static int env_unlink_mbr_at(const struct silofs_env *env,
+static int env_unlink_mbr_at(const struct silofs_env   *env,
                              const struct silofs_paddr *paddr)
 {
 	int err;
@@ -220,7 +220,7 @@ static int env_unlink_mbr_at(const struct silofs_env *env,
 	return 0;
 }
 
-int silofs_env_unlink_mbr(struct silofs_env *env,
+int silofs_env_unlink_mbr(struct silofs_env         *env,
                           const struct silofs_paddr *paddr)
 {
 	struct silofs_mbr1k mbr1k = {

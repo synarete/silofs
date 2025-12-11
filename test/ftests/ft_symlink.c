@@ -27,11 +27,11 @@
  */
 static void test_symlink_simple(struct ft_env *fte)
 {
-	struct stat st[2];
-	const char *path0 = ft_new_path_unique(fte);
-	const char *path1 = ft_new_path_unique(fte);
-	const mode_t ifmt = S_IFMT;
-	int fd = -1;
+	struct stat  st[2];
+	const char  *path0 = ft_new_path_unique(fte);
+	const char  *path1 = ft_new_path_unique(fte);
+	const mode_t ifmt  = S_IFMT;
+	int          fd    = -1;
 
 	ft_creat(path0, 0600, &fd);
 	ft_stat(path0, &st[0]);
@@ -57,15 +57,15 @@ static void test_symlink_simple(struct ft_env *fte)
  */
 static void test_symlink_readlink(struct ft_env *fte)
 {
-	struct stat st = { .st_size = -1 };
-	char buf1[2] = "";
-	const size_t bsz = SILOFS_PATH_MAX;
-	char *buf = ft_new_buf_zeros(fte, bsz);
-	const char *path0 = ft_new_path_unique(fte);
-	const char *path1 = ft_new_path_unique(fte);
-	const char *path2 = ft_new_path_unique(fte);
-	size_t nch = 0;
-	int fd = -1;
+	struct stat  st      = { .st_size = -1 };
+	char         buf1[2] = "";
+	const size_t bsz     = SILOFS_PATH_MAX;
+	char        *buf     = ft_new_buf_zeros(fte, bsz);
+	const char  *path0   = ft_new_path_unique(fte);
+	const char  *path1   = ft_new_path_unique(fte);
+	const char  *path2   = ft_new_path_unique(fte);
+	size_t       nch     = 0;
+	int          fd      = -1;
 
 	ft_creat(path0, 0600, &fd);
 	ft_symlink(path0, path1);
@@ -94,13 +94,13 @@ static void test_symlink_readlink(struct ft_env *fte)
  */
 static void test_symlink_readlink_atime(struct ft_env *fte)
 {
-	struct stat st = { .st_size = -1 };
-	const size_t bsz = SILOFS_PATH_MAX;
-	char *buf = ft_new_buf_zeros(fte, bsz);
-	const char *path0 = ft_new_path_unique(fte);
-	const char *path1 = ft_new_path_unique(fte);
-	time_t atime[2];
-	size_t nch = 0;
+	struct stat  st    = { .st_size = -1 };
+	const size_t bsz   = SILOFS_PATH_MAX;
+	char        *buf   = ft_new_buf_zeros(fte, bsz);
+	const char  *path0 = ft_new_path_unique(fte);
+	const char  *path1 = ft_new_path_unique(fte);
+	time_t       atime[2];
+	size_t       nch = 0;
 
 	ft_mkdir(path0, 0700);
 	ft_symlink(path0, path1);
@@ -133,10 +133,10 @@ static void test_symlink_readlink_atime(struct ft_env *fte)
  */
 static char *ft_new_path_dummy(struct ft_env *fte, size_t len)
 {
-	size_t cnt = 0;
-	const size_t lim = (2 * len);
-	char *name = ft_new_name_unique(fte);
-	char *path = ft_new_buf_zeros(fte, lim + 1);
+	size_t       cnt  = 0;
+	const size_t lim  = (2 * len);
+	char        *name = ft_new_name_unique(fte);
+	char        *path = ft_new_buf_zeros(fte, lim + 1);
 
 	while ((cnt = ft_strlen(path)) < len) {
 		snprintf(path + cnt, lim - cnt, "/%s", name);
@@ -147,12 +147,12 @@ static char *ft_new_path_dummy(struct ft_env *fte, size_t len)
 
 static void test_symlink_anylen_(struct ft_env *fte, size_t len)
 {
-	struct stat st = { .st_size = -1 };
-	const mode_t ifmt = S_IFMT;
-	const char *path0 = ft_new_path_unique(fte);
-	const char *path1 = ft_new_path_dummy(fte, len);
-	char *lnkbuf = ft_new_buf_zeros(fte, len + 1);
-	size_t nch = 0;
+	struct stat  st     = { .st_size = -1 };
+	const mode_t ifmt   = S_IFMT;
+	const char  *path0  = ft_new_path_unique(fte);
+	const char  *path1  = ft_new_path_dummy(fte, len);
+	char        *lnkbuf = ft_new_buf_zeros(fte, len + 1);
+	size_t       nch    = 0;
 
 	ft_symlink(path1, path0);
 	ft_lstat(path0, &st);
@@ -186,17 +186,17 @@ static void fill_name(char *name, size_t lim, size_t idx)
 
 static void test_symlink_with_io_(struct ft_env *fte, size_t cnt)
 {
-	char name[NAME_MAX + 1] = "";
-	struct stat st = { .st_size = -1 };
-	char *symval = nullptr;
-	char *buf = ft_new_buf_zeros(fte, 2 * cnt);
-	const char *path0 = ft_new_path_unique(fte);
-	const char *path1 = ft_new_path_under(fte, path0);
-	const mode_t ifmt = S_IFMT;
-	size_t nch = 0;
-	off_t off = -1;
-	int dfd = -1;
-	int fd = -1;
+	char         name[NAME_MAX + 1] = "";
+	struct stat  st                 = { .st_size = -1 };
+	char        *symval             = nullptr;
+	char        *buf                = ft_new_buf_zeros(fte, 2 * cnt);
+	const char  *path0              = ft_new_path_unique(fte);
+	const char  *path1              = ft_new_path_under(fte, path0);
+	const mode_t ifmt               = S_IFMT;
+	size_t       nch                = 0;
+	off_t        off                = -1;
+	int          dfd                = -1;
+	int          fd                 = -1;
 
 	ft_mkdir(path0, 0700);
 	ft_open(path0, O_DIRECTORY | O_RDONLY, 0, &dfd);
@@ -251,17 +251,17 @@ static void test_symlink_with_io(struct ft_env *fte)
  */
 static void test_symlinkat_simple(struct ft_env *fte)
 {
-	struct stat st = { .st_size = -1 };
-	const char *rname = ft_new_name_unique(fte);
-	const char *sname = ft_new_name_unique(fte);
-	const char *dpath = ft_new_path_unique(fte);
-	const char *rpath = ft_new_path_nested(fte, dpath, rname);
-	const char *spath = ft_new_path_nested(fte, dpath, sname);
+	struct stat  st         = { .st_size = -1 };
+	const char  *rname      = ft_new_name_unique(fte);
+	const char  *sname      = ft_new_name_unique(fte);
+	const char  *dpath      = ft_new_path_unique(fte);
+	const char  *rpath      = ft_new_path_nested(fte, dpath, rname);
+	const char  *spath      = ft_new_path_nested(fte, dpath, sname);
 	const size_t symval_bsz = 4096;
-	char *symval = ft_new_buf_zeros(fte, symval_bsz);
-	size_t len = 0;
-	int dfd = -1;
-	int fd = -1;
+	char        *symval     = ft_new_buf_zeros(fte, symval_bsz);
+	size_t       len        = 0;
+	int          dfd        = -1;
+	int          fd         = -1;
 
 	ft_mkdir(dpath, 0700);
 	ft_open(dpath, O_DIRECTORY | O_RDONLY, 0, &dfd);
@@ -291,16 +291,16 @@ static void test_symlinkat_simple(struct ft_env *fte)
  */
 static void test_symlinkat_readlinkat_empty(struct ft_env *fte)
 {
-	struct stat st = { .st_size = -1 };
-	const char *rname = ft_new_name_unique(fte);
-	const char *sname = ft_new_name_unique(fte);
-	const char *dpath = ft_new_path_unique(fte);
-	const char *rpath = ft_new_path_nested(fte, dpath, rname);
+	struct stat  st         = { .st_size = -1 };
+	const char  *rname      = ft_new_name_unique(fte);
+	const char  *sname      = ft_new_name_unique(fte);
+	const char  *dpath      = ft_new_path_unique(fte);
+	const char  *rpath      = ft_new_path_nested(fte, dpath, rname);
 	const size_t symval_bsz = 4096;
-	char *symval = ft_new_buf_zeros(fte, symval_bsz);
-	size_t len = 0;
-	int dfd = -1;
-	int fd = -1;
+	char        *symval     = ft_new_buf_zeros(fte, symval_bsz);
+	size_t       len        = 0;
+	int          dfd        = -1;
+	int          fd         = -1;
 
 	ft_mkdir(dpath, 0700);
 	ft_open(dpath, O_DIRECTORY | O_RDONLY, 0, &dfd);

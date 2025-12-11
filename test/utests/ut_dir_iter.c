@@ -28,7 +28,7 @@ static const struct ut_dirent_info *
 ut_find_not_dot(const struct ut_dirent_info *deis, size_t n, size_t start_pos)
 {
 	const struct ut_dirent_info *dei = nullptr;
-	size_t pos = start_pos;
+	size_t                       pos = start_pos;
 
 	for (size_t i = 0; i < n; ++i) {
 		if (pos >= n) {
@@ -77,10 +77,10 @@ static void ut_expect_name_exists(const struct ut_dirent_info *dei, size_t n,
 
 static void ut_dir_open_release(struct ut_env *ute)
 {
-	struct stat st = { .st_size = 0 };
-	const char *name = UT_NAME;
+	struct stat st     = { .st_size = 0 };
+	const char *name   = UT_NAME;
 	const ino_t parent = UT_ROOT_INO;
-	ino_t ino;
+	ino_t       ino;
 
 	ut_mkdir(ute, parent, name, &st);
 	ut_lookup(ute, parent, name, &st);
@@ -97,8 +97,8 @@ static void ut_dir_open_release(struct ut_env *ute)
 static void ut_verify_iter_simple(struct ut_env *ute, const char *pre,
                                   const struct ut_readdir_ctx *rd_ctx)
 {
-	const char *name = nullptr;
-	const struct ut_dirent_info *dei = rd_ctx->dei;
+	const char                  *name = nullptr;
+	const struct ut_dirent_info *dei  = rd_ctx->dei;
 
 	ut_expect_ge(rd_ctx->nde, 2);
 	ut_expect_eqs(dei[0].de.d_name, ".");
@@ -112,12 +112,12 @@ static void ut_verify_iter_simple(struct ut_env *ute, const char *pre,
 
 static void ut_dir_iter_simple(struct ut_env *ute)
 {
-	ino_t dino;
-	struct stat st;
-	const char *name = nullptr;
-	const char *dname = UT_NAME;
+	ino_t                  dino;
+	struct stat            st;
+	const char            *name   = nullptr;
+	const char            *dname  = UT_NAME;
 	struct ut_readdir_ctx *rd_ctx = ut_new_readdir_ctx(ute);
-	const size_t count = UT_ARRAY_SIZE(rd_ctx->dei) - 2;
+	const size_t           count  = UT_ARRAY_SIZE(rd_ctx->dei) - 2;
 
 	ut_mkdir_at_root(ute, dname, &dino);
 	ut_opendir(ute, dino);
@@ -148,12 +148,12 @@ static void ut_dir_iter_simple(struct ut_env *ute)
 static void
 ut_dir_iter_names_(struct ut_env *ute, const char *names[], size_t nnames)
 {
-	ino_t ino;
-	ino_t dino;
-	off_t doff = 0;
-	size_t dcnt = 0;
-	const char *name = nullptr;
-	const char *dname = UT_NAME;
+	ino_t                  ino;
+	ino_t                  dino;
+	off_t                  doff   = 0;
+	size_t                 dcnt   = 0;
+	const char            *name   = nullptr;
+	const char            *dname  = UT_NAME;
 	struct ut_readdir_ctx *rd_ctx = ut_new_readdir_ctx(ute);
 
 	ut_mkdir_at_root(ute, dname, &dino);
@@ -232,14 +232,14 @@ static void ut_dir_iter_fixed_names(struct ut_env *ute)
 
 static void ut_dir_iter_rand_names_(struct ut_env *ute, size_t name_len)
 {
-	const char *names[40];
-	char *name_i;
+	const char  *names[40];
+	char        *name_i;
 	const size_t nnames = UT_ARRAY_SIZE(names);
 
 	for (size_t i = 0; i < nnames; ++i) {
-		name_i = ut_randstr(ute, name_len);
+		name_i    = ut_randstr(ute, name_len);
 		name_i[0] = (char)('A' + ((int)i % 23));
-		names[i] = name_i;
+		names[i]  = name_i;
 	}
 	ut_dir_iter_names_(ute, names, nnames);
 }
@@ -258,17 +258,17 @@ static void ut_dir_iter_rand_names(struct ut_env *ute)
 
 static void ut_dir_iter_links_(struct ut_env *ute, size_t cnt)
 {
-	struct stat st = { .st_size = -1 };
-	const char *lname = nullptr;
-	const char *fname = UT_NAME;
-	const char *dname = UT_NAME;
-	const char *dname2 = "AAA";
-	const struct ut_dirent_info *dei = nullptr;
-	struct ut_readdir_ctx *rd_ctx = nullptr;
-	off_t doff = -1;
-	ino_t dino = 0;
-	ino_t dino2 = 0;
-	ino_t ino = 0;
+	struct stat                  st     = { .st_size = -1 };
+	const char                  *lname  = nullptr;
+	const char                  *fname  = UT_NAME;
+	const char                  *dname  = UT_NAME;
+	const char                  *dname2 = "AAA";
+	const struct ut_dirent_info *dei    = nullptr;
+	struct ut_readdir_ctx       *rd_ctx = nullptr;
+	off_t                        doff   = -1;
+	ino_t                        dino   = 0;
+	ino_t                        dino2  = 0;
+	ino_t                        ino    = 0;
 
 	/* TODO: Use comp wrappers */
 	ut_mkdir_at_root(ute, dname, &dino);
@@ -323,15 +323,15 @@ static void ut_dir_iter_links(struct ut_env *ute)
 
 static void ut_dir_iter_unlink_(struct ut_env *ute, size_t cnt)
 {
-	struct stat st = { .st_size = -1 };
-	struct ut_readdir_ctx *rd_ctx = ut_new_readdir_ctx(ute);
-	const struct ut_dirent_info *dei = nullptr;
-	const char *fname = nullptr;
-	const char *dname = UT_NAME;
-	off_t doff = 0;
-	size_t nde = 0;
-	ino_t dino = 0;
-	ino_t ino = 0;
+	struct stat                  st     = { .st_size = -1 };
+	struct ut_readdir_ctx       *rd_ctx = ut_new_readdir_ctx(ute);
+	const struct ut_dirent_info *dei    = nullptr;
+	const char                  *fname  = nullptr;
+	const char                  *dname  = UT_NAME;
+	off_t                        doff   = 0;
+	size_t                       nde    = 0;
+	ino_t                        dino   = 0;
+	ino_t                        ino    = 0;
 
 	ut_mkdir_at_root(ute, dname, &dino);
 	ut_opendir(ute, dino);
@@ -348,7 +348,7 @@ static void ut_dir_iter_unlink_(struct ut_env *ute, size_t cnt)
 		ut_lookup(ute, dino, dei->de.d_name, &st);
 		ut_unlink(ute, dino, dei->de.d_name);
 
-		dei = ut_find_first_not_dot(rd_ctx->dei, nde);
+		dei  = ut_find_first_not_dot(rd_ctx->dei, nde);
 		doff = dei->de.d_off;
 	}
 	ut_releasedir(ute, dino);
@@ -369,15 +369,15 @@ static void ut_dir_iter_unlink(struct ut_env *ute)
 
 static void ut_dir_iter_plus_(struct ut_env *ute, size_t cnt)
 {
-	struct stat st = { .st_size = -1 };
-	struct ut_readdir_ctx *rd_ctx = ut_new_readdir_ctx(ute);
-	const struct ut_dirent_info *dei = nullptr;
-	const char *name = nullptr;
-	const char *dname = UT_NAME;
-	off_t doff = 0;
-	ino_t dino = 0;
-	ino_t ino = 0;
-	uint8_t x = 1;
+	struct stat                  st     = { .st_size = -1 };
+	struct ut_readdir_ctx       *rd_ctx = ut_new_readdir_ctx(ute);
+	const struct ut_dirent_info *dei    = nullptr;
+	const char                  *name   = nullptr;
+	const char                  *dname  = UT_NAME;
+	off_t                        doff   = 0;
+	ino_t                        dino   = 0;
+	ino_t                        ino    = 0;
+	uint8_t                      x      = 1;
 
 	/* TODO: Use comp wrappers */
 	ut_mkdir_at_root(ute, dname, &dino);

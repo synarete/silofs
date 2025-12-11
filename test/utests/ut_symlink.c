@@ -23,9 +23,9 @@ static const char *ut_make_symname(struct ut_env *ute, size_t idx)
 
 static char *ut_make_symval_with(struct ut_env *ute, char c, size_t len)
 {
-	const size_t vsz = SILOFS_PATH_MAX;
+	const size_t vsz      = SILOFS_PATH_MAX;
 	const size_t name_max = NAME_MAX;
-	char *val = nullptr;
+	char        *val      = nullptr;
 
 	ut_expect_le(len, vsz);
 	val = (char *)ut_zerobuf(ute, vsz + 1);
@@ -53,9 +53,9 @@ static void ut_symlink_simple(struct ut_env *ute)
 	const char *dname = UT_NAME;
 	const char *tname = "target";
 	const char *sname = "symlink";
-	ino_t dino = 0;
-	ino_t tino = 0;
-	ino_t sino = 0;
+	ino_t       dino  = 0;
+	ino_t       tino  = 0;
+	ino_t       sino  = 0;
 
 	ut_mkdir_at_root(ute, dname, &dino);
 	ut_mkdir2(ute, dino, tname, &tino);
@@ -74,13 +74,13 @@ static void ut_symlink_simple(struct ut_env *ute)
 
 static void ut_symlink_length(struct ut_env *ute)
 {
-	const char *dname = UT_NAME;
-	const char *tname = nullptr;
-	const char *sname = nullptr;
-	const size_t nlinks = SILOFS_PATH_MAX - 1;
-	const ino_t root_ino = UT_ROOT_INO;
-	ino_t dino = 0;
-	ino_t sino = 0;
+	const char  *dname    = UT_NAME;
+	const char  *tname    = nullptr;
+	const char  *sname    = nullptr;
+	const size_t nlinks   = SILOFS_PATH_MAX - 1;
+	const ino_t  root_ino = UT_ROOT_INO;
+	ino_t        dino     = 0;
+	ino_t        sino     = 0;
 
 	ut_mkdir2(ute, root_ino, dname, &dino);
 	for (size_t i = 1; i <= nlinks; ++i) {
@@ -100,11 +100,11 @@ static void ut_symlink_length(struct ut_env *ute)
 
 static void ut_symlink_nested(struct ut_env *ute)
 {
-	ino_t sino = 0;
-	ino_t dino[128];
+	ino_t       sino = 0;
+	ino_t       dino[128];
 	const char *sname[128];
 	const char *dname = UT_NAME;
-	struct stat st = { .st_size = -1 };
+	struct stat st    = { .st_size = -1 };
 
 	dino[0] = UT_ROOT_INO;
 	for (size_t i = 1; i < UT_ARRAY_SIZE(dino); ++i) {
@@ -127,9 +127,9 @@ static void ut_symlink_nested(struct ut_env *ute)
 
 static void ut_symlink_to_reg_(struct ut_env *ute, size_t cnt)
 {
-	ino_t dino = 0;
-	ino_t ino = 0;
-	ino_t sino = 0;
+	ino_t       dino  = 0;
+	ino_t       ino   = 0;
+	ino_t       sino  = 0;
 	const char *dname = UT_NAME;
 	const char *fname = nullptr;
 	const char *sname = nullptr;
@@ -166,21 +166,21 @@ static void ut_symlink_to_reg(struct ut_env *ute)
 
 static void ut_symlink_and_io_(struct ut_env *ute, size_t cnt)
 {
-	off_t off = -1;
-	ino_t dino = 0;
-	ino_t fino = 0;
-	ino_t sino = 0;
-	char *symval = nullptr;
-	const char *fname = nullptr;
-	const char *sname = nullptr;
-	const char *fp = "f";
-	const char *sp = "s";
-	const char *dname = UT_NAME;
+	off_t       off    = -1;
+	ino_t       dino   = 0;
+	ino_t       fino   = 0;
+	ino_t       sino   = 0;
+	char       *symval = nullptr;
+	const char *fname  = nullptr;
+	const char *sname  = nullptr;
+	const char *fp     = "f";
+	const char *sp     = "s";
+	const char *dname  = UT_NAME;
 
 	ut_mkdir_at_root(ute, dname, &dino);
 	for (size_t i = 0; i < cnt; ++i) {
-		sname = ut_make_name(ute, sp, i);
-		fname = ut_make_name(ute, fp, i);
+		sname  = ut_make_name(ute, sp, i);
+		fname  = ut_make_name(ute, fp, i);
 		symval = ut_make_symval(ute, i + 1);
 		ut_create_file(ute, dino, fname, &fino);
 		ut_symlink(ute, dino, sname, symval, &sino);
@@ -189,8 +189,8 @@ static void ut_symlink_and_io_(struct ut_env *ute, size_t cnt)
 		ut_write_read_str(ute, fino, symval, off);
 	}
 	for (size_t i = 0; i < cnt; ++i) {
-		sname = ut_make_name(ute, sp, i);
-		fname = ut_make_name(ute, fp, i);
+		sname  = ut_make_name(ute, sp, i);
+		fname  = ut_make_name(ute, fp, i);
 		symval = ut_make_symval(ute, i + 1);
 		ut_lookup_ino(ute, dino, sname, &sino);
 		ut_readlink_expect(ute, sino, symval);
@@ -221,23 +221,23 @@ static void ut_symlink_and_io(struct ut_env *ute)
 
 static void ut_symlink_and_io2_(struct ut_env *ute, size_t cnt)
 {
-	off_t off = -1;
-	ino_t dino = 0;
-	ino_t fino = 0;
-	ino_t sino = 0;
-	char *symval = nullptr;
-	const char *fname = nullptr;
-	const char *sname = nullptr;
-	const char *dname = UT_NAME;
-	const char *ff = "ff";
-	const char *s1 = "s1";
-	const char *s2 = "s2";
+	off_t       off      = -1;
+	ino_t       dino     = 0;
+	ino_t       fino     = 0;
+	ino_t       sino     = 0;
+	char       *symval   = nullptr;
+	const char *fname    = nullptr;
+	const char *sname    = nullptr;
+	const char *dname    = UT_NAME;
+	const char *ff       = "ff";
+	const char *s1       = "s1";
+	const char *s2       = "s2";
 	const ino_t root_ino = UT_ROOT_INO;
 
 	ut_mkdir2(ute, root_ino, dname, &dino);
 	for (size_t i = 0; i < cnt; ++i) {
-		sname = ut_make_name(ute, s1, i);
-		fname = ut_make_name(ute, ff, i);
+		sname  = ut_make_name(ute, s1, i);
+		fname  = ut_make_name(ute, ff, i);
 		symval = ut_make_symval(ute, cnt);
 		ut_create_file(ute, dino, fname, &fino);
 		ut_symlink(ute, dino, sname, symval, &sino);
@@ -248,8 +248,8 @@ static void ut_symlink_and_io2_(struct ut_env *ute, size_t cnt)
 	}
 	ut_drop_caches_fully(ute);
 	for (size_t j = cnt; j > 0; --j) {
-		sname = ut_make_name(ute, s1, j - 1);
-		fname = ut_make_name(ute, ff, j - 1);
+		sname  = ut_make_name(ute, s1, j - 1);
+		fname  = ut_make_name(ute, ff, j - 1);
 		symval = ut_make_symval(ute, cnt);
 		ut_lookup_ino(ute, dino, sname, &sino);
 		ut_readlink_expect(ute, sino, symval);
@@ -292,11 +292,11 @@ static void ut_symlink_and_io2(struct ut_env *ute)
 
 static blkcnt_t symval_length_to_blocks(size_t len)
 {
-	size_t nparts = 0;
-	blkcnt_t blkcnt = 0;
+	size_t       nparts   = 0;
+	blkcnt_t     blkcnt   = 0;
 	const size_t val_size = SILOFS_SYMLNK_VAL_SIZE;
 	const size_t head_len = SILOFS_SYMLNK_HEAD_MAX;
-	const size_t factor = val_size / 512;
+	const size_t factor   = val_size / 512;
 
 	if (len > head_len) {
 		nparts = silofs_div_round_up(len - head_len, val_size);
@@ -307,12 +307,12 @@ static blkcnt_t symval_length_to_blocks(size_t len)
 
 static void ut_symlink_stat_(struct ut_env *ute, size_t valsize)
 {
-	struct stat st = { .st_size = -1 };
-	const char *name = UT_NAME;
-	const char *symval = ut_make_symval_with(ute, 's', valsize);
+	struct stat    st     = { .st_size = -1 };
+	const char    *name   = UT_NAME;
+	const char    *symval = ut_make_symval_with(ute, 's', valsize);
 	const blkcnt_t blocks = symval_length_to_blocks(valsize);
-	ino_t dino = 0;
-	ino_t sino = 0;
+	ino_t          dino   = 0;
+	ino_t          sino   = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_symlink(ute, dino, name, symval, &sino);

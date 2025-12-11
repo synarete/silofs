@@ -71,7 +71,7 @@ static void
 statvfs_of(const struct ft_env *fte, struct statvfs *stvfs, bool finish)
 {
 	const char *testdir = fte->params.testdir;
-	int dfd = -1;
+	int         dfd     = -1;
 
 	ft_open(testdir, O_DIRECTORY | O_RDONLY, 0, &dfd);
 	if (finish) {
@@ -93,7 +93,7 @@ static void ft_list_test(struct ft_env *fte, const struct ft_tdef *tdef)
 
 static void ft_start_test(struct ft_env *fte, const struct ft_tdef *tdef)
 {
-	fte->currtest = tdef;
+	fte->currtest     = tdef;
 	fte->nbytes_alloc = 0;
 	silofs_log_info("%-40s =>", fte->currtest->name);
 	statvfs_of(fte, &fte->stvfs, false);
@@ -192,10 +192,10 @@ static bool wanted(const struct ft_tdef *tdef, const char *wantname)
 
 static void ft_run_tests(struct ft_env *fte)
 {
-	const struct ft_tdef *tdef;
-	const struct ft_tests *tests = &fte->tests;
-	const struct ft_params *params = &fte->params;
-	const char *wantname = params->testname;
+	const struct ft_tdef   *tdef;
+	const struct ft_tests  *tests    = &fte->tests;
+	const struct ft_params *params   = &fte->params;
+	const char             *wantname = params->testname;
 
 	for (size_t i = 0; i < tests->len; ++i) {
 		tdef = &tests->arr[i];
@@ -239,10 +239,10 @@ static void *safe_malloc(size_t size)
 
 static struct ft_tdef *alloc_tests_arr(void)
 {
-	size_t asz;
-	size_t cnt = 0;
+	size_t          asz;
+	size_t          cnt = 0;
 	struct ft_tdef *arr;
-	const size_t nelems = FT_ARRAY_SIZE(ft_testsbl);
+	const size_t    nelems = FT_ARRAY_SIZE(ft_testsbl);
 
 	for (size_t i = 0; i < nelems; ++i) {
 		cnt += ft_testsbl[i]->len;
@@ -258,18 +258,18 @@ static struct ft_tdef *unconst_tdef(const struct ft_tdef *p)
 {
 	union {
 		const struct ft_tdef *p;
-		struct ft_tdef *q;
+		struct ft_tdef       *q;
 	} u = { .p = p };
 	return u.q;
 }
 
 static void random_shuffle_tests(struct ft_env *fte)
 {
-	size_t pos1;
-	size_t pos2;
-	uint64_t rand;
-	struct ft_tests *tests = &fte->tests;
-	struct ft_tdef *tests_arr = unconst_tdef(tests->arr);
+	size_t           pos1;
+	size_t           pos2;
+	uint64_t         rand;
+	struct ft_tests *tests     = &fte->tests;
+	struct ft_tdef  *tests_arr = unconst_tdef(tests->arr);
 
 	for (size_t i = 0; i < tests->len; ++i) {
 		rand = (uint64_t)ft_lrand(fte);
@@ -281,10 +281,10 @@ static void random_shuffle_tests(struct ft_env *fte)
 
 static void ft_clone_tests(struct ft_env *fte)
 {
-	size_t len = 0;
-	struct ft_tdef *arr = alloc_tests_arr();
-	const struct ft_tdef *tdef = nullptr;
-	const size_t nelems = FT_ARRAY_SIZE(ft_testsbl);
+	size_t                len    = 0;
+	struct ft_tdef       *arr    = alloc_tests_arr();
+	const struct ft_tdef *tdef   = nullptr;
+	const size_t          nelems = FT_ARRAY_SIZE(ft_testsbl);
 
 	for (size_t i = 0; i < nelems; ++i) {
 		for (size_t j = 0; j < ft_testsbl[i]->len; ++j) {
@@ -342,7 +342,7 @@ static void ft_sub_do_exec(struct ft_sub_exec *se, ft_sub_exec_fn exec_fn)
 	int err;
 
 	se->keep_run = 1;
-	se->exec_fn = exec_fn;
+	se->exec_fn  = exec_fn;
 	err = silofs_thread_create(&se->th, ft_sub_exec_hook, se, nullptr);
 	ft_expect_ok(err);
 }
@@ -378,7 +378,7 @@ static void ft_sub_do_join(struct ft_sub_exec *se)
 	int err;
 
 	se->keep_run = 0;
-	err = silofs_thread_join(&se->th);
+	err          = silofs_thread_join(&se->th);
 	ft_expect_ok(err);
 }
 
@@ -433,13 +433,13 @@ ft_sub_do_setup(struct ft_sub_exec *se, struct ft_env *fte, const char *path,
                 const char *path2, size_t niter, off_t off, size_t len)
 {
 	silofs_memzero(se, sizeof(*se));
-	se->fte = fte;
-	se->path = path;
-	se->path2 = path2;
-	se->niter = niter;
-	se->off = off;
-	se->len = len;
-	se->end = ft_off_end(off, len);
+	se->fte      = fte;
+	se->path     = path;
+	se->path2    = path2;
+	se->niter    = niter;
+	se->off      = off;
+	se->len      = len;
+	se->end      = ft_off_end(off, len);
 	se->keep_run = 1;
 }
 
@@ -462,7 +462,7 @@ void ft_sub_setup(struct ft_sub_exec *se_arr, size_t n, struct ft_env *fte,
 static void ft_sub_do_setup2(struct ft_sub_exec *se, struct ft_env *fte,
                              size_t niter, off_t off, size_t len)
 {
-	const char *path = ft_new_path_unique(fte);
+	const char *path  = ft_new_path_unique(fte);
 	const char *path2 = ft_new_path_unique(fte);
 
 	ft_sub_do_setup(se, fte, path, path2, niter, off, len);

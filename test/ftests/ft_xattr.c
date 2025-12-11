@@ -25,13 +25,13 @@
  */
 static void test_xattr_simple(struct ft_env *fte)
 {
-	char buf[80] = "";
-	const char *path = ft_new_path_unique(fte);
-	const char *name = "user.digits";
-	const char *value = "0123456789";
-	const size_t valsz = ft_strlen(value);
-	size_t sz = 0;
-	int fd = -1;
+	char         buf[80] = "";
+	const char  *path    = ft_new_path_unique(fte);
+	const char  *name    = "user.digits";
+	const char  *value   = "0123456789";
+	const size_t valsz   = ft_strlen(value);
+	size_t       sz      = 0;
+	int          fd      = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0700, &fd);
 	ft_close(fd);
@@ -53,19 +53,19 @@ static void test_xattr_simple(struct ft_env *fte)
  */
 static void test_xattr_by_fd(struct ft_env *fte)
 {
-	char buf[80] = "";
-	const char *dpath = ft_new_path_unique(fte);
-	const char *fpath = ft_new_path_under(fte, dpath);
-	const char *name1 = "user.ascii_lowercase";
-	const char *value1 = "abcdefghijklmnopqrstuvwxyz";
-	const size_t valsz1 = ft_strlen(value1);
-	const char *name2 = "user.ascii_letters";
-	const char *value2 =
+	char         buf[80] = "";
+	const char  *dpath   = ft_new_path_unique(fte);
+	const char  *fpath   = ft_new_path_under(fte, dpath);
+	const char  *name1   = "user.ascii_lowercase";
+	const char  *value1  = "abcdefghijklmnopqrstuvwxyz";
+	const size_t valsz1  = ft_strlen(value1);
+	const char  *name2   = "user.ascii_letters";
+	const char  *value2 =
 		"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 	const size_t valsz2 = ft_strlen(value2);
-	size_t sz = 0;
-	int dfd = -1;
-	int fd = -1;
+	size_t       sz     = 0;
+	int          dfd    = -1;
+	int          fd     = -1;
 
 	ft_mkdir(dpath, 0700);
 	ft_open(dpath, O_DIRECTORY | O_RDONLY, 0, &dfd);
@@ -106,15 +106,15 @@ static void test_xattr_by_fd(struct ft_env *fte)
  */
 static void test_xattr_inode(struct ft_env *fte)
 {
-	char buf[80] = "";
-	const char *path1 = ft_new_path_unique(fte);
-	const char *path2 = ft_new_path_under(fte, path1);
-	const char *path3 = ft_new_path_under(fte, path1);
-	const char *name = "user.digits";
-	const char *value = "0123456789";
-	const size_t valsz = ft_strlen(value);
-	size_t sz = 0;
-	int fd = -1;
+	char         buf[80] = "";
+	const char  *path1   = ft_new_path_unique(fte);
+	const char  *path2   = ft_new_path_under(fte, path1);
+	const char  *path3   = ft_new_path_under(fte, path1);
+	const char  *name    = "user.digits";
+	const char  *value   = "0123456789";
+	const size_t valsz   = ft_strlen(value);
+	size_t       sz      = 0;
+	int          fd      = -1;
 
 	ft_mkdir(path1, 0700);
 	ft_open(path2, O_CREAT | O_RDWR, 0600, &fd);
@@ -150,11 +150,11 @@ static void test_xattr_inode(struct ft_env *fte)
 static void test_xattr_ctime(struct ft_env *fte)
 {
 	struct stat st[2];
-	const char *name = "user.xattr_ctime";
+	const char *name  = "user.xattr_ctime";
 	const char *value = "ABCDEF-ABCDEF-ABCDEF-ABCDEF-ABCDEF";
-	const char *path = ft_new_path_unique(fte);
-	size_t sz = 0;
-	int fd = -1;
+	const char *path  = ft_new_path_unique(fte);
+	size_t      sz    = 0;
+	int         fd    = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0700, &fd);
 	ft_fstat(fd, &st[0]);
@@ -187,14 +187,14 @@ static void test_xattr_ctime(struct ft_env *fte)
  */
 static void test_xattr_replace(struct ft_env *fte)
 {
-	char buf[256] = "";
-	const char *name = "user.xattr_replace";
-	const char *val1 = "0123456789";
-	const char *val2 = "ABCDEFGHIJKLMNOPQRSTUVXYZ";
-	const char *val3 = "abcdefghijklmnopqrstuvwxyz0123456789";
-	const char *path = ft_new_path_unique(fte);
-	size_t sz = 0;
-	int fd = -1;
+	char        buf[256] = "";
+	const char *name     = "user.xattr_replace";
+	const char *val1     = "0123456789";
+	const char *val2     = "ABCDEFGHIJKLMNOPQRSTUVXYZ";
+	const char *val3     = "abcdefghijklmnopqrstuvwxyz0123456789";
+	const char *path     = ft_new_path_unique(fte);
+	size_t      sz       = 0;
+	int         fd       = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0700, &fd);
 	ft_fsetxattr(fd, name, val1, ft_strlen(val1), 0);
@@ -227,15 +227,15 @@ static void test_xattr_replace(struct ft_env *fte)
  */
 static void test_xattr_list(struct ft_env *fte)
 {
-	char list[256] = "";
-	const char *path = ft_new_path_unique(fte);
-	const char *name1 = "user.xattr_list1";
-	const char *name2 = "user.xattr_xxxxx_list2";
-	const char *value = "0123456789ABCDEF";
-	const size_t nlen1 = ft_strlen(name1);
-	const size_t nlen2 = ft_strlen(name2);
-	size_t sz = 0;
-	int fd = -1;
+	char         list[256] = "";
+	const char  *path      = ft_new_path_unique(fte);
+	const char  *name1     = "user.xattr_list1";
+	const char  *name2     = "user.xattr_xxxxx_list2";
+	const char  *value     = "0123456789ABCDEF";
+	const size_t nlen1     = ft_strlen(name1);
+	const size_t nlen2     = ft_strlen(name2);
+	size_t       sz        = 0;
+	int          fd        = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_flistxattr(fd, list, sizeof(list), &sz);
@@ -274,14 +274,14 @@ static void test_xattr_list(struct ft_env *fte)
  */
 static void test_xattr_any_(struct ft_env *fte, size_t valsz)
 {
-	char buf[NAME_MAX + 1] = "";
-	void *vbuf = ft_new_buf_rands(fte, valsz + 1);
-	const void *value = ft_new_buf_rands(fte, valsz);
-	const char *path0 = ft_new_path_unique(fte);
-	const char *path1 = ft_new_path_under(fte, path0);
-	const char *name = nullptr;
-	size_t cnt = 0;
-	int fd = -1;
+	char        buf[NAME_MAX + 1] = "";
+	void       *vbuf              = ft_new_buf_rands(fte, valsz + 1);
+	const void *value             = ft_new_buf_rands(fte, valsz);
+	const char *path0             = ft_new_path_unique(fte);
+	const char *path1             = ft_new_path_under(fte, path0);
+	const char *name              = nullptr;
+	size_t      cnt               = 0;
+	int         fd                = -1;
 
 	ft_mkdir(path0, 0700);
 	ft_open(path1, O_CREAT | O_RDWR, 0600, &fd);

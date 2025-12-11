@@ -37,10 +37,10 @@ static size_t cmd_sysconf(int key)
 
 static size_t cmd_getxx_bsz(void)
 {
-	const size_t bsz1 = cmd_sysconf(_SC_GETPW_R_SIZE_MAX);
-	const size_t bsz2 = cmd_sysconf(_SC_GETGR_R_SIZE_MAX);
+	const size_t bsz1  = cmd_sysconf(_SC_GETPW_R_SIZE_MAX);
+	const size_t bsz2  = cmd_sysconf(_SC_GETGR_R_SIZE_MAX);
 	const size_t align = 1024;
-	size_t bsz;
+	size_t       bsz;
 
 	bsz = (bsz1 > bsz2) ? bsz1 : bsz2;
 	bsz = ((bsz + align - 1) / align) * align;
@@ -55,11 +55,11 @@ enum {
 
 static void cmd_load_idsconf_file(const char *pathname, char **out_txt)
 {
-	struct stat st = { .st_mode = 0 };
-	size_t size = 0;
-	char *txt = nullptr;
-	int fd = -1;
-	int err;
+	struct stat st   = { .st_mode = 0 };
+	size_t      size = 0;
+	char       *txt  = nullptr;
+	int         fd   = -1;
+	int         err;
 
 	err = silofs_sys_stat(pathname, &st);
 	if (err) {
@@ -90,8 +90,8 @@ static void cmd_load_idsconf_file(const char *pathname, char **out_txt)
 static void cmd_save_idsconf_file(const char *pathname, const char *txt)
 {
 	const size_t len = txt ? strlen(txt) : 0;
-	int fd = -1;
-	int err;
+	int          fd  = -1;
+	int          err;
 
 	err = silofs_sys_open(pathname, O_CREAT | O_EXCL | O_RDWR | O_TRUNC,
 	                      S_IRUSR | S_IWUSR | S_IRGRP, &fd);
@@ -110,9 +110,9 @@ static void cmd_save_idsconf_file(const char *pathname, const char *txt)
 
 void cmd_setup_fsids(struct silofs_ugids *ugids)
 {
-	ugids->users.uids = nullptr;
-	ugids->users.nuids = 0;
-	ugids->groups.gids = nullptr;
+	ugids->users.uids   = nullptr;
+	ugids->users.nuids  = 0;
+	ugids->groups.gids  = nullptr;
 	ugids->groups.ngids = 0;
 }
 
@@ -162,7 +162,7 @@ void cmd_load_fsids(struct silofs_ugids *ugids, const char *basedir)
 {
 	char *path = cmd_fsids_confpath(basedir);
 	char *text = nullptr;
-	int err;
+	int   err;
 
 	cmd_reset_fsids(ugids);
 	cmd_load_idsconf_file(path, &text);
@@ -177,9 +177,9 @@ void cmd_load_fsids(struct silofs_ugids *ugids, const char *basedir)
 void cmd_save_fsids(const struct silofs_ugids *ugids, const char *basedir)
 {
 	const size_t size = CMD_IDSCONF_SIZE_MAX;
-	char *path = cmd_fsids_confpath(basedir);
-	char *text = cmd_zalloc(CMD_IDSCONF_SIZE_MAX);
-	int err;
+	char        *path = cmd_fsids_confpath(basedir);
+	char        *text = cmd_zalloc(CMD_IDSCONF_SIZE_MAX);
+	int          err;
 
 	err = silofs_unparse_fsids(ugids, silofs_default_alloc, text, size);
 	if (err) {
@@ -194,11 +194,11 @@ void cmd_save_fsids(const struct silofs_ugids *ugids, const char *basedir)
 
 void cmd_resolve_uidgid(const char *name, uid_t *out_uid, gid_t *out_gid)
 {
-	struct passwd pwd = { .pw_uid = (uid_t)(-1) };
-	struct passwd *pw = nullptr;
-	char *buf = nullptr;
-	size_t bsz;
-	int err;
+	struct passwd  pwd = { .pw_uid = (uid_t)(-1) };
+	struct passwd *pw  = nullptr;
+	char          *buf = nullptr;
+	size_t         bsz;
+	int            err;
 
 	bsz = cmd_getxx_bsz();
 	buf = cmd_zalloc(bsz);
@@ -229,7 +229,7 @@ void cmd_require_uidgid(const struct silofs_ugids *ugids, const char *name,
 static char *cmd_getlogin(void)
 {
 	char name[LOGIN_NAME_MAX + 1] = "";
-	int err;
+	int  err;
 
 	err = getlogin_r(name, sizeof(name) - 1);
 	if (err) {
@@ -243,12 +243,12 @@ static char *cmd_getlogin(void)
 
 char *cmd_getpwuid(uid_t uid)
 {
-	struct passwd pwd = { .pw_uid = (uid_t)(-1) };
-	struct passwd *pw = nullptr;
-	char *buf = nullptr;
-	char *ret = nullptr;
-	size_t bsz;
-	int err;
+	struct passwd  pwd = { .pw_uid = (uid_t)(-1) };
+	struct passwd *pw  = nullptr;
+	char          *buf = nullptr;
+	char          *ret = nullptr;
+	size_t         bsz;
+	int            err;
 
 	bsz = cmd_getxx_bsz();
 	buf = cmd_zalloc(bsz);

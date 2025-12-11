@@ -128,7 +128,7 @@ static void undirtify_lnode(struct silofs_lnode_info *lni)
 
 static void dset_clear_map(struct silofs_dset *dset)
 {
-	const struct silofs_avl_node_functor fn = { .fn = lni_visit_reinit,
+	const struct silofs_avl_node_functor fn = { .fn  = lni_visit_reinit,
 		                                    .ctx = nullptr };
 
 	silofs_avl_clear(&dset->ds_avl, &fn);
@@ -143,14 +143,14 @@ dset_add_dirty(struct silofs_dset *dset, struct silofs_lnode_info *lni)
 static void dset_init(struct silofs_dset *dset)
 {
 	silofs_avl_init(&dset->ds_avl, lni_getkey, hkey_compare, dset);
-	dset->ds_preq = nullptr;
+	dset->ds_preq  = nullptr;
 	dset->ds_postq = nullptr;
 }
 
 static void dset_fini(struct silofs_dset *dset)
 {
 	silofs_avl_fini(&dset->ds_avl);
-	dset->ds_preq = nullptr;
+	dset->ds_preq  = nullptr;
 	dset->ds_postq = nullptr;
 }
 
@@ -160,7 +160,7 @@ dset_push_preq(struct silofs_dset *dset, struct silofs_lnode_info *lni)
 	silofs_assert_null(lni->ln_ds_next);
 
 	lni->ln_ds_next = dset->ds_preq;
-	dset->ds_preq = lni;
+	dset->ds_preq   = lni;
 }
 
 static void
@@ -169,7 +169,7 @@ dset_push_postq(struct silofs_dset *dset, struct silofs_lnode_info *lni)
 	silofs_assert_null(lni->ln_ds_next);
 
 	lni->ln_ds_next = dset->ds_postq;
-	dset->ds_postq = lni;
+	dset->ds_postq  = lni;
 }
 
 static struct silofs_lnode_info *dset_pop_preq(struct silofs_dset *dset)
@@ -177,8 +177,8 @@ static struct silofs_lnode_info *dset_pop_preq(struct silofs_dset *dset)
 	struct silofs_lnode_info *lni = nullptr;
 
 	if (dset->ds_preq != nullptr) {
-		lni = dset->ds_preq;
-		dset->ds_preq = lni->ln_ds_next;
+		lni             = dset->ds_preq;
+		dset->ds_preq   = lni->ln_ds_next;
 		lni->ln_ds_next = nullptr;
 	}
 	return lni;
@@ -212,10 +212,10 @@ static void dset_seal_all(const struct silofs_dset *dset)
 
 static void dset_mkfifo(struct silofs_dset *dset)
 {
-	struct silofs_lnode_info *lni;
+	struct silofs_lnode_info     *lni;
 	const struct silofs_avl_node *end;
 	const struct silofs_avl_node *itr;
-	const struct silofs_avl *avl = &dset->ds_avl;
+	const struct silofs_avl      *avl = &dset->ds_avl;
 
 	silofs_assert_null(dset->ds_preq);
 
@@ -241,21 +241,21 @@ static void dset_undirtify_all(const struct silofs_dset *dset)
 static void dset_unlink_queues(struct silofs_dset *dset)
 {
 	struct silofs_lnode_info *lni_next = nullptr;
-	struct silofs_lnode_info *lni = nullptr;
+	struct silofs_lnode_info *lni      = nullptr;
 
 	lni = dset->ds_preq;
 	while (lni != nullptr) {
-		lni_next = lni->ln_ds_next;
+		lni_next        = lni->ln_ds_next;
 		lni->ln_ds_next = nullptr;
-		lni = lni_next;
+		lni             = lni_next;
 	}
 	dset->ds_preq = nullptr;
 
 	lni = dset->ds_postq;
 	while (lni != nullptr) {
-		lni_next = lni->ln_ds_next;
+		lni_next        = lni->ln_ds_next;
 		lni->ln_ds_next = nullptr;
-		lni = lni_next;
+		lni             = lni_next;
 	}
 	dset->ds_postq = nullptr;
 }
@@ -263,7 +263,7 @@ static void dset_unlink_queues(struct silofs_dset *dset)
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static size_t flusher_dset_slot_of(const struct silofs_flusher *flusher,
-                                   enum silofs_mtype mtype)
+                                   enum silofs_mtype            mtype)
 {
 	size_t slot;
 
@@ -326,20 +326,20 @@ flusher_dset_at2(const struct silofs_flusher *flusher, size_t slot)
 }
 
 static struct silofs_dset *
-flusher_dset_of_vni(struct silofs_flusher *flusher,
+flusher_dset_of_vni(struct silofs_flusher          *flusher,
                     const struct silofs_vnode_info *vni)
 {
 	return flusher_dset_of(flusher, silofs_vni_mtype(vni));
 }
 
 static struct silofs_dset *
-flusher_dset_of_uni(struct silofs_flusher *flusher,
+flusher_dset_of_uni(struct silofs_flusher          *flusher,
                     const struct silofs_unode_info *uni)
 {
 	return flusher_dset_of(flusher, silofs_uni_mtype(uni));
 }
 
-static void flusher_add_dirty_vni(struct silofs_flusher *flusher,
+static void flusher_add_dirty_vni(struct silofs_flusher    *flusher,
                                   struct silofs_vnode_info *vni)
 {
 	struct silofs_dset *dset = flusher_dset_of_vni(flusher, vni);
@@ -347,7 +347,7 @@ static void flusher_add_dirty_vni(struct silofs_flusher *flusher,
 	dset_add_dirty(dset, &vni->vn_lni);
 }
 
-static void flusher_add_dirty_uni(struct silofs_flusher *flusher,
+static void flusher_add_dirty_uni(struct silofs_flusher    *flusher,
                                   struct silofs_unode_info *uni)
 {
 	struct silofs_dset *dset = flusher_dset_of_uni(flusher, uni);
@@ -356,9 +356,9 @@ static void flusher_add_dirty_uni(struct silofs_flusher *flusher,
 }
 
 static void flusher_add_dirty_vnis_of(struct silofs_flusher *flusher,
-                                      struct silofs_dirtyq *dq)
+                                      struct silofs_dirtyq  *dq)
 {
-	struct silofs_dq_elem *dqe = nullptr;
+	struct silofs_dq_elem    *dqe = nullptr;
 	struct silofs_vnode_info *vni = nullptr;
 
 	dqe = silofs_dirtyq_front(dq);
@@ -371,7 +371,7 @@ static void flusher_add_dirty_vnis_of(struct silofs_flusher *flusher,
 	}
 }
 
-static void flusher_add_dirty_ii(struct silofs_flusher *flusher,
+static void flusher_add_dirty_ii(struct silofs_flusher    *flusher,
                                  struct silofs_inode_info *ii)
 {
 	flusher_add_dirty_vnis_of(flusher, &ii->i_dq_vnis);
@@ -379,10 +379,10 @@ static void flusher_add_dirty_ii(struct silofs_flusher *flusher,
 }
 
 static void flusher_add_dirty_iis_of(struct silofs_flusher *flusher,
-                                     struct silofs_dirtyq *dq)
+                                     struct silofs_dirtyq  *dq)
 {
-	struct silofs_dq_elem *dqe = nullptr;
-	struct silofs_inode_info *ii = nullptr;
+	struct silofs_dq_elem    *dqe = nullptr;
+	struct silofs_inode_info *ii  = nullptr;
 
 	dqe = silofs_dirtyq_front(dq);
 	while (dqe != nullptr) {
@@ -393,9 +393,9 @@ static void flusher_add_dirty_iis_of(struct silofs_flusher *flusher,
 }
 
 static void flusher_add_dirty_unis_of(struct silofs_flusher *flusher,
-                                      struct silofs_dirtyq *dq)
+                                      struct silofs_dirtyq  *dq)
 {
-	struct silofs_dq_elem *dqe = nullptr;
+	struct silofs_dq_elem    *dqe = nullptr;
 	struct silofs_unode_info *uni = nullptr;
 
 	dqe = silofs_dirtyq_front(dq);
@@ -437,7 +437,7 @@ static void flusher_fini_txq(struct silofs_flusher *flusher)
 	listq_fini(&flusher->txq);
 }
 
-static void flusher_enqueue_sqe(struct silofs_flusher *flusher,
+static void flusher_enqueue_sqe(struct silofs_flusher     *flusher,
                                 struct silofs_submitq_ent *sqe)
 {
 	listq_push_back(&flusher->txq, &sqe->qlh);
@@ -447,7 +447,7 @@ static void flusher_enqueue_sqe(struct silofs_flusher *flusher,
 static struct silofs_submitq_ent *
 flusher_dequeue_sqe(struct silofs_flusher *flusher)
 {
-	struct silofs_list_head *qlh;
+	struct silofs_list_head   *qlh;
 	struct silofs_submitq_ent *sqe = nullptr;
 
 	qlh = listq_pop_front(&flusher->txq);
@@ -475,10 +475,10 @@ flusher_dirtyqs_from_task(const struct silofs_flusher *flusher)
 }
 
 static int flusher_require_mutable_llink(const struct silofs_flusher *flusher,
-                                         const struct silofs_llink *llink)
+                                         const struct silofs_llink   *llink)
 {
 	const struct silofs_env *env = flusher_env(flusher);
-	bool mut;
+	bool                     mut;
 
 	mut = silofs_sbi_ismutable_laddr(env->sbi, &llink->laddr);
 	silofs_assert(mut);
@@ -487,7 +487,7 @@ static int flusher_require_mutable_llink(const struct silofs_flusher *flusher,
 }
 
 static void flusher_unode_nmeta(const struct silofs_flusher *flusher,
-                                struct silofs_nmeta *out_nmeta)
+                                struct silofs_nmeta         *out_nmeta)
 {
 	silofs_resolve_unode_nmeta(flusher->task->t_env, out_nmeta);
 }
@@ -497,7 +497,7 @@ static int flusher_resolve_llink_of_uni(const struct silofs_flusher *flusher,
                                         struct silofs_llink *out_llink)
 {
 	struct silofs_nmeta nmeta;
-	int ret = 0;
+	int                 ret = 0;
 
 	flusher_unode_nmeta(flusher, &nmeta);
 	silofs_llink_of_uni(uni, &nmeta, out_llink);
@@ -516,10 +516,10 @@ static int flusher_resolve_llink_of_vni(const struct silofs_flusher *flusher,
 }
 
 static int flusher_pre_resolve_llink_of(const struct silofs_flusher *flusher,
-                                        struct silofs_lnode_info *lni)
+                                        struct silofs_lnode_info    *lni)
 {
 	struct silofs_vnode_info *vni = nullptr;
-	int ret = 0;
+	int                       ret = 0;
 
 	if (lni_isvnode(lni)) {
 		vni = vni_from_lni(lni);
@@ -528,13 +528,13 @@ static int flusher_pre_resolve_llink_of(const struct silofs_flusher *flusher,
 	return ret;
 }
 
-static int flusher_resolve_llink_of(const struct silofs_flusher *flusher,
+static int flusher_resolve_llink_of(const struct silofs_flusher    *flusher,
                                     const struct silofs_lnode_info *lni,
-                                    struct silofs_llink *out_llink)
+                                    struct silofs_llink            *out_llink)
 {
 	const struct silofs_unode_info *uni = nullptr;
 	const struct silofs_vnode_info *vni = nullptr;
-	int ret;
+	int                             ret;
 
 	if (lni_isunode(lni)) {
 		uni = uni_from_lni(lni);
@@ -556,12 +556,12 @@ static void flusher_relax_cache_now(const struct silofs_flusher *flusher)
 	silofs_lcache_relax(env->base.lcache, SILOFS_CTLF_NOW);
 }
 
-static int flusher_do_make_sqe(struct silofs_flusher *flusher,
+static int flusher_do_make_sqe(struct silofs_flusher      *flusher,
                                struct silofs_submitq_ent **out_sqe)
 {
-	struct silofs_submitq *smq = flusher->submitq;
-	int retry = 4;
-	int err;
+	struct silofs_submitq *smq   = flusher->submitq;
+	int                    retry = 4;
+	int                    err;
 
 	err = silofs_submitq_new_sqe(smq, out_sqe);
 	while ((err == -SILOFS_ENOMEM) && (retry-- > 0)) {
@@ -571,7 +571,7 @@ static int flusher_do_make_sqe(struct silofs_flusher *flusher,
 	return err;
 }
 
-static int flusher_make_sqe(struct silofs_flusher *flusher,
+static int flusher_make_sqe(struct silofs_flusher      *flusher,
                             struct silofs_submitq_ent **out_sqe)
 {
 	int err;
@@ -585,24 +585,24 @@ static int flusher_make_sqe(struct silofs_flusher *flusher,
 }
 
 static void flusher_append_at(struct silofs_flusher *flusher, size_t pos,
-                              const struct silofs_llink *llink,
+                              const struct silofs_llink      *llink,
                               const struct silofs_lnode_info *lni)
 {
 	struct silofs_submit_ref *ref = &flusher->sref[pos];
 
 	silofs_assert_lt(pos, ARRAY_SIZE(flusher->sref));
 	silofs_llink_assign(&ref->llink, llink);
-	ref->view = lni->ln_view;
+	ref->view  = lni->ln_view;
 	ref->mtype = lni->ln_mtype;
 }
 
-static bool flusher_append_next_ref(struct silofs_flusher *flusher,
+static bool flusher_append_next_ref(struct silofs_flusher     *flusher,
                                     struct silofs_submitq_ent *sqe,
                                     const struct silofs_llink *llink,
-                                    struct silofs_lnode_info *lni)
+                                    struct silofs_lnode_info  *lni)
 {
 	const size_t cur = sqe->cnt;
-	bool ok;
+	bool         ok;
 
 	if (cur >= ARRAY_SIZE(flusher->sref)) {
 		return false;
@@ -615,13 +615,13 @@ static bool flusher_append_next_ref(struct silofs_flusher *flusher,
 	return true;
 }
 
-static int flusher_populate_sqe_refs(struct silofs_flusher *flusher,
-                                     struct silofs_dset *dset,
+static int flusher_populate_sqe_refs(struct silofs_flusher     *flusher,
+                                     struct silofs_dset        *dset,
                                      struct silofs_submitq_ent *sqe)
 {
-	struct silofs_llink llink;
+	struct silofs_llink       llink;
 	struct silofs_lnode_info *lni;
-	int err;
+	int                       err;
 
 	lni = dset_preq_front(dset);
 	while (lni != nullptr) {
@@ -648,7 +648,7 @@ flusher_del_sqe(struct silofs_flusher *flusher, struct silofs_submitq_ent *sqe)
 	silofs_submitq_del_sqe(flusher->submitq, sqe);
 }
 
-static int flusher_setup_sqe_by_refs(struct silofs_flusher *flusher,
+static int flusher_setup_sqe_by_refs(struct silofs_flusher     *flusher,
                                      struct silofs_submitq_ent *sqe)
 {
 	int retry = 4;
@@ -662,8 +662,8 @@ static int flusher_setup_sqe_by_refs(struct silofs_flusher *flusher,
 	return err;
 }
 
-static int flusher_populate_sqe_by(struct silofs_flusher *flusher,
-                                   struct silofs_dset *dset,
+static int flusher_populate_sqe_by(struct silofs_flusher     *flusher,
+                                   struct silofs_dset        *dset,
                                    struct silofs_submitq_ent *sqe)
 {
 	int err;
@@ -709,14 +709,14 @@ static void flusher_cleanup_dset(struct silofs_flusher *flusher, size_t slot)
 }
 
 static int flusher_prep_sqe(const struct silofs_flusher *flusher,
-                            struct silofs_submitq_ent *sqe)
+                            struct silofs_submitq_ent   *sqe)
 {
 	struct silofs_env *env = flusher_env(flusher);
 
 	return silofs_stage_lseg(env, &sqe->laddr_base.lsid);
 }
 
-static void flusher_submit_sqe(struct silofs_flusher *flusher,
+static void flusher_submit_sqe(struct silofs_flusher     *flusher,
                                struct silofs_submitq_ent *sqe)
 {
 	silofs_submitq_enqueue(flusher->submitq, sqe);
@@ -726,7 +726,7 @@ static void flusher_submit_sqe(struct silofs_flusher *flusher,
 static void flusher_submit_txq(struct silofs_flusher *flusher)
 {
 	struct silofs_submitq_ent *sqe;
-	uint32_t tx_index = 0;
+	uint32_t                   tx_index = 0;
 
 	sqe = flusher_dequeue_sqe(flusher);
 	while (sqe != nullptr) {
@@ -748,8 +748,8 @@ static void flusher_discard_txq(struct silofs_flusher *flusher)
 	}
 }
 
-static int flusher_enqueue_dset_into(struct silofs_flusher *flusher,
-                                     struct silofs_dset *dset,
+static int flusher_enqueue_dset_into(struct silofs_flusher     *flusher,
+                                     struct silofs_dset        *dset,
                                      struct silofs_submitq_ent *sqe)
 {
 	int err;
@@ -767,9 +767,9 @@ static int flusher_enqueue_dset_into(struct silofs_flusher *flusher,
 
 static int flusher_enqueue_dset(struct silofs_flusher *flusher, size_t slot)
 {
-	struct silofs_dset *dset;
+	struct silofs_dset        *dset;
 	struct silofs_submitq_ent *sqe;
-	int err;
+	int                        err;
 
 	dset = flusher_dset_at(flusher, slot);
 	while (dset->ds_preq != nullptr) {
@@ -899,20 +899,20 @@ flusher_rebind(struct silofs_flusher *flusher, struct silofs_task_ctx *task,
                struct silofs_inode_info *ii, int flags)
 {
 	flusher_reinit_dsets(flusher);
-	flusher->task = task;
-	flusher->sbi = silofs_get_sbi(task);
-	flusher->ii = ii;
+	flusher->task     = task;
+	flusher->sbi      = silofs_get_sbi(task);
+	flusher->ii       = ii;
 	flusher->tx_count = 0;
-	flusher->flags = flags;
+	flusher->flags    = flags;
 }
 
 static void flusher_unbind(struct silofs_flusher *flusher)
 {
-	flusher->task = nullptr;
-	flusher->sbi = nullptr;
-	flusher->ii = nullptr;
+	flusher->task     = nullptr;
+	flusher->sbi      = nullptr;
+	flusher->ii       = nullptr;
 	flusher->tx_count = 0;
-	flusher->flags = 0;
+	flusher->flags    = 0;
 }
 
 int silofs_flusher_init(struct silofs_flusher *flusher,
@@ -921,12 +921,12 @@ int silofs_flusher_init(struct silofs_flusher *flusher,
 	silofs_memzero(flusher, sizeof(*flusher));
 	flusher_init_dsets(flusher);
 	flusher_init_txq(flusher);
-	flusher->submitq = submitq;
-	flusher->task = nullptr;
-	flusher->sbi = nullptr;
-	flusher->ii = nullptr;
+	flusher->submitq  = submitq;
+	flusher->task     = nullptr;
+	flusher->sbi      = nullptr;
+	flusher->ii       = nullptr;
 	flusher->tx_count = 0;
-	flusher->flags = 0;
+	flusher->flags    = 0;
 	return 0;
 }
 
@@ -985,10 +985,10 @@ static bool need_flush_by_ii(const struct silofs_inode_info *ii, int flags)
 
 static bool need_flush_by_env(const struct silofs_env *env, int flags)
 {
-	const struct silofs_lcache *lcache = env->base.lcache;
-	const struct silofs_dirtyqs *dqs = &lcache->lc_dirtyqs;
-	size_t ndirty;
-	size_t thresh;
+	const struct silofs_lcache  *lcache = env->base.lcache;
+	const struct silofs_dirtyqs *dqs    = &lcache->lc_dirtyqs;
+	size_t                       ndirty;
+	size_t                       thresh;
 
 	thresh = flush_threshold_of(flags);
 	ndirty = dqs->dq_unis.dq_accum + dqs->dq_iis.dq_accum +
@@ -996,7 +996,7 @@ static bool need_flush_by_env(const struct silofs_env *env, int flags)
 	return (ndirty > thresh);
 }
 
-static bool need_flush_by(const struct silofs_task_ctx *task,
+static bool need_flush_by(const struct silofs_task_ctx   *task,
                           const struct silofs_inode_info *ii, int flags)
 {
 	bool ret = false;
@@ -1011,11 +1011,11 @@ static bool need_flush_by(const struct silofs_task_ctx *task,
 	return ret;
 }
 
-static int do_flush_dirty(struct silofs_task_ctx *task,
+static int do_flush_dirty(struct silofs_task_ctx   *task,
                           struct silofs_inode_info *ii, int flags)
 {
 	struct silofs_flusher *flusher = task->t_env->base.flusher;
-	int err;
+	int                    err;
 
 	flusher_rebind(flusher, task, ii, flags);
 	flusher_pre_flush_dirty(flusher);
@@ -1027,7 +1027,7 @@ static int do_flush_dirty(struct silofs_task_ctx *task,
 	return err;
 }
 
-int silofs_flush_dirty(struct silofs_task_ctx *task,
+int silofs_flush_dirty(struct silofs_task_ctx   *task,
                        struct silofs_inode_info *ii, int flags)
 {
 	int err = 0;
@@ -1069,18 +1069,18 @@ static void sqe_reset_iovs(struct silofs_submitq_ent *sqe)
 		silofs_memfree(sqe->alloc, sqe->iov[idx].iov_base,
 		               sqe->iov[idx].iov_len, SILOFS_ALLOCF_NOPUNCH);
 		sqe->iov[idx].iov_base = nullptr;
-		sqe->iov[idx].iov_len = 0;
+		sqe->iov[idx].iov_len  = 0;
 	}
 }
 
 static bool sqe_isappendable(const struct silofs_submitq_ent *sqe,
-                             const struct silofs_laddr *laddr)
+                             const struct silofs_laddr       *laddr)
 {
 	const struct silofs_laddr *sqe_laddr = &sqe->laddr_base;
-	const ssize_t len_max = SILOFS_COMMIT_LEN_MAX;
-	size_t len;
-	off_t end;
-	off_t nxt;
+	const ssize_t              len_max   = SILOFS_COMMIT_LEN_MAX;
+	size_t                     len;
+	off_t                      end;
+	off_t                      nxt;
 
 	STATICASSERT_EQ(ARRAY_SIZE(sqe->iov), ARRAY_SIZE(sqe->lni));
 
@@ -1115,7 +1115,7 @@ static bool sqe_isappendable(const struct silofs_submitq_ent *sqe,
 
 bool silofs_sqe_append_ref(struct silofs_submitq_ent *sqe,
                            const struct silofs_laddr *laddr,
-                           struct silofs_lnode_info *lni)
+                           struct silofs_lnode_info  *lni)
 {
 	if (!sqe_isappendable(sqe, laddr)) {
 		return false;
@@ -1129,12 +1129,12 @@ bool silofs_sqe_append_ref(struct silofs_submitq_ent *sqe,
 	return true;
 }
 
-static int sqe_setup_iovs(struct silofs_submitq_ent *sqe,
+static int sqe_setup_iovs(struct silofs_submitq_ent      *sqe,
                           const struct silofs_submit_ref *refs_arr)
 {
 	const struct silofs_submit_ref *ref;
-	size_t len;
-	int err;
+	size_t                          len;
+	int                             err;
 
 	for (size_t i = 0; i < sqe->cnt; ++i) {
 		ref = &refs_arr[i];
@@ -1147,11 +1147,11 @@ static int sqe_setup_iovs(struct silofs_submitq_ent *sqe,
 	return 0;
 }
 
-static int sqe_encrypted_iovs(struct silofs_submitq_ent *sqe,
+static int sqe_encrypted_iovs(struct silofs_submitq_ent      *sqe,
                               const struct silofs_submit_ref *refs_arr)
 {
 	const struct silofs_submit_ref *ref = nullptr;
-	int err;
+	int                             err;
 
 	for (size_t i = 0; i < sqe->cnt; ++i) {
 		ref = &refs_arr[i];
@@ -1164,7 +1164,7 @@ static int sqe_encrypted_iovs(struct silofs_submitq_ent *sqe,
 	return 0;
 }
 
-int silofs_sqe_assign_iovs(struct silofs_submitq_ent *sqe,
+int silofs_sqe_assign_iovs(struct silofs_submitq_ent      *sqe,
                            const struct silofs_submit_ref *refs_arr)
 {
 	int err;
@@ -1215,13 +1215,13 @@ static void sqe_init(struct silofs_submitq_ent *sqe,
 	memset(sqe, 0, sizeof(*sqe));
 	silofs_list_head_init(&sqe->qlh);
 	silofs_laddr_reset(&sqe->laddr_base);
-	sqe->alloc = alloc;
-	sqe->env = nullptr;
-	sqe->uniq_id = uniq_id;
-	sqe->len = 0;
-	sqe->cnt = 0;
+	sqe->alloc     = alloc;
+	sqe->env       = nullptr;
+	sqe->uniq_id   = uniq_id;
+	sqe->len       = 0;
+	sqe->cnt       = 0;
 	sqe->hold_refs = 0;
-	sqe->status = 0;
+	sqe->status    = 0;
 }
 
 static void sqe_fini(struct silofs_submitq_ent *sqe)
@@ -1229,9 +1229,9 @@ static void sqe_fini(struct silofs_submitq_ent *sqe)
 	silofs_list_head_fini(&sqe->qlh);
 	silofs_laddr_reset(&sqe->laddr_base);
 	sqe_reset_iovs(sqe);
-	sqe->len = 0;
-	sqe->cnt = 0;
-	sqe->alloc = nullptr;
+	sqe->len    = 0;
+	sqe->cnt    = 0;
+	sqe->alloc  = nullptr;
 	sqe->status = -1;
 }
 
@@ -1277,7 +1277,7 @@ int silofs_submitq_init(struct silofs_submitq *smq, struct silofs_alloc *alloc)
 {
 	memset(smq, 0, sizeof(*smq));
 	silofs_listq_init(&smq->smq_listq);
-	smq->smq_alloc = alloc;
+	smq->smq_alloc    = alloc;
 	smq->smq_upper_id = 1;
 	return silofs_mutex_init(&smq->smq_mutex);
 }
@@ -1309,7 +1309,7 @@ submitq_push_sqe(struct silofs_submitq *smq, struct silofs_submitq_ent *sqe)
 	listq_push_back(&smq->smq_listq, &sqe->qlh);
 }
 
-void silofs_submitq_enqueue(struct silofs_submitq *smq,
+void silofs_submitq_enqueue(struct silofs_submitq     *smq,
                             struct silofs_submitq_ent *sqe)
 {
 	silofs_mutex_lock(&smq->smq_mutex);
@@ -1336,7 +1336,7 @@ static int submitq_apply_one(struct silofs_submitq *smq, uint64_t id,
                              struct silofs_submitq_ent **out_sqe)
 {
 	struct silofs_submitq_ent *sqe;
-	int ret = 0;
+	int                        ret = 0;
 
 	silofs_mutex_lock(&smq->smq_mutex);
 	sqe = submitq_get_sqe(smq, id);
@@ -1352,7 +1352,7 @@ static int submitq_apply_one(struct silofs_submitq *smq, uint64_t id,
 int silofs_submitq_apply(struct silofs_submitq *smq, uint64_t id)
 {
 	struct silofs_submitq_ent *sqe = nullptr;
-	int ret = 0;
+	int                        ret = 0;
 
 	while (ret == 0) {
 		sqe = nullptr;
@@ -1365,14 +1365,14 @@ int silofs_submitq_apply(struct silofs_submitq *smq, uint64_t id)
 	return ret;
 }
 
-int silofs_submitq_new_sqe(struct silofs_submitq *smq,
+int silofs_submitq_new_sqe(struct silofs_submitq      *smq,
                            struct silofs_submitq_ent **out_sqe)
 {
 	*out_sqe = sqe_new(smq->smq_alloc, smq->smq_upper_id++);
 	return likely(*out_sqe != nullptr) ? 0 : -SILOFS_ENOMEM;
 }
 
-void silofs_submitq_del_sqe(struct silofs_submitq *smq,
+void silofs_submitq_del_sqe(struct silofs_submitq     *smq,
                             struct silofs_submitq_ent *sqe)
 {
 	sqe_decrefs(sqe);

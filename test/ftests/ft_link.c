@@ -22,7 +22,7 @@
 static size_t get_link_max(void)
 {
 	const long lim = SILOFS_LINK_MAX;
-	long ret;
+	long       ret;
 
 	ret = sysconf(_PC_LINK_MAX);
 	ft_expect_gt(ret, 0);
@@ -48,8 +48,8 @@ static void test_link_exists(struct ft_env *fte)
 	const char *path0 = ft_new_path_unique(fte);
 	const char *path1 = ft_new_path_unique(fte);
 	const char *path2 = ft_new_path_name(fte, "link-to-symlink-exist");
-	int fd0 = -1;
-	int fd1 = -1;
+	int         fd0   = -1;
+	int         fd1   = -1;
 
 	ft_creat(path0, 0644, &fd0);
 	ft_creat(path1, 0644, &fd1);
@@ -78,7 +78,7 @@ static void test_link_noent(struct ft_env *fte)
 	const char *path0 = ft_new_path_unique(fte);
 	const char *path1 = ft_new_path_under(fte, path0);
 	const char *path2 = ft_new_path_under(fte, path0);
-	int fd = -1;
+	int         fd    = -1;
 
 	ft_mkdir(path0, 0700);
 	ft_creat(path1, 0640, &fd);
@@ -101,8 +101,8 @@ static void test_link_notdir(struct ft_env *fte)
 	const char *path1 = ft_new_path_under(fte, path0);
 	const char *path2 = ft_new_path_under(fte, path0);
 	const char *path3 = ft_new_path_under(fte, path1);
-	int fd1 = -1;
-	int fd2 = -1;
+	int         fd1   = -1;
+	int         fd2   = -1;
 
 	ft_mkdir(path0, 0755);
 	ft_creat(path1, 0644, &fd1);
@@ -122,15 +122,15 @@ static void test_link_notdir(struct ft_env *fte)
  */
 static void test_link_rename_(struct ft_env *fte, int cnt)
 {
-	struct stat st = { .st_size = -1 };
-	const char *name = ft_new_name_unique(fte);
+	struct stat st    = { .st_size = -1 };
+	const char *name  = ft_new_name_unique(fte);
 	const char *path0 = ft_new_path_unique(fte);
 	const char *path1 = ft_new_path_under(fte, path0);
 	const char *path2 = nullptr;
 	const char *path3 = nullptr;
-	const int limit = cnt + 1;
-	int nlink = 1;
-	int fd = -1;
+	const int   limit = cnt + 1;
+	int         nlink = 1;
+	int         fd    = -1;
 
 	ft_mkdir(path0, 0700);
 	ft_creat(path1, 0600, &fd);
@@ -169,14 +169,14 @@ static void test_link_rename(struct ft_env *fte)
  */
 static void test_link_max(struct ft_env *fte)
 {
-	struct stat st = { .st_size = -1 };
-	const size_t link_max = get_link_max();
-	const char *name = ft_new_name_unique(fte);
-	const char *path0 = ft_new_path_unique(fte);
-	const char *path1 = ft_new_path_under(fte, path0);
-	const char *path2 = nullptr;
-	nlink_t nlink_base = 0;
-	int fd = -1;
+	struct stat  st         = { .st_size = -1 };
+	const size_t link_max   = get_link_max();
+	const char  *name       = ft_new_name_unique(fte);
+	const char  *path0      = ft_new_path_unique(fte);
+	const char  *path1      = ft_new_path_under(fte, path0);
+	const char  *path2      = nullptr;
+	nlink_t      nlink_base = 0;
+	int          fd         = -1;
 
 	ft_mkdir(path0, 0700);
 	ft_creat(path1, 0600, &fd);
@@ -204,7 +204,7 @@ static void test_link_max(struct ft_env *fte)
  */
 static const char *make_name(struct ft_env *fte, char c, size_t len)
 {
-	char name[NAME_MAX + 1] = "";
+	char   name[NAME_MAX + 1] = "";
 	size_t nlen;
 
 	nlen = (len < sizeof(name)) ? len : (sizeof(name) - 1);
@@ -214,22 +214,22 @@ static const char *make_name(struct ft_env *fte, char c, size_t len)
 
 static void test_link_similar_names(struct ft_env *fte)
 {
-	struct stat st = { .st_size = -1 };
-	const char *name = nullptr;
+	struct stat st    = { .st_size = -1 };
+	const char *name  = nullptr;
 	const char *lpath = nullptr;
 	const char *path0 = ft_new_path_unique(fte);
 	const char *rpath = ft_new_path_under(fte, path0);
 	const char *abc =
 		"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-	const size_t abc_len = ft_strlen(abc);
+	const size_t abc_len  = ft_strlen(abc);
 	const size_t name_max = NAME_MAX;
-	int fd = -1;
+	int          fd       = -1;
 
 	ft_mkdir(path0, 0750);
 	ft_creat(rpath, 0640, &fd);
 	for (size_t i = 0; i < abc_len; ++i) {
 		for (size_t j = 1; j <= name_max; ++j) {
-			name = make_name(fte, abc[i], j);
+			name  = make_name(fte, abc[i], j);
 			lpath = ft_new_path_nested(fte, path0, name);
 			ft_link(rpath, lpath);
 		}
@@ -239,7 +239,7 @@ static void test_link_similar_names(struct ft_env *fte)
 
 	for (size_t i = 0; i < abc_len; ++i) {
 		for (size_t j = 1; j <= name_max; ++j) {
-			name = make_name(fte, abc[i], j);
+			name  = make_name(fte, abc[i], j);
 			lpath = ft_new_path_nested(fte, path0, name);
 			ft_unlink(lpath);
 		}
@@ -257,12 +257,12 @@ static void test_link_similar_names(struct ft_env *fte)
  */
 static void test_linkat_same_dir_(struct ft_env *fte, size_t cnt)
 {
-	struct stat st = { .st_size = -1 };
+	struct stat st   = { .st_size = -1 };
 	const char *path = ft_new_path_unique(fte);
 	const char *name = ft_new_name_unique(fte);
 	const char *link = nullptr;
-	int dfd = -1;
-	int fd = -1;
+	int         dfd  = -1;
+	int         fd   = -1;
 
 	ft_mkdir(path, 0700);
 	ft_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);
@@ -301,15 +301,15 @@ static void test_linkat_same_dir(struct ft_env *fte)
  */
 static void test_linkat_diff_dir_(struct ft_env *fte, size_t cnt)
 {
-	struct stat st = { .st_size = -1 };
+	struct stat st    = { .st_size = -1 };
 	const char *path1 = ft_new_path_unique(fte);
 	const char *name1 = ft_new_name_unique(fte);
 	const char *path2 = ft_new_path_unique(fte);
 	const char *name2 = ft_new_name_unique(fte);
-	const char *link = nullptr;
-	int dfd1 = -1;
-	int dfd2 = -1;
-	int fd = -1;
+	const char *link  = nullptr;
+	int         dfd1  = -1;
+	int         dfd2  = -1;
+	int         fd    = -1;
 
 	ft_mkdir(path1, 0700);
 	ft_open(path1, O_DIRECTORY | O_RDONLY, 0, &dfd1);
@@ -371,13 +371,13 @@ static void test_linkat_diff_dir(struct ft_env *fte)
  */
 static void test_linkat_with_io_(struct ft_env *fte, size_t cnt)
 {
-	struct stat st = { .st_size = -1 };
+	struct stat st   = { .st_size = -1 };
 	const char *path = ft_new_path_unique(fte);
 	const char *name = ft_new_name_unique(fte);
 	const char *link = nullptr;
-	off_t off = -1;
-	int dfd = -1;
-	int fd = -1;
+	off_t       off  = -1;
+	int         dfd  = -1;
+	int         fd   = -1;
 
 	ft_mkdir(path, 0700);
 	ft_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);

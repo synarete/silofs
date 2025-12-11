@@ -25,16 +25,16 @@
 
 static void cred_init(struct silofs_cred *cred)
 {
-	cred->uid = (uid_t)(-1);
-	cred->gid = (gid_t)(-1);
+	cred->uid   = (uid_t)(-1);
+	cred->gid   = (gid_t)(-1);
 	cred->umask = (mode_t)(-1);
 }
 
 static void
 cred_setup(struct silofs_cred *cred, uid_t uid, gid_t gid, mode_t umsk)
 {
-	cred->uid = uid;
-	cred->gid = gid;
+	cred->uid   = uid;
+	cred->gid   = gid;
 	cred->umask = umsk;
 }
 
@@ -69,7 +69,7 @@ void silofs_task_set_ts(struct silofs_task_ctx *task, bool rt)
 	}
 }
 
-void silofs_task_update_by(struct silofs_task_ctx *task,
+void silofs_task_update_by(struct silofs_task_ctx    *task,
                            struct silofs_submitq_ent *sqe)
 {
 	if (sqe->uniq_id > task->t_upper_id) {
@@ -94,21 +94,21 @@ void silofs_task_init(struct silofs_task_ctx *task, struct silofs_env *env)
 	memset(task, 0, sizeof(*task));
 	cred_init(&task->t_auth.creds.fs_cred);
 	cred_init(&task->t_auth.creds.host_cred);
-	task->t_env = env;
-	task->t_creds = &task->t_auth.creds;
-	task->t_idsm = env->base.idsmap;
-	task->t_repo = env->base.repo;
-	task->t_lcache = env->base.lcache;
-	task->t_submitq = env->base.submitq;
-	task->t_looseq = nullptr;
-	task->t_upper_id = 0;
+	task->t_env       = env;
+	task->t_creds     = &task->t_auth.creds;
+	task->t_idsm      = env->base.idsmap;
+	task->t_repo      = env->base.repo;
+	task->t_lcache    = env->base.lcache;
+	task->t_submitq   = env->base.submitq;
+	task->t_looseq    = nullptr;
+	task->t_upper_id  = 0;
 	task->t_interrupt = 0;
 	task->t_fs_locked = false;
 	task->t_ex_locked = false;
 	task->t_exclusive = false;
-	task->t_priv_op = false;
-	task->t_kwrite = false;
-	task->t_runnable = true;
+	task->t_priv_op   = false;
+	task->t_kwrite    = false;
+	task->t_runnable  = true;
 }
 
 void silofs_task_fini(struct silofs_task_ctx *task)
@@ -116,15 +116,15 @@ void silofs_task_fini(struct silofs_task_ctx *task)
 	silofs_assert_null(task->t_looseq);
 	silofs_assert_eq(task->t_fs_locked, false);
 
-	task->t_env = nullptr;
-	task->t_idsm = nullptr;
-	task->t_repo = nullptr;
-	task->t_lcache = nullptr;
-	task->t_submitq = nullptr;
+	task->t_env      = nullptr;
+	task->t_idsm     = nullptr;
+	task->t_repo     = nullptr;
+	task->t_lcache   = nullptr;
+	task->t_submitq  = nullptr;
 	task->t_runnable = false;
 }
 
-void silofs_task_enq_loose(struct silofs_task_ctx *task,
+void silofs_task_enq_loose(struct silofs_task_ctx   *task,
                            struct silofs_inode_info *ii)
 {
 	silofs_assert_null(ii->i_looseq_next);
@@ -132,8 +132,8 @@ void silofs_task_enq_loose(struct silofs_task_ctx *task,
 
 	if (!ii->i_in_looseq) {
 		ii->i_looseq_next = task->t_looseq;
-		ii->i_in_looseq = true;
-		task->t_looseq = ii;
+		ii->i_in_looseq   = true;
+		task->t_looseq    = ii;
 		silofs_ii_incref(ii);
 	}
 }
@@ -143,10 +143,10 @@ static struct silofs_inode_info *task_deq_loose(struct silofs_task_ctx *task)
 	struct silofs_inode_info *ii = nullptr;
 
 	if (task->t_looseq != nullptr) {
-		ii = task->t_looseq;
-		task->t_looseq = ii->i_looseq_next;
+		ii                = task->t_looseq;
+		task->t_looseq    = ii->i_looseq_next;
 		ii->i_looseq_next = nullptr;
-		ii->i_in_looseq = false;
+		ii->i_in_looseq   = false;
 		silofs_ii_decref(ii);
 	}
 	return ii;
@@ -155,7 +155,7 @@ static struct silofs_inode_info *task_deq_loose(struct silofs_task_ctx *task)
 static void task_forget_looseq(struct silofs_task_ctx *task)
 {
 	struct silofs_inode_info *ii;
-	int err;
+	int                       err;
 
 	ii = task_deq_loose(task);
 	while (ii != nullptr) {

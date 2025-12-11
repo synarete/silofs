@@ -22,8 +22,8 @@
  */
 static void test_truncate_simple(struct ft_env *fte)
 {
-	int fd = -1;
-	off_t off;
+	int         fd = -1;
+	off_t       off;
 	struct stat st;
 	const off_t offs[] = {
 		0,         1,          FT_BK_SIZE,
@@ -59,18 +59,18 @@ static void test_truncate_simple(struct ft_env *fte)
  */
 static void test_truncate_unaligned(struct ft_env *fte)
 {
-	int fd = -1;
-	off_t off;
-	struct stat st;
-	const char *dat = "ABCDEFGHIJKLMNOPQ";
-	const size_t len = ft_strlen(dat);
-	const off_t offs[] = {
-		17,
-		7177,
-		17 * FT_1M - 7,
-		17 * FT_1G - 7,
-		3 * FT_1T - 7,
-		FT_FILESIZE_MAX / 7,
+	int          fd = -1;
+	off_t        off;
+	struct stat  st;
+	const char  *dat    = "ABCDEFGHIJKLMNOPQ";
+	const size_t len    = ft_strlen(dat);
+	const off_t  offs[] = {
+                17,
+                7177,
+                17 * FT_1M - 7,
+                17 * FT_1G - 7,
+                3 * FT_1T - 7,
+                FT_FILESIZE_MAX / 7,
 	};
 	const char *path = ft_new_path_unique(fte);
 
@@ -103,14 +103,14 @@ static void test_truncate_unaligned(struct ft_env *fte)
  */
 static void test_truncate_zero(struct ft_env *fte)
 {
-	int fd = -1;
-	off_t off = 0;
-	size_t bsz = FT_BK_SIZE;
+	int         fd  = -1;
+	off_t       off = 0;
+	size_t      bsz = FT_BK_SIZE;
 	struct stat st;
 	const off_t offs[] = {
 		FT_1M, FT_1G, FT_1T, FT_1M - 1, FT_1G - 1, FT_1T - 1,
 	};
-	const void *buf = ft_new_buf_rands(fte, bsz);
+	const void *buf  = ft_new_buf_rands(fte, bsz);
 	const char *path = ft_new_path_unique(fte);
 
 	ft_creat(path, 0600, &fd);
@@ -136,9 +136,9 @@ static void test_truncate_zero(struct ft_env *fte)
  */
 static void test_truncate_filesize_max(struct ft_env *fte)
 {
-	int fd = -1;
+	int         fd = -1;
 	struct stat st;
-	const off_t off = FT_FILESIZE_MAX;
+	const off_t off  = FT_FILESIZE_MAX;
 	const char *path = ft_new_path_unique(fte);
 
 	ft_creat(path, 0600, &fd);
@@ -158,7 +158,7 @@ static void test_truncate_filesize_max(struct ft_env *fte)
  */
 static void test_truncate_mctimes_(struct ft_env *fte, off_t off)
 {
-	int fd = -1;
+	int         fd = -1;
 	struct stat st[2];
 	const char *path = ft_new_path_unique(fte);
 
@@ -201,11 +201,11 @@ static void test_truncate_mctimes(struct ft_env *fte)
  */
 static void test_truncate_suid_sgid(struct ft_env *fte)
 {
-	int fd;
-	off_t off = FT_1M;
-	struct stat st;
+	int          fd;
+	off_t        off = FT_1M;
+	struct stat  st;
 	const mode_t mode = 0770;
-	const char *path = ft_new_path_unique(fte);
+	const char  *path = ft_new_path_unique(fte);
 
 	ft_open(path, O_CREAT | O_RDWR, mode, &fd);
 	ft_fstat(fd, &st);

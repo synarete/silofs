@@ -37,9 +37,9 @@ struct cmd_show_in_args {
 
 struct cmd_show_ctx {
 	struct cmd_show_in_args in_args;
-	union silofs_ioc_u *ioc;
-	enum silofs_query_type qtype;
-	FILE *out_fp;
+	union silofs_ioc_u     *ioc;
+	enum silofs_query_type  qtype;
+	FILE                   *out_fp;
 };
 
 static struct cmd_show_ctx *cmd_show_ctx_p;
@@ -53,7 +53,7 @@ static void cmd_show_parse_optargs(struct cmd_show_ctx *ctx)
 		{ nullptr, 0, 0 },
 	};
 	struct cmd_optargs opa;
-	int opt_chr = 1;
+	int                opt_chr = 1;
 
 	cmd_optargs_init(&opa, ods);
 	while (!opa.opa_done && (opt_chr > 0)) {
@@ -68,7 +68,7 @@ static void cmd_show_parse_optargs(struct cmd_show_ctx *ctx)
 		}
 	}
 
-	ctx->in_args.subcmd = cmd_optargs_getarg(&opa, "subcmd");
+	ctx->in_args.subcmd   = cmd_optargs_getarg(&opa, "subcmd");
 	ctx->in_args.pathname = cmd_optargs_getarg(&opa, "pathname");
 	cmd_optargs_endargs(&opa);
 	cmd_optargs_fini(&opa);
@@ -173,13 +173,13 @@ static void cmd_show_repo(struct cmd_show_ctx *ctx)
 
 static void cmd_show_boot(struct cmd_show_ctx *ctx)
 {
-	struct silofs_ioc_query *qry = &ctx->ioc->query;
-	char *name = nullptr;
-	char *mblobid = nullptr;
+	struct silofs_ioc_query *qry     = &ctx->ioc->query;
+	char                    *name    = nullptr;
+	char                    *mblobid = nullptr;
 
 	cmd_show_do_ioctl_query(ctx);
 
-	name = cmd_strvdup(qry->u.boot.name);
+	name    = cmd_strvdup(qry->u.boot.name);
 	mblobid = cmd_strblobid(&qry->u.boot.mblobid);
 	fprintf(ctx->out_fp, "%s %s\n", name, mblobid);
 	cmd_pstrfree(&name);
@@ -188,24 +188,24 @@ static void cmd_show_boot(struct cmd_show_ctx *ctx)
 
 struct silofs_msflag_name {
 	unsigned long ms_flag;
-	const char *name;
+	const char   *name;
 };
 
 static void msflags_str(unsigned long msflags, char *buf, size_t bsz)
 {
-	const char *end = buf + bsz;
-	const struct silofs_msflag_name *ms_name = nullptr;
-	const struct silofs_msflag_name ms_names[] = {
-		{ MS_RDONLY, "rdonly" },     { MS_NODEV, "nodev" },
-		{ MS_NOSUID, "nosuid" },     { MS_NOEXEC, "noexec" },
-		{ MS_MANDLOCK, "mandlock" }, { MS_NOATIME, "noatime" },
+	const char                      *end        = buf + bsz;
+	const struct silofs_msflag_name *ms_name    = nullptr;
+	const struct silofs_msflag_name  ms_names[] = {
+                { MS_RDONLY, "rdonly" },     { MS_NODEV, "nodev" },
+                { MS_NOSUID, "nosuid" },     { MS_NOEXEC, "noexec" },
+                { MS_MANDLOCK, "mandlock" }, { MS_NOATIME, "noatime" },
 	};
-	size_t len = 0;
-	bool first = true;
+	size_t len   = 0;
+	bool   first = true;
 
 	for (size_t i = 0; i < SILOFS_ARRAY_SIZE(ms_names); ++i) {
 		ms_name = &ms_names[i];
-		len = strlen(ms_name->name);
+		len     = strlen(ms_name->name);
 		if (!(msflags & ms_name->ms_flag)) {
 			continue;
 		}
@@ -217,7 +217,7 @@ static void msflags_str(unsigned long msflags, char *buf, size_t bsz)
 				buf += 1;
 			}
 			buf[0] = '\0';
-			first = false;
+			first  = false;
 		}
 	}
 }
@@ -333,7 +333,7 @@ static void cmd_show_spstats(struct cmd_show_ctx *ctx)
 static void cmd_show_statx(struct cmd_show_ctx *ctx)
 {
 	const struct silofs_query_statx *qstatx = &ctx->ioc->query.u.statx;
-	const struct statx *stx = &qstatx->stx;
+	const struct statx              *stx    = &qstatx->stx;
 
 	cmd_show_do_ioctl_query(ctx);
 	fprintf(ctx->out_fp, "blksize: %ld\n", (long)stx->stx_blksize);
@@ -380,8 +380,8 @@ static void cmd_show_execute(struct cmd_show_ctx *ctx)
 void cmd_execute_show(void)
 {
 	struct cmd_show_ctx ctx = {
-		.qtype = SILOFS_QUERY_NONE,
-		.ioc = nullptr,
+		.qtype  = SILOFS_QUERY_NONE,
+		.ioc    = nullptr,
 		.out_fp = stdout,
 	};
 

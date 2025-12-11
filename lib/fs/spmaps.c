@@ -73,7 +73,7 @@ static void spr_initn(struct silofs_spmap_ref *spr, size_t n)
 	}
 }
 
-static void spr_clone_from(struct silofs_spmap_ref *spr,
+static void spr_clone_from(struct silofs_spmap_ref       *spr,
                            const struct silofs_spmap_ref *spr_other)
 {
 	struct silofs_uaddr uaddr;
@@ -85,36 +85,36 @@ static void spr_clone_from(struct silofs_spmap_ref *spr,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void spnode_parent(const struct silofs_spmap_node *spn,
-                          struct silofs_uaddr *out_uaddr)
+                          struct silofs_uaddr            *out_uaddr)
 {
 	silofs_uaddr128b_xtoh(&spn->sn_parent, out_uaddr);
 }
 
-static void spnode_set_parent(struct silofs_spmap_node *spn,
+static void spnode_set_parent(struct silofs_spmap_node  *spn,
                               const struct silofs_uaddr *uaddr)
 {
 	silofs_uaddr128b_htox(&spn->sn_parent, uaddr);
 }
 
 static void spnode_self(const struct silofs_spmap_node *spn,
-                        struct silofs_uaddr *out_uaddr)
+                        struct silofs_uaddr            *out_uaddr)
 {
 	silofs_uaddr128b_xtoh(&spn->sn_self, out_uaddr);
 }
 
-static void spnode_set_self(struct silofs_spmap_node *spn,
+static void spnode_set_self(struct silofs_spmap_node  *spn,
                             const struct silofs_uaddr *uaddr)
 {
 	silofs_uaddr128b_htox(&spn->sn_self, uaddr);
 }
 
 static void spnode_lrange(const struct silofs_spmap_node *spn,
-                          struct silofs_lrange *out_lrange)
+                          struct silofs_lrange           *out_lrange)
 {
 	silofs_lrange128_xtoh(&spn->sn_lrange, out_lrange);
 }
 
-static void spnode_set_lrange(struct silofs_spmap_node *spn,
+static void spnode_set_lrange(struct silofs_spmap_node   *spn,
                               const struct silofs_lrange *lrange)
 {
 	silofs_lrange128_htox(&spn->sn_lrange, lrange);
@@ -129,7 +129,7 @@ static enum silofs_height spnode_heigth(const struct silofs_spmap_node *spn)
 }
 
 static void spnode_main_lsid(const struct silofs_spmap_node *spn,
-                             struct silofs_lsid *out_lsid)
+                             struct silofs_lsid             *out_lsid)
 {
 	silofs_lsid64b_xtoh(&spn->sn_main_lsid, out_lsid);
 }
@@ -152,16 +152,16 @@ spnode_init(struct silofs_spmap_node *spn, const struct silofs_lrange *lrange)
 
 static size_t spnode_slot_of(const struct silofs_spmap_node *spn, off_t voff)
 {
-	const size_t nslots = SILOFS_SPMAP_NCHILDS;
+	const size_t         nslots = SILOFS_SPMAP_NCHILDS;
 	struct silofs_lrange lrange;
-	size_t len;
-	size_t slot;
-	ssize_t roff;
+	size_t               len;
+	size_t               slot;
+	ssize_t              roff;
 
 	STATICASSERT_EQ(ARRAY_SIZE(spn->sn_subrefs), SILOFS_SPMAP_NCHILDS);
 
 	spnode_lrange(spn, &lrange);
-	len = silofs_lrange_len(&lrange);
+	len  = silofs_lrange_len(&lrange);
 	roff = silofs_off_diff(lrange.beg, voff);
 	slot = (size_t)(roff * (long)nslots) / len;
 	silofs_assert_lt(slot, nslots);
@@ -201,8 +201,8 @@ static void spnode_set_uaddr_of(struct silofs_spmap_node *spn, off_t voff,
 static size_t spnode_count_nactive(const struct silofs_spmap_node *spn)
 {
 	const struct silofs_spmap_ref *spr = nullptr;
-	const size_t nslots_max = ARRAY_SIZE(spn->sn_subrefs);
-	size_t count = 0;
+	const size_t nslots_max            = ARRAY_SIZE(spn->sn_subrefs);
+	size_t       count                 = 0;
 
 	for (size_t slot = 0; slot < nslots_max; ++slot) {
 		spr = spnode_subref_at(spn, slot);
@@ -214,15 +214,15 @@ static size_t spnode_count_nactive(const struct silofs_spmap_node *spn)
 	return count;
 }
 
-static void spnode_clone_subrefs(struct silofs_spmap_node *spn,
+static void spnode_clone_subrefs(struct silofs_spmap_node       *spn,
                                  const struct silofs_spmap_node *sn_other)
 {
-	struct silofs_spmap_ref *spr = nullptr;
+	struct silofs_spmap_ref       *spr       = nullptr;
 	const struct silofs_spmap_ref *spr_other = nullptr;
-	const size_t nslots_max = ARRAY_SIZE(spn->sn_subrefs);
+	const size_t nslots_max                  = ARRAY_SIZE(spn->sn_subrefs);
 
 	for (size_t slot = 0; slot < nslots_max; ++slot) {
-		spr = spnode_subref_at(spn, slot);
+		spr       = spnode_subref_at(spn, slot);
 		spr_other = spnode_subref_at(sn_other, slot);
 		spr_clone_from(spr, spr_other);
 	}
@@ -277,9 +277,9 @@ static void
 lbr_make_lbk_vaddrs(const struct silofs_lbk_ref *lbr, enum silofs_mtype mtype,
                     off_t voff_base, struct silofs_vaddrs *out_vaddrs)
 {
-	struct silofs_laddr laddr;
+	struct silofs_laddr  laddr;
 	struct silofs_vaddr *vaddr;
-	size_t sz;
+	size_t               sz;
 
 	sz = silofs_mtype_size(mtype);
 	silofs_assert_eq(sz, SILOFS_LBK_SIZE);
@@ -292,7 +292,7 @@ lbr_make_lbk_vaddrs(const struct silofs_lbk_ref *lbr, enum silofs_mtype mtype,
 	}
 }
 
-static void lbr_clone_from(struct silofs_lbk_ref *lbr,
+static void lbr_clone_from(struct silofs_lbk_ref       *lbr,
                            const struct silofs_lbk_ref *lbr_other)
 {
 	struct silofs_laddr laddr;
@@ -304,12 +304,12 @@ static void lbr_clone_from(struct silofs_lbk_ref *lbr,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void spleaf_lrange(const struct silofs_spmap_leaf *spl,
-                          struct silofs_lrange *out_lrange)
+                          struct silofs_lrange           *out_lrange)
 {
 	silofs_lrange128_xtoh(&spl->sl_lrange, out_lrange);
 }
 
-static void spleaf_set_lrange(struct silofs_spmap_leaf *spl,
+static void spleaf_set_lrange(struct silofs_spmap_leaf   *spl,
                               const struct silofs_lrange *lrange)
 {
 	silofs_lrange128_htox(&spl->sl_lrange, lrange);
@@ -341,24 +341,24 @@ spleaf_init(struct silofs_spmap_leaf *spl, const struct silofs_lrange *lrange,
 }
 
 static void spleaf_parent(const struct silofs_spmap_leaf *spl,
-                          struct silofs_uaddr *out_uaddr)
+                          struct silofs_uaddr            *out_uaddr)
 {
 	silofs_uaddr128b_xtoh(&spl->sl_parent, out_uaddr);
 }
 
-static void spleaf_set_parent(struct silofs_spmap_leaf *spl,
+static void spleaf_set_parent(struct silofs_spmap_leaf  *spl,
                               const struct silofs_uaddr *uaddr)
 {
 	silofs_uaddr128b_htox(&spl->sl_parent, uaddr);
 }
 
 static void spleaf_self(const struct silofs_spmap_leaf *spl,
-                        struct silofs_uaddr *out_uaddr)
+                        struct silofs_uaddr            *out_uaddr)
 {
 	silofs_uaddr128b_xtoh(&spl->sl_self, out_uaddr);
 }
 
-static void spleaf_set_self(struct silofs_spmap_leaf *spl,
+static void spleaf_set_self(struct silofs_spmap_leaf  *spl,
                             const struct silofs_uaddr *uaddr)
 {
 	silofs_uaddr128b_htox(&spl->sl_self, uaddr);
@@ -393,14 +393,14 @@ static void spleaf_make_lbk_vaddrs(const struct silofs_spmap_leaf *spl,
                                    enum silofs_mtype mtype, off_t voff,
                                    struct silofs_vaddrs *out_vaddrs)
 {
-	const struct silofs_lbk_ref *lbr = spleaf_lbr_by_voff(spl, voff);
-	const off_t voff_base = silofs_off_align_to_lbk(voff);
+	const struct silofs_lbk_ref *lbr       = spleaf_lbr_by_voff(spl, voff);
+	const off_t                  voff_base = silofs_off_align_to_lbk(voff);
 
 	lbr_make_lbk_vaddrs(lbr, mtype, voff_base, out_vaddrs);
 }
 
 static void spleaf_main_lsid(const struct silofs_spmap_leaf *spl,
-                             struct silofs_lsid *out_lsid)
+                             struct silofs_lsid             *out_lsid)
 {
 	silofs_lsid64b_xtoh(&spl->sl_main_lsid, out_lsid);
 }
@@ -415,7 +415,7 @@ static void spleaf_main_child_at(const struct silofs_spmap_leaf *spl,
                                  size_t slot, struct silofs_laddr *out_laddr)
 {
 	struct silofs_lsid lsid = { .lsize = 0 };
-	const off_t pos = silofs_lba_to_off((silofs_lba_t)slot);
+	const off_t        pos  = silofs_lba_to_off((silofs_lba_t)slot);
 
 	spleaf_main_lsid(spl, &lsid);
 	silofs_laddr_setup_lbk(out_laddr, &lsid, pos);
@@ -423,9 +423,9 @@ static void spleaf_main_child_at(const struct silofs_spmap_leaf *spl,
 
 static void spleaf_bind_lbk_to_main(struct silofs_spmap_leaf *spl, off_t voff)
 {
-	struct silofs_laddr laddr;
-	const size_t slot = spleaf_slot_of(spl, voff);
-	struct silofs_lbk_ref *lbr = spleaf_lbr_at(spl, slot);
+	struct silofs_laddr    laddr;
+	const size_t           slot = spleaf_slot_of(spl, voff);
+	struct silofs_lbk_ref *lbr  = spleaf_lbr_at(spl, slot);
 
 	spleaf_main_child_at(spl, slot, &laddr);
 	lbr_set_subref(lbr, &laddr);
@@ -456,14 +456,14 @@ static void spleaf_set_child_of(struct silofs_spmap_leaf *spl, off_t voff,
 	lbr_set_subref(lbr, laddr);
 }
 
-static void spleaf_clone_subrefs(struct silofs_spmap_leaf *spl,
+static void spleaf_clone_subrefs(struct silofs_spmap_leaf       *spl,
                                  const struct silofs_spmap_leaf *sl_other)
 {
-	struct silofs_lbk_ref *lbr;
+	struct silofs_lbk_ref       *lbr;
 	const struct silofs_lbk_ref *lbr_other;
 
 	for (size_t slot = 0; slot < ARRAY_SIZE(spl->sl_lbrs); ++slot) {
-		lbr = spleaf_lbr_at(spl, slot);
+		lbr       = spleaf_lbr_at(spl, slot);
 		lbr_other = spleaf_lbr_at(sl_other, slot);
 		lbr_clone_from(lbr, lbr_other);
 	}
@@ -518,7 +518,7 @@ static void sli_dirtify(struct silofs_spleaf_info *sli)
 }
 
 void silofs_sli_get_lrange(const struct silofs_spleaf_info *sli,
-                           struct silofs_lrange *out_lrange)
+                           struct silofs_lrange            *out_lrange)
 {
 	spleaf_lrange(sli->sl, out_lrange);
 }
@@ -527,7 +527,7 @@ void silofs_sli_setup_spawned(struct silofs_spleaf_info *sli,
                               const struct silofs_uaddr *parent,
                               enum silofs_mtype refmtype, off_t voff)
 {
-	struct silofs_lrange lrange;
+	struct silofs_lrange      lrange;
 	struct silofs_spmap_leaf *sl = sli->sl;
 
 	lrange_of_spleaf(&lrange, voff);
@@ -554,8 +554,8 @@ static bool sli_is_inrange(const struct silofs_spleaf_info *sli, off_t voff)
 }
 
 void silofs_sli_lbk_vaddrs_at(const struct silofs_spleaf_info *sli,
-                              const struct silofs_vaddr *vaddr,
-                              struct silofs_vaddrs *out_vaddrs)
+                              const struct silofs_vaddr       *vaddr,
+                              struct silofs_vaddrs            *out_vaddrs)
 {
 	const enum silofs_mtype refmtype = silofs_sli_refmtype(sli);
 
@@ -565,19 +565,19 @@ void silofs_sli_lbk_vaddrs_at(const struct silofs_spleaf_info *sli,
 }
 
 void silofs_sli_main_lseg(const struct silofs_spleaf_info *sli,
-                          struct silofs_lsid *out_lsid)
+                          struct silofs_lsid              *out_lsid)
 {
 	spleaf_main_lsid(sli->sl, out_lsid);
 }
 
 void silofs_sli_bind_main_lseg(struct silofs_spleaf_info *sli,
-                               const struct silofs_lsid *lsid)
+                               const struct silofs_lsid  *lsid)
 {
 	spleaf_set_main_lsid(sli->sl, lsid);
 	sli_dirtify(sli);
 }
 
-void silofs_sli_clone_from(struct silofs_spleaf_info *sli,
+void silofs_sli_clone_from(struct silofs_spleaf_info       *sli,
                            const struct silofs_spleaf_info *sli_other)
 {
 	spleaf_clone_subrefs(sli->sl, sli_other->sl);
@@ -602,7 +602,7 @@ static int sli_resolve_child_lbk(const struct silofs_spleaf_info *sli,
 }
 
 static bool sli_has_child_lbk_at(const struct silofs_spleaf_info *sli,
-                                 const struct silofs_vaddr *vaddr)
+                                 const struct silofs_vaddr       *vaddr)
 {
 	struct silofs_laddr laddr;
 
@@ -610,7 +610,7 @@ static bool sli_has_child_lbk_at(const struct silofs_spleaf_info *sli,
 }
 
 bool silofs_sli_has_child_lbk_at(const struct silofs_spleaf_info *sli,
-                                 const struct silofs_vaddr *vaddr)
+                                 const struct silofs_vaddr       *vaddr)
 {
 	bool ret = false;
 
@@ -659,7 +659,7 @@ void silofs_sli_bind_child(struct silofs_spleaf_info *sli, off_t voff,
 	sli_dirtify(sli);
 }
 
-static void lmap_append_entry(struct silofs_spmap_lmap *lmap,
+static void lmap_append_entry(struct silofs_spmap_lmap  *lmap,
                               const struct silofs_laddr *laddr, size_t len)
 {
 	silofs_assert_lt(lmap->cnt, ARRAY_SIZE(lmap->laddr));
@@ -699,21 +699,21 @@ is_consecutive_laddrs(const struct silofs_laddr *laddr1, size_t len1,
 }
 
 static bool lmap_may_append_length(const struct silofs_spmap_lmap *lmap,
-                                   const struct silofs_laddr *laddr2)
+                                   const struct silofs_laddr      *laddr2)
 {
 	const struct silofs_laddr *laddr1;
-	size_t len1;
-	bool ret = false;
+	size_t                     len1;
+	bool                       ret = false;
 
 	if (lmap->cnt > 0) {
 		laddr1 = &lmap->laddr[lmap->cnt - 1];
-		len1 = lmap->len[lmap->cnt - 1];
-		ret = is_consecutive_laddrs(laddr1, len1, laddr2);
+		len1   = lmap->len[lmap->cnt - 1];
+		ret    = is_consecutive_laddrs(laddr1, len1, laddr2);
 	}
 	return ret;
 }
 
-static void lmap_append(struct silofs_spmap_lmap *lmap,
+static void lmap_append(struct silofs_spmap_lmap  *lmap,
                         const struct silofs_laddr *laddr, size_t len)
 {
 	silofs_assert_le(lmap->cnt, ARRAY_SIZE(lmap->laddr));
@@ -728,12 +728,12 @@ static void lmap_append(struct silofs_spmap_lmap *lmap,
 }
 
 void silofs_sli_resolve_lmap(const struct silofs_spleaf_info *sli,
-                             struct silofs_spmap_lmap *out_lmap)
+                             struct silofs_spmap_lmap        *out_lmap)
 {
-	struct silofs_laddr laddr = { .pos = -1 };
-	const struct silofs_spmap_leaf *sl = sli->sl;
-	const struct silofs_lbk_ref *lbr = nullptr;
-	const size_t nslots = ARRAY_SIZE(sl->sl_lbrs);
+	struct silofs_laddr             laddr  = { .pos = -1 };
+	const struct silofs_spmap_leaf *sl     = sli->sl;
+	const struct silofs_lbk_ref    *lbr    = nullptr;
+	const size_t                    nslots = ARRAY_SIZE(sl->sl_lbrs);
 
 	STATICASSERT_EQ(ARRAY_SIZE(out_lmap->laddr), ARRAY_SIZE(sl->sl_lbrs));
 
@@ -789,7 +789,7 @@ void silofs_sni_decref(struct silofs_spnode_info *sni)
 void silofs_sni_setup_spawned(struct silofs_spnode_info *sni,
                               const struct silofs_uaddr *parent, off_t voff)
 {
-	struct silofs_lrange lrange = { .beg = -1, .end = -1 };
+	struct silofs_lrange     lrange        = { .beg = -1, .end = -1 };
 	const enum silofs_height parent_height = silofs_uaddr_height(parent);
 
 	lrange_of_spnode(&lrange, parent_height - 1, voff);
@@ -836,20 +836,20 @@ static bool sni_is_inrange(const struct silofs_spnode_info *sni, off_t voff)
 }
 
 void silofs_sni_vspace_range(const struct silofs_spnode_info *sni,
-                             struct silofs_lrange *out_lrange)
+                             struct silofs_lrange            *out_lrange)
 {
 	spnode_lrange(sni->sn, out_lrange);
 }
 
 void silofs_sni_active_lrange(const struct silofs_spnode_info *sni,
-                              struct silofs_lrange *out_lrange)
+                              struct silofs_lrange            *out_lrange)
 {
 	struct silofs_lrange lrange;
-	size_t nform_size;
-	ssize_t span;
+	size_t               nform_size;
+	ssize_t              span;
 
 	silofs_sni_vspace_range(sni, &lrange);
-	span = silofs_height_to_space_span(lrange.height - 1);
+	span       = silofs_height_to_space_span(lrange.height - 1);
 	nform_size = sni->sn_nactive_subs * (size_t)span;
 	silofs_lrange_setup(out_lrange, lrange.height, lrange.beg,
 	                    silofs_off_end(lrange.beg, nform_size));
@@ -866,7 +866,7 @@ off_t silofs_sni_base_voff(const struct silofs_spnode_info *sni)
 static enum silofs_mtype sni_child_mtype(const struct silofs_spnode_info *sni)
 {
 	enum silofs_mtype child_mtype;
-	const size_t child_height = sni_sub_height(sni);
+	const size_t      child_height = sni_sub_height(sni);
 
 	if (child_height == SILOFS_HEIGHT_SPLEAF) {
 		child_mtype = SILOFS_MTYPE_SPLEAF;
@@ -897,13 +897,13 @@ int silofs_sni_resolve_child(const struct silofs_spnode_info *sni, off_t voff,
 }
 
 void silofs_sni_main_lseg(const struct silofs_spnode_info *sni,
-                          struct silofs_lsid *out_lsid)
+                          struct silofs_lsid              *out_lsid)
 {
 	spnode_main_lsid(sni->sn, out_lsid);
 }
 
 void silofs_sni_bind_main_lseg(struct silofs_spnode_info *sni,
-                               const struct silofs_lsid *lsid)
+                               const struct silofs_lsid  *lsid)
 {
 	spnode_set_main_lsid(sni->sn, lsid);
 	sni_dirtify(sni);
@@ -913,7 +913,7 @@ static off_t
 sni_bpos_of_child(const struct silofs_spnode_info *sni, off_t voff)
 {
 	const size_t spmap_size = SILOFS_SPMAP_SIZE;
-	const size_t slot = spnode_slot_of(sni->sn, voff);
+	const size_t slot       = spnode_slot_of(sni->sn, voff);
 
 	return (off_t)(slot * spmap_size);
 }
@@ -921,7 +921,7 @@ sni_bpos_of_child(const struct silofs_spnode_info *sni, off_t voff)
 static off_t
 sni_base_voff_of_child(const struct silofs_spnode_info *sni, off_t voff)
 {
-	struct silofs_lrange lrange;
+	struct silofs_lrange     lrange;
 	const enum silofs_height child_height = sni_sub_height(sni);
 
 	silofs_lrange_of_spmap(&lrange, child_height, voff);
@@ -932,9 +932,9 @@ void silofs_sni_resolve_main(const struct silofs_spnode_info *sni, off_t voff,
                              struct silofs_uaddr *out_uaddr)
 {
 	struct silofs_lsid lsid;
-	const off_t bpos = sni_bpos_of_child(sni, voff);
-	const off_t base = sni_base_voff_of_child(sni, voff);
-	enum silofs_mtype child_mtype = sni_child_mtype(sni);
+	const off_t        bpos        = sni_bpos_of_child(sni, voff);
+	const off_t        base        = sni_base_voff_of_child(sni, voff);
+	enum silofs_mtype  child_mtype = sni_child_mtype(sni);
 
 	silofs_sni_main_lseg(sni, &lsid);
 
@@ -943,7 +943,7 @@ void silofs_sni_resolve_main(const struct silofs_spnode_info *sni, off_t voff,
 	silofs_unused(child_mtype);
 }
 
-void silofs_sni_clone_from(struct silofs_spnode_info *sni,
+void silofs_sni_clone_from(struct silofs_spnode_info       *sni,
                            const struct silofs_spnode_info *sni_other)
 {
 	spnode_clone_subrefs(sni->sn, sni_other->sn);
@@ -952,12 +952,12 @@ void silofs_sni_clone_from(struct silofs_spnode_info *sni,
 }
 
 void silofs_sni_resolve_lmap(const struct silofs_spnode_info *sni,
-                             struct silofs_spmap_lmap *out_lmap)
+                             struct silofs_spmap_lmap        *out_lmap)
 {
-	struct silofs_uaddr uaddr = { .voff = -1 };
-	const struct silofs_spmap_node *sn = sni->sn;
-	const struct silofs_spmap_ref *spr = nullptr;
-	size_t len;
+	struct silofs_uaddr             uaddr = { .voff = -1 };
+	const struct silofs_spmap_node *sn    = sni->sn;
+	const struct silofs_spmap_ref  *spr   = nullptr;
+	size_t                          len;
 
 	STATICASSERT_EQ(ARRAY_SIZE(out_lmap->laddr),
 	                ARRAY_SIZE(sn->sn_subrefs));
@@ -1029,7 +1029,7 @@ static int verify_spmap_leaf_self(const struct silofs_spmap_leaf *sl)
 int silofs_verify_spmap_leaf(const struct silofs_spmap_leaf *sl)
 {
 	const struct silofs_lbk_ref *lbr;
-	int err;
+	int                          err;
 
 	err = verify_spmap_leaf_parent(sl);
 	if (err) {
@@ -1057,7 +1057,7 @@ static int verify_uaddr(const struct silofs_uaddr *uaddr)
 static int verify_spmap_ref(const struct silofs_spmap_ref *spr)
 {
 	struct silofs_uaddr uaddr;
-	int err;
+	int                 err;
 
 	spr_uaddr(spr, &uaddr);
 	if (silofs_uaddr_isnull(&uaddr)) {
@@ -1072,11 +1072,11 @@ static int verify_spmap_ref(const struct silofs_spmap_ref *spr)
 
 static int verify_spmap_node_parent(const struct silofs_spmap_node *sn)
 {
-	struct silofs_uaddr parent_uaddr;
+	struct silofs_uaddr      parent_uaddr;
 	const enum silofs_height height_max = SILOFS_HEIGHT_SUPER - 1;
-	const enum silofs_height height = spnode_heigth(sn);
-	enum silofs_mtype parent_mtype;
-	enum silofs_height parent_height;
+	const enum silofs_height height     = spnode_heigth(sn);
+	enum silofs_mtype        parent_mtype;
+	enum silofs_height       parent_height;
 
 	spnode_parent(sn, &parent_uaddr);
 	if (silofs_uaddr_isnull(&parent_uaddr)) {
@@ -1099,9 +1099,9 @@ static int verify_spmap_node_parent(const struct silofs_spmap_node *sn)
 static int verify_spmap_node_self(const struct silofs_spmap_node *sn)
 {
 	struct silofs_uaddr uaddr;
-	enum silofs_height height;
-	enum silofs_mtype mtype;
-	int err;
+	enum silofs_height  height;
+	enum silofs_mtype   mtype;
+	int                 err;
 
 	spnode_self(sn, &uaddr);
 	if (silofs_uaddr_isnull(&uaddr)) {
@@ -1112,7 +1112,7 @@ static int verify_spmap_node_self(const struct silofs_spmap_node *sn)
 		return -SILOFS_EFSCORRUPTED;
 	}
 	height = silofs_uaddr_height(&uaddr);
-	err = verify_spnode_height(height);
+	err    = verify_spnode_height(height);
 	if (err) {
 		return err;
 	}
@@ -1122,13 +1122,13 @@ static int verify_spmap_node_self(const struct silofs_spmap_node *sn)
 int silofs_verify_spmap_node(const struct silofs_spmap_node *sn)
 {
 	struct silofs_lrange lrange;
-	enum silofs_height height;
-	ssize_t lrange_len;
-	ssize_t height_len;
-	int err;
+	enum silofs_height   height;
+	ssize_t              lrange_len;
+	ssize_t              height_len;
+	int                  err;
 
 	height = spnode_heigth(sn);
-	err = verify_spnode_height(height);
+	err    = verify_spnode_height(height);
 	if (err) {
 		log_err("bad spnode height: height=%d", height);
 		return err;

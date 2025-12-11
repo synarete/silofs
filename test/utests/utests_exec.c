@@ -79,7 +79,7 @@ static struct ut_tgroup const g_ut_tgroups[] = {
 static void *ut_malloc_safe(size_t size)
 {
 	void *ptr = nullptr;
-	int err;
+	int   err;
 
 	err = posix_memalign(&ptr, 64, size);
 	if (err || (ptr == nullptr)) {
@@ -103,13 +103,13 @@ static void ute_init(struct ut_env *ute, struct ut_args *args)
 {
 	memset(ute, 0, sizeof(*ute));
 	silofs_mutex_init(&ute->mutex);
-	ute->args = args;
-	ute->malloc_list = nullptr;
+	ute->args         = args;
+	ute->malloc_list  = nullptr;
 	ute->nbytes_alloc = 0;
-	ute->unique_opid = 1;
-	ute->ftype = SILOFS_FILE_TYPE1;
-	ute->run_level = ut_globals.run_level;
-	ute->prngc = 1;
+	ute->unique_opid  = 1;
+	ute->ftype        = SILOFS_FILE_TYPE1;
+	ute->run_level    = ut_globals.run_level;
+	ute->prngc        = 1;
 }
 
 static void ute_cleanup(struct ut_env *ute)
@@ -195,7 +195,7 @@ static void ute_prandom(struct ut_env *ute, void *buf, size_t bsz)
 {
 	uint64_t u;
 	uint8_t *m = buf;
-	size_t k, cnt = 0;
+	size_t   k, cnt = 0;
 
 	while (cnt < bsz) {
 		u = ute_prandom_u64(ute);
@@ -207,10 +207,10 @@ static void ute_prandom(struct ut_env *ute, void *buf, size_t bsz)
 
 static void ute_prandom_ascii(struct ut_env *ute, char *str, size_t n)
 {
-	uint64_t rnd = 0;
+	uint64_t  rnd  = 0;
 	const int base = 33;
 	const int last = 126;
-	int print_ch;
+	int       print_ch;
 
 	rnd = ute_prandom_u64(ute);
 	for (size_t i = 0; i < n; ++i) {
@@ -220,14 +220,14 @@ static void ute_prandom_ascii(struct ut_env *ute, char *str, size_t n)
 			rnd = ute_prandom_u64(ute);
 		}
 		print_ch = abs((int)(rnd % (uint64_t)(last - base)) + base);
-		str[i] = (char)print_ch;
+		str[i]   = (char)print_ch;
 	}
 }
 
 static void ute_setup_random_passwd(struct ut_env *ute)
 {
 	struct silofs_env_args *env_args = &ute->args->env_args;
-	struct silofs_password *pp = &ute->passwd;
+	struct silofs_password *pp       = &ute->passwd;
 
 	pp->passlen = sizeof(pp->pass) - 1;
 	ute_prandom_ascii(ute, (char *)pp->pass, pp->passlen);
@@ -396,8 +396,8 @@ static void ut_run_test2(struct ut_env *ute, const struct ut_testdef *td)
 
 static void ut_run_test(struct ut_env *ute, const struct ut_testdef *td)
 {
-	const int run_level = ute->run_level;
-	const bool quick = (td->flags & UT_F_QUICK) > 0;
+	const int  run_level   = ute->run_level;
+	const bool quick       = (td->flags & UT_F_QUICK) > 0;
 	const bool with_ftype2 = (td->flags & UT_F_FTYPE2) > 0;
 
 	if ((run_level >= 2) || (quick && run_level)) {
@@ -412,7 +412,7 @@ static void ut_run_test(struct ut_env *ute, const struct ut_testdef *td)
 static void ut_post_test(struct ut_env *ute)
 {
 	struct silofs_task_ctx task;
-	int err;
+	int                    err;
 
 	ut_setup_task(ute, &task);
 	err = silofs_exec_maintain(&task, SILOFS_CTLF_NOW);
@@ -482,11 +482,11 @@ static struct silofs_uids *ut_new_uids(void)
 {
 	struct silofs_uids *uids;
 
-	uids = ut_malloc_safe(2 * sizeof(*uids));
+	uids             = ut_malloc_safe(2 * sizeof(*uids));
 	uids[0].host_uid = 0;
-	uids[0].fs_uid = 100000;
+	uids[0].fs_uid   = 100000;
 	uids[1].host_uid = getuid();
-	uids[1].fs_uid = 100001;
+	uids[1].fs_uid   = 100001;
 	return uids;
 }
 
@@ -499,11 +499,11 @@ static struct silofs_gids *ut_new_gids(void)
 {
 	struct silofs_gids *gids;
 
-	gids = ut_malloc_safe(2 * sizeof(*gids));
+	gids             = ut_malloc_safe(2 * sizeof(*gids));
 	gids[0].host_gid = 0;
-	gids[0].fs_gid = 200000;
+	gids[0].fs_gid   = 200000;
 	gids[1].host_gid = getgid();
-	gids[1].fs_gid = 200001;
+	gids[1].fs_gid   = 200001;
 	return gids;
 }
 
@@ -515,19 +515,19 @@ static void ut_del_gids(struct silofs_gids *gids)
 static void ut_init_args(struct ut_args *args)
 {
 	memset(args, 0, sizeof(*args));
-	args->env_args.boot_args.repodir = ut_globals.test_dir_repo;
-	args->env_args.boot_args.fs_name = "utests";
-	args->env_args.boot_args.mntdir = "/";
-	args->env_args.ugids.users.uids = ut_new_uids();
-	args->env_args.ugids.users.nuids = 2;
-	args->env_args.ugids.groups.gids = ut_new_gids();
+	args->env_args.boot_args.repodir  = ut_globals.test_dir_repo;
+	args->env_args.boot_args.fs_name  = "utests";
+	args->env_args.boot_args.mntdir   = "/";
+	args->env_args.ugids.users.uids   = ut_new_uids();
+	args->env_args.ugids.users.nuids  = 2;
+	args->env_args.ugids.groups.gids  = ut_new_gids();
 	args->env_args.ugids.groups.ngids = 2;
-	args->env_args.uid = getuid();
-	args->env_args.gid = getgid();
-	args->env_args.pid = getpid();
-	args->env_args.umask = 0002;
-	args->env_args.capacity = SILOFS_CAPACITY_SIZE_MIN;
-	args->env_args.memwant = UT_1G;
+	args->env_args.uid                = getuid();
+	args->env_args.gid                = getgid();
+	args->env_args.pid                = getpid();
+	args->env_args.umask              = 0002;
+	args->env_args.capacity           = SILOFS_CAPACITY_SIZE_MIN;
+	args->env_args.memwant            = UT_1G;
 	if (ut_globals.pedantic) {
 		args->env_args.flags |= SILOFS_F_PEDANTIC;
 	}
@@ -566,9 +566,9 @@ ut_do_malloc_chunk(struct ut_env *ute, size_t nbytes)
 	struct ut_malloc_chunk *mchunk;
 
 	mchunk = (struct ut_malloc_chunk *)ut_malloc_safe(sizeof(*mchunk));
-	mchunk->data = ut_malloc_safe(nbytes);
-	mchunk->size = nbytes;
-	mchunk->next = ute->malloc_list;
+	mchunk->data     = ut_malloc_safe(nbytes);
+	mchunk->size     = nbytes;
+	mchunk->next     = ute->malloc_list;
 	ute->malloc_list = mchunk;
 	ute->nbytes_alloc += nbytes + sizeof(*mchunk);
 	return mchunk;
@@ -630,7 +630,7 @@ char *ut_strndup(struct ut_env *ute, const char *str, size_t len)
 
 static void ut_do_freeall(struct ut_env *ute)
 {
-	struct ut_malloc_chunk *mnext = nullptr;
+	struct ut_malloc_chunk *mnext  = nullptr;
 	struct ut_malloc_chunk *mchunk = nullptr;
 
 	mchunk = ute->malloc_list;
@@ -642,7 +642,7 @@ static void ut_do_freeall(struct ut_env *ute)
 	silofs_assert_eq(ute->nbytes_alloc, 0);
 
 	ute->nbytes_alloc = 0;
-	ute->malloc_list = nullptr;
+	ute->malloc_list  = nullptr;
 }
 
 void ut_freeall(struct ut_env *ute)
@@ -704,7 +704,7 @@ static void swap(long *arr, size_t p1, size_t p2)
 
 long *ut_randseq(struct ut_env *ute, size_t len, long base)
 {
-	long *arr;
+	long   *arr;
 	size_t *pos;
 
 	arr = ut_zerobuf(ute, len * sizeof(*arr));
@@ -723,15 +723,15 @@ long *ut_randseq(struct ut_env *ute, size_t len, long base)
 
 static void ut_force_alnum(char *str, size_t len)
 {
-	const char *alt = "_0123456789abcdefghijklmnopqrstuvwxyz";
+	const char  *alt     = "_0123456789abcdefghijklmnopqrstuvwxyz";
 	const size_t alt_len = strlen(alt);
-	size_t idx;
-	int ch;
+	size_t       idx;
+	int          ch;
 
 	for (size_t i = 0; i < len; ++i) {
 		ch = (int)(str[i]);
 		if (!isalnum(ch)) {
-			idx = (size_t)abs(ch);
+			idx    = (size_t)abs(ch);
 			str[i] = alt[idx % alt_len];
 		}
 	}
@@ -751,9 +751,9 @@ char *ut_randstr(struct ut_env *ute, size_t len)
 
 char *ut_strfmt(struct ut_env *ute, const char *fmt, ...)
 {
-	char tmp[1024] = "";
-	va_list ap = { 0 };
-	int nb = 0;
+	char    tmp[1024] = "";
+	va_list ap        = { 0 };
+	int     nb        = 0;
 
 	va_start(ap, fmt);
 	nb = vsnprintf(tmp, sizeof(tmp), fmt, ap);
@@ -767,11 +767,11 @@ char *ut_strfmt(struct ut_env *ute, const char *fmt, ...)
 
 struct ut_dvec *ut_new_dvec(struct ut_env *ute, off_t off, size_t len)
 {
-	size_t size;
+	size_t          size;
 	struct ut_dvec *dvec;
 
-	size = (sizeof(*dvec) + len - sizeof(dvec->dat)) | 0x7;
-	dvec = ut_zerobuf(ute, size);
+	size      = (sizeof(*dvec) + len - sizeof(dvec->dat)) | 0x7;
+	dvec      = ut_zerobuf(ute, size);
 	dvec->off = off;
 	dvec->len = len;
 	ut_randfill(ute, dvec->dat, len);
@@ -804,12 +804,12 @@ static uint64_t ute_next_prandom(struct ut_env *ute)
 
 static void ut_do_prandom_shuffle(struct ut_env *ute, long *arr, size_t len)
 {
-	size_t i = 0, j = 0;
+	size_t   i = 0, j = 0;
 	uint64_t rnd = 0;
 
 	for (i = 0; i < len - 1; i++) {
 		rnd = (i % 17) ? (rnd >> 1) : ute_next_prandom(ute);
-		j = i + (rnd / (ULONG_MAX / (len - i) + 1));
+		j   = i + (rnd / (ULONG_MAX / (len - i) + 1));
 		swap_long(arr + i, arr + j);
 	}
 }

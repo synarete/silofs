@@ -83,9 +83,9 @@ static int val_or_errno2(int val, int *out_val)
 
 	if (val >= 0) {
 		*out_val = val;
-		err = 0;
+		err      = 0;
 	} else {
-		err = errno_value();
+		err      = errno_value();
 		*out_val = -1;
 	}
 	return err;
@@ -97,9 +97,9 @@ static int fd_or_errno(int err, int *out_fd)
 
 	if (err >= 0) {
 		*out_fd = err;
-		ret = 0;
+		ret     = 0;
 	} else {
-		ret = errno_value();
+		ret     = errno_value();
 		*out_fd = -1;
 	}
 	return ret;
@@ -111,9 +111,9 @@ static int val_or_errnol(long err, int *out_val)
 
 	if (err >= 0) {
 		*out_val = (int)err;
-		ret = 0;
+		ret      = 0;
 	} else {
-		ret = errno_value();
+		ret      = errno_value();
 		*out_val = -1;
 	}
 	return ret;
@@ -128,9 +128,9 @@ static int nfds_or_errno(int err, int *out_nfds)
 {
 	if (err >= 0) {
 		*out_nfds = err;
-		err = 0;
+		err       = 0;
 	} else {
-		err = errno_value();
+		err       = errno_value();
 		*out_nfds = -1;
 	}
 	return err;
@@ -141,10 +141,10 @@ static int size_or_errno(ssize_t res, size_t *out_cnt)
 	int err;
 
 	if (res >= 0) {
-		err = 0;
+		err      = 0;
 		*out_cnt = (size_t)res;
 	} else {
-		err = errno_value();
+		err      = errno_value();
 		*out_cnt = 0;
 	}
 	return err;
@@ -155,10 +155,10 @@ static int off_or_errno(off_t off, off_t *out)
 	int err;
 
 	if (off >= 0) {
-		err = 0;
+		err  = 0;
 		*out = off;
 	} else {
-		err = errno_value();
+		err  = errno_value();
 		*out = off;
 	}
 	return err;
@@ -169,10 +169,10 @@ static int differ_or_errno(void *ptr, void *errptr, void **out)
 	int err;
 
 	if (ptr == errptr) {
-		err = errno_value();
+		err  = errno_value();
 		*out = nullptr;
 	} else {
-		err = 0;
+		err  = 0;
 		*out = ptr;
 	}
 	return err;
@@ -635,7 +635,7 @@ int silofs_sys_mmap(void *addr, size_t length, int prot, int flags, int fd,
 
 int silofs_sys_mmap_anon(size_t length, int xflags, void **out_addr)
 {
-	const int prot = PROT_WRITE | PROT_READ;
+	const int prot  = PROT_WRITE | PROT_READ;
 	const int flags = MAP_PRIVATE | MAP_ANONYMOUS;
 
 	return silofs_sys_mmap(nullptr, length, prot, flags | xflags, -1, 0,
@@ -729,24 +729,24 @@ int silofs_sys_ioctl_blkgetsize64(int fd, size_t *sz)
 }
 
 struct linux_dirent64_view {
-	ino64_t d_ino;
-	off64_t d_off;
+	ino64_t        d_ino;
+	off64_t        d_off;
 	unsigned short d_reclen;
-	unsigned char d_type;
-	char d_name[5];
+	unsigned char  d_type;
+	char           d_name[5];
 };
 
 int silofs_sys_getdents(int fd, void *buf, size_t bsz, struct dirent64 *dents,
                         size_t ndents, size_t *out_ndents)
 {
-	long nread;
-	long pos = 0;
-	size_t len;
-	size_t ndents_decoded = 0;
-	const struct linux_dirent64_view *d = nullptr;
-	void *ptr = buf;
-	struct dirent64 *dent = dents;
-	struct dirent64 *end = dents + ndents;
+	long                              nread;
+	long                              pos = 0;
+	size_t                            len;
+	size_t                            ndents_decoded = 0;
+	const struct linux_dirent64_view *d              = nullptr;
+	void                             *ptr            = buf;
+	struct dirent64                  *dent           = dents;
+	struct dirent64                  *end            = dents + ndents;
 
 	errno = 0;
 	if (!ndents || (bsz < sizeof(*dents))) {
@@ -772,14 +772,14 @@ int silofs_sys_getdents(int fd, void *buf, size_t bsz, struct dirent64 *dents,
 			return -ENAMETOOLONG;
 		}
 		memset(dent, 0, sizeof(*dent));
-		dent->d_ino = d->d_ino;
-		dent->d_off = (off_t)d->d_off;
+		dent->d_ino  = d->d_ino;
+		dent->d_off  = (off_t)d->d_off;
 		dent->d_type = d->d_type;
 		memcpy(dent->d_name, d->d_name, len);
 
 		pos += d->d_reclen;
 		ptr = (char *)buf + pos;
-		d = (const struct linux_dirent64_view *)ptr;
+		d   = (const struct linux_dirent64_view *)ptr;
 
 		++ndents_decoded;
 		++dent;

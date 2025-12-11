@@ -12,8 +12,7 @@ cd "${root}"
 command -v clang-format > /dev/null
 
 # define C source/header configuration YAML files
-c_conf="${root}/.clang-format.yaml"
-h_conf="${root}/.clang-format-h.yaml"
+conf="${root}/.clang-format.yaml"
 
 # find relevant source & header files
 c_srcs=$(find "${root}/"{lib,cmd,mntd,test} -type f -name "*.c")
@@ -22,8 +21,7 @@ h_srcs=$(find "${root}/"{include,lib,cmd,mntd,test} -type f \
 
 # do actual code formatting
 _do_clang_format() {
-	clang-format -i --style=file:"${c_conf}" ${c_srcs}
-	clang-format -i --style=file:"${h_conf}" ${h_srcs}
+	clang-format -i --style=file:"${conf}" ${h_srcs} ${c_srcs}
 }
 
 # lint-check code style via python helper script

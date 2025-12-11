@@ -27,7 +27,7 @@ static struct silofs_mntrules *ut_new_mrules(struct ut_env *ute)
 {
 	struct silofs_mntrules *mrules = nullptr;
 
-	mrules = ut_zalloc(ute, sizeof(*mrules));
+	mrules         = ut_zalloc(ute, sizeof(*mrules));
 	mrules->nrules = 0;
 	return mrules;
 }
@@ -35,7 +35,7 @@ static struct silofs_mntrules *ut_new_mrules(struct ut_env *ute)
 static void ut_parseconf_mntrules(struct ut_env *ute)
 {
 	struct silofs_mntrules *mrules = ut_new_mrules(ute);
-	int err;
+	int                     err;
 
 	err = silofs_parse_mntrules(mrules, nullptr, ut_mountd_conf);
 	ut_expect_ok(err);
@@ -62,8 +62,8 @@ static struct silofs_ugids *ut_new_ugids(struct ut_env *ute)
 {
 	struct silofs_ugids *ugids = nullptr;
 
-	ugids = ut_zalloc(ute, sizeof(*ugids));
-	ugids->users.nuids = 0;
+	ugids               = ut_zalloc(ute, sizeof(*ugids));
+	ugids->users.nuids  = 0;
 	ugids->groups.ngids = 0;
 	return ugids;
 }
@@ -71,9 +71,9 @@ static struct silofs_ugids *ut_new_ugids(struct ut_env *ute)
 static void ut_parseconf_fsids(struct ut_env *ute)
 {
 	struct silofs_ugids *ugids = ut_new_ugids(ute);
-	const size_t bsz = UT_1M;
-	char *buf = ut_zalloc(ute, bsz);
-	int err;
+	const size_t         bsz   = UT_1M;
+	char                *buf   = ut_zalloc(ute, bsz);
+	int                  err;
 
 	err = silofs_parse_fsids(ugids, nullptr, ut_fsids_conf);
 	ut_expect_ok(err);
@@ -105,7 +105,7 @@ static struct silofs_mntinfos *ut_new_mntinfos(struct ut_env *ute)
 {
 	struct silofs_mntinfos *minfos = nullptr;
 
-	minfos = ut_zalloc(ute, sizeof(*minfos));
+	minfos         = ut_zalloc(ute, sizeof(*minfos));
 	minfos->ninfos = 0;
 	return minfos;
 }
@@ -113,7 +113,7 @@ static struct silofs_mntinfos *ut_new_mntinfos(struct ut_env *ute)
 static void ut_parseconf_mntinfos(struct ut_env *ute)
 {
 	struct silofs_mntinfos *minfos = ut_new_mntinfos(ute);
-	int err;
+	int                     err;
 
 	err = silofs_parse_mntinfos(minfos, nullptr, ut_mountinfo_conf);
 	ut_expect_ok(err);

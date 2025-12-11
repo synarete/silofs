@@ -24,13 +24,13 @@
 
 enum {
 	RCEK_BLOBID = 1,
-	RCEK_LSID = 2,
+	RCEK_LSID   = 2,
 };
 
 /* repo cached element key */
 struct silofs_repo_cek {
 	union {
-		struct silofs_lsid lsid;
+		struct silofs_lsid   lsid;
 		struct silofs_blobid blobid;
 	} u;
 	short kind;
@@ -38,7 +38,7 @@ struct silofs_repo_cek {
 
 /* repo cached element */
 struct silofs_repo_ce {
-	struct silofs_repo_cek rce_key;
+	struct silofs_repo_cek  rce_key;
 	struct silofs_list_head rce_htb_lh;
 	struct silofs_list_head rce_lru_lh;
 };
@@ -46,16 +46,16 @@ struct silofs_repo_ce {
 /* persistent-segment control file */
 struct silofs_blobf {
 	struct silofs_repo_ce blf_rce;
-	ssize_t blf_size;
-	int blf_fd;
+	ssize_t               blf_size;
+	int                   blf_fd;
 };
 
 /* logical-segment control file */
 struct silofs_lsegf {
 	struct silofs_repo_ce lsf_rce;
-	ssize_t lsf_size;
-	int lsf_fd;
-	bool lsf_rdonly;
+	ssize_t               lsf_size;
+	int                   lsf_fd;
+	bool                  lsf_rdonly;
 };
 
 /* well-know repository meta file-names and sub-directories */
@@ -67,9 +67,9 @@ struct silofs_repo_defs {
 };
 
 static const struct silofs_repo_defs repo_defs = {
-	.re_dots_name = SILOFS_REPO_DOTS_DIRNAME,
-	.re_meta_name = SILOFS_REPO_META_FILENAME,
-	.re_lock_name = SILOFS_REPO_LOCK_FILENAME,
+	.re_dots_name  = SILOFS_REPO_DOTS_DIRNAME,
+	.re_meta_name  = SILOFS_REPO_META_FILENAME,
+	.re_lock_name  = SILOFS_REPO_LOCK_FILENAME,
 	.re_blobs_name = SILOFS_REPO_BLOBS_DIRNAME,
 };
 
@@ -312,7 +312,7 @@ do_fstatat(int dirfd, const char *pathname, struct stat *st, int flags)
 static int do_fstatat_dir(int dirfd, const char *pathname, struct stat *out_st)
 {
 	mode_t mode;
-	int err;
+	int    err;
 
 	err = do_fstatat(dirfd, pathname, out_st, 0);
 	if (err) {
@@ -378,7 +378,7 @@ static struct silofs_repo_ce *rce_unconst(const struct silofs_repo_ce *p)
 {
 	union {
 		const struct silofs_repo_ce *p;
-		struct silofs_repo_ce *q;
+		struct silofs_repo_ce       *q;
 	} u = { .p = p };
 	return u.q;
 }
@@ -439,7 +439,7 @@ static void blobf_fini(struct silofs_blobf *blobf)
 {
 	rce_fini(&blobf->blf_rce);
 	blobf->blf_size = -1;
-	blobf->blf_fd = -1;
+	blobf->blf_fd   = -1;
 }
 
 static int blobf_close(struct silofs_blobf *blobf)
@@ -473,8 +473,8 @@ static int
 lsegf_init(struct silofs_lsegf *lsegf, const struct silofs_lsid *lsid)
 {
 	rce_init2(&lsegf->lsf_rce, lsid);
-	lsegf->lsf_size = 0;
-	lsegf->lsf_fd = -1;
+	lsegf->lsf_size   = 0;
+	lsegf->lsf_fd     = -1;
 	lsegf->lsf_rdonly = false;
 	return 0;
 }
@@ -483,7 +483,7 @@ static void lsegf_fini(struct silofs_lsegf *lsegf)
 {
 	rce_fini(&lsegf->lsf_rce);
 	lsegf->lsf_size = -1;
-	lsegf->lsf_fd = -1;
+	lsegf->lsf_fd   = -1;
 }
 
 static ssize_t lsegf_capacity(const struct silofs_lsegf *lsegf)
@@ -505,7 +505,7 @@ static void lsegf_set_size(struct silofs_lsegf *lsegf, ssize_t sz)
 
 static void lsegf_bindto(struct silofs_lsegf *lsegf, int fd, bool rw)
 {
-	lsegf->lsf_fd = fd;
+	lsegf->lsf_fd     = fd;
 	lsegf->lsf_rdonly = !rw;
 }
 
@@ -532,8 +532,8 @@ static int lsegf_stat(const struct silofs_lsegf *lsegf, struct stat *out_st)
 static int lsegf_inspect_size(struct silofs_lsegf *lsegf)
 {
 	struct stat st;
-	ssize_t cap;
-	int err;
+	ssize_t     cap;
+	int         err;
 
 	err = lsegf_stat(lsegf, &st);
 	if (err) {
@@ -561,7 +561,7 @@ static int lsegf_check_writable(const struct silofs_lsegf *lsegf)
 static int lsegf_reassign_size(struct silofs_lsegf *lsegf, off_t off)
 {
 	ssize_t len;
-	int err;
+	int     err;
 
 	err = lsegf_check_range(lsegf, off, 0);
 	if (err) {
@@ -583,8 +583,8 @@ static int lsegf_reassign_size(struct silofs_lsegf *lsegf, off_t off)
 static int
 lsegf_require_size_ge(struct silofs_lsegf *lsegf, off_t off, size_t len)
 {
-	const off_t end = silofs_off_end(off, len);
-	const off_t nxt = silofs_off_next_lbk(off);
+	const off_t   end       = silofs_off_end(off, len);
+	const off_t   nxt       = silofs_off_next_lbk(off);
 	const ssize_t want_size = silofs_off_max(end, nxt);
 	const ssize_t curr_size = lsegf_size(lsegf);
 
@@ -593,7 +593,7 @@ lsegf_require_size_ge(struct silofs_lsegf *lsegf, off_t off, size_t len)
 	               lsegf_reassign_size(lsegf, want_size);
 }
 
-static int lsegf_require_laddr(struct silofs_lsegf *lsegf,
+static int lsegf_require_laddr(struct silofs_lsegf       *lsegf,
                                const struct silofs_laddr *laddr)
 {
 	const size_t len = silofs_laddr_len(laddr);
@@ -604,7 +604,7 @@ static int lsegf_require_laddr(struct silofs_lsegf *lsegf,
 static int
 lsegf_check_size_ge(const struct silofs_lsegf *lsegf, off_t off, size_t len)
 {
-	const off_t end = silofs_off_end(off, len);
+	const off_t   end = silofs_off_end(off, len);
 	const ssize_t bsz = lsegf_size(lsegf);
 
 	return (bsz >= end) ? 0 : -SILOFS_ERANGE;
@@ -613,11 +613,11 @@ lsegf_check_size_ge(const struct silofs_lsegf *lsegf, off_t off, size_t len)
 static void lsegf_make_iovec(const struct silofs_lsegf *lsegf, off_t off,
                              size_t len, struct silofs_iovec *iov)
 {
-	iov->iov.iov_len = len;
+	iov->iov.iov_len  = len;
 	iov->iov.iov_base = nullptr;
-	iov->iov_off = off;
-	iov->iov_fd = lsegf->lsf_fd;
-	iov->iov_backref = nullptr;
+	iov->iov_off      = off;
+	iov->iov_fd       = lsegf->lsf_fd;
+	iov->iov_backref  = nullptr;
 }
 
 static int lsegf_iovec_at(const struct silofs_lsegf *lsegf, off_t off,
@@ -688,7 +688,7 @@ static int lsegf_pwritevn(struct silofs_lsegf *lsegf, off_t off,
                           const struct iovec *iov, size_t cnt)
 {
 	const size_t len = length_of(iov, cnt);
-	int err;
+	int          err;
 
 	err = lsegf_require_size_ge(lsegf, off, len);
 	if (err) {
@@ -709,7 +709,7 @@ static int lsegf_writev(struct silofs_lsegf *lsegf, off_t off,
                         const struct iovec *iov, size_t cnt, bool sync)
 {
 	size_t len = 0;
-	int err;
+	int    err;
 
 	if (cnt == 1) {
 		len = iov->iov_len;
@@ -729,10 +729,10 @@ static int lsegf_load_bb(const struct silofs_lsegf *lsegf,
                          struct silofs_bytebuf *bb)
 {
 	struct silofs_iovec iovec = { .iov_off = -1 };
-	struct stat st;
-	off_t end;
-	void *bobj;
-	int err;
+	struct stat         st;
+	off_t               end;
+	void               *bobj;
+	int                 err;
 
 	err = lsegf_iovec_of(lsegf, laddr, len, &iovec);
 	if (err) {
@@ -748,7 +748,7 @@ static int lsegf_load_bb(const struct silofs_lsegf *lsegf,
 	silofs_assert_eq(st.st_size % SILOFS_KB_SIZE, 0);
 
 	bobj = silofs_bytebuf_end(bb);
-	end = silofs_off_end(iovec.iov_off, iovec.iov.iov_len);
+	end  = silofs_off_end(iovec.iov_off, iovec.iov.iov_len);
 	if (end > st.st_size) {
 		silofs_memzero(bobj, iovec.iov.iov_len);
 		goto out;
@@ -803,8 +803,8 @@ static int lsegf_punch_with_fallocate(const struct silofs_lsegf *lsegf,
 static int lsegf_do_punch_all(const struct silofs_lsegf *lsegf)
 {
 	struct stat st;
-	ssize_t len;
-	int err;
+	ssize_t     len;
+	int         err;
 
 	err = lsegf_stat(lsegf, &st);
 	if (err) {
@@ -859,7 +859,7 @@ static struct silofs_lsegf *
 lsegf_new(struct silofs_alloc *alloc, const struct silofs_lsid *lsid)
 {
 	struct silofs_lsegf *lsegf;
-	int err;
+	int                  err;
 
 	lsegf = silofs_memalloc(alloc, sizeof(*lsegf), SILOFS_ALLOCF_BZERO);
 	if (lsegf == nullptr) {
@@ -891,7 +891,7 @@ static int repo_htbl_init(struct silofs_repo *repo)
 		return -SILOFS_ENOMEM;
 	}
 	repo->re_htbl.rh_nelems = nelems;
-	repo->re_htbl.rh_size = 0;
+	repo->re_htbl.rh_size   = 0;
 	return 0;
 }
 
@@ -900,9 +900,9 @@ static void repo_htbl_fini(struct silofs_repo *repo)
 	if (repo->re_htbl.rh_arr != nullptr) {
 		silofs_lista_del(repo->re_htbl.rh_arr, repo->re_htbl.rh_nelems,
 		                 repo->re.alloc);
-		repo->re_htbl.rh_arr = nullptr;
+		repo->re_htbl.rh_arr    = nullptr;
 		repo->re_htbl.rh_nelems = 0;
-		repo->re_htbl.rh_size = 0;
+		repo->re_htbl.rh_size   = 0;
 	}
 }
 
@@ -939,8 +939,8 @@ repo_htbl_lookup_lsegf(const struct silofs_repo *repo,
 {
 	const struct silofs_list_head *lst;
 	const struct silofs_list_head *itr;
-	const struct silofs_repo_ce *rce;
-	const struct silofs_lsegf *lsegf;
+	const struct silofs_repo_ce   *rce;
+	const struct silofs_lsegf     *lsegf;
 
 	lst = repo_htbl_list_of_lsid(repo, lsid);
 	itr = lst->next;
@@ -958,7 +958,7 @@ repo_htbl_lookup_lsegf(const struct silofs_repo *repo,
 static void
 repo_htbl_insert_lsegf(struct silofs_repo *repo, struct silofs_lsegf *lsegf)
 {
-	struct silofs_repo_ce *rce = &lsegf->lsf_rce;
+	struct silofs_repo_ce   *rce = &lsegf->lsf_rce;
 	struct silofs_list_head *lst;
 
 	lst = repo_htbl_list_of_lsid(repo, &rce->rce_key.u.lsid);
@@ -1019,7 +1019,7 @@ repo_lruq_remove_lsegf(struct silofs_repo *repo, struct silofs_lsegf *lsegf)
 	repo_lruq_remove(repo, &lsegf->lsf_rce);
 }
 
-static bool repo_lruq_isfront(const struct silofs_repo *repo,
+static bool repo_lruq_isfront(const struct silofs_repo    *repo,
                               const struct silofs_repo_ce *rce)
 {
 	const struct silofs_list_head *lruq_front;
@@ -1045,7 +1045,7 @@ repo_lruq_requeue_lsegf(struct silofs_repo *repo, struct silofs_lsegf *lsegf)
 
 static struct silofs_repo_ce *repo_lruq_back(const struct silofs_repo *repo)
 {
-	struct silofs_repo_ce *rce = nullptr;
+	struct silofs_repo_ce   *rce = nullptr;
 	struct silofs_list_head *lh;
 
 	lh = listq_back(&repo->re_lruq);
@@ -1110,20 +1110,20 @@ repo_prevof(const struct silofs_repo *repo, const struct silofs_repo_ce *rce)
 
 static int repo_do_fsync_all(struct silofs_repo *repo)
 {
-	const struct silofs_repo_ce *rce = nullptr;
-	const struct silofs_blobf *blobf = nullptr;
-	const struct silofs_lsegf *lsegf = nullptr;
-	int ret = 0;
-	int err = 0;
+	const struct silofs_repo_ce *rce   = nullptr;
+	const struct silofs_blobf   *blobf = nullptr;
+	const struct silofs_lsegf   *lsegf = nullptr;
+	int                          ret   = 0;
+	int                          err   = 0;
 
 	rce = repo_prevof(repo, nullptr);
 	while (rce != nullptr) {
 		if (rce->rce_key.kind == RCEK_BLOBID) {
 			blobf = blobf_from_rce(rce);
-			err = blobf_fsync(blobf);
+			err   = blobf_fsync(blobf);
 		} else if (rce->rce_key.kind == RCEK_LSID) {
 			lsegf = lsegf_from_rce(rce);
-			err = lsegf_fsync2(lsegf);
+			err   = lsegf_fsync2(lsegf);
 		} else {
 			silofs_panic("bad lruq: kind=%d", rce->rce_key.kind);
 		}
@@ -1179,9 +1179,9 @@ repo_requeue_lsegf(struct silofs_repo *repo, struct silofs_lsegf *lsegf)
 
 static void repo_evict_some(struct silofs_repo *repo, size_t niter_max)
 {
-	struct silofs_repo_ce *rce = nullptr;
+	struct silofs_repo_ce *rce      = nullptr;
 	struct silofs_repo_ce *rce_prev = nullptr;
-	size_t niter = silofs_min(niter_max, repo->re_lruq.sz);
+	size_t                 niter = silofs_min(niter_max, repo->re_lruq.sz);
 
 	rce = repo_prevof(repo, nullptr);
 	while ((rce != nullptr) && (niter-- > 0)) {
@@ -1234,15 +1234,15 @@ repo_evict_blobf(struct silofs_repo *repo, struct silofs_blobf *blobf)
 
 static int repo_fetch_cached_lsegf(const struct silofs_repo *repo,
                                    const struct silofs_lsid *lsid,
-                                   struct silofs_lsegf **out_lsegf)
+                                   struct silofs_lsegf     **out_lsegf)
 {
 	*out_lsegf = repo_htbl_lookup_lsegf(repo, lsid);
 	return (*out_lsegf == nullptr) ? -SILOFS_ENOENT : 0;
 }
 
-static int repo_fetch_cached_lsegf2(struct silofs_repo *repo,
+static int repo_fetch_cached_lsegf2(struct silofs_repo       *repo,
                                     const struct silofs_lsid *lsid,
-                                    struct silofs_lsegf **out_lsegf)
+                                    struct silofs_lsegf     **out_lsegf)
 {
 	*out_lsegf = repo_htbl_lookup_lsegf(repo, lsid);
 	if (*out_lsegf == nullptr) {
@@ -1252,9 +1252,9 @@ static int repo_fetch_cached_lsegf2(struct silofs_repo *repo,
 	return 0;
 }
 
-static int repo_create_cached_lsegf(struct silofs_repo *repo,
+static int repo_create_cached_lsegf(struct silofs_repo       *repo,
                                     const struct silofs_lsid *lsid,
-                                    struct silofs_lsegf **out_lsegf)
+                                    struct silofs_lsegf     **out_lsegf)
 {
 	repo_try_evict_overpop(repo);
 	return repo_create_lsegf(repo, lsid, out_lsegf);
@@ -1266,7 +1266,7 @@ repo_forget_cached_lsegf(struct silofs_repo *repo, struct silofs_lsegf *lsegf)
 	repo_evict_lsegf(repo, lsegf);
 }
 
-static void repo_try_evict_cached_lsegf(struct silofs_repo *repo,
+static void repo_try_evict_cached_lsegf(struct silofs_repo  *repo,
                                         struct silofs_lsegf *lsegf)
 {
 	repo_evict_lsegf(repo, lsegf);
@@ -1278,7 +1278,7 @@ static void
 repo_hash_lsid(const struct silofs_repo *repo, const struct silofs_lsid *lsid,
                struct silofs_hash256 *out_hash)
 {
-	struct silofs_lsid64b lsid64;
+	struct silofs_lsid64b        lsid64;
 	const struct silofs_mdigest *md = &repo->re_mdigest;
 
 	silofs_lsid64b_htox(&lsid64, lsid);
@@ -1287,7 +1287,7 @@ repo_hash_lsid(const struct silofs_repo *repo, const struct silofs_lsid *lsid,
 
 static void repo_objs_pathname_of(const struct silofs_repo *repo,
                                   const struct silofs_lsid *lsid,
-                                  struct silofs_strbuf *out_sbuf)
+                                  struct silofs_strbuf     *out_sbuf)
 {
 	struct silofs_hash256 hash;
 
@@ -1295,22 +1295,22 @@ static void repo_objs_pathname_of(const struct silofs_repo *repo,
 	silofs_hash256_to_name(&hash, out_sbuf);
 }
 
-static void repo_objs_pathname_by(const struct silofs_repo *repo,
+static void repo_objs_pathname_by(const struct silofs_repo  *repo,
                                   const struct silofs_lsegf *lsegf,
-                                  struct silofs_strbuf *out_sbuf)
+                                  struct silofs_strbuf      *out_sbuf)
 {
-	const struct silofs_repo_ce *rce = &lsegf->lsf_rce;
-	const struct silofs_lsid *lsid = &rce->rce_key.u.lsid;
+	const struct silofs_repo_ce *rce  = &lsegf->lsf_rce;
+	const struct silofs_lsid    *lsid = &rce->rce_key.u.lsid;
 
 	repo_objs_pathname_of(repo, lsid, out_sbuf);
 }
 
-static int repo_objs_require_notexists(const struct silofs_repo *repo,
+static int repo_objs_require_notexists(const struct silofs_repo  *repo,
                                        const struct silofs_lsegf *lsegf)
 {
 	struct silofs_strbuf sbuf;
-	struct stat st = { .st_size = 0 };
-	int err;
+	struct stat          st = { .st_size = 0 };
+	int                  err;
 
 	repo_objs_pathname_by(repo, lsegf, &sbuf);
 	err = do_fstatat(repo->re_blobs_dfd, sbuf.str, &st, 0);
@@ -1326,12 +1326,12 @@ static int repo_objs_require_notexists(const struct silofs_repo *repo,
 }
 
 static int repo_objs_create_lseg_of(const struct silofs_repo *repo,
-                                    struct silofs_lsegf *lsegf)
+                                    struct silofs_lsegf      *lsegf)
 {
 	struct silofs_strbuf sbuf;
-	const int o_flags = O_CREAT | O_RDWR | O_TRUNC;
-	int fd = -1;
-	int err;
+	const int            o_flags = O_CREAT | O_RDWR | O_TRUNC;
+	int                  fd      = -1;
+	int                  err;
 
 	repo_objs_pathname_by(repo, lsegf, &sbuf);
 	err = do_openat(repo->re_blobs_dfd, sbuf.str, o_flags, 0600, &fd);
@@ -1351,9 +1351,9 @@ static int repo_objs_open_lseg_of(const struct silofs_repo *repo,
                                   struct silofs_lsegf *lsegf, bool rw)
 {
 	struct silofs_strbuf sbuf;
-	const int o_flags = rw ? O_RDWR : O_RDONLY;
-	int fd = -1;
-	int err;
+	const int            o_flags = rw ? O_RDWR : O_RDONLY;
+	int                  fd      = -1;
+	int                  err;
 
 	silofs_assert_lt(lsegf->lsf_fd, 0);
 
@@ -1379,8 +1379,8 @@ static int repo_objs_unlink_lseg(const struct silofs_repo *repo,
                                  const struct silofs_lsid *lsid)
 {
 	struct silofs_strbuf sbuf;
-	struct stat st = { .st_size = -1 };
-	int err;
+	struct stat          st = { .st_size = -1 };
+	int                  err;
 
 	repo_objs_pathname_of(repo, lsid, &sbuf);
 	err = do_fstatat(repo->re_blobs_dfd, sbuf.str, &st, 0);
@@ -1397,10 +1397,10 @@ static int repo_objs_unlink_lseg(const struct silofs_repo *repo,
 
 static int repo_objs_open_lseg(struct silofs_repo *repo, bool rw,
                                const struct silofs_lsid *lsid,
-                               struct silofs_lsegf **out_lsegf)
+                               struct silofs_lsegf     **out_lsegf)
 {
 	struct silofs_lsegf *lsegf = nullptr;
-	int err;
+	int                  err;
 
 	err = repo_create_cached_lsegf(repo, lsid, &lsegf);
 	if (err) {
@@ -1422,8 +1422,8 @@ repo_objs_stat_lseg(const struct silofs_repo *repo,
                     const struct silofs_lsid *lsid, struct stat *out_st)
 {
 	struct silofs_strbuf sbuf;
-	size_t len = 0;
-	int err;
+	size_t               len = 0;
+	int                  err;
 
 	repo_objs_pathname_of(repo, lsid, &sbuf);
 	err = do_fstatat(repo->re_blobs_dfd, sbuf.str, out_st, 0);
@@ -1444,7 +1444,7 @@ repo_objs_create_lseg(struct silofs_repo *repo, const struct silofs_lsid *lsid,
                       struct silofs_lsegf **out_lsegf)
 {
 	struct silofs_lsegf *lsegf = nullptr;
-	int err;
+	int                  err;
 
 	err = repo_create_cached_lsegf(repo, lsid, &lsegf);
 	if (err) {
@@ -1531,7 +1531,7 @@ static void repo_fini_filos(struct silofs_repo *repo)
 	silofs_filos_fini(&repo->re_filos);
 }
 
-int silofs_repo_init(struct silofs_repo *repo,
+int silofs_repo_init(struct silofs_repo            *repo,
                      const struct silofs_repo_base *re_base)
 {
 	int err;
@@ -1540,10 +1540,10 @@ int silofs_repo_init(struct silofs_repo *repo,
 	memcpy(&repo->re, re_base, sizeof(repo->re));
 	repo->re_defs = &repo_defs;
 	listq_init(&repo->re_lruq);
-	repo->re_root_dfd = -1;
-	repo->re_dots_dfd = -1;
+	repo->re_root_dfd  = -1;
+	repo->re_dots_dfd  = -1;
 	repo->re_blobs_dfd = -1;
-	err = repo_init_mdigest(repo);
+	err                = repo_init_mdigest(repo);
 	if (err) {
 		return err;
 	}
@@ -1593,7 +1593,7 @@ static int repo_create_skel_subdir(const struct silofs_repo *repo,
                                    const char *name, mode_t mode)
 {
 	struct stat st = { .st_size = 0 };
-	int err;
+	int         err;
 
 	err = do_mkdirat(repo->re_dots_dfd, name, mode);
 	if (err && (err != -EEXIST)) {
@@ -1641,24 +1641,24 @@ static int repo_create_skel_subfile(const struct silofs_repo *repo,
 static int repo_create_skel(const struct silofs_repo *repo)
 {
 	const char *name = nullptr;
-	off_t size = 0;
-	int err;
+	off_t       size = 0;
+	int         err;
 
 	name = repo->re_defs->re_blobs_name;
-	err = repo_create_skel_subdir(repo, name, 0700);
+	err  = repo_create_skel_subdir(repo, name, 0700);
 	if (err) {
 		return err;
 	}
 
 	size = SILOFS_REPO_METAFILE_SIZE;
 	name = repo->re_defs->re_meta_name;
-	err = repo_create_skel_subfile(repo, name, 0600, size);
+	err  = repo_create_skel_subfile(repo, name, 0600, size);
 	if (err) {
 		return err;
 	}
 
 	name = repo->re_defs->re_lock_name;
-	err = repo_create_skel_subfile(repo, name, 0600, size);
+	err  = repo_create_skel_subfile(repo, name, 0600, size);
 	if (err) {
 		return err;
 	}
@@ -1677,7 +1677,7 @@ static int repo_require_skel_subfile(const struct silofs_repo *repo,
                                      const char *name, off_t min_size)
 {
 	struct stat st = { .st_size = 0 };
-	int err;
+	int         err;
 
 	err = do_fstatat(repo->re_dots_dfd, name, &st, 0);
 	if (err) {
@@ -1697,8 +1697,8 @@ static int repo_require_skel_subfile(const struct silofs_repo *repo,
 static int repo_require_skel(const struct silofs_repo *repo)
 {
 	const char *name = nullptr;
-	off_t size;
-	int err;
+	off_t       size;
+	int         err;
 
 	err = do_access(repo->re.repodir.str, R_OK | W_OK | X_OK);
 	if (err) {
@@ -1707,13 +1707,13 @@ static int repo_require_skel(const struct silofs_repo *repo)
 
 	name = repo->re_defs->re_meta_name;
 	size = SILOFS_REPO_METAFILE_SIZE;
-	err = repo_require_skel_subfile(repo, name, size);
+	err  = repo_require_skel_subfile(repo, name, size);
 	if (err) {
 		return err;
 	}
 
 	name = repo->re_defs->re_blobs_name;
-	err = repo_require_skel_subdir(repo, name);
+	err  = repo_require_skel_subdir(repo, name);
 	if (err) {
 		return err;
 	}
@@ -1738,7 +1738,7 @@ static int repo_open_rootdir(struct silofs_repo *repo)
 static int repo_create_dotsdir(const struct silofs_repo *repo)
 {
 	const char *name = repo->re_defs->re_dots_name;
-	int err;
+	int         err;
 
 	err = do_mkdirat(repo->re_root_dfd, name, 0700);
 	if (err && (err != -EEXIST)) {
@@ -1757,9 +1757,9 @@ static int repo_open_dotsdir(struct silofs_repo *repo)
 static int repo_format_meta(const struct silofs_repo *repo)
 {
 	struct silofs_repo_meta rmeta;
-	const char *name = repo->re_defs->re_meta_name;
-	int fd = -1;
-	int err;
+	const char             *name = repo->re_defs->re_meta_name;
+	int                     fd   = -1;
+	int                     err;
 
 	err = do_openat(repo->re_dots_dfd, name, O_RDWR, 0600, &fd);
 	if (err) {
@@ -1785,10 +1785,10 @@ out:
 
 static int repo_format_lock(const struct silofs_repo *repo)
 {
-	char data[SILOFS_REPO_METAFILE_SIZE] = "SILOFS_LOCK\n";
+	char        data[SILOFS_REPO_METAFILE_SIZE] = "SILOFS_LOCK\n";
 	const char *name = repo->re_defs->re_lock_name;
-	int fd = -1;
-	int err;
+	int         fd   = -1;
+	int         err;
 
 	err = do_openat(repo->re_dots_dfd, name, O_RDWR, 0600, &fd);
 	if (err) {
@@ -1810,9 +1810,9 @@ out:
 static int repo_require_meta(const struct silofs_repo *repo)
 {
 	struct silofs_repo_meta rmeta;
-	const char *name = repo->re_defs->re_meta_name;
-	int fd = -1;
-	int err;
+	const char             *name = repo->re_defs->re_meta_name;
+	int                     fd   = -1;
+	int                     err;
 
 	err = do_openat(repo->re_dots_dfd, name, O_RDONLY, 0, &fd);
 	if (err) {
@@ -1834,10 +1834,10 @@ out:
 
 static int repo_require_lock(const struct silofs_repo *repo)
 {
-	char data[SILOFS_REPO_METAFILE_SIZE] = "";
+	char        data[SILOFS_REPO_METAFILE_SIZE] = "";
 	const char *name = repo->re_defs->re_lock_name;
-	int fd = -1;
-	int err;
+	int         fd   = -1;
+	int         err;
 
 	err = do_openat(repo->re_dots_dfd, name, O_RDONLY, 0, &fd);
 	if (err) {
@@ -2030,7 +2030,7 @@ static int repo_do_stat_lseg(const struct silofs_repo *repo,
                              struct stat *out_st)
 {
 	struct silofs_lsegf *lsegf = nullptr;
-	int err;
+	int                  err;
 
 	err = repo_check_open(repo, false);
 	if (err) {
@@ -2047,7 +2047,7 @@ static int repo_do_stat_lseg(const struct silofs_repo *repo,
 	return 0;
 }
 
-int silofs_repo_stat_lseg(struct silofs_repo *repo,
+int silofs_repo_stat_lseg(struct silofs_repo       *repo,
                           const struct silofs_lsid *lsid, bool allow_cache,
                           struct stat *out_st)
 {
@@ -2063,7 +2063,7 @@ static int
 repo_do_spawn_lseg(struct silofs_repo *repo, const struct silofs_lsid *lsid)
 {
 	struct silofs_lsegf *lsegf = nullptr;
-	int err;
+	int                  err;
 
 	err = repo_check_open(repo, true);
 	if (err) {
@@ -2080,7 +2080,7 @@ repo_do_spawn_lseg(struct silofs_repo *repo, const struct silofs_lsid *lsid)
 	return 0;
 }
 
-int silofs_repo_spawn_lseg(struct silofs_repo *repo,
+int silofs_repo_spawn_lseg(struct silofs_repo       *repo,
                            const struct silofs_lsid *lsid)
 {
 	int err;
@@ -2093,7 +2093,7 @@ int silofs_repo_spawn_lseg(struct silofs_repo *repo,
 
 static int repo_stage_lseg_of(struct silofs_repo *repo, bool rw,
                               const struct silofs_lsid *lsid,
-                              struct silofs_lsegf **out_lsegf)
+                              struct silofs_lsegf     **out_lsegf)
 {
 	int err;
 
@@ -2112,7 +2112,7 @@ static int repo_do_stage_lseg(struct silofs_repo *repo, bool rw,
                               const struct silofs_lsid *lsid)
 {
 	struct silofs_lsegf *lsegf = nullptr;
-	int err;
+	int                  err;
 
 	err = repo_check_open(repo, false);
 	if (err) {
@@ -2140,7 +2140,7 @@ static int
 repo_do_remove_lseg(struct silofs_repo *repo, const struct silofs_lsid *lsid)
 {
 	struct silofs_lsegf *lsegf = nullptr;
-	int err;
+	int                  err;
 
 	err = repo_check_open(repo, true);
 	if (err) {
@@ -2157,7 +2157,7 @@ repo_do_remove_lseg(struct silofs_repo *repo, const struct silofs_lsid *lsid)
 	return 0;
 }
 
-int silofs_repo_remove_lseg(struct silofs_repo *repo,
+int silofs_repo_remove_lseg(struct silofs_repo       *repo,
                             const struct silofs_lsid *lsid)
 {
 	int err;
@@ -2172,7 +2172,7 @@ static int
 repo_do_punch_lseg(struct silofs_repo *repo, const struct silofs_lsid *lsid)
 {
 	struct silofs_lsegf *lsegf = nullptr;
-	int err;
+	int                  err;
 
 	err = repo_check_open(repo, true);
 	if (err) {
@@ -2189,7 +2189,7 @@ repo_do_punch_lseg(struct silofs_repo *repo, const struct silofs_lsid *lsid)
 	return 0;
 }
 
-int silofs_repo_punch_lseg(struct silofs_repo *repo,
+int silofs_repo_punch_lseg(struct silofs_repo       *repo,
                            const struct silofs_lsid *lsid)
 {
 	int err;
@@ -2202,7 +2202,7 @@ int silofs_repo_punch_lseg(struct silofs_repo *repo,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int repo_do_spawn_stage_lseg(struct silofs_repo *repo,
+static int repo_do_spawn_stage_lseg(struct silofs_repo       *repo,
                                     const struct silofs_lsid *lsid)
 {
 	int err;
@@ -2222,7 +2222,7 @@ static int
 repo_do_require_lseg(struct silofs_repo *repo, const struct silofs_lsid *lsid)
 {
 	struct stat st = { .st_ino = 0 };
-	int err;
+	int         err;
 
 	err = repo_do_stat_lseg(repo, lsid, true, &st);
 	if (!err) {
@@ -2233,7 +2233,7 @@ repo_do_require_lseg(struct silofs_repo *repo, const struct silofs_lsid *lsid)
 	return err;
 }
 
-int silofs_repo_require_lseg(struct silofs_repo *repo,
+int silofs_repo_require_lseg(struct silofs_repo       *repo,
                              const struct silofs_lsid *lsid)
 {
 	int err;
@@ -2244,11 +2244,11 @@ int silofs_repo_require_lseg(struct silofs_repo *repo,
 	return err;
 }
 
-static int repo_do_require_laddr(struct silofs_repo *repo,
+static int repo_do_require_laddr(struct silofs_repo        *repo,
                                  const struct silofs_laddr *laddr)
 {
 	struct silofs_lsegf *lsegf = nullptr;
-	int err;
+	int                  err;
 
 	err = repo_check_open(repo, false);
 	if (err) {
@@ -2265,7 +2265,7 @@ static int repo_do_require_laddr(struct silofs_repo *repo,
 	return 0;
 }
 
-int silofs_repo_require_laddr(struct silofs_repo *repo,
+int silofs_repo_require_laddr(struct silofs_repo        *repo,
                               const struct silofs_laddr *laddr)
 {
 	int err;
@@ -2281,7 +2281,7 @@ repo_do_writev_at(struct silofs_repo *repo, const struct silofs_laddr *laddr,
                   const struct iovec *iov, size_t cnt)
 {
 	struct silofs_lsegf *lsegf = nullptr;
-	int err;
+	int                  err;
 
 	err = repo_check_open(repo, true);
 	if (err) {
@@ -2298,7 +2298,7 @@ repo_do_writev_at(struct silofs_repo *repo, const struct silofs_laddr *laddr,
 	return 0;
 }
 
-int silofs_repo_writev_at(struct silofs_repo *repo,
+int silofs_repo_writev_at(struct silofs_repo        *repo,
                           const struct silofs_laddr *laddr,
                           const struct iovec *iov, size_t cnt)
 {
@@ -2310,13 +2310,13 @@ int silofs_repo_writev_at(struct silofs_repo *repo,
 	return err;
 }
 
-int silofs_repo_write_at(struct silofs_repo *repo,
+int silofs_repo_write_at(struct silofs_repo        *repo,
                          const struct silofs_laddr *laddr, const void *buf,
                          size_t len)
 {
 	const struct iovec iov = {
 		.iov_base = unconst(buf),
-		.iov_len = len,
+		.iov_len  = len,
 	};
 
 	return silofs_repo_writev_at(repo, laddr, &iov, 1);
@@ -2327,7 +2327,7 @@ repo_do_read_at(struct silofs_repo *repo, const struct silofs_laddr *laddr,
                 void *buf, size_t len)
 {
 	struct silofs_lsegf *lsegf = nullptr;
-	int err;
+	int                  err;
 
 	err = repo_check_open(repo, false);
 	if (err) {
@@ -2349,7 +2349,7 @@ repo_do_read_at(struct silofs_repo *repo, const struct silofs_laddr *laddr,
 	return 0;
 }
 
-int silofs_repo_read_at(struct silofs_repo *repo,
+int silofs_repo_read_at(struct silofs_repo        *repo,
                         const struct silofs_laddr *laddr, void *buf,
                         size_t len)
 {
@@ -2363,9 +2363,9 @@ int silofs_repo_read_at(struct silofs_repo *repo,
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-int silofs_repo_stat_blob(struct silofs_repo *repo,
+int silofs_repo_stat_blob(struct silofs_repo         *repo,
                           const struct silofs_blobid *blobid,
-                          struct stat *out_st)
+                          struct stat                *out_st)
 {
 	int err;
 
@@ -2375,7 +2375,7 @@ int silofs_repo_stat_blob(struct silofs_repo *repo,
 	return err;
 }
 
-int silofs_repo_spawn_blob(struct silofs_repo *repo,
+int silofs_repo_spawn_blob(struct silofs_repo         *repo,
                            const struct silofs_blobid *blobid)
 {
 	int err;
@@ -2386,7 +2386,7 @@ int silofs_repo_spawn_blob(struct silofs_repo *repo,
 	return err;
 }
 
-int silofs_repo_stage_blob(struct silofs_repo *repo,
+int silofs_repo_stage_blob(struct silofs_repo         *repo,
                            const struct silofs_blobid *blobid)
 {
 	int err;
@@ -2397,7 +2397,7 @@ int silofs_repo_stage_blob(struct silofs_repo *repo,
 	return err;
 }
 
-int silofs_repo_save_bseg(struct silofs_repo *repo,
+int silofs_repo_save_bseg(struct silofs_repo        *repo,
                           const struct silofs_paddr *paddr,
                           const struct silofs_rovec *rovec)
 {
@@ -2409,7 +2409,7 @@ int silofs_repo_save_bseg(struct silofs_repo *repo,
 	return err;
 }
 
-int silofs_repo_load_bseg(struct silofs_repo *repo,
+int silofs_repo_load_bseg(struct silofs_repo        *repo,
                           const struct silofs_paddr *paddr,
                           const struct silofs_rwvec *rwvec)
 {
@@ -2421,7 +2421,7 @@ int silofs_repo_load_bseg(struct silofs_repo *repo,
 	return err;
 }
 
-int silofs_repo_remove_blob(struct silofs_repo *repo,
+int silofs_repo_remove_blob(struct silofs_repo         *repo,
                             const struct silofs_blobid *blobid)
 {
 	int err;
@@ -2432,7 +2432,7 @@ int silofs_repo_remove_blob(struct silofs_repo *repo,
 	return err;
 }
 
-int silofs_repo_flush_blob(struct silofs_repo *repo,
+int silofs_repo_flush_blob(struct silofs_repo         *repo,
                            const struct silofs_blobid *blobid)
 {
 	int err;

@@ -28,14 +28,14 @@ enum {
 struct silofs_umap_entry {
 	struct silofs_list_head um_htof_lh;
 	struct silofs_list_head um_ftoh_lh;
-	struct silofs_uids um_uids;
+	struct silofs_uids      um_uids;
 };
 
 /* in-memory host <--> silofs group-id mapping entry */
 struct silofs_gmap_entry {
 	struct silofs_list_head gm_htof_lh;
 	struct silofs_list_head gm_ftoh_lh;
-	struct silofs_gids gm_gids;
+	struct silofs_gids      gm_gids;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -45,7 +45,7 @@ unconst_ume(const struct silofs_umap_entry *ume)
 {
 	union {
 		const struct silofs_umap_entry *p;
-		struct silofs_umap_entry *q;
+		struct silofs_umap_entry       *q;
 	} u = { .p = ume };
 	return u.q;
 }
@@ -74,7 +74,7 @@ ume_init(struct silofs_umap_entry *ume, uid_t host_uid, uid_t fs_uid)
 	list_head_init(&ume->um_htof_lh);
 	list_head_init(&ume->um_ftoh_lh);
 	ume->um_uids.host_uid = host_uid;
-	ume->um_uids.fs_uid = fs_uid;
+	ume->um_uids.fs_uid   = fs_uid;
 }
 
 static void ume_fini(struct silofs_umap_entry *ume)
@@ -82,7 +82,7 @@ static void ume_fini(struct silofs_umap_entry *ume)
 	list_head_fini(&ume->um_htof_lh);
 	list_head_fini(&ume->um_ftoh_lh);
 	ume->um_uids.host_uid = (uid_t)(-1);
-	ume->um_uids.fs_uid = (uid_t)(-1);
+	ume->um_uids.fs_uid   = (uid_t)(-1);
 }
 
 static struct silofs_umap_entry *
@@ -110,7 +110,7 @@ unconst_gme(const struct silofs_gmap_entry *gme)
 {
 	union {
 		const struct silofs_gmap_entry *p;
-		struct silofs_gmap_entry *q;
+		struct silofs_gmap_entry       *q;
 	} u = { .p = gme };
 	return u.q;
 }
@@ -139,7 +139,7 @@ gme_init(struct silofs_gmap_entry *gme, gid_t host_gid, gid_t fs_gid)
 	list_head_init(&gme->gm_htof_lh);
 	list_head_init(&gme->gm_ftoh_lh);
 	gme->gm_gids.host_gid = host_gid;
-	gme->gm_gids.fs_gid = fs_gid;
+	gme->gm_gids.fs_gid   = fs_gid;
 }
 
 static void gme_fini(struct silofs_gmap_entry *gme)
@@ -147,7 +147,7 @@ static void gme_fini(struct silofs_gmap_entry *gme)
 	list_head_fini(&gme->gm_htof_lh);
 	list_head_fini(&gme->gm_ftoh_lh);
 	gme->gm_gids.host_gid = (gid_t)(-1);
-	gme->gm_gids.fs_gid = (gid_t)(-1);
+	gme->gm_gids.fs_gid   = (gid_t)(-1);
 }
 
 static struct silofs_gmap_entry *
@@ -174,7 +174,7 @@ static int idsmap_init_uhmaps(struct silofs_idsmap *idsm)
 {
 	struct silofs_list_head *uhtof = nullptr;
 	struct silofs_list_head *uftoh = nullptr;
-	const size_t hcap = SILOFS_IDSMAP_HCAP;
+	const size_t             hcap  = SILOFS_IDSMAP_HCAP;
 
 	idsm->idm_uhtof = nullptr;
 	idsm->idm_uftoh = nullptr;
@@ -211,7 +211,7 @@ static int idsmap_init_ghmaps(struct silofs_idsmap *idsm)
 {
 	struct silofs_list_head *ghtof = nullptr;
 	struct silofs_list_head *gftoh = nullptr;
-	const size_t hcap = SILOFS_IDSMAP_HCAP;
+	const size_t             hcap  = SILOFS_IDSMAP_HCAP;
 
 	idsm->idm_ghtof = nullptr;
 	idsm->idm_gftoh = nullptr;
@@ -270,7 +270,7 @@ int silofs_idsmap_init(struct silofs_idsmap *idsm, struct silofs_alloc *alloc,
                        bool allow_hostids)
 {
 	silofs_memzero(idsm, sizeof(*idsm));
-	idsm->idm_alloc = alloc;
+	idsm->idm_alloc        = alloc;
 	idsm->idm_allow_hotids = allow_hostids;
 	return idsmap_init_hmaps(idsm);
 }
@@ -338,7 +338,7 @@ static int
 idsmap_insert_umap(struct silofs_idsmap *idsm, uid_t host_uid, uid_t fs_uid)
 {
 	struct silofs_umap_entry *ume = nullptr;
-	struct silofs_list_head *lst = nullptr;
+	struct silofs_list_head  *lst = nullptr;
 
 	ume = idsmap_new_ume(idsm, host_uid, fs_uid);
 	if (ume == nullptr) {
@@ -359,8 +359,8 @@ idsmap_insert_umap(struct silofs_idsmap *idsm, uid_t host_uid, uid_t fs_uid)
 static void idsmap_clear_umap_at(struct silofs_idsmap *idsm, size_t slot)
 {
 	struct silofs_umap_entry *ume;
-	struct silofs_list_head *itr;
-	struct silofs_list_head *lst;
+	struct silofs_list_head  *itr;
+	struct silofs_list_head  *lst;
 
 	lst = idsmap_uhtof_bin_at(idsm, slot);
 	itr = lst->next;
@@ -389,8 +389,8 @@ static const struct silofs_umap_entry *
 idsmap_lookup_uhtof(const struct silofs_idsmap *idsm, uid_t host_uid)
 {
 	const struct silofs_umap_entry *ume;
-	const struct silofs_list_head *itr;
-	const struct silofs_list_head *lst;
+	const struct silofs_list_head  *itr;
+	const struct silofs_list_head  *lst;
 
 	lst = idsmap_uhtof_bin_of(idsm, host_uid);
 	itr = lst->next;
@@ -410,8 +410,8 @@ static const struct silofs_umap_entry *
 idsmap_lookup_uftoh(const struct silofs_idsmap *idsm, uid_t fs_uid)
 {
 	const struct silofs_umap_entry *ume;
-	const struct silofs_list_head *itr;
-	const struct silofs_list_head *lst;
+	const struct silofs_list_head  *itr;
+	const struct silofs_list_head  *lst;
 
 	lst = idsmap_uftoh_bin_of(idsm, fs_uid);
 	itr = lst->next;
@@ -431,15 +431,15 @@ static int idsmap_resolve_uhtof(const struct silofs_idsmap *idsm,
                                 uid_t host_uid, uid_t *out_fs_uid)
 {
 	const struct silofs_umap_entry *ume;
-	int ret;
+	int                             ret;
 
 	ume = idsmap_lookup_uhtof(idsm, host_uid);
 	if (ume != nullptr) {
 		*out_fs_uid = ume->um_uids.fs_uid;
-		ret = 0;
+		ret         = 0;
 	} else {
 		*out_fs_uid = host_uid;
-		ret = idsmap_noent_status(idsm);
+		ret         = idsmap_noent_status(idsm);
 	}
 	return ret;
 }
@@ -448,15 +448,15 @@ static int idsmap_resolve_uftoh(const struct silofs_idsmap *idsm, uid_t fs_uid,
                                 uid_t *out_host_uid)
 {
 	const struct silofs_umap_entry *ume;
-	int ret;
+	int                             ret;
 
 	ume = idsmap_lookup_uftoh(idsm, fs_uid);
 	if (ume != nullptr) {
 		*out_host_uid = ume->um_uids.host_uid;
-		ret = 0;
+		ret           = 0;
 	} else {
 		*out_host_uid = fs_uid;
-		ret = idsmap_noent_status(idsm);
+		ret           = idsmap_noent_status(idsm);
 	}
 	return ret;
 }
@@ -512,7 +512,7 @@ static int
 idsmap_insert_gmap(struct silofs_idsmap *idsm, gid_t host_gid, gid_t fs_gid)
 {
 	struct silofs_gmap_entry *gme = nullptr;
-	struct silofs_list_head *lst = nullptr;
+	struct silofs_list_head  *lst = nullptr;
 
 	gme = idsmap_new_gme(idsm, host_gid, fs_gid);
 	if (gme == nullptr) {
@@ -533,8 +533,8 @@ idsmap_insert_gmap(struct silofs_idsmap *idsm, gid_t host_gid, gid_t fs_gid)
 static void idsmap_clear_gmap_at(struct silofs_idsmap *idsm, size_t slot)
 {
 	struct silofs_gmap_entry *gme;
-	struct silofs_list_head *itr;
-	struct silofs_list_head *lst;
+	struct silofs_list_head  *itr;
+	struct silofs_list_head  *lst;
 
 	lst = idsmap_ghtof_bin_at(idsm, slot);
 	itr = lst->next;
@@ -564,8 +564,8 @@ static const struct silofs_gmap_entry *
 idsmap_lookup_ghtof(const struct silofs_idsmap *idsm, gid_t host_gid)
 {
 	const struct silofs_gmap_entry *gme;
-	const struct silofs_list_head *itr;
-	const struct silofs_list_head *lst;
+	const struct silofs_list_head  *itr;
+	const struct silofs_list_head  *lst;
 
 	lst = idsmap_ghtof_bin_of(idsm, host_gid);
 	itr = lst->next;
@@ -586,8 +586,8 @@ static const struct silofs_gmap_entry *
 idsmap_lookup_gftoh(const struct silofs_idsmap *idsm, gid_t fs_gid)
 {
 	const struct silofs_gmap_entry *gme;
-	const struct silofs_list_head *itr;
-	const struct silofs_list_head *lst;
+	const struct silofs_list_head  *itr;
+	const struct silofs_list_head  *lst;
 
 	lst = idsmap_gftoh_bin_of(idsm, fs_gid);
 	itr = lst->next;
@@ -608,15 +608,15 @@ static int idsmap_resolve_ghtof(const struct silofs_idsmap *idsm,
                                 gid_t host_gid, gid_t *out_fs_gid)
 {
 	const struct silofs_gmap_entry *gme;
-	int ret;
+	int                             ret;
 
 	gme = idsmap_lookup_ghtof(idsm, host_gid);
 	if (gme != nullptr) {
 		*out_fs_gid = gme->gm_gids.fs_gid;
-		ret = 0;
+		ret         = 0;
 	} else {
 		*out_fs_gid = host_gid;
-		ret = idsmap_noent_status(idsm);
+		ret         = idsmap_noent_status(idsm);
 	}
 	return ret;
 }
@@ -625,15 +625,15 @@ static int idsmap_resolve_gftoh(const struct silofs_idsmap *idsm, gid_t fs_gid,
                                 gid_t *out_host_gid)
 {
 	const struct silofs_gmap_entry *gme;
-	int ret;
+	int                             ret;
 
 	gme = idsmap_lookup_gftoh(idsm, fs_gid);
 	if (gme != nullptr) {
 		*out_host_gid = gme->gm_gids.host_gid;
-		ret = 0;
+		ret           = 0;
 	} else {
 		*out_host_gid = fs_gid;
-		ret = idsmap_noent_status(idsm);
+		ret           = idsmap_noent_status(idsm);
 	}
 	return ret;
 }
@@ -646,11 +646,11 @@ idsmap_add_uid(struct silofs_idsmap *idsm, const struct silofs_uids *uid)
 	return idsmap_insert_umap(idsm, uid->host_uid, uid->fs_uid);
 }
 
-int silofs_idsmap_populate_uids(struct silofs_idsmap *idsm,
+int silofs_idsmap_populate_uids(struct silofs_idsmap      *idsm,
                                 const struct silofs_ugids *ugids)
 {
 	const struct silofs_users_ids *uids = &ugids->users;
-	int err;
+	int                            err;
 
 	for (size_t i = 0; i < uids->nuids; ++i) {
 		err = idsmap_add_uid(idsm, &uids->uids[i]);
@@ -667,11 +667,11 @@ idsmap_add_gid(struct silofs_idsmap *idsm, const struct silofs_gids *gid)
 	return idsmap_insert_gmap(idsm, gid->host_gid, gid->fs_gid);
 }
 
-int silofs_idsmap_populate_gids(struct silofs_idsmap *idsm,
+int silofs_idsmap_populate_gids(struct silofs_idsmap      *idsm,
                                 const struct silofs_ugids *ugids)
 {
 	const struct silofs_groups_ids *gids = &ugids->groups;
-	int err;
+	int                             err;
 
 	for (size_t j = 0; j < gids->ngids; ++j) {
 		err = idsmap_add_gid(idsm, &gids->gids[j]);
@@ -699,13 +699,13 @@ int silofs_idsmap_map_uidgid(const struct silofs_idsmap *idsm, uid_t host_uid,
 		err1 = idsmap_resolve_uhtof(idsm, host_uid, out_fs_uid);
 	} else {
 		*out_fs_uid = host_uid;
-		err1 = 0;
+		err1        = 0;
 	}
 	if (host_gid != (gid_t)(-1)) {
 		err2 = idsmap_resolve_ghtof(idsm, host_gid, out_fs_gid);
 	} else {
 		*out_fs_gid = host_gid;
-		err2 = 0;
+		err2        = 0;
 	}
 	return err1 ? err1 : err2;
 }
@@ -721,13 +721,13 @@ int silofs_idsmap_rmap_uidgid(const struct silofs_idsmap *idsm, uid_t fs_uid,
 		err1 = idsmap_resolve_uftoh(idsm, fs_uid, out_host_uid);
 	} else {
 		*out_host_uid = fs_uid;
-		err1 = 0;
+		err1          = 0;
 	}
 	if (fs_gid != (gid_t)(-1)) {
 		err2 = idsmap_resolve_gftoh(idsm, fs_gid, out_host_gid);
 	} else {
 		*out_host_gid = fs_gid;
-		err2 = 0;
+		err2          = 0;
 	}
 	return err1 ? err1 : err2;
 }

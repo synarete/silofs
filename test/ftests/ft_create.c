@@ -23,7 +23,7 @@
 static void test_create_simple_(struct ft_env *fte, size_t cnt)
 {
 	const char *path = ft_new_path_unique(fte);
-	int fd = -1;
+	int         fd   = -1;
 
 	for (size_t i = 0; i < cnt; ++i) {
 		ft_creat(path, 0600, &fd);
@@ -50,7 +50,7 @@ static void test_create_unlink_(struct ft_env *fte, size_t cnt)
 {
 	const char *path0 = ft_new_path_unique(fte);
 	const char *path1 = nullptr;
-	int fd = -1;
+	int         fd    = -1;
 
 	ft_mkdir(path0, 0700);
 	for (size_t i = 0; i < cnt; ++i) {
@@ -81,10 +81,10 @@ static void test_create_unlink(struct ft_env *fte)
  */
 static void test_create_pwrite_(struct ft_env *fte, off_t off, size_t len)
 {
-	void *buf = ft_new_buf_rands(fte, len);
+	void       *buf   = ft_new_buf_rands(fte, len);
 	const char *path0 = ft_new_path_unique(fte);
 	const char *path1 = ft_new_path_under(fte, path0);
-	int fd = -1;
+	int         fd    = -1;
 
 	ft_mkdir(path0, 0700);
 	ft_creat(path1, 0600, &fd);

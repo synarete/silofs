@@ -668,33 +668,33 @@ struct silofs_space_stats1k {
 
 struct silofs_super_block {
 	/* 0..512 */
-	struct silofs_header        sb_hdr;
-	uint64_t                    sb_magic;
-	uint64_t                    sb_version;
-	uint32_t                    sb_flags;
-	uint8_t                     sb_reserved1[4];
-	uint8_t                     sb_endianness;
-	uint8_t                     sb_reserved2[7];
-	uint8_t                     sb_sw_version[64];
-	uint8_t                     sb_reserved3[368];
+	struct silofs_header sb_hdr;
+	uint64_t             sb_magic;
+	uint64_t             sb_version;
+	uint32_t             sb_flags;
+	uint8_t              sb_reserved1[4];
+	uint8_t              sb_endianness;
+	uint8_t              sb_reserved2[7];
+	uint8_t              sb_sw_version[64];
+	uint8_t              sb_reserved3[368];
 	/* 512..1K */
-	struct silofs_tm64b         sb_btime_curr;
-	struct silofs_tm64b         sb_btime_prev;
-	struct silofs_tm64b         sb_btime_base;
-	struct silofs_blobid        sb_lv_curr;
-	struct silofs_blobid        sb_lv_prev;
-	struct silofs_lrange128     sb_lrange;
-	uint8_t                     sb_reserved4[192];
+	struct silofs_tm64b     sb_btime_curr;
+	struct silofs_tm64b     sb_btime_prev;
+	struct silofs_tm64b     sb_btime_base;
+	struct silofs_blobid    sb_lv_curr;
+	struct silofs_blobid    sb_lv_prev;
+	struct silofs_lrange128 sb_lrange;
+	uint8_t                 sb_reserved4[192];
 	/* 1K..3K */
-	struct silofs_sb_sproots    sb_sproots;
+	struct silofs_sb_sproots sb_sproots;
 	/* 3K..4K */
-	struct silofs_sb_lsids      sb_main_lsid;
+	struct silofs_sb_lsids sb_main_lsid;
 	/* 4K..6K */
 	struct silofs_space_stats1k sb_space_stats_curr;
 	struct silofs_space_stats1k sb_space_stats_prev;
 	/* 6K..8K */
-	uint8_t                     sb_reserved6[1536];
-	struct silofs_name          sb_name;
+	uint8_t            sb_reserved6[1536];
+	struct silofs_name sb_name;
 } silofs_attr_aligned64;
 
 struct silofs_spmap_ref {

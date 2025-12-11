@@ -37,18 +37,18 @@ struct cmd_clone_in_args {
 	char *dirpath;
 	char *dirpath_real;
 	char *password;
-	bool offline;
-	bool no_prompt;
+	bool  offline;
+	bool  no_prompt;
 };
 
 struct cmd_clone_ctx {
 	struct cmd_clone_in_args in_args;
-	struct silofs_env_args env_args;
-	struct silofs_blobid fs_blobid;
-	struct silofs_blobid fs_blobid_main;
-	struct silofs_blobid fs_blobid_fork;
-	struct silofs_env *env;
-	union silofs_ioc_u *ioc;
+	struct silofs_env_args   env_args;
+	struct silofs_blobid     fs_blobid;
+	struct silofs_blobid     fs_blobid_main;
+	struct silofs_blobid     fs_blobid_fork;
+	struct silofs_env       *env;
+	union silofs_ioc_u      *ioc;
 };
 
 static struct cmd_clone_ctx *cmd_clone_ctx_p;
@@ -71,7 +71,7 @@ static void cmd_clone_parse_optargs(struct cmd_clone_ctx *ctx)
 		{ nullptr, 0, 0 },       //
 	};
 	struct cmd_optargs opa;
-	int opt_chr = 1;
+	int                opt_chr = 1;
 
 	cmd_optargs_init(&opa, ods);
 	while (!opa.opa_done && (opt_chr > 0)) {
@@ -147,15 +147,15 @@ static void cmd_clone_atexit(void)
 
 static void cmd_clone_start(struct cmd_clone_ctx *ctx)
 {
-	ctx->ioc = cmd_new_ioc();
+	ctx->ioc        = cmd_new_ioc();
 	cmd_clone_ctx_p = ctx;
 	cmd_atexit(cmd_clone_atexit);
 }
 
 static void cmd_clone_prepare_by_query(struct cmd_clone_ctx *ctx)
 {
-	struct silofs_ioc_query ioc_qry;
-	struct silofs_ioc_query *qry = &ioc_qry;
+	struct silofs_ioc_query   ioc_qry;
+	struct silofs_ioc_query  *qry  = &ioc_qry;
 	struct cmd_clone_in_args *args = &ctx->in_args;
 
 	silofs_memzero(qry, sizeof(*qry));
@@ -234,10 +234,10 @@ cmd_clone_ioctl_query(const char *path, struct silofs_ioc_query *qry)
 
 static void cmd_clone_do_ioctl_clonefs(struct cmd_clone_ctx *ctx)
 {
-	union silofs_ioc_u *ioc = ctx->ioc;
-	const char *dirpath = ctx->in_args.dirpath_real;
-	int dfd = -1;
-	int err;
+	union silofs_ioc_u *ioc     = ctx->ioc;
+	const char         *dirpath = ctx->in_args.dirpath_real;
+	int                 dfd     = -1;
+	int                 err;
 
 	SILOFS_STATICASSERT_EQ(sizeof(ctx->fs_blobid_main),
 	                       sizeof(ioc->forkfs.main));
@@ -271,8 +271,8 @@ static void cmd_clone_do_ioctl_clonefs(struct cmd_clone_ctx *ctx)
 static void cmd_clone_do_ioctl_syncfs(struct cmd_clone_ctx *ctx)
 {
 	const char *dirpath = ctx->in_args.dirpath_real;
-	int dfd = -1;
-	int err;
+	int         dfd     = -1;
+	int         err;
 
 	cmd_reset_ioc(ctx->ioc);
 	err = silofs_sys_open(dirpath, O_DIRECTORY | O_RDONLY, 0, &dfd);
@@ -295,7 +295,7 @@ static void cmd_clone_setup_env_args(struct cmd_clone_ctx *ctx)
 	cmd_setup_env_args(env_args);
 	env_args->boot_args.repodir = ctx->in_args.repodir_real;
 	env_args->boot_args.fs_name = ctx->in_args.fsname;
-	env_args->boot_args.passwd = ctx->in_args.password;
+	env_args->boot_args.passwd  = ctx->in_args.password;
 }
 
 static void cmd_clone_setup_fs_ids(struct cmd_clone_ctx *ctx)

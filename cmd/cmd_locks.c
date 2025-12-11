@@ -21,14 +21,14 @@
 #include "cmd.h"
 
 struct cmd_lockfile_ctx {
-	char lockname[NAME_MAX + 1];
-	char tempname[NAME_MAX + 1];
-	char data[256];
+	char        lockname[NAME_MAX + 1];
+	char        tempname[NAME_MAX + 1];
+	char        data[256];
 	const char *repodir;
 	const char *name;
-	time_t now;
-	pid_t pid;
-	int dfd;
+	time_t      now;
+	pid_t       pid;
+	int         dfd;
 };
 
 static int do_fstatat(int dirfd, const char *pathname, struct stat *st)
@@ -46,10 +46,10 @@ static void cmd_lockfile_init(struct cmd_lockfile_ctx *lf_ctx,
 {
 	memset(lf_ctx, 0, sizeof(*lf_ctx));
 	lf_ctx->repodir = repodir;
-	lf_ctx->name = name;
-	lf_ctx->now = time(nullptr);
-	lf_ctx->pid = getpid();
-	lf_ctx->dfd = -1;
+	lf_ctx->name    = name;
+	lf_ctx->now     = time(nullptr);
+	lf_ctx->pid     = getpid();
+	lf_ctx->dfd     = -1;
 }
 
 static void cmd_lockfile_fini(struct cmd_lockfile_ctx *lf_ctx)
@@ -93,7 +93,7 @@ static void cmd_lockfile_setup(struct cmd_lockfile_ctx *lf_ctx,
 static int cmd_lockfile_trystat(const struct cmd_lockfile_ctx *lf_ctx)
 {
 	struct stat st = { .st_size = -1 };
-	int err;
+	int         err;
 
 	err = do_fstatat(lf_ctx->dfd, lf_ctx->lockname, &st);
 	if (err) {
@@ -195,10 +195,10 @@ void cmd_unlock_fs(const char *repodir, const char *name)
 
 static char *cmd_repo_lockpath(const char *repodir)
 {
-	char *dotsdir = nullptr;
+	char *dotsdir  = nullptr;
 	char *lockpath = nullptr;
 
-	dotsdir = cmd_join_path(repodir, SILOFS_REPO_DOTS_DIRNAME);
+	dotsdir  = cmd_join_path(repodir, SILOFS_REPO_DOTS_DIRNAME);
 	lockpath = cmd_join_path(dotsdir, SILOFS_REPO_LOCK_FILENAME);
 	cmd_pstrfree(&dotsdir);
 	return lockpath;
@@ -207,8 +207,8 @@ static char *cmd_repo_lockpath(const char *repodir)
 static void cmd_open_repo_lock(const char *path, int *out_fd)
 {
 	struct stat st = { .st_size = 0 };
-	int fd = -1;
-	int err;
+	int         fd = -1;
+	int         err;
 
 	err = silofs_sys_open(path, O_RDWR, 0, &fd);
 	if (err) {
@@ -237,16 +237,16 @@ static void cmd_close_repo_lock(const char *path, int *pfd)
 
 static void cmd_acquire_repo_lock(const char *path, int fd, bool wrlck)
 {
-	struct stat st = { .st_size = 0 };
+	struct stat  st = { .st_size = 0 };
 	struct flock fl = { .l_type = wrlck ? F_WRLCK : F_RDLCK };
-	int err;
+	int          err;
 
 	err = silofs_sys_fstat(fd, &st);
 	if (err) {
 		cmd_die(err, "failed to stat repo lock: %s", path);
 	}
 	fl.l_len = st.st_size;
-	err = silofs_sys_fcntl_flock(fd, F_OFD_SETLK, &fl);
+	err      = silofs_sys_fcntl_flock(fd, F_OFD_SETLK, &fl);
 	if (err) {
 		cmd_die(err, "failed to acquire repo lock: %s", path);
 	}
@@ -254,16 +254,16 @@ static void cmd_acquire_repo_lock(const char *path, int fd, bool wrlck)
 
 static void cmd_release_repo_lock(const char *path, int fd)
 {
-	struct stat st = { .st_size = 0 };
+	struct stat  st = { .st_size = 0 };
 	struct flock fl = { .l_type = F_UNLCK };
-	int err;
+	int          err;
 
 	err = silofs_sys_fstat(fd, &st);
 	if (err) {
 		cmd_die(err, "failed to stat repo lock: %s", path);
 	}
 	fl.l_len = st.st_size;
-	err = silofs_sys_fcntl_flock(fd, F_OFD_SETLK, &fl);
+	err      = silofs_sys_fcntl_flock(fd, F_OFD_SETLK, &fl);
 	if (err) {
 		cmd_die(err, "failed to release repo lock: %s", path);
 	}

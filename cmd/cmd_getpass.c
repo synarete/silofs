@@ -22,7 +22,7 @@
 static void write_stdout(const char *msg)
 {
 	size_t nwr;
-	int fd_out = STDOUT_FILENO;
+	int    fd_out = STDOUT_FILENO;
 
 	silofs_sys_write(fd_out, msg, strlen(msg), &nwr);
 	silofs_sys_fsync(fd_out);
@@ -59,7 +59,7 @@ static int isskip(int ch)
 
 static char *parse_dup_password(const char *buf, size_t bsz)
 {
-	size_t len = bsz;
+	size_t      len = bsz;
 	const char *str = buf;
 
 	while (len && isskip(*str)) {
@@ -84,8 +84,8 @@ static void
 read_password_buf_from_fd(int fd, void *buf, size_t bsz, size_t *out_len)
 {
 	size_t nrd = 0;
-	char ch = 0;
-	int err;
+	char   ch  = 0;
+	int    err;
 
 	err = silofs_sys_read(fd, buf, bsz, out_len);
 	if (err) {
@@ -106,7 +106,7 @@ static void
 read_password_from_file(int fd, void *buf, size_t bsz, size_t *out_len)
 {
 	struct stat st;
-	int err;
+	int         err;
 
 	err = silofs_sys_fstat(fd, &st);
 	if (err) {
@@ -126,9 +126,9 @@ read_password_from_tty(int fd, void *buf, size_t bsz, size_t *out_len)
 {
 	struct termios tr_old;
 	struct termios tr_new;
-	char *pass = nullptr;
-	int read_err;
-	int err;
+	char          *pass = nullptr;
+	int            read_err;
+	int            err;
 
 	err = tcgetattr(fd, &tr_old);
 	if (err) {
@@ -138,9 +138,9 @@ read_password_from_tty(int fd, void *buf, size_t bsz, size_t *out_len)
 	tr_new.c_lflag &= ~((tcflag_t)ECHO);
 	tr_new.c_lflag |= ICANON;
 	tr_new.c_lflag |= ISIG;
-	tr_new.c_cc[VMIN] = 1;
+	tr_new.c_cc[VMIN]  = 1;
 	tr_new.c_cc[VTIME] = 0;
-	err = tcsetattr(fd, TCSANOW, &tr_new);
+	err                = tcsetattr(fd, TCSANOW, &tr_new);
 	if (err) {
 		cmd_die(errno, "tcsetattr fd=%d", fd);
 	}
@@ -169,7 +169,7 @@ read_password_from_tty(int fd, void *buf, size_t bsz, size_t *out_len)
 static int isregfd(int fd)
 {
 	struct stat st = { .st_mode = 0 };
-	int err;
+	int         err;
 
 	err = silofs_sys_fstat(fd, &st);
 	return !err && S_ISREG(st.st_mode);
@@ -219,9 +219,9 @@ static void close_password_fd(int fd, const char *path)
 
 static char *getpass_from(const char *path)
 {
-	char buf[1024] = "";
-	size_t len = 0;
-	int fd;
+	char   buf[1024] = "";
+	size_t len       = 0;
+	int    fd;
 
 	fd = open_password_fd(path);
 	read_password_from(fd, buf, sizeof(buf), &len);
@@ -231,7 +231,7 @@ static char *getpass_from(const char *path)
 
 static char *do_getpass(const char *path, bool with_prompt, bool repeat)
 {
-	char *pass = nullptr;
+	char *pass  = nullptr;
 	char *pass2 = nullptr;
 
 	if (path) {

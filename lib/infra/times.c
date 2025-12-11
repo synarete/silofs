@@ -75,13 +75,13 @@ time_t silofs_time_mono_now(void)
 
 void silofs_ts_omit(struct timespec *ts)
 {
-	ts->tv_sec = UTIME_OMIT;
+	ts->tv_sec  = UTIME_OMIT;
 	ts->tv_nsec = UTIME_OMIT;
 }
 
 void silofs_ts_copy(struct timespec *dst, const struct timespec *src)
 {
-	dst->tv_sec = src->tv_sec;
+	dst->tv_sec  = src->tv_sec;
 	dst->tv_nsec = src->tv_nsec;
 }
 
@@ -110,9 +110,9 @@ static int silofs_nanosleep(const struct timespec *req, struct timespec *rem)
 	if (req->tv_sec || req->tv_nsec) {
 		err = nanosleep(req, rem);
 	} else {
-		rem->tv_sec = 0;
+		rem->tv_sec  = 0;
 		rem->tv_nsec = 0;
-		err = 0;
+		err          = 0;
 	}
 	return err ? -errno : 0;
 }
@@ -128,15 +128,15 @@ int silofs_suspend_ts(const struct timespec *ts)
 {
 	struct timespec req = { .tv_sec = ts->tv_sec, .tv_nsec = ts->tv_nsec };
 	struct timespec rem = { .tv_sec = 0, .tv_nsec = 0 };
-	int err;
+	int             err;
 
 	err = silofs_nanosleep(&req, &rem);
 	while ((err == -EINTR) && (rem.tv_sec || rem.tv_nsec)) {
-		req.tv_sec = rem.tv_sec;
+		req.tv_sec  = rem.tv_sec;
 		req.tv_nsec = rem.tv_nsec;
-		rem.tv_sec = 0;
+		rem.tv_sec  = 0;
 		rem.tv_nsec = 0;
-		err = silofs_nanosleep(&req, &rem);
+		err         = silofs_nanosleep(&req, &rem);
 	}
 	return err;
 }
@@ -146,7 +146,7 @@ int silofs_suspend_ts(const struct timespec *ts)
 int silofs_init_times(void)
 {
 	struct tm res = { .tm_zone = nullptr };
-	int err;
+	int       err;
 
 	tzset();
 	err = silofs_localtime_now(&res);
@@ -167,10 +167,10 @@ void silofs_uptime(struct timespec *out_ts)
 
 int silofs_localtime_now(struct tm *res)
 {
-	const time_t now = silofs_time_real_now();
+	const time_t     now = silofs_time_real_now();
 	const struct tm *ptm = nullptr;
 
 	errno = 0;
-	ptm = localtime_r(&now, res);
+	ptm   = localtime_r(&now, res);
 	return (ptm == res) ? 0 : -errno;
 }

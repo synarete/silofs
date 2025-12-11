@@ -28,7 +28,7 @@ struct cmd_prune_in_args {
 
 struct cmd_prune_ctx {
 	struct cmd_prune_in_args in_args;
-	struct silofs_env *env;
+	struct silofs_env       *env;
 };
 
 static struct cmd_prune_ctx *cmd_prune_ctx_p;
@@ -42,7 +42,7 @@ static void cmd_prune_parse_optargs(struct cmd_prune_ctx *ctx)
 		{ nullptr, 0, 0 },
 	};
 	struct cmd_optargs opa;
-	int opt_chr = 1;
+	int                opt_chr = 1;
 
 	cmd_optargs_init(&opa, ods);
 	while (!opa.opa_done && (opt_chr > 0)) {

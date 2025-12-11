@@ -49,7 +49,7 @@ static size_t alignment_of(size_t sz)
 {
 	const size_t al_min = 64;
 	const size_t al_max = 65536;
-	size_t al;
+	size_t       al;
 
 	if (sz <= al_min) {
 		al = al_min;
@@ -106,7 +106,7 @@ static void *
 stdalloc_malloc(struct silofs_stdalloc *stdal, size_t n, int flags)
 {
 	void *ptr = nullptr;
-	int err;
+	int   err;
 
 	err = cstd_memalign(n, &ptr);
 	if (err) {
@@ -127,7 +127,7 @@ stdalloc_free(struct silofs_stdalloc *stdal, void *ptr, size_t n, int flags)
 	}
 }
 
-static void stdalloc_stat(struct silofs_stdalloc *stdal,
+static void stdalloc_stat(struct silofs_stdalloc   *stdal,
                           struct silofs_alloc_stat *out_stat)
 {
 	silofs_memzero(out_stat, sizeof(*out_stat));
@@ -147,7 +147,7 @@ stdal_free(struct silofs_alloc *alloc, void *ptr, size_t n, int flags)
 }
 
 static void stdal_stat(const struct silofs_alloc *alloc,
-                       struct silofs_alloc_stat *out_stat)
+                       struct silofs_alloc_stat  *out_stat)
 {
 	stdalloc_stat(alloc_to_stdalloc(alloc), out_stat);
 }
@@ -156,9 +156,9 @@ int silofs_stdalloc_init(struct silofs_stdalloc *sal, size_t memsize)
 {
 	silofs_memzero(sal, sizeof(*sal));
 	sal->alloc.malloc_fn = stdal_malloc;
-	sal->alloc.free_fn = stdal_free;
-	sal->alloc.stat_fn = stdal_stat;
-	sal->nbytes_max = memsize;
+	sal->alloc.free_fn   = stdal_free;
+	sal->alloc.stat_fn   = stdal_stat;
+	sal->nbytes_max      = memsize;
 	return 0;
 }
 
@@ -170,9 +170,9 @@ int silofs_stdalloc_fini(struct silofs_stdalloc *sal)
 
 static struct silofs_stdalloc g_stdalloc = {
 	.alloc.malloc_fn = stdal_malloc,
-	.alloc.free_fn = stdal_free,
-	.alloc.stat_fn = stdal_stat,
-	.nbytes_max = UINT32_MAX,
+	.alloc.free_fn   = stdal_free,
+	.alloc.stat_fn   = stdal_stat,
+	.nbytes_max      = UINT32_MAX,
 };
 
 struct silofs_alloc *silofs_default_alloc = &g_stdalloc.alloc;
@@ -213,7 +213,7 @@ void silofs_memfree(struct silofs_alloc *alloc, void *ptr, size_t n, int flags)
 }
 
 void silofs_memstat(const struct silofs_alloc *alloc,
-                    struct silofs_alloc_stat *out_stat)
+                    struct silofs_alloc_stat  *out_stat)
 {
 	silofs_memzero(out_stat, sizeof(*out_stat));
 	if (alloc->stat_fn != nullptr) {
@@ -226,16 +226,16 @@ void silofs_memstat(const struct silofs_alloc *alloc,
 static int getmemlimit(uint64_t *out_lim)
 {
 	struct rlimit rlim = { .rlim_cur = 0 };
-	int err;
+	int           err;
 
-	err = silofs_sys_getrlimit(RLIMIT_AS, &rlim);
+	err      = silofs_sys_getrlimit(RLIMIT_AS, &rlim);
 	*out_lim = err ? 0 : rlim.rlim_cur;
 	return err;
 }
 
 int silofs_memlimits(uint64_t *out_phy, uint64_t *out_as)
 {
-	const long page_size = silofs_sc_page_size();
+	const long page_size  = silofs_sc_page_size();
 	const long phys_pages = silofs_sc_phys_pages();
 
 	*out_phy = (uint64_t)(page_size * phys_pages);
@@ -246,7 +246,7 @@ int silofs_memlimits(uint64_t *out_phy, uint64_t *out_as)
 
 static void burnstack_recursively(int depth, int nbytes)
 {
-	char buf[1020];
+	char          buf[1020];
 	const int32_t cnt = silofs_min_i32((int)sizeof(buf), nbytes);
 
 	if (cnt > 0) {

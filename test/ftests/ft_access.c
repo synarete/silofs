@@ -61,8 +61,8 @@ static void test_access_noent(struct ft_env *fte)
 static void test_access_inval(struct ft_env *fte)
 {
 	const char *path = ft_new_path_unique(fte);
-	const int mode = R_OK | W_OK | X_OK | F_OK;
-	int fd = -1;
+	const int   mode = R_OK | W_OK | X_OK | F_OK;
+	int         fd   = -1;
 
 	ft_creat(path, 0644, &fd);
 	ft_access_err(path, ~mode, -EINVAL);
@@ -81,8 +81,8 @@ static void test_access_prefix(struct ft_env *fte)
 	const char *path1 = ft_new_path_under(fte, path0);
 	const char *path2 = ft_new_path_under(fte, path1);
 	const char *path3 = ft_new_path_under(fte, path2);
-	const int mode = R_OK;
-	int fd = -1;
+	const int   mode  = R_OK;
+	int         fd    = -1;
 
 	ft_mkdir(path0, 0750);
 	ft_mkdir(path1, 0750);

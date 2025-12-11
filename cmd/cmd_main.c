@@ -89,20 +89,20 @@ static void cmd_setup_globals(int argc, char *argv[])
 {
 	SILOFS_STATICASSERT_LT(sizeof(cmd_global_params), 1024);
 
-	cmd_global_params.version = silofs_version.string;
-	cmd_global_params.name = program_invocation_short_name;
-	cmd_global_params.prog = program_invocation_name;
-	cmd_global_params.argc = argc;
-	cmd_global_params.argv = argv;
-	cmd_global_params.pid = getpid();
-	cmd_global_params.uid = getuid();
-	cmd_global_params.gid = getgid();
-	cmd_global_params.allow_coredump = false;
-	cmd_global_params.developer_mode = false;
-	cmd_global_params.dont_daemonize = false;
+	cmd_global_params.version             = silofs_version.string;
+	cmd_global_params.name                = program_invocation_short_name;
+	cmd_global_params.prog                = program_invocation_name;
+	cmd_global_params.argc                = argc;
+	cmd_global_params.argv                = argv;
+	cmd_global_params.pid                 = getpid();
+	cmd_global_params.uid                 = getuid();
+	cmd_global_params.gid                 = getgid();
+	cmd_global_params.allow_coredump      = false;
+	cmd_global_params.developer_mode      = false;
+	cmd_global_params.dont_daemonize      = false;
 	cmd_global_params.log_params.progname = program_invocation_short_name;
-	cmd_global_params.log_params.level = SILOFS_LOG_INFO;
-	cmd_global_params.log_params.flags = SILOFS_LOGF_DEFAULT;
+	cmd_global_params.log_params.level    = SILOFS_LOG_INFO;
+	cmd_global_params.log_params.flags    = SILOFS_LOGF_DEFAULT;
 
 	umask(0077);
 	setlocale(LC_ALL, "");
@@ -122,9 +122,9 @@ static void cmd_init_libsilofs(void)
 
 static void cmd_resolve_caps(void)
 {
-	cap_t cap;
+	cap_t            cap;
 	cap_flag_value_t flag = CAP_CLEAR;
-	int err = 1;
+	int              err  = 1;
 
 	cap = cap_get_pid(getpid());
 	if (cap != nullptr) {

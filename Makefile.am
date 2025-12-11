@@ -16,7 +16,6 @@ EXTRA_DIST += common.mk.in
 EXTRA_DIST += sedsub.mk.in
 EXTRA_DIST += build-aux/autom4te.cfg.in
 EXTRA_DIST += .clang-format.yaml
-EXTRA_DIST += .clang-format-h.yaml
 EXTRA_DIST += .clang-tidy.yaml
 
 BUILT_SOURCES = REVISION

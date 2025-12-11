@@ -98,12 +98,12 @@ static sa_family_t sockaddr_family(const struct silofs_sockaddr *sa)
 
 static socklen_t sockaddr_length_un(const struct silofs_sockaddr *sa)
 {
-	const char *sun_path;
-	size_t sun_path_max;
-	size_t sun_path_len = 0;
-	const struct sockaddr_un *sa_un = &sa->u.sa_un;
+	const char               *sun_path;
+	size_t                    sun_path_max;
+	size_t                    sun_path_len = 0;
+	const struct sockaddr_un *sa_un        = &sa->u.sa_un;
 
-	sun_path = sa_un->sun_path;
+	sun_path     = sa_un->sun_path;
 	sun_path_max = sizeof(sa_un->sun_path) - 1;
 	if (sun_path[0] == '\0') {
 		sun_path += 1;
@@ -116,7 +116,7 @@ static socklen_t sockaddr_length_un(const struct silofs_sockaddr *sa)
 
 static socklen_t sockaddr_length(const struct silofs_sockaddr *sa)
 {
-	socklen_t len;
+	socklen_t         len;
 	const sa_family_t family = sockaddr_family(sa);
 
 	if (family == AF_INET) {
@@ -139,8 +139,8 @@ void silofs_sockaddr_none(struct silofs_sockaddr *sa)
 void silofs_sockaddr_any(struct silofs_sockaddr *sa)
 {
 	sockaddr_reset(sa);
-	sa->u.sa_in.sin_family = AF_INET;
-	sa->u.sa_in.sin_port = 0;
+	sa->u.sa_in.sin_family      = AF_INET;
+	sa->u.sa_in.sin_port        = 0;
 	sa->u.sa_in.sin_addr.s_addr = silofs_htonl(INADDR_ANY);
 }
 
@@ -148,7 +148,7 @@ void silofs_sockaddr_any6(struct silofs_sockaddr *sa)
 {
 	sockaddr_reset(sa);
 	sa->u.sa_in6.sin6_family = AF_INET6;
-	sa->u.sa_in6.sin6_port = silofs_htons(0);
+	sa->u.sa_in6.sin6_port   = silofs_htons(0);
 	memcpy(&sa->u.sa_in6.sin6_addr, &in6addr_any,
 	       sizeof(sa->u.sa_in6.sin6_addr));
 }
@@ -156,8 +156,8 @@ void silofs_sockaddr_any6(struct silofs_sockaddr *sa)
 void silofs_sockaddr_loopback(struct silofs_sockaddr *sa, in_port_t port)
 {
 	sockaddr_reset(sa);
-	sa->u.sa_in.sin_family = AF_INET;
-	sa->u.sa_in.sin_port = silofs_htons(port);
+	sa->u.sa_in.sin_family      = AF_INET;
+	sa->u.sa_in.sin_port        = silofs_htons(port);
 	sa->u.sa_in.sin_addr.s_addr = silofs_htonl(INADDR_LOOPBACK);
 }
 
@@ -189,7 +189,7 @@ int silofs_sockaddr_unix(struct silofs_sockaddr *sa, const char *path)
 int silofs_sockaddr_abstract(struct silofs_sockaddr *sa, const char *name)
 {
 	size_t len;
-	int err;
+	int    err;
 
 	err = silofs_check_unixsock(name);
 	if (err) {
@@ -217,19 +217,19 @@ int silofs_sockaddr_pton(struct silofs_sockaddr *sa, const char *str)
 		err = (res == 1) ? 0 : -errno;
 	} else {
 		sa->u.sa_in.sin_family = AF_INET;
-		res = inet_aton(str, &sa->u.sa_in.sin_addr);
-		err = (res != 0) ? 0 : -errno;
+		res                    = inet_aton(str, &sa->u.sa_in.sin_addr);
+		err                    = (res != 0) ? 0 : -errno;
 	}
 	return err;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_msghdr_set_addr(struct msghdr *mh,
+void silofs_msghdr_set_addr(struct msghdr                *mh,
                             const struct silofs_sockaddr *sa)
 {
 	mh->msg_namelen = sockaddr_length(sa);
-	mh->msg_name = silofs_unconst(sa);
+	mh->msg_name    = silofs_unconst(sa);
 }
 
 struct cmsghdr *silofs_cmsg_firsthdr(struct msghdr *mh)
@@ -264,9 +264,9 @@ static void *cmsg_data(const struct cmsghdr *cmh)
 
 void silofs_cmsg_pack_fd(struct cmsghdr *cmh, int fd)
 {
-	cmh->cmsg_len = silofs_cmsg_len(sizeof(fd));
+	cmh->cmsg_len   = silofs_cmsg_len(sizeof(fd));
 	cmh->cmsg_level = SOL_SOCKET;
-	cmh->cmsg_type = SCM_RIGHTS;
+	cmh->cmsg_type  = SCM_RIGHTS;
 	memmove(cmsg_data(cmh), &fd, sizeof(fd));
 }
 
@@ -293,26 +293,26 @@ int silofs_cmsg_unpack_fd(const struct cmsghdr *cmh, int *out_fd)
 static void
 socket_init(struct silofs_socket *sock, short family, short type, short proto)
 {
-	sock->fd = -1;
+	sock->fd     = -1;
 	sock->family = family;
-	sock->type = type;
-	sock->proto = proto;
+	sock->type   = type;
+	sock->proto  = proto;
 }
 
 static void socket_assign(struct silofs_socket *sock, int fd, short family,
                           short type, short proto)
 {
-	sock->fd = fd;
+	sock->fd     = fd;
 	sock->family = family;
-	sock->type = type;
-	sock->proto = proto;
+	sock->type   = type;
+	sock->proto  = proto;
 }
 
 static void socket_destroy(struct silofs_socket *sock)
 {
-	sock->fd = -1;
+	sock->fd     = -1;
 	sock->family = -1;
-	sock->type = -1;
+	sock->type   = -1;
 }
 
 static bool socket_isopen(const struct silofs_socket *sock)
@@ -325,7 +325,7 @@ static int socket_checkopen(const struct silofs_socket *sock)
 	return socket_isopen(sock) ? 0 : -EBADF;
 }
 
-static int socket_checkaddr(const struct silofs_socket *sock,
+static int socket_checkaddr(const struct silofs_socket   *sock,
                             const struct silofs_sockaddr *sa)
 {
 	const sa_family_t family = sockaddr_family(sa);
@@ -364,7 +364,7 @@ void silofs_socket_fini(struct silofs_socket *sock)
 }
 
 int silofs_socket_rselect(const struct silofs_socket *sock,
-                          const struct timespec *ts)
+                          const struct timespec      *ts)
 {
 	int err = -EBADF;
 
@@ -374,7 +374,7 @@ int silofs_socket_rselect(const struct silofs_socket *sock,
 	return err;
 }
 
-int silofs_socket_bind(struct silofs_socket *sock,
+int silofs_socket_bind(struct silofs_socket         *sock,
                        const struct silofs_sockaddr *sa)
 {
 	int err;
@@ -410,11 +410,11 @@ int silofs_socket_listen(const struct silofs_socket *sock, int backlog)
 }
 
 int silofs_socket_accept(const struct silofs_socket *sock,
-                         struct silofs_socket *acsock,
-                         struct silofs_sockaddr *peer)
+                         struct silofs_socket       *acsock,
+                         struct silofs_sockaddr     *peer)
 {
-	int err;
-	int fd = -1;
+	int       err;
+	int       fd      = -1;
 	socklen_t addrlen = sizeof(*peer);
 
 	err = socket_checkopen(sock);
@@ -430,7 +430,7 @@ int silofs_socket_accept(const struct silofs_socket *sock,
 	return 0;
 }
 
-int silofs_socket_connect(const struct silofs_socket *sock,
+int silofs_socket_connect(const struct silofs_socket   *sock,
                           const struct silofs_sockaddr *sa)
 {
 	int err;
@@ -537,9 +537,9 @@ static int socket_getsockopt(const struct silofs_socket *sock, int level,
 }
 
 int silofs_socket_getpeercred(const struct silofs_socket *sock,
-                              struct ucred *cred)
+                              struct ucred               *cred)
 {
-	int err;
+	int       err;
 	socklen_t len = sizeof(*cred);
 
 	err = socket_checkopen(sock);
@@ -558,7 +558,7 @@ int silofs_socket_getpeercred(const struct silofs_socket *sock,
 
 int silofs_socket_getsockerror(const struct silofs_socket *sock, int *out_err)
 {
-	int err;
+	int       err;
 	socklen_t len = sizeof(*out_err);
 
 	err = socket_checkopen(sock);
@@ -597,7 +597,7 @@ int silofs_socket_sendto(const struct silofs_socket *sock, const void *buf,
 {
 	socklen_t len;
 	const int fd = sock->fd;
-	int err;
+	int       err;
 
 	err = socket_checkopen(sock);
 	if (err) {
@@ -639,8 +639,8 @@ int silofs_socket_recvfrom(const struct silofs_socket *sock, void *buf,
                            size_t *out_recv)
 {
 	socklen_t len = sizeof(*sa);
-	const int fd = sock->fd;
-	int err;
+	const int fd  = sock->fd;
+	int       err;
 
 	err = socket_checkopen(sock);
 	if (err) {

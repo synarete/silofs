@@ -29,7 +29,7 @@ void silofs_uuid_generate(struct silofs_uuid *uu)
 	uuid_generate_random(uu->id);
 }
 
-void silofs_uuid_assign(struct silofs_uuid *uu,
+void silofs_uuid_assign(struct silofs_uuid       *uu,
                         const struct silofs_uuid *other)
 {
 	silofs_uuid_assign2(uu, other->id);
@@ -52,7 +52,7 @@ long silofs_uuid_compare(const struct silofs_uuid *uu1,
 }
 
 void silofs_uuid_unparse(const struct silofs_uuid *uu,
-                         struct silofs_strbuf *sbuf)
+                         struct silofs_strbuf     *sbuf)
 {
 	silofs_strbuf_reset(sbuf);
 	uuid_unparse_lower(uu->id, sbuf->str);
@@ -61,7 +61,7 @@ void silofs_uuid_unparse(const struct silofs_uuid *uu,
 int silofs_uuid_parse(struct silofs_uuid *uu, const struct silofs_strview *sv)
 {
 	struct silofs_strview sv2;
-	int ret = -EINVAL;
+	int                   ret = -EINVAL;
 
 	silofs_strview_strip_ws(sv, &sv2);
 	if (sv2.len == 36) {

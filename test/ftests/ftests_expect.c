@@ -33,8 +33,8 @@ static const char *basename_of(const char *path)
 attr_noreturn_printf34 static void
 do_error_at_line(const char *fl, int ln, const char *fmt, ...)
 {
-	char msg[512] = "";
-	va_list ap = { 0 };
+	char    msg[512] = "";
+	va_list ap       = { 0 };
 
 	va_start(ap, fmt);
 	vsnprintf(msg, sizeof(msg), fmt, ap);

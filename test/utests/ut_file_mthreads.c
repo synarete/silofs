@@ -17,8 +17,8 @@
 #include "utests.h"
 
 struct ut_thread_args {
-	ino_t dino;
-	off_t off;
+	ino_t  dino;
+	off_t  off;
 	size_t len;
 	size_t cnt;
 };
@@ -26,8 +26,8 @@ struct ut_thread_args {
 typedef void (*ut_th_exec_fn)(struct ut_env *, const struct ut_thread_args *);
 
 struct ut_thread_xargs {
-	struct ut_env *ute;
-	ut_th_exec_fn exec;
+	struct ut_env               *ute;
+	ut_th_exec_fn                exec;
 	const struct ut_thread_args *args;
 };
 
@@ -52,10 +52,10 @@ ut_create_threads(struct ut_env *ute, struct silofs_thread *th_arr, size_t nth,
                   ut_th_exec_fn exec, const struct ut_thread_args *args)
 {
 	struct ut_thread_xargs *xargs = nullptr;
-	int err;
+	int                     err;
 
-	xargs = ut_zalloc(ute, sizeof(*xargs));
-	xargs->ute = ute;
+	xargs       = ut_zalloc(ute, sizeof(*xargs));
+	xargs->ute  = ute;
 	xargs->exec = exec;
 	xargs->args = args;
 
@@ -83,12 +83,12 @@ ut_join_threads(struct ut_env *ute, struct silofs_thread *th_arr, size_t nth)
 static void
 ut_file_mt_exec(struct ut_env *ute, const struct ut_thread_args *args)
 {
-	const ino_t dino = args->dino;
-	const size_t bsz = args->len;
-	void *buf = ut_randbuf(ute, bsz);
-	const char *name = ut_randstr(ute, 100);
-	off_t off = -1;
-	ino_t ino = 0;
+	const ino_t  dino = args->dino;
+	const size_t bsz  = args->len;
+	void        *buf  = ut_randbuf(ute, bsz);
+	const char  *name = ut_randstr(ute, 100);
+	off_t        off  = -1;
+	ino_t        ino  = 0;
 
 	ut_create_file(ute, dino, name, &ino);
 	for (size_t i = 0; i < args->cnt; ++i) {
@@ -107,12 +107,12 @@ ut_file_mt_exec(struct ut_env *ute, const struct ut_thread_args *args)
 static void
 ut_file_mt_simple_(struct ut_env *ute, size_t nth, off_t off, size_t len)
 {
-	const char *name = UT_NAME;
+	const char           *name   = UT_NAME;
 	struct silofs_thread *th_arr = ute_malloc_threads(ute, nth);
-	struct ut_thread_args args = {
-		.off = off,
-		.len = len,
-		.cnt = 1,
+	struct ut_thread_args args   = {
+		  .off = off,
+		  .len = len,
+		  .cnt = 1,
 	};
 
 	ut_mkdir_at_root(ute, name, &args.dino);
@@ -144,12 +144,12 @@ static void ut_file_mt_simple(struct ut_env *ute)
 static void
 ut_file_mt_many_(struct ut_env *ute, size_t nth, off_t off, size_t len)
 {
-	const char *name = UT_NAME;
+	const char           *name   = UT_NAME;
 	struct silofs_thread *th_arr = ute_malloc_threads(ute, nth);
-	struct ut_thread_args args = {
-		.off = off,
-		.len = len,
-		.cnt = 20,
+	struct ut_thread_args args   = {
+		  .off = off,
+		  .len = len,
+		  .cnt = 20,
 	};
 
 	ut_mkdir_at_root(ute, name, &args.dino);
@@ -160,7 +160,7 @@ ut_file_mt_many_(struct ut_env *ute, size_t nth, off_t off, size_t len)
 
 static void ut_file_mt_many(struct ut_env *ute)
 {
-	const size_t nth = (size_t)(2 * silofs_sc_nproc_onln());
+	const size_t          nth     = (size_t)(2 * silofs_sc_nproc_onln());
 	const struct ut_range range[] = {
 		UT_MKRANGE1(1, 1000),
 		UT_MKRANGE1(UT_1K - 1, 2 * UT_1K + 3),

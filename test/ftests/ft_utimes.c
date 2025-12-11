@@ -23,14 +23,14 @@
  */
 static void test_utime_file(struct ft_env *fte)
 {
-	struct stat st[3];
+	struct stat    st[3];
 	struct utimbuf utm[2];
-	const char *path = ft_new_path_unique(fte);
-	int fd = -1;
+	const char    *path = ft_new_path_unique(fte);
+	int            fd   = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_stat(path, &st[0]);
-	utm[0].actime = 11111;
+	utm[0].actime  = 11111;
 	utm[0].modtime = 111111;
 	ft_utime(path, &utm[0]);
 	ft_stat(path, &st[1]);
@@ -39,7 +39,7 @@ static void test_utime_file(struct ft_env *fte)
 	ft_expect_eq(st[1].st_mtim.tv_sec, utm[0].modtime);
 	ft_expect_eq(st[1].st_mtim.tv_nsec, 0);
 	ft_expect_st_ctime_ge(&st[0], &st[1]);
-	utm[1].actime = 2222222222;
+	utm[1].actime  = 2222222222;
 	utm[1].modtime = 222;
 	ft_utime(path, &utm[1]);
 	ft_stat(path, &st[2]);
@@ -60,8 +60,8 @@ static void test_utime_now(struct ft_env *fte)
 {
 	struct stat st[2];
 	const char *path = ft_new_path_unique(fte);
-	size_t nwr = 0;
-	int fd = -1;
+	size_t      nwr  = 0;
+	int         fd   = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_utime(path, nullptr);
@@ -80,18 +80,18 @@ static void test_utime_now(struct ft_env *fte)
  */
 static void test_utimes_file(struct ft_env *fte)
 {
-	struct stat st[3];
+	struct stat    st[3];
 	struct timeval tv1[2];
 	struct timeval tv2[2];
-	const char *path = ft_new_path_unique(fte);
-	size_t nwr = 0;
-	int fd = -1;
+	const char    *path = ft_new_path_unique(fte);
+	size_t         nwr  = 0;
+	int            fd   = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_stat(path, &st[0]);
-	tv1[0].tv_sec = 3333333;
+	tv1[0].tv_sec  = 3333333;
 	tv1[0].tv_usec = 333;
-	tv1[1].tv_sec = 4444;
+	tv1[1].tv_sec  = 4444;
 	tv1[1].tv_usec = 444444;
 	ft_utimes(path, tv1);
 	ft_stat(path, &st[1]);
@@ -101,9 +101,9 @@ static void test_utimes_file(struct ft_env *fte)
 	ft_expect_eq(st[1].st_mtim.tv_sec, tv1[1].tv_sec);
 	ft_expect_eq(st[1].st_mtim.tv_nsec / 1000, tv1[1].tv_usec);
 	ft_write(fd, path, ft_strlen(path), &nwr);
-	tv2[0].tv_sec = 55555;
+	tv2[0].tv_sec  = 55555;
 	tv2[0].tv_usec = 55;
-	tv2[1].tv_sec = 666666;
+	tv2[1].tv_sec  = 666666;
 	tv2[1].tv_usec = 6;
 	ft_utimes(path, tv2);
 	ft_stat(path, &st[2]);
@@ -122,23 +122,23 @@ static void test_utimes_file(struct ft_env *fte)
  */
 static void test_utimensat_file(struct ft_env *fte)
 {
-	struct stat st[4];
+	struct stat     st[4];
 	struct timespec ts1[2];
 	struct timespec ts2[2];
 	struct timespec ts3[2];
-	const char *path = ft_new_path_unique(fte);
-	const char *name = ft_new_name_unique(fte);
-	int dfd = -1;
-	int fd = -1;
+	const char     *path = ft_new_path_unique(fte);
+	const char     *name = ft_new_name_unique(fte);
+	int             dfd  = -1;
+	int             fd   = -1;
 
 	ft_mkdir(path, 0700);
 	ft_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);
 	ft_openat(dfd, name, O_CREAT | O_RDWR, 0600, &fd);
 	ft_fstat(fd, &st[0]);
 
-	ts1[0].tv_sec = 7;
+	ts1[0].tv_sec  = 7;
 	ts1[0].tv_nsec = 77777;
-	ts1[1].tv_sec = 8;
+	ts1[1].tv_sec  = 8;
 	ts1[1].tv_nsec = 88888;
 	ft_utimensat(dfd, name, ts1, 0);
 	ft_fstat(fd, &st[1]);
@@ -147,9 +147,9 @@ static void test_utimensat_file(struct ft_env *fte)
 	ft_expect_ts_eq(&st[1].st_mtim, &ts1[1]);
 	ft_writen(fd, name, ft_strlen(name));
 
-	ts2[0].tv_sec = 0;
+	ts2[0].tv_sec  = 0;
 	ts2[0].tv_nsec = 0;
-	ts2[1].tv_sec = 0;
+	ts2[1].tv_sec  = 0;
 	ts2[1].tv_nsec = 0;
 	ft_futimens(fd, ts2);
 	ft_fstat(fd, &st[2]);
@@ -157,9 +157,9 @@ static void test_utimensat_file(struct ft_env *fte)
 	ft_expect_ts_eq(&st[2].st_atim, &ts2[0]);
 	ft_expect_ts_eq(&st[2].st_mtim, &ts2[1]);
 
-	ts3[0].tv_sec = 0;
+	ts3[0].tv_sec  = 0;
 	ts3[0].tv_nsec = UTIME_NOW;
-	ts3[1].tv_sec = 1;
+	ts3[1].tv_sec  = 1;
 	ts3[1].tv_nsec = UTIME_NOW;
 	ft_futimens(fd, ts3);
 	ft_fstat(fd, &st[3]);
@@ -183,21 +183,21 @@ static void test_utimensat_file(struct ft_env *fte)
  */
 static void test_futimens_ctime(struct ft_env *fte)
 {
-	struct stat st[2];
+	struct stat     st[2];
 	struct timespec tm[2];
-	const char *path = ft_new_path_unique(fte);
-	const char *name = ft_new_name_unique(fte);
-	int dfd = -1;
-	int fd = -1;
+	const char     *path = ft_new_path_unique(fte);
+	const char     *name = ft_new_name_unique(fte);
+	int             dfd  = -1;
+	int             fd   = -1;
 
 	ft_mkdir(path, 0700);
 	ft_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);
 	ft_openat(dfd, name, O_CREAT | O_RDWR, 0600, &fd);
 	ft_suspends(fte, 2);
 
-	tm[0].tv_sec = 9999;
+	tm[0].tv_sec  = 9999;
 	tm[0].tv_nsec = 99;
-	tm[1].tv_sec = 1111;
+	tm[1].tv_sec  = 1111;
 	tm[1].tv_nsec = 11;
 	ft_fstat(fd, &st[0]);
 	ft_futimens(fd, tm);
@@ -206,9 +206,9 @@ static void test_futimens_ctime(struct ft_env *fte)
 	ft_expect_ts_eq(&st[1].st_atim, &tm[0]);
 	ft_expect_ts_eq(&st[1].st_mtim, &tm[1]);
 
-	tm[0].tv_sec = 121212;
+	tm[0].tv_sec  = 121212;
 	tm[0].tv_nsec = 12;
-	tm[1].tv_sec = 343434;
+	tm[1].tv_sec  = 343434;
 	tm[1].tv_nsec = 34;
 	ft_fstat(dfd, &st[0]);
 	ft_futimens(dfd, tm);
@@ -239,23 +239,23 @@ static void test_futimens_ctime(struct ft_env *fte)
  */
 static void test_utimensat_io_(struct ft_env *fte, off_t off, size_t len)
 {
-	struct stat st = { .st_size = -1 };
+	struct stat     st = { .st_size = -1 };
 	struct timespec ts[2];
-	const char *path = ft_new_path_unique(fte);
-	const char *name = ft_new_name_unique(fte);
-	void *buf1 = ft_new_buf_rands(fte, len);
-	void *buf2 = ft_new_buf_rands(fte, len);
-	void *buf3 = ft_new_buf_rands(fte, len);
-	int dfd = -1;
-	int fd = -1;
+	const char     *path = ft_new_path_unique(fte);
+	const char     *name = ft_new_name_unique(fte);
+	void           *buf1 = ft_new_buf_rands(fte, len);
+	void           *buf2 = ft_new_buf_rands(fte, len);
+	void           *buf3 = ft_new_buf_rands(fte, len);
+	int             dfd  = -1;
+	int             fd   = -1;
 
 	ft_mkdir(path, 0700);
 	ft_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);
 	ft_openat(dfd, name, O_CREAT | O_RDWR, 0600, &fd);
 	ft_pwriten(fd, buf1, len, off);
-	ts[0].tv_sec = 9;
+	ts[0].tv_sec  = 9;
 	ts[0].tv_nsec = 99999;
-	ts[1].tv_sec = 10;
+	ts[1].tv_sec  = 10;
 	ts[1].tv_nsec = 101010;
 	ft_futimens(fd, ts);
 	ft_fstat(fd, &st);
@@ -263,18 +263,18 @@ static void test_utimensat_io_(struct ft_env *fte, off_t off, size_t len)
 	ft_expect_ts_eq(&st.st_mtim, &ts[1]);
 	ft_preadn(fd, buf2, len, off);
 	ft_expect_eqm(buf1, buf2, len);
-	ts[0].tv_sec = 11;
+	ts[0].tv_sec  = 11;
 	ts[0].tv_nsec = 11111;
-	ts[1].tv_sec = 22;
+	ts[1].tv_sec  = 22;
 	ts[1].tv_nsec = 222222;
 	ft_futimens(fd, ts);
 	ft_fstat(fd, &st);
 	ft_expect_ts_eq(&st.st_atim, &ts[0]);
 	ft_expect_ts_eq(&st.st_mtim, &ts[1]);
 	ft_pwriten(fd, buf3, len, off);
-	ts[0].tv_sec = 33;
+	ts[0].tv_sec  = 33;
 	ts[0].tv_nsec = 33033030;
-	ts[1].tv_sec = 44;
+	ts[1].tv_sec  = 44;
 	ts[1].tv_nsec = 4040440;
 	ft_futimens(fd, ts);
 	ft_fstat(fd, &st);

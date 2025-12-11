@@ -24,8 +24,8 @@
 
 static char *cmd_current_time(void)
 {
-	char ts[80] = "";
-	time_t curr_tm;
+	char      ts[80] = "";
+	time_t    curr_tm;
 	struct tm tm;
 
 	time(&curr_tm);
@@ -74,7 +74,7 @@ static json_t *cmd_json_integer(long n)
 static json_t *cmd_json_blobid(const struct silofs_blobid *blobid)
 {
 	char bid[256] = "";
-	int err;
+	int  err;
 
 	err = silofs_encode_blobid(blobid, bid, sizeof(bid) - 1);
 	if (err) {
@@ -106,7 +106,7 @@ static char *cmd_json_dumps(json_t *root)
 
 static json_t *cmd_json_loads(const char *jtxt)
 {
-	json_t *jobj;
+	json_t      *jobj;
 	json_error_t jerr;
 
 	jobj = json_loads(jtxt, 0, &jerr);
@@ -156,11 +156,11 @@ static void cmd_json_decref(json_t *root)
 }
 
 static const char cmd_jkey_silofs_version[] = "silofs_version";
-static const char cmd_jkey_fmt_revision[] = "fmt_revision";
-static const char cmd_jkey_meta[] = "meta";
-static const char cmd_jkey_btime[] = "birth_time";
-static const char cmd_jkey_mode[] = "mode";
-static const char cmd_jkey_blobid[] = "blobid";
+static const char cmd_jkey_fmt_revision[]   = "fmt_revision";
+static const char cmd_jkey_meta[]           = "meta";
+static const char cmd_jkey_btime[]          = "birth_time";
+static const char cmd_jkey_mode[]           = "mode";
+static const char cmd_jkey_blobid[]         = "blobid";
 
 static void cmd_encode_meta_json(const struct silofs_blobid *blobid,
                                  bool is_archive, char **out_json)
@@ -168,7 +168,7 @@ static void cmd_encode_meta_json(const struct silofs_blobid *blobid,
 	json_t *root = nullptr;
 	json_t *meta = nullptr;
 	json_t *jobj = nullptr;
-	char *tms = nullptr;
+	char   *tms  = nullptr;
 
 	root = cmd_json_object();
 
@@ -180,7 +180,7 @@ static void cmd_encode_meta_json(const struct silofs_blobid *blobid,
 
 	meta = cmd_json_object();
 
-	tms = cmd_current_time();
+	tms  = cmd_current_time();
 	jobj = cmd_json_string(tms);
 	cmd_json_object_set_new(meta, cmd_jkey_btime, jobj);
 	cmd_pstrfree(&tms);
@@ -254,8 +254,8 @@ static void
 cmd_open_repodir(const struct silofs_boot_args *boot_args, int *out_dfd)
 {
 	const char *repodir = boot_args->repodir;
-	int dfd = -1;
-	int err;
+	int         dfd     = -1;
+	int         err;
 
 	err = silofs_sys_open(repodir, O_DIRECTORY | O_RDONLY, 0, &dfd);
 	if (err) {
@@ -267,8 +267,8 @@ cmd_open_repodir(const struct silofs_boot_args *boot_args, int *out_dfd)
 static void cmd_save_jref_at(int dfd, const char *name, const char *jtxt)
 {
 	char tmp[NAME_MAX + 1] = "";
-	int fd = -1;
-	int err;
+	int  fd                = -1;
+	int  err;
 
 	snprintf(tmp, sizeof(tmp) - 1, "%s~", name);
 	err = silofs_sys_openat(dfd, tmp, O_CREAT | O_EXCL | O_RDWR | O_TRUNC,
@@ -314,7 +314,7 @@ cmd_save_metaref_as_json(int dfd, const char *name,
 }
 
 void cmd_save_fs_metaref(const struct silofs_boot_args *boot_args,
-                         const struct silofs_blobid *fs_blobid)
+                         const struct silofs_blobid    *fs_blobid)
 {
 	int dfd = -1;
 
@@ -324,7 +324,7 @@ void cmd_save_fs_metaref(const struct silofs_boot_args *boot_args,
 }
 
 void cmd_save_ar_metaref(const struct silofs_boot_args *boot_args,
-                         const struct silofs_blobid *ar_blobid)
+                         const struct silofs_blobid    *ar_blobid)
 {
 	int dfd = -1;
 
@@ -335,12 +335,12 @@ void cmd_save_ar_metaref(const struct silofs_boot_args *boot_args,
 
 static char *cmd_load_jref_at(int dfd, const char *name)
 {
-	struct stat st = { .st_mode = 0 };
+	struct stat  st            = { .st_mode = 0 };
 	const size_t jtxt_size_max = 1 << 20;
-	char *jtxt = nullptr;
-	size_t len = 0;
-	int fd = -1;
-	int err;
+	char        *jtxt          = nullptr;
+	size_t       len           = 0;
+	int          fd            = -1;
+	int          err;
 
 	err = silofs_sys_fstatat(dfd, name, &st, 0);
 	if (err) {
@@ -358,7 +358,7 @@ static char *cmd_load_jref_at(int dfd, const char *name)
 		cmd_die(err, "failed to open: %s", name);
 	}
 	jtxt = cmd_zalloc(len + 1);
-	err = silofs_sys_readn(fd, jtxt, len);
+	err  = silofs_sys_readn(fd, jtxt, len);
 	silofs_sys_closefd(&fd);
 	if (err) {
 		cmd_die(err, "failed to read blobid: %s", name);
@@ -382,7 +382,7 @@ cmd_load_metaref_of(const struct silofs_boot_args *boot_args,
                     bool want_archive, struct silofs_blobid *out_blobid)
 {
 	const char *name;
-	int dfd = -1;
+	int         dfd = -1;
 
 	name = want_archive ? boot_args->ar_name : boot_args->fs_name;
 	cmd_open_repodir(boot_args, &dfd);
@@ -391,13 +391,13 @@ cmd_load_metaref_of(const struct silofs_boot_args *boot_args,
 }
 
 void cmd_load_fs_metaref(const struct silofs_boot_args *boot_args,
-                         struct silofs_blobid *out_blobid)
+                         struct silofs_blobid          *out_blobid)
 {
 	cmd_load_metaref_of(boot_args, false, out_blobid);
 }
 
 void cmd_load_ar_metaref(struct silofs_boot_args *boot_args,
-                         struct silofs_blobid *out_blobid)
+                         struct silofs_blobid    *out_blobid)
 {
 	cmd_load_metaref_of(boot_args, true, out_blobid);
 }

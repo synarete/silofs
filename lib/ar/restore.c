@@ -24,13 +24,13 @@
 #include "arre.h"
 
 struct silofs_re_ctx {
-	struct silofs_task_ctx *task;
-	struct silofs_env *env;
+	struct silofs_task_ctx    *task;
+	struct silofs_env         *env;
 	struct silofs_arnode_info *ari;
-	struct silofs_alloc *alloc;
-	struct silofs_repo *repo;
-	struct silofs_filos *filos;
-	struct silofs_laddr sb_laddr;
+	struct silofs_alloc       *alloc;
+	struct silofs_repo        *repo;
+	struct silofs_filos       *filos;
+	struct silofs_laddr        sb_laddr;
 };
 
 static void
@@ -45,20 +45,20 @@ rec_rebind_ari(struct silofs_re_ctx *re_ctx, struct silofs_arnode_info *ari)
 	}
 }
 
-static void rec_setup_ab_meta(struct silofs_re_ctx *re_ctx,
+static void rec_setup_ab_meta(struct silofs_re_ctx   *re_ctx,
                               struct silofs_arn_base *out_ab_meta)
 {
 	struct silofs_env *env = re_ctx->env;
 
 	out_ab_meta->enc_cipher = &env->enc_cipher;
 	out_ab_meta->dec_cipher = &env->dec_cipher;
-	out_ab_meta->mdigest = &env->mdigest;
+	out_ab_meta->mdigest    = &env->mdigest;
 }
 
 static int
 rec_renew_ari(struct silofs_re_ctx *re_ctx, const struct silofs_paddr *paddr)
 {
-	struct silofs_arn_base ab_meta;
+	struct silofs_arn_base     ab_meta;
 	struct silofs_arnode_info *ari = nullptr;
 
 	rec_setup_ab_meta(re_ctx, &ab_meta);
@@ -76,11 +76,11 @@ static int rec_init(struct silofs_re_ctx *re_ctx, struct silofs_task_ctx *task)
 {
 	silofs_memzero(re_ctx, sizeof(*re_ctx));
 	silofs_laddr_reset(&re_ctx->sb_laddr);
-	re_ctx->task = task;
-	re_ctx->env = task->t_env;
-	re_ctx->ari = nullptr;
+	re_ctx->task  = task;
+	re_ctx->env   = task->t_env;
+	re_ctx->ari   = nullptr;
 	re_ctx->alloc = re_ctx->env->base.alloc;
-	re_ctx->repo = re_ctx->env->base.repo;
+	re_ctx->repo  = re_ctx->env->base.repo;
 	re_ctx->filos = &re_ctx->env->base.repo->re_filos;
 	return 0;
 }
@@ -88,10 +88,10 @@ static int rec_init(struct silofs_re_ctx *re_ctx, struct silofs_task_ctx *task)
 static void rec_fini(struct silofs_re_ctx *re_ctx)
 {
 	rec_rebind_ari(re_ctx, nullptr);
-	re_ctx->task = nullptr;
-	re_ctx->env = nullptr;
+	re_ctx->task  = nullptr;
+	re_ctx->env   = nullptr;
 	re_ctx->alloc = nullptr;
-	re_ctx->repo = nullptr;
+	re_ctx->repo  = nullptr;
 }
 
 static int
@@ -115,7 +115,7 @@ rec_save_seg(const struct silofs_re_ctx *re_ctx,
              const struct silofs_laddr *laddr, void *seg, size_t len)
 {
 	const enum silofs_mtype mtype = silofs_laddr_mtype(laddr);
-	int err;
+	int                     err;
 
 	err = silofs_repo_require_lseg(re_ctx->repo, &laddr->lsid);
 	if (err) {
@@ -136,12 +136,12 @@ rec_save_seg(const struct silofs_re_ctx *re_ctx,
 	return 0;
 }
 
-static int rec_restore_segdata(const struct silofs_re_ctx *re_ctx,
+static int rec_restore_segdata(const struct silofs_re_ctx  *re_ctx,
                                const struct silofs_ar_desc *ard)
 {
 	const size_t len = ard->len;
-	void *seg = nullptr;
-	int err;
+	void        *seg = nullptr;
+	int          err;
 
 	seg = silofs_memalloc(re_ctx->alloc, len, 0);
 	if (seg == nullptr) {
@@ -162,9 +162,9 @@ out:
 }
 
 static void rec_arix_nmeta(const struct silofs_re_ctx *re_ctx,
-                           struct silofs_nmeta *out_nmeta)
+                           struct silofs_nmeta        *out_nmeta)
 {
-	struct silofs_pmeta pmeta;
+	struct silofs_pmeta           pmeta;
 	const struct silofs_mbr_info *ar_mbi = &re_ctx->env->mbis.ar_mbi;
 
 	silofs_mbi_arix_root(ar_mbi, &pmeta);
@@ -174,7 +174,7 @@ static void rec_arix_nmeta(const struct silofs_re_ctx *re_ctx,
 static int rec_fetch_arix_node(struct silofs_re_ctx *re_ctx)
 {
 	struct silofs_ar_cargs ar_cargs = {
-		.cipher = &re_ctx->env->enc_cipher,
+		.cipher  = &re_ctx->env->enc_cipher,
 		.mdigest = &re_ctx->env->mdigest,
 	};
 	int err;
@@ -199,7 +199,7 @@ rec_resolve_root(struct silofs_re_ctx *re_ctx, struct silofs_pmeta *out_pmeta)
 	return silofs_mbi_arix_root(ar_mbi, out_pmeta);
 }
 
-static int rec_restore_arix(struct silofs_re_ctx *re_ctx,
+static int rec_restore_arix(struct silofs_re_ctx      *re_ctx,
                             const struct silofs_paddr *paddr)
 {
 	int err;
@@ -218,7 +218,7 @@ static int rec_restore_arix(struct silofs_re_ctx *re_ctx,
 static int rec_restore_apex(struct silofs_re_ctx *re_ctx)
 {
 	struct silofs_pmeta pmeta;
-	int err;
+	int                 err;
 
 	err = rec_resolve_root(re_ctx, &pmeta);
 	if (err) {
@@ -239,7 +239,7 @@ static bool is_super(const struct silofs_ar_desc *ard)
 	return (mtype == SILOFS_MTYPE_SUPER);
 }
 
-static int rec_update_by_desc(struct silofs_re_ctx *re_ctx,
+static int rec_update_by_desc(struct silofs_re_ctx        *re_ctx,
                               const struct silofs_ar_desc *ard)
 {
 	struct silofs_laddr *laddr = &re_ctx->sb_laddr;
@@ -257,14 +257,14 @@ static int rec_update_by_desc(struct silofs_re_ctx *re_ctx,
 
 static int rec_restore_descs(struct silofs_re_ctx *re_ctx)
 {
-	struct silofs_ar_desc ard;
-	const struct silofs_arnode_info *abi = re_ctx->ari;
-	const size_t ndescs = silofs_ari_ndescs(abi);
-	int err;
+	struct silofs_ar_desc            ard;
+	const struct silofs_arnode_info *abi    = re_ctx->ari;
+	const size_t                     ndescs = silofs_ari_ndescs(abi);
+	int                              err;
 
 	for (size_t slot = 0; slot < ndescs; ++slot) {
 		ard.len = 0;
-		err = silofs_ari_fetch_desc(abi, slot, &ard);
+		err     = silofs_ari_fetch_desc(abi, slot, &ard);
 		if (err) {
 			return err;
 		}
@@ -283,7 +283,7 @@ static int rec_restore_descs(struct silofs_re_ctx *re_ctx)
 static int rec_restore_next(struct silofs_re_ctx *re_ctx)
 {
 	struct silofs_paddr paddr = { .pos = -1 };
-	int err;
+	int                 err;
 
 	silofs_assert_not_null(re_ctx->ari);
 
@@ -327,7 +327,7 @@ sb_uaddr_of(const struct silofs_laddr *laddr, struct silofs_uaddr *out_uaddr)
 static int rec_restore_sb_addr(struct silofs_re_ctx *re_ctx)
 {
 	const struct silofs_laddr *sb_laddr = &re_ctx->sb_laddr;
-	struct silofs_uaddr sb_uaddr = { .voff = -1 };
+	struct silofs_uaddr        sb_uaddr = { .voff = -1 };
 
 	if (silofs_laddr_isnull(sb_laddr)) {
 		return -SILOFS_EBADARIX;
@@ -353,13 +353,13 @@ static int rec_restore_sb(struct silofs_re_ctx *re_ctx)
 }
 
 static int rec_restore_fs_mbr(const struct silofs_re_ctx *re_ctx,
-                              struct silofs_paddr *out_fs_mbref)
+                              struct silofs_paddr        *out_fs_mbref)
 {
 	return silofs_env_commit_fs_mbr(re_ctx->env, out_fs_mbref);
 }
 
 static int rec_restore_post(struct silofs_re_ctx *re_ctx,
-                            struct silofs_paddr *out_fs_mbref)
+                            struct silofs_paddr  *out_fs_mbref)
 {
 	int err;
 
@@ -374,15 +374,15 @@ static int rec_restore_post(struct silofs_re_ctx *re_ctx,
 	return 0;
 }
 
-static int rec_restore_prep(struct silofs_re_ctx *re_ctx,
+static int rec_restore_prep(struct silofs_re_ctx      *re_ctx,
                             const struct silofs_paddr *ar_mbref)
 {
 	return silofs_env_reload_ar_mbr(re_ctx->env, ar_mbref);
 }
 
-static int rec_do_restore(struct silofs_re_ctx *re_ctx,
+static int rec_do_restore(struct silofs_re_ctx      *re_ctx,
                           const struct silofs_paddr *ar_mbref,
-                          struct silofs_paddr *out_fs_mbref)
+                          struct silofs_paddr       *out_fs_mbref)
 {
 	int err;
 
@@ -405,12 +405,12 @@ static int rec_do_restore(struct silofs_re_ctx *re_ctx,
 	return 0;
 }
 
-int silofs_do_restore_fs(struct silofs_task_ctx *task,
+int silofs_do_restore_fs(struct silofs_task_ctx    *task,
                          const struct silofs_paddr *ar_mbref,
-                         struct silofs_paddr *out_fs_mbref)
+                         struct silofs_paddr       *out_fs_mbref)
 {
 	struct silofs_re_ctx re_ctx;
-	int err;
+	int                  err;
 
 	err = silofs_flush_dirty_now(task);
 	if (err) {

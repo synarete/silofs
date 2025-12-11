@@ -49,8 +49,8 @@
 	SILOFS_VERSION_STRING "-" SILOFS_RELEASE "." SILOFS_REVISION
 
 const struct silofs_version silofs_version = {
-	.string = SILOFS_VERSION_STRING_FULL,
-	.major = SILOFS_VERSION_MAJOR,
-	.minor = SILOFS_VERSION_MINOR,
+	.string   = SILOFS_VERSION_STRING_FULL,
+	.major    = SILOFS_VERSION_MAJOR,
+	.minor    = SILOFS_VERSION_MINOR,
 	.sublevel = SILOFS_VERSION_SUBLEVEL
 };

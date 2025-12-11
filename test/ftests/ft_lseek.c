@@ -24,13 +24,13 @@
  */
 static void test_lseek_simple_(struct ft_env *fte, size_t len)
 {
-	uint8_t *buf = ft_new_buf_rands(fte, len);
+	uint8_t    *buf  = ft_new_buf_rands(fte, len);
 	const char *path = ft_new_path_unique(fte);
-	off_t pos = -1;
-	size_t nrd = 0;
-	size_t nwr = 0;
-	int fd = -1;
-	uint8_t byte = 0;
+	off_t       pos  = -1;
+	size_t      nrd  = 0;
+	size_t      nwr  = 0;
+	int         fd   = -1;
+	uint8_t     byte = 0;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_write(fd, buf, len, &nwr);
@@ -71,12 +71,12 @@ static void test_lseek_simple(struct ft_env *fte)
 static void test_lseek_data_(struct ft_env *fte, size_t bsz)
 {
 	const char *path = ft_new_path_unique(fte);
-	uint8_t *buf1 = ft_new_buf_rands(fte, bsz);
-	const off_t off = (off_t)(bsz * 2);
-	off_t from = 0;
-	off_t pos = 0;
-	uint8_t byte = 0;
-	int fd = -1;
+	uint8_t    *buf1 = ft_new_buf_rands(fte, bsz);
+	const off_t off  = (off_t)(bsz * 2);
+	off_t       from = 0;
+	off_t       pos  = 0;
+	uint8_t     byte = 0;
+	int         fd   = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_pwriten(fd, buf1, bsz, off);
@@ -105,13 +105,13 @@ static void test_lseek_data(struct ft_env *fte)
  */
 static void test_lseek_hole_(struct ft_env *fte, size_t bsz)
 {
-	int fd = -1;
-	off_t from;
-	off_t off;
-	off_t pos = -1;
-	size_t nrd = 0;
-	uint8_t byte = 0;
-	uint8_t *buf1 = ft_new_buf_rands(fte, bsz);
+	int         fd = -1;
+	off_t       from;
+	off_t       off;
+	off_t       pos  = -1;
+	size_t      nrd  = 0;
+	uint8_t     byte = 0;
+	uint8_t    *buf1 = ft_new_buf_rands(fte, bsz);
 	const char *path = ft_new_path_unique(fte);
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
@@ -119,7 +119,7 @@ static void test_lseek_hole_(struct ft_env *fte, size_t bsz)
 	ft_pwriten(fd, buf1, bsz, off);
 	off = (off_t)(bsz * 100);
 	ft_pwriten(fd, buf1, bsz, off);
-	off = (off_t)bsz;
+	off  = (off_t)bsz;
 	from = off - 1;
 	ft_llseek(fd, from, SEEK_HOLE, &pos);
 	ft_expect_eq(pos, from);
@@ -149,19 +149,19 @@ static void test_lseek_hole(struct ft_env *fte)
  */
 static void test_lseek_data_sparse_(struct ft_env *fte, size_t nsteps)
 {
-	int fd = -1;
-	off_t off;
-	off_t pos;
-	off_t data_off;
-	const size_t size = FT_BK_SIZE;
+	int           fd = -1;
+	off_t         off;
+	off_t         pos;
+	off_t         data_off;
+	const size_t  size  = FT_BK_SIZE;
 	const ssize_t ssize = (ssize_t)size;
-	const size_t step = FT_1M;
-	const void *buf1 = ft_new_buf_rands(fte, size);
-	const char *path = ft_new_path_unique(fte);
+	const size_t  step  = FT_1M;
+	const void   *buf1  = ft_new_buf_rands(fte, size);
+	const char   *path  = ft_new_path_unique(fte);
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	for (size_t i = 0; i < nsteps; ++i) {
-		off = (off_t)(step * (i + 1));
+		off      = (off_t)(step * (i + 1));
 		data_off = off - ssize;
 		ft_ftruncate(fd, off);
 		ft_pwriten(fd, buf1, size, data_off);
@@ -169,7 +169,7 @@ static void test_lseek_data_sparse_(struct ft_env *fte, size_t nsteps)
 	ft_llseek(fd, 0, SEEK_SET, &pos);
 	ft_expect_eq(pos, 0);
 	for (size_t i = 0; i < nsteps; ++i) {
-		off = (off_t)(step * i);
+		off      = (off_t)(step * i);
 		data_off = (off_t)(step * (i + 1)) - ssize;
 		ft_llseek(fd, off, SEEK_DATA, &pos);
 		ft_expect_eq(pos, data_off);
@@ -189,15 +189,15 @@ static void test_lseek_data_sparse(struct ft_env *fte)
  */
 static void test_lseek_hole_sparse_(struct ft_env *fte, size_t nsteps)
 {
-	int fd = -1;
-	off_t pos = 0;
-	off_t off = 0;
-	off_t hole_off = 0;
-	const size_t size = FT_BK_SIZE;
-	const ssize_t ssize = (off_t)size;
-	const size_t step = FT_1M;
-	const void *buf1 = ft_new_buf_rands(fte, size);
-	const char *path = ft_new_path_unique(fte);
+	int           fd       = -1;
+	off_t         pos      = 0;
+	off_t         off      = 0;
+	off_t         hole_off = 0;
+	const size_t  size     = FT_BK_SIZE;
+	const ssize_t ssize    = (off_t)size;
+	const size_t  step     = FT_1M;
+	const void   *buf1     = ft_new_buf_rands(fte, size);
+	const char   *path     = ft_new_path_unique(fte);
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	for (size_t i = 0; i < nsteps; ++i) {
@@ -207,7 +207,7 @@ static void test_lseek_hole_sparse_(struct ft_env *fte, size_t nsteps)
 	ft_llseek(fd, 0, SEEK_SET, &pos);
 	ft_expect_eq(pos, 0);
 	for (size_t i = 0; i < nsteps - 1; ++i) {
-		off = (off_t)(step * i);
+		off      = (off_t)(step * i);
 		hole_off = off + ssize;
 		ft_llseek(fd, off, SEEK_HOLE, &pos);
 		ft_expect_eq(pos, hole_off);
@@ -215,7 +215,7 @@ static void test_lseek_hole_sparse_(struct ft_env *fte, size_t nsteps)
 	ft_llseek(fd, 0, SEEK_SET, &pos);
 	ft_expect_eq(pos, 0);
 	for (size_t i = 0; i < nsteps - 1; ++i) {
-		off = (off_t)(step * i) + ssize + 1;
+		off      = (off_t)(step * i) + ssize + 1;
 		hole_off = off;
 		ft_llseek(fd, off, SEEK_HOLE, &pos);
 		ft_expect_eq(pos, hole_off);

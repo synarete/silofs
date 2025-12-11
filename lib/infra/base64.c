@@ -78,7 +78,7 @@ static bool base64_ispad(int chr)
 
 static int base64_decode_sext(int chr, uint8_t *out_sext)
 {
-	int sext;
+	int          sext;
 	const size_t decode_tbl_nelems = SILOFS_ARRAY_SIZE(base64_decode_tbl);
 
 	if (chr >= (int)decode_tbl_nelems) {
@@ -94,17 +94,17 @@ static int base64_decode_sext(int chr, uint8_t *out_sext)
 
 static void base64_encode_head(const void *in, char *out, size_t len)
 {
-	int sext;
+	int            sext;
 	const uint8_t *inb = in;
 
 	while (len) {
-		sext = inb[0] >> 2;
+		sext   = inb[0] >> 2;
 		out[0] = base64_encode_sext(sext);
-		sext = (inb[0] << 4) + (inb[1] >> 4);
+		sext   = (inb[0] << 4) + (inb[1] >> 4);
 		out[1] = base64_encode_sext(sext);
-		sext = (inb[1] << 2) + (inb[2] >> 6);
+		sext   = (inb[1] << 2) + (inb[2] >> 6);
 		out[2] = base64_encode_sext(sext);
-		sext = inb[2];
+		sext   = inb[2];
 		out[3] = base64_encode_sext(sext);
 
 		out += 4;
@@ -116,24 +116,24 @@ static void base64_encode_head(const void *in, char *out, size_t len)
 static void
 base64_encode_tail(const void *in, size_t inlen, char *out, size_t outlen)
 {
-	int sext;
+	int            sext;
 	const uint8_t *inb = in;
 
 	if (!outlen) {
 		return;
 	}
-	sext = inb[0] >> 2;
+	sext   = inb[0] >> 2;
 	out[0] = base64_encode_sext(sext);
 	if (!--outlen) {
 		return;
 	}
-	sext = (inb[0] << 4) + (--inlen ? (inb[1] >> 4) : 0);
+	sext   = (inb[0] << 4) + (--inlen ? (inb[1] >> 4) : 0);
 	out[1] = base64_encode_sext(sext);
 	if (!--outlen) {
 		return;
 	}
 	if (inlen) {
-		sext = (inb[1] << 2) + (--inlen ? (inb[2] >> 6) : 0);
+		sext   = (inb[1] << 2) + (--inlen ? (inb[2] >> 6) : 0);
 		out[2] = base64_encode_sext(sext);
 	} else {
 		out[2] = '=';
@@ -142,7 +142,7 @@ base64_encode_tail(const void *in, size_t inlen, char *out, size_t outlen)
 		return;
 	}
 	if (inlen) {
-		sext = inb[2];
+		sext   = inb[2];
 		out[3] = base64_encode_sext(sext);
 	} else {
 		out[3] = '=';
@@ -152,23 +152,23 @@ base64_encode_tail(const void *in, size_t inlen, char *out, size_t outlen)
 int silofs_base64_encode(const void *in, size_t inlen, char *out,
                          size_t outlen_max, size_t *out_len)
 {
-	size_t outlen;
-	size_t head_len_in = 0;
-	size_t tail_len_in = 0;
-	size_t head_len_out = 0;
-	size_t tail_len_out = 0;
-	const uint8_t *inb = in;
+	size_t         outlen;
+	size_t         head_len_in  = 0;
+	size_t         tail_len_in  = 0;
+	size_t         head_len_out = 0;
+	size_t         tail_len_out = 0;
+	const uint8_t *inb          = in;
 
 	outlen = BASE64_ENCODE_LEN(inlen);
 	if (outlen > outlen_max) {
 		return -EINVAL;
 	}
 	if (inlen >= 3) {
-		head_len_in = (inlen / 3) * 3;
+		head_len_in  = (inlen / 3) * 3;
 		head_len_out = (inlen / 3) * 4;
 		base64_encode_head(inb, out, head_len_in);
 	}
-	tail_len_in = inlen - head_len_in;
+	tail_len_in  = inlen - head_len_in;
 	tail_len_out = outlen - head_len_out;
 	base64_encode_tail(inb + head_len_in, tail_len_in, out + head_len_out,
 	                   tail_len_out);
@@ -197,14 +197,14 @@ base64_decode_sextets(const uint8_t *inb, uint8_t *outb, size_t cnt)
 int silofs_base64_decode(const char *in, size_t inlen, void *out,
                          size_t outlen_max, size_t *out_len, size_t *out_inrd)
 {
-	uint8_t sext[4];
-	size_t incnt = 0;
-	size_t nsexts = 0;
-	size_t npads = 0;
-	size_t outlen = 0;
-	uint8_t *outb = out;
-	int chr = 0;
-	int err = -1;
+	uint8_t  sext[4];
+	size_t   incnt  = 0;
+	size_t   nsexts = 0;
+	size_t   npads  = 0;
+	size_t   outlen = 0;
+	uint8_t *outb   = out;
+	int      chr    = 0;
+	int      err    = -1;
 
 	while ((incnt < inlen) && (outlen < outlen_max) && (npads < 2)) {
 		chr = (int)in[incnt];
@@ -237,11 +237,11 @@ int silofs_base64_decode(const char *in, size_t inlen, void *out,
 		base64_decode_sextets(sext, outb, nsexts - 1);
 		outlen += nsexts - 1;
 	}
-	*out_len = outlen;
+	*out_len  = outlen;
 	*out_inrd = incnt;
 	return 0;
 out_err:
-	*out_len = outlen;
+	*out_len  = outlen;
 	*out_inrd = incnt;
 	return -EINVAL;
 }

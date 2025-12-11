@@ -28,23 +28,23 @@
 
 /* global context */
 struct mountd_args {
-	int argc;
+	int    argc;
 	char **argv;
-	char *mntpoint;
-	char *mntpoint_real;
-	char *confpath;
-	bool long_listing;
-	bool allow_coredump;
-	bool dumpable;
+	char  *mntpoint;
+	char  *mntpoint_real;
+	char  *confpath;
+	bool   long_listing;
+	bool   allow_coredump;
+	bool   dumpable;
 };
 
 struct mountd_ctx {
-	struct mountd_args args;
-	struct silofs_ms_env *mse;
-	struct silofs_mntrules *mntrules;
+	struct mountd_args       args;
+	struct silofs_ms_env    *mse;
+	struct silofs_mntrules  *mntrules;
 	struct silofs_log_params log_params;
-	int sig_halt;
-	int sig_fatal;
+	int                      sig_halt;
+	int                      sig_fatal;
 };
 
 /* local functions */
@@ -76,12 +76,12 @@ static struct mountd_ctx *mountd_ctx;
 int main(int argc, char *argv[])
 {
 	struct mountd_ctx ctx = {
-		.args.argc = argc,
-		.args.argv = argv,
+		.args.argc           = argc,
+		.args.argv           = argv,
 		.args.allow_coredump = false,
-		.args.dumpable = false,
-		.log_params.level = SILOFS_LOG_INFO,
-		.log_params.flags = SILOFS_LOGF_STDOUT,
+		.args.dumpable       = false,
+		.log_params.level    = SILOFS_LOG_INFO,
+		.log_params.flags    = SILOFS_LOGF_STDOUT,
 		.log_params.progname = program_invocation_short_name,
 	};
 
@@ -139,7 +139,7 @@ static void mountd_init_process(struct mountd_ctx *ctx)
 static void mountd_setrlimit_nocore(void)
 {
 	struct rlimit rlim = { .rlim_cur = 0, .rlim_max = 0 };
-	int err;
+	int           err;
 
 	err = silofs_sys_setrlimit(RLIMIT_CORE, &rlim);
 	if (err) {
@@ -171,13 +171,13 @@ static void mountd_boot_process(const struct mountd_ctx *ctx)
 
 static void mountd_require_cap_sys_admin(const struct mountd_ctx *ctx)
 {
-	cap_value_t value = CAP_SYS_ADMIN;
-	cap_flag_value_t flag = CAP_CLEAR;
-	cap_t cap;
-	int err;
+	cap_value_t      value = CAP_SYS_ADMIN;
+	cap_flag_value_t flag  = CAP_CLEAR;
+	cap_t            cap;
+	int              err;
 
 	errno = 0;
-	cap = cap_get_pid(getpid());
+	cap   = cap_get_pid(getpid());
 	if (cap == nullptr) {
 		silofs_die(errno, "failed to get cap");
 	}
@@ -196,7 +196,7 @@ static void mountd_require_cap_sys_admin(const struct mountd_ctx *ctx)
 static void mountd_setup_env(struct mountd_ctx *ctx)
 {
 	struct silofs_ms_args ms_args = {
-		.runstatedir = nullptr,
+		.runstatedir  = nullptr,
 		.use_abstract = true,
 	};
 	int err;
@@ -307,7 +307,7 @@ silofs_attr_noreturn static void mountd_sigaction_term_handler(int signum)
 
 	silofs_log_crit("term-signal: %d", signum);
 	if (ctx != nullptr) {
-		ctx->sig_halt = signum;
+		ctx->sig_halt  = signum;
 		ctx->sig_fatal = signum;
 	}
 	exit(EXIT_FAILURE);
@@ -323,7 +323,7 @@ silofs_attr_noreturn static void mountd_sigaction_abort_handler(int signum)
 
 	silofs_log_crit("abort-signal: %d", signum);
 	if (ctx) {
-		ctx->sig_halt = signum;
+		ctx->sig_halt  = signum;
 		ctx->sig_fatal = signum;
 	}
 	abort(); /* Re-raise to _exit */
@@ -439,16 +439,16 @@ silofs_attr_noreturn static void mountd_show_version(void)
 
 static void mountd_getopt(struct mountd_ctx *ctx)
 {
-	int opt_chr = 1;
-	int opt_index = 0;
-	int argc = ctx->args.argc;
-	char **argv = ctx->args.argv;
-	const struct option lopts[] = {
-		{ "conf", required_argument, nullptr, 'f' },
-		{ "loglevel", required_argument, nullptr, 'L' },
-		{ "version", no_argument, nullptr, 'v' },
-		{ "help", no_argument, nullptr, 'h' },
-		{ nullptr, no_argument, nullptr, 0 },
+	int                 opt_chr   = 1;
+	int                 opt_index = 0;
+	int                 argc      = ctx->args.argc;
+	char              **argv      = ctx->args.argv;
+	const struct option lopts[]   = {
+                { "conf", required_argument, nullptr, 'f' },
+                { "loglevel", required_argument, nullptr, 'L' },
+                { "version", no_argument, nullptr, 'v' },
+                { "help", no_argument, nullptr, 'h' },
+                { nullptr, no_argument, nullptr, 0 },
 	};
 
 	while (opt_chr > 0) {

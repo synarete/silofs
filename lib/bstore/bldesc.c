@@ -43,12 +43,12 @@ static void bld_reset_prev(struct silofs_blob_desc *bld)
 }
 
 static void bld_refblob(const struct silofs_blob_desc *bld,
-                        struct silofs_blobid *out_blobid)
+                        struct silofs_blobid          *out_blobid)
 {
 	silofs_blobid_copyto(&bld->bld_prev, out_blobid);
 }
 
-static void bld_set_refblob(struct silofs_blob_desc *bld,
+static void bld_set_refblob(struct silofs_blob_desc    *bld,
                             const struct silofs_blobid *blobid)
 {
 	silofs_blobid_copyto(blobid, &bld->bld_refblob);
@@ -60,7 +60,7 @@ static void bld_reset_refblob(struct silofs_blob_desc *bld)
 }
 
 static bool bld_has_refblob(const struct silofs_blob_desc *bld,
-                            const struct silofs_blobid *blobid)
+                            const struct silofs_blobid    *blobid)
 {
 	struct silofs_blobid ref;
 
@@ -135,7 +135,7 @@ bld_has_refmtype(const struct silofs_blob_desc *bld, enum silofs_mtype mtype)
 }
 
 static size_t bld_calc_obj_state_max(const struct silofs_blob_desc *bld,
-                                     enum silofs_mtype refmtype)
+                                     enum silofs_mtype              refmtype)
 {
 	const size_t lim = ARRAY_SIZE(bld->bld_obj_state);
 	const size_t msz = silofs_mtype_size(refmtype);
@@ -252,7 +252,7 @@ static size_t bld_find_free_slot(const struct silofs_blob_desc *bld)
 {
 	const size_t nobjs_max = bld_nobjs_max(bld);
 	const size_t nobjs_cur = bld_nobjs(bld);
-	size_t slot;
+	size_t       slot;
 
 	for (slot = nobjs_cur; slot < nobjs_max; ++slot) {
 		if (bld_has_free_slot_at(bld, slot)) {
@@ -335,12 +335,12 @@ void silofs_bdi_undirtify(struct silofs_bldesc_info *bdi)
 }
 
 void silofs_bdi_setup_spawned(struct silofs_bldesc_info *bdi,
-                              enum silofs_mtype refmtype)
+                              enum silofs_mtype          refmtype)
 {
 	struct timespec now;
-	const size_t obj_size = silofs_mtype_size(refmtype);
-	const size_t nobjs_max = bld_calc_obj_state_max(bdi->bld, refmtype);
-	const size_t blob_size = obj_size * nobjs_max;
+	const size_t    obj_size  = silofs_mtype_size(refmtype);
+	const size_t    nobjs_max = bld_calc_obj_state_max(bdi->bld, refmtype);
+	const size_t    blob_size = obj_size * nobjs_max;
 
 	silofs_clock_real_now(&now);
 	bld_set_btime(bdi->bld, &now);
@@ -354,7 +354,7 @@ void silofs_bdi_setup_spawned(struct silofs_bldesc_info *bdi,
 	silofs_bdi_dirtify(bdi);
 }
 
-void silofs_bdi_set_refblob(struct silofs_bldesc_info *bdi,
+void silofs_bdi_set_refblob(struct silofs_bldesc_info  *bdi,
                             const struct silofs_blobid *blobid)
 {
 	bld_set_refblob(bdi->bld, blobid);
@@ -362,10 +362,10 @@ void silofs_bdi_set_refblob(struct silofs_bldesc_info *bdi,
 }
 
 int silofs_bdi_find_free(const struct silofs_bldesc_info *bdi,
-                         struct silofs_paddr *out_paddr)
+                         struct silofs_paddr             *out_paddr)
 {
 	const struct silofs_blob_desc *bld = bdi->bld;
-	off_t pos;
+	off_t                          pos;
 
 	silofs_paddr_reset(out_paddr);
 	if (!bld_has_free_slot(bld)) {
@@ -380,7 +380,7 @@ int silofs_bdi_find_free(const struct silofs_bldesc_info *bdi,
 }
 
 static bool bdi_is_valid_paddr(const struct silofs_bldesc_info *bdi,
-                               const struct silofs_paddr *paddr)
+                               const struct silofs_paddr       *paddr)
 {
 	if (!bld_has_refmtype(bdi->bld, paddr->mtype)) {
 		return false;
@@ -395,7 +395,7 @@ static bool bdi_is_valid_paddr(const struct silofs_bldesc_info *bdi,
 }
 
 int silofs_bdi_test_free(const struct silofs_bldesc_info *bdi,
-                         const struct silofs_paddr *paddr)
+                         const struct silofs_paddr       *paddr)
 {
 	if (!bdi_is_valid_paddr(bdi, paddr)) {
 		return -SILOFS_EINVAL;
@@ -448,7 +448,7 @@ int silofs_bdi_mark_used(struct silofs_bldesc_info *bdi,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 struct silofs_bldesc_info *
-silofs_lookup_cached_bldesc(struct silofs_pcache *pcache,
+silofs_lookup_cached_bldesc(struct silofs_pcache      *pcache,
                             const struct silofs_paddr *paddr)
 {
 	struct silofs_pnode_info *pni;
@@ -459,10 +459,10 @@ silofs_lookup_cached_bldesc(struct silofs_pcache *pcache,
 }
 
 struct silofs_bldesc_info *
-silofs_create_cached_bldesc(struct silofs_pcache *pcache,
+silofs_create_cached_bldesc(struct silofs_pcache      *pcache,
                             const struct silofs_pmeta *pmeta, bool spawn)
 {
-	struct silofs_pnode_info *pni;
+	struct silofs_pnode_info  *pni;
 	struct silofs_bldesc_info *bdi;
 
 	pni = silofs_pcache_create_pnode(pcache, pmeta);
@@ -473,7 +473,7 @@ silofs_create_cached_bldesc(struct silofs_pcache *pcache,
 	return bdi;
 }
 
-void silofs_forget_cached_bldesc(struct silofs_pcache *pcache,
+void silofs_forget_cached_bldesc(struct silofs_pcache      *pcache,
                                  struct silofs_bldesc_info *bdi)
 {
 	silofs_pcache_delete_pnode(pcache, &bdi->bld_pni);

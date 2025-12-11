@@ -35,16 +35,16 @@ silofs_attr_noreturn static void cmd_fatal_redundant_arg(const char *s)
 #define CMD_ARRAY_SIZE(x_) SILOFS_ARRAY_SIZE(x_)
 
 struct cmd_getopt_info {
-	char sopts[64];
+	char          sopts[64];
 	struct option lopts[32];
-	size_t nopts;
+	size_t        nopts;
 };
 
 static void getopti_pre_add(const struct cmd_getopt_info *goi)
 {
-	const char *sopt = goi->sopts;
-	const char *send = goi->sopts + CMD_ARRAY_SIZE(goi->sopts);
-	const size_t slen = strlen(goi->sopts);
+	const char  *sopt      = goi->sopts;
+	const char  *send      = goi->sopts + CMD_ARRAY_SIZE(goi->sopts);
+	const size_t slen      = strlen(goi->sopts);
 	const size_t nopts_max = CMD_ARRAY_SIZE(goi->lopts);
 
 	if (((sopt + slen + 3) > send) || ((goi->nopts + 1) >= nopts_max)) {
@@ -56,12 +56,12 @@ static void
 getopti_add(struct cmd_getopt_info *goi, const struct cmd_optdesc *od)
 {
 	struct option *lopt = goi->lopts + goi->nopts;
-	char *sopt = goi->sopts + strlen(goi->sopts);
+	char          *sopt = goi->sopts + strlen(goi->sopts);
 
-	lopt->name = od->lopt;
-	lopt->flag = nullptr;
+	lopt->name    = od->lopt;
+	lopt->flag    = nullptr;
 	lopt->has_arg = od->has_arg ? required_argument : no_argument;
-	lopt->val = od->sopt;
+	lopt->val     = od->sopt;
 
 	*sopt = (char)(od->sopt);
 	sopt++;
@@ -107,14 +107,14 @@ static void getopti_del(struct cmd_getopt_info *goi)
 void cmd_optargs_init(struct cmd_optargs *opa, const struct cmd_optdesc *ods)
 {
 	memset(opa, 0, sizeof(*opa));
-	opa->opa_goi = getopti_new(ods);
+	opa->opa_goi      = getopti_new(ods);
 	opa->opa_cmd_argc = cmd_global_params.argc - 1;
 	opa->opa_cmd_argv = cmd_global_params.argv + 1;
 	opa->opa_optind = optind = 1;
 	opa->opa_opterr = opterr = 0;
 	opa->opa_optarg = optarg = nullptr;
-	opa->opa_optidx = 0;
-	opa->opa_done = false;
+	opa->opa_optidx          = 0;
+	opa->opa_done            = false;
 }
 
 void cmd_optargs_fini(struct cmd_optargs *opa)

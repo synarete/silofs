@@ -36,14 +36,7 @@ struct silofs_ar_desc {
 	size_t              len;
 };
 
-struct silofs_arn_base {
-	const struct silofs_cipher  *enc_cipher;
-	const struct silofs_cipher  *dec_cipher;
-	const struct silofs_mdigest *mdigest;
-};
-
 struct silofs_arnode_info {
-	struct silofs_arn_base   arn_base;
 	struct silofs_paddr      arn_paddr;
 	struct silofs_arix_node *arn;
 	struct silofs_arix_node *arn_enc;
@@ -51,8 +44,7 @@ struct silofs_arnode_info {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-struct silofs_arnode_info *
-silofs_ari_new(struct silofs_alloc *alloc, const struct silofs_arn_base *base);
+struct silofs_arnode_info *silofs_ari_new(struct silofs_alloc *alloc);
 
 void silofs_ari_del(struct silofs_arnode_info *ari,
                     struct silofs_alloc       *alloc);
@@ -76,11 +68,6 @@ void silofs_ari_set_next(struct silofs_arnode_info       *ari,
 void silofs_ari_get_next(const struct silofs_arnode_info *ari,
                          struct silofs_paddr             *out_paddr);
 
-void silofs_ari_calc_desc(const struct silofs_arnode_info *ari,
-                          const struct silofs_laddr       *laddr,
-                          const struct silofs_rovec       *rovec,
-                          struct silofs_ar_desc           *out_ard);
-
 int silofs_ari_append_desc(struct silofs_arnode_info   *ari,
                            const struct silofs_ar_desc *ard);
 
@@ -100,5 +87,10 @@ int silofs_save_arix_node(struct silofs_arnode_info *ari,
 
 int silofs_load_arix_node(const struct silofs_arnode_info *ari,
                           struct silofs_filos             *filos);
+
+void silofs_calc_ar_desc(const struct silofs_mdigest *mdigest,
+                         const struct silofs_laddr   *laddr,
+                         const struct silofs_rovec   *rovec,
+                         struct silofs_ar_desc       *out_ard);
 
 #endif /* SILOFS_INDEX_H_ */

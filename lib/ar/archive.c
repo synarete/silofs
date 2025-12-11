@@ -34,7 +34,7 @@ struct silofs_ar_ctx {
 };
 
 static void
-arc_rebind_abi(struct silofs_ar_ctx *ar_ctx, struct silofs_arnode_info *abi)
+arc_rebind_ari(struct silofs_ar_ctx *ar_ctx, struct silofs_arnode_info *abi)
 {
 	if (ar_ctx->abi != nullptr) {
 		silofs_ari_del(ar_ctx->abi, ar_ctx->alloc);
@@ -45,30 +45,18 @@ arc_rebind_abi(struct silofs_ar_ctx *ar_ctx, struct silofs_arnode_info *abi)
 	}
 }
 
-static void arc_setup_ab_meta(struct silofs_ar_ctx   *ar_ctx,
-                              struct silofs_arn_base *out_ab_meta)
-{
-	struct silofs_env *env = ar_ctx->env;
-
-	out_ab_meta->enc_cipher = &env->enc_cipher;
-	out_ab_meta->dec_cipher = &env->dec_cipher;
-	out_ab_meta->mdigest    = &env->mdigest;
-}
-
 static int arc_renew_abi(struct silofs_ar_ctx *ar_ctx)
 {
-	struct silofs_arn_base     ab_meta;
-	struct silofs_arnode_info *abi = nullptr;
+	struct silofs_arnode_info *ari = nullptr;
 
-	arc_setup_ab_meta(ar_ctx, &ab_meta);
-	abi = silofs_ari_new(ar_ctx->alloc, &ab_meta);
-	if (abi == nullptr) {
+	ari = silofs_ari_new(ar_ctx->alloc);
+	if (ari == nullptr) {
 		return -SILOFS_ENOMEM;
 	}
-	silofs_ari_set_btime(abi, &ar_ctx->now);
-	silofs_ari_set_next(abi, ar_ctx->abi);
+	silofs_ari_set_btime(ari, &ar_ctx->now);
+	silofs_ari_set_next(ari, ar_ctx->abi);
 
-	arc_rebind_abi(ar_ctx, abi);
+	arc_rebind_ari(ar_ctx, ari);
 	return 0;
 }
 
@@ -88,7 +76,7 @@ static int arc_init(struct silofs_ar_ctx *ar_ctx, struct silofs_task_ctx *task)
 
 static void arc_fini(struct silofs_ar_ctx *ar_ctx)
 {
-	arc_rebind_abi(ar_ctx, nullptr);
+	arc_rebind_ari(ar_ctx, nullptr);
 	ar_ctx->task  = nullptr;
 	ar_ctx->env   = nullptr;
 	ar_ctx->repo  = nullptr;
@@ -168,9 +156,7 @@ arc_calc_seg_desc(const struct silofs_ar_ctx *ar_ctx,
 		.rov_len  = seg_len,
 	};
 
-	silofs_assert_not_null(ar_ctx->abi);
-
-	silofs_ari_calc_desc(ar_ctx->abi, laddr, &rovec, out_ard);
+	silofs_calc_ar_desc(&ar_ctx->env->mdigest, laddr, &rovec, out_ard);
 }
 
 static int arc_archive_segdata(const struct silofs_ar_ctx *ar_ctx,

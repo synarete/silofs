@@ -45,24 +45,12 @@ rec_rebind_ari(struct silofs_re_ctx *re_ctx, struct silofs_arnode_info *ari)
 	}
 }
 
-static void rec_setup_ab_meta(struct silofs_re_ctx   *re_ctx,
-                              struct silofs_arn_base *out_ab_meta)
-{
-	struct silofs_env *env = re_ctx->env;
-
-	out_ab_meta->enc_cipher = &env->enc_cipher;
-	out_ab_meta->dec_cipher = &env->dec_cipher;
-	out_ab_meta->mdigest    = &env->mdigest;
-}
-
 static int
 rec_renew_ari(struct silofs_re_ctx *re_ctx, const struct silofs_paddr *paddr)
 {
-	struct silofs_arn_base     ab_meta;
 	struct silofs_arnode_info *ari = nullptr;
 
-	rec_setup_ab_meta(re_ctx, &ab_meta);
-	ari = silofs_ari_new(re_ctx->alloc, &ab_meta);
+	ari = silofs_ari_new(re_ctx->alloc);
 	if (ari == nullptr) {
 		return -SILOFS_ENOMEM;
 	}

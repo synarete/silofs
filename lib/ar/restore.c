@@ -147,14 +147,14 @@ out:
 	return err;
 }
 
-static void rec_arix_nmeta(const struct silofs_re_ctx *re_ctx,
-                           struct silofs_nmeta        *out_nmeta)
+static int rec_arix_nmeta(const struct silofs_re_ctx *re_ctx,
+                          struct silofs_nmeta        *out_nmeta)
 {
-	struct silofs_pmeta           pmeta;
 	const struct silofs_mbr_info *ar_mbi = &re_ctx->env->mbis.ar_mbi;
 
-	silofs_mbi_arix_root(ar_mbi, &pmeta);
-	silofs_nmeta_assign(out_nmeta, &pmeta.nmeta);
+	/* For now, using top-level nmeta for all arix nodes */
+	silofs_nmeta_assign(out_nmeta, &ar_mbi->mb_nmeta);
+	return 0;
 }
 
 static const struct silofs_mdigest *
@@ -163,12 +163,12 @@ rec_mdigest(const struct silofs_re_ctx *re_ctx)
 	return &re_ctx->env->mdigest;
 }
 
-static void rec_arix_cargs(const struct silofs_re_ctx *re_ctx,
-                           struct silofs_ar_cargs     *out_ar_cargs)
+static int rec_arix_cargs(const struct silofs_re_ctx *re_ctx,
+                          struct silofs_ar_cargs     *out_ar_cargs)
 {
 	out_ar_cargs->cipher  = &re_ctx->env->enc_cipher;
 	out_ar_cargs->mdigest = rec_mdigest(re_ctx);
-	rec_arix_nmeta(re_ctx, &out_ar_cargs->nmeta);
+	return rec_arix_nmeta(re_ctx, &out_ar_cargs->nmeta);
 }
 
 static struct silofs_arix_node *rec_new_arix_node(struct silofs_re_ctx *re_ctx)
@@ -193,10 +193,13 @@ static int rec_fetch_arix_node(struct silofs_re_ctx *re_ctx)
 	struct silofs_arix_node *arn_enc;
 	int                      err = -SILOFS_ENOMEM;
 
-	rec_arix_cargs(re_ctx, &ar_cargs);
 	arn_enc = rec_new_arix_node(re_ctx);
 	if (arn_enc == nullptr) {
 		goto out;
+	}
+	err = rec_arix_cargs(re_ctx, &ar_cargs);
+	if (err) {
+		return err;
 	}
 	silofs_ari_get_paddr(re_ctx->ari, &paddr);
 	err = silofs_load_arix_node(re_ctx->filos, &paddr, arn_enc);

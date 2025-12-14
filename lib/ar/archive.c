@@ -33,20 +33,27 @@ struct silofs_ar_ctx {
 	struct silofs_filos       *filos;
 };
 
-static void arc_arix_nmeta(const struct silofs_ar_ctx *ar_ctx,
-                           struct silofs_nmeta        *out_nmeta)
+static int arc_arix_nmeta(const struct silofs_ar_ctx *ar_ctx,
+                          struct silofs_nmeta        *out_nmeta)
 {
-	struct silofs_pmeta pmeta;
+	const struct silofs_mbr_info *ar_mbi = &ar_ctx->env->mbis.ar_mbi;
 
-	silofs_mbi_arix_root(&ar_ctx->env->mbis.ar_mbi, &pmeta);
-	silofs_nmeta_assign(out_nmeta, &pmeta.nmeta);
+	/* For now, using top-level nmeta for all arix nodes */
+	silofs_nmeta_assign(out_nmeta, &ar_mbi->mb_nmeta);
+	return 0;
 }
 
-static void arc_default_arix_pmeta(const struct silofs_ar_ctx *ar_ctx,
-                                   struct silofs_pmeta        *out_pmeta)
+static int arc_default_arix_pmeta(const struct silofs_ar_ctx *ar_ctx,
+                                  struct silofs_pmeta        *out_pmeta)
 {
-	arc_arix_nmeta(ar_ctx, &out_pmeta->nmeta);
+	int err;
+
+	err = arc_arix_nmeta(ar_ctx, &out_pmeta->nmeta);
+	if (err) {
+		return err;
+	}
 	silofs_paddr_reset(&out_pmeta->paddr);
+	return 0;
 }
 
 static const struct silofs_mdigest *
@@ -55,12 +62,12 @@ arc_mdigest(const struct silofs_ar_ctx *ar_ctx)
 	return &ar_ctx->env->mdigest;
 }
 
-static void arc_arix_cargs(const struct silofs_ar_ctx *ar_ctx,
-                           struct silofs_ar_cargs     *out_ar_cargs)
+static int arc_arix_cargs(const struct silofs_ar_ctx *ar_ctx,
+                          struct silofs_ar_cargs     *out_ar_cargs)
 {
 	out_ar_cargs->cipher  = &ar_ctx->env->enc_cipher;
 	out_ar_cargs->mdigest = arc_mdigest(ar_ctx);
-	arc_arix_nmeta(ar_ctx, &out_ar_cargs->nmeta);
+	return arc_arix_nmeta(ar_ctx, &out_ar_cargs->nmeta);
 }
 
 static void
@@ -241,9 +248,12 @@ static int arc_store_arix_node(struct silofs_ar_ctx *ar_ctx)
 	struct silofs_arix_node *arn_enc;
 	int                      err = -SILOFS_ENOMEM;
 
-	arc_arix_cargs(ar_ctx, &ar_cargs);
 	arn_enc = arc_new_arix_node(ar_ctx);
 	if (arn_enc == nullptr) {
+		goto out;
+	}
+	err = arc_arix_cargs(ar_ctx, &ar_cargs);
+	if (err) {
 		goto out;
 	}
 	err = silofs_export_arix_node(ar_ctx->ari, &ar_cargs, arn_enc);
@@ -326,8 +336,8 @@ static int arc_archive_fs(struct silofs_ar_ctx *ar_ctx)
 	return silofs_walkfs_at(task, silofs_get_sbi(task), &lvis);
 }
 
-static int arc_archive_apex(struct silofs_ar_ctx *ar_ctx,
-                            struct silofs_paddr  *out_arix_addr)
+static int arc_archive_head_arix(struct silofs_ar_ctx *ar_ctx,
+                                 struct silofs_pmeta  *out_pmeta)
 {
 	int err;
 
@@ -335,7 +345,7 @@ static int arc_archive_apex(struct silofs_ar_ctx *ar_ctx,
 	if (err) {
 		return err;
 	}
-	silofs_ari_get_paddr(ar_ctx->ari, out_arix_addr);
+	silofs_pmeta_assign(out_pmeta, &ar_ctx->ari->arn_pmeta);
 	return 0;
 }
 
@@ -365,21 +375,21 @@ static int arc_archive_mbr(const struct silofs_ar_ctx *ar_ctx,
 	return 0;
 }
 
-static int arc_update_mbr_root(struct silofs_ar_ctx      *ar_ctx,
-                               const struct silofs_paddr *paddr)
+static int arc_set_mbr_root(struct silofs_ar_ctx      *ar_ctx,
+                            const struct silofs_pmeta *pmeta)
 {
 	struct silofs_mbr_info *ar_mbi = &ar_ctx->env->mbis.ar_mbi;
 
-	return silofs_mbi_update_root(ar_mbi, paddr);
+	return silofs_mbi_set_root(ar_mbi, pmeta);
 }
 
 static int arc_archive_post(struct silofs_ar_ctx      *ar_ctx,
-                            const struct silofs_paddr *paddr,
+                            const struct silofs_pmeta *pmeta,
                             struct silofs_paddr       *out_paddr)
 {
 	int err;
 
-	err = arc_update_mbr_root(ar_ctx, paddr);
+	err = arc_set_mbr_root(ar_ctx, pmeta);
 	if (err) {
 		return err;
 	}
@@ -398,7 +408,7 @@ static void arc_archive_prep(struct silofs_ar_ctx *ar_ctx)
 static int
 arc_do_archive(struct silofs_ar_ctx *ar_ctx, struct silofs_paddr *out_mbref)
 {
-	struct silofs_paddr arix_addr;
+	struct silofs_pmeta pmeta;
 	int                 err;
 
 	arc_archive_prep(ar_ctx);
@@ -407,11 +417,11 @@ arc_do_archive(struct silofs_ar_ctx *ar_ctx, struct silofs_paddr *out_mbref)
 	if (err) {
 		return err;
 	}
-	err = arc_archive_apex(ar_ctx, &arix_addr);
+	err = arc_archive_head_arix(ar_ctx, &pmeta);
 	if (err) {
 		return err;
 	}
-	err = arc_archive_post(ar_ctx, &arix_addr, out_mbref);
+	err = arc_archive_post(ar_ctx, &pmeta, out_mbref);
 	if (err) {
 		return err;
 	}

@@ -55,9 +55,6 @@ int silofs_mbi_arix_root(const struct silofs_mbr_info *mbi,
 int silofs_mbi_set_root(struct silofs_mbr_info    *mbi,
                         const struct silofs_pmeta *pmeta);
 
-int silofs_mbi_update_root(struct silofs_mbr_info    *mbi,
-                           const struct silofs_paddr *paddr);
-
 int silofs_mbi_sbaddr(const struct silofs_mbr_info *mbi,
                       struct silofs_uaddr          *out_sb_uaddr);
 

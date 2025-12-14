@@ -184,10 +184,9 @@ hdr_verify_by(const struct silofs_header *hdr, enum silofs_mtype mtype,
 
 int silofs_hdr_verify(const struct silofs_header *hdr, enum silofs_mtype mtype)
 {
-	const size_t     size  = silofs_mtype_size(mtype);
-	enum silofs_hdrf flags = SILOFS_HDRF_CSUM;
+	const size_t size = silofs_mtype_size(mtype);
 
-	return hdr_verify_by(hdr, (uint16_t)mtype, size, flags);
+	return hdr_verify_by(hdr, mtype, size, SILOFS_HDRF_CSUM);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

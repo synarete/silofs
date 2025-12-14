@@ -347,12 +347,11 @@ static void ari_pre_encrypt(const struct silofs_arnode_info *ari,
 	arn_seal_hdr(arn);
 }
 
-static int ari_encrypt(const struct silofs_arnode_info *ari,
-                       const struct silofs_ar_cargs    *ar_cargs,
-                       struct silofs_arix_node         *arn_enc)
+static int encrypt_arix_node(const struct silofs_ar_cargs *ar_cargs,
+                             struct silofs_arix_node      *arn)
 {
 	return silofs_encrypt_buf(ar_cargs->cipher, &ar_cargs->nmeta.civkey,
-	                          ari->arn, arn_enc, sizeof(*arn_enc));
+	                          arn, arn, sizeof(*arn));
 }
 
 int silofs_export_arix_node(const struct silofs_arnode_info *ari,
@@ -360,7 +359,7 @@ int silofs_export_arix_node(const struct silofs_arnode_info *ari,
                             struct silofs_arix_node         *arn_enc)
 {
 	ari_pre_encrypt(ari, arn_enc);
-	return ari_encrypt(ari, ar_cargs, arn_enc);
+	return encrypt_arix_node(ar_cargs, arn_enc);
 }
 
 int silofs_save_arix_node(struct silofs_filos           *filos,
@@ -400,31 +399,38 @@ int silofs_load_arix_node(struct silofs_filos       *filos,
 	return silofs_filos_read_blob(filos, paddr, &rwv);
 }
 
-static int ari_decrypt(struct silofs_arnode_info     *ari,
-                       const struct silofs_ar_cargs  *ar_cargs,
-                       const struct silofs_arix_node *arn_enc)
+static int decrypt_arix_node(const struct silofs_ar_cargs *ar_cargs,
+                             struct silofs_arix_node      *arn)
 {
 	return silofs_decrypt_buf(ar_cargs->cipher, &ar_cargs->nmeta.civkey,
-	                          arn_enc, ari->arn, sizeof(*ari->arn));
+	                          arn, arn, sizeof(*arn));
 }
 
-static int ari_post_decrypt(struct silofs_arnode_info *ari)
-{
-	/* TODO: verify all */
-	return arn_verify_hdr(ari->arn);
-}
-
-int silofs_import_arix_node(struct silofs_arnode_info     *ari,
-                            const struct silofs_ar_cargs  *ar_cargs,
-                            const struct silofs_arix_node *arn_enc)
+static int ari_post_decrypt(struct silofs_arnode_info     *ari,
+                            const struct silofs_arix_node *arn)
 {
 	int err;
 
-	err = ari_decrypt(ari, ar_cargs, arn_enc);
+	/* TODO: verify all */
+	err = arn_verify_hdr(arn);
 	if (err) {
 		return err;
 	}
-	err = ari_post_decrypt(ari);
+	memcpy(ari->arn, arn, sizeof(*arn));
+	return 0;
+}
+
+int silofs_import_arix_node(struct silofs_arnode_info    *ari,
+                            const struct silofs_ar_cargs *ar_cargs,
+                            struct silofs_arix_node      *arn_enc)
+{
+	int err;
+
+	err = decrypt_arix_node(ar_cargs, arn_enc);
+	if (err) {
+		return err;
+	}
+	err = ari_post_decrypt(ari, arn_enc);
 	if (err) {
 		return err;
 	}

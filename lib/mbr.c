@@ -92,12 +92,6 @@ static void mbr1k_reset_root(struct silofs_mbr1k *mbr1k)
 	mbr1k_set_root(mbr1k, silofs_pmeta_none());
 }
 
-static void
-mbr1k_update_root(struct silofs_mbr1k *mbr1k, const struct silofs_paddr *paddr)
-{
-	silofs_paddr64b_htox(&mbr1k->mbr_root.pm_paddr, paddr);
-}
-
 static void mbr1k_sb_addr(const struct silofs_mbr1k *mbr1k,
                           struct silofs_uaddr       *out_sb_addr)
 {
@@ -467,7 +461,7 @@ int silofs_mbi_arix_root(const struct silofs_mbr_info *mbi,
 	const struct silofs_mbr1k *mbr1k = &mbi->mb_mbr1k;
 	const enum silofs_mbr_kind kind  = mbr1k_kind(mbr1k);
 
-	if (kind != SILOFS_MBR_FS) {
+	if (kind != SILOFS_MBR_AR) {
 		return -SILOFS_ENOENT;
 	}
 	mbr1k_root(mbr1k, out_pmeta);
@@ -490,13 +484,6 @@ int silofs_mbi_set_root(struct silofs_mbr_info    *mbi,
 		return -SILOFS_EINVAL;
 	}
 	mbr1k_set_root(mbr1k, pmeta);
-	return 0;
-}
-
-int silofs_mbi_update_root(struct silofs_mbr_info    *mbi,
-                           const struct silofs_paddr *paddr)
-{
-	mbr1k_update_root(&mbi->mb_mbr1k, paddr);
 	return 0;
 }
 

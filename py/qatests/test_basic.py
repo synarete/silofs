@@ -109,14 +109,15 @@ def _test_mkfs_no_utf8_names(env: TestEnv) -> None:
     env.exec_mkfs(no_utf8_names=True)
     env.exec_mount()
     env.exec_lsmnt()
-    name = "hello".encode("utf-32")
-    path = env.make_path(name)
-    data = "hello, world!"
-    with open(path, "w", encoding="utf-32") as f:
-        f.writelines(data)
-    with open(path, "r", encoding="utf-32") as f:
-        f.readlines()
-    path.unlink()
+    paths = []
+    for i in range(1, 100):
+        uname = f"filename-{i}".encode("utf-32")
+        zname = uname.decode("utf-8", "surrogateescape")
+        paths.append(env.make_path(zname))
+    for path in paths:
+        path.touch()
+    for path in paths:
+        path.unlink()
     env.exec_umount()
     env.exec_rmfs()
 

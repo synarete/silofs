@@ -372,7 +372,7 @@ int silofs_save_arix_node(struct silofs_filos           *filos,
 	};
 	int err;
 
-	err = silofs_filos_spawn_blob(filos, &paddr->blobid);
+	err = silofs_filos_require_blob(filos, &paddr->blobid);
 	if (err) {
 		log_err("failed to spawn archive-index: err=%d", err);
 		return err;

@@ -109,7 +109,7 @@ int silofs_env_commit_fs_mbr(struct silofs_env   *env,
 	if (err) {
 		return err;
 	}
-	err = silofs_repo_spawn_blob(env->base.repo, &out_mbref->blobid);
+	err = silofs_repo_require_blob(env->base.repo, &out_mbref->blobid);
 	if (err) {
 		log_err("failed to create mbr blob: err=%d", err);
 		return err;

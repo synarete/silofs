@@ -122,6 +122,9 @@ int silofs_repo_spawn_blob(struct silofs_repo         *repo,
 int silofs_repo_stage_blob(struct silofs_repo         *repo,
                            const struct silofs_blobid *blobid);
 
+int silofs_repo_require_blob(struct silofs_repo         *repo,
+                             const struct silofs_blobid *blobid);
+
 int silofs_repo_remove_blob(struct silofs_repo         *repo,
                             const struct silofs_blobid *blobid);
 

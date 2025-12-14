@@ -145,7 +145,7 @@ static int arc_send_to_repo(const struct silofs_ar_ctx *ar_ctx,
 {
 	int err;
 
-	err = silofs_repo_spawn_blob(ar_ctx->repo, &paddr->blobid);
+	err = silofs_repo_require_blob(ar_ctx->repo, &paddr->blobid);
 	if (err) {
 		log_err("failed to create archive blob: err=%d", err);
 		return err;

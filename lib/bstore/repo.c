@@ -2397,6 +2397,17 @@ int silofs_repo_stage_blob(struct silofs_repo         *repo,
 	return err;
 }
 
+int silofs_repo_require_blob(struct silofs_repo         *repo,
+                             const struct silofs_blobid *blobid)
+{
+	int err;
+
+	repo_lock(repo);
+	err = silofs_filos_require_blob(&repo->re_filos, blobid);
+	repo_unlock(repo);
+	return err;
+}
+
 int silofs_repo_save_bseg(struct silofs_repo        *repo,
                           const struct silofs_paddr *paddr,
                           const struct silofs_rovec *rovec)

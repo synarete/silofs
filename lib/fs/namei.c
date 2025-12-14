@@ -35,7 +35,7 @@ static int check_ascii_fs_name(const struct silofs_strview *sv)
 {
 	const char *allowed = "abcdefghijklmnopqrstuvwxyz"
 			      "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-			      "0123456789_-";
+			      "0123456789_-.+=@";
 	size_t      n;
 
 	if (!silofs_strview_isprint(sv)) {

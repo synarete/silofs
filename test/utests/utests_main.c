@@ -95,8 +95,8 @@ static void ut_setup_globals(int argc, char *argv[])
 static void ut_setup_logging(void)
 {
 	ut_globals.log_params.level = SILOFS_LOG_WARN;
-	ut_globals.log_params.flags =
-		SILOFS_LOGF_STDOUT | SILOFS_LOGF_PROGNAME | SILOFS_LOGF_FILINE;
+	ut_globals.log_params.flags = SILOFS_LOGF_STDOUT |
+	                              SILOFS_LOGF_PROGNAME;
 
 	if (!ut_globals.silent) {
 		ut_globals.log_params.level = SILOFS_LOG_INFO;

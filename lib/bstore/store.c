@@ -17,7 +17,7 @@
 #include "configs.h"
 #include <sys/stat.h>
 #include "nodes.h"
-#include "filos.h"
+#include "regbs.h"
 #include "uber.h"
 #include "store.h"
 #include "mbr.h"
@@ -25,7 +25,7 @@
 
 struct silofs_store_ctx {
 	struct silofs_alloc   *alloc;
-	struct silofs_filos   *filos;
+	struct silofs_regbs   *regbs;
 	struct silofs_pcache  *pcache;
 	struct silofs_mdigest *mdigest;
 	struct silofs_cipher  *enc_cipher;
@@ -36,7 +36,7 @@ struct silofs_store_ctx {
 static void stc_init(struct silofs_store_ctx *st_ctx, struct silofs_env *env)
 {
 	st_ctx->alloc      = env->base.alloc;
-	st_ctx->filos      = &env->base.repo->re_filos;
+	st_ctx->regbs      = &env->base.repo->re_regbs;
 	st_ctx->pcache     = env->base.pcache;
 	st_ctx->mdigest    = &env->mdigest;
 	st_ctx->enc_cipher = &env->enc_cipher;
@@ -71,7 +71,7 @@ static int stc_require_view(struct silofs_store_ctx *st_ctx)
 static int stc_require_paddr(const struct silofs_store_ctx *st_ctx,
                              const struct silofs_paddr     *paddr)
 {
-	return silofs_filos_require_bpos(st_ctx->filos, &paddr->blobid,
+	return silofs_regbs_require_bpos(st_ctx->regbs, &paddr->blobid,
 	                                 paddr->pos);
 }
 
@@ -94,7 +94,7 @@ static int stc_access_pnode(const struct silofs_store_ctx *st_ctx,
 {
 	const off_t off = silofs_paddr_next(paddr);
 
-	return silofs_filos_access_bpos(st_ctx->filos, &paddr->blobid, off);
+	return silofs_regbs_access_bpos(st_ctx->regbs, &paddr->blobid, off);
 }
 
 static int stc_access_pnode_of(const struct silofs_store_ctx *st_ctx,
@@ -117,7 +117,7 @@ stc_read_pnode(struct silofs_store_ctx *st_ctx, struct silofs_pnode_info *pni)
 	};
 	const struct silofs_paddr *paddr = &pni->pn_meta.paddr;
 
-	return silofs_filos_read_blob(st_ctx->filos, paddr, &rwvec);
+	return silofs_regbs_read_blob(st_ctx->regbs, paddr, &rwvec);
 }
 
 static int stc_decrypt_verify_pnode(struct silofs_store_ctx  *st_ctx,
@@ -446,7 +446,7 @@ static int stc_write_pnode(struct silofs_store_ctx        *st_ctx,
 	};
 	const struct silofs_paddr *paddr = &pni->pn_meta.paddr;
 
-	return silofs_filos_write_blob(st_ctx->filos, paddr, &rovec);
+	return silofs_regbs_write_blob(st_ctx->regbs, paddr, &rovec);
 }
 
 static int stc_seal_encrypt_pnode(struct silofs_store_ctx  *st_ctx,

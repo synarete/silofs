@@ -33,10 +33,6 @@ struct silofs_prandgen {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_getentropy(void *p, size_t n);
-
-void silofs_prandom(void *p, size_t n);
-
 int silofs_prandgen_init(struct silofs_prandgen *prng);
 
 void silofs_prandgen_fini(struct silofs_prandgen *prng);

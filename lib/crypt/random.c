@@ -23,85 +23,27 @@
 #include "gcry.h"
 #include "random.h"
 
-static void do_getentropy(void *buf, size_t len)
+static size_t do_getentropy(void *buf, size_t len)
 {
-	if (getentropy(buf, len) != 0) {
-		silofs_gcrypt_random(buf, len);
+	const size_t nr = silofs_min(len, 256);
+
+	if (getentropy(buf, nr) != 0) {
+		silofs_gcrypt_random(buf, nr);
 	}
+	return nr;
 }
 
-void silofs_getentropy(void *buf, size_t len)
+static void silofs_getentropy(void *buf, size_t len)
 {
-	const size_t getentropy_max = 256;
-	uint8_t     *ptr            = buf;
-	size_t       rnd, cnt = 0;
+	uint8_t *ptr = buf;
+	size_t   cnt = 0;
 
 	while (cnt < len) {
-		rnd = silofs_min(len - cnt, getentropy_max);
-		do_getentropy(ptr + cnt, rnd);
-		cnt += rnd;
+		cnt += do_getentropy(ptr + cnt, len - cnt);
 	}
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-
-/* Blum-Blum-Shub pseudo-random number generator, using p=383 q=503 */
-static uint64_t blum_blum_shub(uint64_t n)
-{
-	return (n * n) % 192649UL;
-}
-
-static uint64_t twang_mix64(uint64_t n)
-{
-	n = ~n + (n << 21);
-	n = n ^ (n >> 24);
-	n = n + (n << 3) + (n << 8);
-	n = n ^ (n >> 14);
-	n = n + (n << 2) + (n << 4);
-	n = n ^ (n >> 28);
-	n = n + (n << 31);
-
-	return n;
-}
-
-static void setup_udata(uint64_t u[4])
-{
-	struct timespec t;
-
-	silofs_clock_mono_now(&t);
-	u[0] = (uint64_t)t.tv_sec % 2654435761;
-	u[1] = (uint64_t)t.tv_nsec ^ 0xc6a4a7935bd1e995UL;
-	silofs_uptime(&t);
-	u[2] = (uint64_t)t.tv_sec;
-	u[3] = (uint64_t)t.tv_nsec ^ 0x5bd1e995UL;
-}
-
-static uint64_t prandom_seed(void)
-{
-	uint64_t u[4] = {};
-
-	setup_udata(u);
-	return silofs_xxh64(u, sizeof(u), (uint64_t)gettid());
-}
-
-void silofs_prandom(void *p, size_t n)
-{
-	uint16_t *d = p;
-	uint8_t  *q = p;
-	uint64_t  xx, bbs;
-
-	xx = prandom_seed();
-	for (size_t i = 0; i < (n / sizeof(*d)); ++i) {
-		bbs  = blum_blum_shub(xx);
-		d[i] = (uint16_t)bbs;
-		xx   = twang_mix64(xx + bbs);
-	}
-	if (n & 1) {
-		q[n - 1] = (uint8_t)xx;
-	}
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void
 prandgen_mkhash(struct silofs_prandgen *prng, struct silofs_hash256 *out_hash)
@@ -120,7 +62,7 @@ prandgen_mkhash(struct silofs_prandgen *prng, struct silofs_hash256 *out_hash)
 	d[di++ % nd] = (uint32_t)t.tv_nsec;
 	u            = (uint64_t)t.tv_nsec ^ 0xc6a4a7935bd1e995UL;
 	silofs_uptime(&t);
-	u ^= twang_mix64((uint64_t)t.tv_nsec);
+	u ^= silofs_twang64((uint64_t)t.tv_nsec);
 	d[di++ % nd] = (uint32_t)t.tv_sec * 0x85ebca6b;
 	d[di++ % nd] = (uint32_t)u;
 	d[di++ % nd] = (uint32_t)t.tv_nsec * 0x5bd1e995;
@@ -208,7 +150,7 @@ static void prandgen_prepare(struct silofs_prandgen *prng)
 
 static void prandgen_remix_xseed(struct silofs_prandgen *prng, uint64_t u)
 {
-	const uint64_t t = twang_mix64(u);
+	const uint64_t t = silofs_twang64(u);
 
 	prng->xseed ^= (uint32_t)t;
 	prng->xseed ^= (uint32_t)(t >> 32);

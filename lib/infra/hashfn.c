@@ -46,3 +46,16 @@ uint64_t silofs_xxh64(const void *buf, size_t len, uint64_t seed)
 {
 	return XXH64(buf, len, seed);
 }
+
+uint64_t silofs_twang64(uint64_t n)
+{
+	n = ~n + (n << 21);
+	n = n ^ (n >> 24);
+	n = n + (n << 3) + (n << 8);
+	n = n ^ (n >> 14);
+	n = n + (n << 2) + (n << 4);
+	n = n ^ (n >> 28);
+	n = n + (n << 31);
+
+	return n;
+}

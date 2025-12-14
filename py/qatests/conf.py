@@ -120,7 +120,7 @@ def _verify_metaref(metaref: MetaRef) -> None:
         raise ConfException(f"non-valid metaref format-revision: {metaref}")
     if metaref.meta.mode not in ("filesystem", "archive"):
         raise ConfException(f"non-valid metaref mode: {metaref}")
-    if len(metaref.meta.blobid) != 64:
+    if len(metaref.meta.blobid) != 112:
         raise ConfException(f"non-valid metaref blobid: {metaref}")
 
 

@@ -5,7 +5,6 @@ import shlex
 import subprocess
 import typing
 from pathlib import Path
-from uuid import UUID
 
 from . import log
 from . import utils
@@ -259,12 +258,11 @@ class _Silofs(SubcmdExec):
     def show_repo(self, pathname: Path) -> Path:
         return Path(self.execute_sub(["show", "repo", pathname]))
 
-    def show_boot(self, pathname: Path) -> typing.Tuple[str, str, UUID]:
+    def show_boot(self, pathname: Path) -> typing.Tuple[str, str]:
         boot_info = self.execute_sub(["show", "boot", pathname]).split()
         name = boot_info[0]
         addr = boot_info[1]
-        lvid = UUID(boot_info[2])
-        return (name, addr, lvid)
+        return (name, addr)
 
     def show_proc(self, pathname: Path) -> str:
         return self.execute_sub(["show", "proc", pathname])

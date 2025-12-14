@@ -125,7 +125,7 @@ class _Shell(SubcmdExec):
         SubcmdExec.__init__(self, "sh")
         self.env = os.environ.copy()
 
-    def run(
+    def _run(
         self,
         cmd: str,
         wdir: typing.Optional[Path] = None,
@@ -137,7 +137,7 @@ class _Shell(SubcmdExec):
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             cwd=str(wdir),
-            shell=True,
+            shell=False,
             universal_newlines=True,
             env=self._mkenv(xenv),
         ) as proc:
@@ -150,7 +150,7 @@ class _Shell(SubcmdExec):
         wdir: typing.Optional[Path] = None,
         xenv: typing.Optional[typing.Mapping[str, str]] = None,
     ) -> None:
-        ret = self.run(cmd, wdir, xenv)
+        ret = self._run(cmd, wdir, xenv)
         if ret != 0:
             raise SubcmdError("failed: " + cmd, ret=ret)
 

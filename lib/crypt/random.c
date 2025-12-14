@@ -161,6 +161,8 @@ int silofs_prandgen_init(struct silofs_prandgen *prng)
 {
 	int err;
 
+	STATICASSERT_EQ(sizeof(*prng), 1024);
+
 	memset(prng, 0, sizeof(*prng));
 	prng->cycle = 0;
 	prng->slot  = 0;

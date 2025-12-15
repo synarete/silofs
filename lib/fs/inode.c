@@ -654,7 +654,7 @@ static void ii_setup_sub(struct silofs_inode_info        *ii,
 {
 	silofs_ii_setup_xattr(ii);
 	if (silofs_ii_isdir(ii)) {
-		silofs_ii_setup_dir(ii, inp->parent_mode, 1);
+		silofs_ii_setup_dir(ii, inp->parent_mode, 1, inp->seed);
 	} else if (silofs_ii_isreg(ii)) {
 		silofs_ii_setup_reg(ii);
 	} else if (silofs_ii_islnk(ii)) {
@@ -664,19 +664,20 @@ static void ii_setup_sub(struct silofs_inode_info        *ii,
 	}
 }
 
-static void ii_set_generation(struct silofs_inode_info *ii, uint64_t gen)
+static void ii_set_generation(struct silofs_inode_info        *ii,
+                              const struct silofs_inew_params *inp)
 {
-	inode_set_generation(ii->inode, gen);
+	inode_set_generation(ii->inode, inp->generation);
 	silofs_ii_dirtify(ii);
 }
 
 void silofs_ii_setup_new(struct silofs_inode_info        *ii,
-                         const struct silofs_inew_params *inp, uint64_t gen)
+                         const struct silofs_inew_params *inp)
 {
 	ii_setup_inode(ii, inp);
 	ii_setup_sub(ii, inp);
 	ii_update_itimes(ii, SILOFS_IATTR_TIMES, &inp->ts);
-	ii_set_generation(ii, gen);
+	ii_set_generation(ii, inp);
 	silofs_ii_dirtify(ii);
 }
 

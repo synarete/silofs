@@ -3085,19 +3085,11 @@ claim_inode(struct silofs_task_ctx *task, struct silofs_inode_info **out_ii)
 	return 0;
 }
 
-static uint64_t next_igen(const struct silofs_task_ctx *task)
-{
-	struct silofs_sb_info *sbi = silofs_get_sbi(task);
-
-	return silofs_sbst_next_generation(sbi);
-}
-
 int silofs_spawn_inode(struct silofs_task_ctx          *task,
                        const struct silofs_inew_params *inp,
                        struct silofs_inode_info       **out_ii)
 {
-	uint64_t gen;
-	int      err;
+	int err;
 
 	err = check_itype(task, inp->mode);
 	if (err) {
@@ -3107,8 +3099,7 @@ int silofs_spawn_inode(struct silofs_task_ctx          *task,
 	if (err) {
 		return err;
 	}
-	gen = next_igen(task);
-	silofs_ii_setup_new(*out_ii, inp, gen);
+	silofs_ii_setup_new(*out_ii, inp);
 	return 0;
 }
 

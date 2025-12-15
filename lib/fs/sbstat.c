@@ -658,11 +658,7 @@ static fsfilcnt_t sbst_inodes_max(const struct silofs_sb_info *sbi)
 
 uint64_t silofs_sbst_next_generation(struct silofs_sb_info *sbi)
 {
-	uint64_t gen;
-
-	gen = spgs_inc_generation(&sbi->sb_spst_curr);
-	silofs_sbi_dirtify(sbi);
-	return gen;
+	return spgs_inc_generation(&sbi->sb_spst_curr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

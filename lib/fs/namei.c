@@ -418,20 +418,52 @@ inewp_set_ts(struct silofs_inew_params *inp, const struct timespec *ts)
 	memcpy(&inp->ts, ts, sizeof(inp->ts));
 }
 
+static bool inewp_isreg(const struct silofs_inew_params *inp)
+{
+	return S_ISREG(inp->mode);
+}
+
+static bool inewp_isdir(const struct silofs_inew_params *inp)
+{
+	return S_ISDIR(inp->mode);
+}
+
 static void inewp_set_by_parent(struct silofs_inew_params      *inp,
                                 const struct silofs_inode_info *parent_dii)
 {
-	const int    mask = SILOFS_INODEF_FTYPE2;
-	const mode_t mode = inp->mode;
+	const int mask = SILOFS_INODEF_FTYPE2;
 
-	if (parent_dii != nullptr) {
-		inp->parent_ino  = silofs_ii_ino(parent_dii);
-		inp->parent_mode = silofs_ii_mode(parent_dii);
-		if (S_ISREG(mode) || S_ISDIR(mode)) {
-			inp->flags =
-				make_inodef(silofs_ii_flags(parent_dii), mask);
-		}
+	if (parent_dii == nullptr) {
+		return;
 	}
+	inp->parent_ino  = silofs_ii_ino(parent_dii);
+	inp->parent_mode = silofs_ii_mode(parent_dii);
+	if (!inewp_isreg(inp) && !inewp_isdir(inp)) {
+		return;
+	}
+	inp->flags = make_inodef(silofs_ii_flags(parent_dii), mask);
+}
+
+static struct silofs_prandgen *prng_of(const struct silofs_task_ctx *task)
+{
+	return task->t_env->base.prng;
+}
+
+static struct silofs_sb_info *sbi_of(const struct silofs_task_ctx *task)
+{
+	return silofs_get_sbi(task);
+}
+
+static void inewp_set_generation(struct silofs_inew_params *inp,
+                                 struct silofs_sb_info     *sbi)
+{
+	inp->generation = silofs_sbst_next_generation(sbi);
+}
+
+static void
+inewp_set_seed(struct silofs_inew_params *inp, struct silofs_prandgen *prng)
+{
+	inp->seed = inewp_isdir(inp) ? silofs_prandgen_take64(prng) : 0;
 }
 
 void silofs_inew_params_of(const struct silofs_task_ctx   *task,
@@ -445,6 +477,8 @@ void silofs_inew_params_of(const struct silofs_task_ctx   *task,
 	inewp_set_creds(out_inp, task->t_creds);
 	inewp_set_ts(out_inp, &task->t_auth.ts);
 	inewp_set_by_parent(out_inp, parent_dii);
+	inewp_set_generation(out_inp, sbi_of(task));
+	inewp_set_seed(out_inp, prng_of(task));
 }
 
 static int spawn_inode(struct silofs_task_ctx         *task,

@@ -62,7 +62,7 @@ prandgen_mkhash(struct silofs_prandgen *prng, struct silofs_hash256 *out_hash)
 	d[di++ % nd] = (uint32_t)t.tv_nsec;
 	u            = (uint64_t)t.tv_nsec ^ 0xc6a4a7935bd1e995UL;
 	silofs_uptime(&t);
-	u ^= silofs_twang64((uint64_t)t.tv_nsec);
+	u ^= silofs_twang64((uint64_t)t.tv_nsec) ^ 0x9ae16a3b2f90404fULL;
 	d[di++ % nd] = (uint32_t)t.tv_sec * 0x85ebca6b;
 	d[di++ % nd] = (uint32_t)u;
 	d[di++ % nd] = (uint32_t)t.tv_nsec * 0x5bd1e995;
@@ -108,6 +108,7 @@ int silofs_prandgen_init(struct silofs_prandgen *prng)
 	memset(prng, 0, sizeof(*prng));
 	prng->cycle = 0;
 	prng->slot  = 0;
+	prng->count = 0;
 	err         = silofs_mdigest_init(&prng->mdigest);
 	if (err) {
 		return err;
@@ -121,7 +122,7 @@ void silofs_prandgen_fini(struct silofs_prandgen *prng)
 	memset(prng, 0, sizeof(*prng));
 }
 
-static uint64_t prandgen_take_u64(struct silofs_prandgen *prng)
+static uint64_t prandgen_consume_slot(struct silofs_prandgen *prng)
 {
 	const size_t i = prng->slot++ % ARRAY_SIZE(prng->prandom);
 
@@ -150,7 +151,8 @@ static void prandgen_prepare(struct silofs_prandgen *prng)
 
 static void prandgen_remix_xseed(struct silofs_prandgen *prng, uint64_t u)
 {
-	const uint64_t t = silofs_twang64(u);
+	const uint64_t c = (uint64_t)(prng->count++) ^ 0xc3a5c85c97cb3127ULL;
+	const uint64_t t = silofs_twang64(u ^ c);
 
 	prng->xseed ^= (uint32_t)t;
 	prng->xseed ^= (uint32_t)(t >> 32);
@@ -166,10 +168,18 @@ void silofs_prandgen_take(struct silofs_prandgen *prng, void *p, size_t n)
 		nb = silofs_min(n - k, sizeof(u));
 
 		prandgen_prepare(prng);
-		u = prandgen_take_u64(prng);
+		u = prandgen_consume_slot(prng);
 		prandgen_remix_xseed(prng, u);
 
 		memcpy(&q[k], &u, nb);
 		k += nb;
 	}
+}
+
+uint64_t silofs_prandgen_take64(struct silofs_prandgen *prng)
+{
+	uint64_t u;
+
+	silofs_prandgen_take(prng, &u, sizeof(u));
+	return u;
 }

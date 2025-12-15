@@ -86,6 +86,8 @@ struct silofs_inew_params {
 	ino_t               parent_ino;
 	mode_t              parent_mode;
 	enum silofs_inodef  flags;
+	uint64_t            generation;
+	uint64_t            seed;
 };
 
 bool silofs_ino_isnull(ino_t ino);
@@ -147,7 +149,7 @@ void silofs_ii_kill_suidgid(struct silofs_inode_info *ii);
 void silofs_ii_refresh_atime(struct silofs_inode_info *ii, bool to_volatile);
 
 void silofs_ii_setup_new(struct silofs_inode_info        *ii,
-                         const struct silofs_inew_params *inp, uint64_t gen);
+                         const struct silofs_inew_params *inp);
 
 void silofs_ii_stat_of(const struct silofs_inode_info *ii,
                        uint32_t sx_want_mask, struct silofs_stat *st);

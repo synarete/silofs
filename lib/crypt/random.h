@@ -26,7 +26,8 @@ struct silofs_prandgen {
 	uint32_t              entropy[24];
 	uint64_t              prandom[113];
 	uint64_t              cycle;
-	uint32_t              slot;
+	uint16_t              slot;
+	uint16_t              count;
 	uint32_t              xseed;
 	struct silofs_mdigest mdigest;
 };
@@ -38,5 +39,7 @@ int silofs_prandgen_init(struct silofs_prandgen *prng);
 void silofs_prandgen_fini(struct silofs_prandgen *prng);
 
 void silofs_prandgen_take(struct silofs_prandgen *prng, void *buf, size_t bsz);
+
+uint64_t silofs_prandgen_take64(struct silofs_prandgen *prng);
 
 #endif /* SILOFS_RANDOM_H_ */

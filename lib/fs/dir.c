@@ -1363,21 +1363,8 @@ int silofs_dir_make_hname(const struct silofs_inode_info *dir_ii,
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static uint64_t unique_seed(void)
-{
-	uint64_t        d[3];
-	struct timespec ts;
-
-	silofs_clock_mono_now(&ts);
-	d[0] = (uint64_t)ts.tv_nsec ^ 0xc3a5c85c97cb3127ULL;
-	d[1] = (uint64_t)ts.tv_sec ^ 0x9ae16a3b2f90404fULL;
-	d[2] = (uint64_t)gettid();
-
-	return silofs_xxh64(d, sizeof(d), silofs_twang64(d[2]));
-}
-
 void silofs_ii_setup_dir(struct silofs_inode_info *dir_ii, mode_t parent_mode,
-                         nlink_t nlink)
+                         nlink_t nlink, uint64_t seed)
 {
 	struct silofs_iattr iattr = {
 		.ia_size   = SILOFS_DIR_EMPTY_SIZE,
@@ -1388,7 +1375,7 @@ void silofs_ii_setup_dir(struct silofs_inode_info *dir_ii, mode_t parent_mode,
 		            SILOFS_IATTR_NLINK | SILOFS_IATTR_MODE
 	};
 
-	dirin_setup(dirin_of(dir_ii->inode), unique_seed());
+	dirin_setup(dirin_of(dir_ii->inode), seed);
 	silofs_ii_update_iattrs(dir_ii, &iattr);
 }
 

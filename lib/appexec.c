@@ -359,8 +359,8 @@ static int format_nil_space(struct silofs_task_ctx *task)
 static int
 spawn_rootdir(struct silofs_task_ctx *task, struct silofs_inode_info **out_ii)
 {
-	struct silofs_inew_params inp = { .flags = 0 };
-	struct silofs_inode_info *ii  = nullptr;
+	struct silofs_inew_params inp;
+	struct silofs_inode_info *ii;
 	int                       err;
 
 	silofs_inew_params_of(task, nullptr, S_IFDIR | 0755, 0, &inp);

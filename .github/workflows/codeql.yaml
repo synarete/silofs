@@ -1,0 +1,42 @@
+---
+name: "Silofs CodeQL"
+on:
+  push:
+    branches: ["next"]
+  pull_request:
+    branches: ["main"]
+  schedule:
+    - cron: "0 3 * * 0"
+permissions:
+  contents: read
+  security-events: write
+jobs:
+  analyze:
+    name: Analyze
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ["cpp", "python"]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          config-file: .github/codeql/codeql-config.yml
+      - name: Install build dependencies
+        run: sudo ./dist/deb/install-deb-deps.sh
+      - name: Build project
+        env:
+          CFLAGS: "-O2 -g"
+        run: |
+          ./bootstrap
+          ./configure
+          make
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{ matrix.language }}"

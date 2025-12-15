@@ -1,0 +1,15 @@
+---
+name: "Silofs CodeQL config"
+query-filters:
+  - exclude:
+      problem.severity: recommendation
+paths:
+  - lib
+  - cmd
+  - include
+  - mntd
+  - test
+paths-ignore:
+  - dist
+  - docs
+  - build-aux

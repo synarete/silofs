@@ -198,22 +198,22 @@ static void lnk_set_value_part(struct silofs_inode_info *lnk_ii, size_t slot,
 static const struct silofs_vaddr *
 syi_vaddr(const struct silofs_symval_info *syi)
 {
-	return silofs_vni_vaddr(&syi->sy_vni);
+	return silofs_vni_vaddr(&syi->syv_vni);
 }
 
 static void
 syi_dirtify(struct silofs_symval_info *syi, struct silofs_inode_info *ii)
 {
-	silofs_vni_dirtify(&syi->sy_vni, ii);
+	silofs_vni_dirtify(&syi->syv_vni, ii);
 }
 
 static int syi_recheck_symval(struct silofs_symval_info *syi)
 {
-	if (!silofs_vni_need_recheck(&syi->sy_vni)) {
+	if (!silofs_vni_need_recheck(&syi->syv_vni)) {
 		return 0;
 	}
 	/* TODO: recheck */
-	silofs_vni_set_rechecked(&syi->sy_vni);
+	silofs_vni_set_rechecked(&syi->syv_vni);
 	return 0;
 }
 

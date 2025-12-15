@@ -76,7 +76,7 @@ struct silofs_vnode_info {
 	int                      vn_asyncwr;
 };
 
-/* lsmap */
+/* logical-space map */
 struct silofs_lsmap_info {
 	struct silofs_vnode_info ls_vni;
 	struct silofs_lsmap     *lsm;
@@ -97,40 +97,40 @@ struct silofs_inode_info {
 	bool                      i_in_looseq;
 };
 
-/* xattr */
+/* xattr node */
 struct silofs_xanode_info {
 	struct silofs_vnode_info  xan_vni;
 	struct silofs_xattr_node *xan;
 };
 
-/* symval */
+/* symbolic-link value node */
 struct silofs_symval_info {
-	struct silofs_vnode_info    sy_vni;
+	struct silofs_vnode_info    syv_vni;
 	struct silofs_symlnk_value *syv;
 };
 
-/* dir-node */
-struct silofs_dnode_info {
-	struct silofs_vnode_info  dn_vni;
+/* dir-tree node */
+struct silofs_dtnode_info {
+	struct silofs_vnode_info  dtn_vni;
 	struct silofs_dtree_node *dtn;
 };
 
-/* file-node */
-struct silofs_finode_info {
-	struct silofs_vnode_info  fn_vni;
+/* file-tree node */
+struct silofs_ftnode_info {
+	struct silofs_vnode_info  ftn_vni;
 	struct silofs_ftree_node *ftn;
 };
 
-/* file-leaf */
-union silofs_fileaf_u {
+/* file-tree leaf */
+union silofs_ftleaf_u {
 	struct silofs_data_block1  *db1;
 	struct silofs_data_block4  *db4;
 	struct silofs_data_block64 *db;
 };
 
-struct silofs_fileaf_info {
-	struct silofs_vnode_info fl_vni;
-	union silofs_fileaf_u    flu;
+struct silofs_ftleaf_info {
+	struct silofs_vnode_info ftl_vni;
+	union silofs_ftleaf_u    ftl;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -255,11 +255,11 @@ struct silofs_xanode_info *silofs_xai_from_vni(struct silofs_vnode_info *vni);
 
 struct silofs_symval_info *silofs_syi_from_vni(struct silofs_vnode_info *vni);
 
-struct silofs_dnode_info *silofs_dni_from_vni(struct silofs_vnode_info *vni);
+struct silofs_dtnode_info *silofs_dni_from_vni(struct silofs_vnode_info *vni);
 
-struct silofs_finode_info *silofs_fni_from_vni(struct silofs_vnode_info *vni);
+struct silofs_ftnode_info *silofs_fni_from_vni(struct silofs_vnode_info *vni);
 
-struct silofs_fileaf_info *silofs_fli_from_vni(struct silofs_vnode_info *vni);
+struct silofs_ftleaf_info *silofs_fli_from_vni(struct silofs_vnode_info *vni);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 

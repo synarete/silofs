@@ -13,6 +13,7 @@ Checks: >
   -clang-analyzer-optin.core.EnumCastOutOfRange,
   -clang-analyzer-optin.performance.Padding,
   -clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling,
+  -clang-analyzer-valist.Uninitialized,
   misc-*,
   -misc-include-cleaner,
   -misc-no-recursion,

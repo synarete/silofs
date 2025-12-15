@@ -29,7 +29,7 @@ struct silofs_re_ctx {
 	struct silofs_arnode_info *ari;
 	struct silofs_alloc       *alloc;
 	struct silofs_repo        *repo;
-	struct silofs_regbs       *regbs;
+	struct silofs_vbs         *vbs;
 	struct silofs_laddr        sb_laddr;
 };
 
@@ -67,7 +67,7 @@ static int rec_init(struct silofs_re_ctx *re_ctx, struct silofs_task_ctx *task)
 	re_ctx->ari   = nullptr;
 	re_ctx->alloc = re_ctx->env->base.alloc;
 	re_ctx->repo  = re_ctx->env->base.repo;
-	re_ctx->regbs = &re_ctx->env->base.repo->re_regbs;
+	re_ctx->vbs   = &re_ctx->env->base.repo->re_vbs;
 	return 0;
 }
 
@@ -202,7 +202,7 @@ static int rec_fetch_arix_node(struct silofs_re_ctx *re_ctx)
 		return err;
 	}
 	silofs_ari_get_paddr(re_ctx->ari, &paddr);
-	err = silofs_load_arix_node(re_ctx->regbs, &paddr, arn_enc);
+	err = silofs_load_arix_node(re_ctx->vbs, &paddr, arn_enc);
 	if (err) {
 		goto out;
 	}

@@ -30,7 +30,7 @@ struct silofs_ar_ctx {
 	struct silofs_alloc       *alloc;
 	struct silofs_arnode_info *ari;
 	struct silofs_repo        *repo;
-	struct silofs_regbs       *regbs;
+	struct silofs_vbs         *vbs;
 };
 
 static int arc_arix_nmeta(const struct silofs_ar_ctx *ar_ctx,
@@ -110,7 +110,7 @@ static int arc_init(struct silofs_ar_ctx *ar_ctx, struct silofs_task_ctx *task)
 	ar_ctx->ari   = nullptr;
 	ar_ctx->alloc = ar_ctx->env->base.alloc;
 	ar_ctx->repo  = ar_ctx->env->base.repo;
-	ar_ctx->regbs = &ar_ctx->env->base.repo->re_regbs;
+	ar_ctx->vbs   = &ar_ctx->env->base.repo->re_vbs;
 
 	return arc_renew_ari(ar_ctx);
 }
@@ -121,7 +121,7 @@ static void arc_fini(struct silofs_ar_ctx *ar_ctx)
 	ar_ctx->task  = nullptr;
 	ar_ctx->env   = nullptr;
 	ar_ctx->repo  = nullptr;
-	ar_ctx->regbs = nullptr;
+	ar_ctx->vbs   = nullptr;
 	ar_ctx->alloc = nullptr;
 }
 
@@ -262,7 +262,7 @@ static int arc_store_arix_node(struct silofs_ar_ctx *ar_ctx)
 	}
 	silofs_calc_arix_paddr(arn_enc, arc_mdigest(ar_ctx), &paddr);
 
-	err = silofs_save_arix_node(ar_ctx->regbs, &paddr, arn_enc);
+	err = silofs_save_arix_node(ar_ctx->vbs, &paddr, arn_enc);
 	if (err) {
 		goto out;
 	}

@@ -68,5 +68,8 @@
 	} while (0) /* fallthrough */
 #endif
 
-/* */
+#if !defined(_ISOC23_SOURCE)
+#define nullptr NULL
+#endif
+
 #endif /* SILOFS_CCATTR_H_ */

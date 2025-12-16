@@ -640,7 +640,6 @@ def check_source_line(env: LintEnv, sl: SourceLine) -> None:
     check_no_relative_include(env, sl)
     check_no_sizeof_address(env, sl)
     check_struct_union_name(env, sl)
-    check_c23_keywords(env, sl)
     check_no_mixed_case(env, sl)
     check_underscore_prefix(env, sl)
     check_no_insecure_functions(env, sl)
@@ -651,6 +650,7 @@ def check_source_line(env: LintEnv, sl: SourceLine) -> None:
     check_std_includes(env, sl)
     check_includes_suffix(env, sl)
     if _is_src_file(sl.path):
+        check_c23_keywords(env, sl)
         check_no_excluded_keyword(env, sl)
         check_no_static_inline(env, sl)
 

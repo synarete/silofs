@@ -16,6 +16,7 @@
  */
 #define _GNU_SOURCE 1
 #include "configs.h"
+#include <silofs/ccattr.h>
 #include <silofs/errors.h>
 #include <errno.h>
 #include "utility.h"

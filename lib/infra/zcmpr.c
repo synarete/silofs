@@ -16,6 +16,7 @@
  */
 #include "configs.h"
 #include <zstd.h>
+#include <silofs/ccattr.h>
 #include <silofs/errors.h>
 #include "zcmpr.h"
 

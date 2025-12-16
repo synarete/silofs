@@ -19,6 +19,7 @@
 #include <sys/resource.h>
 #include <string.h>
 #include <limits.h>
+#include <silofs/ccattr.h>
 #include <silofs/consts.h>
 #include <silofs/macros.h>
 #include <silofs/syscall.h>

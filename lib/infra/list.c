@@ -15,6 +15,7 @@
  * GNU General Public License for more details.
  */
 #include "configs.h"
+#include <silofs/ccattr.h>
 #include <silofs/memalloc.h>
 #include "list.h"
 

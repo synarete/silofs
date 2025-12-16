@@ -23,6 +23,7 @@
 #include <string.h>
 #include <errno.h>
 #include <time.h>
+#include <silofs/ccattr.h>
 #include <silofs/macros.h>
 #include <silofs/syscall.h>
 #include <silofs/panic.h>

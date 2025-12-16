@@ -15,6 +15,7 @@
  * GNU General Public License for more details.
  */
 #include "configs.h"
+#include <silofs/ccattr.h>
 #include <silofs/macros.h>
 #include <silofs/panic.h>
 #include "avl.h"

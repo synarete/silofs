@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <silofs/ccattr.h>
 #include <silofs/syscall.h>
 
 static void *buffer_at(const void *buf, size_t step)

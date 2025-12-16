@@ -17,6 +17,7 @@
 #include "configs.h"
 #include <string.h>
 #include <stdint.h>
+#include <silofs/ccattr.h>
 #include "utility.h"
 #include "bytebuf.h"
 

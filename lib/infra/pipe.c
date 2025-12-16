@@ -21,6 +21,7 @@
 #include <stdbool.h>
 #include <errno.h>
 #include <limits.h>
+#include <silofs/ccattr.h>
 #include <silofs/syscall.h>
 #include <silofs/errors.h>
 #include <silofs/logging.h>

@@ -27,6 +27,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <limits.h>
+#include <silofs/ccattr.h>
 #include <silofs/consts.h>
 #include <silofs/macros.h>
 #include <silofs/errors.h>

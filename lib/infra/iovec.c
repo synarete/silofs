@@ -16,6 +16,7 @@
  */
 #include "configs.h"
 #include <string.h>
+#include <silofs/ccattr.h>
 #include <silofs/syscall.h>
 #include <silofs/errors.h>
 #include "iovec.h"

@@ -47,6 +47,7 @@
 #include <poll.h>
 #include <time.h>
 #include <sched.h>
+#include <silofs/ccattr.h>
 #include <silofs/syscall.h>
 
 #if _POSIX_C_SOURCE < 200809L

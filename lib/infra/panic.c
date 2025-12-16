@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <error.h>
+#include <silofs/ccattr.h>
 #include <silofs/macros.h>
 #include <silofs/panic.h>
 #include <silofs/logging.h>

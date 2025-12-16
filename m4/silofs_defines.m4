@@ -1,6 +1,7 @@
 AC_DEFUN([AX_SILOFS_NEED_DEFINES],
 [
   AX_SILOFS_NEED_POSIX_ACL_DEFINES
+  AX_SILOFS_WANT_NULLPTR
 ])
 
 AC_DEFUN([AX_SILOFS_NEED_POSIX_ACL_DEFINES],
@@ -11,7 +12,8 @@ AC_DEFUN([AX_SILOFS_NEED_POSIX_ACL_DEFINES],
         #include <linux/xattr.h>
         #include <string.h>
     ]],
-    [[  size_t acl_access_len = strlen(XATTR_NAME_POSIX_ACL_ACCESS);
+    [[
+        size_t acl_access_len = strlen(XATTR_NAME_POSIX_ACL_ACCESS);
         size_t acl_default_len = strlen(XATTR_NAME_POSIX_ACL_DEFAULT);
         return ((acl_access_len > 0) && (acl_default_len > 0)) ? 0 : 1;
     ]])
@@ -22,5 +24,26 @@ AC_DEFUN([AX_SILOFS_NEED_POSIX_ACL_DEFINES],
 ])
   if test $ac_cv_ax_type_socklen_t != yes; then
     AC_MSG_ERROR([Unable to find POSIX ACL defines])
+  fi
+])
+
+AC_DEFUN([AX_SILOFS_WANT_NULLPTR],
+[AC_CACHE_CHECK([for nullptr keyword], [ac_cv_nullptr_keyword],
+[AC_RUN_IFELSE(
+  [AC_LANG_PROGRAM(
+    [[
+        #include <stdlib.h>
+    ]],
+    [[
+        int *p = nullptr;
+        if (p == nullptr) { }
+    ]])
+  ],
+  [ac_cv_nullptr_keyword=yes],
+  [ac_cv_nullptr_keyword=no],
+  [ac_cv_nullptr_keyword=no])
+])
+  if test "$ac_cv_nullptr_keyword" = yes; then
+    AC_DEFINE(HAVE_NULLPTR, 1, [Define if nullptr keyword is supported])
   fi
 ])

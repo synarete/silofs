@@ -22,5 +22,8 @@ jobs:
         run: sudo apt-get update
       - name: Install deps
         run: sudo ./dist/deb/install-deb-deps.sh
-      - name: Build with GCC
-        run: make -f devel.mk V=1
+      - name: Build
+        run: |
+          ./bootstrap
+          ./configure
+          make

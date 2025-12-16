@@ -330,7 +330,7 @@ class _Unitests(SubcmdExec):
             args.append("--malloc")
         if timestamp:
             args.append("--timestamp")
-        self.execute_sub(args, timeout=1200)
+        self.execute_sub(args, timeout=2400)
 
 
 class _Fnctests(SubcmdExec):

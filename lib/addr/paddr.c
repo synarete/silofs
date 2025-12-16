@@ -16,8 +16,8 @@
  */
 #include "configs.h"
 #include <stdio.h>
-#include <silofs/string.h>
 #include "infra.h"
+#include "stringx.h"
 #include "crypt.h"
 #include "htox.h"
 #include "offlba.h"

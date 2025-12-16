@@ -17,7 +17,7 @@
 #include "configs.h"
 #include <silofs/macros.h>
 #include <silofs/errors.h>
-#include <silofs/string.h>
+#include "stringx.h"
 #include "infra.h"
 #include "passwd.h"
 

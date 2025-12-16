@@ -17,13 +17,12 @@
 #ifndef SILOFS_NAMEI_H_
 #define SILOFS_NAMEI_H_
 
-#include <silofs/string.h>
 #include <silofs/ioctls.h>
+#include "stringx.h"
 
 struct silofs_mdigest;
 struct silofs_task_ctx;
 struct silofs_sb_info;
-struct silofs_ioc_query;
 struct silofs_inew_params;
 struct silofs_laddr_visitor;
 struct silofs_mbrefs;

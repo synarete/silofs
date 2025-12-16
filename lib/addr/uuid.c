@@ -17,8 +17,8 @@
 #include "configs.h"
 #include <uuid/uuid.h>
 #include <errno.h>
-#include <silofs/string.h>
 #include "infra.h"
+#include "stringx.h"
 #include "htox.h"
 #include "uuid.h"
 

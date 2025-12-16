@@ -19,7 +19,7 @@
 
 #include <stdlib.h>
 #include <silofs/ondisk.h>
-#include <silofs/string.h>
+#include "stringx.h"
 #include "svolid.h"
 
 const struct silofs_blobid *silofs_blobid_none(void);

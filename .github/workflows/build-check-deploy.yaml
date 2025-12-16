@@ -1,5 +1,5 @@
 ---
-name: "Silofs CI"
+name: "Silofs build & check"
 on:
   push:
     tags:
@@ -17,7 +17,7 @@ jobs:
     name: Start workflow
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - run: echo "repo ${{ github.repository }} "
       - run: echo "ref ${{ github.ref }} ${{ github.sha }}"
       - run: echo "sha ${{ github.sha }}"
@@ -36,7 +36,7 @@ jobs:
     runs-on: ubuntu-24.04
     needs: prepare
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Update
         run: sudo apt-get update
       - name: Install deps
@@ -67,7 +67,7 @@ jobs:
       - gitlint
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Update
         run: sudo apt-get update
       - name: Install deps
@@ -92,7 +92,7 @@ jobs:
       - gitlint
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Update
         run: sudo apt-get update
       - name: Install deps
@@ -113,7 +113,7 @@ jobs:
       - codelint
       - gitlint
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Update
         run: sudo apt-get update
       - name: Install deps
@@ -131,7 +131,7 @@ jobs:
       - build-devel
       - check-py-code
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Update
         run: sudo apt-get update
       - name: Install deps
@@ -148,7 +148,7 @@ jobs:
       - build-devel
       - check-py-code
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Update
         run: sudo apt-get update
       - name: Install deps
@@ -191,7 +191,7 @@ jobs:
       - build-devel
       - check-py-code
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Update
         run: sudo apt-get update
       - name: Install deps
@@ -250,7 +250,7 @@ jobs:
       - codelint
       - gitlint
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Update
         run: sudo apt-get update
       - name: Install deps

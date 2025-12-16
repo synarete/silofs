@@ -1,0 +1,26 @@
+---
+name: "Silofs build on various CPU architectures"
+on:
+  push:
+    branches:
+      - next
+      - '!_*'
+      - '!gh-pages'
+jobs:
+  build-on-arch:
+    strategy:
+      matrix:
+        arch:
+          - {name: amd64, host: ubuntu-24.04}
+          - {name: arm64, host: ubuntu-24.04-arm}
+    runs-on: ${{ matrix.arch.host }}
+    env:
+      ARCH: ${{ matrix.arch.name }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Update
+        run: sudo apt-get update
+      - name: Install deps
+        run: sudo ./dist/deb/install-deb-deps.sh
+      - name: Build with GCC
+        run: make -f devel.mk V=1

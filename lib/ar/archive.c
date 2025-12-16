@@ -131,7 +131,7 @@ static int arc_stat_pack(const struct silofs_ar_ctx *ar_ctx,
 	struct stat st;
 	int         err;
 
-	err = silofs_repo_stat_blob(ar_ctx->repo, &paddr->blobid, &st);
+	err = silofs_vbs_stat_blob(ar_ctx->vbs, &paddr->blobid, &st);
 	if (err) {
 		return err;
 	}
@@ -145,12 +145,12 @@ static int arc_send_to_repo(const struct silofs_ar_ctx *ar_ctx,
 {
 	int err;
 
-	err = silofs_repo_require_blob(ar_ctx->repo, &paddr->blobid);
+	err = silofs_vbs_require_blob(ar_ctx->vbs, &paddr->blobid);
 	if (err) {
 		log_err("failed to create archive blob: err=%d", err);
 		return err;
 	}
-	err = silofs_repo_save_bseg(ar_ctx->repo, paddr, rov);
+	err = silofs_vbs_write_blob(ar_ctx->vbs, paddr, rov);
 	if (err) {
 		log_err("failed to save blob: err=%d", err);
 		return err;

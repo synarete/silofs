@@ -17,6 +17,7 @@
 #ifndef SILOFS_GCRY_H_
 #define SILOFS_GCRY_H_
 
+#include <stdbool.h>
 #include <gcrypt.h>
 #include <silofs/macros.h>
 

@@ -19,6 +19,7 @@
 
 #include <silofs/ccattr.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 /* current on-disk format revision number */
 #define SILOFS_FMT_REVISION (1)

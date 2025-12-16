@@ -14,7 +14,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include "configs.h"
+#include <silofs/configs.h>
 #include <linux/fs.h>
 #include <linux/fiemap.h>
 #include <linux/landlock.h>
@@ -171,7 +171,7 @@ static int differ_or_errno(void *ptr, void *errptr, void **out)
 
 	if (ptr == errptr) {
 		err  = errno_value();
-		*out = NULL;
+		*out = nullptr;
 	} else {
 		err  = 0;
 		*out = ptr;
@@ -639,7 +639,7 @@ int silofs_sys_mmap_anon(size_t length, int xflags, void **out_addr)
 	const int prot  = PROT_WRITE | PROT_READ;
 	const int flags = MAP_PRIVATE | MAP_ANONYMOUS;
 
-	return silofs_sys_mmap(NULL, length, prot, flags | xflags, -1, 0,
+	return silofs_sys_mmap(nullptr, length, prot, flags | xflags, -1, 0,
 	                       out_addr);
 }
 
@@ -744,7 +744,7 @@ int silofs_sys_getdents(int fd, void *buf, size_t bsz, struct dirent64 *dents,
 	long                              pos = 0;
 	size_t                            len;
 	size_t                            ndents_decoded = 0;
-	const struct linux_dirent64_view *d              = NULL;
+	const struct linux_dirent64_view *d              = nullptr;
 	void                             *ptr            = buf;
 	struct dirent64                  *dent           = dents;
 	struct dirent64                  *end            = dents + ndents;
@@ -966,7 +966,7 @@ int silofs_sys_sched_yield(void)
 
 int silofs_sys_landlock_abi_version(int *out_abi_version)
 {
-	return val_or_errnol(syscall(SYS_landlock_create_ruleset, NULL, 0,
+	return val_or_errnol(syscall(SYS_landlock_create_ruleset, nullptr, 0,
 	                             LANDLOCK_CREATE_RULESET_VERSION),
 	                     out_abi_version);
 }

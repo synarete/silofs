@@ -14,11 +14,11 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include "configs.h"
+#include <silofs/configs.h>
+#include <silofs/macros.h>
 #include <unistd.h>
 #include <string.h>
 #include <xxhash.h>
-#include <silofs/macros.h>
 #include "utility.h"
 #include "times.h"
 #include "hashfn.h"

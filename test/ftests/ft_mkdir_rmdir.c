@@ -15,10 +15,8 @@
  * GNU General Public License for more details.
  */
 #define _GNU_SOURCE 1
-#include <unistd.h>
-#include <errno.h>
-#include <dirent.h>
 #include "ftests.h"
+#include <dirent.h>
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 /*
@@ -189,7 +187,7 @@ static void test_mkdir_many_(struct ft_env *fte, size_t cnt)
 	int         fd  = -1;
 	int         dfd = -1;
 	struct stat st;
-	const char *name = NULL;
+	const char *name = nullptr;
 	const char *path = ft_new_path_unique(fte);
 
 	ft_mkdir(path, 0755);
@@ -259,7 +257,7 @@ static void test_walktree_recursive(struct ft_env *fte, const char *base)
 	int             fd   = -1;
 	off_t           pos  = -1;
 	off_t           off  = 0;
-	const char     *path = NULL;
+	const char     *path = nullptr;
 	struct dirent64 dent = { .d_ino = 0 };
 
 	ft_open(base, O_DIRECTORY | O_RDONLY, 0, &fd);
@@ -287,8 +285,8 @@ test_mktree_recursive(struct ft_env *fte, const char *parent, size_t id,
                       size_t nchilds, size_t depth, size_t depth_max)
 {
 	int         fd   = -1;
-	const char *path = NULL;
-	const char *name = NULL;
+	const char *path = nullptr;
+	const char *name = nullptr;
 
 	if (depth < depth_max) {
 		name = makename(fte, "d", depth, id);
@@ -310,8 +308,8 @@ static void
 test_rmtree_recursive(struct ft_env *fte, const char *parent, size_t id,
                       size_t nchilds, size_t depth, size_t depth_max)
 {
-	const char *path = NULL;
-	const char *name = NULL;
+	const char *path = nullptr;
+	const char *name = nullptr;
 
 	if (depth < depth_max) {
 		name = makename(fte, "d", depth, id);
@@ -440,7 +438,7 @@ static void test_mkdirat_nested_io_(struct ft_env *fte, size_t cnt)
 {
 	const char  *curr      = ft_curr_test_name(fte);
 	const char  *path      = ft_new_path_unique(fte);
-	const char  *name      = NULL;
+	const char  *name      = nullptr;
 	const size_t len       = FT_1M;
 	void        *buf1      = ft_new_buf_rands(fte, len);
 	void        *buf2      = ft_new_buf_rands(fte, len);

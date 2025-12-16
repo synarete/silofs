@@ -49,7 +49,7 @@ LT_PREREQ([2.2])
 LT_INIT
 
 dnl Generate output:
-AC_CONFIG_HEADERS([include/config.h])
+AC_CONFIG_HEADERS([include/silofs/config.h])
 AC_CONFIG_FILES([common.mk])
 AC_CONFIG_FILES([sedsub.mk])
 AC_CONFIG_FILES([Makefile])

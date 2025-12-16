@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include "configs.h"
+#include <silofs/configs.h>
+#include <silofs/panic.h>
 #include <string.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <limits.h>
-#include <silofs/panic.h>
 #include "strchr.h"
 #include "strview.h"
 
@@ -99,7 +99,7 @@ void silofs_strview_init_by(struct silofs_strview       *sv,
 
 void silofs_strview_fini(struct silofs_strview *sv)
 {
-	sv->str = NULL;
+	sv->str = nullptr;
 	sv->len = 0;
 }
 
@@ -132,7 +132,7 @@ size_t silofs_strview_offset(const struct silofs_strview *sv, const char *p)
 {
 	ptrdiff_t dif;
 
-	if (p == NULL) {
+	if (p == nullptr) {
 		return strview_npos();
 	}
 	if (p < sv->str) {
@@ -264,7 +264,7 @@ size_t silofs_strview_nfind(const struct silofs_strview *sv, size_t pos,
 {
 	const size_t sz  = sv->len;
 	const char  *dat = sv->str;
-	const char  *p   = NULL;
+	const char  *p   = nullptr;
 
 	if (pos < sz) {
 		if (n > 1) {
@@ -284,7 +284,7 @@ silofs_strview_find_chr(const struct silofs_strview *sv, size_t pos, char c)
 {
 	const size_t sz  = sv->len;
 	const char  *dat = sv->str;
-	const char  *p   = NULL;
+	const char  *p   = nullptr;
 
 	if (pos < sz) {
 		p = silofs_str_find_chr(dat + pos, sz - pos, c);
@@ -305,7 +305,7 @@ size_t silofs_strview_nrfind(const struct silofs_strview *sv, size_t pos,
 	const size_t sz  = sv->len;
 	const char  *dat = sv->str;
 	const size_t k   = (pos < sz) ? pos + 1 : sz;
-	const char  *p   = NULL;
+	const char  *p   = nullptr;
 	const char  *q   = s;
 
 	if (n == 0) {
@@ -344,7 +344,7 @@ size_t silofs_strview_nfind_first_of(const struct silofs_strview *sv,
 {
 	const size_t sz  = sv->len;
 	const char  *dat = sv->str;
-	const char  *p   = NULL;
+	const char  *p   = nullptr;
 	const char  *q   = s;
 
 	if ((n != 0) && (pos < sz)) {
@@ -373,7 +373,7 @@ size_t silofs_strview_nfind_last_of(const struct silofs_strview *sv,
 {
 	const size_t sz  = sv->len;
 	const char  *dat = sv->str;
-	const char  *p   = NULL;
+	const char  *p   = nullptr;
 	const char  *q   = s;
 
 	if (n != 0) {
@@ -401,7 +401,7 @@ size_t silofs_strview_nfind_first_not_of(const struct silofs_strview *sv,
 {
 	const size_t sz  = sv->len;
 	const char  *dat = sv->str;
-	const char  *p   = NULL;
+	const char  *p   = nullptr;
 	const char  *q   = s;
 
 	if (pos < sz) {
@@ -424,7 +424,7 @@ size_t silofs_strview_find_first_not(const struct silofs_strview *sv,
 {
 	const char  *dat = sv->str;
 	const size_t sz  = sv->len;
-	const char  *p   = NULL;
+	const char  *p   = nullptr;
 
 	if (pos < sz) {
 		p = silofs_str_find_first_not_eq(dat + pos, sz - pos, c);
@@ -445,7 +445,7 @@ size_t silofs_strview_nfind_last_not_of(const struct silofs_strview *sv,
 {
 	const char  *dat = sv->str;
 	const size_t sz  = sv->len;
-	const char  *p   = NULL;
+	const char  *p   = nullptr;
 	const char  *q   = s;
 
 	if (sz != 0) {
@@ -467,7 +467,7 @@ size_t silofs_strview_find_last_not(const struct silofs_strview *sv,
 {
 	const size_t sz = sv->len;
 	const size_t k  = (pos < sz) ? pos + 1 : sz;
-	const char  *p  = NULL;
+	const char  *p  = nullptr;
 
 	p = silofs_str_find_last_not_eq(sv->str, k, c);
 	return silofs_strview_offset(sv, p);
@@ -709,7 +709,7 @@ void silofs_strview_nstrip_any_of(const struct silofs_strview *sv,
                                   const char *set, size_t n,
                                   struct silofs_strview *out_sv)
 {
-	struct silofs_strview sub = { .str = NULL };
+	struct silofs_strview sub = { .str = nullptr };
 
 	silofs_strview_ntrim_any_of(sv, set, n, &sub);
 	silofs_strview_nchop_any_of(&sub, set, n, out_sv);
@@ -718,7 +718,7 @@ void silofs_strview_nstrip_any_of(const struct silofs_strview *sv,
 void silofs_strview_strip_chr(const struct silofs_strview *sv, char c,
                               struct silofs_strview *out_sv)
 {
-	struct silofs_strview sub = { .str = NULL };
+	struct silofs_strview sub = { .str = nullptr };
 
 	silofs_strview_trim_chr(sv, c, &sub);
 	silofs_strview_chop_chr(&sub, c, out_sv);
@@ -782,7 +782,7 @@ void silofs_strview_nfind_next_token(const struct silofs_strview *sv,
                                      const char *seps, size_t n,
                                      struct silofs_strview *out_sv)
 {
-	struct silofs_strview sub = { .str = NULL };
+	struct silofs_strview sub = { .str = nullptr };
 	const size_t          sz  = sv->len;
 	size_t                i;
 
@@ -795,7 +795,7 @@ void silofs_strview_find_next_token_chr(const struct silofs_strview *sv,
                                         const struct silofs_strview *tok,
                                         char sep, struct silofs_strview *out)
 {
-	struct silofs_strview sub = { .str = NULL };
+	struct silofs_strview sub = { .str = nullptr };
 	const size_t          sz  = sv->len;
 	size_t                i;
 
@@ -820,7 +820,7 @@ int silofs_strview_ntokenize(const struct silofs_strview *ss, const char *seps,
 {
 	size_t                 ntok = 0;
 	struct silofs_strview  tok;
-	struct silofs_strview *tgt = NULL;
+	struct silofs_strview *tgt = nullptr;
 
 	silofs_strview_nfind_token(ss, seps, n, &tok);
 	while (!silofs_strview_isempty(&tok)) {
@@ -842,7 +842,7 @@ int silofs_strview_tokenize_chr(const struct silofs_strview *ss, char sep,
 {
 	size_t                 ntok = 0;
 	struct silofs_strview  tok;
-	struct silofs_strview *tgt = NULL;
+	struct silofs_strview *tgt = nullptr;
 
 	silofs_strview_find_token_chr(ss, sep, &tok);
 	while (!silofs_strview_isempty(&tok)) {
@@ -1030,7 +1030,7 @@ void silofs_strview_strip_if(const struct silofs_strview *sv,
                              silofs_chr_testif_fn         fn,
                              struct silofs_strview       *out_sv)
 {
-	struct silofs_strview sub = { .str = NULL };
+	struct silofs_strview sub = { .str = nullptr };
 
 	silofs_strview_trim_if(sv, fn, &sub);
 	silofs_strview_chop_if(&sub, fn, out_sv);

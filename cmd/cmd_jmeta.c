@@ -29,7 +29,7 @@ static char *cmd_current_time(void)
 	struct tm tm;
 
 	time(&curr_tm);
-	if (localtime_r(&curr_tm, &tm) == NULL) {
+	if (localtime_r(&curr_tm, &tm) == nullptr) {
 		cmd_diez("json: failed get local time");
 	}
 	if (strftime(ts, sizeof(ts), "%Y-%m-%d %H:%M:%S", &tm) == 0) {
@@ -43,7 +43,7 @@ static json_t *cmd_json_object(void)
 	json_t *jobj;
 
 	jobj = json_object();
-	if (jobj == NULL) {
+	if (jobj == nullptr) {
 		cmd_diez("json: failed to create object");
 	}
 	return jobj;
@@ -54,7 +54,7 @@ static json_t *cmd_json_string(const char *s)
 	json_t *jstr;
 
 	jstr = json_string(s);
-	if (jstr == NULL) {
+	if (jstr == nullptr) {
 		cmd_diez("json: failed to create string: '%s'", s);
 	}
 	return jstr;
@@ -65,7 +65,7 @@ static json_t *cmd_json_integer(long n)
 	json_t *jint;
 
 	jint = json_integer(n);
-	if (jint == NULL) {
+	if (jint == nullptr) {
 		cmd_diez("json: failed to create integer: %ld", n);
 	}
 	return jint;
@@ -98,7 +98,7 @@ static char *cmd_json_dumps(json_t *root)
 	char *out;
 
 	out = json_dumps(root, JSON_INDENT(4));
-	if (out == NULL) {
+	if (out == nullptr) {
 		cmd_diez("json: failed to dumps");
 	}
 	return out;
@@ -110,7 +110,7 @@ static json_t *cmd_json_loads(const char *jtxt)
 	json_error_t jerr;
 
 	jobj = json_loads(jtxt, 0, &jerr);
-	if (jobj == NULL) {
+	if (jobj == nullptr) {
 		cmd_diez("json: failed to parse: text='%s' line=%d column=%d",
 		         jerr.text, jerr.line, jerr.column);
 	}
@@ -122,7 +122,7 @@ static json_t *cmd_json_object_get(const json_t *jobj, const char *key)
 	json_t *jsub;
 
 	jsub = json_object_get(jobj, key);
-	if (jsub == NULL) {
+	if (jsub == nullptr) {
 		cmd_diez("json: failed to parse: key='%s'", key);
 	}
 	return jsub;
@@ -165,10 +165,10 @@ static const char cmd_jkey_blobid[]         = "blobid";
 static void cmd_encode_meta_json(const struct silofs_blobid *blobid,
                                  bool is_archive, char **out_json)
 {
-	json_t *root = NULL;
-	json_t *meta = NULL;
-	json_t *jobj = NULL;
-	char   *tms  = NULL;
+	json_t *root = nullptr;
+	json_t *meta = nullptr;
+	json_t *jobj = nullptr;
+	char   *tms  = nullptr;
 
 	root = cmd_json_object();
 
@@ -226,9 +226,9 @@ static void cmd_decode_meta_mode(const char *str, bool want_archive)
 static void cmd_decode_meta_json(const char *jtxt, bool want_archive,
                                  struct silofs_blobid *out_blobid)
 {
-	json_t *root = NULL;
-	json_t *meta = NULL;
-	json_t *jobj = NULL;
+	json_t *root = nullptr;
+	json_t *meta = nullptr;
+	json_t *jobj = nullptr;
 
 	root = cmd_json_loads(jtxt);
 	meta = cmd_json_object_get(root, cmd_jkey_meta);
@@ -306,7 +306,7 @@ static void
 cmd_save_metaref_as_json(int dfd, const char *name,
                          const struct silofs_blobid *blobid, bool is_archive)
 {
-	char *jtxt = NULL;
+	char *jtxt = nullptr;
 
 	cmd_encode_meta_json(blobid, is_archive, &jtxt);
 	cmd_save_jref_at(dfd, name, jtxt);
@@ -337,7 +337,7 @@ static char *cmd_load_jref_at(int dfd, const char *name)
 {
 	struct stat  st            = { .st_mode = 0 };
 	const size_t jtxt_size_max = 1 << 20;
-	char        *jtxt          = NULL;
+	char        *jtxt          = nullptr;
 	size_t       len           = 0;
 	int          fd            = -1;
 	int          err;
@@ -370,7 +370,7 @@ static void
 cmd_load_metaref_from_json(int dfd, const char *name, bool want_archive,
                            struct silofs_blobid *out_blobid)
 {
-	char *jtxt = NULL;
+	char *jtxt = nullptr;
 
 	jtxt = cmd_load_jref_at(dfd, name);
 	cmd_decode_meta_json(jtxt, want_archive, out_blobid);

@@ -78,11 +78,11 @@ static struct ut_tgroup const g_ut_tgroups[] = {
 
 static void *ut_malloc_safe(size_t size)
 {
-	void *ptr = NULL;
+	void *ptr = nullptr;
 	int   err;
 
 	err = posix_memalign(&ptr, 64, size);
-	if (err || (ptr == NULL)) {
+	if (err || (ptr == nullptr)) {
 		error(EXIT_FAILURE, err, "malloc failed: size=%lu", size);
 		abort(); /* makes gcc '-fanalyzer' happy */
 	}
@@ -91,7 +91,7 @@ static void *ut_malloc_safe(size_t size)
 
 static void ut_free_safe(void *ptr, size_t size)
 {
-	if (ptr != NULL) {
+	if (ptr != nullptr) {
 		memset(ptr, 0xFF, ut_min(size, 64));
 		free(ptr);
 	}
@@ -104,7 +104,7 @@ static void ute_init(struct ut_env *ute, struct ut_args *args)
 	memset(ute, 0, sizeof(*ute));
 	silofs_mutex_init(&ute->mutex);
 	ute->args         = args;
-	ute->malloc_list  = NULL;
+	ute->malloc_list  = nullptr;
 	ute->nbytes_alloc = 0;
 	ute->unique_opid  = 1;
 	ute->ftype        = SILOFS_FILE_TYPE1;
@@ -114,9 +114,9 @@ static void ute_init(struct ut_env *ute, struct ut_args *args)
 
 static void ute_cleanup(struct ut_env *ute)
 {
-	if (ute->env != NULL) {
+	if (ute->env != nullptr) {
 		silofs_destroy_env(ute->env);
-		ute->env = NULL;
+		ute->env = nullptr;
 	}
 }
 
@@ -422,7 +422,7 @@ static void ut_post_test(struct ut_env *ute)
 
 static void ut_run_tests_group(struct ut_env *ute, const struct ut_tgroup *tg)
 {
-	const struct ut_testdef *td = NULL;
+	const struct ut_testdef *td = nullptr;
 
 	for (size_t i = 0; i < tg->tests->len; ++i) {
 		td = &tg->tests->arr[i];
@@ -630,11 +630,11 @@ char *ut_strndup(struct ut_env *ute, const char *str, size_t len)
 
 static void ut_do_freeall(struct ut_env *ute)
 {
-	struct ut_malloc_chunk *mnext  = NULL;
-	struct ut_malloc_chunk *mchunk = NULL;
+	struct ut_malloc_chunk *mnext  = nullptr;
+	struct ut_malloc_chunk *mchunk = nullptr;
 
 	mchunk = ute->malloc_list;
-	while (mchunk != NULL) {
+	while (mchunk != nullptr) {
 		mnext = mchunk->next;
 		ut_do_free(ute, mchunk);
 		mchunk = mnext;
@@ -642,7 +642,7 @@ static void ut_do_freeall(struct ut_env *ute)
 	silofs_assert_eq(ute->nbytes_alloc, 0);
 
 	ute->nbytes_alloc = 0;
-	ute->malloc_list  = NULL;
+	ute->malloc_list  = nullptr;
 }
 
 void ut_freeall(struct ut_env *ute)
@@ -685,7 +685,7 @@ void ut_randfill(struct ut_env *ute, void *buf, size_t bsz)
 
 void *ut_randbuf(struct ut_env *ute, size_t bsz)
 {
-	uint8_t *buf = NULL;
+	uint8_t *buf = nullptr;
 
 	if (bsz > 0) {
 		buf = ut_malloc(ute, bsz);
@@ -709,7 +709,8 @@ long *ut_randseq(struct ut_env *ute, size_t len, long base)
 
 	arr = ut_zerobuf(ute, len * sizeof(*arr));
 	pos = ut_randbuf(ute, len * sizeof(*pos));
-	if ((arr != NULL) && (pos != NULL)) { /* make gcc-analyzer happy */
+	if ((arr != nullptr) &&
+	    (pos != nullptr)) { /* make gcc-analyzer happy */
 		for (size_t i = 0; i < len; ++i) {
 			arr[i] = base++;
 		}
@@ -741,7 +742,7 @@ char *ut_randstr(struct ut_env *ute, size_t len)
 	char *str;
 
 	str = ut_randbuf(ute, len + 1);
-	if (str != NULL) { /* make gcc-analyzer happy */
+	if (str != nullptr) { /* make gcc-analyzer happy */
 		ut_force_alnum(str, len);
 		str[len] = '\0';
 	}

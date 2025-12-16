@@ -51,7 +51,7 @@ static void cmd_umount_parse_optargs(struct cmd_umount_ctx *ctx)
 		{ "lazy", 'l', 0 },
 		{ "force", 'f', 0 },
 		{ "help", 'h', 0 },
-		{ NULL, 0, 0 },
+		{ nullptr, 0, 0 },
 	};
 	struct cmd_optargs opa;
 	int                opt_chr = 1;
@@ -86,14 +86,14 @@ static void cmd_umount_finalize(struct cmd_umount_ctx *ctx)
 {
 	cmd_pstrfree(&ctx->in_args.mntpoint_real);
 	cmd_pstrfree(&ctx->in_args.mntpoint);
-	cmd_umount_ctx_p = NULL;
+	cmd_umount_ctx_p = nullptr;
 }
 
 static void cmd_umount_atexit(void)
 {
 	struct cmd_umount_ctx *ctx = cmd_umount_ctx_p;
 
-	if (ctx != NULL) {
+	if (ctx != nullptr) {
 		cmd_umount_finalize(ctx);
 	}
 }
@@ -143,7 +143,7 @@ static void cmd_umount_prepare(struct cmd_umount_ctx *ctx)
 
 static const char *cmd_umount_dirpath(const struct cmd_umount_ctx *ctx)
 {
-	return (ctx->in_args.mntpoint_real != NULL) ?
+	return (ctx->in_args.mntpoint_real != nullptr) ?
 	               ctx->in_args.mntpoint_real :
 	               ctx->in_args.mntpoint;
 }

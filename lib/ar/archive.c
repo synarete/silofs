@@ -14,7 +14,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include "configs.h"
+#include <silofs/configs.h>
 #include "infra.h"
 #include "bstore.h"
 #include "fs.h"
@@ -73,11 +73,11 @@ static int arc_arix_cargs(const struct silofs_ar_ctx *ar_ctx,
 static void
 arc_rebind_ari(struct silofs_ar_ctx *ar_ctx, struct silofs_arnode_info *abi)
 {
-	if (ar_ctx->ari != NULL) {
+	if (ar_ctx->ari != nullptr) {
 		silofs_ari_del(ar_ctx->ari, ar_ctx->alloc);
-		ar_ctx->ari = NULL;
+		ar_ctx->ari = nullptr;
 	}
-	if (abi != NULL) {
+	if (abi != nullptr) {
 		ar_ctx->ari = abi;
 	}
 }
@@ -85,15 +85,15 @@ arc_rebind_ari(struct silofs_ar_ctx *ar_ctx, struct silofs_arnode_info *abi)
 static int arc_renew_ari(struct silofs_ar_ctx *ar_ctx)
 {
 	struct silofs_pmeta        pmeta;
-	struct silofs_arnode_info *ari = NULL;
+	struct silofs_arnode_info *ari = nullptr;
 
 	arc_default_arix_pmeta(ar_ctx, &pmeta);
 	ari = silofs_ari_new(ar_ctx->alloc, &pmeta);
-	if (ari == NULL) {
+	if (ari == nullptr) {
 		return -SILOFS_ENOMEM;
 	}
 	silofs_ari_set_btime(ari, &ar_ctx->now);
-	if (ar_ctx->ari != NULL) {
+	if (ar_ctx->ari != nullptr) {
 		silofs_ari_set_next(ari, &ar_ctx->ari->arn_pmeta);
 	}
 
@@ -107,7 +107,7 @@ static int arc_init(struct silofs_ar_ctx *ar_ctx, struct silofs_task_ctx *task)
 	silofs_clock_real_now(&ar_ctx->now);
 	ar_ctx->task  = task;
 	ar_ctx->env   = task->t_env;
-	ar_ctx->ari   = NULL;
+	ar_ctx->ari   = nullptr;
 	ar_ctx->alloc = ar_ctx->env->base.alloc;
 	ar_ctx->repo  = ar_ctx->env->base.repo;
 	ar_ctx->vbs   = &ar_ctx->env->base.repo->re_vbs;
@@ -117,12 +117,12 @@ static int arc_init(struct silofs_ar_ctx *ar_ctx, struct silofs_task_ctx *task)
 
 static void arc_fini(struct silofs_ar_ctx *ar_ctx)
 {
-	arc_rebind_ari(ar_ctx, NULL);
-	ar_ctx->task  = NULL;
-	ar_ctx->env   = NULL;
-	ar_ctx->repo  = NULL;
-	ar_ctx->vbs   = NULL;
-	ar_ctx->alloc = NULL;
+	arc_rebind_ari(ar_ctx, nullptr);
+	ar_ctx->task  = nullptr;
+	ar_ctx->env   = nullptr;
+	ar_ctx->repo  = nullptr;
+	ar_ctx->vbs   = nullptr;
+	ar_ctx->alloc = nullptr;
 }
 
 static int arc_stat_pack(const struct silofs_ar_ctx *ar_ctx,
@@ -204,11 +204,11 @@ static int arc_archive_segdata(const struct silofs_ar_ctx *ar_ctx,
                                const struct silofs_laddr *laddr, size_t len,
                                struct silofs_ar_desc *out_ard)
 {
-	void *seg = NULL;
+	void *seg = nullptr;
 	int   err;
 
 	seg = silofs_memalloc(ar_ctx->alloc, len, 0);
-	if (seg == NULL) {
+	if (seg == nullptr) {
 		return -SILOFS_ENOMEM;
 	}
 	err = arc_load_seg(ar_ctx, laddr, seg, len);
@@ -228,7 +228,7 @@ out:
 
 static struct silofs_arix_node *arc_new_arix_node(struct silofs_ar_ctx *ar_ctx)
 {
-	struct silofs_arix_node *arn = NULL;
+	struct silofs_arix_node *arn = nullptr;
 
 	arn = silofs_memalloc(ar_ctx->alloc, sizeof(*arn),
 	                      SILOFS_ALLOCF_BZERO);
@@ -249,7 +249,7 @@ static int arc_store_arix_node(struct silofs_ar_ctx *ar_ctx)
 	int                      err = -SILOFS_ENOMEM;
 
 	arn_enc = arc_new_arix_node(ar_ctx);
-	if (arn_enc == NULL) {
+	if (arn_enc == nullptr) {
 		goto out;
 	}
 	err = arc_arix_cargs(ar_ctx, &ar_cargs);

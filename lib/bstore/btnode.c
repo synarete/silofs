@@ -14,7 +14,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include "configs.h"
+#include <silofs/configs.h>
 #include "infra.h"
 #include "addr.h"
 #include "btnode.h"
@@ -491,7 +491,7 @@ silofs_create_cached_btnode(struct silofs_pcache      *pcache,
 
 	pni = silofs_pcache_create_pnode(pcache, pmeta);
 	bti = silofs_bti_from_pni(pni);
-	if ((bti != NULL) && spawn) {
+	if ((bti != nullptr) && spawn) {
 		bti_setup_spawned(bti);
 	}
 	return bti;

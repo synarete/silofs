@@ -88,7 +88,7 @@ static void ut_create_unlink_random_(struct ut_env *ute, size_t nfiles,
                                      size_t bsz, off_t off)
 {
 	const char  *name  = UT_NAME;
-	const char **fname = NULL;
+	const char **fname = nullptr;
 	const long  *keys  = ut_randseq(ute, nfiles, 0);
 	ino_t        dino  = 0;
 
@@ -236,8 +236,8 @@ static void ut_link_rand_names(struct ut_env *ute)
 	const char  *name     = UT_NAME;
 	const size_t nlinks   = 10000; /* XXX check with large */
 	const size_t name_max = NAME_MAX;
-	char        *lname    = NULL;
-	char       **links    = NULL;
+	char        *lname    = nullptr;
+	char       **links    = nullptr;
 	size_t       name_len;
 	ino_t        dino = 0;
 	ino_t        ino  = 0;

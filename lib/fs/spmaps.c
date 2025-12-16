@@ -14,7 +14,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include "configs.h"
+#include <silofs/configs.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <limits.h>
@@ -200,7 +200,7 @@ static void spnode_set_uaddr_of(struct silofs_spmap_node *spn, off_t voff,
 
 static size_t spnode_count_nactive(const struct silofs_spmap_node *spn)
 {
-	const struct silofs_spmap_ref *spr = NULL;
+	const struct silofs_spmap_ref *spr = nullptr;
 	const size_t nslots_max            = ARRAY_SIZE(spn->sn_subrefs);
 	size_t       count                 = 0;
 
@@ -217,8 +217,8 @@ static size_t spnode_count_nactive(const struct silofs_spmap_node *spn)
 static void spnode_clone_subrefs(struct silofs_spmap_node       *spn,
                                  const struct silofs_spmap_node *sn_other)
 {
-	struct silofs_spmap_ref       *spr       = NULL;
-	const struct silofs_spmap_ref *spr_other = NULL;
+	struct silofs_spmap_ref       *spr       = nullptr;
+	const struct silofs_spmap_ref *spr_other = nullptr;
 	const size_t nslots_max                  = ARRAY_SIZE(spn->sn_subrefs);
 
 	for (size_t slot = 0; slot < nslots_max; ++slot) {
@@ -500,14 +500,14 @@ enum silofs_mtype silofs_sli_refmtype(const struct silofs_spleaf_info *sli)
 
 void silofs_sli_incref(struct silofs_spleaf_info *sli)
 {
-	if (likely(sli != NULL)) {
+	if (likely(sli != nullptr)) {
 		silofs_uni_incref(sli_uni(sli));
 	}
 }
 
 void silofs_sli_decref(struct silofs_spleaf_info *sli)
 {
-	if (likely(sli != NULL)) {
+	if (likely(sli != nullptr)) {
 		silofs_uni_decref(sli_uni(sli));
 	}
 }
@@ -732,7 +732,7 @@ void silofs_sli_resolve_lmap(const struct silofs_spleaf_info *sli,
 {
 	struct silofs_laddr             laddr  = { .pos = -1 };
 	const struct silofs_spmap_leaf *sl     = sli->sl;
-	const struct silofs_lbk_ref    *lbr    = NULL;
+	const struct silofs_lbk_ref    *lbr    = nullptr;
 	const size_t                    nslots = ARRAY_SIZE(sl->sl_lbrs);
 
 	STATICASSERT_EQ(ARRAY_SIZE(out_lmap->laddr), ARRAY_SIZE(sl->sl_lbrs));
@@ -774,14 +774,14 @@ silofs_sni_laddr(const struct silofs_spnode_info *sni)
 
 void silofs_sni_incref(struct silofs_spnode_info *sni)
 {
-	if (likely(sni != NULL)) {
+	if (likely(sni != nullptr)) {
 		silofs_uni_incref(sni_uni(sni));
 	}
 }
 
 void silofs_sni_decref(struct silofs_spnode_info *sni)
 {
-	if (likely(sni != NULL)) {
+	if (likely(sni != nullptr)) {
 		silofs_uni_decref(sni_uni(sni));
 	}
 }
@@ -956,7 +956,7 @@ void silofs_sni_resolve_lmap(const struct silofs_spnode_info *sni,
 {
 	struct silofs_uaddr             uaddr = { .voff = -1 };
 	const struct silofs_spmap_node *sn    = sni->sn;
-	const struct silofs_spmap_ref  *spr   = NULL;
+	const struct silofs_spmap_ref  *spr   = nullptr;
 	size_t                          len;
 
 	STATICASSERT_EQ(ARRAY_SIZE(out_lmap->laddr),

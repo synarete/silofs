@@ -14,7 +14,11 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include "configs.h"
+#include <silofs/configs.h>
+#include <silofs/macros.h>
+#include <silofs/syscall.h>
+#include <silofs/panic.h>
+#include <silofs/thread.h>
 #include <unistd.h>
 #include <signal.h>
 #include <pthread.h>
@@ -23,11 +27,6 @@
 #include <string.h>
 #include <errno.h>
 #include <time.h>
-#include <silofs/ccattr.h>
-#include <silofs/macros.h>
-#include <silofs/syscall.h>
-#include <silofs/panic.h>
-#include <silofs/thread.h>
 #include "utility.h"
 #include "times.h"
 
@@ -57,7 +56,7 @@ int silofs_thread_sigblock_common(void)
 	sigaddset(&sigset_th, SIGWINCH);
 	sigaddset(&sigset_th, SIGIO);
 
-	return pthread_sigmask(SIG_BLOCK, &sigset_th, NULL);
+	return pthread_sigmask(SIG_BLOCK, &sigset_th, nullptr);
 }
 
 static void silofs_thread_prepare(struct silofs_thread *th)
@@ -98,7 +97,7 @@ int silofs_thread_create(struct silofs_thread *th, silofs_threadexec_fn exec,
 	size_t         nlen = 0;
 	int            err;
 
-	if (exec == NULL) {
+	if (exec == nullptr) {
 		return -EINVAL;
 	}
 	err = pthread_attr_init(&attr);
@@ -112,7 +111,7 @@ int silofs_thread_create(struct silofs_thread *th, silofs_threadexec_fn exec,
 	th->status      = 0;
 	th->exec        = exec;
 	th->arg         = arg;
-	if (name != NULL) {
+	if (name != nullptr) {
 		nlen = silofs_min(strlen(name), sizeof(th->name) - 1);
 		memcpy(th->name, name, nlen);
 	}
@@ -125,7 +124,7 @@ int silofs_thread_create(struct silofs_thread *th, silofs_threadexec_fn exec,
 
 int silofs_thread_join(struct silofs_thread *th)
 {
-	return pthread_join(th->pth, NULL);
+	return pthread_join(th->pth, nullptr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

@@ -14,8 +14,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <unistd.h>
-#include <errno.h>
 #include "ftests.h"
 
 /* Maximum hard-links per file */
@@ -126,8 +124,8 @@ static void test_link_rename_(struct ft_env *fte, int cnt)
 	const char *name  = ft_new_name_unique(fte);
 	const char *path0 = ft_new_path_unique(fte);
 	const char *path1 = ft_new_path_under(fte, path0);
-	const char *path2 = NULL;
-	const char *path3 = NULL;
+	const char *path2 = nullptr;
+	const char *path3 = nullptr;
 	const int   limit = cnt + 1;
 	int         nlink = 1;
 	int         fd    = -1;
@@ -174,7 +172,7 @@ static void test_link_max(struct ft_env *fte)
 	const char  *name       = ft_new_name_unique(fte);
 	const char  *path0      = ft_new_path_unique(fte);
 	const char  *path1      = ft_new_path_under(fte, path0);
-	const char  *path2      = NULL;
+	const char  *path2      = nullptr;
 	nlink_t      nlink_base = 0;
 	int          fd         = -1;
 
@@ -215,8 +213,8 @@ static const char *make_name(struct ft_env *fte, char c, size_t len)
 static void test_link_similar_names(struct ft_env *fte)
 {
 	struct stat st    = { .st_size = -1 };
-	const char *name  = NULL;
-	const char *lpath = NULL;
+	const char *name  = nullptr;
+	const char *lpath = nullptr;
 	const char *path0 = ft_new_path_unique(fte);
 	const char *rpath = ft_new_path_under(fte, path0);
 	const char *abc =
@@ -260,7 +258,7 @@ static void test_linkat_same_dir_(struct ft_env *fte, size_t cnt)
 	struct stat st   = { .st_size = -1 };
 	const char *path = ft_new_path_unique(fte);
 	const char *name = ft_new_name_unique(fte);
-	const char *link = NULL;
+	const char *link = nullptr;
 	int         dfd  = -1;
 	int         fd   = -1;
 
@@ -306,7 +304,7 @@ static void test_linkat_diff_dir_(struct ft_env *fte, size_t cnt)
 	const char *name1 = ft_new_name_unique(fte);
 	const char *path2 = ft_new_path_unique(fte);
 	const char *name2 = ft_new_name_unique(fte);
-	const char *link  = NULL;
+	const char *link  = nullptr;
 	int         dfd1  = -1;
 	int         dfd2  = -1;
 	int         fd    = -1;
@@ -374,7 +372,7 @@ static void test_linkat_with_io_(struct ft_env *fte, size_t cnt)
 	struct stat st   = { .st_size = -1 };
 	const char *path = ft_new_path_unique(fte);
 	const char *name = ft_new_name_unique(fte);
-	const char *link = NULL;
+	const char *link = nullptr;
 	off_t       off  = -1;
 	int         dfd  = -1;
 	int         fd   = -1;

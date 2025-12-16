@@ -15,7 +15,6 @@
  * GNU General Public License for more details.
  */
 #define _GNU_SOURCE 1
-#include <unistd.h>
 #include "ftests.h"
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

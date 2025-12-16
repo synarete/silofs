@@ -14,9 +14,9 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include "configs.h"
-#include <ctype.h>
+#include <silofs/configs.h>
 #include <silofs/errors.h>
+#include <ctype.h>
 #include "ascii.h"
 
 char silofs_nibble_to_ascii(int n)

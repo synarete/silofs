@@ -14,7 +14,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include "configs.h"
+#include <silofs/configs.h>
 #include "infra.h"
 #include "fs.h"
 #include "exec.h"
@@ -58,9 +58,9 @@ dirtyqs_get(struct silofs_dirtyqs *dqs, enum silofs_mtype mtype)
 
 static struct silofs_unode_info *uni_from_hmqe(struct silofs_hmapq_elem *hmqe)
 {
-	struct silofs_unode_info *uni = NULL;
+	struct silofs_unode_info *uni = nullptr;
 
-	if (hmqe != NULL) {
+	if (hmqe != nullptr) {
 		uni = silofs_uni_from_lni(silofs_lni_from_hmqe(hmqe));
 	}
 	return uni;
@@ -138,7 +138,7 @@ static struct silofs_unode_info *
 lcache_find_evictable_uni(struct silofs_lcache *lcache)
 {
 	struct silofs_hmapq       *hmapq = &lcache->lc_uni_hmapq;
-	struct silofs_unode_info  *uni   = NULL;
+	struct silofs_unode_info  *uni   = nullptr;
 	struct silofs_unode_info **puni  = &uni;
 
 	silofs_hmapq_riterate(hmapq, 10, visit_evictable_uni, (void *)puni);
@@ -170,7 +170,7 @@ lcache_find_relru_uni(struct silofs_lcache      *lcache,
 	struct silofs_unode_info *uni;
 
 	uni = lcache_find_uni(lcache, uaddr);
-	if (uni != NULL) {
+	if (uni != nullptr) {
 		lcache_promote_uni(lcache, uni, false);
 	}
 	return uni;
@@ -203,7 +203,7 @@ lcache_get_lru_uni(struct silofs_lcache *lcache)
 	struct silofs_hmapq_elem *hmqe;
 
 	hmqe = silofs_hmapq_get_lru(&lcache->lc_uni_hmapq);
-	return (hmqe != NULL) ? uni_from_hmqe(hmqe) : NULL;
+	return (hmqe != nullptr) ? uni_from_hmqe(hmqe) : nullptr;
 }
 
 static enum silofs_allocf flags_to_allocf(int flags)
@@ -239,7 +239,7 @@ static size_t lcache_shrink_or_relru_unis(struct silofs_lcache *lcache,
 	now = (flags & SILOFS_CTLF_NOW) > 0;
 	for (size_t i = 0; i < n; ++i) {
 		uni = lcache_get_lru_uni(lcache);
-		if (uni == NULL) {
+		if (uni == nullptr) {
 			break;
 		}
 		ok = lcache_evict_or_relru_uni(lcache, uni, flags);
@@ -314,7 +314,7 @@ lcache_lookup_uni(struct silofs_lcache      *lcache,
 	struct silofs_unode_info *uni;
 
 	uni = lcache_find_relru_uni(lcache, uaddr);
-	if (uni != NULL) {
+	if (uni != nullptr) {
 		lcache_track_uaddr_of(lcache, uni);
 	}
 	return uni;
@@ -334,12 +334,12 @@ static struct silofs_unode_info *
 lcache_require_uni(struct silofs_lcache      *lcache,
                    const struct silofs_uaddr *uaddr)
 {
-	struct silofs_unode_info *uni   = NULL;
+	struct silofs_unode_info *uni   = nullptr;
 	int                       retry = 4;
 
 	while (retry-- > 0) {
 		uni = lcache_new_uni(lcache, uaddr);
-		if (uni != NULL) {
+		if (uni != nullptr) {
 			break;
 		}
 		lcache_evict_some(lcache);
@@ -369,7 +369,7 @@ lcache_create_uni(struct silofs_lcache      *lcache,
 	struct silofs_unode_info *uni;
 
 	uni = lcache_require_uni(lcache, uaddr);
-	if (uni != NULL) {
+	if (uni != nullptr) {
 		lcache_set_dq_of_uni(lcache, uni);
 		lcache_store_uni(lcache, uni);
 		lcache_track_uaddr(lcache, silofs_uni_uaddr(uni));
@@ -405,10 +405,10 @@ lcache_find_uni_by(struct silofs_lcache      *lcache,
                    const struct silofs_uakey *uakey)
 {
 	const struct silofs_uaddr *uaddr;
-	struct silofs_unode_info  *uni = NULL;
+	struct silofs_unode_info  *uni = nullptr;
 
 	uaddr = lcache_lookup_uaddr_by(lcache, uakey);
-	if (uaddr != NULL) {
+	if (uaddr != nullptr) {
 		uni = lcache_lookup_uni(lcache, uaddr);
 	}
 	return uni;
@@ -446,7 +446,7 @@ static void lcache_fini_vni_hmapq(struct silofs_lcache *lcache)
 
 static bool test_evictable_vni(const struct silofs_vnode_info *vni)
 {
-	const struct silofs_inode_info *ii  = NULL;
+	const struct silofs_inode_info *ii  = nullptr;
 	bool                            ret = false;
 
 	if (vni_isinode(vni)) {
@@ -473,7 +473,7 @@ static struct silofs_vnode_info *
 lcache_find_evictable_vni(struct silofs_lcache *lcache)
 {
 	struct silofs_hmapq       *hmapq = &lcache->lc_vni_hmapq;
-	struct silofs_vnode_info  *vni   = NULL;
+	struct silofs_vnode_info  *vni   = nullptr;
 	struct silofs_vnode_info **pvni  = &vni;
 
 	silofs_hmapq_riterate(hmapq, 10, visit_evictable_vni, (void *)pvni);
@@ -488,7 +488,7 @@ lcache_find_vni(struct silofs_lcache *lcache, const struct silofs_vaddr *vaddr)
 
 	silofs_hkey_by_vaddr(&hkey, vaddr);
 	hmqe = silofs_hmapq_lookup(&lcache->lc_vni_hmapq, &hkey);
-	return (hmqe != NULL) ? vni_from_hmqe(hmqe) : NULL;
+	return (hmqe != nullptr) ? vni_from_hmqe(hmqe) : nullptr;
 }
 
 static void lcache_promote_vni(struct silofs_lcache     *lcache,
@@ -504,7 +504,7 @@ lcache_find_relru_vni(struct silofs_lcache      *lcache,
 	struct silofs_vnode_info *vni;
 
 	vni = lcache_find_vni(lcache, vaddr);
-	if (vni != NULL) {
+	if (vni != nullptr) {
 		lcache_promote_vni(lcache, vni, false);
 	}
 	return vni;
@@ -544,7 +544,7 @@ lcache_get_lru_vni(struct silofs_lcache *lcache)
 	struct silofs_hmapq_elem *hmqe;
 
 	hmqe = silofs_hmapq_get_lru(&lcache->lc_vni_hmapq);
-	return (hmqe != NULL) ? vni_from_hmqe(hmqe) : NULL;
+	return (hmqe != nullptr) ? vni_from_hmqe(hmqe) : nullptr;
 }
 
 static bool lcache_evict_or_relru_vni(struct silofs_lcache     *lcache,
@@ -565,7 +565,7 @@ static bool lcache_evict_or_relru_vni(struct silofs_lcache     *lcache,
 static size_t lcache_shrink_or_relru_vnis(struct silofs_lcache *lcache,
                                           size_t cnt, int flags)
 {
-	struct silofs_vnode_info *vni = NULL;
+	struct silofs_vnode_info *vni = nullptr;
 	const size_t n = silofs_min(cnt, lcache->lc_vni_hmapq.hmq_lru.sz);
 	size_t       evicted = 0;
 	bool         now;
@@ -574,7 +574,7 @@ static size_t lcache_shrink_or_relru_vnis(struct silofs_lcache *lcache,
 	now = (flags & SILOFS_CTLF_NOW) > 0;
 	for (size_t i = 0; i < n; ++i) {
 		vni = lcache_get_lru_vni(lcache);
-		if (vni == NULL) {
+		if (vni == nullptr) {
 			break;
 		}
 		ok = lcache_evict_or_relru_vni(lcache, vni, flags);
@@ -625,12 +625,12 @@ static struct silofs_vnode_info *
 lcache_require_vni(struct silofs_lcache      *lcache,
                    const struct silofs_vaddr *vaddr)
 {
-	struct silofs_vnode_info *vni   = NULL;
+	struct silofs_vnode_info *vni   = nullptr;
 	int                       retry = 4;
 
 	while (retry-- > 0) {
 		vni = lcache_new_vni(lcache, vaddr);
-		if (vni != NULL) {
+		if (vni != nullptr) {
 			break;
 		}
 		lcache_evict_some(lcache);
@@ -677,7 +677,7 @@ lcache_create_vni(struct silofs_lcache      *lcache,
 	struct silofs_vnode_info *vni;
 
 	vni = lcache_require_vni(lcache, vaddr);
-	if (vni != NULL) {
+	if (vni != nullptr) {
 		lcache_set_dq_of_vni(lcache, vni);
 		lcache_store_vni(lcache, vni);
 	}
@@ -699,7 +699,7 @@ void silofs_lcache_reditify_vni(struct silofs_lcache     *lcache,
 {
 	silofs_vni_undirtify(vni);
 	lcache_set_dq_of_vni(lcache, vni);
-	silofs_vni_dirtify(vni, NULL);
+	silofs_vni_dirtify(vni, nullptr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -725,17 +725,17 @@ lcache_shrink_some(struct silofs_lcache *lcache, size_t count, int flags)
 
 static void lcache_evict_some(struct silofs_lcache *lcache)
 {
-	struct silofs_vnode_info *vni     = NULL;
-	struct silofs_unode_info *uni     = NULL;
+	struct silofs_vnode_info *vni     = nullptr;
+	struct silofs_unode_info *uni     = nullptr;
 	bool                      evicted = false;
 
 	vni = lcache_find_evictable_vni(lcache);
-	if ((vni != NULL) && test_evictable_vni(vni)) {
+	if ((vni != nullptr) && test_evictable_vni(vni)) {
 		lcache_evict_vni(lcache, vni, SILOFS_ALLOCF_NONE);
 		evicted = true;
 	}
 	uni = lcache_find_evictable_uni(lcache);
-	if ((uni != NULL) && silofs_uni_isevictable(uni)) {
+	if ((uni != nullptr) && silofs_uni_isevictable(uni)) {
 		lcache_evict_uni(lcache, uni, SILOFS_ALLOCF_NONE);
 		evicted = true;
 	}
@@ -966,7 +966,7 @@ void silofs_lcache_fini(struct silofs_lcache *lcache)
 	dirtyqs_fini(&lcache->lc_dirtyqs);
 	lcache_fini_hmapqs(lcache);
 	lcache_fini_uamap(lcache);
-	lcache->lc_alloc = NULL;
+	lcache->lc_alloc = nullptr;
 }
 
 static size_t lcache_alloc_bytes(const struct silofs_lcache *lcache)

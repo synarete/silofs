@@ -14,8 +14,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include "configs.h"
-#include <linux/fuse_kernel.h>
+#include <silofs/configs.h>
 #include "mbr.h"
 #include "fs.h"
 #include "walk.h"
@@ -358,8 +357,9 @@ call_read_iter(struct silofs_task_ctx *task, struct silofs_call_args *args)
 int silofs_call_read(struct silofs_task_ctx  *task,
                      struct silofs_call_args *args)
 {
-	return (args->in.read.rwi_ctx != NULL) ? call_read_iter(task, args) :
-	                                         call_read_buf(task, args);
+	return (args->in.read.rwi_ctx != nullptr) ?
+	               call_read_iter(task, args) :
+	               call_read_buf(task, args);
 }
 
 static int
@@ -384,8 +384,9 @@ call_write_iter(struct silofs_task_ctx *task, struct silofs_call_args *args)
 int silofs_call_write(struct silofs_task_ctx  *task,
                       struct silofs_call_args *args)
 {
-	return (args->in.write.rwi_ctx != NULL) ? call_write_iter(task, args) :
-	                                          call_write_buf(task, args);
+	return (args->in.write.rwi_ctx != nullptr) ?
+	               call_write_iter(task, args) :
+	               call_write_buf(task, args);
 }
 
 int silofs_call_syncfs(struct silofs_task_ctx  *task,

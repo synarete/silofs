@@ -174,7 +174,7 @@ void cmd_check_isreg(const char *path)
 
 void cmd_check_isreg2(const char *dirpath, const char *name)
 {
-	char *path = NULL;
+	char *path = nullptr;
 
 	path = cmd_join_path(dirpath, name);
 	cmd_check_isreg(path);
@@ -222,7 +222,7 @@ void cmd_check_notexists(const char *path)
 
 void cmd_check_notexists2(const char *dirpath, const char *name)
 {
-	char *path = NULL;
+	char *path = nullptr;
 
 	path = cmd_join_path(dirpath, name);
 	cmd_check_notexists(path);
@@ -408,7 +408,7 @@ void cmd_check_mntdir(const char *path, bool mount)
 	long                        fstype;
 	struct stat                 st;
 	struct statfs               stfs;
-	const struct silofs_fsinfo *fsi = NULL;
+	const struct silofs_fsinfo *fsi = nullptr;
 
 	if (strlen(path) >= SILOFS_MNTPATH_MAX) {
 		cmd_diez("illegal mount-path length: %s", path);
@@ -419,7 +419,7 @@ void cmd_check_mntdir(const char *path, bool mount)
 		cmd_statfs_ok(path, &stfs);
 		fstype = (long)stfs.f_type;
 		fsi    = silofs_fsinfo_by_vfstype(fstype);
-		if (fsi == NULL) {
+		if (fsi == nullptr) {
 			cmd_diez("unknown fstype at: %s fstype=0x%lx", path,
 			         fstype);
 		}
@@ -437,7 +437,7 @@ void cmd_check_mntdir(const char *path, bool mount)
 		cmd_statfs_ok(path, &stfs);
 		fstype = (long)stfs.f_type;
 		fsi    = silofs_fsinfo_by_vfstype(fstype);
-		if (fsi == NULL) {
+		if (fsi == nullptr) {
 			cmd_diez("unknown fstype at: %s fstype=0x%lx", path,
 			         fstype);
 		}
@@ -465,7 +465,7 @@ static char *cmd_getcwd(void)
 {
 	char *cwd = get_current_dir_name();
 
-	if (cwd == NULL) {
+	if (cwd == nullptr) {
 		cmd_die(errno, "failed to get current working directory");
 	}
 	return cwd;
@@ -476,7 +476,7 @@ static char *cmd_getcwd(void)
 long cmd_parse_str_as_size(const char *str)
 {
 	long        mul    = 0;
-	char       *endptr = NULL;
+	char       *endptr = nullptr;
 	long double val;
 	long double iz;
 
@@ -523,7 +523,7 @@ illegal_value:
 
 static long cmd_parse_str_as_long(const char *str)
 {
-	char *endptr = NULL;
+	char *endptr = nullptr;
 	long  val;
 
 	errno = 0;
@@ -691,8 +691,8 @@ void cmd_setup_coredump_mode(bool enable_coredump)
 
 void cmd_realpath(const char *path, char **out_real)
 {
-	*out_real = realpath(path, NULL);
-	if (*out_real == NULL) {
+	*out_real = realpath(path, nullptr);
+	if (*out_real == nullptr) {
 		cmd_die(-errno, "realpath failure: '%s'", path);
 	}
 }
@@ -724,7 +724,7 @@ void cmd_split_path(const char *path, char **out_head, char **out_tail)
 	size_t      tail_len;
 
 	sep = strrchr(path, '/');
-	if (sep == NULL) {
+	if (sep == nullptr) {
 		*out_head = cmd_getcwd();
 		*out_tail = cmd_strdup(path);
 	} else {
@@ -744,7 +744,7 @@ void cmd_split_path(const char *path, char **out_head, char **out_tail)
 void cmd_remake_path(const char *path, const char *suffix, char **out_head,
                      char **out_tail)
 {
-	char *tail = NULL;
+	char *tail = nullptr;
 
 	cmd_split_path(path, out_head, &tail);
 	*out_tail = cmd_mkpathf("%s%s", tail, suffix);
@@ -754,18 +754,18 @@ void cmd_remake_path(const char *path, const char *suffix, char **out_head,
 void cmd_remake_path2(const char *path, const char *suffix, char **out_head,
                       char **out_tail)
 {
-	char *spos = NULL;
+	char *spos = nullptr;
 
 	cmd_split_path(path, out_head, out_tail);
 	spos = strstr(*out_tail, suffix);
-	if (spos != NULL) {
+	if (spos != nullptr) {
 		*spos = '\0';
 	}
 }
 
 char *cmd_join_path(const char *dirpath, const char *name)
 {
-	char *ret = NULL;
+	char *ret = nullptr;
 
 	if (dirpath && name) {
 		ret = cmd_joinpath_safe(dirpath, name);
@@ -779,7 +779,7 @@ char *cmd_join_path(const char *dirpath, const char *name)
 
 void *cmd_zalloc(size_t nbytes)
 {
-	void *mem = NULL;
+	void *mem = nullptr;
 	int   err;
 
 	err = silofs_zmalloc(nbytes, &mem);
@@ -791,16 +791,16 @@ void *cmd_zalloc(size_t nbytes)
 
 void cmd_zfree(void *ptr, size_t nbytes)
 {
-	if (ptr != NULL) {
+	if (ptr != nullptr) {
 		silofs_zfree(ptr, nbytes);
 	}
 }
 
 void cmd_pstrfree(char **pp)
 {
-	if (*pp != NULL) {
+	if (*pp != nullptr) {
 		cmd_zfree(*pp, strlen(*pp));
-		*pp = NULL;
+		*pp = nullptr;
 	}
 }
 
@@ -808,7 +808,7 @@ char *cmd_strdup(const char *s)
 {
 	char *d = strdup(s);
 
-	if (d == NULL) {
+	if (d == nullptr) {
 		cmd_die(errno, "strdup failed");
 	}
 	return d;
@@ -818,7 +818,7 @@ char *cmd_strndup(const char *s, size_t n)
 {
 	char *d = strndup(s, n);
 
-	if (d == NULL) {
+	if (d == nullptr) {
 		cmd_die(errno, "strndup failed: n=%lu", n);
 	}
 	return d;
@@ -864,7 +864,7 @@ char *cmd_mkpathf(const char *fmt, ...)
 	va_list ap        = { 0 };
 	size_t  path_size = PATH_MAX;
 	char   *path      = cmd_zalloc(path_size);
-	char   *path_dup  = NULL;
+	char   *path_dup  = nullptr;
 	int     n         = 0;
 
 	va_start(ap, fmt);
@@ -988,13 +988,13 @@ static char *cmd_read_proc_mountinfo(void)
 
 struct silofs_mntinfos *cmd_parse_mountinfo(void)
 {
-	struct silofs_mntinfos *minfos = NULL;
-	char                   *midata = NULL;
+	struct silofs_mntinfos *minfos = nullptr;
+	char                   *midata = nullptr;
 	int                     err;
 
 	midata = cmd_read_proc_mountinfo();
 	minfos = cmd_zalloc(sizeof(*minfos));
-	err    = silofs_parse_mntinfos(minfos, NULL, midata);
+	err    = silofs_parse_mntinfos(minfos, nullptr, midata);
 	if (err) {
 		cmd_die(err, "failed to parse mountinfo");
 	}
@@ -1005,8 +1005,8 @@ struct silofs_mntinfos *cmd_parse_mountinfo(void)
 
 void cmd_free_mountinfo(struct silofs_mntinfos *minfos)
 {
-	if (minfos != NULL) {
-		silofs_release_mntinfos(minfos, NULL);
+	if (minfos != nullptr) {
+		silofs_release_mntinfos(minfos, nullptr);
 		cmd_zfree(minfos, sizeof(*minfos));
 	}
 }
@@ -1015,7 +1015,7 @@ void cmd_free_mountinfo(struct silofs_mntinfos *minfos)
 
 union silofs_ioc_u *cmd_new_ioc(void)
 {
-	union silofs_ioc_u *ioc = NULL;
+	union silofs_ioc_u *ioc = nullptr;
 
 	ioc = cmd_zalloc(sizeof(*ioc));
 	return ioc;
@@ -1023,9 +1023,9 @@ union silofs_ioc_u *cmd_new_ioc(void)
 
 void cmd_del_iocp(union silofs_ioc_u **pioc)
 {
-	if ((pioc != NULL) && (*pioc != NULL)) {
+	if ((pioc != nullptr) && (*pioc != nullptr)) {
 		cmd_zfree(*pioc, sizeof(**pioc));
-		*pioc = NULL;
+		*pioc = nullptr;
 	}
 }
 

@@ -15,10 +15,9 @@
  * GNU General Public License for more details.
  */
 #define _GNU_SOURCE 1
-#include <unistd.h>
+#include "ftests.h"
 #include <errno.h>
 #include <stdio.h>
-#include "ftests.h"
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 /*
@@ -358,7 +357,7 @@ static void test_rename_child_(struct ft_env *fte, size_t nsibs)
 	const char *path0 = ft_new_path_unique(fte);
 	const char *path1 = ft_new_path_under(fte, path0);
 	const char *path2 = ft_new_path_under(fte, path0);
-	const char *path3 = NULL;
+	const char *path3 = nullptr;
 
 	ft_mkdir(path0, 0700);
 	for (size_t i = 0; i < nsibs; ++i) {
@@ -392,7 +391,7 @@ static void test_rename_replace_(struct ft_env *fte, size_t nsibs)
 {
 	int         fd    = -1;
 	const char *path0 = ft_new_path_unique(fte);
-	const char *path1 = NULL;
+	const char *path1 = nullptr;
 	const char *path2 = ft_new_path_under(fte, path0);
 
 	ft_mkdir(path0, 0700);
@@ -427,8 +426,8 @@ static void test_rename_replace(struct ft_env *fte)
 static void test_rename_move_(struct ft_env *fte, size_t cnt)
 {
 	int         fd;
-	const char *src_path1 = NULL;
-	const char *tgt_path1 = NULL;
+	const char *src_path1 = nullptr;
+	const char *tgt_path1 = nullptr;
 	const char *src_path0 = ft_new_path_unique(fte);
 	const char *tgt_path0 = ft_new_path_unique(fte);
 
@@ -468,8 +467,8 @@ static void test_rename_move(struct ft_env *fte)
 static void test_rename_override_(struct ft_env *fte, size_t cnt, size_t bsz)
 {
 	int         fd        = -1;
-	char       *src_path1 = NULL;
-	char       *tgt_path1 = NULL;
+	char       *src_path1 = nullptr;
+	char       *tgt_path1 = nullptr;
 	const char *src_path0 = ft_new_path_unique(fte);
 	const char *tgt_path0 = ft_new_path_unique(fte);
 	void       *buf       = ft_new_buf_rands(fte, bsz);
@@ -529,8 +528,8 @@ static const char *dup_name(struct ft_env *fte, const char *str)
 
 static void test_renameat_inplace(struct ft_env *fte)
 {
-	const char *name1 = NULL;
-	const char *name2 = NULL;
+	const char *name1 = nullptr;
+	const char *name2 = nullptr;
 	const char *path  = ft_new_path_unique(fte);
 	size_t      count = NAME_MAX;
 	int         fd    = -1;
@@ -564,8 +563,8 @@ static void test_renameat_inplace_rw_(struct ft_env *fte, size_t cnt)
 	int          dfd   = -1;
 	size_t       nwr   = 0;
 	size_t       nrd   = 0;
-	const char  *name1 = NULL;
-	const char  *name2 = NULL;
+	const char  *name1 = nullptr;
+	const char  *name2 = nullptr;
 	const char   ch    = 'B';
 	const char  *path  = ft_new_path_unique(fte);
 	const size_t bsz   = cnt * FT_1K;
@@ -742,8 +741,8 @@ static void test_renameat_samedir(struct ft_env *fte)
 	int          dfd    = -1;
 	int          fd     = -1;
 	ino_t        ino    = 0;
-	char        *lname1 = NULL;
-	char        *lname2 = NULL;
+	char        *lname1 = nullptr;
+	char        *lname2 = nullptr;
 	char         p1[]   = "1";
 	char         p2[]   = "2";
 	const size_t cnt    = SILOFS_LINK_MAX / 3;

@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include "configs.h"
+#include <silofs/configs.h>
+#include <silofs/errors.h>
+#include <silofs/panic.h>
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
-#include <silofs/errors.h>
-#include <silofs/panic.h>
 #include "infra.h"
 #include "addr.h"
 #include "nodes.h"
@@ -729,14 +729,14 @@ struct silofs_lsmap_info *silofs_lsi_from_vni(struct silofs_vnode_info *vni)
 
 void silofs_lsi_incref(struct silofs_lsmap_info *lsi)
 {
-	if (likely(lsi != NULL)) {
+	if (likely(lsi != nullptr)) {
 		silofs_vni_incref(&lsi->ls_vni);
 	}
 }
 
 void silofs_lsi_decref(struct silofs_lsmap_info *lsi)
 {
-	if (likely(lsi != NULL)) {
+	if (likely(lsi != nullptr)) {
 		silofs_vni_decref(&lsi->ls_vni);
 	}
 }
@@ -750,7 +750,7 @@ static void lrange_of(struct silofs_lrange *lrange, off_t beg, size_t nlbk)
 
 static void lsi_dirtify(struct silofs_lsmap_info *lsi)
 {
-	silofs_vni_dirtify(&lsi->ls_vni, NULL);
+	silofs_vni_dirtify(&lsi->ls_vni, nullptr);
 }
 
 static void lsi_lrange(const struct silofs_lsmap_info *lsi,

@@ -14,7 +14,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <configs.h>
+#include <silofs/configs.h>
 #include <stdint.h>
 #include "infra.h"
 #include "addr.h"
@@ -197,7 +197,7 @@ static struct silofs_arix_node *arn_new(struct silofs_alloc *alloc)
 	struct silofs_arix_node *arn;
 
 	arn = arn_malloc(alloc);
-	if (arn != NULL) {
+	if (arn != nullptr) {
 		arn_init(arn);
 	}
 	return arn;
@@ -205,7 +205,7 @@ static struct silofs_arix_node *arn_new(struct silofs_alloc *alloc)
 
 static void arn_del(struct silofs_arix_node *arn, struct silofs_alloc *alloc)
 {
-	if (arn != NULL) {
+	if (arn != nullptr) {
 		arn_fini(arn);
 		arn_free(arn, alloc);
 	}
@@ -215,7 +215,7 @@ static void arn_del(struct silofs_arix_node *arn, struct silofs_alloc *alloc)
 
 static struct silofs_arnode_info *ari_malloc(struct silofs_alloc *alloc)
 {
-	struct silofs_arnode_info *ari = NULL;
+	struct silofs_arnode_info *ari = nullptr;
 
 	ari = silofs_memalloc(alloc, sizeof(*ari), 0);
 	return ari;
@@ -231,29 +231,29 @@ static void
 ari_init(struct silofs_arnode_info *ari, const struct silofs_pmeta *pmeta)
 {
 	silofs_pmeta_assign(&ari->arn_pmeta, pmeta);
-	ari->arn = NULL;
+	ari->arn = nullptr;
 }
 
 static void ari_fini(struct silofs_arnode_info *ari)
 {
 	silofs_pmeta_reset(&ari->arn_pmeta);
-	ari->arn = NULL;
+	ari->arn = nullptr;
 }
 
 struct silofs_arnode_info *
 silofs_ari_new(struct silofs_alloc *alloc, const struct silofs_pmeta *pmeta)
 {
-	struct silofs_arix_node   *arn = NULL;
-	struct silofs_arnode_info *ari = NULL;
+	struct silofs_arix_node   *arn = nullptr;
+	struct silofs_arnode_info *ari = nullptr;
 
 	arn = arn_new(alloc);
-	if (arn == NULL) {
-		return NULL;
+	if (arn == nullptr) {
+		return nullptr;
 	}
 	ari = ari_malloc(alloc);
-	if (ari == NULL) {
+	if (ari == nullptr) {
 		arn_del(arn, alloc);
-		return NULL;
+		return nullptr;
 	}
 	ari_init(ari, pmeta);
 	ari->arn = arn;
@@ -298,7 +298,7 @@ void silofs_ari_set_paddr(struct silofs_arnode_info *ari,
 static void
 ari_set_next(struct silofs_arnode_info *ari, const struct silofs_pmeta *pmeta)
 {
-	if (pmeta != NULL) {
+	if (pmeta != nullptr) {
 		arn_set_next(ari->arn, pmeta);
 	} else {
 		arn_reset_next(ari->arn);

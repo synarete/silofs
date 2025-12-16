@@ -14,7 +14,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include "configs.h"
+#include <silofs/configs.h>
 #include "infra.h"
 #include "dirtyq.h"
 
@@ -51,9 +51,9 @@ silofs_dirtyq_remove(struct silofs_dirtyq *dq, struct silofs_dq_elem *dqe)
 
 static struct silofs_dq_elem *dqe_from_lh(struct silofs_list_head *lh)
 {
-	struct silofs_dq_elem *dqe = NULL;
+	struct silofs_dq_elem *dqe = nullptr;
 
-	if (lh != NULL) {
+	if (lh != nullptr) {
 		dqe = silofs_container_of(lh, struct silofs_dq_elem, lh);
 	}
 	return dqe;
@@ -70,9 +70,9 @@ struct silofs_dq_elem *silofs_dirtyq_front(const struct silofs_dirtyq *dq)
 struct silofs_dq_elem *silofs_dirtyq_next_of(const struct silofs_dirtyq  *dq,
                                              const struct silofs_dq_elem *dqe)
 {
-	struct silofs_list_head *lh = NULL;
+	struct silofs_list_head *lh = nullptr;
 
-	if (dqe != NULL) {
+	if (dqe != nullptr) {
 		lh = listq_next(&dq->dq, &dqe->lh);
 	}
 	return dqe_from_lh(lh);
@@ -85,7 +85,7 @@ void silofs_dqe_init(struct silofs_dq_elem *dqe, size_t sz)
 	silofs_assert_gt(sz, 0);
 
 	silofs_list_head_init(&dqe->lh);
-	dqe->dq  = NULL;
+	dqe->dq  = nullptr;
 	dqe->sz  = (uint32_t)sz;
 	dqe->inq = false;
 }
@@ -96,7 +96,7 @@ void silofs_dqe_fini(struct silofs_dq_elem *dqe)
 	silofs_assert(!dqe->inq);
 
 	silofs_list_head_fini(&dqe->lh);
-	dqe->dq = NULL;
+	dqe->dq = nullptr;
 	dqe->sz = 0;
 }
 

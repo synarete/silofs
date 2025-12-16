@@ -14,10 +14,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include "configs.h"
+#include <silofs/configs.h>
+#include <silofs/ioctls.h>
 #include <sys/statvfs.h>
 #include <limits.h>
-#include <silofs/ioctls.h>
 #include "infra.h"
 #include "nodes.h"
 #include "super.h"
@@ -133,7 +133,7 @@ spgs256_gauge_of(const struct silofs_space_gauges256 *spgs256,
 	case SILOFS_MTYPE_NONE:
 	case SILOFS_MTYPE_LAST:
 	default:
-		ret = NULL;
+		ret = nullptr;
 		break;
 	}
 	return ret;
@@ -148,14 +148,14 @@ static uint64_t *spgs256_gauge_of2(struct silofs_space_gauges256 *spgs256,
 static void spgs256_xtoh(const struct silofs_space_gauges256 *spgs256,
                          struct silofs_space_gauges          *spgs)
 {
-	ssize_t          *dst   = NULL;
-	const uint64_t   *src   = NULL;
+	ssize_t          *dst   = nullptr;
+	const uint64_t   *src   = nullptr;
 	enum silofs_mtype mtype = SILOFS_MTYPE_NONE;
 
 	while (++mtype < SILOFS_MTYPE_LAST) {
 		src = spgs256_gauge_of(spgs256, mtype);
 		dst = spgs_gauge_of2(spgs, mtype);
-		if ((src != NULL) && (dst != NULL)) {
+		if ((src != nullptr) && (dst != nullptr)) {
 			*dst = silofs_gauge_to_cpu(*src);
 		}
 	}
@@ -164,14 +164,14 @@ static void spgs256_xtoh(const struct silofs_space_gauges256 *spgs256,
 static void spgs256_htox(struct silofs_space_gauges256    *spgs256,
                          const struct silofs_space_gauges *spgs)
 {
-	uint64_t         *dst   = NULL;
-	const ssize_t    *src   = NULL;
+	uint64_t         *dst   = nullptr;
+	const ssize_t    *src   = nullptr;
 	enum silofs_mtype mtype = SILOFS_MTYPE_NONE;
 
 	while (++mtype < SILOFS_MTYPE_LAST) {
 		src = spgs_gauge_of(spgs, mtype);
 		dst = spgs256_gauge_of2(spgs256, mtype);
-		if ((src != NULL) && (dst != NULL)) {
+		if ((src != nullptr) && (dst != nullptr)) {
 			*dst = silofs_cpu_to_gauge(*src);
 		}
 	}
@@ -179,14 +179,14 @@ static void spgs256_htox(struct silofs_space_gauges256    *spgs256,
 
 static int spgs256_verify(const struct silofs_space_gauges256 *spgs256)
 {
-	const uint64_t   *pcnt  = NULL;
+	const uint64_t   *pcnt  = nullptr;
 	enum silofs_mtype mtype = SILOFS_MTYPE_NONE;
 	ssize_t           cnt;
 	int               err;
 
 	while (++mtype < SILOFS_MTYPE_LAST) {
 		pcnt = spgs256_gauge_of(spgs256, mtype);
-		if (unlikely(pcnt == NULL)) {
+		if (unlikely(pcnt == nullptr)) {
 			continue;
 		}
 		cnt = silofs_gauge_to_cpu(*pcnt);
@@ -358,7 +358,7 @@ spgs_gauge_of(const struct silofs_space_gauges *spgs, enum silofs_mtype mtype)
 	case SILOFS_MTYPE_NONE:
 	case SILOFS_MTYPE_LAST:
 	default:
-		ret = NULL;
+		ret = nullptr;
 		break;
 	}
 	return ret;
@@ -372,12 +372,12 @@ spgs_gauge_of2(struct silofs_space_gauges *spgs, enum silofs_mtype mtype)
 
 static void spgs_reset(struct silofs_space_gauges *spgs)
 {
-	ssize_t          *cnt   = NULL;
+	ssize_t          *cnt   = nullptr;
 	enum silofs_mtype mtype = SILOFS_MTYPE_NONE;
 
 	while (++mtype < SILOFS_MTYPE_LAST) {
 		cnt = spgs_gauge_of2(spgs, mtype);
-		if (likely(cnt != NULL)) {
+		if (likely(cnt != nullptr)) {
 			*cnt = 0;
 		}
 	}
@@ -386,14 +386,14 @@ static void spgs_reset(struct silofs_space_gauges *spgs)
 static void spgs_assign(struct silofs_space_gauges       *spgs,
                         const struct silofs_space_gauges *spgs_other)
 {
-	ssize_t          *dst   = NULL;
-	const ssize_t    *src   = NULL;
+	ssize_t          *dst   = nullptr;
+	const ssize_t    *src   = nullptr;
 	enum silofs_mtype mtype = SILOFS_MTYPE_NONE;
 
 	while (++mtype < SILOFS_MTYPE_LAST) {
 		dst = spgs_gauge_of2(spgs, mtype);
 		src = spgs_gauge_of(spgs_other, mtype);
-		if (likely((src != NULL) && (dst != NULL))) {
+		if (likely((src != nullptr) && (dst != nullptr))) {
 			*dst = *src;
 		}
 	}
@@ -404,7 +404,7 @@ static void spgs_update_take(struct silofs_space_gauges *spgs,
 {
 	ssize_t *cnt = spgs_gauge_of2(spgs, mtype);
 
-	if (likely(cnt != NULL)) {
+	if (likely(cnt != nullptr)) {
 		*cnt += take;
 	}
 }
@@ -413,19 +413,19 @@ static ssize_t spgs_ninodes(const struct silofs_space_gauges *spgs)
 {
 	const ssize_t *cnt = spgs_gauge_of(spgs, SILOFS_MTYPE_INODE);
 
-	return likely(cnt != NULL) ? *cnt : 0;
+	return likely(cnt != nullptr) ? *cnt : 0;
 }
 
 static ssize_t spgs_sum(const struct silofs_space_gauges *spgs)
 {
-	const ssize_t    *cnt   = NULL;
+	const ssize_t    *cnt   = nullptr;
 	enum silofs_mtype mtype = SILOFS_MTYPE_NONE;
 	ssize_t           ssz   = 0;
 	ssize_t           sum   = 0;
 
 	while (++mtype < SILOFS_MTYPE_LAST) {
 		cnt = spgs_gauge_of(spgs, mtype);
-		if (likely(cnt != NULL)) {
+		if (likely(cnt != nullptr)) {
 			ssz = silofs_mtype_ssize(mtype);
 			sum += *cnt * ssz;
 		}
@@ -436,14 +436,14 @@ static ssize_t spgs_sum(const struct silofs_space_gauges *spgs)
 static void spgs_accum(struct silofs_space_gauges       *spgs,
                        const struct silofs_space_gauges *spgs_other)
 {
-	ssize_t          *dst   = NULL;
-	const ssize_t    *src   = NULL;
+	ssize_t          *dst   = nullptr;
+	const ssize_t    *src   = nullptr;
 	enum silofs_mtype mtype = SILOFS_MTYPE_NONE;
 
 	while (++mtype < SILOFS_MTYPE_LAST) {
 		src = spgs_gauge_of(spgs_other, mtype);
 		dst = spgs_gauge_of2(spgs, mtype);
-		if ((src != NULL) && (dst != NULL)) {
+		if ((src != nullptr) && (dst != nullptr)) {
 			*dst += *src;
 		}
 	}
@@ -452,14 +452,14 @@ static void spgs_accum(struct silofs_space_gauges       *spgs,
 static void spgs_export(const struct silofs_space_gauges *spgs,
                         struct silofs_space_gauges256    *out_spg)
 {
-	uint64_t         *dst   = NULL;
-	const ssize_t    *src   = NULL;
+	uint64_t         *dst   = nullptr;
+	const ssize_t    *src   = nullptr;
 	enum silofs_mtype mtype = SILOFS_MTYPE_NONE;
 
 	while (++mtype < SILOFS_MTYPE_LAST) {
 		src = spgs_gauge_of(spgs, mtype);
 		dst = spgs256_gauge_of2(out_spg, mtype);
-		if ((src != NULL) && (dst != NULL)) {
+		if ((src != nullptr) && (dst != nullptr)) {
 			*dst = silofs_cpu_to_gauge(*src);
 		}
 	}

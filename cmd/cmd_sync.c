@@ -42,7 +42,7 @@ static void cmd_sync_parse_optargs(struct cmd_sync_ctx *ctx)
 	const struct cmd_optdesc ods[] = {
 		{ "loglevel", 'L', 1 },
 		{ "help", 'h', 0 },
-		{ NULL, 0, 0 },
+		{ nullptr, 0, 0 },
 	};
 	struct cmd_optargs opa;
 	int                opt_chr = 1;
@@ -74,14 +74,14 @@ static void cmd_sync_finalize(struct cmd_sync_ctx *ctx)
 	cmd_pstrfree(&ctx->in_args.pathname_real);
 	cmd_pstrfree(&ctx->in_args.pathname);
 	cmd_del_iocp(&ctx->ioc);
-	cmd_sync_ctx_p = NULL;
+	cmd_sync_ctx_p = nullptr;
 }
 
 static void cmd_sync_atexit(void)
 {
 	struct cmd_sync_ctx *ctx = cmd_sync_ctx_p;
 
-	if (ctx != NULL) {
+	if (ctx != nullptr) {
 		cmd_sync_finalize(ctx);
 	}
 }
@@ -123,7 +123,7 @@ static void cmd_sync_execute(struct cmd_sync_ctx *ctx)
 void cmd_execute_sync(void)
 {
 	struct cmd_sync_ctx ctx = {
-		.ioc = NULL,
+		.ioc = nullptr,
 	};
 
 	/* Do all cleanups upon exits */

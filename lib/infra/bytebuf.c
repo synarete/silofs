@@ -14,10 +14,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include "configs.h"
+#include <silofs/configs.h>
+#include <silofs/ccattr.h>
 #include <string.h>
 #include <stdint.h>
-#include <silofs/ccattr.h>
 #include "utility.h"
 #include "bytebuf.h"
 
@@ -37,14 +37,14 @@ void silofs_bytebuf_init2(struct silofs_bytebuf *bb, void *p, size_t n)
 
 void silofs_bytebuf_fini(struct silofs_bytebuf *bb)
 {
-	bb->ptr = NULL;
+	bb->ptr = nullptr;
 	bb->cap = 0;
 	bb->len = 0;
 }
 
 void silofs_bytebuf_reset(struct silofs_bytebuf *bb)
 {
-	bb->ptr = NULL;
+	bb->ptr = nullptr;
 	bb->cap = 0;
 	bb->len = 0;
 }

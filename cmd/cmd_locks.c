@@ -47,7 +47,7 @@ static void cmd_lockfile_init(struct cmd_lockfile_ctx *lf_ctx,
 	memset(lf_ctx, 0, sizeof(*lf_ctx));
 	lf_ctx->repodir = repodir;
 	lf_ctx->name    = name;
-	lf_ctx->now     = time(NULL);
+	lf_ctx->now     = time(nullptr);
 	lf_ctx->pid     = getpid();
 	lf_ctx->dfd     = -1;
 }
@@ -195,8 +195,8 @@ void cmd_unlock_fs(const char *repodir, const char *name)
 
 static char *cmd_repo_lockpath(const char *repodir)
 {
-	char *dotsdir  = NULL;
-	char *lockpath = NULL;
+	char *dotsdir  = nullptr;
+	char *lockpath = nullptr;
 
 	dotsdir  = cmd_join_path(repodir, SILOFS_REPO_DOTS_DIRNAME);
 	lockpath = cmd_join_path(dotsdir, SILOFS_REPO_LOCK_FILENAME);
@@ -283,7 +283,7 @@ static void cmd_do_unlock_repo(const char *lockfile, int *pfd)
 
 static void cmd_lock_repo(const char *repodir, bool wrlck, int *out_fd)
 {
-	char *lockfile = NULL;
+	char *lockfile = nullptr;
 
 	lockfile = cmd_repo_lockpath(repodir);
 	cmd_do_lock_repo(lockfile, wrlck, out_fd);
@@ -302,7 +302,7 @@ void cmd_rdlock_repo(const char *repodir, int *pfd)
 
 void cmd_unlock_repo(const char *repodir, int *pfd)
 {
-	char *lockfile = NULL;
+	char *lockfile = nullptr;
 
 	if (repodir && pfd && (*pfd > 0)) {
 		lockfile = cmd_repo_lockpath(repodir);

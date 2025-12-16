@@ -134,7 +134,7 @@ static void restrict_process_at(const char *repodir, bool allow_mkdir)
 	create_ruleset(&ruleset_fd);
 	restrict_fsroot(ruleset_fd);
 	restrict_devfs(ruleset_fd);
-	if (repodir != NULL) {
+	if (repodir != nullptr) {
 		restrict_repo(ruleset_fd, repodir, allow_mkdir);
 	}
 	apply_ruleset(&ruleset_fd);

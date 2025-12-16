@@ -14,7 +14,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include "configs.h"
+#include <silofs/configs.h>
 #include <silofs/macros.h>
 #include <silofs/errors.h>
 #include "stringx.h"
@@ -44,10 +44,10 @@ int silofs_password_setup2(struct silofs_password *pw, const void *pass,
 	SILOFS_STATICASSERT_GT(sizeof(pw->pass), SILOFS_PASSWORD_MAX);
 
 	silofs_password_reset(pw);
-	if ((pass == NULL) && (len == 0)) {
+	if ((pass == nullptr) && (len == 0)) {
 		/* password-less mode */
 		password_setup_nil(pw);
-	} else if ((pass != NULL) && //
+	} else if ((pass != nullptr) && //
 	           (len >= SILOFS_PASSWORD_MIN) &&
 	           (len <= SILOFS_PASSWORD_MAX)) {
 		password_setup_dat(pw, pass, len);

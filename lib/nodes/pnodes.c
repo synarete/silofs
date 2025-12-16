@@ -14,7 +14,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include "configs.h"
+#include <silofs/configs.h>
 #include "infra.h"
 #include "addr.h"
 #include "pnodes.h"
@@ -49,14 +49,14 @@ pni_init(struct silofs_pnode_info *pni, const struct silofs_pmeta *pmeta)
 	silofs_pmeta_assign(&pni->pn_meta, pmeta);
 	silofs_hmqe_init(&pni->pn_hmqe, pmeta_size(pmeta));
 	silofs_hkey_by_paddr(&pni->pn_hmqe.hme_key, &pni->pn_meta.paddr);
-	pni->pn_view = NULL;
+	pni->pn_view = nullptr;
 }
 
 static void pni_fini(struct silofs_pnode_info *pni)
 {
 	silofs_pmeta_reset(&pni->pn_meta);
 	silofs_hmqe_fini(&pni->pn_hmqe);
-	pni->pn_view = NULL;
+	pni->pn_view = nullptr;
 }
 
 static enum silofs_mtype pni_mtype(const struct silofs_pnode_info *pni)
@@ -119,15 +119,15 @@ pni_new_view(struct silofs_pnode_info *pni, struct silofs_alloc *alloc)
 {
 	silofs_assert_null(pni->pn_view);
 	pni->pn_view = new_view_of(alloc, pni_mtype(pni));
-	return (pni->pn_view == NULL) ? -SILOFS_ENOMEM : 0;
+	return (pni->pn_view == nullptr) ? -SILOFS_ENOMEM : 0;
 }
 
 static void
 pni_del_view(struct silofs_pnode_info *pni, struct silofs_alloc *alloc)
 {
-	if (pni->pn_view != NULL) {
+	if (pni->pn_view != nullptr) {
 		del_view_of(pni->pn_view, alloc, pni_mtype(pni));
-		pni->pn_view = NULL;
+		pni->pn_view = nullptr;
 	}
 }
 
@@ -147,13 +147,13 @@ static void
 ubi_init(struct silofs_uber_info *ubi, const struct silofs_pmeta *pmeta)
 {
 	pni_init(&ubi->ub_pni, pmeta);
-	ubi->ub = NULL;
+	ubi->ub = nullptr;
 }
 
 static void ubi_fini(struct silofs_uber_info *ubi)
 {
 	pni_fini(&ubi->ub_pni);
-	ubi->ub = NULL;
+	ubi->ub = nullptr;
 }
 
 static int
@@ -171,12 +171,12 @@ ubi_new_view(struct silofs_uber_info *ubi, struct silofs_alloc *alloc)
 static struct silofs_uber_info *
 ubi_new(const struct silofs_pmeta *pmeta, struct silofs_alloc *alloc)
 {
-	struct silofs_uber_info *ubi = NULL;
+	struct silofs_uber_info *ubi = nullptr;
 	int                      err;
 
 	ubi = ubi_malloc(alloc);
-	if (ubi == NULL) {
-		return NULL;
+	if (ubi == nullptr) {
+		return nullptr;
 	}
 	ubi_init(ubi, pmeta);
 
@@ -184,7 +184,7 @@ ubi_new(const struct silofs_pmeta *pmeta, struct silofs_alloc *alloc)
 	if (err) {
 		ubi_fini(ubi);
 		ubi_free(ubi, alloc);
-		return NULL;
+		return nullptr;
 	}
 	return ubi;
 }
@@ -193,12 +193,12 @@ static void
 ubi_del_view(struct silofs_uber_info *ubi, struct silofs_alloc *alloc)
 {
 	pni_del_view(&ubi->ub_pni, alloc);
-	ubi->ub = NULL;
+	ubi->ub = nullptr;
 }
 
 static void ubi_del(struct silofs_uber_info *ubi, struct silofs_alloc *alloc)
 {
-	if (ubi != NULL) {
+	if (ubi != nullptr) {
 		ubi_del_view(ubi, alloc);
 		ubi_fini(ubi);
 		ubi_free(ubi, alloc);
@@ -207,9 +207,9 @@ static void ubi_del(struct silofs_uber_info *ubi, struct silofs_alloc *alloc)
 
 static struct silofs_pnode_info *ubi_to_pni(struct silofs_uber_info *ubi)
 {
-	struct silofs_pnode_info *pni = NULL;
+	struct silofs_pnode_info *pni = nullptr;
 
-	if (ubi != NULL) {
+	if (ubi != nullptr) {
 		pni = &ubi->ub_pni;
 	}
 	return pni;
@@ -217,9 +217,9 @@ static struct silofs_pnode_info *ubi_to_pni(struct silofs_uber_info *ubi)
 
 static struct silofs_uber_info *ubi_from_pni(struct silofs_pnode_info *pni)
 {
-	struct silofs_uber_info *ubi = NULL;
+	struct silofs_uber_info *ubi = nullptr;
 
-	if (pni != NULL) {
+	if (pni != nullptr) {
 		ubi = container_of(pni, struct silofs_uber_info, ub_pni);
 	}
 	return ubi;
@@ -238,9 +238,9 @@ static struct silofs_uber_info *ubi_unconst(const struct silofs_uber_info *p)
 struct silofs_uber_info *
 silofs_ubi_from_pni(const struct silofs_pnode_info *pni)
 {
-	const struct silofs_uber_info *ubi = NULL;
+	const struct silofs_uber_info *ubi = nullptr;
 
-	if (pni != NULL) {
+	if (pni != nullptr) {
 		ubi = container_of2(pni, struct silofs_uber_info, ub_pni);
 	}
 	return ubi_unconst(ubi);
@@ -263,13 +263,13 @@ static void
 bdi_init(struct silofs_bldesc_info *bdi, const struct silofs_pmeta *pmeta)
 {
 	pni_init(&bdi->bld_pni, pmeta);
-	bdi->bld = NULL;
+	bdi->bld = nullptr;
 }
 
 static void bdi_fini(struct silofs_bldesc_info *bdi)
 {
 	pni_fini(&bdi->bld_pni);
-	bdi->bld = NULL;
+	bdi->bld = nullptr;
 }
 
 static int
@@ -287,12 +287,12 @@ bdi_new_view(struct silofs_bldesc_info *bdi, struct silofs_alloc *alloc)
 static struct silofs_bldesc_info *
 bdi_new(const struct silofs_pmeta *pmeta, struct silofs_alloc *alloc)
 {
-	struct silofs_bldesc_info *bdi = NULL;
+	struct silofs_bldesc_info *bdi = nullptr;
 	int                        err;
 
 	bdi = bdi_malloc(alloc);
-	if (bdi == NULL) {
-		return NULL;
+	if (bdi == nullptr) {
+		return nullptr;
 	}
 	bdi_init(bdi, pmeta);
 
@@ -300,7 +300,7 @@ bdi_new(const struct silofs_pmeta *pmeta, struct silofs_alloc *alloc)
 	if (err) {
 		bdi_fini(bdi);
 		bdi_free(bdi, alloc);
-		return NULL;
+		return nullptr;
 	}
 	return bdi;
 }
@@ -309,12 +309,12 @@ static void
 bdi_del_view(struct silofs_bldesc_info *bdi, struct silofs_alloc *alloc)
 {
 	pni_del_view(&bdi->bld_pni, alloc);
-	bdi->bld = NULL;
+	bdi->bld = nullptr;
 }
 
 static void bdi_del(struct silofs_bldesc_info *bdi, struct silofs_alloc *alloc)
 {
-	if (bdi != NULL) {
+	if (bdi != nullptr) {
 		bdi_del_view(bdi, alloc);
 		bdi_fini(bdi);
 		bdi_free(bdi, alloc);
@@ -323,9 +323,9 @@ static void bdi_del(struct silofs_bldesc_info *bdi, struct silofs_alloc *alloc)
 
 static struct silofs_pnode_info *bdi_to_pni(struct silofs_bldesc_info *bdi)
 {
-	struct silofs_pnode_info *pni = NULL;
+	struct silofs_pnode_info *pni = nullptr;
 
-	if (bdi != NULL) {
+	if (bdi != nullptr) {
 		pni = &bdi->bld_pni;
 	}
 	return pni;
@@ -333,9 +333,9 @@ static struct silofs_pnode_info *bdi_to_pni(struct silofs_bldesc_info *bdi)
 
 static struct silofs_bldesc_info *bdi_from_pni(struct silofs_pnode_info *pni)
 {
-	struct silofs_bldesc_info *bdi = NULL;
+	struct silofs_bldesc_info *bdi = nullptr;
 
-	if (pni != NULL) {
+	if (pni != nullptr) {
 		bdi = container_of(pni, struct silofs_bldesc_info, bld_pni);
 	}
 	return bdi;
@@ -355,9 +355,9 @@ bdi_unconst(const struct silofs_bldesc_info *p)
 struct silofs_bldesc_info *
 silofs_bdi_from_pni(const struct silofs_pnode_info *pni)
 {
-	const struct silofs_bldesc_info *bdi = NULL;
+	const struct silofs_bldesc_info *bdi = nullptr;
 
-	if (pni != NULL) {
+	if (pni != nullptr) {
 		bdi = container_of2(pni, struct silofs_bldesc_info, bld_pni);
 	}
 	return bdi_unconst(bdi);
@@ -380,14 +380,14 @@ static void
 bti_init(struct silofs_btnode_info *bti, const struct silofs_pmeta *pmeta)
 {
 	pni_init(&bti->btn_pni, pmeta);
-	bti->btn        = NULL;
+	bti->btn        = nullptr;
 	bti->btn_rdonly = false;
 }
 
 static void bti_fini(struct silofs_btnode_info *bti)
 {
 	pni_fini(&bti->btn_pni);
-	bti->btn = NULL;
+	bti->btn = nullptr;
 }
 
 static int
@@ -405,12 +405,12 @@ bti_new_view(struct silofs_btnode_info *bti, struct silofs_alloc *alloc)
 static struct silofs_btnode_info *
 bti_new(const struct silofs_pmeta *pmeta, struct silofs_alloc *alloc)
 {
-	struct silofs_btnode_info *bti = NULL;
+	struct silofs_btnode_info *bti = nullptr;
 	int                        err;
 
 	bti = bti_malloc(alloc);
-	if (bti == NULL) {
-		return NULL;
+	if (bti == nullptr) {
+		return nullptr;
 	}
 	bti_init(bti, pmeta);
 
@@ -418,7 +418,7 @@ bti_new(const struct silofs_pmeta *pmeta, struct silofs_alloc *alloc)
 	if (err) {
 		bti_fini(bti);
 		bti_free(bti, alloc);
-		return NULL;
+		return nullptr;
 	}
 	return bti;
 }
@@ -427,12 +427,12 @@ static void
 bti_del_view(struct silofs_btnode_info *bti, struct silofs_alloc *alloc)
 {
 	pni_del_view(&bti->btn_pni, alloc);
-	bti->btn = NULL;
+	bti->btn = nullptr;
 }
 
 static void bti_del(struct silofs_btnode_info *bti, struct silofs_alloc *alloc)
 {
-	if (bti != NULL) {
+	if (bti != nullptr) {
 		bti_del_view(bti, alloc);
 		bti_fini(bti);
 		bti_free(bti, alloc);
@@ -441,9 +441,9 @@ static void bti_del(struct silofs_btnode_info *bti, struct silofs_alloc *alloc)
 
 static struct silofs_pnode_info *bti_to_pni(struct silofs_btnode_info *bti)
 {
-	struct silofs_pnode_info *pni = NULL;
+	struct silofs_pnode_info *pni = nullptr;
 
-	if (bti != NULL) {
+	if (bti != nullptr) {
 		pni = &bti->btn_pni;
 	}
 	return pni;
@@ -451,9 +451,9 @@ static struct silofs_pnode_info *bti_to_pni(struct silofs_btnode_info *bti)
 
 static struct silofs_btnode_info *bti_from_pni(struct silofs_pnode_info *pni)
 {
-	struct silofs_btnode_info *bti = NULL;
+	struct silofs_btnode_info *bti = nullptr;
 
-	if (bti != NULL) {
+	if (bti != nullptr) {
 		bti = container_of(pni, struct silofs_btnode_info, btn_pni);
 	}
 	return bti;
@@ -473,9 +473,9 @@ bti_unconst(const struct silofs_btnode_info *p)
 struct silofs_btnode_info *
 silofs_bti_from_pni(const struct silofs_pnode_info *pni)
 {
-	const struct silofs_btnode_info *bti = NULL;
+	const struct silofs_btnode_info *bti = nullptr;
 
-	if (pni != NULL) {
+	if (pni != nullptr) {
 		bti = container_of2(pni, struct silofs_btnode_info, btn_pni);
 	}
 	return bti_unconst(bti);
@@ -486,7 +486,7 @@ silofs_bti_from_pni(const struct silofs_pnode_info *pni)
 struct silofs_pnode_info *
 silofs_new_pnode(const struct silofs_pmeta *pmeta, struct silofs_alloc *alloc)
 {
-	struct silofs_pnode_info *pni   = NULL;
+	struct silofs_pnode_info *pni   = nullptr;
 	const enum silofs_mtype   mtype = pmeta_mtype(pmeta);
 
 	switch (mtype) {

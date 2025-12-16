@@ -15,11 +15,9 @@
  * GNU General Public License for more details.
  */
 #define _GNU_SOURCE 1
-#include <unistd.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <stdio.h>
 #include "ftests.h"
+#include <fcntl.h>
+#include <stdio.h>
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 /*

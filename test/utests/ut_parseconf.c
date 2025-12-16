@@ -25,7 +25,7 @@ static const char ut_mountd_conf[] = //
 
 static struct silofs_mntrules *ut_new_mrules(struct ut_env *ute)
 {
-	struct silofs_mntrules *mrules = NULL;
+	struct silofs_mntrules *mrules = nullptr;
 
 	mrules         = ut_zalloc(ute, sizeof(*mrules));
 	mrules->nrules = 0;
@@ -37,12 +37,12 @@ static void ut_parseconf_mntrules(struct ut_env *ute)
 	struct silofs_mntrules *mrules = ut_new_mrules(ute);
 	int                     err;
 
-	err = silofs_parse_mntrules(mrules, NULL, ut_mountd_conf);
+	err = silofs_parse_mntrules(mrules, nullptr, ut_mountd_conf);
 	ut_expect_ok(err);
 	ut_expect_eq(mrules->nrules, 3);
 	ut_expect_eq(mrules->rules[0].uid, 1000);
 	ut_expect_eq(mrules->rules[1].uid, 1001);
-	silofs_release_mntrules(mrules, NULL);
+	silofs_release_mntrules(mrules, nullptr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -60,7 +60,7 @@ static const char ut_fsids_conf[] = //
 
 static struct silofs_ugids *ut_new_ugids(struct ut_env *ute)
 {
-	struct silofs_ugids *ugids = NULL;
+	struct silofs_ugids *ugids = nullptr;
 
 	ugids               = ut_zalloc(ute, sizeof(*ugids));
 	ugids->users.nuids  = 0;
@@ -75,14 +75,14 @@ static void ut_parseconf_fsids(struct ut_env *ute)
 	char                *buf   = ut_zalloc(ute, bsz);
 	int                  err;
 
-	err = silofs_parse_fsids(ugids, NULL, ut_fsids_conf);
+	err = silofs_parse_fsids(ugids, nullptr, ut_fsids_conf);
 	ut_expect_ok(err);
 	ut_expect_eq(ugids->users.nuids, 2);
 	ut_expect_eq(ugids->groups.ngids, 3);
-	err = silofs_unparse_fsids(ugids, NULL, buf, bsz);
+	err = silofs_unparse_fsids(ugids, nullptr, buf, bsz);
 	ut_expect_ok(err);
 	ut_expect_gt(strlen(buf), 50);
-	silofs_release_fsids(ugids, NULL);
+	silofs_release_fsids(ugids, nullptr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -103,7 +103,7 @@ static const char ut_mountinfo_conf[] = //
 
 static struct silofs_mntinfos *ut_new_mntinfos(struct ut_env *ute)
 {
-	struct silofs_mntinfos *minfos = NULL;
+	struct silofs_mntinfos *minfos = nullptr;
 
 	minfos         = ut_zalloc(ute, sizeof(*minfos));
 	minfos->ninfos = 0;
@@ -115,11 +115,11 @@ static void ut_parseconf_mntinfos(struct ut_env *ute)
 	struct silofs_mntinfos *minfos = ut_new_mntinfos(ute);
 	int                     err;
 
-	err = silofs_parse_mntinfos(minfos, NULL, ut_mountinfo_conf);
+	err = silofs_parse_mntinfos(minfos, nullptr, ut_mountinfo_conf);
 	ut_expect_ok(err);
 	ut_expect_eq(minfos->ninfos, 1);
 	ut_expect_eqs(minfos->infos[0].mntdir, "/mnt/test");
-	silofs_release_mntinfos(minfos, NULL);
+	silofs_release_mntinfos(minfos, nullptr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

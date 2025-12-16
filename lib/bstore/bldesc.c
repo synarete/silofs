@@ -14,7 +14,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include "configs.h"
+#include <silofs/configs.h>
 #include "infra.h"
 #include "addr.h"
 #include "bldesc.h"
@@ -467,7 +467,7 @@ silofs_create_cached_bldesc(struct silofs_pcache      *pcache,
 
 	pni = silofs_pcache_create_pnode(pcache, pmeta);
 	bdi = silofs_bdi_from_pni(pni);
-	if ((bdi != NULL) && spawn) {
+	if ((bdi != nullptr) && spawn) {
 		bdi_setup_spawned(bdi);
 	}
 	return bdi;

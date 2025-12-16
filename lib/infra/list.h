@@ -148,7 +148,7 @@ static inline void silofs_list_head_init(struct silofs_list_head *lh)
 
 static inline void silofs_list_head_fini(struct silofs_list_head *lh)
 {
-	silofs_list_head_set(lh, NULL, NULL);
+	silofs_list_head_set(lh, nullptr, nullptr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

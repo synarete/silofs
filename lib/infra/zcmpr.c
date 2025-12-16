@@ -14,10 +14,9 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include "configs.h"
-#include <zstd.h>
-#include <silofs/ccattr.h>
+#include <silofs/configs.h>
 #include <silofs/errors.h>
+#include <zstd.h>
 #include "zcmpr.h"
 
 #if (ZSTD_VERSION_NUMBER >= 10502)
@@ -41,7 +40,7 @@ static int zcmpr_init_cctx(struct silofs_zcmpr *zc)
 	ZSTD_CCtx *cctx;
 
 	cctx = ZSTD_createCCtx();
-	if (cctx == NULL) {
+	if (cctx == nullptr) {
 		return -SILOFS_ENOMEM;
 	}
 	zc->ctx  = cctx;
@@ -54,7 +53,7 @@ static int zcmpr_init_dctx(struct silofs_zcmpr *zc)
 	ZSTD_DCtx *dctx;
 
 	dctx = ZSTD_createDCtx();
-	if (dctx == NULL) {
+	if (dctx == nullptr) {
 		return -SILOFS_ENOMEM;
 	}
 	zc->ctx  = dctx;
@@ -72,7 +71,7 @@ static void zcmpr_fini_cctx(struct silofs_zcmpr *zc)
 	ZSTD_CCtx *cctx = zc->ctx;
 
 	ZSTD_freeCCtx(cctx);
-	zc->ctx  = NULL;
+	zc->ctx  = nullptr;
 	zc->mode = 0;
 }
 

@@ -14,17 +14,17 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include "configs.h"
+#include <silofs/configs.h>
+#include <silofs/ccattr.h>
+#include <silofs/syscall.h>
+#include <silofs/errors.h>
+#include <silofs/logging.h>
 #include <sys/types.h>
 #include <fcntl.h>
 #include <string.h>
 #include <stdbool.h>
 #include <errno.h>
 #include <limits.h>
-#include <silofs/ccattr.h>
-#include <silofs/syscall.h>
-#include <silofs/errors.h>
-#include <silofs/logging.h>
 #include "utility.h"
 #include "pipe.h"
 
@@ -226,7 +226,7 @@ int silofs_pipe_splice_from_fd(struct silofs_pipe *pipe, int fd, off_t *off,
 {
 	size_t    cnt;
 	size_t    nsp    = 0;
-	off_t     off_in = (off != NULL) ? *off : 0;
+	off_t     off_in = (off != nullptr) ? *off : 0;
 	const int fd_in  = pipe->fd[1];
 	int       err;
 
@@ -235,7 +235,7 @@ int silofs_pipe_splice_from_fd(struct silofs_pipe *pipe, int fd, off_t *off,
 	}
 
 	cnt = silofs_min(pipe_avail(pipe), len);
-	err = silofs_sys_splice(fd, &off_in, fd_in, NULL, cnt, flags, &nsp);
+	err = silofs_sys_splice(fd, &off_in, fd_in, nullptr, cnt, flags, &nsp);
 	if (err) {
 		silofs_log_warn("splice-error: fd_in=%d off_in=%ld "
 		                "fd_out=%d cnt=%zu flags=%u err=%d",
@@ -280,7 +280,7 @@ int silofs_pipe_vmsplice_from_iov(struct silofs_pipe *pipe,
 int silofs_pipe_splice_to_fd(struct silofs_pipe *pipe, int fd, off_t *off,
                              size_t len, unsigned int flags)
 {
-	off_t     off_out = (off != NULL) ? *off : 0;
+	off_t     off_out = (off != nullptr) ? *off : 0;
 	size_t    cnt     = 0;
 	size_t    nsp     = 0;
 	const int fd_in   = pipe->fd[0];
@@ -292,7 +292,8 @@ int silofs_pipe_splice_to_fd(struct silofs_pipe *pipe, int fd, off_t *off,
 	}
 
 	cnt = silofs_min((size_t)pipe->pend, len);
-	err = silofs_sys_splice(fd_in, NULL, fd, &off_out, cnt, flags, &nsp);
+	err = silofs_sys_splice(fd_in, nullptr, fd, &off_out, cnt, flags,
+	                        &nsp);
 	nonblock_err = (err == -EAGAIN) && ((flags & SPLICE_F_NONBLOCK) > 0);
 	if (nonblock_err) {
 		silofs_log_debug("partial-splice: fd_in=%d fd_out=%d "
@@ -398,7 +399,7 @@ int silofs_pipe_sendall_to_fd(struct silofs_pipe *pipe, int fd,
 
 	if (pipe->pend > 0) {
 		len = (size_t)pipe->pend;
-		ret = silofs_pipe_splice_to_fd(pipe, fd, NULL, len, flags);
+		ret = silofs_pipe_splice_to_fd(pipe, fd, nullptr, len, flags);
 	}
 	return ret;
 }

@@ -14,7 +14,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include "configs.h"
+#include <silofs/configs.h>
 #include "infra.h"
 #include "addr.h"
 #include "flags.h"
@@ -33,9 +33,9 @@ static struct silofs_pnode_info *pni_unconst(const struct silofs_pnode_info *p)
 static struct silofs_pnode_info *
 pni_from_hmqe(const struct silofs_hmapq_elem *hmqe)
 {
-	const struct silofs_pnode_info *pni = NULL;
+	const struct silofs_pnode_info *pni = nullptr;
 
-	if (hmqe != NULL) {
+	if (hmqe != nullptr) {
 		pni = container_of2(hmqe, struct silofs_pnode_info, pn_hmqe);
 	}
 	return pni_unconst(pni);
@@ -104,14 +104,14 @@ void silofs_pcache_fini(struct silofs_pcache *pcache)
 {
 	pcache_fini_hmapqs(pcache);
 	silofs_dirtyq_fini(&pcache->pc_dirtyq);
-	pcache->pc_alloc = NULL;
+	pcache->pc_alloc = nullptr;
 }
 
 static const struct silofs_hmapq *
 pcache_hmapq_of(const struct silofs_pcache *pcache,
                 const struct silofs_paddr  *paddr)
 {
-	const struct silofs_hmapq *hmapq = NULL;
+	const struct silofs_hmapq *hmapq = nullptr;
 
 	switch (paddr->mtype) {
 	case SILOFS_MTYPE_UBER:
@@ -162,11 +162,11 @@ pcache_search(const struct silofs_pcache *pcache,
               const struct silofs_paddr  *paddr)
 {
 	struct silofs_hkey         hkey;
-	struct silofs_hmapq_elem  *hmqe  = NULL;
-	const struct silofs_hmapq *hmapq = NULL;
+	struct silofs_hmapq_elem  *hmqe  = nullptr;
+	const struct silofs_hmapq *hmapq = nullptr;
 
 	hmapq = pcache_hmapq_of(pcache, paddr);
-	if (likely(hmapq != NULL)) {
+	if (likely(hmapq != nullptr)) {
 		silofs_hkey_by_paddr(&hkey, paddr);
 		hmqe = silofs_hmapq_lookup(hmapq, &hkey);
 	}
@@ -178,7 +178,7 @@ pcache_promote(struct silofs_pcache *pcache, struct silofs_pnode_info *pni)
 {
 	struct silofs_hmapq *hmapq = pcache_hmapq_of2(pcache, pni);
 
-	if (likely(hmapq != NULL)) {
+	if (likely(hmapq != nullptr)) {
 		silofs_hmapq_promote(hmapq, pni_to_hmqe(pni), false);
 	}
 }
@@ -190,7 +190,7 @@ pcache_search_and_relru(struct silofs_pcache      *pcache,
 	struct silofs_pnode_info *pni;
 
 	pni = pcache_search(pcache, paddr);
-	if (pni != NULL) {
+	if (pni != nullptr) {
 		pcache_promote(pcache, pni);
 	}
 	return pni;
@@ -201,7 +201,7 @@ pcache_map(struct silofs_pcache *pcache, struct silofs_pnode_info *pni)
 {
 	struct silofs_hmapq *hmapq = pcache_hmapq_of2(pcache, pni);
 
-	if (likely(hmapq != NULL)) {
+	if (likely(hmapq != nullptr)) {
 		silofs_hmapq_store(hmapq, pni_to_hmqe(pni));
 	}
 }
@@ -211,7 +211,7 @@ pcache_unmap(struct silofs_pcache *pcache, struct silofs_pnode_info *pni)
 {
 	struct silofs_hmapq *hmapq = pcache_hmapq_of2(pcache, pni);
 
-	if (likely(hmapq != NULL)) {
+	if (likely(hmapq != nullptr)) {
 		silofs_hmapq_remove(hmapq, pni_to_hmqe(pni));
 	}
 }
@@ -226,7 +226,7 @@ static void pcache_unbind_dirtyq(struct silofs_pcache     *pcache,
                                  struct silofs_pnode_info *pni)
 {
 	silofs_pni_undirtify(pni);
-	silofs_pni_set_dq(pni, NULL);
+	silofs_pni_set_dq(pni, nullptr);
 	unused(pcache);
 }
 
@@ -270,10 +270,10 @@ struct silofs_pnode_info *
 silofs_pcache_create_pnode(struct silofs_pcache      *pcache,
                            const struct silofs_pmeta *pmeta)
 {
-	struct silofs_pnode_info *pni = NULL;
+	struct silofs_pnode_info *pni = nullptr;
 
 	pni = pcache_new_pnode(pcache, pmeta);
-	if (pni != NULL) {
+	if (pni != nullptr) {
 		pcache_insert_pnode(pcache, pni);
 	}
 	return pni;
@@ -311,14 +311,14 @@ static int visit_evictable_pni(struct silofs_hmapq_elem *hmqe, void *arg)
 static struct silofs_pnode_info *
 pcache_find_evictable(struct silofs_pcache *pcache, bool iterall)
 {
-	struct silofs_pnode_info  *pni   = NULL;
+	struct silofs_pnode_info  *pni   = nullptr;
 	struct silofs_pnode_info **p_pni = &pni;
 
 	for (size_t i = ARRAY_SIZE(pcache->pc_hmapq); i > 0; --i) {
 		silofs_hmapq_riterate(&pcache->pc_hmapq[i - 1],
 		                      iterall ? SILOFS_HMAPQ_ITERALL : 10,
 		                      visit_evictable_pni, (void *)p_pni);
-		if (pni != NULL) {
+		if (pni != nullptr) {
 			break;
 		}
 	}
@@ -333,7 +333,7 @@ pcache_evict_some(struct silofs_pcache *pcache, size_t niter, bool iterall)
 
 	while (niter-- > 0) {
 		pni = pcache_find_evictable(pcache, iterall);
-		if (pni == NULL) {
+		if (pni == nullptr) {
 			break;
 		}
 		pcache_evict_by(pcache, pni);

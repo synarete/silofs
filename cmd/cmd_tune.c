@@ -47,7 +47,7 @@ static void cmd_tune_parse_optargs(struct cmd_tune_ctx *ctx)
 		{ "ftype", 't', 1 },
 		{ "loglevel", 'L', 1 },
 		{ "help", 'h', 0 },
-		{ NULL, 0, 0 },
+		{ nullptr, 0, 0 },
 	};
 	struct cmd_optargs opa;
 	int                opt_chr = 1;
@@ -84,14 +84,14 @@ static void cmd_tune_finalize(struct cmd_tune_ctx *ctx)
 	cmd_pstrfree(&ctx->in_args.dirpath_real);
 	cmd_pstrfree(&ctx->in_args.dirpath);
 	cmd_del_iocp(&ctx->ioc);
-	cmd_tune_ctx_p = NULL;
+	cmd_tune_ctx_p = nullptr;
 }
 
 static void cmd_tune_atexit(void)
 {
 	struct cmd_tune_ctx *ctx = cmd_tune_ctx_p;
 
-	if (ctx != NULL) {
+	if (ctx != nullptr) {
 		cmd_tune_finalize(ctx);
 	}
 }
@@ -144,7 +144,7 @@ static void cmd_tune_execute(struct cmd_tune_ctx *ctx)
 void cmd_execute_tune(void)
 {
 	struct cmd_tune_ctx ctx = {
-		.ioc         = NULL,
+		.ioc         = nullptr,
 		.iflags_want = 0,
 		.iflags_dont = 0,
 	};

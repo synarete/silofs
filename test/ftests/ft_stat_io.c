@@ -15,9 +15,6 @@
  * GNU General Public License for more details.
  */
 #define _GNU_SOURCE 1
-#include <unistd.h>
-#include <fcntl.h>
-#include <stdio.h>
 #include "ftests.h"
 
 static blkcnt_t calc_nfrgs_of(off_t off, off_t len, blksize_t blksz)
@@ -48,7 +45,7 @@ static void test_stat_write_(struct ft_env *fte, off_t off, size_t len)
 	const char *path     = ft_new_path_unique(fte);
 	blkcnt_t    bcnt_min = 0;
 	blkcnt_t    bcnt_max = 0;
-	void       *buf      = NULL;
+	void       *buf      = nullptr;
 	int         fd       = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);

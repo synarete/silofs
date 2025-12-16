@@ -1,8 +1,9 @@
 -include $(top_builddir)/sedsub.mk
 
 noinst_HEADERS = $(NULL)
-noinst_HEADERS += config.h
-noinst_HEADERS += config-am.h
+noinst_HEADERS += silofs/config.h
+noinst_HEADERS += silofs/config-am.h
+noinst_HEADERS += silofs/configs.h
 noinst_HEADERS += linux/fuse_kernel.h
 
 nobase_include_HEADERS = $(NULL)
@@ -24,7 +25,7 @@ nobase_include_HEADERS += silofs/types.h
 nobase_include_HEADERS += silofs/version.h
 
 
-EXTRA_DIST = config-am.h.in
+EXTRA_DIST = silofs/config-am.h.in
 
-config-am.h: config-am.h.in
+silofs/config-am.h: silofs/config-am.h.in
 	$(silofs_sedsub) "$<" > "$@"

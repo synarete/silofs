@@ -27,7 +27,7 @@ struct ut_readdir_ctx *ut_new_readdir_ctx(struct ut_env *ute)
 static const struct ut_dirent_info *
 ut_find_not_dot(const struct ut_dirent_info *deis, size_t n, size_t start_pos)
 {
-	const struct ut_dirent_info *dei = NULL;
+	const struct ut_dirent_info *dei = nullptr;
 	size_t                       pos = start_pos;
 
 	for (size_t i = 0; i < n; ++i) {
@@ -39,10 +39,10 @@ ut_find_not_dot(const struct ut_dirent_info *deis, size_t n, size_t start_pos)
 			break;
 		}
 		++pos;
-		dei = NULL;
+		dei = nullptr;
 	}
 	ut_expect_not_null(dei);
-	if (dei == NULL) {
+	if (dei == nullptr) {
 		silofs_panic("failed to find real de: n=%zu statr_pos=%zu", n,
 		             start_pos);
 	}
@@ -97,7 +97,7 @@ static void ut_dir_open_release(struct ut_env *ute)
 static void ut_verify_iter_simple(struct ut_env *ute, const char *pre,
                                   const struct ut_readdir_ctx *rd_ctx)
 {
-	const char                  *name = NULL;
+	const char                  *name = nullptr;
 	const struct ut_dirent_info *dei  = rd_ctx->dei;
 
 	ut_expect_ge(rd_ctx->nde, 2);
@@ -114,7 +114,7 @@ static void ut_dir_iter_simple(struct ut_env *ute)
 {
 	ino_t                  dino;
 	struct stat            st;
-	const char            *name   = NULL;
+	const char            *name   = nullptr;
 	const char            *dname  = UT_NAME;
 	struct ut_readdir_ctx *rd_ctx = ut_new_readdir_ctx(ute);
 	const size_t           count  = UT_ARRAY_SIZE(rd_ctx->dei) - 2;
@@ -152,7 +152,7 @@ ut_dir_iter_names_(struct ut_env *ute, const char *names[], size_t nnames)
 	ino_t                  dino;
 	off_t                  doff   = 0;
 	size_t                 dcnt   = 0;
-	const char            *name   = NULL;
+	const char            *name   = nullptr;
 	const char            *dname  = UT_NAME;
 	struct ut_readdir_ctx *rd_ctx = ut_new_readdir_ctx(ute);
 
@@ -259,12 +259,12 @@ static void ut_dir_iter_rand_names(struct ut_env *ute)
 static void ut_dir_iter_links_(struct ut_env *ute, size_t cnt)
 {
 	struct stat                  st     = { .st_size = -1 };
-	const char                  *lname  = NULL;
+	const char                  *lname  = nullptr;
 	const char                  *fname  = UT_NAME;
 	const char                  *dname  = UT_NAME;
 	const char                  *dname2 = "AAA";
-	const struct ut_dirent_info *dei    = NULL;
-	struct ut_readdir_ctx       *rd_ctx = NULL;
+	const struct ut_dirent_info *dei    = nullptr;
+	struct ut_readdir_ctx       *rd_ctx = nullptr;
 	off_t                        doff   = -1;
 	ino_t                        dino   = 0;
 	ino_t                        dino2  = 0;
@@ -325,8 +325,8 @@ static void ut_dir_iter_unlink_(struct ut_env *ute, size_t cnt)
 {
 	struct stat                  st     = { .st_size = -1 };
 	struct ut_readdir_ctx       *rd_ctx = ut_new_readdir_ctx(ute);
-	const struct ut_dirent_info *dei    = NULL;
-	const char                  *fname  = NULL;
+	const struct ut_dirent_info *dei    = nullptr;
+	const char                  *fname  = nullptr;
 	const char                  *dname  = UT_NAME;
 	off_t                        doff   = 0;
 	size_t                       nde    = 0;
@@ -371,8 +371,8 @@ static void ut_dir_iter_plus_(struct ut_env *ute, size_t cnt)
 {
 	struct stat                  st     = { .st_size = -1 };
 	struct ut_readdir_ctx       *rd_ctx = ut_new_readdir_ctx(ute);
-	const struct ut_dirent_info *dei    = NULL;
-	const char                  *name   = NULL;
+	const struct ut_dirent_info *dei    = nullptr;
+	const char                  *name   = nullptr;
 	const char                  *dname  = UT_NAME;
 	off_t                        doff   = 0;
 	ino_t                        dino   = 0;

@@ -14,7 +14,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include "configs.h"
+#include <silofs/configs.h>
 #include <silofs/ondisk.h>
 #include "infra.h"
 #include "crypt.h"
@@ -391,7 +391,7 @@ int silofs_derive_mbr_nmeta(const struct silofs_password *passwd,
 	int                   err;
 
 	silofs_nmeta_reset(out_nmeta);
-	if ((passwd == NULL) || (passwd->passlen == 0)) {
+	if ((passwd == nullptr) || (passwd->passlen == 0)) {
 		return 0;
 	}
 	err = silofs_mdigest_init(&mdigest);

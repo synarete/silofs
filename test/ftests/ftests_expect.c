@@ -25,7 +25,7 @@ static const char *basename_of(const char *path)
 {
 	const char *name = strrchr(path, '/');
 
-	return (name == NULL) ? path : (name + 1);
+	return (name == nullptr) ? path : (name + 1);
 }
 
 #define attr_noreturn_printf34 silofs_attr_noreturn silofs_attr_printf(3, 4)

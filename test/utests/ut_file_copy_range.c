@@ -444,7 +444,7 @@ ut_file_copy_range_nfiles_(struct ut_env *ute, off_t off, size_t len)
 	const size_t nfiles   = 256;
 	const char  *name     = UT_NAME;
 	const char  *name_src = UT_NAME;
-	const char  *name_dst = NULL;
+	const char  *name_dst = nullptr;
 	uint8_t     *buf      = ut_randbuf(ute, len);
 
 	ut_mkdir_at_root(ute, name, &dino);

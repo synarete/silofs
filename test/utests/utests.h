@@ -18,7 +18,8 @@
 #define SILOFS_UTESTS_H_
 
 #define _GNU_SOURCE 1
-#include <config.h>
+#include <silofs/configs.h>
+#include <silofs/silofs.h>
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <sys/stat.h>
@@ -30,8 +31,6 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include <dirent.h>
-
-#include <silofs/silofs.h>
 #include "fs.h"
 #include "ar.h"
 #include "mbr.h"

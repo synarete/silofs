@@ -59,7 +59,7 @@ getopti_add(struct cmd_getopt_info *goi, const struct cmd_optdesc *od)
 	char          *sopt = goi->sopts + strlen(goi->sopts);
 
 	lopt->name    = od->lopt;
-	lopt->flag    = NULL;
+	lopt->flag    = nullptr;
 	lopt->has_arg = od->has_arg ? required_argument : no_argument;
 	lopt->val     = od->sopt;
 
@@ -88,7 +88,7 @@ getopti_init(struct cmd_getopt_info *goi, const struct cmd_optdesc *ods)
 
 static struct cmd_getopt_info *getopti_new(const struct cmd_optdesc *ods)
 {
-	struct cmd_getopt_info *goi = NULL;
+	struct cmd_getopt_info *goi = nullptr;
 
 	goi = cmd_zalloc(sizeof(*goi));
 	getopti_init(goi, ods);
@@ -97,7 +97,7 @@ static struct cmd_getopt_info *getopti_new(const struct cmd_optdesc *ods)
 
 static void getopti_del(struct cmd_getopt_info *goi)
 {
-	if (goi != NULL) {
+	if (goi != nullptr) {
 		cmd_zfree(goi, sizeof(*goi));
 	}
 }
@@ -112,7 +112,7 @@ void cmd_optargs_init(struct cmd_optargs *opa, const struct cmd_optdesc *ods)
 	opa->opa_cmd_argv = cmd_global_params.argv + 1;
 	opa->opa_optind = optind = 1;
 	opa->opa_opterr = opterr = 0;
-	opa->opa_optarg = optarg = NULL;
+	opa->opa_optarg = optarg = nullptr;
 	opa->opa_optidx          = 0;
 	opa->opa_done            = false;
 }
@@ -138,7 +138,7 @@ static void cmd_optargs_update_next(struct cmd_optargs *opa)
 
 static const char *cmd_optargs_by_ind(const struct cmd_optargs *opa)
 {
-	const char *opt = NULL;
+	const char *opt = nullptr;
 
 	if ((opa->opa_optind > 0) && (opa->opa_optind <= opa->opa_cmd_argc)) {
 		opt = opa->opa_cmd_argv[opa->opa_optind - 1];
@@ -148,9 +148,9 @@ static const char *cmd_optargs_by_ind(const struct cmd_optargs *opa)
 
 static const char *cmd_optargs_curr(const struct cmd_optargs *opa)
 {
-	const char *opt = NULL;
+	const char *opt = nullptr;
 
-	if (opa->opa_optarg != NULL) {
+	if (opa->opa_optarg != nullptr) {
 		opt = opa->opa_optarg;
 	} else if ((opa->opa_optind > 0) &&
 	           (opa->opa_optind <= opa->opa_cmd_argc)) {
@@ -216,7 +216,7 @@ char *cmd_optargs_getarg(struct cmd_optargs *opa, const char *arg_name)
 	if (opa->opa_optind > opa->opa_cmd_argc) {
 		cmd_fatal_missing_arg(arg_name);
 	}
-	if ((opa->opa_optind == opa->opa_cmd_argc) || (arg == NULL)) {
+	if ((opa->opa_optind == opa->opa_cmd_argc) || (arg == nullptr)) {
 		cmd_fatal_missing_arg(arg_name);
 	}
 	cmd_optargs_update_next(opa);
@@ -226,13 +226,13 @@ char *cmd_optargs_getarg(struct cmd_optargs *opa, const char *arg_name)
 char *cmd_optargs_getarg2(struct cmd_optargs *opa, const char *arg_name,
                           const char *default_val)
 {
-	const char *arg = NULL;
+	const char *arg = nullptr;
 
 	if (opa->opa_optind > opa->opa_cmd_argc) {
 		cmd_fatal_missing_arg(arg_name);
 	}
 	arg = opa->opa_cmd_argv[opa->opa_optind];
-	if ((opa->opa_optind == opa->opa_cmd_argc) || (arg == NULL)) {
+	if ((opa->opa_optind == opa->opa_cmd_argc) || (arg == nullptr)) {
 		arg = default_val;
 	} else {
 		arg = opa->opa_cmd_argv[opa->opa_optind];
@@ -282,7 +282,7 @@ uint32_t cmd_optargs_curr_as_u32v(const struct cmd_optargs *opa, uint32_t vmin,
 
 void cmd_require_arg(const char *arg_name, const void *arg_val)
 {
-	if (arg_val == NULL) {
+	if (arg_val == nullptr) {
 		cmd_fatal_missing_arg(arg_name);
 	}
 }

@@ -64,7 +64,7 @@ static void test_fsync_reg_unaligned(struct ft_env *fte)
 static void test_fsync_dir_(struct ft_env *fte, size_t cnt)
 {
 	const char *path1 = ft_new_path_unique(fte);
-	const char *path2 = NULL;
+	const char *path2 = nullptr;
 	int         dfd   = -1;
 	int         fd    = -1;
 
@@ -105,8 +105,8 @@ static void test_fsync_dir_io_(struct ft_env *fte, off_t off_base, size_t cnt)
 {
 	struct stat st    = { .st_size = -1 };
 	const char *path  = ft_new_path_unique(fte);
-	const char *name1 = NULL;
-	const char *name2 = NULL;
+	const char *name1 = nullptr;
+	const char *name2 = nullptr;
 	void       *buf;
 	size_t      len;
 	off_t       off;

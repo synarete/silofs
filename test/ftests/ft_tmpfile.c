@@ -15,7 +15,6 @@
  * GNU General Public License for more details.
  */
 #define _GNU_SOURCE 1
-#include <unistd.h>
 #include "ftests.h"
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -62,8 +61,8 @@ static void test_buffer(struct ft_env *fte, size_t bsz)
 	int         fd   = -1;
 	size_t      nwr  = 0;
 	size_t      nrd  = 0;
-	void       *buf1 = NULL;
-	void       *buf2 = NULL;
+	void       *buf1 = nullptr;
+	void       *buf2 = nullptr;
 	char       *path = ft_new_path_unique(fte);
 	struct stat st;
 

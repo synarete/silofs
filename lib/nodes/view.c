@@ -14,9 +14,9 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include "configs.h"
-#include <stdlib.h>
+#include <silofs/configs.h>
 #include <silofs/ondisk.h>
+#include <stdlib.h>
 #include "addr.h"
 #include "crypt.h"
 #include "view.h"
@@ -243,10 +243,10 @@ static void view_fini(struct silofs_view *view, enum silofs_mtype mtype)
 struct silofs_view *
 silofs_view_new(struct silofs_alloc *alloc, enum silofs_mtype mtype, int flags)
 {
-	struct silofs_view *view = NULL;
+	struct silofs_view *view = nullptr;
 
 	view = view_malloc(alloc, mtype, flags);
-	if (view != NULL) {
+	if (view != nullptr) {
 		view_init(view, mtype);
 	}
 	return view;
@@ -255,7 +255,7 @@ silofs_view_new(struct silofs_alloc *alloc, enum silofs_mtype mtype, int flags)
 void silofs_view_del(struct silofs_view *view, struct silofs_alloc *alloc,
                      enum silofs_mtype mtype, int flags)
 {
-	if (likely(view != NULL)) {
+	if (likely(view != nullptr)) {
 		view_fini(view, mtype);
 		view_free(view, alloc, mtype, flags);
 	}

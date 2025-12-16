@@ -15,15 +15,15 @@
  * GNU General Public License for more details.
  */
 #define _GNU_SOURCE 1
-#include "configs.h"
+#include <silofs/configs.h>
+#include <silofs/ccattr.h>
+#include <silofs/syscall.h>
+#include <silofs/panic.h>
 #include <sys/stat.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 #include <time.h>
-#include <silofs/ccattr.h>
-#include <silofs/syscall.h>
-#include <silofs/panic.h>
 #include "times.h"
 
 static struct timespec silofs_start_ts_mono;
@@ -63,7 +63,7 @@ static void timespec_dif(const struct timespec *beg,
 
 time_t silofs_time_real_now(void)
 {
-	return time(NULL);
+	return time(nullptr);
 }
 
 time_t silofs_time_mono_now(void)
@@ -146,7 +146,7 @@ int silofs_suspend_ts(const struct timespec *ts)
 
 int silofs_init_times(void)
 {
-	struct tm res = { .tm_zone = NULL };
+	struct tm res = { .tm_zone = nullptr };
 	int       err;
 
 	tzset();
@@ -169,7 +169,7 @@ void silofs_uptime(struct timespec *out_ts)
 int silofs_localtime_now(struct tm *res)
 {
 	const time_t     now = silofs_time_real_now();
-	const struct tm *ptm = NULL;
+	const struct tm *ptm = nullptr;
 
 	errno = 0;
 	ptm   = localtime_r(&now, res);

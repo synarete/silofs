@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 #define _GNU_SOURCE 1
-#include <unistd.h>
+#include "ftests.h"
 #include <signal.h>
 #include <getopt.h>
 #include <error.h>
@@ -23,7 +23,6 @@
 #include <locale.h>
 #include <stdio.h>
 #include <string.h>
-#include "ftests.h"
 
 struct ft_global_settings {
 	struct silofs_log_params log_params;
@@ -109,7 +108,7 @@ static void ft_error_print_progname(void)
 
 static void ft_atexit_cleanup(void)
 {
-	ft_g_env = NULL;
+	ft_g_env = nullptr;
 	memset(&ft_globals, 0, sizeof(ft_globals));
 }
 
@@ -155,12 +154,12 @@ static void ft_pre_execute(void)
 	ft_tests_mask(&ft_globals.tests_mask, &ft_globals.tests_xmask);
 
 	ft_globals.curr_workdir = get_current_dir_name();
-	if (ft_globals.curr_workdir == NULL) {
+	if (ft_globals.curr_workdir == nullptr) {
 		error(EXIT_FAILURE, errno, "get_current_dir_name failed");
 	}
 
 	ft_g_env = (struct ft_env *)malloc(sizeof(*ft_g_env));
-	if (ft_g_env == NULL) {
+	if (ft_g_env == nullptr) {
 		error(EXIT_FAILURE, errno, "malloc %lu failed",
 		      sizeof(*ft_g_env));
 	}
@@ -172,13 +171,13 @@ static void ft_pre_execute(void)
 
 static void ft_post_execute(void)
 {
-	if (ft_g_env != NULL) {
+	if (ft_g_env != nullptr) {
 		free(ft_g_env);
-		ft_g_env = NULL;
+		ft_g_env = nullptr;
 	}
-	if (ft_globals.curr_workdir != NULL) {
+	if (ft_globals.curr_workdir != nullptr) {
 		free(ft_globals.curr_workdir);
-		ft_globals.curr_workdir = NULL;
+		ft_globals.curr_workdir = nullptr;
 	}
 }
 
@@ -214,7 +213,7 @@ static void register_sigaction(int signum, const struct sigaction *sa)
 {
 	int err;
 
-	err = silofs_sys_sigaction(signum, sa, NULL);
+	err = silofs_sys_sigaction(signum, sa, nullptr);
 	if (err) {
 		error(EXIT_FAILURE, err, "sigaction error: %d", signum);
 	}
@@ -274,7 +273,7 @@ silofs_attr_noreturn static void show_version_and_exit(void)
 static long ft_strtol_safe(const char *nptr)
 {
 	long  ret    = 0;
-	char *endptr = NULL;
+	char *endptr = nullptr;
 
 	errno = 0;
 	ret   = strtol(nptr, &endptr, 10);
@@ -289,16 +288,16 @@ static void ft_parse_args(void)
 	int           opt_chr     = 1;
 	int           opt_index   = 0;
 	struct option long_opts[] = {
-		{ "test", required_argument, NULL, 't' },
-		{ "repeat", required_argument, NULL, 'n' },
-		{ "random", no_argument, NULL, 'r' },
-		{ "nostatvfs", no_argument, NULL, 'C' },
-		{ "noflaky", no_argument, NULL, 'F' },
-		{ "quiet", no_argument, NULL, 'Q' },
-		{ "list", no_argument, NULL, 'l' },
-		{ "version", no_argument, NULL, 'v' },
-		{ "help", no_argument, NULL, 'h' },
-		{ NULL, no_argument, NULL, 0 },
+		{ "test", required_argument, nullptr, 't' },
+		{ "repeat", required_argument, nullptr, 'n' },
+		{ "random", no_argument, nullptr, 'r' },
+		{ "nostatvfs", no_argument, nullptr, 'C' },
+		{ "noflaky", no_argument, nullptr, 'F' },
+		{ "quiet", no_argument, nullptr, 'Q' },
+		{ "list", no_argument, nullptr, 'l' },
+		{ "version", no_argument, nullptr, 'v' },
+		{ "help", no_argument, nullptr, 'h' },
+		{ nullptr, no_argument, nullptr, 0 },
 	};
 
 	while (opt_chr > 0) {

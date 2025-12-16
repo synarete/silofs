@@ -14,7 +14,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include "configs.h"
+#include <silofs/configs.h>
 #include "infra.h"
 #include "bstore.h"
 #include "fs.h"
@@ -36,11 +36,11 @@ struct silofs_re_ctx {
 static void
 rec_rebind_ari(struct silofs_re_ctx *re_ctx, struct silofs_arnode_info *ari)
 {
-	if (re_ctx->ari != NULL) {
+	if (re_ctx->ari != nullptr) {
 		silofs_ari_del(re_ctx->ari, re_ctx->alloc);
-		re_ctx->ari = NULL;
+		re_ctx->ari = nullptr;
 	}
-	if (ari != NULL) {
+	if (ari != nullptr) {
 		re_ctx->ari = ari;
 	}
 }
@@ -48,10 +48,10 @@ rec_rebind_ari(struct silofs_re_ctx *re_ctx, struct silofs_arnode_info *ari)
 static int
 rec_renew_ari(struct silofs_re_ctx *re_ctx, const struct silofs_pmeta *pmeta)
 {
-	struct silofs_arnode_info *ari = NULL;
+	struct silofs_arnode_info *ari = nullptr;
 
 	ari = silofs_ari_new(re_ctx->alloc, pmeta);
-	if (ari == NULL) {
+	if (ari == nullptr) {
 		return -SILOFS_ENOMEM;
 	}
 	rec_rebind_ari(re_ctx, ari);
@@ -64,7 +64,7 @@ static int rec_init(struct silofs_re_ctx *re_ctx, struct silofs_task_ctx *task)
 	silofs_laddr_reset(&re_ctx->sb_laddr);
 	re_ctx->task  = task;
 	re_ctx->env   = task->t_env;
-	re_ctx->ari   = NULL;
+	re_ctx->ari   = nullptr;
 	re_ctx->alloc = re_ctx->env->base.alloc;
 	re_ctx->repo  = re_ctx->env->base.repo;
 	re_ctx->vbs   = &re_ctx->env->base.repo->re_vbs;
@@ -73,11 +73,11 @@ static int rec_init(struct silofs_re_ctx *re_ctx, struct silofs_task_ctx *task)
 
 static void rec_fini(struct silofs_re_ctx *re_ctx)
 {
-	rec_rebind_ari(re_ctx, NULL);
-	re_ctx->task  = NULL;
-	re_ctx->env   = NULL;
-	re_ctx->alloc = NULL;
-	re_ctx->repo  = NULL;
+	rec_rebind_ari(re_ctx, nullptr);
+	re_ctx->task  = nullptr;
+	re_ctx->env   = nullptr;
+	re_ctx->alloc = nullptr;
+	re_ctx->repo  = nullptr;
 }
 
 static int
@@ -126,11 +126,11 @@ static int rec_restore_segdata(const struct silofs_re_ctx  *re_ctx,
                                const struct silofs_ar_desc *ard)
 {
 	const size_t len = ard->len;
-	void        *seg = NULL;
+	void        *seg = nullptr;
 	int          err;
 
 	seg = silofs_memalloc(re_ctx->alloc, len, 0);
-	if (seg == NULL) {
+	if (seg == nullptr) {
 		return -SILOFS_ENOMEM;
 	}
 	err = rec_recv_pack(re_ctx, &ard->paddr, seg, len);
@@ -173,7 +173,7 @@ static int rec_arix_cargs(const struct silofs_re_ctx *re_ctx,
 
 static struct silofs_arix_node *rec_new_arix_node(struct silofs_re_ctx *re_ctx)
 {
-	struct silofs_arix_node *arn = NULL;
+	struct silofs_arix_node *arn = nullptr;
 
 	arn = silofs_memalloc(re_ctx->alloc, sizeof(*arn),
 	                      SILOFS_ALLOCF_BZERO);
@@ -194,7 +194,7 @@ static int rec_fetch_arix_node(struct silofs_re_ctx *re_ctx)
 	int                      err = -SILOFS_ENOMEM;
 
 	arn_enc = rec_new_arix_node(re_ctx);
-	if (arn_enc == NULL) {
+	if (arn_enc == nullptr) {
 		goto out;
 	}
 	err = rec_arix_cargs(re_ctx, &ar_cargs);
@@ -315,7 +315,7 @@ static int rec_restore_next(struct silofs_re_ctx *re_ctx)
 
 	silofs_ari_get_next(re_ctx->ari, &pmeta);
 	if (silofs_pmeta_isnull(&pmeta)) {
-		rec_rebind_ari(re_ctx, NULL);
+		rec_rebind_ari(re_ctx, nullptr);
 		return 0; /* end-of-chain */
 	}
 	err = rec_restore_arix(re_ctx, &pmeta);
@@ -329,7 +329,7 @@ static int rec_restore_fs(struct silofs_re_ctx *re_ctx)
 {
 	int err;
 
-	while (re_ctx->ari != NULL) {
+	while (re_ctx->ari != nullptr) {
 		err = rec_restore_descs(re_ctx);
 		if (err) {
 			return err;

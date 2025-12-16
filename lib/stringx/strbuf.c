@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include "configs.h"
+#include <silofs/configs.h>
+#include <silofs/macros.h>
 #include <limits.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdarg.h>
-#include <silofs/macros.h>
 #include "strchr.h"
 #include "strbuf.h"
 

@@ -342,7 +342,7 @@ void ft_do_close(int fd, const char *fl, int ln)
 
 void ft_do_pclose(int *fd, const char *fl, int ln)
 {
-	if ((fd != NULL) && (*fd >= 0)) {
+	if ((fd != nullptr) && (*fd >= 0)) {
 		ft_do_close(*fd, fl, ln);
 		*fd = -1;
 	}
@@ -764,7 +764,7 @@ void ft_do_getxattr_err(const char *path, const char *name, int err,
 	size_t cnt = 0;
 	int    res;
 
-	res = silofs_sys_getxattr(path, name, NULL, 0, &cnt);
+	res = silofs_sys_getxattr(path, name, nullptr, 0, &cnt);
 	ft_expect_sys_err(res, err, fl, ln);
 }
 
@@ -792,7 +792,7 @@ void ft_do_fgetxattr_err(int fd, const char *name, int err, const char *fl,
 	size_t cnt = 0;
 	int    res;
 
-	res = silofs_sys_fgetxattr(fd, name, NULL, 0, &cnt);
+	res = silofs_sys_fgetxattr(fd, name, nullptr, 0, &cnt);
 	ft_expect_sys_err(res, err, fl, ln);
 }
 
@@ -908,7 +908,7 @@ void ft_do_getdent(int fd, struct dirent64 *dent, const char *fl, int ln)
 
 void ft_do_readn(int fd, void *buf, size_t cnt, const char *fl, int ln)
 {
-	uint8_t *ptr     = NULL;
+	uint8_t *ptr     = nullptr;
 	size_t   nrd     = 0;
 	size_t   nrd_cur = 0;
 
@@ -927,7 +927,7 @@ void ft_do_readn(int fd, void *buf, size_t cnt, const char *fl, int ln)
 void ft_do_preadn(int fd, void *buf, size_t cnt, off_t off, const char *fl,
                   int ln)
 {
-	uint8_t *ptr     = NULL;
+	uint8_t *ptr     = nullptr;
 	off_t    pos     = 0;
 	size_t   nrd     = 0;
 	size_t   nrd_cur = 0;
@@ -947,7 +947,7 @@ void ft_do_preadn(int fd, void *buf, size_t cnt, off_t off, const char *fl,
 
 void ft_do_writen(int fd, const void *buf, size_t cnt, const char *fl, int ln)
 {
-	const uint8_t *ptr     = NULL;
+	const uint8_t *ptr     = nullptr;
 	size_t         nwr     = 0;
 	size_t         nwr_cur = 0;
 
@@ -966,7 +966,7 @@ void ft_do_writen(int fd, const void *buf, size_t cnt, const char *fl, int ln)
 void ft_do_pwriten(int fd, const void *buf, size_t cnt, off_t off,
                    const char *fl, int ln)
 {
-	const uint8_t *ptr     = NULL;
+	const uint8_t *ptr     = nullptr;
 	off_t          pos     = 0;
 	size_t         nwr     = 0;
 	size_t         nwr_cur = 0;

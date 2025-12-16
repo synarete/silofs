@@ -14,7 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include "configs.h"
+#include <silofs/configs.h>
+#include <silofs/syscall.h>
 #include <sys/types.h>
 #include <sys/select.h>
 #include <sys/socket.h>
@@ -31,8 +32,6 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdio.h>
-#include <silofs/syscall.h>
-#include <silofs/ccattr.h>
 #include "utility.h"
 #include "socket.h"
 
@@ -72,7 +71,7 @@ int silofs_check_portnum(int portnum)
 
 int silofs_check_unixsock(const char *path)
 {
-	const struct sockaddr_un *un = NULL;
+	const struct sockaddr_un *un = nullptr;
 
 	return (path && (strlen(path) < sizeof(un->sun_path))) ? 0 : -EINVAL;
 }
@@ -211,7 +210,7 @@ int silofs_sockaddr_pton(struct silofs_sockaddr *sa, const char *str)
 	int err = -EINVAL;
 
 	sockaddr_reset(sa);
-	if (strchr(str, ':') != NULL) {
+	if (strchr(str, ':') != nullptr) {
 		sa->u.sa_in6.sin6_family = AF_INET6;
 		res = inet_pton(AF_INET6, str, &sa->u.sa_in6.sin6_addr);
 		err = (res == 1) ? 0 : -errno;

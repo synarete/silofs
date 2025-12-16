@@ -14,12 +14,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include "configs.h"
-#include <sys/resource.h>
-#include <sys/stat.h>
+#include <silofs/configs.h>
 #include <silofs/ondisk.h>
 #include <silofs/ioctls.h>
 #include <silofs/appexec.h>
+#include <sys/resource.h>
+#include <sys/stat.h>
 #include "infra.h"
 #include "bstore.h"
 #include "fs.h"
@@ -126,7 +126,7 @@ static int reload_vspace(struct silofs_task_ctx *task)
 
 static int reload_rootd(struct silofs_task_ctx *task)
 {
-	struct silofs_inode_info *ii  = NULL;
+	struct silofs_inode_info *ii  = nullptr;
 	const ino_t               ino = SILOFS_INO_ROOT;
 	int                       err;
 
@@ -264,7 +264,7 @@ static int
 require_spmaps_of(struct silofs_task_ctx *task, enum silofs_mtype mtype)
 {
 	struct silofs_vaddr        vaddr;
-	struct silofs_spleaf_info *sli = NULL;
+	struct silofs_spleaf_info *sli = nullptr;
 
 	silofs_vaddr_setup(&vaddr, mtype, 0);
 	return silofs_require_spleaf_of(task, &vaddr, SILOFS_STG_COW, &sli);
@@ -316,11 +316,11 @@ static off_t vni_offset(const struct silofs_vnode_info *vni)
 static int
 claim_offset_zero(struct silofs_task_ctx *task, enum silofs_mtype mtype)
 {
-	struct silofs_vnode_info *vni = NULL;
+	struct silofs_vnode_info *vni = nullptr;
 	off_t                     off = -1;
 	int                       err;
 
-	err = silofs_spawn_vnode(task, NULL, mtype, &vni);
+	err = silofs_spawn_vnode(task, nullptr, mtype, &vni);
 	if (err) {
 		log_err("failed to spawn: mtype=%d err=%d", mtype, err);
 		return err;
@@ -363,7 +363,7 @@ spawn_rootdir(struct silofs_task_ctx *task, struct silofs_inode_info **out_ii)
 	struct silofs_inode_info *ii;
 	int                       err;
 
-	silofs_inew_params_of(task, NULL, S_IFDIR | 0755, 0, &inp);
+	silofs_inew_params_of(task, nullptr, S_IFDIR | 0755, 0, &inp);
 	err = silofs_spawn_inode(task, &inp, &ii);
 	if (err) {
 		return err;
@@ -391,7 +391,7 @@ static void update_rootdir(struct silofs_task_ctx   *task,
 
 static int format_rootdir(struct silofs_task_ctx *task)
 {
-	struct silofs_inode_info *rootd_ii = NULL;
+	struct silofs_inode_info *rootd_ii = nullptr;
 	int                       err;
 
 	err = spawn_rootdir(task, &rootd_ii);
@@ -641,7 +641,7 @@ int silofs_post_exec_fs(struct silofs_env *env)
 	const struct silofs_fuseq *fuseq = env->base.fuseq;
 	int                        ret   = 0;
 
-	if ((fuseq != NULL) && fuseq->fq_got_init) {
+	if ((fuseq != nullptr) && fuseq->fq_got_init) {
 		ret = fuseq->fq_got_destroy ? 0 : -SILOFS_ENOTDONE;
 	}
 	return ret;
@@ -746,7 +746,8 @@ static bool run_with_fuse(const struct silofs_env *env)
 {
 	const struct silofs_fuseq *fuseq = env->base.fuseq;
 
-	return (fuseq != NULL) && silofs_env_hasflag(env, SILOFS_F_WITHFUSE);
+	return (fuseq != nullptr) &&
+	       silofs_env_hasflag(env, SILOFS_F_WITHFUSE);
 }
 
 int silofs_exec_fs(struct silofs_env *env)
@@ -768,7 +769,7 @@ int silofs_exec_fs(struct silofs_env *env)
 void silofs_halt_fs(struct silofs_env *env)
 {
 	silofs_env_lock(env);
-	if (env->base.fuseq != NULL) {
+	if (env->base.fuseq != nullptr) {
 		env->base.fuseq->fq_active = 0;
 	}
 	silofs_env_unlock(env);
@@ -1089,8 +1090,8 @@ inspect_view(void *ctx, const struct silofs_laddr *laddr, size_t len)
 int silofs_inspect_fs(struct silofs_env *env, bool view)
 {
 	const struct silofs_laddr_visitor lvis = {
-		.hook  = view ? inspect_view : NULL,
-		.userp = NULL,
+		.hook  = view ? inspect_view : nullptr,
+		.userp = nullptr,
 	};
 	int err;
 
@@ -1368,7 +1369,7 @@ static bool g_initlib_once_done;
 static bool init_with_fips(void)
 {
 	const char *name  = "SILOFS_FIPS";
-	const char *value = NULL;
+	const char *value = nullptr;
 	size_t      len   = 0;
 	bool        ret   = false;
 

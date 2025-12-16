@@ -14,9 +14,9 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include "configs.h"
-#include <gcrypt.h>
+#include <silofs/configs.h>
 #include <silofs/errors.h>
+#include <gcrypt.h>
 #include "infra.h"
 #include "gcry.h"
 #include "passwd.h"
@@ -156,7 +156,7 @@ cipher_open(struct silofs_cipher *cipher, const struct silofs_ciargs *ciargs)
 static void cipher_close(struct silofs_cipher *cipher)
 {
 	gcry_cipher_close(cipher->ci_hd);
-	cipher->ci_hd = NULL;
+	cipher->ci_hd = nullptr;
 }
 
 int silofs_cipher_init(struct silofs_cipher *cipher)
@@ -195,7 +195,7 @@ int silofs_cipher_reinit(struct silofs_cipher       *cipher,
 
 void silofs_cipher_fini(struct silofs_cipher *cipher)
 {
-	if (cipher->ci_hd != NULL) {
+	if (cipher->ci_hd != nullptr) {
 		cipher_close(cipher);
 	}
 }

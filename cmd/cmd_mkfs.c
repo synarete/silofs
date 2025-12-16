@@ -59,7 +59,7 @@ static void cmd_mkfs_parse_optargs(struct cmd_mkfs_ctx *ctx)
 		{ "developer-mode", 'X', 0 }, //
 		{ "loglevel", 'L', 1 },       //
 		{ "help", 'h', 0 },           //
-		{ NULL, 0, 0 },               //
+		{ nullptr, 0, 0 },            //
 	};
 	struct cmd_optargs opa;
 	int                opt_chr = 1;
@@ -119,7 +119,7 @@ static void cmd_mkfs_finalize(struct cmd_mkfs_ctx *ctx)
 	cmd_pstrfree(&ctx->in_args.username);
 	cmd_delpass(&ctx->in_args.password);
 	cmd_destroy_env_args(&ctx->env_args);
-	cmd_mkfs_ctx_p = NULL;
+	cmd_mkfs_ctx_p = nullptr;
 }
 
 static void cmd_mkfs_acquire_lockfile(struct cmd_mkfs_ctx *ctx)
@@ -142,7 +142,7 @@ static void cmd_mkfs_atexit(void)
 {
 	struct cmd_mkfs_ctx *ctx = cmd_mkfs_ctx_p;
 
-	if (ctx != NULL) {
+	if (ctx != nullptr) {
 		cmd_mkfs_release_lockfile(ctx);
 		cmd_mkfs_finalize(ctx);
 	}
@@ -172,15 +172,15 @@ static void cmd_mkfs_restrict_process(struct cmd_mkfs_ctx *ctx)
 
 static void cmd_mkfs_require_owner(struct cmd_mkfs_ctx *ctx)
 {
-	if (ctx->in_args.username == NULL) {
+	if (ctx->in_args.username == nullptr) {
 		ctx->in_args.username = cmd_getusername();
 	}
 }
 
 static void cmd_mkfs_getpass(struct cmd_mkfs_ctx *ctx)
 {
-	if (ctx->in_args.password == NULL) {
-		cmd_getpass2(NULL, true, &ctx->in_args.password);
+	if (ctx->in_args.password == nullptr) {
+		cmd_getpass2(nullptr, true, &ctx->in_args.password);
 	}
 }
 
@@ -245,7 +245,7 @@ void cmd_execute_mkfs(void)
 			.fs_size = -1,
 			.no_utf8_names = false,
 		},
-		.env = NULL,
+		.env = nullptr,
 	};
 
 	/* Do all cleanups upon exits */

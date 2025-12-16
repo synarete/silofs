@@ -36,7 +36,7 @@ new_dvecs(struct ut_env *ute, const struct ut_ioparams *params)
 {
 	const size_t     step = params->length + params->nskip;
 	const size_t     size = params->count * sizeof(struct ut_dvec *);
-	struct ut_dvec **list = NULL;
+	struct ut_dvec **list = nullptr;
 
 	list = (struct ut_dvec **)ut_zerobuf(ute, size);
 	for (size_t i = 0; i < params->count; ++i) {
@@ -57,9 +57,9 @@ static unsigned long *random_indices(struct ut_env *ute, size_t cnt)
 static void ut_file_random_io_(struct ut_env *ute, ino_t ino,
                                const struct ut_ioparams *params)
 {
-	size_t          *idx   = NULL;
-	struct ut_dvec  *dvec  = NULL;
-	struct ut_dvec **dvecs = NULL;
+	size_t          *idx   = nullptr;
+	struct ut_dvec  *dvec  = nullptr;
+	struct ut_dvec **dvecs = nullptr;
 	const size_t     cnt   = params->count;
 
 	dvecs = new_dvecs(ute, params);
@@ -93,9 +93,9 @@ static void ut_file_random_io_(struct ut_env *ute, ino_t ino,
 static void ut_file_random_io2_(struct ut_env *ute, ino_t ino,
                                 const struct ut_ioparams *params)
 {
-	size_t          *idx   = NULL;
-	struct ut_dvec  *dvec  = NULL;
-	struct ut_dvec **dvecs = NULL;
+	size_t          *idx   = nullptr;
+	struct ut_dvec  *dvec  = nullptr;
+	struct ut_dvec **dvecs = nullptr;
 	const size_t     cnt   = params->count;
 
 	dvecs = new_dvecs(ute, params);

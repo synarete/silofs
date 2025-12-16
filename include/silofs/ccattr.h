@@ -68,9 +68,4 @@
 	} while (0) /* fallthrough */
 #endif
 
-#if HAVE_NULLPTR
-#undef NULL
-#define NULL nullptr
-#endif
-
 #endif /* SILOFS_CCATTR_H_ */

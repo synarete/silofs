@@ -15,10 +15,6 @@
  * GNU General Public License for more details.
  */
 #define _GNU_SOURCE 1
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <errno.h>
 #include "ftests.h"
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -188,7 +184,7 @@ static void test_symlink_with_io_(struct ft_env *fte, size_t cnt)
 {
 	char         name[NAME_MAX + 1] = "";
 	struct stat  st                 = { .st_size = -1 };
-	char        *symval             = NULL;
+	char        *symval             = nullptr;
 	char        *buf                = ft_new_buf_zeros(fte, 2 * cnt);
 	const char  *path0              = ft_new_path_unique(fte);
 	const char  *path1              = ft_new_path_under(fte, path0);

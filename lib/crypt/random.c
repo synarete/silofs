@@ -14,11 +14,11 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include "configs.h"
+#include <silofs/configs.h>
+#include <silofs/ondisk.h>
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
-#include <silofs/ondisk.h>
 #include "infra.h"
 #include "gcry.h"
 #include "random.h"

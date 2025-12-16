@@ -14,8 +14,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include "configs.h"
-#include <errno.h>
+#include <silofs/configs.h>
 #include <silofs/ioctls.h>
 #include "bstore.h"
 #include "fs.h"
@@ -124,8 +123,8 @@ static void spac_setup(struct silofs_spalloc_ctx *spa_ctx,
 	spa_ctx->task  = task;
 	spa_ctx->env   = task->t_env;
 	spa_ctx->sbi   = silofs_get_sbi(task);
-	spa_ctx->sli   = NULL;
-	spa_ctx->lsi   = NULL;
+	spa_ctx->sli   = nullptr;
+	spa_ctx->lsi   = nullptr;
 	spa_ctx->mtype = mtype;
 }
 
@@ -133,7 +132,7 @@ static void spac_increfs(struct silofs_spalloc_ctx *spa_ctx)
 {
 	silofs_assert_not_null(spa_ctx->sli);
 	silofs_sli_incref(spa_ctx->sli);
-	if (spa_ctx->lsi != NULL) {
+	if (spa_ctx->lsi != nullptr) {
 		silofs_lsi_incref(spa_ctx->lsi);
 		spa_ctx->incref_lsi = true;
 	}
@@ -240,8 +239,8 @@ static int spac_require_lsmap_by(struct silofs_spalloc_ctx *spa_ctx, off_t off)
 
 static void spac_unref_spmaps(struct silofs_spalloc_ctx *spa_ctx)
 {
-	spa_ctx->sli = NULL;
-	spa_ctx->lsi = NULL;
+	spa_ctx->sli = nullptr;
+	spa_ctx->lsi = nullptr;
 }
 
 static int spac_require_vspace_at(struct silofs_spalloc_ctx *spa_ctx,
@@ -480,10 +479,11 @@ static int spac_stage_lsmap(const struct silofs_spalloc_ctx *spa_ctx,
                             enum silofs_stg_mode             stg_mode,
                             struct silofs_lsmap_info       **out_lsi)
 {
-	struct silofs_vnode_info *vni = NULL;
+	struct silofs_vnode_info *vni = nullptr;
 	int                       err;
 
-	err = silofs_stage_vnode(spa_ctx->task, NULL, vaddr, stg_mode, &vni);
+	err = silofs_stage_vnode(spa_ctx->task, nullptr, vaddr, stg_mode,
+	                         &vni);
 	if (err) {
 		return err;
 	}
@@ -647,7 +647,7 @@ int silofs_require_lsmap_by(struct silofs_task_ctx    *task,
 int silofs_claim_vspace(struct silofs_task_ctx *task, enum silofs_mtype mtype,
                         struct silofs_vaddr *out_vaddr)
 {
-	struct silofs_lsmap_info *lsi = NULL;
+	struct silofs_lsmap_info *lsi = nullptr;
 	int                       err;
 
 	silofs_assert_ne(mtype, SILOFS_MTYPE_LSMAP);
@@ -731,7 +731,7 @@ static int spac_try_reclaim_vlseg(const struct silofs_spalloc_ctx *spa_ctx)
 	struct silofs_lrange lrange;
 	int                  err;
 
-	if (spa_ctx->lsi == NULL) {
+	if (spa_ctx->lsi == nullptr) {
 		return 0;
 	}
 	if (spa_ctx->lsi->ls_nused_bytes) {

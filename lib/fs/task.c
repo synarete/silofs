@@ -14,7 +14,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include "configs.h"
+#include <silofs/configs.h>
 #include "infra.h"
 #include "bstore.h"
 #include "fs.h"
@@ -100,7 +100,7 @@ void silofs_task_init(struct silofs_task_ctx *task, struct silofs_env *env)
 	task->t_repo      = env->base.repo;
 	task->t_lcache    = env->base.lcache;
 	task->t_submitq   = env->base.submitq;
-	task->t_looseq    = NULL;
+	task->t_looseq    = nullptr;
 	task->t_upper_id  = 0;
 	task->t_interrupt = 0;
 	task->t_fs_locked = false;
@@ -116,11 +116,11 @@ void silofs_task_fini(struct silofs_task_ctx *task)
 	silofs_assert_null(task->t_looseq);
 	silofs_assert_eq(task->t_fs_locked, false);
 
-	task->t_env      = NULL;
-	task->t_idsm     = NULL;
-	task->t_repo     = NULL;
-	task->t_lcache   = NULL;
-	task->t_submitq  = NULL;
+	task->t_env      = nullptr;
+	task->t_idsm     = nullptr;
+	task->t_repo     = nullptr;
+	task->t_lcache   = nullptr;
+	task->t_submitq  = nullptr;
 	task->t_runnable = false;
 }
 
@@ -140,12 +140,12 @@ void silofs_task_enq_loose(struct silofs_task_ctx   *task,
 
 static struct silofs_inode_info *task_deq_loose(struct silofs_task_ctx *task)
 {
-	struct silofs_inode_info *ii = NULL;
+	struct silofs_inode_info *ii = nullptr;
 
-	if (task->t_looseq != NULL) {
+	if (task->t_looseq != nullptr) {
 		ii                = task->t_looseq;
 		task->t_looseq    = ii->i_looseq_next;
-		ii->i_looseq_next = NULL;
+		ii->i_looseq_next = nullptr;
 		ii->i_in_looseq   = false;
 		silofs_ii_decref(ii);
 	}
@@ -158,7 +158,7 @@ static void task_forget_looseq(struct silofs_task_ctx *task)
 	int                       err;
 
 	ii = task_deq_loose(task);
-	while (ii != NULL) {
+	while (ii != nullptr) {
 		err = silofs_forget_loose_ii(task, ii);
 		if (err) {
 			/* TODO: maybe have retry loop ? */
@@ -173,7 +173,7 @@ static void task_forget_looseq(struct silofs_task_ctx *task)
 
 static void task_purge(struct silofs_task_ctx *task)
 {
-	if (task->t_looseq != NULL) {
+	if (task->t_looseq != nullptr) {
 		if (task->t_fs_locked) {
 			/* case 1: already fs-locked; keep it locked post op */
 			task_forget_looseq(task);
@@ -220,7 +220,7 @@ void silofs_rwunlock_fs_by(struct silofs_task_ctx *task)
 
 static bool task_has_looseq(const struct silofs_task_ctx *task)
 {
-	return (task->t_looseq != NULL);
+	return (task->t_looseq != nullptr);
 }
 
 int silofs_task_submit(struct silofs_task_ctx *task, bool all)

@@ -85,7 +85,6 @@ ifneq ($(SANITIZER), $(SNTZ))
 SANITIZER := 0
 endif
 
-
 # Configure options
 CONFIGURE_OPTS += --prefix=$(PREFIX)
 CONFIGURE_OPTS += --disable-shared
@@ -190,7 +189,9 @@ CFLAGS += -Wold-style-definition
 CFLAGS += -Wpointer-sign
 CFLAGS += -Wstrict-prototypes
 CFLAGS += -Wuninitialized
-CFLAGS += -std=gnu23
+CFLAGS += -std=gnu2x
+# Waiting for ubuntu 26.04 for std=gnu23
+#CFLAGS += -std=gnu23
 
 # Debug flags
 CFLAGS += -DDEBUG=$(D)

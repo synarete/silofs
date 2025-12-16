@@ -1,4 +1,6 @@
 EXTRA_DIST = $(NULL)
+EXTRA_DIST += Containerfile
+EXTRA_DIST += cbuild.sh
 EXTRA_DIST += checkcodefmt.sh
 EXTRA_DIST += clangscan.sh
 EXTRA_DIST += clangtidy.sh

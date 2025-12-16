@@ -68,7 +68,7 @@
 	} while (0) /* fallthrough */
 #endif
 
-#if !defined(_ISOC23_SOURCE)
+#if !defined(HAVE_NULLPTR) || (HAVE_NULLPTR != 1)
 #define nullptr NULL
 #endif
 

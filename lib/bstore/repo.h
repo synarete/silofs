@@ -110,33 +110,4 @@ int silofs_repo_read_at(struct silofs_repo        *repo,
                         const struct silofs_laddr *laddr, void *buf,
                         size_t len);
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-int silofs_repo_stat_blob(struct silofs_repo         *repo,
-                          const struct silofs_blobid *blobid,
-                          struct stat                *out_st);
-
-int silofs_repo_spawn_blob(struct silofs_repo         *repo,
-                           const struct silofs_blobid *blobid);
-
-int silofs_repo_stage_blob(struct silofs_repo         *repo,
-                           const struct silofs_blobid *blobid);
-
-int silofs_repo_require_blob(struct silofs_repo         *repo,
-                             const struct silofs_blobid *blobid);
-
-int silofs_repo_remove_blob(struct silofs_repo         *repo,
-                            const struct silofs_blobid *blobid);
-
-int silofs_repo_flush_blob(struct silofs_repo         *repo,
-                           const struct silofs_blobid *blobid);
-
-int silofs_repo_save_bseg(struct silofs_repo        *repo,
-                          const struct silofs_paddr *paddr,
-                          const struct silofs_rovec *rovec);
-
-int silofs_repo_load_bseg(struct silofs_repo        *repo,
-                          const struct silofs_paddr *paddr,
-                          const struct silofs_rwvec *rwvec);
-
 #endif /* SILOFS_REPO_H_ */

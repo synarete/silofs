@@ -48,6 +48,6 @@ size_t silofs_hash256_to_name(const struct silofs_hash256 *hash,
 
 	silofs_strbuf_reset(out_name);
 	silofs_mem_to_ascii(hash->hash, sizeof(hash->hash), out_name->str,
-	                    sizeof(out_name->str) - 1, &cnt);
+	                    sizeof(out_name->str), &cnt);
 	return cnt;
 }

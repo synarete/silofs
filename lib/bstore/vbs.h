@@ -92,7 +92,7 @@ int silofs_vbs_writev_blob(struct silofs_vbs         *vbs,
                            const struct iovec *iov, size_t cnt);
 
 int silofs_vbs_read_blob(struct silofs_vbs         *vbs,
-                         const struct silofs_paddr *paddr,
-                         const struct silofs_rwvec *rwvec);
+                         const struct silofs_paddr *paddr, void *buf,
+                         size_t len);
 
 #endif /* SILOFS_VBS_H_ */

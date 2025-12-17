@@ -76,13 +76,10 @@ static int
 env_load_mbr_at(const struct silofs_env *env, const struct silofs_paddr *paddr,
                 struct silofs_mbr1k *out_mbr1k)
 {
-	struct silofs_rwvec rwvec = {
-		.rwv_base = out_mbr1k,
-		.rwv_len  = sizeof(*out_mbr1k),
-	};
 	int err;
 
-	err = silofs_repo_load_bseg(env->base.repo, paddr, &rwvec);
+	err = silofs_vbs_read_blob(env->base.vbs, paddr, out_mbr1k,
+	                           sizeof(*out_mbr1k));
 	if (err) {
 		log_dbg("failed to load mbr: err=%d", err);
 		return (err == -ENOENT) ? -SILOFS_ENOMBR : err;

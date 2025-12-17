@@ -82,18 +82,16 @@ static void rec_fini(struct silofs_re_ctx *re_ctx)
 
 static int
 rec_recv_from_repo(const struct silofs_re_ctx *re_ctx,
-                   const struct silofs_paddr *paddr, struct silofs_rwvec *rwv)
+                   const struct silofs_paddr *paddr, void *dat, size_t len)
 {
-	return silofs_repo_load_bseg(re_ctx->repo, paddr, rwv);
+	return silofs_vbs_read_blob(re_ctx->vbs, paddr, dat, len);
 }
 
 static int
 rec_recv_pack(const struct silofs_re_ctx *re_ctx,
               const struct silofs_paddr *paddr, void *dat, size_t len)
 {
-	struct silofs_rwvec rwv = { .rwv_base = dat, .rwv_len = len };
-
-	return rec_recv_from_repo(re_ctx, paddr, &rwv);
+	return rec_recv_from_repo(re_ctx, paddr, dat, len);
 }
 
 static int

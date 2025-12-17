@@ -182,8 +182,7 @@ static int do_sync_file_range(int fd, off_t off, off_t nbytes, unsigned flags)
 struct silofs_blobfile {
 	struct silofs_list_head bf_htb_lh;
 	struct silofs_list_head bf_lru_lh;
-	struct silofs_blobid    bf_blobid;
-	struct silofs_strbuf    bf_blobid_name;
+	struct silofs_blobidx   bf_blobidx;
 	int                     bf_fd;
 	bool                    bf_mapped;
 };
@@ -220,26 +219,35 @@ bf_from_lru_link(const struct silofs_list_head *lh)
 	return bf_unconst(bf);
 }
 
-static const char *bf_name(const struct silofs_blobfile *bf)
+static void
+bf_name(const struct silofs_blobfile *bf, struct silofs_strbuf *out_name)
 {
-	return bf->bf_blobid_name.str;
+	silofs_blobidx_tostr(&bf->bf_blobidx, out_name);
 }
 
 static int bf_open(struct silofs_blobfile *bf, int dfd)
 {
-	return do_openat(dfd, bf_name(bf), O_RDWR, 0, &bf->bf_fd);
+	struct silofs_strbuf name;
+
+	bf_name(bf, &name);
+	return do_openat(dfd, name.str, O_RDWR, 0, &bf->bf_fd);
 }
 
 static int bf_create(struct silofs_blobfile *bf, int dfd)
 {
-	const int o_flags = O_CREAT | O_EXCL | O_RDWR;
+	struct silofs_strbuf name;
 
-	return do_openat(dfd, bf_name(bf), o_flags, 0600, &bf->bf_fd);
+	bf_name(bf, &name);
+	return do_openat(dfd, name.str, O_CREAT | O_EXCL | O_RDWR, 0600,
+	                 &bf->bf_fd);
 }
 
 static int bf_unlink(const struct silofs_blobfile *bf, int dfd)
 {
-	return do_unlinkat(dfd, bf_name(bf), 0);
+	struct silofs_strbuf name;
+
+	bf_name(bf, &name);
+	return do_unlinkat(dfd, name.str, 0);
 }
 
 static bool bf_isopen(const struct silofs_blobfile *bf)
@@ -254,10 +262,10 @@ static void bf_close(struct silofs_blobfile *bf)
 	}
 }
 
-static bool bf_has_blobid(const struct silofs_blobfile *bf,
-                          const struct silofs_blobid   *bid)
+static bool bf_has_blobidx(const struct silofs_blobfile *bf,
+                           const struct silofs_blobidx  *blobidx)
 {
-	return silofs_blobid_isequal(&bf->bf_blobid, bid);
+	return silofs_blobidx_isequal(&bf->bf_blobidx, blobidx);
 }
 
 static int bf_stat(const struct silofs_blobfile *bf, struct stat *out_st)
@@ -296,10 +304,10 @@ static int bf_writev(const struct silofs_blobfile *bf, off_t pos,
 	return do_pwritevn(bf->bf_fd, iov, cnt, pos);
 }
 
-static int bf_read(const struct silofs_blobfile *bf, off_t pos,
-                   const struct silofs_rwvec *rwv)
+static int
+bf_read(const struct silofs_blobfile *bf, off_t pos, void *buf, size_t len)
 {
-	return do_preadn(bf->bf_fd, rwv->rwv_base, rwv->rwv_len, pos);
+	return do_preadn(bf->bf_fd, buf, len, pos);
 }
 
 static int bf_truncate(const struct silofs_blobfile *bf, off_t pos)
@@ -346,14 +354,36 @@ bf_sync_range(const struct silofs_blobfile *bf, off_t off, size_t len)
 	return 0;
 }
 
+static int bf_expand(const struct silofs_blobfile *bf, off_t off)
+{
+	struct stat st;
+	int         err;
+
+	err = bf_stat(bf, &st);
+	if (!err && (off > st.st_size)) {
+		err = bf_truncate(bf, off);
+	}
+	return err;
+}
+
+static int bf_stat_offset(const struct silofs_blobfile *bf, off_t off)
+{
+	struct stat st;
+	int         err;
+
+	err = bf_stat(bf, &st);
+	if (!err && (off > st.st_size)) {
+		err = -SILOFS_ERANGE;
+	}
+	return err;
+}
+
 static void
-bf_init(struct silofs_blobfile *bf, const struct silofs_blobid *blobid,
-        const struct silofs_strview *name)
+bf_init(struct silofs_blobfile *bf, const struct silofs_blobidx *blobidx)
 {
 	silofs_list_head_init(&bf->bf_htb_lh);
 	silofs_list_head_init(&bf->bf_lru_lh);
-	silofs_blobid_copyto(blobid, &bf->bf_blobid);
-	silofs_strbuf_setup(&bf->bf_blobid_name, name);
+	silofs_blobidx_assign(&bf->bf_blobidx, blobidx);
 	bf->bf_fd     = -1;
 	bf->bf_mapped = false;
 }
@@ -363,20 +393,18 @@ static void bf_fini(struct silofs_blobfile *bf)
 	silofs_assert(!bf->bf_mapped);
 
 	bf_close(bf);
-	silofs_blobid_reset(&bf->bf_blobid);
 	silofs_list_head_fini(&bf->bf_lru_lh);
 	silofs_list_head_fini(&bf->bf_htb_lh);
 }
 
 static struct silofs_blobfile *
-bf_new(const struct silofs_blobid *blobid, const struct silofs_strview *name,
-       struct silofs_alloc *alloc)
+bf_new(const struct silofs_blobidx *blobidx, struct silofs_alloc *alloc)
 {
 	struct silofs_blobfile *bf;
 
 	bf = silofs_memalloc(alloc, sizeof(*bf), 0);
 	if (bf != nullptr) {
-		bf_init(bf, blobid, name);
+		bf_init(bf, blobidx);
 	}
 	return bf;
 }
@@ -411,27 +439,31 @@ static void lhq_fini(struct silofs_vbs_hq *lhq, struct silofs_alloc *alloc)
 	lhq->vbq_htb_nelems = 0;
 }
 
-static size_t lhq_htb_slot_of(const struct silofs_vbs_hq *lhq,
-                              const struct silofs_blobid *blobid)
+static uint64_t lhq_hash_of(const struct silofs_blobidx *blobidx)
 {
-	const uint64_t hash = silofs_blobid_hash64(blobid, 0);
+	return silofs_xxh64(blobidx->idx.hash, sizeof(blobidx->idx.hash), 0);
+}
 
-	return hash % lhq->vbq_htb_nelems;
+static size_t lhq_htb_slot_of(const struct silofs_vbs_hq  *lhq,
+                              const struct silofs_blobidx *blobidx)
+{
+	return lhq_hash_of(blobidx) % lhq->vbq_htb_nelems;
 }
 
 static const struct silofs_list_head *
-lhq_htb_list_of(const struct silofs_vbs_hq *lhq,
-                const struct silofs_blobid *blobid)
+lhq_htb_list_of(const struct silofs_vbs_hq  *lhq,
+                const struct silofs_blobidx *blobidx)
 {
-	const size_t slot = lhq_htb_slot_of(lhq, blobid);
+	const size_t slot = lhq_htb_slot_of(lhq, blobidx);
 
 	return &lhq->vbq_htb[slot];
 }
 
 static struct silofs_list_head *
-lhq_htb_list_of2(struct silofs_vbs_hq *lhq, const struct silofs_blobid *blobid)
+lhq_htb_list_of2(struct silofs_vbs_hq        *lhq,
+                 const struct silofs_blobidx *blobidx)
 {
-	const size_t slot = lhq_htb_slot_of(lhq, blobid);
+	const size_t slot = lhq_htb_slot_of(lhq, blobidx);
 
 	return &lhq->vbq_htb[slot];
 }
@@ -439,7 +471,7 @@ lhq_htb_list_of2(struct silofs_vbs_hq *lhq, const struct silofs_blobid *blobid)
 static void
 lhq_insert_htb(struct silofs_vbs_hq *lhq, struct silofs_blobfile *bf)
 {
-	struct silofs_list_head *lst = lhq_htb_list_of2(lhq, &bf->bf_blobid);
+	struct silofs_list_head *lst = lhq_htb_list_of2(lhq, &bf->bf_blobidx);
 
 	list_push_front(lst, &bf->bf_htb_lh);
 }
@@ -509,18 +541,18 @@ lhq_get_lru_tail(const struct silofs_vbs_hq *lhq)
 }
 
 static struct silofs_blobfile *
-lhq_lookup_htb(const struct silofs_vbs_hq *lhq,
-               const struct silofs_blobid *blobid)
+lhq_lookup_htb(const struct silofs_vbs_hq  *lhq,
+               const struct silofs_blobidx *blobidx)
 {
 	const struct silofs_list_head *lst = nullptr;
 	const struct silofs_list_head *itr = nullptr;
 	const struct silofs_blobfile  *bf  = nullptr;
 
-	lst = lhq_htb_list_of(lhq, blobid);
+	lst = lhq_htb_list_of(lhq, blobidx);
 	itr = lst->next;
 	while ((itr != lst) && (itr != nullptr)) {
 		bf = bf_from_htb_link(itr);
-		if (bf_has_blobid(bf, blobid)) {
+		if (bf_has_blobidx(bf, blobidx)) {
 			return bf_unconst(bf);
 		}
 		itr = itr->next;
@@ -529,14 +561,14 @@ lhq_lookup_htb(const struct silofs_vbs_hq *lhq,
 }
 
 static struct silofs_blobfile *
-lhq_lookup(struct silofs_vbs_hq *lhq, const struct silofs_blobid *blobid)
+lhq_lookup(struct silofs_vbs_hq *lhq, const struct silofs_blobidx *blobidx)
 {
 	struct silofs_blobfile *bf = nullptr;
 
 	if (!lhq_get_lru_size(lhq)) {
 		goto out;
 	}
-	bf = lhq_lookup_htb(lhq, blobid);
+	bf = lhq_lookup_htb(lhq, blobidx);
 	if (bf == nullptr) {
 		goto out;
 	}
@@ -571,10 +603,10 @@ static void lhq_remove(struct silofs_vbs_hq *lhq, struct silofs_blobfile *bf)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static struct silofs_blobfile *
-vbs_lookup_cached_bf(struct silofs_vbs          *vbs,
-                     const struct silofs_blobid *blobid)
+vbs_lookup_cached_bf(struct silofs_vbs           *vbs,
+                     const struct silofs_blobidx *blobidx)
 {
-	return lhq_lookup(&vbs->vbs_hq, blobid);
+	return lhq_lookup(&vbs->vbs_hq, blobidx);
 }
 
 static void
@@ -589,26 +621,10 @@ vbs_remove_cached_bf(struct silofs_vbs *vbs, struct silofs_blobfile *bf)
 	lhq_remove(&vbs->vbs_hq, bf);
 }
 
-static void
-vbs_name_of(const struct silofs_vbs *vbs, const struct silofs_blobid *blobid,
-            struct silofs_strbuf *out_name)
-{
-	struct silofs_hash256        hash;
-	const struct silofs_mdigest *md = &vbs->vbs_md;
-
-	silofs_sha3_256_of(md, blobid->id, sizeof(blobid->id), &hash);
-	silofs_hash256_to_name(&hash, out_name);
-}
-
 static struct silofs_blobfile *
-vbs_new_bf(struct silofs_vbs *vbs, const struct silofs_blobid *blobid)
+vbs_new_bf(struct silofs_vbs *vbs, const struct silofs_blobidx *blobidx)
 {
-	struct silofs_strbuf  name;
-	struct silofs_strview sv;
-
-	vbs_name_of(vbs, blobid, &name);
-	silofs_strview_init(&sv, name.str);
-	return bf_new(blobid, &sv, vbs->vbs_alloc);
+	return bf_new(blobidx, vbs->vbs_alloc);
 }
 
 static void vbs_del_bf(struct silofs_vbs *vbs, struct silofs_blobfile *bf)
@@ -691,7 +707,8 @@ int silofs_vbs_init(struct silofs_vbs *vbs, struct silofs_alloc *alloc)
 
 	vbs->vbs_alloc = alloc;
 	vbs->vbs_dfd   = -1;
-	err            = silofs_mdigest_init(&vbs->vbs_md);
+
+	err = silofs_mdigest_init(&vbs->vbs_md);
 	if (err) {
 		return err;
 	}
@@ -790,17 +807,17 @@ int silofs_vbs_sync(const struct silofs_vbs *vbs)
 }
 
 static int
-vbs_spawn_blob(struct silofs_vbs *vbs, const struct silofs_blobid *blobid,
+vbs_spawn_blob(struct silofs_vbs *vbs, const struct silofs_blobidx *blobidx,
                struct silofs_blobfile **out_bf)
 {
 	struct silofs_blobfile *bf = nullptr;
 	int                     err;
 
-	bf = vbs_lookup_cached_bf(vbs, blobid);
+	bf = vbs_lookup_cached_bf(vbs, blobidx);
 	if (bf != nullptr) {
 		return -SILOFS_EEXIST;
 	}
-	bf = vbs_new_bf(vbs, blobid);
+	bf = vbs_new_bf(vbs, blobidx);
 	if (bf == nullptr) {
 		return -SILOFS_ENOMEM;
 	}
@@ -813,19 +830,27 @@ vbs_spawn_blob(struct silofs_vbs *vbs, const struct silofs_blobid *blobid,
 	return 0;
 }
 
-static int vbs_spawn_and_cache_bf(struct silofs_vbs          *vbs,
-                                  const struct silofs_blobid *blobid,
-                                  struct silofs_blobfile    **out_bf)
+static int
+vbs_spawn_blob2(struct silofs_vbs *vbs, const struct silofs_blobidx *blobidx)
+{
+	struct silofs_blobfile *bf = nullptr;
+
+	return vbs_spawn_blob(vbs, blobidx, &bf);
+}
+
+static int vbs_spawn_and_cache_bf(struct silofs_vbs           *vbs,
+                                  const struct silofs_blobidx *blobidx,
+                                  struct silofs_blobfile     **out_bf)
 {
 	int err;
 
-	*out_bf = vbs_lookup_cached_bf(vbs, blobid);
+	*out_bf = vbs_lookup_cached_bf(vbs, blobidx);
 	if (*out_bf != nullptr) {
 		return -SILOFS_EEXIST;
 	}
 	vbs_relax_cache(vbs);
 
-	err = vbs_spawn_blob(vbs, blobid, out_bf);
+	err = vbs_spawn_blob(vbs, blobidx, out_bf);
 	if (err) {
 		return err;
 	}
@@ -834,13 +859,13 @@ static int vbs_spawn_and_cache_bf(struct silofs_vbs          *vbs,
 }
 
 static int
-vbs_stage_blob(struct silofs_vbs *vbs, const struct silofs_blobid *blobid,
+vbs_stage_blob(struct silofs_vbs *vbs, const struct silofs_blobidx *blobidx,
                struct silofs_blobfile **out_bf)
 {
 	struct silofs_blobfile *bf  = nullptr;
 	int                     err = 0;
 
-	bf = vbs_new_bf(vbs, blobid);
+	bf = vbs_new_bf(vbs, blobidx);
 	if (bf == nullptr) {
 		return -SILOFS_ENOMEM;
 	}
@@ -853,19 +878,19 @@ vbs_stage_blob(struct silofs_vbs *vbs, const struct silofs_blobid *blobid,
 	return err;
 }
 
-static int vbs_stage_and_cache_bf(struct silofs_vbs          *vbs,
-                                  const struct silofs_blobid *blobid,
-                                  struct silofs_blobfile    **out_bf)
+static int vbs_stage_and_cache_bf(struct silofs_vbs           *vbs,
+                                  const struct silofs_blobidx *blobidx,
+                                  struct silofs_blobfile     **out_bf)
 {
 	int err;
 
-	*out_bf = vbs_lookup_cached_bf(vbs, blobid);
+	*out_bf = vbs_lookup_cached_bf(vbs, blobidx);
 	if (*out_bf != nullptr) {
 		return 0; /* cache hit */
 	}
 	vbs_relax_cache(vbs);
 
-	err = vbs_stage_blob(vbs, blobid, out_bf);
+	err = vbs_stage_blob(vbs, blobidx, out_bf);
 	if (err) {
 		return err;
 	}
@@ -873,21 +898,30 @@ static int vbs_stage_and_cache_bf(struct silofs_vbs          *vbs,
 	return 0;
 }
 
+static void
+vbs_blobidx_of(struct silofs_vbs *vbs, const struct silofs_blobid *blobid,
+               struct silofs_blobidx *out_blobidx)
+{
+	silofs_blobidx_derive(out_blobidx, &vbs->vbs_md, blobid);
+}
+
 int silofs_vbs_spawn_blob(struct silofs_vbs          *vbs,
                           const struct silofs_blobid *blobid)
 {
+	struct silofs_blobidx   blobidx;
 	struct silofs_blobfile *bf = nullptr;
 
-	return vbs_spawn_and_cache_bf(vbs, blobid, &bf);
+	vbs_blobidx_of(vbs, blobid, &blobidx);
+	return vbs_spawn_and_cache_bf(vbs, &blobidx, &bf);
 }
 
-int silofs_vbs_remove_blob(struct silofs_vbs          *vbs,
-                           const struct silofs_blobid *blobid)
+static int
+vbs_remove_blob(struct silofs_vbs *vbs, const struct silofs_blobidx *blobidx)
 {
 	struct silofs_blobfile *bf  = nullptr;
 	int                     err = 0;
 
-	err = vbs_stage_and_cache_bf(vbs, blobid, &bf);
+	err = vbs_stage_and_cache_bf(vbs, blobidx, &bf);
 	if (err) {
 		return err;
 	}
@@ -899,14 +933,23 @@ int silofs_vbs_remove_blob(struct silofs_vbs          *vbs,
 	return 0;
 }
 
-int silofs_vbs_stat_blob(struct silofs_vbs          *vbs,
-                         const struct silofs_blobid *blobid,
-                         struct stat                *out_st)
+int silofs_vbs_remove_blob(struct silofs_vbs          *vbs,
+                           const struct silofs_blobid *blobid)
+{
+	struct silofs_blobidx blobidx;
+
+	vbs_blobidx_of(vbs, blobid, &blobidx);
+	return vbs_remove_blob(vbs, &blobidx);
+}
+
+static int
+vbs_stat_blob(struct silofs_vbs *vbs, const struct silofs_blobidx *blobidx,
+              struct stat *out_st)
 {
 	struct silofs_blobfile *bf  = nullptr;
 	int                     err = 0;
 
-	err = vbs_stage_and_cache_bf(vbs, blobid, &bf);
+	err = vbs_stage_and_cache_bf(vbs, blobidx, &bf);
 	if (err) {
 		return err;
 	}
@@ -917,50 +960,89 @@ int silofs_vbs_stat_blob(struct silofs_vbs          *vbs,
 	return 0;
 }
 
+int silofs_vbs_stat_blob(struct silofs_vbs          *vbs,
+                         const struct silofs_blobid *blobid,
+                         struct stat                *out_st)
+{
+	struct silofs_blobidx blobidx;
+
+	vbs_blobidx_of(vbs, blobid, &blobidx);
+	return vbs_stat_blob(vbs, &blobidx, out_st);
+}
+
 int silofs_vbs_stage_blob(struct silofs_vbs          *vbs,
                           const struct silofs_blobid *blobid)
 {
-	struct stat st;
+	struct silofs_blobidx blobidx;
+	struct stat           st;
 
-	return silofs_vbs_stat_blob(vbs, blobid, &st);
+	vbs_blobidx_of(vbs, blobid, &blobidx);
+	return vbs_stat_blob(vbs, &blobidx, &st);
+}
+
+static int
+vbs_require_blob(struct silofs_vbs *vbs, const struct silofs_blobidx *blobidx)
+{
+	struct stat st;
+	int         err;
+
+	err = vbs_stat_blob(vbs, blobidx, &st);
+	if (err && (err == -ENOENT)) {
+		err = vbs_spawn_blob2(vbs, blobidx);
+	}
+	return err;
 }
 
 int silofs_vbs_require_blob(struct silofs_vbs          *vbs,
                             const struct silofs_blobid *blobid)
 {
-	struct stat st;
-	int         err;
+	struct silofs_blobidx blobidx;
 
-	err = silofs_vbs_stat_blob(vbs, blobid, &st);
-	if (err && (err == -ENOENT)) {
-		err = silofs_vbs_spawn_blob(vbs, blobid);
+	vbs_blobidx_of(vbs, blobid, &blobidx);
+	return vbs_require_blob(vbs, &blobidx);
+}
+
+static int vbs_require_bpos(struct silofs_vbs           *vbs,
+                            const struct silofs_blobidx *blobidx, off_t pos)
+{
+	struct silofs_blobfile *bf = nullptr;
+	int                     err;
+
+	err = vbs_require_blob(vbs, blobidx);
+	if (err) {
+		return err;
 	}
-	return err;
+	err = vbs_stage_and_cache_bf(vbs, blobidx, &bf);
+	if (err) {
+		return err;
+	}
+	err = bf_expand(bf, pos);
+	if (err) {
+		return err;
+	}
+	return 0;
 }
 
 int silofs_vbs_require_bpos(struct silofs_vbs          *vbs,
                             const struct silofs_blobid *blobid, off_t pos)
 {
-	struct stat             st = { .st_size = -1 };
+	struct silofs_blobidx blobidx;
+
+	vbs_blobidx_of(vbs, blobid, &blobidx);
+	return vbs_require_bpos(vbs, &blobidx, pos);
+}
+
+static int vbs_access_bpos(struct silofs_vbs           *vbs,
+                           const struct silofs_blobidx *blobidx, off_t pos)
+{
 	struct silofs_blobfile *bf = nullptr;
 	int                     err;
 
-	err = silofs_vbs_require_blob(vbs, blobid);
+	err = vbs_stage_and_cache_bf(vbs, blobidx, &bf);
 	if (err) {
 		return err;
 	}
-	err = vbs_stage_and_cache_bf(vbs, blobid, &bf);
-	if (err) {
-		return err;
-	}
-	err = bf_stat(bf, &st);
-	if (err) {
-		return err;
-	}
-	if (pos <= st.st_size) {
-		return 0;
-	}
-	err = bf_truncate(bf, pos);
+	err = bf_stat_offset(bf, pos);
 	if (err) {
 		return err;
 	}
@@ -970,31 +1052,19 @@ int silofs_vbs_require_bpos(struct silofs_vbs          *vbs,
 int silofs_vbs_access_bpos(struct silofs_vbs          *vbs,
                            const struct silofs_blobid *blobid, off_t pos)
 {
-	struct stat             st = { .st_size = -1 };
-	struct silofs_blobfile *bf = nullptr;
-	int                     err;
+	struct silofs_blobidx blobidx;
 
-	err = vbs_stage_and_cache_bf(vbs, blobid, &bf);
-	if (err) {
-		return err;
-	}
-	err = bf_stat(bf, &st);
-	if (err) {
-		return err;
-	}
-	if (pos > st.st_size) {
-		return -SILOFS_ERANGE;
-	}
-	return 0;
+	vbs_blobidx_of(vbs, blobid, &blobidx);
+	return vbs_access_bpos(vbs, &blobidx, pos);
 }
 
-int silofs_vbs_flush_blob(struct silofs_vbs          *vbs,
-                          const struct silofs_blobid *blobid)
+static int
+vbs_flush_blob(struct silofs_vbs *vbs, const struct silofs_blobidx *blobidx)
 {
 	struct silofs_blobfile *bf  = nullptr;
 	int                     err = 0;
 
-	err = vbs_stage_and_cache_bf(vbs, blobid, &bf);
+	err = vbs_stage_and_cache_bf(vbs, blobidx, &bf);
 	if (err) {
 		return err;
 	}
@@ -1005,13 +1075,22 @@ int silofs_vbs_flush_blob(struct silofs_vbs          *vbs,
 	return 0;
 }
 
-int silofs_vbs_punch_blob(struct silofs_vbs          *vbs,
+int silofs_vbs_flush_blob(struct silofs_vbs          *vbs,
                           const struct silofs_blobid *blobid)
+{
+	struct silofs_blobidx blobidx;
+
+	vbs_blobidx_of(vbs, blobid, &blobidx);
+	return vbs_flush_blob(vbs, &blobidx);
+}
+
+static int
+vbs_punch_blob(struct silofs_vbs *vbs, const struct silofs_blobidx *blobidx)
 {
 	struct silofs_blobfile *bf  = nullptr;
 	int                     err = 0;
 
-	err = vbs_stage_and_cache_bf(vbs, blobid, &bf);
+	err = vbs_stage_and_cache_bf(vbs, blobidx, &bf);
 	if (err) {
 		return err;
 	}
@@ -1022,14 +1101,25 @@ int silofs_vbs_punch_blob(struct silofs_vbs          *vbs,
 	return 0;
 }
 
+int silofs_vbs_punch_blob(struct silofs_vbs          *vbs,
+                          const struct silofs_blobid *blobid)
+{
+	struct silofs_blobidx blobidx;
+
+	vbs_blobidx_of(vbs, blobid, &blobidx);
+	return vbs_punch_blob(vbs, &blobidx);
+}
+
 int silofs_vbs_write_blob(struct silofs_vbs         *vbs,
                           const struct silofs_paddr *paddr,
                           const struct silofs_rovec *rovec)
 {
+	struct silofs_blobidx   blobidx;
 	struct silofs_blobfile *bf  = nullptr;
 	int                     err = 0;
 
-	err = vbs_stage_and_cache_bf(vbs, &paddr->blobid, &bf);
+	vbs_blobidx_of(vbs, &paddr->blobid, &blobidx);
+	err = vbs_stage_and_cache_bf(vbs, &blobidx, &bf);
 	if (err) {
 		return err;
 	}
@@ -1040,16 +1130,14 @@ int silofs_vbs_write_blob(struct silofs_vbs         *vbs,
 	return 0;
 }
 
-int silofs_vbs_writev_blob(struct silofs_vbs         *vbs,
-                           const struct silofs_paddr *paddr,
-                           const struct iovec *iov, size_t cnt)
+static int
+vbs_writev_blob(struct silofs_vbs *vbs, const struct silofs_blobidx *blobidx,
+                off_t pos, const struct iovec *iov, size_t cnt, bool sync)
 {
-	struct silofs_blobfile *bf   = nullptr;
-	const off_t             pos  = paddr->pos;
-	int                     err  = 0;
-	bool                    sync = false; /* TODO: revisit */
+	struct silofs_blobfile *bf  = nullptr;
+	int                     err = 0;
 
-	err = vbs_stage_and_cache_bf(vbs, &paddr->blobid, &bf);
+	err = vbs_stage_and_cache_bf(vbs, blobidx, &bf);
 	if (err) {
 		return err;
 	}
@@ -1060,20 +1148,41 @@ int silofs_vbs_writev_blob(struct silofs_vbs         *vbs,
 	return sync ? bf_sync_range(bf, pos, silofs_iov_length(iov, cnt)) : 0;
 }
 
-int silofs_vbs_read_blob(struct silofs_vbs         *vbs,
-                         const struct silofs_paddr *paddr,
-                         const struct silofs_rwvec *rwvec)
+int silofs_vbs_writev_blob(struct silofs_vbs         *vbs,
+                           const struct silofs_paddr *paddr,
+                           const struct iovec *iov, size_t cnt)
+{
+	struct silofs_blobidx blobidx;
+	bool                  sync = false; /* TODO: revisit */
+
+	vbs_blobidx_of(vbs, &paddr->blobid, &blobidx);
+	return vbs_writev_blob(vbs, &blobidx, paddr->pos, iov, cnt, sync);
+}
+
+static int
+vbs_read_blob(struct silofs_vbs *vbs, const struct silofs_blobidx *blobidx,
+              off_t pos, void *buf, size_t len)
 {
 	struct silofs_blobfile *bf  = nullptr;
 	int                     err = 0;
 
-	err = vbs_stage_and_cache_bf(vbs, &paddr->blobid, &bf);
+	err = vbs_stage_and_cache_bf(vbs, blobidx, &bf);
 	if (err) {
 		return err;
 	}
-	err = bf_read(bf, paddr->pos, rwvec);
+	err = bf_read(bf, pos, buf, len);
 	if (err) {
 		return err;
 	}
 	return 0;
+}
+
+int silofs_vbs_read_blob(struct silofs_vbs         *vbs,
+                         const struct silofs_paddr *paddr, void *buf,
+                         size_t len)
+{
+	struct silofs_blobidx blobidx;
+
+	vbs_blobidx_of(vbs, &paddr->blobid, &blobidx);
+	return vbs_read_blob(vbs, &blobidx, paddr->pos, buf, len);
 }

@@ -306,3 +306,9 @@ bool silofs_blobidx_isequal(const struct silofs_blobidx *blobidx,
 {
 	return silofs_hash256_isequal(&blobidx->idx, &other->idx);
 }
+
+void silofs_blobidx_tostr(const struct silofs_blobidx *blobidx,
+                          struct silofs_strbuf        *out_sbuf)
+{
+	silofs_hash256_to_name(&blobidx->idx, out_sbuf);
+}

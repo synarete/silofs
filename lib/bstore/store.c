@@ -111,13 +111,10 @@ static size_t viewlen_of(const struct silofs_pnode_info *pni)
 static int
 stc_read_pnode(struct silofs_store_ctx *st_ctx, struct silofs_pnode_info *pni)
 {
-	const struct silofs_rwvec rwvec = {
-		.rwv_base = st_ctx->view,
-		.rwv_len  = viewlen_of(pni),
-	};
 	const struct silofs_paddr *paddr = &pni->pn_meta.paddr;
+	const size_t               len   = viewlen_of(pni);
 
-	return silofs_vbs_read_blob(st_ctx->vbs, paddr, &rwvec);
+	return silofs_vbs_read_blob(st_ctx->vbs, paddr, st_ctx->view, len);
 }
 
 static int stc_decrypt_verify_pnode(struct silofs_store_ctx  *st_ctx,

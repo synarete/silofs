@@ -33,6 +33,7 @@ struct silofs_btree_ctx {
 	struct silofs_btree     *btree;
 	struct silofs_pcache    *pcache;
 	struct silofs_repo      *repo;
+	struct silofs_vbs       *vbs;
 	uint64_t                 key;
 };
 
@@ -231,13 +232,13 @@ static void btree_update_bti(const struct silofs_btree *btree,
 static int btc_stage_blob_of(const struct silofs_btree_ctx *btc,
                              const struct silofs_paddr     *paddr)
 {
-	return silofs_repo_stage_blob(btc->repo, &paddr->blobid);
+	return silofs_vbs_stage_blob(btc->vbs, &paddr->blobid);
 }
 
 static int btc_spawn_blob_of(const struct silofs_btree_ctx *btc,
                              const struct silofs_paddr     *paddr)
 {
-	return silofs_repo_spawn_blob(btc->repo, &paddr->blobid);
+	return silofs_vbs_spawn_blob(btc->vbs, &paddr->blobid);
 }
 
 static int btc_require_blob_of(const struct silofs_btree_ctx *btc,
@@ -255,12 +256,8 @@ static int btc_require_blob_of(const struct silofs_btree_ctx *btc,
 static int btc_load_btnode(const struct silofs_btree_ctx   *btc,
                            const struct silofs_btnode_info *bti)
 {
-	const struct silofs_rwvec rwv = {
-		.rwv_base = bti->btn,
-		.rwv_len  = sizeof(*bti->btn),
-	};
-
-	return silofs_repo_load_bseg(btc->repo, bti_paddr(bti), &rwv);
+	return silofs_vbs_read_blob(btc->vbs, bti_paddr(bti), bti->btn,
+	                            sizeof(*bti->btn));
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -678,6 +675,8 @@ static int btc_init(struct silofs_btree_ctx *btc, struct silofs_btree *btree,
 	btc->btree  = btree;
 	btc->pcache = btree->bt_base.pcache;
 	btc->repo   = btree->bt_base.repo;
+	btc->vbs    = &btree->bt_base.repo->re_vbs;
+
 	bpath_init(&btc->bpath);
 	if (vaddr == nullptr) {
 		btc->key = SILOFS_BTREE_KEY_NULL;

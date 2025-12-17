@@ -392,12 +392,7 @@ int silofs_load_arix_node(struct silofs_vbs         *vbs,
                           const struct silofs_paddr *paddr,
                           struct silofs_arix_node   *arn_enc)
 {
-	struct silofs_rwvec rwv = {
-		.rwv_base = arn_enc,
-		.rwv_len  = sizeof(*arn_enc),
-	};
-
-	return silofs_vbs_read_blob(vbs, paddr, &rwv);
+	return silofs_vbs_read_blob(vbs, paddr, arn_enc, sizeof(*arn_enc));
 }
 
 static int decrypt_arix_node(const struct silofs_ar_cargs *ar_cargs,

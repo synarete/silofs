@@ -17,9 +17,10 @@
 #ifndef SILOFS_BLOBID_H_
 #define SILOFS_BLOBID_H_
 
-#include <stdlib.h>
 #include <silofs/ondisk.h>
+#include <stdlib.h>
 #include "stringx.h"
+#include "crypt.h"
 #include "svolid.h"
 
 const struct silofs_blobid *silofs_blobid_none(void);
@@ -72,9 +73,6 @@ bool silofs_blobid_isnone(const struct silofs_blobid *blobid);
 int silofs_blobid_to_ascii(const struct silofs_blobid *blobid, char *s,
                            size_t n);
 
-int silofs_blobid_from_ascii(struct silofs_blobid *blobid, const char *s,
-                             size_t n);
-
 void silofs_blobid_to_sbuf(const struct silofs_blobid *blobid,
                            struct silofs_strbuf       *sbuf);
 
@@ -86,5 +84,20 @@ int silofs_blobid_from_str(struct silofs_blobid        *blobid,
 
 uint64_t
 silofs_blobid_hash64(const struct silofs_blobid *blobid, uint64_t seed);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_blobidx_setup(struct silofs_blobidx       *blobidx,
+                          const struct silofs_hash256 *h);
+
+void silofs_blobidx_assign(struct silofs_blobidx       *blobidx,
+                           const struct silofs_blobidx *other);
+
+void silofs_blobidx_derive(struct silofs_blobidx       *blobidx,
+                           const struct silofs_mdigest *mdigest,
+                           const struct silofs_blobid  *blobid);
+
+bool silofs_blobidx_isequal(const struct silofs_blobidx *blobidx,
+                            const struct silofs_blobidx *other);
 
 #endif /* SILOFS_BLOBID_H_ */

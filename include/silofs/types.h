@@ -84,6 +84,11 @@ struct silofs_ugids {
 	struct silofs_groups_ids groups;
 };
 
+/* mbr reference */
+struct silofs_mbref {
+	struct silofs_blobidx bx;
+};
+
 /* input arguments */
 struct silofs_env_args {
 	struct silofs_boot_args boot_args;

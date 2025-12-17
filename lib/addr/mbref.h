@@ -14,24 +14,21 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_ADDR_H_
-#define SILOFS_ADDR_H_
+#ifndef SILOFS_MBREF_H_
+#define SILOFS_MBREF_H_
 
-#include <silofs/ondisk.h>
-#include <silofs/errors.h>
-#include "addr/offlba.h"
-#include "addr/htox.h"
-#include "addr/uuid.h"
-#include "addr/mtype.h"
-#include "addr/hash.h"
-#include "addr/svolid.h"
-#include "addr/blobid.h"
-#include "addr/paddr.h"
-#include "addr/nmeta.h"
-#include "addr/laddr.h"
-#include "addr/uaddr.h"
-#include "addr/vaddr.h"
-#include "addr/genid.h"
-#include "addr/mbref.h"
+#include <silofs/types.h>
+#include "crypt.h"
+#include "paddr.h"
 
-#endif /* SILOFS_ADDR_H_ */
+void silofs_mbref_setup(struct silofs_mbref         *mbref,
+                        const struct silofs_blobidx *blobidx);
+
+void silofs_mbref_assign(struct silofs_mbref       *mbref,
+                         const struct silofs_mbref *other);
+
+void silofs_mbref_derive(struct silofs_mbref         *mbref,
+                         const struct silofs_mdigest *mdigest,
+                         const struct silofs_paddr   *paddr);
+
+#endif /* SILOFS_MBREF_H_ */

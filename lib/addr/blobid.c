@@ -235,22 +235,6 @@ int silofs_blobid_to_ascii(const struct silofs_blobid *blobid, char *s,
 	return 0;
 }
 
-int silofs_blobid_from_ascii(struct silofs_blobid *blobid, const char *s,
-                             size_t n)
-{
-	size_t cnt = 0;
-	int    err;
-
-	err = silofs_ascii_to_mem(blobid->id, sizeof(blobid->id), s, n, &cnt);
-	if (err) {
-		return err;
-	}
-	if (cnt != sizeof(blobid->id)) {
-		return -1;
-	}
-	return 0;
-}
-
 void silofs_blobid_to_sbuf(const struct silofs_blobid *blobid,
                            struct silofs_strbuf       *sbuf)
 {
@@ -291,4 +275,34 @@ uint64_t
 silofs_blobid_hash64(const struct silofs_blobid *blobid, uint64_t seed)
 {
 	return silofs_xxh64(blobid->id, sizeof(blobid->id), seed);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_blobidx_setup(struct silofs_blobidx       *blobidx,
+                          const struct silofs_hash256 *h)
+{
+	silofs_hash256_assign(&blobidx->idx, h);
+}
+
+void silofs_blobidx_assign(struct silofs_blobidx       *blobidx,
+                           const struct silofs_blobidx *other)
+{
+	silofs_blobidx_setup(blobidx, &other->idx);
+}
+
+void silofs_blobidx_derive(struct silofs_blobidx       *blobidx,
+                           const struct silofs_mdigest *mdigest,
+                           const struct silofs_blobid  *blobid)
+{
+	struct silofs_hash256 hash;
+
+	silofs_sha3_256_of(mdigest, blobid->id, sizeof(blobid->id), &hash);
+	silofs_blobidx_setup(blobidx, &hash);
+}
+
+bool silofs_blobidx_isequal(const struct silofs_blobidx *blobidx,
+                            const struct silofs_blobidx *other)
+{
+	return silofs_hash256_isequal(&blobidx->idx, &other->idx);
 }

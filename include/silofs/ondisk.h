@@ -514,10 +514,15 @@ struct silofs_svolid {
 	uint8_t id[SILOFS_SVOLID_SIZE];
 } silofs_attr_aligned8;
 
-/* blob identifier */
+/* blob-identifier */
 struct silofs_blobid {
 	uint8_t id[SILOFS_BLOBID_SIZE];
 } silofs_attr_aligned8;
+
+/* exported blob-identifier representation */
+struct silofs_blobidx {
+	struct silofs_hash256 idx;
+} silofs_attr_aligned16;
 
 /* persistent blob addressing */
 struct silofs_paddr64b {

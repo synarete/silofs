@@ -17,9 +17,9 @@
 #ifndef SILOFS_MTYPE_H_
 #define SILOFS_MTYPE_H_
 
+#include <silofs/ondisk.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include <silofs/ondisk.h>
 
 bool silofs_mtype_isnone(enum silofs_mtype mtype);
 
@@ -37,7 +37,7 @@ bool silofs_mtype_isvnode(enum silofs_mtype mtype);
 
 bool silofs_mtype_isdata(enum silofs_mtype mtype);
 
-uint32_t silofs_mtype_size(enum silofs_mtype mtype);
+size_t silofs_mtype_size(enum silofs_mtype mtype);
 
 ssize_t silofs_mtype_ssize(enum silofs_mtype mtype);
 

@@ -149,7 +149,7 @@ bool silofs_mtype_isdata(enum silofs_mtype mtype)
 	return ret;
 }
 
-uint32_t silofs_mtype_size(enum silofs_mtype mtype)
+size_t silofs_mtype_size(enum silofs_mtype mtype)
 {
 	switch (mtype) {
 	case SILOFS_MTYPE_UBER:

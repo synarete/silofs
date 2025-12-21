@@ -60,8 +60,8 @@ env_save_mbr_at(struct silofs_env *env, const struct silofs_paddr *paddr,
 {
 	int err;
 
-	err = silofs_vbs_write_blob_at(env->base.vbs, &paddr->blobid,
-	                               paddr->pos, mbr1k, sizeof(*mbr1k));
+	err = silofs_bstore_write_blob_at(env->base.bstore, &paddr->blobid,
+	                                  paddr->pos, mbr1k, sizeof(*mbr1k));
 	if (err) {
 		log_dbg("failed to save mbr: err=%d", err);
 		return err;
@@ -75,9 +75,9 @@ env_load_mbr_at(const struct silofs_env *env, const struct silofs_paddr *paddr,
 {
 	int err;
 
-	err = silofs_vbs_read_blob_at(env->base.vbs, &paddr->blobid,
-	                              paddr->pos, out_mbr1k,
-	                              sizeof(*out_mbr1k));
+	err = silofs_bstore_read_blob_at(env->base.bstore, &paddr->blobid,
+	                                 paddr->pos, out_mbr1k,
+	                                 sizeof(*out_mbr1k));
 	if (err) {
 		log_dbg("failed to load mbr: err=%d", err);
 		return (err == -ENOENT) ? -SILOFS_ENOMBR : err;
@@ -104,7 +104,7 @@ int silofs_env_commit_fs_mbr(struct silofs_env   *env,
 	if (err) {
 		return err;
 	}
-	err = silofs_vbs_require_blob(env->base.vbs, &out_mbref->blobid);
+	err = silofs_bstore_require_blob(env->base.bstore, &out_mbref->blobid);
 	if (err) {
 		log_err("failed to create mbr blob: err=%d", err);
 		return err;
@@ -123,7 +123,7 @@ env_stat_mbr_at(const struct silofs_env *env, const struct silofs_paddr *paddr)
 	struct stat st;
 	int         err;
 
-	err = silofs_vbs_stat_blob(env->base.vbs, &paddr->blobid, &st);
+	err = silofs_bstore_stat_blob(env->base.bstore, &paddr->blobid, &st);
 	if (err) {
 		return err;
 	}
@@ -205,7 +205,7 @@ static int env_unlink_mbr_at(const struct silofs_env   *env,
 {
 	int err;
 
-	err = silofs_vbs_remove_blob(env->base.vbs, &paddr->blobid);
+	err = silofs_bstore_remove_blob(env->base.bstore, &paddr->blobid);
 	if (err) {
 		log_err("failed to unlink mbr: err=%d", err);
 		return err;

@@ -690,7 +690,8 @@ int silofs_env_sense_ar(struct silofs_env *env)
 	if (err) {
 		return err;
 	}
-	err = silofs_vbs_stat_blob(env->base.vbs, &pmeta.paddr.blobid, &st);
+	err = silofs_bstore_stat_blob(env->base.bstore, &pmeta.paddr.blobid,
+	                              &st);
 	if (err) {
 		return err;
 	}

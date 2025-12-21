@@ -363,19 +363,19 @@ int silofs_export_arix_node(const struct silofs_arnode_info *ari,
 	return encrypt_arix_node(ar_cargs, arn_enc);
 }
 
-int silofs_save_arix_node(struct silofs_vbs             *vbs,
+int silofs_save_arix_node(struct silofs_bstore          *bstore,
                           const struct silofs_paddr     *paddr,
                           const struct silofs_arix_node *arn_enc)
 {
 	int err;
 
-	err = silofs_vbs_require_blob(vbs, &paddr->blobid);
+	err = silofs_bstore_require_blob(bstore, &paddr->blobid);
 	if (err) {
 		log_err("failed to spawn archive-index: err=%d", err);
 		return err;
 	}
-	err = silofs_vbs_write_blob_at(vbs, &paddr->blobid, paddr->pos,
-	                               arn_enc, sizeof(*arn_enc));
+	err = silofs_bstore_write_blob_at(bstore, &paddr->blobid, paddr->pos,
+	                                  arn_enc, sizeof(*arn_enc));
 	if (err) {
 		log_err("failed to save archive-index: err=%d", err);
 		return err;
@@ -385,12 +385,12 @@ int silofs_save_arix_node(struct silofs_vbs             *vbs,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_load_arix_node(struct silofs_vbs         *vbs,
+int silofs_load_arix_node(struct silofs_bstore      *bstore,
                           const struct silofs_paddr *paddr,
                           struct silofs_arix_node   *arn_enc)
 {
-	return silofs_vbs_read_blob_at(vbs, &paddr->blobid, paddr->pos,
-	                               arn_enc, sizeof(*arn_enc));
+	return silofs_bstore_read_blob_at(bstore, &paddr->blobid, paddr->pos,
+	                                  arn_enc, sizeof(*arn_enc));
 }
 
 static int decrypt_arix_node(const struct silofs_ar_cargs *ar_cargs,

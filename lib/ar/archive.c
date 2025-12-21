@@ -30,7 +30,7 @@ struct silofs_ar_ctx {
 	struct silofs_alloc       *alloc;
 	struct silofs_arnode_info *ari;
 	struct silofs_repo        *repo;
-	struct silofs_vbs         *vbs;
+	struct silofs_bstore      *bstore;
 };
 
 static int arc_arix_nmeta(const struct silofs_ar_ctx *ar_ctx,
@@ -105,12 +105,12 @@ static int arc_init(struct silofs_ar_ctx *ar_ctx, struct silofs_task_ctx *task)
 {
 	silofs_memzero(ar_ctx, sizeof(*ar_ctx));
 	silofs_clock_real_now(&ar_ctx->now);
-	ar_ctx->task  = task;
-	ar_ctx->env   = task->t_env;
-	ar_ctx->ari   = nullptr;
-	ar_ctx->alloc = ar_ctx->env->base.alloc;
-	ar_ctx->repo  = ar_ctx->env->base.repo;
-	ar_ctx->vbs   = &ar_ctx->env->base.repo->re_vbs;
+	ar_ctx->task   = task;
+	ar_ctx->env    = task->t_env;
+	ar_ctx->ari    = nullptr;
+	ar_ctx->alloc  = ar_ctx->env->base.alloc;
+	ar_ctx->repo   = ar_ctx->env->base.repo;
+	ar_ctx->bstore = &ar_ctx->env->base.repo->re_bstore;
 
 	return arc_renew_ari(ar_ctx);
 }
@@ -118,11 +118,11 @@ static int arc_init(struct silofs_ar_ctx *ar_ctx, struct silofs_task_ctx *task)
 static void arc_fini(struct silofs_ar_ctx *ar_ctx)
 {
 	arc_rebind_ari(ar_ctx, nullptr);
-	ar_ctx->task  = nullptr;
-	ar_ctx->env   = nullptr;
-	ar_ctx->repo  = nullptr;
-	ar_ctx->vbs   = nullptr;
-	ar_ctx->alloc = nullptr;
+	ar_ctx->task   = nullptr;
+	ar_ctx->env    = nullptr;
+	ar_ctx->repo   = nullptr;
+	ar_ctx->bstore = nullptr;
+	ar_ctx->alloc  = nullptr;
 }
 
 static int arc_stat_pack(const struct silofs_ar_ctx *ar_ctx,
@@ -131,7 +131,7 @@ static int arc_stat_pack(const struct silofs_ar_ctx *ar_ctx,
 	struct stat st;
 	int         err;
 
-	err = silofs_vbs_stat_blob(ar_ctx->vbs, &paddr->blobid, &st);
+	err = silofs_bstore_stat_blob(ar_ctx->bstore, &paddr->blobid, &st);
 	if (err) {
 		return err;
 	}
@@ -145,13 +145,13 @@ arc_send_to_repo(const struct silofs_ar_ctx *ar_ctx,
 {
 	int err;
 
-	err = silofs_vbs_require_blob(ar_ctx->vbs, &paddr->blobid);
+	err = silofs_bstore_require_blob(ar_ctx->bstore, &paddr->blobid);
 	if (err) {
 		log_err("failed to create archive blob: err=%d", err);
 		return err;
 	}
-	err = silofs_vbs_write_blob_at(ar_ctx->vbs, &paddr->blobid, paddr->pos,
-	                               dat, len);
+	err = silofs_bstore_write_blob_at(ar_ctx->bstore, &paddr->blobid,
+	                                  paddr->pos, dat, len);
 	if (err) {
 		log_err("failed to save blob: err=%d", err);
 		return err;
@@ -262,7 +262,7 @@ static int arc_store_arix_node(struct silofs_ar_ctx *ar_ctx)
 	}
 	silofs_calc_arix_paddr(arn_enc, arc_mdigest(ar_ctx), &paddr);
 
-	err = silofs_save_arix_node(ar_ctx->vbs, &paddr, arn_enc);
+	err = silofs_save_arix_node(ar_ctx->bstore, &paddr, arn_enc);
 	if (err) {
 		goto out;
 	}

@@ -16,8 +16,4 @@
 
 #include <silofs/config.h>
 
-#ifndef HAVE_NULLPTR
-#error "can not compile without C23 nullptr keyword"
-#endif
-
 #define SILOFS_CONFIGS_ONCE 1

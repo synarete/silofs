@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_STORE_H_
-#define SILOFS_STORE_H_
+#ifndef SILOFS_STAGE_H_
+#define SILOFS_STAGE_H_
 
 #include "infra.h"
 #include "addr.h"
@@ -47,4 +47,4 @@ int silofs_stage_btnode(struct silofs_env          *env,
 
 int silofs_destage_dirty(struct silofs_env *env);
 
-#endif /* SILOFS_STORE_H_ */
+#endif /* SILOFS_STAGE_H_ */

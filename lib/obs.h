@@ -25,6 +25,6 @@
 #include "obs/btnode.h"
 #include "obs/btree.h"
 #include "obs/uber.h"
-#include "obs/store.h"
+#include "obs/stage.h"
 
 #endif /* SILOFS_OBS_H_ */

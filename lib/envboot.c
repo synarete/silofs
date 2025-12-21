@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include "bstore.h"
+#include "obs.h"
 #include "fs.h"
 #include "mbr.h"
 #include "env.h"

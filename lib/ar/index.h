@@ -22,7 +22,7 @@
 #include "infra.h"
 #include "crypt.h"
 #include "addr.h"
-#include "bstore.h"
+#include "obs.h"
 
 struct silofs_ar_cargs {
 	struct silofs_nmeta          nmeta;

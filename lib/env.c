@@ -18,7 +18,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mount.h>
-#include "bstore.h"
+#include "obs.h"
 #include "fs.h"
 #include "mbr.h"
 #include "env.h"

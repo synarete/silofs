@@ -21,7 +21,7 @@
 #include "crypt.h"
 #include "addr.h"
 #include "nodes.h"
-#include "bstore.h"
+#include "obs.h"
 
 struct silofs_env;
 

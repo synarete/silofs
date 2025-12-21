@@ -18,7 +18,7 @@
 #include <silofs/ondisk.h>
 #include "infra.h"
 #include "crypt.h"
-#include "bstore.h"
+#include "obs.h"
 #include "mbr.h"
 #include "fs.h"
 #include "env.h"

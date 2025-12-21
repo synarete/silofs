@@ -256,8 +256,10 @@ static int btc_require_blob_of(const struct silofs_btree_ctx *btc,
 static int btc_load_btnode(const struct silofs_btree_ctx   *btc,
                            const struct silofs_btnode_info *bti)
 {
-	return silofs_vbs_read_blob(btc->vbs, bti_paddr(bti), bti->btn,
-	                            sizeof(*bti->btn));
+	const struct silofs_paddr *paddr = bti_paddr(bti);
+
+	return silofs_vbs_read_blob_at(btc->vbs, &paddr->blobid, paddr->pos,
+	                               bti->btn, sizeof(*bti->btn));
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

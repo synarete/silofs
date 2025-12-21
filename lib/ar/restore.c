@@ -84,7 +84,8 @@ static int
 rec_recv_from_repo(const struct silofs_re_ctx *re_ctx,
                    const struct silofs_paddr *paddr, void *dat, size_t len)
 {
-	return silofs_vbs_read_blob(re_ctx->vbs, paddr, dat, len);
+	return silofs_vbs_read_blob_at(re_ctx->vbs, &paddr->blobid, paddr->pos,
+	                               dat, len);
 }
 
 static int

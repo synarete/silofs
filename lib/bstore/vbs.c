@@ -293,9 +293,9 @@ static int bf_sync(const struct silofs_blobfile *bf)
 }
 
 static int bf_write(const struct silofs_blobfile *bf, off_t pos,
-                    const struct silofs_rovec *rov)
+                    const void *buf, size_t len)
 {
-	return do_pwriten(bf->bf_fd, rov->rov_base, rov->rov_len, pos);
+	return do_pwriten(bf->bf_fd, buf, len, pos);
 }
 
 static int bf_writev(const struct silofs_blobfile *bf, off_t pos,
@@ -1023,8 +1023,8 @@ static int vbs_require_bpos(struct silofs_vbs           *vbs,
 	return 0;
 }
 
-int silofs_vbs_require_bpos(struct silofs_vbs          *vbs,
-                            const struct silofs_blobid *blobid, off_t pos)
+int silofs_vbs_require_blob_at(struct silofs_vbs          *vbs,
+                               const struct silofs_blobid *blobid, off_t pos)
 {
 	struct silofs_blobidx blobidx;
 
@@ -1049,8 +1049,8 @@ static int vbs_access_bpos(struct silofs_vbs           *vbs,
 	return 0;
 }
 
-int silofs_vbs_access_bpos(struct silofs_vbs          *vbs,
-                           const struct silofs_blobid *blobid, off_t pos)
+int silofs_vbs_access_blob_at(struct silofs_vbs          *vbs,
+                              const struct silofs_blobid *blobid, off_t pos)
 {
 	struct silofs_blobidx blobidx;
 
@@ -1110,24 +1110,60 @@ int silofs_vbs_punch_blob(struct silofs_vbs          *vbs,
 	return vbs_punch_blob(vbs, &blobidx);
 }
 
-int silofs_vbs_write_blob(struct silofs_vbs         *vbs,
-                          const struct silofs_paddr *paddr,
-                          const struct silofs_rovec *rovec)
+static int
+vbs_read_blob(struct silofs_vbs *vbs, const struct silofs_blobidx *blobidx,
+              off_t pos, void *buf, size_t len)
 {
-	struct silofs_blobidx   blobidx;
 	struct silofs_blobfile *bf  = nullptr;
 	int                     err = 0;
 
-	vbs_blobidx_of(vbs, &paddr->blobid, &blobidx);
-	err = vbs_stage_and_cache_bf(vbs, &blobidx, &bf);
+	err = vbs_stage_and_cache_bf(vbs, blobidx, &bf);
 	if (err) {
 		return err;
 	}
-	err = bf_write(bf, paddr->pos, rovec);
+	err = bf_read(bf, pos, buf, len);
 	if (err) {
 		return err;
 	}
 	return 0;
+}
+
+int silofs_vbs_read_blob_at(struct silofs_vbs          *vbs,
+                            const struct silofs_blobid *blobid, off_t pos,
+                            void *buf, size_t len)
+{
+	struct silofs_blobidx blobidx;
+
+	vbs_blobidx_of(vbs, blobid, &blobidx);
+	return vbs_read_blob(vbs, &blobidx, pos, buf, len);
+}
+
+static int
+vbs_write_blob(struct silofs_vbs *vbs, const struct silofs_blobidx *blobidx,
+               off_t pos, const void *buf, size_t len)
+{
+	struct silofs_blobfile *bf  = nullptr;
+	int                     err = 0;
+
+	err = vbs_stage_and_cache_bf(vbs, blobidx, &bf);
+	if (err) {
+		return err;
+	}
+	err = bf_write(bf, pos, buf, len);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+int silofs_vbs_write_blob_at(struct silofs_vbs          *vbs,
+                             const struct silofs_blobid *blobid, off_t pos,
+                             const void *buf, size_t len)
+{
+	struct silofs_blobidx blobidx;
+
+	vbs_blobidx_of(vbs, blobid, &blobidx);
+	return vbs_write_blob(vbs, &blobidx, pos, buf, len);
 }
 
 static int
@@ -1148,41 +1184,29 @@ vbs_writev_blob(struct silofs_vbs *vbs, const struct silofs_blobidx *blobidx,
 	return sync ? bf_sync_range(bf, pos, silofs_iov_length(iov, cnt)) : 0;
 }
 
-int silofs_vbs_writev_blob(struct silofs_vbs         *vbs,
-                           const struct silofs_paddr *paddr,
-                           const struct iovec *iov, size_t cnt)
+int silofs_vbs_writev_blob_at(struct silofs_vbs          *vbs,
+                              const struct silofs_blobid *blobid, off_t pos,
+                              const struct iovec *iov, size_t cnt)
 {
 	struct silofs_blobidx blobidx;
 	bool                  sync = false; /* TODO: revisit */
 
-	vbs_blobidx_of(vbs, &paddr->blobid, &blobidx);
-	return vbs_writev_blob(vbs, &blobidx, paddr->pos, iov, cnt, sync);
+	vbs_blobidx_of(vbs, blobid, &blobidx);
+	return vbs_writev_blob(vbs, &blobidx, pos, iov, cnt, sync);
 }
 
-static int
-vbs_read_blob(struct silofs_vbs *vbs, const struct silofs_blobidx *blobidx,
-              off_t pos, void *buf, size_t len)
-{
-	struct silofs_blobfile *bf  = nullptr;
-	int                     err = 0;
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-	err = vbs_stage_and_cache_bf(vbs, blobidx, &bf);
-	if (err) {
-		return err;
-	}
-	err = bf_read(bf, pos, buf, len);
-	if (err) {
-		return err;
-	}
-	return 0;
+int silofs_vbs_save_mbref(struct silofs_vbs         *vbs,
+                          const struct silofs_mbref *mbref, const void *buf,
+                          size_t len)
+{
+	return vbs_write_blob(vbs, &mbref->bx, 0, buf, len);
 }
 
-int silofs_vbs_read_blob(struct silofs_vbs         *vbs,
-                         const struct silofs_paddr *paddr, void *buf,
-                         size_t len)
+int silofs_vbs_load_mbref(struct silofs_vbs         *vbs,
+                          const struct silofs_mbref *mbref, void *buf,
+                          size_t len)
 {
-	struct silofs_blobidx blobidx;
-
-	vbs_blobidx_of(vbs, &paddr->blobid, &blobidx);
-	return vbs_read_blob(vbs, &blobidx, paddr->pos, buf, len);
+	return vbs_read_blob(vbs, &mbref->bx, 0, buf, len);
 }

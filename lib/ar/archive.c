@@ -139,9 +139,9 @@ static int arc_stat_pack(const struct silofs_ar_ctx *ar_ctx,
 	return 0;
 }
 
-static int arc_send_to_repo(const struct silofs_ar_ctx *ar_ctx,
-                            const struct silofs_paddr  *paddr,
-                            const struct silofs_rovec  *rov)
+static int
+arc_send_to_repo(const struct silofs_ar_ctx *ar_ctx,
+                 const struct silofs_paddr *paddr, const void *dat, size_t len)
 {
 	int err;
 
@@ -150,7 +150,8 @@ static int arc_send_to_repo(const struct silofs_ar_ctx *ar_ctx,
 		log_err("failed to create archive blob: err=%d", err);
 		return err;
 	}
-	err = silofs_vbs_write_blob(ar_ctx->vbs, paddr, rov);
+	err = silofs_vbs_write_blob_at(ar_ctx->vbs, &paddr->blobid, paddr->pos,
+	                               dat, len);
 	if (err) {
 		log_err("failed to save blob: err=%d", err);
 		return err;
@@ -162,13 +163,12 @@ static int
 arc_send_pack(const struct silofs_ar_ctx *ar_ctx,
               const struct silofs_paddr *paddr, const void *dat, size_t len)
 {
-	const struct silofs_rovec rov = { .rov_base = dat, .rov_len = len };
-	size_t                    sz  = 0;
-	int                       err;
+	size_t sz = 0;
+	int    err;
 
 	err = arc_stat_pack(ar_ctx, paddr, &sz);
 	if ((err == -ENOENT) || (!err && (sz != len))) {
-		err = arc_send_to_repo(ar_ctx, paddr, &rov);
+		err = arc_send_to_repo(ar_ctx, paddr, dat, len);
 	}
 	return err;
 }

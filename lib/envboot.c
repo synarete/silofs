@@ -58,13 +58,10 @@ static int
 env_save_mbr_at(struct silofs_env *env, const struct silofs_paddr *paddr,
                 const struct silofs_mbr1k *mbr1k)
 {
-	const struct silofs_rovec rovec = {
-		.rov_base = mbr1k,
-		.rov_len  = sizeof(*mbr1k),
-	};
 	int err;
 
-	err = silofs_vbs_write_blob(env->base.vbs, paddr, &rovec);
+	err = silofs_vbs_write_blob_at(env->base.vbs, &paddr->blobid,
+	                               paddr->pos, mbr1k, sizeof(*mbr1k));
 	if (err) {
 		log_dbg("failed to save mbr: err=%d", err);
 		return err;
@@ -78,8 +75,9 @@ env_load_mbr_at(const struct silofs_env *env, const struct silofs_paddr *paddr,
 {
 	int err;
 
-	err = silofs_vbs_read_blob(env->base.vbs, paddr, out_mbr1k,
-	                           sizeof(*out_mbr1k));
+	err = silofs_vbs_read_blob_at(env->base.vbs, &paddr->blobid,
+	                              paddr->pos, out_mbr1k,
+	                              sizeof(*out_mbr1k));
 	if (err) {
 		log_dbg("failed to load mbr: err=%d", err);
 		return (err == -ENOENT) ? -SILOFS_ENOMBR : err;

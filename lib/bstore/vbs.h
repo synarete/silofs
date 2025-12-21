@@ -68,11 +68,11 @@ int silofs_vbs_stat_blob(struct silofs_vbs          *vbs,
 int silofs_vbs_require_blob(struct silofs_vbs          *vbs,
                             const struct silofs_blobid *blobid);
 
-int silofs_vbs_require_bpos(struct silofs_vbs          *vbs,
-                            const struct silofs_blobid *blobid, off_t pos);
+int silofs_vbs_require_blob_at(struct silofs_vbs          *vbs,
+                               const struct silofs_blobid *blobid, off_t pos);
 
-int silofs_vbs_access_bpos(struct silofs_vbs          *vbs,
-                           const struct silofs_blobid *blobid, off_t pos);
+int silofs_vbs_access_blob_at(struct silofs_vbs          *vbs,
+                              const struct silofs_blobid *blobid, off_t pos);
 
 int silofs_vbs_remove_blob(struct silofs_vbs          *vbs,
                            const struct silofs_blobid *blobid);
@@ -83,16 +83,26 @@ int silofs_vbs_flush_blob(struct silofs_vbs          *vbs,
 int silofs_vbs_punch_blob(struct silofs_vbs          *vbs,
                           const struct silofs_blobid *blobid);
 
-int silofs_vbs_write_blob(struct silofs_vbs         *vbs,
-                          const struct silofs_paddr *paddr,
-                          const struct silofs_rovec *rovec);
+int silofs_vbs_read_blob_at(struct silofs_vbs          *vbs,
+                            const struct silofs_blobid *blobid, off_t pos,
+                            void *buf, size_t len);
 
-int silofs_vbs_writev_blob(struct silofs_vbs         *vbs,
-                           const struct silofs_paddr *paddr,
-                           const struct iovec *iov, size_t cnt);
+int silofs_vbs_write_blob_at(struct silofs_vbs          *vbs,
+                             const struct silofs_blobid *blobid, off_t pos,
+                             const void *buf, size_t len);
 
-int silofs_vbs_read_blob(struct silofs_vbs         *vbs,
-                         const struct silofs_paddr *paddr, void *buf,
-                         size_t len);
+int silofs_vbs_writev_blob_at(struct silofs_vbs          *vbs,
+                              const struct silofs_blobid *blobid, off_t pos,
+                              const struct iovec *iov, size_t cnt);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_vbs_save_mbref(struct silofs_vbs         *vbs,
+                          const struct silofs_mbref *mbref, const void *buf,
+                          size_t len);
+
+int silofs_vbs_load_mbref(struct silofs_vbs         *vbs,
+                          const struct silofs_mbref *mbref, void *buf,
+                          size_t len);
 
 #endif /* SILOFS_VBS_H_ */

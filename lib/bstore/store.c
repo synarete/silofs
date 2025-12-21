@@ -71,8 +71,8 @@ static int stc_require_view(struct silofs_store_ctx *st_ctx)
 static int stc_require_paddr(const struct silofs_store_ctx *st_ctx,
                              const struct silofs_paddr     *paddr)
 {
-	return silofs_vbs_require_bpos(st_ctx->vbs, &paddr->blobid,
-	                               paddr->pos);
+	return silofs_vbs_require_blob_at(st_ctx->vbs, &paddr->blobid,
+	                                  paddr->pos);
 }
 
 static int stc_require_paddr_of(const struct silofs_store_ctx *st_ctx,
@@ -94,7 +94,7 @@ static int stc_access_pnode(const struct silofs_store_ctx *st_ctx,
 {
 	const off_t off = silofs_paddr_next(paddr);
 
-	return silofs_vbs_access_bpos(st_ctx->vbs, &paddr->blobid, off);
+	return silofs_vbs_access_blob_at(st_ctx->vbs, &paddr->blobid, off);
 }
 
 static int stc_access_pnode_of(const struct silofs_store_ctx *st_ctx,
@@ -114,7 +114,8 @@ stc_read_pnode(struct silofs_store_ctx *st_ctx, struct silofs_pnode_info *pni)
 	const struct silofs_paddr *paddr = &pni->pn_meta.paddr;
 	const size_t               len   = viewlen_of(pni);
 
-	return silofs_vbs_read_blob(st_ctx->vbs, paddr, st_ctx->view, len);
+	return silofs_vbs_read_blob_at(st_ctx->vbs, &paddr->blobid, paddr->pos,
+	                               st_ctx->view, len);
 }
 
 static int stc_decrypt_verify_pnode(struct silofs_store_ctx  *st_ctx,
@@ -437,13 +438,11 @@ int silofs_stage_btnode(struct silofs_env          *env,
 static int stc_write_pnode(struct silofs_store_ctx        *st_ctx,
                            const struct silofs_pnode_info *pni)
 {
-	const struct silofs_rovec rovec = {
-		.rov_base = st_ctx->view,
-		.rov_len  = viewlen_of(pni),
-	};
 	const struct silofs_paddr *paddr = &pni->pn_meta.paddr;
+	const size_t               len   = viewlen_of(pni);
 
-	return silofs_vbs_write_blob(st_ctx->vbs, paddr, &rovec);
+	return silofs_vbs_write_blob_at(st_ctx->vbs, &paddr->blobid,
+	                                paddr->pos, st_ctx->view, len);
 }
 
 static int stc_seal_encrypt_pnode(struct silofs_store_ctx  *st_ctx,

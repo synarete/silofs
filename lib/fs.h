@@ -32,7 +32,7 @@
 #include "fs/lcache.h"
 #include "fs/namei.h"
 #include "fs/spmaps.h"
-#include "fs/stage.h"
+#include "fs/vstage.h"
 #include "fs/encdec.h"
 #include "fs/task.h"
 

@@ -170,7 +170,7 @@ CFLAGS += -fstack-clash-protection
 CFLAGS += -fstack-protector-all
 CFLAGS += -fstack-protector-strong
 CFLAGS += -fstrict-aliasing
-CFLAGS += -fwrapv
+CFLAGS += -ftrapv
 
 ifeq ($(SANITIZER), 0)
 CFLAGS += -Wframe-larger-than=4096

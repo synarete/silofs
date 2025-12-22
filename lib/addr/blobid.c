@@ -32,12 +32,13 @@ static void generate_random(uint8_t *p, size_t n)
 
 /* semantic "view" into blobid */
 struct silofs_blobidv {
-	uint8_t mtype;
-	uint8_t btype;
+	uint16_t vers;
+	uint8_t  mtype;
+	uint8_t  btype;
 	/* XXX REMOVE ME */
 	uint8_t              vspace;
 	uint8_t              height;
-	uint8_t              reserved[12];
+	uint8_t              reserved[10];
 	struct silofs_svolid svolid;
 	struct silofs_uniqid uniqid;
 
@@ -62,11 +63,17 @@ static void blobid_from_view(struct silofs_blobid        *blobid,
 	memcpy(blobid, blobidv, sizeof(*blobid));
 }
 
+static void blobidv_pre_setup(struct silofs_blobidv *blobidv)
+{
+	memset(blobidv, 0, sizeof(*blobidv));
+	blobidv->vers = silofs_cpu_to_le16(SILOFS_FMT_VERSION);
+}
+
 static void
 blobidv_setup_raw(struct silofs_blobidv      *blobidv,
                   const struct silofs_svolid *svolid, enum silofs_mtype mtype)
 {
-	memset(blobidv, 0, sizeof(*blobidv));
+	blobidv_pre_setup(blobidv);
 	silofs_svolid_copyto(svolid, &blobidv->svolid);
 	blobidv->mtype = (uint8_t)mtype;
 	blobidv->btype = (uint8_t)SILOFS_BTYPE_RAW;
@@ -78,7 +85,7 @@ blobidv_setup_uniq(struct silofs_blobidv      *blobidv,
                    const struct silofs_svolid *svolid,
                    const struct silofs_uniqid *uniq, enum silofs_mtype mtype)
 {
-	memset(blobidv, 0, sizeof(*blobidv));
+	blobidv_pre_setup(blobidv);
 	silofs_svolid_copyto(svolid, &blobidv->svolid);
 	blobidv->mtype = (uint8_t)mtype;
 	blobidv->btype = (uint8_t)SILOFS_BTYPE_RAW;
@@ -90,7 +97,7 @@ blobidv_setup_cas(struct silofs_blobidv       *blobidv,
                   const struct silofs_svolid  *svolid,
                   const struct silofs_hash256 *hash, enum silofs_mtype mtype)
 {
-	memset(blobidv, 0, sizeof(*blobidv));
+	blobidv_pre_setup(blobidv);
 	silofs_svolid_copyto(svolid, &blobidv->svolid);
 	blobidv->mtype = (uint8_t)mtype;
 	blobidv->btype = (uint8_t)SILOFS_BTYPE_CAS;

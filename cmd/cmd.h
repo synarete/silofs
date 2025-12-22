@@ -346,20 +346,20 @@ void cmd_delpass(char **pass);
 
 void cmd_checkpass(const char *pass);
 
-/* meta-reference */
-void cmd_save_fs_metaref(const struct silofs_boot_args *boot_args,
-                         const struct silofs_mbref     *fs_mbref);
+/* json meta-reference */
+void cmd_save_fs_jref(const struct silofs_boot_args *boot_args,
+                      const struct silofs_mbref     *fs_mbref);
 
-void cmd_save_ar_metaref(const struct silofs_boot_args *boot_args,
-                         const struct silofs_mbref     *ar_mbref);
+void cmd_save_ar_jref(const struct silofs_boot_args *boot_args,
+                      const struct silofs_mbref     *ar_mbref);
 
-void cmd_load_fs_metaref(const struct silofs_boot_args *boot_args,
-                         struct silofs_mbref           *out_mbref);
+void cmd_load_fs_jref(const struct silofs_boot_args *boot_args,
+                      struct silofs_mbref           *out_mbref);
 
-void cmd_load_ar_metaref(struct silofs_boot_args *boot_args,
-                         struct silofs_mbref     *out_mbref);
+void cmd_load_ar_jref(struct silofs_boot_args *boot_args,
+                      struct silofs_mbref     *out_mbref);
 
-void cmd_unlink_fs_metaref(const struct silofs_boot_args *boot_args);
+void cmd_unlink_fs_jref(const struct silofs_boot_args *boot_args);
 
 /* fs input arguments */
 void cmd_setup_env_args(struct silofs_env_args *env_args);

@@ -195,7 +195,7 @@ static void cmd_rmfs_setup_fs_ids(struct cmd_rmfs_ctx *ctx)
 
 static void cmd_rmfs_load_fs_blobid(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_load_fs_metaref(&ctx->env_args.boot_args, &ctx->fs_mbref);
+	cmd_load_fs_jref(&ctx->env_args.boot_args, &ctx->fs_mbref);
 }
 
 static void cmd_rmfs_setup_env(struct cmd_rmfs_ctx *ctx)
@@ -225,7 +225,7 @@ static void cmd_rmfs_execute(struct cmd_rmfs_ctx *ctx)
 
 static void cmd_rmfs_unlink_blobid(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_unlink_fs_metaref(&ctx->env_args.boot_args);
+	cmd_unlink_fs_jref(&ctx->env_args.boot_args);
 }
 
 static void cmd_rmfs_destroy_env(struct cmd_rmfs_ctx *ctx)

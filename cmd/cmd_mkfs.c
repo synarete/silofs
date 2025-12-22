@@ -228,7 +228,7 @@ static void cmd_mkfs_format_fs(struct cmd_mkfs_ctx *ctx)
 
 static void cmd_mkfs_save_blobid(struct cmd_mkfs_ctx *ctx)
 {
-	cmd_save_fs_metaref(&ctx->env_args.boot_args, &ctx->fs_mbref);
+	cmd_save_fs_jref(&ctx->env_args.boot_args, &ctx->fs_mbref);
 }
 
 static void cmd_mkfs_close_fs(struct cmd_mkfs_ctx *ctx)

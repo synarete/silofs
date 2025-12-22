@@ -182,7 +182,7 @@ static void cmd_restore_setup_env_args(struct cmd_restore_ctx *ctx)
 
 static void cmd_restore_load_ar_blobid(struct cmd_restore_ctx *ctx)
 {
-	cmd_load_ar_metaref(&ctx->env_args.boot_args, &ctx->ar_mbref);
+	cmd_load_ar_jref(&ctx->env_args.boot_args, &ctx->ar_mbref);
 }
 
 static void cmd_restore_setup_env(struct cmd_restore_ctx *ctx)
@@ -214,7 +214,7 @@ static void cmd_restore_execute(struct cmd_restore_ctx *ctx)
 	};
 
 	cmd_restore_fs(ctx->env, &ctx->ar_mbref, &ctx->fs_mbref);
-	cmd_save_fs_metaref(&boot_args, &ctx->fs_mbref);
+	cmd_save_fs_jref(&boot_args, &ctx->fs_mbref);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

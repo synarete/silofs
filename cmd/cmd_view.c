@@ -182,7 +182,7 @@ static void cmd_view_setup_fs_ids(struct cmd_view_ctx *ctx)
 
 static void cmd_view_load_fs_blobid(struct cmd_view_ctx *ctx)
 {
-	cmd_load_fs_metaref(&ctx->env_args.boot_args, &ctx->fs_mbref);
+	cmd_load_fs_jref(&ctx->env_args.boot_args, &ctx->fs_mbref);
 }
 
 static void cmd_view_setup_env(struct cmd_view_ctx *ctx)

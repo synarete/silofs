@@ -18,6 +18,7 @@
 #define SILOFS_MBREF_H_
 
 #include <silofs/types.h>
+#include "stringx.h"
 #include "crypt.h"
 #include "paddr.h"
 
@@ -30,5 +31,16 @@ void silofs_mbref_assign(struct silofs_mbref       *mbref,
 void silofs_mbref_derive(struct silofs_mbref         *mbref,
                          const struct silofs_mdigest *mdigest,
                          const struct silofs_paddr   *paddr);
+
+bool silofs_mbref_isequal(const struct silofs_mbref *mbref,
+                          const struct silofs_mbref *other);
+
+int silofs_mbref_from_str(struct silofs_mbref *mbref, const char *str,
+                          size_t len);
+
+int silofs_mbref_to_str(const struct silofs_mbref *mbref, char *str, size_t n);
+
+void silofs_mbrefs_assign(struct silofs_mbrefs       *mbrefs,
+                          const struct silofs_mbrefs *other);
 
 #endif /* SILOFS_MBREF_H_ */

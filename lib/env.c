@@ -614,11 +614,11 @@ static void sbi_mark_fossil(struct silofs_sb_info *sbi)
 }
 
 static int
-env_recalc_fs_mbref(struct silofs_env *env, struct silofs_paddr *out_paddr)
+env_recalc_fs_mbref(struct silofs_env *env, struct silofs_mbref *out_mbref)
 {
 	struct silofs_mbr1k mbr1k = { .mbr_magic = UINT64_MAX };
 
-	return silofs_mbi_export(&env->mbis.fs_mbi, out_paddr, &mbr1k);
+	return silofs_mbi_export(&env->mbis.fs_mbi, out_mbref, &mbr1k);
 }
 
 static int
@@ -665,39 +665,4 @@ int silofs_env_forkfs(struct silofs_env *env, struct silofs_mbrefs *out_mbrefs)
 	err = env_do_forkfs(env, out_mbrefs);
 	silofs_sbi_decref(sbi);
 	return err;
-}
-
-static int check_arix_size(ssize_t sz)
-{
-	const ssize_t arix_size = silofs_mtype_ssize(SILOFS_MTYPE_ARIX);
-
-	return (arix_size == sz) ? 0 : -SILOFS_EBADARIX;
-}
-
-static int
-env_arix_pmeta(const struct silofs_env *env, struct silofs_pmeta *out_pmeta)
-{
-	return silofs_mbi_arix_root(&env->mbis.ar_mbi, out_pmeta);
-}
-
-int silofs_env_sense_ar(struct silofs_env *env)
-{
-	struct silofs_pmeta pmeta;
-	struct stat         st;
-	int                 err;
-
-	err = env_arix_pmeta(env, &pmeta);
-	if (err) {
-		return err;
-	}
-	err = silofs_bstore_stat_blob(env->base.bstore, &pmeta.paddr.blobid,
-	                              &st);
-	if (err) {
-		return err;
-	}
-	err = check_arix_size(st.st_size);
-	if (err) {
-		return err;
-	}
-	return 0;
 }

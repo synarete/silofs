@@ -447,7 +447,7 @@ static void validate_ioctl_types(void)
 {
 	REQUIRE_SIZEOF(struct silofs_ioc_query, 2048);
 	REQUIRE_SIZEOF_LE(struct silofs_ioc_query, SILOFS_IOC_SIZE_MAX);
-	REQUIRE_SIZEOF(struct silofs_ioc_forkfs, 256);
+	REQUIRE_SIZEOF(struct silofs_ioc_forkfs, 128);
 	REQUIRE_SIZEOF_LE(struct silofs_ioc_forkfs, SILOFS_IOC_SIZE_MAX);
 }
 

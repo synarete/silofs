@@ -847,16 +847,16 @@ char *cmd_struuid(const uint8_t uu[16])
 	return cmd_strdup(str);
 }
 
-char *cmd_strblobid(const struct silofs_blobid *blobid)
+char *cmd_strmbref(const struct silofs_mbref *mbref)
 {
-	char bid[256] = "";
+	char str[256] = "";
 	int  err;
 
-	err = silofs_encode_blobid(blobid, bid, sizeof(bid) - 1);
+	err = silofs_encode_mbref(mbref, str, sizeof(str));
 	if (err) {
-		cmd_die(err, "cannot encode blobid");
+		cmd_die(err, "cannot encode mbref");
 	}
-	return cmd_strdup(bid);
+	return cmd_strdup(str);
 }
 
 char *cmd_mkpathf(const char *fmt, ...)
@@ -1003,11 +1003,11 @@ struct silofs_mntinfos *cmd_parse_mountinfo(void)
 	return minfos;
 }
 
-void cmd_free_mountinfo(struct silofs_mntinfos *minfos)
+void cmd_free_mountinfo(struct silofs_mntinfos *mntinfos)
 {
-	if (minfos != nullptr) {
-		silofs_release_mntinfos(minfos, nullptr);
-		cmd_zfree(minfos, sizeof(*minfos));
+	if (mntinfos != nullptr) {
+		silofs_release_mntinfos(mntinfos, nullptr);
+		cmd_zfree(mntinfos, sizeof(*mntinfos));
 	}
 }
 

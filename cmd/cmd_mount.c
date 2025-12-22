@@ -60,8 +60,8 @@ struct cmd_mount_in_args {
 
 struct cmd_mount_ctx {
 	struct cmd_mount_in_args in_args;
+	struct silofs_mbref      fs_mbref;
 	struct silofs_env_args   env_args;
-	struct silofs_blobid     fs_blobid;
 	struct silofs_env       *env;
 	pid_t                    child_pid;
 	time_t                   start_time;
@@ -273,7 +273,7 @@ static void cmd_mount_setup_fs_ids(struct cmd_mount_ctx *ctx)
 
 static void cmd_mount_load_fs_blobid(struct cmd_mount_ctx *ctx)
 {
-	cmd_load_fs_metaref(&ctx->env_args.boot_args, &ctx->fs_blobid);
+	cmd_load_fs_metaref(&ctx->env_args.boot_args, &ctx->fs_mbref);
 }
 
 static void cmd_mount_setup_env(struct cmd_mount_ctx *ctx)
@@ -404,12 +404,12 @@ static void cmd_mount_close_repo(struct cmd_mount_ctx *ctx)
 
 static void cmd_mount_sense_fs(struct cmd_mount_ctx *ctx)
 {
-	cmd_sense_fs(ctx->env, &ctx->fs_blobid);
+	cmd_sense_fs(ctx->env, &ctx->fs_mbref);
 }
 
 static void cmd_mount_open_fs(struct cmd_mount_ctx *ctx)
 {
-	cmd_open_fs(ctx->env, &ctx->fs_blobid);
+	cmd_open_fs(ctx->env, &ctx->fs_mbref);
 }
 
 static void cmd_mount_execute_fs(struct cmd_mount_ctx *ctx)

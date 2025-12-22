@@ -36,8 +36,8 @@ struct cmd_rmfs_in_args {
 struct cmd_rmfs_ctx {
 	struct silofs_ioc_query ioc_qry;
 	struct cmd_rmfs_in_args in_args;
+	struct silofs_mbref     fs_mbref;
 	struct silofs_env_args  env_args;
-	struct silofs_blobid    fs_blobid;
 	struct silofs_env      *env;
 	bool                    has_lockfile;
 };
@@ -195,7 +195,7 @@ static void cmd_rmfs_setup_fs_ids(struct cmd_rmfs_ctx *ctx)
 
 static void cmd_rmfs_load_fs_blobid(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_load_fs_metaref(&ctx->env_args.boot_args, &ctx->fs_blobid);
+	cmd_load_fs_metaref(&ctx->env_args.boot_args, &ctx->fs_mbref);
 }
 
 static void cmd_rmfs_setup_env(struct cmd_rmfs_ctx *ctx)
@@ -215,12 +215,12 @@ static void cmd_rmfs_close_repo(struct cmd_rmfs_ctx *ctx)
 
 static void cmd_rmfs_sense_fs(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_sense_fs(ctx->env, &ctx->fs_blobid);
+	cmd_sense_fs(ctx->env, &ctx->fs_mbref);
 }
 
 static void cmd_rmfs_execute(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_remove_fs(ctx->env, &ctx->fs_blobid);
+	cmd_remove_fs(ctx->env, &ctx->fs_mbref);
 }
 
 static void cmd_rmfs_unlink_blobid(struct cmd_rmfs_ctx *ctx)

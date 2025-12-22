@@ -51,3 +51,38 @@ size_t silofs_hash256_to_name(const struct silofs_hash256 *hash,
 	                    sizeof(out_name->str), &cnt);
 	return cnt;
 }
+
+int silofs_hash256_to_str(const struct silofs_hash256 *hash, char *str,
+                          size_t len)
+{
+	size_t cnt = 0;
+
+	if (len <= (2 * sizeof(hash->hash))) {
+		return -SILOFS_EILLSTR;
+	}
+	silofs_mem_to_ascii(hash->hash, sizeof(hash->hash), str, len, &cnt);
+	if (cnt != (2 * sizeof(hash->hash))) {
+		return -SILOFS_EILLSTR;
+	}
+	return 0;
+}
+
+int silofs_hash256_from_str(struct silofs_hash256 *hash, const char *str,
+                            size_t len)
+{
+	size_t cnt = 0;
+	int    err;
+
+	if (len <= (2 * sizeof(hash->hash))) {
+		return -SILOFS_EILLSTR;
+	}
+	err = silofs_ascii_to_mem(hash->hash, sizeof(hash->hash), str, len,
+	                          &cnt);
+	if (err) {
+		return err;
+	}
+	if (cnt != (2 * sizeof(hash->hash))) {
+		return -SILOFS_EILLSTR;
+	}
+	return 0;
+}

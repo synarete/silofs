@@ -106,9 +106,6 @@ int silofs_env_reload_super(struct silofs_env *env);
 
 int silofs_env_reload_sb_lseg(struct silofs_env *env);
 
-int silofs_env_forkfs(struct silofs_env    *env,
-                      struct silofs_mbrefs *out_mbrefs);
-
 void silofs_env_relax_caches(const struct silofs_env *env, int flags);
 
 void silofs_env_uptime(const struct silofs_env *env, time_t *out_uptime);
@@ -116,31 +113,32 @@ void silofs_env_uptime(const struct silofs_env *env, time_t *out_uptime);
 void silofs_env_allocstat(const struct silofs_env  *env,
                           struct silofs_alloc_stat *out_alst);
 
-int silofs_env_sense_ar(struct silofs_env *env);
-
 void silofs_env_drop_caches(struct silofs_env *env);
 
 bool silofs_env_hasflag(const struct silofs_env *env, enum silofs_flags f);
 
 bool silofs_env_isrdonlyfs(const struct silofs_env *env);
 
+int silofs_env_forkfs(struct silofs_env    *env,
+                      struct silofs_mbrefs *out_mbrefs);
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_env_sense_mbr(struct silofs_env         *env,
-                         const struct silofs_paddr *paddr);
+                         const struct silofs_mbref *mbr);
 
 int silofs_env_setup_fs_mbr(struct silofs_env *env);
 
 int silofs_env_commit_fs_mbr(struct silofs_env   *env,
-                             struct silofs_paddr *out_mbref);
+                             struct silofs_mbref *out_mbref);
 
 int silofs_env_reload_fs_mbr(struct silofs_env         *env,
-                             const struct silofs_paddr *paddr);
+                             const struct silofs_mbref *mbref);
 
 int silofs_env_reload_ar_mbr(struct silofs_env         *env,
-                             const struct silofs_paddr *paddr);
+                             const struct silofs_mbref *mbref);
 
 int silofs_env_unlink_mbr(struct silofs_env         *env,
-                          const struct silofs_paddr *paddr);
+                          const struct silofs_mbref *mbref);
 
 #endif /* SILOFS_ENV_H_ */

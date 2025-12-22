@@ -29,72 +29,16 @@
 #include "fuseq.h"
 #include "walk.h"
 
-static int validate_blobid(const struct silofs_blobid *blobid)
+int silofs_encode_mbref(const struct silofs_mbref *mbref, char *s, size_t n)
 {
-	const struct silofs_blobid *none = silofs_blobid_none();
-
-	return silofs_blobid_isequal(blobid, none) ? -SILOFS_EBLOBID : 0;
+	return silofs_mbref_to_str(mbref, s, n);
 }
 
-static int validate_mbr_blobid(const struct silofs_blobid *blobid)
+int silofs_decode_mbref(struct silofs_mbref *mbref, const char *s)
 {
-	enum silofs_btype btype;
-	enum silofs_mtype mtype;
-	int               err;
+	const size_t n = silofs_str_nlength(s, UINT16_MAX);
 
-	err = validate_blobid(blobid);
-	if (err) {
-		return err;
-	}
-	btype = silofs_blobid_get_btype(blobid);
-	if (btype != SILOFS_BTYPE_CAS) {
-		return -SILOFS_EBLOBID;
-	}
-	mtype = silofs_blobid_get_mtype(blobid);
-	if (mtype != SILOFS_MTYPE_MBR) {
-		return -SILOFS_EBLOBID;
-	}
-	return 0;
-}
-
-static int setup_mbr_paddr(const struct silofs_blobid *blobid,
-                           struct silofs_paddr        *out_paddr)
-{
-	int err;
-
-	err = validate_mbr_blobid(blobid);
-	if (err) {
-		return err;
-	}
-	silofs_paddr_init(out_paddr, blobid, 0);
-	return 0;
-}
-
-static void export_mbr_blobid(const struct silofs_paddr *paddr,
-                              struct silofs_blobid      *out_blobid)
-{
-	silofs_blobid_copyto(&paddr->blobid, out_blobid);
-}
-
-int silofs_encode_blobid(const struct silofs_blobid *blobid, char *s, size_t n)
-{
-	struct silofs_strspan ss;
-	int                   err;
-
-	err = validate_blobid(blobid);
-	if (err) {
-		return err;
-	}
-	silofs_strspan_initk(&ss, s, 0, n);
-	return silofs_blobid_to_str(blobid, &ss);
-}
-
-int silofs_decode_blobid(struct silofs_blobid *blobid, const char *s)
-{
-	struct silofs_strview sv;
-
-	silofs_strview_init(&sv, s);
-	return silofs_blobid_from_str(blobid, &sv);
+	return silofs_mbref_from_str(mbref, s, n);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -408,13 +352,13 @@ static int setup_mbr(struct silofs_task_ctx *task)
 }
 
 static int
-commit_mbr(struct silofs_task_ctx *task, struct silofs_paddr *out_paddr)
+commit_mbr(struct silofs_task_ctx *task, struct silofs_mbref *out_mbref)
 {
-	return silofs_env_commit_fs_mbr(task->t_env, out_paddr);
+	return silofs_env_commit_fs_mbr(task->t_env, out_mbref);
 }
 
 static int appexec_format_meta(struct silofs_task_ctx *task,
-                               struct silofs_paddr    *out_paddr)
+                               struct silofs_mbref    *out_mbref)
 {
 	int err;
 
@@ -454,7 +398,7 @@ static int appexec_format_meta(struct silofs_task_ctx *task,
 	if (err) {
 		return err;
 	}
-	err = commit_mbr(task, out_paddr);
+	err = commit_mbr(task, out_mbref);
 	if (err) {
 		return err;
 	}
@@ -463,17 +407,17 @@ static int appexec_format_meta(struct silofs_task_ctx *task,
 }
 
 static int
-reload_fs_mbr(struct silofs_task_ctx *task, const struct silofs_paddr *paddr)
+reload_fs_mbr(struct silofs_task_ctx *task, const struct silofs_mbref *mbref)
 {
-	return silofs_env_reload_fs_mbr(task->t_env, paddr);
+	return silofs_env_reload_fs_mbr(task->t_env, mbref);
 }
 
 static int
-reload_fs(struct silofs_task_ctx *task, const struct silofs_paddr *paddr)
+reload_fs(struct silofs_task_ctx *task, const struct silofs_mbref *mbref)
 {
 	int err;
 
-	err = reload_fs_mbr(task, paddr);
+	err = reload_fs_mbr(task, mbref);
 	if (err) {
 		return err;
 	}
@@ -497,11 +441,11 @@ reload_fs(struct silofs_task_ctx *task, const struct silofs_paddr *paddr)
 }
 
 static int
-appexec_open_fs(struct silofs_task_ctx *task, const struct silofs_paddr *paddr)
+appexec_open_fs(struct silofs_task_ctx *task, const struct silofs_mbref *mbref)
 {
 	int err;
 
-	err = reload_fs(task, paddr);
+	err = reload_fs(task, mbref);
 	if (!err) {
 		drop_caches(task);
 	}
@@ -560,17 +504,17 @@ static int appexec_unload_fs(struct silofs_task_ctx *task)
 }
 
 static int
-remove_mbr(struct silofs_task_ctx *task, const struct silofs_paddr *paddr)
+remove_mbr(struct silofs_task_ctx *task, const struct silofs_mbref *mbref)
 {
-	return silofs_env_unlink_mbr(task->t_env, paddr);
+	return silofs_env_unlink_mbr(task->t_env, mbref);
 }
 
 static int appexec_remove_fs(struct silofs_task_ctx    *task,
-                             const struct silofs_paddr *paddr)
+                             const struct silofs_mbref *mbref)
 {
 	int err;
 
-	err = reload_fs(task, paddr);
+	err = reload_fs(task, mbref);
 	if (err) {
 		return err;
 	}
@@ -578,7 +522,7 @@ static int appexec_remove_fs(struct silofs_task_ctx    *task,
 	if (err) {
 		return err;
 	}
-	err = remove_mbr(task, paddr);
+	err = remove_mbr(task, mbref);
 	if (err) {
 		return err;
 	}
@@ -590,11 +534,11 @@ static int appexec_remove_fs(struct silofs_task_ctx    *task,
 }
 
 static int appexec_sense_fs(struct silofs_task_ctx    *task,
-                            const struct silofs_paddr *paddr)
+                            const struct silofs_mbref *mbref)
 {
 	int err;
 
-	err = silofs_env_sense_mbr(task->t_env, paddr);
+	err = silofs_env_sense_mbr(task->t_env, mbref);
 	if (err) {
 		return err;
 	}
@@ -603,16 +547,16 @@ static int appexec_sense_fs(struct silofs_task_ctx    *task,
 }
 
 static int appexec_archive_fs(struct silofs_task_ctx    *task,
-                              const struct silofs_paddr *fs_paddr,
-                              struct silofs_paddr       *out_ar_paddr)
+                              const struct silofs_mbref *fs_mbref,
+                              struct silofs_mbref       *out_ar_mbref)
 {
 	int err;
 
-	err = reload_fs(task, fs_paddr);
+	err = reload_fs(task, fs_mbref);
 	if (err) {
 		return err;
 	}
-	err = silofs_exec_archive(task, out_ar_paddr);
+	err = silofs_exec_archive(task, out_ar_mbref);
 	if (err) {
 		return err;
 	}
@@ -621,8 +565,8 @@ static int appexec_archive_fs(struct silofs_task_ctx    *task,
 }
 
 static int appexec_restore_fs(struct silofs_task_ctx    *task,
-                              const struct silofs_paddr *ar_mbref,
-                              struct silofs_paddr       *out_fs_mbref)
+                              const struct silofs_mbref *ar_mbref,
+                              struct silofs_mbref       *out_fs_mbref)
 {
 	int err;
 
@@ -691,14 +635,14 @@ static int term_task(struct silofs_task_ctx *task, int status)
 }
 
 static int
-exec_open_fs(struct silofs_env *env, const struct silofs_paddr *paddr)
+exec_open_fs(struct silofs_env *env, const struct silofs_mbref *mbref)
 {
 	struct silofs_task_ctx task;
 	int                    err;
 
 	err = make_task(env, &task);
 	if (!err) {
-		err = appexec_open_fs(&task, paddr);
+		err = appexec_open_fs(&task, mbref);
 	}
 	return term_task(&task, err);
 }
@@ -840,14 +784,14 @@ static int check_owner_ids(const struct silofs_env *env)
 }
 
 static int
-exec_format_meta(struct silofs_env *env, struct silofs_paddr *out_paddr)
+exec_format_meta(struct silofs_env *env, struct silofs_mbref *out_mbref)
 {
 	struct silofs_task_ctx task;
 	int                    err;
 
 	err = make_task(env, &task);
 	if (!err) {
-		err = appexec_format_meta(&task, out_paddr);
+		err = appexec_format_meta(&task, out_mbref);
 	}
 	return term_task(&task, err);
 }
@@ -887,7 +831,7 @@ static int check_format_fs(struct silofs_env *env)
 	return 0;
 }
 
-static int do_format_fs(struct silofs_env *env, struct silofs_paddr *out_paddr)
+static int do_format_fs(struct silofs_env *env, struct silofs_mbref *out_mbref)
 {
 	int err;
 
@@ -895,81 +839,64 @@ static int do_format_fs(struct silofs_env *env, struct silofs_paddr *out_paddr)
 	if (err) {
 		return err;
 	}
-	err = exec_format_meta(env, out_paddr);
+	err = exec_format_meta(env, out_mbref);
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-int silofs_format_fs(struct silofs_env    *env,
-                     struct silofs_blobid *out_fs_mbr_addr)
+int silofs_format_fs(struct silofs_env *env, struct silofs_mbref *out_mbref)
 {
-	struct silofs_paddr fs_mbr_addr;
-	int                 err;
+	int err;
 
 	silofs_env_lock(env);
-	err = do_format_fs(env, &fs_mbr_addr);
-	if (!err) {
-		export_mbr_blobid(&fs_mbr_addr, out_fs_mbr_addr);
-	}
+	err = do_format_fs(env, out_mbref);
 	silofs_env_unlock(env);
 	return err;
 }
 
 static int
-exec_sense_fs(struct silofs_env *env, const struct silofs_paddr *paddr)
+exec_sense_fs(struct silofs_env *env, const struct silofs_mbref *mbref)
 {
 	struct silofs_task_ctx task;
 	int                    err;
 
 	err = make_task(env, &task);
 	if (!err) {
-		err = appexec_sense_fs(&task, paddr);
+		err = appexec_sense_fs(&task, mbref);
 	}
 	return term_task(&task, err);
 }
 
-int silofs_sense_fs(struct silofs_env          *env,
-                    const struct silofs_blobid *fs_blobid)
+int silofs_sense_fs(struct silofs_env         *env,
+                    const struct silofs_mbref *fs_mbref)
 {
-	struct silofs_paddr paddr;
-	int                 err;
+	int err;
 
 	silofs_env_lock(env);
-	err = setup_mbr_paddr(fs_blobid, &paddr);
-	if (!err) {
-		err = exec_sense_fs(env, &paddr);
-	}
+	err = exec_sense_fs(env, fs_mbref);
 	silofs_env_unlock(env);
 	return err;
 }
 
-int silofs_sense_ar(struct silofs_env          *env,
-                    const struct silofs_blobid *ar_blobid)
+int silofs_sense_ar(struct silofs_env         *env,
+                    const struct silofs_mbref *ar_mbref)
 {
-	struct silofs_paddr paddr;
-	int                 err;
+	int err;
 
 	silofs_env_lock(env);
-	err = setup_mbr_paddr(ar_blobid, &paddr);
-	if (!err) {
-		err = exec_sense_fs(env, &paddr);
-	}
+	err = exec_sense_fs(env, ar_mbref);
 	silofs_env_unlock(env);
 	return err;
 }
 
-int silofs_open_fs(struct silofs_env *env, const struct silofs_blobid *blobid)
+int silofs_open_fs(struct silofs_env *env, const struct silofs_mbref *mbref)
 {
-	struct silofs_paddr paddr;
-	int                 err;
+	int err;
 
 	silofs_env_lock(env);
-	err = setup_mbr_paddr(blobid, &paddr);
-	if (!err) {
-		err = exec_open_fs(env, &paddr);
-	}
+	err = exec_open_fs(env, mbref);
 	silofs_env_unlock(env);
 	return err;
 }
@@ -1009,25 +936,18 @@ exec_fork_fs(struct silofs_env *env, struct silofs_mbrefs *out_mbrefs)
 	return term_task(&task, err);
 }
 
-int silofs_fork_fs(struct silofs_env    *env,
-                   struct silofs_blobid *out_main_blobid,
-                   struct silofs_blobid *out_fork_blobid)
+int silofs_fork_fs(struct silofs_env *env, struct silofs_mbrefs *out_mbrefs)
 {
-	struct silofs_mbrefs mbrefs;
-	int                  err;
+	int err;
 
 	silofs_env_lock(env);
-	err = exec_fork_fs(env, &mbrefs);
-	if (!err) {
-		export_mbr_blobid(&mbrefs.main, out_main_blobid);
-		export_mbr_blobid(&mbrefs.fork, out_fork_blobid);
-	}
+	err = exec_fork_fs(env, out_mbrefs);
 	silofs_env_unlock(env);
 	return err;
 }
 
 static int
-exec_reload_remove_fs(struct silofs_env *env, const struct silofs_paddr *paddr)
+exec_reload_remove_fs(struct silofs_env *env, const struct silofs_mbref *mbref)
 {
 	struct silofs_task_ctx task;
 	int                    err;
@@ -1036,11 +956,11 @@ exec_reload_remove_fs(struct silofs_env *env, const struct silofs_paddr *paddr)
 	if (err) {
 		goto out;
 	}
-	err = appexec_open_fs(&task, paddr);
+	err = appexec_open_fs(&task, mbref);
 	if (err) {
 		goto out;
 	}
-	err = appexec_remove_fs(&task, paddr);
+	err = appexec_remove_fs(&task, mbref);
 	if (err) {
 		goto out;
 	}
@@ -1048,17 +968,12 @@ out:
 	return term_task(&task, err);
 }
 
-int silofs_remove_fs(struct silofs_env          *env,
-                     const struct silofs_blobid *blobid)
+int silofs_remove_fs(struct silofs_env *env, const struct silofs_mbref *mbref)
 {
-	struct silofs_paddr paddr;
-	int                 err;
+	int err;
 
 	silofs_env_lock(env);
-	err = setup_mbr_paddr(blobid, &paddr);
-	if (!err) {
-		err = exec_reload_remove_fs(env, &paddr);
-	}
+	err = exec_reload_remove_fs(env, mbref);
 	silofs_env_unlock(env);
 	return err;
 }
@@ -1102,45 +1017,34 @@ int silofs_inspect_fs(struct silofs_env *env, bool view)
 }
 
 static int
-exec_archive_fs(struct silofs_env *env, const struct silofs_paddr *fs_paddr,
-                struct silofs_paddr *out_ar_paddr)
+exec_archive_fs(struct silofs_env *env, const struct silofs_mbref *fs_mbref,
+                struct silofs_mbref *out_ar_mbref)
 {
 	struct silofs_task_ctx task;
 	int                    err;
 
 	err = make_task(env, &task);
 	if (!err) {
-		err = appexec_archive_fs(&task, fs_paddr, out_ar_paddr);
+		err = appexec_archive_fs(&task, fs_mbref, out_ar_mbref);
 	}
 	return term_task(&task, err);
 }
 
-int silofs_archive_fs(struct silofs_env          *env,
-                      const struct silofs_blobid *fs_blobid,
-                      struct silofs_blobid       *out_ar_blobid)
+int silofs_archive_fs(struct silofs_env         *env,
+                      const struct silofs_mbref *fs_mbref,
+                      struct silofs_mbref       *out_ar_mbref)
 {
-	struct silofs_paddr fs_paddr;
-	struct silofs_paddr ar_paddr;
-	int                 err;
+	int err;
 
 	silofs_env_lock(env);
-	err = setup_mbr_paddr(fs_blobid, &fs_paddr);
-	if (err) {
-		goto out;
-	}
-	err = exec_archive_fs(env, &fs_paddr, &ar_paddr);
-	if (err) {
-		goto out;
-	}
-	export_mbr_blobid(&ar_paddr, out_ar_blobid);
-out:
+	err = exec_archive_fs(env, fs_mbref, out_ar_mbref);
 	silofs_env_unlock(env);
 	return err;
 }
 
 static int
-exec_restore_fs(struct silofs_env *env, const struct silofs_paddr *ar_mbref,
-                struct silofs_paddr *out_fs_mbref)
+exec_restore_fs(struct silofs_env *env, const struct silofs_mbref *ar_mbref,
+                struct silofs_mbref *out_fs_mbref)
 {
 	struct silofs_task_ctx task;
 	int                    err;
@@ -1152,25 +1056,14 @@ exec_restore_fs(struct silofs_env *env, const struct silofs_paddr *ar_mbref,
 	return term_task(&task, err);
 }
 
-int silofs_restore_fs(struct silofs_env          *env,
-                      const struct silofs_blobid *ar_blobid,
-                      struct silofs_blobid       *out_fs_blobid)
+int silofs_restore_fs(struct silofs_env         *env,
+                      const struct silofs_mbref *ar_mbref,
+                      struct silofs_mbref       *out_fs_mbref)
 {
-	struct silofs_paddr ar_mbref;
-	struct silofs_paddr fs_mbref;
-	int                 err;
+	int err;
 
 	silofs_env_lock(env);
-	err = setup_mbr_paddr(ar_blobid, &ar_mbref);
-	if (err) {
-		goto out;
-	}
-	err = exec_restore_fs(env, &ar_mbref, &fs_mbref);
-	if (err) {
-		goto out;
-	}
-	export_mbr_blobid(&fs_mbref, out_fs_blobid);
-out:
+	err = exec_restore_fs(env, ar_mbref, out_fs_mbref);
 	silofs_env_unlock(env);
 	return err;
 }

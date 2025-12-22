@@ -307,8 +307,14 @@ bool silofs_blobidx_isequal(const struct silofs_blobidx *blobidx,
 	return silofs_hash256_isequal(&blobidx->idx, &other->idx);
 }
 
-void silofs_blobidx_tostr(const struct silofs_blobidx *blobidx,
-                          struct silofs_strbuf        *out_sbuf)
+int silofs_blobidx_to_str(const struct silofs_blobidx *blobidx, char *str,
+                          size_t len)
 {
-	silofs_hash256_to_name(&blobidx->idx, out_sbuf);
+	return silofs_hash256_to_str(&blobidx->idx, str, len);
+}
+
+int silofs_blobidx_from_str(struct silofs_blobidx *blobidx, const char *str,
+                            size_t len)
+{
+	return silofs_hash256_from_str(&blobidx->idx, str, len);
 }

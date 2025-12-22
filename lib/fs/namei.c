@@ -2397,7 +2397,7 @@ fill_proc(const struct silofs_env *env, struct silofs_query_proc *qpr)
 	qpr->iopen_cur = env->opstat.op_iopen;
 	qpr->memsz_max = alst.nbytes_max;
 	qpr->memsz_cur = alst.nbytes_use;
-	qpr->bopen_cur = env->base.repo->re_bstore.bstore_hq.vbq_lru.sz;
+	qpr->bopen_cur = env->base.repo->re_bstore.bs_hq.bsq_lru.sz;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -2487,17 +2487,21 @@ static void fill_query_boot_name(const struct silofs_task_ctx *task,
 	str_to_buf(&bootpath.fsname, qboot->name, sizeof(qboot->name));
 }
 
+static const struct silofs_mbr_info *fs_mbi(const struct silofs_task_ctx *task)
+{
+	return &task->t_env->mbis.fs_mbi;
+}
+
 static void fill_query_boot_mblobid(const struct silofs_task_ctx *task,
                                     struct silofs_ioc_query      *query)
 {
-	struct silofs_mbr1k           mbr1k;
-	struct silofs_paddr           mbref;
-	const struct silofs_mbr_info *fs_mbi = &task->t_env->mbis.fs_mbi;
-	int                           err;
+	struct silofs_mbr1k mbr1k;
+	struct silofs_mbref mbref;
+	int                 err;
 
-	err = silofs_mbi_export(fs_mbi, &mbref, &mbr1k);
+	err = silofs_mbi_export(fs_mbi(task), &mbref, &mbr1k);
 	if (!err) {
-		silofs_blobid_copyto(&mbref.blobid, &query->u.boot.mblobid);
+		silofs_mbref_assign(&query->u.boot.mbref, &mbref);
 	}
 }
 

@@ -25,14 +25,11 @@
 #include "bstore.h"
 
 /*
- * TODO-0035: Define proper upper-bound.
+ * TODO-0035: Define proper upper-bound for cache limit.
  *
  * Have explicit upper-limit to cached lsegs, based on the process' rlimit
  * RLIMIT_NOFILE and memory limits.
  */
-enum {
-	SILOFS_LACOS_CACHE_LIM = 64,
-};
 
 static int do_closefd(int *pfd)
 {
@@ -222,7 +219,8 @@ bf_from_lru_link(const struct silofs_list_head *lh)
 static void
 bf_name(const struct silofs_blobfile *bf, struct silofs_strbuf *out_name)
 {
-	silofs_blobidx_tostr(&bf->bf_blobidx, out_name);
+	silofs_blobidx_to_str(&bf->bf_blobidx, out_name->str,
+	                      sizeof(out_name->str));
 }
 
 static int bf_open(struct silofs_blobfile *bf, int dfd)
@@ -421,22 +419,22 @@ static int lhq_init(struct silofs_bstore_hq *lhq, struct silofs_alloc *alloc)
 {
 	const size_t nelems = 1024;
 
-	silofs_listq_init(&lhq->vbq_lru);
-	lhq->vbq_htb_nelems = 0;
-	lhq->vbq_htb        = silofs_lista_new(alloc, nelems);
-	if (lhq->vbq_htb == nullptr) {
+	silofs_listq_init(&lhq->bsq_lru);
+	lhq->bsq_htb_nelems = 0;
+	lhq->bsq_htb        = silofs_lista_new(alloc, nelems);
+	if (lhq->bsq_htb == nullptr) {
 		return -SILOFS_ENOMEM;
 	}
-	lhq->vbq_htb_nelems = nelems;
+	lhq->bsq_htb_nelems = nelems;
 	return 0;
 }
 
 static void lhq_fini(struct silofs_bstore_hq *lhq, struct silofs_alloc *alloc)
 {
-	silofs_listq_fini(&lhq->vbq_lru);
-	silofs_lista_del(lhq->vbq_htb, lhq->vbq_htb_nelems, alloc);
-	lhq->vbq_htb        = nullptr;
-	lhq->vbq_htb_nelems = 0;
+	silofs_listq_fini(&lhq->bsq_lru);
+	silofs_lista_del(lhq->bsq_htb, lhq->bsq_htb_nelems, alloc);
+	lhq->bsq_htb        = nullptr;
+	lhq->bsq_htb_nelems = 0;
 }
 
 static uint64_t lhq_hash_of(const struct silofs_blobidx *blobidx)
@@ -447,7 +445,7 @@ static uint64_t lhq_hash_of(const struct silofs_blobidx *blobidx)
 static size_t lhq_htb_slot_of(const struct silofs_bstore_hq *lhq,
                               const struct silofs_blobidx   *blobidx)
 {
-	return lhq_hash_of(blobidx) % lhq->vbq_htb_nelems;
+	return lhq_hash_of(blobidx) % lhq->bsq_htb_nelems;
 }
 
 static const struct silofs_list_head *
@@ -456,7 +454,7 @@ lhq_htb_list_of(const struct silofs_bstore_hq *lhq,
 {
 	const size_t slot = lhq_htb_slot_of(lhq, blobidx);
 
-	return &lhq->vbq_htb[slot];
+	return &lhq->bsq_htb[slot];
 }
 
 static struct silofs_list_head *
@@ -465,7 +463,7 @@ lhq_htb_list_of2(struct silofs_bstore_hq     *lhq,
 {
 	const size_t slot = lhq_htb_slot_of(lhq, blobidx);
 
-	return &lhq->vbq_htb[slot];
+	return &lhq->bsq_htb[slot];
 }
 
 static void
@@ -479,7 +477,7 @@ lhq_insert_htb(struct silofs_bstore_hq *lhq, struct silofs_blobfile *bf)
 static void
 lhq_insert_lru(struct silofs_bstore_hq *lhq, struct silofs_blobfile *bf)
 {
-	silofs_listq_push_front(&lhq->vbq_lru, &bf->bf_lru_lh);
+	silofs_listq_push_front(&lhq->bsq_lru, &bf->bf_lru_lh);
 }
 
 static void
@@ -494,13 +492,13 @@ lhq_insert(struct silofs_bstore_hq *lhq, struct silofs_blobfile *bf)
 
 static size_t lhq_get_lru_size(const struct silofs_bstore_hq *lhq)
 {
-	return silofs_listq_size(&lhq->vbq_lru);
+	return silofs_listq_size(&lhq->bsq_lru);
 }
 
 static void
 lhq_promote_lru(struct silofs_bstore_hq *lhq, struct silofs_blobfile *bf)
 {
-	struct silofs_listq     *lru = &lhq->vbq_lru;
+	struct silofs_listq     *lru = &lhq->bsq_lru;
 	struct silofs_list_head *lh  = &bf->bf_lru_lh;
 
 	silofs_assert_gt(lru->sz, 0);
@@ -513,7 +511,7 @@ lhq_promote_lru(struct silofs_bstore_hq *lhq, struct silofs_blobfile *bf)
 static struct silofs_blobfile *
 lhq_get_lru_head(const struct silofs_bstore_hq *lhq)
 {
-	const struct silofs_listq *lru = &lhq->vbq_lru;
+	const struct silofs_listq *lru = &lhq->bsq_lru;
 
 	return bf_from_lru_link(silofs_listq_front(lru));
 }
@@ -522,7 +520,7 @@ static struct silofs_blobfile *
 lhq_get_lru_next(const struct silofs_bstore_hq *lhq,
                  const struct silofs_blobfile  *bf)
 {
-	const struct silofs_listq *lru = &lhq->vbq_lru;
+	const struct silofs_listq *lru = &lhq->bsq_lru;
 	struct silofs_blobfile    *nxt = nullptr;
 
 	if (bf == nullptr) {
@@ -536,7 +534,7 @@ lhq_get_lru_next(const struct silofs_bstore_hq *lhq,
 static struct silofs_blobfile *
 lhq_get_lru_tail(const struct silofs_bstore_hq *lhq)
 {
-	const struct silofs_listq *lru = &lhq->vbq_lru;
+	const struct silofs_listq *lru = &lhq->bsq_lru;
 
 	return bf_from_lru_link(silofs_listq_back(lru));
 }
@@ -581,7 +579,7 @@ out:
 static void
 lhq_remove_htb(struct silofs_bstore_hq *lhq, struct silofs_blobfile *bf)
 {
-	silofs_assert_gt(lhq->vbq_lru.sz, 0);
+	silofs_assert_gt(lhq->bsq_lru.sz, 0);
 
 	silofs_list_head_remove(&bf->bf_htb_lh);
 }
@@ -589,7 +587,7 @@ lhq_remove_htb(struct silofs_bstore_hq *lhq, struct silofs_blobfile *bf)
 static void
 lhq_remove_lru(struct silofs_bstore_hq *lhq, struct silofs_blobfile *bf)
 {
-	silofs_listq_remove(&lhq->vbq_lru, &bf->bf_lru_lh);
+	silofs_listq_remove(&lhq->bsq_lru, &bf->bf_lru_lh);
 }
 
 static void
@@ -608,33 +606,33 @@ static struct silofs_blobfile *
 bstore_lookup_cached_bf(struct silofs_bstore        *bstore,
                         const struct silofs_blobidx *blobidx)
 {
-	return lhq_lookup(&bstore->bstore_hq, blobidx);
+	return lhq_lookup(&bstore->bs_hq, blobidx);
 }
 
 static void bstore_insert_cached_bf(struct silofs_bstore   *bstore,
                                     struct silofs_blobfile *bf)
 {
-	lhq_insert(&bstore->bstore_hq, bf);
+	lhq_insert(&bstore->bs_hq, bf);
 }
 
 static void bstore_remove_cached_bf(struct silofs_bstore   *bstore,
                                     struct silofs_blobfile *bf)
 {
-	lhq_remove(&bstore->bstore_hq, bf);
+	lhq_remove(&bstore->bs_hq, bf);
 }
 
 static struct silofs_blobfile *
 bstore_new_bf(struct silofs_bstore        *bstore,
               const struct silofs_blobidx *blobidx)
 {
-	return bf_new(blobidx, bstore->bstore_alloc);
+	return bf_new(blobidx, bstore->bs_alloc);
 }
 
 static void
 bstore_del_bf(struct silofs_bstore *bstore, struct silofs_blobfile *bf)
 {
 	bf_close(bf);
-	bf_del(bf, bstore->bstore_alloc);
+	bf_del(bf, bstore->bs_alloc);
 }
 
 static void bstore_forget_cached_bf(struct silofs_bstore   *bstore,
@@ -648,11 +646,11 @@ static void bstore_drop_cached(struct silofs_bstore *bstore)
 {
 	struct silofs_blobfile *bf;
 
-	bf = lhq_get_lru_tail(&bstore->bstore_hq);
+	bf = lhq_get_lru_tail(&bstore->bs_hq);
 	while (bf != nullptr) {
 		bf_sync(bf);
 		bstore_forget_cached_bf(bstore, bf);
-		bf = lhq_get_lru_tail(&bstore->bstore_hq);
+		bf = lhq_get_lru_tail(&bstore->bs_hq);
 	}
 }
 
@@ -661,20 +659,22 @@ static int bstore_sync_cached(const struct silofs_bstore *bstore)
 	struct silofs_blobfile *bf;
 	int                     err = 0;
 
-	bf = lhq_get_lru_head(&bstore->bstore_hq);
+	bf = lhq_get_lru_head(&bstore->bs_hq);
 	while (bf != nullptr) {
 		err = bf_sync(bf);
 		if (err) {
 			break;
 		}
-		bf = lhq_get_lru_next(&bstore->bstore_hq, bf);
+		bf = lhq_get_lru_next(&bstore->bs_hq, bf);
 	}
 	return err;
 }
 
 static bool bstore_has_overpop_cache(const struct silofs_bstore *bstore)
 {
-	return (bstore->bstore_hq.vbq_lru.sz > SILOFS_LACOS_CACHE_LIM);
+	const size_t cache_lim = 64;
+
+	return (bstore->bs_hq.bsq_lru.sz > cache_lim);
 }
 
 static struct silofs_blobfile *
@@ -683,7 +683,7 @@ bstore_get_overpop_bf(struct silofs_bstore *bstore)
 	struct silofs_blobfile *bf = nullptr;
 
 	if (bstore_has_overpop_cache(bstore)) {
-		bf = lhq_get_lru_tail(&bstore->bstore_hq);
+		bf = lhq_get_lru_tail(&bstore->bs_hq);
 	}
 	return bf;
 }
@@ -703,7 +703,7 @@ static void bstore_relax_cache(struct silofs_bstore *bstore)
 
 static void bstore_close(struct silofs_bstore *bstore)
 {
-	do_closefd(&bstore->bstore_dfd);
+	do_closefd(&bstore->bs_dfd);
 }
 
 int silofs_bstore_init(struct silofs_bstore *bstore,
@@ -711,16 +711,16 @@ int silofs_bstore_init(struct silofs_bstore *bstore,
 {
 	int err;
 
-	bstore->bstore_alloc = alloc;
-	bstore->bstore_dfd   = -1;
+	bstore->bs_alloc = alloc;
+	bstore->bs_dfd   = -1;
 
-	err = silofs_mdigest_init(&bstore->bstore_md);
+	err = silofs_mdigest_init(&bstore->bs_md);
 	if (err) {
 		return err;
 	}
-	err = lhq_init(&bstore->bstore_hq, bstore->bstore_alloc);
+	err = lhq_init(&bstore->bs_hq, bstore->bs_alloc);
 	if (err) {
-		silofs_mdigest_fini(&bstore->bstore_md);
+		silofs_mdigest_fini(&bstore->bs_md);
 		return err;
 	}
 	return 0;
@@ -730,14 +730,14 @@ void silofs_bstore_fini(struct silofs_bstore *bstore)
 {
 	bstore_drop_cached(bstore);
 	bstore_close(bstore);
-	lhq_fini(&bstore->bstore_hq, bstore->bstore_alloc);
-	silofs_mdigest_fini(&bstore->bstore_md);
-	bstore->bstore_alloc = nullptr;
+	lhq_fini(&bstore->bs_hq, bstore->bs_alloc);
+	silofs_mdigest_fini(&bstore->bs_md);
+	bstore->bs_alloc = nullptr;
 }
 
 static bool bstore_isopen(const struct silofs_bstore *bstore)
 {
-	return bstore->bstore_dfd >= 0;
+	return bstore->bs_dfd >= 0;
 }
 
 static void blobs_pathname(struct silofs_strbuf *sbuf)
@@ -760,7 +760,7 @@ bstore_open(struct silofs_bstore *bstore, const struct silofs_strview *repodir)
 		goto out;
 	}
 	blobs_pathname(&sbuf);
-	err = do_opendirat(root_dfd, sbuf.str, &bstore->bstore_dfd);
+	err = do_opendirat(root_dfd, sbuf.str, &bstore->bs_dfd);
 	if (err) {
 		goto out;
 	}
@@ -827,7 +827,7 @@ static int bstore_spawn_blob(struct silofs_bstore        *bstore,
 	if (bf == nullptr) {
 		return -SILOFS_ENOMEM;
 	}
-	err = bf_create(bf, bstore->bstore_dfd);
+	err = bf_create(bf, bstore->bs_dfd);
 	if (err) {
 		bstore_del_bf(bstore, bf);
 		return err;
@@ -875,7 +875,7 @@ static int bstore_stage_blob(struct silofs_bstore        *bstore,
 	if (bf == nullptr) {
 		return -SILOFS_ENOMEM;
 	}
-	err = bf_open(bf, bstore->bstore_dfd);
+	err = bf_open(bf, bstore->bs_dfd);
 	if (err) {
 		bstore_del_bf(bstore, bf);
 		return err;
@@ -908,7 +908,7 @@ static void bstore_blobidx_of(struct silofs_bstore       *bstore,
                               const struct silofs_blobid *blobid,
                               struct silofs_blobidx      *out_blobidx)
 {
-	silofs_blobidx_derive(out_blobidx, &bstore->bstore_md, blobid);
+	silofs_blobidx_derive(out_blobidx, &bstore->bs_md, blobid);
 }
 
 int silofs_bstore_spawn_blob(struct silofs_bstore       *bstore,
@@ -931,7 +931,7 @@ static int bstore_remove_blob(struct silofs_bstore        *bstore,
 	if (err) {
 		return err;
 	}
-	err = bf_unlink(bf, bstore->bstore_dfd);
+	err = bf_unlink(bf, bstore->bs_dfd);
 	if (err) {
 		return err;
 	}
@@ -966,6 +966,14 @@ bstore_stat_blob(struct silofs_bstore        *bstore,
 	return 0;
 }
 
+static int bstore_sense_blob(struct silofs_bstore        *bstore,
+                             const struct silofs_blobidx *blobidx)
+{
+	struct stat st;
+
+	return bstore_stat_blob(bstore, blobidx, &st);
+}
+
 int silofs_bstore_stat_blob(struct silofs_bstore       *bstore,
                             const struct silofs_blobid *blobid,
                             struct stat                *out_st)
@@ -980,10 +988,9 @@ int silofs_bstore_stage_blob(struct silofs_bstore       *bstore,
                              const struct silofs_blobid *blobid)
 {
 	struct silofs_blobidx blobidx;
-	struct stat           st;
 
 	bstore_blobidx_of(bstore, blobid, &blobidx);
-	return bstore_stat_blob(bstore, &blobidx, &st);
+	return bstore_sense_blob(bstore, &blobidx);
 }
 
 static int bstore_require_blob(struct silofs_bstore        *bstore,
@@ -1204,16 +1211,59 @@ int silofs_bstore_writev_blob_at(struct silofs_bstore       *bstore,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_bstore_save_mbref(struct silofs_bstore      *bstore,
-                             const struct silofs_mbref *mbref, const void *buf,
-                             size_t len)
+int silofs_bstore_stat_mbr(struct silofs_bstore      *bstore,
+                           const struct silofs_mbref *mbref,
+                           struct stat               *out_st)
 {
-	return bstore_write_blob(bstore, &mbref->bx, 0, buf, len);
+	return bstore_stat_blob(bstore, &mbref->bx, out_st);
 }
 
-int silofs_bstore_load_mbref(struct silofs_bstore      *bstore,
-                             const struct silofs_mbref *mbref, void *buf,
-                             size_t len)
+int silofs_bstore_save_mbr(struct silofs_bstore      *bstore,
+                           const struct silofs_mbref *mbref, const void *buf,
+                           size_t len)
 {
-	return bstore_read_blob(bstore, &mbref->bx, 0, buf, len);
+	int err;
+
+	err = bstore_require_blob(bstore, &mbref->bx);
+	if (err) {
+		return err;
+	}
+	err = bstore_write_blob(bstore, &mbref->bx, 0, buf, len);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+int silofs_bstore_load_mbr(struct silofs_bstore      *bstore,
+                           const struct silofs_mbref *mbref, void *buf,
+                           size_t len)
+{
+	int err;
+
+	err = bstore_sense_blob(bstore, &mbref->bx);
+	if (err) {
+		return err;
+	}
+	err = bstore_read_blob(bstore, &mbref->bx, 0, buf, len);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+int silofs_bstore_unref_mbr(struct silofs_bstore      *bstore,
+                            const struct silofs_mbref *mbref)
+{
+	int err;
+
+	err = bstore_sense_blob(bstore, &mbref->bx);
+	if (err) {
+		return err;
+	}
+	err = bstore_remove_blob(bstore, &mbref->bx);
+	if (err) {
+		return err;
+	}
+	return 0;
 }

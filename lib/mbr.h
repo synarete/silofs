@@ -25,13 +25,6 @@
 
 struct silofs_env;
 
-/* a tuple of references (CAS) to main boot-records */
-struct silofs_mbrefs {
-	struct silofs_paddr main;
-	struct silofs_paddr base;
-	struct silofs_paddr fork;
-};
-
 /* main boot-record, in-memory representation */
 struct silofs_mbr_info {
 	struct silofs_nmeta mb_nmeta;
@@ -62,11 +55,11 @@ int silofs_mbi_set_sbaddr(struct silofs_mbr_info    *mbi,
                           const struct silofs_uaddr *sb_uaddr);
 
 int silofs_mbi_export(const struct silofs_mbr_info *mbi,
-                      struct silofs_paddr          *out_paddr,
+                      struct silofs_mbref          *out_mbref,
                       struct silofs_mbr1k          *out_mbr1k);
 
 int silofs_mbi_import(struct silofs_mbr_info    *mbi,
-                      const struct silofs_paddr *paddr,
+                      const struct silofs_mbref *mbref,
                       const struct silofs_mbr1k *mbr1k);
 
 int silofs_derive_mbr_nmeta(const struct silofs_password *passwd,

@@ -17,6 +17,8 @@
 #ifndef SILOFS_IOCTLS_H_
 #define SILOFS_IOCTLS_H_
 
+#include <silofs/ondisk.h>
+#include <silofs/types.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -25,7 +27,6 @@
 #include <stdint.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <silofs/ondisk.h>
 
 /* maximal size of ioctl input argument */
 #define SILOFS_IOC_SIZE_MAX (2048)
@@ -58,8 +59,8 @@ struct silofs_query_repo {
 };
 
 struct silofs_query_boot {
-	int8_t               name[SILOFS_NAME_MAX + 1];
-	struct silofs_blobid mblobid;
+	int8_t              name[SILOFS_NAME_MAX + 1];
+	struct silofs_mbref mbref;
 };
 
 struct silofs_query_proc {
@@ -103,12 +104,8 @@ struct silofs_ioc_query {
 };
 
 struct silofs_ioc_forkfs {
-	struct silofs_blobid base;
-	uint8_t              reserved1[8];
-	struct silofs_blobid main;
-	uint8_t              reserved2[8];
-	struct silofs_blobid fork;
-	uint8_t              reserved3[8 + 64];
+	struct silofs_mbrefs mbrefs;
+	uint8_t              pad[32];
 };
 
 struct silofs_ioc_syncfs {

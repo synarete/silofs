@@ -140,8 +140,8 @@ static int arc_stat_pack(const struct silofs_ar_ctx *ar_ctx,
 }
 
 static int
-arc_send_to_repo(const struct silofs_ar_ctx *ar_ctx,
-                 const struct silofs_paddr *paddr, const void *dat, size_t len)
+arc_send_blob(const struct silofs_ar_ctx *ar_ctx,
+              const struct silofs_paddr *paddr, const void *dat, size_t len)
 {
 	int err;
 
@@ -168,7 +168,7 @@ arc_send_pack(const struct silofs_ar_ctx *ar_ctx,
 
 	err = arc_stat_pack(ar_ctx, paddr, &sz);
 	if ((err == -ENOENT) || (!err && (sz != len))) {
-		err = arc_send_to_repo(ar_ctx, paddr, dat, len);
+		err = arc_send_blob(ar_ctx, paddr, dat, len);
 	}
 	return err;
 }
@@ -350,25 +350,40 @@ static int arc_archive_head_arix(struct silofs_ar_ctx *ar_ctx,
 }
 
 static int arc_export_ar_mbr(const struct silofs_ar_ctx *ar_ctx,
-                             struct silofs_paddr        *out_paddr,
+                             struct silofs_mbref        *out_mbref,
                              struct silofs_mbr1k        *out_mbr1k)
 {
 	const struct silofs_mbr_info *ar_mbi = &ar_ctx->env->mbis.ar_mbi;
 
-	return silofs_mbi_export(ar_mbi, out_paddr, out_mbr1k);
+	return silofs_mbi_export(ar_mbi, out_mbref, out_mbr1k);
+}
+
+static int arc_send_mbr1k(const struct silofs_ar_ctx *ar_ctx,
+                          const struct silofs_mbref  *mbref,
+                          const struct silofs_mbr1k  *mbr1k)
+{
+	int err;
+
+	err = silofs_bstore_save_mbr(ar_ctx->bstore, mbref, mbr1k,
+	                             sizeof(*mbr1k));
+	if (err) {
+		log_err("failed to create save mbr: err=%d", err);
+		return err;
+	}
+	return 0;
 }
 
 static int arc_archive_mbr(const struct silofs_ar_ctx *ar_ctx,
-                           struct silofs_paddr        *out_paddr)
+                           struct silofs_mbref        *out_mbref)
 {
 	struct silofs_mbr1k mbr1k = { .mbr_magic = 0xff };
 	int                 err;
 
-	err = arc_export_ar_mbr(ar_ctx, out_paddr, &mbr1k);
+	err = arc_export_ar_mbr(ar_ctx, out_mbref, &mbr1k);
 	if (err) {
 		return err;
 	}
-	err = arc_send_pack(ar_ctx, out_paddr, &mbr1k, sizeof(mbr1k));
+	err = arc_send_mbr1k(ar_ctx, out_mbref, &mbr1k);
 	if (err) {
 		return err;
 	}
@@ -385,7 +400,7 @@ static int arc_set_mbr_root(struct silofs_ar_ctx      *ar_ctx,
 
 static int arc_archive_post(struct silofs_ar_ctx      *ar_ctx,
                             const struct silofs_pmeta *pmeta,
-                            struct silofs_paddr       *out_paddr)
+                            struct silofs_mbref       *out_mbref)
 {
 	int err;
 
@@ -393,7 +408,7 @@ static int arc_archive_post(struct silofs_ar_ctx      *ar_ctx,
 	if (err) {
 		return err;
 	}
-	err = arc_archive_mbr(ar_ctx, out_paddr);
+	err = arc_archive_mbr(ar_ctx, out_mbref);
 	if (err) {
 		return err;
 	}
@@ -406,7 +421,7 @@ static void arc_archive_prep(struct silofs_ar_ctx *ar_ctx)
 }
 
 static int
-arc_do_archive(struct silofs_ar_ctx *ar_ctx, struct silofs_paddr *out_mbref)
+arc_do_archive(struct silofs_ar_ctx *ar_ctx, struct silofs_mbref *out_mbref)
 {
 	struct silofs_pmeta pmeta;
 	int                 err;
@@ -429,7 +444,7 @@ arc_do_archive(struct silofs_ar_ctx *ar_ctx, struct silofs_paddr *out_mbref)
 }
 
 int silofs_do_archive_fs(struct silofs_task_ctx *task,
-                         struct silofs_paddr    *out_ar_mbref)
+                         struct silofs_mbref    *out_ar_mbref)
 {
 	struct silofs_ar_ctx ar_ctx;
 	int                  err;

@@ -44,3 +44,28 @@ void silofs_mbref_derive(struct silofs_mbref         *mbref,
 	silofs_blobidx_derive(&blobidx, mdigest, &paddr->blobid);
 	silofs_mbref_setup(mbref, &blobidx);
 }
+
+bool silofs_mbref_isequal(const struct silofs_mbref *mbref,
+                          const struct silofs_mbref *other)
+{
+	return silofs_blobidx_isequal(&mbref->bx, &other->bx);
+}
+
+int silofs_mbref_from_str(struct silofs_mbref *mbref, const char *str,
+                          size_t len)
+{
+	return silofs_blobidx_from_str(&mbref->bx, str, len);
+}
+
+int silofs_mbref_to_str(const struct silofs_mbref *mbref, char *str, size_t n)
+{
+	return silofs_blobidx_to_str(&mbref->bx, str, n);
+}
+
+void silofs_mbrefs_assign(struct silofs_mbrefs       *mbrefs,
+                          const struct silofs_mbrefs *other)
+{
+	silofs_mbref_assign(&mbrefs->main, &other->main);
+	silofs_mbref_assign(&mbrefs->base, &other->base);
+	silofs_mbref_assign(&mbrefs->fork, &other->fork);
+}

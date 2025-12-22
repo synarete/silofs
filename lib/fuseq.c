@@ -2984,25 +2984,18 @@ out:
 	                       sizeof(fcc->args->out.query.qry), err);
 }
 
-static void assign_ioc_blobid(struct silofs_blobid      *blobid,
-                              const struct silofs_paddr *paddr)
-{
-	silofs_blobid_copyto(&paddr->blobid, blobid);
-}
-
 static int do_ioc_clone(const struct silofs_fuseq_cmd_ctx *fcc)
 {
-	union silofs_ioc_u          ioc_u;
-	const struct silofs_mbrefs *mbrefs      = &fcc->args->out.clone.mbrefs;
-	void                       *buf_out     = fcc->fqs->fqs_outb->u.iob.b;
-	struct silofs_ioc_forkfs   *cl_out      = &ioc_u.forkfs;
-	const size_t                bsz_in_min  = 1;
-	const size_t                bsz_in_max  = sizeof(*cl_out);
-	const size_t                bsz_out_min = sizeof(*cl_out);
-	const size_t                bsz_in      = fcc->in->u.ioctl.arg.in_size;
-	const size_t                bsz_out = fcc->in->u.ioctl.arg.out_size;
-	const int                   flags = (int)(fcc->in->u.ioctl.arg.flags);
-	int                         err;
+	union silofs_ioc_u        ioc_u;
+	void                     *buf_out     = fcc->fqs->fqs_outb->u.iob.b;
+	struct silofs_ioc_forkfs *ioc_out     = &ioc_u.forkfs;
+	const size_t              bsz_in_min  = 1;
+	const size_t              bsz_in_max  = sizeof(*ioc_out);
+	const size_t              bsz_out_min = sizeof(*ioc_out);
+	const size_t              bsz_in      = fcc->in->u.ioctl.arg.in_size;
+	const size_t              bsz_out     = fcc->in->u.ioctl.arg.out_size;
+	const int                 flags = (int)(fcc->in->u.ioctl.arg.flags);
+	int                       err;
 
 	if (!bsz_out && (flags & FUSE_IOCTL_RETRY)) {
 		err = -SILOFS_ENOSYS;
@@ -3019,19 +3012,19 @@ static int do_ioc_clone(const struct silofs_fuseq_cmd_ctx *fcc)
 	fcc->args->ioc_cmd        = SILOFS_IOC_FORKFS;
 	fcc->args->in.clone.ino   = fcc->ino;
 	fcc->args->in.clone.flags = 0;
-	err                       = do_exec_op(fcc);
+
+	err = do_exec_op(fcc);
 	if (err) {
 		goto out;
 	}
 
-	memset(cl_out, 0, sizeof(*cl_out));
-	assign_ioc_blobid(&cl_out->base, &mbrefs->base);
-	assign_ioc_blobid(&cl_out->main, &mbrefs->main);
-	assign_ioc_blobid(&cl_out->fork, &mbrefs->fork);
-	memcpy(buf_out, cl_out, sizeof(*cl_out));
+	memset(ioc_out, 0, sizeof(*ioc_out));
+	silofs_mbrefs_assign(&ioc_out->mbrefs, &fcc->args->out.clone.mbrefs);
+
+	memcpy(buf_out, ioc_out, sizeof(*ioc_out));
 out:
-	return fqs_reply_ioctl(fcc->fqs, fcc->task, 0, cl_out, sizeof(*cl_out),
-	                       err);
+	return fqs_reply_ioctl(fcc->fqs, fcc->task, 0, ioc_out,
+	                       sizeof(*ioc_out), err);
 }
 
 static int do_ioc_syncfs(const struct silofs_fuseq_cmd_ctx *fcc)

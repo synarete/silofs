@@ -44,9 +44,8 @@ struct cmd_clone_in_args {
 struct cmd_clone_ctx {
 	struct cmd_clone_in_args in_args;
 	struct silofs_env_args   env_args;
-	struct silofs_blobid     fs_blobid;
-	struct silofs_blobid     fs_blobid_main;
-	struct silofs_blobid     fs_blobid_fork;
+	struct silofs_mbref      fs_mbref;
+	struct silofs_mbrefs     fs_mbrefs;
 	struct silofs_env       *env;
 	union silofs_ioc_u      *ioc;
 };
@@ -239,11 +238,6 @@ static void cmd_clone_do_ioctl_clonefs(struct cmd_clone_ctx *ctx)
 	int                 dfd     = -1;
 	int                 err;
 
-	SILOFS_STATICASSERT_EQ(sizeof(ctx->fs_blobid_main),
-	                       sizeof(ioc->forkfs.main));
-	SILOFS_STATICASSERT_EQ(sizeof(ctx->fs_blobid_fork),
-	                       sizeof(ioc->forkfs.fork));
-
 	cmd_reset_ioc(ctx->ioc);
 	err = silofs_sys_opendir(dirpath, &dfd);
 	if (err) {
@@ -261,11 +255,7 @@ static void cmd_clone_do_ioctl_clonefs(struct cmd_clone_ctx *ctx)
 		cmd_die(err, "failed to clone: %s",
 		        ctx->in_args.repodir_fsname);
 	}
-
-	memcpy(&ctx->fs_blobid_main, &ioc->forkfs.main,
-	       sizeof(ctx->fs_blobid_main));
-	memcpy(&ctx->fs_blobid_fork, &ioc->forkfs.fork,
-	       sizeof(ctx->fs_blobid_fork));
+	memcpy(&ctx->fs_mbrefs, &ioc->forkfs.mbrefs, sizeof(ctx->fs_mbrefs));
 }
 
 static void cmd_clone_do_ioctl_syncfs(struct cmd_clone_ctx *ctx)
@@ -303,9 +293,9 @@ static void cmd_clone_setup_fs_ids(struct cmd_clone_ctx *ctx)
 	cmd_load_fsids(&ctx->env_args.ugids, ctx->in_args.repodir_real);
 }
 
-static void cmd_clone_load_fs_blobid(struct cmd_clone_ctx *ctx)
+static void cmd_clone_load_fs_metaref(struct cmd_clone_ctx *ctx)
 {
-	cmd_load_fs_metaref(&ctx->env_args.boot_args, &ctx->fs_blobid);
+	cmd_load_fs_metaref(&ctx->env_args.boot_args, &ctx->fs_mbref);
 }
 
 static void cmd_clone_setup_env(struct cmd_clone_ctx *ctx)
@@ -325,17 +315,17 @@ static void cmd_clone_close_repo(struct cmd_clone_ctx *ctx)
 
 static void cmd_clone_sense_fs(struct cmd_clone_ctx *ctx)
 {
-	cmd_sense_fs(ctx->env, &ctx->fs_blobid);
+	cmd_sense_fs(ctx->env, &ctx->fs_mbref);
 }
 
 static void cmd_clone_open_fs(struct cmd_clone_ctx *ctx)
 {
-	cmd_open_fs(ctx->env, &ctx->fs_blobid);
+	cmd_open_fs(ctx->env, &ctx->fs_mbref);
 }
 
 static void cmd_clone_do_clonefs(struct cmd_clone_ctx *ctx)
 {
-	cmd_fork_fs(ctx->env, &ctx->fs_blobid_main, &ctx->fs_blobid_fork);
+	cmd_fork_fs(ctx->env, &ctx->fs_mbrefs);
 }
 
 static void cmd_clone_close_fs(struct cmd_clone_ctx *ctx)
@@ -350,7 +340,7 @@ static void cmd_clone_save_fork_blobid(struct cmd_clone_ctx *ctx)
 		.fs_name = ctx->in_args.forkname,
 	};
 
-	cmd_save_fs_metaref(&boot_args, &ctx->fs_blobid_fork);
+	cmd_save_fs_metaref(&boot_args, &ctx->fs_mbrefs.fork);
 }
 
 static void cmd_clone_save_main_blobid(struct cmd_clone_ctx *ctx)
@@ -360,7 +350,7 @@ static void cmd_clone_save_main_blobid(struct cmd_clone_ctx *ctx)
 		.fs_name = ctx->in_args.fsname,
 	};
 
-	cmd_save_fs_metaref(&boot_args, &ctx->fs_blobid_main);
+	cmd_save_fs_metaref(&boot_args, &ctx->fs_mbrefs.main);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -425,7 +415,7 @@ void cmd_execute_clone(void)
 	cmd_clone_setup_env_args(&ctx);
 
 	/* Load fs boot-reference */
-	cmd_clone_load_fs_blobid(&ctx);
+	cmd_clone_load_fs_metaref(&ctx);
 
 	/* Load fs-ids mapping */
 	cmd_clone_setup_fs_ids(&ctx);

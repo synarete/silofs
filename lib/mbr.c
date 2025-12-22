@@ -309,27 +309,29 @@ mbraux_encode_mbr1k(struct silofs_mbraux *aux, struct silofs_mbr1k *mbr1k,
 	                     out_mbr1k);
 }
 
-static void mbraux_calc_paddr_of(struct silofs_mbraux      *aux,
-                                 const struct silofs_mbr1k *mbr1k,
-                                 struct silofs_paddr       *out_paddr)
+static void
+mbraux_calc_mbref(struct silofs_mbraux *aux, const struct silofs_mbr1k *mbr1k,
+                  struct silofs_mbref *out_mbref)
 {
-	const struct iovec iov = {
-		.iov_base = silofs_unconst(mbr1k),
-		.iov_len  = sizeof(*mbr1k),
+	struct silofs_paddr paddr;
+	const struct iovec  iov = {
+		 .iov_base = silofs_unconst(mbr1k),
+		 .iov_len  = sizeof(*mbr1k),
 	};
 
 	silofs_calc_cas_paddr(&aux->mdigest, SILOFS_MTYPE_MBR, &iov, 1,
-	                      out_paddr);
+	                      &paddr);
+	silofs_mbref_derive(out_mbref, &aux->mdigest, &paddr);
 }
 
-static int mbraux_verify_paddr(struct silofs_mbraux      *aux,
-                               const struct silofs_paddr *paddr,
+static int mbraux_verify_mbref(struct silofs_mbraux      *aux,
+                               const struct silofs_mbref *mbref,
                                const struct silofs_mbr1k *mbr1k)
 {
-	struct silofs_paddr calc_paddr;
+	struct silofs_mbref mbref2;
 
-	mbraux_calc_paddr_of(aux, mbr1k, &calc_paddr);
-	return silofs_paddr_isequal(paddr, &calc_paddr) ? 0 : -SILOFS_EBADMBR;
+	mbraux_calc_mbref(aux, mbr1k, &mbref2);
+	return silofs_mbref_isequal(mbref, &mbref2) ? 0 : -SILOFS_EBADMBR;
 }
 
 static int mbraux_decode_mbr1k(struct silofs_mbraux      *aux,
@@ -526,7 +528,7 @@ mbi_set_mbr1k(struct silofs_mbr_info *mbi, const struct silofs_mbr1k *mbr1k)
 }
 
 int silofs_mbi_export(const struct silofs_mbr_info *mbi,
-                      struct silofs_paddr          *out_paddr,
+                      struct silofs_mbref          *out_mbref,
                       struct silofs_mbr1k          *out_mbr1k_enc)
 {
 	struct silofs_mbr1k  mbr1k;
@@ -542,14 +544,14 @@ int silofs_mbi_export(const struct silofs_mbr_info *mbi,
 	if (err) {
 		goto out;
 	}
-	mbraux_calc_paddr_of(&aux, out_mbr1k_enc, out_paddr);
+	mbraux_calc_mbref(&aux, out_mbr1k_enc, out_mbref);
 out:
 	mbraux_fini(&aux);
 	return err;
 }
 
 int silofs_mbi_import(struct silofs_mbr_info    *mbi,
-                      const struct silofs_paddr *paddr,
+                      const struct silofs_mbref *mbref,
                       const struct silofs_mbr1k *mbr1k_enc)
 {
 	struct silofs_mbr1k  mbr1k;
@@ -560,7 +562,7 @@ int silofs_mbi_import(struct silofs_mbr_info    *mbi,
 	if (err) {
 		return err;
 	}
-	err = mbraux_verify_paddr(&aux, paddr, mbr1k_enc);
+	err = mbraux_verify_mbref(&aux, mbref, mbr1k_enc);
 	if (err) {
 		return err;
 	}

@@ -84,9 +84,16 @@ struct silofs_ugids {
 	struct silofs_groups_ids groups;
 };
 
-/* mbr reference */
+/* main-boot-record reference address */
 struct silofs_mbref {
 	struct silofs_blobidx bx;
+};
+
+/* tuple of mbr-refs */
+struct silofs_mbrefs {
+	struct silofs_mbref main;
+	struct silofs_mbref base;
+	struct silofs_mbref fork;
 };
 
 /* input arguments */

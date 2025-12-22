@@ -249,7 +249,7 @@ char *cmd_strvdup(const void *p);
 
 char *cmd_struuid(const uint8_t uu[16]);
 
-char *cmd_strblobid(const struct silofs_blobid *blobid);
+char *cmd_strmbref(const struct silofs_mbref *mbref);
 
 silofs_attr_printf(1, 2) char *cmd_mkpathf(const char *fmt, ...);
 
@@ -286,37 +286,36 @@ void cmd_open_repo(struct silofs_env *env);
 
 void cmd_close_repo(struct silofs_env *env);
 
-void cmd_format_fs(struct silofs_env *env, struct silofs_blobid *out_blobid);
+void cmd_format_fs(struct silofs_env *env, struct silofs_mbref *out_mbref);
 
-void cmd_sense_fs(struct silofs_env *env, const struct silofs_blobid *blobid);
+void cmd_sense_fs(struct silofs_env *env, const struct silofs_mbref *mbref);
 
-void cmd_sense_ar(struct silofs_env *env, const struct silofs_blobid *blobid);
+void cmd_sense_ar(struct silofs_env *env, const struct silofs_mbref *mbref);
 
-void cmd_open_fs(struct silofs_env *env, const struct silofs_blobid *blobid);
+void cmd_open_fs(struct silofs_env *env, const struct silofs_mbref *mbref);
 
 void cmd_close_fs(struct silofs_env *env);
 
 void cmd_exec_fs(struct silofs_env *env);
 
-void cmd_fork_fs(struct silofs_env *env, struct silofs_blobid *out_main,
-                 struct silofs_blobid *out_fork);
+void cmd_fork_fs(struct silofs_env *env, struct silofs_mbrefs *out_mbrefs);
 
-void cmd_remove_fs(struct silofs_env *env, const struct silofs_blobid *blobid);
+void cmd_remove_fs(struct silofs_env *env, const struct silofs_mbref *mbref);
 
 void cmd_inspect_fs(struct silofs_env *env, bool view);
 
-void cmd_archive_fs(struct silofs_env          *env,
-                    const struct silofs_blobid *fs_blobid,
-                    struct silofs_blobid       *out_ar_blobid);
+void cmd_archive_fs(struct silofs_env         *env,
+                    const struct silofs_mbref *fs_mbref,
+                    struct silofs_mbref       *out_ar_mbref);
 
-void cmd_restore_fs(struct silofs_env          *env,
-                    const struct silofs_blobid *ar_blobid,
-                    struct silofs_blobid       *out_fs_blobid);
+void cmd_restore_fs(struct silofs_env         *env,
+                    const struct silofs_mbref *ar_mbref,
+                    struct silofs_mbref       *out_fs_mbref);
 
 /* mount-info */
 struct silofs_mntinfos *cmd_parse_mountinfo(void);
 
-void cmd_free_mountinfo(struct silofs_mntinfos *minfos);
+void cmd_free_mountinfo(struct silofs_mntinfos *mntinfos);
 
 /* ioctl helpers */
 union silofs_ioc_u *cmd_new_ioc(void);
@@ -349,16 +348,16 @@ void cmd_checkpass(const char *pass);
 
 /* meta-reference */
 void cmd_save_fs_metaref(const struct silofs_boot_args *boot_args,
-                         const struct silofs_blobid    *fs_blobid);
+                         const struct silofs_mbref     *fs_mbref);
 
 void cmd_save_ar_metaref(const struct silofs_boot_args *boot_args,
-                         const struct silofs_blobid    *ar_blobid);
+                         const struct silofs_mbref     *ar_mbref);
 
 void cmd_load_fs_metaref(const struct silofs_boot_args *boot_args,
-                         struct silofs_blobid          *out_blobid);
+                         struct silofs_mbref           *out_mbref);
 
 void cmd_load_ar_metaref(struct silofs_boot_args *boot_args,
-                         struct silofs_blobid    *out_blobid);
+                         struct silofs_mbref     *out_mbref);
 
 void cmd_unlink_fs_metaref(const struct silofs_boot_args *boot_args);
 

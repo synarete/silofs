@@ -146,6 +146,9 @@ void silofs_mem_to_ascii(const void *mem, size_t msz, char *asb, size_t asz,
 		silofs_byte_to_ascii(b[i], asb + cnt);
 		cnt += 2;
 	}
+	if (cnt < asz) {
+		asb[cnt] = '\0';
+	}
 	*out_cnt = cnt;
 }
 

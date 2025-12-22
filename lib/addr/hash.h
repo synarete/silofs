@@ -36,4 +36,10 @@ void silofs_hash256_copyto(const struct silofs_hash256 *hash,
 size_t silofs_hash256_to_name(const struct silofs_hash256 *hash,
                               struct silofs_strbuf        *out_name);
 
+int silofs_hash256_to_str(const struct silofs_hash256 *hash, char *str,
+                          size_t len);
+
+int silofs_hash256_from_str(struct silofs_hash256 *hash, const char *str,
+                            size_t len);
+
 #endif /* SILOFS_HASH_H_ */

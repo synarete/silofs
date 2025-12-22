@@ -100,7 +100,10 @@ void silofs_blobidx_derive(struct silofs_blobidx       *blobidx,
 bool silofs_blobidx_isequal(const struct silofs_blobidx *blobidx,
                             const struct silofs_blobidx *other);
 
-void silofs_blobidx_tostr(const struct silofs_blobidx *blobidx,
-                          struct silofs_strbuf        *out_sbuf);
+int silofs_blobidx_to_str(const struct silofs_blobidx *blobidx, char *str,
+                          size_t len);
+
+int silofs_blobidx_from_str(struct silofs_blobidx *blobidx, const char *str,
+                            size_t len);
 
 #endif /* SILOFS_BLOBID_H_ */

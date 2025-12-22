@@ -23,17 +23,17 @@
 
 /* hash-map + LRU-queue of open blob-refs */
 struct silofs_bstore_hq {
-	struct silofs_listq      vbq_lru;
-	struct silofs_list_head *vbq_htb;
-	size_t                   vbq_htb_nelems;
+	struct silofs_listq      bsq_lru;
+	struct silofs_list_head *bsq_htb;
+	size_t                   bsq_htb_nelems;
 };
 
 /* virtual blob-storage using regular-files */
 struct silofs_bstore {
-	struct silofs_bstore_hq bstore_hq;
-	struct silofs_mdigest   bstore_md;
-	struct silofs_alloc    *bstore_alloc;
-	int                     bstore_dfd;
+	struct silofs_bstore_hq bs_hq;
+	struct silofs_mdigest   bs_md;
+	struct silofs_alloc    *bs_alloc;
+	int                     bs_dfd;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -100,12 +100,19 @@ int silofs_bstore_writev_blob_at(struct silofs_bstore       *bstore,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_bstore_save_mbref(struct silofs_bstore      *bstore,
-                             const struct silofs_mbref *mbref, const void *buf,
-                             size_t len);
+int silofs_bstore_stat_mbr(struct silofs_bstore      *bstore,
+                           const struct silofs_mbref *mbref,
+                           struct stat               *out_st);
 
-int silofs_bstore_load_mbref(struct silofs_bstore      *bstore,
-                             const struct silofs_mbref *mbref, void *buf,
-                             size_t len);
+int silofs_bstore_save_mbr(struct silofs_bstore      *bstore,
+                           const struct silofs_mbref *mbref, const void *buf,
+                           size_t len);
+
+int silofs_bstore_load_mbr(struct silofs_bstore      *bstore,
+                           const struct silofs_mbref *mbref, void *buf,
+                           size_t len);
+
+int silofs_bstore_unref_mbr(struct silofs_bstore      *bstore,
+                            const struct silofs_mbref *mbref);
 
 #endif /* SILOFS_BSTORE_H_ */

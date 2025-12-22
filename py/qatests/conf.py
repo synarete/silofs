@@ -43,19 +43,19 @@ class Config(pydantic.BaseModel):
     remotes: ConfigRemotes = ConfigRemotes()
 
 
-class MeteRefInfo(pydantic.BaseModel):
-    birth_type: str = ""
+class MetaJRefInfo(pydantic.BaseModel):
+    btype: str = ""
     mode: str = ""
-    blobid: str = ""
+    mbref: str = ""
 
 
-class MetaRef(pydantic.BaseModel):
-    silofs_version: str = ""
-    fmt_revision: int = 0
-    meta: MeteRefInfo
+class MetaJRef(pydantic.BaseModel):
+    version: str = ""
+    revision: int = 0
+    meta: MetaJRefInfo
 
 
-class FsIdsConf(pydantic.BaseModel):
+class FsIds(pydantic.BaseModel):
     users: Optional[Dict[str, int]] = {}
     groups: Optional[Dict[str, int]] = {}
 
@@ -102,35 +102,34 @@ def load_config(path: Path) -> Config:
     return config
 
 
-def load_fsids(repodir: Path) -> FsIdsConf:
+def load_fsids(repodir: Path) -> FsIds:
     path = repodir / "fsids.conf"
     try:
         json_conf = json.loads(_load_toml_as_json(path))
-        return FsIdsConf(**json_conf)
+        return FsIds(**json_conf)
     except tomllib.TOMLDecodeError as tde:
         raise ConfException(f"bad fs-ids conf: {path}") from tde
     except pydantic.ValidationError as ve:
         raise ConfException(f"non-valid fs-ids conf: {path}") from ve
 
 
-def _verify_metaref(metaref: MetaRef) -> None:
-    if not metaref.silofs_version:
-        raise ConfException(f"non-valid metaref version: {metaref}")
-    if metaref.fmt_revision != 1:
-        raise ConfException(f"non-valid metaref format-revision: {metaref}")
-    if metaref.meta.mode not in ("filesystem", "archive"):
-        raise ConfException(f"non-valid metaref mode: {metaref}")
-    if len(metaref.meta.blobid) != 112:
-        raise ConfException(f"non-valid metaref blobid: {metaref}")
+def _verify_meta_jref(meta_jref: MetaJRef) -> MetaJRef:
+    if not meta_jref.version:
+        raise ConfException(f"non-valid meta-jref version: {meta_jref}")
+    if meta_jref.revision != 1:
+        raise ConfException(f"non-valid meta-jref revision: {meta_jref}")
+    if meta_jref.meta.mode not in ("filesystem", "archive"):
+        raise ConfException(f"non-valid meta-jref mode: {meta_jref}")
+    if len(meta_jref.meta.mbref) != 64:
+        raise ConfException(f"non-valid meta-jref blobid: {meta_jref}")
+    return meta_jref
 
 
-def load_metaref(path: Path) -> MetaRef:
+def load_meta_jref(path: Path) -> MetaJRef:
     """Load and verify meta-ref json file into internal representation."""
     with open(path, "rb") as f:
         json_conf = json.load(f)
     try:
-        metaref = MetaRef(**json_conf)
+        return _verify_meta_jref(MetaJRef(**json_conf))
     except pydantic.ValidationError as ve:
         raise ConfException(f"non-valid metaref at: {path}") from ve
-    _verify_metaref(metaref)
-    return metaref

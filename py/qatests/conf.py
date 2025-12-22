@@ -43,16 +43,12 @@ class Config(pydantic.BaseModel):
     remotes: ConfigRemotes = ConfigRemotes()
 
 
-class MetaJRefInfo(pydantic.BaseModel):
+class MetaJRef(pydantic.BaseModel):
+    version: str = ""
+    fmtvers: int = 0
     btype: str = ""
     mode: str = ""
     mbref: str = ""
-
-
-class MetaJRef(pydantic.BaseModel):
-    version: str = ""
-    revision: int = 0
-    meta: MetaJRefInfo
 
 
 class FsIds(pydantic.BaseModel):
@@ -116,12 +112,12 @@ def load_fsids(repodir: Path) -> FsIds:
 def _verify_meta_jref(meta_jref: MetaJRef) -> MetaJRef:
     if not meta_jref.version:
         raise ConfException(f"non-valid meta-jref version: {meta_jref}")
-    if meta_jref.revision != 1:
-        raise ConfException(f"non-valid meta-jref revision: {meta_jref}")
-    if meta_jref.meta.mode not in ("filesystem", "archive"):
+    if meta_jref.fmtvers != 1:
+        raise ConfException(f"non-valid meta-jref fmtvers: {meta_jref}")
+    if meta_jref.mode not in ("filesystem", "archive"):
         raise ConfException(f"non-valid meta-jref mode: {meta_jref}")
-    if len(meta_jref.meta.mbref) != 64:
-        raise ConfException(f"non-valid meta-jref blobid: {meta_jref}")
+    if len(meta_jref.mbref) != 64:
+        raise ConfException(f"non-valid meta-jref mbref: {meta_jref}")
     return meta_jref
 
 

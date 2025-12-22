@@ -155,12 +155,12 @@ static void cmd_json_decref(json_t *root)
 	json_decref(root);
 }
 
-static const char cmd_jkey_silofs_version[] = "silofs_version";
-static const char cmd_jkey_fmt_revision[]   = "fmt_revision";
-static const char cmd_jkey_meta[]           = "meta";
-static const char cmd_jkey_btime[]          = "birth_time";
-static const char cmd_jkey_mode[]           = "mode";
-static const char cmd_jkey_mbref[]          = "mbref";
+static const char cmd_jref_key_version[]  = "version";
+static const char cmd_jref_key_revision[] = "revision";
+static const char cmd_jref_key_meta[]     = "meta";
+static const char cmd_jref_key_btime[]    = "btime";
+static const char cmd_jref_key_mode[]     = "mode";
+static const char cmd_jref_key_mbref[]    = "mbref";
 
 static void cmd_encode_jref_text(const struct silofs_mbref *mbref,
                                  bool is_archive, char **out_json)
@@ -173,25 +173,25 @@ static void cmd_encode_jref_text(const struct silofs_mbref *mbref,
 	root = cmd_json_object();
 
 	jobj = cmd_json_string(silofs_version.string);
-	cmd_json_object_set_new(root, cmd_jkey_silofs_version, jobj);
+	cmd_json_object_set_new(root, cmd_jref_key_version, jobj);
 
-	jobj = cmd_json_integer(SILOFS_FMT_REVISION);
-	cmd_json_object_set_new(root, cmd_jkey_fmt_revision, jobj);
+	jobj = cmd_json_integer(SILOFS_REPO_REVISION);
+	cmd_json_object_set_new(root, cmd_jref_key_revision, jobj);
 
 	meta = cmd_json_object();
 
 	tms  = cmd_current_time();
 	jobj = cmd_json_string(tms);
-	cmd_json_object_set_new(meta, cmd_jkey_btime, jobj);
+	cmd_json_object_set_new(meta, cmd_jref_key_btime, jobj);
 	cmd_pstrfree(&tms);
 
 	jobj = cmd_json_string(is_archive ? "archive" : "filesystem");
-	cmd_json_object_set_new(meta, cmd_jkey_mode, jobj);
+	cmd_json_object_set_new(meta, cmd_jref_key_mode, jobj);
 
 	jobj = cmd_json_mbref(mbref);
-	cmd_json_object_set_new(meta, cmd_jkey_mbref, jobj);
+	cmd_json_object_set_new(meta, cmd_jref_key_mbref, jobj);
 
-	cmd_json_object_set_new(root, cmd_jkey_meta, meta);
+	cmd_json_object_set_new(root, cmd_jref_key_meta, meta);
 
 	*out_json = cmd_json_dumps(root);
 	cmd_json_decref(root);
@@ -231,18 +231,18 @@ static void cmd_decode_jref_text(const char *jtxt, bool want_archive,
 	json_t *jobj = nullptr;
 
 	root = cmd_json_loads(jtxt);
-	meta = cmd_json_object_get(root, cmd_jkey_meta);
+	meta = cmd_json_object_get(root, cmd_jref_key_meta);
 
-	cmd_json_object_get_string(root, cmd_jkey_silofs_version);
+	cmd_json_object_get_string(root, cmd_jref_key_version);
 
-	cmd_json_object_get_integer(root, cmd_jkey_fmt_revision);
+	cmd_json_object_get_integer(root, cmd_jref_key_revision);
 
-	cmd_json_object_get_string(meta, cmd_jkey_btime);
+	cmd_json_object_get_string(meta, cmd_jref_key_btime);
 
-	jobj = cmd_json_object_get_string(meta, cmd_jkey_mode);
+	jobj = cmd_json_object_get_string(meta, cmd_jref_key_mode);
 	cmd_decode_meta_mode(json_string_value(jobj), want_archive);
 
-	jobj = cmd_json_object_get_string(meta, cmd_jkey_mbref);
+	jobj = cmd_json_object_get_string(meta, cmd_jref_key_mbref);
 	cmd_decode_mbref(json_string_value(jobj), out_mbref);
 
 	cmd_json_decref(root);

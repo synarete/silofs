@@ -115,7 +115,7 @@ static int mbr1k_check_base(const struct silofs_mbr1k *mbr1k)
 		err = -SILOFS_EBADMBR;
 		errcnt++;
 	}
-	if (version != SILOFS_FMT_REVISION) {
+	if (version != SILOFS_FMT_VERSION) {
 		log_dbg("bad mbr version: %lu", version);
 		err = -SILOFS_EBADMBR;
 		errcnt++;
@@ -236,7 +236,7 @@ static void mbr1k_init(struct silofs_mbr1k *mbr1k, enum silofs_mbr_kind kind)
 {
 	silofs_memzero(mbr1k, sizeof(*mbr1k));
 	mbr1k_set_magic(mbr1k, SILOFS_MBR_MAGIC);
-	mbr1k_set_version(mbr1k, SILOFS_FMT_REVISION);
+	mbr1k_set_version(mbr1k, SILOFS_FMT_VERSION);
 	mbr1k_reset_root(mbr1k);
 	mbr1k_set_kind(mbr1k, kind);
 	mbr1k_set_flags(mbr1k, 0);

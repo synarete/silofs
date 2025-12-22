@@ -21,11 +21,11 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-/* current on-disk format revision number */
-#define SILOFS_FMT_REVISION (1)
+/* on-disk format version number */
+#define SILOFS_FMT_VERSION (1)
 
-/* current repo format version number */
-#define SILOFS_REPO_VERSION (1)
+/* repo format revision number */
+#define SILOFS_REPO_REVISION (1)
 
 /* repo meta-file magic-signature (ASCII: "#SILOFS#") */
 #define SILOFS_REPO_META_MAGIC (0x2353464F4C495323L)

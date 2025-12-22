@@ -109,7 +109,7 @@ static void rmeta_init(struct silofs_repo_meta *rm)
 {
 	silofs_memzero(rm, sizeof(*rm));
 	rmeta_set_magic(rm, SILOFS_REPO_META_MAGIC);
-	rmeta_set_version(rm, SILOFS_REPO_VERSION);
+	rmeta_set_version(rm, SILOFS_REPO_REVISION);
 	rmeta_set_mode(rm, 1);
 }
 
@@ -124,7 +124,7 @@ static int rmeta_check(const struct silofs_repo_meta *rm)
 		return -SILOFS_EFSCORRUPTED;
 	}
 	version = rmeta_version(rm);
-	if (version != SILOFS_REPO_VERSION) {
+	if (version != SILOFS_REPO_REVISION) {
 		log_dbg("bad repo meta: version=%x", version);
 		return -SILOFS_EFSCORRUPTED;
 	}

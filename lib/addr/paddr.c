@@ -15,10 +15,8 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <stdio.h>
 #include "infra.h"
 #include "stringx.h"
-#include "crypt.h"
 #include "htox.h"
 #include "offlba.h"
 #include "mtype.h"

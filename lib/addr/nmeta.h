@@ -17,7 +17,7 @@
 #ifndef SILOFS_NMETA_H_
 #define SILOFS_NMETA_H_
 
-#include "crypt.h"
+#include "crypto.h"
 #include "paddr.h"
 
 /* nodes meta settings */

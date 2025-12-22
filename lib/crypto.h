@@ -14,16 +14,16 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_CRYPT_H_
-#define SILOFS_CRYPT_H_
+#ifndef SILOFS_CRYPTO_H_
+#define SILOFS_CRYPTO_H_
 
 #include "infra.h"
-#include "crypt/passwd.h"
-#include "crypt/ivkey.h"
-#include "crypt/mdigest.h"
-#include "crypt/kdf.h"
-#include "crypt/cipher.h"
-#include "crypt/random.h"
-#include "crypt/gcry.h"
+#include "crypto/passwd.h"
+#include "crypto/ivkey.h"
+#include "crypto/mdigest.h"
+#include "crypto/kdf.h"
+#include "crypto/cipher.h"
+#include "crypto/random.h"
+#include "crypto/gcry.h"
 
-#endif /* SILOFS_CRYPT_H_ */
+#endif /* SILOFS_CRYPTO_H_ */

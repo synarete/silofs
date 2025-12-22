@@ -20,7 +20,7 @@
 #include <silofs/ondisk.h>
 #include <silofs/types.h>
 #include "infra.h"
-#include "crypt.h"
+#include "crypto.h"
 #include "nodes/dirtyq.h"
 #include "nodes/hmapq.h"
 #include "nodes/view.h"

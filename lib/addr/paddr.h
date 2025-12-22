@@ -17,8 +17,8 @@
 #ifndef SILOFS_PADDR_H_
 #define SILOFS_PADDR_H_
 
-#include <stdlib.h>
 #include <silofs/ondisk.h>
+#include <silofs/types.h>
 #include "blobid.h"
 
 /* persistent address with blob */

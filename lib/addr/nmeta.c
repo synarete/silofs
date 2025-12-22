@@ -15,8 +15,6 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <stdio.h>
-#include "crypt.h"
 #include "htox.h"
 #include "paddr.h"
 #include "nmeta.h"

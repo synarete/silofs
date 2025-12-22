@@ -17,7 +17,6 @@
 #ifndef SILOFS_LADDR_H_
 #define SILOFS_LADDR_H_
 
-#include "crypt.h"
 #include "svolid.h"
 #include "blobid.h"
 

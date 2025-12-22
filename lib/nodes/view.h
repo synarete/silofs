@@ -18,8 +18,8 @@
 #define SILOFS_VIEW_H_
 
 #include <silofs/ondisk.h>
+#include "crypto.h"
 #include "addr.h"
-#include "crypt.h"
 
 void silofs_hdr_setup(struct silofs_header *hdr, enum silofs_mtype mtype);
 

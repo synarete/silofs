@@ -18,7 +18,6 @@
 #define SILOFS_MBR_H_
 
 #include "infra.h"
-#include "crypt.h"
 #include "addr.h"
 #include "nodes.h"
 #include "obs.h"

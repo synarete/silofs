@@ -20,7 +20,6 @@
 #include <silofs/ondisk.h>
 #include <silofs/memalloc.h>
 #include "infra.h"
-#include "crypt.h"
 #include "addr.h"
 #include "obs.h"
 

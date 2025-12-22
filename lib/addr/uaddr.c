@@ -15,7 +15,6 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include "crypt.h"
 #include "offlba.h"
 #include "htox.h"
 #include "uaddr.h"

@@ -16,9 +16,7 @@
  */
 #include <silofs/configs.h>
 #include <silofs/ondisk.h>
-#include <stdlib.h>
 #include "addr.h"
-#include "crypt.h"
 #include "view.h"
 
 static uint32_t hdr_magic(const struct silofs_header *hdr)

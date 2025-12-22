@@ -17,7 +17,7 @@
 #ifndef SILOFS_GENID_H_
 #define SILOFS_GENID_H_
 
-#include "crypt.h"
+#include "crypto.h"
 
 void silofs_generate_civkey(struct silofs_prandgen *prng,
                             struct silofs_civkey   *out_civkey);

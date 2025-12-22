@@ -19,7 +19,6 @@
 
 #include <silofs/types.h>
 #include "stringx.h"
-#include "crypt.h"
 #include "paddr.h"
 
 void silofs_mbref_setup(struct silofs_mbref         *mbref,

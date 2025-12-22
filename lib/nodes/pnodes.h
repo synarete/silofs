@@ -18,7 +18,6 @@
 #define SILOFS_PNODES_H_
 
 #include "addr.h"
-#include "crypt.h"
 #include "dirtyq.h"
 #include "hmapq.h"
 #include "view.h"

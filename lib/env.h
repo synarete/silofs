@@ -19,7 +19,7 @@
 
 #include <silofs/appexec.h>
 #include "infra.h"
-#include "crypt.h"
+#include "crypto.h"
 #include "addr.h"
 #include "obs.h"
 #include "fs.h"

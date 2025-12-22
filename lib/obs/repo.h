@@ -18,7 +18,7 @@
 #define SILOFS_REPO_H_
 
 #include "infra.h"
-#include "crypt.h"
+#include "crypto.h"
 #include "addr.h"
 #include "bstore.h"
 

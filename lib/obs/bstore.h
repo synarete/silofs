@@ -18,7 +18,7 @@
 #define SILOFS_BSTORE_H_
 
 #include "infra.h"
-#include "crypt.h"
+#include "crypto.h"
 #include "addr.h"
 
 /* hash-map + LRU-queue of open blob-refs */

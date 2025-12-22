@@ -19,7 +19,6 @@
 #include <stdio.h>
 #include "infra.h"
 #include "stringx.h"
-#include "crypt.h"
 #include "offlba.h"
 #include "htox.h"
 #include "mtype.h"

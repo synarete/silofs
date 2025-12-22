@@ -17,7 +17,6 @@
 #include <silofs/configs.h>
 #include <silofs/ondisk.h>
 #include "infra.h"
-#include "crypt.h"
 #include "obs.h"
 #include "mbr.h"
 #include "fs.h"

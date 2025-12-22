@@ -293,7 +293,7 @@ static void cmd_clone_setup_fs_ids(struct cmd_clone_ctx *ctx)
 	cmd_load_fsids(&ctx->env_args.ugids, ctx->in_args.repodir_real);
 }
 
-static void cmd_clone_load_fs_metaref(struct cmd_clone_ctx *ctx)
+static void cmd_clone_load_fs_jref(struct cmd_clone_ctx *ctx)
 {
 	cmd_load_fs_jref(&ctx->env_args.boot_args, &ctx->fs_mbref);
 }
@@ -415,7 +415,7 @@ void cmd_execute_clone(void)
 	cmd_clone_setup_env_args(&ctx);
 
 	/* Load fs boot-reference */
-	cmd_clone_load_fs_metaref(&ctx);
+	cmd_clone_load_fs_jref(&ctx);
 
 	/* Load fs-ids mapping */
 	cmd_clone_setup_fs_ids(&ctx);

@@ -2397,7 +2397,7 @@ fill_proc(const struct silofs_env *env, struct silofs_query_proc *qpr)
 	qpr->iopen_cur = env->opstat.op_iopen;
 	qpr->memsz_max = alst.nbytes_max;
 	qpr->memsz_cur = alst.nbytes_use;
-	qpr->bopen_cur = env->base.repo->re_bstore.bs_hq.bsq_lru.sz;
+	qpr->bopen_cur = env->base.repo->re_dstor.ds_hq.dsq_lru.sz;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

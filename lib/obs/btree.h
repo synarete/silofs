@@ -58,7 +58,7 @@ int silofs_btree_insert(struct silofs_btree       *btree,
 struct silofs_env;
 
 struct silofs_btmap_ctx {
-	struct silofs_bstore *bstore;
+	struct silofs_dstor  *dstor;
 	struct silofs_pcache *pcache;
 	struct silofs_paddr   btree_root;
 };

@@ -17,7 +17,7 @@
 #include <silofs/configs.h>
 #include <sys/stat.h>
 #include "nodes.h"
-#include "bstore.h"
+#include "dstor.h"
 #include "uber.h"
 #include "stage.h"
 #include "mbr.h"
@@ -25,7 +25,7 @@
 
 struct silofs_stage_ctx {
 	struct silofs_alloc   *alloc;
-	struct silofs_bstore  *bstore;
+	struct silofs_dstor   *dstor;
 	struct silofs_pcache  *pcache;
 	struct silofs_mdigest *mdigest;
 	struct silofs_cipher  *enc_cipher;
@@ -36,7 +36,7 @@ struct silofs_stage_ctx {
 static void stc_init(struct silofs_stage_ctx *st_ctx, struct silofs_env *env)
 {
 	st_ctx->alloc      = env->base.alloc;
-	st_ctx->bstore     = &env->base.repo->re_bstore;
+	st_ctx->dstor      = &env->base.repo->re_dstor;
 	st_ctx->pcache     = env->base.pcache;
 	st_ctx->mdigest    = &env->mdigest;
 	st_ctx->enc_cipher = &env->enc_cipher;
@@ -71,8 +71,8 @@ static int stc_require_view(struct silofs_stage_ctx *st_ctx)
 static int stc_require_paddr(const struct silofs_stage_ctx *st_ctx,
                              const struct silofs_paddr     *paddr)
 {
-	return silofs_bstore_require_blob_at(st_ctx->bstore, &paddr->blobid,
-	                                     paddr->pos);
+	return silofs_dstor_require_blob_at(st_ctx->dstor, &paddr->blobid,
+	                                    paddr->pos);
 }
 
 static int stc_require_paddr_of(const struct silofs_stage_ctx *st_ctx,
@@ -94,8 +94,7 @@ static int stc_access_pnode(const struct silofs_stage_ctx *st_ctx,
 {
 	const off_t off = silofs_paddr_next(paddr);
 
-	return silofs_bstore_access_blob_at(st_ctx->bstore, &paddr->blobid,
-	                                    off);
+	return silofs_dstor_access_blob_at(st_ctx->dstor, &paddr->blobid, off);
 }
 
 static int stc_access_pnode_of(const struct silofs_stage_ctx *st_ctx,
@@ -115,8 +114,8 @@ stc_read_pnode(struct silofs_stage_ctx *st_ctx, struct silofs_pnode_info *pni)
 	const struct silofs_paddr *paddr = &pni->pn_meta.paddr;
 	const size_t               len   = viewlen_of(pni);
 
-	return silofs_bstore_read_blob_at(st_ctx->bstore, &paddr->blobid,
-	                                  paddr->pos, st_ctx->view, len);
+	return silofs_dstor_read_blob_at(st_ctx->dstor, &paddr->blobid,
+	                                 paddr->pos, st_ctx->view, len);
 }
 
 static int stc_decrypt_verify_pnode(struct silofs_stage_ctx  *st_ctx,
@@ -442,8 +441,8 @@ static int stc_write_pnode(struct silofs_stage_ctx        *st_ctx,
 	const struct silofs_paddr *paddr = &pni->pn_meta.paddr;
 	const size_t               len   = viewlen_of(pni);
 
-	return silofs_bstore_write_blob_at(st_ctx->bstore, &paddr->blobid,
-	                                   paddr->pos, st_ctx->view, len);
+	return silofs_dstor_write_blob_at(st_ctx->dstor, &paddr->blobid,
+	                                  paddr->pos, st_ctx->view, len);
 }
 
 static int stc_seal_encrypt_pnode(struct silofs_stage_ctx  *st_ctx,

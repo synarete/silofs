@@ -79,7 +79,7 @@ int silofs_export_arix_node(const struct silofs_arnode_info *ari,
                             const struct silofs_ar_cargs    *ar_cargs,
                             struct silofs_arix_node         *arn_enc);
 
-int silofs_save_arix_node(struct silofs_bstore          *bstore,
+int silofs_save_arix_node(struct silofs_dstor           *dstor,
                           const struct silofs_paddr     *paddr,
                           const struct silofs_arix_node *arn_enc);
 
@@ -87,7 +87,7 @@ int silofs_import_arix_node(struct silofs_arnode_info    *ari,
                             const struct silofs_ar_cargs *ar_cargs,
                             struct silofs_arix_node      *arn_enc);
 
-int silofs_load_arix_node(struct silofs_bstore      *bstore,
+int silofs_load_arix_node(struct silofs_dstor       *dstor,
                           const struct silofs_paddr *paddr,
                           struct silofs_arix_node   *arn_enc);
 

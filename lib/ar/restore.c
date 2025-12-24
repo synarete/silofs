@@ -29,7 +29,7 @@ struct silofs_re_ctx {
 	struct silofs_arnode_info *ari;
 	struct silofs_alloc       *alloc;
 	struct silofs_repo        *repo;
-	struct silofs_bstore      *bstore;
+	struct silofs_dstor       *dstor;
 	struct silofs_laddr        sb_laddr;
 };
 
@@ -62,12 +62,12 @@ static int rec_init(struct silofs_re_ctx *re_ctx, struct silofs_task_ctx *task)
 {
 	silofs_memzero(re_ctx, sizeof(*re_ctx));
 	silofs_laddr_reset(&re_ctx->sb_laddr);
-	re_ctx->task   = task;
-	re_ctx->env    = task->t_env;
-	re_ctx->ari    = nullptr;
-	re_ctx->alloc  = re_ctx->env->base.alloc;
-	re_ctx->repo   = re_ctx->env->base.repo;
-	re_ctx->bstore = &re_ctx->env->base.repo->re_bstore;
+	re_ctx->task  = task;
+	re_ctx->env   = task->t_env;
+	re_ctx->ari   = nullptr;
+	re_ctx->alloc = re_ctx->env->base.alloc;
+	re_ctx->repo  = re_ctx->env->base.repo;
+	re_ctx->dstor = &re_ctx->env->base.repo->re_dstor;
 	return 0;
 }
 
@@ -84,8 +84,8 @@ static int
 rec_recv_from_repo(const struct silofs_re_ctx *re_ctx,
                    const struct silofs_paddr *paddr, void *dat, size_t len)
 {
-	return silofs_bstore_read_blob_at(re_ctx->bstore, &paddr->blobid,
-	                                  paddr->pos, dat, len);
+	return silofs_dstor_read_blob_at(re_ctx->dstor, &paddr->blobid,
+	                                 paddr->pos, dat, len);
 }
 
 static int
@@ -201,7 +201,7 @@ static int rec_fetch_arix_node(struct silofs_re_ctx *re_ctx)
 		return err;
 	}
 	silofs_ari_get_paddr(re_ctx->ari, &paddr);
-	err = silofs_load_arix_node(re_ctx->bstore, &paddr, arn_enc);
+	err = silofs_load_arix_node(re_ctx->dstor, &paddr, arn_enc);
 	if (err) {
 		goto out;
 	}

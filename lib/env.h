@@ -42,7 +42,7 @@ struct silofs_env_base {
 	struct silofs_alloc          *alloc;
 	struct silofs_lblock         *nilbk;
 	struct silofs_repo           *repo;
-	struct silofs_bstore         *bstore;
+	struct silofs_dstor          *dstor;
 	struct silofs_pcache         *pcache;
 	struct silofs_lcache         *lcache;
 	struct silofs_spamaps        *spamaps;

@@ -60,8 +60,8 @@ env_save_mbr_at(struct silofs_env *env, const struct silofs_mbref *mbref,
 {
 	int err;
 
-	err = silofs_bstore_save_mbr(env->base.bstore, mbref, mbr1k,
-	                             sizeof(*mbr1k));
+	err = silofs_dstor_save_mbr(env->base.dstor, mbref, mbr1k,
+	                            sizeof(*mbr1k));
 	if (err) {
 		log_dbg("failed to save mbr: err=%d", err);
 		return err;
@@ -75,8 +75,8 @@ env_load_mbr_at(const struct silofs_env *env, const struct silofs_mbref *mbref,
 {
 	int err;
 
-	err = silofs_bstore_load_mbr(env->base.bstore, mbref, out_mbr1k,
-	                             sizeof(*out_mbr1k));
+	err = silofs_dstor_load_mbr(env->base.dstor, mbref, out_mbr1k,
+	                            sizeof(*out_mbr1k));
 	if (err) {
 		log_dbg("failed to load mbr: err=%d", err);
 		return (err == -ENOENT) ? -SILOFS_ENOMBR : err;
@@ -117,7 +117,7 @@ env_stat_mbr_at(const struct silofs_env *env, const struct silofs_mbref *mbref)
 	struct stat st;
 	int         err;
 
-	err = silofs_bstore_stat_mbr(env->base.bstore, mbref, &st);
+	err = silofs_dstor_stat_mbr(env->base.dstor, mbref, &st);
 	if (err) {
 		return err;
 	}
@@ -199,7 +199,7 @@ static int env_unlink_mbr_at(const struct silofs_env   *env,
 {
 	int err;
 
-	err = silofs_bstore_unref_mbr(env->base.bstore, mbref);
+	err = silofs_dstor_unref_mbr(env->base.dstor, mbref);
 	if (err) {
 		log_err("failed to unref mbr: err=%d", err);
 		return err;

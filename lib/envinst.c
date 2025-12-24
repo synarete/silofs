@@ -495,7 +495,7 @@ static int envi_init_env(struct silofs_env_inst *envi)
 		.alloc   = envi->alloc,
 		.nilbk   = envi->nilbk,
 		.repo    = &envi->repo,
-		.bstore  = &envi->repo.re_bstore,
+		.dstor   = &envi->repo.re_dstor,
 		.pcache  = &envi->pcache,
 		.lcache  = &envi->lcache,
 		.spamaps = &envi->spamaps,

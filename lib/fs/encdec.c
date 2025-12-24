@@ -28,7 +28,7 @@ int silofs_encrypt_lview(const struct silofs_env   *env,
                          const struct silofs_llink *llink,
                          const struct silofs_view *view, void *ptr)
 {
-	return silofs_encrypt_view(&env->enc_cipher, &llink->civkey, view,
+	return silofs_encrypt_view(&env->enc_ci_hd, &llink->civkey, view,
 	                           llink_mtype(llink), ptr);
 }
 
@@ -36,7 +36,7 @@ static int decrypt_lview_inplace(const struct silofs_env   *env,
                                  const struct silofs_llink *llink,
                                  struct silofs_view        *view)
 {
-	return silofs_decrypt_view_inplace(&env->dec_cipher, &llink->civkey,
+	return silofs_decrypt_view_inplace(&env->dec_ci_hd, &llink->civkey,
 	                                   view, llink_mtype(llink));
 }
 
@@ -92,7 +92,7 @@ void silofs_llink_of_vni(const struct silofs_vnode_info *vni,
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-void silofs_calc_cas_paddr(const struct silofs_mdigest *md,
+void silofs_calc_cas_paddr(const struct silofs_mdigest_hd *md_hd,
                            enum silofs_mtype mtype, const struct iovec *iov,
                            size_t iov_cnt, struct silofs_paddr *out_paddr)
 {
@@ -101,7 +101,7 @@ void silofs_calc_cas_paddr(const struct silofs_mdigest *md,
 
 	silofs_assert_ne(mtype, 0);
 
-	silofs_sha3_256_ofv(md, iov, iov_cnt, &hash);
+	silofs_sha3_256_ofv(md_hd, iov, iov_cnt, &hash);
 	silofs_blobid_setup_cas(&blobid, silofs_svolid_none(), &hash, mtype);
 	silofs_paddr_init(out_paddr, &blobid, 0);
 }

@@ -566,21 +566,21 @@ pni_civkey(const struct silofs_pnode_info *pni)
 }
 
 int silofs_encrypt_pnode(const struct silofs_pnode_info *pni,
-                         const struct silofs_cipher     *cipher,
+                         const struct silofs_cipher_hd  *ci_hd,
                          struct silofs_view             *enc_view)
 {
-	return silofs_encrypt_view(cipher,          //
+	return silofs_encrypt_view(ci_hd,           //
 	                           pni_civkey(pni), //
 	                           pni->pn_view,    //
 	                           pni_mtype(pni),  //
 	                           enc_view);
 }
 
-int silofs_decrypt_pnode(struct silofs_pnode_info   *pni,
-                         const struct silofs_cipher *cipher,
-                         const struct silofs_view   *enc_view)
+int silofs_decrypt_pnode(struct silofs_pnode_info      *pni,
+                         const struct silofs_cipher_hd *ci_hd,
+                         const struct silofs_view      *enc_view)
 {
-	return silofs_decrypt_view(cipher,          //
+	return silofs_decrypt_view(ci_hd,           //
 	                           pni_civkey(pni), //
 	                           enc_view,        //
 	                           pni_mtype(pni),  //

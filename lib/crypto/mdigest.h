@@ -25,32 +25,34 @@ struct iovec;
 struct silofs_hash256;
 struct silofs_hash512;
 
-struct silofs_mdigest {
+struct silofs_mdigest_hd {
 	gcry_md_hd_t md_hd;
+	int16_t      md_algos[7];
+	int16_t      md_nalgos;
 };
 
-int silofs_mdigest_init(struct silofs_mdigest *md);
+int silofs_mdigest_init(struct silofs_mdigest_hd *md_hd);
 
-void silofs_mdigest_fini(struct silofs_mdigest *md);
+void silofs_mdigest_fini(struct silofs_mdigest_hd *md_hd);
 
-void silofs_sha256_of(const struct silofs_mdigest *md, const void *buf,
+void silofs_sha256_of(const struct silofs_mdigest_hd *md_hd, const void *buf,
                       size_t bsz, struct silofs_hash256 *out_hash);
 
-void silofs_sha256_ofv(const struct silofs_mdigest *md,
+void silofs_sha256_ofv(const struct silofs_mdigest_hd *md_hd,
                        const struct iovec *iov, size_t cnt,
                        struct silofs_hash256 *out_hash);
 
-void silofs_sha3_256_of(const struct silofs_mdigest *md, const void *buf,
+void silofs_sha3_256_of(const struct silofs_mdigest_hd *md_hd, const void *buf,
                         size_t bsz, struct silofs_hash256 *out_hash);
 
-void silofs_sha3_256_ofv(const struct silofs_mdigest *md,
+void silofs_sha3_256_ofv(const struct silofs_mdigest_hd *md_hd,
                          const struct iovec *iov, size_t cnt,
                          struct silofs_hash256 *out_hash);
 
-void silofs_sha3_512_of(const struct silofs_mdigest *md, const void *buf,
+void silofs_sha3_512_of(const struct silofs_mdigest_hd *md_hd, const void *buf,
                         size_t bsz, struct silofs_hash512 *out_hash);
 
-void silofs_crc32_of(const struct silofs_mdigest *md, const void *buf,
+void silofs_crc32_of(const struct silofs_mdigest_hd *md_hd, const void *buf,
                      size_t bsz, uint32_t *out_crc32);
 
 #endif /* SILOFS_MDIGEST_H_ */

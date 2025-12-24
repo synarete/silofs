@@ -56,17 +56,17 @@ static int arc_default_arix_pmeta(const struct silofs_ar_ctx *ar_ctx,
 	return 0;
 }
 
-static const struct silofs_mdigest *
+static const struct silofs_mdigest_hd *
 arc_mdigest(const struct silofs_ar_ctx *ar_ctx)
 {
-	return &ar_ctx->env->mdigest;
+	return &ar_ctx->env->md_hd;
 }
 
 static int arc_arix_cargs(const struct silofs_ar_ctx *ar_ctx,
                           struct silofs_ar_cargs     *out_ar_cargs)
 {
-	out_ar_cargs->cipher  = &ar_ctx->env->enc_cipher;
-	out_ar_cargs->mdigest = arc_mdigest(ar_ctx);
+	out_ar_cargs->ci_hd = &ar_ctx->env->enc_ci_hd;
+	out_ar_cargs->md_hd = arc_mdigest(ar_ctx);
 	return arc_arix_nmeta(ar_ctx, &out_ar_cargs->nmeta);
 }
 
@@ -197,7 +197,7 @@ arc_calc_seg_desc(const struct silofs_ar_ctx *ar_ctx,
 		.rov_len  = seg_len,
 	};
 
-	silofs_calc_ar_desc(&ar_ctx->env->mdigest, laddr, &rovec, out_ard);
+	silofs_calc_ar_desc(&ar_ctx->env->md_hd, laddr, &rovec, out_ard);
 }
 
 static int arc_archive_segdata(const struct silofs_ar_ctx *ar_ctx,

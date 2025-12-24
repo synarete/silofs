@@ -1197,8 +1197,8 @@ static void
 repo_hash_lsid(const struct silofs_repo *repo, const struct silofs_lsid *lsid,
                struct silofs_hash256 *out_hash)
 {
-	struct silofs_lsid64b        lsid64;
-	const struct silofs_mdigest *md = &repo->re_mdigest;
+	struct silofs_lsid64b           lsid64;
+	const struct silofs_mdigest_hd *md = &repo->re_md_hd;
 
 	silofs_lsid64b_htox(&lsid64, lsid);
 	silofs_sha256_of(md, &lsid64, sizeof(lsid64), out_hash);
@@ -1422,12 +1422,12 @@ static int repo_check_open(const struct silofs_repo *repo, bool rw)
 
 static int repo_init_mdigest(struct silofs_repo *repo)
 {
-	return silofs_mdigest_init(&repo->re_mdigest);
+	return silofs_mdigest_init(&repo->re_md_hd);
 }
 
 static void repo_fini_mdigest(struct silofs_repo *repo)
 {
-	silofs_mdigest_fini(&repo->re_mdigest);
+	silofs_mdigest_fini(&repo->re_md_hd);
 }
 
 static int repo_init_mutex(struct silofs_repo *repo)

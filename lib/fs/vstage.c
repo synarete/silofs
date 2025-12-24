@@ -1930,7 +1930,7 @@ static int vstgc_resolve_llink_of(const struct silofs_vstage_ctx *vstg_ctx,
 		return err;
 	}
 	silofs_laddr_setpos(&laddr, vstg_ctx->voff);
-	silofs_derive_iv_by_laddr(&vstg_ctx->env->mdigest, &laddr, &iv);
+	silofs_derive_iv_by_laddr(&vstg_ctx->env->md_hd, &laddr, &iv);
 	silofs_llink_setup(out_llink, &laddr, &key, &iv);
 	return 0;
 }

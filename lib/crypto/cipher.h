@@ -30,7 +30,7 @@ struct silofs_ciargs {
 };
 
 /* wrapper over libgcrypt cipher handle */
-struct silofs_cipher {
+struct silofs_cipher_hd {
 	gcry_cipher_hd_t     ci_hd;
 	struct silofs_ciargs ci_args;
 };
@@ -50,21 +50,21 @@ void silofs_ciargs_reset(struct silofs_ciargs *ciargs);
 
 int silofs_ciargs_check(const struct silofs_ciargs *ciargs);
 
-int silofs_cipher_init(struct silofs_cipher *cipher);
+int silofs_cipher_init(struct silofs_cipher_hd *ci_hd);
 
-int silofs_cipher_reinit(struct silofs_cipher       *cipher,
+int silofs_cipher_reinit(struct silofs_cipher_hd    *ci_hd,
                          const struct silofs_ciargs *ciargs);
 
-void silofs_cipher_fini(struct silofs_cipher *cipher);
+void silofs_cipher_fini(struct silofs_cipher_hd *ci_hd);
 
-int silofs_cipher_check(const struct silofs_cipher *cipher,
-                        const struct silofs_ciargs *ciargs);
+int silofs_cipher_check(const struct silofs_cipher_hd *ci_hd,
+                        const struct silofs_ciargs    *ciargs);
 
-int silofs_encrypt_buf(const struct silofs_cipher *ci,
+int silofs_encrypt_buf(const struct silofs_cipher_hd *ci_hd,
                        const struct silofs_civkey *civkey, const void *in_dat,
                        void *out_dat, size_t dat_len);
 
-int silofs_decrypt_buf(const struct silofs_cipher *ci,
+int silofs_decrypt_buf(const struct silofs_cipher_hd *ci_hd,
                        const struct silofs_civkey *civkey, const void *in_dat,
                        void *out_dat, size_t dat_len);
 

@@ -64,9 +64,9 @@ struct silofs_env {
 	struct silofs_env_mbis   mbis;
 	struct silofs_rwlock     rwlock;
 	struct silofs_mutex      mutex;
-	struct silofs_cipher     enc_cipher;
-	struct silofs_cipher     dec_cipher;
-	struct silofs_mdigest    mdigest;
+	struct silofs_cipher_hd  enc_ci_hd;
+	struct silofs_cipher_hd  dec_ci_hd;
+	struct silofs_mdigest_hd md_hd;
 	struct silofs_env_opstat opstat;
 	struct silofs_uber_info *ubi;
 	struct silofs_sb_info   *sbi;

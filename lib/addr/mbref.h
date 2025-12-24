@@ -27,9 +27,9 @@ void silofs_mbref_setup(struct silofs_mbref         *mbref,
 void silofs_mbref_assign(struct silofs_mbref       *mbref,
                          const struct silofs_mbref *other);
 
-void silofs_mbref_derive(struct silofs_mbref         *mbref,
-                         const struct silofs_mdigest *mdigest,
-                         const struct silofs_paddr   *paddr);
+void silofs_mbref_derive(struct silofs_mbref            *mbref,
+                         const struct silofs_mdigest_hd *md_hd,
+                         const struct silofs_paddr      *paddr);
 
 bool silofs_mbref_isequal(const struct silofs_mbref *mbref,
                           const struct silofs_mbref *other);

@@ -99,7 +99,7 @@ void silofs_dir_inherit_parent(struct silofs_inode_info       *dir_ii,
                                const struct silofs_inode_info *parentd_ii);
 
 int silofs_dir_make_hname(const struct silofs_inode_info *dir_ii,
-                          const struct silofs_mdigest    *mdigest,
+                          const struct silofs_mdigest_hd *md_hd,
                           const struct silofs_namestr    *nstr,
                           struct silofs_namestr          *out_nstr);
 

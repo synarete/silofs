@@ -297,13 +297,13 @@ void silofs_blobidx_assign(struct silofs_blobidx       *blobidx,
 	silofs_blobidx_setup(blobidx, &other->idx);
 }
 
-void silofs_blobidx_derive(struct silofs_blobidx       *blobidx,
-                           const struct silofs_mdigest *mdigest,
-                           const struct silofs_blobid  *blobid)
+void silofs_blobidx_derive(struct silofs_blobidx          *blobidx,
+                           const struct silofs_mdigest_hd *md_hd,
+                           const struct silofs_blobid     *blobid)
 {
 	struct silofs_hash256 hash;
 
-	silofs_sha3_256_of(mdigest, blobid->id, sizeof(blobid->id), &hash);
+	silofs_sha3_256_of(md_hd, blobid->id, sizeof(blobid->id), &hash);
 	silofs_blobidx_setup(blobidx, &hash);
 }
 

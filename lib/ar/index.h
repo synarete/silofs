@@ -24,9 +24,9 @@
 #include "obs.h"
 
 struct silofs_ar_cargs {
-	struct silofs_nmeta          nmeta;
-	const struct silofs_cipher  *cipher;
-	const struct silofs_mdigest *mdigest;
+	struct silofs_nmeta             nmeta;
+	const struct silofs_cipher_hd  *ci_hd;
+	const struct silofs_mdigest_hd *md_hd;
 };
 
 struct silofs_ar_desc {
@@ -91,17 +91,17 @@ int silofs_load_arix_node(struct silofs_dstor       *dstor,
                           const struct silofs_paddr *paddr,
                           struct silofs_arix_node   *arn_enc);
 
-void silofs_calc_ar_desc(const struct silofs_mdigest *mdigest,
-                         const struct silofs_laddr   *laddr,
-                         const struct silofs_rovec   *rovec,
-                         struct silofs_ar_desc       *out_ard);
+void silofs_calc_ar_desc(const struct silofs_mdigest_hd *md_hd,
+                         const struct silofs_laddr      *laddr,
+                         const struct silofs_rovec      *rovec,
+                         struct silofs_ar_desc          *out_ard);
 
-void silofs_calc_arix_paddr(const struct silofs_arix_node *arn_enc,
-                            const struct silofs_mdigest   *mdigest,
-                            struct silofs_paddr           *out_paddr);
+void silofs_calc_arix_paddr(const struct silofs_arix_node  *arn_enc,
+                            const struct silofs_mdigest_hd *md_hd,
+                            struct silofs_paddr            *out_paddr);
 
-int silofs_verify_arix_paddr(const struct silofs_arix_node *arn_enc,
-                             const struct silofs_mdigest   *mdigest,
-                             const struct silofs_paddr     *paddr);
+int silofs_verify_arix_paddr(const struct silofs_arix_node  *arn_enc,
+                             const struct silofs_mdigest_hd *md_hd,
+                             const struct silofs_paddr      *paddr);
 
 #endif /* SILOFS_INDEX_H_ */

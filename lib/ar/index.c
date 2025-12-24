@@ -351,7 +351,7 @@ static void ari_pre_encrypt(const struct silofs_arnode_info *ari,
 static int encrypt_arix_node(const struct silofs_ar_cargs *ar_cargs,
                              struct silofs_arix_node      *arn)
 {
-	return silofs_encrypt_buf(ar_cargs->cipher, &ar_cargs->nmeta.civkey,
+	return silofs_encrypt_buf(ar_cargs->ci_hd, &ar_cargs->nmeta.civkey,
 	                          arn, arn, sizeof(*arn));
 }
 
@@ -396,7 +396,7 @@ int silofs_load_arix_node(struct silofs_dstor       *dstor,
 static int decrypt_arix_node(const struct silofs_ar_cargs *ar_cargs,
                              struct silofs_arix_node      *arn)
 {
-	return silofs_decrypt_buf(ar_cargs->cipher, &ar_cargs->nmeta.civkey,
+	return silofs_decrypt_buf(ar_cargs->ci_hd, &ar_cargs->nmeta.civkey,
 	                          arn, arn, sizeof(*arn));
 }
 
@@ -431,10 +431,10 @@ int silofs_import_arix_node(struct silofs_arnode_info    *ari,
 	return 0;
 }
 
-void silofs_calc_ar_desc(const struct silofs_mdigest *mdigest,
-                         const struct silofs_laddr   *laddr,
-                         const struct silofs_rovec   *rovec,
-                         struct silofs_ar_desc       *out_ard)
+void silofs_calc_ar_desc(const struct silofs_mdigest_hd *md_hd,
+                         const struct silofs_laddr      *laddr,
+                         const struct silofs_rovec      *rovec,
+                         struct silofs_ar_desc          *out_ard)
 {
 	struct silofs_paddr paddr = {
 		.pos = -1,
@@ -446,29 +446,29 @@ void silofs_calc_ar_desc(const struct silofs_mdigest *mdigest,
 	enum silofs_mtype mtype;
 
 	mtype = silofs_blobid_get_mtype(&laddr->lsid.blobid);
-	silofs_calc_cas_paddr(mdigest, mtype, &iov, 1, &paddr);
+	silofs_calc_cas_paddr(md_hd, mtype, &iov, 1, &paddr);
 
 	ard_init(out_ard, &paddr, laddr, iov.iov_len);
 }
 
-void silofs_calc_arix_paddr(const struct silofs_arix_node *arn_enc,
-                            const struct silofs_mdigest   *mdigest,
-                            struct silofs_paddr           *out_paddr)
+void silofs_calc_arix_paddr(const struct silofs_arix_node  *arn_enc,
+                            const struct silofs_mdigest_hd *md_hd,
+                            struct silofs_paddr            *out_paddr)
 {
 	const struct iovec iov = {
 		.iov_base = unconst(arn_enc),
 		.iov_len  = sizeof(*arn_enc),
 	};
 
-	silofs_calc_cas_paddr(mdigest, SILOFS_MTYPE_ARIX, &iov, 1, out_paddr);
+	silofs_calc_cas_paddr(md_hd, SILOFS_MTYPE_ARIX, &iov, 1, out_paddr);
 }
 
-int silofs_verify_arix_paddr(const struct silofs_arix_node *arn_enc,
-                             const struct silofs_mdigest   *mdigest,
-                             const struct silofs_paddr     *paddr)
+int silofs_verify_arix_paddr(const struct silofs_arix_node  *arn_enc,
+                             const struct silofs_mdigest_hd *md_hd,
+                             const struct silofs_paddr      *paddr)
 {
 	struct silofs_paddr paddr2;
 
-	silofs_calc_arix_paddr(arn_enc, mdigest, &paddr2);
+	silofs_calc_arix_paddr(arn_enc, md_hd, &paddr2);
 	return silofs_paddr_isequal(paddr, &paddr2) ? 0 : -SILOFS_EBADARIX;
 }

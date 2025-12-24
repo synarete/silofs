@@ -32,16 +32,16 @@ void silofs_mbref_assign(struct silofs_mbref       *mbref,
 	silofs_mbref_setup(mbref, &other->bx);
 }
 
-void silofs_mbref_derive(struct silofs_mbref         *mbref,
-                         const struct silofs_mdigest *mdigest,
-                         const struct silofs_paddr   *paddr)
+void silofs_mbref_derive(struct silofs_mbref            *mbref,
+                         const struct silofs_mdigest_hd *md_hd,
+                         const struct silofs_paddr      *paddr)
 {
 	struct silofs_blobidx blobidx;
 
 	silofs_assert_eq(paddr->mtype, SILOFS_MTYPE_MBR);
 	silofs_assert_eq(paddr->pos, 0);
 
-	silofs_blobidx_derive(&blobidx, mdigest, &paddr->blobid);
+	silofs_blobidx_derive(&blobidx, md_hd, &paddr->blobid);
 	silofs_mbref_setup(mbref, &blobidx);
 }
 

@@ -126,9 +126,9 @@ void silofs_laddr96b_xtoh(const struct silofs_laddr96b *laddr96,
 
 void silofs_laddr96b_reset(struct silofs_laddr96b *laddr96);
 
-void silofs_derive_iv_by_laddr(const struct silofs_mdigest *md,
-                               const struct silofs_laddr   *laddr,
-                               struct silofs_civ           *out_iv);
+void silofs_derive_iv_by_laddr(const struct silofs_mdigest_hd *md,
+                               const struct silofs_laddr      *laddr,
+                               struct silofs_civ              *out_iv);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

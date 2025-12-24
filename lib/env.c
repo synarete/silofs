@@ -232,24 +232,24 @@ static void env_fini_locks(struct silofs_env *env)
 
 static void env_fini_crypto(struct silofs_env *env)
 {
-	silofs_cipher_fini(&env->dec_cipher);
-	silofs_cipher_fini(&env->enc_cipher);
-	silofs_mdigest_fini(&env->mdigest);
+	silofs_cipher_fini(&env->dec_ci_hd);
+	silofs_cipher_fini(&env->enc_ci_hd);
+	silofs_mdigest_fini(&env->md_hd);
 }
 
 static int env_init_crypto(struct silofs_env *env)
 {
 	int err;
 
-	err = silofs_mdigest_init(&env->mdigest);
+	err = silofs_mdigest_init(&env->md_hd);
 	if (err) {
 		return err;
 	}
-	err = silofs_cipher_init(&env->enc_cipher);
+	err = silofs_cipher_init(&env->enc_ci_hd);
 	if (err) {
 		goto out_err;
 	}
-	err = silofs_cipher_init(&env->dec_cipher);
+	err = silofs_cipher_init(&env->dec_ci_hd);
 	if (err) {
 		goto out_err;
 	}

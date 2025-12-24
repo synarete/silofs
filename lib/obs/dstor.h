@@ -30,10 +30,10 @@ struct silofs_dstor_hq {
 
 /* blob-storage using regular files within flat directory */
 struct silofs_dstor {
-	struct silofs_dstor_hq ds_hq;
-	struct silofs_mdigest  ds_md;
-	struct silofs_alloc   *ds_alloc;
-	int                    ds_dfd;
+	struct silofs_dstor_hq   ds_hq;
+	struct silofs_mdigest_hd ds_md;
+	struct silofs_alloc     *ds_alloc;
+	int                      ds_dfd;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

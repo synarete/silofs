@@ -25,11 +25,11 @@ env_reinit_ciphers(struct silofs_env *env, const struct silofs_ciargs *ciargs)
 {
 	int err;
 
-	err = silofs_cipher_reinit(&env->enc_cipher, ciargs);
+	err = silofs_cipher_reinit(&env->enc_ci_hd, ciargs);
 	if (err) {
 		return err;
 	}
-	err = silofs_cipher_reinit(&env->dec_cipher, ciargs);
+	err = silofs_cipher_reinit(&env->dec_ci_hd, ciargs);
 	if (err) {
 		return err;
 	}

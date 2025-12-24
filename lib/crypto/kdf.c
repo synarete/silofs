@@ -21,9 +21,10 @@
 #include "gcry.h"
 #include "kdf.h"
 
-static int
-derive_iv(const struct silofs_mdigest *md, const struct silofs_password *pw,
-          const struct silofs_kdf_desc *kdf, struct silofs_civ *out_iv)
+static int derive_iv(const struct silofs_mdigest_hd *md_hd, //
+                     const struct silofs_password   *pw,    //
+                     const struct silofs_kdf_desc   *kdf,   //
+                     struct silofs_civ              *out_iv)
 {
 	struct silofs_hash256 salt;
 	gpg_error_t           gcry_err;
@@ -31,7 +32,7 @@ derive_iv(const struct silofs_mdigest *md, const struct silofs_password *pw,
 	if (kdf->kd_salt_md != SILOFS_MD_SHA3_256) {
 		return -SILOFS_EOPNOTSUPP;
 	}
-	silofs_sha3_256_of(md, pw->pass, pw->passlen, &salt);
+	silofs_sha3_256_of(md_hd, pw->pass, pw->passlen, &salt);
 	gcry_err = gcry_kdf_derive(pw->pass, pw->passlen, (int)kdf->kd_algo,
 	                           (int)kdf->kd_subalgo, salt.hash,
 	                           sizeof(salt.hash), kdf->kd_iterations,
@@ -40,8 +41,9 @@ derive_iv(const struct silofs_mdigest *md, const struct silofs_password *pw,
 }
 
 static int
-derive_key(const struct silofs_mdigest *md, const struct silofs_password *pw,
-           const struct silofs_kdf_desc *kdf, struct silofs_ckey *out_key)
+derive_key(const struct silofs_mdigest_hd *md,
+           const struct silofs_password *pw, const struct silofs_kdf_desc *kdf,
+           struct silofs_ckey *out_key)
 {
 	struct silofs_hash512 salt;
 	gpg_error_t           gcry_err;
@@ -67,10 +69,10 @@ static int check_passlen(size_t len)
 	return ret;
 }
 
-int silofs_derive_civkey(const struct silofs_mdigest   *md,
-                         const struct silofs_password  *pw,
-                         const struct silofs_kdf_descs *kdf,
-                         struct silofs_civkey          *out_civkey)
+int silofs_derive_civkey(const struct silofs_mdigest_hd *md_hd,
+                         const struct silofs_password   *pw,
+                         const struct silofs_kdf_descs  *kdf,
+                         struct silofs_civkey           *out_civkey)
 {
 	int err;
 
@@ -79,11 +81,11 @@ int silofs_derive_civkey(const struct silofs_mdigest   *md,
 	if (err) {
 		return err;
 	}
-	err = derive_iv(md, pw, &kdf->kdf_iv, &out_civkey->iv);
+	err = derive_iv(md_hd, pw, &kdf->kdf_iv, &out_civkey->iv);
 	if (err) {
 		return err;
 	}
-	err = derive_key(md, pw, &kdf->kdf_key, &out_civkey->key);
+	err = derive_key(md_hd, pw, &kdf->kdf_key, &out_civkey->key);
 	if (err) {
 		return err;
 	}

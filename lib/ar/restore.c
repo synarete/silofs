@@ -156,17 +156,17 @@ static int rec_arix_nmeta(const struct silofs_re_ctx *re_ctx,
 	return 0;
 }
 
-static const struct silofs_mdigest *
+static const struct silofs_mdigest_hd *
 rec_mdigest(const struct silofs_re_ctx *re_ctx)
 {
-	return &re_ctx->env->mdigest;
+	return &re_ctx->env->md_hd;
 }
 
 static int rec_arix_cargs(const struct silofs_re_ctx *re_ctx,
                           struct silofs_ar_cargs     *out_ar_cargs)
 {
-	out_ar_cargs->cipher  = &re_ctx->env->enc_cipher;
-	out_ar_cargs->mdigest = rec_mdigest(re_ctx);
+	out_ar_cargs->ci_hd = &re_ctx->env->enc_ci_hd;
+	out_ar_cargs->md_hd = rec_mdigest(re_ctx);
 	return rec_arix_nmeta(re_ctx, &out_ar_cargs->nmeta);
 }
 

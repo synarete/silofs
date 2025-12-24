@@ -1350,14 +1350,14 @@ bool silofs_dir_has_flags(const struct silofs_inode_info *dir_ii,
 }
 
 int silofs_dir_make_hname(const struct silofs_inode_info *dir_ii,
-                          const struct silofs_mdigest    *mdigest,
+                          const struct silofs_mdigest_hd *md_hd,
                           const struct silofs_namestr    *nstr,
                           struct silofs_namestr          *out_nstr)
 {
 	const enum silofs_namehfn nhfn = dir_hfn(dir_ii);
 	const uint64_t            seed = dir_seed(dir_ii);
 
-	return silofs_make_hnamestr(out_nstr, &nstr->sv, mdigest, nhfn, seed);
+	return silofs_make_hnamestr(out_nstr, &nstr->sv, md_hd, nhfn, seed);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

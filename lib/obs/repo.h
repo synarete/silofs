@@ -46,7 +46,7 @@ struct silofs_repo {
 	struct silofs_mutex            re_mutex;
 	struct silofs_repo_htbl        re_htbl;
 	struct silofs_listq            re_lruq;
-	struct silofs_mdigest          re_mdigest;
+	struct silofs_mdigest_hd       re_md_hd;
 	struct silofs_dstor            re_dstor;
 	int                            re_root_dfd;
 	int                            re_dots_dfd;

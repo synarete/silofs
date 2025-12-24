@@ -186,9 +186,9 @@ mbr1k_set_hash(struct silofs_mbr1k *mbr1k, const struct silofs_hash256 *hash)
 	silofs_hash256_copyto(hash, &mbr1k->mbr_hash);
 }
 
-static void mbr1k_calc_hash(const struct silofs_mbr1k   *mbr1k,
-                            const struct silofs_mdigest *md,
-                            struct silofs_hash256       *out_hash)
+static void mbr1k_calc_hash(const struct silofs_mbr1k      *mbr1k,
+                            const struct silofs_mdigest_hd *md,
+                            struct silofs_hash256          *out_hash)
 {
 	const size_t len = offsetof(struct silofs_mbr1k, mbr_hash);
 
@@ -196,7 +196,7 @@ static void mbr1k_calc_hash(const struct silofs_mbr1k   *mbr1k,
 }
 
 static void
-mbr1k_stamp(struct silofs_mbr1k *mbr1k, const struct silofs_mdigest *md)
+mbr1k_stamp(struct silofs_mbr1k *mbr1k, const struct silofs_mdigest_hd *md)
 {
 	struct silofs_hash256 hash;
 
@@ -204,8 +204,8 @@ mbr1k_stamp(struct silofs_mbr1k *mbr1k, const struct silofs_mdigest *md)
 	mbr1k_set_hash(mbr1k, &hash);
 }
 
-static int mbr1k_check_hash(const struct silofs_mbr1k   *mbr1k,
-                            const struct silofs_mdigest *md)
+static int mbr1k_check_hash(const struct silofs_mbr1k      *mbr1k,
+                            const struct silofs_mdigest_hd *md)
 {
 	struct silofs_hash256 hash[2];
 
@@ -215,8 +215,8 @@ static int mbr1k_check_hash(const struct silofs_mbr1k   *mbr1k,
 	return silofs_hash256_isequal(&hash[0], &hash[1]) ? 0 : -SILOFS_ECSUM;
 }
 
-static int
-mbr1k_verify(const struct silofs_mbr1k *mbr1k, const struct silofs_mdigest *md)
+static int mbr1k_verify(const struct silofs_mbr1k      *mbr1k,
+                        const struct silofs_mdigest_hd *md)
 {
 	int err;
 
@@ -247,21 +247,21 @@ static void mbr1k_fini(struct silofs_mbr1k *mbr1k)
 	silofs_memffff(mbr1k, sizeof(*mbr1k));
 }
 
-static int mbr1k_encrypt(const struct silofs_mbr1k  *mbr1k,
-                         const struct silofs_cipher *cipher,
-                         const struct silofs_civkey *civkey,
-                         struct silofs_mbr1k        *out_mbr1k)
+static int mbr1k_encrypt(const struct silofs_mbr1k     *mbr1k,
+                         const struct silofs_cipher_hd *ci_hd,
+                         const struct silofs_civkey    *civkey,
+                         struct silofs_mbr1k           *out_mbr1k)
 {
-	return silofs_encrypt_buf(cipher, civkey, mbr1k, out_mbr1k,
+	return silofs_encrypt_buf(ci_hd, civkey, mbr1k, out_mbr1k,
 	                          sizeof(*out_mbr1k));
 }
 
-static int mbr1k_decrypt(const struct silofs_mbr1k  *mbr1k,
-                         const struct silofs_cipher *cipher,
-                         const struct silofs_civkey *civkey,
-                         struct silofs_mbr1k        *out_mbr1k)
+static int mbr1k_decrypt(const struct silofs_mbr1k     *mbr1k,
+                         const struct silofs_cipher_hd *ci_hd,
+                         const struct silofs_civkey    *civkey,
+                         struct silofs_mbr1k           *out_mbr1k)
 {
-	return silofs_decrypt_buf(cipher, civkey, mbr1k, out_mbr1k,
+	return silofs_decrypt_buf(ci_hd, civkey, mbr1k, out_mbr1k,
 	                          sizeof(*out_mbr1k));
 }
 
@@ -269,9 +269,9 @@ static int mbr1k_decrypt(const struct silofs_mbr1k  *mbr1k,
 
 /* auxiliary controller for MBR operations */
 struct silofs_mbraux {
-	struct silofs_mdigest mdigest;
-	struct silofs_cipher  cipher;
-	struct silofs_nmeta   nmeta;
+	struct silofs_mdigest_hd mdigest;
+	struct silofs_cipher_hd  cipher;
+	struct silofs_nmeta      nmeta;
 };
 
 static int
@@ -377,9 +377,9 @@ static const struct silofs_kdf_descs s_mbr_kdf_descs = {
 	},
 };
 
-static int derive_mbr_civkey(const struct silofs_mdigest  *md,
-                             const struct silofs_password *pw,
-                             struct silofs_civkey         *out_civkey)
+static int derive_mbr_civkey(const struct silofs_mdigest_hd *md,
+                             const struct silofs_password   *pw,
+                             struct silofs_civkey           *out_civkey)
 {
 	return silofs_derive_civkey(md, pw, &s_mbr_kdf_descs, out_civkey);
 }
@@ -387,9 +387,9 @@ static int derive_mbr_civkey(const struct silofs_mdigest  *md,
 int silofs_derive_mbr_nmeta(const struct silofs_password *passwd,
                             struct silofs_nmeta          *out_nmeta)
 {
-	struct silofs_civkey  civkey;
-	struct silofs_mdigest mdigest;
-	int                   err;
+	struct silofs_civkey     civkey;
+	struct silofs_mdigest_hd mdigest;
+	int                      err;
 
 	silofs_nmeta_reset(out_nmeta);
 	if ((passwd == nullptr) || (passwd->passlen == 0)) {

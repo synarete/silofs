@@ -24,24 +24,24 @@
 #include "env.h"
 
 struct silofs_stage_ctx {
-	struct silofs_alloc   *alloc;
-	struct silofs_dstor   *dstor;
-	struct silofs_pcache  *pcache;
-	struct silofs_mdigest *mdigest;
-	struct silofs_cipher  *enc_cipher;
-	struct silofs_cipher  *dec_cipher;
-	struct silofs_view    *view;
+	struct silofs_alloc      *alloc;
+	struct silofs_dstor      *dstor;
+	struct silofs_pcache     *pcache;
+	struct silofs_mdigest_hd *md_hd;
+	struct silofs_cipher_hd  *enc_ci_hd;
+	struct silofs_cipher_hd  *dec_ci_hd;
+	struct silofs_view       *view;
 };
 
 static void stc_init(struct silofs_stage_ctx *st_ctx, struct silofs_env *env)
 {
-	st_ctx->alloc      = env->base.alloc;
-	st_ctx->dstor      = &env->base.repo->re_dstor;
-	st_ctx->pcache     = env->base.pcache;
-	st_ctx->mdigest    = &env->mdigest;
-	st_ctx->enc_cipher = &env->enc_cipher;
-	st_ctx->dec_cipher = &env->dec_cipher;
-	st_ctx->view       = nullptr;
+	st_ctx->alloc     = env->base.alloc;
+	st_ctx->dstor     = &env->base.repo->re_dstor;
+	st_ctx->pcache    = env->base.pcache;
+	st_ctx->md_hd     = &env->md_hd;
+	st_ctx->enc_ci_hd = &env->enc_ci_hd;
+	st_ctx->dec_ci_hd = &env->dec_ci_hd;
+	st_ctx->view      = nullptr;
 }
 
 static void stc_fini(struct silofs_stage_ctx *st_ctx)
@@ -123,7 +123,7 @@ static int stc_decrypt_verify_pnode(struct silofs_stage_ctx  *st_ctx,
 {
 	int err;
 
-	err = silofs_decrypt_pnode(pni, st_ctx->dec_cipher, st_ctx->view);
+	err = silofs_decrypt_pnode(pni, st_ctx->dec_ci_hd, st_ctx->view);
 	if (err) {
 		return err;
 	}
@@ -449,7 +449,7 @@ static int stc_seal_encrypt_pnode(struct silofs_stage_ctx  *st_ctx,
                                   struct silofs_pnode_info *pni)
 {
 	silofs_seal_pnode(pni);
-	return silofs_encrypt_pnode(pni, st_ctx->enc_cipher, st_ctx->view);
+	return silofs_encrypt_pnode(pni, st_ctx->enc_ci_hd, st_ctx->view);
 }
 
 static int stc_destage_dirty_pnode(struct silofs_stage_ctx  *st_ctx,

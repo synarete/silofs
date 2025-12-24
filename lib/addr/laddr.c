@@ -324,9 +324,9 @@ void silofs_laddr96b_xtoh(const struct silofs_laddr96b *laddr96,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void
-laddr_to_hash(const struct silofs_laddr   *laddr,
-              const struct silofs_mdigest *md, struct silofs_hash256 *out_hash)
+static void laddr_to_hash(const struct silofs_laddr      *laddr,
+                          const struct silofs_mdigest_hd *md,
+                          struct silofs_hash256          *out_hash)
 {
 	struct silofs_laddr96b laddr96 = {};
 
@@ -347,9 +347,9 @@ derive_iv_by_hash256(struct silofs_civ *iv, const struct silofs_hash256 *hash)
 	}
 }
 
-void silofs_derive_iv_by_laddr(const struct silofs_mdigest *md,
-                               const struct silofs_laddr   *laddr,
-                               struct silofs_civ           *out_iv)
+void silofs_derive_iv_by_laddr(const struct silofs_mdigest_hd *md,
+                               const struct silofs_laddr      *laddr,
+                               struct silofs_civ              *out_iv)
 {
 	struct silofs_hash256 hash = {};
 

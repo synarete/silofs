@@ -179,8 +179,8 @@ static uint64_t hash256_to_u64(const struct silofs_hash256 *hash)
 }
 
 static uint64_t
-namehash_by_sha256(const struct silofs_strview *sv,
-                   const struct silofs_mdigest *md, uint64_t seed)
+namehash_by_sha256(const struct silofs_strview    *sv,
+                   const struct silofs_mdigest_hd *md, uint64_t seed)
 {
 	struct silofs_hash256 sha256;
 
@@ -195,8 +195,9 @@ namehash_by_xxh64(const struct silofs_strview *sv, uint64_t seed)
 }
 
 static int
-namehash_of(const struct silofs_strview *sv, const struct silofs_mdigest *md,
-            enum silofs_namehfn nhfn, uint64_t seed, uint64_t *out_hash)
+namehash_of(const struct silofs_strview    *sv,
+            const struct silofs_mdigest_hd *md, enum silofs_namehfn nhfn,
+            uint64_t seed, uint64_t *out_hash)
 {
 	switch (nhfn) {
 	case SILOFS_NAMEHASH_SHA256:
@@ -211,9 +212,9 @@ namehash_of(const struct silofs_strview *sv, const struct silofs_mdigest *md,
 	return 0;
 }
 
-int silofs_make_hnamestr(struct silofs_namestr       *nstr,
-                         const struct silofs_strview *sv,
-                         const struct silofs_mdigest *md,
+int silofs_make_hnamestr(struct silofs_namestr          *nstr,
+                         const struct silofs_strview    *sv,
+                         const struct silofs_mdigest_hd *md,
                          enum silofs_namehfn nhfn, uint64_t seed)
 {
 	struct silofs_strbuf  sbuf;
@@ -693,10 +694,10 @@ static int check_lookup(const struct silofs_task_ctx *task,
 	return 0;
 }
 
-static const struct silofs_mdigest *
+static const struct silofs_mdigest_hd *
 get_mdigest(const struct silofs_task_ctx *task)
 {
-	return &task->t_env->mdigest;
+	return &task->t_env->md_hd;
 }
 
 static int assign_namehash(const struct silofs_task_ctx   *task,

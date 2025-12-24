@@ -68,7 +68,7 @@ prandgen_mkhash(struct silofs_prandgen *prng, struct silofs_hash256 *out_hash)
 	d[di++ % nd] = (uint32_t)t.tv_nsec * 0x5bd1e995;
 	d[di++ % nd] = (uint32_t)(u >> 32);
 
-	silofs_sha3_256_of(&prng->mdigest, d, sizeof(d), out_hash);
+	silofs_sha3_256_of(&prng->md_hd, d, sizeof(d), out_hash);
 	prng->xseed = silofs_xxh32(d, sizeof(d), (uint32_t)di);
 }
 
@@ -103,13 +103,12 @@ int silofs_prandgen_init(struct silofs_prandgen *prng)
 {
 	int err;
 
-	STATICASSERT_EQ(sizeof(*prng), 1024);
-
 	memset(prng, 0, sizeof(*prng));
 	prng->cycle = 0;
 	prng->slot  = 0;
 	prng->count = 0;
-	err         = silofs_mdigest_init(&prng->mdigest);
+
+	err = silofs_mdigest_init(&prng->md_hd);
 	if (err) {
 		return err;
 	}
@@ -118,7 +117,7 @@ int silofs_prandgen_init(struct silofs_prandgen *prng)
 
 void silofs_prandgen_fini(struct silofs_prandgen *prng)
 {
-	silofs_mdigest_fini(&prng->mdigest);
+	silofs_mdigest_fini(&prng->md_hd);
 	memset(prng, 0, sizeof(*prng));
 }
 

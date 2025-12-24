@@ -20,7 +20,7 @@
 #include <silofs/ioctls.h>
 #include "stringx.h"
 
-struct silofs_mdigest;
+struct silofs_mdigest_hd;
 struct silofs_task_ctx;
 struct silofs_sb_info;
 struct silofs_inew_params;
@@ -39,9 +39,9 @@ int silofs_make_namestr(struct silofs_namestr *nstr, const char *s);
 
 int silofs_make_fsnamestr(struct silofs_namestr *nstr, const char *s);
 
-int silofs_make_hnamestr(struct silofs_namestr       *nstr,
-                         const struct silofs_strview *sv,
-                         const struct silofs_mdigest *md,
+int silofs_make_hnamestr(struct silofs_namestr          *nstr,
+                         const struct silofs_strview    *sv,
+                         const struct silofs_mdigest_hd *md,
                          enum silofs_namehfn nhfn, uint64_t seed);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

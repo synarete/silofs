@@ -139,41 +139,41 @@ ciargs_keysize(const struct silofs_ciargs *ciargs, size_t keysize_want)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int
-cipher_open(struct silofs_cipher *cipher, const struct silofs_ciargs *ciargs)
+cipher_open(struct silofs_cipher_hd *ci_hd, const struct silofs_ciargs *ciargs)
 {
 	const unsigned int flags = 0; /* XXX GCRY_CIPHER_SECURE ? */
 	gcry_error_t       err;
 
-	err = gcry_cipher_open(&cipher->ci_hd, (int)ciargs->algo,
+	err = gcry_cipher_open(&ci_hd->ci_hd, (int)ciargs->algo,
 	                       (int)ciargs->mode, flags);
 	if (err) {
 		return silofs_gcrypt_status(err, "gcry_cipher_open");
 	}
-	silofs_ciargs_assign(&cipher->ci_args, ciargs);
+	silofs_ciargs_assign(&ci_hd->ci_args, ciargs);
 	return 0;
 }
 
-static void cipher_close(struct silofs_cipher *cipher)
+static void cipher_close(struct silofs_cipher_hd *ci_hd)
 {
-	gcry_cipher_close(cipher->ci_hd);
-	cipher->ci_hd = nullptr;
+	gcry_cipher_close(ci_hd->ci_hd);
+	ci_hd->ci_hd = nullptr;
 }
 
-int silofs_cipher_init(struct silofs_cipher *cipher)
+int silofs_cipher_init(struct silofs_cipher_hd *ci_hd)
 {
 	struct silofs_ciargs ciargs;
 
 	silofs_ciargs_reset(&ciargs);
-	return cipher_open(cipher, &ciargs);
+	return cipher_open(ci_hd, &ciargs);
 }
 
-static bool cipher_has_args(const struct silofs_cipher *cipher,
-                            const struct silofs_ciargs *ciargs)
+static bool cipher_has_args(const struct silofs_cipher_hd *ci_hd,
+                            const struct silofs_ciargs    *ciargs)
 {
-	return ciargs_isequal(&cipher->ci_args, ciargs);
+	return ciargs_isequal(&ci_hd->ci_args, ciargs);
 }
 
-int silofs_cipher_reinit(struct silofs_cipher       *cipher,
+int silofs_cipher_reinit(struct silofs_cipher_hd    *ci_hd,
                          const struct silofs_ciargs *ciargs)
 {
 	int err;
@@ -182,122 +182,122 @@ int silofs_cipher_reinit(struct silofs_cipher       *cipher,
 	if (err) {
 		return err;
 	}
-	if (cipher_has_args(cipher, ciargs)) {
+	if (cipher_has_args(ci_hd, ciargs)) {
 		return 0; /* no-op */
 	}
-	cipher_close(cipher);
-	err = cipher_open(cipher, ciargs);
+	cipher_close(ci_hd);
+	err = cipher_open(ci_hd, ciargs);
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-void silofs_cipher_fini(struct silofs_cipher *cipher)
+void silofs_cipher_fini(struct silofs_cipher_hd *ci_hd)
 {
-	if (cipher->ci_hd != nullptr) {
-		cipher_close(cipher);
+	if (ci_hd->ci_hd != nullptr) {
+		cipher_close(ci_hd);
 	}
 }
 
-int silofs_cipher_check(const struct silofs_cipher *cipher,
-                        const struct silofs_ciargs *ciargs)
+int silofs_cipher_check(const struct silofs_cipher_hd *ci_hd,
+                        const struct silofs_ciargs    *ciargs)
 {
-	return cipher_has_args(cipher, ciargs) ? 0 : -SILOFS_EOPNOTSUPP;
+	return cipher_has_args(ci_hd, ciargs) ? 0 : -SILOFS_EOPNOTSUPP;
 }
 
-static int cipher_prepare(const struct silofs_cipher *cipher,
-                          const struct silofs_civkey *civkey)
+static int cipher_prepare(const struct silofs_cipher_hd *ci_hd,
+                          const struct silofs_civkey    *civkey)
 {
 	const struct silofs_civ  *iv  = &civkey->iv;
 	const struct silofs_ckey *key = &civkey->key;
 	size_t                    blklen, keysize;
 	gcry_error_t              err;
 
-	blklen = gcry_cipher_get_algo_blklen((int)cipher->ci_args.algo);
+	blklen = gcry_cipher_get_algo_blklen((int)ci_hd->ci_args.algo);
 	if (blklen > sizeof(iv->iv)) {
 		silofs_log_warn("bad blklen: algo=%d blklen=%zu",
-		                (int)cipher->ci_args.algo, blklen);
+		                (int)ci_hd->ci_args.algo, blklen);
 		return -SILOFS_EINVAL;
 	}
-	err = gcry_cipher_reset(cipher->ci_hd);
+	err = gcry_cipher_reset(ci_hd->ci_hd);
 	if (err) {
 		return silofs_gcrypt_status(err, "gcry_cipher_reset");
 	}
-	keysize = ciargs_keysize(&cipher->ci_args, sizeof(key->key));
-	err     = gcry_cipher_setkey(cipher->ci_hd, key->key, keysize);
+	keysize = ciargs_keysize(&ci_hd->ci_args, sizeof(key->key));
+	err     = gcry_cipher_setkey(ci_hd->ci_hd, key->key, keysize);
 	if (err) {
 		return silofs_gcrypt_status(err, "gcry_cipher_setkey");
 	}
-	err = gcry_cipher_setiv(cipher->ci_hd, iv->iv, blklen);
+	err = gcry_cipher_setiv(ci_hd->ci_hd, iv->iv, blklen);
 	if (err) {
 		return silofs_gcrypt_status(err, "gcry_cipher_setiv");
 	}
 	return 0;
 }
 
-static int cipher_encrypt(const struct silofs_cipher *ci, const void *in_dat,
-                          void *out_dat, size_t dat_len)
+static int cipher_encrypt(const struct silofs_cipher_hd *ci_hd,
+                          const void *in_dat, void *out_dat, size_t dat_len)
 {
 	gcry_error_t err;
 
-	err = gcry_cipher_encrypt(ci->ci_hd, out_dat, dat_len, in_dat,
+	err = gcry_cipher_encrypt(ci_hd->ci_hd, out_dat, dat_len, in_dat,
 	                          dat_len);
 	if (err) {
 		return silofs_gcrypt_status(err, "gcry_cipher_encrypt");
 	}
-	err = gcry_cipher_final(ci->ci_hd);
+	err = gcry_cipher_final(ci_hd->ci_hd);
 	if (err) {
 		return silofs_gcrypt_status(err, "gcry_cipher_final");
 	}
 	return 0;
 }
 
-static int cipher_decrypt(const struct silofs_cipher *ci, const void *in_dat,
-                          void *out_dat, size_t dat_len)
+static int cipher_decrypt(const struct silofs_cipher_hd *ci_hd,
+                          const void *in_dat, void *out_dat, size_t dat_len)
 {
 	gcry_error_t err;
 
-	err = gcry_cipher_decrypt(ci->ci_hd, out_dat, dat_len, in_dat,
+	err = gcry_cipher_decrypt(ci_hd->ci_hd, out_dat, dat_len, in_dat,
 	                          dat_len);
 	if (err) {
 		return silofs_gcrypt_status(err, "gcry_cipher_decrypt");
 	}
-	err = gcry_cipher_final(ci->ci_hd);
+	err = gcry_cipher_final(ci_hd->ci_hd);
 	if (err) {
 		return silofs_gcrypt_status(err, "gcry_cipher_final");
 	}
 	return 0;
 }
 
-int silofs_encrypt_buf(const struct silofs_cipher *ci,
+int silofs_encrypt_buf(const struct silofs_cipher_hd *ci_hd,
                        const struct silofs_civkey *civkey, const void *in_dat,
                        void *out_dat, size_t dat_len)
 {
 	int err;
 
-	err = cipher_prepare(ci, civkey);
+	err = cipher_prepare(ci_hd, civkey);
 	if (err) {
 		return err;
 	}
-	err = cipher_encrypt(ci, in_dat, out_dat, dat_len);
+	err = cipher_encrypt(ci_hd, in_dat, out_dat, dat_len);
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-int silofs_decrypt_buf(const struct silofs_cipher *ci,
+int silofs_decrypt_buf(const struct silofs_cipher_hd *ci_hd,
                        const struct silofs_civkey *civkey, const void *in_dat,
                        void *out_dat, size_t dat_len)
 {
 	int err;
 
-	err = cipher_prepare(ci, civkey);
+	err = cipher_prepare(ci_hd, civkey);
 	if (err) {
 		return err;
 	}
-	err = cipher_decrypt(ci, in_dat, out_dat, dat_len);
+	err = cipher_decrypt(ci_hd, in_dat, out_dat, dat_len);
 	if (err) {
 		return err;
 	}

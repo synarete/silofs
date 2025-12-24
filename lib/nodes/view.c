@@ -276,26 +276,26 @@ int silofs_view_verify(const struct silofs_view *view, enum silofs_mtype mtype)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_encrypt_view(const struct silofs_cipher *cipher,
-                        const struct silofs_civkey *civkey,
-                        const struct silofs_view   *view,
+int silofs_encrypt_view(const struct silofs_cipher_hd *ci_hd,
+                        const struct silofs_civkey    *civkey,
+                        const struct silofs_view      *view,
                         enum silofs_mtype mtype, void *ptr)
 {
-	return silofs_encrypt_buf(cipher, civkey, view, ptr, view_len(mtype));
+	return silofs_encrypt_buf(ci_hd, civkey, view, ptr, view_len(mtype));
 }
 
-int silofs_decrypt_view(const struct silofs_cipher *cipher,
-                        const struct silofs_civkey *civkey,
-                        const struct silofs_view   *view,
+int silofs_decrypt_view(const struct silofs_cipher_hd *ci_hd,
+                        const struct silofs_civkey    *civkey,
+                        const struct silofs_view      *view,
                         enum silofs_mtype mtype, void *ptr)
 {
-	return silofs_decrypt_buf(cipher, civkey, view, ptr, view_len(mtype));
+	return silofs_decrypt_buf(ci_hd, civkey, view, ptr, view_len(mtype));
 }
 
-int silofs_decrypt_view_inplace(const struct silofs_cipher *cipher,
-                                const struct silofs_civkey *civkey,
-                                struct silofs_view         *view,
-                                enum silofs_mtype           mtype)
+int silofs_decrypt_view_inplace(const struct silofs_cipher_hd *ci_hd,
+                                const struct silofs_civkey    *civkey,
+                                struct silofs_view            *view,
+                                enum silofs_mtype              mtype)
 {
-	return silofs_decrypt_buf(cipher, civkey, view, view, view_len(mtype));
+	return silofs_decrypt_buf(ci_hd, civkey, view, view, view_len(mtype));
 }

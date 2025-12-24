@@ -93,9 +93,9 @@ void silofs_blobidx_setup(struct silofs_blobidx       *blobidx,
 void silofs_blobidx_assign(struct silofs_blobidx       *blobidx,
                            const struct silofs_blobidx *other);
 
-void silofs_blobidx_derive(struct silofs_blobidx       *blobidx,
-                           const struct silofs_mdigest *mdigest,
-                           const struct silofs_blobid  *blobid);
+void silofs_blobidx_derive(struct silofs_blobidx          *blobidx,
+                           const struct silofs_mdigest_hd *md_hd,
+                           const struct silofs_blobid     *blobid);
 
 bool silofs_blobidx_isequal(const struct silofs_blobidx *blobidx,
                             const struct silofs_blobidx *other);

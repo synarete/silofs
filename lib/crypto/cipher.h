@@ -29,7 +29,7 @@ struct silofs_ciargs {
 	enum silofs_cipher_mode mode;
 };
 
-/* wrapper over libgcrypt cipher */
+/* wrapper over libgcrypt cipher handle */
 struct silofs_cipher {
 	gcry_cipher_hd_t     ci_hd;
 	struct silofs_ciargs ci_args;

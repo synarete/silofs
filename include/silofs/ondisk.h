@@ -297,8 +297,11 @@
 /* cryptographic key (max) size */
 #define SILOFS_CRYPTO_KEY_SIZE (64)
 
-/* cryptographic initialization vector size */
+/* cryptographic IV size */
 #define SILOFS_CRYPTO_IV_SIZE (16)
+
+/* cryptographic MAC size */
+#define SILOFS_CRYPTO_MAC_SIZE (32)
 
 /* cryptographic hash-128-bits bytes-size */
 #define SILOFS_HASH128_LEN (16)
@@ -471,6 +474,10 @@ struct silofs_timespec {
 	uint64_t t_nsec;
 } silofs_attr_aligned16;
 
+struct silofs_uuid {
+	uint8_t id[SILOFS_UUID_SIZE];
+} silofs_attr_aligned16;
+
 struct silofs_hash128 {
 	uint8_t hash[SILOFS_HASH128_LEN];
 } silofs_attr_aligned16;
@@ -495,9 +502,9 @@ struct silofs_civ {
 	uint8_t iv[SILOFS_CRYPTO_IV_SIZE];
 } silofs_attr_aligned8;
 
-struct silofs_uuid {
-	uint8_t id[SILOFS_UUID_SIZE];
-} silofs_attr_aligned16;
+struct silofs_mac {
+	uint8_t mac[SILOFS_CRYPTO_MAC_SIZE];
+} silofs_attr_aligned32;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

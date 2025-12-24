@@ -14,17 +14,23 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_CRYPTO_H_
-#define SILOFS_CRYPTO_H_
+#ifndef SILOFS_HMAC_H_
+#define SILOFS_HMAC_H_
 
-#include "infra.h"
-#include "crypto/passwd.h"
-#include "crypto/ivkey.h"
-#include "crypto/mdigest.h"
-#include "crypto/kdf.h"
-#include "crypto/hmac.h"
-#include "crypto/cipher.h"
-#include "crypto/random.h"
-#include "crypto/gcry.h"
+#include <silofs/ondisk.h>
 
-#endif /* SILOFS_CRYPTO_H_ */
+/* wrapper over libgcrypt mac handle */
+struct silofs_hmac_hd {
+	gcry_mac_hd_t hm_hd;
+	int           hm_algo;
+};
+
+int silofs_hmac_init(struct silofs_hmac_hd *hm_hd);
+
+void silofs_hmac_fini(struct silofs_hmac_hd *hm_hd);
+
+int silofs_hmac_calc(struct silofs_hmac_hd    *hm_hd,
+                     const struct silofs_ckey *key, const void *dat,
+                     size_t dsz, struct silofs_mac *out_mac);
+
+#endif /* SILOFS_HMAC_H_ */

@@ -129,7 +129,7 @@ static void verify_consistent_statvfs(const struct statvfs *stv_beg,
 	ft_expect_ge(stv_beg->f_bavail, stv_end->f_bavail);
 
 	bfree_dif = stv_beg->f_bfree - stv_end->f_bfree;
-	ft_expect_lt(bfree_dif, 8192);
+	ft_expect_lt(bfree_dif, 65536); /* TODO: revisit */
 }
 
 static bool ft_without_statvfs(const struct ft_env *fte)

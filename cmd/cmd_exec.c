@@ -73,10 +73,13 @@ static void cmd_report_err_and_die(const struct silofs_env *env, int status,
 		cmd_die(err, "%s%sbad repo: %s", xmsg, xtag, rname);
 		break;
 	case SILOFS_ENOMBR:
-		cmd_die(err, "%s%smissing boot: %s", xmsg, xtag, rname);
+		cmd_die(err, "%s%smissing mbr: %s", xmsg, xtag, rname);
 		break;
 	case SILOFS_EBADMBR:
-		cmd_die(err, "%s%sbad boot: %s", xmsg, xtag, rname);
+		cmd_die(err, "%s%sbad mbr: %s", xmsg, xtag, rname);
+		break;
+	case SILOFS_EMBRMODE:
+		cmd_die(err, "%s%swrong mbr mode: %s", xmsg, xtag, rname);
 		break;
 	case SILOFS_EKEYEXPIRED:
 		cmd_die(err, "%s%sbad password: %s", xmsg, xtag, rname);

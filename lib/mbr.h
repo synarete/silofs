@@ -34,7 +34,7 @@ struct silofs_mbr_info {
 
 void silofs_mbi_init(struct silofs_mbr_info    *mbi,
                      const struct silofs_nmeta *nmeta,
-                     enum silofs_mbr_kind       kind);
+                     enum silofs_mbr_mode       mode);
 
 void silofs_mbi_fini(struct silofs_mbr_info *mbi);
 

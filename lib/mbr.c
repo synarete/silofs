@@ -47,17 +47,17 @@ static void mbr1k_set_flags(struct silofs_mbr1k *mbr1k, uint32_t flags)
 	mbr1k->mbr_flags = silofs_cpu_to_le32(flags);
 }
 
-static enum silofs_mbr_kind mbr1k_kind(const struct silofs_mbr1k *mbr1k)
+static enum silofs_mbr_mode mbr1k_mode(const struct silofs_mbr1k *mbr1k)
 {
-	const uint32_t mbr_kind = silofs_le32_to_cpu(mbr1k->mbr_kind);
+	const uint32_t mode = silofs_le32_to_cpu(mbr1k->mbr_mode);
 
-	return (enum silofs_mbr_kind)mbr_kind;
+	return (enum silofs_mbr_mode)mode;
 }
 
 static void
-mbr1k_set_kind(struct silofs_mbr1k *mbr1k, enum silofs_mbr_kind mbr_kind)
+mbr1k_set_mode(struct silofs_mbr1k *mbr1k, enum silofs_mbr_mode mode)
 {
-	mbr1k->mbr_kind = silofs_cpu_to_le32((uint32_t)mbr_kind);
+	mbr1k->mbr_mode = silofs_cpu_to_le32((uint32_t)mode);
 }
 
 static void
@@ -231,13 +231,13 @@ mbr1k_verify(const struct silofs_mbr1k *mbr1k, const struct silofs_mdigest *md)
 	return 0;
 }
 
-static void mbr1k_init(struct silofs_mbr1k *mbr1k, enum silofs_mbr_kind kind)
+static void mbr1k_init(struct silofs_mbr1k *mbr1k, enum silofs_mbr_mode mode)
 {
 	silofs_memzero(mbr1k, sizeof(*mbr1k));
 	mbr1k_set_magic(mbr1k, SILOFS_MBR_MAGIC);
 	mbr1k_set_version(mbr1k, SILOFS_FMT_VERSION);
 	mbr1k_reset_root(mbr1k);
-	mbr1k_set_kind(mbr1k, kind);
+	mbr1k_set_mode(mbr1k, mode);
 	mbr1k_set_flags(mbr1k, 0);
 	mbr1k_gen_uuid(mbr1k);
 }
@@ -428,10 +428,10 @@ static bool pmeta_isarix(const struct silofs_pmeta *pmeta)
 
 void silofs_mbi_init(struct silofs_mbr_info    *mbi,
                      const struct silofs_nmeta *nmeta,
-                     enum silofs_mbr_kind       kind)
+                     enum silofs_mbr_mode       mode)
 {
 	silofs_nmeta_assign(&mbi->mb_nmeta, nmeta);
-	mbr1k_init(&mbi->mb_mbr1k, kind);
+	mbr1k_init(&mbi->mb_mbr1k, mode);
 }
 
 void silofs_mbi_fini(struct silofs_mbr_info *mbi)
@@ -444,10 +444,10 @@ int silofs_mbi_uber_root(const struct silofs_mbr_info *mbi,
                          struct silofs_pmeta          *out_pmeta)
 {
 	const struct silofs_mbr1k *mbr1k = &mbi->mb_mbr1k;
-	const enum silofs_mbr_kind kind  = mbr1k_kind(mbr1k);
+	const enum silofs_mbr_mode mode  = mbr1k_mode(mbr1k);
 
-	if (kind != SILOFS_MBR_FS) {
-		return -SILOFS_ENOENT;
+	if (mode != SILOFS_MBR_FS) {
+		return -SILOFS_EMBRMODE;
 	}
 	mbr1k_root(mbr1k, out_pmeta);
 	if (!pmeta_isuber(out_pmeta)) {
@@ -460,10 +460,10 @@ int silofs_mbi_arix_root(const struct silofs_mbr_info *mbi,
                          struct silofs_pmeta          *out_pmeta)
 {
 	const struct silofs_mbr1k *mbr1k = &mbi->mb_mbr1k;
-	const enum silofs_mbr_kind kind  = mbr1k_kind(mbr1k);
+	const enum silofs_mbr_mode mode  = mbr1k_mode(mbr1k);
 
-	if (kind != SILOFS_MBR_AR) {
-		return -SILOFS_ENOENT;
+	if (mode != SILOFS_MBR_AR) {
+		return -SILOFS_EMBRMODE;
 	}
 	mbr1k_root(mbr1k, out_pmeta);
 	if (!pmeta_isarix(out_pmeta)) {
@@ -476,13 +476,13 @@ int silofs_mbi_set_root(struct silofs_mbr_info    *mbi,
                         const struct silofs_pmeta *pmeta)
 {
 	struct silofs_mbr1k       *mbr1k = &mbi->mb_mbr1k;
-	const enum silofs_mbr_kind kind  = mbr1k_kind(mbr1k);
+	const enum silofs_mbr_mode mode  = mbr1k_mode(mbr1k);
 
-	if ((kind == SILOFS_MBR_FS) && !pmeta_isuber(pmeta)) {
-		return -SILOFS_EINVAL;
+	if ((mode == SILOFS_MBR_FS) && !pmeta_isuber(pmeta)) {
+		return -SILOFS_EMBRMODE;
 	}
-	if ((kind == SILOFS_MBR_AR) && !pmeta_isarix(pmeta)) {
-		return -SILOFS_EINVAL;
+	if ((mode == SILOFS_MBR_AR) && !pmeta_isarix(pmeta)) {
+		return -SILOFS_EMBRMODE;
 	}
 	mbr1k_set_root(mbr1k, pmeta);
 	return 0;
@@ -492,10 +492,10 @@ int silofs_mbi_sbaddr(const struct silofs_mbr_info *mbi,
                       struct silofs_uaddr          *out_sb_uaddr)
 {
 	const struct silofs_mbr1k *mbr1k = &mbi->mb_mbr1k;
-	const enum silofs_mbr_kind kind  = mbr1k_kind(mbr1k);
+	const enum silofs_mbr_mode mode  = mbr1k_mode(mbr1k);
 
-	if (kind != SILOFS_MBR_FS) {
-		return -SILOFS_EINVAL;
+	if (mode != SILOFS_MBR_FS) {
+		return -SILOFS_EMBRMODE;
 	}
 	mbr1k_sb_addr(mbr1k, out_sb_uaddr);
 	return 0;
@@ -505,10 +505,10 @@ int silofs_mbi_set_sbaddr(struct silofs_mbr_info    *mbi,
                           const struct silofs_uaddr *sb_uaddr)
 {
 	struct silofs_mbr1k       *mbr1k = &mbi->mb_mbr1k;
-	const enum silofs_mbr_kind kind  = mbr1k_kind(mbr1k);
+	const enum silofs_mbr_mode mode  = mbr1k_mode(mbr1k);
 
-	if (kind != SILOFS_MBR_FS) {
-		return -SILOFS_EINVAL;
+	if (mode != SILOFS_MBR_FS) {
+		return -SILOFS_EMBRMODE;
 	}
 	mbr1k_set_sb_addr(&mbi->mb_mbr1k, sb_uaddr);
 	return 0;
@@ -518,12 +518,6 @@ static void mbi_get_mbr1k(const struct silofs_mbr_info *mbi,
                           struct silofs_mbr1k          *out_mbr1k)
 {
 	memcpy(out_mbr1k, &mbi->mb_mbr1k, sizeof(*out_mbr1k));
-}
-
-static void
-mbi_set_mbr1k(struct silofs_mbr_info *mbi, const struct silofs_mbr1k *mbr1k)
-{
-	memcpy(&mbi->mb_mbr1k, mbr1k, sizeof(mbi->mb_mbr1k));
 }
 
 int silofs_mbi_export(const struct silofs_mbr_info *mbi,
@@ -549,6 +543,21 @@ out:
 	return err;
 }
 
+static enum silofs_mbr_mode mbi_mode(const struct silofs_mbr_info *mbi)
+{
+	return mbr1k_mode(&mbi->mb_mbr1k);
+}
+
+static int
+mbi_set_mbr1k(struct silofs_mbr_info *mbi, const struct silofs_mbr1k *mbr1k)
+{
+	if (mbi_mode(mbi) != mbr1k_mode(mbr1k)) {
+		return -SILOFS_EMBRMODE;
+	}
+	memcpy(&mbi->mb_mbr1k, mbr1k, sizeof(mbi->mb_mbr1k));
+	return 0;
+}
+
 int silofs_mbi_import(struct silofs_mbr_info    *mbi,
                       const struct silofs_mbref *mbref,
                       const struct silofs_mbr1k *mbr1k_enc)
@@ -563,13 +572,13 @@ int silofs_mbi_import(struct silofs_mbr_info    *mbi,
 	}
 	err = mbraux_verify_mbref(&aux, mbref, mbr1k_enc);
 	if (err) {
-		return err;
+		goto out;
 	}
 	err = mbraux_decode_mbr1k(&aux, mbr1k_enc, &mbr1k);
 	if (err) {
 		goto out;
 	}
-	mbi_set_mbr1k(mbi, &mbr1k);
+	err = mbi_set_mbr1k(mbi, &mbr1k);
 out:
 	mbraux_fini(&aux);
 	return err;

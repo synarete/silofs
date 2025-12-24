@@ -320,8 +320,8 @@
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-/* global boot-record sub-types */
-enum silofs_mbr_kind {
+/* main boot-record sub-modes */
+enum silofs_mbr_mode {
 	SILOFS_MBR_NONE = 0,
 	SILOFS_MBR_FS   = 1,
 	SILOFS_MBR_AR   = 2,
@@ -597,7 +597,7 @@ struct silofs_mbr1k {
 	uint64_t                mbr_magic;
 	uint64_t                mbr_version;
 	struct silofs_uuid      mbr_uuid;
-	uint32_t                mbr_kind;
+	uint32_t                mbr_mode;
 	uint32_t                mbr_flags;
 	uint8_t                 mbr_reserved1[24];
 	struct silofs_pmeta192b mbr_root;

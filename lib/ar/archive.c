@@ -353,9 +353,7 @@ static int arc_export_ar_mbr(const struct silofs_ar_ctx *ar_ctx,
                              struct silofs_mbref        *out_mbref,
                              struct silofs_mbr1k        *out_mbr1k)
 {
-	const struct silofs_mbr_info *ar_mbi = &ar_ctx->env->mbis.ar_mbi;
-
-	return silofs_mbi_export(ar_mbi, out_mbref, out_mbr1k);
+	return silofs_env_export_ar_mbr(ar_ctx->env, out_mbref, out_mbr1k);
 }
 
 static int arc_send_mbr1k(const struct silofs_ar_ctx *ar_ctx,

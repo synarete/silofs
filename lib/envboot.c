@@ -84,13 +84,6 @@ env_load_mbr_at(const struct silofs_env *env, const struct silofs_mbref *mbref,
 	return 0;
 }
 
-static int
-env_export_fs_mbr(struct silofs_env *env, struct silofs_mbref *out_mbref,
-                  struct silofs_mbr1k *out_mbr1k)
-{
-	return silofs_mbi_export(&env->mbis.fs_mbi, out_mbref, out_mbr1k);
-}
-
 int silofs_env_commit_fs_mbr(struct silofs_env   *env,
                              struct silofs_mbref *out_mbref)
 {
@@ -99,7 +92,7 @@ int silofs_env_commit_fs_mbr(struct silofs_env   *env,
 	};
 	int err;
 
-	err = env_export_fs_mbr(env, out_mbref, &mbr1k);
+	err = silofs_env_export_fs_mbr(env, out_mbref, &mbr1k);
 	if (err) {
 		return err;
 	}

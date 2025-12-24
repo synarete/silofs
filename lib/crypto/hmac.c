@@ -91,24 +91,18 @@ static int hmac_feed(struct silofs_hmac_hd *hm_hd, const void *dat, size_t dsz)
 static int hmac_seep(struct silofs_hmac_hd *hm_hd, struct silofs_mac *out_mac)
 {
 	gcry_error_t err;
-	unsigned int maclen;
-	size_t       len = 0;
+	size_t       maclen;
 
 	maclen = gcry_mac_get_algo_maclen(hm_hd->hm_algo);
 	if (maclen != sizeof(out_mac->mac)) {
-		silofs_log_warn("bad maclen: algo=%d maclen=%u",
+		silofs_log_warn("bad maclen: algo=%d maclen=%zu",
 		                hm_hd->hm_algo, maclen);
 		return -SILOFS_EINVAL;
 	}
 	mac_reset(out_mac);
-	err = gcry_mac_read(hm_hd->hm_hd, out_mac->mac, &len);
+	err = gcry_mac_read(hm_hd->hm_hd, out_mac->mac, &maclen);
 	if (err) {
 		return silofs_gcrypt_status(err, "gcry_mac_read");
-	}
-	if (len != maclen) {
-		silofs_log_warn("bad mac-read len: algo=%d len=%zu",
-		                hm_hd->hm_algo, len);
-		return -SILOFS_EINVAL;
 	}
 	return 0;
 }

@@ -623,7 +623,7 @@ env_recalc_fs_mbref(struct silofs_env *env, struct silofs_mbref *out_mbref)
 {
 	struct silofs_mbr1k mbr1k = { .mbr_magic = UINT64_MAX };
 
-	return silofs_mbi_export(&env->mbis.fs_mbi, out_mbref, &mbr1k);
+	return silofs_env_export_fs_mbr(env, out_mbref, &mbr1k);
 }
 
 static int
@@ -670,4 +670,18 @@ int silofs_env_forkfs(struct silofs_env *env, struct silofs_mbrefs *out_mbrefs)
 	err = env_do_forkfs(env, out_mbrefs);
 	silofs_sbi_decref(sbi);
 	return err;
+}
+
+int silofs_env_export_fs_mbr(struct silofs_env   *env,
+                             struct silofs_mbref *out_mbref,
+                             struct silofs_mbr1k *out_mbr1k)
+{
+	return silofs_mbi_export(&env->mbis.fs_mbi, out_mbref, out_mbr1k);
+}
+
+int silofs_env_export_ar_mbr(struct silofs_env   *env,
+                             struct silofs_mbref *out_mbref,
+                             struct silofs_mbr1k *out_mbr1k)
+{
+	return silofs_mbi_export(&env->mbis.ar_mbi, out_mbref, out_mbr1k);
 }

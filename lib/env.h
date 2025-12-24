@@ -123,6 +123,14 @@ bool silofs_env_isrdonlyfs(const struct silofs_env *env);
 int silofs_env_forkfs(struct silofs_env    *env,
                       struct silofs_mbrefs *out_mbrefs);
 
+int silofs_env_export_fs_mbr(struct silofs_env   *env,
+                             struct silofs_mbref *out_mbref,
+                             struct silofs_mbr1k *out_mbr1k);
+
+int silofs_env_export_ar_mbr(struct silofs_env   *env,
+                             struct silofs_mbref *out_mbref,
+                             struct silofs_mbr1k *out_mbr1k);
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_env_sense_mbr(struct silofs_env         *env,

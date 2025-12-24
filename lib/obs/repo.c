@@ -22,18 +22,9 @@
 #include "infra.h"
 #include "repo.h"
 
-enum {
-	RCEK_BLOBID = 1,
-	RCEK_LSID   = 2,
-};
-
 /* repo cached element key */
 struct silofs_repo_cek {
-	union {
-		struct silofs_lsid   lsid;
-		struct silofs_blobid blobid;
-	} u;
-	short kind;
+	struct silofs_lsid lsid;
 };
 
 /* repo cached element */
@@ -75,8 +66,6 @@ static const struct silofs_repo_defs repo_defs = {
 
 /* local functions */
 static int repo_close(struct silofs_repo *repo);
-static void
-repo_evict_blobf(struct silofs_repo *repo, struct silofs_blobf *blobf);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
@@ -406,57 +395,20 @@ rce_init2(struct silofs_repo_ce *rce, const struct silofs_lsid *lsid)
 {
 	silofs_list_head_init(&rce->rce_htb_lh);
 	silofs_list_head_init(&rce->rce_lru_lh);
-	silofs_lsid_assign(&rce->rce_key.u.lsid, lsid);
-	rce->rce_key.kind = RCEK_LSID;
+	silofs_lsid_assign(&rce->rce_key.lsid, lsid);
 }
 
 static void rce_fini(struct silofs_repo_ce *rce)
 {
 	silofs_list_head_fini(&rce->rce_htb_lh);
 	silofs_list_head_fini(&rce->rce_lru_lh);
-	silofs_lsid_reset(&rce->rce_key.u.lsid);
-	rce->rce_key.kind = -1;
+	silofs_lsid_reset(&rce->rce_key.lsid);
 }
 
 static bool
 rce_has_lsid(const struct silofs_repo_ce *rce, const struct silofs_lsid *lsid)
 {
-	return (rce->rce_key.kind == RCEK_LSID) &&
-	       silofs_lsid_isequal(&rce->rce_key.u.lsid, lsid);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static struct silofs_blobf *blobf_from_rce(const struct silofs_repo_ce *rce)
-{
-	const struct silofs_blobf *blobf;
-
-	blobf = container_of2(rce, struct silofs_blobf, blf_rce);
-	return unconst(blobf);
-}
-
-static void blobf_fini(struct silofs_blobf *blobf)
-{
-	rce_fini(&blobf->blf_rce);
-	blobf->blf_size = -1;
-	blobf->blf_fd   = -1;
-}
-
-static int blobf_close(struct silofs_blobf *blobf)
-{
-	return do_closefd(&blobf->blf_fd);
-}
-
-static int blobf_fsync(const struct silofs_blobf *blobf)
-{
-	return do_fsync(blobf->blf_fd);
-}
-
-static void blobf_del(struct silofs_blobf *blobf, struct silofs_alloc *alloc)
-{
-	blobf_close(blobf);
-	blobf_fini(blobf);
-	silofs_memfree(alloc, blobf, sizeof(*blobf), 0);
+	return silofs_lsid_isequal(&rce->rce_key.lsid, lsid);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -488,7 +440,7 @@ static void lsegf_fini(struct silofs_lsegf *lsegf)
 
 static ssize_t lsegf_capacity(const struct silofs_lsegf *lsegf)
 {
-	const struct silofs_lsid *lsid = &lsegf->lsf_rce.rce_key.u.lsid;
+	const struct silofs_lsid *lsid = &lsegf->lsf_rce.rce_key.lsid;
 
 	return (ssize_t)silofs_lsid_size(lsid);
 }
@@ -961,7 +913,7 @@ repo_htbl_insert_lsegf(struct silofs_repo *repo, struct silofs_lsegf *lsegf)
 	struct silofs_repo_ce   *rce = &lsegf->lsf_rce;
 	struct silofs_list_head *lst;
 
-	lst = repo_htbl_list_of_lsid(repo, &rce->rce_key.u.lsid);
+	lst = repo_htbl_list_of_lsid(repo, &rce->rce_key.lsid);
 	list_push_front(lst, &rce->rce_htb_lh);
 	repo->re_htbl.rh_size += 1;
 }
@@ -973,12 +925,6 @@ repo_htbl_remove(struct silofs_repo *repo, struct silofs_repo_ce *rce)
 
 	list_head_remove(&rce->rce_htb_lh);
 	repo->re_htbl.rh_size -= 1;
-}
-
-static void
-repo_htbl_remove_blobf(struct silofs_repo *repo, struct silofs_blobf *blobf)
-{
-	repo_htbl_remove(repo, &blobf->blf_rce);
 }
 
 static void
@@ -1005,12 +951,6 @@ static void
 repo_lruq_remove(struct silofs_repo *repo, struct silofs_repo_ce *rce)
 {
 	listq_remove(&repo->re_lruq, &rce->rce_lru_lh);
-}
-
-static void
-repo_lruq_remove_blobf(struct silofs_repo *repo, struct silofs_blobf *blobf)
-{
-	repo_lruq_remove(repo, &blobf->blf_rce);
 }
 
 static void
@@ -1111,24 +1051,16 @@ repo_prevof(const struct silofs_repo *repo, const struct silofs_repo_ce *rce)
 static int repo_do_fsync_all(struct silofs_repo *repo)
 {
 	const struct silofs_repo_ce *rce   = nullptr;
-	const struct silofs_blobf   *blobf = nullptr;
 	const struct silofs_lsegf   *lsegf = nullptr;
-	int                          ret   = 0;
-	int                          err   = 0;
+	int                          err, ret;
 
+	ret = 0;
 	rce = repo_prevof(repo, nullptr);
 	while (rce != nullptr) {
-		if (rce->rce_key.kind == RCEK_BLOBID) {
-			blobf = blobf_from_rce(rce);
-			err   = blobf_fsync(blobf);
-		} else if (rce->rce_key.kind == RCEK_LSID) {
-			lsegf = lsegf_from_rce(rce);
-			err   = lsegf_fsync2(lsegf);
-		} else {
-			silofs_panic("bad lruq: kind=%d", rce->rce_key.kind);
-		}
-		ret = err || ret;
-		rce = repo_prevof(repo, rce);
+		lsegf = lsegf_from_rce(rce);
+		err   = lsegf_fsync2(lsegf);
+		ret   = err || ret;
+		rce   = repo_prevof(repo, rce);
 	}
 	return ret;
 }
@@ -1146,18 +1078,10 @@ int silofs_repo_fsync_all(struct silofs_repo *repo)
 static void
 repo_evict_one(struct silofs_repo *repo, struct silofs_repo_ce *rce)
 {
-	struct silofs_blobf *blobf = nullptr;
-	struct silofs_lsegf *lsegf = nullptr;
+	struct silofs_lsegf *lsegf;
 
-	if (rce->rce_key.kind == RCEK_BLOBID) {
-		blobf = blobf_from_rce(rce);
-		repo_evict_blobf(repo, blobf);
-	} else if (rce->rce_key.kind == RCEK_LSID) {
-		lsegf = lsegf_from_rce(rce);
-		repo_evict_lsegf(repo, lsegf);
-	} else {
-		silofs_panic("bad lruq: kind=%d", rce->rce_key.kind);
-	}
+	lsegf = lsegf_from_rce(rce);
+	repo_evict_lsegf(repo, lsegf);
 }
 
 static void repo_evict_all(struct silofs_repo *repo)
@@ -1223,16 +1147,6 @@ void silofs_repo_relax(struct silofs_repo *repo)
 	repo_evict_some(repo, 1);
 	silofs_bstore_relax(&repo->re_bstore);
 	repo_unlock(repo);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static void
-repo_evict_blobf(struct silofs_repo *repo, struct silofs_blobf *blobf)
-{
-	repo_htbl_remove_blobf(repo, blobf);
-	repo_lruq_remove_blobf(repo, blobf);
-	blobf_del(blobf, repo->re.alloc);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1305,7 +1219,7 @@ static void repo_objs_pathname_by(const struct silofs_repo  *repo,
                                   struct silofs_strbuf      *out_sbuf)
 {
 	const struct silofs_repo_ce *rce  = &lsegf->lsf_rce;
-	const struct silofs_lsid    *lsid = &rce->rce_key.u.lsid;
+	const struct silofs_lsid    *lsid = &rce->rce_key.lsid;
 
 	repo_objs_pathname_of(repo, lsid, out_sbuf);
 }

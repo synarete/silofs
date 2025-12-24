@@ -169,7 +169,6 @@ static void cmd_json_decref(json_t *root)
 static const char cmd_jref_key_version[] = "version";
 static const char cmd_jref_key_fmtvers[] = "fmtvers";
 static const char cmd_jref_key_btime[]   = "btime";
-static const char cmd_jref_key_mode[]    = "mode";
 static const char cmd_jref_key_mbref[]   = "mbref";
 
 static void cmd_jref_add_version(json_t *jobj)
@@ -196,14 +195,6 @@ static void cmd_jref_add_btime(json_t *jobj)
 	cmd_json_object_set_new(jobj, cmd_jref_key_btime, jsub);
 }
 
-static void cmd_jref_add_mode(json_t *jobj, bool ar)
-{
-	json_t *jsub;
-
-	jsub = cmd_json_string(ar ? "archive" : "filesystem");
-	cmd_json_object_set_new(jobj, cmd_jref_key_mode, jsub);
-}
-
 static void cmd_jref_add_mbref(json_t *jobj, const struct silofs_mbref *mbref)
 {
 	json_t *jsub;
@@ -212,7 +203,7 @@ static void cmd_jref_add_mbref(json_t *jobj, const struct silofs_mbref *mbref)
 	cmd_json_object_set_new(jobj, cmd_jref_key_mbref, jsub);
 }
 
-static char *cmd_encode_jref(const struct silofs_mbref *mbref, bool ar)
+static char *cmd_encode_jref(const struct silofs_mbref *mbref)
 {
 	json_t *jroot = nullptr;
 	char   *jtxt  = nullptr;
@@ -221,7 +212,6 @@ static char *cmd_encode_jref(const struct silofs_mbref *mbref, bool ar)
 	cmd_jref_add_version(jroot);
 	cmd_jref_add_fmtrev(jroot);
 	cmd_jref_add_btime(jroot);
-	cmd_jref_add_mode(jroot, ar);
 	cmd_jref_add_mbref(jroot, mbref);
 	jtxt = cmd_json_dumps(jroot);
 	cmd_json_decref(jroot);
@@ -256,28 +246,6 @@ static void cmd_jref_get_btime(const json_t *jobj)
 	(void)jsub;
 }
 
-static void cmd_jref_get_mode(const json_t *jobj, bool want_archive)
-{
-	json_t     *jsub;
-	const char *str;
-	int         ar, fs;
-
-	jsub = cmd_json_object_get_string(jobj, cmd_jref_key_mode);
-	str  = json_string_value(jsub);
-	ar   = !strcmp(str, "archive");
-	fs   = !strcmp(str, "filesystem");
-
-	if (!ar && !fs) {
-		cmd_diez("json: illegal mode: '%s'", str);
-	}
-	if (fs && want_archive) {
-		cmd_diez("json: bad mode for filesystem: '%s'", str);
-	}
-	if (ar && !want_archive) {
-		cmd_diez("json: bad mode for archive: '%s'", str);
-	}
-}
-
 static void
 cmd_jref_get_mbref(const json_t *jobj, struct silofs_mbref *out_mbref)
 {
@@ -293,8 +261,7 @@ cmd_jref_get_mbref(const json_t *jobj, struct silofs_mbref *out_mbref)
 	}
 }
 
-static void cmd_decode_jref(const char *jtxt, bool want_archive,
-                            struct silofs_mbref *out_mbref)
+static void cmd_decode_jref(const char *jtxt, struct silofs_mbref *out_mbref)
 {
 	json_t *jroot;
 
@@ -302,7 +269,6 @@ static void cmd_decode_jref(const char *jtxt, bool want_archive,
 	cmd_jref_get_version(jroot);
 	cmd_jref_get_fmtvers(jroot);
 	cmd_jref_get_btime(jroot);
-	cmd_jref_get_mode(jroot, want_archive);
 	cmd_jref_get_mbref(jroot, out_mbref);
 	cmd_json_decref(jroot);
 }
@@ -361,12 +327,12 @@ static void cmd_save_jref_text(int dfd, const char *name, const char *jtxt)
 	}
 }
 
-static void cmd_save_jref_at(int dfd, const char *name,
-                             const struct silofs_mbref *mbref, bool ar)
+static void
+cmd_save_jref_at(int dfd, const char *name, const struct silofs_mbref *mbref)
 {
 	char *jtxt;
 
-	jtxt = cmd_encode_jref(mbref, ar);
+	jtxt = cmd_encode_jref(mbref);
 	cmd_save_jref_text(dfd, name, jtxt);
 	free(jtxt);
 }
@@ -377,7 +343,7 @@ void cmd_save_fs_jref(const struct silofs_boot_args *boot_args,
 	int dfd = -1;
 
 	cmd_open_repodir(boot_args, &dfd);
-	cmd_save_jref_at(dfd, boot_args->fs_name, fs_mbref, false);
+	cmd_save_jref_at(dfd, boot_args->fs_name, fs_mbref);
 	silofs_sys_closefd(&dfd);
 }
 
@@ -387,7 +353,7 @@ void cmd_save_ar_jref(const struct silofs_boot_args *boot_args,
 	int dfd = -1;
 
 	cmd_open_repodir(boot_args, &dfd);
-	cmd_save_jref_at(dfd, boot_args->ar_name, ar_mbref, true);
+	cmd_save_jref_at(dfd, boot_args->ar_name, ar_mbref);
 	silofs_sys_closefd(&dfd);
 }
 
@@ -424,25 +390,25 @@ static char *cmd_load_jref_text(int dfd, const char *name)
 	return jtxt;
 }
 
-static void cmd_load_jref_at(int dfd, const char *name, bool want_archive,
-                             struct silofs_mbref *out_mbref)
+static void
+cmd_load_jref_at(int dfd, const char *name, struct silofs_mbref *out_mbref)
 {
 	char *jtxt = nullptr;
 
 	jtxt = cmd_load_jref_text(dfd, name);
-	cmd_decode_jref(jtxt, want_archive, out_mbref);
+	cmd_decode_jref(jtxt, out_mbref);
 	cmd_pstrfree(&jtxt);
 }
 
-static void cmd_load_jref_of(const struct silofs_boot_args *boot_args,
-                             bool want_archive, struct silofs_mbref *out_mbref)
+static void cmd_load_jref_of(const struct silofs_boot_args *boot_args, bool ar,
+                             struct silofs_mbref *out_mbref)
 {
 	const char *name;
 	int         dfd = -1;
 
-	name = want_archive ? boot_args->ar_name : boot_args->fs_name;
+	name = ar ? boot_args->ar_name : boot_args->fs_name;
 	cmd_open_repodir(boot_args, &dfd);
-	cmd_load_jref_at(dfd, name, want_archive, out_mbref);
+	cmd_load_jref_at(dfd, name, out_mbref);
 	silofs_sys_closefd(&dfd);
 }
 

@@ -176,11 +176,11 @@ backtrace_addrs_to_str(char *buf, size_t bsz, void **bt_arr, int bt_len)
 
 static void silofs_dump_addr2line(void)
 {
-	void     *bt_arr[64]     = { nullptr };
-	char      bt_addrs[1024] = "";
-	const int bt_cnt         = (int)(SILOFS_ARRAY_SIZE(bt_arr));
-	int       bt_len;
+	void *bt_arr[64]     = {};
+	char  bt_addrs[1024] = "";
+	int   bt_cnt, bt_len;
 
+	bt_cnt = (int)(SILOFS_ARRAY_SIZE(bt_arr));
 	bt_len = unw_backtrace(bt_arr, bt_cnt);
 	backtrace_addrs_to_str(bt_addrs, sizeof(bt_addrs) - 1, bt_arr, bt_len);
 	silofs_log_error("addr2line -a -C -e %s -f -p -s %s",

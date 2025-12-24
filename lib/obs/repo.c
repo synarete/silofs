@@ -1202,13 +1202,18 @@ static void repo_evict_many(struct silofs_repo *repo)
  * Have explicit upper-limit to cached lsegs, based on the process' rlimit
  * RLIMIT_NOFILE and memory limits.
  */
+static void repo_do_evict_overpop(struct silofs_repo *repo, size_t cnt)
+{
+	repo_evict_some(repo, cnt);
+}
+
 static void repo_try_evict_overpop(struct silofs_repo *repo)
 {
 	const size_t qcur = repo->re_lruq.sz;
 	const size_t qmax = 256;
 
 	if (qcur > qmax) {
-		repo_evict_some(repo, silofs_min(qcur - qmax, 2));
+		repo_do_evict_overpop(repo, silofs_min(qcur - qmax, 2));
 	}
 }
 

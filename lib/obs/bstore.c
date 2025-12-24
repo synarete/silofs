@@ -37,7 +37,7 @@ static int do_closefd(int *pfd)
 
 	err = silofs_sys_closefd(pfd);
 	if (err) {
-		log_warn("close error: fd=%d err=%d", *pfd, err);
+		log_err("close error: fd=%d err=%d", *pfd, err);
 	}
 	return err;
 }
@@ -75,6 +75,7 @@ do_openat(int dfd, const char *pathname, int o_flags, mode_t mode, int *out_fd)
 		log_warn("openat error: dfd=%d pathname=%s o_flags=0x%x "
 		         "mode=0%o err=%d",
 		         dfd, pathname, o_flags, mode, err);
+		silofs_assert_ok(err);
 	}
 	return err;
 }
@@ -836,26 +837,13 @@ static int bstore_spawn_blob(struct silofs_bstore        *bstore,
 	return 0;
 }
 
-static int bstore_spawn_blob2(struct silofs_bstore        *bstore,
-                              const struct silofs_blobidx *blobidx)
-{
-	struct silofs_blobfile *bf = nullptr;
-
-	return bstore_spawn_blob(bstore, blobidx, &bf);
-}
-
 static int bstore_spawn_and_cache_bf(struct silofs_bstore        *bstore,
                                      const struct silofs_blobidx *blobidx,
                                      struct silofs_blobfile     **out_bf)
 {
 	int err;
 
-	*out_bf = bstore_lookup_cached_bf(bstore, blobidx);
-	if (*out_bf != nullptr) {
-		return -SILOFS_EEXIST;
-	}
 	bstore_relax_cache(bstore);
-
 	err = bstore_spawn_blob(bstore, blobidx, out_bf);
 	if (err) {
 		return err;
@@ -890,18 +878,37 @@ static int bstore_stage_and_cache_bf(struct silofs_bstore        *bstore,
 {
 	int err;
 
-	*out_bf = bstore_lookup_cached_bf(bstore, blobidx);
-	if (*out_bf != nullptr) {
-		return 0; /* cache hit */
-	}
 	bstore_relax_cache(bstore);
-
 	err = bstore_stage_blob(bstore, blobidx, out_bf);
 	if (err) {
 		return err;
 	}
 	bstore_insert_cached_bf(bstore, *out_bf);
 	return 0;
+}
+
+static int bstore_require_cached_bf(struct silofs_bstore        *bstore,
+                                    const struct silofs_blobidx *blobidx,
+                                    struct silofs_blobfile     **out_bf)
+{
+	int err = 0;
+
+	*out_bf = bstore_lookup_cached_bf(bstore, blobidx);
+	if (*out_bf == nullptr) {
+		err = bstore_stage_and_cache_bf(bstore, blobidx, out_bf);
+	}
+	return err;
+}
+
+static void bstore_require_no_cached_bf(struct silofs_bstore        *bstore,
+                                        const struct silofs_blobidx *blobidx)
+{
+	struct silofs_blobfile *bf = nullptr;
+
+	bf = bstore_lookup_cached_bf(bstore, blobidx);
+	if (bf != nullptr) {
+		bstore_remove_cached_bf(bstore, bf);
+	}
 }
 
 static void bstore_blobidx_of(struct silofs_bstore       *bstore,
@@ -918,6 +925,10 @@ int silofs_bstore_spawn_blob(struct silofs_bstore       *bstore,
 	struct silofs_blobfile *bf = nullptr;
 
 	bstore_blobidx_of(bstore, blobid, &blobidx);
+	bf = bstore_lookup_cached_bf(bstore, &blobidx);
+	if (bf != nullptr) {
+		return -SILOFS_EEXIST;
+	}
 	return bstore_spawn_and_cache_bf(bstore, &blobidx, &bf);
 }
 
@@ -927,7 +938,7 @@ static int bstore_remove_blob(struct silofs_bstore        *bstore,
 	struct silofs_blobfile *bf  = nullptr;
 	int                     err = 0;
 
-	err = bstore_stage_and_cache_bf(bstore, blobidx, &bf);
+	err = bstore_require_cached_bf(bstore, blobidx, &bf);
 	if (err) {
 		return err;
 	}
@@ -955,7 +966,7 @@ bstore_stat_blob(struct silofs_bstore        *bstore,
 	struct silofs_blobfile *bf  = nullptr;
 	int                     err = 0;
 
-	err = bstore_stage_and_cache_bf(bstore, blobidx, &bf);
+	err = bstore_require_cached_bf(bstore, blobidx, &bf);
 	if (err) {
 		return err;
 	}
@@ -996,14 +1007,18 @@ int silofs_bstore_stage_blob(struct silofs_bstore       *bstore,
 static int bstore_require_blob(struct silofs_bstore        *bstore,
                                const struct silofs_blobidx *blobidx)
 {
-	struct stat st;
-	int         err;
+	struct silofs_blobfile *bf = nullptr;
+	int                     err;
 
-	err = bstore_stat_blob(bstore, blobidx, &st);
-	if (err && (err == -ENOENT)) {
-		err = bstore_spawn_blob2(bstore, blobidx);
+	err = bstore_sense_blob(bstore, blobidx);
+	if (!err) {
+		return 0; /* OK */
 	}
-	return err;
+	if (err != -ENOENT) {
+		bstore_require_no_cached_bf(bstore, blobidx);
+		return err; /* I/O error */
+	}
+	return bstore_spawn_and_cache_bf(bstore, blobidx, &bf);
 }
 
 int silofs_bstore_require_blob(struct silofs_bstore       *bstore,
@@ -1025,7 +1040,7 @@ static int bstore_require_bpos(struct silofs_bstore        *bstore,
 	if (err) {
 		return err;
 	}
-	err = bstore_stage_and_cache_bf(bstore, blobidx, &bf);
+	err = bstore_require_cached_bf(bstore, blobidx, &bf);
 	if (err) {
 		return err;
 	}
@@ -1052,7 +1067,7 @@ static int bstore_access_bpos(struct silofs_bstore        *bstore,
 	struct silofs_blobfile *bf = nullptr;
 	int                     err;
 
-	err = bstore_stage_and_cache_bf(bstore, blobidx, &bf);
+	err = bstore_require_cached_bf(bstore, blobidx, &bf);
 	if (err) {
 		return err;
 	}
@@ -1078,7 +1093,7 @@ static int bstore_flush_blob(struct silofs_bstore        *bstore,
 	struct silofs_blobfile *bf  = nullptr;
 	int                     err = 0;
 
-	err = bstore_stage_and_cache_bf(bstore, blobidx, &bf);
+	err = bstore_require_cached_bf(bstore, blobidx, &bf);
 	if (err) {
 		return err;
 	}
@@ -1104,7 +1119,7 @@ static int bstore_punch_blob(struct silofs_bstore        *bstore,
 	struct silofs_blobfile *bf  = nullptr;
 	int                     err = 0;
 
-	err = bstore_stage_and_cache_bf(bstore, blobidx, &bf);
+	err = bstore_require_cached_bf(bstore, blobidx, &bf);
 	if (err) {
 		return err;
 	}
@@ -1131,7 +1146,7 @@ static int bstore_read_blob(struct silofs_bstore        *bstore,
 	struct silofs_blobfile *bf  = nullptr;
 	int                     err = 0;
 
-	err = bstore_stage_and_cache_bf(bstore, blobidx, &bf);
+	err = bstore_require_cached_bf(bstore, blobidx, &bf);
 	if (err) {
 		return err;
 	}
@@ -1159,7 +1174,7 @@ static int bstore_write_blob(struct silofs_bstore        *bstore,
 	struct silofs_blobfile *bf  = nullptr;
 	int                     err = 0;
 
-	err = bstore_stage_and_cache_bf(bstore, blobidx, &bf);
+	err = bstore_require_cached_bf(bstore, blobidx, &bf);
 	if (err) {
 		return err;
 	}
@@ -1187,7 +1202,7 @@ static int bstore_writev_blob(struct silofs_bstore        *bstore,
 	struct silofs_blobfile *bf  = nullptr;
 	int                     err = 0;
 
-	err = bstore_stage_and_cache_bf(bstore, blobidx, &bf);
+	err = bstore_require_cached_bf(bstore, blobidx, &bf);
 	if (err) {
 		return err;
 	}

@@ -40,7 +40,7 @@ static int env_reinit_ciphers_by_mbr(struct silofs_env *env)
 {
 	const struct silofs_mbr_info *fs_mbi = &env->mbis.fs_mbi;
 
-	return env_reinit_ciphers(env, &fs_mbi->mb_nmeta.ciargs);
+	return env_reinit_ciphers(env, &fs_mbi->mb_meta.nmeta.ciargs);
 }
 
 int silofs_env_setup_fs_mbr(struct silofs_env *env)

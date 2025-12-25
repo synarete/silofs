@@ -40,4 +40,9 @@ int silofs_derive_civkey(const struct silofs_mdigest_hd *md_hd,
                          const struct silofs_kdf_descs  *kdf,
                          struct silofs_civkey           *out_civkey);
 
+int silofs_derive_hmac_key(const struct silofs_mdigest_hd *md_hd,
+                           const struct silofs_password   *pw,
+                           const struct silofs_kdf_desc   *kdf,
+                           struct silofs_ckey             *out_key);
+
 #endif /* SILOFS_KDF_H_ */

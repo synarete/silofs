@@ -24,17 +24,23 @@
 
 struct silofs_env;
 
+/* mbr meta info */
+struct silofs_mbr_meta {
+	struct silofs_nmeta  nmeta;
+	struct silofs_ckey   hmac_key;
+	enum silofs_mbr_mode mode;
+};
+
 /* main boot-record, in-memory representation */
 struct silofs_mbr_info {
-	struct silofs_nmeta mb_nmeta;
-	struct silofs_mbr1k mb_mbr1k;
+	struct silofs_mbr_meta mb_meta;
+	struct silofs_mbr1k    mb_mbr1k;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_mbi_init(struct silofs_mbr_info    *mbi,
-                     const struct silofs_nmeta *nmeta,
-                     enum silofs_mbr_mode       mode);
+void silofs_mbi_init(struct silofs_mbr_info       *mbi,
+                     const struct silofs_mbr_meta *mbr_meta);
 
 void silofs_mbi_fini(struct silofs_mbr_info *mbi);
 
@@ -61,7 +67,7 @@ int silofs_mbi_import(struct silofs_mbr_info    *mbi,
                       const struct silofs_mbref *mbref,
                       const struct silofs_mbr1k *mbr1k);
 
-int silofs_derive_mbr_nmeta(const struct silofs_password *passwd,
-                            struct silofs_nmeta          *out_nmeta);
+int silofs_derive_mbr_meta(const struct silofs_password *passwd,
+                           struct silofs_mbr_meta       *out_mbr_meta);
 
 #endif /* SILOFS_MBR_H_ */

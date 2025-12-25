@@ -21,6 +21,30 @@
 #include "gcry.h"
 #include "kdf.h"
 
+static int
+derive_key(const struct silofs_mdigest_hd *md_hd,
+           const struct silofs_password *pw, const struct silofs_kdf_desc *kdf,
+           struct silofs_ckey *out_key)
+{
+	struct silofs_hash512 salt;
+	gpg_error_t           gcry_err;
+
+	if (kdf->kd_salt_md != SILOFS_MD_SHA3_512) {
+		return -SILOFS_EOPNOTSUPP;
+	}
+	silofs_sha3_512_of(md_hd, pw->pass, pw->passlen, &salt);
+	gcry_err = gcry_kdf_derive(pw->pass,             //
+	                           pw->passlen,          //
+	                           (int)kdf->kd_algo,    //
+	                           (int)kdf->kd_subalgo, //
+	                           salt.hash,            //
+	                           sizeof(salt.hash),    //
+	                           kdf->kd_iterations,   //
+	                           sizeof(out_key->key), //
+	                           out_key->key);
+	return silofs_gcrypt_status(gcry_err, "gcry_kdf_derive");
+}
+
 static int derive_iv(const struct silofs_mdigest_hd *md_hd, //
                      const struct silofs_password   *pw,    //
                      const struct silofs_kdf_desc   *kdf,   //
@@ -33,29 +57,15 @@ static int derive_iv(const struct silofs_mdigest_hd *md_hd, //
 		return -SILOFS_EOPNOTSUPP;
 	}
 	silofs_sha3_256_of(md_hd, pw->pass, pw->passlen, &salt);
-	gcry_err = gcry_kdf_derive(pw->pass, pw->passlen, (int)kdf->kd_algo,
-	                           (int)kdf->kd_subalgo, salt.hash,
-	                           sizeof(salt.hash), kdf->kd_iterations,
-	                           sizeof(out_iv->iv), out_iv->iv);
-	return silofs_gcrypt_status(gcry_err, "gcry_kdf_derive");
-}
-
-static int
-derive_key(const struct silofs_mdigest_hd *md,
-           const struct silofs_password *pw, const struct silofs_kdf_desc *kdf,
-           struct silofs_ckey *out_key)
-{
-	struct silofs_hash512 salt;
-	gpg_error_t           gcry_err;
-
-	if (kdf->kd_salt_md != SILOFS_MD_SHA3_512) {
-		return -SILOFS_EOPNOTSUPP;
-	}
-	silofs_sha3_512_of(md, pw->pass, pw->passlen, &salt);
-	gcry_err = gcry_kdf_derive(pw->pass, pw->passlen, (int)kdf->kd_algo,
-	                           (int)kdf->kd_subalgo, salt.hash,
-	                           sizeof(salt.hash), kdf->kd_iterations,
-	                           sizeof(out_key->key), out_key->key);
+	gcry_err = gcry_kdf_derive(pw->pass,             //
+	                           pw->passlen,          //
+	                           (int)kdf->kd_algo,    //
+	                           (int)kdf->kd_subalgo, //
+	                           salt.hash,            //
+	                           sizeof(salt.hash),    //
+	                           kdf->kd_iterations,   //
+	                           sizeof(out_iv->iv),   //
+	                           out_iv->iv);
 	return silofs_gcrypt_status(gcry_err, "gcry_kdf_derive");
 }
 
@@ -69,6 +79,11 @@ static int check_passlen(size_t len)
 	return ret;
 }
 
+static int check_password(const struct silofs_password *pw)
+{
+	return check_passlen(pw->passlen);
+}
+
 int silofs_derive_civkey(const struct silofs_mdigest_hd *md_hd,
                          const struct silofs_password   *pw,
                          const struct silofs_kdf_descs  *kdf,
@@ -77,7 +92,7 @@ int silofs_derive_civkey(const struct silofs_mdigest_hd *md_hd,
 	int err;
 
 	silofs_civkey_reset(out_civkey);
-	err = check_passlen(pw->passlen);
+	err = check_password(pw);
 	if (err) {
 		return err;
 	}
@@ -90,4 +105,33 @@ int silofs_derive_civkey(const struct silofs_mdigest_hd *md_hd,
 		return err;
 	}
 	return 0;
+}
+
+int silofs_derive_hmac_key(const struct silofs_mdigest_hd *md_hd,
+                           const struct silofs_password   *pw,
+                           const struct silofs_kdf_desc   *kdf,
+                           struct silofs_ckey             *out_key)
+{
+	struct silofs_hash256 salt;
+	gpg_error_t           gcry_err;
+	int                   err;
+
+	err = check_password(pw);
+	if (err) {
+		return err;
+	}
+	if (kdf->kd_salt_md != SILOFS_MD_SHA3_256) {
+		return -SILOFS_EOPNOTSUPP;
+	}
+	silofs_sha3_256_of(md_hd, pw->pass, pw->passlen, &salt);
+	gcry_err = gcry_kdf_derive(pw->pass,             //
+	                           pw->passlen,          //
+	                           (int)kdf->kd_algo,
+	                           (int)kdf->kd_subalgo, //
+	                           salt.hash,            //
+	                           sizeof(salt.hash),    //
+	                           kdf->kd_iterations,   //
+	                           sizeof(out_key->key), //
+	                           out_key->key);
+	return silofs_gcrypt_status(gcry_err, "gcry_kdf_derive");
 }

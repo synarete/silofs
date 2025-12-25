@@ -190,15 +190,17 @@ static void env_fini_commons(struct silofs_env *env)
 
 static int env_init_mbis(struct silofs_env *env)
 {
-	struct silofs_nmeta nmeta;
-	int                 err;
+	struct silofs_mbr_meta mbr_meta;
+	int                    err;
 
-	err = silofs_derive_mbr_nmeta(env->base.passwd, &nmeta);
+	err = silofs_derive_mbr_meta(env->base.passwd, &mbr_meta);
 	if (err) {
 		return err;
 	}
-	silofs_mbi_init(&env->mbis.fs_mbi, &nmeta, SILOFS_MBR_FS);
-	silofs_mbi_init(&env->mbis.ar_mbi, &nmeta, SILOFS_MBR_AR);
+	mbr_meta.mode = SILOFS_MBR_FS;
+	silofs_mbi_init(&env->mbis.fs_mbi, &mbr_meta);
+	mbr_meta.mode = SILOFS_MBR_AR;
+	silofs_mbi_init(&env->mbis.ar_mbi, &mbr_meta);
 	return 0;
 }
 

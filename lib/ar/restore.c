@@ -152,7 +152,7 @@ static int rec_arix_nmeta(const struct silofs_re_ctx *re_ctx,
 	const struct silofs_mbr_info *ar_mbi = &re_ctx->env->mbis.ar_mbi;
 
 	/* For now, using top-level nmeta for all arix nodes */
-	silofs_nmeta_assign(out_nmeta, &ar_mbi->mb_nmeta);
+	silofs_nmeta_assign(out_nmeta, &ar_mbi->mb_meta.nmeta);
 	return 0;
 }
 

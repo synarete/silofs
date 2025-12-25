@@ -609,8 +609,9 @@ struct silofs_mbr1k {
 	uint8_t                 mbr_reserved1[24];
 	struct silofs_pmeta192b mbr_root;
 	struct silofs_uaddr128b mbr_sb_addr;
-	uint8_t                 mbr_reserved3[608];
+	uint8_t                 mbr_reserved3[576];
 	struct silofs_hash256   mbr_hash;
+	struct silofs_mac       mbr_hmac;
 } silofs_attr_aligned64;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

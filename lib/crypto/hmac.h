@@ -18,6 +18,7 @@
 #define SILOFS_HMAC_H_
 
 #include <silofs/ondisk.h>
+#include <stdbool.h>
 
 /* wrapper over libgcrypt mac handle */
 struct silofs_hmac_hd {
@@ -25,11 +26,14 @@ struct silofs_hmac_hd {
 	int           hm_algo;
 };
 
-int silofs_hmac_init(struct silofs_hmac_hd *hm_hd);
+bool silofs_mac_isequal(const struct silofs_mac *mac,
+                        const struct silofs_mac *other);
 
-void silofs_hmac_fini(struct silofs_hmac_hd *hm_hd);
+int silofs_hmac_init(struct silofs_hmac_hd *hmac_hd);
 
-int silofs_hmac_calc(struct silofs_hmac_hd    *hm_hd,
+void silofs_hmac_fini(struct silofs_hmac_hd *hmac_hd);
+
+int silofs_hmac_calc(struct silofs_hmac_hd    *hmac_hd,
                      const struct silofs_ckey *key, const void *dat,
                      size_t dsz, struct silofs_mac *out_mac);
 

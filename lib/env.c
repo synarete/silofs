@@ -235,7 +235,6 @@ static void env_fini_crypto(struct silofs_env *env)
 	silofs_cipher_fini(&env->dec_ci_hd);
 	silofs_cipher_fini(&env->enc_ci_hd);
 	silofs_mdigest_fini(&env->md_hd);
-	silofs_hmac_fini(&env->hmac_hd);
 }
 
 static int env_init_crypto(struct silofs_env *env)
@@ -251,10 +250,6 @@ static int env_init_crypto(struct silofs_env *env)
 		goto out_err;
 	}
 	err = silofs_cipher_init(&env->dec_ci_hd);
-	if (err) {
-		goto out_err;
-	}
-	err = silofs_hmac_init(&env->hmac_hd);
 	if (err) {
 		goto out_err;
 	}

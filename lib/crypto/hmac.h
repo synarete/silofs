@@ -19,6 +19,8 @@
 
 #include <silofs/ondisk.h>
 #include <stdbool.h>
+#include <stdlib.h>
+#include <gcrypt.h>
 
 /* wrapper over libgcrypt mac handle */
 struct silofs_hmac_hd {

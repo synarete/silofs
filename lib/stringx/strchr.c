@@ -90,6 +90,21 @@ int silofs_str_ncompare(const char *s1, size_t n1, const char *s2, size_t n2)
 	return res;
 }
 
+bool silofs_str_isequal(const char *s1, const char *s2)
+{
+	size_t n1, n2;
+
+	if (s1 == s2) {
+		return true;
+	}
+	n1 = silofs_str_length(s1);
+	n2 = silofs_str_length(s2);
+	if (n1 != n2) {
+		return false;
+	}
+	return (silofs_str_compare(s1, s2, n1) == 0);
+}
+
 const char *silofs_str_find_chr(const char *s, size_t n, char a)
 {
 	return (const char *)(memchr(s, a, n));

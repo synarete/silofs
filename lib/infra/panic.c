@@ -482,6 +482,16 @@ silofs_dump_panic_msg(const char *file, int line, const char *msg, int errnum)
 	silofs_logf(ll, nullptr, 0, " ");
 }
 
+int silofs_panic_mode = SILOFS_PANIC_MODE_ABORT;
+
+silofs_attr_noreturn static void silofs_panicked(void)
+{
+	while (silofs_panic_mode == SILOFS_PANIC_MODE_WAIT) {
+		sleep(1);
+	}
+	silofs_abort();
+}
+
 void silofs_panicf(const char *file, int line, const char *fmt, ...)
 {
 	char      msg[256] = "";
@@ -495,7 +505,7 @@ void silofs_panicf(const char *file, int line, const char *fmt, ...)
 	silofs_dump_panic_msg(file, line, msg, errnum);
 	silofs_dump_backtrace();
 	silofs_dump_addr2line();
-	silofs_abort();
+	silofs_panicked();
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

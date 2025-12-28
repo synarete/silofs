@@ -1223,6 +1223,8 @@ static int check_pre_init_lib(void)
 {
 	int err;
 
+	silofs_validate_ondisk_format();
+
 	err = check_endianess();
 	if (err) {
 		return err;
@@ -1242,7 +1244,28 @@ static int check_pre_init_lib(void)
 	return 0;
 }
 
-static int do_init_lib(bool with_fips)
+static bool has_env_var(const char *name, const char *valwant)
+{
+	const char *val = secure_getenv(name);
+
+	return silofs_str_isequal(val, valwant);
+}
+
+static int init_gcrypt(void)
+{
+	const bool with_fips = has_env_var("SILOFS_FIPS", "1");
+
+	return silofs_init_gcrypt(with_fips);
+}
+
+static void init_panic(void)
+{
+	if (has_env_var("SILOFS_PANIC_MODE_WAIT", "1")) {
+		silofs_panic_mode = SILOFS_PANIC_MODE_WAIT;
+	}
+}
+
+static int do_init_lib(void)
 {
 	int err;
 
@@ -1250,29 +1273,15 @@ static int do_init_lib(bool with_fips)
 	if (err) {
 		return err;
 	}
-	err = silofs_init_gcrypt(with_fips);
+	err = init_gcrypt();
 	if (err) {
 		return err;
 	}
+	init_panic();
 	return 0;
 }
 
 static bool g_initlib_once_done;
-
-static bool init_with_fips(void)
-{
-	const char *name  = "SILOFS_FIPS";
-	const char *value = nullptr;
-	size_t      len   = 0;
-	bool        ret   = false;
-
-	value = secure_getenv(name);
-	len   = silofs_str_length(value);
-	if (len == 1) {
-		ret = silofs_str_compare(value, "1", len);
-	}
-	return ret;
-}
 
 int silofs_init_once(void)
 {
@@ -1285,11 +1294,10 @@ int silofs_init_once(void)
 	if (ret != 0) {
 		goto out;
 	}
-	ret = do_init_lib(init_with_fips());
+	ret = do_init_lib();
 	if (ret != 0) {
 		goto out;
 	}
-	silofs_validate_ondisk_format();
 	g_initlib_once_done = true;
 out:
 	return ret;

@@ -37,6 +37,11 @@ int silofs_str_compare(const char *s1, const char *s2, size_t n);
 int silofs_str_ncompare(const char *s1, size_t n1, const char *s2, size_t n2);
 
 /*
+ * Returns TRUE is two null-terminated strings are equal.
+ */
+bool silofs_str_isequal(const char *s1, const char *s2);
+
+/*
  * Returns the first occurrence of s2 as a strspaning of s1, or null if no such
  * strspaning.
  */

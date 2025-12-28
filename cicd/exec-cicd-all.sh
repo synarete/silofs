@@ -67,7 +67,7 @@ msg "build with analyzer"
 run make -f devel.mk O=0 ANALYZER=1
 run make -f devel.mk reset
 msg "run unit-tests"
-run make -f devel.mk check
+run env SILOFS_PANIC_MODE_WAIT=1 make -f devel.mk check
 run make -f devel.mk reset
 msg "run clang-scan"
 run make -f devel.mk CC=clang V=1 O=2 scan

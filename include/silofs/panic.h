@@ -113,6 +113,9 @@ void silofs_expect_noop_(long a, long b);
 #endif
 
 /* panic */
+#define SILOFS_PANIC_MODE_ABORT (1)
+#define SILOFS_PANIC_MODE_WAIT (2)
+
 #define silofs_panic(fmt_, ...) \
 	silofs_panicf(__FILE__, __LINE__, fmt_, __VA_ARGS__)
 
@@ -125,6 +128,8 @@ void silofs_expect_noop_(long a, long b);
 
 #define silofs_attr_dief(x_, y_) \
 	silofs_attr_noreturn silofs_attr_printf(x_, y_)
+
+extern int silofs_panic_mode;
 
 silofs_attr_dief(3, 4) void silofs_panicf(const char *file, int line,
                                           const char *restrict fmt, ...);

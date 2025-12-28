@@ -163,32 +163,18 @@ static void ute_del(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-/* Blum-Blum-Shub pseudo-random number generator, using p=383 q=503 */
-static uint64_t blum_blum_shub(uint64_t n)
-{
-	return (n * n) % 192649UL;
-}
-
-static uint64_t blum_blum_shub_u64(uint64_t n)
-{
-	uint64_t u = 0;
-
-	n = blum_blum_shub(n);
-	u = (n & 0xFF);
-	n = blum_blum_shub(n);
-	u = (u << 16) | (n & 0xFF);
-	n = blum_blum_shub(n);
-	u = (u << 16) | (n & 0xFF);
-	n = blum_blum_shub(n);
-	u = (u << 16) | (n & 0xFF);
-	return u;
-}
-
 static uint64_t ute_prandom_u64(struct ut_env *ute)
 {
-	const uint64_t start = (uint64_t)ute->ts_start.tv_nsec;
+	struct timespec ts[2];
 
-	return blum_blum_shub_u64(start + ute->prngc++);
+	if (ute->prngc & 1) {
+		silofs_clock_mono_now(&ts[0]);
+		silofs_clock_real_now(&ts[1]);
+	} else {
+		silofs_clock_mono_now(&ts[1]);
+		silofs_clock_real_now(&ts[0]);
+	}
+	return silofs_xxh64(ts, sizeof(ts), ute->prngc++);
 }
 
 static void ute_prandom(struct ut_env *ute, void *buf, size_t bsz)

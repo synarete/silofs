@@ -37,7 +37,7 @@ int silofs_hmac_init(struct silofs_hmac_hd *hmac_hd)
 	gcry_error_t err;
 	const int    algo = GCRY_MAC_HMAC_SHA3_256;
 
-	err = gcry_mac_open(&hmac_hd->hm_hd, algo, 0, NULL);
+	err = gcry_mac_open(&hmac_hd->hm_hd, algo, 0, nullptr);
 	if (err) {
 		return silofs_gcrypt_status(err, "gcry_mac_open");
 	}

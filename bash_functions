@@ -25,8 +25,16 @@ _base_lineno() {
 	echo -n "${lno}"
 }
 
+_base_timestamp() {
+	local show_timestamp=${SILOFS_TIMESTAMP:-0}
+
+	if [[ "${show_timestamp}" == "1" ]]; then
+		echo -n "[$(date --iso-8601=seconds)] "
+	fi
+}
+
 _base_tag() {
-	echo -n "$(_base_source):$(_base_lineno)"
+	echo -n "$(_base_timestamp)$(_base_source):$(_base_lineno)"
 }
 
 msg() {

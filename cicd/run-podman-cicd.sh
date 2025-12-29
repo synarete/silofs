@@ -38,14 +38,14 @@ run mkdir -p "${scratchdir}"
 run rm -rf "${scratchdir}/*"
 
 run podman run --tty --rm \
-    --userns keep-id:"uid=$(id -u),gid=$(id -g)" \
-    --user="$(id -u):$(id -g)" \
-    --volume="/etc/group:/etc/group:ro" \
-    --volume="/etc/passwd:/etc/passwd:ro" \
-    --volume="/etc/shadow:/etc/shadow:ro" \
-    --volume="${scratchdir}:/scratch:rw" \
-    --workdir="/scratch" \
-    "${imagename}" "silofs-utests" "--level=1" "/scratch"
+	--userns keep-id:"uid=$(id -u),gid=$(id -g)" \
+	--user="$(id -u):$(id -g)" \
+	--volume="/etc/group:/etc/group:ro" \
+	--volume="/etc/passwd:/etc/passwd:ro" \
+	--volume="/etc/shadow:/etc/shadow:ro" \
+	--volume="${scratchdir}:/scratch:rw" \
+	--workdir="/scratch" \
+	"${imagename}" "silofs-utests" "--level=1" "/scratch"
 
 # Remove test image
 run podman rmi "${imagename}"

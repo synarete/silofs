@@ -13,6 +13,7 @@ jobs:
         arch:
           - {name: amd64, host: ubuntu-24.04}
           - {name: arm64, host: ubuntu-24.04-arm}
+    name: build-on-arch (${{ matrix.arch.name }}, ${{ matrix.arch.host }})
     runs-on: ${{ matrix.arch.host }}
     env:
       ARCH: ${{ matrix.arch.name }}

@@ -315,7 +315,7 @@ void cmd_restore_fs(struct silofs_env         *env,
 void cmd_setup_env_args(struct silofs_env_args *env_args)
 {
 	memset(env_args, 0, sizeof(*env_args));
-	cmd_setup_fsids(&env_args->ugids);
+	cmd_start_fsids(&env_args->fsids);
 	env_args->uid   = getuid();
 	env_args->gid   = getgid();
 	env_args->pid   = getpid();
@@ -324,6 +324,6 @@ void cmd_setup_env_args(struct silofs_env_args *env_args)
 
 void cmd_destroy_env_args(struct silofs_env_args *env_args)
 {
-	cmd_reset_fsids(&env_args->ugids);
+	cmd_finish_fsids(&env_args->fsids);
 	memset(env_args, 0, sizeof(*env_args));
 }

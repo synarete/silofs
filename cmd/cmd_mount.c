@@ -259,19 +259,20 @@ static void cmd_mount_setup_env_args(struct cmd_mount_ctx *ctx)
 	struct silofs_env_args         *env_args = &ctx->env_args;
 
 	cmd_setup_env_args(env_args);
-	env_args->flags             = (enum silofs_flags)in_args->flags;
+	env_args->flags = (enum silofs_flags)in_args->flags;
+
 	env_args->boot_args.repodir = in_args->repodir_real;
 	env_args->boot_args.fs_name = in_args->fsname;
 	env_args->boot_args.passwd  = in_args->password;
 	env_args->boot_args.mntdir  = in_args->mntpoint_real;
 }
 
-static void cmd_mount_setup_fs_ids(struct cmd_mount_ctx *ctx)
+static void cmd_mount_setup_fsids(struct cmd_mount_ctx *ctx)
 {
-	cmd_load_fsids(&ctx->env_args.ugids, ctx->in_args.repodir_real);
+	cmd_load_jfsids(&ctx->env_args.boot_args, &ctx->env_args.fsids);
 }
 
-static void cmd_mount_load_fs_blobid(struct cmd_mount_ctx *ctx)
+static void cmd_mount_load_fs_jref(struct cmd_mount_ctx *ctx)
 {
 	cmd_load_fs_jref(&ctx->env_args.boot_args, &ctx->fs_mbref);
 }
@@ -279,6 +280,8 @@ static void cmd_mount_load_fs_blobid(struct cmd_mount_ctx *ctx)
 static void cmd_mount_setup_env(struct cmd_mount_ctx *ctx)
 {
 	cmd_new_env(&ctx->env_args, &ctx->env);
+	cmd_finish_fsids(&ctx->env_args.fsids);
+	cmd_delpass(&ctx->in_args.password);
 }
 
 static void cmd_mount_destroy_env(struct cmd_mount_ctx *ctx)
@@ -711,10 +714,10 @@ void cmd_execute_mount(void)
 	cmd_mount_setup_env_args(&ctx);
 
 	/* Load fs-ids mapping */
-	cmd_mount_setup_fs_ids(&ctx);
+	cmd_mount_setup_fsids(&ctx);
 
 	/* Load fs boot-reference */
-	cmd_mount_load_fs_blobid(&ctx);
+	cmd_mount_load_fs_jref(&ctx);
 
 	/* Execute pre-mount as command-line process */
 	cmd_mount_exec_phase1(&ctx);

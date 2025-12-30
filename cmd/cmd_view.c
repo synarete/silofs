@@ -175,12 +175,12 @@ static void cmd_view_setup_env_args(struct cmd_view_ctx *ctx)
 	env_args->boot_args.passwd  = ctx->in_args.password;
 }
 
-static void cmd_view_setup_fs_ids(struct cmd_view_ctx *ctx)
+static void cmd_view_setup_fsids(struct cmd_view_ctx *ctx)
 {
-	cmd_load_fsids(&ctx->env_args.ugids, ctx->in_args.repodir_real);
+	cmd_load_jfsids(&ctx->env_args.boot_args, &ctx->env_args.fsids);
 }
 
-static void cmd_view_load_fs_blobid(struct cmd_view_ctx *ctx)
+static void cmd_view_load_fs_jref(struct cmd_view_ctx *ctx)
 {
 	cmd_load_fs_jref(&ctx->env_args.boot_args, &ctx->fs_mbref);
 }
@@ -188,6 +188,8 @@ static void cmd_view_load_fs_blobid(struct cmd_view_ctx *ctx)
 static void cmd_view_setup_env(struct cmd_view_ctx *ctx)
 {
 	cmd_new_env(&ctx->env_args, &ctx->env);
+	cmd_finish_fsids(&ctx->env_args.fsids);
+	cmd_delpass(&ctx->in_args.password);
 }
 
 static void cmd_view_open_repo(struct cmd_view_ctx *ctx)
@@ -251,10 +253,10 @@ void cmd_execute_view(void)
 	cmd_view_setup_env_args(&ctx);
 
 	/* Load fs-ids mapping */
-	cmd_view_setup_fs_ids(&ctx);
+	cmd_view_setup_fsids(&ctx);
 
 	/* Require fs boot-reference */
-	cmd_view_load_fs_blobid(&ctx);
+	cmd_view_load_fs_jref(&ctx);
 
 	/* Setup execution environment */
 	cmd_view_setup_env(&ctx);

@@ -279,7 +279,7 @@ char *cmd_duppass(const char *pass)
 
 void cmd_delpass(char **pass)
 {
-	if (pass && *pass) {
+	if ((pass != nullptr) && (*pass != nullptr)) {
 		silofs_memffff(*pass, strlen(*pass));
 		cmd_pstrfree(pass);
 	}

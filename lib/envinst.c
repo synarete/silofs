@@ -415,13 +415,14 @@ static void envi_fini_flusher(struct silofs_env_inst *envi)
 
 static int envi_init_idsmap(struct silofs_env_inst *envi)
 {
-	const struct silofs_ugids *ugids  = &envi->args.ugids;
+	const struct silofs_ugids *ugids  = &envi->args.fsids;
 	struct silofs_idsmap      *idsmap = &envi->idsmap;
 	bool                       allow_hostids;
 	int                        err;
 
 	allow_hostids = envi_has_flag(envi, SILOFS_F_ALLOWHOSTIDS);
-	err           = silofs_idsmap_init(idsmap, envi->alloc, allow_hostids);
+
+	err = silofs_idsmap_init(idsmap, envi->alloc, allow_hostids);
 	if (err) {
 		return err;
 	}

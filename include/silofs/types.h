@@ -99,7 +99,7 @@ struct silofs_mbrefs {
 /* input arguments */
 struct silofs_env_args {
 	struct silofs_boot_args boot_args;
-	struct silofs_ugids     ugids;
+	struct silofs_ugids     fsids;
 	enum silofs_flags       flags;
 	uid_t                   uid;
 	gid_t                   gid;

@@ -288,9 +288,9 @@ static void cmd_clone_setup_env_args(struct cmd_clone_ctx *ctx)
 	env_args->boot_args.passwd  = ctx->in_args.password;
 }
 
-static void cmd_clone_setup_fs_ids(struct cmd_clone_ctx *ctx)
+static void cmd_clone_setup_fsids(struct cmd_clone_ctx *ctx)
 {
-	cmd_load_fsids(&ctx->env_args.ugids, ctx->in_args.repodir_real);
+	cmd_load_jfsids(&ctx->env_args.boot_args, &ctx->env_args.fsids);
 }
 
 static void cmd_clone_load_fs_jref(struct cmd_clone_ctx *ctx)
@@ -301,6 +301,8 @@ static void cmd_clone_load_fs_jref(struct cmd_clone_ctx *ctx)
 static void cmd_clone_setup_env(struct cmd_clone_ctx *ctx)
 {
 	cmd_new_env(&ctx->env_args, &ctx->env);
+	cmd_finish_fsids(&ctx->env_args.fsids);
+	cmd_delpass(&ctx->in_args.password);
 }
 
 static void cmd_clone_open_repo(struct cmd_clone_ctx *ctx)
@@ -418,7 +420,7 @@ void cmd_execute_clone(void)
 	cmd_clone_load_fs_jref(&ctx);
 
 	/* Load fs-ids mapping */
-	cmd_clone_setup_fs_ids(&ctx);
+	cmd_clone_setup_fsids(&ctx);
 
 	/* Setup execution environment */
 	cmd_clone_setup_env(&ctx);

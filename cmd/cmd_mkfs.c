@@ -196,19 +196,21 @@ static void cmd_mkfs_setup_env_args(struct cmd_mkfs_ctx *ctx)
 	env_args->no_utf8_names     = ctx->in_args.no_utf8_names;
 }
 
-static void cmd_mkfs_setup_fs_ids(struct cmd_mkfs_ctx *ctx)
+static void cmd_mkfs_setup_fsids(struct cmd_mkfs_ctx *ctx)
 {
 	struct silofs_env_args *env_args = &ctx->env_args;
-	struct silofs_ugids    *ids      = &env_args->ugids;
-	const char             *username = ctx->in_args.username;
 
-	cmd_load_fsids(ids, ctx->in_args.repodir_real);
-	cmd_require_uidgid(ids, username, &env_args->uid, &env_args->gid);
+	cmd_resolve_name_to_uidgid(ctx->in_args.username, &env_args->uid,
+	                           &env_args->gid);
+	cmd_load_jfsids(&env_args->boot_args, &env_args->fsids);
+	cmd_require_fsids(&env_args->fsids, env_args->uid, env_args->gid);
 }
 
 static void cmd_mkfs_setup_env(struct cmd_mkfs_ctx *ctx)
 {
 	cmd_new_env(&ctx->env_args, &ctx->env);
+	cmd_finish_fsids(&ctx->env_args.fsids);
+	cmd_delpass(&ctx->in_args.password);
 }
 
 static void cmd_mkfs_open_repo(const struct cmd_mkfs_ctx *ctx)
@@ -270,7 +272,7 @@ void cmd_execute_mkfs(void)
 	cmd_mkfs_setup_env_args(&ctx);
 
 	/* Setup fs owner and ids */
-	cmd_mkfs_setup_fs_ids(&ctx);
+	cmd_mkfs_setup_fsids(&ctx);
 
 	/* Prepare environment */
 	cmd_mkfs_setup_env(&ctx);

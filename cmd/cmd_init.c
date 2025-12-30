@@ -96,7 +96,7 @@ static void cmd_init_parse_optargs(struct cmd_init_ctx *ctx)
 static void cmd_init_finalize(struct cmd_init_ctx *ctx)
 {
 	cmd_del_env(&ctx->env);
-	cmd_reset_fsids(&ctx->env_args.ugids);
+	cmd_finish_fsids(&ctx->env_args.fsids);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.username);
@@ -157,24 +157,25 @@ static void cmd_init_setup_env_args(struct cmd_init_ctx *ctx)
 	const char             *username = ctx->in_args.username;
 
 	cmd_setup_env_args(env_args);
-	cmd_resolve_uidgid(username, &env_args->uid, &env_args->gid);
+	cmd_resolve_name_to_uidgid(username, &env_args->uid, &env_args->gid);
 	env_args->boot_args.repodir = ctx->in_args.repodir_real;
 	env_args->boot_args.fs_name = "silofs";
 }
 
-static void cmd_init_setup_fs_ids(struct cmd_init_ctx *ctx)
+static void cmd_init_setup_fsids(struct cmd_init_ctx *ctx)
 {
-	struct silofs_ugids *ids             = &ctx->env_args.ugids;
+	struct silofs_ugids *fsids           = &ctx->env_args.fsids;
 	const char          *username        = ctx->in_args.username;
 	const bool           with_sup_groups = ctx->in_args.with_sup_groups;
 	const bool           with_root_user  = ctx->in_args.with_root_user;
-	char                *rootname        = cmd_getpwuid(0);
 
-	cmd_extend_fsids(ids, username, with_sup_groups);
-	if (with_root_user && (strcmp(rootname, username) != 0)) {
-		cmd_extend_fsids(ids, rootname, false);
+	cmd_append_user_uidgid(fsids, username);
+	if (with_sup_groups) {
+		cmd_append_user_supgroups(fsids, username);
 	}
-	cmd_pstrfree(&rootname);
+	if (with_root_user && (strcmp(username, "root") != 0)) {
+		cmd_append_user_uidgid(fsids, "root");
+	}
 }
 
 static void cmd_init_setup_env(struct cmd_init_ctx *ctx)
@@ -192,9 +193,10 @@ static void cmd_init_close_repo(const struct cmd_init_ctx *ctx)
 	cmd_close_repo(ctx->env);
 }
 
-static void cmd_init_save_idsconf(const struct cmd_init_ctx *ctx)
+static void cmd_init_save_jfsids(struct cmd_init_ctx *ctx)
 {
-	cmd_save_fsids(&ctx->env_args.ugids, ctx->env_args.boot_args.repodir);
+	cmd_save_jfsids(&ctx->env_args.boot_args, &ctx->env_args.fsids);
+	cmd_finish_fsids(&ctx->env_args.fsids);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -222,7 +224,7 @@ void cmd_execute_init(void)
 	cmd_init_setup_env_args(&ctx);
 
 	/* Setup users/groups ids */
-	cmd_init_setup_fs_ids(&ctx);
+	cmd_init_setup_fsids(&ctx);
 
 	/* Prepare environment */
 	cmd_init_setup_env(&ctx);
@@ -234,7 +236,7 @@ void cmd_execute_init(void)
 	cmd_init_close_repo(&ctx);
 
 	/* Save ids-config file */
-	cmd_init_save_idsconf(&ctx);
+	cmd_init_save_jfsids(&ctx);
 
 	/* Post execution cleanups */
 	cmd_init_finalize(&ctx);

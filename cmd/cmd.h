@@ -367,24 +367,24 @@ void cmd_setup_env_args(struct silofs_env_args *env_args);
 void cmd_destroy_env_args(struct silofs_env_args *env_args);
 
 /* fsids */
-void cmd_fsids_setup(struct silofs_ugids *fsids);
+void cmd_fsids_setup(struct silofs_fsids *fsids);
 
-void cmd_fsids_clear(struct silofs_ugids *fsids);
+void cmd_fsids_clear(struct silofs_fsids *fsids);
 
-void cmd_fsids_save(const struct silofs_ugids     *fsids,
+void cmd_fsids_save(const struct silofs_fsids     *fsids,
                     const struct silofs_boot_args *boot_args);
 
-void cmd_fsids_load(struct silofs_ugids           *fsids,
+void cmd_fsids_load(struct silofs_fsids           *fsids,
                     const struct silofs_boot_args *boot_args);
 
-void cmd_fsids_add_uidgid_of(struct silofs_ugids *fsids, const char *name);
+void cmd_fsids_add_uidgid_of(struct silofs_fsids *fsids, const char *name);
 
-void cmd_fsids_add_supgroups_of(struct silofs_ugids *fsids, const char *name);
+void cmd_fsids_add_supgroups_of(struct silofs_fsids *fsids, const char *name);
 
-void cmd_fsids_need_uidgid(const struct silofs_ugids *fsids, uid_t host_uid,
+void cmd_fsids_need_uidgid(const struct silofs_fsids *fsids, uid_t host_uid,
                            gid_t host_gid);
 
-void cmd_fsids_need_user(const struct silofs_ugids *fsids, const char *name);
+void cmd_fsids_need_user(const struct silofs_fsids *fsids, const char *name);
 
 char *cmd_getusername(void);
 

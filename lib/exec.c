@@ -190,8 +190,7 @@ static int op_map_uidgid(const struct silofs_task_ctx *task, uid_t uid,
 {
 	int ret;
 
-	ret = silofs_idsmap_map_uidgid(task->t_idsm, uid, gid, out_uid,
-	                               out_gid);
+	ret = silofs_idsmap_mapcreds(task->t_idsm, uid, gid, out_uid, out_gid);
 	return (ret == -SILOFS_ENOENT) ? -SILOFS_EPERM : ret;
 }
 
@@ -228,8 +227,8 @@ op_rmap_stat(const struct silofs_task_ctx *task, struct silofs_stat *st)
 	 * silofs_idsmap_rmap_gid). In case of rmap failure, emit 'nobody' only
 	 * for the relevant id.
 	 */
-	ret = silofs_idsmap_rmap_uidgid(task->t_idsm, uid_in, gid_in, &uid_out,
-	                                &gid_out);
+	ret = silofs_idsmap_rmapcreds(task->t_idsm, uid_in, gid_in, &uid_out,
+	                              &gid_out);
 	st->st.st_uid = st->stx.stx_uid = uid_out;
 	st->st.st_gid = st->stx.stx_gid = gid_out;
 	return (ret == -SILOFS_ENOENT) ? 0 : ret;

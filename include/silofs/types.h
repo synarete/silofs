@@ -78,8 +78,8 @@ struct silofs_groups_ids {
 	size_t              ngids;
 };
 
-/* users & groups id-mappings */
-struct silofs_ugids {
+/* file-system's users/groups host-to-internal id-mappings */
+struct silofs_fsids {
 	struct silofs_users_ids  users;
 	struct silofs_groups_ids groups;
 };
@@ -99,7 +99,7 @@ struct silofs_mbrefs {
 /* input arguments */
 struct silofs_env_args {
 	struct silofs_boot_args boot_args;
-	struct silofs_ugids     fsids;
+	struct silofs_fsids     fsids;
 	enum silofs_flags       flags;
 	uid_t                   uid;
 	gid_t                   gid;

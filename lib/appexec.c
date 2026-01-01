@@ -596,8 +596,8 @@ static int do_map_task_creds(struct silofs_task_ctx *task)
 	const struct silofs_cred *xcred = &task->t_auth.creds.host_cred;
 	struct silofs_cred       *icred = &task->t_auth.creds.fs_cred;
 
-	return silofs_idsmap_map_uidgid(task->t_idsm, xcred->uid, xcred->gid,
-	                                &icred->uid, &icred->gid);
+	return silofs_idsmap_mapcreds(task->t_idsm, xcred->uid, xcred->gid,
+	                              &icred->uid, &icred->gid);
 }
 
 static int map_task_creds(struct silofs_task_ctx *task)
@@ -773,8 +773,8 @@ static int check_owner_ids(const struct silofs_env *env)
 	gid_t                         sgid;
 	int                           err;
 
-	err = silofs_idsmap_map_uidgid(env->base.idsmap, owner_uid, owner_gid,
-	                               &suid, &sgid);
+	err = silofs_idsmap_mapcreds(env->base.idsmap, owner_uid, owner_gid,
+	                             &suid, &sgid);
 	if (err) {
 		log_err("unable to map owner credentials: uid=%ld gid=%ld",
 		        (long)owner_uid, (long)owner_gid);

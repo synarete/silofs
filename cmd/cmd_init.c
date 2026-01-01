@@ -164,7 +164,7 @@ static void cmd_init_setup_env_args(struct cmd_init_ctx *ctx)
 
 static void cmd_init_setup_fsids(struct cmd_init_ctx *ctx)
 {
-	struct silofs_ugids *fsids           = &ctx->env_args.fsids;
+	struct silofs_fsids *fsids           = &ctx->env_args.fsids;
 	const char          *username        = ctx->in_args.username;
 	const bool           with_sup_groups = ctx->in_args.with_sup_groups;
 	const bool           with_root_user  = ctx->in_args.with_root_user;

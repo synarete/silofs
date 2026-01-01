@@ -280,7 +280,7 @@ static void cmd_require_uniq_uids(const struct silofs_users_ids *uids,
 }
 
 static void
-cmd_fsids_require_host_uid(const struct silofs_ugids *fsids, uid_t host_uid)
+cmd_fsids_require_host_uid(const struct silofs_fsids *fsids, uid_t host_uid)
 {
 	for (size_t i = 0; i < fsids->users.nuids; ++i) {
 		if (fsids->users.uids[i].host_uid == host_uid) {
@@ -291,7 +291,7 @@ cmd_fsids_require_host_uid(const struct silofs_ugids *fsids, uid_t host_uid)
 }
 
 static void
-cmd_fsids_require_host_gid(const struct silofs_ugids *fsids, gid_t host_gid)
+cmd_fsids_require_host_gid(const struct silofs_fsids *fsids, gid_t host_gid)
 {
 	for (size_t i = 0; i < fsids->groups.ngids; ++i) {
 		if (fsids->groups.gids[i].host_gid == host_gid) {
@@ -301,7 +301,7 @@ cmd_fsids_require_host_gid(const struct silofs_ugids *fsids, gid_t host_gid)
 	cmd_diez("missing host gid mapping: gid=%u", host_gid);
 }
 
-void cmd_fsids_need_uidgid(const struct silofs_ugids *fsids, uid_t host_uid,
+void cmd_fsids_need_uidgid(const struct silofs_fsids *fsids, uid_t host_uid,
                            gid_t host_gid)
 {
 	cmd_fsids_require_host_uid(fsids, host_uid);
@@ -310,7 +310,7 @@ void cmd_fsids_need_uidgid(const struct silofs_ugids *fsids, uid_t host_uid,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct silofs_uids *cmd_fsids_next_uids(struct silofs_ugids *fsids)
+static struct silofs_uids *cmd_fsids_next_uids(struct silofs_fsids *fsids)
 {
 	struct silofs_users_ids *uids = &fsids->users;
 
@@ -321,7 +321,7 @@ static struct silofs_uids *cmd_fsids_next_uids(struct silofs_ugids *fsids)
 	return &uids->uids[uids->nuids++];
 }
 
-static void cmd_fsids_add_uid_mapping(struct silofs_ugids *fsids,
+static void cmd_fsids_add_uid_mapping(struct silofs_fsids *fsids,
                                       uid_t host_uid, uid_t fs_uid)
 {
 	struct silofs_uids *uids;
@@ -332,7 +332,7 @@ static void cmd_fsids_add_uid_mapping(struct silofs_ugids *fsids,
 	uids->fs_uid   = fs_uid;
 }
 
-static struct silofs_gids *cmd_fsids_next_gids(struct silofs_ugids *fsids)
+static struct silofs_gids *cmd_fsids_next_gids(struct silofs_fsids *fsids)
 {
 	struct silofs_groups_ids *gids = &fsids->groups;
 
@@ -356,7 +356,7 @@ static void cmd_require_uniq_gids(const struct silofs_groups_ids *gids,
 	}
 }
 
-static void cmd_fsids_add_gid_mapping(struct silofs_ugids *fsids,
+static void cmd_fsids_add_gid_mapping(struct silofs_fsids *fsids,
                                       uid_t host_gid, uid_t fs_gid)
 {
 	struct silofs_gids *gids;
@@ -367,7 +367,7 @@ static void cmd_fsids_add_gid_mapping(struct silofs_ugids *fsids,
 	gids->fs_gid   = fs_gid;
 }
 
-void cmd_fsids_add_uidgid_of(struct silofs_ugids *fsids, const char *name)
+void cmd_fsids_add_uidgid_of(struct silofs_fsids *fsids, const char *name)
 {
 	uid_t uid = (uid_t)(-1);
 	gid_t gid = (gid_t)(-1);
@@ -377,7 +377,7 @@ void cmd_fsids_add_uidgid_of(struct silofs_ugids *fsids, const char *name)
 	cmd_fsids_add_gid_mapping(fsids, gid, gid);
 }
 
-void cmd_fsids_add_supgroups_of(struct silofs_ugids *fsids, const char *name)
+void cmd_fsids_add_supgroups_of(struct silofs_fsids *fsids, const char *name)
 {
 	gid_t  gids[64];
 	size_t ngids = 0;
@@ -388,7 +388,7 @@ void cmd_fsids_add_supgroups_of(struct silofs_ugids *fsids, const char *name)
 	}
 }
 
-void cmd_fsids_need_user(const struct silofs_ugids *fsids, const char *name)
+void cmd_fsids_need_user(const struct silofs_fsids *fsids, const char *name)
 {
 	uid_t host_uid = (uid_t)(-1);
 	gid_t host_gid = (gid_t)(-1);
@@ -397,7 +397,7 @@ void cmd_fsids_need_user(const struct silofs_ugids *fsids, const char *name)
 	cmd_fsids_need_uidgid(fsids, host_uid, host_gid);
 }
 
-void cmd_fsids_setup(struct silofs_ugids *fsids)
+void cmd_fsids_setup(struct silofs_fsids *fsids)
 {
 	fsids->users.nuids  = 0;
 	fsids->users.uids   = nullptr;
@@ -405,13 +405,13 @@ void cmd_fsids_setup(struct silofs_ugids *fsids)
 	fsids->groups.gids  = nullptr;
 }
 
-static void cmd_fsids_dealloc(struct silofs_ugids *fsids)
+static void cmd_fsids_dealloc(struct silofs_fsids *fsids)
 {
 	cmd_dealloc_users_ids(&fsids->users);
 	cmd_dealloc_groups_ids(&fsids->groups);
 }
 
-void cmd_fsids_clear(struct silofs_ugids *fsids)
+void cmd_fsids_clear(struct silofs_fsids *fsids)
 {
 	cmd_fsids_dealloc(fsids);
 	cmd_fsids_setup(fsids);
@@ -428,7 +428,7 @@ static const char cmd_jkey_gid[]    = "gid";
 
 static const char cmd_jfsids_filename[] = "fsids.json";
 
-static json_t *cmd_fsids_jencode_users(const struct silofs_ugids *fsids)
+static json_t *cmd_fsids_jencode_users(const struct silofs_fsids *fsids)
 {
 	json_t *jusers = nullptr;
 	json_t *juser  = nullptr;
@@ -457,7 +457,7 @@ static json_t *cmd_fsids_jencode_users(const struct silofs_ugids *fsids)
 }
 
 static void
-cmd_fsids_jdecode_users(struct silofs_ugids *fsids, const json_t *jusers)
+cmd_fsids_jdecode_users(struct silofs_fsids *fsids, const json_t *jusers)
 {
 	const json_t *juser = nullptr;
 	const json_t *jname = nullptr;
@@ -480,7 +480,7 @@ cmd_fsids_jdecode_users(struct silofs_ugids *fsids, const json_t *jusers)
 	}
 }
 
-static json_t *cmd_fsids_jencode_groups(const struct silofs_ugids *fsids)
+static json_t *cmd_fsids_jencode_groups(const struct silofs_fsids *fsids)
 {
 	json_t *jgroups = nullptr;
 	json_t *jgroup  = nullptr;
@@ -509,7 +509,7 @@ static json_t *cmd_fsids_jencode_groups(const struct silofs_ugids *fsids)
 }
 
 static void
-cmd_fsids_jdecode_groups(struct silofs_ugids *fsids, const json_t *jgroups)
+cmd_fsids_jdecode_groups(struct silofs_fsids *fsids, const json_t *jgroups)
 {
 	const json_t *jgroup = nullptr;
 	const json_t *jname  = nullptr;
@@ -532,7 +532,7 @@ cmd_fsids_jdecode_groups(struct silofs_ugids *fsids, const json_t *jgroups)
 	}
 }
 
-static json_t *cmd_fsids_jencode(const struct silofs_ugids *fsids)
+static json_t *cmd_fsids_jencode(const struct silofs_fsids *fsids)
 {
 	json_t *jfsids  = nullptr;
 	json_t *jusers  = nullptr;
@@ -549,7 +549,7 @@ static json_t *cmd_fsids_jencode(const struct silofs_ugids *fsids)
 	return jfsids;
 }
 
-static void cmd_fsids_jdecode(struct silofs_ugids *fsids, const json_t *jfsids)
+static void cmd_fsids_jdecode(struct silofs_fsids *fsids, const json_t *jfsids)
 {
 	const json_t *jusers  = nullptr;
 	const json_t *jgroups = nullptr;
@@ -562,7 +562,7 @@ static void cmd_fsids_jdecode(struct silofs_ugids *fsids, const json_t *jfsids)
 }
 
 static void
-cmd_fsids_save_at(const struct silofs_ugids *fsids, int dfd, const char *name)
+cmd_fsids_save_at(const struct silofs_fsids *fsids, int dfd, const char *name)
 {
 	json_t *jfsids;
 
@@ -571,7 +571,7 @@ cmd_fsids_save_at(const struct silofs_ugids *fsids, int dfd, const char *name)
 	cmd_json_decref(jfsids);
 }
 
-void cmd_fsids_save(const struct silofs_ugids     *fsids,
+void cmd_fsids_save(const struct silofs_fsids     *fsids,
                     const struct silofs_boot_args *boot_args)
 {
 	int dfd = -1;
@@ -582,7 +582,7 @@ void cmd_fsids_save(const struct silofs_ugids     *fsids,
 }
 
 static void
-cmd_fsids_load_at(struct silofs_ugids *fsids, int dfd, const char *name)
+cmd_fsids_load_at(struct silofs_fsids *fsids, int dfd, const char *name)
 {
 	json_t *jfsids;
 
@@ -591,7 +591,7 @@ cmd_fsids_load_at(struct silofs_ugids *fsids, int dfd, const char *name)
 	cmd_json_decref(jfsids);
 }
 
-void cmd_fsids_load(struct silofs_ugids           *fsids,
+void cmd_fsids_load(struct silofs_fsids           *fsids,
                     const struct silofs_boot_args *boot_args)
 {
 	int dfd = -1;

@@ -646,14 +646,13 @@ idsmap_add_uid(struct silofs_idsmap *idsm, const struct silofs_uids *uid)
 	return idsmap_insert_umap(idsm, uid->host_uid, uid->fs_uid);
 }
 
-int silofs_idsmap_populate_uids(struct silofs_idsmap      *idsm,
-                                const struct silofs_ugids *ugids)
+static int idsmap_populate_uids(struct silofs_idsmap      *idsm,
+                                const struct silofs_fsids *fsids)
 {
-	const struct silofs_users_ids *uids = &ugids->users;
-	int                            err;
+	int err;
 
-	for (size_t i = 0; i < uids->nuids; ++i) {
-		err = idsmap_add_uid(idsm, &uids->uids[i]);
+	for (size_t i = 0; i < fsids->users.nuids; ++i) {
+		err = idsmap_add_uid(idsm, &fsids->users.uids[i]);
 		if (err) {
 			return err;
 		}
@@ -667,17 +666,32 @@ idsmap_add_gid(struct silofs_idsmap *idsm, const struct silofs_gids *gid)
 	return idsmap_insert_gmap(idsm, gid->host_gid, gid->fs_gid);
 }
 
-int silofs_idsmap_populate_gids(struct silofs_idsmap      *idsm,
-                                const struct silofs_ugids *ugids)
+static int idsmap_populate_gids(struct silofs_idsmap      *idsm,
+                                const struct silofs_fsids *fsids)
 {
-	const struct silofs_groups_ids *gids = &ugids->groups;
-	int                             err;
+	int err;
 
-	for (size_t j = 0; j < gids->ngids; ++j) {
-		err = idsmap_add_gid(idsm, &gids->gids[j]);
+	for (size_t j = 0; j < fsids->groups.ngids; ++j) {
+		err = idsmap_add_gid(idsm, &fsids->groups.gids[j]);
 		if (err) {
 			return err;
 		}
+	}
+	return 0;
+}
+
+int silofs_idsmap_populate(struct silofs_idsmap      *idsm,
+                           const struct silofs_fsids *fsids)
+{
+	int err;
+
+	err = idsmap_populate_uids(idsm, fsids);
+	if (err) {
+		return err;
+	}
+	err = idsmap_populate_gids(idsm, fsids);
+	if (err) {
+		return err;
 	}
 	return 0;
 }
@@ -688,9 +702,9 @@ void silofs_idsmap_clear(struct silofs_idsmap *idsm)
 	idsmap_clear_gmap(idsm);
 }
 
-int silofs_idsmap_map_uidgid(const struct silofs_idsmap *idsm, uid_t host_uid,
-                             gid_t host_gid, uid_t *out_fs_uid,
-                             gid_t *out_fs_gid)
+int silofs_idsmap_mapcreds(const struct silofs_idsmap *idsm, uid_t host_uid,
+                           gid_t host_gid, uid_t *out_fs_uid,
+                           gid_t *out_fs_gid)
 {
 	int err1;
 	int err2;
@@ -710,9 +724,9 @@ int silofs_idsmap_map_uidgid(const struct silofs_idsmap *idsm, uid_t host_uid,
 	return err1 ? err1 : err2;
 }
 
-int silofs_idsmap_rmap_uidgid(const struct silofs_idsmap *idsm, uid_t fs_uid,
-                              gid_t fs_gid, uid_t *out_host_uid,
-                              gid_t *out_host_gid)
+int silofs_idsmap_rmapcreds(const struct silofs_idsmap *idsm, uid_t fs_uid,
+                            gid_t fs_gid, uid_t *out_host_uid,
+                            gid_t *out_host_gid)
 {
 	int err1;
 	int err2;

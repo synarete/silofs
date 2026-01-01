@@ -17,10 +17,11 @@
 #ifndef SILOFS_MNTSVC_H_
 #define SILOFS_MNTSVC_H_
 
+#include <silofs/ondisk.h>
+#include <silofs/memalloc.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include <silofs/ondisk.h>
 
 struct silofs_ms_env;
 
@@ -58,6 +59,12 @@ struct silofs_ms_args {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+bool silofs_is_fuse_fstype(long fstype);
+
+const struct silofs_fsinfo *silofs_fsinfo_by_vfstype(long vfstype);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 int silofs_mse_new(const struct silofs_ms_args *ms_args,
                    struct silofs_ms_env       **out_mse);
 
@@ -79,8 +86,16 @@ int silofs_mntrpc_umount(const char *mountpoint, uid_t uid, gid_t gid,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-bool silofs_is_fuse_fstype(long fstype);
+int silofs_parse_mntrules(struct silofs_mntrules *mrules,
+                          struct silofs_alloc *alloc, const char *conf);
 
-const struct silofs_fsinfo *silofs_fsinfo_by_vfstype(long vfstype);
+void silofs_release_mntrules(struct silofs_mntrules *mrules,
+                             struct silofs_alloc    *alloc);
+
+int silofs_parse_mntinfos(struct silofs_mntinfos *minfos,
+                          struct silofs_alloc *alloc, const char *conf);
+
+void silofs_release_mntinfos(struct silofs_mntinfos *minfos,
+                             struct silofs_alloc    *alloc);
 
 #endif /* SILOFS_MNTSVC_H_ */

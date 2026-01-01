@@ -47,46 +47,6 @@ static void ut_parseconf_mntrules(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static const char ut_fsids_conf[] = //
-	"# Test fsids.conf              \n\n"
-	"[users]                        \n"
-	"root = 1001                    \n"
-	"bin = 20002                    \n"
-	"# Comment                      \n"
-	"[groups]                       \n"
-	"root = 300033                  \n"
-	"disk = 400444                  \n"
-	"users = 5500555                \n";
-
-static struct silofs_ugids *ut_new_ugids(struct ut_env *ute)
-{
-	struct silofs_ugids *ugids = nullptr;
-
-	ugids               = ut_zalloc(ute, sizeof(*ugids));
-	ugids->users.nuids  = 0;
-	ugids->groups.ngids = 0;
-	return ugids;
-}
-
-static void ut_parseconf_fsids(struct ut_env *ute)
-{
-	struct silofs_ugids *ugids = ut_new_ugids(ute);
-	const size_t         bsz   = UT_1M;
-	char                *buf   = ut_zalloc(ute, bsz);
-	int                  err;
-
-	err = silofs_parse_fsids(ugids, nullptr, ut_fsids_conf);
-	ut_expect_ok(err);
-	ut_expect_eq(ugids->users.nuids, 2);
-	ut_expect_eq(ugids->groups.ngids, 3);
-	err = silofs_unparse_fsids(ugids, nullptr, buf, bsz);
-	ut_expect_ok(err);
-	ut_expect_gt(strlen(buf), 50);
-	silofs_release_fsids(ugids, nullptr);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 static const char ut_mountinfo_conf[] = //
 	"76 1 253:0 / / rw,relatime shared:1                            "
 	"- xfs /dev/mapper/f1 rw,seclabel,attr2                       \n"
@@ -126,7 +86,6 @@ static void ut_parseconf_mntinfos(struct ut_env *ute)
 
 static const struct ut_testdef ut_local_tests[] = {
 	UT_DEFTEST(ut_parseconf_mntrules),
-	UT_DEFTEST(ut_parseconf_fsids),
 	UT_DEFTEST(ut_parseconf_mntinfos),
 };
 

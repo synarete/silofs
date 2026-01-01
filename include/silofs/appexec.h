@@ -21,9 +21,6 @@
 
 struct silofs_alloc;
 struct silofs_env;
-struct silofs_ugids;
-struct silofs_mntrules;
-struct silofs_mntinfos;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -38,32 +35,6 @@ int silofs_check_fsname(const char *s);
 int silofs_encode_mbref(const struct silofs_mbref *mbref, char *s, size_t n);
 
 int silofs_decode_mbref(struct silofs_mbref *mbref, const char *s);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-int silofs_parse_fsids(struct silofs_ugids *ugids, struct silofs_alloc *alloc,
-                       const char *conf);
-
-int silofs_unparse_fsids(const struct silofs_ugids *ugids,
-                         struct silofs_alloc *alloc, char *buf, size_t n);
-
-void silofs_release_fsids(struct silofs_ugids *ugids,
-                          struct silofs_alloc *alloc);
-
-int silofs_extend_fsids(struct silofs_ugids *ugids, struct silofs_alloc *alloc,
-                        const char *user, bool with_sup_groups);
-
-int silofs_parse_mntrules(struct silofs_mntrules *mrules,
-                          struct silofs_alloc *alloc, const char *conf);
-
-void silofs_release_mntrules(struct silofs_mntrules *mrules,
-                             struct silofs_alloc    *alloc);
-
-int silofs_parse_mntinfos(struct silofs_mntinfos *minfos,
-                          struct silofs_alloc *alloc, const char *conf);
-
-void silofs_release_mntinfos(struct silofs_mntinfos *minfos,
-                             struct silofs_alloc    *alloc);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

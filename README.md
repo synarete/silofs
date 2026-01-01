@@ -10,8 +10,10 @@
 
 ## Overview
 
-Silofs *("stored in large objects file-system")* is a user-space
-file-system for storing large volumes of data as encrypted blobs.
+Silofs is a fully encrypted user-space file-system designed for secure,
+long-term data retention. It archives snapshots as immutable blobs, ensuring
+audit-grade integrity and protection against unauthorized modification.
+
 It allows normal users to create an isolated storage area, with its
 own private key, and mount it on local host. When mounted users may
 manipulate their data as they would do with any other file-system,
@@ -31,6 +33,7 @@ for long-term archiving, but without revealing information on their
 private data, and without paying high costs and extra resources due to
 re-packing. See [Why Silofs?](#why-silofs) for more details.
 
+The name silofs is an acronym to "Secured Immutable Large Objects File System".
 
 ## Build and Install
 
@@ -321,4 +324,3 @@ complexity.
 ## License
 
 [GPLv3](https://www.gnu.org/licenses/gpl-3.0.en.html)
-

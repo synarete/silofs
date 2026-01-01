@@ -190,7 +190,7 @@ static void cmd_rmfs_setup_env_args(struct cmd_rmfs_ctx *ctx)
 
 static void cmd_rmfs_setup_fsids(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_load_jfsids(&ctx->env_args.boot_args, &ctx->env_args.fsids);
+	cmd_fsids_load(&ctx->env_args.fsids, &ctx->env_args.boot_args);
 }
 
 static void cmd_rmfs_load_fs_jref(struct cmd_rmfs_ctx *ctx)
@@ -201,7 +201,7 @@ static void cmd_rmfs_load_fs_jref(struct cmd_rmfs_ctx *ctx)
 static void cmd_rmfs_setup_env(struct cmd_rmfs_ctx *ctx)
 {
 	cmd_new_env(&ctx->env_args, &ctx->env);
-	cmd_finish_fsids(&ctx->env_args.fsids);
+	cmd_fsids_clear(&ctx->env_args.fsids);
 	cmd_delpass(&ctx->in_args.password);
 }
 

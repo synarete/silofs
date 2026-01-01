@@ -15,6 +15,7 @@
  * GNU General Public License for more details.
  */
 #define _GNU_SOURCE 1
+#include "cmd.h"
 #include <sys/types.h>
 #include <sys/vfs.h>
 #include <sys/stat.h>
@@ -33,7 +34,6 @@
 #include <ctype.h>
 #include <math.h>
 #include <dirent.h>
-#include "cmd.h"
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

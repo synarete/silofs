@@ -17,7 +17,7 @@
 #ifndef SILOFS_CMD_H_
 #define SILOFS_CMD_H_
 
-#include <config.h>
+#include <silofs/configs.h>
 #include <silofs/silofs.h>
 #include <stdlib.h>
 #include <string.h>
@@ -361,51 +361,34 @@ void cmd_load_ar_jref(struct silofs_boot_args *boot_args,
 
 void cmd_unlink_fs_jref(const struct silofs_boot_args *boot_args);
 
-/* fs input arguments */
+/* env arguments */
 void cmd_setup_env_args(struct silofs_env_args *env_args);
 
 void cmd_destroy_env_args(struct silofs_env_args *env_args);
 
-/* fs-ids config */
-void cmd_start_fsids(struct silofs_ugids *fsids);
+/* fsids */
+void cmd_fsids_setup(struct silofs_ugids *fsids);
 
-void cmd_finish_fsids(struct silofs_ugids *fsids);
+void cmd_fsids_clear(struct silofs_ugids *fsids);
 
-void cmd_require_fsids(const struct silofs_ugids *fsids, uid_t host_uid,
-                       gid_t host_gid);
+void cmd_fsids_save(const struct silofs_ugids     *fsids,
+                    const struct silofs_boot_args *boot_args);
 
-void cmd_append_uid_mapping(struct silofs_ugids *fsids, uid_t host_uid,
-                            uid_t fs_uid);
+void cmd_fsids_load(struct silofs_ugids           *fsids,
+                    const struct silofs_boot_args *boot_args);
 
-void cmd_append_gid_mapping(struct silofs_ugids *fsids, uid_t host_gid,
-                            uid_t fs_gid);
+void cmd_fsids_add_uidgid_of(struct silofs_ugids *fsids, const char *name);
 
-void cmd_append_user_uidgid(struct silofs_ugids *fsids, const char *name);
+void cmd_fsids_add_supgroups_of(struct silofs_ugids *fsids, const char *name);
 
-void cmd_append_user_supgroups(struct silofs_ugids *fsids, const char *name);
+void cmd_fsids_need_uidgid(const struct silofs_ugids *fsids, uid_t host_uid,
+                           gid_t host_gid);
 
-void cmd_save_jfsids(const struct silofs_boot_args *boot_args,
-                     const struct silofs_ugids     *fsids);
-
-void cmd_load_jfsids(const struct silofs_boot_args *boot_args,
-                     struct silofs_ugids           *fsids);
-
-/* users/groups */
+void cmd_fsids_need_user(const struct silofs_ugids *fsids, const char *name);
 
 char *cmd_getusername(void);
 
-void cmd_resolve_name_to_uidgid(const char *name, uid_t *out_uid,
-                                gid_t *out_gid);
-
-uid_t cmd_resolve_name_to_uid(const char *name);
-
-char *cmd_resolve_uid_to_name(uid_t uid);
-
-gid_t cmd_resolve_name_to_gid(const char *name);
-
-char *cmd_resolve_gid_to_name(gid_t gid);
-
-size_t cmd_resolve_supgroups(const char *user, gid_t *groups, size_t ngroups);
+void cmd_uidgid_of(const char *username, uid_t *out_uid, gid_t *out_gid);
 
 /* security restrictions (landlock) */
 void cmd_restrict_process(const char *path, bool allow_mkdir);

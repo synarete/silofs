@@ -15,9 +15,9 @@
  * GNU General Public License for more details.
  */
 #define _GNU_SOURCE 1
+#include "cmd.h"
 #include <sys/signalfd.h>
 #include <signal.h>
-#include "cmd.h"
 
 /*
  * TODO-0057: Use 'signalfd' system API

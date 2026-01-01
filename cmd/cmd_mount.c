@@ -15,6 +15,7 @@
  * GNU General Public License for more details.
  */
 #define _GNU_SOURCE 1
+#include "cmd.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>
@@ -23,7 +24,6 @@
 #include <sys/prctl.h>
 #include <sys/mount.h>
 #include <time.h>
-#include "cmd.h"
 
 static const char *const cmd_mount_help_desc =
 	"mount [options] <repodir/fsname> <mountpoint>                     \n"
@@ -269,7 +269,7 @@ static void cmd_mount_setup_env_args(struct cmd_mount_ctx *ctx)
 
 static void cmd_mount_setup_fsids(struct cmd_mount_ctx *ctx)
 {
-	cmd_load_jfsids(&ctx->env_args.boot_args, &ctx->env_args.fsids);
+	cmd_fsids_load(&ctx->env_args.fsids, &ctx->env_args.boot_args);
 }
 
 static void cmd_mount_load_fs_jref(struct cmd_mount_ctx *ctx)
@@ -277,11 +277,13 @@ static void cmd_mount_load_fs_jref(struct cmd_mount_ctx *ctx)
 	cmd_load_fs_jref(&ctx->env_args.boot_args, &ctx->fs_mbref);
 }
 
-static void cmd_mount_setup_env(struct cmd_mount_ctx *ctx)
+static void cmd_mount_setup_env(struct cmd_mount_ctx *ctx, int phase)
 {
 	cmd_new_env(&ctx->env_args, &ctx->env);
-	cmd_finish_fsids(&ctx->env_args.fsids);
-	cmd_delpass(&ctx->in_args.password);
+	if (phase == 2) {
+		cmd_fsids_clear(&ctx->env_args.fsids);
+		cmd_delpass(&ctx->in_args.password);
+	}
 }
 
 static void cmd_mount_destroy_env(struct cmd_mount_ctx *ctx)
@@ -606,7 +608,7 @@ static void cmd_mount_post_exec_cleanup(const struct cmd_mount_ctx *ctx)
 static void cmd_mount_exec_phase1(struct cmd_mount_ctx *ctx)
 {
 	/* Setup boot environment instance */
-	cmd_mount_setup_env(ctx);
+	cmd_mount_setup_env(ctx, 1);
 
 	/* Acquire lock */
 	cmd_mount_acquire_lockfile(ctx);
@@ -642,7 +644,7 @@ static void cmd_mount_exec_phase2(struct cmd_mount_ctx *ctx)
 	cmd_mount_update_log_params(ctx);
 
 	/* Setup main environment instance */
-	cmd_mount_setup_env(ctx);
+	cmd_mount_setup_env(ctx, 2);
 
 	/* Re-acquire lock */
 	cmd_mount_acquire_lockfile(ctx);

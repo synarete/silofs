@@ -15,10 +15,10 @@
  * GNU General Public License for more details.
  */
 #define _GNU_SOURCE 1
+#include "cmd.h"
 #include <fcntl.h>
 #include <limits.h>
 #include <time.h>
-#include "cmd.h"
 
 struct cmd_lockfile_ctx {
 	char        lockname[NAME_MAX + 1];

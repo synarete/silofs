@@ -15,10 +15,8 @@
  * GNU General Public License for more details.
  */
 #define _GNU_SOURCE 1
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdarg.h>
 #include "cmd.h"
+#include <stdarg.h>
 
 void cmd_new_env(const struct silofs_env_args *env_args,
                  struct silofs_env           **p_env)
@@ -315,7 +313,7 @@ void cmd_restore_fs(struct silofs_env         *env,
 void cmd_setup_env_args(struct silofs_env_args *env_args)
 {
 	memset(env_args, 0, sizeof(*env_args));
-	cmd_start_fsids(&env_args->fsids);
+	cmd_fsids_setup(&env_args->fsids);
 	env_args->uid   = getuid();
 	env_args->gid   = getgid();
 	env_args->pid   = getpid();
@@ -324,6 +322,6 @@ void cmd_setup_env_args(struct silofs_env_args *env_args)
 
 void cmd_destroy_env_args(struct silofs_env_args *env_args)
 {
-	cmd_finish_fsids(&env_args->fsids);
+	cmd_fsids_clear(&env_args->fsids);
 	memset(env_args, 0, sizeof(*env_args));
 }

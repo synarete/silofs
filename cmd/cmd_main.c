@@ -15,6 +15,7 @@
  * GNU General Public License for more details.
  */
 #define _GNU_SOURCE 1
+#include "cmd.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/resource.h>
@@ -23,7 +24,6 @@
 #include <error.h>
 #include <locale.h>
 #include <time.h>
-#include "cmd.h"
 
 /* Local functions forward declarations */
 static void cmd_setup_globals(int argc, char *argv[]);

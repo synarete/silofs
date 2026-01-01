@@ -15,12 +15,8 @@
  * GNU General Public License for more details.
  */
 #define _GNU_SOURCE 1
-#include <string.h>
-#include <limits.h>
-#include <errno.h>
-#include <time.h>
-#include <jansson.h>
-#include "cmd.h"
+
+#include "cmd_jconf.h"
 
 static char *cmd_current_time(void)
 {
@@ -38,7 +34,7 @@ static char *cmd_current_time(void)
 	return cmd_strdup(ts);
 }
 
-static json_t *cmd_json_object(void)
+json_t *cmd_json_object(void)
 {
 	json_t *jobj;
 
@@ -49,7 +45,7 @@ static json_t *cmd_json_object(void)
 	return jobj;
 }
 
-static json_t *cmd_json_string(const char *s)
+json_t *cmd_json_string(const char *s)
 {
 	json_t *jstr;
 
@@ -60,7 +56,7 @@ static json_t *cmd_json_string(const char *s)
 	return jstr;
 }
 
-static json_t *cmd_json_integer(long n)
+json_t *cmd_json_integer(long n)
 {
 	json_t *jint;
 
@@ -71,7 +67,7 @@ static json_t *cmd_json_integer(long n)
 	return jint;
 }
 
-static json_t *cmd_json_array(void)
+json_t *cmd_json_array(void)
 {
 	json_t *jarr;
 
@@ -82,7 +78,7 @@ static json_t *cmd_json_array(void)
 	return jarr;
 }
 
-static size_t cmd_json_array_size(const json_t *jarr)
+size_t cmd_json_array_size(const json_t *jarr)
 {
 	if (!json_is_array(jarr)) {
 		cmd_diez("json: not an array");
@@ -90,7 +86,7 @@ static size_t cmd_json_array_size(const json_t *jarr)
 	return json_array_size(jarr);
 }
 
-static json_t *cmd_json_array_get(const json_t *jarr, size_t idx)
+json_t *cmd_json_array_get(const json_t *jarr, size_t idx)
 {
 	json_t *jsub;
 
@@ -101,7 +97,7 @@ static json_t *cmd_json_array_get(const json_t *jarr, size_t idx)
 	return jsub;
 }
 
-static json_t *cmd_json_btime(void)
+json_t *cmd_json_btime(void)
 {
 	char   *tnow;
 	json_t *jstr;
@@ -124,7 +120,7 @@ static json_t *cmd_json_mbref(const struct silofs_mbref *mbref)
 	return cmd_json_string(s);
 }
 
-static void cmd_json_object_set_new(json_t *jobj, const char *key, json_t *val)
+void cmd_json_object_set_new(json_t *jobj, const char *key, json_t *val)
 {
 	int err;
 
@@ -134,7 +130,7 @@ static void cmd_json_object_set_new(json_t *jobj, const char *key, json_t *val)
 	}
 }
 
-static void cmd_json_append(json_t *jobj, json_t *jval)
+void cmd_json_array_append(json_t *jobj, json_t *jval)
 {
 	int err;
 
@@ -144,11 +140,11 @@ static void cmd_json_append(json_t *jobj, json_t *jval)
 	}
 }
 
-static char *cmd_json_dumps(json_t *root)
+static char *cmd_json_dumps(json_t *jobj)
 {
 	char *out;
 
-	out = json_dumps(root, JSON_INDENT(2));
+	out = json_dumps(jobj, JSON_INDENT(2));
 	if (out == nullptr) {
 		cmd_diez("json: failed to dumps");
 	}
@@ -179,7 +175,7 @@ static json_t *cmd_json_object_get(const json_t *jobj, const char *key)
 	return jsub;
 }
 
-static json_t *cmd_json_object_get_string(const json_t *jobj, const char *key)
+json_t *cmd_json_object_get_string(const json_t *jobj, const char *key)
 {
 	json_t *jstr;
 
@@ -190,7 +186,7 @@ static json_t *cmd_json_object_get_string(const json_t *jobj, const char *key)
 	return jstr;
 }
 
-static const char *cmd_json_string_value(const json_t *jstr)
+const char *cmd_json_string_value(const json_t *jstr)
 {
 	const char *val;
 
@@ -201,7 +197,7 @@ static const char *cmd_json_string_value(const json_t *jstr)
 	return val;
 }
 
-static json_t *cmd_json_object_get_integer(const json_t *jobj, const char *key)
+json_t *cmd_json_object_get_integer(const json_t *jobj, const char *key)
 {
 	json_t *jint;
 
@@ -223,7 +219,7 @@ static uint64_t cmd_json_uint64_value(const json_t *jint)
 	return (uint64_t)val;
 }
 
-static uint32_t cmd_json_uint32_value(const json_t *jint)
+uint32_t cmd_json_uint32_value(const json_t *jint)
 {
 	uint64_t u;
 
@@ -234,7 +230,7 @@ static uint32_t cmd_json_uint32_value(const json_t *jint)
 	return (uint32_t)u;
 }
 
-static json_t *cmd_json_object_get_array(const json_t *jobj, const char *key)
+json_t *cmd_json_object_get_array(const json_t *jobj, const char *key)
 {
 	json_t *jstr;
 
@@ -245,9 +241,9 @@ static json_t *cmd_json_object_get_array(const json_t *jobj, const char *key)
 	return jstr;
 }
 
-static void cmd_json_decref(json_t *root)
+void cmd_json_decref(json_t *jobj)
 {
-	json_decref(root);
+	json_decref(jobj);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -289,19 +285,16 @@ static void cmd_jref_add_mbref(json_t *jobj, const struct silofs_mbref *mbref)
 	cmd_json_object_set_new(jobj, cmd_jkey_mbref, jsub);
 }
 
-static char *cmd_encode_jref(const struct silofs_mbref *mbref)
+static json_t *cmd_jref_encode(const struct silofs_mbref *mbref)
 {
-	json_t *jroot = nullptr;
-	char   *jtxt  = nullptr;
+	json_t *jobj;
 
-	jroot = cmd_json_object();
-	cmd_jref_add_version(jroot);
-	cmd_jref_add_fmtrev(jroot);
-	cmd_jref_add_btime(jroot);
-	cmd_jref_add_mbref(jroot, mbref);
-	jtxt = cmd_json_dumps(jroot);
-	cmd_json_decref(jroot);
-	return jtxt;
+	jobj = cmd_json_object();
+	cmd_jref_add_version(jobj);
+	cmd_jref_add_fmtrev(jobj);
+	cmd_jref_add_btime(jobj);
+	cmd_jref_add_mbref(jobj, mbref);
+	return jobj;
 }
 
 static void cmd_jref_get_version(const json_t *jobj)
@@ -347,43 +340,35 @@ cmd_jref_get_mbref(const json_t *jobj, struct silofs_mbref *out_mbref)
 	}
 }
 
-static void cmd_decode_jref(const char *jtxt, struct silofs_mbref *out_mbref)
+static void cmd_jfsref_decode(json_t *jfsref, struct silofs_mbref *out_mbref)
 {
-	json_t *jroot;
-
-	jroot = cmd_json_loads(jtxt);
-	cmd_jref_get_version(jroot);
-	cmd_jref_get_fmtvers(jroot);
-	cmd_jref_get_btime(jroot);
-	cmd_jref_get_mbref(jroot, out_mbref);
-	cmd_json_decref(jroot);
+	cmd_jref_get_version(jfsref);
+	cmd_jref_get_fmtvers(jfsref);
+	cmd_jref_get_btime(jfsref);
+	cmd_jref_get_mbref(jfsref, out_mbref);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void
-cmd_open_repodir(const struct silofs_boot_args *boot_args, int *out_dfd)
+void cmd_open_jconfdir(const struct silofs_boot_args *boot_args, int *out_dfd)
 {
-	const char *repodir = boot_args->repodir;
-	int         dfd     = -1;
-	int         err;
+	int dfd = -1;
+	int err;
 
-	err = silofs_sys_open(repodir, O_DIRECTORY | O_RDONLY, 0, &dfd);
+	err = silofs_sys_opendir(boot_args->repodir, &dfd);
 	if (err) {
-		cmd_die(err, "failed to open repodir: %s", repodir);
+		cmd_die(err, "failed to open dir: %s", boot_args->repodir);
 	}
 	*out_dfd = dfd;
 }
 
-static void
-cmd_close_repodir(const struct silofs_boot_args *boot_args, int *dfd)
+void cmd_close_jconfdir(const struct silofs_boot_args *boot_args, int dfd)
 {
-	const char *repodir = boot_args->repodir;
-	int         err;
+	int err;
 
-	err = silofs_sys_closefd(dfd);
+	err = silofs_sys_close(dfd);
 	if (err) {
-		cmd_die(err, "failed to open repodir: %s", repodir);
+		cmd_die(err, "failed to close dir: %s", boot_args->repodir);
 	}
 }
 
@@ -425,6 +410,15 @@ static void cmd_save_jtext_at(int dfd, const char *name, const char *jtxt)
 	}
 }
 
+void cmd_json_save_at(json_t *jobj, int dfd, const char *name)
+{
+	char *jtxt;
+
+	jtxt = cmd_json_dumps(jobj);
+	cmd_save_jtext_at(dfd, name, jtxt);
+	free(jtxt);
+}
+
 static char *cmd_load_jtext_at(int dfd, const char *name)
 {
 	struct stat  st       = { .st_mode = 0 };
@@ -458,16 +452,28 @@ static char *cmd_load_jtext_at(int dfd, const char *name)
 	return jtxt;
 }
 
+json_t *cmd_json_load_at(int dfd, const char *name)
+{
+	json_t *jobj;
+	char   *jtxt;
+
+	jtxt = cmd_load_jtext_at(dfd, name);
+	jobj = cmd_json_loads(jtxt);
+	cmd_pstrfree(&jtxt);
+
+	return jobj;
+}
+
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static void
 cmd_save_jref_at(int dfd, const char *name, const struct silofs_mbref *mbref)
 {
-	char *jtxt;
+	json_t *jobj;
 
-	jtxt = cmd_encode_jref(mbref);
-	cmd_save_jtext_at(dfd, name, jtxt);
-	free(jtxt);
+	jobj = cmd_jref_encode(mbref);
+	cmd_json_save_at(jobj, dfd, name);
+	cmd_json_decref(jobj);
 }
 
 void cmd_save_fs_jref(const struct silofs_boot_args *boot_args,
@@ -475,9 +481,9 @@ void cmd_save_fs_jref(const struct silofs_boot_args *boot_args,
 {
 	int dfd = -1;
 
-	cmd_open_repodir(boot_args, &dfd);
+	cmd_open_jconfdir(boot_args, &dfd);
 	cmd_save_jref_at(dfd, boot_args->fs_name, fs_mbref);
-	cmd_close_repodir(boot_args, &dfd);
+	cmd_close_jconfdir(boot_args, dfd);
 }
 
 void cmd_save_ar_jref(const struct silofs_boot_args *boot_args,
@@ -485,19 +491,19 @@ void cmd_save_ar_jref(const struct silofs_boot_args *boot_args,
 {
 	int dfd = -1;
 
-	cmd_open_repodir(boot_args, &dfd);
+	cmd_open_jconfdir(boot_args, &dfd);
 	cmd_save_jref_at(dfd, boot_args->ar_name, ar_mbref);
-	cmd_close_repodir(boot_args, &dfd);
+	cmd_close_jconfdir(boot_args, dfd);
 }
 
 static void
 cmd_load_jref_at(int dfd, const char *name, struct silofs_mbref *out_mbref)
 {
-	char *jtxt = nullptr;
+	json_t *jfsref;
 
-	jtxt = cmd_load_jtext_at(dfd, name);
-	cmd_decode_jref(jtxt, out_mbref);
-	cmd_pstrfree(&jtxt);
+	jfsref = cmd_json_load_at(dfd, name);
+	cmd_jfsref_decode(jfsref, out_mbref);
+	cmd_json_decref(jfsref);
 }
 
 static void cmd_load_jref_of(const struct silofs_boot_args *boot_args, bool ar,
@@ -507,9 +513,9 @@ static void cmd_load_jref_of(const struct silofs_boot_args *boot_args, bool ar,
 	int         dfd = -1;
 
 	name = ar ? boot_args->ar_name : boot_args->fs_name;
-	cmd_open_repodir(boot_args, &dfd);
+	cmd_open_jconfdir(boot_args, &dfd);
 	cmd_load_jref_at(dfd, name, out_mbref);
-	cmd_close_repodir(boot_args, &dfd);
+	cmd_close_jconfdir(boot_args, dfd);
 }
 
 void cmd_load_fs_jref(const struct silofs_boot_args *boot_args,
@@ -528,211 +534,9 @@ void cmd_unlink_fs_jref(const struct silofs_boot_args *boot_args)
 {
 	int dfd = -1;
 
-	cmd_open_repodir(boot_args, &dfd);
+	cmd_open_jconfdir(boot_args, &dfd);
 	silofs_sys_unlinkat(dfd, boot_args->fs_name, 0);
-	cmd_close_repodir(boot_args, &dfd);
+	cmd_close_jconfdir(boot_args, dfd);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-
-static const char cmd_jkey_users[]  = "users";
-static const char cmd_jkey_user[]   = "user";
-static const char cmd_jkey_uid[]    = "uid";
-static const char cmd_jkey_groups[] = "groups";
-static const char cmd_jkey_group[]  = "group";
-static const char cmd_jkey_gid[]    = "gid";
-
-static const char cmd_jfsids_filename[] = "fsids.json";
-
-static json_t *cmd_encode_jfsids_users(const struct silofs_ugids *fsids)
-{
-	json_t *jusers = nullptr;
-	json_t *juser  = nullptr;
-	json_t *jname  = nullptr;
-	json_t *juid   = nullptr;
-	char   *name   = nullptr;
-	uid_t   host_uid, fs_uid;
-
-	jusers = cmd_json_array();
-	for (size_t idx = 0; idx < fsids->users.nuids; ++idx) {
-		juser = cmd_json_object();
-
-		host_uid = fsids->users.uids[idx].host_uid;
-		name     = cmd_resolve_uid_to_name(host_uid);
-		jname    = cmd_json_string(name);
-		cmd_json_object_set_new(juser, cmd_jkey_user, jname);
-
-		fs_uid = fsids->users.uids[idx].fs_uid;
-		juid   = cmd_json_integer((long)fs_uid);
-		cmd_json_object_set_new(juser, cmd_jkey_uid, juid);
-
-		cmd_json_append(jusers, juser);
-		cmd_pstrfree(&name);
-	}
-	return jusers;
-}
-
-static void
-cmd_decode_jfsids_users(const json_t *jusers, struct silofs_ugids *fsids)
-{
-	const json_t *juser = nullptr;
-	const json_t *jname = nullptr;
-	const json_t *juid  = nullptr;
-	const char   *name  = nullptr;
-	uid_t         host_uid, fs_uid;
-	size_t        size;
-
-	size = cmd_json_array_size(jusers);
-	for (size_t idx = 0; idx < size; ++idx) {
-		juser    = cmd_json_array_get(jusers, idx);
-		jname    = cmd_json_object_get_string(juser, cmd_jkey_user);
-		name     = cmd_json_string_value(jname);
-		host_uid = cmd_resolve_name_to_uid(name);
-
-		juid   = cmd_json_object_get_integer(juser, cmd_jkey_uid);
-		fs_uid = cmd_json_uint32_value(juid);
-
-		cmd_append_uid_mapping(fsids, host_uid, fs_uid);
-	}
-}
-
-static json_t *cmd_encode_jfsids_groups(const struct silofs_ugids *fsids)
-{
-	json_t *jgroups = nullptr;
-	json_t *jgroup  = nullptr;
-	json_t *jname   = nullptr;
-	json_t *jgid    = nullptr;
-	char   *name    = nullptr;
-	gid_t   host_gid, fs_gid;
-
-	jgroups = cmd_json_array();
-	for (size_t idx = 0; idx < fsids->groups.ngids; ++idx) {
-		jgroup = cmd_json_object();
-
-		host_gid = fsids->groups.gids[idx].host_gid;
-		name     = cmd_resolve_gid_to_name(host_gid);
-		jname    = cmd_json_string(name);
-		cmd_json_object_set_new(jgroup, cmd_jkey_group, jname);
-
-		fs_gid = fsids->groups.gids[idx].fs_gid;
-		jgid   = cmd_json_integer((long)fs_gid);
-		cmd_json_object_set_new(jgroup, cmd_jkey_gid, jgid);
-
-		cmd_json_append(jgroups, jgroup);
-		cmd_pstrfree(&name);
-	}
-	return jgroups;
-}
-
-static void
-cmd_decode_jfsids_groups(const json_t *jgroups, struct silofs_ugids *fsids)
-{
-	const json_t *jgroup = nullptr;
-	const json_t *jname  = nullptr;
-	const json_t *jgid   = nullptr;
-	const char   *name   = nullptr;
-	gid_t         host_gid, fs_gid;
-	size_t        size;
-
-	size = cmd_json_array_size(jgroups);
-	for (size_t idx = 0; idx < size; ++idx) {
-		jgroup   = cmd_json_array_get(jgroups, idx);
-		jname    = cmd_json_object_get_string(jgroup, cmd_jkey_group);
-		name     = cmd_json_string_value(jname);
-		host_gid = cmd_resolve_name_to_gid(name);
-
-		jgid   = cmd_json_object_get_integer(jgroup, cmd_jkey_gid);
-		fs_gid = cmd_json_uint32_value(jgid);
-
-		cmd_append_gid_mapping(fsids, host_gid, fs_gid);
-	}
-}
-
-static json_t *cmd_encode_jfsids(const struct silofs_ugids *fsids)
-{
-	json_t *jfsids  = nullptr;
-	json_t *jusers  = nullptr;
-	json_t *jgroups = nullptr;
-
-	jfsids = cmd_json_object();
-
-	jusers = cmd_encode_jfsids_users(fsids);
-	cmd_json_object_set_new(jfsids, cmd_jkey_users, jusers);
-
-	jgroups = cmd_encode_jfsids_groups(fsids);
-	cmd_json_object_set_new(jfsids, cmd_jkey_groups, jgroups);
-
-	return jfsids;
-}
-
-static void cmd_decode_jfsids(const json_t *jfsids, struct silofs_ugids *fsids)
-{
-	const json_t *jusers  = nullptr;
-	const json_t *jgroups = nullptr;
-
-	jusers = cmd_json_object_get_array(jfsids, cmd_jkey_users);
-	cmd_decode_jfsids_users(jusers, fsids);
-
-	jgroups = cmd_json_object_get_array(jfsids, cmd_jkey_groups);
-	cmd_decode_jfsids_groups(jgroups, fsids);
-}
-
-static char *cmd_encode_jfsids_text(const struct silofs_ugids *fsids)
-{
-	json_t *jfsids = nullptr;
-	char   *jtxt   = nullptr;
-
-	jfsids = cmd_encode_jfsids(fsids);
-	jtxt   = cmd_json_dumps(jfsids);
-	cmd_json_decref(jfsids);
-	return jtxt;
-}
-static void
-cmd_decode_jfsids_text(const char *jtxt, struct silofs_ugids *fsids)
-{
-	json_t *jfsids = nullptr;
-
-	jfsids = cmd_json_loads(jtxt);
-	cmd_decode_jfsids(jfsids, fsids);
-	cmd_json_decref(jfsids);
-}
-
-static void
-cmd_save_jfsids_at(int dfd, const char *name, const struct silofs_ugids *fsids)
-{
-	char *jtxt;
-
-	jtxt = cmd_encode_jfsids_text(fsids);
-	cmd_save_jtext_at(dfd, name, jtxt);
-	free(jtxt);
-}
-
-void cmd_save_jfsids(const struct silofs_boot_args *boot_args,
-                     const struct silofs_ugids     *fsids)
-{
-	int dfd = -1;
-
-	cmd_open_repodir(boot_args, &dfd);
-	cmd_save_jfsids_at(dfd, cmd_jfsids_filename, fsids);
-	cmd_close_repodir(boot_args, &dfd);
-}
-
-static void
-cmd_load_jfsids_at(int dfd, const char *name, struct silofs_ugids *fsids)
-{
-	char *jtxt;
-
-	jtxt = cmd_load_jtext_at(dfd, name);
-	cmd_decode_jfsids_text(jtxt, fsids);
-	free(jtxt);
-}
-
-void cmd_load_jfsids(const struct silofs_boot_args *boot_args,
-                     struct silofs_ugids           *fsids)
-{
-	int dfd = -1;
-
-	cmd_open_repodir(boot_args, &dfd);
-	cmd_load_jfsids_at(dfd, cmd_jfsids_filename, fsids);
-	cmd_close_repodir(boot_args, &dfd);
-}

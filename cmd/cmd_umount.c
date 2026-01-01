@@ -15,10 +15,10 @@
  * GNU General Public License for more details.
  */
 #define _GNU_SOURCE 1
+#include "cmd.h"
 #include <sys/vfs.h>
 #include <sys/statvfs.h>
 #include <sys/mount.h>
-#include "cmd.h"
 
 static const char *const cmd_umount_help_desc =
 	"umount [options] <mountpoint>                                   \n"

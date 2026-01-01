@@ -15,8 +15,8 @@
  * GNU General Public License for more details.
  */
 #define _GNU_SOURCE 1
-#include <sys/mount.h>
 #include "cmd.h"
+#include <sys/mount.h>
 
 static const char *const cmd_show_help_desc =
 	"show <subcmd> <pathname>                                        \n"

@@ -200,16 +200,15 @@ static void cmd_mkfs_setup_fsids(struct cmd_mkfs_ctx *ctx)
 {
 	struct silofs_env_args *env_args = &ctx->env_args;
 
-	cmd_resolve_name_to_uidgid(ctx->in_args.username, &env_args->uid,
-	                           &env_args->gid);
-	cmd_load_jfsids(&env_args->boot_args, &env_args->fsids);
-	cmd_require_fsids(&env_args->fsids, env_args->uid, env_args->gid);
+	cmd_uidgid_of(ctx->in_args.username, &env_args->uid, &env_args->gid);
+	cmd_fsids_load(&env_args->fsids, &env_args->boot_args);
+	cmd_fsids_need_user(&env_args->fsids, ctx->in_args.username);
 }
 
 static void cmd_mkfs_setup_env(struct cmd_mkfs_ctx *ctx)
 {
 	cmd_new_env(&ctx->env_args, &ctx->env);
-	cmd_finish_fsids(&ctx->env_args.fsids);
+	cmd_fsids_clear(&ctx->env_args.fsids);
 	cmd_delpass(&ctx->in_args.password);
 }
 

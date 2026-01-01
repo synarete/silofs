@@ -96,7 +96,7 @@ static void cmd_init_parse_optargs(struct cmd_init_ctx *ctx)
 static void cmd_init_finalize(struct cmd_init_ctx *ctx)
 {
 	cmd_del_env(&ctx->env);
-	cmd_finish_fsids(&ctx->env_args.fsids);
+	cmd_fsids_clear(&ctx->env_args.fsids);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.username);
@@ -157,7 +157,7 @@ static void cmd_init_setup_env_args(struct cmd_init_ctx *ctx)
 	const char             *username = ctx->in_args.username;
 
 	cmd_setup_env_args(env_args);
-	cmd_resolve_name_to_uidgid(username, &env_args->uid, &env_args->gid);
+	cmd_uidgid_of(username, &env_args->uid, &env_args->gid);
 	env_args->boot_args.repodir = ctx->in_args.repodir_real;
 	env_args->boot_args.fs_name = "silofs";
 }
@@ -169,12 +169,12 @@ static void cmd_init_setup_fsids(struct cmd_init_ctx *ctx)
 	const bool           with_sup_groups = ctx->in_args.with_sup_groups;
 	const bool           with_root_user  = ctx->in_args.with_root_user;
 
-	cmd_append_user_uidgid(fsids, username);
+	cmd_fsids_add_uidgid_of(fsids, username);
 	if (with_sup_groups) {
-		cmd_append_user_supgroups(fsids, username);
+		cmd_fsids_add_supgroups_of(fsids, username);
 	}
 	if (with_root_user && (strcmp(username, "root") != 0)) {
-		cmd_append_user_uidgid(fsids, "root");
+		cmd_fsids_add_uidgid_of(fsids, "root");
 	}
 }
 
@@ -195,8 +195,8 @@ static void cmd_init_close_repo(const struct cmd_init_ctx *ctx)
 
 static void cmd_init_save_jfsids(struct cmd_init_ctx *ctx)
 {
-	cmd_save_jfsids(&ctx->env_args.boot_args, &ctx->env_args.fsids);
-	cmd_finish_fsids(&ctx->env_args.fsids);
+	cmd_fsids_save(&ctx->env_args.fsids, &ctx->env_args.boot_args);
+	cmd_fsids_clear(&ctx->env_args.fsids);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

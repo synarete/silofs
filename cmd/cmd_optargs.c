@@ -16,9 +16,9 @@
  */
 
 #define _GNU_SOURCE 1
+#include "cmd.h"
 #include <unistd.h>
 #include <getopt.h>
-#include "cmd.h"
 
 silofs_attr_noreturn static void cmd_fatal_missing_arg(const char *s)
 {

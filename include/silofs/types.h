@@ -96,6 +96,21 @@ struct silofs_mbrefs {
 	struct silofs_mbref fork;
 };
 
+/* general meta-info */
+struct silofs_meta {
+	char     version[64];
+	uint64_t btime;
+	uint32_t reserved;
+	uint32_t fmtvers;
+	uint8_t  reserved2[48];
+};
+
+/* file-system meta & reference */
+struct silofs_fsref {
+	struct silofs_meta meta;
+	char               mbref[128];
+};
+
 /* input arguments */
 struct silofs_env_args {
 	struct silofs_boot_args boot_args;

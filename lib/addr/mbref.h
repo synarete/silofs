@@ -18,7 +18,6 @@
 #define SILOFS_MBREF_H_
 
 #include <silofs/types.h>
-#include "stringx.h"
 #include "paddr.h"
 
 void silofs_mbref_setup(struct silofs_mbref         *mbref,

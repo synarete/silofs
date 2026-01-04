@@ -27,18 +27,19 @@ static void fsref_reset(struct silofs_fsref *fsref)
 
 static void fsref_setup_meta(struct silofs_fsref *fsref)
 {
-	struct silofs_meta *meta    = &fsref->meta;
-	const char         *version = silofs_version.string;
+	struct silofs_fsmeta *fsmeta  = &fsref->fsmeta;
+	const char           *version = silofs_version.string;
 
-	strncpy(meta->version, version, sizeof(meta->version) - 1);
-	meta->btime   = (uint64_t)silofs_time_real_now();
-	meta->fmtvers = SILOFS_FMT_VERSION;
+	strncpy(fsmeta->version, version, sizeof(fsmeta->version) - 1);
+	fsmeta->btime   = (uint64_t)silofs_time_real_now();
+	fsmeta->fmtvers = SILOFS_FMT_VERSION;
 }
 
 static void fsref_encode_mbref(struct silofs_fsref       *fsref,
                                const struct silofs_mbref *mbref)
 {
-	silofs_mbref_to_str(mbref, fsref->mbref, sizeof(fsref->mbref) - 1);
+	silofs_mbref_to_str(mbref, fsref->mbaddr.mba,
+	                    sizeof(fsref->mbaddr.mba) - 1);
 }
 
 void silofs_fsref_encode(struct silofs_fsref       *fsref,
@@ -51,7 +52,7 @@ void silofs_fsref_encode(struct silofs_fsref       *fsref,
 
 static int fsref_check_meta(const struct silofs_fsref *fsref)
 {
-	const struct silofs_meta *meta = &fsref->meta;
+	const struct silofs_fsmeta *meta = &fsref->fsmeta;
 
 	if (meta->fmtvers != SILOFS_FMT_VERSION) {
 		return -SILOFS_EINVAL;
@@ -68,9 +69,9 @@ static int fsref_decode_mbref(const struct silofs_fsref *fsref,
 	size_t len;
 	int    err = -SILOFS_EINVAL;
 
-	len = silofs_str_nlength(fsref->mbref, sizeof(fsref->mbref));
-	if (len && (len < sizeof(fsref->mbref))) {
-		err = silofs_mbref_from_str(out_mbref, fsref->mbref, len);
+	len = silofs_str_nlength(fsref->mbaddr.mba, sizeof(fsref->mbaddr.mba));
+	if (len && (len < sizeof(fsref->mbaddr.mba))) {
+		err = silofs_mbref_from_str(out_mbref, fsref->mbaddr.mba, len);
 	}
 	return err;
 }

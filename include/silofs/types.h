@@ -89,6 +89,10 @@ struct silofs_mbref {
 	struct silofs_blobidx bx;
 };
 
+struct silofs_mbaddr {
+	char mba[128];
+};
+
 /* tuple of mbr-refs */
 struct silofs_mbrefs {
 	struct silofs_mbref main;
@@ -96,8 +100,8 @@ struct silofs_mbrefs {
 	struct silofs_mbref fork;
 };
 
-/* general meta-info */
-struct silofs_meta {
+/* general fs meta-info */
+struct silofs_fsmeta {
 	char     version[64];
 	uint64_t btime;
 	uint32_t reserved;
@@ -107,8 +111,15 @@ struct silofs_meta {
 
 /* file-system meta & reference */
 struct silofs_fsref {
-	struct silofs_meta meta;
-	char               mbref[128];
+	struct silofs_fsmeta fsmeta;
+	struct silofs_mbaddr mbaddr;
+};
+
+/* file-system meta & forks-reference */
+struct silofs_fsrefs {
+	struct silofs_fsref main;
+	struct silofs_fsref base;
+	struct silofs_fsref fork;
 };
 
 /* input arguments */

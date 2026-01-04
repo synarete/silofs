@@ -404,7 +404,7 @@ call_ioctl_query(struct silofs_task_ctx *task, struct silofs_call_args *args)
 }
 
 static int
-call_ioctl_clone(struct silofs_task_ctx *task, struct silofs_call_args *args)
+call_ioctl_forkfs(struct silofs_task_ctx *task, struct silofs_call_args *args)
 {
 	return silofs_exec_forkfs(task, args->in.clone.ino,
 	                          args->in.clone.flags,
@@ -440,7 +440,7 @@ int silofs_call_ioctl(struct silofs_task_ctx  *task,
 		ret = call_ioctl_query(task, args);
 		break;
 	case SILOFS_IOC_FORKFS:
-		ret = call_ioctl_clone(task, args);
+		ret = call_ioctl_forkfs(task, args);
 		break;
 	case SILOFS_IOC_SYNCFS:
 		ret = call_ioctl_syncfs(task, args);

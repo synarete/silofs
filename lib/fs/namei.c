@@ -2445,47 +2445,30 @@ static void fill_query_version(struct silofs_ioc_query *query)
 	str_to_buf(&s, query->u.version.string, bsz);
 }
 
-/* boot pathname: a pair of repo-directory & fsname */
-struct silofs_bootpath {
-	struct silofs_strview repodir;
-	struct silofs_strview fsname;
-};
-
-static void make_bootpath(struct silofs_bootpath *bootpath,
-                          const char *repodir, const char *fsname)
+static const struct silofs_boot_ref *
+boot_ref_of(const struct silofs_task_ctx *task)
 {
-	silofs_strview_init(&bootpath->repodir, repodir);
-	silofs_strview_init(&bootpath->fsname, fsname);
-}
-
-static void bootpath_of(const struct silofs_task_ctx *task,
-                        struct silofs_bootpath       *out_bootpath)
-{
-	const struct silofs_env_args *env_args = task->t_env->base.args;
-
-	make_bootpath(out_bootpath, env_args->boot_args.repodir,
-	              env_args->boot_args.fs_name);
+	return &task->t_env->base.args->boot_args.ref[0];
 }
 
 static void fill_query_repo(const struct silofs_task_ctx *task,
                             struct silofs_ioc_query      *query)
 {
-	struct silofs_bootpath bootpath;
-	size_t                 bsz;
+	struct silofs_strview         strview;
+	const struct silofs_boot_ref *boot_ref = boot_ref_of(task);
 
-	bootpath_of(task, &bootpath);
-	bsz = sizeof(query->u.repo.path);
-	str_to_buf(&bootpath.repodir, query->u.repo.path, bsz);
+	silofs_strview_init(&strview, boot_ref->repodir);
+	str_to_buf(&strview, query->u.repo.path, sizeof(query->u.repo.path));
 }
 
 static void fill_query_boot_name(const struct silofs_task_ctx *task,
                                  struct silofs_ioc_query      *query)
 {
-	struct silofs_bootpath    bootpath = { .fsname.len = 0 };
-	struct silofs_query_boot *qboot    = &query->u.boot;
+	struct silofs_strview         sv;
+	const struct silofs_boot_ref *boot_ref = boot_ref_of(task);
 
-	bootpath_of(task, &bootpath);
-	str_to_buf(&bootpath.fsname, qboot->name, sizeof(qboot->name));
+	silofs_strview_init(&sv, boot_ref->refname);
+	str_to_buf(&sv, query->u.boot.name, sizeof(query->u.boot.name));
 }
 
 static const struct silofs_mbr_info *fs_mbi(const struct silofs_task_ctx *task)

@@ -283,19 +283,19 @@ static void cmd_clone_setup_env_args(struct cmd_clone_ctx *ctx)
 	struct silofs_env_args *env_args = &ctx->env_args;
 
 	cmd_setup_env_args(env_args);
-	env_args->boot_args.repodir = ctx->in_args.repodir_real;
-	env_args->boot_args.fs_name = ctx->in_args.fsname;
-	env_args->boot_args.passwd  = ctx->in_args.password;
+	env_args->boot_args.ref[0].repodir = ctx->in_args.repodir_real;
+	env_args->boot_args.ref[0].refname = ctx->in_args.fsname;
+	env_args->boot_args.passwd         = ctx->in_args.password;
 }
 
 static void cmd_clone_load_fsids(struct cmd_clone_ctx *ctx)
 {
-	cmd_fsids_load(&ctx->env_args.fsids, &ctx->env_args.boot_args);
+	cmd_fsids_load(&ctx->env_args.fsids, &ctx->env_args.boot_args.ref[0]);
 }
 
 static void cmd_clone_load_fsref(struct cmd_clone_ctx *ctx)
 {
-	cmd_fsref_load(&ctx->fs_mbref, false, &ctx->env_args.boot_args);
+	cmd_fsref_load(&ctx->fs_mbref, &ctx->env_args.boot_args.ref[0]);
 }
 
 static void cmd_clone_setup_env(struct cmd_clone_ctx *ctx)
@@ -335,24 +335,24 @@ static void cmd_clone_close_fs(struct cmd_clone_ctx *ctx)
 	cmd_close_fs(ctx->env);
 }
 
-static void cmd_clone_save_fork_blobid(struct cmd_clone_ctx *ctx)
+static void cmd_clone_save_fork_fsref(struct cmd_clone_ctx *ctx)
 {
-	struct silofs_boot_args boot_args = {
+	struct silofs_boot_ref boot_ref = {
 		.repodir = ctx->in_args.repodir_real,
-		.fs_name = ctx->in_args.forkname,
+		.refname = ctx->in_args.forkname,
 	};
 
-	cmd_fsref_save(&ctx->fs_mbrefs.fork, false, &boot_args);
+	cmd_fsref_save(&ctx->fs_mbrefs.fork, &boot_ref);
 }
 
-static void cmd_clone_save_main_blobid(struct cmd_clone_ctx *ctx)
+static void cmd_clone_save_main_fsref(struct cmd_clone_ctx *ctx)
 {
-	struct silofs_boot_args boot_args = {
+	struct silofs_boot_ref boot_ref = {
 		.repodir = ctx->in_args.repodir_real,
-		.fs_name = ctx->in_args.fsname,
+		.refname = ctx->in_args.fsname,
 	};
 
-	cmd_fsref_save(&ctx->fs_mbrefs.main, false, &boot_args);
+	cmd_fsref_save(&ctx->fs_mbrefs.main, &boot_ref);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -438,10 +438,10 @@ void cmd_execute_clone(void)
 	cmd_clone_close_repo(&ctx);
 
 	/* Save new clone bconf */
-	cmd_clone_save_fork_blobid(&ctx);
+	cmd_clone_save_fork_fsref(&ctx);
 
 	/* Re-save (overwrite) original bconf */
-	cmd_clone_save_main_blobid(&ctx);
+	cmd_clone_save_main_fsref(&ctx);
 
 	/* Delete environment */
 	cmd_clone_destroy_env(&ctx);

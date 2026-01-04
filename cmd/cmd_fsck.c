@@ -153,19 +153,19 @@ static void cmd_fsck_setup_env_args(struct cmd_fsck_ctx *ctx)
 	struct silofs_env_args *env_args = &ctx->env_args;
 
 	cmd_setup_env_args(env_args);
-	env_args->boot_args.repodir = ctx->in_args.repodir_real;
-	env_args->boot_args.fs_name = ctx->in_args.name;
-	env_args->boot_args.passwd  = ctx->in_args.password;
+	env_args->boot_args.ref[0].repodir = ctx->in_args.repodir_real;
+	env_args->boot_args.ref[0].refname = ctx->in_args.name;
+	env_args->boot_args.passwd         = ctx->in_args.password;
 }
 
 static void cmd_fsck_load_fsids(struct cmd_fsck_ctx *ctx)
 {
-	cmd_fsids_load(&ctx->env_args.fsids, &ctx->env_args.boot_args);
+	cmd_fsids_load(&ctx->env_args.fsids, &ctx->env_args.boot_args.ref[0]);
 }
 
 static void cmd_fsck_load_fsref(struct cmd_fsck_ctx *ctx)
 {
-	cmd_fsref_load(&ctx->fs_mbref, false, &ctx->env_args.boot_args);
+	cmd_fsref_load(&ctx->fs_mbref, &ctx->env_args.boot_args.ref[0]);
 }
 
 static void cmd_fsck_setup_env(struct cmd_fsck_ctx *ctx)

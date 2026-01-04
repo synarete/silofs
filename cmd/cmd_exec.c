@@ -44,7 +44,8 @@ static char *cmd_repodir_name(const struct silofs_env *env)
 	struct silofs_boot_args boot_args = {};
 
 	silofs_get_boot_args(env, &boot_args);
-	return cmd_join_path(boot_args.repodir, boot_args.fs_name);
+	return cmd_join_path(boot_args.ref[0].repodir,
+	                     boot_args.ref[0].refname);
 }
 
 static void cmd_report_err_and_die(const struct silofs_env *env, int status,

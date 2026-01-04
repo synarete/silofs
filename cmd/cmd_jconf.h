@@ -31,11 +31,9 @@ json_t *cmd_json_btime(void);
 
 json_t *cmd_json_mbref(const struct silofs_mbref *mbref);
 
-
 json_t *cmd_json_string(const char *s);
 
 const char *cmd_json_string_value(const json_t *jstr);
-
 
 json_t *cmd_json_array(void);
 
@@ -61,8 +59,8 @@ void cmd_json_save_at(json_t *jobj, int dfd, const char *name);
 
 json_t *cmd_json_load_at(int dfd, const char *name);
 
-void cmd_open_jconfdir(const struct silofs_boot_args *boot_args, int *out_dfd);
+void cmd_open_jconfdir(const struct silofs_boot_ref *boot_ref, int *out_dfd);
 
-void cmd_close_jconfdir(const struct silofs_boot_args *boot_args, int dfd);
+void cmd_close_jconfdir(const struct silofs_boot_ref *boot_ref, int dfd);
 
 #endif /* SILOFS_CMD_JCONF_H_ */

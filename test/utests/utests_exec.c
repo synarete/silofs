@@ -501,19 +501,19 @@ static void ut_del_gids(struct silofs_gids *gids)
 static void ut_init_args(struct ut_args *args)
 {
 	memset(args, 0, sizeof(*args));
-	args->env_args.boot_args.repodir  = ut_globals.test_dir_repo;
-	args->env_args.boot_args.fs_name  = "utests";
-	args->env_args.boot_args.mntdir   = "/";
-	args->env_args.fsids.users.uids   = ut_new_uids();
-	args->env_args.fsids.users.nuids  = 2;
-	args->env_args.fsids.groups.gids  = ut_new_gids();
-	args->env_args.fsids.groups.ngids = 2;
-	args->env_args.uid                = getuid();
-	args->env_args.gid                = getgid();
-	args->env_args.pid                = getpid();
-	args->env_args.umask              = 0002;
-	args->env_args.capacity           = SILOFS_CAPACITY_SIZE_MIN;
-	args->env_args.memwant            = UT_1G;
+	args->env_args.boot_args.ref[0].repodir = ut_globals.test_dir_repo;
+	args->env_args.boot_args.ref[0].refname = "utests";
+	args->env_args.boot_args.mntdir         = "/";
+	args->env_args.fsids.users.uids         = ut_new_uids();
+	args->env_args.fsids.users.nuids        = 2;
+	args->env_args.fsids.groups.gids        = ut_new_gids();
+	args->env_args.fsids.groups.ngids       = 2;
+	args->env_args.uid                      = getuid();
+	args->env_args.gid                      = getgid();
+	args->env_args.pid                      = getpid();
+	args->env_args.umask                    = 0002;
+	args->env_args.capacity                 = SILOFS_CAPACITY_SIZE_MIN;
+	args->env_args.memwant                  = UT_1G;
 	if (ut_globals.pedantic) {
 		args->env_args.flags |= SILOFS_F_PEDANTIC;
 	}

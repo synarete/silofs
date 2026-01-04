@@ -175,20 +175,21 @@ static void cmd_archive_setup_env_args(struct cmd_archive_ctx *ctx)
 	struct silofs_env_args *env_args = &ctx->env_args;
 
 	cmd_setup_env_args(env_args);
-	env_args->boot_args.repodir = ctx->in_args.repodir_real;
-	env_args->boot_args.fs_name = ctx->in_args.fsname;
-	env_args->boot_args.ar_name = ctx->in_args.arname;
-	env_args->boot_args.passwd  = ctx->in_args.password;
+	env_args->boot_args.ref[0].repodir = ctx->in_args.repodir_real;
+	env_args->boot_args.ref[0].refname = ctx->in_args.fsname;
+	env_args->boot_args.ref[1].repodir = ctx->in_args.repodir_real;
+	env_args->boot_args.ref[1].refname = ctx->in_args.arname;
+	env_args->boot_args.passwd         = ctx->in_args.password;
 }
 
 static void cmd_archive_load_fsids(struct cmd_archive_ctx *ctx)
 {
-	cmd_fsids_load(&ctx->env_args.fsids, &ctx->env_args.boot_args);
+	cmd_fsids_load(&ctx->env_args.fsids, &ctx->env_args.boot_args.ref[0]);
 }
 
 static void cmd_archive_load_fsref(struct cmd_archive_ctx *ctx)
 {
-	cmd_fsref_load(&ctx->fs_mbref, false, &ctx->env_args.boot_args);
+	cmd_fsref_load(&ctx->fs_mbref, &ctx->env_args.boot_args.ref[0]);
 }
 
 static void cmd_archive_setup_env(struct cmd_archive_ctx *ctx)
@@ -225,14 +226,13 @@ static void cmd_archive_close_fs(struct cmd_archive_ctx *ctx)
 
 static void cmd_archive_execute(struct cmd_archive_ctx *ctx)
 {
-	struct silofs_boot_args boot_args = {
+	struct silofs_boot_ref boot_ref = {
 		.repodir = ctx->in_args.repodir_real,
-		.fs_name = ctx->in_args.fsname,
-		.ar_name = ctx->in_args.arname,
+		.refname = ctx->in_args.arname,
 	};
 
 	cmd_archive_fs(ctx->env, &ctx->fs_mbref, &ctx->ar_mbref);
-	cmd_fsref_save(&ctx->ar_mbref, true, &boot_args);
+	cmd_fsref_save(&ctx->ar_mbref, &boot_ref);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

@@ -189,11 +189,11 @@ static void cmd_mkfs_setup_env_args(struct cmd_mkfs_ctx *ctx)
 	struct silofs_env_args *env_args = &ctx->env_args;
 
 	cmd_setup_env_args(env_args);
-	env_args->boot_args.repodir = ctx->in_args.repodir_real;
-	env_args->boot_args.fs_name = ctx->in_args.fsname;
-	env_args->boot_args.passwd  = ctx->in_args.password;
-	env_args->capacity          = (size_t)ctx->in_args.fs_size;
-	env_args->no_utf8_names     = ctx->in_args.no_utf8_names;
+	env_args->boot_args.ref[0].repodir = ctx->in_args.repodir_real;
+	env_args->boot_args.ref[0].refname = ctx->in_args.fsname;
+	env_args->boot_args.passwd         = ctx->in_args.password;
+	env_args->capacity                 = (size_t)ctx->in_args.fs_size;
+	env_args->no_utf8_names            = ctx->in_args.no_utf8_names;
 }
 
 static void cmd_mkfs_setup_fsids(struct cmd_mkfs_ctx *ctx)
@@ -201,7 +201,7 @@ static void cmd_mkfs_setup_fsids(struct cmd_mkfs_ctx *ctx)
 	struct silofs_env_args *env_args = &ctx->env_args;
 
 	cmd_uidgid_of(ctx->in_args.username, &env_args->uid, &env_args->gid);
-	cmd_fsids_load(&env_args->fsids, &env_args->boot_args);
+	cmd_fsids_load(&env_args->fsids, &env_args->boot_args.ref[0]);
 	cmd_fsids_need_user(&env_args->fsids, ctx->in_args.username);
 }
 
@@ -229,7 +229,7 @@ static void cmd_mkfs_format_fs(struct cmd_mkfs_ctx *ctx)
 
 static void cmd_mkfs_save_fsref(struct cmd_mkfs_ctx *ctx)
 {
-	cmd_fsref_save(&ctx->fs_mbref, false, &ctx->env_args.boot_args);
+	cmd_fsref_save(&ctx->fs_mbref, &ctx->env_args.boot_args.ref[0]);
 }
 
 static void cmd_mkfs_close_fs(struct cmd_mkfs_ctx *ctx)

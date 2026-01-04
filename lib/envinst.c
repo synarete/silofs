@@ -110,28 +110,34 @@ static int calc_mem_size(size_t mem_want, size_t *out_mem_size)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static int check_bootpath(const struct silofs_env_args *args)
+static int check_boot_ref(const struct silofs_boot_ref *boot_ref)
 {
-	struct silofs_namestr          nstr;
-	const struct silofs_boot_args *boot_args = &args->boot_args;
-	const size_t len = silofs_str_length(boot_args->repodir);
-	int          err;
+	struct silofs_namestr nstr;
+	size_t                len;
+	int                   err;
 
-	if (!len || (len >= SILOFS_REPOPATH_MAX)) {
-		log_dbg("illegal repodir length: %s", boot_args->repodir);
+	len = silofs_str_length(boot_ref->repodir);
+	if (len >= SILOFS_REPOPATH_MAX) {
+		log_dbg("repodir too-long: %s", boot_ref->repodir);
 		return -SILOFS_EINVAL;
 	}
-	if (boot_args->fs_name != nullptr) {
-		err = silofs_make_namestr(&nstr, boot_args->fs_name);
+	if (boot_ref->refname != nullptr) {
+		err = silofs_make_namestr(&nstr, boot_ref->refname);
 		if (err) {
-			log_dbg("illegal fsname: %s", boot_args->fs_name);
+			log_dbg("illegal refname: %s", boot_ref->refname);
 			return err;
 		}
 	}
-	if (boot_args->ar_name != nullptr) {
-		err = silofs_make_namestr(&nstr, boot_args->ar_name);
+	return 0;
+}
+
+static int check_boot_refs(const struct silofs_env_args *args)
+{
+	int err;
+
+	for (size_t i = 0; i < ARRAY_SIZE(args->boot_args.ref); ++i) {
+		err = check_boot_ref(&args->boot_args.ref[i]);
 		if (err) {
-			log_dbg("illegal arname: %s", boot_args->ar_name);
 			return err;
 		}
 	}
@@ -149,7 +155,7 @@ static int check_args(const struct silofs_env_args *args)
 {
 	int err;
 
-	err = check_bootpath(args);
+	err = check_boot_refs(args);
 	if (err) {
 		return err;
 	}
@@ -288,7 +294,8 @@ static void envi_make_repo_base(const struct silofs_env_inst *envi,
 	if (envi->args.flags & SILOFS_F_RDONLY) {
 		re_base->flags |= SILOFS_REPOF_RDONLY;
 	}
-	silofs_strview_init(&re_base->repodir, envi->args.boot_args.repodir);
+	silofs_strview_init(&re_base->repodir,
+	                    envi->args.boot_args.ref[0].repodir);
 }
 
 static int envi_init_repo(struct silofs_env_inst *envi)

@@ -45,13 +45,17 @@ enum silofs_flags {
 	SILOFS_F_STDALLOC     = SILOFS_BIT(16),
 };
 
+/* a pair of repo-directory and boot reference name */
+struct silofs_boot_ref {
+	const char *repodir;
+	const char *refname;
+};
+
 /* file-system's boot arguments */
 struct silofs_boot_args {
-	const char *fs_name;
-	const char *ar_name;
-	const char *repodir;
-	const char *mntdir;
-	const char *passwd;
+	struct silofs_boot_ref ref[2];
+	const char            *mntdir;
+	const char            *passwd;
 };
 
 /* user-id host-to-fs bidirectional-mapping */

@@ -159,7 +159,7 @@ static json_t *cmd_json_loads(const char *jtxt)
 	jobj = json_loads(jtxt, 0, &jerr);
 	if (jobj == nullptr) {
 		cmd_diez("json: failed to parse: text='%s' line=%d column=%d",
-			 jerr.text, jerr.line, jerr.column);
+		         jerr.text, jerr.line, jerr.column);
 	}
 	return jobj;
 }
@@ -248,25 +248,25 @@ void cmd_json_decref(json_t *jobj)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void cmd_open_jconfdir(const struct silofs_boot_args *boot_args, int *out_dfd)
+void cmd_open_jconfdir(const struct silofs_boot_ref *boot_ref, int *out_dfd)
 {
 	int dfd = -1;
 	int err;
 
-	err = silofs_sys_opendir(boot_args->repodir, &dfd);
+	err = silofs_sys_opendir(boot_ref->repodir, &dfd);
 	if (err) {
-		cmd_die(err, "failed to open dir: %s", boot_args->repodir);
+		cmd_die(err, "failed to open dir: %s", boot_ref->repodir);
 	}
 	*out_dfd = dfd;
 }
 
-void cmd_close_jconfdir(const struct silofs_boot_args *boot_args, int dfd)
+void cmd_close_jconfdir(const struct silofs_boot_ref *boot_ref, int dfd)
 {
 	int err;
 
 	err = silofs_sys_close(dfd);
 	if (err) {
-		cmd_die(err, "failed to close dir: %s", boot_args->repodir);
+		cmd_die(err, "failed to close dir: %s", boot_ref->repodir);
 	}
 }
 
@@ -278,7 +278,7 @@ static void cmd_save_jtext_at(int dfd, const char *name, const char *jtxt)
 
 	snprintf(tmp, sizeof(tmp) - 1, "%s~", name);
 	err = silofs_sys_openat(dfd, tmp, O_CREAT | O_RDWR | O_TRUNC,
-				S_IRUSR | S_IWUSR, &fd);
+	                        S_IRUSR | S_IWUSR, &fd);
 	if (err) {
 		cmd_die(err, "failed to create: %s", tmp);
 	}

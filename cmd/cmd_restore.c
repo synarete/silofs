@@ -174,15 +174,16 @@ static void cmd_restore_setup_env_args(struct cmd_restore_ctx *ctx)
 	struct silofs_env_args *env_args = &ctx->env_args;
 
 	cmd_setup_env_args(env_args);
-	env_args->boot_args.repodir = ctx->in_args.repodir_real;
-	env_args->boot_args.fs_name = ctx->in_args.fsname;
-	env_args->boot_args.ar_name = ctx->in_args.arname;
-	env_args->boot_args.passwd  = ctx->in_args.password;
+	env_args->boot_args.ref[0].repodir = ctx->in_args.repodir_real;
+	env_args->boot_args.ref[0].refname = ctx->in_args.fsname;
+	env_args->boot_args.ref[1].repodir = ctx->in_args.repodir_real;
+	env_args->boot_args.ref[1].refname = ctx->in_args.arname;
+	env_args->boot_args.passwd         = ctx->in_args.password;
 }
 
 static void cmd_restore_load_fsref(struct cmd_restore_ctx *ctx)
 {
-	cmd_fsref_load(&ctx->ar_mbref, true, &ctx->env_args.boot_args);
+	cmd_fsref_load(&ctx->ar_mbref, &ctx->env_args.boot_args.ref[1]);
 }
 
 static void cmd_restore_setup_env(struct cmd_restore_ctx *ctx)
@@ -207,14 +208,13 @@ static void cmd_restore_sense_archive(struct cmd_restore_ctx *ctx)
 
 static void cmd_restore_execute(struct cmd_restore_ctx *ctx)
 {
-	struct silofs_boot_args boot_args = {
+	struct silofs_boot_ref boot_ref = {
 		.repodir = ctx->in_args.repodir_real,
-		.fs_name = ctx->in_args.fsname,
-		.ar_name = ctx->in_args.arname,
+		.refname = ctx->in_args.fsname,
 	};
 
 	cmd_restore_fs(ctx->env, &ctx->ar_mbref, &ctx->fs_mbref);
-	cmd_fsref_save(&ctx->fs_mbref, false, &boot_args);
+	cmd_fsref_save(&ctx->fs_mbref, &boot_ref);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

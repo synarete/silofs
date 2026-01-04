@@ -261,20 +261,20 @@ static void cmd_mount_setup_env_args(struct cmd_mount_ctx *ctx)
 	cmd_setup_env_args(env_args);
 	env_args->flags = (enum silofs_flags)in_args->flags;
 
-	env_args->boot_args.repodir = in_args->repodir_real;
-	env_args->boot_args.fs_name = in_args->fsname;
-	env_args->boot_args.passwd  = in_args->password;
-	env_args->boot_args.mntdir  = in_args->mntpoint_real;
+	env_args->boot_args.ref[0].repodir = in_args->repodir_real;
+	env_args->boot_args.ref[0].refname = in_args->fsname;
+	env_args->boot_args.passwd         = in_args->password;
+	env_args->boot_args.mntdir         = in_args->mntpoint_real;
 }
 
 static void cmd_mount_load_fsids(struct cmd_mount_ctx *ctx)
 {
-	cmd_fsids_load(&ctx->env_args.fsids, &ctx->env_args.boot_args);
+	cmd_fsids_load(&ctx->env_args.fsids, &ctx->env_args.boot_args.ref[0]);
 }
 
 static void cmd_mount_load_fsref(struct cmd_mount_ctx *ctx)
 {
-	cmd_fsref_load(&ctx->fs_mbref, false, &ctx->env_args.boot_args);
+	cmd_fsref_load(&ctx->fs_mbref, &ctx->env_args.boot_args.ref[0]);
 }
 
 static void cmd_mount_setup_env(struct cmd_mount_ctx *ctx, int phase)

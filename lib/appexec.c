@@ -1071,9 +1071,7 @@ int silofs_restore_fs(struct silofs_env         *env,
 void silofs_get_boot_args(const struct silofs_env *env,
                           struct silofs_boot_args *out_bargs)
 {
-	const struct silofs_boot_args *boot_args = &env->base.args->boot_args;
-
-	memcpy(out_bargs, boot_args, sizeof(*out_bargs));
+	memcpy(out_bargs, &env->base.args->boot_args, sizeof(*out_bargs));
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

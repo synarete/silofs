@@ -120,12 +120,6 @@ static void cmd_fsref_jdecode(struct silofs_mbref *mbref, json_t *jfsref)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static const char *
-cmd_fsref_name(const struct silofs_boot_args *boot_args, bool ar)
-{
-	return ar ? boot_args->ar_name : boot_args->fs_name;
-}
-
 static void
 cmd_fsref_save_at(const struct silofs_mbref *mbref, int dfd, const char *name)
 {
@@ -136,14 +130,14 @@ cmd_fsref_save_at(const struct silofs_mbref *mbref, int dfd, const char *name)
 	cmd_json_decref(jobj);
 }
 
-void cmd_fsref_save(const struct silofs_mbref *mbref, bool ar,
-		    const struct silofs_boot_args *boot_args)
+void cmd_fsref_save(const struct silofs_mbref    *mbref,
+                    const struct silofs_boot_ref *boot_ref)
 {
 	int dfd = -1;
 
-	cmd_open_jconfdir(boot_args, &dfd);
-	cmd_fsref_save_at(mbref, dfd, cmd_fsref_name(boot_args, ar));
-	cmd_close_jconfdir(boot_args, dfd);
+	cmd_open_jconfdir(boot_ref, &dfd);
+	cmd_fsref_save_at(mbref, dfd, boot_ref->refname);
+	cmd_close_jconfdir(boot_ref, dfd);
 }
 
 static void
@@ -156,27 +150,27 @@ cmd_fsref_load_at(struct silofs_mbref *mbref, int dfd, const char *name)
 	cmd_json_decref(jfsref);
 }
 
-static void cmd_fsref_load_by(struct silofs_mbref *mbref, bool ar,
-			      const struct silofs_boot_args *boot_args)
+static void cmd_fsref_load_by(struct silofs_mbref          *mbref,
+                              const struct silofs_boot_ref *boot_ref)
 {
 	int dfd = -1;
 
-	cmd_open_jconfdir(boot_args, &dfd);
-	cmd_fsref_load_at(mbref, dfd, cmd_fsref_name(boot_args, ar));
-	cmd_close_jconfdir(boot_args, dfd);
+	cmd_open_jconfdir(boot_ref, &dfd);
+	cmd_fsref_load_at(mbref, dfd, boot_ref->refname);
+	cmd_close_jconfdir(boot_ref, dfd);
 }
 
-void cmd_fsref_load(struct silofs_mbref *mbref, bool ar,
-		    const struct silofs_boot_args *boot_args)
+void cmd_fsref_load(struct silofs_mbref          *mbref,
+                    const struct silofs_boot_ref *boot_ref)
 {
-	cmd_fsref_load_by(mbref, ar, boot_args);
+	cmd_fsref_load_by(mbref, boot_ref);
 }
 
-void cmd_fsref_unlink(const struct silofs_boot_args *boot_args)
+void cmd_fsref_unlink(const struct silofs_boot_ref *boot_ref)
 {
 	int dfd = -1;
 
-	cmd_open_jconfdir(boot_args, &dfd);
-	silofs_sys_unlinkat(dfd, boot_args->fs_name, 0);
-	cmd_close_jconfdir(boot_args, dfd);
+	cmd_open_jconfdir(boot_ref, &dfd);
+	silofs_sys_unlinkat(dfd, boot_ref->refname, 0);
+	cmd_close_jconfdir(boot_ref, dfd);
 }

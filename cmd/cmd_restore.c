@@ -180,9 +180,9 @@ static void cmd_restore_setup_env_args(struct cmd_restore_ctx *ctx)
 	env_args->boot_args.passwd  = ctx->in_args.password;
 }
 
-static void cmd_restore_load_ar_blobid(struct cmd_restore_ctx *ctx)
+static void cmd_restore_load_fsref(struct cmd_restore_ctx *ctx)
 {
-	cmd_load_ar_jref(&ctx->env_args.boot_args, &ctx->ar_mbref);
+	cmd_fsref_load(&ctx->ar_mbref, true, &ctx->env_args.boot_args);
 }
 
 static void cmd_restore_setup_env(struct cmd_restore_ctx *ctx)
@@ -214,7 +214,7 @@ static void cmd_restore_execute(struct cmd_restore_ctx *ctx)
 	};
 
 	cmd_restore_fs(ctx->env, &ctx->ar_mbref, &ctx->fs_mbref);
-	cmd_save_fs_jref(&boot_args, &ctx->fs_mbref);
+	cmd_fsref_save(&ctx->fs_mbref, false, &boot_args);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -244,7 +244,7 @@ void cmd_execute_restore(void)
 	cmd_restore_setup_env_args(&ctx);
 
 	/* Load archive boot-reference */
-	cmd_restore_load_ar_blobid(&ctx);
+	cmd_restore_load_fsref(&ctx);
 
 	/* Setup execution environment */
 	cmd_restore_setup_env(&ctx);

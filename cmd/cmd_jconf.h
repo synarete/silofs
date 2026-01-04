@@ -29,9 +29,13 @@ uint32_t cmd_json_uint32_value(const json_t *jint);
 
 json_t *cmd_json_btime(void);
 
+json_t *cmd_json_mbref(const struct silofs_mbref *mbref);
+
+
 json_t *cmd_json_string(const char *s);
 
 const char *cmd_json_string_value(const json_t *jstr);
+
 
 json_t *cmd_json_array(void);
 

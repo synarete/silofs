@@ -108,7 +108,7 @@ json_t *cmd_json_btime(void)
 	return jstr;
 }
 
-static json_t *cmd_json_mbref(const struct silofs_mbref *mbref)
+json_t *cmd_json_mbref(const struct silofs_mbref *mbref)
 {
 	char s[256] = "";
 	int  err;
@@ -159,7 +159,7 @@ static json_t *cmd_json_loads(const char *jtxt)
 	jobj = json_loads(jtxt, 0, &jerr);
 	if (jobj == nullptr) {
 		cmd_diez("json: failed to parse: text='%s' line=%d column=%d",
-		         jerr.text, jerr.line, jerr.column);
+			 jerr.text, jerr.line, jerr.column);
 	}
 	return jobj;
 }
@@ -246,108 +246,6 @@ void cmd_json_decref(json_t *jobj)
 	json_decref(jobj);
 }
 
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-
-static const char cmd_jkey_version[] = "version";
-static const char cmd_jkey_fmtvers[] = "fmtvers";
-static const char cmd_jkey_btime[]   = "btime";
-static const char cmd_jkey_mbref[]   = "mbref";
-
-static void cmd_jref_add_version(json_t *jobj)
-{
-	json_t *jsub;
-
-	jsub = cmd_json_string(silofs_version.string);
-	cmd_json_object_set_new(jobj, cmd_jkey_version, jsub);
-}
-
-static void cmd_jref_add_fmtrev(json_t *jobj)
-{
-	json_t *jsub;
-
-	jsub = cmd_json_integer(SILOFS_FMT_VERSION);
-	cmd_json_object_set_new(jobj, cmd_jkey_fmtvers, jsub);
-}
-
-static void cmd_jref_add_btime(json_t *jobj)
-{
-	json_t *jsub;
-
-	jsub = cmd_json_btime();
-	cmd_json_object_set_new(jobj, cmd_jkey_btime, jsub);
-}
-
-static void cmd_jref_add_mbref(json_t *jobj, const struct silofs_mbref *mbref)
-{
-	json_t *jsub;
-
-	jsub = cmd_json_mbref(mbref);
-	cmd_json_object_set_new(jobj, cmd_jkey_mbref, jsub);
-}
-
-static json_t *cmd_jref_encode(const struct silofs_mbref *mbref)
-{
-	json_t *jobj;
-
-	jobj = cmd_json_object();
-	cmd_jref_add_version(jobj);
-	cmd_jref_add_fmtrev(jobj);
-	cmd_jref_add_btime(jobj);
-	cmd_jref_add_mbref(jobj, mbref);
-	return jobj;
-}
-
-static void cmd_jref_get_version(const json_t *jobj)
-{
-	const json_t *jstr;
-
-	jstr = cmd_json_object_get_string(jobj, cmd_jkey_version);
-	(void)jstr;
-}
-
-static void cmd_jref_get_fmtvers(const json_t *jobj)
-{
-	const json_t *jint;
-	uint32_t      vers;
-
-	jint = cmd_json_object_get_integer(jobj, cmd_jkey_fmtvers);
-	vers = cmd_json_uint32_value(jint);
-	if (vers != SILOFS_FMT_VERSION) {
-		cmd_diez("json: unsupported fmtvers: '%ld'", (long)vers);
-	}
-}
-
-static void cmd_jref_get_btime(const json_t *jobj)
-{
-	json_t *jsub;
-
-	jsub = cmd_json_object_get_string(jobj, cmd_jkey_btime);
-	(void)jsub;
-}
-
-static void
-cmd_jref_get_mbref(const json_t *jobj, struct silofs_mbref *out_mbref)
-{
-	json_t     *jsub;
-	const char *str;
-	int         err;
-
-	jsub = cmd_json_object_get_string(jobj, cmd_jkey_mbref);
-	str  = cmd_json_string_value(jsub);
-	err  = silofs_decode_mbref(out_mbref, str);
-	if (err) {
-		cmd_die(err, "json: illegal mbref: '%s'", str);
-	}
-}
-
-static void cmd_jfsref_decode(json_t *jfsref, struct silofs_mbref *out_mbref)
-{
-	cmd_jref_get_version(jfsref);
-	cmd_jref_get_fmtvers(jfsref);
-	cmd_jref_get_btime(jfsref);
-	cmd_jref_get_mbref(jfsref, out_mbref);
-}
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void cmd_open_jconfdir(const struct silofs_boot_args *boot_args, int *out_dfd)
@@ -380,7 +278,7 @@ static void cmd_save_jtext_at(int dfd, const char *name, const char *jtxt)
 
 	snprintf(tmp, sizeof(tmp) - 1, "%s~", name);
 	err = silofs_sys_openat(dfd, tmp, O_CREAT | O_RDWR | O_TRUNC,
-	                        S_IRUSR | S_IWUSR, &fd);
+				S_IRUSR | S_IWUSR, &fd);
 	if (err) {
 		cmd_die(err, "failed to create: %s", tmp);
 	}
@@ -463,80 +361,3 @@ json_t *cmd_json_load_at(int dfd, const char *name)
 
 	return jobj;
 }
-
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-
-static void
-cmd_save_jref_at(int dfd, const char *name, const struct silofs_mbref *mbref)
-{
-	json_t *jobj;
-
-	jobj = cmd_jref_encode(mbref);
-	cmd_json_save_at(jobj, dfd, name);
-	cmd_json_decref(jobj);
-}
-
-void cmd_save_fs_jref(const struct silofs_boot_args *boot_args,
-                      const struct silofs_mbref     *fs_mbref)
-{
-	int dfd = -1;
-
-	cmd_open_jconfdir(boot_args, &dfd);
-	cmd_save_jref_at(dfd, boot_args->fs_name, fs_mbref);
-	cmd_close_jconfdir(boot_args, dfd);
-}
-
-void cmd_save_ar_jref(const struct silofs_boot_args *boot_args,
-                      const struct silofs_mbref     *ar_mbref)
-{
-	int dfd = -1;
-
-	cmd_open_jconfdir(boot_args, &dfd);
-	cmd_save_jref_at(dfd, boot_args->ar_name, ar_mbref);
-	cmd_close_jconfdir(boot_args, dfd);
-}
-
-static void
-cmd_load_jref_at(int dfd, const char *name, struct silofs_mbref *out_mbref)
-{
-	json_t *jfsref;
-
-	jfsref = cmd_json_load_at(dfd, name);
-	cmd_jfsref_decode(jfsref, out_mbref);
-	cmd_json_decref(jfsref);
-}
-
-static void cmd_load_jref_of(const struct silofs_boot_args *boot_args, bool ar,
-                             struct silofs_mbref *out_mbref)
-{
-	const char *name;
-	int         dfd = -1;
-
-	name = ar ? boot_args->ar_name : boot_args->fs_name;
-	cmd_open_jconfdir(boot_args, &dfd);
-	cmd_load_jref_at(dfd, name, out_mbref);
-	cmd_close_jconfdir(boot_args, dfd);
-}
-
-void cmd_load_fs_jref(const struct silofs_boot_args *boot_args,
-                      struct silofs_mbref           *out_mbref)
-{
-	cmd_load_jref_of(boot_args, false, out_mbref);
-}
-
-void cmd_load_ar_jref(struct silofs_boot_args *boot_args,
-                      struct silofs_mbref     *out_mbref)
-{
-	cmd_load_jref_of(boot_args, true, out_mbref);
-}
-
-void cmd_unlink_fs_jref(const struct silofs_boot_args *boot_args)
-{
-	int dfd = -1;
-
-	cmd_open_jconfdir(boot_args, &dfd);
-	silofs_sys_unlinkat(dfd, boot_args->fs_name, 0);
-	cmd_close_jconfdir(boot_args, dfd);
-}
-
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

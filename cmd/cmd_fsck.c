@@ -158,14 +158,14 @@ static void cmd_fsck_setup_env_args(struct cmd_fsck_ctx *ctx)
 	env_args->boot_args.passwd  = ctx->in_args.password;
 }
 
-static void cmd_fsck_setup_fsids(struct cmd_fsck_ctx *ctx)
+static void cmd_fsck_load_fsids(struct cmd_fsck_ctx *ctx)
 {
 	cmd_fsids_load(&ctx->env_args.fsids, &ctx->env_args.boot_args);
 }
 
-static void cmd_fsck_load_fs_jref(struct cmd_fsck_ctx *ctx)
+static void cmd_fsck_load_fsref(struct cmd_fsck_ctx *ctx)
 {
-	cmd_load_fs_jref(&ctx->env_args.boot_args, &ctx->fs_mbref);
+	cmd_fsref_load(&ctx->fs_mbref, false, &ctx->env_args.boot_args);
 }
 
 static void cmd_fsck_setup_env(struct cmd_fsck_ctx *ctx)
@@ -229,10 +229,10 @@ void cmd_execute_fsck(void)
 	cmd_fsck_setup_env_args(&ctx);
 
 	/* Load fs-ids mapping */
-	cmd_fsck_setup_fsids(&ctx);
+	cmd_fsck_load_fsids(&ctx);
 
 	/* Load fs boot-reference */
-	cmd_fsck_load_fs_jref(&ctx);
+	cmd_fsck_load_fsref(&ctx);
 
 	/* Setup execution environment */
 	cmd_fsck_setup_env(&ctx);

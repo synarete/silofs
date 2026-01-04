@@ -227,9 +227,9 @@ static void cmd_mkfs_format_fs(struct cmd_mkfs_ctx *ctx)
 	cmd_format_fs(ctx->env, &ctx->fs_mbref);
 }
 
-static void cmd_mkfs_save_blobid(struct cmd_mkfs_ctx *ctx)
+static void cmd_mkfs_save_fsref(struct cmd_mkfs_ctx *ctx)
 {
-	cmd_save_fs_jref(&ctx->env_args.boot_args, &ctx->fs_mbref);
+	cmd_fsref_save(&ctx->fs_mbref, false, &ctx->env_args.boot_args);
 }
 
 static void cmd_mkfs_close_fs(struct cmd_mkfs_ctx *ctx)
@@ -286,7 +286,7 @@ void cmd_execute_mkfs(void)
 	cmd_mkfs_format_fs(&ctx);
 
 	/* Save top-level fs boot-ref */
-	cmd_mkfs_save_blobid(&ctx);
+	cmd_mkfs_save_fsref(&ctx);
 
 	/* Post-format cleanups */
 	cmd_mkfs_close_fs(&ctx);

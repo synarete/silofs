@@ -92,10 +92,10 @@ static void cmd_rmfs_prepare(struct cmd_rmfs_ctx *ctx)
 {
 	cmd_check_isreg(ctx->in_args.repodir_fsname);
 	cmd_split_path(ctx->in_args.repodir_fsname, &ctx->in_args.repodir,
-	               &ctx->in_args.fsname);
+		       &ctx->in_args.fsname);
 	cmd_realpath_dir(ctx->in_args.repodir, &ctx->in_args.repodir_real);
 	cmd_check_repodir_fsname(ctx->in_args.repodir_real,
-	                         ctx->in_args.fsname);
+				 ctx->in_args.fsname);
 }
 
 static void cmd_rmfs_restrict_process(struct cmd_rmfs_ctx *ctx)
@@ -107,7 +107,7 @@ static void cmd_rmfs_getpass(struct cmd_rmfs_ctx *ctx)
 {
 	if (ctx->in_args.password == nullptr) {
 		cmd_getpass_simple(ctx->in_args.no_prompt,
-		                   &ctx->in_args.password);
+				   &ctx->in_args.password);
 	}
 }
 
@@ -188,14 +188,14 @@ static void cmd_rmfs_setup_env_args(struct cmd_rmfs_ctx *ctx)
 	env_args->boot_args.passwd  = ctx->in_args.password;
 }
 
-static void cmd_rmfs_setup_fsids(struct cmd_rmfs_ctx *ctx)
+static void cmd_rmfs_load_fsids(struct cmd_rmfs_ctx *ctx)
 {
 	cmd_fsids_load(&ctx->env_args.fsids, &ctx->env_args.boot_args);
 }
 
-static void cmd_rmfs_load_fs_jref(struct cmd_rmfs_ctx *ctx)
+static void cmd_rmfs_load_fsref(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_load_fs_jref(&ctx->env_args.boot_args, &ctx->fs_mbref);
+	cmd_fsref_load(&ctx->fs_mbref, false, &ctx->env_args.boot_args);
 }
 
 static void cmd_rmfs_setup_env(struct cmd_rmfs_ctx *ctx)
@@ -227,7 +227,7 @@ static void cmd_rmfs_execute(struct cmd_rmfs_ctx *ctx)
 
 static void cmd_rmfs_unlink_blobid(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_unlink_fs_jref(&ctx->env_args.boot_args);
+	cmd_fsref_unlink(&ctx->env_args.boot_args);
 }
 
 static void cmd_rmfs_destroy_env(struct cmd_rmfs_ctx *ctx)
@@ -314,10 +314,10 @@ void cmd_execute_rmfs(void)
 	cmd_rmfs_setup_env_args(&ctx);
 
 	/* Load fs-ids mapping */
-	cmd_rmfs_setup_fsids(&ctx);
+	cmd_rmfs_load_fsids(&ctx);
 
 	/* Load fs boot-reference */
-	cmd_rmfs_load_fs_jref(&ctx);
+	cmd_rmfs_load_fsref(&ctx);
 
 	/* Setup execution context */
 	cmd_rmfs_setup_env(&ctx);

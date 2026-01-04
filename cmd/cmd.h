@@ -135,7 +135,7 @@ char *cmd_optarg_dupoptarg(const struct cmd_optargs *opa, const char *id);
 char *cmd_optargs_getarg(struct cmd_optargs *opa, const char *arg_name);
 
 char *cmd_optargs_getarg2(struct cmd_optargs *opa, const char *arg_name,
-                          const char *default_val);
+			  const char *default_val);
 
 char *cmd_optargs_getpass(const struct cmd_optargs *opa);
 
@@ -144,7 +144,7 @@ bool cmd_optargs_curr_as_bool(const struct cmd_optargs *opa);
 long cmd_optargs_curr_as_size(const struct cmd_optargs *opa);
 
 uint32_t cmd_optargs_curr_as_u32v(const struct cmd_optargs *opa, uint32_t vmin,
-                                  uint32_t vmax);
+				  uint32_t vmax);
 
 void cmd_optargs_endargs(const struct cmd_optargs *opa);
 
@@ -159,7 +159,7 @@ void cmd_atexit(void (*fn)(void));
 /* fatal-error handling */
 
 silofs_attr_dief(2, 0) void cmd_vdie(int     err, const char *restrict,
-                                     va_list ap);
+				     va_list ap);
 
 silofs_attr_dief(2, 3) void cmd_die(int err, const char *restrict, ...);
 
@@ -218,10 +218,10 @@ void cmd_stat_dir(const char *path, struct stat *st);
 void cmd_split_path(const char *path, char **out_head, char **out_tail);
 
 void cmd_remake_path(const char *path, const char *suffix, char **out_head,
-                     char **out_tail);
+		     char **out_tail);
 
 void cmd_remake_path2(const char *path, const char *suffix, char **out_head,
-                      char **out_tail);
+		      char **out_tail);
 
 char *cmd_join_path(const char *dirpath, const char *name);
 
@@ -305,12 +305,12 @@ void cmd_remove_fs(struct silofs_env *env, const struct silofs_mbref *mbref);
 void cmd_inspect_fs(struct silofs_env *env, bool view);
 
 void cmd_archive_fs(struct silofs_env         *env,
-                    const struct silofs_mbref *fs_mbref,
-                    struct silofs_mbref       *out_ar_mbref);
+		    const struct silofs_mbref *fs_mbref,
+		    struct silofs_mbref       *out_ar_mbref);
 
 void cmd_restore_fs(struct silofs_env         *env,
-                    const struct silofs_mbref *ar_mbref,
-                    struct silofs_mbref       *out_fs_mbref);
+		    const struct silofs_mbref *ar_mbref,
+		    struct silofs_mbref       *out_fs_mbref);
 
 /* mount-info */
 struct silofs_mntinfos *cmd_parse_mountinfo(void);
@@ -326,7 +326,7 @@ void cmd_reset_ioc(union silofs_ioc_u *ioc);
 
 /* file-system environment */
 void cmd_new_env(const struct silofs_env_args *env_args,
-                 struct silofs_env           **p_env);
+		 struct silofs_env           **p_env);
 
 void cmd_del_env(struct silofs_env **p_env);
 
@@ -346,21 +346,6 @@ void cmd_delpass(char **pass);
 
 void cmd_checkpass(const char *pass);
 
-/* json meta-reference */
-void cmd_save_fs_jref(const struct silofs_boot_args *boot_args,
-                      const struct silofs_mbref     *fs_mbref);
-
-void cmd_save_ar_jref(const struct silofs_boot_args *boot_args,
-                      const struct silofs_mbref     *ar_mbref);
-
-void cmd_load_fs_jref(const struct silofs_boot_args *boot_args,
-                      struct silofs_mbref           *out_mbref);
-
-void cmd_load_ar_jref(struct silofs_boot_args *boot_args,
-                      struct silofs_mbref     *out_mbref);
-
-void cmd_unlink_fs_jref(const struct silofs_boot_args *boot_args);
-
 /* env arguments */
 void cmd_setup_env_args(struct silofs_env_args *env_args);
 
@@ -372,28 +357,37 @@ void cmd_fsids_setup(struct silofs_fsids *fsids);
 void cmd_fsids_clear(struct silofs_fsids *fsids);
 
 void cmd_fsids_save(const struct silofs_fsids     *fsids,
-                    const struct silofs_boot_args *boot_args);
+		    const struct silofs_boot_args *boot_args);
 
 void cmd_fsids_load(struct silofs_fsids           *fsids,
-                    const struct silofs_boot_args *boot_args);
+		    const struct silofs_boot_args *boot_args);
 
 void cmd_fsids_add_uidgid_of(struct silofs_fsids *fsids, const char *name);
 
 void cmd_fsids_add_supgroups_of(struct silofs_fsids *fsids, const char *name);
 
 void cmd_fsids_need_uidgid(const struct silofs_fsids *fsids, uid_t host_uid,
-                           gid_t host_gid);
+			   gid_t host_gid);
 
 void cmd_fsids_need_user(const struct silofs_fsids *fsids, const char *name);
 
-char *cmd_getusername(void);
+/* fsref */
+void cmd_fsref_save(const struct silofs_mbref *mbref, bool ar,
+		    const struct silofs_boot_args *boot_args);
 
-void cmd_uidgid_of(const char *username, uid_t *out_uid, gid_t *out_gid);
+void cmd_fsref_load(struct silofs_mbref *mbref, bool ar,
+		    const struct silofs_boot_args *boot_args);
+
+void cmd_fsref_unlink(const struct silofs_boot_args *boot_args);
 
 /* security restrictions (landlock) */
 void cmd_restrict_process(const char *path, bool allow_mkdir);
 
 /* misc */
 void cmd_trace_versions(void);
+
+char *cmd_getusername(void);
+
+void cmd_uidgid_of(const char *username, uid_t *out_uid, gid_t *out_gid);
 
 #endif /* SILOFS_CMD_H_ */

@@ -267,14 +267,14 @@ static void cmd_mount_setup_env_args(struct cmd_mount_ctx *ctx)
 	env_args->boot_args.mntdir  = in_args->mntpoint_real;
 }
 
-static void cmd_mount_setup_fsids(struct cmd_mount_ctx *ctx)
+static void cmd_mount_load_fsids(struct cmd_mount_ctx *ctx)
 {
 	cmd_fsids_load(&ctx->env_args.fsids, &ctx->env_args.boot_args);
 }
 
-static void cmd_mount_load_fs_jref(struct cmd_mount_ctx *ctx)
+static void cmd_mount_load_fsref(struct cmd_mount_ctx *ctx)
 {
-	cmd_load_fs_jref(&ctx->env_args.boot_args, &ctx->fs_mbref);
+	cmd_fsref_load(&ctx->fs_mbref, false, &ctx->env_args.boot_args);
 }
 
 static void cmd_mount_setup_env(struct cmd_mount_ctx *ctx, int phase)
@@ -716,10 +716,10 @@ void cmd_execute_mount(void)
 	cmd_mount_setup_env_args(&ctx);
 
 	/* Load fs-ids mapping */
-	cmd_mount_setup_fsids(&ctx);
+	cmd_mount_load_fsids(&ctx);
 
 	/* Load fs boot-reference */
-	cmd_mount_load_fs_jref(&ctx);
+	cmd_mount_load_fsref(&ctx);
 
 	/* Execute pre-mount as command-line process */
 	cmd_mount_exec_phase1(&ctx);

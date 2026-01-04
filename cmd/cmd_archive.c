@@ -181,14 +181,14 @@ static void cmd_archive_setup_env_args(struct cmd_archive_ctx *ctx)
 	env_args->boot_args.passwd  = ctx->in_args.password;
 }
 
-static void cmd_archive_setup_fsids(struct cmd_archive_ctx *ctx)
+static void cmd_archive_load_fsids(struct cmd_archive_ctx *ctx)
 {
 	cmd_fsids_load(&ctx->env_args.fsids, &ctx->env_args.boot_args);
 }
 
-static void cmd_archive_load_jfsref(struct cmd_archive_ctx *ctx)
+static void cmd_archive_load_fsref(struct cmd_archive_ctx *ctx)
 {
-	cmd_load_fs_jref(&ctx->env_args.boot_args, &ctx->fs_mbref);
+	cmd_fsref_load(&ctx->fs_mbref, false, &ctx->env_args.boot_args);
 }
 
 static void cmd_archive_setup_env(struct cmd_archive_ctx *ctx)
@@ -232,7 +232,7 @@ static void cmd_archive_execute(struct cmd_archive_ctx *ctx)
 	};
 
 	cmd_archive_fs(ctx->env, &ctx->fs_mbref, &ctx->ar_mbref);
-	cmd_save_ar_jref(&boot_args, &ctx->ar_mbref);
+	cmd_fsref_save(&ctx->ar_mbref, true, &boot_args);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -262,10 +262,10 @@ void cmd_execute_archive(void)
 	cmd_archive_setup_env_args(&ctx);
 
 	/* Load local fs ids */
-	cmd_archive_setup_fsids(&ctx);
+	cmd_archive_load_fsids(&ctx);
 
 	/* Load fs boot-reference */
-	cmd_archive_load_jfsref(&ctx);
+	cmd_archive_load_fsref(&ctx);
 
 	/* Setup execution environment */
 	cmd_archive_setup_env(&ctx);

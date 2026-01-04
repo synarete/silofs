@@ -175,14 +175,14 @@ static void cmd_view_setup_env_args(struct cmd_view_ctx *ctx)
 	env_args->boot_args.passwd  = ctx->in_args.password;
 }
 
-static void cmd_view_setup_fsids(struct cmd_view_ctx *ctx)
+static void cmd_view_load_fsids(struct cmd_view_ctx *ctx)
 {
 	cmd_fsids_load(&ctx->env_args.fsids, &ctx->env_args.boot_args);
 }
 
-static void cmd_view_load_fs_jref(struct cmd_view_ctx *ctx)
+static void cmd_view_load_fsref(struct cmd_view_ctx *ctx)
 {
-	cmd_load_fs_jref(&ctx->env_args.boot_args, &ctx->fs_mbref);
+	cmd_fsref_load(&ctx->fs_mbref, false, &ctx->env_args.boot_args);
 }
 
 static void cmd_view_setup_env(struct cmd_view_ctx *ctx)
@@ -253,10 +253,10 @@ void cmd_execute_view(void)
 	cmd_view_setup_env_args(&ctx);
 
 	/* Load fs-ids mapping */
-	cmd_view_setup_fsids(&ctx);
+	cmd_view_load_fsids(&ctx);
 
 	/* Require fs boot-reference */
-	cmd_view_load_fs_jref(&ctx);
+	cmd_view_load_fsref(&ctx);
 
 	/* Setup execution environment */
 	cmd_view_setup_env(&ctx);

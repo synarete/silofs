@@ -288,14 +288,14 @@ static void cmd_clone_setup_env_args(struct cmd_clone_ctx *ctx)
 	env_args->boot_args.passwd  = ctx->in_args.password;
 }
 
-static void cmd_clone_setup_fsids(struct cmd_clone_ctx *ctx)
+static void cmd_clone_load_fsids(struct cmd_clone_ctx *ctx)
 {
 	cmd_fsids_load(&ctx->env_args.fsids, &ctx->env_args.boot_args);
 }
 
-static void cmd_clone_load_fs_jref(struct cmd_clone_ctx *ctx)
+static void cmd_clone_load_fsref(struct cmd_clone_ctx *ctx)
 {
-	cmd_load_fs_jref(&ctx->env_args.boot_args, &ctx->fs_mbref);
+	cmd_fsref_load(&ctx->fs_mbref, false, &ctx->env_args.boot_args);
 }
 
 static void cmd_clone_setup_env(struct cmd_clone_ctx *ctx)
@@ -342,7 +342,7 @@ static void cmd_clone_save_fork_blobid(struct cmd_clone_ctx *ctx)
 		.fs_name = ctx->in_args.forkname,
 	};
 
-	cmd_save_fs_jref(&boot_args, &ctx->fs_mbrefs.fork);
+	cmd_fsref_save(&ctx->fs_mbrefs.fork, false, &boot_args);
 }
 
 static void cmd_clone_save_main_blobid(struct cmd_clone_ctx *ctx)
@@ -352,7 +352,7 @@ static void cmd_clone_save_main_blobid(struct cmd_clone_ctx *ctx)
 		.fs_name = ctx->in_args.fsname,
 	};
 
-	cmd_save_fs_jref(&boot_args, &ctx->fs_mbrefs.main);
+	cmd_fsref_save(&ctx->fs_mbrefs.main, false, &boot_args);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -417,10 +417,10 @@ void cmd_execute_clone(void)
 	cmd_clone_setup_env_args(&ctx);
 
 	/* Load fs boot-reference */
-	cmd_clone_load_fs_jref(&ctx);
+	cmd_clone_load_fsref(&ctx);
 
 	/* Load fs-ids mapping */
-	cmd_clone_setup_fsids(&ctx);
+	cmd_clone_load_fsids(&ctx);
 
 	/* Setup execution environment */
 	cmd_clone_setup_env(&ctx);

@@ -100,7 +100,7 @@ static void env_update_sb(struct silofs_env *env, struct silofs_sb_info *sbi)
 
 static void env_update_owner(struct silofs_env *env)
 {
-	const struct silofs_env_args *args = env->base.args;
+	const struct silofs_args *args = env->base.args;
 
 	env->owner_cred.uid   = args->uid;
 	env->owner_cred.gid   = args->gid;
@@ -142,7 +142,7 @@ static void env_update_mntflags(struct silofs_env *env)
 	env->ms_flags &= ~ms_flag_dont;
 }
 
-static int env_update_by_env_args(struct silofs_env *env)
+static int env_update_by_args(struct silofs_env *env)
 {
 	env_update_owner(env);
 	env_update_mntflags(env);
@@ -282,7 +282,7 @@ int silofs_env_init(struct silofs_env *env, const struct silofs_env_base *base)
 	if (err) {
 		return err;
 	}
-	err = env_update_by_env_args(env);
+	err = env_update_by_args(env);
 	if (err) {
 		return err;
 	}

@@ -49,7 +49,7 @@ union silofs_alloc_u {
 struct silofs_env_inst {
 	struct silofs_prandgen prandgen;
 	struct silofs_password passwd;
-	struct silofs_env_args args;
+	struct silofs_args     args;
 	union silofs_alloc_u   alloc_u;
 	struct silofs_repo     repo;
 	struct silofs_pcache   pcache;
@@ -131,7 +131,7 @@ static int check_boot_ref(const struct silofs_boot_ref *boot_ref)
 	return 0;
 }
 
-static int check_boot_refs(const struct silofs_env_args *args)
+static int check_boot_refs(const struct silofs_args *args)
 {
 	int err;
 
@@ -144,14 +144,14 @@ static int check_boot_refs(const struct silofs_env_args *args)
 	return 0;
 }
 
-static int check_password(const struct silofs_env_args *args)
+static int check_password(const struct silofs_args *args)
 {
 	struct silofs_password passwd;
 
 	return silofs_password_setup(&passwd, args->boot_args.passwd);
 }
 
-static int check_args(const struct silofs_env_args *args)
+static int check_args(const struct silofs_args *args)
 {
 	int err;
 
@@ -576,8 +576,8 @@ static void envi_fini(struct silofs_env_inst *envi)
 	envi_fini_prandgen(envi);
 }
 
-static int envi_init_args(struct silofs_env_inst       *envi,
-                          const struct silofs_env_args *args)
+static int
+envi_init_args(struct silofs_env_inst *envi, const struct silofs_args *args)
 {
 	int err;
 
@@ -595,7 +595,7 @@ static void envi_post_init(struct silofs_env_inst *envi)
 }
 
 static int
-envi_init(struct silofs_env_inst *envi, const struct silofs_env_args *args)
+envi_init(struct silofs_env_inst *envi, const struct silofs_args *args)
 {
 	int err;
 
@@ -671,7 +671,7 @@ static size_t envi_memsize(const struct silofs_env_inst *envi)
 }
 
 static int
-envi_new(const struct silofs_env_args *args, struct silofs_env_inst **out_envi)
+envi_new(const struct silofs_args *args, struct silofs_env_inst **out_envi)
 {
 	struct silofs_env_inst *envi = nullptr;
 	const size_t            msz  = envi_memsize(envi);
@@ -701,8 +701,8 @@ static void envi_del(struct silofs_env_inst *envi)
 	silofs_zfree(mem, msz);
 }
 
-int silofs_create_env(const struct silofs_env_args *args,
-                      struct silofs_env           **out_env)
+int silofs_create_env(const struct silofs_args *args,
+                      struct silofs_env       **out_env)
 {
 	struct silofs_env_inst *envi = nullptr;
 	int                     err  = 0;

@@ -61,7 +61,7 @@ struct cmd_mount_in_args {
 struct cmd_mount_ctx {
 	struct cmd_mount_in_args in_args;
 	struct silofs_fsref      fsref;
-	struct silofs_env_args   env_args;
+	struct silofs_args       args;
 	struct silofs_env       *env;
 	pid_t                    child_pid;
 	time_t                   start_time;
@@ -253,35 +253,35 @@ static void cmd_mount_parse_optargs(struct cmd_mount_ctx *ctx)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void cmd_mount_setup_env_args(struct cmd_mount_ctx *ctx)
+static void cmd_mount_setup_args(struct cmd_mount_ctx *ctx)
 {
-	const struct cmd_mount_in_args *in_args  = &ctx->in_args;
-	struct silofs_env_args         *env_args = &ctx->env_args;
+	const struct cmd_mount_in_args *in_args = &ctx->in_args;
+	struct silofs_args             *args    = &ctx->args;
 
-	cmd_setup_env_args(env_args);
-	env_args->flags = (enum silofs_flags)in_args->flags;
+	cmd_setup_args(args);
+	args->flags = (enum silofs_flags)in_args->flags;
 
-	env_args->boot_args.ref[0].repodir = in_args->repodir_real;
-	env_args->boot_args.ref[0].refname = in_args->fsname;
-	env_args->boot_args.passwd         = in_args->password;
-	env_args->boot_args.mntdir         = in_args->mntpoint_real;
+	args->boot_args.ref[0].repodir = in_args->repodir_real;
+	args->boot_args.ref[0].refname = in_args->fsname;
+	args->boot_args.passwd         = in_args->password;
+	args->boot_args.mntdir         = in_args->mntpoint_real;
 }
 
 static void cmd_mount_load_fsids(struct cmd_mount_ctx *ctx)
 {
-	cmd_fsids_load(&ctx->env_args.fsids, &ctx->env_args.boot_args.ref[0]);
+	cmd_fsids_load(&ctx->args.fsids, &ctx->args.boot_args.ref[0]);
 }
 
 static void cmd_mount_load_fsref(struct cmd_mount_ctx *ctx)
 {
-	cmd_fsref_load(&ctx->fsref, &ctx->env_args.boot_args.ref[0]);
+	cmd_fsref_load(&ctx->fsref, &ctx->args.boot_args.ref[0]);
 }
 
 static void cmd_mount_setup_env(struct cmd_mount_ctx *ctx, int phase)
 {
-	cmd_new_env(&ctx->env_args, &ctx->env);
+	cmd_new_env(&ctx->args, &ctx->env);
 	if (phase == 2) {
-		cmd_fsids_clear(&ctx->env_args.fsids);
+		cmd_fsids_clear(&ctx->args.fsids);
 		cmd_delpass(&ctx->in_args.password);
 	}
 }
@@ -333,7 +333,7 @@ static void cmd_mount_finalize(struct cmd_mount_ctx *ctx)
 	cmd_pstrfree(&ctx->in_args.fsname);
 	cmd_pstrfree(&ctx->in_args.uhelper);
 	cmd_delpass(&ctx->in_args.password);
-	cmd_destroy_env_args(&ctx->env_args);
+	cmd_destroy_args(&ctx->args);
 	cmd_close_syslog();
 	cmd_mount_ctx_p = nullptr;
 }
@@ -713,7 +713,7 @@ void cmd_execute_mount(void)
 	cmd_mount_getpass(&ctx);
 
 	/* Setup input arguments */
-	cmd_mount_setup_env_args(&ctx);
+	cmd_mount_setup_args(&ctx);
 
 	/* Load fs-ids mapping */
 	cmd_mount_load_fsids(&ctx);

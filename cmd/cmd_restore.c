@@ -36,7 +36,7 @@ struct cmd_restore_in_args {
 
 struct cmd_restore_ctx {
 	struct cmd_restore_in_args in_args;
-	struct silofs_env_args     env_args;
+	struct silofs_args         args;
 	struct silofs_fsref        fsref[2];
 	struct silofs_env         *env;
 	bool                       has_lockfile;
@@ -123,7 +123,7 @@ static void cmd_restore_finalize(struct cmd_restore_ctx *ctx)
 	cmd_pstrfree(&ctx->in_args.arname);
 	cmd_pstrfree(&ctx->in_args.fsname);
 	cmd_delpass(&ctx->in_args.password);
-	cmd_destroy_env_args(&ctx->env_args);
+	cmd_destroy_args(&ctx->args);
 	cmd_restore_ctx_p = nullptr;
 }
 
@@ -168,26 +168,26 @@ static void cmd_restore_getpass(struct cmd_restore_ctx *ctx)
 	}
 }
 
-static void cmd_restore_setup_env_args(struct cmd_restore_ctx *ctx)
+static void cmd_restore_setup_args(struct cmd_restore_ctx *ctx)
 {
-	struct silofs_env_args *env_args = &ctx->env_args;
+	struct silofs_args *args = &ctx->args;
 
-	cmd_setup_env_args(env_args);
-	env_args->boot_args.ref[0].repodir = ctx->in_args.repodir_real;
-	env_args->boot_args.ref[0].refname = ctx->in_args.fsname;
-	env_args->boot_args.ref[1].repodir = ctx->in_args.repodir_real;
-	env_args->boot_args.ref[1].refname = ctx->in_args.arname;
-	env_args->boot_args.passwd         = ctx->in_args.password;
+	cmd_setup_args(args);
+	args->boot_args.ref[0].repodir = ctx->in_args.repodir_real;
+	args->boot_args.ref[0].refname = ctx->in_args.fsname;
+	args->boot_args.ref[1].repodir = ctx->in_args.repodir_real;
+	args->boot_args.ref[1].refname = ctx->in_args.arname;
+	args->boot_args.passwd         = ctx->in_args.password;
 }
 
 static void cmd_restore_load_fsref(struct cmd_restore_ctx *ctx)
 {
-	cmd_fsref_load(&ctx->fsref[1], &ctx->env_args.boot_args.ref[1]);
+	cmd_fsref_load(&ctx->fsref[1], &ctx->args.boot_args.ref[1]);
 }
 
 static void cmd_restore_setup_env(struct cmd_restore_ctx *ctx)
 {
-	cmd_new_env(&ctx->env_args, &ctx->env);
+	cmd_new_env(&ctx->args, &ctx->env);
 }
 
 static void cmd_restore_open_repo(struct cmd_restore_ctx *ctx)
@@ -240,7 +240,7 @@ void cmd_execute_restore(void)
 	cmd_restore_enable_signals();
 
 	/* Setup input arguments */
-	cmd_restore_setup_env_args(&ctx);
+	cmd_restore_setup_args(&ctx);
 
 	/* Load archive boot-reference */
 	cmd_restore_load_fsref(&ctx);

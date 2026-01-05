@@ -142,7 +142,7 @@ static void ute_setup(struct ut_env *ute)
 {
 	int err;
 
-	err = silofs_create_env(&ute->args->env_args, &ute->env);
+	err = silofs_create_env(&ute->args->args, &ute->env);
 	silofs_assert_ok(err);
 }
 
@@ -212,12 +212,12 @@ static void ute_prandom_ascii(struct ut_env *ute, char *str, size_t n)
 
 static void ute_setup_random_passwd(struct ut_env *ute)
 {
-	struct silofs_env_args *env_args = &ute->args->env_args;
-	struct silofs_password *pp       = &ute->passwd;
+	struct silofs_args     *args = &ute->args->args;
+	struct silofs_password *pp   = &ute->passwd;
 
 	pp->passlen = sizeof(pp->pass) - 1;
 	ute_prandom_ascii(ute, (char *)pp->pass, pp->passlen);
-	env_args->boot_args.passwd = (const char *)(pp->pass);
+	args->boot_args.passwd = (const char *)(pp->pass);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -501,35 +501,35 @@ static void ut_del_gids(struct silofs_gids *gids)
 static void ut_init_args(struct ut_args *args)
 {
 	memset(args, 0, sizeof(*args));
-	args->env_args.boot_args.ref[0].repodir = ut_globals.test_dir_repo;
-	args->env_args.boot_args.ref[0].refname = "utests";
-	args->env_args.boot_args.mntdir         = "/";
-	args->env_args.fsids.users.uids         = ut_new_uids();
-	args->env_args.fsids.users.nuids        = 2;
-	args->env_args.fsids.groups.gids        = ut_new_gids();
-	args->env_args.fsids.groups.ngids       = 2;
-	args->env_args.uid                      = getuid();
-	args->env_args.gid                      = getgid();
-	args->env_args.pid                      = getpid();
-	args->env_args.umask                    = 0002;
-	args->env_args.capacity                 = SILOFS_CAPACITY_SIZE_MIN;
-	args->env_args.memwant                  = UT_1G;
+	args->args.boot_args.ref[0].repodir = ut_globals.test_dir_repo;
+	args->args.boot_args.ref[0].refname = "utests";
+	args->args.boot_args.mntdir         = "/";
+	args->args.fsids.users.uids         = ut_new_uids();
+	args->args.fsids.users.nuids        = 2;
+	args->args.fsids.groups.gids        = ut_new_gids();
+	args->args.fsids.groups.ngids       = 2;
+	args->args.uid                      = getuid();
+	args->args.gid                      = getgid();
+	args->args.pid                      = getpid();
+	args->args.umask                    = 0002;
+	args->args.capacity                 = SILOFS_CAPACITY_SIZE_MIN;
+	args->args.memwant                  = UT_1G;
 	if (ut_globals.pedantic) {
-		args->env_args.flags |= SILOFS_F_PEDANTIC;
+		args->args.flags |= SILOFS_F_PEDANTIC;
 	}
 	if (ut_globals.asyncwr) {
-		args->env_args.flags |= SILOFS_F_ASYNCWR;
+		args->args.flags |= SILOFS_F_ASYNCWR;
 	}
 	if (ut_globals.stdalloc) {
-		args->env_args.flags |= SILOFS_F_STDALLOC;
+		args->args.flags |= SILOFS_F_STDALLOC;
 	}
 	args->program = ut_globals.program;
 }
 
 static void ut_fini_args(struct ut_args *args)
 {
-	ut_del_uids(args->env_args.fsids.users.uids);
-	ut_del_gids(args->env_args.fsids.groups.gids);
+	ut_del_uids(args->args.fsids.users.uids);
+	ut_del_gids(args->args.fsids.groups.gids);
 	memset(args, 0, sizeof(*args));
 }
 

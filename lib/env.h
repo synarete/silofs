@@ -37,7 +37,7 @@ struct silofs_env_opstat {
 /* environment meta settings */
 struct silofs_env_base {
 	const struct silofs_password *passwd;
-	const struct silofs_env_args *args;
+	const struct silofs_args     *args;
 	struct silofs_prandgen       *prng;
 	struct silofs_alloc          *alloc;
 	struct silofs_lblock         *nilbk;

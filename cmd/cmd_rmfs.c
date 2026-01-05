@@ -37,7 +37,7 @@ struct cmd_rmfs_ctx {
 	struct silofs_ioc_query ioc_qry;
 	struct cmd_rmfs_in_args in_args;
 	struct silofs_fsref     fsref;
-	struct silofs_env_args  env_args;
+	struct silofs_args      args;
 	struct silofs_env      *env;
 	bool                    has_lockfile;
 };
@@ -178,30 +178,30 @@ static void cmd_rmfs_check_nomnt(struct cmd_rmfs_ctx *ctx)
 	cmd_free_mountinfo(minfos);
 }
 
-static void cmd_rmfs_setup_env_args(struct cmd_rmfs_ctx *ctx)
+static void cmd_rmfs_setup_args(struct cmd_rmfs_ctx *ctx)
 {
-	struct silofs_env_args *env_args = &ctx->env_args;
+	struct silofs_args *args = &ctx->args;
 
-	cmd_setup_env_args(env_args);
-	env_args->boot_args.ref[0].repodir = ctx->in_args.repodir_real;
-	env_args->boot_args.ref[0].refname = ctx->in_args.fsname;
-	env_args->boot_args.passwd         = ctx->in_args.password;
+	cmd_setup_args(args);
+	args->boot_args.ref[0].repodir = ctx->in_args.repodir_real;
+	args->boot_args.ref[0].refname = ctx->in_args.fsname;
+	args->boot_args.passwd         = ctx->in_args.password;
 }
 
 static void cmd_rmfs_load_fsids(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_fsids_load(&ctx->env_args.fsids, &ctx->env_args.boot_args.ref[0]);
+	cmd_fsids_load(&ctx->args.fsids, &ctx->args.boot_args.ref[0]);
 }
 
 static void cmd_rmfs_load_fsref(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_fsref_load(&ctx->fsref, &ctx->env_args.boot_args.ref[0]);
+	cmd_fsref_load(&ctx->fsref, &ctx->args.boot_args.ref[0]);
 }
 
 static void cmd_rmfs_setup_env(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_new_env(&ctx->env_args, &ctx->env);
-	cmd_fsids_clear(&ctx->env_args.fsids);
+	cmd_new_env(&ctx->args, &ctx->env);
+	cmd_fsids_clear(&ctx->args.fsids);
 	cmd_delpass(&ctx->in_args.password);
 }
 
@@ -227,7 +227,7 @@ static void cmd_rmfs_execute(struct cmd_rmfs_ctx *ctx)
 
 static void cmd_rmfs_unlink_blobid(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_fsref_unlink(&ctx->env_args.boot_args.ref[0]);
+	cmd_fsref_unlink(&ctx->args.boot_args.ref[0]);
 }
 
 static void cmd_rmfs_destroy_env(struct cmd_rmfs_ctx *ctx)
@@ -311,7 +311,7 @@ void cmd_execute_rmfs(void)
 	cmd_rmfs_enable_signals();
 
 	/* Setup input arguments */
-	cmd_rmfs_setup_env_args(&ctx);
+	cmd_rmfs_setup_args(&ctx);
 
 	/* Load fs-ids mapping */
 	cmd_rmfs_load_fsids(&ctx);

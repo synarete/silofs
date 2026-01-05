@@ -116,7 +116,7 @@ struct silofs_fsrefs {
 };
 
 /* input arguments */
-struct silofs_env_args {
+struct silofs_args {
 	struct silofs_boot_args boot_args;
 	struct silofs_fsids     fsids;
 	enum silofs_flags       flags;

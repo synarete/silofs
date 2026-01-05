@@ -36,7 +36,7 @@ struct cmd_init_in_args {
 
 struct cmd_init_ctx {
 	struct cmd_init_in_args in_args;
-	struct silofs_env_args  env_args;
+	struct silofs_args      args;
 	struct silofs_env      *env;
 };
 
@@ -96,7 +96,7 @@ static void cmd_init_parse_optargs(struct cmd_init_ctx *ctx)
 static void cmd_init_finalize(struct cmd_init_ctx *ctx)
 {
 	cmd_del_env(&ctx->env);
-	cmd_fsids_clear(&ctx->env_args.fsids);
+	cmd_fsids_clear(&ctx->args.fsids);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.username);
@@ -151,20 +151,20 @@ static void cmd_init_resolve_owner(struct cmd_init_ctx *ctx)
 	}
 }
 
-static void cmd_init_setup_env_args(struct cmd_init_ctx *ctx)
+static void cmd_init_setup_args(struct cmd_init_ctx *ctx)
 {
-	struct silofs_env_args *env_args = &ctx->env_args;
-	const char             *username = ctx->in_args.username;
+	struct silofs_args *args     = &ctx->args;
+	const char         *username = ctx->in_args.username;
 
-	cmd_setup_env_args(env_args);
-	cmd_uidgid_of(username, &env_args->uid, &env_args->gid);
-	env_args->boot_args.ref[0].repodir = ctx->in_args.repodir_real;
-	env_args->boot_args.ref[0].refname = "silofs";
+	cmd_setup_args(args);
+	cmd_uidgid_of(username, &args->uid, &args->gid);
+	args->boot_args.ref[0].repodir = ctx->in_args.repodir_real;
+	args->boot_args.ref[0].refname = "silofs";
 }
 
 static void cmd_init_setup_fsids(struct cmd_init_ctx *ctx)
 {
-	struct silofs_fsids *fsids           = &ctx->env_args.fsids;
+	struct silofs_fsids *fsids           = &ctx->args.fsids;
 	const char          *username        = ctx->in_args.username;
 	const bool           with_sup_groups = ctx->in_args.with_sup_groups;
 	const bool           with_root_user  = ctx->in_args.with_root_user;
@@ -180,7 +180,7 @@ static void cmd_init_setup_fsids(struct cmd_init_ctx *ctx)
 
 static void cmd_init_setup_env(struct cmd_init_ctx *ctx)
 {
-	cmd_new_env(&ctx->env_args, &ctx->env);
+	cmd_new_env(&ctx->args, &ctx->env);
 }
 
 static void cmd_init_format_repo(const struct cmd_init_ctx *ctx)
@@ -195,8 +195,8 @@ static void cmd_init_close_repo(const struct cmd_init_ctx *ctx)
 
 static void cmd_init_save_jfsids(struct cmd_init_ctx *ctx)
 {
-	cmd_fsids_save(&ctx->env_args.fsids, &ctx->env_args.boot_args.ref[0]);
-	cmd_fsids_clear(&ctx->env_args.fsids);
+	cmd_fsids_save(&ctx->args.fsids, &ctx->args.boot_args.ref[0]);
+	cmd_fsids_clear(&ctx->args.fsids);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -221,7 +221,7 @@ void cmd_execute_init(void)
 	cmd_init_resolve_owner(&ctx);
 
 	/* Setup input arguments */
-	cmd_init_setup_env_args(&ctx);
+	cmd_init_setup_args(&ctx);
 
 	/* Setup users/groups ids */
 	cmd_init_setup_fsids(&ctx);

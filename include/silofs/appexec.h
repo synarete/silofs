@@ -34,8 +34,8 @@ int silofs_check_fsname(const char *s);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_create_env(const struct silofs_env_args *args,
-                      struct silofs_env           **out_env);
+int silofs_create_env(const struct silofs_args *args,
+                      struct silofs_env       **out_env);
 
 void silofs_destroy_env(struct silofs_env *env);
 

@@ -309,10 +309,10 @@ spawn_rootdir(struct silofs_task_ctx *task, struct silofs_inode_info **out_ii)
 static void update_rootdir(struct silofs_task_ctx   *task,
                            struct silofs_inode_info *rootd_ii)
 {
-	const struct silofs_env_args *env_args = task->t_env->base.args;
+	const struct silofs_args *args = task->t_env->base.args;
 
 	silofs_ii_fixup_as_rootdir(rootd_ii);
-	if (env_args->no_utf8_names) {
+	if (args->no_utf8_names) {
 		silofs_dir_unset_flag(rootd_ii, SILOFS_DIRF_NAME_UTF8);
 	} else {
 		silofs_dir_set_flag(rootd_ii, SILOFS_DIRF_NAME_UTF8);
@@ -600,7 +600,7 @@ static int map_task_creds(struct silofs_task_ctx *task)
 
 static int make_task(struct silofs_env *env, struct silofs_task_ctx *task)
 {
-	const struct silofs_env_args *args = env->base.args;
+	const struct silofs_args *args = env->base.args;
 
 	silofs_task_init(task, env);
 	silofs_task_set_ts(task, true);
@@ -657,9 +657,9 @@ int silofs_close_repo(struct silofs_env *env)
 
 static int do_mount_and_exec(struct silofs_env *env)
 {
-	const struct silofs_env_args *args  = env->base.args;
-	struct silofs_fuseq          *fuseq = env->base.fuseq;
-	int                           err;
+	const struct silofs_args *args  = env->base.args;
+	struct silofs_fuseq      *fuseq = env->base.fuseq;
+	int                       err;
 
 	err = silofs_fuseq_mount(fuseq, env, args->boot_args.mntdir);
 	if (err) {
@@ -752,12 +752,12 @@ static int check_want_capacity(const struct silofs_env *env)
 
 static int check_owner_ids(const struct silofs_env *env)
 {
-	const struct silofs_env_args *args      = env->base.args;
-	const uid_t                   owner_uid = args->uid;
-	const gid_t                   owner_gid = args->gid;
-	uid_t                         suid;
-	gid_t                         sgid;
-	int                           err;
+	const struct silofs_args *args      = env->base.args;
+	const uid_t               owner_uid = args->uid;
+	const gid_t               owner_gid = args->gid;
+	uid_t                     suid;
+	gid_t                     sgid;
+	int                       err;
 
 	err = silofs_idsmap_mapcreds(env->base.idsmap, owner_uid, owner_gid,
 	                             &suid, &sgid);

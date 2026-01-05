@@ -319,8 +319,7 @@ void cmd_del_iocp(union silofs_ioc_u **pioc);
 void cmd_reset_ioc(union silofs_ioc_u *ioc);
 
 /* file-system environment */
-void cmd_new_env(const struct silofs_env_args *env_args,
-                 struct silofs_env           **p_env);
+void cmd_new_env(const struct silofs_args *args, struct silofs_env **p_env);
 
 void cmd_del_env(struct silofs_env **p_env);
 
@@ -341,9 +340,9 @@ void cmd_delpass(char **pass);
 void cmd_checkpass(const char *pass);
 
 /* env arguments */
-void cmd_setup_env_args(struct silofs_env_args *env_args);
+void cmd_setup_args(struct silofs_args *args);
 
-void cmd_destroy_env_args(struct silofs_env_args *env_args);
+void cmd_destroy_args(struct silofs_args *args);
 
 /* fsids */
 void cmd_fsids_setup(struct silofs_fsids *fsids);

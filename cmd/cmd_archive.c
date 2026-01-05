@@ -37,7 +37,7 @@ struct cmd_archive_in_args {
 struct cmd_archive_ctx {
 	struct cmd_archive_in_args in_args;
 	struct silofs_fsref        fsref[2];
-	struct silofs_env_args     env_args;
+	struct silofs_args         args;
 	struct silofs_env         *env;
 	bool                       has_lockfile;
 };
@@ -124,7 +124,7 @@ static void cmd_archive_finalize(struct cmd_archive_ctx *ctx)
 	cmd_pstrfree(&ctx->in_args.fsname);
 	cmd_pstrfree(&ctx->in_args.arname);
 	cmd_delpass(&ctx->in_args.password);
-	cmd_destroy_env_args(&ctx->env_args);
+	cmd_destroy_args(&ctx->args);
 	cmd_archive_ctx_p = nullptr;
 }
 
@@ -169,32 +169,32 @@ static void cmd_archive_getpass(struct cmd_archive_ctx *ctx)
 	}
 }
 
-static void cmd_archive_setup_env_args(struct cmd_archive_ctx *ctx)
+static void cmd_archive_setup_args(struct cmd_archive_ctx *ctx)
 {
-	struct silofs_env_args *env_args = &ctx->env_args;
+	struct silofs_args *args = &ctx->args;
 
-	cmd_setup_env_args(env_args);
-	env_args->boot_args.ref[0].repodir = ctx->in_args.repodir_real;
-	env_args->boot_args.ref[0].refname = ctx->in_args.fsname;
-	env_args->boot_args.ref[1].repodir = ctx->in_args.repodir_real;
-	env_args->boot_args.ref[1].refname = ctx->in_args.arname;
-	env_args->boot_args.passwd         = ctx->in_args.password;
+	cmd_setup_args(args);
+	args->boot_args.ref[0].repodir = ctx->in_args.repodir_real;
+	args->boot_args.ref[0].refname = ctx->in_args.fsname;
+	args->boot_args.ref[1].repodir = ctx->in_args.repodir_real;
+	args->boot_args.ref[1].refname = ctx->in_args.arname;
+	args->boot_args.passwd         = ctx->in_args.password;
 }
 
 static void cmd_archive_load_fsids(struct cmd_archive_ctx *ctx)
 {
-	cmd_fsids_load(&ctx->env_args.fsids, &ctx->env_args.boot_args.ref[0]);
+	cmd_fsids_load(&ctx->args.fsids, &ctx->args.boot_args.ref[0]);
 }
 
 static void cmd_archive_load_fsref(struct cmd_archive_ctx *ctx)
 {
-	cmd_fsref_load(&ctx->fsref[0], &ctx->env_args.boot_args.ref[0]);
+	cmd_fsref_load(&ctx->fsref[0], &ctx->args.boot_args.ref[0]);
 }
 
 static void cmd_archive_setup_env(struct cmd_archive_ctx *ctx)
 {
-	cmd_new_env(&ctx->env_args, &ctx->env);
-	cmd_fsids_clear(&ctx->env_args.fsids);
+	cmd_new_env(&ctx->args, &ctx->env);
+	cmd_fsids_clear(&ctx->args.fsids);
 	cmd_delpass(&ctx->in_args.password);
 }
 
@@ -258,7 +258,7 @@ void cmd_execute_archive(void)
 	cmd_archive_enable_signals();
 
 	/* Setup input arguments */
-	cmd_archive_setup_env_args(&ctx);
+	cmd_archive_setup_args(&ctx);
 
 	/* Load local fs ids */
 	cmd_archive_load_fsids(&ctx);

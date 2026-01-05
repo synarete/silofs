@@ -18,12 +18,11 @@
 #include "cmd.h"
 #include <stdarg.h>
 
-void cmd_new_env(const struct silofs_env_args *env_args,
-                 struct silofs_env           **p_env)
+void cmd_new_env(const struct silofs_args *args, struct silofs_env **p_env)
 {
 	int err;
 
-	err = silofs_create_env(env_args, p_env);
+	err = silofs_create_env(args, p_env);
 	if (err) {
 		cmd_die(err, "failed to create fs instance");
 	}
@@ -297,18 +296,18 @@ void cmd_restore_fs(struct silofs_env *env, const struct silofs_fsref *fsref,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void cmd_setup_env_args(struct silofs_env_args *env_args)
+void cmd_setup_args(struct silofs_args *args)
 {
-	memset(env_args, 0, sizeof(*env_args));
-	cmd_fsids_setup(&env_args->fsids);
-	env_args->uid   = getuid();
-	env_args->gid   = getgid();
-	env_args->pid   = getpid();
-	env_args->umask = 0077;
+	memset(args, 0, sizeof(*args));
+	cmd_fsids_setup(&args->fsids);
+	args->uid   = getuid();
+	args->gid   = getgid();
+	args->pid   = getpid();
+	args->umask = 0077;
 }
 
-void cmd_destroy_env_args(struct silofs_env_args *env_args)
+void cmd_destroy_args(struct silofs_args *args)
 {
-	cmd_fsids_clear(&env_args->fsids);
-	memset(env_args, 0, sizeof(*env_args));
+	cmd_fsids_clear(&args->fsids);
+	memset(args, 0, sizeof(*args));
 }

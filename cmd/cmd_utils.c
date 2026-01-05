@@ -842,7 +842,7 @@ char *cmd_struuid(const uint8_t uu[16])
 
 	memcpy(uuid, uu, sizeof(uuid));
 	uuid_unparse(uuid, str);
-	return cmd_strdup(str);
+	return cmd_strndup(str, sizeof(str));
 }
 
 char *cmd_mkpathf(const char *fmt, ...)

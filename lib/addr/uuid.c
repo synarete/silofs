@@ -18,7 +18,7 @@
 #include <uuid/uuid.h>
 #include <errno.h>
 #include "infra.h"
-#include "stringx.h"
+#include "str.h"
 #include "htox.h"
 #include "uuid.h"
 

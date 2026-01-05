@@ -25,7 +25,7 @@
 #include <stdarg.h>
 #include <limits.h>
 #include "infra.h"
-#include "stringx.h"
+#include "str.h"
 #include "fs.h"
 
 static bool strview_isempty(const struct silofs_strview *sv)

@@ -19,7 +19,7 @@
 
 #include <silofs/ondisk.h>
 #include <stdlib.h>
-#include "stringx.h"
+#include "str.h"
 #include "crypto.h"
 #include "svolid.h"
 

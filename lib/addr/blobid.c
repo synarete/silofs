@@ -16,7 +16,7 @@
  */
 #include <silofs/configs.h>
 #include "infra.h"
-#include "stringx.h"
+#include "str.h"
 #include "htox.h"
 #include "uuid.h"
 #include "hash.h"

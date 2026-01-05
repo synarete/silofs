@@ -14,14 +14,14 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_STRINGX_H_
-#define SILOFS_STRINGX_H_
+#ifndef SILOFS_STR_H_
+#define SILOFS_STR_H_
 
 #include <string.h>
-#include "stringx/ascii.h"
-#include "stringx/strchr.h"
-#include "stringx/strview.h"
-#include "stringx/strspan.h"
-#include "stringx/strbuf.h"
+#include "str/ascii.h"
+#include "str/strchr.h"
+#include "str/strview.h"
+#include "str/strspan.h"
+#include "str/strbuf.h"
 
-#endif /* SILOFS_STRINGX_H_ */
+#endif /* SILOFS_STR_H_ */

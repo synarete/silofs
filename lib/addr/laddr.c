@@ -18,7 +18,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "infra.h"
-#include "stringx.h"
+#include "str.h"
 #include "offlba.h"
 #include "htox.h"
 #include "mtype.h"

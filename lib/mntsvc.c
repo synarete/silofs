@@ -26,7 +26,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include "infra.h"
-#include "stringx.h"
+#include "str.h"
 #include "knownfs.h"
 
 enum silofs_mntcmd {

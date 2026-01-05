@@ -804,14 +804,20 @@ void cmd_pstrfree(char **pp)
 	}
 }
 
+static size_t cmd_safe_strlen(const char *s)
+{
+	const size_t lmax = SILOFS_MEGA;
+	const size_t slen = strnlen(s, lmax);
+
+	if (slen >= lmax) {
+		cmd_die(0, "cannot strdup: len=%zu", slen);
+	}
+	return slen;
+}
+
 char *cmd_strdup(const char *s)
 {
-	char *d = strdup(s);
-
-	if (d == nullptr) {
-		cmd_die(errno, "strdup failed");
-	}
-	return d;
+	return cmd_strndup(s, cmd_safe_strlen(s));
 }
 
 char *cmd_strndup(const char *s, size_t n)
@@ -826,15 +832,7 @@ char *cmd_strndup(const char *s, size_t n)
 
 char *cmd_strvdup(const void *p)
 {
-	const char  *s    = p;
-	const size_t lmax = SILOFS_MEGA;
-	size_t       len;
-
-	len = strnlen(s, lmax);
-	if (len >= lmax) {
-		cmd_die(0, "cannot strdup: len=%zu", len);
-	}
-	return cmd_strdup(s);
+	return cmd_strdup((const char *)p);
 }
 
 char *cmd_struuid(const uint8_t uu[16])
@@ -844,18 +842,6 @@ char *cmd_struuid(const uint8_t uu[16])
 
 	memcpy(uuid, uu, sizeof(uuid));
 	uuid_unparse(uuid, str);
-	return cmd_strdup(str);
-}
-
-char *cmd_strmbref(const struct silofs_mbref *mbref)
-{
-	char str[256] = "";
-	int  err;
-
-	err = silofs_encode_mbref(mbref, str, sizeof(str));
-	if (err) {
-		cmd_die(err, "cannot encode mbref");
-	}
 	return cmd_strdup(str);
 }
 

@@ -44,8 +44,8 @@ struct cmd_clone_in_args {
 struct cmd_clone_ctx {
 	struct cmd_clone_in_args in_args;
 	struct silofs_env_args   env_args;
-	struct silofs_mbref      fs_mbref;
-	struct silofs_mbrefs     fs_mbrefs;
+	struct silofs_fsref      fsref;
+	struct silofs_fsrefs     fsrefs;
 	struct silofs_env       *env;
 	union silofs_ioc_u      *ioc;
 };
@@ -255,7 +255,7 @@ static void cmd_clone_do_ioctl_clonefs(struct cmd_clone_ctx *ctx)
 		cmd_die(err, "failed to clone: %s",
 		        ctx->in_args.repodir_fsname);
 	}
-	memcpy(&ctx->fs_mbrefs, &ioc->forkfs.mbrefs, sizeof(ctx->fs_mbrefs));
+	memcpy(&ctx->fsrefs, &ioc->forkfs.mbrefs, sizeof(ctx->fsrefs));
 }
 
 static void cmd_clone_do_ioctl_syncfs(struct cmd_clone_ctx *ctx)
@@ -295,7 +295,7 @@ static void cmd_clone_load_fsids(struct cmd_clone_ctx *ctx)
 
 static void cmd_clone_load_fsref(struct cmd_clone_ctx *ctx)
 {
-	cmd_fsref_load(&ctx->fs_mbref, &ctx->env_args.boot_args.ref[0]);
+	cmd_fsref_load(&ctx->fsref, &ctx->env_args.boot_args.ref[0]);
 }
 
 static void cmd_clone_setup_env(struct cmd_clone_ctx *ctx)
@@ -317,17 +317,17 @@ static void cmd_clone_close_repo(struct cmd_clone_ctx *ctx)
 
 static void cmd_clone_sense_fs(struct cmd_clone_ctx *ctx)
 {
-	cmd_sense_fs(ctx->env, &ctx->fs_mbref);
+	cmd_sense_fs(ctx->env, &ctx->fsref);
 }
 
 static void cmd_clone_open_fs(struct cmd_clone_ctx *ctx)
 {
-	cmd_open_fs(ctx->env, &ctx->fs_mbref);
+	cmd_open_fs(ctx->env, &ctx->fsref);
 }
 
 static void cmd_clone_do_clonefs(struct cmd_clone_ctx *ctx)
 {
-	cmd_fork_fs(ctx->env, &ctx->fs_mbrefs);
+	cmd_fork_fs(ctx->env, &ctx->fsrefs);
 }
 
 static void cmd_clone_close_fs(struct cmd_clone_ctx *ctx)
@@ -342,7 +342,7 @@ static void cmd_clone_save_fork_fsref(struct cmd_clone_ctx *ctx)
 		.refname = ctx->in_args.forkname,
 	};
 
-	cmd_fsref_save(&ctx->fs_mbrefs.fork, &boot_ref);
+	cmd_fsref_save(&ctx->fsrefs.fork, &boot_ref);
 }
 
 static void cmd_clone_save_main_fsref(struct cmd_clone_ctx *ctx)
@@ -352,7 +352,7 @@ static void cmd_clone_save_main_fsref(struct cmd_clone_ctx *ctx)
 		.refname = ctx->in_args.fsname,
 	};
 
-	cmd_fsref_save(&ctx->fs_mbrefs.main, &boot_ref);
+	cmd_fsref_save(&ctx->fsrefs.main, &boot_ref);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

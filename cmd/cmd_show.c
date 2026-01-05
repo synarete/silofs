@@ -175,15 +175,13 @@ static void cmd_show_boot(struct cmd_show_ctx *ctx)
 {
 	struct silofs_ioc_query *qry       = &ctx->ioc->query;
 	char                    *boot_name = nullptr;
-	char                    *mbref_str = nullptr;
 
 	cmd_show_do_ioctl_query(ctx);
 
 	boot_name = cmd_strvdup(qry->u.boot.name);
-	mbref_str = cmd_strmbref(&qry->u.boot.mbref);
-	fprintf(ctx->out_fp, "%s %s\n", boot_name, mbref_str);
+	fprintf(ctx->out_fp, "%s %s\n", boot_name,
+	        qry->u.boot.fsref.mbaddr.mba);
 	cmd_pstrfree(&boot_name);
-	cmd_pstrfree(&mbref_str);
 }
 
 struct silofs_msflag_name {

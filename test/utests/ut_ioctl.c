@@ -131,13 +131,12 @@ ut_query_boot(struct ut_env *ute, ino_t ino, struct silofs_ioc_query *ioc_qry)
 	ut_query(ute, ino, SILOFS_QUERY_BOOT, ioc_qry);
 }
 
-static void ut_expect_mbref(const struct silofs_mbref *mbref)
+static void ut_expect_boot_fsref(const struct silofs_fsref *fsref)
 {
-	char str[256] = "";
-	int  err;
-
-	err = silofs_encode_mbref(mbref, str, sizeof(str) - 1);
-	silofs_assert_ok(err);
+	ut_expect_eqs(fsref->fsmeta.version, silofs_version.string);
+	ut_expect_eq(fsref->fsmeta.fmtvers, SILOFS_FMT_VERSION);
+	ut_expect_gt(fsref->fsmeta.btime, 0);
+	ut_expect_gt(strlen(fsref->mbaddr.mba), 0);
 }
 
 static void ut_ioctl_query_boot(struct ut_env *ute)
@@ -149,7 +148,7 @@ static void ut_ioctl_query_boot(struct ut_env *ute)
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_query_boot(ute, dino, ioc_qry);
-	ut_expect_mbref(&qbt->mbref);
+	ut_expect_boot_fsref(&qbt->fsref);
 	ut_rmdir_at_root(ute, name);
 }
 

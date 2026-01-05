@@ -108,18 +108,6 @@ json_t *cmd_json_btime(void)
 	return jstr;
 }
 
-json_t *cmd_json_mbref(const struct silofs_mbref *mbref)
-{
-	char s[256] = "";
-	int  err;
-
-	err = silofs_encode_mbref(mbref, s, sizeof(s));
-	if (err) {
-		cmd_die(err, "json: failed to encode blobid");
-	}
-	return cmd_json_string(s);
-}
-
 void cmd_json_object_set_new(json_t *jobj, const char *key, json_t *val)
 {
 	int err;

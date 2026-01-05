@@ -2476,8 +2476,8 @@ static const struct silofs_mbr_info *fs_mbi(const struct silofs_task_ctx *task)
 	return &task->t_env->mbis.fs_mbi;
 }
 
-static void fill_query_boot_mblobid(const struct silofs_task_ctx *task,
-                                    struct silofs_ioc_query      *query)
+static void fill_query_boot_fsref(const struct silofs_task_ctx *task,
+                                  struct silofs_ioc_query      *query)
 {
 	struct silofs_mbr1k mbr1k;
 	struct silofs_mbref mbref;
@@ -2485,7 +2485,7 @@ static void fill_query_boot_mblobid(const struct silofs_task_ctx *task,
 
 	err = silofs_mbi_export(fs_mbi(task), &mbref, &mbr1k);
 	if (!err) {
-		silofs_mbref_assign(&query->u.boot.mbref, &mbref);
+		silofs_fsref_encode(&query->u.boot.fsref, &mbref);
 	}
 }
 
@@ -2494,7 +2494,7 @@ static void fill_query_boot(const struct silofs_task_ctx *task,
 {
 	silofs_memzero(query, sizeof(*query));
 	fill_query_boot_name(task, query);
-	fill_query_boot_mblobid(task, query);
+	fill_query_boot_fsref(task, query);
 }
 
 static void fill_query_proc(const struct silofs_task_ctx *task,

@@ -29,20 +29,6 @@
 #include "fuseq.h"
 #include "walk.h"
 
-int silofs_encode_mbref(const struct silofs_mbref *mbref, char *s, size_t n)
-{
-	return silofs_mbref_to_str(mbref, s, n);
-}
-
-int silofs_decode_mbref(struct silofs_mbref *mbref, const char *s)
-{
-	const size_t n = silofs_str_nlength(s, UINT16_MAX);
-
-	return silofs_mbref_from_str(mbref, s, n);
-}
-
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-
 static int reload_uber(struct silofs_task_ctx *task)
 {
 	return silofs_env_reload_uber(task->t_env);
@@ -831,27 +817,49 @@ static int check_format_fs(struct silofs_env *env)
 	return 0;
 }
 
-static int do_format_fs(struct silofs_env *env, struct silofs_mbref *out_mbref)
+static void
+encode_fsref(const struct silofs_mbref *mbref, struct silofs_fsref *out_fsref)
 {
-	int err;
+	silofs_fsref_encode(out_fsref, mbref);
+}
+
+static void encode_fsrefs(const struct silofs_mbrefs *mbrefs,
+                          struct silofs_fsrefs       *out_fsrefs)
+{
+	silofs_fsref_encode(&out_fsrefs->main, &mbrefs->main);
+	silofs_fsref_encode(&out_fsrefs->base, &mbrefs->base);
+	silofs_fsref_encode(&out_fsrefs->fork, &mbrefs->fork);
+}
+
+static int
+decode_fsref(const struct silofs_fsref *fsref, struct silofs_mbref *out_mbref)
+{
+	return silofs_fsref_decode(fsref, out_mbref);
+}
+
+static int do_format_fs(struct silofs_env *env, struct silofs_fsref *out_fsref)
+{
+	struct silofs_mbref mbref;
+	int                 err;
 
 	err = check_format_fs(env);
 	if (err) {
 		return err;
 	}
-	err = exec_format_meta(env, out_mbref);
+	err = exec_format_meta(env, &mbref);
 	if (err) {
 		return err;
 	}
+	encode_fsref(&mbref, out_fsref);
 	return 0;
 }
 
-int silofs_format_fs(struct silofs_env *env, struct silofs_mbref *out_mbref)
+int silofs_format_fs(struct silofs_env *env, struct silofs_fsref *out_fsref)
 {
 	int err;
 
 	silofs_env_lock(env);
-	err = do_format_fs(env, out_mbref);
+	err = do_format_fs(env, out_fsref);
 	silofs_env_unlock(env);
 	return err;
 }
@@ -869,34 +877,55 @@ exec_sense_fs(struct silofs_env *env, const struct silofs_mbref *mbref)
 	return term_task(&task, err);
 }
 
-int silofs_sense_fs(struct silofs_env         *env,
-                    const struct silofs_mbref *fs_mbref)
+static int
+do_sense_fs(struct silofs_env *env, const struct silofs_fsref *fsref)
+{
+	struct silofs_mbref mbref;
+	int                 err;
+
+	err = decode_fsref(fsref, &mbref);
+	if (err) {
+		return err;
+	}
+	err = exec_sense_fs(env, &mbref);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+int silofs_sense_fs(struct silofs_env *env, const struct silofs_fsref *fsref)
 {
 	int err;
 
 	silofs_env_lock(env);
-	err = exec_sense_fs(env, fs_mbref);
+	err = do_sense_fs(env, fsref);
 	silofs_env_unlock(env);
 	return err;
 }
 
-int silofs_sense_ar(struct silofs_env         *env,
-                    const struct silofs_mbref *ar_mbref)
+static int do_open_fs(struct silofs_env *env, const struct silofs_fsref *fsref)
 {
-	int err;
+	struct silofs_mbref mbref;
+	int                 err;
 
-	silofs_env_lock(env);
-	err = exec_sense_fs(env, ar_mbref);
-	silofs_env_unlock(env);
-	return err;
+	err = decode_fsref(fsref, &mbref);
+	if (err) {
+		return err;
+	}
+	err = exec_open_fs(env, &mbref);
+	if (err) {
+		return err;
+	}
+	return 0;
 }
 
-int silofs_open_fs(struct silofs_env *env, const struct silofs_mbref *mbref)
+int silofs_open_fs(struct silofs_env *env, const struct silofs_fsref *fsref)
 {
 	int err;
 
 	silofs_env_lock(env);
-	err = exec_open_fs(env, mbref);
+	err = do_open_fs(env, fsref);
 	silofs_env_unlock(env);
 	return err;
 }
@@ -936,12 +965,25 @@ exec_fork_fs(struct silofs_env *env, struct silofs_mbrefs *out_mbrefs)
 	return term_task(&task, err);
 }
 
-int silofs_fork_fs(struct silofs_env *env, struct silofs_mbrefs *out_mbrefs)
+static int do_fork_fs(struct silofs_env *env, struct silofs_fsrefs *out_fsrefs)
+{
+	struct silofs_mbrefs mbrefs;
+	int                  err;
+
+	err = exec_fork_fs(env, &mbrefs);
+	if (err) {
+		return err;
+	}
+	encode_fsrefs(&mbrefs, out_fsrefs);
+	return 0;
+}
+
+int silofs_fork_fs(struct silofs_env *env, struct silofs_fsrefs *out_fsrefs)
 {
 	int err;
 
 	silofs_env_lock(env);
-	err = exec_fork_fs(env, out_mbrefs);
+	err = do_fork_fs(env, out_fsrefs);
 	silofs_env_unlock(env);
 	return err;
 }
@@ -968,12 +1010,29 @@ out:
 	return term_task(&task, err);
 }
 
-int silofs_remove_fs(struct silofs_env *env, const struct silofs_mbref *mbref)
+static int
+do_remove_fs(struct silofs_env *env, const struct silofs_fsref *fsref)
+{
+	struct silofs_mbref mbref;
+	int                 err;
+
+	err = decode_fsref(fsref, &mbref);
+	if (err) {
+		return err;
+	}
+	err = exec_reload_remove_fs(env, &mbref);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+int silofs_remove_fs(struct silofs_env *env, const struct silofs_fsref *fsref)
 {
 	int err;
 
 	silofs_env_lock(env);
-	err = exec_reload_remove_fs(env, mbref);
+	err = do_remove_fs(env, fsref);
 	silofs_env_unlock(env);
 	return err;
 }
@@ -1030,14 +1089,32 @@ exec_archive_fs(struct silofs_env *env, const struct silofs_mbref *fs_mbref,
 	return term_task(&task, err);
 }
 
-int silofs_archive_fs(struct silofs_env         *env,
-                      const struct silofs_mbref *fs_mbref,
-                      struct silofs_mbref       *out_ar_mbref)
+static int
+do_archive_fs(struct silofs_env *env, const struct silofs_fsref *fsref,
+              struct silofs_fsref *out_fsref)
+{
+	struct silofs_mbref mbref[2];
+	int                 err;
+
+	err = decode_fsref(fsref, &mbref[0]);
+	if (err) {
+		return err;
+	}
+	err = exec_archive_fs(env, &mbref[0], &mbref[1]);
+	if (err) {
+		return err;
+	}
+	encode_fsref(&mbref[1], out_fsref);
+	return 0;
+}
+
+int silofs_archive_fs(struct silofs_env *env, const struct silofs_fsref *fsref,
+                      struct silofs_fsref *out_fsref)
 {
 	int err;
 
 	silofs_env_lock(env);
-	err = exec_archive_fs(env, fs_mbref, out_ar_mbref);
+	err = do_archive_fs(env, fsref, out_fsref);
 	silofs_env_unlock(env);
 	return err;
 }
@@ -1056,14 +1133,32 @@ exec_restore_fs(struct silofs_env *env, const struct silofs_mbref *ar_mbref,
 	return term_task(&task, err);
 }
 
-int silofs_restore_fs(struct silofs_env         *env,
-                      const struct silofs_mbref *ar_mbref,
-                      struct silofs_mbref       *out_fs_mbref)
+static int
+do_restore_fs(struct silofs_env *env, const struct silofs_fsref *fsref,
+              struct silofs_fsref *out_fsref)
+{
+	struct silofs_mbref mbref[2];
+	int                 err;
+
+	err = decode_fsref(fsref, &mbref[0]);
+	if (err) {
+		return err;
+	}
+	err = exec_restore_fs(env, &mbref[0], &mbref[1]);
+	if (err) {
+		return err;
+	}
+	encode_fsref(&mbref[1], out_fsref);
+	return 0;
+}
+
+int silofs_restore_fs(struct silofs_env *env, const struct silofs_fsref *fsref,
+                      struct silofs_fsref *out_fsref)
 {
 	int err;
 
 	silofs_env_lock(env);
-	err = exec_restore_fs(env, ar_mbref, out_fs_mbref);
+	err = do_restore_fs(env, fsref, out_fsref);
 	silofs_env_unlock(env);
 	return err;
 }

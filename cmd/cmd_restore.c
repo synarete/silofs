@@ -37,8 +37,7 @@ struct cmd_restore_in_args {
 struct cmd_restore_ctx {
 	struct cmd_restore_in_args in_args;
 	struct silofs_env_args     env_args;
-	struct silofs_mbref        ar_mbref;
-	struct silofs_mbref        fs_mbref;
+	struct silofs_fsref        fsref[2];
 	struct silofs_env         *env;
 	bool                       has_lockfile;
 };
@@ -183,7 +182,7 @@ static void cmd_restore_setup_env_args(struct cmd_restore_ctx *ctx)
 
 static void cmd_restore_load_fsref(struct cmd_restore_ctx *ctx)
 {
-	cmd_fsref_load(&ctx->ar_mbref, &ctx->env_args.boot_args.ref[1]);
+	cmd_fsref_load(&ctx->fsref[1], &ctx->env_args.boot_args.ref[1]);
 }
 
 static void cmd_restore_setup_env(struct cmd_restore_ctx *ctx)
@@ -203,7 +202,7 @@ static void cmd_restore_close_repo(struct cmd_restore_ctx *ctx)
 
 static void cmd_restore_sense_archive(struct cmd_restore_ctx *ctx)
 {
-	cmd_sense_ar(ctx->env, &ctx->ar_mbref);
+	cmd_sense_fs(ctx->env, &ctx->fsref[1]);
 }
 
 static void cmd_restore_execute(struct cmd_restore_ctx *ctx)
@@ -213,8 +212,8 @@ static void cmd_restore_execute(struct cmd_restore_ctx *ctx)
 		.refname = ctx->in_args.fsname,
 	};
 
-	cmd_restore_fs(ctx->env, &ctx->ar_mbref, &ctx->fs_mbref);
-	cmd_fsref_save(&ctx->fs_mbref, &boot_ref);
+	cmd_restore_fs(ctx->env, &ctx->fsref[1], &ctx->fsref[0]);
+	cmd_fsref_save(&ctx->fsref[0], &boot_ref);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

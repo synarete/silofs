@@ -33,5 +33,6 @@
 #include "addr/vaddr.h"
 #include "addr/genid.h"
 #include "addr/mbref.h"
+#include "addr/fsref.h"
 
 #endif /* SILOFS_ADDR_H_ */

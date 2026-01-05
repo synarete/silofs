@@ -36,9 +36,8 @@ struct cmd_archive_in_args {
 
 struct cmd_archive_ctx {
 	struct cmd_archive_in_args in_args;
+	struct silofs_fsref        fsref[2];
 	struct silofs_env_args     env_args;
-	struct silofs_mbref        fs_mbref;
-	struct silofs_mbref        ar_mbref;
 	struct silofs_env         *env;
 	bool                       has_lockfile;
 };
@@ -189,7 +188,7 @@ static void cmd_archive_load_fsids(struct cmd_archive_ctx *ctx)
 
 static void cmd_archive_load_fsref(struct cmd_archive_ctx *ctx)
 {
-	cmd_fsref_load(&ctx->fs_mbref, &ctx->env_args.boot_args.ref[0]);
+	cmd_fsref_load(&ctx->fsref[0], &ctx->env_args.boot_args.ref[0]);
 }
 
 static void cmd_archive_setup_env(struct cmd_archive_ctx *ctx)
@@ -211,12 +210,12 @@ static void cmd_archive_close_repo(struct cmd_archive_ctx *ctx)
 
 static void cmd_archive_sense_fs(struct cmd_archive_ctx *ctx)
 {
-	cmd_sense_fs(ctx->env, &ctx->fs_mbref);
+	cmd_sense_fs(ctx->env, &ctx->fsref[0]);
 }
 
 static void cmd_archive_open_fs(struct cmd_archive_ctx *ctx)
 {
-	cmd_open_fs(ctx->env, &ctx->fs_mbref);
+	cmd_open_fs(ctx->env, &ctx->fsref[0]);
 }
 
 static void cmd_archive_close_fs(struct cmd_archive_ctx *ctx)
@@ -231,8 +230,8 @@ static void cmd_archive_execute(struct cmd_archive_ctx *ctx)
 		.refname = ctx->in_args.arname,
 	};
 
-	cmd_archive_fs(ctx->env, &ctx->fs_mbref, &ctx->ar_mbref);
-	cmd_fsref_save(&ctx->ar_mbref, &boot_ref);
+	cmd_archive_fs(ctx->env, &ctx->fsref[0], &ctx->fsref[1]);
+	cmd_fsref_save(&ctx->fsref[1], &boot_ref);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

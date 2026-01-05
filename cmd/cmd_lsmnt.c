@@ -109,7 +109,6 @@ cmd_lsmnt_long(struct cmd_lsmnt_ctx *ctx, const struct silofs_mntinfo *mi)
 	char                    *mntd_path = nullptr;
 	char                    *repo_path = nullptr;
 	char                    *boot_name = nullptr;
-	char                    *boot_addr = nullptr;
 	const int o_flags = O_RDONLY | O_NONBLOCK | O_CLOEXEC | O_DIRECTORY;
 	int       dfd     = -1;
 	int       err     = 0;
@@ -135,10 +134,9 @@ cmd_lsmnt_long(struct cmd_lsmnt_ctx *ctx, const struct silofs_mntinfo *mi)
 		goto out;
 	}
 	boot_name = cmd_strvdup(qry->u.boot.name);
-	boot_addr = cmd_strmbref(&qry->u.boot.mbref);
 
 	fprintf(ctx->out_fp, "%s %s/%s %s", mntd_path, repo_path, boot_name,
-	        boot_addr);
+	        qry->u.boot.fsref.mbaddr.mba);
 out:
 	fputs("\n", ctx->out_fp);
 	fflush(ctx->out_fp);
@@ -146,7 +144,6 @@ out:
 	cmd_pstrfree(&mntd_path);
 	cmd_pstrfree(&repo_path);
 	cmd_pstrfree(&boot_name);
-	cmd_pstrfree(&boot_addr);
 }
 
 static void cmd_lsmnt_execute(struct cmd_lsmnt_ctx *ctx)

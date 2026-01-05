@@ -161,7 +161,7 @@ void cmd_format_repo(struct silofs_env *env)
 
 	err = silofs_format_repo(env);
 	if (err) {
-		cmd_report_err_and_die(env, err, "failed to format repo");
+		cmd_report_err_and_die(env, err, "format repo failure");
 	}
 }
 
@@ -171,7 +171,7 @@ void cmd_open_repo(struct silofs_env *env)
 
 	err = silofs_open_repo(env);
 	if (err) {
-		cmd_report_err_and_die(env, err, "failed to open repo");
+		cmd_report_err_and_die(env, err, "open repo failure");
 	}
 }
 
@@ -181,57 +181,45 @@ void cmd_close_repo(struct silofs_env *env)
 
 	err = silofs_close_repo(env);
 	if (err) {
-		cmd_report_err_and_die(env, err, "failed to close repo");
+		cmd_report_err_and_die(env, err, "close repo failure");
 	}
 }
 
-static void cmd_die_by_mbref(const struct silofs_env *env, //
-                             int err, const char *prefix_msg,
-                             const struct silofs_mbref *mbref)
+static void
+cmd_die_by_fsref(const struct silofs_env *env, int err, const char *msg_prefix,
+                 const struct silofs_fsref *fsref)
 {
-	char s[256] = "";
-
-	silofs_encode_mbref(mbref, s, sizeof(s));
-	cmd_report_err_and_dief(env, err, "%s: %s", prefix_msg, s);
+	cmd_report_err_and_dief(env, err, "%s: %s", msg_prefix,
+	                        fsref->mbaddr.mba);
 }
 
-void cmd_sense_fs(struct silofs_env *env, const struct silofs_mbref *mbref)
+void cmd_sense_fs(struct silofs_env *env, const struct silofs_fsref *fsref)
 {
 	int err;
 
-	err = silofs_sense_fs(env, mbref);
+	err = silofs_sense_fs(env, fsref);
 	if (err) {
-		cmd_die_by_mbref(env, err, "can not sense fs", mbref);
+		cmd_die_by_fsref(env, err, "sense failure", fsref);
 	}
 }
 
-void cmd_sense_ar(struct silofs_env *env, const struct silofs_mbref *mbref)
+void cmd_format_fs(struct silofs_env *env, struct silofs_fsref *out_fsref)
 {
 	int err;
 
-	err = silofs_sense_ar(env, mbref);
+	err = silofs_format_fs(env, out_fsref);
 	if (err) {
-		cmd_die_by_mbref(env, err, "failed to sense archive", mbref);
+		cmd_report_err_and_die(env, err, "format failure");
 	}
 }
 
-void cmd_format_fs(struct silofs_env *env, struct silofs_mbref *out_mbref)
+void cmd_open_fs(struct silofs_env *env, const struct silofs_fsref *fsref)
 {
 	int err;
 
-	err = silofs_format_fs(env, out_mbref);
+	err = silofs_open_fs(env, fsref);
 	if (err) {
-		cmd_report_err_and_die(env, err, "failed to format fs");
-	}
-}
-
-void cmd_open_fs(struct silofs_env *env, const struct silofs_mbref *mbref)
-{
-	int err;
-
-	err = silofs_open_fs(env, mbref);
-	if (err) {
-		cmd_die_by_mbref(env, err, "failed to open fs", mbref);
+		cmd_die_by_fsref(env, err, "open failure", fsref);
 	}
 }
 
@@ -241,7 +229,7 @@ void cmd_close_fs(struct silofs_env *env)
 
 	err = silofs_close_fs(env);
 	if (err) {
-		cmd_report_err_and_die(env, err, "failed to close fs");
+		cmd_report_err_and_die(env, err, "close failure");
 	}
 }
 
@@ -251,27 +239,27 @@ void cmd_exec_fs(struct silofs_env *env)
 
 	err = silofs_exec_fs(env);
 	if (err) {
-		cmd_report_err_and_die(env, err, "failed to exec fs");
+		cmd_report_err_and_die(env, err, "exec failure");
 	}
 }
 
-void cmd_fork_fs(struct silofs_env *env, struct silofs_mbrefs *out_mbrefs)
+void cmd_fork_fs(struct silofs_env *env, struct silofs_fsrefs *out_fsrefs)
 {
 	int err;
 
-	err = silofs_fork_fs(env, out_mbrefs);
+	err = silofs_fork_fs(env, out_fsrefs);
 	if (err) {
-		cmd_report_err_and_die(env, err, "failed to fork fs");
+		cmd_report_err_and_die(env, err, "fork failure");
 	}
 }
 
-void cmd_remove_fs(struct silofs_env *env, const struct silofs_mbref *mbref)
+void cmd_remove_fs(struct silofs_env *env, const struct silofs_fsref *fsref)
 {
 	int err;
 
-	err = silofs_remove_fs(env, mbref);
+	err = silofs_remove_fs(env, fsref);
 	if (err) {
-		cmd_die_by_mbref(env, err, "failed to remove fs", mbref);
+		cmd_die_by_fsref(env, err, "remove failure", fsref);
 	}
 }
 
@@ -281,31 +269,29 @@ void cmd_inspect_fs(struct silofs_env *env, bool view)
 
 	err = silofs_inspect_fs(env, view);
 	if (err) {
-		cmd_report_err_and_die(env, err, "failed to inspect fs");
+		cmd_report_err_and_die(env, err, "failed to inspect");
 	}
 }
 
-void cmd_archive_fs(struct silofs_env         *env,
-                    const struct silofs_mbref *fs_mbref,
-                    struct silofs_mbref       *out_ar_mbref)
+void cmd_archive_fs(struct silofs_env *env, const struct silofs_fsref *fsref,
+                    struct silofs_fsref *out_fsref)
 {
 	int err;
 
-	err = silofs_archive_fs(env, fs_mbref, out_ar_mbref);
+	err = silofs_archive_fs(env, fsref, out_fsref);
 	if (err) {
-		cmd_die_by_mbref(env, err, "failed to archive", fs_mbref);
+		cmd_die_by_fsref(env, err, "archive failure", fsref);
 	}
 }
 
-void cmd_restore_fs(struct silofs_env         *env,
-                    const struct silofs_mbref *ar_mbref,
-                    struct silofs_mbref       *out_fs_mbref)
+void cmd_restore_fs(struct silofs_env *env, const struct silofs_fsref *fsref,
+                    struct silofs_fsref *out_fsref)
 {
 	int err;
 
-	err = silofs_restore_fs(env, ar_mbref, out_fs_mbref);
+	err = silofs_restore_fs(env, fsref, out_fsref);
 	if (err) {
-		cmd_die_by_mbref(env, err, "failed to restore", ar_mbref);
+		cmd_die_by_fsref(env, err, "restore failure", fsref);
 	}
 }
 

@@ -60,7 +60,7 @@ struct silofs_query_repo {
 
 struct silofs_query_boot {
 	int8_t              name[SILOFS_NAME_MAX + 1];
-	struct silofs_mbref mbref;
+	struct silofs_fsref fsref;
 };
 
 struct silofs_query_proc {

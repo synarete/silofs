@@ -20,25 +20,39 @@
 #include <silofs/types.h>
 #include "paddr.h"
 
+/* MBR reference address */
+struct silofs_mbref {
+	struct silofs_blobidx bx;
+};
+
+/* tuple of mbr-refs */
+struct silofs_mbrefs {
+	struct silofs_mbref main;
+	struct silofs_mbref base;
+	struct silofs_mbref fork;
+};
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 void silofs_mbref_setup(struct silofs_mbref         *mbref,
-                        const struct silofs_blobidx *blobidx);
+			const struct silofs_blobidx *blobidx);
 
 void silofs_mbref_assign(struct silofs_mbref       *mbref,
-                         const struct silofs_mbref *other);
+			 const struct silofs_mbref *other);
 
 void silofs_mbref_derive(struct silofs_mbref            *mbref,
-                         const struct silofs_mdigest_hd *md_hd,
-                         const struct silofs_paddr      *paddr);
+			 const struct silofs_mdigest_hd *md_hd,
+			 const struct silofs_paddr      *paddr);
 
 bool silofs_mbref_isequal(const struct silofs_mbref *mbref,
-                          const struct silofs_mbref *other);
+			  const struct silofs_mbref *other);
 
 int silofs_mbref_from_str(struct silofs_mbref *mbref, const char *str,
-                          size_t len);
+			  size_t len);
 
 int silofs_mbref_to_str(const struct silofs_mbref *mbref, char *str, size_t n);
 
 void silofs_mbrefs_assign(struct silofs_mbrefs       *mbrefs,
-                          const struct silofs_mbrefs *other);
+			  const struct silofs_mbrefs *other);
 
 #endif /* SILOFS_MBREF_H_ */

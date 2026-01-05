@@ -104,8 +104,8 @@ struct silofs_ioc_query {
 };
 
 struct silofs_ioc_forkfs {
-	struct silofs_mbrefs mbrefs;
-	uint8_t              pad[32];
+	struct silofs_fsrefs fsrefs;
+	uint8_t              pad[256];
 };
 
 struct silofs_ioc_syncfs {

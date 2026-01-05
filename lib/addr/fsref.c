@@ -36,14 +36,14 @@ static void fsref_setup_meta(struct silofs_fsref *fsref)
 }
 
 static void fsref_encode_mbref(struct silofs_fsref       *fsref,
-                               const struct silofs_mbref *mbref)
+			       const struct silofs_mbref *mbref)
 {
 	silofs_mbref_to_str(mbref, fsref->mbaddr.mba,
-	                    sizeof(fsref->mbaddr.mba) - 1);
+			    sizeof(fsref->mbaddr.mba) - 1);
 }
 
-void silofs_fsref_encode(struct silofs_fsref       *fsref,
-                         const struct silofs_mbref *mbref)
+void silofs_fsref_export(struct silofs_fsref       *fsref,
+			 const struct silofs_mbref *mbref)
 {
 	fsref_reset(fsref);
 	fsref_setup_meta(fsref);
@@ -64,7 +64,7 @@ static int fsref_check_meta(const struct silofs_fsref *fsref)
 }
 
 static int fsref_decode_mbref(const struct silofs_fsref *fsref,
-                              struct silofs_mbref       *out_mbref)
+			      struct silofs_mbref       *out_mbref)
 {
 	size_t len;
 	int    err = -SILOFS_EINVAL;
@@ -76,8 +76,8 @@ static int fsref_decode_mbref(const struct silofs_fsref *fsref,
 	return err;
 }
 
-int silofs_fsref_decode(const struct silofs_fsref *fsref,
-                        struct silofs_mbref       *out_mbref)
+int silofs_fsref_import(const struct silofs_fsref *fsref,
+			struct silofs_mbref       *out_mbref)
 {
 	int err;
 
@@ -90,4 +90,13 @@ int silofs_fsref_decode(const struct silofs_fsref *fsref,
 		return err;
 	}
 	return 0;
+}
+
+
+void silofs_fsrefs_export(struct silofs_fsrefs *fsrefs,
+			const struct silofs_mbrefs       *mbrefs)
+{
+	silofs_fsref_export(&fsrefs->main, &mbrefs->main);
+	silofs_fsref_export(&fsrefs->base, &mbrefs->base);
+	silofs_fsref_export(&fsrefs->fork, &mbrefs->fork);
 }

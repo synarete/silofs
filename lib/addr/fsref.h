@@ -19,10 +19,14 @@
 
 #include <silofs/types.h>
 
-void silofs_fsref_encode(struct silofs_fsref       *fsref,
-                         const struct silofs_mbref *mbref);
+void silofs_fsref_export(struct silofs_fsref       *fsref,
+			 const struct silofs_mbref *mbref);
 
-int silofs_fsref_decode(const struct silofs_fsref *fsref,
-                        struct silofs_mbref       *out_mbref);
+int silofs_fsref_import(const struct silofs_fsref *fsref,
+			struct silofs_mbref       *out_mbref);
+
+
+void silofs_fsrefs_export(struct silofs_fsrefs *fsrefs,
+			  const struct silofs_mbrefs       *mbrefs);
 
 #endif /* SILOFS_FSREF_H_ */

@@ -88,20 +88,9 @@ struct silofs_fsids {
 	struct silofs_groups_ids groups;
 };
 
-/* main-boot-record reference address */
-struct silofs_mbref {
-	struct silofs_blobidx bx;
-};
-
+/* main-boot-record reference address string */
 struct silofs_mbaddr {
 	char mba[128];
-};
-
-/* tuple of mbr-refs */
-struct silofs_mbrefs {
-	struct silofs_mbref main;
-	struct silofs_mbref base;
-	struct silofs_mbref fork;
 };
 
 /* general fs meta-info */

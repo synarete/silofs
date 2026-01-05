@@ -69,12 +69,10 @@ json_t *cmd_json_mbaddr(const struct silofs_mbaddr *mbaddr);
 
 void cmd_json_mbaddr_value(const json_t *jstr, struct silofs_mbaddr *mbaddr);
 
-void cmd_json_save_at(json_t *jobj, int dfd, const char *name);
+void cmd_json_save(json_t *jobj, const char *dirpath, const char *name);
 
-json_t *cmd_json_load_at(int dfd, const char *name);
+json_t *cmd_json_load(const char *dirpath, const char *name);
 
-void cmd_open_jconfdir(const struct silofs_boot_ref *boot_ref, int *out_dfd);
-
-void cmd_close_jconfdir(const struct silofs_boot_ref *boot_ref, int dfd);
+void cmd_json_unlink(const char *dirpath, const char *name);
 
 #endif /* SILOFS_CMD_JCONF_H_ */

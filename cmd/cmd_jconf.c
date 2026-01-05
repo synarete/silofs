@@ -312,25 +312,23 @@ void cmd_json_mbaddr_value(const json_t *jstr, struct silofs_mbaddr *mbaddr)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-void cmd_open_jconfdir(const struct silofs_boot_ref *boot_ref, int *out_dfd)
+static void cmd_open_jconfdir(const char *path, int *out_dfd)
 {
-	int dfd = -1;
 	int err;
 
-	err = silofs_sys_opendir(boot_ref->repodir, &dfd);
+	err = silofs_sys_opendir(path, out_dfd);
 	if (err) {
-		cmd_die(err, "failed to open dir: %s", boot_ref->repodir);
+		cmd_die(err, "failed to open dir: %s", path);
 	}
-	*out_dfd = dfd;
 }
 
-void cmd_close_jconfdir(const struct silofs_boot_ref *boot_ref, int dfd)
+static void cmd_close_jconfdir(const char *path, int dfd)
 {
 	int err;
 
 	err = silofs_sys_close(dfd);
 	if (err) {
-		cmd_die(err, "failed to close dir: %s", boot_ref->repodir);
+		cmd_die(err, "failed to close dir: %s", path);
 	}
 }
 
@@ -372,13 +370,22 @@ static void cmd_save_jtext_at(int dfd, const char *name, const char *jtxt)
 	}
 }
 
-void cmd_json_save_at(json_t *jobj, int dfd, const char *name)
+static void cmd_json_save_at(json_t *jobj, int dfd, const char *name)
 {
 	char *jtxt;
 
 	jtxt = cmd_json_dumps(jobj);
 	cmd_save_jtext_at(dfd, name, jtxt);
 	free(jtxt);
+}
+
+void cmd_json_save(json_t *jobj, const char *dirpath, const char *name)
+{
+	int dfd = -1;
+
+	cmd_open_jconfdir(dirpath, &dfd);
+	cmd_json_save_at(jobj, dfd, name);
+	cmd_close_jconfdir(dirpath, dfd);
 }
 
 static char *cmd_load_jtext_at(int dfd, const char *name)
@@ -414,7 +421,7 @@ static char *cmd_load_jtext_at(int dfd, const char *name)
 	return jtxt;
 }
 
-json_t *cmd_json_load_at(int dfd, const char *name)
+static json_t *cmd_json_load_at(int dfd, const char *name)
 {
 	json_t *jobj;
 	char   *jtxt;
@@ -424,4 +431,25 @@ json_t *cmd_json_load_at(int dfd, const char *name)
 	cmd_pstrfree(&jtxt);
 
 	return jobj;
+}
+
+json_t *cmd_json_load(const char *dirpath, const char *name)
+{
+	json_t *jobj = nullptr;
+	int     dfd  = -1;
+
+	cmd_open_jconfdir(dirpath, &dfd);
+	jobj = cmd_json_load_at(dfd, name);
+	cmd_close_jconfdir(dirpath, dfd);
+
+	return jobj;
+}
+
+void cmd_json_unlink(const char *dirpath, const char *name)
+{
+	int dfd = -1;
+
+	cmd_open_jconfdir(dirpath, &dfd);
+	silofs_sys_unlinkat(dfd, name, 0);
+	cmd_close_jconfdir(dirpath, dfd);
 }

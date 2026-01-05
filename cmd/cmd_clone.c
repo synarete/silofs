@@ -175,7 +175,7 @@ static void cmd_clone_prepare_online(struct cmd_clone_ctx *ctx)
 	cmd_clone_prepare_by_query(ctx);
 	cmd_realpath_dir(ctx->in_args.repodir, &ctx->in_args.repodir_real);
 	cmd_check_repodir_fsname(ctx->in_args.repodir_real,
-				 ctx->in_args.fsname);
+	                         ctx->in_args.fsname);
 	cmd_check_notexists2(ctx->in_args.repodir_real, ctx->in_args.forkname);
 }
 
@@ -183,11 +183,11 @@ static void cmd_clone_prepare_offline(struct cmd_clone_ctx *ctx)
 {
 	cmd_check_isreg(ctx->in_args.repodir_fsname);
 	cmd_split_path(ctx->in_args.repodir_fsname, &ctx->in_args.repodir,
-		       &ctx->in_args.fsname);
+	               &ctx->in_args.fsname);
 	cmd_check_nonemptydir(ctx->in_args.repodir, true);
 	cmd_realpath_dir(ctx->in_args.repodir, &ctx->in_args.repodir_real);
 	cmd_check_repodir_fsname(ctx->in_args.repodir_real,
-				 ctx->in_args.fsname);
+	                         ctx->in_args.fsname);
 	cmd_check_fsname(ctx->in_args.forkname);
 	cmd_check_notexists2(ctx->in_args.repodir_real, ctx->in_args.forkname);
 }
@@ -210,7 +210,7 @@ static void cmd_clone_getpass(struct cmd_clone_ctx *ctx)
 {
 	if (ctx->in_args.password == nullptr) {
 		cmd_getpass_simple(ctx->in_args.no_prompt,
-				   &ctx->in_args.password);
+		                   &ctx->in_args.password);
 	}
 }
 
@@ -253,7 +253,7 @@ static void cmd_clone_do_ioctl_forkfs(struct cmd_clone_ctx *ctx)
 		cmd_die(err, "ioctl error: %s", dirpath);
 	} else if (err) {
 		cmd_die(err, "failed to clone: %s",
-			ctx->in_args.repodir_fsname);
+		        ctx->in_args.repodir_fsname);
 	}
 	memcpy(&ctx->fsrefs, &ioc->forkfs.fsrefs, sizeof(ctx->fsrefs));
 }

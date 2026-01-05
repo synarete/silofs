@@ -58,6 +58,15 @@ struct silofs_boot_args {
 	const char            *passwd;
 };
 
+/* general fs meta-info */
+struct silofs_fsmeta {
+	char     version[64];
+	uint32_t fmtvers;
+	uint32_t reserved;
+	uint64_t btime;
+	uint8_t  reserved2[48];
+};
+
 /* user-id host-to-fs bidirectional-mapping */
 struct silofs_uids {
 	uid_t host_uid;
@@ -88,18 +97,9 @@ struct silofs_fsids {
 	struct silofs_groups_ids groups;
 };
 
-/* main-boot-record reference address string */
+/* main-boot-record address (ascii-string representation) */
 struct silofs_mbaddr {
 	char mba[128];
-};
-
-/* general fs meta-info */
-struct silofs_fsmeta {
-	char     version[64];
-	uint64_t btime;
-	uint32_t reserved;
-	uint32_t fmtvers;
-	uint8_t  reserved2[48];
 };
 
 /* file-system meta & reference */

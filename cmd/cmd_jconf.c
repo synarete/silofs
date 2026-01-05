@@ -18,14 +18,12 @@
 
 #include "cmd_jconf.h"
 
-static char *cmd_current_time(void)
+static char *cmd_localtime_str(time_t t)
 {
 	char      ts[80] = "";
-	time_t    curr_tm;
 	struct tm tm;
 
-	time(&curr_tm);
-	if (localtime_r(&curr_tm, &tm) == nullptr) {
+	if (localtime_r(&t, &tm) == nullptr) {
 		cmd_diez("json: failed get local time");
 	}
 	if (strftime(ts, sizeof(ts), "%Y-%m-%d %H:%M:%S", &tm) == 0) {
@@ -67,6 +65,11 @@ json_t *cmd_json_integer(long n)
 	return jint;
 }
 
+json_t *cmd_json_uint32(uint32_t n)
+{
+	return cmd_json_integer((long)n);
+}
+
 json_t *cmd_json_array(void)
 {
 	json_t *jarr;
@@ -97,15 +100,20 @@ json_t *cmd_json_array_get(const json_t *jarr, size_t idx)
 	return jsub;
 }
 
-json_t *cmd_json_btime(void)
+json_t *cmd_json_time(time_t t)
 {
-	char   *tnow;
+	char   *tstr;
 	json_t *jstr;
 
-	tnow = cmd_current_time();
-	jstr = cmd_json_string(tnow);
-	cmd_pstrfree(&tnow);
+	tstr = cmd_localtime_str(t);
+	jstr = cmd_json_string(tstr);
+	cmd_pstrfree(&tstr);
 	return jstr;
+}
+
+json_t *cmd_json_btime(void)
+{
+	return cmd_json_time(time(nullptr));
 }
 
 void cmd_json_object_set_new(json_t *jobj, const char *key, json_t *val)
@@ -152,7 +160,7 @@ static json_t *cmd_json_loads(const char *jtxt)
 	return jobj;
 }
 
-static json_t *cmd_json_object_get(const json_t *jobj, const char *key)
+json_t *cmd_json_object_get(const json_t *jobj, const char *key)
 {
 	json_t *jsub;
 
@@ -196,7 +204,7 @@ json_t *cmd_json_object_get_integer(const json_t *jobj, const char *key)
 	return jint;
 }
 
-static uint64_t cmd_json_uint64_value(const json_t *jint)
+uint64_t cmd_json_uint64_value(const json_t *jint)
 {
 	json_int_t val;
 
@@ -235,6 +243,74 @@ void cmd_json_decref(json_t *jobj)
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static const char cmd_jkey_version[] = "version";
+static const char cmd_jkey_fmtvers[] = "fmtvers";
+static const char cmd_jkey_btime[]   = "btime";
+
+json_t *cmd_json_fsmeta(const struct silofs_fsmeta *fsmeta)
+{
+	json_t *jobj = nullptr;
+	json_t *jsub = nullptr;
+
+	jobj = cmd_json_object();
+
+	jsub = cmd_json_string(fsmeta->version);
+	cmd_json_object_set_new(jobj, cmd_jkey_version, jsub);
+
+	jsub = cmd_json_integer(fsmeta->fmtvers);
+	cmd_json_object_set_new(jobj, cmd_jkey_fmtvers, jsub);
+
+	jsub = cmd_json_time((time_t)(fsmeta->btime));
+	cmd_json_object_set_new(jobj, cmd_jkey_btime, jsub);
+
+	return jobj;
+}
+
+void cmd_json_fsmeta_value(const json_t *jobj, struct silofs_fsmeta *fsmeta)
+{
+	const json_t *jsub = nullptr;
+	const char   *str  = nullptr;
+	size_t        len;
+
+	memset(fsmeta, 0, sizeof(*fsmeta));
+
+	jsub = cmd_json_object_get_string(jobj, cmd_jkey_version);
+	str  = cmd_json_string_value(jsub);
+	len  = strlen(str);
+	if (len >= sizeof(fsmeta->version)) {
+		cmd_diez("illegal fsmeta version: %s", str);
+	}
+	strncpy(fsmeta->version, str, len);
+
+	jsub            = cmd_json_object_get_integer(jobj, cmd_jkey_fmtvers);
+	fsmeta->fmtvers = cmd_json_uint32_value(jsub);
+
+	jsub          = cmd_json_object_get_integer(jobj, cmd_jkey_btime);
+	fsmeta->btime = cmd_json_uint64_value(jsub);
+}
+
+json_t *cmd_json_mbaddr(const struct silofs_mbaddr *mbaddr)
+{
+	return cmd_json_string(mbaddr->mba);
+}
+
+void cmd_json_mbaddr_value(const json_t *jstr, struct silofs_mbaddr *mbaddr)
+{
+	const char *str;
+	size_t      len;
+
+	memset(mbaddr, 0, sizeof(*mbaddr));
+
+	str = cmd_json_string_value(jstr);
+	len = strlen(str);
+	if (!len || (len >= sizeof(mbaddr->mba))) {
+		cmd_diez("json: illegal mbaddr: '%s'", str);
+	}
+	strncpy(mbaddr->mba, str, len);
+}
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 void cmd_open_jconfdir(const struct silofs_boot_ref *boot_ref, int *out_dfd)
 {

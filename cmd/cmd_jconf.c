@@ -286,8 +286,9 @@ void cmd_json_fsmeta_value(const json_t *jobj, struct silofs_fsmeta *fsmeta)
 	jsub            = cmd_json_object_get_integer(jobj, cmd_jkey_fmtvers);
 	fsmeta->fmtvers = cmd_json_uint32_value(jsub);
 
-	jsub          = cmd_json_object_get_integer(jobj, cmd_jkey_btime);
-	fsmeta->btime = cmd_json_uint64_value(jsub);
+	jsub          = cmd_json_object_get_string(jobj, cmd_jkey_btime);
+	fsmeta->btime = 0; /* TODO: unparse btime */
+	(void)jsub;
 }
 
 json_t *cmd_json_mbaddr(const struct silofs_mbaddr *mbaddr)

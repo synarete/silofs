@@ -57,7 +57,7 @@ static int fsref_check_meta(const struct silofs_fsref *fsref)
 	if (meta->fmtvers != SILOFS_FMT_VERSION) {
 		return -SILOFS_EINVAL;
 	}
-	if (!meta->btime) {
+	if ((int64_t)meta->btime < 0) {
 		return -SILOFS_EINVAL;
 	}
 	return 0;

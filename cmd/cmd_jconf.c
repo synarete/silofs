@@ -281,7 +281,7 @@ void cmd_json_fsmeta_value(const json_t *jobj, struct silofs_fsmeta *fsmeta)
 	if (len >= sizeof(fsmeta->version)) {
 		cmd_diez("illegal fsmeta version: %s", str);
 	}
-	strncpy(fsmeta->version, str, len);
+	strncpy(fsmeta->version, str, sizeof(fsmeta->version));
 
 	jsub            = cmd_json_object_get_integer(jobj, cmd_jkey_fmtvers);
 	fsmeta->fmtvers = cmd_json_uint32_value(jsub);
@@ -307,7 +307,7 @@ void cmd_json_mbaddr_value(const json_t *jstr, struct silofs_mbaddr *mbaddr)
 	if (!len || (len >= sizeof(mbaddr->mba))) {
 		cmd_diez("json: illegal mbaddr: '%s'", str);
 	}
-	strncpy(mbaddr->mba, str, len);
+	strncpy(mbaddr->mba, str, sizeof(mbaddr->mba));
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

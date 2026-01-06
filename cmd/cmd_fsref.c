@@ -18,7 +18,7 @@
 #include "cmd.h"
 #include "cmd_jconf.h"
 
-static const char cmd_jkey_gmeta[]  = "silofs-meta";
+static const char cmd_jkey_gmeta[]  = "gmeta";
 static const char cmd_jkey_mbaddr[] = "mbaddr";
 
 static json_t *cmd_fsref_jencode(const struct silofs_fsref *fsref)

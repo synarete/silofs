@@ -420,7 +420,7 @@ void cmd_fsids_clear(struct silofs_fsids *fsids)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static const char cmd_jkey_gmeta[]  = "silofs-meta";
+static const char cmd_jkey_gmeta[]  = "gmeta";
 static const char cmd_jkey_users[]  = "users";
 static const char cmd_jkey_user[]   = "user";
 static const char cmd_jkey_uid[]    = "uid";

@@ -4,7 +4,7 @@
 #
 # cstylelint.py: C-style checker utility for silofs
 #
-# Copyright (C) 2025 Shachar Sharon
+# Copyright (C) 2026 Shachar Sharon
 #
 # Silofs is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by

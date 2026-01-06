@@ -189,11 +189,11 @@ static void cmd_mkfs_setup_args(struct cmd_mkfs_ctx *ctx)
 	struct silofs_args *args = &ctx->args;
 
 	cmd_setup_args(args);
-	args->boot_args.ref[0].repodir = ctx->in_args.repodir_real;
-	args->boot_args.ref[0].refname = ctx->in_args.fsname;
-	args->boot_args.passwd         = ctx->in_args.password;
-	args->capacity                 = (size_t)ctx->in_args.fs_size;
-	args->no_utf8_names            = ctx->in_args.no_utf8_names;
+	args->bref[0].repodir = ctx->in_args.repodir_real;
+	args->bref[0].refname = ctx->in_args.fsname;
+	args->passwd          = ctx->in_args.password;
+	args->capacity        = (size_t)ctx->in_args.fs_size;
+	args->no_utf8_names   = ctx->in_args.no_utf8_names;
 }
 
 static void cmd_mkfs_setup_fsids(struct cmd_mkfs_ctx *ctx)
@@ -201,7 +201,7 @@ static void cmd_mkfs_setup_fsids(struct cmd_mkfs_ctx *ctx)
 	struct silofs_args *args = &ctx->args;
 
 	cmd_uidgid_of(ctx->in_args.username, &args->uid, &args->gid);
-	cmd_fsids_load(&args->fsids, &args->boot_args.ref[0]);
+	cmd_fsids_load(&args->fsids, &args->bref[0]);
 	cmd_fsids_need_user(&args->fsids, ctx->in_args.username);
 }
 
@@ -229,7 +229,7 @@ static void cmd_mkfs_format_fs(struct cmd_mkfs_ctx *ctx)
 
 static void cmd_mkfs_save_fsref(struct cmd_mkfs_ctx *ctx)
 {
-	cmd_fsref_save(&ctx->fsref, &ctx->args.boot_args.ref[0]);
+	cmd_fsref_save(&ctx->fsref, &ctx->args.bref[0]);
 }
 
 static void cmd_mkfs_close_fs(struct cmd_mkfs_ctx *ctx)

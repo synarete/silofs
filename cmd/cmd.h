@@ -349,11 +349,11 @@ void cmd_fsids_setup(struct silofs_fsids *fsids);
 
 void cmd_fsids_clear(struct silofs_fsids *fsids);
 
-void cmd_fsids_save(const struct silofs_fsids    *fsids,
-                    const struct silofs_boot_ref *boot_ref);
+void cmd_fsids_save(const struct silofs_fsids   *fsids,
+                    const struct silofs_baseref *boot_ref);
 
-void cmd_fsids_load(struct silofs_fsids          *fsids,
-                    const struct silofs_boot_ref *boot_ref);
+void cmd_fsids_load(struct silofs_fsids         *fsids,
+                    const struct silofs_baseref *boot_ref);
 
 void cmd_fsids_add_uidgid_of(struct silofs_fsids *fsids, const char *name);
 
@@ -365,13 +365,13 @@ void cmd_fsids_need_uidgid(const struct silofs_fsids *fsids, uid_t host_uid,
 void cmd_fsids_need_user(const struct silofs_fsids *fsids, const char *name);
 
 /* fsref */
-void cmd_fsref_save(const struct silofs_fsref    *fsref,
-                    const struct silofs_boot_ref *boot_ref);
+void cmd_fsref_save(const struct silofs_fsref   *fsref,
+                    const struct silofs_baseref *boot_ref);
 
-void cmd_fsref_load(struct silofs_fsref          *fsref,
-                    const struct silofs_boot_ref *boot_ref);
+void cmd_fsref_load(struct silofs_fsref         *fsref,
+                    const struct silofs_baseref *boot_ref);
 
-void cmd_fsref_unlink(const struct silofs_boot_ref *boot_ref);
+void cmd_fsref_unlink(const struct silofs_baseref *boot_ref);
 
 /* security restrictions (landlock) */
 void cmd_restrict_process(const char *path, bool allow_mkdir);

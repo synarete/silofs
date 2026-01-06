@@ -110,33 +110,54 @@ static int calc_mem_size(size_t mem_want, size_t *out_mem_size)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static int check_boot_ref(const struct silofs_boot_ref *boot_ref)
+static int check_baseref_repodir(const struct silofs_baseref *baseref)
+{
+	size_t len;
+	int    ret = 0;
+
+	len = silofs_str_length(baseref->repodir);
+	if (len >= SILOFS_REPOPATH_MAX) {
+		log_dbg("repodir too-long: %s", baseref->repodir);
+		ret = -SILOFS_EINVAL;
+	}
+	return ret;
+}
+
+static int check_baseref_refname(const struct silofs_baseref *baseref)
 {
 	struct silofs_namestr nstr;
-	size_t                len;
-	int                   err;
+	int                   ret = 0;
 
-	len = silofs_str_length(boot_ref->repodir);
-	if (len >= SILOFS_REPOPATH_MAX) {
-		log_dbg("repodir too-long: %s", boot_ref->repodir);
-		return -SILOFS_EINVAL;
-	}
-	if (boot_ref->refname != nullptr) {
-		err = silofs_make_namestr(&nstr, boot_ref->refname);
-		if (err) {
-			log_dbg("illegal refname: %s", boot_ref->refname);
-			return err;
+	if (baseref->refname != nullptr) {
+		ret = silofs_make_namestr(&nstr, baseref->refname);
+		if (ret) {
+			log_dbg("illegal refname: %s", baseref->refname);
 		}
+	}
+	return ret;
+}
+
+static int check_baseref(const struct silofs_baseref *baseref)
+{
+	int err;
+
+	err = check_baseref_repodir(baseref);
+	if (err) {
+		return err;
+	}
+	err = check_baseref_refname(baseref);
+	if (err) {
+		return err;
 	}
 	return 0;
 }
 
-static int check_boot_refs(const struct silofs_args *args)
+static int check_baserefs(const struct silofs_args *args)
 {
 	int err;
 
-	for (size_t i = 0; i < ARRAY_SIZE(args->boot_args.ref); ++i) {
-		err = check_boot_ref(&args->boot_args.ref[i]);
+	for (size_t i = 0; i < ARRAY_SIZE(args->bref); ++i) {
+		err = check_baseref(&args->bref[i]);
 		if (err) {
 			return err;
 		}
@@ -148,14 +169,14 @@ static int check_password(const struct silofs_args *args)
 {
 	struct silofs_password passwd;
 
-	return silofs_password_setup(&passwd, args->boot_args.passwd);
+	return silofs_password_setup(&passwd, args->passwd);
 }
 
 static int check_args(const struct silofs_args *args)
 {
 	int err;
 
-	err = check_boot_refs(args);
+	err = check_baserefs(args);
 	if (err) {
 		return err;
 	}
@@ -294,8 +315,7 @@ static void envi_make_repo_base(const struct silofs_env_inst *envi,
 	if (envi->args.flags & SILOFS_F_RDONLY) {
 		re_base->flags |= SILOFS_REPOF_RDONLY;
 	}
-	silofs_strview_init(&re_base->repodir,
-	                    envi->args.boot_args.ref[0].repodir);
+	silofs_strview_init(&re_base->repodir, envi->args.bref[0].repodir);
 }
 
 static int envi_init_repo(struct silofs_env_inst *envi)
@@ -530,8 +550,7 @@ static void envi_fini_env(struct silofs_env_inst *envi)
 
 static int envi_init_passwd(struct silofs_env_inst *envi)
 {
-	return silofs_password_setup(&envi->passwd,
-	                             envi->args.boot_args.passwd);
+	return silofs_password_setup(&envi->passwd, envi->args.passwd);
 }
 
 static void envi_fini_passwd(struct silofs_env_inst *envi)

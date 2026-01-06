@@ -173,16 +173,16 @@ static void cmd_restore_setup_args(struct cmd_restore_ctx *ctx)
 	struct silofs_args *args = &ctx->args;
 
 	cmd_setup_args(args);
-	args->boot_args.ref[0].repodir = ctx->in_args.repodir_real;
-	args->boot_args.ref[0].refname = ctx->in_args.fsname;
-	args->boot_args.ref[1].repodir = ctx->in_args.repodir_real;
-	args->boot_args.ref[1].refname = ctx->in_args.arname;
-	args->boot_args.passwd         = ctx->in_args.password;
+	args->bref[0].repodir = ctx->in_args.repodir_real;
+	args->bref[0].refname = ctx->in_args.fsname;
+	args->bref[1].repodir = ctx->in_args.repodir_real;
+	args->bref[1].refname = ctx->in_args.arname;
+	args->passwd          = ctx->in_args.password;
 }
 
 static void cmd_restore_load_fsref(struct cmd_restore_ctx *ctx)
 {
-	cmd_fsref_load(&ctx->fsref[1], &ctx->args.boot_args.ref[1]);
+	cmd_fsref_load(&ctx->fsref[1], &ctx->args.bref[1]);
 }
 
 static void cmd_restore_setup_env(struct cmd_restore_ctx *ctx)
@@ -207,7 +207,7 @@ static void cmd_restore_sense_archive(struct cmd_restore_ctx *ctx)
 
 static void cmd_restore_execute(struct cmd_restore_ctx *ctx)
 {
-	struct silofs_boot_ref boot_ref = {
+	struct silofs_baseref boot_ref = {
 		.repodir = ctx->in_args.repodir_real,
 		.refname = ctx->in_args.fsname,
 	};

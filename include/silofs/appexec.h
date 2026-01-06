@@ -39,8 +39,8 @@ int silofs_create_env(const struct silofs_args *args,
 
 void silofs_destroy_env(struct silofs_env *env);
 
-void silofs_get_boot_args(const struct silofs_env *env,
-                          struct silofs_boot_args *out);
+void silofs_get_baseref(const struct silofs_env *env,
+                        struct silofs_baseref   *out);
 
 void silofs_collect_stats(const struct silofs_env   *env,
                           struct silofs_cache_stats *out);

@@ -217,7 +217,7 @@ static void ute_setup_random_passwd(struct ut_env *ute)
 
 	pp->passlen = sizeof(pp->pass) - 1;
 	ute_prandom_ascii(ute, (char *)pp->pass, pp->passlen);
-	args->boot_args.passwd = (const char *)(pp->pass);
+	args->passwd = (const char *)(pp->pass);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -501,19 +501,19 @@ static void ut_del_gids(struct silofs_gids *gids)
 static void ut_init_args(struct ut_args *args)
 {
 	memset(args, 0, sizeof(*args));
-	args->args.boot_args.ref[0].repodir = ut_globals.test_dir_repo;
-	args->args.boot_args.ref[0].refname = "utests";
-	args->args.boot_args.mntdir         = "/";
-	args->args.fsids.users.uids         = ut_new_uids();
-	args->args.fsids.users.nuids        = 2;
-	args->args.fsids.groups.gids        = ut_new_gids();
-	args->args.fsids.groups.ngids       = 2;
-	args->args.uid                      = getuid();
-	args->args.gid                      = getgid();
-	args->args.pid                      = getpid();
-	args->args.umask                    = 0002;
-	args->args.capacity                 = SILOFS_CAPACITY_SIZE_MIN;
-	args->args.memwant                  = UT_1G;
+	args->args.bref[0].repodir    = ut_globals.test_dir_repo;
+	args->args.bref[0].refname    = "utests";
+	args->args.mntdir             = "/";
+	args->args.fsids.users.uids   = ut_new_uids();
+	args->args.fsids.users.nuids  = 2;
+	args->args.fsids.groups.gids  = ut_new_gids();
+	args->args.fsids.groups.ngids = 2;
+	args->args.uid                = getuid();
+	args->args.gid                = getgid();
+	args->args.pid                = getpid();
+	args->args.umask              = 0002;
+	args->args.capacity           = SILOFS_CAPACITY_SIZE_MIN;
+	args->args.memwant            = UT_1G;
 	if (ut_globals.pedantic) {
 		args->args.flags |= SILOFS_F_PEDANTIC;
 	}

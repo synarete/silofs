@@ -38,19 +38,18 @@ void cmd_del_env(struct silofs_env **p_env)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static char *cmd_repodir_name(const struct silofs_env *env)
+static char *cmd_boot_ref_path(const struct silofs_env *env)
 {
-	struct silofs_boot_args boot_args = {};
+	struct silofs_baseref boot_ref = {};
 
-	silofs_get_boot_args(env, &boot_args);
-	return cmd_join_path(boot_args.ref[0].repodir,
-	                     boot_args.ref[0].refname);
+	silofs_get_baseref(env, &boot_ref);
+	return cmd_join_path(boot_ref.repodir, boot_ref.refname);
 }
 
 static void cmd_report_err_and_die(const struct silofs_env *env, int status,
                                    const char *msg)
 {
-	char       *rname = nullptr;
+	char       *rpath = nullptr;
 	const char *xmsg  = msg ? msg : "";
 	const char *xtag  = msg ? ": " : "";
 	int         err;
@@ -59,40 +58,41 @@ static void cmd_report_err_and_die(const struct silofs_env *env, int status,
 	if (status == 0) {
 		return;
 	}
-	rname = cmd_repodir_name(env);
+
+	rpath = cmd_boot_ref_path(env);
 
 	/* internal errors */
 	err = abs(status);
 	switch (err) {
 	case SILOFS_ENOREPO:
-		cmd_die(err, "%s%smissing repo: %s", xmsg, xtag, rname);
+		cmd_die(err, "%s%smissing repo: %s", xmsg, xtag, rpath);
 		break;
 	case SILOFS_EBADREPO:
-		cmd_die(err, "%s%sbad repo: %s", xmsg, xtag, rname);
+		cmd_die(err, "%s%sbad repo: %s", xmsg, xtag, rpath);
 		break;
 	case SILOFS_ENOMBR:
-		cmd_die(err, "%s%smissing mbr: %s", xmsg, xtag, rname);
+		cmd_die(err, "%s%smissing mbr: %s", xmsg, xtag, rpath);
 		break;
 	case SILOFS_EBADMBR:
-		cmd_die(err, "%s%sbad mbr: %s", xmsg, xtag, rname);
+		cmd_die(err, "%s%sbad mbr: %s", xmsg, xtag, rpath);
 		break;
 	case SILOFS_EMBRMODE:
-		cmd_die(err, "%s%swrong mbr mode: %s", xmsg, xtag, rname);
+		cmd_die(err, "%s%swrong mbr mode: %s", xmsg, xtag, rpath);
 		break;
 	case SILOFS_EKEYEXPIRED:
-		cmd_die(err, "%s%sbad password: %s", xmsg, xtag, rname);
+		cmd_die(err, "%s%sbad password: %s", xmsg, xtag, rpath);
 		break;
 	case SILOFS_EMOUNT:
-		cmd_die(err, "%s%scan not mount: %s", xmsg, xtag, rname);
+		cmd_die(err, "%s%scan not mount: %s", xmsg, xtag, rpath);
 		break;
 	case SILOFS_EUMOUNT:
-		cmd_die(err, "%s%scan not umount: %s", xmsg, xtag, rname);
+		cmd_die(err, "%s%scan not umount: %s", xmsg, xtag, rpath);
 		break;
 	case SILOFS_EFSCORRUPTED:
-		cmd_die(err, "%s%scorrupted fs: %s", xmsg, xtag, rname);
+		cmd_die(err, "%s%scorrupted fs: %s", xmsg, xtag, rpath);
 		break;
 	case SILOFS_ECSUM:
-		cmd_die(err, "%s%schecksum error: %s", xmsg, xtag, rname);
+		cmd_die(err, "%s%schecksum error: %s", xmsg, xtag, rpath);
 		break;
 	case SILOFS_EILLSTR:
 		cmd_die(err, "%s%sillegal string", xmsg, xtag);
@@ -109,26 +109,26 @@ static void cmd_report_err_and_die(const struct silofs_env *env, int status,
 	err = abs(silofs_remap_status_code(status));
 	switch (err) {
 	case EWOULDBLOCK:
-		cmd_die(err, "%s%scan not lock: %s", xmsg, xtag, rname);
+		cmd_die(err, "%s%scan not lock: %s", xmsg, xtag, rpath);
 		break;
 	case EROFS:
-		cmd_die(err, "%s%sread-only fs: %s", xmsg, xtag, rname);
+		cmd_die(err, "%s%sread-only fs: %s", xmsg, xtag, rpath);
 		break;
 	case EUCLEAN:
-		cmd_die(err, "%s%sunclean: %s", xmsg, xtag, rname);
+		cmd_die(err, "%s%sunclean: %s", xmsg, xtag, rpath);
 		break;
 	case EKEYEXPIRED:
-		cmd_die(err, "%s%sbad password: %s", xmsg, xtag, rname);
+		cmd_die(err, "%s%sbad password: %s", xmsg, xtag, rpath);
 		break;
 	case ENOENT:
-		cmd_diez("%s%snot exist: %s", xmsg, xtag, rname);
+		cmd_diez("%s%snot exist: %s", xmsg, xtag, rpath);
 		break;
 	default:
-		cmd_die(err, "%s%s%s", xmsg, xtag, rname);
+		cmd_die(err, "%s%s%s", xmsg, xtag, rpath);
 		break;
 	}
 
-	cmd_pstrfree(&rname);
+	cmd_pstrfree(&rpath);
 }
 
 #define attr_printf34 silofs_attr_printf(3, 4)

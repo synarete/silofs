@@ -661,7 +661,7 @@ static int do_mount_and_exec(struct silofs_env *env)
 	struct silofs_fuseq      *fuseq = env->base.fuseq;
 	int                       err;
 
-	err = silofs_fuseq_mount(fuseq, env, args->boot_args.mntdir);
+	err = silofs_fuseq_mount(fuseq, env, args->mntdir);
 	if (err) {
 		return err;
 	}
@@ -1161,10 +1161,11 @@ int silofs_restore_fs(struct silofs_env *env, const struct silofs_fsref *fsref,
 	return err;
 }
 
-void silofs_get_boot_args(const struct silofs_env *env,
-                          struct silofs_boot_args *out_bargs)
+void silofs_get_baseref(const struct silofs_env *env,
+                        struct silofs_baseref   *out_baseref)
 {
-	memcpy(out_bargs, &env->base.args->boot_args, sizeof(*out_bargs));
+	out_baseref->repodir = env->base.args->bref[0].repodir;
+	out_baseref->refname = env->base.args->bref[0].refname;
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

@@ -45,17 +45,10 @@ enum silofs_flags {
 	SILOFS_F_STDALLOC     = SILOFS_BIT(16),
 };
 
-/* a pair of repo-directory and boot reference name */
-struct silofs_boot_ref {
+/* a pair of repo-directory and reference name */
+struct silofs_baseref {
 	const char *repodir;
 	const char *refname;
-};
-
-/* file-system's boot arguments */
-struct silofs_boot_args {
-	struct silofs_boot_ref ref[2];
-	const char            *mntdir;
-	const char            *passwd;
 };
 
 /* general fs meta-info */
@@ -117,17 +110,19 @@ struct silofs_fsrefs {
 
 /* input arguments */
 struct silofs_args {
-	struct silofs_boot_args boot_args;
-	struct silofs_fsids     fsids;
-	enum silofs_flags       flags;
-	uid_t                   uid;
-	gid_t                   gid;
-	pid_t                   pid;
-	mode_t                  umask;
-	size_t                  capacity;
-	size_t                  memwant;
-	bool                    no_ispecial;
-	bool                    no_utf8_names;
+	struct silofs_baseref bref[2];
+	const char           *mntdir;
+	const char           *passwd;
+	struct silofs_fsids   fsids;
+	enum silofs_flags     flags;
+	uid_t                 uid;
+	gid_t                 gid;
+	pid_t                 pid;
+	mode_t                umask;
+	size_t                capacity;
+	size_t                memwant;
+	bool                  no_ispecial;
+	bool                  no_utf8_names;
 };
 
 /* in-use versions */

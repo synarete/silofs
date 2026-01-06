@@ -50,8 +50,8 @@ static void cmd_fsref_jdecode(struct silofs_fsref *fsref, const json_t *jobj)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-void cmd_fsref_save(const struct silofs_fsref    *fsref,
-                    const struct silofs_boot_ref *boot_ref)
+void cmd_fsref_save(const struct silofs_fsref   *fsref,
+                    const struct silofs_baseref *boot_ref)
 {
 	json_t *jfsref;
 
@@ -60,8 +60,8 @@ void cmd_fsref_save(const struct silofs_fsref    *fsref,
 	cmd_json_decref(jfsref);
 }
 
-void cmd_fsref_load(struct silofs_fsref          *fsref,
-                    const struct silofs_boot_ref *boot_ref)
+void cmd_fsref_load(struct silofs_fsref         *fsref,
+                    const struct silofs_baseref *boot_ref)
 {
 	json_t *jfsref;
 
@@ -70,7 +70,7 @@ void cmd_fsref_load(struct silofs_fsref          *fsref,
 	cmd_json_decref(jfsref);
 }
 
-void cmd_fsref_unlink(const struct silofs_boot_ref *boot_ref)
+void cmd_fsref_unlink(const struct silofs_baseref *boot_ref)
 {
 	cmd_json_unlink(boot_ref->repodir, boot_ref->refname);
 }

@@ -561,8 +561,8 @@ static void cmd_fsids_jdecode(struct silofs_fsids *fsids, const json_t *jfsids)
 	cmd_fsids_jdecode_groups(fsids, jgroups);
 }
 
-void cmd_fsids_save(const struct silofs_fsids    *fsids,
-                    const struct silofs_boot_ref *boot_ref)
+void cmd_fsids_save(const struct silofs_fsids   *fsids,
+                    const struct silofs_baseref *boot_ref)
 {
 	json_t *jfsids;
 
@@ -571,8 +571,8 @@ void cmd_fsids_save(const struct silofs_fsids    *fsids,
 	cmd_json_decref(jfsids);
 }
 
-void cmd_fsids_load(struct silofs_fsids          *fsids,
-                    const struct silofs_boot_ref *boot_ref)
+void cmd_fsids_load(struct silofs_fsids         *fsids,
+                    const struct silofs_baseref *boot_ref)
 {
 	json_t *jfsids;
 

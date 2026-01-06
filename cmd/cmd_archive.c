@@ -174,21 +174,21 @@ static void cmd_archive_setup_args(struct cmd_archive_ctx *ctx)
 	struct silofs_args *args = &ctx->args;
 
 	cmd_setup_args(args);
-	args->boot_args.ref[0].repodir = ctx->in_args.repodir_real;
-	args->boot_args.ref[0].refname = ctx->in_args.fsname;
-	args->boot_args.ref[1].repodir = ctx->in_args.repodir_real;
-	args->boot_args.ref[1].refname = ctx->in_args.arname;
-	args->boot_args.passwd         = ctx->in_args.password;
+	args->bref[0].repodir = ctx->in_args.repodir_real;
+	args->bref[0].refname = ctx->in_args.fsname;
+	args->bref[1].repodir = ctx->in_args.repodir_real;
+	args->bref[1].refname = ctx->in_args.arname;
+	args->passwd          = ctx->in_args.password;
 }
 
 static void cmd_archive_load_fsids(struct cmd_archive_ctx *ctx)
 {
-	cmd_fsids_load(&ctx->args.fsids, &ctx->args.boot_args.ref[0]);
+	cmd_fsids_load(&ctx->args.fsids, &ctx->args.bref[0]);
 }
 
 static void cmd_archive_load_fsref(struct cmd_archive_ctx *ctx)
 {
-	cmd_fsref_load(&ctx->fsref[0], &ctx->args.boot_args.ref[0]);
+	cmd_fsref_load(&ctx->fsref[0], &ctx->args.bref[0]);
 }
 
 static void cmd_archive_setup_env(struct cmd_archive_ctx *ctx)
@@ -225,7 +225,7 @@ static void cmd_archive_close_fs(struct cmd_archive_ctx *ctx)
 
 static void cmd_archive_execute(struct cmd_archive_ctx *ctx)
 {
-	struct silofs_boot_ref boot_ref = {
+	struct silofs_baseref boot_ref = {
 		.repodir = ctx->in_args.repodir_real,
 		.refname = ctx->in_args.arname,
 	};

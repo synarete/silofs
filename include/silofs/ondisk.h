@@ -52,6 +52,9 @@
 /* max size for file-system names (not including null terminator) */
 #define SILOFS_FSNAME_MAX (127)
 
+/* max number of uid/gid mapping */
+#define SILOFS_NIDS_MAX (1024)
+
 /* max size of path (symbolic link value, including null) */
 #define SILOFS_PATH_MAX (4096)
 

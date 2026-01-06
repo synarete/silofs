@@ -230,12 +230,11 @@ void cmd_uidgid_of(const char *username, uid_t *out_uid, gid_t *out_gid)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-#define NIDS_MAX (4096)
-
 static void cmd_alloc_users_ids(struct silofs_users_ids *uids)
 {
 	if (uids->uids == nullptr) {
-		uids->uids  = cmd_zalloc(NIDS_MAX * sizeof(uids->uids[0]));
+		uids->uids =
+			cmd_zalloc(SILOFS_NIDS_MAX * sizeof(uids->uids[0]));
 		uids->nuids = 0;
 	}
 }
@@ -243,7 +242,7 @@ static void cmd_alloc_users_ids(struct silofs_users_ids *uids)
 static void cmd_dealloc_users_ids(struct silofs_users_ids *uids)
 {
 	if (uids->uids != nullptr) {
-		cmd_zfree(uids->uids, NIDS_MAX * sizeof(uids->uids[0]));
+		cmd_zfree(uids->uids, SILOFS_NIDS_MAX * sizeof(uids->uids[0]));
 		uids->uids  = nullptr;
 		uids->nuids = 0;
 	}
@@ -252,7 +251,8 @@ static void cmd_dealloc_users_ids(struct silofs_users_ids *uids)
 static void cmd_alloc_groups_ids(struct silofs_groups_ids *gids)
 {
 	if (gids->gids == nullptr) {
-		gids->gids  = cmd_zalloc(NIDS_MAX * sizeof(gids->gids[0]));
+		gids->gids =
+			cmd_zalloc(SILOFS_NIDS_MAX * sizeof(gids->gids[0]));
 		gids->ngids = 0;
 	}
 }
@@ -260,7 +260,7 @@ static void cmd_alloc_groups_ids(struct silofs_groups_ids *gids)
 static void cmd_dealloc_groups_ids(struct silofs_groups_ids *gids)
 {
 	if (gids->gids != nullptr) {
-		cmd_zfree(gids->gids, NIDS_MAX * sizeof(gids->gids[0]));
+		cmd_zfree(gids->gids, SILOFS_NIDS_MAX * sizeof(gids->gids[0]));
 		gids->gids  = nullptr;
 		gids->ngids = 0;
 	}
@@ -314,7 +314,7 @@ static struct silofs_uids *cmd_fsids_next_uids(struct silofs_fsids *fsids)
 {
 	struct silofs_users_ids *uids = &fsids->users;
 
-	if (uids->nuids == NIDS_MAX) {
+	if (uids->nuids == SILOFS_NIDS_MAX) {
 		cmd_diez("too many users");
 	}
 	cmd_alloc_users_ids(uids);
@@ -336,7 +336,7 @@ static struct silofs_gids *cmd_fsids_next_gids(struct silofs_fsids *fsids)
 {
 	struct silofs_groups_ids *gids = &fsids->groups;
 
-	if (gids->ngids == NIDS_MAX) {
+	if (gids->ngids == SILOFS_NIDS_MAX) {
 		cmd_diez("too many groups");
 	}
 	cmd_alloc_groups_ids(gids);

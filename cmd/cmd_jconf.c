@@ -244,50 +244,50 @@ void cmd_json_decref(json_t *jobj)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static const char cmd_jkey_version[] = "version";
-static const char cmd_jkey_fmtvers[] = "fmtvers";
-static const char cmd_jkey_btime[]   = "btime";
+static const char cmd_jkey_version[]   = "version";
+static const char cmd_jkey_fmtvers[]   = "fmtvers";
+static const char cmd_jkey_timestamp[] = "timestamp";
 
-json_t *cmd_json_fsmeta(const struct silofs_fsmeta *fsmeta)
+json_t *cmd_json_gmeta(const struct silofs_gmeta *gmeta)
 {
 	json_t *jobj = nullptr;
 	json_t *jsub = nullptr;
 
 	jobj = cmd_json_object();
 
-	jsub = cmd_json_string(fsmeta->version);
+	jsub = cmd_json_string(gmeta->version);
 	cmd_json_object_set_new(jobj, cmd_jkey_version, jsub);
 
-	jsub = cmd_json_integer(fsmeta->fmtvers);
+	jsub = cmd_json_integer(gmeta->fmtvers);
 	cmd_json_object_set_new(jobj, cmd_jkey_fmtvers, jsub);
 
-	jsub = cmd_json_time((time_t)(fsmeta->btime));
-	cmd_json_object_set_new(jobj, cmd_jkey_btime, jsub);
+	jsub = cmd_json_time((time_t)(gmeta->timestamp));
+	cmd_json_object_set_new(jobj, cmd_jkey_timestamp, jsub);
 
 	return jobj;
 }
 
-void cmd_json_fsmeta_value(const json_t *jobj, struct silofs_fsmeta *fsmeta)
+void cmd_json_gmeta_value(const json_t *jobj, struct silofs_gmeta *gmeta)
 {
 	const json_t *jsub = nullptr;
 	const char   *str  = nullptr;
 	size_t        len;
 
-	memset(fsmeta, 0, sizeof(*fsmeta));
+	memset(gmeta, 0, sizeof(*gmeta));
 
 	jsub = cmd_json_object_get_string(jobj, cmd_jkey_version);
 	str  = cmd_json_string_value(jsub);
 	len  = strlen(str);
-	if (len >= sizeof(fsmeta->version)) {
-		cmd_diez("illegal fsmeta version: %s", str);
+	if (len >= sizeof(gmeta->version)) {
+		cmd_diez("illegal gmeta version: %s", str);
 	}
-	strncpy(fsmeta->version, str, sizeof(fsmeta->version));
+	strncpy(gmeta->version, str, sizeof(gmeta->version));
 
-	jsub            = cmd_json_object_get_integer(jobj, cmd_jkey_fmtvers);
-	fsmeta->fmtvers = cmd_json_uint32_value(jsub);
+	jsub           = cmd_json_object_get_integer(jobj, cmd_jkey_fmtvers);
+	gmeta->fmtvers = cmd_json_uint32_value(jsub);
 
-	jsub          = cmd_json_object_get_string(jobj, cmd_jkey_btime);
-	fsmeta->btime = 0; /* TODO: unparse btime */
+	jsub = cmd_json_object_get_string(jobj, cmd_jkey_timestamp);
+	gmeta->timestamp = 0; /* TODO: unparse btime */
 	(void)jsub;
 }
 

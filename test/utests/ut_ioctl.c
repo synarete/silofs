@@ -133,9 +133,9 @@ ut_query_boot(struct ut_env *ute, ino_t ino, struct silofs_ioc_query *ioc_qry)
 
 static void ut_expect_boot_fsref(const struct silofs_fsref *fsref)
 {
-	ut_expect_eqs(fsref->fsmeta.version, silofs_version.string);
-	ut_expect_eq(fsref->fsmeta.fmtvers, SILOFS_FMT_VERSION);
-	ut_expect_gt(fsref->fsmeta.btime, 0);
+	ut_expect_eqs(fsref->gmeta.version, silofs_version.string);
+	ut_expect_eq(fsref->gmeta.fmtvers, SILOFS_FMT_VERSION);
+	ut_expect_gt(fsref->gmeta.timestamp, 0);
 	ut_expect_gt(strlen(fsref->mbaddr.mba), 0);
 }
 

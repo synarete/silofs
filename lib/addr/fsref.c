@@ -20,6 +20,16 @@
 #include "mbref.h"
 #include "fsref.h"
 
+void silofs_gmeta_setup(struct silofs_gmeta *gmeta)
+{
+	const char *version = silofs_version.string;
+
+	silofs_memzero(gmeta, sizeof(*gmeta));
+	strncpy(gmeta->version, version, sizeof(gmeta->version) - 1);
+	gmeta->timestamp = (uint64_t)silofs_time_real_now();
+	gmeta->fmtvers   = SILOFS_FMT_VERSION;
+}
+
 static void fsref_reset(struct silofs_fsref *fsref)
 {
 	silofs_memzero(fsref, sizeof(*fsref));
@@ -27,12 +37,7 @@ static void fsref_reset(struct silofs_fsref *fsref)
 
 static void fsref_setup_meta(struct silofs_fsref *fsref)
 {
-	struct silofs_fsmeta *fsmeta  = &fsref->fsmeta;
-	const char           *version = silofs_version.string;
-
-	strncpy(fsmeta->version, version, sizeof(fsmeta->version) - 1);
-	fsmeta->btime   = (uint64_t)silofs_time_real_now();
-	fsmeta->fmtvers = SILOFS_FMT_VERSION;
+	silofs_gmeta_setup(&fsref->gmeta);
 }
 
 static void fsref_encode_mbref(struct silofs_fsref       *fsref,
@@ -52,12 +57,12 @@ void silofs_fsref_export(struct silofs_fsref       *fsref,
 
 static int fsref_check_meta(const struct silofs_fsref *fsref)
 {
-	const struct silofs_fsmeta *meta = &fsref->fsmeta;
+	const struct silofs_gmeta *meta = &fsref->gmeta;
 
 	if (meta->fmtvers != SILOFS_FMT_VERSION) {
 		return -SILOFS_EINVAL;
 	}
-	if ((int64_t)meta->btime < 0) {
+	if ((int64_t)meta->timestamp < 0) {
 		return -SILOFS_EINVAL;
 	}
 	return 0;

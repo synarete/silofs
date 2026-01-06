@@ -19,6 +19,8 @@
 
 #include <silofs/types.h>
 
+void silofs_gmeta_setup(struct silofs_gmeta *gmeta);
+
 void silofs_fsref_export(struct silofs_fsref       *fsref,
                          const struct silofs_mbref *mbref);
 

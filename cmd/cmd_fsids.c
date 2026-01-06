@@ -399,6 +399,7 @@ void cmd_fsids_need_user(const struct silofs_fsids *fsids, const char *name)
 
 void cmd_fsids_setup(struct silofs_fsids *fsids)
 {
+	silofs_getgmeta(&fsids->gmeta);
 	fsids->users.nuids  = 0;
 	fsids->users.uids   = nullptr;
 	fsids->groups.ngids = 0;
@@ -419,6 +420,7 @@ void cmd_fsids_clear(struct silofs_fsids *fsids)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
+static const char cmd_jkey_gmeta[]  = "silofs-meta";
 static const char cmd_jkey_users[]  = "users";
 static const char cmd_jkey_user[]   = "user";
 static const char cmd_jkey_uid[]    = "uid";
@@ -427,6 +429,17 @@ static const char cmd_jkey_group[]  = "group";
 static const char cmd_jkey_gid[]    = "gid";
 
 static const char cmd_jfsids_filename[] = "fsids.json";
+
+static json_t *cmd_fsids_jencode_gmeta(const struct silofs_fsids *fsids)
+{
+	return cmd_json_gmeta(&fsids->gmeta);
+}
+
+static void
+cmd_fsids_jdecode_gmeta(struct silofs_fsids *fsids, const json_t *jgmeta)
+{
+	cmd_json_gmeta_value(jgmeta, &fsids->gmeta);
+}
 
 static json_t *cmd_fsids_jencode_users(const struct silofs_fsids *fsids)
 {
@@ -535,10 +548,14 @@ cmd_fsids_jdecode_groups(struct silofs_fsids *fsids, const json_t *jgroups)
 static json_t *cmd_fsids_jencode(const struct silofs_fsids *fsids)
 {
 	json_t *jfsids  = nullptr;
+	json_t *jgmeta  = nullptr;
 	json_t *jusers  = nullptr;
 	json_t *jgroups = nullptr;
 
 	jfsids = cmd_json_object();
+
+	jgmeta = cmd_fsids_jencode_gmeta(fsids);
+	cmd_json_object_set_new(jfsids, cmd_jkey_gmeta, jgmeta);
 
 	jusers = cmd_fsids_jencode_users(fsids);
 	cmd_json_object_set_new(jfsids, cmd_jkey_users, jusers);
@@ -551,8 +568,12 @@ static json_t *cmd_fsids_jencode(const struct silofs_fsids *fsids)
 
 static void cmd_fsids_jdecode(struct silofs_fsids *fsids, const json_t *jfsids)
 {
+	const json_t *jgmeta  = nullptr;
 	const json_t *jusers  = nullptr;
 	const json_t *jgroups = nullptr;
+
+	jgmeta = cmd_json_object_get(jfsids, cmd_jkey_gmeta);
+	cmd_fsids_jdecode_gmeta(fsids, jgmeta);
 
 	jusers = cmd_json_object_get_array(jfsids, cmd_jkey_users);
 	cmd_fsids_jdecode_users(fsids, jusers);

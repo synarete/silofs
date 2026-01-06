@@ -1402,6 +1402,11 @@ void silofs_getversions(struct silofs_versions *out_vers)
 	out_vers->zstd_version   = silofs_zstd_version();
 }
 
+void silofs_getgmeta(struct silofs_gmeta *out_gmeta)
+{
+	silofs_gmeta_setup(out_gmeta);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_remap_status_code(int status)

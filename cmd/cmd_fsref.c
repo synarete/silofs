@@ -18,7 +18,7 @@
 #include "cmd.h"
 #include "cmd_jconf.h"
 
-static const char cmd_jkey_fsmeta[] = "fsmeta";
+static const char cmd_jkey_gmeta[]  = "silofs-meta";
 static const char cmd_jkey_mbaddr[] = "mbaddr";
 
 static json_t *cmd_fsref_jencode(const struct silofs_fsref *fsref)
@@ -28,8 +28,8 @@ static json_t *cmd_fsref_jencode(const struct silofs_fsref *fsref)
 
 	jobj = cmd_json_object();
 
-	jsub = cmd_json_fsmeta(&fsref->fsmeta);
-	cmd_json_object_set_new(jobj, cmd_jkey_fsmeta, jsub);
+	jsub = cmd_json_gmeta(&fsref->gmeta);
+	cmd_json_object_set_new(jobj, cmd_jkey_gmeta, jsub);
 
 	jsub = cmd_json_mbaddr(&fsref->mbaddr);
 	cmd_json_object_set_new(jobj, cmd_jkey_mbaddr, jsub);
@@ -41,8 +41,8 @@ static void cmd_fsref_jdecode(struct silofs_fsref *fsref, const json_t *jobj)
 {
 	json_t *jsub;
 
-	jsub = cmd_json_object_get(jobj, cmd_jkey_fsmeta);
-	cmd_json_fsmeta_value(jsub, &fsref->fsmeta);
+	jsub = cmd_json_object_get(jobj, cmd_jkey_gmeta);
+	cmd_json_gmeta_value(jsub, &fsref->gmeta);
 
 	jsub = cmd_json_object_get(jobj, cmd_jkey_mbaddr);
 	cmd_json_mbaddr_value(jsub, &fsref->mbaddr);

@@ -51,12 +51,12 @@ struct silofs_baseref {
 	const char *refname;
 };
 
-/* general fs meta-info */
-struct silofs_fsmeta {
+/* global meta-info */
+struct silofs_gmeta {
 	char     version[64];
 	uint32_t fmtvers;
 	uint32_t reserved;
-	uint64_t btime;
+	uint64_t timestamp;
 	uint8_t  reserved2[48];
 };
 
@@ -86,6 +86,7 @@ struct silofs_groups_ids {
 
 /* file-system's users/groups host-to-internal id-mappings */
 struct silofs_fsids {
+	struct silofs_gmeta      gmeta;
 	struct silofs_users_ids  users;
 	struct silofs_groups_ids groups;
 };
@@ -97,7 +98,7 @@ struct silofs_mbaddr {
 
 /* file-system meta & reference */
 struct silofs_fsref {
-	struct silofs_fsmeta fsmeta;
+	struct silofs_gmeta  gmeta;
 	struct silofs_mbaddr mbaddr;
 };
 

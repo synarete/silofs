@@ -1402,9 +1402,9 @@ void silofs_getversions(struct silofs_versions *out_vers)
 	out_vers->zstd_version   = silofs_zstd_version();
 }
 
-void silofs_getgmeta(struct silofs_gmeta *out_gmeta)
+void silofs_getfsmeta(struct silofs_fsmeta *out_fsmeta)
 {
-	silofs_gmeta_setup(out_gmeta);
+	silofs_fsmeta_setup(out_fsmeta);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

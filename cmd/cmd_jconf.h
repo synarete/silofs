@@ -61,9 +61,9 @@ json_t *cmd_json_array_get(const json_t *jarr, size_t idx);
 
 void cmd_json_array_append(json_t *jobj, json_t *jval);
 
-json_t *cmd_json_gmeta(const struct silofs_gmeta *gmeta);
+json_t *cmd_json_fsmeta(const struct silofs_fsmeta *fsmeta);
 
-void cmd_json_gmeta_value(const json_t *jobj, struct silofs_gmeta *gmeta);
+void cmd_json_fsmeta_value(const json_t *jobj, struct silofs_fsmeta *fsmeta);
 
 json_t *cmd_json_mbaddr(const struct silofs_mbaddr *mbaddr);
 

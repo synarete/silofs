@@ -28,7 +28,7 @@ int silofs_init_once(void);
 
 void silofs_getversions(struct silofs_versions *out_vers);
 
-void silofs_getgmeta(struct silofs_gmeta *out_gmeta);
+void silofs_getfsmeta(struct silofs_fsmeta *out_fsmeta);
 
 int silofs_remap_status_code(int status);
 

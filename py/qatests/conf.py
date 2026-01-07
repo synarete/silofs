@@ -43,19 +43,19 @@ class Config(pydantic.BaseModel):
     remotes: ConfigRemotes = ConfigRemotes()
 
 
-class GMeta(pydantic.BaseModel):
+class FsMeta(pydantic.BaseModel):
     version: str = ""
     fmtvers: int = 0
     timestamp: str = ""
 
 
 class FsRef(pydantic.BaseModel):
-    gmeta: GMeta = GMeta()
+    fsmeta: FsMeta = FsMeta()
     mbaddr: str = ""
 
 
 class FsIds(pydantic.BaseModel):
-    gmeta: GMeta = GMeta()
+    fsmeta: FsMeta = FsMeta()
     users: Optional[Dict[str, int]] = {}
     groups: Optional[Dict[str, int]] = {}
 
@@ -102,13 +102,13 @@ def load_config(path: Path) -> Config:
     return config
 
 
-def _verify_gmeta(gmeta: GMeta) -> None:
-    if not gmeta.version:
-        raise ConfException(f"non-valid meta version: {gmeta}")
-    if gmeta.fmtvers != 1:
-        raise ConfException(f"non-valid meta fmtvers: {gmeta}")
-    if not gmeta.timestamp:
-        raise ConfException(f"non-valid meta timestamp: {gmeta}")
+def _verify_fsmeta(fsmeta: FsMeta) -> None:
+    if not fsmeta.version:
+        raise ConfException(f"non-valid meta version: {fsmeta}")
+    if fsmeta.fmtvers != 1:
+        raise ConfException(f"non-valid meta fmtvers: {fsmeta}")
+    if not fsmeta.timestamp:
+        raise ConfException(f"non-valid meta timestamp: {fsmeta}")
 
 
 def load_fsids(repodir: Path) -> FsIds:
@@ -118,7 +118,7 @@ def load_fsids(repodir: Path) -> FsIds:
         try:
             jfsids = json.load(f)
             fsids = FsIds(**jfsids)
-            _verify_gmeta(fsids.gmeta)
+            _verify_fsmeta(fsids.fsmeta)
         except json.JSONDecodeError as jde:
             raise ConfException(f"bad fsids file: {path}") from jde
         except pydantic.ValidationError as ve:
@@ -127,7 +127,7 @@ def load_fsids(repodir: Path) -> FsIds:
 
 
 def _verify_fsref(fsref: FsRef) -> None:
-    _verify_gmeta(fsref.gmeta)
+    _verify_fsmeta(fsref.fsmeta)
     if len(fsref.mbaddr) != 64:
         raise ConfException(f"non-valid mbaddr: {fsref.mbaddr}")
 

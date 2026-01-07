@@ -280,7 +280,7 @@ class TestEnv:
         self.fsids = conf.load_fsids(self.repodir())
 
     def _require_meta_jref(self, name: str = "") -> None:
-        conf.load_meta_jref(self._repodir_name(name))
+        conf.load_fsref(self._repodir_name(name))
 
 
 # pylint: disable=R0903

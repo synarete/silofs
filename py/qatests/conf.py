@@ -43,15 +43,19 @@ class Config(pydantic.BaseModel):
     remotes: ConfigRemotes = ConfigRemotes()
 
 
-class MetaJRef(pydantic.BaseModel):
+class GMeta(pydantic.BaseModel):
     version: str = ""
     fmtvers: int = 0
-    btype: str = ""
-    mode: str = ""
-    mbref: str = ""
+    timestamp: str = ""
+
+
+class FsRef(pydantic.BaseModel):
+    gmeta: GMeta = GMeta()
+    mbaddr: str = ""
 
 
 class FsIds(pydantic.BaseModel):
+    gmeta: GMeta = GMeta()
     users: Optional[Dict[str, int]] = {}
     groups: Optional[Dict[str, int]] = {}
 
@@ -98,34 +102,46 @@ def load_config(path: Path) -> Config:
     return config
 
 
+def _verify_gmeta(gmeta: GMeta) -> None:
+    if not gmeta.version:
+        raise ConfException(f"non-valid meta version: {gmeta}")
+    if gmeta.fmtvers != 1:
+        raise ConfException(f"non-valid meta fmtvers: {gmeta}")
+    if not gmeta.timestamp:
+        raise ConfException(f"non-valid meta timestamp: {gmeta}")
+
+
 def load_fsids(repodir: Path) -> FsIds:
-    path = repodir / "fsids.conf"
-    try:
-        json_conf = json.loads(_load_toml_as_json(path))
-        return FsIds(**json_conf)
-    except tomllib.TOMLDecodeError as tde:
-        raise ConfException(f"bad fs-ids conf: {path}") from tde
-    except pydantic.ValidationError as ve:
-        raise ConfException(f"non-valid fs-ids conf: {path}") from ve
-
-
-def _verify_meta_jref(meta_jref: MetaJRef) -> MetaJRef:
-    if not meta_jref.version:
-        raise ConfException(f"non-valid meta-jref version: {meta_jref}")
-    if meta_jref.fmtvers != 1:
-        raise ConfException(f"non-valid meta-jref fmtvers: {meta_jref}")
-    if meta_jref.mode not in ("filesystem", "archive"):
-        raise ConfException(f"non-valid meta-jref mode: {meta_jref}")
-    if len(meta_jref.mbref) != 64:
-        raise ConfException(f"non-valid meta-jref mbref: {meta_jref}")
-    return meta_jref
-
-
-def load_meta_jref(path: Path) -> MetaJRef:
-    """Load and verify meta-ref json file into internal representation."""
+    path = repodir / "fsids.json"
+    fsids = FsIds()
     with open(path, "rb") as f:
-        json_conf = json.load(f)
-    try:
-        return _verify_meta_jref(MetaJRef(**json_conf))
-    except pydantic.ValidationError as ve:
-        raise ConfException(f"non-valid metaref at: {path}") from ve
+        try:
+            jfsids = json.load(f)
+            fsids = FsIds(**jfsids)
+            _verify_gmeta(fsids.gmeta)
+        except json.JSONDecodeError as jde:
+            raise ConfException(f"bad fsids file: {path}") from jde
+        except pydantic.ValidationError as ve:
+            raise ConfException(f"non-valid fsids: {path}") from ve
+    return fsids
+
+
+def _verify_fsref(fsref: FsRef) -> None:
+    _verify_gmeta(fsref.gmeta)
+    if len(fsref.mbaddr) != 64:
+        raise ConfException(f"non-valid mbaddr: {fsref.mbaddr}")
+
+
+def load_fsref(path: Path) -> FsRef:
+    """Load and verify meta-ref json file into internal representation."""
+    fsref = FsRef()
+    with open(path, "rb") as f:
+        try:
+            jfsref = json.load(f)
+            fsref = FsRef(**jfsref)
+            _verify_fsref(fsref)
+        except json.JSONDecodeError as jde:
+            raise ConfException(f"bad fsref file: {path}") from jde
+        except pydantic.ValidationError as ve:
+            raise ConfException(f"non-valid fsref at: {path}") from ve
+    return fsref

@@ -181,7 +181,7 @@ int silofs_sockaddr_unix(struct silofs_sockaddr *sa, const char *path)
 	}
 	sockaddr_clear_un(sa);
 	sa->u.sa_un.sun_family = AF_UNIX;
-	strncpy(sa->u.sa_un.sun_path, path, sizeof(sa->u.sa_un.sun_path) - 1);
+	strlcpy(sa->u.sa_un.sun_path, path, sizeof(sa->u.sa_un.sun_path));
 	return 0;
 }
 

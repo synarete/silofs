@@ -25,7 +25,7 @@ void silofs_fsmeta_setup(struct silofs_fsmeta *fsmeta)
 	const char *version = silofs_version.string;
 
 	silofs_memzero(fsmeta, sizeof(*fsmeta));
-	strncpy(fsmeta->version, version, sizeof(fsmeta->version) - 1);
+	strlcpy(fsmeta->version, version, sizeof(fsmeta->version));
 	fsmeta->timestamp = (uint64_t)silofs_time_real_now();
 	fsmeta->fmtvers   = SILOFS_FMT_VERSION;
 }

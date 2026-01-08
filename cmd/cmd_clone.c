@@ -50,11 +50,31 @@ struct cmd_clone_ctx {
 	union silofs_ioc_u      *ioc;
 };
 
-static struct cmd_clone_ctx *cmd_clone_ctx_p;
-
 /* local functions */
 static void
 cmd_clone_ioctl_query(const char *path, struct silofs_ioc_query *qry);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static struct cmd_clone_ctx *cmd_clone_ctx_p;
+
+static struct cmd_clone_ctx *cmd_clone_new_ctx(void)
+{
+	struct cmd_clone_ctx *ctx = cmd_clone_ctx_p;
+
+	if (ctx == nullptr) {
+		ctx = cmd_clone_ctx_p = cmd_zalloc(sizeof(*ctx));
+	}
+	return ctx;
+}
+
+static void cmd_clone_del_ctx(struct cmd_clone_ctx *ctx)
+{
+	if ((ctx != nullptr) && (ctx == cmd_clone_ctx_p)) {
+		cmd_zfree(ctx, sizeof(*ctx));
+		cmd_clone_ctx_p = nullptr;
+	}
+}
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -132,7 +152,7 @@ static void cmd_clone_finalize(struct cmd_clone_ctx *ctx)
 	cmd_pstrfree(&ctx->in_args.dirpath_real);
 	cmd_del_iocp(&ctx->ioc);
 	cmd_destroy_args(&ctx->args);
-	cmd_clone_ctx_p = nullptr;
+	cmd_clone_del_ctx(ctx);
 }
 
 static void cmd_clone_atexit(void)
@@ -144,11 +164,11 @@ static void cmd_clone_atexit(void)
 	}
 }
 
-static void cmd_clone_start(struct cmd_clone_ctx *ctx)
+static void cmd_clone_start(struct cmd_clone_ctx **pctx)
 {
-	ctx->ioc        = cmd_new_ioc();
-	cmd_clone_ctx_p = ctx;
 	cmd_atexit(cmd_clone_atexit);
+	*pctx        = cmd_clone_new_ctx();
+	(*pctx)->ioc = cmd_new_ioc();
 }
 
 static void cmd_clone_prepare_by_query(struct cmd_clone_ctx *ctx)
@@ -393,59 +413,56 @@ static void cmd_clone_execute(struct cmd_clone_ctx *ctx)
 
 void cmd_execute_clone(void)
 {
-	struct cmd_clone_ctx ctx = {
-		.env = nullptr,
-		.ioc = nullptr,
-	};
+	struct cmd_clone_ctx *ctx = nullptr;
 
-	/* Do all cleanups upon exits */
+	/* Setup context */
 	cmd_clone_start(&ctx);
 
 	/* Parse command's arguments */
-	cmd_clone_parse_optargs(&ctx);
+	cmd_clone_parse_optargs(ctx);
 
 	/* Verify user's arguments */
-	cmd_clone_prepare(&ctx);
+	cmd_clone_prepare(ctx);
 
 	/* Restrict process access */
-	cmd_clone_restrict_process(&ctx);
+	cmd_clone_restrict_process(ctx);
 
 	/* Require password (off-line mode) */
-	cmd_clone_getpass(&ctx);
+	cmd_clone_getpass(ctx);
 
 	/* Setup input arguments */
-	cmd_clone_setup_args(&ctx);
+	cmd_clone_setup_args(ctx);
 
 	/* Load fs boot-reference */
-	cmd_clone_load_fsref(&ctx);
+	cmd_clone_load_fsref(ctx);
 
 	/* Load fs-ids mapping */
-	cmd_clone_load_fsids(&ctx);
+	cmd_clone_load_fsids(ctx);
 
 	/* Setup execution environment */
-	cmd_clone_setup_env(&ctx);
+	cmd_clone_setup_env(ctx);
 
 	/* Open repository */
-	cmd_clone_open_repo(&ctx);
+	cmd_clone_open_repo(ctx);
 
 	/* Require source boot-record */
-	cmd_clone_sense_fs(&ctx);
+	cmd_clone_sense_fs(ctx);
 
 	/* Do actual clone (offline|online) */
-	cmd_clone_execute(&ctx);
+	cmd_clone_execute(ctx);
 
 	/* Close repository */
-	cmd_clone_close_repo(&ctx);
+	cmd_clone_close_repo(ctx);
 
 	/* Save new clone bconf */
-	cmd_clone_save_fork_fsref(&ctx);
+	cmd_clone_save_fork_fsref(ctx);
 
 	/* Re-save (overwrite) original bconf */
-	cmd_clone_save_main_fsref(&ctx);
+	cmd_clone_save_main_fsref(ctx);
 
 	/* Delete environment */
-	cmd_clone_destroy_env(&ctx);
+	cmd_clone_destroy_env(ctx);
 
 	/* Post execution cleanups */
-	cmd_clone_finalize(&ctx);
+	cmd_clone_finalize(ctx);
 }

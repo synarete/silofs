@@ -202,7 +202,7 @@ static void cmd_clone_prepare_online(struct cmd_clone_ctx *ctx)
 static void cmd_clone_prepare_offline(struct cmd_clone_ctx *ctx)
 {
 	cmd_check_isreg(ctx->in_args.repodir_fsname);
-	cmd_split_path(ctx->in_args.repodir_fsname, &ctx->in_args.repodir,
+	cmd_path_split(ctx->in_args.repodir_fsname, &ctx->in_args.repodir,
 	               &ctx->in_args.fsname);
 	cmd_check_nonemptydir(ctx->in_args.repodir, true);
 	cmd_realpath_dir(ctx->in_args.repodir, &ctx->in_args.repodir_real);
@@ -357,22 +357,22 @@ static void cmd_clone_close_fs(struct cmd_clone_ctx *ctx)
 
 static void cmd_clone_save_fork_fsref(struct cmd_clone_ctx *ctx)
 {
-	struct silofs_baseref boot_ref = {
+	struct silofs_baseref baseref = {
 		.repodir = ctx->in_args.repodir_real,
 		.refname = ctx->in_args.forkname,
 	};
 
-	cmd_fsref_save(&ctx->fsrefs.fork, &boot_ref);
+	cmd_fsref_save(&ctx->fsrefs.fork, &baseref);
 }
 
 static void cmd_clone_save_main_fsref(struct cmd_clone_ctx *ctx)
 {
-	struct silofs_baseref boot_ref = {
+	struct silofs_baseref baseref = {
 		.repodir = ctx->in_args.repodir_real,
 		.refname = ctx->in_args.fsname,
 	};
 
-	cmd_fsref_save(&ctx->fsrefs.main, &boot_ref);
+	cmd_fsref_save(&ctx->fsrefs.main, &baseref);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

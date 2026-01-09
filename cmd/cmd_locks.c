@@ -198,8 +198,8 @@ static char *cmd_repo_lockpath(const char *repodir)
 	char *dotsdir  = nullptr;
 	char *lockpath = nullptr;
 
-	dotsdir  = cmd_join_path(repodir, SILOFS_REPO_DOTS_DIRNAME);
-	lockpath = cmd_join_path(dotsdir, SILOFS_REPO_LOCK_FILENAME);
+	dotsdir  = cmd_path_join(repodir, SILOFS_REPO_DOTS_DIRNAME);
+	lockpath = cmd_path_join(dotsdir, SILOFS_REPO_LOCK_FILENAME);
 	cmd_pstrfree(&dotsdir);
 	return lockpath;
 }

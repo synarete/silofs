@@ -38,12 +38,12 @@ void cmd_del_env(struct silofs_env **p_env)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static char *cmd_boot_ref_path(const struct silofs_env *env)
+static char *cmd_baseref_path(const struct silofs_env *env)
 {
-	struct silofs_baseref boot_ref = {};
+	struct silofs_baseref baseref = {};
 
-	silofs_get_baseref(env, &boot_ref);
-	return cmd_join_path(boot_ref.repodir, boot_ref.refname);
+	silofs_get_baseref(env, &baseref);
+	return cmd_path_join(baseref.repodir, baseref.refname);
 }
 
 static void cmd_report_err_and_die(const struct silofs_env *env, int status,
@@ -59,7 +59,7 @@ static void cmd_report_err_and_die(const struct silofs_env *env, int status,
 		return;
 	}
 
-	rpath = cmd_boot_ref_path(env);
+	rpath = cmd_baseref_path(env);
 
 	/* internal errors */
 	err = abs(status);

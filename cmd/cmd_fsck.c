@@ -134,7 +134,7 @@ static void cmd_fsck_prepare(struct cmd_fsck_ctx *ctx)
 {
 	cmd_check_exists(ctx->in_args.repodir_name);
 	cmd_check_isreg(ctx->in_args.repodir_name);
-	cmd_split_path(ctx->in_args.repodir_name, &ctx->in_args.repodir,
+	cmd_path_split(ctx->in_args.repodir_name, &ctx->in_args.repodir,
 	               &ctx->in_args.name);
 	cmd_realpath_dir(ctx->in_args.repodir, &ctx->in_args.repodir_real);
 	cmd_check_repodir_fsname(ctx->in_args.repodir_real, ctx->in_args.name);

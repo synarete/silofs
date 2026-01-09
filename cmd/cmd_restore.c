@@ -150,7 +150,7 @@ static void cmd_restore_enable_signals(void)
 
 static void cmd_restore_prepare(struct cmd_restore_ctx *ctx)
 {
-	cmd_split_path(ctx->in_args.repodir_fsname, &ctx->in_args.repodir,
+	cmd_path_split(ctx->in_args.repodir_fsname, &ctx->in_args.repodir,
 	               &ctx->in_args.fsname);
 	cmd_check_fsname(ctx->in_args.fsname);
 	cmd_realpath_rdir(ctx->in_args.repodir, &ctx->in_args.repodir_real);
@@ -207,13 +207,13 @@ static void cmd_restore_sense_archive(struct cmd_restore_ctx *ctx)
 
 static void cmd_restore_execute(struct cmd_restore_ctx *ctx)
 {
-	struct silofs_baseref boot_ref = {
+	struct silofs_baseref baseref = {
 		.repodir = ctx->in_args.repodir_real,
 		.refname = ctx->in_args.fsname,
 	};
 
 	cmd_restore_fs(ctx->env, &ctx->fsref[1], &ctx->fsref[0]);
-	cmd_fsref_save(&ctx->fsref[0], &boot_ref);
+	cmd_fsref_save(&ctx->fsref[0], &baseref);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

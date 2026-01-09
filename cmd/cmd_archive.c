@@ -153,7 +153,7 @@ static void cmd_archive_prepare(struct cmd_archive_ctx *ctx)
 {
 	cmd_check_fsname(ctx->in_args.arname);
 	cmd_check_isreg(ctx->in_args.repodir_fsname);
-	cmd_split_path(ctx->in_args.repodir_fsname, &ctx->in_args.repodir,
+	cmd_path_split(ctx->in_args.repodir_fsname, &ctx->in_args.repodir,
 	               &ctx->in_args.fsname);
 	cmd_realpath_rdir(ctx->in_args.repodir, &ctx->in_args.repodir_real);
 	cmd_check_repodir_fsname(ctx->in_args.repodir_real,
@@ -225,13 +225,13 @@ static void cmd_archive_close_fs(struct cmd_archive_ctx *ctx)
 
 static void cmd_archive_execute(struct cmd_archive_ctx *ctx)
 {
-	struct silofs_baseref boot_ref = {
+	struct silofs_baseref baseref = {
 		.repodir = ctx->in_args.repodir_real,
 		.refname = ctx->in_args.arname,
 	};
 
 	cmd_archive_fs(ctx->env, &ctx->fsref[0], &ctx->fsref[1]);
-	cmd_fsref_save(&ctx->fsref[1], &boot_ref);
+	cmd_fsref_save(&ctx->fsref[1], &baseref);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

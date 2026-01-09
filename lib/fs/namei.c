@@ -2446,7 +2446,7 @@ static void fill_query_version(struct silofs_ioc_query *query)
 }
 
 static const struct silofs_baseref *
-boot_ref_of(const struct silofs_task_ctx *task)
+baseref_of(const struct silofs_task_ctx *task)
 {
 	return &task->t_env->base.args->bref[0];
 }
@@ -2455,9 +2455,9 @@ static void fill_query_repo(const struct silofs_task_ctx *task,
                             struct silofs_ioc_query      *query)
 {
 	struct silofs_strview        strview;
-	const struct silofs_baseref *boot_ref = boot_ref_of(task);
+	const struct silofs_baseref *baseref = baseref_of(task);
 
-	silofs_strview_init(&strview, boot_ref->repodir);
+	silofs_strview_init(&strview, baseref->repodir);
 	str_to_buf(&strview, query->u.repo.path, sizeof(query->u.repo.path));
 }
 
@@ -2465,9 +2465,9 @@ static void fill_query_boot_name(const struct silofs_task_ctx *task,
                                  struct silofs_ioc_query      *query)
 {
 	struct silofs_strview        sv;
-	const struct silofs_baseref *boot_ref = boot_ref_of(task);
+	const struct silofs_baseref *baseref = baseref_of(task);
 
-	silofs_strview_init(&sv, boot_ref->refname);
+	silofs_strview_init(&sv, baseref->refname);
 	str_to_buf(&sv, query->u.boot.name, sizeof(query->u.boot.name));
 }
 

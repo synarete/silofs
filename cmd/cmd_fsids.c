@@ -583,21 +583,21 @@ static void cmd_fsids_jdecode(struct silofs_fsids *fsids, const json_t *jfsids)
 }
 
 void cmd_fsids_save(const struct silofs_fsids   *fsids,
-                    const struct silofs_baseref *boot_ref)
+                    const struct silofs_baseref *baseref)
 {
 	json_t *jfsids;
 
 	jfsids = cmd_fsids_jencode(fsids);
-	cmd_json_save(jfsids, boot_ref->repodir, cmd_jfsids_filename);
+	cmd_json_save(jfsids, baseref->repodir, cmd_jfsids_filename);
 	cmd_json_decref(jfsids);
 }
 
 void cmd_fsids_load(struct silofs_fsids         *fsids,
-                    const struct silofs_baseref *boot_ref)
+                    const struct silofs_baseref *baseref)
 {
 	json_t *jfsids;
 
-	jfsids = cmd_json_load(boot_ref->repodir, cmd_jfsids_filename);
+	jfsids = cmd_json_load(baseref->repodir, cmd_jfsids_filename);
 	cmd_fsids_jdecode(fsids, jfsids);
 	cmd_json_decref(jfsids);
 }

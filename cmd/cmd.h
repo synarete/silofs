@@ -167,6 +167,7 @@ silofs_attr_dief(1, 2) void cmd_diez(const char *restrict, ...);
 
 /* common utilities */
 
+/* checkers */
 void cmd_check_repopath(const char *arg_val);
 
 void cmd_check_fsname(const char *arg_val);
@@ -215,16 +216,6 @@ void cmd_realpath_rdir(const char *path, char **out_real);
 
 void cmd_stat_dir(const char *path, struct stat *st);
 
-void cmd_split_path(const char *path, char **out_head, char **out_tail);
-
-void cmd_remake_path(const char *path, const char *suffix, char **out_head,
-                     char **out_tail);
-
-void cmd_remake_path2(const char *path, const char *suffix, char **out_head,
-                      char **out_tail);
-
-char *cmd_join_path(const char *dirpath, const char *name);
-
 void cmd_daemonize_process(pid_t *out_pid);
 
 void cmd_open_syslog(void);
@@ -241,17 +232,22 @@ void cmd_zfree(void *ptr, size_t nbytes);
 
 void cmd_pstrfree(char **pp);
 
+char *cmd_strjoin(const char *s1, const char *s2);
+
 char *cmd_strdup(const char *s);
 
 char *cmd_strndup(const char *s, size_t n);
 
 char *cmd_strvdup(const void *p);
 
-char *cmd_struuid(const uint8_t uu[16]);
-
-silofs_attr_printf(1, 2) char *cmd_mkpathf(const char *fmt, ...);
-
 silofs_attr_noreturn void cmd_print_help_and_exit(const char *help_strings);
+
+/* path-name */
+void cmd_path_split(const char *path, char **out_head, char **out_tail);
+
+char *cmd_path_join(const char *dirpath, const char *name);
+
+silofs_attr_printf(1, 2) char *cmd_path_fmt(const char *fmt, ...);
 
 /* parse helpers */
 long cmd_parse_str_as_size(const char *str);
@@ -350,10 +346,10 @@ void cmd_fsids_setup(struct silofs_fsids *fsids);
 void cmd_fsids_clear(struct silofs_fsids *fsids);
 
 void cmd_fsids_save(const struct silofs_fsids   *fsids,
-                    const struct silofs_baseref *boot_ref);
+                    const struct silofs_baseref *baseref);
 
 void cmd_fsids_load(struct silofs_fsids         *fsids,
-                    const struct silofs_baseref *boot_ref);
+                    const struct silofs_baseref *baseref);
 
 void cmd_fsids_add_uidgid_of(struct silofs_fsids *fsids, const char *name);
 
@@ -366,12 +362,12 @@ void cmd_fsids_need_user(const struct silofs_fsids *fsids, const char *name);
 
 /* fsref */
 void cmd_fsref_save(const struct silofs_fsref   *fsref,
-                    const struct silofs_baseref *boot_ref);
+                    const struct silofs_baseref *baseref);
 
 void cmd_fsref_load(struct silofs_fsref         *fsref,
-                    const struct silofs_baseref *boot_ref);
+                    const struct silofs_baseref *baseref);
 
-void cmd_fsref_unlink(const struct silofs_baseref *boot_ref);
+void cmd_fsref_unlink(const struct silofs_baseref *baseref);
 
 /* security restrictions (landlock) */
 void cmd_restrict_process(const char *path, bool allow_mkdir);

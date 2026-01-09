@@ -21,7 +21,6 @@
 #include <sys/stat.h>
 #include <sys/resource.h>
 #include <sys/prctl.h>
-#include <uuid/uuid.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -94,9 +93,20 @@ void cmd_atexit(void (*fn)(void))
 	}
 }
 
+static size_t cmd_safe_strlen(const char *s)
+{
+	const size_t lmax = SILOFS_MEGA;
+	const size_t slen = strnlen(s, lmax);
+
+	if (slen >= lmax) {
+		cmd_die(0, "bad string length: len=%zu", slen);
+	}
+	return slen;
+}
+
 void cmd_check_repopath(const char *arg_val)
 {
-	const size_t len = strlen(arg_val);
+	const size_t len = cmd_safe_strlen(arg_val);
 
 	if ((len < 2) || (len >= SILOFS_REPOPATH_MAX)) {
 		cmd_die(-EINVAL, "illegal repo pathname: %s", arg_val);
@@ -176,7 +186,7 @@ void cmd_check_isreg2(const char *dirpath, const char *name)
 {
 	char *path = nullptr;
 
-	path = cmd_join_path(dirpath, name);
+	path = cmd_path_join(dirpath, name);
 	cmd_check_isreg(path);
 	cmd_pstrfree(&path);
 }
@@ -224,23 +234,9 @@ void cmd_check_notexists2(const char *dirpath, const char *name)
 {
 	char *path = nullptr;
 
-	path = cmd_join_path(dirpath, name);
+	path = cmd_path_join(dirpath, name);
 	cmd_check_notexists(path);
 	cmd_pstrfree(&path);
-}
-
-static char *cmd_joinpath_safe(const char *path, const char *name)
-{
-	char        *xpath;
-	const size_t plen = strlen(path);
-	const size_t nlen = strlen(name);
-
-	xpath = cmd_zalloc(plen + nlen + 2);
-	memcpy(xpath, path, plen);
-	memcpy(xpath + 1 + plen, name, nlen);
-	xpath[plen]            = '/';
-	xpath[plen + nlen + 1] = '\0';
-	return xpath;
 }
 
 void cmd_check_exists(const char *path)
@@ -717,64 +713,6 @@ void cmd_stat_dir(const char *path, struct stat *st)
 	}
 }
 
-void cmd_split_path(const char *path, char **out_head, char **out_tail)
-{
-	const char *sep;
-	size_t      head_len;
-	size_t      tail_len;
-
-	sep = strrchr(path, '/');
-	if (sep == nullptr) {
-		*out_head = cmd_getcwd();
-		*out_tail = cmd_strdup(path);
-	} else {
-		tail_len = strlen(sep + 1);
-		if (!tail_len) {
-			cmd_diez("missing filename: %s", path);
-		}
-		if (sep == path) {
-			cmd_diez("missing basename: %s", path);
-		}
-		head_len  = (size_t)(sep - path);
-		*out_head = cmd_strndup(path, head_len);
-		*out_tail = cmd_strndup(sep + 1, tail_len);
-	}
-}
-
-void cmd_remake_path(const char *path, const char *suffix, char **out_head,
-                     char **out_tail)
-{
-	char *tail = nullptr;
-
-	cmd_split_path(path, out_head, &tail);
-	*out_tail = cmd_mkpathf("%s%s", tail, suffix);
-	cmd_pstrfree(&tail);
-}
-
-void cmd_remake_path2(const char *path, const char *suffix, char **out_head,
-                      char **out_tail)
-{
-	char *spos = nullptr;
-
-	cmd_split_path(path, out_head, out_tail);
-	spos = strstr(*out_tail, suffix);
-	if (spos != nullptr) {
-		*spos = '\0';
-	}
-}
-
-char *cmd_join_path(const char *dirpath, const char *name)
-{
-	char *ret = nullptr;
-
-	if (dirpath && name) {
-		ret = cmd_joinpath_safe(dirpath, name);
-	} else {
-		ret = cmd_strdup("");
-	}
-	return ret;
-}
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void *cmd_zalloc(size_t nbytes)
@@ -804,15 +742,15 @@ void cmd_pstrfree(char **pp)
 	}
 }
 
-static size_t cmd_safe_strlen(const char *s)
+char *cmd_strjoin(const char *s1, const char *s2)
 {
-	const size_t lmax = SILOFS_MEGA;
-	const size_t slen = strnlen(s, lmax);
+	const size_t n1 = cmd_safe_strlen(s1);
+	const size_t n2 = cmd_safe_strlen(s2);
+	char        *s  = cmd_zalloc(n1 + n2 + 1);
 
-	if (slen >= lmax) {
-		cmd_die(0, "cannot strdup: len=%zu", slen);
-	}
-	return slen;
+	memcpy(s, s1, n1);
+	memcpy(s + n1, s2, n2);
+	return s;
 }
 
 char *cmd_strdup(const char *s)
@@ -835,17 +773,52 @@ char *cmd_strvdup(const void *p)
 	return cmd_strdup((const char *)p);
 }
 
-char *cmd_struuid(const uint8_t uu[16])
-{
-	char   str[40] = "";
-	uuid_t uuid;
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-	memcpy(uuid, uu, sizeof(uuid));
-	uuid_unparse(uuid, str);
-	return cmd_strndup(str, sizeof(str));
+void cmd_path_split(const char *path, char **out_head, char **out_tail)
+{
+	const char *sep;
+	char       *head = nullptr;
+	char       *tail = nullptr;
+	size_t      head_len;
+	size_t      tail_len;
+
+	sep = strrchr(path, '/');
+	if (sep == nullptr) {
+		head = cmd_getcwd();
+		tail = cmd_strdup(path);
+		goto out;
+	}
+	tail_len = strlen(sep + 1);
+	if (!tail_len) {
+		cmd_diez("missing filename: %s", path);
+	}
+	if (sep == path) {
+		cmd_diez("missing basename: %s", path);
+	}
+	head_len = (size_t)(sep - path);
+	head     = cmd_strndup(path, head_len);
+	tail     = cmd_strndup(sep + 1, tail_len);
+out:
+	*out_head = head;
+	*out_tail = tail;
 }
 
-char *cmd_mkpathf(const char *fmt, ...)
+char *cmd_path_join(const char *dirpath, const char *name)
+{
+	char  *xpath = nullptr;
+	size_t plen, nlen;
+
+	plen  = cmd_safe_strlen(dirpath);
+	nlen  = cmd_safe_strlen(name);
+	xpath = cmd_zalloc(plen + nlen + 2);
+	strlcpy(xpath, dirpath, plen + 1);
+	xpath[plen] = '/';
+	strlcpy(xpath + 1 + plen, name, nlen + 1);
+	return xpath;
+}
+
+char *cmd_path_fmt(const char *fmt, ...)
 {
 	va_list ap        = { 0 };
 	size_t  path_size = PATH_MAX;
@@ -854,15 +827,20 @@ char *cmd_mkpathf(const char *fmt, ...)
 	int     n         = 0;
 
 	va_start(ap, fmt);
-	n = vsnprintf(path, path_size - 1, fmt, ap);
+	n = vsnprintf(path, path_size, fmt, ap);
 	va_end(ap);
 
 	if (n >= (int)path_size) {
 		cmd_diez("illegal path-len %d", n);
 	}
+	if ((n * 2) > (int)path_size) {
+		goto out;
+	}
 	path_dup = cmd_strdup(path);
 	cmd_pstrfree(&path);
-	return path_dup;
+	path = path_dup;
+out:
+	return path;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

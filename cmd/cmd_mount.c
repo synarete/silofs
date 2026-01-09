@@ -377,7 +377,7 @@ static void cmd_mount_prepare_mntpoint(struct cmd_mount_ctx *ctx)
 static void cmd_mount_prepare_repo(struct cmd_mount_ctx *ctx)
 {
 	cmd_check_isreg(ctx->in_args.repodir_fsname);
-	cmd_split_path(ctx->in_args.repodir_fsname, &ctx->in_args.repodir,
+	cmd_path_split(ctx->in_args.repodir_fsname, &ctx->in_args.repodir,
 	               &ctx->in_args.fsname);
 	cmd_realpath_rdir(ctx->in_args.repodir, &ctx->in_args.repodir_real);
 	cmd_check_repodir_fsname(ctx->in_args.repodir_real,

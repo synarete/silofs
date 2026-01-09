@@ -91,7 +91,7 @@ static void cmd_rmfs_parse_optargs(struct cmd_rmfs_ctx *ctx)
 static void cmd_rmfs_prepare(struct cmd_rmfs_ctx *ctx)
 {
 	cmd_check_isreg(ctx->in_args.repodir_fsname);
-	cmd_split_path(ctx->in_args.repodir_fsname, &ctx->in_args.repodir,
+	cmd_path_split(ctx->in_args.repodir_fsname, &ctx->in_args.repodir,
 	               &ctx->in_args.fsname);
 	cmd_realpath_dir(ctx->in_args.repodir, &ctx->in_args.repodir_real);
 	cmd_check_repodir_fsname(ctx->in_args.repodir_real,
@@ -143,14 +143,14 @@ static void cmd_rmfs_check_nomnt_at(struct cmd_rmfs_ctx *ctx, const char *mntp)
 	}
 	name = cmd_strvdup(qry->u.boot.name);
 
-	path[0] = cmd_join_path(repodir, name);
+	path[0] = cmd_path_join(repodir, name);
 	err     = silofs_sys_stat(path[0], &st[0]);
 	if (err) {
 		goto out;
 	}
 
 	path[1] =
-		cmd_join_path(ctx->in_args.repodir_real, ctx->in_args.fsname);
+		cmd_path_join(ctx->in_args.repodir_real, ctx->in_args.fsname);
 	err = silofs_sys_stat(path[1], &st[1]);
 	if (err) {
 		goto out;

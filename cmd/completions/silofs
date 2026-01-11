@@ -1,176 +1,221 @@
 # -*- mode: sh; sh-shell: bash; -*-
 # silofs(1) bash completion
 # shellcheck shell=bash
-# shellcheck disable=SC2207
 
 [ -z "$BASH_VERSION" ] && return
 
-_silofs_init() {
-	local cur prev words cword
+_silofs_complete_options() {
+	local options="$1"
 
-	_init_completion || return
+	if [[ "$cur" == *=* ]]; then
+		return
+	fi
+	mapfile -t COMPREPLY < <(compgen -W "$options" -- "$cur")
+
+	if [[ ${#COMPREPLY[@]} -eq 1 && ${COMPREPLY[0]} == *= ]]; then
+		compopt -o nospace
+	fi
+}
+
+_silofs_complete_subcmds() {
+	local subcmds="$1"
+
+	mapfile -t COMPREPLY < <(compgen -W "$subcmds" -- "$cur")
+}
+
+
+_silofs_complete_filedir() {
+	_filedir
+}
+
+_silofs_init() {
+	local options=""
+
 	if [[ "$cur" == -* ]]; then
-		COMPREPLY+=($(compgen -W '-u --user= ' -- "$cur"))
-		COMPREPLY+=($(compgen -W '-G --sup-groups ' -- "$cur"))
-		COMPREPLY+=($(compgen -W '-R --allow-root ' -- "$cur"))
-		COMPREPLY+=($(compgen -W '-L --loglevel= ' -- "$cur"))
-		COMPREPLY+=($(compgen -W '-h --help ' -- "$cur"))
+		options+="-u --user= "
+		options+="-L --loglevel= "
+		options+="-h --help "
+		_silofs_complete_options "$options"
+	else
+		_silofs_complete_filedir
 	fi
 }
 
 _silofs_mkfs() {
-	local cur prev words cword
+	local options=""
 
-	_init_completion || return
 	if [[ "$cur" == -* ]]; then
-		COMPREPLY+=($(compgen -W '-s --size= ' -- "$cur"))
-		COMPREPLY+=($(compgen -W '-u --user= ' -- "$cur"))
-		COMPREPLY+=($(compgen -W '-N --no-utf8-names ' -- "$cur"))
-		COMPREPLY+=($(compgen -W '-L --loglevel= ' -- "$cur"))
-		COMPREPLY+=($(compgen -W '-h --help ' -- "$cur"))
+		options+="-s --size= "
+		options+="-u --user= "
+		options+="-G --sup-groups "
+		options+="-R --allow-root "
+		options+="-N --no-utf8-names "
+		options+="-L --loglevel= "
+		options+="-h --help "
+		_silofs_complete_options "$options"
+	else
+		_silofs_complete_filedir
 	fi
 }
 
 _silofs_mount() {
-	local cur prev words cword
+	local options=""
 
-	_init_completion || return
 	if [[ "$cur" == -* ]]; then
-		COMPREPLY+=($(compgen -W '-o --opts= ' -- "$cur"))
-		COMPREPLY+=($(compgen -W '-D --nodaemon ' -- "$cur"))
-		COMPREPLY+=($(compgen -W '-C --coredump ' -- "$cur"))
-		COMPREPLY+=($(compgen -W '-A --no-allow-other ' -- "$cur"))
-		COMPREPLY+=($(compgen -W '-W --no-writeback-cache ' -- "$cur"))
-		COMPREPLY+=($(compgen -W '-L --loglevel= ' -- "$cur"))
-		COMPREPLY+=($(compgen -W '-h --help ' -- "$cur"))
+		options+="-o --opts= "
+		options+="-D --nodaemon "
+		options+="-C --coredump "
+		options+="-A --no-allow-other "
+		options+="-W --no-writeback-cache "
+		options+="-L --loglevel= "
+		options+="-h --help "
+		_silofs_complete_options "$options"
+	else
+		_silofs_complete_filedir
 	fi
 }
 
 _silofs_umount() {
-	local cur prev words cword
+	local options=""
 
-	_init_completion || return
 	if [[ "$cur" == -* ]]; then
-		COMPREPLY+=($(compgen -W '-h --help ' -- "$cur"))
+		options+="-h --help "
+		_silofs_complete_options "$options"
+	else
+		_silofs_complete_filedir
 	fi
 }
 
 _silofs_lsmnt() {
-	local cur prev words cword
+	local options=""
 
-	_init_completion || return
 	if [[ "$cur" == -* ]]; then
-		COMPREPLY+=($(compgen -W '-l --long ' -- "$cur"))
-		COMPREPLY+=($(compgen -W '-h --help ' -- "$cur"))
+		options+="-l --long "
+		options+="-h --help "
+		_silofs_complete_options "$options"
+	else
+		_silofs_complete_filedir
 	fi
 }
 
 _silofs_show() {
-	local cur prev words cword
+	local options=""
+	local subcmds=""
 
-	_init_completion || return
 	if [[ "$cur" == -* ]]; then
-		COMPREPLY+=($(compgen -W '-h' -- "$cur"))
+		options+="-h --help"
+		_silofs_complete_options "$options"
 	else
-		COMPREPLY+=($(compgen -W 'version ' -- "$cur"))
-		COMPREPLY+=($(compgen -W 'repo ' -- "$cur"))
-		COMPREPLY+=($(compgen -W 'boot ' -- "$cur"))
-		COMPREPLY+=($(compgen -W 'proc ' -- "$cur"))
-		COMPREPLY+=($(compgen -W 'statx ' -- "$cur"))
-		COMPREPLY+=($(compgen -W 'spstats ' -- "$cur"))
+		subcmds+="version repo boot proc statx spstats"
+		_silofs_complete_subcmds "$subcmds"
 	fi
 }
 
 _silofs_clone() {
-	local cur prev words cword
+	local options=""
 
-	_init_completion || return
 	if [[ "$cur" == -* ]]; then
-		COMPREPLY+=($(compgen -W '-X --offline ' -- "$cur"))
-		COMPREPLY+=($(compgen -W '-n --name= ' -- "$cur"))
-		COMPREPLY+=($(compgen -W '-h --help ' -- "$cur"))
+		options+="-X --offline "
+		options+="-n --name= "
+		options+="-h --help "
+		_silofs_complete_options "$options"
+	else
+		_silofs_complete_filedir
 	fi
 }
 
 _silofs_sync() {
-	local cur prev words cword
+	local options=""
 
-	_init_completion || return
 	if [[ "$cur" == -* ]]; then
-		COMPREPLY+=($(compgen -W '-h --help ' -- "$cur"))
+		options+="-h --help "
+		_silofs_complete_options "$options"
+	else
+		_silofs_complete_filedir
 	fi
 }
 
 _silofs_tune() {
-	local cur prev words cword
+	local options=""
 
-	_init_completion || return
 	if [[ "$cur" == -* ]]; then
-		COMPREPLY+=($(compgen -W '-t --ftype= ' -- "$cur"))
-		COMPREPLY+=($(compgen -W '-h --help ' -- "$cur"))
+		options+="-t --ftype= "
+		options+="-h --help "
+		_silofs_complete_options "$options"
+	else
+		_silofs_complete_filedir
 	fi
 }
 
 _silofs_rmfs() {
-	local cur prev words cword
+	local options=""
 
-	_init_completion || return
 	if [[ "$cur" == -* ]]; then
-		COMPREPLY+=($(compgen -W '-h --help ' -- "$cur"))
+		options+="-h --help "
+		_silofs_complete_options "$options"
+	else
+		_silofs_complete_filedir
 	fi
 }
 
 _silofs_prune() {
-	local cur prev words cword
+	local options=""
 
-	_init_completion || return
 	if [[ "$cur" == -* ]]; then
-		COMPREPLY+=($(compgen -W '-h --help ' -- "$cur"))
+		options+="-h --help "
+		_silofs_complete_options "$options"
+	else
+		_silofs_complete_filedir
 	fi
 }
 
 _silofs_fsck() {
-	local cur prev words cword
+	local options=""
 
-	_init_completion || return
 	if [[ "$cur" == -* ]]; then
-		COMPREPLY+=($(compgen -W '-h --help ' -- "$cur"))
+		options+="-h --help "
+		_silofs_complete_options "$options"
+	else
+		_silofs_complete_filedir
 	fi
 }
 
 _silofs_view() {
-	local cur prev words cword
+	local options=""
 
-	_init_completion || return
 	if [[ "$cur" == -* ]]; then
-		COMPREPLY+=($(compgen -W '-h --help ' -- "$cur"))
+		options+="-h --help "
+		_silofs_complete_options "$options"
+	else
+		_silofs_complete_filedir
 	fi
 }
 
 _silofs_archive() {
-	local cur prev words cword
+	local options=""
 
-	_init_completion || return
 	if [[ "$cur" == -* ]]; then
-		COMPREPLY+=($(compgen -W '-n --into= ' -- "$cur"))
-		COMPREPLY+=($(compgen -W '-h --help ' -- "$cur"))
+		options+="-n --into= "
+		options+="-h --help "
+		_silofs_complete_options "$options"
+	else
+		_silofs_complete_filedir
 	fi
 }
 
 _silofs_restore() {
-	local cur prev words cword
+	local options=""
 
-	_init_completion || return
 	if [[ "$cur" == -* ]]; then
-		COMPREPLY+=($(compgen -W '-n --from= ' -- "$cur"))
-		COMPREPLY+=($(compgen -W '-h --help ' -- "$cur"))
+		options+="-n --from= "
+		options+="-h --help "
+		_silofs_complete_options "$options"
+	else
+		_silofs_complete_filedir
 	fi
 }
 
 _silofs_subcmd() {
-	local cur prev words cword
-	_init_completion || return
-
 	case "${words[1]}" in
 		"init")
 			_silofs_init
@@ -221,28 +266,17 @@ _silofs_subcmd() {
 }
 
 _silofs_main() {
-	local cur prev words cword
-	_init_completion || return
+	local options=""
+	local subcmds=""
 
 	if [[ "$cur" == -* ]]; then
-		COMPREPLY+=($(compgen -W '-v --version ' -- "$cur"))
-		COMPREPLY+=($(compgen -W '-h --help' -- "$cur"))
+		options+="-v --version "
+		options+="-h --help "
+		_silofs_complete_options "$options"
 	else
-		COMPREPLY+=($(compgen -W 'init ' -- "$cur"))
-		COMPREPLY+=($(compgen -W 'mkfs ' -- "$cur"))
-		COMPREPLY+=($(compgen -W 'mount ' -- "$cur"))
-		COMPREPLY+=($(compgen -W 'umount ' -- "$cur"))
-		COMPREPLY+=($(compgen -W 'lsmnt ' -- "$cur"))
-		COMPREPLY+=($(compgen -W 'show ' -- "$cur"))
-		COMPREPLY+=($(compgen -W 'clone ' -- "$cur"))
-		COMPREPLY+=($(compgen -W 'sync ' -- "$cur"))
-		COMPREPLY+=($(compgen -W 'tune ' -- "$cur"))
-		COMPREPLY+=($(compgen -W 'rmfs ' -- "$cur"))
-		COMPREPLY+=($(compgen -W 'prune ' -- "$cur"))
-		COMPREPLY+=($(compgen -W 'fsck ' -- "$cur"))
-		COMPREPLY+=($(compgen -W 'view ' -- "$cur"))
-		COMPREPLY+=($(compgen -W 'archive ' -- "$cur"))
-		COMPREPLY+=($(compgen -W 'restore ' -- "$cur"))
+		subcmds+="init mkfs mount lsmnt show sync clone "
+		subcmds+="tune rmfs prune fsck view archive restore "
+		_silofs_complete_subcmds "$subcmds"
 	fi
 }
 
@@ -251,9 +285,9 @@ _silofs_completions() {
 	# shellcheck disable=SC2034
 	local cur prev words cword
 
+	command -v _init_completion > /dev/null || return
 	_init_completion || return
 
-	compopt -o nospace
 	COMPREPLY=( "${COMPREPLY[@]:-}" )
 
 	if [[ $cword -eq 1 ]]; then

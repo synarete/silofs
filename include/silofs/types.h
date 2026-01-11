@@ -109,6 +109,12 @@ struct silofs_fsrefs {
 	struct silofs_fsref fork;
 };
 
+/* fs root specification */
+struct silofs_spec {
+	struct silofs_fsref fsref;
+	struct silofs_fsids fsids;
+};
+
 /* input arguments */
 struct silofs_args {
 	struct silofs_baseref bref[2];

@@ -98,7 +98,7 @@ static void cmd_clone_parse_optargs(struct cmd_clone_ctx *ctx)
 		switch (opt_chr) {
 		case 'n':
 			ctx->in_args.forkname =
-				cmd_optarg_dupoptarg(&opa, "name");
+				cmd_optarg_getcurr2(&opa, "name");
 			break;
 		case 'X':
 			ctx->in_args.offline = true;

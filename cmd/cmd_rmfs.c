@@ -191,6 +191,7 @@ static void cmd_rmfs_setup_args(struct cmd_rmfs_ctx *ctx)
 static void cmd_rmfs_load_fsids(struct cmd_rmfs_ctx *ctx)
 {
 	cmd_fsids_load(&ctx->args.fsids, &ctx->args.bref[0]);
+	cmd_fsids_need_self(&ctx->args.fsids);
 }
 
 static void cmd_rmfs_load_fsref(struct cmd_rmfs_ctx *ctx)

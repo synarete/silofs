@@ -128,9 +128,9 @@ void cmd_optargs_fini(struct cmd_optargs *opa);
 
 int cmd_optargs_parse(struct cmd_optargs *opa);
 
-char *cmd_optargs_dupcurr(const struct cmd_optargs *opa);
+char *cmd_optargs_getcurr(const struct cmd_optargs *opa);
 
-char *cmd_optarg_dupoptarg(const struct cmd_optargs *opa, const char *id);
+char *cmd_optarg_getcurr2(const struct cmd_optargs *opa, const char *id);
 
 char *cmd_optargs_getarg(struct cmd_optargs *opa, const char *arg_name);
 
@@ -358,7 +358,7 @@ void cmd_fsids_add_supgroups_of(struct silofs_fsids *fsids, const char *name);
 void cmd_fsids_need_uidgid(const struct silofs_fsids *fsids, uid_t host_uid,
                            gid_t host_gid);
 
-void cmd_fsids_need_user(const struct silofs_fsids *fsids, const char *name);
+void cmd_fsids_need_self(const struct silofs_fsids *fsids);
 
 /* fsref */
 void cmd_fsref_save(const struct silofs_fsref   *fsref,

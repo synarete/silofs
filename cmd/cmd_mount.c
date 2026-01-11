@@ -270,6 +270,7 @@ static void cmd_mount_setup_args(struct cmd_mount_ctx *ctx)
 static void cmd_mount_load_fsids(struct cmd_mount_ctx *ctx)
 {
 	cmd_fsids_load(&ctx->args.fsids, &ctx->args.bref[0]);
+	cmd_fsids_need_self(&ctx->args.fsids);
 }
 
 static void cmd_mount_load_fsref(struct cmd_mount_ctx *ctx)

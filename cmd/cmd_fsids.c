@@ -388,13 +388,22 @@ void cmd_fsids_add_supgroups_of(struct silofs_fsids *fsids, const char *name)
 	}
 }
 
-void cmd_fsids_need_user(const struct silofs_fsids *fsids, const char *name)
+static void
+cmd_fsids_need_user(const struct silofs_fsids *fsids, const char *name)
 {
 	uid_t host_uid = (uid_t)(-1);
 	gid_t host_gid = (gid_t)(-1);
 
 	cmd_resolve_name_to_uidgid(name, &host_uid, &host_gid);
 	cmd_fsids_need_uidgid(fsids, host_uid, host_gid);
+}
+
+void cmd_fsids_need_self(const struct silofs_fsids *fsids)
+{
+	char *username = cmd_getusername();
+
+	cmd_fsids_need_user(fsids, username);
+	cmd_pstrfree(&username);
 }
 
 void cmd_fsids_setup(struct silofs_fsids *fsids)

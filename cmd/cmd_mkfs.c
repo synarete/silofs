@@ -18,13 +18,15 @@
 #include "cmd.h"
 
 static const char *const cmd_mkfs_help_desc =
-	"mkfs --size=nbytes [options] <repodir/fsname>                   \n"
-	"                                                                \n"
-	"options:                                                        \n"
-	"  -s, --size=nbytes            Capacity size limit              \n"
-	"  -u, --user=username          Set username owner of root-dir   \n"
-	"  -N, --no-utf8-names          Do not force UTF8 file names     \n"
-	"  -L, --loglevel=level         Logging level (rfc5424)          \n";
+	"mkfs --size=nbytes [options] <repodir/fsname>                     \n"
+	"                                                                  \n"
+	"options:                                                          \n"
+	"  -s, --size=nbytes            Capacity size limit                \n"
+	"  -u, --user=username          Primary user-name (fs owner)       \n"
+	"  -G, --sup-groups             Allow owner's supplementary groups \n"
+	"  -R, --allow-root             Allow root user and group          \n"
+	"  -N, --no-utf8-names          Do not force UTF8 file names       \n"
+	"  -L, --loglevel=level         Logging level (rfc5424)            \n";
 
 struct cmd_mkfs_in_args {
 	char *repodir_fsname;
@@ -34,6 +36,8 @@ struct cmd_mkfs_in_args {
 	char *password;
 	char *username;
 	long  fs_size;
+	bool  with_sup_groups;
+	bool  with_root_user;
 	bool  no_utf8_names;
 };
 
@@ -54,6 +58,8 @@ static void cmd_mkfs_parse_optargs(struct cmd_mkfs_ctx *ctx)
 	const struct cmd_optdesc ods[] = {
 		{ "size", 's', 1 },           //
 		{ "user", 'u', 1 },           //
+		{ "sup-groups", 'G', 0 },     //
+		{ "allow-root", 'R', 0 },     //
 		{ "password", 'p', 1 },       //
 		{ "no-utf8-names", 'N', 0 },  //
 		{ "developer-mode", 'X', 0 }, //
@@ -73,7 +79,13 @@ static void cmd_mkfs_parse_optargs(struct cmd_mkfs_ctx *ctx)
 			break;
 		case 'u':
 			ctx->in_args.username =
-				cmd_optarg_dupoptarg(&opa, "user");
+				cmd_optarg_getcurr2(&opa, "user");
+			break;
+		case 'G':
+			ctx->in_args.with_sup_groups = true;
+			break;
+		case 'R':
+			ctx->in_args.with_root_user = true;
 			break;
 		case 'p':
 			ctx->in_args.password = cmd_optargs_getpass(&opa);
@@ -189,6 +201,7 @@ static void cmd_mkfs_setup_args(struct cmd_mkfs_ctx *ctx)
 	struct silofs_args *args = &ctx->args;
 
 	cmd_setup_args(args);
+	cmd_uidgid_of(ctx->in_args.username, &args->uid, &args->gid);
 	args->bref[0].repodir = ctx->in_args.repodir_real;
 	args->bref[0].refname = ctx->in_args.fsname;
 	args->passwd          = ctx->in_args.password;
@@ -198,17 +211,22 @@ static void cmd_mkfs_setup_args(struct cmd_mkfs_ctx *ctx)
 
 static void cmd_mkfs_setup_fsids(struct cmd_mkfs_ctx *ctx)
 {
-	struct silofs_args *args = &ctx->args;
+	struct silofs_args *args     = &ctx->args;
+	const char         *username = ctx->in_args.username;
 
-	cmd_uidgid_of(ctx->in_args.username, &args->uid, &args->gid);
-	cmd_fsids_load(&args->fsids, &args->bref[0]);
-	cmd_fsids_need_user(&args->fsids, ctx->in_args.username);
+	cmd_uidgid_of(username, &args->uid, &args->gid);
+	cmd_fsids_add_uidgid_of(&args->fsids, username);
+	if (ctx->in_args.with_sup_groups) {
+		cmd_fsids_add_supgroups_of(&args->fsids, username);
+	}
+	if (ctx->in_args.with_root_user && strcmp(username, "root")) {
+		cmd_fsids_add_uidgid_of(&args->fsids, "root");
+	}
 }
 
 static void cmd_mkfs_setup_env(struct cmd_mkfs_ctx *ctx)
 {
 	cmd_new_env(&ctx->args, &ctx->env);
-	cmd_fsids_clear(&ctx->args.fsids);
 	cmd_delpass(&ctx->in_args.password);
 }
 
@@ -230,6 +248,17 @@ static void cmd_mkfs_format_fs(struct cmd_mkfs_ctx *ctx)
 static void cmd_mkfs_save_fsref(struct cmd_mkfs_ctx *ctx)
 {
 	cmd_fsref_save(&ctx->fsref, &ctx->args.bref[0]);
+}
+
+static void cmd_mkfs_save_fsids(struct cmd_mkfs_ctx *ctx)
+{
+	cmd_fsids_save(&ctx->args.fsids, &ctx->args.bref[0]);
+}
+
+static void cmd_mkfs_save_refs(struct cmd_mkfs_ctx *ctx)
+{
+	cmd_mkfs_save_fsref(ctx);
+	cmd_mkfs_save_fsids(ctx);
 }
 
 static void cmd_mkfs_close_fs(struct cmd_mkfs_ctx *ctx)
@@ -285,8 +314,8 @@ void cmd_execute_mkfs(void)
 	/* Format file-system layer */
 	cmd_mkfs_format_fs(&ctx);
 
-	/* Save top-level fs boot-ref */
-	cmd_mkfs_save_fsref(&ctx);
+	/* Save top-level refs */
+	cmd_mkfs_save_refs(&ctx);
 
 	/* Post-format cleanups */
 	cmd_mkfs_close_fs(&ctx);

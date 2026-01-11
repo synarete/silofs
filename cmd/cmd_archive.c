@@ -65,7 +65,7 @@ static void cmd_archive_parse_optargs(struct cmd_archive_ctx *ctx)
 		switch (opt_chr) {
 		case 'n':
 			ctx->in_args.arname =
-				cmd_optarg_dupoptarg(&opa, "into");
+				cmd_optarg_getcurr2(&opa, "into");
 			break;
 		case 'p':
 			ctx->in_args.password = cmd_optargs_getpass(&opa);

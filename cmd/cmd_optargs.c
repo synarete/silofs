@@ -196,17 +196,17 @@ int cmd_optargs_parse(struct cmd_optargs *opa)
 	return ret;
 }
 
-char *cmd_optargs_dupcurr(const struct cmd_optargs *opa)
+char *cmd_optargs_getcurr(const struct cmd_optargs *opa)
 {
 	return cmd_strdup(cmd_optargs_curr(opa));
 }
 
-char *cmd_optarg_dupoptarg(const struct cmd_optargs *opa, const char *id)
+char *cmd_optarg_getcurr2(const struct cmd_optargs *opa, const char *id)
 {
 	if (!strlen(opa->opa_optarg)) {
 		cmd_diez("missing option argument: %s", id);
 	}
-	return cmd_optargs_dupcurr(opa);
+	return cmd_optargs_getcurr(opa);
 }
 
 char *cmd_optargs_getarg(struct cmd_optargs *opa, const char *arg_name)
@@ -255,7 +255,7 @@ void cmd_optargs_set_loglevel(const struct cmd_optargs *opa)
 
 char *cmd_optargs_getpass(const struct cmd_optargs *opa)
 {
-	char *opt = cmd_optarg_dupoptarg(opa, "--password");
+	char *opt = cmd_optarg_getcurr2(opa, "--password");
 	char *pas = cmd_duppass(opt);
 
 	cmd_pstrfree(&opt);

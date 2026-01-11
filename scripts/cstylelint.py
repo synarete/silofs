@@ -4,7 +4,7 @@
 #
 # cstylelint.py: C-style checker utility for silofs
 #
-# Copyright (C) 2026 Shachar Sharon
+# Copyright (C) 2020-2026 Shachar Sharon
 #
 # Silofs is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -270,9 +270,13 @@ RESERVED_TOKENS = [
     ")))))",
 ]
 
-RE_FUNC_DECL = re.compile(r"""\w+ \w+\(.*\);$""")
-RE_SIZEOF_ADDRESS = re.compile(r"""\bsizeof\s*\(\s*\&""")
-RE_SUSPICIOUS_SEMICOLON = re.compile(r"""\bif\s*\(.*\)\s*;""")
+SOURCE_LINE_DELIMITERS = set(" \t{}[]();:.")
+
+REGEX = {
+    "func_decl": re.compile(r"""\w+ \w+\(.*\);$"""),
+    "sizeof_address": re.compile(r"""\bsizeof\s*\(\s*\&"""),
+    "suspicious_semicolon": re.compile(r"""\bif\s*\(.*\)\s*;"""),
+}
 
 # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 
@@ -355,10 +359,8 @@ class SourceLine:
 
     def _tokenize(self) -> list[str]:
         """Converts delimiters to spaces and splits line into tokens."""
-        wline = str(self.line)
-        for c in " { * } [ ] ( ) ; : . ".split():
-            wline = wline.replace(c, " ")
-        return wline.split()
+        dels = SOURCE_LINE_DELIMITERS
+        return "".join(c if c not in dels else " " for c in self.line).split()
 
 
 class SourceFile:
@@ -451,7 +453,7 @@ def check_no_suspicious_semicolon(env: LintEnv, sl: SourceLine) -> None:
     do_while = (line.find("do ") >= 0) and (line.find(" while") > 0)
     if do_while:
         return  # special case: do-while loop
-    susp_semicolon = re.search(RE_SUSPICIOUS_SEMICOLON, line)
+    susp_semicolon = re.search(REGEX["suspicious_semicolon"], line)
     if susp_semicolon is not None:
         env.lerror(sl, "Suspicious semicolon")
 
@@ -465,8 +467,8 @@ def check_no_relative_include(env: LintEnv, sl: SourceLine) -> None:
 
 def check_no_sizeof_address(env: LintEnv, sl: SourceLine) -> None:
     """Forbid the sizeof(&) syntax."""
-    if re.search(RE_SIZEOF_ADDRESS, sl.line) is not None:
-        env.lerror(sl, "Avoid sizeof(& ")
+    if re.search(REGEX["sizeof_address"], sl.line) is not None:
+        env.lerror(sl, "Avoid sizeof(&")
 
 
 def check_struct_union_name(env: LintEnv, sl: SourceLine) -> None:
@@ -532,11 +534,11 @@ def check_no_mixed_case(env: LintEnv, sl: SourceLine) -> None:
         for t in tok.split("_"):
             if (len(t) > 0) and t.isalnum() and t[0].isalpha():
                 names.append((t, tok))
-    for name, tok in names:
+    for t, tok in names:
         if _is_private_name(tok) or _is_lib_name(tok):
             continue
         if _has_mixed_case(tok):
-            env.lerror(sl, f"Mixed-case '{tok}'")
+            env.lerror(sl, f"Mixed-case '{t}' of '{tok}'")
 
 
 def check_underscore_prefix(env: LintEnv, sl: SourceLine) -> None:

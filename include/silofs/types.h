@@ -117,10 +117,10 @@ struct silofs_spec {
 
 /* input arguments */
 struct silofs_args {
+	struct silofs_fsids   fsids;
 	struct silofs_baseref bref[2];
 	const char           *mntdir;
 	const char           *passwd;
-	struct silofs_fsids   fsids;
 	enum silofs_flags     flags;
 	uid_t                 uid;
 	gid_t                 gid;

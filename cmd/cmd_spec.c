@@ -429,6 +429,8 @@ void cmd_fsids_clear(struct silofs_fsids *fsids)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
+static const char cmd_jkey_fsref[]  = "fsref";
+static const char cmd_jkey_fsids[]  = "fsids";
 static const char cmd_jkey_fsmeta[] = "fsmeta";
 static const char cmd_jkey_users[]  = "users";
 static const char cmd_jkey_user[]   = "user";
@@ -436,6 +438,7 @@ static const char cmd_jkey_uid[]    = "uid";
 static const char cmd_jkey_groups[] = "groups";
 static const char cmd_jkey_group[]  = "group";
 static const char cmd_jkey_gid[]    = "gid";
+static const char cmd_jkey_mbaddr[] = "mbaddr";
 
 static const char cmd_jfsids_filename[] = "fsids.json";
 
@@ -609,4 +612,127 @@ void cmd_fsids_load(struct silofs_fsids         *fsids,
 	jfsids = cmd_json_load(baseref->repodir, cmd_jfsids_filename);
 	cmd_fsids_jdecode(fsids, jfsids);
 	cmd_json_decref(jfsids);
+}
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+static json_t *cmd_fsref_jencode(const struct silofs_fsref *fsref)
+{
+	json_t *jobj;
+	json_t *jsub;
+
+	jobj = cmd_json_object();
+
+	jsub = cmd_json_fsmeta(&fsref->fsmeta);
+	cmd_json_object_set_new(jobj, cmd_jkey_fsmeta, jsub);
+
+	jsub = cmd_json_mbaddr(&fsref->mbaddr);
+	cmd_json_object_set_new(jobj, cmd_jkey_mbaddr, jsub);
+
+	return jobj;
+}
+
+static void cmd_fsref_jdecode(struct silofs_fsref *fsref, const json_t *jobj)
+{
+	json_t *jsub;
+
+	jsub = cmd_json_object_get(jobj, cmd_jkey_fsmeta);
+	cmd_json_fsmeta_value(jsub, &fsref->fsmeta);
+
+	jsub = cmd_json_object_get(jobj, cmd_jkey_mbaddr);
+	cmd_json_mbaddr_value(jsub, &fsref->mbaddr);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void cmd_fsref_save(const struct silofs_fsref   *fsref,
+                    const struct silofs_baseref *baseref)
+{
+	json_t *jfsref = nullptr;
+
+	jfsref = cmd_fsref_jencode(fsref);
+	cmd_json_save(jfsref, baseref->repodir, baseref->refname);
+	cmd_json_decref(jfsref);
+}
+
+void cmd_fsref_load(struct silofs_fsref         *fsref,
+                    const struct silofs_baseref *baseref)
+{
+	json_t *jfsref = nullptr;
+
+	jfsref = cmd_json_load(baseref->repodir, baseref->refname);
+	cmd_fsref_jdecode(fsref, jfsref);
+	cmd_json_decref(jfsref);
+}
+
+void cmd_fsref_unlink(const struct silofs_baseref *baseref)
+{
+	cmd_json_unlink(baseref->repodir, baseref->refname);
+}
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+static json_t *cmd_spec_jencode(const struct silofs_spec *spec)
+{
+	json_t *jspec  = nullptr;
+	json_t *jfsref = nullptr;
+	json_t *jfsids = nullptr;
+
+	jspec = cmd_json_object();
+
+	jfsref = cmd_fsref_jencode(&spec->fsref);
+	cmd_json_object_set_new(jspec, cmd_jkey_fsref, jfsref);
+
+	jfsids = cmd_fsids_jencode(&spec->fsids);
+	cmd_json_object_set_new(jspec, cmd_jkey_fsids, jfsids);
+
+	return jspec;
+}
+
+void cmd_spec_save(const struct silofs_spec    *spec,
+                   const struct silofs_baseref *baseref)
+{
+	json_t *jspec = nullptr;
+
+	jspec = cmd_spec_jencode(spec);
+	cmd_json_save(jspec, baseref->repodir, baseref->refname);
+	cmd_json_decref(jspec);
+}
+
+static void cmd_spec_jdecode(struct silofs_spec *spec, const json_t *jspec)
+{
+	json_t *jfsref = nullptr;
+	json_t *jfsids = nullptr;
+
+	jfsref = cmd_json_object_get(jspec, cmd_jkey_fsref);
+	cmd_fsref_jdecode(&spec->fsref, jfsref);
+
+	jfsids = cmd_json_object_get(jspec, cmd_jkey_fsids);
+	cmd_fsids_jdecode(&spec->fsids, jfsids);
+}
+
+void cmd_spec_load(struct silofs_spec          *spec,
+                   const struct silofs_baseref *baseref)
+{
+	json_t *jspec = nullptr;
+
+	jspec = cmd_json_load(baseref->repodir, baseref->refname);
+	cmd_spec_jdecode(spec, jspec);
+	cmd_json_decref(jspec);
+}
+
+void cmd_spec_unlink(const struct silofs_baseref *baseref)
+{
+	cmd_json_unlink(baseref->repodir, baseref->refname);
+}
+
+void cmd_spec_setup(struct silofs_spec *spec)
+{
+	memset(spec, 0, sizeof(*spec));
+	cmd_fsids_setup(&spec->fsids);
+}
+
+void cmd_spec_clear(struct silofs_spec *spec)
+{
+	cmd_fsids_clear(&spec->fsids);
 }

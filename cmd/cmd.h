@@ -369,6 +369,19 @@ void cmd_fsref_load(struct silofs_fsref         *fsref,
 
 void cmd_fsref_unlink(const struct silofs_baseref *baseref);
 
+/* spec */
+void cmd_spec_setup(struct silofs_spec *spec);
+
+void cmd_spec_clear(struct silofs_spec *spec);
+
+void cmd_spec_save(const struct silofs_spec    *spec,
+                   const struct silofs_baseref *baseref);
+
+void cmd_spec_load(struct silofs_spec          *spec,
+                   const struct silofs_baseref *baseref);
+
+void cmd_spec_unlink(const struct silofs_baseref *baseref);
+
 /* security restrictions (landlock) */
 void cmd_restrict_process(const char *path, bool allow_mkdir);
 

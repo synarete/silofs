@@ -36,7 +36,7 @@ struct cmd_archive_in_args {
 
 struct cmd_archive_ctx {
 	struct cmd_archive_in_args in_args;
-	struct silofs_fsref        fsref[2];
+	struct silofs_fsref        ar_fsref;
 	struct silofs_args         args;
 	struct silofs_env         *env;
 	bool                       has_lockfile;
@@ -181,20 +181,15 @@ static void cmd_archive_setup_args(struct cmd_archive_ctx *ctx)
 	args->passwd          = ctx->in_args.password;
 }
 
-static void cmd_archive_load_fsids(struct cmd_archive_ctx *ctx)
+static void cmd_archive_load_spec(struct cmd_archive_ctx *ctx)
 {
-	cmd_fsids_load(&ctx->args.fsids, &ctx->args.bref[0]);
-}
-
-static void cmd_archive_load_fsref(struct cmd_archive_ctx *ctx)
-{
-	cmd_fsref_load(&ctx->fsref[0], &ctx->args.bref[0]);
+	cmd_spec_load(&ctx->args.spec, &ctx->args.bref[0]);
 }
 
 static void cmd_archive_setup_env(struct cmd_archive_ctx *ctx)
 {
 	cmd_new_env(&ctx->args, &ctx->env);
-	cmd_fsids_clear(&ctx->args.fsids);
+	cmd_spec_clear_fsids(&ctx->args.spec);
 	cmd_delpass(&ctx->in_args.password);
 }
 
@@ -210,12 +205,12 @@ static void cmd_archive_close_repo(struct cmd_archive_ctx *ctx)
 
 static void cmd_archive_sense_fs(struct cmd_archive_ctx *ctx)
 {
-	cmd_sense_fs(ctx->env, &ctx->fsref[0]);
+	cmd_sense_fs(ctx->env, &ctx->args.spec.fsref);
 }
 
 static void cmd_archive_open_fs(struct cmd_archive_ctx *ctx)
 {
-	cmd_open_fs(ctx->env, &ctx->fsref[0]);
+	cmd_open_fs(ctx->env, &ctx->args.spec.fsref);
 }
 
 static void cmd_archive_close_fs(struct cmd_archive_ctx *ctx)
@@ -225,13 +220,17 @@ static void cmd_archive_close_fs(struct cmd_archive_ctx *ctx)
 
 static void cmd_archive_execute(struct cmd_archive_ctx *ctx)
 {
-	struct silofs_baseref baseref = {
+	cmd_archive_fs(ctx->env, &ctx->args.spec.fsref, &ctx->ar_fsref);
+}
+
+static void cmd_archive_save_spec(struct cmd_archive_ctx *ctx)
+{
+	const struct silofs_baseref baseref = {
 		.repodir = ctx->in_args.repodir_real,
 		.refname = ctx->in_args.arname,
 	};
 
-	cmd_archive_fs(ctx->env, &ctx->fsref[0], &ctx->fsref[1]);
-	cmd_fsref_save(&ctx->fsref[1], &baseref);
+	cmd_spec_resave(&ctx->args.spec, &ctx->ar_fsref, &baseref);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -260,11 +259,8 @@ void cmd_execute_archive(void)
 	/* Setup input arguments */
 	cmd_archive_setup_args(&ctx);
 
-	/* Load local fs ids */
-	cmd_archive_load_fsids(&ctx);
-
-	/* Load fs boot-reference */
-	cmd_archive_load_fsref(&ctx);
+	/* Load fs spec */
+	cmd_archive_load_spec(&ctx);
 
 	/* Setup execution environment */
 	cmd_archive_setup_env(&ctx);
@@ -283,6 +279,9 @@ void cmd_execute_archive(void)
 
 	/* Do actual archive */
 	cmd_archive_execute(&ctx);
+
+	/* Save new fs spec */
+	cmd_archive_save_spec(&ctx);
 
 	/* Close file-system */
 	cmd_archive_close_fs(&ctx);

@@ -36,7 +36,6 @@ struct cmd_rmfs_in_args {
 struct cmd_rmfs_ctx {
 	struct silofs_ioc_query ioc_qry;
 	struct cmd_rmfs_in_args in_args;
-	struct silofs_fsref     fsref;
 	struct silofs_args      args;
 	struct silofs_env      *env;
 	bool                    has_lockfile;
@@ -188,21 +187,16 @@ static void cmd_rmfs_setup_args(struct cmd_rmfs_ctx *ctx)
 	args->passwd          = ctx->in_args.password;
 }
 
-static void cmd_rmfs_load_fsids(struct cmd_rmfs_ctx *ctx)
+static void cmd_rmfs_load_spec(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_fsids_load(&ctx->args.fsids, &ctx->args.bref[0]);
-	cmd_fsids_need_self(&ctx->args.fsids);
-}
-
-static void cmd_rmfs_load_fsref(struct cmd_rmfs_ctx *ctx)
-{
-	cmd_fsref_load(&ctx->fsref, &ctx->args.bref[0]);
+	cmd_spec_load(&ctx->args.spec, &ctx->args.bref[0]);
+	cmd_fsids_need_self(&ctx->args.spec.fsids);
 }
 
 static void cmd_rmfs_setup_env(struct cmd_rmfs_ctx *ctx)
 {
 	cmd_new_env(&ctx->args, &ctx->env);
-	cmd_fsids_clear(&ctx->args.fsids);
+	cmd_spec_clear_fsids(&ctx->args.spec);
 	cmd_delpass(&ctx->in_args.password);
 }
 
@@ -218,17 +212,17 @@ static void cmd_rmfs_close_repo(struct cmd_rmfs_ctx *ctx)
 
 static void cmd_rmfs_sense_fs(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_sense_fs(ctx->env, &ctx->fsref);
+	cmd_sense_fs(ctx->env, &ctx->args.spec.fsref);
 }
 
 static void cmd_rmfs_execute(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_remove_fs(ctx->env, &ctx->fsref);
+	cmd_remove_fs(ctx->env, &ctx->args.spec.fsref);
 }
 
 static void cmd_rmfs_unlink_blobid(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_fsref_unlink(&ctx->args.bref[0]);
+	cmd_spec_unlink(&ctx->args.bref[0]);
 }
 
 static void cmd_rmfs_destroy_env(struct cmd_rmfs_ctx *ctx)
@@ -314,11 +308,8 @@ void cmd_execute_rmfs(void)
 	/* Setup input arguments */
 	cmd_rmfs_setup_args(&ctx);
 
-	/* Load fs-ids mapping */
-	cmd_rmfs_load_fsids(&ctx);
-
-	/* Load fs boot-reference */
-	cmd_rmfs_load_fsref(&ctx);
+	/* Load fs spec */
+	cmd_rmfs_load_spec(&ctx);
 
 	/* Setup execution context */
 	cmd_rmfs_setup_env(&ctx);

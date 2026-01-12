@@ -341,41 +341,25 @@ void cmd_setup_args(struct silofs_args *args);
 void cmd_destroy_args(struct silofs_args *args);
 
 /* fsids */
-void cmd_fsids_setup(struct silofs_fsids *fsids);
-
-void cmd_fsids_clear(struct silofs_fsids *fsids);
-
-void cmd_fsids_save(const struct silofs_fsids   *fsids,
-                    const struct silofs_baseref *baseref);
-
-void cmd_fsids_load(struct silofs_fsids         *fsids,
-                    const struct silofs_baseref *baseref);
-
 void cmd_fsids_add_uidgid_of(struct silofs_fsids *fsids, const char *name);
 
 void cmd_fsids_add_supgroups_of(struct silofs_fsids *fsids, const char *name);
 
-void cmd_fsids_need_uidgid(const struct silofs_fsids *fsids, uid_t host_uid,
-                           gid_t host_gid);
-
 void cmd_fsids_need_self(const struct silofs_fsids *fsids);
-
-/* fsref */
-void cmd_fsref_save(const struct silofs_fsref   *fsref,
-                    const struct silofs_baseref *baseref);
-
-void cmd_fsref_load(struct silofs_fsref         *fsref,
-                    const struct silofs_baseref *baseref);
-
-void cmd_fsref_unlink(const struct silofs_baseref *baseref);
 
 /* spec */
 void cmd_spec_setup(struct silofs_spec *spec);
 
-void cmd_spec_clear(struct silofs_spec *spec);
+void cmd_spec_clear_fsids(struct silofs_spec *spec);
+
+void cmd_spec_reset(struct silofs_spec *spec);
 
 void cmd_spec_save(const struct silofs_spec    *spec,
                    const struct silofs_baseref *baseref);
+
+void cmd_spec_resave(const struct silofs_spec    *spec,
+                     const struct silofs_fsref   *fsref,
+                     const struct silofs_baseref *baseref);
 
 void cmd_spec_load(struct silofs_spec          *spec,
                    const struct silofs_baseref *baseref);

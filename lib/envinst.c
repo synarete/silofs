@@ -442,7 +442,7 @@ static void envi_fini_flusher(struct silofs_env_inst *envi)
 
 static int envi_init_idsmap(struct silofs_env_inst *envi)
 {
-	const struct silofs_fsids *ugids  = &envi->args.fsids;
+	const struct silofs_fsids *fsids  = &envi->args.spec.fsids;
 	struct silofs_idsmap      *idsmap = &envi->idsmap;
 	bool                       allow_hostids;
 	int                        err;
@@ -453,7 +453,7 @@ static int envi_init_idsmap(struct silofs_env_inst *envi)
 	if (err) {
 		return err;
 	}
-	err = silofs_idsmap_populate(idsmap, ugids);
+	err = silofs_idsmap_populate(idsmap, fsids);
 	if (err) {
 		silofs_idsmap_fini(idsmap);
 		return err;

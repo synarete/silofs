@@ -301,8 +301,8 @@ cmd_fsids_require_host_gid(const struct silofs_fsids *fsids, gid_t host_gid)
 	cmd_diez("missing host gid mapping: gid=%u", host_gid);
 }
 
-void cmd_fsids_need_uidgid(const struct silofs_fsids *fsids, uid_t host_uid,
-                           gid_t host_gid)
+static void cmd_fsids_need_uidgid(const struct silofs_fsids *fsids,
+                                  uid_t host_uid, gid_t host_gid)
 {
 	cmd_fsids_require_host_uid(fsids, host_uid);
 	cmd_fsids_require_host_gid(fsids, host_gid);
@@ -406,9 +406,8 @@ void cmd_fsids_need_self(const struct silofs_fsids *fsids)
 	cmd_pstrfree(&username);
 }
 
-void cmd_fsids_setup(struct silofs_fsids *fsids)
+static void cmd_fsids_setup(struct silofs_fsids *fsids)
 {
-	silofs_getfsmeta(&fsids->fsmeta);
 	fsids->users.nuids  = 0;
 	fsids->users.uids   = nullptr;
 	fsids->groups.ngids = 0;
@@ -421,7 +420,7 @@ static void cmd_fsids_dealloc(struct silofs_fsids *fsids)
 	cmd_dealloc_groups_ids(&fsids->groups);
 }
 
-void cmd_fsids_clear(struct silofs_fsids *fsids)
+static void cmd_fsids_clear(struct silofs_fsids *fsids)
 {
 	cmd_fsids_dealloc(fsids);
 	cmd_fsids_setup(fsids);
@@ -429,9 +428,9 @@ void cmd_fsids_clear(struct silofs_fsids *fsids)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
+static const char cmd_jkey_fsmeta[] = "fsmeta";
 static const char cmd_jkey_fsref[]  = "fsref";
 static const char cmd_jkey_fsids[]  = "fsids";
-static const char cmd_jkey_fsmeta[] = "fsmeta";
 static const char cmd_jkey_users[]  = "users";
 static const char cmd_jkey_user[]   = "user";
 static const char cmd_jkey_uid[]    = "uid";
@@ -439,19 +438,6 @@ static const char cmd_jkey_groups[] = "groups";
 static const char cmd_jkey_group[]  = "group";
 static const char cmd_jkey_gid[]    = "gid";
 static const char cmd_jkey_mbaddr[] = "mbaddr";
-
-static const char cmd_jfsids_filename[] = "fsids.json";
-
-static json_t *cmd_fsids_jencode_fsmeta(const struct silofs_fsids *fsids)
-{
-	return cmd_json_fsmeta(&fsids->fsmeta);
-}
-
-static void
-cmd_fsids_jdecode_fsmeta(struct silofs_fsids *fsids, const json_t *jfsmeta)
-{
-	cmd_json_fsmeta_value(jfsmeta, &fsids->fsmeta);
-}
 
 static json_t *cmd_fsids_jencode_users(const struct silofs_fsids *fsids)
 {
@@ -560,14 +546,10 @@ cmd_fsids_jdecode_groups(struct silofs_fsids *fsids, const json_t *jgroups)
 static json_t *cmd_fsids_jencode(const struct silofs_fsids *fsids)
 {
 	json_t *jfsids  = nullptr;
-	json_t *jfsmeta = nullptr;
 	json_t *jusers  = nullptr;
 	json_t *jgroups = nullptr;
 
 	jfsids = cmd_json_object();
-
-	jfsmeta = cmd_fsids_jencode_fsmeta(fsids);
-	cmd_json_object_set_new(jfsids, cmd_jkey_fsmeta, jfsmeta);
 
 	jusers = cmd_fsids_jencode_users(fsids);
 	cmd_json_object_set_new(jfsids, cmd_jkey_users, jusers);
@@ -580,12 +562,8 @@ static json_t *cmd_fsids_jencode(const struct silofs_fsids *fsids)
 
 static void cmd_fsids_jdecode(struct silofs_fsids *fsids, const json_t *jfsids)
 {
-	const json_t *jfsmeta = nullptr;
 	const json_t *jusers  = nullptr;
 	const json_t *jgroups = nullptr;
-
-	jfsmeta = cmd_json_object_get(jfsids, cmd_jkey_fsmeta);
-	cmd_fsids_jdecode_fsmeta(fsids, jfsmeta);
 
 	jusers = cmd_json_object_get_array(jfsids, cmd_jkey_users);
 	cmd_fsids_jdecode_users(fsids, jusers);
@@ -594,91 +572,42 @@ static void cmd_fsids_jdecode(struct silofs_fsids *fsids, const json_t *jfsids)
 	cmd_fsids_jdecode_groups(fsids, jgroups);
 }
 
-void cmd_fsids_save(const struct silofs_fsids   *fsids,
-                    const struct silofs_baseref *baseref)
-{
-	json_t *jfsids;
-
-	jfsids = cmd_fsids_jencode(fsids);
-	cmd_json_save(jfsids, baseref->repodir, cmd_jfsids_filename);
-	cmd_json_decref(jfsids);
-}
-
-void cmd_fsids_load(struct silofs_fsids         *fsids,
-                    const struct silofs_baseref *baseref)
-{
-	json_t *jfsids;
-
-	jfsids = cmd_json_load(baseref->repodir, cmd_jfsids_filename);
-	cmd_fsids_jdecode(fsids, jfsids);
-	cmd_json_decref(jfsids);
-}
-
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static json_t *cmd_fsref_jencode(const struct silofs_fsref *fsref)
 {
-	json_t *jobj;
-	json_t *jsub;
+	json_t *jfsref = nullptr;
+	json_t *jsub   = nullptr;
 
-	jobj = cmd_json_object();
-
-	jsub = cmd_json_fsmeta(&fsref->fsmeta);
-	cmd_json_object_set_new(jobj, cmd_jkey_fsmeta, jsub);
+	jfsref = cmd_json_object();
 
 	jsub = cmd_json_mbaddr(&fsref->mbaddr);
-	cmd_json_object_set_new(jobj, cmd_jkey_mbaddr, jsub);
+	cmd_json_object_set_new(jfsref, cmd_jkey_mbaddr, jsub);
 
-	return jobj;
+	return jfsref;
 }
 
 static void cmd_fsref_jdecode(struct silofs_fsref *fsref, const json_t *jobj)
 {
-	json_t *jsub;
-
-	jsub = cmd_json_object_get(jobj, cmd_jkey_fsmeta);
-	cmd_json_fsmeta_value(jsub, &fsref->fsmeta);
-
-	jsub = cmd_json_object_get(jobj, cmd_jkey_mbaddr);
-	cmd_json_mbaddr_value(jsub, &fsref->mbaddr);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-void cmd_fsref_save(const struct silofs_fsref   *fsref,
-                    const struct silofs_baseref *baseref)
-{
 	json_t *jfsref = nullptr;
 
-	jfsref = cmd_fsref_jencode(fsref);
-	cmd_json_save(jfsref, baseref->repodir, baseref->refname);
-	cmd_json_decref(jfsref);
-}
-
-void cmd_fsref_load(struct silofs_fsref         *fsref,
-                    const struct silofs_baseref *baseref)
-{
-	json_t *jfsref = nullptr;
-
-	jfsref = cmd_json_load(baseref->repodir, baseref->refname);
-	cmd_fsref_jdecode(fsref, jfsref);
-	cmd_json_decref(jfsref);
-}
-
-void cmd_fsref_unlink(const struct silofs_baseref *baseref)
-{
-	cmd_json_unlink(baseref->repodir, baseref->refname);
+	jfsref = cmd_json_object_get(jobj, cmd_jkey_mbaddr);
+	cmd_json_mbaddr_value(jfsref, &fsref->mbaddr);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static json_t *cmd_spec_jencode(const struct silofs_spec *spec)
 {
-	json_t *jspec  = nullptr;
-	json_t *jfsref = nullptr;
-	json_t *jfsids = nullptr;
+	json_t *jspec   = nullptr;
+	json_t *jfsmeta = nullptr;
+	json_t *jfsref  = nullptr;
+	json_t *jfsids  = nullptr;
 
 	jspec = cmd_json_object();
+
+	jfsmeta = cmd_json_fsmeta(&spec->fsref.fsmeta);
+	cmd_json_object_set_new(jspec, cmd_jkey_fsmeta, jfsmeta);
 
 	jfsref = cmd_fsref_jencode(&spec->fsref);
 	cmd_json_object_set_new(jspec, cmd_jkey_fsref, jfsref);
@@ -699,10 +628,25 @@ void cmd_spec_save(const struct silofs_spec    *spec,
 	cmd_json_decref(jspec);
 }
 
+void cmd_spec_resave(const struct silofs_spec    *spec,
+                     const struct silofs_fsref   *fsref,
+                     const struct silofs_baseref *baseref)
+{
+	struct silofs_spec spec2 = {};
+
+	memcpy(&spec2, spec, sizeof(spec2));
+	memcpy(&spec2.fsref, fsref, sizeof(spec2.fsref));
+	cmd_spec_save(&spec2, baseref);
+}
+
 static void cmd_spec_jdecode(struct silofs_spec *spec, const json_t *jspec)
 {
-	json_t *jfsref = nullptr;
-	json_t *jfsids = nullptr;
+	json_t *jfsmeta = nullptr;
+	json_t *jfsref  = nullptr;
+	json_t *jfsids  = nullptr;
+
+	jfsmeta = cmd_json_object_get(jspec, cmd_jkey_fsmeta);
+	cmd_json_fsmeta_value(jfsmeta, &spec->fsref.fsmeta);
 
 	jfsref = cmd_json_object_get(jspec, cmd_jkey_fsref);
 	cmd_fsref_jdecode(&spec->fsref, jfsref);
@@ -726,13 +670,25 @@ void cmd_spec_unlink(const struct silofs_baseref *baseref)
 	cmd_json_unlink(baseref->repodir, baseref->refname);
 }
 
-void cmd_spec_setup(struct silofs_spec *spec)
+static void cmd_spec_bzero(struct silofs_spec *spec)
 {
 	memset(spec, 0, sizeof(*spec));
-	cmd_fsids_setup(&spec->fsids);
 }
 
-void cmd_spec_clear(struct silofs_spec *spec)
+void cmd_spec_setup(struct silofs_spec *spec)
+{
+	cmd_spec_bzero(spec);
+	cmd_fsids_setup(&spec->fsids);
+	silofs_getfsmeta(&spec->fsref.fsmeta);
+}
+
+void cmd_spec_clear_fsids(struct silofs_spec *spec)
 {
 	cmd_fsids_clear(&spec->fsids);
+}
+
+void cmd_spec_reset(struct silofs_spec *spec)
+{
+	cmd_spec_clear_fsids(spec);
+	cmd_spec_bzero(spec);
 }

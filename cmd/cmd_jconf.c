@@ -298,7 +298,7 @@ json_t *cmd_json_mbaddr(const struct silofs_mbaddr *mbaddr)
 
 void cmd_json_mbaddr_value(const json_t *jstr, struct silofs_mbaddr *mbaddr)
 {
-	const char *str;
+	const char *str = nullptr;
 	size_t      len;
 
 	memset(mbaddr, 0, sizeof(*mbaddr));
@@ -373,7 +373,7 @@ static void cmd_save_jtext_at(int dfd, const char *name, const char *jtxt)
 
 static void cmd_json_save_at(json_t *jobj, int dfd, const char *name)
 {
-	char *jtxt;
+	char *jtxt = nullptr;
 
 	jtxt = cmd_json_dumps(jobj);
 	cmd_save_jtext_at(dfd, name, jtxt);

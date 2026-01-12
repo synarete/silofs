@@ -44,7 +44,6 @@ struct cmd_mkfs_in_args {
 struct cmd_mkfs_ctx {
 	struct cmd_mkfs_in_args in_args;
 	struct silofs_args      args;
-	struct silofs_fsref     fsref;
 	struct silofs_env      *env;
 	bool                    has_lockfile;
 };
@@ -215,12 +214,12 @@ static void cmd_mkfs_setup_fsids(struct cmd_mkfs_ctx *ctx)
 	const char         *username = ctx->in_args.username;
 
 	cmd_uidgid_of(username, &args->uid, &args->gid);
-	cmd_fsids_add_uidgid_of(&args->fsids, username);
+	cmd_fsids_add_uidgid_of(&args->spec.fsids, username);
 	if (ctx->in_args.with_sup_groups) {
-		cmd_fsids_add_supgroups_of(&args->fsids, username);
+		cmd_fsids_add_supgroups_of(&args->spec.fsids, username);
 	}
 	if (ctx->in_args.with_root_user && strcmp(username, "root")) {
-		cmd_fsids_add_uidgid_of(&args->fsids, "root");
+		cmd_fsids_add_uidgid_of(&args->spec.fsids, "root");
 	}
 }
 
@@ -242,23 +241,12 @@ static void cmd_mkfs_close_repo(const struct cmd_mkfs_ctx *ctx)
 
 static void cmd_mkfs_format_fs(struct cmd_mkfs_ctx *ctx)
 {
-	cmd_format_fs(ctx->env, &ctx->fsref);
+	cmd_format_fs(ctx->env, &ctx->args.spec.fsref);
 }
 
-static void cmd_mkfs_save_fsref(struct cmd_mkfs_ctx *ctx)
+static void cmd_mkfs_save_spec(struct cmd_mkfs_ctx *ctx)
 {
-	cmd_fsref_save(&ctx->fsref, &ctx->args.bref[0]);
-}
-
-static void cmd_mkfs_save_fsids(struct cmd_mkfs_ctx *ctx)
-{
-	cmd_fsids_save(&ctx->args.fsids, &ctx->args.bref[0]);
-}
-
-static void cmd_mkfs_save_refs(struct cmd_mkfs_ctx *ctx)
-{
-	cmd_mkfs_save_fsref(ctx);
-	cmd_mkfs_save_fsids(ctx);
+	cmd_spec_save(&ctx->args.spec, &ctx->args.bref[0]);
 }
 
 static void cmd_mkfs_close_fs(struct cmd_mkfs_ctx *ctx)
@@ -314,8 +302,8 @@ void cmd_execute_mkfs(void)
 	/* Format file-system layer */
 	cmd_mkfs_format_fs(&ctx);
 
-	/* Save top-level refs */
-	cmd_mkfs_save_refs(&ctx);
+	/* Save fs spec */
+	cmd_mkfs_save_spec(&ctx);
 
 	/* Post-format cleanups */
 	cmd_mkfs_close_fs(&ctx);

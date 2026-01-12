@@ -35,7 +35,6 @@ struct cmd_fsck_in_args {
 struct cmd_fsck_ctx {
 	struct cmd_fsck_in_args in_args;
 	struct silofs_args      args;
-	struct silofs_fsref     fsref;
 	struct silofs_env      *env;
 	bool                    has_lockfile;
 };
@@ -158,20 +157,15 @@ static void cmd_fsck_setup_args(struct cmd_fsck_ctx *ctx)
 	args->passwd          = ctx->in_args.password;
 }
 
-static void cmd_fsck_load_fsids(struct cmd_fsck_ctx *ctx)
+static void cmd_fsck_load_spec(struct cmd_fsck_ctx *ctx)
 {
-	cmd_fsids_load(&ctx->args.fsids, &ctx->args.bref[0]);
-}
-
-static void cmd_fsck_load_fsref(struct cmd_fsck_ctx *ctx)
-{
-	cmd_fsref_load(&ctx->fsref, &ctx->args.bref[0]);
+	cmd_spec_load(&ctx->args.spec, &ctx->args.bref[0]);
 }
 
 static void cmd_fsck_setup_env(struct cmd_fsck_ctx *ctx)
 {
 	cmd_new_env(&ctx->args, &ctx->env);
-	cmd_fsids_clear(&ctx->args.fsids);
+	cmd_spec_clear_fsids(&ctx->args.spec);
 	cmd_delpass(&ctx->in_args.password);
 }
 
@@ -182,12 +176,12 @@ static void cmd_fsck_open_repo(struct cmd_fsck_ctx *ctx)
 
 static void cmd_fsck_sense_fs(struct cmd_fsck_ctx *ctx)
 {
-	cmd_sense_fs(ctx->env, &ctx->fsref);
+	cmd_sense_fs(ctx->env, &ctx->args.spec.fsref);
 }
 
 static void cmd_fsck_open_fs(struct cmd_fsck_ctx *ctx)
 {
-	cmd_open_fs(ctx->env, &ctx->fsref);
+	cmd_open_fs(ctx->env, &ctx->args.spec.fsref);
 }
 
 static void cmd_fsck_close_fs(struct cmd_fsck_ctx *ctx)
@@ -228,11 +222,8 @@ void cmd_execute_fsck(void)
 	/* Setup input arguments */
 	cmd_fsck_setup_args(&ctx);
 
-	/* Load fs-ids mapping */
-	cmd_fsck_load_fsids(&ctx);
-
-	/* Load fs boot-reference */
-	cmd_fsck_load_fsref(&ctx);
+	/* Load fs spec */
+	cmd_fsck_load_spec(&ctx);
 
 	/* Setup execution environment */
 	cmd_fsck_setup_env(&ctx);

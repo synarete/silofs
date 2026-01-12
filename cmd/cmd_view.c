@@ -35,7 +35,6 @@ struct cmd_view_in_args {
 
 struct cmd_view_ctx {
 	struct cmd_view_in_args in_args;
-	struct silofs_fsref     fsref;
 	struct silofs_args      args;
 	struct silofs_env      *env;
 	FILE                   *out_fp;
@@ -175,21 +174,16 @@ static void cmd_view_setup_args(struct cmd_view_ctx *ctx)
 	args->passwd          = ctx->in_args.password;
 }
 
-static void cmd_view_load_fsids(struct cmd_view_ctx *ctx)
+static void cmd_view_load_spec(struct cmd_view_ctx *ctx)
 {
-	cmd_fsids_load(&ctx->args.fsids, &ctx->args.bref[0]);
-	cmd_fsids_need_self(&ctx->args.fsids);
-}
-
-static void cmd_view_load_fsref(struct cmd_view_ctx *ctx)
-{
-	cmd_fsref_load(&ctx->fsref, &ctx->args.bref[0]);
+	cmd_spec_load(&ctx->args.spec, &ctx->args.bref[0]);
+	cmd_fsids_need_self(&ctx->args.spec.fsids);
 }
 
 static void cmd_view_setup_env(struct cmd_view_ctx *ctx)
 {
 	cmd_new_env(&ctx->args, &ctx->env);
-	cmd_fsids_clear(&ctx->args.fsids);
+	cmd_spec_clear_fsids(&ctx->args.spec);
 	cmd_delpass(&ctx->in_args.password);
 }
 
@@ -205,12 +199,12 @@ static void cmd_view_close_repo(struct cmd_view_ctx *ctx)
 
 static void cmd_view_sense_fs(struct cmd_view_ctx *ctx)
 {
-	cmd_sense_fs(ctx->env, &ctx->fsref);
+	cmd_sense_fs(ctx->env, &ctx->args.spec.fsref);
 }
 
 static void cmd_view_open_fs(struct cmd_view_ctx *ctx)
 {
-	cmd_open_fs(ctx->env, &ctx->fsref);
+	cmd_open_fs(ctx->env, &ctx->args.spec.fsref);
 }
 
 static void cmd_view_close_fs(struct cmd_view_ctx *ctx)
@@ -253,11 +247,8 @@ void cmd_execute_view(void)
 	/* Setup input arguments */
 	cmd_view_setup_args(&ctx);
 
-	/* Load fs-ids mapping */
-	cmd_view_load_fsids(&ctx);
-
-	/* Require fs boot-reference */
-	cmd_view_load_fsref(&ctx);
+	/* Load fs spec */
+	cmd_view_load_spec(&ctx);
 
 	/* Setup execution environment */
 	cmd_view_setup_env(&ctx);

@@ -299,7 +299,7 @@ void cmd_restore_fs(struct silofs_env *env, const struct silofs_fsref *fsref,
 void cmd_setup_args(struct silofs_args *args)
 {
 	memset(args, 0, sizeof(*args));
-	cmd_fsids_setup(&args->fsids);
+	cmd_spec_setup(&args->spec);
 	args->uid   = getuid();
 	args->gid   = getgid();
 	args->pid   = getpid();
@@ -308,6 +308,6 @@ void cmd_setup_args(struct silofs_args *args)
 
 void cmd_destroy_args(struct silofs_args *args)
 {
-	cmd_fsids_clear(&args->fsids);
+	cmd_spec_reset(&args->spec);
 	memset(args, 0, sizeof(*args));
 }

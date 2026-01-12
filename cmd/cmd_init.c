@@ -77,7 +77,7 @@ static void cmd_init_parse_optargs(struct cmd_init_ctx *ctx)
 static void cmd_init_finalize(struct cmd_init_ctx *ctx)
 {
 	cmd_del_env(&ctx->env);
-	cmd_fsids_clear(&ctx->args.fsids);
+	cmd_destroy_args(&ctx->args);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_init_ctx_p = nullptr;

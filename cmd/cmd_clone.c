@@ -44,7 +44,6 @@ struct cmd_clone_in_args {
 struct cmd_clone_ctx {
 	struct cmd_clone_in_args in_args;
 	struct silofs_args       args;
-	struct silofs_fsref      fsref;
 	struct silofs_fsrefs     fsrefs;
 	struct silofs_env       *env;
 	union silofs_ioc_u      *ioc;
@@ -308,20 +307,15 @@ static void cmd_clone_setup_args(struct cmd_clone_ctx *ctx)
 	args->passwd          = ctx->in_args.password;
 }
 
-static void cmd_clone_load_fsids(struct cmd_clone_ctx *ctx)
+static void cmd_clone_load_spec(struct cmd_clone_ctx *ctx)
 {
-	cmd_fsids_load(&ctx->args.fsids, &ctx->args.bref[0]);
-}
-
-static void cmd_clone_load_fsref(struct cmd_clone_ctx *ctx)
-{
-	cmd_fsref_load(&ctx->fsref, &ctx->args.bref[0]);
+	cmd_spec_load(&ctx->args.spec, &ctx->args.bref[0]);
 }
 
 static void cmd_clone_setup_env(struct cmd_clone_ctx *ctx)
 {
 	cmd_new_env(&ctx->args, &ctx->env);
-	cmd_fsids_clear(&ctx->args.fsids);
+	cmd_spec_clear_fsids(&ctx->args.spec);
 	cmd_delpass(&ctx->in_args.password);
 }
 
@@ -337,12 +331,12 @@ static void cmd_clone_close_repo(struct cmd_clone_ctx *ctx)
 
 static void cmd_clone_sense_fs(struct cmd_clone_ctx *ctx)
 {
-	cmd_sense_fs(ctx->env, &ctx->fsref);
+	cmd_sense_fs(ctx->env, &ctx->args.spec.fsref);
 }
 
 static void cmd_clone_open_fs(struct cmd_clone_ctx *ctx)
 {
-	cmd_open_fs(ctx->env, &ctx->fsref);
+	cmd_open_fs(ctx->env, &ctx->args.spec.fsref);
 }
 
 static void cmd_clone_do_clonefs(struct cmd_clone_ctx *ctx)
@@ -355,24 +349,24 @@ static void cmd_clone_close_fs(struct cmd_clone_ctx *ctx)
 	cmd_close_fs(ctx->env);
 }
 
-static void cmd_clone_save_fork_fsref(struct cmd_clone_ctx *ctx)
+static void cmd_clone_save_fork(struct cmd_clone_ctx *ctx)
 {
-	struct silofs_baseref baseref = {
+	const struct silofs_baseref baseref = {
 		.repodir = ctx->in_args.repodir_real,
 		.refname = ctx->in_args.forkname,
 	};
 
-	cmd_fsref_save(&ctx->fsrefs.fork, &baseref);
+	cmd_spec_resave(&ctx->args.spec, &ctx->fsrefs.fork, &baseref);
 }
 
-static void cmd_clone_save_main_fsref(struct cmd_clone_ctx *ctx)
+static void cmd_clone_save_main(struct cmd_clone_ctx *ctx)
 {
-	struct silofs_baseref baseref = {
+	const struct silofs_baseref baseref = {
 		.repodir = ctx->in_args.repodir_real,
 		.refname = ctx->in_args.fsname,
 	};
 
-	cmd_fsref_save(&ctx->fsrefs.main, &baseref);
+	cmd_spec_resave(&ctx->args.spec, &ctx->fsrefs.main, &baseref);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -433,11 +427,8 @@ void cmd_execute_clone(void)
 	/* Setup input arguments */
 	cmd_clone_setup_args(ctx);
 
-	/* Load fs boot-reference */
-	cmd_clone_load_fsref(ctx);
-
-	/* Load fs-ids mapping */
-	cmd_clone_load_fsids(ctx);
+	/* Load fs spec */
+	cmd_clone_load_spec(ctx);
 
 	/* Setup execution environment */
 	cmd_clone_setup_env(ctx);
@@ -454,11 +445,11 @@ void cmd_execute_clone(void)
 	/* Close repository */
 	cmd_clone_close_repo(ctx);
 
-	/* Save new clone bconf */
-	cmd_clone_save_fork_fsref(ctx);
+	/* Save new clone spec */
+	cmd_clone_save_fork(ctx);
 
-	/* Re-save (overwrite) original bconf */
-	cmd_clone_save_main_fsref(ctx);
+	/* Re-save (overwrite) original spec */
+	cmd_clone_save_main(ctx);
 
 	/* Delete environment */
 	cmd_clone_destroy_env(ctx);

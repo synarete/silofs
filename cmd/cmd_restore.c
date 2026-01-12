@@ -37,7 +37,7 @@ struct cmd_restore_in_args {
 struct cmd_restore_ctx {
 	struct cmd_restore_in_args in_args;
 	struct silofs_args         args;
-	struct silofs_fsref        fsref[2];
+	struct silofs_fsref        fsref;
 	struct silofs_env         *env;
 	bool                       has_lockfile;
 };
@@ -180,9 +180,9 @@ static void cmd_restore_setup_args(struct cmd_restore_ctx *ctx)
 	args->passwd          = ctx->in_args.password;
 }
 
-static void cmd_restore_load_fsref(struct cmd_restore_ctx *ctx)
+static void cmd_restore_load_spec(struct cmd_restore_ctx *ctx)
 {
-	cmd_fsref_load(&ctx->fsref[1], &ctx->args.bref[1]);
+	cmd_spec_load(&ctx->args.spec, &ctx->args.bref[1]);
 }
 
 static void cmd_restore_setup_env(struct cmd_restore_ctx *ctx)
@@ -202,18 +202,22 @@ static void cmd_restore_close_repo(struct cmd_restore_ctx *ctx)
 
 static void cmd_restore_sense_archive(struct cmd_restore_ctx *ctx)
 {
-	cmd_sense_fs(ctx->env, &ctx->fsref[1]);
+	cmd_sense_fs(ctx->env, &ctx->args.spec.fsref);
 }
 
 static void cmd_restore_execute(struct cmd_restore_ctx *ctx)
 {
-	struct silofs_baseref baseref = {
+	cmd_restore_fs(ctx->env, &ctx->args.spec.fsref, &ctx->fsref);
+}
+
+static void cmd_restore_save_spec(struct cmd_restore_ctx *ctx)
+{
+	const struct silofs_baseref baseref = {
 		.repodir = ctx->in_args.repodir_real,
 		.refname = ctx->in_args.fsname,
 	};
 
-	cmd_restore_fs(ctx->env, &ctx->fsref[1], &ctx->fsref[0]);
-	cmd_fsref_save(&ctx->fsref[0], &baseref);
+	cmd_spec_resave(&ctx->args.spec, &ctx->fsref, &baseref);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -242,8 +246,8 @@ void cmd_execute_restore(void)
 	/* Setup input arguments */
 	cmd_restore_setup_args(&ctx);
 
-	/* Load archive boot-reference */
-	cmd_restore_load_fsref(&ctx);
+	/* Load archive spec */
+	cmd_restore_load_spec(&ctx);
 
 	/* Setup execution environment */
 	cmd_restore_setup_env(&ctx);
@@ -259,6 +263,9 @@ void cmd_execute_restore(void)
 
 	/* Do actual restore */
 	cmd_restore_execute(&ctx);
+
+	/* Save new fs spec */
+	cmd_restore_save_spec(&ctx);
 
 	/* Close repository */
 	cmd_restore_close_repo(&ctx);

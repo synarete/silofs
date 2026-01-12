@@ -86,7 +86,6 @@ struct silofs_groups_ids {
 
 /* file-system's users/groups host-to-internal id-mappings */
 struct silofs_fsids {
-	struct silofs_fsmeta     fsmeta;
 	struct silofs_users_ids  users;
 	struct silofs_groups_ids groups;
 };
@@ -117,7 +116,7 @@ struct silofs_spec {
 
 /* input arguments */
 struct silofs_args {
-	struct silofs_fsids   fsids;
+	struct silofs_spec    spec;
 	struct silofs_baseref bref[2];
 	const char           *mntdir;
 	const char           *passwd;

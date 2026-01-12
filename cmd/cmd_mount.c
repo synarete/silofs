@@ -60,7 +60,6 @@ struct cmd_mount_in_args {
 
 struct cmd_mount_ctx {
 	struct cmd_mount_in_args in_args;
-	struct silofs_fsref      fsref;
 	struct silofs_args       args;
 	struct silofs_env       *env;
 	pid_t                    child_pid;
@@ -267,22 +266,17 @@ static void cmd_mount_setup_args(struct cmd_mount_ctx *ctx)
 	args->mntdir          = in_args->mntpoint_real;
 }
 
-static void cmd_mount_load_fsids(struct cmd_mount_ctx *ctx)
+static void cmd_mount_load_spec(struct cmd_mount_ctx *ctx)
 {
-	cmd_fsids_load(&ctx->args.fsids, &ctx->args.bref[0]);
-	cmd_fsids_need_self(&ctx->args.fsids);
-}
-
-static void cmd_mount_load_fsref(struct cmd_mount_ctx *ctx)
-{
-	cmd_fsref_load(&ctx->fsref, &ctx->args.bref[0]);
+	cmd_spec_load(&ctx->args.spec, &ctx->args.bref[0]);
+	cmd_fsids_need_self(&ctx->args.spec.fsids);
 }
 
 static void cmd_mount_setup_env(struct cmd_mount_ctx *ctx, int phase)
 {
 	cmd_new_env(&ctx->args, &ctx->env);
 	if (phase == 2) {
-		cmd_fsids_clear(&ctx->args.fsids);
+		cmd_spec_clear_fsids(&ctx->args.spec);
 		cmd_delpass(&ctx->in_args.password);
 	}
 }
@@ -410,12 +404,12 @@ static void cmd_mount_close_repo(struct cmd_mount_ctx *ctx)
 
 static void cmd_mount_sense_fs(struct cmd_mount_ctx *ctx)
 {
-	cmd_sense_fs(ctx->env, &ctx->fsref);
+	cmd_sense_fs(ctx->env, &ctx->args.spec.fsref);
 }
 
 static void cmd_mount_open_fs(struct cmd_mount_ctx *ctx)
 {
-	cmd_open_fs(ctx->env, &ctx->fsref);
+	cmd_open_fs(ctx->env, &ctx->args.spec.fsref);
 }
 
 static void cmd_mount_execute_fs(struct cmd_mount_ctx *ctx)
@@ -716,11 +710,8 @@ void cmd_execute_mount(void)
 	/* Setup input arguments */
 	cmd_mount_setup_args(&ctx);
 
-	/* Load fs-ids mapping */
-	cmd_mount_load_fsids(&ctx);
-
-	/* Load fs boot-reference */
-	cmd_mount_load_fsref(&ctx);
+	/* Load fs spec */
+	cmd_mount_load_spec(&ctx);
 
 	/* Execute pre-mount as command-line process */
 	cmd_mount_exec_phase1(&ctx);

@@ -54,12 +54,12 @@ static char *cmd_dup_user_group_name(const char *name)
 
 static uid_t cmd_resolve_name_to_uid(const char *name)
 {
-	struct passwd  pwd = { .pw_uid = (uid_t)(-1) };
-	struct passwd *pw  = nullptr;
-	const size_t   bsz = cmd_sysconf_getpwgr_rsize_max();
-	void          *buf = cmd_zalloc(bsz);
-	uid_t          uid = (uid_t)(-1);
-	int            err;
+	struct passwd pwd = { .pw_uid = (uid_t)(-1) };
+	struct passwd *pw = nullptr;
+	const size_t bsz  = cmd_sysconf_getpwgr_rsize_max();
+	void *buf         = cmd_zalloc(bsz);
+	uid_t uid         = (uid_t)(-1);
+	int err;
 
 	errno = 0;
 	err   = getpwnam_r(name, &pwd, buf, bsz, &pw);
@@ -78,11 +78,11 @@ static uid_t cmd_resolve_name_to_uid(const char *name)
 static void
 cmd_resolve_name_to_uidgid(const char *name, uid_t *out_uid, gid_t *out_gid)
 {
-	struct passwd  pwd = { .pw_uid = (uid_t)(-1) };
-	struct passwd *pw  = nullptr;
-	const size_t   bsz = cmd_sysconf_getpwgr_rsize_max();
-	void          *buf = cmd_zalloc(bsz);
-	int            err;
+	struct passwd pwd = { .pw_uid = (uid_t)(-1) };
+	struct passwd *pw = nullptr;
+	const size_t bsz  = cmd_sysconf_getpwgr_rsize_max();
+	void *buf         = cmd_zalloc(bsz);
+	int err;
 
 	errno = 0;
 	err   = getpwnam_r(name, &pwd, buf, bsz, &pw);
@@ -100,12 +100,12 @@ cmd_resolve_name_to_uidgid(const char *name, uid_t *out_uid, gid_t *out_gid)
 
 static char *cmd_resolve_uid_to_name(uid_t uid)
 {
-	struct passwd  pwd  = { .pw_uid = (uid_t)(-1) };
-	struct passwd *pw   = nullptr;
-	const size_t   bsz  = cmd_sysconf_getpwgr_rsize_max();
-	void          *buf  = cmd_zalloc(bsz);
-	char          *name = nullptr;
-	int            err;
+	struct passwd pwd = { .pw_uid = (uid_t)(-1) };
+	struct passwd *pw = nullptr;
+	const size_t bsz  = cmd_sysconf_getpwgr_rsize_max();
+	void *buf         = cmd_zalloc(bsz);
+	char *name        = nullptr;
+	int err;
 
 	errno = 0;
 	err   = getpwuid_r(uid, &pwd, buf, bsz, &pw);
@@ -123,12 +123,12 @@ static char *cmd_resolve_uid_to_name(uid_t uid)
 
 static gid_t cmd_resolve_name_to_gid(const char *name)
 {
-	struct group  grp = { .gr_gid = (gid_t)(-1) };
-	struct group *gr  = nullptr;
-	const size_t  bsz = cmd_sysconf_getpwgr_rsize_max();
-	void         *buf = cmd_zalloc(bsz);
-	gid_t         gid = (gid_t)(-1);
-	int           err;
+	struct group grp = { .gr_gid = (gid_t)(-1) };
+	struct group *gr = nullptr;
+	const size_t bsz = cmd_sysconf_getpwgr_rsize_max();
+	void *buf        = cmd_zalloc(bsz);
+	gid_t gid        = (gid_t)(-1);
+	int err;
 
 	errno = 0;
 	err   = getgrnam_r(name, &grp, buf, bsz, &gr);
@@ -146,12 +146,12 @@ static gid_t cmd_resolve_name_to_gid(const char *name)
 
 static char *cmd_resolve_gid_to_name(gid_t gid)
 {
-	struct group  grp  = { .gr_gid = (gid_t)(-1) };
-	struct group *gr   = nullptr;
-	const size_t  bsz  = cmd_sysconf_getpwgr_rsize_max();
-	void         *buf  = cmd_zalloc(bsz);
-	char         *name = nullptr;
-	int           err;
+	struct group grp = { .gr_gid = (gid_t)(-1) };
+	struct group *gr = nullptr;
+	const size_t bsz = cmd_sysconf_getpwgr_rsize_max();
+	void *buf        = cmd_zalloc(bsz);
+	char *name       = nullptr;
+	int err;
 
 	errno = 0;
 	err   = getgrgid_r(gid, &grp, buf, bsz, &gr);
@@ -171,10 +171,10 @@ static size_t
 cmd_resolve_supgroups_of(const char *user, gid_t *groups, size_t ngroups)
 {
 	const gid_t gid_none = (gid_t)(-1);
-	gid_t       gids[64] = { gid_none };
-	size_t      ngids    = SILOFS_ARRAY_SIZE(gids);
-	int         ngrp     = (int)((ngroups > ngids) ? ngids : ngroups);
-	int         err;
+	gid_t gids[64]       = { gid_none };
+	size_t ngids         = SILOFS_ARRAY_SIZE(gids);
+	int ngrp             = (int)((ngroups > ngids) ? ngids : ngroups);
+	int err;
 
 	errno = 0;
 	err   = getgrouplist(user, gid_none, gids, &ngrp);
@@ -195,7 +195,7 @@ cmd_resolve_supgroups_of(const char *user, gid_t *groups, size_t ngroups)
 static char *cmd_getlogin(void)
 {
 	char name[LOGIN_NAME_MAX + 1] = "";
-	int  err;
+	int err;
 
 	err = getlogin_r(name, sizeof(name) - 1);
 	if (err) {
@@ -379,7 +379,7 @@ void cmd_fsids_add_uidgid_of(struct silofs_fsids *fsids, const char *name)
 
 void cmd_fsids_add_supgroups_of(struct silofs_fsids *fsids, const char *name)
 {
-	gid_t  gids[64];
+	gid_t gids[64];
 	size_t ngids = 0;
 
 	ngids = cmd_resolve_supgroups_of(name, gids, SILOFS_ARRAY_SIZE(gids));
@@ -445,8 +445,8 @@ static json_t *cmd_fsids_jencode_users(const struct silofs_fsids *fsids)
 	json_t *juser  = nullptr;
 	json_t *jname  = nullptr;
 	json_t *juid   = nullptr;
-	char   *name   = nullptr;
-	uid_t   host_uid, fs_uid;
+	char *name     = nullptr;
+	uid_t host_uid, fs_uid;
 
 	jusers = cmd_json_array();
 	for (size_t idx = 0; idx < fsids->users.nuids; ++idx) {
@@ -473,9 +473,9 @@ cmd_fsids_jdecode_users(struct silofs_fsids *fsids, const json_t *jusers)
 	const json_t *juser = nullptr;
 	const json_t *jname = nullptr;
 	const json_t *juid  = nullptr;
-	const char   *name  = nullptr;
-	uid_t         host_uid, fs_uid;
-	size_t        size;
+	const char *name    = nullptr;
+	uid_t host_uid, fs_uid;
+	size_t size;
 
 	size = cmd_json_array_size(jusers);
 	for (size_t idx = 0; idx < size; ++idx) {
@@ -497,8 +497,8 @@ static json_t *cmd_fsids_jencode_groups(const struct silofs_fsids *fsids)
 	json_t *jgroup  = nullptr;
 	json_t *jname   = nullptr;
 	json_t *jgid    = nullptr;
-	char   *name    = nullptr;
-	gid_t   host_gid, fs_gid;
+	char *name      = nullptr;
+	gid_t host_gid, fs_gid;
 
 	jgroups = cmd_json_array();
 	for (size_t idx = 0; idx < fsids->groups.ngids; ++idx) {
@@ -525,9 +525,9 @@ cmd_fsids_jdecode_groups(struct silofs_fsids *fsids, const json_t *jgroups)
 	const json_t *jgroup = nullptr;
 	const json_t *jname  = nullptr;
 	const json_t *jgid   = nullptr;
-	const char   *name   = nullptr;
-	gid_t         host_gid, fs_gid;
-	size_t        size;
+	const char *name     = nullptr;
+	gid_t host_gid, fs_gid;
+	size_t size;
 
 	size = cmd_json_array_size(jgroups);
 	for (size_t idx = 0; idx < size; ++idx) {
@@ -618,7 +618,7 @@ static json_t *cmd_spec_jencode(const struct silofs_spec *spec)
 	return jspec;
 }
 
-void cmd_spec_save(const struct silofs_spec    *spec,
+void cmd_spec_save(const struct silofs_spec *spec,
                    const struct silofs_baseref *baseref)
 {
 	json_t *jspec = nullptr;
@@ -628,8 +628,8 @@ void cmd_spec_save(const struct silofs_spec    *spec,
 	cmd_json_decref(jspec);
 }
 
-void cmd_spec_resave(const struct silofs_spec    *spec,
-                     const struct silofs_fsref   *fsref,
+void cmd_spec_resave(const struct silofs_spec *spec,
+                     const struct silofs_fsref *fsref,
                      const struct silofs_baseref *baseref)
 {
 	struct silofs_spec spec2 = {};
@@ -655,7 +655,7 @@ static void cmd_spec_jdecode(struct silofs_spec *spec, const json_t *jspec)
 	cmd_fsids_jdecode(&spec->fsids, jfsids);
 }
 
-void cmd_spec_load(struct silofs_spec          *spec,
+void cmd_spec_load(struct silofs_spec *spec,
                    const struct silofs_baseref *baseref)
 {
 	json_t *jspec = nullptr;

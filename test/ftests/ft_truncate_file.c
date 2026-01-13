@@ -25,9 +25,9 @@ static void test_truncate_basic_(struct ft_env *fte, size_t cnt)
 {
 	struct stat st   = { .st_size = -1 };
 	const char *path = ft_new_path_unique(fte);
-	size_t      nwr  = 0;
-	off_t       off  = -1;
-	int         fd   = -1;
+	size_t nwr       = 0;
+	off_t off        = -1;
+	int fd           = -1;
 
 	ft_creat(path, 0600, &fd);
 	for (size_t i = 0; i < cnt; ++i) {
@@ -66,12 +66,12 @@ static void test_truncate_basic(struct ft_env *fte)
 static void test_truncate_tail_(struct ft_env *fte, off_t base_off,
                                 size_t data_sz, size_t tail_sz)
 {
-	struct stat st     = { .st_size = -1 };
-	void       *buf1   = ft_new_buf_rands(fte, data_sz);
-	void       *buf2   = ft_new_buf_zeros(fte, data_sz);
-	const char *path   = ft_new_path_unique(fte);
-	off_t       off[2] = { 0, 0 };
-	int         fd     = -1;
+	struct stat st   = { .st_size = -1 };
+	void *buf1       = ft_new_buf_rands(fte, data_sz);
+	void *buf2       = ft_new_buf_zeros(fte, data_sz);
+	const char *path = ft_new_path_unique(fte);
+	off_t off[2]     = { 0, 0 };
+	int fd           = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_pwriten(fd, buf1, data_sz, base_off);
@@ -106,12 +106,12 @@ static void test_truncate_tail(struct ft_env *fte)
 static void test_truncate_extend_(struct ft_env *fte, off_t off, size_t len)
 {
 	struct stat st   = { .st_size = -1 };
-	void       *buf1 = ft_new_buf_rands(fte, len);
-	void       *buf2 = ft_new_buf_zeros(fte, len);
+	void *buf1       = ft_new_buf_rands(fte, len);
+	void *buf2       = ft_new_buf_zeros(fte, len);
 	const char *path = ft_new_path_unique(fte);
-	off_t       pos1 = -1;
-	off_t       pos2 = -1;
-	int         fd   = -1;
+	off_t pos1       = -1;
+	off_t pos2       = -1;
+	int fd           = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_pwriten(fd, buf1, len, off);
@@ -151,8 +151,8 @@ static void test_truncate_zeros_(struct ft_env *fte, off_t off, size_t len)
 	struct stat st   = { .st_size = -1 };
 	const char *path = ft_new_path_unique(fte);
 	const off_t end  = off + (ssize_t)len;
-	int         fd   = -1;
-	uint8_t     byte = 1;
+	int fd           = -1;
+	uint8_t byte     = 1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0700, &fd);
 	ft_ftruncate(fd, end);

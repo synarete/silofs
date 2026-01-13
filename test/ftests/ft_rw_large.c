@@ -17,7 +17,7 @@
 #include "ftests.h"
 
 struct ft_rw_large_args {
-	off_t  off_base;
+	off_t off_base;
 	size_t nskip;
 };
 
@@ -28,13 +28,13 @@ struct ft_rw_large_args {
 static void test_rw_ngiga_by_(struct ft_env *fte, int fd,
                               const struct ft_rw_large_args *args)
 {
-	const off_t  off_base = args->off_base;
-	const size_t nskip    = args->nskip;
-	const size_t bsz      = FT_1M;
-	const size_t cnt      = FT_1G / bsz;
-	void        *buf      = ft_new_buf_rands(fte, bsz);
-	size_t       num      = 0;
-	off_t        off      = -1;
+	const off_t off_base = args->off_base;
+	const size_t nskip   = args->nskip;
+	const size_t bsz     = FT_1M;
+	const size_t cnt     = FT_1G / bsz;
+	void *buf            = ft_new_buf_rands(fte, bsz);
+	size_t num           = 0;
+	off_t off            = -1;
 
 	for (size_t i = 0; i < cnt; ++i) {
 		num = i + 1;
@@ -57,7 +57,7 @@ static void
 test_rw_ngiga_(struct ft_env *fte, const struct ft_rw_large_args *args)
 {
 	const char *path = ft_new_path_unique(fte);
-	int         fd   = -1;
+	int fd           = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	test_rw_ngiga_by_(fte, fd, args);
@@ -65,11 +65,11 @@ test_rw_ngiga_(struct ft_env *fte, const struct ft_rw_large_args *args)
 	ft_unlink(path);
 }
 
-static void test_rw_ngiga_unlinked_(struct ft_env                 *fte,
+static void test_rw_ngiga_unlinked_(struct ft_env *fte,
                                     const struct ft_rw_large_args *args)
 {
 	const char *path = ft_new_path_unique(fte);
-	int         fd   = -1;
+	int fd           = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_unlink(path);

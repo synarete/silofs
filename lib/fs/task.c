@@ -69,7 +69,7 @@ void silofs_task_set_ts(struct silofs_task_ctx *task, bool rt)
 	}
 }
 
-void silofs_task_update_by(struct silofs_task_ctx    *task,
+void silofs_task_update_by(struct silofs_task_ctx *task,
                            struct silofs_submitq_ent *sqe)
 {
 	if (sqe->uniq_id > task->t_upper_id) {
@@ -124,7 +124,7 @@ void silofs_task_fini(struct silofs_task_ctx *task)
 	task->t_runnable = false;
 }
 
-void silofs_task_enq_loose(struct silofs_task_ctx   *task,
+void silofs_task_enq_loose(struct silofs_task_ctx *task,
                            struct silofs_inode_info *ii)
 {
 	silofs_assert_null(ii->i_looseq_next);
@@ -155,7 +155,7 @@ static struct silofs_inode_info *task_deq_loose(struct silofs_task_ctx *task)
 static void task_forget_looseq(struct silofs_task_ctx *task)
 {
 	struct silofs_inode_info *ii;
-	int                       err;
+	int err;
 
 	ii = task_deq_loose(task);
 	while (ii != nullptr) {

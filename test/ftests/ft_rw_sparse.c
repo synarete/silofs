@@ -22,13 +22,13 @@
  */
 static void test_rw_sparse_simple_(struct ft_env *fte, size_t cnt)
 {
-	const char  *path = ft_new_path_unique(fte);
+	const char *path  = ft_new_path_unique(fte);
 	const size_t step = 524287;
-	off_t        pos  = -1;
-	size_t       nsz  = 0;
-	size_t       num  = 0;
-	size_t       num2 = 0;
-	int          fd   = -1;
+	off_t pos         = -1;
+	size_t nsz        = 0;
+	size_t num        = 0;
+	size_t num2       = 0;
+	int fd            = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	for (size_t i = 0; i < cnt; ++i) {
@@ -66,13 +66,13 @@ static void test_rw_sparse_simple(struct ft_env *fte)
  */
 static void test_rw_sparse_repeat_(struct ft_env *fte, size_t cnt)
 {
-	const char  *path = ft_new_path_unique(fte);
+	const char *path  = ft_new_path_unique(fte);
 	const size_t step = 524287;
-	off_t        pos  = -1;
-	size_t       nsz  = 0;
-	size_t       num  = 0;
-	size_t       num2 = 0;
-	int          fd   = -1;
+	off_t pos         = -1;
+	size_t nsz        = 0;
+	size_t num        = 0;
+	size_t num2       = 0;
+	int fd            = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_close(fd);
@@ -108,20 +108,20 @@ static void test_rw_sparse_repeat(struct ft_env *fte)
  */
 static void test_rw_sparse_overwrite_(struct ft_env *fte, off_t base_off)
 {
-	const size_t len1   = 10037;
-	const size_t len2   = 10039;
-	uint8_t     *buf1   = ft_new_buf_rands(fte, len1);
-	uint8_t     *buf2   = ft_new_buf_rands(fte, len2);
-	uint8_t     *buf3   = ft_new_buf_rands(fte, len1 + len2);
-	const char  *path   = ft_new_path_unique(fte);
-	const off_t  offs[] = {
-                737717, 280411, 10007, 31033,  42043,   53113, 161881,  375533,
-                86767,  97171,  75353, 611999, 1108007, 64601, 1272211, 20323,
+	const size_t len1  = 10037;
+	const size_t len2  = 10039;
+	uint8_t *buf1      = ft_new_buf_rands(fte, len1);
+	uint8_t *buf2      = ft_new_buf_rands(fte, len2);
+	uint8_t *buf3      = ft_new_buf_rands(fte, len1 + len2);
+	const char *path   = ft_new_path_unique(fte);
+	const off_t offs[] = {
+		737717, 280411, 10007, 31033,  42043,   53113, 161881,  375533,
+		86767,  97171,  75353, 611999, 1108007, 64601, 1272211, 20323,
 	};
 	const size_t noffs = FT_ARRAY_SIZE(offs);
-	off_t        off   = -1;
-	uint8_t      byte  = 0;
-	int          fd    = -1;
+	off_t off          = -1;
+	uint8_t byte       = 0;
+	int fd             = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	for (size_t i = 0; i < noffs; ++i) {
@@ -160,16 +160,16 @@ static void test_rw_sparse_overwrite(struct ft_env *fte)
 static void test_rw_sparse_stat_(struct ft_env *fte, off_t from_off,
                                  size_t data_size, size_t skip_size)
 {
-	struct stat  st     = { .st_size = -1 };
+	struct stat st      = { .st_size = -1 };
 	const size_t nsteps = 8;
-	const char  *path   = ft_new_path_unique(fte);
-	const char  *name   = ft_new_name_unique(fte);
-	uint8_t     *buf1   = ft_new_buf_rands(fte, data_size);
-	uint8_t     *buf2   = ft_new_buf_zeros(fte, data_size);
-	ssize_t      size   = -1;
-	off_t        off    = -1;
-	int          dfd    = -1;
-	int          fd     = -1;
+	const char *path    = ft_new_path_unique(fte);
+	const char *name    = ft_new_name_unique(fte);
+	uint8_t *buf1       = ft_new_buf_rands(fte, data_size);
+	uint8_t *buf2       = ft_new_buf_zeros(fte, data_size);
+	ssize_t size        = -1;
+	off_t off           = -1;
+	int dfd             = -1;
+	int fd              = -1;
 
 	ft_mkdir(path, 0700);
 	ft_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);

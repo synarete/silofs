@@ -28,7 +28,7 @@ uint64_t silofs_fnv1a(const void *buf, size_t len, uint64_t seed)
 	const uint8_t *itr       = (const uint8_t *)buf;
 	const uint8_t *end       = itr + len;
 	const uint64_t fnv_prime = 0x100000001B3UL;
-	uint64_t       hval      = seed;
+	uint64_t hval            = seed;
 
 	while (itr < end) {
 		hval *= fnv_prime;

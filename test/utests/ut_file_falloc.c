@@ -19,11 +19,11 @@
 static void
 ut_file_fallocate_simple_(struct ut_env *ute, off_t off, size_t ulen)
 {
-	const void   *buf  = ut_randbuf(ute, ulen);
-	const char   *name = UT_NAME;
-	const ssize_t len  = (ssize_t)ulen;
-	ino_t         dino = 0;
-	ino_t         ino  = 0;
+	const void *buf   = ut_randbuf(ute, ulen);
+	const char *name  = UT_NAME;
+	const ssize_t len = (ssize_t)ulen;
+	ino_t dino        = 0;
+	ino_t ino         = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -63,10 +63,10 @@ static void ut_file_fallocate_unaligned(struct ut_env *ute)
 static void
 ut_file_fallocate_rdonly_(struct ut_env *ute, off_t off, size_t ulen)
 {
-	const char   *name = UT_NAME;
-	const ssize_t len  = (ssize_t)ulen;
-	ino_t         dino = 0;
-	ino_t         ino  = 0;
+	const char *name  = UT_NAME;
+	const ssize_t len = (ssize_t)ulen;
+	ino_t dino        = 0;
+	ino_t ino         = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -99,12 +99,12 @@ static void ut_file_fallocate_rdonly(struct ut_env *ute)
 static void
 ut_file_fallocate_truncate_(struct ut_env *ute, off_t off, size_t ulen)
 {
-	const char   *name = UT_NAME;
-	const ssize_t len  = (ssize_t)ulen;
-	const off_t   mid  = off + (len / 2);
-	const off_t   end  = off + len;
-	ino_t         dino = 0;
-	ino_t         ino  = 0;
+	const char *name  = UT_NAME;
+	const ssize_t len = (ssize_t)ulen;
+	const off_t mid   = off + (len / 2);
+	const off_t end   = off + len;
+	ino_t dino        = 0;
+	ino_t ino         = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -151,11 +151,11 @@ static void ut_file_fallocate_truncate(struct ut_env *ute)
 static void
 ut_file_fallocate_unwritten_(struct ut_env *ute, off_t off, size_t ulen)
 {
-	const char   *name = UT_NAME;
-	const ssize_t len  = (ssize_t)ulen;
-	const uint8_t b    = 1;
-	ino_t         dino = 0;
-	ino_t         ino  = 0;
+	const char *name  = UT_NAME;
+	const ssize_t len = (ssize_t)ulen;
+	const uint8_t b   = 1;
+	ino_t dino        = 0;
+	ino_t ino         = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -189,11 +189,11 @@ static void ut_file_fallocate_unwritten(struct ut_env *ute)
 static void
 ut_file_fallocate_drop_caches_(struct ut_env *ute, off_t off, size_t ulen)
 {
-	const char   *name = UT_NAME;
-	void         *buf  = ut_randbuf(ute, ulen);
-	const ssize_t len  = (ssize_t)ulen;
-	ino_t         dino = 0;
-	ino_t         ino  = 0;
+	const char *name  = UT_NAME;
+	void *buf         = ut_randbuf(ute, ulen);
+	const ssize_t len = (ssize_t)ulen;
+	ino_t dino        = 0;
+	ino_t ino         = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -228,11 +228,11 @@ static void
 ut_file_fallocate_punch_hole1_(struct ut_env *ute, off_t off, size_t len)
 {
 	const char *name = UT_NAME;
-	uint8_t    *buf  = ut_randbuf(ute, len);
+	uint8_t *buf     = ut_randbuf(ute, len);
 	const off_t off1 = off + (off_t)len;
 	const off_t off2 = off1 + (off_t)len;
-	ino_t       dino = 0;
-	ino_t       ino  = 0;
+	ino_t dino       = 0;
+	ino_t ino        = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -267,11 +267,11 @@ static void ut_file_fallocate_punch_hole1(struct ut_env *ute)
 static void ut_file_fallocate_punch_hole2_(struct ut_env *ute, off_t off1,
                                            off_t off2, size_t len)
 {
-	uint8_t    *buf     = ut_randbuf(ute, len);
-	const char *name    = UT_NAME;
-	uint8_t     zero[1] = { 0 };
-	ino_t       dino    = 0;
-	ino_t       ino     = 0;
+	uint8_t *buf     = ut_randbuf(ute, len);
+	const char *name = UT_NAME;
+	uint8_t zero[1]  = { 0 };
+	ino_t dino       = 0;
+	ino_t ino        = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -322,10 +322,10 @@ ut_file_fallocate_punch_hole_sparse_(struct ut_env *ute, off_t off_base,
 {
 	const char *name    = UT_NAME;
 	const off_t bk_size = UT_BK_SIZE;
-	off_t       off_end = -1;
-	off_t       off     = -1;
-	ino_t       dino    = 0;
-	ino_t       ino     = 0;
+	off_t off_end       = -1;
+	off_t off           = -1;
+	ino_t dino          = 0;
+	ino_t ino           = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -363,12 +363,12 @@ static void ut_file_fallocate_punch_hole_sparse(struct ut_env *ute)
 static void
 ut_file_fallocate_zero_range_(struct ut_env *ute, off_t off, size_t ulen)
 {
-	const char   *name = UT_NAME;
-	const ssize_t len  = (ssize_t)ulen;
-	uint8_t      *buf  = ut_randbuf(ute, ulen);
-	ino_t         dino = 0;
-	ino_t         ino  = 0;
-	bool          keep_size;
+	const char *name  = UT_NAME;
+	const ssize_t len = (ssize_t)ulen;
+	uint8_t *buf      = ut_randbuf(ute, ulen);
+	ino_t dino        = 0;
+	ino_t ino         = 0;
+	bool keep_size;
 
 	keep_size = true;
 	ut_mkdir_at_root(ute, name, &dino);
@@ -440,7 +440,7 @@ static blkcnt_t blocks_count_of(off_t off, off_t len)
 {
 	const silofs_lba_t lba_beg = off_to_nbk(off);
 	const silofs_lba_t lba_end = off_to_nbk_up(off + len);
-	const off_t        length  = (lba_end - lba_beg) * UT_BK_SIZE;
+	const off_t length         = (lba_end - lba_beg) * UT_BK_SIZE;
 
 	return length / 512;
 }
@@ -448,13 +448,13 @@ static blkcnt_t blocks_count_of(off_t off, off_t len)
 static void ut_file_fallocate_stat_(struct ut_env *ute, off_t base_off,
                                     off_t len, off_t step_size)
 {
-	struct stat  st[2];
-	const char  *name = UT_NAME;
-	const size_t cnt  = 64;
-	blkcnt_t     nblk = 0;
-	off_t        off  = -1;
-	ino_t        dino = 0;
-	ino_t        ino  = 0;
+	struct stat st[2];
+	const char *name = UT_NAME;
+	const size_t cnt = 64;
+	blkcnt_t nblk    = 0;
+	off_t off        = -1;
+	ino_t dino       = 0;
+	ino_t ino        = 0;
 
 	ut_expect_eq(base_off % UT_BK_SIZE, 0);
 	ut_expect_eq(step_size % UT_BK_SIZE, 0);
@@ -509,15 +509,15 @@ static void ut_file_fallocate_stat(struct ut_env *ute)
 static void
 ut_file_fallocate_sparse_(struct ut_env *ute, off_t base_off, off_t step_size)
 {
-	struct stat st     = { .st_size = -1 };
-	const char *name   = UT_NAME;
-	const long  cnt    = 1024;
-	off_t       off    = -1;
-	off_t       len    = 0;
-	off_t       zero   = 0;
-	blkcnt_t    blocks = 0;
-	ino_t       dino   = 0;
-	ino_t       ino    = 0;
+	struct stat st   = { .st_size = -1 };
+	const char *name = UT_NAME;
+	const long cnt   = 1024;
+	off_t off        = -1;
+	off_t len        = 0;
+	off_t zero       = 0;
+	blkcnt_t blocks  = 0;
+	ino_t dino       = 0;
+	ino_t ino        = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -566,13 +566,13 @@ static void ut_file_fallocate_sparse(struct ut_env *ute)
 static void
 ut_file_fallocate_beyond_(struct ut_env *ute, off_t off, size_t ulen)
 {
-	struct stat   st     = { .st_size = -1 };
-	const char   *name   = UT_NAME;
-	uint8_t      *buf    = ut_randbuf(ute, ulen);
-	const ssize_t len    = (ssize_t)ulen;
-	blkcnt_t      blocks = 0;
-	ino_t         dino   = 0;
-	ino_t         ino    = 0;
+	struct stat st    = { .st_size = -1 };
+	const char *name  = UT_NAME;
+	uint8_t *buf      = ut_randbuf(ute, ulen);
+	const ssize_t len = (ssize_t)ulen;
+	blkcnt_t blocks   = 0;
+	ino_t dino        = 0;
+	ino_t ino         = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);

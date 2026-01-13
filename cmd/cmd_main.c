@@ -122,9 +122,9 @@ static void cmd_init_libsilofs(void)
 
 static void cmd_resolve_caps(void)
 {
-	cap_t            cap;
+	cap_t cap;
 	cap_flag_value_t flag = CAP_CLEAR;
-	int              err  = 1;
+	int err               = 1;
 
 	cap = cap_get_pid(getpid());
 	if (cap != nullptr) {

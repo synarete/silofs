@@ -23,10 +23,10 @@
  */
 static void test_utime_file(struct ft_env *fte)
 {
-	struct stat    st[3];
+	struct stat st[3];
 	struct utimbuf utm[2];
-	const char    *path = ft_new_path_unique(fte);
-	int            fd   = -1;
+	const char *path = ft_new_path_unique(fte);
+	int fd           = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_stat(path, &st[0]);
@@ -60,8 +60,8 @@ static void test_utime_now(struct ft_env *fte)
 {
 	struct stat st[2];
 	const char *path = ft_new_path_unique(fte);
-	size_t      nwr  = 0;
-	int         fd   = -1;
+	size_t nwr       = 0;
+	int fd           = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_utime(path, nullptr);
@@ -80,12 +80,12 @@ static void test_utime_now(struct ft_env *fte)
  */
 static void test_utimes_file(struct ft_env *fte)
 {
-	struct stat    st[3];
+	struct stat st[3];
 	struct timeval tv1[2];
 	struct timeval tv2[2];
-	const char    *path = ft_new_path_unique(fte);
-	size_t         nwr  = 0;
-	int            fd   = -1;
+	const char *path = ft_new_path_unique(fte);
+	size_t nwr       = 0;
+	int fd           = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_stat(path, &st[0]);
@@ -122,14 +122,14 @@ static void test_utimes_file(struct ft_env *fte)
  */
 static void test_utimensat_file(struct ft_env *fte)
 {
-	struct stat     st[4];
+	struct stat st[4];
 	struct timespec ts1[2];
 	struct timespec ts2[2];
 	struct timespec ts3[2];
-	const char     *path = ft_new_path_unique(fte);
-	const char     *name = ft_new_name_unique(fte);
-	int             dfd  = -1;
-	int             fd   = -1;
+	const char *path = ft_new_path_unique(fte);
+	const char *name = ft_new_name_unique(fte);
+	int dfd          = -1;
+	int fd           = -1;
 
 	ft_mkdir(path, 0700);
 	ft_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);
@@ -183,12 +183,12 @@ static void test_utimensat_file(struct ft_env *fte)
  */
 static void test_futimens_ctime(struct ft_env *fte)
 {
-	struct stat     st[2];
+	struct stat st[2];
 	struct timespec tm[2];
-	const char     *path = ft_new_path_unique(fte);
-	const char     *name = ft_new_name_unique(fte);
-	int             dfd  = -1;
-	int             fd   = -1;
+	const char *path = ft_new_path_unique(fte);
+	const char *name = ft_new_name_unique(fte);
+	int dfd          = -1;
+	int fd           = -1;
 
 	ft_mkdir(path, 0700);
 	ft_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);
@@ -239,15 +239,15 @@ static void test_futimens_ctime(struct ft_env *fte)
  */
 static void test_utimensat_io_(struct ft_env *fte, off_t off, size_t len)
 {
-	struct stat     st = { .st_size = -1 };
+	struct stat st = { .st_size = -1 };
 	struct timespec ts[2];
-	const char     *path = ft_new_path_unique(fte);
-	const char     *name = ft_new_name_unique(fte);
-	void           *buf1 = ft_new_buf_rands(fte, len);
-	void           *buf2 = ft_new_buf_rands(fte, len);
-	void           *buf3 = ft_new_buf_rands(fte, len);
-	int             dfd  = -1;
-	int             fd   = -1;
+	const char *path = ft_new_path_unique(fte);
+	const char *name = ft_new_name_unique(fte);
+	void *buf1       = ft_new_buf_rands(fte, len);
+	void *buf2       = ft_new_buf_rands(fte, len);
+	void *buf3       = ft_new_buf_rands(fte, len);
+	int dfd          = -1;
+	int fd           = -1;
 
 	ft_mkdir(path, 0700);
 	ft_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);

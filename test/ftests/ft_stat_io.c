@@ -19,9 +19,9 @@
 
 static blkcnt_t calc_nfrgs_of(off_t off, off_t len, blksize_t blksz)
 {
-	const off_t    frgsz = FT_FRGSIZE;
-	const off_t    beg   = (off / blksz) * blksz;
-	const off_t    end   = ((off + len + blksz - 1) / blksz) * blksz;
+	const off_t frgsz    = FT_FRGSIZE;
+	const off_t beg      = (off / blksz) * blksz;
+	const off_t end      = ((off + len + blksz - 1) / blksz) * blksz;
 	const blkcnt_t nfrgs = (blkcnt_t)(end - beg) / frgsz;
 
 	return nfrgs;
@@ -41,12 +41,12 @@ static void ft_calc_stat_blkcnt(off_t off, size_t nbytes, blkcnt_t *out_min,
  */
 static void test_stat_write_(struct ft_env *fte, off_t off, size_t len)
 {
-	struct stat st       = { .st_ino = 0 };
-	const char *path     = ft_new_path_unique(fte);
-	blkcnt_t    bcnt_min = 0;
-	blkcnt_t    bcnt_max = 0;
-	void       *buf      = nullptr;
-	int         fd       = -1;
+	struct stat st    = { .st_ino = 0 };
+	const char *path  = ft_new_path_unique(fte);
+	blkcnt_t bcnt_min = 0;
+	blkcnt_t bcnt_max = 0;
+	void *buf         = nullptr;
+	int fd            = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_fstat(fd, &st);
@@ -122,13 +122,13 @@ static void test_stat_write_unaligned(struct ft_env *fte)
  */
 static void test_stat_punch_(struct ft_env *fte, off_t off, size_t len)
 {
-	struct stat st       = { .st_size = -1 };
-	const int   mode     = FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE;
-	void       *buf      = ft_new_buf_rands(fte, len);
-	const char *path     = ft_new_path_unique(fte);
-	blkcnt_t    bcnt_min = 0;
-	blkcnt_t    bcnt_max = 0;
-	int         fd       = -1;
+	struct stat st    = { .st_size = -1 };
+	const int mode    = FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE;
+	void *buf         = ft_new_buf_rands(fte, len);
+	const char *path  = ft_new_path_unique(fte);
+	blkcnt_t bcnt_min = 0;
+	blkcnt_t bcnt_max = 0;
+	int fd            = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_fstat(fd, &st);
@@ -195,14 +195,14 @@ static void test_stat_punch_unaligned(struct ft_env *fte)
  */
 static void test_stat_write_ctime_(struct ft_env *fte, size_t nfiles)
 {
-	char         name[128] = "";
-	struct stat  st        = { .st_size = -1 };
-	struct stat *sts       = ft_new_buf_zeros(fte, nfiles * sizeof(st));
-	const char  *path      = ft_new_path_unique(fte);
-	off_t        off       = -1;
-	long         dif       = 0;
-	int          dfd       = -1;
-	int          fd        = -1;
+	char name[128]   = "";
+	struct stat st   = { .st_size = -1 };
+	struct stat *sts = ft_new_buf_zeros(fte, nfiles * sizeof(st));
+	const char *path = ft_new_path_unique(fte);
+	off_t off        = -1;
+	long dif         = 0;
+	int dfd          = -1;
+	int fd           = -1;
 
 	ft_mkdir(path, 0700);
 	ft_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);

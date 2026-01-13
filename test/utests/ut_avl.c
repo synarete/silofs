@@ -20,9 +20,9 @@
 
 struct ut_zrecord {
 	struct silofs_avl_node avl_node;
-	struct ut_env         *ute;
-	long                   key;
-	long                   magic;
+	struct ut_env *ute;
+	long key;
+	long magic;
 };
 
 static struct ut_zrecord *avl_node_to_zrecord(const struct silofs_avl_node *an)
@@ -171,7 +171,7 @@ static void avl_insert_replace(struct silofs_avl *avl, long key)
 
 static void avl_find_exists(const struct silofs_avl *avl, long key)
 {
-	const struct ut_zrecord      *zr;
+	const struct ut_zrecord *zr;
 	const struct silofs_avl_node *an;
 
 	an = silofs_avl_find(avl, &key);
@@ -191,7 +191,7 @@ static void avl_find_non_exists(const struct silofs_avl *avl, long key)
 
 static void avl_find_unique(const struct silofs_avl *avl, long key)
 {
-	size_t                        cnt;
+	size_t cnt;
 	const struct silofs_avl_node *an;
 
 	an = silofs_avl_find_first(avl, &key);
@@ -216,8 +216,8 @@ static void avl_remove_exists(struct silofs_avl *avl, long key)
 
 static void avl_remove_range(struct silofs_avl *avl, long key1, long key2)
 {
-	struct silofs_avl_node       *first = nullptr;
-	const struct silofs_avl_node *last  = nullptr;
+	struct silofs_avl_node *first      = nullptr;
+	const struct silofs_avl_node *last = nullptr;
 
 	silofs_assert_le(key1, key2);
 
@@ -267,7 +267,7 @@ avl_prev(const struct silofs_avl *avl, const struct silofs_avl_node *x)
 
 static long avl_min_key(const struct silofs_avl *avl)
 {
-	const struct ut_zrecord      *zr;
+	const struct ut_zrecord *zr;
 	const struct silofs_avl_node *beg;
 
 	ut_expect(avl->size > 0);
@@ -284,8 +284,8 @@ avl_iterate_range(const struct silofs_avl *avl, struct silofs_avl_node *beg,
                   const struct silofs_avl_node *end, size_t expected_cnt,
                   long key_beg, long step)
 {
-	size_t                  cnt;
-	long                    key = key_beg;
+	size_t cnt;
+	long key                    = key_beg;
 	struct silofs_avl_node *itr = beg;
 
 	cnt = 0;
@@ -324,7 +324,7 @@ static void avl_iterate_seq(const struct silofs_avl *avl)
 static void
 ut_avl_simple_(struct ut_env *ute, size_t cnt, long key_base, long step)
 {
-	long               key;
+	long key;
 	struct silofs_avl *avl;
 
 	avl = avl_new(ute);
@@ -366,7 +366,7 @@ static void ut_avl_simple(struct ut_env *ute)
 static void
 ut_avl_mixed_(struct ut_env *ute, size_t cnt, long key_base, long step)
 {
-	long               key;
+	long key;
 	struct silofs_avl *avl;
 
 	avl = avl_new(ute);
@@ -407,10 +407,10 @@ static long *random_keys(struct ut_env *ute, size_t cnt, long base)
 
 static void ut_avl_random_(struct ut_env *ute, size_t cnt)
 {
-	const long         base = 100000;
-	const long        *keys = random_keys(ute, cnt, base);
-	struct silofs_avl *avl  = nullptr;
-	long               key;
+	const long base        = 100000;
+	const long *keys       = random_keys(ute, cnt, base);
+	struct silofs_avl *avl = nullptr;
+	long key;
 
 	avl = avl_new(ute);
 	for (size_t i = 0; i < cnt; ++i) {
@@ -453,12 +453,12 @@ avl_populate_keys(struct silofs_avl *avl, const long *keys, size_t cnt)
 
 static void ut_avl_remove_range_(struct ut_env *ute, size_t cnt)
 {
-	long               key1;
-	long               key2;
-	size_t             size;
-	const long         key_last = (long)cnt - 1;
+	long key1;
+	long key2;
+	size_t size;
+	const long key_last = (long)cnt - 1;
 	struct silofs_avl *avl;
-	const long        *keys = random_keys(ute, cnt, 0);
+	const long *keys = random_keys(ute, cnt, 0);
 
 	avl = avl_new(ute);
 	avl_populate_keys(avl, keys, cnt);

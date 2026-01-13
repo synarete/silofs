@@ -79,7 +79,7 @@ static struct ut_tgroup const g_ut_tgroups[] = {
 static void *ut_malloc_safe(size_t size)
 {
 	void *ptr = nullptr;
-	int   err;
+	int err;
 
 	err = posix_memalign(&ptr, 64, size);
 	if (err || (ptr == nullptr)) {
@@ -185,7 +185,7 @@ static void ute_prandom(struct ut_env *ute, void *buf, size_t bsz)
 {
 	uint64_t u;
 	uint8_t *m = buf;
-	size_t   k, cnt = 0;
+	size_t k, cnt = 0;
 
 	while (cnt < bsz) {
 		u = ute_prandom_u64(ute);
@@ -197,10 +197,10 @@ static void ute_prandom(struct ut_env *ute, void *buf, size_t bsz)
 
 static void ute_prandom_ascii(struct ut_env *ute, char *str, size_t n)
 {
-	uint64_t  rnd  = 0;
+	uint64_t rnd   = 0;
 	const int base = 33;
 	const int last = 126;
-	int       print_ch;
+	int print_ch;
 
 	rnd = ute_prandom_u64(ute);
 	for (size_t i = 0; i < n; ++i) {
@@ -216,8 +216,8 @@ static void ute_prandom_ascii(struct ut_env *ute, char *str, size_t n)
 
 static void ute_setup_random_passwd(struct ut_env *ute)
 {
-	struct silofs_args     *args = &ute->args->args;
-	struct silofs_password *pp   = &ute->passwd;
+	struct silofs_args *args   = &ute->args->args;
+	struct silofs_password *pp = &ute->passwd;
 
 	pp->passlen = sizeof(pp->pass) - 1;
 	ute_prandom_ascii(ute, (char *)pp->pass, pp->passlen);
@@ -386,7 +386,7 @@ static void ut_run_test2(struct ut_env *ute, const struct ut_testdef *td)
 
 static void ut_run_test(struct ut_env *ute, const struct ut_testdef *td)
 {
-	const int  run_level   = ute->run_level;
+	const int run_level    = ute->run_level;
 	const bool quick       = (td->flags & UT_F_QUICK) > 0;
 	const bool with_ftype2 = (td->flags & UT_F_FTYPE2) > 0;
 
@@ -402,7 +402,7 @@ static void ut_run_test(struct ut_env *ute, const struct ut_testdef *td)
 static void ut_post_test(struct ut_env *ute)
 {
 	struct silofs_task_ctx task;
-	int                    err;
+	int err;
 
 	ut_setup_task(ute, &task);
 	err = silofs_exec_maintain(&task, SILOFS_CTLF_NOW);
@@ -694,7 +694,7 @@ static void swap(long *arr, size_t p1, size_t p2)
 
 long *ut_randseq(struct ut_env *ute, size_t len, long base)
 {
-	long   *arr;
+	long *arr;
 	size_t *pos;
 
 	arr = ut_zerobuf(ute, len * sizeof(*arr));
@@ -713,10 +713,10 @@ long *ut_randseq(struct ut_env *ute, size_t len, long base)
 
 static void ut_force_alnum(char *str, size_t len)
 {
-	const char  *alt     = "_0123456789abcdefghijklmnopqrstuvwxyz";
+	const char *alt      = "_0123456789abcdefghijklmnopqrstuvwxyz";
 	const size_t alt_len = strlen(alt);
-	size_t       idx;
-	int          ch;
+	size_t idx;
+	int ch;
 
 	for (size_t i = 0; i < len; ++i) {
 		ch = (int)(str[i]);
@@ -741,9 +741,9 @@ char *ut_randstr(struct ut_env *ute, size_t len)
 
 char *ut_strfmt(struct ut_env *ute, const char *fmt, ...)
 {
-	char    tmp[1024] = "";
-	va_list ap        = { 0 };
-	int     nb        = 0;
+	char tmp[1024] = "";
+	va_list ap     = { 0 };
+	int nb         = 0;
 
 	va_start(ap, fmt);
 	nb = vsnprintf(tmp, sizeof(tmp), fmt, ap);
@@ -757,7 +757,7 @@ char *ut_strfmt(struct ut_env *ute, const char *fmt, ...)
 
 struct ut_dvec *ut_new_dvec(struct ut_env *ute, off_t off, size_t len)
 {
-	size_t          size;
+	size_t size;
 	struct ut_dvec *dvec;
 
 	size      = (sizeof(*dvec) + len - sizeof(dvec->dat)) | 0x7;
@@ -794,7 +794,7 @@ static uint64_t ute_next_prandom(struct ut_env *ute)
 
 static void ut_do_prandom_shuffle(struct ut_env *ute, long *arr, size_t len)
 {
-	size_t   i = 0, j = 0;
+	size_t i = 0, j = 0;
 	uint64_t rnd = 0;
 
 	for (i = 0; i < len - 1; i++) {

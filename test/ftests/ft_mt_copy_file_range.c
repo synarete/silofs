@@ -18,14 +18,14 @@
 
 static void test_copy_file_range_simple(struct ft_sub_exec *se)
 {
-	const uint64_t tail     = 0xCAFEBEB;
-	uint8_t       *buf_src  = ft_new_buf_rands(se->fte, se->len);
-	uint8_t       *buf_dst  = ft_new_buf_rands(se->fte, se->len);
-	off_t          tail_pos = ft_off_end(se->off, se->len);
-	size_t         iter     = 0;
-	int            fd_src   = -1;
-	int            fd_dst   = -1;
-	uint64_t       xdat;
+	const uint64_t tail = 0xCAFEBEB;
+	uint8_t *buf_src    = ft_new_buf_rands(se->fte, se->len);
+	uint8_t *buf_dst    = ft_new_buf_rands(se->fte, se->len);
+	off_t tail_pos      = ft_off_end(se->off, se->len);
+	size_t iter         = 0;
+	int fd_src          = -1;
+	int fd_dst          = -1;
+	uint64_t xdat;
 
 	ft_open(se->path, O_RDWR, 0600, &fd_src);
 	ft_open(se->path2, O_RDWR, 0600, &fd_dst);
@@ -51,7 +51,7 @@ static void
 test_mt_copy_file_range_simple_(struct ft_env *fte, off_t off, size_t len)
 {
 	struct ft_sub_exec se[10];
-	const size_t       nse = FT_ARRAY_SIZE(se);
+	const size_t nse = FT_ARRAY_SIZE(se);
 
 	ft_sub_setup2(se, nse, fte, 100, off, len);
 	ft_sub_run(se, nse, test_copy_file_range_simple);
@@ -77,14 +77,14 @@ static void test_mt_copy_file_range_simple(struct ft_env *fte)
 
 static void test_copy_file_range_toggle(struct ft_sub_exec *se)
 {
-	const size_t len  = se->len;
-	uint64_t     head = 0xCAFEBEB;
-	uint8_t     *buf1 = ft_new_buf_rands(se->fte, len);
-	uint8_t     *buf2 = ft_new_buf_rands(se->fte, len);
-	uint8_t     *buf3 = ft_new_buf_zeros(se->fte, len);
-	uint64_t     iter = 0;
-	int          fd1  = -1;
-	int          fd2  = -1;
+	const size_t len = se->len;
+	uint64_t head    = 0xCAFEBEB;
+	uint8_t *buf1    = ft_new_buf_rands(se->fte, len);
+	uint8_t *buf2    = ft_new_buf_rands(se->fte, len);
+	uint8_t *buf3    = ft_new_buf_zeros(se->fte, len);
+	uint64_t iter    = 0;
+	int fd1          = -1;
+	int fd2          = -1;
 
 	ft_open(se->path, O_RDWR, 0600, &fd1);
 	ft_open(se->path2, O_RDWR, 0600, &fd2);
@@ -116,7 +116,7 @@ static void
 test_mt_copy_file_range_toggle_(struct ft_env *fte, off_t off, size_t len)
 {
 	struct ft_sub_exec se[10];
-	const size_t       nse = FT_ARRAY_SIZE(se);
+	const size_t nse = FT_ARRAY_SIZE(se);
 
 	ft_sub_setup2(se, nse, fte, 100, off, len);
 	ft_sub_run(se, nse, test_copy_file_range_toggle);

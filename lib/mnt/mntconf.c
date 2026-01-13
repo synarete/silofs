@@ -45,7 +45,7 @@ strview_copyto(const struct silofs_strview *sv, void *buf, size_t n)
 }
 
 static void strview_strip_ws(const struct silofs_strview *sv,
-                             struct silofs_strview       *out_sv)
+                             struct silofs_strview *out_sv)
 {
 	silofs_strview_strip_ws(sv, out_sv);
 }
@@ -75,10 +75,10 @@ static bool strview_has_substr(const struct silofs_strview *sv, const char *s)
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 struct silofs_conf_parser {
-	struct silofs_alloc  *alloc;
+	struct silofs_alloc *alloc;
 	struct silofs_strview conf;
 	struct silofs_strview line;
-	int                   line_no;
+	int line_no;
 };
 
 static void cpr_setup(struct silofs_conf_parser *cpr,
@@ -96,7 +96,7 @@ static void cpr_reset_line(struct silofs_conf_parser *cpr)
 	cpr->line_no = 0;
 }
 
-static void cpr_update_line(struct silofs_conf_parser   *cpr,
+static void cpr_update_line(struct silofs_conf_parser *cpr,
                             const struct silofs_strview *line)
 {
 	if (line != nullptr) {
@@ -106,7 +106,7 @@ static void cpr_update_line(struct silofs_conf_parser   *cpr,
 	}
 }
 
-static void cpr_update_next_line(struct silofs_conf_parser   *cpr,
+static void cpr_update_next_line(struct silofs_conf_parser *cpr,
                                  const struct silofs_strview *line)
 {
 	cpr_update_line(cpr, line);
@@ -140,8 +140,8 @@ static int cpr_strdup(const struct silofs_conf_parser *cpr,
                       const struct silofs_strview *sv, char **out_str)
 {
 	const size_t n = sv->len + 1;
-	void        *p = nullptr;
-	int          err;
+	void *p        = nullptr;
+	int err;
 
 	err = cpr_zalloc(cpr, n, &p);
 	if (err) {
@@ -202,9 +202,9 @@ static int cpr_parse_bool(const struct silofs_conf_parser *cpr,
 static int cpr_parse_long(const struct silofs_conf_parser *cpr,
                           const struct silofs_strview *sv, long *out_val)
 {
-	char  str[80] = "";
-	char *endptr  = nullptr;
-	long  val     = 0;
+	char str[80] = "";
+	char *endptr = nullptr;
+	long val     = 0;
 
 	if (sv->len >= sizeof(str)) {
 		return cpr_bad_val(cpr, sv, "integer");
@@ -228,7 +228,7 @@ static int cpr_parse_int(const struct silofs_conf_parser *cpr,
 
 {
 	long num = 0;
-	int  err;
+	int err;
 
 	err = cpr_parse_long(cpr, sv, &num);
 	if (err) {
@@ -284,17 +284,17 @@ static int mcp_require_ascii(const struct silofs_mntconf_parser *mcp)
 }
 
 static int mcp_parse_rule_args(const struct silofs_mntconf_parser *mcp,
-                               const struct silofs_strview        *args,
-                               struct silofs_mntrule              *mntrule)
+                               const struct silofs_strview *args,
+                               struct silofs_mntrule *mntrule)
 {
 	struct silofs_strview_pair key_val;
 	struct silofs_strview_pair ss_pair;
-	struct silofs_strview     *key  = &key_val.first;
-	struct silofs_strview     *val  = &key_val.second;
-	struct silofs_strview     *carg = &ss_pair.first;
-	struct silofs_strview     *tail = &ss_pair.second;
-	const char                *seps = " \t";
-	int                        err  = 0;
+	struct silofs_strview *key  = &key_val.first;
+	struct silofs_strview *val  = &key_val.second;
+	struct silofs_strview *carg = &ss_pair.first;
+	struct silofs_strview *tail = &ss_pair.second;
+	const char *seps            = " \t";
+	int err                     = 0;
 
 	mntrule->uid       = (uid_t)(-1);
 	mntrule->recursive = false;
@@ -326,7 +326,7 @@ static int mcp_parse_rule_args(const struct silofs_mntconf_parser *mcp,
 }
 
 static int mcp_check_rule_path(const struct silofs_mntconf_parser *mcp,
-                               const struct silofs_strview        *path)
+                               const struct silofs_strview *path)
 {
 	const char *tag = "path";
 
@@ -360,20 +360,20 @@ mcp_parse_rule_path(const struct silofs_mntconf_parser *mcp,
 }
 
 static void mcp_release_rule(const struct silofs_mntconf_parser *mcp,
-                             struct silofs_mntrule              *mntrule)
+                             struct silofs_mntrule *mntrule)
 {
 	cpr_strfree(&mcp->cpr, &mntrule->path);
 	mntrule->uid = silofs_uid_nobody();
 }
 
 static int mcp_parse_rule(const struct silofs_mntconf_parser *mcp,
-                          const struct silofs_strview        *path,
-                          const struct silofs_strview        *args,
-                          struct silofs_mntrules             *mrules)
+                          const struct silofs_strview *path,
+                          const struct silofs_strview *args,
+                          struct silofs_mntrules *mrules)
 {
-	const size_t           max_rules = ARRAY_SIZE(mrules->rules);
-	struct silofs_mntrule *mntrule   = nullptr;
-	int                    err;
+	const size_t max_rules         = ARRAY_SIZE(mrules->rules);
+	struct silofs_mntrule *mntrule = nullptr;
+	int err;
 
 	if (mrules->nrules >= max_rules) {
 		return cpr_bad_conf(&mcp->cpr, nullptr,
@@ -394,9 +394,9 @@ static int mcp_parse_rule(const struct silofs_mntconf_parser *mcp,
 }
 
 static int mcp_parse_line(const struct silofs_mntconf_parser *mcp,
-                          struct silofs_mntrules             *mrules)
+                          struct silofs_mntrules *mrules)
 {
-	struct silofs_strview      sline;
+	struct silofs_strview sline;
 	struct silofs_strview_pair svp;
 
 	strview_split_chr(&mcp->cpr.line, '#', &svp);
@@ -409,12 +409,12 @@ static int mcp_parse_line(const struct silofs_mntconf_parser *mcp,
 }
 
 static int mcp_parse_rules(struct silofs_mntconf_parser *mcp,
-                           struct silofs_mntrules       *mrules)
+                           struct silofs_mntrules *mrules)
 {
-	struct silofs_strview_pair   svp;
+	struct silofs_strview_pair svp;
 	const struct silofs_strview *line = &svp.first;
 	const struct silofs_strview *tail = &svp.second;
-	int                          err;
+	int err;
 
 	cpr_reset_line(&mcp->cpr);
 	strview_split_chr(&mcp->cpr.conf, '\n', &svp);
@@ -430,7 +430,7 @@ static int mcp_parse_rules(struct silofs_mntconf_parser *mcp,
 }
 
 static void mcp_release_rules(const struct silofs_mntconf_parser *mcp,
-                              struct silofs_mntrules             *mrules)
+                              struct silofs_mntrules *mrules)
 {
 	for (size_t i = 0; i < mrules->nrules; ++i) {
 		mcp_release_rule(mcp, &mrules->rules[i]);
@@ -442,7 +442,7 @@ int silofs_parse_mntrules(struct silofs_mntrules *mrules,
                           struct silofs_alloc *alloc, const char *conf)
 {
 	struct silofs_mntconf_parser mcp;
-	int                          err;
+	int err;
 
 	mcp_setup(&mcp, alloc, conf);
 	err = mcp_require_ascii(&mcp);
@@ -459,7 +459,7 @@ int silofs_parse_mntrules(struct silofs_mntrules *mrules,
 }
 
 void silofs_release_mntrules(struct silofs_mntrules *mrules,
-                             struct silofs_alloc    *alloc)
+                             struct silofs_alloc *alloc)
 {
 	struct silofs_mntconf_parser mcp;
 
@@ -483,8 +483,8 @@ static void mip_parse_field(const struct silofs_mountinfo_parser *mip,
                             size_t idx, struct silofs_strview *out_field)
 {
 	struct silofs_strview_pair svp;
-	struct silofs_strview     *word = &svp.first;
-	struct silofs_strview     *tail = &svp.second;
+	struct silofs_strview *word = &svp.first;
+	struct silofs_strview *tail = &svp.second;
 
 	silofs_strview_init(out_field, "");
 	strview_split(&mip->cpr.line, " \t\v", &svp);
@@ -505,12 +505,12 @@ static bool mip_isfusesilofs_line(const struct silofs_mountinfo_parser *mip)
 }
 
 static int mip_parse_mntinfo(const struct silofs_mountinfo_parser *mip,
-                             struct silofs_mntinfos               *minfos)
+                             struct silofs_mntinfos *minfos)
 {
-	const size_t           max_infos = ARRAY_SIZE(minfos->infos);
-	struct silofs_mntinfo *mntinfo   = nullptr;
-	struct silofs_strview  mntdir;
-	int                    err;
+	const size_t max_infos         = ARRAY_SIZE(minfos->infos);
+	struct silofs_mntinfo *mntinfo = nullptr;
+	struct silofs_strview mntdir;
+	int err;
 
 	if (minfos->ninfos >= max_infos) {
 		return cpr_bad_conf(&mip->cpr, nullptr,
@@ -530,9 +530,9 @@ static int mip_parse_mntinfo(const struct silofs_mountinfo_parser *mip,
 }
 
 static int mip_parse_line(struct silofs_mountinfo_parser *mip,
-                          struct silofs_mntinfos         *minfos)
+                          struct silofs_mntinfos *minfos)
 {
-	struct silofs_strview      sline;
+	struct silofs_strview sline;
 	struct silofs_strview_pair svp;
 
 	strview_split_chr(&mip->cpr.line, '#', &svp);
@@ -548,12 +548,12 @@ static int mip_parse_line(struct silofs_mountinfo_parser *mip,
 }
 
 static int mip_parse_infos(struct silofs_mountinfo_parser *mip,
-                           struct silofs_mntinfos         *minfos)
+                           struct silofs_mntinfos *minfos)
 {
-	struct silofs_strview_pair   svp;
+	struct silofs_strview_pair svp;
 	const struct silofs_strview *line = &svp.first;
 	const struct silofs_strview *tail = &svp.second;
-	int                          err;
+	int err;
 
 	cpr_reset_line(&mip->cpr);
 	strview_split_chr(&mip->cpr.conf, '\n', &svp);
@@ -569,13 +569,13 @@ static int mip_parse_infos(struct silofs_mountinfo_parser *mip,
 }
 
 static void mip_release_info(const struct silofs_mountinfo_parser *mip,
-                             struct silofs_mntinfo                *minfo)
+                             struct silofs_mntinfo *minfo)
 {
 	cpr_strfree(&mip->cpr, &minfo->mntdir);
 }
 
 static void mip_release_infos(const struct silofs_mountinfo_parser *mip,
-                              struct silofs_mntinfos               *minfos)
+                              struct silofs_mntinfos *minfos)
 {
 	for (size_t i = 0; i < minfos->ninfos; ++i) {
 		mip_release_info(mip, &minfos->infos[i]);
@@ -593,7 +593,7 @@ int silofs_parse_mntinfos(struct silofs_mntinfos *minfos,
 }
 
 void silofs_release_mntinfos(struct silofs_mntinfos *minfos,
-                             struct silofs_alloc    *alloc)
+                             struct silofs_alloc *alloc)
 {
 	struct silofs_mountinfo_parser mip;
 

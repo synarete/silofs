@@ -153,8 +153,8 @@ void silofs_ubi_undirtify(struct silofs_uber_info *ubi)
 }
 
 int silofs_ubi_bcursor_of(const struct silofs_uber_info *ubi,
-                          enum silofs_mtype              mtype,
-                          struct silofs_bcursor         *out_bcursor)
+                          enum silofs_mtype mtype,
+                          struct silofs_bcursor *out_bcursor)
 {
 	const struct silofs_bcursor128b *bcur;
 
@@ -176,8 +176,8 @@ static void ubi_update_changed(struct silofs_uber_info *ubi)
 	silofs_ubi_dirtify(ubi);
 }
 
-int silofs_ubi_update_bcursor(struct silofs_uber_info     *ubi,
-                              enum silofs_mtype            mtype,
+int silofs_ubi_update_bcursor(struct silofs_uber_info *ubi,
+                              enum silofs_mtype mtype,
                               const struct silofs_bcursor *bcursor)
 {
 	struct silofs_bcursor128b *bcur;
@@ -200,7 +200,7 @@ void silofs_ubi_key_of(const struct silofs_uber_info *ubi,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 struct silofs_uber_info *
-silofs_lookup_cached_uber(struct silofs_pcache      *pcache,
+silofs_lookup_cached_uber(struct silofs_pcache *pcache,
                           const struct silofs_paddr *paddr)
 {
 	struct silofs_pnode_info *pni;
@@ -211,11 +211,11 @@ silofs_lookup_cached_uber(struct silofs_pcache      *pcache,
 }
 
 struct silofs_uber_info *
-silofs_create_cached_uber(struct silofs_pcache      *pcache,
+silofs_create_cached_uber(struct silofs_pcache *pcache,
                           const struct silofs_pmeta *pmeta, bool spawn)
 {
 	struct silofs_pnode_info *pni;
-	struct silofs_uber_info  *ubi;
+	struct silofs_uber_info *ubi;
 
 	pni = silofs_pcache_create_pnode(pcache, pmeta);
 	ubi = silofs_ubi_from_pni(pni);
@@ -225,7 +225,7 @@ silofs_create_cached_uber(struct silofs_pcache      *pcache,
 	return ubi;
 }
 
-void silofs_forget_cached_uber(struct silofs_pcache    *pcache,
+void silofs_forget_cached_uber(struct silofs_pcache *pcache,
                                struct silofs_uber_info *ubi)
 {
 	silofs_pcache_delete_pnode(pcache, &ubi->ub_pni);

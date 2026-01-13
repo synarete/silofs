@@ -22,8 +22,8 @@
 static int open_dirfd(const char *dirpath)
 {
 	const int o_flags = O_PATH | O_CLOEXEC | O_DIRECTORY;
-	int       dirfd   = -1;
-	int       err;
+	int dirfd         = -1;
+	int err;
 
 	err = silofs_sys_open(dirpath, o_flags, 0, &dirfd);
 	if (err) {

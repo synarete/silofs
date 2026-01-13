@@ -60,9 +60,9 @@ static const char *log_progname(void)
 
 static const char *log_timestamp(char *buf, size_t bsz)
 {
-	struct tm    tm_now;
+	struct tm tm_now;
 	const time_t now = time(nullptr);
-	size_t       n;
+	size_t n;
 
 	localtime_r(&now, &tm_now);
 	n = strftime(buf, bsz, "%Y-%m-%d %H:%M:%S", &tm_now);
@@ -138,8 +138,8 @@ log_msg(enum silofs_log_level log_level, enum silofs_log_flags log_flags,
 static enum silofs_log_flags log_ctrl_flags(void)
 {
 	const struct silofs_log_params *params = silofs_global_log_params;
-	const enum silofs_log_flags     log_flags =
-                (params != nullptr) ? params->flags : SILOFS_LOG_FLAGS_DEFAULT;
+	const enum silofs_log_flags log_flags =
+		(params != nullptr) ? params->flags : SILOFS_LOG_FLAGS_DEFAULT;
 
 	return log_flags;
 }
@@ -174,8 +174,8 @@ log_with_file_line(enum silofs_log_flags log_flags, const char *file, int line)
 static bool log_level_enabled(enum silofs_log_level log_level)
 {
 	const struct silofs_log_params *params = silofs_global_log_params;
-	const enum silofs_log_level     log_level_want =
-                (params != nullptr) ? params->level : SILOFS_LOG_LEVEL_DEFAULT;
+	const enum silofs_log_level log_level_want =
+		(params != nullptr) ? params->level : SILOFS_LOG_LEVEL_DEFAULT;
 
 	return (log_level <= log_level_want);
 }
@@ -188,12 +188,12 @@ static bool log_enabled_with(enum silofs_log_level log_level)
 int silofs_logf(enum silofs_log_level log_level, const char *file, int line,
                 const char *fmt, ...)
 {
-	char                  msg[512];
-	va_list               ap          = { 0 };
-	const char           *filename    = nullptr;
-	const int             saved_errno = errno;
+	char msg[512];
+	va_list ap            = { 0 };
+	const char *filename  = nullptr;
+	const int saved_errno = errno;
 	enum silofs_log_flags log_flags;
-	int                   n, ret = 0;
+	int n, ret = 0;
 
 	va_start(ap, fmt);
 

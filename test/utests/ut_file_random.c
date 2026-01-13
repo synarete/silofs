@@ -17,7 +17,7 @@
 #include "utests.h"
 
 struct ut_ioparams {
-	off_t  offset;
+	off_t offset;
 	size_t length;
 	size_t nskip;
 	size_t count;
@@ -34,8 +34,8 @@ struct ut_ioparams {
 static struct ut_dvec **
 new_dvecs(struct ut_env *ute, const struct ut_ioparams *params)
 {
-	const size_t     step = params->length + params->nskip;
-	const size_t     size = params->count * sizeof(struct ut_dvec *);
+	const size_t step     = params->length + params->nskip;
+	const size_t size     = params->count * sizeof(struct ut_dvec *);
 	struct ut_dvec **list = nullptr;
 
 	list = (struct ut_dvec **)ut_zerobuf(ute, size);
@@ -57,10 +57,10 @@ static unsigned long *random_indices(struct ut_env *ute, size_t cnt)
 static void ut_file_random_io_(struct ut_env *ute, ino_t ino,
                                const struct ut_ioparams *params)
 {
-	size_t          *idx   = nullptr;
-	struct ut_dvec  *dvec  = nullptr;
+	size_t *idx            = nullptr;
+	struct ut_dvec *dvec   = nullptr;
 	struct ut_dvec **dvecs = nullptr;
-	const size_t     cnt   = params->count;
+	const size_t cnt       = params->count;
 
 	dvecs = new_dvecs(ute, params);
 	idx   = random_indices(ute, cnt);
@@ -93,10 +93,10 @@ static void ut_file_random_io_(struct ut_env *ute, ino_t ino,
 static void ut_file_random_io2_(struct ut_env *ute, ino_t ino,
                                 const struct ut_ioparams *params)
 {
-	size_t          *idx   = nullptr;
-	struct ut_dvec  *dvec  = nullptr;
+	size_t *idx            = nullptr;
+	struct ut_dvec *dvec   = nullptr;
 	struct ut_dvec **dvecs = nullptr;
-	const size_t     cnt   = params->count;
+	const size_t cnt       = params->count;
 
 	dvecs = new_dvecs(ute, params);
 	idx   = random_indices(ute, cnt);
@@ -132,8 +132,8 @@ static void
 ut_file_random_(struct ut_env *ute, const struct ut_ioparams *params)
 {
 	const char *name = UT_NAME;
-	ino_t       dino = 0;
-	ino_t       ino  = 0;
+	ino_t dino       = 0;
+	ino_t ino        = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -143,7 +143,7 @@ ut_file_random_(struct ut_env *ute, const struct ut_ioparams *params)
 	ut_rmdir_at_root(ute, name);
 }
 
-static void ut_file_random_arr_(struct ut_env            *ute,
+static void ut_file_random_arr_(struct ut_env *ute,
                                 const struct ut_ioparams *arr, size_t nelems)
 {
 	for (size_t i = 0; i < nelems; ++i) {
@@ -222,7 +222,7 @@ static void ut_file_random_unaligned(struct ut_env *ute)
 
 static void ut_file_random_random(struct ut_env *ute)
 {
-	uint64_t           rand = 0;
+	uint64_t rand = 0;
 	struct ut_ioparams params;
 
 	for (size_t i = 0; i < 10; i++) {

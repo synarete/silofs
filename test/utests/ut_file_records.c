@@ -17,9 +17,9 @@
 #include "utests.h"
 
 struct ut_record {
-	void    *data;
-	size_t   size;
-	uint8_t  seed[16];
+	void *data;
+	size_t size;
+	uint8_t seed[16];
 	uint64_t hash;
 	uint64_t index;
 };
@@ -36,7 +36,7 @@ static size_t record_size(const struct ut_record *rec, size_t size)
 
 static struct ut_record *record_new(struct ut_env *ute, size_t size)
 {
-	size_t            rec_size;
+	size_t rec_size;
 	struct ut_record *rec = nullptr;
 
 	rec_size  = record_size(rec, size);
@@ -147,11 +147,11 @@ offset_of(const struct ut_record *rec, size_t index, off_t base_off)
 static void
 ut_file_records_seq_(struct ut_env *ute, off_t off, size_t len, size_t cnt)
 {
-	const char       *name = UT_NAME;
-	struct ut_record *rec  = nullptr;
-	off_t             pos  = -1;
-	ino_t             dino = 0;
-	ino_t             ino  = 0;
+	const char *name      = UT_NAME;
+	struct ut_record *rec = nullptr;
+	off_t pos             = -1;
+	ino_t dino            = 0;
+	ino_t ino             = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -175,7 +175,7 @@ ut_file_records_seq_(struct ut_env *ute, off_t off, size_t len, size_t cnt)
 
 static void ut_file_records_seq(struct ut_env *ute)
 {
-	const off_t  off[] = { 0, 111, 11111, 1111111, 111111111 };
+	const off_t off[]  = { 0, 111, 11111, 1111111, 111111111 };
 	const size_t len[] = { 111, 1111, 11111 };
 
 	for (size_t i = 0; i < UT_ARRAY_SIZE(off); ++i) {
@@ -201,13 +201,13 @@ static off_t resolve_offset(const struct ut_record *rec, long pos, off_t base)
 static void
 ut_file_records_rand_(struct ut_env *ute, off_t off, size_t len, size_t cnt)
 {
-	const size_t      niter = 2;
-	struct ut_record *rec   = nullptr;
-	const char       *name  = UT_NAME;
-	const long       *poss  = ut_randseq(ute, cnt, 0);
-	off_t             pos   = -1;
-	ino_t             dino  = 0;
-	ino_t             ino   = 0;
+	const size_t niter    = 2;
+	struct ut_record *rec = nullptr;
+	const char *name      = UT_NAME;
+	const long *poss      = ut_randseq(ute, cnt, 0);
+	off_t pos             = -1;
+	ino_t dino            = 0;
+	ino_t ino             = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -261,7 +261,7 @@ static void ut_file_records_rand_unaligned1(struct ut_env *ute)
 
 static void ut_file_records_rand_unaligned2(struct ut_env *ute)
 {
-	const off_t  off[] = { UT_64K - 2, UT_1M - 2, UT_1G - 2, UT_1T - 2 };
+	const off_t off[] = { UT_64K - 2, UT_1M - 2, UT_1G - 2, UT_1T - 2 };
 	const size_t size_rec = record_base_size(nullptr);
 	const size_t size_max = UT_IOSIZE_MAX - size_rec;
 

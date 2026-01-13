@@ -33,7 +33,7 @@ static void *buffer_at(const void *buf, size_t step)
 {
 	union {
 		const void *p;
-		void       *q;
+		void *q;
 	} u = { .p = (const uint8_t *)buf + step };
 
 	return u.q;
@@ -58,9 +58,9 @@ static int io_status(int err, size_t nexpected, size_t ncomplete)
 int silofs_sys_readn(int fd, void *buf, size_t cnt)
 {
 	uint8_t *ptr;
-	size_t   nrd_cur;
-	size_t   nrd = 0;
-	int      err = 0;
+	size_t nrd_cur;
+	size_t nrd = 0;
+	int err    = 0;
 
 	while (nrd < cnt) {
 		ptr     = buffer_at(buf, nrd);
@@ -80,10 +80,10 @@ int silofs_sys_readn(int fd, void *buf, size_t cnt)
 int silofs_sys_preadn(int fd, void *buf, size_t cnt, off_t off)
 {
 	uint8_t *ptr;
-	off_t    pos;
-	size_t   nrd_cur;
-	size_t   nrd = 0;
-	int      err = 0;
+	off_t pos;
+	size_t nrd_cur;
+	size_t nrd = 0;
+	int err    = 0;
 
 	while (nrd < cnt) {
 		ptr     = buffer_at(buf, nrd);
@@ -104,9 +104,9 @@ int silofs_sys_preadn(int fd, void *buf, size_t cnt, off_t off)
 int silofs_sys_writen(int fd, const void *buf, size_t cnt)
 {
 	const uint8_t *ptr;
-	size_t         nwr_cur;
-	size_t         nwr = 0;
-	int            err = 0;
+	size_t nwr_cur;
+	size_t nwr = 0;
+	int err    = 0;
 
 	while (nwr < cnt) {
 		ptr     = buffer_at(buf, nwr);
@@ -126,10 +126,10 @@ int silofs_sys_writen(int fd, const void *buf, size_t cnt)
 int silofs_sys_pwriten(int fd, const void *buf, size_t cnt, off_t off)
 {
 	const uint8_t *ptr;
-	off_t          pos;
-	size_t         nwr_cur;
-	size_t         nwr = 0;
-	int            err = 0;
+	off_t pos;
+	size_t nwr_cur;
+	size_t nwr = 0;
+	int err    = 0;
 
 	while (nwr < cnt) {
 		ptr     = buffer_at(buf, nwr);
@@ -172,7 +172,7 @@ do_sys_pwritevn(int fd, struct iovec *iov, int cnt, off_t off, off_t *out_off)
 	size_t nwr_cur;
 	size_t nwr = 0;
 	size_t len;
-	int    err = 0;
+	int err = 0;
 
 	len = silofs_iov_length(iov, (size_t)cnt);
 	while (nwr < len) {
@@ -194,9 +194,9 @@ do_sys_pwritevn(int fd, struct iovec *iov, int cnt, off_t off, off_t *out_off)
 int silofs_sys_pwritevn(int fd, const struct iovec *iov, int cnt, off_t off)
 {
 	struct iovec iov2[128];
-	const int    cnt_max = (int)(sizeof(iov2) / sizeof(iov2[0]));
-	int          cnt2;
-	int          err = 0;
+	const int cnt_max = (int)(sizeof(iov2) / sizeof(iov2[0]));
+	int cnt2;
+	int err = 0;
 
 	while ((cnt > 0) && !err) {
 		cnt2 = (cnt > cnt_max) ? cnt_max : cnt;
@@ -260,7 +260,7 @@ int silofs_sys_munmapp(void **p_addr, size_t length)
 int silofs_sys_llseek_data(int fd, off_t off, off_t *out_data_off)
 {
 	off_t pos = 0;
-	int   err;
+	int err;
 
 	err = silofs_sys_llseek(fd, off, SEEK_SET, &pos);
 	if (err) {
@@ -276,8 +276,8 @@ int silofs_sys_llseek_data(int fd, off_t off, off_t *out_data_off)
 int silofs_sys_pselect_rfd(int fd, const struct timespec *ts)
 {
 	fd_set rfds;
-	int    err;
-	int    nfds = 0;
+	int err;
+	int nfds = 0;
 
 	if (fd >= FD_SETSIZE) {
 		return -EBADF;
@@ -363,10 +363,10 @@ static int sys_readproc(const char *procdir, const char *filename, void *buf,
 
 static int sys_readproc_long(const char *pathname, long *out_value)
 {
-	char   buf[128];
+	char buf[128];
 	size_t nrd = 0;
-	char  *end = nullptr;
-	int    err;
+	char *end  = nullptr;
+	int err;
 
 	memset(buf, 0, sizeof(buf));
 	err = sys_readproc("/proc", pathname, buf, sizeof(buf) - 1, &nrd);

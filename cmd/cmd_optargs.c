@@ -35,15 +35,15 @@ silofs_attr_noreturn static void cmd_fatal_redundant_arg(const char *s)
 #define CMD_ARRAY_SIZE(x_) SILOFS_ARRAY_SIZE(x_)
 
 struct cmd_getopt_info {
-	char          sopts[64];
+	char sopts[64];
 	struct option lopts[32];
-	size_t        nopts;
+	size_t nopts;
 };
 
 static void getopti_pre_add(const struct cmd_getopt_info *goi)
 {
-	const char  *sopt      = goi->sopts;
-	const char  *send      = goi->sopts + CMD_ARRAY_SIZE(goi->sopts);
+	const char *sopt       = goi->sopts;
+	const char *send       = goi->sopts + CMD_ARRAY_SIZE(goi->sopts);
 	const size_t slen      = strlen(goi->sopts);
 	const size_t nopts_max = CMD_ARRAY_SIZE(goi->lopts);
 
@@ -56,7 +56,7 @@ static void
 getopti_add(struct cmd_getopt_info *goi, const struct cmd_optdesc *od)
 {
 	struct option *lopt = goi->lopts + goi->nopts;
-	char          *sopt = goi->sopts + strlen(goi->sopts);
+	char *sopt          = goi->sopts + strlen(goi->sopts);
 
 	lopt->name    = od->lopt;
 	lopt->flag    = nullptr;

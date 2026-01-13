@@ -83,7 +83,7 @@ static void assign_statx(struct statx *stx, const struct silofs_stat *sst)
 static int ut_do_statfs(struct ut_env *ute, ino_t ino, struct statvfs *st)
 {
 	struct silofs_task_ctx task;
-	int                    ret;
+	int ret;
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_statfs(&task, ino, st);
@@ -95,8 +95,8 @@ static int ut_do_statx(struct ut_env *ute, ino_t ino, uint32_t sx_want_mask,
                        struct statx *stx)
 {
 	struct silofs_task_ctx task;
-	struct silofs_stat     st;
-	int                    ret;
+	struct silofs_stat st;
+	int ret;
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_statx(&task, ino, sx_want_mask, &st);
@@ -108,7 +108,7 @@ static int ut_do_statx(struct ut_env *ute, ino_t ino, uint32_t sx_want_mask,
 static int ut_do_access(struct ut_env *ute, ino_t ino, int mode)
 {
 	struct silofs_task_ctx task;
-	int                    ret;
+	int ret;
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_access(&task, ino, mode);
@@ -119,8 +119,8 @@ static int ut_do_access(struct ut_env *ute, ino_t ino, int mode)
 static int ut_do_getattr(struct ut_env *ute, ino_t ino, struct stat *out_st)
 {
 	struct silofs_task_ctx task;
-	struct silofs_stat     st;
-	int                    ret;
+	struct silofs_stat st;
+	int ret;
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_getattr(&task, ino, &st);
@@ -133,8 +133,8 @@ static int ut_do_lookup(struct ut_env *ute, ino_t parent, const char *name,
                         struct stat *out_st)
 {
 	struct silofs_task_ctx task;
-	struct silofs_stat     st;
-	int                    ret;
+	struct silofs_stat st;
+	int ret;
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_lookup(&task, parent, name, &st);
@@ -156,9 +156,9 @@ static int ut_do_utimens(struct ut_env *ute, ino_t ino, const struct stat *tms,
                          struct stat *out_st)
 {
 	struct silofs_task_ctx task;
-	struct silofs_itimes   itimes;
-	struct silofs_stat     st;
-	int                    ret;
+	struct silofs_itimes itimes;
+	struct silofs_stat st;
+	int ret;
 
 	stat_to_itimes(tms, &itimes);
 	ut_setup_task(ute, &task);
@@ -172,8 +172,8 @@ static int ut_do_mkdir(struct ut_env *ute, ino_t parent, const char *name,
                        mode_t mode, struct stat *out_st)
 {
 	struct silofs_task_ctx task;
-	struct silofs_stat     st;
-	int                    ret;
+	struct silofs_stat st;
+	int ret;
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_mkdir(&task, parent, name, mode | S_IFDIR, &st);
@@ -185,7 +185,7 @@ static int ut_do_mkdir(struct ut_env *ute, ino_t parent, const char *name,
 static int ut_do_rmdir(struct ut_env *ute, ino_t parent, const char *name)
 {
 	struct silofs_task_ctx task;
-	int                    ret;
+	int ret;
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_rmdir(&task, parent, name);
@@ -196,7 +196,7 @@ static int ut_do_rmdir(struct ut_env *ute, ino_t parent, const char *name)
 static int ut_do_opendir(struct ut_env *ute, ino_t ino)
 {
 	struct silofs_task_ctx task;
-	int                    ret;
+	int ret;
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_opendir(&task, ino, 0);
@@ -207,7 +207,7 @@ static int ut_do_opendir(struct ut_env *ute, ino_t ino)
 static int ut_do_releasedir(struct ut_env *ute, ino_t ino)
 {
 	struct silofs_task_ctx task;
-	int                    ret;
+	int ret;
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_releasedir(&task, ino, 0);
@@ -218,7 +218,7 @@ static int ut_do_releasedir(struct ut_env *ute, ino_t ino)
 static int ut_do_fsyncdir(struct ut_env *ute, ino_t ino, bool datasync)
 {
 	struct silofs_task_ctx task;
-	int                    ret;
+	int ret;
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_fsyncdir(&task, ino, datasync);
@@ -230,8 +230,8 @@ static int ut_do_symlink(struct ut_env *ute, ino_t parent, const char *name,
                          const char *val, struct stat *out_st)
 {
 	struct silofs_task_ctx task;
-	struct silofs_stat     st;
-	int                    ret;
+	struct silofs_stat st;
+	int ret;
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_symlink(&task, parent, name, val, &st);
@@ -244,7 +244,7 @@ static int ut_do_readlink(struct ut_env *ute, ino_t ino, char *buf, size_t len,
                           size_t *out_len)
 {
 	struct silofs_task_ctx task;
-	int                    ret;
+	int ret;
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_readlink(&task, ino, buf, len, out_len);
@@ -256,8 +256,8 @@ static int ut_do_link(struct ut_env *ute, ino_t ino, ino_t parent,
                       const char *name, struct stat *out_st)
 {
 	struct silofs_task_ctx task;
-	struct silofs_stat     st;
-	int                    ret;
+	struct silofs_stat st;
+	int ret;
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_link(&task, ino, parent, name, &st);
@@ -269,7 +269,7 @@ static int ut_do_link(struct ut_env *ute, ino_t ino, ino_t parent,
 static int ut_do_unlink(struct ut_env *ute, ino_t parent, const char *name)
 {
 	struct silofs_task_ctx task;
-	int                    ret;
+	int ret;
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_unlink(&task, parent, name);
@@ -281,8 +281,8 @@ static int ut_do_create(struct ut_env *ute, ino_t parent, const char *name,
                         mode_t mode, struct stat *out_st)
 {
 	struct silofs_task_ctx task;
-	struct silofs_stat     st;
-	int                    ret;
+	struct silofs_stat st;
+	int ret;
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_create(&task, parent, name, 0, mode, false, &st);
@@ -294,7 +294,7 @@ static int ut_do_create(struct ut_env *ute, ino_t parent, const char *name,
 static int ut_do_open(struct ut_env *ute, ino_t ino, int flags)
 {
 	struct silofs_task_ctx task;
-	int                    ret;
+	int ret;
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_open(&task, ino, flags, true);
@@ -305,7 +305,7 @@ static int ut_do_open(struct ut_env *ute, ino_t ino, int flags)
 static int ut_do_release(struct ut_env *ute, ino_t ino, bool flush)
 {
 	struct silofs_task_ctx task;
-	int                    ret;
+	int ret;
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_release(&task, ino, 0, flush);
@@ -317,8 +317,8 @@ static int ut_do_truncate(struct ut_env *ute, ino_t ino, off_t length,
                           struct stat *out_st)
 {
 	struct silofs_task_ctx task;
-	struct silofs_stat     st;
-	int                    ret;
+	struct silofs_stat st;
+	int ret;
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_truncate(&task, ino, length, false, &st);
@@ -330,7 +330,7 @@ static int ut_do_truncate(struct ut_env *ute, ino_t ino, off_t length,
 static int ut_do_fsync(struct ut_env *ute, ino_t ino, bool datasync)
 {
 	struct silofs_task_ctx task;
-	int                    ret;
+	int ret;
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_fsync(&task, ino, datasync);
@@ -342,7 +342,7 @@ static int ut_do_rename(struct ut_env *ute, ino_t parent, const char *name,
                         ino_t newparent, const char *newname, int flags)
 {
 	struct silofs_task_ctx task;
-	int                    ret;
+	int ret;
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_rename(&task, parent, name, newparent, newname,
@@ -354,7 +354,7 @@ static int ut_do_rename(struct ut_env *ute, ino_t parent, const char *name,
 static int ut_do_fiemap(struct ut_env *ute, ino_t ino, struct fiemap *fm)
 {
 	struct silofs_task_ctx task;
-	int                    ret;
+	int ret;
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_fiemap(&task, ino, fm);
@@ -366,7 +366,7 @@ static int
 ut_do_lseek(struct ut_env *ute, ino_t ino, off_t off, int whence, off_t *out)
 {
 	struct silofs_task_ctx task;
-	int                    ret;
+	int ret;
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_lseek(&task, ino, off, whence, out);
@@ -379,7 +379,7 @@ static int ut_do_copy_file_range(struct ut_env *ute, ino_t ino_in,
                                  size_t len, size_t *out_len)
 {
 	struct silofs_task_ctx task;
-	int                    ret;
+	int ret;
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_copy_file_range(&task, ino_in, off_in, ino_out,
@@ -393,7 +393,7 @@ ut_do_query(struct ut_env *ute, ino_t ino, enum silofs_query_type qtype,
             struct silofs_ioc_query *out_qry)
 {
 	struct silofs_task_ctx task;
-	int                    ret;
+	int ret;
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_query(&task, ino, qtype, out_qry);
@@ -404,7 +404,7 @@ ut_do_query(struct ut_env *ute, ino_t ino, enum silofs_query_type qtype,
 static int ut_do_flush(struct ut_env *ute, ino_t ino, bool now)
 {
 	struct silofs_task_ctx task;
-	int                    ret;
+	int ret;
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_flush(&task, ino, now);
@@ -416,7 +416,7 @@ static int ut_do_read(struct ut_env *ute, ino_t ino, void *buf, size_t len,
                       off_t off, size_t *out_len)
 {
 	struct silofs_task_ctx task;
-	int                    ret;
+	int ret;
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_read(&task, ino, buf, len, off, 0, out_len);
@@ -428,7 +428,7 @@ static int ut_do_fallocate(struct ut_env *ute, ino_t ino, int mode,
                            off_t offset, off_t len)
 {
 	struct silofs_task_ctx task;
-	int                    ret;
+	int ret;
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_fallocate(&task, ino, mode, offset, len);
@@ -440,7 +440,7 @@ static int ut_do_write(struct ut_env *ute, ino_t ino, const void *buf,
                        size_t len, off_t off, size_t *out_len)
 {
 	struct silofs_task_ctx task;
-	int                    ret;
+	int ret;
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_write(&task, ino, buf, len, off, 0, false, out_len);
@@ -449,13 +449,13 @@ static int ut_do_write(struct ut_env *ute, ino_t ino, const void *buf,
 }
 
 struct ut_write_iter {
-	struct silofs_iovec      iov[SILOFS_FILE_NITER_MAX];
+	struct silofs_iovec iov[SILOFS_FILE_NITER_MAX];
 	struct silofs_rwiter_ctx rwi;
-	const uint8_t           *dat;
-	size_t                   dat_len;
-	size_t                   dat_max;
-	size_t                   cnt;
-	size_t                   ncp;
+	const uint8_t *dat;
+	size_t dat_len;
+	size_t dat_max;
+	size_t cnt;
+	size_t ncp;
 };
 
 static struct ut_write_iter *write_iter_of(const struct silofs_rwiter_ctx *rwi)
@@ -473,7 +473,7 @@ iovec_copy(struct silofs_iovec *dst, const struct silofs_iovec *src)
 }
 
 static int ut_write_iter_check(const struct ut_write_iter *wri,
-                               const struct silofs_iovec  *iovec)
+                               const struct silofs_iovec *iovec)
 {
 	if ((iovec->iov_fd > 0) && (iovec->iov_off < 0)) {
 		return -EINVAL;
@@ -484,11 +484,11 @@ static int ut_write_iter_check(const struct ut_write_iter *wri,
 	return 0;
 }
 
-static int ut_write_iter_actor(struct silofs_rwiter_ctx  *rwi,
+static int ut_write_iter_actor(struct silofs_rwiter_ctx *rwi,
                                const struct silofs_iovec *iovec)
 {
 	struct ut_write_iter *wri = write_iter_of(rwi);
-	int                   err;
+	int err;
 
 	err = ut_write_iter_check(wri, iovec);
 	if (err) {
@@ -504,11 +504,11 @@ static int ut_write_iter_actor(struct silofs_rwiter_ctx  *rwi,
 	return 0;
 }
 
-static int ut_write_iter_asyncwr_actor(struct silofs_rwiter_ctx  *rwi,
+static int ut_write_iter_asyncwr_actor(struct silofs_rwiter_ctx *rwi,
                                        const struct silofs_iovec *iov)
 {
 	struct ut_write_iter *wri = write_iter_of(rwi);
-	int                   err;
+	int err;
 
 	err = ut_write_iter_check(wri, iov);
 	if (err) {
@@ -521,7 +521,7 @@ static int ut_write_iter_asyncwr_actor(struct silofs_rwiter_ctx  *rwi,
 static int ut_write_iter_copy_rem(struct ut_write_iter *wri)
 {
 	const struct silofs_iovec *iovec;
-	int                        err;
+	int err;
 
 	for (size_t i = wri->ncp; i < wri->cnt; ++i) {
 		iovec = &wri->iov[i];
@@ -544,7 +544,7 @@ static int ut_do_write_iter(struct ut_env *ute, ino_t ino, const void *buf,
                             size_t len, off_t off, size_t *out_len)
 {
 	struct silofs_task_ctx task = { .t_interrupt = -1 };
-	struct ut_write_iter   wri  = {
+	struct ut_write_iter wri    = {
 		   .dat       = buf,
 		   .dat_len   = 0,
 		   .dat_max   = len,
@@ -579,12 +579,12 @@ static struct ut_readdir_ctx *ut_readdir_ctx_of(struct silofs_readdir_ctx *ptr)
 	return ut_container_of(ptr, struct ut_readdir_ctx, rd_ctx);
 }
 
-static int filldir(struct silofs_readdir_ctx        *rd_ctx,
+static int filldir(struct silofs_readdir_ctx *rd_ctx,
                    const struct silofs_readdir_info *rdi)
 {
 	struct ut_dirent_info *dei;
 	struct ut_readdir_ctx *ut_rd_ctx;
-	size_t                 ndents_max, namelen;
+	size_t ndents_max, namelen;
 
 	ut_rd_ctx  = ut_readdir_ctx_of(rd_ctx);
 	ndents_max = UT_ARRAY_SIZE(ut_rd_ctx->dei);
@@ -614,9 +614,9 @@ static int filldir(struct silofs_readdir_ctx        *rd_ctx,
 static int ut_do_readdir(struct ut_env *ute, ino_t ino, off_t doff,
                          struct ut_readdir_ctx *ut_rd_ctx)
 {
-	struct silofs_task_ctx     task;
+	struct silofs_task_ctx task;
 	struct silofs_readdir_ctx *rd_ctx = &ut_rd_ctx->rd_ctx;
-	int                        ret;
+	int ret;
 
 	ut_rd_ctx->nde  = 0;
 	ut_rd_ctx->plus = 0;
@@ -632,9 +632,9 @@ static int ut_do_readdir(struct ut_env *ute, ino_t ino, off_t doff,
 static int ut_do_readdirplus(struct ut_env *ute, ino_t ino, off_t doff,
                              struct ut_readdir_ctx *ut_rd_ctx)
 {
-	struct silofs_task_ctx     task;
+	struct silofs_task_ctx task;
 	struct silofs_readdir_ctx *rd_ctx = &ut_rd_ctx->rd_ctx;
-	int                        ret;
+	int ret;
 
 	ut_rd_ctx->nde  = 0;
 	ut_rd_ctx->plus = 1;
@@ -651,7 +651,7 @@ static int ut_do_setxattr(struct ut_env *ute, ino_t ino, const char *name,
                           const void *value, size_t size, int flags)
 {
 	struct silofs_task_ctx task;
-	int                    ret;
+	int ret;
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_setxattr(&task, ino, name, value, size, flags,
@@ -664,7 +664,7 @@ static int ut_do_getxattr(struct ut_env *ute, ino_t ino, const char *name,
                           void *buf, size_t size, size_t *out_size)
 {
 	struct silofs_task_ctx task;
-	int                    ret;
+	int ret;
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_getxattr(&task, ino, name, buf, size, out_size);
@@ -675,7 +675,7 @@ static int ut_do_getxattr(struct ut_env *ute, ino_t ino, const char *name,
 static int ut_do_removexattr(struct ut_env *ute, ino_t ino, const char *name)
 {
 	struct silofs_task_ctx task;
-	int                    ret;
+	int ret;
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_removexattr(&task, ino, name);
@@ -692,8 +692,8 @@ ut_listxattr_ctx_of(struct silofs_listxattr_ctx *ptr)
 static int
 fillxent(struct silofs_listxattr_ctx *lxa_ctx, const char *name, size_t nlen)
 {
-	char                    *xname;
-	size_t                   limit;
+	char *xname;
+	size_t limit;
 	struct ut_listxattr_ctx *ut_lxa_ctx;
 
 	ut_lxa_ctx = ut_listxattr_ctx_of(lxa_ctx);
@@ -710,9 +710,9 @@ fillxent(struct silofs_listxattr_ctx *lxa_ctx, const char *name, size_t nlen)
 static int ut_do_listxattr(struct ut_env *ute, ino_t ino,
                            struct ut_listxattr_ctx *ut_lxa_ctx)
 {
-	struct silofs_task_ctx       task;
+	struct silofs_task_ctx task;
 	struct silofs_listxattr_ctx *lxa_ctx = &ut_lxa_ctx->lxa_ctx;
-	int                          ret;
+	int ret;
 
 	memset(ut_lxa_ctx, 0, sizeof(*ut_lxa_ctx));
 	ut_lxa_ctx->ute           = ute;
@@ -728,7 +728,7 @@ static int
 ut_do_tune(struct ut_env *ute, ino_t ino, int iflags_want, int iflags_dont)
 {
 	struct silofs_task_ctx task;
-	int                    ret;
+	int ret;
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_tune(&task, ino, iflags_want, iflags_dont);
@@ -739,7 +739,7 @@ ut_do_tune(struct ut_env *ute, ino_t ino, int iflags_want, int iflags_dont)
 static int ut_do_timedout(struct ut_env *ute)
 {
 	struct silofs_task_ctx task;
-	int                    ret;
+	int ret;
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_maintain(&task, SILOFS_CTLF_IDLE);
@@ -793,7 +793,7 @@ static void ut_expect_sane_statx(const struct statx *stx)
 
 void ut_statx(struct ut_env *ute, ino_t ino, struct statx *stx)
 {
-	int                err;
+	int err;
 	const unsigned int mask = STATX_ALL | STATX_BTIME;
 
 	err = ut_do_statx(ute, ino, mask, stx);
@@ -813,7 +813,7 @@ void ut_getattr(struct ut_env *ute, ino_t ino, struct stat *st)
 
 void ut_getattr_noent(struct ut_env *ute, ino_t ino)
 {
-	int         err;
+	int err;
 	struct stat st;
 
 	err = ut_do_getattr(ute, ino, &st);
@@ -852,7 +852,7 @@ void ut_getattr_dirsize(struct ut_env *ute, ino_t ino, off_t size)
 void ut_utimens_atime(struct ut_env *ute, ino_t ino,
                       const struct timespec *atime)
 {
-	int         err;
+	int err;
 	struct stat st;
 	struct stat uts = { .st_ino = 0 };
 
@@ -872,7 +872,7 @@ void ut_utimens_atime(struct ut_env *ute, ino_t ino,
 void ut_utimens_mtime(struct ut_env *ute, ino_t ino,
                       const struct timespec *mtime)
 {
-	int         err;
+	int err;
 	struct stat st;
 	struct stat uts;
 
@@ -966,8 +966,8 @@ static void ut_mkdir_status(struct ut_env *ute, ino_t parent, const char *name,
 void ut_mkdir(struct ut_env *ute, ino_t parent, const char *name,
               struct stat *out_st)
 {
-	int         err;
-	ino_t       dino;
+	int err;
+	ino_t dino;
 	struct stat st;
 
 	ut_mkdir_status(ute, parent, name, out_st, 0);
@@ -1045,7 +1045,7 @@ void ut_rmdir_at_root(struct ut_env *ute, const char *name)
 
 static void ut_require_dir(struct ut_env *ute, ino_t dino)
 {
-	int         err;
+	int err;
 	struct stat st;
 
 	err = ut_do_getattr(ute, dino, &st);
@@ -1129,8 +1129,8 @@ static void ut_link_status(struct ut_env *ute, ino_t ino, ino_t parent,
 void ut_link(struct ut_env *ute, ino_t ino, ino_t parent, const char *name,
              struct stat *out_st)
 {
-	nlink_t     nlink1;
-	nlink_t     nlink2;
+	nlink_t nlink1;
+	nlink_t nlink2;
 	struct stat st;
 
 	ut_lookup_noent(ute, parent, name);
@@ -1175,7 +1175,7 @@ void ut_unlink_err(struct ut_env *ute, ino_t parent, const char *name, int err)
 
 void ut_unlink_file(struct ut_env *ute, ino_t parent, const char *name)
 {
-	ino_t       ino;
+	ino_t ino;
 	struct stat st;
 
 	ut_lookup_ino(ute, parent, name, &ino);
@@ -1222,7 +1222,7 @@ void ut_rename_exchange(struct ut_env *ute, ino_t parent, const char *name,
                         ino_t newparent, const char *newname)
 {
 	struct stat st[4];
-	const int   flags = RENAME_EXCHANGE;
+	const int flags = RENAME_EXCHANGE;
 
 	ut_lookup(ute, parent, name, &st[0]);
 	ut_expect_gt(st[0].st_nlink, 0);
@@ -1242,7 +1242,7 @@ void ut_rename_exchange(struct ut_env *ute, ino_t parent, const char *name,
 void ut_symlink(struct ut_env *ute, ino_t parent, const char *name,
                 const char *value, ino_t *out_ino)
 {
-	int         err;
+	int err;
 	struct stat st;
 
 	err = ut_do_lookup(ute, parent, name, &st);
@@ -1259,9 +1259,9 @@ void ut_symlink(struct ut_env *ute, ino_t parent, const char *name,
 
 void ut_readlink_expect(struct ut_env *ute, ino_t ino, const char *value)
 {
-	int          err;
-	char        *lnk;
-	size_t       nrd = 0;
+	int err;
+	char *lnk;
+	size_t nrd       = 0;
 	const size_t lsz = SILOFS_PATH_MAX;
 
 	lnk = ut_zalloc(ute, lsz);
@@ -1291,7 +1291,7 @@ static void ut_create2(struct ut_env *ute, ino_t parent, const char *name,
                        mode_t mode, ino_t *out_ino)
 {
 	struct stat st;
-	ino_t       ino = 0;
+	ino_t ino = 0;
 
 	ut_create(ute, parent, name, mode, &st);
 	ino = st.st_ino;
@@ -1355,7 +1355,7 @@ void ut_fsync(struct ut_env *ute, ino_t ino, bool datasync)
 void ut_create_only(struct ut_env *ute, ino_t parent, const char *name,
                     ino_t *out_ino)
 {
-	ino_t       ino;
+	ino_t ino;
 	struct stat st;
 
 	ut_create(ute, parent, name, S_IFREG | 0600, &st);
@@ -1415,7 +1415,7 @@ void ut_write(struct ut_env *ute, ino_t ino, const void *buf, size_t bsz,
               off_t off)
 {
 	size_t nwr = 0;
-	int    err;
+	int err;
 
 	err = ut_do_write(ute, ino, buf, bsz, off, &nwr);
 	ut_expect_ok(err);
@@ -1426,7 +1426,7 @@ void ut_write_iter(struct ut_env *ute, ino_t ino, const void *buf, size_t bsz,
                    off_t off)
 {
 	size_t nwr = 0;
-	int    err;
+	int err;
 
 	err = ut_do_write_iter(ute, ino, buf, bsz, off, &nwr);
 	ut_expect_ok(err);
@@ -1468,7 +1468,7 @@ void ut_write_read_str(struct ut_env *ute, ino_t ino, const char *str,
 void ut_read_verify(struct ut_env *ute, ino_t ino, const void *buf, size_t bsz,
                     off_t off)
 {
-	char  tmp[1024];
+	char tmp[1024];
 	void *dat = (bsz > sizeof(tmp)) ? ut_randbuf(ute, bsz) : tmp;
 
 	ut_read(ute, ino, dat, bsz, off);
@@ -1484,7 +1484,7 @@ void ut_read_verify_str(struct ut_env *ute, ino_t ino, const char *str,
 void ut_read(struct ut_env *ute, ino_t ino, void *buf, size_t bsz, off_t off)
 {
 	size_t nrd;
-	int    err;
+	int err;
 
 	err = ut_do_read(ute, ino, buf, bsz, off, &nrd);
 	ut_expect_ok(err);
@@ -1513,9 +1513,9 @@ void ut_read_zeros(struct ut_env *ute, ino_t ino, off_t off, size_t len)
 void ut_trunacate_file(struct ut_env *ute, ino_t ino, off_t off)
 {
 	struct stat st;
-	size_t      nrd;
-	uint8_t     buf[1] = { 0 };
-	int         err;
+	size_t nrd;
+	uint8_t buf[1] = { 0 };
+	int err;
 
 	err = ut_do_truncate(ute, ino, off, &st);
 	ut_expect_ok(err);
@@ -1539,7 +1539,7 @@ void ut_trunacate_zero(struct ut_env *ute, ino_t ino)
 void ut_fallocate_reserve(struct ut_env *ute, ino_t ino, off_t off, off_t len)
 {
 	struct stat st;
-	int         err;
+	int err;
 
 	err = ut_do_fallocate(ute, ino, 0, off, len);
 	ut_expect_ok(err);
@@ -1553,8 +1553,8 @@ void ut_fallocate_keep_size(struct ut_env *ute, ino_t ino, off_t off,
                             off_t len)
 {
 	struct stat st[2];
-	const int   mode = FALLOC_FL_KEEP_SIZE;
-	int         err;
+	const int mode = FALLOC_FL_KEEP_SIZE;
+	int err;
 
 	err = ut_do_getattr(ute, ino, &st[0]);
 	ut_expect_ok(err);
@@ -1575,8 +1575,8 @@ void ut_fallocate_punch_hole(struct ut_env *ute, ino_t ino, off_t off,
                              off_t len)
 {
 	struct stat st[2];
-	const int   mode = FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE;
-	int         err;
+	const int mode = FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE;
+	int err;
 
 	err = ut_do_getattr(ute, ino, &st[0]);
 	ut_expect_ok(err);
@@ -1594,9 +1594,9 @@ void ut_fallocate_zero_range(struct ut_env *ute, ino_t ino, off_t off,
                              off_t len, bool keep_size)
 {
 	struct stat st[2];
-	const off_t end  = off + len;
-	int         mode = FALLOC_FL_ZERO_RANGE;
-	int         err;
+	const off_t end = off + len;
+	int mode        = FALLOC_FL_ZERO_RANGE;
+	int err;
 
 	if (keep_size) {
 		mode |= FALLOC_FL_KEEP_SIZE;
@@ -1665,9 +1665,9 @@ void ut_setxattr_all(struct ut_env *ute, ino_t ino, const struct ut_kvl *kvl)
 void ut_getxattr_value(struct ut_env *ute, ino_t ino,
                        const struct ut_keyval *kv)
 {
-	void  *val = nullptr;
+	void *val = nullptr;
 	size_t vsz;
-	int    err;
+	int err;
 
 	vsz = 0;
 	err = ut_do_getxattr(ute, ino, kv->name, nullptr, 0, &vsz);
@@ -1684,9 +1684,9 @@ void ut_getxattr_nodata(struct ut_env *ute, ino_t ino,
                         const struct ut_keyval *kv)
 
 {
-	char   buf[256] = "";
-	size_t bsz      = 0;
-	int    err;
+	char buf[256] = "";
+	size_t bsz    = 0;
+	int err;
 
 	err = ut_do_getxattr(ute, ino, kv->name, buf, sizeof(buf), &bsz);
 	ut_expect_err(err, -ENODATA);
@@ -1720,9 +1720,9 @@ static struct ut_keyval *kvl_search(const struct ut_kvl *kvl, const char *name)
 void ut_listxattr(struct ut_env *ute, ino_t ino, const struct ut_kvl *kvl)
 {
 	struct ut_listxattr_ctx ut_lxa_ctx;
-	const struct ut_keyval *kv   = nullptr;
-	const char             *name = nullptr;
-	int                     err;
+	const struct ut_keyval *kv = nullptr;
+	const char *name           = nullptr;
+	int err;
 
 	err = ut_do_listxattr(ute, ino, &ut_lxa_ctx);
 	ut_expect_ok(err);
@@ -1781,7 +1781,7 @@ static void
 ut_lseek(struct ut_env *ute, ino_t ino, off_t off, int whence, off_t *out_off)
 {
 	struct stat st;
-	int         err;
+	int err;
 
 	ut_getattr(ute, ino, &st);
 
@@ -1805,7 +1805,7 @@ void ut_lseek_hole(struct ut_env *ute, ino_t ino, off_t off, off_t *out_off)
 void ut_lseek_nodata(struct ut_env *ute, ino_t ino, off_t off)
 {
 	off_t res_off = -1;
-	int   err;
+	int err;
 
 	err = ut_do_lseek(ute, ino, off, SEEK_DATA, &res_off);
 	ut_expect_err(err, -ENXIO);
@@ -1935,7 +1935,7 @@ void ut_expect_statvfs(const struct statvfs *stv1, const struct statvfs *stv2)
 
 void ut_reload_fs_at(struct ut_env *ute, ino_t ino)
 {
-	struct stat    st[2];
+	struct stat st[2];
 	struct statvfs stv[2];
 
 	ut_statfs(ute, ino, &stv[0]);

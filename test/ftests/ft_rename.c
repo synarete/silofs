@@ -30,7 +30,7 @@ static void test_rename_simple(struct ft_env *fte)
 	const char *path0 = ft_new_path_unique(fte);
 	const char *path1 = ft_new_path_under(fte, path0);
 	const char *path2 = ft_new_path_under(fte, path0);
-	int         fd    = -1;
+	int fd            = -1;
 
 	ft_mkdir(path0, 0755);
 	ft_creat(path1, 0644, &fd);
@@ -63,8 +63,8 @@ static void test_renameat_simple(struct ft_env *fte)
 	const char *path  = ft_new_path_unique(fte);
 	const char *name1 = ft_new_name_unique(fte);
 	const char *name2 = ft_new_name_unique(fte);
-	int         dfd   = -1;
-	int         fd    = -1;
+	int dfd           = -1;
+	int fd            = -1;
 
 	ft_mkdir(path, 0700);
 	ft_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);
@@ -92,12 +92,12 @@ static void test_renameat_simple(struct ft_env *fte)
  */
 static void test_rename_getattr(struct ft_env *fte)
 {
-	struct stat  st[3];
-	const char  *path0 = ft_new_path_unique(fte);
-	const char  *path1 = ft_new_path_under(fte, path0);
-	const char  *path2 = ft_new_path_under(fte, path0);
-	const mode_t ifmt  = S_IFMT;
-	int          fd    = -1;
+	struct stat st[3];
+	const char *path0 = ft_new_path_unique(fte);
+	const char *path1 = ft_new_path_under(fte, path0);
+	const char *path2 = ft_new_path_under(fte, path0);
+	const mode_t ifmt = S_IFMT;
+	int fd            = -1;
 
 	ft_mkdir(path0, 0755);
 	ft_creat(path1, 0644, &fd);
@@ -126,7 +126,7 @@ static void test_rename_getattr(struct ft_env *fte)
  */
 static void test_rename_ctime(struct ft_env *fte)
 {
-	int         fd = -1;
+	int fd = -1;
 	struct stat st[2];
 	const char *path0 = ft_new_path_unique(fte);
 	const char *path1 = ft_new_path_unique(fte);
@@ -186,7 +186,7 @@ static void test_rename_notdirto(struct ft_env *fte)
 	struct stat st[2];
 	const char *path0 = ft_new_path_unique(fte);
 	const char *path1 = ft_new_path_unique(fte);
-	int         fd    = -1;
+	int fd            = -1;
 
 	ft_mkdir(path0, 0750);
 	ft_creat(path1, 0644, &fd);
@@ -216,7 +216,7 @@ static void test_rename_isdirto(struct ft_env *fte)
 	struct stat st[2];
 	const char *path0 = ft_new_path_unique(fte);
 	const char *path1 = ft_new_path_unique(fte);
-	int         fd    = -1;
+	int fd            = -1;
 
 	ft_mkdir(path0, 0750);
 	ft_creat(path1, 0640, &fd);
@@ -250,8 +250,8 @@ static void test_rename_isdirto(struct ft_env *fte)
  */
 static void test_rename_symlink_(struct ft_env *fte, size_t bsz)
 {
-	int         fd    = -1;
-	void       *buf   = ft_new_buf_rands(fte, bsz);
+	int fd            = -1;
+	void *buf         = ft_new_buf_rands(fte, bsz);
 	const char *path0 = ft_new_path_unique(fte);
 	const char *path1 = ft_new_path_under(fte, path0);
 	const char *path2 = ft_new_path_under(fte, path0);
@@ -280,7 +280,7 @@ static void test_rename_symlink(struct ft_env *fte)
  */
 static void test_rename_nlink(struct ft_env *fte)
 {
-	int         fd = -1;
+	int fd = -1;
 	struct stat st;
 	const char *path_x    = ft_new_path_unique(fte);
 	const char *path_a    = ft_new_path_under(fte, path_x);
@@ -353,7 +353,7 @@ static void test_rename_nlink(struct ft_env *fte)
  */
 static void test_rename_child_(struct ft_env *fte, size_t nsibs)
 {
-	int         fd    = -1;
+	int fd            = -1;
 	const char *path0 = ft_new_path_unique(fte);
 	const char *path1 = ft_new_path_under(fte, path0);
 	const char *path2 = ft_new_path_under(fte, path0);
@@ -389,7 +389,7 @@ static void test_rename_child(struct ft_env *fte)
  */
 static void test_rename_replace_(struct ft_env *fte, size_t nsibs)
 {
-	int         fd    = -1;
+	int fd            = -1;
 	const char *path0 = ft_new_path_unique(fte);
 	const char *path1 = nullptr;
 	const char *path2 = ft_new_path_under(fte, path0);
@@ -425,7 +425,7 @@ static void test_rename_replace(struct ft_env *fte)
  */
 static void test_rename_move_(struct ft_env *fte, size_t cnt)
 {
-	int         fd;
+	int fd;
 	const char *src_path1 = nullptr;
 	const char *tgt_path1 = nullptr;
 	const char *src_path0 = ft_new_path_unique(fte);
@@ -466,12 +466,12 @@ static void test_rename_move(struct ft_env *fte)
  */
 static void test_rename_override_(struct ft_env *fte, size_t cnt, size_t bsz)
 {
-	int         fd        = -1;
-	char       *src_path1 = nullptr;
-	char       *tgt_path1 = nullptr;
+	int fd                = -1;
+	char *src_path1       = nullptr;
+	char *tgt_path1       = nullptr;
 	const char *src_path0 = ft_new_path_unique(fte);
 	const char *tgt_path0 = ft_new_path_unique(fte);
-	void       *buf       = ft_new_buf_rands(fte, bsz);
+	void *buf             = ft_new_buf_rands(fte, bsz);
 
 	ft_mkdir(src_path0, 0700);
 	ft_mkdir(tgt_path0, 0700);
@@ -511,7 +511,7 @@ static void test_rename_override(struct ft_env *fte)
  */
 static const char *make_name(struct ft_env *fte, size_t len, char ch)
 {
-	char   str[NAME_MAX + 1] = "";
+	char str[NAME_MAX + 1] = "";
 	size_t nn;
 
 	nn = (len < sizeof(str)) ? len : (sizeof(str) - 1);
@@ -531,10 +531,10 @@ static void test_renameat_inplace(struct ft_env *fte)
 	const char *name1 = nullptr;
 	const char *name2 = nullptr;
 	const char *path  = ft_new_path_unique(fte);
-	size_t      count = NAME_MAX;
-	int         fd    = -1;
-	int         dfd   = -1;
-	const char  ch    = 'A';
+	size_t count      = NAME_MAX;
+	int fd            = -1;
+	int dfd           = -1;
+	const char ch     = 'A';
 
 	ft_mkdir(path, 0700);
 	ft_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);
@@ -559,17 +559,17 @@ static void test_renameat_inplace(struct ft_env *fte)
 
 static void test_renameat_inplace_rw_(struct ft_env *fte, size_t cnt)
 {
-	int          fd    = -1;
-	int          dfd   = -1;
-	size_t       nwr   = 0;
-	size_t       nrd   = 0;
-	const char  *name1 = nullptr;
-	const char  *name2 = nullptr;
-	const char   ch    = 'B';
-	const char  *path  = ft_new_path_unique(fte);
-	const size_t bsz   = cnt * FT_1K;
-	void        *buf1  = ft_new_buf_rands(fte, bsz);
-	void        *buf2  = ft_new_buf_rands(fte, bsz);
+	int fd            = -1;
+	int dfd           = -1;
+	size_t nwr        = 0;
+	size_t nrd        = 0;
+	const char *name1 = nullptr;
+	const char *name2 = nullptr;
+	const char ch     = 'B';
+	const char *path  = ft_new_path_unique(fte);
+	const size_t bsz  = cnt * FT_1K;
+	void *buf1        = ft_new_buf_rands(fte, bsz);
+	void *buf2        = ft_new_buf_rands(fte, bsz);
 
 	ft_mkdir(path, 0700);
 	ft_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);
@@ -616,13 +616,13 @@ static void test_renameat_inplace_rw(struct ft_env *fte)
  */
 static void test_renameat_move_(struct ft_env *fte, size_t cnt)
 {
-	int         fd   = -1;
-	int         dfd1 = -1;
-	int         dfd2 = -1;
+	int fd   = -1;
+	int dfd1 = -1;
+	int dfd2 = -1;
 	struct stat st;
 	const char *name1;
 	const char *name2;
-	const char  ch    = 'C';
+	const char ch     = 'C';
 	const char *path1 = ft_new_path_unique(fte);
 	const char *path2 = ft_new_path_unique(fte);
 
@@ -667,12 +667,12 @@ static void test_renameat_move(struct ft_env *fte)
  */
 static void test_renameat_exchange(struct ft_env *fte)
 {
-	int         fd1  = -1;
-	int         fd2  = -1;
-	int         dfd1 = -1;
-	int         dfd2 = -1;
-	ino_t       ino1;
-	ino_t       ino2;
+	int fd1  = -1;
+	int fd2  = -1;
+	int dfd1 = -1;
+	int dfd2 = -1;
+	ino_t ino1;
+	ino_t ino2;
 	struct stat dst1;
 	struct stat dst2;
 	struct stat st1;
@@ -738,17 +738,17 @@ static char *make_lname(struct ft_env *fte, const char *prefix, size_t idx)
 
 static void test_renameat_samedir(struct ft_env *fte)
 {
-	int          dfd    = -1;
-	int          fd     = -1;
-	ino_t        ino    = 0;
-	char        *lname1 = nullptr;
-	char        *lname2 = nullptr;
-	char         p1[]   = "1";
-	char         p2[]   = "2";
-	const size_t cnt    = SILOFS_LINK_MAX / 3;
-	const char  *path   = ft_new_path_unique(fte);
-	const char  *fname  = ft_new_name_unique(fte);
-	struct stat  st;
+	int dfd           = -1;
+	int fd            = -1;
+	ino_t ino         = 0;
+	char *lname1      = nullptr;
+	char *lname2      = nullptr;
+	char p1[]         = "1";
+	char p2[]         = "2";
+	const size_t cnt  = SILOFS_LINK_MAX / 3;
+	const char *path  = ft_new_path_unique(fte);
+	const char *fname = ft_new_name_unique(fte);
+	struct stat st;
 
 	ft_mkdir(path, 0700);
 	ft_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);

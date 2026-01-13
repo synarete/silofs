@@ -40,7 +40,7 @@ static off_t dvec_last_off(const struct ut_dvec *dvec)
 static void
 ut_rw_plus_minus_1_(struct ut_env *ute, ino_t ino, off_t off, size_t len)
 {
-	uint8_t         byte;
+	uint8_t byte;
 	struct ut_dvec *dv1;
 	struct ut_dvec *dv2;
 	struct ut_dvec *dv3;
@@ -68,8 +68,8 @@ ut_rw_plus_minus_1_(struct ut_env *ute, ino_t ino, off_t off, size_t len)
 
 static void ut_file_edges_1_(struct ut_env *ute, off_t off, size_t len)
 {
-	ino_t       ino;
-	ino_t       dino;
+	ino_t ino;
+	ino_t dino;
 	const char *name = UT_NAME;
 
 	ut_mkdir_at_root(ute, name, &dino);
@@ -135,12 +135,12 @@ static void ut_file_edges_special(struct ut_env *ute)
 static void
 ut_file_edges_fmapping_(struct ut_env *ute, const off_t *off_arr, size_t cnt)
 {
-	const size_t bsz  = 512;
-	uint8_t     *buf  = ut_randbuf(ute, bsz);
-	const char  *name = UT_NAME;
-	off_t        off  = -1;
-	ino_t        dino = 0;
-	ino_t        ino  = 0;
+	const size_t bsz = 512;
+	uint8_t *buf     = ut_randbuf(ute, bsz);
+	const char *name = UT_NAME;
+	off_t off        = -1;
+	ino_t dino       = 0;
+	ino_t ino        = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);

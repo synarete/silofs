@@ -35,12 +35,12 @@ void silofs_strbuf_fini(struct silofs_strbuf *sbuf)
 }
 
 void silofs_strbuf_as_sv(const struct silofs_strbuf *sbuf,
-                         struct silofs_strview      *out_sv)
+                         struct silofs_strview *out_sv)
 {
 	silofs_strview_init(out_sv, sbuf->str);
 }
 
-void silofs_strbuf_as_ss(struct silofs_strbuf  *sbuf,
+void silofs_strbuf_as_ss(struct silofs_strbuf *sbuf,
                          struct silofs_strspan *out_ss)
 {
 	const size_t len = silofs_str_length(sbuf->str);
@@ -60,7 +60,7 @@ void silofs_strbuf_bzero(struct silofs_strbuf *sbuf, size_t n)
 	memset(sbuf->str, 0, (n < m) ? n : m);
 }
 
-void silofs_strbuf_assign(struct silofs_strbuf       *sbuf,
+void silofs_strbuf_assign(struct silofs_strbuf *sbuf,
                           const struct silofs_strbuf *other)
 {
 	struct silofs_strview sv;
@@ -72,7 +72,7 @@ void silofs_strbuf_assign(struct silofs_strbuf       *sbuf,
 	silofs_strspan_vassign(&ss, &sv);
 }
 
-void silofs_strbuf_setup(struct silofs_strbuf        *sbuf,
+void silofs_strbuf_setup(struct silofs_strbuf *sbuf,
                          const struct silofs_strview *sv)
 {
 	silofs_strbuf_reset(sbuf);
@@ -101,8 +101,8 @@ void silofs_strbuf_setup_by2(struct silofs_strbuf *sbuf, const char *s,
 size_t silofs_strbuf_sprintf(struct silofs_strbuf *sbuf, const char *fmt, ...)
 {
 	va_list ap = { 0 };
-	size_t  k  = sizeof(sbuf->str);
-	int     n;
+	size_t k   = sizeof(sbuf->str);
+	int n;
 
 	silofs_strbuf_reset(sbuf);
 	va_start(ap, fmt);

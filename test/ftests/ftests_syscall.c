@@ -27,7 +27,7 @@
 
 static const char *syscall_name(const char *fn)
 {
-	const char  *prefix  = "ft_do_";
+	const char *prefix   = "ft_do_";
 	const size_t preflen = ft_strlen(prefix);
 
 	if (!strncmp(prefix, fn, preflen)) {
@@ -71,7 +71,7 @@ void ft_do_stat(const char *path, struct stat *st, const char *fl, int ln)
 void ft_do_stat_err(const char *path, int err, const char *fl, int ln)
 {
 	struct stat st = { .st_size = -1 };
-	int         res;
+	int res;
 
 	res = silofs_sys_stat(path, &st);
 	ft_expect_sys_err(res, err, fl, ln);
@@ -101,7 +101,7 @@ void ft_do_lstat(const char *path, struct stat *st, const char *fl, int ln)
 void ft_do_lstat_err(const char *path, int err, const char *fl, int ln)
 {
 	struct stat st = { .st_size = -1 };
-	int         res;
+	int res;
 
 	res = silofs_sys_lstat(path, &st);
 	ft_expect_sys_err(res, err, fl, ln);
@@ -120,7 +120,7 @@ void ft_do_fstatat_err(int dirfd, const char *name, int flags, int err,
                        const char *fl, int ln)
 {
 	struct stat st = { .st_size = -1 };
-	int         res;
+	int res;
 
 	res = silofs_sys_fstatat(dirfd, name, &st, flags);
 	ft_expect_sys_err(res, err, fl, ln);
@@ -147,7 +147,7 @@ void ft_do_statvfs(const char *path, struct statvfs *stv, const char *fl,
 void ft_do_statvfs_err(const char *path, int err, const char *fl, int ln)
 {
 	struct statvfs stv = { .f_bsize = 0 };
-	int            res;
+	int res;
 
 	res = silofs_sys_statvfs(path, &stv);
 	ft_expect_sys_err(res, err, fl, ln);
@@ -377,7 +377,7 @@ void ft_do_llseek_err(int fd, off_t off, int whence, int err, const char *fl,
                       int ln)
 {
 	off_t pos = -1;
-	int   res;
+	int res;
 
 	res = silofs_sys_llseek(fd, off, whence, &pos);
 	ft_expect_sys_err(res, err, fl, ln);
@@ -396,7 +396,7 @@ void ft_do_write_err(int fd, const void *buf, size_t cnt, int err,
                      const char *fl, int ln)
 {
 	size_t nwr = 0;
-	int    res;
+	int res;
 
 	res = silofs_sys_write(fd, buf, cnt, &nwr);
 	ft_expect_sys_err(res, err, fl, ln);
@@ -415,7 +415,7 @@ void ft_do_pwrite_err(int fd, const void *buf, size_t cnt, off_t off, int err,
                       const char *fl, int ln)
 {
 	size_t nwr = 0;
-	int    res;
+	int res;
 
 	res = silofs_sys_pwrite(fd, buf, cnt, off, &nwr);
 	ft_expect_sys_err(res, err, fl, ln);
@@ -434,7 +434,7 @@ void ft_do_read_err(int fd, void *buf, size_t cnt, int err, const char *fl,
                     int ln)
 {
 	size_t nrd = 0;
-	int    res;
+	int res;
 
 	res = silofs_sys_read(fd, buf, cnt, &nrd);
 	ft_expect_sys_err(res, err, fl, ln);
@@ -541,7 +541,7 @@ void ft_do_readlink_err(const char *path, char *buf, size_t bsz, int err,
                         const char *fl, int ln)
 {
 	size_t cnt = 0;
-	int    res;
+	int res;
 
 	res = silofs_sys_readlink(path, buf, bsz, &cnt);
 	ft_expect_sys_err(res, err, fl, ln);
@@ -762,7 +762,7 @@ void ft_do_getxattr_err(const char *path, const char *name, int err,
                         const char *fl, int ln)
 {
 	size_t cnt = 0;
-	int    res;
+	int res;
 
 	res = silofs_sys_getxattr(path, name, nullptr, 0, &cnt);
 	ft_expect_sys_err(res, err, fl, ln);
@@ -790,7 +790,7 @@ void ft_do_fgetxattr_err(int fd, const char *name, int err, const char *fl,
                          int ln)
 {
 	size_t cnt = 0;
-	int    res;
+	int res;
 
 	res = silofs_sys_fgetxattr(fd, name, nullptr, 0, &cnt);
 	ft_expect_sys_err(res, err, fl, ln);
@@ -862,7 +862,7 @@ void ft_do_flistxattr_err(int fd, char *list, size_t size, int err,
                           const char *fl, int ln)
 {
 	size_t len = 0;
-	int    res;
+	int res;
 
 	res = silofs_sys_flistxattr(fd, list, size, &len);
 	ft_expect_sys_err(res, err, fl, ln);
@@ -898,7 +898,7 @@ void ft_do_getdents(int fd, void *buf, size_t bsz, struct dirent64 *des,
 
 void ft_do_getdent(int fd, struct dirent64 *dent, const char *fl, int ln)
 {
-	char   buf[1024];
+	char buf[1024];
 	size_t nde = 0;
 
 	ft_do_getdents(fd, buf, sizeof(buf), dent, 1, &nde, fl, ln);
@@ -908,9 +908,9 @@ void ft_do_getdent(int fd, struct dirent64 *dent, const char *fl, int ln)
 
 void ft_do_readn(int fd, void *buf, size_t cnt, const char *fl, int ln)
 {
-	uint8_t *ptr     = nullptr;
-	size_t   nrd     = 0;
-	size_t   nrd_cur = 0;
+	uint8_t *ptr   = nullptr;
+	size_t nrd     = 0;
+	size_t nrd_cur = 0;
 
 	while (nrd < cnt) {
 		ptr     = (uint8_t *)buf + nrd;
@@ -927,10 +927,10 @@ void ft_do_readn(int fd, void *buf, size_t cnt, const char *fl, int ln)
 void ft_do_preadn(int fd, void *buf, size_t cnt, off_t off, const char *fl,
                   int ln)
 {
-	uint8_t *ptr     = nullptr;
-	off_t    pos     = 0;
-	size_t   nrd     = 0;
-	size_t   nrd_cur = 0;
+	uint8_t *ptr   = nullptr;
+	off_t pos      = 0;
+	size_t nrd     = 0;
+	size_t nrd_cur = 0;
 
 	while (nrd < cnt) {
 		ptr     = (uint8_t *)buf + nrd;
@@ -947,9 +947,9 @@ void ft_do_preadn(int fd, void *buf, size_t cnt, off_t off, const char *fl,
 
 void ft_do_writen(int fd, const void *buf, size_t cnt, const char *fl, int ln)
 {
-	const uint8_t *ptr     = nullptr;
-	size_t         nwr     = 0;
-	size_t         nwr_cur = 0;
+	const uint8_t *ptr = nullptr;
+	size_t nwr         = 0;
+	size_t nwr_cur     = 0;
 
 	while (nwr < cnt) {
 		ptr = (const uint8_t *)buf + nwr;
@@ -966,10 +966,10 @@ void ft_do_writen(int fd, const void *buf, size_t cnt, const char *fl, int ln)
 void ft_do_pwriten(int fd, const void *buf, size_t cnt, off_t off,
                    const char *fl, int ln)
 {
-	const uint8_t *ptr     = nullptr;
-	off_t          pos     = 0;
-	size_t         nwr     = 0;
-	size_t         nwr_cur = 0;
+	const uint8_t *ptr = nullptr;
+	off_t pos          = 0;
+	size_t nwr         = 0;
+	size_t nwr_cur     = 0;
 
 	while (nwr < cnt) {
 		ptr     = (const uint8_t *)buf + nwr;
@@ -990,8 +990,8 @@ void ft_do_copy_file_rangen(int fd_src, off_t off_in, int fd_dst,
 	size_t ncp       = 0;
 	size_t ncp_want  = 0;
 	size_t ncp_total = 0;
-	off_t  off_src   = off_in;
-	off_t  off_dst   = off_out;
+	off_t off_src    = off_in;
+	off_t off_dst    = off_out;
 
 	while (ncp_total < len) {
 		ncp_want = len - ncp_total;
@@ -1017,7 +1017,7 @@ void ft_do_creat_resize(const char *path, size_t len, const char *fl, int ln)
 void ft_do_ioctl_syncfs(int fd, const char *fl, int ln)
 {
 	struct silofs_ioc_syncfs syncfs = { .flags = 0 };
-	int                      res;
+	int res;
 
 	res = silofs_sys_ioctlp(fd, SILOFS_IOC_SYNCFS, &syncfs);
 	ft_expect_sys_ok(res, fl, ln);

@@ -24,11 +24,11 @@
 static void test_statx_simple_(struct ft_env *fte, size_t bsz)
 {
 	struct statx stx;
-	void        *buf  = ft_new_buf_rands(fte, bsz);
-	const char  *path = ft_new_path_unique(fte);
-	const char  *name = ft_new_name_unique(fte);
-	int          dfd  = -1;
-	int          fd   = -1;
+	void *buf        = ft_new_buf_rands(fte, bsz);
+	const char *path = ft_new_path_unique(fte);
+	const char *name = ft_new_name_unique(fte);
+	int dfd          = -1;
+	int fd           = -1;
 
 	ft_mkdir(path, 0700);
 	ft_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);
@@ -62,14 +62,14 @@ static void test_statx_simple(struct ft_env *fte)
  */
 static void test_statx_btime_(struct ft_env *fte, off_t off, size_t len)
 {
-	struct statx    stx[2];
+	struct statx stx[2];
 	struct timespec ts[2];
-	void           *buf   = ft_new_buf_rands(fte, len);
-	const char     *name  = ft_new_name_unique(fte);
-	const char     *path  = ft_new_path_unique(fte);
-	const int       flags = AT_STATX_FORCE_SYNC;
-	int             dfd   = -1;
-	int             fd    = -1;
+	void *buf        = ft_new_buf_rands(fte, len);
+	const char *name = ft_new_name_unique(fte);
+	const char *path = ft_new_path_unique(fte);
+	const int flags  = AT_STATX_FORCE_SYNC;
+	int dfd          = -1;
+	int fd           = -1;
 
 	ft_mkdir(path, 0750);
 	ft_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);
@@ -120,12 +120,12 @@ static void test_statx_btime(struct ft_env *fte)
 static void test_statx_attributes_(struct ft_env *fte, off_t off, size_t len)
 {
 	struct statx stx[2];
-	void        *buf   = ft_new_buf_rands(fte, len);
-	const char  *name  = ft_new_name_unique(fte);
-	const char  *path  = ft_new_path_unique(fte);
-	const int    flags = AT_STATX_FORCE_SYNC;
-	int          dfd   = -1;
-	int          fd    = -1;
+	void *buf        = ft_new_buf_rands(fte, len);
+	const char *name = ft_new_name_unique(fte);
+	const char *path = ft_new_path_unique(fte);
+	const int flags  = AT_STATX_FORCE_SYNC;
+	int dfd          = -1;
+	int fd           = -1;
 
 	ft_mkdir(path, 0750);
 	ft_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);
@@ -172,12 +172,12 @@ static void test_statx_attributes(struct ft_env *fte)
 static void test_statx_ctime_unlinked_(struct ft_env *fte, size_t bsz)
 {
 	struct statx stx[2];
-	void        *buf   = ft_new_buf_zeros(fte, bsz);
-	const char  *path  = ft_new_path_unique(fte);
-	const char  *name  = ft_new_name_unique(fte);
-	const int    flags = AT_STATX_FORCE_SYNC;
-	int          dfd   = -1;
-	int          fd    = -1;
+	void *buf        = ft_new_buf_zeros(fte, bsz);
+	const char *path = ft_new_path_unique(fte);
+	const char *name = ft_new_name_unique(fte);
+	const int flags  = AT_STATX_FORCE_SYNC;
+	int dfd          = -1;
+	int fd           = -1;
 
 	ft_mkdir(path, 0750);
 	ft_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);

@@ -42,7 +42,7 @@ void silofs_svolid_generate(struct silofs_svolid *svolid)
 }
 
 void silofs_svolid_copyto(const struct silofs_svolid *svolid,
-                          struct silofs_svolid       *other)
+                          struct silofs_svolid *other)
 {
 	memcpy(other->id, svolid->id, sizeof(other->id));
 }

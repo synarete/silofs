@@ -26,7 +26,7 @@
 static void *zalloc(size_t n)
 {
 	void *p = nullptr;
-	int   err;
+	int err;
 
 	err = silofs_zmalloc(n, &p);
 	if (err) {
@@ -51,11 +51,11 @@ static void zfreestr(char *s)
 
 static char *read_mntconf_file(const char *path)
 {
-	struct stat st   = { .st_size = -1 };
-	size_t      size = 0;
-	char       *conf = nullptr;
-	int         fd   = -1;
-	int         err;
+	struct stat st = { .st_size = -1 };
+	size_t size    = 0;
+	char *conf     = nullptr;
+	int fd         = -1;
+	int err;
 
 	err = silofs_sys_stat(path, &st);
 	if (err) {
@@ -94,10 +94,10 @@ static struct silofs_mntrules *new_mntrules(void)
 
 struct silofs_mntrules *mountd_parse_mntrules(const char *path)
 {
-	struct silofs_alloc    *alloc    = silofs_default_alloc;
+	struct silofs_alloc *alloc       = silofs_default_alloc;
 	struct silofs_mntrules *mntrules = new_mntrules();
-	char                   *conf     = nullptr;
-	int                     err;
+	char *conf                       = nullptr;
+	int err;
 
 	conf = read_mntconf_file(path);
 	err  = silofs_parse_mntrules(mntrules, alloc, conf);

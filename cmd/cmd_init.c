@@ -30,8 +30,8 @@ struct cmd_init_in_args {
 
 struct cmd_init_ctx {
 	struct cmd_init_in_args in_args;
-	struct silofs_args      args;
-	struct silofs_env      *env;
+	struct silofs_args args;
+	struct silofs_env *env;
 };
 
 static struct cmd_init_ctx *cmd_init_ctx_p;
@@ -47,7 +47,7 @@ static void cmd_init_parse_optargs(struct cmd_init_ctx *ctx)
 		{ nullptr, 0, 0 },            //
 	};
 	struct cmd_optargs opa;
-	int                opt_chr = 1;
+	int opt_chr = 1;
 
 	cmd_optargs_init(&opa, ods);
 	while (!opa.opa_done && (opt_chr > 0)) {
@@ -101,7 +101,7 @@ static void cmd_init_start(struct cmd_init_ctx *ctx)
 static void cmd_init_prepare_repodir(const struct cmd_init_ctx *ctx)
 {
 	struct stat st = { .st_mode = 0 };
-	int         err;
+	int err;
 
 	err = silofs_sys_stat(ctx->in_args.repodir, &st);
 	if (err == -ENOENT) {

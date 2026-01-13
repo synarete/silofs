@@ -18,7 +18,7 @@
 
 struct ut_dvecs {
 	struct ut_dvec *dvec[64];
-	size_t          count;
+	size_t count;
 };
 
 static struct ut_dvecs *new_dvecs(struct ut_env *ute)
@@ -33,8 +33,8 @@ static struct ut_dvecs *new_dvecs(struct ut_env *ute)
 static void assign(struct ut_env *ute, struct ut_dvecs *dvecs,
                    const struct ut_ranges *rngs)
 {
-	off_t           off;
-	size_t          len;
+	off_t off;
+	size_t len;
 	struct ut_dvec *dvec;
 
 	for (size_t i = 0; i < rngs->cnt; ++i) {
@@ -100,9 +100,9 @@ static void
 ut_write_read_n(struct ut_env *ute, const struct ut_dvecs *dvecs, ino_t ino)
 {
 	const struct ut_dvec *dvec = nullptr;
-	void                 *buf  = nullptr;
-	off_t                 off  = -1;
-	size_t                len  = 0;
+	void *buf                  = nullptr;
+	off_t off                  = -1;
+	size_t len                 = 0;
 
 	for (size_t i = 0; i < dvecs->count; ++i) {
 		dvec = dvecs->dvec[i];
@@ -124,8 +124,8 @@ ut_write_read_n(struct ut_env *ute, const struct ut_dvecs *dvecs, ino_t ino)
 static void ut_rdwr_file1(struct ut_env *ute, const struct ut_dvecs *drefs)
 {
 	const char *name = UT_NAME;
-	ino_t       dino = 0;
-	ino_t       ino  = 0;
+	ino_t dino       = 0;
+	ino_t ino        = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -139,8 +139,8 @@ static void ut_rdwr_file2(struct ut_env *ute, const struct ut_dvecs *drefs1,
                           const struct ut_dvecs *drefs2)
 {
 	const char *name = UT_NAME;
-	ino_t       dino = 0;
-	ino_t       ino  = 0;
+	ino_t dino       = 0;
+	ino_t ino        = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);

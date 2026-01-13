@@ -35,7 +35,7 @@ static struct silofs_mntrules *ut_new_mrules(struct ut_env *ute)
 static void ut_parseconf_mntrules(struct ut_env *ute)
 {
 	struct silofs_mntrules *mrules = ut_new_mrules(ute);
-	int                     err;
+	int err;
 
 	err = silofs_parse_mntrules(mrules, nullptr, ut_mountd_conf);
 	ut_expect_ok(err);
@@ -73,7 +73,7 @@ static struct silofs_mntinfos *ut_new_mntinfos(struct ut_env *ute)
 static void ut_parseconf_mntinfos(struct ut_env *ute)
 {
 	struct silofs_mntinfos *minfos = ut_new_mntinfos(ute);
-	int                     err;
+	int err;
 
 	err = silofs_parse_mntinfos(minfos, nullptr, ut_mountinfo_conf);
 	ut_expect_ok(err);

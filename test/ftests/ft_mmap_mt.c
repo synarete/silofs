@@ -19,12 +19,12 @@
 
 struct ft_mmap_mt_ctx {
 	struct silofs_thread th;
-	struct ft_env       *fte;
-	uint8_t             *addr;
-	size_t               size;
-	size_t               sgsz;
-	size_t               indx;
-	int                  fd;
+	struct ft_env *fte;
+	uint8_t *addr;
+	size_t size;
+	size_t sgsz;
+	size_t indx;
+	int fd;
 };
 
 static void
@@ -49,15 +49,15 @@ static void ft_mmtc_join_thread(struct ft_mmap_mt_ctx *mmtc)
 static void
 test_mmap_mt_seq_at_(struct ft_env *fte, const struct ft_mmap_mt_ctx *mmtc)
 {
-	const size_t   indx  = mmtc->indx;
-	const size_t   nsegs = mmtc->size / mmtc->sgsz;
-	const size_t   bsz   = mmtc->sgsz;
-	uint8_t       *buf   = ft_new_buf_zeros(fte, bsz);
-	const uint8_t *src   = nullptr;
-	uint8_t       *dst   = nullptr;
-	uint8_t        dat   = (uint8_t)('A' + (int)indx);
-	size_t         seg;
-	off_t          pos;
+	const size_t indx  = mmtc->indx;
+	const size_t nsegs = mmtc->size / mmtc->sgsz;
+	const size_t bsz   = mmtc->sgsz;
+	uint8_t *buf       = ft_new_buf_zeros(fte, bsz);
+	const uint8_t *src = nullptr;
+	uint8_t *dst       = nullptr;
+	uint8_t dat        = (uint8_t)('A' + (int)indx);
+	size_t seg;
+	off_t pos;
 
 	memset(buf, dat, bsz);
 	for (size_t i = 0; i < nsegs; ++i) {
@@ -88,9 +88,9 @@ static void
 test_mmap_mt_seq_(struct ft_env *fte, off_t off, size_t msz, size_t sgsz)
 {
 	struct ft_mmap_mt_ctx mmt_ctx[16];
-	const char           *path = ft_new_path_unique(fte);
-	void                 *addr = nullptr;
-	int                   fd   = -1;
+	const char *path = ft_new_path_unique(fte);
+	void *addr       = nullptr;
+	int fd           = -1;
 
 	memset(mmt_ctx, 0, sizeof(mmt_ctx));
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);

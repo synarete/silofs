@@ -38,10 +38,10 @@ test_rmdir_notempty(struct ft_env *fte, char const **pathi, size_t count)
 
 static void test_mkdir_rmdir(struct ft_env *fte)
 {
-	const char  *pathi[32];
+	const char *pathi[32];
 	const size_t nelems = FT_ARRAY_SIZE(pathi);
-	const char  *path0  = ft_new_path_unique(fte);
-	const char  *path1  = path0;
+	const char *path0   = ft_new_path_unique(fte);
+	const char *path1   = path0;
 
 	ft_mkdir(path0, 0700);
 	for (size_t i = 0; i < nelems; ++i) {
@@ -64,11 +64,11 @@ static void test_mkdir_rmdir(struct ft_env *fte)
  */
 static void test_mkdir_umask(struct ft_env *fte)
 {
-	mode_t       umsk;
+	mode_t umsk;
 	const mode_t ifmt = S_IFMT;
-	struct stat  st[2];
-	const char  *path0 = ft_new_path_unique(fte);
-	const char  *path1 = ft_new_path_under(fte, path0);
+	struct stat st[2];
+	const char *path0 = ft_new_path_unique(fte);
+	const char *path1 = ft_new_path_under(fte, path0);
 
 	umsk = umask(0020);
 	ft_mkdir(path0, 0755);
@@ -184,8 +184,8 @@ static void test_mkdir_loop(struct ft_env *fte)
  */
 static void test_mkdir_many_(struct ft_env *fte, size_t cnt)
 {
-	int         fd  = -1;
-	int         dfd = -1;
+	int fd  = -1;
+	int dfd = -1;
 	struct stat st;
 	const char *name = nullptr;
 	const char *path = ft_new_path_unique(fte);
@@ -254,10 +254,10 @@ makename(struct ft_env *fte, const char *prefix, size_t depth, size_t id)
 
 static void test_walktree_recursive(struct ft_env *fte, const char *base)
 {
-	int             fd   = -1;
-	off_t           pos  = -1;
-	off_t           off  = 0;
-	const char     *path = nullptr;
+	int fd               = -1;
+	off_t pos            = -1;
+	off_t off            = 0;
+	const char *path     = nullptr;
 	struct dirent64 dent = { .d_ino = 0 };
 
 	ft_open(base, O_DIRECTORY | O_RDONLY, 0, &fd);
@@ -284,7 +284,7 @@ static void
 test_mktree_recursive(struct ft_env *fte, const char *parent, size_t id,
                       size_t nchilds, size_t depth, size_t depth_max)
 {
-	int         fd   = -1;
+	int fd           = -1;
 	const char *path = nullptr;
 	const char *name = nullptr;
 
@@ -389,8 +389,8 @@ static void test_mkdirat_simple(struct ft_env *fte)
 	struct stat st   = { .st_size = -1 };
 	const char *path = ft_new_path_unique(fte);
 	const char *name = ft_new_name_unique(fte);
-	int         dfd1 = -1;
-	int         dfd2 = -1;
+	int dfd1         = -1;
+	int dfd2         = -1;
 
 	ft_mkdir(path, 0700);
 	ft_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd1);
@@ -416,7 +416,7 @@ static void test_mkdirat_nested(struct ft_env *fte)
 	const char *path    = ft_new_path_unique(fte);
 	const char *nested1 = "nested1";
 	const char *nested2 = "nested1/nested2";
-	int         dfd     = -1;
+	int dfd             = -1;
 
 	ft_mkdir(path, 0700);
 	ft_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);
@@ -436,16 +436,16 @@ static void test_mkdirat_nested(struct ft_env *fte)
  */
 static void test_mkdirat_nested_io_(struct ft_env *fte, size_t cnt)
 {
-	const char  *curr      = ft_curr_test_name(fte);
-	const char  *path      = ft_new_path_unique(fte);
-	const char  *name      = nullptr;
+	const char *curr       = ft_curr_test_name(fte);
+	const char *path       = ft_new_path_unique(fte);
+	const char *name       = nullptr;
 	const size_t len       = FT_1M;
-	void        *buf1      = ft_new_buf_rands(fte, len);
-	void        *buf2      = ft_new_buf_rands(fte, len);
+	void *buf1             = ft_new_buf_rands(fte, len);
+	void *buf2             = ft_new_buf_rands(fte, len);
 	const size_t cnt_inner = (cnt > 10) ? 10 : cnt;
-	off_t        off       = -1;
-	int          dfd       = -1;
-	int          fd        = -1;
+	off_t off              = -1;
+	int dfd                = -1;
+	int fd                 = -1;
 
 	ft_mkdir(path, 0700);
 	ft_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);
@@ -534,8 +534,8 @@ static void test_rmdir_openat(struct ft_env *fte)
 	const char *name  = ft_new_name_unique(fte);
 	const char *path1 = ft_new_path_unique(fte);
 	const char *path2 = ft_new_path_nested(fte, path1, name);
-	int         dfd1  = -1;
-	int         dfd2  = -1;
+	int dfd1          = -1;
+	int dfd2          = -1;
 
 	ft_mkdir(path1, 0700);
 	ft_open(path1, O_DIRECTORY | O_RDONLY, 0, &dfd1);
@@ -565,16 +565,16 @@ static void test_rmdir_openat(struct ft_env *fte)
  */
 static void test_rmdir_getdents(struct ft_env *fte)
 {
-	struct stat     st    = { .st_size = -1 };
-	struct dirent64 dent  = { .d_off = -1 };
-	const char     *name2 = ft_new_name_unique(fte);
-	const char     *name3 = ft_new_name_unique(fte);
-	const char     *path1 = ft_new_path_unique(fte);
-	const char     *path2 = ft_new_path_nested(fte, path1, name2);
-	off_t           pos   = -1;
-	int             dfd1  = -1;
-	int             dfd2  = -1;
-	int             fd3   = -1;
+	struct stat st       = { .st_size = -1 };
+	struct dirent64 dent = { .d_off = -1 };
+	const char *name2    = ft_new_name_unique(fte);
+	const char *name3    = ft_new_name_unique(fte);
+	const char *path1    = ft_new_path_unique(fte);
+	const char *path2    = ft_new_path_nested(fte, path1, name2);
+	off_t pos            = -1;
+	int dfd1             = -1;
+	int dfd2             = -1;
+	int fd3              = -1;
 
 	ft_mkdir(path1, 0700);
 	ft_open(path1, O_DIRECTORY | O_RDONLY, 0, &dfd1);

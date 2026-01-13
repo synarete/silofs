@@ -91,7 +91,7 @@ static uint16_t ham12_encode(uint8_t n)
 	const uint16_t p2 = d1 ^ d3 ^ d4 ^ d6 ^ d7;
 	const uint16_t p4 = d2 ^ d3 ^ d4 ^ d8;
 	const uint16_t p8 = d5 ^ d6 ^ d7 ^ d8;
-	uint16_t       cw = 0;
+	uint16_t cw       = 0;
 
 	ham12_setbit(&cw, 1, p1);
 	ham12_setbit(&cw, 2, p2);
@@ -199,7 +199,7 @@ static void ham12_encode8(const uint8_t dat[8], uint8_t out[12])
 static int ham12_decode8(const uint8_t in[12], uint8_t out[8])
 {
 	unsigned cw, i, j = 0;
-	int      nerr = 0;
+	int nerr = 0;
 
 	memset(out, 0, 8);
 	for (i = 0; i < 8; ++i) {
@@ -223,8 +223,8 @@ static int ham12_decode8(const uint8_t in[12], uint8_t out[8])
 int silofs_hamming12_encode_buf(const void *inb, size_t inlen, void *outb,
                                 size_t outlen)
 {
-	const uint8_t *in  = inb;
-	uint8_t       *out = outb;
+	const uint8_t *in = inb;
+	uint8_t *out      = outb;
 
 	if ((inlen % 8) || (outlen % 12)) {
 		return -1;
@@ -241,9 +241,9 @@ int silofs_hamming12_encode_buf(const void *inb, size_t inlen, void *outb,
 int silofs_hamming12_decode_buf(const void *inb, size_t inlen, void *outb,
                                 size_t outlen)
 {
-	const uint8_t *in   = inb;
-	uint8_t       *out  = outb;
-	int            nerr = 0;
+	const uint8_t *in = inb;
+	uint8_t *out      = outb;
+	int nerr          = 0;
 
 	if ((inlen % 12) || (outlen % 8)) {
 		return -1;

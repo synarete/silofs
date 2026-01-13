@@ -20,21 +20,21 @@
 #include "paddr.h"
 #include "mbref.h"
 
-void silofs_mbref_setup(struct silofs_mbref         *mbref,
+void silofs_mbref_setup(struct silofs_mbref *mbref,
                         const struct silofs_blobidx *blobidx)
 {
 	silofs_blobidx_assign(&mbref->bx, blobidx);
 }
 
-void silofs_mbref_assign(struct silofs_mbref       *mbref,
+void silofs_mbref_assign(struct silofs_mbref *mbref,
                          const struct silofs_mbref *other)
 {
 	silofs_mbref_setup(mbref, &other->bx);
 }
 
-void silofs_mbref_derive(struct silofs_mbref            *mbref,
+void silofs_mbref_derive(struct silofs_mbref *mbref,
                          const struct silofs_mdigest_hd *md_hd,
-                         const struct silofs_paddr      *paddr)
+                         const struct silofs_paddr *paddr)
 {
 	struct silofs_blobidx blobidx;
 
@@ -62,7 +62,7 @@ int silofs_mbref_to_str(const struct silofs_mbref *mbref, char *str, size_t n)
 	return silofs_blobidx_to_str(&mbref->bx, str, n);
 }
 
-void silofs_mbrefs_assign(struct silofs_mbrefs       *mbrefs,
+void silofs_mbrefs_assign(struct silofs_mbrefs *mbrefs,
                           const struct silofs_mbrefs *other)
 {
 	silofs_mbref_assign(&mbrefs->main, &other->main);

@@ -730,24 +730,24 @@ int silofs_sys_ioctl_blkgetsize64(int fd, size_t *sz)
 }
 
 struct linux_dirent64_view {
-	ino64_t        d_ino;
-	off64_t        d_off;
+	ino64_t d_ino;
+	off64_t d_off;
 	unsigned short d_reclen;
-	unsigned char  d_type;
-	char           d_name[5];
+	unsigned char d_type;
+	char d_name[5];
 };
 
 int silofs_sys_getdents(int fd, void *buf, size_t bsz, struct dirent64 *dents,
                         size_t ndents, size_t *out_ndents)
 {
-	long                              nread;
-	long                              pos = 0;
-	size_t                            len;
-	size_t                            ndents_decoded = 0;
-	const struct linux_dirent64_view *d              = nullptr;
-	void                             *ptr            = buf;
-	struct dirent64                  *dent           = dents;
-	struct dirent64                  *end            = dents + ndents;
+	long nread;
+	long pos = 0;
+	size_t len;
+	size_t ndents_decoded               = 0;
+	const struct linux_dirent64_view *d = nullptr;
+	void *ptr                           = buf;
+	struct dirent64 *dent               = dents;
+	struct dirent64 *end                = dents + ndents;
 
 	errno = 0;
 	if (!ndents || (bsz < sizeof(*dents))) {

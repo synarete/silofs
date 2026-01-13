@@ -25,16 +25,16 @@ static const char *const cmd_tune_help_desc =
 	"  -L, --loglevel=level         Logging level (rfc5424)          \n";
 
 struct cmd_tune_in_args {
-	char        *dirpath;
-	char        *dirpath_real;
+	char *dirpath;
+	char *dirpath_real;
 	unsigned int ftype;
 };
 
 struct cmd_tune_ctx {
 	struct cmd_tune_in_args in_args;
-	union silofs_ioc_u     *ioc;
-	enum silofs_inodef      iflags_want;
-	enum silofs_inodef      iflags_dont;
+	union silofs_ioc_u *ioc;
+	enum silofs_inodef iflags_want;
+	enum silofs_inodef iflags_dont;
 };
 
 static struct cmd_tune_ctx *cmd_tune_ctx_p;
@@ -50,7 +50,7 @@ static void cmd_tune_parse_optargs(struct cmd_tune_ctx *ctx)
 		{ nullptr, 0, 0 },
 	};
 	struct cmd_optargs opa;
-	int                opt_chr = 1;
+	int opt_chr = 1;
 
 	cmd_optargs_init(&opa, ods);
 	while (!opa.opa_done && (opt_chr > 0)) {
@@ -123,8 +123,8 @@ static void cmd_tune_set_iflags(struct cmd_tune_ctx *ctx)
 static void cmd_tune_execute(struct cmd_tune_ctx *ctx)
 {
 	const char *dirpath = ctx->in_args.dirpath_real;
-	int         fd      = -1;
-	int         err;
+	int fd              = -1;
+	int err;
 
 	ctx->ioc->tune.iflags_want = ctx->iflags_want;
 	ctx->ioc->tune.iflags_dont = ctx->iflags_dont;

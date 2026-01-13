@@ -35,7 +35,7 @@ bool silofs_mac_isequal(const struct silofs_mac *mac,
 int silofs_hmac_init(struct silofs_hmac_hd *hmac_hd)
 {
 	gcry_error_t err;
-	const int    algo = GCRY_MAC_HMAC_SHA3_256;
+	const int algo = GCRY_MAC_HMAC_SHA3_256;
 
 	err = gcry_mac_open(&hmac_hd->hm_hd, algo, 0, nullptr);
 	if (err) {
@@ -99,7 +99,7 @@ static int
 hmac_seep(struct silofs_hmac_hd *hmac_hd, struct silofs_mac *out_mac)
 {
 	gcry_error_t err;
-	size_t       maclen;
+	size_t maclen;
 
 	maclen = gcry_mac_get_algo_maclen(hmac_hd->hm_algo);
 	if (maclen != sizeof(out_mac->mac)) {
@@ -115,7 +115,7 @@ hmac_seep(struct silofs_hmac_hd *hmac_hd, struct silofs_mac *out_mac)
 	return 0;
 }
 
-int silofs_hmac_calc(struct silofs_hmac_hd    *hmac_hd,
+int silofs_hmac_calc(struct silofs_hmac_hd *hmac_hd,
                      const struct silofs_ckey *key, const void *dat,
                      size_t dsz, struct silofs_mac *out_mac)
 {

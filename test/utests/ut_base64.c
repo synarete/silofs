@@ -61,15 +61,15 @@ static const struct ut_base64_vector ut_base64_common_vecs[] = {
 static void
 ut_base64_encdec(struct ut_env *ute, const char *dat, const char *exp)
 {
-	int          err;
-	size_t       len;
-	size_t       nrd      = 0;
-	size_t       enc_len  = 0;
-	size_t       dec_len  = 0;
-	const size_t dat_len  = strlen(dat);
-	const size_t exp_len  = strlen(exp);
-	char         enc[128] = "";
-	char         dec[256] = "";
+	int err;
+	size_t len;
+	size_t nrd           = 0;
+	size_t enc_len       = 0;
+	size_t dec_len       = 0;
+	const size_t dat_len = strlen(dat);
+	const size_t exp_len = strlen(exp);
+	char enc[128]        = "";
+	char dec[256]        = "";
 
 	len = sizeof(enc);
 	err = silofs_base64_encode(dat, dat_len, enc, len, &enc_len);
@@ -89,7 +89,7 @@ ut_base64_encdec(struct ut_env *ute, const char *dat, const char *exp)
 	ut_unused(ute);
 }
 
-static void ut_base64_with(struct ut_env                 *ute,
+static void ut_base64_with(struct ut_env *ute,
                            const struct ut_base64_vector *vec, size_t nvecs)
 {
 	for (size_t i = 0; i < nvecs; ++i) {
@@ -119,14 +119,14 @@ static void ut_base64_common(struct ut_env *ute)
 
 static void ut_base64_random_(struct ut_env *ute, size_t bsz)
 {
-	int          err;
-	size_t       nrd     = 0;
-	size_t       enc_len = 0;
-	size_t       dec_len = 0;
-	const size_t slen    = silofs_base64_encode_len(bsz);
-	char        *str     = ut_zerobuf(ute, slen + 1);
-	void        *buf1    = ut_randbuf(ute, bsz);
-	void        *buf2    = ut_randbuf(ute, bsz);
+	int err;
+	size_t nrd        = 0;
+	size_t enc_len    = 0;
+	size_t dec_len    = 0;
+	const size_t slen = silofs_base64_encode_len(bsz);
+	char *str         = ut_zerobuf(ute, slen + 1);
+	void *buf1        = ut_randbuf(ute, bsz);
+	void *buf2        = ut_randbuf(ute, bsz);
 
 	err = silofs_base64_encode(buf1, bsz, str, slen, &enc_len);
 	ut_expect_ok(err);

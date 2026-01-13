@@ -25,8 +25,8 @@
 
 /* local functions forward declarations */
 static void ii_update_itimes(struct silofs_inode_info *ii,
-                             enum silofs_iattr_flags   attr_flags,
-                             const struct timespec    *ts);
+                             enum silofs_iattr_flags attr_flags,
+                             const struct timespec *ts);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -469,7 +469,7 @@ static void ii_set_iflags(struct silofs_inode_info *ii, int iflags)
 {
 	const enum silofs_inodef iflags_curr  = silofs_ii_flags(ii);
 	const enum silofs_inodef iflags_allow = SILOFS_INODEF_FTYPE2;
-	enum silofs_inodef       iflags_set;
+	enum silofs_inodef iflags_set;
 
 	iflags_set = (enum silofs_inodef)iflags & iflags_allow;
 	if (iflags_set != iflags_curr) {
@@ -482,7 +482,7 @@ void silofs_ii_update_iflags(struct silofs_inode_info *ii, int iflags_want,
                              int iflags_dont)
 {
 	const enum silofs_inodef iflags_curr = silofs_ii_flags(ii);
-	int                      iflags      = (int)iflags_curr;
+	int iflags                           = (int)iflags_curr;
 
 	if (iflags_want) {
 		iflags |= iflags_want;
@@ -582,7 +582,7 @@ struct silofs_inode_info *silofs_ii_unconst(const struct silofs_inode_info *ii)
 {
 	union {
 		const struct silofs_inode_info *p;
-		struct silofs_inode_info       *q;
+		struct silofs_inode_info *q;
 	} u = { .p = ii };
 	return u.q;
 }
@@ -638,13 +638,13 @@ static void inode_setup_common(struct silofs_inode *inode, ino_t ino,
 	inode_set_generation(inode, 0);
 }
 
-static void ii_setup_inode(struct silofs_inode_info        *ii,
+static void ii_setup_inode(struct silofs_inode_info *ii,
                            const struct silofs_inew_params *inp)
 {
 	inode_setup_common(ii->inode, silofs_ii_ino(ii), inp);
 }
 
-static void ii_setup_sub(struct silofs_inode_info        *ii,
+static void ii_setup_sub(struct silofs_inode_info *ii,
                          const struct silofs_inew_params *inp)
 {
 	silofs_ii_setup_xattr(ii);
@@ -659,14 +659,14 @@ static void ii_setup_sub(struct silofs_inode_info        *ii,
 	}
 }
 
-static void ii_set_generation(struct silofs_inode_info        *ii,
+static void ii_set_generation(struct silofs_inode_info *ii,
                               const struct silofs_inew_params *inp)
 {
 	inode_set_generation(ii->inode, inp->generation);
 	silofs_ii_dirtify(ii);
 }
 
-void silofs_ii_setup_new(struct silofs_inode_info        *ii,
+void silofs_ii_setup_new(struct silofs_inode_info *ii,
                          const struct silofs_inew_params *inp)
 {
 	ii_setup_inode(ii, inp);
@@ -677,7 +677,7 @@ void silofs_ii_setup_new(struct silofs_inode_info        *ii,
 }
 
 void silofs_ii_mkiattr(const struct silofs_inode_info *ii,
-                       struct silofs_iattr            *out_iattr)
+                       struct silofs_iattr *out_iattr)
 {
 	iattr_setup_now(out_iattr, silofs_ii_ino(ii));
 }
@@ -689,7 +689,7 @@ static mode_t itype_of(mode_t mode)
 	return S_IFMT & mode;
 }
 
-static bool user_isowner(const struct silofs_cred       *cred,
+static bool user_isowner(const struct silofs_cred *cred,
                          const struct silofs_inode_info *ii)
 {
 	return silofs_uid_eq(cred->uid, silofs_ii_uid(ii));
@@ -708,12 +708,12 @@ check_waccess(const struct silofs_task_ctx *task, struct silofs_inode_info *ii)
 	return silofs_do_access(task, ii, W_OK);
 }
 
-static int check_xaccess_parent(struct silofs_task_ctx         *task,
+static int check_xaccess_parent(struct silofs_task_ctx *task,
                                 const struct silofs_inode_info *ii)
 {
 	struct silofs_inode_info *parent_ii = nullptr;
-	ino_t                     parent;
-	int                       err;
+	ino_t parent;
+	int err;
 
 	if (!silofs_ii_isdir(ii) || silofs_ii_isrootd(ii)) {
 		return 0;
@@ -736,7 +736,7 @@ static int check_xaccess_parent(struct silofs_task_ctx         *task,
 static void kill_suid_sgid(struct silofs_inode_info *ii, long flags)
 {
 	const long mode_cur = silofs_ii_mode(ii);
-	long       mode_new = mode_cur;
+	long mode_new       = mode_cur;
 
 	if ((flags & SILOFS_IATTR_KILL_SUID) && (mode_cur & S_ISUID)) {
 		mode_new &= ~S_ISUID;
@@ -762,7 +762,7 @@ static int check_chmod(const struct silofs_task_ctx *task,
                        struct silofs_inode_info *ii, mode_t mode)
 {
 	const struct silofs_creds *creds = task->t_creds;
-	int                        ret   = -SILOFS_EPERM;
+	int ret                          = -SILOFS_EPERM;
 
 	if (!itype_of(mode) || has_itype(ii, mode)) {
 		if (user_isowner(&creds->fs_cred, ii) ||
@@ -774,9 +774,9 @@ static int check_chmod(const struct silofs_task_ctx *task,
 }
 
 static void update_times_attr(const struct silofs_task_ctx *task,
-                              struct silofs_inode_info     *ii,
-                              enum silofs_iattr_flags       attr_flags,
-                              const struct silofs_itimes   *itimes)
+                              struct silofs_inode_info *ii,
+                              enum silofs_iattr_flags attr_flags,
+                              const struct silofs_itimes *itimes)
 {
 	struct silofs_iattr iattr = { .ia_size = -1 };
 
@@ -797,8 +797,8 @@ update_post_chmod(const struct silofs_task_ctx *task,
                   struct silofs_inode_info *ii, struct silofs_iattr *iattr)
 {
 	const struct silofs_creds *creds = task->t_creds;
-	const struct silofs_cred  *cred  = &creds->fs_cred;
-	const gid_t                gid   = silofs_ii_gid(ii);
+	const struct silofs_cred *cred   = &creds->fs_cred;
+	const gid_t gid                  = silofs_ii_gid(ii);
 
 	iattr->ia_flags |= SILOFS_IATTR_MODE | SILOFS_IATTR_CTIME;
 	if (!silofs_gid_eq(gid, cred->gid) && !silofs_user_cap_fsetid(cred)) {
@@ -811,7 +811,7 @@ static int do_chmod(struct silofs_task_ctx *task, struct silofs_inode_info *ii,
                     mode_t mode, const struct silofs_itimes *itimes)
 {
 	struct silofs_iattr iattr = { .ia_flags = 0 };
-	int                 err;
+	int err;
 
 	err = check_chmod(task, ii, mode);
 	if (err) {
@@ -846,7 +846,7 @@ static int check_cap_chown(const struct silofs_task_ctx *task)
 	return silofs_user_cap_chown(&creds->host_cred) ? 0 : -SILOFS_EPERM;
 }
 
-static int check_chown_uid(const struct silofs_task_ctx   *task,
+static int check_chown_uid(const struct silofs_task_ctx *task,
                            const struct silofs_inode_info *ii, uid_t uid)
 {
 	if (silofs_uid_eq(uid, silofs_ii_uid(ii))) {
@@ -855,7 +855,7 @@ static int check_chown_uid(const struct silofs_task_ctx   *task,
 	return check_cap_chown(task);
 }
 
-static int check_chown_gid(const struct silofs_task_ctx   *task,
+static int check_chown_gid(const struct silofs_task_ctx *task,
                            const struct silofs_inode_info *ii, gid_t gid)
 {
 	const struct silofs_creds *creds = task->t_creds;
@@ -870,7 +870,7 @@ static int check_chown_gid(const struct silofs_task_ctx   *task,
 }
 
 static int
-check_chown(const struct silofs_task_ctx   *task,
+check_chown(const struct silofs_task_ctx *task,
             const struct silofs_inode_info *ii, uid_t uid, gid_t gid)
 {
 	int err = 0;
@@ -902,10 +902,10 @@ static int do_chown(const struct silofs_task_ctx *task,
                     struct silofs_inode_info *ii, uid_t uid, gid_t gid,
                     bool kill_suidgid, const struct silofs_itimes *itimes)
 {
-	struct silofs_iattr iattr     = { .ia_flags = 0 };
-	bool                chown_uid = !silofs_uid_isnull(uid);
-	bool                chown_gid = !silofs_gid_isnull(gid);
-	int                 err;
+	struct silofs_iattr iattr = { .ia_flags = 0 };
+	bool chown_uid            = !silofs_uid_isnull(uid);
+	bool chown_gid            = !silofs_gid_isnull(gid);
+	int err;
 
 	if (!chown_uid && !chown_gid) {
 		return 0; /* no-op */
@@ -956,7 +956,7 @@ static int
 check_utimens(const struct silofs_task_ctx *task, struct silofs_inode_info *ii)
 {
 	const struct silofs_creds *creds = task->t_creds;
-	int                        err;
+	int err;
 
 	if (user_isowner(&creds->fs_cred, ii)) {
 		return 0;
@@ -983,7 +983,7 @@ do_utimens(const struct silofs_task_ctx *task, struct silofs_inode_info *ii,
 	const struct timespec *ctime = &itimes->ctime;
 	const struct timespec *atime = &itimes->atime;
 	const struct timespec *mtime = &itimes->mtime;
-	int                    err;
+	int err;
 
 	err = check_utimens(task, ii);
 	if (err) {
@@ -1006,8 +1006,8 @@ do_utimens(const struct silofs_task_ctx *task, struct silofs_inode_info *ii,
 }
 
 int silofs_do_utimens(const struct silofs_task_ctx *task,
-                      struct silofs_inode_info     *ii,
-                      const struct silofs_itimes   *itimes)
+                      struct silofs_inode_info *ii,
+                      const struct silofs_itimes *itimes)
 {
 	int err;
 
@@ -1017,12 +1017,12 @@ int silofs_do_utimens(const struct silofs_task_ctx *task,
 	return err;
 }
 
-static int check_parent_dir_ii(struct silofs_task_ctx         *task,
+static int check_parent_dir_ii(struct silofs_task_ctx *task,
                                const struct silofs_inode_info *ii)
 {
 	struct silofs_inode_info *parent_ii = nullptr;
-	ino_t                     parent;
-	int                       err;
+	ino_t parent;
+	int err;
 
 	if (!silofs_ii_isdir(ii) || silofs_ii_isrootd(ii)) {
 		return 0;
@@ -1059,10 +1059,10 @@ static blksize_t ii_stat_blksize(const struct silofs_inode_info *ii)
 
 static blkcnt_t ii_stat_blocks(const struct silofs_inode_info *ii)
 {
-	const size_t   frg_size = 512;
-	const ssize_t  kb_size  = SILOFS_KB_SIZE;
-	const blkcnt_t blocks   = silofs_ii_blocks(ii);
-	const size_t   nbytes   = (size_t)(blocks * kb_size);
+	const size_t frg_size = 512;
+	const ssize_t kb_size = SILOFS_KB_SIZE;
+	const blkcnt_t blocks = silofs_ii_blocks(ii);
+	const size_t nbytes   = (size_t)(blocks * kb_size);
 
 	return (blkcnt_t)silofs_div_round_up(nbytes, frg_size);
 }
@@ -1071,12 +1071,12 @@ static blkcnt_t ii_stat_blocks(const struct silofs_inode_info *ii)
 	(STATX_ATIME | STATX_BTIME | STATX_CTIME | STATX_MTIME)
 
 static void ii_update_statx(const struct silofs_inode_info *ii,
-                            const struct silofs_itimes     *tms,
+                            const struct silofs_itimes *tms,
                             uint32_t sx_want_mask, struct silofs_stat *st)
 {
 	const struct stat *st_in = &st->st;
-	struct statx      *stx   = &st->stx;
-	const mode_t       ifmt  = S_IFMT;
+	struct statx *stx        = &st->stx;
+	const mode_t ifmt        = S_IFMT;
 
 	if (!sx_want_mask) {
 		return;
@@ -1191,7 +1191,7 @@ do_getattr(struct silofs_task_ctx *task, const struct silofs_inode_info *ii,
 	return 0;
 }
 
-int silofs_do_getattr(struct silofs_task_ctx   *task,
+int silofs_do_getattr(struct silofs_task_ctx *task,
                       struct silofs_inode_info *ii, struct silofs_stat *out_st)
 {
 	int err;
@@ -1250,13 +1250,13 @@ ii_update_atime(struct silofs_inode_info *ii, const struct timespec *atime)
 	}
 }
 
-static void ii_update_inode_attr(struct silofs_inode_info  *ii,
+static void ii_update_inode_attr(struct silofs_inode_info *ii,
                                  const struct silofs_iattr *iattr,
-                                 enum silofs_iattr_flags    attr_flags,
-                                 const struct timespec     *ts_now)
+                                 enum silofs_iattr_flags attr_flags,
+                                 const struct timespec *ts_now)
 {
-	long                   flags = (long)attr_flags;
-	struct silofs_inode   *inode;
+	long flags = (long)attr_flags;
+	struct silofs_inode *inode;
 	const struct timespec *ts;
 
 	if (ii == nullptr) {
@@ -1333,14 +1333,14 @@ static void ii_update_inode_attr(struct silofs_inode_info  *ii,
 	silofs_ii_dirtify(ii);
 }
 
-static void ii_update_iattrs(struct silofs_inode_info  *ii,
+static void ii_update_iattrs(struct silofs_inode_info *ii,
                              const struct silofs_iattr *iattr,
-                             const struct timespec     *ts_now)
+                             const struct timespec *ts_now)
 {
 	ii_update_inode_attr(ii, iattr, iattr->ia_flags, ts_now);
 }
 
-void silofs_ii_update_iattrs(struct silofs_inode_info  *ii,
+void silofs_ii_update_iattrs(struct silofs_inode_info *ii,
                              const struct silofs_iattr *iattr)
 {
 	const struct timespec ts = { .tv_nsec = UTIME_OMIT };
@@ -1358,11 +1358,11 @@ void silofs_ii_kill_suidgid(struct silofs_inode_info *ii)
 }
 
 static void ii_update_itimes(struct silofs_inode_info *ii,
-                             enum silofs_iattr_flags   attr_flags,
-                             const struct timespec    *ts_now)
+                             enum silofs_iattr_flags attr_flags,
+                             const struct timespec *ts_now)
 {
-	struct silofs_iattr           iattr = { .ia_size = -1 };
-	const enum silofs_iattr_flags mask  = SILOFS_IATTR_TIMES;
+	struct silofs_iattr iattr          = { .ia_size = -1 };
+	const enum silofs_iattr_flags mask = SILOFS_IATTR_TIMES;
 
 	silofs_ii_mkiattr(ii, &iattr);
 	ii_update_inode_attr(ii, &iattr, attr_flags & mask, ts_now);
@@ -1380,9 +1380,9 @@ void silofs_ii_refresh_atime(struct silofs_inode_info *ii, bool to_volatile)
 static blkcnt_t recalc_iblocks(const struct silofs_inode_info *ii,
                                enum silofs_mtype mtype, long dif)
 {
-	const size_t   nkbs   = silofs_mtype_nkbs(mtype);
+	const size_t nkbs     = silofs_mtype_nkbs(mtype);
 	const blkcnt_t blocks = silofs_ii_blocks(ii);
-	blkcnt_t       cnt;
+	blkcnt_t cnt;
 
 	if (dif > 0) {
 		cnt = blocks + (blkcnt_t)(nkbs * (size_t)dif);
@@ -1419,9 +1419,9 @@ static void ii_update_isize(struct silofs_inode_info *ii, ssize_t size,
 
 void silofs_ii_undirtify_vnis(struct silofs_inode_info *ii)
 {
-	struct silofs_dq_elem    *dqe;
+	struct silofs_dq_elem *dqe;
 	struct silofs_vnode_info *vni;
-	struct silofs_dirtyq     *dq = &ii->i_dq_vnis;
+	struct silofs_dirtyq *dq = &ii->i_dq_vnis;
 
 	dqe = silofs_dirtyq_front(dq);
 	while (dqe != nullptr) {
@@ -1435,22 +1435,22 @@ void silofs_ii_undirtify_vnis(struct silofs_inode_info *ii)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_update_itimes_of(const struct silofs_task_ctx *task,
-                             struct silofs_inode_info     *ii,
-                             enum silofs_iattr_flags       attr_flags)
+                             struct silofs_inode_info *ii,
+                             enum silofs_iattr_flags attr_flags)
 {
 	ii_update_itimes(ii, attr_flags, ts_of(task));
 }
 
 void silofs_update_iblocks_of(const struct silofs_task_ctx *task,
-                              struct silofs_inode_info     *ii,
+                              struct silofs_inode_info *ii,
                               enum silofs_mtype mtype, long dif)
 {
 	ii_update_iblocks(ii, mtype, dif, ts_of(task));
 }
 
 void silofs_update_iattrs_of(const struct silofs_task_ctx *task,
-                             struct silofs_inode_info     *ii,
-                             const struct silofs_iattr    *iattr)
+                             struct silofs_inode_info *ii,
+                             const struct silofs_iattr *iattr)
 {
 	ii_update_iattrs(ii, iattr, ts_of(task));
 }
@@ -1471,7 +1471,7 @@ int silofs_verify_ino(ino_t ino)
 static int verify_inode_specific(const struct silofs_inode *inode)
 {
 	const mode_t mode = inode_mode(inode);
-	int          err  = 0;
+	int err           = 0;
 
 	if (S_ISDIR(mode)) {
 		err = silofs_verify_dir_inode(inode);
@@ -1484,11 +1484,11 @@ static int verify_inode_specific(const struct silofs_inode *inode)
 
 static int verify_inode_head(const struct silofs_inode *inode)
 {
-	ino_t   ino;
-	off_t   size;
+	ino_t ino;
+	off_t size;
 	nlink_t nlink;
-	mode_t  mode;
-	int     err;
+	mode_t mode;
+	int err;
 
 	ino = silofs_inode_ino(inode);
 	err = silofs_verify_ino(ino);
@@ -1516,8 +1516,8 @@ static int verify_inode_head(const struct silofs_inode *inode)
 
 static int verify_inode_flags(const struct silofs_inode *inode)
 {
-	const mode_t             mode  = inode_mode(inode);
-	const ino_t              ino   = silofs_inode_ino(inode);
+	const mode_t mode              = inode_mode(inode);
+	const ino_t ino                = silofs_inode_ino(inode);
 	const enum silofs_inodef flags = inode_flags(inode);
 	const enum silofs_inodef fmask = SILOFS_INODEF_ROOTD |
 	                                 SILOFS_INODEF_FTYPE2;

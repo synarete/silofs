@@ -38,7 +38,7 @@ static void paddr_init_by_self(struct silofs_paddr *paddr)
 	paddr->btype = silofs_blobid_get_btype(&paddr->blobid);
 }
 
-void silofs_paddr_init(struct silofs_paddr        *paddr,
+void silofs_paddr_init(struct silofs_paddr *paddr,
                        const struct silofs_blobid *blobid, off_t pos)
 {
 	silofs_blobid_copyto(blobid, &paddr->blobid);
@@ -57,7 +57,7 @@ void silofs_paddr_reset(struct silofs_paddr *paddr)
 	paddr->pos = SILOFS_OFF_NULL;
 }
 
-void silofs_paddr_assign(struct silofs_paddr       *paddr,
+void silofs_paddr_assign(struct silofs_paddr *paddr,
                          const struct silofs_paddr *other)
 {
 	silofs_blobid_copyto(&other->blobid, &paddr->blobid);
@@ -101,7 +101,7 @@ off_t silofs_paddr_next(const struct silofs_paddr *paddr)
 	return silofs_off_end(paddr->pos, len);
 }
 
-void silofs_paddr64b_htox(struct silofs_paddr64b    *paddr64,
+void silofs_paddr64b_htox(struct silofs_paddr64b *paddr64,
                           const struct silofs_paddr *paddr)
 {
 	memset(paddr64, 0, sizeof(*paddr64));
@@ -110,7 +110,7 @@ void silofs_paddr64b_htox(struct silofs_paddr64b    *paddr64,
 }
 
 void silofs_paddr64b_xtoh(const struct silofs_paddr64b *paddr64,
-                          struct silofs_paddr          *paddr)
+                          struct silofs_paddr *paddr)
 {
 	silofs_blobid_copyto(&paddr64->blobid, &paddr->blobid);
 	paddr->pos = silofs_off_to_cpu(paddr64->pos);
@@ -134,13 +134,13 @@ void silofs_bcursor128b_reset(struct silofs_bcursor128b *bcur128)
 }
 
 void silofs_bcursor128b_xtoh(const struct silofs_bcursor128b *bcur128,
-                             struct silofs_bcursor           *bcur)
+                             struct silofs_bcursor *bcur)
 {
 	silofs_paddr64b_xtoh(&bcur128->paddr, &bcur->paddr);
 	bcur->blobsz = silofs_le64_to_cpu(bcur128->blobsz);
 }
 
-void silofs_bcursor128b_htox(struct silofs_bcursor128b   *bcur128,
+void silofs_bcursor128b_htox(struct silofs_bcursor128b *bcur128,
                              const struct silofs_bcursor *bcur)
 {
 	silofs_paddr64b_htox(&bcur128->paddr, &bcur->paddr);

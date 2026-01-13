@@ -30,7 +30,7 @@ struct cmd_sync_in_args {
 
 struct cmd_sync_ctx {
 	struct cmd_sync_in_args in_args;
-	union silofs_ioc_u     *ioc;
+	union silofs_ioc_u *ioc;
 };
 
 static struct cmd_sync_ctx *cmd_sync_ctx_p;
@@ -45,7 +45,7 @@ static void cmd_sync_parse_optargs(struct cmd_sync_ctx *ctx)
 		{ nullptr, 0, 0 },
 	};
 	struct cmd_optargs opa;
-	int                opt_chr = 1;
+	int opt_chr = 1;
 
 	cmd_optargs_init(&opa, ods);
 	while (!opa.opa_done && (opt_chr > 0)) {
@@ -103,8 +103,8 @@ static void cmd_sync_prepare(struct cmd_sync_ctx *ctx)
 static void cmd_sync_execute(struct cmd_sync_ctx *ctx)
 {
 	const char *pathname = ctx->in_args.pathname_real;
-	int         fd       = -1;
-	int         err;
+	int fd               = -1;
+	int err;
 
 	cmd_reset_ioc(ctx->ioc);
 	err = silofs_sys_open(pathname, O_RDONLY, 0, &fd);

@@ -106,7 +106,7 @@ int silofs_zcmpr_compress(const struct silofs_zcmpr *zc, void *dst,
                           int cl_in, size_t *out_sz)
 {
 	size_t ret;
-	int    cl;
+	int cl;
 
 	if (zc->mode != ZCOMP_ZSTD_CCTX) {
 		return -SILOFS_EINVAL;

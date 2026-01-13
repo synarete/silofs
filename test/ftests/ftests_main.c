@@ -26,20 +26,20 @@
 
 struct ft_global_settings {
 	struct silofs_log_params log_params;
-	int                      argc;
-	char                   **argv;
-	char                    *curr_workdir;
-	char                    *testdir_path;
-	char                    *testdir_real;
-	char                    *test_name;
-	long                     repeat_count;
-	int                      tests_mask;
-	int                      tests_xmask;
-	bool                     quiet_mode;
-	bool                     without_statvfs;
-	bool                     without_flaky;
-	bool                     random_order;
-	bool                     list_tests;
+	int argc;
+	char **argv;
+	char *curr_workdir;
+	char *testdir_path;
+	char *testdir_real;
+	char *test_name;
+	long repeat_count;
+	int tests_mask;
+	int tests_xmask;
+	bool quiet_mode;
+	bool without_statvfs;
+	bool without_flaky;
+	bool random_order;
+	bool list_tests;
 };
 
 /* Global settings */
@@ -272,7 +272,7 @@ silofs_attr_noreturn static void show_version_and_exit(void)
 
 static long ft_strtol_safe(const char *nptr)
 {
-	long  ret    = 0;
+	long ret     = 0;
 	char *endptr = nullptr;
 
 	errno = 0;
@@ -285,8 +285,8 @@ static long ft_strtol_safe(const char *nptr)
 
 static void ft_parse_args(void)
 {
-	int           opt_chr     = 1;
-	int           opt_index   = 0;
+	int opt_chr               = 1;
+	int opt_index             = 0;
 	struct option long_opts[] = {
 		{ "test", required_argument, nullptr, 't' },
 		{ "repeat", required_argument, nullptr, 'n' },
@@ -349,7 +349,7 @@ static void ft_verify_args(void)
 {
 	struct stat st   = { .st_size = -1 };
 	const char *base = ft_globals.testdir_path;
-	int         err;
+	int err;
 
 	if (ft_globals.list_tests) {
 		return;

@@ -27,8 +27,8 @@ ut_mkname(struct ut_env *ute, const char *prefix, unsigned long i)
 static void ut_create_open_release(struct ut_env *ute)
 {
 	const char *name = UT_NAME;
-	ino_t       dino = 0;
-	ino_t       ino  = 0;
+	ino_t dino       = 0;
+	ino_t ino        = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -54,8 +54,8 @@ static void ut_create_unlink_simple(struct ut_env *ute)
 {
 	struct stat st   = { .st_size = -1 };
 	const char *name = UT_NAME;
-	ino_t       dino = 0;
-	ino_t       ino  = 0;
+	ino_t dino       = 0;
+	ino_t ino        = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -87,10 +87,10 @@ static void ut_create_write_release(struct ut_env *ute, ino_t dino,
 static void ut_create_unlink_random_(struct ut_env *ute, size_t nfiles,
                                      size_t bsz, off_t off)
 {
-	const char  *name  = UT_NAME;
+	const char *name   = UT_NAME;
 	const char **fname = nullptr;
-	const long  *keys  = ut_randseq(ute, nfiles, 0);
-	ino_t        dino  = 0;
+	const long *keys   = ut_randseq(ute, nfiles, 0);
+	ino_t dino         = 0;
 
 	fname = (const char **)ut_zalloc(ute, nfiles * sizeof(char *));
 	ut_mkdir_at_root(ute, name, &dino);
@@ -114,12 +114,12 @@ static void ut_create_unlink_random(struct ut_env *ute)
 
 static void ut_link_unlink_many(struct ut_env *ute)
 {
-	ino_t        ino;
-	ino_t        dino;
-	struct stat  st;
-	const char  *lname;
-	const char  *dname      = UT_NAME;
-	const char  *fname      = UT_NAME;
+	ino_t ino;
+	ino_t dino;
+	struct stat st;
+	const char *lname;
+	const char *dname       = UT_NAME;
+	const char *fname       = UT_NAME;
 	const size_t nlinks_max = 10000;
 
 	ut_expect_le(nlinks_max, SILOFS_LINK_MAX);
@@ -151,14 +151,14 @@ static void ut_link_unlink_many(struct ut_env *ute)
 
 static void ut_link_max(struct ut_env *ute)
 {
-	ino_t          ino;
-	ino_t          dino;
-	struct stat    st;
+	ino_t ino;
+	ino_t dino;
+	struct stat st;
 	struct statvfs stv;
-	const char    *lname;
-	const char    *dname     = UT_NAME;
-	const char    *fname     = UT_NAME;
-	const size_t   nlink_max = SILOFS_LINK_MAX;
+	const char *lname;
+	const char *dname      = UT_NAME;
+	const char *fname      = UT_NAME;
+	const size_t nlink_max = SILOFS_LINK_MAX;
 
 	ut_mkdir_at_root(ute, dname, &dino);
 	ut_statfs(ute, dino, &stv);
@@ -190,7 +190,7 @@ static void ut_link_max(struct ut_env *ute)
 static const char *make_repeated_name(struct ut_env *ute, char c, size_t len)
 {
 	size_t nlen;
-	char   name[NAME_MAX + 1] = "";
+	char name[NAME_MAX + 1] = "";
 
 	nlen = (len < sizeof(name)) ? len : (sizeof(name) - 1);
 	memset(name, c, nlen);
@@ -199,12 +199,12 @@ static const char *make_repeated_name(struct ut_env *ute, char c, size_t len)
 
 static void ut_link_similar_names(struct ut_env *ute)
 {
-	ino_t        ino;
-	ino_t        dino;
-	struct stat  st;
-	const char  *name = UT_NAME;
-	const char  *lname;
-	const char  *abc      = "abcdefghijklmnopqrstuvwxyz"
+	ino_t ino;
+	ino_t dino;
+	struct stat st;
+	const char *name = UT_NAME;
+	const char *lname;
+	const char *abc       = "abcdefghijklmnopqrstuvwxyz"
 				"ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 	const size_t abc_len  = strlen(abc);
 	const size_t name_max = NAME_MAX;
@@ -232,15 +232,15 @@ static void ut_link_similar_names(struct ut_env *ute)
 
 static void ut_link_rand_names(struct ut_env *ute)
 {
-	struct stat  st       = { .st_size = -1 };
-	const char  *name     = UT_NAME;
+	struct stat st        = { .st_size = -1 };
+	const char *name      = UT_NAME;
 	const size_t nlinks   = 10000; /* XXX check with large */
 	const size_t name_max = NAME_MAX;
-	char        *lname    = nullptr;
-	char       **links    = nullptr;
-	size_t       name_len;
-	ino_t        dino = 0;
-	ino_t        ino  = 0;
+	char *lname           = nullptr;
+	char **links          = nullptr;
+	size_t name_len;
+	ino_t dino = 0;
+	ino_t ino  = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_only(ute, dino, name, &ino);
@@ -264,9 +264,9 @@ static void ut_link_rand_names(struct ut_env *ute)
 
 static void ut_inode_utimes(struct ut_env *ute)
 {
-	ino_t           ino;
-	ino_t           dino;
-	const char     *name  = UT_NAME;
+	ino_t ino;
+	ino_t dino;
+	const char *name      = UT_NAME;
 	struct timespec mtime = { 111, 2222 };
 	struct timespec atime = { 33333, 444444 };
 
@@ -282,9 +282,9 @@ static void ut_inode_utimes(struct ut_env *ute)
 
 static void ut_inode_special(struct ut_env *ute)
 {
-	ino_t        ino;
-	ino_t        dino;
-	const char  *name  = UT_NAME;
+	ino_t ino;
+	ino_t dino;
+	const char *name   = UT_NAME;
 	const mode_t rmode = S_IRUSR | S_IRGRP;
 
 	ut_mkdir_at_root(ute, name, &dino);
@@ -298,7 +298,7 @@ static void ut_inode_special(struct ut_env *ute)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void ut_expect_eq_tsx(const struct statx_timestamp *stx_ts,
-                             const struct timespec        *st_ts)
+                             const struct timespec *st_ts)
 {
 	ut_expect_eq(stx_ts->tv_sec, st_ts->tv_sec);
 	ut_expect_eq(stx_ts->tv_nsec, st_ts->tv_nsec);
@@ -320,7 +320,7 @@ static void ut_expect_eq_statx(const struct statx *stx, const struct stat *st)
 
 static void ut_getattr_statx(struct ut_env *ute, ino_t ino)
 {
-	struct stat  st;
+	struct stat st;
 	struct statx stx;
 
 	ut_getattr(ute, ino, &st);
@@ -330,9 +330,9 @@ static void ut_getattr_statx(struct ut_env *ute, ino_t ino)
 
 static void ut_inode_statx(struct ut_env *ute)
 {
-	ino_t       ino;
-	ino_t       dino;
-	ino_t       dino2;
+	ino_t ino;
+	ino_t dino;
+	ino_t dino2;
 	const char *name = UT_NAME;
 
 	ut_mkdir_at_root(ute, name, &dino);

@@ -28,9 +28,9 @@ enum { MCHUNK_MAGIC = 0x3A4BE8C1 };
 
 struct ft_mchunk {
 	struct ft_mchunk *next;
-	uint8_t          *data;
-	size_t            size;
-	unsigned long     magic;
+	uint8_t *data;
+	size_t size;
+	unsigned long magic;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -134,7 +134,7 @@ static void *ft_do_zalloc(struct ft_env *fte, size_t sz)
 
 static char *ft_do_strdup(struct ft_env *fte, const char *str)
 {
-	char        *str2;
+	char *str2;
 	const size_t len = ft_strlen(str);
 
 	str2 = ft_do_malloc(fte, len + 1);
@@ -157,7 +157,7 @@ char *ft_strdup(struct ft_env *fte, const char *str)
 static char *
 ft_do_strcat(struct ft_env *fte, const char *str1, const char *str2)
 {
-	char        *str;
+	char *str;
 	const size_t len1 = ft_strlen(str1);
 	const size_t len2 = ft_strlen(str2);
 
@@ -241,7 +241,7 @@ static void ft_prandom(struct ft_env *fte, void *buf, size_t bsz)
 {
 	uint64_t u;
 	uint8_t *m = buf;
-	size_t   k, cnt = 0;
+	size_t k, cnt = 0;
 
 	while (cnt < bsz) {
 		u = ft_prandom_u64(fte);
@@ -255,7 +255,7 @@ void ft_suspend(const struct ft_env *fte, int sec, int part)
 {
 	struct timespec rem = { 0, 0 };
 	struct timespec req = { sec, (long)part * 1000000LL };
-	int             err;
+	int err;
 
 	err = nanosleep(&req, &rem);
 	while (err && (errno == EINTR)) {
@@ -280,7 +280,7 @@ static char *ft_do_joinpath(struct ft_env *fte, const char *s1, const char *s2)
 	const size_t len1 = ft_strlen(s1);
 	const size_t len2 = ft_strlen(s2);
 	const size_t msz  = len1 + len2 + 2;
-	char        *path = nullptr;
+	char *path        = nullptr;
 
 	path = (char *)ft_do_malloc(fte, msz);
 	strncpy(path, s1, len1 + 1);
@@ -324,8 +324,8 @@ char *ft_new_path_under(struct ft_env *fte, const char *base)
 
 char *ft_new_namef(struct ft_env *fte, const char *fmt, ...)
 {
-	char    name[NAME_MAX + 1] = "";
-	va_list ap                 = { 0 };
+	char name[NAME_MAX + 1] = "";
+	va_list ap              = { 0 };
 
 	va_start(ap, fmt);
 	vsnprintf(name, sizeof(name) - 1, fmt, ap);
@@ -335,8 +335,8 @@ char *ft_new_namef(struct ft_env *fte, const char *fmt, ...)
 
 char *ft_new_pathf(struct ft_env *fte, const char *p, const char *fmt, ...)
 {
-	char    buf[PATH_MAX / 2] = "";
-	va_list ap                = { 0 };
+	char buf[PATH_MAX / 2] = "";
+	va_list ap             = { 0 };
 
 	va_start(ap, fmt);
 	vsnprintf(buf, sizeof(buf) - 1, fmt, ap);
@@ -402,7 +402,7 @@ static void swap(long *arr, size_t i, size_t j)
 
 long *ft_new_buf_randseq(struct ft_env *fte, size_t cnt, long base)
 {
-	long   *arr = nullptr;
+	long *arr = nullptr;
 	size_t *pos;
 
 	arr = ft_new_seq(fte, cnt, base);
@@ -417,10 +417,10 @@ long *ft_new_buf_randseq(struct ft_env *fte, size_t cnt, long base)
 
 static void fill_buf_nums(long base, void *buf, size_t bsz)
 {
-	uint8_t     *rem;
-	uint8_t     *end;
-	int64_t     *ubuf = buf;
-	const size_t cnt  = bsz / sizeof(*ubuf);
+	uint8_t *rem;
+	uint8_t *end;
+	int64_t *ubuf    = buf;
+	const size_t cnt = bsz / sizeof(*ubuf);
 
 	for (size_t i = 0; i < cnt; ++i) {
 		ubuf[i] = base + (long)i;
@@ -443,9 +443,9 @@ void *ft_new_buf_nums(struct ft_env *fte, long base, size_t bsz)
 
 char *ft_strfmt(struct ft_env *fte, const char *fmt, ...)
 {
-	char    str[2000] = "";
-	va_list ap        = { 0 };
-	int     len;
+	char str[2000] = "";
+	va_list ap     = { 0 };
+	int len;
 
 	va_start(ap, fmt);
 	len = vsnprintf(str, sizeof(str) - 1, fmt, ap);
@@ -462,10 +462,10 @@ char *ft_make_ulong_name(struct ft_env *fte, unsigned long key)
 
 static void ft_force_alnum(char *str, size_t len)
 {
-	const char  *alt     = "_0123456789abcdefghijklmnopqrstuvwxyz";
+	const char *alt      = "_0123456789abcdefghijklmnopqrstuvwxyz";
 	const size_t alt_len = ft_strlen(alt);
-	size_t       idx;
-	int          ch;
+	size_t idx;
+	int ch;
 
 	for (size_t i = 0; i < len; ++i) {
 		ch = (int)(str[i]);
@@ -506,11 +506,11 @@ const char *ft_curr_test_name(const struct ft_env *fte)
 char *
 ft_make_xname_unique(struct ft_env *fte, size_t nlen, char *buf, size_t bsz)
 {
-	const char    *curr_name = ft_curr_test_name(fte);
-	const uint32_t seq       = (uint32_t)ft_next_seqn(fte);
-	const uint32_t rnd       = (uint32_t)ft_lrand(fte);
-	const uint32_t val       = seq ^ rnd ^ (uint32_t)fte->pid;
-	ssize_t        len;
+	const char *curr_name = ft_curr_test_name(fte);
+	const uint32_t seq    = (uint32_t)ft_next_seqn(fte);
+	const uint32_t rnd    = (uint32_t)ft_lrand(fte);
+	const uint32_t val    = seq ^ rnd ^ (uint32_t)fte->pid;
+	ssize_t len;
 
 	if ((bsz > 0) && (nlen < bsz)) {
 		len = snprintf(buf, bsz, "%s_%08x", curr_name, val);

@@ -122,7 +122,7 @@ static void require_algo_dlen(int algo, size_t hlen)
 void silofs_sha256_of(const struct silofs_mdigest_hd *md_hd, const void *buf,
                       size_t bsz, struct silofs_hash256 *out_hash)
 {
-	const int    algo = GCRY_MD_SHA256;
+	const int algo    = GCRY_MD_SHA256;
 	const size_t hlen = sizeof(out_hash->hash);
 
 	require_algo_dlen(algo, hlen);
@@ -134,7 +134,7 @@ void silofs_sha256_ofv(const struct silofs_mdigest_hd *md_hd,
                        struct silofs_hash256 *out_hash)
 {
 	const size_t hlen = sizeof(out_hash->hash);
-	const int    algo = GCRY_MD_SHA256;
+	const int algo    = GCRY_MD_SHA256;
 
 	require_algo_dlen(algo, hlen);
 	mdigest_vcalc(md_hd, algo, iov, cnt, hlen, out_hash->hash);
@@ -144,7 +144,7 @@ void silofs_sha3_256_of(const struct silofs_mdigest_hd *md_hd, const void *buf,
                         size_t bsz, struct silofs_hash256 *out_hash)
 {
 	const size_t hlen = sizeof(out_hash->hash);
-	const int    algo = GCRY_MD_SHA3_256;
+	const int algo    = GCRY_MD_SHA3_256;
 
 	require_algo_dlen(algo, hlen);
 	mdigest_calc(md_hd, algo, buf, bsz, hlen, out_hash->hash);
@@ -155,7 +155,7 @@ void silofs_sha3_256_ofv(const struct silofs_mdigest_hd *md_hd,
                          struct silofs_hash256 *out_hash)
 {
 	const size_t hlen = sizeof(out_hash->hash);
-	const int    algo = GCRY_MD_SHA3_256;
+	const int algo    = GCRY_MD_SHA3_256;
 
 	require_algo_dlen(algo, hlen);
 	mdigest_vcalc(md_hd, algo, iov, cnt, hlen, out_hash->hash);
@@ -165,7 +165,7 @@ void silofs_sha3_512_of(const struct silofs_mdigest_hd *md_hd, const void *buf,
                         size_t bsz, struct silofs_hash512 *out_hash)
 {
 	const size_t hlen = sizeof(out_hash->hash);
-	const int    algo = GCRY_MD_SHA3_512;
+	const int algo    = GCRY_MD_SHA3_512;
 
 	require_algo_dlen(algo, hlen);
 	mdigest_calc(md_hd, algo, buf, bsz, hlen, out_hash->hash);
@@ -184,9 +184,9 @@ static uint32_t digest_to_uint32(const uint8_t *digest)
 void silofs_crc32_of(const struct silofs_mdigest_hd *md_hd, const void *buf,
                      size_t bsz, uint32_t *out_crc32)
 {
-	const int    algo = GCRY_MD_CRC32;
+	const int algo    = GCRY_MD_CRC32;
 	const size_t hlen = sizeof(*out_crc32);
-	const void  *ptr  = nullptr;
+	const void *ptr   = nullptr;
 
 	require_algo_dlen(algo, hlen);
 	gcry_md_reset(md_hd->md_hd);

@@ -53,10 +53,10 @@ static char *cmd_baseref_path(const struct silofs_env *env)
 static void cmd_report_err_and_die(const struct silofs_env *env, int status,
                                    const char *msg)
 {
-	char       *rpath = nullptr;
-	const char *xmsg  = msg ? msg : "";
-	const char *xtag  = msg ? ": " : "";
-	int         err;
+	char *rpath      = nullptr;
+	const char *xmsg = msg ? msg : "";
+	const char *xtag = msg ? ": " : "";
+	int err;
 
 	/* no error */
 	if (status == 0) {
@@ -141,9 +141,9 @@ attr_printf34 static void
 cmd_report_err_and_dief(const struct silofs_env *env, int status,
                         const char *restrict fmt, ...)
 {
-	char    msg[1024];
+	char msg[1024];
 	va_list ap = { 0 };
-	int     ret;
+	int ret;
 
 	va_start(ap, fmt);
 	ret = vsnprintf(msg, sizeof(msg), fmt, ap);

@@ -22,15 +22,15 @@
  */
 static void test_boundaries_(struct ft_env *fte, off_t base_off)
 {
-	uint64_t    val1    = 0;
-	uint64_t    val2    = 0;
-	const long  vsz     = (long)sizeof(val1);
+	uint64_t val1       = 0;
+	uint64_t val2       = 0;
+	const long vsz      = (long)sizeof(val1);
 	const off_t off_beg = base_off - vsz - 1;
 	const off_t off_end = base_off + vsz + 1;
 	const char *path    = ft_new_path_unique(fte);
-	off_t       off     = -1;
-	int         fd      = -1;
-	uint8_t     byte    = 0;
+	off_t off           = -1;
+	int fd              = -1;
+	uint8_t byte        = 0;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	for (off = off_beg; off < off_end; ++off) {

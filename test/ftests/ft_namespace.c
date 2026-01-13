@@ -19,10 +19,10 @@
 /* TODO: Also readdir */
 struct ft_ns_ctx {
 	struct ft_env *fte;
-	const char    *root_path;
-	size_t         depth_max;
-	size_t         dirs_per_level;
-	size_t         files_per_level;
+	const char *root_path;
+	size_t depth_max;
+	size_t dirs_per_level;
+	size_t files_per_level;
 };
 
 static char *make_path(const struct ft_ns_ctx *ns_ctx, const char *parent_dir,
@@ -49,7 +49,7 @@ static char *make_filepath(const struct ft_ns_ctx *ns_ctx,
 static void test_mktree_recursive(const struct ft_ns_ctx *ns_ctx,
                                   const char *parent_dir, size_t depth)
 {
-	int   fd;
+	int fd;
 	char *path;
 
 	if (depth >= ns_ctx->depth_max) {
@@ -88,8 +88,8 @@ static void test_rmtree_recursive(const struct ft_ns_ctx *ns_ctx,
 
 static void test_namespace_(struct ft_ns_ctx *ns_ctx)
 {
-	struct ft_env *fte  = ns_ctx->fte;
-	const char    *path = ft_new_path_unique(fte);
+	struct ft_env *fte = ns_ctx->fte;
+	const char *path   = ft_new_path_unique(fte);
 
 	ns_ctx->root_path = path;
 	ft_mkdir(path, 0700);

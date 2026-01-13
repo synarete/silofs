@@ -30,15 +30,15 @@ struct cmd_view_in_args {
 	char *fsname;
 	char *password;
 	char *outfile;
-	bool  no_prompt;
+	bool no_prompt;
 };
 
 struct cmd_view_ctx {
 	struct cmd_view_in_args in_args;
-	struct silofs_args      args;
-	struct silofs_env      *env;
-	FILE                   *out_fp;
-	bool                    has_lockfile;
+	struct silofs_args args;
+	struct silofs_env *env;
+	FILE *out_fp;
+	bool has_lockfile;
 };
 
 static struct cmd_view_ctx *cmd_view_ctx_p;
@@ -53,7 +53,7 @@ static void cmd_view_parse_optargs(struct cmd_view_ctx *ctx)
 		{ nullptr, 0, 0 },
 	};
 	struct cmd_optargs opa;
-	int                opt_chr = 1;
+	int opt_chr = 1;
 
 	cmd_optargs_init(&opa, ods);
 	while (!opa.opa_done && (opt_chr > 0)) {

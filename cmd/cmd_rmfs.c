@@ -30,15 +30,15 @@ struct cmd_rmfs_in_args {
 	char *repodir_real;
 	char *fsname;
 	char *password;
-	bool  no_prompt;
+	bool no_prompt;
 };
 
 struct cmd_rmfs_ctx {
 	struct silofs_ioc_query ioc_qry;
 	struct cmd_rmfs_in_args in_args;
-	struct silofs_args      args;
-	struct silofs_env      *env;
-	bool                    has_lockfile;
+	struct silofs_args args;
+	struct silofs_env *env;
+	bool has_lockfile;
 };
 
 static struct cmd_rmfs_ctx *cmd_rmfs_ctx_p;
@@ -55,7 +55,7 @@ static void cmd_rmfs_parse_optargs(struct cmd_rmfs_ctx *ctx)
 		{ nullptr, 0, 0 },       //
 	};
 	struct cmd_optargs opa;
-	int                opt_chr = 1;
+	int opt_chr = 1;
 
 	cmd_optargs_init(&opa, ods);
 	while (!opa.opa_done && (opt_chr > 0)) {
@@ -112,11 +112,11 @@ static void cmd_rmfs_getpass(struct cmd_rmfs_ctx *ctx)
 
 static void cmd_rmfs_check_nomnt_at(struct cmd_rmfs_ctx *ctx, const char *mntp)
 {
-	struct stat              st[2];
-	char                    *path[2] = { nullptr, nullptr };
-	char                    *repodir = nullptr;
-	char                    *name    = nullptr;
-	struct silofs_ioc_query *qry     = &ctx->ioc_qry;
+	struct stat st[2];
+	char *path[2]                = { nullptr, nullptr };
+	char *repodir                = nullptr;
+	char *name                   = nullptr;
+	struct silofs_ioc_query *qry = &ctx->ioc_qry;
 	int o_flags = O_RDONLY | O_NONBLOCK | O_CLOEXEC | O_DIRECTORY;
 	int dfd     = -1;
 	int err     = 0;

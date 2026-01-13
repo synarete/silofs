@@ -39,7 +39,7 @@ static size_t kbn_of(const struct silofs_vaddr *vaddr)
 
 static uint64_t mask_of(size_t ki, size_t nk)
 {
-	uint64_t       mask;
+	uint64_t mask;
 	const uint64_t zero = 0;
 
 	if (nk < 64) {
@@ -99,13 +99,13 @@ static bool lbk_state_has_mask_any(const struct silofs_lbk_state *lbk_st,
 	return ((lbk_st->state & lbk_mask->state) > 0);
 }
 
-static void lbk_state_set_mask(struct silofs_lbk_state       *lbk_st,
+static void lbk_state_set_mask(struct silofs_lbk_state *lbk_st,
                                const struct silofs_lbk_state *lbk_mask)
 {
 	lbk_st->state |= lbk_mask->state;
 }
 
-static void lbk_state_unset_mask(struct silofs_lbk_state       *lbk_st,
+static void lbk_state_unset_mask(struct silofs_lbk_state *lbk_st,
                                  const struct silofs_lbk_state *lbk_mask)
 {
 	lbk_st->state &= ~(lbk_mask->state);
@@ -117,12 +117,12 @@ static size_t lbk_state_popcount(const struct silofs_lbk_state *lbk_st)
 }
 
 static void lbk_state_xtoh(const struct silofs_lbk_state *lbk_st_le,
-                           struct silofs_lbk_state       *lbk_st)
+                           struct silofs_lbk_state *lbk_st)
 {
 	lbk_st->state = silofs_le64_to_cpu(lbk_st_le->state);
 }
 
-static void lbk_state_htox(struct silofs_lbk_state       *lbk_st_le,
+static void lbk_state_htox(struct silofs_lbk_state *lbk_st_le,
                            const struct silofs_lbk_state *lbk_st)
 {
 	lbk_st_le->state = silofs_cpu_to_le64(lbk_st->state);
@@ -155,12 +155,12 @@ static void lbm_dec_refcnt(struct silofs_lbk_meta *lbm)
 }
 
 static void lbm_allocated(const struct silofs_lbk_meta *lbm,
-                          struct silofs_lbk_state      *lbk_st)
+                          struct silofs_lbk_state *lbk_st)
 {
 	lbk_state_xtoh(&lbm->lbm_allocated, lbk_st);
 }
 
-static void lbm_set_allocated(struct silofs_lbk_meta        *lbm,
+static void lbm_set_allocated(struct silofs_lbk_meta *lbm,
                               const struct silofs_lbk_state *lbk_st)
 {
 	lbk_state_htox(&lbm->lbm_allocated, lbk_st);
@@ -244,12 +244,12 @@ static bool lbm_isunused(const struct silofs_lbk_meta *lbm)
 }
 
 static void lbm_unwritten(const struct silofs_lbk_meta *lbm,
-                          struct silofs_lbk_state      *lbk_st)
+                          struct silofs_lbk_state *lbk_st)
 {
 	lbk_state_xtoh(&lbm->lbm_unwritten, lbk_st);
 }
 
-static void lbm_set_unwritten(struct silofs_lbk_meta        *lbm,
+static void lbm_set_unwritten(struct silofs_lbk_meta *lbm,
                               const struct silofs_lbk_state *lbk_st)
 {
 	lbk_state_htox(&lbm->lbm_unwritten, lbk_st);
@@ -310,7 +310,7 @@ lbm_find_free(const struct silofs_lbk_meta *lbm, size_t nkb, size_t *out_kbn)
 {
 	struct silofs_lbk_state lbk_st;
 	struct silofs_lbk_state bk_mask;
-	const size_t            nkb_in_bk = SILOFS_NKB_IN_LBK;
+	const size_t nkb_in_bk = SILOFS_NKB_IN_LBK;
 
 	lbm_allocated(lbm, &lbk_st);
 	for (size_t kbn = 0; (kbn + nkb) <= nkb_in_bk; kbn += nkb) {
@@ -328,9 +328,9 @@ lbm_make_vaddrs(const struct silofs_lbk_meta *lbm, enum silofs_mtype mtype,
                 off_t off_base, struct silofs_vaddrs *out_vaddrs)
 {
 	struct silofs_lbk_state lbk_st;
-	const size_t            nkb       = silofs_mtype_nkbs(mtype);
-	const size_t            nkb_in_bk = SILOFS_NKB_IN_LBK;
-	off_t                   off;
+	const size_t nkb       = silofs_mtype_nkbs(mtype);
+	const size_t nkb_in_bk = SILOFS_NKB_IN_LBK;
+	off_t off;
 
 	lbm_allocated(lbm, &lbk_st);
 	out_vaddrs->count = 0;
@@ -349,7 +349,7 @@ lbm_make_vaddrs(const struct silofs_lbk_meta *lbm, enum silofs_mtype mtype,
 	}
 }
 
-static void lbm_clone_from(struct silofs_lbk_meta       *lbm,
+static void lbm_clone_from(struct silofs_lbk_meta *lbm,
                            const struct silofs_lbk_meta *lbm_other)
 {
 	struct silofs_lbk_state lbk_st;
@@ -502,9 +502,9 @@ static size_t lsmap_refmtype_nkb(const struct silofs_lsmap *lsm)
 static int
 lsmap_find_free_at(const struct silofs_lsmap *lsm, size_t bn, size_t *out_kbn)
 {
-	const size_t                  nkb = lsmap_refmtype_nkb(lsm);
+	const size_t nkb                  = lsmap_refmtype_nkb(lsm);
 	const struct silofs_lbk_meta *lbm = lsmap_lbm_at2(lsm, bn);
-	int                           err = -SILOFS_ENOSPC;
+	int err                           = -SILOFS_ENOSPC;
 
 	if (lbm_may_alloc(lbm, nkb)) {
 		err = lbm_find_free(lbm, nkb, out_kbn);
@@ -516,7 +516,7 @@ static int lsmap_find_free(const struct silofs_lsmap *lsm, size_t bn_beg,
                            size_t bn_end, size_t *out_bn, size_t *out_kbn)
 {
 	size_t kbn = 0;
-	int    err;
+	int err;
 
 	for (size_t bn = bn_beg; bn < bn_end; ++bn) {
 		err = lsmap_find_free_at(lsm, bn, &kbn);
@@ -529,11 +529,11 @@ static int lsmap_find_free(const struct silofs_lsmap *lsm, size_t bn_beg,
 	return -SILOFS_ENOSPC;
 }
 
-static void lsmap_set_allocated_at(struct silofs_lsmap       *lsm,
+static void lsmap_set_allocated_at(struct silofs_lsmap *lsm,
                                    const struct silofs_vaddr *vaddr)
 {
-	const size_t            kbn = kbn_of(vaddr);
-	const size_t            nkb = nkbs_of(vaddr);
+	const size_t kbn            = kbn_of(vaddr);
+	const size_t nkb            = nkbs_of(vaddr);
 	struct silofs_lbk_meta *lbm = lsmap_lbm_by_vaddr(lsm, vaddr);
 
 	lbm_set_allocated_at(lbm, kbn, nkb);
@@ -542,11 +542,11 @@ static void lsmap_set_allocated_at(struct silofs_lsmap       *lsm,
 	}
 }
 
-static void lsmap_unset_allocated_at(struct silofs_lsmap       *lsm,
+static void lsmap_unset_allocated_at(struct silofs_lsmap *lsm,
                                      const struct silofs_vaddr *vaddr)
 {
-	const size_t            kbn = kbn_of(vaddr);
-	const size_t            nkb = nkbs_of(vaddr);
+	const size_t kbn            = kbn_of(vaddr);
+	const size_t nkb            = nkbs_of(vaddr);
 	struct silofs_lbk_meta *lbm = lsmap_lbm_by_vaddr(lsm, vaddr);
 
 	if (silofs_vaddr_isdatabk(vaddr)) {
@@ -577,10 +577,10 @@ static size_t lsmap_refcnt_at(const struct silofs_lsmap *lsm,
 static bool lsmap_is_allocated_at(const struct silofs_lsmap *lsm,
                                   const struct silofs_vaddr *vaddr)
 {
-	const size_t                  kbn = kbn_of(vaddr);
-	const size_t                  nkb = nkbs_of(vaddr);
+	const size_t kbn                  = kbn_of(vaddr);
+	const size_t nkb                  = nkbs_of(vaddr);
 	const struct silofs_lbk_meta *lbm = lsmap_lbm_by_vaddr2(lsm, vaddr);
-	bool                          ret;
+	bool ret;
 
 	if (silofs_vaddr_isdatabk(vaddr)) {
 		ret = (lbm_refcnt(lbm) > 0);
@@ -593,10 +593,10 @@ static bool lsmap_is_allocated_at(const struct silofs_lsmap *lsm,
 static bool lsmap_is_last_allocated(const struct silofs_lsmap *lsm,
                                     const struct silofs_vaddr *vaddr)
 {
-	const size_t                  kbn = kbn_of(vaddr);
-	const size_t                  nkb = nkbs_of(vaddr);
+	const size_t kbn                  = kbn_of(vaddr);
+	const size_t nkb                  = nkbs_of(vaddr);
 	const struct silofs_lbk_meta *lbm = lsmap_lbm_by_vaddr2(lsm, vaddr);
-	bool                          ret;
+	bool ret;
 
 	if (silofs_vaddr_isdatabk(vaddr)) {
 		ret = (lbm_refcnt(lbm) == 1);
@@ -614,7 +614,7 @@ static bool lsmap_test_unwritten_at(const struct silofs_lsmap *lsm,
 	return lbm_test_unwritten_at(lbm, kbn_of(vaddr), nkbs_of(vaddr));
 }
 
-static void lsmap_set_unwritten_at(struct silofs_lsmap       *lsm,
+static void lsmap_set_unwritten_at(struct silofs_lsmap *lsm,
                                    const struct silofs_vaddr *vaddr)
 {
 	struct silofs_lbk_meta *lbm = lsmap_lbm_by_vaddr(lsm, vaddr);
@@ -622,7 +622,7 @@ static void lsmap_set_unwritten_at(struct silofs_lsmap       *lsm,
 	lbm_set_unwritten_at(lbm, kbn_of(vaddr), nkbs_of(vaddr));
 }
 
-static void lsmap_clear_unwritten_at(struct silofs_lsmap       *lsm,
+static void lsmap_clear_unwritten_at(struct silofs_lsmap *lsm,
                                      const struct silofs_vaddr *vaddr)
 {
 	struct silofs_lbk_meta *lbm = lsmap_lbm_by_vaddr(lsm, vaddr);
@@ -632,7 +632,7 @@ static void lsmap_clear_unwritten_at(struct silofs_lsmap       *lsm,
 
 static void lsmap_make_vaddrs_of(const struct silofs_lsmap *lsm,
                                  const struct silofs_vaddr *vaddr,
-                                 struct silofs_vaddrs      *out_vaddrs)
+                                 struct silofs_vaddrs *out_vaddrs)
 {
 	const struct silofs_lbk_meta *lbm = lsmap_lbm_by_vaddr2(lsm, vaddr);
 	const off_t off_base = silofs_off_align_to_lbk(vaddr->off);
@@ -688,7 +688,7 @@ static void lsmap_gen_keys(struct silofs_lsmap *lsm)
 static void
 lsmap_renew_key_at(struct silofs_lsmap *lsm, const struct silofs_vaddr *vaddr)
 {
-	struct silofs_ckey  rkey;
+	struct silofs_ckey rkey;
 	struct silofs_ckey *key = lsmap_key_of(lsm, vaddr->off);
 
 	silofs_ckey_mkrand(&rkey);
@@ -701,7 +701,7 @@ key_clone_from(struct silofs_ckey *key, const struct silofs_ckey *key_other)
 	silofs_ckey_assign(key, key_other);
 }
 
-static void lsmap_clone_from(struct silofs_lsmap       *lsm,
+static void lsmap_clone_from(struct silofs_lsmap *lsm,
                              const struct silofs_lsmap *lsm_other)
 {
 	struct silofs_lrange lrange;
@@ -754,7 +754,7 @@ static void lsi_dirtify(struct silofs_lsmap_info *lsi)
 }
 
 static void lsi_lrange(const struct silofs_lsmap_info *lsi,
-                       struct silofs_lrange           *out_lrange)
+                       struct silofs_lrange *out_lrange)
 {
 	lsmap_lrange(lsi->lsm, out_lrange);
 }
@@ -783,7 +783,7 @@ static size_t lsi_off_to_bn(const struct silofs_lsmap_info *lsi, off_t off)
 }
 
 void silofs_lsi_get_lrange(const struct silofs_lsmap_info *lsi,
-                           struct silofs_lrange           *out_lrange)
+                           struct silofs_lrange *out_lrange)
 {
 	lsi_lrange(lsi, out_lrange);
 }
@@ -821,10 +821,10 @@ enum silofs_mtype silofs_lsi_refmtype(const struct silofs_lsmap_info *lsi)
 }
 
 static bool lsi_is_subref(const struct silofs_lsmap_info *lsi,
-                          const struct silofs_vaddr      *vaddr)
+                          const struct silofs_vaddr *vaddr)
 {
 	enum silofs_mtype refmtype;
-	bool              ret = false;
+	bool ret = false;
 
 	refmtype = silofs_lsi_refmtype(lsi);
 	if (vaddr->mtype == refmtype) {
@@ -850,7 +850,7 @@ static void lsi_vaddr_at(const struct silofs_lsmap_info *lsi, size_t bn,
 static size_t lsi_start_bn(const struct silofs_lsmap_info *lsi)
 {
 	struct silofs_lrange lrange;
-	off_t                off_beg = lsi->ls_off_hint;
+	off_t off_beg = lsi->ls_off_hint;
 
 	lsi_lrange(lsi, &lrange);
 	if (!silofs_lrange_within(&lrange, off_beg)) {
@@ -868,13 +868,13 @@ static size_t lsi_finish_bn(const struct silofs_lsmap_info *lsi)
 }
 
 static int lsi_find_free_space(const struct silofs_lsmap_info *lsi,
-                               struct silofs_vaddr            *out_vaddr)
+                               struct silofs_vaddr *out_vaddr)
 {
 	size_t bn_beg = lsi_start_bn(lsi);
 	size_t bn_end = lsi_finish_bn(lsi);
 	size_t bn     = 0;
 	size_t kbn    = 0;
-	int    err;
+	int err;
 
 	/* fast search based on cached last-allocated hint */
 	err = lsmap_find_free(lsi->lsm, bn_beg, bn_end, &bn, &kbn);
@@ -909,7 +909,7 @@ static bool lsi_cap_allocate(const struct silofs_lsmap_info *lsi)
 }
 
 int silofs_lsi_find_free_space(const struct silofs_lsmap_info *lsi,
-                               struct silofs_vaddr            *out_vaddr)
+                               struct silofs_vaddr *out_vaddr)
 {
 	int ret = -SILOFS_ENOSPC;
 
@@ -919,11 +919,11 @@ int silofs_lsi_find_free_space(const struct silofs_lsmap_info *lsi,
 	return ret;
 }
 
-void silofs_lsi_update_off_hint(struct silofs_lsmap_info  *lsi,
+void silofs_lsi_update_off_hint(struct silofs_lsmap_info *lsi,
                                 const struct silofs_vaddr *vaddr)
 {
 	struct silofs_lrange lrange;
-	const off_t          off = vaddr->off;
+	const off_t off = vaddr->off;
 
 	lsi_lrange(lsi, &lrange);
 	if (silofs_lrange_within(&lrange, off)) {
@@ -933,7 +933,7 @@ void silofs_lsi_update_off_hint(struct silofs_lsmap_info  *lsi,
 	}
 }
 
-void silofs_lsi_mark_allocated_at(struct silofs_lsmap_info  *lsi,
+void silofs_lsi_mark_allocated_at(struct silofs_lsmap_info *lsi,
                                   const struct silofs_vaddr *vaddr)
 {
 	const size_t len = silofs_vaddr_len(vaddr);
@@ -949,10 +949,10 @@ void silofs_lsi_mark_allocated_at(struct silofs_lsmap_info  *lsi,
 	lsi_dirtify(lsi);
 }
 
-void silofs_lsi_unref_allocated_at(struct silofs_lsmap_info  *lsi,
+void silofs_lsi_unref_allocated_at(struct silofs_lsmap_info *lsi,
                                    const struct silofs_vaddr *vaddr)
 {
-	const size_t            len      = silofs_vaddr_len(vaddr);
+	const size_t len                 = silofs_vaddr_len(vaddr);
 	const enum silofs_mtype refmtype = silofs_lsi_refmtype(lsi);
 	const bool last = lsmap_is_last_allocated(lsi->lsm, vaddr);
 
@@ -971,7 +971,7 @@ void silofs_lsi_unref_allocated_at(struct silofs_lsmap_info  *lsi,
 	lsi_dirtify(lsi);
 }
 
-void silofs_lsi_reref_allocated_at(struct silofs_lsmap_info  *lsi,
+void silofs_lsi_reref_allocated_at(struct silofs_lsmap_info *lsi,
                                    const struct silofs_vaddr *vaddr)
 {
 	silofs_assert_eq(vaddr->mtype, SILOFS_MTYPE_DATABK);
@@ -983,7 +983,7 @@ void silofs_lsi_reref_allocated_at(struct silofs_lsmap_info  *lsi,
 }
 
 size_t silofs_lsi_refcnt_at(const struct silofs_lsmap_info *lsi,
-                            const struct silofs_vaddr      *vaddr)
+                            const struct silofs_vaddr *vaddr)
 {
 	size_t refcnt = 0;
 
@@ -994,7 +994,7 @@ size_t silofs_lsi_refcnt_at(const struct silofs_lsmap_info *lsi,
 }
 
 bool silofs_lsi_has_allocated_with(const struct silofs_lsmap_info *lsi,
-                                   const struct silofs_vaddr      *vaddr)
+                                   const struct silofs_vaddr *vaddr)
 {
 	bool ret = false;
 
@@ -1005,7 +1005,7 @@ bool silofs_lsi_has_allocated_with(const struct silofs_lsmap_info *lsi,
 }
 
 bool silofs_lsi_is_last_allocated(const struct silofs_lsmap_info *lsi,
-                                  const struct silofs_vaddr      *vaddr)
+                                  const struct silofs_vaddr *vaddr)
 {
 	bool ret = false;
 
@@ -1016,7 +1016,7 @@ bool silofs_lsi_is_last_allocated(const struct silofs_lsmap_info *lsi,
 }
 
 bool silofs_lsi_has_allocated_at(const struct silofs_lsmap_info *lsi,
-                                 const struct silofs_vaddr      *vaddr)
+                                 const struct silofs_vaddr *vaddr)
 {
 	bool ret = false;
 
@@ -1027,7 +1027,7 @@ bool silofs_lsi_has_allocated_at(const struct silofs_lsmap_info *lsi,
 }
 
 bool silofs_lsi_has_unwritten_at(const struct silofs_lsmap_info *lsi,
-                                 const struct silofs_vaddr      *vaddr)
+                                 const struct silofs_vaddr *vaddr)
 {
 	bool ret = false;
 
@@ -1037,7 +1037,7 @@ bool silofs_lsi_has_unwritten_at(const struct silofs_lsmap_info *lsi,
 	return ret;
 }
 
-void silofs_lsi_clear_unwritten_at(struct silofs_lsmap_info  *lsi,
+void silofs_lsi_clear_unwritten_at(struct silofs_lsmap_info *lsi,
                                    const struct silofs_vaddr *vaddr)
 {
 	if (lsi_is_subref(lsi, vaddr) &&
@@ -1047,7 +1047,7 @@ void silofs_lsi_clear_unwritten_at(struct silofs_lsmap_info  *lsi,
 	}
 }
 
-void silofs_lsi_mark_unwritten_at(struct silofs_lsmap_info  *lsi,
+void silofs_lsi_mark_unwritten_at(struct silofs_lsmap_info *lsi,
                                   const struct silofs_vaddr *vaddr)
 {
 	if (lsi_is_subref(lsi, vaddr) &&
@@ -1058,8 +1058,8 @@ void silofs_lsi_mark_unwritten_at(struct silofs_lsmap_info  *lsi,
 }
 
 void silofs_lsi_vaddrs_at(const struct silofs_lsmap_info *lsi,
-                          const struct silofs_vaddr      *vaddr,
-                          struct silofs_vaddrs           *out_vaddrs)
+                          const struct silofs_vaddr *vaddr,
+                          struct silofs_vaddrs *out_vaddrs)
 {
 	out_vaddrs->count = 0;
 
@@ -1078,8 +1078,8 @@ void silofs_lsi_clone_from(struct silofs_lsmap_info *lsi,
 }
 
 int silofs_lsi_resolve_key(const struct silofs_lsmap_info *lsi,
-                           const struct silofs_vaddr      *vaddr,
-                           struct silofs_ckey             *out_key)
+                           const struct silofs_vaddr *vaddr,
+                           struct silofs_ckey *out_key)
 {
 	if (!lsi_is_subref(lsi, vaddr)) {
 		return -SILOFS_ERANGE;
@@ -1088,9 +1088,9 @@ int silofs_lsi_resolve_key(const struct silofs_lsmap_info *lsi,
 	return 0;
 }
 
-int silofs_lsi_rebind_key(struct silofs_lsmap_info  *lsi,
+int silofs_lsi_rebind_key(struct silofs_lsmap_info *lsi,
                           const struct silofs_vaddr *vaddr,
-                          const struct silofs_ckey  *key)
+                          const struct silofs_ckey *key)
 {
 	if (!lsi_is_subref(lsi, vaddr)) {
 		return -SILOFS_ERANGE;
@@ -1105,7 +1105,7 @@ int silofs_lsi_rebind_key(struct silofs_lsmap_info  *lsi,
 static int verify_lsmap_lrange(const struct silofs_lsmap *lsm)
 {
 	struct silofs_lrange lrange;
-	size_t               len;
+	size_t len;
 
 	lsmap_lrange(lsm, &lrange);
 	if (!silofs_lrange_isvalid(&lrange)) {
@@ -1139,7 +1139,7 @@ static int verify_lbk_meta(const struct silofs_lbk_meta *lbm)
 int silofs_verify_lsmap(const struct silofs_lsmap *lsm)
 {
 	const struct silofs_lbk_meta *lbm;
-	int                           err = 0;
+	int err = 0;
 
 	err = verify_lsmap_lrange(lsm);
 	if (err) {

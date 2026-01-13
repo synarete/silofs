@@ -25,12 +25,12 @@
  */
 static void test_opath_reg(struct ft_env *fte)
 {
-	struct stat    st    = { .st_size = -1 };
-	struct statvfs stv   = { .f_blocks = 0 };
-	uint8_t        buf[] = { 1, 2, 3, 4, 5, 6, 7, 8 };
-	const char    *path  = ft_new_path_unique(fte);
-	const mode_t   ifmt  = S_IFMT;
-	int            fd    = -1;
+	struct stat st     = { .st_size = -1 };
+	struct statvfs stv = { .f_blocks = 0 };
+	uint8_t buf[]      = { 1, 2, 3, 4, 5, 6, 7, 8 };
+	const char *path   = ft_new_path_unique(fte);
+	const mode_t ifmt  = S_IFMT;
+	int fd             = -1;
 
 	ft_open_err(path, O_CREAT | O_RDWR | O_PATH, 0666, -ENOENT);
 	ft_open(path, O_CREAT | O_RDWR, 0666, &fd);
@@ -61,13 +61,13 @@ static void test_opath_reg(struct ft_env *fte)
  */
 static void test_opath_symlnk(struct ft_env *fte)
 {
-	struct stat  st     = { .st_size = -1 };
-	const char  *path0  = ft_new_path_unique(fte);
-	const char  *path1  = ft_new_path_unique(fte);
-	const size_t len    = ft_strlen(path0);
-	char        *symval = ft_new_buf_zeros(fte, len + 1);
-	size_t       nch    = 0;
-	int          fd     = -1;
+	struct stat st    = { .st_size = -1 };
+	const char *path0 = ft_new_path_unique(fte);
+	const char *path1 = ft_new_path_unique(fte);
+	const size_t len  = ft_strlen(path0);
+	char *symval      = ft_new_buf_zeros(fte, len + 1);
+	size_t nch        = 0;
+	int fd            = -1;
 
 	ft_creat(path0, 0600, &fd);
 	ft_close(fd);
@@ -89,16 +89,16 @@ static void test_opath_symlnk(struct ft_env *fte)
  */
 static void test_opath_dir(struct ft_env *fte)
 {
-	struct stat  st   = { .st_size = -1 };
-	const char  *path = ft_new_path_unique(fte);
-	const char  *name = ft_new_name_unique(fte);
+	struct stat st    = { .st_size = -1 };
+	const char *path  = ft_new_path_unique(fte);
+	const char *name  = ft_new_name_unique(fte);
 	const size_t dlen = FT_1M - 1;
-	const void  *data = ft_new_buf_rands(fte, dlen);
-	int          dfd1 = -1;
-	int          dfd2 = -1;
-	int          dfd3 = -1;
-	int          fd1  = -1;
-	int          fd2  = -1;
+	const void *data  = ft_new_buf_rands(fte, dlen);
+	int dfd1          = -1;
+	int dfd2          = -1;
+	int dfd3          = -1;
+	int fd1           = -1;
+	int fd2           = -1;
 
 	ft_mkdir(path, 0700);
 	ft_open(path, O_DIRECTORY | O_PATH, 0, &dfd1);
@@ -137,19 +137,19 @@ static void test_opath_dir(struct ft_env *fte)
  */
 static void test_opath_renameat(struct ft_env *fte)
 {
-	struct stat  st    = { .st_size = -1 };
-	const size_t len1  = FT_1K;
-	const size_t len2  = FT_64K;
-	const char  *path1 = ft_new_path_unique(fte);
-	const char  *path2 = ft_new_path_unique(fte);
-	const char  *name1 = ft_new_name_unique(fte);
-	const char  *name2 = ft_new_name_unique(fte);
-	const void  *data1 = ft_new_buf_rands(fte, len1);
-	const void  *data2 = ft_new_buf_rands(fte, len2);
-	int          dfd1  = -1;
-	int          dfd2  = -1;
-	int          fd1   = -1;
-	int          fd2   = -1;
+	struct stat st    = { .st_size = -1 };
+	const size_t len1 = FT_1K;
+	const size_t len2 = FT_64K;
+	const char *path1 = ft_new_path_unique(fte);
+	const char *path2 = ft_new_path_unique(fte);
+	const char *name1 = ft_new_name_unique(fte);
+	const char *name2 = ft_new_name_unique(fte);
+	const void *data1 = ft_new_buf_rands(fte, len1);
+	const void *data2 = ft_new_buf_rands(fte, len2);
+	int dfd1          = -1;
+	int dfd2          = -1;
+	int fd1           = -1;
+	int fd2           = -1;
 
 	ft_mkdir(path1, 0700);
 	ft_open(path1, O_DIRECTORY, 0, &dfd1);
@@ -206,8 +206,8 @@ static void test_opath_fstatat(struct ft_env *fte)
 	struct stat st   = { .st_size = -1 };
 	const char *path = ft_new_path_unique(fte);
 	const char *name = ft_new_name_unique(fte);
-	int         dfd  = -1;
-	int         fd   = -1;
+	int dfd          = -1;
+	int fd           = -1;
 
 	ft_mkdir(path, 0700);
 	ft_openat(AT_FDCWD, path, O_DIRECTORY | O_RDONLY | O_PATH, 0, &dfd);
@@ -232,13 +232,13 @@ static void test_opath_fstatat(struct ft_env *fte)
  */
 static void test_opath_unlinked(struct ft_env *fte)
 {
-	struct stat     st    = { .st_size = -1 };
+	struct stat st        = { .st_size = -1 };
 	struct timespec ts[2] = { { 1, 22 }, { 333, 4444 } };
-	uint8_t         buf[] = { 7, 6, 5, 4, 3, 2, 1 };
-	const char     *path  = ft_new_path_unique(fte);
-	const char     *name  = ft_new_name_unique(fte);
-	int             dfd   = -1;
-	int             fd1   = -1;
+	uint8_t buf[]         = { 7, 6, 5, 4, 3, 2, 1 };
+	const char *path      = ft_new_path_unique(fte);
+	const char *name      = ft_new_name_unique(fte);
+	int dfd               = -1;
+	int fd1               = -1;
 	int fd2 = -1; /* need 2nd fd due to issue with FUSE+O_PATH */
 
 	ft_mkdir(path, 0700);
@@ -276,9 +276,9 @@ static void test_opath_unlinked(struct ft_env *fte)
 static void test_opath_selfdir(struct ft_env *fte)
 {
 	struct stat st[3];
-	const char *path    = ft_new_path_unique(fte);
-	const int   o_flags = O_DIRECTORY | O_RDONLY | O_NONBLOCK;
-	int         dfd[3]  = { -1, -1 };
+	const char *path  = ft_new_path_unique(fte);
+	const int o_flags = O_DIRECTORY | O_RDONLY | O_NONBLOCK;
+	int dfd[3]        = { -1, -1 };
 
 	ft_mkdir(path, 0700);
 	ft_openat(AT_FDCWD, path, o_flags, 0, &dfd[0]);

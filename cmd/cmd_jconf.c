@@ -20,7 +20,7 @@
 
 static char *cmd_localtime_str(time_t t)
 {
-	char      ts[80] = "";
+	char ts[80] = "";
 	struct tm tm;
 
 	if (localtime_r(&t, &tm) == nullptr) {
@@ -102,7 +102,7 @@ json_t *cmd_json_array_get(const json_t *jarr, size_t idx)
 
 json_t *cmd_json_time(time_t t)
 {
-	char   *tstr;
+	char *tstr;
 	json_t *jstr;
 
 	tstr = cmd_localtime_str(t);
@@ -149,7 +149,7 @@ static char *cmd_json_dumps(json_t *jobj)
 
 static json_t *cmd_json_loads(const char *jtxt)
 {
-	json_t      *jobj;
+	json_t *jobj;
 	json_error_t jerr;
 
 	jobj = json_loads(jtxt, 0, &jerr);
@@ -270,8 +270,8 @@ json_t *cmd_json_fsmeta(const struct silofs_fsmeta *fsmeta)
 void cmd_json_fsmeta_value(const json_t *jobj, struct silofs_fsmeta *fsmeta)
 {
 	const json_t *jsub = nullptr;
-	const char   *str  = nullptr;
-	size_t        len;
+	const char *str    = nullptr;
+	size_t len;
 
 	memset(fsmeta, 0, sizeof(*fsmeta));
 
@@ -299,7 +299,7 @@ json_t *cmd_json_mbaddr(const struct silofs_mbaddr *mbaddr)
 void cmd_json_mbaddr_value(const json_t *jstr, struct silofs_mbaddr *mbaddr)
 {
 	const char *str = nullptr;
-	size_t      len;
+	size_t len;
 
 	memset(mbaddr, 0, sizeof(*mbaddr));
 
@@ -336,8 +336,8 @@ static void cmd_close_jdir(const char *path, int dfd)
 static void cmd_save_jtext_at(int dfd, const char *name, const char *jtxt)
 {
 	char tmp[NAME_MAX + 1] = "";
-	int  fd                = -1;
-	int  err;
+	int fd                 = -1;
+	int err;
 
 	snprintf(tmp, sizeof(tmp) - 1, "%s~", name);
 	err = silofs_sys_openat(dfd, tmp, O_CREAT | O_RDWR | O_TRUNC,
@@ -391,12 +391,12 @@ void cmd_json_save(json_t *jobj, const char *dirpath, const char *name)
 
 static char *cmd_load_jtext_at(int dfd, const char *name)
 {
-	struct stat  st       = { .st_mode = 0 };
+	struct stat st        = { .st_mode = 0 };
 	const size_t jtxt_max = 1 << 24;
-	char        *jtxt     = nullptr;
-	size_t       len      = 0;
-	int          fd       = -1;
-	int          err;
+	char *jtxt            = nullptr;
+	size_t len            = 0;
+	int fd                = -1;
+	int err;
 
 	err = silofs_sys_fstatat(dfd, name, &st, 0);
 	if (err) {
@@ -425,7 +425,7 @@ static char *cmd_load_jtext_at(int dfd, const char *name)
 static json_t *cmd_json_load_at(int dfd, const char *name)
 {
 	json_t *jobj;
-	char   *jtxt;
+	char *jtxt;
 
 	jtxt = cmd_load_jtext_at(dfd, name);
 	jobj = cmd_json_loads(jtxt);
@@ -437,7 +437,7 @@ static json_t *cmd_json_load_at(int dfd, const char *name)
 json_t *cmd_json_load(const char *dirpath, const char *name)
 {
 	json_t *jobj = nullptr;
-	int     dfd  = -1;
+	int dfd      = -1;
 
 	cmd_open_jdir(dirpath, &dfd);
 	jobj = cmd_json_load_at(dfd, name);

@@ -84,13 +84,13 @@ void silofs_strview_initz(struct silofs_strview *sv)
 	silofs_strview_initn(sv, z, 0);
 }
 
-void silofs_strview_initv(struct silofs_strview       *sv,
+void silofs_strview_initv(struct silofs_strview *sv,
                           const struct silofs_strview *other)
 {
 	silofs_strview_initn(sv, other->str, other->len);
 }
 
-void silofs_strview_init_by(struct silofs_strview       *sv,
+void silofs_strview_init_by(struct silofs_strview *sv,
                             const struct silofs_strview *other)
 {
 	sv->str = other->str;
@@ -170,7 +170,7 @@ size_t
 silofs_strview_copyto(const struct silofs_strview *sv, void *buf, size_t n)
 {
 	const size_t len = min(n, sv->len);
-	char        *str = buf;
+	char *str        = buf;
 
 	silofs_str_copy(str, sv->str, len);
 	if (len < n) {
@@ -262,9 +262,9 @@ size_t silofs_strview_find(const struct silofs_strview *sv, const char *s)
 size_t silofs_strview_nfind(const struct silofs_strview *sv, size_t pos,
                             const char *s, size_t n)
 {
-	const size_t sz  = sv->len;
-	const char  *dat = sv->str;
-	const char  *p   = nullptr;
+	const size_t sz = sv->len;
+	const char *dat = sv->str;
+	const char *p   = nullptr;
 
 	if (pos < sz) {
 		if (n > 1) {
@@ -282,9 +282,9 @@ size_t silofs_strview_nfind(const struct silofs_strview *sv, size_t pos,
 size_t
 silofs_strview_find_chr(const struct silofs_strview *sv, size_t pos, char c)
 {
-	const size_t sz  = sv->len;
-	const char  *dat = sv->str;
-	const char  *p   = nullptr;
+	const size_t sz = sv->len;
+	const char *dat = sv->str;
+	const char *p   = nullptr;
 
 	if (pos < sz) {
 		p = silofs_str_find_chr(dat + pos, sz - pos, c);
@@ -302,11 +302,11 @@ size_t silofs_strview_rfind(const struct silofs_strview *sv, const char *s)
 size_t silofs_strview_nrfind(const struct silofs_strview *sv, size_t pos,
                              const char *s, size_t n)
 {
-	const size_t sz  = sv->len;
-	const char  *dat = sv->str;
-	const size_t k   = (pos < sz) ? pos + 1 : sz;
-	const char  *p   = nullptr;
-	const char  *q   = s;
+	const size_t sz = sv->len;
+	const char *dat = sv->str;
+	const size_t k  = (pos < sz) ? pos + 1 : sz;
+	const char *p   = nullptr;
+	const char *q   = s;
 
 	if (n == 0) {
 		/* STL compatible: empty string always matches */
@@ -322,10 +322,10 @@ size_t silofs_strview_nrfind(const struct silofs_strview *sv, size_t pos,
 size_t
 silofs_strview_rfind_chr(const struct silofs_strview *sv, size_t pos, char c)
 {
-	const size_t sz  = sv->len;
-	const char  *dat = sv->str;
-	const size_t k   = (pos < sz) ? pos + 1 : sz;
-	const char  *p;
+	const size_t sz = sv->len;
+	const char *dat = sv->str;
+	const size_t k  = (pos < sz) ? pos + 1 : sz;
+	const char *p;
 
 	p = silofs_str_rfind_chr(dat, k, c);
 	return silofs_strview_offset(sv, p);
@@ -342,10 +342,10 @@ silofs_strview_find_first_of(const struct silofs_strview *ss, const char *s)
 size_t silofs_strview_nfind_first_of(const struct silofs_strview *sv,
                                      size_t pos, const char *s, size_t n)
 {
-	const size_t sz  = sv->len;
-	const char  *dat = sv->str;
-	const char  *p   = nullptr;
-	const char  *q   = s;
+	const size_t sz = sv->len;
+	const char *dat = sv->str;
+	const char *p   = nullptr;
+	const char *q   = s;
 
 	if ((n != 0) && (pos < sz)) {
 		if (n == 1) {
@@ -371,10 +371,10 @@ silofs_strview_find_last_of(const struct silofs_strview *sv, const char *s)
 size_t silofs_strview_nfind_last_of(const struct silofs_strview *sv,
                                     size_t pos, const char *s, size_t n)
 {
-	const size_t sz  = sv->len;
-	const char  *dat = sv->str;
-	const char  *p   = nullptr;
-	const char  *q   = s;
+	const size_t sz = sv->len;
+	const char *dat = sv->str;
+	const char *p   = nullptr;
+	const char *q   = s;
 
 	if (n != 0) {
 		const size_t k = (pos < sz) ? pos + 1 : sz;
@@ -389,7 +389,7 @@ size_t silofs_strview_nfind_last_of(const struct silofs_strview *sv,
 }
 
 size_t silofs_strview_find_first_not_of(const struct silofs_strview *sv,
-                                        const char                  *s)
+                                        const char *s)
 {
 	const size_t len = silofs_str_length(s);
 
@@ -399,10 +399,10 @@ size_t silofs_strview_find_first_not_of(const struct silofs_strview *sv,
 size_t silofs_strview_nfind_first_not_of(const struct silofs_strview *sv,
                                          size_t pos, const char *s, size_t n)
 {
-	const size_t sz  = sv->len;
-	const char  *dat = sv->str;
-	const char  *p   = nullptr;
-	const char  *q   = s;
+	const size_t sz = sv->len;
+	const char *dat = sv->str;
+	const char *p   = nullptr;
+	const char *q   = s;
 
 	if (pos < sz) {
 		if (n == 0) {
@@ -422,9 +422,9 @@ size_t silofs_strview_nfind_first_not_of(const struct silofs_strview *sv,
 size_t silofs_strview_find_first_not(const struct silofs_strview *sv,
                                      size_t pos, char c)
 {
-	const char  *dat = sv->str;
-	const size_t sz  = sv->len;
-	const char  *p   = nullptr;
+	const char *dat = sv->str;
+	const size_t sz = sv->len;
+	const char *p   = nullptr;
 
 	if (pos < sz) {
 		p = silofs_str_find_first_not_eq(dat + pos, sz - pos, c);
@@ -443,10 +443,10 @@ silofs_strview_find_last_not_of(const struct silofs_strview *sv, const char *s)
 size_t silofs_strview_nfind_last_not_of(const struct silofs_strview *sv,
                                         size_t pos, const char *s, size_t n)
 {
-	const char  *dat = sv->str;
-	const size_t sz  = sv->len;
-	const char  *p   = nullptr;
-	const char  *q   = s;
+	const char *dat = sv->str;
+	const size_t sz = sv->len;
+	const char *p   = nullptr;
+	const char *q   = s;
 
 	if (sz != 0) {
 		const size_t k = (pos < sz) ? pos + 1 : sz;
@@ -467,7 +467,7 @@ size_t silofs_strview_find_last_not(const struct silofs_strview *sv,
 {
 	const size_t sz = sv->len;
 	const size_t k  = (pos < sz) ? pos + 1 : sz;
-	const char  *p  = nullptr;
+	const char *p   = nullptr;
 
 	p = silofs_str_find_last_not_eq(sv->str, k, c);
 	return silofs_strview_offset(sv, p);
@@ -497,14 +497,14 @@ void silofs_strview_rsub(const struct silofs_strview *sv, size_t n,
 
 void silofs_strview_intersection(const struct silofs_strview *sv1,
                                  const struct silofs_strview *sv2,
-                                 struct silofs_strview       *out_sv)
+                                 struct silofs_strview *out_sv)
 {
 	const char *sv1_beg = silofs_strview_begin(sv1);
 	const char *sv1_end = silofs_strview_end(sv1);
 	const char *sv2_beg = silofs_strview_begin(sv2);
 	const char *sv2_end = silofs_strview_end(sv2);
-	size_t      i       = 0;
-	size_t      n       = 0;
+	size_t i            = 0;
+	size_t n            = 0;
 
 	if (sv1_beg <= sv2_beg) {
 		/* Case 1:  [.s1...)  [..s2.....) -- Return empty strviewing */
@@ -550,7 +550,7 @@ void silofs_strview_nsplit(const struct silofs_strview *sv, const char *seps,
                            size_t n, struct silofs_strview_pair *out_sv_pair)
 {
 	const size_t sz = sv->len;
-	size_t       i, j, k;
+	size_t i, j, k;
 
 	i = silofs_strview_nfind_first_of(sv, 0UL, seps, n);
 	if (!strview_has_pos(sv, i)) {
@@ -595,7 +595,7 @@ void silofs_strview_nrsplit(const struct silofs_strview *sv, const char *seps,
                             size_t n, struct silofs_strview_pair *out_ss_pair)
 {
 	const size_t sz = sv->len;
-	size_t       i, j;
+	size_t i, j;
 
 	i = silofs_strview_nfind_last_of(sv, sz, seps, n);
 	if (!strview_has_pos(sv, i)) {
@@ -662,9 +662,9 @@ void silofs_strview_trim_chr(const struct silofs_strview *sv, char c,
 void silofs_strview_chop(const struct silofs_strview *sv, size_t n,
                          struct silofs_strview *out_sv)
 {
-	const char  *dat = sv->str;
-	const size_t sz  = sv->len;
-	const size_t k   = min(sz, n);
+	const char *dat = sv->str;
+	const size_t sz = sv->len;
+	const size_t k  = min(sz, n);
 
 	silofs_strview_initn(out_sv, dat, sz - k);
 }
@@ -699,8 +699,8 @@ void silofs_strview_chop_chr(const struct silofs_strview *sv, char c,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_strview_strip_any_of(const struct silofs_strview *sv,
-                                 const char                  *set,
-                                 struct silofs_strview       *out_sv)
+                                 const char *set,
+                                 struct silofs_strview *out_sv)
 {
 	silofs_strview_nstrip_any_of(sv, set, silofs_str_length(set), out_sv);
 }
@@ -725,7 +725,7 @@ void silofs_strview_strip_chr(const struct silofs_strview *sv, char c,
 }
 
 void silofs_strview_strip_ws(const struct silofs_strview *sv,
-                             struct silofs_strview       *out_sv)
+                             struct silofs_strview *out_sv)
 {
 	const char *spaces = " \n\t\r\v\f";
 
@@ -769,8 +769,8 @@ void silofs_strview_find_token_chr(const struct silofs_strview *sv, char sep,
 
 void silofs_strview_find_next_token(const struct silofs_strview *sv,
                                     const struct silofs_strview *tok,
-                                    const char                  *seps,
-                                    struct silofs_strview       *out_sv)
+                                    const char *seps,
+                                    struct silofs_strview *out_sv)
 {
 	const size_t len = silofs_str_length(seps);
 
@@ -783,8 +783,8 @@ void silofs_strview_nfind_next_token(const struct silofs_strview *sv,
                                      struct silofs_strview *out_sv)
 {
 	struct silofs_strview sub = { .str = nullptr };
-	const size_t          sz  = sv->len;
-	size_t                i;
+	const size_t sz           = sv->len;
+	size_t i;
 
 	i = strview_xoffset(sv, silofs_strview_end(tok));
 	silofs_strview_sub(sv, i, sz, &sub);
@@ -796,8 +796,8 @@ void silofs_strview_find_next_token_chr(const struct silofs_strview *sv,
                                         char sep, struct silofs_strview *out)
 {
 	struct silofs_strview sub = { .str = nullptr };
-	const size_t          sz  = sv->len;
-	size_t                i;
+	const size_t sz           = sv->len;
+	size_t i;
 
 	i = strview_xoffset(sv, silofs_strview_end(tok));
 	silofs_strview_sub(sv, i, sz, &sub);
@@ -818,8 +818,8 @@ int silofs_strview_ntokenize(const struct silofs_strview *ss, const char *seps,
                              size_t n, struct silofs_strview tok_list[],
                              size_t list_size, size_t *out_ntok)
 {
-	size_t                 ntok = 0;
-	struct silofs_strview  tok;
+	size_t ntok = 0;
+	struct silofs_strview tok;
 	struct silofs_strview *tgt = nullptr;
 
 	silofs_strview_nfind_token(ss, seps, n, &tok);
@@ -840,8 +840,8 @@ int silofs_strview_tokenize_chr(const struct silofs_strview *ss, char sep,
                                 struct silofs_strview tok_list[],
                                 size_t list_size, size_t *out_ntok)
 {
-	size_t                 ntok = 0;
-	struct silofs_strview  tok;
+	size_t ntok = 0;
+	struct silofs_strview tok;
 	struct silofs_strview *tgt = nullptr;
 
 	silofs_strview_find_token_chr(ss, sep, &tok);
@@ -877,8 +877,8 @@ size_t silofs_strview_ncommon_prefix(const struct silofs_strview *sv,
 
 bool silofs_strview_starts_with(const struct silofs_strview *sv, char c)
 {
-	const char  *dat = sv->str;
-	const size_t sz  = sv->len;
+	const char *dat = sv->str;
+	const size_t sz = sv->len;
 
 	return (sz > 0) && chr_eq(c, *dat);
 }
@@ -894,9 +894,9 @@ silofs_strview_common_suffix(const struct silofs_strview *sv, const char *s)
 size_t silofs_strview_ncommon_suffix(const struct silofs_strview *sv,
                                      const char *s, size_t n)
 {
-	const char  *dat = sv->str;
-	const size_t sz  = sv->len;
-	size_t       k   = 0;
+	const char *dat = sv->str;
+	const size_t sz = sv->len;
+	size_t k        = 0;
 
 	if (n > sz) {
 		k = silofs_str_common_suffix(dat, s + (n - sz), sz);
@@ -908,8 +908,8 @@ size_t silofs_strview_ncommon_suffix(const struct silofs_strview *sv,
 
 int silofs_strview_ends_with(const struct silofs_strview *sv, char c)
 {
-	const char  *dat = sv->str;
-	const size_t sz  = sv->len;
+	const char *dat = sv->str;
+	const size_t sz = sv->len;
 
 	return (sz > 0) && chr_eq(c, dat[sz - 1]);
 }
@@ -934,13 +934,13 @@ static size_t strview_find_if(const struct silofs_strview *sv,
 }
 
 size_t silofs_strview_find_if(const struct silofs_strview *sv,
-                              silofs_chr_testif_fn         fn)
+                              silofs_chr_testif_fn fn)
 {
 	return strview_find_if(sv, fn, true);
 }
 
 size_t silofs_strview_find_if_not(const struct silofs_strview *sv,
-                                  silofs_chr_testif_fn         fn)
+                                  silofs_chr_testif_fn fn)
 {
 	return strview_find_if(sv, fn, false);
 }
@@ -962,13 +962,13 @@ static size_t strview_rfind_if(const struct silofs_strview *sv,
 }
 
 size_t silofs_strview_rfind_if(const struct silofs_strview *sv,
-                               silofs_chr_testif_fn         fn)
+                               silofs_chr_testif_fn fn)
 {
 	return strview_rfind_if(sv, fn, true);
 }
 
 size_t silofs_strview_rfind_if_not(const struct silofs_strview *sv,
-                                   silofs_chr_testif_fn         fn)
+                                   silofs_chr_testif_fn fn)
 {
 	return strview_rfind_if(sv, fn, false);
 }
@@ -976,11 +976,11 @@ size_t silofs_strview_rfind_if_not(const struct silofs_strview *sv,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 size_t silofs_strview_count_if(const struct silofs_strview *sv,
-                               silofs_chr_testif_fn         fn)
+                               silofs_chr_testif_fn fn)
 {
-	const char *p   = silofs_strview_begin(sv);
-	const char *q   = silofs_strview_end(sv);
-	size_t      cnt = 0;
+	const char *p = silofs_strview_begin(sv);
+	const char *q = silofs_strview_end(sv);
+	size_t cnt    = 0;
 
 	while (p < q) {
 		if (fn(*p++)) {
@@ -991,7 +991,7 @@ size_t silofs_strview_count_if(const struct silofs_strview *sv,
 }
 
 bool silofs_strview_test_if(const struct silofs_strview *sv,
-                            silofs_chr_testif_fn         fn)
+                            silofs_chr_testif_fn fn)
 {
 	const char *p = silofs_strview_begin(sv);
 	const char *q = silofs_strview_end(sv);
@@ -1005,30 +1005,30 @@ bool silofs_strview_test_if(const struct silofs_strview *sv,
 }
 
 void silofs_strview_trim_if(const struct silofs_strview *sv,
-                            silofs_chr_testif_fn         fn,
-                            struct silofs_strview       *out_sv)
+                            silofs_chr_testif_fn fn,
+                            struct silofs_strview *out_sv)
 {
 	const size_t sz = sv->len;
-	size_t       pos;
+	size_t pos;
 
 	pos = silofs_strview_find_if_not(sv, fn);
 	silofs_strview_sub(sv, pos, sz, out_sv);
 }
 
 void silofs_strview_chop_if(const struct silofs_strview *sv,
-                            silofs_chr_testif_fn         fn,
-                            struct silofs_strview       *out_sv)
+                            silofs_chr_testif_fn fn,
+                            struct silofs_strview *out_sv)
 {
 	const size_t sz = sv->len;
-	size_t       pos;
+	size_t pos;
 
 	pos = silofs_strview_rfind_if_not(sv, fn);
 	silofs_strview_sub(sv, 0UL, ((pos < sz) ? pos + 1 : 0), out_sv);
 }
 
 void silofs_strview_strip_if(const struct silofs_strview *sv,
-                             silofs_chr_testif_fn         fn,
-                             struct silofs_strview       *out_sv)
+                             silofs_chr_testif_fn fn,
+                             struct silofs_strview *out_sv)
 {
 	struct silofs_strview sub = { .str = nullptr };
 

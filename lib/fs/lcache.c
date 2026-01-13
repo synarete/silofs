@@ -112,8 +112,8 @@ lcache_dirtyq_by(struct silofs_lcache *lcache, enum silofs_mtype mtype)
 
 static int lcache_init_uni_hmapq(struct silofs_lcache *lcache)
 {
-	struct silofs_alloc *alloc  = lcache->lc_alloc;
-	const size_t         nslots = silofs_hmapq_nslots_by(alloc, 1);
+	struct silofs_alloc *alloc = lcache->lc_alloc;
+	const size_t nslots        = silofs_hmapq_nslots_by(alloc, 1);
 
 	return silofs_hmapq_init(&lcache->lc_uni_hmapq, alloc, nslots);
 }
@@ -137,9 +137,9 @@ static int visit_evictable_uni(struct silofs_hmapq_elem *hmqe, void *arg)
 static struct silofs_unode_info *
 lcache_find_evictable_uni(struct silofs_lcache *lcache)
 {
-	struct silofs_hmapq       *hmapq = &lcache->lc_uni_hmapq;
-	struct silofs_unode_info  *uni   = nullptr;
-	struct silofs_unode_info **puni  = &uni;
+	struct silofs_hmapq *hmapq      = &lcache->lc_uni_hmapq;
+	struct silofs_unode_info *uni   = nullptr;
+	struct silofs_unode_info **puni = &uni;
 
 	silofs_hmapq_riterate(hmapq, 10, visit_evictable_uni, (void *)puni);
 	return uni;
@@ -147,9 +147,9 @@ lcache_find_evictable_uni(struct silofs_lcache *lcache)
 
 static struct silofs_unode_info *
 lcache_find_uni(const struct silofs_lcache *lcache,
-                const struct silofs_uaddr  *uaddr)
+                const struct silofs_uaddr *uaddr)
 {
-	struct silofs_hkey        hkey;
+	struct silofs_hkey hkey;
 	struct silofs_hmapq_elem *hmqe;
 
 	silofs_hkey_by_uaddr(&hkey, uaddr);
@@ -157,14 +157,14 @@ lcache_find_uni(const struct silofs_lcache *lcache,
 	return uni_from_hmqe(hmqe);
 }
 
-static void lcache_promote_uni(struct silofs_lcache     *lcache,
+static void lcache_promote_uni(struct silofs_lcache *lcache,
                                struct silofs_unode_info *uni, bool now)
 {
 	silofs_hmapq_promote(&lcache->lc_uni_hmapq, uni_to_hmqe(uni), now);
 }
 
 static struct silofs_unode_info *
-lcache_find_relru_uni(struct silofs_lcache      *lcache,
+lcache_find_relru_uni(struct silofs_lcache *lcache,
                       const struct silofs_uaddr *uaddr)
 {
 	struct silofs_unode_info *uni;
@@ -191,7 +191,7 @@ lcache_evict_uni(struct silofs_lcache *lcache, struct silofs_unode_info *uni,
 	silofs_del_unode(uni, lcache->lc_alloc, (int)flags);
 }
 
-static void lcache_store_uni_hmapq(struct silofs_lcache     *lcache,
+static void lcache_store_uni_hmapq(struct silofs_lcache *lcache,
                                    struct silofs_unode_info *uni)
 {
 	silofs_hmapq_store(&lcache->lc_uni_hmapq, uni_to_hmqe(uni));
@@ -212,7 +212,7 @@ static enum silofs_allocf flags_to_allocf(int flags)
 	                                    SILOFS_ALLOCF_NONE;
 }
 
-static bool lcache_evict_or_relru_uni(struct silofs_lcache     *lcache,
+static bool lcache_evict_or_relru_uni(struct silofs_lcache *lcache,
                                       struct silofs_unode_info *uni, int flags)
 {
 	bool evicted;
@@ -232,9 +232,9 @@ static size_t lcache_shrink_or_relru_unis(struct silofs_lcache *lcache,
 {
 	struct silofs_unode_info *uni;
 	const size_t n = silofs_min(cnt, lcache->lc_uni_hmapq.hmq_lru.sz);
-	size_t       evicted = 0;
-	bool         now;
-	bool         ok;
+	size_t evicted = 0;
+	bool now;
+	bool ok;
 
 	now = (flags & SILOFS_CTLF_NOW) > 0;
 	for (size_t i = 0; i < n; ++i) {
@@ -268,18 +268,18 @@ static void lcache_drop_evictable_unis(struct silofs_lcache *lcache)
 
 static struct silofs_unode_info *
 lcache_new_uni(const struct silofs_lcache *lcache,
-               const struct silofs_uaddr  *uaddr)
+               const struct silofs_uaddr *uaddr)
 {
 	return silofs_new_unode(lcache->lc_alloc, uaddr);
 }
 
-static void lcache_track_uaddr(struct silofs_lcache      *lcache,
+static void lcache_track_uaddr(struct silofs_lcache *lcache,
                                const struct silofs_uaddr *uaddr)
 {
 	silofs_uamap_insert(&lcache->lc_uamap, uaddr);
 }
 
-static void lcache_forget_uaddr(struct silofs_lcache      *lcache,
+static void lcache_forget_uaddr(struct silofs_lcache *lcache,
                                 const struct silofs_uaddr *uaddr)
 {
 	struct silofs_uakey uakey;
@@ -289,16 +289,16 @@ static void lcache_forget_uaddr(struct silofs_lcache      *lcache,
 }
 
 static const struct silofs_uaddr *
-lcache_lookup_uaddr_by(struct silofs_lcache      *lcache,
+lcache_lookup_uaddr_by(struct silofs_lcache *lcache,
                        const struct silofs_uakey *uakey)
 {
 	return silofs_uamap_lookup(&lcache->lc_uamap, uakey);
 }
 
-static void lcache_track_uaddr_of(struct silofs_lcache           *lcache,
+static void lcache_track_uaddr_of(struct silofs_lcache *lcache,
                                   const struct silofs_unode_info *uni)
 {
-	struct silofs_uakey        uakey;
+	struct silofs_uakey uakey;
 	const struct silofs_uaddr *uaddr = uni_uaddr(uni);
 
 	silofs_uakey_setup_by(&uakey, uaddr);
@@ -308,7 +308,7 @@ static void lcache_track_uaddr_of(struct silofs_lcache           *lcache,
 }
 
 static struct silofs_unode_info *
-lcache_lookup_uni(struct silofs_lcache      *lcache,
+lcache_lookup_uni(struct silofs_lcache *lcache,
                   const struct silofs_uaddr *uaddr)
 {
 	struct silofs_unode_info *uni;
@@ -321,7 +321,7 @@ lcache_lookup_uni(struct silofs_lcache      *lcache,
 }
 
 struct silofs_unode_info *
-silofs_lcache_lookup_uni(struct silofs_lcache      *lcache,
+silofs_lcache_lookup_uni(struct silofs_lcache *lcache,
                          const struct silofs_uaddr *uaddr)
 {
 	struct silofs_unode_info *uni;
@@ -331,11 +331,11 @@ silofs_lcache_lookup_uni(struct silofs_lcache      *lcache,
 }
 
 static struct silofs_unode_info *
-lcache_require_uni(struct silofs_lcache      *lcache,
+lcache_require_uni(struct silofs_lcache *lcache,
                    const struct silofs_uaddr *uaddr)
 {
-	struct silofs_unode_info *uni   = nullptr;
-	int                       retry = 4;
+	struct silofs_unode_info *uni = nullptr;
+	int retry                     = 4;
 
 	while (retry-- > 0) {
 		uni = lcache_new_uni(lcache, uaddr);
@@ -354,7 +354,7 @@ lcache_store_uni(struct silofs_lcache *lcache, struct silofs_unode_info *uni)
 	lcache_store_uni_hmapq(lcache, uni);
 }
 
-static void lcache_set_dq_of_uni(struct silofs_lcache     *lcache,
+static void lcache_set_dq_of_uni(struct silofs_lcache *lcache,
                                  struct silofs_unode_info *uni)
 {
 	struct silofs_dirtyq *dq = lcache_dirtyq_by(lcache, uni_mtype(uni));
@@ -363,7 +363,7 @@ static void lcache_set_dq_of_uni(struct silofs_lcache     *lcache,
 }
 
 static struct silofs_unode_info *
-lcache_create_uni(struct silofs_lcache      *lcache,
+lcache_create_uni(struct silofs_lcache *lcache,
                   const struct silofs_uaddr *uaddr)
 {
 	struct silofs_unode_info *uni;
@@ -378,7 +378,7 @@ lcache_create_uni(struct silofs_lcache      *lcache,
 }
 
 struct silofs_unode_info *
-silofs_lcache_create_uni(struct silofs_lcache      *lcache,
+silofs_lcache_create_uni(struct silofs_lcache *lcache,
                          const struct silofs_uaddr *uaddr)
 {
 	struct silofs_unode_info *uni;
@@ -394,18 +394,18 @@ lcache_forget_uni(struct silofs_lcache *lcache, struct silofs_unode_info *uni)
 	lcache_evict_uni(lcache, uni, SILOFS_ALLOCF_NONE);
 }
 
-void silofs_lcache_forget_uni(struct silofs_lcache     *lcache,
+void silofs_lcache_forget_uni(struct silofs_lcache *lcache,
                               struct silofs_unode_info *uni)
 {
 	lcache_forget_uni(lcache, uni);
 }
 
 static struct silofs_unode_info *
-lcache_find_uni_by(struct silofs_lcache      *lcache,
+lcache_find_uni_by(struct silofs_lcache *lcache,
                    const struct silofs_uakey *uakey)
 {
 	const struct silofs_uaddr *uaddr;
-	struct silofs_unode_info  *uni = nullptr;
+	struct silofs_unode_info *uni = nullptr;
 
 	uaddr = lcache_lookup_uaddr_by(lcache, uakey);
 	if (uaddr != nullptr) {
@@ -415,7 +415,7 @@ lcache_find_uni_by(struct silofs_lcache      *lcache,
 }
 
 struct silofs_unode_info *
-silofs_lcache_find_uni_by(struct silofs_lcache      *lcache,
+silofs_lcache_find_uni_by(struct silofs_lcache *lcache,
                           const struct silofs_uakey *uakey)
 {
 	struct silofs_unode_info *uni;
@@ -433,8 +433,8 @@ void silofs_lcache_drop_uamap(struct silofs_lcache *lcache)
 
 static int lcache_init_vni_hmapq(struct silofs_lcache *lcache)
 {
-	struct silofs_alloc *alloc  = lcache->lc_alloc;
-	const size_t         nslots = silofs_hmapq_nslots_by(alloc, 3);
+	struct silofs_alloc *alloc = lcache->lc_alloc;
+	const size_t nslots        = silofs_hmapq_nslots_by(alloc, 3);
 
 	return silofs_hmapq_init(&lcache->lc_vni_hmapq, alloc, nslots);
 }
@@ -446,8 +446,8 @@ static void lcache_fini_vni_hmapq(struct silofs_lcache *lcache)
 
 static bool test_evictable_vni(const struct silofs_vnode_info *vni)
 {
-	const struct silofs_inode_info *ii  = nullptr;
-	bool                            ret = false;
+	const struct silofs_inode_info *ii = nullptr;
+	bool ret                           = false;
 
 	if (vni_isinode(vni)) {
 		ii  = silofs_ii_from_vni(vni);
@@ -472,9 +472,9 @@ static int visit_evictable_vni(struct silofs_hmapq_elem *hmqe, void *arg)
 static struct silofs_vnode_info *
 lcache_find_evictable_vni(struct silofs_lcache *lcache)
 {
-	struct silofs_hmapq       *hmapq = &lcache->lc_vni_hmapq;
-	struct silofs_vnode_info  *vni   = nullptr;
-	struct silofs_vnode_info **pvni  = &vni;
+	struct silofs_hmapq *hmapq      = &lcache->lc_vni_hmapq;
+	struct silofs_vnode_info *vni   = nullptr;
+	struct silofs_vnode_info **pvni = &vni;
 
 	silofs_hmapq_riterate(hmapq, 10, visit_evictable_vni, (void *)pvni);
 	return vni;
@@ -483,7 +483,7 @@ lcache_find_evictable_vni(struct silofs_lcache *lcache)
 static struct silofs_vnode_info *
 lcache_find_vni(struct silofs_lcache *lcache, const struct silofs_vaddr *vaddr)
 {
-	struct silofs_hkey        hkey;
+	struct silofs_hkey hkey;
 	struct silofs_hmapq_elem *hmqe;
 
 	silofs_hkey_by_vaddr(&hkey, vaddr);
@@ -491,14 +491,14 @@ lcache_find_vni(struct silofs_lcache *lcache, const struct silofs_vaddr *vaddr)
 	return (hmqe != nullptr) ? vni_from_hmqe(hmqe) : nullptr;
 }
 
-static void lcache_promote_vni(struct silofs_lcache     *lcache,
+static void lcache_promote_vni(struct silofs_lcache *lcache,
                                struct silofs_vnode_info *vni, bool now)
 {
 	silofs_hmapq_promote(&lcache->lc_vni_hmapq, vni_to_hmqe(vni), now);
 }
 
 static struct silofs_vnode_info *
-lcache_find_relru_vni(struct silofs_lcache      *lcache,
+lcache_find_relru_vni(struct silofs_lcache *lcache,
                       const struct silofs_vaddr *vaddr)
 {
 	struct silofs_vnode_info *vni;
@@ -525,7 +525,7 @@ lcache_evict_vni(struct silofs_lcache *lcache, struct silofs_vnode_info *vni,
 	silofs_del_vnode(vni, lcache->lc_alloc, (int)flags);
 }
 
-static void lcache_store_vni_hmapq(struct silofs_lcache     *lcache,
+static void lcache_store_vni_hmapq(struct silofs_lcache *lcache,
                                    struct silofs_vnode_info *vni)
 {
 	silofs_hmapq_store(&lcache->lc_vni_hmapq, vni_to_hmqe(vni));
@@ -547,7 +547,7 @@ lcache_get_lru_vni(struct silofs_lcache *lcache)
 	return (hmqe != nullptr) ? vni_from_hmqe(hmqe) : nullptr;
 }
 
-static bool lcache_evict_or_relru_vni(struct silofs_lcache     *lcache,
+static bool lcache_evict_or_relru_vni(struct silofs_lcache *lcache,
                                       struct silofs_vnode_info *vni, int flags)
 {
 	bool evicted;
@@ -567,9 +567,9 @@ static size_t lcache_shrink_or_relru_vnis(struct silofs_lcache *lcache,
 {
 	struct silofs_vnode_info *vni = nullptr;
 	const size_t n = silofs_min(cnt, lcache->lc_vni_hmapq.hmq_lru.sz);
-	size_t       evicted = 0;
-	bool         now;
-	bool         ok;
+	size_t evicted = 0;
+	bool now;
+	bool ok;
 
 	now = (flags & SILOFS_CTLF_NOW) > 0;
 	for (size_t i = 0; i < n; ++i) {
@@ -589,8 +589,8 @@ static size_t lcache_shrink_or_relru_vnis(struct silofs_lcache *lcache,
 
 static int try_evict_vni(struct silofs_hmapq_elem *hmqe, void *arg)
 {
-	struct silofs_lcache     *lcache = arg;
-	struct silofs_vnode_info *vni    = vni_from_hmqe(hmqe);
+	struct silofs_lcache *lcache  = arg;
+	struct silofs_vnode_info *vni = vni_from_hmqe(hmqe);
 
 	lcache_evict_or_relru_vni(lcache, vni, 0);
 	return 0;
@@ -606,13 +606,13 @@ static void lcache_drop_evictable_vnis(struct silofs_lcache *lcache)
 
 static struct silofs_vnode_info *
 lcache_new_vni(const struct silofs_lcache *lcache,
-               const struct silofs_vaddr  *vaddr)
+               const struct silofs_vaddr *vaddr)
 {
 	return silofs_new_vnode(lcache->lc_alloc, vaddr);
 }
 
 struct silofs_vnode_info *
-silofs_lcache_lookup_vni(struct silofs_lcache      *lcache,
+silofs_lcache_lookup_vni(struct silofs_lcache *lcache,
                          const struct silofs_vaddr *vaddr)
 {
 	struct silofs_vnode_info *vni;
@@ -622,11 +622,11 @@ silofs_lcache_lookup_vni(struct silofs_lcache      *lcache,
 }
 
 static struct silofs_vnode_info *
-lcache_require_vni(struct silofs_lcache      *lcache,
+lcache_require_vni(struct silofs_lcache *lcache,
                    const struct silofs_vaddr *vaddr)
 {
-	struct silofs_vnode_info *vni   = nullptr;
-	int                       retry = 4;
+	struct silofs_vnode_info *vni = nullptr;
+	int retry                     = 4;
 
 	while (retry-- > 0) {
 		vni = lcache_new_vni(lcache, vaddr);
@@ -656,13 +656,13 @@ lcache_forget_vni(struct silofs_lcache *lcache, struct silofs_vnode_info *vni)
 	}
 }
 
-void silofs_lcache_forget_vni(struct silofs_lcache     *lcache,
+void silofs_lcache_forget_vni(struct silofs_lcache *lcache,
                               struct silofs_vnode_info *vni)
 {
 	lcache_forget_vni(lcache, vni);
 }
 
-static void lcache_set_dq_of_vni(struct silofs_lcache     *lcache,
+static void lcache_set_dq_of_vni(struct silofs_lcache *lcache,
                                  struct silofs_vnode_info *vni)
 {
 	struct silofs_dirtyq *dq = lcache_dirtyq_by(lcache, vni_mtype(vni));
@@ -671,7 +671,7 @@ static void lcache_set_dq_of_vni(struct silofs_lcache     *lcache,
 }
 
 static struct silofs_vnode_info *
-lcache_create_vni(struct silofs_lcache      *lcache,
+lcache_create_vni(struct silofs_lcache *lcache,
                   const struct silofs_vaddr *vaddr)
 {
 	struct silofs_vnode_info *vni;
@@ -685,7 +685,7 @@ lcache_create_vni(struct silofs_lcache      *lcache,
 }
 
 struct silofs_vnode_info *
-silofs_lcache_create_vni(struct silofs_lcache      *lcache,
+silofs_lcache_create_vni(struct silofs_lcache *lcache,
                          const struct silofs_vaddr *vaddr)
 {
 	struct silofs_vnode_info *vni;
@@ -694,7 +694,7 @@ silofs_lcache_create_vni(struct silofs_lcache      *lcache,
 	return vni;
 }
 
-void silofs_lcache_reditify_vni(struct silofs_lcache     *lcache,
+void silofs_lcache_reditify_vni(struct silofs_lcache *lcache,
                                 struct silofs_vnode_info *vni)
 {
 	silofs_vni_undirtify(vni);
@@ -725,9 +725,9 @@ lcache_shrink_some(struct silofs_lcache *lcache, size_t count, int flags)
 
 static void lcache_evict_some(struct silofs_lcache *lcache)
 {
-	struct silofs_vnode_info *vni     = nullptr;
-	struct silofs_unode_info *uni     = nullptr;
-	bool                      evicted = false;
+	struct silofs_vnode_info *vni = nullptr;
+	struct silofs_unode_info *uni = nullptr;
+	bool evicted                  = false;
 
 	vni = lcache_find_evictable_vni(lcache);
 	if ((vni != nullptr) && test_evictable_vni(vni)) {
@@ -749,7 +749,7 @@ static void lcache_evict_some(struct silofs_lcache *lcache)
 static size_t lcache_memory_pressure(const struct silofs_lcache *lcache)
 {
 	struct silofs_alloc_stat st;
-	size_t                   mem_press = 0;
+	size_t mem_press = 0;
 
 	silofs_memstat(lcache->lc_alloc, &st);
 	if (likely(st.nbytes_max > 0)) {
@@ -762,7 +762,7 @@ static size_t lcache_calc_niter(const struct silofs_lcache *lcache, int flags)
 {
 	const size_t mempress            = lcache_memory_pressure(lcache);
 	const size_t mempress_percentage = mempress / 10;
-	size_t       niter               = 0;
+	size_t niter                     = 0;
 
 	if (mempress_percentage > 60) {
 		niter += 10;
@@ -795,7 +795,7 @@ lcache_relax_by_niter(struct silofs_lcache *lcache, size_t niter, int flags)
 	size_t nvis;
 	size_t nuis;
 	size_t cnt;
-	bool   now;
+	bool now;
 
 	now = (flags & SILOFS_CTLF_NOW) > 0;
 	cnt = (now || (niter > 1)) ? 2 : 1;
@@ -940,7 +940,7 @@ static void lcache_fini_uamap(struct silofs_lcache *lcache)
 }
 
 int silofs_lcache_init(struct silofs_lcache *lcache,
-                       struct silofs_alloc  *alloc)
+                       struct silofs_alloc *alloc)
 {
 	int err;
 
@@ -984,7 +984,7 @@ static size_t lcache_sum_nodes(const struct silofs_lcache *lcache)
 }
 
 void silofs_lcache_collect_stats(const struct silofs_lcache *lcache,
-                                 struct silofs_cache_stats  *out_cstats)
+                                 struct silofs_cache_stats *out_cstats)
 {
 	out_cstats->nalloc_bytes = lcache_alloc_bytes(lcache);
 	out_cstats->ncache_nodes = lcache_sum_nodes(lcache);

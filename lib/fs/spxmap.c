@@ -21,8 +21,8 @@
 /* single entry of free space */
 struct silofs_spa_entry {
 	struct silofs_avl_node spe_an;
-	off_t                  spe_voff;
-	size_t                 spe_len;
+	off_t spe_voff;
+	size_t spe_len;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -175,7 +175,7 @@ spamap_delete_spe(struct silofs_spamap *spa, struct silofs_spa_entry *spe)
 static struct silofs_spa_entry *
 spamap_minimal_spe(const struct silofs_spamap *spa)
 {
-	struct silofs_avl_node  *an  = nullptr;
+	struct silofs_avl_node *an   = nullptr;
 	const struct silofs_avl *avl = &spa->spa_avl;
 
 	if (avl->size == 0) {
@@ -188,7 +188,7 @@ spamap_minimal_spe(const struct silofs_spamap *spa)
 static struct silofs_spa_entry *
 spamap_maximal_spe(const struct silofs_spamap *spa)
 {
-	struct silofs_avl_node  *an  = nullptr;
+	struct silofs_avl_node *an   = nullptr;
 	const struct silofs_avl *avl = &spa->spa_avl;
 
 	if (avl->size == 0) {
@@ -201,20 +201,20 @@ spamap_maximal_spe(const struct silofs_spamap *spa)
 static struct silofs_spa_entry *
 spmap_lower_bound_spe(const struct silofs_spamap *spa, off_t off)
 {
-	const struct silofs_avl_node *an  = nullptr;
-	const struct silofs_avl      *avl = &spa->spa_avl;
+	const struct silofs_avl_node *an = nullptr;
+	const struct silofs_avl *avl     = &spa->spa_avl;
 
 	an = silofs_avl_lower_bound(avl, &off);
 	return avl_node_to_spe(an);
 }
 
 static struct silofs_spa_entry *
-spmap_prev_of(const struct silofs_spamap    *spa,
+spmap_prev_of(const struct silofs_spamap *spa,
               const struct silofs_spa_entry *spe)
 {
-	struct silofs_spa_entry      *spe_prev = nullptr;
-	const struct silofs_avl_node *an_prev  = nullptr;
-	const struct silofs_avl      *avl      = &spa->spa_avl;
+	struct silofs_spa_entry *spe_prev     = nullptr;
+	const struct silofs_avl_node *an_prev = nullptr;
+	const struct silofs_avl *avl          = &spa->spa_avl;
 
 	an_prev = silofs_avl_prev(avl, &spe->spe_an);
 	if (an_prev != silofs_avl_end(avl)) {
@@ -243,8 +243,8 @@ static void spmap_find_next_prev(const struct silofs_spamap *spa, off_t off,
 static void
 spamap_insert_spe(struct silofs_spamap *spa, struct silofs_spa_entry *spe)
 {
-	struct silofs_avl_node *an  = &spe->spe_an;
-	struct silofs_avl      *avl = &spa->spa_avl;
+	struct silofs_avl_node *an = &spe->spe_an;
+	struct silofs_avl *avl     = &spa->spa_avl;
 
 	silofs_avl_insert(avl, an);
 }
@@ -252,8 +252,8 @@ spamap_insert_spe(struct silofs_spamap *spa, struct silofs_spa_entry *spe)
 static void
 spamap_remove_spe(struct silofs_spamap *spa, struct silofs_spa_entry *spe)
 {
-	struct silofs_avl_node *an  = &spe->spe_an;
-	struct silofs_avl      *avl = &spa->spa_avl;
+	struct silofs_avl_node *an = &spe->spe_an;
+	struct silofs_avl *avl     = &spa->spa_avl;
 
 	silofs_avl_remove(avl, an);
 }
@@ -278,7 +278,7 @@ static int
 spamap_pop_space(struct silofs_spamap *spa, size_t len, off_t *out_off)
 {
 	struct silofs_spa_entry *spe;
-	int                      err;
+	int err;
 
 	err = spalifo_pop_space(&spa->spa_lifo, len, out_off);
 	if (!err) {
@@ -307,8 +307,8 @@ static int spamap_merge_space(struct silofs_spamap *spa, off_t off, size_t len)
 	struct silofs_spa_entry *spe      = nullptr;
 	struct silofs_spa_entry *spe_prev = nullptr;
 	struct silofs_spa_entry *spe_next = nullptr;
-	off_t                    end;
-	int                      ret = -SILOFS_ENOENT;
+	off_t end;
+	int ret = -SILOFS_ENOENT;
 
 	end = silofs_off_end(off, len);
 	spmap_find_next_prev(spa, off, &spe_prev, &spe_next);
@@ -418,7 +418,7 @@ static int spamap_find_baseof(const struct silofs_spamap *spa, off_t off,
 
 static void spamap_avl_node_delete_cb(struct silofs_avl_node *an, void *p)
 {
-	struct silofs_spamap    *spa = p;
+	struct silofs_spamap *spa    = p;
 	struct silofs_spa_entry *spe = avl_node_to_spe(an);
 
 	spamap_delete_spe(spa, spe);
@@ -527,7 +527,7 @@ int silofs_spamaps_store(struct silofs_spamaps *spam, enum silofs_mtype mtype,
                          off_t voff, size_t len)
 {
 	struct silofs_spamap *spa;
-	int                   err = -SILOFS_EINVAL;
+	int err = -SILOFS_EINVAL;
 
 	spa = spamaps_sub_map(spam, mtype);
 	if (spa != nullptr) {
@@ -540,7 +540,7 @@ int silofs_spamaps_trypop(struct silofs_spamaps *spam, enum silofs_mtype mtype,
                           size_t len, off_t *out_voff)
 {
 	struct silofs_spamap *spa;
-	int                   err = -SILOFS_EINVAL;
+	int err = -SILOFS_EINVAL;
 
 	spa = spamaps_sub_map(spam, mtype);
 	if (spa != nullptr) {
@@ -554,7 +554,7 @@ int silofs_spamaps_baseof(const struct silofs_spamaps *spam,
                           enum silofs_mtype mtype, off_t voff, off_t *out)
 {
 	const struct silofs_spamap *spa;
-	int                         err = -SILOFS_ENOENT;
+	int err = -SILOFS_ENOENT;
 
 	spa = spamaps_sub_map2(spam, mtype);
 	if (spa != nullptr) {
@@ -564,10 +564,10 @@ int silofs_spamaps_baseof(const struct silofs_spamaps *spam,
 }
 
 off_t silofs_spamaps_get_hint(const struct silofs_spamaps *spam,
-                              enum silofs_mtype            mtype)
+                              enum silofs_mtype mtype)
 {
 	const struct silofs_spamap *spa;
-	off_t                       hint = 0;
+	off_t hint = 0;
 
 	spa = spamaps_sub_map2(spam, mtype);
 	if (spa != nullptr) {
@@ -589,8 +589,8 @@ void silofs_spamaps_set_hint(struct silofs_spamaps *spam,
 
 void silofs_spamaps_drop(struct silofs_spamaps *spam)
 {
-	struct silofs_spamap *spa   = nullptr;
-	enum silofs_mtype     mtype = SILOFS_MTYPE_NONE;
+	struct silofs_spamap *spa = nullptr;
+	enum silofs_mtype mtype   = SILOFS_MTYPE_NONE;
 
 	while (++mtype < SILOFS_MTYPE_LAST) {
 		spa = spamaps_sub_map(spam, mtype);
@@ -601,10 +601,10 @@ void silofs_spamaps_drop(struct silofs_spamaps *spam)
 }
 
 int silofs_spamaps_init(struct silofs_spamaps *spam,
-                        struct silofs_alloc   *alloc)
+                        struct silofs_alloc *alloc)
 {
-	struct silofs_spamap *spa   = nullptr;
-	enum silofs_mtype     mtype = SILOFS_MTYPE_NONE;
+	struct silofs_spamap *spa = nullptr;
+	enum silofs_mtype mtype   = SILOFS_MTYPE_NONE;
 
 	while (++mtype < SILOFS_MTYPE_LAST) {
 		spa = spamaps_sub_map(spam, mtype);
@@ -617,8 +617,8 @@ int silofs_spamaps_init(struct silofs_spamaps *spam,
 
 void silofs_spamaps_fini(struct silofs_spamaps *spam)
 {
-	struct silofs_spamap *spa   = nullptr;
-	enum silofs_mtype     mtype = SILOFS_MTYPE_NONE;
+	struct silofs_spamap *spa = nullptr;
+	enum silofs_mtype mtype   = SILOFS_MTYPE_NONE;
 
 	while (++mtype < SILOFS_MTYPE_LAST) {
 		spa = spamaps_sub_map(spam, mtype);
@@ -644,16 +644,16 @@ static void uakey_setup(struct silofs_uakey *uakey, off_t voff,
 	uakey->vspace = vspace;
 }
 
-void silofs_uakey_setup_by(struct silofs_uakey       *uakey,
+void silofs_uakey_setup_by(struct silofs_uakey *uakey,
                            const struct silofs_uaddr *uaddr)
 {
 	uakey_setup(uakey, uaddr->voff, silofs_uaddr_height(uaddr),
 	            uaddr_vspace(uaddr));
 }
 
-void silofs_uakey_setup_by2(struct silofs_uakey        *uakey,
+void silofs_uakey_setup_by2(struct silofs_uakey *uakey,
                             const struct silofs_lrange *lrange,
-                            enum silofs_mtype           vspace)
+                            enum silofs_mtype vspace)
 {
 	uakey_setup(uakey, lrange->beg, lrange->height, vspace);
 }
@@ -670,7 +670,7 @@ static uint64_t uakey_hash(const struct silofs_uakey *uakey)
 {
 	const uint64_t off = (uint64_t)(uakey->voff);
 	const uint64_t nlz = silofs_clz_u64(off);
-	uint64_t       hval;
+	uint64_t hval;
 
 	hval = off;
 	hval ^= (0x5D21C111ULL / (nlz + 1));
@@ -684,7 +684,7 @@ static uint64_t uakey_hash(const struct silofs_uakey *uakey)
 struct silofs_uaent {
 	struct silofs_list_head htb_lh;
 	struct silofs_list_head lru_lh;
-	struct silofs_uaddr     uaddr;
+	struct silofs_uaddr uaddr;
 };
 
 static void
@@ -733,7 +733,7 @@ static struct silofs_uaent *uaent_unconst(const struct silofs_uaent *uae)
 {
 	union {
 		const struct silofs_uaent *p;
-		struct silofs_uaent       *q;
+		struct silofs_uaent *q;
 	} u = { .p = uae };
 	return u.q;
 }
@@ -799,8 +799,8 @@ static size_t uamap_slot_of(const struct silofs_uamap *uamap,
 static struct silofs_list_head *uamap_list_of(const struct silofs_uamap *uamap,
                                               const struct silofs_uakey *uakey)
 {
-	const size_t                   slot = uamap_slot_of(uamap, uakey);
-	const struct silofs_list_head *lh   = &uamap->uam_htbl[slot];
+	const size_t slot                 = uamap_slot_of(uamap, uakey);
+	const struct silofs_list_head *lh = &uamap->uam_htbl[slot];
 
 	return silofs_unconst(lh);
 }
@@ -820,7 +820,7 @@ uamap_find(const struct silofs_uamap *uamap, const struct silofs_uakey *uakey)
 {
 	const struct silofs_list_head *lst;
 	const struct silofs_list_head *itr;
-	const struct silofs_uaent     *uae = nullptr;
+	const struct silofs_uaent *uae = nullptr;
 
 	lst = uamap_list_of(uamap, uakey);
 	itr = lst->next;
@@ -888,7 +888,7 @@ uamap_remove_del(struct silofs_uamap *uamap, struct silofs_uaent *uaent)
 	uaent_del(uaent, uamap->uam_alloc);
 }
 
-void silofs_uamap_remove(struct silofs_uamap       *uamap,
+void silofs_uamap_remove(struct silofs_uamap *uamap,
                          const struct silofs_uakey *uakey)
 {
 	struct silofs_uaent *uaent;
@@ -902,7 +902,7 @@ void silofs_uamap_remove(struct silofs_uamap       *uamap,
 
 static struct silofs_uaent *uamap_get_lru(struct silofs_uamap *uamap)
 {
-	struct silofs_uaent     *uae = nullptr;
+	struct silofs_uaent *uae = nullptr;
 	struct silofs_list_head *lh;
 
 	lh = listq_back(&uamap->uam_lru);
@@ -938,7 +938,7 @@ static void uamap_refresh(struct silofs_uamap *uamap)
 	}
 }
 
-int silofs_uamap_insert(struct silofs_uamap       *uamap,
+int silofs_uamap_insert(struct silofs_uamap *uamap,
                         const struct silofs_uaddr *uaddr)
 {
 	struct silofs_uaent *uaent;

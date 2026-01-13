@@ -25,7 +25,7 @@ static void test_open_atime(struct ft_env *fte)
 	struct stat st[2];
 	const char *path0 = ft_new_path_unique(fte);
 	const char *path1 = ft_new_path_under(fte, path0);
-	int         fd    = -1;
+	int fd            = -1;
 
 	ft_mkdir(path0, 0755);
 	ft_stat(path0, &st[0]);
@@ -48,8 +48,8 @@ static void test_open_mctime(struct ft_env *fte)
 	struct stat st[4];
 	const char *path0 = ft_new_path_unique(fte);
 	const char *path1 = ft_new_path_under(fte, path0);
-	int         fd2   = -1;
-	int         fd1   = -1;
+	int fd2           = -1;
+	int fd1           = -1;
 
 	ft_mkdir(path0, 0755);
 	ft_stat(path0, &st[0]);
@@ -111,7 +111,7 @@ static void test_open_loop(struct ft_env *fte)
 static void test_open_isdir(struct ft_env *fte)
 {
 	const char *path = ft_new_path_unique(fte);
-	int         fd   = -1;
+	int fd           = -1;
 
 	ft_mkdir(path, 0755);
 	ft_open(path, O_RDONLY, 0, &fd);
@@ -131,10 +131,10 @@ static void test_open_isdir(struct ft_env *fte)
 static void test_open_trunc_(struct ft_env *fte, off_t off, size_t len)
 {
 	struct stat st   = { .st_size = -1 };
-	void       *buf  = ft_new_buf_zeros(fte, len);
+	void *buf        = ft_new_buf_zeros(fte, len);
 	const char *path = ft_new_path_unique(fte);
-	int         fd1  = -1;
-	int         fd2  = -1;
+	int fd1          = -1;
+	int fd2          = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd1);
 	ft_pwriten(fd1, buf, len, off);
@@ -180,10 +180,10 @@ static void test_open_trunc(struct ft_env *fte)
 static void test_open_append_(struct ft_env *fte, off_t off, size_t len)
 {
 	struct stat st   = { .st_size = -1 };
-	void       *buf  = ft_new_buf_zeros(fte, len);
+	void *buf        = ft_new_buf_zeros(fte, len);
 	const char *path = ft_new_path_unique(fte);
-	ssize_t     sz   = -1;
-	int         fd   = -1;
+	ssize_t sz       = -1;
+	int fd           = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_ftruncate(fd, off);

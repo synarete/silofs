@@ -26,13 +26,13 @@ static const char *const cmd_lsmnt_help_desc =
 struct cmd_lsmnt_in_args {
 	char *mntpoint;
 	char *mntpoint_real;
-	bool  long_listing;
+	bool long_listing;
 };
 
 struct cmd_lsmnt_ctx {
 	struct cmd_lsmnt_in_args in_args;
-	struct silofs_ioc_query  ioc_qry;
-	FILE                    *out_fp;
+	struct silofs_ioc_query ioc_qry;
+	FILE *out_fp;
 };
 
 static struct cmd_lsmnt_ctx *cmd_lsmnt_ctx_p;
@@ -47,7 +47,7 @@ static void cmd_lsmnt_parse_optargs(struct cmd_lsmnt_ctx *ctx)
 		{ nullptr, 0, 0 },
 	};
 	struct cmd_optargs opa;
-	int                opt_chr = 1;
+	int opt_chr = 1;
 
 	cmd_optargs_init(&opa, ods);
 	while (!opa.opa_done && (opt_chr > 0)) {
@@ -96,7 +96,7 @@ static void cmd_lsmnt_prepare(struct cmd_lsmnt_ctx *ctx)
 	memset(&ctx->ioc_qry, 0, sizeof(ctx->ioc_qry));
 }
 
-static void cmd_lsmnt_short(const struct cmd_lsmnt_ctx  *ctx,
+static void cmd_lsmnt_short(const struct cmd_lsmnt_ctx *ctx,
                             const struct silofs_mntinfo *mi)
 {
 	fprintf(ctx->out_fp, "%s\n", mi->mntdir);
@@ -105,13 +105,13 @@ static void cmd_lsmnt_short(const struct cmd_lsmnt_ctx  *ctx,
 static void
 cmd_lsmnt_long(struct cmd_lsmnt_ctx *ctx, const struct silofs_mntinfo *mi)
 {
-	struct silofs_ioc_query *qry       = &ctx->ioc_qry;
-	char                    *mntd_path = nullptr;
-	char                    *repo_path = nullptr;
-	char                    *boot_name = nullptr;
+	struct silofs_ioc_query *qry = &ctx->ioc_qry;
+	char *mntd_path              = nullptr;
+	char *repo_path              = nullptr;
+	char *boot_name              = nullptr;
 	const int o_flags = O_RDONLY | O_NONBLOCK | O_CLOEXEC | O_DIRECTORY;
-	int       dfd     = -1;
-	int       err     = 0;
+	int dfd           = -1;
+	int err           = 0;
 
 	mntd_path = cmd_strdup(mi->mntdir);
 	err       = silofs_sys_openat(AT_FDCWD, mntd_path, o_flags, 0, &dfd);

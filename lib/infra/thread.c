@@ -81,7 +81,7 @@ silofs_attr_noreturn static void silofs_thread_exit(struct silofs_thread *th)
 static void *silofs_thread_start(void *arg)
 {
 	struct silofs_thread *th = (struct silofs_thread *)arg;
-	int                   err;
+	int err;
 
 	silofs_thread_prepare(th);
 	err = th->exec(th);
@@ -94,8 +94,8 @@ int silofs_thread_create(struct silofs_thread *th, silofs_threadexec_fn exec,
                          void *arg, const char *name)
 {
 	pthread_attr_t attr;
-	size_t         nlen = 0;
-	int            err;
+	size_t nlen = 0;
+	int err;
 
 	if (exec == nullptr) {
 		return -EINVAL;
@@ -144,7 +144,7 @@ static int silofs_pthread_err(int err, const char *func)
 int silofs_mutex_init(struct silofs_mutex *mutex)
 {
 	pthread_mutexattr_t attr;
-	int                 err;
+	int err;
 
 	err = pthread_mutexattr_init(&attr);
 	if (err) {
@@ -190,7 +190,7 @@ void silofs_mutex_lock(struct silofs_mutex *mutex)
 
 bool silofs_mutex_trylock(struct silofs_mutex *mutex)
 {
-	int  err;
+	int err;
 	bool status = false;
 
 	err = pthread_mutex_trylock(&mutex->mutex);
@@ -204,10 +204,10 @@ bool silofs_mutex_trylock(struct silofs_mutex *mutex)
 	return status;
 }
 
-bool silofs_mutex_timedlock(struct silofs_mutex   *mutex,
+bool silofs_mutex_timedlock(struct silofs_mutex *mutex,
                             const struct timespec *abstime)
 {
-	int  err;
+	int err;
 	bool status = false;
 
 	err = pthread_mutex_timedlock(&mutex->mutex, abstime);
@@ -236,7 +236,7 @@ void silofs_mutex_unlock(struct silofs_mutex *mutex)
 int silofs_cond_init(struct silofs_cond *cond)
 {
 	pthread_condattr_t attr;
-	int                err;
+	int err;
 
 	err = pthread_condattr_init(&attr);
 	if (err) {
@@ -292,7 +292,7 @@ int silofs_cond_timedwait(struct silofs_cond *cond, struct silofs_mutex *mutex,
 	return -err;
 }
 
-int silofs_cond_ntimedwait(struct silofs_cond  *cond,
+int silofs_cond_ntimedwait(struct silofs_cond *cond,
                            struct silofs_mutex *mutex, time_t nsec)
 {
 	struct timespec ts;
@@ -327,7 +327,7 @@ void silofs_cond_broadcast(struct silofs_cond *cond)
 int silofs_rwlock_init(struct silofs_rwlock *rwlock)
 {
 	pthread_rwlockattr_t attr;
-	int                  err;
+	int err;
 
 	err = pthread_rwlockattr_init(&attr);
 	if (err) {

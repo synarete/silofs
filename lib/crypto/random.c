@@ -36,7 +36,7 @@ static size_t do_getentropy(void *buf, size_t len)
 static void silofs_getentropy(void *buf, size_t len)
 {
 	uint8_t *ptr = buf;
-	size_t   cnt = 0;
+	size_t cnt   = 0;
 
 	while (cnt < len) {
 		cnt += do_getentropy(ptr + cnt, len - cnt);
@@ -48,11 +48,11 @@ static void silofs_getentropy(void *buf, size_t len)
 static void
 prandgen_mkhash(struct silofs_prandgen *prng, struct silofs_hash256 *out_hash)
 {
-	uint32_t        d[8];
-	const size_t    nd = ARRAY_SIZE(d);
-	const size_t    ne = ARRAY_SIZE(prng->entropy);
-	size_t          di = prng->xseed + prng->slot;
-	uint64_t        u  = prng->entropy[di % ne];
+	uint32_t d[8];
+	const size_t nd = ARRAY_SIZE(d);
+	const size_t ne = ARRAY_SIZE(prng->entropy);
+	size_t di       = prng->xseed + prng->slot;
+	uint64_t u      = prng->entropy[di % ne];
 	struct timespec t;
 
 	d[di++ % nd] = (uint32_t)u;
@@ -80,9 +80,9 @@ static void *prandgen_prandom_buf(struct silofs_prandgen *prng)
 static void prandgen_refill_prandom(struct silofs_prandgen *prng)
 {
 	struct silofs_hash256 hash;
-	const size_t          psz = sizeof(prng->prandom);
-	uint8_t              *p   = prandgen_prandom_buf(prng);
-	size_t                k, cnt = 0;
+	const size_t psz = sizeof(prng->prandom);
+	uint8_t *p       = prandgen_prandom_buf(prng);
+	size_t k, cnt = 0;
 
 	while (cnt < psz) {
 		prandgen_mkhash(prng, &hash);
@@ -161,7 +161,7 @@ void silofs_prandgen_take(struct silofs_prandgen *prng, void *p, size_t n)
 {
 	uint64_t u;
 	uint8_t *q = p;
-	size_t   nb, k = 0;
+	size_t nb, k = 0;
 
 	while (k < n) {
 		nb = silofs_min(n - k, sizeof(u));

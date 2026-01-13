@@ -4,7 +4,10 @@ AlignConsecutiveAssignments:
     Enabled: true
     AcrossEmptyLines: false
     AcrossComments: false
-AlignConsecutiveDeclarations: None
+AlignConsecutiveDeclarations:
+    Enabled: true
+    AcrossEmptyLines: false
+    AcrossComments: false
 AlignConsecutiveMacros:
     Enabled: true
     AcrossEmptyLines: false

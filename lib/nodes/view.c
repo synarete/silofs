@@ -140,7 +140,7 @@ hdr_verify_base(const struct silofs_header *hdr, enum silofs_mtype mtype,
 
 static uint32_t hdr_calc_chekcsum(const struct silofs_header *hdr)
 {
-	const void  *payload = hdr_payload(hdr);
+	const void *payload  = hdr_payload(hdr);
 	const size_t pl_size = hdr_payload_size(hdr);
 
 	return silofs_xxh32(payload, pl_size, SILOFS_META_MAGIC);
@@ -277,25 +277,25 @@ int silofs_view_verify(const struct silofs_view *view, enum silofs_mtype mtype)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_encrypt_view(const struct silofs_cipher_hd *ci_hd,
-                        const struct silofs_civkey    *civkey,
-                        const struct silofs_view      *view,
+                        const struct silofs_civkey *civkey,
+                        const struct silofs_view *view,
                         enum silofs_mtype mtype, void *ptr)
 {
 	return silofs_encrypt_buf(ci_hd, civkey, view, ptr, view_len(mtype));
 }
 
 int silofs_decrypt_view(const struct silofs_cipher_hd *ci_hd,
-                        const struct silofs_civkey    *civkey,
-                        const struct silofs_view      *view,
+                        const struct silofs_civkey *civkey,
+                        const struct silofs_view *view,
                         enum silofs_mtype mtype, void *ptr)
 {
 	return silofs_decrypt_buf(ci_hd, civkey, view, ptr, view_len(mtype));
 }
 
 int silofs_decrypt_view_inplace(const struct silofs_cipher_hd *ci_hd,
-                                const struct silofs_civkey    *civkey,
-                                struct silofs_view            *view,
-                                enum silofs_mtype              mtype)
+                                const struct silofs_civkey *civkey,
+                                struct silofs_view *view,
+                                enum silofs_mtype mtype)
 {
 	return silofs_decrypt_buf(ci_hd, civkey, view, view, view_len(mtype));
 }

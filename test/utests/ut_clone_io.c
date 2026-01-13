@@ -22,9 +22,9 @@ static void ut_clone_write_sparse_(struct ut_env *ute, const off_t *offs,
                                    size_t cnt, size_t bsz)
 {
 	const char *name = UT_NAME;
-	void       *buf  = ut_randbuf(ute, bsz);
-	ino_t       dino = 0;
-	ino_t       ino  = 0;
+	void *buf        = ut_randbuf(ute, bsz);
+	ino_t dino       = 0;
+	ino_t ino        = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -68,11 +68,11 @@ ut_clone_copy_file_range_(struct ut_env *ute, off_t off, size_t len)
 	const char *name_src = UT_NAME_AT;
 	const char *name_dst = UT_NAME_AT;
 	const off_t end      = ut_off_end(off, len);
-	void       *buf1     = ut_randbuf(ute, len);
-	void       *buf2     = ut_randbuf(ute, len);
-	ino_t       ino_src  = 0;
-	ino_t       ino_dst  = 0;
-	ino_t       dino     = 0;
+	void *buf1           = ut_randbuf(ute, len);
+	void *buf2           = ut_randbuf(ute, len);
+	ino_t ino_src        = 0;
+	ino_t ino_dst        = 0;
+	ino_t dino           = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name_src, &ino_src);
@@ -135,11 +135,11 @@ static void ut_clone_rename_io_(struct ut_env *ute, off_t off, size_t bsz)
 	const char *dname = UT_NAME;
 	const char *name1 = UT_NAME_AT;
 	const char *name2 = UT_NAME_AT;
-	void       *buf1  = ut_randbuf(ute, bsz);
-	void       *buf2  = ut_randbuf(ute, bsz);
-	ino_t       dino  = 0;
-	ino_t       ino1  = 0;
-	ino_t       ino2  = 0;
+	void *buf1        = ut_randbuf(ute, bsz);
+	void *buf2        = ut_randbuf(ute, bsz);
+	ino_t dino        = 0;
+	ino_t ino1        = 0;
+	ino_t ino2        = 0;
 
 	ut_mkdir_at_root(ute, dname, &dino);
 	for (size_t i = 0; i < 4; ++i) {

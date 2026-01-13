@@ -24,10 +24,10 @@ static void test_fsync_reg_(struct ft_env *fte, off_t base_off, size_t bsz,
                             off_t step, size_t cnt)
 {
 	const char *path = ft_new_path_unique(fte);
-	void       *buf1 = ft_new_buf_rands(fte, bsz);
-	void       *buf2 = ft_new_buf_rands(fte, bsz);
-	off_t       off  = -1;
-	int         fd   = -1;
+	void *buf1       = ft_new_buf_rands(fte, bsz);
+	void *buf2       = ft_new_buf_rands(fte, bsz);
+	off_t off        = -1;
+	int fd           = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	for (size_t i = 0; i < cnt; ++i) {
@@ -65,8 +65,8 @@ static void test_fsync_dir_(struct ft_env *fte, size_t cnt)
 {
 	const char *path1 = ft_new_path_unique(fte);
 	const char *path2 = nullptr;
-	int         dfd   = -1;
-	int         fd    = -1;
+	int dfd           = -1;
+	int fd            = -1;
 
 	ft_mkdir(path1, 0700);
 	ft_open(path1, O_DIRECTORY | O_RDONLY, 0, &dfd);
@@ -107,11 +107,11 @@ static void test_fsync_dir_io_(struct ft_env *fte, off_t off_base, size_t cnt)
 	const char *path  = ft_new_path_unique(fte);
 	const char *name1 = nullptr;
 	const char *name2 = nullptr;
-	void       *buf;
-	size_t      len;
-	off_t       off;
-	int         dfd = -1;
-	int         fd  = -1;
+	void *buf;
+	size_t len;
+	off_t off;
+	int dfd = -1;
+	int fd  = -1;
 
 	ft_mkdir(path, 0700);
 	ft_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);
@@ -149,7 +149,7 @@ static void test_fsync_dir_io_(struct ft_env *fte, off_t off_base, size_t cnt)
 static void test_fsync_dir_io(struct ft_env *fte)
 {
 	const off_t off[] = { 0, FT_64K, FT_1M, FT_1T };
-	size_t      cnt   = 10;
+	size_t cnt        = 10;
 
 	for (size_t i = 0; i < FT_ARRAY_SIZE(off); ++i) {
 		test_fsync_dir_io_(fte, off[i], cnt);
@@ -165,7 +165,7 @@ static void test_fsync_dir_io(struct ft_env *fte)
 static void test_syncfs_simple(struct ft_env *fte)
 {
 	const char *path = ft_new_path_unique(fte);
-	int         fd   = -1;
+	int fd           = -1;
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_syncfs(fd);
@@ -180,7 +180,7 @@ static void test_syncfs_simple(struct ft_env *fte)
 static void test_syncfs_by_ioctl(struct ft_env *fte)
 {
 	const char *path = ft_new_path_unique(fte);
-	int         dfd  = -1;
+	int dfd          = -1;
 
 	ft_mkdir(path, 0700);
 	ft_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);

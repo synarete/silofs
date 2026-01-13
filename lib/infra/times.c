@@ -129,7 +129,7 @@ int silofs_suspend_ts(const struct timespec *ts)
 {
 	struct timespec req = { .tv_sec = ts->tv_sec, .tv_nsec = ts->tv_nsec };
 	struct timespec rem = { .tv_sec = 0, .tv_nsec = 0 };
-	int             err;
+	int err;
 
 	err = silofs_nanosleep(&req, &rem);
 	while ((err == -EINTR) && (rem.tv_sec || rem.tv_nsec)) {
@@ -147,7 +147,7 @@ int silofs_suspend_ts(const struct timespec *ts)
 int silofs_init_times(void)
 {
 	struct tm res = { .tm_zone = nullptr };
-	int       err;
+	int err;
 
 	tzset();
 	err = silofs_localtime_now(&res);
@@ -168,7 +168,7 @@ void silofs_uptime(struct timespec *out_ts)
 
 int silofs_localtime_now(struct tm *res)
 {
-	const time_t     now = silofs_time_real_now();
+	const time_t now     = silofs_time_real_now();
 	const struct tm *ptm = nullptr;
 
 	errno = 0;

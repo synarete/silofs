@@ -17,14 +17,14 @@
 #include "utests.h"
 
 struct ut_namesarr {
-	size_t      cnt;
+	size_t cnt;
 	const char *arr[1];
 };
 
 static const char *make_name(struct ut_env *ute, long idx, size_t len)
 {
-	char         name[NAME_MAX + 1] = "";
-	const size_t name_max           = sizeof(name) - 1;
+	char name[NAME_MAX + 1] = "";
+	const size_t name_max   = sizeof(name) - 1;
 
 	ut_expect_lt(len, sizeof(name));
 	memset(name, 'x', name_max);
@@ -38,8 +38,8 @@ static const char *make_name(struct ut_env *ute, long idx, size_t len)
 
 static const char *make_ulong_name(struct ut_env *ute, unsigned long key)
 {
-	char         name[NAME_MAX + 1] = "";
-	const size_t name_max           = sizeof(name) - 1;
+	char name[NAME_MAX + 1] = "";
+	const size_t name_max   = sizeof(name) - 1;
 
 	snprintf(name, name_max, "%lu", key);
 	return ut_strdup(ute, name);
@@ -49,7 +49,7 @@ static const char *make_ulong_name(struct ut_env *ute, unsigned long key)
 
 static struct ut_namesarr *new_namesarr(struct ut_env *ute, size_t cnt)
 {
-	size_t              sz;
+	size_t sz;
 	struct ut_namesarr *na;
 
 	sz      = sizeof(*na) + ((cnt - 1) * sizeof(na->arr));
@@ -108,10 +108,10 @@ make_names_ulongs_seq(struct ut_env *ute, size_t cnt)
 static void ut_mkdir_simple(struct ut_env *ute)
 {
 	struct statvfs stv[2];
-	struct stat    st     = { .st_size = -1 };
-	const char    *name   = UT_NAME;
-	const ino_t    parent = UT_ROOT_INO;
-	ino_t          ino    = 0;
+	struct stat st     = { .st_size = -1 };
+	const char *name   = UT_NAME;
+	const ino_t parent = UT_ROOT_INO;
+	ino_t ino          = 0;
 
 	ut_statfs_rootd(ute, &stv[0]);
 	ut_mkdir(ute, parent, name, &st);
@@ -135,10 +135,10 @@ static void ut_mkdir_simple(struct ut_env *ute)
 
 static void ut_mkdir_subdirs_(struct ut_env *ute, size_t cnt)
 {
-	const struct ut_namesarr *na   = make_names(ute, cnt);
-	const char               *name = UT_NAME;
-	ino_t                     sino = 0;
-	ino_t                     dino = 0;
+	const struct ut_namesarr *na = make_names(ute, cnt);
+	const char *name             = UT_NAME;
+	ino_t sino                   = 0;
+	ino_t dino                   = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	for (size_t i = 0; i < cnt; ++i) {
@@ -169,7 +169,7 @@ static void ut_mkdir_reloaded(struct ut_env *ute)
 	struct stat st     = { .st_size = -1 };
 	const char *name   = UT_NAME;
 	const ino_t parent = UT_ROOT_INO;
-	ino_t       ino    = 0;
+	ino_t ino          = 0;
 
 	ut_drop_caches_fully(ute);
 	ut_getattr(ute, parent, &st);
@@ -203,14 +203,14 @@ static void ut_mkdir_reloaded(struct ut_env *ute)
 
 static void ut_mkdir_multi_(struct ut_env *ute, size_t cnt)
 {
-	struct stat         st        = { .st_size = -1 };
-	struct statvfs      stv       = { .f_bsize = 0 };
-	const char         *dname     = UT_NAME;
-	struct ut_namesarr *na        = make_names(ute, cnt + 1);
-	blkcnt_t            blkcnt    = 0;
-	off_t               size      = 0;
-	ino_t               dino      = 0;
-	ino_t               child_ino = 0;
+	struct stat st         = { .st_size = -1 };
+	struct statvfs stv     = { .f_bsize = 0 };
+	const char *dname      = UT_NAME;
+	struct ut_namesarr *na = make_names(ute, cnt + 1);
+	blkcnt_t blkcnt        = 0;
+	off_t size             = 0;
+	ino_t dino             = 0;
+	ino_t child_ino        = 0;
 
 	ut_mkdir_at_root(ute, dname, &dino);
 	ut_statfs(ute, dino, &stv);
@@ -256,13 +256,13 @@ static void ut_mkdir_multi(struct ut_env *ute)
 
 static void ut_mkdir_link_max(struct ut_env *ute)
 {
-	struct stat               st        = { .st_size = -1 };
-	struct statvfs            stv       = { .f_bsize = 0 };
-	const char               *dname     = UT_NAME;
-	const size_t              nlink_max = SILOFS_LINK_MAX;
-	const struct ut_namesarr *na        = make_names(ute, nlink_max);
-	ino_t                     dino      = 0;
-	ino_t                     ino       = 0;
+	struct stat st               = { .st_size = -1 };
+	struct statvfs stv           = { .f_bsize = 0 };
+	const char *dname            = UT_NAME;
+	const size_t nlink_max       = SILOFS_LINK_MAX;
+	const struct ut_namesarr *na = make_names(ute, nlink_max);
+	ino_t dino                   = 0;
+	ino_t ino                    = 0;
 
 	ut_mkdir_at_root(ute, dname, &dino);
 	ut_statfs(ute, dino, &stv);
@@ -288,11 +288,11 @@ static void ut_mkdir_link_max(struct ut_env *ute)
 
 static void ut_rmdir_when_open(struct ut_env *ute)
 {
-	ino_t       ino     = 0;
-	ino_t       dino    = 0;
-	ino_t       parentd = 0;
-	struct stat st      = { .st_size = -1 };
-	const char *name    = UT_NAME;
+	ino_t ino        = 0;
+	ino_t dino       = 0;
+	ino_t parentd    = 0;
+	struct stat st   = { .st_size = -1 };
+	const char *name = UT_NAME;
 
 	ut_mkdir_at_root(ute, name, &parentd);
 	ut_mkdir2(ute, parentd, name, &dino);
@@ -318,12 +318,12 @@ static void ut_rmdir_when_open(struct ut_env *ute)
 
 static void ut_dir_create_seq_(struct ut_env *ute, size_t cnt)
 {
-	struct stat               st    = { .st_size = -1 };
-	const struct ut_namesarr *na    = make_names_ulongs_seq(ute, cnt);
-	const char               *name  = UT_NAME;
-	const char               *fname = nullptr;
-	ino_t                     dino  = 0;
-	ino_t                     ino   = 0;
+	struct stat st               = { .st_size = -1 };
+	const struct ut_namesarr *na = make_names_ulongs_seq(ute, cnt);
+	const char *name             = UT_NAME;
+	const char *fname            = nullptr;
+	ino_t dino                   = 0;
+	ino_t ino                    = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	for (size_t i = 0; i < cnt; ++i) {
@@ -353,11 +353,11 @@ static void ut_dir_create_seq_many(struct ut_env *ute)
 
 static void ut_dir_link_any_names_(struct ut_env *ute, size_t cnt)
 {
-	const struct ut_namesarr *na   = make_names_any_len(ute, cnt);
-	const long               *idx  = ut_randseq(ute, cnt, 0);
-	const char               *name = UT_NAME;
-	ino_t                     dino = 0;
-	ino_t                     ino  = 0;
+	const struct ut_namesarr *na = make_names_any_len(ute, cnt);
+	const long *idx              = ut_randseq(ute, cnt, 0);
+	const char *name             = UT_NAME;
+	ino_t dino                   = 0;
+	ino_t ino                    = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	for (size_t i = 0; i < cnt; ++i) {
@@ -383,11 +383,11 @@ static void ut_dir_link_any_names(struct ut_env *ute)
 
 static void ut_dir_link_long_names_(struct ut_env *ute, size_t cnt)
 {
-	const struct ut_namesarr *na   = make_names_max_len(ute, cnt);
-	const char               *name = UT_NAME;
-	long                     *idx  = nullptr;
-	ino_t                     dino = 0;
-	ino_t                     ino  = 0;
+	const struct ut_namesarr *na = make_names_max_len(ute, cnt);
+	const char *name             = UT_NAME;
+	long *idx                    = nullptr;
+	ino_t dino                   = 0;
+	ino_t ino                    = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	idx = ut_randseq(ute, cnt, 0);
@@ -415,9 +415,9 @@ static void ut_dir_link_long_names(struct ut_env *ute)
 
 static const char *make_lname(struct ut_env *ute, size_t len, int tag)
 {
-	char         name[NAME_MAX + 1] = "";
-	const size_t name_max           = sizeof(name) - 1;
-	const char   ch                 = tag ? 'A' : 'B';
+	char name[NAME_MAX + 1] = "";
+	const size_t name_max   = sizeof(name) - 1;
+	const char ch           = tag ? 'A' : 'B';
 
 	ut_expect_le(len, name_max);
 	memset(name, ch, len);
@@ -432,9 +432,9 @@ static void ut_dir_link_unlink_mixed_(struct ut_env *ute, size_t nfiles)
 	const char *dname = UT_NAME;
 	const char *fname = UT_NAME;
 	const char *lname = nullptr;
-	size_t      len   = 0;
-	ino_t       dino  = 0;
-	ino_t       ino   = 0;
+	size_t len        = 0;
+	ino_t dino        = 0;
+	ino_t ino         = 0;
 
 	ut_mkdir_at_root(ute, dname, &dino);
 	ut_create(ute, dino, fname, S_IFREG | S_IRWXU, &st);
@@ -489,15 +489,15 @@ static const char *make_xname(struct ut_env *ute, size_t x)
 
 static void ut_dir_stat_(struct ut_env *ute, size_t cnt)
 {
-	struct stat    st         = { .st_size = -1 };
-	const blkcnt_t nfrg       = UT_BK_SIZE / 512;
-	const char    *dname      = UT_NAME;
-	const char    *xname      = nullptr;
-	const off_t    empty_size = SILOFS_DIR_EMPTY_SIZE;
-	blkcnt_t       blocks     = 0;
-	off_t          dsize      = -1;
-	ino_t          dino       = 0;
-	ino_t          ino        = 0;
+	struct stat st         = { .st_size = -1 };
+	const blkcnt_t nfrg    = UT_BK_SIZE / 512;
+	const char *dname      = UT_NAME;
+	const char *xname      = nullptr;
+	const off_t empty_size = SILOFS_DIR_EMPTY_SIZE;
+	blkcnt_t blocks        = 0;
+	off_t dsize            = -1;
+	ino_t dino             = 0;
+	ino_t ino              = 0;
 
 	ut_mkdir_at_root(ute, dname, &dino);
 	ut_getattr(ute, dino, &st);

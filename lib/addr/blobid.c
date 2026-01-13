@@ -32,19 +32,19 @@ static void generate_random(uint8_t *p, size_t n)
 /* semantic "view" into blobid */
 struct silofs_blobidv {
 	uint16_t vers;
-	uint8_t  mtype;
-	uint8_t  btype;
+	uint8_t mtype;
+	uint8_t btype;
 	/* XXX REMOVE ME */
-	uint8_t              vspace;
-	uint8_t              height;
-	uint8_t              reserved[10];
+	uint8_t vspace;
+	uint8_t height;
+	uint8_t reserved[10];
 	struct silofs_svolid svolid;
 	struct silofs_uniqid uniqid;
 
 } silofs_attr_aligned64;
 
 static void blobid_to_view(const struct silofs_blobid *blobid,
-                           struct silofs_blobidv      *out_blobidv)
+                           struct silofs_blobidv *out_blobidv)
 {
 	STATICASSERT_LE(sizeof(*blobid), sizeof(*out_blobidv));
 
@@ -52,7 +52,7 @@ static void blobid_to_view(const struct silofs_blobid *blobid,
 	memcpy(out_blobidv, blobid, sizeof(*blobid));
 }
 
-static void blobid_from_view(struct silofs_blobid        *blobid,
+static void blobid_from_view(struct silofs_blobid *blobid,
                              const struct silofs_blobidv *blobidv)
 {
 	STATICASSERT_EQ(sizeof(*blobid), 56);
@@ -69,7 +69,7 @@ static void blobidv_pre_setup(struct silofs_blobidv *blobidv)
 }
 
 static void
-blobidv_setup_raw(struct silofs_blobidv      *blobidv,
+blobidv_setup_raw(struct silofs_blobidv *blobidv,
                   const struct silofs_svolid *svolid, enum silofs_mtype mtype)
 {
 	blobidv_pre_setup(blobidv);
@@ -80,7 +80,7 @@ blobidv_setup_raw(struct silofs_blobidv      *blobidv,
 }
 
 static void
-blobidv_setup_uniq(struct silofs_blobidv      *blobidv,
+blobidv_setup_uniq(struct silofs_blobidv *blobidv,
                    const struct silofs_svolid *svolid,
                    const struct silofs_uniqid *uniq, enum silofs_mtype mtype)
 {
@@ -92,8 +92,8 @@ blobidv_setup_uniq(struct silofs_blobidv      *blobidv,
 }
 
 static void
-blobidv_setup_cas(struct silofs_blobidv       *blobidv,
-                  const struct silofs_svolid  *svolid,
+blobidv_setup_cas(struct silofs_blobidv *blobidv,
+                  const struct silofs_svolid *svolid,
                   const struct silofs_hash256 *hash, enum silofs_mtype mtype)
 {
 	blobidv_pre_setup(blobidv);
@@ -112,9 +112,9 @@ const struct silofs_blobid *silofs_blobid_none(void)
 	return &s_silofs_blobid_none;
 }
 
-void silofs_blobid_setup_raw(struct silofs_blobid       *blobid,
+void silofs_blobid_setup_raw(struct silofs_blobid *blobid,
                              const struct silofs_svolid *svolid,
-                             enum silofs_mtype           mtype)
+                             enum silofs_mtype mtype)
 {
 	struct silofs_blobidv blobidv;
 
@@ -122,11 +122,11 @@ void silofs_blobid_setup_raw(struct silofs_blobid       *blobid,
 	blobid_from_view(blobid, &blobidv);
 }
 
-void silofs_blobid_setup_raw2(struct silofs_blobid       *blobid,
+void silofs_blobid_setup_raw2(struct silofs_blobid *blobid,
                               const struct silofs_svolid *svolid,
-                              enum silofs_mtype           mtype,
-                              enum silofs_mtype           vspace,
-                              enum silofs_height          height)
+                              enum silofs_mtype mtype,
+                              enum silofs_mtype vspace,
+                              enum silofs_height height)
 {
 	struct silofs_blobidv blobidv;
 
@@ -136,10 +136,10 @@ void silofs_blobid_setup_raw2(struct silofs_blobid       *blobid,
 	blobid_from_view(blobid, &blobidv);
 }
 
-void silofs_blobid_setup_raw3(struct silofs_blobid       *blobid,
+void silofs_blobid_setup_raw3(struct silofs_blobid *blobid,
                               const struct silofs_svolid *svolid,
                               const struct silofs_uniqid *uniq,
-                              enum silofs_mtype           mtype)
+                              enum silofs_mtype mtype)
 {
 	struct silofs_blobidv blobidv;
 
@@ -147,10 +147,10 @@ void silofs_blobid_setup_raw3(struct silofs_blobid       *blobid,
 	blobid_from_view(blobid, &blobidv);
 }
 
-void silofs_blobid_setup_cas(struct silofs_blobid        *blobid,
-                             const struct silofs_svolid  *svolid,
+void silofs_blobid_setup_cas(struct silofs_blobid *blobid,
+                             const struct silofs_svolid *svolid,
                              const struct silofs_hash256 *hash,
-                             enum silofs_mtype            mtype)
+                             enum silofs_mtype mtype)
 {
 	struct silofs_blobidv blobidv;
 
@@ -159,7 +159,7 @@ void silofs_blobid_setup_cas(struct silofs_blobid        *blobid,
 }
 
 void silofs_blobid_get_svolid(const struct silofs_blobid *blobid,
-                              struct silofs_svolid       *out_svolid)
+                              struct silofs_svolid *out_svolid)
 {
 	struct silofs_blobidv blobidv;
 
@@ -200,7 +200,7 @@ enum silofs_mtype silofs_blobid_get_vspace(const struct silofs_blobid *blobid)
 }
 
 void silofs_blobid_copyto(const struct silofs_blobid *blobid,
-                          struct silofs_blobid       *other)
+                          struct silofs_blobid *other)
 {
 	memcpy(other->id, blobid->id, sizeof(other->id));
 }
@@ -242,17 +242,17 @@ int silofs_blobid_to_ascii(const struct silofs_blobid *blobid, char *s,
 }
 
 void silofs_blobid_to_sbuf(const struct silofs_blobid *blobid,
-                           struct silofs_strbuf       *sbuf)
+                           struct silofs_strbuf *sbuf)
 {
 	silofs_strbuf_reset(sbuf);
 	silofs_blobid_to_ascii(blobid, sbuf->str, sizeof(sbuf->str) - 1);
 }
 
 int silofs_blobid_to_str(const struct silofs_blobid *blobid,
-                         struct silofs_strspan      *ss)
+                         struct silofs_strspan *ss)
 {
 	struct silofs_strbuf sbuf;
-	size_t               n;
+	size_t n;
 
 	silofs_strbuf_reset(&sbuf);
 	silofs_blobid_to_sbuf(blobid, &sbuf);
@@ -260,11 +260,11 @@ int silofs_blobid_to_str(const struct silofs_blobid *blobid,
 	return (n < ss->n) ? 0 : -SILOFS_EINVAL;
 }
 
-int silofs_blobid_from_str(struct silofs_blobid        *blobid,
+int silofs_blobid_from_str(struct silofs_blobid *blobid,
                            const struct silofs_strview *sv)
 {
 	size_t cnt = 0;
-	int    err;
+	int err;
 
 	err = silofs_ascii_to_mem(blobid->id, sizeof(blobid->id), sv->str,
 	                          sv->len, &cnt);
@@ -285,21 +285,21 @@ silofs_blobid_hash64(const struct silofs_blobid *blobid, uint64_t seed)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_blobidx_setup(struct silofs_blobidx       *blobidx,
+void silofs_blobidx_setup(struct silofs_blobidx *blobidx,
                           const struct silofs_hash256 *h)
 {
 	silofs_hash256_assign(&blobidx->idx, h);
 }
 
-void silofs_blobidx_assign(struct silofs_blobidx       *blobidx,
+void silofs_blobidx_assign(struct silofs_blobidx *blobidx,
                            const struct silofs_blobidx *other)
 {
 	silofs_blobidx_setup(blobidx, &other->idx);
 }
 
-void silofs_blobidx_derive(struct silofs_blobidx          *blobidx,
+void silofs_blobidx_derive(struct silofs_blobidx *blobidx,
                            const struct silofs_mdigest_hd *md_hd,
-                           const struct silofs_blobid     *blobid)
+                           const struct silofs_blobid *blobid)
 {
 	struct silofs_hash256 hash;
 

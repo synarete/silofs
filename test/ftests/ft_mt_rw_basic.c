@@ -32,10 +32,10 @@ static void test_rdwr_trunc(struct ft_sub_exec *se)
 {
 	uint8_t *buf1 = ft_new_buf_rands(se->fte, se->len);
 	uint8_t *buf2 = ft_new_buf_rands(se->fte, se->len);
-	uint8_t  byte = 0;
-	size_t   iter = 0;
-	int      fd1  = -1;
-	int      fd2  = -1;
+	uint8_t byte  = 0;
+	size_t iter   = 0;
+	int fd1       = -1;
+	int fd2       = -1;
 
 	ft_open(se->path, O_WRONLY, 0600, &fd1);
 	ft_open(se->path, O_RDONLY, 0600, &fd2);
@@ -65,7 +65,7 @@ static void test_rdwr_trunc(struct ft_sub_exec *se)
 static void test_mt_rw_trunc_(struct ft_env *fte, off_t off, size_t len)
 {
 	struct ft_sub_exec se[10];
-	const size_t       nse = FT_ARRAY_SIZE(se);
+	const size_t nse = FT_ARRAY_SIZE(se);
 
 	ft_sub_setup(se, nse, fte, 100, off, len);
 	ft_sub_run(se, nse, test_rdwr_trunc);
@@ -92,11 +92,11 @@ static void test_mt_rw_trunc(struct ft_env *fte)
 
 static void test_rewrite_over(struct ft_sub_exec *se)
 {
-	struct stat st   = { .st_size = -1 };
-	uint8_t    *buf1 = ft_new_buf_rands(se->fte, se->len);
-	uint8_t    *buf2 = ft_new_buf_rands(se->fte, se->len);
-	size_t      iter = 0;
-	int         fd   = -1;
+	struct stat st = { .st_size = -1 };
+	uint8_t *buf1  = ft_new_buf_rands(se->fte, se->len);
+	uint8_t *buf2  = ft_new_buf_rands(se->fte, se->len);
+	size_t iter    = 0;
+	int fd         = -1;
 
 	ft_open(se->path, O_RDWR, 0, &fd);
 	while (se->keep_run && (iter++ < se->niter)) {
@@ -126,7 +126,7 @@ static void test_rewrite_over(struct ft_sub_exec *se)
 static void test_mt_rw_over_(struct ft_env *fte, off_t off, size_t len)
 {
 	struct ft_sub_exec se[10];
-	const size_t       nse = FT_ARRAY_SIZE(se);
+	const size_t nse = FT_ARRAY_SIZE(se);
 
 	ft_sub_setup(se, nse, fte, 100, off, len);
 	ft_sub_run(se, nse, test_rewrite_over);
@@ -153,19 +153,19 @@ static void test_mt_rw_over(struct ft_env *fte)
 
 static void test_rdwr_with_xattr(struct ft_sub_exec *se)
 {
-	char         name1[64] = "";
-	char         name2[64] = "";
+	char name1[64]         = "";
+	char name2[64]         = "";
 	const size_t valsz_max = 1024;
-	uint8_t     *buf1      = ft_new_buf_rands(se->fte, se->len);
-	uint8_t     *buf2      = ft_new_buf_rands(se->fte, se->len);
-	uint8_t     *buf3      = ft_new_buf_rands(se->fte, se->len);
-	void        *val1      = ft_new_buf_rands(se->fte, valsz_max);
-	void        *val2      = ft_new_buf_rands(se->fte, valsz_max);
-	void        *val3      = ft_new_buf_rands(se->fte, valsz_max);
-	size_t       valsz     = 0;
-	size_t       iter      = 0;
-	size_t       sz        = 0;
-	int          fd        = -1;
+	uint8_t *buf1          = ft_new_buf_rands(se->fte, se->len);
+	uint8_t *buf2          = ft_new_buf_rands(se->fte, se->len);
+	uint8_t *buf3          = ft_new_buf_rands(se->fte, se->len);
+	void *val1             = ft_new_buf_rands(se->fte, valsz_max);
+	void *val2             = ft_new_buf_rands(se->fte, valsz_max);
+	void *val3             = ft_new_buf_rands(se->fte, valsz_max);
+	size_t valsz           = 0;
+	size_t iter            = 0;
+	size_t sz              = 0;
+	int fd                 = -1;
 
 	ft_open(se->path, O_RDWR, 0, &fd);
 	while (se->keep_run && (iter++ < se->niter)) {
@@ -200,7 +200,7 @@ static void test_rdwr_with_xattr(struct ft_sub_exec *se)
 static void test_mt_rw_xattr_(struct ft_env *fte, off_t off, size_t len)
 {
 	struct ft_sub_exec se[10];
-	const size_t       nse = FT_ARRAY_SIZE(se);
+	const size_t nse = FT_ARRAY_SIZE(se);
 
 	ft_sub_setup(se, nse, fte, 1000, off, len);
 	ft_sub_run(se, nse, test_rdwr_with_xattr);

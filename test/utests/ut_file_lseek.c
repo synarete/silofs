@@ -18,14 +18,14 @@
 
 static void ut_file_lseek_simple_(struct ut_env *ute, off_t off)
 {
-	struct stat st       = { .st_size = -1 };
-	const char *name     = UT_NAME;
-	const off_t step     = 2 * UT_64K;
-	off_t       off_data = -1;
-	off_t       off_hole = -1;
-	ino_t       dino     = 0;
-	ino_t       ino      = 0;
-	char        d        = 'd';
+	struct stat st   = { .st_size = -1 };
+	const char *name = UT_NAME;
+	const off_t step = 2 * UT_64K;
+	off_t off_data   = -1;
+	off_t off_hole   = -1;
+	ino_t dino       = 0;
+	ino_t ino        = 0;
+	char d           = 'd';
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -62,16 +62,16 @@ static void ut_file_lseek_simple(struct ut_env *ute)
 
 static void ut_file_lseek_holes_(struct ut_env *ute, off_t off)
 {
-	struct stat  st       = { .st_size = -1 };
-	const char  *name     = UT_NAME;
-	const size_t len      = UT_64K;
-	const size_t cnt      = 1000;
-	void        *buf      = ut_randbuf(ute, len);
-	off_t        pos_data = -1;
-	off_t        pos_hole = -1;
-	off_t        pos      = -1;
-	ino_t        dino     = 0;
-	ino_t        ino      = 0;
+	struct stat st   = { .st_size = -1 };
+	const char *name = UT_NAME;
+	const size_t len = UT_64K;
+	const size_t cnt = 1000;
+	void *buf        = ut_randbuf(ute, len);
+	off_t pos_data   = -1;
+	off_t pos_hole   = -1;
+	off_t pos        = -1;
+	ino_t dino       = 0;
+	ino_t ino        = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -107,17 +107,17 @@ static void ut_file_lseek_holes(struct ut_env *ute)
 
 static void ut_file_lseek_sparse_(struct ut_env *ute, off_t off, size_t len)
 {
-	const char   *name        = UT_NAME;
-	const size_t  nsteps      = (len < UT_1M) ? 1000 : 100;
+	const char *name          = UT_NAME;
+	const size_t nsteps       = (len < UT_1M) ? 1000 : 100;
 	const ssize_t head1_lsize = (ssize_t)SILOFS_FILE_HEAD1_LEAF_SIZE;
 	const ssize_t head2_lsize = (ssize_t)SILOFS_FILE_HEAD2_LEAF_SIZE;
 	const ssize_t tree_lsize  = (ssize_t)SILOFS_FILE_TREE_LEAF_SIZE;
-	off_t         pos_data    = -1;
-	off_t         pos_hole    = -1;
-	off_t         pos_next    = -1;
-	off_t         pos         = -1;
-	ino_t         dino        = 0;
-	ino_t         ino         = 0;
+	off_t pos_data            = -1;
+	off_t pos_hole            = -1;
+	off_t pos_next            = -1;
+	off_t pos                 = -1;
+	ino_t dino                = 0;
+	ino_t ino                 = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);

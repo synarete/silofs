@@ -78,7 +78,7 @@ void silofs_strspan_initz(struct silofs_strspan *ss)
 	silofs_strspan_initk(ss, z, 0, 0);
 }
 
-void silofs_strspan_init_by(struct silofs_strspan       *ss,
+void silofs_strspan_init_by(struct silofs_strspan *ss,
                             const struct silofs_strspan *other)
 {
 	silofs_strview_init_by(&ss->v, &other->v);
@@ -110,7 +110,7 @@ silofs_strspan_view(const struct silofs_strspan *ss)
 }
 
 void silofs_strspan_mkview(const struct silofs_strspan *ss,
-                           struct silofs_strview       *out_sv)
+                           struct silofs_strview *out_sv)
 {
 	silofs_strview_init_by(out_sv, &ss->v);
 }
@@ -145,7 +145,7 @@ void silofs_strspan_rsub(const struct silofs_strspan *ss, size_t n,
 
 void silofs_strspan_vsub(const struct silofs_strspan *ss,
                          const struct silofs_strview *sv,
-                         struct silofs_strspan       *out_ss)
+                         struct silofs_strspan *out_ss)
 {
 	const size_t npos = silofs_strview_npos();
 	const size_t i    = silofs_strview_offset(&ss->v, sv->str);
@@ -290,7 +290,7 @@ silofs_strspan_nassign(struct silofs_strspan *ss, const char *s, size_t len)
 	return silofs_strspan_nreplace(ss, 0, ss->v.len, s, len);
 }
 
-size_t silofs_strspan_vassign(struct silofs_strspan       *ss,
+size_t silofs_strspan_vassign(struct silofs_strspan *ss,
                               const struct silofs_strview *sv)
 {
 	return silofs_strspan_nassign(ss, sv->str, sv->len);
@@ -412,7 +412,7 @@ void silofs_strspan_reverse(struct silofs_strspan *ss)
 
 void silofs_strspan_foreach(struct silofs_strspan *ss, silofs_chr_modify_fn fn)
 {
-	char       *p = ss->s;
+	char *p       = ss->s;
 	const char *q = p + ss->n;
 
 	while (p < q) {

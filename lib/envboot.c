@@ -84,7 +84,7 @@ env_load_mbr_at(const struct silofs_env *env, const struct silofs_mbref *mbref,
 	return 0;
 }
 
-int silofs_env_commit_fs_mbr(struct silofs_env   *env,
+int silofs_env_commit_fs_mbr(struct silofs_env *env,
                              struct silofs_mbref *out_mbref)
 {
 	struct silofs_mbr1k mbr1k = {
@@ -108,7 +108,7 @@ static int
 env_stat_mbr_at(const struct silofs_env *env, const struct silofs_mbref *mbref)
 {
 	struct stat st;
-	int         err;
+	int err;
 
 	err = silofs_dstor_stat_mbr(env->base.dstor, mbref, &st);
 	if (err) {
@@ -121,7 +121,7 @@ env_stat_mbr_at(const struct silofs_env *env, const struct silofs_mbref *mbref)
 	return 0;
 }
 
-int silofs_env_sense_mbr(struct silofs_env         *env,
+int silofs_env_sense_mbr(struct silofs_env *env,
                          const struct silofs_mbref *mbref)
 {
 	return env_stat_mbr_at(env, mbref);
@@ -134,7 +134,7 @@ env_import_fs_mbr(struct silofs_env *env, const struct silofs_mbref *mbref,
 	return silofs_mbi_import(&env->mbis.fs_mbi, mbref, mbr1k);
 }
 
-int silofs_env_reload_fs_mbr(struct silofs_env         *env,
+int silofs_env_reload_fs_mbr(struct silofs_env *env,
                              const struct silofs_mbref *mbref)
 {
 	struct silofs_mbr1k mbr1k = {
@@ -164,7 +164,7 @@ env_import_ar_mbr(struct silofs_env *env, const struct silofs_mbref *mbref,
 	return silofs_mbi_import(&env->mbis.ar_mbi, mbref, mbr1k);
 }
 
-int silofs_env_reload_ar_mbr(struct silofs_env         *env,
+int silofs_env_reload_ar_mbr(struct silofs_env *env,
                              const struct silofs_mbref *mbref)
 {
 	struct silofs_mbr1k mbr1k = {
@@ -187,7 +187,7 @@ int silofs_env_reload_ar_mbr(struct silofs_env         *env,
 	return 0;
 }
 
-static int env_unlink_mbr_at(const struct silofs_env   *env,
+static int env_unlink_mbr_at(const struct silofs_env *env,
                              const struct silofs_mbref *mbref)
 {
 	int err;
@@ -200,7 +200,7 @@ static int env_unlink_mbr_at(const struct silofs_env   *env,
 	return 0;
 }
 
-int silofs_env_unlink_mbr(struct silofs_env         *env,
+int silofs_env_unlink_mbr(struct silofs_env *env,
                           const struct silofs_mbref *mbref)
 {
 	struct silofs_mbr1k mbr1k = {

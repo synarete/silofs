@@ -30,7 +30,7 @@ void silofs_iovec_reset(struct silofs_iovec *iov)
 	iov->iov_fd       = -1;
 }
 
-void silofs_iovec_assign(struct silofs_iovec       *iov,
+void silofs_iovec_assign(struct silofs_iovec *iov,
                          const struct silofs_iovec *other)
 {
 	iov->iov.iov_base = other->iov.iov_base;

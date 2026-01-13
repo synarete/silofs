@@ -44,9 +44,9 @@
 struct silofs_backtrace_args {
 	const char *sym;
 	const void *ip;
-	int64_t     sp;
-	int64_t     off;
-	int         step;
+	int64_t sp;
+	int64_t off;
+	int step;
 };
 
 typedef int (*silofs_backtrace_cb)(const struct silofs_backtrace_args *);
@@ -54,12 +54,12 @@ typedef int (*silofs_backtrace_cb)(const struct silofs_backtrace_args *);
 #ifdef SILOFS_WITH_LIBUNWIND
 
 struct silofs_backtrace_ctx {
-	unw_context_t                context;
-	unw_cursor_t                 cursor;
-	unw_word_t                   ip;
-	unw_word_t                   sp;
-	unw_word_t                   off;
-	char                         sym[512];
+	unw_context_t context;
+	unw_cursor_t cursor;
+	unw_word_t ip;
+	unw_word_t sp;
+	unw_word_t off;
+	char sym[512];
 	struct silofs_backtrace_args args;
 };
 
@@ -67,7 +67,7 @@ static const void *unw_word_to_ptr(unw_word_t word)
 {
 	union u {
 		const void *p;
-		unw_word_t  w;
+		unw_word_t w;
 	} u = { .w = word };
 
 	return u.p;
@@ -76,7 +76,7 @@ static const void *unw_word_to_ptr(unw_word_t word)
 static int silofs_backtrace_calls(silofs_backtrace_cb bt_cb)
 {
 	struct silofs_backtrace_ctx bt_ctx;
-	int                         err;
+	int err;
 
 	memset(&bt_ctx, 0, sizeof(bt_ctx));
 	err = unw_getcontext(&bt_ctx.context);
@@ -176,9 +176,9 @@ backtrace_addrs_to_str(char *buf, size_t bsz, void **bt_arr, int bt_len)
 
 static void silofs_dump_addr2line(void)
 {
-	void *bt_arr[64]     = {};
-	char  bt_addrs[1024] = "";
-	int   bt_cnt, bt_len;
+	void *bt_arr[64]    = {};
+	char bt_addrs[1024] = "";
+	int bt_cnt, bt_len;
 
 	bt_cnt = (int)(SILOFS_ARRAY_SIZE(bt_arr));
 	bt_len = unw_backtrace(bt_arr, bt_cnt);
@@ -198,11 +198,11 @@ static void silofs_dump_addr2line(void)
 /* file-line convenience pair */
 struct silofs_fileline {
 	const char *file;
-	int         line;
+	int line;
 };
 
 struct silofs_fatal_msg {
-	char                   str[256];
+	char str[256];
 	struct silofs_fileline fl;
 };
 
@@ -468,9 +468,9 @@ static const char *basename_of(const char *path)
 static void
 silofs_dump_panic_msg(const char *file, int line, const char *msg, int errnum)
 {
-	const char                 *base = nullptr;
-	const char                 *tag  = "<panic>";
-	const enum silofs_log_level ll   = SILOFS_LOG_CRIT;
+	const char *base               = nullptr;
+	const char *tag                = "<panic>";
+	const enum silofs_log_level ll = SILOFS_LOG_CRIT;
 
 	silofs_logf(ll, nullptr, 0, " ");
 	base = basename_of(file);
@@ -494,9 +494,9 @@ silofs_attr_noreturn static void silofs_panicked(void)
 
 void silofs_panicf(const char *file, int line, const char *fmt, ...)
 {
-	char      msg[256] = "";
-	va_list   ap       = { 0 };
-	const int errnum   = errno;
+	char msg[256]    = "";
+	va_list ap       = { 0 };
+	const int errnum = errno;
 
 	va_start(ap, fmt);
 	silofs_vsnprintf(msg, sizeof(msg), fmt, ap);
@@ -512,8 +512,8 @@ void silofs_panicf(const char *file, int line, const char *fmt, ...)
 
 void silofs_die(int errnum, const char *fmt, ...)
 {
-	char    msg[1024] = "";
-	va_list ap        = { 0 };
+	char msg[1024] = "";
+	va_list ap     = { 0 };
 
 	va_start(ap, fmt);
 	silofs_vsnprintf(msg, sizeof(msg), fmt, ap);
@@ -526,8 +526,8 @@ void silofs_die(int errnum, const char *fmt, ...)
 
 void silofs_die_at(int errnum, const char *fl, int ln, const char *fmt, ...)
 {
-	char    msg[1024] = "";
-	va_list ap        = { 0 };
+	char msg[1024] = "";
+	va_list ap     = { 0 };
 
 	va_start(ap, fmt);
 	silofs_vsnprintf(msg, sizeof(msg), fmt, ap);

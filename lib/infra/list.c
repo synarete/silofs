@@ -136,21 +136,21 @@ bool silofs_listq_isempty(const struct silofs_listq *lsq)
 	return (lsq->sz == 0);
 }
 
-void silofs_listq_remove(struct silofs_listq     *lsq,
+void silofs_listq_remove(struct silofs_listq *lsq,
                          struct silofs_list_head *lnk)
 {
 	silofs_list_head_remove(lnk);
 	lsq->sz--;
 }
 
-void silofs_listq_push_front(struct silofs_listq     *lsq,
+void silofs_listq_push_front(struct silofs_listq *lsq,
                              struct silofs_list_head *lnk)
 {
 	silofs_list_push_front(&lsq->ls, lnk);
 	lsq->sz++;
 }
 
-void silofs_listq_push_back(struct silofs_listq     *lsq,
+void silofs_listq_push_back(struct silofs_listq *lsq,
                             struct silofs_list_head *lnk)
 {
 	silofs_list_push_back(&lsq->ls, lnk);
@@ -199,7 +199,7 @@ struct silofs_list_head *silofs_listq_back(const struct silofs_listq *lsq)
 	return lnk;
 }
 
-struct silofs_list_head *silofs_listq_next(const struct silofs_listq     *lsq,
+struct silofs_list_head *silofs_listq_next(const struct silofs_listq *lsq,
                                            const struct silofs_list_head *lnk)
 {
 	struct silofs_list_head *nxt = nullptr;
@@ -214,7 +214,7 @@ struct silofs_list_head *silofs_listq_next(const struct silofs_listq     *lsq,
 	return nxt;
 }
 
-struct silofs_list_head *silofs_listq_prev(const struct silofs_listq     *lsq,
+struct silofs_list_head *silofs_listq_prev(const struct silofs_listq *lsq,
                                            const struct silofs_list_head *lnk)
 {
 	struct silofs_list_head *prv = nullptr;

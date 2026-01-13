@@ -24,7 +24,7 @@ static void test_unlink_reg(struct ft_env *fte)
 {
 	struct stat st   = { .st_size = -1 };
 	const char *path = ft_new_path_unique(fte);
-	int         fd   = -1;
+	int fd           = -1;
 
 	ft_unlink_noent(path);
 	ft_open(path, O_CREAT | O_RDWR, 0700, &fd);
@@ -41,7 +41,7 @@ static void test_unlink_symlink(struct ft_env *fte)
 	struct stat st    = { .st_size = -1 };
 	const char *path0 = ft_new_path_unique(fte);
 	const char *path1 = ft_new_path_unique(fte);
-	int         fd    = -1;
+	int fd            = -1;
 
 	ft_unlink_noent(path0);
 	ft_creat(path0, 0600, &fd);
@@ -79,7 +79,7 @@ static void test_unlink_notdir(struct ft_env *fte)
 	const char *path0 = ft_new_path_unique(fte);
 	const char *path1 = ft_new_path_under(fte, path0);
 	const char *path2 = ft_new_path_under(fte, path1);
-	int         fd    = -1;
+	int fd            = -1;
 
 	ft_mkdir(path0, 0755);
 	ft_stat(path0, &st);
@@ -115,8 +115,8 @@ static void test_unlinkat_simple(struct ft_env *fte)
 	struct stat st[2];
 	const char *path = ft_new_path_unique(fte);
 	const char *name = ft_new_name_unique(fte);
-	int         dfd  = -1;
-	int         fd   = -1;
+	int dfd          = -1;
+	int fd           = -1;
 
 	ft_mkdir(path, 0700);
 	ft_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);
@@ -140,12 +140,12 @@ static void test_unlinkat_io_(struct ft_env *fte, off_t off, size_t len)
 	struct stat st   = { .st_size = -1 };
 	const char *path = ft_new_path_unique(fte);
 	const char *name = ft_new_name_unique(fte);
-	void       *buf1 = ft_new_buf_rands(fte, len);
-	void       *buf2 = ft_new_buf_rands(fte, len);
-	void       *data = ft_new_buf_zeros(fte, len);
+	void *buf1       = ft_new_buf_rands(fte, len);
+	void *buf2       = ft_new_buf_rands(fte, len);
+	void *data       = ft_new_buf_zeros(fte, len);
 	const off_t end  = ft_off_end(off, len);
-	int         dfd  = -1;
-	int         fd   = -1;
+	int dfd          = -1;
+	int fd           = -1;
 
 	ft_mkdir(path, 0700);
 	ft_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);
@@ -214,10 +214,10 @@ static void test_unlinkat_same_name(struct ft_env *fte)
 	struct stat st   = { .st_size = -1 };
 	const char *path = ft_new_path_unique(fte);
 	const char *name = ft_new_name_unique(fte);
-	size_t      nfds = 0;
-	int         fds[64];
-	int         dfd = -1;
-	int         fd  = -1;
+	size_t nfds      = 0;
+	int fds[64];
+	int dfd = -1;
+	int fd  = -1;
 
 	ft_mkdir(path, 0700);
 	ft_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);

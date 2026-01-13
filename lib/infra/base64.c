@@ -78,7 +78,7 @@ static bool base64_ispad(int chr)
 
 static int base64_decode_sext(int chr, uint8_t *out_sext)
 {
-	int          sext;
+	int sext;
 	const size_t decode_tbl_nelems = SILOFS_ARRAY_SIZE(base64_decode_tbl);
 
 	if (chr >= (int)decode_tbl_nelems) {
@@ -94,7 +94,7 @@ static int base64_decode_sext(int chr, uint8_t *out_sext)
 
 static void base64_encode_head(const void *in, char *out, size_t len)
 {
-	int            sext;
+	int sext;
 	const uint8_t *inb = in;
 
 	while (len) {
@@ -116,7 +116,7 @@ static void base64_encode_head(const void *in, char *out, size_t len)
 static void
 base64_encode_tail(const void *in, size_t inlen, char *out, size_t outlen)
 {
-	int            sext;
+	int sext;
 	const uint8_t *inb = in;
 
 	if (!outlen) {
@@ -152,12 +152,12 @@ base64_encode_tail(const void *in, size_t inlen, char *out, size_t outlen)
 int silofs_base64_encode(const void *in, size_t inlen, char *out,
                          size_t outlen_max, size_t *out_len)
 {
-	size_t         outlen;
-	size_t         head_len_in  = 0;
-	size_t         tail_len_in  = 0;
-	size_t         head_len_out = 0;
-	size_t         tail_len_out = 0;
-	const uint8_t *inb          = in;
+	size_t outlen;
+	size_t head_len_in  = 0;
+	size_t tail_len_in  = 0;
+	size_t head_len_out = 0;
+	size_t tail_len_out = 0;
+	const uint8_t *inb  = in;
 
 	outlen = BASE64_ENCODE_LEN(inlen);
 	if (outlen > outlen_max) {
@@ -197,14 +197,14 @@ base64_decode_sextets(const uint8_t *inb, uint8_t *outb, size_t cnt)
 int silofs_base64_decode(const char *in, size_t inlen, void *out,
                          size_t outlen_max, size_t *out_len, size_t *out_inrd)
 {
-	uint8_t  sext[4];
-	size_t   incnt  = 0;
-	size_t   nsexts = 0;
-	size_t   npads  = 0;
-	size_t   outlen = 0;
-	uint8_t *outb   = out;
-	int      chr    = 0;
-	int      err    = -1;
+	uint8_t sext[4];
+	size_t incnt  = 0;
+	size_t nsexts = 0;
+	size_t npads  = 0;
+	size_t outlen = 0;
+	uint8_t *outb = out;
+	int chr       = 0;
+	int err       = -1;
 
 	while ((incnt < inlen) && (outlen < outlen_max) && (npads < 2)) {
 		chr = (int)in[incnt];

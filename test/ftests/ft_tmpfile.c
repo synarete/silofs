@@ -23,15 +23,15 @@
  */
 static void test_tmpfile_simple(struct ft_env *fte)
 {
-	int          fd  = -1;
-	off_t        pos = -1;
-	size_t       dat = 0;
-	size_t       nwr = 0;
-	size_t       nrd = 0;
-	struct stat  st;
-	const size_t bsz  = FT_BK_SIZE;
-	void        *buf  = ft_new_buf_zeros(fte, bsz);
-	char        *path = ft_new_path_unique(fte);
+	int fd     = -1;
+	off_t pos  = -1;
+	size_t dat = 0;
+	size_t nwr = 0;
+	size_t nrd = 0;
+	struct stat st;
+	const size_t bsz = FT_BK_SIZE;
+	void *buf        = ft_new_buf_zeros(fte, bsz);
+	char *path       = ft_new_path_unique(fte);
 
 	ft_mkdir(path, 0700);
 	ft_open(path, O_RDWR | O_TMPFILE | O_EXCL, 0600, &fd);
@@ -58,12 +58,12 @@ static void test_tmpfile_simple(struct ft_env *fte)
  */
 static void test_buffer(struct ft_env *fte, size_t bsz)
 {
-	int         fd   = -1;
-	size_t      nwr  = 0;
-	size_t      nrd  = 0;
-	void       *buf1 = nullptr;
-	void       *buf2 = nullptr;
-	char       *path = ft_new_path_unique(fte);
+	int fd     = -1;
+	size_t nwr = 0;
+	size_t nrd = 0;
+	void *buf1 = nullptr;
+	void *buf2 = nullptr;
+	char *path = ft_new_path_unique(fte);
 	struct stat st;
 
 	ft_mkdir(path, 0700);

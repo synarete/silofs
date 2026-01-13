@@ -19,9 +19,9 @@
 #include <dirent.h>
 
 struct ft_getdents_ctx {
-	char            buf[FT_1M / 4];
+	char buf[FT_1M / 4];
 	struct dirent64 dents[1024];
-	size_t          ndents;
+	size_t ndents;
 };
 
 static struct ft_getdents_ctx *ft_new_getdents_ctx(struct ft_env *fte)
@@ -35,8 +35,8 @@ static struct ft_getdents_ctx *ft_new_getdents_ctx(struct ft_env *fte)
 static void
 ft_verify_getdents_ctx(struct ft_env *fte, struct ft_getdents_ctx *gd_ctx)
 {
-	off_t                  off_curr;
-	off_t                  off_prev = -1;
+	off_t off_curr;
+	off_t off_prev = -1;
 	const struct dirent64 *dent;
 
 	for (size_t i = 0; i < gd_ctx->ndents; ++i) {
@@ -54,7 +54,7 @@ ft_verify_getdents_ctx(struct ft_env *fte, struct ft_getdents_ctx *gd_ctx)
 
 static void ft_getdents2(int fd, struct ft_getdents_ctx *gd_ctx)
 {
-	size_t       ndents     = 0;
+	size_t ndents           = 0;
 	const size_t ndents_max = FT_ARRAY_SIZE(gd_ctx->dents);
 
 	ft_getdents(fd, gd_ctx->buf, sizeof(gd_ctx->buf), gd_ctx->dents,
@@ -80,16 +80,16 @@ static void ft_getdents_from(struct ft_env *fte, int fd, off_t off,
  */
 static void test_readdir_basic_(struct ft_env *fte, size_t lim)
 {
-	struct stat     st    = { .st_size = -1 };
-	struct dirent64 dent  = { .d_ino = 0 };
-	const char     *path1 = nullptr;
-	const char     *path0 = ft_new_path_unique(fte);
-	off_t           pos   = -1;
-	off_t           off   = 0;
-	size_t          cnt   = 0;
-	size_t          itr   = 0;
-	int             dfd   = -1;
-	int             fd    = -1;
+	struct stat st       = { .st_size = -1 };
+	struct dirent64 dent = { .d_ino = 0 };
+	const char *path1    = nullptr;
+	const char *path0    = ft_new_path_unique(fte);
+	off_t pos            = -1;
+	off_t off            = 0;
+	size_t cnt           = 0;
+	size_t itr           = 0;
+	int dfd              = -1;
+	int fd               = -1;
 
 	ft_mkdir(path0, 0755);
 	ft_open(path0, O_DIRECTORY | O_RDONLY, 0, &dfd);
@@ -142,15 +142,15 @@ static void test_readdir_basic(struct ft_env *fte)
  */
 static void test_readdir_unlink_(struct ft_env *fte, size_t lim)
 {
-	struct stat     st    = { .st_size = -1 };
-	struct dirent64 dent  = { .d_ino = 0 };
-	const char     *path1 = nullptr;
-	const char     *path0 = ft_new_path_unique(fte);
-	off_t           pos   = -1;
-	off_t           off   = 0;
-	size_t          cnt   = 0;
-	int             dfd   = -1;
-	int             fd    = -1;
+	struct stat st       = { .st_size = -1 };
+	struct dirent64 dent = { .d_ino = 0 };
+	const char *path1    = nullptr;
+	const char *path0    = ft_new_path_unique(fte);
+	off_t pos            = -1;
+	off_t off            = 0;
+	size_t cnt           = 0;
+	int dfd              = -1;
+	int fd               = -1;
 
 	ft_mkdir(path0, 0700);
 	ft_open(path0, O_DIRECTORY | O_RDONLY, 0, &dfd);
@@ -211,22 +211,22 @@ make_iname(struct ft_env *fte, const char *path, const char *pref, size_t idx)
 
 static void test_readdir_getdents_(struct ft_env *fte, size_t lim)
 {
-	struct dirent64        dents[8];
-	struct stat            st     = { .st_size = -1 };
-	const size_t           bsz    = 1024;
-	const size_t           ndents = FT_ARRAY_SIZE(dents);
-	char                  *buf    = ft_new_buf_zeros(fte, bsz);
-	const char            *path0  = ft_new_path_unique(fte);
-	const char            *path1  = nullptr;
-	const char            *prefix = ft_new_name_unique(fte);
-	const struct dirent64 *dent   = nullptr;
-	off_t                  pos    = -1;
-	off_t                  off    = 0;
-	size_t                 nde    = 0;
-	size_t                 cnt    = 0;
-	int                    cmp    = 0;
-	int                    dfd    = -1;
-	int                    fd     = -1;
+	struct dirent64 dents[8];
+	struct stat st              = { .st_size = -1 };
+	const size_t bsz            = 1024;
+	const size_t ndents         = FT_ARRAY_SIZE(dents);
+	char *buf                   = ft_new_buf_zeros(fte, bsz);
+	const char *path0           = ft_new_path_unique(fte);
+	const char *path1           = nullptr;
+	const char *prefix          = ft_new_name_unique(fte);
+	const struct dirent64 *dent = nullptr;
+	off_t pos                   = -1;
+	off_t off                   = 0;
+	size_t nde                  = 0;
+	size_t cnt                  = 0;
+	int cmp                     = 0;
+	int dfd                     = -1;
+	int fd                      = -1;
 
 	ft_mkdir(path0, 0755);
 	ft_open(path0, O_DIRECTORY | O_RDONLY, 0, &dfd);
@@ -283,13 +283,13 @@ static void test_readdir_getdents(struct ft_env *fte)
 static void test_readdir_counted_(struct ft_env *fte, size_t lim)
 {
 	struct ft_getdents_ctx *gd_ctx = ft_new_getdents_ctx(fte);
-	const char             *path0  = ft_new_path_unique(fte);
-	const char             *path1  = nullptr;
-	const char             *name   = nullptr;
-	const struct dirent64  *dent   = nullptr;
-	off_t                   off    = 0;
-	size_t                  cnt    = 0;
-	int                     dfd    = -1;
+	const char *path0              = ft_new_path_unique(fte);
+	const char *path1              = nullptr;
+	const char *name               = nullptr;
+	const struct dirent64 *dent    = nullptr;
+	off_t off                      = 0;
+	size_t cnt                     = 0;
+	int dfd                        = -1;
 
 	ft_mkdir(path0, 0700);
 	for (size_t diri = 0; diri < lim; ++diri) {
@@ -348,19 +348,19 @@ static void test_readdir_counted(struct ft_env *fte)
 
 static void test_readdir_unlinkat_(struct ft_env *fte, size_t lim)
 {
-	struct stat             st     = { .st_size = -1 };
-	const char             *path1  = ft_new_path_unique(fte);
-	const char             *path2  = ft_new_path_unique(fte);
-	const char             *fname  = ft_new_name_unique(fte);
+	struct stat st                 = { .st_size = -1 };
+	const char *path1              = ft_new_path_unique(fte);
+	const char *path2              = ft_new_path_unique(fte);
+	const char *fname              = ft_new_name_unique(fte);
 	struct ft_getdents_ctx *gd_ctx = ft_new_getdents_ctx(fte);
-	const struct dirent64  *dent   = nullptr;
-	const char             *name   = nullptr;
-	off_t                   doff   = 0;
-	size_t                  cnt    = 0;
-	size_t                  itr    = 0;
-	int                     dfd1   = -1;
-	int                     dfd2   = -1;
-	int                     fd     = -1;
+	const struct dirent64 *dent    = nullptr;
+	const char *name               = nullptr;
+	off_t doff                     = 0;
+	size_t cnt                     = 0;
+	size_t itr                     = 0;
+	int dfd1                       = -1;
+	int dfd2                       = -1;
+	int fd                         = -1;
 
 	ft_mkdir(path1, 0700);
 	ft_open(path1, O_DIRECTORY | O_RDONLY, 0, &dfd1);
@@ -424,11 +424,11 @@ static void test_readdir_unlinkat(struct ft_env *fte)
 static void test_readdir_nox_(struct ft_env *fte, size_t cnt)
 {
 	struct ft_getdents_ctx *gd_ctx = ft_new_getdents_ctx(fte);
-	const char             *path   = ft_new_path_unique(fte);
-	const struct dirent64  *dent   = nullptr;
-	const char             *name   = nullptr;
-	int                     dfd    = -1;
-	int                     fd     = -1;
+	const char *path               = ft_new_path_unique(fte);
+	const struct dirent64 *dent    = nullptr;
+	const char *name               = nullptr;
+	int dfd                        = -1;
+	int fd                         = -1;
 
 	ft_mkdir(path, 0700);
 	ft_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);
@@ -480,12 +480,12 @@ static void test_readdir_unlink_names_arr_(struct ft_env *fte,
                                            const char *names[], size_t cnt)
 {
 	struct ft_getdents_ctx *gd_ctx = ft_new_getdents_ctx(fte);
-	const char             *path   = ft_new_path_unique(fte);
-	const struct dirent64  *dent   = nullptr;
-	off_t                   doff   = 0;
-	size_t                  dcnt   = 0;
-	int                     dfd    = -1;
-	int                     fd     = -1;
+	const char *path               = ft_new_path_unique(fte);
+	const struct dirent64 *dent    = nullptr;
+	off_t doff                     = 0;
+	size_t dcnt                    = 0;
+	int dfd                        = -1;
+	int fd                         = -1;
 
 	ft_mkdir(path, 0700);
 	ft_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);
@@ -514,9 +514,9 @@ static void test_readdir_unlink_names_arr_(struct ft_env *fte,
 
 static void test_readdir_unlink_names_(struct ft_env *fte, size_t nlen)
 {
-	const char  *names[256];
-	char        *name_i = nullptr;
-	const size_t cnt    = FT_ARRAY_SIZE(names);
+	const char *names[256];
+	char *name_i     = nullptr;
+	const size_t cnt = FT_ARRAY_SIZE(names);
 
 	for (size_t i = 0; i < cnt; ++i) {
 		name_i    = ft_make_rand_name(fte, nlen);

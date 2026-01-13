@@ -19,7 +19,7 @@
 static void ut_archive_simple(struct ut_env *ute)
 {
 	const char *name = UT_NAME;
-	ino_t       dino = 0;
+	ino_t dino       = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_archive_fs(ute);
@@ -33,13 +33,13 @@ static void ut_archive_simple(struct ut_env *ute)
 
 static void ut_archive_data(struct ut_env *ute)
 {
-	struct stat  st   = { .st_ino = 0 };
-	const char  *name = UT_NAME;
-	const size_t len  = UT_1M;
-	const off_t  off  = 1;
-	void        *buf  = ut_randbuf(ute, len);
-	ino_t        dino = 0;
-	ino_t        ino  = 0;
+	struct stat st   = { .st_ino = 0 };
+	const char *name = UT_NAME;
+	const size_t len = UT_1M;
+	const off_t off  = 1;
+	void *buf        = ut_randbuf(ute, len);
+	ino_t dino       = 0;
+	ino_t ino        = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -63,16 +63,16 @@ static void ut_archive_data(struct ut_env *ute)
 
 static void ut_archive_nfiles(struct ut_env *ute)
 {
-	struct stat  st       = { .st_ino = 0 };
-	const ino_t  root_ino = SILOFS_INO_ROOT;
-	const char  *pref     = UT_NAME;
-	const char  *name     = nullptr;
-	const size_t cnt      = 100;
-	const size_t len      = UT_1M;
-	off_t        off      = -1;
-	void        *buf      = ut_randbuf(ute, len);
-	ino_t        dino     = 0;
-	ino_t        ino      = 0;
+	struct stat st       = { .st_ino = 0 };
+	const ino_t root_ino = SILOFS_INO_ROOT;
+	const char *pref     = UT_NAME;
+	const char *name     = nullptr;
+	const size_t cnt     = 100;
+	const size_t len     = UT_1M;
+	off_t off            = -1;
+	void *buf            = ut_randbuf(ute, len);
+	ino_t dino           = 0;
+	ino_t ino            = 0;
 
 	for (size_t i = 0; i < cnt; ++i) {
 		off  = (off_t)((i * len) + (i * UT_1G) + i);
@@ -105,17 +105,17 @@ static void ut_archive_nfiles(struct ut_env *ute)
 
 static void ut_archive_twice(struct ut_env *ute)
 {
-	const char  *dname = UT_NAME;
-	const char  *name1 = UT_NAME_AT;
-	const char  *name2 = UT_NAME_AT;
-	const size_t len   = UT_1M;
-	const off_t  off1  = UT_1G - 1;
-	const off_t  off2  = UT_1T - UT_1M - 2;
-	void        *buf1  = ut_randbuf(ute, len);
-	void        *buf2  = ut_randbuf(ute, len);
-	ino_t        dino  = 0;
-	ino_t        ino1  = 0;
-	ino_t        ino2  = 0;
+	const char *dname = UT_NAME;
+	const char *name1 = UT_NAME_AT;
+	const char *name2 = UT_NAME_AT;
+	const size_t len  = UT_1M;
+	const off_t off1  = UT_1G - 1;
+	const off_t off2  = UT_1T - UT_1M - 2;
+	void *buf1        = ut_randbuf(ute, len);
+	void *buf2        = ut_randbuf(ute, len);
+	ino_t dino        = 0;
+	ino_t ino1        = 0;
+	ino_t ino2        = 0;
 
 	ut_mkdir_at_root(ute, dname, &dino);
 	ut_create_file(ute, dino, name1, &ino1);

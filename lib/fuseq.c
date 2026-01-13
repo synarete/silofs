@@ -4385,12 +4385,12 @@ static void fqs_setup_self_task(const struct silofs_fuseq_sub *fqs,
                                 struct silofs_task_ctx *task)
 {
 	const struct silofs_fuseq *fq  = fqs_fuseq(fqs);
-	const struct silofs_args *args = fq->fq_env->base.args;
+	const struct silofs_cred *cred = &fq->fq_env->owner_cred;
 
 	silofs_task_init(task, fq->fq_env);
-	silofs_task_set_creds(task, args->uid, args->gid, args->umask);
+	silofs_task_set_creds(task, cred->uid, cred->gid, cred->umask);
 	silofs_task_set_ts(task, false);
-	task->t_auth.pid  = args->pid;
+	task->t_auth.pid  = getpid();
 	task->t_exclusive = false;
 }
 

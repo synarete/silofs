@@ -334,7 +334,7 @@ static void cmd_clone_sense_fs(struct cmd_clone_ctx *ctx)
 	cmd_sense_fs(ctx->env, &ctx->args.spec.fsref);
 }
 
-static void cmd_clone_open_fs(struct cmd_clone_ctx *ctx)
+static void cmd_clone_reload_fs(struct cmd_clone_ctx *ctx)
 {
 	cmd_reload_fs(ctx->env, &ctx->args.spec.fsref);
 }
@@ -344,9 +344,9 @@ static void cmd_clone_do_clonefs(struct cmd_clone_ctx *ctx)
 	cmd_fork_fs(ctx->env, &ctx->fsrefs);
 }
 
-static void cmd_clone_close_fs(struct cmd_clone_ctx *ctx)
+static void cmd_clone_unload_fs(struct cmd_clone_ctx *ctx)
 {
-	cmd_close_fs(ctx->env);
+	cmd_unload_fs(ctx->env);
 }
 
 static void cmd_clone_save_fork(struct cmd_clone_ctx *ctx)
@@ -383,13 +383,13 @@ static void cmd_clone_online(struct cmd_clone_ctx *ctx)
 static void cmd_clone_offline(struct cmd_clone_ctx *ctx)
 {
 	/* Open file-system */
-	cmd_clone_open_fs(ctx);
+	cmd_clone_reload_fs(ctx);
 
 	/* Fork and clone */
 	cmd_clone_do_clonefs(ctx);
 
 	/* Shut down file-system environment */
-	cmd_clone_close_fs(ctx);
+	cmd_clone_unload_fs(ctx);
 }
 
 static void cmd_clone_execute(struct cmd_clone_ctx *ctx)

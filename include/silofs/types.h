@@ -124,16 +124,18 @@ struct silofs_spec {
 struct silofs_inargs {
 	size_t            memwant;
 	enum silofs_flags flags;
+	uid_t             uid;
+	gid_t             gid;
+	mode_t            umask;
 };
 
-/* format-fs arguments */
+/* format arguments */
 struct silofs_foargs {
 	struct silofs_password passwd;
 	struct silofs_baseref  bref;
 	enum silofs_flags      flags;
 	uid_t                  uid;
 	gid_t                  gid;
-	pid_t                  pid;
 	mode_t                 umask;
 	size_t                 capacity;
 	bool                   no_utf8_names;
@@ -148,7 +150,6 @@ struct silofs_args {
 	enum silofs_flags     flags;
 	uid_t                 uid;
 	gid_t                 gid;
-	pid_t                 pid;
 	mode_t                umask;
 	size_t                capacity;
 	size_t                memwant;

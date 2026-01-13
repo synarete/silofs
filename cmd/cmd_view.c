@@ -202,14 +202,14 @@ static void cmd_view_sense_fs(struct cmd_view_ctx *ctx)
 	cmd_sense_fs(ctx->env, &ctx->args.spec.fsref);
 }
 
-static void cmd_view_open_fs(struct cmd_view_ctx *ctx)
+static void cmd_view_reload_fs(struct cmd_view_ctx *ctx)
 {
 	cmd_reload_fs(ctx->env, &ctx->args.spec.fsref);
 }
 
-static void cmd_view_close_fs(struct cmd_view_ctx *ctx)
+static void cmd_view_unload_fs(struct cmd_view_ctx *ctx)
 {
-	cmd_close_fs(ctx->env);
+	cmd_unload_fs(ctx->env);
 }
 
 static void cmd_view_execute(struct cmd_view_ctx *ctx)
@@ -263,13 +263,13 @@ void cmd_execute_view(void)
 	cmd_view_sense_fs(&ctx);
 
 	/* Open file-system */
-	cmd_view_open_fs(&ctx);
+	cmd_view_reload_fs(&ctx);
 
 	/* Do actual view */
 	cmd_view_execute(&ctx);
 
 	/* Close file-system */
-	cmd_view_close_fs(&ctx);
+	cmd_view_unload_fs(&ctx);
 
 	/* Close repository */
 	cmd_view_close_repo(&ctx);

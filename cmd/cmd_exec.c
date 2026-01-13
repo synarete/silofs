@@ -23,6 +23,9 @@ void cmd_new_env(const struct silofs_args *args, struct silofs_env **p_env)
 	const struct silofs_inargs inargs = {
 		.memwant = args->memwant,
 		.flags   = args->flags,
+		.uid     = args->uid,
+		.gid     = args->gid,
+		.umask   = args->umask,
 	};
 	int err;
 
@@ -226,11 +229,11 @@ void cmd_reload_fs(struct silofs_env *env, const struct silofs_fsref *fsref)
 	}
 }
 
-void cmd_close_fs(struct silofs_env *env)
+void cmd_unload_fs(struct silofs_env *env)
 {
 	int err;
 
-	err = silofs_close_fs(env);
+	err = silofs_unload_fs(env);
 	if (err) {
 		cmd_report_err_and_die(env, err, "close failure");
 	}
@@ -306,7 +309,6 @@ void cmd_setup_args(struct silofs_args *args)
 	cmd_spec_setup(&args->spec);
 	args->uid   = getuid();
 	args->gid   = getgid();
-	args->pid   = getpid();
 	args->umask = 0077;
 }
 

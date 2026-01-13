@@ -98,13 +98,25 @@ static void env_update_sb(struct silofs_env *env, struct silofs_sb_info *sbi)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void env_update_owner(struct silofs_env *env)
+static int
+env_setup_owner(struct silofs_env *env, const struct silofs_inargs *inargs)
 {
-	const struct silofs_args *args = env->base.args;
-
-	env->owner_cred.uid   = args->uid;
-	env->owner_cred.gid   = args->gid;
-	env->owner_cred.umask = args->umask;
+	if (inargs->uid == (uid_t)(-1)) {
+		log_dbg("illegal owner uid: %u", inargs->uid);
+		return -SILOFS_EINVAL;
+	}
+	if (inargs->gid == (gid_t)(-1)) {
+		log_dbg("illegal owner gid: %u", inargs->gid);
+		return -SILOFS_EINVAL;
+	}
+	if (inargs->umask == 0) {
+		log_dbg("zero umask: uid=%u gid=%u", inargs->uid, inargs->gid);
+		return -SILOFS_EINVAL;
+	}
+	env->owner_cred.uid   = inargs->uid;
+	env->owner_cred.gid   = inargs->gid;
+	env->owner_cred.umask = inargs->umask;
+	return 0;
 }
 
 static void env_update_mntflags(struct silofs_env *env)
@@ -144,7 +156,6 @@ static void env_update_mntflags(struct silofs_env *env)
 
 static int env_update_by_args(struct silofs_env *env)
 {
-	env_update_owner(env);
 	env_update_mntflags(env);
 	return 0;
 }
@@ -271,13 +282,18 @@ static void env_fini_uconv(struct silofs_env *env)
 	silofs_uconv_fini(&env->uconv);
 }
 
-int silofs_env_init(struct silofs_env *env, const struct silofs_env_base *base)
+int silofs_env_init(struct silofs_env *env, const struct silofs_env_base *base,
+                    const struct silofs_inargs *inargs)
 {
 	int err;
 
 	env_init_commons(env, base);
 	env_init_opstat(env);
 
+	err = env_setup_owner(env, inargs);
+	if (err) {
+		return err;
+	}
 	err = env_init_mbis(env);
 	if (err) {
 		return err;

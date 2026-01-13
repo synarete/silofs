@@ -2391,7 +2391,7 @@ fill_proc(const struct silofs_env *env, struct silofs_query_proc *qpr)
 	silofs_memzero(qpr, sizeof(*qpr));
 	qpr->uid       = env->owner_cred.uid;
 	qpr->gid       = env->owner_cred.gid;
-	qpr->pid       = env->base.args->pid;
+	qpr->pid       = getpid();
 	qpr->msflags   = env->ms_flags;
 	qpr->uptime    = uptime;
 	qpr->iopen_max = env->opstat.op_iopen_max;

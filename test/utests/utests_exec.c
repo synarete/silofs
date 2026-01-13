@@ -143,6 +143,9 @@ static void ute_setup(struct ut_env *ute)
 	const struct silofs_inargs inargs = {
 		.memwant = ute->args->args.memwant,
 		.flags   = ute->args->args.flags,
+		.uid     = getuid(),
+		.gid     = getgid(),
+		.umask   = 0022,
 	};
 	int err;
 
@@ -433,7 +436,7 @@ static void ut_prep_tests(struct ut_env *ute)
 {
 	ut_format_repo(ute);
 	ut_format_fs(ute);
-	ut_close_fs(ute);
+	ut_unload_fs(ute);
 	ut_close_repo(ute);
 	ut_open_repo(ute);
 	ut_reload_fs(ute);
@@ -441,7 +444,7 @@ static void ut_prep_tests(struct ut_env *ute)
 
 static void ut_done_tests(struct ut_env *ute)
 {
-	ut_close_fs(ute);
+	ut_unload_fs(ute);
 	ut_close_repo(ute);
 }
 
@@ -514,7 +517,6 @@ static void ut_init_args(struct ut_args *args)
 	args->args.spec.fsids.groups.ngids = 2;
 	args->args.uid                     = getuid();
 	args->args.gid                     = getgid();
-	args->args.pid                     = getpid();
 	args->args.umask                   = 0002;
 	args->args.capacity                = SILOFS_CAPACITY_SIZE_MIN;
 	args->args.memwant                 = UT_1G;

@@ -208,14 +208,14 @@ static void cmd_archive_sense_fs(struct cmd_archive_ctx *ctx)
 	cmd_sense_fs(ctx->env, &ctx->args.spec.fsref);
 }
 
-static void cmd_archive_open_fs(struct cmd_archive_ctx *ctx)
+static void cmd_archive_reload_fs(struct cmd_archive_ctx *ctx)
 {
 	cmd_reload_fs(ctx->env, &ctx->args.spec.fsref);
 }
 
-static void cmd_archive_close_fs(struct cmd_archive_ctx *ctx)
+static void cmd_archive_unload_fs(struct cmd_archive_ctx *ctx)
 {
-	cmd_close_fs(ctx->env);
+	cmd_unload_fs(ctx->env);
 }
 
 static void cmd_archive_execute(struct cmd_archive_ctx *ctx)
@@ -275,7 +275,7 @@ void cmd_execute_archive(void)
 	cmd_archive_sense_fs(&ctx);
 
 	/* Open file-system */
-	cmd_archive_open_fs(&ctx);
+	cmd_archive_reload_fs(&ctx);
 
 	/* Do actual archive */
 	cmd_archive_execute(&ctx);
@@ -284,7 +284,7 @@ void cmd_execute_archive(void)
 	cmd_archive_save_spec(&ctx);
 
 	/* Close file-system */
-	cmd_archive_close_fs(&ctx);
+	cmd_archive_unload_fs(&ctx);
 
 	/* Close repository */
 	cmd_archive_close_repo(&ctx);

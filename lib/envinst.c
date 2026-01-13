@@ -506,7 +506,8 @@ static void envi_fini_fuseq(struct silofs_env_inst *envi)
 	}
 }
 
-static int envi_init_env(struct silofs_env_inst *envi)
+static int
+envi_init_env(struct silofs_env_inst *envi, const struct silofs_inargs *inargs)
 {
 	const struct silofs_env_base env_base = {
 		.args    = &envi->args,
@@ -527,7 +528,7 @@ static int envi_init_env(struct silofs_env_inst *envi)
 	struct silofs_env *env = &envi->env;
 	int err;
 
-	err = silofs_env_init(env, &env_base);
+	err = silofs_env_init(env, &env_base, inargs);
 	if (err) {
 		return err;
 	}
@@ -668,7 +669,7 @@ envi_init(struct silofs_env_inst *envi, const struct silofs_inargs *inargs,
 	if (err) {
 		goto out_err;
 	}
-	err = envi_init_env(envi);
+	err = envi_init_env(envi, inargs);
 	if (err) {
 		goto out_err;
 	}

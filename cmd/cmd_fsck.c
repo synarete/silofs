@@ -179,14 +179,14 @@ static void cmd_fsck_sense_fs(struct cmd_fsck_ctx *ctx)
 	cmd_sense_fs(ctx->env, &ctx->args.spec.fsref);
 }
 
-static void cmd_fsck_open_fs(struct cmd_fsck_ctx *ctx)
+static void cmd_fsck_reload_fs(struct cmd_fsck_ctx *ctx)
 {
 	cmd_reload_fs(ctx->env, &ctx->args.spec.fsref);
 }
 
-static void cmd_fsck_close_fs(struct cmd_fsck_ctx *ctx)
+static void cmd_fsck_unload_fs(struct cmd_fsck_ctx *ctx)
 {
-	cmd_close_fs(ctx->env);
+	cmd_unload_fs(ctx->env);
 }
 
 static void cmd_fsck_execute(struct cmd_fsck_ctx *ctx)
@@ -238,13 +238,13 @@ void cmd_execute_fsck(void)
 	cmd_fsck_sense_fs(&ctx);
 
 	/* Open file-system */
-	cmd_fsck_open_fs(&ctx);
+	cmd_fsck_reload_fs(&ctx);
 
 	/* Do actual fsck */
 	cmd_fsck_execute(&ctx);
 
 	/* Close file-system and caches */
-	cmd_fsck_close_fs(&ctx);
+	cmd_fsck_unload_fs(&ctx);
 
 	/* Close repository */
 	cmd_fsck_close_repo(&ctx);

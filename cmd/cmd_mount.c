@@ -407,7 +407,7 @@ static void cmd_mount_sense_fs(struct cmd_mount_ctx *ctx)
 	cmd_sense_fs(ctx->env, &ctx->args.spec.fsref);
 }
 
-static void cmd_mount_open_fs(struct cmd_mount_ctx *ctx)
+static void cmd_mount_reload_fs(struct cmd_mount_ctx *ctx)
 {
 	cmd_reload_fs(ctx->env, &ctx->args.spec.fsref);
 }
@@ -419,9 +419,9 @@ static void cmd_mount_execute_fs(struct cmd_mount_ctx *ctx)
 	ctx->post_exec_status = silofs_post_exec_fs(ctx->env);
 }
 
-static void cmd_mount_close_fs(struct cmd_mount_ctx *ctx)
+static void cmd_mount_unload_fs(struct cmd_mount_ctx *ctx)
 {
-	cmd_close_fs(ctx->env);
+	cmd_unload_fs(ctx->env);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -615,10 +615,10 @@ static void cmd_mount_exec_phase1(struct cmd_mount_ctx *ctx)
 	cmd_mount_sense_fs(ctx);
 
 	/* Require boot + lock-able file-system */
-	cmd_mount_open_fs(ctx);
+	cmd_mount_reload_fs(ctx);
 
 	/* Flush-close file-system */
-	cmd_mount_close_fs(ctx);
+	cmd_mount_unload_fs(ctx);
 
 	/* Close repository */
 	cmd_mount_close_repo(ctx);
@@ -651,7 +651,7 @@ static void cmd_mount_exec_phase2(struct cmd_mount_ctx *ctx)
 	cmd_mount_sense_fs(ctx);
 
 	/* Open-load file-system meta-data */
-	cmd_mount_open_fs(ctx);
+	cmd_mount_reload_fs(ctx);
 
 	/* Report beginning-of-mount */
 	cmd_mount_log_start(ctx);
@@ -663,7 +663,7 @@ static void cmd_mount_exec_phase2(struct cmd_mount_ctx *ctx)
 	cmd_mount_execute_fs(ctx);
 
 	/* Flush-close file-system meta-data */
-	cmd_mount_close_fs(ctx);
+	cmd_mount_unload_fs(ctx);
 
 	/* Close repository */
 	cmd_mount_close_repo(ctx);

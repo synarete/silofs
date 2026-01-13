@@ -45,10 +45,8 @@ static uint64_t ut_unique_opid(struct ut_env *ute)
 
 void ut_setup_task(struct ut_env *ute, struct silofs_task_ctx *task)
 {
-	const struct silofs_args *args = &ute->args->args;
-
 	silofs_task_init(task, ute->env);
-	silofs_task_set_creds(task, args->uid, args->gid, 0002);
+	silofs_task_set_creds(task, getuid(), getgid(), 0002);
 	silofs_task_set_ts(task, true);
 	task->t_auth.unique = ut_unique_opid(ute);
 	task->t_auth.pid    = getpid();
@@ -2007,11 +2005,11 @@ void ut_reload_forked_fs(struct ut_env *ute)
 	ut_expect_ok(err);
 }
 
-void ut_close_fs(struct ut_env *ute)
+void ut_unload_fs(struct ut_env *ute)
 {
 	int err;
 
-	err = silofs_close_fs(ute->env);
+	err = silofs_unload_fs(ute->env);
 	ut_expect_ok(err);
 }
 
@@ -2041,7 +2039,7 @@ void ut_remove_fs2(struct ut_env *ute)
 
 void ut_close_reload_fs(struct ut_env *ute)
 {
-	ut_close_fs(ute);
+	ut_unload_fs(ute);
 	ut_close_repo(ute);
 	ut_open_repo(ute);
 	ut_reload_fs(ute);

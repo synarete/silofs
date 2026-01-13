@@ -249,9 +249,9 @@ static void cmd_mkfs_save_spec(struct cmd_mkfs_ctx *ctx)
 	cmd_spec_save(&ctx->args.spec, &ctx->args.bref[0]);
 }
 
-static void cmd_mkfs_close_fs(struct cmd_mkfs_ctx *ctx)
+static void cmd_mkfs_unload_fs(struct cmd_mkfs_ctx *ctx)
 {
-	cmd_close_fs(ctx->env);
+	cmd_unload_fs(ctx->env);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -306,7 +306,7 @@ void cmd_execute_mkfs(void)
 	cmd_mkfs_save_spec(&ctx);
 
 	/* Post-format cleanups */
-	cmd_mkfs_close_fs(&ctx);
+	cmd_mkfs_unload_fs(&ctx);
 
 	/* Close repository */
 	cmd_mkfs_close_repo(&ctx);

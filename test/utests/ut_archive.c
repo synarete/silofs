@@ -23,7 +23,7 @@ static void ut_archive_simple(struct ut_env *ute)
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_archive_fs(ute);
-	ut_close_fs(ute);
+	ut_unload_fs(ute);
 	ut_restore_fs(ute);
 	ut_reload_fs(ute);
 	ut_rmdir_at_root(ute, name);
@@ -47,7 +47,7 @@ static void ut_archive_data(struct ut_env *ute)
 	ut_release_flush(ute, ino);
 	ut_close_reload_fs(ute);
 	ut_archive_fs(ute);
-	ut_close_fs(ute);
+	ut_unload_fs(ute);
 	ut_remove_fs(ute);
 	ut_restore_fs(ute);
 	ut_reload_fs(ute);
@@ -83,7 +83,7 @@ static void ut_archive_nfiles(struct ut_env *ute)
 		ut_release_flush(ute, ino);
 	}
 	ut_archive_fs(ute);
-	ut_close_fs(ute);
+	ut_unload_fs(ute);
 	ut_remove_fs(ute);
 	ut_restore_fs(ute);
 	ut_reload_fs(ute);
@@ -125,7 +125,7 @@ static void ut_archive_twice(struct ut_env *ute)
 	ut_write_read(ute, ino2, buf2, len, off2);
 	ut_release_flush(ute, ino2);
 	ut_archive_fs(ute);
-	ut_close_fs(ute);
+	ut_unload_fs(ute);
 	ut_remove_fs(ute);
 	ut_restore_fs(ute);
 	ut_reload_fs(ute);
@@ -137,7 +137,7 @@ static void ut_archive_twice(struct ut_env *ute)
 	ut_release_file(ute, ino2);
 	ut_rename_exchange(ute, dino, name1, dino, name2);
 	ut_archive_fs(ute);
-	ut_close_fs(ute);
+	ut_unload_fs(ute);
 	ut_remove_fs(ute);
 	ut_restore_fs(ute);
 	ut_reload_fs(ute);

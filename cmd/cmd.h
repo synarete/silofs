@@ -286,7 +286,7 @@ void cmd_sense_fs(struct silofs_env *env, const struct silofs_fsref *fsref);
 
 void cmd_reload_fs(struct silofs_env *env, const struct silofs_fsref *fsref);
 
-void cmd_close_fs(struct silofs_env *env);
+void cmd_unload_fs(struct silofs_env *env);
 
 void cmd_exec_fs(struct silofs_env *env);
 

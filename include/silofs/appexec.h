@@ -64,7 +64,7 @@ int silofs_sense_fs(struct silofs_env *env, const struct silofs_fsref *fsref);
 
 int silofs_reload_fs(struct silofs_env *env, const struct silofs_fsref *fsref);
 
-int silofs_close_fs(struct silofs_env *env);
+int silofs_unload_fs(struct silofs_env *env);
 
 int silofs_exec_fs(struct silofs_env *env);
 
@@ -73,8 +73,6 @@ void silofs_halt_fs(struct silofs_env *env);
 int silofs_post_exec_fs(struct silofs_env *env);
 
 int silofs_fork_fs(struct silofs_env *env, struct silofs_fsrefs *out_fsrefs);
-
-int silofs_remove_fs(struct silofs_env *env, const struct silofs_fsref *fsref);
 
 int silofs_sync_fs(struct silofs_env *env, bool drop);
 
@@ -85,5 +83,7 @@ int silofs_archive_fs(struct silofs_env *env, const struct silofs_fsref *fsref,
 
 int silofs_restore_fs(struct silofs_env *env, const struct silofs_fsref *fsref,
                       struct silofs_fsref *out_fsref);
+
+int silofs_remove_fs(struct silofs_env *env, const struct silofs_fsref *fsref);
 
 #endif /* SILOFS_APPEXEC_H_ */

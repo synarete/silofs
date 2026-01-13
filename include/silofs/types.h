@@ -45,6 +45,12 @@ enum silofs_flags {
 	SILOFS_F_STDALLOC     = SILOFS_BIT(16),
 };
 
+/* password as octets-buffers with explicit length */
+struct silofs_password {
+	uint8_t pass[SILOFS_PASSWORD_MAX];
+	uint8_t passlen;
+};
+
 /* a pair of repo-directory and reference name */
 struct silofs_baseref {
 	const char *repodir;
@@ -118,6 +124,19 @@ struct silofs_spec {
 struct silofs_inargs {
 	size_t            memwant;
 	enum silofs_flags flags;
+};
+
+/* format-fs arguments */
+struct silofs_foargs {
+	struct silofs_password passwd;
+	struct silofs_baseref  bref;
+	enum silofs_flags      flags;
+	uid_t                  uid;
+	gid_t                  gid;
+	pid_t                  pid;
+	mode_t                 umask;
+	size_t                 capacity;
+	bool                   no_utf8_names;
 };
 
 /* fs arguments */

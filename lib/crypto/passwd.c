@@ -21,11 +21,20 @@
 #include "infra.h"
 #include "passwd.h"
 
+void silofs_password_reset(struct silofs_password *pw)
+{
+	silofs_memzero(pw, sizeof(*pw));
+	pw->passlen = 0;
+}
+
 static void
 password_setup_dat(struct silofs_password *pw, const void *pass, size_t len)
 {
+	SILOFS_STATICASSERT_LT(sizeof(pw->pass), UINT8_MAX);
+	silofs_assert_le(len, sizeof(pw->pass));
+
 	memcpy(pw->pass, pass, len);
-	pw->passlen = len;
+	pw->passlen = (uint8_t)len;
 }
 
 static void password_setup_nil(struct silofs_password *pw)
@@ -40,8 +49,6 @@ int silofs_password_setup2(struct silofs_password *pw, const void *pass,
                            size_t len)
 {
 	int ret = 0;
-
-	SILOFS_STATICASSERT_GT(sizeof(pw->pass), SILOFS_PASSWORD_MAX);
 
 	silofs_password_reset(pw);
 	if ((pass == nullptr) && (len == 0)) {
@@ -60,10 +67,4 @@ int silofs_password_setup2(struct silofs_password *pw, const void *pass,
 int silofs_password_setup(struct silofs_password *pw, const char *pass)
 {
 	return silofs_password_setup2(pw, pass, silofs_str_length(pass));
-}
-
-void silofs_password_reset(struct silofs_password *pw)
-{
-	silofs_memzero(pw, sizeof(*pw));
-	pw->passlen = 0;
 }

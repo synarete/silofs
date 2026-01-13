@@ -44,7 +44,7 @@
 
 /* min/max length of encryption password (FIPS 140-2) */
 #define SILOFS_PASSWORD_MIN (8)
-#define SILOFS_PASSWORD_MAX (255)
+#define SILOFS_PASSWORD_MAX (127)
 
 /* max size for names (not including null terminator) */
 #define SILOFS_NAME_MAX (511)

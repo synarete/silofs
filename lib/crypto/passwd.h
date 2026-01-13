@@ -18,13 +18,7 @@
 #define SILOFS_PASSWD_H_
 
 #include <silofs/ondisk.h>
-#include <stdlib.h>
-
-/* password octets-buffers */
-struct silofs_password {
-	uint8_t pass[SILOFS_PASSWORD_MAX + 1];
-	size_t  passlen;
-};
+#include <silofs/types.h>
 
 int silofs_password_setup(struct silofs_password *pw, const char *pass);
 

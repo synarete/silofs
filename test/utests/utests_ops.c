@@ -1933,14 +1933,14 @@ void ut_expect_statvfs(const struct statvfs *stv1, const struct statvfs *stv2)
 	ut_expect_lt(bfree_dif, 16 * 4000);
 }
 
-void ut_reload_fs_at(struct ut_env *ute, ino_t ino)
+void ut_close_reload_fs_at(struct ut_env *ute, ino_t ino)
 {
 	struct stat st[2];
 	struct statvfs stv[2];
 
 	ut_statfs(ute, ino, &stv[0]);
 	ut_getattr(ute, ino, &st[0]);
-	ut_reload_fs(ute);
+	ut_close_reload_fs(ute);
 	ut_statfs(ute, ino, &stv[1]);
 	ut_getattr(ute, ino, &st[1]);
 	ut_expect_statvfs(&stv[0], &stv[1]);
@@ -1991,19 +1991,19 @@ void ut_format_fs(struct ut_env *ute)
 	ut_expect_ok(err);
 }
 
-void ut_open_fs(struct ut_env *ute)
+void ut_reload_fs(struct ut_env *ute)
 {
 	int err;
 
-	err = silofs_open_fs(ute->env, &ute->fsrefs.main);
+	err = silofs_reload_fs(ute->env, &ute->fsrefs.main);
 	ut_expect_ok(err);
 }
 
-void ut_open_fs2(struct ut_env *ute)
+void ut_reload_forked_fs(struct ut_env *ute)
 {
 	int err;
 
-	err = silofs_open_fs(ute->env, &ute->fsrefs.fork);
+	err = silofs_reload_fs(ute->env, &ute->fsrefs.fork);
 	ut_expect_ok(err);
 }
 
@@ -2039,12 +2039,12 @@ void ut_remove_fs2(struct ut_env *ute)
 	ut_expect_ok(err);
 }
 
-void ut_reload_fs(struct ut_env *ute)
+void ut_close_reload_fs(struct ut_env *ute)
 {
 	ut_close_fs(ute);
 	ut_close_repo(ute);
 	ut_open_repo(ute);
-	ut_open_fs(ute);
+	ut_reload_fs(ute);
 }
 
 void ut_fork_fs(struct ut_env *ute)

@@ -181,7 +181,7 @@ static void cmd_fsck_sense_fs(struct cmd_fsck_ctx *ctx)
 
 static void cmd_fsck_open_fs(struct cmd_fsck_ctx *ctx)
 {
-	cmd_open_fs(ctx->env, &ctx->args.spec.fsref);
+	cmd_reload_fs(ctx->env, &ctx->args.spec.fsref);
 }
 
 static void cmd_fsck_close_fs(struct cmd_fsck_ctx *ctx)

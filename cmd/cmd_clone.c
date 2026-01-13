@@ -336,7 +336,7 @@ static void cmd_clone_sense_fs(struct cmd_clone_ctx *ctx)
 
 static void cmd_clone_open_fs(struct cmd_clone_ctx *ctx)
 {
-	cmd_open_fs(ctx->env, &ctx->args.spec.fsref);
+	cmd_reload_fs(ctx->env, &ctx->args.spec.fsref);
 }
 
 static void cmd_clone_do_clonefs(struct cmd_clone_ctx *ctx)

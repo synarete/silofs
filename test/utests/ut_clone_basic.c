@@ -124,7 +124,7 @@ static void ut_clone_reload(struct ut_env *ute)
 	ut_write_read_str(ute, ino, name, UT_1M);
 	ut_release(ute, ino);
 	ut_clone(ute, dino);
-	ut_reload_fs(ute);
+	ut_close_reload_fs(ute);
 	ut_inspect_fs(ute);
 	ut_open_rdonly(ute, ino);
 	ut_read_verify_str(ute, ino, name, UT_1M);
@@ -155,7 +155,7 @@ static void ut_clone_reload_other(struct ut_env *ute)
 	ut_release(ute, ino1);
 	ut_clone(ute, dino);
 	ut_close_fs(ute);
-	ut_open_fs2(ute);
+	ut_reload_forked_fs(ute);
 	ut_open_rdonly(ute, ino1);
 	ut_read_verify_str(ute, ino1, str1, off1[0]);
 	ut_read_verify_str(ute, ino1, str1, off1[1]);
@@ -167,7 +167,7 @@ static void ut_clone_reload_other(struct ut_env *ute)
 	ut_release(ute, ino2);
 	ut_close_fs(ute);
 	ut_remove_fs2(ute);
-	ut_open_fs(ute);
+	ut_reload_fs(ute);
 	ut_open_rdonly(ute, ino1);
 	ut_read_verify_str(ute, ino1, str1, off1[0]);
 	ut_read_verify_str(ute, ino1, str1, off1[1]);

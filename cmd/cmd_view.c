@@ -204,7 +204,7 @@ static void cmd_view_sense_fs(struct cmd_view_ctx *ctx)
 
 static void cmd_view_open_fs(struct cmd_view_ctx *ctx)
 {
-	cmd_open_fs(ctx->env, &ctx->args.spec.fsref);
+	cmd_reload_fs(ctx->env, &ctx->args.spec.fsref);
 }
 
 static void cmd_view_close_fs(struct cmd_view_ctx *ctx)

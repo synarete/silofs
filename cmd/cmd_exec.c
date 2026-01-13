@@ -216,13 +216,13 @@ void cmd_format_fs(struct silofs_env *env, struct silofs_fsref *out_fsref)
 	}
 }
 
-void cmd_open_fs(struct silofs_env *env, const struct silofs_fsref *fsref)
+void cmd_reload_fs(struct silofs_env *env, const struct silofs_fsref *fsref)
 {
 	int err;
 
-	err = silofs_open_fs(env, fsref);
+	err = silofs_reload_fs(env, fsref);
 	if (err) {
-		cmd_die_by_fsref(env, err, "open failure", fsref);
+		cmd_die_by_fsref(env, err, "reload failure", fsref);
 	}
 }
 

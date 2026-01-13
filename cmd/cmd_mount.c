@@ -409,7 +409,7 @@ static void cmd_mount_sense_fs(struct cmd_mount_ctx *ctx)
 
 static void cmd_mount_open_fs(struct cmd_mount_ctx *ctx)
 {
-	cmd_open_fs(ctx->env, &ctx->args.spec.fsref);
+	cmd_reload_fs(ctx->env, &ctx->args.spec.fsref);
 }
 
 static void cmd_mount_execute_fs(struct cmd_mount_ctx *ctx)

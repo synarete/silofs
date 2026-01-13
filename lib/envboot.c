@@ -112,7 +112,7 @@ env_stat_mbr_at(const struct silofs_env *env, const struct silofs_mbref *mbref)
 
 	err = silofs_dstor_stat_mbr(env->base.dstor, mbref, &st);
 	if (err) {
-		return err;
+		return (err == -ENOENT) ? -SILOFS_ENOMBR : err;
 	}
 	if (st.st_size != SILOFS_MBR_SIZE) {
 		log_warn("bad mbr: size=%zd", st.st_size);

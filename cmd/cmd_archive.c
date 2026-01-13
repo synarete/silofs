@@ -210,7 +210,7 @@ static void cmd_archive_sense_fs(struct cmd_archive_ctx *ctx)
 
 static void cmd_archive_open_fs(struct cmd_archive_ctx *ctx)
 {
-	cmd_open_fs(ctx->env, &ctx->args.spec.fsref);
+	cmd_reload_fs(ctx->env, &ctx->args.spec.fsref);
 }
 
 static void cmd_archive_close_fs(struct cmd_archive_ctx *ctx)

@@ -436,7 +436,7 @@ static void ut_prep_tests(struct ut_env *ute)
 	ut_close_fs(ute);
 	ut_close_repo(ute);
 	ut_open_repo(ute);
-	ut_open_fs(ute);
+	ut_reload_fs(ute);
 }
 
 static void ut_done_tests(struct ut_env *ute)

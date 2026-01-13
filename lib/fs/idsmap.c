@@ -266,12 +266,11 @@ static void idsmap_fini_hmaps(struct silofs_idsmap *idsm)
 	idsmap_fini_ghmaps(idsm);
 }
 
-int silofs_idsmap_init(struct silofs_idsmap *idsm, struct silofs_alloc *alloc,
-                       bool allow_hostids)
+int silofs_idsmap_init(struct silofs_idsmap *idsm, struct silofs_alloc *alloc)
 {
 	silofs_memzero(idsm, sizeof(*idsm));
-	idsm->idm_alloc        = alloc;
-	idsm->idm_allow_hotids = allow_hostids;
+	idsm->idm_alloc         = alloc;
+	idsm->idm_allow_hostids = false;
 	return idsmap_init_hmaps(idsm);
 }
 
@@ -284,7 +283,7 @@ void silofs_idsmap_fini(struct silofs_idsmap *idsm)
 
 static int idsmap_noent_status(const struct silofs_idsmap *idsm)
 {
-	return idsm->idm_allow_hotids ? 0 : -SILOFS_ENOENT;
+	return idsm->idm_allow_hostids ? 0 : -SILOFS_ENOENT;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -681,7 +680,8 @@ static int idsmap_populate_gids(struct silofs_idsmap      *idsm,
 }
 
 int silofs_idsmap_populate(struct silofs_idsmap      *idsm,
-                           const struct silofs_fsids *fsids)
+                           const struct silofs_fsids *fsids,
+                           bool                       allow_hostids)
 {
 	int err;
 
@@ -693,6 +693,7 @@ int silofs_idsmap_populate(struct silofs_idsmap      *idsm,
 	if (err) {
 		return err;
 	}
+	idsm->idm_allow_hostids = allow_hostids;
 	return 0;
 }
 

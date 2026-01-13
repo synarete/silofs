@@ -33,20 +33,20 @@ struct silofs_idsmap {
 	size_t                   idm_usize;
 	size_t                   idm_ghcap;
 	size_t                   idm_gsize;
-	bool                     idm_allow_hotids;
+	bool                     idm_allow_hostids;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_idsmap_init(struct silofs_idsmap *idsm, struct silofs_alloc *alloc,
-                       bool allow_hostids);
+int silofs_idsmap_init(struct silofs_idsmap *idsm, struct silofs_alloc *alloc);
 
 void silofs_idsmap_fini(struct silofs_idsmap *idsm);
 
 void silofs_idsmap_clear(struct silofs_idsmap *idsm);
 
 int silofs_idsmap_populate(struct silofs_idsmap      *idsm,
-                           const struct silofs_fsids *fsids);
+                           const struct silofs_fsids *fsids,
+                           bool                       allow_hostids);
 
 int silofs_idsmap_mapcreds(const struct silofs_idsmap *idsm, uid_t host_uid,
                            gid_t host_gid, uid_t *out_fs_uid,

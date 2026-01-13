@@ -140,9 +140,13 @@ static void ute_unlock(struct ut_env *ute)
 
 static void ute_setup(struct ut_env *ute)
 {
+	const struct silofs_inargs inargs = {
+		.memwant = ute->args->args.memwant,
+		.flags   = ute->args->args.flags,
+	};
 	int err;
 
-	err = silofs_create_env(&ute->args->args, &ute->env);
+	err = silofs_create_env(&inargs, &ute->args->args, &ute->env);
 	silofs_assert_ok(err);
 }
 

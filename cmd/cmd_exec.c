@@ -20,9 +20,13 @@
 
 void cmd_new_env(const struct silofs_args *args, struct silofs_env **p_env)
 {
+	const struct silofs_inargs inargs = {
+		.memwant = args->memwant,
+		.flags   = args->flags,
+	};
 	int err;
 
-	err = silofs_create_env(args, p_env);
+	err = silofs_create_env(&inargs, args, p_env);
 	if (err) {
 		cmd_die(err, "failed to create fs instance");
 	}

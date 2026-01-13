@@ -114,7 +114,13 @@ struct silofs_spec {
 	struct silofs_fsids fsids;
 };
 
-/* input arguments */
+/* init arguments */
+struct silofs_inargs {
+	size_t            memwant;
+	enum silofs_flags flags;
+};
+
+/* fs arguments */
 struct silofs_args {
 	struct silofs_spec    spec;
 	struct silofs_baseref bref[2];

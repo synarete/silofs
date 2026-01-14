@@ -2831,10 +2831,7 @@ fqs_setup_wr_iter(struct silofs_fuseq_sub *fqs,
 
 static void *tail_of(const struct silofs_fuseq_in *in, size_t head_len)
 {
-	const void *p    = in;
-	const uint8_t *t = (const uint8_t *)p + head_len;
-
-	return unconst(t);
+	return (void *)((uintptr_t)in + head_len);
 }
 
 static int do_write_buf(const struct silofs_fuseq_cmd_ctx *fcc)

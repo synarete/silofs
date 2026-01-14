@@ -121,6 +121,7 @@ static inline void *silofs_unconst(const void *p)
 		const void *p;
 		void       *q;
 	} u = { .p = p };
+
 	return u.q;
 }
 
@@ -128,9 +129,7 @@ static inline void *silofs_unconst(const void *p)
 
 static inline void *silofs_baseof(void *p, size_t d)
 {
-	uint8_t *q = (uint8_t *)p;
-
-	return q - d;
+	return (void *)((uintptr_t)p - d);
 }
 
 static inline const void *silofs_const_baseof(const void *p, size_t d)

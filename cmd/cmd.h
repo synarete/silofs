@@ -335,8 +335,10 @@ void cmd_delpass(char **pass);
 
 void cmd_checkpass(const char *pass);
 
+void cmd_mkpasswd(struct silofs_password *pw, const char *pass);
+
 /* env arguments */
-void cmd_setup_args(struct silofs_args *args);
+void cmd_setup_args(struct silofs_args *args, const char *pass);
 
 void cmd_destroy_args(struct silofs_args *args);
 

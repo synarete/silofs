@@ -1422,3 +1422,8 @@ int silofs_remap_status_code(int status)
 	}
 	return -ret;
 }
+
+int silofs_mkpasswd(struct silofs_password *pw, const char *s)
+{
+	return silofs_password_setup(pw, s);
+}

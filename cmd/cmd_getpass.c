@@ -295,7 +295,21 @@ void cmd_checkpass(const char *pass)
 		cmd_diez("password is not FIPS 140-2 compliant "
 		         "(len=%lu minlen=%lu)",
 		         len, min);
-	} else if (len > max) {
+	}
+	if (len > max) {
 		cmd_diez("password too long (len=%lu maxlen=%lu)", len, max);
+	}
+}
+
+void cmd_mkpasswd(struct silofs_password *pw, const char *pass)
+{
+	int err;
+
+	if (pass != nullptr) {
+		cmd_checkpass(pass);
+	}
+	err = silofs_mkpasswd(pw, pass);
+	if (err) {
+		cmd_die(err, "illegal password");
 	}
 }

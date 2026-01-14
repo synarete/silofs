@@ -167,9 +167,7 @@ static int check_baserefs(const struct silofs_args *args)
 
 static int check_password(const struct silofs_args *args)
 {
-	struct silofs_password passwd;
-
-	return silofs_password_setup(&passwd, args->passwd);
+	return silofs_password_recheck(&args->passwd);
 }
 
 static int check_args(const struct silofs_args *args)
@@ -548,7 +546,7 @@ static void envi_fini_env(struct silofs_env_inst *envi)
 
 static int envi_init_passwd(struct silofs_env_inst *envi)
 {
-	return silofs_password_setup(&envi->passwd, envi->args.passwd);
+	return silofs_password_assign(&envi->passwd, &envi->args.passwd);
 }
 
 static void envi_fini_passwd(struct silofs_env_inst *envi)

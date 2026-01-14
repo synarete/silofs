@@ -19,7 +19,6 @@
 #include <gcrypt.h>
 #include "infra.h"
 #include "gcry.h"
-#include "passwd.h"
 #include "mdigest.h"
 #include "cipher.h"
 

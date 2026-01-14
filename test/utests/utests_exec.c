@@ -219,12 +219,13 @@ static void ute_prandom_ascii(struct ut_env *ute, char *str, size_t n)
 
 static void ute_setup_random_passwd(struct ut_env *ute)
 {
-	struct silofs_args *args   = &ute->args->args;
-	struct silofs_password *pp = &ute->passwd;
+	char pass[SILOFS_PASSWORD_MAX + 1] = "";
+	struct silofs_args *args           = &ute->args->args;
+	int err;
 
-	pp->passlen = sizeof(pp->pass) - 1;
-	ute_prandom_ascii(ute, (char *)pp->pass, pp->passlen);
-	args->passwd = (const char *)(pp->pass);
+	ute_prandom_ascii(ute, pass, sizeof(pass) - 1);
+	err = silofs_mkpasswd(&args->passwd, pass);
+	ut_expect_ok(err);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

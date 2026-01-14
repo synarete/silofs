@@ -143,27 +143,18 @@ static int check_fsname(const struct silofs_strview *sv)
 	return 0;
 }
 
+/* TODO: use me to check fs-name upon open */
 int silofs_make_fsnamestr(struct silofs_namestr *nstr, const char *s)
 {
+	struct silofs_strview sv;
 	int err;
 
-	err = silofs_make_namestr(nstr, s);
-	if (err) {
-		return err;
-	}
-	err = check_fsname(&nstr->sv);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
-int silofs_check_fsname(const char *s)
-{
-	struct silofs_strview sv;
-
 	silofs_strview_init(&sv, s);
-	return check_fsname(&sv);
+	err = check_fsname(&sv);
+	if (err) {
+		return err;
+	}
+	return make_namestr(nstr, &sv);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

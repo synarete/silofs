@@ -257,13 +257,12 @@ static void cmd_mount_setup_args(struct cmd_mount_ctx *ctx)
 	const struct cmd_mount_in_args *in_args = &ctx->in_args;
 	struct silofs_args *args                = &ctx->args;
 
-	cmd_setup_args(args);
-	args->flags = (enum silofs_flags)in_args->flags;
-
+	cmd_setup_args(args, in_args->password);
 	args->bref[0].repodir = in_args->repodir_real;
 	args->bref[0].refname = in_args->fsname;
-	args->passwd          = in_args->password;
 	args->mntdir          = in_args->mntpoint_real;
+	args->flags           = (enum silofs_flags)in_args->flags;
+	cmd_delpass(&ctx->in_args.password);
 }
 
 static void cmd_mount_load_spec(struct cmd_mount_ctx *ctx)
@@ -277,7 +276,6 @@ static void cmd_mount_setup_env(struct cmd_mount_ctx *ctx, int phase)
 	cmd_new_env(&ctx->args, &ctx->env);
 	if (phase == 2) {
 		cmd_spec_clear_fsids(&ctx->args.spec);
-		cmd_delpass(&ctx->in_args.password);
 	}
 }
 

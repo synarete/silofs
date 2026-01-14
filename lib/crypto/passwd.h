@@ -22,9 +22,11 @@
 
 int silofs_password_setup(struct silofs_password *pw, const char *pass);
 
-int silofs_password_setup2(struct silofs_password *pw, const void *pass,
-                           size_t len);
+int silofs_password_assign(struct silofs_password       *pw,
+                           const struct silofs_password *other);
 
 void silofs_password_reset(struct silofs_password *pw);
+
+int silofs_password_recheck(const struct silofs_password *pw);
 
 #endif /* SILOFS_PASSWD_H_ */

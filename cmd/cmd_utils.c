@@ -93,15 +93,61 @@ void cmd_atexit(void (*fn)(void))
 	}
 }
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 static size_t cmd_safe_strlen(const char *s)
 {
 	const size_t lmax = SILOFS_MEGA;
 	const size_t slen = strnlen(s, lmax);
 
 	if (slen >= lmax) {
-		cmd_die(0, "bad string length: len=%zu", slen);
+		cmd_die(0, "bad string length: '%.8s...' len=%zu", s, slen);
 	}
 	return slen;
+}
+
+static void cmd_check_ascii_fsname(const char *s, size_t n)
+{
+	const char *allowed = "abcdefghijklmnopqrstuvwxyz"
+			      "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+			      "0123456789_-.+=@";
+	int ch;
+
+	for (size_t i = 0; i < n; ++i) {
+		ch = s[i];
+		if (isspace(ch)) {
+			cmd_diez("illegal space char in fsname: 0%o", ch);
+		}
+		if (iscntrl(ch)) {
+			cmd_diez("illegal control char in fsname: 0%o", ch);
+		}
+		if (!isprint(ch)) {
+			cmd_diez("non-printable char in fsname: 0%o", ch);
+		}
+		if (!isascii(ch)) {
+			cmd_diez("non-ASCII char in fsname: 0%o", ch);
+		}
+		if (strchr(allowed, ch) == nullptr) {
+			cmd_diez("char not allowed in fsname: '%c'", ch);
+		}
+	}
+}
+
+void cmd_check_fsname(const char *s)
+{
+	size_t n;
+
+	n = cmd_safe_strlen(s);
+	if (!n) {
+		cmd_die(-SILOFS_EILLSTR, "fs-name must not be empty");
+	}
+	if (n > SILOFS_FSNAME_MAX) {
+		cmd_die(-ENAMETOOLONG, "fs-name too long: '%s'", s);
+	}
+	if (s[0] == '.') {
+		cmd_diez("fs-name must not start with dot");
+	}
+	cmd_check_ascii_fsname(s, n);
 }
 
 void cmd_check_repopath(const char *arg_val)
@@ -110,16 +156,6 @@ void cmd_check_repopath(const char *arg_val)
 
 	if ((len < 2) || (len >= SILOFS_REPOPATH_MAX)) {
 		cmd_die(-EINVAL, "illegal repo pathname: %s", arg_val);
-	}
-}
-
-void cmd_check_fsname(const char *arg_val)
-{
-	int err;
-
-	err = silofs_check_fsname(arg_val);
-	if (err) {
-		cmd_die(err, "illegal file-system name: %s", arg_val);
 	}
 }
 
@@ -353,6 +389,8 @@ void cmd_check_emptydir(const char *path, bool w_ok)
 		cmd_diez("not an empty directory: %s", path);
 	}
 }
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void cmd_mkdir(const char *path, mode_t mode)
 {

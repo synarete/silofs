@@ -168,10 +168,10 @@ static void cmd_view_setup_args(struct cmd_view_ctx *ctx)
 {
 	struct silofs_args *args = &ctx->args;
 
-	cmd_setup_args(args);
+	cmd_setup_args(args, ctx->in_args.password);
 	args->bref[0].repodir = ctx->in_args.repodir_real;
 	args->bref[0].refname = ctx->in_args.fsname;
-	args->passwd          = ctx->in_args.password;
+	cmd_delpass(&ctx->in_args.password);
 }
 
 static void cmd_view_load_spec(struct cmd_view_ctx *ctx)
@@ -184,7 +184,6 @@ static void cmd_view_setup_env(struct cmd_view_ctx *ctx)
 {
 	cmd_new_env(&ctx->args, &ctx->env);
 	cmd_spec_clear_fsids(&ctx->args.spec);
-	cmd_delpass(&ctx->in_args.password);
 }
 
 static void cmd_view_open_repo(struct cmd_view_ctx *ctx)

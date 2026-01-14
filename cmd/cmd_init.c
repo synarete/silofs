@@ -128,7 +128,7 @@ static void cmd_init_setup_args(struct cmd_init_ctx *ctx)
 {
 	struct silofs_args *args = &ctx->args;
 
-	cmd_setup_args(args);
+	cmd_setup_args(args, nullptr);
 	args->bref[0].repodir = ctx->in_args.repodir_real;
 	args->bref[0].refname = "silofs";
 }

@@ -172,12 +172,12 @@ static void cmd_restore_setup_args(struct cmd_restore_ctx *ctx)
 {
 	struct silofs_args *args = &ctx->args;
 
-	cmd_setup_args(args);
+	cmd_setup_args(args, ctx->in_args.password);
 	args->bref[0].repodir = ctx->in_args.repodir_real;
 	args->bref[0].refname = ctx->in_args.fsname;
 	args->bref[1].repodir = ctx->in_args.repodir_real;
 	args->bref[1].refname = ctx->in_args.arname;
-	args->passwd          = ctx->in_args.password;
+	cmd_delpass(&ctx->in_args.password);
 }
 
 static void cmd_restore_load_spec(struct cmd_restore_ctx *ctx)

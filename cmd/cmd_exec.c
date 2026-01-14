@@ -303,9 +303,10 @@ void cmd_restore_fs(struct silofs_env *env, const struct silofs_fsref *fsref,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void cmd_setup_args(struct silofs_args *args)
+void cmd_setup_args(struct silofs_args *args, const char *pass)
 {
 	memset(args, 0, sizeof(*args));
+	cmd_mkpasswd(&args->passwd, pass);
 	cmd_spec_setup(&args->spec);
 	args->uid   = getuid();
 	args->gid   = getgid();

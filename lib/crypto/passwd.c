@@ -17,9 +17,50 @@
 #include <silofs/configs.h>
 #include <silofs/macros.h>
 #include <silofs/errors.h>
+#include <ctype.h>
 #include "str.h"
 #include "infra.h"
 #include "passwd.h"
+
+static int check_password_len(size_t len)
+{
+	return ((len < SILOFS_PASSWORD_MIN) || //
+	        (len > SILOFS_PASSWORD_MAX)) ?
+	               -SILOFS_EILLPASS :
+	               0;
+}
+
+static int check_password_char(int ch)
+{
+	int ret = 0;
+
+	if (!isascii(ch)) {
+		ret = -SILOFS_EILLPASS;
+	} else if (iscntrl(ch)) {
+		ret = -SILOFS_EILLPASS;
+	} else if (isspace(ch)) {
+		ret = -SILOFS_EILLPASS;
+	} else if (!isprint(ch)) {
+		ret = -SILOFS_EILLPASS;
+	} else if (!isalnum(ch) && !ispunct(ch)) {
+		ret = -SILOFS_EILLPASS;
+	}
+	return ret;
+}
+
+static int check_password_dat(const void *d, size_t n)
+{
+	const char *p = d;
+	int err       = 0;
+
+	for (size_t i = 0; i < n; ++i) {
+		err = check_password_char(p[i]);
+		if (err) {
+			break;
+		}
+	}
+	return err;
+}
 
 void silofs_password_reset(struct silofs_password *pw)
 {
@@ -45,26 +86,54 @@ static void password_setup_nil(struct silofs_password *pw)
 	password_setup_dat(pw, pass, sizeof(pass));
 }
 
-int silofs_password_setup2(struct silofs_password *pw, const void *pass,
-                           size_t len)
-{
-	int ret = 0;
-
-	silofs_password_reset(pw);
-	if ((pass == nullptr) && (len == 0)) {
-		/* password-less mode */
-		password_setup_nil(pw);
-	} else if ((pass != nullptr) && //
-	           (len >= SILOFS_PASSWORD_MIN) &&
-	           (len <= SILOFS_PASSWORD_MAX)) {
-		password_setup_dat(pw, pass, len);
-	} else {
-		ret = -SILOFS_EILLPASS;
-	}
-	return ret;
-}
-
 int silofs_password_setup(struct silofs_password *pw, const char *pass)
 {
-	return silofs_password_setup2(pw, pass, silofs_str_length(pass));
+	size_t len;
+	int err;
+
+	silofs_password_reset(pw);
+	if (pass == nullptr) {
+		/* password-less mode */
+		password_setup_nil(pw);
+		return 0;
+	}
+	len = silofs_str_length(pass);
+	err = check_password_len(len);
+	if (err) {
+		return err;
+	}
+	err = check_password_dat(pass, len);
+	if (err) {
+		return err;
+	}
+	password_setup_dat(pw, pass, len);
+	return 0;
+}
+
+int silofs_password_assign(struct silofs_password *pw,
+                           const struct silofs_password *other)
+{
+	int err;
+
+	err = silofs_password_recheck(other);
+	if (err) {
+		return err;
+	}
+	password_setup_dat(pw, other->pass, other->passlen);
+	return 0;
+}
+
+int silofs_password_recheck(const struct silofs_password *pw)
+{
+	int err;
+
+	err = check_password_len(pw->passlen);
+	if (err) {
+		return err;
+	}
+	err = check_password_dat(pw->pass, pw->passlen);
+	if (err) {
+		return err;
+	}
+	return 0;
 }

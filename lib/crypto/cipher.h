@@ -21,7 +21,6 @@
 #include <silofs/ondisk.h>
 #include "ivkey.h"
 #include "mdigest.h"
-#include "passwd.h"
 
 /* cipher's operation arguments */
 struct silofs_ciargs {

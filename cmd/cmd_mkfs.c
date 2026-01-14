@@ -199,13 +199,13 @@ static void cmd_mkfs_setup_args(struct cmd_mkfs_ctx *ctx)
 {
 	struct silofs_args *args = &ctx->args;
 
-	cmd_setup_args(args);
+	cmd_setup_args(args, ctx->in_args.password);
 	cmd_uidgid_of(ctx->in_args.username, &args->uid, &args->gid);
 	args->bref[0].repodir = ctx->in_args.repodir_real;
 	args->bref[0].refname = ctx->in_args.fsname;
-	args->passwd          = ctx->in_args.password;
 	args->capacity        = (size_t)ctx->in_args.fs_size;
 	args->no_utf8_names   = ctx->in_args.no_utf8_names;
+	cmd_delpass(&ctx->in_args.password);
 }
 
 static void cmd_mkfs_setup_fsids(struct cmd_mkfs_ctx *ctx)
@@ -226,7 +226,6 @@ static void cmd_mkfs_setup_fsids(struct cmd_mkfs_ctx *ctx)
 static void cmd_mkfs_setup_env(struct cmd_mkfs_ctx *ctx)
 {
 	cmd_new_env(&ctx->args, &ctx->env);
-	cmd_delpass(&ctx->in_args.password);
 }
 
 static void cmd_mkfs_open_repo(const struct cmd_mkfs_ctx *ctx)

@@ -32,7 +32,7 @@ void silofs_getfsmeta(struct silofs_fsmeta *out_fsmeta);
 
 int silofs_remap_status_code(int status);
 
-int silofs_check_fsname(const char *s);
+int silofs_mkpasswd(struct silofs_password *pw, const char *s);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

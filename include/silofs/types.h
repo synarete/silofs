@@ -129,32 +129,20 @@ struct silofs_inargs {
 	mode_t            umask;
 };
 
-/* format arguments */
-struct silofs_foargs {
+/* fs arguments */
+struct silofs_args {
+	struct silofs_spec     spec;
+	struct silofs_baseref  bref[2];
 	struct silofs_password passwd;
-	struct silofs_baseref  bref;
+	const char            *mntdir;
 	enum silofs_flags      flags;
 	uid_t                  uid;
 	gid_t                  gid;
 	mode_t                 umask;
 	size_t                 capacity;
+	size_t                 memwant;
+	bool                   no_ispecial;
 	bool                   no_utf8_names;
-};
-
-/* fs arguments */
-struct silofs_args {
-	struct silofs_spec    spec;
-	struct silofs_baseref bref[2];
-	const char           *mntdir;
-	const char           *passwd;
-	enum silofs_flags     flags;
-	uid_t                 uid;
-	gid_t                 gid;
-	mode_t                umask;
-	size_t                capacity;
-	size_t                memwant;
-	bool                  no_ispecial;
-	bool                  no_utf8_names;
 };
 
 /* in-use versions */

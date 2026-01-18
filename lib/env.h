@@ -36,18 +36,17 @@ struct silofs_env_opstat {
 
 /* environment meta settings */
 struct silofs_env_base {
-	const struct silofs_args *args;
-	struct silofs_prandgen   *prng;
-	struct silofs_alloc      *alloc;
-	struct silofs_lblock     *nilbk;
-	struct silofs_repo       *repo;
-	struct silofs_dstor      *dstor;
-	struct silofs_pcache     *pcache;
-	struct silofs_lcache     *lcache;
-	struct silofs_spamaps    *spamaps;
-	struct silofs_submitq    *submitq;
-	struct silofs_flusher    *flusher;
-	struct silofs_idsmap     *idsmap;
+	struct silofs_prandgen *prng;
+	struct silofs_alloc    *alloc;
+	struct silofs_lblock   *nilbk;
+	struct silofs_repo     *repo;
+	struct silofs_dstor    *dstor;
+	struct silofs_pcache   *pcache;
+	struct silofs_lcache   *lcache;
+	struct silofs_spamaps  *spamaps;
+	struct silofs_submitq  *submitq;
+	struct silofs_flusher  *flusher;
+	struct silofs_idsmap   *idsmap;
 };
 
 /* main boot-records info */
@@ -59,6 +58,7 @@ struct silofs_env_mbis {
 /* top-level environment object */
 struct silofs_env {
 	struct silofs_password   passwd;
+	struct silofs_args       args;
 	struct silofs_env_base   base;
 	struct silofs_env_mbis   mbis;
 	struct silofs_rwlock     rwlock;

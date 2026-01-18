@@ -3041,7 +3041,7 @@ static int check_itype(const struct silofs_task_ctx *task, mode_t mode)
 	 * TODO-0031: Filter supported modes based on mount flags
 	 */
 	const mode_t itype     = mode & S_IFMT;
-	const bool no_ispecial = task->t_env->base.args->no_ispecial;
+	const bool no_ispecial = task->t_env->args.no_ispecial;
 	int ret;
 
 	switch (itype) {

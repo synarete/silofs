@@ -36,9 +36,7 @@ int silofs_mkpasswd(struct silofs_password *pw, const char *s);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_create_env(const struct silofs_inargs *inargs,
-                      const struct silofs_args   *args,
-                      struct silofs_env         **out_env);
+struct silofs_env *silofs_create_env(size_t memwant, enum silofs_flags flags);
 
 void silofs_destroy_env(struct silofs_env *env);
 

@@ -115,7 +115,7 @@ static int format_uber(struct silofs_task_ctx *task)
 
 static size_t calc_aligned_fs_cap(const struct silofs_task_ctx *task)
 {
-	const size_t fs_cap_want = task->t_env->base.args->capacity;
+	const size_t fs_cap_want = task->t_env->args.capacity;
 	const size_t align_size  = SILOFS_LSEG_SIZE_MAX;
 
 	return (fs_cap_want / align_size) * align_size;
@@ -309,10 +309,10 @@ spawn_rootdir(struct silofs_task_ctx *task, struct silofs_inode_info **out_ii)
 static void update_rootdir(struct silofs_task_ctx *task,
                            struct silofs_inode_info *rootd_ii)
 {
-	const struct silofs_args *args = task->t_env->base.args;
+	const bool no_utf8_names = task->t_env->args.no_utf8_names;
 
 	silofs_ii_fixup_as_rootdir(rootd_ii);
-	if (args->no_utf8_names) {
+	if (no_utf8_names) {
 		silofs_dir_unset_flag(rootd_ii, SILOFS_DIRF_NAME_UTF8);
 	} else {
 		silofs_dir_set_flag(rootd_ii, SILOFS_DIRF_NAME_UTF8);
@@ -656,11 +656,10 @@ int silofs_close_repo(struct silofs_env *env)
 
 static int do_mount_and_exec(struct silofs_env *env)
 {
-	const struct silofs_args *args = env->base.args;
-	struct silofs_fuseq *fuseq     = env->fuseq;
+	struct silofs_fuseq *fuseq = env->fuseq;
 	int err;
 
-	err = silofs_fuseq_mount(fuseq, env, args->mntdir);
+	err = silofs_fuseq_mount(fuseq, env, env->args.mntdir);
 	if (!err) {
 		err = silofs_fuseq_exec(fuseq);
 	}
@@ -729,7 +728,7 @@ static int check_fs_capacity(size_t cap_size)
 
 static int check_want_capacity(const struct silofs_env *env)
 {
-	const size_t cap_want = env->base.args->capacity;
+	const size_t cap_want = env->args.capacity;
 	int err;
 
 	err = check_fs_capacity(cap_want);
@@ -773,7 +772,7 @@ exec_format_meta(struct silofs_env *env, struct silofs_mbref *out_mbref)
 
 int silofs_format_repo(struct silofs_env *env)
 {
-	const struct silofs_baseref *bref = &env->base.args->bref[0];
+	const struct silofs_baseref *bref = &env->args.bref[0];
 	int ret;
 
 	silofs_env_lock(env);
@@ -784,8 +783,8 @@ int silofs_format_repo(struct silofs_env *env)
 
 int silofs_open_repo(struct silofs_env *env)
 {
-	const struct silofs_baseref *bref = &env->base.args->bref[0];
-	const bool rdonly = (env->base.args->flags & SILOFS_F_RDONLY) > 0;
+	const struct silofs_baseref *bref = &env->args.bref[0];
+	const bool rdonly = (env->args.flags & SILOFS_F_RDONLY) > 0;
 	int ret;
 
 	silofs_env_lock(env);
@@ -1157,8 +1156,9 @@ int silofs_restore_fs(struct silofs_env *env, const struct silofs_fsref *fsref,
 void silofs_get_baseref(const struct silofs_env *env,
                         struct silofs_baseref *out_baseref)
 {
-	out_baseref->repodir = env->base.args->bref[0].repodir;
-	out_baseref->refname = env->base.args->bref[0].refname;
+	const struct silofs_baseref *bref = &env->base.repo->re_bref;
+
+	memcpy(out_baseref, bref, sizeof(*out_baseref));
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

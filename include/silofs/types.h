@@ -121,12 +121,6 @@ struct silofs_spec {
 	struct silofs_fsids fsids;
 };
 
-/* init arguments */
-struct silofs_inargs {
-	size_t            memwant;
-	enum silofs_flags flags;
-};
-
 /* fs arguments */
 struct silofs_args {
 	struct silofs_password passwd;

@@ -146,7 +146,7 @@ int silofs_env_update_password(struct silofs_env *env,
 
 static void env_update_mntflags(struct silofs_env *env)
 {
-	const enum silofs_flags flags = env->base.args->flags;
+	const enum silofs_flags flags = env->args.flags;
 	unsigned long ms_flag_with    = 0;
 	unsigned long ms_flag_dont    = 0;
 
@@ -372,7 +372,7 @@ void silofs_env_rwunlock(struct silofs_env *env)
 
 bool silofs_env_hasflag(const struct silofs_env *env, enum silofs_flags f)
 {
-	return (env->base.args->flags & f) == f;
+	return (env->args.flags & f) == f;
 }
 
 bool silofs_env_isrdonlyfs(const struct silofs_env *env)

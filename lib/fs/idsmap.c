@@ -18,6 +18,7 @@
 #include <silofs/types.h>
 #include <silofs/errors.h>
 #include "infra.h"
+#include "uidgid.h"
 #include "idsmap.h"
 
 enum {
@@ -707,42 +708,46 @@ int silofs_idsmap_mapcreds(const struct silofs_idsmap *idsm, uid_t host_uid,
                            gid_t host_gid, uid_t *out_fs_uid,
                            gid_t *out_fs_gid)
 {
-	int err1;
-	int err2;
+	int err;
 
-	if (host_uid != (uid_t)(-1)) {
-		err1 = idsmap_resolve_uhtof(idsm, host_uid, out_fs_uid);
-	} else {
-		*out_fs_uid = host_uid;
-		err1        = 0;
+	*out_fs_uid = host_uid;
+	*out_fs_gid = host_gid;
+
+	if (!silofs_uid_isnull(host_uid)) {
+		err = idsmap_resolve_uhtof(idsm, host_uid, out_fs_uid);
+		if (err) {
+			return err;
+		}
 	}
-	if (host_gid != (gid_t)(-1)) {
-		err2 = idsmap_resolve_ghtof(idsm, host_gid, out_fs_gid);
-	} else {
-		*out_fs_gid = host_gid;
-		err2        = 0;
+	if (!silofs_gid_isnull(host_gid)) {
+		err = idsmap_resolve_ghtof(idsm, host_gid, out_fs_gid);
+		if (err) {
+			return err;
+		}
 	}
-	return err1 ? err1 : err2;
+	return 0;
 }
 
 int silofs_idsmap_rmapcreds(const struct silofs_idsmap *idsm, uid_t fs_uid,
                             gid_t fs_gid, uid_t *out_host_uid,
                             gid_t *out_host_gid)
 {
-	int err1;
-	int err2;
+	int err;
 
-	if (fs_uid != (uid_t)(-1)) {
-		err1 = idsmap_resolve_uftoh(idsm, fs_uid, out_host_uid);
-	} else {
-		*out_host_uid = fs_uid;
-		err1          = 0;
+	*out_host_uid = fs_uid;
+	*out_host_gid = fs_gid;
+
+	if (!silofs_uid_isnull(fs_uid)) {
+		err = idsmap_resolve_uftoh(idsm, fs_uid, out_host_uid);
+		if (err) {
+			return err;
+		}
 	}
-	if (fs_gid != (gid_t)(-1)) {
-		err2 = idsmap_resolve_gftoh(idsm, fs_gid, out_host_gid);
-	} else {
-		*out_host_gid = fs_gid;
-		err2          = 0;
+	if (!silofs_gid_isnull(fs_gid)) {
+		err = idsmap_resolve_gftoh(idsm, fs_gid, out_host_gid);
+		if (err) {
+			return err;
+		}
 	}
-	return err1 ? err1 : err2;
+	return 0;
 }

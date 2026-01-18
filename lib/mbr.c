@@ -521,11 +521,14 @@ out:
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_mbi_init(struct silofs_mbr_info *mbi,
-                     const struct silofs_mbr_meta *meta)
+void silofs_mbi_init(struct silofs_mbr_info *mbi, enum silofs_mbr_mode mode)
 {
-	mbr_meta_assign(&mbi->mb_meta, meta);
-	mbr1k_init(&mbi->mb_mbr1k, meta->mode);
+	const struct silofs_mbr_meta meta_none = {
+		.mode = mode,
+	};
+
+	mbr_meta_assign(&mbi->mb_meta, &meta_none);
+	mbr1k_init(&mbi->mb_mbr1k, mode);
 }
 
 void silofs_mbi_fini(struct silofs_mbr_info *mbi)
@@ -537,6 +540,16 @@ void silofs_mbi_fini(struct silofs_mbr_info *mbi)
 static enum silofs_mbr_mode mbi_mode(const struct silofs_mbr_info *mbi)
 {
 	return mbi->mb_meta.mode;
+}
+
+int silofs_mbi_set_meta(struct silofs_mbr_info *mbi,
+                        const struct silofs_mbr_meta *meta)
+{
+	if (meta->mode != mbi_mode(mbi)) {
+		return -SILOFS_EINVAL;
+	}
+	mbr_meta_assign(&mbi->mb_meta, meta);
+	return 0;
 }
 
 int silofs_mbi_uber_root(const struct silofs_mbr_info *mbi,

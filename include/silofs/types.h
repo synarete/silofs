@@ -43,6 +43,7 @@ enum silofs_flags {
 	SILOFS_F_ASYNCWR      = SILOFS_BIT(14),
 	SILOFS_F_LAZYTIME     = SILOFS_BIT(15),
 	SILOFS_F_STDALLOC     = SILOFS_BIT(16),
+	SILOFS_F_NOPASSWD     = SILOFS_BIT(17),
 };
 
 /* password as octets-buffers with explicit length */
@@ -124,16 +125,13 @@ struct silofs_spec {
 struct silofs_inargs {
 	size_t            memwant;
 	enum silofs_flags flags;
-	uid_t             uid;
-	gid_t             gid;
-	mode_t            umask;
 };
 
 /* fs arguments */
 struct silofs_args {
+	struct silofs_password passwd;
 	struct silofs_spec     spec;
 	struct silofs_baseref  bref[2];
-	struct silofs_password passwd;
 	const char            *mntdir;
 	enum silofs_flags      flags;
 	uid_t                  uid;

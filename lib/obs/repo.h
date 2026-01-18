@@ -22,16 +22,6 @@
 #include "addr.h"
 #include "dstor.h"
 
-/* repository control flags */
-#define SILOFS_REPOF_RDONLY (1)
-
-/* repository meta settings */
-struct silofs_repo_base {
-	struct silofs_strview repodir;
-	struct silofs_alloc  *alloc;
-	long                  flags;
-};
-
 /* repository logical-segments-file hash-map */
 struct silofs_repo_htbl {
 	size_t                   rh_size;
@@ -41,28 +31,31 @@ struct silofs_repo_htbl {
 
 /* repository */
 struct silofs_repo {
-	struct silofs_repo_base        re;
 	const struct silofs_repo_defs *re_defs;
 	struct silofs_mutex            re_mutex;
 	struct silofs_repo_htbl        re_htbl;
 	struct silofs_listq            re_lruq;
 	struct silofs_mdigest_hd       re_md_hd;
 	struct silofs_dstor            re_dstor;
+	struct silofs_baseref          re_bref;
+	struct silofs_alloc           *re_alloc;
 	int                            re_root_dfd;
 	int                            re_dots_dfd;
 	int                            re_blobs_dfd;
+	bool                           re_rdonly;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_repo_init(struct silofs_repo            *repo,
-                     const struct silofs_repo_base *repo_base);
+int silofs_repo_init(struct silofs_repo *repo, struct silofs_alloc *alloc);
 
 void silofs_repo_fini(struct silofs_repo *repo);
 
-int silofs_repo_format(struct silofs_repo *repo);
+int silofs_repo_format(struct silofs_repo          *repo,
+                       const struct silofs_baseref *bref);
 
-int silofs_repo_open(struct silofs_repo *repo);
+int silofs_repo_open(struct silofs_repo          *repo,
+                     const struct silofs_baseref *bref, bool rdonly);
 
 int silofs_repo_close(struct silofs_repo *repo);
 

@@ -48,7 +48,6 @@ union silofs_alloc_u {
 /* actual environment instance object (internal) */
 struct silofs_env_inst {
 	struct silofs_prandgen prandgen;
-	struct silofs_password passwd;
 	struct silofs_args args;
 	union silofs_alloc_u alloc_u;
 	struct silofs_repo repo;
@@ -64,6 +63,9 @@ struct silofs_env_inst {
 	struct silofs_fuseq *fuseq;
 	long initf;
 };
+
+/* Local functions */
+static void envi_detach_fuseq(struct silofs_env_inst *envi);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
@@ -187,12 +189,6 @@ static int check_args(const struct silofs_args *args)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static bool
-envi_has_flag(const struct silofs_env_inst *envi, enum silofs_flags f)
-{
-	return ((envi->args.flags & f) == f);
-}
-
 static int envi_init_qalloc(struct silofs_env_inst *envi,
                             const struct silofs_inargs *inargs)
 {
@@ -308,24 +304,11 @@ static void envi_fini_nil_bk(struct silofs_env_inst *envi)
 	}
 }
 
-static void envi_make_repo_base(const struct silofs_env_inst *envi,
-                                struct silofs_repo_base *re_base)
-{
-	silofs_memzero(re_base, sizeof(*re_base));
-	re_base->alloc = envi->alloc;
-	if (envi_has_flag(envi, SILOFS_F_RDONLY)) {
-		re_base->flags |= SILOFS_REPOF_RDONLY;
-	}
-	silofs_strview_init(&re_base->repodir, envi->args.bref[0].repodir);
-}
-
 static int envi_init_repo(struct silofs_env_inst *envi)
 {
-	struct silofs_repo_base re_base = { .flags = 0 };
 	int err;
 
-	envi_make_repo_base(envi, &re_base);
-	err = silofs_repo_init(&envi->repo, &re_base);
+	err = silofs_repo_init(&envi->repo, envi->alloc);
 	if (err) {
 		return err;
 	}
@@ -441,22 +424,13 @@ static void envi_fini_flusher(struct silofs_env_inst *envi)
 	}
 }
 
-static int envi_init_idsmap(struct silofs_env_inst *envi,
-                            const struct silofs_inargs *inargs)
+static int envi_init_idsmap(struct silofs_env_inst *envi)
 {
-	const struct silofs_fsids *fsids = &envi->args.spec.fsids;
-	struct silofs_idsmap *idsmap     = &envi->idsmap;
-	bool allow_hostids;
+	struct silofs_idsmap *idsmap = &envi->idsmap;
 	int err;
 
 	err = silofs_idsmap_init(idsmap, envi->alloc);
 	if (err) {
-		return err;
-	}
-	allow_hostids = (inargs->flags & SILOFS_F_ALLOWHOSTIDS) > 0;
-	err           = silofs_idsmap_populate(idsmap, fsids, allow_hostids);
-	if (err) {
-		silofs_idsmap_fini(idsmap);
 		return err;
 	}
 	envi->initf |= SILOFS_ENVIF_IDSMAP;
@@ -474,42 +448,10 @@ static void envi_fini_idsmap(struct silofs_env_inst *envi)
 	}
 }
 
-static int envi_init_fuseq(struct silofs_env_inst *envi,
-                           const struct silofs_inargs *inargs)
-{
-	struct silofs_fuseq *fq       = nullptr;
-	const enum silofs_flags flags = inargs->flags;
-
-	if (!envi_has_flag(envi, SILOFS_F_WITHFUSE)) {
-		return 0;
-	}
-	fq = silofs_fuseq_new(envi->alloc, flags);
-	if (fq == nullptr) {
-		log_warn("failed to create fuseq: flags=0x%x", flags);
-		return -SILOFS_ENOMEM;
-	}
-	envi->initf |= SILOFS_ENVIF_FUSEQ;
-	envi->fuseq = fq;
-	return 0;
-}
-
-static void envi_fini_fuseq(struct silofs_env_inst *envi)
-{
-	struct silofs_fuseq *fq = envi->fuseq;
-
-	if (envi->initf & SILOFS_ENVIF_FUSEQ) {
-		silofs_fuseq_del(fq, envi->alloc);
-		envi->fuseq = nullptr;
-		envi->initf &= ~SILOFS_ENVIF_FUSEQ;
-	}
-}
-
-static int
-envi_init_env(struct silofs_env_inst *envi, const struct silofs_inargs *inargs)
+static int envi_init_env(struct silofs_env_inst *envi)
 {
 	const struct silofs_env_base env_base = {
 		.args    = &envi->args,
-		.passwd  = &envi->passwd,
 		.prng    = &envi->prandgen,
 		.alloc   = envi->alloc,
 		.nilbk   = envi->nilbk,
@@ -521,12 +463,11 @@ envi_init_env(struct silofs_env_inst *envi, const struct silofs_inargs *inargs)
 		.submitq = &envi->submitq,
 		.flusher = &envi->flusher,
 		.idsmap  = &envi->idsmap,
-		.fuseq   = envi->fuseq,
 	};
 	struct silofs_env *env = &envi->env;
 	int err;
 
-	err = silofs_env_init(env, &env_base, inargs);
+	err = silofs_env_init(env, &env_base);
 	if (err) {
 		return err;
 	}
@@ -542,16 +483,6 @@ static void envi_fini_env(struct silofs_env_inst *envi)
 		silofs_env_fini(env);
 		envi->initf &= ~SILOFS_ENVIF_ENV;
 	}
-}
-
-static int envi_init_passwd(struct silofs_env_inst *envi)
-{
-	return silofs_password_assign(&envi->passwd, &envi->args.passwd);
-}
-
-static void envi_fini_passwd(struct silofs_env_inst *envi)
-{
-	silofs_password_reset(&envi->passwd);
 }
 
 static int envi_init_prandgen(struct silofs_env_inst *envi)
@@ -576,8 +507,8 @@ static void envi_fini_prandgen(struct silofs_env_inst *envi)
 
 static void envi_fini(struct silofs_env_inst *envi)
 {
+	envi_detach_fuseq(envi);
 	envi_fini_env(envi);
-	envi_fini_fuseq(envi);
 	envi_fini_idsmap(envi);
 	envi_fini_flusher(envi);
 	envi_fini_submitq(envi);
@@ -587,7 +518,6 @@ static void envi_fini(struct silofs_env_inst *envi)
 	envi_fini_repo(envi);
 	envi_fini_nil_bk(envi);
 	envi_fini_alloc(envi);
-	envi_fini_passwd(envi);
 	envi_fini_prandgen(envi);
 }
 
@@ -604,11 +534,6 @@ envi_init_args(struct silofs_env_inst *envi, const struct silofs_args *args)
 	return 0;
 }
 
-static void envi_post_init(struct silofs_env_inst *envi)
-{
-	envi_fini_passwd(envi);
-}
-
 static int
 envi_init(struct silofs_env_inst *envi, const struct silofs_inargs *inargs,
           const struct silofs_args *args)
@@ -620,10 +545,6 @@ envi_init(struct silofs_env_inst *envi, const struct silofs_inargs *inargs,
 		goto out_err;
 	}
 	err = envi_init_prandgen(envi);
-	if (err) {
-		goto out_err;
-	}
-	err = envi_init_passwd(envi);
 	if (err) {
 		goto out_err;
 	}
@@ -659,19 +580,14 @@ envi_init(struct silofs_env_inst *envi, const struct silofs_inargs *inargs,
 	if (err) {
 		goto out_err;
 	}
-	err = envi_init_idsmap(envi, inargs);
+	err = envi_init_idsmap(envi);
 	if (err) {
 		goto out_err;
 	}
-	err = envi_init_fuseq(envi, inargs);
+	err = envi_init_env(envi);
 	if (err) {
 		goto out_err;
 	}
-	err = envi_init_env(envi, inargs);
-	if (err) {
-		goto out_err;
-	}
-	envi_post_init(envi);
 	return 0;
 out_err:
 	envi_fini(envi);
@@ -723,7 +639,7 @@ int silofs_create_env(const struct silofs_inargs *inargs,
                       struct silofs_env **out_env)
 {
 	struct silofs_env_inst *envi = nullptr;
-	int err                      = 0;
+	int err;
 
 	STATICASSERT_LE(sizeof(*envi), 32 * SILOFS_KILO);
 
@@ -753,4 +669,102 @@ void silofs_destroy_env(struct silofs_env *env)
 	envi = env_inst_of(env);
 	envi_del(envi);
 	silofs_burnstack();
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static int
+envi_update_owner(struct silofs_env_inst *envi, const struct silofs_args *args)
+{
+	struct silofs_cred cred;
+
+	silofs_cred_setup(&cred, args->uid, args->gid, args->umask);
+	return silofs_env_update_owner(&envi->env, &cred);
+}
+
+static int envi_update_password(struct silofs_env_inst *envi,
+                                const struct silofs_args *args)
+{
+	return silofs_env_update_password(&envi->env, &args->passwd);
+}
+
+static int envi_populate_idsmap(struct silofs_env_inst *envi,
+                                const struct silofs_args *args)
+{
+	const struct silofs_fsids *fsids = &args->spec.fsids;
+	struct silofs_idsmap *idsmap     = &envi->idsmap;
+	bool allow_hostids;
+
+	allow_hostids = (args->flags & SILOFS_F_ALLOWHOSTIDS) > 0;
+	return silofs_idsmap_populate(idsmap, fsids, allow_hostids);
+}
+
+static int
+envi_attach_fuseq(struct silofs_env_inst *envi, const struct silofs_args *args)
+{
+	struct silofs_fuseq *fuseq    = nullptr;
+	const enum silofs_flags flags = args->flags;
+
+	fuseq = silofs_fuseq_new(envi->alloc, flags);
+	if (fuseq == nullptr) {
+		log_warn("failed to create fuseq: flags=0x%x", flags);
+		return -SILOFS_ENOMEM;
+	}
+	envi->initf |= SILOFS_ENVIF_FUSEQ;
+
+	fuseq->fq_env = &envi->env;
+
+	envi->fuseq = envi->env.fuseq = fuseq;
+	return 0;
+}
+
+static void envi_detach_fuseq(struct silofs_env_inst *envi)
+{
+	if (envi->initf & SILOFS_ENVIF_FUSEQ) {
+		silofs_fuseq_del(envi->fuseq, envi->alloc);
+		envi->fuseq = envi->env.fuseq = nullptr;
+		envi->initf &= ~SILOFS_ENVIF_FUSEQ;
+	}
+}
+
+static bool with_password(const struct silofs_args *args)
+{
+	return (args->flags & SILOFS_F_NOPASSWD) == 0;
+}
+
+static bool with_fuse(const struct silofs_args *args)
+{
+	return (args->flags & SILOFS_F_WITHFUSE) > 0;
+}
+
+int silofs_open_env(struct silofs_env *env, const struct silofs_args *args)
+{
+	struct silofs_env_inst *envi = env_inst_of(env);
+	int err;
+
+	err = check_args(args);
+	if (err) {
+		return err;
+	}
+	err = envi_update_owner(envi, args);
+	if (err) {
+		return err;
+	}
+	err = envi_populate_idsmap(envi, args);
+	if (err) {
+		return err;
+	}
+	if (with_password(args)) {
+		err = envi_update_password(envi, args);
+		if (err) {
+			return err;
+		}
+	}
+	if (with_fuse(args)) {
+		err = envi_attach_fuseq(envi, args);
+		if (err) {
+			return err;
+		}
+	}
+	return 0;
 }

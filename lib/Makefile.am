@@ -169,6 +169,7 @@ libsilofs_la_SOURCES += fs/symlink.c
 libsilofs_la_SOURCES += fs/symlink.h
 libsilofs_la_SOURCES += fs/task.c
 libsilofs_la_SOURCES += fs/task.h
+libsilofs_la_SOURCES += fs/uidgid.c
 libsilofs_la_SOURCES += fs/uidgid.h
 libsilofs_la_SOURCES += fs/ustage.c
 libsilofs_la_SOURCES += fs/vstage.c

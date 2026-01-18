@@ -23,9 +23,6 @@ void cmd_new_env(const struct silofs_args *args, struct silofs_env **p_env)
 	const struct silofs_inargs inargs = {
 		.memwant = args->memwant,
 		.flags   = args->flags,
-		.uid     = args->uid,
-		.gid     = args->gid,
-		.umask   = args->umask,
 	};
 	int err;
 

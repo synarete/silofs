@@ -568,9 +568,10 @@ static int appexec_restore_fs(struct silofs_task_ctx *task,
 
 int silofs_post_exec_fs(struct silofs_env *env)
 {
-	const struct silofs_fuseq *fuseq = env->base.fuseq;
-	int ret                          = 0;
+	const struct silofs_fuseq *fuseq = env->fuseq;
+	int ret;
 
+	ret = 0;
 	if ((fuseq != nullptr) && fuseq->fq_got_init) {
 		ret = fuseq->fq_got_destroy ? 0 : -SILOFS_ENOTDONE;
 	}
@@ -656,49 +657,41 @@ int silofs_close_repo(struct silofs_env *env)
 static int do_mount_and_exec(struct silofs_env *env)
 {
 	const struct silofs_args *args = env->base.args;
-	struct silofs_fuseq *fuseq     = env->base.fuseq;
+	struct silofs_fuseq *fuseq     = env->fuseq;
 	int err;
 
 	err = silofs_fuseq_mount(fuseq, env, args->mntdir);
+	if (!err) {
+		err = silofs_fuseq_exec(fuseq);
+	}
+	silofs_fuseq_term(fuseq);
+	return err;
+}
+
+int silofs_exec_fs(struct silofs_env *env)
+{
+	struct silofs_fuseq *fuseq = env->fuseq;
+	int err;
+
+	if (fuseq == nullptr) {
+		return -SILOFS_EINVAL;
+	}
+	err = silofs_fuseq_update(fuseq);
 	if (err) {
 		return err;
 	}
-	err = silofs_fuseq_exec(fuseq);
+	err = do_mount_and_exec(env);
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-static bool run_with_fuse(const struct silofs_env *env)
-{
-	const struct silofs_fuseq *fuseq = env->base.fuseq;
-
-	return (fuseq != nullptr) &&
-	       silofs_env_hasflag(env, SILOFS_F_WITHFUSE);
-}
-
-int silofs_exec_fs(struct silofs_env *env)
-{
-	struct silofs_fuseq *fuseq = env->base.fuseq;
-	int err;
-
-	if (!run_with_fuse(env)) {
-		return -SILOFS_EINVAL;
-	}
-	err = silofs_fuseq_update(fuseq);
-	if (!err) {
-		err = do_mount_and_exec(env);
-		silofs_fuseq_term(fuseq);
-	}
-	return err;
-}
-
 void silofs_halt_fs(struct silofs_env *env)
 {
 	silofs_env_lock(env);
-	if (env->base.fuseq != nullptr) {
-		env->base.fuseq->fq_active = 0;
+	if (env->fuseq != nullptr) {
+		env->fuseq->fq_active = 0;
 	}
 	silofs_env_unlock(env);
 }
@@ -750,18 +743,16 @@ static int check_want_capacity(const struct silofs_env *env)
 
 static int check_owner_ids(const struct silofs_env *env)
 {
-	const struct silofs_args *args = env->base.args;
-	const uid_t owner_uid          = args->uid;
-	const gid_t owner_gid          = args->gid;
+	const struct silofs_cred *owner_cred = &env->owner_cred;
 	uid_t suid;
 	gid_t sgid;
 	int err;
 
-	err = silofs_idsmap_mapcreds(env->base.idsmap, owner_uid, owner_gid,
-	                             &suid, &sgid);
+	err = silofs_idsmap_mapcreds(env->base.idsmap, owner_cred->uid,
+	                             owner_cred->gid, &suid, &sgid);
 	if (err) {
-		log_err("unable to map owner credentials: uid=%ld gid=%ld",
-		        (long)owner_uid, (long)owner_gid);
+		log_err("unable to map owner credentials: uid=%u gid=%u",
+		        owner_cred->uid, owner_cred->gid);
 		return err;
 	}
 	return 0;
@@ -782,20 +773,23 @@ exec_format_meta(struct silofs_env *env, struct silofs_mbref *out_mbref)
 
 int silofs_format_repo(struct silofs_env *env)
 {
+	const struct silofs_baseref *bref = &env->base.args->bref[0];
 	int ret;
 
 	silofs_env_lock(env);
-	ret = silofs_repo_format(env->base.repo);
+	ret = silofs_repo_format(env->base.repo, bref);
 	silofs_env_unlock(env);
 	return ret;
 }
 
 int silofs_open_repo(struct silofs_env *env)
 {
+	const struct silofs_baseref *bref = &env->base.args->bref[0];
+	const bool rdonly = (env->base.args->flags & SILOFS_F_RDONLY) > 0;
 	int ret;
 
 	silofs_env_lock(env);
-	ret = silofs_repo_open(env->base.repo);
+	ret = silofs_repo_open(env->base.repo, bref, rdonly);
 	silofs_env_unlock(env);
 	return ret;
 }

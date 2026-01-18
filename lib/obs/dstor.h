@@ -42,8 +42,7 @@ int silofs_dstor_init(struct silofs_dstor *dstor, struct silofs_alloc *alloc);
 
 void silofs_dstor_fini(struct silofs_dstor *dstor);
 
-int silofs_dstor_open(struct silofs_dstor         *dstor,
-                      const struct silofs_strview *repodir);
+int silofs_dstor_open(struct silofs_dstor *dstor, int root_dfd);
 
 void silofs_dstor_close(struct silofs_dstor *dstor);
 

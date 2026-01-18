@@ -143,13 +143,13 @@ static void ute_setup(struct ut_env *ute)
 	const struct silofs_inargs inargs = {
 		.memwant = ute->args->args.memwant,
 		.flags   = ute->args->args.flags,
-		.uid     = getuid(),
-		.gid     = getgid(),
-		.umask   = 0022,
 	};
 	int err;
 
 	err = silofs_create_env(&inargs, &ute->args->args, &ute->env);
+	silofs_assert_ok(err);
+
+	err = silofs_open_env(ute->env, &ute->args->args);
 	silofs_assert_ok(err);
 }
 

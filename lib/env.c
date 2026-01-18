@@ -98,24 +98,49 @@ static void env_update_sb(struct silofs_env *env, struct silofs_sb_info *sbi)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int
-env_setup_owner(struct silofs_env *env, const struct silofs_inargs *inargs)
+int silofs_env_update_owner(struct silofs_env *env,
+                            const struct silofs_cred *cred)
 {
-	if (inargs->uid == (uid_t)(-1)) {
-		log_dbg("illegal owner uid: %u", inargs->uid);
+	if (silofs_uid_isnull(cred->uid)) {
+		log_dbg("illegal owner uid: %u", cred->uid);
 		return -SILOFS_EINVAL;
 	}
-	if (inargs->gid == (gid_t)(-1)) {
-		log_dbg("illegal owner gid: %u", inargs->gid);
+	if (silofs_gid_isnull(cred->gid)) {
+		log_dbg("illegal owner gid: %u", cred->gid);
 		return -SILOFS_EINVAL;
 	}
-	if (inargs->umask == 0) {
-		log_dbg("zero umask: uid=%u gid=%u", inargs->uid, inargs->gid);
+	if (cred->umask == 0) {
+		log_dbg("zero umask: uid=%u gid=%u", cred->uid, cred->gid);
 		return -SILOFS_EINVAL;
 	}
-	env->owner_cred.uid   = inargs->uid;
-	env->owner_cred.gid   = inargs->gid;
-	env->owner_cred.umask = inargs->umask;
+	silofs_cred_assign(&env->owner_cred, cred);
+	return 0;
+}
+
+int silofs_env_update_password(struct silofs_env *env,
+                               const struct silofs_password *pw)
+{
+	struct silofs_mbr_meta mbr_meta = {};
+	int err;
+
+	err = silofs_password_assign(&env->passwd, pw);
+	if (err) {
+		return err;
+	}
+	err = silofs_derive_mbr_meta(&env->passwd, &mbr_meta);
+	if (err) {
+		return err;
+	}
+	mbr_meta.mode = SILOFS_MBR_FS;
+	err           = silofs_mbi_set_meta(&env->mbis.fs_mbi, &mbr_meta);
+	if (err) {
+		return err;
+	}
+	mbr_meta.mode = SILOFS_MBR_AR;
+	err           = silofs_mbi_set_meta(&env->mbis.ar_mbi, &mbr_meta);
+	if (err) {
+		return err;
+	}
 	return 0;
 }
 
@@ -184,6 +209,8 @@ static void
 env_init_commons(struct silofs_env *env, const struct silofs_env_base *base)
 {
 	memcpy(&env->base, base, sizeof(env->base));
+	silofs_password_reset(&env->passwd);
+	silofs_cred_init(&env->owner_cred);
 	env->init_time = silofs_time_mono_now();
 	env->iconv_set = false;
 	env->ubi       = nullptr;
@@ -194,6 +221,8 @@ env_init_commons(struct silofs_env *env, const struct silofs_env_base *base)
 static void env_fini_commons(struct silofs_env *env)
 {
 	memset(&env->base, 0, sizeof(env->base));
+	silofs_password_reset(&env->passwd);
+	silofs_cred_fini(&env->owner_cred);
 	env->ubi      = nullptr;
 	env->sbi      = nullptr;
 	env->ms_flags = 0;
@@ -201,17 +230,8 @@ static void env_fini_commons(struct silofs_env *env)
 
 static int env_init_mbis(struct silofs_env *env)
 {
-	struct silofs_mbr_meta mbr_meta;
-	int err;
-
-	err = silofs_derive_mbr_meta(env->base.passwd, &mbr_meta);
-	if (err) {
-		return err;
-	}
-	mbr_meta.mode = SILOFS_MBR_FS;
-	silofs_mbi_init(&env->mbis.fs_mbi, &mbr_meta);
-	mbr_meta.mode = SILOFS_MBR_AR;
-	silofs_mbi_init(&env->mbis.ar_mbi, &mbr_meta);
+	silofs_mbi_init(&env->mbis.fs_mbi, SILOFS_MBR_FS);
+	silofs_mbi_init(&env->mbis.ar_mbi, SILOFS_MBR_AR);
 	return 0;
 }
 
@@ -282,18 +302,13 @@ static void env_fini_uconv(struct silofs_env *env)
 	silofs_uconv_fini(&env->uconv);
 }
 
-int silofs_env_init(struct silofs_env *env, const struct silofs_env_base *base,
-                    const struct silofs_inargs *inargs)
+int silofs_env_init(struct silofs_env *env, const struct silofs_env_base *base)
 {
 	int err;
 
 	env_init_commons(env, base);
 	env_init_opstat(env);
 
-	err = env_setup_owner(env, inargs);
-	if (err) {
-		return err;
-	}
 	err = env_init_mbis(env);
 	if (err) {
 		return err;

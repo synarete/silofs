@@ -4844,7 +4844,7 @@ out_err:
 
 static void fuseq_fini_fuse_fd(struct silofs_fuseq *fq)
 {
-	if (fq->fq_fuse_fd > 0) {
+	if (fq->fq_fuse_fd >= 0) {
 		silofs_sys_close(fq->fq_fuse_fd);
 		fq->fq_fuse_fd = -1;
 	}

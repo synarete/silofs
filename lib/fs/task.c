@@ -23,39 +23,20 @@
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void cred_init(struct silofs_cred *cred)
-{
-	cred->uid   = (uid_t)(-1);
-	cred->gid   = (gid_t)(-1);
-	cred->umask = (mode_t)(-1);
-}
-
-static void
-cred_setup(struct silofs_cred *cred, uid_t uid, gid_t gid, mode_t umsk)
-{
-	cred->uid   = uid;
-	cred->gid   = gid;
-	cred->umask = umsk;
-}
-
-static void cred_update_umask(struct silofs_cred *cred, mode_t umsk)
-{
-	cred->umask = umsk;
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 void silofs_task_set_creds(struct silofs_task_ctx *task, uid_t uid, gid_t gid,
                            mode_t umsk)
 {
-	cred_setup(&task->t_auth.creds.host_cred, uid, gid, umsk);
-	cred_setup(&task->t_auth.creds.fs_cred, uid, gid, umsk);
+	struct silofs_creds *creds = &task->t_auth.creds;
+
+	silofs_cred_setup(&creds->host_cred, uid, gid, umsk);
+	silofs_cred_setup(&creds->fs_cred, uid, gid, umsk);
 }
 
 void silofs_task_update_umask(struct silofs_task_ctx *task, mode_t umask)
 {
-	cred_update_umask(&task->t_auth.creds.host_cred, umask);
-	cred_update_umask(&task->t_auth.creds.fs_cred, umask);
+	struct silofs_creds *creds = &task->t_auth.creds;
+
+	creds->host_cred.umask = creds->fs_cred.umask = umask;
 }
 
 void silofs_task_set_ts(struct silofs_task_ctx *task, bool rt)
@@ -92,8 +73,8 @@ static int task_apply(const struct silofs_task_ctx *task, bool all)
 void silofs_task_init(struct silofs_task_ctx *task, struct silofs_env *env)
 {
 	memset(task, 0, sizeof(*task));
-	cred_init(&task->t_auth.creds.fs_cred);
-	cred_init(&task->t_auth.creds.host_cred);
+	silofs_cred_init(&task->t_auth.creds.fs_cred);
+	silofs_cred_init(&task->t_auth.creds.host_cred);
 	task->t_env       = env;
 	task->t_creds     = &task->t_auth.creds;
 	task->t_idsm      = env->base.idsmap;

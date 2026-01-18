@@ -42,17 +42,6 @@ static int do_closefd(int *pfd)
 	return err;
 }
 
-static int do_opendir(const char *path, int *out_fd)
-{
-	int err;
-
-	err = silofs_sys_opendir(path, out_fd);
-	if (err) {
-		log_warn("opendir failed: %s err=%d", path, err);
-	}
-	return err;
-}
-
 static int do_opendirat(int dirfd, const char *pathname, int *out_fd)
 {
 	int err;
@@ -744,36 +733,20 @@ static void blobs_pathname(struct silofs_strbuf *sbuf)
 	silofs_strbuf_sprintf(sbuf, "%s/%s", dots, subd);
 }
 
-static int
-dstor_open(struct silofs_dstor *dstor, const struct silofs_strview *repodir)
+static int dstor_open(struct silofs_dstor *dstor, int root_dfd)
 {
 	struct silofs_strbuf sbuf;
-	int root_dfd = -1;
-	int err;
 
-	err = do_opendir(repodir->str, &root_dfd);
-	if (err) {
-		goto out;
-	}
 	blobs_pathname(&sbuf);
-	err = do_opendirat(root_dfd, sbuf.str, &dstor->ds_dfd);
-	if (err) {
-		goto out;
-	}
-out:
-	do_closefd(&root_dfd);
-	return err;
+	return do_opendirat(root_dfd, sbuf.str, &dstor->ds_dfd);
 }
 
-int silofs_dstor_open(struct silofs_dstor *dstor,
-                      const struct silofs_strview *repodir)
+int silofs_dstor_open(struct silofs_dstor *dstor, int root_dfd)
 {
-	int ret = -SILOFS_EALREADY;
-
-	if (!dstor_isopen(dstor)) {
-		ret = dstor_open(dstor, repodir);
+	if (dstor_isopen(dstor)) {
+		return -SILOFS_EALREADY;
 	}
-	return ret;
+	return dstor_open(dstor, root_dfd);
 }
 
 void silofs_dstor_close(struct silofs_dstor *dstor)

@@ -2439,7 +2439,7 @@ static void fill_query_version(struct silofs_ioc_query *query)
 static const struct silofs_baseref *
 baseref_of(const struct silofs_task_ctx *task)
 {
-	return &task->t_env->base.args->bref[0];
+	return &task->t_env->base.repo->re_bref;
 }
 
 static void fill_query_repo(const struct silofs_task_ctx *task,

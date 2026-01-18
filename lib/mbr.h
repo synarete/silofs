@@ -39,10 +39,12 @@ struct silofs_mbr_info {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_mbi_init(struct silofs_mbr_info       *mbi,
-                     const struct silofs_mbr_meta *mbr_meta);
+void silofs_mbi_init(struct silofs_mbr_info *mbi, enum silofs_mbr_mode mode);
 
 void silofs_mbi_fini(struct silofs_mbr_info *mbi);
+
+int silofs_mbi_set_meta(struct silofs_mbr_info       *mbi,
+                        const struct silofs_mbr_meta *meta);
 
 int silofs_mbi_uber_root(const struct silofs_mbr_info *mbi,
                          struct silofs_pmeta          *out_pmeta);

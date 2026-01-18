@@ -36,20 +36,18 @@ struct silofs_env_opstat {
 
 /* environment meta settings */
 struct silofs_env_base {
-	const struct silofs_password *passwd;
-	const struct silofs_args     *args;
-	struct silofs_prandgen       *prng;
-	struct silofs_alloc          *alloc;
-	struct silofs_lblock         *nilbk;
-	struct silofs_repo           *repo;
-	struct silofs_dstor          *dstor;
-	struct silofs_pcache         *pcache;
-	struct silofs_lcache         *lcache;
-	struct silofs_spamaps        *spamaps;
-	struct silofs_submitq        *submitq;
-	struct silofs_flusher        *flusher;
-	struct silofs_idsmap         *idsmap;
-	struct silofs_fuseq          *fuseq;
+	const struct silofs_args *args;
+	struct silofs_prandgen   *prng;
+	struct silofs_alloc      *alloc;
+	struct silofs_lblock     *nilbk;
+	struct silofs_repo       *repo;
+	struct silofs_dstor      *dstor;
+	struct silofs_pcache     *pcache;
+	struct silofs_lcache     *lcache;
+	struct silofs_spamaps    *spamaps;
+	struct silofs_submitq    *submitq;
+	struct silofs_flusher    *flusher;
+	struct silofs_idsmap     *idsmap;
 };
 
 /* main boot-records info */
@@ -60,6 +58,7 @@ struct silofs_env_mbis {
 
 /* top-level environment object */
 struct silofs_env {
+	struct silofs_password   passwd;
 	struct silofs_env_base   base;
 	struct silofs_env_mbis   mbis;
 	struct silofs_rwlock     rwlock;
@@ -70,6 +69,7 @@ struct silofs_env {
 	struct silofs_env_opstat opstat;
 	struct silofs_uber_info *ubi;
 	struct silofs_sb_info   *sbi;
+	struct silofs_fuseq     *fuseq;
 	struct silofs_cred       owner_cred;
 	struct silofs_uconv      uconv;
 	unsigned long            ms_flags;
@@ -81,10 +81,16 @@ struct silofs_env {
 
 void silofs_validate_ondisk_format(void);
 
-int silofs_env_init(struct silofs_env *env, const struct silofs_env_base *base,
-                    const struct silofs_inargs *inargs);
+int silofs_env_init(struct silofs_env            *env,
+                    const struct silofs_env_base *base);
 
 void silofs_env_fini(struct silofs_env *env);
+
+int silofs_env_update_owner(struct silofs_env        *env,
+                            const struct silofs_cred *cred);
+
+int silofs_env_update_password(struct silofs_env            *env,
+                               const struct silofs_password *pw);
 
 void silofs_env_lock(struct silofs_env *env);
 

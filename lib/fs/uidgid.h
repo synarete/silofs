@@ -36,45 +36,34 @@ struct silofs_creds {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-/*
- * TODO-0043: Map uig/gid "nobody" to host values
- *
- * Do not use hard-coded values to uid/gid "nobody" but resolve to host-local
- * values upon boot.
- */
-static inline uid_t silofs_uid_nobody(void)
-{
-	return 65534;
-}
+uid_t silofs_uid_null(void);
 
-static inline gid_t silofs_gid_nobody(void)
-{
-	return 65534;
-}
+uid_t silofs_uid_nobody(void);
 
-static inline bool silofs_uid_eq(uid_t uid1, uid_t uid2)
-{
-	return (uid1 == uid2);
-}
+bool silofs_uid_eq(uid_t uid1, uid_t uid2);
 
-static inline bool silofs_uid_isnull(uid_t uid)
-{
-	return silofs_uid_eq(uid, (uid_t)(-1));
-}
+bool silofs_uid_isnull(uid_t uid);
 
-static inline bool silofs_uid_isroot(uid_t uid)
-{
-	return silofs_uid_eq(uid, 0);
-}
+bool silofs_uid_isroot(uid_t uid);
 
-static inline bool silofs_gid_eq(gid_t gid1, gid_t gid2)
-{
-	return (gid1 == gid2);
-}
+gid_t silofs_gid_null(void);
 
-static inline bool silofs_gid_isnull(gid_t gid)
-{
-	return silofs_gid_eq(gid, (gid_t)(-1));
-}
+gid_t silofs_gid_nobody(void);
+
+bool silofs_gid_eq(gid_t gid1, gid_t gid2);
+
+bool silofs_gid_isnull(gid_t gid);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_cred_init(struct silofs_cred *cred);
+
+void silofs_cred_fini(struct silofs_cred *cred);
+
+void silofs_cred_assign(struct silofs_cred       *cred,
+                        const struct silofs_cred *other);
+
+void silofs_cred_setup(struct silofs_cred *cred, uid_t uid, gid_t gid,
+                       mode_t umsk);
 
 #endif /* SILOFS_UIDGID_H_ */

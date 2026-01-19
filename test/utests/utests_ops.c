@@ -535,24 +535,26 @@ static int ut_write_iter_copy_rem(struct ut_write_iter *wri)
 
 static bool ut_with_aswyncwr(const struct ut_env *ute)
 {
-	return (ute->args->flags & SILOFS_F_ASYNCWR) > 0;
+	return (ute->spec->args.flags & SILOFS_F_ASYNCWR) > 0;
 }
 
 static int ut_do_write_iter(struct ut_env *ute, ino_t ino, const void *buf,
                             size_t len, off_t off, size_t *out_len)
 {
-	struct silofs_task_ctx task = { .t_interrupt = -1 };
-	struct ut_write_iter wri    = {
-		   .dat       = buf,
-		   .dat_len   = 0,
-		   .dat_max   = len,
-		   .cnt       = 0,
-		   .ncp       = 0,
-		   .rwi.len   = len,
-		   .rwi.off   = off,
-		   .rwi.actor = ut_with_aswyncwr(ute) ?
-		                        ut_write_iter_asyncwr_actor :
-		                        ut_write_iter_actor,
+	struct silofs_task_ctx task = {
+		.t_interrupt = -1,
+	};
+	struct ut_write_iter wri = {
+		.dat       = buf,
+		.dat_len   = 0,
+		.dat_max   = len,
+		.cnt       = 0,
+		.ncp       = 0,
+		.rwi.len   = len,
+		.rwi.off   = off,
+		.rwi.actor = ut_with_aswyncwr(ute) ?
+		                     ut_write_iter_asyncwr_actor :
+		                     ut_write_iter_actor,
 	};
 	int err1;
 	int err2;

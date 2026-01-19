@@ -36,6 +36,7 @@ struct cmd_archive_in_args {
 
 struct cmd_archive_ctx {
 	struct cmd_archive_in_args in_args;
+	struct cmd_fs_spec spec;
 	struct silofs_fsref ar_fsref;
 	struct silofs_args args;
 	struct silofs_env *env;
@@ -112,19 +113,19 @@ static void cmd_archive_release_lockfile(struct cmd_archive_ctx *ctx)
 
 static void cmd_archive_destroy_env(struct cmd_archive_ctx *ctx)
 {
-	cmd_del_env(&ctx->env);
+	cmd_destroy_env(&ctx->env);
 }
 
 static void cmd_archive_finalize(struct cmd_archive_ctx *ctx)
 {
-	cmd_del_env(&ctx->env);
+	cmd_destroy_env(&ctx->env);
 	cmd_pstrfree(&ctx->in_args.repodir_fsname);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
 	cmd_pstrfree(&ctx->in_args.fsname);
 	cmd_pstrfree(&ctx->in_args.arname);
 	cmd_delpass(&ctx->in_args.password);
-	cmd_destroy_args(&ctx->args);
+	cmd_destroy_spec_args(&ctx->spec, &ctx->args);
 	cmd_archive_ctx_p = nullptr;
 }
 
@@ -171,25 +172,23 @@ static void cmd_archive_getpass(struct cmd_archive_ctx *ctx)
 
 static void cmd_archive_setup_args(struct cmd_archive_ctx *ctx)
 {
-	struct silofs_args *args = &ctx->args;
-
-	cmd_setup_args(args, ctx->in_args.password);
-	args->bref[0].repodir = ctx->in_args.repodir_real;
-	args->bref[0].refname = ctx->in_args.fsname;
-	args->bref[1].repodir = ctx->in_args.repodir_real;
-	args->bref[1].refname = ctx->in_args.arname;
+	cmd_setup_spec_args(&ctx->spec, &ctx->args, ctx->in_args.password);
 	cmd_delpass(&ctx->in_args.password);
+	ctx->args.bref[0].repodir = ctx->in_args.repodir_real;
+	ctx->args.bref[0].refname = ctx->in_args.fsname;
+	ctx->args.bref[1].repodir = ctx->in_args.repodir_real;
+	ctx->args.bref[1].refname = ctx->in_args.arname;
 }
 
 static void cmd_archive_load_spec(struct cmd_archive_ctx *ctx)
 {
-	cmd_spec_load(&ctx->args.spec, &ctx->args.bref[0]);
+	cmd_spec_load(&ctx->spec, &ctx->args.bref[0]);
 }
 
 static void cmd_archive_setup_env(struct cmd_archive_ctx *ctx)
 {
-	cmd_new_env(&ctx->env);
-	cmd_spec_clear_fsids(&ctx->args.spec);
+	cmd_create_env(&ctx->env);
+	cmd_spec_clear_fsids(&ctx->spec);
 }
 
 static void cmd_archive_open_repo(struct cmd_archive_ctx *ctx)
@@ -204,12 +203,12 @@ static void cmd_archive_close_repo(struct cmd_archive_ctx *ctx)
 
 static void cmd_archive_sense_fs(struct cmd_archive_ctx *ctx)
 {
-	cmd_sense_fs(ctx->env, &ctx->args.spec.fsref);
+	cmd_sense_fs(ctx->env, &ctx->spec.fsref);
 }
 
 static void cmd_archive_reload_fs(struct cmd_archive_ctx *ctx)
 {
-	cmd_reload_fs(ctx->env, &ctx->args.spec.fsref);
+	cmd_reload_fs(ctx->env, &ctx->spec.fsref);
 }
 
 static void cmd_archive_unload_fs(struct cmd_archive_ctx *ctx)
@@ -219,7 +218,7 @@ static void cmd_archive_unload_fs(struct cmd_archive_ctx *ctx)
 
 static void cmd_archive_execute(struct cmd_archive_ctx *ctx)
 {
-	cmd_archive_fs(ctx->env, &ctx->args.spec.fsref, &ctx->ar_fsref);
+	cmd_archive_fs(ctx->env, &ctx->spec.fsref, &ctx->ar_fsref);
 }
 
 static void cmd_archive_save_spec(struct cmd_archive_ctx *ctx)
@@ -229,7 +228,7 @@ static void cmd_archive_save_spec(struct cmd_archive_ctx *ctx)
 		.refname = ctx->in_args.arname,
 	};
 
-	cmd_spec_resave(&ctx->args.spec, &ctx->ar_fsref, &baseref);
+	cmd_spec_resave(&ctx->spec, &ctx->ar_fsref, &baseref);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

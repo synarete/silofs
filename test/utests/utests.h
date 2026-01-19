@@ -125,10 +125,16 @@ struct ut_malloc_chunk {
 	void                   *data;
 };
 
+struct ut_spec {
+	struct silofs_password passwd;
+	struct silofs_args     args;
+	struct silofs_fsids    fsids;
+};
+
 struct ut_env {
+	const struct ut_spec       *spec;
 	struct silofs_fsrefs        fsrefs;
 	struct silofs_fsref         arfsref;
-	struct silofs_args         *args;
 	struct silofs_env          *env;
 	struct timespec             ts_start;
 	struct timespec             ts_finish;

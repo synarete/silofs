@@ -214,6 +214,18 @@ void silofs_memfree(struct silofs_alloc *alloc, void *ptr, size_t n, int flags)
 	}
 }
 
+void *
+silofs_memdup(struct silofs_alloc *alloc, const void *ptr, size_t n, int flags)
+{
+	void *dup;
+
+	dup = silofs_memalloc(alloc, n, flags);
+	if (dup != nullptr) {
+		memcpy(dup, ptr, n);
+	}
+	return dup;
+}
+
 void silofs_memstat(const struct silofs_alloc *alloc,
                     struct silofs_alloc_stat *out_stat)
 {

@@ -18,12 +18,12 @@
 #include "cmd.h"
 #include <stdarg.h>
 
-void cmd_new_env(struct silofs_env **penv)
+void cmd_create_env(struct silofs_env **penv)
 {
-	cmd_new_env2(0, penv);
+	cmd_create_env2(0, penv);
 }
 
-void cmd_new_env2(enum silofs_flags flags, struct silofs_env **penv)
+void cmd_create_env2(enum silofs_flags flags, struct silofs_env **penv)
 {
 	int err;
 
@@ -33,7 +33,7 @@ void cmd_new_env2(enum silofs_flags flags, struct silofs_env **penv)
 	}
 }
 
-void cmd_del_env(struct silofs_env **penv)
+void cmd_destroy_env(struct silofs_env **penv)
 {
 	if ((penv != nullptr) && (*penv != nullptr)) {
 		silofs_destroy_env(*penv);
@@ -43,18 +43,9 @@ void cmd_del_env(struct silofs_env **penv)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static char *cmd_baseref_path(const struct silofs_env *env)
-{
-	struct silofs_baseref baseref = {};
-
-	silofs_get_baseref(env, &baseref);
-	return cmd_path_join(baseref.repodir, baseref.refname);
-}
-
 static void cmd_report_err_and_die(const struct silofs_env *env, int status,
                                    const char *msg)
 {
-	char *rpath      = nullptr;
 	const char *xmsg = msg ? msg : "";
 	const char *xtag = msg ? ": " : "";
 	int err;
@@ -64,40 +55,38 @@ static void cmd_report_err_and_die(const struct silofs_env *env, int status,
 		return;
 	}
 
-	rpath = cmd_baseref_path(env);
-
 	/* internal errors */
 	err = abs(status);
 	switch (err) {
 	case SILOFS_ENOREPO:
-		cmd_die(err, "%s%smissing repo: %s", xmsg, xtag, rpath);
+		cmd_die(err, "%s%smissing repo", xmsg, xtag);
 		break;
 	case SILOFS_EBADREPO:
-		cmd_die(err, "%s%sbad repo: %s", xmsg, xtag, rpath);
+		cmd_die(err, "%s%sbad repo", xmsg, xtag);
 		break;
 	case SILOFS_ENOMBR:
-		cmd_die(err, "%s%smissing mbr: %s", xmsg, xtag, rpath);
+		cmd_die(err, "%s%smissing mbr", xmsg, xtag);
 		break;
 	case SILOFS_EBADMBR:
-		cmd_die(err, "%s%sbad mbr: %s", xmsg, xtag, rpath);
+		cmd_die(err, "%s%sbad mbr", xmsg, xtag);
 		break;
 	case SILOFS_EMBRMODE:
-		cmd_die(err, "%s%swrong mbr mode: %s", xmsg, xtag, rpath);
+		cmd_die(err, "%s%swrong mbr mode", xmsg, xtag);
 		break;
 	case SILOFS_EKEYEXPIRED:
-		cmd_die(err, "%s%sbad password: %s", xmsg, xtag, rpath);
+		cmd_die(err, "%s%sbad password", xmsg, xtag);
 		break;
 	case SILOFS_EMOUNT:
-		cmd_die(err, "%s%scan not mount: %s", xmsg, xtag, rpath);
+		cmd_die(err, "%s%smount failure", xmsg, xtag);
 		break;
 	case SILOFS_EUMOUNT:
-		cmd_die(err, "%s%scan not umount: %s", xmsg, xtag, rpath);
+		cmd_die(err, "%s%sumount error", xmsg, xtag);
 		break;
 	case SILOFS_EFSCORRUPTED:
-		cmd_die(err, "%s%scorrupted fs: %s", xmsg, xtag, rpath);
+		cmd_die(err, "%s%scorrupted fs", xmsg, xtag);
 		break;
 	case SILOFS_ECSUM:
-		cmd_die(err, "%s%schecksum error: %s", xmsg, xtag, rpath);
+		cmd_die(err, "%s%schecksum error", xmsg, xtag);
 		break;
 	case SILOFS_EILLSTR:
 		cmd_die(err, "%s%sillegal string", xmsg, xtag);
@@ -114,26 +103,27 @@ static void cmd_report_err_and_die(const struct silofs_env *env, int status,
 	err = abs(silofs_remap_status_code(status));
 	switch (err) {
 	case EWOULDBLOCK:
-		cmd_die(err, "%s%scan not lock: %s", xmsg, xtag, rpath);
+		cmd_die(err, "%s%scan not lock", xmsg, xtag);
 		break;
 	case EROFS:
-		cmd_die(err, "%s%sread-only fs: %s", xmsg, xtag, rpath);
+		cmd_die(err, "%s%sread-only fs", xmsg, xtag);
 		break;
 	case EUCLEAN:
-		cmd_die(err, "%s%sunclean: %s", xmsg, xtag, rpath);
+		cmd_die(err, "%s%sunclean", xmsg, xtag);
 		break;
 	case EKEYEXPIRED:
-		cmd_die(err, "%s%sbad password: %s", xmsg, xtag, rpath);
+		cmd_die(err, "%s%sbad password", xmsg, xtag);
 		break;
 	case ENOENT:
-		cmd_diez("%s%snot exist: %s", xmsg, xtag, rpath);
+		cmd_diez("%s%snot exist", xmsg, xtag);
 		break;
 	default:
-		cmd_die(err, "%s%s%s", xmsg, xtag, rpath);
+		cmd_die(err, "%s%s", xmsg, xtag);
 		break;
 	}
 
-	cmd_pstrfree(&rpath);
+	/* TODO: pass ctx and use */
+	(void)env;
 }
 
 #define attr_printf34 silofs_attr_printf(3, 4)
@@ -303,18 +293,22 @@ void cmd_restore_fs(struct silofs_env *env, const struct silofs_fsref *fsref,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void cmd_setup_args(struct silofs_args *args, const char *pass)
+void cmd_setup_spec_args(struct cmd_fs_spec *spec, struct silofs_args *args,
+                         const char *pass)
 {
+	cmd_spec_setup(spec);
+	cmd_mkpasswd(&spec->passwd, pass);
+
 	memset(args, 0, sizeof(*args));
-	cmd_mkpasswd(&args->passwd, pass);
-	cmd_spec_setup(&args->spec);
-	args->cred.uid   = getuid();
-	args->cred.gid   = getgid();
-	args->cred.umask = 0077;
+	args->passwd        = &spec->passwd;
+	args->fsids         = &spec->fsids;
+	args->fsowner.uid   = getuid();
+	args->fsowner.gid   = getgid();
+	args->fsowner.umask = 0077;
 }
 
-void cmd_destroy_args(struct silofs_args *args)
+void cmd_destroy_spec_args(struct cmd_fs_spec *spec, struct silofs_args *args)
 {
-	cmd_spec_reset(&args->spec);
+	cmd_spec_reset(spec);
 	memset(args, 0, sizeof(*args));
 }

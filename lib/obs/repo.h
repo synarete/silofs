@@ -37,8 +37,8 @@ struct silofs_repo {
 	struct silofs_listq            re_lruq;
 	struct silofs_mdigest_hd       re_md_hd;
 	struct silofs_dstor            re_dstor;
-	struct silofs_baseref          re_bref;
 	struct silofs_alloc           *re_alloc;
+	char                          *re_rootdir;
 	int                            re_root_dfd;
 	int                            re_dots_dfd;
 	int                            re_blobs_dfd;
@@ -51,11 +51,10 @@ int silofs_repo_init(struct silofs_repo *repo, struct silofs_alloc *alloc);
 
 void silofs_repo_fini(struct silofs_repo *repo);
 
-int silofs_repo_format(struct silofs_repo          *repo,
-                       const struct silofs_baseref *bref);
+int silofs_repo_format(struct silofs_repo *repo, const char *rootdir);
 
-int silofs_repo_open(struct silofs_repo          *repo,
-                     const struct silofs_baseref *bref, bool rdonly);
+int silofs_repo_open(struct silofs_repo *repo, const char *rootdir,
+                     bool rdonly);
 
 int silofs_repo_close(struct silofs_repo *repo);
 

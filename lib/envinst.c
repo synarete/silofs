@@ -172,7 +172,7 @@ static int check_baserefs(const struct silofs_args *args)
 
 static int check_password(const struct silofs_args *args)
 {
-	return silofs_password_recheck(&args->passwd);
+	return silofs_password_recheck(args->passwd);
 }
 
 static int check_args(const struct silofs_args *args)
@@ -660,18 +660,17 @@ envi_update_owner(struct silofs_env_inst *envi, const struct silofs_cred *cred)
 static int envi_update_password(struct silofs_env_inst *envi,
                                 const struct silofs_args *args)
 {
-	return silofs_env_update_password(&envi->env, &args->passwd);
+	return silofs_env_use_password(&envi->env, args->passwd);
 }
 
 static int envi_populate_idsmap(struct silofs_env_inst *envi,
                                 const struct silofs_args *args)
 {
-	const struct silofs_fsids *fsids = &args->spec.fsids;
-	struct silofs_idsmap *idsmap     = &envi->idsmap;
+	struct silofs_idsmap *idsmap = &envi->idsmap;
 	bool allow_hostids;
 
 	allow_hostids = (args->flags & SILOFS_F_ALLOWHOSTIDS) > 0;
-	return silofs_idsmap_populate(idsmap, fsids, allow_hostids);
+	return silofs_idsmap_populate(idsmap, args->fsids, allow_hostids);
 }
 
 static int
@@ -722,6 +721,7 @@ env_update_args(struct silofs_env *env, const struct silofs_args *args)
 		return err;
 	}
 	memcpy(&env->args, args, sizeof(env->args));
+	silofs_strbuf_setup_by(&env->name, args->bref[0].refname);
 	return 0;
 }
 
@@ -734,7 +734,7 @@ int silofs_open_env(struct silofs_env *env, const struct silofs_args *args)
 	if (err) {
 		return err;
 	}
-	err = envi_update_owner(envi, &args->cred);
+	err = envi_update_owner(envi, &args->fsowner);
 	if (err) {
 		return err;
 	}

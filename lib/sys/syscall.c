@@ -779,7 +779,7 @@ int silofs_sys_getdents(int fd, void *buf, size_t bsz, struct dirent64 *dents,
 		memcpy(dent->d_name, d->d_name, len);
 
 		pos += d->d_reclen;
-		ptr = (char *)buf + pos;
+		ptr = (void *)((uintptr_t)buf + (uintptr_t)pos);
 		d   = (const struct linux_dirent64_view *)ptr;
 
 		++ndents_decoded;
@@ -818,6 +818,7 @@ int silofs_sys_fcntl_setfl(int fd, int fl)
 
 int silofs_sys_fcntl_setpipesz(int fd, int pipesize)
 {
+
 	return ok_or_errno(fcntl(fd, F_SETPIPE_SZ, pipesize));
 }
 

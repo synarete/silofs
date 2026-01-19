@@ -30,6 +30,7 @@ struct cmd_init_in_args {
 
 struct cmd_init_ctx {
 	struct cmd_init_in_args in_args;
+	struct cmd_fs_spec spec;
 	struct silofs_args args;
 	struct silofs_env *env;
 };
@@ -76,8 +77,8 @@ static void cmd_init_parse_optargs(struct cmd_init_ctx *ctx)
 
 static void cmd_init_finalize(struct cmd_init_ctx *ctx)
 {
-	cmd_del_env(&ctx->env);
-	cmd_destroy_args(&ctx->args);
+	cmd_destroy_env(&ctx->env);
+	cmd_destroy_spec_args(&ctx->spec, &ctx->args);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_init_ctx_p = nullptr;
@@ -126,16 +127,14 @@ static void cmd_init_restrict_process(struct cmd_init_ctx *ctx)
 
 static void cmd_init_setup_args(struct cmd_init_ctx *ctx)
 {
-	struct silofs_args *args = &ctx->args;
-
-	cmd_setup_args(args, nullptr);
-	args->bref[0].repodir = ctx->in_args.repodir_real;
-	args->bref[0].refname = "silofs";
+	cmd_setup_spec_args(&ctx->spec, &ctx->args, nullptr);
+	ctx->args.bref[0].repodir = ctx->in_args.repodir_real;
+	ctx->args.bref[0].refname = "silofs";
 }
 
 static void cmd_init_setup_env(struct cmd_init_ctx *ctx)
 {
-	cmd_new_env(&ctx->env);
+	cmd_create_env(&ctx->env);
 }
 
 static void cmd_init_format_repo(const struct cmd_init_ctx *ctx)

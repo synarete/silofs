@@ -43,6 +43,7 @@ struct cmd_mkfs_in_args {
 
 struct cmd_mkfs_ctx {
 	struct cmd_mkfs_in_args in_args;
+	struct cmd_fs_spec spec;
 	struct silofs_args args;
 	struct silofs_env *env;
 	bool has_lockfile;
@@ -117,7 +118,7 @@ static void cmd_mkfs_parse_optargs(struct cmd_mkfs_ctx *ctx)
 
 static void cmd_mkfs_destroy_env(struct cmd_mkfs_ctx *ctx)
 {
-	cmd_del_env(&ctx->env);
+	cmd_destroy_env(&ctx->env);
 }
 
 static void cmd_mkfs_finalize(struct cmd_mkfs_ctx *ctx)
@@ -129,7 +130,7 @@ static void cmd_mkfs_finalize(struct cmd_mkfs_ctx *ctx)
 	cmd_pstrfree(&ctx->in_args.repodir_real);
 	cmd_pstrfree(&ctx->in_args.username);
 	cmd_delpass(&ctx->in_args.password);
-	cmd_destroy_args(&ctx->args);
+	cmd_destroy_spec_args(&ctx->spec, &ctx->args);
 	cmd_mkfs_ctx_p = nullptr;
 }
 
@@ -199,11 +200,12 @@ static void cmd_mkfs_setup_args(struct cmd_mkfs_ctx *ctx)
 {
 	struct silofs_args *args = &ctx->args;
 
-	cmd_setup_args(args, ctx->in_args.password);
-	cmd_uidgid_of(ctx->in_args.username, &args->cred.uid, &args->cred.gid);
+	cmd_setup_spec_args(&ctx->spec, &ctx->args, ctx->in_args.password);
+	cmd_delpass(&ctx->in_args.password);
+	cmd_uidgid_of(ctx->in_args.username, &args->fsowner.uid,
+	              &args->fsowner.gid);
 	args->bref[0].repodir = ctx->in_args.repodir_real;
 	args->bref[0].refname = ctx->in_args.fsname;
-	cmd_delpass(&ctx->in_args.password);
 }
 
 static void cmd_mkfs_setup_fsids(struct cmd_mkfs_ctx *ctx)
@@ -211,19 +213,19 @@ static void cmd_mkfs_setup_fsids(struct cmd_mkfs_ctx *ctx)
 	struct silofs_args *args = &ctx->args;
 	const char *username     = ctx->in_args.username;
 
-	cmd_uidgid_of(username, &args->cred.uid, &args->cred.gid);
-	cmd_fsids_add_uidgid_of(&args->spec.fsids, username);
+	cmd_uidgid_of(username, &args->fsowner.uid, &args->fsowner.gid);
+	cmd_fsids_add_uidgid_of(&ctx->spec.fsids, username);
 	if (ctx->in_args.with_sup_groups) {
-		cmd_fsids_add_supgroups_of(&args->spec.fsids, username);
+		cmd_fsids_add_supgroups_of(&ctx->spec.fsids, username);
 	}
 	if (ctx->in_args.with_root_user && strcmp(username, "root")) {
-		cmd_fsids_add_uidgid_of(&args->spec.fsids, "root");
+		cmd_fsids_add_uidgid_of(&ctx->spec.fsids, "root");
 	}
 }
 
 static void cmd_mkfs_setup_env(struct cmd_mkfs_ctx *ctx)
 {
-	cmd_new_env(&ctx->env);
+	cmd_create_env(&ctx->env);
 }
 
 static void cmd_mkfs_open_repo(const struct cmd_mkfs_ctx *ctx)
@@ -241,12 +243,12 @@ static void cmd_mkfs_format_fs(struct cmd_mkfs_ctx *ctx)
 	const size_t fs_cap   = ctx->in_args.fs_size;
 	const bool utf8_names = !ctx->in_args.no_utf8_names;
 
-	cmd_format_fs(ctx->env, fs_cap, utf8_names, &ctx->args.spec.fsref);
+	cmd_format_fs(ctx->env, fs_cap, utf8_names, &ctx->spec.fsref);
 }
 
 static void cmd_mkfs_save_spec(struct cmd_mkfs_ctx *ctx)
 {
-	cmd_spec_save(&ctx->args.spec, &ctx->args.bref[0]);
+	cmd_spec_save(&ctx->spec, &ctx->args.bref[0]);
 }
 
 static void cmd_mkfs_unload_fs(struct cmd_mkfs_ctx *ctx)

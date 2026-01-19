@@ -57,7 +57,7 @@ struct silofs_env_mbis {
 
 /* top-level environment object */
 struct silofs_env {
-	struct silofs_password   passwd;
+	struct silofs_strbuf     name;
 	struct silofs_args       args;
 	struct silofs_env_base   base;
 	struct silofs_env_mbis   mbis;
@@ -90,8 +90,8 @@ void silofs_env_fini(struct silofs_env *env);
 int silofs_env_update_owner(struct silofs_env        *env,
                             const struct silofs_cred *cred);
 
-int silofs_env_update_password(struct silofs_env            *env,
-                               const struct silofs_password *pw);
+int silofs_env_use_password(struct silofs_env            *env,
+                            const struct silofs_password *pw);
 
 void silofs_env_lock(struct silofs_env *env);
 

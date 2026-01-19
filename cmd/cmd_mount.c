@@ -60,6 +60,7 @@ struct cmd_mount_in_args {
 
 struct cmd_mount_ctx {
 	struct cmd_mount_in_args in_args;
+	struct cmd_fs_spec spec;
 	struct silofs_args args;
 	struct silofs_env *env;
 	pid_t child_pid;
@@ -254,33 +255,30 @@ static void cmd_mount_parse_optargs(struct cmd_mount_ctx *ctx)
 
 static void cmd_mount_setup_args(struct cmd_mount_ctx *ctx)
 {
-	const struct cmd_mount_in_args *in_args = &ctx->in_args;
-	struct silofs_args *args                = &ctx->args;
-
-	cmd_setup_args(args, in_args->password);
-	args->bref[0].repodir = in_args->repodir_real;
-	args->bref[0].refname = in_args->fsname;
-	args->flags           = (enum silofs_flags)in_args->flags;
+	cmd_setup_spec_args(&ctx->spec, &ctx->args, ctx->in_args.password);
 	cmd_delpass(&ctx->in_args.password);
+	ctx->args.bref[0].repodir = ctx->in_args.repodir_real;
+	ctx->args.bref[0].refname = ctx->in_args.fsname;
+	ctx->args.flags           = (enum silofs_flags)ctx->in_args.flags;
 }
 
 static void cmd_mount_load_spec(struct cmd_mount_ctx *ctx)
 {
-	cmd_spec_load(&ctx->args.spec, &ctx->args.bref[0]);
-	cmd_fsids_need_self(&ctx->args.spec.fsids);
+	cmd_spec_load(&ctx->spec, &ctx->args.bref[0]);
+	cmd_spec_need_self(&ctx->spec);
 }
 
 static void cmd_mount_setup_env(struct cmd_mount_ctx *ctx, int phase)
 {
-	cmd_new_env2(ctx->args.flags, &ctx->env);
+	cmd_create_env2(ctx->args.flags, &ctx->env);
 	if (phase == 2) {
-		cmd_spec_clear_fsids(&ctx->args.spec);
+		cmd_spec_clear_fsids(&ctx->spec);
 	}
 }
 
 static void cmd_mount_destroy_env(struct cmd_mount_ctx *ctx)
 {
-	cmd_del_env(&ctx->env);
+	cmd_destroy_env(&ctx->env);
 }
 
 static void cmd_mount_halt_by_signal(int signum)
@@ -325,7 +323,7 @@ static void cmd_mount_finalize(struct cmd_mount_ctx *ctx)
 	cmd_pstrfree(&ctx->in_args.fsname);
 	cmd_pstrfree(&ctx->in_args.uhelper);
 	cmd_delpass(&ctx->in_args.password);
-	cmd_destroy_args(&ctx->args);
+	cmd_destroy_spec_args(&ctx->spec, &ctx->args);
 	cmd_close_syslog();
 	cmd_mount_ctx_p = nullptr;
 }
@@ -401,12 +399,12 @@ static void cmd_mount_close_repo(struct cmd_mount_ctx *ctx)
 
 static void cmd_mount_sense_fs(struct cmd_mount_ctx *ctx)
 {
-	cmd_sense_fs(ctx->env, &ctx->args.spec.fsref);
+	cmd_sense_fs(ctx->env, &ctx->spec.fsref);
 }
 
 static void cmd_mount_reload_fs(struct cmd_mount_ctx *ctx)
 {
-	cmd_reload_fs(ctx->env, &ctx->args.spec.fsref);
+	cmd_reload_fs(ctx->env, &ctx->spec.fsref);
 }
 
 static void cmd_mount_execute_fs(struct cmd_mount_ctx *ctx)

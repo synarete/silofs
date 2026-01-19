@@ -43,6 +43,7 @@ struct cmd_clone_in_args {
 
 struct cmd_clone_ctx {
 	struct cmd_clone_in_args in_args;
+	struct cmd_fs_spec spec;
 	struct silofs_args args;
 	struct silofs_fsrefs fsrefs;
 	struct silofs_env *env;
@@ -135,7 +136,7 @@ static void cmd_clone_parse_optargs(struct cmd_clone_ctx *ctx)
 
 static void cmd_clone_destroy_env(struct cmd_clone_ctx *ctx)
 {
-	cmd_del_env(&ctx->env);
+	cmd_destroy_env(&ctx->env);
 }
 
 static void cmd_clone_finalize(struct cmd_clone_ctx *ctx)
@@ -150,7 +151,7 @@ static void cmd_clone_finalize(struct cmd_clone_ctx *ctx)
 	cmd_pstrfree(&ctx->in_args.dirpath);
 	cmd_pstrfree(&ctx->in_args.dirpath_real);
 	cmd_del_iocp(&ctx->ioc);
-	cmd_destroy_args(&ctx->args);
+	cmd_destroy_spec_args(&ctx->spec, &ctx->args);
 	cmd_clone_del_ctx(ctx);
 }
 
@@ -280,7 +281,7 @@ static void cmd_clone_do_ioctl_forkfs(struct cmd_clone_ctx *ctx)
 static void cmd_clone_do_ioctl_syncfs(struct cmd_clone_ctx *ctx)
 {
 	const char *dirpath = ctx->in_args.dirpath_real;
-	int dfd             = -1;
+	int dfd;
 	int err;
 
 	cmd_reset_ioc(ctx->ioc);
@@ -299,23 +300,21 @@ static void cmd_clone_do_ioctl_syncfs(struct cmd_clone_ctx *ctx)
 
 static void cmd_clone_setup_args(struct cmd_clone_ctx *ctx)
 {
-	struct silofs_args *args = &ctx->args;
-
-	cmd_setup_args(args, ctx->in_args.password);
-	args->bref[0].repodir = ctx->in_args.repodir_real;
-	args->bref[0].refname = ctx->in_args.fsname;
+	cmd_setup_spec_args(&ctx->spec, &ctx->args, ctx->in_args.password);
 	cmd_delpass(&ctx->in_args.password);
+	ctx->args.bref[0].repodir = ctx->in_args.repodir_real;
+	ctx->args.bref[0].refname = ctx->in_args.fsname;
 }
 
 static void cmd_clone_load_spec(struct cmd_clone_ctx *ctx)
 {
-	cmd_spec_load(&ctx->args.spec, &ctx->args.bref[0]);
+	cmd_spec_load(&ctx->spec, &ctx->args.bref[0]);
 }
 
 static void cmd_clone_setup_env(struct cmd_clone_ctx *ctx)
 {
-	cmd_new_env(&ctx->env);
-	cmd_spec_clear_fsids(&ctx->args.spec);
+	cmd_create_env(&ctx->env);
+	cmd_spec_clear_fsids(&ctx->spec);
 }
 
 static void cmd_clone_open_repo(struct cmd_clone_ctx *ctx)
@@ -330,12 +329,12 @@ static void cmd_clone_close_repo(struct cmd_clone_ctx *ctx)
 
 static void cmd_clone_sense_fs(struct cmd_clone_ctx *ctx)
 {
-	cmd_sense_fs(ctx->env, &ctx->args.spec.fsref);
+	cmd_sense_fs(ctx->env, &ctx->spec.fsref);
 }
 
 static void cmd_clone_reload_fs(struct cmd_clone_ctx *ctx)
 {
-	cmd_reload_fs(ctx->env, &ctx->args.spec.fsref);
+	cmd_reload_fs(ctx->env, &ctx->spec.fsref);
 }
 
 static void cmd_clone_do_clonefs(struct cmd_clone_ctx *ctx)
@@ -355,7 +354,7 @@ static void cmd_clone_save_fork(struct cmd_clone_ctx *ctx)
 		.refname = ctx->in_args.forkname,
 	};
 
-	cmd_spec_resave(&ctx->args.spec, &ctx->fsrefs.fork, &baseref);
+	cmd_spec_resave(&ctx->spec, &ctx->fsrefs.fork, &baseref);
 }
 
 static void cmd_clone_save_main(struct cmd_clone_ctx *ctx)
@@ -365,7 +364,7 @@ static void cmd_clone_save_main(struct cmd_clone_ctx *ctx)
 		.refname = ctx->in_args.fsname,
 	};
 
-	cmd_spec_resave(&ctx->args.spec, &ctx->fsrefs.main, &baseref);
+	cmd_spec_resave(&ctx->spec, &ctx->fsrefs.main, &baseref);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

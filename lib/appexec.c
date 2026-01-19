@@ -772,7 +772,7 @@ int silofs_format_repo(struct silofs_env *env)
 	int ret;
 
 	silofs_env_lock(env);
-	ret = silofs_repo_format(env->base.repo, bref);
+	ret = silofs_repo_format(env->base.repo, bref->repodir);
 	silofs_env_unlock(env);
 	return ret;
 }
@@ -784,7 +784,7 @@ int silofs_open_repo(struct silofs_env *env)
 	int ret;
 
 	silofs_env_lock(env);
-	ret = silofs_repo_open(env->base.repo, bref, rdonly);
+	ret = silofs_repo_open(env->base.repo, bref->repodir, rdonly);
 	silofs_env_unlock(env);
 	return ret;
 }
@@ -1149,14 +1149,6 @@ int silofs_restore_fs(struct silofs_env *env, const struct silofs_fsref *fsref,
 	err = do_restore_fs(env, fsref, out_fsref);
 	silofs_env_unlock(env);
 	return err;
-}
-
-void silofs_get_baseref(const struct silofs_env *env,
-                        struct silofs_baseref *out_baseref)
-{
-	const struct silofs_baseref *bref = &env->base.repo->re_bref;
-
-	memcpy(out_baseref, bref, sizeof(*out_baseref));
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

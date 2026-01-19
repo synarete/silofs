@@ -398,7 +398,7 @@ cmd_fsids_need_user(const struct silofs_fsids *fsids, const char *name)
 	cmd_fsids_need_uidgid(fsids, host_uid, host_gid);
 }
 
-void cmd_fsids_need_self(const struct silofs_fsids *fsids)
+static void cmd_fsids_need_self(const struct silofs_fsids *fsids)
 {
 	char *username = cmd_getusername();
 
@@ -597,7 +597,7 @@ static void cmd_fsref_jdecode(struct silofs_fsref *fsref, const json_t *jobj)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static json_t *cmd_spec_jencode(const struct silofs_spec *spec)
+static json_t *cmd_spec_jencode(const struct cmd_fs_spec *spec)
 {
 	json_t *jspec   = nullptr;
 	json_t *jfsmeta = nullptr;
@@ -618,7 +618,7 @@ static json_t *cmd_spec_jencode(const struct silofs_spec *spec)
 	return jspec;
 }
 
-void cmd_spec_save(const struct silofs_spec *spec,
+void cmd_spec_save(const struct cmd_fs_spec *spec,
                    const struct silofs_baseref *baseref)
 {
 	json_t *jspec = nullptr;
@@ -628,18 +628,18 @@ void cmd_spec_save(const struct silofs_spec *spec,
 	cmd_json_decref(jspec);
 }
 
-void cmd_spec_resave(const struct silofs_spec *spec,
+void cmd_spec_resave(const struct cmd_fs_spec *spec,
                      const struct silofs_fsref *fsref,
                      const struct silofs_baseref *baseref)
 {
-	struct silofs_spec spec2 = {};
+	struct cmd_fs_spec spec2 = {};
 
 	memcpy(&spec2, spec, sizeof(spec2));
 	memcpy(&spec2.fsref, fsref, sizeof(spec2.fsref));
 	cmd_spec_save(&spec2, baseref);
 }
 
-static void cmd_spec_jdecode(struct silofs_spec *spec, const json_t *jspec)
+static void cmd_spec_jdecode(struct cmd_fs_spec *spec, const json_t *jspec)
 {
 	json_t *jfsmeta = nullptr;
 	json_t *jfsref  = nullptr;
@@ -655,7 +655,7 @@ static void cmd_spec_jdecode(struct silofs_spec *spec, const json_t *jspec)
 	cmd_fsids_jdecode(&spec->fsids, jfsids);
 }
 
-void cmd_spec_load(struct silofs_spec *spec,
+void cmd_spec_load(struct cmd_fs_spec *spec,
                    const struct silofs_baseref *baseref)
 {
 	json_t *jspec = nullptr;
@@ -670,24 +670,29 @@ void cmd_spec_unlink(const struct silofs_baseref *baseref)
 	cmd_json_unlink(baseref->repodir, baseref->refname);
 }
 
-static void cmd_spec_bzero(struct silofs_spec *spec)
+static void cmd_spec_bzero(struct cmd_fs_spec *spec)
 {
 	memset(spec, 0, sizeof(*spec));
 }
 
-void cmd_spec_setup(struct silofs_spec *spec)
+void cmd_spec_setup(struct cmd_fs_spec *spec)
 {
 	cmd_spec_bzero(spec);
 	cmd_fsids_setup(&spec->fsids);
 	silofs_getfsmeta(&spec->fsref.fsmeta);
 }
 
-void cmd_spec_clear_fsids(struct silofs_spec *spec)
+void cmd_spec_clear_fsids(struct cmd_fs_spec *spec)
 {
 	cmd_fsids_clear(&spec->fsids);
 }
 
-void cmd_spec_reset(struct silofs_spec *spec)
+void cmd_spec_need_self(const struct cmd_fs_spec *spec)
+{
+	cmd_fsids_need_self(&spec->fsids);
+}
+
+void cmd_spec_reset(struct cmd_fs_spec *spec)
 {
 	cmd_spec_clear_fsids(spec);
 	cmd_spec_bzero(spec);

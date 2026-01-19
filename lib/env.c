@@ -117,17 +117,13 @@ int silofs_env_update_owner(struct silofs_env *env,
 	return 0;
 }
 
-int silofs_env_update_password(struct silofs_env *env,
-                               const struct silofs_password *pw)
+int silofs_env_use_password(struct silofs_env *env,
+                            const struct silofs_password *pw)
 {
 	struct silofs_mbr_meta mbr_meta = {};
 	int err;
 
-	err = silofs_password_assign(&env->passwd, pw);
-	if (err) {
-		return err;
-	}
-	err = silofs_derive_mbr_meta(&env->passwd, &mbr_meta);
+	err = silofs_derive_mbr_meta(pw, &mbr_meta);
 	if (err) {
 		return err;
 	}
@@ -209,7 +205,7 @@ static void
 env_init_commons(struct silofs_env *env, const struct silofs_env_base *base)
 {
 	memcpy(&env->base, base, sizeof(env->base));
-	silofs_password_reset(&env->passwd);
+	silofs_strbuf_reset(&env->name);
 	silofs_cred_init(&env->owner_cred);
 	env->init_time   = silofs_time_mono_now();
 	env->ubi         = nullptr;
@@ -222,7 +218,6 @@ env_init_commons(struct silofs_env *env, const struct silofs_env_base *base)
 static void env_fini_commons(struct silofs_env *env)
 {
 	memset(&env->base, 0, sizeof(env->base));
-	silofs_password_reset(&env->passwd);
 	silofs_cred_fini(&env->owner_cred);
 	env->ubi      = nullptr;
 	env->sbi      = nullptr;

@@ -99,11 +99,11 @@ static void ut_free_safe(void *ptr, size_t size)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ute_init(struct ut_env *ute, struct silofs_args *args)
+static void ute_init(struct ut_env *ute, struct ut_spec *spec)
 {
 	memset(ute, 0, sizeof(*ute));
 	silofs_mutex_init(&ute->mutex);
-	ute->args         = args;
+	ute->spec         = spec;
 	ute->malloc_list  = nullptr;
 	ute->nbytes_alloc = 0;
 	ute->unique_opid  = 1;
@@ -143,20 +143,20 @@ static void ute_setup(struct ut_env *ute)
 {
 	int err;
 
-	err = silofs_create_env(UT_1G, ute->args->flags, &ute->env);
+	err = silofs_create_env(UT_1G, ute->spec->args.flags, &ute->env);
 	silofs_assert_ok(err);
 	silofs_assert_not_null(ute->env);
 
-	err = silofs_open_env(ute->env, ute->args);
+	err = silofs_open_env(ute->env, &ute->spec->args);
 	silofs_assert_ok(err);
 }
 
-static struct ut_env *ute_new(struct silofs_args *args)
+static struct ut_env *ute_new(struct ut_spec *spec)
 {
 	struct ut_env *ute;
 
 	ute = (struct ut_env *)ut_malloc_safe(sizeof(*ute));
-	ute_init(ute, args);
+	ute_init(ute, spec);
 	return ute;
 }
 
@@ -168,18 +168,14 @@ static void ute_del(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static uint64_t ute_prandom_u64(struct ut_env *ute)
+static uint64_t ut_prandom_u64(void)
 {
 	struct timespec ts[2];
 
-	if (ute->prngc & 1) {
-		silofs_clock_mono_now(&ts[0]);
-		silofs_clock_real_now(&ts[1]);
-	} else {
-		silofs_clock_mono_now(&ts[1]);
-		silofs_clock_real_now(&ts[0]);
-	}
-	return silofs_xxh64(ts, sizeof(ts), ute->prngc++);
+	silofs_clock_mono_now(&ts[0]);
+	silofs_clock_real_now(&ts[1]);
+
+	return silofs_xxh64(ts, sizeof(ts), (uint64_t)getpid());
 }
 
 static void ute_prandom(struct ut_env *ute, void *buf, size_t bsz)
@@ -189,41 +185,30 @@ static void ute_prandom(struct ut_env *ute, void *buf, size_t bsz)
 	size_t k, cnt = 0;
 
 	while (cnt < bsz) {
-		u = ute_prandom_u64(ute);
+		u = ut_prandom_u64() * ute->prngc++;
 		k = ut_min(bsz - cnt, sizeof(u));
 		memcpy(&m[cnt], &u, k);
 		cnt += k;
 	}
 }
 
-static void ute_prandom_ascii(struct ut_env *ute, char *str, size_t n)
+static void ut_prandom_ascii(char *str, size_t n)
 {
 	uint64_t rnd   = 0;
 	const int base = 33;
 	const int last = 126;
 	int print_ch;
 
-	rnd = ute_prandom_u64(ute);
+	rnd = ut_prandom_u64();
 	for (size_t i = 0; i < n; ++i) {
 		if (i % 53) {
 			rnd = rnd >> 1;
 		} else {
-			rnd = ute_prandom_u64(ute);
+			rnd = ut_prandom_u64();
 		}
 		print_ch = abs((int)(rnd % (uint64_t)(last - base)) + base);
 		str[i]   = (char)print_ch;
 	}
-}
-
-static void ute_setup_random_passwd(struct ut_env *ute)
-{
-	char pass[SILOFS_PASSWORD_MAX + 1] = "";
-	struct silofs_args *args           = ute->args;
-	int err;
-
-	ute_prandom_ascii(ute, pass, sizeof(pass) - 1);
-	err = silofs_mkpasswd(&args->passwd, pass);
-	ut_expect_ok(err);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -447,12 +432,11 @@ static void ut_done_tests(struct ut_env *ute)
 	ut_close_repo(ute);
 }
 
-static void ut_execute_tests_cycle(struct silofs_args *args)
+static void ut_execute_tests_cycle(struct ut_spec *spec)
 {
 	struct ut_env *ute;
 
-	ute = ute_new(args);
-	ute_setup_random_passwd(ute);
+	ute = ute_new(spec);
 	ute_setup(ute);
 	ut_prep_tests(ute);
 	ut_exec_tests(ute);
@@ -462,13 +446,12 @@ static void ut_execute_tests_cycle(struct silofs_args *args)
 	ute_del(ute);
 }
 
-static void ut_print_tests_info(const struct silofs_args *args, int start)
+static void ut_print_tests_info(int start)
 {
 	char name[256] = "";
 
 	snprintf(name, sizeof(name) - 1, "  %s", ut_globals.program);
 	silofs_log_meta_banner(name, start);
-	silofs_unused(args);
 }
 
 static struct silofs_uids *ut_new_uids(void)
@@ -505,45 +488,61 @@ static void ut_del_gids(struct silofs_gids *gids)
 	ut_free_safe(gids, 2 * sizeof(*gids));
 }
 
-static void ut_init_args(struct silofs_args *args)
+static void ut_mkpasswd(struct ut_spec *spec)
 {
-	memset(args, 0, sizeof(*args));
-	args->bref[0].repodir         = ut_globals.test_dir_repo;
-	args->bref[0].refname         = "utests";
-	args->spec.fsids.users.uids   = ut_new_uids();
-	args->spec.fsids.users.nuids  = 2;
-	args->spec.fsids.groups.gids  = ut_new_gids();
-	args->spec.fsids.groups.ngids = 2;
-	args->cred.uid                = getuid();
-	args->cred.gid                = getgid();
-	args->cred.umask              = 0002;
+	char pass[SILOFS_PASSWORD_MAX + 1] = "";
+	size_t len;
+	int err;
+
+	len = (sizeof(pass) / 2) + ((size_t)getpid() % 31);
+	ut_prandom_ascii(pass, len);
+
+	err = silofs_mkpasswd(&spec->passwd, pass);
+	ut_expect_ok(err);
+}
+
+static void ut_init_spec(struct ut_spec *spec)
+{
+	memset(spec, 0, sizeof(*spec));
+	ut_mkpasswd(spec);
+	spec->args.bref[0].repodir = ut_globals.test_dir_repo;
+	spec->args.bref[0].refname = "utests";
+	spec->fsids.users.uids     = ut_new_uids();
+	spec->fsids.users.nuids    = 2;
+	spec->fsids.groups.gids    = ut_new_gids();
+	spec->fsids.groups.ngids   = 2;
+	spec->args.passwd          = &spec->passwd;
+	spec->args.fsids           = &spec->fsids;
+	spec->args.fsowner.uid     = getuid();
+	spec->args.fsowner.gid     = getgid();
+	spec->args.fsowner.umask   = 0077;
 	if (ut_globals.pedantic) {
-		args->flags |= SILOFS_F_PEDANTIC;
+		spec->args.flags |= SILOFS_F_PEDANTIC;
 	}
 	if (ut_globals.asyncwr) {
-		args->flags |= SILOFS_F_ASYNCWR;
+		spec->args.flags |= SILOFS_F_ASYNCWR;
 	}
 	if (ut_globals.stdalloc) {
-		args->flags |= SILOFS_F_STDALLOC;
+		spec->args.flags |= SILOFS_F_STDALLOC;
 	}
 }
 
-static void ut_fini_args(struct silofs_args *args)
+static void ut_fini_spec(struct ut_spec *spec)
 {
-	ut_del_uids(args->spec.fsids.users.uids);
-	ut_del_gids(args->spec.fsids.groups.gids);
-	memset(args, 0, sizeof(*args));
+	ut_del_uids(spec->fsids.users.uids);
+	ut_del_gids(spec->fsids.groups.gids);
+	memset(spec, 0, sizeof(*spec));
 }
 
 void ut_execute_tests(void)
 {
-	struct silofs_args args;
+	struct ut_spec spec;
 
-	ut_init_args(&args);
-	ut_print_tests_info(&args, 1);
-	ut_execute_tests_cycle(&args);
-	ut_print_tests_info(&args, 0);
-	ut_fini_args(&args);
+	ut_init_spec(&spec);
+	ut_print_tests_info(1);
+	ut_execute_tests_cycle(&spec);
+	ut_print_tests_info(0);
+	ut_fini_spec(&spec);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -785,7 +784,7 @@ static uint64_t ute_next_prandom(struct ut_env *ute)
 	uint64_t rnd;
 
 	ute_lock(ute);
-	rnd = ute_prandom_u64(ute);
+	rnd = ut_prandom_u64();
 	ute_unlock(ute);
 	return rnd;
 }

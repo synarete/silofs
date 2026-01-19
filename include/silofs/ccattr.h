@@ -60,6 +60,8 @@
 #define silofs_attr_printf(x_, y_)
 #endif
 
+#define silofs_attr_printf23 silofs_attr_printf(2, 3)
+
 #if __has_attribute(__fallthrough__)
 #define silofs_fallthrough __attribute__((__fallthrough__))
 #else

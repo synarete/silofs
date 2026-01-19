@@ -65,7 +65,7 @@ static void cmd_prune_parse_optargs(struct cmd_prune_ctx *ctx)
 
 static void cmd_prune_finalize(struct cmd_prune_ctx *ctx)
 {
-	cmd_del_env(&ctx->env);
+	cmd_destroy_env(&ctx->env);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_prune_ctx_p = nullptr;

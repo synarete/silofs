@@ -3039,9 +3039,12 @@ static int check_itype(const struct silofs_task_ctx *task, mode_t mode)
 {
 	/*
 	 * TODO-0031: Filter supported modes based on mount flags
+	 *
+	 * Have explicit control in 'allow_ispecial' from mount command and
+	 * by mount flags.
 	 */
-	const mode_t itype     = mode & S_IFMT;
-	const bool no_ispecial = task->t_env->args.no_ispecial;
+	const mode_t itype        = mode & S_IFMT;
+	const bool allow_ispecial = !task->t_env->no_ispecial;
 	int ret;
 
 	switch (itype) {
@@ -3052,7 +3055,7 @@ static int check_itype(const struct silofs_task_ctx *task, mode_t mode)
 		break;
 	case S_IFSOCK:
 	case S_IFIFO:
-		ret = no_ispecial ? -SILOFS_EOPNOTSUPP : 0;
+		ret = allow_ispecial ? 0 : -SILOFS_EOPNOTSUPP;
 		break;
 	case S_IFCHR:
 	case S_IFBLK:

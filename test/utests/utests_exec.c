@@ -514,9 +514,9 @@ static void ut_init_args(struct silofs_args *args)
 	args->spec.fsids.users.nuids  = 2;
 	args->spec.fsids.groups.gids  = ut_new_gids();
 	args->spec.fsids.groups.ngids = 2;
-	args->uid                     = getuid();
-	args->gid                     = getgid();
-	args->umask                   = 0002;
+	args->cred.uid                = getuid();
+	args->cred.gid                = getgid();
+	args->cred.umask              = 0002;
 	if (ut_globals.pedantic) {
 		args->flags |= SILOFS_F_PEDANTIC;
 	}

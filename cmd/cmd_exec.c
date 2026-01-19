@@ -207,12 +207,12 @@ void cmd_sense_fs(struct silofs_env *env, const struct silofs_fsref *fsref)
 	}
 }
 
-void cmd_format_fs(struct silofs_env *env, size_t capacity,
+void cmd_format_fs(struct silofs_env *env, size_t capacity, bool utf8_names,
                    struct silofs_fsref *out_fsref)
 {
 	int err;
 
-	err = silofs_format_fs(env, capacity, out_fsref);
+	err = silofs_format_fs(env, capacity, utf8_names, out_fsref);
 	if (err) {
 		cmd_report_err_and_die(env, err, "format failure");
 	}
@@ -308,9 +308,9 @@ void cmd_setup_args(struct silofs_args *args, const char *pass)
 	memset(args, 0, sizeof(*args));
 	cmd_mkpasswd(&args->passwd, pass);
 	cmd_spec_setup(&args->spec);
-	args->uid   = getuid();
-	args->gid   = getgid();
-	args->umask = 0077;
+	args->cred.uid   = getuid();
+	args->cred.gid   = getgid();
+	args->cred.umask = 0077;
 }
 
 void cmd_destroy_args(struct silofs_args *args)

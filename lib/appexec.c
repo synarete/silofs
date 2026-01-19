@@ -305,20 +305,17 @@ spawn_rootdir(struct silofs_task_ctx *task, struct silofs_inode_info **out_ii)
 	return 0;
 }
 
-static void update_rootdir(struct silofs_task_ctx *task,
-                           struct silofs_inode_info *rootd_ii)
+static void update_rootdir(struct silofs_inode_info *rootd_ii, bool utf8_names)
 {
-	const bool no_utf8_names = task->t_env->args.no_utf8_names;
-
 	silofs_ii_fixup_as_rootdir(rootd_ii);
-	if (no_utf8_names) {
-		silofs_dir_unset_flag(rootd_ii, SILOFS_DIRF_NAME_UTF8);
-	} else {
+	if (utf8_names) {
 		silofs_dir_set_flag(rootd_ii, SILOFS_DIRF_NAME_UTF8);
+	} else {
+		silofs_dir_unset_flag(rootd_ii, SILOFS_DIRF_NAME_UTF8);
 	}
 }
 
-static int format_rootdir(struct silofs_task_ctx *task)
+static int format_rootdir(struct silofs_task_ctx *task, bool utf8_names)
 {
 	struct silofs_inode_info *rootd_ii = nullptr;
 	int err;
@@ -327,7 +324,7 @@ static int format_rootdir(struct silofs_task_ctx *task)
 	if (err) {
 		return err;
 	}
-	update_rootdir(task, rootd_ii);
+	update_rootdir(rootd_ii, utf8_names);
 	return 0;
 }
 
@@ -343,7 +340,7 @@ commit_mbr(struct silofs_task_ctx *task, struct silofs_mbref *out_mbref)
 }
 
 static int appexec_format_meta(struct silofs_task_ctx *task, size_t capacity,
-                               struct silofs_mbref *out_mbref)
+                               bool utf8_names, struct silofs_mbref *out_mbref)
 {
 	int err;
 
@@ -375,7 +372,7 @@ static int appexec_format_meta(struct silofs_task_ctx *task, size_t capacity,
 	if (err) {
 		return err;
 	}
-	err = format_rootdir(task);
+	err = format_rootdir(task, utf8_names);
 	if (err) {
 		return err;
 	}
@@ -755,15 +752,16 @@ static int check_owner_ids(const struct silofs_env *env)
 	return 0;
 }
 
-static int exec_format_meta(struct silofs_env *env, size_t capacity,
-                            struct silofs_mbref *out_mbref)
+static int exec_format_meta(struct silofs_env *env, size_t fs_cap,
+                            bool utf8_names, struct silofs_mbref *out_mbref)
 {
 	struct silofs_task_ctx task;
 	int err;
 
 	err = make_priv_task(env, &task);
 	if (!err) {
-		err = appexec_format_meta(&task, capacity, out_mbref);
+		err = appexec_format_meta(&task, fs_cap, utf8_names,
+		                          out_mbref);
 	}
 	return term_task(&task, err);
 }
@@ -825,7 +823,7 @@ decode_fsref(const struct silofs_fsref *fsref, struct silofs_mbref *out_mbref)
 }
 
 static int do_format_fs(struct silofs_env *env, size_t capacity,
-                        struct silofs_fsref *out_fsref)
+                        bool utf8_names, struct silofs_fsref *out_fsref)
 {
 	struct silofs_mbref mbref;
 	int err;
@@ -834,7 +832,7 @@ static int do_format_fs(struct silofs_env *env, size_t capacity,
 	if (err) {
 		return err;
 	}
-	err = exec_format_meta(env, capacity, &mbref);
+	err = exec_format_meta(env, capacity, utf8_names, &mbref);
 	if (err) {
 		return err;
 	}
@@ -842,13 +840,13 @@ static int do_format_fs(struct silofs_env *env, size_t capacity,
 	return 0;
 }
 
-int silofs_format_fs(struct silofs_env *env, size_t capacity,
+int silofs_format_fs(struct silofs_env *env, size_t capacity, bool utf8_names,
                      struct silofs_fsref *out_fsref)
 {
 	int err;
 
 	silofs_env_lock(env);
-	err = do_format_fs(env, capacity, out_fsref);
+	err = do_format_fs(env, capacity, utf8_names, out_fsref);
 	silofs_env_unlock(env);
 	return err;
 }

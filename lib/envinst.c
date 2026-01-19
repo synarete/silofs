@@ -48,7 +48,6 @@ union silofs_alloc_u {
 /* actual environment instance object (internal) */
 struct silofs_env_inst {
 	struct silofs_prandgen prandgen;
-	struct silofs_args args;
 	union silofs_alloc_u alloc_u;
 	struct silofs_repo repo;
 	struct silofs_pcache pcache;
@@ -653,12 +652,9 @@ void silofs_destroy_env(struct silofs_env *env)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int
-envi_update_owner(struct silofs_env_inst *envi, const struct silofs_args *args)
+envi_update_owner(struct silofs_env_inst *envi, const struct silofs_cred *cred)
 {
-	struct silofs_cred cred;
-
-	silofs_cred_setup(&cred, args->uid, args->gid, args->umask);
-	return silofs_env_update_owner(&envi->env, &cred);
+	return silofs_env_update_owner(&envi->env, cred);
 }
 
 static int envi_update_password(struct silofs_env_inst *envi,
@@ -738,7 +734,7 @@ int silofs_open_env(struct silofs_env *env, const struct silofs_args *args)
 	if (err) {
 		return err;
 	}
-	err = envi_update_owner(envi, args);
+	err = envi_update_owner(envi, &args->cred);
 	if (err) {
 		return err;
 	}

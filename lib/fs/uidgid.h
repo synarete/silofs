@@ -17,16 +17,10 @@
 #ifndef SILOFS_UIDGID_H_
 #define SILOFS_UIDGID_H_
 
+#include <silofs/types.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <unistd.h>
-
-/* user-credentials */
-struct silofs_cred {
-	uid_t  uid;
-	gid_t  gid;
-	mode_t umask;
-};
 
 /* credential mapping (host/external to fs/internal) */
 struct silofs_creds {

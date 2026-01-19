@@ -200,10 +200,9 @@ static void cmd_mkfs_setup_args(struct cmd_mkfs_ctx *ctx)
 	struct silofs_args *args = &ctx->args;
 
 	cmd_setup_args(args, ctx->in_args.password);
-	cmd_uidgid_of(ctx->in_args.username, &args->uid, &args->gid);
+	cmd_uidgid_of(ctx->in_args.username, &args->cred.uid, &args->cred.gid);
 	args->bref[0].repodir = ctx->in_args.repodir_real;
 	args->bref[0].refname = ctx->in_args.fsname;
-	args->no_utf8_names   = ctx->in_args.no_utf8_names;
 	cmd_delpass(&ctx->in_args.password);
 }
 
@@ -212,7 +211,7 @@ static void cmd_mkfs_setup_fsids(struct cmd_mkfs_ctx *ctx)
 	struct silofs_args *args = &ctx->args;
 	const char *username     = ctx->in_args.username;
 
-	cmd_uidgid_of(username, &args->uid, &args->gid);
+	cmd_uidgid_of(username, &args->cred.uid, &args->cred.gid);
 	cmd_fsids_add_uidgid_of(&args->spec.fsids, username);
 	if (ctx->in_args.with_sup_groups) {
 		cmd_fsids_add_supgroups_of(&args->spec.fsids, username);
@@ -239,7 +238,10 @@ static void cmd_mkfs_close_repo(const struct cmd_mkfs_ctx *ctx)
 
 static void cmd_mkfs_format_fs(struct cmd_mkfs_ctx *ctx)
 {
-	cmd_format_fs(ctx->env, ctx->in_args.fs_size, &ctx->args.spec.fsref);
+	const size_t fs_cap   = ctx->in_args.fs_size;
+	const bool utf8_names = !ctx->in_args.no_utf8_names;
+
+	cmd_format_fs(ctx->env, fs_cap, utf8_names, &ctx->args.spec.fsref);
 }
 
 static void cmd_mkfs_save_spec(struct cmd_mkfs_ctx *ctx)

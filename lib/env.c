@@ -211,11 +211,12 @@ env_init_commons(struct silofs_env *env, const struct silofs_env_base *base)
 	memcpy(&env->base, base, sizeof(env->base));
 	silofs_password_reset(&env->passwd);
 	silofs_cred_init(&env->owner_cred);
-	env->init_time = silofs_time_mono_now();
-	env->iconv_set = false;
-	env->ubi       = nullptr;
-	env->sbi       = nullptr;
-	env->ms_flags  = 0;
+	env->init_time   = silofs_time_mono_now();
+	env->ubi         = nullptr;
+	env->sbi         = nullptr;
+	env->ms_flags    = 0;
+	env->no_ispecial = true;
+	env->iconv_set   = false;
 }
 
 static void env_fini_commons(struct silofs_env *env)

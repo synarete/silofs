@@ -67,6 +67,13 @@ struct silofs_fsmeta {
 	uint8_t  reserved2[48];
 };
 
+/* user-credentials */
+struct silofs_cred {
+	uid_t  uid;
+	gid_t  gid;
+	mode_t umask;
+};
+
 /* user-id host-to-fs bidirectional-mapping */
 struct silofs_uids {
 	uid_t host_uid;
@@ -124,14 +131,10 @@ struct silofs_spec {
 /* fs arguments */
 struct silofs_args {
 	struct silofs_password passwd;
-	struct silofs_spec     spec;
 	struct silofs_baseref  bref[2];
+	struct silofs_spec     spec;
+	struct silofs_cred     cred;
 	enum silofs_flags      flags;
-	uid_t                  uid;
-	gid_t                  gid;
-	mode_t                 umask;
-	bool                   no_ispecial;
-	bool                   no_utf8_names;
 };
 
 /* in-use versions */

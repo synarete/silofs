@@ -59,7 +59,7 @@ int silofs_close_repo(struct silofs_env *env);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_format_fs(struct silofs_env *env, size_t capacity,
+int silofs_format_fs(struct silofs_env *env, size_t capacity, bool utf8_names,
                      struct silofs_fsref *out_fsref);
 
 int silofs_sense_fs(struct silofs_env *env, const struct silofs_fsref *fsref);

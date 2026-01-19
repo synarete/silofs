@@ -125,15 +125,10 @@ struct ut_malloc_chunk {
 	void                   *data;
 };
 
-struct ut_args {
-	struct silofs_args args;
-	const char        *program;
-};
-
 struct ut_env {
 	struct silofs_fsrefs        fsrefs;
 	struct silofs_fsref         arfsref;
-	struct ut_args             *args;
+	struct silofs_args         *args;
 	struct silofs_env          *env;
 	struct timespec             ts_start;
 	struct timespec             ts_finish;
@@ -147,6 +142,7 @@ struct ut_env {
 	uint64_t                    prngc;
 	int                         run_level;
 	enum silofs_file_type       ftype;
+	size_t                      fs_capacity;
 };
 
 struct ut_dvec {

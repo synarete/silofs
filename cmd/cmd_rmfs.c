@@ -195,7 +195,7 @@ static void cmd_rmfs_load_spec(struct cmd_rmfs_ctx *ctx)
 
 static void cmd_rmfs_setup_env(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_new_env(&ctx->args, &ctx->env);
+	cmd_new_env(&ctx->env);
 	cmd_spec_clear_fsids(&ctx->args.spec);
 }
 

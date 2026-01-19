@@ -18,20 +18,26 @@
 #include "cmd.h"
 #include <stdarg.h>
 
-void cmd_new_env(const struct silofs_args *args, struct silofs_env **p_env)
+void cmd_new_env(struct silofs_env **penv)
 {
-	*p_env = silofs_create_env(args->memwant, args->flags);
-	if (*p_env == nullptr) {
-		cmd_diez("failed to create instance: memwant=%zu flags=0x%x",
-		         args->memwant, args->flags);
+	cmd_new_env2(0, penv);
+}
+
+void cmd_new_env2(enum silofs_flags flags, struct silofs_env **penv)
+{
+	int err;
+
+	err = silofs_create_env(0, flags, penv);
+	if (err) {
+		cmd_die(err, "failed to create instance: flags=0x%x", flags);
 	}
 }
 
-void cmd_del_env(struct silofs_env **p_env)
+void cmd_del_env(struct silofs_env **penv)
 {
-	if (p_env && *p_env) {
-		silofs_destroy_env(*p_env);
-		*p_env = nullptr;
+	if ((penv != nullptr) && (*penv != nullptr)) {
+		silofs_destroy_env(*penv);
+		*penv = nullptr;
 	}
 }
 
@@ -201,11 +207,12 @@ void cmd_sense_fs(struct silofs_env *env, const struct silofs_fsref *fsref)
 	}
 }
 
-void cmd_format_fs(struct silofs_env *env, struct silofs_fsref *out_fsref)
+void cmd_format_fs(struct silofs_env *env, size_t capacity,
+                   struct silofs_fsref *out_fsref)
 {
 	int err;
 
-	err = silofs_format_fs(env, out_fsref);
+	err = silofs_format_fs(env, capacity, out_fsref);
 	if (err) {
 		cmd_report_err_and_die(env, err, "format failure");
 	}
@@ -231,13 +238,14 @@ void cmd_unload_fs(struct silofs_env *env)
 	}
 }
 
-void cmd_exec_fs(struct silofs_env *env)
+void cmd_exec_fs(struct silofs_env *env, const char *mntdir)
 {
 	int err;
 
-	err = silofs_exec_fs(env);
+	err = silofs_exec_fs(env, mntdir);
 	if (err) {
-		cmd_report_err_and_die(env, err, "exec failure");
+		cmd_report_err_and_dief(env, err, "exec failure: mntdir=%s",
+		                        mntdir);
 	}
 }
 

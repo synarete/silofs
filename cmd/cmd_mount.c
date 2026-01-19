@@ -260,7 +260,6 @@ static void cmd_mount_setup_args(struct cmd_mount_ctx *ctx)
 	cmd_setup_args(args, in_args->password);
 	args->bref[0].repodir = in_args->repodir_real;
 	args->bref[0].refname = in_args->fsname;
-	args->mntdir          = in_args->mntpoint_real;
 	args->flags           = (enum silofs_flags)in_args->flags;
 	cmd_delpass(&ctx->in_args.password);
 }
@@ -273,7 +272,7 @@ static void cmd_mount_load_spec(struct cmd_mount_ctx *ctx)
 
 static void cmd_mount_setup_env(struct cmd_mount_ctx *ctx, int phase)
 {
-	cmd_new_env(&ctx->args, &ctx->env);
+	cmd_new_env2(ctx->args.flags, &ctx->env);
 	if (phase == 2) {
 		cmd_spec_clear_fsids(&ctx->args.spec);
 	}
@@ -413,7 +412,7 @@ static void cmd_mount_reload_fs(struct cmd_mount_ctx *ctx)
 static void cmd_mount_execute_fs(struct cmd_mount_ctx *ctx)
 {
 	ctx->start_time = time(nullptr);
-	cmd_exec_fs(ctx->env);
+	cmd_exec_fs(ctx->env, ctx->in_args.mntpoint_real);
 	ctx->post_exec_status = silofs_post_exec_fs(ctx->env);
 }
 

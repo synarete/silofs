@@ -314,7 +314,7 @@ static void cmd_clone_load_spec(struct cmd_clone_ctx *ctx)
 
 static void cmd_clone_setup_env(struct cmd_clone_ctx *ctx)
 {
-	cmd_new_env(&ctx->args, &ctx->env);
+	cmd_new_env(&ctx->env);
 	cmd_spec_clear_fsids(&ctx->args.spec);
 }
 

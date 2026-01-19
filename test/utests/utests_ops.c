@@ -535,7 +535,7 @@ static int ut_write_iter_copy_rem(struct ut_write_iter *wri)
 
 static bool ut_with_aswyncwr(const struct ut_env *ute)
 {
-	return (ute->args->args.flags & SILOFS_F_ASYNCWR) > 0;
+	return (ute->args->flags & SILOFS_F_ASYNCWR) > 0;
 }
 
 static int ut_do_write_iter(struct ut_env *ute, ino_t ino, const void *buf,
@@ -1985,7 +1985,7 @@ void ut_format_fs(struct ut_env *ute)
 {
 	int err;
 
-	err = silofs_format_fs(ute->env, &ute->fsrefs.main);
+	err = silofs_format_fs(ute->env, ute->fs_capacity, &ute->fsrefs.main);
 	ut_expect_ok(err);
 }
 

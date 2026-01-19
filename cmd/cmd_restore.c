@@ -187,7 +187,7 @@ static void cmd_restore_load_spec(struct cmd_restore_ctx *ctx)
 
 static void cmd_restore_setup_env(struct cmd_restore_ctx *ctx)
 {
-	cmd_new_env(&ctx->args, &ctx->env);
+	cmd_new_env(&ctx->env);
 }
 
 static void cmd_restore_open_repo(struct cmd_restore_ctx *ctx)

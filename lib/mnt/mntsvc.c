@@ -1179,7 +1179,7 @@ static int mntsrv_bind_abstract(struct silofs_mntsrv *msrv)
 {
 	struct silofs_sockaddr saddr;
 	struct silofs_socket *sock = &msrv->ms_lsock;
-	const char *sockname       = SILOFS_MNTSOCK_NAME;
+	const char *sockname       = silofs_mntrpc_sockname();
 	int err;
 
 	silofs_sockaddr_abstract(&saddr, sockname);
@@ -1203,7 +1203,7 @@ static int
 mntsrv_make_unixaddr(const struct silofs_mntsrv *msrv, char *buf, size_t bsz)
 {
 	const char *statedir = mntsrv_runstatedir(msrv);
-	const char *sockname = SILOFS_MNTSOCK_NAME;
+	const char *sockname = silofs_mntrpc_sockname();
 	ssize_t len;
 
 	len = snprintf(buf, bsz, "%s/%s", statedir, sockname);
@@ -1325,9 +1325,9 @@ static void mse_fini(struct silofs_ms_env *mse)
 int silofs_mse_new(const struct silofs_ms_args *ms_args,
                    struct silofs_ms_env **out_mse)
 {
-	void *mem                         = nullptr;
 	struct silofs_ms_env *mse         = nullptr;
 	struct silofs_ms_env_obj *mse_obj = nullptr;
+	void *mem;
 	int err;
 
 	err = silofs_zmalloc(sizeof(*mse_obj), &mem);
@@ -1412,7 +1412,7 @@ static int silofs_mse_exec_one(struct silofs_ms_env *mse)
 
 static int silofs_mse_exec(struct silofs_ms_env *mse)
 {
-	const char *sock = SILOFS_MNTSOCK_NAME;
+	const char *sock = silofs_mntrpc_sockname();
 	int err;
 
 	log_info("start serve: sock=@%s", sock);
@@ -1463,8 +1463,10 @@ void silofs_mse_halt(struct silofs_ms_env *mse, int signum)
 
 static void mntclnt_init(struct silofs_mntclnt *mclnt)
 {
+	const char *sockname = silofs_mntrpc_sockname();
+
 	silofs_streamsock_initu(&mclnt->mc_sock);
-	silofs_sockaddr_abstract(&mclnt->mc_srvaddr, SILOFS_MNTSOCK_NAME);
+	silofs_sockaddr_abstract(&mclnt->mc_srvaddr, sockname);
 }
 
 static void mntclnt_fini(struct silofs_mntclnt *mclnt)
@@ -1709,6 +1711,11 @@ int silofs_mntrpc_handshake(uid_t uid, gid_t gid)
 	mntclnt_fini(&mclnt);
 
 	return err;
+}
+
+const char *silofs_mntrpc_sockname(void)
+{
+	return SILOFS_MNTSOCK_NAME;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

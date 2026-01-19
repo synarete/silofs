@@ -113,17 +113,16 @@ static int format_uber(struct silofs_task_ctx *task)
 	return silofs_env_format_uber(task->t_env);
 }
 
-static size_t calc_aligned_fs_cap(const struct silofs_task_ctx *task)
+static size_t calc_aligned_fs_cap(size_t fs_cap_want)
 {
-	const size_t fs_cap_want = task->t_env->args.capacity;
-	const size_t align_size  = SILOFS_LSEG_SIZE_MAX;
+	const size_t align_size = SILOFS_LSEG_SIZE_MAX;
 
 	return (fs_cap_want / align_size) * align_size;
 }
 
-static int format_super(struct silofs_task_ctx *task)
+static int format_super(struct silofs_task_ctx *task, size_t fs_cap_want)
 {
-	const size_t fs_cap = calc_aligned_fs_cap(task);
+	const size_t fs_cap = calc_aligned_fs_cap(fs_cap_want);
 
 	return silofs_env_format_super(task->t_env, fs_cap);
 }
@@ -343,7 +342,7 @@ commit_mbr(struct silofs_task_ctx *task, struct silofs_mbref *out_mbref)
 	return silofs_env_commit_fs_mbr(task->t_env, out_mbref);
 }
 
-static int appexec_format_meta(struct silofs_task_ctx *task,
+static int appexec_format_meta(struct silofs_task_ctx *task, size_t capacity,
                                struct silofs_mbref *out_mbref)
 {
 	int err;
@@ -356,7 +355,7 @@ static int appexec_format_meta(struct silofs_task_ctx *task,
 	if (err) {
 		return err;
 	}
-	err = format_super(task);
+	err = format_super(task, capacity);
 	if (err) {
 		return err;
 	}
@@ -654,12 +653,12 @@ int silofs_close_repo(struct silofs_env *env)
 	return ret;
 }
 
-static int do_mount_and_exec(struct silofs_env *env)
+static int do_mount_and_exec(struct silofs_env *env, const char *mntdir)
 {
 	struct silofs_fuseq *fuseq = env->fuseq;
 	int err;
 
-	err = silofs_fuseq_mount(fuseq, env, env->args.mntdir);
+	err = silofs_fuseq_mount(fuseq, mntdir);
 	if (!err) {
 		err = silofs_fuseq_exec(fuseq);
 	}
@@ -667,7 +666,7 @@ static int do_mount_and_exec(struct silofs_env *env)
 	return err;
 }
 
-int silofs_exec_fs(struct silofs_env *env)
+int silofs_exec_fs(struct silofs_env *env, const char *mntdir)
 {
 	struct silofs_fuseq *fuseq = env->fuseq;
 	int err;
@@ -679,7 +678,7 @@ int silofs_exec_fs(struct silofs_env *env)
 	if (err) {
 		return err;
 	}
-	err = do_mount_and_exec(env);
+	err = do_mount_and_exec(env, mntdir);
 	if (err) {
 		return err;
 	}
@@ -726,15 +725,14 @@ static int check_fs_capacity(size_t cap_size)
 	return 0;
 }
 
-static int check_want_capacity(const struct silofs_env *env)
+static int check_want_capacity(size_t capacity)
 {
-	const size_t cap_want = env->args.capacity;
 	int err;
 
-	err = check_fs_capacity(cap_want);
+	err = check_fs_capacity(capacity);
 	if (err) {
 		log_err("illegal file-system capacity: cap=%lu err=%d",
-		        cap_want, err);
+		        capacity, err);
 		return err;
 	}
 	return 0;
@@ -757,15 +755,15 @@ static int check_owner_ids(const struct silofs_env *env)
 	return 0;
 }
 
-static int
-exec_format_meta(struct silofs_env *env, struct silofs_mbref *out_mbref)
+static int exec_format_meta(struct silofs_env *env, size_t capacity,
+                            struct silofs_mbref *out_mbref)
 {
 	struct silofs_task_ctx task;
 	int err;
 
 	err = make_priv_task(env, &task);
 	if (!err) {
-		err = appexec_format_meta(&task, out_mbref);
+		err = appexec_format_meta(&task, capacity, out_mbref);
 	}
 	return term_task(&task, err);
 }
@@ -793,11 +791,11 @@ int silofs_open_repo(struct silofs_env *env)
 	return ret;
 }
 
-static int check_format_fs(struct silofs_env *env)
+static int check_format_fs(struct silofs_env *env, size_t capacity)
 {
 	int err;
 
-	err = check_want_capacity(env);
+	err = check_want_capacity(capacity);
 	if (err) {
 		return err;
 	}
@@ -826,16 +824,17 @@ decode_fsref(const struct silofs_fsref *fsref, struct silofs_mbref *out_mbref)
 	return silofs_fsref_import(fsref, out_mbref);
 }
 
-static int do_format_fs(struct silofs_env *env, struct silofs_fsref *out_fsref)
+static int do_format_fs(struct silofs_env *env, size_t capacity,
+                        struct silofs_fsref *out_fsref)
 {
 	struct silofs_mbref mbref;
 	int err;
 
-	err = check_format_fs(env);
+	err = check_format_fs(env, capacity);
 	if (err) {
 		return err;
 	}
-	err = exec_format_meta(env, &mbref);
+	err = exec_format_meta(env, capacity, &mbref);
 	if (err) {
 		return err;
 	}
@@ -843,12 +842,13 @@ static int do_format_fs(struct silofs_env *env, struct silofs_fsref *out_fsref)
 	return 0;
 }
 
-int silofs_format_fs(struct silofs_env *env, struct silofs_fsref *out_fsref)
+int silofs_format_fs(struct silofs_env *env, size_t capacity,
+                     struct silofs_fsref *out_fsref)
 {
 	int err;
 
 	silofs_env_lock(env);
-	err = do_format_fs(env, out_fsref);
+	err = do_format_fs(env, capacity, out_fsref);
 	silofs_env_unlock(env);
 	return err;
 }

@@ -20,7 +20,6 @@
 
 static void ut_statfs_empty(struct ut_env *ute)
 {
-	size_t capacity    = 0;
 	size_t fs_size     = 0;
 	size_t used_bytes  = 0;
 	size_t used_files  = 0;
@@ -33,13 +32,12 @@ static void ut_statfs_empty(struct ut_env *ute)
 	ut_expect_gt(stv.f_blocks, stv.f_bfree);
 	ut_expect_gt(stv.f_files, stv.f_ffree);
 
-	fs_size  = stv.f_frsize * stv.f_blocks;
-	capacity = ute->args->args.capacity;
-	ut_expect_eq(fs_size, capacity);
+	fs_size = stv.f_frsize * stv.f_blocks;
+	ut_expect_eq(fs_size, ute->fs_capacity);
 
 	used_bytes = (stv.f_blocks - stv.f_bfree) * stv.f_frsize;
 	ut_expect_gt(used_bytes, SILOFS_SB_SIZE);
-	ut_expect_lt(used_bytes, capacity);
+	ut_expect_lt(used_bytes, ute->fs_capacity);
 
 	/* 2 used inodes: anon-allocation at voff=0 and root-dir */
 	used_files = stv.f_files - stv.f_ffree;

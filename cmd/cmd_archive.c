@@ -188,7 +188,7 @@ static void cmd_archive_load_spec(struct cmd_archive_ctx *ctx)
 
 static void cmd_archive_setup_env(struct cmd_archive_ctx *ctx)
 {
-	cmd_new_env(&ctx->args, &ctx->env);
+	cmd_new_env(&ctx->env);
 	cmd_spec_clear_fsids(&ctx->args.spec);
 }
 

@@ -182,7 +182,7 @@ static void cmd_view_load_spec(struct cmd_view_ctx *ctx)
 
 static void cmd_view_setup_env(struct cmd_view_ctx *ctx)
 {
-	cmd_new_env(&ctx->args, &ctx->env);
+	cmd_new_env(&ctx->env);
 	cmd_spec_clear_fsids(&ctx->args.spec);
 }
 

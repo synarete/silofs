@@ -267,7 +267,7 @@ bool cmd_optargs_curr_as_bool(const struct cmd_optargs *opa)
 	return cmd_parse_str_as_bool(opa->opa_optarg);
 }
 
-long cmd_optargs_curr_as_size(const struct cmd_optargs *opa)
+size_t cmd_optargs_curr_as_size(const struct cmd_optargs *opa)
 {
 	return cmd_parse_str_as_size(opa->opa_optarg);
 }
@@ -287,9 +287,9 @@ void cmd_require_arg(const char *arg_name, const void *arg_val)
 	}
 }
 
-void cmd_require_arg_size(const char *arg_name, long val)
+void cmd_require_arg_size(const char *arg_name, size_t val)
 {
-	if (val < 0) {
+	if ((intmax_t)val <= 0) {
 		cmd_fatal_missing_arg(arg_name);
 	}
 }

@@ -135,7 +135,7 @@ static void cmd_init_setup_args(struct cmd_init_ctx *ctx)
 
 static void cmd_init_setup_env(struct cmd_init_ctx *ctx)
 {
-	cmd_new_env(&ctx->args, &ctx->env);
+	cmd_new_env(&ctx->env);
 }
 
 static void cmd_init_format_repo(const struct cmd_init_ctx *ctx)

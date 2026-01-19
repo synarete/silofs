@@ -36,7 +36,8 @@ int silofs_mkpasswd(struct silofs_password *pw, const char *s);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-struct silofs_env *silofs_create_env(size_t memwant, enum silofs_flags flags);
+int silofs_create_env(size_t memwant, enum silofs_flags flags,
+                      struct silofs_env **out_env);
 
 void silofs_destroy_env(struct silofs_env *env);
 
@@ -58,7 +59,8 @@ int silofs_close_repo(struct silofs_env *env);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_format_fs(struct silofs_env *env, struct silofs_fsref *out_fsref);
+int silofs_format_fs(struct silofs_env *env, size_t capacity,
+                     struct silofs_fsref *out_fsref);
 
 int silofs_sense_fs(struct silofs_env *env, const struct silofs_fsref *fsref);
 
@@ -66,7 +68,7 @@ int silofs_reload_fs(struct silofs_env *env, const struct silofs_fsref *fsref);
 
 int silofs_unload_fs(struct silofs_env *env);
 
-int silofs_exec_fs(struct silofs_env *env);
+int silofs_exec_fs(struct silofs_env *env, const char *mntdir);
 
 void silofs_halt_fs(struct silofs_env *env);
 

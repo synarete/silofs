@@ -141,7 +141,7 @@ char *cmd_optargs_getpass(const struct cmd_optargs *opa);
 
 bool cmd_optargs_curr_as_bool(const struct cmd_optargs *opa);
 
-long cmd_optargs_curr_as_size(const struct cmd_optargs *opa);
+size_t cmd_optargs_curr_as_size(const struct cmd_optargs *opa);
 
 uint32_t cmd_optargs_curr_as_u32v(const struct cmd_optargs *opa, uint32_t vmin,
                                   uint32_t vmax);
@@ -152,7 +152,7 @@ void cmd_optargs_set_loglevel(const struct cmd_optargs *opa);
 
 void cmd_require_arg(const char *arg_name, const void *arg_val);
 
-void cmd_require_arg_size(const char *arg_name, long val);
+void cmd_require_arg_size(const char *arg_name, size_t val);
 
 void cmd_atexit(void (*fn)(void));
 
@@ -250,7 +250,7 @@ char *cmd_path_join(const char *dirpath, const char *name);
 silofs_attr_printf(1, 2) char *cmd_path_fmt(const char *fmt, ...);
 
 /* parse helpers */
-long cmd_parse_str_as_size(const char *str);
+size_t cmd_parse_str_as_size(const char *str);
 
 uint32_t cmd_parse_str_as_u32(const char *str);
 
@@ -280,7 +280,8 @@ void cmd_open_repo(struct silofs_env *env);
 
 void cmd_close_repo(struct silofs_env *env);
 
-void cmd_format_fs(struct silofs_env *env, struct silofs_fsref *out_fsref);
+void cmd_format_fs(struct silofs_env *env, size_t capacity,
+                   struct silofs_fsref *out_fsref);
 
 void cmd_sense_fs(struct silofs_env *env, const struct silofs_fsref *fsref);
 
@@ -288,7 +289,7 @@ void cmd_reload_fs(struct silofs_env *env, const struct silofs_fsref *fsref);
 
 void cmd_unload_fs(struct silofs_env *env);
 
-void cmd_exec_fs(struct silofs_env *env);
+void cmd_exec_fs(struct silofs_env *env, const char *mntdir);
 
 void cmd_fork_fs(struct silofs_env *env, struct silofs_fsrefs *out_fsrefs);
 
@@ -314,8 +315,10 @@ void cmd_del_iocp(union silofs_ioc_u **pioc);
 
 void cmd_reset_ioc(union silofs_ioc_u *ioc);
 
-/* file-system environment */
-void cmd_new_env(const struct silofs_args *args, struct silofs_env **p_env);
+/* environment context */
+void cmd_new_env(struct silofs_env **penv);
+
+void cmd_new_env2(enum silofs_flags flags, struct silofs_env **p_env);
 
 void cmd_del_env(struct silofs_env **p_env);
 

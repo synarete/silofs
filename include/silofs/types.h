@@ -126,13 +126,10 @@ struct silofs_args {
 	struct silofs_password passwd;
 	struct silofs_spec     spec;
 	struct silofs_baseref  bref[2];
-	const char            *mntdir;
 	enum silofs_flags      flags;
 	uid_t                  uid;
 	gid_t                  gid;
 	mode_t                 umask;
-	size_t                 capacity;
-	size_t                 memwant;
 	bool                   no_ispecial;
 	bool                   no_utf8_names;
 };

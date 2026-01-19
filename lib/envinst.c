@@ -74,9 +74,14 @@ static size_t align_down(size_t sz, size_t align)
 	return (sz / align) * align;
 }
 
-static uint64_t minu64(uint64_t x, uint64_t y, uint64_t z)
+static uint64_t min3_u64(uint64_t x, uint64_t y, uint64_t z)
 {
 	return silofs_min(silofs_min(x, y), z);
+}
+
+static uint64_t clamp_u64(uint64_t v, uint64_t lo, uint64_t hi)
+{
+	return silofs_clamp_u64(v, lo, hi);
 }
 
 static int calc_mem_size(size_t mem_want, size_t *out_mem_size)
@@ -98,14 +103,13 @@ static int calc_mem_size(size_t mem_want, size_t *out_mem_size)
 	if (err) {
 		return err;
 	}
-	if (mem_total < mem_floor) {
+	if ((mem_total < mem_floor) || (mem_rlim < mem_floor)) {
 		return -SILOFS_ENOMEM;
 	}
-	if (mem_rlim < mem_floor) {
-		return -SILOFS_ENOMEM;
-	}
-	mem_ceil      = minu64(mem_glim, mem_rlim, mem_total / 4);
-	mem_uget      = silofs_clamp_u64(mem_want, mem_floor, mem_ceil);
+
+	mem_ceil = min3_u64(mem_glim, mem_rlim, mem_total / 4);
+	mem_uget = clamp_u64(mem_want, mem_floor, mem_ceil);
+
 	*out_mem_size = align_down(mem_uget, 2 * SILOFS_UMEGA);
 	return 0;
 }
@@ -583,8 +587,8 @@ static size_t envi_memsize(const struct silofs_env_inst *envi)
 	return npgs * pgsz;
 }
 
-static struct silofs_env_inst *
-envi_new(size_t memwant, enum silofs_flags flags)
+static int envi_new(size_t memwant, enum silofs_flags flags,
+                    struct silofs_env_inst **out_envi)
 
 {
 	struct silofs_env_inst *envi = nullptr;
@@ -595,15 +599,15 @@ envi_new(size_t memwant, enum silofs_flags flags)
 	msz = envi_memsize(envi);
 	err = silofs_zmalloc(msz, &mem);
 	if (err) {
-		return nullptr;
+		return err;
 	}
 	envi = mem;
 	err  = envi_init(envi, memwant, flags);
 	if (err) {
-		silofs_zfree(mem, msz);
-		return nullptr;
+		return err;
 	}
-	return envi;
+	*out_envi = envi;
+	return 0;
 }
 
 static void envi_del(struct silofs_env_inst *envi)
@@ -615,20 +619,21 @@ static void envi_del(struct silofs_env_inst *envi)
 	silofs_zfree(mem, msz);
 }
 
-struct silofs_env *silofs_create_env(size_t memwant, enum silofs_flags flags)
+int silofs_create_env(size_t memwant, enum silofs_flags flags,
+                      struct silofs_env **out_env)
 {
-	struct silofs_env_inst *envi = nullptr;
-	struct silofs_env *env       = nullptr;
+	struct silofs_env_inst *envi;
+	int err;
 
 	STATICASSERT_LE(sizeof(*envi), 32 * SILOFS_KILO);
 
-	envi = envi_new(memwant, flags);
-	if (envi != nullptr) {
-		env = &envi->env;
+	err = envi_new(memwant, flags, &envi);
+	if (!err) {
+		*out_env = &envi->env;
 	}
 	silofs_burnstack();
 
-	return env;
+	return err;
 }
 
 static struct silofs_env_inst *env_inst_of(struct silofs_env *env)

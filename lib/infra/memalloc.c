@@ -69,7 +69,7 @@ static int cstd_memalign(size_t sz, void **out_mem)
 
 static void cstd_memfree(void *mem, size_t sz)
 {
-	if (mem && sz) {
+	if ((mem != nullptr) && (sz > 0)) {
 		free(mem);
 	}
 }
@@ -78,7 +78,8 @@ int silofs_zmalloc(size_t sz, void **out_mem)
 {
 	int err;
 
-	err = cstd_memalign(sz, out_mem);
+	*out_mem = nullptr;
+	err      = cstd_memalign(sz, out_mem);
 	if (err) {
 		return err;
 	}

@@ -84,6 +84,8 @@ int silofs_mntrpc_mount(const char *mountpoint, uid_t uid, gid_t gid,
 int silofs_mntrpc_umount(const char *mountpoint, uid_t uid, gid_t gid,
                          unsigned int mnt_flags);
 
+const char *silofs_mntrpc_sockname(void);
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_parse_mntrules(struct silofs_mntrules *mrules,

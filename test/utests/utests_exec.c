@@ -99,7 +99,7 @@ static void ut_free_safe(void *ptr, size_t size)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ute_init(struct ut_env *ute, struct ut_args *args)
+static void ute_init(struct ut_env *ute, struct silofs_args *args)
 {
 	memset(ute, 0, sizeof(*ute));
 	silofs_mutex_init(&ute->mutex);
@@ -108,6 +108,7 @@ static void ute_init(struct ut_env *ute, struct ut_args *args)
 	ute->nbytes_alloc = 0;
 	ute->unique_opid  = 1;
 	ute->ftype        = SILOFS_FILE_TYPE1;
+	ute->fs_capacity  = SILOFS_CAPACITY_SIZE_MIN;
 	ute->run_level    = ut_globals.run_level;
 	ute->prngc        = 1;
 }
@@ -140,18 +141,17 @@ static void ute_unlock(struct ut_env *ute)
 
 static void ute_setup(struct ut_env *ute)
 {
-	const size_t memwant          = ute->args->args.memwant;
-	const enum silofs_flags flags = ute->args->args.flags;
 	int err;
 
-	ute->env = silofs_create_env(memwant, flags);
+	err = silofs_create_env(UT_1G, ute->args->flags, &ute->env);
+	silofs_assert_ok(err);
 	silofs_assert_not_null(ute->env);
 
-	err = silofs_open_env(ute->env, &ute->args->args);
+	err = silofs_open_env(ute->env, ute->args);
 	silofs_assert_ok(err);
 }
 
-static struct ut_env *ute_new(struct ut_args *args)
+static struct ut_env *ute_new(struct silofs_args *args)
 {
 	struct ut_env *ute;
 
@@ -218,7 +218,7 @@ static void ute_prandom_ascii(struct ut_env *ute, char *str, size_t n)
 static void ute_setup_random_passwd(struct ut_env *ute)
 {
 	char pass[SILOFS_PASSWORD_MAX + 1] = "";
-	struct silofs_args *args           = &ute->args->args;
+	struct silofs_args *args           = ute->args;
 	int err;
 
 	ute_prandom_ascii(ute, pass, sizeof(pass) - 1);
@@ -447,7 +447,7 @@ static void ut_done_tests(struct ut_env *ute)
 	ut_close_repo(ute);
 }
 
-static void ut_execute_tests_cycle(struct ut_args *args)
+static void ut_execute_tests_cycle(struct silofs_args *args)
 {
 	struct ut_env *ute;
 
@@ -462,12 +462,13 @@ static void ut_execute_tests_cycle(struct ut_args *args)
 	ute_del(ute);
 }
 
-static void ut_print_tests_info(const struct ut_args *args, int start)
+static void ut_print_tests_info(const struct silofs_args *args, int start)
 {
 	char name[256] = "";
 
-	snprintf(name, sizeof(name) - 1, "  %s", args->program);
+	snprintf(name, sizeof(name) - 1, "  %s", ut_globals.program);
 	silofs_log_meta_banner(name, start);
+	silofs_unused(args);
 }
 
 static struct silofs_uids *ut_new_uids(void)
@@ -504,43 +505,39 @@ static void ut_del_gids(struct silofs_gids *gids)
 	ut_free_safe(gids, 2 * sizeof(*gids));
 }
 
-static void ut_init_args(struct ut_args *args)
+static void ut_init_args(struct silofs_args *args)
 {
 	memset(args, 0, sizeof(*args));
-	args->args.bref[0].repodir         = ut_globals.test_dir_repo;
-	args->args.bref[0].refname         = "utests";
-	args->args.mntdir                  = "/";
-	args->args.spec.fsids.users.uids   = ut_new_uids();
-	args->args.spec.fsids.users.nuids  = 2;
-	args->args.spec.fsids.groups.gids  = ut_new_gids();
-	args->args.spec.fsids.groups.ngids = 2;
-	args->args.uid                     = getuid();
-	args->args.gid                     = getgid();
-	args->args.umask                   = 0002;
-	args->args.capacity                = SILOFS_CAPACITY_SIZE_MIN;
-	args->args.memwant                 = UT_1G;
+	args->bref[0].repodir         = ut_globals.test_dir_repo;
+	args->bref[0].refname         = "utests";
+	args->spec.fsids.users.uids   = ut_new_uids();
+	args->spec.fsids.users.nuids  = 2;
+	args->spec.fsids.groups.gids  = ut_new_gids();
+	args->spec.fsids.groups.ngids = 2;
+	args->uid                     = getuid();
+	args->gid                     = getgid();
+	args->umask                   = 0002;
 	if (ut_globals.pedantic) {
-		args->args.flags |= SILOFS_F_PEDANTIC;
+		args->flags |= SILOFS_F_PEDANTIC;
 	}
 	if (ut_globals.asyncwr) {
-		args->args.flags |= SILOFS_F_ASYNCWR;
+		args->flags |= SILOFS_F_ASYNCWR;
 	}
 	if (ut_globals.stdalloc) {
-		args->args.flags |= SILOFS_F_STDALLOC;
+		args->flags |= SILOFS_F_STDALLOC;
 	}
-	args->program = ut_globals.program;
 }
 
-static void ut_fini_args(struct ut_args *args)
+static void ut_fini_args(struct silofs_args *args)
 {
-	ut_del_uids(args->args.spec.fsids.users.uids);
-	ut_del_gids(args->args.spec.fsids.groups.gids);
+	ut_del_uids(args->spec.fsids.users.uids);
+	ut_del_gids(args->spec.fsids.groups.gids);
 	memset(args, 0, sizeof(*args));
 }
 
 void ut_execute_tests(void)
 {
-	struct ut_args args;
+	struct silofs_args args;
 
 	ut_init_args(&args);
 	ut_print_tests_info(&args, 1);

@@ -507,12 +507,13 @@ static char *cmd_getcwd(void)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-long cmd_parse_str_as_size(const char *str)
+size_t cmd_parse_str_as_size(const char *str)
 {
 	long mul     = 0;
 	char *endptr = nullptr;
 	long double val;
 	long double iz;
+	intmax_t size;
 
 	errno = 0;
 	val   = strtold(str, &endptr);
@@ -548,11 +549,17 @@ long cmd_parse_str_as_size(const char *str)
 	if ((iz < 0.0L) || isnan(iz)) {
 		goto illegal_value;
 	}
-	return (long)(val * (long double)mul);
+
+	size = (intmax_t)(val * (long double)mul);
+	if ((size <= 0) || (size >= (LONG_MAX / 2))) {
+		goto illegal_value;
+	}
+
+	return (size_t)size;
 
 illegal_value:
 	cmd_die(0, "illegal value: %s", str);
-	return -EINVAL;
+	return 0; /* never gets here */
 }
 
 static long cmd_parse_str_as_long(const char *str)

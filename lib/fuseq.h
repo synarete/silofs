@@ -96,7 +96,6 @@ struct silofs_fuseq {
 	uint32_t                      fq_nprocs;
 	int64_t                       fq_nexecs;
 	int64_t                       fq_nopers;
-	uid_t                         fq_fs_owner;
 	volatile int                  fq_active;
 	volatile int                  fq_fuse_fd;
 	bool                          fq_init_pipes;
@@ -116,8 +115,7 @@ void silofs_fuseq_del(struct silofs_fuseq *fq, struct silofs_alloc *alloc);
 
 int silofs_fuseq_update(struct silofs_fuseq *fq);
 
-int silofs_fuseq_mount(struct silofs_fuseq *fq, struct silofs_env *env,
-                       const char *path);
+int silofs_fuseq_mount(struct silofs_fuseq *fq, const char *mntpath);
 
 int silofs_fuseq_exec(struct silofs_fuseq *fq);
 

@@ -164,7 +164,7 @@ static void cmd_fsck_load_spec(struct cmd_fsck_ctx *ctx)
 
 static void cmd_fsck_setup_env(struct cmd_fsck_ctx *ctx)
 {
-	cmd_new_env(&ctx->args, &ctx->env);
+	cmd_new_env(&ctx->env);
 	cmd_spec_clear_fsids(&ctx->args.spec);
 }
 

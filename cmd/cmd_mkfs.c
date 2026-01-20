@@ -198,14 +198,12 @@ static void cmd_mkfs_getpass(struct cmd_mkfs_ctx *ctx)
 
 static void cmd_mkfs_setup_args(struct cmd_mkfs_ctx *ctx)
 {
-	struct silofs_args *args = &ctx->args;
-
 	cmd_setup_spec_args(&ctx->spec, &ctx->args, ctx->in_args.password);
 	cmd_delpass(&ctx->in_args.password);
-	cmd_uidgid_of(ctx->in_args.username, &args->fsowner.uid,
-	              &args->fsowner.gid);
-	args->bref[0].repodir = ctx->in_args.repodir_real;
-	args->bref[0].refname = ctx->in_args.fsname;
+	cmd_uidgid_of(ctx->in_args.username, &ctx->args.fsowner.uid,
+	              &ctx->args.fsowner.gid);
+	ctx->args.bref[0].repodir = ctx->in_args.repodir_real;
+	ctx->args.bref[0].refname = ctx->in_args.fsname;
 }
 
 static void cmd_mkfs_setup_fsids(struct cmd_mkfs_ctx *ctx)
@@ -230,7 +228,7 @@ static void cmd_mkfs_setup_env(struct cmd_mkfs_ctx *ctx)
 
 static void cmd_mkfs_open_repo(const struct cmd_mkfs_ctx *ctx)
 {
-	cmd_open_repo(ctx->env);
+	cmd_open_repo(ctx->env, ctx->args.bref[0].repodir, ctx->args.flags);
 }
 
 static void cmd_mkfs_close_repo(const struct cmd_mkfs_ctx *ctx)

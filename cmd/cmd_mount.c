@@ -389,7 +389,7 @@ static void cmd_mount_getpass(struct cmd_mount_ctx *ctx)
 
 static void cmd_mount_open_repo(struct cmd_mount_ctx *ctx)
 {
-	cmd_open_repo(ctx->env);
+	cmd_open_repo(ctx->env, ctx->args.bref[0].repodir, ctx->args.flags);
 }
 
 static void cmd_mount_close_repo(struct cmd_mount_ctx *ctx)

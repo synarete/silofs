@@ -169,7 +169,7 @@ static void cmd_fsck_setup_env(struct cmd_fsck_ctx *ctx)
 
 static void cmd_fsck_open_repo(struct cmd_fsck_ctx *ctx)
 {
-	cmd_open_repo(ctx->env);
+	cmd_open_repo(ctx->env, ctx->args.bref[0].repodir, ctx->args.flags);
 }
 
 static void cmd_fsck_sense_fs(struct cmd_fsck_ctx *ctx)

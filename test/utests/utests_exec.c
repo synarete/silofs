@@ -516,6 +516,7 @@ static void ut_init_spec(struct ut_spec *spec)
 	spec->args.fsowner.uid     = getuid();
 	spec->args.fsowner.gid     = getgid();
 	spec->args.fsowner.umask   = 0077;
+	spec->args.flags           = SILOFS_F_ALLOWIFIFO | SILOFS_F_ALLOWISOCK;
 	if (ut_globals.pedantic) {
 		spec->args.flags |= SILOFS_F_PEDANTIC;
 	}

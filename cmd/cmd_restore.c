@@ -191,7 +191,7 @@ static void cmd_restore_setup_env(struct cmd_restore_ctx *ctx)
 
 static void cmd_restore_open_repo(struct cmd_restore_ctx *ctx)
 {
-	cmd_open_repo(ctx->env);
+	cmd_open_repo(ctx->env, ctx->args.bref[1].repodir, ctx->args.flags);
 }
 
 static void cmd_restore_close_repo(struct cmd_restore_ctx *ctx)

@@ -766,25 +766,24 @@ static int exec_format_meta(struct silofs_env *env, size_t fs_cap,
 	return term_task(&task, err);
 }
 
-int silofs_format_repo(struct silofs_env *env)
+int silofs_format_repo(struct silofs_env *env, const char *repodir)
 {
-	const struct silofs_baseref *bref = &env->args.bref[0];
 	int ret;
 
 	silofs_env_lock(env);
-	ret = silofs_repo_format(env->base.repo, bref->repodir);
+	ret = silofs_repo_format(env->base.repo, repodir);
 	silofs_env_unlock(env);
 	return ret;
 }
 
-int silofs_open_repo(struct silofs_env *env)
+int silofs_open_repo(struct silofs_env *env, const char *repodir,
+                     enum silofs_flags flags)
 {
-	const struct silofs_baseref *bref = &env->args.bref[0];
-	const bool rdonly = (env->args.flags & SILOFS_F_RDONLY) > 0;
+	const bool rdonly = (flags & SILOFS_F_RDONLY) > 0;
 	int ret;
 
 	silofs_env_lock(env);
-	ret = silofs_repo_open(env->base.repo, bref->repodir, rdonly);
+	ret = silofs_repo_open(env->base.repo, repodir, rdonly);
 	silofs_env_unlock(env);
 	return ret;
 }

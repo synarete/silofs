@@ -711,18 +711,10 @@ static bool with_fuse(const struct silofs_args *args)
 	return (args->flags & SILOFS_F_WITHFUSE) > 0;
 }
 
-static int
-env_update_args(struct silofs_env *env, const struct silofs_args *args)
+static int envi_update_by_args(struct silofs_env_inst *envi,
+                               const struct silofs_args *args)
 {
-	int err;
-
-	err = check_args(args);
-	if (err) {
-		return err;
-	}
-	memcpy(&env->args, args, sizeof(env->args));
-	silofs_strbuf_setup_by(&env->name, args->bref[0].refname);
-	return 0;
+	return silofs_env_update_by_args(&envi->env, args);
 }
 
 int silofs_open_env(struct silofs_env *env, const struct silofs_args *args)
@@ -730,7 +722,11 @@ int silofs_open_env(struct silofs_env *env, const struct silofs_args *args)
 	struct silofs_env_inst *envi = env_inst_of(env);
 	int err;
 
-	err = env_update_args(env, args);
+	err = check_args(args);
+	if (err) {
+		return err;
+	}
+	err = envi_update_by_args(envi, args);
 	if (err) {
 		return err;
 	}

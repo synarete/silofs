@@ -193,7 +193,7 @@ static void cmd_archive_setup_env(struct cmd_archive_ctx *ctx)
 
 static void cmd_archive_open_repo(struct cmd_archive_ctx *ctx)
 {
-	cmd_open_repo(ctx->env);
+	cmd_open_repo(ctx->env, ctx->args.bref[0].repodir, ctx->args.flags);
 }
 
 static void cmd_archive_close_repo(struct cmd_archive_ctx *ctx)

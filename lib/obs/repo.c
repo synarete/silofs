@@ -1450,19 +1450,19 @@ static void repo_fini_dstor(struct silofs_repo *repo)
 	silofs_dstor_fini(&repo->re_dstor);
 }
 
-static int repo_set_rootdir(struct silofs_repo *repo, const char *repodir)
+static int repo_set_rootdir(struct silofs_repo *repo, const char *rootdir)
 {
+	struct silofs_alloc *alloc = repo->re_alloc;
 	size_t len;
 
 	if (repo->re_rootdir != nullptr) {
 		len = silofs_str_length(repo->re_rootdir);
-		silofs_memfree(repo->re_alloc, repo->re_rootdir, len + 1, 0);
+		silofs_memfree(alloc, repo->re_rootdir, len + 1, 0);
 		repo->re_rootdir = nullptr;
 	}
-	if (repodir != nullptr) {
-		len = silofs_str_length(repo->re_rootdir);
-		repo->re_rootdir =
-			silofs_memdup(repo->re_alloc, repodir, len + 1, 0);
+	if (rootdir != nullptr) {
+		len              = silofs_str_length(rootdir);
+		repo->re_rootdir = silofs_memdup(alloc, rootdir, len + 1, 0);
 		if (repo->re_rootdir == nullptr) {
 			return -SILOFS_ENOMEM;
 		}

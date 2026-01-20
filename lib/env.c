@@ -140,11 +140,10 @@ int silofs_env_use_password(struct silofs_env *env,
 	return 0;
 }
 
-static void env_update_mntflags(struct silofs_env *env)
+static int env_update_mntflags(struct silofs_env *env, enum silofs_flags flags)
 {
-	const enum silofs_flags flags = env->args.flags;
-	unsigned long ms_flag_with    = 0;
-	unsigned long ms_flag_dont    = 0;
+	unsigned long ms_flag_with = 0;
+	unsigned long ms_flag_dont = 0;
 
 	if (flags & SILOFS_F_LAZYTIME) {
 		ms_flag_with |= MS_LAZYTIME;
@@ -173,11 +172,41 @@ static void env_update_mntflags(struct silofs_env *env)
 	}
 	env->ms_flags |= ms_flag_with;
 	env->ms_flags &= ~ms_flag_dont;
+	return 0;
 }
 
-static int env_update_by_args(struct silofs_env *env)
+static int env_update_name(struct silofs_env *env, const char *fsname)
 {
-	env_update_mntflags(env);
+	struct silofs_namestr nstr;
+	int err;
+
+	if (fsname == nullptr) {
+		silofs_strbuf_reset(&env->name);
+		return 0;
+	}
+	err = silofs_make_fsnamestr(&nstr, fsname);
+	if (err) {
+		return err;
+	}
+	silofs_strbuf_setup(&env->name, &nstr.sv);
+	return 0;
+}
+
+int silofs_env_update_by_args(struct silofs_env *env,
+                              const struct silofs_args *args)
+{
+	const char *fsname = args->bref[0].refname;
+	int err;
+
+	err = env_update_name(env, fsname);
+	if (err) {
+		return err;
+	}
+	err = env_update_mntflags(env, args->flags);
+	if (err) {
+		return err;
+	}
+	env->flags = args->flags;
 	return 0;
 }
 
@@ -207,12 +236,12 @@ env_init_commons(struct silofs_env *env, const struct silofs_env_base *base)
 	memcpy(&env->base, base, sizeof(env->base));
 	silofs_strbuf_reset(&env->name);
 	silofs_cred_init(&env->owner_cred);
-	env->init_time   = silofs_time_mono_now();
-	env->ubi         = nullptr;
-	env->sbi         = nullptr;
-	env->ms_flags    = 0;
-	env->no_ispecial = true;
-	env->iconv_set   = false;
+	env->init_time = silofs_time_mono_now();
+	env->ubi       = nullptr;
+	env->sbi       = nullptr;
+	env->flags     = 0;
+	env->ms_flags  = 0;
+	env->iconv_set = false;
 }
 
 static void env_fini_commons(struct silofs_env *env)
@@ -303,13 +332,10 @@ int silofs_env_init(struct silofs_env *env, const struct silofs_env_base *base)
 	int err;
 
 	env_init_commons(env, base);
+
 	env_init_opstat(env);
 
 	err = env_init_mbis(env);
-	if (err) {
-		return err;
-	}
-	err = env_update_by_args(env);
 	if (err) {
 		return err;
 	}
@@ -368,13 +394,13 @@ void silofs_env_rwunlock(struct silofs_env *env)
 
 bool silofs_env_hasflag(const struct silofs_env *env, enum silofs_flags f)
 {
-	return (env->args.flags & f) == f;
+	return (env->flags & f) == f;
 }
 
 bool silofs_env_isrdonlyfs(const struct silofs_env *env)
 {
-	return (silofs_env_hasflag(env, SILOFS_F_RDONLY)) ||
-	       (env->ms_flags & MS_RDONLY) || silofs_sbi_is_fossil(env->sbi);
+	return silofs_env_hasflag(env, SILOFS_F_RDONLY) ||
+	       silofs_sbi_is_fossil(env->sbi);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

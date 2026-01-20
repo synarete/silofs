@@ -3035,6 +3035,16 @@ int silofs_spawn_vnode(struct silofs_task_ctx *task,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static bool isock_allowed(const struct silofs_task_ctx *task)
+{
+	return (task->t_env->flags & SILOFS_F_ALLOWISOCK) > 0;
+}
+
+static bool ififo_allowed(const struct silofs_task_ctx *task)
+{
+	return (task->t_env->flags & SILOFS_F_ALLOWIFIFO) > 0;
+}
+
 static int check_itype(const struct silofs_task_ctx *task, mode_t mode)
 {
 	/*
@@ -3043,8 +3053,7 @@ static int check_itype(const struct silofs_task_ctx *task, mode_t mode)
 	 * Have explicit control in 'allow_ispecial' from mount command and
 	 * by mount flags.
 	 */
-	const mode_t itype        = mode & S_IFMT;
-	const bool allow_ispecial = !task->t_env->no_ispecial;
+	const mode_t itype = mode & S_IFMT;
 	int ret;
 
 	switch (itype) {
@@ -3054,8 +3063,10 @@ static int check_itype(const struct silofs_task_ctx *task, mode_t mode)
 		ret = 0;
 		break;
 	case S_IFSOCK:
+		ret = isock_allowed(task) ? 0 : -SILOFS_EOPNOTSUPP;
+		break;
 	case S_IFIFO:
-		ret = allow_ispecial ? 0 : -SILOFS_EOPNOTSUPP;
+		ret = ififo_allowed(task) ? 0 : -SILOFS_EOPNOTSUPP;
 		break;
 	case S_IFCHR:
 	case S_IFBLK:

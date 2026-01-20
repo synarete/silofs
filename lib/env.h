@@ -58,7 +58,6 @@ struct silofs_env_mbis {
 /* top-level environment object */
 struct silofs_env {
 	struct silofs_strbuf     name;
-	struct silofs_args       args;
 	struct silofs_env_base   base;
 	struct silofs_env_mbis   mbis;
 	struct silofs_rwlock     rwlock;
@@ -72,10 +71,10 @@ struct silofs_env {
 	struct silofs_fuseq     *fuseq;
 	struct silofs_cred       owner_cred;
 	struct silofs_uconv      uconv;
+	enum silofs_flags        flags;
 	unsigned long            ms_flags;
 	time_t                   init_time;
 	bool                     iconv_set;
-	bool                     no_ispecial;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -86,6 +85,9 @@ int silofs_env_init(struct silofs_env            *env,
                     const struct silofs_env_base *base);
 
 void silofs_env_fini(struct silofs_env *env);
+
+int silofs_env_update_by_args(struct silofs_env        *env,
+                              const struct silofs_args *args);
 
 int silofs_env_update_owner(struct silofs_env        *env,
                             const struct silofs_cred *cred);

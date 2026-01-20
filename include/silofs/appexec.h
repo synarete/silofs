@@ -48,9 +48,10 @@ void silofs_collect_stats(const struct silofs_env   *env,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_format_repo(struct silofs_env *env);
+int silofs_format_repo(struct silofs_env *env, const char *repodir);
 
-int silofs_open_repo(struct silofs_env *env);
+int silofs_open_repo(struct silofs_env *env, const char *repodir,
+                     enum silofs_flags flags);
 
 int silofs_close_repo(struct silofs_env *env);
 

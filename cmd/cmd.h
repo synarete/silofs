@@ -285,10 +285,11 @@ void cmd_rdlock_repo(const char *repodir, int *pfd);
 
 void cmd_unlock_repo(const char *repodir, int *pfd);
 
-/* complex fs operations */
-void cmd_format_repo(struct silofs_env *env);
+/* API wrappers */
+void cmd_format_repo(struct silofs_env *env, const char *repodir);
 
-void cmd_open_repo(struct silofs_env *env);
+void cmd_open_repo(struct silofs_env *env, const char *repodir,
+                   enum silofs_flags flags);
 
 void cmd_close_repo(struct silofs_env *env);
 

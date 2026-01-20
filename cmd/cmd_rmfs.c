@@ -200,7 +200,7 @@ static void cmd_rmfs_setup_env(struct cmd_rmfs_ctx *ctx)
 
 static void cmd_rmfs_open_repo(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_open_repo(ctx->env);
+	cmd_open_repo(ctx->env, ctx->args.bref[0].repodir, ctx->args.flags);
 }
 
 static void cmd_rmfs_close_repo(struct cmd_rmfs_ctx *ctx)

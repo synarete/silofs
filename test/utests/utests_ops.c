@@ -1963,7 +1963,7 @@ void ut_format_repo(struct ut_env *ute)
 {
 	int err;
 
-	err = silofs_format_repo(ute->env);
+	err = silofs_format_repo(ute->env, ute->spec->args.bref[0].repodir);
 	ut_expect_ok(err);
 }
 
@@ -1971,7 +1971,8 @@ void ut_open_repo(struct ut_env *ute)
 {
 	int err;
 
-	err = silofs_open_repo(ute->env);
+	err = silofs_open_repo(ute->env, ute->spec->args.bref[0].repodir,
+	                       ute->spec->args.flags);
 	ut_expect_ok(err);
 }
 

@@ -319,7 +319,7 @@ static void cmd_clone_setup_env(struct cmd_clone_ctx *ctx)
 
 static void cmd_clone_open_repo(struct cmd_clone_ctx *ctx)
 {
-	cmd_open_repo(ctx->env);
+	cmd_open_repo(ctx->env, ctx->args.bref[0].repodir, ctx->args.flags);
 }
 
 static void cmd_clone_close_repo(struct cmd_clone_ctx *ctx)

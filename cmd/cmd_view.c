@@ -187,7 +187,7 @@ static void cmd_view_setup_env(struct cmd_view_ctx *ctx)
 
 static void cmd_view_open_repo(struct cmd_view_ctx *ctx)
 {
-	cmd_open_repo(ctx->env);
+	cmd_open_repo(ctx->env, ctx->args.bref[0].repodir, ctx->args.flags);
 }
 
 static void cmd_view_close_repo(struct cmd_view_ctx *ctx)

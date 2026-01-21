@@ -98,8 +98,8 @@ static void env_update_sb(struct silofs_env *env, struct silofs_sb_info *sbi)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_env_update_owner(struct silofs_env *env,
-                            const struct silofs_cred *cred)
+static int
+env_setup_owner(struct silofs_env *env, const struct silofs_cred *cred)
 {
 	if (silofs_uid_isnull(cred->uid)) {
 		log_dbg("illegal owner uid: %u", cred->uid);
@@ -117,8 +117,8 @@ int silofs_env_update_owner(struct silofs_env *env,
 	return 0;
 }
 
-int silofs_env_use_password(struct silofs_env *env,
-                            const struct silofs_password *pw)
+static int
+env_use_password(struct silofs_env *env, const struct silofs_password *pw)
 {
 	struct silofs_mbr_meta mbr_meta = {};
 	int err;
@@ -140,7 +140,7 @@ int silofs_env_use_password(struct silofs_env *env,
 	return 0;
 }
 
-static int env_update_mntflags(struct silofs_env *env, enum silofs_flags flags)
+static int env_setup_mntflags(struct silofs_env *env, enum silofs_flags flags)
 {
 	unsigned long ms_flag_with = 0;
 	unsigned long ms_flag_dont = 0;
@@ -192,23 +192,38 @@ static int env_update_name(struct silofs_env *env, const char *fsname)
 	return 0;
 }
 
-int silofs_env_update_by_args(struct silofs_env *env,
-                              const struct silofs_args *args)
+static bool with_passwd(enum silofs_flags flags)
 {
-	const char *fsname = args->bref[0].refname;
+	return (flags & SILOFS_F_NOPASSWD) == 0;
+}
+
+int silofs_env_setup(struct silofs_env *env, const struct silofs_spec *spec)
+{
 	int err;
 
-	err = env_update_name(env, fsname);
+	err = env_update_name(env, spec->bref[0].refname);
 	if (err) {
 		return err;
 	}
-	err = env_update_mntflags(env, args->flags);
+	err = env_setup_owner(env, &spec->fsowner);
 	if (err) {
 		return err;
 	}
-	env->flags = args->flags;
+	if (with_passwd(spec->flags)) {
+		err = env_use_password(env, &spec->passwd);
+		if (err) {
+			return err;
+		}
+	}
+	err = env_setup_mntflags(env, spec->flags);
+	if (err) {
+		return err;
+	}
+	env->flags = spec->flags;
 	return 0;
 }
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static size_t env_calc_iopen_limit(const struct silofs_env *env)
 {

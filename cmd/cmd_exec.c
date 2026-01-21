@@ -149,26 +149,25 @@ cmd_report_err_and_dief(const struct silofs_env *env, int status,
 	cmd_report_err_and_die(env, status, msg);
 }
 
-void cmd_format_repo(struct silofs_env *env, const char *repodir)
+void cmd_format_repo(struct silofs_env *env, const struct silofs_spec *spec)
 {
 	int err;
 
-	err = silofs_format_repo(env, repodir);
+	err = silofs_format_repo(env, spec->bref[0].repodir);
 	if (err) {
 		cmd_report_err_and_dief(env, err, "format repo error: %s",
-		                        repodir);
+		                        spec->bref[0].repodir);
 	}
 }
 
-void cmd_open_repo(struct silofs_env *env, const char *repodir,
-                   enum silofs_flags flags)
+void cmd_open_repo(struct silofs_env *env, const struct silofs_spec *spec)
 {
 	int err;
 
-	err = silofs_open_repo(env, repodir, flags);
+	err = silofs_open_repo(env, spec->bref[0].repodir, spec->flags);
 	if (err) {
 		cmd_report_err_and_dief(env, err, "open repo error: %s",
-		                        repodir);
+		                        spec->bref[0].repodir);
 	}
 }
 
@@ -292,26 +291,4 @@ void cmd_restore_fs(struct silofs_env *env, const struct silofs_fsref *fsref,
 	if (err) {
 		cmd_die_by_fsref(env, err, "restore failure", fsref);
 	}
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-void cmd_setup_spec_args(struct cmd_fs_spec *spec, struct silofs_args *args,
-                         const char *pass)
-{
-	cmd_spec_setup(spec);
-	cmd_mkpasswd(&spec->passwd, pass);
-
-	memset(args, 0, sizeof(*args));
-	args->passwd        = &spec->passwd;
-	args->fsids         = &spec->fsids;
-	args->fsowner.uid   = getuid();
-	args->fsowner.gid   = getgid();
-	args->fsowner.umask = 0077;
-}
-
-void cmd_destroy_spec_args(struct cmd_fs_spec *spec, struct silofs_args *args)
-{
-	cmd_spec_reset(spec);
-	memset(args, 0, sizeof(*args));
 }

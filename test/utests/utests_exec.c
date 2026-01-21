@@ -99,7 +99,7 @@ static void ut_free_safe(void *ptr, size_t size)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ute_init(struct ut_env *ute, struct ut_spec *spec)
+static void ute_init(struct ut_env *ute, struct silofs_spec *spec)
 {
 	memset(ute, 0, sizeof(*ute));
 	silofs_mutex_init(&ute->mutex);
@@ -143,15 +143,15 @@ static void ute_setup(struct ut_env *ute)
 {
 	int err;
 
-	err = silofs_create_env(UT_1G, ute->spec->args.flags, &ute->env);
+	err = silofs_create_env(UT_1G, ute->spec->flags, &ute->env);
 	silofs_assert_ok(err);
 	silofs_assert_not_null(ute->env);
 
-	err = silofs_open_env(ute->env, &ute->spec->args);
+	err = silofs_open_env(ute->env, ute->spec);
 	silofs_assert_ok(err);
 }
 
-static struct ut_env *ute_new(struct ut_spec *spec)
+static struct ut_env *ute_new(struct silofs_spec *spec)
 {
 	struct ut_env *ute;
 
@@ -432,7 +432,7 @@ static void ut_done_tests(struct ut_env *ute)
 	ut_close_repo(ute);
 }
 
-static void ut_execute_tests_cycle(struct ut_spec *spec)
+static void ut_execute_tests_cycle(struct silofs_spec *spec)
 {
 	struct ut_env *ute;
 
@@ -488,7 +488,7 @@ static void ut_del_gids(struct silofs_gids *gids)
 	ut_free_safe(gids, 2 * sizeof(*gids));
 }
 
-static void ut_mkpasswd(struct ut_spec *spec)
+static void ut_mkpasswd(struct silofs_spec *spec)
 {
 	char pass[SILOFS_PASSWORD_MAX + 1] = "";
 	size_t len;
@@ -501,34 +501,32 @@ static void ut_mkpasswd(struct ut_spec *spec)
 	ut_expect_ok(err);
 }
 
-static void ut_init_spec(struct ut_spec *spec)
+static void ut_init_spec(struct silofs_spec *spec)
 {
 	memset(spec, 0, sizeof(*spec));
 	ut_mkpasswd(spec);
-	spec->args.bref[0].repodir = ut_globals.test_dir_repo;
-	spec->args.bref[0].refname = "utests";
-	spec->fsids.users.uids     = ut_new_uids();
-	spec->fsids.users.nuids    = 2;
-	spec->fsids.groups.gids    = ut_new_gids();
-	spec->fsids.groups.ngids   = 2;
-	spec->args.passwd          = &spec->passwd;
-	spec->args.fsids           = &spec->fsids;
-	spec->args.fsowner.uid     = getuid();
-	spec->args.fsowner.gid     = getgid();
-	spec->args.fsowner.umask   = 0077;
-	spec->args.flags           = SILOFS_F_ALLOWIFIFO | SILOFS_F_ALLOWISOCK;
+	spec->bref[0].repodir    = ut_globals.test_dir_repo;
+	spec->bref[0].refname    = "utests";
+	spec->fsowner.uid        = getuid();
+	spec->fsowner.gid        = getgid();
+	spec->fsowner.umask      = 0077;
+	spec->fsids.users.uids   = ut_new_uids();
+	spec->fsids.users.nuids  = 2;
+	spec->fsids.groups.gids  = ut_new_gids();
+	spec->fsids.groups.ngids = 2;
+	spec->flags              = SILOFS_F_ALLOWIFIFO | SILOFS_F_ALLOWISOCK;
 	if (ut_globals.pedantic) {
-		spec->args.flags |= SILOFS_F_PEDANTIC;
+		spec->flags |= SILOFS_F_PEDANTIC;
 	}
 	if (ut_globals.asyncwr) {
-		spec->args.flags |= SILOFS_F_ASYNCWR;
+		spec->flags |= SILOFS_F_ASYNCWR;
 	}
 	if (ut_globals.stdalloc) {
-		spec->args.flags |= SILOFS_F_STDALLOC;
+		spec->flags |= SILOFS_F_STDALLOC;
 	}
 }
 
-static void ut_fini_spec(struct ut_spec *spec)
+static void ut_fini_spec(struct silofs_spec *spec)
 {
 	ut_del_uids(spec->fsids.users.uids);
 	ut_del_gids(spec->fsids.groups.gids);
@@ -537,7 +535,7 @@ static void ut_fini_spec(struct ut_spec *spec)
 
 void ut_execute_tests(void)
 {
-	struct ut_spec spec;
+	struct silofs_spec spec;
 
 	ut_init_spec(&spec);
 	ut_print_tests_info(1);

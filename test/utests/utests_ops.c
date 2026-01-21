@@ -535,7 +535,7 @@ static int ut_write_iter_copy_rem(struct ut_write_iter *wri)
 
 static bool ut_with_aswyncwr(const struct ut_env *ute)
 {
-	return (ute->spec->args.flags & SILOFS_F_ASYNCWR) > 0;
+	return (ute->spec->flags & SILOFS_F_ASYNCWR) > 0;
 }
 
 static int ut_do_write_iter(struct ut_env *ute, ino_t ino, const void *buf,
@@ -1963,7 +1963,7 @@ void ut_format_repo(struct ut_env *ute)
 {
 	int err;
 
-	err = silofs_format_repo(ute->env, ute->spec->args.bref[0].repodir);
+	err = silofs_format_repo(ute->env, ute->spec->bref[0].repodir);
 	ut_expect_ok(err);
 }
 
@@ -1971,8 +1971,8 @@ void ut_open_repo(struct ut_env *ute)
 {
 	int err;
 
-	err = silofs_open_repo(ute->env, ute->spec->args.bref[0].repodir,
-	                       ute->spec->args.flags);
+	err = silofs_open_repo(ute->env, ute->spec->bref[0].repodir,
+	                       ute->spec->flags);
 	ut_expect_ok(err);
 }
 

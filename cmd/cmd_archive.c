@@ -36,9 +36,8 @@ struct cmd_archive_in_args {
 
 struct cmd_archive_ctx {
 	struct cmd_archive_in_args in_args;
-	struct cmd_fs_spec spec;
+	struct silofs_spec spec;
 	struct silofs_fsref ar_fsref;
-	struct silofs_args args;
 	struct silofs_env *env;
 	bool has_lockfile;
 };
@@ -125,7 +124,7 @@ static void cmd_archive_finalize(struct cmd_archive_ctx *ctx)
 	cmd_pstrfree(&ctx->in_args.fsname);
 	cmd_pstrfree(&ctx->in_args.arname);
 	cmd_delpass(&ctx->in_args.password);
-	cmd_destroy_spec_args(&ctx->spec, &ctx->args);
+	cmd_spec_reset(&ctx->spec);
 	cmd_archive_ctx_p = nullptr;
 }
 
@@ -170,19 +169,19 @@ static void cmd_archive_getpass(struct cmd_archive_ctx *ctx)
 	}
 }
 
-static void cmd_archive_setup_args(struct cmd_archive_ctx *ctx)
+static void cmd_archive_setup_spec(struct cmd_archive_ctx *ctx)
 {
-	cmd_setup_spec_args(&ctx->spec, &ctx->args, ctx->in_args.password);
-	cmd_delpass(&ctx->in_args.password);
-	ctx->args.bref[0].repodir = ctx->in_args.repodir_real;
-	ctx->args.bref[0].refname = ctx->in_args.fsname;
-	ctx->args.bref[1].repodir = ctx->in_args.repodir_real;
-	ctx->args.bref[1].refname = ctx->in_args.arname;
+	cmd_spec_setup(&ctx->spec);
+	cmd_spec_own_passwd(&ctx->spec, &ctx->in_args.password);
+	cmd_spec_set_baseref(&ctx->spec, ctx->in_args.repodir_real,
+	                     ctx->in_args.fsname);
+	cmd_spec_set_baseref2(&ctx->spec, ctx->in_args.repodir_real,
+	                      ctx->in_args.arname);
 }
 
 static void cmd_archive_load_spec(struct cmd_archive_ctx *ctx)
 {
-	cmd_spec_load(&ctx->spec, &ctx->args.bref[0]);
+	cmd_spec_jload(&ctx->spec);
 }
 
 static void cmd_archive_setup_env(struct cmd_archive_ctx *ctx)
@@ -193,7 +192,7 @@ static void cmd_archive_setup_env(struct cmd_archive_ctx *ctx)
 
 static void cmd_archive_open_repo(struct cmd_archive_ctx *ctx)
 {
-	cmd_open_repo(ctx->env, ctx->args.bref[0].repodir, ctx->args.flags);
+	cmd_open_repo(ctx->env, &ctx->spec);
 }
 
 static void cmd_archive_close_repo(struct cmd_archive_ctx *ctx)
@@ -223,12 +222,8 @@ static void cmd_archive_execute(struct cmd_archive_ctx *ctx)
 
 static void cmd_archive_save_spec(struct cmd_archive_ctx *ctx)
 {
-	const struct silofs_baseref baseref = {
-		.repodir = ctx->in_args.repodir_real,
-		.refname = ctx->in_args.arname,
-	};
-
-	cmd_spec_resave(&ctx->spec, &ctx->ar_fsref, &baseref);
+	cmd_spec_update_fsref(&ctx->spec, &ctx->ar_fsref);
+	cmd_spec_jsave2(&ctx->spec);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -255,7 +250,7 @@ void cmd_execute_archive(void)
 	cmd_archive_enable_signals();
 
 	/* Setup input arguments */
-	cmd_archive_setup_args(&ctx);
+	cmd_archive_setup_spec(&ctx);
 
 	/* Load fs spec */
 	cmd_archive_load_spec(&ctx);

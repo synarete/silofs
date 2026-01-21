@@ -157,12 +157,12 @@ static int check_baseref(const struct silofs_baseref *baseref)
 	return 0;
 }
 
-static int check_baserefs(const struct silofs_args *args)
+static int check_baserefs(const struct silofs_spec *spec)
 {
 	int err;
 
-	for (size_t i = 0; i < ARRAY_SIZE(args->bref); ++i) {
-		err = check_baseref(&args->bref[i]);
+	for (size_t i = 0; i < ARRAY_SIZE(spec->bref); ++i) {
+		err = check_baseref(&spec->bref[i]);
 		if (err) {
 			return err;
 		}
@@ -170,20 +170,25 @@ static int check_baserefs(const struct silofs_args *args)
 	return 0;
 }
 
-static int check_password(const struct silofs_args *args)
+static int check_password(const struct silofs_spec *spec)
 {
-	return silofs_password_recheck(args->passwd);
+	int ret = 0;
+
+	if ((spec->flags & SILOFS_F_NOPASSWD) == 0) {
+		ret = silofs_password_recheck(&spec->passwd);
+	}
+	return ret;
 }
 
-static int check_args(const struct silofs_args *args)
+static int check_spec(const struct silofs_spec *spec)
 {
 	int err;
 
-	err = check_baserefs(args);
+	err = check_baserefs(spec);
 	if (err) {
 		return err;
 	}
-	err = check_password(args);
+	err = check_password(spec);
 	if (err) {
 		return err;
 	}
@@ -193,7 +198,7 @@ static int check_args(const struct silofs_args *args)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int envi_init_qalloc(struct silofs_env_inst *envi, size_t memwant,
-                            enum silofs_flags flags)
+			    enum silofs_flags flags)
 {
 	struct silofs_qalloc *qalloc = nullptr;
 	enum silofs_qallocf qaflags  = SILOFS_QALLOCF_NOFAIL;
@@ -262,7 +267,7 @@ static void envi_fini_stdalloc(struct silofs_env_inst *envi)
 }
 
 static int envi_init_alloc(struct silofs_env_inst *envi, size_t memwant,
-                           enum silofs_flags flags)
+			   enum silofs_flags flags)
 {
 	int ret;
 
@@ -301,7 +306,7 @@ static void envi_fini_nil_bk(struct silofs_env_inst *envi)
 
 	if (lbk != nullptr) {
 		silofs_memfree(envi->alloc, lbk, sizeof(*lbk),
-		               SILOFS_ALLOCF_TRYPUNCH);
+			       SILOFS_ALLOCF_TRYPUNCH);
 		envi->nilbk = nullptr;
 	}
 }
@@ -523,7 +528,7 @@ static void envi_fini(struct silofs_env_inst *envi)
 }
 
 static int envi_init(struct silofs_env_inst *envi, size_t memwant,
-                     enum silofs_flags flags)
+		     enum silofs_flags flags)
 {
 	int err;
 
@@ -587,7 +592,7 @@ static size_t envi_memsize(const struct silofs_env_inst *envi)
 }
 
 static int envi_new(size_t memwant, enum silofs_flags flags,
-                    struct silofs_env_inst **out_envi)
+		    struct silofs_env_inst **out_envi)
 
 {
 	struct silofs_env_inst *envi = nullptr;
@@ -619,7 +624,7 @@ static void envi_del(struct silofs_env_inst *envi)
 }
 
 int silofs_create_env(size_t memwant, enum silofs_flags flags,
-                      struct silofs_env **out_env)
+		      struct silofs_env **out_env)
 {
 	struct silofs_env_inst *envi;
 	int err;
@@ -651,43 +656,28 @@ void silofs_destroy_env(struct silofs_env *env)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int
-envi_update_owner(struct silofs_env_inst *envi, const struct silofs_cred *cred)
-{
-	return silofs_env_update_owner(&envi->env, cred);
-}
-
-static int envi_update_password(struct silofs_env_inst *envi,
-                                const struct silofs_args *args)
-{
-	return silofs_env_use_password(&envi->env, args->passwd);
-}
-
 static int envi_populate_idsmap(struct silofs_env_inst *envi,
-                                const struct silofs_args *args)
+				const struct silofs_spec *spec)
 {
 	struct silofs_idsmap *idsmap = &envi->idsmap;
 	bool allow_hostids;
 
-	allow_hostids = (args->flags & SILOFS_F_ALLOWHOSTIDS) > 0;
-	return silofs_idsmap_populate(idsmap, args->fsids, allow_hostids);
+	allow_hostids = (spec->flags & SILOFS_F_ALLOWHOSTIDS) > 0;
+	return silofs_idsmap_populate(idsmap, &spec->fsids, allow_hostids);
 }
 
 static int
-envi_attach_fuseq(struct silofs_env_inst *envi, const struct silofs_args *args)
+envi_attach_fuseq(struct silofs_env_inst *envi, const struct silofs_spec *spec)
 {
-	struct silofs_fuseq *fuseq    = nullptr;
-	const enum silofs_flags flags = args->flags;
+	struct silofs_fuseq *fuseq;
 
-	fuseq = silofs_fuseq_new(envi->alloc, flags);
+	fuseq = silofs_fuseq_new(envi->alloc, spec->flags);
 	if (fuseq == nullptr) {
-		log_warn("failed to create fuseq: flags=0x%x", flags);
+		log_warn("failed to create fuseq: flags=0x%x", spec->flags);
 		return -SILOFS_ENOMEM;
 	}
 	envi->initf |= SILOFS_ENVIF_FUSEQ;
-
 	fuseq->fq_env = &envi->env;
-
 	envi->fuseq = envi->env.fuseq = fuseq;
 	return 0;
 }
@@ -701,54 +691,40 @@ static void envi_detach_fuseq(struct silofs_env_inst *envi)
 	}
 }
 
-static bool with_password(const struct silofs_args *args)
-{
-	return (args->flags & SILOFS_F_NOPASSWD) == 0;
-}
-
-static bool with_fuse(const struct silofs_args *args)
+static bool with_fuse(const struct silofs_spec *args)
 {
 	return (args->flags & SILOFS_F_WITHFUSE) > 0;
 }
 
-static int envi_update_by_args(struct silofs_env_inst *envi,
-                               const struct silofs_args *args)
+static int envi_update_by_spec(struct silofs_env_inst *envi,
+			       const struct silofs_spec *spec)
 {
-	return silofs_env_update_by_args(&envi->env, args);
+	return silofs_env_setup(&envi->env, spec);
 }
 
-int silofs_open_env(struct silofs_env *env, const struct silofs_args *args)
+int silofs_open_env(struct silofs_env *env, const struct silofs_spec *spec)
 {
 	struct silofs_env_inst *envi = env_inst_of(env);
 	int err;
 
-	err = check_args(args);
+	err = check_spec(spec);
 	if (err) {
 		return err;
 	}
-	err = envi_update_by_args(envi, args);
+	err = envi_update_by_spec(envi, spec);
 	if (err) {
 		return err;
 	}
-	err = envi_update_owner(envi, &args->fsowner);
+	err = envi_populate_idsmap(envi, spec);
 	if (err) {
 		return err;
 	}
-	err = envi_populate_idsmap(envi, args);
+	if (!with_fuse(spec)) {
+		return 0;
+	}
+	err = envi_attach_fuseq(envi, spec);
 	if (err) {
 		return err;
-	}
-	if (with_password(args)) {
-		err = envi_update_password(envi, args);
-		if (err) {
-			return err;
-		}
-	}
-	if (with_fuse(args)) {
-		err = envi_attach_fuseq(envi, args);
-		if (err) {
-			return err;
-		}
 	}
 	return 0;
 }

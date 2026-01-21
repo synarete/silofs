@@ -43,8 +43,7 @@ struct cmd_mkfs_in_args {
 
 struct cmd_mkfs_ctx {
 	struct cmd_mkfs_in_args in_args;
-	struct cmd_fs_spec spec;
-	struct silofs_args args;
+	struct silofs_spec spec;
 	struct silofs_env *env;
 	bool has_lockfile;
 };
@@ -130,7 +129,7 @@ static void cmd_mkfs_finalize(struct cmd_mkfs_ctx *ctx)
 	cmd_pstrfree(&ctx->in_args.repodir_real);
 	cmd_pstrfree(&ctx->in_args.username);
 	cmd_delpass(&ctx->in_args.password);
-	cmd_destroy_spec_args(&ctx->spec, &ctx->args);
+	cmd_spec_reset(&ctx->spec);
 	cmd_mkfs_ctx_p = nullptr;
 }
 
@@ -196,22 +195,21 @@ static void cmd_mkfs_getpass(struct cmd_mkfs_ctx *ctx)
 	}
 }
 
-static void cmd_mkfs_setup_args(struct cmd_mkfs_ctx *ctx)
+static void cmd_mkfs_setup_spec(struct cmd_mkfs_ctx *ctx)
 {
-	cmd_setup_spec_args(&ctx->spec, &ctx->args, ctx->in_args.password);
-	cmd_delpass(&ctx->in_args.password);
-	cmd_uidgid_of(ctx->in_args.username, &ctx->args.fsowner.uid,
-	              &ctx->args.fsowner.gid);
-	ctx->args.bref[0].repodir = ctx->in_args.repodir_real;
-	ctx->args.bref[0].refname = ctx->in_args.fsname;
+	cmd_spec_setup(&ctx->spec);
+	cmd_spec_own_passwd(&ctx->spec, &ctx->in_args.password);
+	cmd_spec_update_owner(&ctx->spec, ctx->in_args.username);
+	cmd_spec_set_baseref(&ctx->spec, ctx->in_args.repodir_real,
+	                     ctx->in_args.fsname);
 }
 
 static void cmd_mkfs_setup_fsids(struct cmd_mkfs_ctx *ctx)
 {
-	struct silofs_args *args = &ctx->args;
-	const char *username     = ctx->in_args.username;
+	const char *username = ctx->in_args.username;
 
-	cmd_uidgid_of(username, &args->fsowner.uid, &args->fsowner.gid);
+	cmd_uidgid_of(username, &ctx->spec.fsowner.uid,
+	              &ctx->spec.fsowner.gid);
 	cmd_fsids_add_uidgid_of(&ctx->spec.fsids, username);
 	if (ctx->in_args.with_sup_groups) {
 		cmd_fsids_add_supgroups_of(&ctx->spec.fsids, username);
@@ -228,7 +226,7 @@ static void cmd_mkfs_setup_env(struct cmd_mkfs_ctx *ctx)
 
 static void cmd_mkfs_open_repo(const struct cmd_mkfs_ctx *ctx)
 {
-	cmd_open_repo(ctx->env, ctx->args.bref[0].repodir, ctx->args.flags);
+	cmd_open_repo(ctx->env, &ctx->spec);
 }
 
 static void cmd_mkfs_close_repo(const struct cmd_mkfs_ctx *ctx)
@@ -246,7 +244,7 @@ static void cmd_mkfs_format_fs(struct cmd_mkfs_ctx *ctx)
 
 static void cmd_mkfs_save_spec(struct cmd_mkfs_ctx *ctx)
 {
-	cmd_spec_save(&ctx->spec, &ctx->args.bref[0]);
+	cmd_spec_jsave(&ctx->spec);
 }
 
 static void cmd_mkfs_unload_fs(struct cmd_mkfs_ctx *ctx)
@@ -281,7 +279,7 @@ void cmd_execute_mkfs(void)
 	cmd_mkfs_getpass(&ctx);
 
 	/* Setup input arguments */
-	cmd_mkfs_setup_args(&ctx);
+	cmd_mkfs_setup_spec(&ctx);
 
 	/* Setup fs owner and ids */
 	cmd_mkfs_setup_fsids(&ctx);

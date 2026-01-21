@@ -86,14 +86,7 @@ int silofs_env_init(struct silofs_env            *env,
 
 void silofs_env_fini(struct silofs_env *env);
 
-int silofs_env_update_by_args(struct silofs_env        *env,
-                              const struct silofs_args *args);
-
-int silofs_env_update_owner(struct silofs_env        *env,
-                            const struct silofs_cred *cred);
-
-int silofs_env_use_password(struct silofs_env            *env,
-                            const struct silofs_password *pw);
+int silofs_env_setup(struct silofs_env *env, const struct silofs_spec *args);
 
 void silofs_env_lock(struct silofs_env *env);
 

@@ -60,8 +60,7 @@ struct cmd_mount_in_args {
 
 struct cmd_mount_ctx {
 	struct cmd_mount_in_args in_args;
-	struct cmd_fs_spec spec;
-	struct silofs_args args;
+	struct silofs_spec spec;
 	struct silofs_env *env;
 	pid_t child_pid;
 	time_t start_time;
@@ -253,24 +252,23 @@ static void cmd_mount_parse_optargs(struct cmd_mount_ctx *ctx)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void cmd_mount_setup_args(struct cmd_mount_ctx *ctx)
+static void cmd_mount_setup_spec(struct cmd_mount_ctx *ctx)
 {
-	cmd_setup_spec_args(&ctx->spec, &ctx->args, ctx->in_args.password);
-	cmd_delpass(&ctx->in_args.password);
-	ctx->args.bref[0].repodir = ctx->in_args.repodir_real;
-	ctx->args.bref[0].refname = ctx->in_args.fsname;
-	ctx->args.flags           = (enum silofs_flags)ctx->in_args.flags;
+	cmd_spec_setup2(&ctx->spec, (enum silofs_flags)ctx->in_args.flags);
+	cmd_spec_own_passwd(&ctx->spec, &ctx->in_args.password);
+	cmd_spec_set_baseref(&ctx->spec, ctx->in_args.repodir_real,
+	                     ctx->in_args.fsname);
 }
 
 static void cmd_mount_load_spec(struct cmd_mount_ctx *ctx)
 {
-	cmd_spec_load(&ctx->spec, &ctx->args.bref[0]);
+	cmd_spec_jload(&ctx->spec);
 	cmd_spec_need_self(&ctx->spec);
 }
 
 static void cmd_mount_setup_env(struct cmd_mount_ctx *ctx, int phase)
 {
-	cmd_create_env2(ctx->args.flags, &ctx->env);
+	cmd_create_env2(ctx->spec.flags, &ctx->env);
 	if (phase == 2) {
 		cmd_spec_clear_fsids(&ctx->spec);
 	}
@@ -323,7 +321,7 @@ static void cmd_mount_finalize(struct cmd_mount_ctx *ctx)
 	cmd_pstrfree(&ctx->in_args.fsname);
 	cmd_pstrfree(&ctx->in_args.uhelper);
 	cmd_delpass(&ctx->in_args.password);
-	cmd_destroy_spec_args(&ctx->spec, &ctx->args);
+	cmd_spec_reset(&ctx->spec);
 	cmd_close_syslog();
 	cmd_mount_ctx_p = nullptr;
 }
@@ -389,7 +387,7 @@ static void cmd_mount_getpass(struct cmd_mount_ctx *ctx)
 
 static void cmd_mount_open_repo(struct cmd_mount_ctx *ctx)
 {
-	cmd_open_repo(ctx->env, ctx->args.bref[0].repodir, ctx->args.flags);
+	cmd_open_repo(ctx->env, &ctx->spec);
 }
 
 static void cmd_mount_close_repo(struct cmd_mount_ctx *ctx)
@@ -703,7 +701,7 @@ void cmd_execute_mount(void)
 	cmd_mount_getpass(&ctx);
 
 	/* Setup input arguments */
-	cmd_mount_setup_args(&ctx);
+	cmd_mount_setup_spec(&ctx);
 
 	/* Load fs spec */
 	cmd_mount_load_spec(&ctx);

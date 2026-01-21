@@ -90,16 +90,6 @@ struct cmd_globals {
 
 extern struct cmd_globals cmd_global_params;
 
-/* fs root specification */
-struct cmd_fs_spec {
-	struct silofs_baseref  bref[2];
-	struct silofs_password passwd;
-	struct silofs_fsref    fsref;
-	struct silofs_fsids    fsids;
-	struct silofs_cred     fsowner;
-	enum silofs_flags      flags;
-};
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 /* execution hooks */
@@ -286,10 +276,9 @@ void cmd_rdlock_repo(const char *repodir, int *pfd);
 void cmd_unlock_repo(const char *repodir, int *pfd);
 
 /* API wrappers */
-void cmd_format_repo(struct silofs_env *env, const char *repodir);
+void cmd_format_repo(struct silofs_env *env, const struct silofs_spec *spec);
 
-void cmd_open_repo(struct silofs_env *env, const char *repodir,
-                   enum silofs_flags flags);
+void cmd_open_repo(struct silofs_env *env, const struct silofs_spec *spec);
 
 void cmd_close_repo(struct silofs_env *env);
 
@@ -359,31 +348,40 @@ void cmd_fsids_add_uidgid_of(struct silofs_fsids *fsids, const char *name);
 void cmd_fsids_add_supgroups_of(struct silofs_fsids *fsids, const char *name);
 
 /* spec */
-void cmd_spec_setup(struct cmd_fs_spec *spec);
+void cmd_spec_setup(struct silofs_spec *spec);
 
-void cmd_spec_clear_fsids(struct cmd_fs_spec *spec);
+void cmd_spec_setup2(struct silofs_spec *spec, enum silofs_flags flags);
 
-void cmd_spec_need_self(const struct cmd_fs_spec *spec);
+void cmd_spec_update_fsref(struct silofs_spec        *spec,
+                           const struct silofs_fsref *fsref);
 
-void cmd_spec_reset(struct cmd_fs_spec *spec);
+void cmd_spec_set_passwd(struct silofs_spec *spec, const char *passwd);
 
-void cmd_spec_save(const struct cmd_fs_spec    *spec,
-                   const struct silofs_baseref *baseref);
+void cmd_spec_own_passwd(struct silofs_spec *spec, char **passwd);
 
-void cmd_spec_resave(const struct cmd_fs_spec    *spec,
-                     const struct silofs_fsref   *fsref,
-                     const struct silofs_baseref *baseref);
+void cmd_spec_set_baseref(struct silofs_spec *spec, const char *repodir,
+                          const char *refname);
 
-void cmd_spec_load(struct cmd_fs_spec          *spec,
-                   const struct silofs_baseref *baseref);
+void cmd_spec_set_baseref2(struct silofs_spec *spec, const char *repodir,
+                           const char *refname);
 
-void cmd_spec_unlink(const struct silofs_baseref *baseref);
+void cmd_spec_update_owner(struct silofs_spec *spec, const char *username);
 
-/* spec + arguments binding */
-void cmd_setup_spec_args(struct cmd_fs_spec *spec, struct silofs_args *args,
-                         const char *pass);
+void cmd_spec_clear_fsids(struct silofs_spec *spec);
 
-void cmd_destroy_spec_args(struct cmd_fs_spec *spec, struct silofs_args *args);
+void cmd_spec_need_self(const struct silofs_spec *spec);
+
+void cmd_spec_reset(struct silofs_spec *spec);
+
+void cmd_spec_jsave(const struct silofs_spec *spec);
+
+void cmd_spec_jsave2(const struct silofs_spec *spec);
+
+void cmd_spec_jload(struct silofs_spec *spec);
+
+void cmd_spec_jload2(struct silofs_spec *spec);
+
+void cmd_spec_junlink(const struct silofs_spec *spec);
 
 /* security restrictions (landlock) */
 void cmd_restrict_process(const char *path, bool allow_mkdir);

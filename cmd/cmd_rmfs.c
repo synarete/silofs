@@ -36,8 +36,7 @@ struct cmd_rmfs_in_args {
 struct cmd_rmfs_ctx {
 	struct silofs_ioc_query ioc_qry;
 	struct cmd_rmfs_in_args in_args;
-	struct cmd_fs_spec spec;
-	struct silofs_args args;
+	struct silofs_spec spec;
 	struct silofs_env *env;
 	bool has_lockfile;
 };
@@ -178,17 +177,17 @@ static void cmd_rmfs_check_nomnt(struct cmd_rmfs_ctx *ctx)
 	cmd_free_mountinfo(minfos);
 }
 
-static void cmd_rmfs_setup_args(struct cmd_rmfs_ctx *ctx)
+static void cmd_rmfs_setup_spec(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_setup_spec_args(&ctx->spec, &ctx->args, ctx->in_args.password);
-	cmd_delpass(&ctx->in_args.password);
-	ctx->args.bref[0].repodir = ctx->in_args.repodir_real;
-	ctx->args.bref[0].refname = ctx->in_args.fsname;
+	cmd_spec_setup(&ctx->spec);
+	cmd_spec_own_passwd(&ctx->spec, &ctx->in_args.password);
+	cmd_spec_set_baseref(&ctx->spec, ctx->in_args.repodir_real,
+	                     ctx->in_args.fsname);
 }
 
 static void cmd_rmfs_load_spec(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_spec_load(&ctx->spec, &ctx->args.bref[0]);
+	cmd_spec_jload(&ctx->spec);
 	cmd_spec_need_self(&ctx->spec);
 }
 
@@ -200,7 +199,7 @@ static void cmd_rmfs_setup_env(struct cmd_rmfs_ctx *ctx)
 
 static void cmd_rmfs_open_repo(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_open_repo(ctx->env, ctx->args.bref[0].repodir, ctx->args.flags);
+	cmd_open_repo(ctx->env, &ctx->spec);
 }
 
 static void cmd_rmfs_close_repo(struct cmd_rmfs_ctx *ctx)
@@ -218,9 +217,9 @@ static void cmd_rmfs_execute(struct cmd_rmfs_ctx *ctx)
 	cmd_remove_fs(ctx->env, &ctx->spec.fsref);
 }
 
-static void cmd_rmfs_unlink_blobid(struct cmd_rmfs_ctx *ctx)
+static void cmd_rmfs_unlink_spec(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_spec_unlink(&ctx->args.bref[0]);
+	cmd_spec_junlink(&ctx->spec);
 }
 
 static void cmd_rmfs_destroy_env(struct cmd_rmfs_ctx *ctx)
@@ -304,7 +303,7 @@ void cmd_execute_rmfs(void)
 	cmd_rmfs_enable_signals();
 
 	/* Setup input arguments */
-	cmd_rmfs_setup_args(&ctx);
+	cmd_rmfs_setup_spec(&ctx);
 
 	/* Load fs spec */
 	cmd_rmfs_load_spec(&ctx);
@@ -325,7 +324,7 @@ void cmd_execute_rmfs(void)
 	cmd_rmfs_execute(&ctx);
 
 	/* Unlink boot-configuration */
-	cmd_rmfs_unlink_blobid(&ctx);
+	cmd_rmfs_unlink_spec(&ctx);
 
 	/* Close repository */
 	cmd_rmfs_close_repo(&ctx);

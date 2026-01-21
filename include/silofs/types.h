@@ -124,13 +124,14 @@ struct silofs_fsrefs {
 	struct silofs_fsref fork;
 };
 
-/* fs arguments */
-struct silofs_args {
-	const struct silofs_password *passwd;
-	const struct silofs_fsids    *fsids;
-	struct silofs_baseref         bref[2];
-	struct silofs_cred            fsowner;
-	enum silofs_flags             flags;
+/* file-system's input specification */
+struct silofs_spec {
+	struct silofs_baseref  bref[2];
+	struct silofs_password passwd;
+	struct silofs_fsref    fsref;
+	struct silofs_fsids    fsids;
+	struct silofs_cred     fsowner;
+	enum silofs_flags      flags;
 };
 
 /* in-use versions */

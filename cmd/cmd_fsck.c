@@ -34,8 +34,7 @@ struct cmd_fsck_in_args {
 
 struct cmd_fsck_ctx {
 	struct cmd_fsck_in_args in_args;
-	struct cmd_fs_spec spec;
-	struct silofs_args args;
+	struct silofs_spec spec;
 	struct silofs_env *env;
 	bool has_lockfile;
 };
@@ -94,7 +93,7 @@ static void cmd_fsck_finalize(struct cmd_fsck_ctx *ctx)
 	cmd_pstrfree(&ctx->in_args.repodir_real);
 	cmd_pstrfree(&ctx->in_args.name);
 	cmd_delpass(&ctx->in_args.password);
-	cmd_destroy_spec_args(&ctx->spec, &ctx->args);
+	cmd_spec_reset(&ctx->spec);
 	cmd_fsck_ctx_p = nullptr;
 }
 
@@ -148,17 +147,17 @@ static void cmd_fsck_getpass(struct cmd_fsck_ctx *ctx)
 	}
 }
 
-static void cmd_fsck_setup_args(struct cmd_fsck_ctx *ctx)
+static void cmd_fsck_setup_spec(struct cmd_fsck_ctx *ctx)
 {
-	cmd_setup_spec_args(&ctx->spec, &ctx->args, ctx->in_args.password);
-	cmd_delpass(&ctx->in_args.password);
-	ctx->args.bref[0].repodir = ctx->in_args.repodir_real;
-	ctx->args.bref[0].refname = ctx->in_args.name;
+	cmd_spec_setup(&ctx->spec);
+	cmd_spec_own_passwd(&ctx->spec, &ctx->in_args.password);
+	cmd_spec_set_baseref(&ctx->spec, ctx->in_args.repodir_real,
+	                     ctx->in_args.name);
 }
 
 static void cmd_fsck_load_spec(struct cmd_fsck_ctx *ctx)
 {
-	cmd_spec_load(&ctx->spec, &ctx->args.bref[0]);
+	cmd_spec_jload(&ctx->spec);
 }
 
 static void cmd_fsck_setup_env(struct cmd_fsck_ctx *ctx)
@@ -169,7 +168,7 @@ static void cmd_fsck_setup_env(struct cmd_fsck_ctx *ctx)
 
 static void cmd_fsck_open_repo(struct cmd_fsck_ctx *ctx)
 {
-	cmd_open_repo(ctx->env, ctx->args.bref[0].repodir, ctx->args.flags);
+	cmd_open_repo(ctx->env, &ctx->spec);
 }
 
 static void cmd_fsck_sense_fs(struct cmd_fsck_ctx *ctx)
@@ -218,7 +217,7 @@ void cmd_execute_fsck(void)
 	cmd_fsck_getpass(&ctx);
 
 	/* Setup input arguments */
-	cmd_fsck_setup_args(&ctx);
+	cmd_fsck_setup_spec(&ctx);
 
 	/* Load fs spec */
 	cmd_fsck_load_spec(&ctx);

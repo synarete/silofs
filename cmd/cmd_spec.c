@@ -574,6 +574,12 @@ static void cmd_fsids_jdecode(struct silofs_fsids *fsids, const json_t *jfsids)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
+static void cmd_fsref_setup(struct silofs_fsref *fsref)
+{
+	memset(fsref, 0, sizeof(*fsref));
+	silofs_getfsmeta(&fsref->fsmeta);
+}
+
 static json_t *cmd_fsref_jencode(const struct silofs_fsref *fsref)
 {
 	json_t *jfsref = nullptr;
@@ -597,7 +603,7 @@ static void cmd_fsref_jdecode(struct silofs_fsref *fsref, const json_t *jobj)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static json_t *cmd_spec_jencode(const struct cmd_fs_spec *spec)
+static json_t *cmd_spec_jencode(const struct silofs_spec *spec)
 {
 	json_t *jspec   = nullptr;
 	json_t *jfsmeta = nullptr;
@@ -618,8 +624,8 @@ static json_t *cmd_spec_jencode(const struct cmd_fs_spec *spec)
 	return jspec;
 }
 
-void cmd_spec_save(const struct cmd_fs_spec *spec,
-                   const struct silofs_baseref *baseref)
+static void cmd_spec_jsave_at(const struct silofs_spec *spec,
+                              const struct silofs_baseref *baseref)
 {
 	json_t *jspec = nullptr;
 
@@ -628,18 +634,17 @@ void cmd_spec_save(const struct cmd_fs_spec *spec,
 	cmd_json_decref(jspec);
 }
 
-void cmd_spec_resave(const struct cmd_fs_spec *spec,
-                     const struct silofs_fsref *fsref,
-                     const struct silofs_baseref *baseref)
+void cmd_spec_jsave(const struct silofs_spec *spec)
 {
-	struct cmd_fs_spec spec2 = {};
-
-	memcpy(&spec2, spec, sizeof(spec2));
-	memcpy(&spec2.fsref, fsref, sizeof(spec2.fsref));
-	cmd_spec_save(&spec2, baseref);
+	cmd_spec_jsave_at(spec, &spec->bref[0]);
 }
 
-static void cmd_spec_jdecode(struct cmd_fs_spec *spec, const json_t *jspec)
+void cmd_spec_jsave2(const struct silofs_spec *spec)
+{
+	cmd_spec_jsave_at(spec, &spec->bref[1]);
+}
+
+static void cmd_spec_jdecode(struct silofs_spec *spec, const json_t *jspec)
 {
 	json_t *jfsmeta = nullptr;
 	json_t *jfsref  = nullptr;
@@ -655,8 +660,8 @@ static void cmd_spec_jdecode(struct cmd_fs_spec *spec, const json_t *jspec)
 	cmd_fsids_jdecode(&spec->fsids, jfsids);
 }
 
-void cmd_spec_load(struct cmd_fs_spec *spec,
-                   const struct silofs_baseref *baseref)
+static void cmd_spec_jload_at(struct silofs_spec *spec,
+                              const struct silofs_baseref *baseref)
 {
 	json_t *jspec = nullptr;
 
@@ -665,34 +670,89 @@ void cmd_spec_load(struct cmd_fs_spec *spec,
 	cmd_json_decref(jspec);
 }
 
-void cmd_spec_unlink(const struct silofs_baseref *baseref)
+void cmd_spec_jload(struct silofs_spec *spec)
 {
-	cmd_json_unlink(baseref->repodir, baseref->refname);
+	cmd_spec_jload_at(spec, &spec->bref[0]);
 }
 
-static void cmd_spec_bzero(struct cmd_fs_spec *spec)
+void cmd_spec_jload2(struct silofs_spec *spec)
+{
+	cmd_spec_jload_at(spec, &spec->bref[1]);
+}
+
+void cmd_spec_junlink(const struct silofs_spec *spec)
+{
+	cmd_json_unlink(spec->bref[0].repodir, spec->bref[0].refname);
+}
+
+static void cmd_spec_bzero(struct silofs_spec *spec)
 {
 	memset(spec, 0, sizeof(*spec));
 }
 
-void cmd_spec_setup(struct cmd_fs_spec *spec)
+void cmd_spec_setup(struct silofs_spec *spec)
+{
+	cmd_spec_setup2(spec, 0);
+}
+
+void cmd_spec_setup2(struct silofs_spec *spec, enum silofs_flags flags)
 {
 	cmd_spec_bzero(spec);
 	cmd_fsids_setup(&spec->fsids);
-	silofs_getfsmeta(&spec->fsref.fsmeta);
+	cmd_fsref_setup(&spec->fsref);
+	spec->fsowner.uid   = getuid();
+	spec->fsowner.gid   = getgid();
+	spec->fsowner.umask = 0077;
+	spec->flags         = flags;
 }
 
-void cmd_spec_clear_fsids(struct cmd_fs_spec *spec)
+void cmd_spec_update_fsref(struct silofs_spec *spec,
+                           const struct silofs_fsref *fsref)
+{
+	memcpy(&spec->fsref, fsref, sizeof(spec->fsref));
+}
+
+void cmd_spec_set_passwd(struct silofs_spec *spec, const char *passwd)
+{
+	cmd_mkpasswd(&spec->passwd, passwd);
+}
+
+void cmd_spec_own_passwd(struct silofs_spec *spec, char **passwd)
+{
+	cmd_spec_set_passwd(spec, *passwd);
+	cmd_delpass(passwd);
+}
+
+void cmd_spec_set_baseref(struct silofs_spec *spec, const char *repodir,
+                          const char *refname)
+{
+	spec->bref[0].repodir = repodir;
+	spec->bref[0].refname = refname;
+}
+
+void cmd_spec_set_baseref2(struct silofs_spec *spec, const char *repodir,
+                           const char *refname)
+{
+	spec->bref[1].repodir = repodir;
+	spec->bref[1].refname = refname;
+}
+
+void cmd_spec_update_owner(struct silofs_spec *spec, const char *username)
+{
+	cmd_uidgid_of(username, &spec->fsowner.uid, &spec->fsowner.gid);
+}
+
+void cmd_spec_clear_fsids(struct silofs_spec *spec)
 {
 	cmd_fsids_clear(&spec->fsids);
 }
 
-void cmd_spec_need_self(const struct cmd_fs_spec *spec)
+void cmd_spec_need_self(const struct silofs_spec *spec)
 {
 	cmd_fsids_need_self(&spec->fsids);
 }
 
-void cmd_spec_reset(struct cmd_fs_spec *spec)
+void cmd_spec_reset(struct silofs_spec *spec)
 {
 	cmd_spec_clear_fsids(spec);
 	cmd_spec_bzero(spec);

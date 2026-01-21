@@ -712,7 +712,7 @@ void cmd_spec_update_fsref(struct silofs_spec *spec,
 	memcpy(&spec->fsref, fsref, sizeof(spec->fsref));
 }
 
-void cmd_spec_set_passwd(struct silofs_spec *spec, const char *passwd)
+static void cmd_spec_set_passwd(struct silofs_spec *spec, const char *passwd)
 {
 	cmd_mkpasswd(&spec->passwd, passwd);
 }

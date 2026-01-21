@@ -324,6 +324,8 @@ void cmd_create_env2(enum silofs_flags flags, struct silofs_env **p_env);
 
 void cmd_destroy_env(struct silofs_env **p_env);
 
+void cmd_open_env(struct silofs_env *env, const struct silofs_spec *spec);
+
 /* signals handling */
 void cmd_register_sigactions(void (*sig_hook_fn)(int));
 
@@ -354,8 +356,6 @@ void cmd_spec_setup2(struct silofs_spec *spec, enum silofs_flags flags);
 
 void cmd_spec_update_fsref(struct silofs_spec        *spec,
                            const struct silofs_fsref *fsref);
-
-void cmd_spec_set_passwd(struct silofs_spec *spec, const char *passwd);
 
 void cmd_spec_own_passwd(struct silofs_spec *spec, char **passwd);
 

@@ -29,7 +29,7 @@ void cmd_create_env2(enum silofs_flags flags, struct silofs_env **penv)
 
 	err = silofs_create_env(0, flags, penv);
 	if (err) {
-		cmd_die(err, "failed to create instance: flags=0x%x", flags);
+		cmd_die(err, "failed to create env: flags=0x%x", flags);
 	}
 }
 
@@ -38,6 +38,16 @@ void cmd_destroy_env(struct silofs_env **penv)
 	if ((penv != nullptr) && (*penv != nullptr)) {
 		silofs_destroy_env(*penv);
 		*penv = nullptr;
+	}
+}
+
+void cmd_open_env(struct silofs_env *env, const struct silofs_spec *spec)
+{
+	int err;
+
+	err = silofs_open_env(env, spec);
+	if (err) {
+		cmd_die(err, "failed to open env: %s", spec->bref[0].repodir);
 	}
 }
 

@@ -181,7 +181,7 @@ static void cmd_mkfs_restrict_process(struct cmd_mkfs_ctx *ctx)
 	cmd_restrict_process(ctx->in_args.repodir_real, false);
 }
 
-static void cmd_mkfs_require_owner(struct cmd_mkfs_ctx *ctx)
+static void cmd_mkfs_require_username(struct cmd_mkfs_ctx *ctx)
 {
 	if (ctx->in_args.username == nullptr) {
 		ctx->in_args.username = cmd_getusername();
@@ -199,29 +199,23 @@ static void cmd_mkfs_setup_spec(struct cmd_mkfs_ctx *ctx)
 {
 	cmd_spec_setup(&ctx->spec);
 	cmd_spec_own_passwd(&ctx->spec, &ctx->in_args.password);
-	cmd_spec_update_owner(&ctx->spec, ctx->in_args.username);
 	cmd_spec_set_baseref(&ctx->spec, ctx->in_args.repodir_real,
 	                     ctx->in_args.fsname);
 }
 
 static void cmd_mkfs_setup_fsids(struct cmd_mkfs_ctx *ctx)
 {
-	const char *username = ctx->in_args.username;
-
-	cmd_uidgid_of(username, &ctx->spec.fsowner.uid,
-	              &ctx->spec.fsowner.gid);
-	cmd_fsids_add_uidgid_of(&ctx->spec.fsids, username);
-	if (ctx->in_args.with_sup_groups) {
-		cmd_fsids_add_supgroups_of(&ctx->spec.fsids, username);
-	}
-	if (ctx->in_args.with_root_user && strcmp(username, "root")) {
-		cmd_fsids_add_uidgid_of(&ctx->spec.fsids, "root");
+	cmd_spec_update_owner(&ctx->spec, ctx->in_args.username,
+	                      ctx->in_args.with_sup_groups);
+	if (ctx->in_args.with_root_user) {
+		cmd_spec_append_user(&ctx->spec, "root");
 	}
 }
 
 static void cmd_mkfs_setup_env(struct cmd_mkfs_ctx *ctx)
 {
 	cmd_create_env(&ctx->env);
+	cmd_open_env(ctx->env, &ctx->spec);
 }
 
 static void cmd_mkfs_open_repo(const struct cmd_mkfs_ctx *ctx)
@@ -273,7 +267,7 @@ void cmd_execute_mkfs(void)
 	cmd_mkfs_restrict_process(&ctx);
 
 	/* Have proper file-system owner username */
-	cmd_mkfs_require_owner(&ctx);
+	cmd_mkfs_require_username(&ctx);
 
 	/* Require password */
 	cmd_mkfs_getpass(&ctx);

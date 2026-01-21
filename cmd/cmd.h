@@ -365,7 +365,10 @@ void cmd_spec_set_baseref(struct silofs_spec *spec, const char *repodir,
 void cmd_spec_set_baseref2(struct silofs_spec *spec, const char *repodir,
                            const char *refname);
 
-void cmd_spec_update_owner(struct silofs_spec *spec, const char *username);
+void cmd_spec_update_owner(struct silofs_spec *spec, const char *username,
+                           bool with_sup_groups);
+
+void cmd_spec_append_user(struct silofs_spec *spec, const char *username);
 
 void cmd_spec_clear_fsids(struct silofs_spec *spec);
 
@@ -390,7 +393,5 @@ void cmd_restrict_process(const char *path, bool allow_mkdir);
 void cmd_trace_versions(void);
 
 char *cmd_getusername(void);
-
-void cmd_uidgid_of(const char *username, uid_t *out_uid, gid_t *out_gid);
 
 #endif /* SILOFS_CMD_H_ */

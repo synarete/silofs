@@ -223,11 +223,6 @@ char *cmd_getusername(void)
 	return name;
 }
 
-void cmd_uidgid_of(const char *username, uid_t *out_uid, gid_t *out_gid)
-{
-	cmd_resolve_name_to_uidgid(username, out_uid, out_gid);
-}
-
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static void cmd_alloc_users_ids(struct silofs_users_ids *uids)
@@ -266,39 +261,64 @@ static void cmd_dealloc_groups_ids(struct silofs_groups_ids *gids)
 	}
 }
 
-static void cmd_require_uniq_uids(const struct silofs_users_ids *uids,
-                                  uid_t host_uid, uid_t fs_uid)
+static bool
+cmd_fsids_has_host_uid(const struct silofs_fsids *fsids, uid_t host_uid)
 {
-	for (size_t i = 0; i < uids->nuids; ++i) {
-		if (uids->uids[i].host_uid == host_uid) {
-			cmd_diez("duplicate host uid: %u", host_uid);
+	for (size_t i = 0; i < fsids->users.nuids; ++i) {
+		if (fsids->users.uids[i].host_uid == host_uid) {
+			return true;
 		}
-		if (uids->uids[i].fs_uid == fs_uid) {
-			cmd_diez("duplicate fs uid: %u", fs_uid);
+	}
+	return false;
+}
+
+static bool
+cmd_fsids_has_fs_uid(const struct silofs_fsids *fsids, uid_t fs_uid)
+{
+	for (size_t i = 0; i < fsids->users.nuids; ++i) {
+		if (fsids->users.uids[i].fs_uid == fs_uid) {
+			return true;
 		}
+	}
+	return false;
+}
+
+static void cmd_fsids_require_uniq_uids(const struct silofs_fsids *fsids,
+                                        uid_t host_uid, uid_t fs_uid)
+{
+	if (cmd_fsids_has_host_uid(fsids, host_uid)) {
+		cmd_diez("duplicate host uid: %u", host_uid);
+	}
+	if (cmd_fsids_has_fs_uid(fsids, fs_uid)) {
+		cmd_diez("duplicate fs uid: %u", fs_uid);
 	}
 }
 
 static void
 cmd_fsids_require_host_uid(const struct silofs_fsids *fsids, uid_t host_uid)
 {
-	for (size_t i = 0; i < fsids->users.nuids; ++i) {
-		if (fsids->users.uids[i].host_uid == host_uid) {
-			return;
+	if (!cmd_fsids_has_host_uid(fsids, host_uid)) {
+		cmd_diez("missing host uid mapping: uid=%u", host_uid);
+	}
+}
+
+static bool
+cmd_fsids_has_host_gid(const struct silofs_fsids *fsids, gid_t host_gid)
+{
+	for (size_t i = 0; i < fsids->groups.ngids; ++i) {
+		if (fsids->groups.gids[i].host_gid == host_gid) {
+			return true;
 		}
 	}
-	cmd_diez("missing host uid mapping: uid=%u", host_uid);
+	return false;
 }
 
 static void
 cmd_fsids_require_host_gid(const struct silofs_fsids *fsids, gid_t host_gid)
 {
-	for (size_t i = 0; i < fsids->groups.ngids; ++i) {
-		if (fsids->groups.gids[i].host_gid == host_gid) {
-			return;
-		}
+	if (!cmd_fsids_has_host_gid(fsids, host_gid)) {
+		cmd_diez("missing host gid mapping: gid=%u", host_gid);
 	}
-	cmd_diez("missing host gid mapping: gid=%u", host_gid);
 }
 
 static void cmd_fsids_need_uidgid(const struct silofs_fsids *fsids,
@@ -326,7 +346,7 @@ static void cmd_fsids_add_uid_mapping(struct silofs_fsids *fsids,
 {
 	struct silofs_uids *uids;
 
-	cmd_require_uniq_uids(&fsids->users, host_uid, fs_uid);
+	cmd_fsids_require_uniq_uids(fsids, host_uid, fs_uid);
 	uids           = cmd_fsids_next_uids(fsids);
 	uids->host_uid = host_uid;
 	uids->fs_uid   = fs_uid;
@@ -737,9 +757,34 @@ void cmd_spec_set_baseref2(struct silofs_spec *spec, const char *repodir,
 	spec->bref[1].refname = refname;
 }
 
-void cmd_spec_update_owner(struct silofs_spec *spec, const char *username)
+void cmd_spec_update_owner(struct silofs_spec *spec, const char *username,
+                           bool with_sup_groups)
 {
-	cmd_uidgid_of(username, &spec->fsowner.uid, &spec->fsowner.gid);
+	uid_t uid;
+	gid_t gid;
+
+	cmd_resolve_name_to_uidgid(username, &uid, &gid);
+	cmd_fsids_add_uid_mapping(&spec->fsids, uid, uid);
+	cmd_fsids_add_gid_mapping(&spec->fsids, gid, gid);
+	spec->fsowner.uid = uid;
+	spec->fsowner.gid = gid;
+	if (with_sup_groups) {
+		cmd_fsids_add_supgroups_of(&spec->fsids, username);
+	}
+}
+
+void cmd_spec_append_user(struct silofs_spec *spec, const char *username)
+{
+	uid_t uid;
+	gid_t gid;
+
+	cmd_resolve_name_to_uidgid(username, &uid, &gid);
+	if (!cmd_fsids_has_host_uid(&spec->fsids, uid)) {
+		cmd_fsids_add_uid_mapping(&spec->fsids, uid, uid);
+	}
+	if (!cmd_fsids_has_host_gid(&spec->fsids, gid)) {
+		cmd_fsids_add_gid_mapping(&spec->fsids, gid, gid);
+	}
 }
 
 void cmd_spec_clear_fsids(struct silofs_spec *spec)

@@ -12,7 +12,7 @@ _silofs_complete_options() {
 	fi
 	mapfile -t COMPREPLY < <(compgen -W "$options" -- "$cur")
 
-	# If the only match ends in '=', don't add a space
+	# don't add a space if match ends with '='
 	if [[ ${#COMPREPLY[@]} -eq 1 && ${COMPREPLY[0]} == *= ]]; then
 		compopt -o nospace
 	fi
@@ -25,6 +25,8 @@ _silofs_complete_subcmds() {
 }
 
 _silofs_complete_filedir() {
+	# reset nospace in case it was set by an option check
+	compopt +o nospace 2>/dev/null
 	_filedir "$@"
 }
 
@@ -263,10 +265,10 @@ _silofs_completions() {
 	# shellcheck disable=SC2034
 	local cur prev words cword
 
-	command -v _init_completion > /dev/null || return
-	_init_completion || return
+	# require bash-completion helpers
+	command -v _init_completion >/dev/null 2>&1 || return
 
-	COMPREPLY=( "${COMPREPLY[@]:-}" )
+	_init_completion || return
 
 	if [[ $cword -eq 1 ]]; then
 		_silofs_main
@@ -275,6 +277,6 @@ _silofs_completions() {
 	fi
 }
 
-complete -o bashdefault -o default -F _silofs_completions silofs
+complete -o filenames -o bashdefault -o default -F _silofs_completions silofs
 
 # vim: filetype=sh

@@ -32,20 +32,13 @@ static int check_password_len(size_t len)
 
 static int check_password_char(int ch)
 {
-	int ret = 0;
-
-	if (!isascii(ch)) {
-		ret = -SILOFS_EILLPASS;
-	} else if (iscntrl(ch)) {
-		ret = -SILOFS_EILLPASS;
-	} else if (isspace(ch)) {
-		ret = -SILOFS_EILLPASS;
-	} else if (!isprint(ch)) {
-		ret = -SILOFS_EILLPASS;
-	} else if (!isalnum(ch) && !ispunct(ch)) {
-		ret = -SILOFS_EILLPASS;
-	}
-	return ret;
+	return (!isascii(ch) || //
+	        iscntrl(ch) ||  //
+	        isspace(ch) ||  //
+	        !isprint(ch) || //
+	        !(isalnum(ch) || ispunct(ch))) ?
+	               -SILOFS_EILLPASS :
+	               0;
 }
 
 static int check_password_dat(const void *d, size_t n)

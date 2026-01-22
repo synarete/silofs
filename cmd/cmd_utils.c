@@ -114,7 +114,7 @@ static void cmd_check_ascii_fsname(const char *s, size_t n)
 	int ch;
 
 	for (size_t i = 0; i < n; ++i) {
-		ch = s[i];
+		ch = (int)(s[i]);
 		if (isspace(ch)) {
 			cmd_diez("illegal space char in fsname: 0%o", ch);
 		}

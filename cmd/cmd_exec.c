@@ -183,16 +183,6 @@ void cmd_open_repo(struct silofs_env *env, const struct silofs_spec *spec)
 	}
 }
 
-void cmd_close_repo(struct silofs_env *env)
-{
-	int err;
-
-	err = silofs_close_repo(env);
-	if (err) {
-		cmd_report_err_and_die(env, err, "close repo failure");
-	}
-}
-
 static void
 cmd_die_by_fsref(const struct silofs_env *env, int err, const char *msg_prefix,
                  const struct silofs_fsref *fsref)

@@ -323,11 +323,6 @@ static void cmd_clone_open_repo(struct cmd_clone_ctx *ctx)
 	cmd_open_repo(ctx->env, &ctx->spec);
 }
 
-static void cmd_clone_close_repo(struct cmd_clone_ctx *ctx)
-{
-	cmd_close_repo(ctx->env);
-}
-
 static void cmd_clone_sense_fs(struct cmd_clone_ctx *ctx)
 {
 	cmd_sense_fs(ctx->env, &ctx->spec.fsref);
@@ -432,9 +427,6 @@ void cmd_execute_clone(void)
 
 	/* Do actual clone (offline|online) */
 	cmd_clone_execute(ctx);
-
-	/* Close repository */
-	cmd_clone_close_repo(ctx);
 
 	/* Save new clone spec */
 	cmd_clone_save_fork(ctx);

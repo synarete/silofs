@@ -194,11 +194,6 @@ static void cmd_archive_open_repo(struct cmd_archive_ctx *ctx)
 	cmd_open_repo(ctx->env, &ctx->spec);
 }
 
-static void cmd_archive_close_repo(struct cmd_archive_ctx *ctx)
-{
-	cmd_close_repo(ctx->env);
-}
-
 static void cmd_archive_sense_fs(struct cmd_archive_ctx *ctx)
 {
 	cmd_sense_fs(ctx->env, &ctx->spec.fsref);
@@ -275,11 +270,8 @@ void cmd_execute_archive(void)
 	/* Save new fs spec */
 	cmd_archive_save_spec(&ctx);
 
-	/* Close file-system */
+	/* Unload file-system */
 	cmd_archive_unload_fs(&ctx);
-
-	/* Close repository */
-	cmd_archive_close_repo(&ctx);
 
 	/* Release lock */
 	cmd_archive_release_lockfile(&ctx);

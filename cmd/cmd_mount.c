@@ -390,11 +390,6 @@ static void cmd_mount_open_repo(struct cmd_mount_ctx *ctx)
 	cmd_open_repo(ctx->env, &ctx->spec);
 }
 
-static void cmd_mount_close_repo(struct cmd_mount_ctx *ctx)
-{
-	cmd_close_repo(ctx->env);
-}
-
 static void cmd_mount_sense_fs(struct cmd_mount_ctx *ctx)
 {
 	cmd_sense_fs(ctx->env, &ctx->spec.fsref);
@@ -613,9 +608,6 @@ static void cmd_mount_exec_phase1(struct cmd_mount_ctx *ctx)
 	/* Flush-close file-system */
 	cmd_mount_unload_fs(ctx);
 
-	/* Close repository */
-	cmd_mount_close_repo(ctx);
-
 	/* Release lock */
 	cmd_mount_release_lockfile(ctx);
 
@@ -657,9 +649,6 @@ static void cmd_mount_exec_phase2(struct cmd_mount_ctx *ctx)
 
 	/* Flush-close file-system meta-data */
 	cmd_mount_unload_fs(ctx);
-
-	/* Close repository */
-	cmd_mount_close_repo(ctx);
 
 	/* Release lock */
 	cmd_mount_release_lockfile(ctx);

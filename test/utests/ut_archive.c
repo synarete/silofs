@@ -45,7 +45,7 @@ static void ut_archive_data(struct ut_env *ute)
 	ut_create_file(ute, dino, name, &ino);
 	ut_write_read(ute, ino, buf, len, off);
 	ut_release_flush(ute, ino);
-	ut_close_reload_fs(ute);
+	ut_unload_reload_fs(ute);
 	ut_archive_fs(ute);
 	ut_unload_fs(ute);
 	ut_remove_fs(ute);

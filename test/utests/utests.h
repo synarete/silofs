@@ -510,7 +510,7 @@ void ut_tune_ftype2(struct ut_env *ute, ino_t ino);
 
 void ut_timedout(struct ut_env *ute);
 
-void ut_close_reload_fs(struct ut_env *ute);
+void ut_unload_reload_fs(struct ut_env *ute);
 
 void ut_close_reload_fs_at(struct ut_env *ute, ino_t ino);
 
@@ -522,8 +522,6 @@ void ut_format_fs(struct ut_env *ute);
 void ut_unload_fs(struct ut_env *ute);
 
 void ut_open_repo(struct ut_env *ute);
-
-void ut_close_repo(struct ut_env *ute);
 
 void ut_reload_fs(struct ut_env *ute);
 

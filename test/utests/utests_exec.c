@@ -421,7 +421,6 @@ static void ut_prep_tests(struct ut_env *ute)
 	ut_format_repo(ute);
 	ut_format_fs(ute);
 	ut_unload_fs(ute);
-	ut_close_repo(ute);
 	ut_open_repo(ute);
 	ut_reload_fs(ute);
 }
@@ -429,7 +428,6 @@ static void ut_prep_tests(struct ut_env *ute)
 static void ut_done_tests(struct ut_env *ute)
 {
 	ut_unload_fs(ute);
-	ut_close_repo(ute);
 }
 
 static void ut_execute_tests_cycle(struct silofs_spec *spec)

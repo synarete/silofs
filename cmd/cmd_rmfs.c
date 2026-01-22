@@ -201,11 +201,6 @@ static void cmd_rmfs_open_repo(struct cmd_rmfs_ctx *ctx)
 	cmd_open_repo(ctx->env, &ctx->spec);
 }
 
-static void cmd_rmfs_close_repo(struct cmd_rmfs_ctx *ctx)
-{
-	cmd_close_repo(ctx->env);
-}
-
 static void cmd_rmfs_sense_fs(struct cmd_rmfs_ctx *ctx)
 {
 	cmd_sense_fs(ctx->env, &ctx->spec.fsref);
@@ -324,9 +319,6 @@ void cmd_execute_rmfs(void)
 
 	/* Unlink boot-configuration */
 	cmd_rmfs_unlink_spec(&ctx);
-
-	/* Close repository */
-	cmd_rmfs_close_repo(&ctx);
 
 	/* Release lock */
 	cmd_rmfs_release_lockfile(&ctx);

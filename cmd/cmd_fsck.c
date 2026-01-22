@@ -191,11 +191,6 @@ static void cmd_fsck_execute(struct cmd_fsck_ctx *ctx)
 	cmd_inspect_fs(ctx->env, false);
 }
 
-static void cmd_fsck_close_repo(struct cmd_fsck_ctx *ctx)
-{
-	cmd_close_repo(ctx->env);
-}
-
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 void cmd_execute_fsck(void)
@@ -242,9 +237,6 @@ void cmd_execute_fsck(void)
 
 	/* Close file-system and caches */
 	cmd_fsck_unload_fs(&ctx);
-
-	/* Close repository */
-	cmd_fsck_close_repo(&ctx);
 
 	/* Release lock */
 	cmd_fsck_release_lockfile(&ctx);

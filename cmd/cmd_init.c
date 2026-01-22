@@ -140,11 +140,6 @@ static void cmd_init_format_repo(const struct cmd_init_ctx *ctx)
 	cmd_format_repo(ctx->env, &ctx->spec);
 }
 
-static void cmd_init_close_repo(const struct cmd_init_ctx *ctx)
-{
-	cmd_close_repo(ctx->env);
-}
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void cmd_execute_init(void)
@@ -171,9 +166,6 @@ void cmd_execute_init(void)
 
 	/* Format repository layout */
 	cmd_init_format_repo(&ctx);
-
-	/* Post-format cleanups */
-	cmd_init_close_repo(&ctx);
 
 	/* Post execution cleanups */
 	cmd_init_finalize(&ctx);

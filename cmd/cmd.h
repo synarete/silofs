@@ -280,8 +280,6 @@ void cmd_format_repo(struct silofs_env *env, const struct silofs_spec *spec);
 
 void cmd_open_repo(struct silofs_env *env, const struct silofs_spec *spec);
 
-void cmd_close_repo(struct silofs_env *env);
-
 void cmd_format_fs(struct silofs_env *env, size_t capacity, bool utf8_names,
                    struct silofs_fsref *out_fsref);
 

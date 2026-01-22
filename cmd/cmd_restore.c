@@ -193,11 +193,6 @@ static void cmd_restore_open_repo(struct cmd_restore_ctx *ctx)
 	cmd_open_repo(ctx->env, &ctx->spec);
 }
 
-static void cmd_restore_close_repo(struct cmd_restore_ctx *ctx)
-{
-	cmd_close_repo(ctx->env);
-}
-
 static void cmd_restore_sense_archive(struct cmd_restore_ctx *ctx)
 {
 	cmd_sense_fs(ctx->env, &ctx->spec.fsref);
@@ -260,9 +255,6 @@ void cmd_execute_restore(void)
 
 	/* Save new fs spec */
 	cmd_restore_save_spec(&ctx);
-
-	/* Close repository */
-	cmd_restore_close_repo(&ctx);
 
 	/* Release lock */
 	cmd_restore_release_lockfile(&ctx);

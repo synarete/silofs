@@ -124,7 +124,7 @@ static void ut_clone_reload(struct ut_env *ute)
 	ut_write_read_str(ute, ino, name, UT_1M);
 	ut_release(ute, ino);
 	ut_clone(ute, dino);
-	ut_close_reload_fs(ute);
+	ut_unload_reload_fs(ute);
 	ut_inspect_fs(ute);
 	ut_open_rdonly(ute, ino);
 	ut_read_verify_str(ute, ino, name, UT_1M);

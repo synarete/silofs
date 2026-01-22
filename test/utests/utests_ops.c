@@ -1940,7 +1940,7 @@ void ut_close_reload_fs_at(struct ut_env *ute, ino_t ino)
 
 	ut_statfs(ute, ino, &stv[0]);
 	ut_getattr(ute, ino, &st[0]);
-	ut_close_reload_fs(ute);
+	ut_unload_reload_fs(ute);
 	ut_statfs(ute, ino, &stv[1]);
 	ut_getattr(ute, ino, &st[1]);
 	ut_expect_statvfs(&stv[0], &stv[1]);
@@ -1973,14 +1973,6 @@ void ut_open_repo(struct ut_env *ute)
 
 	err = silofs_open_repo(ute->env, ute->spec->bref[0].repodir,
 	                       ute->spec->flags);
-	ut_expect_ok(err);
-}
-
-void ut_close_repo(struct ut_env *ute)
-{
-	int err;
-
-	err = silofs_close_repo(ute->env);
 	ut_expect_ok(err);
 }
 
@@ -2041,10 +2033,9 @@ void ut_remove_fs2(struct ut_env *ute)
 	ut_expect_ok(err);
 }
 
-void ut_close_reload_fs(struct ut_env *ute)
+void ut_unload_reload_fs(struct ut_env *ute)
 {
 	ut_unload_fs(ute);
-	ut_close_repo(ute);
 	ut_open_repo(ute);
 	ut_reload_fs(ute);
 }

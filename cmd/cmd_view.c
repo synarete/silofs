@@ -188,11 +188,6 @@ static void cmd_view_open_repo(struct cmd_view_ctx *ctx)
 	cmd_open_repo(ctx->env, &ctx->spec);
 }
 
-static void cmd_view_close_repo(struct cmd_view_ctx *ctx)
-{
-	cmd_close_repo(ctx->env);
-}
-
 static void cmd_view_sense_fs(struct cmd_view_ctx *ctx)
 {
 	cmd_sense_fs(ctx->env, &ctx->spec.fsref);
@@ -266,9 +261,6 @@ void cmd_execute_view(void)
 
 	/* Close file-system */
 	cmd_view_unload_fs(&ctx);
-
-	/* Close repository */
-	cmd_view_close_repo(&ctx);
 
 	/* Release lock */
 	cmd_view_release_lockfile(&ctx);

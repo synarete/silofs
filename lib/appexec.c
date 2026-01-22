@@ -470,6 +470,11 @@ static int shutdown_fs(struct silofs_task_ctx *task)
 	return 0;
 }
 
+static int close_repo(struct silofs_task_ctx *task)
+{
+	return silofs_repo_close(task->t_repo);
+}
+
 static int appexec_unload_fs(struct silofs_task_ctx *task)
 {
 	int err;
@@ -479,6 +484,10 @@ static int appexec_unload_fs(struct silofs_task_ctx *task)
 		return err;
 	}
 	err = shutdown_fs(task);
+	if (err) {
+		return err;
+	}
+	err = close_repo(task);
 	if (err) {
 		return err;
 	}
@@ -638,16 +647,6 @@ static int exec_resync_vmeta(struct silofs_env *env, bool drop)
 		err = appexec_resync_vmeta(&task, drop);
 	}
 	return term_task(&task, err);
-}
-
-int silofs_close_repo(struct silofs_env *env)
-{
-	int ret;
-
-	silofs_env_lock(env);
-	ret = silofs_repo_close(env->base.repo);
-	silofs_env_unlock(env);
-	return ret;
 }
 
 static int do_mount_and_exec(struct silofs_env *env, const char *mntdir)

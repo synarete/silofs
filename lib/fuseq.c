@@ -1989,8 +1989,8 @@ static bool testf(uint32_t flags, uint32_t mask)
 static int
 uid_gid_of(const struct stat *attr, uint32_t to_set, uid_t *uid, gid_t *gid)
 {
-	*uid = testf(to_set, FATTR_UID) ? attr->st_uid : (uid_t)(-1);
-	*gid = testf(to_set, FATTR_GID) ? attr->st_gid : (gid_t)(-1);
+	*uid = testf(to_set, FATTR_UID) ? attr->st_uid : silofs_uid_null();
+	*gid = testf(to_set, FATTR_GID) ? attr->st_gid : silofs_gid_null();
 	return 0; /* TODO: Check valid ranges */
 }
 

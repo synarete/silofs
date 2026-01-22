@@ -216,8 +216,8 @@ op_rmap_stat(const struct silofs_task_ctx *task, struct silofs_stat *st)
 {
 	const uid_t uid_in = st->st.st_uid;
 	const gid_t gid_in = st->st.st_gid;
-	uid_t uid_out      = (uid_t)(-1);
-	gid_t gid_out      = (gid_t)(-1);
+	uid_t uid_out      = silofs_uid_null();
+	gid_t gid_out      = silofs_gid_null();
 	int ret;
 
 	/*

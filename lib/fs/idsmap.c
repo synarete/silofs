@@ -82,8 +82,8 @@ static void ume_fini(struct silofs_umap_entry *ume)
 {
 	list_head_fini(&ume->um_htof_lh);
 	list_head_fini(&ume->um_ftoh_lh);
-	ume->um_uids.host_uid = (uid_t)(-1);
-	ume->um_uids.fs_uid   = (uid_t)(-1);
+	ume->um_uids.host_uid = silofs_uid_null();
+	ume->um_uids.fs_uid   = silofs_uid_null();
 }
 
 static struct silofs_umap_entry *
@@ -147,8 +147,8 @@ static void gme_fini(struct silofs_gmap_entry *gme)
 {
 	list_head_fini(&gme->gm_htof_lh);
 	list_head_fini(&gme->gm_ftoh_lh);
-	gme->gm_gids.host_gid = (gid_t)(-1);
-	gme->gm_gids.fs_gid   = (gid_t)(-1);
+	gme->gm_gids.host_gid = silofs_gid_null();
+	gme->gm_gids.fs_gid   = silofs_gid_null();
 }
 
 static struct silofs_gmap_entry *

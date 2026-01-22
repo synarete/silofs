@@ -266,11 +266,11 @@ static void cmd_mount_load_spec(struct cmd_mount_ctx *ctx)
 	cmd_spec_need_self(&ctx->spec);
 }
 
-static void cmd_mount_setup_env(struct cmd_mount_ctx *ctx, bool reset_spec)
+static void cmd_mount_setup_env(struct cmd_mount_ctx *ctx, bool clear_fsids)
 {
 	cmd_env_setup(&ctx->spec, &ctx->env);
-	if (reset_spec) {
-		cmd_spec_reset(&ctx->spec);
+	if (clear_fsids) {
+		cmd_spec_clear_fsids(&ctx->spec);
 	}
 }
 

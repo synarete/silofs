@@ -254,7 +254,7 @@ _silofs_main() {
 		options+="-h --help "
 		_silofs_complete_options "$options"
 	else
-		subcmds+="init mkfs mount lsmnt show sync clone "
+		subcmds+="init mkfs mount umount lsmnt show sync clone "
 		subcmds+="tune rmfs prune fsck view archive restore "
 		_silofs_complete_subcmds "$subcmds"
 	fi

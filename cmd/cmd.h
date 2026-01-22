@@ -318,13 +318,9 @@ void cmd_del_iocp(union silofs_ioc_u **pioc);
 void cmd_reset_ioc(union silofs_ioc_u *ioc);
 
 /* environment context */
-void cmd_create_env(struct silofs_env **penv);
+void cmd_env_setup(const struct silofs_spec *spec, struct silofs_env **penv);
 
-void cmd_create_env2(enum silofs_flags flags, struct silofs_env **p_env);
-
-void cmd_destroy_env(struct silofs_env **p_env);
-
-void cmd_open_env(struct silofs_env *env, const struct silofs_spec *spec);
+void cmd_env_destroy(struct silofs_env **p_env);
 
 /* signals handling */
 void cmd_register_sigactions(void (*sig_hook_fn)(int));
@@ -343,11 +339,6 @@ void cmd_delpass(char **pass);
 void cmd_checkpass(const char *pass);
 
 void cmd_mkpasswd(struct silofs_password *pw, const char *pass);
-
-/* fsids */
-void cmd_fsids_add_uidgid_of(struct silofs_fsids *fsids, const char *name);
-
-void cmd_fsids_add_supgroups_of(struct silofs_fsids *fsids, const char *name);
 
 /* spec */
 void cmd_spec_setup(struct silofs_spec *spec);

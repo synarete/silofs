@@ -112,12 +112,12 @@ static void cmd_archive_release_lockfile(struct cmd_archive_ctx *ctx)
 
 static void cmd_archive_destroy_env(struct cmd_archive_ctx *ctx)
 {
-	cmd_destroy_env(&ctx->env);
+	cmd_env_destroy(&ctx->env);
 }
 
 static void cmd_archive_finalize(struct cmd_archive_ctx *ctx)
 {
-	cmd_destroy_env(&ctx->env);
+	cmd_env_destroy(&ctx->env);
 	cmd_pstrfree(&ctx->in_args.repodir_fsname);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
@@ -186,8 +186,7 @@ static void cmd_archive_load_spec(struct cmd_archive_ctx *ctx)
 
 static void cmd_archive_setup_env(struct cmd_archive_ctx *ctx)
 {
-	cmd_create_env(&ctx->env);
-	cmd_spec_clear_fsids(&ctx->spec);
+	cmd_env_setup(&ctx->spec, &ctx->env);
 }
 
 static void cmd_archive_open_repo(struct cmd_archive_ctx *ctx)

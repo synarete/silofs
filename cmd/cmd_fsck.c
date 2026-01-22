@@ -82,12 +82,12 @@ static void cmd_fsck_parse_optargs(struct cmd_fsck_ctx *ctx)
 
 static void cmd_fsck_destroy_env(struct cmd_fsck_ctx *ctx)
 {
-	cmd_destroy_env(&ctx->env);
+	cmd_env_destroy(&ctx->env);
 }
 
 static void cmd_fsck_finalize(struct cmd_fsck_ctx *ctx)
 {
-	cmd_destroy_env(&ctx->env);
+	cmd_env_destroy(&ctx->env);
 	cmd_pstrfree(&ctx->in_args.repodir_name);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
@@ -162,8 +162,8 @@ static void cmd_fsck_load_spec(struct cmd_fsck_ctx *ctx)
 
 static void cmd_fsck_setup_env(struct cmd_fsck_ctx *ctx)
 {
-	cmd_create_env(&ctx->env);
-	cmd_spec_clear_fsids(&ctx->spec);
+	cmd_env_setup(&ctx->spec, &ctx->env);
+	cmd_spec_reset(&ctx->spec);
 }
 
 static void cmd_fsck_open_repo(struct cmd_fsck_ctx *ctx)

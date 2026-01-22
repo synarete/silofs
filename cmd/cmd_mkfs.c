@@ -117,7 +117,7 @@ static void cmd_mkfs_parse_optargs(struct cmd_mkfs_ctx *ctx)
 
 static void cmd_mkfs_destroy_env(struct cmd_mkfs_ctx *ctx)
 {
-	cmd_destroy_env(&ctx->env);
+	cmd_env_destroy(&ctx->env);
 }
 
 static void cmd_mkfs_finalize(struct cmd_mkfs_ctx *ctx)
@@ -214,8 +214,7 @@ static void cmd_mkfs_setup_fsids(struct cmd_mkfs_ctx *ctx)
 
 static void cmd_mkfs_setup_env(struct cmd_mkfs_ctx *ctx)
 {
-	cmd_create_env(&ctx->env);
-	cmd_open_env(ctx->env, &ctx->spec);
+	cmd_env_setup(&ctx->spec, &ctx->env);
 }
 
 static void cmd_mkfs_open_repo(const struct cmd_mkfs_ctx *ctx)

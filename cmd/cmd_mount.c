@@ -266,17 +266,17 @@ static void cmd_mount_load_spec(struct cmd_mount_ctx *ctx)
 	cmd_spec_need_self(&ctx->spec);
 }
 
-static void cmd_mount_setup_env(struct cmd_mount_ctx *ctx, int phase)
+static void cmd_mount_setup_env(struct cmd_mount_ctx *ctx, bool reset_spec)
 {
-	cmd_create_env2(ctx->spec.flags, &ctx->env);
-	if (phase == 2) {
-		cmd_spec_clear_fsids(&ctx->spec);
+	cmd_env_setup(&ctx->spec, &ctx->env);
+	if (reset_spec) {
+		cmd_spec_reset(&ctx->spec);
 	}
 }
 
 static void cmd_mount_destroy_env(struct cmd_mount_ctx *ctx)
 {
-	cmd_destroy_env(&ctx->env);
+	cmd_env_destroy(&ctx->env);
 }
 
 static void cmd_mount_halt_by_signal(int signum)
@@ -596,7 +596,7 @@ static void cmd_mount_post_exec_cleanup(const struct cmd_mount_ctx *ctx)
 static void cmd_mount_exec_phase1(struct cmd_mount_ctx *ctx)
 {
 	/* Setup boot environment instance */
-	cmd_mount_setup_env(ctx, 1);
+	cmd_mount_setup_env(ctx, false);
 
 	/* Acquire lock */
 	cmd_mount_acquire_lockfile(ctx);
@@ -631,8 +631,8 @@ static void cmd_mount_exec_phase2(struct cmd_mount_ctx *ctx)
 	/* Update logging */
 	cmd_mount_update_log_params(ctx);
 
-	/* Setup main environment instance */
-	cmd_mount_setup_env(ctx, 2);
+	/* (Re)Setup main environment instance */
+	cmd_mount_setup_env(ctx, true);
 
 	/* Re-acquire lock */
 	cmd_mount_acquire_lockfile(ctx);

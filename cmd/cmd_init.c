@@ -76,7 +76,7 @@ static void cmd_init_parse_optargs(struct cmd_init_ctx *ctx)
 
 static void cmd_init_finalize(struct cmd_init_ctx *ctx)
 {
-	cmd_destroy_env(&ctx->env);
+	cmd_env_destroy(&ctx->env);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_spec_reset(&ctx->spec);
@@ -132,8 +132,7 @@ static void cmd_init_setup_spec(struct cmd_init_ctx *ctx)
 
 static void cmd_init_setup_env(struct cmd_init_ctx *ctx)
 {
-	cmd_create_env(&ctx->env);
-	cmd_open_env(ctx->env, &ctx->spec);
+	cmd_env_setup(&ctx->spec, &ctx->env);
 }
 
 static void cmd_init_format_repo(const struct cmd_init_ctx *ctx)

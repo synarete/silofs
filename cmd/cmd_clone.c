@@ -135,7 +135,7 @@ static void cmd_clone_parse_optargs(struct cmd_clone_ctx *ctx)
 
 static void cmd_clone_destroy_env(struct cmd_clone_ctx *ctx)
 {
-	cmd_destroy_env(&ctx->env);
+	cmd_env_destroy(&ctx->env);
 }
 
 static void cmd_clone_finalize(struct cmd_clone_ctx *ctx)
@@ -314,8 +314,7 @@ static void cmd_clone_load_spec(struct cmd_clone_ctx *ctx)
 
 static void cmd_clone_setup_env(struct cmd_clone_ctx *ctx)
 {
-	cmd_create_env(&ctx->env);
-	cmd_spec_clear_fsids(&ctx->spec);
+	cmd_env_setup(&ctx->spec, &ctx->env);
 }
 
 static void cmd_clone_open_repo(struct cmd_clone_ctx *ctx)

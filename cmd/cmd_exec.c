@@ -18,12 +18,7 @@
 #include "cmd.h"
 #include <stdarg.h>
 
-void cmd_create_env(struct silofs_env **penv)
-{
-	cmd_create_env2(0, penv);
-}
-
-void cmd_create_env2(enum silofs_flags flags, struct silofs_env **penv)
+static void cmd_env_create(enum silofs_flags flags, struct silofs_env **penv)
 {
 	int err;
 
@@ -33,21 +28,28 @@ void cmd_create_env2(enum silofs_flags flags, struct silofs_env **penv)
 	}
 }
 
-void cmd_destroy_env(struct silofs_env **penv)
-{
-	if ((penv != nullptr) && (*penv != nullptr)) {
-		silofs_destroy_env(*penv);
-		*penv = nullptr;
-	}
-}
-
-void cmd_open_env(struct silofs_env *env, const struct silofs_spec *spec)
+static void
+cmd_env_open(struct silofs_env *env, const struct silofs_spec *spec)
 {
 	int err;
 
 	err = silofs_open_env(env, spec);
 	if (err) {
 		cmd_die(err, "failed to open env: %s", spec->bref[0].repodir);
+	}
+}
+
+void cmd_env_setup(const struct silofs_spec *spec, struct silofs_env **penv)
+{
+	cmd_env_create(spec->flags, penv);
+	cmd_env_open(*penv, spec);
+}
+
+void cmd_env_destroy(struct silofs_env **penv)
+{
+	if ((penv != nullptr) && (*penv != nullptr)) {
+		silofs_destroy_env(*penv);
+		*penv = nullptr;
 	}
 }
 

@@ -193,8 +193,7 @@ static void cmd_rmfs_load_spec(struct cmd_rmfs_ctx *ctx)
 
 static void cmd_rmfs_setup_env(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_create_env(&ctx->env);
-	cmd_spec_clear_fsids(&ctx->spec);
+	cmd_env_setup(&ctx->spec, &ctx->env);
 }
 
 static void cmd_rmfs_open_repo(struct cmd_rmfs_ctx *ctx)
@@ -224,7 +223,7 @@ static void cmd_rmfs_unlink_spec(struct cmd_rmfs_ctx *ctx)
 
 static void cmd_rmfs_destroy_env(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_destroy_env(&ctx->env);
+	cmd_env_destroy(&ctx->env);
 }
 
 static void cmd_rmfs_acquire_lockfile(struct cmd_rmfs_ctx *ctx)

@@ -103,12 +103,12 @@ static void cmd_view_release_lockfile(struct cmd_view_ctx *ctx)
 
 static void cmd_view_destroy_env(struct cmd_view_ctx *ctx)
 {
-	cmd_destroy_env(&ctx->env);
+	cmd_env_destroy(&ctx->env);
 }
 
 static void cmd_view_finalize(struct cmd_view_ctx *ctx)
 {
-	cmd_destroy_env(&ctx->env);
+	cmd_env_destroy(&ctx->env);
 	cmd_pstrfree(&ctx->in_args.repodir_fsname);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
@@ -180,8 +180,7 @@ static void cmd_view_load_spec(struct cmd_view_ctx *ctx)
 
 static void cmd_view_setup_env(struct cmd_view_ctx *ctx)
 {
-	cmd_create_env(&ctx->env);
-	cmd_spec_clear_fsids(&ctx->spec);
+	cmd_env_setup(&ctx->spec, &ctx->env);
 }
 
 static void cmd_view_open_repo(struct cmd_view_ctx *ctx)

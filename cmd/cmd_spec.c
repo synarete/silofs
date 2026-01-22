@@ -387,17 +387,8 @@ static void cmd_fsids_add_gid_mapping(struct silofs_fsids *fsids,
 	gids->fs_gid   = fs_gid;
 }
 
-void cmd_fsids_add_uidgid_of(struct silofs_fsids *fsids, const char *name)
-{
-	uid_t uid = (uid_t)(-1);
-	gid_t gid = (gid_t)(-1);
-
-	cmd_resolve_name_to_uidgid(name, &uid, &gid);
-	cmd_fsids_add_uid_mapping(fsids, uid, uid);
-	cmd_fsids_add_gid_mapping(fsids, gid, gid);
-}
-
-void cmd_fsids_add_supgroups_of(struct silofs_fsids *fsids, const char *name)
+static void
+cmd_fsids_add_supgroups_of(struct silofs_fsids *fsids, const char *name)
 {
 	gid_t gids[64];
 	size_t ngids = 0;

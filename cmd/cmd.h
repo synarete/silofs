@@ -240,7 +240,7 @@ char *cmd_strdup(const char *s);
 
 char *cmd_strndup(const char *s, size_t n);
 
-char *cmd_strvdup(const void *p);
+char *cmd_strvdup(const void *p, size_t n);
 
 silofs_attr_noreturn void cmd_print_help_and_exit(const char *help_strings);
 

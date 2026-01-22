@@ -808,14 +808,20 @@ char *cmd_strndup(const char *s, size_t n)
 	char *d = strndup(s, n);
 
 	if (d == nullptr) {
-		cmd_die(errno, "strndup failed: n=%lu", n);
+		cmd_die(errno, "strndup failed: n=%zu", n);
 	}
 	return d;
 }
 
-char *cmd_strvdup(const void *p)
+char *cmd_strvdup(const void *p, size_t n)
 {
-	return cmd_strdup((const char *)p);
+	const char *s  = p;
+	const size_t k = strnlen(s, n);
+
+	if (k >= n) {
+		cmd_diez("illegal string value: n=%zu", n);
+	}
+	return cmd_strndup(s, k);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

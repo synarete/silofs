@@ -132,7 +132,7 @@ static void cmd_rmfs_check_nomnt_at(struct cmd_rmfs_ctx *ctx, const char *mntp)
 	if (err) {
 		goto out;
 	}
-	repodir = cmd_strvdup(qry->u.repo.path);
+	repodir = cmd_strvdup(qry->u.repo.path, sizeof(qry->u.repo.path));
 
 	silofs_memzero(qry, sizeof(*qry));
 	qry->qtype = SILOFS_QUERY_BOOT;
@@ -140,7 +140,7 @@ static void cmd_rmfs_check_nomnt_at(struct cmd_rmfs_ctx *ctx, const char *mntp)
 	if (err) {
 		goto out;
 	}
-	name = cmd_strvdup(qry->u.boot.name);
+	name = cmd_strvdup(qry->u.boot.name, sizeof(qry->u.boot.name));
 
 	path[0] = cmd_path_join(repodir, name);
 	err     = silofs_sys_stat(path[0], &st[0]);

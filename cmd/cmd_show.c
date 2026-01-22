@@ -178,7 +178,7 @@ static void cmd_show_boot(struct cmd_show_ctx *ctx)
 
 	cmd_show_do_ioctl_query(ctx);
 
-	boot_name = cmd_strvdup(qry->u.boot.name);
+	boot_name = cmd_strvdup(qry->u.boot.name, sizeof(qry->u.boot.name));
 	fprintf(ctx->out_fp, "%s %s\n", boot_name,
 	        qry->u.boot.fsref.mbaddr.mba);
 	cmd_pstrfree(&boot_name);

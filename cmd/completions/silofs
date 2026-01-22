@@ -12,6 +12,7 @@ _silofs_complete_options() {
 	fi
 	mapfile -t COMPREPLY < <(compgen -W "$options" -- "$cur")
 
+	# If the only match ends in '=', don't add a space
 	if [[ ${#COMPREPLY[@]} -eq 1 && ${COMPREPLY[0]} == *= ]]; then
 		compopt -o nospace
 	fi
@@ -23,9 +24,16 @@ _silofs_complete_subcmds() {
 	mapfile -t COMPREPLY < <(compgen -W "$subcmds" -- "$cur")
 }
 
-
 _silofs_complete_filedir() {
-	_filedir
+	_filedir "$@"
+}
+
+_silofs_complete_file() {
+	_silofs_complete_filedir -f
+}
+
+_silofs_complete_dir() {
+	_silofs_complete_filedir -d
 }
 
 _silofs_init() {
@@ -37,7 +45,7 @@ _silofs_init() {
 		options+="-h --help "
 		_silofs_complete_options "$options"
 	else
-		_silofs_complete_filedir
+		_silofs_complete_dir
 	fi
 }
 
@@ -54,7 +62,7 @@ _silofs_mkfs() {
 		options+="-h --help "
 		_silofs_complete_options "$options"
 	else
-		_silofs_complete_filedir
+		_silofs_complete_dir -d
 	fi
 }
 
@@ -82,7 +90,7 @@ _silofs_umount() {
 		options+="-h --help "
 		_silofs_complete_options "$options"
 	else
-		_silofs_complete_filedir
+		_silofs_complete_dir
 	fi
 }
 
@@ -103,10 +111,10 @@ _silofs_show() {
 	local subcmds=""
 
 	if [[ "$cur" == -* ]]; then
-		options+="-h --help"
+		options+="-h --help "
 		_silofs_complete_options "$options"
 	else
-		subcmds+="version repo boot proc statx spstats"
+		subcmds+="version repo boot proc statx spstats "
 		_silofs_complete_subcmds "$subcmds"
 	fi
 }
@@ -120,7 +128,7 @@ _silofs_clone() {
 		options+="-h --help "
 		_silofs_complete_options "$options"
 	else
-		_silofs_complete_filedir
+		_silofs_complete_file
 	fi
 }
 
@@ -154,7 +162,7 @@ _silofs_rmfs() {
 		options+="-h --help "
 		_silofs_complete_options "$options"
 	else
-		_silofs_complete_filedir
+		_silofs_complete_file
 	fi
 }
 
@@ -165,7 +173,7 @@ _silofs_prune() {
 		options+="-h --help "
 		_silofs_complete_options "$options"
 	else
-		_silofs_complete_filedir
+		_silofs_complete_file
 	fi
 }
 
@@ -176,7 +184,7 @@ _silofs_fsck() {
 		options+="-h --help "
 		_silofs_complete_options "$options"
 	else
-		_silofs_complete_filedir
+		_silofs_complete_file
 	fi
 }
 
@@ -217,51 +225,21 @@ _silofs_restore() {
 
 _silofs_subcmd() {
 	case "${words[1]}" in
-		"init")
-			_silofs_init
-			;;
-		"mkfs")
-			_silofs_mkfs
-			;;
-		"mount")
-			_silofs_mount
-			;;
-		"umount")
-			_silofs_umount
-			;;
-		"lsmnt")
-			_silofs_lsmnt
-			;;
-		"show")
-			_silofs_show
-			;;
-		"clone")
-			_silofs_clone
-			;;
-		"sync")
-			_silofs_sync
-			;;
-		"tune")
-			_silofs_tune
-			;;
-		"rmfs")
-			_silofs_rmfs
-			;;
-		"prune")
-			_silofs_prune
-			;;
-		"fsck")
-			_silofs_fsck
-			;;
-		"view")
-			_silofs_view
-			;;
-		"archive")
-			_silofs_archive
-			;;
-		"restore")
-			_silofs_restore
-			;;
+		"init")    _silofs_init    ;;
+		"mkfs")    _silofs_mkfs    ;;
+		"mount")   _silofs_mount   ;;
+		"umount")  _silofs_umount  ;;
+		"lsmnt")   _silofs_lsmnt   ;;
+		"show")    _silofs_show    ;;
+		"clone")   _silofs_clone   ;;
+		"sync")    _silofs_sync    ;;
+		"tune")    _silofs_tune    ;;
+		"rmfs")    _silofs_rmfs    ;;
+		"prune")   _silofs_prune   ;;
+		"fsck")    _silofs_fsck    ;;
+		"view")    _silofs_view    ;;
+		"archive") _silofs_archive ;;
+		"restore") _silofs_restore ;;
 	esac
 }
 
@@ -297,6 +275,6 @@ _silofs_completions() {
 	fi
 }
 
-complete -o bashdefault -o default -o nospace -F _silofs_completions silofs
+complete -o bashdefault -o default -F _silofs_completions silofs
 
 # vim: filetype=sh

@@ -196,11 +196,6 @@ static void cmd_rmfs_setup_env(struct cmd_rmfs_ctx *ctx)
 	cmd_env_setup(&ctx->spec, &ctx->env);
 }
 
-static void cmd_rmfs_open_repo(struct cmd_rmfs_ctx *ctx)
-{
-	cmd_open_repo(ctx->env, &ctx->spec);
-}
-
 static void cmd_rmfs_sense_fs(struct cmd_rmfs_ctx *ctx)
 {
 	cmd_sense_fs(ctx->env, &ctx->spec.fsref);
@@ -307,9 +302,6 @@ void cmd_execute_rmfs(void)
 
 	/* Acquire lock */
 	cmd_rmfs_acquire_lockfile(&ctx);
-
-	/* Open-validate repository */
-	cmd_rmfs_open_repo(&ctx);
 
 	/* Require existing boot-record */
 	cmd_rmfs_sense_fs(&ctx);

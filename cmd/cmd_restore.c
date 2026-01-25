@@ -188,11 +188,6 @@ static void cmd_restore_setup_env(struct cmd_restore_ctx *ctx)
 	cmd_env_setup(&ctx->spec, &ctx->env);
 }
 
-static void cmd_restore_open_repo(struct cmd_restore_ctx *ctx)
-{
-	cmd_open_repo(ctx->env, &ctx->spec);
-}
-
 static void cmd_restore_sense_archive(struct cmd_restore_ctx *ctx)
 {
 	cmd_sense_fs(ctx->env, &ctx->spec.fsref);
@@ -243,9 +238,6 @@ void cmd_execute_restore(void)
 
 	/* Acquire lock */
 	cmd_restore_acquire_lockfile(&ctx);
-
-	/* Open repository */
-	cmd_restore_open_repo(&ctx);
 
 	/* Require valid boot-record */
 	cmd_restore_sense_archive(&ctx);

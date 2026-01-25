@@ -318,11 +318,6 @@ static void cmd_clone_setup_env(struct cmd_clone_ctx *ctx)
 	cmd_env_setup(&ctx->spec, &ctx->env);
 }
 
-static void cmd_clone_open_repo(struct cmd_clone_ctx *ctx)
-{
-	cmd_open_repo(ctx->env, &ctx->spec);
-}
-
 static void cmd_clone_sense_fs(struct cmd_clone_ctx *ctx)
 {
 	cmd_sense_fs(ctx->env, &ctx->spec.fsref);
@@ -418,9 +413,6 @@ void cmd_execute_clone(void)
 
 	/* Setup execution environment */
 	cmd_clone_setup_env(ctx);
-
-	/* Open repository */
-	cmd_clone_open_repo(ctx);
 
 	/* Require source boot-record */
 	cmd_clone_sense_fs(ctx);

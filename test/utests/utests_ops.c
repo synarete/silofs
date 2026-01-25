@@ -1963,16 +1963,7 @@ void ut_format_repo(struct ut_env *ute)
 {
 	int err;
 
-	err = silofs_format_repo(ute->env, ute->spec->bref[0].repodir);
-	ut_expect_ok(err);
-}
-
-void ut_open_repo(struct ut_env *ute)
-{
-	int err;
-
-	err = silofs_open_repo(ute->env, ute->spec->bref[0].repodir,
-	                       ute->spec->flags);
+	err = silofs_format_repo(ute->env);
 	ut_expect_ok(err);
 }
 
@@ -2036,7 +2027,6 @@ void ut_remove_fs2(struct ut_env *ute)
 void ut_unload_reload_fs(struct ut_env *ute)
 {
 	ut_unload_fs(ute);
-	ut_open_repo(ute);
 	ut_reload_fs(ute);
 }
 

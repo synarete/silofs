@@ -72,6 +72,7 @@ struct silofs_env {
 	struct silofs_cred       owner_cred;
 	struct silofs_uconv      uconv;
 	enum silofs_flags        flags;
+	char                    *repodir;
 	unsigned long            ms_flags;
 	time_t                   init_time;
 	bool                     iconv_set;
@@ -96,8 +97,6 @@ void silofs_env_rwlock(struct silofs_env *env, bool ex);
 
 void silofs_env_rwunlock(struct silofs_env *env);
 
-int silofs_env_shut(struct silofs_env *env);
-
 int silofs_env_format_uber(struct silofs_env *env);
 
 int silofs_env_format_super(struct silofs_env *env, size_t capacity);
@@ -119,7 +118,7 @@ void silofs_env_drop_caches(struct silofs_env *env);
 
 bool silofs_env_hasflag(const struct silofs_env *env, enum silofs_flags f);
 
-bool silofs_env_isrdonlyfs(const struct silofs_env *env);
+int silofs_env_shut(struct silofs_env *env);
 
 int silofs_env_forkfs(struct silofs_env    *env,
                       struct silofs_mbrefs *out_mbrefs);
@@ -132,7 +131,11 @@ int silofs_env_export_ar_mbr(struct silofs_env   *env,
                              struct silofs_mbref *out_mbref,
                              struct silofs_mbr1k *out_mbr1k);
 
+bool silofs_env_isrdonlyfs(const struct silofs_env *env);
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_env_reload_repo(struct silofs_env *env);
 
 int silofs_env_sense_mbr(struct silofs_env         *env,
                          const struct silofs_mbref *mbr);

@@ -189,11 +189,6 @@ static void cmd_archive_setup_env(struct cmd_archive_ctx *ctx)
 	cmd_env_setup(&ctx->spec, &ctx->env);
 }
 
-static void cmd_archive_open_repo(struct cmd_archive_ctx *ctx)
-{
-	cmd_open_repo(ctx->env, &ctx->spec);
-}
-
 static void cmd_archive_sense_fs(struct cmd_archive_ctx *ctx)
 {
 	cmd_sense_fs(ctx->env, &ctx->spec.fsref);
@@ -254,9 +249,6 @@ void cmd_execute_archive(void)
 
 	/* Acquire lock */
 	cmd_archive_acquire_lockfile(&ctx);
-
-	/* Open repository */
-	cmd_archive_open_repo(&ctx);
 
 	/* Require valid boot-record */
 	cmd_archive_sense_fs(&ctx);

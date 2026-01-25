@@ -385,11 +385,6 @@ static void cmd_mount_getpass(struct cmd_mount_ctx *ctx)
 	}
 }
 
-static void cmd_mount_open_repo(struct cmd_mount_ctx *ctx)
-{
-	cmd_open_repo(ctx->env, &ctx->spec);
-}
-
 static void cmd_mount_sense_fs(struct cmd_mount_ctx *ctx)
 {
 	cmd_sense_fs(ctx->env, &ctx->spec.fsref);
@@ -596,9 +591,6 @@ static void cmd_mount_exec_phase1(struct cmd_mount_ctx *ctx)
 	/* Acquire lock */
 	cmd_mount_acquire_lockfile(ctx);
 
-	/* Open repository first time */
-	cmd_mount_open_repo(ctx);
-
 	/* Load-verify boot-record */
 	cmd_mount_sense_fs(ctx);
 
@@ -628,9 +620,6 @@ static void cmd_mount_exec_phase2(struct cmd_mount_ctx *ctx)
 
 	/* Re-acquire lock */
 	cmd_mount_acquire_lockfile(ctx);
-
-	/* Re-open repository */
-	cmd_mount_open_repo(ctx);
 
 	/* Re-load and verify boot-record  */
 	cmd_mount_sense_fs(ctx);

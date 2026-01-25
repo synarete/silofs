@@ -421,7 +421,6 @@ static void ut_prep_tests(struct ut_env *ute)
 	ut_format_repo(ute);
 	ut_format_fs(ute);
 	ut_unload_fs(ute);
-	ut_open_repo(ute);
 	ut_reload_fs(ute);
 }
 

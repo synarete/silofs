@@ -217,11 +217,6 @@ static void cmd_mkfs_setup_env(struct cmd_mkfs_ctx *ctx)
 	cmd_env_setup(&ctx->spec, &ctx->env);
 }
 
-static void cmd_mkfs_open_repo(const struct cmd_mkfs_ctx *ctx)
-{
-	cmd_open_repo(ctx->env, &ctx->spec);
-}
-
 static void cmd_mkfs_format_fs(struct cmd_mkfs_ctx *ctx)
 {
 	const size_t fs_cap   = ctx->in_args.fs_size;
@@ -277,9 +272,6 @@ void cmd_execute_mkfs(void)
 
 	/* Acquire lock */
 	cmd_mkfs_acquire_lockfile(&ctx);
-
-	/* Open repository */
-	cmd_mkfs_open_repo(&ctx);
 
 	/* Format file-system layer */
 	cmd_mkfs_format_fs(&ctx);

@@ -98,6 +98,26 @@ static void env_update_sb(struct silofs_env *env, struct silofs_sb_info *sbi)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static int env_update_repodir(struct silofs_env *env, const char *repodir)
+{
+	struct silofs_alloc *alloc = env->base.alloc;
+	size_t len;
+
+	if (env->repodir != nullptr) {
+		len = silofs_str_length(env->repodir);
+		silofs_memfree(alloc, env->repodir, len + 1, 0);
+		env->repodir = nullptr;
+	}
+	if (repodir != nullptr) {
+		len          = silofs_str_length(repodir);
+		env->repodir = silofs_memdup(alloc, repodir, len + 1, 0);
+		if (env->repodir == nullptr) {
+			return -SILOFS_ENOMEM;
+		}
+	}
+	return 0;
+}
+
 static int
 env_setup_owner(struct silofs_env *env, const struct silofs_cred *cred)
 {
@@ -201,6 +221,10 @@ int silofs_env_setup(struct silofs_env *env, const struct silofs_spec *spec)
 {
 	int err;
 
+	err = env_update_repodir(env, spec->bref[0].repodir);
+	if (err) {
+		return err;
+	}
 	err = env_update_name(env, spec->bref[0].refname);
 	if (err) {
 		return err;
@@ -257,6 +281,7 @@ env_init_commons(struct silofs_env *env, const struct silofs_env_base *base)
 	env->flags     = 0;
 	env->ms_flags  = 0;
 	env->iconv_set = false;
+	env->repodir   = nullptr;
 }
 
 static void env_fini_commons(struct silofs_env *env)
@@ -374,6 +399,7 @@ out_err:
 
 void silofs_env_fini(struct silofs_env *env)
 {
+	env_update_repodir(env, nullptr);
 	env_update_sb(env, nullptr);
 	env_update_uber(env, nullptr);
 	env_fini_uconv(env);
@@ -749,4 +775,14 @@ int silofs_env_export_ar_mbr(struct silofs_env *env,
                              struct silofs_mbr1k *out_mbr1k)
 {
 	return silofs_mbi_export(&env->mbis.ar_mbi, out_mbref, out_mbr1k);
+}
+
+int silofs_env_reload_repo(struct silofs_env *env)
+{
+	struct silofs_repo *repo = env->base.repo;
+
+	if (repo->re_opened) {
+		return 0;
+	}
+	return silofs_repo_open(repo, env->repodir, env->flags);
 }

@@ -394,8 +394,8 @@ reload_fs_mbr(struct silofs_task_ctx *task, const struct silofs_mbref *mbref)
 	return silofs_env_reload_fs_mbr(task->t_env, mbref);
 }
 
-static int
-reload_fs(struct silofs_task_ctx *task, const struct silofs_mbref *mbref)
+static int appexec_reload_meta(struct silofs_task_ctx *task,
+                               const struct silofs_mbref *mbref)
 {
 	int err;
 
@@ -422,15 +422,26 @@ reload_fs(struct silofs_task_ctx *task, const struct silofs_mbref *mbref)
 	return 0;
 }
 
+static int appexec_reload_repo(struct silofs_task_ctx *task)
+{
+	return silofs_env_reload_repo(task->t_env);
+}
+
 static int appexec_reload_fs(struct silofs_task_ctx *task,
                              const struct silofs_mbref *mbref)
 {
 	int err;
 
-	err = reload_fs(task, mbref);
-	if (!err) {
-		drop_caches(task);
+	err = appexec_reload_repo(task);
+	if (err) {
+		goto out;
 	}
+	err = appexec_reload_meta(task, mbref);
+	if (err) {
+		goto out;
+	}
+	drop_caches(task);
+out:
 	return err;
 }
 
@@ -505,7 +516,7 @@ static int appexec_remove_fs(struct silofs_task_ctx *task,
 {
 	int err;
 
-	err = reload_fs(task, mbref);
+	err = appexec_reload_meta(task, mbref);
 	if (err) {
 		return err;
 	}
@@ -543,7 +554,7 @@ static int appexec_archive_fs(struct silofs_task_ctx *task,
 {
 	int err;
 
-	err = reload_fs(task, fs_mbref);
+	err = appexec_reload_meta(task, fs_mbref);
 	if (err) {
 		return err;
 	}
@@ -765,24 +776,12 @@ static int exec_format_meta(struct silofs_env *env, size_t fs_cap,
 	return term_task(&task, err);
 }
 
-int silofs_format_repo(struct silofs_env *env, const char *repodir)
+int silofs_format_repo(struct silofs_env *env)
 {
 	int ret;
 
 	silofs_env_lock(env);
-	ret = silofs_repo_format(env->base.repo, repodir);
-	silofs_env_unlock(env);
-	return ret;
-}
-
-int silofs_open_repo(struct silofs_env *env, const char *repodir,
-                     enum silofs_flags flags)
-{
-	const bool rdonly = (flags & SILOFS_F_RDONLY) > 0;
-	int ret;
-
-	silofs_env_lock(env);
-	ret = silofs_repo_open(env->base.repo, repodir, rdonly);
+	ret = silofs_repo_format(env->base.repo, env->repodir);
 	silofs_env_unlock(env);
 	return ret;
 }
@@ -856,9 +855,15 @@ exec_sense_fs(struct silofs_env *env, const struct silofs_mbref *mbref)
 	int err;
 
 	err = make_priv_task(env, &task);
-	if (!err) {
-		err = appexec_sense_fs(&task, mbref);
+	if (err) {
+		goto out;
 	}
+	err = appexec_reload_repo(&task);
+	if (err) {
+		goto out;
+	}
+	err = appexec_sense_fs(&task, mbref);
+out:
 	return term_task(&task, err);
 }
 
@@ -984,6 +989,10 @@ exec_reload_remove_fs(struct silofs_env *env, const struct silofs_mbref *mbref)
 	if (err) {
 		goto out;
 	}
+	err = appexec_reload_repo(&task);
+	if (err) {
+		return err;
+	}
 	err = appexec_reload_fs(&task, mbref);
 	if (err) {
 		goto out;
@@ -1030,9 +1039,15 @@ static int exec_inspect_fs(struct silofs_env *env,
 	int err;
 
 	err = make_priv_task(env, &task);
-	if (!err) {
-		err = silofs_exec_walkfs(&task, lvis);
+	if (err) {
+		goto out;
 	}
+	err = appexec_reload_repo(&task);
+	if (err) {
+		goto out;
+	}
+	err = silofs_exec_walkfs(&task, lvis);
+out:
 	return term_task(&task, err);
 }
 
@@ -1069,9 +1084,15 @@ exec_archive_fs(struct silofs_env *env, const struct silofs_mbref *fs_mbref,
 	int err;
 
 	err = make_priv_task(env, &task);
-	if (!err) {
-		err = appexec_archive_fs(&task, fs_mbref, out_ar_mbref);
+	if (err) {
+		goto out;
 	}
+	err = appexec_reload_repo(&task);
+	if (err) {
+		goto out;
+	}
+	err = appexec_archive_fs(&task, fs_mbref, out_ar_mbref);
+out:
 	return term_task(&task, err);
 }
 
@@ -1113,9 +1134,15 @@ exec_restore_fs(struct silofs_env *env, const struct silofs_mbref *ar_mbref,
 	int err;
 
 	err = make_priv_task(env, &task);
-	if (!err) {
-		err = appexec_restore_fs(&task, ar_mbref, out_fs_mbref);
+	if (err) {
+		goto out;
 	}
+	err = appexec_reload_repo(&task);
+	if (err) {
+		goto out;
+	}
+	err = appexec_restore_fs(&task, ar_mbref, out_fs_mbref);
+out:
 	return term_task(&task, err);
 }
 

@@ -337,18 +337,6 @@ static int do_opendir(const char *path, int *out_fd)
 	return err;
 }
 
-static int do_access(const char *path, int mode)
-{
-	int err;
-
-	err = silofs_sys_access(path, mode);
-	if (err) {
-		log_warn("access error: path=%s mode=0x%x err=%d", path, mode,
-		         err);
-	}
-	return err;
-}
-
 static int do_mkdirat(int dirfd, const char *pathname, mode_t mode)
 {
 	int err;
@@ -1393,11 +1381,7 @@ static int repo_check_root_dfd(const struct silofs_repo *repo)
 
 static int repo_check_writable(const struct silofs_repo *repo)
 {
-	if (repo->re_rdonly) {
-		log_dbg("read-only repo: %s", repo->re_rootdir);
-		return -SILOFS_EPERM;
-	}
-	return 0;
+	return (repo->re_rdonly) ? -SILOFS_EPERM : 0;
 }
 
 static int repo_check_open(const struct silofs_repo *repo, bool rw)
@@ -1450,26 +1434,6 @@ static void repo_fini_dstor(struct silofs_repo *repo)
 	silofs_dstor_fini(&repo->re_dstor);
 }
 
-static int repo_set_rootdir(struct silofs_repo *repo, const char *rootdir)
-{
-	struct silofs_alloc *alloc = repo->re_alloc;
-	size_t len;
-
-	if (repo->re_rootdir != nullptr) {
-		len = silofs_str_length(repo->re_rootdir);
-		silofs_memfree(alloc, repo->re_rootdir, len + 1, 0);
-		repo->re_rootdir = nullptr;
-	}
-	if (rootdir != nullptr) {
-		len              = silofs_str_length(rootdir);
-		repo->re_rootdir = silofs_memdup(alloc, rootdir, len + 1, 0);
-		if (repo->re_rootdir == nullptr) {
-			return -SILOFS_ENOMEM;
-		}
-	}
-	return 0;
-}
-
 int silofs_repo_init(struct silofs_repo *repo, struct silofs_alloc *alloc)
 {
 	int err;
@@ -1481,8 +1445,8 @@ int silofs_repo_init(struct silofs_repo *repo, struct silofs_alloc *alloc)
 	repo->re_root_dfd  = -1;
 	repo->re_dots_dfd  = -1;
 	repo->re_blobs_dfd = -1;
-	repo->re_rootdir   = nullptr;
 	repo->re_rdonly    = false;
+	repo->re_opened    = false;
 
 	err = repo_init_mdigest(repo);
 	if (err) {
@@ -1517,8 +1481,9 @@ void silofs_repo_fini(struct silofs_repo *repo)
 	repo_fini_mdigest(repo);
 	repo_fini_mutex(repo);
 	listq_fini(&repo->re_lruq);
-	repo_set_rootdir(repo, nullptr);
-	repo->re_alloc = nullptr;
+	repo->re_alloc  = nullptr;
+	repo->re_rdonly = false;
+	repo->re_opened = false;
 }
 
 void silofs_repo_drop_some(struct silofs_repo *repo)
@@ -1643,11 +1608,6 @@ static int repo_require_skel(const struct silofs_repo *repo)
 	off_t size;
 	int err;
 
-	err = do_access(repo->re_rootdir, R_OK | W_OK | X_OK);
-	if (err) {
-		return err;
-	}
-
 	name = repo->re_defs->re_meta_name;
 	size = SILOFS_REPO_METAFILE_SIZE;
 	err  = repo_require_skel_subfile(repo, name, size);
@@ -1666,12 +1626,12 @@ static int repo_require_skel(const struct silofs_repo *repo)
 
 static int repo_check_not_open(const struct silofs_repo *repo)
 {
-	return (repo->re_root_dfd > 0) ? -SILOFS_EALREADY : 0;
+	return repo->re_opened ? -SILOFS_EALREADY : 0;
 }
 
-static int repo_open_rootdir(struct silofs_repo *repo)
+static int repo_open_rootdir(struct silofs_repo *repo, const char *rootdir)
 {
-	return do_opendir(repo->re_rootdir, &repo->re_root_dfd);
+	return do_opendir(rootdir, &repo->re_root_dfd);
 }
 
 static int repo_create_dotsdir(const struct silofs_repo *repo)
@@ -1811,11 +1771,7 @@ static int repo_do_format(struct silofs_repo *repo, const char *repodir)
 	if (err) {
 		return err;
 	}
-	err = repo_set_rootdir(repo, repodir);
-	if (err) {
-		return err;
-	}
-	err = repo_open_rootdir(repo);
+	err = repo_open_rootdir(repo, repodir);
 	if (err) {
 		return err;
 	}
@@ -1847,6 +1803,7 @@ static int repo_do_format(struct silofs_repo *repo, const char *repodir)
 	if (err) {
 		return err;
 	}
+	repo->re_opened = true;
 	return 0;
 }
 
@@ -1869,11 +1826,7 @@ repo_do_open(struct silofs_repo *repo, const char *repodir, bool rdonly)
 	if (err) {
 		return err;
 	}
-	err = repo_set_rootdir(repo, repodir);
-	if (err) {
-		return err;
-	}
-	err = repo_open_rootdir(repo);
+	err = repo_open_rootdir(repo, repodir);
 	if (err) {
 		return err;
 	}
@@ -1902,12 +1855,14 @@ repo_do_open(struct silofs_repo *repo, const char *repodir, bool rdonly)
 		return err;
 	}
 	repo->re_rdonly = rdonly;
+	repo->re_opened = true;
 	return 0;
 }
 
 int silofs_repo_open(struct silofs_repo *repo, const char *rootdir,
-                     bool rdonly)
+                     enum silofs_flags flags)
 {
+	const bool rdonly = (flags & SILOFS_F_RDONLY) > 0;
 	int err;
 
 	repo_lock(repo);
@@ -1916,17 +1871,17 @@ int silofs_repo_open(struct silofs_repo *repo, const char *rootdir,
 	return err;
 }
 
-static int repo_close_basedir(struct silofs_repo *repo)
+static int repo_close_dots_fd(struct silofs_repo *repo)
 {
 	return do_closefd(&repo->re_dots_dfd);
 }
 
-static int repo_close_rootdir(struct silofs_repo *repo)
+static int repo_close_root_fd(struct silofs_repo *repo)
 {
 	return do_closefd(&repo->re_root_dfd);
 }
 
-static int repo_close_objs_dir(struct silofs_repo *repo)
+static int repo_close_blobs_fd(struct silofs_repo *repo)
 {
 	return do_closefd(&repo->re_blobs_dfd);
 }
@@ -1941,18 +1896,19 @@ static int repo_close(struct silofs_repo *repo)
 	int err;
 
 	repo_close_dstor(repo);
-	err = repo_close_objs_dir(repo);
+	err = repo_close_blobs_fd(repo);
 	if (err) {
 		return err;
 	}
-	err = repo_close_basedir(repo);
+	err = repo_close_dots_fd(repo);
 	if (err) {
 		return err;
 	}
-	err = repo_close_rootdir(repo);
+	err = repo_close_root_fd(repo);
 	if (err) {
 		return err;
 	}
+	repo->re_opened = false;
 	return 0;
 }
 
@@ -1960,7 +1916,7 @@ static int repo_do_close(struct silofs_repo *repo)
 {
 	int err;
 
-	if (repo->re_root_dfd < 0) {
+	if (!repo->re_opened) {
 		return 0;
 	}
 	err = repo_close(repo);

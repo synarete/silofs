@@ -521,8 +521,6 @@ void ut_format_fs(struct ut_env *ute);
 
 void ut_unload_fs(struct ut_env *ute);
 
-void ut_open_repo(struct ut_env *ute);
-
 void ut_reload_fs(struct ut_env *ute);
 
 void ut_reload_forked_fs(struct ut_env *ute);

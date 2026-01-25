@@ -161,25 +161,13 @@ cmd_report_err_and_dief(const struct silofs_env *env, int status,
 	cmd_report_err_and_die(env, status, msg);
 }
 
-void cmd_format_repo(struct silofs_env *env, const struct silofs_spec *spec)
+void cmd_format_repo(struct silofs_env *env)
 {
 	int err;
 
-	err = silofs_format_repo(env, spec->bref[0].repodir);
+	err = silofs_format_repo(env);
 	if (err) {
-		cmd_report_err_and_dief(env, err, "format repo error: %s",
-		                        spec->bref[0].repodir);
-	}
-}
-
-void cmd_open_repo(struct silofs_env *env, const struct silofs_spec *spec)
-{
-	int err;
-
-	err = silofs_open_repo(env, spec->bref[0].repodir, spec->flags);
-	if (err) {
-		cmd_report_err_and_dief(env, err, "open repo error: %s",
-		                        spec->bref[0].repodir);
+		cmd_report_err_and_die(env, err, "format repo error");
 	}
 }
 

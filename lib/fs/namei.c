@@ -2441,7 +2441,7 @@ static void fill_query_repo(const struct silofs_task_ctx *task,
 {
 	struct silofs_strview strview;
 
-	silofs_strview_init(&strview, task->t_env->base.repo->re_rootdir);
+	silofs_strview_init(&strview, task->t_env->repodir);
 	str_to_buf(&strview, query->u.repo.path, sizeof(query->u.repo.path));
 }
 

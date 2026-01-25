@@ -166,11 +166,6 @@ static void cmd_fsck_setup_env(struct cmd_fsck_ctx *ctx)
 	cmd_spec_reset(&ctx->spec);
 }
 
-static void cmd_fsck_open_repo(struct cmd_fsck_ctx *ctx)
-{
-	cmd_open_repo(ctx->env, &ctx->spec);
-}
-
 static void cmd_fsck_sense_fs(struct cmd_fsck_ctx *ctx)
 {
 	cmd_sense_fs(ctx->env, &ctx->spec.fsref);
@@ -222,9 +217,6 @@ void cmd_execute_fsck(void)
 
 	/* Acquire lock */
 	cmd_fsck_acquire_lockfile(&ctx);
-
-	/* Open repository */
-	cmd_fsck_open_repo(&ctx);
 
 	/* Require source boot-record */
 	cmd_fsck_sense_fs(&ctx);

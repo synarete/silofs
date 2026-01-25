@@ -439,16 +439,16 @@ static void cmd_fsids_clear(struct silofs_fsids *fsids)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static const char cmd_jkey_fsmeta[] = "fsmeta";
-static const char cmd_jkey_fsref[]  = "fsref";
-static const char cmd_jkey_fsids[]  = "fsids";
-static const char cmd_jkey_users[]  = "users";
-static const char cmd_jkey_user[]   = "user";
-static const char cmd_jkey_uid[]    = "uid";
-static const char cmd_jkey_groups[] = "groups";
-static const char cmd_jkey_group[]  = "group";
-static const char cmd_jkey_gid[]    = "gid";
-static const char cmd_jkey_mbaddr[] = "mbaddr";
+static const char cmd_jkey_fsmeta[]    = "fsmeta";
+static const char cmd_jkey_fsref[]     = "fsref";
+static const char cmd_jkey_fsids[]     = "fsids";
+static const char cmd_jkey_users[]     = "users";
+static const char cmd_jkey_username[]  = "username";
+static const char cmd_jkey_uid[]       = "uid";
+static const char cmd_jkey_groups[]    = "groups";
+static const char cmd_jkey_groupname[] = "groupname";
+static const char cmd_jkey_gid[]       = "gid";
+static const char cmd_jkey_mbaddr[]    = "mbaddr";
 
 static json_t *cmd_fsids_jencode_users(const struct silofs_fsids *fsids)
 {
@@ -466,7 +466,7 @@ static json_t *cmd_fsids_jencode_users(const struct silofs_fsids *fsids)
 		host_uid = fsids->users.uids[idx].host_uid;
 		name     = cmd_resolve_uid_to_name(host_uid);
 		jname    = cmd_json_string(name);
-		cmd_json_object_set_new(juser, cmd_jkey_user, jname);
+		cmd_json_object_set_new(juser, cmd_jkey_username, jname);
 
 		fs_uid = fsids->users.uids[idx].fs_uid;
 		juid   = cmd_json_integer((long)fs_uid);
@@ -490,9 +490,9 @@ cmd_fsids_jdecode_users(struct silofs_fsids *fsids, const json_t *jusers)
 
 	size = cmd_json_array_size(jusers);
 	for (size_t idx = 0; idx < size; ++idx) {
-		juser    = cmd_json_array_get(jusers, idx);
-		jname    = cmd_json_object_get_string(juser, cmd_jkey_user);
-		name     = cmd_json_string_value(jname);
+		juser = cmd_json_array_get(jusers, idx);
+		jname = cmd_json_object_get_string(juser, cmd_jkey_username);
+		name  = cmd_json_string_value(jname);
 		host_uid = cmd_resolve_name_to_uid(name);
 
 		juid   = cmd_json_object_get_integer(juser, cmd_jkey_uid);
@@ -518,7 +518,7 @@ static json_t *cmd_fsids_jencode_groups(const struct silofs_fsids *fsids)
 		host_gid = fsids->groups.gids[idx].host_gid;
 		name     = cmd_resolve_gid_to_name(host_gid);
 		jname    = cmd_json_string(name);
-		cmd_json_object_set_new(jgroup, cmd_jkey_group, jname);
+		cmd_json_object_set_new(jgroup, cmd_jkey_groupname, jname);
 
 		fs_gid = fsids->groups.gids[idx].fs_gid;
 		jgid   = cmd_json_integer((long)fs_gid);
@@ -542,9 +542,9 @@ cmd_fsids_jdecode_groups(struct silofs_fsids *fsids, const json_t *jgroups)
 
 	size = cmd_json_array_size(jgroups);
 	for (size_t idx = 0; idx < size; ++idx) {
-		jgroup   = cmd_json_array_get(jgroups, idx);
-		jname    = cmd_json_object_get_string(jgroup, cmd_jkey_group);
-		name     = cmd_json_string_value(jname);
+		jgroup = cmd_json_array_get(jgroups, idx);
+		jname = cmd_json_object_get_string(jgroup, cmd_jkey_groupname);
+		name  = cmd_json_string_value(jname);
 		host_gid = cmd_resolve_name_to_gid(name);
 
 		jgid   = cmd_json_object_get_integer(jgroup, cmd_jkey_gid);

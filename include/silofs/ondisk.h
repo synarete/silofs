@@ -74,7 +74,7 @@
 #define SILOFS_REPO_LOCK_FILENAME "lock"
 
 /* repository meta sub-dir name */
-#define SILOFS_REPO_DOTS_DIRNAME ".silofs"
+#define SILOFS_REPO_DOTS_DIRNAME ".silofs.d"
 
 /* repository blobs sub-directory */
 #define SILOFS_REPO_BLOBS_DIRNAME "blobs"

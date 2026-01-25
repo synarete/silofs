@@ -55,9 +55,14 @@ class FsRef(pydantic.BaseModel):
 
 
 class FsIds(pydantic.BaseModel):
-    fsmeta: FsMeta = FsMeta()
     users: Optional[Dict[str, int]] = {}
     groups: Optional[Dict[str, int]] = {}
+
+
+class FsSpec(pydantic.BaseModel):
+    fsmeta: FsMeta = FsMeta()
+    fsref: FsRef = FsRef()
+    fsids: FsIds = FsIds()
 
 
 def _load_toml_as_json(path: Path) -> str:
@@ -111,37 +116,32 @@ def _verify_fsmeta(fsmeta: FsMeta) -> None:
         raise ConfException(f"non-valid meta timestamp: {fsmeta}")
 
 
-def load_fsids(repodir: Path) -> FsIds:
-    path = repodir / "fsids.json"
-    fsids = FsIds()
-    with open(path, "rb") as f:
-        try:
-            jfsids = json.load(f)
-            fsids = FsIds(**jfsids)
-            _verify_fsmeta(fsids.fsmeta)
-        except json.JSONDecodeError as jde:
-            raise ConfException(f"bad fsids file: {path}") from jde
-        except pydantic.ValidationError as ve:
-            raise ConfException(f"non-valid fsids: {path}") from ve
-    return fsids
-
-
 def _verify_fsref(fsref: FsRef) -> None:
-    _verify_fsmeta(fsref.fsmeta)
     if len(fsref.mbaddr) != 64:
         raise ConfException(f"non-valid mbaddr: {fsref.mbaddr}")
 
 
-def load_fsref(path: Path) -> FsRef:
+def _verify_fsids(fsids: FsIds) -> None:
+    if not fsids.users or not fsids.groups:
+        raise ConfException("non-valid fsids mapping")
+
+
+def _verify_spec(spec: FsSpec) -> None:
+    _verify_fsmeta(spec.fsmeta)
+    _verify_fsref(spec.fsref)
+    _verify_fsids(spec.fsids)
+
+
+def load_spec(path: Path) -> FsSpec:
     """Load and verify meta-ref json file into internal representation."""
-    fsref = FsRef()
+    spec = FsSpec()
     with open(path, "rb") as f:
         try:
-            jfsref = json.load(f)
-            fsref = FsRef(**jfsref)
-            _verify_fsref(fsref)
+            jspec = json.load(f)
+            spec = FsSpec(**jspec)
+            _verify_spec(spec)
         except json.JSONDecodeError as jde:
-            raise ConfException(f"bad fsref file: {path}") from jde
+            raise ConfException(f"bad spec file: {path}") from jde
         except pydantic.ValidationError as ve:
-            raise ConfException(f"non-valid fsref at: {path}") from ve
-    return fsref
+            raise ConfException(f"non-valid spec at: {path}") from ve
+    return spec

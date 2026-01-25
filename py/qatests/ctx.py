@@ -97,7 +97,6 @@ class TestEnv:
         self.subcmd = subcmd.Subcmds(
             cfg.params.use_stdalloc, cfg.params.allow_coredump
         )
-        self.fsids = conf.FsIds()
 
     @staticmethod
     def suspend(nsec: int) -> None:
@@ -170,7 +169,6 @@ class TestEnv:
         self, sup_groups: bool = False, allow_root: bool = False
     ) -> None:
         self.subcmd.silofs.init(self.repodir(), sup_groups, allow_root)
-        self._update_fsids()
 
     def exec_mkfs(
         self,
@@ -195,6 +193,7 @@ class TestEnv:
         allow_xattr_acl: bool = False,
         no_writeback_cache: bool = False,
         buffer_copy_mode: bool = False,
+        allow_ispecial: bool = True,
     ) -> None:
         self._require_meta_jref(name)
         repodir_name = self._repodir_name(name)
@@ -206,6 +205,7 @@ class TestEnv:
             allow_xattr_acl=allow_xattr_acl,
             no_writeback_cache=no_writeback_cache,
             buffer_copy_mode=buffer_copy_mode,
+            allow_ispecial=allow_ispecial,
         )
 
     def exec_umount(self) -> None:
@@ -216,12 +216,14 @@ class TestEnv:
         gsize: int = 2,
         allow_xattr_acl: bool = False,
         no_writeback_cache: bool = False,
+        allow_ispecial: bool = False,
     ) -> None:
         self.exec_init()
         self.exec_mkfs(gsize)
         self.exec_mount(
             allow_xattr_acl=allow_xattr_acl,
             no_writeback_cache=no_writeback_cache,
+            allow_ispecial=allow_ispecial,
         )
         self.exec_lsmnt()
 
@@ -276,11 +278,8 @@ class TestEnv:
         mnts = self.subcmd.silofs.lsmnt()
         self.expect.within(mntp, mnts)
 
-    def _update_fsids(self) -> None:
-        self.fsids = conf.load_fsids(self.repodir())
-
     def _require_meta_jref(self, name: str = "") -> None:
-        conf.load_fsref(self._repodir_name(name))
+        conf.load_spec(self._repodir_name(name))
 
 
 # pylint: disable=R0903

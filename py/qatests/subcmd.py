@@ -228,6 +228,7 @@ class _Silofs(SubcmdExec):
         allow_xattr_acl: bool = False,
         no_writeback_cache: bool = False,
         buffer_copy_mode: bool = False,
+        allow_ispecial: bool = False,
     ) -> None:
         args = ["mount", "--no-prompt"]
         if self.allow_coredump:
@@ -242,6 +243,8 @@ class _Silofs(SubcmdExec):
             args = args + ["--no-writeback-cache"]
         if buffer_copy_mode:
             args = args + ["--buffer-copy-mode"]
+        if allow_ispecial:
+            args = args + ["--allow-ispecial"]
         args = args + [str(repodir_name), str(mntpoint)]
         self.execute_run(args, indat=password)
 

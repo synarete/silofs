@@ -32,7 +32,9 @@ def _test_ftests(env: TestEnv) -> None:
     ff_pre_dname = "pre-ftests"
     ff_dname = "ftests"
     ff_clone_name = "ftests-clone"
-    env.exec_setup_fs(64, allow_xattr_acl=True, no_writeback_cache=True)
+    env.exec_setup_fs(
+        64, allow_xattr_acl=True, no_writeback_cache=True, allow_ispecial=True
+    )
     tds = env.make_tds(64, ff_pre_dname, 2**22)
     tds.do_makedirs()
     tds.do_write()

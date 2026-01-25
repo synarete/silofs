@@ -35,6 +35,7 @@ static const char *const cmd_mount_help_desc =
 	"  -S, --nosuid                 Do not honor special bits          \n"
 	"  -i  --allow-hostids          Use local host uid/gid             \n"
 	"  -E  --allow-xattr-acl        ACLs via extended attributes       \n"
+	"  -Z  --allow-ispecial         Allow fifo and socket inodes       \n"
 	"  -A  --no-allow-other         Do not allow other users           \n"
 	"  -W  --no-writeback-cache     Disable write-back cache mode      \n"
 	"  -B  --buffer-copy-mode       Set FUSE with copy-to-buffer mode  \n"
@@ -159,6 +160,7 @@ static void cmd_mount_parse_optargs(struct cmd_mount_ctx *ctx)
 		{ "opts", 'o', 1 },
 		{ "allow-hostids", 'i', 0 },
 		{ "allow-xattr-acl", 'E', 0 },
+		{ "allow-ispecial", 'Z', 0 },
 		{ "no-allow-other", 'A', 0 },
 		{ "no-writeback-cache", 'W', 0 },
 		{ "buffer-copy-mode", 'B', 0 },
@@ -197,6 +199,10 @@ static void cmd_mount_parse_optargs(struct cmd_mount_ctx *ctx)
 		case 'W':
 			ctx->in_args.flags |= SILOFS_F_NOWRITEBACK;
 			ctx->in_args.flags |= SILOFS_F_AUTOINVAL;
+			break;
+		case 'Z':
+			ctx->in_args.flags |= SILOFS_F_ALLOWIFIFO;
+			ctx->in_args.flags |= SILOFS_F_ALLOWISOCK;
 			break;
 		case 'B':
 			ctx->in_args.flags &= ~SILOFS_F_MAYSPLICE;

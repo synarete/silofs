@@ -762,17 +762,22 @@ static int check_owner_ids(const struct silofs_env *env)
 	return 0;
 }
 
-static int exec_format_meta(struct silofs_env *env, size_t fs_cap,
-                            bool utf8_names, struct silofs_mbref *out_mbref)
+static int exec_format_fs(struct silofs_env *env, size_t fs_cap,
+                          bool utf8_names, struct silofs_mbref *out_mbref)
 {
 	struct silofs_task_ctx task;
 	int err;
 
 	err = make_priv_task(env, &task);
-	if (!err) {
-		err = appexec_format_meta(&task, fs_cap, utf8_names,
-		                          out_mbref);
+	if (err) {
+		goto out;
 	}
+	err = appexec_reload_repo(&task);
+	if (err) {
+		goto out;
+	}
+	err = appexec_format_meta(&task, fs_cap, utf8_names, out_mbref);
+out:
 	return term_task(&task, err);
 }
 
@@ -829,7 +834,7 @@ static int do_format_fs(struct silofs_env *env, size_t capacity,
 	if (err) {
 		return err;
 	}
-	err = exec_format_meta(env, capacity, utf8_names, &mbref);
+	err = exec_format_fs(env, capacity, utf8_names, &mbref);
 	if (err) {
 		return err;
 	}

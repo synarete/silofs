@@ -18,6 +18,7 @@
 #include <silofs/config-am.h>
 #include <silofs/errors.h>
 #include <silofs/mntsvc.h>
+#include <linux/magic.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/statfs.h>
@@ -27,7 +28,6 @@
 #include <stdio.h>
 #include "infra.h"
 #include "str.h"
-#include "knownfs.h"
 
 enum silofs_mntcmd {
 	SILOFS_MNTCMD_NONE      = 0,
@@ -117,16 +117,16 @@ struct silofs_ms_env_obj {
 static const struct silofs_fsinfo fsinfo_allowed[] = {
 	MKFSINFO(FUSE_SUPER_MAGIC, "FUSE", 0, 1),
 	MKFSINFO(TMPFS_MAGIC, "TMPFS", 0, 0),
-	MKFSINFO(XFS_SB_MAGIC, "XFS", 1, 0),
-	MKFSINFO(EXT234_SUPER_MAGIC, "EXT234", 1, 0),
-	MKFSINFO(ZFS_SUPER_MAGIC, "ZFS", 1, 0),
+	MKFSINFO(XFS_SUPER_MAGIC, "XFS", 1, 0),
+	MKFSINFO(EXT2_SUPER_MAGIC, "EXT2", 1, 0),
+	MKFSINFO(EXT3_SUPER_MAGIC, "EXT3", 1, 0),
+	MKFSINFO(EXT4_SUPER_MAGIC, "EXT4", 1, 0),
 	MKFSINFO(BTRFS_SUPER_MAGIC, "BTRFS", 1, 0),
 	MKFSINFO(CEPH_SUPER_MAGIC, "CEPH", 1, 0),
-	MKFSINFO(CIFS_MAGIC_NUMBER, "CIFS", 1, 0),
+	MKFSINFO(CIFS_SUPER_MAGIC, "CIFS", 1, 0),
 	MKFSINFO(ECRYPTFS_SUPER_MAGIC, "ECRYPTFS", 0, 0),
 	MKFSINFO(F2FS_SUPER_MAGIC, "F2FS", 1, 0),
 	MKFSINFO(NFS_SUPER_MAGIC, "NFS", 1, 0),
-	MKFSINFO(NTFS_SB_MAGIC, "NTFS", 1, 0),
 	MKFSINFO(OVERLAYFS_SUPER_MAGIC, "OVERLAYFS", 0, 0),
 };
 

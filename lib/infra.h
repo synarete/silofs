@@ -26,7 +26,6 @@
 #include <silofs/logging.h>
 #include <silofs/panic.h>
 #include <silofs/memalloc.h>
-#include <silofs/thread.h>
 
 #include "infra/utility.h"
 #include "infra/atomic.h"
@@ -43,6 +42,7 @@
 #include "infra/qalloc.h"
 #include "infra/uconv.h"
 #include "infra/zcmpr.h"
+#include "infra/thread.h"
 
 #ifdef SILOFS_USE_PRIVATE
 #include "infra/private.h"

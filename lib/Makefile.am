@@ -44,6 +44,7 @@ libsilofs_la_SOURCES += infra/snprintf.h
 libsilofs_la_SOURCES += infra/socket.c
 libsilofs_la_SOURCES += infra/socket.h
 libsilofs_la_SOURCES += infra/thread.c
+libsilofs_la_SOURCES += infra/thread.h
 libsilofs_la_SOURCES += infra/times.c
 libsilofs_la_SOURCES += infra/times.h
 libsilofs_la_SOURCES += infra/uconv.c

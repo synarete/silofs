@@ -23,7 +23,6 @@
 #include <silofs/memalloc.h>
 #include <silofs/logging.h>
 #include <silofs/panic.h>
-#include <silofs/thread.h>
 #include <sys/types.h>
 #include <sys/resource.h>
 #include <sys/mman.h>
@@ -41,6 +40,7 @@
 #include "iovec.h"
 #include "atomic.h"
 #include "snprintf.h"
+#include "thread.h"
 #include "qalloc.h"
 
 #ifndef ARRAY_SIZE

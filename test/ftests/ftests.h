@@ -25,9 +25,10 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <limits.h>
-#include <string.h>
+#include <stdlib.h>
 #include <stdio.h>
+#include <limits.h>
+#include "infra.h"
 
 struct dirent64;
 struct utimbuf;

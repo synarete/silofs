@@ -20,7 +20,6 @@ nobase_include_HEADERS += silofs/ondisk.h
 nobase_include_HEADERS += silofs/panic.h
 nobase_include_HEADERS += silofs/silofs.h
 nobase_include_HEADERS += silofs/syscall.h
-nobase_include_HEADERS += silofs/thread.h
 nobase_include_HEADERS += silofs/types.h
 nobase_include_HEADERS += silofs/version.h
 

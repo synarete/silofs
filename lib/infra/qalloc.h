@@ -20,9 +20,9 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <silofs/memalloc.h>
-#include <silofs/thread.h>
 #include "iovec.h"
 #include "list.h"
+#include "thread.h"
 
 /* quick memory allocator */
 enum silofs_qallocf {

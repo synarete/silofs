@@ -507,25 +507,23 @@ static bool mip_isfusesilofs_line(const struct silofs_mountinfo_parser *mip)
 static int mip_parse_mntinfo(const struct silofs_mountinfo_parser *mip,
                              struct silofs_mntinfos *minfos)
 {
-	const size_t max_infos         = ARRAY_SIZE(minfos->infos);
-	struct silofs_mntinfo *mntinfo = nullptr;
+	const size_t max_infos = ARRAY_SIZE(minfos->mntd);
 	struct silofs_strview mntdir;
 	int err;
 
-	if (minfos->ninfos >= max_infos) {
+	if (minfos->nmntd >= max_infos) {
 		return cpr_bad_conf(&mip->cpr, nullptr,
 		                    "too many mountinfo entries");
 	}
-	mntinfo = &minfos->infos[minfos->ninfos];
 	mip_parse_field(mip, 4, &mntdir);
 	if (strview_isempty(&mntdir)) {
 		return 0;
 	}
-	err = cpr_strdup(&mip->cpr, &mntdir, &mntinfo->mntdir);
+	err = cpr_strdup(&mip->cpr, &mntdir, &minfos->mntd[minfos->nmntd]);
 	if (err) {
 		return err;
 	}
-	minfos->ninfos++;
+	minfos->nmntd++;
 	return 0;
 }
 
@@ -568,19 +566,19 @@ static int mip_parse_infos(struct silofs_mountinfo_parser *mip,
 	return 0;
 }
 
-static void mip_release_info(const struct silofs_mountinfo_parser *mip,
-                             struct silofs_mntinfo *minfo)
+static void
+mip_release_mntd(const struct silofs_mountinfo_parser *mip, char **mntd)
 {
-	cpr_strfree(&mip->cpr, &minfo->mntdir);
+	cpr_strfree(&mip->cpr, mntd);
 }
 
-static void mip_release_infos(const struct silofs_mountinfo_parser *mip,
+static void mip_release_mntds(const struct silofs_mountinfo_parser *mip,
                               struct silofs_mntinfos *minfos)
 {
-	for (size_t i = 0; i < minfos->ninfos; ++i) {
-		mip_release_info(mip, &minfos->infos[i]);
+	for (size_t i = 0; i < minfos->nmntd; ++i) {
+		mip_release_mntd(mip, &minfos->mntd[i]);
 	}
-	minfos->ninfos = 0;
+	minfos->nmntd = 0;
 }
 
 int silofs_parse_mntinfos(struct silofs_mntinfos *minfos,
@@ -598,5 +596,5 @@ void silofs_release_mntinfos(struct silofs_mntinfos *minfos,
 	struct silofs_mountinfo_parser mip;
 
 	mip_setup(&mip, alloc, nullptr);
-	mip_release_infos(&mip, minfos);
+	mip_release_mntds(&mip, minfos);
 }

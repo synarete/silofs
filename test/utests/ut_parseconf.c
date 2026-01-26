@@ -65,8 +65,8 @@ static struct silofs_mntinfos *ut_new_mntinfos(struct ut_env *ute)
 {
 	struct silofs_mntinfos *minfos = nullptr;
 
-	minfos         = ut_zalloc(ute, sizeof(*minfos));
-	minfos->ninfos = 0;
+	minfos        = ut_zalloc(ute, sizeof(*minfos));
+	minfos->nmntd = 0;
 	return minfos;
 }
 
@@ -77,8 +77,8 @@ static void ut_parseconf_mntinfos(struct ut_env *ute)
 
 	err = silofs_parse_mntinfos(minfos, nullptr, ut_mountinfo_conf);
 	ut_expect_ok(err);
-	ut_expect_eq(minfos->ninfos, 1);
-	ut_expect_eqs(minfos->infos[0].mntdir, "/mnt/test");
+	ut_expect_eq(minfos->nmntd, 1);
+	ut_expect_eqs(minfos->mntd[0], "/mnt/test");
 	silofs_release_mntinfos(minfos, nullptr);
 }
 

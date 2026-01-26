@@ -140,16 +140,18 @@ static void cmd_rmfs_check_nomnt_at(struct cmd_rmfs_ctx *ctx, const char *mntp)
 	if (err) {
 		goto out;
 	}
-	name = cmd_strvdup(qry->u.boot.name, sizeof(qry->u.boot.name));
 
+	name    = cmd_strvdup(qry->u.boot.name, sizeof(qry->u.boot.name));
 	path[0] = cmd_path_join(repodir, name);
-	err     = silofs_sys_stat(path[0], &st[0]);
+	cmd_pstrfree(&name);
+	err = silofs_sys_stat(path[0], &st[0]);
 	if (err) {
 		goto out;
 	}
 
-	path[1] =
-		cmd_path_join(ctx->in_args.repodir_real, ctx->in_args.fsname);
+	name    = cmd_strdup(ctx->in_args.fsname);
+	path[1] = cmd_path_join(ctx->in_args.repodir_real, name);
+	cmd_pstrfree(&name);
 	err = silofs_sys_stat(path[1], &st[1]);
 	if (err) {
 		goto out;
@@ -171,8 +173,8 @@ static void cmd_rmfs_check_nomnt(struct cmd_rmfs_ctx *ctx)
 	struct silofs_mntinfos *minfos = nullptr;
 
 	minfos = cmd_parse_mountinfo();
-	for (size_t i = 0; i < minfos->ninfos; ++i) {
-		cmd_rmfs_check_nomnt_at(ctx, minfos->infos[i].mntdir);
+	for (size_t i = 0; i < minfos->nmntd; ++i) {
+		cmd_rmfs_check_nomnt_at(ctx, minfos->mntd[i]);
 	}
 	cmd_free_mountinfo(minfos);
 }

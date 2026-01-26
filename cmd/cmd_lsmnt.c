@@ -96,25 +96,21 @@ static void cmd_lsmnt_prepare(struct cmd_lsmnt_ctx *ctx)
 	memset(&ctx->ioc_qry, 0, sizeof(ctx->ioc_qry));
 }
 
-static void cmd_lsmnt_short(const struct cmd_lsmnt_ctx *ctx,
-                            const struct silofs_mntinfo *mi)
+static void cmd_lsmnt_short(const struct cmd_lsmnt_ctx *ctx, const char *mntd)
 {
-	fprintf(ctx->out_fp, "%s\n", mi->mntdir);
+	fprintf(ctx->out_fp, "%s\n", mntd);
 }
 
-static void
-cmd_lsmnt_long(struct cmd_lsmnt_ctx *ctx, const struct silofs_mntinfo *mi)
+static void cmd_lsmnt_long(struct cmd_lsmnt_ctx *ctx, const char *mntd)
 {
 	struct silofs_ioc_query *qry = &ctx->ioc_qry;
-	char *mntd_path              = nullptr;
 	char *repo_path              = nullptr;
 	char *boot_name              = nullptr;
 	const int o_flags = O_RDONLY | O_NONBLOCK | O_CLOEXEC | O_DIRECTORY;
 	int dfd           = -1;
 	int err           = 0;
 
-	mntd_path = cmd_strdup(mi->mntdir);
-	err       = silofs_sys_openat(AT_FDCWD, mntd_path, o_flags, 0, &dfd);
+	err = silofs_sys_openat(AT_FDCWD, mntd, o_flags, 0, &dfd);
 	if (err) {
 		goto out;
 	}
@@ -135,13 +131,12 @@ cmd_lsmnt_long(struct cmd_lsmnt_ctx *ctx, const struct silofs_mntinfo *mi)
 	}
 	boot_name = cmd_strvdup(qry->u.boot.name, sizeof(qry->u.boot.name));
 
-	fprintf(ctx->out_fp, "%s %s/%s %s", mntd_path, repo_path, boot_name,
+	fprintf(ctx->out_fp, "%s %s/%s %s", mntd, repo_path, boot_name,
 	        qry->u.boot.fsref.mbaddr.mba);
 out:
 	fputs("\n", ctx->out_fp);
 	fflush(ctx->out_fp);
 	silofs_sys_closefd(&dfd);
-	cmd_pstrfree(&mntd_path);
 	cmd_pstrfree(&repo_path);
 	cmd_pstrfree(&boot_name);
 }
@@ -151,11 +146,11 @@ static void cmd_lsmnt_execute(struct cmd_lsmnt_ctx *ctx)
 	struct silofs_mntinfos *minfos = nullptr;
 
 	minfos = cmd_parse_mountinfo();
-	for (size_t i = 0; i < minfos->ninfos; ++i) {
+	for (size_t i = 0; i < minfos->nmntd; ++i) {
 		if (ctx->in_args.long_listing) {
-			cmd_lsmnt_long(ctx, &minfos->infos[i]);
+			cmd_lsmnt_long(ctx, minfos->mntd[i]);
 		} else {
-			cmd_lsmnt_short(ctx, &minfos->infos[i]);
+			cmd_lsmnt_short(ctx, minfos->mntd[i]);
 		}
 	}
 	cmd_free_mountinfo(minfos);

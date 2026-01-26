@@ -1717,10 +1717,3 @@ const char *silofs_mntrpc_sockname(void)
 {
 	return SILOFS_MNTSOCK_NAME;
 }
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-bool silofs_is_fuse_fstype(long fstype)
-{
-	return (fstype == FUSE_SUPER_MAGIC);
-}

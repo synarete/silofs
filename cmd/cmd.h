@@ -196,6 +196,8 @@ void cmd_check_mntdir(const char *path, bool mount);
 
 void cmd_check_fusefs(const char *path);
 
+bool cmd_test_fusefs(const char *path);
+
 void cmd_check_isreg(const char *path);
 
 void cmd_check_isreg2(const char *dirpath, const char *name);

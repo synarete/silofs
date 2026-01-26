@@ -181,23 +181,11 @@ static void cmd_umount_send_recv(const struct cmd_umount_ctx *ctx)
 
 static void cmd_umount_probe_post(const struct cmd_umount_ctx *ctx)
 {
-	struct statfs stfs  = { .f_type = 0 };
-	const char *path    = cmd_umount_dirpath(ctx);
-	const int retry_max = 5;
-	long fstype         = 0;
-	int retry           = 0;
-	int err;
+	const char *path = cmd_umount_dirpath(ctx);
+	int retry;
 
-	while (retry++ < retry_max) {
-		stfs.f_type = 0;
-		err         = silofs_sys_statfs(path, &stfs);
-		if (err) {
-			break;
-		}
-		fstype = stfs.f_type;
-		if (fstype && !silofs_is_fuse_fstype(fstype)) {
-			break;
-		}
+	retry = 0;
+	while (cmd_test_fusefs(path) && (retry++ < 5)) {
 		/*
 		 * TODO-0023: Fix FUSE statfs/statvfs
 		 *

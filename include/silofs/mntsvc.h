@@ -55,12 +55,6 @@ struct silofs_ms_args {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-bool silofs_is_fuse_fstype(long fstype);
-
-const struct silofs_fsinfo *silofs_fsinfo_by_vfstype(long vfstype);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 int silofs_mse_new(const struct silofs_ms_args *ms_args,
                    struct silofs_ms_env       **out_mse);
 
@@ -95,5 +89,9 @@ int silofs_parse_mntinfos(struct silofs_mntinfos *minfos,
 
 void silofs_release_mntinfos(struct silofs_mntinfos *minfos,
                              struct silofs_alloc    *alloc);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+const struct silofs_fsinfo *silofs_fsinfo_by_vfstype(long vfstype);
 
 #endif /* SILOFS_MNTSVC_H_ */

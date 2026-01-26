@@ -16,6 +16,7 @@
  */
 #define _GNU_SOURCE 1
 #include "cmd.h"
+#include <linux/magic.h>
 #include <sys/types.h>
 #include <sys/vfs.h>
 #include <sys/stat.h>
@@ -485,14 +486,28 @@ void cmd_check_mntdir(const char *path, bool mount)
 	}
 }
 
+static bool cmd_is_fusefs(long fstype)
+{
+	return (fstype == FUSE_SUPER_MAGIC);
+}
+
 void cmd_check_fusefs(const char *path)
 {
 	struct statfs stfs;
 
 	cmd_statfs_ok(path, &stfs);
-	if (!silofs_is_fuse_fstype(stfs.f_type)) {
+	if (!cmd_is_fusefs(stfs.f_type)) {
 		cmd_diez("not on FUSE file-system: %s", path);
 	}
+}
+
+bool cmd_test_fusefs(const char *path)
+{
+	struct statfs stfs = {};
+	int err;
+
+	err = silofs_sys_statfs(path, &stfs);
+	return !err && cmd_is_fusefs(stfs.f_type);
 }
 
 static char *cmd_getcwd(void)

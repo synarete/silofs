@@ -189,4 +189,9 @@ int silofs_exec_restore(struct silofs_task_ctx    *task,
                         const struct silofs_mbref *ar_mbref,
                         struct silofs_mbref       *out_fs_mbref);
 
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+int silofs_exec_format_fs(struct silofs_task_ctx *task, size_t capacity,
+                          bool utf8_names, struct silofs_mbref *out_mbref);
+
 #endif /* SILOFS_EXEC_H_ */

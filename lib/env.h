@@ -140,7 +140,7 @@ int silofs_env_reload_repo(struct silofs_env *env);
 int silofs_env_sense_mbr(struct silofs_env         *env,
                          const struct silofs_mbref *mbr);
 
-int silofs_env_setup_fs_mbr(struct silofs_env *env);
+int silofs_env_reinit_ciphers(struct silofs_env *env);
 
 int silofs_env_commit_fs_mbr(struct silofs_env   *env,
                              struct silofs_mbref *out_mbref);

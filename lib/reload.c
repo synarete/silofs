@@ -23,38 +23,38 @@
 #include "exec.h"
 #include "env.h"
 
-static int reload_uber(struct silofs_task_ctx *task)
+static int reload_uber(struct silofs_exec_ctx *ectx)
 {
-	return silofs_env_reload_uber(task->t_env);
+	return silofs_env_reload_uber(ectx->ex_env);
 }
 
-static int reload_super(struct silofs_task_ctx *task)
+static int reload_super(struct silofs_exec_ctx *ectx)
 {
 	int err;
 
-	err = silofs_env_reload_sb_lseg(task->t_env);
+	err = silofs_env_reload_sb_lseg(ectx->ex_env);
 	if (err) {
 		return err;
 	}
-	err = silofs_env_reload_super(task->t_env);
+	err = silofs_env_reload_super(ectx->ex_env);
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-static int reload_vspace(struct silofs_task_ctx *task)
+static int reload_vspace(struct silofs_exec_ctx *ectx)
 {
-	return silofs_reload_vspace(task);
+	return silofs_reload_vspace(ectx);
 }
 
-static int reload_rootd(struct silofs_task_ctx *task)
+static int reload_rootd(struct silofs_exec_ctx *ectx)
 {
 	struct silofs_inode_info *ii = nullptr;
 	const ino_t ino              = SILOFS_INO_ROOT;
 	int err;
 
-	err = silofs_stage_inode(task, ino, SILOFS_STG_CUR, &ii);
+	err = silofs_stage_inode(ectx, ino, SILOFS_STG_CUR, &ii);
 	if (err) {
 		log_err("failed to reload root-inode: err=%d", err);
 		return err;
@@ -68,33 +68,33 @@ static int reload_rootd(struct silofs_task_ctx *task)
 }
 
 static int
-reload_fs_mbr(struct silofs_task_ctx *task, const struct silofs_mbref *mbref)
+reload_fs_mbr(struct silofs_exec_ctx *ectx, const struct silofs_mbref *mbref)
 {
-	return silofs_env_reload_fs_mbr(task->t_env, mbref);
+	return silofs_env_reload_fs_mbr(ectx->ex_env, mbref);
 }
 
-int silofs_exec_reload_fs(struct silofs_task_ctx *task,
+int silofs_exec_reload_fs(struct silofs_exec_ctx *ectx,
                           const struct silofs_mbref *mbref)
 {
 	int err;
 
-	err = reload_fs_mbr(task, mbref);
+	err = reload_fs_mbr(ectx, mbref);
 	if (err) {
 		return err;
 	}
-	err = reload_uber(task);
+	err = reload_uber(ectx);
 	if (err) {
 		return err;
 	}
-	err = reload_super(task);
+	err = reload_super(ectx);
 	if (err) {
 		return err;
 	}
-	err = reload_vspace(task);
+	err = reload_vspace(ectx);
 	if (err) {
 		return err;
 	}
-	err = reload_rootd(task);
+	err = reload_rootd(ectx);
 	if (err) {
 		return err;
 	}

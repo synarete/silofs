@@ -18,6 +18,7 @@
 #include "infra.h"
 #include "obs.h"
 #include "fs.h"
+#include "exectx.h"
 #include "env.h"
 #include "walk.h"
 #include "index.h"
@@ -25,7 +26,7 @@
 
 struct silofs_ar_ctx {
 	struct timespec now;
-	struct silofs_task_ctx *task;
+	struct silofs_exec_ctx *ectx;
 	struct silofs_env *env;
 	struct silofs_alloc *alloc;
 	struct silofs_arnode_info *ari;
@@ -101,12 +102,12 @@ static int arc_renew_ari(struct silofs_ar_ctx *ar_ctx)
 	return 0;
 }
 
-static int arc_init(struct silofs_ar_ctx *ar_ctx, struct silofs_task_ctx *task)
+static int arc_init(struct silofs_ar_ctx *ar_ctx, struct silofs_exec_ctx *ectx)
 {
 	silofs_memzero(ar_ctx, sizeof(*ar_ctx));
 	silofs_clock_real_now(&ar_ctx->now);
-	ar_ctx->task  = task;
-	ar_ctx->env   = task->t_env;
+	ar_ctx->ectx  = ectx;
+	ar_ctx->env   = ectx->ex_env;
 	ar_ctx->ari   = nullptr;
 	ar_ctx->alloc = ar_ctx->env->base.alloc;
 	ar_ctx->repo  = ar_ctx->env->base.repo;
@@ -118,7 +119,7 @@ static int arc_init(struct silofs_ar_ctx *ar_ctx, struct silofs_task_ctx *task)
 static void arc_fini(struct silofs_ar_ctx *ar_ctx)
 {
 	arc_rebind_ari(ar_ctx, nullptr);
-	ar_ctx->task  = nullptr;
+	ar_ctx->ectx  = nullptr;
 	ar_ctx->env   = nullptr;
 	ar_ctx->repo  = nullptr;
 	ar_ctx->dstor = nullptr;
@@ -331,9 +332,9 @@ static int arc_archive_fs(struct silofs_ar_ctx *ar_ctx)
 		.hook  = arc_visit_laddr_cb,
 		.userp = ar_ctx,
 	};
-	struct silofs_task_ctx *task = ar_ctx->task;
+	struct silofs_exec_ctx *ectx = ar_ctx->ectx;
 
-	return silofs_walkfs_at(task, silofs_get_sbi(task), &lvis);
+	return silofs_walkfs_at(ectx, silofs_get_sbi(ectx), &lvis);
 }
 
 static int arc_archive_head_arix(struct silofs_ar_ctx *ar_ctx,
@@ -441,17 +442,17 @@ arc_do_archive(struct silofs_ar_ctx *ar_ctx, struct silofs_mbref *out_mbref)
 	return 0;
 }
 
-int silofs_do_archive_fs(struct silofs_task_ctx *task,
+int silofs_do_archive_fs(struct silofs_exec_ctx *ectx,
                          struct silofs_mbref *out_ar_mbref)
 {
 	struct silofs_ar_ctx ar_ctx;
 	int err;
 
-	err = silofs_flush_dirty_now(task);
+	err = silofs_flush_dirty_now(ectx);
 	if (err) {
 		return err;
 	}
-	err = arc_init(&ar_ctx, task);
+	err = arc_init(&ar_ctx, ectx);
 	if (err) {
 		goto out;
 	}

@@ -58,7 +58,7 @@ struct silofs_xentry_info {
 };
 
 struct silofs_xattr_ctx {
-	struct silofs_task_ctx *task;
+	struct silofs_exec_ctx *ectx;
 	struct silofs_listxattr_ctx *lxa_ctx;
 	struct silofs_inode_info *ii;
 	const struct silofs_namestr *name;
@@ -571,7 +571,7 @@ static int xac_do_stage_xanode(const struct silofs_xattr_ctx *xa_ctx,
 	struct silofs_xanode_info *xai = nullptr;
 	int err;
 
-	err = silofs_stage_vnode(xa_ctx->task, xa_ctx->ii, vaddr,
+	err = silofs_stage_vnode(xa_ctx->ectx, xa_ctx->ii, vaddr,
 	                         xa_ctx->stg_mode, &vni);
 	if (err) {
 		return err;
@@ -633,7 +633,7 @@ search_prefix(const struct silofs_namestr *name)
 
 static bool xac_allow_acl(const struct silofs_xattr_ctx *xa_ctx)
 {
-	const struct silofs_env *env = xa_ctx->task->t_env;
+	const struct silofs_env *env = xa_ctx->ectx->ex_env;
 
 	return silofs_env_hasflag(env, SILOFS_F_ALLOWXACL);
 }
@@ -683,7 +683,7 @@ static int xac_check_op(const struct silofs_xattr_ctx *xa_ctx, int access_mode)
 	if (!is_valid_xflags(xa_ctx->flags)) {
 		return -SILOFS_EINVAL;
 	}
-	err = silofs_do_access(xa_ctx->task, ii, access_mode);
+	err = silofs_do_access(xa_ctx->ectx, ii, access_mode);
 	if (err) {
 		return err;
 	}
@@ -786,13 +786,13 @@ static int xac_getxattr(struct silofs_xattr_ctx *xa_ctx, size_t *out_size)
 	return ret;
 }
 
-int silofs_do_getxattr(struct silofs_task_ctx *task,
+int silofs_do_getxattr(struct silofs_exec_ctx *ectx,
                        struct silofs_inode_info *ii,
                        const struct silofs_namestr *name, void *buf,
                        size_t size, size_t *out_size)
 {
 	struct silofs_xattr_ctx xa_ctx = {
-		.task      = task,
+		.ectx      = ectx,
 		.ii        = ii,
 		.name      = name,
 		.value.ptr = buf,
@@ -813,7 +813,7 @@ static int xac_spawn_xanode(const struct silofs_xattr_ctx *xa_ctx,
 	struct silofs_xanode_info *xai = nullptr;
 	int err;
 
-	err = silofs_spawn_vnode(xa_ctx->task, xa_ctx->ii, SILOFS_MTYPE_XANODE,
+	err = silofs_spawn_vnode(xa_ctx->ectx, xa_ctx->ii, SILOFS_MTYPE_XANODE,
 	                         &vni);
 	if (err) {
 		return err;
@@ -845,7 +845,7 @@ xac_spawn_bind_xanode(const struct silofs_xattr_ctx *xa_ctx, size_t slot,
 static int xac_remove_xanode_at(const struct silofs_xattr_ctx *xa_ctx,
                                 const struct silofs_vaddr *vaddr)
 {
-	return silofs_remove_vnode_at(xa_ctx->task, vaddr);
+	return silofs_remove_vnode_at(xa_ctx->ectx, vaddr);
 }
 
 static int xac_require_xanode(const struct silofs_xattr_ctx *xa_ctx,
@@ -1003,7 +1003,7 @@ static void xac_update_post_setxattr(const struct silofs_xattr_ctx *xa_ctx)
 	silofs_ii_mkiattr(ii, &iattr);
 	iattr.ia_flags |= SILOFS_IATTR_CTIME;
 	iattr.ia_flags |= (xa_ctx->kill_sgid ? SILOFS_IATTR_KILL_SGID : 0);
-	silofs_update_iattrs_of(xa_ctx->task, ii, &iattr);
+	silofs_update_iattrs_of(xa_ctx->ectx, ii, &iattr);
 }
 
 static int xac_do_setxattr(struct silofs_xattr_ctx *xa_ctx)
@@ -1032,13 +1032,13 @@ static int xac_setxattr(struct silofs_xattr_ctx *xa_ctx)
 	return ret;
 }
 
-int silofs_do_setxattr(struct silofs_task_ctx *task,
+int silofs_do_setxattr(struct silofs_exec_ctx *ectx,
                        struct silofs_inode_info *ii,
                        const struct silofs_namestr *name, const void *value,
                        size_t size, int flags, bool kill_sgid)
 {
 	struct silofs_xattr_ctx xa_ctx = {
-		.task      = task,
+		.ectx      = ectx,
 		.ii        = ii,
 		.name      = name,
 		.value.ptr = unconst(value),
@@ -1102,7 +1102,7 @@ static int xac_do_removexattr(struct silofs_xattr_ctx *xa_ctx)
 	}
 	xei_discard_entry(&xei);
 	xai_dirtify(xei.xai, xa_ctx->ii);
-	silofs_update_itimes_of(xa_ctx->task, xa_ctx->ii, SILOFS_IATTR_CTIME);
+	silofs_update_itimes_of(xa_ctx->ectx, xa_ctx->ii, SILOFS_IATTR_CTIME);
 	return 0;
 }
 
@@ -1116,12 +1116,12 @@ static int xac_removexattr(struct silofs_xattr_ctx *xa_ctx)
 	return ret;
 }
 
-int silofs_do_removexattr(struct silofs_task_ctx *task,
+int silofs_do_removexattr(struct silofs_exec_ctx *ectx,
                           struct silofs_inode_info *ii,
                           const struct silofs_namestr *name)
 {
 	struct silofs_xattr_ctx xa_ctx = {
-		.task     = task,
+		.ectx     = ectx,
 		.ii       = ii,
 		.name     = name,
 		.stg_mode = SILOFS_STG_COW,
@@ -1249,12 +1249,12 @@ static int xac_listxattr(struct silofs_xattr_ctx *xa_ctx)
 	return ret;
 }
 
-int silofs_do_listxattr(struct silofs_task_ctx *task,
+int silofs_do_listxattr(struct silofs_exec_ctx *ectx,
                         struct silofs_inode_info *ii,
                         struct silofs_listxattr_ctx *lxa_ctx)
 {
 	struct silofs_xattr_ctx xa_ctx = {
-		.task     = task,
+		.ectx     = ectx,
 		.ii       = ii,
 		.lxa_ctx  = lxa_ctx,
 		.stg_mode = SILOFS_STG_CUR,
@@ -1306,11 +1306,11 @@ static int xac_drop_slots(struct silofs_xattr_ctx *xa_ctx)
 	return ret;
 }
 
-int silofs_drop_xattr(struct silofs_task_ctx *task,
+int silofs_drop_xattr(struct silofs_exec_ctx *ectx,
                       struct silofs_inode_info *ii)
 {
 	struct silofs_xattr_ctx xa_ctx = {
-		.task     = task,
+		.ectx     = ectx,
 		.ii       = ii,
 		.stg_mode = SILOFS_STG_COW,
 	};

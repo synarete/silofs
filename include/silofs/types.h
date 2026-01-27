@@ -76,6 +76,12 @@ struct silofs_cred {
 	mode_t umask;
 };
 
+/* credential mapping (host to fs-internal) */
+struct silofs_creds {
+	struct silofs_cred host_cred;
+	struct silofs_cred fs_cred;
+};
+
 /* user-id host-to-fs bidirectional-mapping */
 struct silofs_uids {
 	uid_t host_uid;

@@ -23,10 +23,10 @@
 #include "fs.h"
 #include "index.h"
 
-int silofs_do_archive_fs(struct silofs_task_ctx *task,
+int silofs_do_archive_fs(struct silofs_exec_ctx *ectx,
                          struct silofs_mbref    *out_ar_mbref);
 
-int silofs_do_restore_fs(struct silofs_task_ctx    *task,
+int silofs_do_restore_fs(struct silofs_exec_ctx    *ectx,
                          const struct silofs_mbref *ar_mbref,
                          struct silofs_mbref       *out_fs_mbref);
 

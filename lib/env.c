@@ -21,6 +21,7 @@
 #include "obs.h"
 #include "fs.h"
 #include "mbr.h"
+#include "exectx.h"
 #include "env.h"
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

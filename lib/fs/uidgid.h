@@ -22,14 +22,6 @@
 #include <stdbool.h>
 #include <unistd.h>
 
-/* credential mapping (host/external to fs/internal) */
-struct silofs_creds {
-	struct silofs_cred host_cred;
-	struct silofs_cred fs_cred;
-};
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 uid_t silofs_uid_null(void);
 
 uid_t silofs_uid_nobody(void);

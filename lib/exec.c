@@ -43,34 +43,36 @@
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int op_start(struct silofs_task_ctx *task)
+static int op_start(struct silofs_exec_ctx *ectx)
 {
-	struct silofs_env *env = task->t_env;
+	struct silofs_env *env = ectx->ex_env;
 
-	silofs_lock_fs_by(task);
-	env->opstat.op_time = task->t_op_start_time = silofs_time_mono_now();
+	silofs_lock_fs_by(ectx);
+	env->opstat.op_time = ectx->ex_op_start_time = silofs_time_mono_now();
 	env->opstat.op_count++;
 	return 0;
 }
 
 static int
-op_try_flush(struct silofs_task_ctx *task, struct silofs_inode_info *ii)
+op_try_flush(struct silofs_exec_ctx *ectx, struct silofs_inode_info *ii)
 {
-	return silofs_flush_dirty(task, ii, SILOFS_CTLF_OPSTART);
+	return silofs_flush_dirty(ectx, ii, SILOFS_CTLF_OPSTART);
 }
 
-static void op_probe_duration(const struct silofs_task_ctx *task, int res)
+static void op_probe_duration(const struct silofs_exec_ctx *ectx, int res)
 {
-	const time_t time_dif = silofs_time_mono_now() - task->t_op_start_time;
-	const uint32_t op_code = task->t_auth.opcode;
+	const time_t time_dif =
+		silofs_time_mono_now() - ectx->ex_op_start_time;
+	const uint32_t op_code = ectx->ex_auth.opcode;
 
 	if (op_code && (time_dif > 30)) {
 		log_warn("slow-oper: op_count=%zu op_code=%u dif=%ld res=%d",
-		         task->t_env->opstat.op_count, op_code, time_dif, res);
+		         ectx->ex_env->opstat.op_count, op_code, time_dif,
+		         res);
 	}
 }
 
-static int op_unlooseq(struct silofs_task_ctx *task)
+static int op_unlooseq(struct silofs_exec_ctx *ectx)
 {
 	int ret = 0;
 
@@ -79,23 +81,23 @@ static int op_unlooseq(struct silofs_task_ctx *task)
 	 * alive but could not be fully dropped as they are still under to-be
 	 * written state in submit-queue. This rare case may happen on heavy
 	 * load with unlinked files. In this special case, we must do forced
-	 * flush-all to purge and evict those pending inodes while current task
+	 * flush-all to purge and evict those pending inodes while current ectx
 	 * still holds the fs-lock.
 	 */
-	if (task->t_looseq != nullptr) {
-		ret = silofs_flush_dirty_now(task);
-		silofs_assert_null(task->t_looseq);
+	if (ectx->ex_looseq != nullptr) {
+		ret = silofs_flush_dirty_now(ectx);
+		silofs_assert_null(ectx->ex_looseq);
 	}
 	return ret;
 }
 
-static int op_finish(struct silofs_task_ctx *task, int err)
+static int op_finish(struct silofs_exec_ctx *ectx, int err)
 {
 	int err2 = 0;
 
-	op_probe_duration(task, err);
-	err2 = op_unlooseq(task);
-	silofs_unlock_fs_by(task);
+	op_probe_duration(ectx, err);
+	err2 = op_unlooseq(ectx);
+	silofs_unlock_fs_by(ectx);
 	return err ? err : err2;
 }
 
@@ -118,19 +120,19 @@ static int symval_to_str(const char *symval, struct silofs_strview *out_sv)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static const struct silofs_sb_info *sbi_of(const struct silofs_task_ctx *task)
+static const struct silofs_sb_info *sbi_of(const struct silofs_exec_ctx *ectx)
 {
-	return silofs_get_sbi(task);
+	return silofs_get_sbi(ectx);
 }
 
-static bool op_is_kernel(const struct silofs_task_ctx *task)
+static bool op_is_kernel(const struct silofs_exec_ctx *ectx)
 {
-	const struct silofs_creds *creds = task->t_creds;
+	const struct silofs_creds *creds = ectx->ex_creds;
 
-	if (task->t_kwrite) {
+	if (ectx->ex_kwrite) {
 		return true;
 	}
-	if (task->t_auth.pid) {
+	if (ectx->ex_auth.pid) {
 		return false;
 	}
 	if (!creds->host_cred.uid && !creds->host_cred.gid) {
@@ -139,80 +141,81 @@ static bool op_is_kernel(const struct silofs_task_ctx *task)
 	return false;
 }
 
-static bool op_is_admin(const struct silofs_task_ctx *task)
+static bool op_is_admin(const struct silofs_exec_ctx *ectx)
 {
-	return (sbi_of(task) == nullptr) || op_is_kernel(task);
+	return (sbi_of(ectx) == nullptr) || op_is_kernel(ectx);
 }
 
-static bool op_is_fsowner(const struct silofs_task_ctx *task)
+static bool op_is_fsowner(const struct silofs_exec_ctx *ectx)
 {
-	const struct silofs_creds *creds = task->t_creds;
+	const struct silofs_creds *creds = ectx->ex_creds;
 
 	return silofs_uid_eq(creds->host_cred.uid,
-	                     task->t_env->owner_cred.uid);
+	                     ectx->ex_env->owner_cred.uid);
 }
 
-static bool op_cap_sys_admin(const struct silofs_task_ctx *task)
+static bool op_cap_sys_admin(const struct silofs_exec_ctx *ectx)
 {
-	const struct silofs_creds *creds = task->t_creds;
+	const struct silofs_creds *creds = ectx->ex_creds;
 
-	return silofs_env_hasflag(task->t_env, SILOFS_F_ALLOWADMIN) &&
+	return silofs_env_hasflag(ectx->ex_env, SILOFS_F_ALLOWADMIN) &&
 	       silofs_user_cap_sys_admin(&creds->host_cred);
 }
 
-static bool op_allow_other(const struct silofs_task_ctx *task)
+static bool op_allow_other(const struct silofs_exec_ctx *ectx)
 {
-	return silofs_env_hasflag(task->t_env, SILOFS_F_ALLOWOTHER);
+	return silofs_env_hasflag(ectx->ex_env, SILOFS_F_ALLOWOTHER);
 }
 
-static int op_authorize(const struct silofs_task_ctx *task)
+static int op_authorize(const struct silofs_exec_ctx *ectx)
 {
-	if (sbi_of(task) == nullptr) {
+	if (sbi_of(ectx) == nullptr) {
 		return 0; /* case off-line operation XXX */
 	}
-	if (op_is_kernel(task)) {
+	if (op_is_kernel(ectx)) {
 		return 0; /* request by kernel */
 	}
-	if (op_is_fsowner(task)) {
+	if (op_is_fsowner(ectx)) {
 		return 0; /* request by file-system's owner */
 	}
-	if (op_cap_sys_admin(task)) {
+	if (op_cap_sys_admin(ectx)) {
 		return 0; /* request by system administrator */
 	}
-	if (op_allow_other(task)) {
+	if (op_allow_other(ectx)) {
 		return 0; /* request by other users */
 	}
 	return -SILOFS_EPERM;
 }
 
-static int op_map_uidgid(const struct silofs_task_ctx *task, uid_t uid,
+static int op_map_uidgid(const struct silofs_exec_ctx *ectx, uid_t uid,
                          gid_t gid, uid_t *out_uid, gid_t *out_gid)
 {
 	int ret;
 
-	ret = silofs_idsmap_mapcreds(task->t_idsm, uid, gid, out_uid, out_gid);
+	ret = silofs_idsmap_mapcreds(ectx->ex_idsm, uid, gid, out_uid,
+	                             out_gid);
 	return (ret == -SILOFS_ENOENT) ? -SILOFS_EPERM : ret;
 }
 
-static int op_map_creds(struct silofs_task_ctx *task)
+static int op_map_creds(struct silofs_exec_ctx *ectx)
 {
-	const struct silofs_cred *host_cred = &task->t_auth.creds.host_cred;
-	struct silofs_cred *fs_cred         = &task->t_auth.creds.fs_cred;
+	const struct silofs_cred *host_cred = &ectx->ex_auth.creds.host_cred;
+	struct silofs_cred *fs_cred         = &ectx->ex_auth.creds.fs_cred;
 	int ret                             = 0;
 
 	fs_cred->uid   = host_cred->uid;
 	fs_cred->gid   = host_cred->gid;
 	fs_cred->umask = host_cred->umask;
 
-	if (!op_is_admin(task)) {
-		ret = op_map_uidgid(task, host_cred->uid, host_cred->gid,
+	if (!op_is_admin(ectx)) {
+		ret = op_map_uidgid(ectx, host_cred->uid, host_cred->gid,
 		                    &fs_cred->uid, &fs_cred->gid);
 	}
 	return (ret == -SILOFS_ENOENT) ? -SILOFS_EPERM : ret;
 }
 
 static int
-op_rmap_stat(const struct silofs_task_ctx *task, struct silofs_stat *st)
+op_rmap_stat(const struct silofs_exec_ctx *ectx, struct silofs_stat *st)
 {
 	const uid_t uid_in = st->st.st_uid;
 	const gid_t gid_in = st->st.st_gid;
@@ -227,7 +230,7 @@ op_rmap_stat(const struct silofs_task_ctx *task, struct silofs_stat *st)
 	 * silofs_idsmap_rmap_gid). In case of rmap failure, emit 'nobody' only
 	 * for the relevant id.
 	 */
-	ret = silofs_idsmap_rmapcreds(task->t_idsm, uid_in, gid_in, &uid_out,
+	ret = silofs_idsmap_rmapcreds(ectx->ex_idsm, uid_in, gid_in, &uid_out,
 	                              &gid_out);
 	st->st.st_uid = st->stx.stx_uid = uid_out;
 	st->st.st_gid = st->stx.stx_gid = gid_out;
@@ -235,11 +238,11 @@ op_rmap_stat(const struct silofs_task_ctx *task, struct silofs_stat *st)
 }
 
 static void
-op_rmap_stat_any(const struct silofs_task_ctx *task, struct silofs_stat *st)
+op_rmap_stat_any(const struct silofs_exec_ctx *ectx, struct silofs_stat *st)
 {
 	int err;
 
-	err = op_rmap_stat(task, st);
+	err = op_rmap_stat(ectx, st);
 	if (err) {
 		st->st.st_uid = st->stx.stx_uid = silofs_uid_nobody();
 		st->st.st_gid = st->stx.stx_gid = silofs_gid_nobody();
@@ -248,102 +251,102 @@ op_rmap_stat_any(const struct silofs_task_ctx *task, struct silofs_stat *st)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int op_stage_cacheonly_inode(struct silofs_task_ctx *task, ino_t ino,
+static int op_stage_cacheonly_inode(struct silofs_exec_ctx *ectx, ino_t ino,
                                     struct silofs_inode_info **out_ii)
 {
-	return silofs_fetch_cached_inode(task, ino, out_ii);
+	return silofs_fetch_cached_inode(ectx, ino, out_ii);
 }
 
-static int op_stage_inode(struct silofs_task_ctx *task, ino_t ino, bool mut,
+static int op_stage_inode(struct silofs_exec_ctx *ectx, ino_t ino, bool mut,
                           struct silofs_inode_info **out_ii)
 {
 	enum silofs_stg_mode stg_mode = mut ? SILOFS_STG_COW : SILOFS_STG_CUR;
 
-	return silofs_stage_inode(task, ino, stg_mode, out_ii);
+	return silofs_stage_inode(ectx, ino, stg_mode, out_ii);
 }
 
-static int op_stage_cur_inode(struct silofs_task_ctx *task, ino_t ino,
+static int op_stage_cur_inode(struct silofs_exec_ctx *ectx, ino_t ino,
                               struct silofs_inode_info **out_ii)
 {
-	return op_stage_inode(task, ino, false, out_ii);
+	return op_stage_inode(ectx, ino, false, out_ii);
 }
 
-static int op_stage_mut_inode(struct silofs_task_ctx *task, ino_t ino,
+static int op_stage_mut_inode(struct silofs_exec_ctx *ectx, ino_t ino,
                               struct silofs_inode_info *ii_alt,
                               struct silofs_inode_info **out_ii)
 {
 	int ret;
 
 	silofs_ii_incref(ii_alt);
-	ret = op_stage_inode(task, ino, true, out_ii);
+	ret = op_stage_inode(ectx, ino, true, out_ii);
 	silofs_ii_decref(ii_alt);
 	return ret;
 }
 
-static int op_stage_opt_inode(struct silofs_task_ctx *task, ino_t ino,
+static int op_stage_opt_inode(struct silofs_exec_ctx *ectx, ino_t ino,
                               bool mut, struct silofs_inode_info **out_ii)
 {
 	int err;
 
-	err = op_stage_inode(task, ino, mut, out_ii);
+	err = op_stage_inode(ectx, ino, mut, out_ii);
 	if (!err && !mut && silofs_ii_isdirty(*out_ii)) {
-		err = op_stage_inode(task, ino, true, out_ii);
+		err = op_stage_inode(ectx, ino, true, out_ii);
 	}
 	return err;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_exec_forget(struct silofs_task_ctx *task, ino_t ino, size_t nlookup)
+int silofs_exec_forget(struct silofs_exec_ctx *ectx, ino_t ino, size_t nlookup)
 {
 	struct silofs_inode_info *ii = nullptr;
 	int err;
 
-	err = op_start(task);
+	err = op_start(ectx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(task);
+	err = op_authorize(ectx);
 	ok_or_goto_out(err);
 
-	err = op_map_creds(task);
+	err = op_map_creds(ectx);
 	ok_or_goto_out(err);
 
-	err = op_stage_cacheonly_inode(task, ino, &ii);
+	err = op_stage_cacheonly_inode(ectx, ino, &ii);
 	ok_or_goto_out_ok(err);
 
-	err = silofs_do_forget(task, ii, nlookup);
+	err = silofs_do_forget(ectx, ii, nlookup);
 	ok_or_goto_out(err);
 out_ok:
 	err = 0;
 out:
-	return op_finish(task, err);
+	return op_finish(ectx, err);
 }
 
-int silofs_exec_statfs(struct silofs_task_ctx *task, ino_t ino,
+int silofs_exec_statfs(struct silofs_exec_ctx *ectx, ino_t ino,
                        struct statvfs *stvfs)
 {
 	struct silofs_inode_info *ii = nullptr;
 	int err;
 
-	err = op_start(task);
+	err = op_start(ectx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(task);
+	err = op_authorize(ectx);
 	ok_or_goto_out(err);
 
-	err = op_map_creds(task);
+	err = op_map_creds(ectx);
 	ok_or_goto_out(err);
 
-	err = op_stage_cur_inode(task, ino, &ii);
+	err = op_stage_cur_inode(ectx, ino, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_statvfs(task, ii, stvfs);
+	err = silofs_do_statvfs(ectx, ii, stvfs);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, err);
+	return op_finish(ectx, err);
 }
 
-int silofs_exec_lookup(struct silofs_task_ctx *task, ino_t parent,
+int silofs_exec_lookup(struct silofs_exec_ctx *ectx, ino_t parent,
                        const char *name, struct silofs_stat *out_stat)
 {
 	struct silofs_namestr nstr;
@@ -351,84 +354,84 @@ int silofs_exec_lookup(struct silofs_task_ctx *task, ino_t parent,
 	struct silofs_inode_info *dir_ii = nullptr;
 	int err;
 
-	err = op_start(task);
+	err = op_start(ectx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(task);
+	err = op_authorize(ectx);
 	ok_or_goto_out(err);
 
-	err = op_map_creds(task);
+	err = op_map_creds(ectx);
 	ok_or_goto_out(err);
 
-	err = op_stage_cur_inode(task, parent, &dir_ii);
+	err = op_stage_cur_inode(ectx, parent, &dir_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_make_linkname(task, dir_ii, name, &nstr);
+	err = silofs_make_linkname(ectx, dir_ii, name, &nstr);
 	ok_or_goto_out(err);
 
-	err = silofs_do_lookup(task, dir_ii, &nstr, &ii);
+	err = silofs_do_lookup(ectx, dir_ii, &nstr, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_getattr(task, ii, out_stat);
+	err = silofs_do_getattr(ectx, ii, out_stat);
 	ok_or_goto_out(err);
 
-	err = op_rmap_stat(task, out_stat);
+	err = op_rmap_stat(ectx, out_stat);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, err);
+	return op_finish(ectx, err);
 }
 
-int silofs_exec_getattr(struct silofs_task_ctx *task, ino_t ino,
+int silofs_exec_getattr(struct silofs_exec_ctx *ectx, ino_t ino,
                         struct silofs_stat *out_st)
 {
 	struct silofs_inode_info *ii = nullptr;
 	int err;
 
-	err = op_start(task);
+	err = op_start(ectx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(task);
+	err = op_authorize(ectx);
 	ok_or_goto_out(err);
 
-	err = op_map_creds(task);
+	err = op_map_creds(ectx);
 	ok_or_goto_out(err);
 
-	err = op_stage_cur_inode(task, ino, &ii);
+	err = op_stage_cur_inode(ectx, ino, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_getattr(task, ii, out_st);
+	err = silofs_do_getattr(ectx, ii, out_st);
 	ok_or_goto_out(err);
 
-	err = op_rmap_stat(task, out_st);
+	err = op_rmap_stat(ectx, out_st);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, err);
+	return op_finish(ectx, err);
 }
 
-int silofs_exec_access(struct silofs_task_ctx *task, ino_t ino, int mode)
+int silofs_exec_access(struct silofs_exec_ctx *ectx, ino_t ino, int mode)
 {
 	struct silofs_inode_info *ii = nullptr;
 	int err;
 
-	err = op_start(task);
+	err = op_start(ectx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(task);
+	err = op_authorize(ectx);
 	ok_or_goto_out(err);
 
-	err = op_map_creds(task);
+	err = op_map_creds(ectx);
 	ok_or_goto_out(err);
 
-	err = op_stage_cur_inode(task, ino, &ii);
+	err = op_stage_cur_inode(ectx, ino, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_access(task, ii, mode);
+	err = silofs_do_access(ectx, ii, mode);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, err);
+	return op_finish(ectx, err);
 }
 
-int silofs_exec_mkdir(struct silofs_task_ctx *task, ino_t parent,
+int silofs_exec_mkdir(struct silofs_exec_ctx *ectx, ino_t parent,
                       const char *name, mode_t mode,
                       struct silofs_stat *out_stat)
 {
@@ -437,65 +440,65 @@ int silofs_exec_mkdir(struct silofs_task_ctx *task, ino_t parent,
 	struct silofs_inode_info *dir_ii = nullptr;
 	int err;
 
-	err = op_start(task);
+	err = op_start(ectx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(task);
+	err = op_authorize(ectx);
 	ok_or_goto_out(err);
 
-	err = op_map_creds(task);
+	err = op_map_creds(ectx);
 	ok_or_goto_out(err);
 
-	err = op_stage_mut_inode(task, parent, nullptr, &dir_ii);
+	err = op_stage_mut_inode(ectx, parent, nullptr, &dir_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_make_linkname(task, dir_ii, name, &nstr);
+	err = silofs_make_linkname(ectx, dir_ii, name, &nstr);
 	ok_or_goto_out(err);
 
-	err = op_try_flush(task, dir_ii);
+	err = op_try_flush(ectx, dir_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_mkdir(task, dir_ii, &nstr, mode, &ii);
+	err = silofs_do_mkdir(ectx, dir_ii, &nstr, mode, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_getattr(task, ii, out_stat);
+	err = silofs_do_getattr(ectx, ii, out_stat);
 	ok_or_goto_out(err);
 
-	err = op_rmap_stat(task, out_stat);
+	err = op_rmap_stat(ectx, out_stat);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, err);
+	return op_finish(ectx, err);
 }
 
-int silofs_exec_rmdir(struct silofs_task_ctx *task, ino_t parent,
+int silofs_exec_rmdir(struct silofs_exec_ctx *ectx, ino_t parent,
                       const char *name)
 {
 	struct silofs_namestr nstr;
 	struct silofs_inode_info *dir_ii = nullptr;
 	int err;
 
-	err = op_start(task);
+	err = op_start(ectx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(task);
+	err = op_authorize(ectx);
 	ok_or_goto_out(err);
 
-	err = op_map_creds(task);
+	err = op_map_creds(ectx);
 	ok_or_goto_out(err);
 
-	err = op_stage_mut_inode(task, parent, nullptr, &dir_ii);
+	err = op_stage_mut_inode(ectx, parent, nullptr, &dir_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_make_linkname(task, dir_ii, name, &nstr);
+	err = silofs_make_linkname(ectx, dir_ii, name, &nstr);
 	ok_or_goto_out(err);
 
-	err = silofs_do_rmdir(task, dir_ii, &nstr);
+	err = silofs_do_rmdir(ectx, dir_ii, &nstr);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, err);
+	return op_finish(ectx, err);
 }
 
-int silofs_exec_symlink(struct silofs_task_ctx *task, ino_t parent,
+int silofs_exec_symlink(struct silofs_exec_ctx *ectx, ino_t parent,
                         const char *name, const char *symval,
                         struct silofs_stat *out_stat)
 {
@@ -505,92 +508,92 @@ int silofs_exec_symlink(struct silofs_task_ctx *task, ino_t parent,
 	struct silofs_inode_info *dir_ii = nullptr;
 	int err;
 
-	err = op_start(task);
+	err = op_start(ectx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(task);
+	err = op_authorize(ectx);
 	ok_or_goto_out(err);
 
-	err = op_map_creds(task);
+	err = op_map_creds(ectx);
 	ok_or_goto_out(err);
 
-	err = op_stage_mut_inode(task, parent, nullptr, &dir_ii);
+	err = op_stage_mut_inode(ectx, parent, nullptr, &dir_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_make_linkname(task, dir_ii, name, &nstr);
+	err = silofs_make_linkname(ectx, dir_ii, name, &nstr);
 	ok_or_goto_out(err);
 
 	err = symval_to_str(symval, &value);
 	ok_or_goto_out(err);
 
-	err = op_try_flush(task, dir_ii);
+	err = op_try_flush(ectx, dir_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_symlink(task, dir_ii, &nstr, &value, &ii);
+	err = silofs_do_symlink(ectx, dir_ii, &nstr, &value, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_getattr(task, ii, out_stat);
+	err = silofs_do_getattr(ectx, ii, out_stat);
 	ok_or_goto_out(err);
 
-	err = op_rmap_stat(task, out_stat);
+	err = op_rmap_stat(ectx, out_stat);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, err);
+	return op_finish(ectx, err);
 }
 
-int silofs_exec_readlink(struct silofs_task_ctx *task, ino_t ino, char *ptr,
+int silofs_exec_readlink(struct silofs_exec_ctx *ectx, ino_t ino, char *ptr,
                          size_t lim, size_t *out_len)
 {
 	struct silofs_inode_info *ii = nullptr;
 	int err;
 
-	err = op_start(task);
+	err = op_start(ectx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(task);
+	err = op_authorize(ectx);
 	ok_or_goto_out(err);
 
-	err = op_map_creds(task);
+	err = op_map_creds(ectx);
 	ok_or_goto_out(err);
 
-	err = op_stage_cur_inode(task, ino, &ii);
+	err = op_stage_cur_inode(ectx, ino, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_readlink(task, ii, ptr, lim, out_len);
+	err = silofs_do_readlink(ectx, ii, ptr, lim, out_len);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, err);
+	return op_finish(ectx, err);
 }
 
-int silofs_exec_unlink(struct silofs_task_ctx *task, ino_t parent,
+int silofs_exec_unlink(struct silofs_exec_ctx *ectx, ino_t parent,
                        const char *name)
 {
 	struct silofs_namestr nstr;
 	struct silofs_inode_info *dir_ii = nullptr;
 	int err;
 
-	err = op_start(task);
+	err = op_start(ectx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(task);
+	err = op_authorize(ectx);
 	ok_or_goto_out(err);
 
-	err = op_map_creds(task);
+	err = op_map_creds(ectx);
 	ok_or_goto_out(err);
 
-	err = op_stage_mut_inode(task, parent, nullptr, &dir_ii);
+	err = op_stage_mut_inode(ectx, parent, nullptr, &dir_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_make_linkname(task, dir_ii, name, &nstr);
+	err = silofs_make_linkname(ectx, dir_ii, name, &nstr);
 	ok_or_goto_out(err);
 
-	err = silofs_do_unlink(task, dir_ii, &nstr);
+	err = silofs_do_unlink(ectx, dir_ii, &nstr);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, err);
+	return op_finish(ectx, err);
 }
 
-int silofs_exec_link(struct silofs_task_ctx *task, ino_t ino, ino_t parent,
+int silofs_exec_link(struct silofs_exec_ctx *ectx, ino_t ino, ino_t parent,
                      const char *name, struct silofs_stat *out_stat)
 {
 	struct silofs_namestr nstr;
@@ -598,111 +601,111 @@ int silofs_exec_link(struct silofs_task_ctx *task, ino_t ino, ino_t parent,
 	struct silofs_inode_info *dir_ii = nullptr;
 	int err;
 
-	err = op_start(task);
+	err = op_start(ectx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(task);
+	err = op_authorize(ectx);
 	ok_or_goto_out(err);
 
-	err = op_map_creds(task);
+	err = op_map_creds(ectx);
 	ok_or_goto_out(err);
 
-	err = op_stage_mut_inode(task, parent, nullptr, &dir_ii);
+	err = op_stage_mut_inode(ectx, parent, nullptr, &dir_ii);
 	ok_or_goto_out(err);
 
-	err = op_stage_mut_inode(task, ino, dir_ii, &ii);
+	err = op_stage_mut_inode(ectx, ino, dir_ii, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_make_linkname(task, dir_ii, name, &nstr);
+	err = silofs_make_linkname(ectx, dir_ii, name, &nstr);
 	ok_or_goto_out(err);
 
-	err = silofs_do_link(task, dir_ii, &nstr, ii);
+	err = silofs_do_link(ectx, dir_ii, &nstr, ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_getattr(task, ii, out_stat);
+	err = silofs_do_getattr(ectx, ii, out_stat);
 	ok_or_goto_out(err);
 
-	err = op_rmap_stat(task, out_stat);
+	err = op_rmap_stat(ectx, out_stat);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, err);
+	return op_finish(ectx, err);
 }
 
-int silofs_exec_opendir(struct silofs_task_ctx *task, ino_t ino, int o_flags)
+int silofs_exec_opendir(struct silofs_exec_ctx *ectx, ino_t ino, int o_flags)
 {
 	struct silofs_inode_info *dir_ii = nullptr;
 	int err;
 
-	err = op_start(task);
+	err = op_start(ectx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(task);
+	err = op_authorize(ectx);
 	ok_or_goto_out(err);
 
-	err = op_map_creds(task);
+	err = op_map_creds(ectx);
 	ok_or_goto_out(err);
 
-	err = op_stage_cur_inode(task, ino, &dir_ii);
+	err = op_stage_cur_inode(ectx, ino, &dir_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_opendir(task, dir_ii, o_flags);
+	err = silofs_do_opendir(ectx, dir_ii, o_flags);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, err);
+	return op_finish(ectx, err);
 }
 
-int silofs_exec_releasedir(struct silofs_task_ctx *task, ino_t ino,
+int silofs_exec_releasedir(struct silofs_exec_ctx *ectx, ino_t ino,
                            int o_flags)
 {
 	struct silofs_inode_info *dir_ii = nullptr;
 	const bool flush                 = (o_flags & O_SYNC) > 0;
 	int err;
 
-	err = op_start(task);
+	err = op_start(ectx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(task);
+	err = op_authorize(ectx);
 	ok_or_goto_out(err);
 
-	err = op_map_creds(task);
+	err = op_map_creds(ectx);
 	ok_or_goto_out(err);
 
-	err = op_stage_opt_inode(task, ino, flush, &dir_ii);
+	err = op_stage_opt_inode(ectx, ino, flush, &dir_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_releasedir(task, dir_ii, o_flags, flush);
+	err = silofs_do_releasedir(ectx, dir_ii, o_flags, flush);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, err);
+	return op_finish(ectx, err);
 }
 
-int silofs_exec_readdir(struct silofs_task_ctx *task, ino_t ino,
+int silofs_exec_readdir(struct silofs_exec_ctx *ectx, ino_t ino,
                         struct silofs_readdir_ctx *rd_ctx)
 {
 	struct silofs_inode_info *dir_ii = nullptr;
 	int err;
 
-	err = op_start(task);
+	err = op_start(ectx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(task);
+	err = op_authorize(ectx);
 	ok_or_goto_out(err);
 
-	err = op_map_creds(task);
+	err = op_map_creds(ectx);
 	ok_or_goto_out(err);
 
-	err = op_stage_cur_inode(task, ino, &dir_ii);
+	err = op_stage_cur_inode(ectx, ino, &dir_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_readdir(task, dir_ii, rd_ctx);
+	err = silofs_do_readdir(ectx, dir_ii, rd_ctx);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, err);
+	return op_finish(ectx, err);
 }
 
 struct silofs_readdir_filter_ctx {
 	struct silofs_readdir_ctx *rd_ctx_orig;
-	struct silofs_task_ctx *task;
+	struct silofs_exec_ctx *ectx;
 	struct silofs_readdir_ctx rd_ctx;
 };
 
@@ -720,99 +723,99 @@ static int readdirplus_actor(struct silofs_readdir_ctx *rd_ctx,
 	} else {
 		/* case2: copy attr to local and re-map uid-gid */
 		memcpy(&rdi2, rdi, sizeof(rdi2));
-		op_rmap_stat_any(rdf_ctx->task, &rdi2.attr);
+		op_rmap_stat_any(rdf_ctx->ectx, &rdi2.attr);
 		rdf_ctx->rd_ctx_orig->pos = rdf_ctx->rd_ctx.pos;
 		ret = rdf_ctx->rd_ctx_orig->actor(rdf_ctx->rd_ctx_orig, &rdi2);
 	}
 	return ret;
 }
 
-int silofs_exec_readdirplus(struct silofs_task_ctx *task, ino_t ino,
+int silofs_exec_readdirplus(struct silofs_exec_ctx *ectx, ino_t ino,
                             struct silofs_readdir_ctx *rd_ctx)
 {
 	struct silofs_readdir_filter_ctx rdf_ctx = {
 		.rd_ctx_orig  = rd_ctx,
-		.task         = task,
+		.ectx         = ectx,
 		.rd_ctx.actor = readdirplus_actor,
 		.rd_ctx.pos   = rd_ctx->pos,
 	};
 	struct silofs_inode_info *dir_ii = nullptr;
 	int err;
 
-	err = op_start(task);
+	err = op_start(ectx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(task);
+	err = op_authorize(ectx);
 	ok_or_goto_out(err);
 
-	err = op_map_creds(task);
+	err = op_map_creds(ectx);
 	ok_or_goto_out(err);
 
-	err = op_stage_cur_inode(task, ino, &dir_ii);
+	err = op_stage_cur_inode(ectx, ino, &dir_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_readdirplus(task, dir_ii, &rdf_ctx.rd_ctx);
+	err = silofs_do_readdirplus(ectx, dir_ii, &rdf_ctx.rd_ctx);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, err);
+	return op_finish(ectx, err);
 }
 
-int silofs_exec_fsyncdir(struct silofs_task_ctx *task, ino_t ino,
+int silofs_exec_fsyncdir(struct silofs_exec_ctx *ectx, ino_t ino,
                          bool datasync)
 {
 	struct silofs_inode_info *dir_ii = nullptr;
 	int err;
 
-	err = op_start(task);
+	err = op_start(ectx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(task);
+	err = op_authorize(ectx);
 	ok_or_goto_out(err);
 
-	err = op_map_creds(task);
+	err = op_map_creds(ectx);
 	ok_or_goto_out(err);
 
-	err = op_stage_opt_inode(task, ino, datasync, &dir_ii);
+	err = op_stage_opt_inode(ectx, ino, datasync, &dir_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_fsyncdir(task, dir_ii, datasync);
+	err = silofs_do_fsyncdir(ectx, dir_ii, datasync);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, err);
+	return op_finish(ectx, err);
 }
 
-int silofs_exec_chmod(struct silofs_task_ctx *task, ino_t ino, mode_t mode,
+int silofs_exec_chmod(struct silofs_exec_ctx *ectx, ino_t ino, mode_t mode,
                       const struct silofs_itimes *itimes,
                       struct silofs_stat *out_stat)
 {
 	struct silofs_inode_info *ii = nullptr;
 	int err;
 
-	err = op_start(task);
+	err = op_start(ectx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(task);
+	err = op_authorize(ectx);
 	ok_or_goto_out(err);
 
-	err = op_map_creds(task);
+	err = op_map_creds(ectx);
 	ok_or_goto_out(err);
 
-	err = op_stage_mut_inode(task, ino, nullptr, &ii);
+	err = op_stage_mut_inode(ectx, ino, nullptr, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_chmod(task, ii, mode, itimes);
+	err = silofs_do_chmod(ectx, ii, mode, itimes);
 	ok_or_goto_out(err);
 
-	err = silofs_do_getattr(task, ii, out_stat);
+	err = silofs_do_getattr(ectx, ii, out_stat);
 	ok_or_goto_out(err);
 
-	err = op_rmap_stat(task, out_stat);
+	err = op_rmap_stat(ectx, out_stat);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, err);
+	return op_finish(ectx, err);
 }
 
-int silofs_exec_chown(struct silofs_task_ctx *task, ino_t ino, uid_t uid,
+int silofs_exec_chown(struct silofs_exec_ctx *ectx, ino_t ino, uid_t uid,
                       gid_t gid, bool kill_suidgid,
                       const struct silofs_itimes *itimes,
                       struct silofs_stat *out_stat)
@@ -820,98 +823,98 @@ int silofs_exec_chown(struct silofs_task_ctx *task, ino_t ino, uid_t uid,
 	struct silofs_inode_info *ii = nullptr;
 	int err;
 
-	err = op_start(task);
+	err = op_start(ectx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(task);
+	err = op_authorize(ectx);
 	ok_or_goto_out(err);
 
-	err = op_map_creds(task);
+	err = op_map_creds(ectx);
 	ok_or_goto_out(err);
 
-	err = op_map_uidgid(task, uid, gid, &uid, &gid);
+	err = op_map_uidgid(ectx, uid, gid, &uid, &gid);
 	ok_or_goto_out(err);
 
-	err = op_stage_mut_inode(task, ino, nullptr, &ii);
+	err = op_stage_mut_inode(ectx, ino, nullptr, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_chown(task, ii, uid, gid, kill_suidgid, itimes);
+	err = silofs_do_chown(ectx, ii, uid, gid, kill_suidgid, itimes);
 	ok_or_goto_out(err);
 
-	err = silofs_do_getattr(task, ii, out_stat);
+	err = silofs_do_getattr(ectx, ii, out_stat);
 	ok_or_goto_out(err);
 
-	err = op_rmap_stat(task, out_stat);
+	err = op_rmap_stat(ectx, out_stat);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, err);
+	return op_finish(ectx, err);
 }
 
-int silofs_exec_utimens(struct silofs_task_ctx *task, ino_t ino,
+int silofs_exec_utimens(struct silofs_exec_ctx *ectx, ino_t ino,
                         const struct silofs_itimes *itimes,
                         struct silofs_stat *out_stat)
 {
 	struct silofs_inode_info *ii = nullptr;
 	int err;
 
-	err = op_start(task);
+	err = op_start(ectx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(task);
+	err = op_authorize(ectx);
 	ok_or_goto_out(err);
 
-	err = op_map_creds(task);
+	err = op_map_creds(ectx);
 	ok_or_goto_out(err);
 
-	err = op_stage_mut_inode(task, ino, nullptr, &ii);
+	err = op_stage_mut_inode(ectx, ino, nullptr, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_utimens(task, ii, itimes);
+	err = silofs_do_utimens(ectx, ii, itimes);
 	ok_or_goto_out(err);
 
-	err = silofs_do_getattr(task, ii, out_stat);
+	err = silofs_do_getattr(ectx, ii, out_stat);
 	ok_or_goto_out(err);
 
-	err = op_rmap_stat(task, out_stat);
+	err = op_rmap_stat(ectx, out_stat);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, err);
+	return op_finish(ectx, err);
 }
 
-int silofs_exec_truncate(struct silofs_task_ctx *task, ino_t ino, off_t len,
+int silofs_exec_truncate(struct silofs_exec_ctx *ectx, ino_t ino, off_t len,
                          bool kill_suidgid, struct silofs_stat *out_stat)
 {
 	struct silofs_inode_info *ii = nullptr;
 	int err;
 
-	err = op_start(task);
+	err = op_start(ectx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(task);
+	err = op_authorize(ectx);
 	ok_or_goto_out(err);
 
-	err = op_map_creds(task);
+	err = op_map_creds(ectx);
 	ok_or_goto_out(err);
 
-	err = op_stage_mut_inode(task, ino, nullptr, &ii);
+	err = op_stage_mut_inode(ectx, ino, nullptr, &ii);
 	ok_or_goto_out(err);
 
-	err = op_try_flush(task, ii);
+	err = op_try_flush(ectx, ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_truncate(task, ii, len, kill_suidgid);
+	err = silofs_do_truncate(ectx, ii, len, kill_suidgid);
 	ok_or_goto_out(err);
 
-	err = silofs_do_getattr(task, ii, out_stat);
+	err = silofs_do_getattr(ectx, ii, out_stat);
 	ok_or_goto_out(err);
 
-	err = op_rmap_stat(task, out_stat);
+	err = op_rmap_stat(ectx, out_stat);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, err);
+	return op_finish(ectx, err);
 }
 
-int silofs_exec_create(struct silofs_task_ctx *task, ino_t parent,
+int silofs_exec_create(struct silofs_exec_ctx *ectx, ino_t parent,
                        const char *name, int o_flags, mode_t mode,
                        bool kill_suidgid, struct silofs_stat *out_stat)
 {
@@ -922,62 +925,62 @@ int silofs_exec_create(struct silofs_task_ctx *task, ino_t parent,
 
 	unused(o_flags); /* XXX use me */
 
-	err = op_start(task);
+	err = op_start(ectx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(task);
+	err = op_authorize(ectx);
 	ok_or_goto_out(err);
 
-	err = op_map_creds(task);
+	err = op_map_creds(ectx);
 	ok_or_goto_out(err);
 
-	err = op_stage_mut_inode(task, parent, nullptr, &dir_ii);
+	err = op_stage_mut_inode(ectx, parent, nullptr, &dir_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_make_linkname(task, dir_ii, name, &nstr);
+	err = silofs_make_linkname(ectx, dir_ii, name, &nstr);
 	ok_or_goto_out(err);
 
-	err = op_try_flush(task, dir_ii);
+	err = op_try_flush(ectx, dir_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_create(task, dir_ii, &nstr, mode, kill_suidgid, &ii);
+	err = silofs_do_create(ectx, dir_ii, &nstr, mode, kill_suidgid, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_getattr(task, ii, out_stat);
+	err = silofs_do_getattr(ectx, ii, out_stat);
 	ok_or_goto_out(err);
 
-	err = op_rmap_stat(task, out_stat);
+	err = op_rmap_stat(ectx, out_stat);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, err);
+	return op_finish(ectx, err);
 }
 
-int silofs_exec_open(struct silofs_task_ctx *task, ino_t ino, int o_flags,
+int silofs_exec_open(struct silofs_exec_ctx *ectx, ino_t ino, int o_flags,
                      bool kill_suidgid)
 {
 	struct silofs_inode_info *ii = nullptr;
 	const int mutf = o_flags & (O_RDWR | O_WRONLY | O_TRUNC | O_APPEND);
 	int err;
 
-	err = op_start(task);
+	err = op_start(ectx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(task);
+	err = op_authorize(ectx);
 	ok_or_goto_out(err);
 
-	err = op_map_creds(task);
+	err = op_map_creds(ectx);
 	ok_or_goto_out(err);
 
-	err = op_stage_inode(task, ino, mutf > 0, &ii);
+	err = op_stage_inode(ectx, ino, mutf > 0, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_open(task, ii, o_flags, kill_suidgid);
+	err = silofs_do_open(ectx, ii, o_flags, kill_suidgid);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, err);
+	return op_finish(ectx, err);
 }
 
-int silofs_exec_mknod(struct silofs_task_ctx *task, ino_t parent,
+int silofs_exec_mknod(struct silofs_exec_ctx *ectx, ino_t parent,
                       const char *name, mode_t mode, dev_t rdev,
                       struct silofs_stat *out_stat)
 {
@@ -986,37 +989,37 @@ int silofs_exec_mknod(struct silofs_task_ctx *task, ino_t parent,
 	struct silofs_inode_info *dir_ii = nullptr;
 	int err;
 
-	err = op_start(task);
+	err = op_start(ectx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(task);
+	err = op_authorize(ectx);
 	ok_or_goto_out(err);
 
-	err = op_map_creds(task);
+	err = op_map_creds(ectx);
 	ok_or_goto_out(err);
 
-	err = op_stage_mut_inode(task, parent, nullptr, &dir_ii);
+	err = op_stage_mut_inode(ectx, parent, nullptr, &dir_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_make_linkname(task, dir_ii, name, &nstr);
+	err = silofs_make_linkname(ectx, dir_ii, name, &nstr);
 	ok_or_goto_out(err);
 
-	err = op_try_flush(task, dir_ii);
+	err = op_try_flush(ectx, dir_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_mknod(task, dir_ii, &nstr, mode, rdev, &ii);
+	err = silofs_do_mknod(ectx, dir_ii, &nstr, mode, rdev, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_getattr(task, ii, out_stat);
+	err = silofs_do_getattr(ectx, ii, out_stat);
 	ok_or_goto_out(err);
 
-	err = op_rmap_stat(task, out_stat);
+	err = op_rmap_stat(ectx, out_stat);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, err);
+	return op_finish(ectx, err);
 }
 
-int silofs_exec_release(struct silofs_task_ctx *task, ino_t ino, int o_flags,
+int silofs_exec_release(struct silofs_exec_ctx *ectx, ino_t ino, int o_flags,
                         bool flush)
 {
 	struct silofs_inode_info *ii = nullptr;
@@ -1025,71 +1028,71 @@ int silofs_exec_release(struct silofs_task_ctx *task, ino_t ino, int o_flags,
 	/* TODO: useme */
 	unused(o_flags);
 
-	err = op_start(task);
+	err = op_start(ectx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(task);
+	err = op_authorize(ectx);
 	ok_or_goto_out(err);
 
-	err = op_map_creds(task);
+	err = op_map_creds(ectx);
 	ok_or_goto_out(err);
 
-	err = op_stage_opt_inode(task, ino, flush, &ii);
+	err = op_stage_opt_inode(ectx, ino, flush, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_release(task, ii, flush);
+	err = silofs_do_release(ectx, ii, flush);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, err);
+	return op_finish(ectx, err);
 }
 
-int silofs_exec_flush(struct silofs_task_ctx *task, ino_t ino, bool now)
+int silofs_exec_flush(struct silofs_exec_ctx *ectx, ino_t ino, bool now)
 {
 	struct silofs_inode_info *ii = nullptr;
 	int err;
 
-	err = op_start(task);
+	err = op_start(ectx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(task);
+	err = op_authorize(ectx);
 	ok_or_goto_out(err);
 
-	err = op_map_creds(task);
+	err = op_map_creds(ectx);
 	ok_or_goto_out(err);
 
-	err = op_stage_cur_inode(task, ino, &ii);
+	err = op_stage_cur_inode(ectx, ino, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_flush(task, ii, now);
+	err = silofs_do_flush(ectx, ii, now);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, err);
+	return op_finish(ectx, err);
 }
 
-int silofs_exec_fsync(struct silofs_task_ctx *task, ino_t ino, bool datasync)
+int silofs_exec_fsync(struct silofs_exec_ctx *ectx, ino_t ino, bool datasync)
 {
 	struct silofs_inode_info *ii = nullptr;
 	int err;
 
-	err = op_start(task);
+	err = op_start(ectx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(task);
+	err = op_authorize(ectx);
 	ok_or_goto_out(err);
 
-	err = op_map_creds(task);
+	err = op_map_creds(ectx);
 	ok_or_goto_out(err);
 
-	err = op_stage_opt_inode(task, ino, datasync, &ii);
+	err = op_stage_opt_inode(ectx, ino, datasync, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_fsync(task, ii, datasync);
+	err = silofs_do_fsync(ectx, ii, datasync);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, err);
+	return op_finish(ectx, err);
 }
 
-int silofs_exec_rename(struct silofs_task_ctx *task, ino_t parent_ino,
+int silofs_exec_rename(struct silofs_exec_ctx *ectx, ino_t parent_ino,
                        const char *name, ino_t newparent_ino,
                        const char *newname, int flags)
 {
@@ -1099,190 +1102,190 @@ int silofs_exec_rename(struct silofs_task_ctx *task, ino_t parent_ino,
 	struct silofs_inode_info *newd_ii = nullptr;
 	int err;
 
-	err = op_start(task);
+	err = op_start(ectx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(task);
+	err = op_authorize(ectx);
 	ok_or_goto_out(err);
 
-	err = op_map_creds(task);
+	err = op_map_creds(ectx);
 	ok_or_goto_out(err);
 
-	err = op_stage_mut_inode(task, parent_ino, nullptr, &curd_ii);
+	err = op_stage_mut_inode(ectx, parent_ino, nullptr, &curd_ii);
 	ok_or_goto_out(err);
 
-	err = op_stage_mut_inode(task, newparent_ino, curd_ii, &newd_ii);
+	err = op_stage_mut_inode(ectx, newparent_ino, curd_ii, &newd_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_make_linkname(task, curd_ii, name, &nstr);
+	err = silofs_make_linkname(ectx, curd_ii, name, &nstr);
 	ok_or_goto_out(err);
 
-	err = silofs_make_linkname(task, newd_ii, newname, &newnstr);
+	err = silofs_make_linkname(ectx, newd_ii, newname, &newnstr);
 	ok_or_goto_out(err);
 
-	err = silofs_do_rename(task, curd_ii, &nstr, newd_ii, &newnstr, flags);
+	err = silofs_do_rename(ectx, curd_ii, &nstr, newd_ii, &newnstr, flags);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, err);
+	return op_finish(ectx, err);
 }
 
-int silofs_exec_read(struct silofs_task_ctx *task, ino_t ino, void *buf,
+int silofs_exec_read(struct silofs_exec_ctx *ectx, ino_t ino, void *buf,
                      size_t len, off_t off, int o_flags, size_t *out_len)
 {
 	struct silofs_inode_info *ii = nullptr;
 	int err;
 
-	err = op_start(task);
+	err = op_start(ectx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(task);
+	err = op_authorize(ectx);
 	ok_or_goto_out(err);
 
-	err = op_map_creds(task);
+	err = op_map_creds(ectx);
 	ok_or_goto_out(err);
 
-	err = op_stage_cur_inode(task, ino, &ii);
+	err = op_stage_cur_inode(ectx, ino, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_read(task, ii, buf, len, off, o_flags, out_len);
+	err = silofs_do_read(ectx, ii, buf, len, off, o_flags, out_len);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, err);
+	return op_finish(ectx, err);
 }
 
-int silofs_exec_read_iter(struct silofs_task_ctx *task, ino_t ino, int o_flags,
+int silofs_exec_read_iter(struct silofs_exec_ctx *ectx, ino_t ino, int o_flags,
                           struct silofs_rwiter_ctx *rwi_ctx)
 {
 	struct silofs_inode_info *ii = nullptr;
 	int err;
 
-	err = op_start(task);
+	err = op_start(ectx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(task);
+	err = op_authorize(ectx);
 	ok_or_goto_out(err);
 
-	err = op_map_creds(task);
+	err = op_map_creds(ectx);
 	ok_or_goto_out(err);
 
-	err = op_stage_cur_inode(task, ino, &ii);
+	err = op_stage_cur_inode(ectx, ino, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_read_iter(task, ii, o_flags, rwi_ctx);
+	err = silofs_do_read_iter(ectx, ii, o_flags, rwi_ctx);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, err);
+	return op_finish(ectx, err);
 }
 
-int silofs_exec_write(struct silofs_task_ctx *task, ino_t ino, const void *buf,
+int silofs_exec_write(struct silofs_exec_ctx *ectx, ino_t ino, const void *buf,
                       size_t len, off_t off, int o_flags, bool kill_suidgid,
                       size_t *out_len)
 {
 	struct silofs_inode_info *ii = nullptr;
 	int err;
 
-	err = op_start(task);
+	err = op_start(ectx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(task);
+	err = op_authorize(ectx);
 	ok_or_goto_out(err);
 
-	err = op_map_creds(task);
+	err = op_map_creds(ectx);
 	ok_or_goto_out(err);
 
-	err = op_stage_mut_inode(task, ino, nullptr, &ii);
+	err = op_stage_mut_inode(ectx, ino, nullptr, &ii);
 	ok_or_goto_out(err);
 
-	err = op_try_flush(task, ii);
+	err = op_try_flush(ectx, ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_write(task, ii, buf, len, off, o_flags, kill_suidgid,
+	err = silofs_do_write(ectx, ii, buf, len, off, o_flags, kill_suidgid,
 	                      out_len);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, err);
+	return op_finish(ectx, err);
 }
 
-int silofs_exec_write_iter(struct silofs_task_ctx *task, ino_t ino,
+int silofs_exec_write_iter(struct silofs_exec_ctx *ectx, ino_t ino,
                            int o_flags, bool kill_suidgid,
                            struct silofs_rwiter_ctx *rwi_ctx)
 {
 	struct silofs_inode_info *ii = nullptr;
 	int err;
 
-	err = op_start(task);
+	err = op_start(ectx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(task);
+	err = op_authorize(ectx);
 	ok_or_goto_out(err);
 
-	err = op_map_creds(task);
+	err = op_map_creds(ectx);
 	ok_or_goto_out(err);
 
-	err = op_stage_mut_inode(task, ino, nullptr, &ii);
+	err = op_stage_mut_inode(ectx, ino, nullptr, &ii);
 	ok_or_goto_out(err);
 
-	err = op_try_flush(task, ii);
+	err = op_try_flush(ectx, ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_write_iter(task, ii, o_flags, kill_suidgid, rwi_ctx);
+	err = silofs_do_write_iter(ectx, ii, o_flags, kill_suidgid, rwi_ctx);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, err);
+	return op_finish(ectx, err);
 }
 
-int silofs_exec_fallocate(struct silofs_task_ctx *task, ino_t ino, int mode,
+int silofs_exec_fallocate(struct silofs_exec_ctx *ectx, ino_t ino, int mode,
                           off_t offset, off_t length)
 {
 	struct silofs_inode_info *ii = nullptr;
 	int err;
 
-	err = op_start(task);
+	err = op_start(ectx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(task);
+	err = op_authorize(ectx);
 	ok_or_goto_out(err);
 
-	err = op_map_creds(task);
+	err = op_map_creds(ectx);
 	ok_or_goto_out(err);
 
-	err = op_stage_mut_inode(task, ino, nullptr, &ii);
+	err = op_stage_mut_inode(ectx, ino, nullptr, &ii);
 	ok_or_goto_out(err);
 
-	err = op_try_flush(task, ii);
+	err = op_try_flush(ectx, ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_fallocate(task, ii, mode, offset, length);
+	err = silofs_do_fallocate(ectx, ii, mode, offset, length);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, err);
+	return op_finish(ectx, err);
 }
 
-int silofs_exec_lseek(struct silofs_task_ctx *task, ino_t ino, off_t off,
+int silofs_exec_lseek(struct silofs_exec_ctx *ectx, ino_t ino, off_t off,
                       int whence, off_t *out_off)
 {
 	struct silofs_inode_info *ii = nullptr;
 	int err;
 
-	err = op_start(task);
+	err = op_start(ectx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(task);
+	err = op_authorize(ectx);
 	ok_or_goto_out(err);
 
-	err = op_map_creds(task);
+	err = op_map_creds(ectx);
 	ok_or_goto_out(err);
 
-	err = op_stage_cur_inode(task, ino, &ii);
+	err = op_stage_cur_inode(ectx, ino, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_lseek(task, ii, off, whence, out_off);
+	err = silofs_do_lseek(ectx, ii, off, whence, out_off);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, err);
+	return op_finish(ectx, err);
 }
 
-int silofs_exec_copy_file_range(struct silofs_task_ctx *task, ino_t ino_in,
+int silofs_exec_copy_file_range(struct silofs_exec_ctx *ectx, ino_t ino_in,
                                 off_t off_in, ino_t ino_out, off_t off_out,
                                 size_t len, int flags, size_t *out_ncp)
 {
@@ -1290,29 +1293,29 @@ int silofs_exec_copy_file_range(struct silofs_task_ctx *task, ino_t ino_in,
 	struct silofs_inode_info *ii_out = nullptr;
 	int err;
 
-	err = op_start(task);
+	err = op_start(ectx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(task);
+	err = op_authorize(ectx);
 	ok_or_goto_out(err);
 
-	err = op_map_creds(task);
+	err = op_map_creds(ectx);
 	ok_or_goto_out(err);
 
-	err = op_stage_cur_inode(task, ino_in, &ii_in);
+	err = op_stage_cur_inode(ectx, ino_in, &ii_in);
 	ok_or_goto_out(err);
 
-	err = op_stage_mut_inode(task, ino_out, ii_in, &ii_out);
+	err = op_stage_mut_inode(ectx, ino_out, ii_in, &ii_out);
 	ok_or_goto_out(err);
 
-	err = silofs_do_copy_file_range(task, ii_in, ii_out, off_in, off_out,
+	err = silofs_do_copy_file_range(ectx, ii_in, ii_out, off_in, off_out,
 	                                len, flags, out_ncp);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, err);
+	return op_finish(ectx, err);
 }
 
-int silofs_exec_setxattr(struct silofs_task_ctx *task, ino_t ino,
+int silofs_exec_setxattr(struct silofs_exec_ctx *ectx, ino_t ino,
                          const char *name, const void *value, size_t size,
                          int flags, bool kill_sgid)
 {
@@ -1320,32 +1323,32 @@ int silofs_exec_setxattr(struct silofs_task_ctx *task, ino_t ino,
 	struct silofs_inode_info *ii = nullptr;
 	int err;
 
-	err = op_start(task);
+	err = op_start(ectx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(task);
+	err = op_authorize(ectx);
 	ok_or_goto_out(err);
 
-	err = op_map_creds(task);
+	err = op_map_creds(ectx);
 	ok_or_goto_out(err);
 
-	err = op_stage_mut_inode(task, ino, nullptr, &ii);
+	err = op_stage_mut_inode(ectx, ino, nullptr, &ii);
 	ok_or_goto_out(err);
 
-	err = op_try_flush(task, ii);
+	err = op_try_flush(ectx, ii);
 	ok_or_goto_out(err);
 
-	err = silofs_make_xattrname(task, ii, name, &nstr);
+	err = silofs_make_xattrname(ectx, ii, name, &nstr);
 	ok_or_goto_out(err);
 
-	err = silofs_do_setxattr(task, ii, &nstr, value, size, flags,
+	err = silofs_do_setxattr(ectx, ii, &nstr, value, size, flags,
 	                         kill_sgid);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, err);
+	return op_finish(ectx, err);
 }
 
-int silofs_exec_getxattr(struct silofs_task_ctx *task, ino_t ino,
+int silofs_exec_getxattr(struct silofs_exec_ctx *ectx, ino_t ino,
                          const char *name, void *buf, size_t size,
                          size_t *out_size)
 {
@@ -1353,329 +1356,329 @@ int silofs_exec_getxattr(struct silofs_task_ctx *task, ino_t ino,
 	struct silofs_inode_info *ii = nullptr;
 	int err;
 
-	err = op_start(task);
+	err = op_start(ectx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(task);
+	err = op_authorize(ectx);
 	ok_or_goto_out(err);
 
-	err = op_map_creds(task);
+	err = op_map_creds(ectx);
 	ok_or_goto_out(err);
 
-	err = op_stage_cur_inode(task, ino, &ii);
+	err = op_stage_cur_inode(ectx, ino, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_make_xattrname(task, ii, name, &nstr);
+	err = silofs_make_xattrname(ectx, ii, name, &nstr);
 	ok_or_goto_out(err);
 
-	err = silofs_do_getxattr(task, ii, &nstr, buf, size, out_size);
+	err = silofs_do_getxattr(ectx, ii, &nstr, buf, size, out_size);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, err);
+	return op_finish(ectx, err);
 }
 
-int silofs_exec_listxattr(struct silofs_task_ctx *task, ino_t ino,
+int silofs_exec_listxattr(struct silofs_exec_ctx *ectx, ino_t ino,
                           struct silofs_listxattr_ctx *lxa_ctx)
 {
 	struct silofs_inode_info *ii = nullptr;
 	int err;
 
-	err = op_start(task);
+	err = op_start(ectx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(task);
+	err = op_authorize(ectx);
 	ok_or_goto_out(err);
 
-	err = op_map_creds(task);
+	err = op_map_creds(ectx);
 	ok_or_goto_out(err);
 
-	err = op_stage_cur_inode(task, ino, &ii);
+	err = op_stage_cur_inode(ectx, ino, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_listxattr(task, ii, lxa_ctx);
+	err = silofs_do_listxattr(ectx, ii, lxa_ctx);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, err);
+	return op_finish(ectx, err);
 }
 
-int silofs_exec_removexattr(struct silofs_task_ctx *task, ino_t ino,
+int silofs_exec_removexattr(struct silofs_exec_ctx *ectx, ino_t ino,
                             const char *name)
 {
 	struct silofs_namestr nstr;
 	struct silofs_inode_info *ii = nullptr;
 	int err;
 
-	err = op_start(task);
+	err = op_start(ectx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(task);
+	err = op_authorize(ectx);
 	ok_or_goto_out(err);
 
-	err = op_map_creds(task);
+	err = op_map_creds(ectx);
 	ok_or_goto_out(err);
 
-	err = op_stage_mut_inode(task, ino, nullptr, &ii);
+	err = op_stage_mut_inode(ectx, ino, nullptr, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_make_xattrname(task, ii, name, &nstr);
+	err = silofs_make_xattrname(ectx, ii, name, &nstr);
 	ok_or_goto_out(err);
 
-	err = silofs_do_removexattr(task, ii, &nstr);
+	err = silofs_do_removexattr(ectx, ii, &nstr);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, err);
+	return op_finish(ectx, err);
 }
 
-int silofs_exec_statx(struct silofs_task_ctx *task, ino_t ino,
+int silofs_exec_statx(struct silofs_exec_ctx *ectx, ino_t ino,
                       uint32_t sx_want_mask, struct silofs_stat *out_st)
 {
 	struct silofs_inode_info *ii = nullptr;
 	int err;
 
-	err = op_start(task);
+	err = op_start(ectx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(task);
+	err = op_authorize(ectx);
 	ok_or_goto_out(err);
 
-	err = op_map_creds(task);
+	err = op_map_creds(ectx);
 	ok_or_goto_out(err);
 
-	err = op_stage_cur_inode(task, ino, &ii);
+	err = op_stage_cur_inode(ectx, ino, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_statx(task, ii, sx_want_mask, out_st);
+	err = silofs_do_statx(ectx, ii, sx_want_mask, out_st);
 	ok_or_goto_out(err);
 
-	err = op_rmap_stat(task, out_st);
+	err = op_rmap_stat(ectx, out_st);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, err);
+	return op_finish(ectx, err);
 }
 
-int silofs_exec_fiemap(struct silofs_task_ctx *task, ino_t ino,
+int silofs_exec_fiemap(struct silofs_exec_ctx *ectx, ino_t ino,
                        struct fiemap *fm)
 {
 	struct silofs_inode_info *ii = nullptr;
 	int err;
 
-	err = op_start(task);
+	err = op_start(ectx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(task);
+	err = op_authorize(ectx);
 	ok_or_goto_out(err);
 
-	err = op_map_creds(task);
+	err = op_map_creds(ectx);
 	ok_or_goto_out(err);
 
-	err = op_stage_cur_inode(task, ino, &ii);
+	err = op_stage_cur_inode(ectx, ino, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_fiemap(task, ii, fm);
+	err = silofs_do_fiemap(ectx, ii, fm);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, err);
+	return op_finish(ectx, err);
 }
 
-int silofs_exec_syncfs(struct silofs_task_ctx *task, ino_t ino, int flags)
+int silofs_exec_syncfs(struct silofs_exec_ctx *ectx, ino_t ino, int flags)
 {
 	struct silofs_inode_info *ii = nullptr;
 	int err;
 
-	err = op_start(task);
+	err = op_start(ectx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(task);
+	err = op_authorize(ectx);
 	ok_or_goto_out(err);
 
-	err = op_map_creds(task);
+	err = op_map_creds(ectx);
 	ok_or_goto_out(err);
 
-	err = op_stage_mut_inode(task, ino, nullptr, &ii);
+	err = op_stage_mut_inode(ectx, ino, nullptr, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_syncfs(task, ii, flags);
+	err = silofs_do_syncfs(ectx, ii, flags);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, err);
+	return op_finish(ectx, err);
 }
 
-int silofs_exec_query(struct silofs_task_ctx *task, ino_t ino,
+int silofs_exec_query(struct silofs_exec_ctx *ectx, ino_t ino,
                       enum silofs_query_type qtype,
                       struct silofs_ioc_query *out_qry)
 {
 	struct silofs_inode_info *ii = nullptr;
 	int err;
 
-	err = op_start(task);
+	err = op_start(ectx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(task);
+	err = op_authorize(ectx);
 	ok_or_goto_out(err);
 
-	err = op_map_creds(task);
+	err = op_map_creds(ectx);
 	ok_or_goto_out(err);
 
-	err = op_stage_cur_inode(task, ino, &ii);
+	err = op_stage_cur_inode(ectx, ino, &ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_query(task, ii, qtype, out_qry);
+	err = silofs_do_query(ectx, ii, qtype, out_qry);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, err);
+	return op_finish(ectx, err);
 }
 
-int silofs_exec_forkfs(struct silofs_task_ctx *task, ino_t ino, int flags,
+int silofs_exec_forkfs(struct silofs_exec_ctx *ectx, ino_t ino, int flags,
                        struct silofs_mbrefs *out_mbrefs)
 {
 	struct silofs_inode_info *dir_ii = nullptr;
 	int err;
 
-	err = op_start(task);
+	err = op_start(ectx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(task);
+	err = op_authorize(ectx);
 	ok_or_goto_out(err);
 
-	err = op_map_creds(task);
+	err = op_map_creds(ectx);
 	ok_or_goto_out(err);
 
-	err = op_stage_cur_inode(task, ino, &dir_ii);
+	err = op_stage_cur_inode(ectx, ino, &dir_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_forkfs(task, dir_ii, flags, out_mbrefs);
+	err = silofs_do_forkfs(ectx, dir_ii, flags, out_mbrefs);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, err);
+	return op_finish(ectx, err);
 }
 
-int silofs_exec_tune(struct silofs_task_ctx *task, ino_t ino, int iflags_want,
+int silofs_exec_tune(struct silofs_exec_ctx *ectx, ino_t ino, int iflags_want,
                      int iflags_dont)
 {
 	struct silofs_inode_info *dir_ii = nullptr;
 	int err;
 
-	err = op_start(task);
+	err = op_start(ectx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(task);
+	err = op_authorize(ectx);
 	ok_or_goto_out(err);
 
-	err = op_map_creds(task);
+	err = op_map_creds(ectx);
 	ok_or_goto_out(err);
 
-	err = op_stage_mut_inode(task, ino, nullptr, &dir_ii);
+	err = op_stage_mut_inode(ectx, ino, nullptr, &dir_ii);
 	ok_or_goto_out(err);
 
-	err = silofs_do_tune(task, dir_ii, iflags_want, iflags_dont);
+	err = silofs_do_tune(ectx, dir_ii, iflags_want, iflags_dont);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, err);
+	return op_finish(ectx, err);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_exec_rdwr_post(const struct silofs_task_ctx *task, int wr_mode,
+int silofs_exec_rdwr_post(const struct silofs_exec_ctx *ectx, int wr_mode,
                           const struct silofs_iovec *iov, size_t cnt)
 {
 	/*
-	 * No need to have op_lock_fs(task),op_unlock_fs(task) here: the
+	 * No need to have op_lock_fs(ectx),op_unlock_fs(ectx) here: the
 	 * underlying operation is just atomic decrement.
 	 */
-	return silofs_do_rdwr_post(task, wr_mode, iov, cnt);
+	return silofs_do_rdwr_post(ectx, wr_mode, iov, cnt);
 }
 
-int silofs_exec_maintain(struct silofs_task_ctx *task, int flags)
+int silofs_exec_maintain(struct silofs_exec_ctx *ectx, int flags)
 {
 	int err;
 
-	err = op_start(task);
+	err = op_start(ectx);
 	ok_or_goto_out(err);
 
-	err = silofs_do_maintain(task, flags | SILOFS_CTLF_OPSTART);
+	err = silofs_do_maintain(ectx, flags | SILOFS_CTLF_OPSTART);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, err);
+	return op_finish(ectx, err);
 }
 
-int silofs_exec_walkfs(struct silofs_task_ctx *task,
+int silofs_exec_walkfs(struct silofs_exec_ctx *ectx,
                        const struct silofs_laddr_visitor *lvis)
 {
 	int err;
 
-	err = op_start(task);
+	err = op_start(ectx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(task);
+	err = op_authorize(ectx);
 	ok_or_goto_out(err);
 
-	err = op_map_creds(task);
+	err = op_map_creds(ectx);
 	ok_or_goto_out(err);
 
-	err = silofs_do_walkfs(task, lvis);
+	err = silofs_do_walkfs(ectx, lvis);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, err);
+	return op_finish(ectx, err);
 }
 
-int silofs_exec_unrefs(struct silofs_task_ctx *task)
+int silofs_exec_unrefs(struct silofs_exec_ctx *ectx)
 {
 	int err;
 
-	err = op_start(task);
+	err = op_start(ectx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(task);
+	err = op_authorize(ectx);
 	ok_or_goto_out(err);
 
-	err = op_map_creds(task);
+	err = op_map_creds(ectx);
 	ok_or_goto_out(err);
 
-	err = silofs_do_unrefs(task);
+	err = silofs_do_unrefs(ectx);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, err);
+	return op_finish(ectx, err);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_exec_archive(struct silofs_task_ctx *task,
+int silofs_exec_archive(struct silofs_exec_ctx *ectx,
                         struct silofs_mbref *out_ar_mbref)
 {
 	int err;
 
-	err = op_start(task);
+	err = op_start(ectx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(task);
+	err = op_authorize(ectx);
 	ok_or_goto_out(err);
 
-	err = op_map_creds(task);
+	err = op_map_creds(ectx);
 	ok_or_goto_out(err);
 
-	err = silofs_do_archive_fs(task, out_ar_mbref);
+	err = silofs_do_archive_fs(ectx, out_ar_mbref);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, err);
+	return op_finish(ectx, err);
 }
 
-int silofs_exec_restore(struct silofs_task_ctx *task,
+int silofs_exec_restore(struct silofs_exec_ctx *ectx,
                         const struct silofs_mbref *ar_mbref,
                         struct silofs_mbref *out_fs_mbref)
 {
 	int err;
 
-	err = op_start(task);
+	err = op_start(ectx);
 	ok_or_goto_out(err);
 
-	err = op_authorize(task);
+	err = op_authorize(ectx);
 	ok_or_goto_out(err);
 
-	err = op_map_creds(task);
+	err = op_map_creds(ectx);
 	ok_or_goto_out(err);
 
-	err = silofs_do_restore_fs(task, ar_mbref, out_fs_mbref);
+	err = silofs_do_restore_fs(ectx, ar_mbref, out_fs_mbref);
 	ok_or_goto_out(err);
 out:
-	return op_finish(task, err);
+	return op_finish(ectx, err);
 }

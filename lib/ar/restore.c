@@ -18,13 +18,14 @@
 #include "infra.h"
 #include "obs.h"
 #include "fs.h"
+#include "exectx.h"
 #include "env.h"
 #include "walk.h"
 #include "index.h"
 #include "arre.h"
 
 struct silofs_re_ctx {
-	struct silofs_task_ctx *task;
+	struct silofs_exec_ctx *ectx;
 	struct silofs_env *env;
 	struct silofs_arnode_info *ari;
 	struct silofs_alloc *alloc;
@@ -58,12 +59,12 @@ rec_renew_ari(struct silofs_re_ctx *re_ctx, const struct silofs_pmeta *pmeta)
 	return 0;
 }
 
-static int rec_init(struct silofs_re_ctx *re_ctx, struct silofs_task_ctx *task)
+static int rec_init(struct silofs_re_ctx *re_ctx, struct silofs_exec_ctx *ectx)
 {
 	silofs_memzero(re_ctx, sizeof(*re_ctx));
 	silofs_laddr_reset(&re_ctx->sb_laddr);
-	re_ctx->task  = task;
-	re_ctx->env   = task->t_env;
+	re_ctx->ectx  = ectx;
+	re_ctx->env   = ectx->ex_env;
 	re_ctx->ari   = nullptr;
 	re_ctx->alloc = re_ctx->env->base.alloc;
 	re_ctx->repo  = re_ctx->env->base.repo;
@@ -74,7 +75,7 @@ static int rec_init(struct silofs_re_ctx *re_ctx, struct silofs_task_ctx *task)
 static void rec_fini(struct silofs_re_ctx *re_ctx)
 {
 	rec_rebind_ari(re_ctx, nullptr);
-	re_ctx->task  = nullptr;
+	re_ctx->ectx  = nullptr;
 	re_ctx->env   = nullptr;
 	re_ctx->alloc = nullptr;
 	re_ctx->repo  = nullptr;
@@ -430,18 +431,18 @@ static int rec_do_restore(struct silofs_re_ctx *re_ctx,
 	return 0;
 }
 
-int silofs_do_restore_fs(struct silofs_task_ctx *task,
+int silofs_do_restore_fs(struct silofs_exec_ctx *ectx,
                          const struct silofs_mbref *ar_mbref,
                          struct silofs_mbref *out_fs_mbref)
 {
 	struct silofs_re_ctx re_ctx;
 	int err;
 
-	err = silofs_flush_dirty_now(task);
+	err = silofs_flush_dirty_now(ectx);
 	if (err) {
 		return err;
 	}
-	err = rec_init(&re_ctx, task);
+	err = rec_init(&re_ctx, ectx);
 	if (err) {
 		goto out;
 	}

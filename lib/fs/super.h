@@ -21,7 +21,7 @@
 #include <silofs/ondisk.h>
 #include "addr.h"
 
-struct silofs_task_ctx;
+struct silofs_exec_ctx;
 struct silofs_spnode_info;
 struct silofs_spleaf_info;
 struct silofs_spmap_lmap;
@@ -159,20 +159,20 @@ int silofs_verify_space_stats(const struct silofs_space_stats1k *sp);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_clear_unwritten_at(struct silofs_task_ctx    *task,
+int silofs_clear_unwritten_at(struct silofs_exec_ctx    *ectx,
                               const struct silofs_vaddr *vaddr);
 
-int silofs_mark_unwritten_at(struct silofs_task_ctx    *task,
+int silofs_mark_unwritten_at(struct silofs_exec_ctx    *ectx,
                              const struct silofs_vaddr *vaddr);
 
-int silofs_test_unwritten_at(struct silofs_task_ctx    *task,
+int silofs_test_unwritten_at(struct silofs_exec_ctx    *ectx,
                              const struct silofs_vaddr *vaddr, bool *out_res);
 
-int silofs_test_last_allocated(struct silofs_task_ctx    *task,
+int silofs_test_last_allocated(struct silofs_exec_ctx    *ectx,
                                const struct silofs_vaddr *vaddr,
                                bool                      *out_res);
 
-int silofs_test_shared_dbkref(struct silofs_task_ctx    *task,
+int silofs_test_shared_dbkref(struct silofs_exec_ctx    *ectx,
                               const struct silofs_vaddr *vaddr, bool *out_res);
 
 #endif /* SILOFS_SUPER_H_ */

@@ -34,6 +34,6 @@
 #include "fs/spmaps.h"
 #include "fs/vstage.h"
 #include "fs/encdec.h"
-#include "fs/task.h"
+#include "fs/flush.h"
 
 #endif /* SILOFS_FS_H_ */

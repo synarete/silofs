@@ -363,6 +363,5 @@ int silofs_exec_format_fs(struct silofs_task_ctx *task, size_t capacity,
 	if (err) {
 		return err;
 	}
-	silofs_unused(out_mbref);
 	return 0;
 }

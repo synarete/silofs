@@ -706,11 +706,11 @@ bool silofs_sbi_ismutable_laddr(const struct silofs_sb_info *sbi,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int
-do_stage_spleaf(struct silofs_exec_ctx *ectx, const struct silofs_vaddr *vaddr,
+do_stage_spleaf(struct silofs_exec_ctx *exct, const struct silofs_vaddr *vaddr,
                 enum silofs_stg_mode stg_mode,
                 struct silofs_spleaf_info **out_sli)
 {
-	return silofs_stage_spleaf_of(ectx, vaddr, stg_mode, out_sli);
+	return silofs_stage_spleaf_of(exct, vaddr, stg_mode, out_sli);
 }
 
 static void lsmap_vaddr_of(const struct silofs_spleaf_info *sli,
@@ -724,7 +724,7 @@ static void lsmap_vaddr_of(const struct silofs_spleaf_info *sli,
 	silofs_vaddr_of_lsmap(out_vaddr, refmtype, lrange.beg);
 }
 
-static int do_stage_lsmap_of(struct silofs_exec_ctx *ectx,
+static int do_stage_lsmap_of(struct silofs_exec_ctx *exct,
                              const struct silofs_spleaf_info *sli,
                              enum silofs_stg_mode stg_mode,
                              struct silofs_lsmap_info **out_lsi)
@@ -734,7 +734,7 @@ static int do_stage_lsmap_of(struct silofs_exec_ctx *ectx,
 	int err;
 
 	lsmap_vaddr_of(sli, &vaddr);
-	err = silofs_stage_vnode(ectx, nullptr, &vaddr, stg_mode, &vni);
+	err = silofs_stage_vnode(exct, nullptr, &vaddr, stg_mode, &vni);
 	if (err) {
 		return err;
 	}
@@ -743,20 +743,20 @@ static int do_stage_lsmap_of(struct silofs_exec_ctx *ectx,
 }
 
 static int
-stage_lsmap_of(struct silofs_exec_ctx *ectx, struct silofs_spleaf_info *sli,
+stage_lsmap_of(struct silofs_exec_ctx *exct, struct silofs_spleaf_info *sli,
                enum silofs_stg_mode stg_mode,
                struct silofs_lsmap_info **out_lsi)
 {
 	int err;
 
 	silofs_sli_incref(sli);
-	err = do_stage_lsmap_of(ectx, sli, stg_mode, out_lsi);
+	err = do_stage_lsmap_of(exct, sli, stg_mode, out_lsi);
 	silofs_sli_decref(sli);
 	silofs_assert_ok(err);
 	return err;
 }
 
-static int stage_spleaf_lsmap(struct silofs_exec_ctx *ectx,
+static int stage_spleaf_lsmap(struct silofs_exec_ctx *exct,
                               const struct silofs_vaddr *vaddr,
                               enum silofs_stg_mode stg_mode,
                               struct silofs_spleaf_info **out_sli,
@@ -764,11 +764,11 @@ static int stage_spleaf_lsmap(struct silofs_exec_ctx *ectx,
 {
 	int err;
 
-	err = do_stage_spleaf(ectx, vaddr, stg_mode, out_sli);
+	err = do_stage_spleaf(exct, vaddr, stg_mode, out_sli);
 	if (err) {
 		return err;
 	}
-	err = stage_lsmap_of(ectx, *out_sli, stg_mode, out_lsi);
+	err = stage_lsmap_of(exct, *out_sli, stg_mode, out_lsi);
 	if (err) {
 		return err;
 	}
@@ -776,21 +776,21 @@ static int stage_spleaf_lsmap(struct silofs_exec_ctx *ectx,
 }
 
 static int
-stage_lsmap(struct silofs_exec_ctx *ectx, const struct silofs_vaddr *vaddr,
+stage_lsmap(struct silofs_exec_ctx *exct, const struct silofs_vaddr *vaddr,
             enum silofs_stg_mode stg_mode, struct silofs_lsmap_info **out_lsi)
 {
 	struct silofs_spleaf_info *sli = nullptr;
 
-	return stage_spleaf_lsmap(ectx, vaddr, stg_mode, &sli, out_lsi);
+	return stage_spleaf_lsmap(exct, vaddr, stg_mode, &sli, out_lsi);
 }
 
-int silofs_test_unwritten_at(struct silofs_exec_ctx *ectx,
+int silofs_test_unwritten_at(struct silofs_exec_ctx *exct,
                              const struct silofs_vaddr *vaddr, bool *out_res)
 {
 	struct silofs_lsmap_info *lsi = nullptr;
 	int err;
 
-	err = stage_lsmap(ectx, vaddr, SILOFS_STG_CUR, &lsi);
+	err = stage_lsmap(exct, vaddr, SILOFS_STG_CUR, &lsi);
 	if (err) {
 		return err;
 	}
@@ -798,13 +798,13 @@ int silofs_test_unwritten_at(struct silofs_exec_ctx *ectx,
 	return 0;
 }
 
-int silofs_clear_unwritten_at(struct silofs_exec_ctx *ectx,
+int silofs_clear_unwritten_at(struct silofs_exec_ctx *exct,
                               const struct silofs_vaddr *vaddr)
 {
 	struct silofs_lsmap_info *lsi = nullptr;
 	int err;
 
-	err = stage_lsmap(ectx, vaddr, SILOFS_STG_COW, &lsi);
+	err = stage_lsmap(exct, vaddr, SILOFS_STG_COW, &lsi);
 	if (err) {
 		return err;
 	}
@@ -812,13 +812,13 @@ int silofs_clear_unwritten_at(struct silofs_exec_ctx *ectx,
 	return 0;
 }
 
-int silofs_mark_unwritten_at(struct silofs_exec_ctx *ectx,
+int silofs_mark_unwritten_at(struct silofs_exec_ctx *exct,
                              const struct silofs_vaddr *vaddr)
 {
 	struct silofs_lsmap_info *lsi = nullptr;
 	int err;
 
-	err = stage_lsmap(ectx, vaddr, SILOFS_STG_COW, &lsi);
+	err = stage_lsmap(exct, vaddr, SILOFS_STG_COW, &lsi);
 	if (err) {
 		return err;
 	}
@@ -826,13 +826,13 @@ int silofs_mark_unwritten_at(struct silofs_exec_ctx *ectx,
 	return 0;
 }
 
-int silofs_test_last_allocated(struct silofs_exec_ctx *ectx,
+int silofs_test_last_allocated(struct silofs_exec_ctx *exct,
                                const struct silofs_vaddr *vaddr, bool *out_res)
 {
 	struct silofs_lsmap_info *lsi = nullptr;
 	int err;
 
-	err = stage_lsmap(ectx, vaddr, SILOFS_STG_CUR, &lsi);
+	err = stage_lsmap(exct, vaddr, SILOFS_STG_CUR, &lsi);
 	if (err) {
 		return err;
 	}
@@ -840,7 +840,7 @@ int silofs_test_last_allocated(struct silofs_exec_ctx *ectx,
 	return 0;
 }
 
-int silofs_test_shared_dbkref(struct silofs_exec_ctx *ectx,
+int silofs_test_shared_dbkref(struct silofs_exec_ctx *exct,
                               const struct silofs_vaddr *vaddr, bool *out_res)
 {
 	struct silofs_spleaf_info *sli = nullptr;
@@ -852,7 +852,7 @@ int silofs_test_shared_dbkref(struct silofs_exec_ctx *ectx,
 	if (!silofs_vaddr_isdatabk(vaddr)) {
 		return 0;
 	}
-	err = stage_spleaf_lsmap(ectx, vaddr, SILOFS_STG_CUR, &sli, &lsi);
+	err = stage_spleaf_lsmap(exct, vaddr, SILOFS_STG_CUR, &sli, &lsi);
 	if (err) {
 		return err;
 	}

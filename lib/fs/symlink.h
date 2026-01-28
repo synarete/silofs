@@ -26,14 +26,14 @@ struct silofs_symlnk_value;
 
 void silofs_ii_setup_symlnk(struct silofs_inode_info *lnk_ii);
 
-int silofs_drop_symlink(struct silofs_exec_ctx   *ectx,
+int silofs_drop_symlink(struct silofs_exec_ctx   *exct,
                         struct silofs_inode_info *lnk_ii);
 
-int silofs_do_readlink(struct silofs_exec_ctx   *ectx,
+int silofs_do_readlink(struct silofs_exec_ctx   *exct,
                        struct silofs_inode_info *lnk_ii, void *ptr, size_t lim,
                        size_t *out_len);
 
-int silofs_bind_symval(struct silofs_exec_ctx      *ectx,
+int silofs_bind_symval(struct silofs_exec_ctx      *exct,
                        struct silofs_inode_info    *lnk_ii,
                        const struct silofs_strview *symval);
 

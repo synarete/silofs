@@ -70,7 +70,7 @@ struct silofs_flusher {
 	struct silofs_dset        dset[3];
 	struct silofs_listq       txq;
 	struct silofs_submitq    *submitq;
-	struct silofs_exec_ctx   *ectx;
+	struct silofs_exec_ctx   *exct;
 	struct silofs_sb_info    *sbi;
 	struct silofs_inode_info *ii;
 	uint32_t                  tx_count;
@@ -115,9 +115,9 @@ int silofs_flusher_init(struct silofs_flusher *flusher,
 
 void silofs_flusher_fini(struct silofs_flusher *flusher);
 
-int silofs_flush_dirty(struct silofs_exec_ctx   *ectx,
+int silofs_flush_dirty(struct silofs_exec_ctx   *exct,
                        struct silofs_inode_info *ii, int flags);
 
-int silofs_flush_dirty_now(struct silofs_exec_ctx *ectx);
+int silofs_flush_dirty_now(struct silofs_exec_ctx *exct);
 
 #endif /* SILOFS_FLUSH_H_ */

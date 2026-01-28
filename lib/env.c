@@ -54,8 +54,8 @@ static void env_update_root_uber(struct silofs_env *env,
 	}
 }
 
-static void
-env_update_uber(struct silofs_env *env, struct silofs_uber_info *ubi)
+void silofs_env_update_uber(struct silofs_env *env,
+                            struct silofs_uber_info *ubi)
 {
 	env_bind_ubi(env, ubi);
 	env_update_root_uber(env, ubi);
@@ -403,7 +403,7 @@ void silofs_env_fini(struct silofs_env *env)
 {
 	env_update_repodir(env, nullptr);
 	env_update_sb(env, nullptr);
-	env_update_uber(env, nullptr);
+	silofs_env_update_uber(env, nullptr);
 	env_fini_uconv(env);
 	env_fini_crypto(env);
 	env_fini_locks(env);
@@ -448,22 +448,6 @@ bool silofs_env_isrdonlyfs(const struct silofs_env *env)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-int silofs_env_format_uber(struct silofs_env *env)
-{
-	struct silofs_pnodeptr pnodeptr = {};
-	struct silofs_uber_info *ubi    = nullptr;
-	int err;
-
-	silofs_make_base_pnodeptr(env->base.prng, SILOFS_MTYPE_UBER,
-	                          &pnodeptr);
-	err = silofs_spawn_uber(env, &pnodeptr, &ubi);
-	if (err) {
-		return err;
-	}
-	env_update_uber(env, ubi);
-	return 0;
-}
-
 int silofs_env_reload_uber(struct silofs_env *env)
 {
 	struct silofs_pnodeptr pnodeptr = {};
@@ -478,7 +462,7 @@ int silofs_env_reload_uber(struct silofs_env *env)
 	if (err) {
 		return err;
 	}
-	env_update_uber(env, ubi);
+	silofs_env_update_uber(env, ubi);
 	return 0;
 }
 
@@ -621,7 +605,7 @@ int silofs_env_shut(struct silofs_env *env)
 {
 	log_dbg("shut env: op_count=%lu", env->opstat.op_count);
 	env_update_sb(env, nullptr);
-	env_update_uber(env, nullptr);
+	silofs_env_update_uber(env, nullptr);
 	return 0;
 }
 

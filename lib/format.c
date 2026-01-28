@@ -19,41 +19,42 @@
 #include <silofs/types.h>
 #include "infra.h"
 #include "addr.h"
+#include "obs.h"
 #include "fs.h"
 #include "exec.h"
 #include "env.h"
 
-static int pre_format_fs(struct silofs_exec_ctx *ectx)
+static int pre_format_fs(struct silofs_exec_ctx *exct)
 {
-	return silofs_env_reinit_ciphers(ectx->ex_env);
+	return silofs_env_reinit_ciphers(exct->env);
 }
 
-static void drop_caches(struct silofs_exec_ctx *ectx)
+static void drop_caches(struct silofs_exec_ctx *exct)
 {
-	silofs_env_drop_caches(ectx->ex_env);
+	silofs_env_drop_caches(exct->env);
 }
 
-static void relax_caches(struct silofs_exec_ctx *ectx)
+static void relax_caches(struct silofs_exec_ctx *exct)
 {
-	silofs_env_relax_caches(ectx->ex_env, SILOFS_CTLF_IDLE);
+	silofs_env_relax_caches(exct->env, SILOFS_CTLF_IDLE);
 }
 
-static void drop_relax_caches(struct silofs_exec_ctx *ectx)
+static void drop_relax_caches(struct silofs_exec_ctx *exct)
 {
-	drop_caches(ectx);
-	relax_caches(ectx);
+	drop_caches(exct);
+	relax_caches(exct);
 }
 
-static int flush_destage_dirty(struct silofs_exec_ctx *ectx)
+static int flush_destage_dirty(struct silofs_exec_ctx *exct)
 {
 	int err;
 
-	err = silofs_flush_dirty_now(ectx);
+	err = silofs_flush_dirty_now(exct);
 	if (err) {
 		log_err("failed to flush dirty: err=%d", err);
 		return err;
 	}
-	err = silofs_destage_dirty(ectx->ex_env);
+	err = silofs_destage_dirty(exct->env);
 	if (err) {
 		log_err("failed to destage dirty: err=%d", err);
 		return err;
@@ -61,11 +62,11 @@ static int flush_destage_dirty(struct silofs_exec_ctx *ectx)
 	return 0;
 }
 
-static int post_format_fs(struct silofs_exec_ctx *ectx)
+static int post_format_fs(struct silofs_exec_ctx *exct)
 {
 	int err;
 
-	err = flush_destage_dirty(ectx);
+	err = flush_destage_dirty(exct);
 	if (err) {
 		return err;
 	}
@@ -74,16 +75,95 @@ static int post_format_fs(struct silofs_exec_ctx *ectx)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static int format_uber(struct silofs_exec_ctx *ectx)
+static void
+make_base_pnodeptr(const struct silofs_exec_ctx *exct, enum silofs_mtype mtype,
+                   struct silofs_pnodeptr *out_pnodeptr)
 {
-	return silofs_env_format_uber(ectx->ex_env);
+	struct silofs_prandgen *prng = exct->env->base.prng;
+
+	silofs_make_base_pnodeptr(prng, mtype, out_pnodeptr);
 }
 
-static int format_obs(struct silofs_exec_ctx *ectx)
+static int format_uber(struct silofs_exec_ctx *exct)
+{
+	struct silofs_pnodeptr pnodeptr = {};
+	struct silofs_uber_info *ubi    = nullptr;
+	int err;
+
+	make_base_pnodeptr(exct, SILOFS_MTYPE_UBER, &pnodeptr);
+	err = silofs_spawn_uber(exct->env, &pnodeptr, &ubi);
+	if (err) {
+		return err;
+	}
+	silofs_env_update_uber(exct->env, ubi);
+	return 0;
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static int
+spawn_btree_root(struct silofs_exec_ctx *exct, enum silofs_mtype mtype)
+{
+	struct silofs_pnodeptr pnodeptr;
+	struct silofs_btnode_info *bti = nullptr;
+	int err;
+
+	make_base_pnodeptr(exct, SILOFS_MTYPE_BTNODE, &pnodeptr);
+	err = silofs_spawn_btnode(exct->env, &pnodeptr, &bti);
+	if (err) {
+		return err;
+	}
+	/* YOU ARE HERE */
+	(void)mtype;
+	return 0;
+}
+
+static int
+format_btree_of(struct silofs_exec_ctx *exct, enum silofs_mtype mtype)
 {
 	int err;
 
-	err = format_uber(ectx);
+	err = spawn_btree_root(exct, mtype);
+	if (err) {
+		log_err("format btree failed: mtype=%d err=%d", mtype, err);
+		return err;
+	}
+	err = flush_destage_dirty(exct);
+	if (err) {
+		return err;
+	}
+	log_dbg("format btree of: mtype=%d", mtype);
+	return 0;
+}
+
+static int format_btrees(struct silofs_exec_ctx *exct)
+{
+	enum silofs_mtype mtype = SILOFS_MTYPE_NONE;
+	int err;
+
+	while (++mtype < SILOFS_MTYPE_LAST) {
+		if (!silofs_mtype_isvnode2(mtype)) {
+			continue;
+		}
+		err = format_btree_of(exct, mtype);
+		if (err) {
+			return err;
+		}
+	}
+	return 0;
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static int format_obs(struct silofs_exec_ctx *exct)
+{
+	int err;
+
+	err = format_uber(exct);
+	if (err) {
+		return err;
+	}
+	err = format_btrees(exct);
 	if (err) {
 		return err;
 	}
@@ -99,32 +179,32 @@ static size_t calc_fs_cap(size_t fs_cap_want)
 	return (fs_cap_want / align_size) * align_size;
 }
 
-static int format_super(struct silofs_exec_ctx *ectx, size_t fs_cap_want)
+static int format_super(struct silofs_exec_ctx *exct, size_t fs_cap_want)
 {
-	return silofs_env_format_super(ectx->ex_env, calc_fs_cap(fs_cap_want));
+	return silofs_env_format_super(exct->env, calc_fs_cap(fs_cap_want));
 }
 
 static int
-require_spmaps_of(struct silofs_exec_ctx *ectx, enum silofs_mtype mtype)
+require_spmaps_of(struct silofs_exec_ctx *exct, enum silofs_mtype mtype)
 {
 	struct silofs_vaddr vaddr;
 	struct silofs_spleaf_info *sli = nullptr;
 
 	silofs_vaddr_setup(&vaddr, mtype, 0);
-	return silofs_require_spleaf_of(ectx, &vaddr, SILOFS_STG_COW, &sli);
+	return silofs_require_spleaf_of(exct, &vaddr, SILOFS_STG_COW, &sli);
 }
 
 static int
-format_spmaps_of(struct silofs_exec_ctx *ectx, enum silofs_mtype mtype)
+format_spmaps_of(struct silofs_exec_ctx *exct, enum silofs_mtype mtype)
 {
 	int err;
 
-	err = require_spmaps_of(ectx, mtype);
+	err = require_spmaps_of(exct, mtype);
 	if (err) {
 		log_err("format spmaps failed: mtype=%d err=%d", mtype, err);
 		return err;
 	}
-	err = flush_destage_dirty(ectx);
+	err = flush_destage_dirty(exct);
 	if (err) {
 		return err;
 	}
@@ -132,7 +212,7 @@ format_spmaps_of(struct silofs_exec_ctx *ectx, enum silofs_mtype mtype)
 	return 0;
 }
 
-static int format_spmaps(struct silofs_exec_ctx *ectx)
+static int format_spmaps(struct silofs_exec_ctx *exct)
 {
 	enum silofs_mtype mtype = SILOFS_MTYPE_NONE;
 	int err;
@@ -141,11 +221,11 @@ static int format_spmaps(struct silofs_exec_ctx *ectx)
 		if (!silofs_mtype_isvnode(mtype)) {
 			continue;
 		}
-		err = format_spmaps_of(ectx, mtype);
+		err = format_spmaps_of(exct, mtype);
 		if (err) {
 			return err;
 		}
-		drop_relax_caches(ectx);
+		drop_relax_caches(exct);
 	}
 	return 0;
 }
@@ -153,13 +233,13 @@ static int format_spmaps(struct silofs_exec_ctx *ectx)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int
-claim_reclaim_of(struct silofs_exec_ctx *ectx, enum silofs_mtype mtype)
+claim_reclaim_of(struct silofs_exec_ctx *exct, enum silofs_mtype mtype)
 {
 	struct silofs_vaddr vaddr;
 	const off_t voff_exp = 0;
 	int err;
 
-	err = silofs_claim_vspace(ectx, mtype, &vaddr);
+	err = silofs_claim_vspace(exct, mtype, &vaddr);
 	if (err) {
 		log_err("claim failed: mtype=%d err=%d", mtype, err);
 		return err;
@@ -169,8 +249,8 @@ claim_reclaim_of(struct silofs_exec_ctx *ectx, enum silofs_mtype mtype)
 		        vaddr.off);
 		return -SILOFS_EFSCORRUPTED;
 	}
-	drop_caches(ectx);
-	err = silofs_reclaim_vspace(ectx, &vaddr);
+	drop_caches(exct);
+	err = silofs_reclaim_vspace(exct, &vaddr);
 	if (err) {
 		log_err("bad reclaim: mtype=%d voff=%ld err=%d", mtype,
 		        vaddr.off, err);
@@ -178,7 +258,7 @@ claim_reclaim_of(struct silofs_exec_ctx *ectx, enum silofs_mtype mtype)
 	return 0;
 }
 
-static int claim_recalim_space(struct silofs_exec_ctx *ectx)
+static int claim_recalim_space(struct silofs_exec_ctx *exct)
 {
 	enum silofs_mtype mtype = SILOFS_MTYPE_NONE;
 	int err;
@@ -188,15 +268,15 @@ static int claim_recalim_space(struct silofs_exec_ctx *ectx)
 		    (mtype == SILOFS_MTYPE_LSMAP)) {
 			continue;
 		}
-		err = claim_reclaim_of(ectx, mtype);
+		err = claim_reclaim_of(exct, mtype);
 		if (err) {
 			return err;
 		}
-		err = flush_destage_dirty(ectx);
+		err = flush_destage_dirty(exct);
 		if (err) {
 			return err;
 		}
-		drop_relax_caches(ectx);
+		drop_relax_caches(exct);
 	}
 	return 0;
 }
@@ -211,13 +291,13 @@ static off_t vni_offset(const struct silofs_vnode_info *vni)
 }
 
 static int
-claim_offset_zero(struct silofs_exec_ctx *ectx, enum silofs_mtype mtype)
+claim_offset_zero(struct silofs_exec_ctx *exct, enum silofs_mtype mtype)
 {
 	struct silofs_vnode_info *vni = nullptr;
 	off_t off                     = -1;
 	int err;
 
-	err = silofs_spawn_vnode(ectx, nullptr, mtype, &vni);
+	err = silofs_spawn_vnode(exct, nullptr, mtype, &vni);
 	if (err) {
 		log_err("failed to spawn: mtype=%d err=%d", mtype, err);
 		return err;
@@ -230,7 +310,7 @@ claim_offset_zero(struct silofs_exec_ctx *ectx, enum silofs_mtype mtype)
 	return 0;
 }
 
-static int format_nil_space(struct silofs_exec_ctx *ectx)
+static int format_nil_space(struct silofs_exec_ctx *exct)
 {
 	enum silofs_mtype mtype = SILOFS_MTYPE_NONE;
 	int err;
@@ -240,15 +320,15 @@ static int format_nil_space(struct silofs_exec_ctx *ectx)
 		    (mtype == SILOFS_MTYPE_LSMAP)) { /* TODO: revisit */
 			continue;
 		}
-		err = claim_offset_zero(ectx, mtype);
+		err = claim_offset_zero(exct, mtype);
 		if (err) {
 			return err;
 		}
-		err = flush_destage_dirty(ectx);
+		err = flush_destage_dirty(exct);
 		if (err) {
 			return err;
 		}
-		drop_relax_caches(ectx);
+		drop_relax_caches(exct);
 	}
 	return 0;
 }
@@ -256,14 +336,14 @@ static int format_nil_space(struct silofs_exec_ctx *ectx)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int
-spawn_rootdir(struct silofs_exec_ctx *ectx, struct silofs_inode_info **out_ii)
+spawn_rootdir(struct silofs_exec_ctx *exct, struct silofs_inode_info **out_ii)
 {
 	struct silofs_inew_params inp;
 	struct silofs_inode_info *ii;
 	int err;
 
-	silofs_inew_params_of(ectx, nullptr, S_IFDIR | 0755, 0, &inp);
-	err = silofs_spawn_inode(ectx, &inp, &ii);
+	silofs_inew_params_of(exct, nullptr, S_IFDIR | 0755, 0, &inp);
+	err = silofs_spawn_inode(exct, &inp, &ii);
 	if (err) {
 		return err;
 	}
@@ -285,45 +365,45 @@ static void update_rootdir(struct silofs_inode_info *rootd_ii, bool utf8_names)
 	}
 }
 
-static int format_rootdir(struct silofs_exec_ctx *ectx, bool utf8_names)
+static int format_rootdir(struct silofs_exec_ctx *exct, bool utf8_names)
 {
 	struct silofs_inode_info *rootd_ii = nullptr;
 	int err;
 
-	err = spawn_rootdir(ectx, &rootd_ii);
+	err = spawn_rootdir(exct, &rootd_ii);
 	if (err) {
 		return err;
 	}
 	update_rootdir(rootd_ii, utf8_names);
 
-	err = flush_destage_dirty(ectx);
+	err = flush_destage_dirty(exct);
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-static int format_fs(struct silofs_exec_ctx *ectx, size_t cap, bool utf8_names)
+static int format_fs(struct silofs_exec_ctx *exct, size_t cap, bool utf8_names)
 {
 	int err;
 
-	err = format_super(ectx, cap);
+	err = format_super(exct, cap);
 	if (err) {
 		return err;
 	}
-	err = format_spmaps(ectx);
+	err = format_spmaps(exct);
 	if (err) {
 		return err;
 	}
-	err = claim_recalim_space(ectx);
+	err = claim_recalim_space(exct);
 	if (err) {
 		return err;
 	}
-	err = format_nil_space(ectx);
+	err = format_nil_space(exct);
 	if (err) {
 		return err;
 	}
-	err = format_rootdir(ectx, utf8_names);
+	err = format_rootdir(exct, utf8_names);
 	if (err) {
 		return err;
 	}
@@ -333,33 +413,33 @@ static int format_fs(struct silofs_exec_ctx *ectx, size_t cap, bool utf8_names)
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static int
-commit_mbr(struct silofs_exec_ctx *ectx, struct silofs_mbref *out_mbref)
+commit_mbr(struct silofs_exec_ctx *exct, struct silofs_mbref *out_mbref)
 {
-	return silofs_env_commit_fs_mbr(ectx->ex_env, out_mbref);
+	return silofs_env_commit_fs_mbr(exct->env, out_mbref);
 }
 
-int silofs_exec_format_fs(struct silofs_exec_ctx *ectx, size_t capacity,
+int silofs_exec_format_fs(struct silofs_exec_ctx *exct, size_t capacity,
                           bool utf8_names, struct silofs_mbref *out_mbref)
 {
 	int err;
 
-	err = pre_format_fs(ectx);
+	err = pre_format_fs(exct);
 	if (err) {
 		return err;
 	}
-	err = format_obs(ectx);
+	err = format_obs(exct);
 	if (err) {
 		return err;
 	}
-	err = format_fs(ectx, capacity, utf8_names);
+	err = format_fs(exct, capacity, utf8_names);
 	if (err) {
 		return err;
 	}
-	err = commit_mbr(ectx, out_mbref);
+	err = commit_mbr(exct, out_mbref);
 	if (err) {
 		return err;
 	}
-	err = post_format_fs(ectx);
+	err = post_format_fs(exct);
 	if (err) {
 		return err;
 	}

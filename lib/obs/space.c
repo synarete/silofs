@@ -22,9 +22,9 @@
 #include "nodes.h"
 #include "space.h"
 
-void silofs_make_uniq_blobid(struct silofs_prandgen *prng,
-                             enum silofs_mtype mtype,
-                             struct silofs_blobid *out_blobid)
+static void
+make_uniq_blobid(struct silofs_prandgen *prng, enum silofs_mtype mtype,
+                 struct silofs_blobid *out_blobid)
 {
 	struct silofs_svolid svolid;
 	struct silofs_uniqid uniqid;
@@ -34,13 +34,13 @@ void silofs_make_uniq_blobid(struct silofs_prandgen *prng,
 	silofs_blobid_setup_raw3(out_blobid, &svolid, &uniqid, mtype);
 }
 
-void silofs_make_base_paddr(struct silofs_prandgen *prng,
-                            enum silofs_mtype mtype,
-                            struct silofs_paddr *out_paddr)
+static void
+make_base_paddr(struct silofs_prandgen *prng, enum silofs_mtype mtype,
+                struct silofs_paddr *out_paddr)
 {
 	struct silofs_blobid blobid;
 
-	silofs_make_uniq_blobid(prng, mtype, &blobid);
+	make_uniq_blobid(prng, mtype, &blobid);
 	silofs_paddr_init(out_paddr, &blobid, 0);
 }
 
@@ -51,7 +51,19 @@ void silofs_make_base_pnodeptr(struct silofs_prandgen *prng,
 	struct silofs_paddr paddr;
 	struct silofs_civkey civkey;
 
-	silofs_make_base_paddr(prng, mtype, &paddr);
+	make_base_paddr(prng, mtype, &paddr);
 	silofs_generate_civkey(prng, &civkey);
 	silofs_pnodeptr_setup(out_pnodeptr, &paddr, &civkey);
+}
+
+void silofs_make_next_pnodeptr(struct silofs_prandgen *prng,
+                               const struct silofs_paddr *paddr,
+                               struct silofs_pnodeptr *out_pnodeptr)
+{
+	struct silofs_paddr next;
+	struct silofs_civkey civkey;
+
+	silofs_paddr_next(paddr, &next);
+	silofs_generate_civkey(prng, &civkey);
+	silofs_pnodeptr_setup(out_pnodeptr, &next, &civkey);
 }

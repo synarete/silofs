@@ -97,7 +97,8 @@ void silofs_env_rwlock(struct silofs_env *env, bool ex);
 
 void silofs_env_rwunlock(struct silofs_env *env);
 
-int silofs_env_format_uber(struct silofs_env *env);
+void silofs_env_update_uber(struct silofs_env       *env,
+                            struct silofs_uber_info *ubi);
 
 int silofs_env_format_super(struct silofs_env *env, size_t capacity);
 

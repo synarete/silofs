@@ -188,39 +188,39 @@ bool silofs_ii_isdirty(const struct silofs_inode_info *ii);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_do_getattr(struct silofs_exec_ctx   *ectx,
+int silofs_do_getattr(struct silofs_exec_ctx   *exct,
                       struct silofs_inode_info *ii,
                       struct silofs_stat       *out_st);
 
-int silofs_do_statx(struct silofs_exec_ctx *ectx, struct silofs_inode_info *ii,
+int silofs_do_statx(struct silofs_exec_ctx *exct, struct silofs_inode_info *ii,
                     uint32_t sx_want_mask, struct silofs_stat *out_st);
 
-int silofs_do_chmod(struct silofs_exec_ctx *ectx, struct silofs_inode_info *ii,
+int silofs_do_chmod(struct silofs_exec_ctx *exct, struct silofs_inode_info *ii,
                     mode_t mode, const struct silofs_itimes *itimes);
 
-int silofs_do_chown(const struct silofs_exec_ctx *ectx,
+int silofs_do_chown(const struct silofs_exec_ctx *exct,
                     struct silofs_inode_info *ii, uid_t uid, gid_t gid,
                     bool kill_suidgid, const struct silofs_itimes *itimes);
 
-int silofs_do_utimens(const struct silofs_exec_ctx *ectx,
+int silofs_do_utimens(const struct silofs_exec_ctx *exct,
                       struct silofs_inode_info     *ii,
                       const struct silofs_itimes   *itimes);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_update_itimes_of(const struct silofs_exec_ctx *ectx,
+void silofs_update_itimes_of(const struct silofs_exec_ctx *exct,
                              struct silofs_inode_info     *ii,
                              enum silofs_iattr_flags       attr_flags);
 
-void silofs_update_iblocks_of(const struct silofs_exec_ctx *ectx,
+void silofs_update_iblocks_of(const struct silofs_exec_ctx *exct,
                               struct silofs_inode_info     *ii,
                               enum silofs_mtype mtype, long dif);
 
-void silofs_update_iattrs_of(const struct silofs_exec_ctx *ectx,
+void silofs_update_iattrs_of(const struct silofs_exec_ctx *exct,
                              struct silofs_inode_info     *ii,
                              const struct silofs_iattr    *iattr);
 
-void silofs_update_isize_of(const struct silofs_exec_ctx *ectx,
+void silofs_update_isize_of(const struct silofs_exec_ctx *exct,
                             struct silofs_inode_info *ii, ssize_t size);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

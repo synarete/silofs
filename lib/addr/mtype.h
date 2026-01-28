@@ -35,6 +35,8 @@ bool silofs_mtype_isunode(enum silofs_mtype mtype);
 
 bool silofs_mtype_isvnode(enum silofs_mtype mtype);
 
+bool silofs_mtype_isvnode2(enum silofs_mtype mtype);
+
 bool silofs_mtype_isdata(enum silofs_mtype mtype);
 
 size_t silofs_mtype_size(enum silofs_mtype mtype);

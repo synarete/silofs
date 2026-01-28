@@ -59,6 +59,9 @@ silofs_blobid_get_height(const struct silofs_blobid *blobid);
 
 void silofs_blobid_reset(struct silofs_blobid *blobid);
 
+void silofs_blobid_assign(struct silofs_blobid       *blobid,
+                          const struct silofs_blobid *other);
+
 void silofs_blobid_copyto(const struct silofs_blobid *blobid,
                           struct silofs_blobid       *other);
 

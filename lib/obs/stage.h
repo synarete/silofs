@@ -40,7 +40,7 @@ int silofs_stage_bldesc(struct silofs_env            *env,
                         struct silofs_bldesc_info   **out_bdi);
 
 int silofs_spawn_btnode(struct silofs_env            *env,
-                        const struct silofs_pnodeptr *pmeat,
+                        const struct silofs_pnodeptr *pnodeptr,
                         struct silofs_btnode_info   **out_bti);
 
 int silofs_stage_btnode(struct silofs_env            *env,

@@ -45,62 +45,6 @@ static void ub_inc_generation(struct silofs_uber_block *ub)
 	ub_set_generation(ub, ub_generation(ub) + 1);
 }
 
-static struct silofs_bcursor128b *
-ub_bcursor_at(struct silofs_uber_block *ub, size_t slot)
-{
-	struct silofs_bcursor128b *bcursor = nullptr;
-
-	if (likely(slot < ARRAY_SIZE(ub->ub_bcursor))) {
-		bcursor = &ub->ub_bcursor[slot];
-	}
-	return bcursor;
-}
-
-static const struct silofs_bcursor128b *
-ub_bcursor_at2(const struct silofs_uber_block *ub, size_t slot)
-{
-	const struct silofs_bcursor128b *bcursor = nullptr;
-
-	if (likely(slot < ARRAY_SIZE(ub->ub_bcursor))) {
-		bcursor = &ub->ub_bcursor[slot];
-	}
-	return bcursor;
-}
-
-static struct silofs_bcursor128b *
-ub_bcursor_of(struct silofs_uber_block *ub, enum silofs_mtype mtype)
-{
-	STATICASSERT_GT(ARRAY_SIZE(ub->ub_bcursor), SILOFS_MTYPE_LAST);
-	silofs_assert_lt(mtype, ARRAY_SIZE(ub->ub_bcursor));
-
-	return ub_bcursor_at(ub, (size_t)(mtype - 1));
-}
-
-static const struct silofs_bcursor128b *
-ub_bcursor_of2(const struct silofs_uber_block *ub, enum silofs_mtype mtype)
-{
-	STATICASSERT_GT(ARRAY_SIZE(ub->ub_bcursor), SILOFS_MTYPE_LAST);
-	silofs_assert_lt(mtype, ARRAY_SIZE(ub->ub_bcursor));
-
-	return ub_bcursor_at2(ub, (size_t)(mtype - 1));
-}
-
-static void ub_reset_bcursor_at(struct silofs_uber_block *ub, size_t slot)
-{
-	struct silofs_bcursor128b *bcur = ub_bcursor_at(ub, slot);
-
-	if (likely(bcur != nullptr)) {
-		silofs_bcursor128b_reset(bcur);
-	}
-}
-
-static void ub_reset_bcursors(struct silofs_uber_block *ub)
-{
-	for (size_t slot = 0; slot < ARRAY_SIZE(ub->ub_bcursor); ++slot) {
-		ub_reset_bcursor_at(ub, slot);
-	}
-}
-
 static const struct silofs_ckey *
 ub_key_of(const struct silofs_uber_block *ub, uint32_t idx)
 {
@@ -114,11 +58,12 @@ static void ub_setup_keys(struct silofs_uber_block *ub)
 
 static void ub_setup(struct silofs_uber_block *ub, const struct timespec *ts)
 {
-	ub_set_generation(ub, 1);
+	ub_set_generation(ub, 0);
 	ub_set_btime(ub, ts);
 	ub_set_ctime(ub, ts);
-	ub_reset_bcursors(ub);
 	ub_setup_keys(ub);
+
+	ub_inc_generation(ub);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -150,45 +95,6 @@ void silofs_ubi_dirtify(struct silofs_uber_info *ubi)
 void silofs_ubi_undirtify(struct silofs_uber_info *ubi)
 {
 	silofs_pni_undirtify(&ubi->ub_pni);
-}
-
-int silofs_ubi_bcursor_of(const struct silofs_uber_info *ubi,
-                          enum silofs_mtype mtype,
-                          struct silofs_bcursor *out_bcursor)
-{
-	const struct silofs_bcursor128b *bcur;
-
-	bcur = ub_bcursor_of2(ubi->ub, mtype);
-	if (unlikely(bcur == nullptr)) {
-		return -SILOFS_ENOENT;
-	}
-	silofs_bcursor128b_xtoh(bcur, out_bcursor);
-	return 0;
-}
-
-static void ubi_update_changed(struct silofs_uber_info *ubi)
-{
-	struct timespec now;
-
-	silofs_clock_real_now(&now);
-	ub_set_ctime(ubi->ub, &now);
-	ub_inc_generation(ubi->ub);
-	silofs_ubi_dirtify(ubi);
-}
-
-int silofs_ubi_update_bcursor(struct silofs_uber_info *ubi,
-                              enum silofs_mtype mtype,
-                              const struct silofs_bcursor *bcursor)
-{
-	struct silofs_bcursor128b *bcur;
-
-	bcur = ub_bcursor_of(ubi->ub, mtype);
-	if (unlikely(bcur == nullptr)) {
-		return -SILOFS_ENOENT;
-	}
-	silofs_bcursor128b_htox(bcur, bcursor);
-	ubi_update_changed(ubi);
-	return 0;
 }
 
 void silofs_ubi_key_of(const struct silofs_uber_info *ubi,

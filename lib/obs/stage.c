@@ -92,9 +92,11 @@ static void stc_update_spawned_pnode(const struct silofs_stage_ctx *st_ctx,
 static int stc_access_pnode(const struct silofs_stage_ctx *st_ctx,
                             const struct silofs_paddr *paddr)
 {
-	const off_t off = silofs_paddr_next(paddr);
+	struct silofs_paddr next;
 
-	return silofs_dstor_access_blob_at(st_ctx->dstor, &paddr->blobid, off);
+	silofs_paddr_next(paddr, &next);
+	return silofs_dstor_access_blob_at(st_ctx->dstor, &next.blobid,
+	                                   next.pos);
 }
 
 static int stc_access_pnode_of(const struct silofs_stage_ctx *st_ctx,

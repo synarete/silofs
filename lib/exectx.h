@@ -35,57 +35,56 @@ struct silofs_exec_auth {
 
 /* execution-context */
 struct silofs_exec_ctx {
-	struct silofs_exec_auth     ex_auth;
-	struct silofs_env          *ex_env;
-	const struct silofs_idsmap *ex_idsm;
-	const struct silofs_creds  *ex_creds;
-	struct silofs_repo         *ex_repo;
-	struct silofs_lcache       *ex_lcache;
-	struct silofs_submitq      *ex_submitq;
-	struct silofs_inode_info   *ex_looseq;
-	uint64_t                    ex_upper_id;
-	time_t                      ex_op_start_time;
-	volatile int8_t             ex_interrupt;
-	volatile bool               ex_fs_locked;
-	volatile bool               ex_rw_locked;
-	bool                        ex_exclusive;
-	bool                        ex_priv_op;
-	bool                        ex_kwrite;
-	bool                        ex_runnable;
+	struct silofs_exec_auth     auth;
+	struct silofs_env          *env;
+	const struct silofs_idsmap *idsm;
+	struct silofs_repo         *repo;
+	struct silofs_lcache       *lcache;
+	struct silofs_submitq      *submitq;
+	struct silofs_inode_info   *looseq;
+	uint64_t                    upper_id;
+	time_t                      op_start_time;
+	volatile int8_t             interrupt;
+	volatile bool               fs_locked;
+	volatile bool               rw_locked;
+	bool                        exclusive;
+	bool                        priv_op;
+	bool                        kwrite;
+	bool                        runnable;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_ectx_init(struct silofs_exec_ctx *ectx, struct silofs_env *env);
+void silofs_exct_init(struct silofs_exec_ctx *exct, struct silofs_env *env);
 
-void silofs_ectx_fini(struct silofs_exec_ctx *ectx);
+void silofs_exct_fini(struct silofs_exec_ctx *exct);
 
-void silofs_ectx_update_creds(struct silofs_exec_ctx *ectx, uid_t uid,
+void silofs_exct_update_creds(struct silofs_exec_ctx *exct, uid_t uid,
                               gid_t gid, mode_t umsk);
 
-void silofs_ectx_update_auth(struct silofs_exec_ctx *ectx, pid_t pid,
+void silofs_exct_update_auth(struct silofs_exec_ctx *exct, pid_t pid,
                              uint64_t unique, uint32_t opcode, bool exclusive);
 
-void silofs_ectx_update_umask(struct silofs_exec_ctx *ectx, mode_t umask);
+void silofs_exct_update_umask(struct silofs_exec_ctx *exct, mode_t umask);
 
-void silofs_ectx_update_times(struct silofs_exec_ctx *ectx, bool rt);
+void silofs_exct_update_times(struct silofs_exec_ctx *exct, bool rt);
 
-void silofs_ectx_update_id(struct silofs_exec_ctx    *ectx,
+void silofs_exct_update_id(struct silofs_exec_ctx    *exct,
                            struct silofs_submitq_ent *sqe);
 
-int silofs_ectx_submit(struct silofs_exec_ctx *ectx, bool all);
+int silofs_exct_submit(struct silofs_exec_ctx *exct, bool all);
 
-void silofs_ectx_enq_loose(struct silofs_exec_ctx   *ectx,
+void silofs_exct_enq_loose(struct silofs_exec_ctx   *exct,
                            struct silofs_inode_info *ii);
 
-void silofs_lock_fs_by(struct silofs_exec_ctx *ectx);
+void silofs_lock_fs_by(struct silofs_exec_ctx *exct);
 
-void silofs_unlock_fs_by(struct silofs_exec_ctx *ectx);
+void silofs_unlock_fs_by(struct silofs_exec_ctx *exct);
 
-void silofs_rwlock_fs_by(struct silofs_exec_ctx *ectx);
+void silofs_rwlock_fs_by(struct silofs_exec_ctx *exct);
 
-void silofs_rwunlock_fs_by(struct silofs_exec_ctx *ectx);
+void silofs_rwunlock_fs_by(struct silofs_exec_ctx *exct);
 
-struct silofs_sb_info *silofs_get_sbi(const struct silofs_exec_ctx *ectx);
+struct silofs_sb_info *silofs_get_sbi(const struct silofs_exec_ctx *exct);
 
 #endif /* SILOFS_EXECTX_H_ */

@@ -29,38 +29,38 @@
 #include "fuseq.h"
 #include "walk.h"
 
-static int reload_uber(struct silofs_exec_ctx *ectx)
+static int reload_uber(struct silofs_exec_ctx *exct)
 {
-	return silofs_env_reload_uber(ectx->ex_env);
+	return silofs_env_reload_uber(exct->env);
 }
 
-static int reload_super(struct silofs_exec_ctx *ectx)
+static int reload_super(struct silofs_exec_ctx *exct)
 {
 	int err;
 
-	err = silofs_env_reload_sb_lseg(ectx->ex_env);
+	err = silofs_env_reload_sb_lseg(exct->env);
 	if (err) {
 		return err;
 	}
-	err = silofs_env_reload_super(ectx->ex_env);
+	err = silofs_env_reload_super(exct->env);
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-static int reload_vspace(struct silofs_exec_ctx *ectx)
+static int reload_vspace(struct silofs_exec_ctx *exct)
 {
-	return silofs_reload_vspace(ectx);
+	return silofs_reload_vspace(exct);
 }
 
-static int reload_rootd(struct silofs_exec_ctx *ectx)
+static int reload_rootd(struct silofs_exec_ctx *exct)
 {
 	struct silofs_inode_info *ii = nullptr;
 	const ino_t ino              = SILOFS_INO_ROOT;
 	int err;
 
-	err = silofs_stage_inode(ectx, ino, SILOFS_STG_CUR, &ii);
+	err = silofs_stage_inode(exct, ino, SILOFS_STG_CUR, &ii);
 	if (err) {
 		log_err("failed to reload root-inode: err=%d", err);
 		return err;
@@ -73,23 +73,23 @@ static int reload_rootd(struct silofs_exec_ctx *ectx)
 	return 0;
 }
 
-static void relax_caches(struct silofs_exec_ctx *ectx, bool now)
+static void relax_caches(struct silofs_exec_ctx *exct, bool now)
 {
 	const int flags = now ? SILOFS_CTLF_NOW : SILOFS_CTLF_IDLE;
 
-	silofs_env_relax_caches(ectx->ex_env, flags);
+	silofs_env_relax_caches(exct->env, flags);
 }
 
-static int flush_dirty(struct silofs_exec_ctx *ectx)
+static int flush_dirty(struct silofs_exec_ctx *exct)
 {
 	int err;
 
-	err = silofs_flush_dirty_now(ectx);
+	err = silofs_flush_dirty_now(exct);
 	if (err) {
 		log_err("failed to flush dirty: err=%d", err);
 		return err;
 	}
-	err = silofs_destage_dirty(ectx->ex_env);
+	err = silofs_destage_dirty(exct->env);
 	if (err) {
 		log_err("failed to destage dirty: err=%d", err);
 		return err;
@@ -97,147 +97,147 @@ static int flush_dirty(struct silofs_exec_ctx *ectx)
 	return 0;
 }
 
-static void drop_caches(struct silofs_exec_ctx *ectx)
+static void drop_caches(struct silofs_exec_ctx *exct)
 {
-	silofs_env_drop_caches(ectx->ex_env);
+	silofs_env_drop_caches(exct->env);
 }
 
-static void drop_relax_caches(struct silofs_exec_ctx *ectx)
+static void drop_relax_caches(struct silofs_exec_ctx *exct)
 {
-	drop_caches(ectx);
-	relax_caches(ectx, false);
+	drop_caches(exct);
+	relax_caches(exct, false);
 }
 
-static int appexec_resync_vmeta(struct silofs_exec_ctx *ectx, bool drop)
+static int appexec_resync_vmeta(struct silofs_exec_ctx *exct, bool drop)
 {
 	int err;
 
-	relax_caches(ectx, drop);
-	err = flush_dirty(ectx);
+	relax_caches(exct, drop);
+	err = flush_dirty(exct);
 	if (err || !drop) {
 		return err;
 	}
-	drop_relax_caches(ectx);
+	drop_relax_caches(exct);
 	return 0;
 }
 
-static int appexec_format_fs(struct silofs_exec_ctx *ectx, size_t fs_cap,
+static int appexec_format_fs(struct silofs_exec_ctx *exct, size_t fs_cap,
                              bool utf8_names, struct silofs_mbref *out_mbref)
 {
-	return silofs_exec_format_fs(ectx, fs_cap, utf8_names, out_mbref);
+	return silofs_exec_format_fs(exct, fs_cap, utf8_names, out_mbref);
 }
 
 static int
-reload_fs_mbr(struct silofs_exec_ctx *ectx, const struct silofs_mbref *mbref)
+reload_fs_mbr(struct silofs_exec_ctx *exct, const struct silofs_mbref *mbref)
 {
-	return silofs_env_reload_fs_mbr(ectx->ex_env, mbref);
+	return silofs_env_reload_fs_mbr(exct->env, mbref);
 }
 
-static int appexec_reload_meta(struct silofs_exec_ctx *ectx,
+static int appexec_reload_meta(struct silofs_exec_ctx *exct,
                                const struct silofs_mbref *mbref)
 {
 	int err;
 
-	err = reload_fs_mbr(ectx, mbref);
+	err = reload_fs_mbr(exct, mbref);
 	if (err) {
 		return err;
 	}
-	err = reload_uber(ectx);
+	err = reload_uber(exct);
 	if (err) {
 		return err;
 	}
-	err = reload_super(ectx);
+	err = reload_super(exct);
 	if (err) {
 		return err;
 	}
-	err = reload_vspace(ectx);
+	err = reload_vspace(exct);
 	if (err) {
 		return err;
 	}
-	err = reload_rootd(ectx);
+	err = reload_rootd(exct);
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-static int appexec_reload_repo(struct silofs_exec_ctx *ectx)
+static int appexec_reload_repo(struct silofs_exec_ctx *exct)
 {
-	return silofs_env_reload_repo(ectx->ex_env);
+	return silofs_env_reload_repo(exct->env);
 }
 
-static int appexec_reload_fs(struct silofs_exec_ctx *ectx,
+static int appexec_reload_fs(struct silofs_exec_ctx *exct,
                              const struct silofs_mbref *mbref)
 {
 	int err;
 
-	err = appexec_reload_repo(ectx);
+	err = appexec_reload_repo(exct);
 	if (err) {
 		goto out;
 	}
-	err = appexec_reload_meta(ectx, mbref);
+	err = appexec_reload_meta(exct, mbref);
 	if (err) {
 		goto out;
 	}
-	drop_caches(ectx);
+	drop_caches(exct);
 out:
 	return err;
 }
 
 static int
-appexec_fork_fs(struct silofs_exec_ctx *ectx, struct silofs_mbrefs *out_mbrefs)
+appexec_fork_fs(struct silofs_exec_ctx *exct, struct silofs_mbrefs *out_mbrefs)
 {
 	int err;
 
-	err = silofs_exec_forkfs(ectx, SILOFS_INO_ROOT, 0, out_mbrefs);
+	err = silofs_exec_forkfs(exct, SILOFS_INO_ROOT, 0, out_mbrefs);
 	if (err) {
 		return err;
 	}
-	err = flush_dirty(ectx);
+	err = flush_dirty(exct);
 	if (err) {
 		return err;
 	}
-	drop_relax_caches(ectx);
+	drop_relax_caches(exct);
 	return 0;
 }
 
-static int shutdown_fs(struct silofs_exec_ctx *ectx)
+static int shutdown_fs(struct silofs_exec_ctx *exct)
 {
 	int err;
 
-	err = silofs_repo_fsync_all(ectx->ex_repo);
+	err = silofs_repo_fsync_all(exct->repo);
 	if (err) {
 		return err;
 	}
-	drop_relax_caches(ectx);
+	drop_relax_caches(exct);
 
-	err = silofs_env_shut(ectx->ex_env);
+	err = silofs_env_shut(exct->env);
 	if (err) {
 		return err;
 	}
-	drop_relax_caches(ectx);
+	drop_relax_caches(exct);
 
 	return 0;
 }
 
-static int close_repo(struct silofs_exec_ctx *ectx)
+static int close_repo(struct silofs_exec_ctx *exct)
 {
-	return silofs_repo_close(ectx->ex_repo);
+	return silofs_repo_close(exct->repo);
 }
 
-static int appexec_unload_fs(struct silofs_exec_ctx *ectx)
+static int appexec_unload_fs(struct silofs_exec_ctx *exct)
 {
 	int err;
 
-	err = flush_dirty(ectx);
+	err = flush_dirty(exct);
 	if (err) {
 		return err;
 	}
-	err = shutdown_fs(ectx);
+	err = shutdown_fs(exct);
 	if (err) {
 		return err;
 	}
-	err = close_repo(ectx);
+	err = close_repo(exct);
 	if (err) {
 		return err;
 	}
@@ -245,77 +245,77 @@ static int appexec_unload_fs(struct silofs_exec_ctx *ectx)
 }
 
 static int
-remove_mbr(struct silofs_exec_ctx *ectx, const struct silofs_mbref *mbref)
+remove_mbr(struct silofs_exec_ctx *exct, const struct silofs_mbref *mbref)
 {
-	return silofs_env_unlink_mbr(ectx->ex_env, mbref);
+	return silofs_env_unlink_mbr(exct->env, mbref);
 }
 
-static int appexec_remove_fs(struct silofs_exec_ctx *ectx,
+static int appexec_remove_fs(struct silofs_exec_ctx *exct,
                              const struct silofs_mbref *mbref)
 {
 	int err;
 
-	err = appexec_reload_meta(ectx, mbref);
+	err = appexec_reload_meta(exct, mbref);
 	if (err) {
 		return err;
 	}
-	err = silofs_exec_unrefs(ectx);
+	err = silofs_exec_unrefs(exct);
 	if (err) {
 		return err;
 	}
-	err = remove_mbr(ectx, mbref);
+	err = remove_mbr(exct, mbref);
 	if (err) {
 		return err;
 	}
-	err = shutdown_fs(ectx);
+	err = shutdown_fs(exct);
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-static int appexec_sense_fs(struct silofs_exec_ctx *ectx,
+static int appexec_sense_fs(struct silofs_exec_ctx *exct,
                             const struct silofs_mbref *mbref)
 {
 	int err;
 
-	err = silofs_env_sense_mbr(ectx->ex_env, mbref);
+	err = silofs_env_sense_mbr(exct->env, mbref);
 	if (err) {
 		return err;
 	}
-	drop_caches(ectx);
+	drop_caches(exct);
 	return 0;
 }
 
-static int appexec_archive_fs(struct silofs_exec_ctx *ectx,
+static int appexec_archive_fs(struct silofs_exec_ctx *exct,
                               const struct silofs_mbref *fs_mbref,
                               struct silofs_mbref *out_ar_mbref)
 {
 	int err;
 
-	err = appexec_reload_meta(ectx, fs_mbref);
+	err = appexec_reload_meta(exct, fs_mbref);
 	if (err) {
 		return err;
 	}
-	err = silofs_exec_archive(ectx, out_ar_mbref);
+	err = silofs_exec_archive(exct, out_ar_mbref);
 	if (err) {
 		return err;
 	}
-	drop_caches(ectx);
+	drop_caches(exct);
 	return 0;
 }
 
-static int appexec_restore_fs(struct silofs_exec_ctx *ectx,
+static int appexec_restore_fs(struct silofs_exec_ctx *exct,
                               const struct silofs_mbref *ar_mbref,
                               struct silofs_mbref *out_fs_mbref)
 {
 	int err;
 
-	err = silofs_exec_restore(ectx, ar_mbref, out_fs_mbref);
+	err = silofs_exec_restore(exct, ar_mbref, out_fs_mbref);
 	if (err) {
 		return err;
 	}
-	drop_caches(ectx);
+	drop_caches(exct);
 	return 0;
 }
 
@@ -333,70 +333,70 @@ int silofs_post_exec_fs(struct silofs_env *env)
 	return ret;
 }
 
-static int do_map_ectx_creds(struct silofs_exec_ctx *ectx)
+static int do_map_exct_creds(struct silofs_exec_ctx *exct)
 {
-	const struct silofs_cred *xcred = &ectx->ex_auth.creds.host_cred;
-	struct silofs_cred *icred       = &ectx->ex_auth.creds.fs_cred;
+	const struct silofs_cred *xcred = &exct->auth.creds.host_cred;
+	struct silofs_cred *icred       = &exct->auth.creds.fs_cred;
 
-	return silofs_idsmap_mapcreds(ectx->ex_idsm, xcred->uid, xcred->gid,
+	return silofs_idsmap_mapcreds(exct->idsm, xcred->uid, xcred->gid,
 	                              &icred->uid, &icred->gid);
 }
 
-static int map_ectx_creds(struct silofs_exec_ctx *ectx)
+static int map_exct_creds(struct silofs_exec_ctx *exct)
 {
-	const struct silofs_idsmap *idsm = ectx->ex_idsm;
+	const struct silofs_idsmap *idsm = exct->idsm;
 	int err                          = 0;
 
 	if (idsm->idm_usize || idsm->idm_gsize) {
-		err = do_map_ectx_creds(ectx);
+		err = do_map_exct_creds(exct);
 	}
-	ectx->ex_runnable = (err == 0);
+	exct->runnable = (err == 0);
 	return err;
 }
 
-static int make_priv_ectx(struct silofs_env *env, struct silofs_exec_ctx *ectx)
+static int make_priv_exct(struct silofs_env *env, struct silofs_exec_ctx *exct)
 {
-	silofs_ectx_init(ectx, env);
-	silofs_ectx_update_times(ectx, true);
-	silofs_ectx_update_creds(ectx, getuid(), getgid(), 0077);
-	ectx->ex_priv_op = true;
-	return map_ectx_creds(ectx);
+	silofs_exct_init(exct, env);
+	silofs_exct_update_times(exct, true);
+	silofs_exct_update_creds(exct, getuid(), getgid(), 0077);
+	exct->priv_op = true;
+	return map_exct_creds(exct);
 }
 
-static int term_ectx(struct silofs_exec_ctx *ectx, int status)
+static int term_exct(struct silofs_exec_ctx *exct, int status)
 {
 	int err = 0;
 
-	if (ectx->ex_runnable) {
-		err = silofs_ectx_submit(ectx, true);
+	if (exct->runnable) {
+		err = silofs_exct_submit(exct, true);
 	}
-	silofs_ectx_fini(ectx);
+	silofs_exct_fini(exct);
 	return status ? status : err;
 }
 
 static int
 exec_reload_fs(struct silofs_env *env, const struct silofs_mbref *mbref)
 {
-	struct silofs_exec_ctx ectx;
+	struct silofs_exec_ctx exct;
 	int err;
 
-	err = make_priv_ectx(env, &ectx);
+	err = make_priv_exct(env, &exct);
 	if (!err) {
-		err = appexec_reload_fs(&ectx, mbref);
+		err = appexec_reload_fs(&exct, mbref);
 	}
-	return term_ectx(&ectx, err);
+	return term_exct(&exct, err);
 }
 
 static int exec_resync_vmeta(struct silofs_env *env, bool drop)
 {
-	struct silofs_exec_ctx ectx;
+	struct silofs_exec_ctx exct;
 	int err;
 
-	err = make_priv_ectx(env, &ectx);
+	err = make_priv_exct(env, &exct);
 	if (!err) {
-		err = appexec_resync_vmeta(&ectx, drop);
+		err = appexec_resync_vmeta(&exct, drop);
 	}
-	return term_ectx(&ectx, err);
+	return term_exct(&exct, err);
 }
 
 static int do_mount_and_exec(struct silofs_env *env, const char *mntdir)
@@ -504,24 +504,24 @@ static int check_owner_ids(const struct silofs_env *env)
 static int exec_format_fs(struct silofs_env *env, size_t fs_cap,
                           bool utf8_names, struct silofs_mbref *out_mbref)
 {
-	struct silofs_exec_ctx ectx;
+	struct silofs_exec_ctx exct;
 	int err;
 
-	err = make_priv_ectx(env, &ectx);
+	err = make_priv_exct(env, &exct);
 	if (err) {
 		goto out;
 	}
-	err = appexec_reload_repo(&ectx);
+	err = appexec_reload_repo(&exct);
 	if (err) {
 		goto out;
 	}
-	err = appexec_format_fs(&ectx, fs_cap, utf8_names, out_mbref);
+	err = appexec_format_fs(&exct, fs_cap, utf8_names, out_mbref);
 	if (err) {
 		goto out;
 	}
 	log_dbg("format-fs done: fs_cap=%zu", fs_cap);
 out:
-	return term_ectx(&ectx, err);
+	return term_exct(&exct, err);
 }
 
 int silofs_format_repo(struct silofs_env *env)
@@ -599,20 +599,20 @@ int silofs_format_fs(struct silofs_env *env, size_t capacity, bool utf8_names,
 static int
 exec_sense_fs(struct silofs_env *env, const struct silofs_mbref *mbref)
 {
-	struct silofs_exec_ctx ectx;
+	struct silofs_exec_ctx exct;
 	int err;
 
-	err = make_priv_ectx(env, &ectx);
+	err = make_priv_exct(env, &exct);
 	if (err) {
 		goto out;
 	}
-	err = appexec_reload_repo(&ectx);
+	err = appexec_reload_repo(&exct);
 	if (err) {
 		goto out;
 	}
-	err = appexec_sense_fs(&ectx, mbref);
+	err = appexec_sense_fs(&exct, mbref);
 out:
-	return term_ectx(&ectx, err);
+	return term_exct(&exct, err);
 }
 
 static int
@@ -671,14 +671,14 @@ int silofs_reload_fs(struct silofs_env *env, const struct silofs_fsref *fsref)
 
 static int exec_unload_fs(struct silofs_env *env)
 {
-	struct silofs_exec_ctx ectx;
+	struct silofs_exec_ctx exct;
 	int err;
 
-	err = make_priv_ectx(env, &ectx);
+	err = make_priv_exct(env, &exct);
 	if (!err) {
-		err = appexec_unload_fs(&ectx);
+		err = appexec_unload_fs(&exct);
 	}
-	return term_ectx(&ectx, err);
+	return term_exct(&exct, err);
 }
 
 int silofs_unload_fs(struct silofs_env *env)
@@ -694,14 +694,14 @@ int silofs_unload_fs(struct silofs_env *env)
 static int
 exec_fork_fs(struct silofs_env *env, struct silofs_mbrefs *out_mbrefs)
 {
-	struct silofs_exec_ctx ectx;
+	struct silofs_exec_ctx exct;
 	int err;
 
-	err = make_priv_ectx(env, &ectx);
+	err = make_priv_exct(env, &exct);
 	if (!err) {
-		err = appexec_fork_fs(&ectx, out_mbrefs);
+		err = appexec_fork_fs(&exct, out_mbrefs);
 	}
-	return term_ectx(&ectx, err);
+	return term_exct(&exct, err);
 }
 
 static int do_fork_fs(struct silofs_env *env, struct silofs_fsrefs *out_fsrefs)
@@ -730,27 +730,27 @@ int silofs_fork_fs(struct silofs_env *env, struct silofs_fsrefs *out_fsrefs)
 static int
 exec_reload_remove_fs(struct silofs_env *env, const struct silofs_mbref *mbref)
 {
-	struct silofs_exec_ctx ectx;
+	struct silofs_exec_ctx exct;
 	int err;
 
-	err = make_priv_ectx(env, &ectx);
+	err = make_priv_exct(env, &exct);
 	if (err) {
 		goto out;
 	}
-	err = appexec_reload_repo(&ectx);
+	err = appexec_reload_repo(&exct);
 	if (err) {
 		return err;
 	}
-	err = appexec_reload_fs(&ectx, mbref);
+	err = appexec_reload_fs(&exct, mbref);
 	if (err) {
 		goto out;
 	}
-	err = appexec_remove_fs(&ectx, mbref);
+	err = appexec_remove_fs(&exct, mbref);
 	if (err) {
 		goto out;
 	}
 out:
-	return term_ectx(&ectx, err);
+	return term_exct(&exct, err);
 }
 
 static int
@@ -783,20 +783,20 @@ int silofs_remove_fs(struct silofs_env *env, const struct silofs_fsref *fsref)
 static int exec_inspect_fs(struct silofs_env *env,
                            const struct silofs_laddr_visitor *lvis)
 {
-	struct silofs_exec_ctx ectx;
+	struct silofs_exec_ctx exct;
 	int err;
 
-	err = make_priv_ectx(env, &ectx);
+	err = make_priv_exct(env, &exct);
 	if (err) {
 		goto out;
 	}
-	err = appexec_reload_repo(&ectx);
+	err = appexec_reload_repo(&exct);
 	if (err) {
 		goto out;
 	}
-	err = silofs_exec_walkfs(&ectx, lvis);
+	err = silofs_exec_walkfs(&exct, lvis);
 out:
-	return term_ectx(&ectx, err);
+	return term_exct(&exct, err);
 }
 
 static int
@@ -828,20 +828,20 @@ static int
 exec_archive_fs(struct silofs_env *env, const struct silofs_mbref *fs_mbref,
                 struct silofs_mbref *out_ar_mbref)
 {
-	struct silofs_exec_ctx ectx;
+	struct silofs_exec_ctx exct;
 	int err;
 
-	err = make_priv_ectx(env, &ectx);
+	err = make_priv_exct(env, &exct);
 	if (err) {
 		goto out;
 	}
-	err = appexec_reload_repo(&ectx);
+	err = appexec_reload_repo(&exct);
 	if (err) {
 		goto out;
 	}
-	err = appexec_archive_fs(&ectx, fs_mbref, out_ar_mbref);
+	err = appexec_archive_fs(&exct, fs_mbref, out_ar_mbref);
 out:
-	return term_ectx(&ectx, err);
+	return term_exct(&exct, err);
 }
 
 static int
@@ -878,20 +878,20 @@ static int
 exec_restore_fs(struct silofs_env *env, const struct silofs_mbref *ar_mbref,
                 struct silofs_mbref *out_fs_mbref)
 {
-	struct silofs_exec_ctx ectx;
+	struct silofs_exec_ctx exct;
 	int err;
 
-	err = make_priv_ectx(env, &ectx);
+	err = make_priv_exct(env, &exct);
 	if (err) {
 		goto out;
 	}
-	err = appexec_reload_repo(&ectx);
+	err = appexec_reload_repo(&exct);
 	if (err) {
 		goto out;
 	}
-	err = appexec_restore_fs(&ectx, ar_mbref, out_fs_mbref);
+	err = appexec_restore_fs(&exct, ar_mbref, out_fs_mbref);
 out:
-	return term_ectx(&ectx, err);
+	return term_exct(&exct, err);
 }
 
 static int

@@ -261,7 +261,7 @@ struct ut_readdir_ctx *ut_new_readdir_ctx(struct ut_env *ute);
 
 struct ut_dvec *ut_new_dvec(struct ut_env *, off_t, size_t);
 
-void ut_setup_ectx(struct ut_env *ute, struct silofs_exec_ctx *task);
+void ut_setup_exct(struct ut_env *ute, struct silofs_exec_ctx *task);
 
 void ut_release_task(struct ut_env *ute, struct silofs_exec_ctx *task);
 

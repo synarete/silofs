@@ -29,12 +29,6 @@ struct silofs_paddr {
 	enum silofs_btype    btype;
 };
 
-/* blob cursor */
-struct silofs_bcursor {
-	struct silofs_paddr paddr;
-	size_t              blobsz;
-};
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 const struct silofs_paddr *silofs_paddr_none(void);
@@ -57,24 +51,13 @@ bool silofs_paddr_isnull(const struct silofs_paddr *paddr);
 long silofs_paddr_compare(const struct silofs_paddr *paddr1,
                           const struct silofs_paddr *paddr2);
 
-off_t silofs_paddr_next(const struct silofs_paddr *paddr);
+void silofs_paddr_next(const struct silofs_paddr *paddr,
+                       struct silofs_paddr       *out_next);
 
 void silofs_paddr64b_htox(struct silofs_paddr64b    *paddr64,
                           const struct silofs_paddr *paddr);
 
 void silofs_paddr64b_xtoh(const struct silofs_paddr64b *paddr64,
                           struct silofs_paddr          *paddr);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-const struct silofs_bcursor *silofs_cursor_none(void);
-
-void silofs_bcursor128b_reset(struct silofs_bcursor128b *bcur128);
-
-void silofs_bcursor128b_xtoh(const struct silofs_bcursor128b *bcur128,
-                             struct silofs_bcursor           *bcur);
-
-void silofs_bcursor128b_htox(struct silofs_bcursor128b   *bcur128,
-                             const struct silofs_bcursor *bcur);
 
 #endif /* SILOFS_PADDR_H_ */

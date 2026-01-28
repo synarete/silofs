@@ -32,18 +32,19 @@ const struct silofs_paddr *silofs_paddr_none(void)
 	return &s_silofs_paddr_none;
 }
 
-static void paddr_init_by_self(struct silofs_paddr *paddr)
+static void
+paddr_update_by(struct silofs_paddr *paddr, const struct silofs_blobid *blobid)
 {
-	paddr->mtype = silofs_blobid_get_mtype(&paddr->blobid);
-	paddr->btype = silofs_blobid_get_btype(&paddr->blobid);
+	paddr->mtype = silofs_blobid_get_mtype(blobid);
+	paddr->btype = silofs_blobid_get_btype(blobid);
 }
 
 void silofs_paddr_init(struct silofs_paddr *paddr,
                        const struct silofs_blobid *blobid, off_t pos)
 {
-	silofs_blobid_copyto(blobid, &paddr->blobid);
+	silofs_blobid_assign(&paddr->blobid, blobid);
 	paddr->pos = pos;
-	paddr_init_by_self(paddr);
+	paddr_update_by(paddr, blobid);
 }
 
 void silofs_paddr_fini(struct silofs_paddr *paddr)
@@ -94,11 +95,19 @@ long silofs_paddr_compare(const struct silofs_paddr *paddr1,
 	return 0;
 }
 
-off_t silofs_paddr_next(const struct silofs_paddr *paddr)
+static off_t paddr_next_off(const struct silofs_paddr *paddr)
 {
 	const size_t len = silofs_mtype_size(paddr->mtype);
 
 	return silofs_off_end(paddr->pos, len);
+}
+
+void silofs_paddr_next(const struct silofs_paddr *paddr,
+                       struct silofs_paddr *out_next)
+{
+	const off_t off = paddr_next_off(paddr);
+
+	silofs_paddr_init(out_next, &paddr->blobid, off);
 }
 
 void silofs_paddr64b_htox(struct silofs_paddr64b *paddr64,
@@ -112,37 +121,7 @@ void silofs_paddr64b_htox(struct silofs_paddr64b *paddr64,
 void silofs_paddr64b_xtoh(const struct silofs_paddr64b *paddr64,
                           struct silofs_paddr *paddr)
 {
-	silofs_blobid_copyto(&paddr64->blobid, &paddr->blobid);
+	silofs_blobid_assign(&paddr->blobid, &paddr64->blobid);
 	paddr->pos = silofs_off_to_cpu(paddr64->pos);
-	paddr_init_by_self(paddr);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static const struct silofs_bcursor s_silofs_cursor_none = {
-	.blobsz = 0,
-};
-
-const struct silofs_bcursor *silofs_cursor_none(void)
-{
-	return &s_silofs_cursor_none;
-}
-
-void silofs_bcursor128b_reset(struct silofs_bcursor128b *bcur128)
-{
-	silofs_bcursor128b_htox(bcur128, silofs_cursor_none());
-}
-
-void silofs_bcursor128b_xtoh(const struct silofs_bcursor128b *bcur128,
-                             struct silofs_bcursor *bcur)
-{
-	silofs_paddr64b_xtoh(&bcur128->paddr, &bcur->paddr);
-	bcur->blobsz = silofs_le64_to_cpu(bcur128->blobsz);
-}
-
-void silofs_bcursor128b_htox(struct silofs_bcursor128b *bcur128,
-                             const struct silofs_bcursor *bcur)
-{
-	silofs_paddr64b_htox(&bcur128->paddr, &bcur->paddr);
-	bcur128->blobsz = silofs_cpu_to_le64(bcur->blobsz);
+	paddr_update_by(paddr, &paddr64->blobid);
 }

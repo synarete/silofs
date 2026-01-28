@@ -23,38 +23,38 @@
 #include "exec.h"
 #include "env.h"
 
-static int reload_uber(struct silofs_exec_ctx *ectx)
+static int reload_uber(struct silofs_exec_ctx *exct)
 {
-	return silofs_env_reload_uber(ectx->ex_env);
+	return silofs_env_reload_uber(exct->env);
 }
 
-static int reload_super(struct silofs_exec_ctx *ectx)
+static int reload_super(struct silofs_exec_ctx *exct)
 {
 	int err;
 
-	err = silofs_env_reload_sb_lseg(ectx->ex_env);
+	err = silofs_env_reload_sb_lseg(exct->env);
 	if (err) {
 		return err;
 	}
-	err = silofs_env_reload_super(ectx->ex_env);
+	err = silofs_env_reload_super(exct->env);
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-static int reload_vspace(struct silofs_exec_ctx *ectx)
+static int reload_vspace(struct silofs_exec_ctx *exct)
 {
-	return silofs_reload_vspace(ectx);
+	return silofs_reload_vspace(exct);
 }
 
-static int reload_rootd(struct silofs_exec_ctx *ectx)
+static int reload_rootd(struct silofs_exec_ctx *exct)
 {
 	struct silofs_inode_info *ii = nullptr;
 	const ino_t ino              = SILOFS_INO_ROOT;
 	int err;
 
-	err = silofs_stage_inode(ectx, ino, SILOFS_STG_CUR, &ii);
+	err = silofs_stage_inode(exct, ino, SILOFS_STG_CUR, &ii);
 	if (err) {
 		log_err("failed to reload root-inode: err=%d", err);
 		return err;
@@ -68,33 +68,33 @@ static int reload_rootd(struct silofs_exec_ctx *ectx)
 }
 
 static int
-reload_fs_mbr(struct silofs_exec_ctx *ectx, const struct silofs_mbref *mbref)
+reload_fs_mbr(struct silofs_exec_ctx *exct, const struct silofs_mbref *mbref)
 {
-	return silofs_env_reload_fs_mbr(ectx->ex_env, mbref);
+	return silofs_env_reload_fs_mbr(exct->env, mbref);
 }
 
-int silofs_exec_reload_fs(struct silofs_exec_ctx *ectx,
+int silofs_exec_reload_fs(struct silofs_exec_ctx *exct,
                           const struct silofs_mbref *mbref)
 {
 	int err;
 
-	err = reload_fs_mbr(ectx, mbref);
+	err = reload_fs_mbr(exct, mbref);
 	if (err) {
 		return err;
 	}
-	err = reload_uber(ectx);
+	err = reload_uber(exct);
 	if (err) {
 		return err;
 	}
-	err = reload_super(ectx);
+	err = reload_super(exct);
 	if (err) {
 		return err;
 	}
-	err = reload_vspace(ectx);
+	err = reload_vspace(exct);
 	if (err) {
 		return err;
 	}
-	err = reload_rootd(ectx);
+	err = reload_rootd(exct);
 	if (err) {
 		return err;
 	}

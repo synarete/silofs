@@ -26,7 +26,7 @@
 
 struct silofs_ar_ctx {
 	struct timespec now;
-	struct silofs_exec_ctx *ectx;
+	struct silofs_exec_ctx *exct;
 	struct silofs_env *env;
 	struct silofs_alloc *alloc;
 	struct silofs_arnode_info *ari;
@@ -102,12 +102,12 @@ static int arc_renew_ari(struct silofs_ar_ctx *ar_ctx)
 	return 0;
 }
 
-static int arc_init(struct silofs_ar_ctx *ar_ctx, struct silofs_exec_ctx *ectx)
+static int arc_init(struct silofs_ar_ctx *ar_ctx, struct silofs_exec_ctx *exct)
 {
 	silofs_memzero(ar_ctx, sizeof(*ar_ctx));
 	silofs_clock_real_now(&ar_ctx->now);
-	ar_ctx->ectx  = ectx;
-	ar_ctx->env   = ectx->ex_env;
+	ar_ctx->exct  = exct;
+	ar_ctx->env   = exct->env;
 	ar_ctx->ari   = nullptr;
 	ar_ctx->alloc = ar_ctx->env->base.alloc;
 	ar_ctx->repo  = ar_ctx->env->base.repo;
@@ -119,7 +119,7 @@ static int arc_init(struct silofs_ar_ctx *ar_ctx, struct silofs_exec_ctx *ectx)
 static void arc_fini(struct silofs_ar_ctx *ar_ctx)
 {
 	arc_rebind_ari(ar_ctx, nullptr);
-	ar_ctx->ectx  = nullptr;
+	ar_ctx->exct  = nullptr;
 	ar_ctx->env   = nullptr;
 	ar_ctx->repo  = nullptr;
 	ar_ctx->dstor = nullptr;
@@ -332,9 +332,9 @@ static int arc_archive_fs(struct silofs_ar_ctx *ar_ctx)
 		.hook  = arc_visit_laddr_cb,
 		.userp = ar_ctx,
 	};
-	struct silofs_exec_ctx *ectx = ar_ctx->ectx;
+	struct silofs_exec_ctx *exct = ar_ctx->exct;
 
-	return silofs_walkfs_at(ectx, silofs_get_sbi(ectx), &lvis);
+	return silofs_walkfs_at(exct, silofs_get_sbi(exct), &lvis);
 }
 
 static int arc_archive_head_arix(struct silofs_ar_ctx *ar_ctx,
@@ -442,17 +442,17 @@ arc_do_archive(struct silofs_ar_ctx *ar_ctx, struct silofs_mbref *out_mbref)
 	return 0;
 }
 
-int silofs_do_archive_fs(struct silofs_exec_ctx *ectx,
+int silofs_do_archive_fs(struct silofs_exec_ctx *exct,
                          struct silofs_mbref *out_ar_mbref)
 {
 	struct silofs_ar_ctx ar_ctx;
 	int err;
 
-	err = silofs_flush_dirty_now(ectx);
+	err = silofs_flush_dirty_now(exct);
 	if (err) {
 		return err;
 	}
-	err = arc_init(&ar_ctx, ectx);
+	err = arc_init(&ar_ctx, exct);
 	if (err) {
 		goto out;
 	}

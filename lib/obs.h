@@ -26,5 +26,6 @@
 #include "obs/btree.h"
 #include "obs/uber.h"
 #include "obs/stage.h"
+#include "obs/space.h"
 
 #endif /* SILOFS_OBS_H_ */

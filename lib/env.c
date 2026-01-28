@@ -447,49 +447,13 @@ bool silofs_env_isrdonlyfs(const struct silofs_env *env)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static void
-env_make_uniqid(struct silofs_env *env, struct silofs_uniqid *out_uniqid)
-{
-	silofs_generate_uniqid(env->base.prng, out_uniqid);
-}
-
-static void
-env_make_civkey(struct silofs_env *env, struct silofs_civkey *out_civkey)
-{
-	silofs_generate_civkey(env->base.prng, out_civkey);
-}
-
-static void env_make_first_uber_paddr(struct silofs_env *env,
-                                      struct silofs_paddr *out_paddr)
-{
-	struct silofs_svolid svolid;
-	struct silofs_uniqid uniqid;
-	struct silofs_blobid blobid;
-
-	silofs_svolid_generate(&svolid);
-	env_make_uniqid(env, &uniqid);
-	silofs_blobid_setup_raw3(&blobid, &svolid, &uniqid, SILOFS_MTYPE_UBER);
-	silofs_paddr_init(out_paddr, &blobid, 0);
-}
-
-static void env_make_first_uber_pmeta(struct silofs_env *env,
-                                      struct silofs_pmeta *out_pmeta)
-{
-	struct silofs_paddr paddr;
-	struct silofs_civkey civkey;
-
-	env_make_first_uber_paddr(env, &paddr);
-	env_make_civkey(env, &civkey);
-	silofs_pmeta_setup(out_pmeta, &paddr, &civkey);
-}
-
 int silofs_env_format_uber(struct silofs_env *env)
 {
-	struct silofs_pmeta pmeta;
+	struct silofs_pmeta pmeta    = {};
 	struct silofs_uber_info *ubi = nullptr;
 	int err;
 
-	env_make_first_uber_pmeta(env, &pmeta);
+	silofs_make_base_pmeta(env->base.prng, SILOFS_MTYPE_UBER, &pmeta);
 	err = silofs_spawn_uber(env, &pmeta, &ubi);
 	if (err) {
 		return err;
@@ -500,7 +464,7 @@ int silofs_env_format_uber(struct silofs_env *env)
 
 int silofs_env_reload_uber(struct silofs_env *env)
 {
-	struct silofs_pmeta pmeta;
+	struct silofs_pmeta pmeta    = {};
 	struct silofs_uber_info *ubi = nullptr;
 	int err;
 

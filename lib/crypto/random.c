@@ -161,10 +161,10 @@ void silofs_prandgen_take(struct silofs_prandgen *prng, void *p, size_t n)
 {
 	uint64_t u;
 	uint8_t *q = p;
-	size_t nb, k = 0;
+	size_t k   = 0;
 
 	while (k < n) {
-		nb = silofs_min(n - k, sizeof(u));
+		const size_t nb = silofs_min(n - k, sizeof(u));
 
 		prandgen_prepare(prng);
 		u = prandgen_consume_slot(prng);

@@ -29,8 +29,8 @@ void silofs_make_base_paddr(struct silofs_prandgen *prng,
                             enum silofs_mtype       mtype,
                             struct silofs_paddr    *out_paddr);
 
-void silofs_make_base_pmeta(struct silofs_prandgen *prng,
-                            enum silofs_mtype       mtype,
-                            struct silofs_pmeta    *out_pmeta);
+void silofs_make_base_pnodeptr(struct silofs_prandgen *prng,
+                               enum silofs_mtype       mtype,
+                               struct silofs_pnodeptr *out_pnodeptr);
 
 #endif /* SILOFS_SPACE_H_ */

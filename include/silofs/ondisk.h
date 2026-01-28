@@ -595,7 +595,7 @@ struct silofs_nmeta128b {
 } silofs_attr_aligned32;
 
 /* pnode meta parameters (address + encryption) */
-struct silofs_pmeta192b {
+struct silofs_pnodeptr192b {
 	struct silofs_paddr64b  pm_paddr;
 	struct silofs_nmeta128b pm_nmeta;
 } silofs_attr_aligned64;
@@ -604,17 +604,17 @@ struct silofs_pmeta192b {
 
 /* global boot record */
 struct silofs_mbr1k {
-	uint64_t                mbr_magic;
-	uint64_t                mbr_version;
-	struct silofs_uuid      mbr_uuid;
-	uint32_t                mbr_mode;
-	uint32_t                mbr_flags;
-	uint8_t                 mbr_reserved1[24];
-	struct silofs_pmeta192b mbr_root;
-	struct silofs_uaddr128b mbr_sb_addr;
-	uint8_t                 mbr_reserved3[576];
-	struct silofs_hash256   mbr_hash;
-	struct silofs_mac       mbr_hmac;
+	uint64_t                   mbr_magic;
+	uint64_t                   mbr_version;
+	struct silofs_uuid         mbr_uuid;
+	uint32_t                   mbr_mode;
+	uint32_t                   mbr_flags;
+	uint8_t                    mbr_reserved1[24];
+	struct silofs_pnodeptr192b mbr_root;
+	struct silofs_uaddr128b    mbr_sb_addr;
+	uint8_t                    mbr_reserved3[576];
+	struct silofs_hash256      mbr_hash;
+	struct silofs_mac          mbr_hmac;
 } silofs_attr_aligned64;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -970,17 +970,17 @@ struct silofs_blob_desc {
 
 /* b+tree node of persistent volume mapping */
 struct silofs_btree_node {
-	struct silofs_header    btn_hdr;
-	uint32_t                btn_flags;
-	uint8_t                 btn_mtype;
-	uint8_t                 btn_reserved1;
-	uint16_t                btn_height;
-	uint8_t                 btn_nkeys;
-	uint8_t                 btn_nchilds;
-	uint8_t                 btn_reserved2[86];
-	uint64_t                btn_key[SILOFS_BTREE_NODE_NKEYS];
-	uint8_t                 btn_reserved3[64];
-	struct silofs_pmeta192b btn_child[SILOFS_BTREE_NODE_NCHILDS];
+	struct silofs_header       btn_hdr;
+	uint32_t                   btn_flags;
+	uint8_t                    btn_mtype;
+	uint8_t                    btn_reserved1;
+	uint16_t                   btn_height;
+	uint8_t                    btn_nkeys;
+	uint8_t                    btn_nchilds;
+	uint8_t                    btn_reserved2[86];
+	uint64_t                   btn_key[SILOFS_BTREE_NODE_NKEYS];
+	uint8_t                    btn_reserved3[64];
+	struct silofs_pnodeptr192b btn_child[SILOFS_BTREE_NODE_NCHILDS];
 } silofs_attr_aligned64;
 
 /* uber-block */
@@ -1006,13 +1006,13 @@ struct silofs_ar_desc256b {
 
 /* archive-index */
 struct silofs_arix_node {
-	struct silofs_header      arn_hdr;
-	struct silofs_timespec    arn_btime;
-	uint32_t                  arn_flags;
-	uint32_t                  arn_ndescs;
-	uint8_t                   arn_reserved1[8];
-	struct silofs_pmeta192b   arn_next;
-	struct silofs_ar_desc256b arn_descs[255];
+	struct silofs_header       arn_hdr;
+	struct silofs_timespec     arn_btime;
+	uint32_t                   arn_flags;
+	uint32_t                   arn_ndescs;
+	uint8_t                    arn_reserved1[8];
+	struct silofs_pnodeptr192b arn_next;
+	struct silofs_ar_desc256b  arn_descs[255];
 } silofs_attr_aligned64;
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

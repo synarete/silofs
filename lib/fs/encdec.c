@@ -45,11 +45,11 @@ static int decrypt_lview_inplace(const struct silofs_env *env,
 void silofs_resolve_unode_nmeta(const struct silofs_env *env,
                                 struct silofs_nmeta *out_nmeta)
 {
-	struct silofs_pmeta pmeta;
+	struct silofs_pnodeptr pnodeptr;
 	const struct silofs_mbr_info *fs_mbi = &env->mbis.fs_mbi;
 
-	silofs_mbi_uber_root(fs_mbi, &pmeta);
-	silofs_nmeta_assign(out_nmeta, &pmeta.nmeta);
+	silofs_mbi_uber_root(fs_mbi, &pnodeptr);
+	silofs_nmeta_assign(out_nmeta, &pnodeptr.nmeta);
 }
 
 int silofs_decrypt_uni_view(const struct silofs_env *env,

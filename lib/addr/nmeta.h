@@ -27,7 +27,7 @@ struct silofs_nmeta {
 };
 
 /* p-nodes meta settings */
-struct silofs_pmeta {
+struct silofs_pnodeptr {
 	struct silofs_nmeta nmeta;
 	struct silofs_paddr paddr;
 };
@@ -52,27 +52,27 @@ void silofs_nmeta128b_xtoh(const struct silofs_nmeta128b *nmeta128,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-const struct silofs_pmeta *silofs_pmeta_none(void);
+const struct silofs_pnodeptr *silofs_pnodeptr_none(void);
 
-void silofs_pmeta_setup(struct silofs_pmeta        *pmeta,
-                        const struct silofs_paddr  *paddr,
-                        const struct silofs_civkey *civkey);
+void silofs_pnodeptr_setup(struct silofs_pnodeptr     *pnodeptr,
+                           const struct silofs_paddr  *paddr,
+                           const struct silofs_civkey *civkey);
 
-void silofs_pmeta_setup2(struct silofs_pmeta       *pmeta,
-                         const struct silofs_paddr *paddr,
-                         const struct silofs_nmeta *nmeta);
+void silofs_pnodeptr_setup2(struct silofs_pnodeptr    *pnodeptr,
+                            const struct silofs_paddr *paddr,
+                            const struct silofs_nmeta *nmeta);
 
-void silofs_pmeta_reset(struct silofs_pmeta *pmeta);
+void silofs_pnodeptr_reset(struct silofs_pnodeptr *pnodeptr);
 
-void silofs_pmeta_assign(struct silofs_pmeta       *pmeta,
-                         const struct silofs_pmeta *other);
+void silofs_pnodeptr_assign(struct silofs_pnodeptr       *pnodeptr,
+                            const struct silofs_pnodeptr *other);
 
-bool silofs_pmeta_isnull(const struct silofs_pmeta *pmeta);
+bool silofs_pnodeptr_isnull(const struct silofs_pnodeptr *pnodeptr);
 
-void silofs_pmeta192b_htox(struct silofs_pmeta192b   *pmeta192,
-                           const struct silofs_pmeta *pmeta);
+void silofs_pnodeptr192b_htox(struct silofs_pnodeptr192b   *pnodeptr192,
+                              const struct silofs_pnodeptr *pnodeptr);
 
-void silofs_pmeta192b_xtoh(const struct silofs_pmeta192b *pmeta192,
-                           struct silofs_pmeta           *pmeta);
+void silofs_pnodeptr192b_xtoh(const struct silofs_pnodeptr192b *pnodeptr192,
+                              struct silofs_pnodeptr           *pnodeptr);
 
 #endif /* SILOFS_NMETA_H_ */

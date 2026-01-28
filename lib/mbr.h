@@ -47,13 +47,13 @@ int silofs_mbi_set_meta(struct silofs_mbr_info       *mbi,
                         const struct silofs_mbr_meta *meta);
 
 int silofs_mbi_uber_root(const struct silofs_mbr_info *mbi,
-                         struct silofs_pmeta          *out_pmeta);
+                         struct silofs_pnodeptr       *out_pnodeptr);
 
 int silofs_mbi_arix_root(const struct silofs_mbr_info *mbi,
-                         struct silofs_pmeta          *out_pmeta);
+                         struct silofs_pnodeptr       *out_pnodeptr);
 
-int silofs_mbi_set_root(struct silofs_mbr_info    *mbi,
-                        const struct silofs_pmeta *pmeta);
+int silofs_mbi_set_root(struct silofs_mbr_info       *mbi,
+                        const struct silofs_pnodeptr *pnodeptr);
 
 int silofs_mbi_sbaddr(const struct silofs_mbr_info *mbi,
                       struct silofs_uaddr          *out_sb_uaddr);

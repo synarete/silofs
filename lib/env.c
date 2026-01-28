@@ -26,7 +26,8 @@
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static const struct silofs_pmeta *ubi_pmeta(const struct silofs_uber_info *ubi)
+static const struct silofs_pnodeptr *
+ubi_pnodeptr(const struct silofs_uber_info *ubi)
 {
 	return &ubi->ub_pni.pn_meta;
 }
@@ -49,7 +50,7 @@ static void env_update_root_uber(struct silofs_env *env,
                                  const struct silofs_uber_info *ubi)
 {
 	if (ubi != nullptr) {
-		silofs_mbi_set_root(&env->mbis.fs_mbi, ubi_pmeta(ubi));
+		silofs_mbi_set_root(&env->mbis.fs_mbi, ubi_pnodeptr(ubi));
 	}
 }
 
@@ -61,9 +62,9 @@ env_update_uber(struct silofs_env *env, struct silofs_uber_info *ubi)
 }
 
 static int env_resolve_root_uber(const struct silofs_env *env,
-                                 struct silofs_pmeta *out_pmeta)
+                                 struct silofs_pnodeptr *out_pnodeptr)
 {
-	return silofs_mbi_uber_root(&env->mbis.fs_mbi, out_pmeta);
+	return silofs_mbi_uber_root(&env->mbis.fs_mbi, out_pnodeptr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -449,12 +450,13 @@ bool silofs_env_isrdonlyfs(const struct silofs_env *env)
 
 int silofs_env_format_uber(struct silofs_env *env)
 {
-	struct silofs_pmeta pmeta    = {};
-	struct silofs_uber_info *ubi = nullptr;
+	struct silofs_pnodeptr pnodeptr = {};
+	struct silofs_uber_info *ubi    = nullptr;
 	int err;
 
-	silofs_make_base_pmeta(env->base.prng, SILOFS_MTYPE_UBER, &pmeta);
-	err = silofs_spawn_uber(env, &pmeta, &ubi);
+	silofs_make_base_pnodeptr(env->base.prng, SILOFS_MTYPE_UBER,
+	                          &pnodeptr);
+	err = silofs_spawn_uber(env, &pnodeptr, &ubi);
 	if (err) {
 		return err;
 	}
@@ -464,15 +466,15 @@ int silofs_env_format_uber(struct silofs_env *env)
 
 int silofs_env_reload_uber(struct silofs_env *env)
 {
-	struct silofs_pmeta pmeta    = {};
-	struct silofs_uber_info *ubi = nullptr;
+	struct silofs_pnodeptr pnodeptr = {};
+	struct silofs_uber_info *ubi    = nullptr;
 	int err;
 
-	err = env_resolve_root_uber(env, &pmeta);
+	err = env_resolve_root_uber(env, &pnodeptr);
 	if (err) {
 		return err;
 	}
-	err = silofs_stage_uber(env, &pmeta, &ubi);
+	err = silofs_stage_uber(env, &pnodeptr, &ubi);
 	if (err) {
 		return err;
 	}

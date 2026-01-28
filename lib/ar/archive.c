@@ -44,16 +44,16 @@ static int arc_arix_nmeta(const struct silofs_ar_ctx *ar_ctx,
 	return 0;
 }
 
-static int arc_default_arix_pmeta(const struct silofs_ar_ctx *ar_ctx,
-                                  struct silofs_pmeta *out_pmeta)
+static int arc_default_arix_pnodeptr(const struct silofs_ar_ctx *ar_ctx,
+                                     struct silofs_pnodeptr *out_pnodeptr)
 {
 	int err;
 
-	err = arc_arix_nmeta(ar_ctx, &out_pmeta->nmeta);
+	err = arc_arix_nmeta(ar_ctx, &out_pnodeptr->nmeta);
 	if (err) {
 		return err;
 	}
-	silofs_paddr_reset(&out_pmeta->paddr);
+	silofs_paddr_reset(&out_pnodeptr->paddr);
 	return 0;
 }
 
@@ -85,17 +85,17 @@ arc_rebind_ari(struct silofs_ar_ctx *ar_ctx, struct silofs_arnode_info *abi)
 
 static int arc_renew_ari(struct silofs_ar_ctx *ar_ctx)
 {
-	struct silofs_pmeta pmeta;
+	struct silofs_pnodeptr pnodeptr;
 	struct silofs_arnode_info *ari = nullptr;
 
-	arc_default_arix_pmeta(ar_ctx, &pmeta);
-	ari = silofs_ari_new(ar_ctx->alloc, &pmeta);
+	arc_default_arix_pnodeptr(ar_ctx, &pnodeptr);
+	ari = silofs_ari_new(ar_ctx->alloc, &pnodeptr);
 	if (ari == nullptr) {
 		return -SILOFS_ENOMEM;
 	}
 	silofs_ari_set_btime(ari, &ar_ctx->now);
 	if (ar_ctx->ari != nullptr) {
-		silofs_ari_set_next(ari, &ar_ctx->ari->arn_pmeta);
+		silofs_ari_set_next(ari, &ar_ctx->ari->arn_pnodeptr);
 	}
 
 	arc_rebind_ari(ar_ctx, ari);
@@ -338,7 +338,7 @@ static int arc_archive_fs(struct silofs_ar_ctx *ar_ctx)
 }
 
 static int arc_archive_head_arix(struct silofs_ar_ctx *ar_ctx,
-                                 struct silofs_pmeta *out_pmeta)
+                                 struct silofs_pnodeptr *out_pnodeptr)
 {
 	int err;
 
@@ -346,7 +346,7 @@ static int arc_archive_head_arix(struct silofs_ar_ctx *ar_ctx,
 	if (err) {
 		return err;
 	}
-	silofs_pmeta_assign(out_pmeta, &ar_ctx->ari->arn_pmeta);
+	silofs_pnodeptr_assign(out_pnodeptr, &ar_ctx->ari->arn_pnodeptr);
 	return 0;
 }
 
@@ -390,20 +390,20 @@ static int arc_archive_mbr(const struct silofs_ar_ctx *ar_ctx,
 }
 
 static int arc_set_mbr_root(struct silofs_ar_ctx *ar_ctx,
-                            const struct silofs_pmeta *pmeta)
+                            const struct silofs_pnodeptr *pnodeptr)
 {
 	struct silofs_mbr_info *ar_mbi = &ar_ctx->env->mbis.ar_mbi;
 
-	return silofs_mbi_set_root(ar_mbi, pmeta);
+	return silofs_mbi_set_root(ar_mbi, pnodeptr);
 }
 
 static int arc_archive_post(struct silofs_ar_ctx *ar_ctx,
-                            const struct silofs_pmeta *pmeta,
+                            const struct silofs_pnodeptr *pnodeptr,
                             struct silofs_mbref *out_mbref)
 {
 	int err;
 
-	err = arc_set_mbr_root(ar_ctx, pmeta);
+	err = arc_set_mbr_root(ar_ctx, pnodeptr);
 	if (err) {
 		return err;
 	}
@@ -422,7 +422,7 @@ static void arc_archive_prep(struct silofs_ar_ctx *ar_ctx)
 static int
 arc_do_archive(struct silofs_ar_ctx *ar_ctx, struct silofs_mbref *out_mbref)
 {
-	struct silofs_pmeta pmeta;
+	struct silofs_pnodeptr pnodeptr;
 	int err;
 
 	arc_archive_prep(ar_ctx);
@@ -431,11 +431,11 @@ arc_do_archive(struct silofs_ar_ctx *ar_ctx, struct silofs_mbref *out_mbref)
 	if (err) {
 		return err;
 	}
-	err = arc_archive_head_arix(ar_ctx, &pmeta);
+	err = arc_archive_head_arix(ar_ctx, &pnodeptr);
 	if (err) {
 		return err;
 	}
-	err = arc_archive_post(ar_ctx, &pmeta, out_mbref);
+	err = arc_archive_post(ar_ctx, &pnodeptr, out_mbref);
 	if (err) {
 		return err;
 	}

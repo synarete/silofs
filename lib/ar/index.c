@@ -112,21 +112,21 @@ static bool arn_has_room(const struct silofs_arix_node *arn)
 	return (arn_ndescs(arn) < ARRAY_SIZE(arn->arn_descs));
 }
 
-static void
-arn_next(const struct silofs_arix_node *arn, struct silofs_pmeta *out_pmeta)
+static void arn_next(const struct silofs_arix_node *arn,
+                     struct silofs_pnodeptr *out_pnodeptr)
 {
-	silofs_pmeta192b_xtoh(&arn->arn_next, out_pmeta);
+	silofs_pnodeptr192b_xtoh(&arn->arn_next, out_pnodeptr);
 }
 
-static void
-arn_set_next(struct silofs_arix_node *arn, const struct silofs_pmeta *pmeta)
+static void arn_set_next(struct silofs_arix_node *arn,
+                         const struct silofs_pnodeptr *pnodeptr)
 {
-	silofs_pmeta192b_htox(&arn->arn_next, pmeta);
+	silofs_pnodeptr192b_htox(&arn->arn_next, pnodeptr);
 }
 
 static void arn_reset_next(struct silofs_arix_node *arn)
 {
-	arn_set_next(arn, silofs_pmeta_none());
+	arn_set_next(arn, silofs_pnodeptr_none());
 }
 
 static void arn_desc(const struct silofs_arix_node *arn, size_t slot,
@@ -227,21 +227,22 @@ ari_free(struct silofs_arnode_info *ari, struct silofs_alloc *alloc)
 	silofs_memfree(alloc, ari, sizeof(*ari), 0);
 }
 
-static void
-ari_init(struct silofs_arnode_info *ari, const struct silofs_pmeta *pmeta)
+static void ari_init(struct silofs_arnode_info *ari,
+                     const struct silofs_pnodeptr *pnodeptr)
 {
-	silofs_pmeta_assign(&ari->arn_pmeta, pmeta);
+	silofs_pnodeptr_assign(&ari->arn_pnodeptr, pnodeptr);
 	ari->arn = nullptr;
 }
 
 static void ari_fini(struct silofs_arnode_info *ari)
 {
-	silofs_pmeta_reset(&ari->arn_pmeta);
+	silofs_pnodeptr_reset(&ari->arn_pnodeptr);
 	ari->arn = nullptr;
 }
 
 struct silofs_arnode_info *
-silofs_ari_new(struct silofs_alloc *alloc, const struct silofs_pmeta *pmeta)
+silofs_ari_new(struct silofs_alloc *alloc,
+               const struct silofs_pnodeptr *pnodeptr)
 {
 	struct silofs_arix_node *arn   = nullptr;
 	struct silofs_arnode_info *ari = nullptr;
@@ -255,7 +256,7 @@ silofs_ari_new(struct silofs_alloc *alloc, const struct silofs_pmeta *pmeta)
 		arn_del(arn, alloc);
 		return nullptr;
 	}
-	ari_init(ari, pmeta);
+	ari_init(ari, pnodeptr);
 	ari->arn = arn;
 	return ari;
 }
@@ -286,35 +287,35 @@ void silofs_ari_set_btime(struct silofs_arnode_info *ari,
 void silofs_ari_get_paddr(const struct silofs_arnode_info *ari,
                           struct silofs_paddr *out_paddr)
 {
-	silofs_paddr_assign(out_paddr, &ari->arn_pmeta.paddr);
+	silofs_paddr_assign(out_paddr, &ari->arn_pnodeptr.paddr);
 }
 
 void silofs_ari_set_paddr(struct silofs_arnode_info *ari,
                           const struct silofs_paddr *paddr)
 {
-	silofs_paddr_assign(&ari->arn_pmeta.paddr, paddr);
+	silofs_paddr_assign(&ari->arn_pnodeptr.paddr, paddr);
 }
 
-static void
-ari_set_next(struct silofs_arnode_info *ari, const struct silofs_pmeta *pmeta)
+static void ari_set_next(struct silofs_arnode_info *ari,
+                         const struct silofs_pnodeptr *pnodeptr)
 {
-	if (pmeta != nullptr) {
-		arn_set_next(ari->arn, pmeta);
+	if (pnodeptr != nullptr) {
+		arn_set_next(ari->arn, pnodeptr);
 	} else {
 		arn_reset_next(ari->arn);
 	}
 }
 
 void silofs_ari_set_next(struct silofs_arnode_info *ari,
-                         const struct silofs_pmeta *pmeta)
+                         const struct silofs_pnodeptr *pnodeptr)
 {
-	ari_set_next(ari, pmeta);
+	ari_set_next(ari, pnodeptr);
 }
 
 void silofs_ari_get_next(const struct silofs_arnode_info *ari,
-                         struct silofs_pmeta *out_pmeta)
+                         struct silofs_pnodeptr *out_pnodeptr)
 {
-	arn_next(ari->arn, out_pmeta);
+	arn_next(ari->arn, out_pnodeptr);
 }
 
 int silofs_ari_append_desc(struct silofs_arnode_info *ari,

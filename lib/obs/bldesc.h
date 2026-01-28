@@ -50,8 +50,9 @@ silofs_lookup_cached_bldesc(struct silofs_pcache      *pcache,
                             const struct silofs_paddr *paddr);
 
 struct silofs_bldesc_info *
-silofs_create_cached_bldesc(struct silofs_pcache      *pcache,
-                            const struct silofs_pmeta *pmeta, bool spawn);
+silofs_create_cached_bldesc(struct silofs_pcache         *pcache,
+                            const struct silofs_pnodeptr *pnodeptr,
+                            bool                          spawn);
 
 void silofs_forget_cached_bldesc(struct silofs_pcache      *pcache,
                                  struct silofs_bldesc_info *bdi);

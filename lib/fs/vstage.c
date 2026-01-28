@@ -1882,10 +1882,10 @@ static int vstgc_resolve_child_of(const struct silofs_vstage_ctx *vstg_ctx,
 static void vstgc_root_nmeta(const struct silofs_vstage_ctx *vstg_ctx,
                              struct silofs_nmeta *out_nmeta)
 {
-	struct silofs_pmeta pmeta = {};
+	struct silofs_pnodeptr pnodeptr = {};
 
-	silofs_mbi_uber_root(&vstg_ctx->env->mbis.fs_mbi, &pmeta);
-	silofs_nmeta_assign(out_nmeta, &pmeta.nmeta);
+	silofs_mbi_uber_root(&vstg_ctx->env->mbis.fs_mbi, &pnodeptr);
+	silofs_nmeta_assign(out_nmeta, &pnodeptr.nmeta);
 }
 
 static void vstgc_resolve_main_key(const struct silofs_vstage_ctx *vstg_ctx,

@@ -212,12 +212,12 @@ silofs_lookup_cached_uber(struct silofs_pcache *pcache,
 
 struct silofs_uber_info *
 silofs_create_cached_uber(struct silofs_pcache *pcache,
-                          const struct silofs_pmeta *pmeta, bool spawn)
+                          const struct silofs_pnodeptr *pnodeptr, bool spawn)
 {
 	struct silofs_pnode_info *pni;
 	struct silofs_uber_info *ubi;
 
-	pni = silofs_pcache_create_pnode(pcache, pmeta);
+	pni = silofs_pcache_create_pnode(pcache, pnodeptr);
 	ubi = silofs_ubi_from_pni(pni);
 	if ((ubi != nullptr) && spawn) {
 		ubi_setup_spawned(ubi);

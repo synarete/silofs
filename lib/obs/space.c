@@ -44,14 +44,14 @@ void silofs_make_base_paddr(struct silofs_prandgen *prng,
 	silofs_paddr_init(out_paddr, &blobid, 0);
 }
 
-void silofs_make_base_pmeta(struct silofs_prandgen *prng,
-                            enum silofs_mtype mtype,
-                            struct silofs_pmeta *out_pmeta)
+void silofs_make_base_pnodeptr(struct silofs_prandgen *prng,
+                               enum silofs_mtype mtype,
+                               struct silofs_pnodeptr *out_pnodeptr)
 {
 	struct silofs_paddr paddr;
 	struct silofs_civkey civkey;
 
 	silofs_make_base_paddr(prng, mtype, &paddr);
 	silofs_generate_civkey(prng, &civkey);
-	silofs_pmeta_setup(out_pmeta, &paddr, &civkey);
+	silofs_pnodeptr_setup(out_pnodeptr, &paddr, &civkey);
 }

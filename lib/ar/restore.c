@@ -46,12 +46,12 @@ rec_rebind_ari(struct silofs_re_ctx *re_ctx, struct silofs_arnode_info *ari)
 	}
 }
 
-static int
-rec_renew_ari(struct silofs_re_ctx *re_ctx, const struct silofs_pmeta *pmeta)
+static int rec_renew_ari(struct silofs_re_ctx *re_ctx,
+                         const struct silofs_pnodeptr *pnodeptr)
 {
 	struct silofs_arnode_info *ari = nullptr;
 
-	ari = silofs_ari_new(re_ctx->alloc, pmeta);
+	ari = silofs_ari_new(re_ctx->alloc, pnodeptr);
 	if (ari == nullptr) {
 		return -SILOFS_ENOMEM;
 	}
@@ -219,20 +219,20 @@ out:
 	return err;
 }
 
-static int
-rec_resolve_root(struct silofs_re_ctx *re_ctx, struct silofs_pmeta *out_pmeta)
+static int rec_resolve_root(struct silofs_re_ctx *re_ctx,
+                            struct silofs_pnodeptr *out_pnodeptr)
 {
 	const struct silofs_mbr_info *ar_mbi = &re_ctx->env->mbis.ar_mbi;
 
-	return silofs_mbi_arix_root(ar_mbi, out_pmeta);
+	return silofs_mbi_arix_root(ar_mbi, out_pnodeptr);
 }
 
 static int rec_restore_arix(struct silofs_re_ctx *re_ctx,
-                            const struct silofs_pmeta *pmeta)
+                            const struct silofs_pnodeptr *pnodeptr)
 {
 	int err;
 
-	err = rec_renew_ari(re_ctx, pmeta);
+	err = rec_renew_ari(re_ctx, pnodeptr);
 	if (err) {
 		return err;
 	}
@@ -245,14 +245,14 @@ static int rec_restore_arix(struct silofs_re_ctx *re_ctx,
 
 static int rec_restore_apex(struct silofs_re_ctx *re_ctx)
 {
-	struct silofs_pmeta pmeta;
+	struct silofs_pnodeptr pnodeptr;
 	int err;
 
-	err = rec_resolve_root(re_ctx, &pmeta);
+	err = rec_resolve_root(re_ctx, &pnodeptr);
 	if (err) {
 		return err;
 	}
-	err = rec_restore_arix(re_ctx, &pmeta);
+	err = rec_restore_arix(re_ctx, &pnodeptr);
 	if (err) {
 		return err;
 	}
@@ -310,15 +310,15 @@ static int rec_restore_descs(struct silofs_re_ctx *re_ctx)
 
 static int rec_restore_next(struct silofs_re_ctx *re_ctx)
 {
-	struct silofs_pmeta pmeta;
+	struct silofs_pnodeptr pnodeptr;
 	int err;
 
-	silofs_ari_get_next(re_ctx->ari, &pmeta);
-	if (silofs_pmeta_isnull(&pmeta)) {
+	silofs_ari_get_next(re_ctx->ari, &pnodeptr);
+	if (silofs_pnodeptr_isnull(&pnodeptr)) {
 		rec_rebind_ari(re_ctx, nullptr);
 		return 0; /* end-of-chain */
 	}
-	err = rec_restore_arix(re_ctx, &pmeta);
+	err = rec_restore_arix(re_ctx, &pnodeptr);
 	if (err) {
 		return err;
 	}

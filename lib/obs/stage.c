@@ -35,7 +35,7 @@ struct silofs_stage_ctx {
 
 static void stc_init(struct silofs_stage_ctx *st_ctx, struct silofs_env *env)
 {
-	st_ctx->alloc     = env->base.alloc;
+	st_ctx->alloc     = env->alloc;
 	st_ctx->dstor     = &env->base.repo->re_dstor;
 	st_ctx->pcache    = env->base.pcache;
 	st_ctx->md_hd     = &env->md_hd;

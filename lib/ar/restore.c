@@ -66,7 +66,7 @@ static int rec_init(struct silofs_re_ctx *re_ctx, struct silofs_exec_ctx *exct)
 	re_ctx->exct  = exct;
 	re_ctx->env   = exct->env;
 	re_ctx->ari   = nullptr;
-	re_ctx->alloc = re_ctx->env->base.alloc;
+	re_ctx->alloc = re_ctx->env->alloc;
 	re_ctx->repo  = re_ctx->env->base.repo;
 	re_ctx->dstor = &re_ctx->env->base.repo->re_dstor;
 	return 0;

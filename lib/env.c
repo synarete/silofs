@@ -102,7 +102,7 @@ static void env_update_sb(struct silofs_env *env, struct silofs_sb_info *sbi)
 
 static int env_update_repodir(struct silofs_env *env, const char *repodir)
 {
-	struct silofs_alloc *alloc = env->base.alloc;
+	struct silofs_alloc *alloc = env->alloc;
 	size_t len;
 
 	if (env->repodir != nullptr) {
@@ -140,11 +140,15 @@ env_setup_owner(struct silofs_env *env, const struct silofs_cred *cred)
 }
 
 static int
-env_use_password(struct silofs_env *env, const struct silofs_password *pw)
+env_use_password(struct silofs_env *env, const struct silofs_password *pw,
+                 enum silofs_flags flags)
 {
 	struct silofs_mbr_meta mbr_meta = {};
 	int err;
 
+	if (flags & SILOFS_F_NOPASSWD) {
+		return 0; /* password-less mode */
+	}
 	err = silofs_derive_mbr_meta(pw, &mbr_meta);
 	if (err) {
 		return err;
@@ -214,9 +218,20 @@ static int env_update_name(struct silofs_env *env, const char *fsname)
 	return 0;
 }
 
-static bool with_passwd(enum silofs_flags flags)
+static size_t env_calc_iopen_limit(const struct silofs_env *env)
 {
-	return (flags & SILOFS_F_NOPASSWD) == 0;
+	struct silofs_alloc_stat st;
+	const size_t align = 128;
+	size_t lim;
+
+	silofs_memstat(env->alloc, &st);
+	lim = (st.nbytes_max / (2 * SILOFS_LBK_SIZE));
+	return silofs_div_round_up(lim, align) * align;
+}
+
+static void env_update_iopen_max(struct silofs_env *env)
+{
+	env->opstat.op_iopen_max = env_calc_iopen_limit(env);
 }
 
 int silofs_env_setup(struct silofs_env *env, const struct silofs_spec *spec)
@@ -235,49 +250,38 @@ int silofs_env_setup(struct silofs_env *env, const struct silofs_spec *spec)
 	if (err) {
 		return err;
 	}
-	if (with_passwd(spec->flags)) {
-		err = env_use_password(env, &spec->passwd);
-		if (err) {
-			return err;
-		}
+	err = env_use_password(env, &spec->passwd, spec->flags);
+	if (err) {
+		return err;
 	}
 	err = env_setup_mntflags(env, spec->flags);
 	if (err) {
 		return err;
 	}
+	env_update_iopen_max(env);
 	env->flags = spec->flags;
 	return 0;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static size_t env_calc_iopen_limit(const struct silofs_env *env)
-{
-	struct silofs_alloc_stat st;
-	const size_t align = 128;
-	size_t lim;
-
-	silofs_memstat(env->base.alloc, &st);
-	lim = (st.nbytes_max / (2 * SILOFS_LBK_SIZE));
-	return silofs_div_round_up(lim, align) * align;
-}
-
 static void env_init_opstat(struct silofs_env *env)
 {
 	env->opstat.op_iopen_max = 0;
 	env->opstat.op_iopen     = 0;
-	env->opstat.op_time      = silofs_time_real_now();
+	env->opstat.op_time      = 0;
 	env->opstat.op_count     = 0;
-	env->opstat.op_iopen_max = env_calc_iopen_limit(env);
+	env->opstat.op_iopen_max = 0;
 }
 
 static void
-env_init_commons(struct silofs_env *env, const struct silofs_env_base *base)
+env_init_commons(struct silofs_env *env, struct silofs_alloc *alloc)
 {
-	memcpy(&env->base, base, sizeof(env->base));
+	memset(&env->base, 0, sizeof(env->base));
 	silofs_strbuf_reset(&env->name);
 	silofs_cred_init(&env->owner_cred);
 	env->init_time = silofs_time_mono_now();
+	env->alloc     = alloc;
 	env->ubi       = nullptr;
 	env->sbi       = nullptr;
 	env->flags     = 0;
@@ -369,12 +373,11 @@ static void env_fini_uconv(struct silofs_env *env)
 	silofs_uconv_fini(&env->uconv);
 }
 
-int silofs_env_init(struct silofs_env *env, const struct silofs_env_base *base)
+int silofs_env_init(struct silofs_env *env, struct silofs_alloc *alloc)
 {
 	int err;
 
-	env_init_commons(env, base);
-
+	env_init_commons(env, alloc);
 	env_init_opstat(env);
 
 	err = env_init_mbis(env);
@@ -409,6 +412,11 @@ void silofs_env_fini(struct silofs_env *env)
 	env_fini_locks(env);
 	env_fini_mbis(env);
 	env_fini_commons(env);
+}
+
+void silofs_env_use(struct silofs_env *env, const struct silofs_env_base *base)
+{
+	memcpy(&env->base, base, sizeof(env->base));
 }
 
 void silofs_env_lock(struct silofs_env *env)
@@ -628,7 +636,7 @@ void silofs_env_uptime(const struct silofs_env *env, time_t *out_uptime)
 void silofs_env_allocstat(const struct silofs_env *env,
                           struct silofs_alloc_stat *out_alst)
 {
-	silofs_memstat(env->base.alloc, out_alst);
+	silofs_memstat(env->alloc, out_alst);
 }
 
 static void env_drop_uamap(struct silofs_env *env)

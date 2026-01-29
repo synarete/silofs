@@ -966,7 +966,7 @@ static bool need_flush_now(const struct silofs_exec_ctx *exct, int flags)
 	if (flags & SILOFS_CTLF_NOW) {
 		return true;
 	}
-	silofs_memstat(exct->env->base.alloc, &alst);
+	silofs_memstat(exct->env->alloc, &alst);
 	if (alst.nbytes_use > (alst.nbytes_max / 2)) {
 		return true;
 	}

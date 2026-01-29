@@ -37,7 +37,6 @@ struct silofs_env_opstat {
 /* environment meta settings */
 struct silofs_env_base {
 	struct silofs_prandgen *prng;
-	struct silofs_alloc    *alloc;
 	struct silofs_lblock   *nilbk;
 	struct silofs_repo     *repo;
 	struct silofs_dstor    *dstor;
@@ -58,6 +57,7 @@ struct silofs_env_mbis {
 /* top-level environment object */
 struct silofs_env {
 	struct silofs_strbuf     name;
+	struct silofs_alloc     *alloc;
 	struct silofs_env_base   base;
 	struct silofs_env_mbis   mbis;
 	struct silofs_rwlock     rwlock;
@@ -82,12 +82,14 @@ struct silofs_env {
 
 void silofs_validate_ondisk_format(void);
 
-int silofs_env_init(struct silofs_env            *env,
-                    const struct silofs_env_base *base);
+int silofs_env_init(struct silofs_env *env, struct silofs_alloc *alloc);
 
 void silofs_env_fini(struct silofs_env *env);
 
-int silofs_env_setup(struct silofs_env *env, const struct silofs_spec *args);
+void silofs_env_use(struct silofs_env            *env,
+                    const struct silofs_env_base *base);
+
+int silofs_env_setup(struct silofs_env *env, const struct silofs_spec *spec);
 
 void silofs_env_lock(struct silofs_env *env);
 

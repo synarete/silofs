@@ -459,7 +459,6 @@ static int envi_init_env(struct silofs_env_inst *envi)
 {
 	const struct silofs_env_base env_base = {
 		.prng    = &envi->prandgen,
-		.alloc   = envi->alloc,
 		.nilbk   = envi->nilbk,
 		.repo    = &envi->repo,
 		.dstor   = &envi->repo.re_dstor,
@@ -473,10 +472,12 @@ static int envi_init_env(struct silofs_env_inst *envi)
 	struct silofs_env *env = &envi->env;
 	int err;
 
-	err = silofs_env_init(env, &env_base);
+	err = silofs_env_init(env, envi->alloc);
 	if (err) {
 		return err;
 	}
+
+	silofs_env_use(env, &env_base);
 	envi->initf |= SILOFS_ENVIF_ENV;
 	return 0;
 }

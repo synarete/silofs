@@ -109,7 +109,7 @@ static int arc_init(struct silofs_ar_ctx *ar_ctx, struct silofs_exec_ctx *exct)
 	ar_ctx->exct  = exct;
 	ar_ctx->env   = exct->env;
 	ar_ctx->ari   = nullptr;
-	ar_ctx->alloc = ar_ctx->env->base.alloc;
+	ar_ctx->alloc = ar_ctx->env->alloc;
 	ar_ctx->repo  = ar_ctx->env->base.repo;
 	ar_ctx->dstor = &ar_ctx->env->base.repo->re_dstor;
 

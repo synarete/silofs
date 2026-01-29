@@ -31,6 +31,10 @@ void silofs_ubi_set_child(struct silofs_uber_info      *ubi,
                           enum silofs_mtype             mtype,
                           const struct silofs_pnodeptr *pnodeptr);
 
+void silofs_ubi_get_child(const struct silofs_uber_info *ubi,
+                          enum silofs_mtype              mtype,
+                          struct silofs_pnodeptr        *out_pnodeptr);
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 struct silofs_uber_info *

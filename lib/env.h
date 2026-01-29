@@ -104,8 +104,6 @@ void silofs_env_update_uber(struct silofs_env       *env,
 
 int silofs_env_format_super(struct silofs_env *env, size_t capacity);
 
-int silofs_env_reload_uber(struct silofs_env *env);
-
 int silofs_env_reload_super(struct silofs_env *env);
 
 int silofs_env_reload_sb_lseg(struct silofs_env *env);

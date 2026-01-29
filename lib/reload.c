@@ -23,10 +23,102 @@
 #include "exec.h"
 #include "env.h"
 
+static int resolve_root_uber(const struct silofs_exec_ctx *exct,
+                             struct silofs_pnodeptr *out_pnodeptr)
+{
+	const struct silofs_env_mbis *mbis = &exct->env->mbis;
+
+	return silofs_mbi_uber_root(&mbis->fs_mbi, out_pnodeptr);
+}
+
 static int reload_uber(struct silofs_exec_ctx *exct)
 {
-	return silofs_env_reload_uber(exct->env);
+	struct silofs_pnodeptr pnodeptr = {};
+	struct silofs_uber_info *ubi    = nullptr;
+	int err;
+
+	err = resolve_root_uber(exct, &pnodeptr);
+	if (err) {
+		return err;
+	}
+	err = silofs_stage_uber(exct->env, &pnodeptr, &ubi);
+	if (err) {
+		return err;
+	}
+	silofs_env_update_uber(exct->env, ubi);
+	return 0;
 }
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static int
+stage_btree_root(struct silofs_exec_ctx *exct, enum silofs_mtype mtype)
+{
+	struct silofs_pnodeptr pnodeptr;
+	struct silofs_btnode_info *bti = nullptr;
+	int err;
+
+	silofs_ubi_get_child(exct->env->ubi, mtype, &pnodeptr);
+	if (silofs_paddr_isnull(&pnodeptr.paddr)) {
+		log_dbg("missing btree root: mtype=%d", mtype);
+		return -SILOFS_ENOENT;
+	}
+	err = silofs_stage_btnode(exct->env, &pnodeptr, &bti);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+static int
+reload_btree_of(struct silofs_exec_ctx *exct, enum silofs_mtype mtype)
+{
+	int err;
+
+	err = stage_btree_root(exct, mtype);
+	if (err) {
+		log_err("reload btree failed: mtype=%d err=%d", mtype, err);
+		return err;
+	}
+	log_dbg("reload btree of: mtype=%d", mtype);
+	return 0;
+}
+
+static int reload_btrees(struct silofs_exec_ctx *exct)
+{
+	enum silofs_mtype mtype = SILOFS_MTYPE_NONE;
+	int err;
+
+	while (++mtype < SILOFS_MTYPE_LAST) {
+		if (!silofs_mtype_isvnode2(mtype)) {
+			continue;
+		}
+		err = reload_btree_of(exct, mtype);
+		if (err) {
+			return err;
+		}
+	}
+	return 0;
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static int reload_obs(struct silofs_exec_ctx *exct)
+{
+	int err;
+
+	err = reload_uber(exct);
+	if (err) {
+		return err;
+	}
+	err = reload_btrees(exct);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static int reload_super(struct silofs_exec_ctx *exct)
 {
@@ -51,10 +143,9 @@ static int reload_vspace(struct silofs_exec_ctx *exct)
 static int reload_rootd(struct silofs_exec_ctx *exct)
 {
 	struct silofs_inode_info *ii = nullptr;
-	const ino_t ino              = SILOFS_INO_ROOT;
 	int err;
 
-	err = silofs_stage_inode(exct, ino, SILOFS_STG_CUR, &ii);
+	err = silofs_stage_inode(exct, SILOFS_INO_ROOT, SILOFS_STG_CUR, &ii);
 	if (err) {
 		log_err("failed to reload root-inode: err=%d", err);
 		return err;
@@ -66,6 +157,8 @@ static int reload_rootd(struct silofs_exec_ctx *exct)
 	}
 	return 0;
 }
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static int
 reload_fs_mbr(struct silofs_exec_ctx *exct, const struct silofs_mbref *mbref)
@@ -82,7 +175,7 @@ int silofs_exec_reload_fs(struct silofs_exec_ctx *exct,
 	if (err) {
 		return err;
 	}
-	err = reload_uber(exct);
+	err = reload_obs(exct);
 	if (err) {
 		return err;
 	}

@@ -61,12 +61,6 @@ void silofs_env_update_uber(struct silofs_env *env,
 	env_update_root_uber(env, ubi);
 }
 
-static int env_resolve_root_uber(const struct silofs_env *env,
-                                 struct silofs_pnodeptr *out_pnodeptr)
-{
-	return silofs_mbi_uber_root(&env->mbis.fs_mbi, out_pnodeptr);
-}
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void
@@ -455,26 +449,6 @@ bool silofs_env_isrdonlyfs(const struct silofs_env *env)
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-
-int silofs_env_reload_uber(struct silofs_env *env)
-{
-	struct silofs_pnodeptr pnodeptr = {};
-	struct silofs_uber_info *ubi    = nullptr;
-	int err;
-
-	err = env_resolve_root_uber(env, &pnodeptr);
-	if (err) {
-		return err;
-	}
-	err = silofs_stage_uber(env, &pnodeptr, &ubi);
-	if (err) {
-		return err;
-	}
-	silofs_env_update_uber(env, ubi);
-	return 0;
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void make_super_lsid(struct silofs_lsid *out_lsid)
 {

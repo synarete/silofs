@@ -101,7 +101,7 @@
 #define SILOFS_HEADER_SIZE (32)
 
 /* number of pointers btree mapping-node */
-#define SILOFS_BTREE_NODE_NCHILDS (40)
+#define SILOFS_BTREE_NODE_NCHILDS (30)
 
 /* number of keys in btree mapping-node */
 #define SILOFS_BTREE_NODE_NKEYS (SILOFS_BTREE_NODE_NCHILDS - 1)
@@ -594,10 +594,11 @@ struct silofs_nmeta128b {
 	uint8_t            nm_reserved2[40];
 } silofs_attr_aligned32;
 
-/* pnode meta parameters (address + encryption) */
-struct silofs_pnodeptr192b {
-	struct silofs_paddr64b  pm_paddr;
-	struct silofs_nmeta128b pm_nmeta;
+/* pnode meta-pointer */
+struct silofs_pnodeptr256b {
+	struct silofs_nmeta128b pn_nmeta;
+	struct silofs_paddr64b  pn_paddr;
+	uint8_t                 pn_reserved[64];
 } silofs_attr_aligned64;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -610,9 +611,10 @@ struct silofs_mbr1k {
 	uint32_t                   mbr_mode;
 	uint32_t                   mbr_flags;
 	uint8_t                    mbr_reserved1[24];
-	struct silofs_pnodeptr192b mbr_root;
+	uint8_t                    mbr_reserved2[192];
+	struct silofs_pnodeptr256b mbr_root;
 	struct silofs_uaddr128b    mbr_sb_addr;
-	uint8_t                    mbr_reserved3[576];
+	uint8_t                    mbr_reserved3[320];
 	struct silofs_hash256      mbr_hash;
 	struct silofs_mac          mbr_hmac;
 } silofs_attr_aligned64;
@@ -979,8 +981,8 @@ struct silofs_btree_node {
 	uint8_t                    btn_nchilds;
 	uint8_t                    btn_reserved2[86];
 	uint64_t                   btn_key[SILOFS_BTREE_NODE_NKEYS];
-	uint8_t                    btn_reserved3[64];
-	struct silofs_pnodeptr192b btn_child[SILOFS_BTREE_NODE_NCHILDS];
+	uint8_t                    btn_reserved3[144];
+	struct silofs_pnodeptr256b btn_child[SILOFS_BTREE_NODE_NCHILDS];
 } silofs_attr_aligned64;
 
 /* uber-block */
@@ -1010,9 +1012,9 @@ struct silofs_arix_node {
 	struct silofs_timespec     arn_btime;
 	uint32_t                   arn_flags;
 	uint32_t                   arn_ndescs;
-	uint8_t                    arn_reserved1[8];
-	struct silofs_pnodeptr192b arn_next;
-	struct silofs_ar_desc256b  arn_descs[255];
+	uint8_t                    arn_reserved1[200];
+	struct silofs_pnodeptr256b arn_next;
+	struct silofs_ar_desc256b  arn_descs[254];
 } silofs_attr_aligned64;
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

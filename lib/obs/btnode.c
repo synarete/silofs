@@ -195,7 +195,7 @@ static void btn_child_at(const struct silofs_btree_node *btn, size_t slot,
 {
 	silofs_assert_lt(slot, ARRAY_SIZE(btn->btn_child));
 
-	silofs_pnodeptr192b_xtoh(&btn->btn_child[slot], out_pnodeptr);
+	silofs_pnodeptr256b_xtoh(&btn->btn_child[slot], out_pnodeptr);
 }
 
 static void btn_set_child_at(struct silofs_btree_node *btn, size_t slot,
@@ -203,7 +203,7 @@ static void btn_set_child_at(struct silofs_btree_node *btn, size_t slot,
 {
 	silofs_assert_lt(slot, ARRAY_SIZE(btn->btn_child));
 
-	silofs_pnodeptr192b_htox(&btn->btn_child[slot], pnodeptr);
+	silofs_pnodeptr256b_htox(&btn->btn_child[slot], pnodeptr);
 }
 
 static void btn_reset_child_at(struct silofs_btree_node *btn, size_t slot)

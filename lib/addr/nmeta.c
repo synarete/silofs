@@ -123,17 +123,17 @@ bool silofs_pnodeptr_isnull(const struct silofs_pnodeptr *pnodeptr)
 	return silofs_paddr_isnull(&pnodeptr->paddr);
 }
 
-void silofs_pnodeptr192b_htox(struct silofs_pnodeptr192b *pnodeptr192,
+void silofs_pnodeptr256b_htox(struct silofs_pnodeptr256b *pnodeptr256,
                               const struct silofs_pnodeptr *pnodeptr)
 {
-	memset(pnodeptr192, 0, sizeof(*pnodeptr192));
-	silofs_paddr64b_htox(&pnodeptr192->pm_paddr, &pnodeptr->paddr);
-	silofs_nmeta128b_htox(&pnodeptr192->pm_nmeta, &pnodeptr->nmeta);
+	memset(pnodeptr256, 0, sizeof(*pnodeptr256));
+	silofs_paddr64b_htox(&pnodeptr256->pn_paddr, &pnodeptr->paddr);
+	silofs_nmeta128b_htox(&pnodeptr256->pn_nmeta, &pnodeptr->nmeta);
 }
 
-void silofs_pnodeptr192b_xtoh(const struct silofs_pnodeptr192b *pnodeptr192,
+void silofs_pnodeptr256b_xtoh(const struct silofs_pnodeptr256b *pnodeptr256,
                               struct silofs_pnodeptr *pnodeptr)
 {
-	silofs_paddr64b_xtoh(&pnodeptr192->pm_paddr, &pnodeptr->paddr);
-	silofs_nmeta128b_xtoh(&pnodeptr192->pm_nmeta, &pnodeptr->nmeta);
+	silofs_paddr64b_xtoh(&pnodeptr256->pn_paddr, &pnodeptr->paddr);
+	silofs_nmeta128b_xtoh(&pnodeptr256->pn_nmeta, &pnodeptr->nmeta);
 }

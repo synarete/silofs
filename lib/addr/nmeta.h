@@ -69,10 +69,10 @@ void silofs_pnodeptr_assign(struct silofs_pnodeptr       *pnodeptr,
 
 bool silofs_pnodeptr_isnull(const struct silofs_pnodeptr *pnodeptr);
 
-void silofs_pnodeptr192b_htox(struct silofs_pnodeptr192b   *pnodeptr192,
+void silofs_pnodeptr256b_htox(struct silofs_pnodeptr256b   *pnodeptr256,
                               const struct silofs_pnodeptr *pnodeptr);
 
-void silofs_pnodeptr192b_xtoh(const struct silofs_pnodeptr192b *pnodeptr192,
+void silofs_pnodeptr256b_xtoh(const struct silofs_pnodeptr256b *pnodeptr256,
                               struct silofs_pnodeptr           *pnodeptr);
 
 #endif /* SILOFS_NMETA_H_ */

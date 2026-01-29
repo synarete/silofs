@@ -27,8 +27,9 @@ void silofs_ubi_dirtify(struct silofs_uber_info *ubi);
 
 void silofs_ubi_undirtify(struct silofs_uber_info *ubi);
 
-void silofs_ubi_key_of(const struct silofs_uber_info *ubi,
-                       enum silofs_mtype mtype, struct silofs_ckey *out_key);
+void silofs_ubi_set_child(struct silofs_uber_info      *ubi,
+                          enum silofs_mtype             mtype,
+                          const struct silofs_pnodeptr *pnodeptr);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

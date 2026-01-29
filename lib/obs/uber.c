@@ -18,6 +18,46 @@
 #include "addr.h"
 #include "uber.h"
 
+static size_t ub_slot_of(enum silofs_mtype mtype)
+{
+	switch (mtype) {
+	case SILOFS_MTYPE_SUPER:
+		return 1;
+	case SILOFS_MTYPE_SPNODE:
+		return 2;
+	case SILOFS_MTYPE_SPLEAF:
+		return 3;
+	case SILOFS_MTYPE_LSMAP:
+		return 4;
+	case SILOFS_MTYPE_INODE:
+		return 5;
+	case SILOFS_MTYPE_XANODE:
+		return 6;
+	case SILOFS_MTYPE_DTNODE:
+		return 7;
+	case SILOFS_MTYPE_SYMVAL:
+		return 8;
+	case SILOFS_MTYPE_FTNODE:
+		return 9;
+	case SILOFS_MTYPE_DATA1K:
+		return 10;
+	case SILOFS_MTYPE_DATA4K:
+		return 11;
+	case SILOFS_MTYPE_DATABK:
+		return 12;
+	case SILOFS_MTYPE_NONE:
+	case SILOFS_MTYPE_MBR:
+	case SILOFS_MTYPE_UBER:
+	case SILOFS_MTYPE_ARIX:
+	case SILOFS_MTYPE_BLDESC:
+	case SILOFS_MTYPE_BTNODE:
+	case SILOFS_MTYPE_LAST:
+	default:
+		break;
+	}
+	return 0;
+}
+
 static void
 ub_set_btime(struct silofs_uber_block *ub, const struct timespec *ts)
 {
@@ -45,15 +85,36 @@ static void ub_inc_generation(struct silofs_uber_block *ub)
 	ub_set_generation(ub, ub_generation(ub) + 1);
 }
 
-static const struct silofs_ckey *
-ub_key_of(const struct silofs_uber_block *ub, uint32_t idx)
+static void ub_set_child(struct silofs_uber_block *ub, size_t slot,
+                         const struct silofs_pnodeptr *pnodeptr)
 {
-	return &ub->ub_key[idx % ARRAY_SIZE(ub->ub_key)];
+	silofs_assert_lt(slot, ARRAY_SIZE(ub->ub_child));
+
+	silofs_pnodeptr256b_htox(&ub->ub_child[slot], pnodeptr);
 }
 
-static void ub_setup_keys(struct silofs_uber_block *ub)
+static void
+ub_set_child_of(struct silofs_uber_block *ub, enum silofs_mtype mtype,
+                const struct silofs_pnodeptr *pnodeptr)
 {
-	silofs_generate_keys(ub->ub_key, ARRAY_SIZE(ub->ub_key));
+	const size_t slot = ub_slot_of(mtype);
+
+	silofs_assert(silofs_mtype_isvnode2(mtype));
+	silofs_assert_gt(slot, 0);
+
+	ub_set_child(ub, slot, pnodeptr);
+}
+
+static void ub_reset_child(struct silofs_uber_block *ub, size_t slot)
+{
+	ub_set_child(ub, slot, silofs_pnodeptr_none());
+}
+
+static void ub_reset_childs(struct silofs_uber_block *ub)
+{
+	for (size_t slot = 0; slot < ARRAY_SIZE(ub->ub_child); ++slot) {
+		ub_reset_child(ub, slot);
+	}
 }
 
 static void ub_setup(struct silofs_uber_block *ub, const struct timespec *ts)
@@ -61,9 +122,7 @@ static void ub_setup(struct silofs_uber_block *ub, const struct timespec *ts)
 	ub_set_generation(ub, 0);
 	ub_set_btime(ub, ts);
 	ub_set_ctime(ub, ts);
-	ub_setup_keys(ub);
-
-	ub_inc_generation(ub);
+	ub_reset_childs(ub);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -97,10 +156,13 @@ void silofs_ubi_undirtify(struct silofs_uber_info *ubi)
 	silofs_pni_undirtify(&ubi->ub_pni);
 }
 
-void silofs_ubi_key_of(const struct silofs_uber_info *ubi,
-                       enum silofs_mtype mtype, struct silofs_ckey *out_key)
+void silofs_ubi_set_child(struct silofs_uber_info *ubi,
+                          enum silofs_mtype mtype,
+                          const struct silofs_pnodeptr *pnodeptr)
 {
-	silofs_ckey_assign(out_key, ub_key_of(ubi->ub, (uint32_t)mtype));
+	ub_set_child_of(ubi->ub, mtype, pnodeptr);
+	ub_inc_generation(ubi->ub);
+	silofs_ubi_dirtify(ubi);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

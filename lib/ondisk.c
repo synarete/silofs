@@ -175,7 +175,7 @@ static void validate_ondisk_addrs(void)
 	REQUIRE_SIZEOF(struct silofs_laddr96b, 96);
 	REQUIRE_SIZEOF(struct silofs_uaddr128b, 128);
 	REQUIRE_SIZEOF(struct silofs_paddr64b, 64);
-	REQUIRE_SIZEOF(struct silofs_bcursor128b, 128);
+	REQUIRE_SIZEOF(struct silofs_pnodeptr256b, 256);
 }
 
 static void validate_ondisk_pnodeptr(void)
@@ -241,14 +241,12 @@ static void validate_ondisk_mbr(void)
 
 static void validate_ondisk_uber(void)
 {
-	REQUIRE_SIZEOF(struct silofs_bcursor128b, 128);
 	REQUIRE_OFFSET64(struct silofs_uber_block, ub_hdr, 0);
 	REQUIRE_OFFSET64(struct silofs_uber_block, ub_btime, 32);
 	REQUIRE_OFFSET64(struct silofs_uber_block, ub_ctime, 48);
 	REQUIRE_OFFSET64(struct silofs_uber_block, ub_generation, 64);
-	REQUIRE_OFFSET64(struct silofs_uber_block, ub_bcursor, 128);
-	REQUIRE_OFFSET64(struct silofs_uber_block, ub_key, 4096);
-	REQUIRE_GT(MEMBER_NELEMS(struct silofs_uber_block, ub_bcursor),
+	REQUIRE_OFFSET64(struct silofs_uber_block, ub_child, 256);
+	REQUIRE_GT(MEMBER_NELEMS(struct silofs_uber_block, ub_child),
 	           SILOFS_MTYPE_LAST);
 	REQUIRE_SIZEOF_8K(struct silofs_uber_block);
 }

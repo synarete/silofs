@@ -113,8 +113,7 @@ spawn_btree_root(struct silofs_exec_ctx *exct, enum silofs_mtype mtype)
 	if (err) {
 		return err;
 	}
-	/* YOU ARE HERE */
-	(void)mtype;
+	silofs_ubi_set_child(exct->env->ubi, mtype, &pnodeptr);
 	return 0;
 }
 

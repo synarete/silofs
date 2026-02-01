@@ -44,6 +44,8 @@ void silofs_ts_diff(const struct timespec *start,
 
 int silofs_suspend_ts(const struct timespec *ts);
 
-int silofs_suspend_nsecs(time_t nsecs);
+int silofs_suspend_secs(time_t secs);
+
+int silofs_suspend_usecs(useconds_t usecs);
 
 #endif /* SILOFS_TIMES_H_ */

@@ -4297,7 +4297,7 @@ static int fqs_exec_timedout(struct silofs_fuseq_sub *fqs)
 static void fqs_suspend(const struct silofs_fuseq_sub *fqs)
 {
 	silofs_unused(fqs);
-	silofs_suspend_nsecs(1);
+	silofs_suspend_usecs(500000);
 }
 
 static bool fqs_is_leader(const struct silofs_fuseq_sub *fqs)
@@ -4920,7 +4920,7 @@ int silofs_fuseq_mount(struct silofs_fuseq *fq, const char *mntpath)
 	fq->fq_mount   = true;
 
 	/* TODO: Looks like kernel needs time. why? investigate more... */
-	silofs_suspend_nsecs(1);
+	silofs_suspend_secs(1);
 
 	return 0;
 }
@@ -4970,7 +4970,7 @@ static void fuseq_finish_subs(struct silofs_fuseq *fq)
 		if (fuseq_join_subs(fq)) {
 			break;
 		}
-		silofs_suspend_nsecs(1);
+		silofs_suspend_secs(1);
 	}
 	if (retry == 0) {
 		silofs_panic("failed to join all sub-threads: nsub_run=%zu",
@@ -5002,7 +5002,7 @@ static void fuseq_suspend_while_active(struct silofs_fuseq *fq)
 
 	while (active || fuseq_has_live_opers(fq)) {
 		if (!active || !fuseq_ntimedwait(fq, 10)) {
-			silofs_suspend_nsecs(1);
+			silofs_suspend_secs(1);
 		}
 		active = fuseq_is_active(fq);
 	}

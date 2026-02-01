@@ -118,11 +118,24 @@ static int silofs_nanosleep(const struct timespec *req, struct timespec *rem)
 	return err ? -errno : 0;
 }
 
-int silofs_suspend_nsecs(time_t nsecs)
+int silofs_suspend_secs(time_t secs)
 {
-	const struct timespec ts = { .tv_sec = nsecs, .tv_nsec = 0 };
+	const struct timespec ts = {
+		.tv_sec  = secs,
+		.tv_nsec = 0,
+	};
 
-	return (nsecs > 0) ? silofs_suspend_ts(&ts) : 0;
+	return (secs > 0) ? silofs_suspend_ts(&ts) : 0;
+}
+
+int silofs_suspend_usecs(useconds_t usecs)
+{
+	const struct timespec ts = {
+		.tv_sec  = usecs / 1000000,
+		.tv_nsec = usecs % 1000000,
+	};
+
+	return (usecs > 0) ? silofs_suspend_ts(&ts) : 0;
 }
 
 int silofs_suspend_ts(const struct timespec *ts)

@@ -366,12 +366,12 @@ void cmd_check_nonemptydir(const char *path, bool w_ok)
 
 void cmd_check_emptydir(const char *path, bool w_ok)
 {
-	int err;
-	int dfd     = -1;
-	size_t ndes = 0;
-	struct dirent64 de[8];
-	const size_t nde = SILOFS_ARRAY_SIZE(de);
+	struct dirent64 de[4];
 	char buf[1024]   = "";
+	const size_t nde = SILOFS_ARRAY_SIZE(de);
+	size_t ndes      = 0;
+	int dfd;
+	int err;
 
 	cmd_check_isdir(path, w_ok);
 	err = silofs_sys_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);

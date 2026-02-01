@@ -77,6 +77,11 @@ static int appexec_resync_vmeta(struct silofs_exec_ctx *exct, bool drop)
 	return 0;
 }
 
+static int appexec_format_repo(struct silofs_exec_ctx *exct)
+{
+	return silofs_exec_format_repo(exct);
+}
+
 static int appexec_format_fs(struct silofs_exec_ctx *exct, size_t fs_cap,
                              bool utf8_names, struct silofs_mbref *out_mbref)
 {
@@ -388,6 +393,77 @@ void silofs_collect_stats(const struct silofs_env *env,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static int check_format_repo(struct silofs_env *env)
+{
+	struct stat st;
+	const char *path  = env->repodir;
+	const size_t len  = silofs_str_length(path);
+	const int o_flags = O_DIRECTORY | O_RDONLY | O_PATH;
+	int dfd           = -1;
+	int err;
+
+	if (!len || (len > SILOFS_REPOPATH_MAX)) {
+		err = -SILOFS_EINVAL;
+		goto out;
+	}
+	err = silofs_sys_open(env->repodir, o_flags, 0, &dfd);
+	if (err) {
+		goto out;
+	}
+	err = silofs_sys_fstat(dfd, &st);
+	if (err) {
+		goto out;
+	}
+out:
+	silofs_sys_closefd(&dfd);
+	return err;
+}
+
+static int exec_format_repo(struct silofs_env *env)
+{
+	struct silofs_exec_ctx exct;
+	int err;
+
+	err = make_priv_exct(env, &exct);
+	if (err) {
+		goto out;
+	}
+	err = appexec_format_repo(&exct);
+	if (err) {
+		goto out;
+	}
+	log_dbg("format-repo done: %s", env->repodir);
+out:
+	return term_exct(&exct, err);
+}
+
+static int do_format_repo(struct silofs_env *env)
+{
+	int err;
+
+	err = check_format_repo(env);
+	if (err) {
+		return err;
+	}
+	err = exec_format_repo(env);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+int silofs_format_repo(struct silofs_env *env)
+{
+	int ret;
+
+	silofs_env_lock(env);
+	ret = do_format_repo(env);
+	silofs_env_unlock(env);
+	return ret;
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 static int check_fs_capacity(size_t cap_size)
 {
 	if (cap_size < SILOFS_CAPACITY_SIZE_MIN) {
@@ -450,16 +526,6 @@ static int exec_format_fs(struct silofs_env *env, size_t fs_cap,
 	log_dbg("format-fs done: fs_cap=%zu", fs_cap);
 out:
 	return term_exct(&exct, err);
-}
-
-int silofs_format_repo(struct silofs_env *env)
-{
-	int ret;
-
-	silofs_env_lock(env);
-	ret = silofs_repo_format(env->base.repo, env->repodir);
-	silofs_env_unlock(env);
-	return ret;
 }
 
 static int check_format_fs(struct silofs_env *env, size_t capacity)

@@ -191,6 +191,8 @@ int silofs_exec_restore(struct silofs_exec_ctx    *exct,
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
+int silofs_exec_format_repo(struct silofs_exec_ctx *exct);
+
 int silofs_exec_format_fs(struct silofs_exec_ctx *exct, size_t capacity,
                           bool utf8_names, struct silofs_mbref *out_mbref);
 

@@ -123,6 +123,9 @@ int silofs_sys_rmdir(const char *path);
 int silofs_sys_getdents(int fd, void *buf, size_t bsz, struct dirent64 *dents,
                         size_t ndents, size_t *out_ndents);
 
+int silofs_sys_getdents2(int dfd, struct dirent64 *des, size_t ndes,
+                         size_t *out_ndes);
+
 int silofs_sys_creat(const char *path, mode_t mode, int *fd);
 
 int silofs_sys_memfd_create(const char *name, unsigned int flags, int *fd);

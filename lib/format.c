@@ -17,6 +17,8 @@
 #include <silofs/configs.h>
 #include <silofs/ondisk.h>
 #include <silofs/types.h>
+#include <silofs/syscall.h>
+#include <dirent.h>
 #include "infra.h"
 #include "addr.h"
 #include "obs.h"
@@ -24,9 +26,64 @@
 #include "exec.h"
 #include "env.h"
 
+static const char *repodir_of(const struct silofs_exec_ctx *exct)
+{
+	return exct->env->repodir;
+}
+
+static int require_valid_repodir(const struct silofs_exec_ctx *exct)
+{
+	struct dirent64 de[4];
+	size_t ndes      = 0;
+	const char *path = repodir_of(exct);
+	int dfd          = -1;
+	int err;
+
+	err = silofs_sys_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);
+	if (err) {
+		log_dbg("opendir error: repodir=%s err=%d", path, err);
+		goto out;
+	}
+	err = silofs_sys_getdents2(dfd, de, ARRAY_SIZE(de), &ndes);
+	if (err) {
+		log_dbg("readdir error: repodir=%s err=%d", path, err);
+		goto out;
+	}
+	if (ndes > 2) {
+		err = -SILOFS_ENOTEMPTY;
+		goto out;
+	}
+out:
+	silofs_sys_closefd(&dfd);
+	return err;
+}
+
+int silofs_exec_format_repo(struct silofs_exec_ctx *exct)
+{
+	int err;
+
+	err = require_valid_repodir(exct);
+	if (err) {
+		return err;
+	}
+	err = silofs_repo_format(exct->repo, repodir_of(exct));
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
 static int pre_format_fs(struct silofs_exec_ctx *exct)
 {
-	return silofs_env_reinit_ciphers(exct->env);
+	int err;
+
+	err = silofs_env_reinit_ciphers(exct->env);
+	if (err) {
+		return err;
+	}
+	return 0;
 }
 
 static void drop_caches(struct silofs_exec_ctx *exct)

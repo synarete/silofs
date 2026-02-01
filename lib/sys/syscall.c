@@ -737,7 +737,7 @@ struct linux_dirent64_view {
 	char d_name[5];
 };
 
-int silofs_sys_getdents(int fd, void *buf, size_t bsz, struct dirent64 *dents,
+int silofs_sys_getdents(int dfd, void *buf, size_t bsz, struct dirent64 *dents,
                         size_t ndents, size_t *out_ndents)
 {
 	long nread;
@@ -753,7 +753,7 @@ int silofs_sys_getdents(int fd, void *buf, size_t bsz, struct dirent64 *dents,
 	if (!ndents || (bsz < sizeof(*dents))) {
 		return -EINVAL;
 	}
-	nread = syscall(SYS_getdents64, fd, ptr, bsz);
+	nread = syscall(SYS_getdents64, dfd, ptr, bsz);
 	if (nread == -1) {
 		return errno_or_generic_error();
 	}
@@ -788,6 +788,15 @@ int silofs_sys_getdents(int fd, void *buf, size_t bsz, struct dirent64 *dents,
 out:
 	*out_ndents = ndents_decoded;
 	return 0;
+}
+
+int silofs_sys_getdents2(int dfd, struct dirent64 *des, size_t ndes,
+                         size_t *out_ndes)
+{
+	uint8_t buf[2048];
+
+	memset(buf, 0, sizeof(buf));
+	return silofs_sys_getdents(dfd, buf, sizeof(buf), des, ndes, out_ndes);
 }
 
 int silofs_sys_sigaction(int signum, const struct sigaction *act,

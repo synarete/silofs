@@ -46,6 +46,7 @@ enum silofs_flags {
 	SILOFS_F_LAZYTIME     = SILOFS_BIT(17),
 	SILOFS_F_STDALLOC     = SILOFS_BIT(18),
 	SILOFS_F_NOPASSWD     = SILOFS_BIT(19),
+	SILOFS_F_UTF8NAMES    = SILOFS_BIT(20),
 };
 
 /* password as octets-buffers with explicit length */

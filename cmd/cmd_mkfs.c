@@ -36,9 +36,9 @@ struct cmd_mkfs_in_args {
 	char *password;
 	char *username;
 	size_t fs_size;
+	int flags;
 	bool with_sup_groups;
 	bool with_root_user;
-	bool no_utf8_names;
 };
 
 struct cmd_mkfs_ctx {
@@ -90,7 +90,7 @@ static void cmd_mkfs_parse_optargs(struct cmd_mkfs_ctx *ctx)
 			ctx->in_args.password = cmd_optargs_getpass(&opa);
 			break;
 		case 'N':
-			ctx->in_args.no_utf8_names = true;
+			ctx->in_args.flags &= ~SILOFS_F_UTF8NAMES;
 			break;
 		case 'X':
 			cmd_global_params.developer_mode = true;
@@ -197,7 +197,7 @@ static void cmd_mkfs_getpass(struct cmd_mkfs_ctx *ctx)
 
 static void cmd_mkfs_setup_spec(struct cmd_mkfs_ctx *ctx)
 {
-	cmd_spec_setup(&ctx->spec);
+	cmd_spec_setup2(&ctx->spec, ctx->in_args.flags);
 	cmd_spec_own_passwd(&ctx->spec, &ctx->in_args.password);
 	cmd_spec_set_baseref(&ctx->spec, ctx->in_args.repodir_real,
 	                     ctx->in_args.fsname);
@@ -219,10 +219,9 @@ static void cmd_mkfs_setup_env(struct cmd_mkfs_ctx *ctx)
 
 static void cmd_mkfs_format_fs(struct cmd_mkfs_ctx *ctx)
 {
-	const size_t fs_cap   = ctx->in_args.fs_size;
-	const bool utf8_names = !ctx->in_args.no_utf8_names;
+	const size_t fs_cap = ctx->in_args.fs_size;
 
-	cmd_format_fs(ctx->env, fs_cap, utf8_names, &ctx->spec.fsref);
+	cmd_format_fs(ctx->env, fs_cap, &ctx->spec.fsref);
 }
 
 static void cmd_mkfs_save_spec(struct cmd_mkfs_ctx *ctx)
@@ -240,7 +239,8 @@ static void cmd_mkfs_unload_fs(struct cmd_mkfs_ctx *ctx)
 void cmd_execute_mkfs(void)
 {
 	struct cmd_mkfs_ctx ctx = {
-		.env = nullptr,
+		.env           = nullptr,
+		.in_args.flags = SILOFS_F_UTF8NAMES,
 	};
 
 	/* Do all cleanups upon exits */

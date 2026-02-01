@@ -83,9 +83,9 @@ static int appexec_format_repo(struct silofs_exec_ctx *exct)
 }
 
 static int appexec_format_fs(struct silofs_exec_ctx *exct, size_t fs_cap,
-                             bool utf8_names, struct silofs_mbref *out_mbref)
+                             struct silofs_mbref *out_mbref)
 {
-	return silofs_exec_format_fs(exct, fs_cap, utf8_names, out_mbref);
+	return silofs_exec_format_fs(exct, fs_cap, out_mbref);
 }
 
 static int appexec_reload_fs_meta(struct silofs_exec_ctx *exct,
@@ -506,7 +506,7 @@ static int check_owner_ids(const struct silofs_env *env)
 }
 
 static int exec_format_fs(struct silofs_env *env, size_t fs_cap,
-                          bool utf8_names, struct silofs_mbref *out_mbref)
+                          struct silofs_mbref *out_mbref)
 {
 	struct silofs_exec_ctx exct;
 	int err;
@@ -519,7 +519,7 @@ static int exec_format_fs(struct silofs_env *env, size_t fs_cap,
 	if (err) {
 		goto out;
 	}
-	err = appexec_format_fs(&exct, fs_cap, utf8_names, out_mbref);
+	err = appexec_format_fs(&exct, fs_cap, out_mbref);
 	if (err) {
 		goto out;
 	}
@@ -562,7 +562,7 @@ decode_fsref(const struct silofs_fsref *fsref, struct silofs_mbref *out_mbref)
 }
 
 static int do_format_fs(struct silofs_env *env, size_t capacity,
-                        bool utf8_names, struct silofs_fsref *out_fsref)
+                        struct silofs_fsref *out_fsref)
 {
 	struct silofs_mbref mbref;
 	int err;
@@ -571,7 +571,7 @@ static int do_format_fs(struct silofs_env *env, size_t capacity,
 	if (err) {
 		return err;
 	}
-	err = exec_format_fs(env, capacity, utf8_names, &mbref);
+	err = exec_format_fs(env, capacity, &mbref);
 	if (err) {
 		return err;
 	}
@@ -579,13 +579,13 @@ static int do_format_fs(struct silofs_env *env, size_t capacity,
 	return 0;
 }
 
-int silofs_format_fs(struct silofs_env *env, size_t capacity, bool utf8_names,
+int silofs_format_fs(struct silofs_env *env, size_t capacity,
                      struct silofs_fsref *out_fsref)
 {
 	int err;
 
 	silofs_env_lock(env);
-	err = do_format_fs(env, capacity, utf8_names, out_fsref);
+	err = do_format_fs(env, capacity, out_fsref);
 	silofs_env_unlock(env);
 	return err;
 }

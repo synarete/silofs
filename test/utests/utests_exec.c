@@ -511,7 +511,11 @@ static void ut_init_spec(struct silofs_spec *spec)
 	spec->fsids.users.nuids  = 2;
 	spec->fsids.groups.gids  = ut_new_gids();
 	spec->fsids.groups.ngids = 2;
-	spec->flags              = SILOFS_F_ALLOWIFIFO | SILOFS_F_ALLOWISOCK;
+	spec->flags              = 0;
+
+	spec->flags |= SILOFS_F_ALLOWIFIFO;
+	spec->flags |= SILOFS_F_ALLOWISOCK;
+	spec->flags |= SILOFS_F_UTF8NAMES;
 	if (ut_globals.pedantic) {
 		spec->flags |= SILOFS_F_PEDANTIC;
 	}

@@ -421,7 +421,12 @@ static void update_rootdir(struct silofs_inode_info *rootd_ii, bool utf8_names)
 	}
 }
 
-static int format_rootdir(struct silofs_exec_ctx *exct, bool utf8_names)
+static bool use_utf8_names(const struct silofs_exec_ctx *exct)
+{
+	return (exct->env->flags & SILOFS_F_UTF8NAMES) > 0;
+}
+
+static int format_rootdir(struct silofs_exec_ctx *exct)
 {
 	struct silofs_inode_info *rootd_ii = nullptr;
 	int err;
@@ -430,7 +435,7 @@ static int format_rootdir(struct silofs_exec_ctx *exct, bool utf8_names)
 	if (err) {
 		return err;
 	}
-	update_rootdir(rootd_ii, utf8_names);
+	update_rootdir(rootd_ii, use_utf8_names(exct));
 
 	err = flush_destage_dirty(exct);
 	if (err) {
@@ -439,7 +444,7 @@ static int format_rootdir(struct silofs_exec_ctx *exct, bool utf8_names)
 	return 0;
 }
 
-static int format_fs(struct silofs_exec_ctx *exct, size_t cap, bool utf8_names)
+static int format_fs(struct silofs_exec_ctx *exct, size_t cap)
 {
 	int err;
 
@@ -459,7 +464,7 @@ static int format_fs(struct silofs_exec_ctx *exct, size_t cap, bool utf8_names)
 	if (err) {
 		return err;
 	}
-	err = format_rootdir(exct, utf8_names);
+	err = format_rootdir(exct);
 	if (err) {
 		return err;
 	}
@@ -475,7 +480,7 @@ commit_mbr(struct silofs_exec_ctx *exct, struct silofs_mbref *out_mbref)
 }
 
 int silofs_exec_format_fs(struct silofs_exec_ctx *exct, size_t capacity,
-                          bool utf8_names, struct silofs_mbref *out_mbref)
+                          struct silofs_mbref *out_mbref)
 {
 	int err;
 
@@ -487,7 +492,7 @@ int silofs_exec_format_fs(struct silofs_exec_ctx *exct, size_t capacity,
 	if (err) {
 		return err;
 	}
-	err = format_fs(exct, capacity, utf8_names);
+	err = format_fs(exct, capacity);
 	if (err) {
 		return err;
 	}

@@ -511,6 +511,7 @@ static void ut_init_spec(struct silofs_spec *spec)
 	spec->fsids.users.nuids  = 2;
 	spec->fsids.groups.gids  = ut_new_gids();
 	spec->fsids.groups.ngids = 2;
+	spec->fscap              = SILOFS_CAPACITY_SIZE_MIN;
 	spec->flags              = 0;
 
 	spec->flags |= SILOFS_F_ALLOWIFIFO;

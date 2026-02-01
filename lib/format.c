@@ -228,16 +228,9 @@ static int format_obs(struct silofs_exec_ctx *exct)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static size_t calc_fs_cap(size_t fs_cap_want)
+static int format_super(struct silofs_exec_ctx *exct)
 {
-	const size_t align_size = SILOFS_LSEG_SIZE_MAX;
-
-	return (fs_cap_want / align_size) * align_size;
-}
-
-static int format_super(struct silofs_exec_ctx *exct, size_t fs_cap_want)
-{
-	return silofs_env_format_super(exct->env, calc_fs_cap(fs_cap_want));
+	return silofs_env_format_super(exct->env, exct->env->fscap);
 }
 
 static int
@@ -444,11 +437,11 @@ static int format_rootdir(struct silofs_exec_ctx *exct)
 	return 0;
 }
 
-static int format_fs(struct silofs_exec_ctx *exct, size_t cap)
+static int format_fs(struct silofs_exec_ctx *exct)
 {
 	int err;
 
-	err = format_super(exct, cap);
+	err = format_super(exct);
 	if (err) {
 		return err;
 	}
@@ -479,7 +472,7 @@ commit_mbr(struct silofs_exec_ctx *exct, struct silofs_mbref *out_mbref)
 	return silofs_env_commit_fs_mbr(exct->env, out_mbref);
 }
 
-int silofs_exec_format_fs(struct silofs_exec_ctx *exct, size_t capacity,
+int silofs_exec_format_fs(struct silofs_exec_ctx *exct,
                           struct silofs_mbref *out_mbref)
 {
 	int err;
@@ -492,7 +485,7 @@ int silofs_exec_format_fs(struct silofs_exec_ctx *exct, size_t capacity,
 	if (err) {
 		return err;
 	}
-	err = format_fs(exct, capacity);
+	err = format_fs(exct);
 	if (err) {
 		return err;
 	}

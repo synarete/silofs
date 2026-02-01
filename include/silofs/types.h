@@ -139,6 +139,7 @@ struct silofs_spec {
 	struct silofs_fsids    fsids;
 	struct silofs_cred     fsowner;
 	enum silofs_flags      flags;
+	size_t                 fscap;
 };
 
 /* in-use versions */

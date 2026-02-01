@@ -82,10 +82,10 @@ static int appexec_format_repo(struct silofs_exec_ctx *exct)
 	return silofs_exec_format_repo(exct);
 }
 
-static int appexec_format_fs(struct silofs_exec_ctx *exct, size_t fs_cap,
-                             struct silofs_mbref *out_mbref)
+static int
+appexec_format_fs(struct silofs_exec_ctx *exct, struct silofs_mbref *out_mbref)
 {
-	return silofs_exec_format_fs(exct, fs_cap, out_mbref);
+	return silofs_exec_format_fs(exct, out_mbref);
 }
 
 static int appexec_reload_fs_meta(struct silofs_exec_ctx *exct,
@@ -464,26 +464,12 @@ int silofs_format_repo(struct silofs_env *env)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int check_fs_capacity(size_t cap_size)
+static int check_fs_capacity(size_t fscap)
 {
-	if (cap_size < SILOFS_CAPACITY_SIZE_MIN) {
+	if ((fscap < SILOFS_CAPACITY_SIZE_MIN) ||
+	    (fscap > SILOFS_CAPACITY_SIZE_MAX)) {
+		log_err("illegal file-system capacity: %zu", fscap);
 		return -SILOFS_EINVAL;
-	}
-	if (cap_size > SILOFS_CAPACITY_SIZE_MAX) {
-		return -SILOFS_EINVAL;
-	}
-	return 0;
-}
-
-static int check_want_capacity(size_t capacity)
-{
-	int err;
-
-	err = check_fs_capacity(capacity);
-	if (err) {
-		log_err("illegal file-system capacity: cap=%lu err=%d",
-		        capacity, err);
-		return err;
 	}
 	return 0;
 }
@@ -505,8 +491,8 @@ static int check_owner_ids(const struct silofs_env *env)
 	return 0;
 }
 
-static int exec_format_fs(struct silofs_env *env, size_t fs_cap,
-                          struct silofs_mbref *out_mbref)
+static int
+exec_format_fs(struct silofs_env *env, struct silofs_mbref *out_mbref)
 {
 	struct silofs_exec_ctx exct;
 	int err;
@@ -519,20 +505,20 @@ static int exec_format_fs(struct silofs_env *env, size_t fs_cap,
 	if (err) {
 		goto out;
 	}
-	err = appexec_format_fs(&exct, fs_cap, out_mbref);
+	err = appexec_format_fs(&exct, out_mbref);
 	if (err) {
 		goto out;
 	}
-	log_dbg("format-fs done: fs_cap=%zu", fs_cap);
+	log_dbg("format-fs done: fscap=%zu", env->fscap);
 out:
 	return term_exct(&exct, err);
 }
 
-static int check_format_fs(struct silofs_env *env, size_t capacity)
+static int check_format_fs(struct silofs_env *env)
 {
 	int err;
 
-	err = check_want_capacity(capacity);
+	err = check_fs_capacity(env->fscap);
 	if (err) {
 		return err;
 	}
@@ -561,17 +547,16 @@ decode_fsref(const struct silofs_fsref *fsref, struct silofs_mbref *out_mbref)
 	return silofs_fsref_import(fsref, out_mbref);
 }
 
-static int do_format_fs(struct silofs_env *env, size_t capacity,
-                        struct silofs_fsref *out_fsref)
+static int do_format_fs(struct silofs_env *env, struct silofs_fsref *out_fsref)
 {
 	struct silofs_mbref mbref;
 	int err;
 
-	err = check_format_fs(env, capacity);
+	err = check_format_fs(env);
 	if (err) {
 		return err;
 	}
-	err = exec_format_fs(env, capacity, &mbref);
+	err = exec_format_fs(env, &mbref);
 	if (err) {
 		return err;
 	}
@@ -579,13 +564,12 @@ static int do_format_fs(struct silofs_env *env, size_t capacity,
 	return 0;
 }
 
-int silofs_format_fs(struct silofs_env *env, size_t capacity,
-                     struct silofs_fsref *out_fsref)
+int silofs_format_fs(struct silofs_env *env, struct silofs_fsref *out_fsref)
 {
 	int err;
 
 	silofs_env_lock(env);
-	err = do_format_fs(env, capacity, out_fsref);
+	err = do_format_fs(env, out_fsref);
 	silofs_env_unlock(env);
 	return err;
 }

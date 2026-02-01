@@ -126,7 +126,7 @@ static void cmd_init_restrict_process(struct cmd_init_ctx *ctx)
 
 static void cmd_init_setup_spec(struct cmd_init_ctx *ctx)
 {
-	cmd_spec_setup2(&ctx->spec, SILOFS_F_NOPASSWD);
+	cmd_spec_setup1(&ctx->spec, SILOFS_F_NOPASSWD);
 	cmd_spec_set_baseref(&ctx->spec, ctx->in_args.repodir_real, nullptr);
 }
 

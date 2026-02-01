@@ -193,8 +193,8 @@ int silofs_exec_restore(struct silofs_exec_ctx    *exct,
 
 int silofs_exec_format_repo(struct silofs_exec_ctx *exct);
 
-int silofs_exec_format_fs(struct silofs_exec_ctx *exct, size_t capacity,
-                          struct silofs_mbref *out_mbref);
+int silofs_exec_format_fs(struct silofs_exec_ctx *exct,
+                          struct silofs_mbref    *out_mbref);
 
 int silofs_exec_reload_fs(struct silofs_exec_ctx    *exct,
                           const struct silofs_mbref *mbref);

@@ -197,7 +197,7 @@ static void cmd_mkfs_getpass(struct cmd_mkfs_ctx *ctx)
 
 static void cmd_mkfs_setup_spec(struct cmd_mkfs_ctx *ctx)
 {
-	cmd_spec_setup2(&ctx->spec, ctx->in_args.flags);
+	cmd_spec_setup2(&ctx->spec, ctx->in_args.fs_size, ctx->in_args.flags);
 	cmd_spec_own_passwd(&ctx->spec, &ctx->in_args.password);
 	cmd_spec_set_baseref(&ctx->spec, ctx->in_args.repodir_real,
 	                     ctx->in_args.fsname);
@@ -219,9 +219,7 @@ static void cmd_mkfs_setup_env(struct cmd_mkfs_ctx *ctx)
 
 static void cmd_mkfs_format_fs(struct cmd_mkfs_ctx *ctx)
 {
-	const size_t fs_cap = ctx->in_args.fs_size;
-
-	cmd_format_fs(ctx->env, fs_cap, &ctx->spec.fsref);
+	cmd_format_fs(ctx->env, &ctx->spec.fsref);
 }
 
 static void cmd_mkfs_save_spec(struct cmd_mkfs_ctx *ctx)

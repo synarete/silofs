@@ -703,10 +703,16 @@ static void cmd_spec_bzero(struct silofs_spec *spec)
 
 void cmd_spec_setup(struct silofs_spec *spec)
 {
-	cmd_spec_setup2(spec, 0);
+	cmd_spec_setup1(spec, 0);
 }
 
-void cmd_spec_setup2(struct silofs_spec *spec, enum silofs_flags flags)
+void cmd_spec_setup1(struct silofs_spec *spec, enum silofs_flags flags)
+{
+	cmd_spec_setup2(spec, 0, flags);
+}
+
+void cmd_spec_setup2(struct silofs_spec *spec, size_t fs_capacity,
+                     enum silofs_flags flags)
 {
 	cmd_spec_bzero(spec);
 	cmd_fsids_setup(&spec->fsids);
@@ -715,6 +721,7 @@ void cmd_spec_setup2(struct silofs_spec *spec, enum silofs_flags flags)
 	spec->fsowner.gid   = getgid();
 	spec->fsowner.umask = 0077;
 	spec->flags         = flags;
+	spec->fscap         = fs_capacity;
 }
 
 void cmd_spec_update_fsref(struct silofs_spec *spec,

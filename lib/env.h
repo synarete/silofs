@@ -73,6 +73,7 @@ struct silofs_env {
 	struct silofs_uconv      uconv;
 	enum silofs_flags        flags;
 	char                    *repodir;
+	size_t                   fscap;
 	unsigned long            ms_flags;
 	time_t                   init_time;
 	bool                     iconv_set;

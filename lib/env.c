@@ -160,6 +160,22 @@ env_use_password(struct silofs_env *env, const struct silofs_password *pw,
 	return 0;
 }
 
+static int env_update_fscap(struct silofs_env *env, size_t cap_want)
+{
+	const size_t align_size = SILOFS_LSEG_SIZE_MAX;
+	const size_t fscap      = (cap_want / align_size) * align_size;
+
+	if (cap_want == 0) {
+		return 0; /* no-op */
+	}
+	if ((fscap < SILOFS_CAPACITY_SIZE_MIN) ||
+	    (fscap > SILOFS_CAPACITY_SIZE_MAX)) {
+		return -SILOFS_EINVAL;
+	}
+	env->fscap = fscap;
+	return 0;
+}
+
 static int env_setup_mntflags(struct silofs_env *env, enum silofs_flags flags)
 {
 	unsigned long ms_flag_with = 0;
@@ -245,6 +261,10 @@ int silofs_env_setup(struct silofs_env *env, const struct silofs_spec *spec)
 		return err;
 	}
 	err = env_use_password(env, &spec->passwd, spec->flags);
+	if (err) {
+		return err;
+	}
+	err = env_update_fscap(env, spec->fscap);
 	if (err) {
 		return err;
 	}

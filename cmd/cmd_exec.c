@@ -189,12 +189,11 @@ void cmd_sense_fs(struct silofs_env *env, const struct silofs_fsref *fsref)
 	}
 }
 
-void cmd_format_fs(struct silofs_env *env, size_t capacity,
-                   struct silofs_fsref *out_fsref)
+void cmd_format_fs(struct silofs_env *env, struct silofs_fsref *out_fsref)
 {
 	int err;
 
-	err = silofs_format_fs(env, capacity, out_fsref);
+	err = silofs_format_fs(env, out_fsref);
 	if (err) {
 		cmd_report_err_and_die(env, err, "format failure");
 	}

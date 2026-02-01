@@ -50,8 +50,7 @@ void silofs_collect_stats(const struct silofs_env   *env,
 
 int silofs_format_repo(struct silofs_env *env);
 
-int silofs_format_fs(struct silofs_env *env, size_t capacity,
-                     struct silofs_fsref *out_fsref);
+int silofs_format_fs(struct silofs_env *env, struct silofs_fsref *out_fsref);
 
 int silofs_sense_fs(struct silofs_env *env, const struct silofs_fsref *fsref);
 

@@ -280,8 +280,7 @@ void cmd_unlock_repo(const char *repodir, int *pfd);
 /* API wrappers */
 void cmd_format_repo(struct silofs_env *env);
 
-void cmd_format_fs(struct silofs_env *env, size_t capacity,
-                   struct silofs_fsref *out_fsref);
+void cmd_format_fs(struct silofs_env *env, struct silofs_fsref *out_fsref);
 
 void cmd_sense_fs(struct silofs_env *env, const struct silofs_fsref *fsref);
 
@@ -341,7 +340,10 @@ void cmd_mkpasswd(struct silofs_password *pw, const char *pass);
 /* spec */
 void cmd_spec_setup(struct silofs_spec *spec);
 
-void cmd_spec_setup2(struct silofs_spec *spec, enum silofs_flags flags);
+void cmd_spec_setup1(struct silofs_spec *spec, enum silofs_flags flags);
+
+void cmd_spec_setup2(struct silofs_spec *spec, size_t fs_capacity,
+                     enum silofs_flags flags);
 
 void cmd_spec_update_fsref(struct silofs_spec        *spec,
                            const struct silofs_fsref *fsref);

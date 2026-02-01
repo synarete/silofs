@@ -1971,7 +1971,7 @@ void ut_format_fs(struct ut_env *ute)
 {
 	int err;
 
-	err = silofs_format_fs(ute->env, ute->fs_capacity, &ute->fsrefs.main);
+	err = silofs_format_fs(ute->env, &ute->fsrefs.main);
 	ut_expect_ok(err);
 }
 

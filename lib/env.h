@@ -137,8 +137,6 @@ bool silofs_env_isrdonlyfs(const struct silofs_env *env);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_env_reload_repo(struct silofs_env *env);
-
 int silofs_env_sense_mbr(struct silofs_env         *env,
                          const struct silofs_mbref *mbr);
 

@@ -82,21 +82,26 @@ static int appexec_format_repo(struct silofs_exec_ctx *exct)
 	return silofs_exec_format_repo(exct);
 }
 
+static int appexec_format_obs(struct silofs_exec_ctx *exct)
+{
+	return silofs_exec_format_obs(exct);
+}
+
 static int
 appexec_format_fs(struct silofs_exec_ctx *exct, struct silofs_mbref *out_mbref)
 {
 	return silofs_exec_format_fs(exct, out_mbref);
 }
 
+static int appexec_reload_repo(struct silofs_exec_ctx *exct)
+{
+	return silofs_exec_reload_repo(exct);
+}
+
 static int appexec_reload_fs_meta(struct silofs_exec_ctx *exct,
                                   const struct silofs_mbref *mbref)
 {
 	return silofs_exec_reload_fs(exct, mbref);
-}
-
-static int appexec_reload_repo(struct silofs_exec_ctx *exct)
-{
-	return silofs_env_reload_repo(exct->env);
 }
 
 static int appexec_reload_fs(struct silofs_exec_ctx *exct,
@@ -502,6 +507,10 @@ exec_format_fs(struct silofs_env *env, struct silofs_mbref *out_mbref)
 		goto out;
 	}
 	err = appexec_reload_repo(&exct);
+	if (err) {
+		goto out;
+	}
+	err = appexec_format_obs(&exct);
 	if (err) {
 		goto out;
 	}

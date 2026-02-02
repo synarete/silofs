@@ -17,11 +17,71 @@
 #include <silofs/configs.h>
 #include <silofs/ondisk.h>
 #include <silofs/types.h>
+#include <dirent.h>
 #include "infra.h"
 #include "addr.h"
 #include "fs.h"
 #include "exec.h"
 #include "env.h"
+
+static int require_nonempty_repodir(const struct silofs_exec_ctx *exct)
+{
+	struct dirent64 de[4];
+	const char *path = exct->env->repodir;
+	size_t ndes      = 0;
+	int dfd          = -1;
+	int err;
+
+	err = silofs_sys_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);
+	if (err) {
+		log_dbg("opendir error: repodir=%s err=%d", path, err);
+		goto out;
+	}
+	err = silofs_sys_getdents2(dfd, de, ARRAY_SIZE(de), &ndes);
+	if (err) {
+		log_dbg("readdir error: repodir=%s err=%d", path, err);
+		goto out;
+	}
+	if (ndes <= 2) {
+		log_dbg("bad repodir: %s", path);
+		err = -SILOFS_EBADREPO;
+		goto out;
+	}
+out:
+	silofs_sys_closefd(&dfd);
+	return err;
+}
+
+static int pre_reload_repo(struct silofs_exec_ctx *exct)
+{
+	return require_nonempty_repodir(exct);
+}
+
+static int open_repo(struct silofs_exec_ctx *exct)
+{
+	return silofs_repo_open(exct->repo, exct->env->repodir,
+	                        exct->env->flags);
+}
+
+int silofs_exec_reload_repo(struct silofs_exec_ctx *exct)
+{
+	int err;
+
+	if (exct->repo->re_opened) {
+		return 0; /* no-op */
+	}
+	err = pre_reload_repo(exct);
+	if (err) {
+		return err;
+	}
+	err = open_repo(exct);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static int resolve_root_uber(const struct silofs_exec_ctx *exct,
                              struct silofs_pnodeptr *out_pnodeptr)

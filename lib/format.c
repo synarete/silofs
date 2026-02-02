@@ -26,16 +26,11 @@
 #include "exec.h"
 #include "env.h"
 
-static const char *repodir_of(const struct silofs_exec_ctx *exct)
-{
-	return exct->env->repodir;
-}
-
-static int require_valid_repodir(const struct silofs_exec_ctx *exct)
+static int require_empty_repodir(const struct silofs_exec_ctx *exct)
 {
 	struct dirent64 de[4];
+	const char *path = exct->env->repodir;
 	size_t ndes      = 0;
-	const char *path = repodir_of(exct);
 	int dfd          = -1;
 	int err;
 
@@ -58,15 +53,20 @@ out:
 	return err;
 }
 
+static int pre_format_repo(const struct silofs_exec_ctx *exct)
+{
+	return require_empty_repodir(exct);
+}
+
 int silofs_exec_format_repo(struct silofs_exec_ctx *exct)
 {
 	int err;
 
-	err = require_valid_repodir(exct);
+	err = pre_format_repo(exct);
 	if (err) {
 		return err;
 	}
-	err = silofs_repo_format(exct->repo, repodir_of(exct));
+	err = silofs_repo_format(exct->repo, exct->env->repodir);
 	if (err) {
 		return err;
 	}
@@ -75,15 +75,9 @@ int silofs_exec_format_repo(struct silofs_exec_ctx *exct)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static int pre_format_fs(struct silofs_exec_ctx *exct)
+static int pre_format_obs(struct silofs_exec_ctx *exct)
 {
-	int err;
-
-	err = silofs_env_reinit_ciphers(exct->env);
-	if (err) {
-		return err;
-	}
-	return 0;
+	return silofs_env_reinit_ciphers(exct->env);
 }
 
 static void drop_caches(struct silofs_exec_ctx *exct)
@@ -211,10 +205,14 @@ static int format_btrees(struct silofs_exec_ctx *exct)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int format_obs(struct silofs_exec_ctx *exct)
+int silofs_exec_format_obs(struct silofs_exec_ctx *exct)
 {
 	int err;
 
+	err = pre_format_obs(exct);
+	if (err) {
+		return err;
+	}
 	err = format_uber(exct);
 	if (err) {
 		return err;
@@ -466,6 +464,12 @@ static int format_fs(struct silofs_exec_ctx *exct)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
+static int pre_format_fs(struct silofs_exec_ctx *exct)
+{
+	drop_relax_caches(exct);
+	return 0;
+}
+
 static int
 commit_mbr(struct silofs_exec_ctx *exct, struct silofs_mbref *out_mbref)
 {
@@ -478,10 +482,6 @@ int silofs_exec_format_fs(struct silofs_exec_ctx *exct,
 	int err;
 
 	err = pre_format_fs(exct);
-	if (err) {
-		return err;
-	}
-	err = format_obs(exct);
 	if (err) {
 		return err;
 	}

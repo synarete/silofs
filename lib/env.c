@@ -730,16 +730,6 @@ int silofs_env_export_ar_mbr(struct silofs_env *env,
 	return silofs_mbi_export(&env->mbis.ar_mbi, out_mbref, out_mbr1k);
 }
 
-int silofs_env_reload_repo(struct silofs_env *env)
-{
-	struct silofs_repo *repo = env->base.repo;
-
-	if (repo->re_opened) {
-		return 0;
-	}
-	return silofs_repo_open(repo, env->repodir, env->flags);
-}
-
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static int

@@ -31,9 +31,8 @@
 
 static void relax_caches(struct silofs_exec_ctx *exct, bool now)
 {
-	const int flags = now ? SILOFS_CTLF_NOW : SILOFS_CTLF_IDLE;
-
-	silofs_env_relax_caches(exct->env, flags);
+	silofs_env_relax_caches(exct->env, //
+	                        now ? SILOFS_CTLF_NOW : SILOFS_CTLF_IDLE);
 }
 
 static int flush_dirty(struct silofs_exec_ctx *exct)
@@ -77,43 +76,20 @@ static int appexec_resync_vmeta(struct silofs_exec_ctx *exct, bool drop)
 	return 0;
 }
 
-static int appexec_format_repo(struct silofs_exec_ctx *exct)
-{
-	return silofs_exec_format_repo(exct);
-}
-
-static int appexec_format_obs(struct silofs_exec_ctx *exct)
-{
-	return silofs_exec_format_obs(exct);
-}
-
-static int
-appexec_format_fs(struct silofs_exec_ctx *exct, struct silofs_mbref *out_mbref)
-{
-	return silofs_exec_format_fs(exct, out_mbref);
-}
-
-static int appexec_reload_repo(struct silofs_exec_ctx *exct)
-{
-	return silofs_exec_reload_repo(exct);
-}
-
-static int appexec_reload_fs_meta(struct silofs_exec_ctx *exct,
-                                  const struct silofs_mbref *mbref)
-{
-	return silofs_exec_reload_fs(exct, mbref);
-}
-
 static int appexec_reload_fs(struct silofs_exec_ctx *exct,
                              const struct silofs_mbref *mbref)
 {
 	int err;
 
-	err = appexec_reload_repo(exct);
+	err = silofs_exec_reload_repo(exct);
 	if (err) {
 		goto out;
 	}
-	err = appexec_reload_fs_meta(exct, mbref);
+	err = silofs_exec_reload_obs(exct, mbref);
+	if (err) {
+		goto out;
+	}
+	err = silofs_exec_reload_fs(exct);
 	if (err) {
 		goto out;
 	}
@@ -193,7 +169,15 @@ static int appexec_remove_fs(struct silofs_exec_ctx *exct,
 {
 	int err;
 
-	err = appexec_reload_fs_meta(exct, mbref);
+	err = silofs_exec_reload_repo(exct);
+	if (err) {
+		return err;
+	}
+	err = silofs_exec_reload_obs(exct, mbref);
+	if (err) {
+		return err;
+	}
+	err = silofs_exec_reload_fs(exct);
 	if (err) {
 		return err;
 	}
@@ -231,7 +215,11 @@ static int appexec_preserve_fs(struct silofs_exec_ctx *exct,
 {
 	int err;
 
-	err = appexec_reload_fs_meta(exct, fs_mbref);
+	err = silofs_exec_reload_obs(exct, fs_mbref);
+	if (err) {
+		return err;
+	}
+	err = silofs_exec_reload_fs(exct);
 	if (err) {
 		return err;
 	}
@@ -419,7 +407,7 @@ static int exec_format_repo(struct silofs_env *env)
 	if (err) {
 		goto out;
 	}
-	err = appexec_format_repo(&exct);
+	err = silofs_exec_format_repo(&exct);
 	if (err) {
 		goto out;
 	}
@@ -492,15 +480,15 @@ exec_format_fs(struct silofs_env *env, struct silofs_mbref *out_mbref)
 	if (err) {
 		goto out;
 	}
-	err = appexec_reload_repo(&exct);
+	err = silofs_exec_reload_repo(&exct);
 	if (err) {
 		goto out;
 	}
-	err = appexec_format_obs(&exct);
+	err = silofs_exec_format_obs(&exct);
 	if (err) {
 		goto out;
 	}
-	err = appexec_format_fs(&exct, out_mbref);
+	err = silofs_exec_format_fs(&exct, out_mbref);
 	if (err) {
 		goto out;
 	}
@@ -579,7 +567,7 @@ exec_sense_fs(struct silofs_env *env, const struct silofs_mbref *mbref)
 	if (err) {
 		goto out;
 	}
-	err = appexec_reload_repo(&exct);
+	err = silofs_exec_reload_repo(&exct);
 	if (err) {
 		goto out;
 	}
@@ -710,7 +698,7 @@ exec_reload_remove_fs(struct silofs_env *env, const struct silofs_mbref *mbref)
 	if (err) {
 		goto out;
 	}
-	err = appexec_reload_repo(&exct);
+	err = silofs_exec_reload_repo(&exct);
 	if (err) {
 		return err;
 	}
@@ -763,7 +751,7 @@ static int exec_inspect_fs(struct silofs_env *env,
 	if (err) {
 		goto out;
 	}
-	err = appexec_reload_repo(&exct);
+	err = silofs_exec_reload_repo(&exct);
 	if (err) {
 		goto out;
 	}
@@ -808,7 +796,7 @@ exec_preserve_fs(struct silofs_env *env, const struct silofs_mbref *fs_mbref,
 	if (err) {
 		goto out;
 	}
-	err = appexec_reload_repo(&exct);
+	err = silofs_exec_reload_repo(&exct);
 	if (err) {
 		goto out;
 	}
@@ -906,13 +894,13 @@ static int check_endianess(void)
 
 static int check_sysconf(void)
 {
-	long val;
-	long page_shift           = 0;
 	const long page_size_min  = SILOFS_PAGE_SIZE_MIN;
 	const long page_shift_min = SILOFS_PAGE_SHIFT_MIN;
 	const long page_shift_max = SILOFS_PAGE_SHIFT_MAX;
 	const long cl_size_min    = SILOFS_CACHELINE_SIZE_MIN;
 	const long cl_size_max    = SILOFS_CACHELINE_SIZE_MAX;
+	long page_shift           = 0;
+	long val;
 
 	errno = 0;
 	val   = silofs_sc_phys_pages();

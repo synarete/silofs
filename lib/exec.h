@@ -180,8 +180,6 @@ int silofs_exec_walkfs(struct silofs_exec_ctx            *exct,
 
 int silofs_exec_unrefs(struct silofs_exec_ctx *exct);
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 int silofs_exec_preserve(struct silofs_exec_ctx *exct,
                          struct silofs_mbref    *out_ar_mbref);
 
@@ -196,7 +194,9 @@ int silofs_exec_format_fs(struct silofs_exec_ctx *exct,
 
 int silofs_exec_reload_repo(struct silofs_exec_ctx *exct);
 
-int silofs_exec_reload_fs(struct silofs_exec_ctx    *exct,
-                          const struct silofs_mbref *mbref);
+int silofs_exec_reload_obs(struct silofs_exec_ctx    *exct,
+                           const struct silofs_mbref *mbref);
+
+int silofs_exec_reload_fs(struct silofs_exec_ctx *exct);
 
 #endif /* SILOFS_EXEC_H_ */

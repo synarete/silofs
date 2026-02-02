@@ -163,10 +163,21 @@ static int reload_btrees(struct silofs_exec_ctx *exct)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int reload_obs(struct silofs_exec_ctx *exct)
+static int
+reload_mbr(struct silofs_exec_ctx *exct, const struct silofs_mbref *mbref)
+{
+	return silofs_env_reload_fs_mbr(exct->env, mbref);
+}
+
+int silofs_exec_reload_obs(struct silofs_exec_ctx *exct,
+                           const struct silofs_mbref *mbref)
 {
 	int err;
 
+	err = reload_mbr(exct, mbref);
+	if (err) {
+		return err;
+	}
 	err = reload_uber(exct);
 	if (err) {
 		return err;
@@ -218,27 +229,10 @@ static int reload_rootd(struct silofs_exec_ctx *exct)
 	return 0;
 }
 
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-
-static int
-reload_fs_mbr(struct silofs_exec_ctx *exct, const struct silofs_mbref *mbref)
-{
-	return silofs_env_reload_fs_mbr(exct->env, mbref);
-}
-
-int silofs_exec_reload_fs(struct silofs_exec_ctx *exct,
-                          const struct silofs_mbref *mbref)
+int silofs_exec_reload_fs(struct silofs_exec_ctx *exct)
 {
 	int err;
 
-	err = reload_fs_mbr(exct, mbref);
-	if (err) {
-		return err;
-	}
-	err = reload_obs(exct);
-	if (err) {
-		return err;
-	}
 	err = reload_super(exct);
 	if (err) {
 		return err;

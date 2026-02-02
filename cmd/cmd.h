@@ -121,8 +121,6 @@ void cmd_execute_view(void);
 
 void cmd_execute_preserve(void);
 
-void cmd_execute_restore(void);
-
 /* options-arguments parsing via getopt */
 void cmd_optargs_init(struct cmd_optargs *opa, const struct cmd_optdesc *ods);
 
@@ -298,9 +296,6 @@ void cmd_inspect_fs(struct silofs_env *env, bool view);
 
 void cmd_preserve_fs(struct silofs_env *env, const struct silofs_fsref *fsref,
                      struct silofs_fsref *out_fsref);
-
-void cmd_restore_fs(struct silofs_env *env, const struct silofs_fsref *fsref,
-                    struct silofs_fsref *out_fsref);
 
 /* mount-info */
 struct silofs_mntinfos *cmd_parse_mountinfo(void);

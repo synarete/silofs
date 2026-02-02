@@ -213,18 +213,6 @@ _silofs_preserve() {
 	fi
 }
 
-_silofs_restore() {
-	local options=""
-
-	if [[ "$cur" == -* ]]; then
-		options+="-n --from= "
-		options+="-h --help "
-		_silofs_complete_options "$options"
-	else
-		_silofs_complete_filedir
-	fi
-}
-
 _silofs_subcmd() {
 	case "${words[1]}" in
 		"init")    _silofs_init    ;;
@@ -241,7 +229,6 @@ _silofs_subcmd() {
 		"fsck")    _silofs_fsck    ;;
 		"view")    _silofs_view    ;;
 		"archive") _silofs_archive ;;
-		"restore") _silofs_restore ;;
 	esac
 }
 
@@ -255,7 +242,7 @@ _silofs_main() {
 		_silofs_complete_options "$options"
 	else
 		subcmds+="init mkfs mount umount lsmnt show sync clone "
-		subcmds+="tune rmfs prune fsck view preserve restore "
+		subcmds+="tune rmfs prune fsck view preserve "
 		_silofs_complete_subcmds "$subcmds"
 	fi
 }

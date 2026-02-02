@@ -99,13 +99,13 @@ static int appexec_reload_repo(struct silofs_exec_ctx *exct)
 }
 
 static int appexec_reload_fs_meta(struct silofs_exec_ctx *exct,
-                                  const struct silofs_mbref *mbref)
+				  const struct silofs_mbref *mbref)
 {
 	return silofs_exec_reload_fs(exct, mbref);
 }
 
 static int appexec_reload_fs(struct silofs_exec_ctx *exct,
-                             const struct silofs_mbref *mbref)
+			     const struct silofs_mbref *mbref)
 {
 	int err;
 
@@ -189,7 +189,7 @@ remove_mbr(struct silofs_exec_ctx *exct, const struct silofs_mbref *mbref)
 }
 
 static int appexec_remove_fs(struct silofs_exec_ctx *exct,
-                             const struct silofs_mbref *mbref)
+			     const struct silofs_mbref *mbref)
 {
 	int err;
 
@@ -213,7 +213,7 @@ static int appexec_remove_fs(struct silofs_exec_ctx *exct,
 }
 
 static int appexec_sense_fs(struct silofs_exec_ctx *exct,
-                            const struct silofs_mbref *mbref)
+			    const struct silofs_mbref *mbref)
 {
 	int err;
 
@@ -226,8 +226,8 @@ static int appexec_sense_fs(struct silofs_exec_ctx *exct,
 }
 
 static int appexec_preserve_fs(struct silofs_exec_ctx *exct,
-                               const struct silofs_mbref *fs_mbref,
-                               struct silofs_mbref *out_ar_mbref)
+			       const struct silofs_mbref *fs_mbref,
+			       struct silofs_mbref *out_ar_mbref)
 {
 	int err;
 
@@ -236,20 +236,6 @@ static int appexec_preserve_fs(struct silofs_exec_ctx *exct,
 		return err;
 	}
 	err = silofs_exec_preserve(exct, out_ar_mbref);
-	if (err) {
-		return err;
-	}
-	drop_caches(exct);
-	return 0;
-}
-
-static int appexec_restore_fs(struct silofs_exec_ctx *exct,
-                              const struct silofs_mbref *ar_mbref,
-                              struct silofs_mbref *out_fs_mbref)
-{
-	int err;
-
-	err = silofs_exec_restore(exct, ar_mbref, out_fs_mbref);
 	if (err) {
 		return err;
 	}
@@ -277,7 +263,7 @@ static int do_map_exct_creds(struct silofs_exec_ctx *exct)
 	struct silofs_cred *icred       = &exct->auth.creds.fs_cred;
 
 	return silofs_idsmap_mapcreds(exct->idsm, xcred->uid, xcred->gid,
-	                              &icred->uid, &icred->gid);
+				      &icred->uid, &icred->gid);
 }
 
 static int map_exct_creds(struct silofs_exec_ctx *exct)
@@ -391,7 +377,7 @@ int silofs_sync_fs(struct silofs_env *env, bool drop)
 }
 
 void silofs_collect_stats(const struct silofs_env *env,
-                          struct silofs_cache_stats *out_cstats)
+			  struct silofs_cache_stats *out_cstats)
 {
 	silofs_lcache_collect_stats(env->base.lcache, out_cstats);
 }
@@ -487,10 +473,10 @@ static int check_owner_ids(const struct silofs_env *env)
 	int err;
 
 	err = silofs_idsmap_mapcreds(env->base.idsmap, owner_cred->uid,
-	                             owner_cred->gid, &suid, &sgid);
+				     owner_cred->gid, &suid, &sgid);
 	if (err) {
 		log_err("unable to map owner credentials: uid=%u gid=%u",
-		        owner_cred->uid, owner_cred->gid);
+			owner_cred->uid, owner_cred->gid);
 		return err;
 	}
 	return 0;
@@ -545,7 +531,7 @@ encode_fsref(const struct silofs_mbref *mbref, struct silofs_fsref *out_fsref)
 }
 
 static void encode_fsrefs(const struct silofs_mbrefs *mbrefs,
-                          struct silofs_fsrefs *out_fsrefs)
+			  struct silofs_fsrefs *out_fsrefs)
 {
 	silofs_fsrefs_export(out_fsrefs, mbrefs);
 }
@@ -768,7 +754,7 @@ int silofs_remove_fs(struct silofs_env *env, const struct silofs_fsref *fsref)
 }
 
 static int exec_inspect_fs(struct silofs_env *env,
-                           const struct silofs_laddr_visitor *lvis)
+			   const struct silofs_laddr_visitor *lvis)
 {
 	struct silofs_exec_ctx exct;
 	int err;
@@ -813,7 +799,7 @@ int silofs_inspect_fs(struct silofs_env *env, bool view)
 
 static int
 exec_preserve_fs(struct silofs_env *env, const struct silofs_mbref *fs_mbref,
-                 struct silofs_mbref *out_ar_mbref)
+		 struct silofs_mbref *out_ar_mbref)
 {
 	struct silofs_exec_ctx exct;
 	int err;
@@ -833,7 +819,7 @@ out:
 
 static int
 do_preserve_fs(struct silofs_env *env, const struct silofs_fsref *fsref,
-               struct silofs_fsref *out_fsref)
+	       struct silofs_fsref *out_fsref)
 {
 	struct silofs_mbref mbref[2];
 	int err;
@@ -851,63 +837,13 @@ do_preserve_fs(struct silofs_env *env, const struct silofs_fsref *fsref,
 }
 
 int silofs_preserve_fs(struct silofs_env *env,
-                       const struct silofs_fsref *fsref,
-                       struct silofs_fsref *out_fsref)
+		       const struct silofs_fsref *fsref,
+		       struct silofs_fsref *out_fsref)
 {
 	int err;
 
 	silofs_env_lock(env);
 	err = do_preserve_fs(env, fsref, out_fsref);
-	silofs_env_unlock(env);
-	return err;
-}
-
-static int
-exec_restore_fs(struct silofs_env *env, const struct silofs_mbref *ar_mbref,
-                struct silofs_mbref *out_fs_mbref)
-{
-	struct silofs_exec_ctx exct;
-	int err;
-
-	err = make_priv_exct(env, &exct);
-	if (err) {
-		goto out;
-	}
-	err = appexec_reload_repo(&exct);
-	if (err) {
-		goto out;
-	}
-	err = appexec_restore_fs(&exct, ar_mbref, out_fs_mbref);
-out:
-	return term_exct(&exct, err);
-}
-
-static int
-do_restore_fs(struct silofs_env *env, const struct silofs_fsref *fsref,
-              struct silofs_fsref *out_fsref)
-{
-	struct silofs_mbref mbref[2];
-	int err;
-
-	err = decode_fsref(fsref, &mbref[0]);
-	if (err) {
-		return err;
-	}
-	err = exec_restore_fs(env, &mbref[0], &mbref[1]);
-	if (err) {
-		return err;
-	}
-	encode_fsref(&mbref[1], out_fsref);
-	return 0;
-}
-
-int silofs_restore_fs(struct silofs_env *env, const struct silofs_fsref *fsref,
-                      struct silofs_fsref *out_fsref)
-{
-	int err;
-
-	silofs_env_lock(env);
-	err = do_restore_fs(env, fsref, out_fsref);
 	silofs_env_unlock(env);
 	return err;
 }

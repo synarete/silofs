@@ -24,10 +24,6 @@
 #include "index.h"
 
 int silofs_do_preserve_fs(struct silofs_exec_ctx *exct,
-                          struct silofs_mbref    *out_ar_mbref);
-
-int silofs_do_restore_fs(struct silofs_exec_ctx    *exct,
-                         const struct silofs_mbref *ar_mbref,
-                         struct silofs_mbref       *out_fs_mbref);
+			  struct silofs_mbref    *out_ar_mbref);
 
 #endif /* SILOFS_ARRE_H_ */

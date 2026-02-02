@@ -184,7 +184,6 @@ libsilofs_la_SOURCES += ar/hamming.c
 libsilofs_la_SOURCES += ar/hamming.h
 libsilofs_la_SOURCES += ar/index.c
 libsilofs_la_SOURCES += ar/index.h
-libsilofs_la_SOURCES += ar/restore.c
 libsilofs_la_SOURCES += ar.h
 libsilofs_la_SOURCES += mnt/mntconf.c
 libsilofs_la_SOURCES += mnt/mntsvc.c

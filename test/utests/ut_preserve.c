@@ -16,13 +16,13 @@
  */
 #include "utests.h"
 
-static void ut_archive_simple(struct ut_env *ute)
+static void ut_preserve_simple(struct ut_env *ute)
 {
 	const char *name = UT_NAME;
 	ino_t dino       = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
-	ut_archive_fs(ute);
+	ut_preserve_fs(ute);
 	ut_unload_fs(ute);
 	ut_restore_fs(ute);
 	ut_reload_fs(ute);
@@ -31,7 +31,7 @@ static void ut_archive_simple(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_archive_data(struct ut_env *ute)
+static void ut_preserve_data(struct ut_env *ute)
 {
 	struct stat st   = { .st_ino = 0 };
 	const char *name = UT_NAME;
@@ -46,7 +46,7 @@ static void ut_archive_data(struct ut_env *ute)
 	ut_write_read(ute, ino, buf, len, off);
 	ut_release_flush(ute, ino);
 	ut_unload_reload_fs(ute);
-	ut_archive_fs(ute);
+	ut_preserve_fs(ute);
 	ut_unload_fs(ute);
 	ut_remove_fs(ute);
 	ut_restore_fs(ute);
@@ -61,7 +61,7 @@ static void ut_archive_data(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_archive_nfiles(struct ut_env *ute)
+static void ut_preserve_nfiles(struct ut_env *ute)
 {
 	struct stat st       = { .st_ino = 0 };
 	const ino_t root_ino = SILOFS_INO_ROOT;
@@ -82,7 +82,7 @@ static void ut_archive_nfiles(struct ut_env *ute)
 		ut_write_read(ute, ino, buf, len, off);
 		ut_release_flush(ute, ino);
 	}
-	ut_archive_fs(ute);
+	ut_preserve_fs(ute);
 	ut_unload_fs(ute);
 	ut_remove_fs(ute);
 	ut_restore_fs(ute);
@@ -103,7 +103,7 @@ static void ut_archive_nfiles(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_archive_twice(struct ut_env *ute)
+static void ut_preserve_twice(struct ut_env *ute)
 {
 	const char *dname = UT_NAME;
 	const char *name1 = UT_NAME_AT;
@@ -124,7 +124,7 @@ static void ut_archive_twice(struct ut_env *ute)
 	ut_create_file(ute, dino, name2, &ino2);
 	ut_write_read(ute, ino2, buf2, len, off2);
 	ut_release_flush(ute, ino2);
-	ut_archive_fs(ute);
+	ut_preserve_fs(ute);
 	ut_unload_fs(ute);
 	ut_remove_fs(ute);
 	ut_restore_fs(ute);
@@ -136,7 +136,7 @@ static void ut_archive_twice(struct ut_env *ute)
 	ut_read_verify(ute, ino2, buf2, len, off2);
 	ut_release_file(ute, ino2);
 	ut_rename_exchange(ute, dino, name1, dino, name2);
-	ut_archive_fs(ute);
+	ut_preserve_fs(ute);
 	ut_unload_fs(ute);
 	ut_remove_fs(ute);
 	ut_restore_fs(ute);
@@ -155,10 +155,10 @@ static void ut_archive_twice(struct ut_env *ute)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ut_testdef ut_local_tests[] = {
-	UT_DEFTEST1(ut_archive_simple),
-	UT_DEFTEST(ut_archive_data),
-	UT_DEFTEST(ut_archive_nfiles),
-	UT_DEFTEST(ut_archive_twice),
+	UT_DEFTEST1(ut_preserve_simple),
+	UT_DEFTEST(ut_preserve_data),
+	UT_DEFTEST(ut_preserve_nfiles),
+	UT_DEFTEST(ut_preserve_twice),
 };
 
-const struct ut_testdefs ut_tdefs_archive = UT_MKTESTS(ut_local_tests);
+const struct ut_testdefs ut_tdefs_preserve = UT_MKTESTS(ut_local_tests);

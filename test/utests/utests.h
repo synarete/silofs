@@ -225,7 +225,7 @@ extern const struct ut_testdefs ut_tdefs_reload;
 extern const struct ut_testdefs ut_tdefs_fillfs;
 extern const struct ut_testdefs ut_tdefs_clone_basic;
 extern const struct ut_testdefs ut_tdefs_clone_io;
-extern const struct ut_testdefs ut_tdefs_archive;
+extern const struct ut_testdefs ut_tdefs_preserve;
 
 /* exec */
 void ut_execute_tests(void);
@@ -533,9 +533,7 @@ void ut_remove_fs2(struct ut_env *ute);
 
 void ut_fork_fs(struct ut_env *ute);
 
-void ut_archive_fs(struct ut_env *ute);
-
-void ut_restore_fs(struct ut_env *ute);
+void ut_preserve_fs(struct ut_env *ute);
 
 /* utilities */
 void ut_prandom_shuffle(struct ut_env *ute, long *arr, size_t len);

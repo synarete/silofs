@@ -978,7 +978,7 @@ struct silofs_btree_node {
 	struct silofs_nodeptr256b btn_child[SILOFS_BTREE_NODE_NCHILDS];
 } silofs_attr_aligned64;
 
-/* uber-block */
+/* uber-node */
 struct silofs_uber_node {
 	struct silofs_header      ub_hdr;
 	struct silofs_timespec    ub_btime;

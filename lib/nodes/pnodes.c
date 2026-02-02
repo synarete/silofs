@@ -147,13 +147,13 @@ static void
 ubi_init(struct silofs_uber_info *ubi, const struct silofs_nodeptr *nodeptr)
 {
 	pni_init(&ubi->ub_pni, nodeptr);
-	ubi->ub = nullptr;
+	ubi->ubn = nullptr;
 }
 
 static void ubi_fini(struct silofs_uber_info *ubi)
 {
 	pni_fini(&ubi->ub_pni);
-	ubi->ub = nullptr;
+	ubi->ubn = nullptr;
 }
 
 static int
@@ -163,7 +163,7 @@ ubi_new_view(struct silofs_uber_info *ubi, struct silofs_alloc *alloc)
 
 	err = pni_new_view(&ubi->ub_pni, alloc);
 	if (!err) {
-		ubi->ub = &ubi->ub_pni.pn_view->u.ub;
+		ubi->ubn = &ubi->ub_pni.pn_view->u.ub;
 	}
 	return err;
 }
@@ -193,7 +193,7 @@ static void
 ubi_del_view(struct silofs_uber_info *ubi, struct silofs_alloc *alloc)
 {
 	pni_del_view(&ubi->ub_pni, alloc);
-	ubi->ub = nullptr;
+	ubi->ubn = nullptr;
 }
 
 static void ubi_del(struct silofs_uber_info *ubi, struct silofs_alloc *alloc)

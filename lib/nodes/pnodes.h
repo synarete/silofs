@@ -29,10 +29,10 @@ struct silofs_pnode_info {
 	struct silofs_view      *pn_view;
 };
 
-/* uber-block in-memory state */
+/* uber-node in-memory state */
 struct silofs_uber_info {
 	struct silofs_pnode_info ub_pni;
-	struct silofs_uber_node *ub;
+	struct silofs_uber_node *ubn;
 };
 
 /* blob-descriptor node */

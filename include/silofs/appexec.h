@@ -70,8 +70,9 @@ int silofs_sync_fs(struct silofs_env *env, bool drop);
 
 int silofs_inspect_fs(struct silofs_env *env, bool show);
 
-int silofs_archive_fs(struct silofs_env *env, const struct silofs_fsref *fsref,
-                      struct silofs_fsref *out_fsref);
+int silofs_preserve_fs(struct silofs_env         *env,
+                       const struct silofs_fsref *fsref,
+                       struct silofs_fsref       *out_fsref);
 
 int silofs_restore_fs(struct silofs_env *env, const struct silofs_fsref *fsref,
                       struct silofs_fsref *out_fsref);

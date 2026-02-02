@@ -119,7 +119,7 @@ void cmd_execute_fsck(void);
 
 void cmd_execute_view(void);
 
-void cmd_execute_archive(void);
+void cmd_execute_preserve(void);
 
 void cmd_execute_restore(void);
 
@@ -296,8 +296,8 @@ void cmd_remove_fs(struct silofs_env *env, const struct silofs_fsref *fsref);
 
 void cmd_inspect_fs(struct silofs_env *env, bool view);
 
-void cmd_archive_fs(struct silofs_env *env, const struct silofs_fsref *fsref,
-                    struct silofs_fsref *out_fsref);
+void cmd_preserve_fs(struct silofs_env *env, const struct silofs_fsref *fsref,
+                     struct silofs_fsref *out_fsref);
 
 void cmd_restore_fs(struct silofs_env *env, const struct silofs_fsref *fsref,
                     struct silofs_fsref *out_fsref);

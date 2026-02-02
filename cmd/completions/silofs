@@ -201,7 +201,7 @@ _silofs_view() {
 	fi
 }
 
-_silofs_archive() {
+_silofs_preserve() {
 	local options=""
 
 	if [[ "$cur" == -* ]]; then
@@ -255,7 +255,7 @@ _silofs_main() {
 		_silofs_complete_options "$options"
 	else
 		subcmds+="init mkfs mount umount lsmnt show sync clone "
-		subcmds+="tune rmfs prune fsck view archive restore "
+		subcmds+="tune rmfs prune fsck view preserve restore "
 		_silofs_complete_subcmds "$subcmds"
 	fi
 }

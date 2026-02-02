@@ -23,8 +23,8 @@
 #include "fs.h"
 #include "index.h"
 
-int silofs_do_archive_fs(struct silofs_exec_ctx *exct,
-                         struct silofs_mbref    *out_ar_mbref);
+int silofs_do_preserve_fs(struct silofs_exec_ctx *exct,
+                          struct silofs_mbref    *out_ar_mbref);
 
 int silofs_do_restore_fs(struct silofs_exec_ctx    *exct,
                          const struct silofs_mbref *ar_mbref,

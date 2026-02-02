@@ -11,7 +11,7 @@
 ## Overview
 
 Silofs is a fully encrypted user-space file-system designed for secure,
-long-term data retention. It archives snapshots as immutable blobs, ensuring
+long-term data preservation. It archives snapshots as immutable blobs, ensuring
 audit-grade integrity and protection against unauthorized modification.
 
 It allows normal users to create an isolated storage area, with its

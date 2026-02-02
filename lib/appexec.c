@@ -225,9 +225,9 @@ static int appexec_sense_fs(struct silofs_exec_ctx *exct,
 	return 0;
 }
 
-static int appexec_archive_fs(struct silofs_exec_ctx *exct,
-                              const struct silofs_mbref *fs_mbref,
-                              struct silofs_mbref *out_ar_mbref)
+static int appexec_preserve_fs(struct silofs_exec_ctx *exct,
+                               const struct silofs_mbref *fs_mbref,
+                               struct silofs_mbref *out_ar_mbref)
 {
 	int err;
 
@@ -235,7 +235,7 @@ static int appexec_archive_fs(struct silofs_exec_ctx *exct,
 	if (err) {
 		return err;
 	}
-	err = silofs_exec_archive(exct, out_ar_mbref);
+	err = silofs_exec_preserve(exct, out_ar_mbref);
 	if (err) {
 		return err;
 	}
@@ -812,8 +812,8 @@ int silofs_inspect_fs(struct silofs_env *env, bool view)
 }
 
 static int
-exec_archive_fs(struct silofs_env *env, const struct silofs_mbref *fs_mbref,
-                struct silofs_mbref *out_ar_mbref)
+exec_preserve_fs(struct silofs_env *env, const struct silofs_mbref *fs_mbref,
+                 struct silofs_mbref *out_ar_mbref)
 {
 	struct silofs_exec_ctx exct;
 	int err;
@@ -826,14 +826,14 @@ exec_archive_fs(struct silofs_env *env, const struct silofs_mbref *fs_mbref,
 	if (err) {
 		goto out;
 	}
-	err = appexec_archive_fs(&exct, fs_mbref, out_ar_mbref);
+	err = appexec_preserve_fs(&exct, fs_mbref, out_ar_mbref);
 out:
 	return term_exct(&exct, err);
 }
 
 static int
-do_archive_fs(struct silofs_env *env, const struct silofs_fsref *fsref,
-              struct silofs_fsref *out_fsref)
+do_preserve_fs(struct silofs_env *env, const struct silofs_fsref *fsref,
+               struct silofs_fsref *out_fsref)
 {
 	struct silofs_mbref mbref[2];
 	int err;
@@ -842,7 +842,7 @@ do_archive_fs(struct silofs_env *env, const struct silofs_fsref *fsref,
 	if (err) {
 		return err;
 	}
-	err = exec_archive_fs(env, &mbref[0], &mbref[1]);
+	err = exec_preserve_fs(env, &mbref[0], &mbref[1]);
 	if (err) {
 		return err;
 	}
@@ -850,13 +850,14 @@ do_archive_fs(struct silofs_env *env, const struct silofs_fsref *fsref,
 	return 0;
 }
 
-int silofs_archive_fs(struct silofs_env *env, const struct silofs_fsref *fsref,
-                      struct silofs_fsref *out_fsref)
+int silofs_preserve_fs(struct silofs_env *env,
+                       const struct silofs_fsref *fsref,
+                       struct silofs_fsref *out_fsref)
 {
 	int err;
 
 	silofs_env_lock(env);
-	err = do_archive_fs(env, fsref, out_fsref);
+	err = do_preserve_fs(env, fsref, out_fsref);
 	silofs_env_unlock(env);
 	return err;
 }

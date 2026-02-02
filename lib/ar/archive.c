@@ -442,8 +442,8 @@ arc_do_archive(struct silofs_ar_ctx *ar_ctx, struct silofs_mbref *out_mbref)
 	return 0;
 }
 
-int silofs_do_archive_fs(struct silofs_exec_ctx *exct,
-                         struct silofs_mbref *out_ar_mbref)
+int silofs_do_preserve_fs(struct silofs_exec_ctx *exct,
+                          struct silofs_mbref *out_ar_mbref)
 {
 	struct silofs_ar_ctx ar_ctx;
 	int err;

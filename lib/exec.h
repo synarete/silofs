@@ -182,8 +182,8 @@ int silofs_exec_unrefs(struct silofs_exec_ctx *exct);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_exec_archive(struct silofs_exec_ctx *exct,
-                        struct silofs_mbref    *out_ar_mbref);
+int silofs_exec_preserve(struct silofs_exec_ctx *exct,
+                         struct silofs_mbref    *out_ar_mbref);
 
 int silofs_exec_restore(struct silofs_exec_ctx    *exct,
                         const struct silofs_mbref *ar_mbref,

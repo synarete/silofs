@@ -260,12 +260,12 @@ void cmd_inspect_fs(struct silofs_env *env, bool view)
 	}
 }
 
-void cmd_archive_fs(struct silofs_env *env, const struct silofs_fsref *fsref,
-                    struct silofs_fsref *out_fsref)
+void cmd_preserve_fs(struct silofs_env *env, const struct silofs_fsref *fsref,
+                     struct silofs_fsref *out_fsref)
 {
 	int err;
 
-	err = silofs_archive_fs(env, fsref, out_fsref);
+	err = silofs_preserve_fs(env, fsref, out_fsref);
 	if (err) {
 		cmd_die_by_fsref(env, err, "archive failure", fsref);
 	}

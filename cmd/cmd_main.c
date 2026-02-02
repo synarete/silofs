@@ -148,20 +148,20 @@ static void cmd_clean_postexec(void)
 	}
 
 static const struct cmd_info g_cmd_info[] = {
-	DEFCMD(init),    //
-	DEFCMD(mkfs),    //
-	DEFCMD(mount),   //
-	DEFCMD(umount),  //
-	DEFCMD(lsmnt),   //
-	DEFCMD(show),    //
-	DEFCMD(clone),   //
-	DEFCMD(sync),    //
-	DEFCMD(tune),    //
-	DEFCMD(rmfs),    //
-	DEFCMD(prune),   //
-	DEFCMD(fsck),    //
-	DEFCMD(view),    //
-	DEFCMD(archive), //
+	DEFCMD(init),     //
+	DEFCMD(mkfs),     //
+	DEFCMD(mount),    //
+	DEFCMD(umount),   //
+	DEFCMD(lsmnt),    //
+	DEFCMD(show),     //
+	DEFCMD(clone),    //
+	DEFCMD(sync),     //
+	DEFCMD(tune),     //
+	DEFCMD(rmfs),     //
+	DEFCMD(prune),    //
+	DEFCMD(fsck),     //
+	DEFCMD(view),     //
+	DEFCMD(preserve), //
 	DEFCMD(restore),
 };
 

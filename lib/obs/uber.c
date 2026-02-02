@@ -59,33 +59,33 @@ static size_t ub_slot_of(enum silofs_mtype mtype)
 }
 
 static void
-ub_set_btime(struct silofs_uber_block *ub, const struct timespec *ts)
+ub_set_btime(struct silofs_uber_node *ub, const struct timespec *ts)
 {
 	silofs_cpu_to_ts(ts, &ub->ub_btime);
 }
 
 static void
-ub_set_ctime(struct silofs_uber_block *ub, const struct timespec *ts)
+ub_set_ctime(struct silofs_uber_node *ub, const struct timespec *ts)
 {
 	silofs_cpu_to_ts(ts, &ub->ub_ctime);
 }
 
-static uint64_t ub_generation(const struct silofs_uber_block *ub)
+static uint64_t ub_generation(const struct silofs_uber_node *ub)
 {
 	return silofs_le64_to_cpu(ub->ub_generation);
 }
 
-static void ub_set_generation(struct silofs_uber_block *ub, uint64_t gn)
+static void ub_set_generation(struct silofs_uber_node *ub, uint64_t gn)
 {
 	ub->ub_generation = silofs_cpu_to_le64(gn);
 }
 
-static void ub_inc_generation(struct silofs_uber_block *ub)
+static void ub_inc_generation(struct silofs_uber_node *ub)
 {
 	ub_set_generation(ub, ub_generation(ub) + 1);
 }
 
-static void ub_get_child(const struct silofs_uber_block *ub, size_t slot,
+static void ub_get_child(const struct silofs_uber_node *ub, size_t slot,
                          struct silofs_nodeptr *out_nodeptr)
 {
 	silofs_assert_lt(slot, ARRAY_SIZE(ub->ub_child));
@@ -94,7 +94,7 @@ static void ub_get_child(const struct silofs_uber_block *ub, size_t slot,
 }
 
 static void
-ub_get_child_of(const struct silofs_uber_block *ub, enum silofs_mtype mtype,
+ub_get_child_of(const struct silofs_uber_node *ub, enum silofs_mtype mtype,
                 struct silofs_nodeptr *out_nodeptr)
 {
 	const size_t slot = ub_slot_of(mtype);
@@ -105,7 +105,7 @@ ub_get_child_of(const struct silofs_uber_block *ub, enum silofs_mtype mtype,
 	ub_get_child(ub, slot, out_nodeptr);
 }
 
-static void ub_set_child(struct silofs_uber_block *ub, size_t slot,
+static void ub_set_child(struct silofs_uber_node *ub, size_t slot,
                          const struct silofs_nodeptr *nodeptr)
 {
 	silofs_assert_lt(slot, ARRAY_SIZE(ub->ub_child));
@@ -114,7 +114,7 @@ static void ub_set_child(struct silofs_uber_block *ub, size_t slot,
 }
 
 static void
-ub_set_child_of(struct silofs_uber_block *ub, enum silofs_mtype mtype,
+ub_set_child_of(struct silofs_uber_node *ub, enum silofs_mtype mtype,
                 const struct silofs_nodeptr *nodeptr)
 {
 	const size_t slot = ub_slot_of(mtype);
@@ -125,19 +125,19 @@ ub_set_child_of(struct silofs_uber_block *ub, enum silofs_mtype mtype,
 	ub_set_child(ub, slot, nodeptr);
 }
 
-static void ub_reset_child(struct silofs_uber_block *ub, size_t slot)
+static void ub_reset_child(struct silofs_uber_node *ub, size_t slot)
 {
 	ub_set_child(ub, slot, silofs_nodeptr_none());
 }
 
-static void ub_reset_childs(struct silofs_uber_block *ub)
+static void ub_reset_childs(struct silofs_uber_node *ub)
 {
 	for (size_t slot = 0; slot < ARRAY_SIZE(ub->ub_child); ++slot) {
 		ub_reset_child(ub, slot);
 	}
 }
 
-static void ub_setup(struct silofs_uber_block *ub, const struct timespec *ts)
+static void ub_setup(struct silofs_uber_node *ub, const struct timespec *ts)
 {
 	ub_set_generation(ub, 0);
 	ub_set_btime(ub, ts);

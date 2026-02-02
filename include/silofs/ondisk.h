@@ -979,7 +979,7 @@ struct silofs_btree_node {
 } silofs_attr_aligned64;
 
 /* uber-block */
-struct silofs_uber_block {
+struct silofs_uber_node {
 	struct silofs_header      ub_hdr;
 	struct silofs_timespec    ub_btime;
 	struct silofs_timespec    ub_ctime;
@@ -1015,7 +1015,7 @@ struct silofs_arix_node {
 union silofs_view_u {
 	struct silofs_header       hdr[2];
 	struct silofs_mbr1k        mbr;
-	struct silofs_uber_block   ub;
+	struct silofs_uber_node    ub;
 	struct silofs_arix_node    arn;
 	struct silofs_blob_desc    bd;
 	struct silofs_btree_node   btn;

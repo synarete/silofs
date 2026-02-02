@@ -31,8 +31,8 @@ struct silofs_pnode_info {
 
 /* uber-block in-memory state */
 struct silofs_uber_info {
-	struct silofs_pnode_info  ub_pni;
-	struct silofs_uber_block *ub;
+	struct silofs_pnode_info ub_pni;
+	struct silofs_uber_node *ub;
 };
 
 /* blob-descriptor node */

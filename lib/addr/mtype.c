@@ -186,7 +186,7 @@ size_t silofs_mtype_size(enum silofs_mtype mtype)
 {
 	switch (mtype) {
 	case SILOFS_MTYPE_UBER:
-		return sizeof(struct silofs_uber_block);
+		return sizeof(struct silofs_uber_node);
 	case SILOFS_MTYPE_ARIX:
 		return sizeof(struct silofs_arix_node);
 	case SILOFS_MTYPE_BLDESC:

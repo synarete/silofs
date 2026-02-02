@@ -461,13 +461,13 @@ flusher_dequeue_sqe(struct silofs_flusher *flusher)
 
 static struct silofs_env *flusher_env(const struct silofs_flusher *flusher)
 {
-	silofs_assert_not_null(flusher->exct);
+	silofs_assert_not_null(flusher->task);
 
-	return flusher->exct->env;
+	return flusher->task->env;
 }
 
 static struct silofs_dirtyqs *
-flusher_dirtyqs_from_exct(const struct silofs_flusher *flusher)
+flusher_dirtyqs_from_task(const struct silofs_flusher *flusher)
 {
 	const struct silofs_env *env = flusher_env(flusher);
 
@@ -489,7 +489,7 @@ static int flusher_require_mutable_llink(const struct silofs_flusher *flusher,
 static void flusher_unode_nmeta(const struct silofs_flusher *flusher,
                                 struct silofs_nmeta *out_nmeta)
 {
-	silofs_resolve_unode_nmeta(flusher->exct->env, out_nmeta);
+	silofs_resolve_unode_nmeta(flusher->task->env, out_nmeta);
 }
 
 static int flusher_resolve_llink_of_uni(const struct silofs_flusher *flusher,
@@ -523,7 +523,7 @@ static int flusher_pre_resolve_llink_of(const struct silofs_flusher *flusher,
 
 	if (lni_isvnode(lni)) {
 		vni = vni_from_lni(lni);
-		ret = silofs_refresh_llink(flusher->exct, vni);
+		ret = silofs_refresh_llink(flusher->task, vni);
 	}
 	return ret;
 }
@@ -720,7 +720,7 @@ static void flusher_submit_sqe(struct silofs_flusher *flusher,
                                struct silofs_submitq_ent *sqe)
 {
 	silofs_submitq_enqueue(flusher->submitq, sqe);
-	silofs_exct_update_id(flusher->exct, sqe);
+	silofs_task_update_id(flusher->task, sqe);
 }
 
 static void flusher_submit_txq(struct silofs_flusher *flusher)
@@ -807,7 +807,7 @@ static int flusher_process_dset_at(struct silofs_flusher *flusher, size_t slot)
 
 static void flusher_fill_dsets(struct silofs_flusher *flusher)
 {
-	struct silofs_dirtyqs *dirtyqs = flusher_dirtyqs_from_exct(flusher);
+	struct silofs_dirtyqs *dirtyqs = flusher_dirtyqs_from_task(flusher);
 
 	if ((flusher->ii == nullptr) || (flusher->flags & SILOFS_CTLF_NOW)) {
 		flusher_add_dirty_any_of(flusher, dirtyqs);
@@ -855,7 +855,7 @@ static int flusher_complete_commits(const struct silofs_flusher *flusher)
 	int ret = 0;
 
 	if (flusher->flags & SILOFS_CTLF_NOW) {
-		ret = silofs_exct_submit(flusher->exct, true);
+		ret = silofs_task_submit(flusher->task, true);
 	}
 	return ret;
 }
@@ -895,12 +895,12 @@ static void flusher_pre_flush_dirty(struct silofs_flusher *flusher)
 }
 
 static void
-flusher_rebind(struct silofs_flusher *flusher, struct silofs_exec_ctx *exct,
+flusher_rebind(struct silofs_flusher *flusher, struct silofs_task_ctx *task,
                struct silofs_inode_info *ii, int flags)
 {
 	flusher_reinit_dsets(flusher);
-	flusher->exct     = exct;
-	flusher->sbi      = silofs_get_sbi(exct);
+	flusher->task     = task;
+	flusher->sbi      = silofs_get_sbi(task);
 	flusher->ii       = ii;
 	flusher->tx_count = 0;
 	flusher->flags    = flags;
@@ -908,7 +908,7 @@ flusher_rebind(struct silofs_flusher *flusher, struct silofs_exec_ctx *exct,
 
 static void flusher_unbind(struct silofs_flusher *flusher)
 {
-	flusher->exct     = nullptr;
+	flusher->task     = nullptr;
 	flusher->sbi      = nullptr;
 	flusher->ii       = nullptr;
 	flusher->tx_count = 0;
@@ -922,7 +922,7 @@ int silofs_flusher_init(struct silofs_flusher *flusher,
 	flusher_init_dsets(flusher);
 	flusher_init_txq(flusher);
 	flusher->submitq  = submitq;
-	flusher->exct     = nullptr;
+	flusher->task     = nullptr;
 	flusher->sbi      = nullptr;
 	flusher->ii       = nullptr;
 	flusher->tx_count = 0;
@@ -959,14 +959,14 @@ static size_t flush_threshold_of(int flags)
 	return threshold;
 }
 
-static bool need_flush_now(const struct silofs_exec_ctx *exct, int flags)
+static bool need_flush_now(const struct silofs_task_ctx *task, int flags)
 {
 	struct silofs_alloc_stat alst = { .nbytes_use = 0, .nbytes_max = 0 };
 
 	if (flags & SILOFS_CTLF_NOW) {
 		return true;
 	}
-	silofs_memstat(exct->env->alloc, &alst);
+	silofs_memstat(task->env->alloc, &alst);
 	if (alst.nbytes_use > (alst.nbytes_max / 2)) {
 		return true;
 	}
@@ -996,28 +996,28 @@ static bool need_flush_by_env(const struct silofs_env *env, int flags)
 	return (ndirty > thresh);
 }
 
-static bool need_flush_by(const struct silofs_exec_ctx *exct,
+static bool need_flush_by(const struct silofs_task_ctx *task,
                           const struct silofs_inode_info *ii, int flags)
 {
 	bool ret = false;
 
-	if (need_flush_now(exct, flags)) {
+	if (need_flush_now(task, flags)) {
 		ret = true;
 	} else if (ii != nullptr) {
 		ret = need_flush_by_ii(ii, flags);
 	} else {
-		ret = need_flush_by_env(exct->env, flags);
+		ret = need_flush_by_env(task->env, flags);
 	}
 	return ret;
 }
 
-static int do_flush_dirty(struct silofs_exec_ctx *exct,
+static int do_flush_dirty(struct silofs_task_ctx *task,
                           struct silofs_inode_info *ii, int flags)
 {
-	struct silofs_flusher *flusher = exct->env->base.flusher;
+	struct silofs_flusher *flusher = task->env->base.flusher;
 	int err;
 
-	flusher_rebind(flusher, exct, ii, flags);
+	flusher_rebind(flusher, task, ii, flags);
 	flusher_pre_flush_dirty(flusher);
 	err = flusher_flush_dirty(flusher);
 	if (err) {
@@ -1027,22 +1027,22 @@ static int do_flush_dirty(struct silofs_exec_ctx *exct,
 	return err;
 }
 
-int silofs_flush_dirty(struct silofs_exec_ctx *exct,
+int silofs_flush_dirty(struct silofs_task_ctx *task,
                        struct silofs_inode_info *ii, int flags)
 {
 	int err = 0;
 
-	if (need_flush_by(exct, ii, flags)) {
+	if (need_flush_by(task, ii, flags)) {
 		silofs_ii_incref(ii);
-		err = do_flush_dirty(exct, ii, flags);
+		err = do_flush_dirty(task, ii, flags);
 		silofs_ii_decref(ii);
 	}
 	return err;
 }
 
-int silofs_flush_dirty_now(struct silofs_exec_ctx *exct)
+int silofs_flush_dirty_now(struct silofs_task_ctx *task)
 {
-	return silofs_flush_dirty(exct, nullptr, SILOFS_CTLF_NOW);
+	return silofs_flush_dirty(task, nullptr, SILOFS_CTLF_NOW);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

@@ -20,7 +20,7 @@
 #include "infra.h"
 #include "addr.h"
 
-struct silofs_exec_ctx;
+struct silofs_task_ctx;
 struct silofs_visitor;
 struct silofs_walk_iter;
 struct silofs_sb_info;
@@ -56,15 +56,15 @@ struct silofs_laddr_visitor {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_visit_sptree(struct silofs_exec_ctx *exct,
+int silofs_visit_sptree(struct silofs_task_ctx *task,
                         struct silofs_sb_info  *sbi,
                         struct silofs_visitor  *vis);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_walkfs_at(struct silofs_exec_ctx *exct, struct silofs_sb_info *sbi,
+int silofs_walkfs_at(struct silofs_task_ctx *task, struct silofs_sb_info *sbi,
                      const struct silofs_laddr_visitor *lvis);
 
-int silofs_unrefs_at(struct silofs_exec_ctx *exct, struct silofs_sb_info *sbi);
+int silofs_unrefs_at(struct silofs_task_ctx *task, struct silofs_sb_info *sbi);
 
 #endif /* SILOFS_WALK_H_ */

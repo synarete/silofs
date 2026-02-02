@@ -24,10 +24,10 @@
 #include "exec.h"
 #include "env.h"
 
-static int require_nonempty_repodir(const struct silofs_exec_ctx *exct)
+static int require_nonempty_repodir(const struct silofs_task_ctx *task)
 {
 	struct dirent64 de[4];
-	const char *path = exct->env->repodir;
+	const char *path = task->env->repodir;
 	size_t ndes      = 0;
 	int dfd          = -1;
 	int err;
@@ -52,29 +52,29 @@ out:
 	return err;
 }
 
-static int pre_reload_repo(struct silofs_exec_ctx *exct)
+static int pre_reload_repo(struct silofs_task_ctx *task)
 {
-	return require_nonempty_repodir(exct);
+	return require_nonempty_repodir(task);
 }
 
-static int open_repo(struct silofs_exec_ctx *exct)
+static int open_repo(struct silofs_task_ctx *task)
 {
-	return silofs_repo_open(exct->repo, exct->env->repodir,
-	                        exct->env->flags);
+	return silofs_repo_open(task->repo, task->env->repodir,
+	                        task->env->flags);
 }
 
-int silofs_exec_reload_repo(struct silofs_exec_ctx *exct)
+int silofs_exec_reload_repo(struct silofs_task_ctx *task)
 {
 	int err;
 
-	if (exct->repo->re_opened) {
+	if (task->repo->re_opened) {
 		return 0; /* no-op */
 	}
-	err = pre_reload_repo(exct);
+	err = pre_reload_repo(task);
 	if (err) {
 		return err;
 	}
-	err = open_repo(exct);
+	err = open_repo(task);
 	if (err) {
 		return err;
 	}
@@ -83,47 +83,47 @@ int silofs_exec_reload_repo(struct silofs_exec_ctx *exct)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static int resolve_root_uber(const struct silofs_exec_ctx *exct,
+static int resolve_root_uber(const struct silofs_task_ctx *task,
                              struct silofs_pnodeptr *out_pnodeptr)
 {
-	const struct silofs_env_mbis *mbis = &exct->env->mbis;
+	const struct silofs_env_mbis *mbis = &task->env->mbis;
 
 	return silofs_mbi_uber_root(&mbis->fs_mbi, out_pnodeptr);
 }
 
-static int reload_uber(struct silofs_exec_ctx *exct)
+static int reload_uber(struct silofs_task_ctx *task)
 {
 	struct silofs_pnodeptr pnodeptr = {};
 	struct silofs_uber_info *ubi    = nullptr;
 	int err;
 
-	err = resolve_root_uber(exct, &pnodeptr);
+	err = resolve_root_uber(task, &pnodeptr);
 	if (err) {
 		return err;
 	}
-	err = silofs_stage_uber(exct->env, &pnodeptr, &ubi);
+	err = silofs_stage_uber(task->env, &pnodeptr, &ubi);
 	if (err) {
 		return err;
 	}
-	silofs_env_update_uber(exct->env, ubi);
+	silofs_env_update_uber(task->env, ubi);
 	return 0;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int
-stage_btree_root(struct silofs_exec_ctx *exct, enum silofs_mtype mtype)
+stage_btree_root(struct silofs_task_ctx *task, enum silofs_mtype mtype)
 {
 	struct silofs_pnodeptr pnodeptr;
 	struct silofs_btnode_info *bti = nullptr;
 	int err;
 
-	silofs_ubi_get_child(exct->env->ubi, mtype, &pnodeptr);
+	silofs_ubi_get_child(task->env->ubi, mtype, &pnodeptr);
 	if (silofs_paddr_isnull(&pnodeptr.paddr)) {
 		log_dbg("missing btree root: mtype=%d", mtype);
 		return -SILOFS_ENOENT;
 	}
-	err = silofs_stage_btnode(exct->env, &pnodeptr, &bti);
+	err = silofs_stage_btnode(task->env, &pnodeptr, &bti);
 	if (err) {
 		return err;
 	}
@@ -131,11 +131,11 @@ stage_btree_root(struct silofs_exec_ctx *exct, enum silofs_mtype mtype)
 }
 
 static int
-reload_btree_of(struct silofs_exec_ctx *exct, enum silofs_mtype mtype)
+reload_btree_of(struct silofs_task_ctx *task, enum silofs_mtype mtype)
 {
 	int err;
 
-	err = stage_btree_root(exct, mtype);
+	err = stage_btree_root(task, mtype);
 	if (err) {
 		log_err("reload btree failed: mtype=%d err=%d", mtype, err);
 		return err;
@@ -144,7 +144,7 @@ reload_btree_of(struct silofs_exec_ctx *exct, enum silofs_mtype mtype)
 	return 0;
 }
 
-static int reload_btrees(struct silofs_exec_ctx *exct)
+static int reload_btrees(struct silofs_task_ctx *task)
 {
 	enum silofs_mtype mtype = SILOFS_MTYPE_NONE;
 	int err;
@@ -153,7 +153,7 @@ static int reload_btrees(struct silofs_exec_ctx *exct)
 		if (!silofs_mtype_isvnode2(mtype)) {
 			continue;
 		}
-		err = reload_btree_of(exct, mtype);
+		err = reload_btree_of(task, mtype);
 		if (err) {
 			return err;
 		}
@@ -164,25 +164,25 @@ static int reload_btrees(struct silofs_exec_ctx *exct)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int
-reload_mbr(struct silofs_exec_ctx *exct, const struct silofs_mbref *mbref)
+reload_mbr(struct silofs_task_ctx *task, const struct silofs_mbref *mbref)
 {
-	return silofs_env_reload_fs_mbr(exct->env, mbref);
+	return silofs_env_reload_fs_mbr(task->env, mbref);
 }
 
-int silofs_exec_reload_obs(struct silofs_exec_ctx *exct,
+int silofs_exec_reload_obs(struct silofs_task_ctx *task,
                            const struct silofs_mbref *mbref)
 {
 	int err;
 
-	err = reload_mbr(exct, mbref);
+	err = reload_mbr(task, mbref);
 	if (err) {
 		return err;
 	}
-	err = reload_uber(exct);
+	err = reload_uber(task);
 	if (err) {
 		return err;
 	}
-	err = reload_btrees(exct);
+	err = reload_btrees(task);
 	if (err) {
 		return err;
 	}
@@ -191,32 +191,32 @@ int silofs_exec_reload_obs(struct silofs_exec_ctx *exct,
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static int reload_super(struct silofs_exec_ctx *exct)
+static int reload_super(struct silofs_task_ctx *task)
 {
 	int err;
 
-	err = silofs_env_reload_sb_lseg(exct->env);
+	err = silofs_env_reload_sb_lseg(task->env);
 	if (err) {
 		return err;
 	}
-	err = silofs_env_reload_super(exct->env);
+	err = silofs_env_reload_super(task->env);
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-static int reload_vspace(struct silofs_exec_ctx *exct)
+static int reload_vspace(struct silofs_task_ctx *task)
 {
-	return silofs_reload_vspace(exct);
+	return silofs_reload_vspace(task);
 }
 
-static int reload_rootd(struct silofs_exec_ctx *exct)
+static int reload_rootd(struct silofs_task_ctx *task)
 {
 	struct silofs_inode_info *ii = nullptr;
 	int err;
 
-	err = silofs_stage_inode(exct, SILOFS_INO_ROOT, SILOFS_STG_CUR, &ii);
+	err = silofs_stage_inode(task, SILOFS_INO_ROOT, SILOFS_STG_CUR, &ii);
 	if (err) {
 		log_err("failed to reload root-inode: err=%d", err);
 		return err;
@@ -229,19 +229,19 @@ static int reload_rootd(struct silofs_exec_ctx *exct)
 	return 0;
 }
 
-int silofs_exec_reload_fs(struct silofs_exec_ctx *exct)
+int silofs_exec_reload_fs(struct silofs_task_ctx *task)
 {
 	int err;
 
-	err = reload_super(exct);
+	err = reload_super(task);
 	if (err) {
 		return err;
 	}
-	err = reload_vspace(exct);
+	err = reload_vspace(task);
 	if (err) {
 		return err;
 	}
-	err = reload_rootd(exct);
+	err = reload_rootd(task);
 	if (err) {
 		return err;
 	}

@@ -386,10 +386,10 @@ static void ut_run_test(struct ut_env *ute, const struct ut_testdef *td)
 
 static void ut_post_test(struct ut_env *ute)
 {
-	struct silofs_exec_ctx task;
+	struct silofs_task_ctx task;
 	int err;
 
-	ut_setup_exct(ute, &task);
+	ut_setup_task(ute, &task);
 	err = silofs_exec_maintain(&task, SILOFS_CTLF_NOW);
 	ut_release_task(ute, &task);
 	silofs_assert_ok(err);

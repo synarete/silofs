@@ -24,117 +24,117 @@
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_exct_update_creds(struct silofs_exec_ctx *exct, uid_t uid,
+void silofs_task_update_creds(struct silofs_task_ctx *task, uid_t uid,
                               gid_t gid, mode_t umsk)
 {
-	struct silofs_creds *creds = &exct->auth.creds;
+	struct silofs_creds *creds = &task->auth.creds;
 
 	silofs_cred_setup(&creds->host_cred, uid, gid, umsk);
 	silofs_cred_setup(&creds->fs_cred, uid, gid, umsk);
 }
 
-void silofs_exct_update_auth(struct silofs_exec_ctx *exct, pid_t pid,
+void silofs_task_update_auth(struct silofs_task_ctx *task, pid_t pid,
                              uint64_t unique, uint32_t opcode, bool exclusive)
 {
-	exct->auth.pid    = pid;
-	exct->auth.unique = unique;
-	exct->auth.opcode = opcode;
-	exct->exclusive   = exclusive;
+	task->auth.pid    = pid;
+	task->auth.unique = unique;
+	task->auth.opcode = opcode;
+	task->exclusive   = exclusive;
 }
 
-void silofs_exct_update_umask(struct silofs_exec_ctx *exct, mode_t umask)
+void silofs_task_update_umask(struct silofs_task_ctx *task, mode_t umask)
 {
-	struct silofs_creds *creds = &exct->auth.creds;
+	struct silofs_creds *creds = &task->auth.creds;
 
 	creds->host_cred.umask = creds->fs_cred.umask = umask;
 }
 
-void silofs_exct_update_times(struct silofs_exec_ctx *exct, bool rt)
+void silofs_task_update_times(struct silofs_task_ctx *task, bool rt)
 {
 	int err;
 
-	err = silofs_ts_gettime(&exct->auth.ts, rt);
+	err = silofs_ts_gettime(&task->auth.ts, rt);
 	if (err && rt) {
 		/* failure in clock_gettime -- fall to non-realtime */
-		silofs_ts_gettime(&exct->auth.ts, !rt);
+		silofs_ts_gettime(&task->auth.ts, !rt);
 	}
 }
 
-void silofs_exct_update_id(struct silofs_exec_ctx *exct,
+void silofs_task_update_id(struct silofs_task_ctx *task,
                            struct silofs_submitq_ent *sqe)
 {
-	if (sqe->uniq_id > exct->upper_id) {
-		exct->upper_id = sqe->uniq_id;
+	if (sqe->uniq_id > task->upper_id) {
+		task->upper_id = sqe->uniq_id;
 	}
 }
 
-static int exct_apply(const struct silofs_exec_ctx *exct, bool all)
+static int task_apply(const struct silofs_task_ctx *task, bool all)
 {
 	int ret = 0;
 
 	if (all) {
-		ret = silofs_submitq_apply(exct->submitq, SILOFS_CID_ALL);
-	} else if (exct->upper_id) {
-		ret = silofs_submitq_apply(exct->submitq, exct->upper_id);
+		ret = silofs_submitq_apply(task->submitq, SILOFS_CID_ALL);
+	} else if (task->upper_id) {
+		ret = silofs_submitq_apply(task->submitq, task->upper_id);
 	}
 	return ret;
 }
 
-void silofs_exct_init(struct silofs_exec_ctx *exct, struct silofs_env *env)
+void silofs_task_init(struct silofs_task_ctx *task, struct silofs_env *env)
 {
-	memset(exct, 0, sizeof(*exct));
-	silofs_cred_init(&exct->auth.creds.fs_cred);
-	silofs_cred_init(&exct->auth.creds.host_cred);
-	exct->env       = env;
-	exct->idsm      = env->base.idsmap;
-	exct->repo      = env->base.repo;
-	exct->lcache    = env->base.lcache;
-	exct->submitq   = env->base.submitq;
-	exct->looseq    = nullptr;
-	exct->upper_id  = 0;
-	exct->interrupt = 0;
-	exct->fs_locked = false;
-	exct->rw_locked = false;
-	exct->exclusive = false;
-	exct->priv_op   = false;
-	exct->kwrite    = false;
-	exct->runnable  = true;
+	memset(task, 0, sizeof(*task));
+	silofs_cred_init(&task->auth.creds.fs_cred);
+	silofs_cred_init(&task->auth.creds.host_cred);
+	task->env       = env;
+	task->idsm      = env->base.idsmap;
+	task->repo      = env->base.repo;
+	task->lcache    = env->base.lcache;
+	task->submitq   = env->base.submitq;
+	task->looseq    = nullptr;
+	task->upper_id  = 0;
+	task->interrupt = 0;
+	task->fs_locked = false;
+	task->rw_locked = false;
+	task->exclusive = false;
+	task->priv_op   = false;
+	task->kwrite    = false;
+	task->runnable  = true;
 }
 
-void silofs_exct_fini(struct silofs_exec_ctx *exct)
+void silofs_task_fini(struct silofs_task_ctx *task)
 {
-	silofs_assert_null(exct->looseq);
-	silofs_assert_eq(exct->fs_locked, false);
+	silofs_assert_null(task->looseq);
+	silofs_assert_eq(task->fs_locked, false);
 
-	exct->env      = nullptr;
-	exct->idsm     = nullptr;
-	exct->repo     = nullptr;
-	exct->lcache   = nullptr;
-	exct->submitq  = nullptr;
-	exct->runnable = false;
+	task->env      = nullptr;
+	task->idsm     = nullptr;
+	task->repo     = nullptr;
+	task->lcache   = nullptr;
+	task->submitq  = nullptr;
+	task->runnable = false;
 }
 
-void silofs_exct_enq_loose(struct silofs_exec_ctx *exct,
+void silofs_task_enq_loose(struct silofs_task_ctx *task,
                            struct silofs_inode_info *ii)
 {
 	silofs_assert_null(ii->i_looseq_next);
 	silofs_assert_eq(ii->i_vni.vn_lni.ln_flags & SILOFS_LNF_PINNED, 0);
 
 	if (!ii->i_in_looseq) {
-		ii->i_looseq_next = exct->looseq;
+		ii->i_looseq_next = task->looseq;
 		ii->i_in_looseq   = true;
-		exct->looseq      = ii;
+		task->looseq      = ii;
 		silofs_ii_incref(ii);
 	}
 }
 
-static struct silofs_inode_info *exct_deq_loose(struct silofs_exec_ctx *exct)
+static struct silofs_inode_info *task_deq_loose(struct silofs_task_ctx *task)
 {
 	struct silofs_inode_info *ii = nullptr;
 
-	if (exct->looseq != nullptr) {
-		ii                = exct->looseq;
-		exct->looseq      = ii->i_looseq_next;
+	if (task->looseq != nullptr) {
+		ii                = task->looseq;
+		task->looseq      = ii->i_looseq_next;
 		ii->i_looseq_next = nullptr;
 		ii->i_in_looseq   = false;
 		silofs_ii_decref(ii);
@@ -142,14 +142,14 @@ static struct silofs_inode_info *exct_deq_loose(struct silofs_exec_ctx *exct)
 	return ii;
 }
 
-static void exct_forget_looseq(struct silofs_exec_ctx *exct)
+static void task_forget_looseq(struct silofs_task_ctx *task)
 {
 	struct silofs_inode_info *ii;
 	int err;
 
-	ii = exct_deq_loose(exct);
+	ii = task_deq_loose(task);
 	while (ii != nullptr) {
-		err = silofs_forget_loose_ii(exct, ii);
+		err = silofs_forget_loose_ii(task, ii);
 		if (err) {
 			/* TODO: maybe have retry loop ? */
 			silofs_panic("failed to forget loose inode: "
@@ -157,72 +157,72 @@ static void exct_forget_looseq(struct silofs_exec_ctx *exct)
 			             ii->i_ino, ii->i_vni.vn_lni.ln_flags,
 			             err);
 		}
-		ii = exct_deq_loose(exct);
+		ii = task_deq_loose(task);
 	}
 }
 
-static void exct_purge(struct silofs_exec_ctx *exct)
+static void task_purge(struct silofs_task_ctx *task)
 {
-	if (exct->looseq != nullptr) {
-		if (exct->fs_locked) {
+	if (task->looseq != nullptr) {
+		if (task->fs_locked) {
 			/* case 1: already fs-locked; keep it locked post op */
-			exct_forget_looseq(exct);
+			task_forget_looseq(task);
 		} else {
 			/* case 2: need to protect with fs-lock/unlock pair */
-			silofs_lock_fs_by(exct);
-			exct_forget_looseq(exct);
-			silofs_unlock_fs_by(exct);
+			silofs_lock_fs_by(task);
+			task_forget_looseq(task);
+			silofs_unlock_fs_by(task);
 		}
 	}
 }
 
-void silofs_lock_fs_by(struct silofs_exec_ctx *exct)
+void silofs_lock_fs_by(struct silofs_task_ctx *task)
 {
-	if (!exct->fs_locked && !exct->priv_op) {
-		silofs_env_lock(exct->env);
-		exct->fs_locked = true;
+	if (!task->fs_locked && !task->priv_op) {
+		silofs_env_lock(task->env);
+		task->fs_locked = true;
 	}
 }
 
-void silofs_unlock_fs_by(struct silofs_exec_ctx *exct)
+void silofs_unlock_fs_by(struct silofs_task_ctx *task)
 {
-	if (exct->fs_locked && !exct->priv_op) {
-		silofs_env_unlock(exct->env);
-		exct->fs_locked = false;
+	if (task->fs_locked && !task->priv_op) {
+		silofs_env_unlock(task->env);
+		task->fs_locked = false;
 	}
 }
 
-void silofs_rwlock_fs_by(struct silofs_exec_ctx *exct)
+void silofs_rwlock_fs_by(struct silofs_task_ctx *task)
 {
-	if (!exct->rw_locked) {
-		silofs_env_rwlock(exct->env, exct->exclusive);
-		exct->rw_locked = true;
+	if (!task->rw_locked) {
+		silofs_env_rwlock(task->env, task->exclusive);
+		task->rw_locked = true;
 	}
 }
 
-void silofs_rwunlock_fs_by(struct silofs_exec_ctx *exct)
+void silofs_rwunlock_fs_by(struct silofs_task_ctx *task)
 {
-	if (exct->rw_locked) {
-		silofs_env_rwunlock(exct->env);
-		exct->rw_locked = false;
+	if (task->rw_locked) {
+		silofs_env_rwunlock(task->env);
+		task->rw_locked = false;
 	}
 }
 
-static bool exct_has_looseq(const struct silofs_exec_ctx *exct)
+static bool task_has_looseq(const struct silofs_task_ctx *task)
 {
-	return (exct->looseq != nullptr);
+	return (task->looseq != nullptr);
 }
 
-int silofs_exct_submit(struct silofs_exec_ctx *exct, bool all)
+int silofs_task_submit(struct silofs_task_ctx *task, bool all)
 {
 	int ret;
 
-	ret = exct_apply(exct, all || exct_has_looseq(exct));
-	exct_purge(exct);
+	ret = task_apply(task, all || task_has_looseq(task));
+	task_purge(task);
 	return ret;
 }
 
-struct silofs_sb_info *silofs_get_sbi(const struct silofs_exec_ctx *exct)
+struct silofs_sb_info *silofs_get_sbi(const struct silofs_task_ctx *task)
 {
-	return exct->env->sbi;
+	return task->env->sbi;
 }

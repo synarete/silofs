@@ -76,7 +76,7 @@ void silofs_nmeta128b_xtoh(const struct silofs_nmeta128b *nmeta128,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static const struct silofs_pnodeptr s_pnodeptr_none = {
+static const struct silofs_nodeptr s_nodeptr_none = {
 	.nmeta.ciargs.algo = SILOFS_CIPHER_NONE,
 	.nmeta.ciargs.mode = SILOFS_CIPHER_MODE_NONE,
 	.paddr.pos         = SILOFS_OFF_NULL,
@@ -84,56 +84,56 @@ static const struct silofs_pnodeptr s_pnodeptr_none = {
 	.paddr.btype       = SILOFS_BTYPE_NONE,
 };
 
-const struct silofs_pnodeptr *silofs_pnodeptr_none(void)
+const struct silofs_nodeptr *silofs_nodeptr_none(void)
 {
-	return &s_pnodeptr_none;
+	return &s_nodeptr_none;
 }
 
-void silofs_pnodeptr_setup(struct silofs_pnodeptr *pnodeptr,
+void silofs_nodeptr_setup(struct silofs_nodeptr *nodeptr,
+                          const struct silofs_paddr *paddr,
+                          const struct silofs_civkey *civkey)
+{
+	silofs_paddr_assign(&nodeptr->paddr, paddr);
+	silofs_nmeta_setup(&nodeptr->nmeta, civkey);
+}
+
+void silofs_nodeptr_setup2(struct silofs_nodeptr *nodeptr,
                            const struct silofs_paddr *paddr,
-                           const struct silofs_civkey *civkey)
+                           const struct silofs_nmeta *nmeta)
 {
-	silofs_paddr_assign(&pnodeptr->paddr, paddr);
-	silofs_nmeta_setup(&pnodeptr->nmeta, civkey);
+	silofs_paddr_assign(&nodeptr->paddr, paddr);
+	silofs_nmeta_assign(&nodeptr->nmeta, nmeta);
 }
 
-void silofs_pnodeptr_setup2(struct silofs_pnodeptr *pnodeptr,
-                            const struct silofs_paddr *paddr,
-                            const struct silofs_nmeta *nmeta)
+void silofs_nodeptr_reset(struct silofs_nodeptr *nodeptr)
 {
-	silofs_paddr_assign(&pnodeptr->paddr, paddr);
-	silofs_nmeta_assign(&pnodeptr->nmeta, nmeta);
+	silofs_paddr_reset(&nodeptr->paddr);
+	silofs_nmeta_reset(&nodeptr->nmeta);
 }
 
-void silofs_pnodeptr_reset(struct silofs_pnodeptr *pnodeptr)
+void silofs_nodeptr_assign(struct silofs_nodeptr *nodeptr,
+                           const struct silofs_nodeptr *other)
 {
-	silofs_paddr_reset(&pnodeptr->paddr);
-	silofs_nmeta_reset(&pnodeptr->nmeta);
+	silofs_paddr_assign(&nodeptr->paddr, &other->paddr);
+	silofs_nmeta_assign(&nodeptr->nmeta, &other->nmeta);
 }
 
-void silofs_pnodeptr_assign(struct silofs_pnodeptr *pnodeptr,
-                            const struct silofs_pnodeptr *other)
+bool silofs_nodeptr_isnull(const struct silofs_nodeptr *nodeptr)
 {
-	silofs_paddr_assign(&pnodeptr->paddr, &other->paddr);
-	silofs_nmeta_assign(&pnodeptr->nmeta, &other->nmeta);
+	return silofs_paddr_isnull(&nodeptr->paddr);
 }
 
-bool silofs_pnodeptr_isnull(const struct silofs_pnodeptr *pnodeptr)
+void silofs_nodeptr256b_htox(struct silofs_nodeptr256b *nodeptr256,
+                             const struct silofs_nodeptr *nodeptr)
 {
-	return silofs_paddr_isnull(&pnodeptr->paddr);
+	memset(nodeptr256, 0, sizeof(*nodeptr256));
+	silofs_paddr64b_htox(&nodeptr256->pn_paddr, &nodeptr->paddr);
+	silofs_nmeta128b_htox(&nodeptr256->pn_nmeta, &nodeptr->nmeta);
 }
 
-void silofs_pnodeptr256b_htox(struct silofs_pnodeptr256b *pnodeptr256,
-                              const struct silofs_pnodeptr *pnodeptr)
+void silofs_nodeptr256b_xtoh(const struct silofs_nodeptr256b *nodeptr256,
+                             struct silofs_nodeptr *nodeptr)
 {
-	memset(pnodeptr256, 0, sizeof(*pnodeptr256));
-	silofs_paddr64b_htox(&pnodeptr256->pn_paddr, &pnodeptr->paddr);
-	silofs_nmeta128b_htox(&pnodeptr256->pn_nmeta, &pnodeptr->nmeta);
-}
-
-void silofs_pnodeptr256b_xtoh(const struct silofs_pnodeptr256b *pnodeptr256,
-                              struct silofs_pnodeptr *pnodeptr)
-{
-	silofs_paddr64b_xtoh(&pnodeptr256->pn_paddr, &pnodeptr->paddr);
-	silofs_nmeta128b_xtoh(&pnodeptr256->pn_nmeta, &pnodeptr->nmeta);
+	silofs_paddr64b_xtoh(&nodeptr256->pn_paddr, &nodeptr->paddr);
+	silofs_nmeta128b_xtoh(&nodeptr256->pn_nmeta, &nodeptr->nmeta);
 }

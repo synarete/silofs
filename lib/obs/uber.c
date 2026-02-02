@@ -86,48 +86,48 @@ static void ub_inc_generation(struct silofs_uber_block *ub)
 }
 
 static void ub_get_child(const struct silofs_uber_block *ub, size_t slot,
-                         struct silofs_pnodeptr *out_pnodeptr)
+                         struct silofs_nodeptr *out_nodeptr)
 {
 	silofs_assert_lt(slot, ARRAY_SIZE(ub->ub_child));
 
-	silofs_pnodeptr256b_xtoh(&ub->ub_child[slot], out_pnodeptr);
+	silofs_nodeptr256b_xtoh(&ub->ub_child[slot], out_nodeptr);
 }
 
 static void
 ub_get_child_of(const struct silofs_uber_block *ub, enum silofs_mtype mtype,
-                struct silofs_pnodeptr *out_pnodeptr)
+                struct silofs_nodeptr *out_nodeptr)
 {
 	const size_t slot = ub_slot_of(mtype);
 
 	silofs_assert(silofs_mtype_isvnode2(mtype));
 	silofs_assert_gt(slot, 0);
 
-	ub_get_child(ub, slot, out_pnodeptr);
+	ub_get_child(ub, slot, out_nodeptr);
 }
 
 static void ub_set_child(struct silofs_uber_block *ub, size_t slot,
-                         const struct silofs_pnodeptr *pnodeptr)
+                         const struct silofs_nodeptr *nodeptr)
 {
 	silofs_assert_lt(slot, ARRAY_SIZE(ub->ub_child));
 
-	silofs_pnodeptr256b_htox(&ub->ub_child[slot], pnodeptr);
+	silofs_nodeptr256b_htox(&ub->ub_child[slot], nodeptr);
 }
 
 static void
 ub_set_child_of(struct silofs_uber_block *ub, enum silofs_mtype mtype,
-                const struct silofs_pnodeptr *pnodeptr)
+                const struct silofs_nodeptr *nodeptr)
 {
 	const size_t slot = ub_slot_of(mtype);
 
 	silofs_assert(silofs_mtype_isvnode2(mtype));
 	silofs_assert_gt(slot, 0);
 
-	ub_set_child(ub, slot, pnodeptr);
+	ub_set_child(ub, slot, nodeptr);
 }
 
 static void ub_reset_child(struct silofs_uber_block *ub, size_t slot)
 {
-	ub_set_child(ub, slot, silofs_pnodeptr_none());
+	ub_set_child(ub, slot, silofs_nodeptr_none());
 }
 
 static void ub_reset_childs(struct silofs_uber_block *ub)
@@ -178,18 +178,18 @@ void silofs_ubi_undirtify(struct silofs_uber_info *ubi)
 
 void silofs_ubi_set_child(struct silofs_uber_info *ubi,
                           enum silofs_mtype mtype,
-                          const struct silofs_pnodeptr *pnodeptr)
+                          const struct silofs_nodeptr *nodeptr)
 {
-	ub_set_child_of(ubi->ub, mtype, pnodeptr);
+	ub_set_child_of(ubi->ub, mtype, nodeptr);
 	ub_inc_generation(ubi->ub);
 	silofs_ubi_dirtify(ubi);
 }
 
 void silofs_ubi_get_child(const struct silofs_uber_info *ubi,
                           enum silofs_mtype mtype,
-                          struct silofs_pnodeptr *out_pnodeptr)
+                          struct silofs_nodeptr *out_nodeptr)
 {
-	ub_get_child_of(ubi->ub, mtype, out_pnodeptr);
+	ub_get_child_of(ubi->ub, mtype, out_nodeptr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -207,12 +207,12 @@ silofs_lookup_cached_uber(struct silofs_pcache *pcache,
 
 struct silofs_uber_info *
 silofs_create_cached_uber(struct silofs_pcache *pcache,
-                          const struct silofs_pnodeptr *pnodeptr, bool spawn)
+                          const struct silofs_nodeptr *nodeptr, bool spawn)
 {
 	struct silofs_pnode_info *pni;
 	struct silofs_uber_info *ubi;
 
-	pni = silofs_pcache_create_pnode(pcache, pnodeptr);
+	pni = silofs_pcache_create_pnode(pcache, nodeptr);
 	ubi = silofs_ubi_from_pni(pni);
 	if ((ubi != nullptr) && spawn) {
 		ubi_setup_spawned(ubi);

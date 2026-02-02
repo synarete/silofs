@@ -127,22 +127,22 @@ static int post_format_fs(struct silofs_task_ctx *task)
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static void
-make_base_pnodeptr(const struct silofs_task_ctx *task, enum silofs_mtype mtype,
-                   struct silofs_pnodeptr *out_pnodeptr)
+make_base_nodeptr(const struct silofs_task_ctx *task, enum silofs_mtype mtype,
+                  struct silofs_nodeptr *out_nodeptr)
 {
 	struct silofs_prandgen *prng = task->env->base.prng;
 
-	silofs_make_base_pnodeptr(prng, mtype, out_pnodeptr);
+	silofs_make_base_nodeptr(prng, mtype, out_nodeptr);
 }
 
 static int format_uber(struct silofs_task_ctx *task)
 {
-	struct silofs_pnodeptr pnodeptr = {};
-	struct silofs_uber_info *ubi    = nullptr;
+	struct silofs_nodeptr nodeptr = {};
+	struct silofs_uber_info *ubi  = nullptr;
 	int err;
 
-	make_base_pnodeptr(task, SILOFS_MTYPE_UBER, &pnodeptr);
-	err = silofs_spawn_uber(task->env, &pnodeptr, &ubi);
+	make_base_nodeptr(task, SILOFS_MTYPE_UBER, &nodeptr);
+	err = silofs_spawn_uber(task->env, &nodeptr, &ubi);
 	if (err) {
 		return err;
 	}
@@ -155,16 +155,16 @@ static int format_uber(struct silofs_task_ctx *task)
 static int
 spawn_btree_root(struct silofs_task_ctx *task, enum silofs_mtype mtype)
 {
-	struct silofs_pnodeptr pnodeptr;
+	struct silofs_nodeptr nodeptr;
 	struct silofs_btnode_info *bti = nullptr;
 	int err;
 
-	make_base_pnodeptr(task, SILOFS_MTYPE_BTNODE, &pnodeptr);
-	err = silofs_spawn_btnode(task->env, &pnodeptr, &bti);
+	make_base_nodeptr(task, SILOFS_MTYPE_BTNODE, &nodeptr);
+	err = silofs_spawn_btnode(task->env, &nodeptr, &bti);
 	if (err) {
 		return err;
 	}
-	silofs_ubi_set_child(task->env->ubi, mtype, &pnodeptr);
+	silofs_ubi_set_child(task->env->ubi, mtype, &nodeptr);
 	return 0;
 }
 

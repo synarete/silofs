@@ -84,24 +84,24 @@ int silofs_exec_reload_repo(struct silofs_task_ctx *task)
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static int resolve_root_uber(const struct silofs_task_ctx *task,
-                             struct silofs_pnodeptr *out_pnodeptr)
+                             struct silofs_nodeptr *out_nodeptr)
 {
 	const struct silofs_env_mbis *mbis = &task->env->mbis;
 
-	return silofs_mbi_uber_root(&mbis->fs_mbi, out_pnodeptr);
+	return silofs_mbi_uber_root(&mbis->fs_mbi, out_nodeptr);
 }
 
 static int reload_uber(struct silofs_task_ctx *task)
 {
-	struct silofs_pnodeptr pnodeptr = {};
-	struct silofs_uber_info *ubi    = nullptr;
+	struct silofs_nodeptr nodeptr = {};
+	struct silofs_uber_info *ubi  = nullptr;
 	int err;
 
-	err = resolve_root_uber(task, &pnodeptr);
+	err = resolve_root_uber(task, &nodeptr);
 	if (err) {
 		return err;
 	}
-	err = silofs_stage_uber(task->env, &pnodeptr, &ubi);
+	err = silofs_stage_uber(task->env, &nodeptr, &ubi);
 	if (err) {
 		return err;
 	}
@@ -114,16 +114,16 @@ static int reload_uber(struct silofs_task_ctx *task)
 static int
 stage_btree_root(struct silofs_task_ctx *task, enum silofs_mtype mtype)
 {
-	struct silofs_pnodeptr pnodeptr;
+	struct silofs_nodeptr nodeptr;
 	struct silofs_btnode_info *bti = nullptr;
 	int err;
 
-	silofs_ubi_get_child(task->env->ubi, mtype, &pnodeptr);
-	if (silofs_paddr_isnull(&pnodeptr.paddr)) {
+	silofs_ubi_get_child(task->env->ubi, mtype, &nodeptr);
+	if (silofs_paddr_isnull(&nodeptr.paddr)) {
 		log_dbg("missing btree root: mtype=%d", mtype);
 		return -SILOFS_ENOENT;
 	}
-	err = silofs_stage_btnode(task->env, &pnodeptr, &bti);
+	err = silofs_stage_btnode(task->env, &nodeptr, &bti);
 	if (err) {
 		return err;
 	}

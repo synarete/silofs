@@ -232,9 +232,9 @@ static void pcache_unbind_dirtyq(struct silofs_pcache *pcache,
 
 static struct silofs_pnode_info *
 pcache_new_pnode(const struct silofs_pcache *pcache,
-                 const struct silofs_pnodeptr *pnodeptr)
+                 const struct silofs_nodeptr *nodeptr)
 {
-	return silofs_new_pnode(pnodeptr, pcache->pc_alloc);
+	return silofs_new_pnode(nodeptr, pcache->pc_alloc);
 }
 
 static void pcache_del_pnode(const struct silofs_pcache *pcache,
@@ -268,11 +268,11 @@ silofs_pcache_lookup_pnode(struct silofs_pcache *pcache,
 
 struct silofs_pnode_info *
 silofs_pcache_create_pnode(struct silofs_pcache *pcache,
-                           const struct silofs_pnodeptr *pnodeptr)
+                           const struct silofs_nodeptr *nodeptr)
 {
 	struct silofs_pnode_info *pni = nullptr;
 
-	pni = pcache_new_pnode(pcache, pnodeptr);
+	pni = pcache_new_pnode(pcache, nodeptr);
 	if (pni != nullptr) {
 		pcache_insert_pnode(pcache, pni);
 	}

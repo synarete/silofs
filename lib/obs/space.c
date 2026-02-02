@@ -44,26 +44,26 @@ make_base_paddr(struct silofs_prandgen *prng, enum silofs_mtype mtype,
 	silofs_paddr_init(out_paddr, &blobid, 0);
 }
 
-void silofs_make_base_pnodeptr(struct silofs_prandgen *prng,
-                               enum silofs_mtype mtype,
-                               struct silofs_pnodeptr *out_pnodeptr)
+void silofs_make_base_nodeptr(struct silofs_prandgen *prng,
+                              enum silofs_mtype mtype,
+                              struct silofs_nodeptr *out_nodeptr)
 {
 	struct silofs_paddr paddr;
 	struct silofs_civkey civkey;
 
 	make_base_paddr(prng, mtype, &paddr);
 	silofs_generate_civkey(prng, &civkey);
-	silofs_pnodeptr_setup(out_pnodeptr, &paddr, &civkey);
+	silofs_nodeptr_setup(out_nodeptr, &paddr, &civkey);
 }
 
-void silofs_make_next_pnodeptr(struct silofs_prandgen *prng,
-                               const struct silofs_paddr *paddr,
-                               struct silofs_pnodeptr *out_pnodeptr)
+void silofs_make_next_nodeptr(struct silofs_prandgen *prng,
+                              const struct silofs_paddr *paddr,
+                              struct silofs_nodeptr *out_nodeptr)
 {
 	struct silofs_paddr next;
 	struct silofs_civkey civkey;
 
 	silofs_paddr_next(paddr, &next);
 	silofs_generate_civkey(prng, &civkey);
-	silofs_pnodeptr_setup(out_pnodeptr, &next, &civkey);
+	silofs_nodeptr_setup(out_nodeptr, &next, &civkey);
 }

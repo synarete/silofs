@@ -21,12 +21,12 @@
 #include "addr.h"
 #include "crypto.h"
 
-void silofs_make_base_pnodeptr(struct silofs_prandgen *prng,
-                               enum silofs_mtype       mtype,
-                               struct silofs_pnodeptr *out_pnodeptr);
+void silofs_make_base_nodeptr(struct silofs_prandgen *prng,
+                              enum silofs_mtype       mtype,
+                              struct silofs_nodeptr  *out_nodeptr);
 
-void silofs_make_next_pnodeptr(struct silofs_prandgen    *prng,
-                               const struct silofs_paddr *paddr,
-                               struct silofs_pnodeptr    *out_pnodeptr);
+void silofs_make_next_nodeptr(struct silofs_prandgen    *prng,
+                              const struct silofs_paddr *paddr,
+                              struct silofs_nodeptr     *out_nodeptr);
 
 #endif /* SILOFS_SPACE_H_ */

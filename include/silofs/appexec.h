@@ -37,14 +37,14 @@ int silofs_mkpasswd(struct silofs_password *pw, const char *s);
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_create_env(size_t memwant, enum silofs_flags flags,
-		      struct silofs_env **out_env);
+                      struct silofs_env **out_env);
 
 void silofs_destroy_env(struct silofs_env *env);
 
 int silofs_open_env(struct silofs_env *env, const struct silofs_spec *spec);
 
 void silofs_collect_stats(const struct silofs_env   *env,
-			  struct silofs_cache_stats *out);
+                          struct silofs_cache_stats *out);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -71,8 +71,8 @@ int silofs_sync_fs(struct silofs_env *env, bool drop);
 int silofs_inspect_fs(struct silofs_env *env, bool show);
 
 int silofs_preserve_fs(struct silofs_env         *env,
-		       const struct silofs_fsref *fsref,
-		       struct silofs_fsref       *out_fsref);
+                       const struct silofs_fsref *fsref,
+                       struct silofs_fsref       *out_fsref);
 
 int silofs_remove_fs(struct silofs_env *env, const struct silofs_fsref *fsref);
 

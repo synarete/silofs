@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_ARRE_H_
-#define SILOFS_ARRE_H_
+#ifndef SILOFS_ARCHIVE_H_
+#define SILOFS_ARCHIVE_H_
 
 #include <silofs/ondisk.h>
 #include "infra.h"
@@ -24,6 +24,6 @@
 #include "index.h"
 
 int silofs_do_preserve_fs(struct silofs_exec_ctx *exct,
-			  struct silofs_mbref    *out_ar_mbref);
+                          struct silofs_mbref    *out_ar_mbref);
 
-#endif /* SILOFS_ARRE_H_ */
+#endif /* SILOFS_ARCHIVE_H_ */

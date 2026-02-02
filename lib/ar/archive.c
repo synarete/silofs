@@ -22,7 +22,7 @@
 #include "env.h"
 #include "walk.h"
 #include "index.h"
-#include "arre.h"
+#include "archive.h"
 
 struct silofs_ar_ctx {
 	struct timespec now;
@@ -85,8 +85,8 @@ arc_rebind_ari(struct silofs_ar_ctx *ar_ctx, struct silofs_arnode_info *abi)
 
 static int arc_renew_ari(struct silofs_ar_ctx *ar_ctx)
 {
-	struct silofs_pnodeptr pnodeptr;
-	struct silofs_arnode_info *ari = nullptr;
+	struct silofs_pnodeptr pnodeptr = {};
+	struct silofs_arnode_info *ari  = nullptr;
 
 	arc_default_arix_pnodeptr(ar_ctx, &pnodeptr);
 	ari = silofs_ari_new(ar_ctx->alloc, &pnodeptr);
@@ -422,7 +422,7 @@ static void arc_archive_prep(struct silofs_ar_ctx *ar_ctx)
 static int
 arc_do_archive(struct silofs_ar_ctx *ar_ctx, struct silofs_mbref *out_mbref)
 {
-	struct silofs_pnodeptr pnodeptr;
+	struct silofs_pnodeptr pnodeptr = {};
 	int err;
 
 	arc_archive_prep(ar_ctx);

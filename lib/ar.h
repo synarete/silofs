@@ -20,7 +20,7 @@
 #include "infra.h"
 #include "addr.h"
 
-#include "ar/arre.h"
+#include "ar/archive.h"
 #include "ar/hamming.h"
 
 #endif /* SILOFS_AR_H_ */

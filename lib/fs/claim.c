@@ -16,7 +16,7 @@
  */
 #include <silofs/configs.h>
 #include <silofs/ioctls.h>
-#include "obs.h"
+#include "bs.h"
 #include "fs.h"
 #include "exec.h"
 #include "env.h"

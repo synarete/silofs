@@ -21,7 +21,7 @@
 #include <sys/resource.h>
 #include <sys/stat.h>
 #include "infra.h"
-#include "obs.h"
+#include "bs.h"
 #include "fs.h"
 #include "mbr.h"
 #include "env.h"

@@ -14,18 +14,18 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_OBS_H_
-#define SILOFS_OBS_H_
+#ifndef SILOFS_BS_H_
+#define SILOFS_BS_H_
 
 #include "infra.h"
 #include "addr.h"
 #include "nodes.h"
-#include "obs/repo.h"
-#include "obs/bldesc.h"
-#include "obs/btnode.h"
-#include "obs/btree.h"
-#include "obs/uber.h"
-#include "obs/stage.h"
-#include "obs/space.h"
+#include "bs/repo.h"
+#include "bs/bldesc.h"
+#include "bs/btnode.h"
+#include "bs/btree.h"
+#include "bs/uber.h"
+#include "bs/stage.h"
+#include "bs/space.h"
 
-#endif /* SILOFS_OBS_H_ */
+#endif /* SILOFS_BS_H_ */

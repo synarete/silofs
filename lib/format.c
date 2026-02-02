@@ -21,7 +21,7 @@
 #include <dirent.h>
 #include "infra.h"
 #include "addr.h"
-#include "obs.h"
+#include "bs.h"
 #include "fs.h"
 #include "exec.h"
 #include "env.h"

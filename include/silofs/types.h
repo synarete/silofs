@@ -149,34 +149,6 @@ struct silofs_versions {
 	const char *zstd_version;
 };
 
-/* space accounting per sub-type */
-struct silofs_space_gauges {
-	ssize_t nsuper;
-	ssize_t nspnode;
-	ssize_t nspleaf;
-	ssize_t nlsmap;
-	ssize_t ninode;
-	ssize_t nxanode;
-	ssize_t ndtnode;
-	ssize_t nsymval;
-	ssize_t nftnode;
-	ssize_t ndata1k;
-	ssize_t ndata4k;
-	ssize_t ndatabk;
-};
-
-/* space accounting per sub-kind + sub-type */
-struct silofs_space_stats {
-	time_t                     btime;
-	time_t                     ctime;
-	size_t                     capacity;
-	size_t                     vspacesize;
-	uint64_t                   generation;
-	struct silofs_space_gauges lsegs;
-	struct silofs_space_gauges bks;
-	struct silofs_space_gauges objs;
-};
-
 /* file-system' internal cache stats */
 struct silofs_cache_stats {
 	size_t nalloc_bytes;

@@ -17,9 +17,9 @@
 #include <silofs/configs.h>
 #include <silofs/ondisk.h>
 #include "infra.h"
-#include "obs.h"
-#include "mbr.h"
+#include "bs.h"
 #include "fs.h"
+#include "mbr.h"
 #include "env.h"
 
 static enum silofs_mtype nodeptr_mtype(const struct silofs_nodeptr *nodeptr)

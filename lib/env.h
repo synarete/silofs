@@ -21,7 +21,7 @@
 #include "infra.h"
 #include "crypto.h"
 #include "addr.h"
-#include "obs.h"
+#include "bs.h"
 #include "fs.h"
 #include "mbr.h"
 

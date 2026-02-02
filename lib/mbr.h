@@ -20,7 +20,7 @@
 #include "infra.h"
 #include "addr.h"
 #include "nodes.h"
-#include "obs.h"
+#include "bs.h"
 
 struct silofs_env;
 

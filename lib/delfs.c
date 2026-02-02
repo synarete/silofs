@@ -17,7 +17,7 @@
 #include <silofs/configs.h>
 #include <silofs/ioctls.h>
 #include "infra.h"
-#include "obs.h"
+#include "bs.h"
 #include "fs.h"
 #include "exectx.h"
 #include "mbr.h"

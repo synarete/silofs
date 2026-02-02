@@ -264,14 +264,10 @@ class TestEnv:
         repodir_name = self._repodir_name(name)
         return list(self.subcmd.silofs.view(repodir_name, self._passwd()))
 
-    def exec_archive(self, arname: str, name: str = "") -> None:
+    def exec_preserve(self, arname: str, name: str = "") -> None:
         self._require_meta_jref(name)
         repodir_name = self._repodir_name(name)
-        self.subcmd.silofs.archive(repodir_name, arname, self._passwd())
-
-    def exec_restore(self, arname: str, name: str = "") -> None:
-        repodir_name = self._repodir_name(name)
-        self.subcmd.silofs.restore(repodir_name, arname, self._passwd())
+        self.subcmd.silofs.preserve(repodir_name, arname, self._passwd())
 
     def exec_lsmnt(self) -> None:
         mntp = self.cfg.mntdir

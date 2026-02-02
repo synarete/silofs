@@ -12,7 +12,6 @@ silofs_qatests_PYTHON += log.py
 silofs_qatests_PYTHON += run.py
 silofs_qatests_PYTHON += start.py
 silofs_qatests_PYTHON += test_all.py
-silofs_qatests_PYTHON += test_archive.py
 silofs_qatests_PYTHON += test_fillfs.py
 silofs_qatests_PYTHON += test_fio.py
 silofs_qatests_PYTHON += test_clone.py

@@ -301,12 +301,8 @@ class _Silofs(SubcmdExec):
         args = ["view", "--no-prompt", repodir_name]
         return self.execute_sub(args, indat=password).split("\n")
 
-    def archive(self, repodir_name: Path, arname: str, password: str) -> None:
-        args = ["archive", "--no-prompt", repodir_name, "--into", arname]
-        self.execute_sub(args, indat=password, timeout=600.0)
-
-    def restore(self, repodir_name: Path, name: str, password: str) -> None:
-        args = ["restore", "--no-prompt", repodir_name, "--from", name]
+    def preserve(self, repodir_name: Path, arname: str, password: str) -> None:
+        args = ["preserve", "--no-prompt", repodir_name, "--into", arname]
         self.execute_sub(args, indat=password, timeout=600.0)
 
 

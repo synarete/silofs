@@ -2,7 +2,6 @@
 import itertools
 
 from . import ctx
-from . import test_archive
 from . import test_basic
 from . import test_clone
 from . import test_fillfs
@@ -21,7 +20,6 @@ def list_tests() -> list[ctx.TestDef]:
         test_view.list_tests(),
         test_clone.list_tests(),
         test_fsck.list_tests(),
-        test_archive.list_tests(),
         test_fillfs.list_tests(),
         test_self.list_tests(),
         test_fio.list_tests(),

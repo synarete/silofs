@@ -245,6 +245,7 @@ static void validate_ondisk_uber(void)
 	REQUIRE_OFFSET64(struct silofs_uber_node, ub_btime, 32);
 	REQUIRE_OFFSET64(struct silofs_uber_node, ub_ctime, 48);
 	REQUIRE_OFFSET64(struct silofs_uber_node, ub_generation, 64);
+	REQUIRE_OFFSET64(struct silofs_uber_node, ub_capacity, 72);
 	REQUIRE_OFFSET64(struct silofs_uber_node, ub_child, 256);
 	REQUIRE_GT(MEMBER_NELEMS(struct silofs_uber_node, ub_child),
 	           SILOFS_MTYPE_LAST);

@@ -150,12 +150,11 @@ static int reload_btrees(struct silofs_task_ctx *task)
 	int err;
 
 	while (++mtype < SILOFS_MTYPE_LAST) {
-		if (!silofs_mtype_isvnode2(mtype)) {
-			continue;
-		}
-		err = reload_btree_of(task, mtype);
-		if (err) {
-			return err;
+		if (silofs_mtype_isvnode(mtype)) {
+			err = reload_btree_of(task, mtype);
+			if (err) {
+				return err;
+			}
 		}
 	}
 	return 0;
@@ -169,8 +168,8 @@ reload_mbr(struct silofs_task_ctx *task, const struct silofs_mbref *mbref)
 	return silofs_env_reload_fs_mbr(task->env, mbref);
 }
 
-int silofs_exec_reload_obs(struct silofs_task_ctx *task,
-                           const struct silofs_mbref *mbref)
+int silofs_exec_reload_bs(struct silofs_task_ctx *task,
+                          const struct silofs_mbref *mbref)
 {
 	int err;
 

@@ -984,7 +984,8 @@ struct silofs_uber_node {
 	struct silofs_timespec    ub_btime;
 	struct silofs_timespec    ub_ctime;
 	uint64_t                  ub_generation;
-	uint8_t                   ub_reserved1[184];
+	uint64_t                  ub_capacity;
+	uint8_t                   ub_reserved1[176];
 	struct silofs_nodeptr256b ub_child[31];
 } silofs_attr_aligned64;
 

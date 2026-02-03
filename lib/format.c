@@ -75,7 +75,7 @@ int silofs_exec_format_repo(struct silofs_task_ctx *task)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static int pre_format_obs(struct silofs_task_ctx *task)
+static int pre_format_bs(struct silofs_task_ctx *task)
 {
 	return silofs_env_reinit_ciphers(task->env);
 }
@@ -108,17 +108,6 @@ static int flush_destage_dirty(struct silofs_task_ctx *task)
 	err = silofs_destage_dirty(task->env);
 	if (err) {
 		log_err("failed to destage dirty: err=%d", err);
-		return err;
-	}
-	return 0;
-}
-
-static int post_format_fs(struct silofs_task_ctx *task)
-{
-	int err;
-
-	err = flush_destage_dirty(task);
-	if (err) {
 		return err;
 	}
 	return 0;
@@ -192,24 +181,28 @@ static int format_btrees(struct silofs_task_ctx *task)
 	int err;
 
 	while (++mtype < SILOFS_MTYPE_LAST) {
-		if (!silofs_mtype_isvnode2(mtype)) {
-			continue;
-		}
-		err = format_btree_of(task, mtype);
-		if (err) {
-			return err;
+		if (silofs_mtype_isvnode(mtype)) {
+			err = format_btree_of(task, mtype);
+			if (err) {
+				return err;
+			}
 		}
 	}
 	return 0;
 }
 
+static int post_format_bs(struct silofs_task_ctx *task)
+{
+	return flush_destage_dirty(task);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_exec_format_obs(struct silofs_task_ctx *task)
+int silofs_exec_format_bs(struct silofs_task_ctx *task)
 {
 	int err;
 
-	err = pre_format_obs(task);
+	err = pre_format_bs(task);
 	if (err) {
 		return err;
 	}
@@ -218,6 +211,10 @@ int silofs_exec_format_obs(struct silofs_task_ctx *task)
 		return err;
 	}
 	err = format_btrees(task);
+	if (err) {
+		return err;
+	}
+	err = post_format_bs(task);
 	if (err) {
 		return err;
 	}
@@ -462,8 +459,6 @@ static int format_fs(struct silofs_task_ctx *task)
 	return 0;
 }
 
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-
 static int pre_format_fs(struct silofs_task_ctx *task)
 {
 	drop_relax_caches(task);
@@ -475,6 +470,13 @@ commit_mbr(struct silofs_task_ctx *task, struct silofs_mbref *out_mbref)
 {
 	return silofs_env_commit_fs_mbr(task->env, out_mbref);
 }
+
+static int post_format_fs(struct silofs_task_ctx *task)
+{
+	return flush_destage_dirty(task);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_exec_format_fs(struct silofs_task_ctx *task,
                           struct silofs_mbref *out_mbref)

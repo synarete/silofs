@@ -187,15 +187,15 @@ int silofs_exec_preserve(struct silofs_task_ctx *task,
 
 int silofs_exec_format_repo(struct silofs_task_ctx *task);
 
-int silofs_exec_format_obs(struct silofs_task_ctx *task);
+int silofs_exec_format_bs(struct silofs_task_ctx *task);
 
 int silofs_exec_format_fs(struct silofs_task_ctx *task,
                           struct silofs_mbref    *out_mbref);
 
 int silofs_exec_reload_repo(struct silofs_task_ctx *task);
 
-int silofs_exec_reload_obs(struct silofs_task_ctx    *task,
-                           const struct silofs_mbref *mbref);
+int silofs_exec_reload_bs(struct silofs_task_ctx    *task,
+                          const struct silofs_mbref *mbref);
 
 int silofs_exec_reload_fs(struct silofs_task_ctx *task);
 

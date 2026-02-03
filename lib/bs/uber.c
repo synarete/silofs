@@ -18,33 +18,42 @@
 #include "addr.h"
 #include "uber.h"
 
-static size_t ubn_slot_of(enum silofs_mtype mtype)
+static size_t
+ubn_slot_of(const struct silofs_uber_node *ubn, enum silofs_mtype mtype)
 {
+	size_t slot;
+
 	switch (mtype) {
-	case SILOFS_MTYPE_SUPER:
-		return 1;
-	case SILOFS_MTYPE_SPNODE:
-		return 2;
-	case SILOFS_MTYPE_SPLEAF:
-		return 3;
 	case SILOFS_MTYPE_LSMAP:
-		return 4;
+		slot = 0;
+		break;
 	case SILOFS_MTYPE_INODE:
-		return 5;
+		slot = 1;
+		break;
 	case SILOFS_MTYPE_XANODE:
-		return 6;
+		slot = 2;
+		break;
 	case SILOFS_MTYPE_DTNODE:
-		return 7;
+		slot = 3;
+		break;
 	case SILOFS_MTYPE_SYMVAL:
-		return 8;
+		slot = 4;
+		break;
 	case SILOFS_MTYPE_FTNODE:
-		return 9;
+		slot = 5;
+		break;
 	case SILOFS_MTYPE_DATA1K:
-		return 10;
+		slot = 6;
+		break;
 	case SILOFS_MTYPE_DATA4K:
-		return 11;
+		slot = 7;
+		break;
 	case SILOFS_MTYPE_DATABK:
-		return 12;
+		slot = 8;
+		break;
+	case SILOFS_MTYPE_SUPER:
+	case SILOFS_MTYPE_SPNODE:
+	case SILOFS_MTYPE_SPLEAF:
 	case SILOFS_MTYPE_NONE:
 	case SILOFS_MTYPE_MBR:
 	case SILOFS_MTYPE_UBER:
@@ -53,9 +62,11 @@ static size_t ubn_slot_of(enum silofs_mtype mtype)
 	case SILOFS_MTYPE_BTNODE:
 	case SILOFS_MTYPE_LAST:
 	default:
+		slot = ARRAY_SIZE(ubn->ub_child) - 1;
 		break;
 	}
-	return 0;
+	silofs_assert_lt(slot, SILOFS_MTYPE_LAST);
+	return slot;
 }
 
 static void
@@ -80,6 +91,11 @@ static void ubn_set_generation(struct silofs_uber_node *ubn, uint64_t gn)
 	ubn->ub_generation = silofs_cpu_to_le64(gn);
 }
 
+static void ubn_set_capacity(struct silofs_uber_node *ubn, uint64_t cap)
+{
+	ubn->ub_capacity = silofs_cpu_to_le64(cap);
+}
+
 static void ubn_inc_generation(struct silofs_uber_node *ubn)
 {
 	ubn_set_generation(ubn, ubn_generation(ubn) + 1);
@@ -97,11 +113,9 @@ static void
 ubn_get_child_of(const struct silofs_uber_node *ubn, enum silofs_mtype mtype,
                  struct silofs_nodeptr *out_nodeptr)
 {
-	const size_t slot = ubn_slot_of(mtype);
+	const size_t slot = ubn_slot_of(ubn, mtype);
 
-	silofs_assert(silofs_mtype_isvnode2(mtype));
-	silofs_assert_gt(slot, 0);
-
+	silofs_assert(silofs_mtype_isvnode(mtype));
 	ubn_get_child(ubn, slot, out_nodeptr);
 }
 
@@ -117,11 +131,9 @@ static void
 ubn_set_child_of(struct silofs_uber_node *ubn, enum silofs_mtype mtype,
                  const struct silofs_nodeptr *nodeptr)
 {
-	const size_t slot = ubn_slot_of(mtype);
+	const size_t slot = ubn_slot_of(ubn, mtype);
 
-	silofs_assert(silofs_mtype_isvnode2(mtype));
-	silofs_assert_gt(slot, 0);
-
+	silofs_assert(silofs_mtype_isvnode(mtype));
 	ubn_set_child(ubn, slot, nodeptr);
 }
 
@@ -140,6 +152,7 @@ static void ubn_reset_childs(struct silofs_uber_node *ubn)
 static void ubn_setup(struct silofs_uber_node *ubn, const struct timespec *ts)
 {
 	ubn_set_generation(ubn, 0);
+	ubn_set_capacity(ubn, 0);
 	ubn_set_btime(ubn, ts);
 	ubn_set_ctime(ubn, ts);
 	ubn_reset_childs(ubn);

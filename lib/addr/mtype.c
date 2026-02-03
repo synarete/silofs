@@ -116,39 +116,6 @@ bool silofs_mtype_isvnode(enum silofs_mtype mtype)
 	return ret;
 }
 
-bool silofs_mtype_isvnode2(enum silofs_mtype mtype)
-{
-	bool ret;
-
-	switch (mtype) {
-	case SILOFS_MTYPE_LSMAP:
-	case SILOFS_MTYPE_INODE:
-	case SILOFS_MTYPE_XANODE:
-	case SILOFS_MTYPE_SYMVAL:
-	case SILOFS_MTYPE_DTNODE:
-	case SILOFS_MTYPE_FTNODE:
-	case SILOFS_MTYPE_DATA1K:
-	case SILOFS_MTYPE_DATA4K:
-	case SILOFS_MTYPE_DATABK:
-	case SILOFS_MTYPE_SUPER:
-		ret = true;
-		break;
-	case SILOFS_MTYPE_UBER:
-	case SILOFS_MTYPE_ARIX:
-	case SILOFS_MTYPE_BLDESC:
-	case SILOFS_MTYPE_BTNODE:
-	case SILOFS_MTYPE_MBR:
-	case SILOFS_MTYPE_SPNODE:
-	case SILOFS_MTYPE_SPLEAF:
-	case SILOFS_MTYPE_NONE:
-	case SILOFS_MTYPE_LAST:
-	default:
-		ret = false;
-		break;
-	}
-	return ret;
-}
-
 bool silofs_mtype_isdata(enum silofs_mtype mtype)
 {
 	bool ret;

@@ -76,64 +76,81 @@ void silofs_nmeta128b_xtoh(const struct silofs_nmeta128b *nmeta128,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static const struct silofs_nodeptr s_nodeptr_none = {
+static const struct silofs_pnodeptr s_pnodeptr_none = {
 	.nmeta.ciargs.algo = SILOFS_CIPHER_NONE,
 	.nmeta.ciargs.mode = SILOFS_CIPHER_MODE_NONE,
 	.paddr.pos         = SILOFS_OFF_NULL,
 	.paddr.mtype       = SILOFS_MTYPE_NONE,
 	.paddr.btype       = SILOFS_BTYPE_NONE,
+	.nsub_vobjs        = 0,
+	.nsub_btnodes      = 0,
+
 };
 
-const struct silofs_nodeptr *silofs_nodeptr_none(void)
+const struct silofs_pnodeptr *silofs_pnodeptr_none(void)
 {
-	return &s_nodeptr_none;
+	return &s_pnodeptr_none;
 }
 
-void silofs_nodeptr_setup(struct silofs_nodeptr *nodeptr,
-                          const struct silofs_paddr *paddr,
-                          const struct silofs_civkey *civkey)
-{
-	silofs_paddr_assign(&nodeptr->paddr, paddr);
-	silofs_nmeta_setup(&nodeptr->nmeta, civkey);
-}
-
-void silofs_nodeptr_setup2(struct silofs_nodeptr *nodeptr,
+void silofs_pnodeptr_setup(struct silofs_pnodeptr *pnodeptr,
                            const struct silofs_paddr *paddr,
-                           const struct silofs_nmeta *nmeta)
+                           const struct silofs_civkey *civkey)
 {
-	silofs_paddr_assign(&nodeptr->paddr, paddr);
-	silofs_nmeta_assign(&nodeptr->nmeta, nmeta);
+	silofs_paddr_assign(&pnodeptr->paddr, paddr);
+	silofs_nmeta_setup(&pnodeptr->nmeta, civkey);
+	pnodeptr->nsub_vobjs   = 0;
+	pnodeptr->nsub_btnodes = 0;
 }
 
-void silofs_nodeptr_reset(struct silofs_nodeptr *nodeptr)
+void silofs_pnodeptr_setup2(struct silofs_pnodeptr *pnodeptr,
+                            const struct silofs_paddr *paddr,
+                            const struct silofs_nmeta *nmeta)
 {
-	silofs_paddr_reset(&nodeptr->paddr);
-	silofs_nmeta_reset(&nodeptr->nmeta);
+	silofs_paddr_assign(&pnodeptr->paddr, paddr);
+	silofs_nmeta_assign(&pnodeptr->nmeta, nmeta);
+	pnodeptr->nsub_vobjs   = 0;
+	pnodeptr->nsub_btnodes = 0;
 }
 
-void silofs_nodeptr_assign(struct silofs_nodeptr *nodeptr,
-                           const struct silofs_nodeptr *other)
+void silofs_pnodeptr_reset(struct silofs_pnodeptr *pnodeptr)
 {
-	silofs_paddr_assign(&nodeptr->paddr, &other->paddr);
-	silofs_nmeta_assign(&nodeptr->nmeta, &other->nmeta);
+	silofs_paddr_reset(&pnodeptr->paddr);
+	silofs_nmeta_reset(&pnodeptr->nmeta);
+	pnodeptr->nsub_vobjs   = 0;
+	pnodeptr->nsub_btnodes = 0;
 }
 
-bool silofs_nodeptr_isnull(const struct silofs_nodeptr *nodeptr)
+void silofs_pnodeptr_assign(struct silofs_pnodeptr *pnodeptr,
+                            const struct silofs_pnodeptr *other)
 {
-	return silofs_paddr_isnull(&nodeptr->paddr);
+	silofs_paddr_assign(&pnodeptr->paddr, &other->paddr);
+	silofs_nmeta_assign(&pnodeptr->nmeta, &other->nmeta);
+	pnodeptr->nsub_vobjs   = other->nsub_vobjs;
+	pnodeptr->nsub_btnodes = other->nsub_btnodes;
 }
 
-void silofs_nodeptr256b_htox(struct silofs_nodeptr256b *nodeptr256,
-                             const struct silofs_nodeptr *nodeptr)
+bool silofs_pnodeptr_isnull(const struct silofs_pnodeptr *pnodeptr)
 {
-	memset(nodeptr256, 0, sizeof(*nodeptr256));
-	silofs_paddr64b_htox(&nodeptr256->pn_paddr, &nodeptr->paddr);
-	silofs_nmeta128b_htox(&nodeptr256->pn_nmeta, &nodeptr->nmeta);
+	return silofs_paddr_isnull(&pnodeptr->paddr);
 }
 
-void silofs_nodeptr256b_xtoh(const struct silofs_nodeptr256b *nodeptr256,
-                             struct silofs_nodeptr *nodeptr)
+void silofs_pnodeptr256b_htox(struct silofs_pnodeptr256b *pnodeptr256,
+                              const struct silofs_pnodeptr *pnodeptr)
 {
-	silofs_paddr64b_xtoh(&nodeptr256->pn_paddr, &nodeptr->paddr);
-	silofs_nmeta128b_xtoh(&nodeptr256->pn_nmeta, &nodeptr->nmeta);
+	memset(pnodeptr256, 0, sizeof(*pnodeptr256));
+	silofs_paddr64b_htox(&pnodeptr256->pn_paddr, &pnodeptr->paddr);
+	silofs_nmeta128b_htox(&pnodeptr256->pn_nmeta, &pnodeptr->nmeta);
+	pnodeptr256->pn_nsub_vobjs = silofs_cpu_to_le64(pnodeptr->nsub_vobjs);
+	pnodeptr256->pn_nsub_btnodes =
+		silofs_cpu_to_le32((uint32_t)pnodeptr->nsub_btnodes);
+}
+
+void silofs_pnodeptr256b_xtoh(const struct silofs_pnodeptr256b *pnodeptr256,
+                              struct silofs_pnodeptr *pnodeptr)
+{
+	silofs_paddr64b_xtoh(&pnodeptr256->pn_paddr, &pnodeptr->paddr);
+	silofs_nmeta128b_xtoh(&pnodeptr256->pn_nmeta, &pnodeptr->nmeta);
+	pnodeptr->nsub_vobjs = silofs_le64_to_cpu(pnodeptr256->pn_nsub_vobjs);
+	pnodeptr->nsub_btnodes =
+		silofs_le32_to_cpu(pnodeptr256->pn_nsub_btnodes);
 }

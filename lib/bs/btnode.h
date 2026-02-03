@@ -49,19 +49,19 @@ uint64_t silofs_bti_median_key(const struct silofs_btnode_info *bti);
 size_t silofs_bti_nchilds(const struct silofs_btnode_info *bti);
 
 void silofs_bti_child_at(const struct silofs_btnode_info *bti, size_t slot,
-                         struct silofs_nodeptr *out_nodeptr);
+                         struct silofs_pnodeptr *out_pnodeptr);
 
 int silofs_bti_resolve(const struct silofs_btnode_info *bti, uint64_t key,
-                       struct silofs_nodeptr *out_nodeptr);
+                       struct silofs_pnodeptr *out_pnodeptr);
 
 int silofs_bti_update_child(struct silofs_btnode_info *bti, uint64_t key,
-                            const struct silofs_nodeptr *nodeptr);
+                            const struct silofs_pnodeptr *pnodeptr);
 
 int silofs_bti_expand(struct silofs_btnode_info *bti, uint64_t key,
-                      const struct silofs_nodeptr *nodeptr);
+                      const struct silofs_pnodeptr *pnodeptr);
 
-void silofs_bti_set_final(struct silofs_btnode_info   *bti,
-                          const struct silofs_nodeptr *nodeptr);
+void silofs_bti_set_final(struct silofs_btnode_info    *bti,
+                          const struct silofs_pnodeptr *pnodeptr);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -70,8 +70,9 @@ silofs_lookup_cached_btnode(struct silofs_pcache      *pcache,
                             const struct silofs_paddr *paddr);
 
 struct silofs_btnode_info *
-silofs_create_cached_btnode(struct silofs_pcache        *pcache,
-                            const struct silofs_nodeptr *nodeptr, bool spawn);
+silofs_create_cached_btnode(struct silofs_pcache         *pcache,
+                            const struct silofs_pnodeptr *pnodeptr,
+                            bool                          spawn);
 
 void silofs_forget_cached_btnode(struct silofs_pcache      *pcache,
                                  struct silofs_btnode_info *bti);

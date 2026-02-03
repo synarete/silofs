@@ -27,13 +27,13 @@ void silofs_ubi_dirtify(struct silofs_uber_info *ubi);
 
 void silofs_ubi_undirtify(struct silofs_uber_info *ubi);
 
-void silofs_ubi_set_child(struct silofs_uber_info     *ubi,
-                          enum silofs_mtype            mtype,
-                          const struct silofs_nodeptr *nodeptr);
+void silofs_ubi_set_child(struct silofs_uber_info      *ubi,
+                          enum silofs_mtype             mtype,
+                          const struct silofs_pnodeptr *pnodeptr);
 
 void silofs_ubi_get_child(const struct silofs_uber_info *ubi,
                           enum silofs_mtype              mtype,
-                          struct silofs_nodeptr         *out_nodeptr);
+                          struct silofs_pnodeptr        *out_pnodeptr);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -42,8 +42,8 @@ silofs_lookup_cached_uber(struct silofs_pcache      *pcache,
                           const struct silofs_paddr *paddr);
 
 struct silofs_uber_info *
-silofs_create_cached_uber(struct silofs_pcache        *pcache,
-                          const struct silofs_nodeptr *nodeptr, bool spawn);
+silofs_create_cached_uber(struct silofs_pcache         *pcache,
+                          const struct silofs_pnodeptr *pnodeptr, bool spawn);
 
 void silofs_forget_cached_uber(struct silofs_pcache    *pcache,
                                struct silofs_uber_info *ubi);

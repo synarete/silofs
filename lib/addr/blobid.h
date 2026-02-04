@@ -73,17 +73,8 @@ bool silofs_blobid_isequal(const struct silofs_blobid *blobid1,
 
 bool silofs_blobid_isnone(const struct silofs_blobid *blobid);
 
-int silofs_blobid_to_ascii(const struct silofs_blobid *blobid, char *s,
-                           size_t n);
-
 void silofs_blobid_to_sbuf(const struct silofs_blobid *blobid,
                            struct silofs_strbuf       *sbuf);
-
-int silofs_blobid_to_str(const struct silofs_blobid *blobid,
-                         struct silofs_strspan      *ss);
-
-int silofs_blobid_from_str(struct silofs_blobid        *blobid,
-                           const struct silofs_strview *sv);
 
 uint64_t
 silofs_blobid_hash64(const struct silofs_blobid *blobid, uint64_t seed);

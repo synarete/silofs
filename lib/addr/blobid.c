@@ -233,8 +233,8 @@ bool silofs_blobid_isnone(const struct silofs_blobid *blobid)
 	return silofs_blobid_isequal(blobid, &s_silofs_blobid_none);
 }
 
-int silofs_blobid_to_ascii(const struct silofs_blobid *blobid, char *s,
-                           size_t n)
+static int
+blobid_to_ascii(const struct silofs_blobid *blobid, char *s, size_t n)
 {
 	size_t cnt = 0;
 
@@ -251,36 +251,7 @@ void silofs_blobid_to_sbuf(const struct silofs_blobid *blobid,
                            struct silofs_strbuf *sbuf)
 {
 	silofs_strbuf_reset(sbuf);
-	silofs_blobid_to_ascii(blobid, sbuf->str, sizeof(sbuf->str) - 1);
-}
-
-int silofs_blobid_to_str(const struct silofs_blobid *blobid,
-                         struct silofs_strspan *ss)
-{
-	struct silofs_strbuf sbuf;
-	size_t n;
-
-	silofs_strbuf_reset(&sbuf);
-	silofs_blobid_to_sbuf(blobid, &sbuf);
-	n = silofs_strspan_assign(ss, sbuf.str);
-	return (n < ss->n) ? 0 : -SILOFS_EINVAL;
-}
-
-int silofs_blobid_from_str(struct silofs_blobid *blobid,
-                           const struct silofs_strview *sv)
-{
-	size_t cnt = 0;
-	int err;
-
-	err = silofs_ascii_to_mem(blobid->id, sizeof(blobid->id), sv->str,
-	                          sv->len, &cnt);
-	if (err) {
-		return err;
-	}
-	if (cnt != sizeof(blobid->id)) {
-		return -1;
-	}
-	return 0;
+	blobid_to_ascii(blobid, sbuf->str, sizeof(sbuf->str) - 1);
 }
 
 uint64_t

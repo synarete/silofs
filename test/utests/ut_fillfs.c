@@ -190,7 +190,7 @@ static void ut_fillfs_reload_(struct ut_env *ute, size_t bsz)
 	ut_create_file(ute, dino, name, &ino);
 	ut_fillfs_append_(ute, ino, bsz);
 	ut_release_file(ute, ino);
-	ut_close_reload_fs_at(ute, ino);
+	ut_unload_reload_fs_at(ute, ino);
 	ut_unlink_file(ute, dino, name);
 	ut_statfs(ute, dino, &stv[1]);
 	ut_expect_statvfs(&stv[0], &stv[1]);

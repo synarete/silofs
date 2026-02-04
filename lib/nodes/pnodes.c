@@ -453,7 +453,7 @@ static struct silofs_btnode_info *bti_from_pni(struct silofs_pnode_info *pni)
 {
 	struct silofs_btnode_info *bti = nullptr;
 
-	if (bti != nullptr) {
+	if (pni != nullptr) {
 		bti = container_of(pni, struct silofs_btnode_info, btn_pni);
 	}
 	return bti;

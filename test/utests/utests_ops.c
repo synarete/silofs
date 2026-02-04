@@ -1933,7 +1933,7 @@ void ut_expect_statvfs(const struct statvfs *stv1, const struct statvfs *stv2)
 	ut_expect_lt(bfree_dif, 16 * 4000);
 }
 
-void ut_close_reload_fs_at(struct ut_env *ute, ino_t ino)
+void ut_unload_reload_fs_at(struct ut_env *ute, ino_t ino)
 {
 	struct stat st[2];
 	struct statvfs stv[2];
@@ -2007,6 +2007,14 @@ void ut_inspect_fs(struct ut_env *ute)
 	ut_expect_ok(err);
 }
 
+size_t ut_nalloc_bytes_now(const struct ut_env *ute)
+{
+	struct silofs_cache_stats st;
+
+	silofs_collect_stats(ute->env, &st);
+	return st.nalloc_bytes;
+}
+
 void ut_remove_fs(struct ut_env *ute)
 {
 	int err;
@@ -2025,8 +2033,16 @@ void ut_remove_fs2(struct ut_env *ute)
 
 void ut_unload_reload_fs(struct ut_env *ute)
 {
+	size_t nalloc_bytes[3];
+
+	nalloc_bytes[0] = ut_nalloc_bytes_now(ute);
 	ut_unload_fs(ute);
+	nalloc_bytes[1] = ut_nalloc_bytes_now(ute);
 	ut_reload_fs(ute);
+	nalloc_bytes[2] = ut_nalloc_bytes_now(ute);
+
+	ut_expect_lt(nalloc_bytes[1], nalloc_bytes[0]);
+	ut_expect_le(nalloc_bytes[2], nalloc_bytes[0]);
 }
 
 void ut_fork_fs(struct ut_env *ute)

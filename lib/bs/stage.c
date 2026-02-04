@@ -373,6 +373,7 @@ static int stc_spawn_btnode(const struct silofs_stage_ctx *st_ctx,
 	}
 	err = stc_create_cached_bti(st_ctx, pnodeptr, true, out_bti);
 	if (err) {
+		silofs_assert_ok(err);
 		return err;
 	}
 	stc_update_spawned_btnode(st_ctx, *out_bti);
@@ -417,10 +418,12 @@ static int stc_stage_btnode(struct silofs_stage_ctx *st_ctx,
 	}
 	err = stc_create_cached_bti(st_ctx, pnodeptr, false, &bti);
 	if (err) {
+		silofs_assert_ok(err);
 		return err;
 	}
 	err = stc_stage_pnode(st_ctx, &bti->btn_pni);
 	if (err) {
+		silofs_assert_ok(err);
 		return err;
 	}
 out_ok:

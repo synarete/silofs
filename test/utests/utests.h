@@ -512,7 +512,7 @@ void ut_timedout(struct ut_env *ute);
 
 void ut_unload_reload_fs(struct ut_env *ute);
 
-void ut_close_reload_fs_at(struct ut_env *ute, ino_t ino);
+void ut_unload_reload_fs_at(struct ut_env *ute, ino_t ino);
 
 /* top-level exec ops */
 void ut_format_repo(struct ut_env *ute);
@@ -534,6 +534,8 @@ void ut_remove_fs2(struct ut_env *ute);
 void ut_fork_fs(struct ut_env *ute);
 
 void ut_preserve_fs(struct ut_env *ute);
+
+size_t ut_nalloc_bytes_now(const struct ut_env *ute);
 
 /* utilities */
 void ut_prandom_shuffle(struct ut_env *ute, long *arr, size_t len);

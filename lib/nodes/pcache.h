@@ -22,7 +22,7 @@
 #include "pnodes.h"
 
 struct silofs_pcache {
-	struct silofs_hmapq  pc_hmapq[3];
+	struct silofs_hmapq  pc_hmapq;
 	struct silofs_dirtyq pc_dirtyq;
 	struct silofs_alloc *pc_alloc;
 };

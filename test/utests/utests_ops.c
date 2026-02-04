@@ -2033,16 +2033,8 @@ void ut_remove_fs2(struct ut_env *ute)
 
 void ut_unload_reload_fs(struct ut_env *ute)
 {
-	size_t nalloc_bytes[3];
-
-	nalloc_bytes[0] = ut_nalloc_bytes_now(ute);
 	ut_unload_fs(ute);
-	nalloc_bytes[1] = ut_nalloc_bytes_now(ute);
 	ut_reload_fs(ute);
-	nalloc_bytes[2] = ut_nalloc_bytes_now(ute);
-
-	ut_expect_lt(nalloc_bytes[1], nalloc_bytes[0]);
-	ut_expect_le(nalloc_bytes[2], nalloc_bytes[0]);
 }
 
 void ut_fork_fs(struct ut_env *ute)

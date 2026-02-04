@@ -19,6 +19,7 @@
 
 #include <silofs/ccattr.h>
 #include <silofs/macros.h>
+#include <stdint.h>
 
 /*
  * TODO-0052: Define and use bug_on macros
@@ -30,12 +31,12 @@
 /* expect-or-die */
 void silofs_expect_true_(int cond, const char *fl, int ln);
 void silofs_expect_cond_(int cond, const char *str, const char *fl, int ln);
-void silofs_expect_eq_(long a, long b, const char *fl, int ln);
-void silofs_expect_ne_(long a, long b, const char *fl, int ln);
-void silofs_expect_lt_(long a, long b, const char *fl, int ln);
-void silofs_expect_le_(long a, long b, const char *fl, int ln);
-void silofs_expect_gt_(long a, long b, const char *fl, int ln);
-void silofs_expect_ge_(long a, long b, const char *fl, int ln);
+void silofs_expect_eq_(intmax_t a, intmax_t b, const char *fl, int ln);
+void silofs_expect_ne_(intmax_t a, intmax_t b, const char *fl, int ln);
+void silofs_expect_lt_(intmax_t a, intmax_t b, const char *fl, int ln);
+void silofs_expect_le_(intmax_t a, intmax_t b, const char *fl, int ln);
+void silofs_expect_gt_(intmax_t a, intmax_t b, const char *fl, int ln);
+void silofs_expect_ge_(intmax_t a, intmax_t b, const char *fl, int ln);
 void silofs_expect_ok_(int err, const char *fl, int ln);
 void silofs_expect_err_(int err, int exp, const char *fl, int ln);
 void silofs_expect_not_null_(const void *ptr, const char *fl, int ln);
@@ -43,22 +44,22 @@ void silofs_expect_null_(const void *ptr, const char *fl, int ln);
 void silofs_expect_eqs_(const char *s, const char *z, const char *fl, int ln);
 void silofs_expect_eqm_(const void *p, const void *q, size_t n, const char *fl,
                         int ln);
-void silofs_expect_noop_(long a, long b);
+void silofs_expect_noop_(intmax_t a, intmax_t b);
 
 #define silofs_expect(cond) \
 	silofs_expect_cond_((cond), SILOFS_STR(cond), SILOFS_FL_LN_)
 #define silofs_expect_eq(a, b) \
-	silofs_expect_eq_((long)(a), (long)(b), SILOFS_FL_LN_)
+	silofs_expect_eq_((intmax_t)(a), (intmax_t)(b), SILOFS_FL_LN_)
 #define silofs_expect_ne(a, b) \
-	silofs_expect_ne_((long)(a), (long)(b), SILOFS_FL_LN_)
+	silofs_expect_ne_((intmax_t)(a), (intmax_t)(b), SILOFS_FL_LN_)
 #define silofs_expect_lt(a, b) \
-	silofs_expect_lt_((long)(a), (long)(b), SILOFS_FL_LN_)
+	silofs_expect_lt_((intmax_t)(a), (intmax_t)(b), SILOFS_FL_LN_)
 #define silofs_expect_le(a, b) \
-	silofs_expect_le_((long)(a), (long)(b), SILOFS_FL_LN_)
+	silofs_expect_le_((intmax_t)(a), (intmax_t)(b), SILOFS_FL_LN_)
 #define silofs_expect_gt(a, b) \
-	silofs_expect_gt_((long)(a), (long)(b), SILOFS_FL_LN_)
+	silofs_expect_gt_((intmax_t)(a), (intmax_t)(b), SILOFS_FL_LN_)
 #define silofs_expect_ge(a, b) \
-	silofs_expect_ge_((long)(a), (long)(b), SILOFS_FL_LN_)
+	silofs_expect_ge_((intmax_t)(a), (intmax_t)(b), SILOFS_FL_LN_)
 #define silofs_expect_not_null(ptr) \
 	silofs_expect_not_null_(ptr, SILOFS_FL_LN_)
 #define silofs_expect_null(ptr) silofs_expect_null_(ptr, SILOFS_FL_LN_)
@@ -71,36 +72,47 @@ void silofs_expect_noop_(long a, long b);
 
 /* run-time assertions (debug mode only) */
 #ifdef NDEBUG
-#define silofs_assert(cond)         silofs_expect_noop_((cond), 0)
-#define silofs_assert_eq(a, b)      silofs_expect_noop_((long)(a), (long)(b))
-#define silofs_assert_ne(a, b)      silofs_expect_noop_((long)(a), (long)(b))
-#define silofs_assert_lt(a, b)      silofs_expect_noop_((long)(a), (long)(b))
-#define silofs_assert_le(a, b)      silofs_expect_noop_((long)(a), (long)(b))
-#define silofs_assert_gt(a, b)      silofs_expect_noop_((long)(a), (long)(b))
-#define silofs_assert_ge(a, b)      silofs_expect_noop_((long)(a), (long)(b))
-#define silofs_assert_not_null(ptr) silofs_expect_noop_((long)(ptr), 1)
-#define silofs_assert_null(ptr)     silofs_expect_noop_((long)(ptr), 0)
-#define silofs_assert_ok(err)       silofs_expect_noop_((long)(err), 0)
+#define silofs_assert(cond)         \
+	silofs_expect_noop_((cond), 0)
+#define silofs_assert_eq(a, b)      \
+	silofs_expect_noop_((intmax_t)(a), (intmax_t)(b))
+#define silofs_assert_ne(a, b)      \
+	silofs_expect_noop_((intmax_t)(a), (intmax_t)(b))
+#define silofs_assert_lt(a, b)      \
+	silofs_expect_noop_((intmax_t)(a), (intmax_t)(b))
+#define silofs_assert_le(a, b)      \
+	silofs_expect_noop_((intmax_t)(a), (intmax_t)(b))
+#define silofs_assert_gt(a, b)      \
+	silofs_expect_noop_((intmax_t)(a), (intmax_t)(b))
+#define silofs_assert_ge(a, b)      \
+	silofs_expect_noop_((intmax_t)(a), (intmax_t)(b))
+#define silofs_assert_not_null(ptr) \
+	silofs_expect_noop_((intmax_t)(ptr), 1)
+#define silofs_assert_null(ptr)     \
+	silofs_expect_noop_((intmax_t)(ptr), 0)
+#define silofs_assert_ok(err)       \
+	silofs_expect_noop_((intmax_t)(err), 0)
 #define silofs_assert_err(err, exp) \
-	silofs_expect_noop_((long)(err), (long)(exp))
-#define silofs_assert_eqs(s1, s2) silofs_expect_noop_((long)(s1), (long)(s2))
+	silofs_expect_noop_((intmax_t)(err), (intmax_t)(exp))
+#define silofs_assert_eqs(s1, s2)    \
+	silofs_expect_noop_((intmax_t)(s1), (intmax_t)(s2))
 #define silofs_assert_eqm(m1, m2, nn) \
-	silofs_expect_noop_((long)(m1), (long)(m2))
+	silofs_expect_noop_((intmax_t)(m1), (intmax_t)(m2))
 #else
 #define silofs_assert(cond) \
 	silofs_expect_cond_((cond), SILOFS_STR(cond), SILOFS_FL_LN_)
 #define silofs_assert_eq(a, b) \
-	silofs_expect_eq_((long)(a), (long)(b), SILOFS_FL_LN_)
+	silofs_expect_eq_((intmax_t)(a), (intmax_t)(b), SILOFS_FL_LN_)
 #define silofs_assert_ne(a, b) \
-	silofs_expect_ne_((long)(a), (long)(b), SILOFS_FL_LN_)
+	silofs_expect_ne_((intmax_t)(a), (intmax_t)(b), SILOFS_FL_LN_)
 #define silofs_assert_lt(a, b) \
-	silofs_expect_lt_((long)(a), (long)(b), SILOFS_FL_LN_)
+	silofs_expect_lt_((intmax_t)(a), (intmax_t)(b), SILOFS_FL_LN_)
 #define silofs_assert_le(a, b) \
-	silofs_expect_le_((long)(a), (long)(b), SILOFS_FL_LN_)
+	silofs_expect_le_((intmax_t)(a), (intmax_t)(b), SILOFS_FL_LN_)
 #define silofs_assert_gt(a, b) \
-	silofs_expect_gt_((long)(a), (long)(b), SILOFS_FL_LN_)
+	silofs_expect_gt_((intmax_t)(a), (intmax_t)(b), SILOFS_FL_LN_)
 #define silofs_assert_ge(a, b) \
-	silofs_expect_ge_((long)(a), (long)(b), SILOFS_FL_LN_)
+	silofs_expect_ge_((intmax_t)(a), (intmax_t)(b), SILOFS_FL_LN_)
 #define silofs_assert_not_null(ptr) \
 	silofs_expect_not_null_(ptr, SILOFS_FL_LN_)
 #define silofs_assert_null(ptr) silofs_expect_null_(ptr, SILOFS_FL_LN_)

@@ -240,7 +240,7 @@ silofs_fatal_by_(const struct silofs_fatal_msg *fm)
 }
 
 silofs_attr_noreturn static void
-silofs_fatal_op(long a, const char *op, long b,
+silofs_fatal_op(intmax_t a, const char *op, intmax_t b,
                 const struct silofs_fileline *fl)
 {
 	struct silofs_fatal_msg fm = {
@@ -277,7 +277,7 @@ void silofs_expect_true_(int cond, const char *file, int line)
 	}
 }
 
-void silofs_expect_eq_(long a, long b, const char *file, int line)
+void silofs_expect_eq_(intmax_t a, intmax_t b, const char *file, int line)
 {
 	if (silofs_unlikely(a != b)) {
 		const struct silofs_fileline fl = {
@@ -289,7 +289,7 @@ void silofs_expect_eq_(long a, long b, const char *file, int line)
 	}
 }
 
-void silofs_expect_ne_(long a, long b, const char *file, int line)
+void silofs_expect_ne_(intmax_t a, intmax_t b, const char *file, int line)
 {
 	if (silofs_unlikely(a == b)) {
 		const struct silofs_fileline fl = {
@@ -301,7 +301,7 @@ void silofs_expect_ne_(long a, long b, const char *file, int line)
 	}
 }
 
-void silofs_expect_lt_(long a, long b, const char *file, int line)
+void silofs_expect_lt_(intmax_t a, intmax_t b, const char *file, int line)
 {
 	if (silofs_unlikely(a >= b)) {
 		const struct silofs_fileline fl = {
@@ -313,7 +313,7 @@ void silofs_expect_lt_(long a, long b, const char *file, int line)
 	}
 }
 
-void silofs_expect_le_(long a, long b, const char *file, int line)
+void silofs_expect_le_(intmax_t a, intmax_t b, const char *file, int line)
 {
 	if (silofs_unlikely(a > b)) {
 		const struct silofs_fileline fl = {
@@ -325,7 +325,7 @@ void silofs_expect_le_(long a, long b, const char *file, int line)
 	}
 }
 
-void silofs_expect_gt_(long a, long b, const char *file, int line)
+void silofs_expect_gt_(intmax_t a, intmax_t b, const char *file, int line)
 {
 	if (silofs_unlikely(a <= b)) {
 		const struct silofs_fileline fl = {
@@ -337,7 +337,7 @@ void silofs_expect_gt_(long a, long b, const char *file, int line)
 	}
 }
 
-void silofs_expect_ge_(long a, long b, const char *file, int line)
+void silofs_expect_ge_(intmax_t a, intmax_t b, const char *file, int line)
 {
 	if (silofs_unlikely(a < b)) {
 		const struct silofs_fileline fl = {
@@ -449,7 +449,7 @@ void silofs_expect_eqm_(const void *p, const void *q, size_t n, const char *fl,
 	}
 }
 
-void silofs_expect_noop_(long a, long b)
+void silofs_expect_noop_(intmax_t a, intmax_t b)
 {
 	/* Just make clang-scan happy: map assertions to no-op */
 	silofs_unused(a);

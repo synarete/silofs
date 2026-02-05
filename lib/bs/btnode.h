@@ -34,7 +34,8 @@ void silofs_bti_undirtify(struct silofs_btnode_info *bti);
 void silofs_bti_dup_by(struct silofs_btnode_info       *bti,
                        const struct silofs_btnode_info *bti_other);
 
-bool silofs_bti_isfull(const struct silofs_btnode_info *bti);
+void silofs_bti_set_vspace(struct silofs_btnode_info *bti,
+                           enum silofs_mtype          vspace);
 
 void silofs_bti_mark_root(struct silofs_btnode_info *bti);
 
@@ -62,6 +63,8 @@ int silofs_bti_expand(struct silofs_btnode_info *bti, uint64_t key,
 
 void silofs_bti_set_final(struct silofs_btnode_info    *bti,
                           const struct silofs_pnodeptr *pnodeptr);
+
+bool silofs_bti_isfull(const struct silofs_btnode_info *bti);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

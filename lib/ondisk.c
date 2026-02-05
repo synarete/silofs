@@ -243,13 +243,17 @@ static void validate_ondisk_mbr(void)
 
 static void validate_ondisk_uber(void)
 {
+	REQUIRE_OFFSET64(struct silofs_btree_state384b, bts_root, 0);
+	REQUIRE_OFFSET64(struct silofs_btree_state384b, bts_nextfree, 256);
+	REQUIRE_SIZEOF(struct silofs_btree_state384b, 384);
+
 	REQUIRE_OFFSET64(struct silofs_uber_node, ub_hdr, 0);
 	REQUIRE_OFFSET64(struct silofs_uber_node, ub_btime, 32);
 	REQUIRE_OFFSET64(struct silofs_uber_node, ub_ctime, 48);
 	REQUIRE_OFFSET64(struct silofs_uber_node, ub_generation, 64);
 	REQUIRE_OFFSET64(struct silofs_uber_node, ub_capacity, 72);
-	REQUIRE_OFFSET64(struct silofs_uber_node, ub_child, 256);
-	REQUIRE_SIZEOF_4K(struct silofs_uber_node);
+	REQUIRE_OFFSET64(struct silofs_uber_node, ub_child, 512);
+	REQUIRE_SIZEOF_8K(struct silofs_uber_node);
 }
 
 static void validate_ondisk_super(void)
@@ -399,7 +403,7 @@ static void validate_ondisk_btnode(void)
 {
 	REQUIRE_OFFSET64(struct silofs_btree_node, btn_hdr, 0);
 	REQUIRE_OFFSET64(struct silofs_btree_node, btn_flags, 32);
-	REQUIRE_OFFSET32(struct silofs_btree_node, btn_mtype, 36);
+	REQUIRE_OFFSET32(struct silofs_btree_node, btn_vspace, 36);
 	REQUIRE_OFFSETXX(struct silofs_btree_node, btn_height, 38);
 	REQUIRE_OFFSETXX(struct silofs_btree_node, btn_nkeys, 40);
 	REQUIRE_OFFSETXX(struct silofs_btree_node, btn_nchilds, 41);

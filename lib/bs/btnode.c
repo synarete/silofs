@@ -36,6 +36,19 @@ static void btn_add_flags(struct silofs_btree_node *btn, enum silofs_pnodef f)
 	btn_set_flags(btn, f | btn_flags(btn));
 }
 
+static enum silofs_mtype btn_vspace(const struct silofs_btree_node *btn)
+{
+	const unsigned vspace = btn->btn_vspace;
+
+	return (enum silofs_mtype)vspace;
+}
+
+static void
+btn_set_vspace(struct silofs_btree_node *btn, enum silofs_mtype vspace)
+{
+	btn->btn_vspace = (uint8_t)vspace;
+}
+
 static size_t btn_height(const struct silofs_btree_node *btn)
 {
 	return silofs_le16_to_cpu(btn->btn_height);
@@ -289,6 +302,7 @@ static void btn_dup_by(struct silofs_btree_node *btn,
                        const struct silofs_btree_node *btn_other)
 {
 	btn_set_flags(btn, btn_flags(btn_other));
+	btn_set_vspace(btn, btn_vspace(btn_other));
 	btn_set_height(btn, btn_height(btn_other));
 	btn_dup_keys(btn, btn_other);
 	btn_dup_childs(btn, btn_other);
@@ -324,6 +338,14 @@ void silofs_bti_dirtify(struct silofs_btnode_info *bti)
 void silofs_bti_undirtify(struct silofs_btnode_info *bti)
 {
 	silofs_pni_undirtify(&bti->btn_pni);
+}
+
+void silofs_bti_set_vspace(struct silofs_btnode_info *bti,
+                           enum silofs_mtype vspace)
+{
+	silofs_assert(silofs_mtype_isvnode(vspace));
+	btn_set_vspace(bti->btn, vspace);
+	silofs_bti_dirtify(bti);
 }
 
 void silofs_bti_mark_root(struct silofs_btnode_info *bti)

@@ -26,7 +26,7 @@ struct silofs_nmeta {
 	struct silofs_ciargs ciargs;
 };
 
-/* p-nodes meta settings */
+/* pnode meta pointer */
 struct silofs_pnodeptr {
 	struct silofs_nmeta nmeta;
 	struct silofs_paddr paddr;

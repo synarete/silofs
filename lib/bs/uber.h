@@ -19,6 +19,14 @@
 
 #include "nodes.h"
 
+/* btree root-state */
+struct silofs_btree_state {
+	struct silofs_pnodeptr root;
+	struct silofs_paddr    nextfree;
+};
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 void silofs_ubi_incref(struct silofs_uber_info *ubi);
 
 void silofs_ubi_decref(struct silofs_uber_info *ubi);

@@ -965,11 +965,11 @@ struct silofs_blob_desc {
 	uint8_t                bld_obj_state[7936];
 } silofs_attr_aligned64;
 
-/* b+tree node of persistent volume mapping */
+/* btree node of persistent volume mapping */
 struct silofs_btree_node {
 	struct silofs_header       btn_hdr;
 	uint32_t                   btn_flags;
-	uint8_t                    btn_mtype;
+	uint8_t                    btn_vspace;
 	uint8_t                    btn_reserved1;
 	uint16_t                   btn_height;
 	uint8_t                    btn_nkeys;
@@ -980,6 +980,13 @@ struct silofs_btree_node {
 	struct silofs_pnodeptr256b btn_child[SILOFS_BTREE_NODE_NCHILDS];
 } silofs_attr_aligned64;
 
+/* btree top-level state */
+struct silofs_btree_state384b {
+	struct silofs_pnodeptr256b bts_root;
+	struct silofs_paddr64b     bts_nextfree;
+	uint8_t                    bts_reserved[64];
+} silofs_attr_aligned64;
+
 /* uber-node */
 struct silofs_uber_node {
 	struct silofs_header       ub_hdr;
@@ -987,8 +994,9 @@ struct silofs_uber_node {
 	struct silofs_timespec     ub_ctime;
 	uint64_t                   ub_generation;
 	uint64_t                   ub_capacity;
-	uint8_t                    ub_reserved1[176];
+	uint8_t                    ub_reserved1[432];
 	struct silofs_pnodeptr256b ub_child[15];
+	uint8_t                    ub_reserved2[3840];
 } silofs_attr_aligned64;
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

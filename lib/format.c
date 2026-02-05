@@ -153,6 +153,8 @@ spawn_btree_root(struct silofs_task_ctx *task, enum silofs_mtype mtype)
 	if (err) {
 		return err;
 	}
+	silofs_bti_set_vspace(bti, mtype);
+
 	silofs_ubi_set_child(task->env->ubi, mtype, &pnodeptr);
 	return 0;
 }

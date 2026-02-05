@@ -18,6 +18,8 @@
 #include "addr.h"
 #include "uber.h"
 
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
 static size_t
 ubn_slot_of(const struct silofs_uber_node *ubn, enum silofs_mtype mtype)
 {

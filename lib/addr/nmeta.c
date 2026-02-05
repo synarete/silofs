@@ -154,3 +154,21 @@ void silofs_pnodeptr256b_xtoh(const struct silofs_pnodeptr256b *pnodeptr256,
 	pnodeptr->nsub_btnodes =
 		silofs_le32_to_cpu(pnodeptr256->pn_nsub_btnodes);
 }
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_pstate384b_htox(struct silofs_pstate384b *pstate384,
+                            const struct silofs_pstate *pstate)
+{
+	memset(pstate384, 0, sizeof(*pstate384));
+	silofs_pnodeptr256b_htox(&pstate384->bts_apex, &pstate->apex);
+	silofs_paddr64b_htox(&pstate384->bts_edge, &pstate->edge);
+}
+
+void silofs_pstate384b_xtoh(const struct silofs_pstate384b *pstate384,
+                            struct silofs_pstate *pstate)
+{
+	silofs_pnodeptr256b_xtoh(&pstate384->bts_apex, &pstate->apex);
+	silofs_paddr64b_xtoh(&pstate384->bts_edge, &pstate->edge);
+	pstate->vspace = SILOFS_MTYPE_NONE;
+}

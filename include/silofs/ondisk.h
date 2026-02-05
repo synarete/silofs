@@ -596,6 +596,13 @@ struct silofs_pnodeptr256b {
 	uint8_t                 pn_reserved[52];
 } silofs_attr_aligned64;
 
+/* current persistent state */
+struct silofs_pstate384b {
+	struct silofs_pnodeptr256b bts_apex;
+	struct silofs_paddr64b     bts_edge;
+	uint8_t                    bts_reserved[64];
+} silofs_attr_aligned64;
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 /* global boot record */
@@ -963,13 +970,6 @@ struct silofs_blob_desc {
 	uint8_t                bld_refmtype;
 	uint8_t                bld_reserved1[55];
 	uint8_t                bld_obj_state[7936];
-} silofs_attr_aligned64;
-
-/* btree top-level state */
-struct silofs_btstate384b {
-	struct silofs_pnodeptr256b bts_root;
-	struct silofs_paddr64b     bts_nextfree;
-	uint8_t                    bts_reserved[64];
 } silofs_attr_aligned64;
 
 /* uber-node */

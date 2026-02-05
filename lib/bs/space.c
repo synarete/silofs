@@ -57,26 +57,22 @@ void silofs_make_base_pnodeptr(struct silofs_prandgen *prng,
 	silofs_pnodeptr_setup(out_pnodeptr, &paddr, &civkey);
 }
 
-void silofs_make_next_pnodeptr(struct silofs_prandgen *prng,
-                               const struct silofs_paddr *paddr,
-                               struct silofs_pnodeptr *out_pnodeptr)
+void silofs_trigger_ubspace(struct silofs_prandgen *prng,
+                            struct silofs_pstate *out_pstate)
 {
-	struct silofs_paddr next;
-	struct silofs_civkey civkey;
-
-	silofs_paddr_next(paddr, &next);
-	silofs_generate_civkey(prng, &civkey);
-	silofs_pnodeptr_setup(out_pnodeptr, &next, &civkey);
+	silofs_make_base_pnodeptr(prng, SILOFS_MTYPE_UBER, &out_pstate->apex);
+	silofs_paddr_next(&out_pstate->apex.paddr, &out_pstate->edge);
+	out_pstate->vspace = SILOFS_MTYPE_NONE;
 }
 
-void silofs_make_base_btstate(struct silofs_prandgen *prng,
-                              enum silofs_mtype vspace,
-                              struct silofs_btstate *out_btstate)
+void silofs_trigger_btspace(struct silofs_prandgen *prng,
+                            enum silofs_mtype vspace,
+                            struct silofs_pstate *out_pstate)
 {
-	struct silofs_pnodeptr pnodeptr;
-	struct silofs_paddr paddr;
+	silofs_assert(silofs_mtype_isvnode(vspace));
 
-	silofs_make_base_pnodeptr(prng, SILOFS_MTYPE_BTNODE, &pnodeptr);
-	silofs_paddr_next(&pnodeptr.paddr, &paddr);
-	silofs_btstate_setup(out_btstate, &pnodeptr, &paddr, vspace);
+	silofs_make_base_pnodeptr(prng, SILOFS_MTYPE_BTNODE,
+	                          &out_pstate->apex);
+	silofs_paddr_next(&out_pstate->apex.paddr, &out_pstate->edge);
+	out_pstate->vspace = vspace;
 }

@@ -34,6 +34,13 @@ struct silofs_pnodeptr {
 	size_t              nsub_btnodes;
 };
 
+/* persistent state: pointer to root-node and next free space */
+struct silofs_pstate {
+	struct silofs_pnodeptr apex;
+	struct silofs_paddr    edge;
+	enum silofs_mtype      vspace;
+};
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 const struct silofs_nmeta *silofs_nmeta_none(void);
@@ -76,5 +83,13 @@ void silofs_pnodeptr256b_htox(struct silofs_pnodeptr256b   *pnodeptr256,
 
 void silofs_pnodeptr256b_xtoh(const struct silofs_pnodeptr256b *pnodeptr256,
                               struct silofs_pnodeptr           *pnodeptr);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_pstate384b_htox(struct silofs_pstate384b   *pstate384,
+                            const struct silofs_pstate *pstate);
+
+void silofs_pstate384b_xtoh(const struct silofs_pstate384b *pstate384,
+                            struct silofs_pstate           *pstate);
 
 #endif /* SILOFS_NMETA_H_ */

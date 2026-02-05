@@ -20,10 +20,16 @@
 #include "nodes.h"
 
 /* btree root-state */
-struct silofs_btree_state {
+struct silofs_btstate {
 	struct silofs_pnodeptr root;
 	struct silofs_paddr    nextfree;
+	enum silofs_mtype      vspace;
 };
+
+void silofs_btstate_setup(struct silofs_btstate        *btstate,
+                          const struct silofs_pnodeptr *root,
+                          const struct silofs_paddr    *nextfree,
+                          enum silofs_mtype             vspace);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

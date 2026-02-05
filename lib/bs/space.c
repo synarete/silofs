@@ -20,6 +20,7 @@
 #include "addr.h"
 #include "crypto.h"
 #include "nodes.h"
+#include "uber.h"
 #include "space.h"
 
 static void
@@ -66,4 +67,16 @@ void silofs_make_next_pnodeptr(struct silofs_prandgen *prng,
 	silofs_paddr_next(paddr, &next);
 	silofs_generate_civkey(prng, &civkey);
 	silofs_pnodeptr_setup(out_pnodeptr, &next, &civkey);
+}
+
+void silofs_make_base_btstate(struct silofs_prandgen *prng,
+                              enum silofs_mtype vspace,
+                              struct silofs_btstate *out_btstate)
+{
+	struct silofs_pnodeptr pnodeptr;
+	struct silofs_paddr paddr;
+
+	silofs_make_base_pnodeptr(prng, SILOFS_MTYPE_BTNODE, &pnodeptr);
+	silofs_paddr_next(&pnodeptr.paddr, &paddr);
+	silofs_btstate_setup(out_btstate, &pnodeptr, &paddr, vspace);
 }

@@ -965,23 +965,8 @@ struct silofs_blob_desc {
 	uint8_t                bld_obj_state[7936];
 } silofs_attr_aligned64;
 
-/* btree node of persistent volume mapping */
-struct silofs_btree_node {
-	struct silofs_header       btn_hdr;
-	uint32_t                   btn_flags;
-	uint8_t                    btn_vspace;
-	uint8_t                    btn_reserved1;
-	uint16_t                   btn_height;
-	uint8_t                    btn_nkeys;
-	uint8_t                    btn_nchilds;
-	uint8_t                    btn_reserved2[86];
-	uint64_t                   btn_key[SILOFS_BTREE_NODE_NKEYS];
-	uint8_t                    btn_reserved3[144];
-	struct silofs_pnodeptr256b btn_child[SILOFS_BTREE_NODE_NCHILDS];
-} silofs_attr_aligned64;
-
 /* btree top-level state */
-struct silofs_btree_state384b {
+struct silofs_btstate384b {
 	struct silofs_pnodeptr256b bts_root;
 	struct silofs_paddr64b     bts_nextfree;
 	uint8_t                    bts_reserved[64];
@@ -997,6 +982,21 @@ struct silofs_uber_node {
 	uint8_t                    ub_reserved1[432];
 	struct silofs_pnodeptr256b ub_child[15];
 	uint8_t                    ub_reserved2[3840];
+} silofs_attr_aligned64;
+
+/* btree node of persistent volume mapping */
+struct silofs_btree_node {
+	struct silofs_header       btn_hdr;
+	uint32_t                   btn_flags;
+	uint8_t                    btn_vspace;
+	uint8_t                    btn_reserved1;
+	uint16_t                   btn_height;
+	uint8_t                    btn_nkeys;
+	uint8_t                    btn_nchilds;
+	uint8_t                    btn_reserved2[86];
+	uint64_t                   btn_key[SILOFS_BTREE_NODE_NKEYS];
+	uint8_t                    btn_reserved3[144];
+	struct silofs_pnodeptr256b btn_child[SILOFS_BTREE_NODE_NCHILDS];
 } silofs_attr_aligned64;
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

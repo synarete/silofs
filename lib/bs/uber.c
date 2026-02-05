@@ -18,6 +18,33 @@
 #include "addr.h"
 #include "uber.h"
 
+void silofs_btstate_setup(struct silofs_btstate *btstate,
+                          const struct silofs_pnodeptr *root,
+                          const struct silofs_paddr *nextfree,
+                          enum silofs_mtype vspace)
+{
+	silofs_pnodeptr_assign(&btstate->root, root);
+	silofs_paddr_assign(&btstate->nextfree, nextfree);
+	btstate->vspace = vspace;
+}
+
+static inline void btstate384b_htox(struct silofs_btstate384b *btstate384,
+                                    const struct silofs_btstate *btstate)
+{
+	memset(btstate384, 0, sizeof(*btstate384));
+	silofs_pnodeptr256b_htox(&btstate384->bts_root, &btstate->root);
+	silofs_paddr64b_htox(&btstate384->bts_nextfree, &btstate->nextfree);
+}
+
+static inline void
+btstate384b_xtoh(const struct silofs_btstate384b *btstate384,
+                 struct silofs_btstate *btstate)
+{
+	silofs_pnodeptr256b_xtoh(&btstate384->bts_root, &btstate->root);
+	silofs_paddr64b_xtoh(&btstate384->bts_nextfree, &btstate->nextfree);
+	btstate->vspace = SILOFS_MTYPE_NONE;
+}
+
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static size_t

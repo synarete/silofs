@@ -26,10 +26,10 @@ void silofs_make_base_pnodeptr(struct silofs_prandgen *prng,
                                struct silofs_pnodeptr *out_pnodeptr);
 
 void silofs_trigger_ubspace(struct silofs_prandgen *prng,
-                            struct silofs_pstate   *out_pstate);
+                            struct silofs_plogref  *out_plogref);
 
 void silofs_trigger_btspace(struct silofs_prandgen *prng,
                             enum silofs_mtype       vspace,
-                            struct silofs_pstate   *out_pstate);
+                            struct silofs_plogref  *out_plogref);
 
 #endif /* SILOFS_SPACE_H_ */

@@ -35,7 +35,7 @@ struct silofs_pnodeptr {
 };
 
 /* persistent state: pointer to root-node and next free space */
-struct silofs_pstate {
+struct silofs_plogref {
 	struct silofs_pnodeptr apex;
 	struct silofs_paddr    edge;
 	enum silofs_mtype      vspace;
@@ -86,10 +86,12 @@ void silofs_pnodeptr256b_xtoh(const struct silofs_pnodeptr256b *pnodeptr256,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_pstate384b_htox(struct silofs_pstate384b   *pstate384,
-                            const struct silofs_pstate *pstate);
+const struct silofs_plogref *silofs_plogref_none(void);
 
-void silofs_pstate384b_xtoh(const struct silofs_pstate384b *pstate384,
-                            struct silofs_pstate           *pstate);
+void silofs_plogref384b_htox(struct silofs_plogref384b   *plogref384,
+                             const struct silofs_plogref *plogref);
+
+void silofs_plogref384b_xtoh(const struct silofs_plogref384b *plogref384,
+                             struct silofs_plogref           *plogref);
 
 #endif /* SILOFS_NMETA_H_ */

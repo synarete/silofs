@@ -243,9 +243,9 @@ static void validate_ondisk_mbr(void)
 
 static void validate_ondisk_uber(void)
 {
-	REQUIRE_OFFSET64(struct silofs_pstate384b, bts_apex, 0);
-	REQUIRE_OFFSET64(struct silofs_pstate384b, bts_edge, 256);
-	REQUIRE_SIZEOF(struct silofs_pstate384b, 384);
+	REQUIRE_OFFSET64(struct silofs_plogref384b, pl_apex, 0);
+	REQUIRE_OFFSET64(struct silofs_plogref384b, pl_edge, 256);
+	REQUIRE_SIZEOF(struct silofs_plogref384b, 384);
 	REQUIRE_OFFSET64(struct silofs_uber_node, ub_hdr, 0);
 	REQUIRE_OFFSET64(struct silofs_uber_node, ub_btime, 32);
 	REQUIRE_OFFSET64(struct silofs_uber_node, ub_ctime, 48);

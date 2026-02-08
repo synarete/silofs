@@ -115,23 +115,20 @@ static int flush_destage_dirty(struct silofs_task_ctx *task)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static void
-make_base_pnodeptr(const struct silofs_task_ctx *task, enum silofs_mtype mtype,
-                   struct silofs_pnodeptr *out_pnodeptr)
+static void trigger_ubspace(const struct silofs_task_ctx *task,
+                            struct silofs_plogref *out_plogref)
 {
-	struct silofs_prandgen *prng = task->env->base.prng;
-
-	silofs_make_base_pnodeptr(prng, mtype, out_pnodeptr);
+	silofs_trigger_ubspace(task->env->base.prng, out_plogref);
 }
 
 static int format_uber(struct silofs_task_ctx *task)
 {
-	struct silofs_pnodeptr pnodeptr = {};
-	struct silofs_uber_info *ubi    = nullptr;
+	struct silofs_plogref plogref = {};
+	struct silofs_uber_info *ubi  = nullptr;
 	int err;
 
-	make_base_pnodeptr(task, SILOFS_MTYPE_UBER, &pnodeptr);
-	err = silofs_spawn_uber(task->env, &pnodeptr, &ubi);
+	trigger_ubspace(task, &plogref);
+	err = silofs_spawn_uber(task->env, &plogref.apex, &ubi);
 	if (err) {
 		return err;
 	}
@@ -141,21 +138,28 @@ static int format_uber(struct silofs_task_ctx *task)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int
-spawn_btree_root(struct silofs_task_ctx *task, enum silofs_mtype mtype)
+static void
+trigger_btspace(const struct silofs_task_ctx *task, enum silofs_mtype vspace,
+                struct silofs_plogref *out_plogref)
 {
-	struct silofs_pnodeptr pnodeptr;
+	silofs_trigger_btspace(task->env->base.prng, vspace, out_plogref);
+}
+
+static int
+spawn_btree_root(struct silofs_task_ctx *task, enum silofs_mtype vspace)
+{
+	struct silofs_plogref plogref  = {};
 	struct silofs_btnode_info *bti = nullptr;
 	int err;
 
-	make_base_pnodeptr(task, SILOFS_MTYPE_BTNODE, &pnodeptr);
-	err = silofs_spawn_btnode(task->env, &pnodeptr, &bti);
+	trigger_btspace(task, vspace, &plogref);
+	err = silofs_spawn_btnode(task->env, &plogref.apex, &bti);
 	if (err) {
 		return err;
 	}
-	silofs_bti_set_vspace(bti, mtype);
+	silofs_bti_set_vspace(bti, vspace);
 
-	silofs_ubi_set_child(task->env->ubi, mtype, &pnodeptr);
+	silofs_ubi_set_child(task->env->ubi, vspace, &plogref);
 	return 0;
 }
 

@@ -102,44 +102,44 @@ static void ubn_inc_generation(struct silofs_uber_node *ubn)
 }
 
 static void ubn_get_child(const struct silofs_uber_node *ubn, size_t slot,
-                          struct silofs_pnodeptr *out_pnodeptr)
+                          struct silofs_plogref *out_plogref)
 {
 	silofs_assert_lt(slot, ARRAY_SIZE(ubn->ub_child));
 
-	silofs_pnodeptr256b_xtoh(&ubn->ub_child[slot], out_pnodeptr);
+	silofs_plogref384b_xtoh(&ubn->ub_child[slot], out_plogref);
 }
 
 static void
-ubn_get_child_of(const struct silofs_uber_node *ubn, enum silofs_mtype mtype,
-                 struct silofs_pnodeptr *out_pnodeptr)
+ubn_get_child_of(const struct silofs_uber_node *ubn, enum silofs_mtype vspace,
+                 struct silofs_plogref *out_plogref)
 {
-	const size_t slot = ubn_slot_of(ubn, mtype);
+	const size_t slot = ubn_slot_of(ubn, vspace);
 
-	silofs_assert(silofs_mtype_isvnode(mtype));
-	ubn_get_child(ubn, slot, out_pnodeptr);
+	silofs_assert(silofs_mtype_isvnode(vspace));
+	ubn_get_child(ubn, slot, out_plogref);
 }
 
 static void ubn_set_child(struct silofs_uber_node *ubn, size_t slot,
-                          const struct silofs_pnodeptr *pnodeptr)
+                          const struct silofs_plogref *plogref)
 {
 	silofs_assert_lt(slot, ARRAY_SIZE(ubn->ub_child));
 
-	silofs_pnodeptr256b_htox(&ubn->ub_child[slot], pnodeptr);
+	silofs_plogref384b_htox(&ubn->ub_child[slot], plogref);
 }
 
 static void
-ubn_set_child_of(struct silofs_uber_node *ubn, enum silofs_mtype mtype,
-                 const struct silofs_pnodeptr *pnodeptr)
+ubn_set_child_of(struct silofs_uber_node *ubn, enum silofs_mtype vspace,
+                 const struct silofs_plogref *plogref)
 {
-	const size_t slot = ubn_slot_of(ubn, mtype);
+	const size_t slot = ubn_slot_of(ubn, vspace);
 
-	silofs_assert(silofs_mtype_isvnode(mtype));
-	ubn_set_child(ubn, slot, pnodeptr);
+	silofs_assert(silofs_mtype_isvnode(vspace));
+	ubn_set_child(ubn, slot, plogref);
 }
 
 static void ubn_reset_child(struct silofs_uber_node *ubn, size_t slot)
 {
-	ubn_set_child(ubn, slot, silofs_pnodeptr_none());
+	ubn_set_child(ubn, slot, silofs_plogref_none());
 }
 
 static void ubn_reset_childs(struct silofs_uber_node *ubn)
@@ -190,19 +190,19 @@ void silofs_ubi_undirtify(struct silofs_uber_info *ubi)
 }
 
 void silofs_ubi_set_child(struct silofs_uber_info *ubi,
-                          enum silofs_mtype mtype,
-                          const struct silofs_pnodeptr *pnodeptr)
+                          enum silofs_mtype vspace,
+                          const struct silofs_plogref *plogref)
 {
-	ubn_set_child_of(ubi->ubn, mtype, pnodeptr);
+	ubn_set_child_of(ubi->ubn, vspace, plogref);
 	ubn_inc_generation(ubi->ubn);
 	silofs_ubi_dirtify(ubi);
 }
 
 void silofs_ubi_get_child(const struct silofs_uber_info *ubi,
-                          enum silofs_mtype mtype,
-                          struct silofs_pnodeptr *out_pnodeptr)
+                          enum silofs_mtype vspace,
+                          struct silofs_plogref *out_plogref)
 {
-	ubn_get_child_of(ubi->ubn, mtype, out_pnodeptr);
+	ubn_get_child_of(ubi->ubn, vspace, out_plogref);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

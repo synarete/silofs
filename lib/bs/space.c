@@ -58,21 +58,21 @@ void silofs_make_base_pnodeptr(struct silofs_prandgen *prng,
 }
 
 void silofs_trigger_ubspace(struct silofs_prandgen *prng,
-                            struct silofs_pstate *out_pstate)
+                            struct silofs_plogref *out_plogref)
 {
-	silofs_make_base_pnodeptr(prng, SILOFS_MTYPE_UBER, &out_pstate->apex);
-	silofs_paddr_next(&out_pstate->apex.paddr, &out_pstate->edge);
-	out_pstate->vspace = SILOFS_MTYPE_NONE;
+	silofs_make_base_pnodeptr(prng, SILOFS_MTYPE_UBER, &out_plogref->apex);
+	silofs_paddr_next(&out_plogref->apex.paddr, &out_plogref->edge);
+	out_plogref->vspace = SILOFS_MTYPE_NONE;
 }
 
 void silofs_trigger_btspace(struct silofs_prandgen *prng,
                             enum silofs_mtype vspace,
-                            struct silofs_pstate *out_pstate)
+                            struct silofs_plogref *out_plogref)
 {
 	silofs_assert(silofs_mtype_isvnode(vspace));
 
 	silofs_make_base_pnodeptr(prng, SILOFS_MTYPE_BTNODE,
-	                          &out_pstate->apex);
-	silofs_paddr_next(&out_pstate->apex.paddr, &out_pstate->edge);
-	out_pstate->vspace = vspace;
+	                          &out_plogref->apex);
+	silofs_paddr_next(&out_plogref->apex.paddr, &out_plogref->edge);
+	out_plogref->vspace = vspace;
 }

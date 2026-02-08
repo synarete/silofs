@@ -596,11 +596,11 @@ struct silofs_pnodeptr256b {
 	uint8_t                 pn_reserved[52];
 } silofs_attr_aligned64;
 
-/* current persistent state */
-struct silofs_pstate384b {
-	struct silofs_pnodeptr256b bts_apex;
-	struct silofs_paddr64b     bts_edge;
-	uint8_t                    bts_reserved[64];
+/* persistent state */
+struct silofs_plogref384b {
+	struct silofs_pnodeptr256b pl_apex;
+	struct silofs_paddr64b     pl_edge;
+	uint8_t                    pl_reserved[64];
 } silofs_attr_aligned64;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -656,7 +656,7 @@ struct silofs_sb_lsids {
 	struct silofs_lsid64b sb_silofs_lsid_data1k;
 	struct silofs_lsid64b sb_silofs_lsid_data4k;
 	struct silofs_lsid64b sb_silofs_lsid_databk;
-	uint8_t               sb_reserved[592 - (9 * 16)];
+	uint8_t               sb_reserved[448];
 } silofs_attr_aligned64;
 
 struct silofs_space_gauges256 {
@@ -974,14 +974,13 @@ struct silofs_blob_desc {
 
 /* uber-node */
 struct silofs_uber_node {
-	struct silofs_header       ub_hdr;
-	struct silofs_timespec     ub_btime;
-	struct silofs_timespec     ub_ctime;
-	uint64_t                   ub_generation;
-	uint64_t                   ub_capacity;
-	uint8_t                    ub_reserved1[432];
-	struct silofs_pnodeptr256b ub_child[15];
-	uint8_t                    ub_reserved2[3840];
+	struct silofs_header      ub_hdr;
+	struct silofs_timespec    ub_btime;
+	struct silofs_timespec    ub_ctime;
+	uint64_t                  ub_generation;
+	uint64_t                  ub_capacity;
+	uint8_t                   ub_reserved1[432];
+	struct silofs_plogref384b ub_child[20];
 } silofs_attr_aligned64;
 
 /* btree node of persistent volume mapping */

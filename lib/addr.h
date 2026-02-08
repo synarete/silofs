@@ -24,7 +24,7 @@
 #include "addr/uuid.h"
 #include "addr/mtype.h"
 #include "addr/hash.h"
-#include "addr/svolid.h"
+#include "addr/layerid.h"
 #include "addr/blobid.h"
 #include "addr/paddr.h"
 #include "addr/nmeta.h"

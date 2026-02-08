@@ -27,12 +27,12 @@ static void
 make_uniq_blobid(struct silofs_prandgen *prng, enum silofs_mtype mtype,
                  struct silofs_blobid *out_blobid)
 {
-	struct silofs_svolid svolid;
+	struct silofs_layerid layerid;
 	struct silofs_uniqid uniqid;
 
-	silofs_svolid_generate(&svolid);
+	silofs_layerid_generate(&layerid);
 	silofs_generate_uniqid(prng, &uniqid);
-	silofs_blobid_setup_raw3(out_blobid, &svolid, &uniqid, mtype);
+	silofs_blobid_setup_raw3(out_blobid, &layerid, &uniqid, mtype);
 }
 
 static void

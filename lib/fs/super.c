@@ -578,13 +578,13 @@ void silofs_sbi_self_blobid(const struct silofs_sb_info *sbi,
 	sb_lv_curr(sbi->sb, out_blobid);
 }
 
-void silofs_sbi_self_svolid(const struct silofs_sb_info *sbi,
-                            struct silofs_svolid *out_svolid)
+void silofs_sbi_self_layerid(const struct silofs_sb_info *sbi,
+                             struct silofs_layerid *out_layerid)
 {
 	struct silofs_blobid blobid;
 
 	silofs_sbi_self_blobid(sbi, &blobid);
-	silofs_blobid_get_svolid(&blobid, out_svolid);
+	silofs_blobid_get_layerid(&blobid, out_layerid);
 }
 
 int silofs_sbi_main_lseg(const struct silofs_sb_info *sbi,
@@ -691,10 +691,10 @@ void silofs_sbi_bind_child(struct silofs_sb_info *sbi, enum silofs_mtype mtype,
 bool silofs_sbi_ismutable_lsid(const struct silofs_sb_info *sbi,
                                const struct silofs_lsid *lsid)
 {
-	struct silofs_svolid svolid;
+	struct silofs_layerid layerid;
 
-	silofs_sbi_self_svolid(sbi, &svolid);
-	return silofs_lsid_has_svolid(lsid, &svolid);
+	silofs_sbi_self_layerid(sbi, &layerid);
+	return silofs_lsid_has_layerid(lsid, &layerid);
 }
 
 bool silofs_sbi_ismutable_laddr(const struct silofs_sb_info *sbi,

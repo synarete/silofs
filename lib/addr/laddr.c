@@ -98,13 +98,13 @@ bool silofs_lsid_has_blobid(const struct silofs_lsid *lsid,
 	return silofs_blobid_isequal(&lsid->blobid, blobid);
 }
 
-bool silofs_lsid_has_svolid(const struct silofs_lsid *lsid,
-                            const struct silofs_svolid *svolid)
+bool silofs_lsid_has_layerid(const struct silofs_lsid *lsid,
+                             const struct silofs_layerid *layerid)
 {
-	struct silofs_svolid self_svolid;
+	struct silofs_layerid self_layerid;
 
-	silofs_blobid_get_svolid(&lsid->blobid, &self_svolid);
-	return silofs_svolid_isequal(&self_svolid, svolid);
+	silofs_blobid_get_layerid(&lsid->blobid, &self_layerid);
+	return silofs_layerid_isequal(&self_layerid, layerid);
 }
 
 off_t silofs_lsid_pos(const struct silofs_lsid *lsid, off_t off)

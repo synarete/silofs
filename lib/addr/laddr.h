@@ -17,7 +17,7 @@
 #ifndef SILOFS_LADDR_H_
 #define SILOFS_LADDR_H_
 
-#include "svolid.h"
+#include "layerid.h"
 #include "blobid.h"
 
 struct silofs_strbuf;
@@ -59,8 +59,8 @@ bool silofs_lsid_isnull(const struct silofs_lsid *lsid);
 bool silofs_lsid_has_blobid(const struct silofs_lsid   *lsid,
                             const struct silofs_blobid *blobid);
 
-bool silofs_lsid_has_svolid(const struct silofs_lsid   *lsid,
-                            const struct silofs_svolid *svolid);
+bool silofs_lsid_has_layerid(const struct silofs_lsid    *lsid,
+                             const struct silofs_layerid *layerid);
 
 void silofs_lsid_reset(struct silofs_lsid *lsid);
 

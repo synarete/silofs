@@ -102,6 +102,6 @@ void silofs_calc_cas_paddr(const struct silofs_mdigest_hd *md_hd,
 	silofs_assert_ne(mtype, 0);
 
 	silofs_sha3_256_ofv(md_hd, iov, iov_cnt, &hash);
-	silofs_blobid_setup_cas(&blobid, silofs_svolid_none(), &hash, mtype);
+	silofs_blobid_setup_cas(&blobid, silofs_layerid_none(), &hash, mtype);
 	silofs_paddr_init(out_paddr, &blobid, 0);
 }

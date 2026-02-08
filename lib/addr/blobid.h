@@ -21,32 +21,32 @@
 #include <stdlib.h>
 #include "str.h"
 #include "crypto.h"
-#include "svolid.h"
+#include "layerid.h"
 
 const struct silofs_blobid *silofs_blobid_none(void);
 
-void silofs_blobid_setup_raw(struct silofs_blobid       *blobid,
-                             const struct silofs_svolid *svolid,
-                             enum silofs_mtype           mtype);
+void silofs_blobid_setup_raw(struct silofs_blobid        *blobid,
+                             const struct silofs_layerid *layerid,
+                             enum silofs_mtype            mtype);
 
-void silofs_blobid_setup_raw2(struct silofs_blobid       *blobid,
-                              const struct silofs_svolid *svolid,
-                              enum silofs_mtype           mtype,
-                              enum silofs_mtype           vspace,
-                              enum silofs_height          height);
+void silofs_blobid_setup_raw2(struct silofs_blobid        *blobid,
+                              const struct silofs_layerid *layerid,
+                              enum silofs_mtype            mtype,
+                              enum silofs_mtype            vspace,
+                              enum silofs_height           height);
 
-void silofs_blobid_setup_raw3(struct silofs_blobid       *blobid,
-                              const struct silofs_svolid *svolid,
-                              const struct silofs_uniqid *uniq,
-                              enum silofs_mtype           mtype);
+void silofs_blobid_setup_raw3(struct silofs_blobid        *blobid,
+                              const struct silofs_layerid *layerid,
+                              const struct silofs_uniqid  *uniq,
+                              enum silofs_mtype            mtype);
 
 void silofs_blobid_setup_cas(struct silofs_blobid        *blobid,
-                             const struct silofs_svolid  *svolid,
+                             const struct silofs_layerid *layerid,
                              const struct silofs_hash256 *hash,
                              enum silofs_mtype            mtype);
 
-void silofs_blobid_get_svolid(const struct silofs_blobid *blobid,
-                              struct silofs_svolid       *out_svolid);
+void silofs_blobid_get_layerid(const struct silofs_blobid *blobid,
+                               struct silofs_layerid      *out_layerid);
 
 enum silofs_btype silofs_blobid_get_btype(const struct silofs_blobid *blobid);
 

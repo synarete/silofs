@@ -477,12 +477,12 @@ vstgc_make_lsid_of(const struct silofs_vstage_ctx *vstg_ctx, off_t voff,
                    struct silofs_lsid *out_lsid)
 {
 	struct silofs_blobid blobid;
-	struct silofs_svolid svolid;
+	struct silofs_layerid layerid;
 
 	/* TODO: crap, re-write this logic */
 	silofs_sbi_self_blobid(vstg_ctx->sbi, &blobid);
-	silofs_blobid_get_svolid(&blobid, &svolid);
-	silofs_blobid_setup_raw2(&blobid, &svolid, mtype, vstg_ctx->vspace,
+	silofs_blobid_get_layerid(&blobid, &layerid);
+	silofs_blobid_setup_raw2(&blobid, &layerid, mtype, vstg_ctx->vspace,
 	                         height);
 
 	silofs_lsid_setup(out_lsid, &blobid, voff);

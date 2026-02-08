@@ -80,7 +80,7 @@
 #define SILOFS_REPO_BLOBS_DIRNAME "blobs"
 
 /* sub-volume identifier size */
-#define SILOFS_SVOLID_SIZE (16)
+#define SILOFS_LAYERID_SIZE (16)
 
 /* blob identifier size */
 #define SILOFS_BLOBID_SIZE (56)
@@ -520,8 +520,8 @@ struct silofs_uniqid {
 } silofs_attr_aligned8;
 
 /* sub-volume identifier */
-struct silofs_svolid {
-	uint8_t id[SILOFS_SVOLID_SIZE];
+struct silofs_layerid {
+	uint8_t id[SILOFS_LAYERID_SIZE];
 } silofs_attr_aligned8;
 
 /* blob-identifier */

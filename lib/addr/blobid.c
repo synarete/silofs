@@ -38,7 +38,7 @@ struct silofs_blobidv {
 	uint8_t vspace;
 	uint8_t height;
 	uint8_t reserved[10];
-	struct silofs_svolid svolid;
+	struct silofs_layerid layerid;
 	struct silofs_uniqid uniqid;
 
 } silofs_attr_aligned64;
@@ -68,12 +68,12 @@ static void blobidv_pre_setup(struct silofs_blobidv *blobidv)
 	blobidv->vers = silofs_cpu_to_le16(SILOFS_FMT_VERSION);
 }
 
-static void
-blobidv_setup_raw(struct silofs_blobidv *blobidv,
-                  const struct silofs_svolid *svolid, enum silofs_mtype mtype)
+static void blobidv_setup_raw(struct silofs_blobidv *blobidv,
+                              const struct silofs_layerid *layerid,
+                              enum silofs_mtype mtype)
 {
 	blobidv_pre_setup(blobidv);
-	silofs_svolid_copyto(svolid, &blobidv->svolid);
+	silofs_layerid_copyto(layerid, &blobidv->layerid);
 	blobidv->mtype = (uint8_t)mtype;
 	blobidv->btype = (uint8_t)SILOFS_BTYPE_RAW;
 	generate_random(blobidv->uniqid.u.raw, sizeof(blobidv->uniqid.u.raw));
@@ -81,11 +81,11 @@ blobidv_setup_raw(struct silofs_blobidv *blobidv,
 
 static void
 blobidv_setup_uniq(struct silofs_blobidv *blobidv,
-                   const struct silofs_svolid *svolid,
+                   const struct silofs_layerid *layerid,
                    const struct silofs_uniqid *uniq, enum silofs_mtype mtype)
 {
 	blobidv_pre_setup(blobidv);
-	silofs_svolid_copyto(svolid, &blobidv->svolid);
+	silofs_layerid_copyto(layerid, &blobidv->layerid);
 	blobidv->mtype = (uint8_t)mtype;
 	blobidv->btype = (uint8_t)SILOFS_BTYPE_RAW;
 	memcpy(&blobidv->uniqid, uniq, sizeof(blobidv->uniqid));
@@ -93,11 +93,11 @@ blobidv_setup_uniq(struct silofs_blobidv *blobidv,
 
 static void
 blobidv_setup_cas(struct silofs_blobidv *blobidv,
-                  const struct silofs_svolid *svolid,
+                  const struct silofs_layerid *layerid,
                   const struct silofs_hash256 *hash, enum silofs_mtype mtype)
 {
 	blobidv_pre_setup(blobidv);
-	silofs_svolid_copyto(svolid, &blobidv->svolid);
+	silofs_layerid_copyto(layerid, &blobidv->layerid);
 	blobidv->mtype = (uint8_t)mtype;
 	blobidv->btype = (uint8_t)SILOFS_BTYPE_CAS;
 	silofs_hash256_copyto(hash, &blobidv->uniqid.u.hash);
@@ -113,58 +113,58 @@ const struct silofs_blobid *silofs_blobid_none(void)
 }
 
 void silofs_blobid_setup_raw(struct silofs_blobid *blobid,
-                             const struct silofs_svolid *svolid,
+                             const struct silofs_layerid *layerid,
                              enum silofs_mtype mtype)
 {
 	struct silofs_blobidv blobidv;
 
-	blobidv_setup_raw(&blobidv, svolid, mtype);
+	blobidv_setup_raw(&blobidv, layerid, mtype);
 	blobid_from_view(blobid, &blobidv);
 }
 
 void silofs_blobid_setup_raw2(struct silofs_blobid *blobid,
-                              const struct silofs_svolid *svolid,
+                              const struct silofs_layerid *layerid,
                               enum silofs_mtype mtype,
                               enum silofs_mtype vspace,
                               enum silofs_height height)
 {
 	struct silofs_blobidv blobidv;
 
-	blobidv_setup_raw(&blobidv, svolid, mtype);
+	blobidv_setup_raw(&blobidv, layerid, mtype);
 	blobidv.vspace = (uint8_t)vspace;
 	blobidv.height = (uint8_t)height;
 	blobid_from_view(blobid, &blobidv);
 }
 
 void silofs_blobid_setup_raw3(struct silofs_blobid *blobid,
-                              const struct silofs_svolid *svolid,
+                              const struct silofs_layerid *layerid,
                               const struct silofs_uniqid *uniq,
                               enum silofs_mtype mtype)
 {
 	struct silofs_blobidv blobidv;
 
-	blobidv_setup_uniq(&blobidv, svolid, uniq, mtype);
+	blobidv_setup_uniq(&blobidv, layerid, uniq, mtype);
 	blobid_from_view(blobid, &blobidv);
 }
 
 void silofs_blobid_setup_cas(struct silofs_blobid *blobid,
-                             const struct silofs_svolid *svolid,
+                             const struct silofs_layerid *layerid,
                              const struct silofs_hash256 *hash,
                              enum silofs_mtype mtype)
 {
 	struct silofs_blobidv blobidv;
 
-	blobidv_setup_cas(&blobidv, svolid, hash, mtype);
+	blobidv_setup_cas(&blobidv, layerid, hash, mtype);
 	blobid_from_view(blobid, &blobidv);
 }
 
-void silofs_blobid_get_svolid(const struct silofs_blobid *blobid,
-                              struct silofs_svolid *out_svolid)
+void silofs_blobid_get_layerid(const struct silofs_blobid *blobid,
+                               struct silofs_layerid *out_layerid)
 {
 	struct silofs_blobidv blobidv;
 
 	blobid_to_view(blobid, &blobidv);
-	silofs_svolid_copyto(&blobidv.svolid, out_svolid);
+	silofs_layerid_copyto(&blobidv.layerid, out_layerid);
 }
 
 enum silofs_height silofs_blobid_get_height(const struct silofs_blobid *blobid)

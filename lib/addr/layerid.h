@@ -14,21 +14,21 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_SVOLID_H_
-#define SILOFS_SVOLID_H_
+#ifndef SILOFS_LAYERID_H_
+#define SILOFS_LAYERID_H_
 
 #include <silofs/ondisk.h>
 
-const struct silofs_svolid *silofs_svolid_none(void);
+const struct silofs_layerid *silofs_layerid_none(void);
 
-void silofs_svolid_reset(struct silofs_svolid *svolid);
+void silofs_layerid_reset(struct silofs_layerid *layerid);
 
-void silofs_svolid_generate(struct silofs_svolid *svolid);
+void silofs_layerid_generate(struct silofs_layerid *layerid);
 
-void silofs_svolid_copyto(const struct silofs_svolid *svolid,
-                          struct silofs_svolid       *other);
+void silofs_layerid_copyto(const struct silofs_layerid *layerid,
+                           struct silofs_layerid       *other);
 
-bool silofs_svolid_isequal(const struct silofs_svolid *svolid,
-                           const struct silofs_svolid *other);
+bool silofs_layerid_isequal(const struct silofs_layerid *layerid,
+                            const struct silofs_layerid *other);
 
-#endif /* SILOFS_SVOLID_H_ */
+#endif /* SILOFS_LAYERID_H_ */

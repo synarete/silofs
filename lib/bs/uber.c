@@ -150,6 +150,26 @@ static void ubn_reset_childs(struct silofs_uber_node *ubn)
 	}
 }
 
+static void ubn_set_pldesc(struct silofs_uber_node *ubn, size_t slot,
+                           const struct silofs_plogdesc *plogdesc)
+{
+	silofs_assert_lt(slot, ARRAY_SIZE(ubn->ub_pldesc));
+
+	silofs_plogdesc_htox(&ubn->ub_pldesc[slot], plogdesc);
+}
+
+static void ubn_reset_pldesc(struct silofs_uber_node *ubn, size_t slot)
+{
+	ubn_set_pldesc(ubn, slot, silofs_plogdesc_none());
+}
+
+static void ubn_reset_pldescs(struct silofs_uber_node *ubn)
+{
+	for (size_t slot = 0; slot < ARRAY_SIZE(ubn->ub_pldesc); ++slot) {
+		ubn_reset_pldesc(ubn, slot);
+	}
+}
+
 static void ubn_setup(struct silofs_uber_node *ubn, const struct timespec *ts)
 {
 	ubn_set_generation(ubn, 0);
@@ -157,6 +177,7 @@ static void ubn_setup(struct silofs_uber_node *ubn, const struct timespec *ts)
 	ubn_set_btime(ubn, ts);
 	ubn_set_ctime(ubn, ts);
 	ubn_reset_childs(ubn);
+	ubn_reset_pldescs(ubn);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

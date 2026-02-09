@@ -598,8 +598,8 @@ struct silofs_pnodeptr256b {
 
 /* persistent-log descriptor */
 struct silofs_plogdesc128b {
-	struct silofs_paddr64b pld_head;
-	struct silofs_paddr64b pld_tail;
+	struct silofs_paddr64b pl_head;
+	struct silofs_paddr64b pl_tail;
 } silofs_attr_aligned64;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

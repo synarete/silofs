@@ -34,6 +34,12 @@ struct silofs_pnodeptr {
 	size_t              nsub_btnodes;
 };
 
+/* plog descriptor */
+struct silofs_plogdesc {
+	struct silofs_paddr head;
+	struct silofs_paddr tail;
+};
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 const struct silofs_nmeta *silofs_nmeta_none(void);
@@ -76,5 +82,22 @@ void silofs_pnodeptr256b_htox(struct silofs_pnodeptr256b   *pnodeptr256,
 
 void silofs_pnodeptr256b_xtoh(const struct silofs_pnodeptr256b *pnodeptr256,
                               struct silofs_pnodeptr           *pnodeptr);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+const struct silofs_plogdesc *silofs_plogdesc_none(void);
+
+void silofs_plogdesc_setup(struct silofs_plogdesc    *pldesc,
+                           const struct silofs_paddr *head,
+                           const struct silofs_paddr *tail);
+
+void silofs_plogdesc_ignite(struct silofs_plogdesc    *pldesc,
+                            const struct silofs_paddr *paddr);
+
+void silofs_plogdesc_htox(struct silofs_plogdesc128b   *plogdesc128,
+                          const struct silofs_plogdesc *plogdesc);
+
+void silofs_plogdesc_xtoh(const struct silofs_plogdesc128b *plogdesc128,
+                          struct silofs_plogdesc           *plogdesc);
 
 #endif /* SILOFS_NMETA_H_ */

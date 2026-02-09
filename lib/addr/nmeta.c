@@ -155,3 +155,43 @@ void silofs_pnodeptr256b_xtoh(const struct silofs_pnodeptr256b *pnodeptr256,
 	pnodeptr->nsub_btnodes =
 		silofs_le32_to_cpu(pnodeptr256->pn_nsub_btnodes);
 }
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static const struct silofs_plogdesc s_plogdesc_none = {
+	.head.pos = SILOFS_OFF_NULL,
+	.tail.pos = SILOFS_OFF_NULL,
+};
+
+const struct silofs_plogdesc *silofs_plogdesc_none(void)
+{
+	return &s_plogdesc_none;
+}
+
+void silofs_plogdesc_setup(struct silofs_plogdesc *pldesc,
+                           const struct silofs_paddr *head,
+                           const struct silofs_paddr *tail)
+{
+	silofs_paddr_assign(&pldesc->head, head);
+	silofs_paddr_assign(&pldesc->tail, tail);
+}
+
+void silofs_plogdesc_ignite(struct silofs_plogdesc *pldesc,
+                            const struct silofs_paddr *paddr)
+{
+	silofs_plogdesc_setup(pldesc, paddr, paddr);
+}
+
+void silofs_plogdesc_htox(struct silofs_plogdesc128b *plogdesc128,
+                          const struct silofs_plogdesc *plogdesc)
+{
+	silofs_paddr64b_htox(&plogdesc128->pl_head, &plogdesc->head);
+	silofs_paddr64b_htox(&plogdesc128->pl_tail, &plogdesc->tail);
+}
+
+void silofs_plogdesc_xtoh(const struct silofs_plogdesc128b *plogdesc128,
+                          struct silofs_plogdesc *plogdesc)
+{
+	silofs_paddr64b_xtoh(&plogdesc128->pl_head, &plogdesc->head);
+	silofs_paddr64b_xtoh(&plogdesc128->pl_tail, &plogdesc->tail);
+}

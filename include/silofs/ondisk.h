@@ -589,17 +589,25 @@ struct silofs_nmeta128b {
 
 /* pnode meta-pointer */
 struct silofs_pnodeptr256b {
-	struct silofs_nmeta128b pn_nmeta;
-	struct silofs_paddr64b  pn_paddr;
-	uint64_t                pn_nsub_vobjs;
-	uint32_t                pn_nsub_btnodes;
-	uint8_t                 pn_reserved[52];
+	struct silofs_nmeta128b pp_nmeta;
+	struct silofs_paddr64b  pp_paddr;
+	uint64_t                pp_nsub_vobjs;
+	uint32_t                pp_nsub_btnodes;
+	uint8_t                 pp_reserved[52];
 } silofs_attr_aligned64;
 
 /* persistent-log descriptor */
 struct silofs_plogdesc128b {
 	struct silofs_paddr64b pl_head;
 	struct silofs_paddr64b pl_tail;
+} silofs_attr_aligned64;
+
+/* btree-node meta-pointer with subs */
+struct silofs_btnodeptr256b {
+	struct silofs_pnodeptr256b btp_pnodeptr;
+	uint64_t                   btp_nsub_vobjs;
+	uint32_t                   btp_nsub_btnodes;
+	uint8_t                    btp_reserved[52];
 } silofs_attr_aligned64;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

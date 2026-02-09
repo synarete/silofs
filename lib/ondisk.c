@@ -186,10 +186,10 @@ static void validate_ondisk_pnodeptr(void)
 	REQUIRE_OFFSET64(struct silofs_nmeta128b, nm_cipher_algo, 80);
 	REQUIRE_OFFSET32(struct silofs_nmeta128b, nm_cipher_mode, 84);
 	REQUIRE_SIZEOF(struct silofs_nmeta128b, 128);
-	REQUIRE_OFFSET64(struct silofs_pnodeptr256b, pn_nmeta, 0);
-	REQUIRE_OFFSET64(struct silofs_pnodeptr256b, pn_paddr, 128);
-	REQUIRE_OFFSET64(struct silofs_pnodeptr256b, pn_nsub_vobjs, 192);
-	REQUIRE_OFFSET64(struct silofs_pnodeptr256b, pn_nsub_btnodes, 200);
+	REQUIRE_OFFSET64(struct silofs_pnodeptr256b, pp_nmeta, 0);
+	REQUIRE_OFFSET64(struct silofs_pnodeptr256b, pp_paddr, 128);
+	REQUIRE_OFFSET64(struct silofs_pnodeptr256b, pp_nsub_vobjs, 192);
+	REQUIRE_OFFSET64(struct silofs_pnodeptr256b, pp_nsub_btnodes, 200);
 	REQUIRE_SIZEOF(struct silofs_pnodeptr256b, 256);
 }
 

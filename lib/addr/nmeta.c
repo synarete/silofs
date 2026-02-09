@@ -139,21 +139,21 @@ void silofs_pnodeptr256b_htox(struct silofs_pnodeptr256b *pnodeptr256,
                               const struct silofs_pnodeptr *pnodeptr)
 {
 	memset(pnodeptr256, 0, sizeof(*pnodeptr256));
-	silofs_paddr64b_htox(&pnodeptr256->pn_paddr, &pnodeptr->paddr);
-	silofs_nmeta128b_htox(&pnodeptr256->pn_nmeta, &pnodeptr->nmeta);
-	pnodeptr256->pn_nsub_vobjs = silofs_cpu_to_le64(pnodeptr->nsub_vobjs);
-	pnodeptr256->pn_nsub_btnodes =
+	silofs_paddr64b_htox(&pnodeptr256->pp_paddr, &pnodeptr->paddr);
+	silofs_nmeta128b_htox(&pnodeptr256->pp_nmeta, &pnodeptr->nmeta);
+	pnodeptr256->pp_nsub_vobjs = silofs_cpu_to_le64(pnodeptr->nsub_vobjs);
+	pnodeptr256->pp_nsub_btnodes =
 		silofs_cpu_to_le32((uint32_t)pnodeptr->nsub_btnodes);
 }
 
 void silofs_pnodeptr256b_xtoh(const struct silofs_pnodeptr256b *pnodeptr256,
                               struct silofs_pnodeptr *pnodeptr)
 {
-	silofs_paddr64b_xtoh(&pnodeptr256->pn_paddr, &pnodeptr->paddr);
-	silofs_nmeta128b_xtoh(&pnodeptr256->pn_nmeta, &pnodeptr->nmeta);
-	pnodeptr->nsub_vobjs = silofs_le64_to_cpu(pnodeptr256->pn_nsub_vobjs);
+	silofs_paddr64b_xtoh(&pnodeptr256->pp_paddr, &pnodeptr->paddr);
+	silofs_nmeta128b_xtoh(&pnodeptr256->pp_nmeta, &pnodeptr->nmeta);
+	pnodeptr->nsub_vobjs = silofs_le64_to_cpu(pnodeptr256->pp_nsub_vobjs);
 	pnodeptr->nsub_btnodes =
-		silofs_le32_to_cpu(pnodeptr256->pn_nsub_btnodes);
+		silofs_le32_to_cpu(pnodeptr256->pp_nsub_btnodes);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

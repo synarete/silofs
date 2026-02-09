@@ -24,9 +24,9 @@
 struct silofs_task_ctx;
 
 void silofs_ignite_ubspace(const struct silofs_task_ctx *task,
-                           struct silofs_pnodeptr       *out_pnodeptr);
+                           struct silofs_nodeptr        *out_nodeptr);
 
 void silofs_ignite_btspace(const struct silofs_task_ctx *task,
-                           struct silofs_pnodeptr       *out_pnodeptr);
+                           struct silofs_nodeptr        *out_nodeptr);
 
 #endif /* SILOFS_SPACE_H_ */

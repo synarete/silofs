@@ -33,28 +33,28 @@ static void del_view_of(struct silofs_view *view, struct silofs_alloc *alloc,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static enum silofs_mtype pnodeptr_mtype(const struct silofs_pnodeptr *pnodeptr)
+static enum silofs_mtype nodeptr_mtype(const struct silofs_nodeptr *nodeptr)
 {
-	return pnodeptr->paddr.mtype;
+	return nodeptr->paddr.mtype;
 }
 
-static size_t pnodeptr_size(const struct silofs_pnodeptr *pnodeptr)
+static size_t nodeptr_size(const struct silofs_nodeptr *nodeptr)
 {
-	return silofs_mtype_size(pnodeptr_mtype(pnodeptr));
+	return silofs_mtype_size(nodeptr_mtype(nodeptr));
 }
 
 static void
-pni_init(struct silofs_pnode_info *pni, const struct silofs_pnodeptr *pnodeptr)
+pni_init(struct silofs_pnode_info *pni, const struct silofs_nodeptr *nodeptr)
 {
-	silofs_pnodeptr_assign(&pni->pn_self, pnodeptr);
-	silofs_hmqe_init(&pni->pn_hmqe, pnodeptr_size(pnodeptr));
+	silofs_nodeptr_assign(&pni->pn_self, nodeptr);
+	silofs_hmqe_init(&pni->pn_hmqe, nodeptr_size(nodeptr));
 	silofs_hkey_by_paddr(&pni->pn_hmqe.hme_key, &pni->pn_self.paddr);
 	pni->pn_view = nullptr;
 }
 
 static void pni_fini(struct silofs_pnode_info *pni)
 {
-	silofs_pnodeptr_reset(&pni->pn_self);
+	silofs_nodeptr_reset(&pni->pn_self);
 	silofs_hmqe_fini(&pni->pn_hmqe);
 	pni->pn_view = nullptr;
 }
@@ -131,7 +131,7 @@ pni_del_view(struct silofs_pnode_info *pni, struct silofs_alloc *alloc)
 	}
 }
 
-const struct silofs_pnodeptr *
+const struct silofs_nodeptr *
 silofs_pni_self(const struct silofs_pnode_info *pni)
 {
 	return &pni->pn_self;
@@ -150,9 +150,9 @@ static void ubi_free(struct silofs_uber_info *ubi, struct silofs_alloc *alloc)
 }
 
 static void
-ubi_init(struct silofs_uber_info *ubi, const struct silofs_pnodeptr *pnodeptr)
+ubi_init(struct silofs_uber_info *ubi, const struct silofs_nodeptr *nodeptr)
 {
-	pni_init(&ubi->ub_pni, pnodeptr);
+	pni_init(&ubi->ub_pni, nodeptr);
 	ubi->ubn = nullptr;
 }
 
@@ -175,7 +175,7 @@ ubi_new_view(struct silofs_uber_info *ubi, struct silofs_alloc *alloc)
 }
 
 static struct silofs_uber_info *
-ubi_new(const struct silofs_pnodeptr *pnodeptr, struct silofs_alloc *alloc)
+ubi_new(const struct silofs_nodeptr *nodeptr, struct silofs_alloc *alloc)
 {
 	struct silofs_uber_info *ubi = nullptr;
 	int err;
@@ -184,7 +184,7 @@ ubi_new(const struct silofs_pnodeptr *pnodeptr, struct silofs_alloc *alloc)
 	if (ubi == nullptr) {
 		return nullptr;
 	}
-	ubi_init(ubi, pnodeptr);
+	ubi_init(ubi, nodeptr);
 
 	err = ubi_new_view(ubi, alloc);
 	if (err) {
@@ -265,10 +265,10 @@ bdi_free(struct silofs_bldesc_info *bdi, struct silofs_alloc *alloc)
 	silofs_memfree(alloc, bdi, sizeof(*bdi), 0);
 }
 
-static void bdi_init(struct silofs_bldesc_info *bdi,
-                     const struct silofs_pnodeptr *pnodeptr)
+static void
+bdi_init(struct silofs_bldesc_info *bdi, const struct silofs_nodeptr *nodeptr)
 {
-	pni_init(&bdi->bld_pni, pnodeptr);
+	pni_init(&bdi->bld_pni, nodeptr);
 	bdi->bld = nullptr;
 }
 
@@ -291,7 +291,7 @@ bdi_new_view(struct silofs_bldesc_info *bdi, struct silofs_alloc *alloc)
 }
 
 static struct silofs_bldesc_info *
-bdi_new(const struct silofs_pnodeptr *pnodeptr, struct silofs_alloc *alloc)
+bdi_new(const struct silofs_nodeptr *nodeptr, struct silofs_alloc *alloc)
 {
 	struct silofs_bldesc_info *bdi = nullptr;
 	int err;
@@ -300,7 +300,7 @@ bdi_new(const struct silofs_pnodeptr *pnodeptr, struct silofs_alloc *alloc)
 	if (bdi == nullptr) {
 		return nullptr;
 	}
-	bdi_init(bdi, pnodeptr);
+	bdi_init(bdi, nodeptr);
 
 	err = bdi_new_view(bdi, alloc);
 	if (err) {
@@ -382,10 +382,10 @@ bti_free(struct silofs_btnode_info *bti, struct silofs_alloc *alloc)
 	silofs_memfree(alloc, bti, sizeof(*bti), 0);
 }
 
-static void bti_init(struct silofs_btnode_info *bti,
-                     const struct silofs_pnodeptr *pnodeptr)
+static void
+bti_init(struct silofs_btnode_info *bti, const struct silofs_nodeptr *nodeptr)
 {
-	pni_init(&bti->btn_pni, pnodeptr);
+	pni_init(&bti->btn_pni, nodeptr);
 	bti->btn        = nullptr;
 	bti->btn_rdonly = false;
 }
@@ -409,7 +409,7 @@ bti_new_view(struct silofs_btnode_info *bti, struct silofs_alloc *alloc)
 }
 
 static struct silofs_btnode_info *
-bti_new(const struct silofs_pnodeptr *pnodeptr, struct silofs_alloc *alloc)
+bti_new(const struct silofs_nodeptr *nodeptr, struct silofs_alloc *alloc)
 {
 	struct silofs_btnode_info *bti = nullptr;
 	int err;
@@ -418,7 +418,7 @@ bti_new(const struct silofs_pnodeptr *pnodeptr, struct silofs_alloc *alloc)
 	if (bti == nullptr) {
 		return nullptr;
 	}
-	bti_init(bti, pnodeptr);
+	bti_init(bti, nodeptr);
 
 	err = bti_new_view(bti, alloc);
 	if (err) {
@@ -490,21 +490,21 @@ silofs_bti_from_pni(const struct silofs_pnode_info *pni)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 struct silofs_pnode_info *
-silofs_new_pnode(const struct silofs_pnodeptr *pnodeptr,
+silofs_new_pnode(const struct silofs_nodeptr *nodeptr,
                  struct silofs_alloc *alloc)
 {
 	struct silofs_pnode_info *pni = nullptr;
-	const enum silofs_mtype mtype = pnodeptr_mtype(pnodeptr);
+	const enum silofs_mtype mtype = nodeptr_mtype(nodeptr);
 
 	switch (mtype) {
 	case SILOFS_MTYPE_UBER:
-		pni = ubi_to_pni(ubi_new(pnodeptr, alloc));
+		pni = ubi_to_pni(ubi_new(nodeptr, alloc));
 		break;
 	case SILOFS_MTYPE_BLDESC:
-		pni = bdi_to_pni(bdi_new(pnodeptr, alloc));
+		pni = bdi_to_pni(bdi_new(nodeptr, alloc));
 		break;
 	case SILOFS_MTYPE_BTNODE:
-		pni = bti_to_pni(bti_new(pnodeptr, alloc));
+		pni = bti_to_pni(bti_new(nodeptr, alloc));
 		break;
 	case SILOFS_MTYPE_SUPER:
 	case SILOFS_MTYPE_SPNODE:

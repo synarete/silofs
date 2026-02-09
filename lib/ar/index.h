@@ -36,15 +36,15 @@ struct silofs_ar_desc {
 };
 
 struct silofs_arnode_info {
-	struct silofs_pnodeptr   arn_pnodeptr;
+	struct silofs_nodeptr    arn_nodeptr;
 	struct silofs_arix_node *arn;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 struct silofs_arnode_info *
-silofs_ari_new(struct silofs_alloc          *alloc,
-               const struct silofs_pnodeptr *pnodeptr);
+silofs_ari_new(struct silofs_alloc         *alloc,
+               const struct silofs_nodeptr *nodeptr);
 
 void silofs_ari_del(struct silofs_arnode_info *ari,
                     struct silofs_alloc       *alloc);
@@ -62,11 +62,11 @@ void silofs_ari_get_paddr(const struct silofs_arnode_info *ari,
 void silofs_ari_set_paddr(struct silofs_arnode_info *ari,
                           const struct silofs_paddr *paddr);
 
-void silofs_ari_set_next(struct silofs_arnode_info    *ari,
-                         const struct silofs_pnodeptr *pnodeptr);
+void silofs_ari_set_next(struct silofs_arnode_info   *ari,
+                         const struct silofs_nodeptr *nodeptr);
 
 void silofs_ari_get_next(const struct silofs_arnode_info *ari,
-                         struct silofs_pnodeptr          *out_pnodeptr);
+                         struct silofs_nodeptr           *out_nodeptr);
 
 int silofs_ari_append_desc(struct silofs_arnode_info   *ari,
                            const struct silofs_ar_desc *ard);

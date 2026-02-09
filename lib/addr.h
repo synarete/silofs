@@ -28,6 +28,7 @@
 #include "addr/blobid.h"
 #include "addr/paddr.h"
 #include "addr/nmeta.h"
+#include "addr/nodeptr.h"
 #include "addr/laddr.h"
 #include "addr/uaddr.h"
 #include "addr/vaddr.h"

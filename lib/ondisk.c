@@ -175,22 +175,22 @@ static void validate_ondisk_addrs(void)
 	REQUIRE_SIZEOF(struct silofs_laddr96b, 96);
 	REQUIRE_SIZEOF(struct silofs_uaddr128b, 128);
 	REQUIRE_SIZEOF(struct silofs_paddr64b, 64);
-	REQUIRE_SIZEOF(struct silofs_pnodeptr256b, 256);
+	REQUIRE_SIZEOF(struct silofs_nodeptr256b, 256);
 	REQUIRE_SIZEOF(struct silofs_plogdesc128b, 128);
 }
 
-static void validate_ondisk_pnodeptr(void)
+static void validate_ondisk_nodeptr(void)
 {
 	REQUIRE_OFFSET64(struct silofs_nmeta128b, nm_cipher_key, 0);
 	REQUIRE_OFFSET64(struct silofs_nmeta128b, nm_cipher_iv, 64);
 	REQUIRE_OFFSET64(struct silofs_nmeta128b, nm_cipher_algo, 80);
 	REQUIRE_OFFSET32(struct silofs_nmeta128b, nm_cipher_mode, 84);
 	REQUIRE_SIZEOF(struct silofs_nmeta128b, 128);
-	REQUIRE_OFFSET64(struct silofs_pnodeptr256b, pp_nmeta, 0);
-	REQUIRE_OFFSET64(struct silofs_pnodeptr256b, pp_paddr, 128);
-	REQUIRE_OFFSET64(struct silofs_pnodeptr256b, pp_nsub_vobjs, 192);
-	REQUIRE_OFFSET64(struct silofs_pnodeptr256b, pp_nsub_btnodes, 200);
-	REQUIRE_SIZEOF(struct silofs_pnodeptr256b, 256);
+	REQUIRE_OFFSET64(struct silofs_nodeptr256b, np_nmeta, 0);
+	REQUIRE_OFFSET64(struct silofs_nodeptr256b, np_paddr, 128);
+	REQUIRE_OFFSET64(struct silofs_nodeptr256b, np_nsub_vobjs, 192);
+	REQUIRE_OFFSET64(struct silofs_nodeptr256b, np_nsub_btnodes, 200);
+	REQUIRE_SIZEOF(struct silofs_nodeptr256b, 256);
 }
 
 static void validate_ondisk_headers(void)
@@ -458,7 +458,7 @@ void silofs_validate_ondisk_format(void)
 	validate_ondisk_defs();
 	validate_ondisk_base_types();
 	validate_ondisk_addrs();
-	validate_ondisk_pnodeptr();
+	validate_ondisk_nodeptr();
 	validate_ondisk_headers();
 	validate_ondisk_spmaps();
 	validate_ondisk_mbr();

@@ -22,19 +22,19 @@
 #include "mbr.h"
 #include "env.h"
 
-static enum silofs_mtype pnodeptr_mtype(const struct silofs_pnodeptr *pnodeptr)
+static enum silofs_mtype nodeptr_mtype(const struct silofs_nodeptr *nodeptr)
 {
-	return pnodeptr->paddr.mtype;
+	return nodeptr->paddr.mtype;
 }
 
-static bool pnodeptr_isuber(const struct silofs_pnodeptr *pnodeptr)
+static bool nodeptr_isuber(const struct silofs_nodeptr *nodeptr)
 {
-	return (pnodeptr_mtype(pnodeptr) == SILOFS_MTYPE_UBER);
+	return (nodeptr_mtype(nodeptr) == SILOFS_MTYPE_UBER);
 }
 
-static bool pnodeptr_isarix(const struct silofs_pnodeptr *pnodeptr)
+static bool nodeptr_isarix(const struct silofs_nodeptr *nodeptr)
 {
-	return (pnodeptr_mtype(pnodeptr) == SILOFS_MTYPE_ARIX);
+	return (nodeptr_mtype(nodeptr) == SILOFS_MTYPE_ARIX);
 }
 
 static void mbr_meta_assign(struct silofs_mbr_meta *meta,
@@ -106,20 +106,20 @@ static void mbr1k_gen_uuid(struct silofs_mbr1k *mbr1k)
 }
 
 static void mbr1k_root(const struct silofs_mbr1k *mbr1k,
-                       struct silofs_pnodeptr *out_pnodeptr)
+                       struct silofs_nodeptr *out_nodeptr)
 {
-	silofs_pnodeptr256b_xtoh(&mbr1k->mbr_root, out_pnodeptr);
+	silofs_nodeptr256b_xtoh(&mbr1k->mbr_root, out_nodeptr);
 }
 
 static void mbr1k_set_root(struct silofs_mbr1k *mbr1k,
-                           const struct silofs_pnodeptr *pnodeptr)
+                           const struct silofs_nodeptr *nodeptr)
 {
-	silofs_pnodeptr256b_htox(&mbr1k->mbr_root, pnodeptr);
+	silofs_nodeptr256b_htox(&mbr1k->mbr_root, nodeptr);
 }
 
 static void mbr1k_reset_root(struct silofs_mbr1k *mbr1k)
 {
-	mbr1k_set_root(mbr1k, silofs_pnodeptr_none());
+	mbr1k_set_root(mbr1k, silofs_nodeptr_none());
 }
 
 static void mbr1k_sb_addr(const struct silofs_mbr1k *mbr1k,
@@ -180,10 +180,10 @@ static int mbr1k_check_uaddr_sb(const struct silofs_mbr1k *mbr1k)
 
 static int mbr1k_check_root(const struct silofs_mbr1k *mbr1k)
 {
-	struct silofs_pnodeptr pnodeptr;
+	struct silofs_nodeptr nodeptr;
 
-	mbr1k_root(mbr1k, &pnodeptr);
-	return silofs_ciargs_check(&pnodeptr.nmeta.ciargs);
+	mbr1k_root(mbr1k, &nodeptr);
+	return silofs_ciargs_check(&nodeptr.nmeta.ciargs);
 }
 
 static int mbr1k_check(const struct silofs_mbr1k *mbr1k)
@@ -553,47 +553,47 @@ int silofs_mbi_set_meta(struct silofs_mbr_info *mbi,
 }
 
 int silofs_mbi_uber_root(const struct silofs_mbr_info *mbi,
-                         struct silofs_pnodeptr *out_pnodeptr)
+                         struct silofs_nodeptr *out_nodeptr)
 {
 	const struct silofs_mbr1k *mbr1k = &mbi->mb_mbr1k;
 
 	if (mbi_mode(mbi) != SILOFS_MBR_FS) {
 		return -SILOFS_EMBRMODE;
 	}
-	mbr1k_root(mbr1k, out_pnodeptr);
-	if (!pnodeptr_isuber(out_pnodeptr)) {
+	mbr1k_root(mbr1k, out_nodeptr);
+	if (!nodeptr_isuber(out_nodeptr)) {
 		return -SILOFS_ENOENT;
 	}
 	return 0;
 }
 
 int silofs_mbi_arix_root(const struct silofs_mbr_info *mbi,
-                         struct silofs_pnodeptr *out_pnodeptr)
+                         struct silofs_nodeptr *out_nodeptr)
 {
 	const struct silofs_mbr1k *mbr1k = &mbi->mb_mbr1k;
 
 	if (mbi_mode(mbi) != SILOFS_MBR_AR) {
 		return -SILOFS_EMBRMODE;
 	}
-	mbr1k_root(mbr1k, out_pnodeptr);
-	if (!pnodeptr_isarix(out_pnodeptr)) {
+	mbr1k_root(mbr1k, out_nodeptr);
+	if (!nodeptr_isarix(out_nodeptr)) {
 		return -SILOFS_ENOENT;
 	}
 	return 0;
 }
 
 int silofs_mbi_set_root(struct silofs_mbr_info *mbi,
-                        const struct silofs_pnodeptr *pnodeptr)
+                        const struct silofs_nodeptr *nodeptr)
 {
 	struct silofs_mbr1k *mbr1k = &mbi->mb_mbr1k;
 
-	if ((mbi_mode(mbi) == SILOFS_MBR_FS) && !pnodeptr_isuber(pnodeptr)) {
+	if ((mbi_mode(mbi) == SILOFS_MBR_FS) && !nodeptr_isuber(nodeptr)) {
 		return -SILOFS_EMBRMODE;
 	}
-	if ((mbi_mode(mbi) == SILOFS_MBR_AR) && !pnodeptr_isarix(pnodeptr)) {
+	if ((mbi_mode(mbi) == SILOFS_MBR_AR) && !nodeptr_isarix(nodeptr)) {
 		return -SILOFS_EMBRMODE;
 	}
-	mbr1k_set_root(mbr1k, pnodeptr);
+	mbr1k_set_root(mbr1k, nodeptr);
 	return 0;
 }
 

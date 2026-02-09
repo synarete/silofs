@@ -21,15 +21,12 @@
 #include "addr.h"
 #include "crypto.h"
 
-void silofs_make_base_pnodeptr(struct silofs_prandgen *prng,
-                               enum silofs_mtype       mtype,
-                               struct silofs_pnodeptr *out_pnodeptr);
+struct silofs_task_ctx;
 
-void silofs_trigger_ubspace(struct silofs_prandgen *prng,
-                            struct silofs_plogref  *out_plogref);
+void silofs_ignite_ubspace(const struct silofs_task_ctx *task,
+                           struct silofs_pnodeptr       *out_pnodeptr);
 
-void silofs_trigger_btspace(struct silofs_prandgen *prng,
-                            enum silofs_mtype       vspace,
-                            struct silofs_plogref  *out_plogref);
+void silofs_ignite_btspace(const struct silofs_task_ctx *task,
+                           struct silofs_pnodeptr       *out_pnodeptr);
 
 #endif /* SILOFS_SPACE_H_ */

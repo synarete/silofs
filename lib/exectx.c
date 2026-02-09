@@ -86,6 +86,7 @@ void silofs_task_init(struct silofs_task_ctx *task, struct silofs_env *env)
 	silofs_cred_init(&task->auth.creds.fs_cred);
 	silofs_cred_init(&task->auth.creds.host_cred);
 	task->env       = env;
+	task->prng      = env->base.prng;
 	task->idsm      = env->base.idsmap;
 	task->repo      = env->base.repo;
 	task->lcache    = env->base.lcache;

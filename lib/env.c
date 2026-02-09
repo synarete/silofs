@@ -29,7 +29,7 @@
 static const struct silofs_pnodeptr *
 ubi_pnodeptr(const struct silofs_uber_info *ubi)
 {
-	return &ubi->ub_pni.pn_meta;
+	return &ubi->ub_pni.pn_self;
 }
 
 static void

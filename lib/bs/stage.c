@@ -113,7 +113,7 @@ static size_t viewlen_of(const struct silofs_pnode_info *pni)
 static int
 stc_read_pnode(struct silofs_stage_ctx *st_ctx, struct silofs_pnode_info *pni)
 {
-	const struct silofs_paddr *paddr = &pni->pn_meta.paddr;
+	const struct silofs_paddr *paddr = &pni->pn_self.paddr;
 	const size_t len                 = viewlen_of(pni);
 
 	return silofs_dstor_read_blob_at(st_ctx->dstor, &paddr->blobid,
@@ -449,7 +449,7 @@ int silofs_stage_btnode(struct silofs_env *env,
 static int stc_write_pnode(struct silofs_stage_ctx *st_ctx,
                            const struct silofs_pnode_info *pni)
 {
-	const struct silofs_paddr *paddr = &pni->pn_meta.paddr;
+	const struct silofs_paddr *paddr = &pni->pn_self.paddr;
 	const size_t len                 = viewlen_of(pni);
 
 	return silofs_dstor_write_blob_at(st_ctx->dstor, &paddr->blobid,

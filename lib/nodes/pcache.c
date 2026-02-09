@@ -130,7 +130,7 @@ pcache_hmapq_of2(const struct silofs_pcache *pcache,
 {
 	const struct silofs_hmapq *hmapq;
 
-	hmapq = pcache_hmapq_of(pcache, &pni->pn_meta.paddr);
+	hmapq = pcache_hmapq_of(pcache, &pni->pn_self.paddr);
 	return unconst(hmapq);
 }
 

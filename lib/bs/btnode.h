@@ -23,6 +23,9 @@
 
 #define SILOFS_BTREE_KEY_NULL (0)
 
+const struct silofs_pnodeptr *
+silofs_bti_self(const struct silofs_btnode_info *bti);
+
 void silofs_bti_incref(struct silofs_btnode_info *bti);
 
 void silofs_bti_decref(struct silofs_btnode_info *bti);
@@ -33,6 +36,8 @@ void silofs_bti_undirtify(struct silofs_btnode_info *bti);
 
 void silofs_bti_dup_by(struct silofs_btnode_info       *bti,
                        const struct silofs_btnode_info *bti_other);
+
+enum silofs_mtype silofs_bti_vspace(const struct silofs_btnode_info *bti);
 
 void silofs_bti_set_vspace(struct silofs_btnode_info *bti,
                            enum silofs_mtype          vspace);

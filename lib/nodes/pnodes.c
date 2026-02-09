@@ -46,22 +46,22 @@ static size_t pnodeptr_size(const struct silofs_pnodeptr *pnodeptr)
 static void
 pni_init(struct silofs_pnode_info *pni, const struct silofs_pnodeptr *pnodeptr)
 {
-	silofs_pnodeptr_assign(&pni->pn_meta, pnodeptr);
+	silofs_pnodeptr_assign(&pni->pn_self, pnodeptr);
 	silofs_hmqe_init(&pni->pn_hmqe, pnodeptr_size(pnodeptr));
-	silofs_hkey_by_paddr(&pni->pn_hmqe.hme_key, &pni->pn_meta.paddr);
+	silofs_hkey_by_paddr(&pni->pn_hmqe.hme_key, &pni->pn_self.paddr);
 	pni->pn_view = nullptr;
 }
 
 static void pni_fini(struct silofs_pnode_info *pni)
 {
-	silofs_pnodeptr_reset(&pni->pn_meta);
+	silofs_pnodeptr_reset(&pni->pn_self);
 	silofs_hmqe_fini(&pni->pn_hmqe);
 	pni->pn_view = nullptr;
 }
 
 static enum silofs_mtype pni_mtype(const struct silofs_pnode_info *pni)
 {
-	return pni->pn_meta.paddr.mtype;
+	return pni->pn_self.paddr.mtype;
 }
 
 enum silofs_mtype silofs_pni_mtype(const struct silofs_pnode_info *pni)
@@ -129,6 +129,12 @@ pni_del_view(struct silofs_pnode_info *pni, struct silofs_alloc *alloc)
 		del_view_of(pni->pn_view, alloc, pni_mtype(pni));
 		pni->pn_view = nullptr;
 	}
+}
+
+const struct silofs_pnodeptr *
+silofs_pni_self(const struct silofs_pnode_info *pni)
+{
+	return &pni->pn_self;
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -563,7 +569,7 @@ void silofs_del_pnode(struct silofs_pnode_info *pni,
 static const struct silofs_civkey *
 pni_civkey(const struct silofs_pnode_info *pni)
 {
-	return &pni->pn_meta.nmeta.civkey;
+	return &pni->pn_self.nmeta.civkey;
 }
 
 int silofs_encrypt_pnode(const struct silofs_pnode_info *pni,

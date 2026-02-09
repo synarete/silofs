@@ -176,6 +176,7 @@ static void validate_ondisk_addrs(void)
 	REQUIRE_SIZEOF(struct silofs_uaddr128b, 128);
 	REQUIRE_SIZEOF(struct silofs_paddr64b, 64);
 	REQUIRE_SIZEOF(struct silofs_pnodeptr256b, 256);
+	REQUIRE_SIZEOF(struct silofs_plogdesc128b, 128);
 }
 
 static void validate_ondisk_pnodeptr(void)
@@ -243,9 +244,6 @@ static void validate_ondisk_mbr(void)
 
 static void validate_ondisk_uber(void)
 {
-	REQUIRE_OFFSET64(struct silofs_plogref384b, pl_apex, 0);
-	REQUIRE_OFFSET64(struct silofs_plogref384b, pl_edge, 256);
-	REQUIRE_SIZEOF(struct silofs_plogref384b, 384);
 	REQUIRE_OFFSET64(struct silofs_uber_node, ub_hdr, 0);
 	REQUIRE_OFFSET64(struct silofs_uber_node, ub_btime, 32);
 	REQUIRE_OFFSET64(struct silofs_uber_node, ub_ctime, 48);

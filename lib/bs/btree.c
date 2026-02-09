@@ -54,7 +54,7 @@ static void bti_decref(struct silofs_btnode_info *bti)
 static const struct silofs_paddr *
 bti_paddr(const struct silofs_btnode_info *bti)
 {
-	return &bti->btn_pni.pn_meta.paddr;
+	return &bti->btn_pni.pn_self.paddr;
 }
 
 static const struct silofs_blobid *

@@ -24,7 +24,7 @@
 
 /* base of all persistent nodes */
 struct silofs_pnode_info {
-	struct silofs_pnodeptr   pn_meta;
+	struct silofs_pnodeptr   pn_self;
 	struct silofs_hmapq_elem pn_hmqe;
 	struct silofs_view      *pn_view;
 };
@@ -49,6 +49,9 @@ struct silofs_btnode_info {
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+const struct silofs_pnodeptr *
+silofs_pni_self(const struct silofs_pnode_info *pni);
 
 enum silofs_mtype silofs_pni_mtype(const struct silofs_pnode_info *pni);
 

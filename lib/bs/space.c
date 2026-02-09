@@ -22,6 +22,7 @@
 #include "nodes.h"
 #include "uber.h"
 #include "space.h"
+#include "exectx.h"
 
 static void
 make_uniq_blobid(struct silofs_prandgen *prng, enum silofs_mtype mtype,
@@ -45,34 +46,34 @@ make_base_paddr(struct silofs_prandgen *prng, enum silofs_mtype mtype,
 	silofs_paddr_init(out_paddr, &blobid, 0);
 }
 
-void silofs_make_base_pnodeptr(struct silofs_prandgen *prng,
-                               enum silofs_mtype mtype,
-                               struct silofs_pnodeptr *out_pnodeptr)
+static void
+ignite_space_at(struct silofs_prandgen *prng, const struct silofs_paddr *paddr,
+                struct silofs_pnodeptr *out_pnodeptr)
 {
-	struct silofs_paddr paddr;
 	struct silofs_civkey civkey;
 
-	make_base_paddr(prng, mtype, &paddr);
 	silofs_generate_civkey(prng, &civkey);
-	silofs_pnodeptr_setup(out_pnodeptr, &paddr, &civkey);
+	silofs_pnodeptr_setup(out_pnodeptr, paddr, &civkey);
 }
 
-void silofs_trigger_ubspace(struct silofs_prandgen *prng,
-                            struct silofs_plogref *out_plogref)
+static void
+ignite_space_of(struct silofs_prandgen *prng, enum silofs_mtype mtype,
+                struct silofs_pnodeptr *out_pnodeptr)
 {
-	silofs_make_base_pnodeptr(prng, SILOFS_MTYPE_UBER, &out_plogref->apex);
-	silofs_paddr_next(&out_plogref->apex.paddr, &out_plogref->edge);
-	out_plogref->vspace = SILOFS_MTYPE_NONE;
+	struct silofs_paddr paddr = {};
+
+	make_base_paddr(prng, mtype, &paddr);
+	ignite_space_at(prng, &paddr, out_pnodeptr);
 }
 
-void silofs_trigger_btspace(struct silofs_prandgen *prng,
-                            enum silofs_mtype vspace,
-                            struct silofs_plogref *out_plogref)
+void silofs_ignite_ubspace(const struct silofs_task_ctx *task,
+                           struct silofs_pnodeptr *out_pnodeptr)
 {
-	silofs_assert(silofs_mtype_isvnode(vspace));
+	ignite_space_of(task->prng, SILOFS_MTYPE_UBER, out_pnodeptr);
+}
 
-	silofs_make_base_pnodeptr(prng, SILOFS_MTYPE_BTNODE,
-	                          &out_plogref->apex);
-	silofs_paddr_next(&out_plogref->apex.paddr, &out_plogref->edge);
-	out_plogref->vspace = vspace;
+void silofs_ignite_btspace(const struct silofs_task_ctx *task,
+                           struct silofs_pnodeptr *out_pnodeptr)
+{
+	ignite_space_of(task->prng, SILOFS_MTYPE_BTNODE, out_pnodeptr);
 }

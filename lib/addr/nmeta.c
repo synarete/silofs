@@ -131,7 +131,8 @@ void silofs_pnodeptr_assign(struct silofs_pnodeptr *pnodeptr,
 
 bool silofs_pnodeptr_isnull(const struct silofs_pnodeptr *pnodeptr)
 {
-	return silofs_paddr_isnull(&pnodeptr->paddr);
+	return silofs_paddr_isnull(&pnodeptr->paddr) ||
+	       !pnodeptr->nmeta.ciargs.algo || !pnodeptr->nmeta.ciargs.mode;
 }
 
 void silofs_pnodeptr256b_htox(struct silofs_pnodeptr256b *pnodeptr256,
@@ -153,39 +154,4 @@ void silofs_pnodeptr256b_xtoh(const struct silofs_pnodeptr256b *pnodeptr256,
 	pnodeptr->nsub_vobjs = silofs_le64_to_cpu(pnodeptr256->pn_nsub_vobjs);
 	pnodeptr->nsub_btnodes =
 		silofs_le32_to_cpu(pnodeptr256->pn_nsub_btnodes);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static const struct silofs_plogref s_plogref_none = {
-	.apex.nmeta.ciargs.algo = SILOFS_CIPHER_NONE,
-	.apex.nmeta.ciargs.mode = SILOFS_CIPHER_MODE_NONE,
-	.apex.paddr.pos         = SILOFS_OFF_NULL,
-	.apex.paddr.mtype       = SILOFS_MTYPE_NONE,
-	.apex.paddr.btype       = SILOFS_BTYPE_NONE,
-	.apex.nsub_vobjs        = 0,
-	.apex.nsub_btnodes      = 0,
-	.edge.pos               = SILOFS_OFF_NULL,
-	.vspace                 = SILOFS_MTYPE_NONE,
-};
-
-const struct silofs_plogref *silofs_plogref_none(void)
-{
-	return &s_plogref_none;
-}
-
-void silofs_plogref384b_htox(struct silofs_plogref384b *plogref384,
-                             const struct silofs_plogref *plogref)
-{
-	memset(plogref384, 0, sizeof(*plogref384));
-	silofs_pnodeptr256b_htox(&plogref384->pl_apex, &plogref->apex);
-	silofs_paddr64b_htox(&plogref384->pl_edge, &plogref->edge);
-}
-
-void silofs_plogref384b_xtoh(const struct silofs_plogref384b *plogref384,
-                             struct silofs_plogref *plogref)
-{
-	silofs_pnodeptr256b_xtoh(&plogref384->pl_apex, &plogref->apex);
-	silofs_paddr64b_xtoh(&plogref384->pl_edge, &plogref->edge);
-	plogref->vspace = SILOFS_MTYPE_NONE;
 }

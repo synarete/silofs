@@ -320,6 +320,12 @@ static void btn_setup(struct silofs_btree_node *btn)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+const struct silofs_pnodeptr *
+silofs_bti_self(const struct silofs_btnode_info *bti)
+{
+	return silofs_pni_self(&bti->btn_pni);
+}
+
 void silofs_bti_incref(struct silofs_btnode_info *bti)
 {
 	silofs_pni_incref(&bti->btn_pni);
@@ -338,6 +344,11 @@ void silofs_bti_dirtify(struct silofs_btnode_info *bti)
 void silofs_bti_undirtify(struct silofs_btnode_info *bti)
 {
 	silofs_pni_undirtify(&bti->btn_pni);
+}
+
+enum silofs_mtype silofs_bti_vspace(const struct silofs_btnode_info *bti)
+{
+	return btn_vspace(bti->btn);
 }
 
 void silofs_bti_set_vspace(struct silofs_btnode_info *bti,

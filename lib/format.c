@@ -115,20 +115,14 @@ static int flush_destage_dirty(struct silofs_task_ctx *task)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static void trigger_ubspace(const struct silofs_task_ctx *task,
-                            struct silofs_plogref *out_plogref)
-{
-	silofs_trigger_ubspace(task->env->base.prng, out_plogref);
-}
-
 static int format_uber(struct silofs_task_ctx *task)
 {
-	struct silofs_plogref plogref = {};
-	struct silofs_uber_info *ubi  = nullptr;
+	struct silofs_pnodeptr pnodeptr = {};
+	struct silofs_uber_info *ubi    = nullptr;
 	int err;
 
-	trigger_ubspace(task, &plogref);
-	err = silofs_spawn_uber(task->env, &plogref.apex, &ubi);
+	silofs_ignite_ubspace(task, &pnodeptr);
+	err = silofs_spawn_uber(task->env, &pnodeptr, &ubi);
 	if (err) {
 		return err;
 	}
@@ -138,28 +132,21 @@ static int format_uber(struct silofs_task_ctx *task)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void
-trigger_btspace(const struct silofs_task_ctx *task, enum silofs_mtype vspace,
-                struct silofs_plogref *out_plogref)
-{
-	silofs_trigger_btspace(task->env->base.prng, vspace, out_plogref);
-}
-
 static int
 spawn_btree_root(struct silofs_task_ctx *task, enum silofs_mtype vspace)
 {
-	struct silofs_plogref plogref  = {};
-	struct silofs_btnode_info *bti = nullptr;
+	struct silofs_pnodeptr pnodeptr = {};
+	struct silofs_btnode_info *bti  = nullptr;
 	int err;
 
-	trigger_btspace(task, vspace, &plogref);
-	err = silofs_spawn_btnode(task->env, &plogref.apex, &bti);
+	silofs_ignite_btspace(task, &pnodeptr);
+	err = silofs_spawn_btnode(task->env, &pnodeptr, &bti);
 	if (err) {
 		return err;
 	}
 	silofs_bti_set_vspace(bti, vspace);
 
-	silofs_ubi_set_child(task->env->ubi, vspace, &plogref);
+	silofs_ubi_set_child_by(task->env->ubi, bti);
 	return 0;
 }
 

@@ -114,16 +114,16 @@ static int reload_uber(struct silofs_task_ctx *task)
 static int
 stage_btree_root(struct silofs_task_ctx *task, enum silofs_mtype mtype)
 {
-	struct silofs_plogref plogref;
-	struct silofs_btnode_info *bti = nullptr;
+	struct silofs_pnodeptr pnodeptr = {};
+	struct silofs_btnode_info *bti  = nullptr;
 	int err;
 
-	silofs_ubi_get_child(task->env->ubi, mtype, &plogref);
-	if (silofs_paddr_isnull(&plogref.apex.paddr)) {
+	silofs_ubi_get_child(task->env->ubi, mtype, &pnodeptr);
+	if (silofs_pnodeptr_isnull(&pnodeptr)) {
 		log_dbg("missing btree root: mtype=%d", mtype);
 		return -SILOFS_ENOENT;
 	}
-	err = silofs_stage_btnode(task->env, &plogref.apex, &bti);
+	err = silofs_stage_btnode(task->env, &pnodeptr, &bti);
 	if (err) {
 		return err;
 	}

@@ -48,7 +48,6 @@ silofs_utests_SOURCES += ut_inspect.c
 silofs_utests_SOURCES += ut_ioctl.c
 silofs_utests_SOURCES += ut_namei.c
 silofs_utests_SOURCES += ut_parseconf.c
-# silofs_utests_SOURCES += ut_preserve.c
 silofs_utests_SOURCES += ut_qalloc.c
 silofs_utests_SOURCES += ut_reload.c
 silofs_utests_SOURCES += ut_rename.c

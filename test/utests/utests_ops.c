@@ -2045,10 +2045,3 @@ void ut_fork_fs(struct ut_env *ute)
 	ut_expect_ok(err);
 }
 
-void ut_preserve_fs(struct ut_env *ute)
-{
-	int err;
-
-	err = silofs_preserve_fs(ute->env, &ute->fsrefs.main, &ute->arfsref);
-	ut_expect_ok(err);
-}

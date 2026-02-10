@@ -18,6 +18,7 @@
 #define SILOFS_TIMES_H_
 
 #include <time.h>
+#include <unistd.h>
 
 int silofs_init_times(void);
 

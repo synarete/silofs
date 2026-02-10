@@ -386,8 +386,10 @@ static void
 bti_init(struct silofs_btnode_info *bti, const struct silofs_nodeptr *nodeptr)
 {
 	pni_init(&bti->btn_pni, nodeptr);
-	bti->btn        = nullptr;
-	bti->btn_rdonly = false;
+	bti->btn              = nullptr;
+	bti->btp_nsub_vobjs   = 0;
+	bti->btp_nsub_btnodes = 0;
+	bti->btn_rdonly       = false;
 }
 
 static void bti_fini(struct silofs_btnode_info *bti)

@@ -114,16 +114,16 @@ static int reload_uber(struct silofs_task_ctx *task)
 static int
 stage_btree_root(struct silofs_task_ctx *task, enum silofs_mtype mtype)
 {
-	struct silofs_nodeptr nodeptr  = {};
+	struct silofs_btnptr btnptr    = {};
 	struct silofs_btnode_info *bti = nullptr;
 	int err;
 
-	silofs_ubi_get_child(task->env->ubi, mtype, &nodeptr);
-	if (silofs_nodeptr_isnull(&nodeptr)) {
+	silofs_ubi_get_child(task->env->ubi, mtype, &btnptr);
+	if (silofs_btnptr_isnull(&btnptr)) {
 		log_dbg("missing btree root: mtype=%d", mtype);
 		return -SILOFS_ENOENT;
 	}
-	err = silofs_stage_btnode(task->env, &nodeptr, &bti);
+	err = silofs_stage_btnode(task->env, &btnptr.base, &bti);
 	if (err) {
 		return err;
 	}

@@ -23,12 +23,10 @@
 struct silofs_nodeptr {
 	struct silofs_nmeta nmeta;
 	struct silofs_paddr paddr;
-	size_t              nsub_vobjs;
-	size_t              nsub_btnodes;
 };
 
 /* plog descriptor */
-struct silofs_plogdesc {
+struct silofs_spdesc {
 	struct silofs_paddr head;
 	struct silofs_paddr tail;
 };
@@ -59,28 +57,28 @@ void silofs_nodeptr_assign(struct silofs_nodeptr       *nodeptr,
 
 bool silofs_nodeptr_isnull(const struct silofs_nodeptr *nodeptr);
 
-void silofs_nodeptr256b_htox(struct silofs_nodeptr256b   *nodeptr256,
+void silofs_nodeptr192b_htox(struct silofs_nodeptr192b   *nodeptr192,
                              const struct silofs_nodeptr *nodeptr);
 
-void silofs_nodeptr256b_xtoh(const struct silofs_nodeptr256b *nodeptr256,
+void silofs_nodeptr192b_xtoh(const struct silofs_nodeptr192b *nodeptr192,
                              struct silofs_nodeptr           *nodeptr);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-const struct silofs_plogdesc *silofs_plogdesc_none(void);
+const struct silofs_spdesc *silofs_spdesc_none(void);
 
-void silofs_plogdesc_setup(struct silofs_plogdesc    *pldesc,
-                           const struct silofs_paddr *head,
-                           const struct silofs_paddr *tail);
+void silofs_spdesc_setup(struct silofs_spdesc      *pldesc,
+                         const struct silofs_paddr *head,
+                         const struct silofs_paddr *tail);
 
-void silofs_plogdesc_ignite(struct silofs_plogdesc    *pldesc,
-                            const struct silofs_paddr *paddr);
+void silofs_spdesc_ignite(struct silofs_spdesc      *pldesc,
+                          const struct silofs_paddr *paddr);
 
-void silofs_plogdesc_htox(struct silofs_plogdesc128b   *plogdesc128,
-                          const struct silofs_plogdesc *plogdesc);
+void silofs_spdesc_htox(struct silofs_spdesc128b   *spdesc128,
+                        const struct silofs_spdesc *spdesc);
 
-void silofs_plogdesc_xtoh(const struct silofs_plogdesc128b *plogdesc128,
-                          struct silofs_plogdesc           *plogdesc);
+void silofs_spdesc_xtoh(const struct silofs_spdesc128b *spdesc128,
+                        struct silofs_spdesc           *spdesc);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

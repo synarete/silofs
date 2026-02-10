@@ -103,44 +103,44 @@ static void ubn_inc_generation(struct silofs_uber_node *ubn)
 }
 
 static void ubn_get_child(const struct silofs_uber_node *ubn, size_t slot,
-                          struct silofs_nodeptr *out_nodeptr)
+                          struct silofs_btnptr *out_btnptr)
 {
 	silofs_assert_lt(slot, ARRAY_SIZE(ubn->ub_child));
 
-	silofs_nodeptr256b_xtoh(&ubn->ub_child[slot], out_nodeptr);
+	silofs_btnptr256b_xtoh(&ubn->ub_child[slot], out_btnptr);
 }
 
 static void
 ubn_get_child_of(const struct silofs_uber_node *ubn, enum silofs_mtype vspace,
-                 struct silofs_nodeptr *out_nodeptr)
+                 struct silofs_btnptr *out_btnptr)
 {
 	const size_t slot = ubn_slot_of(ubn, vspace);
 
 	silofs_assert(silofs_mtype_isvnode(vspace));
-	ubn_get_child(ubn, slot, out_nodeptr);
+	ubn_get_child(ubn, slot, out_btnptr);
 }
 
 static void ubn_set_child(struct silofs_uber_node *ubn, size_t slot,
-                          const struct silofs_nodeptr *nodeptr)
+                          const struct silofs_btnptr *btnptr)
 {
 	silofs_assert_lt(slot, ARRAY_SIZE(ubn->ub_child));
 
-	silofs_nodeptr256b_htox(&ubn->ub_child[slot], nodeptr);
+	silofs_btnptr256b_htox(&ubn->ub_child[slot], btnptr);
 }
 
 static void
 ubn_set_child_of(struct silofs_uber_node *ubn, enum silofs_mtype vspace,
-                 const struct silofs_nodeptr *nodeptr)
+                 const struct silofs_btnptr *btnptr)
 {
 	const size_t slot = ubn_slot_of(ubn, vspace);
 
 	silofs_assert(silofs_mtype_isvnode(vspace));
-	ubn_set_child(ubn, slot, nodeptr);
+	ubn_set_child(ubn, slot, btnptr);
 }
 
 static void ubn_reset_child(struct silofs_uber_node *ubn, size_t slot)
 {
-	ubn_set_child(ubn, slot, silofs_nodeptr_none());
+	ubn_set_child(ubn, slot, silofs_btnptr_none());
 }
 
 static void ubn_reset_childs(struct silofs_uber_node *ubn)
@@ -151,16 +151,16 @@ static void ubn_reset_childs(struct silofs_uber_node *ubn)
 }
 
 static void ubn_set_pldesc(struct silofs_uber_node *ubn, size_t slot,
-                           const struct silofs_plogdesc *plogdesc)
+                           const struct silofs_spdesc *spdesc)
 {
 	silofs_assert_lt(slot, ARRAY_SIZE(ubn->ub_pldesc));
 
-	silofs_plogdesc_htox(&ubn->ub_pldesc[slot], plogdesc);
+	silofs_spdesc_htox(&ubn->ub_pldesc[slot], spdesc);
 }
 
 static void ubn_reset_pldesc(struct silofs_uber_node *ubn, size_t slot)
 {
-	ubn_set_pldesc(ubn, slot, silofs_plogdesc_none());
+	ubn_set_pldesc(ubn, slot, silofs_spdesc_none());
 }
 
 static void ubn_reset_pldescs(struct silofs_uber_node *ubn)
@@ -213,9 +213,9 @@ void silofs_ubi_undirtify(struct silofs_uber_info *ubi)
 
 void silofs_ubi_set_child(struct silofs_uber_info *ubi,
                           enum silofs_mtype vspace,
-                          const struct silofs_nodeptr *nodeptr)
+                          const struct silofs_btnptr *btnptr)
 {
-	ubn_set_child_of(ubi->ubn, vspace, nodeptr);
+	ubn_set_child_of(ubi->ubn, vspace, btnptr);
 	ubn_inc_generation(ubi->ubn);
 	silofs_ubi_dirtify(ubi);
 }
@@ -223,15 +223,17 @@ void silofs_ubi_set_child(struct silofs_uber_info *ubi,
 void silofs_ubi_set_child_by(struct silofs_uber_info *ubi,
                              const struct silofs_btnode_info *bti)
 {
-	silofs_ubi_set_child(ubi, silofs_bti_vspace(bti),
-	                     silofs_bti_self(bti));
+	struct silofs_btnptr btnptr;
+
+	silofs_bti_self(bti, &btnptr);
+	silofs_ubi_set_child(ubi, silofs_bti_vspace(bti), &btnptr);
 }
 
 void silofs_ubi_get_child(const struct silofs_uber_info *ubi,
                           enum silofs_mtype vspace,
-                          struct silofs_nodeptr *out_nodeptr)
+                          struct silofs_btnptr *out_btnptr)
 {
-	ubn_get_child_of(ubi->ubn, vspace, out_nodeptr);
+	ubn_get_child_of(ubi->ubn, vspace, out_btnptr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

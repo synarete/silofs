@@ -108,13 +108,13 @@ static void mbr1k_gen_uuid(struct silofs_mbr1k *mbr1k)
 static void mbr1k_root(const struct silofs_mbr1k *mbr1k,
                        struct silofs_nodeptr *out_nodeptr)
 {
-	silofs_nodeptr256b_xtoh(&mbr1k->mbr_root, out_nodeptr);
+	silofs_nodeptr192b_xtoh(&mbr1k->mbr_root, out_nodeptr);
 }
 
 static void mbr1k_set_root(struct silofs_mbr1k *mbr1k,
                            const struct silofs_nodeptr *nodeptr)
 {
-	silofs_nodeptr256b_htox(&mbr1k->mbr_root, nodeptr);
+	silofs_nodeptr192b_htox(&mbr1k->mbr_root, nodeptr);
 }
 
 static void mbr1k_reset_root(struct silofs_mbr1k *mbr1k)

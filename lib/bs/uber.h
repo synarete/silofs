@@ -27,16 +27,16 @@ void silofs_ubi_dirtify(struct silofs_uber_info *ubi);
 
 void silofs_ubi_undirtify(struct silofs_uber_info *ubi);
 
-void silofs_ubi_set_child(struct silofs_uber_info     *ubi,
-                          enum silofs_mtype            vspace,
-                          const struct silofs_nodeptr *nodeptr);
+void silofs_ubi_set_child(struct silofs_uber_info    *ubi,
+                          enum silofs_mtype           vspace,
+                          const struct silofs_btnptr *btnptr);
 
 void silofs_ubi_set_child_by(struct silofs_uber_info         *ubi,
                              const struct silofs_btnode_info *bti);
 
 void silofs_ubi_get_child(const struct silofs_uber_info *ubi,
                           enum silofs_mtype              vspace,
-                          struct silofs_nodeptr         *out_nodeptr);
+                          struct silofs_btnptr          *out_btnptr);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

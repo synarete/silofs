@@ -260,7 +260,7 @@ static void cmd_mount_parse_optargs(struct cmd_mount_ctx *ctx)
 
 static void cmd_mount_setup_spec(struct cmd_mount_ctx *ctx)
 {
-	cmd_spec_setup1(&ctx->spec, (enum silofs_flags)ctx->in_args.flags);
+	cmd_spec_setup1(&ctx->spec, ctx->in_args.flags);
 	cmd_spec_own_passwd(&ctx->spec, &ctx->in_args.password);
 	cmd_spec_set_baseref(&ctx->spec, ctx->in_args.repodir_real,
 	                     ctx->in_args.fsname);

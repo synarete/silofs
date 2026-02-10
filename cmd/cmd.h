@@ -335,10 +335,9 @@ void cmd_mkpasswd(struct silofs_password *pw, const char *pass);
 /* spec */
 void cmd_spec_setup(struct silofs_spec *spec);
 
-void cmd_spec_setup1(struct silofs_spec *spec, enum silofs_flags flags);
+void cmd_spec_setup1(struct silofs_spec *spec, int flags);
 
-void cmd_spec_setup2(struct silofs_spec *spec, size_t fs_capacity,
-                     enum silofs_flags flags);
+void cmd_spec_setup2(struct silofs_spec *spec, size_t fs_capacity, int flags);
 
 void cmd_spec_update_fsref(struct silofs_spec        *spec,
                            const struct silofs_fsref *fsref);

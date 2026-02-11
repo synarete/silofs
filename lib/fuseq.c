@@ -2056,6 +2056,12 @@ static int fcc_reply_readdir(const struct silofs_fuseq_cmd_ctx *fcc,
 	return fqs_reply_readdir(fcc->fqs, fcc->task, buf, len, err);
 }
 
+static int fcc_reply_readdir_it(const struct silofs_fuseq_cmd_ctx *fcc,
+                                const struct silofs_fuseq_diter *dit, int err)
+{
+	return fcc_reply_readdir(fcc, dit->buf, dit->len, err);
+}
+
 static int
 fcc_reply_write(const struct silofs_fuseq_cmd_ctx *fcc, size_t cnt, int err)
 {
@@ -2521,7 +2527,7 @@ static int do_readdir(const struct silofs_fuseq_cmd_ctx *fcc)
 	fcc->args->in.readdir.rd_ctx = &dit->rd_ctx;
 
 	err = do_exec_op(fcc);
-	ret = fcc_reply_readdir(fcc, dit->buf, dit->bsz, err);
+	ret = fcc_reply_readdir_it(fcc, dit, err);
 	diter_done(dit);
 	return ret;
 }
@@ -2540,7 +2546,7 @@ static int do_readdirplus(const struct silofs_fuseq_cmd_ctx *fcc)
 	fcc->args->in.readdir.rd_ctx = &dit->rd_ctx;
 
 	err = do_exec_op(fcc);
-	ret = fcc_reply_readdir(fcc, dit->buf, dit->bsz, err);
+	ret = fcc_reply_readdir_it(fcc, dit, err);
 	diter_done(dit);
 	return ret;
 }

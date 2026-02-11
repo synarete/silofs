@@ -2044,4 +2044,3 @@ void ut_fork_fs(struct ut_env *ute)
 	err = silofs_fork_fs(ute->env, &ute->fsrefs);
 	ut_expect_ok(err);
 }
-

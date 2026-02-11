@@ -1062,24 +1062,37 @@ int silofs_do_mknod(struct silofs_task_ctx *task,
 	return err;
 }
 
+/*
+ * FMODE_EXEC is Linux kernel internal value (1 << 5), which is not used by
+ * the O_xxx flags (see comment in <asm-generic/fcntl.h>). Interestingly, it is
+ * propagated via FUSE, probably unintentionally. Need further investigation.
+ */
+#define FMODE_EXEC 040
+
 static int o_flags_to_rwx(int o_flags)
 {
-	int mask = 0;
+	int rwx = 0;
+	int mask;
 
 	if ((o_flags & O_RDWR) == O_RDWR) {
-		mask = R_OK | W_OK;
+		rwx = R_OK | W_OK;
 	} else if ((o_flags & O_WRONLY) == O_WRONLY) {
-		mask = W_OK;
+		rwx = W_OK;
 	} else if ((o_flags & O_RDONLY) == O_RDONLY) {
-		mask = R_OK;
+		rwx = R_OK;
 	}
 	if ((o_flags & O_TRUNC) == O_TRUNC) {
-		mask |= W_OK;
+		rwx |= W_OK;
 	}
 	if ((o_flags & O_APPEND) == O_APPEND) {
-		mask |= W_OK;
+		rwx |= W_OK;
 	}
-	return mask;
+	/* special case of Kernel's execve */
+	mask = (O_LARGEFILE | FMODE_EXEC);
+	if ((o_flags & mask) == mask) {
+		rwx |= X_OK;
+	}
+	return rwx;
 }
 
 static int check_open_flags(const struct silofs_inode_info *ii, int o_flags)

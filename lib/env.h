@@ -29,7 +29,6 @@
 struct silofs_env_opstat {
 	size_t op_iopen_max;
 	size_t op_iopen;
-	time_t op_time;
 	size_t op_count;
 	/* TODO: Have counter per-operation */
 };

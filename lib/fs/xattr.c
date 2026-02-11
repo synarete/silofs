@@ -664,14 +664,21 @@ xac_check_xattr_name(const struct silofs_xattr_ctx *xa_ctx, int w_mode)
 	return 0;
 }
 
+static int xac_check_imode(const struct silofs_xattr_ctx *xa_ctx)
+{
+	const mode_t mode = silofs_ii_mode(xa_ctx->ii);
+
+	return (S_ISCHR(mode) || S_ISBLK(mode)) ? -SILOFS_EINVAL : 0;
+}
+
 static int xac_check_op(const struct silofs_xattr_ctx *xa_ctx, int access_mode)
 {
 	struct silofs_inode_info *ii = xa_ctx->ii;
-	const mode_t mode            = silofs_ii_mode(ii);
 	int err;
 
-	if (S_ISCHR(mode) || S_ISBLK(mode)) {
-		return -SILOFS_EINVAL;
+	err = xac_check_imode(xa_ctx);
+	if (err) {
+		return err;
 	}
 	err = xac_check_xattr_name(xa_ctx, access_mode & W_OK);
 	if (err) {

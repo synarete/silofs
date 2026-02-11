@@ -52,6 +52,7 @@ struct silofs_task_ctx {
 	bool                        priv_op;
 	bool                        kwrite;
 	bool                        runnable;
+	bool                        internal;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

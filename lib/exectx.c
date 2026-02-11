@@ -100,6 +100,7 @@ void silofs_task_init(struct silofs_task_ctx *task, struct silofs_env *env)
 	task->priv_op   = false;
 	task->kwrite    = false;
 	task->runnable  = true;
+	task->internal  = false;
 }
 
 void silofs_task_fini(struct silofs_task_ctx *task)

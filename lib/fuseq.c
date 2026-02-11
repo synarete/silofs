@@ -2056,7 +2056,8 @@ static int do_setattr(const struct silofs_fuseq_cmd_ctx *fcc)
 		fcc->args->in.setattr.kill_suidgid = true;
 	}
 	fcc->args->in.setattr.ino = fcc->ino;
-	err                       = do_exec_op(fcc);
+
+	err = do_exec_op(fcc);
 	return fqs_reply_attr(fcc->fqs, fcc->task, &fcc->args->out.setattr.st,
 	                      err);
 }
@@ -2069,7 +2070,8 @@ static int do_lookup(const struct silofs_fuseq_cmd_ctx *fcc)
 
 	fcc->args->in.lookup.parent = fcc->ino;
 	fcc->args->in.lookup.name   = fcc->in->u.lookup.name;
-	err                         = do_exec_op(fcc);
+
+	err = do_exec_op(fcc);
 	return fqs_reply_lookup(fcc->fqs, fcc->task, &fcc->args->out.lookup.st,
 	                        err);
 }
@@ -2080,7 +2082,8 @@ static int do_forget(const struct silofs_fuseq_cmd_ctx *fcc)
 
 	fcc->args->in.forget.ino     = fcc->ino;
 	fcc->args->in.forget.nlookup = fcc->in->u.forget.arg.nlookup;
-	err                          = do_exec_op(fcc);
+
+	err = do_exec_op(fcc);
 	unused(err);
 	return fqs_reply_none(fcc->fqs);
 }
@@ -2118,7 +2121,8 @@ static int do_getattr(const struct silofs_fuseq_cmd_ctx *fcc)
 
 	check_fh_of(fcc->task, fcc->ino, fcc->in->u.getattr.arg.fh);
 	fcc->args->in.getattr.ino = fcc->ino;
-	err                       = do_exec_op(fcc);
+
+	err = do_exec_op(fcc);
 	return fqs_reply_attr(fcc->fqs, fcc->task, &fcc->args->out.getattr.st,
 	                      err);
 }
@@ -2130,7 +2134,8 @@ static int do_statx(const struct silofs_fuseq_cmd_ctx *fcc)
 	check_fh_of(fcc->task, fcc->ino, fcc->in->u.statx.arg.fh);
 	fcc->args->in.statx.ino     = fcc->ino;
 	fcc->args->in.statx.sx_mask = fcc->in->u.statx.arg.sx_mask;
-	err                         = do_exec_op(fcc);
+
+	err = do_exec_op(fcc);
 	return fqs_reply_statx(fcc->fqs, fcc->task, &fcc->args->out.statx.st,
 	                       err);
 }
@@ -2145,7 +2150,8 @@ static int do_readlink(const struct silofs_fuseq_cmd_ctx *fcc)
 	fcc->args->in.readlink.ptr  = lnk;
 	fcc->args->in.readlink.lim  = sizeof(pab->path);
 	fcc->args->out.readlink.len = 0;
-	err                         = do_exec_op(fcc);
+
+	err = do_exec_op(fcc);
 	return fqs_reply_readlink(fcc->fqs, fcc->task, lnk,
 	                          fcc->args->out.readlink.len, err);
 }
@@ -2157,7 +2163,8 @@ static int do_symlink(const struct silofs_fuseq_cmd_ctx *fcc)
 	fcc->args->in.symlink.parent = fcc->ino;
 	fcc->args->in.symlink.name   = fcc->in->u.symlink.name_target;
 	fcc->args->in.symlink.symval = after_name(fcc->args->in.symlink.name);
-	err                          = do_exec_op(fcc);
+
+	err = do_exec_op(fcc);
 	return fqs_reply_entry(fcc->fqs, fcc->task, &fcc->args->out.symlink.st,
 	                       err);
 }
@@ -2172,6 +2179,7 @@ static int do_mknod(const struct silofs_fuseq_cmd_ctx *fcc)
 	fcc->args->in.mknod.mode   = (mode_t)fcc->in->u.mknod.arg.mode;
 	fcc->args->in.mknod.umask  = (mode_t)fcc->in->u.mknod.arg.umask;
 	silofs_task_update_umask(fcc->task, fcc->args->in.mknod.umask);
+
 	err = do_exec_op(fcc);
 	return fqs_reply_entry(fcc->fqs, fcc->task, &fcc->args->out.mknod.st,
 	                       err);
@@ -2187,6 +2195,7 @@ static int do_mkdir(const struct silofs_fuseq_cmd_ctx *fcc)
 	fcc->args->in.mkdir.mode |= S_IFDIR;
 	fcc->args->in.mkdir.umask = (mode_t)fcc->in->u.mkdir.arg.umask;
 	silofs_task_update_umask(fcc->task, fcc->args->in.mkdir.umask);
+
 	err = do_exec_op(fcc);
 	return fqs_reply_entry(fcc->fqs, fcc->task, &fcc->args->out.mkdir.st,
 	                       err);
@@ -2198,7 +2207,8 @@ static int do_unlink(const struct silofs_fuseq_cmd_ctx *fcc)
 
 	fcc->args->in.unlink.parent = fcc->ino;
 	fcc->args->in.unlink.name   = fcc->in->u.unlink.name;
-	err                         = do_exec_op(fcc);
+
+	err = do_exec_op(fcc);
 	return fqs_reply_status(fcc->fqs, fcc->task, err);
 }
 
@@ -2208,7 +2218,8 @@ static int do_rmdir(const struct silofs_fuseq_cmd_ctx *fcc)
 
 	fcc->args->in.rmdir.parent = fcc->ino;
 	fcc->args->in.rmdir.name   = fcc->in->u.rmdir.name;
-	err                        = do_exec_op(fcc);
+
+	err = do_exec_op(fcc);
 	return fqs_reply_status(fcc->fqs, fcc->task, err);
 }
 
@@ -2221,7 +2232,8 @@ static int do_rename(const struct silofs_fuseq_cmd_ctx *fcc)
 	fcc->args->in.rename.newparent = (ino_t)(fcc->in->u.rename.arg.newdir);
 	fcc->args->in.rename.newname   = after_name(fcc->args->in.rename.name);
 	fcc->args->in.rename.flags     = 0;
-	err                            = do_exec_op(fcc);
+
+	err = do_exec_op(fcc);
 	return fqs_reply_status(fcc->fqs, fcc->task, err);
 }
 
@@ -2232,7 +2244,8 @@ static int do_link(const struct silofs_fuseq_cmd_ctx *fcc)
 	fcc->args->in.link.ino    = (ino_t)(fcc->in->u.link.arg.oldnodeid);
 	fcc->args->in.link.parent = fcc->ino;
 	fcc->args->in.link.name   = fcc->in->u.link.name;
-	err                       = do_exec_op(fcc);
+
+	err = do_exec_op(fcc);
 	return fqs_reply_entry(fcc->fqs, fcc->task, &fcc->args->out.link.st,
 	                       err);
 }
@@ -2248,7 +2261,8 @@ static int do_open(const struct silofs_fuseq_cmd_ctx *fcc)
 		testf(fcc->in->u.open.arg.open_flags, FUSE_OPEN_KILL_SUIDGID);
 	noflush = (fcc->args->in.open.o_flags & O_ACCMODE) == O_RDONLY;
 	fcc->args->in.open.noflush = noflush;
-	err                        = do_exec_op(fcc);
+
+	err = do_exec_op(fcc);
 	return fqs_reply_open(fcc->fqs, fcc->task, noflush > 0, err);
 }
 
@@ -2257,7 +2271,8 @@ static int do_statfs(const struct silofs_fuseq_cmd_ctx *fcc)
 	int err;
 
 	fcc->args->in.statfs.ino = fcc->ino;
-	err                      = do_exec_op(fcc);
+
+	err = do_exec_op(fcc);
 	return fqs_reply_statfs(fcc->fqs, fcc->task,
 	                        &fcc->args->out.statfs.stv, err);
 }
@@ -2271,6 +2286,7 @@ static int do_release(const struct silofs_fuseq_cmd_ctx *fcc)
 	fcc->args->in.release.o_flags = (int)fcc->in->u.release.arg.flags;
 	fcc->args->in.release.flush =
 		(fcc->in->u.release.arg.flags & FUSE_RELEASE_FLUSH) > 0;
+
 	err = do_exec_op(fcc);
 	return fqs_reply_status(fcc->fqs, fcc->task, err);
 }
@@ -2283,6 +2299,7 @@ static int do_fsync(const struct silofs_fuseq_cmd_ctx *fcc)
 	fcc->args->in.fsync.ino = fcc->ino;
 	fcc->args->in.fsync.datasync =
 		(fcc->in->u.fsync.arg.fsync_flags & 1) != 0;
+
 	err = do_exec_op(fcc);
 	return fqs_reply_status(fcc->fqs, fcc->task, err);
 }
@@ -2298,7 +2315,8 @@ static int do_setxattr1(const struct silofs_fuseq_cmd_ctx *fcc)
 	fcc->args->in.setxattr.size  = fcc->in->u.setxattr1.arg.size;
 	fcc->args->in.setxattr.flags = (int)(fcc->in->u.setxattr1.arg.flags);
 	fcc->args->in.setxattr.kill_sgid = false;
-	err                              = do_exec_op(fcc);
+
+	err = do_exec_op(fcc);
 	return fqs_reply_status(fcc->fqs, fcc->task, err);
 }
 
@@ -2315,6 +2333,7 @@ static int do_setxattr2(const struct silofs_fuseq_cmd_ctx *fcc)
 	fcc->args->in.setxattr.flags = (int)(fcc->in->u.setxattr.arg.flags);
 	fcc->args->in.setxattr.kill_sgid =
 		(fcc->args->in.setxattr.flags & mask) > 0;
+
 	err = do_exec_op(fcc);
 	return fqs_reply_status(fcc->fqs, fcc->task, err);
 }
@@ -2337,7 +2356,8 @@ static int do_getxattr(const struct silofs_fuseq_cmd_ctx *fcc)
 	fcc->args->in.getxattr.buf = fcc->args->in.getxattr.size ? xab->value :
 	                                                           nullptr;
 	fcc->args->out.getxattr.size = 0;
-	err                          = do_exec_op(fcc);
+
+	err = do_exec_op(fcc);
 	return fqs_reply_xattr(fcc->fqs, fcc->task, fcc->args->in.getxattr.buf,
 	                       fcc->args->out.getxattr.size, err);
 }
@@ -2351,7 +2371,8 @@ static int do_listxattr(const struct silofs_fuseq_cmd_ctx *fcc)
 	xiter_prep(xit, fcc->in->u.listxattr.arg.size);
 	fcc->args->in.listxattr.ino     = fcc->ino;
 	fcc->args->in.listxattr.lxa_ctx = &xit->lxa;
-	err                             = do_exec_op(fcc);
+
+	err = do_exec_op(fcc);
 	ret = fqs_reply_xattr(fcc->fqs, fcc->task, xit->beg, xit->cnt, err);
 	xiter_done(xit);
 	return ret;
@@ -2363,7 +2384,8 @@ static int do_removexattr(const struct silofs_fuseq_cmd_ctx *fcc)
 
 	fcc->args->in.removexattr.ino  = fcc->ino;
 	fcc->args->in.removexattr.name = fcc->in->u.removexattr.name;
-	err                            = do_exec_op(fcc);
+
+	err = do_exec_op(fcc);
 	return fqs_reply_status(fcc->fqs, fcc->task, err);
 }
 
@@ -2373,7 +2395,8 @@ static int do_flush(const struct silofs_fuseq_cmd_ctx *fcc)
 
 	check_fh_of(fcc->task, fcc->ino, fcc->in->u.flush.arg.fh);
 	fcc->args->in.flush.ino = fcc->ino;
-	err                     = do_exec_op(fcc);
+
+	err = do_exec_op(fcc);
 	return fqs_reply_status(fcc->fqs, fcc->task, err);
 }
 
@@ -2383,7 +2406,8 @@ static int do_opendir(const struct silofs_fuseq_cmd_ctx *fcc)
 
 	fcc->args->in.opendir.ino     = fcc->ino;
 	fcc->args->in.opendir.o_flags = (int)(fcc->in->u.opendir.arg.flags);
-	err                           = do_exec_op(fcc);
+
+	err = do_exec_op(fcc);
 	return fqs_reply_opendir(fcc->fqs, fcc->task, err);
 }
 
@@ -2399,7 +2423,8 @@ static int do_readdir(const struct silofs_fuseq_cmd_ctx *fcc)
 	diter_prep(dit, size, off, 0);
 	fcc->args->in.readdir.ino    = fcc->ino;
 	fcc->args->in.readdir.rd_ctx = &dit->rd_ctx;
-	err                          = do_exec_op(fcc);
+
+	err = do_exec_op(fcc);
 	ret = fqs_reply_readdir(fcc->fqs, fcc->task, dit, err);
 	diter_done(dit);
 	return ret;
@@ -2417,7 +2442,8 @@ static int do_readdirplus(const struct silofs_fuseq_cmd_ctx *fcc)
 	diter_prep(dit, size, off, 1);
 	fcc->args->in.readdir.ino    = fcc->ino;
 	fcc->args->in.readdir.rd_ctx = &dit->rd_ctx;
-	err                          = do_exec_op(fcc);
+
+	err = do_exec_op(fcc);
 	ret = fqs_reply_readdir(fcc->fqs, fcc->task, dit, err);
 	diter_done(dit);
 	return ret;
@@ -2443,6 +2469,7 @@ static int do_fsyncdir(const struct silofs_fuseq_cmd_ctx *fcc)
 	fcc->args->in.fsyncdir.ino = fcc->ino;
 	fcc->args->in.fsyncdir.datasync =
 		(fcc->in->u.fsyncdir.arg.fsync_flags & 1) != 0;
+
 	err = do_exec_op(fcc);
 	return fqs_reply_status(fcc->fqs, fcc->task, err);
 }
@@ -2453,7 +2480,8 @@ static int do_access(const struct silofs_fuseq_cmd_ctx *fcc)
 
 	fcc->args->in.access.ino  = fcc->ino;
 	fcc->args->in.access.mask = (int)(fcc->in->u.access.arg.mask);
-	err                       = do_exec_op(fcc);
+
+	err = do_exec_op(fcc);
 	return fqs_reply_status(fcc->fqs, fcc->task, err);
 }
 
@@ -2470,6 +2498,7 @@ static int do_create(const struct silofs_fuseq_cmd_ctx *fcc)
 		testf(fcc->in->u.create.arg.open_flags,
 	              FUSE_OPEN_KILL_SUIDGID);
 	silofs_task_update_umask(fcc->task, fcc->args->in.create.umask);
+
 	err = do_exec_op(fcc);
 	return fqs_reply_create(fcc->fqs, fcc->task, &fcc->args->out.create.st,
 	                        err);
@@ -2484,7 +2513,8 @@ static int do_fallocate(const struct silofs_fuseq_cmd_ctx *fcc)
 	fcc->args->in.fallocate.mode = (int)(fcc->in->u.fallocate.arg.mode);
 	fcc->args->in.fallocate.off = (off_t)(fcc->in->u.fallocate.arg.offset);
 	fcc->args->in.fallocate.len = (off_t)(fcc->in->u.fallocate.arg.length);
-	err                         = do_exec_op(fcc);
+
+	err = do_exec_op(fcc);
 	return fqs_reply_status(fcc->fqs, fcc->task, err);
 }
 
@@ -2498,7 +2528,8 @@ static int do_rename2(const struct silofs_fuseq_cmd_ctx *fcc)
 	fcc->args->in.rename.name    = fcc->in->u.rename2.name_newname;
 	fcc->args->in.rename.newname = after_name(fcc->args->in.rename.name);
 	fcc->args->in.rename.flags   = (int)(fcc->in->u.rename2.arg.flags);
-	err                          = do_exec_op(fcc);
+
+	err = do_exec_op(fcc);
 	return fqs_reply_status(fcc->fqs, fcc->task, err);
 }
 
@@ -2511,7 +2542,8 @@ static int do_lseek(const struct silofs_fuseq_cmd_ctx *fcc)
 	fcc->args->in.lseek.off    = (off_t)(fcc->in->u.lseek.arg.offset);
 	fcc->args->in.lseek.whence = (int)(fcc->in->u.lseek.arg.whence);
 	fcc->args->out.lseek.off   = -1;
-	err                        = do_exec_op(fcc);
+
+	err = do_exec_op(fcc);
 	return fqs_reply_lseek(fcc->fqs, fcc->task, fcc->args->out.lseek.off,
 	                       err);
 }
@@ -2536,7 +2568,8 @@ static int do_copy_file_range(const struct silofs_fuseq_cmd_ctx *fcc)
 	fcc->args->in.copy_file_range.flags =
 		(int)fcc->in->u.copy_file_range.arg.flags;
 	fcc->args->out.copy_file_range.ncp = 0;
-	err                                = do_exec_op(fcc);
+
+	err = do_exec_op(fcc);
 	ncp = fcc->args->out.copy_file_range.ncp;
 	return fqs_reply_copy_file_range(fcc->fqs, fcc->task, ncp, err);
 }
@@ -2546,7 +2579,8 @@ static int do_syncfs(const struct silofs_fuseq_cmd_ctx *fcc)
 	int err;
 
 	fcc->args->in.syncfs.ino = fcc->ino;
-	err                      = do_exec_op(fcc);
+
+	err = do_exec_op(fcc);
 	return fqs_reply_status(fcc->fqs, fcc->task, err);
 }
 
@@ -2628,6 +2662,7 @@ static int do_read_iter(const struct silofs_fuseq_cmd_ctx *fcc)
 	fcc->args->in.read.o_flags = (int)(fcc->in->u.read.arg.flags);
 	fqs_setup_rd_iter(fcc->fqs, fcc->task, fq_rdi, len,
 	                  fcc->args->in.read.off);
+
 	err = do_exec_op(fcc);
 	ret = fq_rdi_reply_read_iter(fq_rdi, err);
 	do_rdwr_post(fcc->task, 0, fq_rdi->iovec, fq_rdi->cnt);
@@ -2648,7 +2683,8 @@ static int do_read_buf(const struct silofs_fuseq_cmd_ctx *fcc)
 	fcc->args->in.read.rwi_ctx = nullptr;
 	fcc->args->in.read.o_flags = (int)(fcc->in->u.read.arg.flags);
 	fcc->args->out.read.nrd    = 0;
-	err                        = do_exec_op(fcc);
+
+	err = do_exec_op(fcc);
 	return fqs_reply_read_buf(fcc->fqs, fcc->task, dab->buf,
 	                          fcc->args->out.read.nrd, err);
 }
@@ -2850,7 +2886,8 @@ static int do_write_buf(const struct silofs_fuseq_cmd_ctx *fcc)
 		testf(fcc->in->u.write.arg.write_flags,
 	              FUSE_WRITE_KILL_SUIDGID);
 	fcc->args->out.write.nwr = 0;
-	err                      = do_exec_op(fcc);
+
+	err = do_exec_op(fcc);
 	ret = fqs_reply_write(fcc->fqs, fcc->task, fcc->args->out.write.nwr,
 	                      err);
 	return ret;
@@ -2878,6 +2915,7 @@ static int do_write_iter(const struct silofs_fuseq_cmd_ctx *fcc)
 	              FUSE_WRITE_KILL_SUIDGID);
 	fcc->args->out.write.nwr = 0;
 	fqs_setup_wr_iter(fcc->fqs, fq_wri, len, fcc->args->in.write.off);
+
 	err1 = do_exec_op(fcc);
 	if (!err1 || (err1 == -ENOSPC)) {
 		err2 = fq_wri_copy_iov(fq_wri); /* unlocked */
@@ -2932,7 +2970,8 @@ static int do_ioc_getflags(const struct silofs_fuseq_cmd_ctx *fcc)
 	}
 	fcc->task->auth.opcode    = FUSE_GETATTR;
 	fcc->args->in.getattr.ino = fcc->ino;
-	err                       = do_exec_op(fcc);
+
+	err = do_exec_op(fcc);
 	if (err) {
 		goto out;
 	}
@@ -3044,10 +3083,8 @@ static int do_ioc_syncfs(const struct silofs_fuseq_cmd_ctx *fcc)
 	fcc->args->ioc_cmd         = SILOFS_IOC_SYNCFS;
 	fcc->args->in.syncfs.ino   = fcc->ino;
 	fcc->args->in.syncfs.flags = (int)ioc_u.syncfs.flags;
-	err                        = do_exec_op(fcc);
-	if (err) {
-		goto out;
-	}
+
+	err = do_exec_op(fcc);
 out:
 	return fqs_reply_ioctl(fcc->fqs, fcc->task, 0, nullptr, 0, err);
 }
@@ -3073,10 +3110,8 @@ static int do_ioc_tune(const struct silofs_fuseq_cmd_ctx *fcc)
 	fcc->args->in.tune.ino         = fcc->ino;
 	fcc->args->in.tune.iflags_want = (int)ioc_u.tune.iflags_want;
 	fcc->args->in.tune.iflags_dont = (int)ioc_u.tune.iflags_dont;
-	err                            = do_exec_op(fcc);
-	if (err) {
-		goto out;
-	}
+
+	err = do_exec_op(fcc);
 out:
 	return fqs_reply_ioctl(fcc->fqs, fcc->task, 0, nullptr, 0, err);
 }
@@ -3315,6 +3350,11 @@ static struct silofs_fuseq_in *fqs_in_of(struct silofs_fuseq_sub *fqs)
 	return &fqs->fqs_inb->u.in;
 }
 
+static ino_t fqs_in_ino_of(const struct silofs_fuseq_sub *fqs)
+{
+	return fqs->fqs_inb->u.in.u.hdr.hdr.nodeid;
+}
+
 static const struct silofs_fuseq_in *
 fqs_in_of2(const struct silofs_fuseq_sub *fqs)
 {
@@ -3549,15 +3589,14 @@ static int call_oper_of(const struct silofs_fuseq_cmd_ctx *fcc,
 static int
 fqs_call_oper(struct silofs_fuseq_sub *fqs, struct silofs_task_ctx *task)
 {
-	const struct silofs_fuseq_cmd_desc *cmd_desc = nullptr;
-	const struct silofs_fuseq_in *in             = fqs_in_of(fqs);
-	const struct silofs_fuseq_cmd_ctx fcc        = {
-		       .fq   = fqs_fuseq2(fqs),
-		       .fqs  = fqs,
-		       .task = task,
-		       .args = &fqs->fqs_args,
-		       .in   = in,
-		       .ino  = in->u.hdr.hdr.nodeid,
+	const struct silofs_fuseq_cmd_desc *cmd_desc;
+	const struct silofs_fuseq_cmd_ctx fcc = {
+		.fq   = fqs_fuseq2(fqs),
+		.fqs  = fqs,
+		.task = task,
+		.args = &fqs->fqs_args,
+		.in   = fqs_in_of(fqs),
+		.ino  = fqs_in_ino_of(fqs),
 	};
 	int err = -SILOFS_ENOSYS;
 
@@ -4393,6 +4432,7 @@ static void fqs_setup_self_task(const struct silofs_fuseq_sub *fqs,
 	silofs_task_update_times(task, false);
 	task->auth.pid  = getpid();
 	task->exclusive = false;
+	task->internal  = true;
 }
 
 static int fqs_do_exec_maintain(struct silofs_fuseq_sub *fqs,

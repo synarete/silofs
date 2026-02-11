@@ -283,7 +283,6 @@ static void env_init_opstat(struct silofs_env *env)
 {
 	env->opstat.op_iopen_max = 0;
 	env->opstat.op_iopen     = 0;
-	env->opstat.op_time      = 0;
 	env->opstat.op_count     = 0;
 	env->opstat.op_iopen_max = 0;
 }

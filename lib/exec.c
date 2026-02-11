@@ -45,11 +45,12 @@
 
 static int op_start(struct silofs_task_ctx *task)
 {
-	struct silofs_env *env = task->env;
-
 	silofs_lock_fs_by(task);
-	env->opstat.op_time = task->op_start_time = silofs_time_mono_now();
-	env->opstat.op_count++;
+
+	task->op_start_time = silofs_time_mono_now();
+	if (!task->internal) {
+		task->env->opstat.op_count++;
+	}
 	return 0;
 }
 
@@ -95,6 +96,7 @@ static int op_finish(struct silofs_task_ctx *task, int err)
 
 	op_probe_duration(task, err);
 	err2 = op_unlooseq(task);
+
 	silofs_unlock_fs_by(task);
 	return err ? err : err2;
 }

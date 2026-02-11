@@ -62,34 +62,47 @@ test_boundaries_arr_(struct ft_env *fte, const off_t *arr, size_t cnt)
 	}
 }
 
-static void test_boundaries_write_read(struct ft_env *fte)
+static void test_rw_boundaries_aligned(struct ft_env *fte)
 {
-	const off_t offs[] = { 0,
-		               FT_1K,
-		               FT_2K,
-		               FT_4K,
-		               FT_8K,
-		               FT_64K,
-		               FT_1M,
-		               FT_2M + 1,
-		               FT_1G,
-		               7 * FT_1G - 7,
-		               FT_1T,
-		               FT_1T / 2 - 1,
-		               FT_FILESIZE_MAX / 2,
-		               FT_FILESIZE_MAX / 2 + 1,
-		               FT_FILESIZE_MAX };
+	const off_t offs[] = {
+		0,
+		FT_1K,
+		FT_2K,
+		FT_4K,
+		FT_8K,
+		FT_64K,
+		FT_1M,
+		FT_1G,
+		FT_1T,
+		FT_FILESIZE_MAX / 2,
+		FT_FILESIZE_MAX,
+	};
 
 	test_boundaries_arr_(fte, offs, FT_ARRAY_SIZE(offs));
 }
 
-static void test_boundaries_tree_levels(struct ft_env *fte)
+static void test_rw_boundaries_unaligned(struct ft_env *fte)
 {
-	const off_t offs[] = { FT_BK_SIZE, FT_BK_SIZE * FT_FILEMAP_NCHILD,
-		               FT_BK_SIZE * FT_FILEMAP_NCHILD *
-		                       FT_FILEMAP_NCHILD,
-		               FT_BK_SIZE * FT_FILEMAP_NCHILD *
-		                       FT_FILEMAP_NCHILD * FT_FILEMAP_NCHILD };
+	const off_t offs[] = {
+		FT_64K - 11,
+		FT_2M + 1,
+		7 * FT_1G - 7,
+		FT_1T / 2 - 1,
+		FT_FILESIZE_MAX / 2 + 1,
+	};
+
+	test_boundaries_arr_(fte, offs, FT_ARRAY_SIZE(offs));
+}
+
+static void test_rw_boundaries_tree_levels(struct ft_env *fte)
+{
+	const off_t offs[] = {
+		FT_BK_SIZE,
+		FT_BK_SIZE * FT_FILEMAP_NCHILD,
+		FT_BK_SIZE * FT_FILEMAP_NCHILD * FT_FILEMAP_NCHILD,
+		FT_BK_SIZE * FT_FILEMAP_NCHILD * FT_FILEMAP_NCHILD *
+			FT_FILEMAP_NCHILD,
+	};
 
 	test_boundaries_arr_(fte, offs, FT_ARRAY_SIZE(offs));
 }
@@ -97,8 +110,9 @@ static void test_boundaries_tree_levels(struct ft_env *fte)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ft_tdef ft_local_tests[] = {
-	FT_DEFTEST(test_boundaries_write_read),
-	FT_DEFTEST(test_boundaries_tree_levels),
+	FT_DEFTEST(test_rw_boundaries_aligned),
+	FT_DEFTEST(test_rw_boundaries_unaligned),
+	FT_DEFTEST(test_rw_boundaries_tree_levels),
 };
 
-const struct ft_tests ft_test_boundaries = FT_DEFTESTS(ft_local_tests);
+const struct ft_tests ft_test_rw_boundaries = FT_DEFTESTS(ft_local_tests);

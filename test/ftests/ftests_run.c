@@ -48,7 +48,7 @@ static const struct ft_tests *const ft_testsbl[] = {
 	FT_METATEST(ft_test_truncate),
 	FT_METATEST(ft_test_namespace),
 	FT_METATEST(ft_test_rw_basic),
-	FT_METATEST(ft_test_boundaries),
+	FT_METATEST(ft_test_rw_boundaries),
 	FT_METATEST(ft_test_rw_sequencial),
 	FT_METATEST(ft_test_rw_sparse),
 	FT_METATEST(ft_test_rw_random),

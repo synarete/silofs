@@ -177,7 +177,7 @@ static void validate_ondisk_addrs(void)
 	REQUIRE_SIZEOF(struct silofs_paddr64b, 64);
 	REQUIRE_SIZEOF(struct silofs_nodeptr192b, 192);
 	REQUIRE_SIZEOF(struct silofs_btnptr256b, 256);
-	REQUIRE_SIZEOF(struct silofs_spdesc128b, 128);
+	REQUIRE_SIZEOF(struct silofs_spdesc256b, 256);
 }
 
 static void validate_ondisk_nodeptr(void)
@@ -198,6 +198,15 @@ static void validate_ondisk_btnptr(void)
 	REQUIRE_OFFSET64(struct silofs_btnptr256b, btp_nsub_vobjs, 192);
 	REQUIRE_OFFSET64(struct silofs_btnptr256b, btp_nsub_btnodes, 200);
 	REQUIRE_SIZEOF(struct silofs_btnptr256b, 256);
+}
+
+static void validate_ondisk_spdesc(void)
+{
+	REQUIRE_OFFSET64(struct silofs_spdesc256b, spd_btns_head, 0);
+	REQUIRE_OFFSET64(struct silofs_spdesc256b, spd_btns_tail, 64);
+	REQUIRE_OFFSET64(struct silofs_spdesc256b, spd_vns_head, 128);
+	REQUIRE_OFFSET64(struct silofs_spdesc256b, spd_vns_tail, 192);
+	REQUIRE_SIZEOF(struct silofs_spdesc256b, 256);
 }
 
 static void validate_ondisk_headers(void)
@@ -251,12 +260,15 @@ static void validate_ondisk_mbr(void)
 
 static void validate_ondisk_uber(void)
 {
+	REQUIRE_OFFSET64(struct silofs_uber_vspace, ub_btroot, 0);
+	REQUIRE_OFFSET64(struct silofs_uber_vspace, ub_spdesc, 256);
+	REQUIRE_SIZEOF(struct silofs_uber_vspace, 512);
 	REQUIRE_OFFSET64(struct silofs_uber_node, ub_hdr, 0);
 	REQUIRE_OFFSET64(struct silofs_uber_node, ub_btime, 32);
 	REQUIRE_OFFSET64(struct silofs_uber_node, ub_ctime, 48);
 	REQUIRE_OFFSET64(struct silofs_uber_node, ub_generation, 64);
 	REQUIRE_OFFSET64(struct silofs_uber_node, ub_capacity, 72);
-	REQUIRE_OFFSET64(struct silofs_uber_node, ub_child, 512);
+	REQUIRE_OFFSET64(struct silofs_uber_node, ub_vspace, 512);
 	REQUIRE_SIZEOF_8K(struct silofs_uber_node);
 }
 
@@ -467,6 +479,7 @@ void silofs_validate_ondisk_format(void)
 	validate_ondisk_addrs();
 	validate_ondisk_nodeptr();
 	validate_ondisk_btnptr();
+	validate_ondisk_spdesc();
 	validate_ondisk_headers();
 	validate_ondisk_spmaps();
 	validate_ondisk_mbr();

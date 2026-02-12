@@ -85,46 +85,6 @@ void silofs_nodeptr192b_xtoh(const struct silofs_nodeptr192b *nodeptr192,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static const struct silofs_spdesc s_spdesc_none = {
-	.head.pos = SILOFS_OFF_NULL,
-	.tail.pos = SILOFS_OFF_NULL,
-};
-
-const struct silofs_spdesc *silofs_spdesc_none(void)
-{
-	return &s_spdesc_none;
-}
-
-void silofs_spdesc_setup(struct silofs_spdesc *pldesc,
-                         const struct silofs_paddr *head,
-                         const struct silofs_paddr *tail)
-{
-	silofs_paddr_assign(&pldesc->head, head);
-	silofs_paddr_assign(&pldesc->tail, tail);
-}
-
-void silofs_spdesc_ignite(struct silofs_spdesc *pldesc,
-                          const struct silofs_paddr *paddr)
-{
-	silofs_spdesc_setup(pldesc, paddr, paddr);
-}
-
-void silofs_spdesc_htox(struct silofs_spdesc128b *spdesc128,
-                        const struct silofs_spdesc *spdesc)
-{
-	silofs_paddr64b_htox(&spdesc128->pl_head, &spdesc->head);
-	silofs_paddr64b_htox(&spdesc128->pl_tail, &spdesc->tail);
-}
-
-void silofs_spdesc_xtoh(const struct silofs_spdesc128b *spdesc128,
-                        struct silofs_spdesc *spdesc)
-{
-	silofs_paddr64b_xtoh(&spdesc128->pl_head, &spdesc->head);
-	silofs_paddr64b_xtoh(&spdesc128->pl_tail, &spdesc->tail);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 static const struct silofs_btnptr s_btnptr_none = {
 	.base.nmeta.ciargs.algo = SILOFS_CIPHER_NONE,
 	.base.nmeta.ciargs.mode = SILOFS_CIPHER_MODE_NONE,

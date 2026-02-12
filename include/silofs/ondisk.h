@@ -593,18 +593,20 @@ struct silofs_nodeptr192b {
 	struct silofs_paddr64b  np_paddr;
 } silofs_attr_aligned64;
 
-/* space descriptor */
-struct silofs_spdesc128b {
-	struct silofs_paddr64b pl_head;
-	struct silofs_paddr64b pl_tail;
-} silofs_attr_aligned64;
-
 /* btree-node meta-pointer with sub-counters */
 struct silofs_btnptr256b {
 	struct silofs_nodeptr192b btp_base;
 	uint64_t                  btp_nsub_vobjs;
 	uint32_t                  btp_nsub_btnodes;
 	uint8_t                   btp_reserved[52];
+} silofs_attr_aligned64;
+
+/* space descriptor  */
+struct silofs_spdesc256b {
+	struct silofs_paddr64b spd_btns_head;
+	struct silofs_paddr64b spd_btns_tail;
+	struct silofs_paddr64b spd_vns_head;
+	struct silofs_paddr64b spd_vns_tail;
 } silofs_attr_aligned64;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -977,16 +979,21 @@ struct silofs_blob_desc {
 	uint8_t                bld_obj_state[7936];
 } silofs_attr_aligned64;
 
+/* uber-node sub-child by vspace */
+struct silofs_uber_vspace {
+	struct silofs_btnptr256b ub_btroot;
+	struct silofs_spdesc256b ub_spdesc;
+} silofs_attr_aligned64;
+
 /* uber-node */
 struct silofs_uber_node {
-	struct silofs_header     ub_hdr;
-	struct silofs_timespec   ub_btime;
-	struct silofs_timespec   ub_ctime;
-	uint64_t                 ub_generation;
-	uint64_t                 ub_capacity;
-	uint8_t                  ub_reserved1[432];
-	struct silofs_btnptr256b ub_child[20];
-	struct silofs_spdesc128b ub_pldesc[20];
+	struct silofs_header      ub_hdr;
+	struct silofs_timespec    ub_btime;
+	struct silofs_timespec    ub_ctime;
+	uint64_t                  ub_generation;
+	uint64_t                  ub_capacity;
+	uint8_t                   ub_reserved1[432];
+	struct silofs_uber_vspace ub_vspace[15];
 } silofs_attr_aligned64;
 
 /* btree node of persistent volume mapping */

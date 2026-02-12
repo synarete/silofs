@@ -25,12 +25,6 @@ struct silofs_nodeptr {
 	struct silofs_paddr paddr;
 };
 
-/* plog descriptor */
-struct silofs_spdesc {
-	struct silofs_paddr head;
-	struct silofs_paddr tail;
-};
-
 /* btnode meta pointer */
 struct silofs_btnptr {
 	struct silofs_nodeptr base;
@@ -62,23 +56,6 @@ void silofs_nodeptr192b_htox(struct silofs_nodeptr192b   *nodeptr192,
 
 void silofs_nodeptr192b_xtoh(const struct silofs_nodeptr192b *nodeptr192,
                              struct silofs_nodeptr           *nodeptr);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-const struct silofs_spdesc *silofs_spdesc_none(void);
-
-void silofs_spdesc_setup(struct silofs_spdesc      *pldesc,
-                         const struct silofs_paddr *head,
-                         const struct silofs_paddr *tail);
-
-void silofs_spdesc_ignite(struct silofs_spdesc      *pldesc,
-                          const struct silofs_paddr *paddr);
-
-void silofs_spdesc_htox(struct silofs_spdesc128b   *spdesc128,
-                        const struct silofs_spdesc *spdesc);
-
-void silofs_spdesc_xtoh(const struct silofs_spdesc128b *spdesc128,
-                        struct silofs_spdesc           *spdesc);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

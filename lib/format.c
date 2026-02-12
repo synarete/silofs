@@ -146,7 +146,7 @@ spawn_btree_root(struct silofs_task_ctx *task, enum silofs_mtype vspace)
 	}
 	silofs_bti_set_vspace(bti, vspace);
 
-	silofs_ubi_set_child_by(task->env->ubi, bti);
+	silofs_ubi_set_btroot_by(task->env->ubi, bti);
 	return 0;
 }
 

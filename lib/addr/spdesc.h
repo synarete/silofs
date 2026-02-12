@@ -14,27 +14,25 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_ADDR_H_
-#define SILOFS_ADDR_H_
+#ifndef SILOFS_SPDESC_H_
+#define SILOFS_SPDESC_H_
 
-#include <silofs/ondisk.h>
-#include <silofs/errors.h>
-#include "addr/offlba.h"
-#include "addr/htox.h"
-#include "addr/uuid.h"
-#include "addr/mtype.h"
-#include "addr/hash.h"
-#include "addr/layerid.h"
-#include "addr/blobid.h"
-#include "addr/paddr.h"
-#include "addr/nmeta.h"
-#include "addr/nodeptr.h"
-#include "addr/spdesc.h"
-#include "addr/laddr.h"
-#include "addr/uaddr.h"
-#include "addr/vaddr.h"
-#include "addr/genid.h"
-#include "addr/mbref.h"
-#include "addr/fsref.h"
+#include "paddr.h"
 
-#endif /* SILOFS_ADDR_H_ */
+/* space descriptor (btnodes + vnodes) */
+struct silofs_spdesc {
+	struct silofs_paddr btns_head;
+	struct silofs_paddr btns_tail;
+	struct silofs_paddr vns_head;
+	struct silofs_paddr vns_tail;
+};
+
+const struct silofs_spdesc *silofs_spdesc_none(void);
+
+void silofs_spdesc_htox(struct silofs_spdesc256b   *spdesc256,
+                        const struct silofs_spdesc *spdesc);
+
+void silofs_spdesc_xtoh(const struct silofs_spdesc256b *spdesc256,
+                        struct silofs_spdesc           *spdesc);
+
+#endif /* SILOFS_SPDESC_H_ */

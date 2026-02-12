@@ -67,7 +67,7 @@ struct cmd_mount_ctx {
 	time_t start_time;
 	int halt_signal;
 	int post_exec_status;
-	bool has_lockfile;
+	int fslock;
 	bool with_progname; /* XXX: TODO: allow set */
 };
 
@@ -300,25 +300,22 @@ static void cmd_mount_enable_signals(void)
 	cmd_register_sigactions(cmd_mount_halt_by_signal);
 }
 
-static void cmd_mount_acquire_lockfile(struct cmd_mount_ctx *ctx)
+static void cmd_mount_acquire_fslock(struct cmd_mount_ctx *ctx)
 {
-	if (!ctx->has_lockfile) {
-		cmd_lock_fs(ctx->in_args.repodir_real, ctx->in_args.fsname);
-		ctx->has_lockfile = true;
-	}
+	cmd_fslock_acquire(ctx->in_args.repodir_real, ctx->in_args.fsname,
+	                   &ctx->fslock);
 }
 
-static void cmd_mount_release_lockfile(struct cmd_mount_ctx *ctx)
+static void cmd_mount_release_fslock(struct cmd_mount_ctx *ctx)
 {
-	if (ctx->has_lockfile) {
-		cmd_unlock_fs(ctx->in_args.repodir_real, ctx->in_args.fsname);
-		ctx->has_lockfile = false;
-	}
+	cmd_fslock_release(ctx->in_args.repodir_real, ctx->in_args.fsname,
+	                   &ctx->fslock);
 }
 
 static void cmd_mount_finalize(struct cmd_mount_ctx *ctx)
 {
 	cmd_mount_destroy_env(ctx);
+	cmd_mount_release_fslock(ctx);
 	cmd_pstrfree(&ctx->in_args.repodir_fsname);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
@@ -337,7 +334,6 @@ static void cmd_mount_atexit(void)
 	struct cmd_mount_ctx *ctx = cmd_mount_ctx_p;
 
 	if (ctx != nullptr) {
-		cmd_mount_release_lockfile(ctx);
 		cmd_mount_finalize(cmd_mount_ctx_p);
 	}
 }
@@ -595,7 +591,7 @@ static void cmd_mount_exec_phase1(struct cmd_mount_ctx *ctx)
 	cmd_mount_setup_env(ctx, false);
 
 	/* Acquire lock */
-	cmd_mount_acquire_lockfile(ctx);
+	cmd_mount_acquire_fslock(ctx);
 
 	/* Load-verify boot-record */
 	cmd_mount_sense_fs(ctx);
@@ -607,7 +603,7 @@ static void cmd_mount_exec_phase1(struct cmd_mount_ctx *ctx)
 	cmd_mount_unload_fs(ctx);
 
 	/* Release lock */
-	cmd_mount_release_lockfile(ctx);
+	cmd_mount_release_fslock(ctx);
 
 	/* Destroy boot environment instance */
 	cmd_mount_destroy_env(ctx);
@@ -625,7 +621,7 @@ static void cmd_mount_exec_phase2(struct cmd_mount_ctx *ctx)
 	cmd_mount_setup_env(ctx, true);
 
 	/* Re-acquire lock */
-	cmd_mount_acquire_lockfile(ctx);
+	cmd_mount_acquire_fslock(ctx);
 
 	/* Re-load and verify boot-record  */
 	cmd_mount_sense_fs(ctx);
@@ -646,7 +642,7 @@ static void cmd_mount_exec_phase2(struct cmd_mount_ctx *ctx)
 	cmd_mount_unload_fs(ctx);
 
 	/* Release lock */
-	cmd_mount_release_lockfile(ctx);
+	cmd_mount_release_fslock(ctx);
 
 	/* Report end-of-mount */
 	cmd_mount_log_finish(ctx);
@@ -661,6 +657,7 @@ void cmd_execute_mount(void)
 		.env              = nullptr,
 		.halt_signal      = -1,
 		.post_exec_status = 0,
+		.fslock           = -1,
 	};
 
 	/* Do all cleanups upon exits */

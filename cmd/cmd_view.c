@@ -38,7 +38,7 @@ struct cmd_view_ctx {
 	struct silofs_spec spec;
 	struct silofs_env *env;
 	FILE *out_fp;
-	bool has_lockfile;
+	int fslock;
 };
 
 static struct cmd_view_ctx *cmd_view_ctx_p;
@@ -85,20 +85,16 @@ static void cmd_view_parse_optargs(struct cmd_view_ctx *ctx)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void cmd_view_acquire_lockfile(struct cmd_view_ctx *ctx)
+static void cmd_view_acquire_fslock(struct cmd_view_ctx *ctx)
 {
-	if (!ctx->has_lockfile) {
-		cmd_lock_fs(ctx->in_args.repodir_real, ctx->in_args.fsname);
-		ctx->has_lockfile = true;
-	}
+	cmd_fslock_acquire(ctx->in_args.repodir_real, ctx->in_args.fsname,
+	                   &ctx->fslock);
 }
 
-static void cmd_view_release_lockfile(struct cmd_view_ctx *ctx)
+static void cmd_view_release_fslock(struct cmd_view_ctx *ctx)
 {
-	if (ctx->has_lockfile) {
-		cmd_unlock_fs(ctx->in_args.repodir_real, ctx->in_args.fsname);
-		ctx->has_lockfile = false;
-	}
+	cmd_fslock_release(ctx->in_args.repodir_real, ctx->in_args.fsname,
+	                   &ctx->fslock);
 }
 
 static void cmd_view_destroy_env(struct cmd_view_ctx *ctx)
@@ -108,7 +104,8 @@ static void cmd_view_destroy_env(struct cmd_view_ctx *ctx)
 
 static void cmd_view_finalize(struct cmd_view_ctx *ctx)
 {
-	cmd_env_destroy(&ctx->env);
+	cmd_view_destroy_env(ctx);
+	cmd_view_release_fslock(ctx);
 	cmd_pstrfree(&ctx->in_args.repodir_fsname);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
@@ -124,7 +121,6 @@ static void cmd_view_atexit(void)
 	struct cmd_view_ctx *ctx = cmd_view_ctx_p;
 
 	if (ctx != nullptr) {
-		cmd_view_release_lockfile(ctx);
 		cmd_view_finalize(ctx);
 	}
 }
@@ -210,6 +206,7 @@ void cmd_execute_view(void)
 	struct cmd_view_ctx ctx = {
 		.env    = nullptr,
 		.out_fp = stdout,
+		.fslock = -1,
 	};
 
 	/* Do all cleanups upon exits */
@@ -240,7 +237,7 @@ void cmd_execute_view(void)
 	cmd_view_setup_env(&ctx);
 
 	/* Acquire lock */
-	cmd_view_acquire_lockfile(&ctx);
+	cmd_view_acquire_fslock(&ctx);
 
 	/* Require valid boot-record */
 	cmd_view_sense_fs(&ctx);
@@ -255,7 +252,7 @@ void cmd_execute_view(void)
 	cmd_view_unload_fs(&ctx);
 
 	/* Release lock */
-	cmd_view_release_lockfile(&ctx);
+	cmd_view_release_fslock(&ctx);
 
 	/* Destroy environment instance */
 	cmd_view_destroy_env(&ctx);

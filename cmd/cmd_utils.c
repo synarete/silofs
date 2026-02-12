@@ -794,22 +794,38 @@ void cmd_zfree(void *ptr, size_t nbytes)
 	}
 }
 
+void cmd_strfree(char *s)
+{
+	cmd_zfree(s, cmd_safe_strlen(s));
+}
+
 void cmd_pstrfree(char **pp)
 {
 	if (*pp != nullptr) {
-		cmd_zfree(*pp, strlen(*pp));
+		cmd_strfree(*pp);
 		*pp = nullptr;
 	}
 }
 
-char *cmd_strjoin(const char *s1, const char *s2)
+char *cmd_strcat(const char *s1, const char *s2)
 {
 	const size_t n1 = cmd_safe_strlen(s1);
 	const size_t n2 = cmd_safe_strlen(s2);
-	char *s         = cmd_zalloc(n1 + n2 + 1);
+	char *s;
 
+	s = cmd_zalloc(n1 + n2 + 1);
 	memcpy(s, s1, n1);
 	memcpy(s + n1, s2, n2);
+	return s;
+}
+
+char *cmd_strcat3(const char *s1, const char *s2, const char *s3)
+{
+	char *s, *t;
+
+	t = cmd_strcat(s1, s2);
+	s = cmd_strcat(t, s3);
+	cmd_strfree(t);
 	return s;
 }
 

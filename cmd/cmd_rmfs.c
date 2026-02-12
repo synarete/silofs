@@ -38,7 +38,7 @@ struct cmd_rmfs_ctx {
 	struct cmd_rmfs_in_args in_args;
 	struct silofs_spec spec;
 	struct silofs_env *env;
-	bool has_lockfile;
+	int fslock;
 };
 
 static struct cmd_rmfs_ctx *cmd_rmfs_ctx_p;
@@ -218,25 +218,22 @@ static void cmd_rmfs_destroy_env(struct cmd_rmfs_ctx *ctx)
 	cmd_env_destroy(&ctx->env);
 }
 
-static void cmd_rmfs_acquire_lockfile(struct cmd_rmfs_ctx *ctx)
+static void cmd_rmfs_acquire_fslock(struct cmd_rmfs_ctx *ctx)
 {
-	if (!ctx->has_lockfile) {
-		cmd_lock_fs(ctx->in_args.repodir_real, ctx->in_args.fsname);
-		ctx->has_lockfile = true;
-	}
+	cmd_fslock_acquire(ctx->in_args.repodir_real, ctx->in_args.fsname,
+	                   &ctx->fslock);
 }
 
-static void cmd_rmfs_release_lockfile(struct cmd_rmfs_ctx *ctx)
+static void cmd_rmfs_release_fslock(struct cmd_rmfs_ctx *ctx)
 {
-	if (ctx->has_lockfile) {
-		cmd_unlock_fs(ctx->in_args.repodir_real, ctx->in_args.fsname);
-		ctx->has_lockfile = false;
-	}
+	cmd_fslock_release(ctx->in_args.repodir_real, ctx->in_args.fsname,
+	                   &ctx->fslock);
 }
 
 static void cmd_rmfs_finalize(struct cmd_rmfs_ctx *ctx)
 {
 	cmd_rmfs_destroy_env(ctx);
+	cmd_rmfs_release_fslock(ctx);
 	cmd_delpass(&ctx->in_args.password);
 	cmd_pstrfree(&ctx->in_args.repodir_fsname);
 	cmd_pstrfree(&ctx->in_args.repodir);
@@ -250,7 +247,6 @@ static void cmd_rmfs_atexit(void)
 	struct cmd_rmfs_ctx *ctx = cmd_rmfs_ctx_p;
 
 	if (ctx != nullptr) {
-		cmd_rmfs_release_lockfile(ctx);
 		cmd_rmfs_finalize(ctx);
 	}
 }
@@ -270,7 +266,10 @@ static void cmd_rmfs_enable_signals(void)
 
 void cmd_execute_rmfs(void)
 {
-	struct cmd_rmfs_ctx ctx = { .ioc_qry.qtype = -1 };
+	struct cmd_rmfs_ctx ctx = {
+		.ioc_qry.qtype = -1,
+		.fslock        = -1,
+	};
 
 	/* Do all cleanups upon exits */
 	cmd_rmfs_start(&ctx);
@@ -303,7 +302,7 @@ void cmd_execute_rmfs(void)
 	cmd_rmfs_setup_env(&ctx);
 
 	/* Acquire lock */
-	cmd_rmfs_acquire_lockfile(&ctx);
+	cmd_rmfs_acquire_fslock(&ctx);
 
 	/* Require existing boot-record */
 	cmd_rmfs_sense_fs(&ctx);
@@ -315,7 +314,7 @@ void cmd_execute_rmfs(void)
 	cmd_rmfs_unlink_spec(&ctx);
 
 	/* Release lock */
-	cmd_rmfs_release_lockfile(&ctx);
+	cmd_rmfs_release_fslock(&ctx);
 
 	/* Post execution cleanups */
 	cmd_rmfs_finalize(&ctx);

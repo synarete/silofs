@@ -36,7 +36,7 @@ struct cmd_fsck_ctx {
 	struct cmd_fsck_in_args in_args;
 	struct silofs_spec spec;
 	struct silofs_env *env;
-	bool has_lockfile;
+	int fslock;
 };
 
 static struct cmd_fsck_ctx *cmd_fsck_ctx_p;
@@ -80,6 +80,18 @@ static void cmd_fsck_parse_optargs(struct cmd_fsck_ctx *ctx)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static void cmd_fsck_acquire_fslock(struct cmd_fsck_ctx *ctx)
+{
+	cmd_fslock_acquire(ctx->in_args.repodir_real, ctx->in_args.name,
+	                   &ctx->fslock);
+}
+
+static void cmd_fsck_release_fslock(struct cmd_fsck_ctx *ctx)
+{
+	cmd_fslock_release(ctx->in_args.repodir_real, ctx->in_args.name,
+	                   &ctx->fslock);
+}
+
 static void cmd_fsck_destroy_env(struct cmd_fsck_ctx *ctx)
 {
 	cmd_env_destroy(&ctx->env);
@@ -87,7 +99,8 @@ static void cmd_fsck_destroy_env(struct cmd_fsck_ctx *ctx)
 
 static void cmd_fsck_finalize(struct cmd_fsck_ctx *ctx)
 {
-	cmd_env_destroy(&ctx->env);
+	cmd_fsck_destroy_env(ctx);
+	cmd_fsck_release_fslock(ctx);
 	cmd_pstrfree(&ctx->in_args.repodir_name);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
@@ -97,28 +110,11 @@ static void cmd_fsck_finalize(struct cmd_fsck_ctx *ctx)
 	cmd_fsck_ctx_p = nullptr;
 }
 
-static void cmd_fsck_acquire_lockfile(struct cmd_fsck_ctx *ctx)
-{
-	if (!ctx->has_lockfile) {
-		cmd_lock_fs(ctx->in_args.repodir_real, ctx->in_args.name);
-		ctx->has_lockfile = true;
-	}
-}
-
-static void cmd_fsck_release_lockfile(struct cmd_fsck_ctx *ctx)
-{
-	if (ctx->has_lockfile) {
-		cmd_unlock_fs(ctx->in_args.repodir_real, ctx->in_args.name);
-		ctx->has_lockfile = false;
-	}
-}
-
 static void cmd_fsck_atexit(void)
 {
 	struct cmd_fsck_ctx *ctx = cmd_fsck_ctx_p;
 
 	if (ctx != nullptr) {
-		cmd_fsck_release_lockfile(ctx);
 		cmd_fsck_finalize(ctx);
 	}
 }
@@ -191,7 +187,8 @@ static void cmd_fsck_execute(struct cmd_fsck_ctx *ctx)
 void cmd_execute_fsck(void)
 {
 	struct cmd_fsck_ctx ctx = {
-		.env = nullptr,
+		.env    = nullptr,
+		.fslock = -1,
 	};
 
 	/* Do all cleanups upon exits */
@@ -216,7 +213,7 @@ void cmd_execute_fsck(void)
 	cmd_fsck_setup_env(&ctx);
 
 	/* Acquire lock */
-	cmd_fsck_acquire_lockfile(&ctx);
+	cmd_fsck_acquire_fslock(&ctx);
 
 	/* Require source boot-record */
 	cmd_fsck_sense_fs(&ctx);
@@ -231,7 +228,7 @@ void cmd_execute_fsck(void)
 	cmd_fsck_unload_fs(&ctx);
 
 	/* Release lock */
-	cmd_fsck_release_lockfile(&ctx);
+	cmd_fsck_release_fslock(&ctx);
 
 	/* Destroy environment instance */
 	cmd_fsck_destroy_env(&ctx);

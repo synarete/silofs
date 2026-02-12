@@ -22,6 +22,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <fcntl.h>
+#include <limits.h>
+#include <time.h>
 
 typedef void (*silofs_subcmd_fn)(void);
 
@@ -232,9 +235,13 @@ void *cmd_zalloc(size_t n);
 
 void cmd_zfree(void *ptr, size_t nbytes);
 
+void cmd_strfree(char *s);
+
 void cmd_pstrfree(char **pp);
 
-char *cmd_strjoin(const char *s1, const char *s2);
+char *cmd_strcat(const char *s1, const char *s2);
+
+char *cmd_strcat3(const char *s1, const char *s2, const char *s3);
 
 char *cmd_strdup(const char *s);
 
@@ -265,15 +272,11 @@ gid_t cmd_parse_str_as_gid(const char *str);
 bool cmd_parse_str_as_bool(const char *str);
 
 /* locking facilities */
-void cmd_lock_fs(const char *repodir, const char *name);
+void cmd_fslock_acquirex(const char *repodir, const char *fsname, int *out_fd);
 
-void cmd_unlock_fs(const char *repodir, const char *name);
+void cmd_fslock_acquire(const char *repodir, const char *fsname, int *out_fd);
 
-void cmd_wrlock_repo(const char *repodir, int *pfd);
-
-void cmd_rdlock_repo(const char *repodir, int *pfd);
-
-void cmd_unlock_repo(const char *repodir, int *pfd);
+void cmd_fslock_release(const char *repodir, const char *fsname, int *pfd);
 
 /* API wrappers */
 void cmd_format_repo(struct silofs_env *env);

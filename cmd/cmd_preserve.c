@@ -39,7 +39,7 @@ struct cmd_preserve_ctx {
 	struct silofs_spec spec;
 	struct silofs_fsref ar_fsref;
 	struct silofs_env *env;
-	bool has_lockfile;
+	int fslock;
 };
 
 static struct cmd_preserve_ctx *cmd_preserve_ctx_p;
@@ -94,20 +94,16 @@ static void cmd_preserve_parse_optargs(struct cmd_preserve_ctx *ctx)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void cmd_preserve_acquire_lockfile(struct cmd_preserve_ctx *ctx)
+static void cmd_preserve_acquire_fslock(struct cmd_preserve_ctx *ctx)
 {
-	if (!ctx->has_lockfile) {
-		cmd_lock_fs(ctx->in_args.repodir_real, ctx->in_args.fsname);
-		ctx->has_lockfile = true;
-	}
+	cmd_fslock_acquire(ctx->in_args.repodir_real, ctx->in_args.fsname,
+	                   &ctx->fslock);
 }
 
-static void cmd_preserve_release_lockfile(struct cmd_preserve_ctx *ctx)
+static void cmd_preserve_release_fslock(struct cmd_preserve_ctx *ctx)
 {
-	if (ctx->has_lockfile) {
-		cmd_unlock_fs(ctx->in_args.repodir_real, ctx->in_args.fsname);
-		ctx->has_lockfile = false;
-	}
+	cmd_fslock_release(ctx->in_args.repodir_real, ctx->in_args.fsname,
+	                   &ctx->fslock);
 }
 
 static void cmd_preserve_destroy_env(struct cmd_preserve_ctx *ctx)
@@ -117,7 +113,8 @@ static void cmd_preserve_destroy_env(struct cmd_preserve_ctx *ctx)
 
 static void cmd_preserve_finalize(struct cmd_preserve_ctx *ctx)
 {
-	cmd_env_destroy(&ctx->env);
+	cmd_preserve_destroy_env(ctx);
+	cmd_preserve_release_fslock(ctx);
 	cmd_pstrfree(&ctx->in_args.repodir_fsname);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
@@ -133,7 +130,6 @@ static void cmd_preserve_atexit(void)
 	struct cmd_preserve_ctx *ctx = cmd_preserve_ctx_p;
 
 	if (ctx != nullptr) {
-		cmd_preserve_release_lockfile(ctx);
 		cmd_preserve_finalize(ctx);
 	}
 }
@@ -220,7 +216,8 @@ static void cmd_preserve_save_spec(struct cmd_preserve_ctx *ctx)
 void cmd_execute_preserve(void)
 {
 	struct cmd_preserve_ctx ctx = {
-		.env = nullptr,
+		.env    = nullptr,
+		.fslock = -1,
 	};
 
 	/* Do all cleanups upon exits */
@@ -248,7 +245,7 @@ void cmd_execute_preserve(void)
 	cmd_preserve_setup_env(&ctx);
 
 	/* Acquire lock */
-	cmd_preserve_acquire_lockfile(&ctx);
+	cmd_preserve_acquire_fslock(&ctx);
 
 	/* Require valid boot-record */
 	cmd_preserve_sense_fs(&ctx);
@@ -266,7 +263,7 @@ void cmd_execute_preserve(void)
 	cmd_preserve_unload_fs(&ctx);
 
 	/* Release lock */
-	cmd_preserve_release_lockfile(&ctx);
+	cmd_preserve_release_fslock(&ctx);
 
 	/* Destroy environment instance */
 	cmd_preserve_destroy_env(&ctx);

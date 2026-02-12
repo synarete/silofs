@@ -45,7 +45,7 @@ struct cmd_mkfs_ctx {
 	struct cmd_mkfs_in_args in_args;
 	struct silofs_spec spec;
 	struct silofs_env *env;
-	bool has_lockfile;
+	int fslock;
 };
 
 static struct cmd_mkfs_ctx *cmd_mkfs_ctx_p;
@@ -115,6 +115,18 @@ static void cmd_mkfs_parse_optargs(struct cmd_mkfs_ctx *ctx)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static void cmd_mkfs_acquire_fslock(struct cmd_mkfs_ctx *ctx)
+{
+	cmd_fslock_acquirex(ctx->in_args.repodir_real, ctx->in_args.fsname,
+	                    &ctx->fslock);
+}
+
+static void cmd_mkfs_release_fslock(struct cmd_mkfs_ctx *ctx)
+{
+	cmd_fslock_release(ctx->in_args.repodir_real, ctx->in_args.fsname,
+	                   &ctx->fslock);
+}
+
 static void cmd_mkfs_destroy_env(struct cmd_mkfs_ctx *ctx)
 {
 	cmd_env_destroy(&ctx->env);
@@ -123,6 +135,7 @@ static void cmd_mkfs_destroy_env(struct cmd_mkfs_ctx *ctx)
 static void cmd_mkfs_finalize(struct cmd_mkfs_ctx *ctx)
 {
 	cmd_mkfs_destroy_env(ctx);
+	cmd_mkfs_release_fslock(ctx);
 	cmd_pstrfree(&ctx->in_args.fsname);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_fsname);
@@ -133,28 +146,11 @@ static void cmd_mkfs_finalize(struct cmd_mkfs_ctx *ctx)
 	cmd_mkfs_ctx_p = nullptr;
 }
 
-static void cmd_mkfs_acquire_lockfile(struct cmd_mkfs_ctx *ctx)
-{
-	if (!ctx->has_lockfile) {
-		cmd_lock_fs(ctx->in_args.repodir_real, ctx->in_args.fsname);
-		ctx->has_lockfile = true;
-	}
-}
-
-static void cmd_mkfs_release_lockfile(struct cmd_mkfs_ctx *ctx)
-{
-	if (ctx->has_lockfile) {
-		cmd_unlock_fs(ctx->in_args.repodir_real, ctx->in_args.fsname);
-		ctx->has_lockfile = false;
-	}
-}
-
 static void cmd_mkfs_atexit(void)
 {
 	struct cmd_mkfs_ctx *ctx = cmd_mkfs_ctx_p;
 
 	if (ctx != nullptr) {
-		cmd_mkfs_release_lockfile(ctx);
 		cmd_mkfs_finalize(ctx);
 	}
 }
@@ -239,6 +235,7 @@ void cmd_execute_mkfs(void)
 	struct cmd_mkfs_ctx ctx = {
 		.env           = nullptr,
 		.in_args.flags = SILOFS_F_UTF8NAMES,
+		.fslock        = -1,
 	};
 
 	/* Do all cleanups upon exits */
@@ -268,8 +265,8 @@ void cmd_execute_mkfs(void)
 	/* Prepare environment */
 	cmd_mkfs_setup_env(&ctx);
 
-	/* Acquire lock */
-	cmd_mkfs_acquire_lockfile(&ctx);
+	/* Create fs-lock */
+	cmd_mkfs_acquire_fslock(&ctx);
 
 	/* Format file-system layer */
 	cmd_mkfs_format_fs(&ctx);
@@ -280,8 +277,8 @@ void cmd_execute_mkfs(void)
 	/* Post-format cleanups */
 	cmd_mkfs_unload_fs(&ctx);
 
-	/* Release lock */
-	cmd_mkfs_release_lockfile(&ctx);
+	/* Release fs-lock */
+	cmd_mkfs_release_fslock(&ctx);
 
 	/* Post execution cleanups */
 	cmd_mkfs_finalize(&ctx);

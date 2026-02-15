@@ -55,27 +55,22 @@ int silofs_btree_insert(struct silofs_btree       *btree,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-struct silofs_env;
+struct silofs_task_ctx;
 
-struct silofs_btmap_ctx {
-	struct silofs_dstor  *dstor;
-	struct silofs_pcache *pcache;
-	struct silofs_paddr   btree_root;
-};
-
-int silofs_format_mapping(struct silofs_env *env, enum silofs_mtype mtype);
-
-int silofs_resolve_ltob(struct silofs_env         *env,
+int silofs_resolve_vtop(struct silofs_task_ctx    *task,
                         const struct silofs_vaddr *vaddr,
                         struct silofs_paddr       *out_paddr);
 
-int silofs_map_ltob(struct silofs_env *env, const struct silofs_vaddr *vaddr,
+int silofs_map_vtop(struct silofs_task_ctx    *task,
+                    const struct silofs_vaddr *vaddr,
                     const struct silofs_paddr *paddr);
 
-int silofs_remap_ltob(struct silofs_env *env, const struct silofs_vaddr *vaddr,
+int silofs_remap_vtop(struct silofs_task_ctx    *task,
+                      const struct silofs_vaddr *vaddr,
                       const struct silofs_paddr *paddr);
 
-int silofs_unmap_ltob(struct silofs_env *env, const struct silofs_vaddr *vaddr,
+int silofs_unmap_vtop(struct silofs_task_ctx    *task,
+                      const struct silofs_vaddr *vaddr,
                       const struct silofs_paddr *paddr);
 
 #endif /* SILOFS_BTREE_H_ */

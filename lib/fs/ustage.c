@@ -52,7 +52,7 @@ static int ubi_verify_sub_view(const struct silofs_unode_info *uni)
 	case SILOFS_MTYPE_BTNODE:
 	case SILOFS_MTYPE_DATA1K:
 	case SILOFS_MTYPE_DATA4K:
-	case SILOFS_MTYPE_DATABK:
+	case SILOFS_MTYPE_DATA64K:
 	case SILOFS_MTYPE_NONE:
 	case SILOFS_MTYPE_LAST:
 	default:

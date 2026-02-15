@@ -1065,7 +1065,7 @@ int silofs_do_mknod(struct silofs_task_ctx *task,
 /*
  * Unlike historic UNIX (*BSD, Solaris) Linux does not have O_EXEC. On the
  * other hand, there is FMODE_EXEC internal flag, which has a value (1 << 5)
- * that is not used by other O_xxx flags (see comment in <asm-generic/fcntl.h>).
+ * that is not used by other O_x flags (see comment in <asm-generic/fcntl.h>).
  * Interestingly, it is propagated via FUSE, probably unintentionally. Need
  * further investigation.
  */

@@ -166,7 +166,7 @@ static bool off_is_partial_head2(off_t off, off_t end)
 
 static bool off_is_partial_leaf(off_t off, off_t end)
 {
-	return off_is_partial(off, end, SILOFS_MTYPE_DATABK);
+	return off_is_partial(off, end, SILOFS_MTYPE_DATA64K);
 }
 
 static off_t off_head1_end_of(size_t slot)
@@ -335,7 +335,7 @@ static void *fli_data_at(const struct silofs_ftleaf_info *fli, off_t pos)
 	} else if (mtype == SILOFS_MTYPE_DATA4K) {
 		dat_size = sizeof(fli->ftl.db4->dat);
 		dat_base = fli->ftl.db4->dat;
-	} else if (mtype == SILOFS_MTYPE_DATABK) {
+	} else if (mtype == SILOFS_MTYPE_DATA64K) {
 		dat_size = sizeof(fli->ftl.db->dat);
 		dat_base = fli->ftl.db->dat;
 	}
@@ -552,7 +552,7 @@ ftn_child_mtype_by_height(const struct silofs_ftree_node *ftn, size_t height,
                           enum silofs_mtype *out_child_mtype)
 {
 	if (height <= 2) {
-		*out_child_mtype = SILOFS_MTYPE_DATABK;
+		*out_child_mtype = SILOFS_MTYPE_DATA64K;
 	} else {
 		*out_child_mtype = SILOFS_MTYPE_FTNODE;
 	}
@@ -1163,7 +1163,7 @@ static void filc_set_tree_root_at(const struct silofs_file_ctx *f_ctx,
 static void filc_curr_data_mtype(const struct silofs_file_ctx *f_ctx,
                                  enum silofs_mtype *out_mtype)
 {
-	*out_mtype = SILOFS_MTYPE_DATABK;
+	*out_mtype = SILOFS_MTYPE_DATA64K;
 	if (filc_ftype1_mode(f_ctx)) {
 		if (off_is_head1(f_ctx->off)) {
 			*out_mtype = SILOFS_MTYPE_DATA1K;
@@ -2247,7 +2247,7 @@ static int filc_del_data_space(const struct silofs_file_ctx *f_ctx,
 	if (err) {
 		return err;
 	}
-	if (last || !silofs_vaddr_isdatabk(vaddr)) {
+	if (last || !silofs_vaddr_isdata64k(vaddr)) {
 		err = filc_clear_unwritten_at(f_ctx, vaddr);
 		if (err) {
 			return err;
@@ -2407,7 +2407,7 @@ filc_do_create_tree_leaf_space(const struct silofs_file_ctx *f_ctx,
 	struct silofs_vaddr vaddr;
 	int err;
 
-	err = filc_create_data_leaf(f_ctx, SILOFS_MTYPE_DATABK, &vaddr);
+	err = filc_create_data_leaf(f_ctx, SILOFS_MTYPE_DATA64K, &vaddr);
 	if (err) {
 		return err;
 	}
@@ -3698,7 +3698,7 @@ static int filc_create_bind_tree_leaf(const struct silofs_file_ctx *f_ctx,
 	if (flref.has_data) {
 		return filc_require_mut_by(f_ctx, &flref);
 	}
-	err = filc_create_data_leaf(f_ctx, SILOFS_MTYPE_DATABK, &flref.vaddr);
+	err = filc_create_data_leaf(f_ctx, SILOFS_MTYPE_DATA64K, &flref.vaddr);
 	if (err) {
 		return err;
 	}
@@ -4817,7 +4817,7 @@ int silofs_verify_ftree_node(const struct silofs_ftree_node *ftn)
 	if (child_mtype != expect_mtype) {
 		return -SILOFS_EFSCORRUPTED;
 	}
-	if (ftn_isbottom(ftn) && (child_mtype != SILOFS_MTYPE_DATABK)) {
+	if (ftn_isbottom(ftn) && (child_mtype != SILOFS_MTYPE_DATA64K)) {
 		return -SILOFS_EFSCORRUPTED;
 	}
 	return 0;

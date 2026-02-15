@@ -122,8 +122,8 @@ spgs256_gauge_of(const struct silofs_space_gauges256 *spgs256,
 	case SILOFS_MTYPE_DATA4K:
 		ret = &spgs256->sg_ndata4k;
 		break;
-	case SILOFS_MTYPE_DATABK:
-		ret = &spgs256->sg_ndatabk;
+	case SILOFS_MTYPE_DATA64K:
+		ret = &spgs256->sg_ndata64k;
 		break;
 	case SILOFS_MTYPE_UBER:
 	case SILOFS_MTYPE_ARIX:
@@ -347,8 +347,8 @@ spgs_gauge_of(const struct silofs_space_gauges *spgs, enum silofs_mtype mtype)
 	case SILOFS_MTYPE_DATA4K:
 		ret = &spgs->ndata4k;
 		break;
-	case SILOFS_MTYPE_DATABK:
-		ret = &spgs->ndatabk;
+	case SILOFS_MTYPE_DATA64K:
+		ret = &spgs->ndata64k;
 		break;
 	case SILOFS_MTYPE_UBER:
 	case SILOFS_MTYPE_ARIX:

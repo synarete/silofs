@@ -1234,7 +1234,7 @@ fli_init(struct silofs_ftleaf_info *fli, const struct silofs_vaddr *vaddr,
 		fli->ftl.db1 = &view->u.dbk1;
 	} else if (vaddr->mtype == SILOFS_MTYPE_DATA4K) {
 		fli->ftl.db4 = &view->u.dbk4;
-	} else if (vaddr->mtype == SILOFS_MTYPE_DATABK) {
+	} else if (vaddr->mtype == SILOFS_MTYPE_DATA64K) {
 		fli->ftl.db = &view->u.dbk64;
 	} else {
 		silofs_panic("not data mtype: %d", (int)vaddr->mtype);
@@ -1325,7 +1325,7 @@ silofs_new_unode(struct silofs_alloc *alloc, const struct silofs_uaddr *uaddr)
 	case SILOFS_MTYPE_FTNODE:
 	case SILOFS_MTYPE_DATA1K:
 	case SILOFS_MTYPE_DATA4K:
-	case SILOFS_MTYPE_DATABK:
+	case SILOFS_MTYPE_DATA64K:
 	case SILOFS_MTYPE_NONE:
 	case SILOFS_MTYPE_LAST:
 	default:
@@ -1363,7 +1363,7 @@ void silofs_del_unode(struct silofs_unode_info *uni,
 	case SILOFS_MTYPE_FTNODE:
 	case SILOFS_MTYPE_DATA1K:
 	case SILOFS_MTYPE_DATA4K:
-	case SILOFS_MTYPE_DATABK:
+	case SILOFS_MTYPE_DATA64K:
 	case SILOFS_MTYPE_NONE:
 	case SILOFS_MTYPE_LAST:
 	default:
@@ -1401,7 +1401,7 @@ silofs_new_vnode(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 		break;
 	case SILOFS_MTYPE_DATA1K:
 	case SILOFS_MTYPE_DATA4K:
-	case SILOFS_MTYPE_DATABK:
+	case SILOFS_MTYPE_DATA64K:
 		vni = fli_to_vni(fli_new(alloc, vaddr));
 		break;
 	case SILOFS_MTYPE_UBER:
@@ -1447,7 +1447,7 @@ void silofs_del_vnode(struct silofs_vnode_info *vni,
 		break;
 	case SILOFS_MTYPE_DATA1K:
 	case SILOFS_MTYPE_DATA4K:
-	case SILOFS_MTYPE_DATABK:
+	case SILOFS_MTYPE_DATA64K:
 		fli_del(fli_from_vni(vni), alloc, flags);
 		break;
 	case SILOFS_MTYPE_UBER:

@@ -521,7 +521,7 @@ silofs_new_pnode(const struct silofs_nodeptr *nodeptr,
 	case SILOFS_MTYPE_FTNODE:
 	case SILOFS_MTYPE_DATA1K:
 	case SILOFS_MTYPE_DATA4K:
-	case SILOFS_MTYPE_DATABK:
+	case SILOFS_MTYPE_DATA64K:
 	case SILOFS_MTYPE_NONE:
 	case SILOFS_MTYPE_LAST:
 	default:
@@ -559,7 +559,7 @@ void silofs_del_pnode(struct silofs_pnode_info *pni,
 	case SILOFS_MTYPE_FTNODE:
 	case SILOFS_MTYPE_DATA1K:
 	case SILOFS_MTYPE_DATA4K:
-	case SILOFS_MTYPE_DATABK:
+	case SILOFS_MTYPE_DATA64K:
 	case SILOFS_MTYPE_NONE:
 	case SILOFS_MTYPE_LAST:
 	default:

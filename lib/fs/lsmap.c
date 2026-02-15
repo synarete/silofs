@@ -400,7 +400,7 @@ static enum silofs_mtype lsmap_refmtype(const struct silofs_lsmap *lsm)
 	const uint32_t refmtype = lsm->lsm_refmtype;
 
 	silofs_assert_ge(refmtype, SILOFS_MTYPE_INODE);
-	silofs_assert_le(refmtype, SILOFS_MTYPE_DATABK);
+	silofs_assert_le(refmtype, SILOFS_MTYPE_DATA64K);
 
 	return (enum silofs_mtype)refmtype;
 }
@@ -409,7 +409,7 @@ static void
 lsmap_set_refmtype(struct silofs_lsmap *lsm, enum silofs_mtype refmtype)
 {
 	silofs_assert_ge(refmtype, SILOFS_MTYPE_INODE);
-	silofs_assert_le(refmtype, SILOFS_MTYPE_DATABK);
+	silofs_assert_le(refmtype, SILOFS_MTYPE_DATA64K);
 
 	lsm->lsm_refmtype = (uint8_t)refmtype;
 }
@@ -488,7 +488,7 @@ static bool lsmap_has_allocated_with(const struct silofs_lsmap *lsm,
 {
 	const struct silofs_lbk_meta *lbm = lsmap_lbm_by_vaddr2(lsm, vaddr);
 
-	if (silofs_vaddr_isdatabk(vaddr)) {
+	if (silofs_vaddr_isdata64k(vaddr)) {
 		return lbm_refcnt(lbm) > 0;
 	}
 	return lbm_test_allocated_other(lbm, kbn_of(vaddr), nkbs_of(vaddr));
@@ -537,7 +537,7 @@ static void lsmap_set_allocated_at(struct silofs_lsmap *lsm,
 	struct silofs_lbk_meta *lbm = lsmap_lbm_by_vaddr(lsm, vaddr);
 
 	lbm_set_allocated_at(lbm, kbn, nkb);
-	if (silofs_vaddr_isdatabk(vaddr)) {
+	if (silofs_vaddr_isdata64k(vaddr)) {
 		lbm_inc_refcnt(lbm);
 	}
 }
@@ -549,7 +549,7 @@ static void lsmap_unset_allocated_at(struct silofs_lsmap *lsm,
 	const size_t nkb            = nkbs_of(vaddr);
 	struct silofs_lbk_meta *lbm = lsmap_lbm_by_vaddr(lsm, vaddr);
 
-	if (silofs_vaddr_isdatabk(vaddr)) {
+	if (silofs_vaddr_isdata64k(vaddr)) {
 		lbm_dec_refcnt(lbm);
 	}
 	if (!lbm_refcnt(lbm) || (nkb < SILOFS_NKB_IN_LBK)) {
@@ -569,7 +569,7 @@ lsmap_renew_bk_at(struct silofs_lsmap *lsm, const struct silofs_vaddr *vaddr)
 static size_t lsmap_refcnt_at(const struct silofs_lsmap *lsm,
                               const struct silofs_vaddr *vaddr)
 {
-	silofs_assert_eq(vaddr->mtype, SILOFS_MTYPE_DATABK);
+	silofs_assert_eq(vaddr->mtype, SILOFS_MTYPE_DATA64K);
 
 	return lbm_refcnt(lsmap_lbm_by_vaddr2(lsm, vaddr));
 }
@@ -582,7 +582,7 @@ static bool lsmap_is_allocated_at(const struct silofs_lsmap *lsm,
 	const struct silofs_lbk_meta *lbm = lsmap_lbm_by_vaddr2(lsm, vaddr);
 	bool ret;
 
-	if (silofs_vaddr_isdatabk(vaddr)) {
+	if (silofs_vaddr_isdata64k(vaddr)) {
 		ret = (lbm_refcnt(lbm) > 0);
 	} else {
 		ret = lbm_test_allocated_at(lbm, kbn, nkb);
@@ -598,7 +598,7 @@ static bool lsmap_is_last_allocated(const struct silofs_lsmap *lsm,
 	const struct silofs_lbk_meta *lbm = lsmap_lbm_by_vaddr2(lsm, vaddr);
 	bool ret;
 
-	if (silofs_vaddr_isdatabk(vaddr)) {
+	if (silofs_vaddr_isdata64k(vaddr)) {
 		ret = (lbm_refcnt(lbm) == 1);
 	} else {
 		ret = !lbm_test_allocated_other(lbm, kbn, nkb);
@@ -974,7 +974,7 @@ void silofs_lsi_unref_allocated_at(struct silofs_lsmap_info *lsi,
 void silofs_lsi_reref_allocated_at(struct silofs_lsmap_info *lsi,
                                    const struct silofs_vaddr *vaddr)
 {
-	silofs_assert_eq(vaddr->mtype, SILOFS_MTYPE_DATABK);
+	silofs_assert_eq(vaddr->mtype, SILOFS_MTYPE_DATA64K);
 	silofs_assert_ge(lsi->ls_nused_bytes, SILOFS_LBK_SIZE);
 	silofs_assert_le(lsi->ls_nused_bytes, SILOFS_LSEG_SIZE_MAX);
 
@@ -987,7 +987,7 @@ size_t silofs_lsi_refcnt_at(const struct silofs_lsmap_info *lsi,
 {
 	size_t refcnt = 0;
 
-	if (lsi_is_subref(lsi, vaddr) && silofs_vaddr_isdatabk(vaddr)) {
+	if (lsi_is_subref(lsi, vaddr) && silofs_vaddr_isdata64k(vaddr)) {
 		refcnt = lsmap_refcnt_at(lsi->lsm, vaddr);
 	}
 	return refcnt;

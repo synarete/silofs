@@ -73,7 +73,7 @@ bool silofs_mtype_isunode(enum silofs_mtype mtype)
 	case SILOFS_MTYPE_FTNODE:
 	case SILOFS_MTYPE_DATA1K:
 	case SILOFS_MTYPE_DATA4K:
-	case SILOFS_MTYPE_DATABK:
+	case SILOFS_MTYPE_DATA64K:
 	case SILOFS_MTYPE_NONE:
 	case SILOFS_MTYPE_LAST:
 	default:
@@ -96,7 +96,7 @@ bool silofs_mtype_isvnode(enum silofs_mtype mtype)
 	case SILOFS_MTYPE_FTNODE:
 	case SILOFS_MTYPE_DATA1K:
 	case SILOFS_MTYPE_DATA4K:
-	case SILOFS_MTYPE_DATABK:
+	case SILOFS_MTYPE_DATA64K:
 		ret = true;
 		break;
 	case SILOFS_MTYPE_UBER:
@@ -123,7 +123,7 @@ bool silofs_mtype_isdata(enum silofs_mtype mtype)
 	switch (mtype) {
 	case SILOFS_MTYPE_DATA1K:
 	case SILOFS_MTYPE_DATA4K:
-	case SILOFS_MTYPE_DATABK:
+	case SILOFS_MTYPE_DATA64K:
 		ret = true;
 		break;
 	case SILOFS_MTYPE_UBER:
@@ -184,7 +184,7 @@ size_t silofs_mtype_size(enum silofs_mtype mtype)
 		return sizeof(struct silofs_data_block1);
 	case SILOFS_MTYPE_DATA4K:
 		return sizeof(struct silofs_data_block4);
-	case SILOFS_MTYPE_DATABK:
+	case SILOFS_MTYPE_DATA64K:
 		return sizeof(struct silofs_data_block64);
 	case SILOFS_MTYPE_NONE:
 	case SILOFS_MTYPE_LAST:

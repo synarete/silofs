@@ -253,7 +253,7 @@ ut_check_valid_space_gauges(const struct silofs_space_gauges256 *spg)
 	ut_expect_ge(spg->sg_nftnode, 0);
 	ut_expect_ge(spg->sg_ndata1k, 0);
 	ut_expect_ge(spg->sg_ndata4k, 0);
-	ut_expect_ge(spg->sg_ndatabk, 0);
+	ut_expect_ge(spg->sg_ndata64k, 0);
 }
 
 static void ut_expect_space_stats(const struct silofs_space_stats1k *spst1,
@@ -269,7 +269,7 @@ static void ut_expect_space_stats(const struct silofs_space_stats1k *spst1,
 	ut_expect_le(spst1->sp_lsegs.sg_nftnode, spst2->sp_lsegs.sg_nftnode);
 	ut_expect_le(spst1->sp_lsegs.sg_ndata1k, spst2->sp_lsegs.sg_ndata1k);
 	ut_expect_le(spst1->sp_lsegs.sg_ndata4k, spst2->sp_lsegs.sg_ndata4k);
-	ut_expect_le(spst1->sp_lsegs.sg_ndatabk, spst2->sp_lsegs.sg_ndatabk);
+	ut_expect_le(spst1->sp_lsegs.sg_ndata64k, spst2->sp_lsegs.sg_ndata64k);
 
 	ut_expect_le(spst1->sp_bks.sg_nsuper, spst2->sp_bks.sg_nsuper);
 	ut_expect_le(spst1->sp_bks.sg_nspnode, spst2->sp_bks.sg_nspnode);
@@ -281,7 +281,7 @@ static void ut_expect_space_stats(const struct silofs_space_stats1k *spst1,
 	ut_expect_le(spst1->sp_bks.sg_nftnode, spst2->sp_bks.sg_nftnode);
 	ut_expect_le(spst1->sp_bks.sg_ndata1k, spst2->sp_bks.sg_ndata1k);
 	ut_expect_le(spst1->sp_bks.sg_ndata4k, spst2->sp_bks.sg_ndata4k);
-	ut_expect_le(spst1->sp_bks.sg_ndatabk, spst2->sp_bks.sg_ndatabk);
+	ut_expect_le(spst1->sp_bks.sg_ndata64k, spst2->sp_bks.sg_ndata64k);
 
 	ut_expect_le(spst1->sp_objs.sg_nsuper, spst2->sp_objs.sg_nsuper);
 	ut_expect_le(spst1->sp_objs.sg_nspnode, spst2->sp_objs.sg_nspnode);
@@ -293,7 +293,7 @@ static void ut_expect_space_stats(const struct silofs_space_stats1k *spst1,
 	ut_expect_eq(spst1->sp_objs.sg_nftnode, spst2->sp_objs.sg_nftnode);
 	ut_expect_eq(spst1->sp_objs.sg_ndata1k, spst2->sp_objs.sg_ndata1k);
 	ut_expect_eq(spst1->sp_objs.sg_ndata4k, spst2->sp_objs.sg_ndata4k);
-	ut_expect_eq(spst1->sp_objs.sg_ndatabk, spst2->sp_objs.sg_ndatabk);
+	ut_expect_eq(spst1->sp_objs.sg_ndata64k, spst2->sp_objs.sg_ndata64k);
 }
 
 static void ut_check_spacestats(const struct silofs_space_stats1k *spst1,

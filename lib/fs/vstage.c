@@ -141,7 +141,7 @@ static int vni_verify_sub_view(const struct silofs_vnode_info *vni)
 		break;
 	case SILOFS_MTYPE_DATA1K:
 	case SILOFS_MTYPE_DATA4K:
-	case SILOFS_MTYPE_DATABK:
+	case SILOFS_MTYPE_DATA64K:
 		break;
 	case SILOFS_MTYPE_NONE:
 	case SILOFS_MTYPE_MBR:
@@ -2357,7 +2357,7 @@ static int vstgc_pre_clone_stage_at(const struct silofs_vstage_ctx *vstg_ctx,
 		*out_vni = nullptr;
 	} else if (vstgc_has_vaddr(vstg_ctx, vaddr) &&
 	           ((stg_mode & SILOFS_STG_RAW) ||
-	            silofs_vaddr_isdatabk(vaddr))) {
+	            silofs_vaddr_isdata64k(vaddr))) {
 		/* ignore current data-block */
 		*out_vni = nullptr;
 	} else if (silofs_vaddr_isinode(vaddr)) {

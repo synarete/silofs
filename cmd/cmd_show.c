@@ -287,7 +287,7 @@ static void cmd_show_spacestats(const struct cmd_show_ctx *ctx)
 	prefix = "lsegs";
 	cmd_show_counter(ctx, prefix, "ndata1k", spst->sp_lsegs.sg_ndata1k);
 	cmd_show_counter(ctx, prefix, "ndata4k", spst->sp_lsegs.sg_ndata4k);
-	cmd_show_counter(ctx, prefix, "ndatabk", spst->sp_lsegs.sg_ndatabk);
+	cmd_show_counter(ctx, prefix, "ndata64k", spst->sp_lsegs.sg_ndata64k);
 	cmd_show_counter(ctx, prefix, "nsuper", spst->sp_lsegs.sg_nsuper);
 	cmd_show_counter(ctx, prefix, "nspnode", spst->sp_lsegs.sg_nspnode);
 	cmd_show_counter(ctx, prefix, "nspleaf", spst->sp_lsegs.sg_nspleaf);
@@ -299,7 +299,7 @@ static void cmd_show_spacestats(const struct cmd_show_ctx *ctx)
 	prefix = "bks";
 	cmd_show_counter(ctx, prefix, "ndata1k", spst->sp_bks.sg_ndata1k);
 	cmd_show_counter(ctx, prefix, "ndata4k", spst->sp_bks.sg_ndata4k);
-	cmd_show_counter(ctx, prefix, "ndatabk", spst->sp_bks.sg_ndatabk);
+	cmd_show_counter(ctx, prefix, "ndata64k", spst->sp_bks.sg_ndata64k);
 	cmd_show_counter(ctx, prefix, "nsuper", spst->sp_bks.sg_nsuper);
 	cmd_show_counter(ctx, prefix, "nspnode", spst->sp_bks.sg_nspnode);
 	cmd_show_counter(ctx, prefix, "nspleaf", spst->sp_bks.sg_nspleaf);
@@ -311,7 +311,7 @@ static void cmd_show_spacestats(const struct cmd_show_ctx *ctx)
 	prefix = "objs";
 	cmd_show_counter(ctx, prefix, "ndata1k", spst->sp_objs.sg_ndata1k);
 	cmd_show_counter(ctx, prefix, "ndata4k", spst->sp_objs.sg_ndata4k);
-	cmd_show_counter(ctx, prefix, "ndatabk", spst->sp_objs.sg_ndatabk);
+	cmd_show_counter(ctx, prefix, "ndata64k", spst->sp_objs.sg_ndata64k);
 	cmd_show_counter(ctx, prefix, "nsuper", spst->sp_objs.sg_nsuper);
 	cmd_show_counter(ctx, prefix, "nspnode", spst->sp_objs.sg_nspnode);
 	cmd_show_counter(ctx, prefix, "nspleaf", spst->sp_objs.sg_nspleaf);

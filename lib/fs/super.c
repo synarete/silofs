@@ -203,8 +203,8 @@ sb_mainsilofs_lsid_by(const struct silofs_super_block *sb,
 	case SILOFS_MTYPE_DATA4K:
 		ret = &sb->sb_main_lsid.sb_silofs_lsid_data4k;
 		break;
-	case SILOFS_MTYPE_DATABK:
-		ret = &sb->sb_main_lsid.sb_silofs_lsid_databk;
+	case SILOFS_MTYPE_DATA64K:
+		ret = &sb->sb_main_lsid.sb_silofs_lsid_data64k;
 		break;
 	case SILOFS_MTYPE_NONE:
 	case SILOFS_MTYPE_UBER:
@@ -299,8 +299,8 @@ sb_sproot_by(const struct silofs_super_block *sb, enum silofs_mtype mtype)
 	case SILOFS_MTYPE_DATA4K:
 		ret = &sb->sb_sproots.sb_sproot_data4k;
 		break;
-	case SILOFS_MTYPE_DATABK:
-		ret = &sb->sb_sproots.sb_sproot_databk;
+	case SILOFS_MTYPE_DATA64K:
+		ret = &sb->sb_sproots.sb_sproot_data64k;
 		break;
 	case SILOFS_MTYPE_NONE:
 	case SILOFS_MTYPE_UBER:
@@ -849,7 +849,7 @@ int silofs_test_shared_dbkref(struct silofs_task_ctx *task,
 	int err;
 
 	*out_res = false;
-	if (!silofs_vaddr_isdatabk(vaddr)) {
+	if (!silofs_vaddr_isdata64k(vaddr)) {
 		return 0;
 	}
 	err = stage_spleaf_lsmap(task, vaddr, SILOFS_STG_CUR, &sli, &lsi);

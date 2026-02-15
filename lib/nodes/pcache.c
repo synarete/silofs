@@ -115,7 +115,7 @@ pcache_hmapq_of(const struct silofs_pcache *pcache,
 	case SILOFS_MTYPE_FTNODE:
 	case SILOFS_MTYPE_DATA1K:
 	case SILOFS_MTYPE_DATA4K:
-	case SILOFS_MTYPE_DATABK:
+	case SILOFS_MTYPE_DATA64K:
 	case SILOFS_MTYPE_LAST:
 	default:
 		silofs_panic("bad pcache: mtype=%d", (int)paddr->mtype);

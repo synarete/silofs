@@ -50,7 +50,7 @@ static void ut_ioctl_query_statfsx(struct ut_env *ute)
 	ut_expect_ge(spst.sp_capacity, SILOFS_CAPACITY_SIZE_MIN);
 	ut_expect_ge(spst.sp_vspacesize, SILOFS_CAPACITY_SIZE_MIN);
 	ut_expect_ge(spst.sp_lsegs.sg_nsuper, 1);
-	ut_expect_ge(spst.sp_lsegs.sg_ndatabk, 1);
+	ut_expect_ge(spst.sp_lsegs.sg_ndata64k, 1);
 	ut_expect_ge(spst.sp_lsegs.sg_nspnode, 3);
 	ut_expect_ge(spst.sp_lsegs.sg_nspleaf, 1);
 	ut_expect_ge(spst.sp_lsegs.sg_ninode, 1);
@@ -59,7 +59,7 @@ static void ut_ioctl_query_statfsx(struct ut_env *ute)
 	ut_expect_ge(spst.sp_objs.sg_nspleaf, 4);
 	ut_expect_ge(spst.sp_bks.sg_ndata1k, spst.sp_bks.sg_ndata1k);
 	ut_expect_ge(spst.sp_bks.sg_ndata4k, spst.sp_bks.sg_ndata4k);
-	ut_expect_ge(spst.sp_bks.sg_ndatabk, spst.sp_bks.sg_ndatabk);
+	ut_expect_ge(spst.sp_bks.sg_ndata64k, spst.sp_bks.sg_ndata64k);
 	ut_expect_ge(spst.sp_bks.sg_nsuper, spst.sp_bks.sg_nsuper);
 	ut_expect_ge(spst.sp_bks.sg_nspnode, spst.sp_bks.sg_nspnode);
 	ut_expect_ge(spst.sp_bks.sg_nspleaf, spst.sp_bks.sg_nspleaf);
@@ -70,7 +70,7 @@ static void ut_ioctl_query_statfsx(struct ut_env *ute)
 	ut_expect_ge(spst.sp_bks.sg_nsymval, spst.sp_bks.sg_nsymval);
 	ut_expect_ge(spst.sp_objs.sg_ndata1k, spst.sp_objs.sg_ndata1k);
 	ut_expect_ge(spst.sp_objs.sg_ndata4k, spst.sp_objs.sg_ndata4k);
-	ut_expect_ge(spst.sp_objs.sg_ndatabk, spst.sp_objs.sg_ndatabk);
+	ut_expect_ge(spst.sp_objs.sg_ndata64k, spst.sp_objs.sg_ndata64k);
 	ut_expect_ge(spst.sp_objs.sg_nsuper, spst.sp_objs.sg_nsuper);
 	ut_expect_ge(spst.sp_objs.sg_nspnode, spst.sp_objs.sg_nspnode);
 	ut_expect_ge(spst.sp_objs.sg_nspleaf, spst.sp_objs.sg_nspleaf);

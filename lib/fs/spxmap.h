@@ -47,7 +47,7 @@ struct silofs_spamaps {
 	struct silofs_spamap spa_ftnode;
 	struct silofs_spamap spa_data1k;
 	struct silofs_spamap spa_data4k;
-	struct silofs_spamap spa_databk;
+	struct silofs_spamap spa_data64k;
 };
 
 /* key of in-memory uaddress-mapping */

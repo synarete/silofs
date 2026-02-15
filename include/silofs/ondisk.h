@@ -360,25 +360,25 @@ enum silofs_pnodef {
 
 /* meta elements types */
 enum silofs_mtype {
-	SILOFS_MTYPE_NONE   = 0,
-	SILOFS_MTYPE_MBR    = 1,
-	SILOFS_MTYPE_UBER   = 2,
-	SILOFS_MTYPE_ARIX   = 3,
-	SILOFS_MTYPE_BLDESC = 4,
-	SILOFS_MTYPE_BTNODE = 5,
-	SILOFS_MTYPE_SUPER  = 6,
-	SILOFS_MTYPE_SPNODE = 7,
-	SILOFS_MTYPE_SPLEAF = 8,
-	SILOFS_MTYPE_LSMAP  = 9,
-	SILOFS_MTYPE_INODE  = 10,
-	SILOFS_MTYPE_XANODE = 11,
-	SILOFS_MTYPE_DTNODE = 12,
-	SILOFS_MTYPE_SYMVAL = 13,
-	SILOFS_MTYPE_FTNODE = 14,
-	SILOFS_MTYPE_DATA1K = 15,
-	SILOFS_MTYPE_DATA4K = 16,
-	SILOFS_MTYPE_DATABK = 17,
-	SILOFS_MTYPE_LAST   = 18, /* keep last */
+	SILOFS_MTYPE_NONE    = 0,
+	SILOFS_MTYPE_MBR     = 1,
+	SILOFS_MTYPE_UBER    = 2,
+	SILOFS_MTYPE_ARIX    = 3,
+	SILOFS_MTYPE_BLDESC  = 4,
+	SILOFS_MTYPE_BTNODE  = 5,
+	SILOFS_MTYPE_SUPER   = 6,
+	SILOFS_MTYPE_SPNODE  = 7,
+	SILOFS_MTYPE_SPLEAF  = 8,
+	SILOFS_MTYPE_LSMAP   = 9,
+	SILOFS_MTYPE_INODE   = 10,
+	SILOFS_MTYPE_XANODE  = 11,
+	SILOFS_MTYPE_DTNODE  = 12,
+	SILOFS_MTYPE_SYMVAL  = 13,
+	SILOFS_MTYPE_FTNODE  = 14,
+	SILOFS_MTYPE_DATA1K  = 15,
+	SILOFS_MTYPE_DATA4K  = 16,
+	SILOFS_MTYPE_DATA64K = 17,
+	SILOFS_MTYPE_LAST    = 18, /* keep last */
 };
 
 /* logical heights of unode mappings */
@@ -647,7 +647,7 @@ struct silofs_sb_sproots {
 	struct silofs_uaddr128b sb_sproot_symval;
 	struct silofs_uaddr128b sb_sproot_data1k;
 	struct silofs_uaddr128b sb_sproot_data4k;
-	struct silofs_uaddr128b sb_sproot_databk;
+	struct silofs_uaddr128b sb_sproot_data64k;
 	uint8_t                 sb_reserved[896];
 } silofs_attr_aligned64;
 
@@ -660,7 +660,7 @@ struct silofs_sb_lsids {
 	struct silofs_lsid64b sb_silofs_lsid_symval;
 	struct silofs_lsid64b sb_silofs_lsid_data1k;
 	struct silofs_lsid64b sb_silofs_lsid_data4k;
-	struct silofs_lsid64b sb_silofs_lsid_databk;
+	struct silofs_lsid64b sb_silofs_lsid_data64k;
 	uint8_t               sb_reserved[448];
 } silofs_attr_aligned64;
 
@@ -676,7 +676,7 @@ struct silofs_space_gauges256 {
 	uint64_t sg_nftnode;
 	uint64_t sg_ndata1k;
 	uint64_t sg_ndata4k;
-	uint64_t sg_ndatabk;
+	uint64_t sg_ndata64k;
 	uint64_t sg_reserved2[20];
 } silofs_attr_aligned64;
 

@@ -118,16 +118,16 @@ void silofs_vaddr_of_lsmap(struct silofs_vaddr *vaddr,
 
 	// all sort of hidden assumptions here -- FIXME
 	STATICASSERT_EQ(SILOFS_MTYPE_INODE, 10);
-	STATICASSERT_EQ(SILOFS_MTYPE_DATABK - SILOFS_MTYPE_INODE + 1, 8);
-	STATICASSERT_EQ(SILOFS_MTYPE_DATABK + 1, SILOFS_MTYPE_LAST);
+	STATICASSERT_EQ(SILOFS_MTYPE_DATA64K - SILOFS_MTYPE_INODE + 1, 8);
+	STATICASSERT_EQ(SILOFS_MTYPE_DATA64K + 1, SILOFS_MTYPE_LAST);
 	STATICASSERT_EQ(sizeof(struct silofs_lsmap), SILOFS_LBK_SIZE);
 
 	silofs_assert_ge(refmtype, SILOFS_MTYPE_INODE);
-	silofs_assert_le(refmtype, SILOFS_MTYPE_DATABK);
+	silofs_assert_le(refmtype, SILOFS_MTYPE_DATA64K);
 
 	lseg_idx = pos / SILOFS_LSEG_SIZE_MAX;
 	refl_idx = (ssize_t)refmtype - SILOFS_MTYPE_INODE;
-	span     = SILOFS_MTYPE_DATABK - SILOFS_MTYPE_INODE + 1;
+	span     = SILOFS_MTYPE_DATA64K - SILOFS_MTYPE_INODE + 1;
 	off = ((lseg_idx * span) + refl_idx + 1) * step; /* zero is reserved */
 
 	silofs_vaddr_setup(vaddr, SILOFS_MTYPE_LSMAP, off);
@@ -157,9 +157,9 @@ bool silofs_vaddr_isdata(const struct silofs_vaddr *vaddr)
 	return silofs_mtype_isdata(vaddr->mtype);
 }
 
-bool silofs_vaddr_isdatabk(const struct silofs_vaddr *vaddr)
+bool silofs_vaddr_isdata64k(const struct silofs_vaddr *vaddr)
 {
-	return vaddr->mtype == SILOFS_MTYPE_DATABK;
+	return vaddr->mtype == SILOFS_MTYPE_DATA64K;
 }
 
 bool silofs_vaddr_isinode(const struct silofs_vaddr *vaddr)

@@ -59,7 +59,7 @@ struct silofs_space_gauges {
 	ssize_t nftnode;
 	ssize_t ndata1k;
 	ssize_t ndata4k;
-	ssize_t ndatabk;
+	ssize_t ndata64k;
 };
 
 /* space accounting per sub-kind + sub-type */

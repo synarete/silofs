@@ -497,8 +497,8 @@ spamaps_sub_map(struct silofs_spamaps *spam, enum silofs_mtype mtype)
 	case SILOFS_MTYPE_DATA4K:
 		ret = &spam->spa_data4k;
 		break;
-	case SILOFS_MTYPE_DATABK:
-		ret = &spam->spa_databk;
+	case SILOFS_MTYPE_DATA64K:
+		ret = &spam->spa_data64k;
 		break;
 	case SILOFS_MTYPE_UBER:
 	case SILOFS_MTYPE_ARIX:

@@ -82,7 +82,7 @@ ubn_slot_of(const struct silofs_uber_node *ubn, enum silofs_mtype vtype)
 	case SILOFS_MTYPE_DATA4K:
 		slot = 7;
 		break;
-	case SILOFS_MTYPE_DATABK:
+	case SILOFS_MTYPE_DATA64K:
 		slot = 8;
 		break;
 	case SILOFS_MTYPE_SUPER:

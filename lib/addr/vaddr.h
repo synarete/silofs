@@ -62,7 +62,7 @@ bool silofs_vaddr_isnull(const struct silofs_vaddr *vaddr);
 
 bool silofs_vaddr_isdata(const struct silofs_vaddr *vaddr);
 
-bool silofs_vaddr_isdatabk(const struct silofs_vaddr *vaddr);
+bool silofs_vaddr_isdata64k(const struct silofs_vaddr *vaddr);
 
 bool silofs_vaddr_isinode(const struct silofs_vaddr *vaddr);
 

@@ -47,6 +47,9 @@ int silofs_stage_btnode(struct silofs_env           *env,
                         const struct silofs_nodeptr *nodeptr,
                         struct silofs_btnode_info  **out_bti);
 
+int silofs_require_paddr(struct silofs_env         *env,
+                         const struct silofs_paddr *paddr);
+
 int silofs_destage_dirty(struct silofs_env *env);
 
 #endif /* SILOFS_STAGE_H_ */

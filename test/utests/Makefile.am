@@ -71,6 +71,7 @@ clean-local:
 
 check-local: $(bin_PROGRAMS)
 	$(AM_V)mkdir -p $(ut_check_dir)
+	$(AM_V)rm -rf $(ut_check_dir)/*
 	$(AM_V)echo "  TEST       " && \
 	  $$(realpath "$^") -l $(SILOFS_UNITESTS_LEVEL) $(ut_check_dir) ;
 	$(AM_V)rm -rf $(ut_check_dir)

@@ -602,11 +602,9 @@ struct silofs_btnptr256b {
 } silofs_attr_aligned64;
 
 /* space descriptor  */
-struct silofs_spdesc256b {
-	struct silofs_paddr64b spd_btns_head;
-	struct silofs_paddr64b spd_btns_tail;
-	struct silofs_paddr64b spd_vns_head;
-	struct silofs_paddr64b spd_vns_tail;
+struct silofs_spdesc128b {
+	struct silofs_paddr64b spd_beg;
+	struct silofs_paddr64b spd_end;
 } silofs_attr_aligned64;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -982,7 +980,8 @@ struct silofs_blob_desc {
 /* uber-node sub-child by vspace */
 struct silofs_uber_vspace {
 	struct silofs_btnptr256b ub_btroot;
-	struct silofs_spdesc256b ub_spdesc;
+	struct silofs_spdesc128b ub_bn_spdesc;
+	struct silofs_spdesc128b ub_vn_spdesc;
 } silofs_attr_aligned64;
 
 /* uber-node */

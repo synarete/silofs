@@ -80,7 +80,10 @@ void silofs_ignite_btspace(const struct silofs_task_ctx *task,
 
 void silofs_ignite_vspace(const struct silofs_task_ctx *task,
                           enum silofs_mtype vtype,
-                          struct silofs_nodeptr *out_nodeptr)
+                          struct silofs_spdesc *out_spdesc)
 {
-	ignite_space_of(task->prng, vtype, out_nodeptr);
+	struct silofs_paddr paddr = {};
+
+	make_base_paddr(task->prng, vtype, &paddr);
+	silofs_spdesc_setup1(out_spdesc, &paddr);
 }

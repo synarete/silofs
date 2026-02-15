@@ -442,6 +442,18 @@ int silofs_stage_btnode(struct silofs_env *env,
 	return err;
 }
 
+int silofs_require_paddr(struct silofs_env *env,
+                         const struct silofs_paddr *paddr)
+{
+	struct silofs_stage_ctx st_ctx = {};
+	int err;
+
+	stc_init(&st_ctx, env);
+	err = stc_require_paddr(&st_ctx, paddr);
+	stc_fini(&st_ctx);
+	return err;
+}
+
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static int stc_write_pnode(struct silofs_stage_ctx *st_ctx,

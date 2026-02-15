@@ -132,50 +132,68 @@ static int format_uber(struct silofs_task_ctx *task)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int
-spawn_btree_root(struct silofs_task_ctx *task, enum silofs_mtype vspace)
+static int spawn_btroot(struct silofs_task_ctx *task, enum silofs_mtype vtype,
+                        struct silofs_btnode_info **out_bti)
 {
-	struct silofs_nodeptr nodeptr  = {};
-	struct silofs_btnode_info *bti = nullptr;
+	struct silofs_nodeptr nodeptr = {};
 	int err;
 
 	silofs_ignite_btspace(task, &nodeptr);
-	err = silofs_spawn_btnode(task->env, &nodeptr, &bti);
+	err = silofs_spawn_btnode(task->env, &nodeptr, out_bti);
 	if (err) {
 		return err;
 	}
-	silofs_bti_set_vspace(bti, vspace);
-
-	silofs_ubi_set_btroot_by(task->env->ubi, bti);
+	silofs_bti_set_vspace(*out_bti, vtype);
 	return 0;
+}
+
+static int ignite_vspace_by(struct silofs_task_ctx *task,
+                            const struct silofs_btnode_info *bti)
+{
+	struct silofs_btnptr btnptr   = {};
+	struct silofs_spdesc spdesc   = {};
+	struct silofs_uber_info *ubi  = task->env->ubi;
+	const enum silofs_mtype vtype = silofs_bti_vspace(bti);
+
+	silofs_bti_self(bti, &btnptr);
+	silofs_ubi_set_btroot(ubi, vtype, &btnptr);
+
+	silofs_spdesc_setup1(&spdesc, &btnptr.base.paddr);
+	silofs_ubi_set_bndesc(ubi, vtype, &spdesc);
+
+	silofs_ignite_vspace(task, vtype, &spdesc);
+	silofs_ubi_set_vndesc(ubi, vtype, &spdesc);
+
+	return flush_destage_dirty(task);
 }
 
 static int
-format_btree_of(struct silofs_task_ctx *task, enum silofs_mtype mtype)
+format_vspace_of(struct silofs_task_ctx *task, enum silofs_mtype vtype)
 {
+	struct silofs_btnode_info *bti = nullptr;
 	int err;
 
-	err = spawn_btree_root(task, mtype);
+	err = spawn_btroot(task, vtype, &bti);
 	if (err) {
-		log_err("format btree failed: mtype=%d err=%d", mtype, err);
+		log_err("spawn btroot failed: vtype=%d err=%d", vtype, err);
 		return err;
 	}
-	err = flush_destage_dirty(task);
+	err = ignite_vspace_by(task, bti);
 	if (err) {
-		return err;
+		log_err("ignite vspace failed: vtype=%d err=%d", vtype, err);
 	}
-	log_dbg("format btree of: mtype=%d", mtype);
+	log_dbg("format vspace of: vtype=%d", vtype);
 	return 0;
 }
 
-static int format_btrees(struct silofs_task_ctx *task)
+static int format_vspaces(struct silofs_task_ctx *task)
 {
 	enum silofs_mtype mtype = SILOFS_MTYPE_NONE;
 	int err;
 
 	while (++mtype < SILOFS_MTYPE_LAST) {
 		if (silofs_mtype_isvnode(mtype)) {
-			err = format_btree_of(task, mtype);
+			err = format_vspace_of(task, mtype);
 			if (err) {
 				return err;
 			}
@@ -203,7 +221,7 @@ int silofs_exec_format_bs(struct silofs_task_ctx *task)
 	if (err) {
 		return err;
 	}
-	err = format_btrees(task);
+	err = format_vspaces(task);
 	if (err) {
 		return err;
 	}

@@ -31,6 +31,6 @@ void silofs_ignite_btspace(const struct silofs_task_ctx *task,
 
 void silofs_ignite_vspace(const struct silofs_task_ctx *task,
                           enum silofs_mtype             vtype,
-                          struct silofs_nodeptr        *out_nodeptr);
+                          struct silofs_spdesc         *out_spdesc);
 
 #endif /* SILOFS_SPACE_H_ */

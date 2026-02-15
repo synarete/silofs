@@ -1063,11 +1063,17 @@ int silofs_do_mknod(struct silofs_task_ctx *task,
 }
 
 /*
- * FMODE_EXEC is Linux kernel internal value (1 << 5), which is not used by
- * the O_xxx flags (see comment in <asm-generic/fcntl.h>). Interestingly, it is
- * propagated via FUSE, probably unintentionally. Need further investigation.
+ * Unlike historic UNIX (*BSD, Solaris) Linux does not have O_EXEC. On the
+ * other hand, there is FMODE_EXEC internal flag, which has a value (1 << 5)
+ * that is not used by other O_xxx flags (see comment in <asm-generic/fcntl.h>).
+ * Interestingly, it is propagated via FUSE, probably unintentionally. Need
+ * further investigation.
  */
-#define FMODE_EXEC 040
+#define FMODE_EXEC (1 << 5)
+#ifdef O_EXEC
+#error "unexpected O_EXEC define"
+#endif
+#define O_EXEC FMODE_EXEC
 
 static int o_flags_to_rwx(int o_flags)
 {
@@ -1088,7 +1094,7 @@ static int o_flags_to_rwx(int o_flags)
 		rwx |= W_OK;
 	}
 	/* special case of Kernel's execve */
-	mask = (O_LARGEFILE | FMODE_EXEC);
+	mask = (O_LARGEFILE | O_EXEC);
 	if ((o_flags & mask) == mask) {
 		rwx |= X_OK;
 	}

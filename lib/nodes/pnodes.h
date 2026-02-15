@@ -26,7 +26,7 @@
 struct silofs_pnode_info {
 	struct silofs_nodeptr    pn_self;
 	struct silofs_hmapq_elem pn_hmqe;
-	struct silofs_view      *pn_view;
+	struct silofs_pview     *pn_pview;
 };
 
 /* uber-node in-memory state */
@@ -88,11 +88,11 @@ void silofs_del_pnode(struct silofs_pnode_info *pni,
 
 int silofs_encrypt_pnode(const struct silofs_pnode_info *pni,
                          const struct silofs_cipher_hd  *ci_hd,
-                         struct silofs_view             *enc_view);
+                         struct silofs_pview            *enc_pview);
 
 int silofs_decrypt_pnode(struct silofs_pnode_info      *pni,
                          const struct silofs_cipher_hd *ci_hd,
-                         const struct silofs_view      *enc_view);
+                         const struct silofs_pview     *enc_pview);
 
 int silofs_verify_pnode(const struct silofs_pnode_info *pni);
 

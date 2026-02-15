@@ -19,16 +19,16 @@
 #include "addr.h"
 #include "pnodes.h"
 
-static struct silofs_view *
-new_view_of(struct silofs_alloc *alloc, enum silofs_mtype mtype)
+static struct silofs_pview *
+new_pview_of(struct silofs_alloc *alloc, enum silofs_mtype mtype)
 {
-	return silofs_view_new(alloc, mtype, 0);
+	return silofs_pview_new(alloc, mtype);
 }
 
-static void del_view_of(struct silofs_view *view, struct silofs_alloc *alloc,
-                        enum silofs_mtype mtype)
+static void del_pview_of(struct silofs_pview *pview,
+                         struct silofs_alloc *alloc, enum silofs_mtype mtype)
 {
-	silofs_view_del(view, alloc, mtype, 0);
+	silofs_pview_del(pview, alloc, mtype);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -49,14 +49,14 @@ pni_init(struct silofs_pnode_info *pni, const struct silofs_nodeptr *nodeptr)
 	silofs_nodeptr_assign(&pni->pn_self, nodeptr);
 	silofs_hmqe_init(&pni->pn_hmqe, nodeptr_size(nodeptr));
 	silofs_hkey_by_paddr(&pni->pn_hmqe.hme_key, &pni->pn_self.paddr);
-	pni->pn_view = nullptr;
+	pni->pn_pview = nullptr;
 }
 
 static void pni_fini(struct silofs_pnode_info *pni)
 {
 	silofs_nodeptr_reset(&pni->pn_self);
 	silofs_hmqe_fini(&pni->pn_hmqe);
-	pni->pn_view = nullptr;
+	pni->pn_pview = nullptr;
 }
 
 static enum silofs_mtype pni_mtype(const struct silofs_pnode_info *pni)
@@ -115,19 +115,19 @@ void silofs_pni_decref(struct silofs_pnode_info *pni)
 }
 
 static int
-pni_new_view(struct silofs_pnode_info *pni, struct silofs_alloc *alloc)
+pni_new_pview(struct silofs_pnode_info *pni, struct silofs_alloc *alloc)
 {
-	silofs_assert_null(pni->pn_view);
-	pni->pn_view = new_view_of(alloc, pni_mtype(pni));
-	return (pni->pn_view == nullptr) ? -SILOFS_ENOMEM : 0;
+	silofs_assert_null(pni->pn_pview);
+	pni->pn_pview = new_pview_of(alloc, pni_mtype(pni));
+	return (pni->pn_pview == nullptr) ? -SILOFS_ENOMEM : 0;
 }
 
 static void
 pni_del_view(struct silofs_pnode_info *pni, struct silofs_alloc *alloc)
 {
-	if (pni->pn_view != nullptr) {
-		del_view_of(pni->pn_view, alloc, pni_mtype(pni));
-		pni->pn_view = nullptr;
+	if (pni->pn_pview != nullptr) {
+		del_pview_of(pni->pn_pview, alloc, pni_mtype(pni));
+		pni->pn_pview = nullptr;
 	}
 }
 
@@ -167,9 +167,9 @@ ubi_new_view(struct silofs_uber_info *ubi, struct silofs_alloc *alloc)
 {
 	int err;
 
-	err = pni_new_view(&ubi->ub_pni, alloc);
+	err = pni_new_pview(&ubi->ub_pni, alloc);
 	if (!err) {
-		ubi->ubn = &ubi->ub_pni.pn_view->u.ub;
+		ubi->ubn = &ubi->ub_pni.pn_pview->pv.ub;
 	}
 	return err;
 }
@@ -283,9 +283,9 @@ bdi_new_view(struct silofs_bldesc_info *bdi, struct silofs_alloc *alloc)
 {
 	int err;
 
-	err = pni_new_view(&bdi->bld_pni, alloc);
+	err = pni_new_pview(&bdi->bld_pni, alloc);
 	if (!err) {
-		bdi->bld = &bdi->bld_pni.pn_view->u.bd;
+		bdi->bld = &bdi->bld_pni.pn_pview->pv.bd;
 	}
 	return err;
 }
@@ -403,9 +403,9 @@ bti_new_view(struct silofs_btnode_info *bti, struct silofs_alloc *alloc)
 {
 	int err;
 
-	err = pni_new_view(&bti->btn_pni, alloc);
+	err = pni_new_pview(&bti->btn_pni, alloc);
 	if (!err) {
-		bti->btn = &bti->btn_pni.pn_view->u.btn;
+		bti->btn = &bti->btn_pni.pn_pview->pv.btn;
 	}
 	return err;
 }
@@ -576,33 +576,33 @@ pni_civkey(const struct silofs_pnode_info *pni)
 
 int silofs_encrypt_pnode(const struct silofs_pnode_info *pni,
                          const struct silofs_cipher_hd *ci_hd,
-                         struct silofs_view *enc_view)
+                         struct silofs_pview *enc_pview)
 {
-	return silofs_encrypt_view(ci_hd,           //
-	                           pni_civkey(pni), //
-	                           pni->pn_view,    //
-	                           pni_mtype(pni),  //
-	                           enc_view);
+	return silofs_encrypt_pview(ci_hd,           //
+	                            pni_civkey(pni), //
+	                            pni->pn_pview,   //
+	                            pni_mtype(pni),  //
+	                            enc_pview);
 }
 
 int silofs_decrypt_pnode(struct silofs_pnode_info *pni,
                          const struct silofs_cipher_hd *ci_hd,
-                         const struct silofs_view *enc_view)
+                         const struct silofs_pview *enc_pview)
 {
-	return silofs_decrypt_view(ci_hd,           //
-	                           pni_civkey(pni), //
-	                           enc_view,        //
-	                           pni_mtype(pni),  //
-	                           pni->pn_view);
+	return silofs_decrypt_pview(ci_hd,           //
+	                            pni_civkey(pni), //
+	                            enc_pview,       //
+	                            pni_mtype(pni),  //
+	                            pni->pn_pview);
 }
 
 int silofs_verify_pnode(const struct silofs_pnode_info *pni)
 {
 	// TODO: verify sub-components
-	return silofs_view_verify(pni->pn_view, pni_mtype(pni));
+	return silofs_verify_pview(pni->pn_pview, pni_mtype(pni));
 }
 
 void silofs_seal_pnode(struct silofs_pnode_info *pni)
 {
-	silofs_view_seal(pni->pn_view);
+	silofs_seal_pview(pni->pn_pview);
 }

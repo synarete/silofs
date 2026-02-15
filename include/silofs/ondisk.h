@@ -1035,14 +1035,23 @@ struct silofs_arix_node {
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
+/* semantic "view" into pnodes' meta-elements */
+union silofs_pview_u {
+	struct silofs_header     hdr[2];
+	struct silofs_uber_node  ub;
+	struct silofs_blob_desc  bd;
+	struct silofs_btree_node btn;
+} silofs_attr_aligned64;
+
+struct silofs_pview {
+	union silofs_pview_u pv;
+} silofs_attr_aligned64;
+
 /* semantic "view" into meta elements */
 union silofs_view_u {
 	struct silofs_header       hdr[2];
 	struct silofs_mbr1k        mbr;
-	struct silofs_uber_node    ub;
 	struct silofs_arix_node    arn;
-	struct silofs_blob_desc    bd;
-	struct silofs_btree_node   btn;
 	struct silofs_super_block  sb;
 	struct silofs_spmap_node   sn;
 	struct silofs_spmap_leaf   sl;

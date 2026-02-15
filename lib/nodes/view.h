@@ -58,4 +58,29 @@ int silofs_decrypt_view_inplace(const struct silofs_cipher_hd *ci_hd,
                                 struct silofs_view            *view,
                                 enum silofs_mtype              mtype);
 
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+struct silofs_pview *
+silofs_pview_new(struct silofs_alloc *alloc, enum silofs_mtype mtype);
+
+void silofs_pview_del(struct silofs_pview *pview, struct silofs_alloc *alloc,
+                      enum silofs_mtype mtype);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_seal_pview(struct silofs_pview *pview);
+
+int silofs_verify_pview(const struct silofs_pview *pview,
+                        enum silofs_mtype          mtype);
+
+int silofs_encrypt_pview(const struct silofs_cipher_hd *ci_hd,
+                         const struct silofs_civkey    *civkey,
+                         const struct silofs_pview     *pview,
+                         enum silofs_mtype mtype, void *ptr);
+
+int silofs_decrypt_pview(const struct silofs_cipher_hd *ci_hd,
+                         const struct silofs_civkey    *civkey,
+                         const struct silofs_pview     *pview,
+                         enum silofs_mtype mtype, void *ptr);
+
 #endif /* SILOFS_VIEW_H_ */

@@ -30,7 +30,7 @@ struct silofs_stage_ctx {
 	struct silofs_mdigest_hd *md_hd;
 	struct silofs_cipher_hd *enc_ci_hd;
 	struct silofs_cipher_hd *dec_ci_hd;
-	struct silofs_view *view;
+	struct silofs_pview *pview;
 };
 
 static void stc_init(struct silofs_stage_ctx *st_ctx, struct silofs_env *env)
@@ -41,30 +41,30 @@ static void stc_init(struct silofs_stage_ctx *st_ctx, struct silofs_env *env)
 	st_ctx->md_hd     = &env->md_hd;
 	st_ctx->enc_ci_hd = &env->enc_ci_hd;
 	st_ctx->dec_ci_hd = &env->dec_ci_hd;
-	st_ctx->view      = nullptr;
+	st_ctx->pview     = nullptr;
 }
 
 static void stc_fini(struct silofs_stage_ctx *st_ctx)
 {
-	struct silofs_view *view = st_ctx->view;
+	struct silofs_pview *pview = st_ctx->pview;
 
-	if (view != nullptr) {
-		silofs_memfree(st_ctx->alloc, view, sizeof(*view), 0);
+	if (pview != nullptr) {
+		silofs_memfree(st_ctx->alloc, pview, sizeof(*pview), 0);
 	}
 }
 
-static int stc_require_view(struct silofs_stage_ctx *st_ctx)
+static int stc_require_pview(struct silofs_stage_ctx *st_ctx)
 {
-	struct silofs_view *view = nullptr;
+	struct silofs_pview *pview = nullptr;
 
-	if (st_ctx->view != nullptr) {
+	if (st_ctx->pview != nullptr) {
 		return 0;
 	}
-	view = silofs_memalloc(st_ctx->alloc, sizeof(*view), 0);
-	if (view == nullptr) {
+	pview = silofs_memalloc(st_ctx->alloc, sizeof(*pview), 0);
+	if (pview == nullptr) {
 		return -SILOFS_ENOENT;
 	}
-	st_ctx->view = view;
+	st_ctx->pview = pview;
 	return 0;
 }
 
@@ -105,7 +105,7 @@ static int stc_access_pnode_of(const struct silofs_stage_ctx *st_ctx,
 	return stc_access_pnode(st_ctx, &nodeptr->paddr);
 }
 
-static size_t viewlen_of(const struct silofs_pnode_info *pni)
+static size_t pview_length_of(const struct silofs_pnode_info *pni)
 {
 	return silofs_mtype_size(silofs_pni_mtype(pni));
 }
@@ -114,10 +114,10 @@ static int
 stc_read_pnode(struct silofs_stage_ctx *st_ctx, struct silofs_pnode_info *pni)
 {
 	const struct silofs_paddr *paddr = &pni->pn_self.paddr;
-	const size_t len                 = viewlen_of(pni);
+	const size_t len                 = pview_length_of(pni);
 
 	return silofs_dstor_read_blob_at(st_ctx->dstor, &paddr->blobid,
-	                                 paddr->pos, st_ctx->view, len);
+	                                 paddr->pos, st_ctx->pview, len);
 }
 
 static int stc_decrypt_verify_pnode(struct silofs_stage_ctx *st_ctx,
@@ -125,7 +125,7 @@ static int stc_decrypt_verify_pnode(struct silofs_stage_ctx *st_ctx,
 {
 	int err;
 
-	err = silofs_decrypt_pnode(pni, st_ctx->dec_ci_hd, st_ctx->view);
+	err = silofs_decrypt_pnode(pni, st_ctx->dec_ci_hd, st_ctx->pview);
 	if (err) {
 		return err;
 	}
@@ -141,7 +141,7 @@ stc_stage_pnode(struct silofs_stage_ctx *st_ctx, struct silofs_pnode_info *pni)
 {
 	int err;
 
-	err = stc_require_view(st_ctx);
+	err = stc_require_pview(st_ctx);
 	if (err) {
 		return err;
 	}
@@ -448,17 +448,17 @@ static int stc_write_pnode(struct silofs_stage_ctx *st_ctx,
                            const struct silofs_pnode_info *pni)
 {
 	const struct silofs_paddr *paddr = &pni->pn_self.paddr;
-	const size_t len                 = viewlen_of(pni);
+	const size_t len                 = pview_length_of(pni);
 
 	return silofs_dstor_write_blob_at(st_ctx->dstor, &paddr->blobid,
-	                                  paddr->pos, st_ctx->view, len);
+	                                  paddr->pos, st_ctx->pview, len);
 }
 
 static int stc_seal_encrypt_pnode(struct silofs_stage_ctx *st_ctx,
                                   struct silofs_pnode_info *pni)
 {
 	silofs_seal_pnode(pni);
-	return silofs_encrypt_pnode(pni, st_ctx->enc_ci_hd, st_ctx->view);
+	return silofs_encrypt_pnode(pni, st_ctx->enc_ci_hd, st_ctx->pview);
 }
 
 static int stc_destage_dirty_pnode(struct silofs_stage_ctx *st_ctx,
@@ -466,7 +466,7 @@ static int stc_destage_dirty_pnode(struct silofs_stage_ctx *st_ctx,
 {
 	int err;
 
-	err = stc_require_view(st_ctx);
+	err = stc_require_pview(st_ctx);
 	if (err) {
 		return err;
 	}

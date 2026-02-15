@@ -299,3 +299,88 @@ int silofs_decrypt_view_inplace(const struct silofs_cipher_hd *ci_hd,
 {
 	return silofs_decrypt_buf(ci_hd, civkey, view, view, view_len(mtype));
 }
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+static size_t pview_len(enum silofs_mtype mtype)
+{
+	return silofs_mtype_size(mtype);
+}
+
+static struct silofs_pview *
+pview_malloc(struct silofs_alloc *alloc, enum silofs_mtype mtype, int flags)
+{
+	return silofs_memalloc(alloc, pview_len(mtype), flags);
+}
+
+static void pview_free(struct silofs_pview *pview, struct silofs_alloc *alloc,
+                       enum silofs_mtype mtype, int flags)
+{
+	silofs_memfree(alloc, pview, pview_len(mtype), flags);
+}
+
+static void pview_bzero(struct silofs_pview *pview, enum silofs_mtype mtype)
+{
+	memset(pview, 0, pview_len(mtype));
+}
+
+static void pview_init(struct silofs_pview *pview, enum silofs_mtype mtype)
+{
+	pview_bzero(pview, mtype);
+	silofs_hdr_setup(&pview->pv.hdr[0], mtype);
+}
+
+static void pview_fini(struct silofs_pview *pview, enum silofs_mtype mtype)
+{
+	pview_bzero(pview, mtype);
+}
+
+struct silofs_pview *
+silofs_pview_new(struct silofs_alloc *alloc, enum silofs_mtype mtype)
+{
+	struct silofs_pview *pview = nullptr;
+
+	pview = pview_malloc(alloc, mtype, 0);
+	if (pview != nullptr) {
+		pview_init(pview, mtype);
+	}
+	return pview;
+}
+
+void silofs_pview_del(struct silofs_pview *pview, struct silofs_alloc *alloc,
+                      enum silofs_mtype mtype)
+{
+	if (likely(pview != nullptr)) {
+		pview_fini(pview, mtype);
+		pview_free(pview, alloc, mtype, 0);
+	}
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_seal_pview(struct silofs_pview *pview)
+{
+	silofs_hdr_seal(&pview->pv.hdr[0]);
+}
+
+int silofs_verify_pview(const struct silofs_pview *pview,
+                        enum silofs_mtype mtype)
+{
+	return silofs_hdr_verify(&pview->pv.hdr[0], mtype);
+}
+
+int silofs_encrypt_pview(const struct silofs_cipher_hd *ci_hd,
+                         const struct silofs_civkey *civkey,
+                         const struct silofs_pview *pview,
+                         enum silofs_mtype mtype, void *ptr)
+{
+	return silofs_encrypt_buf(ci_hd, civkey, pview, ptr, pview_len(mtype));
+}
+
+int silofs_decrypt_pview(const struct silofs_cipher_hd *ci_hd,
+                         const struct silofs_civkey *civkey,
+                         const struct silofs_pview *pview,
+                         enum silofs_mtype mtype, void *ptr)
+{
+	return silofs_decrypt_buf(ci_hd, civkey, pview, ptr, pview_len(mtype));
+}

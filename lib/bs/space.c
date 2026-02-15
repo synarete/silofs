@@ -77,3 +77,10 @@ void silofs_ignite_btspace(const struct silofs_task_ctx *task,
 {
 	ignite_space_of(task->prng, SILOFS_MTYPE_BTNODE, out_nodeptr);
 }
+
+void silofs_ignite_vspace(const struct silofs_task_ctx *task,
+                          enum silofs_mtype vtype,
+                          struct silofs_nodeptr *out_nodeptr)
+{
+	ignite_space_of(task->prng, vtype, out_nodeptr);
+}

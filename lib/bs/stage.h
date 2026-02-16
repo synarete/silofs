@@ -23,29 +23,29 @@
 
 struct silofs_env;
 
-int silofs_spawn_uber(struct silofs_env           *env,
-                      const struct silofs_nodeptr *nodeptr,
-                      struct silofs_uber_info    **out_ubi);
+int silofs_spawn_uber(struct silofs_env          *env,
+                      const struct silofs_pndptr *pndptr,
+                      struct silofs_uber_info   **out_ubi);
 
-int silofs_stage_uber(struct silofs_env           *env,
-                      const struct silofs_nodeptr *nodeptr,
-                      struct silofs_uber_info    **out_ubi);
+int silofs_stage_uber(struct silofs_env          *env,
+                      const struct silofs_pndptr *pndptr,
+                      struct silofs_uber_info   **out_ubi);
 
-int silofs_spawn_bldesc(struct silofs_env           *env,
-                        const struct silofs_nodeptr *nodeptr,
-                        struct silofs_bldesc_info  **out_bdi);
+int silofs_spawn_bldesc(struct silofs_env          *env,
+                        const struct silofs_pndptr *pndptr,
+                        struct silofs_bldesc_info **out_bdi);
 
-int silofs_stage_bldesc(struct silofs_env           *env,
-                        const struct silofs_nodeptr *nodeptr,
-                        struct silofs_bldesc_info  **out_bdi);
+int silofs_stage_bldesc(struct silofs_env          *env,
+                        const struct silofs_pndptr *pndptr,
+                        struct silofs_bldesc_info **out_bdi);
 
-int silofs_spawn_btnode(struct silofs_env           *env,
-                        const struct silofs_nodeptr *nodeptr,
-                        struct silofs_btnode_info  **out_bti);
+int silofs_spawn_btnode(struct silofs_env          *env,
+                        const struct silofs_pndptr *pndptr,
+                        struct silofs_btnode_info **out_bti);
 
-int silofs_stage_btnode(struct silofs_env           *env,
-                        const struct silofs_nodeptr *nodeptr,
-                        struct silofs_btnode_info  **out_bti);
+int silofs_stage_btnode(struct silofs_env          *env,
+                        const struct silofs_pndptr *pndptr,
+                        struct silofs_btnode_info **out_bti);
 
 int silofs_require_paddr(struct silofs_env         *env,
                          const struct silofs_paddr *paddr);

@@ -84,24 +84,24 @@ int silofs_exec_reload_repo(struct silofs_task_ctx *task)
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static int resolve_root_uber(const struct silofs_task_ctx *task,
-                             struct silofs_nodeptr *out_nodeptr)
+                             struct silofs_pndptr *out_pndptr)
 {
 	const struct silofs_env_mbis *mbis = &task->env->mbis;
 
-	return silofs_mbi_uber_root(&mbis->fs_mbi, out_nodeptr);
+	return silofs_mbi_uber_root(&mbis->fs_mbi, out_pndptr);
 }
 
 static int reload_uber(struct silofs_task_ctx *task)
 {
-	struct silofs_nodeptr nodeptr = {};
-	struct silofs_uber_info *ubi  = nullptr;
+	struct silofs_pndptr pndptr  = {};
+	struct silofs_uber_info *ubi = nullptr;
 	int err;
 
-	err = resolve_root_uber(task, &nodeptr);
+	err = resolve_root_uber(task, &pndptr);
 	if (err) {
 		return err;
 	}
-	err = silofs_stage_uber(task->env, &nodeptr, &ubi);
+	err = silofs_stage_uber(task->env, &pndptr, &ubi);
 	if (err) {
 		return err;
 	}

@@ -55,7 +55,7 @@ struct silofs_task_ctx;
 
 int silofs_resolve_vtop(struct silofs_task_ctx    *task,
                         const struct silofs_vaddr *vaddr,
-                        struct silofs_nodeptr     *out_nodeptr);
+                        struct silofs_pndptr      *out_pndptr);
 
 int silofs_map_vtop(struct silofs_task_ctx    *task,
                     const struct silofs_vaddr *vaddr,

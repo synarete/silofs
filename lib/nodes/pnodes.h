@@ -68,6 +68,9 @@ void silofs_pni_decref(struct silofs_pnode_info *pni);
 void silofs_pni_set_dq(struct silofs_pnode_info *pni,
                        struct silofs_dirtyq     *dq);
 
+void silofs_pni_layerid(const struct silofs_pnode_info *pni,
+                        struct silofs_layerid          *out_layerid);
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 struct silofs_uber_info *
@@ -79,8 +82,11 @@ silofs_bdi_from_pni(const struct silofs_pnode_info *pni);
 struct silofs_btnode_info *
 silofs_bti_from_pni(const struct silofs_pnode_info *pni);
 
-struct silofs_pnode_info *silofs_new_pnode(const struct silofs_pndptr *pndptr,
-                                           struct silofs_alloc        *alloc);
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+struct silofs_pnode_info *
+silofs_new_pnode(const struct silofs_pndptr *pndptr, //
+                 struct silofs_alloc        *alloc);
 
 void silofs_del_pnode(struct silofs_pnode_info *pni,
                       struct silofs_alloc      *alloc);

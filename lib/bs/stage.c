@@ -399,6 +399,21 @@ static int stc_lookup_cached_bti(const struct silofs_stage_ctx *st_ctx,
 	return (*out_bti == nullptr) ? -SILOFS_ENOENT : 0;
 }
 
+static int stc_validate_btnode(struct silofs_stage_ctx *st_ctx,
+                               const struct silofs_btnode_info *bti)
+{
+	size_t height;
+
+	height = silofs_bti_height(bti);
+	if ((height < SILOFS_BTREE_HEIGHT_MIN) || //
+	    (height > SILOFS_BTREE_HEIGHT_MAX)) {
+		log_warn("bad btnode: height=%zu", height);
+		return -SILOFS_EFSCORRUPTED;
+	}
+	silofs_unused(st_ctx);
+	return 0;
+}
+
 static int stc_stage_btnode(struct silofs_stage_ctx *st_ctx,
                             const struct silofs_nodeptr *nodeptr,
                             struct silofs_btnode_info **out_bti)
@@ -420,6 +435,11 @@ static int stc_stage_btnode(struct silofs_stage_ctx *st_ctx,
 		return err;
 	}
 	err = stc_stage_pnode(st_ctx, &bti->btn_pni);
+	if (err) {
+		silofs_assert_ok(err);
+		return err;
+	}
+	err = stc_validate_btnode(st_ctx, bti);
 	if (err) {
 		silofs_assert_ok(err);
 		return err;

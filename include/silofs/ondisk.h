@@ -957,7 +957,8 @@ enum silofs_objstatef {
 	SILOFS_OBJSTATEF_USED = 0x01,
 };
 
-/* maximal btree height, including leaf nodes */
+/* minimal/maximal btree height, including leaf nodes */
+#define SILOFS_BTREE_HEIGHT_MIN (1)
 #define SILOFS_BTREE_HEIGHT_MAX (8)
 
 /* blob's meta descriptor */

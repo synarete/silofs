@@ -144,6 +144,7 @@ static int spawn_btroot(struct silofs_task_ctx *task, enum silofs_mtype vtype,
 		return err;
 	}
 	silofs_bti_set_vspace(*out_bti, vtype);
+	silofs_bti_mark_root(*out_bti);
 	return 0;
 }
 

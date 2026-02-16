@@ -45,10 +45,6 @@ void silofs_btree_update_root(struct silofs_btree       *btree,
 
 int silofs_btree_format(struct silofs_btree *btree);
 
-int silofs_btree_lookup(struct silofs_btree       *btree,
-                        const struct silofs_vaddr *vaddr,
-                        struct silofs_btnptr      *out_child);
-
 int silofs_btree_insert(struct silofs_btree       *btree,
                         const struct silofs_vaddr *vaddr,
                         const struct silofs_paddr *paddr);
@@ -59,7 +55,7 @@ struct silofs_task_ctx;
 
 int silofs_resolve_vtop(struct silofs_task_ctx    *task,
                         const struct silofs_vaddr *vaddr,
-                        struct silofs_paddr       *out_paddr);
+                        struct silofs_nodeptr     *out_nodeptr);
 
 int silofs_map_vtop(struct silofs_task_ctx    *task,
                     const struct silofs_vaddr *vaddr,

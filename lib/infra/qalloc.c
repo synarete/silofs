@@ -413,10 +413,11 @@ qpool_add_free(struct silofs_qpool *qpool, struct silofs_qpage_info *qpgi,
 
 static void qpool_init_page_infos(struct silofs_qpool *qpool)
 {
-	union silofs_qpage *qpg;
 	struct silofs_qpage_info *qpgi;
 
 	for (size_t i = 0; i < qpool->npgs_max; ++i) {
+		union silofs_qpage *qpg;
+
 		qpg  = qpool_page_at(qpool, i);
 		qpgi = qpool_page_info_at(qpool, i);
 		qpgi_init(qpgi, qpg, i);
@@ -939,7 +940,6 @@ static size_t slab_step_nsegs(const struct silofs_slab *slab)
 static void
 slab_expand(struct silofs_slab *slab, struct silofs_qpage_info *qpgi)
 {
-	struct silofs_slab_seg *seg;
 	union silofs_qpage *qpg = qpgi->qpg;
 	const size_t step       = slab_step_nsegs(slab);
 	const size_t nsegs      = ARRAY_SIZE(qpg->seg);
@@ -948,7 +948,8 @@ slab_expand(struct silofs_slab *slab, struct silofs_qpage_info *qpgi)
 	qpgi->qpg_slab_nelems = (int)(sizeof(*qpg) / slab->elemsz);
 	qpgi->qpg_slab_nused  = 0;
 	for (size_t i = 0; (i + step) <= nsegs; i += step) {
-		seg = &qpg->seg[i];
+		struct silofs_slab_seg *seg = &qpg->seg[i];
+
 		silofs_list_push_back(&slab->free_list, &seg->link);
 		slab->nfree++;
 	}
@@ -957,7 +958,6 @@ slab_expand(struct silofs_slab *slab, struct silofs_qpage_info *qpgi)
 static void
 slab_shrink(struct silofs_slab *slab, struct silofs_qpage_info *qpgi)
 {
-	struct silofs_slab_seg *seg;
 	union silofs_qpage *qpg = qpgi->qpg;
 	const size_t step       = slab_step_nsegs(slab);
 	const size_t nsegs      = ARRAY_SIZE(qpg->seg);
@@ -966,9 +966,9 @@ slab_shrink(struct silofs_slab *slab, struct silofs_qpage_info *qpgi)
 	silofs_assert_eq(qpgi->qpg_slab_nused, 0);
 
 	for (size_t i = 0; (i + step) <= nsegs; i += step) {
-		silofs_assert_gt(slab->nfree, 0);
+		struct silofs_slab_seg *seg = &qpg->seg[i];
 
-		seg = &qpg->seg[i];
+		silofs_assert_gt(slab->nfree, 0);
 		silofs_list_head_remove(&seg->link);
 		slab->nfree--;
 	}

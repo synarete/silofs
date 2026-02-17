@@ -21,7 +21,7 @@
 #include <errno.h>
 #include "infra.h"
 #include "gcry.h"
-#include "random.h"
+#include "prand.h"
 
 static size_t do_getentropy(void *buf, size_t len)
 {
@@ -82,13 +82,16 @@ static void prandgen_refill_prandom(struct silofs_prandgen *prng)
 	struct silofs_hash256 hash;
 	const size_t psz = sizeof(prng->prandom);
 	uint8_t *p       = prandgen_prandom_buf(prng);
-	size_t k, cnt = 0;
+	size_t cnt       = 0;
 
 	while (cnt < psz) {
+		const size_t k = silofs_min(sizeof(hash.hash), psz - cnt);
+
 		prandgen_mkhash(prng, &hash);
-		k = silofs_min(sizeof(hash.hash), psz - cnt);
 		memcpy(p + cnt, hash.hash, k);
 		cnt += k;
+
+		/* TODO: if k < sizeof(hash) use leftover bits for xseed */
 	}
 }
 
@@ -159,11 +162,11 @@ static void prandgen_remix_xseed(struct silofs_prandgen *prng, uint64_t u)
 
 void silofs_prandgen_take(struct silofs_prandgen *prng, void *p, size_t n)
 {
-	uint64_t u;
 	uint8_t *q = p;
 	size_t k   = 0;
 
 	while (k < n) {
+		uint64_t u;
 		const size_t nb = silofs_min(n - k, sizeof(u));
 
 		prandgen_prepare(prng);

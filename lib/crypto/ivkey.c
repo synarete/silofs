@@ -19,7 +19,6 @@
 #include "infra.h"
 #include "gcry.h"
 #include "ivkey.h"
-#include "random.h"
 
 static enum gcry_random_level random_level(bool strong)
 {

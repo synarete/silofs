@@ -14,21 +14,23 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_RANDOM_H_
-#define SILOFS_RANDOM_H_
+#ifndef SILOFS_PRAND_H_
+#define SILOFS_PRAND_H_
 
 #include <stdlib.h>
 #include <stdint.h>
 #include "ivkey.h"
 #include "mdigest.h"
 
+/* pseudo random generator */
 struct silofs_prandgen {
-	uint32_t                 entropy[24];
-	uint64_t                 prandom[113];
-	uint64_t                 cycle;
-	uint16_t                 slot;
-	uint16_t                 count;
-	uint32_t                 xseed;
+	uint32_t entropy[24];
+	uint64_t prandom[113];
+	uint64_t cycle;
+	uint16_t slot;
+	uint16_t count;
+	uint32_t xseed;
+	/* produce pseudo-random via crypto hasher */
 	struct silofs_mdigest_hd md_hd;
 };
 
@@ -42,4 +44,4 @@ void silofs_prandgen_take(struct silofs_prandgen *prng, void *buf, size_t bsz);
 
 uint64_t silofs_prandgen_take64(struct silofs_prandgen *prng);
 
-#endif /* SILOFS_RANDOM_H_ */
+#endif /* SILOFS_PRAND_H_ */

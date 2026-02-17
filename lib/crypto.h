@@ -24,7 +24,7 @@
 #include "crypto/kdf.h"
 #include "crypto/hmac.h"
 #include "crypto/cipher.h"
-#include "crypto/random.h"
+#include "crypto/prand.h"
 #include "crypto/gcry.h"
 
 #endif /* SILOFS_CRYPTO_H_ */

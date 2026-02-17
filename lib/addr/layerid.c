@@ -16,7 +16,6 @@
  */
 #include <silofs/configs.h>
 #include "infra.h"
-#include "uuid.h"
 #include "layerid.h"
 
 static const struct silofs_layerid s_silofs_layerid_none;

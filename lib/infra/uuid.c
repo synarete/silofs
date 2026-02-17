@@ -15,11 +15,8 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
+#include <silofs/macros.h>
 #include <uuid/uuid.h>
-#include <errno.h>
-#include "infra.h"
-#include "str.h"
-#include "htox.h"
 #include "uuid.h"
 
 void silofs_uuid_generate(struct silofs_uuid *uu)
@@ -49,34 +46,4 @@ long silofs_uuid_compare(const struct silofs_uuid *uu1,
                          const struct silofs_uuid *uu2)
 {
 	return uuid_compare(uu1->id, uu2->id);
-}
-
-void silofs_uuid_unparse(const struct silofs_uuid *uu,
-                         struct silofs_strbuf *sbuf)
-{
-	silofs_strbuf_reset(sbuf);
-	uuid_unparse_lower(uu->id, sbuf->str);
-}
-
-int silofs_uuid_parse(struct silofs_uuid *uu, const struct silofs_strview *sv)
-{
-	struct silofs_strview sv2;
-	int ret = -EINVAL;
-
-	silofs_strview_strip_ws(sv, &sv2);
-	if (sv2.len == 36) {
-		ret = uuid_parse_range(silofs_strview_begin(&sv2),
-		                       silofs_strview_end(&sv2), uu->id);
-	}
-	return ret;
-}
-
-void silofs_uuid_as_u64s(const struct silofs_uuid *uu, uint64_t u[2])
-{
-	const uint8_t *p = uu->id;
-
-	SILOFS_STATICASSERT_EQ(sizeof(uu->id), 16);
-
-	u[0] = silofs_u8b_as_u64(p);
-	u[1] = silofs_u8b_as_u64(p + 8);
 }

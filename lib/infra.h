@@ -39,6 +39,7 @@
 #include "infra/socket.h"
 #include "infra/snprintf.h"
 #include "infra/times.h"
+#include "infra/uuid.h"
 #include "infra/qalloc.h"
 #include "infra/uconv.h"
 #include "infra/zcmpr.h"

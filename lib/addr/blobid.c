@@ -18,7 +18,6 @@
 #include "infra.h"
 #include "str.h"
 #include "htox.h"
-#include "uuid.h"
 #include "hash.h"
 #include "blobid.h"
 

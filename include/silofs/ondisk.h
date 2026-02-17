@@ -335,8 +335,10 @@ enum silofs_mbr_mode {
 
 /* common-header flags */
 enum silofs_hdrf {
-	SILOFS_HDRF_NONE = 0x00,
-	SILOFS_HDRF_CSUM = 0x01,
+	SILOFS_HDRF_NONE  = 0x00,
+	SILOFS_HDRF_CSUM  = 0x01,
+	SILOFS_HDRF_PNODE = 0x02,
+	SILOFS_HDRF_VNODE = 0x04,
 };
 
 /* format endianness */
@@ -356,6 +358,16 @@ enum silofs_pnodef {
 	SILOFS_PNODEF_NONE   = 0x00,
 	SILOFS_PNODEF_META   = 0x01,
 	SILOFS_PNODEF_BTROOT = 0x02,
+};
+
+/* p-elements sub-types */
+enum silofs_ptype {
+	SILOFS_PTYPE_NONE   = 0,
+	SILOFS_PTYPE_MBR    = 1,
+	SILOFS_PTYPE_UBER   = 2,
+	SILOFS_PTYPE_BLDESC = 3,
+	SILOFS_PTYPE_BTNODE = 4,
+	SILOFS_PTYPE_LAST   = 5, /* keep last */
 };
 
 /* meta elements types */

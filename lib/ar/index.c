@@ -59,7 +59,7 @@ static void ard256b_xtoh(const struct silofs_ar_desc256b *ard256,
 
 static void arn_setup_hdr(struct silofs_arix_node *arn)
 {
-	silofs_hdr_setup(&arn->arn_hdr, SILOFS_MTYPE_ARIX);
+	silofs_hdr_setup(&arn->arn_hdr, SILOFS_MTYPE_ARIX, SILOFS_HDRF_VNODE);
 }
 
 static void arn_seal_hdr(struct silofs_arix_node *arn)
@@ -69,7 +69,8 @@ static void arn_seal_hdr(struct silofs_arix_node *arn)
 
 static int arn_verify_hdr(const struct silofs_arix_node *arn)
 {
-	return silofs_hdr_verify(&arn->arn_hdr, SILOFS_MTYPE_ARIX);
+	return silofs_hdr_verify(&arn->arn_hdr, SILOFS_MTYPE_ARIX,
+	                         SILOFS_HDRF_VNODE);
 }
 
 static void

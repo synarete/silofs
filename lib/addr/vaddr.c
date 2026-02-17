@@ -17,7 +17,7 @@
 #include <silofs/configs.h>
 #include "infra.h"
 #include "offlba.h"
-#include "mtype.h"
+#include "stype.h"
 #include "htox.h"
 #include "vaddr.h"
 

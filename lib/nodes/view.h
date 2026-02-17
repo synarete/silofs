@@ -21,10 +21,11 @@
 #include "crypto.h"
 #include "addr.h"
 
-void silofs_hdr_setup(struct silofs_header *hdr, enum silofs_mtype mtype);
+void silofs_hdr_setup(struct silofs_header *hdr, enum silofs_mtype mtype,
+                      enum silofs_hdrf flags);
 
-int silofs_hdr_verify(const struct silofs_header *hdr,
-                      enum silofs_mtype           mtype);
+int silofs_hdr_verify(const struct silofs_header *hdr, enum silofs_mtype mtype,
+                      enum silofs_hdrf flags);
 
 void silofs_hdr_seal(struct silofs_header *hdr);
 

@@ -22,7 +22,7 @@
 #include "addr/offlba.h"
 #include "addr/htox.h"
 #include "addr/uuid.h"
-#include "addr/mtype.h"
+#include "addr/stype.h"
 #include "addr/hash.h"
 #include "addr/layerid.h"
 #include "addr/blobid.h"

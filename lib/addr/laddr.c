@@ -21,7 +21,7 @@
 #include "str.h"
 #include "offlba.h"
 #include "htox.h"
-#include "mtype.h"
+#include "stype.h"
 #include "blobid.h"
 #include "laddr.h"
 

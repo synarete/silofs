@@ -19,7 +19,7 @@
 #include "str.h"
 #include "htox.h"
 #include "offlba.h"
-#include "mtype.h"
+#include "stype.h"
 #include "blobid.h"
 #include "paddr.h"
 

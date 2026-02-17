@@ -14,12 +14,16 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_MTYPE_H_
-#define SILOFS_MTYPE_H_
+#ifndef SILOFS_STYPE_H_
+#define SILOFS_STYPE_H_
 
 #include <silofs/ondisk.h>
 #include <stdlib.h>
 #include <stdbool.h>
+
+size_t silofs_ptype_size(enum silofs_ptype ptype);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 bool silofs_mtype_isnone(enum silofs_mtype mtype);
 
@@ -43,4 +47,4 @@ ssize_t silofs_mtype_ssize(enum silofs_mtype mtype);
 
 size_t silofs_mtype_nkbs(enum silofs_mtype mtype);
 
-#endif /* SILOFS_MTYPE_H_ */
+#endif /* SILOFS_STYPE_H_ */

@@ -16,7 +16,35 @@
  */
 #include <silofs/configs.h>
 #include "infra.h"
-#include "mtype.h"
+#include "stype.h"
+
+size_t silofs_ptype_size(enum silofs_ptype ptype)
+{
+	size_t sz;
+
+	switch (ptype) {
+	case SILOFS_PTYPE_MBR:
+		sz = sizeof(struct silofs_mbr1k);
+		break;
+	case SILOFS_PTYPE_UBER:
+		sz = sizeof(struct silofs_uber_node);
+		break;
+	case SILOFS_PTYPE_BLDESC:
+		sz = sizeof(struct silofs_blob_desc);
+		break;
+	case SILOFS_PTYPE_BTNODE:
+		sz = sizeof(struct silofs_btree_node);
+		break;
+	case SILOFS_PTYPE_NONE:
+	case SILOFS_PTYPE_LAST:
+	default:
+		sz = 0;
+		break;
+	}
+	return sz;
+}
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static bool mtype_isequal(enum silofs_mtype st1, enum silofs_mtype st2)
 {

@@ -25,10 +25,6 @@
 
 const struct silofs_blobid *silofs_blobid_none(void);
 
-void silofs_blobid_setup_raw(struct silofs_blobid        *blobid,
-                             const struct silofs_layerid *layerid,
-                             enum silofs_mtype            mtype);
-
 void silofs_blobid_setup_raw2(struct silofs_blobid        *blobid,
                               const struct silofs_layerid *layerid,
                               enum silofs_mtype            mtype,
@@ -47,8 +43,6 @@ void silofs_blobid_setup_cas(struct silofs_blobid        *blobid,
 
 void silofs_blobid_get_layerid(const struct silofs_blobid *blobid,
                                struct silofs_layerid      *out_layerid);
-
-enum silofs_btype silofs_blobid_get_btype(const struct silofs_blobid *blobid);
 
 enum silofs_mtype silofs_blobid_get_mtype(const struct silofs_blobid *blobid);
 

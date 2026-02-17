@@ -33,11 +33,10 @@ static void generate_random(uint8_t *p, size_t n)
 struct silofs_blobidv {
 	uint16_t vers;
 	uint8_t mtype;
-	uint8_t btype;
 	/* XXX REMOVE ME */
 	uint8_t vspace;
 	uint8_t height;
-	uint8_t reserved[10];
+	uint8_t reserved[11];
 	struct silofs_layerid layerid;
 	struct silofs_uniqid uniqid;
 
@@ -75,7 +74,6 @@ static void blobidv_setup_raw(struct silofs_blobidv *blobidv,
 	blobidv_pre_setup(blobidv);
 	silofs_layerid_copyto(layerid, &blobidv->layerid);
 	blobidv->mtype = (uint8_t)mtype;
-	blobidv->btype = (uint8_t)SILOFS_BTYPE_RAW;
 	generate_random(blobidv->uniqid.u.raw, sizeof(blobidv->uniqid.u.raw));
 }
 
@@ -87,7 +85,6 @@ blobidv_setup_uniq(struct silofs_blobidv *blobidv,
 	blobidv_pre_setup(blobidv);
 	silofs_layerid_copyto(layerid, &blobidv->layerid);
 	blobidv->mtype = (uint8_t)mtype;
-	blobidv->btype = (uint8_t)SILOFS_BTYPE_RAW;
 	memcpy(&blobidv->uniqid, uniq, sizeof(blobidv->uniqid));
 }
 
@@ -99,7 +96,6 @@ blobidv_setup_cas(struct silofs_blobidv *blobidv,
 	blobidv_pre_setup(blobidv);
 	silofs_layerid_copyto(layerid, &blobidv->layerid);
 	blobidv->mtype = (uint8_t)mtype;
-	blobidv->btype = (uint8_t)SILOFS_BTYPE_CAS;
 	silofs_hash256_copyto(hash, &blobidv->uniqid.u.hash);
 }
 
@@ -110,16 +106,6 @@ static const struct silofs_blobid s_silofs_blobid_none;
 const struct silofs_blobid *silofs_blobid_none(void)
 {
 	return &s_silofs_blobid_none;
-}
-
-void silofs_blobid_setup_raw(struct silofs_blobid *blobid,
-                             const struct silofs_layerid *layerid,
-                             enum silofs_mtype mtype)
-{
-	struct silofs_blobidv blobidv;
-
-	blobidv_setup_raw(&blobidv, layerid, mtype);
-	blobid_from_view(blobid, &blobidv);
 }
 
 void silofs_blobid_setup_raw2(struct silofs_blobid *blobid,
@@ -173,14 +159,6 @@ enum silofs_height silofs_blobid_get_height(const struct silofs_blobid *blobid)
 
 	blobid_to_view(blobid, &blobidv);
 	return blobidv.height;
-}
-
-enum silofs_btype silofs_blobid_get_btype(const struct silofs_blobid *blobid)
-{
-	struct silofs_blobidv blobidv;
-
-	blobid_to_view(blobid, &blobidv);
-	return blobidv.btype;
 }
 
 enum silofs_mtype silofs_blobid_get_mtype(const struct silofs_blobid *blobid)

@@ -25,4 +25,7 @@ void silofs_generate_civkey(struct silofs_prandgen *prng,
 void silofs_generate_uniqid(struct silofs_prandgen *prng,
                             struct silofs_uniqid   *out_uniqid);
 
+void silofs_generate_layerid(struct silofs_prandgen *prng,
+                             struct silofs_layerid  *out_layerid);
+
 #endif /* SILOFS_RANDOM_H_ */

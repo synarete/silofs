@@ -17,16 +17,21 @@
 #include <silofs/configs.h>
 #include "genid.h"
 
+static void make_prandom(struct silofs_prandgen *prng, void *p, size_t n)
+{
+	silofs_prandgen_take(prng, p, n);
+}
+
 static void
 make_prandom_ckey(struct silofs_prandgen *prng, struct silofs_ckey *out_ckey)
 {
-	silofs_prandgen_take(prng, out_ckey->key, sizeof(out_ckey->key));
+	make_prandom(prng, out_ckey->key, sizeof(out_ckey->key));
 }
 
 static void
 make_prandom_civ(struct silofs_prandgen *prng, struct silofs_civ *out_civ)
 {
-	silofs_prandgen_take(prng, out_civ->iv, sizeof(out_civ->iv));
+	make_prandom(prng, out_civ->iv, sizeof(out_civ->iv));
 }
 
 void silofs_generate_civkey(struct silofs_prandgen *prng,
@@ -39,6 +44,11 @@ void silofs_generate_civkey(struct silofs_prandgen *prng,
 void silofs_generate_uniqid(struct silofs_prandgen *prng,
                             struct silofs_uniqid *out_uniqid)
 {
-	silofs_prandgen_take(prng, out_uniqid->u.raw,
-	                     sizeof(out_uniqid->u.raw));
+	make_prandom(prng, out_uniqid->u.raw, sizeof(out_uniqid->u.raw));
+}
+
+void silofs_generate_layerid(struct silofs_prandgen *prng,
+                             struct silofs_layerid *out_layerid)
+{
+	make_prandom(prng, out_layerid->id, sizeof(out_layerid->id));
 }

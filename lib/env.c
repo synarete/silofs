@@ -476,7 +476,7 @@ make_super_lsid(struct silofs_env *env, struct silofs_lsid *out_lsid)
 	struct silofs_uniqid uniqid;
 	struct silofs_blobid56b blobid56b;
 
-	silofs_layerid_generate(&layerid);
+	silofs_generate_layerid(env->base.prng, &layerid);
 	silofs_generate_uniqid(env->base.prng, &uniqid);
 
 	silofs_blobid56b_setup_raw2(&blobid56b, &layerid, &uniqid,

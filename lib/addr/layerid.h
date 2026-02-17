@@ -23,8 +23,6 @@ const struct silofs_layerid *silofs_layerid_none(void);
 
 void silofs_layerid_reset(struct silofs_layerid *layerid);
 
-void silofs_layerid_generate(struct silofs_layerid *layerid);
-
 void silofs_layerid_copyto(const struct silofs_layerid *layerid,
                            struct silofs_layerid       *other);
 

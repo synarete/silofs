@@ -31,7 +31,7 @@ make_uniq_blobid56b(struct silofs_prandgen *prng, enum silofs_mtype mtype,
 	struct silofs_layerid layerid;
 	struct silofs_uniqid uniqid;
 
-	silofs_layerid_generate(&layerid);
+	silofs_generate_layerid(prng, &layerid);
 	silofs_generate_uniqid(prng, &uniqid);
 	silofs_blobid56b_setup_raw3(out_blobid56b, &layerid, &uniqid, mtype);
 }

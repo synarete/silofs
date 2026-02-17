@@ -30,16 +30,6 @@ void silofs_layerid_reset(struct silofs_layerid *layerid)
 	memset(layerid->id, 0, sizeof(layerid->id));
 }
 
-void silofs_layerid_generate(struct silofs_layerid *layerid)
-{
-	struct silofs_uuid uuid;
-
-	STATICASSERT_EQ(sizeof(uuid.id), sizeof(layerid->id));
-
-	silofs_uuid_generate(&uuid);
-	memcpy(layerid->id, uuid.id, sizeof(layerid->id));
-}
-
 void silofs_layerid_copyto(const struct silofs_layerid *layerid,
                            struct silofs_layerid *other)
 {

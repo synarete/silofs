@@ -19,6 +19,22 @@
 #include "addr.h"
 #include "view.h"
 
+static size_t hdr_size_by(uint8_t stype, enum silofs_hdrf flags)
+{
+	size_t sz;
+
+	silofs_assert_gt(flags & (SILOFS_HDRF_PNODE | SILOFS_HDRF_VNODE), 0);
+
+	if (flags & SILOFS_HDRF_PNODE) {
+		sz = silofs_ptype_size(stype);
+	} else if (flags & SILOFS_HDRF_VNODE) {
+		sz = silofs_mtype_size(stype);
+	} else {
+		sz = sizeof(struct silofs_header);
+	}
+	return sz;
+}
+
 static uint32_t hdr_magic(const struct silofs_header *hdr)
 {
 	return silofs_le32_to_cpu(hdr->h_magic);
@@ -52,16 +68,14 @@ static size_t hdr_payload_size(const struct silofs_header *hdr)
 	return size - sizeof(*hdr);
 }
 
-static enum silofs_mtype hdr_mtype(const struct silofs_header *hdr)
+static uint8_t hdr_stype(const struct silofs_header *hdr)
 {
-	const uint8_t mtype = hdr->h_mtype;
-
-	return (enum silofs_mtype)mtype;
+	return hdr->h_stype;
 }
 
-static void hdr_set_mtype(struct silofs_header *hdr, enum silofs_mtype mtype)
+static void hdr_set_stype(struct silofs_header *hdr, uint8_t stype)
 {
-	hdr->h_mtype = (uint8_t)mtype;
+	hdr->h_stype = stype;
 }
 
 static enum silofs_hdrf hdr_flags(const struct silofs_header *hdr)
@@ -110,30 +124,29 @@ static const void *hdr_payload(const struct silofs_header *hdr)
 	return hdr + 1;
 }
 
-void silofs_hdr_setup(struct silofs_header *hdr, enum silofs_mtype mtype,
+void silofs_hdr_setup(struct silofs_header *hdr, uint8_t stype,
                       enum silofs_hdrf flags)
 {
 	memset(hdr, 0, sizeof(*hdr));
 	hdr_set_magic(hdr, SILOFS_META_MAGIC);
-	hdr_set_size(hdr, silofs_mtype_size(mtype));
-	hdr_set_mtype(hdr, mtype);
+	hdr_set_size(hdr, hdr_size_by(stype, flags));
+	hdr_set_stype(hdr, stype);
 	hdr_set_flags(hdr, flags);
 }
 
-static int
-hdr_verify_base(const struct silofs_header *hdr, enum silofs_mtype mtype,
-                size_t size, enum silofs_hdrf flags)
+static int hdr_verify_base(const struct silofs_header *hdr, uint8_t stype,
+                           enum silofs_hdrf flags)
 {
 	if (hdr_magic(hdr) != SILOFS_META_MAGIC) {
 		return -SILOFS_EFSCORRUPTED;
 	}
-	if (hdr_mtype(hdr) != mtype) {
-		return -SILOFS_EFSCORRUPTED;
-	}
-	if (hdr_size(hdr) != size) {
+	if (hdr_stype(hdr) != stype) {
 		return -SILOFS_EFSCORRUPTED;
 	}
 	if (!hdr_has_flags(hdr, flags)) {
+		return -SILOFS_EFSCORRUPTED;
+	}
+	if (hdr_size(hdr) != hdr_size_by(stype, flags)) {
 		return -SILOFS_EFSCORRUPTED;
 	}
 	return 0;
@@ -168,13 +181,12 @@ static int hdr_verify_checksum(const struct silofs_header *hdr)
 	return 0;
 }
 
-int silofs_hdr_verify(const struct silofs_header *hdr, enum silofs_mtype mtype,
+int silofs_hdr_verify(const struct silofs_header *hdr, uint8_t stype,
                       enum silofs_hdrf flags)
 {
-	const size_t size = silofs_mtype_size(mtype);
 	int err;
 
-	err = hdr_verify_base(hdr, mtype, size, flags);
+	err = hdr_verify_base(hdr, stype, flags);
 	if (err) {
 		return err;
 	}

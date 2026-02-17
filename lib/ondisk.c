@@ -211,7 +211,7 @@ static void validate_ondisk_headers(void)
 {
 	REQUIRE_OFFSET32(struct silofs_header, h_magic, 0);
 	REQUIRE_OFFSET32(struct silofs_header, h_size, 4);
-	REQUIRE_OFFSET32(struct silofs_header, h_mtype, 8);
+	REQUIRE_OFFSET32(struct silofs_header, h_stype, 8);
 	REQUIRE_OFFSETXX(struct silofs_header, h_flags, 10);
 	REQUIRE_OFFSET32(struct silofs_header, h_csum, 28);
 	REQUIRE_SIZEOF(struct silofs_header, SILOFS_HEADER_SIZE);

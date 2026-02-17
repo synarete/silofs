@@ -37,6 +37,20 @@ size_t silofs_ptype_size(enum silofs_ptype ptype)
 		break;
 	case SILOFS_PTYPE_NONE:
 	case SILOFS_PTYPE_LAST:
+		/* XXX */
+	case SILOFS_PTYPE_ARIX:
+	case SILOFS_PTYPE_SUPER:
+	case SILOFS_PTYPE_SPNODE:
+	case SILOFS_PTYPE_SPLEAF:
+	case SILOFS_PTYPE_LSMAP:
+	case SILOFS_PTYPE_INODE:
+	case SILOFS_PTYPE_XANODE:
+	case SILOFS_PTYPE_DTNODE:
+	case SILOFS_PTYPE_SYMVAL:
+	case SILOFS_PTYPE_FTNODE:
+	case SILOFS_PTYPE_DATA1K:
+	case SILOFS_PTYPE_DATA4K:
+	case SILOFS_PTYPE_DATA64K:
 	default:
 		sz = 0;
 		break;

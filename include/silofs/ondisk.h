@@ -356,12 +356,25 @@ enum silofs_pnodef {
 
 /* p-elements sub-types */
 enum silofs_ptype {
-	SILOFS_PTYPE_NONE   = 0,
-	SILOFS_PTYPE_MBR    = 1,
-	SILOFS_PTYPE_UBER   = 2,
-	SILOFS_PTYPE_BLDESC = 3,
-	SILOFS_PTYPE_BTNODE = 4,
-	SILOFS_PTYPE_LAST   = 5, /* keep last */
+	SILOFS_PTYPE_NONE    = 0,
+	SILOFS_PTYPE_MBR     = 1,
+	SILOFS_PTYPE_UBER    = 2,
+	SILOFS_PTYPE_ARIX    = 3,
+	SILOFS_PTYPE_BLDESC  = 4,
+	SILOFS_PTYPE_BTNODE  = 5,
+	SILOFS_PTYPE_SUPER   = 6,
+	SILOFS_PTYPE_SPNODE  = 7,
+	SILOFS_PTYPE_SPLEAF  = 8,
+	SILOFS_PTYPE_LSMAP   = 9,
+	SILOFS_PTYPE_INODE   = 10,
+	SILOFS_PTYPE_XANODE  = 11,
+	SILOFS_PTYPE_DTNODE  = 12,
+	SILOFS_PTYPE_SYMVAL  = 13,
+	SILOFS_PTYPE_FTNODE  = 14,
+	SILOFS_PTYPE_DATA1K  = 15,
+	SILOFS_PTYPE_DATA4K  = 16,
+	SILOFS_PTYPE_DATA64K = 17,
+	SILOFS_PTYPE_LAST    = 18, /* keep last */
 };
 
 /* meta elements types */
@@ -637,7 +650,7 @@ struct silofs_mbr1k {
 struct silofs_header {
 	uint32_t h_magic;
 	uint32_t h_size;
-	uint8_t  h_mtype;
+	uint8_t  h_stype;
 	uint8_t  h_reserved1;
 	uint16_t h_flags;
 	uint8_t  h_reserved2[16];

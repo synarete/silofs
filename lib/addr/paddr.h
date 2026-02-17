@@ -26,7 +26,6 @@ struct silofs_paddr {
 	struct silofs_blobid blobid;
 	off_t                pos;
 	enum silofs_mtype    mtype;
-	enum silofs_btype    btype;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

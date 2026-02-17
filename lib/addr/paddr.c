@@ -36,7 +36,6 @@ static void
 paddr_update_by(struct silofs_paddr *paddr, const struct silofs_blobid *blobid)
 {
 	paddr->mtype = silofs_blobid_get_mtype(blobid);
-	paddr->btype = silofs_blobid_get_btype(blobid);
 }
 
 void silofs_paddr_init(struct silofs_paddr *paddr,
@@ -64,7 +63,6 @@ void silofs_paddr_assign(struct silofs_paddr *paddr,
 	silofs_blobid_copyto(&other->blobid, &paddr->blobid);
 	paddr->pos   = other->pos;
 	paddr->mtype = other->mtype;
-	paddr->btype = other->btype;
 }
 
 bool silofs_paddr_isequal(const struct silofs_paddr *paddr,

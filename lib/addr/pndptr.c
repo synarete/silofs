@@ -25,7 +25,6 @@ static const struct silofs_pndptr s_pndptr_none = {
 	.nmeta.ciargs.mode = SILOFS_CIPHER_MODE_NONE,
 	.paddr.pos         = SILOFS_OFF_NULL,
 	.paddr.mtype       = SILOFS_MTYPE_NONE,
-	.paddr.btype       = SILOFS_BTYPE_NONE,
 };
 
 const struct silofs_pndptr *silofs_pndptr_none(void)

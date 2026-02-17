@@ -417,7 +417,7 @@ static char *cmd_load_jtext_at(int dfd, const char *name)
 	err  = silofs_sys_readn(fd, jtxt, len);
 	silofs_sys_closefd(&fd);
 	if (err) {
-		cmd_die(err, "failed to read blobid: %s", name);
+		cmd_die(err, "failed to read blobid56b: %s", name);
 	}
 	return jtxt;
 }

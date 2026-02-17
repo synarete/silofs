@@ -23,17 +23,17 @@
 
 /* persistent address with blob */
 struct silofs_paddr {
-	struct silofs_blobid blobid;
-	off_t                pos;
-	enum silofs_mtype    mtype;
+	struct silofs_blobid56b blobid56b;
+	off_t                   pos;
+	enum silofs_mtype       mtype;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 const struct silofs_paddr *silofs_paddr_none(void);
 
-void silofs_paddr_init(struct silofs_paddr        *paddr,
-                       const struct silofs_blobid *blobid, off_t pos);
+void silofs_paddr_init(struct silofs_paddr           *paddr,
+                       const struct silofs_blobid56b *blobid56b, off_t pos);
 
 void silofs_paddr_fini(struct silofs_paddr *paddr);
 

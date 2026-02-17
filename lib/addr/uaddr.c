@@ -78,10 +78,10 @@ bool silofs_uaddr_isequal(const struct silofs_uaddr *uaddr1,
 	return (silofs_uaddr_compare(uaddr1, uaddr2) == 0);
 }
 
-const struct silofs_blobid *
-silofs_uaddr_blobid(const struct silofs_uaddr *uaddr)
+const struct silofs_blobid56b *
+silofs_uaddr_blobid56b(const struct silofs_uaddr *uaddr)
 {
-	return &uaddr->laddr.lsid.blobid;
+	return &uaddr->laddr.lsid.blobid56b;
 }
 
 const struct silofs_lsid *silofs_uaddr_lsid(const struct silofs_uaddr *uaddr)
@@ -96,7 +96,7 @@ enum silofs_mtype silofs_uaddr_mtype(const struct silofs_uaddr *uaddr)
 
 enum silofs_height silofs_uaddr_height(const struct silofs_uaddr *uaddr)
 {
-	return silofs_blobid_get_height(&uaddr->laddr.lsid.blobid);
+	return silofs_blobid56b_get_height(&uaddr->laddr.lsid.blobid56b);
 }
 
 void silofs_uaddr128b_reset(struct silofs_uaddr128b *uaddr128)

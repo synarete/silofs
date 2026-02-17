@@ -31,41 +31,41 @@ bld_set_ctime(struct silofs_blob_desc *bld, const struct timespec *ts)
 	silofs_cpu_to_ts(ts, &bld->bld_ctime);
 }
 
-static void
-bld_set_prev(struct silofs_blob_desc *bld, const struct silofs_blobid *blobid)
+static void bld_set_prev(struct silofs_blob_desc *bld,
+                         const struct silofs_blobid56b *blobid56b)
 {
-	silofs_blobid_copyto(blobid, &bld->bld_prev);
+	silofs_blobid56b_copyto(blobid56b, &bld->bld_prev);
 }
 
 static void bld_reset_prev(struct silofs_blob_desc *bld)
 {
-	bld_set_prev(bld, silofs_blobid_none());
+	bld_set_prev(bld, silofs_blobid56b_none());
 }
 
 static void bld_refblob(const struct silofs_blob_desc *bld,
-                        struct silofs_blobid *out_blobid)
+                        struct silofs_blobid56b *out_blobid56b)
 {
-	silofs_blobid_copyto(&bld->bld_prev, out_blobid);
+	silofs_blobid56b_copyto(&bld->bld_prev, out_blobid56b);
 }
 
 static void bld_set_refblob(struct silofs_blob_desc *bld,
-                            const struct silofs_blobid *blobid)
+                            const struct silofs_blobid56b *blobid56b)
 {
-	silofs_blobid_copyto(blobid, &bld->bld_refblob);
+	silofs_blobid56b_copyto(blobid56b, &bld->bld_refblob);
 }
 
 static void bld_reset_refblob(struct silofs_blob_desc *bld)
 {
-	bld_set_refblob(bld, silofs_blobid_none());
+	bld_set_refblob(bld, silofs_blobid56b_none());
 }
 
 static bool bld_has_refblob(const struct silofs_blob_desc *bld,
-                            const struct silofs_blobid *blobid)
+                            const struct silofs_blobid56b *blobid56b)
 {
-	struct silofs_blobid ref;
+	struct silofs_blobid56b ref;
 
 	bld_refblob(bld, &ref);
-	return silofs_blobid_isequal(&ref, blobid);
+	return silofs_blobid56b_isequal(&ref, blobid56b);
 }
 
 static void bld_set_blobsize(struct silofs_blob_desc *bld, size_t sz)
@@ -295,13 +295,13 @@ static void bld_mark_used_slot_by(struct silofs_blob_desc *bld, off_t pos)
 static void bld_paddr_at(const struct silofs_blob_desc *bld, off_t pos,
                          struct silofs_paddr *out_paddr)
 {
-	struct silofs_blobid blobid;
+	struct silofs_blobid56b blobid56b;
 
 	if (!bld_is_valid_pos(bld, pos)) {
 		pos = SILOFS_OFF_NULL;
 	}
-	bld_refblob(bld, &blobid);
-	silofs_paddr_init(out_paddr, &blobid, pos);
+	bld_refblob(bld, &blobid56b);
+	silofs_paddr_init(out_paddr, &blobid56b, pos);
 }
 
 static void bld_setup(struct silofs_blob_desc *bld)
@@ -355,9 +355,9 @@ void silofs_bdi_setup_spawned(struct silofs_bldesc_info *bdi,
 }
 
 void silofs_bdi_set_refblob(struct silofs_bldesc_info *bdi,
-                            const struct silofs_blobid *blobid)
+                            const struct silofs_blobid56b *blobid56b)
 {
-	bld_set_refblob(bdi->bld, blobid);
+	bld_set_refblob(bdi->bld, blobid56b);
 	silofs_bdi_dirtify(bdi);
 }
 
@@ -388,7 +388,7 @@ static bool bdi_is_valid_paddr(const struct silofs_bldesc_info *bdi,
 	if (!bld_is_valid_pos(bdi->bld, paddr->pos)) {
 		return false;
 	}
-	if (!bld_has_refblob(bdi->bld, &paddr->blobid)) {
+	if (!bld_has_refblob(bdi->bld, &paddr->blobid56b)) {
 		return false;
 	}
 	return true;

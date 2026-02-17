@@ -92,10 +92,10 @@ bool silofs_lsid_isnull(const struct silofs_lsid *lsid)
 	return (lsid->lsize == 0) || (lsid->vindex == UINT32_MAX);
 }
 
-bool silofs_lsid_has_blobid(const struct silofs_lsid *lsid,
-                            const struct silofs_blobid *blobid)
+bool silofs_lsid_has_blobid56b(const struct silofs_lsid *lsid,
+                               const struct silofs_blobid56b *blobid56b)
 {
-	return silofs_blobid_isequal(&lsid->blobid, blobid);
+	return silofs_blobid56b_isequal(&lsid->blobid56b, blobid56b);
 }
 
 bool silofs_lsid_has_layerid(const struct silofs_lsid *lsid,
@@ -103,7 +103,7 @@ bool silofs_lsid_has_layerid(const struct silofs_lsid *lsid,
 {
 	struct silofs_layerid self_layerid;
 
-	silofs_blobid_get_layerid(&lsid->blobid, &self_layerid);
+	silofs_blobid56b_get_layerid(&lsid->blobid56b, &self_layerid);
 	return silofs_layerid_isequal(&self_layerid, layerid);
 }
 
@@ -124,7 +124,7 @@ void silofs_lsid_reset(struct silofs_lsid *lsid)
 void silofs_lsid_assign(struct silofs_lsid *lsid,
                         const struct silofs_lsid *other)
 {
-	silofs_blobid_copyto(&other->blobid, &lsid->blobid);
+	silofs_blobid56b_copyto(&other->blobid56b, &lsid->blobid56b);
 	lsid->vindex = other->vindex;
 	lsid->lsize  = other->lsize;
 }
@@ -134,7 +134,7 @@ static long silofs_lsid_compare(const struct silofs_lsid *lsid1,
 {
 	long cmp;
 
-	cmp = silofs_blobid_compare(&lsid1->blobid, &lsid2->blobid);
+	cmp = silofs_blobid56b_compare(&lsid1->blobid56b, &lsid2->blobid56b);
 	if (cmp) {
 		return cmp;
 	}
@@ -164,12 +164,13 @@ uint64_t silofs_lsid_hash64(const struct silofs_lsid *lsid)
 }
 
 void silofs_lsid_setup(struct silofs_lsid *lsid,
-                       const struct silofs_blobid *blobid, off_t off)
+                       const struct silofs_blobid56b *blobid56b, off_t off)
 {
-	const enum silofs_height height = silofs_blobid_get_height(blobid);
-	const size_t lseg_size          = height_to_lseg_size(height);
+	const enum silofs_height height =
+		silofs_blobid56b_get_height(blobid56b);
+	const size_t lseg_size = height_to_lseg_size(height);
 
-	silofs_blobid_copyto(blobid, &lsid->blobid);
+	silofs_blobid56b_copyto(blobid56b, &lsid->blobid56b);
 	lsid->lsize  = lseg_size;
 	lsid->vindex = lseg_vindex_of(off, (ssize_t)lseg_size);
 }
@@ -185,7 +186,7 @@ void silofs_lsid64b_htox(struct silofs_lsid64b *lsid64,
                          const struct silofs_lsid *lsid)
 {
 	memset(lsid64, 0, sizeof(*lsid64));
-	silofs_blobid_copyto(&lsid->blobid, &lsid64->blobid);
+	silofs_blobid56b_copyto(&lsid->blobid56b, &lsid64->blobid56b);
 	lsid64->vindex = silofs_cpu_to_le32(lsid->vindex);
 	lsid64->lsize  = silofs_cpu_to_le32((uint32_t)lsid->lsize);
 }
@@ -193,7 +194,7 @@ void silofs_lsid64b_htox(struct silofs_lsid64b *lsid64,
 void silofs_lsid64b_xtoh(const struct silofs_lsid64b *lsid64,
                          struct silofs_lsid *lsid)
 {
-	silofs_blobid_copyto(&lsid64->blobid, &lsid->blobid);
+	silofs_blobid56b_copyto(&lsid64->blobid56b, &lsid->blobid56b);
 	lsid->vindex = silofs_le32_to_cpu(lsid64->vindex);
 	lsid->lsize  = silofs_le32_to_cpu(lsid64->lsize);
 }
@@ -251,7 +252,7 @@ void silofs_laddr_assign(struct silofs_laddr *laddr,
 
 enum silofs_mtype silofs_laddr_mtype(const struct silofs_laddr *laddr)
 {
-	return silofs_blobid_get_mtype(&laddr->lsid.blobid);
+	return silofs_blobid56b_get_mtype(&laddr->lsid.blobid56b);
 }
 
 size_t silofs_laddr_len(const struct silofs_laddr *laddr)

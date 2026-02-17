@@ -469,22 +469,28 @@ bool silofs_env_isrdonlyfs(const struct silofs_env *env)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static void make_super_lsid(struct silofs_lsid *out_lsid)
+static void
+make_super_lsid(struct silofs_env *env, struct silofs_lsid *out_lsid)
 {
 	struct silofs_layerid layerid;
-	struct silofs_blobid blobid;
+	struct silofs_uniqid uniqid;
+	struct silofs_blobid56b blobid56b;
 
 	silofs_layerid_generate(&layerid);
-	silofs_blobid_setup_raw2(&blobid, &layerid, SILOFS_MTYPE_SUPER,
-	                         SILOFS_MTYPE_SUPER, SILOFS_HEIGHT_SUPER);
-	silofs_lsid_setup(out_lsid, &blobid, 0);
+	silofs_generate_uniqid(env->base.prng, &uniqid);
+
+	silofs_blobid56b_setup_raw2(&blobid56b, &layerid, &uniqid,
+	                            SILOFS_MTYPE_SUPER, SILOFS_MTYPE_SUPER,
+	                            SILOFS_HEIGHT_SUPER);
+	silofs_lsid_setup(out_lsid, &blobid56b, 0);
 }
 
-static void make_super_uaddr(struct silofs_uaddr *out_uaddr)
+static void
+make_super_uaddr(struct silofs_env *env, struct silofs_uaddr *out_uaddr)
 {
 	struct silofs_lsid lsid = { .lsize = 0 };
 
-	make_super_lsid(&lsid);
+	make_super_lsid(env, &lsid);
 	silofs_uaddr_setup(out_uaddr, &lsid, 0, 0);
 }
 
@@ -494,7 +500,7 @@ env_spawn_super_of(struct silofs_env *env, struct silofs_sb_info **out_sbi)
 	struct silofs_uaddr uaddr = { .voff = -1 };
 	int err;
 
-	make_super_uaddr(&uaddr);
+	make_super_uaddr(env, &uaddr);
 	err = silofs_spawn_super(env, &uaddr, out_sbi);
 	if (err) {
 		return err;

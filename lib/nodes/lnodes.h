@@ -219,7 +219,7 @@ silofs_uni_uaddr(const struct silofs_unode_info *uni);
 const struct silofs_laddr *
 silofs_uni_laddr(const struct silofs_unode_info *uni);
 
-const struct silofs_blobid *
+const struct silofs_blobid56b *
 silofs_uni_lvid(const struct silofs_unode_info *uni);
 
 struct silofs_unode_info *

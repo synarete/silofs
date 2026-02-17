@@ -765,7 +765,7 @@ inspect_view(void *ctx, const struct silofs_laddr *laddr, size_t len)
 {
 	struct silofs_strbuf sbuf;
 
-	silofs_blobid_to_sbuf(&laddr->lsid.blobid, &sbuf);
+	silofs_blobid56b_to_sbuf(&laddr->lsid.blobid56b, &sbuf);
 	silofs_log_info("%s %ld:%zu", sbuf.str, laddr->pos, len);
 	silofs_unused(ctx);
 	return 0;

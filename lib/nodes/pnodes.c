@@ -88,7 +88,8 @@ void silofs_pni_set_dq(struct silofs_pnode_info *pni, struct silofs_dirtyq *dq)
 void silofs_pni_layerid(const struct silofs_pnode_info *pni,
                         struct silofs_layerid *out_layerid)
 {
-	silofs_blobid_get_layerid(&pni->pn_self.paddr.blobid, out_layerid);
+	silofs_blobid56b_get_layerid(&pni->pn_self.paddr.blobid56b,
+	                             out_layerid);
 }
 
 static bool pni_isdirty(const struct silofs_pnode_info *pni)

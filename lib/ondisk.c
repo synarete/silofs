@@ -167,7 +167,7 @@ static void validate_ondisk_addrs(void)
 {
 	REQUIRE_SIZEOF(struct silofs_uniqid, 32);
 	REQUIRE_SIZEOF(struct silofs_layerid, 16);
-	REQUIRE_SIZEOF(struct silofs_blobid, 56);
+	REQUIRE_SIZEOF(struct silofs_blobid56b, 56);
 	REQUIRE_SIZEOF(struct silofs_vaddr56, 7);
 	REQUIRE_SIZEOF(struct silofs_vaddr64, 8);
 	REQUIRE_SIZEOF(struct silofs_lrange128, 16);

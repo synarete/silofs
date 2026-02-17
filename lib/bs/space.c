@@ -25,25 +25,25 @@
 #include "exectx.h"
 
 static void
-make_uniq_blobid(struct silofs_prandgen *prng, enum silofs_mtype mtype,
-                 struct silofs_blobid *out_blobid)
+make_uniq_blobid56b(struct silofs_prandgen *prng, enum silofs_mtype mtype,
+                    struct silofs_blobid56b *out_blobid56b)
 {
 	struct silofs_layerid layerid;
 	struct silofs_uniqid uniqid;
 
 	silofs_layerid_generate(&layerid);
 	silofs_generate_uniqid(prng, &uniqid);
-	silofs_blobid_setup_raw3(out_blobid, &layerid, &uniqid, mtype);
+	silofs_blobid56b_setup_raw3(out_blobid56b, &layerid, &uniqid, mtype);
 }
 
 static void
 make_base_paddr(struct silofs_prandgen *prng, enum silofs_mtype mtype,
                 struct silofs_paddr *out_paddr)
 {
-	struct silofs_blobid blobid;
+	struct silofs_blobid56b blobid56b;
 
-	make_uniq_blobid(prng, mtype, &blobid);
-	silofs_paddr_init(out_paddr, &blobid, 0);
+	make_uniq_blobid56b(prng, mtype, &blobid56b);
+	silofs_paddr_init(out_paddr, &blobid56b, 0);
 }
 
 static void

@@ -97,11 +97,12 @@ void silofs_calc_cas_paddr(const struct silofs_mdigest_hd *md_hd,
                            size_t iov_cnt, struct silofs_paddr *out_paddr)
 {
 	struct silofs_hash256 hash;
-	struct silofs_blobid blobid;
+	struct silofs_blobid56b blobid56b;
 
 	silofs_assert_ne(mtype, 0);
 
 	silofs_sha3_256_ofv(md_hd, iov, iov_cnt, &hash);
-	silofs_blobid_setup_cas(&blobid, silofs_layerid_none(), &hash, mtype);
-	silofs_paddr_init(out_paddr, &blobid, 0);
+	silofs_blobid56b_setup_cas(&blobid56b, silofs_layerid_none(), &hash,
+	                           mtype);
+	silofs_paddr_init(out_paddr, &blobid56b, 0);
 }

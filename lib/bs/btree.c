@@ -64,18 +64,19 @@ bti_paddr(const struct silofs_btnode_info *bti)
 	return &bti->btn_pni.pn_self.paddr;
 }
 
-static const struct silofs_blobid *
-bti_blobid(const struct silofs_btnode_info *bti)
+static const struct silofs_blobid56b *
+bti_blobid56b(const struct silofs_btnode_info *bti)
 {
 	const struct silofs_paddr *paddr = bti_paddr(bti);
 
-	return &paddr->blobid;
+	return &paddr->blobid56b;
 }
 
-static bool bti_has_same_blobid(const struct silofs_btnode_info *bti,
-                                const struct silofs_btnode_info *bti_other)
+static bool bti_has_same_blobid56b(const struct silofs_btnode_info *bti,
+                                   const struct silofs_btnode_info *bti_other)
 {
-	return silofs_blobid_isequal(bti_blobid(bti), bti_blobid(bti_other));
+	return silofs_blobid56b_isequal(bti_blobid56b(bti),
+	                                bti_blobid56b(bti_other));
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -199,13 +200,13 @@ static enum silofs_mtype btc_vspace(const struct silofs_btree_ctx *btc)
 static int btc_stage_blob_of(const struct silofs_btree_ctx *btc,
                              const struct silofs_paddr *paddr)
 {
-	return silofs_dstor_stage_blob(btc->dstor, &paddr->blobid);
+	return silofs_dstor_stage_blob(btc->dstor, &paddr->blobid56b);
 }
 
 static int btc_spawn_blob_of(const struct silofs_btree_ctx *btc,
                              const struct silofs_paddr *paddr)
 {
-	return silofs_dstor_spawn_blob(btc->dstor, &paddr->blobid);
+	return silofs_dstor_spawn_blob(btc->dstor, &paddr->blobid56b);
 }
 
 static int btc_require_blob_of(const struct silofs_btree_ctx *btc,
@@ -225,7 +226,7 @@ static int btc_load_btnode(const struct silofs_btree_ctx *btc,
 {
 	const struct silofs_paddr *paddr = bti_paddr(bti);
 
-	return silofs_dstor_read_blob_at(btc->dstor, &paddr->blobid,
+	return silofs_dstor_read_blob_at(btc->dstor, &paddr->blobid56b,
 	                                 paddr->pos, bti->btn,
 	                                 sizeof(*bti->btn));
 }
@@ -377,7 +378,7 @@ btc_validate_child_btnode(const struct silofs_btree_ctx *btc,
 	}
 
 	/* XXX */
-	if (!bti_has_same_blobid(parent_bti, child_bti)) {
+	if (!bti_has_same_blobid56b(parent_bti, child_bti)) {
 		return -SILOFS_EFSCORRUPTED;
 	}
 	return 0;

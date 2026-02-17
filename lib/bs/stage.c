@@ -71,7 +71,7 @@ static int stc_require_pview(struct silofs_stage_ctx *st_ctx)
 static int stc_require_paddr(const struct silofs_stage_ctx *st_ctx,
                              const struct silofs_paddr *paddr)
 {
-	return silofs_dstor_require_blob_at(st_ctx->dstor, &paddr->blobid,
+	return silofs_dstor_require_blob_at(st_ctx->dstor, &paddr->blobid56b,
 	                                    paddr->pos);
 }
 
@@ -95,7 +95,7 @@ static int stc_access_pnode(const struct silofs_stage_ctx *st_ctx,
 	struct silofs_paddr next;
 
 	silofs_paddr_next(paddr, &next);
-	return silofs_dstor_access_blob_at(st_ctx->dstor, &next.blobid,
+	return silofs_dstor_access_blob_at(st_ctx->dstor, &next.blobid56b,
 	                                   next.pos);
 }
 
@@ -116,7 +116,7 @@ stc_read_pnode(struct silofs_stage_ctx *st_ctx, struct silofs_pnode_info *pni)
 	const struct silofs_paddr *paddr = &pni->pn_self.paddr;
 	const size_t len                 = pview_length_of(pni);
 
-	return silofs_dstor_read_blob_at(st_ctx->dstor, &paddr->blobid,
+	return silofs_dstor_read_blob_at(st_ctx->dstor, &paddr->blobid56b,
 	                                 paddr->pos, st_ctx->pview, len);
 }
 
@@ -482,7 +482,7 @@ static int stc_write_pnode(struct silofs_stage_ctx *st_ctx,
 	const struct silofs_paddr *paddr = &pni->pn_self.paddr;
 	const size_t len                 = pview_length_of(pni);
 
-	return silofs_dstor_write_blob_at(st_ctx->dstor, &paddr->blobid,
+	return silofs_dstor_write_blob_at(st_ctx->dstor, &paddr->blobid56b,
 	                                  paddr->pos, st_ctx->pview, len);
 }
 

@@ -23,75 +23,93 @@
 #include "crypto.h"
 #include "layerid.h"
 
-const struct silofs_blobid *silofs_blobid_none(void);
-
-void silofs_blobid_setup_raw2(struct silofs_blobid        *blobid,
-                              const struct silofs_layerid *layerid,
-                              enum silofs_mtype            mtype,
-                              enum silofs_mtype            vspace,
-                              enum silofs_height           height);
-
-void silofs_blobid_setup_raw3(struct silofs_blobid        *blobid,
-                              const struct silofs_layerid *layerid,
-                              const struct silofs_uniqid  *uniq,
-                              enum silofs_mtype            mtype);
-
-void silofs_blobid_setup_cas(struct silofs_blobid        *blobid,
-                             const struct silofs_layerid *layerid,
-                             const struct silofs_hash256 *hash,
-                             enum silofs_mtype            mtype);
-
-void silofs_blobid_get_layerid(const struct silofs_blobid *blobid,
-                               struct silofs_layerid      *out_layerid);
-
-enum silofs_mtype silofs_blobid_get_mtype(const struct silofs_blobid *blobid);
-
-enum silofs_mtype silofs_blobid_get_vspace(const struct silofs_blobid *blobid);
-
-enum silofs_height
-silofs_blobid_get_height(const struct silofs_blobid *blobid);
-
-void silofs_blobid_reset(struct silofs_blobid *blobid);
-
-void silofs_blobid_assign(struct silofs_blobid       *blobid,
-                          const struct silofs_blobid *other);
-
-void silofs_blobid_copyto(const struct silofs_blobid *blobid,
-                          struct silofs_blobid       *other);
-
-long silofs_blobid_compare(const struct silofs_blobid *blobid1,
-                           const struct silofs_blobid *blobid2);
-
-bool silofs_blobid_isequal(const struct silofs_blobid *blobid1,
-                           const struct silofs_blobid *blobid2);
-
-bool silofs_blobid_isnone(const struct silofs_blobid *blobid);
-
-void silofs_blobid_to_sbuf(const struct silofs_blobid *blobid,
-                           struct silofs_strbuf       *sbuf);
-
-uint64_t
-silofs_blobid_hash64(const struct silofs_blobid *blobid, uint64_t seed);
+struct silofs_blobid56b_info {
+	struct silofs_layerid layerid;
+	struct silofs_uniqid  uniqid;
+	enum silofs_bidf      flags;
+	union {
+		uint8_t           stype;
+		enum silofs_ptype ptype;
+		enum silofs_mtype mtype;
+	} u;
+	enum silofs_mtype  vspace;
+	enum silofs_height height;
+};
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_blobidx_setup(struct silofs_blobidx       *blobidx,
-                          const struct silofs_hash256 *h);
+const struct silofs_blobid56b *silofs_blobid56b_none(void);
 
-void silofs_blobidx_assign(struct silofs_blobidx       *blobidx,
-                           const struct silofs_blobidx *other);
+void silofs_blobid56b_setup_raw2(struct silofs_blobid56b     *blobid56b,
+                                 const struct silofs_layerid *layerid,
+                                 const struct silofs_uniqid  *uniq,
+                                 enum silofs_mtype            mtype,
+                                 enum silofs_mtype            vspace,
+                                 enum silofs_height           height);
 
-void silofs_blobidx_derive(struct silofs_blobidx          *blobidx,
-                           const struct silofs_mdigest_hd *md_hd,
-                           const struct silofs_blobid     *blobid);
+void silofs_blobid56b_setup_raw3(struct silofs_blobid56b     *blobid56b,
+                                 const struct silofs_layerid *layerid,
+                                 const struct silofs_uniqid  *uniq,
+                                 enum silofs_mtype            mtype);
 
-bool silofs_blobidx_isequal(const struct silofs_blobidx *blobidx,
-                            const struct silofs_blobidx *other);
+void silofs_blobid56b_setup_cas(struct silofs_blobid56b     *blobid56b,
+                                const struct silofs_layerid *layerid,
+                                const struct silofs_hash256 *hash,
+                                enum silofs_mtype            mtype);
 
-int silofs_blobidx_to_str(const struct silofs_blobidx *blobidx, char *str,
-                          size_t len);
+void silofs_blobid56b_get_layerid(const struct silofs_blobid56b *blobid56b,
+                                  struct silofs_layerid         *out_layerid);
 
-int silofs_blobidx_from_str(struct silofs_blobidx *blobidx, const char *str,
-                            size_t len);
+enum silofs_mtype
+silofs_blobid56b_get_mtype(const struct silofs_blobid56b *blobid56b);
+
+enum silofs_mtype
+silofs_blobid56b_get_vspace(const struct silofs_blobid56b *blobid56b);
+
+enum silofs_height
+silofs_blobid56b_get_height(const struct silofs_blobid56b *blobid56b);
+
+void silofs_blobid56b_reset(struct silofs_blobid56b *blobid56b);
+
+void silofs_blobid56b_assign(struct silofs_blobid56b       *blobid56b,
+                             const struct silofs_blobid56b *other);
+
+void silofs_blobid56b_copyto(const struct silofs_blobid56b *blobid56b,
+                             struct silofs_blobid56b       *other);
+
+long silofs_blobid56b_compare(const struct silofs_blobid56b *blobid56b1,
+                              const struct silofs_blobid56b *blobid56b2);
+
+bool silofs_blobid56b_isequal(const struct silofs_blobid56b *blobid56b1,
+                              const struct silofs_blobid56b *blobid56b2);
+
+bool silofs_blobid56b_isnone(const struct silofs_blobid56b *blobid56b);
+
+void silofs_blobid56b_to_sbuf(const struct silofs_blobid56b *blobid56b,
+                              struct silofs_strbuf          *sbuf);
+
+uint64_t silofs_blobid56b_hash64(const struct silofs_blobid56b *blobid56b,
+                                 uint64_t                       seed);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_blobid56bx_setup(struct silofs_blobid56bx    *blobid56bx,
+                             const struct silofs_hash256 *h);
+
+void silofs_blobid56bx_assign(struct silofs_blobid56bx       *blobid56bx,
+                              const struct silofs_blobid56bx *other);
+
+void silofs_blobid56bx_derive(struct silofs_blobid56bx       *blobid56bx,
+                              const struct silofs_mdigest_hd *md_hd,
+                              const struct silofs_blobid56b  *blobid56b);
+
+bool silofs_blobid56bx_isequal(const struct silofs_blobid56bx *blobid56bx,
+                               const struct silofs_blobid56bx *other);
+
+int silofs_blobid56bx_to_str(const struct silofs_blobid56bx *blobid56bx,
+                             char *str, size_t len);
+
+int silofs_blobid56bx_from_str(struct silofs_blobid56bx *blobid56bx,
+                               const char *str, size_t len);
 
 #endif /* SILOFS_BLOBID_H_ */

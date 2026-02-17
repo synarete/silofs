@@ -333,12 +333,19 @@ enum silofs_mbr_mode {
 	SILOFS_MBR_AR   = 2,
 };
 
-/* common-header flags */
+/* blobid56b flags */
+enum silofs_bidf {
+	SILOFS_BIDF_NONE  = 0x00,
+	SILOFS_BIDF_PNODE = 0x01,
+	SILOFS_BIDF_VNODE = 0x02,
+};
+
+/* meta-header flags */
 enum silofs_hdrf {
 	SILOFS_HDRF_NONE  = 0x00,
-	SILOFS_HDRF_CSUM  = 0x01,
-	SILOFS_HDRF_PNODE = 0x02,
-	SILOFS_HDRF_VNODE = 0x04,
+	SILOFS_HDRF_PNODE = 0x01,
+	SILOFS_HDRF_VNODE = 0x02,
+	SILOFS_HDRF_CSUM  = 0x04,
 };
 
 /* format endianness */
@@ -544,26 +551,26 @@ struct silofs_layerid {
 } silofs_attr_aligned8;
 
 /* blob-identifier */
-struct silofs_blobid {
+struct silofs_blobid56b {
 	uint8_t id[SILOFS_BLOBID_SIZE];
 } silofs_attr_aligned8;
 
 /* exported blob-identifier representation */
-struct silofs_blobidx {
+struct silofs_blobid56bx {
 	struct silofs_hash256 idx;
 } silofs_attr_aligned16;
 
 /* persistent blob addressing */
 struct silofs_paddr64b {
-	struct silofs_blobid blobid;
-	int64_t              pos;
+	struct silofs_blobid56b blobid56b;
+	int64_t                 pos;
 } silofs_attr_aligned64;
 
 /* logical volume's segment identifier */
 struct silofs_lsid64b {
-	struct silofs_blobid blobid;
-	uint32_t             lsize;
-	uint32_t             vindex;
+	struct silofs_blobid56b blobid56b;
+	uint32_t                lsize;
+	uint32_t                vindex;
 } silofs_attr_aligned16;
 
 /* logical address */
@@ -726,8 +733,8 @@ struct silofs_super_block {
 	struct silofs_tm64b     sb_btime_curr;
 	struct silofs_tm64b     sb_btime_prev;
 	struct silofs_tm64b     sb_btime_base;
-	struct silofs_blobid    sb_lv_curr;
-	struct silofs_blobid    sb_lv_prev;
+	struct silofs_blobid56b sb_lv_curr;
+	struct silofs_blobid56b sb_lv_prev;
 	struct silofs_lrange128 sb_lrange;
 	uint8_t                 sb_reserved4[192];
 	/* 1K..3K */
@@ -982,19 +989,19 @@ enum silofs_objstatef {
 
 /* blob's meta descriptor */
 struct silofs_blob_desc {
-	struct silofs_header   bld_hdr;
-	struct silofs_timespec bld_btime;
-	struct silofs_timespec bld_ctime;
-	struct silofs_blobid   bld_prev;
-	struct silofs_blobid   bld_refblob;
-	uint64_t               bld_blobsize;
-	uint32_t               bld_objsize;
-	uint32_t               bld_nobjs_max;
-	uint32_t               bld_nobjs;
-	uint32_t               bld_flags;
-	uint8_t                bld_refmtype;
-	uint8_t                bld_reserved1[55];
-	uint8_t                bld_obj_state[7936];
+	struct silofs_header    bld_hdr;
+	struct silofs_timespec  bld_btime;
+	struct silofs_timespec  bld_ctime;
+	struct silofs_blobid56b bld_prev;
+	struct silofs_blobid56b bld_refblob;
+	uint64_t                bld_blobsize;
+	uint32_t                bld_objsize;
+	uint32_t                bld_nobjs_max;
+	uint32_t                bld_nobjs;
+	uint32_t                bld_flags;
+	uint8_t                 bld_refmtype;
+	uint8_t                 bld_reserved1[55];
+	uint8_t                 bld_obj_state[7936];
 } silofs_attr_aligned64;
 
 /* uber-node sub-child by vspace */

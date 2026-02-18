@@ -53,8 +53,8 @@ silofs_lookup_cached_uber(struct silofs_pcache      *pcache,
                           const struct silofs_paddr *paddr);
 
 struct silofs_uber_info *
-silofs_create_cached_uber(struct silofs_pcache       *pcache,
-                          const struct silofs_pndptr *pndptr, bool spawn);
+silofs_create_cached_uber(struct silofs_pcache      *pcache,
+                          const struct silofs_pnptr *pnptr, bool spawn);
 
 void silofs_forget_cached_uber(struct silofs_pcache    *pcache,
                                struct silofs_uber_info *ubi);

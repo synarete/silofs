@@ -621,17 +621,17 @@ struct silofs_nmeta128b {
 } silofs_attr_aligned32;
 
 /* pnode meta-pointer */
-struct silofs_pndptr192b {
+struct silofs_pnptr192b {
 	struct silofs_nmeta128b np_nmeta;
 	struct silofs_paddr64b  np_paddr;
 } silofs_attr_aligned64;
 
 /* btree-node meta-pointer with sub-counters */
 struct silofs_btnptr256b {
-	struct silofs_pndptr192b btp_base;
-	uint64_t                 btp_nsub_vobjs;
-	uint32_t                 btp_nsub_btnodes;
-	uint8_t                  btp_reserved[52];
+	struct silofs_pnptr192b btp_base;
+	uint64_t                btp_nsub_vobjs;
+	uint32_t                btp_nsub_btnodes;
+	uint8_t                 btp_reserved[52];
 } silofs_attr_aligned64;
 
 /* space descriptor  */
@@ -644,19 +644,19 @@ struct silofs_spdesc128b {
 
 /* global boot record */
 struct silofs_mbr1k {
-	uint64_t                 mbr_magic;
-	uint64_t                 mbr_version;
-	struct silofs_uuid       mbr_uuid;
-	uint32_t                 mbr_mode;
-	uint32_t                 mbr_flags;
-	uint8_t                  mbr_reserved1[24];
-	uint8_t                  mbr_reserved2[192];
-	struct silofs_pndptr192b mbr_root;
-	uint8_t                  mbr_reserved3[64];
-	struct silofs_uaddr128b  mbr_sb_addr;
-	uint8_t                  mbr_reserved4[320];
-	struct silofs_hash256    mbr_hash;
-	struct silofs_mac        mbr_hmac;
+	uint64_t                mbr_magic;
+	uint64_t                mbr_version;
+	struct silofs_uuid      mbr_uuid;
+	uint32_t                mbr_mode;
+	uint32_t                mbr_flags;
+	uint8_t                 mbr_reserved1[24];
+	uint8_t                 mbr_reserved2[192];
+	struct silofs_pnptr192b mbr_root;
+	uint8_t                 mbr_reserved3[64];
+	struct silofs_uaddr128b mbr_sb_addr;
+	uint8_t                 mbr_reserved4[320];
+	struct silofs_hash256   mbr_hash;
+	struct silofs_mac       mbr_hmac;
 } silofs_attr_aligned64;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1061,7 +1061,7 @@ struct silofs_arix_node {
 	uint32_t                  arn_flags;
 	uint32_t                  arn_ndescs;
 	uint8_t                   arn_reserved1[200];
-	struct silofs_pndptr192b  arn_next;
+	struct silofs_pnptr192b   arn_next;
 	uint8_t                   arn_reserved2[64];
 	struct silofs_ar_desc256b arn_descs[254];
 } silofs_attr_aligned64;

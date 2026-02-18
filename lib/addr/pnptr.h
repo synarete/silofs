@@ -20,49 +20,49 @@
 #include "nmeta.h"
 
 /* pnode meta pointer */
-struct silofs_pndptr {
+struct silofs_pnptr {
 	struct silofs_nmeta nmeta;
 	struct silofs_paddr paddr;
 };
 
 /* btnode meta pointer */
 struct silofs_btnptr {
-	struct silofs_pndptr base;
-	size_t               nsub_vobjs;
-	size_t               nsub_btnodes;
+	struct silofs_pnptr base;
+	size_t              nsub_vobjs;
+	size_t              nsub_btnodes;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-const struct silofs_pndptr *silofs_pndptr_none(void);
+const struct silofs_pnptr *silofs_pnptr_none(void);
 
-void silofs_pndptr_setup(struct silofs_pndptr       *pndptr,
-                         const struct silofs_paddr  *paddr,
-                         const struct silofs_civkey *civkey);
+void silofs_pnptr_setup(struct silofs_pnptr        *pnptr,
+                        const struct silofs_paddr  *paddr,
+                        const struct silofs_civkey *civkey);
 
-void silofs_pndptr_setup2(struct silofs_pndptr      *pndptr,
-                          const struct silofs_paddr *paddr,
-                          const struct silofs_nmeta *nmeta);
+void silofs_pnptr_setup2(struct silofs_pnptr       *pnptr,
+                         const struct silofs_paddr *paddr,
+                         const struct silofs_nmeta *nmeta);
 
-void silofs_pndptr_reset(struct silofs_pndptr *pndptr);
+void silofs_pnptr_reset(struct silofs_pnptr *pnptr);
 
-void silofs_pndptr_assign(struct silofs_pndptr       *pndptr,
-                          const struct silofs_pndptr *other);
+void silofs_pnptr_assign(struct silofs_pnptr       *pnptr,
+                         const struct silofs_pnptr *other);
 
-bool silofs_pndptr_isnull(const struct silofs_pndptr *pndptr);
+bool silofs_pnptr_isnull(const struct silofs_pnptr *pnptr);
 
-void silofs_pndptr192b_htox(struct silofs_pndptr192b   *pndptr192,
-                            const struct silofs_pndptr *pndptr);
+void silofs_pnptr192b_htox(struct silofs_pnptr192b   *pnptr192,
+                           const struct silofs_pnptr *pnptr);
 
-void silofs_pndptr192b_xtoh(const struct silofs_pndptr192b *pndptr192,
-                            struct silofs_pndptr           *pndptr);
+void silofs_pnptr192b_xtoh(const struct silofs_pnptr192b *pnptr192,
+                           struct silofs_pnptr           *pnptr);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 const struct silofs_btnptr *silofs_btnptr_none(void);
 
-void silofs_btnptr_setup(struct silofs_btnptr       *btnptr,
-                         const struct silofs_pndptr *pndptr);
+void silofs_btnptr_setup(struct silofs_btnptr      *btnptr,
+                         const struct silofs_pnptr *pnptr);
 
 void silofs_btnptr_reset(struct silofs_btnptr *btnptr);
 

@@ -26,8 +26,7 @@
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static const struct silofs_pndptr *
-ubi_pndptr(const struct silofs_uber_info *ubi)
+static const struct silofs_pnptr *ubi_pnptr(const struct silofs_uber_info *ubi)
 {
 	return &ubi->ub_pni.pn_self;
 }
@@ -50,7 +49,7 @@ static void env_update_root_uber(struct silofs_env *env,
                                  const struct silofs_uber_info *ubi)
 {
 	if (ubi != nullptr) {
-		silofs_mbi_set_root(&env->mbis.fs_mbi, ubi_pndptr(ubi));
+		silofs_mbi_set_root(&env->mbis.fs_mbi, ubi_pnptr(ubi));
 	}
 }
 

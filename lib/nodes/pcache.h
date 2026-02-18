@@ -44,8 +44,8 @@ struct silofs_pnode_info *
 silofs_pcache_dq_front(const struct silofs_pcache *pcache);
 
 struct silofs_pnode_info *
-silofs_pcache_create_pnode(struct silofs_pcache       *pcache,
-                           const struct silofs_pndptr *pndptr);
+silofs_pcache_create_pnode(struct silofs_pcache      *pcache,
+                           const struct silofs_pnptr *pnptr);
 
 struct silofs_pnode_info *
 silofs_pcache_lookup_pnode(struct silofs_pcache      *pcache,

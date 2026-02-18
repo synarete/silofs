@@ -16,70 +16,70 @@
  */
 #include <silofs/configs.h>
 #include "htox.h"
-#include "pndptr.h"
+#include "pnptr.h"
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static const struct silofs_pndptr s_pndptr_none = {
+static const struct silofs_pnptr s_pnptr_none = {
 	.nmeta.ciargs.algo = SILOFS_CIPHER_NONE,
 	.nmeta.ciargs.mode = SILOFS_CIPHER_MODE_NONE,
 	.paddr.pos         = SILOFS_OFF_NULL,
 	.paddr.mtype       = SILOFS_MTYPE_NONE,
 };
 
-const struct silofs_pndptr *silofs_pndptr_none(void)
+const struct silofs_pnptr *silofs_pnptr_none(void)
 {
-	return &s_pndptr_none;
+	return &s_pnptr_none;
 }
 
-void silofs_pndptr_setup(struct silofs_pndptr *pndptr,
+void silofs_pnptr_setup(struct silofs_pnptr *pnptr,
+                        const struct silofs_paddr *paddr,
+                        const struct silofs_civkey *civkey)
+{
+	silofs_paddr_assign(&pnptr->paddr, paddr);
+	silofs_nmeta_setup(&pnptr->nmeta, civkey);
+}
+
+void silofs_pnptr_setup2(struct silofs_pnptr *pnptr,
                          const struct silofs_paddr *paddr,
-                         const struct silofs_civkey *civkey)
+                         const struct silofs_nmeta *nmeta)
 {
-	silofs_paddr_assign(&pndptr->paddr, paddr);
-	silofs_nmeta_setup(&pndptr->nmeta, civkey);
+	silofs_paddr_assign(&pnptr->paddr, paddr);
+	silofs_nmeta_assign(&pnptr->nmeta, nmeta);
 }
 
-void silofs_pndptr_setup2(struct silofs_pndptr *pndptr,
-                          const struct silofs_paddr *paddr,
-                          const struct silofs_nmeta *nmeta)
+void silofs_pnptr_reset(struct silofs_pnptr *pnptr)
 {
-	silofs_paddr_assign(&pndptr->paddr, paddr);
-	silofs_nmeta_assign(&pndptr->nmeta, nmeta);
+	silofs_paddr_reset(&pnptr->paddr);
+	silofs_nmeta_reset(&pnptr->nmeta);
 }
 
-void silofs_pndptr_reset(struct silofs_pndptr *pndptr)
+void silofs_pnptr_assign(struct silofs_pnptr *pnptr,
+                         const struct silofs_pnptr *other)
 {
-	silofs_paddr_reset(&pndptr->paddr);
-	silofs_nmeta_reset(&pndptr->nmeta);
+	silofs_paddr_assign(&pnptr->paddr, &other->paddr);
+	silofs_nmeta_assign(&pnptr->nmeta, &other->nmeta);
 }
 
-void silofs_pndptr_assign(struct silofs_pndptr *pndptr,
-                          const struct silofs_pndptr *other)
+bool silofs_pnptr_isnull(const struct silofs_pnptr *pnptr)
 {
-	silofs_paddr_assign(&pndptr->paddr, &other->paddr);
-	silofs_nmeta_assign(&pndptr->nmeta, &other->nmeta);
+	return silofs_paddr_isnull(&pnptr->paddr) ||
+	       !pnptr->nmeta.ciargs.algo || !pnptr->nmeta.ciargs.mode;
 }
 
-bool silofs_pndptr_isnull(const struct silofs_pndptr *pndptr)
+void silofs_pnptr192b_htox(struct silofs_pnptr192b *pnptr192,
+                           const struct silofs_pnptr *pnptr)
 {
-	return silofs_paddr_isnull(&pndptr->paddr) ||
-	       !pndptr->nmeta.ciargs.algo || !pndptr->nmeta.ciargs.mode;
+	memset(pnptr192, 0, sizeof(*pnptr192));
+	silofs_paddr64b_htox(&pnptr192->np_paddr, &pnptr->paddr);
+	silofs_nmeta128b_htox(&pnptr192->np_nmeta, &pnptr->nmeta);
 }
 
-void silofs_pndptr192b_htox(struct silofs_pndptr192b *pndptr192,
-                            const struct silofs_pndptr *pndptr)
+void silofs_pnptr192b_xtoh(const struct silofs_pnptr192b *pnptr192,
+                           struct silofs_pnptr *pnptr)
 {
-	memset(pndptr192, 0, sizeof(*pndptr192));
-	silofs_paddr64b_htox(&pndptr192->np_paddr, &pndptr->paddr);
-	silofs_nmeta128b_htox(&pndptr192->np_nmeta, &pndptr->nmeta);
-}
-
-void silofs_pndptr192b_xtoh(const struct silofs_pndptr192b *pndptr192,
-                            struct silofs_pndptr *pndptr)
-{
-	silofs_paddr64b_xtoh(&pndptr192->np_paddr, &pndptr->paddr);
-	silofs_nmeta128b_xtoh(&pndptr192->np_nmeta, &pndptr->nmeta);
+	silofs_paddr64b_xtoh(&pnptr192->np_paddr, &pnptr->paddr);
+	silofs_nmeta128b_xtoh(&pnptr192->np_nmeta, &pnptr->nmeta);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -100,16 +100,16 @@ const struct silofs_btnptr *silofs_btnptr_none(void)
 }
 
 void silofs_btnptr_setup(struct silofs_btnptr *btnptr,
-                         const struct silofs_pndptr *pndptr)
+                         const struct silofs_pnptr *pnptr)
 {
-	silofs_pndptr_assign(&btnptr->base, pndptr);
+	silofs_pnptr_assign(&btnptr->base, pnptr);
 	btnptr->nsub_vobjs   = 0;
 	btnptr->nsub_btnodes = 0;
 }
 
 void silofs_btnptr_reset(struct silofs_btnptr *btnptr)
 {
-	silofs_pndptr_reset(&btnptr->base);
+	silofs_pnptr_reset(&btnptr->base);
 	btnptr->nsub_vobjs   = 0;
 	btnptr->nsub_btnodes = 0;
 }
@@ -117,21 +117,21 @@ void silofs_btnptr_reset(struct silofs_btnptr *btnptr)
 void silofs_btnptr_assign(struct silofs_btnptr *btnptr,
                           const struct silofs_btnptr *other)
 {
-	silofs_pndptr_assign(&btnptr->base, &other->base);
+	silofs_pnptr_assign(&btnptr->base, &other->base);
 	btnptr->nsub_vobjs   = other->nsub_vobjs;
 	btnptr->nsub_btnodes = other->nsub_btnodes;
 }
 
 bool silofs_btnptr_isnull(const struct silofs_btnptr *btnptr)
 {
-	return silofs_pndptr_isnull(&btnptr->base);
+	return silofs_pnptr_isnull(&btnptr->base);
 }
 
 void silofs_btnptr256b_htox(struct silofs_btnptr256b *btnptr256,
                             const struct silofs_btnptr *btnptr)
 {
 	memset(btnptr256, 0, sizeof(*btnptr256));
-	silofs_pndptr192b_htox(&btnptr256->btp_base, &btnptr->base);
+	silofs_pnptr192b_htox(&btnptr256->btp_base, &btnptr->base);
 	btnptr256->btp_nsub_vobjs = silofs_cpu_to_le64(btnptr->nsub_vobjs);
 	btnptr256->btp_nsub_btnodes =
 		silofs_cpu_to_le32((uint32_t)btnptr->nsub_btnodes);
@@ -140,7 +140,7 @@ void silofs_btnptr256b_htox(struct silofs_btnptr256b *btnptr256,
 void silofs_btnptr256b_xtoh(const struct silofs_btnptr256b *btnptr256,
                             struct silofs_btnptr *btnptr)
 {
-	silofs_pndptr192b_xtoh(&btnptr256->btp_base, &btnptr->base);
+	silofs_pnptr192b_xtoh(&btnptr256->btp_base, &btnptr->base);
 	btnptr->nsub_vobjs   = silofs_le64_to_cpu(btnptr256->btp_nsub_vobjs);
 	btnptr->nsub_btnodes = silofs_le32_to_cpu(btnptr256->btp_nsub_btnodes);
 }

@@ -460,12 +460,12 @@ silofs_lookup_cached_bldesc(struct silofs_pcache *pcache,
 
 struct silofs_bldesc_info *
 silofs_create_cached_bldesc(struct silofs_pcache *pcache,
-                            const struct silofs_pndptr *pndptr, bool spawn)
+                            const struct silofs_pnptr *pnptr, bool spawn)
 {
 	struct silofs_pnode_info *pni;
 	struct silofs_bldesc_info *bdi;
 
-	pni = silofs_pcache_create_pnode(pcache, pndptr);
+	pni = silofs_pcache_create_pnode(pcache, pnptr);
 	bdi = silofs_bdi_from_pni(pni);
 	if ((bdi != nullptr) && spawn) {
 		bdi_setup_spawned(bdi);

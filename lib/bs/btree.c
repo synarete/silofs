@@ -611,7 +611,7 @@ static int btc_require_insertable(struct silofs_btree_ctx *btc)
 
 static int btc_resolve_leaf_by(const struct silofs_btree_ctx *btc,
                                const struct silofs_btnode_info *bti,
-                               struct silofs_pndptr *out_pndptr)
+                               struct silofs_pnptr *out_pnptr)
 {
 	struct silofs_btnptr btnptr = {};
 	int err;
@@ -621,12 +621,12 @@ static int btc_resolve_leaf_by(const struct silofs_btree_ctx *btc,
 		return err;
 	}
 	silofs_assert_eq(btnptr.nsub_btnodes, 0);
-	silofs_pndptr_assign(out_pndptr, &btnptr.base);
+	silofs_pnptr_assign(out_pnptr, &btnptr.base);
 	return 0;
 }
 
-static int btc_resolve_leaf(struct silofs_btree_ctx *btc,
-                            struct silofs_pndptr *out_pndptr)
+static int
+btc_resolve_leaf(struct silofs_btree_ctx *btc, struct silofs_pnptr *out_pnptr)
 {
 	const struct silofs_btnode_info *bti = nullptr;
 	int err;
@@ -639,7 +639,7 @@ static int btc_resolve_leaf(struct silofs_btree_ctx *btc,
 	if (bti == nullptr) {
 		return -SILOFS_ENOENT;
 	}
-	err = btc_resolve_leaf_by(btc, bti, out_pndptr);
+	err = btc_resolve_leaf_by(btc, bti, out_pnptr);
 	if (err) {
 		return err;
 	}
@@ -670,8 +670,8 @@ static int btc_require_path(struct silofs_btree_ctx *btc)
 	return 0;
 }
 
-static int btc_insert_leaf(struct silofs_btree_ctx *btc,
-                           const struct silofs_pndptr *pndptr)
+static int
+btc_insert_leaf(struct silofs_btree_ctx *btc, const struct silofs_pnptr *pnptr)
 {
 	int err;
 
@@ -681,7 +681,7 @@ static int btc_insert_leaf(struct silofs_btree_ctx *btc,
 	}
 
 	// XXX
-	(void)pndptr;
+	(void)pnptr;
 	return 0;
 }
 
@@ -689,26 +689,26 @@ static int btc_insert_leaf(struct silofs_btree_ctx *btc,
 
 int silofs_resolve_vtop(struct silofs_task_ctx *task,
                         const struct silofs_vaddr *vaddr,
-                        struct silofs_pndptr *out_pndptr)
+                        struct silofs_pnptr *out_pnptr)
 {
 	struct silofs_btree_ctx btc;
 	int err;
 
 	btc_init2(&btc, task, vaddr);
-	err = btc_resolve_leaf(&btc, out_pndptr);
+	err = btc_resolve_leaf(&btc, out_pnptr);
 	btc_fini(&btc);
 	return err;
 }
 
 int silofs_insmap_vtop(struct silofs_task_ctx *task,
                        const struct silofs_vaddr *vaddr,
-                       const struct silofs_pndptr *pndptr)
+                       const struct silofs_pnptr *pnptr)
 {
 	struct silofs_btree_ctx btc;
 	int err;
 
 	btc_init2(&btc, task, vaddr);
-	err = btc_insert_leaf(&btc, pndptr);
+	err = btc_insert_leaf(&btc, pnptr);
 	btc_fini(&btc);
 	return err;
 }

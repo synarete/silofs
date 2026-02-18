@@ -323,9 +323,9 @@ static void btn_setup(struct silofs_btree_node *btn)
 void silofs_bti_self(const struct silofs_btnode_info *bti,
                      struct silofs_btnptr *out_btnptr)
 {
-	const struct silofs_pndptr *pndptr = silofs_pni_self(&bti->btn_pni);
+	const struct silofs_pnptr *pnptr = silofs_pni_self(&bti->btn_pni);
 
-	silofs_btnptr_setup(out_btnptr, pndptr);
+	silofs_btnptr_setup(out_btnptr, pnptr);
 	out_btnptr->nsub_btnodes = bti->btp_nsub_btnodes;
 	out_btnptr->nsub_vobjs   = bti->btp_nsub_vobjs;
 }
@@ -521,12 +521,12 @@ silofs_lookup_cached_btnode(struct silofs_pcache *pcache,
 
 struct silofs_btnode_info *
 silofs_create_cached_btnode(struct silofs_pcache *pcache,
-                            const struct silofs_pndptr *pndptr, bool spawn)
+                            const struct silofs_pnptr *pnptr, bool spawn)
 {
 	struct silofs_pnode_info *pni;
 	struct silofs_btnode_info *bti;
 
-	pni = silofs_pcache_create_pnode(pcache, pndptr);
+	pni = silofs_pcache_create_pnode(pcache, pnptr);
 	bti = silofs_bti_from_pni(pni);
 	if ((bti != nullptr) && spawn) {
 		bti_setup_spawned(bti);

@@ -24,10 +24,10 @@
 struct silofs_task_ctx;
 
 void silofs_ignite_ubspace(const struct silofs_task_ctx *task,
-                           struct silofs_pndptr         *out_pndptr);
+                           struct silofs_pnptr          *out_pnptr);
 
 void silofs_ignite_btspace(const struct silofs_task_ctx *task,
-                           struct silofs_pndptr         *out_pndptr);
+                           struct silofs_pnptr          *out_pnptr);
 
 void silofs_ignite_vspace(const struct silofs_task_ctx *task,
                           enum silofs_mtype             vtype,

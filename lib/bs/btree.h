@@ -41,10 +41,10 @@ struct silofs_task_ctx;
 
 int silofs_resolve_vtop(struct silofs_task_ctx    *task,
                         const struct silofs_vaddr *vaddr,
-                        struct silofs_pndptr      *out_pndptr);
+                        struct silofs_pnptr       *out_pnptr);
 
-int silofs_insmap_vtop(struct silofs_task_ctx     *task,
-                       const struct silofs_vaddr  *vaddr,
-                       const struct silofs_pndptr *pndptr);
+int silofs_insmap_vtop(struct silofs_task_ctx    *task,
+                       const struct silofs_vaddr *vaddr,
+                       const struct silofs_pnptr *pnptr);
 
 #endif /* SILOFS_BTREE_H_ */

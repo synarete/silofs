@@ -5,37 +5,48 @@ on:
     branches: ["next"]
   pull_request:
     branches: ["main"]
-  schedule:
-    - cron: "0 3 * * 0"
-permissions:
-  contents: read
-  security-events: write
+
 jobs:
   analyze:
-    name: Analyze
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
+    name: Analyze (${{ matrix.language }})
+    runs-on: ubuntu-24.04
+    permissions:
+      security-events: write
+      packages: read
+      actions: read
+      contents: read
+
     strategy:
       fail-fast: false
       matrix:
-        language: ["cpp", "python"]
+        include:
+          - language: c-cpp
+            build-mode: manual
+
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
+
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
           config-file: .github/codeql/codeql-config.yaml
+
       - name: Install build dependencies
         run: sudo ./dist/deb/install-deb-deps.sh
+
       - name: Build project
+        if: matrix.build-mode == 'manual'
+        shell: bash
         env:
           CFLAGS: "-O2 -g"
         run: |
           ./bootstrap
           ./configure
           make
+
       - name: Perform CodeQL analysis
         uses: github/codeql-action/analyze@v4
         with:

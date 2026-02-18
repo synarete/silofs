@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_PNDPTR_H_
-#define SILOFS_PNDPTR_H_
+#ifndef SILOFS_PNPTR_H_
+#define SILOFS_PNPTR_H_
 
 #include "nmeta.h"
 
@@ -77,4 +77,4 @@ void silofs_btnptr256b_htox(struct silofs_btnptr256b   *btnptr256,
 void silofs_btnptr256b_xtoh(const struct silofs_btnptr256b *btnptr256,
                             struct silofs_btnptr           *btnptr);
 
-#endif /* SILOFS_PNDPTR_H_ */
+#endif /* SILOFS_PNPTR_H_ */

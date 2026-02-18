@@ -87,9 +87,17 @@ static size_t htbl_calc_nslots(const struct silofs_alloc *alloc, uint8_t fac)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
+static uint64_t blobid_hash64(const struct silofs_blobid *blobid, uint64_t s)
+{
+	struct silofs_blobid56b blobid56;
+
+	silofs_blobid56b_htox(&blobid56, blobid);
+	return silofs_xxh64(&blobid56, sizeof(blobid56), s);
+}
+
 static uint64_t hash_of_paddr(const struct silofs_paddr *paddr)
 {
-	return silofs_blobid_hash64(&paddr->blobid, (uint64_t)paddr->pos);
+	return blobid_hash64(&paddr->blobid, (uint64_t)paddr->pos);
 }
 
 static uint64_t hash_of_lsid(const struct silofs_lsid *lsid)

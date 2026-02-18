@@ -37,6 +37,8 @@ bool silofs_layerid_isequal(const struct silofs_layerid *layerid,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+void silofs_uniqid_reset(struct silofs_uniqid *uniqid);
+
 void silofs_uniqid_setup_by(struct silofs_uniqid        *uniqid,
                             const struct silofs_hash256 *hash);
 

@@ -240,6 +240,12 @@ static void ubn_setup(struct silofs_uber_node *ubn, const struct timespec *ts)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+const struct silofs_layerid *
+silofs_ubi_layerid(const struct silofs_uber_info *ubi)
+{
+	return silofs_pni_layerid(&ubi->ub_pni);
+}
+
 void silofs_ubi_incref(struct silofs_uber_info *ubi)
 {
 	silofs_pni_incref(&ubi->ub_pni);

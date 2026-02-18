@@ -528,7 +528,7 @@ static bool btc_is_writeable_btnode(const struct silofs_btree_ctx *btc,
 	const struct silofs_layerid *ub_layerid;
 	const struct silofs_layerid *btn_layerid;
 
-	ub_layerid  = silofs_pni_layerid(&btc->ubi->ub_pni);
+	ub_layerid  = silofs_ubi_layerid(btc->ubi);
 	btn_layerid = silofs_pni_layerid(&bti->btn_pni);
 
 	return silofs_layerid_isequal(ub_layerid, btn_layerid);

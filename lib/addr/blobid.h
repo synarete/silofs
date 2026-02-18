@@ -43,8 +43,8 @@ struct silofs_blobid {
 
 const struct silofs_blobid *silofs_blobid_none(void);
 
-void silofs_blobid_initp(struct silofs_blobid *blobid,
-                         enum silofs_ptype     ptype);
+void silofs_blobid_initp(struct silofs_blobid *blobid, enum silofs_ptype ptype,
+                         enum silofs_mtype vspace);
 
 void silofs_blobid_initv(struct silofs_blobid *blobid,
                          enum silofs_mtype     mtype);
@@ -62,7 +62,9 @@ long silofs_blobid_compare(const struct silofs_blobid *blobid,
 bool silofs_blobid_isequal(const struct silofs_blobid *blobid,
                            const struct silofs_blobid *other);
 
-uint64_t silofs_blobid_hash64(const struct silofs_blobid *blobid, uint64_t s);
+void silofs_blobid_update(struct silofs_blobid        *blobid,
+                          const struct silofs_layerid *layerid,
+                          const struct silofs_uniqid  *uniqid);
 
 void silofs_blobid56b_htox(struct silofs_blobid56b    *blobid56,
                            const struct silofs_blobid *blobid);

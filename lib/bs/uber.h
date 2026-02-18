@@ -19,6 +19,9 @@
 
 #include "nodes.h"
 
+const struct silofs_layerid *
+silofs_ubi_layerid(const struct silofs_uber_info *ubi);
+
 void silofs_ubi_incref(struct silofs_uber_info *ubi);
 
 void silofs_ubi_decref(struct silofs_uber_info *ubi);

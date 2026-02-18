@@ -138,7 +138,7 @@ static int spawn_btroot(struct silofs_task_ctx *task, enum silofs_mtype vtype,
 	struct silofs_pnptr pnptr = {};
 	int err;
 
-	silofs_ignite_btspace(task, &pnptr);
+	silofs_ignite_btspace(task, vtype, &pnptr);
 	err = silofs_spawn_btnode(task->env, &pnptr, out_bti);
 	if (err) {
 		return err;

@@ -34,7 +34,13 @@ const struct silofs_blobid *silofs_blobid_none(void)
 
 static void blobid_clear(struct silofs_blobid *blobid)
 {
-	memset(blobid, 0, sizeof(*blobid));
+	silofs_layerid_reset(&blobid->layerid);
+	silofs_uniqid_reset(&blobid->uniqid);
+	blobid->stype.xtype = 0;
+	blobid->flags       = SILOFS_BIDF_NONE;
+	blobid->vspace      = SILOFS_MTYPE_NONE;
+	blobid->height      = SILOFS_HEIGHT_NONE;
+	blobid->vers        = 0;
 }
 
 static void blobid_init_common(struct silofs_blobid *blobid)
@@ -43,11 +49,13 @@ static void blobid_init_common(struct silofs_blobid *blobid)
 	blobid->vers = SILOFS_FMT_VERSION;
 }
 
-void silofs_blobid_initp(struct silofs_blobid *blobid, enum silofs_ptype ptype)
+void silofs_blobid_initp(struct silofs_blobid *blobid, enum silofs_ptype ptype,
+                         enum silofs_mtype vspace)
 {
 	blobid_init_common(blobid);
 	blobid->stype.ptype = ptype;
 	blobid->flags       = SILOFS_BIDF_PNODE;
+	blobid->vspace      = vspace;
 }
 
 void silofs_blobid_initv(struct silofs_blobid *blobid, enum silofs_mtype mtype)
@@ -61,6 +69,18 @@ void silofs_blobid_initv(struct silofs_blobid *blobid, enum silofs_mtype mtype)
 void silofs_blobid_fini(struct silofs_blobid *blobid)
 {
 	blobid_clear(blobid);
+}
+
+void silofs_blobid_update(struct silofs_blobid *blobid,
+                          const struct silofs_layerid *layerid,
+                          const struct silofs_uniqid *uniqid)
+{
+	if (layerid != nullptr) {
+		silofs_layerid_assign(&blobid->layerid, layerid);
+	}
+	if (uniqid != nullptr) {
+		silofs_uniqid_assign(&blobid->uniqid, uniqid);
+	}
 }
 
 static uint8_t blobid_stype(const struct silofs_blobid *blobid)
@@ -145,14 +165,6 @@ bool silofs_blobid_isequal(const struct silofs_blobid *blobid,
                            const struct silofs_blobid *other)
 {
 	return (silofs_blobid_compare(blobid, other) == 0);
-}
-
-uint64_t silofs_blobid_hash64(const struct silofs_blobid *blobid, uint64_t s)
-{
-	struct silofs_blobid56b blobid56;
-
-	silofs_blobid56b_htox(&blobid56, blobid);
-	return silofs_xxh64(&blobid56, sizeof(blobid56), s);
 }
 
 void silofs_blobid56b_htox(struct silofs_blobid56b *blobid56,

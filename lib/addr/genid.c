@@ -44,7 +44,7 @@ void silofs_generate_civkey(struct silofs_prandgen *prng,
 void silofs_generate_uniqid(struct silofs_prandgen *prng,
                             struct silofs_uniqid *out_uniqid)
 {
-	make_prandom(prng, out_uniqid->u.raw, sizeof(out_uniqid->u.raw));
+	make_prandom(prng, out_uniqid->id, sizeof(out_uniqid->id));
 }
 
 void silofs_generate_layerid(struct silofs_prandgen *prng,

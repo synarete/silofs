@@ -465,7 +465,7 @@ static int vstgc_spawn_lseg(const struct silofs_vstage_ctx *vstg_ctx,
 
 	err = vstgc_do_spawn_lseg(vstg_ctx, lsid);
 	if (!err) {
-		mtype = silofs_blobid56b_get_mtype(&lsid->blobid56b);
+		mtype = lsid->blobid.stype.mtype;
 		silofs_sbst_update_lsegs(vstg_ctx->sbi, mtype, 1);
 	}
 	return err;
@@ -476,19 +476,17 @@ vstgc_make_lsid_of(const struct silofs_vstage_ctx *vstg_ctx, off_t voff,
                    enum silofs_height height, enum silofs_mtype mtype,
                    struct silofs_lsid *out_lsid)
 {
-	struct silofs_blobid56b blobid56b;
-	struct silofs_layerid layerid;
-	struct silofs_uniqid uniqid;
+	struct silofs_blobid sb_blobid, blobid;
 
 	/* TODO: crap, re-write this logic */
-	silofs_sbi_self_blobid56b(vstg_ctx->sbi, &blobid56b);
-	silofs_blobid56b_get_layerid(&blobid56b, &layerid);
+	silofs_sbi_self_blobid(vstg_ctx->sbi, &sb_blobid);
 
-	silofs_generate_uniqid(vstg_ctx->env->base.prng, &uniqid);
-	silofs_blobid56b_setup_raw2(&blobid56b, &layerid, &uniqid, mtype,
-	                            vstg_ctx->vspace, height);
+	silofs_blobid_initv(&blobid, mtype);
+	silofs_layerid_assign(&blobid.layerid, &sb_blobid.layerid);
+	silofs_generate_uniqid(vstg_ctx->env->base.prng, &blobid.uniqid);
+	blobid.height = height;
 
-	silofs_lsid_setup(out_lsid, &blobid56b, voff);
+	silofs_lsid_setup(out_lsid, &blobid, voff);
 }
 
 static void

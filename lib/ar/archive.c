@@ -132,7 +132,7 @@ static int arc_stat_pack(const struct silofs_ar_ctx *ar_ctx,
 	struct stat st;
 	int err;
 
-	err = silofs_dstor_stat_blob(ar_ctx->dstor, &paddr->blobid56b, &st);
+	err = silofs_dstor_stat_blob(ar_ctx->dstor, &paddr->blobid, &st);
 	if (err) {
 		return err;
 	}
@@ -146,12 +146,12 @@ arc_send_blob(const struct silofs_ar_ctx *ar_ctx,
 {
 	int err;
 
-	err = silofs_dstor_require_blob(ar_ctx->dstor, &paddr->blobid56b);
+	err = silofs_dstor_require_blob(ar_ctx->dstor, &paddr->blobid);
 	if (err) {
 		log_err("failed to create archive blob: err=%d", err);
 		return err;
 	}
-	err = silofs_dstor_write_blob_at(ar_ctx->dstor, &paddr->blobid56b,
+	err = silofs_dstor_write_blob_at(ar_ctx->dstor, &paddr->blobid,
 	                                 paddr->pos, dat, len);
 	if (err) {
 		log_err("failed to save blob: err=%d", err);

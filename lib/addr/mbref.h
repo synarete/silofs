@@ -22,7 +22,7 @@
 
 /* MBR reference address */
 struct silofs_mbref {
-	struct silofs_blobid56bx bx;
+	struct silofs_blobidx bx;
 };
 
 /* tuple of mbr-refs */
@@ -34,8 +34,8 @@ struct silofs_mbrefs {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_mbref_setup(struct silofs_mbref            *mbref,
-                        const struct silofs_blobid56bx *blobid56bx);
+void silofs_mbref_setup(struct silofs_mbref         *mbref,
+                        const struct silofs_blobidx *blobidx);
 
 void silofs_mbref_assign(struct silofs_mbref       *mbref,
                          const struct silofs_mbref *other);

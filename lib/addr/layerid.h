@@ -23,10 +23,27 @@ const struct silofs_layerid *silofs_layerid_none(void);
 
 void silofs_layerid_reset(struct silofs_layerid *layerid);
 
+void silofs_layerid_assign(struct silofs_layerid       *layerid,
+                           const struct silofs_layerid *other);
+
 void silofs_layerid_copyto(const struct silofs_layerid *layerid,
                            struct silofs_layerid       *other);
 
+long silofs_layerid_compare(const struct silofs_layerid *layerid,
+                            const struct silofs_layerid *other);
+
 bool silofs_layerid_isequal(const struct silofs_layerid *layerid,
                             const struct silofs_layerid *other);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_uniqid_setup_by(struct silofs_uniqid        *uniqid,
+                            const struct silofs_hash256 *hash);
+
+void silofs_uniqid_assign(struct silofs_uniqid       *uniqid,
+                          const struct silofs_uniqid *other);
+
+long silofs_uniqid_compare(const struct silofs_uniqid *uniqid,
+                           const struct silofs_uniqid *other);
 
 #endif /* SILOFS_LAYERID_H_ */

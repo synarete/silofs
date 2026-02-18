@@ -21,9 +21,9 @@
 #include "mbref.h"
 
 void silofs_mbref_setup(struct silofs_mbref *mbref,
-                        const struct silofs_blobid56bx *blobid56bx)
+                        const struct silofs_blobidx *blobidx)
 {
-	silofs_blobid56bx_assign(&mbref->bx, blobid56bx);
+	silofs_blobidx_assign(&mbref->bx, blobidx);
 }
 
 void silofs_mbref_assign(struct silofs_mbref *mbref,
@@ -36,30 +36,30 @@ void silofs_mbref_derive(struct silofs_mbref *mbref,
                          const struct silofs_mdigest_hd *md_hd,
                          const struct silofs_paddr *paddr)
 {
-	struct silofs_blobid56bx blobid56bx;
+	struct silofs_blobidx blobidx;
 
 	silofs_assert_eq(paddr->mtype, SILOFS_MTYPE_MBR);
 	silofs_assert_eq(paddr->pos, 0);
 
-	silofs_blobid56bx_derive(&blobid56bx, md_hd, &paddr->blobid56b);
-	silofs_mbref_setup(mbref, &blobid56bx);
+	silofs_blobidx_derive(&blobidx, md_hd, &paddr->blobid);
+	silofs_mbref_setup(mbref, &blobidx);
 }
 
 bool silofs_mbref_isequal(const struct silofs_mbref *mbref,
                           const struct silofs_mbref *other)
 {
-	return silofs_blobid56bx_isequal(&mbref->bx, &other->bx);
+	return silofs_blobidx_isequal(&mbref->bx, &other->bx);
 }
 
 int silofs_mbref_from_str(struct silofs_mbref *mbref, const char *str,
                           size_t len)
 {
-	return silofs_blobid56bx_from_str(&mbref->bx, str, len);
+	return silofs_blobidx_from_str(&mbref->bx, str, len);
 }
 
 int silofs_mbref_to_str(const struct silofs_mbref *mbref, char *str, size_t n)
 {
-	return silofs_blobid56bx_to_str(&mbref->bx, str, n);
+	return silofs_blobidx_to_str(&mbref->bx, str, n);
 }
 
 void silofs_mbrefs_assign(struct silofs_mbrefs *mbrefs,

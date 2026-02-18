@@ -79,8 +79,11 @@
 /* repository blobs sub-directory */
 #define SILOFS_REPO_BLOBS_DIRNAME "blobs"
 
-/* sub-volume identifier size */
+/* layer identifier size */
 #define SILOFS_LAYERID_SIZE (16)
+
+/* unique identifier size */
+#define SILOFS_UNIQEID_SIZE (32)
 
 /* blob identifier size */
 #define SILOFS_BLOBID_SIZE (56)
@@ -537,26 +540,30 @@ struct silofs_mac {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-/* unique identifier within blob-id */
-struct silofs_uniqid {
-	union {
-		struct silofs_hash256 hash;
-		uint8_t               raw[32];
-	} u;
-} silofs_attr_aligned8;
-
-/* sub-volume identifier */
+/* common layer identifier */
 struct silofs_layerid {
 	uint8_t id[SILOFS_LAYERID_SIZE];
 } silofs_attr_aligned8;
 
+/* unique identifier within blob */
+struct silofs_uniqid {
+	uint8_t id[SILOFS_UNIQEID_SIZE];
+} silofs_attr_aligned8;
+
 /* blob-identifier */
 struct silofs_blobid56b {
-	uint8_t id[SILOFS_BLOBID_SIZE];
+	struct silofs_layerid layerid;
+	struct silofs_uniqid  uniqid;
+	uint16_t              flags;
+	uint8_t               stype;
+	uint8_t               vspace;
+	uint8_t               height;
+	uint8_t               reserved;
+	uint16_t              vers;
 } silofs_attr_aligned8;
 
 /* exported blob-identifier representation */
-struct silofs_blobid56bx {
+struct silofs_blobidx {
 	struct silofs_hash256 idx;
 } silofs_attr_aligned16;
 

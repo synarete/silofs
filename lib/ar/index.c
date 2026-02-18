@@ -370,12 +370,12 @@ int silofs_save_arix_node(struct silofs_dstor *dstor,
 {
 	int err;
 
-	err = silofs_dstor_require_blob(dstor, &paddr->blobid56b);
+	err = silofs_dstor_require_blob(dstor, &paddr->blobid);
 	if (err) {
 		log_err("failed to spawn archive-index: err=%d", err);
 		return err;
 	}
-	err = silofs_dstor_write_blob_at(dstor, &paddr->blobid56b, paddr->pos,
+	err = silofs_dstor_write_blob_at(dstor, &paddr->blobid, paddr->pos,
 	                                 arn_enc, sizeof(*arn_enc));
 	if (err) {
 		log_err("failed to save archive-index: err=%d", err);
@@ -390,7 +390,7 @@ int silofs_load_arix_node(struct silofs_dstor *dstor,
                           const struct silofs_paddr *paddr,
                           struct silofs_arix_node *arn_enc)
 {
-	return silofs_dstor_read_blob_at(dstor, &paddr->blobid56b, paddr->pos,
+	return silofs_dstor_read_blob_at(dstor, &paddr->blobid, paddr->pos,
 	                                 arn_enc, sizeof(*arn_enc));
 }
 
@@ -446,7 +446,7 @@ void silofs_calc_ar_desc(const struct silofs_mdigest_hd *md_hd,
 	};
 	enum silofs_mtype mtype;
 
-	mtype = silofs_blobid56b_get_mtype(&laddr->lsid.blobid56b);
+	mtype = laddr->lsid.blobid.stype.mtype;
 	silofs_calc_cas_paddr(md_hd, mtype, &iov, 1, &paddr);
 
 	ard_init(out_ard, &paddr, laddr, iov.iov_len);

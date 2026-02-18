@@ -30,14 +30,48 @@ void silofs_layerid_reset(struct silofs_layerid *layerid)
 	memset(layerid->id, 0, sizeof(layerid->id));
 }
 
+void silofs_layerid_assign(struct silofs_layerid *layerid,
+                           const struct silofs_layerid *other)
+{
+	memcpy(layerid->id, other->id, sizeof(layerid->id));
+}
+
 void silofs_layerid_copyto(const struct silofs_layerid *layerid,
                            struct silofs_layerid *other)
 {
-	memcpy(other->id, layerid->id, sizeof(other->id));
+	silofs_layerid_assign(other, layerid);
+}
+
+long silofs_layerid_compare(const struct silofs_layerid *layerid,
+                            const struct silofs_layerid *other)
+{
+	return memcmp(layerid->id, other->id, sizeof(layerid->id));
 }
 
 bool silofs_layerid_isequal(const struct silofs_layerid *layerid,
                             const struct silofs_layerid *other)
 {
-	return (memcmp(layerid->id, other->id, sizeof(layerid->id)) == 0);
+	return (silofs_layerid_compare(layerid, other) == 0);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_uniqid_setup_by(struct silofs_uniqid *uniqid,
+                            const struct silofs_hash256 *hash)
+{
+	STATICASSERT_EQ(sizeof(uniqid->id), sizeof(hash->hash));
+
+	memcpy(uniqid->id, hash->hash, sizeof(uniqid->id));
+}
+
+void silofs_uniqid_assign(struct silofs_uniqid *uniqid,
+                          const struct silofs_uniqid *other)
+{
+	memcpy(uniqid->id, other->id, sizeof(uniqid->id));
+}
+
+long silofs_uniqid_compare(const struct silofs_uniqid *uniqid,
+                           const struct silofs_uniqid *other)
+{
+	return memcmp(uniqid->id, other->id, sizeof(uniqid->id));
 }

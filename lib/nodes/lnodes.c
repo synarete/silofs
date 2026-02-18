@@ -348,12 +348,6 @@ silofs_uni_laddr(const struct silofs_unode_info *uni)
 	return &uni->un_uaddr.laddr;
 }
 
-const struct silofs_blobid56b *
-silofs_uni_lvid(const struct silofs_unode_info *uni)
-{
-	return &uni->un_uaddr.laddr.lsid.blobid56b;
-}
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static struct silofs_vnode_info *

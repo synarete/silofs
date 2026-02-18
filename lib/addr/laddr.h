@@ -24,9 +24,9 @@ struct silofs_strbuf;
 
 /* logical-segment id within specific volume mapping */
 struct silofs_lsid {
-	struct silofs_blobid56b blobid56b;
-	size_t                  lsize;
-	uint32_t                vindex;
+	struct silofs_blobid blobid;
+	size_t               lsize;
+	uint32_t             vindex;
 };
 
 /* logical-address within specific volume's mapping extend */
@@ -56,16 +56,16 @@ size_t silofs_lsid_size(const struct silofs_lsid *lsid);
 
 bool silofs_lsid_isnull(const struct silofs_lsid *lsid);
 
-bool silofs_lsid_has_blobid56b(const struct silofs_lsid      *lsid,
-                               const struct silofs_blobid56b *blobid56b);
+bool silofs_lsid_has_blobid(const struct silofs_lsid   *lsid,
+                            const struct silofs_blobid *blobid);
 
 bool silofs_lsid_has_layerid(const struct silofs_lsid    *lsid,
                              const struct silofs_layerid *layerid);
 
 void silofs_lsid_reset(struct silofs_lsid *lsid);
 
-void silofs_lsid_setup(struct silofs_lsid            *lsid,
-                       const struct silofs_blobid56b *blobid56b, off_t off);
+void silofs_lsid_setup(struct silofs_lsid         *lsid,
+                       const struct silofs_blobid *blobid, off_t off);
 
 void silofs_lsid_assign(struct silofs_lsid       *lsid,
                         const struct silofs_lsid *other);

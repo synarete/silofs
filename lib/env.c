@@ -472,17 +472,14 @@ bool silofs_env_isrdonlyfs(const struct silofs_env *env)
 static void
 make_super_lsid(struct silofs_env *env, struct silofs_lsid *out_lsid)
 {
-	struct silofs_layerid layerid;
-	struct silofs_uniqid uniqid;
-	struct silofs_blobid56b blobid56b;
+	struct silofs_blobid blobid;
 
-	silofs_generate_layerid(env->base.prng, &layerid);
-	silofs_generate_uniqid(env->base.prng, &uniqid);
+	silofs_blobid_initv(&blobid, SILOFS_MTYPE_SUPER);
+	silofs_generate_layerid(env->base.prng, &blobid.layerid);
+	silofs_generate_uniqid(env->base.prng, &blobid.uniqid);
+	blobid.height = SILOFS_HEIGHT_SUPER;
 
-	silofs_blobid56b_setup_raw2(&blobid56b, &layerid, &uniqid,
-	                            SILOFS_MTYPE_SUPER, SILOFS_MTYPE_SUPER,
-	                            SILOFS_HEIGHT_SUPER);
-	silofs_lsid_setup(out_lsid, &blobid56b, 0);
+	silofs_lsid_setup(out_lsid, &blobid, 0);
 }
 
 static void

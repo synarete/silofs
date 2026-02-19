@@ -446,7 +446,7 @@ void silofs_calc_ar_desc(const struct silofs_mdigest_hd *md_hd,
 	};
 	enum silofs_mtype mtype;
 
-	mtype = laddr->lsid.blobid.stype.mtype;
+	mtype = laddr->lsid.blobid.vspace;
 	silofs_calc_cas_paddr(md_hd, mtype, &iov, 1, &paddr);
 
 	ard_init(out_ard, &paddr, laddr, iov.iov_len);

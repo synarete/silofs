@@ -713,7 +713,7 @@ static int spac_resolve_main_range(const struct silofs_spalloc_ctx *spa_ctx,
 	if (silofs_lsid_isnull(out_lsid)) {
 		return -SILOFS_ENOENT;
 	}
-	mtype = out_lsid->blobid.stype.mtype;
+	mtype = out_lsid->blobid.vspace;
 	if (mtype != spa_ctx->mtype) {
 		return -SILOFS_EBUG;
 	}

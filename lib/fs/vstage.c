@@ -465,7 +465,7 @@ static int vstgc_spawn_lseg(const struct silofs_vstage_ctx *vstg_ctx,
 
 	err = vstgc_do_spawn_lseg(vstg_ctx, lsid);
 	if (!err) {
-		mtype = lsid->blobid.stype.mtype;
+		mtype = lsid->blobid.vspace;
 		silofs_sbst_update_lsegs(vstg_ctx->sbi, mtype, 1);
 	}
 	return err;

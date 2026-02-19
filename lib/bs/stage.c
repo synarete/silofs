@@ -187,15 +187,25 @@ static int stc_spawn_uber(const struct silofs_stage_ctx *st_ctx,
 	return 0;
 }
 
-int silofs_spawn_uber(struct silofs_task_ctx *task,
-                      const struct silofs_pnptr *pnptr,
-                      struct silofs_uber_info **out_ubi)
+static int stc_spawn_uber_at(const struct silofs_stage_ctx *st_ctx,
+                             const struct silofs_paddr *paddr,
+                             struct silofs_uber_info **out_ubi)
+{
+	struct silofs_pnptr pnptr = {};
+
+	silofs_ignite_pnptr(st_ctx->task, paddr, &pnptr);
+	return stc_spawn_uber(st_ctx, &pnptr, out_ubi);
+}
+
+int silofs_spawn_uber_at(struct silofs_task_ctx *task,
+                         const struct silofs_paddr *paddr,
+                         struct silofs_uber_info **out_ubi)
 {
 	struct silofs_stage_ctx st_ctx = {};
 	int err;
 
 	stc_init(&st_ctx, task);
-	err = stc_spawn_uber(&st_ctx, pnptr, out_ubi);
+	err = stc_spawn_uber_at(&st_ctx, paddr, out_ubi);
 	stc_fini(&st_ctx);
 	return err;
 }
@@ -380,15 +390,25 @@ static int stc_spawn_btnode(const struct silofs_stage_ctx *st_ctx,
 	return 0;
 }
 
-int silofs_spawn_btnode(struct silofs_task_ctx *task,
-                        const struct silofs_pnptr *pnptr,
-                        struct silofs_btnode_info **out_bti)
+static int stc_spawn_btnode_at(const struct silofs_stage_ctx *st_ctx,
+                               const struct silofs_paddr *paddr,
+                               struct silofs_btnode_info **out_bti)
+{
+	struct silofs_pnptr pnptr = {};
+
+	silofs_ignite_pnptr(st_ctx->task, paddr, &pnptr);
+	return stc_spawn_btnode(st_ctx, &pnptr, out_bti);
+}
+
+int silofs_spawn_btnode_at(struct silofs_task_ctx *task,
+                           const struct silofs_paddr *paddr,
+                           struct silofs_btnode_info **out_bti)
 {
 	struct silofs_stage_ctx st_ctx = {};
 	int err;
 
 	stc_init(&st_ctx, task);
-	err = stc_spawn_btnode(&st_ctx, pnptr, out_bti);
+	err = stc_spawn_btnode_at(&st_ctx, paddr, out_bti);
 	stc_fini(&st_ctx);
 	return err;
 }

@@ -68,6 +68,9 @@ void silofs_pni_decref(struct silofs_pnode_info *pni);
 void silofs_pni_set_dq(struct silofs_pnode_info *pni,
                        struct silofs_dirtyq     *dq);
 
+const struct silofs_paddr *
+silofs_pni_paddr(const struct silofs_pnode_info *pni);
+
 const struct silofs_layerid *
 silofs_pni_layerid(const struct silofs_pnode_info *pni);
 

@@ -117,12 +117,12 @@ static int flush_destage_dirty(struct silofs_task_ctx *task)
 
 static int format_uber(struct silofs_task_ctx *task)
 {
-	struct silofs_pnptr pnptr    = {};
+	struct silofs_paddr paddr    = {};
 	struct silofs_uber_info *ubi = nullptr;
 	int err;
 
-	silofs_ignite_ubspace(task, &pnptr);
-	err = silofs_spawn_uber(task, &pnptr, &ubi);
+	silofs_ignite_ubspace(task, &paddr);
+	err = silofs_spawn_uber_at(task, &paddr, &ubi);
 	if (err) {
 		return err;
 	}
@@ -135,11 +135,11 @@ static int format_uber(struct silofs_task_ctx *task)
 static int spawn_btroot(struct silofs_task_ctx *task, enum silofs_vtype vtype,
                         struct silofs_btnode_info **out_bti)
 {
-	struct silofs_pnptr pnptr = {};
+	struct silofs_paddr paddr = {};
 	int err;
 
-	silofs_ignite_btspace(task, vtype, &pnptr);
-	err = silofs_spawn_btnode(task, &pnptr, out_bti);
+	silofs_ignite_btspace(task, vtype, &paddr);
+	err = silofs_spawn_btnode_at(task, &paddr, out_bti);
 	if (err) {
 		return err;
 	}
@@ -151,19 +151,16 @@ static int spawn_btroot(struct silofs_task_ctx *task, enum silofs_vtype vtype,
 static int ignite_vspace_by(struct silofs_task_ctx *task,
                             const struct silofs_btnode_info *bti)
 {
-	struct silofs_btnptr btnptr   = {};
-	struct silofs_spdesc spdesc   = {};
-	struct silofs_uber_info *ubi  = task->env->ubi;
-	const enum silofs_vtype vtype = silofs_bti_vspace(bti);
+	struct silofs_paddr paddr            = {};
+	struct silofs_uber_info *ubi         = task->env->ubi;
+	const struct silofs_paddr *btn_paddr = silofs_pni_paddr(&bti->btn_pni);
+	const enum silofs_vtype vtype        = silofs_bti_vspace(bti);
 
-	silofs_bti_self(bti, &btnptr);
-	silofs_ubi_set_btroot(ubi, vtype, &btnptr);
+	silofs_ubi_set_btroot_by(ubi, bti);
+	silofs_ubi_start_spdesc(ubi, btn_paddr);
 
-	silofs_spdesc_setup1(&spdesc, &btnptr.base.paddr);
-	silofs_ubi_set_bndesc(ubi, vtype, &spdesc);
-
-	silofs_ignite_vspace(task, vtype, &spdesc);
-	silofs_ubi_set_vndesc(ubi, vtype, &spdesc);
+	silofs_ignite_vspace(task, vtype, &paddr);
+	silofs_ubi_start_spdesc(ubi, &paddr);
 
 	return flush_destage_dirty(task);
 }

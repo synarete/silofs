@@ -300,20 +300,26 @@ void silofs_ubi_btroot_of(const struct silofs_uber_info *ubi,
 	ubn_btroot_of(ubi->ubn, vtype, out_btnptr);
 }
 
-void silofs_ubi_set_bndesc(struct silofs_uber_info *ubi,
-                           enum silofs_vtype vtype,
-                           const struct silofs_spdesc *spdesc)
+void silofs_ubi_start_spdesc(struct silofs_uber_info *ubi,
+                             const struct silofs_paddr *paddr)
 {
-	ubn_set_bn_spdesc_of(ubi->ubn, vtype, spdesc);
-	ubn_inc_generation(ubi->ubn);
-	silofs_ubi_dirtify(ubi);
+	struct silofs_spdesc spdesc = {};
+
+	silofs_spdesc_setup1(&spdesc, paddr);
+	silofs_ubi_update_spdesc(ubi, &spdesc);
 }
 
-void silofs_ubi_set_vndesc(struct silofs_uber_info *ubi,
-                           enum silofs_vtype vtype,
-                           const struct silofs_spdesc *spdesc)
+void silofs_ubi_update_spdesc(struct silofs_uber_info *ubi,
+                              const struct silofs_spdesc *spdesc)
 {
-	ubn_set_vn_spdesc_of(ubi->ubn, vtype, spdesc);
+	const struct silofs_blobid *blobid = &spdesc->beg.blobid;
+
+	if (blobid->ptype == SILOFS_PTYPE_VNODE) {
+		ubn_set_vn_spdesc_of(ubi->ubn, blobid->vtype, spdesc);
+	} else {
+		silofs_assert_eq(blobid->ptype, SILOFS_PTYPE_BTNODE);
+		ubn_set_bn_spdesc_of(ubi->ubn, blobid->vtype, spdesc);
+	}
 	ubn_inc_generation(ubi->ubn);
 	silofs_ubi_dirtify(ubi);
 }

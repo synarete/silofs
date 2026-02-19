@@ -23,15 +23,19 @@
 
 struct silofs_task_ctx;
 
+void silofs_ignite_pnptr(const struct silofs_task_ctx *task,
+                         const struct silofs_paddr    *paddr,
+                         struct silofs_pnptr          *out_pnptr);
+
 void silofs_ignite_ubspace(const struct silofs_task_ctx *task,
-                           struct silofs_pnptr          *out_pnptr);
+                           struct silofs_paddr          *out_paddr);
 
 void silofs_ignite_btspace(const struct silofs_task_ctx *task,
                            enum silofs_vtype             vspace,
-                           struct silofs_pnptr          *out_pnptr);
+                           struct silofs_paddr          *out_paddr);
 
 void silofs_ignite_vspace(const struct silofs_task_ctx *task,
                           enum silofs_vtype             vtype,
-                          struct silofs_spdesc         *out_spdesc);
+                          struct silofs_paddr          *out_paddr);
 
 #endif /* SILOFS_SPACE_H_ */

@@ -85,10 +85,18 @@ void silofs_pni_set_dq(struct silofs_pnode_info *pni, struct silofs_dirtyq *dq)
 	silofs_dqe_setq(pni_dqe(pni), dq);
 }
 
+const struct silofs_paddr *
+silofs_pni_paddr(const struct silofs_pnode_info *pni)
+{
+	return &pni->pn_self.paddr;
+}
+
 const struct silofs_layerid *
 silofs_pni_layerid(const struct silofs_pnode_info *pni)
 {
-	return &pni->pn_self.paddr.blobid.layerid;
+	const struct silofs_paddr *paddr = silofs_pni_paddr(pni);
+
+	return &paddr->blobid.layerid;
 }
 
 static bool pni_isdirty(const struct silofs_pnode_info *pni)

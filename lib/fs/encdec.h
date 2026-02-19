@@ -46,7 +46,8 @@ void silofs_llink_of_vni(const struct silofs_vnode_info *vni,
                          struct silofs_llink            *out_llink);
 
 void silofs_calc_cas_paddr(const struct silofs_mdigest_hd *md_hd,
-                           enum silofs_mtype mtype, const struct iovec *iov,
-                           size_t iov_cnt, struct silofs_paddr *out_paddr);
+                           enum silofs_ptype ptype, enum silofs_vtype vtype,
+                           const struct iovec *iov, size_t iov_cnt,
+                           struct silofs_paddr *out_paddr);
 
 #endif /* SILOFS_ENCDEC_H_ */

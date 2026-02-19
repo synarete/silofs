@@ -182,8 +182,8 @@ arc_load_seg(const struct silofs_ar_ctx *ar_ctx,
 
 	err = silofs_repo_read_at(ar_ctx->repo, laddr, seg, len);
 	if (err) {
-		log_err("failed to read: mtype=%d pos=%ld len=%zu err=%d",
-		        silofs_laddr_mtype(laddr), laddr->pos, len, err);
+		log_err("failed to read: vtype=%d pos=%ld len=%zu err=%d",
+		        silofs_laddr_vtype(laddr), laddr->pos, len, err);
 	}
 	return err;
 }

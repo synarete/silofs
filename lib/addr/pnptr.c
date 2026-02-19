@@ -24,7 +24,7 @@ static const struct silofs_pnptr s_pnptr_none = {
 	.nmeta.ciargs.algo = SILOFS_CIPHER_NONE,
 	.nmeta.ciargs.mode = SILOFS_CIPHER_MODE_NONE,
 	.paddr.pos         = SILOFS_OFF_NULL,
-	.paddr.mtype       = SILOFS_MTYPE_NONE,
+	.paddr.ptype       = SILOFS_PTYPE_NONE,
 };
 
 const struct silofs_pnptr *silofs_pnptr_none(void)
@@ -88,7 +88,7 @@ static const struct silofs_btnptr s_btnptr_none = {
 	.base.nmeta.ciargs.algo = SILOFS_CIPHER_NONE,
 	.base.nmeta.ciargs.mode = SILOFS_CIPHER_MODE_NONE,
 	.base.paddr.pos         = SILOFS_OFF_NULL,
-	.base.paddr.mtype       = SILOFS_MTYPE_NONE,
+	.base.paddr.ptype       = SILOFS_PTYPE_NONE,
 	.nsub_vobjs             = 0,
 	.nsub_btnodes           = 0,
 

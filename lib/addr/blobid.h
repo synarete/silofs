@@ -23,18 +23,11 @@
 #include "crypto.h"
 #include "layerid.h"
 
-union silofs_stype {
-	enum silofs_ptype ptype;
-	enum silofs_mtype mtype;
-	unsigned          xtype;
-};
-
 struct silofs_blobid {
 	struct silofs_layerid layerid;
 	struct silofs_uniqid  uniqid;
-	union silofs_stype    stype;
-	enum silofs_bidf      flags;
-	enum silofs_mtype     vspace;
+	enum silofs_ptype     ptype;
+	enum silofs_vtype     vtype;
 	enum silofs_height    height;
 	uint16_t              vers;
 };
@@ -43,11 +36,8 @@ struct silofs_blobid {
 
 const struct silofs_blobid *silofs_blobid_none(void);
 
-void silofs_blobid_initp(struct silofs_blobid *blobid, enum silofs_ptype ptype,
-                         enum silofs_mtype vspace);
-
-void silofs_blobid_initv(struct silofs_blobid *blobid,
-                         enum silofs_mtype     mtype);
+void silofs_blobid_init(struct silofs_blobid *blobid, enum silofs_ptype ptype,
+                        enum silofs_vtype vtype);
 
 void silofs_blobid_fini(struct silofs_blobid *blobid);
 
@@ -65,6 +55,8 @@ bool silofs_blobid_isequal(const struct silofs_blobid *blobid,
 void silofs_blobid_update(struct silofs_blobid        *blobid,
                           const struct silofs_layerid *layerid,
                           const struct silofs_uniqid  *uniqid);
+
+size_t silofs_blobid_slotsize(const struct silofs_blobid *blobid);
 
 void silofs_blobid56b_htox(struct silofs_blobid56b    *blobid56,
                            const struct silofs_blobid *blobid);

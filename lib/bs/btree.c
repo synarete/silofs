@@ -189,9 +189,9 @@ static uint64_t btc_key(const struct silofs_btree_ctx *btc)
 	return (uint64_t)(btc->vaddr.off);
 }
 
-static enum silofs_mtype btc_vspace(const struct silofs_btree_ctx *btc)
+static enum silofs_vtype btc_vspace(const struct silofs_btree_ctx *btc)
 {
-	return btc->vaddr.mtype;
+	return btc->vaddr.vtype;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -356,8 +356,8 @@ btc_validate_child_btnode(const struct silofs_btree_ctx *btc,
                           const struct silofs_btnode_info *child_bti)
 {
 	size_t parent_height, child_height;
-	enum silofs_mtype parent_vspace, child_vspace;
-	const enum silofs_mtype vspace = btc_vspace(btc);
+	enum silofs_vtype parent_vspace, child_vspace;
+	const enum silofs_vtype vspace = btc_vspace(btc);
 
 	parent_vspace = silofs_bti_vspace(parent_bti);
 	child_vspace  = silofs_bti_vspace(child_bti);

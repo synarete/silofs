@@ -36,15 +36,15 @@ static void btn_add_flags(struct silofs_btree_node *btn, enum silofs_pnodef f)
 	btn_set_flags(btn, f | btn_flags(btn));
 }
 
-static enum silofs_mtype btn_vspace(const struct silofs_btree_node *btn)
+static enum silofs_vtype btn_vspace(const struct silofs_btree_node *btn)
 {
 	const unsigned vspace = btn->btn_vspace;
 
-	return (enum silofs_mtype)vspace;
+	return (enum silofs_vtype)vspace;
 }
 
 static void
-btn_set_vspace(struct silofs_btree_node *btn, enum silofs_mtype vspace)
+btn_set_vspace(struct silofs_btree_node *btn, enum silofs_vtype vspace)
 {
 	btn->btn_vspace = (uint8_t)vspace;
 }
@@ -350,15 +350,15 @@ void silofs_bti_undirtify(struct silofs_btnode_info *bti)
 	silofs_pni_undirtify(&bti->btn_pni);
 }
 
-enum silofs_mtype silofs_bti_vspace(const struct silofs_btnode_info *bti)
+enum silofs_vtype silofs_bti_vspace(const struct silofs_btnode_info *bti)
 {
 	return btn_vspace(bti->btn);
 }
 
 void silofs_bti_set_vspace(struct silofs_btnode_info *bti,
-                           enum silofs_mtype vspace)
+                           enum silofs_vtype vspace)
 {
-	silofs_assert(silofs_mtype_isvnode(vspace));
+	silofs_assert(silofs_vtype_isvnode(vspace));
 	btn_set_vspace(bti->btn, vspace);
 	silofs_bti_dirtify(bti);
 }
@@ -514,7 +514,7 @@ silofs_lookup_cached_btnode(struct silofs_pcache *pcache,
 {
 	struct silofs_pnode_info *pni;
 
-	silofs_assert_eq(paddr->mtype, SILOFS_MTYPE_BTNODE);
+	silofs_assert_eq(paddr->ptype, SILOFS_PTYPE_BTNODE);
 	pni = silofs_pcache_lookup_pnode(pcache, paddr);
 	return silofs_bti_from_pni(pni);
 }

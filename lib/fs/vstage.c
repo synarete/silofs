@@ -34,7 +34,7 @@ struct silofs_vstage_ctx {
 	const struct silofs_vaddr *vaddr;
 	off_t voff;
 	enum silofs_stg_mode stg_mode;
-	enum silofs_mtype vspace;
+	enum silofs_vtype vspace;
 	unsigned int retry;
 };
 
@@ -117,44 +117,44 @@ static void vni_update_llink(struct silofs_vnode_info *vni,
 static int vni_verify_sub_view(const struct silofs_vnode_info *vni)
 {
 	const struct silofs_view *view = vni->vn_lni.ln_view;
-	const enum silofs_mtype mtype  = silofs_vni_mtype(vni);
+	const enum silofs_vtype vtype  = silofs_vni_vtype(vni);
 	int ret                        = 0;
 
-	switch (mtype) {
-	case SILOFS_MTYPE_LSMAP:
+	switch (vtype) {
+	case SILOFS_VTYPE_LSMAP:
 		ret = silofs_verify_lsmap(&view->u.lsm);
 		break;
-	case SILOFS_MTYPE_INODE:
+	case SILOFS_VTYPE_INODE:
 		ret = silofs_verify_inode(&view->u.in);
 		break;
-	case SILOFS_MTYPE_XANODE:
+	case SILOFS_VTYPE_XANODE:
 		ret = silofs_verify_xattr_node(&view->u.xan);
 		break;
-	case SILOFS_MTYPE_SYMVAL:
+	case SILOFS_VTYPE_SYMVAL:
 		ret = silofs_verify_symlnk_value(&view->u.syv);
 		break;
-	case SILOFS_MTYPE_DTNODE:
+	case SILOFS_VTYPE_DTNODE:
 		ret = silofs_verify_dtree_node(&view->u.dtn);
 		break;
-	case SILOFS_MTYPE_FTNODE:
+	case SILOFS_VTYPE_FTNODE:
 		ret = silofs_verify_ftree_node(&view->u.ftn);
 		break;
-	case SILOFS_MTYPE_DATA1K:
-	case SILOFS_MTYPE_DATA4K:
-	case SILOFS_MTYPE_DATA64K:
+	case SILOFS_VTYPE_DATA1K:
+	case SILOFS_VTYPE_DATA4K:
+	case SILOFS_VTYPE_DATA64K:
 		break;
-	case SILOFS_MTYPE_NONE:
-	case SILOFS_MTYPE_MBR:
-	case SILOFS_MTYPE_UBER:
-	case SILOFS_MTYPE_ARIX:
-	case SILOFS_MTYPE_BLDESC:
-	case SILOFS_MTYPE_BTNODE:
-	case SILOFS_MTYPE_SUPER:
-	case SILOFS_MTYPE_SPNODE:
-	case SILOFS_MTYPE_SPLEAF:
-	case SILOFS_MTYPE_LAST:
+	case SILOFS_VTYPE_NONE:
+	case SILOFS_VTYPE_MBR:
+	case SILOFS_VTYPE_UBER:
+	case SILOFS_VTYPE_ARIX:
+	case SILOFS_VTYPE_BLDESC:
+	case SILOFS_VTYPE_BTNODE:
+	case SILOFS_VTYPE_SUPER:
+	case SILOFS_VTYPE_SPNODE:
+	case SILOFS_VTYPE_SPLEAF:
+	case SILOFS_VTYPE_LAST:
 	default:
-		silofs_panic("non vnode: mtype=%d", mtype);
+		silofs_panic("non vnode: vtype=%d", vtype);
 		break;
 	}
 	return ret;
@@ -178,7 +178,7 @@ static int vni_verify_view(const struct silofs_vnode_info *vni)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void
-sbi_bind_child_spnode(struct silofs_sb_info *sbi, enum silofs_mtype vspace,
+sbi_bind_child_spnode(struct silofs_sb_info *sbi, enum silofs_vtype vspace,
                       const struct silofs_spnode_info *sni_child)
 {
 	silofs_sbi_bind_child(sbi, vspace, silofs_sni_uaddr(sni_child));
@@ -399,33 +399,33 @@ static int sbi_inspect_cached_sli(const struct silofs_sb_info *sbi,
 	return sbi_inspect_cached_uni(sbi, &sli->sl_uni, stg_mode);
 }
 
-static enum silofs_mtype sni_child_mtype(const struct silofs_spnode_info *sni)
+static enum silofs_vtype sni_child_vtype(const struct silofs_spnode_info *sni)
 {
-	enum silofs_mtype mtype;
+	enum silofs_vtype vtype;
 	const enum silofs_height height = silofs_sni_height(sni);
 
 	switch (height) {
 	case SILOFS_HEIGHT_BOOT:
-		mtype = SILOFS_MTYPE_SUPER;
+		vtype = SILOFS_VTYPE_SUPER;
 		break;
 	case SILOFS_HEIGHT_SUPER:
 	case SILOFS_HEIGHT_SPNODE4:
 	case SILOFS_HEIGHT_SPNODE3:
 	case SILOFS_HEIGHT_SPNODE2:
-		mtype = SILOFS_MTYPE_SPNODE;
+		vtype = SILOFS_VTYPE_SPNODE;
 		break;
 	case SILOFS_HEIGHT_SPNODE1:
-		mtype = SILOFS_MTYPE_SPLEAF;
+		vtype = SILOFS_VTYPE_SPLEAF;
 		break;
 	case SILOFS_HEIGHT_SPLEAF:
 	case SILOFS_HEIGHT_VDATA:
 	case SILOFS_HEIGHT_LAST:
 	case SILOFS_HEIGHT_NONE:
 	default:
-		mtype = SILOFS_MTYPE_NONE;
+		vtype = SILOFS_VTYPE_NONE;
 		break;
 	}
-	return mtype;
+	return vtype;
 }
 
 static enum silofs_height
@@ -446,7 +446,7 @@ vstgc_setup(struct silofs_vstage_ctx *vstg_ctx, struct silofs_task_ctx *task,
 	vstg_ctx->sbi      = task->env->sbi;
 	vstg_ctx->vaddr    = vaddr;
 	vstg_ctx->stg_mode = stg_mode;
-	vstg_ctx->vspace   = vaddr->mtype;
+	vstg_ctx->vspace   = vaddr->vtype;
 	vstg_ctx->voff     = vaddr->off;
 	vstg_ctx->retry    = 3;
 }
@@ -460,20 +460,20 @@ static int vstgc_do_spawn_lseg(const struct silofs_vstage_ctx *vstg_ctx,
 static int vstgc_spawn_lseg(const struct silofs_vstage_ctx *vstg_ctx,
                             const struct silofs_lsid *lsid)
 {
-	enum silofs_mtype mtype;
+	enum silofs_vtype vtype;
 	int err;
 
 	err = vstgc_do_spawn_lseg(vstg_ctx, lsid);
 	if (!err) {
-		mtype = lsid->blobid.vspace;
-		silofs_sbst_update_lsegs(vstg_ctx->sbi, mtype, 1);
+		vtype = lsid->blobid.vtype;
+		silofs_sbst_update_lsegs(vstg_ctx->sbi, vtype, 1);
 	}
 	return err;
 }
 
 static void
 vstgc_make_lsid_of(const struct silofs_vstage_ctx *vstg_ctx, off_t voff,
-                   enum silofs_height height, enum silofs_mtype mtype,
+                   enum silofs_height height, enum silofs_vtype vtype,
                    struct silofs_lsid *out_lsid)
 {
 	struct silofs_blobid sb_blobid, blobid;
@@ -481,7 +481,7 @@ vstgc_make_lsid_of(const struct silofs_vstage_ctx *vstg_ctx, off_t voff,
 	/* TODO: crap, re-write this logic */
 	silofs_sbi_self_blobid(vstg_ctx->sbi, &sb_blobid);
 
-	silofs_blobid_initv(&blobid, mtype);
+	silofs_blobid_init(&blobid, SILOFS_PTYPE_VNODE, vtype);
 	silofs_layerid_assign(&blobid.layerid, &sb_blobid.layerid);
 	silofs_generate_uniqid(vstg_ctx->env->base.prng, &blobid.uniqid);
 	blobid.height = height;
@@ -491,21 +491,21 @@ vstgc_make_lsid_of(const struct silofs_vstage_ctx *vstg_ctx, off_t voff,
 
 static void
 vstgc_make_lsid_of_spmaps(const struct silofs_vstage_ctx *vstg_ctx, off_t voff,
-                          enum silofs_height height, enum silofs_mtype mtype,
+                          enum silofs_height height, enum silofs_vtype vtype,
                           struct silofs_lsid *out_lsid)
 {
-	silofs_assert_ne(mtype, vstg_ctx->vspace);
+	silofs_assert_ne(vtype, vstg_ctx->vspace);
 
-	vstgc_make_lsid_of(vstg_ctx, voff, height, mtype, out_lsid);
+	vstgc_make_lsid_of(vstg_ctx, voff, height, vtype, out_lsid);
 }
 
 static void
 vstgc_make_lsid_of_vdata(const struct silofs_vstage_ctx *vstg_ctx, off_t voff,
-                         enum silofs_mtype mtype, struct silofs_lsid *out_lsid)
+                         enum silofs_vtype vtype, struct silofs_lsid *out_lsid)
 {
-	silofs_assert_eq(mtype, vstg_ctx->vspace);
+	silofs_assert_eq(vtype, vstg_ctx->vspace);
 
-	vstgc_make_lsid_of(vstg_ctx, voff, SILOFS_HEIGHT_VDATA, mtype,
+	vstgc_make_lsid_of(vstg_ctx, voff, SILOFS_HEIGHT_VDATA, vtype,
 	                   out_lsid);
 }
 
@@ -514,10 +514,10 @@ vstgc_make_lsid_of_vdata(const struct silofs_vstage_ctx *vstg_ctx, off_t voff,
 static void vstgc_update_space_stats(const struct silofs_vstage_ctx *vstg_ctx,
                                      const struct silofs_uaddr *uaddr)
 {
-	const enum silofs_mtype mtype = silofs_uaddr_mtype(uaddr);
+	const enum silofs_vtype vtype = silofs_uaddr_vtype(uaddr);
 
-	silofs_sbst_update_objs(vstg_ctx->sbi, mtype, 1);
-	silofs_sbst_update_bks(vstg_ctx->sbi, mtype, 1);
+	silofs_sbst_update_objs(vstg_ctx->sbi, vtype, 1);
+	silofs_sbst_update_bks(vstg_ctx->sbi, vtype, 1);
 }
 
 static int
@@ -525,10 +525,10 @@ vstgc_spawn_super_main_lseg(const struct silofs_vstage_ctx *vstg_ctx)
 {
 	struct silofs_lsid lsid;
 	const enum silofs_height height = SILOFS_HEIGHT_SUPER - 1;
-	const enum silofs_mtype mtype   = SILOFS_MTYPE_SPNODE;
+	const enum silofs_vtype vtype   = SILOFS_VTYPE_SPNODE;
 	int err;
 
-	vstgc_make_lsid_of_spmaps(vstg_ctx, 0, height, mtype, &lsid);
+	vstgc_make_lsid_of_spmaps(vstg_ctx, 0, height, vtype, &lsid);
 	err = vstgc_spawn_lseg(vstg_ctx, &lsid);
 	if (err) {
 		return err;
@@ -568,10 +568,10 @@ vstgc_spawn_spnode_main_lseg(const struct silofs_vstage_ctx *vstg_ctx,
 	struct silofs_lsid lsid;
 	const off_t voff                = silofs_sni_base_voff(sni);
 	const enum silofs_height height = sni_child_height(sni);
-	const enum silofs_mtype mtype   = sni_child_mtype(sni);
+	const enum silofs_vtype vtype   = sni_child_vtype(sni);
 	int err;
 
-	vstgc_make_lsid_of_spmaps(vstg_ctx, voff, height, mtype, &lsid);
+	vstgc_make_lsid_of_spmaps(vstg_ctx, voff, height, vtype, &lsid);
 	err = vstgc_spawn_lseg(vstg_ctx, &lsid);
 	if (err) {
 		return err;
@@ -1599,7 +1599,7 @@ static void
 vstgc_setup_spawned_spleaf(const struct silofs_vstage_ctx *vstg_ctx,
                            struct silofs_spleaf_info *sli)
 {
-	silofs_assert(silofs_mtype_isvnode(vstg_ctx->vspace));
+	silofs_assert(silofs_vtype_isvnode(vstg_ctx->vspace));
 
 	silofs_sli_setup_spawned(sli, silofs_sni_uaddr(vstg_ctx->sni1),
 	                         vstg_ctx->vspace, vstgc_lbk_voff(vstg_ctx));
@@ -1631,7 +1631,7 @@ vstgc_require_spleaf_main_lseg(const struct silofs_vstage_ctx *vstg_ctx,
                                struct silofs_spleaf_info *sli)
 {
 	struct silofs_lsid lsid       = { .lsize = 0 };
-	const enum silofs_mtype mtype = vstg_ctx->vspace;
+	const enum silofs_vtype vtype = vstg_ctx->vspace;
 	off_t voff                    = -1;
 	int err;
 
@@ -1643,7 +1643,7 @@ vstgc_require_spleaf_main_lseg(const struct silofs_vstage_ctx *vstg_ctx,
 	 * TODO-0047: Do not use underlying repo to detect if vdata-lseg exists
 	 */
 	voff = silofs_sli_base_voff(sli);
-	vstgc_make_lsid_of_vdata(vstg_ctx, voff, mtype, &lsid);
+	vstgc_make_lsid_of_vdata(vstg_ctx, voff, vtype, &lsid);
 	err = vstgc_do_stage_lseg(vstg_ctx, &lsid);
 	if (!err) {
 		goto out_ok;
@@ -1903,7 +1903,7 @@ static int vstgc_resolve_key_of(const struct silofs_vstage_ctx *vstg_ctx,
 {
 	int ret = 0;
 
-	if (vstg_ctx->vspace != SILOFS_MTYPE_LSMAP) {
+	if (vstg_ctx->vspace != SILOFS_VTYPE_LSMAP) {
 		silofs_assert_not_null(vstg_ctx->lsi);
 
 		ret = silofs_lsi_resolve_key(vstg_ctx->lsi, vstg_ctx->vaddr,
@@ -1969,7 +1969,7 @@ static int vstgc_stage_lsmap_for_resolve(struct silofs_vstage_ctx *vstg_ctx)
 	int err = 0;
 
 	silofs_sli_incref(vstg_ctx->sli);
-	if (vstg_ctx->vspace == SILOFS_MTYPE_LSMAP) {
+	if (vstg_ctx->vspace == SILOFS_VTYPE_LSMAP) {
 		goto out;
 	}
 	silofs_vaddr_of_lsmap(&vaddr, vstg_ctx->vspace, vstg_ctx->voff);
@@ -2052,7 +2052,7 @@ static int vstgc_check_stable_vaddr(const struct silofs_vstage_ctx *vstg_ctx)
 	const struct silofs_vaddr *vaddr = vstg_ctx->vaddr;
 	bool stable;
 
-	if (vstg_ctx->vspace != SILOFS_MTYPE_LSMAP) {
+	if (vstg_ctx->vspace != SILOFS_VTYPE_LSMAP) {
 		silofs_assert_not_null(vstg_ctx->lsi);
 		stable = silofs_lsi_has_allocated_at(vstg_ctx->lsi, vaddr);
 	} else {
@@ -2067,8 +2067,8 @@ static int vstgc_require_stable_vaddr(const struct silofs_vstage_ctx *vstg_ctx)
 
 	err = vstgc_check_stable_vaddr(vstg_ctx);
 	if (err) {
-		log_err("unstable: off=0x%lx mtype=%d", vstg_ctx->vaddr->off,
-		        vstg_ctx->vaddr->mtype);
+		log_err("unstable: off=0x%lx vtype=%d", vstg_ctx->vaddr->off,
+		        vstg_ctx->vaddr->vtype);
 		return -SILOFS_EFSCORRUPTED;
 	}
 	return 0;
@@ -2129,9 +2129,9 @@ check_stable_at(struct silofs_task_ctx *task, const struct silofs_vaddr *vaddr)
 
 static bool laddr_isdata(const struct silofs_laddr *laddr)
 {
-	const enum silofs_mtype mtype = silofs_laddr_mtype(laddr);
+	const enum silofs_vtype vtype = silofs_laddr_vtype(laddr);
 
-	return silofs_mtype_isdata(mtype);
+	return silofs_vtype_isdata(vtype);
 }
 
 static int
@@ -2276,7 +2276,7 @@ static void vstgc_rebind_lbk_llink(const struct silofs_vstage_ctx *vstg_ctx,
 {
 
 	silofs_sli_bind_child(vstg_ctx->sli, vstg_ctx->vaddr->off, laddr);
-	if (vstg_ctx->vspace != SILOFS_MTYPE_LSMAP) {
+	if (vstg_ctx->vspace != SILOFS_VTYPE_LSMAP) {
 		silofs_assert_not_null(vstg_ctx->lsi);
 		silofs_lsi_rebind_key(vstg_ctx->lsi, vstg_ctx->vaddr, key);
 	}
@@ -2354,7 +2354,7 @@ static int vstgc_pre_clone_stage_at(const struct silofs_vstage_ctx *vstg_ctx,
 
 	if (vaddr->off == 0) {
 		/* ignore off=0 which is allocated-as-numb once upon format */
-		log_dbg("unexpected pre-clone: mtype=%d", vaddr->mtype);
+		log_dbg("unexpected pre-clone: vtype=%d", vaddr->vtype);
 		*out_vni = nullptr;
 	} else if (vstgc_has_vaddr(vstg_ctx, vaddr) &&
 	           ((stg_mode & SILOFS_STG_RAW) ||
@@ -2393,7 +2393,7 @@ static int vstgc_resolve_vaddrs(struct silofs_vstage_ctx *vstg_ctx,
 	const struct silofs_vaddr *vaddr = vstg_ctx->vaddr;
 	int err;
 
-	if (vstg_ctx->vspace == SILOFS_MTYPE_LSMAP) {
+	if (vstg_ctx->vspace == SILOFS_VTYPE_LSMAP) {
 		silofs_sli_lbk_vaddrs_at(vstg_ctx->sli, vaddr, out_vaddrs);
 	} else {
 		err = vstgc_require_lsmap_of(vstg_ctx);
@@ -2782,8 +2782,8 @@ pre_stage_vnode(struct silofs_task_ctx *task, const struct silofs_vaddr *vaddr,
 	struct silofs_vnode_info *vni = nullptr;
 	int ret                       = 0;
 
-	if (vaddr->mtype != SILOFS_MTYPE_LSMAP) {
-		silofs_vaddr_of_lsmap(&vaddr2, vaddr->mtype, vaddr->off);
+	if (vaddr->vtype != SILOFS_VTYPE_LSMAP) {
+		silofs_vaddr_of_lsmap(&vaddr2, vaddr->vtype, vaddr->off);
 		ret = silofs_stage_vnode(task, nullptr, &vaddr2, stg_mode,
 		                         &vni);
 	}
@@ -2837,7 +2837,7 @@ static int resolve_iaddr(ino_t ino, struct silofs_vaddr *out_vaddr)
 	if (silofs_off_isnull(voff)) {
 		return -SILOFS_EINVAL;
 	}
-	silofs_vaddr_setup(out_vaddr, SILOFS_MTYPE_INODE, voff);
+	silofs_vaddr_setup(out_vaddr, SILOFS_VTYPE_INODE, voff);
 	return 0;
 }
 
@@ -3006,12 +3006,12 @@ spawn_vnode_at(struct silofs_task_ctx *task, struct silofs_inode_info *pii,
 
 static int
 do_spawn_vnode(struct silofs_task_ctx *task, struct silofs_inode_info *pii,
-               enum silofs_mtype mtype, struct silofs_vnode_info **out_vni)
+               enum silofs_vtype vtype, struct silofs_vnode_info **out_vni)
 {
 	struct silofs_vaddr vaddr;
 	int err;
 
-	err = silofs_claim_vspace(task, mtype, &vaddr);
+	err = silofs_claim_vspace(task, vtype, &vaddr);
 	if (err) {
 		return err;
 	}
@@ -3023,13 +3023,13 @@ do_spawn_vnode(struct silofs_task_ctx *task, struct silofs_inode_info *pii,
 }
 
 int silofs_spawn_vnode(struct silofs_task_ctx *task,
-                       struct silofs_inode_info *pii, enum silofs_mtype mtype,
+                       struct silofs_inode_info *pii, enum silofs_vtype vtype,
                        struct silofs_vnode_info **out_vni)
 {
 	int err;
 
 	silofs_ii_incref(pii);
-	err = do_spawn_vnode(task, pii, mtype, out_vni);
+	err = do_spawn_vnode(task, pii, vtype, out_vni);
 	silofs_ii_decref(pii);
 	return err;
 }
@@ -3231,8 +3231,8 @@ int silofs_refresh_llink(struct silofs_task_ctx *task,
 	vaddr = silofs_vni_vaddr(vni);
 	err   = silofs_resolve_llink_of(task, vaddr, SILOFS_STG_CUR, &llink);
 	if (err) {
-		log_warn("failed to refresh llink: mtype=%d off=%ld err=%d",
-		         vaddr->mtype, vaddr->off, err);
+		log_warn("failed to refresh llink: vtype=%d off=%ld err=%d",
+		         vaddr->vtype, vaddr->off, err);
 		return err;
 	}
 	vni_update_llink(vni, &llink);

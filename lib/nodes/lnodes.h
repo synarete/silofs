@@ -36,7 +36,7 @@ struct silofs_lnode_info {
 	struct silofs_lnode_info *ln_ds_next;
 	struct silofs_view       *ln_view;
 	enum silofs_lnflags       ln_flags;
-	enum silofs_mtype         ln_mtype;
+	enum silofs_vtype         ln_vtype;
 };
 
 /* unode */
@@ -211,7 +211,7 @@ void silofs_uni_seal_view(struct silofs_unode_info *uni);
 void silofs_uni_set_dq(struct silofs_unode_info *uni,
                        struct silofs_dirtyq     *dq);
 
-enum silofs_mtype silofs_uni_mtype(const struct silofs_unode_info *uni);
+enum silofs_vtype silofs_uni_vtype(const struct silofs_unode_info *uni);
 
 const struct silofs_uaddr *
 silofs_uni_uaddr(const struct silofs_unode_info *uni);
@@ -248,7 +248,7 @@ bool silofs_vni_need_recheck(const struct silofs_vnode_info *vni);
 
 void silofs_vni_set_rechecked(struct silofs_vnode_info *vni);
 
-enum silofs_mtype silofs_vni_mtype(const struct silofs_vnode_info *vni);
+enum silofs_vtype silofs_vni_vtype(const struct silofs_vnode_info *vni);
 
 const struct silofs_vaddr *
 silofs_vni_vaddr(const struct silofs_vnode_info *vni);

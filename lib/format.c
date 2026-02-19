@@ -132,7 +132,7 @@ static int format_uber(struct silofs_task_ctx *task)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int spawn_btroot(struct silofs_task_ctx *task, enum silofs_mtype vtype,
+static int spawn_btroot(struct silofs_task_ctx *task, enum silofs_vtype vtype,
                         struct silofs_btnode_info **out_bti)
 {
 	struct silofs_pnptr pnptr = {};
@@ -154,7 +154,7 @@ static int ignite_vspace_by(struct silofs_task_ctx *task,
 	struct silofs_btnptr btnptr   = {};
 	struct silofs_spdesc spdesc   = {};
 	struct silofs_uber_info *ubi  = task->env->ubi;
-	const enum silofs_mtype vtype = silofs_bti_vspace(bti);
+	const enum silofs_vtype vtype = silofs_bti_vspace(bti);
 
 	silofs_bti_self(bti, &btnptr);
 	silofs_ubi_set_btroot(ubi, vtype, &btnptr);
@@ -169,7 +169,7 @@ static int ignite_vspace_by(struct silofs_task_ctx *task,
 }
 
 static int
-format_vspace_of(struct silofs_task_ctx *task, enum silofs_mtype vtype)
+format_vspace_of(struct silofs_task_ctx *task, enum silofs_vtype vtype)
 {
 	struct silofs_btnode_info *bti = nullptr;
 	int err;
@@ -189,12 +189,12 @@ format_vspace_of(struct silofs_task_ctx *task, enum silofs_mtype vtype)
 
 static int format_vspaces(struct silofs_task_ctx *task)
 {
-	enum silofs_mtype mtype = SILOFS_MTYPE_NONE;
+	enum silofs_vtype vtype = SILOFS_VTYPE_NONE;
 	int err;
 
-	while (++mtype < SILOFS_MTYPE_LAST) {
-		if (silofs_mtype_isvnode(mtype)) {
-			err = format_vspace_of(task, mtype);
+	while (++vtype < SILOFS_VTYPE_LAST) {
+		if (silofs_vtype_isvnode(vtype)) {
+			err = format_vspace_of(task, vtype);
 			if (err) {
 				return err;
 			}
@@ -241,43 +241,43 @@ static int format_super(struct silofs_task_ctx *task)
 }
 
 static int
-require_spmaps_of(struct silofs_task_ctx *task, enum silofs_mtype mtype)
+require_spmaps_of(struct silofs_task_ctx *task, enum silofs_vtype vtype)
 {
 	struct silofs_vaddr vaddr;
 	struct silofs_spleaf_info *sli = nullptr;
 
-	silofs_vaddr_setup(&vaddr, mtype, 0);
+	silofs_vaddr_setup(&vaddr, vtype, 0);
 	return silofs_require_spleaf_of(task, &vaddr, SILOFS_STG_COW, &sli);
 }
 
 static int
-format_spmaps_of(struct silofs_task_ctx *task, enum silofs_mtype mtype)
+format_spmaps_of(struct silofs_task_ctx *task, enum silofs_vtype vtype)
 {
 	int err;
 
-	err = require_spmaps_of(task, mtype);
+	err = require_spmaps_of(task, vtype);
 	if (err) {
-		log_err("format spmaps failed: mtype=%d err=%d", mtype, err);
+		log_err("format spmaps failed: vtype=%d err=%d", vtype, err);
 		return err;
 	}
 	err = flush_destage_dirty(task);
 	if (err) {
 		return err;
 	}
-	log_dbg("format spmaps of: mtype=%d", mtype);
+	log_dbg("format spmaps of: vtype=%d", vtype);
 	return 0;
 }
 
 static int format_spmaps(struct silofs_task_ctx *task)
 {
-	enum silofs_mtype mtype = SILOFS_MTYPE_NONE;
+	enum silofs_vtype vtype = SILOFS_VTYPE_NONE;
 	int err;
 
-	while (++mtype < SILOFS_MTYPE_LAST) {
-		if (!silofs_mtype_isvnode(mtype)) {
+	while (++vtype < SILOFS_VTYPE_LAST) {
+		if (!silofs_vtype_isvnode(vtype)) {
 			continue;
 		}
-		err = format_spmaps_of(task, mtype);
+		err = format_spmaps_of(task, vtype);
 		if (err) {
 			return err;
 		}
@@ -289,26 +289,26 @@ static int format_spmaps(struct silofs_task_ctx *task)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int
-claim_reclaim_of(struct silofs_task_ctx *task, enum silofs_mtype mtype)
+claim_reclaim_of(struct silofs_task_ctx *task, enum silofs_vtype vtype)
 {
 	struct silofs_vaddr vaddr;
 	const off_t voff_exp = 0;
 	int err;
 
-	err = silofs_claim_vspace(task, mtype, &vaddr);
+	err = silofs_claim_vspace(task, vtype, &vaddr);
 	if (err) {
-		log_err("claim failed: mtype=%d err=%d", mtype, err);
+		log_err("claim failed: vtype=%d err=%d", vtype, err);
 		return err;
 	}
 	if (vaddr.off != voff_exp) {
-		log_err("bad claim: mtype=%d exp=%ld got=%ld", mtype, voff_exp,
+		log_err("bad claim: vtype=%d exp=%ld got=%ld", vtype, voff_exp,
 		        vaddr.off);
 		return -SILOFS_EFSCORRUPTED;
 	}
 	drop_caches(task);
 	err = silofs_reclaim_vspace(task, &vaddr);
 	if (err) {
-		log_err("bad reclaim: mtype=%d voff=%ld err=%d", mtype,
+		log_err("bad reclaim: vtype=%d voff=%ld err=%d", vtype,
 		        vaddr.off, err);
 	}
 	return 0;
@@ -316,15 +316,15 @@ claim_reclaim_of(struct silofs_task_ctx *task, enum silofs_mtype mtype)
 
 static int claim_recalim_space(struct silofs_task_ctx *task)
 {
-	enum silofs_mtype mtype = SILOFS_MTYPE_NONE;
+	enum silofs_vtype vtype = SILOFS_VTYPE_NONE;
 	int err;
 
-	while (++mtype < SILOFS_MTYPE_LAST) {
-		if (!silofs_mtype_isvnode(mtype) ||
-		    (mtype == SILOFS_MTYPE_LSMAP)) {
+	while (++vtype < SILOFS_VTYPE_LAST) {
+		if (!silofs_vtype_isvnode(vtype) ||
+		    (vtype == SILOFS_VTYPE_LSMAP)) {
 			continue;
 		}
-		err = claim_reclaim_of(task, mtype);
+		err = claim_reclaim_of(task, vtype);
 		if (err) {
 			return err;
 		}
@@ -347,20 +347,20 @@ static off_t vni_offset(const struct silofs_vnode_info *vni)
 }
 
 static int
-claim_offset_zero(struct silofs_task_ctx *task, enum silofs_mtype mtype)
+claim_offset_zero(struct silofs_task_ctx *task, enum silofs_vtype vtype)
 {
 	struct silofs_vnode_info *vni = nullptr;
 	off_t off                     = -1;
 	int err;
 
-	err = silofs_spawn_vnode(task, nullptr, mtype, &vni);
+	err = silofs_spawn_vnode(task, nullptr, vtype, &vni);
 	if (err) {
-		log_err("failed to spawn: mtype=%d err=%d", mtype, err);
+		log_err("failed to spawn: vtype=%d err=%d", vtype, err);
 		return err;
 	}
 	off = vni_offset(vni);
 	if (off != 0) {
-		log_err("format zspace failed: mtype=%d off=%ld", mtype, off);
+		log_err("format zspace failed: vtype=%d off=%ld", vtype, off);
 		return -SILOFS_EFSCORRUPTED;
 	}
 	return 0;
@@ -368,15 +368,15 @@ claim_offset_zero(struct silofs_task_ctx *task, enum silofs_mtype mtype)
 
 static int format_nil_space(struct silofs_task_ctx *task)
 {
-	enum silofs_mtype mtype = SILOFS_MTYPE_NONE;
+	enum silofs_vtype vtype = SILOFS_VTYPE_NONE;
 	int err;
 
-	while (++mtype < SILOFS_MTYPE_LAST) {
-		if (!silofs_mtype_isvnode(mtype) ||
-		    (mtype == SILOFS_MTYPE_LSMAP)) { /* TODO: revisit */
+	while (++vtype < SILOFS_VTYPE_LAST) {
+		if (!silofs_vtype_isvnode(vtype) ||
+		    (vtype == SILOFS_VTYPE_LSMAP)) { /* TODO: revisit */
 			continue;
 		}
-		err = claim_offset_zero(task, mtype);
+		err = claim_offset_zero(task, vtype);
 		if (err) {
 			return err;
 		}

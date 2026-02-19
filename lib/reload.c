@@ -112,7 +112,7 @@ static int reload_uber(struct silofs_task_ctx *task)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int
-stage_btree_root(struct silofs_task_ctx *task, enum silofs_mtype vtype)
+stage_btree_root(struct silofs_task_ctx *task, enum silofs_vtype vtype)
 {
 	struct silofs_btnptr btnptr    = {};
 	struct silofs_btnode_info *bti = nullptr;
@@ -131,27 +131,27 @@ stage_btree_root(struct silofs_task_ctx *task, enum silofs_mtype vtype)
 }
 
 static int
-reload_btree_of(struct silofs_task_ctx *task, enum silofs_mtype mtype)
+reload_btree_of(struct silofs_task_ctx *task, enum silofs_vtype vtype)
 {
 	int err;
 
-	err = stage_btree_root(task, mtype);
+	err = stage_btree_root(task, vtype);
 	if (err) {
-		log_err("reload btree failed: mtype=%d err=%d", mtype, err);
+		log_err("reload btree failed: vtype=%d err=%d", vtype, err);
 		return err;
 	}
-	log_dbg("reload btree of: mtype=%d", mtype);
+	log_dbg("reload btree of: vtype=%d", vtype);
 	return 0;
 }
 
 static int reload_btrees(struct silofs_task_ctx *task)
 {
-	enum silofs_mtype mtype = SILOFS_MTYPE_NONE;
+	enum silofs_vtype vtype = SILOFS_VTYPE_NONE;
 	int err;
 
-	while (++mtype < SILOFS_MTYPE_LAST) {
-		if (silofs_mtype_isvnode(mtype)) {
-			err = reload_btree_of(task, mtype);
+	while (++vtype < SILOFS_VTYPE_LAST) {
+		if (silofs_vtype_isvnode(vtype)) {
+			err = reload_btree_of(task, vtype);
 			if (err) {
 				return err;
 			}

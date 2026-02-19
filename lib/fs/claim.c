@@ -28,17 +28,17 @@ struct silofs_spalloc_ctx {
 	struct silofs_sb_info *sbi;
 	struct silofs_spleaf_info *sli;
 	struct silofs_lsmap_info *lsi;
-	enum silofs_mtype mtype;
+	enum silofs_vtype vtype;
 	bool incref_lsi;
 };
 
 /* local functions */
 static int
-require_lsmap_of(struct silofs_task_ctx *task, enum silofs_mtype refmtype,
+require_lsmap_of(struct silofs_task_ctx *task, enum silofs_vtype refvtype,
                  off_t off, struct silofs_lsmap_info **out_lsi);
 
 static int
-stage_lsmap_of(struct silofs_task_ctx *task, enum silofs_mtype refmtype,
+stage_lsmap_of(struct silofs_task_ctx *task, enum silofs_vtype refvtype,
                off_t off, struct silofs_lsmap_info **out_lsi);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -77,14 +77,14 @@ static off_t spac_get_hint(const struct silofs_spalloc_ctx *spa_ctx)
 {
 	const struct silofs_spamaps *spam = spac_spamaps(spa_ctx);
 
-	return silofs_spamaps_get_hint(spam, spa_ctx->mtype);
+	return silofs_spamaps_get_hint(spam, spa_ctx->vtype);
 }
 
 static void spac_set_hint(struct silofs_spalloc_ctx *spa_ctx, off_t off)
 {
 	struct silofs_spamaps *spam = spac_spamaps(spa_ctx);
 
-	silofs_spamaps_set_hint(spam, spa_ctx->mtype, off);
+	silofs_spamaps_set_hint(spam, spa_ctx->vtype, off);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -110,14 +110,14 @@ static void sbi_update_space_stats(struct silofs_sb_info *sbi,
 	 * Current code does not take into account case of shared blocks.
 	 * May need more fine-grained logic.
 	 */
-	silofs_sbst_update_objs(sbi, vaddr->mtype, nobjs_take);
-	silofs_sbst_update_bks(sbi, vaddr->mtype, nbks_take);
+	silofs_sbst_update_objs(sbi, vaddr->vtype, nobjs_take);
+	silofs_sbst_update_bks(sbi, vaddr->vtype, nbks_take);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void spac_setup(struct silofs_spalloc_ctx *spa_ctx,
-                       struct silofs_task_ctx *task, enum silofs_mtype mtype)
+                       struct silofs_task_ctx *task, enum silofs_vtype vtype)
 {
 	silofs_memzero(spa_ctx, sizeof(*spa_ctx));
 	spa_ctx->task  = task;
@@ -125,7 +125,7 @@ static void spac_setup(struct silofs_spalloc_ctx *spa_ctx,
 	spa_ctx->sbi   = silofs_get_sbi(task);
 	spa_ctx->sli   = nullptr;
 	spa_ctx->lsi   = nullptr;
-	spa_ctx->mtype = mtype;
+	spa_ctx->vtype = vtype;
 }
 
 static void spac_increfs(struct silofs_spalloc_ctx *spa_ctx)
@@ -153,7 +153,7 @@ static int spac_stage_spleaf_of(struct silofs_spalloc_ctx *spa_ctx, off_t off)
 {
 	struct silofs_vaddr vaddr;
 
-	silofs_vaddr_setup(&vaddr, spa_ctx->mtype, off);
+	silofs_vaddr_setup(&vaddr, spa_ctx->vtype, off);
 	return silofs_stage_spleaf_of(spa_ctx->task, &vaddr, SILOFS_STG_CUR,
 	                              &spa_ctx->sli);
 }
@@ -164,7 +164,7 @@ static int spac_require_spleaf_of(struct silofs_spalloc_ctx *spa_ctx,
 	struct silofs_vaddr vaddr;
 	int err;
 
-	silofs_vaddr_setup(&vaddr, spa_ctx->mtype, off);
+	silofs_vaddr_setup(&vaddr, spa_ctx->vtype, off);
 	err = silofs_require_spleaf_of(spa_ctx->task, &vaddr, SILOFS_STG_COW,
 	                               &spa_ctx->sli);
 	if (err) {
@@ -194,14 +194,14 @@ static int spac_resolve_llink(struct silofs_spalloc_ctx *spa_ctx,
 static int spac_do_find_free_vspace_at(struct silofs_spalloc_ctx *spa_ctx,
                                        struct silofs_vaddr *out_vaddr)
 {
-	enum silofs_mtype refmtype;
+	enum silofs_vtype refvtype;
 	int err;
 
 	silofs_assert_not_null(spa_ctx->sli);
 	silofs_assert_not_null(spa_ctx->lsi);
 
-	refmtype = silofs_sli_refmtype(spa_ctx->sli);
-	silofs_assert_eq(refmtype, spa_ctx->mtype);
+	refvtype = silofs_sli_refvtype(spa_ctx->sli);
+	silofs_assert_eq(refvtype, spa_ctx->vtype);
 
 	err = silofs_lsi_find_free_space(spa_ctx->lsi, out_vaddr);
 	if (err) {
@@ -228,11 +228,11 @@ static int spac_find_free_vspace_at(struct silofs_spalloc_ctx *spa_ctx,
 
 static int spac_require_lsmap_by(struct silofs_spalloc_ctx *spa_ctx, off_t off)
 {
-	const enum silofs_mtype refmtype = silofs_sli_refmtype(spa_ctx->sli);
+	const enum silofs_vtype refvtype = silofs_sli_refvtype(spa_ctx->sli);
 	int err;
 
 	spac_increfs(spa_ctx);
-	err = require_lsmap_of(spa_ctx->task, refmtype, off, &spa_ctx->lsi);
+	err = require_lsmap_of(spa_ctx->task, refvtype, off, &spa_ctx->lsi);
 	spac_decrefs(spa_ctx);
 	return err;
 }
@@ -287,14 +287,14 @@ static int spac_claim_vspace_from_cache(struct silofs_spalloc_ctx *spa_ctx,
                                         struct silofs_vaddr *out_vaddr)
 {
 	struct silofs_spamaps *spam   = spac_spamaps(spa_ctx);
-	const enum silofs_mtype mtype = spa_ctx->mtype;
-	const size_t len              = silofs_mtype_size(mtype);
+	const enum silofs_vtype vtype = spa_ctx->vtype;
+	const size_t len              = silofs_vtype_size(vtype);
 	off_t voff                    = SILOFS_OFF_NULL;
 	int err;
 
-	err = silofs_spamaps_trypop(spam, mtype, len, &voff);
+	err = silofs_spamaps_trypop(spam, vtype, len, &voff);
 	if (!err) {
-		silofs_vaddr_setup(out_vaddr, mtype, voff);
+		silofs_vaddr_setup(out_vaddr, vtype, voff);
 	}
 	return err;
 }
@@ -325,16 +325,16 @@ spac_require_unalloc_vspace(struct silofs_spalloc_ctx *spa_ctx, off_t hint,
 static int spac_check_avail_space(const struct silofs_spalloc_ctx *spa_ctx)
 {
 	const struct silofs_sb_info *sbi = spa_ctx->sbi;
-	const size_t nb                  = silofs_mtype_size(spa_ctx->mtype);
+	const size_t nb                  = silofs_vtype_size(spa_ctx->vtype);
 	bool new_file;
 	bool ok;
 
 	ok = silofs_sbst_mayalloc_some(sbi, nb);
 	if (ok) {
-		if (silofs_mtype_isdata(spa_ctx->mtype)) {
+		if (silofs_vtype_isdata(spa_ctx->vtype)) {
 			ok = silofs_sbst_mayalloc_data(sbi, nb);
 		} else {
-			new_file = silofs_mtype_isinode(spa_ctx->mtype);
+			new_file = silofs_vtype_isinode(spa_ctx->vtype);
 			ok = silofs_sbst_mayalloc_meta(sbi, nb, new_file);
 		}
 	}
@@ -358,7 +358,7 @@ static void spac_mark_allocated(struct silofs_spalloc_ctx *spa_ctx,
 {
 	bool first = true;
 
-	if (spa_ctx->mtype != SILOFS_MTYPE_LSMAP) {
+	if (spa_ctx->vtype != SILOFS_VTYPE_LSMAP) {
 		silofs_assert_not_null(spa_ctx->lsi);
 
 		first = !silofs_lsi_has_allocated_with(spa_ctx->lsi, vaddr);
@@ -410,7 +410,7 @@ spac_require_spmaps_of(struct silofs_spalloc_ctx *spa_ctx, off_t off)
 	int err;
 
 	err = spac_require_spleaf_of(spa_ctx, off, &new_bind);
-	if (!err && (spa_ctx->mtype != SILOFS_MTYPE_LSMAP)) {
+	if (!err && (spa_ctx->vtype != SILOFS_VTYPE_LSMAP)) {
 		err = spac_require_lsmap_by(spa_ctx, off);
 	}
 	return err;
@@ -458,14 +458,14 @@ static int spac_claim_vspace(struct silofs_spalloc_ctx *spa_ctx,
 }
 
 static int
-claim_vspace_of(struct silofs_task_ctx *task, enum silofs_mtype mtype,
+claim_vspace_of(struct silofs_task_ctx *task, enum silofs_vtype vtype,
                 struct silofs_vaddr *out_vaddr)
 {
 	struct silofs_spalloc_ctx spa_ctx;
 
-	silofs_assert_ne(mtype, SILOFS_MTYPE_LSMAP);
+	silofs_assert_ne(vtype, SILOFS_VTYPE_LSMAP);
 
-	spac_setup(&spa_ctx, task, mtype);
+	spac_setup(&spa_ctx, task, vtype);
 	return spac_claim_vspace(&spa_ctx, out_vaddr);
 }
 
@@ -493,7 +493,7 @@ static int spac_stage_lsmap(const struct silofs_spalloc_ctx *spa_ctx,
 
 static int spac_spawn_lsmap_at(struct silofs_spalloc_ctx *spa_ctx,
                                const struct silofs_vaddr *vaddr,
-                               enum silofs_mtype refmtype, off_t off,
+                               enum silofs_vtype refvtype, off_t off,
                                struct silofs_lsmap_info **out_lsi)
 {
 	enum silofs_stg_mode stg_mode;
@@ -509,7 +509,7 @@ static int spac_spawn_lsmap_at(struct silofs_spalloc_ctx *spa_ctx,
 		return err;
 	}
 
-	silofs_lsi_setup_spawned(*out_lsi, refmtype, lsmap_base_offset(off));
+	silofs_lsi_setup_spawned(*out_lsi, refvtype, lsmap_base_offset(off));
 	spac_mark_allocated(spa_ctx, vaddr);
 
 	return 0;
@@ -532,13 +532,13 @@ static int spac_stage_lsmap_at(struct silofs_spalloc_ctx *spa_ctx,
 static int
 spac_require_lsmap_at(struct silofs_spalloc_ctx *spa_ctx,
                       const struct silofs_vaddr *vaddr,
-                      enum silofs_mtype refmtype, off_t off, bool new_bind)
+                      enum silofs_vtype refvtype, off_t off, bool new_bind)
 {
 	int err;
 
 	spac_increfs(spa_ctx);
 	if (new_bind) {
-		err = spac_spawn_lsmap_at(spa_ctx, vaddr, refmtype, off,
+		err = spac_spawn_lsmap_at(spa_ctx, vaddr, refvtype, off,
 		                          &spa_ctx->lsi);
 	} else {
 		err = spac_stage_lsmap_at(spa_ctx, vaddr, &spa_ctx->lsi);
@@ -548,21 +548,21 @@ spac_require_lsmap_at(struct silofs_spalloc_ctx *spa_ctx,
 }
 
 static int spac_require_lsmap_of(struct silofs_spalloc_ctx *spa_ctx,
-                                 enum silofs_mtype refmtype, off_t off)
+                                 enum silofs_vtype refvtype, off_t off)
 {
 	struct silofs_vaddr vaddr;
 	bool new_bind = false;
 	int err;
 
-	silofs_assert_eq(spa_ctx->mtype, SILOFS_MTYPE_LSMAP);
-	silofs_assert_ne(refmtype, SILOFS_MTYPE_LSMAP);
+	silofs_assert_eq(spa_ctx->vtype, SILOFS_VTYPE_LSMAP);
+	silofs_assert_ne(refvtype, SILOFS_VTYPE_LSMAP);
 
-	silofs_vaddr_of_lsmap(&vaddr, refmtype, off);
+	silofs_vaddr_of_lsmap(&vaddr, refvtype, off);
 	err = spac_require_spleaf_of(spa_ctx, vaddr.off, &new_bind);
 	if (err) {
 		return err;
 	}
-	err = spac_require_lsmap_at(spa_ctx, &vaddr, refmtype, off, new_bind);
+	err = spac_require_lsmap_at(spa_ctx, &vaddr, refvtype, off, new_bind);
 	if (err) {
 		return err;
 	}
@@ -570,16 +570,16 @@ static int spac_require_lsmap_of(struct silofs_spalloc_ctx *spa_ctx,
 }
 
 static int
-require_lsmap_of(struct silofs_task_ctx *task, enum silofs_mtype refmtype,
+require_lsmap_of(struct silofs_task_ctx *task, enum silofs_vtype refvtype,
                  off_t off, struct silofs_lsmap_info **out_lsi)
 {
 	struct silofs_spalloc_ctx spa_ctx;
 	int err;
 
-	silofs_assert_ne(refmtype, SILOFS_MTYPE_LSMAP);
+	silofs_assert_ne(refvtype, SILOFS_VTYPE_LSMAP);
 
-	spac_setup(&spa_ctx, task, SILOFS_MTYPE_LSMAP);
-	err = spac_require_lsmap_of(&spa_ctx, refmtype, off);
+	spac_setup(&spa_ctx, task, SILOFS_VTYPE_LSMAP);
+	err = spac_require_lsmap_of(&spa_ctx, refvtype, off);
 	if (err) {
 		return err;
 	}
@@ -599,15 +599,15 @@ static int spac_try_stage_lsmap_at(struct silofs_spalloc_ctx *spa_ctx,
 }
 
 static int spac_stage_lsmap_of(struct silofs_spalloc_ctx *spa_ctx,
-                               enum silofs_mtype refmtype, off_t off)
+                               enum silofs_vtype refvtype, off_t off)
 {
 	struct silofs_vaddr vaddr;
 	int err;
 
-	silofs_assert_eq(spa_ctx->mtype, SILOFS_MTYPE_LSMAP);
-	silofs_assert_ne(refmtype, SILOFS_MTYPE_LSMAP);
+	silofs_assert_eq(spa_ctx->vtype, SILOFS_VTYPE_LSMAP);
+	silofs_assert_ne(refvtype, SILOFS_VTYPE_LSMAP);
 
-	silofs_vaddr_of_lsmap(&vaddr, refmtype, off);
+	silofs_vaddr_of_lsmap(&vaddr, refvtype, off);
 	err = spac_stage_spleaf_of(spa_ctx, vaddr.off);
 	if (err) {
 		return err;
@@ -620,16 +620,16 @@ static int spac_stage_lsmap_of(struct silofs_spalloc_ctx *spa_ctx,
 }
 
 static int
-stage_lsmap_of(struct silofs_task_ctx *task, enum silofs_mtype refmtype,
+stage_lsmap_of(struct silofs_task_ctx *task, enum silofs_vtype refvtype,
                off_t off, struct silofs_lsmap_info **out_lsi)
 {
 	struct silofs_spalloc_ctx spa_ctx;
 	int err;
 
-	silofs_assert_ne(refmtype, SILOFS_MTYPE_LSMAP);
+	silofs_assert_ne(refvtype, SILOFS_VTYPE_LSMAP);
 
-	spac_setup(&spa_ctx, task, SILOFS_MTYPE_LSMAP);
-	err = spac_stage_lsmap_of(&spa_ctx, refmtype, off);
+	spac_setup(&spa_ctx, task, SILOFS_VTYPE_LSMAP);
+	err = spac_stage_lsmap_of(&spa_ctx, refvtype, off);
 	if (err) {
 		return err;
 	}
@@ -641,18 +641,18 @@ int silofs_require_lsmap_by(struct silofs_task_ctx *task,
                             const struct silofs_vaddr *vaddr,
                             struct silofs_lsmap_info **out_lsi)
 {
-	return require_lsmap_of(task, vaddr->mtype, vaddr->off, out_lsi);
+	return require_lsmap_of(task, vaddr->vtype, vaddr->off, out_lsi);
 }
 
-int silofs_claim_vspace(struct silofs_task_ctx *task, enum silofs_mtype mtype,
+int silofs_claim_vspace(struct silofs_task_ctx *task, enum silofs_vtype vtype,
                         struct silofs_vaddr *out_vaddr)
 {
 	struct silofs_lsmap_info *lsi = nullptr;
 	int err;
 
-	silofs_assert_ne(mtype, SILOFS_MTYPE_LSMAP);
+	silofs_assert_ne(vtype, SILOFS_VTYPE_LSMAP);
 
-	err = claim_vspace_of(task, mtype, out_vaddr);
+	err = claim_vspace_of(task, vtype, out_vaddr);
 	if (err) {
 		return err;
 	}
@@ -666,7 +666,7 @@ int silofs_claim_vspace(struct silofs_task_ctx *task, enum silofs_mtype mtype,
 int silofs_claim_ispace(struct silofs_task_ctx *task,
                         struct silofs_vaddr *out_vaddr)
 {
-	return silofs_claim_vspace(task, SILOFS_MTYPE_INODE, out_vaddr);
+	return silofs_claim_vspace(task, SILOFS_VTYPE_INODE, out_vaddr);
 }
 
 static bool spac_has_dbkref_at(const struct silofs_spalloc_ctx *spa_ctx,
@@ -686,14 +686,14 @@ static int spac_try_recache_vspace(const struct silofs_spalloc_ctx *spa_ctx,
 	struct silofs_spamaps *spam = spac_spamaps(spa_ctx);
 	size_t len;
 
-	if (vaddr->mtype == SILOFS_MTYPE_LSMAP) {
+	if (vaddr->vtype == SILOFS_VTYPE_LSMAP) {
 		return 0;
 	}
 	if (spac_has_dbkref_at(spa_ctx, vaddr)) {
 		return 0;
 	}
 	len = silofs_vaddr_len(vaddr);
-	return silofs_spamaps_store(spam, vaddr->mtype, vaddr->off, len);
+	return silofs_spamaps_store(spam, vaddr->vtype, vaddr->off, len);
 }
 
 static bool spac_ismutable_lsid(const struct silofs_spalloc_ctx *spa_ctx,
@@ -707,14 +707,14 @@ static int spac_resolve_main_range(const struct silofs_spalloc_ctx *spa_ctx,
                                    struct silofs_lrange *out_lrange)
 {
 	struct silofs_spleaf_info *sli = spa_ctx->sli;
-	enum silofs_mtype mtype;
+	enum silofs_vtype vtype;
 
 	silofs_sli_main_lseg(sli, out_lsid);
 	if (silofs_lsid_isnull(out_lsid)) {
 		return -SILOFS_ENOENT;
 	}
-	mtype = out_lsid->blobid.vspace;
-	if (mtype != spa_ctx->mtype) {
+	vtype = out_lsid->blobid.vtype;
+	if (vtype != spa_ctx->vtype) {
 		return -SILOFS_EBUG;
 	}
 	silofs_sli_get_lrange(sli, out_lrange);
@@ -794,7 +794,7 @@ static int spac_refresh_lsmap(struct silofs_spalloc_ctx *spa_ctx,
 	int err;
 
 	spac_increfs(spa_ctx);
-	err = stage_lsmap_of(spa_ctx->task, vaddr->mtype, vaddr->off,
+	err = stage_lsmap_of(spa_ctx->task, vaddr->vtype, vaddr->off,
 	                     &spa_ctx->lsi);
 	spac_decrefs(spa_ctx);
 	return err;
@@ -827,9 +827,9 @@ int silofs_reclaim_vspace(struct silofs_task_ctx *task,
 {
 	struct silofs_spalloc_ctx spa_ctx;
 
-	silofs_assert_ne(vaddr->mtype, SILOFS_MTYPE_LSMAP);
+	silofs_assert_ne(vaddr->vtype, SILOFS_VTYPE_LSMAP);
 
-	spac_setup(&spa_ctx, task, vaddr->mtype);
+	spac_setup(&spa_ctx, task, vaddr->vtype);
 	return spac_reclaim_vspace(&spa_ctx, vaddr);
 }
 
@@ -855,7 +855,7 @@ int silofs_addref_vspace(struct silofs_task_ctx *task,
 	bool new_bind = false;
 	int err;
 
-	spac_setup(&spa_ctx, task, vaddr->mtype);
+	spac_setup(&spa_ctx, task, vaddr->vtype);
 	err = spac_require_spleaf_of(&spa_ctx, vaddr->off, &new_bind);
 	if (err) {
 		return err;
@@ -878,7 +878,7 @@ static int spac_stage_lsmap_by(struct silofs_spalloc_ctx *spa_ctx, off_t voff)
 	int err;
 
 	spac_increfs(spa_ctx);
-	err = stage_lsmap_of(spa_ctx->task, spa_ctx->mtype, voff,
+	err = stage_lsmap_of(spa_ctx->task, spa_ctx->vtype, voff,
 	                     &spa_ctx->lsi);
 	spac_decrefs(spa_ctx);
 	return err;
@@ -915,13 +915,13 @@ static int spac_rescan_free_vspace(struct silofs_spalloc_ctx *spa_ctx,
 }
 
 static int
-rescan_vspace_of(struct silofs_task_ctx *task, enum silofs_mtype mtype)
+rescan_vspace_of(struct silofs_task_ctx *task, enum silofs_vtype vtype)
 {
 	struct silofs_spalloc_ctx spa_ctx;
 	struct silofs_vaddr vaddr;
 	int err;
 
-	spac_setup(&spa_ctx, task, mtype);
+	spac_setup(&spa_ctx, task, vtype);
 	err = spac_rescan_free_vspace(&spa_ctx, &vaddr);
 	if (err) {
 		return err;
@@ -932,18 +932,18 @@ rescan_vspace_of(struct silofs_task_ctx *task, enum silofs_mtype mtype)
 
 int silofs_reload_vspace(struct silofs_task_ctx *task)
 {
-	enum silofs_mtype mtype = SILOFS_MTYPE_NONE;
+	enum silofs_vtype vtype = SILOFS_VTYPE_NONE;
 	int err;
 
-	while (++mtype < SILOFS_MTYPE_LAST) {
-		if (!silofs_mtype_isvnode(mtype) ||
-		    (mtype == SILOFS_MTYPE_LSMAP)) {
+	while (++vtype < SILOFS_VTYPE_LAST) {
+		if (!silofs_vtype_isvnode(vtype) ||
+		    (vtype == SILOFS_VTYPE_LSMAP)) {
 			continue;
 		}
-		err = rescan_vspace_of(task, mtype);
+		err = rescan_vspace_of(task, vtype);
 		if (err && (err != -SILOFS_ENOENT)) {
-			log_err("failed to reload vspace: mtype=%d err=%d",
-			        mtype, err);
+			log_err("failed to reload vspace: vtype=%d err=%d",
+			        vtype, err);
 			return err;
 		}
 	}

@@ -22,19 +22,14 @@
 #include "mbr.h"
 #include "env.h"
 
-static enum silofs_mtype pnptr_mtype(const struct silofs_pnptr *pnptr)
-{
-	return pnptr->paddr.mtype;
-}
-
 static bool pnptr_isuber(const struct silofs_pnptr *pnptr)
 {
-	return (pnptr_mtype(pnptr) == SILOFS_MTYPE_UBER);
+	return pnptr->paddr.blobid.ptype == SILOFS_PTYPE_UBER;
 }
 
 static bool pnptr_isarix(const struct silofs_pnptr *pnptr)
 {
-	return (pnptr_mtype(pnptr) == SILOFS_MTYPE_ARIX);
+	return pnptr->paddr.blobid.vtype == SILOFS_VTYPE_ARIX;
 }
 
 static void mbr_meta_assign(struct silofs_mbr_meta *meta,
@@ -161,18 +156,18 @@ static int mbr1k_check_uaddr_sb(const struct silofs_mbr1k *mbr1k)
 {
 	struct silofs_uaddr uaddr;
 	enum silofs_height height;
-	enum silofs_mtype mtype;
+	enum silofs_vtype vtype;
 
 	mbr1k_sb_addr(mbr1k, &uaddr);
 	if (silofs_uaddr_isnull(&uaddr)) {
 		return 0;
 	}
 	height = silofs_uaddr_height(&uaddr);
-	mtype  = silofs_uaddr_mtype(&uaddr);
-	if ((mtype != SILOFS_MTYPE_SUPER) || (height != SILOFS_HEIGHT_SUPER) ||
+	vtype  = silofs_uaddr_vtype(&uaddr);
+	if ((vtype != SILOFS_VTYPE_SUPER) || (height != SILOFS_HEIGHT_SUPER) ||
 	    (uaddr.voff != 0)) {
-		log_dbg("bad mbr uaddr-sb: voff=%ld mtype=%d height=%d",
-		        uaddr.voff, (int)mtype, (int)height);
+		log_dbg("bad mbr uaddr-sb: voff=%ld vtype=%d height=%d",
+		        uaddr.voff, (int)vtype, (int)height);
 		return -SILOFS_EBADMBR;
 	}
 	return 0;
@@ -406,7 +401,8 @@ mbraux_calc_mbref(struct silofs_mbraux *aux, const struct silofs_mbr1k *mbr1k,
 		.iov_len  = sizeof(*mbr1k),
 	};
 
-	silofs_calc_cas_paddr(&aux->md_hd, SILOFS_MTYPE_MBR, &iov, 1, &paddr);
+	silofs_calc_cas_paddr(&aux->md_hd, SILOFS_PTYPE_MBR, SILOFS_VTYPE_MBR,
+	                      &iov, 1, &paddr);
 	silofs_mbref_derive(out_mbref, &aux->md_hd, &paddr);
 }
 

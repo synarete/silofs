@@ -245,14 +245,14 @@ void silofs_laddr_assign(struct silofs_laddr *laddr,
 	laddr->pos = other->pos;
 }
 
-enum silofs_mtype silofs_laddr_mtype(const struct silofs_laddr *laddr)
+enum silofs_vtype silofs_laddr_vtype(const struct silofs_laddr *laddr)
 {
-	return laddr->lsid.blobid.vspace;
+	return laddr->lsid.blobid.vtype;
 }
 
 size_t silofs_laddr_len(const struct silofs_laddr *laddr)
 {
-	return silofs_mtype_size(silofs_laddr_mtype(laddr));
+	return silofs_vtype_size(silofs_laddr_vtype(laddr));
 }
 
 off_t silofs_laddr_end(const struct silofs_laddr *laddr)

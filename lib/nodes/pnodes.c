@@ -20,27 +20,27 @@
 #include "pnodes.h"
 
 static struct silofs_pview *
-new_pview_of(struct silofs_alloc *alloc, enum silofs_mtype mtype)
+new_pview_of(struct silofs_alloc *alloc, enum silofs_ptype ptype)
 {
-	return silofs_pview_new(alloc, mtype);
+	return silofs_pview_new(alloc, ptype);
 }
 
 static void del_pview_of(struct silofs_pview *pview,
-                         struct silofs_alloc *alloc, enum silofs_mtype mtype)
+                         struct silofs_alloc *alloc, enum silofs_ptype ptype)
 {
-	silofs_pview_del(pview, alloc, mtype);
+	silofs_pview_del(pview, alloc, ptype);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static enum silofs_mtype pnptr_mtype(const struct silofs_pnptr *pnptr)
+static enum silofs_ptype pnptr_ptype(const struct silofs_pnptr *pnptr)
 {
-	return pnptr->paddr.mtype;
+	return pnptr->paddr.ptype;
 }
 
 static size_t pnptr_size(const struct silofs_pnptr *pnptr)
 {
-	return silofs_mtype_size(pnptr_mtype(pnptr));
+	return silofs_ptype_size(pnptr_ptype(pnptr));
 }
 
 static void
@@ -59,14 +59,14 @@ static void pni_fini(struct silofs_pnode_info *pni)
 	pni->pn_pview = nullptr;
 }
 
-static enum silofs_mtype pni_mtype(const struct silofs_pnode_info *pni)
+static enum silofs_ptype pni_ptype(const struct silofs_pnode_info *pni)
 {
-	return pni->pn_self.paddr.mtype;
+	return pni->pn_self.paddr.ptype;
 }
 
-enum silofs_mtype silofs_pni_mtype(const struct silofs_pnode_info *pni)
+enum silofs_ptype silofs_pni_ptype(const struct silofs_pnode_info *pni)
 {
-	return pni_mtype(pni);
+	return pni_ptype(pni);
 }
 
 static struct silofs_dq_elem *pni_dqe(struct silofs_pnode_info *pni)
@@ -124,7 +124,7 @@ static int
 pni_new_pview(struct silofs_pnode_info *pni, struct silofs_alloc *alloc)
 {
 	silofs_assert_null(pni->pn_pview);
-	pni->pn_pview = new_pview_of(alloc, pni_mtype(pni));
+	pni->pn_pview = new_pview_of(alloc, pni_ptype(pni));
 	return (pni->pn_pview == nullptr) ? -SILOFS_ENOMEM : 0;
 }
 
@@ -132,7 +132,7 @@ static void
 pni_del_view(struct silofs_pnode_info *pni, struct silofs_alloc *alloc)
 {
 	if (pni->pn_pview != nullptr) {
-		del_pview_of(pni->pn_pview, alloc, pni_mtype(pni));
+		del_pview_of(pni->pn_pview, alloc, pni_ptype(pni));
 		pni->pn_pview = nullptr;
 	}
 }
@@ -500,36 +500,24 @@ struct silofs_pnode_info *
 silofs_new_pnode(const struct silofs_pnptr *pnptr, struct silofs_alloc *alloc)
 {
 	struct silofs_pnode_info *pni = nullptr;
-	const enum silofs_mtype mtype = pnptr_mtype(pnptr);
+	const enum silofs_ptype ptype = pnptr_ptype(pnptr);
 
-	switch (mtype) {
-	case SILOFS_MTYPE_UBER:
+	switch (ptype) {
+	case SILOFS_PTYPE_UBER:
 		pni = ubi_to_pni(ubi_new(pnptr, alloc));
 		break;
-	case SILOFS_MTYPE_BLDESC:
+	case SILOFS_PTYPE_BLDESC:
 		pni = bdi_to_pni(bdi_new(pnptr, alloc));
 		break;
-	case SILOFS_MTYPE_BTNODE:
+	case SILOFS_PTYPE_BTNODE:
 		pni = bti_to_pni(bti_new(pnptr, alloc));
 		break;
-	case SILOFS_MTYPE_SUPER:
-	case SILOFS_MTYPE_SPNODE:
-	case SILOFS_MTYPE_SPLEAF:
-	case SILOFS_MTYPE_ARIX:
-	case SILOFS_MTYPE_MBR:
-	case SILOFS_MTYPE_LSMAP:
-	case SILOFS_MTYPE_INODE:
-	case SILOFS_MTYPE_XANODE:
-	case SILOFS_MTYPE_SYMVAL:
-	case SILOFS_MTYPE_DTNODE:
-	case SILOFS_MTYPE_FTNODE:
-	case SILOFS_MTYPE_DATA1K:
-	case SILOFS_MTYPE_DATA4K:
-	case SILOFS_MTYPE_DATA64K:
-	case SILOFS_MTYPE_NONE:
-	case SILOFS_MTYPE_LAST:
+	case SILOFS_PTYPE_NONE:
+	case SILOFS_PTYPE_MBR:
+	case SILOFS_PTYPE_VNODE:
+	case SILOFS_PTYPE_LAST:
 	default:
-		silofs_panic("can not create pnode: mtype=%d", (int)mtype);
+		silofs_panic("can not create pnode: ptype=%d", (int)ptype);
 		break;
 	}
 	return pni;
@@ -538,36 +526,24 @@ silofs_new_pnode(const struct silofs_pnptr *pnptr, struct silofs_alloc *alloc)
 void silofs_del_pnode(struct silofs_pnode_info *pni,
                       struct silofs_alloc *alloc)
 {
-	const enum silofs_mtype mtype = pni_mtype(pni);
+	const enum silofs_ptype ptype = pni_ptype(pni);
 
-	switch (mtype) {
-	case SILOFS_MTYPE_UBER:
+	switch (ptype) {
+	case SILOFS_PTYPE_UBER:
 		ubi_del(ubi_from_pni(pni), alloc);
 		break;
-	case SILOFS_MTYPE_BLDESC:
+	case SILOFS_PTYPE_BLDESC:
 		bdi_del(bdi_from_pni(pni), alloc);
 		break;
-	case SILOFS_MTYPE_BTNODE:
+	case SILOFS_PTYPE_BTNODE:
 		bti_del(bti_from_pni(pni), alloc);
 		break;
-	case SILOFS_MTYPE_SUPER:
-	case SILOFS_MTYPE_SPNODE:
-	case SILOFS_MTYPE_SPLEAF:
-	case SILOFS_MTYPE_ARIX:
-	case SILOFS_MTYPE_MBR:
-	case SILOFS_MTYPE_LSMAP:
-	case SILOFS_MTYPE_INODE:
-	case SILOFS_MTYPE_XANODE:
-	case SILOFS_MTYPE_SYMVAL:
-	case SILOFS_MTYPE_DTNODE:
-	case SILOFS_MTYPE_FTNODE:
-	case SILOFS_MTYPE_DATA1K:
-	case SILOFS_MTYPE_DATA4K:
-	case SILOFS_MTYPE_DATA64K:
-	case SILOFS_MTYPE_NONE:
-	case SILOFS_MTYPE_LAST:
+	case SILOFS_PTYPE_NONE:
+	case SILOFS_PTYPE_MBR:
+	case SILOFS_PTYPE_VNODE:
+	case SILOFS_PTYPE_LAST:
 	default:
-		silofs_panic("can not create pnode: mtype=%d", (int)mtype);
+		silofs_panic("can not delete pnode: ptype=%d", (int)ptype);
 		break;
 	}
 }
@@ -585,7 +561,7 @@ int silofs_encrypt_pnode(const struct silofs_pnode_info *pni,
 	return silofs_encrypt_pview(ci_hd,           //
 	                            pni_civkey(pni), //
 	                            pni->pn_pview,   //
-	                            pni_mtype(pni),  //
+	                            pni_ptype(pni),  //
 	                            enc_pview);
 }
 
@@ -596,14 +572,14 @@ int silofs_decrypt_pnode(struct silofs_pnode_info *pni,
 	return silofs_decrypt_pview(ci_hd,           //
 	                            pni_civkey(pni), //
 	                            enc_pview,       //
-	                            pni_mtype(pni),  //
+	                            pni_ptype(pni),  //
 	                            pni->pn_pview);
 }
 
 int silofs_verify_pnode(const struct silofs_pnode_info *pni)
 {
 	// TODO: verify sub-components
-	return silofs_verify_pview(pni->pn_pview, pni_mtype(pni));
+	return silofs_verify_pview(pni->pn_pview, pni_ptype(pni));
 }
 
 void silofs_seal_pnode(struct silofs_pnode_info *pni)

@@ -31,22 +31,22 @@ void silofs_ubi_dirtify(struct silofs_uber_info *ubi);
 void silofs_ubi_undirtify(struct silofs_uber_info *ubi);
 
 void silofs_ubi_set_btroot(struct silofs_uber_info    *ubi,
-                           enum silofs_mtype           vtype,
+                           enum silofs_vtype           vtype,
                            const struct silofs_btnptr *btnptr);
 
 void silofs_ubi_set_btroot_by(struct silofs_uber_info         *ubi,
                               const struct silofs_btnode_info *bti);
 
 void silofs_ubi_btroot_of(const struct silofs_uber_info *ubi,
-                          enum silofs_mtype              vtype,
+                          enum silofs_vtype              vtype,
                           struct silofs_btnptr          *out_btnptr);
 
 void silofs_ubi_set_bndesc(struct silofs_uber_info    *ubi,
-                           enum silofs_mtype           vtype,
+                           enum silofs_vtype           vtype,
                            const struct silofs_spdesc *spdesc);
 
 void silofs_ubi_set_vndesc(struct silofs_uber_info    *ubi,
-                           enum silofs_mtype           vtype,
+                           enum silofs_vtype           vtype,
                            const struct silofs_spdesc *spdesc);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

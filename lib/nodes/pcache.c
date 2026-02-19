@@ -95,30 +95,18 @@ pcache_hmapq_of(const struct silofs_pcache *pcache,
 {
 	const struct silofs_hmapq *hmapq = nullptr;
 
-	switch (paddr->mtype) {
-	case SILOFS_MTYPE_UBER:
-	case SILOFS_MTYPE_BLDESC:
-	case SILOFS_MTYPE_BTNODE:
+	switch (paddr->ptype) {
+	case SILOFS_PTYPE_UBER:
+	case SILOFS_PTYPE_BLDESC:
+	case SILOFS_PTYPE_BTNODE:
 		hmapq = &pcache->pc_hmapq;
 		break;
-	case SILOFS_MTYPE_ARIX:
-	case SILOFS_MTYPE_NONE:
-	case SILOFS_MTYPE_MBR:
-	case SILOFS_MTYPE_SUPER:
-	case SILOFS_MTYPE_SPNODE:
-	case SILOFS_MTYPE_SPLEAF:
-	case SILOFS_MTYPE_LSMAP:
-	case SILOFS_MTYPE_INODE:
-	case SILOFS_MTYPE_XANODE:
-	case SILOFS_MTYPE_DTNODE:
-	case SILOFS_MTYPE_SYMVAL:
-	case SILOFS_MTYPE_FTNODE:
-	case SILOFS_MTYPE_DATA1K:
-	case SILOFS_MTYPE_DATA4K:
-	case SILOFS_MTYPE_DATA64K:
-	case SILOFS_MTYPE_LAST:
+	case SILOFS_PTYPE_NONE:
+	case SILOFS_PTYPE_MBR:
+	case SILOFS_PTYPE_VNODE:
+	case SILOFS_PTYPE_LAST:
 	default:
-		silofs_panic("bad pcache: mtype=%d", (int)paddr->mtype);
+		silofs_panic("bad pcache: ptype=%d", (int)paddr->ptype);
 		break;
 	}
 	return hmapq;

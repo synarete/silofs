@@ -25,25 +25,6 @@
 #include "exectx.h"
 #include "env.h"
 
-static void
-make_uniq_blobid(struct silofs_prandgen *prng, enum silofs_mtype mtype,
-                 struct silofs_blobid *out_blobid)
-{
-	silofs_blobid_initv(out_blobid, mtype);
-	silofs_generate_layerid(prng, &out_blobid->layerid);
-	silofs_generate_uniqid(prng, &out_blobid->uniqid);
-}
-
-static void
-make_base_paddr(struct silofs_prandgen *prng, enum silofs_mtype mtype,
-                struct silofs_paddr *out_paddr)
-{
-	struct silofs_blobid blobid;
-
-	make_uniq_blobid(prng, mtype, &blobid);
-	silofs_paddr_init(out_paddr, &blobid, 0);
-}
-
 static void generate_pnptr_at(const struct silofs_task_ctx *task,
                               const struct silofs_paddr *paddr,
                               struct silofs_pnptr *out_pnptr)
@@ -65,7 +46,7 @@ void silofs_ignite_ubspace(const struct silofs_task_ctx *task,
 	silofs_generate_layerid(task->prng, &layerid);
 	silofs_generate_uniqid(task->prng, &uniqid);
 
-	silofs_blobid_initp(&blobid, SILOFS_PTYPE_UBER, SILOFS_MTYPE_NONE);
+	silofs_blobid_init(&blobid, SILOFS_PTYPE_UBER, SILOFS_VTYPE_NONE);
 	silofs_blobid_update(&blobid, &layerid, &uniqid);
 
 	silofs_paddr_init(&paddr, &blobid, 0);
@@ -73,7 +54,7 @@ void silofs_ignite_ubspace(const struct silofs_task_ctx *task,
 }
 
 void silofs_ignite_btspace(const struct silofs_task_ctx *task,
-                           enum silofs_mtype vspace,
+                           enum silofs_vtype vspace,
                            struct silofs_pnptr *out_pnptr)
 {
 	struct silofs_uniqid uniqid;
@@ -84,7 +65,7 @@ void silofs_ignite_btspace(const struct silofs_task_ctx *task,
 	silofs_assert_not_null(ubi);
 	silofs_generate_uniqid(task->prng, &uniqid);
 
-	silofs_blobid_initp(&blobid, SILOFS_PTYPE_BTNODE, vspace);
+	silofs_blobid_init(&blobid, SILOFS_PTYPE_BTNODE, vspace);
 	silofs_blobid_update(&blobid, silofs_ubi_layerid(ubi), &uniqid);
 
 	silofs_paddr_init(&paddr, &blobid, 0);
@@ -92,11 +73,20 @@ void silofs_ignite_btspace(const struct silofs_task_ctx *task,
 }
 
 void silofs_ignite_vspace(const struct silofs_task_ctx *task,
-                          enum silofs_mtype vtype,
+                          enum silofs_vtype vtype,
                           struct silofs_spdesc *out_spdesc)
 {
-	struct silofs_paddr paddr = {};
+	struct silofs_uniqid uniqid;
+	struct silofs_blobid blobid;
+	struct silofs_paddr paddr;
+	const struct silofs_uber_info *ubi = task->env->ubi;
 
-	make_base_paddr(task->prng, vtype, &paddr);
+	silofs_assert_not_null(ubi);
+	silofs_generate_uniqid(task->prng, &uniqid);
+
+	silofs_blobid_init(&blobid, SILOFS_PTYPE_VNODE, vtype);
+	silofs_blobid_update(&blobid, silofs_ubi_layerid(ubi), &uniqid);
+
+	silofs_paddr_init(&paddr, &blobid, 0);
 	silofs_spdesc_setup1(out_spdesc, &paddr);
 }

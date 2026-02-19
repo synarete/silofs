@@ -107,7 +107,7 @@ static int stc_access_pnode_of(const struct silofs_stage_ctx *st_ctx,
 
 static size_t pview_length_of(const struct silofs_pnode_info *pni)
 {
-	return silofs_mtype_size(silofs_pni_mtype(pni));
+	return silofs_ptype_size(silofs_pni_ptype(pni));
 }
 
 static int

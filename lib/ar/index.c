@@ -59,7 +59,7 @@ static void ard256b_xtoh(const struct silofs_ar_desc256b *ard256,
 
 static void arn_setup_hdr(struct silofs_arix_node *arn)
 {
-	silofs_hdr_setup(&arn->arn_hdr, SILOFS_MTYPE_ARIX, SILOFS_HDRF_VNODE);
+	silofs_hdr_setup(&arn->arn_hdr, SILOFS_VTYPE_ARIX, SILOFS_HDRF_VNODE);
 }
 
 static void arn_seal_hdr(struct silofs_arix_node *arn)
@@ -69,7 +69,7 @@ static void arn_seal_hdr(struct silofs_arix_node *arn)
 
 static int arn_verify_hdr(const struct silofs_arix_node *arn)
 {
-	return silofs_hdr_verify(&arn->arn_hdr, SILOFS_MTYPE_ARIX,
+	return silofs_hdr_verify(&arn->arn_hdr, SILOFS_VTYPE_ARIX,
 	                         SILOFS_HDRF_VNODE);
 }
 
@@ -444,10 +444,11 @@ void silofs_calc_ar_desc(const struct silofs_mdigest_hd *md_hd,
 		.iov_base = unconst(rovec->rov_base),
 		.iov_len  = rovec->rov_len,
 	};
-	enum silofs_mtype mtype;
+	enum silofs_vtype vtype;
 
-	mtype = laddr->lsid.blobid.vspace;
-	silofs_calc_cas_paddr(md_hd, mtype, &iov, 1, &paddr);
+	vtype = laddr->lsid.blobid.vtype;
+	silofs_calc_cas_paddr(md_hd, SILOFS_PTYPE_NONE, vtype, &iov, 1,
+	                      &paddr);
 
 	ard_init(out_ard, &paddr, laddr, iov.iov_len);
 }
@@ -461,7 +462,8 @@ void silofs_calc_arix_paddr(const struct silofs_arix_node *arn_enc,
 		.iov_len  = sizeof(*arn_enc),
 	};
 
-	silofs_calc_cas_paddr(md_hd, SILOFS_MTYPE_ARIX, &iov, 1, out_paddr);
+	silofs_calc_cas_paddr(md_hd, SILOFS_PTYPE_VNODE, SILOFS_VTYPE_ARIX,
+	                      &iov, 1, out_paddr);
 }
 
 int silofs_verify_arix_paddr(const struct silofs_arix_node *arn_enc,

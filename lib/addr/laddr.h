@@ -102,7 +102,7 @@ void silofs_laddr_reset(struct silofs_laddr *laddr);
 void silofs_laddr_assign(struct silofs_laddr       *laddr,
                          const struct silofs_laddr *other);
 
-enum silofs_mtype silofs_laddr_mtype(const struct silofs_laddr *laddr);
+enum silofs_vtype silofs_laddr_vtype(const struct silofs_laddr *laddr);
 
 size_t silofs_laddr_len(const struct silofs_laddr *laddr);
 

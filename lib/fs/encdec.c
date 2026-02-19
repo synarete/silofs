@@ -19,9 +19,9 @@
 #include "nodes.h"
 #include "env.h"
 
-static enum silofs_mtype llink_mtype(const struct silofs_llink *llink)
+static enum silofs_vtype llink_vtype(const struct silofs_llink *llink)
 {
-	return silofs_laddr_mtype(&llink->laddr);
+	return silofs_laddr_vtype(&llink->laddr);
 }
 
 int silofs_encrypt_lview(const struct silofs_env *env,
@@ -29,7 +29,7 @@ int silofs_encrypt_lview(const struct silofs_env *env,
                          const struct silofs_view *view, void *ptr)
 {
 	return silofs_encrypt_view(&env->enc_ci_hd, &llink->civkey, view,
-	                           llink_mtype(llink), ptr);
+	                           llink_vtype(llink), ptr);
 }
 
 static int decrypt_lview_inplace(const struct silofs_env *env,
@@ -37,7 +37,7 @@ static int decrypt_lview_inplace(const struct silofs_env *env,
                                  struct silofs_view *view)
 {
 	return silofs_decrypt_view_inplace(&env->dec_ci_hd, &llink->civkey,
-	                                   view, llink_mtype(llink));
+	                                   view, llink_vtype(llink));
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -93,16 +93,17 @@ void silofs_llink_of_vni(const struct silofs_vnode_info *vni,
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 void silofs_calc_cas_paddr(const struct silofs_mdigest_hd *md_hd,
-                           enum silofs_mtype mtype, const struct iovec *iov,
-                           size_t iov_cnt, struct silofs_paddr *out_paddr)
+                           enum silofs_ptype ptype, enum silofs_vtype vtype,
+                           const struct iovec *iov, size_t iov_cnt,
+                           struct silofs_paddr *out_paddr)
 {
 	struct silofs_hash256 hash;
 	struct silofs_blobid blobid;
 
-	silofs_assert_ne(mtype, 0);
+	silofs_assert_ne(vtype, 0);
 
 	silofs_sha3_256_ofv(md_hd, iov, iov_cnt, &hash);
-	silofs_blobid_initv(&blobid, mtype);
+	silofs_blobid_init(&blobid, ptype, vtype);
 	silofs_uniqid_setup_by(&blobid.uniqid, &hash);
 
 	silofs_paddr_init(out_paddr, &blobid, 0);

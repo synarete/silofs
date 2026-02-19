@@ -1377,9 +1377,9 @@ void silofs_ii_refresh_atime(struct silofs_inode_info *ii, bool to_volatile)
 }
 
 static blkcnt_t recalc_iblocks(const struct silofs_inode_info *ii,
-                               enum silofs_mtype mtype, long dif)
+                               enum silofs_vtype vtype, long dif)
 {
-	const size_t nkbs     = silofs_mtype_nkbs(mtype);
+	const size_t nkbs     = silofs_vtype_nkbs(vtype);
 	const blkcnt_t blocks = silofs_ii_blocks(ii);
 	blkcnt_t cnt;
 
@@ -1392,13 +1392,13 @@ static blkcnt_t recalc_iblocks(const struct silofs_inode_info *ii,
 }
 
 static void
-ii_update_iblocks(struct silofs_inode_info *ii, enum silofs_mtype mtype,
+ii_update_iblocks(struct silofs_inode_info *ii, enum silofs_vtype vtype,
                   long dif, const struct timespec *ts)
 {
 	struct silofs_iattr iattr = { .ia_size = -1 };
 
 	silofs_ii_mkiattr(ii, &iattr);
-	iattr.ia_blocks = recalc_iblocks(ii, mtype, dif);
+	iattr.ia_blocks = recalc_iblocks(ii, vtype, dif);
 	iattr.ia_flags  = SILOFS_IATTR_BLOCKS;
 
 	ii_update_iattrs(ii, &iattr, ts);
@@ -1442,9 +1442,9 @@ void silofs_update_itimes_of(const struct silofs_task_ctx *task,
 
 void silofs_update_iblocks_of(const struct silofs_task_ctx *task,
                               struct silofs_inode_info *ii,
-                              enum silofs_mtype mtype, long dif)
+                              enum silofs_vtype vtype, long dif)
 {
-	ii_update_iblocks(ii, mtype, dif, ts_of(task));
+	ii_update_iblocks(ii, vtype, dif, ts_of(task));
 }
 
 void silofs_update_iattrs_of(const struct silofs_task_ctx *task,

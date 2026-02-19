@@ -39,16 +39,16 @@ static void dirtyqs_fini(struct silofs_dirtyqs *dqs)
 }
 
 static struct silofs_dirtyq *
-dirtyqs_get(struct silofs_dirtyqs *dqs, enum silofs_mtype mtype)
+dirtyqs_get(struct silofs_dirtyqs *dqs, enum silofs_vtype vtype)
 {
 	struct silofs_dirtyq *dq;
 
-	if (silofs_mtype_isinode(mtype)) {
+	if (silofs_vtype_isinode(vtype)) {
 		dq = &dqs->dq_iis;
-	} else if (silofs_mtype_isvnode(mtype)) {
+	} else if (silofs_vtype_isvnode(vtype)) {
 		dq = &dqs->dq_vnis;
 	} else {
-		silofs_assert(silofs_mtype_isunode(mtype));
+		silofs_assert(silofs_vtype_isunode(vtype));
 		dq = &dqs->dq_unis;
 	}
 	return dq;
@@ -77,9 +77,9 @@ uni_uaddr(const struct silofs_unode_info *uni)
 	return silofs_uni_uaddr(uni);
 }
 
-static enum silofs_mtype uni_mtype(const struct silofs_unode_info *uni)
+static enum silofs_vtype uni_vtype(const struct silofs_unode_info *uni)
 {
-	return silofs_uni_mtype(uni);
+	return silofs_uni_vtype(uni);
 }
 
 static struct silofs_vnode_info *vni_from_hmqe(struct silofs_hmapq_elem *hmqe)
@@ -92,22 +92,22 @@ static struct silofs_hmapq_elem *vni_to_hmqe(struct silofs_vnode_info *vni)
 	return &vni->vn_lni.ln_hmqe;
 }
 
-static enum silofs_mtype vni_mtype(const struct silofs_vnode_info *vni)
+static enum silofs_vtype vni_vtype(const struct silofs_vnode_info *vni)
 {
-	return silofs_vni_mtype(vni);
+	return silofs_vni_vtype(vni);
 }
 
 static bool vni_isinode(const struct silofs_vnode_info *vni)
 {
-	return silofs_mtype_isinode(vni_mtype(vni));
+	return silofs_vtype_isinode(vni_vtype(vni));
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static struct silofs_dirtyq *
-lcache_dirtyq_by(struct silofs_lcache *lcache, enum silofs_mtype mtype)
+lcache_dirtyq_by(struct silofs_lcache *lcache, enum silofs_vtype vtype)
 {
-	return dirtyqs_get(&lcache->lc_dirtyqs, mtype);
+	return dirtyqs_get(&lcache->lc_dirtyqs, vtype);
 }
 
 static int lcache_init_uni_hmapq(struct silofs_lcache *lcache)
@@ -357,7 +357,7 @@ lcache_store_uni(struct silofs_lcache *lcache, struct silofs_unode_info *uni)
 static void lcache_set_dq_of_uni(struct silofs_lcache *lcache,
                                  struct silofs_unode_info *uni)
 {
-	struct silofs_dirtyq *dq = lcache_dirtyq_by(lcache, uni_mtype(uni));
+	struct silofs_dirtyq *dq = lcache_dirtyq_by(lcache, uni_vtype(uni));
 
 	silofs_uni_set_dq(uni, dq);
 }
@@ -665,7 +665,7 @@ void silofs_lcache_forget_vni(struct silofs_lcache *lcache,
 static void lcache_set_dq_of_vni(struct silofs_lcache *lcache,
                                  struct silofs_vnode_info *vni)
 {
-	struct silofs_dirtyq *dq = lcache_dirtyq_by(lcache, vni_mtype(vni));
+	struct silofs_dirtyq *dq = lcache_dirtyq_by(lcache, vni_vtype(vni));
 
 	silofs_vni_set_dq(vni, dq);
 }

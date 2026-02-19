@@ -25,26 +25,26 @@ size_t silofs_ptype_size(enum silofs_ptype ptype);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-bool silofs_mtype_isnone(enum silofs_mtype mtype);
+bool silofs_vtype_isnone(enum silofs_vtype vtype);
 
-bool silofs_mtype_issuper(enum silofs_mtype mtype);
+bool silofs_vtype_issuper(enum silofs_vtype vtype);
 
-bool silofs_mtype_isspnode(enum silofs_mtype mtype);
+bool silofs_vtype_isspnode(enum silofs_vtype vtype);
 
-bool silofs_mtype_isspleaf(enum silofs_mtype mtype);
+bool silofs_vtype_isspleaf(enum silofs_vtype vtype);
 
-bool silofs_mtype_isinode(enum silofs_mtype mtype);
+bool silofs_vtype_isinode(enum silofs_vtype vtype);
 
-bool silofs_mtype_isunode(enum silofs_mtype mtype);
+bool silofs_vtype_isunode(enum silofs_vtype vtype);
 
-bool silofs_mtype_isvnode(enum silofs_mtype mtype);
+bool silofs_vtype_isvnode(enum silofs_vtype vtype);
 
-bool silofs_mtype_isdata(enum silofs_mtype mtype);
+bool silofs_vtype_isdata(enum silofs_vtype vtype);
 
-size_t silofs_mtype_size(enum silofs_mtype mtype);
+size_t silofs_vtype_size(enum silofs_vtype vtype);
 
-ssize_t silofs_mtype_ssize(enum silofs_mtype mtype);
+ssize_t silofs_vtype_ssize(enum silofs_vtype vtype);
 
-size_t silofs_mtype_nkbs(enum silofs_mtype mtype);
+size_t silofs_vtype_nkbs(enum silofs_vtype vtype);
 
 #endif /* SILOFS_STYPE_H_ */

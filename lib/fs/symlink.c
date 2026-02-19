@@ -371,7 +371,7 @@ static int sylc_spawn_symval(const struct silofs_symlnk_ctx *sl_ctx,
 	int err;
 
 	err = silofs_spawn_vnode(sl_ctx->task, sl_ctx->lnk_ii,
-	                         SILOFS_MTYPE_SYMVAL, &vni);
+	                         SILOFS_VTYPE_SYMVAL, &vni);
 	if (err) {
 		return err;
 	}
@@ -417,7 +417,7 @@ static int sylc_assign_symval_head(const struct silofs_symlnk_ctx *sl_ctx,
 static void sylc_update_iblocks_by(const struct silofs_symlnk_ctx *sl_ctx,
                                    const struct silofs_vaddr *vaddr)
 {
-	silofs_update_iblocks_of(sl_ctx->task, sl_ctx->lnk_ii, vaddr->mtype,
+	silofs_update_iblocks_of(sl_ctx->task, sl_ctx->lnk_ii, vaddr->vtype,
 	                         1);
 }
 

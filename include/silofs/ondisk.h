@@ -336,13 +336,6 @@ enum silofs_mbr_mode {
 	SILOFS_MBR_AR   = 2,
 };
 
-/* blobid56b flags */
-enum silofs_bidf {
-	SILOFS_BIDF_NONE  = 0x00,
-	SILOFS_BIDF_PNODE = 0x01,
-	SILOFS_BIDF_VNODE = 0x02,
-};
-
 /* meta-header flags */
 enum silofs_hdrf {
 	SILOFS_HDRF_NONE  = 0x00,
@@ -366,48 +359,36 @@ enum silofs_pnodef {
 
 /* p-elements sub-types */
 enum silofs_ptype {
-	SILOFS_PTYPE_NONE    = 0,
-	SILOFS_PTYPE_MBR     = 1,
-	SILOFS_PTYPE_UBER    = 2,
-	SILOFS_PTYPE_ARIX    = 3,
-	SILOFS_PTYPE_BLDESC  = 4,
-	SILOFS_PTYPE_BTNODE  = 5,
-	SILOFS_PTYPE_SUPER   = 6,
-	SILOFS_PTYPE_SPNODE  = 7,
-	SILOFS_PTYPE_SPLEAF  = 8,
-	SILOFS_PTYPE_LSMAP   = 9,
-	SILOFS_PTYPE_INODE   = 10,
-	SILOFS_PTYPE_XANODE  = 11,
-	SILOFS_PTYPE_DTNODE  = 12,
-	SILOFS_PTYPE_SYMVAL  = 13,
-	SILOFS_PTYPE_FTNODE  = 14,
-	SILOFS_PTYPE_DATA1K  = 15,
-	SILOFS_PTYPE_DATA4K  = 16,
-	SILOFS_PTYPE_DATA64K = 17,
-	SILOFS_PTYPE_LAST    = 18, /* keep last */
+	SILOFS_PTYPE_NONE   = 0,
+	SILOFS_PTYPE_MBR    = 1,
+	SILOFS_PTYPE_UBER   = 2,
+	SILOFS_PTYPE_BLDESC = 3,
+	SILOFS_PTYPE_BTNODE = 4,
+	SILOFS_PTYPE_VNODE  = 5,
+	SILOFS_PTYPE_LAST   = 6, /* keep last */
 };
 
 /* meta elements types */
-enum silofs_mtype {
-	SILOFS_MTYPE_NONE    = 0,
-	SILOFS_MTYPE_MBR     = 1,
-	SILOFS_MTYPE_UBER    = 2,
-	SILOFS_MTYPE_ARIX    = 3,
-	SILOFS_MTYPE_BLDESC  = 4,
-	SILOFS_MTYPE_BTNODE  = 5,
-	SILOFS_MTYPE_SUPER   = 6,
-	SILOFS_MTYPE_SPNODE  = 7,
-	SILOFS_MTYPE_SPLEAF  = 8,
-	SILOFS_MTYPE_LSMAP   = 9,
-	SILOFS_MTYPE_INODE   = 10,
-	SILOFS_MTYPE_XANODE  = 11,
-	SILOFS_MTYPE_DTNODE  = 12,
-	SILOFS_MTYPE_SYMVAL  = 13,
-	SILOFS_MTYPE_FTNODE  = 14,
-	SILOFS_MTYPE_DATA1K  = 15,
-	SILOFS_MTYPE_DATA4K  = 16,
-	SILOFS_MTYPE_DATA64K = 17,
-	SILOFS_MTYPE_LAST    = 18, /* keep last */
+enum silofs_vtype {
+	SILOFS_VTYPE_NONE    = 0,
+	SILOFS_VTYPE_MBR     = 1,
+	SILOFS_VTYPE_UBER    = 2,
+	SILOFS_VTYPE_ARIX    = 3,
+	SILOFS_VTYPE_BLDESC  = 4,
+	SILOFS_VTYPE_BTNODE  = 5,
+	SILOFS_VTYPE_SUPER   = 6,
+	SILOFS_VTYPE_SPNODE  = 7,
+	SILOFS_VTYPE_SPLEAF  = 8,
+	SILOFS_VTYPE_LSMAP   = 9,
+	SILOFS_VTYPE_INODE   = 10,
+	SILOFS_VTYPE_XANODE  = 11,
+	SILOFS_VTYPE_DTNODE  = 12,
+	SILOFS_VTYPE_SYMVAL  = 13,
+	SILOFS_VTYPE_FTNODE  = 14,
+	SILOFS_VTYPE_DATA1K  = 15,
+	SILOFS_VTYPE_DATA4K  = 16,
+	SILOFS_VTYPE_DATA64K = 17,
+	SILOFS_VTYPE_LAST    = 18, /* keep last */
 };
 
 /* logical heights of unode mappings */
@@ -554,11 +535,10 @@ struct silofs_uniqid {
 struct silofs_blobid56b {
 	struct silofs_layerid layerid;
 	struct silofs_uniqid  uniqid;
-	uint16_t              flags;
-	uint8_t               stype;
-	uint8_t               vspace;
+	uint8_t               ptype;
+	uint8_t               vtype;
 	uint8_t               height;
-	uint8_t               reserved;
+	uint8_t               reserved[3];
 	uint16_t              vers;
 } silofs_attr_aligned8;
 
@@ -605,7 +585,7 @@ struct silofs_vaddr56 {
 };
 
 struct silofs_vaddr64 {
-	uint64_t off_mtype;
+	uint64_t off_vtype;
 } silofs_attr_aligned8;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -780,7 +760,7 @@ struct silofs_lbk_ref {
 struct silofs_spmap_leaf {
 	struct silofs_header    sl_hdr;
 	struct silofs_lrange128 sl_lrange;
-	uint16_t                sl_refmtype;
+	uint16_t                sl_refvtype;
 	uint8_t                 sl_reserved1[14];
 	struct silofs_lsid64b   sl_main_lsid;
 	struct silofs_uaddr128b sl_parent;
@@ -804,7 +784,7 @@ struct silofs_lbk_meta {
 struct silofs_lsmap {
 	struct silofs_header    lsm_hdr;
 	struct silofs_lrange128 lsm_lrange;
-	uint8_t                 lsm_refmtype;
+	uint8_t                 lsm_refvtype;
 	uint8_t                 lsm_reserved1[15];
 	struct silofs_lbk_meta  lsm_lbms[SILOFS_SPMAP_NCHILDS];
 	uint8_t                 lsm_reserved2[448];
@@ -922,7 +902,7 @@ struct silofs_ftree_node {
 	int64_t               fn_end;
 	uint32_t              fn_nactive_childs;
 	uint8_t               fn_height;
-	uint8_t               fn_child_mtype;
+	uint8_t               fn_child_vtype;
 	uint8_t               fn_reserved[58];
 	uint8_t               fn_zeros[896];
 	struct silofs_vaddr56 fn_child[SILOFS_FILE_NODE_NCHILDS];
@@ -1006,8 +986,7 @@ struct silofs_blob_desc {
 	uint32_t                bld_nobjs_max;
 	uint32_t                bld_nobjs;
 	uint32_t                bld_flags;
-	uint8_t                 bld_refmtype;
-	uint8_t                 bld_reserved1[55];
+	uint8_t                 bld_reserved1[56];
 	uint8_t                 bld_obj_state[7936];
 } silofs_attr_aligned64;
 

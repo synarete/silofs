@@ -37,10 +37,10 @@ void silofs_bti_undirtify(struct silofs_btnode_info *bti);
 void silofs_bti_dup_by(struct silofs_btnode_info       *bti,
                        const struct silofs_btnode_info *bti_other);
 
-enum silofs_mtype silofs_bti_vspace(const struct silofs_btnode_info *bti);
+enum silofs_vtype silofs_bti_vspace(const struct silofs_btnode_info *bti);
 
 void silofs_bti_set_vspace(struct silofs_btnode_info *bti,
-                           enum silofs_mtype          vspace);
+                           enum silofs_vtype          vspace);
 
 void silofs_bti_mark_root(struct silofs_btnode_info *bti);
 

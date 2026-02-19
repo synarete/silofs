@@ -25,38 +25,38 @@
 static int ubi_verify_sub_view(const struct silofs_unode_info *uni)
 {
 	const struct silofs_view *view = uni->un_lni.ln_view;
-	const enum silofs_mtype mtype  = silofs_uni_mtype(uni);
+	const enum silofs_vtype vtype  = silofs_uni_vtype(uni);
 	int ret                        = 0;
 
-	switch (mtype) {
-	case SILOFS_MTYPE_MBR:
+	switch (vtype) {
+	case SILOFS_VTYPE_MBR:
 		break;
-	case SILOFS_MTYPE_SUPER:
+	case SILOFS_VTYPE_SUPER:
 		ret = silofs_verify_super_block(&view->u.sb);
 		break;
-	case SILOFS_MTYPE_SPNODE:
+	case SILOFS_VTYPE_SPNODE:
 		ret = silofs_verify_spmap_node(&view->u.sn);
 		break;
-	case SILOFS_MTYPE_SPLEAF:
+	case SILOFS_VTYPE_SPLEAF:
 		ret = silofs_verify_spmap_leaf(&view->u.sl);
 		break;
-	case SILOFS_MTYPE_LSMAP:
-	case SILOFS_MTYPE_INODE:
-	case SILOFS_MTYPE_XANODE:
-	case SILOFS_MTYPE_SYMVAL:
-	case SILOFS_MTYPE_DTNODE:
-	case SILOFS_MTYPE_FTNODE:
-	case SILOFS_MTYPE_UBER:
-	case SILOFS_MTYPE_ARIX:
-	case SILOFS_MTYPE_BLDESC:
-	case SILOFS_MTYPE_BTNODE:
-	case SILOFS_MTYPE_DATA1K:
-	case SILOFS_MTYPE_DATA4K:
-	case SILOFS_MTYPE_DATA64K:
-	case SILOFS_MTYPE_NONE:
-	case SILOFS_MTYPE_LAST:
+	case SILOFS_VTYPE_LSMAP:
+	case SILOFS_VTYPE_INODE:
+	case SILOFS_VTYPE_XANODE:
+	case SILOFS_VTYPE_SYMVAL:
+	case SILOFS_VTYPE_DTNODE:
+	case SILOFS_VTYPE_FTNODE:
+	case SILOFS_VTYPE_UBER:
+	case SILOFS_VTYPE_ARIX:
+	case SILOFS_VTYPE_BLDESC:
+	case SILOFS_VTYPE_BTNODE:
+	case SILOFS_VTYPE_DATA1K:
+	case SILOFS_VTYPE_DATA4K:
+	case SILOFS_VTYPE_DATA64K:
+	case SILOFS_VTYPE_NONE:
+	case SILOFS_VTYPE_LAST:
 	default:
-		silofs_panic("non unode: mtype=%d", mtype);
+		silofs_panic("non unode: vtype=%d", vtype);
 		break;
 	}
 	return ret;

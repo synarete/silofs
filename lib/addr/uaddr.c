@@ -89,9 +89,9 @@ const struct silofs_lsid *silofs_uaddr_lsid(const struct silofs_uaddr *uaddr)
 	return &uaddr->laddr.lsid;
 }
 
-enum silofs_mtype silofs_uaddr_mtype(const struct silofs_uaddr *uaddr)
+enum silofs_vtype silofs_uaddr_vtype(const struct silofs_uaddr *uaddr)
 {
-	return silofs_laddr_mtype(&uaddr->laddr);
+	return silofs_laddr_vtype(&uaddr->laddr);
 }
 
 enum silofs_height silofs_uaddr_height(const struct silofs_uaddr *uaddr)

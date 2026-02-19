@@ -214,7 +214,7 @@ void silofs_update_itimes_of(const struct silofs_task_ctx *task,
 
 void silofs_update_iblocks_of(const struct silofs_task_ctx *task,
                               struct silofs_inode_info     *ii,
-                              enum silofs_mtype mtype, long dif);
+                              enum silofs_vtype vtype, long dif);
 
 void silofs_update_iattrs_of(const struct silofs_task_ctx *task,
                              struct silofs_inode_info     *ii,

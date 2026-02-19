@@ -55,7 +55,7 @@ struct silofs_btnode_info {
 const struct silofs_pnptr *
 silofs_pni_self(const struct silofs_pnode_info *pni);
 
-enum silofs_mtype silofs_pni_mtype(const struct silofs_pnode_info *pni);
+enum silofs_ptype silofs_pni_ptype(const struct silofs_pnode_info *pni);
 
 void silofs_pni_dirtify(struct silofs_pnode_info *pni);
 

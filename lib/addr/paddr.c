@@ -24,8 +24,8 @@
 #include "paddr.h"
 
 static const struct silofs_paddr s_silofs_paddr_none = {
-	.blobid.vspace = SILOFS_MTYPE_NONE,
-	.pos           = SILOFS_OFF_NULL,
+	.ptype = SILOFS_PTYPE_NONE,
+	.pos   = SILOFS_OFF_NULL,
 };
 
 const struct silofs_paddr *silofs_paddr_none(void)
@@ -38,7 +38,7 @@ void silofs_paddr_init(struct silofs_paddr *paddr,
 {
 	silofs_blobid_assign(&paddr->blobid, blobid);
 	paddr->pos   = pos;
-	paddr->mtype = blobid->stype.mtype;
+	paddr->ptype = blobid->ptype;
 }
 
 void silofs_paddr_fini(struct silofs_paddr *paddr)
@@ -50,7 +50,7 @@ void silofs_paddr_reset(struct silofs_paddr *paddr)
 {
 	silofs_blobid_reset(&paddr->blobid);
 	paddr->pos   = SILOFS_OFF_NULL;
-	paddr->mtype = SILOFS_MTYPE_NONE;
+	paddr->ptype = SILOFS_PTYPE_NONE;
 }
 
 void silofs_paddr_assign(struct silofs_paddr *paddr,
@@ -58,7 +58,7 @@ void silofs_paddr_assign(struct silofs_paddr *paddr,
 {
 	silofs_blobid_assign(&paddr->blobid, &other->blobid);
 	paddr->pos   = other->pos;
-	paddr->mtype = other->mtype;
+	paddr->ptype = other->ptype;
 }
 
 bool silofs_paddr_isequal(const struct silofs_paddr *paddr,
@@ -91,7 +91,7 @@ long silofs_paddr_compare(const struct silofs_paddr *paddr,
 
 static off_t paddr_next_off(const struct silofs_paddr *paddr)
 {
-	const size_t len = silofs_mtype_size(paddr->mtype);
+	const size_t len = silofs_ptype_size(paddr->ptype);
 
 	return silofs_off_end(paddr->pos, len);
 }
@@ -117,5 +117,5 @@ void silofs_paddr64b_xtoh(const struct silofs_paddr64b *paddr64,
 {
 	silofs_blobid56b_xtoh(&paddr64->blobid56b, &paddr->blobid);
 	paddr->pos   = silofs_off_to_cpu(paddr64->pos);
-	paddr->mtype = paddr->blobid.stype.mtype;
+	paddr->ptype = paddr->blobid.ptype;
 }

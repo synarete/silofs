@@ -27,11 +27,11 @@ void silofs_ignite_ubspace(const struct silofs_task_ctx *task,
                            struct silofs_pnptr          *out_pnptr);
 
 void silofs_ignite_btspace(const struct silofs_task_ctx *task,
-                           enum silofs_mtype             vspace,
+                           enum silofs_vtype             vspace,
                            struct silofs_pnptr          *out_pnptr);
 
 void silofs_ignite_vspace(const struct silofs_task_ctx *task,
-                          enum silofs_mtype             vtype,
+                          enum silofs_vtype             vtype,
                           struct silofs_spdesc         *out_spdesc);
 
 #endif /* SILOFS_SPACE_H_ */

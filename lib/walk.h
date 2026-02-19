@@ -40,7 +40,7 @@ struct silofs_walk_iter {
 	struct silofs_spnode_info *sni1;
 	struct silofs_spleaf_info *sli;
 	enum silofs_height         height;
-	enum silofs_mtype          vspace;
+	enum silofs_vtype          vspace;
 	off_t                      voff;
 };
 

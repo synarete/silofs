@@ -27,7 +27,7 @@
 
 static size_t nkbs_of(const struct silofs_vaddr *vaddr)
 {
-	return silofs_mtype_nkbs(vaddr->mtype);
+	return silofs_vtype_nkbs(vaddr->vtype);
 }
 
 static size_t kbn_of(const struct silofs_vaddr *vaddr)
@@ -324,11 +324,11 @@ lbm_find_free(const struct silofs_lbk_meta *lbm, size_t nkb, size_t *out_kbn)
 }
 
 static void
-lbm_make_vaddrs(const struct silofs_lbk_meta *lbm, enum silofs_mtype mtype,
+lbm_make_vaddrs(const struct silofs_lbk_meta *lbm, enum silofs_vtype vtype,
                 off_t off_base, struct silofs_vaddrs *out_vaddrs)
 {
 	struct silofs_lbk_state lbk_st;
-	const size_t nkb       = silofs_mtype_nkbs(mtype);
+	const size_t nkb       = silofs_vtype_nkbs(vtype);
 	const size_t nkb_in_bk = SILOFS_NKB_IN_LBK;
 	off_t off;
 
@@ -343,7 +343,7 @@ lbm_make_vaddrs(const struct silofs_lbk_meta *lbm, enum silofs_mtype mtype,
 				&out_vaddrs->vaddr[out_vaddrs->count];
 
 			off = silofs_off_end(off_base, kbn * SILOFS_KB_SIZE);
-			silofs_vaddr_setup(vaddr, mtype, off);
+			silofs_vaddr_setup(vaddr, vtype, off);
 			out_vaddrs->count++;
 		}
 	}
@@ -395,31 +395,31 @@ lsmap_set_lrange(struct silofs_lsmap *lsm, const struct silofs_lrange *lrange)
 	silofs_lrange128_htox(&lsm->lsm_lrange, lrange);
 }
 
-static enum silofs_mtype lsmap_refmtype(const struct silofs_lsmap *lsm)
+static enum silofs_vtype lsmap_refvtype(const struct silofs_lsmap *lsm)
 {
-	const uint32_t refmtype = lsm->lsm_refmtype;
+	const uint32_t refvtype = lsm->lsm_refvtype;
 
-	silofs_assert_ge(refmtype, SILOFS_MTYPE_INODE);
-	silofs_assert_le(refmtype, SILOFS_MTYPE_DATA64K);
+	silofs_assert_ge(refvtype, SILOFS_VTYPE_INODE);
+	silofs_assert_le(refvtype, SILOFS_VTYPE_DATA64K);
 
-	return (enum silofs_mtype)refmtype;
+	return (enum silofs_vtype)refvtype;
 }
 
 static void
-lsmap_set_refmtype(struct silofs_lsmap *lsm, enum silofs_mtype refmtype)
+lsmap_set_refvtype(struct silofs_lsmap *lsm, enum silofs_vtype refvtype)
 {
-	silofs_assert_ge(refmtype, SILOFS_MTYPE_INODE);
-	silofs_assert_le(refmtype, SILOFS_MTYPE_DATA64K);
+	silofs_assert_ge(refvtype, SILOFS_VTYPE_INODE);
+	silofs_assert_le(refvtype, SILOFS_VTYPE_DATA64K);
 
-	lsm->lsm_refmtype = (uint8_t)refmtype;
+	lsm->lsm_refvtype = (uint8_t)refvtype;
 }
 
 static void
 lsmap_init(struct silofs_lsmap *lsm, const struct silofs_lrange *lrange,
-           enum silofs_mtype refmtype)
+           enum silofs_vtype refvtype)
 {
 	lsmap_set_lrange(lsm, lrange);
-	lsmap_set_refmtype(lsm, refmtype);
+	lsmap_set_refvtype(lsm, refvtype);
 	lbm_init_arr(lsm->lsm_lbms, ARRAY_SIZE(lsm->lsm_lbms));
 }
 
@@ -494,15 +494,15 @@ static bool lsmap_has_allocated_with(const struct silofs_lsmap *lsm,
 	return lbm_test_allocated_other(lbm, kbn_of(vaddr), nkbs_of(vaddr));
 }
 
-static size_t lsmap_refmtype_nkb(const struct silofs_lsmap *lsm)
+static size_t lsmap_refvtype_nkb(const struct silofs_lsmap *lsm)
 {
-	return silofs_mtype_nkbs(lsmap_refmtype(lsm));
+	return silofs_vtype_nkbs(lsmap_refvtype(lsm));
 }
 
 static int
 lsmap_find_free_at(const struct silofs_lsmap *lsm, size_t bn, size_t *out_kbn)
 {
-	const size_t nkb                  = lsmap_refmtype_nkb(lsm);
+	const size_t nkb                  = lsmap_refvtype_nkb(lsm);
 	const struct silofs_lbk_meta *lbm = lsmap_lbm_at2(lsm, bn);
 	int err                           = -SILOFS_ENOSPC;
 
@@ -569,7 +569,7 @@ lsmap_renew_bk_at(struct silofs_lsmap *lsm, const struct silofs_vaddr *vaddr)
 static size_t lsmap_refcnt_at(const struct silofs_lsmap *lsm,
                               const struct silofs_vaddr *vaddr)
 {
-	silofs_assert_eq(vaddr->mtype, SILOFS_MTYPE_DATA64K);
+	silofs_assert_eq(vaddr->vtype, SILOFS_VTYPE_DATA64K);
 
 	return lbm_refcnt(lsmap_lbm_by_vaddr2(lsm, vaddr));
 }
@@ -637,7 +637,7 @@ static void lsmap_make_vaddrs_of(const struct silofs_lsmap *lsm,
 	const struct silofs_lbk_meta *lbm = lsmap_lbm_by_vaddr2(lsm, vaddr);
 	const off_t off_base = silofs_off_align_to_lbk(vaddr->off);
 
-	lbm_make_vaddrs(lbm, lsmap_refmtype(lsm), off_base, out_vaddrs);
+	lbm_make_vaddrs(lbm, lsmap_refvtype(lsm), off_base, out_vaddrs);
 }
 
 static struct silofs_ckey *lsmap_key_at(struct silofs_lsmap *lsm, size_t slot)
@@ -708,7 +708,7 @@ static void lsmap_clone_from(struct silofs_lsmap *lsm,
 
 	lsmap_lrange(lsm_other, &lrange);
 	lsmap_set_lrange(lsm, &lrange);
-	lsmap_set_refmtype(lsm, lsmap_refmtype(lsm_other));
+	lsmap_set_refvtype(lsm, lsmap_refvtype(lsm_other));
 
 	for (size_t slot = 0; slot < ARRAY_SIZE(lsm->lsm_lbms); ++slot) {
 		lbm_clone_from(lsmap_lbm_at(lsm, slot),
@@ -789,12 +789,12 @@ void silofs_lsi_get_lrange(const struct silofs_lsmap_info *lsi,
 }
 
 void silofs_lsi_setup_spawned(struct silofs_lsmap_info *lsi,
-                              enum silofs_mtype refmtype, off_t beg)
+                              enum silofs_vtype refvtype, off_t beg)
 {
 	struct silofs_lrange lrange;
 
 	lrange_of(&lrange, beg, ARRAY_SIZE(lsi->lsm->lsm_lbms));
-	lsmap_init(lsi->lsm, &lrange, refmtype);
+	lsmap_init(lsi->lsm, &lrange, refvtype);
 	lsmap_gen_keys(lsi->lsm);
 	lsi_dirtify(lsi);
 }
@@ -815,27 +815,27 @@ static bool lsi_is_off_within(const struct silofs_lsmap_info *lsi, off_t off)
 	return silofs_lrange_within(&lrange, off);
 }
 
-enum silofs_mtype silofs_lsi_refmtype(const struct silofs_lsmap_info *lsi)
+enum silofs_vtype silofs_lsi_refvtype(const struct silofs_lsmap_info *lsi)
 {
-	return lsmap_refmtype(lsi->lsm);
+	return lsmap_refvtype(lsi->lsm);
 }
 
 static bool lsi_is_subref(const struct silofs_lsmap_info *lsi,
                           const struct silofs_vaddr *vaddr)
 {
-	enum silofs_mtype refmtype;
+	enum silofs_vtype refvtype;
 	bool ret = false;
 
-	refmtype = silofs_lsi_refmtype(lsi);
-	if (vaddr->mtype == refmtype) {
+	refvtype = silofs_lsi_refvtype(lsi);
+	if (vaddr->vtype == refvtype) {
 		ret = lsi_is_off_within(lsi, vaddr->off);
 	}
 	return ret;
 }
 
-static size_t lsi_refmtype_size(const struct silofs_lsmap_info *lsi)
+static size_t lsi_refvtype_size(const struct silofs_lsmap_info *lsi)
 {
-	return silofs_mtype_size(silofs_lsi_refmtype(lsi));
+	return silofs_vtype_size(silofs_lsi_refvtype(lsi));
 }
 
 static void lsi_vaddr_at(const struct silofs_lsmap_info *lsi, size_t bn,
@@ -843,7 +843,7 @@ static void lsi_vaddr_at(const struct silofs_lsmap_info *lsi, size_t bn,
 {
 	const off_t beg = lsi_start_off(lsi);
 
-	silofs_vaddr_by_spleaf(out_vaddr, silofs_lsi_refmtype(lsi), beg, bn,
+	silofs_vaddr_by_spleaf(out_vaddr, silofs_lsi_refvtype(lsi), beg, bn,
 	                       kbn);
 }
 
@@ -899,7 +899,7 @@ out_err:
 static bool lsi_cap_allocate(const struct silofs_lsmap_info *lsi)
 {
 	const size_t nlimit      = lsi_lrange_len(lsi);
-	const size_t nbytes_want = lsi_refmtype_size(lsi);
+	const size_t nbytes_want = lsi_refvtype_size(lsi);
 	const size_t nbytes_used = lsi->ls_nused_bytes;
 
 	silofs_assert_le(nlimit, SILOFS_LSEG_SIZE_MAX);
@@ -953,11 +953,11 @@ void silofs_lsi_unref_allocated_at(struct silofs_lsmap_info *lsi,
                                    const struct silofs_vaddr *vaddr)
 {
 	const size_t len                 = silofs_vaddr_len(vaddr);
-	const enum silofs_mtype refmtype = silofs_lsi_refmtype(lsi);
+	const enum silofs_vtype refvtype = silofs_lsi_refvtype(lsi);
 	const bool last = lsmap_is_last_allocated(lsi->lsm, vaddr);
 
 	silofs_assert_gt(lsi->ls_nused_bytes, 0);
-	silofs_assert_eq(refmtype, vaddr->mtype);
+	silofs_assert_eq(refvtype, vaddr->vtype);
 
 	lsmap_unset_allocated_at(lsi->lsm, vaddr);
 	if (!lsmap_is_allocated_at(lsi->lsm, vaddr)) {
@@ -974,7 +974,7 @@ void silofs_lsi_unref_allocated_at(struct silofs_lsmap_info *lsi,
 void silofs_lsi_reref_allocated_at(struct silofs_lsmap_info *lsi,
                                    const struct silofs_vaddr *vaddr)
 {
-	silofs_assert_eq(vaddr->mtype, SILOFS_MTYPE_DATA64K);
+	silofs_assert_eq(vaddr->vtype, SILOFS_VTYPE_DATA64K);
 	silofs_assert_ge(lsi->ls_nused_bytes, SILOFS_LBK_SIZE);
 	silofs_assert_le(lsi->ls_nused_bytes, SILOFS_LSEG_SIZE_MAX);
 
@@ -1118,11 +1118,11 @@ static int verify_lsmap_lrange(const struct silofs_lsmap *lsm)
 	return 0;
 }
 
-static int verify_lsmap_refmtype(const struct silofs_lsmap *lsm)
+static int verify_lsmap_refvtype(const struct silofs_lsmap *lsm)
 {
-	const enum silofs_mtype mtype = lsmap_refmtype(lsm);
+	const enum silofs_vtype vtype = lsmap_refvtype(lsm);
 
-	return silofs_mtype_isvnode(mtype) ? 0 : -SILOFS_EFSCORRUPTED;
+	return silofs_vtype_isvnode(vtype) ? 0 : -SILOFS_EFSCORRUPTED;
 }
 
 static int verify_lbk_meta(const struct silofs_lbk_meta *lbm)
@@ -1145,7 +1145,7 @@ int silofs_verify_lsmap(const struct silofs_lsmap *lsm)
 	if (err) {
 		return err;
 	}
-	err = verify_lsmap_refmtype(lsm);
+	err = verify_lsmap_refvtype(lsm);
 	if (err) {
 		return err;
 	}

@@ -35,22 +35,11 @@ size_t silofs_ptype_size(enum silofs_ptype ptype)
 	case SILOFS_PTYPE_BTNODE:
 		sz = sizeof(struct silofs_btree_node);
 		break;
+	case SILOFS_PTYPE_VNODE:
+		sz = sizeof(struct silofs_data_block1); /* min vnode size */
+		break;
 	case SILOFS_PTYPE_NONE:
 	case SILOFS_PTYPE_LAST:
-		/* XXX */
-	case SILOFS_PTYPE_ARIX:
-	case SILOFS_PTYPE_SUPER:
-	case SILOFS_PTYPE_SPNODE:
-	case SILOFS_PTYPE_SPLEAF:
-	case SILOFS_PTYPE_LSMAP:
-	case SILOFS_PTYPE_INODE:
-	case SILOFS_PTYPE_XANODE:
-	case SILOFS_PTYPE_DTNODE:
-	case SILOFS_PTYPE_SYMVAL:
-	case SILOFS_PTYPE_FTNODE:
-	case SILOFS_PTYPE_DATA1K:
-	case SILOFS_PTYPE_DATA4K:
-	case SILOFS_PTYPE_DATA64K:
 	default:
 		sz = 0;
 		break;
@@ -60,64 +49,64 @@ size_t silofs_ptype_size(enum silofs_ptype ptype)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static bool mtype_isequal(enum silofs_mtype st1, enum silofs_mtype st2)
+static bool vtype_isequal(enum silofs_vtype st1, enum silofs_vtype st2)
 {
 	return (st1 == st2);
 }
 
-bool silofs_mtype_issuper(enum silofs_mtype mtype)
+bool silofs_vtype_issuper(enum silofs_vtype vtype)
 {
-	return mtype_isequal(mtype, SILOFS_MTYPE_SUPER);
+	return vtype_isequal(vtype, SILOFS_VTYPE_SUPER);
 }
 
-bool silofs_mtype_isspnode(enum silofs_mtype mtype)
+bool silofs_vtype_isspnode(enum silofs_vtype vtype)
 {
-	return mtype_isequal(mtype, SILOFS_MTYPE_SPNODE);
+	return vtype_isequal(vtype, SILOFS_VTYPE_SPNODE);
 }
 
-bool silofs_mtype_isspleaf(enum silofs_mtype mtype)
+bool silofs_vtype_isspleaf(enum silofs_vtype vtype)
 {
-	return mtype_isequal(mtype, SILOFS_MTYPE_SPLEAF);
+	return vtype_isequal(vtype, SILOFS_VTYPE_SPLEAF);
 }
 
-bool silofs_mtype_isinode(enum silofs_mtype mtype)
+bool silofs_vtype_isinode(enum silofs_vtype vtype)
 {
-	return mtype_isequal(mtype, SILOFS_MTYPE_INODE);
+	return vtype_isequal(vtype, SILOFS_VTYPE_INODE);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-bool silofs_mtype_isnone(enum silofs_mtype mtype)
+bool silofs_vtype_isnone(enum silofs_vtype vtype)
 {
-	return (mtype == SILOFS_MTYPE_NONE);
+	return (vtype == SILOFS_VTYPE_NONE);
 }
 
-bool silofs_mtype_isunode(enum silofs_mtype mtype)
+bool silofs_vtype_isunode(enum silofs_vtype vtype)
 {
 	bool ret;
 
-	switch (mtype) {
-	case SILOFS_MTYPE_MBR:
-	case SILOFS_MTYPE_SUPER:
-	case SILOFS_MTYPE_SPNODE:
-	case SILOFS_MTYPE_SPLEAF:
+	switch (vtype) {
+	case SILOFS_VTYPE_MBR:
+	case SILOFS_VTYPE_SUPER:
+	case SILOFS_VTYPE_SPNODE:
+	case SILOFS_VTYPE_SPLEAF:
 		ret = true;
 		break;
-	case SILOFS_MTYPE_UBER:
-	case SILOFS_MTYPE_ARIX:
-	case SILOFS_MTYPE_BLDESC:
-	case SILOFS_MTYPE_BTNODE:
-	case SILOFS_MTYPE_LSMAP:
-	case SILOFS_MTYPE_INODE:
-	case SILOFS_MTYPE_XANODE:
-	case SILOFS_MTYPE_SYMVAL:
-	case SILOFS_MTYPE_DTNODE:
-	case SILOFS_MTYPE_FTNODE:
-	case SILOFS_MTYPE_DATA1K:
-	case SILOFS_MTYPE_DATA4K:
-	case SILOFS_MTYPE_DATA64K:
-	case SILOFS_MTYPE_NONE:
-	case SILOFS_MTYPE_LAST:
+	case SILOFS_VTYPE_UBER:
+	case SILOFS_VTYPE_ARIX:
+	case SILOFS_VTYPE_BLDESC:
+	case SILOFS_VTYPE_BTNODE:
+	case SILOFS_VTYPE_LSMAP:
+	case SILOFS_VTYPE_INODE:
+	case SILOFS_VTYPE_XANODE:
+	case SILOFS_VTYPE_SYMVAL:
+	case SILOFS_VTYPE_DTNODE:
+	case SILOFS_VTYPE_FTNODE:
+	case SILOFS_VTYPE_DATA1K:
+	case SILOFS_VTYPE_DATA4K:
+	case SILOFS_VTYPE_DATA64K:
+	case SILOFS_VTYPE_NONE:
+	case SILOFS_VTYPE_LAST:
 	default:
 		ret = false;
 		break;
@@ -125,32 +114,32 @@ bool silofs_mtype_isunode(enum silofs_mtype mtype)
 	return ret;
 }
 
-bool silofs_mtype_isvnode(enum silofs_mtype mtype)
+bool silofs_vtype_isvnode(enum silofs_vtype vtype)
 {
 	bool ret;
 
-	switch (mtype) {
-	case SILOFS_MTYPE_LSMAP:
-	case SILOFS_MTYPE_INODE:
-	case SILOFS_MTYPE_XANODE:
-	case SILOFS_MTYPE_SYMVAL:
-	case SILOFS_MTYPE_DTNODE:
-	case SILOFS_MTYPE_FTNODE:
-	case SILOFS_MTYPE_DATA1K:
-	case SILOFS_MTYPE_DATA4K:
-	case SILOFS_MTYPE_DATA64K:
+	switch (vtype) {
+	case SILOFS_VTYPE_LSMAP:
+	case SILOFS_VTYPE_INODE:
+	case SILOFS_VTYPE_XANODE:
+	case SILOFS_VTYPE_SYMVAL:
+	case SILOFS_VTYPE_DTNODE:
+	case SILOFS_VTYPE_FTNODE:
+	case SILOFS_VTYPE_DATA1K:
+	case SILOFS_VTYPE_DATA4K:
+	case SILOFS_VTYPE_DATA64K:
 		ret = true;
 		break;
-	case SILOFS_MTYPE_UBER:
-	case SILOFS_MTYPE_ARIX:
-	case SILOFS_MTYPE_BLDESC:
-	case SILOFS_MTYPE_BTNODE:
-	case SILOFS_MTYPE_MBR:
-	case SILOFS_MTYPE_SUPER:
-	case SILOFS_MTYPE_SPNODE:
-	case SILOFS_MTYPE_SPLEAF:
-	case SILOFS_MTYPE_NONE:
-	case SILOFS_MTYPE_LAST:
+	case SILOFS_VTYPE_UBER:
+	case SILOFS_VTYPE_ARIX:
+	case SILOFS_VTYPE_BLDESC:
+	case SILOFS_VTYPE_BTNODE:
+	case SILOFS_VTYPE_MBR:
+	case SILOFS_VTYPE_SUPER:
+	case SILOFS_VTYPE_SPNODE:
+	case SILOFS_VTYPE_SPLEAF:
+	case SILOFS_VTYPE_NONE:
+	case SILOFS_VTYPE_LAST:
 	default:
 		ret = false;
 		break;
@@ -158,32 +147,32 @@ bool silofs_mtype_isvnode(enum silofs_mtype mtype)
 	return ret;
 }
 
-bool silofs_mtype_isdata(enum silofs_mtype mtype)
+bool silofs_vtype_isdata(enum silofs_vtype vtype)
 {
 	bool ret;
 
-	switch (mtype) {
-	case SILOFS_MTYPE_DATA1K:
-	case SILOFS_MTYPE_DATA4K:
-	case SILOFS_MTYPE_DATA64K:
+	switch (vtype) {
+	case SILOFS_VTYPE_DATA1K:
+	case SILOFS_VTYPE_DATA4K:
+	case SILOFS_VTYPE_DATA64K:
 		ret = true;
 		break;
-	case SILOFS_MTYPE_UBER:
-	case SILOFS_MTYPE_ARIX:
-	case SILOFS_MTYPE_BLDESC:
-	case SILOFS_MTYPE_BTNODE:
-	case SILOFS_MTYPE_MBR:
-	case SILOFS_MTYPE_SUPER:
-	case SILOFS_MTYPE_SPNODE:
-	case SILOFS_MTYPE_SPLEAF:
-	case SILOFS_MTYPE_LSMAP:
-	case SILOFS_MTYPE_INODE:
-	case SILOFS_MTYPE_XANODE:
-	case SILOFS_MTYPE_DTNODE:
-	case SILOFS_MTYPE_FTNODE:
-	case SILOFS_MTYPE_SYMVAL:
-	case SILOFS_MTYPE_NONE:
-	case SILOFS_MTYPE_LAST:
+	case SILOFS_VTYPE_UBER:
+	case SILOFS_VTYPE_ARIX:
+	case SILOFS_VTYPE_BLDESC:
+	case SILOFS_VTYPE_BTNODE:
+	case SILOFS_VTYPE_MBR:
+	case SILOFS_VTYPE_SUPER:
+	case SILOFS_VTYPE_SPNODE:
+	case SILOFS_VTYPE_SPLEAF:
+	case SILOFS_VTYPE_LSMAP:
+	case SILOFS_VTYPE_INODE:
+	case SILOFS_VTYPE_XANODE:
+	case SILOFS_VTYPE_DTNODE:
+	case SILOFS_VTYPE_FTNODE:
+	case SILOFS_VTYPE_SYMVAL:
+	case SILOFS_VTYPE_NONE:
+	case SILOFS_VTYPE_LAST:
 	default:
 		ret = false;
 		break;
@@ -191,59 +180,59 @@ bool silofs_mtype_isdata(enum silofs_mtype mtype)
 	return ret;
 }
 
-size_t silofs_mtype_size(enum silofs_mtype mtype)
+size_t silofs_vtype_size(enum silofs_vtype vtype)
 {
-	switch (mtype) {
-	case SILOFS_MTYPE_UBER:
+	switch (vtype) {
+	case SILOFS_VTYPE_UBER:
 		return sizeof(struct silofs_uber_node);
-	case SILOFS_MTYPE_ARIX:
+	case SILOFS_VTYPE_ARIX:
 		return sizeof(struct silofs_arix_node);
-	case SILOFS_MTYPE_BLDESC:
+	case SILOFS_VTYPE_BLDESC:
 		return sizeof(struct silofs_blob_desc);
-	case SILOFS_MTYPE_BTNODE:
+	case SILOFS_VTYPE_BTNODE:
 		return sizeof(struct silofs_btree_node);
-	case SILOFS_MTYPE_MBR:
+	case SILOFS_VTYPE_MBR:
 		return sizeof(struct silofs_mbr1k);
-	case SILOFS_MTYPE_SUPER:
+	case SILOFS_VTYPE_SUPER:
 		return sizeof(struct silofs_super_block);
-	case SILOFS_MTYPE_SPNODE:
+	case SILOFS_VTYPE_SPNODE:
 		return sizeof(struct silofs_spmap_node);
-	case SILOFS_MTYPE_SPLEAF:
+	case SILOFS_VTYPE_SPLEAF:
 		return sizeof(struct silofs_spmap_leaf);
-	case SILOFS_MTYPE_LSMAP:
+	case SILOFS_VTYPE_LSMAP:
 		return sizeof(struct silofs_lsmap);
-	case SILOFS_MTYPE_INODE:
+	case SILOFS_VTYPE_INODE:
 		return sizeof(struct silofs_inode);
-	case SILOFS_MTYPE_XANODE:
+	case SILOFS_VTYPE_XANODE:
 		return sizeof(struct silofs_xattr_node);
-	case SILOFS_MTYPE_DTNODE:
+	case SILOFS_VTYPE_DTNODE:
 		return sizeof(struct silofs_dtree_node);
-	case SILOFS_MTYPE_FTNODE:
+	case SILOFS_VTYPE_FTNODE:
 		return sizeof(struct silofs_ftree_node);
-	case SILOFS_MTYPE_SYMVAL:
+	case SILOFS_VTYPE_SYMVAL:
 		return sizeof(struct silofs_symlnk_value);
-	case SILOFS_MTYPE_DATA1K:
+	case SILOFS_VTYPE_DATA1K:
 		return sizeof(struct silofs_data_block1);
-	case SILOFS_MTYPE_DATA4K:
+	case SILOFS_VTYPE_DATA4K:
 		return sizeof(struct silofs_data_block4);
-	case SILOFS_MTYPE_DATA64K:
+	case SILOFS_VTYPE_DATA64K:
 		return sizeof(struct silofs_data_block64);
-	case SILOFS_MTYPE_NONE:
-	case SILOFS_MTYPE_LAST:
+	case SILOFS_VTYPE_NONE:
+	case SILOFS_VTYPE_LAST:
 	default:
 		break;
 	}
 	return 0;
 }
 
-ssize_t silofs_mtype_ssize(enum silofs_mtype mtype)
+ssize_t silofs_vtype_ssize(enum silofs_vtype vtype)
 {
-	return (ssize_t)silofs_mtype_size(mtype);
+	return (ssize_t)silofs_vtype_size(vtype);
 }
 
-size_t silofs_mtype_nkbs(enum silofs_mtype mtype)
+size_t silofs_vtype_nkbs(enum silofs_vtype vtype)
 {
-	const size_t size = silofs_mtype_size(mtype);
+	const size_t size = silofs_vtype_size(vtype);
 
 	return silofs_div_round_up(size, SILOFS_KB_SIZE);
 }

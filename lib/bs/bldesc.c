@@ -115,32 +115,12 @@ static void bld_dec_nobjs(struct silofs_blob_desc *bld)
 	bld_set_nobjs(bld, bld_nobjs(bld) - 1);
 }
 
-static enum silofs_mtype bld_refmtype(const struct silofs_blob_desc *bld)
-{
-	const uint8_t refmtype = bld->bld_refmtype;
-
-	return (enum silofs_mtype)refmtype;
-}
-
-static void
-bld_set_refmtype(struct silofs_blob_desc *bld, enum silofs_mtype refmtype)
-{
-	bld->bld_refmtype = (uint8_t)refmtype;
-}
-
-static bool
-bld_has_refmtype(const struct silofs_blob_desc *bld, enum silofs_mtype mtype)
-{
-	return (mtype == bld_refmtype(bld));
-}
-
-static size_t bld_calc_obj_state_max(const struct silofs_blob_desc *bld,
-                                     enum silofs_mtype refmtype)
+static size_t
+bld_calc_obj_state_max(const struct silofs_blob_desc *bld, size_t old_size)
 {
 	const size_t lim = ARRAY_SIZE(bld->bld_obj_state);
-	const size_t msz = silofs_mtype_size(refmtype);
 
-	return (msz == SILOFS_LBK_SIZE) ? silofs_min_u64(lim, 4096) : lim;
+	return (old_size == SILOFS_LBK_SIZE) ? silofs_min_u64(lim, 4096) : lim;
 }
 
 static void bld_reset_obj_state(struct silofs_blob_desc *bld)
@@ -312,7 +292,6 @@ static void bld_setup(struct silofs_blob_desc *bld)
 	bld_set_objsize(bld, 0);
 	bld_set_nobjs_max(bld, 0);
 	bld_set_nobjs(bld, 0);
-	bld_set_refmtype(bld, SILOFS_MTYPE_NONE);
 	bld_reset_obj_state(bld);
 }
 
@@ -335,29 +314,22 @@ void silofs_bdi_undirtify(struct silofs_bldesc_info *bdi)
 }
 
 void silofs_bdi_setup_spawned(struct silofs_bldesc_info *bdi,
-                              enum silofs_mtype refmtype)
+                              const struct silofs_blobid *blobid)
 {
 	struct timespec now;
-	const size_t obj_size  = silofs_mtype_size(refmtype);
-	const size_t nobjs_max = bld_calc_obj_state_max(bdi->bld, refmtype);
+	const size_t obj_size  = silofs_blobid_slotsize(blobid);
+	const size_t nobjs_max = bld_calc_obj_state_max(bdi->bld, obj_size);
 	const size_t blob_size = obj_size * nobjs_max;
 
 	silofs_clock_gettime_real(&now);
 	bld_set_btime(bdi->bld, &now);
 	bld_set_ctime(bdi->bld, &now);
+	bld_set_refblob(bdi->bld, blobid);
 	bld_set_blobsize(bdi->bld, blob_size);
 	bld_set_objsize(bdi->bld, obj_size);
 	bld_set_nobjs_max(bdi->bld, nobjs_max);
 	bld_set_nobjs(bdi->bld, 0);
-	bld_set_refmtype(bdi->bld, refmtype);
 	bld_reset_obj_state(bdi->bld);
-	silofs_bdi_dirtify(bdi);
-}
-
-void silofs_bdi_set_refblob(struct silofs_bldesc_info *bdi,
-                            const struct silofs_blobid *blobid)
-{
-	bld_set_refblob(bdi->bld, blobid);
 	silofs_bdi_dirtify(bdi);
 }
 
@@ -382,9 +354,6 @@ int silofs_bdi_find_free(const struct silofs_bldesc_info *bdi,
 static bool bdi_is_valid_paddr(const struct silofs_bldesc_info *bdi,
                                const struct silofs_paddr *paddr)
 {
-	if (!bld_has_refmtype(bdi->bld, paddr->mtype)) {
-		return false;
-	}
 	if (!bld_is_valid_pos(bdi->bld, paddr->pos)) {
 		return false;
 	}
@@ -453,7 +422,7 @@ silofs_lookup_cached_bldesc(struct silofs_pcache *pcache,
 {
 	struct silofs_pnode_info *pni;
 
-	silofs_assert_eq(paddr->mtype, SILOFS_MTYPE_BLDESC);
+	silofs_assert_eq(paddr->ptype, SILOFS_PTYPE_BLDESC);
 	pni = silofs_pcache_lookup_pnode(pcache, paddr);
 	return silofs_bdi_from_pni(pni);
 }

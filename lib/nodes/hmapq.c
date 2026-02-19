@@ -119,7 +119,7 @@ static uint64_t hash_of_vaddr(const struct silofs_vaddr *vaddr)
 {
 	const uint64_t off = (uint64_t)vaddr->off;
 
-	return silofs_lrotate64(off + vaddr->mtype, 7) ^ 0x736f6d6570736575ULL;
+	return silofs_lrotate64(off + vaddr->vtype, 7) ^ 0x736f6d6570736575ULL;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

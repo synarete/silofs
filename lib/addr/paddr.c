@@ -91,7 +91,10 @@ long silofs_paddr_compare(const struct silofs_paddr *paddr,
 
 static off_t paddr_next_off(const struct silofs_paddr *paddr)
 {
-	const size_t len = silofs_ptype_size(paddr->ptype);
+	const size_t len = silofs_blobid_slotsize(&paddr->blobid);
+
+	silofs_assert_gt(len, 0);
+	silofs_assert_eq(paddr->pos % (long)len, 0);
 
 	return silofs_off_end(paddr->pos, len);
 }

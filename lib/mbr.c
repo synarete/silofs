@@ -401,7 +401,7 @@ mbraux_calc_mbref(struct silofs_mbraux *aux, const struct silofs_mbr1k *mbr1k,
 		.iov_len  = sizeof(*mbr1k),
 	};
 
-	silofs_calc_cas_paddr(&aux->md_hd, SILOFS_PTYPE_MBR, SILOFS_VTYPE_MBR,
+	silofs_calc_cas_paddr(&aux->md_hd, SILOFS_PTYPE_MBR, SILOFS_VTYPE_NONE,
 	                      &iov, 1, &paddr);
 	silofs_mbref_derive(out_mbref, &aux->md_hd, &paddr);
 }

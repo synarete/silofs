@@ -144,7 +144,6 @@ static int vni_verify_sub_view(const struct silofs_vnode_info *vni)
 	case SILOFS_VTYPE_DATA64K:
 		break;
 	case SILOFS_VTYPE_NONE:
-	case SILOFS_VTYPE_MBR:
 	case SILOFS_VTYPE_ARIX:
 	case SILOFS_VTYPE_SUPER:
 	case SILOFS_VTYPE_SPNODE:

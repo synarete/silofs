@@ -86,7 +86,6 @@ bool silofs_vtype_isunode(enum silofs_vtype vtype)
 	bool ret;
 
 	switch (vtype) {
-	case SILOFS_VTYPE_MBR:
 	case SILOFS_VTYPE_SUPER:
 	case SILOFS_VTYPE_SPNODE:
 	case SILOFS_VTYPE_SPLEAF:
@@ -128,7 +127,6 @@ bool silofs_vtype_isvnode(enum silofs_vtype vtype)
 		ret = true;
 		break;
 	case SILOFS_VTYPE_ARIX:
-	case SILOFS_VTYPE_MBR:
 	case SILOFS_VTYPE_SUPER:
 	case SILOFS_VTYPE_SPNODE:
 	case SILOFS_VTYPE_SPLEAF:
@@ -152,7 +150,6 @@ bool silofs_vtype_isdata(enum silofs_vtype vtype)
 		ret = true;
 		break;
 	case SILOFS_VTYPE_ARIX:
-	case SILOFS_VTYPE_MBR:
 	case SILOFS_VTYPE_SUPER:
 	case SILOFS_VTYPE_SPNODE:
 	case SILOFS_VTYPE_SPLEAF:
@@ -176,8 +173,6 @@ size_t silofs_vtype_size(enum silofs_vtype vtype)
 	switch (vtype) {
 	case SILOFS_VTYPE_ARIX:
 		return sizeof(struct silofs_arix_node);
-	case SILOFS_VTYPE_MBR:
-		return sizeof(struct silofs_mbr1k);
 	case SILOFS_VTYPE_SUPER:
 		return sizeof(struct silofs_super_block);
 	case SILOFS_VTYPE_SPNODE:

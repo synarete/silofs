@@ -501,7 +501,6 @@ spamaps_sub_map(struct silofs_spamaps *spam, enum silofs_vtype vtype)
 		ret = &spam->spa_data64k;
 		break;
 	case SILOFS_VTYPE_ARIX:
-	case SILOFS_VTYPE_MBR:
 	case SILOFS_VTYPE_SUPER:
 	case SILOFS_VTYPE_SPNODE:
 	case SILOFS_VTYPE_SPLEAF:

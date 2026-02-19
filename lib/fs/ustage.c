@@ -26,11 +26,9 @@ static int ubi_verify_sub_view(const struct silofs_unode_info *uni)
 {
 	const struct silofs_view *view = uni->un_lni.ln_view;
 	const enum silofs_vtype vtype  = silofs_uni_vtype(uni);
-	int ret                        = 0;
+	int ret = -1;
 
 	switch (vtype) {
-	case SILOFS_VTYPE_MBR:
-		break;
 	case SILOFS_VTYPE_SUPER:
 		ret = silofs_verify_super_block(&view->u.sb);
 		break;

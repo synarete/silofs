@@ -208,7 +208,6 @@ sb_mainsilofs_lsid_by(const struct silofs_super_block *sb,
 		break;
 	case SILOFS_VTYPE_NONE:
 	case SILOFS_VTYPE_ARIX:
-	case SILOFS_VTYPE_MBR:
 	case SILOFS_VTYPE_SUPER:
 	case SILOFS_VTYPE_SPNODE:
 	case SILOFS_VTYPE_SPLEAF:
@@ -301,7 +300,6 @@ sb_sproot_by(const struct silofs_super_block *sb, enum silofs_vtype vtype)
 		break;
 	case SILOFS_VTYPE_NONE:
 	case SILOFS_VTYPE_ARIX:
-	case SILOFS_VTYPE_MBR:
 	case SILOFS_VTYPE_SUPER:
 	case SILOFS_VTYPE_SPNODE:
 	case SILOFS_VTYPE_SPLEAF:

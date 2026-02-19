@@ -299,7 +299,7 @@ static int btc_stage_btnode(const struct silofs_btree_ctx *btc,
                             const struct silofs_btnptr *btnptr,
                             struct silofs_btnode_info **out_bti)
 {
-	return silofs_stage_btnode(btc->task->env, &btnptr->base, out_bti);
+	return silofs_stage_btnode(btc->task, &btnptr->base, out_bti);
 }
 
 static void btc_resolve_btroot(const struct silofs_btree_ctx *btc,

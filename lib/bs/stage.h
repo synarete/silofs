@@ -21,33 +21,35 @@
 #include "addr.h"
 #include "nodes.h"
 
-struct silofs_env;
+struct silofs_task_ctx;
 
-int silofs_spawn_uber(struct silofs_env *env, const struct silofs_pnptr *pnptr,
-                      struct silofs_uber_info **out_ubi);
+int silofs_spawn_uber(struct silofs_task_ctx    *task,
+                      const struct silofs_pnptr *pnptr,
+                      struct silofs_uber_info  **out_ubi);
 
-int silofs_stage_uber(struct silofs_env *env, const struct silofs_pnptr *pnptr,
-                      struct silofs_uber_info **out_ubi);
+int silofs_stage_uber(struct silofs_task_ctx    *task,
+                      const struct silofs_pnptr *pnptr,
+                      struct silofs_uber_info  **out_ubi);
 
-int silofs_spawn_bldesc(struct silofs_env          *env,
+int silofs_spawn_bldesc(struct silofs_task_ctx     *task,
                         const struct silofs_pnptr  *pnptr,
                         struct silofs_bldesc_info **out_bdi);
 
-int silofs_stage_bldesc(struct silofs_env          *env,
+int silofs_stage_bldesc(struct silofs_task_ctx     *task,
                         const struct silofs_pnptr  *pnptr,
                         struct silofs_bldesc_info **out_bdi);
 
-int silofs_spawn_btnode(struct silofs_env          *env,
+int silofs_spawn_btnode(struct silofs_task_ctx     *task,
                         const struct silofs_pnptr  *pnptr,
                         struct silofs_btnode_info **out_bti);
 
-int silofs_stage_btnode(struct silofs_env          *env,
+int silofs_stage_btnode(struct silofs_task_ctx     *task,
                         const struct silofs_pnptr  *pnptr,
                         struct silofs_btnode_info **out_bti);
 
-int silofs_require_paddr(struct silofs_env         *env,
+int silofs_require_paddr(struct silofs_task_ctx    *task,
                          const struct silofs_paddr *paddr);
 
-int silofs_destage_dirty(struct silofs_env *env);
+int silofs_destage_dirty(struct silofs_task_ctx *task);
 
 #endif /* SILOFS_STAGE_H_ */

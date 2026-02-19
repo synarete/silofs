@@ -21,9 +21,11 @@
 #include "uber.h"
 #include "stage.h"
 #include "mbr.h"
+#include "exectx.h"
 #include "env.h"
 
 struct silofs_stage_ctx {
+	struct silofs_task_ctx *task;
 	struct silofs_alloc *alloc;
 	struct silofs_dstor *dstor;
 	struct silofs_pcache *pcache;
@@ -33,14 +35,16 @@ struct silofs_stage_ctx {
 	struct silofs_pview *pview;
 };
 
-static void stc_init(struct silofs_stage_ctx *st_ctx, struct silofs_env *env)
+static void
+stc_init(struct silofs_stage_ctx *st_ctx, struct silofs_task_ctx *task)
 {
-	st_ctx->alloc     = env->alloc;
-	st_ctx->dstor     = &env->base.repo->re_dstor;
-	st_ctx->pcache    = env->base.pcache;
-	st_ctx->md_hd     = &env->md_hd;
-	st_ctx->enc_ci_hd = &env->enc_ci_hd;
-	st_ctx->dec_ci_hd = &env->dec_ci_hd;
+	st_ctx->task      = task;
+	st_ctx->alloc     = task->env->alloc;
+	st_ctx->dstor     = &task->env->base.repo->re_dstor;
+	st_ctx->pcache    = task->env->base.pcache;
+	st_ctx->md_hd     = &task->env->md_hd;
+	st_ctx->enc_ci_hd = &task->env->enc_ci_hd;
+	st_ctx->dec_ci_hd = &task->env->dec_ci_hd;
 	st_ctx->pview     = nullptr;
 }
 
@@ -183,13 +187,14 @@ static int stc_spawn_uber(const struct silofs_stage_ctx *st_ctx,
 	return 0;
 }
 
-int silofs_spawn_uber(struct silofs_env *env, const struct silofs_pnptr *pnptr,
+int silofs_spawn_uber(struct silofs_task_ctx *task,
+                      const struct silofs_pnptr *pnptr,
                       struct silofs_uber_info **out_ubi)
 {
 	struct silofs_stage_ctx st_ctx = {};
 	int err;
 
-	stc_init(&st_ctx, env);
+	stc_init(&st_ctx, task);
 	err = stc_spawn_uber(&st_ctx, pnptr, out_ubi);
 	stc_fini(&st_ctx);
 	return err;
@@ -231,13 +236,14 @@ out_ok:
 	return 0;
 }
 
-int silofs_stage_uber(struct silofs_env *env, const struct silofs_pnptr *pnptr,
+int silofs_stage_uber(struct silofs_task_ctx *task,
+                      const struct silofs_pnptr *pnptr,
                       struct silofs_uber_info **out_ubi)
 {
 	struct silofs_stage_ctx st_ctx = {};
 	int err;
 
-	stc_init(&st_ctx, env);
+	stc_init(&st_ctx, task);
 	err = stc_stage_uber(&st_ctx, pnptr, out_ubi);
 	stc_fini(&st_ctx);
 	return err;
@@ -277,14 +283,14 @@ static int stc_spawn_bldesc(const struct silofs_stage_ctx *st_ctx,
 	return 0;
 }
 
-int silofs_spawn_bldesc(struct silofs_env *env,
+int silofs_spawn_bldesc(struct silofs_task_ctx *task,
                         const struct silofs_pnptr *pnptr,
                         struct silofs_bldesc_info **out_bdi)
 {
 	struct silofs_stage_ctx st_ctx = {};
 	int err;
 
-	stc_init(&st_ctx, env);
+	stc_init(&st_ctx, task);
 	err = stc_spawn_bldesc(&st_ctx, pnptr, out_bdi);
 	stc_fini(&st_ctx);
 	return err;
@@ -326,14 +332,14 @@ out_ok:
 	return 0;
 }
 
-int silofs_stage_bldesc(struct silofs_env *env,
+int silofs_stage_bldesc(struct silofs_task_ctx *task,
                         const struct silofs_pnptr *pnptr,
                         struct silofs_bldesc_info **out_bdi)
 {
 	struct silofs_stage_ctx st_ctx = {};
 	int err;
 
-	stc_init(&st_ctx, env);
+	stc_init(&st_ctx, task);
 	err = stc_stage_bldesc(&st_ctx, pnptr, out_bdi);
 	stc_fini(&st_ctx);
 	return err;
@@ -374,14 +380,14 @@ static int stc_spawn_btnode(const struct silofs_stage_ctx *st_ctx,
 	return 0;
 }
 
-int silofs_spawn_btnode(struct silofs_env *env,
+int silofs_spawn_btnode(struct silofs_task_ctx *task,
                         const struct silofs_pnptr *pnptr,
                         struct silofs_btnode_info **out_bti)
 {
 	struct silofs_stage_ctx st_ctx = {};
 	int err;
 
-	stc_init(&st_ctx, env);
+	stc_init(&st_ctx, task);
 	err = stc_spawn_btnode(&st_ctx, pnptr, out_bti);
 	stc_fini(&st_ctx);
 	return err;
@@ -445,26 +451,26 @@ out_ok:
 	return 0;
 }
 
-int silofs_stage_btnode(struct silofs_env *env,
+int silofs_stage_btnode(struct silofs_task_ctx *task,
                         const struct silofs_pnptr *pnptr,
                         struct silofs_btnode_info **out_bti)
 {
 	struct silofs_stage_ctx st_ctx = {};
 	int err;
 
-	stc_init(&st_ctx, env);
+	stc_init(&st_ctx, task);
 	err = stc_stage_btnode(&st_ctx, pnptr, out_bti);
 	stc_fini(&st_ctx);
 	return err;
 }
 
-int silofs_require_paddr(struct silofs_env *env,
+int silofs_require_paddr(struct silofs_task_ctx *task,
                          const struct silofs_paddr *paddr)
 {
 	struct silofs_stage_ctx st_ctx = {};
 	int err;
 
-	stc_init(&st_ctx, env);
+	stc_init(&st_ctx, task);
 	err = stc_require_paddr(&st_ctx, paddr);
 	stc_fini(&st_ctx);
 	return err;
@@ -531,12 +537,12 @@ static int stc_destage_dirty(struct silofs_stage_ctx *st_ctx)
 	return 0;
 }
 
-int silofs_destage_dirty(struct silofs_env *env)
+int silofs_destage_dirty(struct silofs_task_ctx *task)
 {
 	struct silofs_stage_ctx st_ctx = {};
 	int err;
 
-	stc_init(&st_ctx, env);
+	stc_init(&st_ctx, task);
 	err = stc_destage_dirty(&st_ctx);
 	stc_fini(&st_ctx);
 	return err;

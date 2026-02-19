@@ -101,7 +101,7 @@ static int reload_uber(struct silofs_task_ctx *task)
 	if (err) {
 		return err;
 	}
-	err = silofs_stage_uber(task->env, &pnptr, &ubi);
+	err = silofs_stage_uber(task, &pnptr, &ubi);
 	if (err) {
 		return err;
 	}
@@ -123,7 +123,7 @@ stage_btree_root(struct silofs_task_ctx *task, enum silofs_vtype vtype)
 		log_dbg("missing btree root: vtype=%d", vtype);
 		return -SILOFS_ENOENT;
 	}
-	err = silofs_stage_btnode(task->env, &btnptr.base, &bti);
+	err = silofs_stage_btnode(task, &btnptr.base, &bti);
 	if (err) {
 		return err;
 	}

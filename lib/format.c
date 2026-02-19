@@ -105,7 +105,7 @@ static int flush_destage_dirty(struct silofs_task_ctx *task)
 		log_err("failed to flush dirty: err=%d", err);
 		return err;
 	}
-	err = silofs_destage_dirty(task->env);
+	err = silofs_destage_dirty(task);
 	if (err) {
 		log_err("failed to destage dirty: err=%d", err);
 		return err;
@@ -122,7 +122,7 @@ static int format_uber(struct silofs_task_ctx *task)
 	int err;
 
 	silofs_ignite_ubspace(task, &pnptr);
-	err = silofs_spawn_uber(task->env, &pnptr, &ubi);
+	err = silofs_spawn_uber(task, &pnptr, &ubi);
 	if (err) {
 		return err;
 	}
@@ -139,7 +139,7 @@ static int spawn_btroot(struct silofs_task_ctx *task, enum silofs_vtype vtype,
 	int err;
 
 	silofs_ignite_btspace(task, vtype, &pnptr);
-	err = silofs_spawn_btnode(task->env, &pnptr, out_bti);
+	err = silofs_spawn_btnode(task, &pnptr, out_bti);
 	if (err) {
 		return err;
 	}

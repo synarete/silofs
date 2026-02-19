@@ -92,10 +92,7 @@ bool silofs_vtype_isunode(enum silofs_vtype vtype)
 	case SILOFS_VTYPE_SPLEAF:
 		ret = true;
 		break;
-	case SILOFS_VTYPE_UBER:
 	case SILOFS_VTYPE_ARIX:
-	case SILOFS_VTYPE_BLDESC:
-	case SILOFS_VTYPE_BTNODE:
 	case SILOFS_VTYPE_LSMAP:
 	case SILOFS_VTYPE_INODE:
 	case SILOFS_VTYPE_XANODE:
@@ -130,10 +127,7 @@ bool silofs_vtype_isvnode(enum silofs_vtype vtype)
 	case SILOFS_VTYPE_DATA64K:
 		ret = true;
 		break;
-	case SILOFS_VTYPE_UBER:
 	case SILOFS_VTYPE_ARIX:
-	case SILOFS_VTYPE_BLDESC:
-	case SILOFS_VTYPE_BTNODE:
 	case SILOFS_VTYPE_MBR:
 	case SILOFS_VTYPE_SUPER:
 	case SILOFS_VTYPE_SPNODE:
@@ -157,10 +151,7 @@ bool silofs_vtype_isdata(enum silofs_vtype vtype)
 	case SILOFS_VTYPE_DATA64K:
 		ret = true;
 		break;
-	case SILOFS_VTYPE_UBER:
 	case SILOFS_VTYPE_ARIX:
-	case SILOFS_VTYPE_BLDESC:
-	case SILOFS_VTYPE_BTNODE:
 	case SILOFS_VTYPE_MBR:
 	case SILOFS_VTYPE_SUPER:
 	case SILOFS_VTYPE_SPNODE:
@@ -183,14 +174,8 @@ bool silofs_vtype_isdata(enum silofs_vtype vtype)
 size_t silofs_vtype_size(enum silofs_vtype vtype)
 {
 	switch (vtype) {
-	case SILOFS_VTYPE_UBER:
-		return sizeof(struct silofs_uber_node);
 	case SILOFS_VTYPE_ARIX:
 		return sizeof(struct silofs_arix_node);
-	case SILOFS_VTYPE_BLDESC:
-		return sizeof(struct silofs_blob_desc);
-	case SILOFS_VTYPE_BTNODE:
-		return sizeof(struct silofs_btree_node);
 	case SILOFS_VTYPE_MBR:
 		return sizeof(struct silofs_mbr1k);
 	case SILOFS_VTYPE_SUPER:

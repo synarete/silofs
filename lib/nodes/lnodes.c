@@ -1306,10 +1306,7 @@ silofs_new_unode(struct silofs_alloc *alloc, const struct silofs_uaddr *uaddr)
 	case SILOFS_VTYPE_SPLEAF:
 		uni = sli_to_uni(sli_new(alloc, uaddr));
 		break;
-	case SILOFS_VTYPE_UBER:
 	case SILOFS_VTYPE_ARIX:
-	case SILOFS_VTYPE_BLDESC:
-	case SILOFS_VTYPE_BTNODE:
 	case SILOFS_VTYPE_MBR:
 	case SILOFS_VTYPE_LSMAP:
 	case SILOFS_VTYPE_INODE:
@@ -1344,10 +1341,7 @@ void silofs_del_unode(struct silofs_unode_info *uni,
 	case SILOFS_VTYPE_SPLEAF:
 		sli_del(sli_from_uni(uni), alloc, flags);
 		break;
-	case SILOFS_VTYPE_UBER:
 	case SILOFS_VTYPE_ARIX:
-	case SILOFS_VTYPE_BLDESC:
-	case SILOFS_VTYPE_BTNODE:
 	case SILOFS_VTYPE_MBR:
 	case SILOFS_VTYPE_LSMAP:
 	case SILOFS_VTYPE_INODE:
@@ -1398,10 +1392,7 @@ silofs_new_vnode(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 	case SILOFS_VTYPE_DATA64K:
 		vni = fli_to_vni(fli_new(alloc, vaddr));
 		break;
-	case SILOFS_VTYPE_UBER:
 	case SILOFS_VTYPE_ARIX:
-	case SILOFS_VTYPE_BLDESC:
-	case SILOFS_VTYPE_BTNODE:
 	case SILOFS_VTYPE_MBR:
 	case SILOFS_VTYPE_SUPER:
 	case SILOFS_VTYPE_SPNODE:
@@ -1444,10 +1435,7 @@ void silofs_del_vnode(struct silofs_vnode_info *vni,
 	case SILOFS_VTYPE_DATA64K:
 		fli_del(fli_from_vni(vni), alloc, flags);
 		break;
-	case SILOFS_VTYPE_UBER:
 	case SILOFS_VTYPE_ARIX:
-	case SILOFS_VTYPE_BLDESC:
-	case SILOFS_VTYPE_BTNODE:
 	case SILOFS_VTYPE_MBR:
 	case SILOFS_VTYPE_SUPER:
 	case SILOFS_VTYPE_SPNODE:

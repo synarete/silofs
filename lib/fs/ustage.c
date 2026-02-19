@@ -46,10 +46,7 @@ static int ubi_verify_sub_view(const struct silofs_unode_info *uni)
 	case SILOFS_VTYPE_SYMVAL:
 	case SILOFS_VTYPE_DTNODE:
 	case SILOFS_VTYPE_FTNODE:
-	case SILOFS_VTYPE_UBER:
 	case SILOFS_VTYPE_ARIX:
-	case SILOFS_VTYPE_BLDESC:
-	case SILOFS_VTYPE_BTNODE:
 	case SILOFS_VTYPE_DATA1K:
 	case SILOFS_VTYPE_DATA4K:
 	case SILOFS_VTYPE_DATA64K:

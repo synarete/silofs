@@ -90,10 +90,7 @@ ubn_slot_of(const struct silofs_uber_node *ubn, enum silofs_vtype vtype)
 	case SILOFS_VTYPE_SPLEAF:
 	case SILOFS_VTYPE_NONE:
 	case SILOFS_VTYPE_MBR:
-	case SILOFS_VTYPE_UBER:
 	case SILOFS_VTYPE_ARIX:
-	case SILOFS_VTYPE_BLDESC:
-	case SILOFS_VTYPE_BTNODE:
 	case SILOFS_VTYPE_LAST:
 	default:
 		slot = ARRAY_SIZE(ubn->ub_vspace) - 1;

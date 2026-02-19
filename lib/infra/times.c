@@ -28,25 +28,30 @@
 
 static struct timespec silofs_start_ts_mono;
 
-static void do_clock_gettime(clockid_t clock_id, struct timespec *tp)
+static void do_clock_gettime(clockid_t clock_id, struct timespec *ts)
 {
 	int err;
 
-	err = silofs_sys_clock_gettime(clock_id, tp);
+	err = silofs_sys_clock_gettime(clock_id, ts);
 	if (err) {
 		silofs_panic("clock_gettime failure: clock_id=%ld err=%d",
 		             (long)clock_id, err);
 	}
 }
 
-void silofs_clock_real_now(struct timespec *ts)
+void silofs_clock_gettime_real(struct timespec *ts)
 {
 	do_clock_gettime(CLOCK_REALTIME, ts);
 }
 
-void silofs_clock_mono_now(struct timespec *ts)
+void silofs_clock_gettime_mono(struct timespec *ts)
 {
 	do_clock_gettime(CLOCK_MONOTONIC, ts);
+}
+
+void silofs_clock_gettime_boot(struct timespec *ts)
+{
+	do_clock_gettime(CLOCK_BOOTTIME, ts);
 }
 
 static void timespec_dif(const struct timespec *beg,
@@ -70,7 +75,7 @@ time_t silofs_time_mono_now(void)
 {
 	struct timespec ts;
 
-	silofs_clock_mono_now(&ts);
+	silofs_clock_gettime_mono(&ts);
 	return ts.tv_sec;
 }
 
@@ -86,22 +91,10 @@ void silofs_ts_copy(struct timespec *dst, const struct timespec *src)
 	dst->tv_nsec = src->tv_nsec;
 }
 
-int silofs_ts_gettime(struct timespec *ts, int realtime)
+void silofs_ts_diff(const struct timespec *beg, const struct timespec *end,
+                    struct timespec *out_dif)
 {
-	int err = 0;
-
-	if (realtime) {
-		err = silofs_sys_clock_gettime(CLOCK_REALTIME, ts);
-	} else {
-		err = silofs_sys_clock_gettime(CLOCK_MONOTONIC, ts);
-	}
-	return err;
-}
-
-void silofs_ts_diff(const struct timespec *start,
-                    const struct timespec *finish, struct timespec *out_dif)
-{
-	timespec_dif(start, finish, out_dif);
+	timespec_dif(beg, end, out_dif);
 }
 
 static int silofs_nanosleep(const struct timespec *req, struct timespec *rem)
@@ -125,7 +118,7 @@ int silofs_suspend_secs(time_t secs)
 		.tv_nsec = 0,
 	};
 
-	return (secs > 0) ? silofs_suspend_ts(&ts) : 0;
+	return (secs > 0) ? silofs_suspend(&ts) : 0;
 }
 
 int silofs_suspend_usecs(useconds_t usecs)
@@ -135,10 +128,10 @@ int silofs_suspend_usecs(useconds_t usecs)
 		.tv_nsec = usecs % 1000000,
 	};
 
-	return (usecs > 0) ? silofs_suspend_ts(&ts) : 0;
+	return (usecs > 0) ? silofs_suspend(&ts) : 0;
 }
 
-int silofs_suspend_ts(const struct timespec *ts)
+int silofs_suspend(const struct timespec *ts)
 {
 	struct timespec req = { .tv_sec = ts->tv_sec, .tv_nsec = ts->tv_nsec };
 	struct timespec rem = { .tv_sec = 0, .tv_nsec = 0 };
@@ -167,7 +160,7 @@ int silofs_init_times(void)
 	if (err) {
 		return err;
 	}
-	silofs_clock_mono_now(&silofs_start_ts_mono);
+	silofs_clock_gettime_mono(&silofs_start_ts_mono);
 	return 0;
 }
 
@@ -175,7 +168,7 @@ void silofs_uptime(struct timespec *out_ts)
 {
 	struct timespec ts_now;
 
-	silofs_clock_mono_now(&ts_now);
+	silofs_clock_gettime_mono(&ts_now);
 	silofs_ts_diff(&silofs_start_ts_mono, &ts_now, out_ts);
 }
 

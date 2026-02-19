@@ -342,7 +342,7 @@ void silofs_bdi_setup_spawned(struct silofs_bldesc_info *bdi,
 	const size_t nobjs_max = bld_calc_obj_state_max(bdi->bld, refmtype);
 	const size_t blob_size = obj_size * nobjs_max;
 
-	silofs_clock_real_now(&now);
+	silofs_clock_gettime_real(&now);
 	bld_set_btime(bdi->bld, &now);
 	bld_set_ctime(bdi->bld, &now);
 	bld_set_blobsize(bdi->bld, blob_size);

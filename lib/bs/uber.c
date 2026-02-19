@@ -260,7 +260,7 @@ static void ubi_setup_spawned(struct silofs_uber_info *ubi)
 {
 	struct timespec now;
 
-	silofs_clock_real_now(&now);
+	silofs_clock_gettime_real(&now);
 	ubn_setup(ubi->ubn, &now);
 	silofs_ubi_dirtify(ubi);
 }

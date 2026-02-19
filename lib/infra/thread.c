@@ -297,7 +297,7 @@ int silofs_cond_ntimedwait(struct silofs_cond *cond,
 {
 	struct timespec ts;
 
-	silofs_clock_mono_now(&ts);
+	silofs_clock_gettime_mono(&ts);
 	ts.tv_sec += nsec;
 	return silofs_cond_timedwait(cond, mutex, &ts);
 }
@@ -475,7 +475,7 @@ bool silofs_sem_ntimedwait(struct silofs_sem *sem, time_t nsec)
 {
 	struct timespec ts;
 
-	silofs_clock_real_now(&ts);
+	silofs_clock_gettime_real(&ts);
 	ts.tv_sec += nsec;
 
 	return silofs_sem_timedwait(sem, &ts);

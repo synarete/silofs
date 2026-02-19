@@ -105,7 +105,7 @@ static int arc_renew_ari(struct silofs_ar_ctx *ar_ctx)
 static int arc_init(struct silofs_ar_ctx *ar_ctx, struct silofs_task_ctx *task)
 {
 	silofs_memzero(ar_ctx, sizeof(*ar_ctx));
-	silofs_clock_real_now(&ar_ctx->now);
+	silofs_clock_gettime_real(&ar_ctx->now);
 	ar_ctx->task  = task;
 	ar_ctx->env   = task->env;
 	ar_ctx->ari   = nullptr;

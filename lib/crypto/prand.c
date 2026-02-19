@@ -53,32 +53,29 @@ struct silofs_prand_in {
 static void
 prandgen_fill_in(struct silofs_prandgen *prng, struct silofs_prand_in *prin)
 {
+	struct timespec ts[2];
+	struct silofs_uuid uu;
 	const size_t nd = ARRAY_SIZE(prin->d);
 	const size_t ne = ARRAY_SIZE(prng->entropy);
-	struct silofs_uuid uu;
-	struct timespec t;
 	size_t di;
 	uint64_t ev;
 
+	silofs_clock_gettime_boot(&ts[0]);
 	silofs_uuid_generate(&uu);
 	silofs_uuid_copyto(&uu, prin->u);
+	silofs_clock_gettime_real(&ts[1]);
 
-	di = prng->xseed + prng->slot;
-	ev = prng->entropy[di % ne];
-
+	di                 = prng->xseed + prng->slot;
+	ev                 = prng->entropy[di % ne];
 	prin->d[di++ % nd] = (uint32_t)ev;
-	silofs_clock_mono_now(&t);
-	prin->d[di++ % nd] = (uint32_t)t.tv_sec * 0xc2b2ae35;
+	prin->d[di++ % nd] = (uint32_t)ts[0].tv_sec * 0xc2b2ae35;
 	prin->d[di++ % nd] = prng->xseed;
-	prin->d[di++ % nd] = (uint32_t)t.tv_nsec;
+	prin->d[di++ % nd] = (uint32_t)ts[1].tv_nsec;
 
-	ev ^= (uint64_t)t.tv_nsec ^ 0xc6a4a7935bd1e995UL;
-	silofs_uptime(&t);
-	ev ^= silofs_twang64((uint64_t)t.tv_nsec ^ 0x9ae16a3b2f90404fUL);
-
-	prin->d[di++ % nd] = (uint32_t)t.tv_sec * 0x85ebca6b;
+	ev ^= silofs_twang64((uint64_t)ts[0].tv_nsec ^ 0x9ae16a3b2f90404fUL);
+	prin->d[di++ % nd] = (uint32_t)ts[1].tv_sec * 0x85ebca6b;
 	prin->d[di++ % nd] = (uint32_t)ev;
-	prin->d[di++ % nd] = (uint32_t)t.tv_nsec * 0x5bd1e995;
+	prin->d[di++ % nd] = (uint32_t)(ts[0].tv_nsec ^ ts[1].tv_nsec);
 	prin->d[di++ % nd] = (uint32_t)(ev >> 32);
 }
 

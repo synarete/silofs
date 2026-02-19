@@ -30,20 +30,20 @@ time_t silofs_time_real_now(void);
 
 time_t silofs_time_mono_now(void);
 
-void silofs_clock_real_now(struct timespec *ts);
+void silofs_clock_gettime_real(struct timespec *ts);
 
-void silofs_clock_mono_now(struct timespec *ts);
+void silofs_clock_gettime_mono(struct timespec *ts);
+
+void silofs_clock_gettime_boot(struct timespec *ts);
 
 void silofs_ts_omit(struct timespec *ts);
 
 void silofs_ts_copy(struct timespec *dst, const struct timespec *src);
 
-int silofs_ts_gettime(struct timespec *ts, int realtime);
+void silofs_ts_diff(const struct timespec *beg, const struct timespec *end,
+                    struct timespec *dif);
 
-void silofs_ts_diff(const struct timespec *start,
-                    const struct timespec *finish, struct timespec *dif);
-
-int silofs_suspend_ts(const struct timespec *ts);
+int silofs_suspend(const struct timespec *ts);
 
 int silofs_suspend_secs(time_t secs);
 

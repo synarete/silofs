@@ -51,12 +51,12 @@ void silofs_task_update_umask(struct silofs_task_ctx *task, mode_t umask)
 
 void silofs_task_update_times(struct silofs_task_ctx *task, bool rt)
 {
-	int err;
+	struct timespec *ts = &task->auth.ts;
 
-	err = silofs_ts_gettime(&task->auth.ts, rt);
-	if (err && rt) {
-		/* failure in clock_gettime -- fall to non-realtime */
-		silofs_ts_gettime(&task->auth.ts, !rt);
+	if (rt) {
+		silofs_clock_gettime_real(ts);
+	} else {
+		silofs_clock_gettime_mono(ts);
 	}
 }
 

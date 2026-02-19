@@ -170,8 +170,8 @@ static uint64_t ut_prandom_u64(void)
 {
 	struct timespec ts[2];
 
-	silofs_clock_mono_now(&ts[0]);
-	silofs_clock_real_now(&ts[1]);
+	silofs_clock_gettime_mono(&ts[0]);
+	silofs_clock_gettime_real(&ts[1]);
 
 	return silofs_xxh64(ts, sizeof(ts), (uint64_t)getpid());
 }
@@ -216,9 +216,9 @@ static void ut_track_test(struct ut_env *ute, const struct ut_testdef *td,
 {
 	if (pre_execute) {
 		silofs_log_info("  %-40s =>", td->name);
-		silofs_clock_mono_now(&ute->ts_start);
+		silofs_clock_gettime_mono(&ute->ts_start);
 	} else {
-		silofs_clock_mono_now(&ute->ts_finish);
+		silofs_clock_gettime_mono(&ute->ts_finish);
 		silofs_log_info("  %-40s OK", td->name);
 	}
 }

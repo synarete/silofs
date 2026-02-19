@@ -89,7 +89,7 @@ static void ut_setup_globals(int argc, char *argv[])
 
 	umask(0002);
 	setlocale(LC_ALL, "");
-	silofs_clock_mono_now(&ut_globals.start_ts);
+	silofs_clock_gettime_mono(&ut_globals.start_ts);
 }
 
 static void ut_setup_logging(void)

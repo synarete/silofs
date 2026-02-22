@@ -21,6 +21,13 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
+struct silofs_stype {
+	enum silofs_ptype ptype;
+	enum silofs_vtype vtype;
+};
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 size_t silofs_ptype_size(enum silofs_ptype ptype);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

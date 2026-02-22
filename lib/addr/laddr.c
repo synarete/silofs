@@ -247,7 +247,7 @@ void silofs_laddr_assign(struct silofs_laddr *laddr,
 
 enum silofs_vtype silofs_laddr_vtype(const struct silofs_laddr *laddr)
 {
-	return laddr->lsid.blobid.vtype;
+	return laddr->lsid.blobid.stype.vtype;
 }
 
 size_t silofs_laddr_len(const struct silofs_laddr *laddr)

@@ -68,13 +68,14 @@ void silofs_ignite_ubspace(const struct silofs_task_ctx *task,
 	struct silofs_layerid layerid;
 	struct silofs_uniqid uniqid;
 	struct silofs_blobid blobid;
+	const struct silofs_stype stype = {
+		.ptype = SILOFS_PTYPE_UBER,
+		.vtype = SILOFS_VTYPE_NONE,
+	};
 
 	gen_layerid(task, &layerid);
 	gen_uniqid(task, &uniqid);
-
-	silofs_blobid_init(&blobid, SILOFS_PTYPE_UBER, SILOFS_VTYPE_NONE);
-	silofs_blobid_update(&blobid, &layerid, &uniqid);
-
+	silofs_blobid_init(&blobid, &stype, &layerid, &uniqid);
 	silofs_paddr_init(out_paddr, &blobid, 0);
 }
 
@@ -84,12 +85,13 @@ void silofs_ignite_btspace(const struct silofs_task_ctx *task,
 {
 	struct silofs_uniqid uniqid;
 	struct silofs_blobid blobid;
+	const struct silofs_stype stype = {
+		.ptype = SILOFS_PTYPE_BTNODE,
+		.vtype = vtype,
+	};
 
 	gen_uniqid(task, &uniqid);
-
-	silofs_blobid_init(&blobid, SILOFS_PTYPE_BTNODE, vtype);
-	silofs_blobid_update(&blobid, top_layerid(task), &uniqid);
-
+	silofs_blobid_init(&blobid, &stype, top_layerid(task), &uniqid);
 	silofs_paddr_init(out_paddr, &blobid, 0);
 }
 
@@ -99,11 +101,29 @@ void silofs_ignite_vspace(const struct silofs_task_ctx *task,
 {
 	struct silofs_uniqid uniqid;
 	struct silofs_blobid blobid;
+	const struct silofs_stype stype = {
+		.ptype = SILOFS_PTYPE_VNODE,
+		.vtype = vtype,
+	};
 
 	gen_uniqid(task, &uniqid);
-
-	silofs_blobid_init(&blobid, SILOFS_PTYPE_VNODE, vtype);
-	silofs_blobid_update(&blobid, top_layerid(task), &uniqid);
-
+	silofs_blobid_init(&blobid, &stype, top_layerid(task), &uniqid);
 	silofs_paddr_init(out_paddr, &blobid, 0);
+}
+
+void silofs_carve_btspace(const struct silofs_task_ctx *task,
+                          enum silofs_vtype vtype,
+                          struct silofs_paddr *out_paddr)
+{
+	struct silofs_spdesc spdesc[2];
+	const struct silofs_stype stype = {
+		.ptype = SILOFS_PTYPE_BTNODE,
+		.vtype = vtype,
+	};
+
+	silofs_ubi_spdesc_of(task->env->ubi, &stype, &spdesc[0]);
+	silofs_paddr_next(&spdesc[0].end, out_paddr);
+
+	silofs_spdesc_setup(&spdesc[1], &spdesc[0].beg, out_paddr);
+	silofs_ubi_update_spdesc(task->env->ubi, &spdesc[1]);
 }

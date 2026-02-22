@@ -24,12 +24,12 @@
 
 static bool pnptr_isuber(const struct silofs_pnptr *pnptr)
 {
-	return pnptr->paddr.blobid.ptype == SILOFS_PTYPE_UBER;
+	return pnptr->paddr.blobid.stype.ptype == SILOFS_PTYPE_UBER;
 }
 
 static bool pnptr_isarix(const struct silofs_pnptr *pnptr)
 {
-	return pnptr->paddr.blobid.vtype == SILOFS_VTYPE_ARIX;
+	return pnptr->paddr.blobid.stype.vtype == SILOFS_VTYPE_ARIX;
 }
 
 static void mbr_meta_assign(struct silofs_mbr_meta *meta,

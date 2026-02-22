@@ -38,4 +38,8 @@ void silofs_ignite_vspace(const struct silofs_task_ctx *task,
                           enum silofs_vtype             vtype,
                           struct silofs_paddr          *out_paddr);
 
+void silofs_carve_btspace(const struct silofs_task_ctx *task,
+                          enum silofs_vtype             vtype,
+                          struct silofs_paddr          *out_paddr);
+
 #endif /* SILOFS_SPACE_H_ */

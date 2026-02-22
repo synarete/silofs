@@ -446,7 +446,7 @@ void silofs_calc_ar_desc(const struct silofs_mdigest_hd *md_hd,
 	};
 	enum silofs_vtype vtype;
 
-	vtype = laddr->lsid.blobid.vtype;
+	vtype = laddr->lsid.blobid.stype.vtype;
 	silofs_calc_cas_paddr(md_hd, SILOFS_PTYPE_NONE, vtype, &iov, 1,
 	                      &paddr);
 

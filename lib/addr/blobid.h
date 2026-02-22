@@ -21,13 +21,13 @@
 #include <stdlib.h>
 #include "str.h"
 #include "crypto.h"
+#include "stype.h"
 #include "layerid.h"
 
 struct silofs_blobid {
 	struct silofs_layerid layerid;
 	struct silofs_uniqid  uniqid;
-	enum silofs_ptype     ptype;
-	enum silofs_vtype     vtype;
+	struct silofs_stype   stype;
 	enum silofs_height    height;
 	uint16_t              vers;
 };
@@ -36,8 +36,10 @@ struct silofs_blobid {
 
 const struct silofs_blobid *silofs_blobid_none(void);
 
-void silofs_blobid_init(struct silofs_blobid *blobid, enum silofs_ptype ptype,
-                        enum silofs_vtype vtype);
+void silofs_blobid_init(struct silofs_blobid        *blobid,
+                        const struct silofs_stype   *stype,
+                        const struct silofs_layerid *layerid,
+                        const struct silofs_uniqid  *uniqid);
 
 void silofs_blobid_fini(struct silofs_blobid *blobid);
 
@@ -51,10 +53,6 @@ long silofs_blobid_compare(const struct silofs_blobid *blobid,
 
 bool silofs_blobid_isequal(const struct silofs_blobid *blobid,
                            const struct silofs_blobid *other);
-
-void silofs_blobid_update(struct silofs_blobid        *blobid,
-                          const struct silofs_layerid *layerid,
-                          const struct silofs_uniqid  *uniqid);
 
 size_t silofs_blobid_slotsize(const struct silofs_blobid *blobid);
 

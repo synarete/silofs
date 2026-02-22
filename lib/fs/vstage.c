@@ -461,7 +461,7 @@ static int vstgc_spawn_lseg(const struct silofs_vstage_ctx *vstg_ctx,
 
 	err = vstgc_do_spawn_lseg(vstg_ctx, lsid);
 	if (!err) {
-		vtype = lsid->blobid.vtype;
+		vtype = lsid->blobid.stype.vtype;
 		silofs_sbst_update_lsegs(vstg_ctx->sbi, vtype, 1);
 	}
 	return err;
@@ -473,13 +473,17 @@ vstgc_make_lsid_of(const struct silofs_vstage_ctx *vstg_ctx, off_t voff,
                    struct silofs_lsid *out_lsid)
 {
 	struct silofs_blobid sb_blobid, blobid;
+	struct silofs_uniqid uniqid;
+	const struct silofs_stype stype = {
+		.ptype = SILOFS_PTYPE_VNODE,
+		.vtype = vtype,
+	};
 
 	/* TODO: crap, re-write this logic */
 	silofs_sbi_self_blobid(vstg_ctx->sbi, &sb_blobid);
 
-	silofs_blobid_init(&blobid, SILOFS_PTYPE_VNODE, vtype);
-	silofs_layerid_assign(&blobid.layerid, &sb_blobid.layerid);
-	silofs_generate_uniqid(vstg_ctx->env->base.prng, &blobid.uniqid);
+	silofs_generate_uniqid(vstg_ctx->env->base.prng, &uniqid);
+	silofs_blobid_init(&blobid, &stype, &sb_blobid.layerid, &uniqid);
 	blobid.height = height;
 
 	silofs_lsid_setup(out_lsid, &blobid, voff);

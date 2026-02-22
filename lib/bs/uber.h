@@ -41,11 +41,18 @@ void silofs_ubi_btroot_of(const struct silofs_uber_info *ubi,
                           enum silofs_vtype              vtype,
                           struct silofs_btnptr          *out_btnptr);
 
+void silofs_ubi_spdesc_of(const struct silofs_uber_info *ubi,
+                          const struct silofs_stype     *stype,
+                          struct silofs_spdesc          *out_spdesc);
+
 void silofs_ubi_start_spdesc(struct silofs_uber_info   *ubi,
                              const struct silofs_paddr *paddr);
 
 void silofs_ubi_update_spdesc(struct silofs_uber_info    *ubi,
                               const struct silofs_spdesc *spdesc);
+
+bool silofs_ubi_onsame_layer(const struct silofs_uber_info   *ubi,
+                             const struct silofs_btnode_info *bti);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

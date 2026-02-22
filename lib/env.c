@@ -472,10 +472,16 @@ static void
 make_super_lsid(struct silofs_env *env, struct silofs_lsid *out_lsid)
 {
 	struct silofs_blobid blobid;
+	struct silofs_layerid layerid;
+	struct silofs_uniqid uniqid;
+	const struct silofs_stype stype = {
+		.ptype = SILOFS_PTYPE_VNODE,
+		.vtype = SILOFS_VTYPE_SUPER,
+	};
 
-	silofs_blobid_init(&blobid, SILOFS_PTYPE_VNODE, SILOFS_VTYPE_SUPER);
-	silofs_generate_layerid(env->base.prng, &blobid.layerid);
-	silofs_generate_uniqid(env->base.prng, &blobid.uniqid);
+	silofs_generate_layerid(env->base.prng, &layerid);
+	silofs_generate_uniqid(env->base.prng, &uniqid);
+	silofs_blobid_init(&blobid, &stype, &layerid, &uniqid);
 	blobid.height = SILOFS_HEIGHT_SUPER;
 
 	silofs_lsid_setup(out_lsid, &blobid, 0);

@@ -38,7 +38,7 @@ void silofs_paddr_init(struct silofs_paddr *paddr,
 {
 	silofs_blobid_assign(&paddr->blobid, blobid);
 	paddr->pos   = pos;
-	paddr->ptype = blobid->ptype;
+	paddr->ptype = blobid->stype.ptype;
 }
 
 void silofs_paddr_fini(struct silofs_paddr *paddr)
@@ -120,5 +120,5 @@ void silofs_paddr64b_xtoh(const struct silofs_paddr64b *paddr64,
 {
 	silofs_blobid56b_xtoh(&paddr64->blobid56b, &paddr->blobid);
 	paddr->pos   = silofs_off_to_cpu(paddr64->pos);
-	paddr->ptype = paddr->blobid.ptype;
+	paddr->ptype = paddr->blobid.stype.ptype;
 }

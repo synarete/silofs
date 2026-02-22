@@ -350,12 +350,12 @@ static int btc_spawn_btnode_at(const struct silofs_btree_ctx *btc,
 	return silofs_spawn_btnode_at(btc->task, paddr, out_bti);
 }
 
-static void btc_consume_btnode_space(const struct silofs_btree_ctx *btc,
-                                     struct silofs_paddr *out_paddr)
+static int btc_carve_btspace(const struct silofs_btree_ctx *btc,
+                             struct silofs_paddr *out_paddr)
 {
-	// XXX FIXME
-	silofs_unused(btc);
-	silofs_paddr_reset(out_paddr);
+	silofs_carve_btspace(btc->task, btc_vspace(btc), out_paddr);
+	/* TODO: check avail space, RDONLY etc */
+	return 0;
 }
 
 static int btc_spawn_btnode_by(const struct silofs_btree_ctx *btc,
@@ -365,7 +365,10 @@ static int btc_spawn_btnode_by(const struct silofs_btree_ctx *btc,
 	struct silofs_paddr paddr = { .pos = -1 };
 	int err;
 
-	btc_consume_btnode_space(btc, &paddr);
+	err = btc_carve_btspace(btc, &paddr);
+	if (err) {
+		return err;
+	}
 	err = btc_spawn_btnode_at(btc, &paddr, out_bti);
 	if (err) {
 		return err;
@@ -377,13 +380,7 @@ static int btc_spawn_btnode_by(const struct silofs_btree_ctx *btc,
 static bool btc_is_writeable_btnode(const struct silofs_btree_ctx *btc,
                                     const struct silofs_btnode_info *bti)
 {
-	const struct silofs_layerid *ub_layerid;
-	const struct silofs_layerid *btn_layerid;
-
-	ub_layerid  = silofs_ubi_layerid(btc->ubi);
-	btn_layerid = silofs_pni_layerid(&bti->btn_pni);
-
-	return silofs_layerid_isequal(ub_layerid, btn_layerid);
+	return silofs_ubi_onsame_layer(btc->ubi, bti);
 }
 
 static int btc_require_writable_path(struct silofs_btree_ctx *btc)

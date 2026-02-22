@@ -20,23 +20,6 @@
 #include "infra.h"
 #include "addr.h"
 
-struct silofs_pcache;
-struct silofs_repo;
-
-/* b+tree base refs  */
-struct silofs_btree_base {
-	struct silofs_pcache *pcache;
-	struct silofs_repo   *repo;
-};
-
-/* b+tree in-memory control object */
-struct silofs_btree {
-	struct silofs_btree_base bt_base;
-	struct silofs_paddr      bt_root;
-};
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 struct silofs_task_ctx;
 
 int silofs_resolve_vtop(struct silofs_task_ctx    *task,

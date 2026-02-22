@@ -100,8 +100,6 @@ void silofs_calc_cas_paddr(const struct silofs_mdigest_hd *md_hd,
 	struct silofs_hash256 hash;
 	struct silofs_blobid blobid;
 
-	silofs_assert_ne(vtype, 0);
-
 	silofs_sha3_256_ofv(md_hd, iov, iov_cnt, &hash);
 	silofs_blobid_init(&blobid, ptype, vtype);
 	silofs_uniqid_setup_by(&blobid.uniqid, &hash);

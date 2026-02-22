@@ -29,7 +29,7 @@
 #define BASE64_DECODE_ENT(ch, v) [(ch)] = ((short)(v) + BASE64_DECODE_ADD)
 
 static const char base64_encode_tbl[] =
-	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/\0";
 
 static const int8_t base64_decode_tbl[] = {
 	BASE64_DECODE_ENT('A', 0x0),  BASE64_DECODE_ENT('B', 0x1),

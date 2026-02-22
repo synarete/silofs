@@ -83,7 +83,7 @@
 #define SILOFS_LAYERID_SIZE (16)
 
 /* unique identifier size */
-#define SILOFS_UNIQEID_SIZE (32)
+#define SILOFS_UNIQEID_SIZE (16)
 
 /* blob identifier size */
 #define SILOFS_BLOBID_SIZE (56)
@@ -534,7 +534,7 @@ struct silofs_blobid56b {
 	uint8_t               ptype;
 	uint8_t               vtype;
 	uint8_t               height;
-	uint8_t               reserved[3];
+	uint8_t               reserved[19];
 	uint16_t              vers;
 } silofs_attr_aligned8;
 

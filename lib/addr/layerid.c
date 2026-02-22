@@ -64,9 +64,14 @@ void silofs_uniqid_reset(struct silofs_uniqid *uniqid)
 void silofs_uniqid_setup_by(struct silofs_uniqid *uniqid,
                             const struct silofs_hash256 *hash)
 {
-	STATICASSERT_EQ(sizeof(uniqid->id), sizeof(hash->hash));
+	STATICASSERT_EQ(2 * sizeof(uniqid->id), sizeof(hash->hash));
 
-	memcpy(uniqid->id, hash->hash, sizeof(uniqid->id));
+	silofs_uniqid_reset(uniqid);
+	for (size_t i = 0; i < ARRAY_SIZE(hash->hash); ++i) {
+		const size_t j = i % ARRAY_SIZE(uniqid->id);
+
+		uniqid->id[j] ^= hash->hash[i];
+	}
 }
 
 void silofs_uniqid_assign(struct silofs_uniqid *uniqid,

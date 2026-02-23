@@ -72,4 +72,19 @@ int silofs_mbi_import(struct silofs_mbr_info    *mbi,
 int silofs_derive_mbr_meta(const struct silofs_password *passwd,
                            struct silofs_mbr_meta       *out_mbr_meta);
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_commit_mbr(const struct silofs_mbr_info *mbi,
+                      struct silofs_dstor          *dstor,
+                      struct silofs_mbref          *out_mbref);
+
+int silofs_sense_mbr(struct silofs_dstor       *dstor,
+                     const struct silofs_mbref *mbref);
+
+int silofs_reload_mbr(struct silofs_mbr_info *mbi, struct silofs_dstor *dstor,
+                      const struct silofs_mbref *mbref);
+
+int silofs_unref_mbr(struct silofs_dstor       *dstor,
+                     const struct silofs_mbref *mbref);
+
 #endif /* SILOFS_MBR_H_ */

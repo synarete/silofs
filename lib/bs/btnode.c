@@ -71,22 +71,9 @@ static bool btn_isleaf(const struct silofs_btree_node *btn)
 	return (height == 1);
 }
 
-static size_t btn_nchilds(const struct silofs_btree_node *btn)
-{
-	return btn->btn_nchilds;
-}
-
-static void btn_set_nchilds(struct silofs_btree_node *btn, size_t nchilds)
-{
-	STATICASSERT_LT(ARRAY_SIZE(btn->btn_child), UINT8_MAX);
-	silofs_assert_le(nchilds, ARRAY_SIZE(btn->btn_child));
-
-	btn->btn_nchilds = (uint8_t)nchilds;
-}
-
 static size_t btn_nkeys(const struct silofs_btree_node *btn)
 {
-	return btn->btn_nkeys;
+	return silofs_le16_to_cpu(btn->btn_nkeys);
 }
 
 static void btn_set_nkeys(struct silofs_btree_node *btn, size_t nkeys)
@@ -94,7 +81,12 @@ static void btn_set_nkeys(struct silofs_btree_node *btn, size_t nkeys)
 	STATICASSERT_LT(ARRAY_SIZE(btn->btn_key), UINT8_MAX);
 	silofs_assert_le(nkeys, ARRAY_SIZE(btn->btn_key));
 
-	btn->btn_nkeys = (uint8_t)nkeys;
+	btn->btn_nkeys = silofs_cpu_to_le16((uint16_t)nkeys);
+}
+
+static size_t btn_nchilds(const struct silofs_btree_node *btn)
+{
+	return btn_nkeys(btn) + 1;
 }
 
 static void btn_inc_nkeys(struct silofs_btree_node *btn)
@@ -306,7 +298,6 @@ static void btn_setup(struct silofs_btree_node *btn)
 	btn_set_flags(btn, SILOFS_PNODEF_NONE);
 	btn_set_height(btn, 1);
 	btn_set_nkeys(btn, 0);
-	btn_set_nchilds(btn, 0);
 	btn_reset_childs(btn);
 	btn_reset_keys(btn);
 }
@@ -377,11 +368,6 @@ size_t silofs_bti_height(const struct silofs_btnode_info *bti)
 size_t silofs_bti_nkeys(const struct silofs_btnode_info *bti)
 {
 	return btn_nkeys(bti->btn);
-}
-
-size_t silofs_bti_nchilds(const struct silofs_btnode_info *bti)
-{
-	return btn_nchilds(bti->btn);
 }
 
 static uint64_t bti_median_key(const struct silofs_btnode_info *bti)
@@ -594,7 +580,7 @@ int silofs_split_btnode(struct silofs_btnode_info *bti,
 	return 0;
 }
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 struct silofs_btnode_info *
 silofs_lookup_cached_btnode(struct silofs_pcache *pcache,

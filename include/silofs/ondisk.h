@@ -1011,8 +1011,7 @@ struct silofs_btree_node {
 	uint8_t                  btn_vspace;
 	uint8_t                  btn_reserved1;
 	uint16_t                 btn_height;
-	uint8_t                  btn_nkeys;
-	uint8_t                  btn_nchilds;
+	uint16_t                 btn_nkeys;
 	uint8_t                  btn_reserved2[86];
 	uint64_t                 btn_key[SILOFS_BTREE_NODE_NKEYS];
 	uint8_t                  btn_reserved3[144];

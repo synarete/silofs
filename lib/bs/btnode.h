@@ -50,8 +50,6 @@ size_t silofs_bti_height(const struct silofs_btnode_info *bti);
 
 size_t silofs_bti_nkeys(const struct silofs_btnode_info *bti);
 
-size_t silofs_bti_nchilds(const struct silofs_btnode_info *bti);
-
 int silofs_bti_resolve(const struct silofs_btnode_info *bti, uint64_t key,
                        struct silofs_btnptr *out_btnptr);
 

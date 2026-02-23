@@ -424,7 +424,6 @@ static void validate_ondisk_btnode(void)
 	REQUIRE_OFFSET32(struct silofs_btree_node, btn_vspace, 36);
 	REQUIRE_OFFSETXX(struct silofs_btree_node, btn_height, 38);
 	REQUIRE_OFFSETXX(struct silofs_btree_node, btn_nkeys, 40);
-	REQUIRE_OFFSETXX(struct silofs_btree_node, btn_nchilds, 41);
 	REQUIRE_OFFSET64(struct silofs_btree_node, btn_key, 128);
 	REQUIRE_OFFSET64(struct silofs_btree_node, btn_child, 512);
 	REQUIRE_SIZEOF(struct silofs_btree_node, SILOFS_BTREE_NODE_SIZE);

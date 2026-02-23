@@ -231,32 +231,25 @@ static void btn_reset_childs(struct silofs_btree_node *btn)
 	}
 }
 
-static void
-btn_resolve_internal_child(const struct silofs_btree_node *btn, uint64_t key,
-                           struct silofs_btnptr *out_child)
+static size_t
+btn_key_to_slot(const struct silofs_btree_node *btn, uint64_t key)
 {
-	const size_t slot = btn_find_slot_ge(btn, key);
+	size_t slot;
 
-	btn_child_at(btn, slot, out_child);
-}
-
-static void
-btn_resolve_leaf_child(const struct silofs_btree_node *btn, uint64_t key,
-                       struct silofs_btnptr *out_child)
-{
-	const size_t slot = btn_find_slot_eq(btn, key);
-
-	btn_child_at(btn, slot, out_child);
+	if (btn_isleaf(btn)) {
+		slot = btn_find_slot_eq(btn, key);
+	} else {
+		slot = btn_find_slot_ge(btn, key);
+	}
+	return slot;
 }
 
 static void btn_resolve_child(const struct silofs_btree_node *btn,
                               uint64_t key, struct silofs_btnptr *out_child)
 {
-	if (btn_isleaf(btn)) {
-		btn_resolve_leaf_child(btn, key, out_child);
-	} else {
-		btn_resolve_internal_child(btn, key, out_child);
-	}
+	const size_t slot = btn_key_to_slot(btn, key);
+
+	btn_child_at(btn, slot, out_child);
 }
 
 static void btn_insert_child(struct silofs_btree_node *btn, size_t slot,
@@ -391,20 +384,6 @@ size_t silofs_bti_nchilds(const struct silofs_btnode_info *bti)
 	return btn_nchilds(bti->btn);
 }
 
-static bool bti_has_child_at(const struct silofs_btnode_info *bti, size_t slot)
-{
-	return (slot < silofs_bti_nchilds(bti));
-}
-
-void silofs_bti_child_at(const struct silofs_btnode_info *bti, size_t slot,
-                         struct silofs_btnptr *out_btnptr)
-{
-	silofs_btnptr_reset(out_btnptr);
-	if (bti_has_child_at(bti, slot)) {
-		btn_child_at(bti->btn, slot, out_btnptr);
-	}
-}
-
 uint64_t silofs_bti_median_key(const struct silofs_btnode_info *bti)
 {
 	const size_t nkeys = silofs_bti_nkeys(bti);
@@ -460,9 +439,11 @@ int silofs_bti_expand(struct silofs_btnode_info *bti, uint64_t key,
 	if (!nfree_keys) {
 		return -SILOFS_ENOSPC;
 	}
-	slot = btn_find_slot_ge(btn, key);
+	slot = btn_key_to_slot(btn, key);
 	btn_insert_child(btn, slot, btnptr);
 	btn_insert_key(btn, slot, key);
+
+	silofs_bti_dirtify(bti);
 	return 0;
 }
 

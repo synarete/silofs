@@ -93,7 +93,7 @@ void silofs_ciargs_reset(struct silofs_ciargs *ciargs)
 	silofs_ciargs_assign(ciargs, silofs_ciargs_default());
 }
 
-static bool ciargs_isequal(const struct silofs_ciargs *ciargs,
+bool silofs_ciargs_isequal(const struct silofs_ciargs *ciargs,
                            const struct silofs_ciargs *other)
 {
 	return (ciargs->algo == other->algo) && (ciargs->mode == other->mode);
@@ -169,7 +169,7 @@ int silofs_cipher_init(struct silofs_cipher_hd *ci_hd)
 static bool cipher_has_args(const struct silofs_cipher_hd *ci_hd,
                             const struct silofs_ciargs *ciargs)
 {
-	return ciargs_isequal(&ci_hd->ci_args, ciargs);
+	return silofs_ciargs_isequal(&ci_hd->ci_args, ciargs);
 }
 
 int silofs_cipher_reinit(struct silofs_cipher_hd *ci_hd,

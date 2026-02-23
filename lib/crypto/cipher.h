@@ -47,6 +47,9 @@ void silofs_ciargs_assign(struct silofs_ciargs       *ciargs,
 
 void silofs_ciargs_reset(struct silofs_ciargs *ciargs);
 
+bool silofs_ciargs_isequal(const struct silofs_ciargs *ciargs,
+                           const struct silofs_ciargs *other);
+
 int silofs_ciargs_check(const struct silofs_ciargs *ciargs);
 
 int silofs_cipher_init(struct silofs_cipher_hd *ci_hd);

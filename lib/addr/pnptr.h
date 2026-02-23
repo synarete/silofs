@@ -49,6 +49,9 @@ void silofs_pnptr_reset(struct silofs_pnptr *pnptr);
 void silofs_pnptr_assign(struct silofs_pnptr       *pnptr,
                          const struct silofs_pnptr *other);
 
+bool silofs_pnptr_isequal(const struct silofs_pnptr *pnptr,
+                          const struct silofs_pnptr *other);
+
 bool silofs_pnptr_isnull(const struct silofs_pnptr *pnptr);
 
 void silofs_pnptr192b_htox(struct silofs_pnptr192b   *pnptr192,

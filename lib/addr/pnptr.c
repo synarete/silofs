@@ -61,6 +61,13 @@ void silofs_pnptr_assign(struct silofs_pnptr *pnptr,
 	silofs_nmeta_assign(&pnptr->nmeta, &other->nmeta);
 }
 
+bool silofs_pnptr_isequal(const struct silofs_pnptr *pnptr,
+                          const struct silofs_pnptr *other)
+{
+	return silofs_paddr_isequal(&pnptr->paddr, &other->paddr) &&
+	       silofs_nmeta_isequal(&pnptr->nmeta, &other->nmeta);
+}
+
 bool silofs_pnptr_isnull(const struct silofs_pnptr *pnptr)
 {
 	return silofs_paddr_isnull(&pnptr->paddr) ||

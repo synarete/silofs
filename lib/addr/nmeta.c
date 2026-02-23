@@ -49,6 +49,13 @@ void silofs_nmeta_assign(struct silofs_nmeta *nmeta,
 	silofs_ciargs_assign(&nmeta->ciargs, &other->ciargs);
 }
 
+bool silofs_nmeta_isequal(const struct silofs_nmeta *nmeta,
+                          const struct silofs_nmeta *other)
+{
+	return silofs_ciargs_isequal(&nmeta->ciargs, &other->ciargs) &&
+	       silofs_civkey_isequal(&nmeta->civkey, &other->civkey);
+}
+
 void silofs_nmeta128b_htox(struct silofs_nmeta128b *nmeta128,
                            const struct silofs_nmeta *nmeta)
 {

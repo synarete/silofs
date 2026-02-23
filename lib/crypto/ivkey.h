@@ -60,6 +60,9 @@ void silofs_ckey_reset(struct silofs_ckey *key);
 void silofs_ckey_assign(struct silofs_ckey       *key,
                         const struct silofs_ckey *other);
 
+bool silofs_ckey_isequal(const struct silofs_ckey *key,
+                         const struct silofs_ckey *other);
+
 void silofs_ckey_mkrand(struct silofs_ckey *key);
 
 void silofs_ckey_xor_with(struct silofs_ckey *key, const void *buf,
@@ -84,6 +87,9 @@ void silofs_civkey_setup(struct silofs_civkey     *civkey,
 
 void silofs_civkey_assign(struct silofs_civkey       *civkey,
                           const struct silofs_civkey *other);
+
+bool silofs_civkey_isequal(const struct silofs_civkey *civkey,
+                           const struct silofs_civkey *other);
 
 void silofs_civkey_xor_with(struct silofs_civkey       *civkey,
                             const struct silofs_civkey *other);

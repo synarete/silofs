@@ -54,9 +54,6 @@ uint64_t silofs_bti_median_key(const struct silofs_btnode_info *bti);
 
 size_t silofs_bti_nchilds(const struct silofs_btnode_info *bti);
 
-void silofs_bti_child_at(const struct silofs_btnode_info *bti, size_t slot,
-                         struct silofs_btnptr *out_btnptr);
-
 int silofs_bti_resolve(const struct silofs_btnode_info *bti, uint64_t key,
                        struct silofs_btnptr *out_btnptr);
 

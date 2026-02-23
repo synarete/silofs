@@ -118,6 +118,12 @@ void silofs_ckey_assign(struct silofs_ckey *key,
 	memcpy(key, other, sizeof(*key));
 }
 
+bool silofs_ckey_isequal(const struct silofs_ckey *key,
+                         const struct silofs_ckey *other)
+{
+	return memcmp(key, other, sizeof(*key)) == 0;
+}
+
 void silofs_ckey_mkrand(struct silofs_ckey *key)
 {
 	randomize(key->key, sizeof(key->key), true);
@@ -179,6 +185,13 @@ void silofs_civkey_assign(struct silofs_civkey *civkey,
                           const struct silofs_civkey *other)
 {
 	silofs_civkey_setup(civkey, &other->key, &other->iv);
+}
+
+bool silofs_civkey_isequal(const struct silofs_civkey *civkey,
+                           const struct silofs_civkey *other)
+{
+	return silofs_civ_isequal(&civkey->iv, &other->iv) &&
+	       silofs_ckey_isequal(&civkey->key, &other->key);
 }
 
 void silofs_civkey_xor_with(struct silofs_civkey *civkey,

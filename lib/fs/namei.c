@@ -2486,14 +2486,9 @@ static const struct silofs_mbr_info *fs_mbi(const struct silofs_task_ctx *task)
 static void fill_query_boot_fsref(const struct silofs_task_ctx *task,
                                   struct silofs_ioc_query *query)
 {
-	struct silofs_mbr1k mbr1k;
-	struct silofs_mbref mbref;
-	int err;
+	const struct silofs_mbr_info *mbi = fs_mbi(task);
 
-	err = silofs_mbi_export(fs_mbi(task), &mbref, &mbr1k);
-	if (!err) {
-		silofs_fsref_export(&query->u.boot.fsref, &mbref);
-	}
+	silofs_fsref_export(&query->u.boot.fsref, &mbi->mb_ref);
 }
 
 static void fill_query_boot(const struct silofs_task_ctx *task,

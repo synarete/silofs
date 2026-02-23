@@ -517,6 +517,17 @@ out:
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static void
+mbi_set_ref(struct silofs_mbr_info *mbi, const struct silofs_mbref *mbref)
+{
+	silofs_mbref_assign(&mbi->mb_ref, mbref);
+}
+
+static void mbi_reset_ref(struct silofs_mbr_info *mbi)
+{
+	silofs_mbref_reset(&mbi->mb_ref);
+}
+
 void silofs_mbi_init(struct silofs_mbr_info *mbi, enum silofs_mbr_mode mode)
 {
 	const struct silofs_mbr_meta meta_none = {
@@ -525,10 +536,12 @@ void silofs_mbi_init(struct silofs_mbr_info *mbi, enum silofs_mbr_mode mode)
 
 	mbr_meta_assign(&mbi->mb_meta, &meta_none);
 	mbr1k_init(&mbi->mb_mbr1k, mode);
+	mbi_reset_ref(mbi);
 }
 
 void silofs_mbi_fini(struct silofs_mbr_info *mbi)
 {
+	mbi_reset_ref(mbi);
 	mbr_meta_reset(&mbi->mb_meta);
 	mbr1k_fini(&mbi->mb_mbr1k);
 }
@@ -652,9 +665,9 @@ mbi_set_mbr1k(struct silofs_mbr_info *mbi, const struct silofs_mbr1k *mbr1k)
 	return 0;
 }
 
-int silofs_mbi_import(struct silofs_mbr_info *mbi,
-                      const struct silofs_mbref *mbref,
-                      const struct silofs_mbr1k *mbr1k_enc)
+static int
+mbi_import(struct silofs_mbr_info *mbi, const struct silofs_mbref *mbref,
+           const struct silofs_mbr1k *mbr1k_enc)
 {
 	struct silofs_mbr1k mbr1k;
 	struct silofs_mbraux aux;
@@ -673,6 +686,9 @@ int silofs_mbi_import(struct silofs_mbr_info *mbi,
 		goto out;
 	}
 	err = mbi_set_mbr1k(mbi, &mbr1k);
+	if (err) {
+		goto out;
+	}
 out:
 	mbraux_fini(&aux);
 	return err;
@@ -742,8 +758,7 @@ unref_mbr_at(struct silofs_dstor *dstor, const struct silofs_mbref *mbref)
 	return 0;
 }
 
-int silofs_commit_mbr(const struct silofs_mbr_info *mbi,
-                      struct silofs_dstor *dstor,
+int silofs_commit_mbr(struct silofs_mbr_info *mbi, struct silofs_dstor *dstor,
                       struct silofs_mbref *out_mbref)
 {
 	struct silofs_mbr1k mbr1k = {
@@ -759,6 +774,7 @@ int silofs_commit_mbr(const struct silofs_mbr_info *mbi,
 	if (err) {
 		return err;
 	}
+	mbi_set_ref(mbi, out_mbref);
 	return 0;
 }
 
@@ -784,26 +800,20 @@ int silofs_reload_mbr(struct silofs_mbr_info *mbi, struct silofs_dstor *dstor,
 	if (err) {
 		return err;
 	}
-	err = silofs_mbi_import(mbi, mbref, &mbr1k);
+	err = mbi_import(mbi, mbref, &mbr1k);
 	if (err) {
 		return err;
 	}
+	mbi_set_ref(mbi, mbref);
 	return 0;
 }
 
-int silofs_unref_mbr(struct silofs_dstor *dstor,
+int silofs_unref_mbr(struct silofs_mbr_info *mbi, struct silofs_dstor *dstor,
                      const struct silofs_mbref *mbref)
 {
-	struct silofs_mbr1k mbr1k = {
-		.mbr_magic = UINT64_MAX,
-	};
 	int err;
 
-	err = stat_mbr_at(dstor, mbref);
-	if (err) {
-		return err;
-	}
-	err = load_mbr_at(dstor, mbref, &mbr1k);
+	err = silofs_reload_mbr(mbi, dstor, mbref);
 	if (err) {
 		return err;
 	}
@@ -811,5 +821,6 @@ int silofs_unref_mbr(struct silofs_dstor *dstor,
 	if (err) {
 		return err;
 	}
+	mbi_reset_ref(mbi);
 	return 0;
 }

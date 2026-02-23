@@ -124,10 +124,6 @@ int silofs_env_shut(struct silofs_env *env);
 int silofs_env_forkfs(struct silofs_env    *env,
                       struct silofs_mbrefs *out_mbrefs);
 
-int silofs_env_export_fs_mbr(struct silofs_env   *env,
-                             struct silofs_mbref *out_mbref,
-                             struct silofs_mbr1k *out_mbr1k);
-
 int silofs_env_export_ar_mbr(struct silofs_env   *env,
                              struct silofs_mbref *out_mbref,
                              struct silofs_mbr1k *out_mbr1k);
@@ -150,7 +146,7 @@ int silofs_env_reload_fs_mbr(struct silofs_env         *env,
 int silofs_env_reload_ar_mbr(struct silofs_env         *env,
                              const struct silofs_mbref *mbref);
 
-int silofs_env_unlink_mbr(struct silofs_env         *env,
-                          const struct silofs_mbref *mbref);
+int silofs_env_unref_fs_mbr(struct silofs_env         *env,
+                            const struct silofs_mbref *mbref);
 
 #endif /* SILOFS_ENV_H_ */

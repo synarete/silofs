@@ -20,6 +20,11 @@
 #include "paddr.h"
 #include "mbref.h"
 
+void silofs_mbref_reset(struct silofs_mbref *mbref)
+{
+	silofs_memzero(mbref, sizeof(*mbref));
+}
+
 void silofs_mbref_setup(struct silofs_mbref *mbref,
                         const struct silofs_blobidx *blobidx)
 {

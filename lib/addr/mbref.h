@@ -34,6 +34,8 @@ struct silofs_mbrefs {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+void silofs_mbref_reset(struct silofs_mbref *mbref);
+
 void silofs_mbref_setup(struct silofs_mbref         *mbref,
                         const struct silofs_blobidx *blobidx);
 

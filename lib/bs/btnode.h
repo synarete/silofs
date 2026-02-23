@@ -50,23 +50,24 @@ size_t silofs_bti_height(const struct silofs_btnode_info *bti);
 
 size_t silofs_bti_nkeys(const struct silofs_btnode_info *bti);
 
-uint64_t silofs_bti_median_key(const struct silofs_btnode_info *bti);
-
 size_t silofs_bti_nchilds(const struct silofs_btnode_info *bti);
 
 int silofs_bti_resolve(const struct silofs_btnode_info *bti, uint64_t key,
                        struct silofs_btnptr *out_btnptr);
 
-int silofs_bti_update_child(struct silofs_btnode_info *bti, uint64_t key,
-                            const struct silofs_btnptr *btnptr);
-
-int silofs_bti_expand(struct silofs_btnode_info *bti, uint64_t key,
+int silofs_bti_relink(struct silofs_btnode_info *bti, uint64_t key,
                       const struct silofs_btnptr *btnptr);
 
-void silofs_bti_set_final(struct silofs_btnode_info  *bti,
-                          const struct silofs_btnptr *btnptr);
+int silofs_bti_insert(struct silofs_btnode_info *bti, uint64_t key,
+                      const struct silofs_btnptr *btnptr);
 
 bool silofs_bti_isfull(const struct silofs_btnode_info *bti);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_split_btnode(struct silofs_btnode_info *bti,
+                        struct silofs_btnode_info *bti_next,
+                        uint64_t                  *out_mkey);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

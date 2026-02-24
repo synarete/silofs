@@ -223,6 +223,19 @@ static void btn_reset_childs(struct silofs_btree_node *btn)
 	}
 }
 
+static void btn_reset_tail(struct silofs_btree_node *btn)
+{
+	const size_t nkeys_max = btn_nkeys_max(btn);
+	const size_t nkeys     = btn_nkeys(btn);
+
+	for (size_t slot = nkeys; slot < nkeys_max; ++slot) {
+		btn_reset_key_at(btn, slot);
+	}
+	for (size_t slot = nkeys + 1; slot <= nkeys_max; ++slot) {
+		btn_reset_child_at(btn, slot);
+	}
+}
+
 static size_t
 btn_key_to_slot(const struct silofs_btree_node *btn, uint64_t key)
 {
@@ -365,27 +378,21 @@ size_t silofs_bti_height(const struct silofs_btnode_info *bti)
 	return btn_height(bti->btn);
 }
 
-size_t silofs_bti_nkeys(const struct silofs_btnode_info *bti)
+static size_t bti_nkeys(const struct silofs_btnode_info *bti)
 {
 	return btn_nkeys(bti->btn);
 }
 
-static uint64_t bti_median_key(const struct silofs_btnode_info *bti)
+static uint64_t bti_key_at(const struct silofs_btnode_info *bti, size_t slot)
 {
-	const size_t nkeys = silofs_bti_nkeys(bti);
-	uint64_t ikey[2];
-	uint64_t mkey;
+	const size_t nkeys = bti_nkeys(bti);
+	uint64_t key       = SILOFS_BTREE_KEY_NULL;
 
-	if (nkeys == 0) {
-		mkey = SILOFS_BTREE_KEY_NULL;
-	} else if (nkeys % 2 == 1) {
-		mkey = btn_key_at(bti->btn, nkeys / 2);
-	} else {
-		ikey[0] = btn_key_at(bti->btn, (nkeys - 1) / 2);
-		ikey[1] = btn_key_at(bti->btn, nkeys / 2);
-		mkey    = (ikey[0] + ikey[1]) / 2;
+	silofs_assert_le(slot, nkeys);
+	if (slot < nkeys) {
+		key = btn_key_at(bti->btn, slot);
 	}
-	return mkey;
+	return key;
 }
 
 static bool btkey_isvalid(uint64_t key)
@@ -393,12 +400,16 @@ static bool btkey_isvalid(uint64_t key)
 	return (key != SILOFS_BTREE_KEY_NULL);
 }
 
-static int bti_resolve(const struct silofs_btnode_info *bti, uint64_t key,
-                       struct silofs_btnptr *out_btnptr)
+static void bti_resolve(const struct silofs_btnode_info *bti, uint64_t key,
+                        struct silofs_btnptr *out_btnptr)
 {
 	btn_resolve_child(bti->btn, key, out_btnptr);
+}
 
-	return silofs_btnptr_isnull(out_btnptr) ? -SILOFS_ENOENT : 0;
+static void bti_child_at(const struct silofs_btnode_info *bti, size_t slot,
+                         struct silofs_btnptr *out_btnptr)
+{
+	btn_child_at(bti->btn, slot, out_btnptr);
 }
 
 int silofs_bti_resolve(const struct silofs_btnode_info *bti, uint64_t key,
@@ -413,7 +424,25 @@ int silofs_bti_resolve(const struct silofs_btnode_info *bti, uint64_t key,
 	if (!nkeys) {
 		return -SILOFS_ENOENT;
 	}
-	return bti_resolve(bti, key, out_btnptr);
+	bti_resolve(bti, key, out_btnptr);
+	return silofs_btnptr_isnull(out_btnptr) ? -SILOFS_ENOENT : 0;
+}
+
+static bool bti_has_space(const struct silofs_btnode_info *bti)
+{
+	const size_t nfree_keys = btn_nfree_keys(bti->btn);
+
+	return (nfree_keys > 0);
+}
+
+static void bti_insert_at(struct silofs_btnode_info *bti, size_t slot,
+                          uint64_t key, const struct silofs_btnptr *btnptr)
+{
+	btn_insert_child(bti->btn, slot, btnptr);
+	if (key != SILOFS_BTREE_KEY_NULL) {
+		btn_insert_key(bti->btn, slot, key);
+	}
+	silofs_bti_dirtify(bti);
 }
 
 static void bti_insert(struct silofs_btnode_info *bti, uint64_t key,
@@ -421,49 +450,21 @@ static void bti_insert(struct silofs_btnode_info *bti, uint64_t key,
 {
 	const size_t slot = btn_key_to_slot(bti->btn, key);
 
-	btn_insert_child(bti->btn, slot, btnptr);
-	btn_insert_key(bti->btn, slot, key);
-	silofs_bti_dirtify(bti);
+	silofs_assert(bti_has_space(bti));
+	bti_insert_at(bti, slot, key, btnptr);
 }
 
 int silofs_bti_insert(struct silofs_btnode_info *bti, uint64_t key,
                       const struct silofs_btnptr *btnptr)
 {
-	const size_t nfree_keys = btn_nfree_keys(bti->btn);
-
 	if (!btkey_isvalid(key)) {
 		return -SILOFS_EINVAL;
 	}
-	if (!nfree_keys) {
+	if (!bti_has_space(bti)) {
 		return -SILOFS_ENOSPC;
 	}
 	bti_insert(bti, key, btnptr);
 	return 0;
-}
-
-static void bti_final(const struct silofs_btnode_info *bti,
-                      struct silofs_btnptr *out_btnptr)
-{
-	const size_t slot = btn_nkeys(bti->btn);
-
-	btn_child_at(bti->btn, slot, out_btnptr);
-}
-
-static void bti_set_final(struct silofs_btnode_info *bti,
-                          const struct silofs_btnptr *btnptr)
-{
-	const size_t slot = btn_nkeys(bti->btn);
-
-	btn_set_child_at(bti->btn, slot, btnptr);
-	silofs_bti_dirtify(bti);
-}
-
-static void bti_clear_final(struct silofs_btnode_info *bti)
-{
-	const size_t slot = btn_nkeys(bti->btn);
-
-	btn_reset_child_at(bti->btn, slot);
-	silofs_bti_dirtify(bti);
 }
 
 void silofs_bti_dup_by(struct silofs_btnode_info *bti,
@@ -500,84 +501,59 @@ static void bti_setup_spawned(struct silofs_btnode_info *bti)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static size_t
-bti_split_from_slot(const struct silofs_btnode_info *bti, uint64_t mkey)
+static void bti_split_pos(const struct silofs_btnode_info *bti,
+                          size_t *out_slot, uint64_t *out_mkey)
 {
-	size_t slot = 0;
+	const size_t nkeys = bti_nkeys(bti);
 
-	if (likely(mkey != SILOFS_BTREE_KEY_NULL)) {
-		slot = btn_find_slot_ge(bti->btn, mkey);
-	}
-	return slot;
+	STATICASSERT_EQ(SILOFS_BTREE_NODE_NKEYS % 2, 1);
+
+	*out_slot = nkeys / 2;
+	*out_mkey = bti_key_at(bti, nkeys / 2);
 }
 
-static int
-bti_insert_to_next(const struct silofs_btnode_info *bti, uint64_t key,
-                   struct silofs_btnode_info *bti_next)
+static void
+bti_insert_to(const struct silofs_btnode_info *bti_from, size_t slot_from,
+              struct silofs_btnode_info *bti_to, size_t slot_to)
 {
 	struct silofs_btnptr btnptr;
-	int err;
+	const uint64_t key = bti_key_at(bti_from, slot_from);
 
-	err = silofs_bti_resolve(bti, key, &btnptr);
-	if (err) {
-		return err;
-	}
-	err = silofs_bti_insert(bti_next, key, &btnptr);
-	if (err) {
-		return err;
-	}
-	return 0;
+	bti_child_at(bti_from, slot_from, &btnptr);
+	bti_insert_at(bti_to, slot_to, key, &btnptr);
 }
 
-static int
-bti_split_to_next(const struct silofs_btnode_info *bti, size_t from_slot,
-                  struct silofs_btnode_info *bti_next)
+static void bti_split_to(const struct silofs_btnode_info *bti_from,
+                         size_t slot_from, struct silofs_btnode_info *bti_to)
 {
-	const size_t nkeys = btn_nkeys(bti->btn);
-	uint64_t key;
-	int err;
+	const size_t nkeys = btn_nkeys(bti_from->btn);
+	size_t slot_to     = 0;
 
-	for (size_t slot = from_slot; slot < nkeys; ++slot) {
-		key = btn_key_at(bti->btn, slot);
-		err = bti_insert_to_next(bti, key, bti_next);
-		if (err) {
-			return err;
-		}
+	while (slot_from <= nkeys) {
+		bti_insert_to(bti_from, slot_from++, bti_to, slot_to++);
 	}
-	return 0;
 }
 
-static void bti_final_to_next(const struct silofs_btnode_info *bti,
-                              struct silofs_btnode_info *bti_next)
+static void bti_trim(struct silofs_btnode_info *bti, size_t nkeys)
 {
-	struct silofs_btnptr btnptr;
-
-	bti_final(bti, &btnptr);
-	bti_set_final(bti_next, &btnptr);
+	btn_set_nkeys(bti->btn, nkeys);
+	btn_reset_tail(bti->btn);
+	silofs_bti_dirtify(bti);
 }
 
-static void bti_truncate_to(struct silofs_btnode_info *bti, size_t to_slot)
+uint64_t silofs_split_btnode(struct silofs_btnode_info *bti,
+                             struct silofs_btnode_info *bti_next)
 {
-	btn_set_nkeys(bti->btn, to_slot);
-	bti_clear_final(bti);
-}
+	size_t slot;
+	uint64_t mkey;
 
-int silofs_split_btnode(struct silofs_btnode_info *bti,
-                        struct silofs_btnode_info *bti_next,
-                        uint64_t *out_mkey)
-{
-	const uint64_t mkey = bti_median_key(bti);
-	const size_t slot   = bti_split_from_slot(bti, mkey);
-	int err;
+	silofs_assert_eq(bti_nkeys(bti), SILOFS_BTREE_NODE_NKEYS);
+	silofs_assert_eq(bti_nkeys(bti_next), 0);
 
-	err = bti_split_to_next(bti, slot, bti_next);
-	if (err) {
-		return err;
-	}
-	bti_final_to_next(bti, bti_next);
-	bti_truncate_to(bti, slot);
-	*out_mkey = mkey;
-	return 0;
+	bti_split_pos(bti, &slot, &mkey);
+	bti_split_to(bti, slot + 1, bti_next);
+	bti_trim(bti, slot);
+	return mkey;
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

@@ -390,7 +390,7 @@ void ft_do_ioctl_syncfs(int fd, const char *fl, int ln);
 
 #define ft_pclose(fd_) ft_do_pclose(fd_, FT_FL_LN_)
 
-#define ft_truncate(path_, len_) ft_do_truncate(path, len_, FT_FL_LN_)
+#define ft_truncate(path_, len_) ft_do_truncate(path_, len_, FT_FL_LN_)
 
 #define ft_ftruncate(fd_, len_) ft_do_ftruncate(fd_, len_, FT_FL_LN_)
 
@@ -435,7 +435,7 @@ void ft_do_ioctl_syncfs(int fd, const char *fl, int ln);
 	ft_do_mkfifoat(dirfd_, name_, mode_, FT_FL_LN_)
 
 #define ft_mknod(path_, mode_, dev_) \
-	ft_do_mknod((path_, mode_, dev_, FT_FL_LN_)
+	ft_do_mknod(path_, mode_, dev_, FT_FL_LN_)
 
 #define ft_mknodat(dirfd_, name_, mode_, dev_) \
 	ft_do_mknodat(dirfd_, name_, mode_, dev_, FT_FL_LN_)

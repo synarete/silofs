@@ -108,7 +108,14 @@ static void ft_error_print_progname(void)
 
 static void ft_atexit_cleanup(void)
 {
-	ft_g_env = nullptr;
+	if (ft_g_env != nullptr) {
+		free(ft_g_env);
+		ft_g_env = nullptr;
+	}
+	if (ft_globals.curr_workdir != nullptr) {
+		free(ft_globals.curr_workdir);
+		ft_globals.curr_workdir = nullptr;
+	}
 	memset(&ft_globals, 0, sizeof(ft_globals));
 }
 
@@ -226,21 +233,7 @@ static void sigaction_noop(int signum)
 
 static void ft_register_sigactions(void)
 {
-	sigaction_noop(SIGHUP);
-	sigaction_noop(SIGTRAP);
-	sigaction_noop(SIGUSR1);
-	sigaction_noop(SIGUSR2);
 	sigaction_noop(SIGPIPE);
-	sigaction_noop(SIGALRM);
-	sigaction_noop(SIGCHLD);
-	sigaction_noop(SIGCONT);
-	sigaction_noop(SIGURG);
-	sigaction_noop(SIGPROF);
-	sigaction_noop(SIGWINCH);
-	sigaction_noop(SIGIO);
-	/* GC specifics */
-	sigaction_noop(SIGPWR);
-	sigaction_noop(SIGXCPU);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -275,10 +268,20 @@ static long ft_strtol_safe(const char *nptr)
 	long ret     = 0;
 	char *endptr = nullptr;
 
+	if (nptr == nullptr) {
+		error(EXIT_FAILURE, 0, "null numeric string");
+	}
 	errno = 0;
 	ret   = strtol(nptr, &endptr, 10);
-	if ((ret == LONG_MAX) || (ret == LONG_MIN)) {
+	if (errno == ERANGE) {
 		error(EXIT_FAILURE, errno, "bad numeric: %s", nptr);
+	}
+	if (endptr == nptr) {
+		error(EXIT_FAILURE, 0, "not a number: %s", nptr);
+	}
+	if (*endptr != '\0') {
+		error(EXIT_FAILURE, 0, "invalid trailing characters: %s",
+		      nptr);
 	}
 	return ret;
 }

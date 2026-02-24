@@ -62,42 +62,42 @@ void ft_do_expect_ok(int err, const char *fl, int ln)
 void ft_do_expect_eq(intmax_t a, intmax_t b, const char *fl, int ln)
 {
 	if (a != b) {
-		do_error_at_line(fl, ln, "%ld != %ld", a, b);
+		do_error_at_line(fl, ln, "%jd != %jd", a, b);
 	}
 }
 
 void ft_do_expect_ne(intmax_t a, intmax_t b, const char *fl, int ln)
 {
 	if (a == b) {
-		do_error_at_line(fl, ln, "%ld == %ld", a, b);
+		do_error_at_line(fl, ln, "%jd == %jd", a, b);
 	}
 }
 
 void ft_do_expect_lt(intmax_t a, intmax_t b, const char *fl, int ln)
 {
 	if (a >= b) {
-		do_error_at_line(fl, ln, "%ld >= %ld", a, b);
+		do_error_at_line(fl, ln, "%jd >= %jd", a, b);
 	}
 }
 
 void ft_do_expect_le(intmax_t a, intmax_t b, const char *fl, int ln)
 {
 	if (a > b) {
-		do_error_at_line(fl, ln, "%ld > %ld", a, b);
+		do_error_at_line(fl, ln, "%jd > %jd", a, b);
 	}
 }
 
 void ft_do_expect_gt(intmax_t a, intmax_t b, const char *fl, int ln)
 {
 	if (a <= b) {
-		do_error_at_line(fl, ln, "%ld <= %ld", a, b);
+		do_error_at_line(fl, ln, "%jd <= %jd", a, b);
 	}
 }
 
 void ft_do_expect_ge(intmax_t a, intmax_t b, const char *fl, int ln)
 {
 	if (a < b) {
-		do_error_at_line(fl, ln, "%ld < %ld", a, b);
+		do_error_at_line(fl, ln, "%jd < %jd", a, b);
 	}
 }
 

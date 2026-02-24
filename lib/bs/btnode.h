@@ -17,11 +17,12 @@
 #ifndef SILOFS_BTNODE_H_
 #define SILOFS_BTNODE_H_
 
+#include <limits.h>
 #include "infra.h"
 #include "addr.h"
 #include "nodes.h"
 
-#define SILOFS_BTREE_KEY_NULL (0)
+#define SILOFS_BTREE_KEY_NULL UINT64_MAX
 
 void silofs_bti_self(const struct silofs_btnode_info *bti,
                      struct silofs_btnptr            *out_btnptr);
@@ -48,6 +49,8 @@ bool silofs_bti_marked_root(const struct silofs_btnode_info *bti);
 
 size_t silofs_bti_height(const struct silofs_btnode_info *bti);
 
+void silofs_bti_set_height(struct silofs_btnode_info *bti, size_t height);
+
 int silofs_bti_resolve(const struct silofs_btnode_info *bti, uint64_t key,
                        struct silofs_btnptr *out_btnptr);
 
@@ -56,6 +59,17 @@ int silofs_bti_relink(struct silofs_btnode_info *bti, uint64_t key,
 
 int silofs_bti_insert(struct silofs_btnode_info *bti, uint64_t key,
                       const struct silofs_btnptr *btnptr);
+
+int silofs_bti_insert_by(struct silofs_btnode_info *bti, uint64_t key,
+                         const struct silofs_btnode_info *bti_child);
+
+int silofs_bti_insert2(struct silofs_btnode_info *bti, uint64_t key,
+                       const struct silofs_btnptr *btnptr1,
+                       const struct silofs_btnptr *btnptr2);
+
+int silofs_bti_insert_by2(struct silofs_btnode_info *bti, uint64_t key,
+                          const struct silofs_btnode_info *bti1,
+                          const struct silofs_btnode_info *bti2);
 
 bool silofs_bti_isfull(const struct silofs_btnode_info *bti);
 

@@ -56,7 +56,7 @@ static size_t btn_height(const struct silofs_btree_node *btn)
 
 static void btn_set_height(struct silofs_btree_node *btn, size_t height)
 {
-	silofs_assert_le(height, 8);
+	silofs_assert_le(height, SILOFS_BTREE_HEIGHT_MAX);
 	silofs_assert_gt(height, 0);
 	btn->btn_height = silofs_cpu_to_le16((uint16_t)height);
 }
@@ -323,8 +323,8 @@ void silofs_bti_self(const struct silofs_btnode_info *bti,
 	const struct silofs_pnptr *pnptr = silofs_pni_self(&bti->btn_pni);
 
 	silofs_btnptr_setup(out_btnptr, pnptr);
-	out_btnptr->nsub_btnodes = bti->btp_nsub_btnodes;
-	out_btnptr->nsub_vobjs   = bti->btp_nsub_vobjs;
+	out_btnptr->nsub_btnodes = bti->btn_nsub_btnodes;
+	out_btnptr->nsub_vobjs   = bti->btn_nsub_vobjs;
 }
 
 void silofs_bti_incref(struct silofs_btnode_info *bti)
@@ -376,6 +376,12 @@ bool silofs_bti_marked_root(const struct silofs_btnode_info *bti)
 size_t silofs_bti_height(const struct silofs_btnode_info *bti)
 {
 	return btn_height(bti->btn);
+}
+
+void silofs_bti_set_height(struct silofs_btnode_info *bti, size_t height)
+{
+	btn_set_height(bti->btn, height);
+	silofs_bti_dirtify(bti);
 }
 
 static size_t bti_nkeys(const struct silofs_btnode_info *bti)
@@ -465,6 +471,52 @@ int silofs_bti_insert(struct silofs_btnode_info *bti, uint64_t key,
 	}
 	bti_insert(bti, key, btnptr);
 	return 0;
+}
+
+int silofs_bti_insert_by(struct silofs_btnode_info *bti, uint64_t key,
+                         const struct silofs_btnode_info *bti_child)
+{
+	struct silofs_btnptr btnptr;
+
+	silofs_bti_self(bti_child, &btnptr);
+	return silofs_bti_insert(bti, key, &btnptr);
+}
+
+static void bti_insert2(struct silofs_btnode_info *bti, uint64_t key,
+                        const struct silofs_btnptr *btnptr1,
+                        const struct silofs_btnptr *btnptr2)
+{
+	const size_t slot       = btn_key_to_slot(bti->btn, key);
+	const uint64_t key_null = SILOFS_BTREE_KEY_NULL;
+
+	silofs_assert(bti_has_space(bti));
+	bti_insert_at(bti, slot, key, btnptr1);
+	bti_insert_at(bti, slot, key_null, btnptr2);
+}
+
+int silofs_bti_insert2(struct silofs_btnode_info *bti, uint64_t key,
+                       const struct silofs_btnptr *btnptr1,
+                       const struct silofs_btnptr *btnptr2)
+{
+	if (!btkey_isvalid(key)) {
+		return -SILOFS_EINVAL;
+	}
+	if (!bti_has_space(bti)) {
+		return -SILOFS_ENOSPC;
+	}
+	bti_insert2(bti, key, btnptr1, btnptr2);
+	return 0;
+}
+
+int silofs_bti_insert_by2(struct silofs_btnode_info *bti, uint64_t key,
+                          const struct silofs_btnode_info *bti1,
+                          const struct silofs_btnode_info *bti2)
+{
+	struct silofs_btnptr btnptr[2];
+
+	silofs_bti_self(bti1, &btnptr[0]);
+	silofs_bti_self(bti2, &btnptr[1]);
+	return silofs_bti_insert2(bti, key, &btnptr[0], &btnptr[1]);
 }
 
 void silofs_bti_dup_by(struct silofs_btnode_info *bti,

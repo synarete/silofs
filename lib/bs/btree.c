@@ -460,15 +460,6 @@ btc_require_writable_path(struct silofs_btree_ctx *btc, size_t *out_nre)
 	return 0;
 }
 
-static bool btc_uber_has_child(const struct silofs_btree_ctx *btc,
-                               const struct silofs_pnptr *pnptr)
-{
-	struct silofs_btnptr btnptr;
-
-	silofs_ubi_btroot_of(btc->ubi, btc_vspace(btc), &btnptr);
-	return silofs_pnptr_isequal(pnptr, &btnptr.base);
-}
-
 static bool btc_btnode_has_child(const struct silofs_btree_ctx *btc,
                                  const struct silofs_btnode_info *bti,
                                  const struct silofs_pnptr *pnptr)
@@ -486,13 +477,7 @@ static bool btc_btnode_has_child(const struct silofs_btree_ctx *btc,
 
 static void btc_update_btroot_by_path(const struct silofs_btree_ctx *btc)
 {
-	struct silofs_btnptr btnptr;
-	const struct silofs_btnode_info *bti = btc_path_front(btc);
-
-	silofs_bti_self(bti, &btnptr);
-	if (!btc_uber_has_child(btc, &btnptr.base)) {
-		silofs_ubi_set_btroot(btc->ubi, btc_vspace(btc), &btnptr);
-	}
+	silofs_ubi_set_btroot_by(btc->ubi, btc_path_front(btc));
 }
 
 static int btc_try_relink_child(const struct silofs_btree_ctx *btc,
@@ -729,6 +714,10 @@ static int btc_insert_at_leaf(struct silofs_btree_ctx *btc,
 {
 	struct silofs_btnptr btnptr;
 	struct silofs_btnode_info *bti = btc_path_last(btc);
+	size_t height;
+
+	height = silofs_bti_height(bti);
+	silofs_assert_eq(height, 1);
 
 	silofs_btnptr_setup(&btnptr, pnptr);
 	return silofs_bti_insert(bti, btc_key(btc), &btnptr);

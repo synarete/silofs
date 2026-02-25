@@ -321,13 +321,25 @@ void silofs_ubi_set_btroot(struct silofs_uber_info *ubi,
 	silofs_ubi_dirtify(ubi);
 }
 
+static bool ubi_has_btroot(const struct silofs_uber_info *ubi,
+                           const struct silofs_pnptr *pnptr)
+{
+	struct silofs_btnptr btnptr;
+	const enum silofs_vtype vspace = pnptr->paddr.blobid.stype.vtype;
+
+	silofs_ubi_btroot_of(ubi, vspace, &btnptr);
+	return silofs_pnptr_isequal(pnptr, &btnptr.base);
+}
+
 void silofs_ubi_set_btroot_by(struct silofs_uber_info *ubi,
                               const struct silofs_btnode_info *bti)
 {
 	struct silofs_btnptr btnptr;
 
 	silofs_bti_self(bti, &btnptr);
-	silofs_ubi_set_btroot(ubi, silofs_bti_vspace(bti), &btnptr);
+	if (!ubi_has_btroot(ubi, &btnptr.base)) {
+		silofs_ubi_set_btroot(ubi, silofs_bti_vspace(bti), &btnptr);
+	}
 }
 
 void silofs_ubi_spdesc_of(const struct silofs_uber_info *ubi,

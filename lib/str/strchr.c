@@ -17,6 +17,7 @@
 #include <silofs/configs.h>
 #include <silofs/macros.h>
 #include <string.h>
+#include <stdint.h>
 #include <stdbool.h>
 #include <ctype.h>
 #include <limits.h>
@@ -259,20 +260,29 @@ size_t silofs_str_common_suffix(const char *s1, const char *s2, size_t n)
 	return k;
 }
 
+static uintptr_t
+str_overlaps(const char *s1, size_t n1, const char *s2, size_t n2)
+{
+	const uintptr_t b1 = (uintptr_t)s1;
+	const uintptr_t e1 = b1 + n1;
+	const uintptr_t b2 = (uintptr_t)s2;
+	const uintptr_t e2 = b2 + n2;
+	uintptr_t n        = 0;
+
+	if ((b1 < e2) && (b2 < e1)) {
+		if (b2 > b1) {
+			n = (e1 - b2);
+		} else {
+			n = (e2 - b1);
+		}
+	}
+	return n;
+}
+
 size_t
 silofs_str_overlaps(const char *s1, size_t n1, const char *s2, size_t n2)
 {
-	size_t d;
-	size_t k;
-
-	if (s1 < s2) {
-		d = (size_t)(s2 - s1);
-		k = (d < n1) ? (n1 - d) : 0;
-	} else {
-		d = (size_t)(s1 - s2);
-		k = (d < n2) ? (n2 - d) : 0;
-	}
-	return k;
+	return (size_t)str_overlaps(s1, n1, s2, n2);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -301,13 +311,11 @@ static void str_move(char *s1, const char *s2, size_t n)
 
 void silofs_str_copy(char *t, const char *s, size_t n)
 {
-	const size_t d = (size_t)((t > s) ? t - s : s - t);
-
-	if (silofs_likely(n > 0) && silofs_likely(d > 0)) {
-		if (silofs_likely(n < d)) {
-			str_copy(t, s, n);
+	if (silofs_likely(n > 0)) {
+		if (str_overlaps(t, n, s, n) > 0) {
+			str_move(t, s, n);
 		} else {
-			str_move(t, s, n); /* overlap */
+			str_copy(t, s, n);
 		}
 	}
 }

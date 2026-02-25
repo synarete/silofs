@@ -553,15 +553,13 @@ static void bti_setup_spawned(struct silofs_btnode_info *bti)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void bti_split_pos(const struct silofs_btnode_info *bti,
-                          size_t *out_slot, uint64_t *out_mkey)
+static size_t bti_split_slot(const struct silofs_btnode_info *bti)
 {
 	const size_t nkeys = bti_nkeys(bti);
 
 	STATICASSERT_EQ(SILOFS_BTREE_NODE_NKEYS % 2, 1);
 
-	*out_slot = nkeys / 2;
-	*out_mkey = bti_key_at(bti, nkeys / 2);
+	return nkeys / 2;
 }
 
 static void
@@ -575,6 +573,16 @@ bti_insert_to(const struct silofs_btnode_info *bti_from, size_t slot_from,
 	bti_insert_at(bti_to, slot_to, key, &btnptr);
 }
 
+static void
+bti_insert_to_last(const struct silofs_btnode_info *bti_from, size_t slot_from,
+                   struct silofs_btnode_info *bti_to, size_t slot_to)
+{
+	struct silofs_btnptr btnptr;
+
+	bti_child_at(bti_from, slot_from, &btnptr);
+	bti_insert_at(bti_to, slot_to, SILOFS_BTREE_KEY_NULL, &btnptr);
+}
+
 static void bti_split_to(const struct silofs_btnode_info *bti_from,
                          size_t slot_from, struct silofs_btnode_info *bti_to)
 {
@@ -584,6 +592,7 @@ static void bti_split_to(const struct silofs_btnode_info *bti_from,
 	while (slot_from <= nkeys) {
 		bti_insert_to(bti_from, slot_from++, bti_to, slot_to++);
 	}
+	bti_insert_to_last(bti_from, slot_from, bti_to, slot_to);
 }
 
 static void bti_trim(struct silofs_btnode_info *bti, size_t nkeys)
@@ -593,18 +602,28 @@ static void bti_trim(struct silofs_btnode_info *bti, size_t nkeys)
 	silofs_bti_dirtify(bti);
 }
 
+static bool bti_isleaf(const struct silofs_btnode_info *bti)
+{
+	return btn_isleaf(bti->btn);
+}
+
 uint64_t silofs_split_btnode(struct silofs_btnode_info *bti,
                              struct silofs_btnode_info *bti_next)
 {
-	size_t slot;
-	uint64_t mkey;
+	const size_t slot   = bti_split_slot(bti);
+	const uint64_t mkey = bti_key_at(bti, slot);
 
 	silofs_assert_eq(bti_nkeys(bti), SILOFS_BTREE_NODE_NKEYS);
 	silofs_assert_eq(bti_nkeys(bti_next), 0);
 
-	bti_split_pos(bti, &slot, &mkey);
-	bti_split_to(bti, slot + 1, bti_next);
+	if (bti_isleaf(bti)) {
+		bti_split_to(bti, slot, bti_next);
+	} else {
+		bti_split_to(bti, slot + 1, bti_next);
+	}
+
 	bti_trim(bti, slot);
+
 	return mkey;
 }
 

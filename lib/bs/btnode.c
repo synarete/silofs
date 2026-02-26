@@ -422,7 +422,7 @@ static bool bti_isleaf(const struct silofs_btnode_info *bti)
 }
 
 static size_t
-bti_key_to_slot(const struct silofs_btnode_info *bti, uint64_t key)
+bti_resolve_child_slot(const struct silofs_btnode_info *bti, uint64_t key)
 {
 	size_t slot;
 
@@ -437,7 +437,7 @@ bti_key_to_slot(const struct silofs_btnode_info *bti, uint64_t key)
 static void bti_resolve(const struct silofs_btnode_info *bti, uint64_t key,
                         struct silofs_btnptr *out_btnptr)
 {
-	const size_t slot = bti_key_to_slot(bti, key);
+	const size_t slot = bti_resolve_child_slot(bti, key);
 
 	btn_child_at(bti->btn, slot, out_btnptr);
 }
@@ -481,10 +481,16 @@ static void bti_insert_at(struct silofs_btnode_info *bti, size_t slot,
 	silofs_bti_dirtify(bti);
 }
 
+static size_t
+bti_insert_slot_of(const struct silofs_btnode_info *bti, uint64_t key)
+{
+	return btn_find_slot_ge(bti->btn, key);
+}
+
 static void bti_insert(struct silofs_btnode_info *bti, uint64_t key,
                        const struct silofs_btnptr *btnptr)
 {
-	const size_t slot = bti_key_to_slot(bti, key);
+	const size_t slot = bti_insert_slot_of(bti, key);
 
 	silofs_assert(bti_has_space(bti));
 	bti_insert_at(bti, slot, key, btnptr);
@@ -516,12 +522,11 @@ static void bti_insert2(struct silofs_btnode_info *bti, uint64_t key,
                         const struct silofs_btnptr *btnptr1,
                         const struct silofs_btnptr *btnptr2)
 {
-	const size_t slot       = bti_key_to_slot(bti, key);
-	const uint64_t key_null = SILOFS_BTREE_KEY_NULL;
+	const size_t slot = bti_insert_slot_of(bti, key);
 
 	silofs_assert(bti_has_space(bti));
 	bti_insert_at(bti, slot, key, btnptr1);
-	bti_insert_at(bti, slot, key_null, btnptr2);
+	bti_insert_at(bti, slot, SILOFS_BTREE_KEY_NULL, btnptr2);
 }
 
 int silofs_bti_insert2(struct silofs_btnode_info *bti, uint64_t key,
@@ -557,7 +562,10 @@ int silofs_bti_relink(struct silofs_btnode_info *bti, uint64_t key,
 	if (!btkey_isvalid(key)) {
 		return -SILOFS_EINVAL;
 	}
-	slot = bti_key_to_slot(bti, key);
+	slot = btn_find_slot_eq(bti->btn, key);
+	if (slot >= btn_nkeys(bti->btn)) {
+		return -SILOFS_ENOENT;
+	}
 	btn_set_child_at(bti->btn, slot, btnptr);
 	silofs_bti_dirtify(bti);
 	return 0;

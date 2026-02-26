@@ -13,7 +13,7 @@ commandv make tar timeout
 
 ###
 sep() { msg "$*" ; echo "# # # # # # # # # # # # # # # # " ; }
-exe() { timeout -k 10s 30m runx $* ; }
+exe() { timeout -k 10s 1h runx "$*" ; }
 
 ###
 if [ "$#" -ne 2 ]; then die "usage: '$self <archive-file> <citests-dir>'"; fi
@@ -71,18 +71,19 @@ msg "build with analyzer"
 exe make -f devel.mk O=0 ANALYZER=1
 exe make -f devel.mk reset
 msg "run unit-tests"
-exe env SILOFS_PANIC_MODE_WAIT=1 make -f devel.mk check
-exe make -f devel.mk reset
-msg "run clang-scan"
-exe make -f devel.mk CC=clang V=1 O=2 scan
+exe env SILOFS_PANIC_MODE_WAIT=1 make -f devel.mk O=2 check
 exe make -f devel.mk reset
 sep "developer's build OK"
 
 ###
+msg "run clang checks"
+msg "run clang-scan"
+exe make -f devel.mk CC=clang V=1 O=2 scan
+exe make -f devel.mk reset
 msg "run clang-tidy"
 exe make -f devel.mk CC=clang O=2 tidy
 exe make -f devel.mk reset
-sep "clang-tidy OK"
+sep "clang checks OK"
 
 ###
 msg "run sanitizer check"

@@ -201,12 +201,10 @@ static void btn_remove_key_at(struct silofs_btree_node *btn, size_t slot)
 
 static size_t btn_nchilds_max(const struct silofs_btree_node *btn)
 {
-	const size_t nchilds_max = ARRAY_SIZE(btn->btn_child);
-
 	STATICASSERT_EQ(ARRAY_SIZE(btn->btn_child),
 	                ARRAY_SIZE(btn->btn_key) + 1);
 
-	return btn_isleaf(btn) ? (nchilds_max - 1) : nchilds_max;
+	return ARRAY_SIZE(btn->btn_child);
 }
 
 static void btn_child_at(const struct silofs_btree_node *btn, size_t slot,
@@ -585,12 +583,10 @@ int silofs_bti_remove(struct silofs_btnode_info *bti, uint64_t key)
 		return -SILOFS_EINVAL;
 	}
 	if (!bti_isleaf(bti)) {
-		silofs_assert(!key); // XXX
 		return -SILOFS_EOPNOTSUPP;
 	}
 	slot = btn_find_slot_eq(bti->btn, key);
 	if (slot >= bti_nkeys(bti)) {
-		silofs_assert(!key); // XXX
 		return -SILOFS_ENOENT;
 	}
 	bti_remove_at(bti, slot);
@@ -649,7 +645,6 @@ static void bti_split_to(const struct silofs_btnode_info *bti_from,
 	while (slot_from <= nkeys) {
 		bti_insert_to(bti_from, slot_from++, bti_to, slot_to++);
 	}
-	bti_insert_to_last(bti_from, slot_from, bti_to, slot_to);
 }
 
 static void bti_trim(struct silofs_btnode_info *bti, size_t nkeys)

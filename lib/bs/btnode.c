@@ -140,23 +140,15 @@ static void btn_reset_keys(struct silofs_btree_node *btn)
 	}
 }
 
-static long btn_compare_key_at(const struct silofs_btree_node *btn,
-                               size_t slot, uint64_t key)
-{
-	const uint64_t skey = btn_key_at(btn, slot);
-
-	return (long)(skey - key);
-}
-
 static size_t
 btn_find_slot_ge(const struct silofs_btree_node *btn, uint64_t key)
 {
 	const size_t nkeys = btn_nkeys(btn);
-	long cmp;
 
 	for (size_t slot = 0; slot < nkeys; ++slot) {
-		cmp = btn_compare_key_at(btn, slot, key);
-		if (cmp <= 0) {
+		const uint64_t skey = btn_key_at(btn, slot);
+
+		if (skey >= key) {
 			return slot;
 		}
 	}
@@ -167,11 +159,11 @@ static size_t
 btn_find_slot_eq(const struct silofs_btree_node *btn, uint64_t key)
 {
 	const size_t nkeys = btn_nkeys(btn);
-	long cmp;
 
 	for (size_t slot = 0; slot < nkeys; ++slot) {
-		cmp = btn_compare_key_at(btn, slot, key);
-		if (cmp == 0) {
+		const uint64_t skey = btn_key_at(btn, slot);
+
+		if (skey == key) {
 			return slot;
 		}
 	}

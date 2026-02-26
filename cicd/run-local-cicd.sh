@@ -18,8 +18,8 @@ source "${rootdir}/bash_functions"
 
 # Prerequisites checks + prepare
 run "${version_sh}"
-run mkdir -p "${workdir}"
-run mkdir -p "${autotoolsdir}"
+runx mkdir -p "${workdir}"
+runx mkdir -p "${autotoolsdir}"
 
 # Use autotools build to create dist
 version=$("${version_sh}")
@@ -27,11 +27,11 @@ version_only=$("${version_sh}" --version)
 distname="${name}-${version_only}"
 disttgz="${distname}.tar.gz"
 cdx "${autotoolsdir}"
-run "${rootdir}"/bootstrap
-run "${rootdir}"/configure \
+runx "${rootdir}"/bootstrap
+runx "${rootdir}"/configure \
 	"--enable-utests=0" \
 	"--enable-compile-warnings=error"
-run make dist
+runx make dist
 run stat "${autotoolsdir}/${disttgz}"
 
 # Run CI tests on local work-dir
@@ -41,8 +41,8 @@ run sh "${selfdir}/exec-cicd-all.sh" \
 
 # Post-op cleanups
 cdx "${rootdir}"
-run rm -rf "${autotoolsdir}"
-run rm -rf "${workdir}"
+runx rm -rf "${autotoolsdir}"
+runx rm -rf "${workdir}"
 run sleep 2
 
 # Goodby ;)

@@ -55,6 +55,14 @@ run() {
 	( "$@" ) || die "failed: $*"
 }
 
+runx() {
+	msg "$*"
+	if ! output=$( "$@" 2>&1 ); then
+		echo "$output"
+		die "failed: $*"
+	fi
+}
+
 try() {
 	msg "$*"
 	( "$@" ) || msg "failed: $*"

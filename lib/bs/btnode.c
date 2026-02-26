@@ -195,7 +195,7 @@ static void btn_remove_key_at(struct silofs_btree_node *btn, size_t slot)
 		ikey = btn_key_at(btn, i);
 		btn_set_key_at(btn, i - 1, ikey);
 	}
-	btn_reset_key_at(btn, nkeys);
+	btn_reset_key_at(btn, nkeys - 1);
 	btn_dec_nkeys(btn);
 }
 
@@ -277,7 +277,7 @@ static void btn_remove_child_at(struct silofs_btree_node *btn, size_t slot)
 		btn_child_at(btn, i, &ibtnptr);
 		btn_set_child_at(btn, i - 1, &ibtnptr);
 	}
-	btn_reset_child_at(btn, nchilds);
+	btn_reset_child_at(btn, nchilds - 1);
 }
 
 static void btn_setup(struct silofs_btree_node *btn)

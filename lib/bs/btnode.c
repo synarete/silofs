@@ -626,16 +626,6 @@ bti_insert_to(const struct silofs_btnode_info *bti_from, size_t slot_from,
 	bti_insert_at(bti_to, slot_to, key, &btnptr);
 }
 
-static void
-bti_insert_to_last(const struct silofs_btnode_info *bti_from, size_t slot_from,
-                   struct silofs_btnode_info *bti_to, size_t slot_to)
-{
-	struct silofs_btnptr btnptr;
-
-	bti_child_at(bti_from, slot_from, &btnptr);
-	bti_insert_at(bti_to, slot_to, SILOFS_BTREE_KEY_NULL, &btnptr);
-}
-
 static void bti_split_to(const struct silofs_btnode_info *bti_from,
                          size_t slot_from, struct silofs_btnode_info *bti_to)
 {

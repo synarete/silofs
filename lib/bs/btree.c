@@ -586,28 +586,30 @@ btc_split_btnode(struct silofs_btree_ctx *btc, struct silofs_btnode_info *bti,
 	return 0;
 }
 
-static int btc_require_insertable_at(struct silofs_btree_ctx *btc, size_t j)
+static int btc_require_insertable_at(struct silofs_btree_ctx *btc, size_t i)
 {
-	struct silofs_btnode_info *parent   = nullptr;
-	struct silofs_btnode_info *bti      = nullptr;
-	struct silofs_btnode_info *bti_next = nullptr;
-	uint64_t key                        = SILOFS_BTREE_KEY_NULL;
+	struct silofs_btnode_info *parent = btc_path_btnode_at(btc, i);
+	struct silofs_btnode_info *child  = btc_path_btnode_at(btc, i + 1);
+	struct silofs_btnode_info *other  = nullptr;
+	uint64_t key;
 	int err;
 
-	bti = btc_path_btnode_at(btc, j);
-	if (!silofs_bti_isfull(bti)) {
-		return 0;
+	if (!silofs_bti_isfull(child)) {
+		goto out;
 	}
-	err = btc_split_btnode(btc, bti, &bti_next, &key);
+	err = btc_split_btnode(btc, child, &other, &key);
 	if (err) {
 		return err;
 	}
-
-	parent = btc_path_btnode_at(btc, j - 1);
-	err    = silofs_bti_insert_by2(parent, key, bti, bti_next);
+	err = silofs_bti_insert_by2(parent, key, child, other);
 	if (err) {
 		return err;
 	}
+	if (btc_key(btc) < key) {
+		goto out;
+	}
+	btc_path_replace_at(btc, i + 1, other);
+out:
 	return 0;
 }
 
@@ -615,8 +617,8 @@ static int btc_require_insertable_btnodes(struct silofs_btree_ctx *btc)
 {
 	int err;
 
-	for (size_t j = 1; j < btc->bpath.cnt; ++j) {
-		err = btc_require_insertable_at(btc, j);
+	for (size_t i = 0; i < btc->bpath.cnt - 1; ++i) {
+		err = btc_require_insertable_at(btc, i);
 		if (err) {
 			return err;
 		}

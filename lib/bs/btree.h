@@ -26,8 +26,11 @@ int silofs_resolve_vtop(struct silofs_task_ctx    *task,
                         const struct silofs_vaddr *vaddr,
                         struct silofs_pnptr       *out_pnptr);
 
-int silofs_insmap_vtop(struct silofs_task_ctx    *task,
+int silofs_insert_vtop(struct silofs_task_ctx    *task,
                        const struct silofs_vaddr *vaddr,
                        const struct silofs_pnptr *pnptr);
+
+int silofs_remove_vtop(struct silofs_task_ctx    *task,
+                       const struct silofs_vaddr *vaddr);
 
 #endif /* SILOFS_BTREE_H_ */

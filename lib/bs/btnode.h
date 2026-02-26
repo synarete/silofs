@@ -35,8 +35,7 @@ void silofs_bti_dirtify(struct silofs_btnode_info *bti);
 
 void silofs_bti_undirtify(struct silofs_btnode_info *bti);
 
-void silofs_bti_dup_by(struct silofs_btnode_info       *bti,
-                       const struct silofs_btnode_info *bti_other);
+bool silofs_bti_isfull(const struct silofs_btnode_info *bti);
 
 enum silofs_vtype silofs_bti_vspace(const struct silofs_btnode_info *bti);
 
@@ -71,12 +70,15 @@ int silofs_bti_insert_by2(struct silofs_btnode_info *bti, uint64_t key,
                           const struct silofs_btnode_info *bti1,
                           const struct silofs_btnode_info *bti2);
 
-bool silofs_bti_isfull(const struct silofs_btnode_info *bti);
+int silofs_bti_remove(struct silofs_btnode_info *bti, uint64_t key);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 uint64_t silofs_split_btnode(struct silofs_btnode_info *bti,
                              struct silofs_btnode_info *bti_next);
+
+void silofs_clone_btnode(const struct silofs_btnode_info *bti,
+                         struct silofs_btnode_info       *bti_other);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

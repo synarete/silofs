@@ -59,7 +59,8 @@ static void ard256b_xtoh(const struct silofs_ar_desc256b *ard256,
 
 static void arn_setup_hdr(struct silofs_arix_node *arn)
 {
-	silofs_hdr_setup(&arn->arn_hdr, SILOFS_VTYPE_ARIX, SILOFS_HDRF_VNODE);
+	silofs_hdr_setup(&arn->arn_hdr, (uint8_t)SILOFS_VTYPE_ARIX,
+	                 SILOFS_HDRF_VNODE);
 }
 
 static void arn_seal_hdr(struct silofs_arix_node *arn)

@@ -224,7 +224,7 @@ static void view_free(struct silofs_view *view, struct silofs_alloc *alloc,
 static void view_init_meta(struct silofs_view *view, enum silofs_vtype vtype)
 {
 	memset(view, 0, view_len(vtype));
-	silofs_hdr_setup(&view->u.hdr[0], vtype, SILOFS_HDRF_VNODE);
+	silofs_hdr_setup(&view->u.hdr[0], (uint8_t)vtype, SILOFS_HDRF_VNODE);
 }
 
 static void view_init(struct silofs_view *view, enum silofs_vtype vtype)
@@ -279,7 +279,7 @@ int silofs_view_verify(const struct silofs_view *view, enum silofs_vtype vtype)
 	int ret = 0;
 
 	if (!silofs_vtype_isdata(vtype)) {
-		ret = silofs_hdr_verify(&view->u.hdr[0], vtype,
+		ret = silofs_hdr_verify(&view->u.hdr[0], (uint8_t)vtype,
 		                        SILOFS_HDRF_VNODE);
 	}
 	return ret;
@@ -338,7 +338,7 @@ static void pview_bzero(struct silofs_pview *pview, enum silofs_ptype ptype)
 static void pview_init(struct silofs_pview *pview, enum silofs_ptype ptype)
 {
 	pview_bzero(pview, ptype);
-	silofs_hdr_setup(&pview->pv.hdr[0], ptype, SILOFS_HDRF_PNODE);
+	silofs_hdr_setup(&pview->pv.hdr[0], (uint8_t)ptype, SILOFS_HDRF_PNODE);
 }
 
 static void pview_fini(struct silofs_pview *pview, enum silofs_ptype ptype)
@@ -377,7 +377,8 @@ void silofs_seal_pview(struct silofs_pview *pview)
 int silofs_verify_pview(const struct silofs_pview *pview,
                         enum silofs_ptype ptype)
 {
-	return silofs_hdr_verify(&pview->pv.hdr[0], ptype, SILOFS_HDRF_PNODE);
+	return silofs_hdr_verify(&pview->pv.hdr[0], (uint8_t)ptype,
+	                         SILOFS_HDRF_PNODE);
 }
 
 int silofs_encrypt_pview(const struct silofs_cipher_hd *ci_hd,

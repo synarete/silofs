@@ -59,8 +59,11 @@ void silofs_bti_update(struct silofs_btnode_info *bti, uint64_t key,
 void silofs_bti_insert(struct silofs_btnode_info *bti, uint64_t key,
                        const struct silofs_btnptr *btnptr);
 
-void silofs_bti_insert_after(struct silofs_btnode_info *bti, uint64_t key,
-                             const struct silofs_btnptr *btnptr);
+void silofs_bti_rlink(struct silofs_btnode_info *bti, uint64_t key,
+                      const struct silofs_btnptr *btnptr);
+
+void silofs_bti_promote(struct silofs_btnode_info *bti, uint64_t key,
+                        const struct silofs_btnptr *btnptr);
 
 void silofs_bti_remove(struct silofs_btnode_info *bti, uint64_t key);
 

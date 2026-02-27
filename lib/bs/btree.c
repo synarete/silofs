@@ -546,7 +546,7 @@ static int btc_increase_btree(struct silofs_btree_ctx *btc,
 	silofs_bti_insert(root, key, &btnptr);
 
 	silofs_bti_self(next, &btnptr);
-	silofs_bti_insert_after(root, key, &btnptr);
+	silofs_bti_rlink(root, key, &btnptr);
 
 	btc_path_push_front(btc, root);
 	return 0;
@@ -593,7 +593,7 @@ static int btc_require_insertable_at(struct silofs_btree_ctx *btc, size_t i)
 		return err;
 	}
 	silofs_bti_self(next, &btnptr);
-	silofs_bti_insert(parent, key, &btnptr);
+	silofs_bti_promote(parent, key, &btnptr);
 
 	if (btc_key(btc) < key) {
 		goto out;

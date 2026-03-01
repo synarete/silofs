@@ -532,30 +532,23 @@ static int btc_increase_btree(struct silofs_btree_ctx *btc,
                               struct silofs_btnode_info *curr,
                               struct silofs_btnode_info *next, uint64_t key)
 {
-	struct silofs_btnptr btnptr;
-	struct silofs_btnode_info *root = nullptr;
-	size_t height;
+	struct silofs_btnode_info *root;
+	const size_t curr_height = silofs_bti_height(curr);
 	int err;
 
-	height = silofs_bti_height(curr) + 1;
-	err    = btc_spawn_btroot(btc, height, &root);
+	err = btc_spawn_btroot(btc, curr_height + 1, &root);
 	if (err) {
 		return err;
 	}
-	silofs_bti_self(curr, &btnptr);
-	silofs_bti_insert(root, key, &btnptr);
-
-	silofs_bti_self(next, &btnptr);
-	silofs_bti_rlink(root, key, &btnptr);
-
+	silofs_link_btnodes(root, curr, next, key);
 	btc_path_push_front(btc, root);
 	return 0;
 }
 
 static int btc_require_insertable_btroot(struct silofs_btree_ctx *btc)
 {
-	struct silofs_btnode_info *bti      = nullptr;
-	struct silofs_btnode_info *bti_next = nullptr;
+	struct silofs_btnode_info *bti;
+	struct silofs_btnode_info *bti_next;
 	uint64_t key;
 	int err;
 
@@ -576,7 +569,6 @@ static int btc_require_insertable_btroot(struct silofs_btree_ctx *btc)
 
 static int btc_require_insertable_at(struct silofs_btree_ctx *btc, size_t i)
 {
-	struct silofs_btnptr btnptr;
 	struct silofs_btnode_info *parent = nullptr;
 	struct silofs_btnode_info *curr   = nullptr;
 	struct silofs_btnode_info *next   = nullptr;
@@ -592,8 +584,7 @@ static int btc_require_insertable_at(struct silofs_btree_ctx *btc, size_t i)
 	if (err) {
 		return err;
 	}
-	silofs_bti_self(next, &btnptr);
-	silofs_bti_promote(parent, key, &btnptr);
+	silofs_link_btnodes(parent, curr, next, key);
 
 	if (btc_key(btc) < key) {
 		goto out;

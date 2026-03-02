@@ -74,15 +74,15 @@ static bool bti_has_same_layerid(const struct silofs_btnode_info *bti1,
 
 struct silofs_btree_path {
 	struct silofs_btnode_info *bti[SILOFS_BTREE_HEIGHT_MAX];
-	struct silofs_btnode_info *alt[SILOFS_BTREE_HEIGHT_MAX];
+	struct silofs_btnode_info *bti_alt[SILOFS_BTREE_HEIGHT_MAX];
 	size_t cnt;
 };
 
 static void bpath_init(struct silofs_btree_path *bpath)
 {
 	for (size_t i = 0; i < ARRAY_SIZE(bpath->bti); ++i) {
-		bpath->bti[i] = nullptr;
-		bpath->alt[i] = nullptr;
+		bpath->bti[i]     = nullptr;
+		bpath->bti_alt[i] = nullptr;
 	}
 	bpath->cnt = 0;
 }
@@ -92,8 +92,8 @@ static void bpath_fini(struct silofs_btree_path *bpath)
 	for (size_t i = 0; i < bpath->cnt; ++i) {
 		bti_decref(bpath->bti[i]);
 		bpath->bti[i] = nullptr;
-		bti_decref(bpath->alt[i]);
-		bpath->alt[i] = nullptr;
+		bti_decref(bpath->bti_alt[i]);
+		bpath->bti_alt[i] = nullptr;
 	}
 	bpath->cnt = 0;
 }
@@ -128,7 +128,7 @@ static void bpath_replace(struct silofs_btree_path *bpath, size_t slot,
 	silofs_assert_lt(slot, bpath->cnt);
 	bpath->bti[slot] = bti_new;
 	bti_incref(bti_new);
-	bpath->alt[slot] = bti;
+	bpath->bti_alt[slot] = bti;
 }
 
 static struct silofs_btnode_info *
@@ -150,7 +150,7 @@ bpath_alt_at(const struct silofs_btree_path *bpath, size_t slot)
 
 	silofs_assert_lt(slot, bpath->cnt);
 	if (slot < bpath->cnt) {
-		bti = bpath->alt[slot];
+		bti = bpath->bti_alt[slot];
 	}
 	return bti;
 }

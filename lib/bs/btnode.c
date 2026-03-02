@@ -120,6 +120,14 @@ static uint64_t btn_key_at(const struct silofs_btree_node *btn, size_t slot)
 	return silofs_le64_to_cpu(btn->btn_key[slot]);
 }
 
+static bool
+btn_has_key_at(const struct silofs_btree_node *btn, size_t slot, uint64_t key)
+{
+	const size_t nkeys = btn_nkeys(btn);
+
+	return (slot < nkeys) && (btn_key_at(btn, slot) == key);
+}
+
 static void
 btn_set_key_at(struct silofs_btree_node *btn, size_t slot, uint64_t key)
 {
@@ -447,7 +455,12 @@ static void btn_insert(struct silofs_btree_node *btn, uint64_t key,
 {
 	const size_t slot = btn_find_slot_ge(btn, key);
 
-	btn_insert_at(btn, slot, key, btnptr);
+	if (btn_has_key_at(btn, slot, key)) {
+		/* update existing (no duplicates) */
+		btn_set_child_at(btn, slot, btnptr);
+	} else {
+		btn_insert_at(btn, slot, key, btnptr);
+	}
 }
 
 static size_t
@@ -458,7 +471,7 @@ btn_resolve_child_slot(const struct silofs_btree_node *btn, uint64_t key)
 	if (btn_isleaf(btn)) {
 		slot = btn_find_slot_eq(btn, key);
 	} else {
-		slot = btn_find_slot_ge(btn, key);
+		slot = btn_find_slot_gt(btn, key);
 	}
 	return slot;
 }

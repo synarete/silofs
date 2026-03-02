@@ -355,6 +355,25 @@ btn_find_slot_eq(const struct silofs_btree_node *btn, uint64_t key)
 	return btn_nkeys(btn);
 }
 
+static size_t
+btn_find_slot_gt(const struct silofs_btree_node *btn, uint64_t key)
+{
+	size_t hi = btn_nkeys(btn);
+	size_t lo = 0;
+
+	while (lo < hi) {
+		const size_t mid    = lo + (hi - lo) / 2;
+		const uint64_t skey = btn_key_at(btn, mid);
+
+		if (key < skey) {
+			hi = mid;
+		} else {
+			lo = mid + 1;
+		}
+	}
+	return lo;
+}
+
 static void btn_resolve_at_leaf(const struct silofs_btree_node *btn,
                                 uint64_t key, struct silofs_btnptr *out_btnptr)
 {
@@ -372,7 +391,7 @@ static void btn_resolve_at_node(const struct silofs_btree_node *btn,
 {
 	size_t slot;
 
-	slot = btn_find_slot_ge(btn, key);
+	slot = btn_find_slot_gt(btn, key);
 	btn_child_at(btn, slot, out_btnptr);
 }
 
@@ -517,7 +536,7 @@ static void btn_split_node_into(struct silofs_btree_node *btn_from,
 	}
 
 	/* copy keys into btn_to */
-	for (size_t i = base + 1; i < nkeys; ++i) {
+	for (size_t i = base; i < nkeys; ++i) {
 		const uint64_t key = btn_key_at(btn_from, i);
 
 		btn_append_key(btn_to, key);
@@ -713,18 +732,20 @@ void silofs_rebind_btchilds(struct silofs_btnode_info *parent,
                             const struct silofs_btnptr *left,
                             const struct silofs_btnptr *right, uint64_t key)
 {
+	const size_t nkeys = btn_nkeys(parent->btn);
 	size_t slot;
 
-	slot = btn_search_child(parent->btn, left);
-	if (slot < btn_nchilds(parent->btn)) {
-		btn_insert_key_at(parent->btn, slot, key);
+	if (nkeys == 0) {
+		/* case 1: fresh new empty node */
+		btn_insert_at(parent->btn, 0, key, left);
+		btn_insert_child_at(parent->btn, 1, right);
 	} else {
-		silofs_assert_eq(btn_nkeys(parent->btn), 0);
-		slot = 0;
-		btn_insert_at(parent->btn, slot, key, left);
+		/* case 2: left exists, and right */
+		slot = btn_search_child(parent->btn, left);
+		silofs_assert_lt(slot, btn_nchilds(parent->btn));
+		btn_insert_child_at(parent->btn, slot + 1, right);
+		btn_insert_key_at(parent->btn, slot, key);
 	}
-
-	btn_insert_child_at(parent->btn, slot + 1, right);
 	bti_dirtify(parent);
 }
 

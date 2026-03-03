@@ -370,11 +370,17 @@ static bool btn_isleaf(const struct silofs_btree_node *btn)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static size_t
-btn_find_slot_ge(const struct silofs_btree_node *btn, uint64_t key)
+enum btn_find_mode {
+	BTN_FIND_GE,
+	BTN_FIND_EQ,
+	BTN_FIND_GT,
+};
+
+static size_t btn_find_slot(const struct silofs_btree_node *btn, uint64_t key,
+                            enum btn_find_mode mode)
 {
-	size_t lo = 0;
 	size_t hi = btn_nkeys(btn);
+	size_t lo = 0;
 
 	while (lo < hi) {
 		const size_t mid    = lo + (hi - lo) / 2;
@@ -385,50 +391,28 @@ btn_find_slot_ge(const struct silofs_btree_node *btn, uint64_t key)
 		} else if (key > skey) {
 			lo = mid + 1;
 		} else {
-			return mid;
+			return (mode == BTN_FIND_GT) ? mid + 1 : mid;
 		}
 	}
-	return lo;
+	return (mode == BTN_FIND_EQ) ? btn_nkeys(btn) : lo;
+}
+
+static size_t
+btn_find_slot_ge(const struct silofs_btree_node *btn, uint64_t key)
+{
+	return btn_find_slot(btn, key, BTN_FIND_GE);
 }
 
 static size_t
 btn_find_slot_eq(const struct silofs_btree_node *btn, uint64_t key)
 {
-	size_t hi = btn_nkeys(btn);
-	size_t lo = 0;
-
-	while (lo < hi) {
-		const size_t mid    = lo + (hi - lo) / 2;
-		const uint64_t skey = btn_key_at(btn, mid);
-
-		if (key < skey) {
-			hi = mid;
-		} else if (key > skey) {
-			lo = mid + 1;
-		} else {
-			return mid;
-		}
-	}
-	return btn_nkeys(btn);
+	return btn_find_slot(btn, key, BTN_FIND_EQ);
 }
 
 static size_t
 btn_find_slot_gt(const struct silofs_btree_node *btn, uint64_t key)
 {
-	size_t hi = btn_nkeys(btn);
-	size_t lo = 0;
-
-	while (lo < hi) {
-		const size_t mid    = lo + (hi - lo) / 2;
-		const uint64_t skey = btn_key_at(btn, mid);
-
-		if (key < skey) {
-			hi = mid;
-		} else {
-			lo = mid + 1;
-		}
-	}
-	return lo;
+	return btn_find_slot(btn, key, BTN_FIND_GT);
 }
 
 static int btn_resolve_at_leaf(const struct silofs_btree_node *btn,

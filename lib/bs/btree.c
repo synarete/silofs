@@ -798,6 +798,7 @@ btc_update_vtop(struct silofs_btree_ctx *btc, const struct silofs_pnptr *pnptr)
 	}
 	err = btc_update_at_leaf(btc, pnptr);
 	if (err) {
+		return err;
 	}
 	return 0;
 }

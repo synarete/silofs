@@ -482,6 +482,9 @@ static int btn_insert(struct silofs_btree_node *btn, uint64_t key,
 	if (!btn_nfree_keys(btn)) {
 		return -SILOFS_ENOSPC;
 	}
+	if (btn_has_key_at(btn, slot, key)) {
+		return -SILOFS_EEXIST;
+	}
 	btn_insert_at(btn, slot, key, btnptr);
 	return 0;
 }

@@ -246,7 +246,7 @@ static void btn_reset_childs_tail(struct silofs_btree_node *btn)
 	const size_t nchilds_max = btn_nchilds_max(btn);
 	const size_t nchilds     = btn_nchilds(btn);
 
-	for (size_t slot = nchilds + 1; slot < nchilds_max; ++slot) {
+	for (size_t slot = nchilds; slot < nchilds_max; ++slot) {
 		btn_reset_child_at(btn, slot);
 	}
 }
@@ -529,26 +529,25 @@ btn_insert_to(const struct silofs_btree_node *btn_from, size_t slot_from,
 	btn_insert_at(btn_to, slot_to, key, &btnptr);
 }
 
-static void btn_split_leaf_into(struct silofs_btree_node *btn_from,
-                                size_t base, struct silofs_btree_node *btn_to)
+static void btn_split_leaf(struct silofs_btree_node *btn_from, size_t mid_slot,
+                           struct silofs_btree_node *btn_to)
 {
 	const size_t nkeys = btn_nkeys(btn_from);
-	size_t from = base, to = 0;
+	size_t from = mid_slot, to = 0;
 
 	while (from < nkeys) {
 		btn_insert_to(btn_from, from++, btn_to, to++);
 	}
-	btn_trim(btn_from, base);
+	btn_trim(btn_from, mid_slot);
 }
 
-static void
-btn_split_node_into(struct silofs_btree_node *btn_from, size_t mid_slot,
-                    struct silofs_btree_node *btn_to)
+static void btn_split_node(struct silofs_btree_node *btn_from, size_t mid_slot,
+                           struct silofs_btree_node *btn_to)
 {
 	const size_t nkeys   = btn_nkeys(btn_from);
 	const size_t nchilds = btn_nchilds(btn_from);
 
-	/* copy children within range [mid+1, bchilds) */
+	/* copy children within range [mid+1, nchilds) */
 	for (size_t i = mid_slot + 1, j = 0; i < nchilds; ++i, ++j) {
 		struct silofs_btnptr btnptr;
 
@@ -556,14 +555,14 @@ btn_split_node_into(struct silofs_btree_node *btn_from, size_t mid_slot,
 		btn_set_child_at(btn_to, j, &btnptr);
 	}
 
-	/* copy keys within range [mid+1, bchilds) */
+	/* copy keys within range [mid+1, nkeys) */
 	for (size_t i = mid_slot + 1; i < nkeys; ++i) {
 		const uint64_t key = btn_key_at(btn_from, i);
 
 		btn_append_key(btn_to, key);
 	}
 
-	/* trim source: keeps children [0..mid_slot) */
+	/* trim source: keeps keys [0..mid_slot) */
 	btn_trim(btn_from, mid_slot);
 
 	/* clear target's tail */
@@ -574,9 +573,9 @@ static void btn_split_at(struct silofs_btree_node *btn_from, size_t slot,
                          struct silofs_btree_node *btn_to)
 {
 	if (btn_isleaf(btn_from)) {
-		btn_split_leaf_into(btn_from, slot, btn_to);
+		btn_split_leaf(btn_from, slot, btn_to);
 	} else {
-		btn_split_node_into(btn_from, slot, btn_to);
+		btn_split_node(btn_from, slot, btn_to);
 	}
 }
 

@@ -51,24 +51,14 @@ btn_set_vspace(struct silofs_btree_node *btn, enum silofs_vtype vspace)
 
 static size_t btn_height(const struct silofs_btree_node *btn)
 {
-	return silofs_le16_to_cpu(btn->btn_height);
+	return btn->btn_height;
 }
 
 static void btn_set_height(struct silofs_btree_node *btn, size_t height)
 {
 	silofs_assert_le(height, SILOFS_BTREE_HEIGHT_MAX);
 	silofs_assert_gt(height, 0);
-	btn->btn_height = silofs_cpu_to_le16((uint16_t)height);
-}
-
-static bool btn_isleaf(const struct silofs_btree_node *btn)
-{
-	const size_t height = btn_height(btn);
-
-	silofs_assert_gt(height, 0);
-	silofs_assert_le(height, SILOFS_BTREE_HEIGHT_MAX);
-
-	return (height == 1);
+	btn->btn_height = (uint8_t)height;
 }
 
 static size_t btn_nkeys(const struct silofs_btree_node *btn)
@@ -82,11 +72,6 @@ static void btn_set_nkeys(struct silofs_btree_node *btn, size_t nkeys)
 	silofs_assert_le(nkeys, ARRAY_SIZE(btn->btn_key));
 
 	btn->btn_nkeys = silofs_cpu_to_le16((uint16_t)nkeys);
-}
-
-static size_t btn_nchilds(const struct silofs_btree_node *btn)
-{
-	return btn_nkeys(btn) + 1;
 }
 
 static void btn_inc_nkeys(struct silofs_btree_node *btn)
@@ -161,12 +146,10 @@ static void
 btn_insert_key_at(struct silofs_btree_node *btn, size_t slot, uint64_t key)
 {
 	const size_t nkeys = btn_nkeys(btn);
-	uint64_t jkey;
 
 	silofs_assert_lt(nkeys, btn_nkeys_max(btn));
 	for (size_t i = nkeys; i > slot; --i) {
-		jkey = btn_key_at(btn, i - 1);
-		btn_set_key_at(btn, i, jkey);
+		btn_set_key_at(btn, i, btn_key_at(btn, i - 1));
 	}
 	btn_set_key_at(btn, slot, key);
 	btn_inc_nkeys(btn);
@@ -175,15 +158,36 @@ btn_insert_key_at(struct silofs_btree_node *btn, size_t slot, uint64_t key)
 static void btn_remove_key_at(struct silofs_btree_node *btn, size_t slot)
 {
 	const size_t nkeys = btn_nkeys(btn);
-	uint64_t ikey;
 
 	silofs_assert_lt(slot, nkeys);
 	for (size_t i = slot + 1; i < nkeys; ++i) {
-		ikey = btn_key_at(btn, i);
-		btn_set_key_at(btn, i - 1, ikey);
+		btn_set_key_at(btn, i - 1, btn_key_at(btn, i));
 	}
 	btn_reset_key_at(btn, nkeys - 1);
 	btn_dec_nkeys(btn);
+}
+
+static size_t btn_nchilds(const struct silofs_btree_node *btn)
+{
+	return silofs_le16_to_cpu(btn->btn_nchilds);
+}
+
+static void btn_set_nchilds(struct silofs_btree_node *btn, size_t nchilds)
+{
+	STATICASSERT_LT(ARRAY_SIZE(btn->btn_child), UINT8_MAX);
+	silofs_assert_le(nchilds, ARRAY_SIZE(btn->btn_child));
+
+	btn->btn_nchilds = silofs_cpu_to_le16((uint16_t)nchilds);
+}
+
+static void btn_inc_nchilds(struct silofs_btree_node *btn)
+{
+	btn_set_nchilds(btn, btn_nchilds(btn) + 1);
+}
+
+static void btn_dec_nchilds(struct silofs_btree_node *btn)
+{
+	btn_set_nchilds(btn, btn_nchilds(btn) - 1);
 }
 
 static size_t btn_nchilds_max(const struct silofs_btree_node *btn)
@@ -198,6 +202,7 @@ static void btn_child_at(const struct silofs_btree_node *btn, size_t slot,
                          struct silofs_btnptr *out_btnptr)
 {
 	silofs_assert_lt(slot, ARRAY_SIZE(btn->btn_child));
+	silofs_assert_lt(slot, btn_nchilds(btn));
 
 	silofs_btnptr256b_xtoh(&btn->btn_child[slot], out_btnptr);
 }
@@ -257,34 +262,49 @@ static void btn_reset_tail(struct silofs_btree_node *btn)
 	btn_reset_childs_tail(btn);
 }
 
-static void btn_insert_child_at(struct silofs_btree_node *btn, size_t slot,
-                                const struct silofs_btnptr *btnptr)
+static void btn_append_child(struct silofs_btree_node *btn,
+                             const struct silofs_btnptr *btnptr)
 {
-	struct silofs_btnptr jbtnptr;
 	const size_t nchilds = btn_nchilds(btn);
 
 	silofs_assert_lt(nchilds, btn_nchilds_max(btn));
+	btn_set_child_at(btn, nchilds, btnptr);
+	btn_inc_nchilds(btn);
+}
+
+static void btn_insert_child_at(struct silofs_btree_node *btn, size_t slot,
+                                const struct silofs_btnptr *btnptr)
+{
+	const size_t nchilds = btn_nchilds(btn);
+
+	silofs_assert_lt(nchilds, btn_nchilds_max(btn));
+	silofs_assert_lt(slot, nchilds);
 
 	for (size_t i = nchilds; i > slot; --i) {
-		btn_child_at(btn, i - 1, &jbtnptr);
-		btn_set_child_at(btn, i, &jbtnptr);
+		struct silofs_btnptr btnptr_j;
+
+		btn_child_at(btn, i - 1, &btnptr_j);
+		btn_set_child_at(btn, i, &btnptr_j);
 	}
 	btn_set_child_at(btn, slot, btnptr);
+	btn_inc_nchilds(btn);
 }
 
 static void btn_remove_child_at(struct silofs_btree_node *btn, size_t slot)
 {
-	struct silofs_btnptr ibtnptr;
 	const size_t nchilds = btn_nchilds(btn);
 
 	silofs_assert_le(nchilds, btn_nchilds_max(btn));
 	silofs_assert_lt(slot, nchilds);
 
 	for (size_t i = slot + 1; i < nchilds; ++i) {
-		btn_child_at(btn, i, &ibtnptr);
-		btn_set_child_at(btn, i - 1, &ibtnptr);
+		struct silofs_btnptr btnptr_i;
+
+		btn_child_at(btn, i, &btnptr_i);
+		btn_set_child_at(btn, i - 1, &btnptr_i);
 	}
 	btn_reset_child_at(btn, nchilds - 1);
+	btn_dec_nchilds(btn);
 }
 
 static void btn_setup(struct silofs_btree_node *btn)
@@ -292,33 +312,34 @@ static void btn_setup(struct silofs_btree_node *btn)
 	btn_set_flags(btn, SILOFS_PNODEF_NONE);
 	btn_set_height(btn, 1);
 	btn_set_nkeys(btn, 0);
+	btn_set_nchilds(btn, 0);
 	btn_reset_childs(btn);
 	btn_reset_keys(btn);
 }
 
-static void btn_clone_keys_into(const struct silofs_btree_node *btn,
-                                struct silofs_btree_node *btn_other)
+static void btn_clone_keys(const struct silofs_btree_node *btn,
+                           struct silofs_btree_node *btn_other)
 {
 	const size_t nkeys = btn_nkeys(btn);
-	uint64_t key;
 
 	for (size_t slot = 0; slot < nkeys; ++slot) {
-		key = btn_key_at(btn, slot);
-		btn_set_key_at(btn_other, slot, key);
+		btn_set_key_at(btn_other, slot, btn_key_at(btn, slot));
 	}
 	btn_set_nkeys(btn_other, nkeys);
 }
 
-static void btn_clone_childs_into(const struct silofs_btree_node *btn,
-                                  struct silofs_btree_node *btn_other)
+static void btn_clone_childs(const struct silofs_btree_node *btn,
+                             struct silofs_btree_node *btn_other)
 {
-	struct silofs_btnptr btnptr;
 	const size_t nchilds = btn_nchilds(btn);
 
 	for (size_t slot = 0; slot < nchilds; ++slot) {
+		struct silofs_btnptr btnptr;
+
 		btn_child_at(btn, slot, &btnptr);
 		btn_set_child_at(btn_other, slot, &btnptr);
 	}
+	btn_set_nchilds(btn_other, nchilds);
 }
 
 static void btn_clone_into(const struct silofs_btree_node *btn,
@@ -328,8 +349,24 @@ static void btn_clone_into(const struct silofs_btree_node *btn,
 	btn_set_flags(btn_other, btn_flags(btn));
 	btn_set_vspace(btn_other, btn_vspace(btn));
 	btn_set_height(btn_other, btn_height(btn));
-	btn_clone_keys_into(btn, btn_other);
-	btn_clone_childs_into(btn, btn_other);
+	btn_clone_keys(btn, btn_other);
+	btn_clone_childs(btn, btn_other);
+}
+
+static bool btn_isleaf(const struct silofs_btree_node *btn)
+{
+	const size_t height = btn_height(btn);
+
+	silofs_assert_gt(height, 0);
+	silofs_assert_le(height, SILOFS_BTREE_HEIGHT_MAX);
+
+	if (height == 1) {
+		silofs_assert_eq(btn_nkeys(btn), btn_nchilds(btn));
+	} else {
+		silofs_assert_eq(btn_nkeys(btn) + 1, btn_nchilds(btn));
+	}
+
+	return (height == 1);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -496,8 +533,8 @@ static void btn_remove(struct silofs_btree_node *btn, uint64_t key)
 
 	slot = btn_resolve_child_slot(btn, key);
 	if (slot < nkeys) {
-		btn_remove_child_at(btn, slot);
 		btn_remove_key_at(btn, slot);
+		btn_remove_child_at(btn, slot);
 	}
 }
 
@@ -515,18 +552,19 @@ static size_t btn_split_slot(const struct silofs_btree_node *btn)
 static void btn_trim(struct silofs_btree_node *btn, size_t nkeys)
 {
 	btn_set_nkeys(btn, nkeys);
+	btn_set_nchilds(btn, nkeys + 1);
 	btn_reset_tail(btn);
 }
 
 static void
-btn_insert_to(const struct silofs_btree_node *btn_from, size_t slot_from,
-              struct silofs_btree_node *btn_to, size_t slot_to)
+btn_insert_to(const struct silofs_btree_node *btn_from, size_t from_slot,
+              struct silofs_btree_node *btn_to, size_t to_slot)
 {
 	struct silofs_btnptr btnptr;
-	const uint64_t key = btn_key_at(btn_from, slot_from);
+	const uint64_t key = btn_key_at(btn_from, from_slot);
 
-	btn_child_at(btn_from, slot_from, &btnptr);
-	btn_insert_at(btn_to, slot_to, key, &btnptr);
+	btn_child_at(btn_from, from_slot, &btnptr);
+	btn_insert_at(btn_to, to_slot, key, &btnptr);
 }
 
 static void btn_split_leaf(struct silofs_btree_node *btn_from, size_t mid_slot,
@@ -548,18 +586,16 @@ static void btn_split_node(struct silofs_btree_node *btn_from, size_t mid_slot,
 	const size_t nchilds = btn_nchilds(btn_from);
 
 	/* copy children within range [mid+1, nchilds) */
-	for (size_t i = mid_slot + 1, j = 0; i < nchilds; ++i, ++j) {
+	for (size_t i = mid_slot + 1; i < nchilds; ++i) {
 		struct silofs_btnptr btnptr;
 
 		btn_child_at(btn_from, i, &btnptr);
-		btn_set_child_at(btn_to, j, &btnptr);
+		btn_append_child(btn_to, &btnptr);
 	}
 
 	/* copy keys within range [mid+1, nkeys) */
 	for (size_t i = mid_slot + 1; i < nkeys; ++i) {
-		const uint64_t key = btn_key_at(btn_from, i);
-
-		btn_append_key(btn_to, key);
+		btn_append_key(btn_to, btn_key_at(btn_from, i));
 	}
 
 	/* trim source: keeps keys [0..mid_slot) */
@@ -765,8 +801,10 @@ void silofs_rebind_btchilds(struct silofs_btnode_info *parent,
 
 	if (nkeys == 0) {
 		/* case 1: fresh new empty node */
-		btn_insert_at(parent->btn, 0, key, left);
-		btn_insert_child_at(parent->btn, 1, right);
+		btn_set_child_at(parent->btn, 0, left);
+		btn_set_child_at(parent->btn, 1, right);
+		btn_set_key_at(parent->btn, 0, key);
+		btn_set_nkeys(parent->btn, 1);
 	} else {
 		/* case 2: left exists, and right */
 		slot = btn_search_child(parent->btn, left);

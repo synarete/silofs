@@ -30,6 +30,10 @@ int silofs_insert_vtop(struct silofs_task_ctx    *task,
                        const struct silofs_vaddr *vaddr,
                        const struct silofs_pnptr *pnptr);
 
+int silofs_update_vtop(struct silofs_task_ctx    *task,
+                       const struct silofs_vaddr *vaddr,
+                       const struct silofs_pnptr *pnptr);
+
 int silofs_remove_vtop(struct silofs_task_ctx    *task,
                        const struct silofs_vaddr *vaddr);
 

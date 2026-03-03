@@ -549,10 +549,25 @@ static size_t btn_split_slot(const struct silofs_btree_node *btn)
 	return nkeys / 2;
 }
 
-static void btn_trim(struct silofs_btree_node *btn, size_t nkeys)
+static void btn_trim_leaf(struct silofs_btree_node *btn, size_t nkeys)
+{
+	btn_set_nkeys(btn, nkeys);
+	btn_set_nchilds(btn, nkeys);
+}
+
+static void btn_trim_node(struct silofs_btree_node *btn, size_t nkeys)
 {
 	btn_set_nkeys(btn, nkeys);
 	btn_set_nchilds(btn, nkeys + 1);
+}
+
+static void btn_trim(struct silofs_btree_node *btn, size_t nkeys)
+{
+	if (btn_isleaf(btn)) {
+		btn_trim_leaf(btn, nkeys);
+	} else {
+		btn_trim_node(btn, nkeys);
+	}
 	btn_reset_tail(btn);
 }
 
@@ -623,6 +638,27 @@ static uint64_t split_btnode(struct silofs_btree_node *btn_from,
 
 	btn_split_at(btn_from, slot, btn_to);
 	return skey;
+}
+
+static void rebind_btchilds(struct silofs_btree_node *bti_parent,
+                            const struct silofs_btnptr *left,
+                            const struct silofs_btnptr *right, uint64_t key)
+{
+	const size_t nkeys = btn_nkeys(bti_parent);
+	size_t slot;
+
+	if (nkeys == 0) {
+		/* case 1: fresh new empty node */
+		btn_append_child(bti_parent, left);
+		btn_append_key(bti_parent, key);
+		btn_append_child(bti_parent, right);
+	} else {
+		/* case 2: left exists, add right */
+		slot = btn_search_child(bti_parent, left);
+		silofs_assert_lt(slot, btn_nchilds(bti_parent));
+		btn_insert_child_at(bti_parent, slot + 1, right);
+		btn_insert_key_at(bti_parent, slot, key);
+	}
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -796,22 +832,7 @@ void silofs_rebind_btchilds(struct silofs_btnode_info *parent,
                             const struct silofs_btnptr *left,
                             const struct silofs_btnptr *right, uint64_t key)
 {
-	const size_t nkeys = btn_nkeys(parent->btn);
-	size_t slot;
-
-	if (nkeys == 0) {
-		/* case 1: fresh new empty node */
-		btn_set_child_at(parent->btn, 0, left);
-		btn_set_child_at(parent->btn, 1, right);
-		btn_set_key_at(parent->btn, 0, key);
-		btn_set_nkeys(parent->btn, 1);
-	} else {
-		/* case 2: left exists, and right */
-		slot = btn_search_child(parent->btn, left);
-		silofs_assert_lt(slot, btn_nchilds(parent->btn));
-		btn_insert_child_at(parent->btn, slot + 1, right);
-		btn_insert_key_at(parent->btn, slot, key);
-	}
+	rebind_btchilds(parent->btn, left, right, key);
 	bti_dirtify(parent);
 }
 

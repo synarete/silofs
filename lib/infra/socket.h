@@ -165,16 +165,18 @@ int silofs_socket_recvmsg(const struct silofs_socket *sock,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_dgramsock_init(struct silofs_socket *sock);
+void silofs_makesock_dgram(struct silofs_socket *sock);
 
-void silofs_dgramsock_init6(struct silofs_socket *sock);
+void silofs_makesock_dgram6(struct silofs_socket *sock);
 
-void silofs_dgramsock_initu(struct silofs_socket *sock);
+void silofs_makesock_dgramu(struct silofs_socket *sock);
 
-void silofs_streamsock_init(struct silofs_socket *sock);
+void silofs_makesock_stream(struct silofs_socket *sock);
 
-void silofs_streamsock_init6(struct silofs_socket *sock);
+void silofs_makesock_stream6(struct silofs_socket *sock);
 
-void silofs_streamsock_initu(struct silofs_socket *sock);
+void silofs_makesock_streamu(struct silofs_socket *sock);
+
+void silofs_makesock_seqpacketu(struct silofs_socket *sock);
 
 #endif /* SILOFS_SOCKET_H_ */

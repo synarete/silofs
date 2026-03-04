@@ -551,7 +551,7 @@ enum {
 static int try_sendmsg(const struct silofs_socket *sock,
                        const struct msghdr *mh, size_t *out_nbytes)
 {
-	const int flags = MSG_NOSIGNAL;
+	const int flags = MSG_EOR | MSG_NOSIGNAL;
 	int err;
 
 	for (int i = 0; i < SENDRECVMSG_RETRY_MAX; ++i) {
@@ -627,7 +627,8 @@ static int mntmsg_send(const struct silofs_mntmsg *mmsg,
 static int try_recvmsg(const struct silofs_socket *sock, struct msghdr *mh,
                        size_t *out_nbytes)
 {
-	const int flags = MSG_WAITALL | MSG_NOSIGNAL | MSG_CMSG_CLOEXEC;
+	const int flags = MSG_WAITALL | MSG_NOSIGNAL | MSG_TRUNC |
+	                  MSG_CMSG_CLOEXEC;
 	int err;
 
 	for (int i = 0; i < SENDRECVMSG_RETRY_MAX; ++i) {
@@ -740,7 +741,7 @@ static void mntsvc_reset_peer_ucred(struct silofs_mntsvc *msvc)
 
 static void mntsvc_init(struct silofs_mntsvc *msvc)
 {
-	silofs_streamsock_initu(&msvc->ms_asock);
+	silofs_makesock_seqpacketu(&msvc->ms_asock);
 	silofs_sockaddr_none(&msvc->ms_peer);
 	mntsvc_reset_peer_ucred(msvc);
 	msvc->ms_page_size = (uint32_t)silofs_sc_page_size();
@@ -801,7 +802,7 @@ static void mntsvc_term_peer(struct silofs_mntsvc *msvc)
 	log_info("end-connection: peer=%s", msvc->ms_peer_ids);
 	silofs_socket_shutdown_rdwr(&msvc->ms_asock);
 	silofs_socket_fini(&msvc->ms_asock);
-	silofs_streamsock_initu(&msvc->ms_asock);
+	silofs_makesock_seqpacketu(&msvc->ms_asock);
 	mntsvc_reset_peer_ucred(msvc);
 }
 
@@ -1124,7 +1125,7 @@ static void
 mntsrv_init(struct silofs_mntsrv *msrv, const struct silofs_ms_args *ms_args)
 {
 	memcpy(&msrv->ms_args, ms_args, sizeof(msrv->ms_args));
-	silofs_streamsock_initu(&msrv->ms_lsock);
+	silofs_makesock_seqpacketu(&msrv->ms_lsock);
 	mntsvc_init(&msrv->ms_svc);
 	msrv->ms_rules = nullptr;
 }
@@ -1465,7 +1466,7 @@ static void mntclnt_init(struct silofs_mntclnt *mclnt)
 {
 	const char *sockname = silofs_mntrpc_sockname();
 
-	silofs_streamsock_initu(&mclnt->mc_sock);
+	silofs_makesock_seqpacketu(&mclnt->mc_sock);
 	silofs_sockaddr_abstract(&mclnt->mc_srvaddr, sockname);
 }
 

@@ -834,7 +834,7 @@ bool silofs_bti_isfull(const struct silofs_btnode_info *bti)
 	return btn_nkeys(bti->btn) == btn_nkeys_max(bti->btn);
 }
 
-static void bti_setup_spawned(struct silofs_btnode_info *bti)
+void silofs_bti_ignite(struct silofs_btnode_info *bti)
 {
 	btn_setup(bti->btn);
 	bti_dirtify(bti);
@@ -868,38 +868,4 @@ void silofs_clone_btnode(const struct silofs_btnode_info *bti,
 {
 	btn_clone_into(bti->btn, bti_other->btn);
 	silofs_bti_dirtify(bti_other);
-}
-
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-
-struct silofs_btnode_info *
-silofs_lookup_cached_btnode(struct silofs_pcache *pcache,
-                            const struct silofs_paddr *paddr)
-{
-	struct silofs_pnode_info *pni;
-
-	silofs_assert_eq(paddr->ptype, SILOFS_PTYPE_BTNODE);
-	pni = silofs_pcache_lookup_pnode(pcache, paddr);
-	return silofs_bti_from_pni(pni);
-}
-
-struct silofs_btnode_info *
-silofs_create_cached_btnode(struct silofs_pcache *pcache,
-                            const struct silofs_pnptr *pnptr, bool spawn)
-{
-	struct silofs_pnode_info *pni;
-	struct silofs_btnode_info *bti;
-
-	pni = silofs_pcache_create_pnode(pcache, pnptr);
-	bti = silofs_bti_from_pni(pni);
-	if ((bti != nullptr) && spawn) {
-		bti_setup_spawned(bti);
-	}
-	return bti;
-}
-
-void silofs_forget_cached_btnode(struct silofs_pcache *pcache,
-                                 struct silofs_btnode_info *bti)
-{
-	silofs_pcache_delete_pnode(pcache, &bti->btn_pni);
 }

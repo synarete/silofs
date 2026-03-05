@@ -14,27 +14,16 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_FS_H_
-#define SILOFS_FS_H_
+#ifndef SILOFS_LSPACE_H_
+#define SILOFS_LSPACE_H_
 
-#include "infra.h"
+#include <silofs/ondisk.h>
 #include "addr.h"
-#include "nodes.h"
-#include "fs/uidgid.h"
-#include "fs/idsmap.h"
-#include "fs/lsmap.h"
-#include "fs/lspace.h"
-#include "fs/inode.h"
-#include "fs/xattr.h"
-#include "fs/dir.h"
-#include "fs/file.h"
-#include "fs/symlink.h"
-#include "fs/super.h"
-#include "fs/lcache.h"
-#include "fs/namei.h"
-#include "fs/spmaps.h"
-#include "fs/vstage.h"
-#include "fs/encdec.h"
-#include "fs/flush.h"
 
-#endif /* SILOFS_FS_H_ */
+struct silofs_task_ctx;
+
+int silofs_require_lsmap_of(struct silofs_task_ctx    *task,
+                            const struct silofs_vaddr *ref_vaddr,
+                            struct silofs_lsmap_info **out_lsi);
+
+#endif /* SILOFS_LSPACE_H_ */

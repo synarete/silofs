@@ -25,8 +25,10 @@ void silofs_bdi_dirtify(struct silofs_bldesc_info *bdi);
 
 void silofs_bdi_undirtify(struct silofs_bldesc_info *bdi);
 
-void silofs_bdi_setup_spawned(struct silofs_bldesc_info  *bdi,
-                              const struct silofs_blobid *blobid);
+void silofs_bdi_ignite(struct silofs_bldesc_info *bdi);
+
+void silofs_bdi_ignite2(struct silofs_bldesc_info  *bdi,
+                        const struct silofs_blobid *blobid);
 
 int silofs_bdi_find_free(const struct silofs_bldesc_info *bdi,
                          struct silofs_paddr             *out_paddr);
@@ -39,18 +41,5 @@ int silofs_bdi_mark_free(struct silofs_bldesc_info *bdi,
 
 int silofs_bdi_mark_used(struct silofs_bldesc_info *bdi,
                          const struct silofs_paddr *paddr);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-struct silofs_bldesc_info *
-silofs_lookup_cached_bldesc(struct silofs_pcache      *pcache,
-                            const struct silofs_paddr *paddr);
-
-struct silofs_bldesc_info *
-silofs_create_cached_bldesc(struct silofs_pcache      *pcache,
-                            const struct silofs_pnptr *pnptr, bool spawn);
-
-void silofs_forget_cached_bldesc(struct silofs_pcache      *pcache,
-                                 struct silofs_bldesc_info *bdi);
 
 #endif /* SILOFS_BLDESC_H_ */

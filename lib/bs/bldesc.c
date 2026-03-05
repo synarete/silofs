@@ -297,7 +297,7 @@ static void bld_setup(struct silofs_blob_desc *bld)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static void bdi_setup_spawned(struct silofs_bldesc_info *bdi)
+void silofs_bdi_ignite(struct silofs_bldesc_info *bdi)
 {
 	bld_setup(bdi->bld);
 	silofs_bdi_dirtify(bdi);
@@ -313,8 +313,8 @@ void silofs_bdi_undirtify(struct silofs_bldesc_info *bdi)
 	silofs_pni_undirtify(&bdi->bld_pni);
 }
 
-void silofs_bdi_setup_spawned(struct silofs_bldesc_info *bdi,
-                              const struct silofs_blobid *blobid)
+void silofs_bdi_ignite2(struct silofs_bldesc_info *bdi,
+                        const struct silofs_blobid *blobid)
 {
 	struct timespec now;
 	const size_t obj_size  = silofs_blobid_slotsize(blobid);
@@ -412,38 +412,4 @@ int silofs_bdi_mark_used(struct silofs_bldesc_info *bdi,
 	bld_dec_nobjs(bdi->bld);
 	silofs_bdi_dirtify(bdi);
 	return 0;
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-struct silofs_bldesc_info *
-silofs_lookup_cached_bldesc(struct silofs_pcache *pcache,
-                            const struct silofs_paddr *paddr)
-{
-	struct silofs_pnode_info *pni;
-
-	silofs_assert_eq(paddr->ptype, SILOFS_PTYPE_BLDESC);
-	pni = silofs_pcache_lookup_pnode(pcache, paddr);
-	return silofs_bdi_from_pni(pni);
-}
-
-struct silofs_bldesc_info *
-silofs_create_cached_bldesc(struct silofs_pcache *pcache,
-                            const struct silofs_pnptr *pnptr, bool spawn)
-{
-	struct silofs_pnode_info *pni;
-	struct silofs_bldesc_info *bdi;
-
-	pni = silofs_pcache_create_pnode(pcache, pnptr);
-	bdi = silofs_bdi_from_pni(pni);
-	if ((bdi != nullptr) && spawn) {
-		bdi_setup_spawned(bdi);
-	}
-	return bdi;
-}
-
-void silofs_forget_cached_bldesc(struct silofs_pcache *pcache,
-                                 struct silofs_bldesc_info *bdi)
-{
-	silofs_pcache_delete_pnode(pcache, &bdi->bld_pni);
 }

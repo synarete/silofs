@@ -286,7 +286,7 @@ void silofs_ubi_decref(struct silofs_uber_info *ubi)
 	silofs_pni_decref(&ubi->ub_pni);
 }
 
-static void ubi_setup_spawned(struct silofs_uber_info *ubi)
+void silofs_ubi_ignite(struct silofs_uber_info *ubi)
 {
 	struct timespec now;
 
@@ -391,38 +391,4 @@ bool silofs_ubi_onsame_layer(const struct silofs_uber_info *ubi,
                              const struct silofs_btnode_info *bti)
 {
 	return ubi_onsame_layer(ubi, &bti->btn_pni);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-struct silofs_uber_info *
-silofs_lookup_cached_uber(struct silofs_pcache *pcache,
-                          const struct silofs_paddr *paddr)
-{
-	struct silofs_pnode_info *pni;
-
-	silofs_assert_eq(paddr->ptype, SILOFS_PTYPE_UBER);
-	pni = silofs_pcache_lookup_pnode(pcache, paddr);
-	return silofs_ubi_from_pni(pni);
-}
-
-struct silofs_uber_info *
-silofs_create_cached_uber(struct silofs_pcache *pcache,
-                          const struct silofs_pnptr *pnptr, bool spawn)
-{
-	struct silofs_pnode_info *pni;
-	struct silofs_uber_info *ubi;
-
-	pni = silofs_pcache_create_pnode(pcache, pnptr);
-	ubi = silofs_ubi_from_pni(pni);
-	if ((ubi != nullptr) && spawn) {
-		ubi_setup_spawned(ubi);
-	}
-	return ubi;
-}
-
-void silofs_forget_cached_uber(struct silofs_pcache *pcache,
-                               struct silofs_uber_info *ubi)
-{
-	silofs_pcache_delete_pnode(pcache, &ubi->ub_pni);
 }

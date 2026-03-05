@@ -29,6 +29,7 @@ struct silofs_stage_ctx {
 	struct silofs_alloc *alloc;
 	struct silofs_dstor *dstor;
 	struct silofs_pcache *pcache;
+	struct silofs_lcache *lcache;
 	struct silofs_mdigest_hd *md_hd;
 	struct silofs_cipher_hd *enc_ci_hd;
 	struct silofs_cipher_hd *dec_ci_hd;
@@ -42,6 +43,7 @@ stc_init(struct silofs_stage_ctx *st_ctx, struct silofs_task_ctx *task)
 	st_ctx->alloc     = task->env->alloc;
 	st_ctx->dstor     = &task->env->base.repo->re_dstor;
 	st_ctx->pcache    = task->env->base.pcache;
+	st_ctx->lcache    = task->env->base.lcache;
 	st_ctx->md_hd     = &task->env->md_hd;
 	st_ctx->enc_ci_hd = &task->env->enc_ci_hd;
 	st_ctx->dec_ci_hd = &task->env->dec_ci_hd;
@@ -83,14 +85,6 @@ static int stc_require_paddr_of(const struct silofs_stage_ctx *st_ctx,
                                 const struct silofs_pnptr *pnptr)
 {
 	return stc_require_paddr(st_ctx, &pnptr->paddr);
-}
-
-static void stc_update_spawned_pnode(const struct silofs_stage_ctx *st_ctx,
-                                     struct silofs_pnode_info *pni)
-
-{
-	silofs_pni_dirtify(pni);
-	silofs_unused(st_ctx);
 }
 
 static int stc_access_pnode(const struct silofs_stage_ctx *st_ctx,
@@ -162,12 +156,25 @@ stc_stage_pnode(struct silofs_stage_ctx *st_ctx, struct silofs_pnode_info *pni)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int stc_create_cached_ubi(const struct silofs_stage_ctx *st_ctx,
-                                 const struct silofs_pnptr *pnptr, bool spawn,
-                                 struct silofs_uber_info **out_ubi)
+static int stc_create_cached_uber(const struct silofs_stage_ctx *st_ctx,
+                                  const struct silofs_pnptr *pnptr,
+                                  struct silofs_uber_info **out_ubi)
 {
-	*out_ubi = silofs_create_cached_uber(st_ctx->pcache, pnptr, spawn);
-	return ((*out_ubi) == nullptr) ? -SILOFS_ENOMEM : 0;
+	struct silofs_pnode_info *pni;
+
+	pni = silofs_pcache_create_pnode(st_ctx->pcache, pnptr);
+	if (pni == nullptr) {
+		return -SILOFS_ENOMEM;
+	}
+	*out_ubi = silofs_ubi_from_pni(pni);
+	return 0;
+}
+
+static void stc_update_spawned_uber(const struct silofs_stage_ctx *st_ctx,
+                                    struct silofs_uber_info *ubi)
+{
+	silofs_ubi_ignite(ubi);
+	silofs_unused(st_ctx);
 }
 
 static int stc_spawn_uber(const struct silofs_stage_ctx *st_ctx,
@@ -180,10 +187,11 @@ static int stc_spawn_uber(const struct silofs_stage_ctx *st_ctx,
 	if (err) {
 		return err;
 	}
-	err = stc_create_cached_ubi(st_ctx, pnptr, true, out_ubi);
+	err = stc_create_cached_uber(st_ctx, pnptr, out_ubi);
 	if (err) {
 		return err;
 	}
+	stc_update_spawned_uber(st_ctx, *out_ubi);
 	return 0;
 }
 
@@ -210,12 +218,19 @@ int silofs_spawn_uber_at(struct silofs_task_ctx *task,
 	return err;
 }
 
-static int stc_lookup_cached_ubi(const struct silofs_stage_ctx *st_ctx,
-                                 const struct silofs_paddr *paddr,
-                                 struct silofs_uber_info **out_ubi)
+static int stc_lookup_cached_uber(const struct silofs_stage_ctx *st_ctx,
+                                  const struct silofs_paddr *paddr,
+                                  struct silofs_uber_info **out_ubi)
 {
-	*out_ubi = silofs_lookup_cached_uber(st_ctx->pcache, paddr);
-	return (*out_ubi == nullptr) ? -SILOFS_ENOENT : 0;
+	struct silofs_pnode_info *pni;
+
+	silofs_assert_eq(paddr->ptype, SILOFS_PTYPE_UBER);
+	pni = silofs_pcache_lookup_pnode(st_ctx->pcache, paddr);
+	if (pni == nullptr) {
+		return -SILOFS_ENOENT;
+	}
+	*out_ubi = silofs_ubi_from_pni(pni);
+	return 0;
 }
 
 static int stc_stage_uber(struct silofs_stage_ctx *st_ctx,
@@ -225,7 +240,7 @@ static int stc_stage_uber(struct silofs_stage_ctx *st_ctx,
 	struct silofs_uber_info *ubi = nullptr;
 	int err;
 
-	err = stc_lookup_cached_ubi(st_ctx, &pnptr->paddr, &ubi);
+	err = stc_lookup_cached_uber(st_ctx, &pnptr->paddr, &ubi);
 	if (!err) {
 		goto out_ok; /* OK -- cache hit */
 	}
@@ -233,7 +248,7 @@ static int stc_stage_uber(struct silofs_stage_ctx *st_ctx,
 	if (err) {
 		return err;
 	}
-	err = stc_create_cached_ubi(st_ctx, pnptr, false, &ubi);
+	err = stc_create_cached_uber(st_ctx, pnptr, &ubi);
 	if (err) {
 		return err;
 	}
@@ -261,18 +276,25 @@ int silofs_stage_uber(struct silofs_task_ctx *task,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int stc_create_cached_bdi(const struct silofs_stage_ctx *st_ctx,
-                                 const struct silofs_pnptr *pnptr, bool spawn,
-                                 struct silofs_bldesc_info **out_bdi)
+static int stc_create_cached_bldesc(const struct silofs_stage_ctx *st_ctx,
+                                    const struct silofs_pnptr *pnptr,
+                                    struct silofs_bldesc_info **out_bdi)
 {
-	*out_bdi = silofs_create_cached_bldesc(st_ctx->pcache, pnptr, spawn);
-	return ((*out_bdi) == nullptr) ? -SILOFS_ENOMEM : 0;
+	struct silofs_pnode_info *pni;
+
+	pni = silofs_pcache_create_pnode(st_ctx->pcache, pnptr);
+	if (pni == nullptr) {
+		return -SILOFS_ENOMEM;
+	}
+	*out_bdi = silofs_bdi_from_pni(pni);
+	return 0;
 }
 
 static void stc_update_spawned_bldesc(const struct silofs_stage_ctx *st_ctx,
                                       struct silofs_bldesc_info *bdi)
 {
-	stc_update_spawned_pnode(st_ctx, &bdi->bld_pni);
+	silofs_bdi_ignite(bdi);
+	silofs_unused(st_ctx);
 }
 
 static int stc_spawn_bldesc(const struct silofs_stage_ctx *st_ctx,
@@ -285,7 +307,7 @@ static int stc_spawn_bldesc(const struct silofs_stage_ctx *st_ctx,
 	if (err) {
 		return err;
 	}
-	err = stc_create_cached_bdi(st_ctx, pnptr, true, out_bdi);
+	err = stc_create_cached_bldesc(st_ctx, pnptr, out_bdi);
 	if (err) {
 		return err;
 	}
@@ -306,12 +328,19 @@ int silofs_spawn_bldesc(struct silofs_task_ctx *task,
 	return err;
 }
 
-static int stc_lookup_cached_bdi(const struct silofs_stage_ctx *st_ctx,
-                                 const struct silofs_paddr *paddr,
-                                 struct silofs_bldesc_info **out_bdi)
+static int stc_lookup_cached_bldesc(const struct silofs_stage_ctx *st_ctx,
+                                    const struct silofs_paddr *paddr,
+                                    struct silofs_bldesc_info **out_bdi)
 {
-	*out_bdi = silofs_lookup_cached_bldesc(st_ctx->pcache, paddr);
-	return (*out_bdi == nullptr) ? -SILOFS_ENOENT : 0;
+	struct silofs_pnode_info *pni;
+
+	silofs_assert_eq(paddr->ptype, SILOFS_PTYPE_BLDESC);
+	pni = silofs_pcache_lookup_pnode(st_ctx->pcache, paddr);
+	if (pni == nullptr) {
+		return -SILOFS_ENOENT;
+	}
+	*out_bdi = silofs_bdi_from_pni(pni);
+	return 0;
 }
 
 static int stc_stage_bldesc(struct silofs_stage_ctx *st_ctx,
@@ -321,7 +350,7 @@ static int stc_stage_bldesc(struct silofs_stage_ctx *st_ctx,
 	struct silofs_bldesc_info *bdi = nullptr;
 	int err;
 
-	err = stc_lookup_cached_bdi(st_ctx, &pnptr->paddr, &bdi);
+	err = stc_lookup_cached_bldesc(st_ctx, &pnptr->paddr, &bdi);
 	if (!err) {
 		goto out_ok; /* OK -- cache hit */
 	}
@@ -329,7 +358,7 @@ static int stc_stage_bldesc(struct silofs_stage_ctx *st_ctx,
 	if (err) {
 		return err;
 	}
-	err = stc_create_cached_bdi(st_ctx, pnptr, false, &bdi);
+	err = stc_create_cached_bldesc(st_ctx, pnptr, &bdi);
 	if (err) {
 		return err;
 	}
@@ -357,18 +386,25 @@ int silofs_stage_bldesc(struct silofs_task_ctx *task,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int stc_create_cached_bti(const struct silofs_stage_ctx *st_ctx,
-                                 const struct silofs_pnptr *pnptr, bool spawn,
-                                 struct silofs_btnode_info **out_bti)
+static int stc_create_cached_btnode(const struct silofs_stage_ctx *st_ctx,
+                                    const struct silofs_pnptr *pnptr,
+                                    struct silofs_btnode_info **out_bti)
 {
-	*out_bti = silofs_create_cached_btnode(st_ctx->pcache, pnptr, spawn);
-	return ((*out_bti) == nullptr) ? -SILOFS_ENOMEM : 0;
+	struct silofs_pnode_info *pni;
+
+	pni = silofs_pcache_create_pnode(st_ctx->pcache, pnptr);
+	if (pni == nullptr) {
+		return -SILOFS_ENOMEM;
+	}
+	*out_bti = silofs_bti_from_pni(pni);
+	return 0;
 }
 
 static void stc_update_spawned_btnode(const struct silofs_stage_ctx *st_ctx,
                                       struct silofs_btnode_info *bti)
 {
-	stc_update_spawned_pnode(st_ctx, &bti->btn_pni);
+	silofs_bti_ignite(bti);
+	silofs_unused(st_ctx);
 }
 
 static int stc_spawn_btnode(const struct silofs_stage_ctx *st_ctx,
@@ -381,7 +417,7 @@ static int stc_spawn_btnode(const struct silofs_stage_ctx *st_ctx,
 	if (err) {
 		return err;
 	}
-	err = stc_create_cached_bti(st_ctx, pnptr, true, out_bti);
+	err = stc_create_cached_btnode(st_ctx, pnptr, out_bti);
 	if (err) {
 		silofs_assert_ok(err);
 		return err;
@@ -413,12 +449,19 @@ int silofs_spawn_btnode_at(struct silofs_task_ctx *task,
 	return err;
 }
 
-static int stc_lookup_cached_bti(const struct silofs_stage_ctx *st_ctx,
-                                 const struct silofs_paddr *paddr,
-                                 struct silofs_btnode_info **out_bti)
+static int stc_lookup_cached_btnode(const struct silofs_stage_ctx *st_ctx,
+                                    const struct silofs_paddr *paddr,
+                                    struct silofs_btnode_info **out_bti)
 {
-	*out_bti = silofs_lookup_cached_btnode(st_ctx->pcache, paddr);
-	return (*out_bti == nullptr) ? -SILOFS_ENOENT : 0;
+	struct silofs_pnode_info *pni;
+
+	silofs_assert_eq(paddr->ptype, SILOFS_PTYPE_BTNODE);
+	pni = silofs_pcache_lookup_pnode(st_ctx->pcache, paddr);
+	if (pni == nullptr) {
+		return -SILOFS_ENOENT;
+	}
+	*out_bti = silofs_bti_from_pni(pni);
+	return 0;
 }
 
 static int stc_validate_btnode(struct silofs_stage_ctx *st_ctx,
@@ -443,7 +486,7 @@ static int stc_stage_btnode(struct silofs_stage_ctx *st_ctx,
 	struct silofs_btnode_info *bti = nullptr;
 	int err;
 
-	err = stc_lookup_cached_bti(st_ctx, &pnptr->paddr, &bti);
+	err = stc_lookup_cached_btnode(st_ctx, &pnptr->paddr, &bti);
 	if (!err) {
 		goto out_ok; /* OK -- cache hit */
 	}
@@ -451,7 +494,7 @@ static int stc_stage_btnode(struct silofs_stage_ctx *st_ctx,
 	if (err) {
 		return err;
 	}
-	err = stc_create_cached_bti(st_ctx, pnptr, false, &bti);
+	err = stc_create_cached_btnode(st_ctx, pnptr, &bti);
 	if (err) {
 		silofs_assert_ok(err);
 		return err;

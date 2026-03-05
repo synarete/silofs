@@ -30,6 +30,8 @@ void silofs_ubi_dirtify(struct silofs_uber_info *ubi);
 
 void silofs_ubi_undirtify(struct silofs_uber_info *ubi);
 
+void silofs_ubi_ignite(struct silofs_uber_info *ubi);
+
 void silofs_ubi_set_btroot(struct silofs_uber_info    *ubi,
                            enum silofs_vtype           vtype,
                            const struct silofs_btnptr *btnptr);
@@ -53,18 +55,5 @@ void silofs_ubi_update_spdesc(struct silofs_uber_info    *ubi,
 
 bool silofs_ubi_onsame_layer(const struct silofs_uber_info   *ubi,
                              const struct silofs_btnode_info *bti);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-struct silofs_uber_info *
-silofs_lookup_cached_uber(struct silofs_pcache      *pcache,
-                          const struct silofs_paddr *paddr);
-
-struct silofs_uber_info *
-silofs_create_cached_uber(struct silofs_pcache      *pcache,
-                          const struct silofs_pnptr *pnptr, bool spawn);
-
-void silofs_forget_cached_uber(struct silofs_pcache    *pcache,
-                               struct silofs_uber_info *ubi);
 
 #endif /* SILOFS_UBER_H_ */

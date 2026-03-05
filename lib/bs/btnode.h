@@ -37,6 +37,8 @@ void silofs_bti_undirtify(struct silofs_btnode_info *bti);
 
 bool silofs_bti_isfull(const struct silofs_btnode_info *bti);
 
+void silofs_bti_ignite(struct silofs_btnode_info *bti);
+
 enum silofs_vtype silofs_bti_vspace(const struct silofs_btnode_info *bti);
 
 void silofs_bti_set_vspace(struct silofs_btnode_info *bti,
@@ -76,18 +78,5 @@ void silofs_rebind_btchilds(struct silofs_btnode_info  *parent,
 
 void silofs_clone_btnode(const struct silofs_btnode_info *bti,
                          struct silofs_btnode_info       *bti_other);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-struct silofs_btnode_info *
-silofs_lookup_cached_btnode(struct silofs_pcache      *pcache,
-                            const struct silofs_paddr *paddr);
-
-struct silofs_btnode_info *
-silofs_create_cached_btnode(struct silofs_pcache      *pcache,
-                            const struct silofs_pnptr *pnptr, bool spawn);
-
-void silofs_forget_cached_btnode(struct silofs_pcache      *pcache,
-                                 struct silofs_btnode_info *bti);
 
 #endif /* SILOFS_BTNODE_H_ */

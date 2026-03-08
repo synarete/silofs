@@ -23,9 +23,9 @@
 
 struct silofs_task_ctx;
 
-int silofs_spawn_uber_at(struct silofs_task_ctx    *task,
-                         const struct silofs_paddr *paddr,
-                         struct silofs_uber_info  **out_ubi);
+int silofs_spawn_uber(struct silofs_task_ctx    *task,
+                      const struct silofs_pnptr *pnptr,
+                      struct silofs_uber_info  **out_ubi);
 
 int silofs_stage_uber(struct silofs_task_ctx    *task,
                       const struct silofs_pnptr *pnptr,
@@ -39,9 +39,9 @@ int silofs_stage_bldesc(struct silofs_task_ctx     *task,
                         const struct silofs_pnptr  *pnptr,
                         struct silofs_bldesc_info **out_bdi);
 
-int silofs_spawn_btnode_at(struct silofs_task_ctx     *task,
-                           const struct silofs_paddr  *paddr,
-                           struct silofs_btnode_info **out_bti);
+int silofs_spawn_btnode(struct silofs_task_ctx     *task,
+                        const struct silofs_pnptr  *pnptr,
+                        struct silofs_btnode_info **out_bti);
 
 int silofs_stage_btnode(struct silofs_task_ctx     *task,
                         const struct silofs_pnptr  *pnptr,

@@ -25,7 +25,7 @@
 #include "bs/btnode.h"
 #include "bs/btree.h"
 #include "bs/uber.h"
+#include "bs/carve.h"
 #include "bs/stage.h"
-#include "bs/space.h"
 
 #endif /* SILOFS_BS_H_ */

@@ -396,16 +396,16 @@ static int btc_stage_path(struct silofs_btree_ctx *btc)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int btc_spawn_btnode_at(const struct silofs_btree_ctx *btc,
-                               const struct silofs_paddr *paddr,
+                               const struct silofs_pnptr *pnptr,
                                struct silofs_btnode_info **out_bti)
 {
-	return silofs_spawn_btnode_at(btc->task, paddr, out_bti);
+	return silofs_spawn_btnode(btc->task, pnptr, out_bti);
 }
 
 static int btc_carve_btspace(const struct silofs_btree_ctx *btc,
-                             struct silofs_paddr *out_paddr)
+                             struct silofs_pnptr *out_pnptr)
 {
-	silofs_carve_btspace(btc->task, btc_vspace(btc), out_paddr);
+	silofs_carve_next_btspace(btc->task, btc_vspace(btc), out_pnptr);
 	/* TODO: check avail space, RDONLY etc */
 	return 0;
 }
@@ -413,14 +413,14 @@ static int btc_carve_btspace(const struct silofs_btree_ctx *btc,
 static int btc_spawn_btnode(const struct silofs_btree_ctx *btc,
                             struct silofs_btnode_info **out_bti)
 {
-	struct silofs_paddr paddr = { .pos = -1 };
+	struct silofs_pnptr pnptr = { .paddr.pos = -1 };
 	int err;
 
-	err = btc_carve_btspace(btc, &paddr);
+	err = btc_carve_btspace(btc, &pnptr);
 	if (err) {
 		return err;
 	}
-	err = btc_spawn_btnode_at(btc, &paddr, out_bti);
+	err = btc_spawn_btnode_at(btc, &pnptr, out_bti);
 	if (err) {
 		return err;
 	}

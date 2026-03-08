@@ -48,8 +48,8 @@ void silofs_blobid_init(struct silofs_blobid *blobid,
                         const struct silofs_layerid *layerid,
                         const struct silofs_uniqid *uniqid)
 {
-	silofs_layerid_assign(&blobid->layerid, layerid);
-	silofs_uniqid_assign(&blobid->uniqid, uniqid);
+	silofs_layerid_assignx(&blobid->layerid, layerid);
+	silofs_uniqid_assignx(&blobid->uniqid, uniqid);
 	blobid->stype.ptype = stype->ptype;
 	blobid->stype.vtype = stype->vtype;
 	blobid->height      = SILOFS_HEIGHT_NONE;

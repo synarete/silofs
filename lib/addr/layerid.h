@@ -26,8 +26,8 @@ void silofs_layerid_reset(struct silofs_layerid *layerid);
 void silofs_layerid_assign(struct silofs_layerid       *layerid,
                            const struct silofs_layerid *other);
 
-void silofs_layerid_copyto(const struct silofs_layerid *layerid,
-                           struct silofs_layerid       *other);
+void silofs_layerid_assignx(struct silofs_layerid       *layerid,
+                            const struct silofs_layerid *other);
 
 long silofs_layerid_compare(const struct silofs_layerid *layerid,
                             const struct silofs_layerid *other);
@@ -44,6 +44,9 @@ void silofs_uniqid_setup_by(struct silofs_uniqid        *uniqid,
 
 void silofs_uniqid_assign(struct silofs_uniqid       *uniqid,
                           const struct silofs_uniqid *other);
+
+void silofs_uniqid_assignx(struct silofs_uniqid       *uniqid,
+                           const struct silofs_uniqid *other);
 
 long silofs_uniqid_compare(const struct silofs_uniqid *uniqid,
                            const struct silofs_uniqid *other);

@@ -117,12 +117,12 @@ static int flush_destage_dirty(struct silofs_task_ctx *task)
 
 static int format_uber(struct silofs_task_ctx *task)
 {
-	struct silofs_paddr paddr    = {};
+	struct silofs_pnptr pnptr    = {};
 	struct silofs_uber_info *ubi = nullptr;
 	int err;
 
-	silofs_ignite_ubspace(task, &paddr);
-	err = silofs_spawn_uber_at(task, &paddr, &ubi);
+	silofs_carve_base_ubspace(task, &pnptr);
+	err = silofs_spawn_uber(task, &pnptr, &ubi);
 	if (err) {
 		return err;
 	}
@@ -135,11 +135,11 @@ static int format_uber(struct silofs_task_ctx *task)
 static int spawn_btroot(struct silofs_task_ctx *task, enum silofs_vtype vtype,
                         struct silofs_btnode_info **out_bti)
 {
-	struct silofs_paddr paddr = {};
+	struct silofs_pnptr pnptr = {};
 	int err;
 
-	silofs_ignite_btspace(task, vtype, &paddr);
-	err = silofs_spawn_btnode_at(task, &paddr, out_bti);
+	silofs_carve_base_btspace(task, vtype, &pnptr);
+	err = silofs_spawn_btnode(task, &pnptr, out_bti);
 	if (err) {
 		return err;
 	}
@@ -159,7 +159,7 @@ static int ignite_vspace_by(struct silofs_task_ctx *task,
 	silofs_ubi_set_btroot_by(ubi, bti);
 	silofs_ubi_start_spdesc(ubi, btn_paddr);
 
-	silofs_ignite_vspace(task, vtype, &paddr);
+	silofs_carve_base_vspace(task, vtype, &paddr);
 	silofs_ubi_start_spdesc(ubi, &paddr);
 
 	return flush_destage_dirty(task);

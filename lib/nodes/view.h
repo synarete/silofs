@@ -31,32 +31,35 @@ void silofs_hdr_seal(struct silofs_header *hdr);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-struct silofs_view *silofs_view_new(struct silofs_alloc *alloc,
-                                    enum silofs_vtype vtype, int flags);
+struct silofs_lview *silofs_lview_new(struct silofs_alloc *alloc,
+                                      enum silofs_vtype vtype, int flags);
 
-void silofs_view_del(struct silofs_view *view, struct silofs_alloc *alloc,
-                     enum silofs_vtype vtype, int flags);
+void silofs_lview_del(struct silofs_lview *lview, struct silofs_alloc *alloc,
+                      enum silofs_vtype vtype, int flags);
 
-void silofs_view_seal(struct silofs_view *view);
+void silofs_seal_lview(struct silofs_lview *lview);
 
-int silofs_view_verify(const struct silofs_view *view,
-                       enum silofs_vtype         vtype);
+int silofs_verify_lview(const struct silofs_lview *lview,
+                        enum silofs_vtype          vtype);
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+int silofs_encrypt_lview(const struct silofs_cipher_hd *ci_hd,
+                         const struct silofs_civkey    *civkey,
+                         const struct silofs_lview     *lview,
+                         enum silofs_vtype vtype, void *ptr);
 
-int silofs_encrypt_view(const struct silofs_cipher_hd *ci_hd,
-                        const struct silofs_civkey    *civkey,
-                        const struct silofs_view      *view,
-                        enum silofs_vtype vtype, void *ptr);
+int silofs_decrypt_lview(const struct silofs_cipher_hd *ci_hd,
+                         const struct silofs_civkey    *civkey,
+                         const struct silofs_lview     *lview,
+                         enum silofs_vtype vtype, void *ptr);
 
-int silofs_decrypt_view(const struct silofs_cipher_hd *ci_hd,
-                        const struct silofs_civkey    *civkey,
-                        const struct silofs_view      *view,
-                        enum silofs_vtype vtype, void *ptr);
+int silofs_decrypt_lview2(const struct silofs_cipher_hd *ci_hd,
+                          const struct silofs_civkey    *civkey,
+                          const struct silofs_lview     *lview_enc,
+                          struct silofs_lview *lview, size_t len);
 
 int silofs_decrypt_view_inplace(const struct silofs_cipher_hd *ci_hd,
                                 const struct silofs_civkey    *civkey,
-                                struct silofs_view            *view,
+                                struct silofs_lview           *view,
                                 enum silofs_vtype              vtype);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -67,8 +70,6 @@ silofs_pview_new(struct silofs_alloc *alloc, enum silofs_ptype ptype);
 void silofs_pview_del(struct silofs_pview *pview, struct silofs_alloc *alloc,
                       enum silofs_ptype ptype);
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 void silofs_seal_pview(struct silofs_pview *pview);
 
 int silofs_verify_pview(const struct silofs_pview *pview,
@@ -77,11 +78,11 @@ int silofs_verify_pview(const struct silofs_pview *pview,
 int silofs_encrypt_pview(const struct silofs_cipher_hd *ci_hd,
                          const struct silofs_civkey    *civkey,
                          const struct silofs_pview     *pview,
-                         enum silofs_ptype ptype, void *ptr);
+                         struct silofs_pview *pview_enc, size_t len);
 
 int silofs_decrypt_pview(const struct silofs_cipher_hd *ci_hd,
                          const struct silofs_civkey    *civkey,
-                         const struct silofs_pview     *pview,
-                         enum silofs_ptype ptype, void *ptr);
+                         const struct silofs_pview     *pview_enc,
+                         struct silofs_pview *pview, size_t len);
 
 #endif /* SILOFS_VIEW_H_ */

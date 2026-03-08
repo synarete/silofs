@@ -34,7 +34,7 @@ struct silofs_lnode_info {
 	struct silofs_hmapq_elem  ln_hmqe;
 	struct silofs_avl_node    ln_ds_avl_node;
 	struct silofs_lnode_info *ln_ds_next;
-	struct silofs_view       *ln_view;
+	struct silofs_lview      *ln_view;
 	enum silofs_lnflags       ln_flags;
 	enum silofs_vtype         ln_vtype;
 };
@@ -180,7 +180,7 @@ bool silofs_lni_isevictable(const struct silofs_lnode_info *lni);
 
 bool silofs_lni_isdirty(const struct silofs_lnode_info *lni);
 
-int silofs_lni_verify_view(const struct silofs_lnode_info *lni);
+int silofs_verify_lnode(const struct silofs_lnode_info *lni);
 
 struct silofs_lnode_info *
 silofs_lni_from_dqe(const struct silofs_dq_elem *dqe);

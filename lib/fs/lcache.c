@@ -612,8 +612,8 @@ lcache_new_vni(const struct silofs_lcache *lcache,
 }
 
 struct silofs_vnode_info *
-silofs_lcache_lookup_vni(struct silofs_lcache *lcache,
-                         const struct silofs_vaddr *vaddr)
+silofs_lcache_lookup_vnode(struct silofs_lcache *lcache,
+                           const struct silofs_vaddr *vaddr)
 {
 	struct silofs_vnode_info *vni;
 
@@ -656,8 +656,8 @@ lcache_forget_vni(struct silofs_lcache *lcache, struct silofs_vnode_info *vni)
 	}
 }
 
-void silofs_lcache_forget_vni(struct silofs_lcache *lcache,
-                              struct silofs_vnode_info *vni)
+void silofs_lcache_forget_vnode(struct silofs_lcache *lcache,
+                                struct silofs_vnode_info *vni)
 {
 	lcache_forget_vni(lcache, vni);
 }
@@ -685,8 +685,8 @@ lcache_create_vni(struct silofs_lcache *lcache,
 }
 
 struct silofs_vnode_info *
-silofs_lcache_create_vni(struct silofs_lcache *lcache,
-                         const struct silofs_vaddr *vaddr)
+silofs_lcache_create_vnode(struct silofs_lcache *lcache,
+                           const struct silofs_vaddr *vaddr)
 {
 	struct silofs_vnode_info *vni;
 
@@ -694,8 +694,8 @@ silofs_lcache_create_vni(struct silofs_lcache *lcache,
 	return vni;
 }
 
-void silofs_lcache_reditify_vni(struct silofs_lcache *lcache,
-                                struct silofs_vnode_info *vni)
+void silofs_lcache_redirtify_vnode(struct silofs_lcache *lcache,
+                                   struct silofs_vnode_info *vni)
 {
 	silofs_vni_undirtify(vni);
 	lcache_set_dq_of_vni(lcache, vni);

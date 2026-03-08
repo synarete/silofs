@@ -28,9 +28,9 @@ struct silofs_mbr;
 void silofs_resolve_unode_nmeta(const struct silofs_env *env,
                                 struct silofs_nmeta     *out_nmeta);
 
-int silofs_encrypt_lview(const struct silofs_env   *env,
-                         const struct silofs_llink *llink,
-                         const struct silofs_view *view, void *ptr);
+int silofs_encrypt_view(const struct silofs_env   *env,
+                        const struct silofs_llink *llink,
+                        const struct silofs_lview *view, void *ptr);
 
 int silofs_decrypt_uni_view(const struct silofs_env  *env,
                             struct silofs_unode_info *uni);

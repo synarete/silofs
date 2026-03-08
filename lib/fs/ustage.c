@@ -24,9 +24,9 @@
 
 static int ubi_verify_sub_view(const struct silofs_unode_info *uni)
 {
-	const struct silofs_view *view = uni->un_lni.ln_view;
-	const enum silofs_vtype vtype  = silofs_uni_vtype(uni);
-	int ret                        = -1;
+	const struct silofs_lview *view = uni->un_lni.ln_view;
+	const enum silofs_vtype vtype   = silofs_uni_vtype(uni);
+	int ret                         = -1;
 
 	switch (vtype) {
 	case SILOFS_VTYPE_SUPER:
@@ -61,7 +61,7 @@ static int uni_verify_view(const struct silofs_unode_info *uni)
 {
 	int err;
 
-	err = silofs_lni_verify_view(&uni->un_lni);
+	err = silofs_verify_lnode(&uni->un_lni);
 	if (err) {
 		return err;
 	}
@@ -288,7 +288,7 @@ require_lseg_by(const struct silofs_env *env, const struct silofs_uaddr *uaddr)
 
 static int
 load_view_at(const struct silofs_env *env, const struct silofs_laddr *laddr,
-             struct silofs_view *view)
+             struct silofs_lview *view)
 {
 	const size_t len = silofs_laddr_len(laddr);
 
@@ -297,7 +297,7 @@ load_view_at(const struct silofs_env *env, const struct silofs_laddr *laddr,
 
 static int
 stage_load_view(const struct silofs_env *env, const struct silofs_laddr *laddr,
-                struct silofs_view *view)
+                struct silofs_lview *view)
 {
 	int err;
 

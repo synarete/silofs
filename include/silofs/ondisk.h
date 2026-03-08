@@ -1054,8 +1054,8 @@ struct silofs_pview {
 	union silofs_pview_u pv;
 } silofs_attr_aligned64;
 
-/* semantic "view" into meta elements */
-union silofs_view_u {
+/* semantic "view" into lnodes' meta-elements */
+union silofs_lview_u {
 	struct silofs_header       hdr[2];
 	struct silofs_mbr1k        mbr;
 	struct silofs_arix_node    arn;
@@ -1074,8 +1074,8 @@ union silofs_view_u {
 	struct silofs_lblock       lbk;
 } silofs_attr_aligned64;
 
-struct silofs_view {
-	union silofs_view_u u;
+struct silofs_lview {
+	union silofs_lview_u u;
 } silofs_attr_aligned64;
 
 #endif /* SILOFS_ONDISK_H_ */

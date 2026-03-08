@@ -27,30 +27,30 @@ enum {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct silofs_view *
+static struct silofs_lview *
 view_new_by_uaddr(struct silofs_alloc *alloc, const struct silofs_uaddr *uaddr)
 {
-	return silofs_view_new(alloc, silofs_uaddr_vtype(uaddr), 0);
+	return silofs_lview_new(alloc, silofs_uaddr_vtype(uaddr), 0);
 }
 
-static struct silofs_view *
+static struct silofs_lview *
 view_new_by_vaddr(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 {
-	return silofs_view_new(alloc, vaddr->vtype, 0);
+	return silofs_lview_new(alloc, vaddr->vtype, 0);
 }
 
 static void
-view_del_by_uaddr(struct silofs_view *view, const struct silofs_uaddr *uaddr,
+view_del_by_uaddr(struct silofs_lview *view, const struct silofs_uaddr *uaddr,
                   struct silofs_alloc *alloc, int flags)
 {
-	silofs_view_del(view, alloc, silofs_uaddr_vtype(uaddr), flags);
+	silofs_lview_del(view, alloc, silofs_uaddr_vtype(uaddr), flags);
 }
 
 static void
-view_del_by_vaddr(struct silofs_view *view, const struct silofs_vaddr *vaddr,
+view_del_by_vaddr(struct silofs_lview *view, const struct silofs_vaddr *vaddr,
                   struct silofs_alloc *alloc, int flags)
 {
-	silofs_view_del(view, alloc, vaddr->vtype, flags);
+	silofs_lview_del(view, alloc, vaddr->vtype, flags);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -66,7 +66,7 @@ lni_unconst(const struct silofs_lnode_info *lni)
 }
 
 static void lni_init(struct silofs_lnode_info *lni, enum silofs_vtype vtype,
-                     struct silofs_view *view)
+                     struct silofs_lview *view)
 {
 	silofs_hmqe_init(&lni->ln_hmqe, silofs_vtype_size(vtype));
 	silofs_avl_node_init(&lni->ln_ds_avl_node);
@@ -82,12 +82,6 @@ static void lni_fini(struct silofs_lnode_info *lni)
 	silofs_avl_node_fini(&lni->ln_ds_avl_node);
 	lni->ln_ds_next = nullptr;
 	lni->ln_view    = nullptr;
-}
-
-int silofs_lni_verify_view(const struct silofs_lnode_info *lni)
-{
-	silofs_assert_not_null(lni->ln_view);
-	return silofs_view_verify(lni->ln_view, lni->ln_vtype);
 }
 
 struct silofs_lnode_info *
@@ -208,6 +202,12 @@ void silofs_lni_undirtify(struct silofs_lnode_info *lni)
 	}
 }
 
+int silofs_verify_lnode(const struct silofs_lnode_info *lni)
+{
+	silofs_assert_not_null(lni->ln_view);
+	return silofs_verify_lview(lni->ln_view, lni->ln_vtype);
+}
+
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static struct silofs_unode_info *
@@ -233,7 +233,7 @@ static void uni_verify(const struct silofs_unode_info *uni)
 
 static void
 uni_init(struct silofs_unode_info *uni, const struct silofs_uaddr *uaddr,
-         struct silofs_view *view)
+         struct silofs_lview *view)
 {
 	lni_init(&uni->un_lni, silofs_uaddr_vtype(uaddr), view);
 	silofs_uaddr_assign(&uni->un_uaddr, uaddr);
@@ -277,13 +277,13 @@ silofs_uni_from_lni(const struct silofs_lnode_info *lni)
 void silofs_uni_seal_view(struct silofs_unode_info *uni)
 {
 	uni_verify(uni);
-	silofs_view_seal(uni->un_lni.ln_view);
+	silofs_seal_lview(uni->un_lni.ln_view);
 }
 
 static void uni_del_view(struct silofs_unode_info *uni,
                          struct silofs_alloc *alloc, int flags)
 {
-	struct silofs_view *view = uni->un_lni.ln_view;
+	struct silofs_lview *view = uni->un_lni.ln_view;
 
 	view_del_by_uaddr(view, silofs_uni_uaddr(uni), alloc, flags);
 	uni->un_lni.ln_view = nullptr;
@@ -360,7 +360,7 @@ vni_unconst(const struct silofs_vnode_info *vni)
 	return u.q;
 }
 
-static void vni_verify(const struct silofs_vnode_info *vni)
+static void vni_dbg_check(const struct silofs_vnode_info *vni)
 {
 	if (unlikely(vni->vn_magic != SILOFS_VI_MAGIC)) {
 		silofs_panic("bad vnode: vni=%p magic=%lx", (const void *)vni,
@@ -370,7 +370,7 @@ static void vni_verify(const struct silofs_vnode_info *vni)
 
 static void
 vni_init(struct silofs_vnode_info *vni, const struct silofs_vaddr *vaddr,
-         struct silofs_view *view)
+         struct silofs_lview *view)
 {
 	lni_init(&vni->vn_lni, vaddr->vtype, view);
 	silofs_vaddr_assign(&vni->vn_vaddr, vaddr);
@@ -381,7 +381,7 @@ vni_init(struct silofs_vnode_info *vni, const struct silofs_vaddr *vaddr,
 
 static void vni_fini(struct silofs_vnode_info *vni)
 {
-	vni_verify(vni);
+	vni_dbg_check(vni);
 	silofs_assert_eq(vni->vn_asyncwr, 0);
 
 	lni_fini(&vni->vn_lni);
@@ -455,7 +455,7 @@ silofs_vni_from_lni(const struct silofs_lnode_info *lni)
 
 	if (lni != nullptr) {
 		vni = container_of2(lni, struct silofs_vnode_info, vn_lni);
-		vni_verify(vni);
+		vni_dbg_check(vni);
 	}
 	return vni_unconst(vni);
 }
@@ -468,7 +468,7 @@ struct silofs_vnode_info *silofs_vni_from_dqe(struct silofs_dq_elem *dqe)
 void silofs_vni_seal_view(struct silofs_vnode_info *vni)
 {
 	silofs_assert_not_null(vni->vn_lni.ln_view);
-	silofs_view_seal(vni->vn_lni.ln_view);
+	silofs_seal_lview(vni->vn_lni.ln_view);
 }
 
 static bool
@@ -480,7 +480,7 @@ vni_has_vtype(const struct silofs_vnode_info *vni, enum silofs_vtype vtype)
 static void vni_del_view(struct silofs_vnode_info *vni,
                          struct silofs_alloc *alloc, int flags)
 {
-	struct silofs_view *view = vni->vn_lni.ln_view;
+	struct silofs_lview *view = vni->vn_lni.ln_view;
 
 	view_del_by_vaddr(view, silofs_vni_vaddr(vni), alloc, flags);
 	vni->vn_lni.ln_view = nullptr;
@@ -527,8 +527,9 @@ static struct silofs_sb_info *sbi_from_uni(struct silofs_unode_info *uni)
 	return container_of(uni, struct silofs_sb_info, sb_uni);
 }
 
-static int sbi_init(struct silofs_sb_info *sbi,
-                    const struct silofs_uaddr *uaddr, struct silofs_view *view)
+static int
+sbi_init(struct silofs_sb_info *sbi, const struct silofs_uaddr *uaddr,
+         struct silofs_lview *view)
 {
 	uni_init(&sbi->sb_uni, uaddr, view);
 	sbi->sb = &view->u.sb;
@@ -558,7 +559,7 @@ sbi_free(struct silofs_sb_info *sbi, struct silofs_alloc *alloc, int flags)
 static struct silofs_sb_info *
 sbi_new(struct silofs_alloc *alloc, const struct silofs_uaddr *uaddr)
 {
-	struct silofs_view *view;
+	struct silofs_lview *view;
 	struct silofs_sb_info *sbi;
 	int err;
 
@@ -608,7 +609,7 @@ static struct silofs_spnode_info *sni_from_uni(struct silofs_unode_info *uni)
 
 static void
 sni_init(struct silofs_spnode_info *sni, const struct silofs_uaddr *uaddr,
-         struct silofs_view *view)
+         struct silofs_lview *view)
 {
 	uni_init(&sni->sn_uni, uaddr, view);
 	sni->sn              = &view->u.sn;
@@ -648,7 +649,7 @@ sni_del(struct silofs_spnode_info *sni, struct silofs_alloc *alloc, int flags)
 static struct silofs_spnode_info *
 sni_new(struct silofs_alloc *alloc, const struct silofs_uaddr *uaddr)
 {
-	struct silofs_view *view;
+	struct silofs_lview *view;
 	struct silofs_spnode_info *sni;
 
 	view = view_new_by_uaddr(alloc, uaddr);
@@ -684,7 +685,7 @@ static struct silofs_spleaf_info *sli_from_uni(struct silofs_unode_info *uni)
 
 static void
 sli_init(struct silofs_spleaf_info *sli, const struct silofs_uaddr *uaddr,
-         struct silofs_view *view)
+         struct silofs_lview *view)
 {
 	uni_init(&sli->sl_uni, uaddr, view);
 	sli->sl = &view->u.sl;
@@ -713,7 +714,7 @@ sli_free(struct silofs_spleaf_info *sli, struct silofs_alloc *alloc, int flags)
 static struct silofs_spleaf_info *
 sli_new(struct silofs_alloc *alloc, const struct silofs_uaddr *uaddr)
 {
-	struct silofs_view *view;
+	struct silofs_lview *view;
 	struct silofs_spleaf_info *sli;
 
 	view = view_new_by_uaddr(alloc, uaddr);
@@ -757,7 +758,7 @@ static struct silofs_lsmap_info *lsi_from_vni(struct silofs_vnode_info *vni)
 
 static void
 lsi_init(struct silofs_lsmap_info *lsi, const struct silofs_vaddr *vaddr,
-         struct silofs_view *view)
+         struct silofs_lview *view)
 {
 	vni_init(&lsi->ls_vni, vaddr, view);
 	lsi->lsm            = &view->u.lsm;
@@ -789,7 +790,7 @@ lsi_free(struct silofs_lsmap_info *lsi, struct silofs_alloc *alloc, int flags)
 static struct silofs_lsmap_info *
 lsi_new(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 {
-	struct silofs_view *view;
+	struct silofs_lview *view;
 	struct silofs_lsmap_info *lsi;
 
 	view = view_new_by_vaddr(alloc, vaddr);
@@ -825,8 +826,9 @@ static struct silofs_inode_info *ii_from_vni(struct silofs_vnode_info *vni)
 	return container_of(vni, struct silofs_inode_info, i_vni);
 }
 
-static void ii_init(struct silofs_inode_info *ii,
-                    const struct silofs_vaddr *vaddr, struct silofs_view *view)
+static void
+ii_init(struct silofs_inode_info *ii, const struct silofs_vaddr *vaddr,
+        struct silofs_lview *view)
 {
 	vni_init(&ii->i_vni, vaddr, view);
 	silofs_dirtyq_init(&ii->i_dq_vnis);
@@ -869,7 +871,7 @@ ii_free(struct silofs_inode_info *ii, struct silofs_alloc *alloc, int flags)
 static struct silofs_inode_info *
 ii_new(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 {
-	struct silofs_view *view;
+	struct silofs_lview *view;
 	struct silofs_inode_info *ii;
 
 	view = view_new_by_vaddr(alloc, vaddr);
@@ -928,7 +930,7 @@ static struct silofs_xanode_info *xai_from_vni(struct silofs_vnode_info *vni)
 
 static void
 xai_init(struct silofs_xanode_info *xai, const struct silofs_vaddr *vaddr,
-         struct silofs_view *view)
+         struct silofs_lview *view)
 {
 	vni_init(&xai->xan_vni, vaddr, view);
 	xai->xan = &view->u.xan;
@@ -957,7 +959,7 @@ xai_free(struct silofs_xanode_info *xai, struct silofs_alloc *alloc, int flags)
 static struct silofs_xanode_info *
 xai_new(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 {
-	struct silofs_view *view;
+	struct silofs_lview *view;
 	struct silofs_xanode_info *xai;
 
 	view = view_new_by_vaddr(alloc, vaddr);
@@ -1001,7 +1003,7 @@ static struct silofs_symval_info *syi_from_vni(struct silofs_vnode_info *vni)
 
 static void
 syi_init(struct silofs_symval_info *syi, const struct silofs_vaddr *vaddr,
-         struct silofs_view *view)
+         struct silofs_lview *view)
 {
 	vni_init(&syi->syv_vni, vaddr, view);
 	syi->syv = &view->u.syv;
@@ -1030,7 +1032,7 @@ syi_free(struct silofs_symval_info *syi, struct silofs_alloc *alloc, int flags)
 static struct silofs_symval_info *
 syi_new(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 {
-	struct silofs_view *view;
+	struct silofs_lview *view;
 	struct silofs_symval_info *syi;
 
 	view = view_new_by_vaddr(alloc, vaddr);
@@ -1073,7 +1075,7 @@ static struct silofs_dtnode_info *dni_from_vni(struct silofs_vnode_info *vni)
 
 static void
 dni_init(struct silofs_dtnode_info *dni, const struct silofs_vaddr *vaddr,
-         struct silofs_view *view)
+         struct silofs_lview *view)
 {
 	vni_init(&dni->dtn_vni, vaddr, view);
 	dni->dtn = &view->u.dtn;
@@ -1102,7 +1104,7 @@ dni_free(struct silofs_dtnode_info *dni, struct silofs_alloc *alloc, int flags)
 static struct silofs_dtnode_info *
 dni_new(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 {
-	struct silofs_view *view;
+	struct silofs_lview *view;
 	struct silofs_dtnode_info *dni;
 
 	view = view_new_by_vaddr(alloc, vaddr);
@@ -1147,7 +1149,7 @@ static struct silofs_ftnode_info *fni_from_vni(struct silofs_vnode_info *vni)
 
 static void
 fni_init(struct silofs_ftnode_info *fni, const struct silofs_vaddr *vaddr,
-         struct silofs_view *view)
+         struct silofs_lview *view)
 {
 	vni_init(&fni->ftn_vni, vaddr, view);
 	fni->ftn = &view->u.ftn;
@@ -1176,7 +1178,7 @@ fni_free(struct silofs_ftnode_info *fni, struct silofs_alloc *alloc, int flags)
 static struct silofs_ftnode_info *
 fni_new(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 {
-	struct silofs_view *view;
+	struct silofs_lview *view;
 	struct silofs_ftnode_info *fni;
 
 	view = view_new_by_vaddr(alloc, vaddr);
@@ -1220,7 +1222,7 @@ static struct silofs_ftleaf_info *fli_from_vni(struct silofs_vnode_info *vni)
 
 static void
 fli_init(struct silofs_ftleaf_info *fli, const struct silofs_vaddr *vaddr,
-         struct silofs_view *view)
+         struct silofs_lview *view)
 {
 	vni_init(&fli->ftl_vni, vaddr, view);
 
@@ -1258,7 +1260,7 @@ fli_free(struct silofs_ftleaf_info *fli, struct silofs_alloc *alloc, int flags)
 static struct silofs_ftleaf_info *
 fli_new(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 {
-	struct silofs_view *view;
+	struct silofs_lview *view;
 	struct silofs_ftleaf_info *fli;
 
 	view = view_new_by_vaddr(alloc, vaddr);

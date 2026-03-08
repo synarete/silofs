@@ -2910,7 +2910,7 @@ static int try_forget_cached_ii(const struct silofs_task_ctx *task,
                                 struct silofs_inode_info *ii)
 {
 	if ((ii->i_nlookup <= 0) && ii_isevictable(ii)) {
-		silofs_lcache_forget_vni(task->lcache, silofs_ii_to_vni(ii));
+		silofs_lcache_forget_vnode(task->lcache, silofs_ii_to_vni(ii));
 	}
 	return 0;
 }

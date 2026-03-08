@@ -24,17 +24,17 @@ static enum silofs_vtype llink_vtype(const struct silofs_llink *llink)
 	return silofs_laddr_vtype(&llink->laddr);
 }
 
-int silofs_encrypt_lview(const struct silofs_env *env,
-                         const struct silofs_llink *llink,
-                         const struct silofs_view *view, void *ptr)
+int silofs_encrypt_view(const struct silofs_env *env,
+                        const struct silofs_llink *llink,
+                        const struct silofs_lview *view, void *ptr)
 {
-	return silofs_encrypt_view(&env->enc_ci_hd, &llink->civkey, view,
-	                           llink_vtype(llink), ptr);
+	return silofs_encrypt_lview(&env->enc_ci_hd, &llink->civkey, view,
+	                            llink_vtype(llink), ptr);
 }
 
 static int decrypt_lview_inplace(const struct silofs_env *env,
                                  const struct silofs_llink *llink,
-                                 struct silofs_view *view)
+                                 struct silofs_lview *view)
 {
 	return silofs_decrypt_view_inplace(&env->dec_ci_hd, &llink->civkey,
 	                                   view, llink_vtype(llink));

@@ -99,6 +99,12 @@ silofs_pni_layerid(const struct silofs_pnode_info *pni)
 	return &paddr->blobid.layerid;
 }
 
+const struct silofs_civkey *
+silofs_pni_civkey(const struct silofs_pnode_info *pni)
+{
+	return &pni->pn_self.nmeta.civkey;
+}
+
 static bool pni_isdirty(const struct silofs_pnode_info *pni)
 {
 	return silofs_dqe_is_dirty(pni_dqe2(pni));
@@ -554,34 +560,6 @@ void silofs_del_pnode(struct silofs_pnode_info *pni,
 		silofs_panic("can not delete pnode: ptype=%d", (int)ptype);
 		break;
 	}
-}
-
-static const struct silofs_civkey *
-pni_civkey(const struct silofs_pnode_info *pni)
-{
-	return &pni->pn_self.nmeta.civkey;
-}
-
-int silofs_encrypt_pnode(const struct silofs_pnode_info *pni,
-                         const struct silofs_cipher_hd *ci_hd,
-                         struct silofs_pview *enc_pview)
-{
-	return silofs_encrypt_pview(ci_hd,           //
-	                            pni_civkey(pni), //
-	                            pni->pn_pview,   //
-	                            pni_ptype(pni),  //
-	                            enc_pview);
-}
-
-int silofs_decrypt_pnode(struct silofs_pnode_info *pni,
-                         const struct silofs_cipher_hd *ci_hd,
-                         const struct silofs_pview *enc_pview)
-{
-	return silofs_decrypt_pview(ci_hd,           //
-	                            pni_civkey(pni), //
-	                            enc_pview,       //
-	                            pni_ptype(pni),  //
-	                            pni->pn_pview);
 }
 
 int silofs_verify_pnode(const struct silofs_pnode_info *pni)

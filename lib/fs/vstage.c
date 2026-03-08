@@ -116,9 +116,9 @@ static void vni_update_llink(struct silofs_vnode_info *vni,
 
 static int vni_verify_sub_view(const struct silofs_vnode_info *vni)
 {
-	const struct silofs_view *view = vni->vn_lni.ln_view;
-	const enum silofs_vtype vtype  = silofs_vni_vtype(vni);
-	int ret                        = 0;
+	const struct silofs_lview *view = vni->vn_lni.ln_view;
+	const enum silofs_vtype vtype   = silofs_vni_vtype(vni);
+	int ret                         = 0;
 
 	switch (vtype) {
 	case SILOFS_VTYPE_LSMAP:
@@ -160,7 +160,7 @@ static int vni_verify_view(const struct silofs_vnode_info *vni)
 {
 	int err;
 
-	err = silofs_lni_verify_view(&vni->vn_lni);
+	err = silofs_verify_lnode(&vni->vn_lni);
 	if (err) {
 		return err;
 	}
@@ -235,7 +235,7 @@ static int vstgc_create_cached_vni(const struct silofs_vstage_ctx *vstg_ctx,
                                    const struct silofs_vaddr *vaddr,
                                    struct silofs_vnode_info **out_vni)
 {
-	*out_vni = silofs_lcache_create_vni(vstgc_lcache(vstg_ctx), vaddr);
+	*out_vni = silofs_lcache_create_vnode(vstgc_lcache(vstg_ctx), vaddr);
 	return (*out_vni == nullptr) ? -SILOFS_ENOMEM : 0;
 }
 
@@ -243,7 +243,7 @@ static void vstgc_forget_cached_vni(const struct silofs_vstage_ctx *vstg_ctx,
                                     struct silofs_vnode_info *vni)
 {
 	if (vni != nullptr) {
-		silofs_lcache_forget_vni(vstgc_lcache(vstg_ctx), vni);
+		silofs_lcache_forget_vnode(vstgc_lcache(vstg_ctx), vni);
 	}
 }
 
@@ -2136,7 +2136,7 @@ static bool laddr_isdata(const struct silofs_laddr *laddr)
 
 static int
 vstgc_load_view_at(const struct silofs_vstage_ctx *vstg_ctx,
-                   const struct silofs_laddr *laddr, struct silofs_view *view)
+                   const struct silofs_laddr *laddr, struct silofs_lview *view)
 {
 	struct silofs_repo *repo      = vstg_ctx->env->base.repo;
 	enum silofs_stg_mode stg_mode = vstg_ctx->stg_mode;
@@ -2199,7 +2199,7 @@ static int vstgc_require_lseg_of(const struct silofs_vstage_ctx *vstg_ctx,
 
 static int vstgc_stage_load_view(const struct silofs_vstage_ctx *vstg_ctx,
                                  const struct silofs_laddr *laddr,
-                                 struct silofs_view *view)
+                                 struct silofs_lview *view)
 {
 	int err;
 
@@ -2437,7 +2437,7 @@ static int vstgc_pre_clone_lbk(struct silofs_vstage_ctx *vstg_ctx,
 static void vstgc_redirtify_vni(const struct silofs_vstage_ctx *vstg_ctx,
                                 struct silofs_vnode_info *vni)
 {
-	silofs_lcache_reditify_vni(vstgc_lcache(vstg_ctx), vni);
+	silofs_lcache_redirtify_vnode(vstgc_lcache(vstg_ctx), vni);
 }
 
 static void vstgc_post_clone_lbk(const struct silofs_vstage_ctx *vstg_ctx,
@@ -2616,7 +2616,7 @@ static int fixup_cached_vni(const struct silofs_task_ctx *task,
 	if (silofs_vni_refcnt(vni)) {
 		return 0;
 	}
-	silofs_lcache_forget_vni(task->lcache, vni);
+	silofs_lcache_forget_vnode(task->lcache, vni);
 	return -SILOFS_ENOENT;
 }
 
@@ -2627,7 +2627,7 @@ static int fetch_cached_vni(struct silofs_task_ctx *task,
 	struct silofs_vnode_info *vni;
 	int err;
 
-	vni = silofs_lcache_lookup_vni(task->lcache, vaddr);
+	vni = silofs_lcache_lookup_vnode(task->lcache, vaddr);
 	if (vni == nullptr) {
 		return -SILOFS_ENOENT;
 	}
@@ -3123,7 +3123,7 @@ int silofs_spawn_inode(struct silofs_task_ctx *task,
 static void forget_cached_vni(const struct silofs_task_ctx *task,
                               struct silofs_vnode_info *vni)
 {
-	silofs_lcache_forget_vni(task->lcache, vni);
+	silofs_lcache_forget_vnode(task->lcache, vni);
 }
 
 static int reclaim_vspace_at(struct silofs_task_ctx *task,

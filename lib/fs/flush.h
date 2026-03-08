@@ -26,9 +26,9 @@
 
 /* submit reference into view within underlying block */
 struct silofs_submit_ref {
-	struct silofs_llink       llink;
-	const struct silofs_view *view;
-	enum silofs_vtype         vtype;
+	struct silofs_llink        llink;
+	const struct silofs_lview *view;
+	enum silofs_vtype          vtype;
 };
 
 /* submission queue entry */

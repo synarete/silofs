@@ -57,7 +57,7 @@ static int fetch_cached_lsi(struct silofs_task_ctx *task,
 {
 	struct silofs_vnode_info *vni;
 
-	vni = silofs_lcache_lookup_vni(task->lcache, vaddr);
+	vni = silofs_lcache_lookup_vnode(task->lcache, vaddr);
 	if (vni == nullptr) {
 		return -SILOFS_ENOENT;
 	}

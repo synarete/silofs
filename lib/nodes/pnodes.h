@@ -74,6 +74,9 @@ silofs_pni_paddr(const struct silofs_pnode_info *pni);
 const struct silofs_layerid *
 silofs_pni_layerid(const struct silofs_pnode_info *pni);
 
+const struct silofs_civkey *
+silofs_pni_civkey(const struct silofs_pnode_info *pni);
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 struct silofs_uber_info *
@@ -92,14 +95,6 @@ struct silofs_pnode_info *silofs_new_pnode(const struct silofs_pnptr *pnptr, //
 
 void silofs_del_pnode(struct silofs_pnode_info *pni,
                       struct silofs_alloc      *alloc);
-
-int silofs_encrypt_pnode(const struct silofs_pnode_info *pni,
-                         const struct silofs_cipher_hd  *ci_hd,
-                         struct silofs_pview            *enc_pview);
-
-int silofs_decrypt_pnode(struct silofs_pnode_info      *pni,
-                         const struct silofs_cipher_hd *ci_hd,
-                         const struct silofs_pview     *enc_pview);
 
 int silofs_verify_pnode(const struct silofs_pnode_info *pni);
 

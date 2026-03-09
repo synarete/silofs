@@ -47,6 +47,11 @@ int silofs_stage_btnode(struct silofs_task_ctx     *task,
                         const struct silofs_pnptr  *pnptr,
                         struct silofs_btnode_info **out_bti);
 
+int silofs_spawn_vnode2(struct silofs_task_ctx    *task,
+                        const struct silofs_vaddr *vaddr,
+                        const struct silofs_pnptr *pnptr,
+                        struct silofs_vnode_info **out_vni);
+
 int silofs_stage_vnode2(struct silofs_task_ctx    *task,
                         const struct silofs_vaddr *vaddr,
                         const struct silofs_pnptr *pnptr,

@@ -690,6 +690,38 @@ static int stc_create_cached_vnode(const struct silofs_stage_ctx *st_ctx,
 	return (*out_vni == nullptr) ? -SILOFS_ENOMEM : 0;
 }
 
+static int stc_spawn_vnode(const struct silofs_stage_ctx *st_ctx,
+                           const struct silofs_vaddr *vaddr,
+                           const struct silofs_pnptr *pnptr,
+                           struct silofs_vnode_info **out_vni)
+{
+	int err;
+
+	err = stc_require_paddr_of(st_ctx, pnptr);
+	if (err) {
+		return err;
+	}
+	err = stc_create_cached_vnode(st_ctx, vaddr, out_vni);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+int silofs_spawn_vnode2(struct silofs_task_ctx *task,
+                        const struct silofs_vaddr *vaddr,
+                        const struct silofs_pnptr *pnptr,
+                        struct silofs_vnode_info **out_vni)
+{
+	struct silofs_stage_ctx st_ctx = {};
+	int err;
+
+	stc_init(&st_ctx, task);
+	err = stc_spawn_vnode(&st_ctx, vaddr, pnptr, out_vni);
+	stc_fini(&st_ctx);
+	return err;
+}
+
 static int stc_read_lview_at(struct silofs_stage_ctx *st_ctx,
                              const struct silofs_paddr *paddr, size_t len)
 {

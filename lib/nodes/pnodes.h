@@ -54,7 +54,6 @@ struct silofs_btnode_info {
 	struct silofs_btree_node *btn;
 	size_t                    btn_nsub_vobjs;
 	size_t                    btn_nsub_btnodes;
-	bool                      btn_rdonly;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

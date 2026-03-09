@@ -56,4 +56,6 @@ void silofs_ubi_update_spdesc(struct silofs_uber_info    *ubi,
 bool silofs_ubi_onsame_layer(const struct silofs_uber_info   *ubi,
                              const struct silofs_btnode_info *bti);
 
+int silofs_validate_uber(const struct silofs_uber_info *ubi);
+
 #endif /* SILOFS_UBER_H_ */

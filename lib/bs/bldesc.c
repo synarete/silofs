@@ -413,3 +413,10 @@ int silofs_bdi_mark_used(struct silofs_bldesc_info *bdi,
 	silofs_bdi_dirtify(bdi);
 	return 0;
 }
+
+int silofs_validate_bldesc(const struct silofs_bldesc_info *bdi)
+{
+	/* TODO: writeme */
+	silofs_unused(bdi);
+	return 0;
+}

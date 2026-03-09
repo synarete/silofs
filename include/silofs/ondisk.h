@@ -350,13 +350,6 @@ enum silofs_endianness {
 	SILOFS_ENDIANNESS_BE = 2,
 };
 
-/* persistent nodes' flags */
-enum silofs_pnodef {
-	SILOFS_PNODEF_NONE   = 0x00,
-	SILOFS_PNODEF_META   = 0x01,
-	SILOFS_PNODEF_BTROOT = 0x02,
-};
-
 /* p-elements sub-types */
 enum silofs_ptype {
 	SILOFS_PTYPE_NONE   = 0,
@@ -399,6 +392,12 @@ enum silofs_height {
 	SILOFS_HEIGHT_SUPER   = 7,
 	SILOFS_HEIGHT_BOOT    = 8,
 	SILOFS_HEIGHT_LAST    = 9, /* keep last */
+};
+
+/* btree-node flags */
+enum silofs_btnodef {
+	SILOFS_BTNODEF_NONE = 0x00,
+	SILOFS_BTNODEF_ROOT = 0x01,
 };
 
 /* name-to-hash functions */

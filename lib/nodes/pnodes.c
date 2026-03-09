@@ -50,6 +50,7 @@ pni_init(struct silofs_pnode_info *pni, const struct silofs_pnptr *pnptr)
 	silofs_hmqe_init(&pni->pn_hmqe, pnptr_size(pnptr));
 	silofs_hkey_by_paddr(&pni->pn_hmqe.hme_key, &pni->pn_self.paddr);
 	pni->pn_pview = nullptr;
+	pni->pn_flags = SILOFS_PNODEF_NONE;
 }
 
 static void pni_fini(struct silofs_pnode_info *pni)
@@ -562,13 +563,13 @@ void silofs_del_pnode(struct silofs_pnode_info *pni,
 	}
 }
 
+void silofs_seal_pnode(struct silofs_pnode_info *pni)
+{
+	silofs_seal_pview(pni->pn_pview);
+}
+
 int silofs_verify_pnode(const struct silofs_pnode_info *pni)
 {
 	// TODO: verify sub-components
 	return silofs_verify_pview(pni->pn_pview, pni_ptype(pni));
-}
-
-void silofs_seal_pnode(struct silofs_pnode_info *pni)
-{
-	silofs_seal_pview(pni->pn_pview);
 }

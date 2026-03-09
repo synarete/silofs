@@ -22,11 +22,18 @@
 #include "hmapq.h"
 #include "view.h"
 
+enum silofs_pnodef {
+	SILOFS_PNODEF_NONE      = 0x00,
+	SILOFS_PNODEF_STAGED_OK = 0x01,
+	SILOFS_PNODEF_RDONLY    = 0x02,
+};
+
 /* base of all persistent nodes */
 struct silofs_pnode_info {
 	struct silofs_pnptr      pn_self;
 	struct silofs_hmapq_elem pn_hmqe;
 	struct silofs_pview     *pn_pview;
+	unsigned int             pn_flags;
 };
 
 /* uber-node in-memory state */

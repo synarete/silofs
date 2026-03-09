@@ -69,6 +69,8 @@ int silofs_bti_relink(struct silofs_btnode_info  *bti,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+int silofs_validate_btnode(const struct silofs_btnode_info *bti);
+
 uint64_t silofs_split_btnode(struct silofs_btnode_info *curr,
                              struct silofs_btnode_info *next);
 

@@ -42,4 +42,6 @@ int silofs_bdi_mark_free(struct silofs_bldesc_info *bdi,
 int silofs_bdi_mark_used(struct silofs_bldesc_info *bdi,
                          const struct silofs_paddr *paddr);
 
+int silofs_validate_bldesc(const struct silofs_bldesc_info *bdi);
+
 #endif /* SILOFS_BLDESC_H_ */

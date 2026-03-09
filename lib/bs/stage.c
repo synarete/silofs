@@ -37,14 +37,6 @@ struct silofs_stage_ctx {
 	struct silofs_lview *lview;
 };
 
-/* local functions */
-static int stc_validate_uber(struct silofs_stage_ctx *st_ctx,
-                             const struct silofs_uber_info *ubi);
-static int stc_validate_bldesc(struct silofs_stage_ctx *st_ctx,
-                               const struct silofs_bldesc_info *bdi);
-static int stc_validate_btnode(struct silofs_stage_ctx *st_ctx,
-                               const struct silofs_btnode_info *bti);
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static size_t paddr_len(const struct silofs_paddr *paddr)
@@ -66,6 +58,16 @@ static const struct silofs_civkey *
 pni_civkey(const struct silofs_pnode_info *pni)
 {
 	return silofs_pni_civkey(pni);
+}
+
+static bool pni_staged_ok(const struct silofs_pnode_info *pni)
+{
+	return (pni->pn_flags & SILOFS_PNODEF_STAGED_OK) > 0;
+}
+
+static void pni_set_staged_ok(struct silofs_pnode_info *pni)
+{
+	pni->pn_flags |= SILOFS_PNODEF_STAGED_OK;
 }
 
 static size_t vni_len(const struct silofs_vnode_info *vni)
@@ -250,6 +252,12 @@ static int stc_lookup_cached_pnode(const struct silofs_stage_ctx *st_ctx,
 	return (*out_pni == nullptr) ? -SILOFS_ENOENT : 0;
 }
 
+static void stc_forget_cached_pnode(const struct silofs_stage_ctx *st_ctx,
+                                    struct silofs_pnode_info *pni)
+{
+	silofs_pcache_delete_pnode(st_ctx->pcache, pni);
+}
+
 static struct silofs_pnode_info *
 stc_pcache_dqfront(struct silofs_stage_ctx *st_ctx)
 {
@@ -271,35 +279,6 @@ static int stc_spawn_pnode(const struct silofs_stage_ctx *st_ctx,
 		return err;
 	}
 	return 0;
-}
-
-static int stc_validate_pnode(struct silofs_stage_ctx *st_ctx,
-                              const struct silofs_pnode_info *pni)
-{
-	const struct silofs_paddr *paddr = silofs_pni_paddr(pni);
-	int err;
-
-	switch (paddr->ptype) {
-	case SILOFS_PTYPE_UBER:
-		err = stc_validate_uber(st_ctx, silofs_ubi_from_pni(pni));
-		break;
-	case SILOFS_PTYPE_BLDESC:
-		err = stc_validate_bldesc(st_ctx, silofs_bdi_from_pni(pni));
-		break;
-	case SILOFS_PTYPE_BTNODE:
-		err = stc_validate_btnode(st_ctx, silofs_bti_from_pni(pni));
-		break;
-	case SILOFS_PTYPE_VNODE:
-		err = 0;
-		break;
-	case SILOFS_PTYPE_NONE:
-	case SILOFS_PTYPE_MBR:
-	case SILOFS_PTYPE_LAST:
-	default:
-		err = -SILOFS_EFSCORRUPTED;
-		break;
-	}
-	return err;
 }
 
 static int stc_stage_pnode(struct silofs_stage_ctx *st_ctx,
@@ -325,10 +304,6 @@ static int stc_stage_pnode(struct silofs_stage_ctx *st_ctx,
 	if (err) {
 		return err;
 	}
-	err = stc_validate_pnode(st_ctx, pni);
-	if (err) {
-		return err;
-	}
 out_ok:
 	*out_pni = pni;
 	return 0;
@@ -336,12 +311,21 @@ out_ok:
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int stc_validate_uber(struct silofs_stage_ctx *st_ctx,
-                             const struct silofs_uber_info *ubi)
+static int stc_validate_staged_uber(struct silofs_stage_ctx *st_ctx,
+                                    struct silofs_uber_info *ubi)
 {
-	/* TODO: write me */
-	silofs_unused(st_ctx);
-	silofs_unused(ubi);
+	struct silofs_pnode_info *pni = &ubi->ub_pni;
+	int err;
+
+	if (pni_staged_ok(pni)) {
+		return 0;
+	}
+	err = silofs_validate_uber(ubi);
+	if (err) {
+		stc_forget_cached_pnode(st_ctx, pni);
+		return err;
+	}
+	pni_set_staged_ok(pni);
 	return 0;
 }
 
@@ -394,6 +378,11 @@ static int stc_stage_uber(struct silofs_stage_ctx *st_ctx,
 		return err;
 	}
 	*out_ubi = silofs_ubi_from_pni(pni);
+
+	err = stc_validate_staged_uber(st_ctx, *out_ubi);
+	if (err) {
+		return err;
+	}
 	return 0;
 }
 
@@ -412,12 +401,21 @@ int silofs_stage_uber(struct silofs_task_ctx *task,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int stc_validate_bldesc(struct silofs_stage_ctx *st_ctx,
-                               const struct silofs_bldesc_info *bdi)
+static int stc_validate_staged_bldesc(struct silofs_stage_ctx *st_ctx,
+                                      struct silofs_bldesc_info *bdi)
 {
-	/* TODO: write me */
-	silofs_unused(st_ctx);
-	silofs_unused(bdi);
+	struct silofs_pnode_info *pni = &bdi->bld_pni;
+	int err;
+
+	if (pni_staged_ok(pni)) {
+		return 0;
+	}
+	err = silofs_validate_bldesc(bdi);
+	if (err) {
+		stc_forget_cached_pnode(st_ctx, pni);
+		return err;
+	}
+	pni_set_staged_ok(pni);
 	return 0;
 }
 
@@ -470,6 +468,11 @@ static int stc_stage_bldesc(struct silofs_stage_ctx *st_ctx,
 		return err;
 	}
 	*out_bdi = silofs_bdi_from_pni(pni);
+
+	err = stc_validate_staged_bldesc(st_ctx, *out_bdi);
+	if (err) {
+		return err;
+	}
 	return 0;
 }
 
@@ -488,18 +491,21 @@ int silofs_stage_bldesc(struct silofs_task_ctx *task,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int stc_validate_btnode(struct silofs_stage_ctx *st_ctx,
-                               const struct silofs_btnode_info *bti)
+static int stc_validate_staged_btnode(struct silofs_stage_ctx *st_ctx,
+                                      struct silofs_btnode_info *bti)
 {
-	size_t height;
+	struct silofs_pnode_info *pni = &bti->btn_pni;
+	int err;
 
-	height = silofs_bti_height(bti);
-	if ((height < SILOFS_BTREE_HEIGHT_MIN) || //
-	    (height > SILOFS_BTREE_HEIGHT_MAX)) {
-		log_warn("bad btnode: height=%zu", height);
-		return -SILOFS_EFSCORRUPTED;
+	if (pni_staged_ok(pni)) {
+		return 0;
 	}
-	silofs_unused(st_ctx);
+	err = silofs_validate_btnode(bti);
+	if (err) {
+		stc_forget_cached_pnode(st_ctx, pni);
+		return err;
+	}
+	pni_set_staged_ok(pni);
 	return 0;
 }
 
@@ -551,6 +557,11 @@ static int stc_stage_btnode(struct silofs_stage_ctx *st_ctx,
 		return err;
 	}
 	*out_bti = silofs_bti_from_pni(pni);
+
+	err = stc_validate_staged_btnode(st_ctx, *out_bti);
+	if (err) {
+		return err;
+	}
 	return 0;
 }
 

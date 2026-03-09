@@ -19,19 +19,19 @@
 #include "addr.h"
 #include "btnode.h"
 
-static enum silofs_pnodef btn_flags(const struct silofs_btree_node *btn)
+static enum silofs_btnodef btn_flags(const struct silofs_btree_node *btn)
 {
 	const uint32_t f = silofs_le32_to_cpu(btn->btn_flags);
 
-	return (enum silofs_pnodef)f;
+	return (enum silofs_btnodef)f;
 }
 
-static void btn_set_flags(struct silofs_btree_node *btn, enum silofs_pnodef f)
+static void btn_set_flags(struct silofs_btree_node *btn, enum silofs_btnodef f)
 {
 	btn->btn_flags = silofs_cpu_to_le32((uint32_t)f);
 }
 
-static void btn_add_flags(struct silofs_btree_node *btn, enum silofs_pnodef f)
+static void btn_add_flags(struct silofs_btree_node *btn, enum silofs_btnodef f)
 {
 	btn_set_flags(btn, f | btn_flags(btn));
 }
@@ -308,7 +308,7 @@ static void btn_remove_child_at(struct silofs_btree_node *btn, size_t slot)
 
 static void btn_setup(struct silofs_btree_node *btn)
 {
-	btn_set_flags(btn, SILOFS_PNODEF_NONE);
+	btn_set_flags(btn, SILOFS_BTNODEF_NONE);
 	btn_set_height(btn, 1);
 	btn_set_nkeys(btn, 0);
 	btn_set_nchilds(btn, 0);
@@ -724,15 +724,15 @@ void silofs_bti_set_vspace(struct silofs_btnode_info *bti,
 
 void silofs_bti_mark_root(struct silofs_btnode_info *bti)
 {
-	btn_add_flags(bti->btn, SILOFS_PNODEF_META | SILOFS_PNODEF_BTROOT);
+	btn_add_flags(bti->btn, SILOFS_BTNODEF_ROOT);
 	bti_dirtify(bti);
 }
 
 bool silofs_bti_marked_root(const struct silofs_btnode_info *bti)
 {
-	const enum silofs_pnodef flgs = btn_flags(bti->btn);
+	const enum silofs_btnodef flags = btn_flags(bti->btn);
 
-	return ((flgs & SILOFS_PNODEF_BTROOT) > 0);
+	return ((flags & SILOFS_BTNODEF_ROOT) > 0);
 }
 
 size_t silofs_bti_height(const struct silofs_btnode_info *bti)
@@ -838,6 +838,20 @@ void silofs_bti_ignite(struct silofs_btnode_info *bti)
 {
 	btn_setup(bti->btn);
 	bti_dirtify(bti);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_validate_btnode(const struct silofs_btnode_info *bti)
+{
+	const size_t height = silofs_bti_height(bti);
+
+	if ((height < SILOFS_BTREE_HEIGHT_MIN) || //
+	    (height > SILOFS_BTREE_HEIGHT_MAX)) {
+		log_warn("bad btnode: height=%zu", height);
+		return -SILOFS_EFSCORRUPTED;
+	}
+	return 0;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

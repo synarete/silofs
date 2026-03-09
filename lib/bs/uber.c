@@ -392,3 +392,10 @@ bool silofs_ubi_onsame_layer(const struct silofs_uber_info *ubi,
 {
 	return ubi_onsame_layer(ubi, &bti->btn_pni);
 }
+
+int silofs_validate_uber(const struct silofs_uber_info *ubi)
+{
+	/* TODO: writeme */
+	silofs_unused(ubi);
+	return 0;
+}

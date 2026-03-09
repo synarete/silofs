@@ -29,6 +29,7 @@ AC_DEFUN([AX_SILOFS_NEED_HEADERS],
   AX_SILOFS_NEED_HEADER([linux/prctl.h])
   AX_SILOFS_NEED_HEADER([linux/stat.h])
   AX_SILOFS_NEED_HEADER([linux/types.h])
+  AX_SILOFS_NEED_HEADER([linux/un.h])
   AX_SILOFS_NEED_HEADER([linux/xattr.h])
   AX_SILOFS_NEED_HEADER([math.h])
   AX_SILOFS_NEED_HEADER([netinet/in.h])

@@ -4,7 +4,6 @@ noinst_HEADERS = $(NULL)
 noinst_HEADERS += silofs/config.h
 noinst_HEADERS += silofs/config-am.h
 noinst_HEADERS += silofs/configs.h
-noinst_HEADERS += linux/fuse_kernel.h
 
 nobase_include_HEADERS = $(NULL)
 nobase_include_HEADERS += silofs/appexec.h

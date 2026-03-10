@@ -18,7 +18,7 @@
 #include <stdint.h>
 #include "infra.h"
 #include "addr.h"
-#include "bs.h"
+#include "ps.h"
 #include "fs.h"
 #include "index.h"
 

@@ -25,7 +25,7 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <limits.h>
-#include "bs.h"
+#include "ps.h"
 #include "fs.h"
 #include "exec.h"
 #include "env.h"

@@ -21,7 +21,7 @@
 #include <silofs/memalloc.h>
 #include "infra.h"
 #include "addr.h"
-#include "bs.h"
+#include "ps.h"
 
 struct silofs_ar_cargs {
 	struct silofs_nmeta             nmeta;

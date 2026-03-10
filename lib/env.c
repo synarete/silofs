@@ -18,7 +18,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mount.h>
-#include "ps.h"
+#include "pv.h"
 #include "fs.h"
 #include "mbr.h"
 #include "exectx.h"

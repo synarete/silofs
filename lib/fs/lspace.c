@@ -20,7 +20,7 @@
 #include <limits.h>
 #include "infra.h"
 #include "addr.h"
-#include "ps.h"
+#include "pv.h"
 #include "lcache.h"
 #include "lsmap.h"
 #include "lspace.h"

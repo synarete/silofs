@@ -17,7 +17,7 @@
 #include <silofs/configs.h>
 #include <silofs/ioctls.h>
 #include <sys/resource.h>
-#include "ps.h"
+#include "pv.h"
 #include "fs.h"
 #include "mbr.h"
 #include "env.h"
@@ -198,7 +198,7 @@ static int check_spec(const struct silofs_spec *spec)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int envi_init_qalloc(struct silofs_env_inst *envi, size_t memwant,
-			    enum silofs_flags flags)
+                            enum silofs_flags flags)
 {
 	struct silofs_qalloc *qalloc = nullptr;
 	enum silofs_qallocf qaflags  = SILOFS_QALLOCF_NOFAIL;
@@ -267,7 +267,7 @@ static void envi_fini_stdalloc(struct silofs_env_inst *envi)
 }
 
 static int envi_init_alloc(struct silofs_env_inst *envi, size_t memwant,
-			   enum silofs_flags flags)
+                           enum silofs_flags flags)
 {
 	int ret;
 
@@ -306,7 +306,7 @@ static void envi_fini_nil_bk(struct silofs_env_inst *envi)
 
 	if (lbk != nullptr) {
 		silofs_memfree(envi->alloc, lbk, sizeof(*lbk),
-			       SILOFS_ALLOCF_TRYPUNCH);
+		               SILOFS_ALLOCF_TRYPUNCH);
 		envi->nilbk = nullptr;
 	}
 }
@@ -529,7 +529,7 @@ static void envi_fini(struct silofs_env_inst *envi)
 }
 
 static int envi_init(struct silofs_env_inst *envi, size_t memwant,
-		     enum silofs_flags flags)
+                     enum silofs_flags flags)
 {
 	int err;
 
@@ -593,7 +593,7 @@ static size_t envi_memsize(const struct silofs_env_inst *envi)
 }
 
 static int envi_new(size_t memwant, enum silofs_flags flags,
-		    struct silofs_env_inst **out_envi)
+                    struct silofs_env_inst **out_envi)
 
 {
 	struct silofs_env_inst *envi = nullptr;
@@ -625,7 +625,7 @@ static void envi_del(struct silofs_env_inst *envi)
 }
 
 int silofs_create_env(size_t memwant, enum silofs_flags flags,
-		      struct silofs_env **out_env)
+                      struct silofs_env **out_env)
 {
 	struct silofs_env_inst *envi;
 	int err;
@@ -658,7 +658,7 @@ void silofs_destroy_env(struct silofs_env *env)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int envi_populate_idsmap(struct silofs_env_inst *envi,
-				const struct silofs_spec *spec)
+                                const struct silofs_spec *spec)
 {
 	struct silofs_idsmap *idsmap = &envi->idsmap;
 	bool allow_hostids;
@@ -698,7 +698,7 @@ static bool with_fuse(const struct silofs_spec *args)
 }
 
 static int envi_update_by_spec(struct silofs_env_inst *envi,
-			       const struct silofs_spec *spec)
+                               const struct silofs_spec *spec)
 {
 	return silofs_env_setup(&envi->env, spec);
 }

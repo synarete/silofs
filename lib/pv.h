@@ -14,19 +14,19 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_PS_H_
-#define SILOFS_PS_H_
+#ifndef SILOFS_PV_H_
+#define SILOFS_PV_H_
 
 #include "infra.h"
 #include "addr.h"
 #include "nodes.h"
-#include "ps/repo.h"
-#include "ps/bldesc.h"
-#include "ps/btnode.h"
-#include "ps/btree.h"
-#include "ps/uber.h"
-#include "ps/carve.h"
-#include "ps/stage.h"
-#include "ps/space.h"
+#include "pv/repo.h"
+#include "pv/bldesc.h"
+#include "pv/btnode.h"
+#include "pv/btree.h"
+#include "pv/uber.h"
+#include "pv/carve.h"
+#include "pv/stage.h"
+#include "pv/space.h"
 
-#endif /* SILOFS_PS_H_ */
+#endif /* SILOFS_PV_H_ */

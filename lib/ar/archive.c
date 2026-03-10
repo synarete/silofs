@@ -16,7 +16,7 @@
  */
 #include <silofs/configs.h>
 #include "infra.h"
-#include "ps.h"
+#include "pv.h"
 #include "fs.h"
 #include "exectx.h"
 #include "env.h"

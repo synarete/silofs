@@ -18,7 +18,7 @@ conf_h="${root}/.clang-format-h.yaml"
 # find relevant source & header files
 c_srcs=$(find "${root}/"{lib,cmd,mntd,test} -type f -name "*.c")
 h_srcs=$(find "${root}/"{include,lib,cmd,mntd,test} -type f \
-	      -not -name "fuse_kernel.h" -not -name "config*.h" -name "*.h")
+	      -not -name "fuse_abi.h" -not -name "config*.h" -name "*.h")
 
 # do actual code formatting
 _do_clang_format() {

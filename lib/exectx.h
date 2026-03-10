@@ -63,22 +63,22 @@ void silofs_task_init(struct silofs_task_ctx *task, struct silofs_env *env);
 void silofs_task_fini(struct silofs_task_ctx *task);
 
 void silofs_task_update_creds(struct silofs_task_ctx *task, uid_t uid,
-			      gid_t gid, mode_t umsk);
+                              gid_t gid, mode_t umsk);
 
 void silofs_task_update_auth(struct silofs_task_ctx *task, pid_t pid,
-			     uint64_t unique, uint32_t opcode, bool exclusive);
+                             uint64_t unique, uint32_t opcode, bool exclusive);
 
 void silofs_task_update_umask(struct silofs_task_ctx *task, mode_t umask);
 
 void silofs_task_update_times(struct silofs_task_ctx *task, bool rt);
 
 void silofs_task_update_id(struct silofs_task_ctx    *task,
-			   struct silofs_submitq_ent *sqe);
+                           struct silofs_submitq_ent *sqe);
 
 int silofs_task_submit(struct silofs_task_ctx *task, bool all);
 
 void silofs_task_enq_loose(struct silofs_task_ctx   *task,
-			   struct silofs_inode_info *ii);
+                           struct silofs_inode_info *ii);
 
 void silofs_lock_fs_by(struct silofs_task_ctx *task);
 

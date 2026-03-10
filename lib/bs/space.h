@@ -25,9 +25,8 @@ struct silofs_task_ctx;
 
 int silofs_format_ps(struct silofs_task_ctx *task);
 
-
 int silofs_spawn_vnode2_at(struct silofs_task_ctx    *task,
-			   const struct silofs_vaddr *vaddr,
-			   struct silofs_vnode_info **out_vni);
+                           const struct silofs_vaddr *vaddr,
+                           struct silofs_vnode_info **out_vni);
 
 #endif /* SILOFS_SPACE_H_ */

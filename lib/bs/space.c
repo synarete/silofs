@@ -23,18 +23,17 @@
 #include "exectx.h"
 #include "env.h"
 
-
 static void update_formatted_uber(struct silofs_task_ctx *task,
-			struct silofs_uber_info *ubi)
+                                  struct silofs_uber_info *ubi)
 {
-	log_dbg("update uber: ubi=%p", (void*)ubi);
+	log_dbg("update uber: ubi=%p", (void *)ubi);
 	silofs_env_update_uber(task->env, ubi);
 	task->ubi = task->env->ubi;
 }
 
 static int format_uber(struct silofs_task_ctx *task)
 {
-	struct silofs_pnptr pnptr = {};
+	struct silofs_pnptr pnptr    = {};
 	struct silofs_uber_info *ubi = nullptr;
 	int err;
 
@@ -59,7 +58,7 @@ fixup_spawned_btroot(struct silofs_btnode_info *bti, enum silofs_vtype vtype)
 
 static int
 spawn_btroot_of(struct silofs_task_ctx *task, enum silofs_vtype vtype,
-		struct silofs_btnode_info **out_bti)
+                struct silofs_btnode_info **out_bti)
 {
 	struct silofs_pnptr pnptr = {};
 	int err;
@@ -83,7 +82,7 @@ bti_paddr(const struct silofs_btnode_info *bti)
 }
 
 static void update_formatted_btroot(struct silofs_task_ctx *task,
-				    const struct silofs_btnode_info *bti)
+                                    const struct silofs_btnode_info *bti)
 {
 	struct silofs_uber_info *ubi = task->ubi;
 
@@ -91,8 +90,8 @@ static void update_formatted_btroot(struct silofs_task_ctx *task,
 	silofs_ubi_start_spdesc(ubi, bti_paddr(bti));
 }
 
-static int format_btroot_of(struct silofs_task_ctx *task,
-			    enum silofs_vtype vtype)
+static int
+format_btroot_of(struct silofs_task_ctx *task, enum silofs_vtype vtype)
 {
 	struct silofs_btnode_info *bti = nullptr;
 	int err;
@@ -105,8 +104,8 @@ static int format_btroot_of(struct silofs_task_ctx *task,
 	return 0;
 }
 
-static int format_vspace_of(struct silofs_task_ctx *task,
-			    enum silofs_vtype vtype)
+static int
+format_vspace_of(struct silofs_task_ctx *task, enum silofs_vtype vtype)
 {
 	struct silofs_paddr paddr = {};
 	int err;
@@ -158,8 +157,8 @@ int silofs_format_ps(struct silofs_task_ctx *task)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_spawn_vnode2_at(struct silofs_task_ctx *task,
-			   const struct silofs_vaddr *vaddr,
-			   struct silofs_vnode_info **out_vni)
+                           const struct silofs_vaddr *vaddr,
+                           struct silofs_vnode_info **out_vni)
 {
 	struct silofs_pnptr pnptr;
 	int err;

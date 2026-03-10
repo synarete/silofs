@@ -52,18 +52,20 @@ static void gen_civkey(const struct silofs_task_ctx *task,
 	silofs_generate_civkey(task->prng, out_civkey);
 }
 
-static void
-ignite_pnptr(const struct silofs_task_ctx *task,
+static int
+gen_pnptr_at(const struct silofs_task_ctx *task,
              const struct silofs_paddr *paddr, struct silofs_pnptr *out_pnptr)
 {
 	struct silofs_civkey civkey;
 
 	gen_civkey(task, &civkey);
 	silofs_pnptr_setup(out_pnptr, paddr, &civkey);
+
+	return 0;
 }
 
-void silofs_carve_base_ubspace(const struct silofs_task_ctx *task,
-                               struct silofs_pnptr *out_pnptr)
+int silofs_carve_base_ubspace(const struct silofs_task_ctx *task,
+                              struct silofs_pnptr *out_pnptr)
 {
 	struct silofs_blobid blobid;
 	struct silofs_paddr paddr;
@@ -77,12 +79,12 @@ void silofs_carve_base_ubspace(const struct silofs_task_ctx *task,
 	gen_uniqid(task, &blobid.uniqid);
 
 	silofs_paddr_init(&paddr, &blobid, 0);
-	ignite_pnptr(task, &paddr, out_pnptr);
+	return gen_pnptr_at(task, &paddr, out_pnptr);
 }
 
-void silofs_carve_base_btspace(const struct silofs_task_ctx *task,
-                               enum silofs_vtype vtype,
-                               struct silofs_pnptr *out_pnptr)
+int silofs_carve_base_btspace(const struct silofs_task_ctx *task,
+                              enum silofs_vtype vtype,
+                              struct silofs_pnptr *out_pnptr)
 {
 	struct silofs_blobid blobid;
 	struct silofs_paddr paddr;
@@ -95,12 +97,12 @@ void silofs_carve_base_btspace(const struct silofs_task_ctx *task,
 	gen_uniqid(task, &blobid.uniqid);
 	silofs_paddr_init(&paddr, &blobid, 0);
 
-	ignite_pnptr(task, &paddr, out_pnptr);
+	return gen_pnptr_at(task, &paddr, out_pnptr);
 }
 
-void silofs_carve_base_vspace(const struct silofs_task_ctx *task,
-                              enum silofs_vtype vtype,
-                              struct silofs_paddr *out_paddr)
+int silofs_carve_base_vspace(const struct silofs_task_ctx *task,
+                             enum silofs_vtype vtype,
+                             struct silofs_paddr *out_paddr)
 {
 	struct silofs_blobid blobid;
 	const struct silofs_stype stype = {
@@ -111,6 +113,8 @@ void silofs_carve_base_vspace(const struct silofs_task_ctx *task,
 	silofs_blobid_init(&blobid, &stype, top_layerid(task), nullptr);
 	gen_uniqid(task, &blobid.uniqid);
 	silofs_paddr_init(out_paddr, &blobid, 0);
+
+	return 0;
 }
 
 static void carve_next_space_of(const struct silofs_task_ctx *task,
@@ -127,29 +131,36 @@ static void carve_next_space_of(const struct silofs_task_ctx *task,
 	silofs_ubi_update_spdesc(ubi, &spdesc[1]);
 }
 
-void silofs_carve_next_btspace(const struct silofs_task_ctx *task,
-                               enum silofs_vtype vtype,
+static int carve_next_pnptr_of(const struct silofs_task_ctx *task,
+                               const struct silofs_stype *stype,
                                struct silofs_pnptr *out_pnptr)
 {
 	struct silofs_paddr paddr;
+
+	carve_next_space_of(task, stype, &paddr);
+	return gen_pnptr_at(task, &paddr, out_pnptr);
+}
+
+int silofs_carve_next_btspace(const struct silofs_task_ctx *task,
+                              enum silofs_vtype vtype,
+                              struct silofs_pnptr *out_pnptr)
+{
 	const struct silofs_stype stype = {
 		.ptype = SILOFS_PTYPE_BTNODE,
 		.vtype = vtype,
 	};
 
-	carve_next_space_of(task, &stype, &paddr);
-
-	ignite_pnptr(task, &paddr, out_pnptr);
+	return carve_next_pnptr_of(task, &stype, out_pnptr);
 }
 
-void silofs_carve_next_vspace(const struct silofs_task_ctx *task,
-                              enum silofs_vtype vtype,
-                              struct silofs_paddr *out_paddr)
+int silofs_carve_next_vspace(const struct silofs_task_ctx *task,
+                             enum silofs_vtype vtype,
+                             struct silofs_pnptr *out_pnptr)
 {
 	const struct silofs_stype stype = {
 		.ptype = SILOFS_PTYPE_VNODE,
 		.vtype = vtype,
 	};
 
-	carve_next_space_of(task, &stype, out_paddr);
+	return carve_next_pnptr_of(task, &stype, out_pnptr);
 }

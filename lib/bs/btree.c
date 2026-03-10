@@ -405,9 +405,9 @@ static int btc_spawn_btnode_at(const struct silofs_btree_ctx *btc,
 static int btc_carve_btspace(const struct silofs_btree_ctx *btc,
                              struct silofs_pnptr *out_pnptr)
 {
-	silofs_carve_next_btspace(btc->task, btc_vspace(btc), out_pnptr);
 	/* TODO: check avail space, RDONLY etc */
-	return 0;
+	return silofs_carve_next_btspace(btc->task, btc_vspace(btc),
+	                                 out_pnptr);
 }
 
 static int btc_spawn_btnode(const struct silofs_btree_ctx *btc,

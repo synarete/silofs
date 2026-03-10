@@ -75,11 +75,6 @@ int silofs_exec_format_repo(struct silofs_task_ctx *task)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static int pre_format_bs(struct silofs_task_ctx *task)
-{
-	return silofs_env_reinit_ciphers(task->env);
-}
-
 static void drop_caches(struct silofs_task_ctx *task)
 {
 	silofs_env_drop_caches(task->env);
@@ -115,115 +110,29 @@ static int flush_destage_dirty(struct silofs_task_ctx *task)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static int format_uber(struct silofs_task_ctx *task)
+static int pre_format_ps(struct silofs_task_ctx *task)
 {
-	struct silofs_pnptr pnptr    = {};
-	struct silofs_uber_info *ubi = nullptr;
-	int err;
-
-	silofs_carve_base_ubspace(task, &pnptr);
-	err = silofs_spawn_uber(task, &pnptr, &ubi);
-	if (err) {
-		return err;
-	}
-	silofs_env_update_uber(task->env, ubi);
-	return 0;
+	return silofs_env_reinit_ciphers(task->env);
 }
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static int spawn_btroot(struct silofs_task_ctx *task, enum silofs_vtype vtype,
-                        struct silofs_btnode_info **out_bti)
-{
-	struct silofs_pnptr pnptr = {};
-	int err;
-
-	silofs_carve_base_btspace(task, vtype, &pnptr);
-	err = silofs_spawn_btnode(task, &pnptr, out_bti);
-	if (err) {
-		return err;
-	}
-	silofs_bti_set_vspace(*out_bti, vtype);
-	silofs_bti_mark_root(*out_bti);
-	return 0;
-}
-
-static int ignite_vspace_by(struct silofs_task_ctx *task,
-                            const struct silofs_btnode_info *bti)
-{
-	struct silofs_paddr paddr            = {};
-	struct silofs_uber_info *ubi         = task->env->ubi;
-	const struct silofs_paddr *btn_paddr = silofs_pni_paddr(&bti->btn_pni);
-	const enum silofs_vtype vtype        = silofs_bti_vspace(bti);
-
-	silofs_ubi_set_btroot_by(ubi, bti);
-	silofs_ubi_start_spdesc(ubi, btn_paddr);
-
-	silofs_carve_base_vspace(task, vtype, &paddr);
-	silofs_ubi_start_spdesc(ubi, &paddr);
-
-	return flush_destage_dirty(task);
-}
-
-static int
-format_vspace_of(struct silofs_task_ctx *task, enum silofs_vtype vtype)
-{
-	struct silofs_btnode_info *bti = nullptr;
-	int err;
-
-	err = spawn_btroot(task, vtype, &bti);
-	if (err) {
-		log_err("spawn btroot failed: vtype=%d err=%d", vtype, err);
-		return err;
-	}
-	err = ignite_vspace_by(task, bti);
-	if (err) {
-		log_err("ignite vspace failed: vtype=%d err=%d", vtype, err);
-	}
-	log_dbg("format vspace of: vtype=%d", vtype);
-	return 0;
-}
-
-static int format_vspaces(struct silofs_task_ctx *task)
-{
-	enum silofs_vtype vtype = SILOFS_VTYPE_NONE;
-	int err;
-
-	while (++vtype < SILOFS_VTYPE_LAST) {
-		if (silofs_vtype_isvnode(vtype)) {
-			err = format_vspace_of(task, vtype);
-			if (err) {
-				return err;
-			}
-		}
-	}
-	return 0;
-}
-
-static int post_format_bs(struct silofs_task_ctx *task)
+static int post_format_ps(struct silofs_task_ctx *task)
 {
 	return flush_destage_dirty(task);
 }
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-int silofs_exec_format_bs(struct silofs_task_ctx *task)
+int silofs_exec_format_ps(struct silofs_task_ctx *task)
 {
 	int err;
 
-	err = pre_format_bs(task);
+	err = pre_format_ps(task);
 	if (err) {
 		return err;
 	}
-	err = format_uber(task);
+	err = silofs_format_ps(task);
 	if (err) {
 		return err;
 	}
-	err = format_vspaces(task);
-	if (err) {
-		return err;
-	}
-	err = post_format_bs(task);
+	err = post_format_ps(task);
 	if (err) {
 		return err;
 	}
@@ -299,14 +208,14 @@ claim_reclaim_of(struct silofs_task_ctx *task, enum silofs_vtype vtype)
 	}
 	if (vaddr.off != voff_exp) {
 		log_err("bad claim: vtype=%d exp=%ld got=%ld", vtype, voff_exp,
-		        vaddr.off);
+			vaddr.off);
 		return -SILOFS_EFSCORRUPTED;
 	}
 	drop_caches(task);
 	err = silofs_reclaim_vspace(task, &vaddr);
 	if (err) {
 		log_err("bad reclaim: vtype=%d voff=%ld err=%d", vtype,
-		        vaddr.off, err);
+			vaddr.off, err);
 	}
 	return 0;
 }
@@ -488,7 +397,7 @@ static int post_format_fs(struct silofs_task_ctx *task)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_exec_format_fs(struct silofs_task_ctx *task,
-                          struct silofs_mbref *out_mbref)
+			  struct silofs_mbref *out_mbref)
 {
 	int err;
 

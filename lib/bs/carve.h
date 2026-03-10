@@ -23,23 +23,23 @@
 
 struct silofs_task_ctx;
 
-void silofs_carve_base_ubspace(const struct silofs_task_ctx *task,
-                               struct silofs_pnptr          *out_pnptr);
+int silofs_carve_base_ubspace(const struct silofs_task_ctx *task,
+                              struct silofs_pnptr          *out_pnptr);
 
-void silofs_carve_base_btspace(const struct silofs_task_ctx *task,
-                               enum silofs_vtype             vspace,
-                               struct silofs_pnptr          *out_pnptr);
+int silofs_carve_base_btspace(const struct silofs_task_ctx *task,
+                              enum silofs_vtype             vspace,
+                              struct silofs_pnptr          *out_pnptr);
 
-void silofs_carve_base_vspace(const struct silofs_task_ctx *task,
+int silofs_carve_base_vspace(const struct silofs_task_ctx *task,
+                             enum silofs_vtype             vtype,
+                             struct silofs_paddr          *out_paddr);
+
+int silofs_carve_next_btspace(const struct silofs_task_ctx *task,
                               enum silofs_vtype             vtype,
-                              struct silofs_paddr          *out_paddr);
+                              struct silofs_pnptr          *out_pnptr);
 
-void silofs_carve_next_btspace(const struct silofs_task_ctx *task,
-                               enum silofs_vtype             vtype,
-                               struct silofs_pnptr          *out_pnptr);
-
-void silofs_carve_next_vspace(const struct silofs_task_ctx *task,
-                              enum silofs_vtype             vtype,
-                              struct silofs_paddr          *out_paddr);
+int silofs_carve_next_vspace(const struct silofs_task_ctx *task,
+                             enum silofs_vtype             vtype,
+                             struct silofs_pnptr          *out_pnptr);
 
 #endif /* SILOFS_CARVE_H_ */

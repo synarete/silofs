@@ -25,7 +25,7 @@
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_task_update_creds(struct silofs_task_ctx *task, uid_t uid,
-                              gid_t gid, mode_t umsk)
+			      gid_t gid, mode_t umsk)
 {
 	struct silofs_creds *creds = &task->auth.creds;
 
@@ -34,7 +34,7 @@ void silofs_task_update_creds(struct silofs_task_ctx *task, uid_t uid,
 }
 
 void silofs_task_update_auth(struct silofs_task_ctx *task, pid_t pid,
-                             uint64_t unique, uint32_t opcode, bool exclusive)
+			     uint64_t unique, uint32_t opcode, bool exclusive)
 {
 	task->auth.pid    = pid;
 	task->auth.unique = unique;
@@ -61,7 +61,7 @@ void silofs_task_update_times(struct silofs_task_ctx *task, bool rt)
 }
 
 void silofs_task_update_id(struct silofs_task_ctx *task,
-                           struct silofs_submitq_ent *sqe)
+			   struct silofs_submitq_ent *sqe)
 {
 	if (sqe->uniq_id > task->upper_id) {
 		task->upper_id = sqe->uniq_id;
@@ -92,6 +92,7 @@ void silofs_task_init(struct silofs_task_ctx *task, struct silofs_env *env)
 	task->lcache    = env->base.lcache;
 	task->submitq   = env->base.submitq;
 	task->looseq    = nullptr;
+	task->ubi       = env->ubi;
 	task->upper_id  = 0;
 	task->interrupt = 0;
 	task->fs_locked = false;
@@ -117,7 +118,7 @@ void silofs_task_fini(struct silofs_task_ctx *task)
 }
 
 void silofs_task_enq_loose(struct silofs_task_ctx *task,
-                           struct silofs_inode_info *ii)
+			   struct silofs_inode_info *ii)
 {
 	silofs_assert_null(ii->i_looseq_next);
 	silofs_assert_eq(ii->i_vni.vn_lni.ln_flags & SILOFS_LNF_PINNED, 0);
@@ -155,9 +156,9 @@ static void task_forget_looseq(struct silofs_task_ctx *task)
 		if (err) {
 			/* TODO: maybe have retry loop ? */
 			silofs_panic("failed to forget loose inode: "
-			             "ino=%ld flags=%x err=%d",
-			             ii->i_ino, ii->i_vni.vn_lni.ln_flags,
-			             err);
+				     "ino=%ld flags=%x err=%d",
+				     ii->i_ino, ii->i_vni.vn_lni.ln_flags,
+				     err);
 		}
 		ii = task_deq_loose(task);
 	}

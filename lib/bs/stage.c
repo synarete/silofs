@@ -15,7 +15,6 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <sys/stat.h>
 #include "nodes.h"
 #include "dstor.h"
 #include "uber.h"

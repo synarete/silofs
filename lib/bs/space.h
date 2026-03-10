@@ -14,19 +14,20 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_BS_H_
-#define SILOFS_BS_H_
+#ifndef SILOFS_SPACE_H_
+#define SILOFS_SPACE_H_
 
 #include "infra.h"
 #include "addr.h"
 #include "nodes.h"
-#include "bs/repo.h"
-#include "bs/bldesc.h"
-#include "bs/btnode.h"
-#include "bs/btree.h"
-#include "bs/uber.h"
-#include "bs/carve.h"
-#include "bs/stage.h"
-#include "bs/space.h"
 
-#endif /* SILOFS_BS_H_ */
+struct silofs_task_ctx;
+
+int silofs_format_ps(struct silofs_task_ctx *task);
+
+
+int silofs_spawn_vnode2_at(struct silofs_task_ctx    *task,
+			   const struct silofs_vaddr *vaddr,
+			   struct silofs_vnode_info **out_vni);
+
+#endif /* SILOFS_SPACE_H_ */

@@ -18,7 +18,6 @@
 #define SILOFS_FTESTS_H_
 
 #include <silofs/configs.h>
-#include <silofs/silofs.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>
@@ -28,7 +27,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <limits.h>
-#include "infra.h"
+
+#include <silofs/silofs.h>
+#include <silofs/infra.h>
 
 struct dirent64;
 struct utimbuf;

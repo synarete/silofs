@@ -19,7 +19,6 @@
 
 #define _GNU_SOURCE 1
 #include <silofs/configs.h>
-#include <silofs/silofs.h>
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <sys/stat.h>
@@ -31,11 +30,13 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include <dirent.h>
-#include "fs.h"
-#include "ar.h"
-#include "mbr.h"
-#include "exec.h"
-#include "walk.h"
+
+#include <silofs/silofs.h>
+#include <silofs/fs.h>
+#include <silofs/ar.h>
+#include <silofs/mbr.h>
+#include <silofs/exec.h>
+#include <silofs/walk.h>
 
 #ifndef SILOFS_UNITEST
 #error "this header must not be included out-side of utests"

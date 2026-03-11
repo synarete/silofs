@@ -26,20 +26,20 @@
 static int check_password_len(size_t len)
 {
 	return ((len < SILOFS_PASSWORD_MIN) || //
-		(len > SILOFS_PASSWORD_MAX)) ?
-		       -SILOFS_EILLPASS :
-		       0;
+	        (len > SILOFS_PASSWORD_MAX)) ?
+	               -SILOFS_EILLPASS :
+	               0;
 }
 
 static int check_password_char(int ch)
 {
 	return (!isascii(ch) || //
-		iscntrl(ch) ||  //
-		isspace(ch) ||  //
-		!isprint(ch) || //
-		!(isalnum(ch) || ispunct(ch))) ?
-		       -SILOFS_EILLPASS :
-		       0;
+	        iscntrl(ch) ||  //
+	        isspace(ch) ||  //
+	        !isprint(ch) || //
+	        !(isalnum(ch) || ispunct(ch))) ?
+	               -SILOFS_EILLPASS :
+	               0;
 }
 
 static int check_password_dat(const void *d, size_t n)
@@ -105,7 +105,7 @@ int silofs_password_setup(struct silofs_password *pw, const char *pass)
 }
 
 int silofs_password_assign(struct silofs_password *pw,
-			   const struct silofs_password *other)
+                           const struct silofs_password *other)
 {
 	int err;
 

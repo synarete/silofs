@@ -25,36 +25,36 @@
 #include "hash.h"
 
 bool silofs_hash256_isequal(const struct silofs_hash256 *hash,
-			    const struct silofs_hash256 *other)
+                            const struct silofs_hash256 *other)
 {
 	return (memcmp(hash->hash, other->hash, sizeof(hash->hash)) == 0);
 }
 
 void silofs_hash256_assign(struct silofs_hash256 *hash,
-			   const struct silofs_hash256 *other)
+                           const struct silofs_hash256 *other)
 {
 	silofs_hash256_copyto(other, hash);
 }
 
 void silofs_hash256_copyto(const struct silofs_hash256 *hash,
-			   struct silofs_hash256 *other)
+                           struct silofs_hash256 *other)
 {
 	memcpy(other->hash, hash->hash, sizeof(other->hash));
 }
 
 size_t silofs_hash256_to_name(const struct silofs_hash256 *hash,
-			      struct silofs_strbuf *out_name)
+                              struct silofs_strbuf *out_name)
 {
 	size_t cnt = 0;
 
 	silofs_strbuf_reset(out_name);
 	silofs_mem_to_ascii(hash->hash, sizeof(hash->hash), out_name->str,
-			    sizeof(out_name->str), &cnt);
+	                    sizeof(out_name->str), &cnt);
 	return cnt;
 }
 
 int silofs_hash256_to_str(const struct silofs_hash256 *hash, char *str,
-			  size_t len)
+                          size_t len)
 {
 	size_t cnt = 0;
 
@@ -66,13 +66,13 @@ int silofs_hash256_to_str(const struct silofs_hash256 *hash, char *str,
 }
 
 int silofs_hash256_from_str(struct silofs_hash256 *hash, const char *str,
-			    size_t len)
+                            size_t len)
 {
 	size_t cnt = 0;
 	int err;
 
 	err = silofs_ascii_to_mem(hash->hash, sizeof(hash->hash), str, len,
-				  &cnt);
+	                          &cnt);
 	if (err) {
 		return err;
 	}

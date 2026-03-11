@@ -28,7 +28,7 @@
 #include <stdio.h>
 #include <limits.h>
 
-#include <silofs/silofs.h>
+#include <silofs/api.h>
 #include <silofs/infra.h>
 
 struct dirent64;

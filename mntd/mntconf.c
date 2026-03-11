@@ -20,7 +20,8 @@
 #include <stdio.h>
 #include <limits.h>
 #include <config.h>
-#include <silofs/silofs.h>
+
+#include <silofs/api.h>
 #include "mountd.h"
 
 static void *zalloc(size_t n)

@@ -24,8 +24,8 @@
 #include <signal.h>
 #include <getopt.h>
 #include "mountd.h"
-#include <config.h>
-#include <silofs/silofs.h>
+
+#include <silofs/api.h>
 
 /* global context */
 struct mountd_args {

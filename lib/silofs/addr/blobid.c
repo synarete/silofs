@@ -44,9 +44,9 @@ static void blobid_clear(struct silofs_blobid *blobid)
 }
 
 void silofs_blobid_init(struct silofs_blobid *blobid,
-			const struct silofs_stype *stype,
-			const struct silofs_layerid *layerid,
-			const struct silofs_uniqid *uniqid)
+                        const struct silofs_stype *stype,
+                        const struct silofs_layerid *layerid,
+                        const struct silofs_uniqid *uniqid)
 {
 	silofs_layerid_assignx(&blobid->layerid, layerid);
 	silofs_uniqid_assignx(&blobid->uniqid, uniqid);
@@ -67,7 +67,7 @@ void silofs_blobid_reset(struct silofs_blobid *blobid)
 }
 
 void silofs_blobid_assign(struct silofs_blobid *blobid,
-			  const struct silofs_blobid *other)
+                          const struct silofs_blobid *other)
 {
 	silofs_layerid_assign(&blobid->layerid, &other->layerid);
 	silofs_uniqid_assign(&blobid->uniqid, &other->uniqid);
@@ -78,7 +78,7 @@ void silofs_blobid_assign(struct silofs_blobid *blobid,
 }
 
 long silofs_blobid_compare(const struct silofs_blobid *blobid,
-			   const struct silofs_blobid *other)
+                           const struct silofs_blobid *other)
 {
 	long cmp;
 
@@ -110,7 +110,7 @@ long silofs_blobid_compare(const struct silofs_blobid *blobid,
 }
 
 bool silofs_blobid_isequal(const struct silofs_blobid *blobid,
-			   const struct silofs_blobid *other)
+                           const struct silofs_blobid *other)
 {
 	return (silofs_blobid_compare(blobid, other) == 0);
 }
@@ -128,7 +128,7 @@ size_t silofs_blobid_slotsize(const struct silofs_blobid *blobid)
 }
 
 void silofs_blobid56b_htox(struct silofs_blobid56b *blobid56,
-			   const struct silofs_blobid *blobid)
+                           const struct silofs_blobid *blobid)
 {
 	memset(blobid56, 0, sizeof(*blobid56));
 	silofs_layerid_assign(&blobid56->layerid, &blobid->layerid);
@@ -140,7 +140,7 @@ void silofs_blobid56b_htox(struct silofs_blobid56b *blobid56,
 }
 
 void silofs_blobid56b_xtoh(const struct silofs_blobid56b *blobid56,
-			   struct silofs_blobid *blobid)
+                           struct silofs_blobid *blobid)
 {
 	silofs_layerid_assign(&blobid->layerid, &blobid56->layerid);
 	silofs_uniqid_assign(&blobid->uniqid, &blobid56->uniqid);
@@ -153,20 +153,20 @@ void silofs_blobid56b_xtoh(const struct silofs_blobid56b *blobid56,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_blobidx_setup(struct silofs_blobidx *blobidx,
-			  const struct silofs_hash256 *h)
+                          const struct silofs_hash256 *h)
 {
 	silofs_hash256_assign(&blobidx->idx, h);
 }
 
 void silofs_blobidx_assign(struct silofs_blobidx *blobidx,
-			   const struct silofs_blobidx *other)
+                           const struct silofs_blobidx *other)
 {
 	silofs_blobidx_setup(blobidx, &other->idx);
 }
 
 void silofs_blobidx_derive(struct silofs_blobidx *blobidx,
-			   const struct silofs_mdigest_hd *md_hd,
-			   const struct silofs_blobid *blobid)
+                           const struct silofs_mdigest_hd *md_hd,
+                           const struct silofs_blobid *blobid)
 {
 	struct silofs_blobid56b blobid56b;
 	struct silofs_hash256 hash;
@@ -177,19 +177,19 @@ void silofs_blobidx_derive(struct silofs_blobidx *blobidx,
 }
 
 bool silofs_blobidx_isequal(const struct silofs_blobidx *blobidx,
-			    const struct silofs_blobidx *other)
+                            const struct silofs_blobidx *other)
 {
 	return silofs_hash256_isequal(&blobidx->idx, &other->idx);
 }
 
 int silofs_blobidx_to_str(const struct silofs_blobidx *blobidx, char *str,
-			  size_t len)
+                          size_t len)
 {
 	return silofs_hash256_to_str(&blobidx->idx, str, len);
 }
 
 int silofs_blobidx_from_str(struct silofs_blobidx *blobidx, const char *str,
-			    size_t len)
+                            size_t len)
 {
 	return silofs_hash256_from_str(&blobidx->idx, str, len);
 }

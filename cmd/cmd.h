@@ -18,7 +18,7 @@
 #define SILOFS_CMD_H_
 
 #include <silofs/configs.h>
-#include <silofs/silofs.h>
+#include <silofs/api.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>

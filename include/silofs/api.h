@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_SILOFS_H_
-#define SILOFS_SILOFS_H_
+#ifndef SILOFS_API_H_
+#define SILOFS_API_H_
 
 #include <silofs/version.h>
 #include <silofs/ccattr.h>
@@ -32,4 +32,4 @@
 #include <silofs/mntsvc.h>
 #include <silofs/appexec.h>
 
-#endif /* SILOFS_SILOFS_H_ */
+#endif /* SILOFS_API_H_ */

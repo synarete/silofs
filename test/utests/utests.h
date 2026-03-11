@@ -19,19 +19,19 @@
 
 #define _GNU_SOURCE 1
 #include <silofs/configs.h>
+#include <linux/fiemap.h>
+#include <linux/fs.h>
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>
-#include <linux/fs.h>
-#include <linux/fiemap.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <stddef.h>
 #include <stdbool.h>
 #include <dirent.h>
 
-#include <silofs/silofs.h>
+#include <silofs/api.h>
 #include <silofs/fs.h>
 #include <silofs/ar.h>
 #include <silofs/mbr.h>

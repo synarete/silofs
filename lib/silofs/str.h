@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_STR_H_
-#define SILOFS_STR_H_
+#ifndef SILOFS_STRINGS_H_
+#define SILOFS_STRINGS_H_
 
 #include <string.h>
 #include <silofs/str/ascii.h>
@@ -24,4 +24,4 @@
 #include <silofs/str/strspan.h>
 #include <silofs/str/strbuf.h>
 
-#endif /* SILOFS_STR_H_ */
+#endif /* SILOFS_STRINGS_H_ */

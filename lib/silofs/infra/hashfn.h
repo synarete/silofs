@@ -17,9 +17,9 @@
 #ifndef SILOFS_HASHFN_H_
 #define SILOFS_HASHFN_H_
 
-#include <silofs/ccattr.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <silofs/ccattr.h>
 
 uint64_t silofs_fnv1a(const void *buf, size_t len, uint64_t seed);
 

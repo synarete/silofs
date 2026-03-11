@@ -17,6 +17,8 @@
 #include <silofs/configs.h>
 #include <silofs/ondisk.h>
 #include <silofs/errors.h>
+#include "passwd.h"
+#include "ivkey.h"
 #include "mdigest.h"
 #include "gcry.h"
 #include "kdf.h"

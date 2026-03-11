@@ -17,6 +17,7 @@
 #include <silofs/configs.h>
 #include <silofs/infra.h>
 #include <silofs/addr.h>
+#include "view.h"
 #include "pnodes.h"
 
 static struct silofs_pview *

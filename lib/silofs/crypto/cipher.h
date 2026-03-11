@@ -19,8 +19,8 @@
 
 #include <gcrypt.h>
 #include <silofs/ondisk.h>
-#include "ivkey.h"
-#include "mdigest.h"
+
+struct silofs_civkey;
 
 /* cipher's operation arguments */
 struct silofs_ciargs {

@@ -18,9 +18,8 @@
 #define SILOFS_PNODES_H_
 
 #include <silofs/addr.h>
-#include "dirtyq.h"
-#include "hmapq.h"
-#include "view.h"
+#include <silofs/nodes/dirtyq.h>
+#include <silofs/nodes/hmapq.h>
 
 enum silofs_pnodef {
 	SILOFS_PNODEF_NONE      = 0x00,

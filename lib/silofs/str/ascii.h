@@ -17,9 +17,9 @@
 #ifndef SILOFS_ASCII_H_
 #define SILOFS_ASCII_H_
 
-#include <silofs/ccattr.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <silofs/ccattr.h>
 
 silofs_attr_const char silofs_nibble_to_ascii(int n);
 

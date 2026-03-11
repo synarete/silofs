@@ -18,8 +18,9 @@
 #define SILOFS_STRBUF_H_
 
 #include <silofs/ccattr.h>
-#include "strview.h"
-#include "strspan.h"
+
+struct silofs_strview;
+struct silofs_strspan;
 
 /* fixed-size string-buffer (typically, for names) */
 struct silofs_strbuf {

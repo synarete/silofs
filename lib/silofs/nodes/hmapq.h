@@ -19,7 +19,7 @@
 
 #include <stdint.h>
 #include <silofs/infra.h>
-#include "dirtyq.h"
+#include <silofs/nodes/dirtyq.h>
 
 #define SILOFS_HMAPQ_ITERALL (0xffffffffU)
 

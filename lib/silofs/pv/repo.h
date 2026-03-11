@@ -20,7 +20,7 @@
 #include <silofs/infra.h>
 #include <silofs/crypto.h>
 #include <silofs/addr.h>
-#include "dstor.h"
+#include <silofs/pv/dstor.h>
 
 /* repository logical-segments-file hash-map */
 struct silofs_repo_htbl {

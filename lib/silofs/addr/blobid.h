@@ -38,50 +38,50 @@ struct silofs_blobid {
 const struct silofs_blobid *silofs_blobid_none(void);
 
 void silofs_blobid_init(struct silofs_blobid        *blobid,
-                        const struct silofs_stype   *stype,
-                        const struct silofs_layerid *layerid,
-                        const struct silofs_uniqid  *uniqid);
+			const struct silofs_stype   *stype,
+			const struct silofs_layerid *layerid,
+			const struct silofs_uniqid  *uniqid);
 
 void silofs_blobid_fini(struct silofs_blobid *blobid);
 
 void silofs_blobid_reset(struct silofs_blobid *blobid);
 
 void silofs_blobid_assign(struct silofs_blobid       *blobid,
-                          const struct silofs_blobid *other);
+			  const struct silofs_blobid *other);
 
 long silofs_blobid_compare(const struct silofs_blobid *blobid,
-                           const struct silofs_blobid *other);
+			   const struct silofs_blobid *other);
 
 bool silofs_blobid_isequal(const struct silofs_blobid *blobid,
-                           const struct silofs_blobid *other);
+			   const struct silofs_blobid *other);
 
 size_t silofs_blobid_slotsize(const struct silofs_blobid *blobid);
 
 void silofs_blobid56b_htox(struct silofs_blobid56b    *blobid56,
-                           const struct silofs_blobid *blobid);
+			   const struct silofs_blobid *blobid);
 
 void silofs_blobid56b_xtoh(const struct silofs_blobid56b *blobid56,
-                           struct silofs_blobid          *blobid);
+			   struct silofs_blobid          *blobid);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_blobidx_setup(struct silofs_blobidx       *blobidx,
-                          const struct silofs_hash256 *h);
+			  const struct silofs_hash256 *h);
 
 void silofs_blobidx_assign(struct silofs_blobidx       *blobidx,
-                           const struct silofs_blobidx *other);
+			   const struct silofs_blobidx *other);
 
 void silofs_blobidx_derive(struct silofs_blobidx          *blobidx,
-                           const struct silofs_mdigest_hd *md_hd,
-                           const struct silofs_blobid     *blobid);
+			   const struct silofs_mdigest_hd *md_hd,
+			   const struct silofs_blobid     *blobid);
 
 bool silofs_blobidx_isequal(const struct silofs_blobidx *blobidx,
-                            const struct silofs_blobidx *other);
+			    const struct silofs_blobidx *other);
 
 int silofs_blobidx_to_str(const struct silofs_blobidx *blobidx, char *str,
-                          size_t len);
+			  size_t len);
 
 int silofs_blobidx_from_str(struct silofs_blobidx *blobidx, const char *str,
-                            size_t len);
+			    size_t len);
 
 #endif /* SILOFS_BLOBID_H_ */

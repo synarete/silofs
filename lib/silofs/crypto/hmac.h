@@ -17,10 +17,10 @@
 #ifndef SILOFS_HMAC_H_
 #define SILOFS_HMAC_H_
 
-#include <silofs/ondisk.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <gcrypt.h>
+#include <silofs/ondisk.h>
 
 /* wrapper over libgcrypt mac handle */
 struct silofs_hmac_hd {

@@ -15,8 +15,9 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/errors.h>
 #include <ctype.h>
+
+#include <silofs/errors.h>
 #include "ascii.h"
 
 char silofs_nibble_to_ascii(int n)

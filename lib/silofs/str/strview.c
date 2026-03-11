@@ -15,11 +15,12 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/panic.h>
 #include <string.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <limits.h>
+
+#include <silofs/panic.h>
 #include "strchr.h"
 #include "strview.h"
 

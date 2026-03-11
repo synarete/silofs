@@ -21,6 +21,7 @@
 #include <silofs/infra.h>
 #include "gcry.h"
 #include "mdigest.h"
+#include "ivkey.h"
 #include "cipher.h"
 
 #define SILOFS_CIPHER_ALGO_DEFAULT SILOFS_CIPHER_AES256

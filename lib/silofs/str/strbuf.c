@@ -15,12 +15,15 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/macros.h>
 #include <limits.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdarg.h>
+
+#include <silofs/macros.h>
 #include "strchr.h"
+#include "strview.h"
+#include "strspan.h"
 #include "strbuf.h"
 
 void silofs_strbuf_init(struct silofs_strbuf *sbuf)

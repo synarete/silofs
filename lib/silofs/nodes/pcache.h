@@ -19,7 +19,7 @@
 
 #include <silofs/infra.h>
 #include <silofs/addr.h>
-#include "pnodes.h"
+#include <silofs/nodes/pnodes.h>
 
 struct silofs_pcache {
 	struct silofs_hmapq  pc_hmapq;

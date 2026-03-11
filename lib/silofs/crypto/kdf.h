@@ -18,9 +18,10 @@
 #define SILOFS_KDF_H_
 
 #include <stdint.h>
-#include "passwd.h"
-#include "ivkey.h"
-#include "mdigest.h"
+
+struct silofs_password;
+struct silofs_civkey;
+struct silofs_mdigest_hd;
 
 struct silofs_kdf_desc {
 	uint32_t kd_iterations;

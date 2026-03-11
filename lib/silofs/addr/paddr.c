@@ -34,7 +34,7 @@ const struct silofs_paddr *silofs_paddr_none(void)
 }
 
 void silofs_paddr_init(struct silofs_paddr *paddr,
-                       const struct silofs_blobid *blobid, off_t pos)
+		       const struct silofs_blobid *blobid, off_t pos)
 {
 	silofs_blobid_assign(&paddr->blobid, blobid);
 	paddr->pos   = pos;
@@ -54,7 +54,7 @@ void silofs_paddr_reset(struct silofs_paddr *paddr)
 }
 
 void silofs_paddr_assign(struct silofs_paddr *paddr,
-                         const struct silofs_paddr *other)
+			 const struct silofs_paddr *other)
 {
 	silofs_blobid_assign(&paddr->blobid, &other->blobid);
 	paddr->pos   = other->pos;
@@ -62,7 +62,7 @@ void silofs_paddr_assign(struct silofs_paddr *paddr,
 }
 
 bool silofs_paddr_isequal(const struct silofs_paddr *paddr,
-                          const struct silofs_paddr *other)
+			  const struct silofs_paddr *other)
 {
 	return (paddr->pos == other->pos) &&
 	       silofs_blobid_isequal(&paddr->blobid, &other->blobid);
@@ -74,7 +74,7 @@ bool silofs_paddr_isnull(const struct silofs_paddr *paddr)
 }
 
 long silofs_paddr_compare(const struct silofs_paddr *paddr,
-                          const struct silofs_paddr *other)
+			  const struct silofs_paddr *other)
 {
 	long cmp;
 
@@ -100,7 +100,7 @@ static off_t paddr_next_off(const struct silofs_paddr *paddr)
 }
 
 void silofs_paddr_next(const struct silofs_paddr *paddr,
-                       struct silofs_paddr *out_next)
+		       struct silofs_paddr *out_next)
 {
 	const off_t off = paddr_next_off(paddr);
 
@@ -108,7 +108,7 @@ void silofs_paddr_next(const struct silofs_paddr *paddr,
 }
 
 void silofs_paddr64b_htox(struct silofs_paddr64b *paddr64,
-                          const struct silofs_paddr *paddr)
+			  const struct silofs_paddr *paddr)
 {
 	memset(paddr64, 0, sizeof(*paddr64));
 	silofs_blobid56b_htox(&paddr64->blobid56b, &paddr->blobid);
@@ -116,7 +116,7 @@ void silofs_paddr64b_htox(struct silofs_paddr64b *paddr64,
 }
 
 void silofs_paddr64b_xtoh(const struct silofs_paddr64b *paddr64,
-                          struct silofs_paddr *paddr)
+			  struct silofs_paddr *paddr)
 {
 	silofs_blobid56b_xtoh(&paddr64->blobid56b, &paddr->blobid);
 	paddr->pos   = silofs_off_to_cpu(paddr64->pos);

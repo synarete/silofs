@@ -19,8 +19,7 @@
 
 #include <stdlib.h>
 #include <stdint.h>
-#include "ivkey.h"
-#include "mdigest.h"
+#include <silofs/crypto/mdigest.h>
 
 /* pseudo random generator */
 struct silofs_prandgen {

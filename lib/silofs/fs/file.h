@@ -38,18 +38,6 @@ enum silofs_file_op {
 	SILOFS_FILE_OP_COPY_RANGE = 7,
 };
 
-/* call-back context for read-write operations */
-struct silofs_rwiter_ctx;
-
-typedef int (*silofs_rwiter_fn)(struct silofs_rwiter_ctx  *rwi_ctx,
-                                const struct silofs_iovec *iov);
-
-struct silofs_rwiter_ctx {
-	silofs_rwiter_fn actor;
-	off_t            off;
-	size_t           len;
-};
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_ii_setup_reg(struct silofs_inode_info *ii);

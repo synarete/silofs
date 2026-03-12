@@ -22,18 +22,6 @@
 struct silofs_task_ctx;
 struct silofs_namestr;
 
-/* call-back context for list extended-attributes operations */
-struct silofs_listxattr_ctx;
-
-typedef int (*silofs_fillxattr_fn)(struct silofs_listxattr_ctx *lxa_ctx,
-                                   const char *name, size_t name_len);
-
-struct silofs_listxattr_ctx {
-	silofs_fillxattr_fn actor;
-};
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 void silofs_ii_setup_xattr(struct silofs_inode_info *ii);
 
 int silofs_do_getxattr(struct silofs_task_ctx      *task,

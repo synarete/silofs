@@ -15,7 +15,9 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/fs.h>
+#include <silofs/nodes.h>
+#include "vfs.h"
+#include "symlink.h"
 #include <silofs/run.h>
 
 struct silofs_symval_desc {

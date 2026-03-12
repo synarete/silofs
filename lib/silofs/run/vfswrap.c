@@ -19,11 +19,10 @@
 #include "mbr.h"
 #include "walk.h"
 #include "env.h"
-#include "call.h"
 #include "opers.h"
 
 static int
-call_setattr(struct silofs_task_ctx *task, struct silofs_call_args *args)
+vfswrap_setattr(struct silofs_task_ctx *task, struct silofs_vfs_args *args)
 {
 	struct silofs_stat *out_st         = &args->out.setattr.st;
 	const struct silofs_itimes *itimes = &args->in.setattr.itimes;
@@ -83,21 +82,21 @@ call_setattr(struct silofs_task_ctx *task, struct silofs_call_args *args)
 }
 
 static int
-call_lookup(struct silofs_task_ctx *task, struct silofs_call_args *args)
+vfswrap_lookup(struct silofs_task_ctx *task, struct silofs_vfs_args *args)
 {
 	return silofs_exec_lookup(task, args->in.lookup.parent,
 	                          args->in.lookup.name, &args->out.lookup.st);
 }
 
 static int
-call_forget(struct silofs_task_ctx *task, struct silofs_call_args *args)
+vfswrap_forget(struct silofs_task_ctx *task, struct silofs_vfs_args *args)
 {
 	return silofs_exec_forget(task, args->in.forget.ino,
 	                          args->in.forget.nlookup);
 }
 
-static int
-call_batch_forget(struct silofs_task_ctx *task, struct silofs_call_args *args)
+static int vfswrap_batch_forget(struct silofs_task_ctx *task,
+                                struct silofs_vfs_args *args)
 {
 	int err;
 
@@ -112,21 +111,21 @@ call_batch_forget(struct silofs_task_ctx *task, struct silofs_call_args *args)
 }
 
 static int
-call_getattr(struct silofs_task_ctx *task, struct silofs_call_args *args)
+vfswrap_getattr(struct silofs_task_ctx *task, struct silofs_vfs_args *args)
 {
 	return silofs_exec_getattr(task, args->in.getattr.ino,
 	                           &args->out.getattr.st);
 }
 
 static int
-call_statx(struct silofs_task_ctx *task, struct silofs_call_args *args)
+vfswrap_statx(struct silofs_task_ctx *task, struct silofs_vfs_args *args)
 {
 	return silofs_exec_statx(task, args->in.statx.ino,
 	                         args->in.statx.sx_mask, &args->out.statx.st);
 }
 
 static int
-call_readlink(struct silofs_task_ctx *task, struct silofs_call_args *args)
+vfswrap_readlink(struct silofs_task_ctx *task, struct silofs_vfs_args *args)
 {
 	return silofs_exec_readlink(task, args->in.readlink.ino,
 	                            args->in.readlink.ptr,
@@ -135,7 +134,7 @@ call_readlink(struct silofs_task_ctx *task, struct silofs_call_args *args)
 }
 
 static int
-call_symlink(struct silofs_task_ctx *task, struct silofs_call_args *args)
+vfswrap_symlink(struct silofs_task_ctx *task, struct silofs_vfs_args *args)
 {
 	return silofs_exec_symlink(task, args->in.symlink.parent,
 	                           args->in.symlink.name,
@@ -144,7 +143,7 @@ call_symlink(struct silofs_task_ctx *task, struct silofs_call_args *args)
 }
 
 static int
-call_mknod(struct silofs_task_ctx *task, struct silofs_call_args *args)
+vfswrap_mknod(struct silofs_task_ctx *task, struct silofs_vfs_args *args)
 {
 	return silofs_exec_mknod(task, args->in.mknod.parent,
 	                         args->in.mknod.name, args->in.mknod.mode,
@@ -152,7 +151,7 @@ call_mknod(struct silofs_task_ctx *task, struct silofs_call_args *args)
 }
 
 static int
-call_mkdir(struct silofs_task_ctx *task, struct silofs_call_args *args)
+vfswrap_mkdir(struct silofs_task_ctx *task, struct silofs_vfs_args *args)
 {
 	return silofs_exec_mkdir(task, args->in.mkdir.parent,
 	                         args->in.mkdir.name, args->in.mkdir.mode,
@@ -160,21 +159,21 @@ call_mkdir(struct silofs_task_ctx *task, struct silofs_call_args *args)
 }
 
 static int
-call_unlink(struct silofs_task_ctx *task, struct silofs_call_args *args)
+vfswrap_unlink(struct silofs_task_ctx *task, struct silofs_vfs_args *args)
 {
 	return silofs_exec_unlink(task, args->in.unlink.parent,
 	                          args->in.unlink.name);
 }
 
 static int
-call_rmdir(struct silofs_task_ctx *task, struct silofs_call_args *args)
+vfswrap_rmdir(struct silofs_task_ctx *task, struct silofs_vfs_args *args)
 {
 	return silofs_exec_rmdir(task, args->in.rmdir.parent,
 	                         args->in.rmdir.name);
 }
 
 static int
-call_rename(struct silofs_task_ctx *task, struct silofs_call_args *args)
+vfswrap_rename(struct silofs_task_ctx *task, struct silofs_vfs_args *args)
 {
 	return silofs_exec_rename(task, args->in.rename.parent,
 	                          args->in.rename.name,
@@ -184,28 +183,28 @@ call_rename(struct silofs_task_ctx *task, struct silofs_call_args *args)
 }
 
 static int
-call_link(struct silofs_task_ctx *task, struct silofs_call_args *args)
+vfswrap_link(struct silofs_task_ctx *task, struct silofs_vfs_args *args)
 {
 	return silofs_exec_link(task, args->in.link.ino, args->in.link.parent,
 	                        args->in.link.name, &args->out.link.st);
 }
 
 static int
-call_open(struct silofs_task_ctx *task, struct silofs_call_args *args)
+vfswrap_open(struct silofs_task_ctx *task, struct silofs_vfs_args *args)
 {
 	return silofs_exec_open(task, args->in.open.ino, args->in.open.o_flags,
 	                        args->in.open.kill_suidgid);
 }
 
 static int
-call_statfs(struct silofs_task_ctx *task, struct silofs_call_args *args)
+vfswrap_statfs(struct silofs_task_ctx *task, struct silofs_vfs_args *args)
 {
 	return silofs_exec_statfs(task, args->in.statfs.ino,
 	                          &args->out.statfs.stv);
 }
 
 static int
-call_release(struct silofs_task_ctx *task, struct silofs_call_args *args)
+vfswrap_release(struct silofs_task_ctx *task, struct silofs_vfs_args *args)
 {
 	return silofs_exec_release(task, args->in.release.ino,
 	                           args->in.release.o_flags,
@@ -213,14 +212,14 @@ call_release(struct silofs_task_ctx *task, struct silofs_call_args *args)
 }
 
 static int
-call_fsync(struct silofs_task_ctx *task, struct silofs_call_args *args)
+vfswrap_fsync(struct silofs_task_ctx *task, struct silofs_vfs_args *args)
 {
 	return silofs_exec_fsync(task, args->in.fsync.ino,
 	                         args->in.fsync.datasync);
 }
 
 static int
-call_setxattr(struct silofs_task_ctx *task, struct silofs_call_args *args)
+vfswrap_setxattr(struct silofs_task_ctx *task, struct silofs_vfs_args *args)
 {
 	return silofs_exec_setxattr(
 		task, args->in.setxattr.ino, args->in.setxattr.name,
@@ -229,7 +228,7 @@ call_setxattr(struct silofs_task_ctx *task, struct silofs_call_args *args)
 }
 
 static int
-call_getxattr(struct silofs_task_ctx *task, struct silofs_call_args *args)
+vfswrap_getxattr(struct silofs_task_ctx *task, struct silofs_vfs_args *args)
 {
 	return silofs_exec_getxattr(task, args->in.getxattr.ino,
 	                            args->in.getxattr.name,
@@ -239,70 +238,70 @@ call_getxattr(struct silofs_task_ctx *task, struct silofs_call_args *args)
 }
 
 static int
-call_listxattr(struct silofs_task_ctx *task, struct silofs_call_args *args)
+vfswrap_listxattr(struct silofs_task_ctx *task, struct silofs_vfs_args *args)
 {
 	return silofs_exec_listxattr(task, args->in.listxattr.ino,
 	                             args->in.listxattr.lxa_ctx);
 }
 
 static int
-call_removexattr(struct silofs_task_ctx *task, struct silofs_call_args *args)
+vfswrap_removexattr(struct silofs_task_ctx *task, struct silofs_vfs_args *args)
 {
 	return silofs_exec_removexattr(task, args->in.removexattr.ino,
 	                               args->in.removexattr.name);
 }
 
 static int
-call_flush(struct silofs_task_ctx *task, struct silofs_call_args *args)
+vfswrap_flush(struct silofs_task_ctx *task, struct silofs_vfs_args *args)
 {
 	return silofs_exec_flush(task, args->in.flush.ino,
 	                         args->in.flush.ino == 0);
 }
 
 static int
-call_opendir(struct silofs_task_ctx *task, struct silofs_call_args *args)
+vfswrap_opendir(struct silofs_task_ctx *task, struct silofs_vfs_args *args)
 {
 	return silofs_exec_opendir(task, args->in.opendir.ino,
 	                           args->in.opendir.o_flags);
 }
 
 static int
-call_readdir(struct silofs_task_ctx *task, struct silofs_call_args *args)
+vfswrap_readdir(struct silofs_task_ctx *task, struct silofs_vfs_args *args)
 {
 	return silofs_exec_readdir(task, args->in.readdir.ino,
 	                           args->in.readdir.rd_ctx);
 }
 
 static int
-call_readdirplus(struct silofs_task_ctx *task, struct silofs_call_args *args)
+vfswrap_readdirplus(struct silofs_task_ctx *task, struct silofs_vfs_args *args)
 {
 	return silofs_exec_readdirplus(task, args->in.readdir.ino,
 	                               args->in.readdir.rd_ctx);
 }
 
 static int
-call_releasedir(struct silofs_task_ctx *task, struct silofs_call_args *args)
+vfswrap_releasedir(struct silofs_task_ctx *task, struct silofs_vfs_args *args)
 {
 	return silofs_exec_releasedir(task, args->in.releasedir.ino,
 	                              args->in.releasedir.o_flags);
 }
 
 static int
-call_fsyncdir(struct silofs_task_ctx *task, struct silofs_call_args *args)
+vfswrap_fsyncdir(struct silofs_task_ctx *task, struct silofs_vfs_args *args)
 {
 	return silofs_exec_fsyncdir(task, args->in.fsyncdir.ino,
 	                            args->in.fsyncdir.datasync);
 }
 
 static int
-call_access(struct silofs_task_ctx *task, struct silofs_call_args *args)
+vfswrap_access(struct silofs_task_ctx *task, struct silofs_vfs_args *args)
 {
 	return silofs_exec_access(task, args->in.access.ino,
 	                          args->in.access.mask);
 }
 
 static int
-call_create(struct silofs_task_ctx *task, struct silofs_call_args *args)
+vfswrap_create(struct silofs_task_ctx *task, struct silofs_vfs_args *args)
 {
 	return silofs_exec_create(
 		task, args->in.create.parent, args->in.create.name,
@@ -311,7 +310,7 @@ call_create(struct silofs_task_ctx *task, struct silofs_call_args *args)
 }
 
 static int
-call_fallocate(struct silofs_task_ctx *task, struct silofs_call_args *args)
+vfswrap_fallocate(struct silofs_task_ctx *task, struct silofs_vfs_args *args)
 {
 	return silofs_exec_fallocate(task, args->in.fallocate.ino,
 	                             args->in.fallocate.mode,
@@ -320,14 +319,14 @@ call_fallocate(struct silofs_task_ctx *task, struct silofs_call_args *args)
 }
 
 static int
-call_lseek(struct silofs_task_ctx *task, struct silofs_call_args *args)
+vfswrap_lseek(struct silofs_task_ctx *task, struct silofs_vfs_args *args)
 {
 	return silofs_exec_lseek(task, args->in.lseek.ino, args->in.lseek.off,
 	                         args->in.lseek.whence, &args->out.lseek.off);
 }
 
-static int call_copy_file_range(struct silofs_task_ctx *task,
-                                struct silofs_call_args *args)
+static int vfswrap_copy_file_range(struct silofs_task_ctx *task,
+                                   struct silofs_vfs_args *args)
 {
 	return silofs_exec_copy_file_range(task,
 	                                   args->in.copy_file_range.ino_in,
@@ -340,7 +339,7 @@ static int call_copy_file_range(struct silofs_task_ctx *task,
 }
 
 static int
-call_read_buf(struct silofs_task_ctx *task, struct silofs_call_args *args)
+vfswrap_read_buf(struct silofs_task_ctx *task, struct silofs_vfs_args *args)
 {
 	return silofs_exec_read(task, args->in.read.ino, args->in.read.buf,
 	                        args->in.read.len, args->in.read.off,
@@ -348,7 +347,7 @@ call_read_buf(struct silofs_task_ctx *task, struct silofs_call_args *args)
 }
 
 static int
-call_read_iter(struct silofs_task_ctx *task, struct silofs_call_args *args)
+vfswrap_read_iter(struct silofs_task_ctx *task, struct silofs_vfs_args *args)
 {
 	return silofs_exec_read_iter(task, args->in.read.ino,
 	                             args->in.read.o_flags,
@@ -356,15 +355,15 @@ call_read_iter(struct silofs_task_ctx *task, struct silofs_call_args *args)
 }
 
 static int
-call_read(struct silofs_task_ctx *task, struct silofs_call_args *args)
+vfswrap_read(struct silofs_task_ctx *task, struct silofs_vfs_args *args)
 {
 	return (args->in.read.rwi_ctx != nullptr) ?
-	               call_read_iter(task, args) :
-	               call_read_buf(task, args);
+	               vfswrap_read_iter(task, args) :
+	               vfswrap_read_buf(task, args);
 }
 
 static int
-call_write_buf(struct silofs_task_ctx *task, struct silofs_call_args *args)
+vfswrap_write_buf(struct silofs_task_ctx *task, struct silofs_vfs_args *args)
 {
 	return silofs_exec_write(task, args->in.write.ino, args->in.write.buf,
 	                         args->in.write.len, args->in.write.off,
@@ -374,7 +373,7 @@ call_write_buf(struct silofs_task_ctx *task, struct silofs_call_args *args)
 }
 
 static int
-call_write_iter(struct silofs_task_ctx *task, struct silofs_call_args *args)
+vfswrap_write_iter(struct silofs_task_ctx *task, struct silofs_vfs_args *args)
 {
 	return silofs_exec_write_iter(task, args->in.write.ino,
 	                              args->in.write.o_flags,
@@ -383,48 +382,48 @@ call_write_iter(struct silofs_task_ctx *task, struct silofs_call_args *args)
 }
 
 static int
-call_write(struct silofs_task_ctx *task, struct silofs_call_args *args)
+vfswrap_write(struct silofs_task_ctx *task, struct silofs_vfs_args *args)
 {
 	return (args->in.write.rwi_ctx != nullptr) ?
-	               call_write_iter(task, args) :
-	               call_write_buf(task, args);
+	               vfswrap_write_iter(task, args) :
+	               vfswrap_write_buf(task, args);
 }
 
 static int
-call_syncfs(struct silofs_task_ctx *task, struct silofs_call_args *args)
+vfswrap_syncfs(struct silofs_task_ctx *task, struct silofs_vfs_args *args)
 {
 	return silofs_exec_syncfs(task, args->in.syncfs.ino,
 	                          args->in.syncfs.flags);
 }
 
 static int
-call_ioctl_query(struct silofs_task_ctx *task, struct silofs_call_args *args)
+vfswrap_ioctl_query(struct silofs_task_ctx *task, struct silofs_vfs_args *args)
 {
 	return silofs_exec_query(task, args->in.query.ino,
 	                         args->in.query.qtype, &args->out.query.qry);
 }
 
-static int
-call_ioctl_forkfs(struct silofs_task_ctx *task, struct silofs_call_args *args)
+static int vfswrap_ioctl_forkfs(struct silofs_task_ctx *task,
+                                struct silofs_vfs_args *args)
 {
 	return silofs_exec_forkfs(task, args->in.clone.ino,
 	                          args->in.clone.flags,
 	                          &args->out.clone.mbrefs);
 }
 
-static int
-call_ioctl_syncfs(struct silofs_task_ctx *task, struct silofs_call_args *args)
+static int vfswrap_ioctl_syncfs(struct silofs_task_ctx *task,
+                                struct silofs_vfs_args *args)
 {
 	/*
 	 * Currently (Linux kernel v6.3) fuse has 'fc->sync_fs = true' only for
 	 * fs/fuse/virtio_fs.c code-path. Thus, implement full sync-fs via
 	 * dedicated ioctl.
 	 */
-	return call_syncfs(task, args);
+	return vfswrap_syncfs(task, args);
 }
 
 static int
-call_ioctl_tune(struct silofs_task_ctx *task, struct silofs_call_args *args)
+vfswrap_ioctl_tune(struct silofs_task_ctx *task, struct silofs_vfs_args *args)
 {
 	return silofs_exec_tune(task, args->in.tune.ino,
 	                        args->in.tune.iflags_want,
@@ -432,22 +431,22 @@ call_ioctl_tune(struct silofs_task_ctx *task, struct silofs_call_args *args)
 }
 
 static int
-call_ioctl(struct silofs_task_ctx *task, struct silofs_call_args *args)
+vfswrap_ioctl(struct silofs_task_ctx *task, struct silofs_vfs_args *args)
 {
 	int ret;
 
 	switch (args->ioc_cmd) {
 	case SILOFS_IOC_QUERY:
-		ret = call_ioctl_query(task, args);
+		ret = vfswrap_ioctl_query(task, args);
 		break;
 	case SILOFS_IOC_FORKFS:
-		ret = call_ioctl_forkfs(task, args);
+		ret = vfswrap_ioctl_forkfs(task, args);
 		break;
 	case SILOFS_IOC_SYNCFS:
-		ret = call_ioctl_syncfs(task, args);
+		ret = vfswrap_ioctl_syncfs(task, args);
 		break;
 	case SILOFS_IOC_TUNE:
-		ret = call_ioctl_tune(task, args);
+		ret = vfswrap_ioctl_tune(task, args);
 		break;
 	default:
 		ret = -SILOFS_ENOSYS;
@@ -458,47 +457,47 @@ call_ioctl(struct silofs_task_ctx *task, struct silofs_call_args *args)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static const struct silofs_call_table s_call_tbl = {
-	.setattr         = call_setattr,
-	.lookup          = call_lookup,
-	.forget          = call_forget,
-	.batch_forget    = call_batch_forget,
-	.getattr         = call_getattr,
-	.statx           = call_statx,
-	.readlink        = call_readlink,
-	.symlink         = call_symlink,
-	.mknod           = call_mknod,
-	.mkdir           = call_mkdir,
-	.unlink          = call_unlink,
-	.rmdir           = call_rmdir,
-	.rename          = call_rename,
-	.link            = call_link,
-	.open            = call_open,
-	.statfs          = call_statfs,
-	.release         = call_release,
-	.fsync           = call_fsync,
-	.setxattr        = call_setxattr,
-	.getxattr        = call_getxattr,
-	.listxattr       = call_listxattr,
-	.removexattr     = call_removexattr,
-	.flush           = call_flush,
-	.opendir         = call_opendir,
-	.readdir         = call_readdir,
-	.readdirplus     = call_readdirplus,
-	.releasedir      = call_releasedir,
-	.fsyncdir        = call_fsyncdir,
-	.access          = call_access,
-	.create          = call_create,
-	.fallocate       = call_fallocate,
-	.lseek           = call_lseek,
-	.copy_file_range = call_copy_file_range,
-	.read            = call_read,
-	.write           = call_write,
-	.syncfs          = call_syncfs,
-	.ioctl           = call_ioctl,
+static const struct silofs_vfs_hooks s_vfs_hooks = {
+	.setattr         = vfswrap_setattr,
+	.lookup          = vfswrap_lookup,
+	.forget          = vfswrap_forget,
+	.batch_forget    = vfswrap_batch_forget,
+	.getattr         = vfswrap_getattr,
+	.statx           = vfswrap_statx,
+	.readlink        = vfswrap_readlink,
+	.symlink         = vfswrap_symlink,
+	.mknod           = vfswrap_mknod,
+	.mkdir           = vfswrap_mkdir,
+	.unlink          = vfswrap_unlink,
+	.rmdir           = vfswrap_rmdir,
+	.rename          = vfswrap_rename,
+	.link            = vfswrap_link,
+	.open            = vfswrap_open,
+	.statfs          = vfswrap_statfs,
+	.release         = vfswrap_release,
+	.fsync           = vfswrap_fsync,
+	.setxattr        = vfswrap_setxattr,
+	.getxattr        = vfswrap_getxattr,
+	.listxattr       = vfswrap_listxattr,
+	.removexattr     = vfswrap_removexattr,
+	.flush           = vfswrap_flush,
+	.opendir         = vfswrap_opendir,
+	.readdir         = vfswrap_readdir,
+	.readdirplus     = vfswrap_readdirplus,
+	.releasedir      = vfswrap_releasedir,
+	.fsyncdir        = vfswrap_fsyncdir,
+	.access          = vfswrap_access,
+	.create          = vfswrap_create,
+	.fallocate       = vfswrap_fallocate,
+	.lseek           = vfswrap_lseek,
+	.copy_file_range = vfswrap_copy_file_range,
+	.read            = vfswrap_read,
+	.write           = vfswrap_write,
+	.syncfs          = vfswrap_syncfs,
+	.ioctl           = vfswrap_ioctl,
 };
 
-const struct silofs_call_table *silofs_call_hooks(void)
+void silofs_env_bind_hooks(struct silofs_env *env)
 {
-	return &s_call_tbl;
+	env->vfs_hooks = &s_vfs_hooks;
 }

@@ -20,6 +20,7 @@
 #include <sys/mount.h>
 #include <silofs/pv.h>
 #include <silofs/fs.h>
+#include <silofs/fuse.h>
 #include "mbr.h"
 #include "task.h"
 #include "env.h"
@@ -243,6 +244,15 @@ static void env_update_iopen_max(struct silofs_env *env)
 	env->opstat.op_iopen_max = env_calc_iopen_limit(env);
 }
 
+static void env_update_vfs_hooks(struct silofs_env *env)
+{
+	silofs_env_bind_hooks(env);
+	if (env->fuseq != nullptr) {
+		env->fuseq->fq_env       = env;
+		env->fuseq->fq_vfs_hooks = env->vfs_hooks;
+	}
+}
+
 int silofs_env_setup(struct silofs_env *env, const struct silofs_spec *spec)
 {
 	int err;
@@ -271,6 +281,7 @@ int silofs_env_setup(struct silofs_env *env, const struct silofs_spec *spec)
 	if (err) {
 		return err;
 	}
+	env_update_vfs_hooks(env);
 	env_update_iopen_max(env);
 	env->flags = spec->flags;
 	return 0;
@@ -300,6 +311,8 @@ env_init_commons(struct silofs_env *env, struct silofs_alloc *alloc)
 	env->ms_flags  = 0;
 	env->iconv_set = false;
 	env->repodir   = nullptr;
+	env->fuseq     = nullptr;
+	env->vfs_hooks = nullptr;
 }
 
 static void env_fini_commons(struct silofs_env *env)

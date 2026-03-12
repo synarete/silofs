@@ -23,6 +23,7 @@
 #include <limits.h>
 
 #include <silofs/infra.h>
+#include "vfs.h"
 #include "flush.h"
 #include "file.h"
 #include <silofs/run.h>

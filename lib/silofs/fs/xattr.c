@@ -19,7 +19,10 @@
 #include <sys/xattr.h>
 #include <linux/xattr.h>
 #include <limits.h>
-#include <silofs/fs.h>
+
+#include <silofs/nodes.h>
+#include "vfs.h"
+#include "xattr.h"
 #include <silofs/run.h>
 
 #define XATTR_DATA_MAX (SILOFS_NAME_MAX + 1 + SILOFS_XATTR_VALUE_MAX)

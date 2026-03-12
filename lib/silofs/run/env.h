@@ -55,27 +55,28 @@ struct silofs_env_mbis {
 
 /* top-level environment object */
 struct silofs_env {
-	struct silofs_strbuf     name;
-	struct silofs_alloc     *alloc;
-	struct silofs_env_base   base;
-	struct silofs_env_mbis   mbis;
-	struct silofs_rwlock     rwlock;
-	struct silofs_mutex      mutex;
-	struct silofs_cipher_hd  enc_ci_hd;
-	struct silofs_cipher_hd  dec_ci_hd;
-	struct silofs_mdigest_hd md_hd;
-	struct silofs_env_opstat opstat;
-	struct silofs_uber_info *ubi;
-	struct silofs_sb_info   *sbi;
-	struct silofs_fuseq     *fuseq;
-	struct silofs_cred       owner_cred;
-	struct silofs_uconv      uconv;
-	enum silofs_flags        flags;
-	char                    *repodir;
-	size_t                   fscap;
-	unsigned long            ms_flags;
-	time_t                   init_time;
-	bool                     iconv_set;
+	struct silofs_strbuf           name;
+	struct silofs_alloc           *alloc;
+	struct silofs_env_base         base;
+	struct silofs_env_mbis         mbis;
+	struct silofs_rwlock           rwlock;
+	struct silofs_mutex            mutex;
+	struct silofs_cipher_hd        enc_ci_hd;
+	struct silofs_cipher_hd        dec_ci_hd;
+	struct silofs_mdigest_hd       md_hd;
+	struct silofs_env_opstat       opstat;
+	struct silofs_uber_info       *ubi;
+	struct silofs_sb_info         *sbi;
+	struct silofs_fuseq           *fuseq;
+	const struct silofs_vfs_hooks *vfs_hooks;
+	struct silofs_cred             owner_cred;
+	struct silofs_uconv            uconv;
+	enum silofs_flags              flags;
+	char                          *repodir;
+	size_t                         fscap;
+	unsigned long                  ms_flags;
+	time_t                         init_time;
+	bool                           iconv_set;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -90,6 +91,8 @@ void silofs_env_use(struct silofs_env            *env,
                     const struct silofs_env_base *base);
 
 int silofs_env_setup(struct silofs_env *env, const struct silofs_spec *spec);
+
+void silofs_env_bind_hooks(struct silofs_env *env);
 
 void silofs_env_lock(struct silofs_env *env);
 

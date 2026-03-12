@@ -14,14 +14,67 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_CALL_H_
-#define SILOFS_CALL_H_
+#ifndef SILOFS_VFS_H_
+#define SILOFS_VFS_H_
 
 #include <sys/stat.h>
 #include <sys/statvfs.h>
+
+#include <silofs/ioctls.h>
 #include <silofs/infra.h>
 #include <silofs/addr.h>
-#include <silofs/fs.h>
+
+/* extended inode stat */
+struct silofs_stat {
+	struct stat  st;
+	struct statx stx;
+	uint64_t     gen;
+};
+
+/* call-back context for list extended-attributes operations */
+struct silofs_listxattr_ctx;
+
+typedef int (*silofs_fillxattr_fn)(struct silofs_listxattr_ctx *lxa_ctx,
+                                   const char *name, size_t name_len);
+
+struct silofs_listxattr_ctx {
+	silofs_fillxattr_fn actor;
+};
+
+/* call-back context for read-dir operations */
+struct silofs_readdir_ctx;
+struct silofs_readdir_info;
+
+typedef int (*silofs_filldir_fn)(struct silofs_readdir_ctx        *rd_ctx,
+                                 const struct silofs_readdir_info *rdi);
+
+struct silofs_readdir_info {
+	struct silofs_stat attr;
+	const char        *name;
+	size_t             namelen;
+	ino_t              ino;
+	off_t              off;
+	mode_t             dt;
+};
+
+struct silofs_readdir_ctx {
+	silofs_filldir_fn actor;
+	off_t             pos;
+};
+
+/* call-back context for read-write operations */
+struct silofs_rwiter_ctx;
+
+typedef int (*silofs_rwiter_fn)(struct silofs_rwiter_ctx  *rwi_ctx,
+                                const struct silofs_iovec *iov);
+
+struct silofs_rwiter_ctx {
+	silofs_rwiter_fn actor;
+	off_t            off;
+	size_t           len;
+};
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 struct silofs_lookup_in {
 	ino_t       parent;
@@ -334,7 +387,7 @@ struct silofs_tune_in {
 	int   iflags_dont;
 };
 
-union silofs_call_args_in {
+union silofs_vfs_args_in {
 	struct silofs_lookup_in          lookup;
 	struct silofs_forget_in          forget;
 	struct silofs_batch_forget_in    batch_forget;
@@ -375,7 +428,7 @@ union silofs_call_args_in {
 	struct silofs_tune_in            tune;
 } silofs_attr_aligned64;
 
-union silofs_call_args_out {
+union silofs_vfs_args_out {
 	struct silofs_lookup_out          lookup;
 	struct silofs_getattr_out         getattr;
 	struct silofs_statx_out           statx;
@@ -396,57 +449,57 @@ union silofs_call_args_out {
 	struct silofs_clone_out           clone;
 } silofs_attr_aligned64;
 
-struct silofs_call_args {
-	union silofs_call_args_in  in;
-	union silofs_call_args_out out;
-	long                       ioc_cmd;
+struct silofs_vfs_args {
+	union silofs_vfs_args_in  in;
+	union silofs_vfs_args_out out;
+	long                      ioc_cmd;
 } silofs_attr_aligned64;
 
-typedef int (*silofs_call_fn)(struct silofs_task_ctx *,
-                              struct silofs_call_args *);
+struct silofs_task_ctx;
+
+typedef int (*silofs_vfs_fn)(struct silofs_task_ctx *,
+                             struct silofs_vfs_args *);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-struct silofs_call_table {
-	silofs_call_fn setattr;
-	silofs_call_fn lookup;
-	silofs_call_fn forget;
-	silofs_call_fn batch_forget;
-	silofs_call_fn getattr;
-	silofs_call_fn statx;
-	silofs_call_fn readlink;
-	silofs_call_fn symlink;
-	silofs_call_fn mknod;
-	silofs_call_fn mkdir;
-	silofs_call_fn unlink;
-	silofs_call_fn rmdir;
-	silofs_call_fn rename;
-	silofs_call_fn link;
-	silofs_call_fn open;
-	silofs_call_fn statfs;
-	silofs_call_fn release;
-	silofs_call_fn fsync;
-	silofs_call_fn setxattr;
-	silofs_call_fn getxattr;
-	silofs_call_fn listxattr;
-	silofs_call_fn removexattr;
-	silofs_call_fn flush;
-	silofs_call_fn opendir;
-	silofs_call_fn readdir;
-	silofs_call_fn readdirplus;
-	silofs_call_fn releasedir;
-	silofs_call_fn fsyncdir;
-	silofs_call_fn access;
-	silofs_call_fn create;
-	silofs_call_fn fallocate;
-	silofs_call_fn lseek;
-	silofs_call_fn copy_file_range;
-	silofs_call_fn read;
-	silofs_call_fn write;
-	silofs_call_fn syncfs;
-	silofs_call_fn ioctl;
+struct silofs_vfs_hooks {
+	silofs_vfs_fn setattr;
+	silofs_vfs_fn lookup;
+	silofs_vfs_fn forget;
+	silofs_vfs_fn batch_forget;
+	silofs_vfs_fn getattr;
+	silofs_vfs_fn statx;
+	silofs_vfs_fn readlink;
+	silofs_vfs_fn symlink;
+	silofs_vfs_fn mknod;
+	silofs_vfs_fn mkdir;
+	silofs_vfs_fn unlink;
+	silofs_vfs_fn rmdir;
+	silofs_vfs_fn rename;
+	silofs_vfs_fn link;
+	silofs_vfs_fn open;
+	silofs_vfs_fn statfs;
+	silofs_vfs_fn release;
+	silofs_vfs_fn fsync;
+	silofs_vfs_fn setxattr;
+	silofs_vfs_fn getxattr;
+	silofs_vfs_fn listxattr;
+	silofs_vfs_fn removexattr;
+	silofs_vfs_fn flush;
+	silofs_vfs_fn opendir;
+	silofs_vfs_fn readdir;
+	silofs_vfs_fn readdirplus;
+	silofs_vfs_fn releasedir;
+	silofs_vfs_fn fsyncdir;
+	silofs_vfs_fn access;
+	silofs_vfs_fn create;
+	silofs_vfs_fn fallocate;
+	silofs_vfs_fn lseek;
+	silofs_vfs_fn copy_file_range;
+	silofs_vfs_fn read;
+	silofs_vfs_fn write;
+	silofs_vfs_fn syncfs;
+	silofs_vfs_fn ioctl;
 };
 
-const struct silofs_call_table *silofs_call_hooks(void);
-
-#endif /* SILOFS_CALL_H_ */
+#endif /* SILOFS_VFS_H_ */

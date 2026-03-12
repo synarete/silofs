@@ -16,8 +16,11 @@
  */
 #include <silofs/configs.h>
 #include <dirent.h>
+
 #include <silofs/infra.h>
-#include <silofs/fs.h>
+#include <silofs/nodes.h>
+#include "vfs.h"
+#include "dir.h"
 #include <silofs/run.h>
 
 enum silofs_dtree_consts {

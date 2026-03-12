@@ -22,6 +22,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <stdint.h>
+
 #include <silofs/macros.h>
 #include <silofs/ondisk.h>
 #include <silofs/types.h>
@@ -52,13 +53,6 @@ enum silofs_iattr_flags {
 	SILOFS_IATTR_MCTIME = SILOFS_IATTR_MTIME | SILOFS_IATTR_CTIME,
 	SILOFS_IATTR_TIMES  = SILOFS_IATTR_BTIME | SILOFS_IATTR_ATIME |
 	                     SILOFS_IATTR_MTIME | SILOFS_IATTR_CTIME,
-};
-
-/* extended inode stat */
-struct silofs_stat {
-	struct stat  st;
-	struct statx stx;
-	uint64_t     gen;
 };
 
 /* inode's attributes */

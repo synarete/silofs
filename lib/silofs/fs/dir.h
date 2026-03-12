@@ -25,29 +25,10 @@ struct silofs_readdir_ctx;
 struct silofs_readdir_info;
 struct silofs_namestr;
 
-/* call-back context for read-dir operations */
-typedef int (*silofs_filldir_fn)(struct silofs_readdir_ctx        *rd_ctx,
-                                 const struct silofs_readdir_info *rdi);
-
-struct silofs_readdir_info {
-	struct silofs_stat attr;
-	const char        *name;
-	size_t             namelen;
-	ino_t              ino;
-	off_t              off;
-	mode_t             dt;
-};
-
-struct silofs_readdir_ctx {
-	silofs_filldir_fn actor;
-	off_t             pos;
-};
-
 /* pair of ino and dir-type */
 struct silofs_ino_dt {
 	ino_t  ino;
 	mode_t dt;
-	int    pad;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

@@ -451,9 +451,8 @@ struct silofs_fuseq_cmd_ctx {
 	struct silofs_fuseq *fq;
 	struct silofs_fuseq_sub *fqs;
 	struct silofs_task_ctx *task;
-	struct silofs_call_args *args;
+	struct silofs_vfs_args *args;
 	const struct silofs_fuseq_in *in;
-	const struct silofs_call_table *hooks;
 	ino_t ino;
 };
 
@@ -1961,10 +1960,10 @@ static bool fuseq_has_memory_pressure(const struct silofs_fuseq *fq)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 #define fcc_exec_hook(fcc_, hook_) \
-	fcc_exec_call(fcc_, ((fcc_)->hooks)->hook_)
+	fcc_exec_call(fcc_, ((fcc_)->fq->fq_vfs_hooks)->hook_)
 
 static int
-fcc_exec_call(const struct silofs_fuseq_cmd_ctx *fcc, silofs_call_fn fn)
+fcc_exec_call(const struct silofs_fuseq_cmd_ctx *fcc, silofs_vfs_fn fn)
 {
 	return fn(fcc->task, fcc->args);
 }
@@ -3694,23 +3693,16 @@ static int fcc_call_oper(const struct silofs_fuseq_cmd_ctx *fcc,
 	return err;
 }
 
-static const struct silofs_call_table *
-fqs_call_hooks(const struct silofs_fuseq_sub *fqs)
-{
-	return fqs->fqs_th.fq->fq_call_hooks;
-}
-
 static int
 fqs_call_oper(struct silofs_fuseq_sub *fqs, struct silofs_task_ctx *task)
 {
 	const struct silofs_fuseq_cmd_ctx fcc = {
-		.fq    = fqs_fuseq2(fqs),
-		.fqs   = fqs,
-		.task  = task,
-		.args  = &fqs->fqs_args,
-		.in    = fqs_in_of(fqs),
-		.ino   = fqs_in_ino_of(fqs),
-		.hooks = fqs_call_hooks(fqs),
+		.fq   = fqs_fuseq2(fqs),
+		.fqs  = fqs,
+		.task = task,
+		.args = &fqs->fqs_args,
+		.in   = fqs_in_of(fqs),
+		.ino  = fqs_in_ino_of(fqs),
 	};
 
 	return fcc_call_oper(&fcc, cmd_desc_of(task->auth.opcode));
@@ -4310,7 +4302,7 @@ static void fqs_fini_rwi(struct silofs_fuseq_sub *fqs)
 
 static int fqs_init_op_args(struct silofs_fuseq_sub *fqs)
 {
-	struct silofs_call_args *op_args = &fqs->fqs_args;
+	struct silofs_vfs_args *op_args = &fqs->fqs_args;
 
 	silofs_memzero(op_args, sizeof(*op_args));
 	return 0;
@@ -4318,7 +4310,7 @@ static int fqs_init_op_args(struct silofs_fuseq_sub *fqs)
 
 static void fqs_fini_op_args(struct silofs_fuseq_sub *fqs)
 {
-	struct silofs_call_args *op_args = &fqs->fqs_args;
+	struct silofs_vfs_args *op_args = &fqs->fqs_args;
 
 	silofs_memffff(op_args, sizeof(*op_args));
 }
@@ -4776,7 +4768,7 @@ fuseq_init_common(struct silofs_fuseq *fq, struct silofs_alloc *alloc,
 	fq->fq_subs.fq_nsub_run = 0;
 	listq_init(&fq->fq_curr_opers);
 	fq->fq_env           = nullptr;
-	fq->fq_call_hooks    = nullptr;
+	fq->fq_vfs_hooks     = nullptr;
 	fq->fq_pagesize      = (uint32_t)silofs_sc_page_size();
 	fq->fq_nprocs        = (uint32_t)silofs_sc_nproc_onln();
 	fq->fq_alloc         = alloc;

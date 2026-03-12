@@ -24,7 +24,7 @@
 #include <silofs/addr.h>
 #include <silofs/pv.h>
 #include <silofs/fs.h>
-#include "exec.h"
+#include "opers.h"
 #include "env.h"
 
 static void drop_caches(struct silofs_task_ctx *task)

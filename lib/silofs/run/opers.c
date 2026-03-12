@@ -25,7 +25,7 @@
 #include <silofs/ar.h>
 #include "mbr.h"
 #include "walk.h"
-#include "exec.h"
+#include "opers.h"
 #include "env.h"
 
 #define status_ok(err_) ((err_) == 0)

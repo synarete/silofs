@@ -18,7 +18,7 @@
 #include <silofs/infra.h>
 #include <silofs/pv.h>
 #include <silofs/fs.h>
-#include "exec.h"
+#include "opers.h"
 #include "env.h"
 #include "task.h"
 

@@ -27,7 +27,7 @@
 #include <silofs/fuse.h>
 #include "mbr.h"
 #include "env.h"
-#include "exec.h"
+#include "opers.h"
 #include "walk.h"
 
 static void relax_caches(struct silofs_task_ctx *task, bool now)

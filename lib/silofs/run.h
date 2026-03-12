@@ -20,7 +20,7 @@
 #include <silofs/infra.h>
 #include <silofs/run/task.h>
 #include <silofs/run/call.h>
-#include <silofs/run/exec.h>
+#include <silofs/run/opers.h>
 #include <silofs/run/env.h>
 #include <silofs/run/walk.h>
 

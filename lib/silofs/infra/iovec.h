@@ -25,12 +25,6 @@ struct silofs_rovec {
 	size_t      rov_len;
 };
 
-/* read-write I/O vector: pointer to mutable data and length */
-struct silofs_rwvec {
-	void  *rwv_base;
-	size_t rwv_len;
-};
-
 /* extension to standard scatter/gather I/O vector with optional
  * file-descriptor and back-reference. */
 struct silofs_iovec {

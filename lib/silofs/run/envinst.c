@@ -678,7 +678,8 @@ envi_attach_fuseq(struct silofs_env_inst *envi, const struct silofs_spec *spec)
 		return -SILOFS_ENOMEM;
 	}
 	envi->initf |= SILOFS_ENVIF_FUSEQ;
-	fuseq->fq_env = &envi->env;
+	fuseq->fq_env        = &envi->env;
+	fuseq->fq_call_hooks = silofs_call_hooks();
 	envi->fuseq = envi->env.fuseq = fuseq;
 	return 0;
 }

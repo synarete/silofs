@@ -14,11 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_EXEC_H_
-#define SILOFS_EXEC_H_
-
-#include <sys/stat.h>
-#include <sys/statvfs.h>
+#ifndef SILOFS_OPERS_H_
+#define SILOFS_OPERS_H_
 
 #include <silofs/ioctls.h>
 #include <silofs/run/task.h>
@@ -200,4 +197,4 @@ int silofs_exec_reload_pv(struct silofs_task_ctx    *task,
 
 int silofs_exec_reload_fs(struct silofs_task_ctx *task);
 
-#endif /* SILOFS_EXEC_H_ */
+#endif /* SILOFS_OPERS_H_ */

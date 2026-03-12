@@ -20,7 +20,7 @@
 #include "walk.h"
 #include "env.h"
 #include "call.h"
-#include "exec.h"
+#include "opers.h"
 
 static int
 call_setattr(struct silofs_task_ctx *task, struct silofs_call_args *args)

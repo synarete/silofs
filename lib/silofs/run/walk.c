@@ -15,11 +15,11 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include "infra.h"
+#include <silofs/infra.h>
+#include <silofs/fs.h>
 #include "mbr.h"
-#include "fs.h"
 #include "env.h"
-#include "exectx.h"
+#include "task.h"
 #include "walk.h"
 
 #define check_ok_or_bailout(err_)      \

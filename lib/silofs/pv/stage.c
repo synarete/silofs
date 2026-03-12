@@ -19,9 +19,7 @@
 #include "dstor.h"
 #include "uber.h"
 #include "stage.h"
-#include <silofs/mbr.h>
-#include <silofs/exectx.h>
-#include <silofs/env.h>
+#include <silofs/run.h>
 
 struct silofs_stage_ctx {
 	struct silofs_task_ctx *task;

@@ -20,9 +20,10 @@
 #include <sys/statvfs.h>
 #include <fcntl.h>
 #include <time.h>
+
+#include <silofs/fs.h>
+#include <silofs/ar.h>
 #include "mbr.h"
-#include "fs.h"
-#include "ar.h"
 #include "walk.h"
 #include "exec.h"
 #include "env.h"

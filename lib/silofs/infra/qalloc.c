@@ -15,14 +15,6 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/ccattr.h>
-#include <silofs/consts.h>
-#include <silofs/macros.h>
-#include <silofs/errors.h>
-#include <silofs/syscall.h>
-#include <silofs/memalloc.h>
-#include <silofs/logging.h>
-#include <silofs/panic.h>
 #include <sys/types.h>
 #include <sys/resource.h>
 #include <sys/mman.h>
@@ -35,6 +27,15 @@
 #include <string.h>
 #include <stdbool.h>
 #include <limits.h>
+
+#include <silofs/ccattr.h>
+#include <silofs/consts.h>
+#include <silofs/macros.h>
+#include <silofs/errors.h>
+#include <silofs/syscall.h>
+#include <silofs/memalloc.h>
+#include <silofs/logging.h>
+#include <silofs/panic.h>
 #include "list.h"
 #include "utility.h"
 #include "iovec.h"

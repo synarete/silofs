@@ -14,10 +14,14 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_FUSE_H_
-#define SILOFS_FUSE_H_
+#ifndef SILOFS_RUN_H_
+#define SILOFS_RUN_H_
 
 #include <silofs/infra.h>
-#include <silofs/fuse/fuseq.h>
+#include <silofs/run/task.h>
+#include <silofs/run/call.h>
+#include <silofs/run/exec.h>
+#include <silofs/run/env.h>
+#include <silofs/run/walk.h>
 
-#endif /* SILOFS_FUSE_H_ */
+#endif /* SILOFS_RUN_H_ */

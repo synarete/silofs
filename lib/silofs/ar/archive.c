@@ -18,9 +18,7 @@
 #include <silofs/infra.h>
 #include <silofs/pv.h>
 #include <silofs/fs.h>
-#include <silofs/exectx.h>
-#include <silofs/env.h>
-#include <silofs/walk.h>
+#include <silofs/run.h>
 #include "index.h"
 #include "archive.h"
 

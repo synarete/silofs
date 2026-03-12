@@ -18,10 +18,10 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mount.h>
-#include "pv.h"
-#include "fs.h"
+#include <silofs/pv.h>
+#include <silofs/fs.h>
 #include "mbr.h"
-#include "exectx.h"
+#include "task.h"
 #include "env.h"
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

@@ -16,10 +16,10 @@
  */
 #include <silofs/configs.h>
 #include <silofs/ioctls.h>
-#include "infra.h"
-#include "pv.h"
-#include "fs.h"
-#include "exectx.h"
+#include <silofs/infra.h>
+#include <silofs/pv.h>
+#include <silofs/fs.h>
+#include "task.h"
 #include "mbr.h"
 #include "env.h"
 #include "walk.h"

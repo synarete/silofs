@@ -15,10 +15,6 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/ccattr.h>
-#include <silofs/macros.h>
-#include <silofs/panic.h>
-#include <silofs/logging.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
@@ -28,6 +24,11 @@
 #include <stdio.h>
 #include <errno.h>
 #include <error.h>
+
+#include <silofs/ccattr.h>
+#include <silofs/macros.h>
+#include <silofs/panic.h>
+#include <silofs/logging.h>
 #include "utility.h"
 #include "snprintf.h"
 

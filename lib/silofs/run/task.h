@@ -14,13 +14,13 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_EXECTX_H_
-#define SILOFS_EXECTX_H_
+#ifndef SILOFS_TASK_H_
+#define SILOFS_TASK_H_
 
 #include <silofs/types.h>
-#include "infra.h"
-#include "addr.h"
-#include "flags.h"
+#include <silofs/infra.h>
+#include <silofs/addr.h>
+#include <silofs/flags.h>
 
 struct silofs_submitq_ent;
 
@@ -90,4 +90,4 @@ void silofs_rwunlock_fs_by(struct silofs_task_ctx *task);
 
 struct silofs_sb_info *silofs_get_sbi(const struct silofs_task_ctx *task);
 
-#endif /* SILOFS_EXECTX_H_ */
+#endif /* SILOFS_TASK_H_ */

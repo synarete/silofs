@@ -15,8 +15,9 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/errors.h>
 #include <zstd.h>
+
+#include <silofs/errors.h>
 #include "zcmpr.h"
 
 #if (ZSTD_VERSION_NUMBER >= 10502)

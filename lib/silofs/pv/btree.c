@@ -23,8 +23,7 @@
 #include "btnode.h"
 #include "stage.h"
 #include "uber.h"
-#include <silofs/exectx.h>
-#include <silofs/env.h>
+#include <silofs/run.h>
 #include "btree.h"
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

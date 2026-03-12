@@ -20,8 +20,7 @@
 #include <sys/mount.h>
 #include <silofs/infra.h>
 #include <silofs/fs.h>
-#include <silofs/exec.h>
-#include <silofs/env.h>
+#include <silofs/run.h>
 
 static void tm64b_htox(struct silofs_tm64b *tm64, const struct tm *tm)
 {

@@ -17,11 +17,11 @@
 #include <silofs/configs.h>
 #include <silofs/ioctls.h>
 #include <sys/resource.h>
-#include "pv.h"
-#include "fs.h"
+#include <silofs/pv.h>
+#include <silofs/fs.h>
+#include <silofs/fuse.h>
 #include "mbr.h"
 #include "env.h"
-#include "fuse.h"
 
 /* env initialization-state flags */
 enum silofs_env_initf {

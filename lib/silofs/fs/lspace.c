@@ -25,7 +25,7 @@
 #include "lcache.h"
 #include "lsmap.h"
 #include "lspace.h"
-#include <silofs/exectx.h>
+#include <silofs/run.h>
 
 static void lsmap_vaddr_of(const struct silofs_vaddr *ref_vaddr,
                            struct silofs_vaddr *out_vaddr)

@@ -15,8 +15,9 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/ccattr.h>
 #include <stdio.h>
+
+#include <silofs/ccattr.h>
 #include "snprintf.h"
 
 #define attr_printf silofs_attr_printf(3, 0)

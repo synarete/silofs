@@ -15,18 +15,19 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
+#include <sys/resource.h>
+#include <sys/stat.h>
+
 #include <silofs/ondisk.h>
 #include <silofs/ioctls.h>
 #include <silofs/appexec.h>
-#include <sys/resource.h>
-#include <sys/stat.h>
-#include "infra.h"
-#include "pv.h"
-#include "fs.h"
+#include <silofs/infra.h>
+#include <silofs/pv.h>
+#include <silofs/fs.h>
+#include <silofs/fuse.h>
 #include "mbr.h"
 #include "env.h"
 #include "exec.h"
-#include "fuse.h"
 #include "walk.h"
 
 static void relax_caches(struct silofs_task_ctx *task, bool now)

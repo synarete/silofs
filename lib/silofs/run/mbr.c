@@ -16,9 +16,9 @@
  */
 #include <silofs/configs.h>
 #include <silofs/ondisk.h>
-#include "infra.h"
-#include "pv.h"
-#include "fs.h"
+#include <silofs/infra.h>
+#include <silofs/pv.h>
+#include <silofs/fs.h>
 #include "mbr.h"
 #include "env.h"
 

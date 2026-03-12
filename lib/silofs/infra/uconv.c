@@ -16,8 +16,9 @@
  */
 #define _GNU_SOURCE 1
 #include <silofs/configs.h>
-#include <silofs/errors.h>
 #include <errno.h>
+
+#include <silofs/errors.h>
 #include "utility.h"
 #include "uconv.h"
 

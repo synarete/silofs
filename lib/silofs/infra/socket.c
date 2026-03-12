@@ -15,7 +15,6 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/syscall.h>
 #include <sys/types.h>
 #include <sys/select.h>
 #include <sys/socket.h>
@@ -32,6 +31,8 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdio.h>
+
+#include <silofs/syscall.h>
 #include "utility.h"
 #include "socket.h"
 

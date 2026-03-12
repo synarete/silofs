@@ -15,8 +15,8 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
+#include <silofs/fs.h>
 #include "mbr.h"
-#include "fs.h"
 #include "walk.h"
 #include "env.h"
 #include "call.h"

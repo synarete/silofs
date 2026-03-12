@@ -16,13 +16,14 @@
  */
 #define _GNU_SOURCE 1
 #include <silofs/configs.h>
-#include <silofs/ccattr.h>
-#include <silofs/syscall.h>
-#include <silofs/panic.h>
 #include <sys/stat.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+
+#include <silofs/ccattr.h>
+#include <silofs/syscall.h>
+#include <silofs/panic.h>
 #include <time.h>
 #include "times.h"
 

@@ -25,8 +25,7 @@
 #include <silofs/infra.h>
 #include "flush.h"
 #include "file.h"
-#include <silofs/exec.h>
-#include <silofs/env.h>
+#include <silofs/run.h>
 
 struct silofs_file_ctx {
 	enum silofs_file_op op;

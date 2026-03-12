@@ -34,9 +34,7 @@
 #include <silofs/api.h>
 #include <silofs/fs.h>
 #include <silofs/ar.h>
-#include <silofs/mbr.h>
-#include <silofs/exec.h>
-#include <silofs/walk.h>
+#include <silofs/run.h>
 
 #ifndef SILOFS_UNITEST
 #error "this header must not be included out-side of utests"

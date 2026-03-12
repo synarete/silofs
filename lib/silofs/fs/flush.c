@@ -16,8 +16,7 @@
  */
 #include <silofs/configs.h>
 #include "flush.h"
-#include <silofs/exec.h>
-#include <silofs/env.h>
+#include <silofs/run.h>
 
 static bool lni_isunode(const struct silofs_lnode_info *lni)
 {

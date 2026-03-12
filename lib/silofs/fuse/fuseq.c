@@ -32,11 +32,8 @@
 #include <silofs/ioctls.h>
 #include <silofs/mntsvc.h>
 #include <silofs/infra.h>
-#include <silofs/mbr.h>
 #include <silofs/fs.h>
-#include <silofs/env.h>
-#include <silofs/call.h>
-#include <silofs/exec.h>
+#include <silofs/run.h>
 #include "fuse_abi.h"
 #include "fuseq.h"
 

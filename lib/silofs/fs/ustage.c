@@ -21,7 +21,7 @@
 
 #include <silofs/pv.h>
 #include <silofs/fs.h>
-#include <silofs/env.h>
+#include <silofs/run.h>
 
 static int ubi_verify_sub_view(const struct silofs_unode_info *uni)
 {

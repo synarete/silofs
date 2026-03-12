@@ -17,10 +17,10 @@
 #ifndef SILOFS_MBR_H_
 #define SILOFS_MBR_H_
 
-#include "infra.h"
-#include "addr.h"
-#include "nodes.h"
-#include "pv.h"
+#include <silofs/infra.h>
+#include <silofs/addr.h>
+#include <silofs/nodes.h>
+#include <silofs/pv.h>
 
 struct silofs_env;
 

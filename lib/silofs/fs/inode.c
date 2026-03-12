@@ -21,8 +21,7 @@
 #include <limits.h>
 
 #include <silofs/fs.h>
-#include <silofs/exec.h>
-#include <silofs/env.h>
+#include <silofs/run.h>
 
 /* local functions forward declarations */
 static void ii_update_itimes(struct silofs_inode_info *ii,

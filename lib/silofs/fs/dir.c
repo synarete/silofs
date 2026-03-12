@@ -18,7 +18,7 @@
 #include <dirent.h>
 #include <silofs/infra.h>
 #include <silofs/fs.h>
-#include <silofs/env.h>
+#include <silofs/run.h>
 
 enum silofs_dtree_consts {
 	DTREE_SHIFT      = SILOFS_DIR_NODE_SHIFT,

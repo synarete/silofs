@@ -15,8 +15,9 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/macros.h>
 #include <uuid/uuid.h>
+
+#include <silofs/macros.h>
 #include "uuid.h"
 
 void silofs_uuid_generate(struct silofs_uuid *uu)

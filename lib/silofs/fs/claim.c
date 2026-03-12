@@ -18,8 +18,7 @@
 #include <silofs/ioctls.h>
 #include <silofs/pv.h>
 #include <silofs/fs.h>
-#include <silofs/exec.h>
-#include <silofs/env.h>
+#include <silofs/run.h>
 
 /* space-allocation context */
 struct silofs_spalloc_ctx {

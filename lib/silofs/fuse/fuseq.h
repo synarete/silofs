@@ -19,7 +19,7 @@
 
 #include <stdint.h>
 #include <silofs/infra.h>
-#include <silofs/call.h>
+#include <silofs/run.h>
 
 /* high-limit for pipes in splice-mode */
 #define SILOFS_FUSEQ_PIPES_MAX (8)

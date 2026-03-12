@@ -15,9 +15,6 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/version.h>
-#include <silofs/ccattr.h>
-#include <silofs/logging.h>
 #include <unistd.h>
 #include <syslog.h>
 #include <stdlib.h>
@@ -27,6 +24,10 @@
 #include <stdio.h>
 #include <errno.h>
 #include <time.h>
+
+#include <silofs/version.h>
+#include <silofs/ccattr.h>
+#include <silofs/logging.h>
 
 #define SILOFS_LOG_LEVEL_DEFAULT (SILOFS_LOG_ERROR)
 

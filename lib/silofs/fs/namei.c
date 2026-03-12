@@ -28,9 +28,7 @@
 #include <silofs/ioctls.h>
 #include <silofs/pv.h>
 #include <silofs/fs.h>
-#include <silofs/exec.h>
-#include <silofs/env.h>
-#include <silofs/walk.h>
+#include <silofs/run.h>
 
 static int check_ascii_fs_name(const struct silofs_strview *sv)
 {

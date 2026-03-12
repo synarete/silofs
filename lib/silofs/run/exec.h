@@ -19,8 +19,9 @@
 
 #include <sys/stat.h>
 #include <sys/statvfs.h>
+
 #include <silofs/ioctls.h>
-#include "exectx.h"
+#include <silofs/run/task.h>
 
 struct silofs_readdir_ctx;
 struct silofs_rwiter_ctx;

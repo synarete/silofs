@@ -18,8 +18,7 @@
 #include <silofs/infra.h>
 #include <silofs/pv.h>
 #include <silofs/fs.h>
-#include <silofs/exec.h>
-#include <silofs/env.h>
+#include <silofs/run.h>
 
 struct silofs_vstage_ctx {
 	struct silofs_task_ctx *task;

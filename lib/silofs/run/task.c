@@ -15,12 +15,12 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include "infra.h"
-#include "pv.h"
-#include "fs.h"
+#include <silofs/infra.h>
+#include <silofs/pv.h>
+#include <silofs/fs.h>
 #include "exec.h"
 #include "env.h"
-#include "exectx.h"
+#include "task.h"
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

@@ -15,14 +15,15 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
+#include <dirent.h>
+
 #include <silofs/ondisk.h>
 #include <silofs/types.h>
 #include <silofs/syscall.h>
-#include <dirent.h>
-#include "infra.h"
-#include "addr.h"
-#include "pv.h"
-#include "fs.h"
+#include <silofs/infra.h>
+#include <silofs/addr.h>
+#include <silofs/pv.h>
+#include <silofs/fs.h>
 #include "exec.h"
 #include "env.h"
 

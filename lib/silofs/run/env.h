@@ -18,12 +18,12 @@
 #define SILOFS_ENV_H_
 
 #include <silofs/appexec.h>
-#include "infra.h"
-#include "crypto.h"
-#include "addr.h"
-#include "pv.h"
-#include "fs.h"
-#include "mbr.h"
+#include <silofs/infra.h>
+#include <silofs/crypto.h>
+#include <silofs/addr.h>
+#include <silofs/pv.h>
+#include <silofs/fs.h>
+#include <silofs/run/mbr.h>
 
 /* top-level operations counters/stats */
 struct silofs_env_opstat {

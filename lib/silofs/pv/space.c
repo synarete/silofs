@@ -20,8 +20,7 @@
 #include "btnode.h"
 #include "btree.h"
 #include "space.h"
-#include <silofs/exectx.h>
-#include <silofs/env.h>
+#include <silofs/run.h>
 
 static void update_formatted_uber(struct silofs_task_ctx *task,
                                   struct silofs_uber_info *ubi)

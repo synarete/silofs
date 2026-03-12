@@ -17,8 +17,8 @@
 #ifndef SILOFS_WALK_H_
 #define SILOFS_WALK_H_
 
-#include "infra.h"
-#include "addr.h"
+#include <silofs/infra.h>
+#include <silofs/addr.h>
 
 struct silofs_task_ctx;
 struct silofs_visitor;

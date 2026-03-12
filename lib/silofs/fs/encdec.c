@@ -17,7 +17,7 @@
 #include <silofs/configs.h>
 #include <silofs/addr.h>
 #include <silofs/nodes.h>
-#include <silofs/env.h>
+#include <silofs/run.h>
 
 static enum silofs_vtype llink_vtype(const struct silofs_llink *llink)
 {

@@ -16,7 +16,7 @@
  */
 #include <silofs/configs.h>
 #include <silofs/fs.h>
-#include <silofs/exec.h>
+#include <silofs/run.h>
 
 struct silofs_symval_desc {
 	struct silofs_strview head;

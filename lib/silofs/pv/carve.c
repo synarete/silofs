@@ -22,8 +22,7 @@
 #include <silofs/nodes.h>
 #include "uber.h"
 #include "carve.h"
-#include <silofs/exectx.h>
-#include <silofs/env.h>
+#include <silofs/run.h>
 
 static const struct silofs_layerid *
 top_layerid(const struct silofs_task_ctx *task)

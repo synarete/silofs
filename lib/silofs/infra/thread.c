@@ -15,9 +15,6 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/macros.h>
-#include <silofs/syscall.h>
-#include <silofs/panic.h>
 #include <unistd.h>
 #include <signal.h>
 #include <pthread.h>
@@ -26,6 +23,10 @@
 #include <string.h>
 #include <errno.h>
 #include <time.h>
+
+#include <silofs/macros.h>
+#include <silofs/syscall.h>
+#include <silofs/panic.h>
 #include "utility.h"
 #include "times.h"
 #include "thread.h"

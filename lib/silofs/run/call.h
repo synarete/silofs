@@ -407,115 +407,46 @@ typedef int (*silofs_call_fn)(struct silofs_task_ctx *,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_call_setattr(struct silofs_task_ctx  *task,
-                        struct silofs_call_args *args);
+struct silofs_call_table {
+	silofs_call_fn setattr;
+	silofs_call_fn lookup;
+	silofs_call_fn forget;
+	silofs_call_fn batch_forget;
+	silofs_call_fn getattr;
+	silofs_call_fn statx;
+	silofs_call_fn readlink;
+	silofs_call_fn symlink;
+	silofs_call_fn mknod;
+	silofs_call_fn mkdir;
+	silofs_call_fn unlink;
+	silofs_call_fn rmdir;
+	silofs_call_fn rename;
+	silofs_call_fn link;
+	silofs_call_fn open;
+	silofs_call_fn statfs;
+	silofs_call_fn release;
+	silofs_call_fn fsync;
+	silofs_call_fn setxattr;
+	silofs_call_fn getxattr;
+	silofs_call_fn listxattr;
+	silofs_call_fn removexattr;
+	silofs_call_fn flush;
+	silofs_call_fn opendir;
+	silofs_call_fn readdir;
+	silofs_call_fn readdirplus;
+	silofs_call_fn releasedir;
+	silofs_call_fn fsyncdir;
+	silofs_call_fn access;
+	silofs_call_fn create;
+	silofs_call_fn fallocate;
+	silofs_call_fn lseek;
+	silofs_call_fn copy_file_range;
+	silofs_call_fn read;
+	silofs_call_fn write;
+	silofs_call_fn syncfs;
+	silofs_call_fn ioctl;
+};
 
-int silofs_call_lookup(struct silofs_task_ctx  *task,
-                       struct silofs_call_args *args);
-
-int silofs_call_forget(struct silofs_task_ctx  *task,
-                       struct silofs_call_args *args);
-
-int silofs_call_batch_forget(struct silofs_task_ctx  *task,
-                             struct silofs_call_args *args);
-
-int silofs_call_getattr(struct silofs_task_ctx  *task,
-                        struct silofs_call_args *args);
-
-int silofs_call_statx(struct silofs_task_ctx  *task,
-                      struct silofs_call_args *args);
-
-int silofs_call_readlink(struct silofs_task_ctx  *task,
-                         struct silofs_call_args *args);
-
-int silofs_call_symlink(struct silofs_task_ctx  *task,
-                        struct silofs_call_args *args);
-
-int silofs_call_mknod(struct silofs_task_ctx  *task,
-                      struct silofs_call_args *args);
-
-int silofs_call_mkdir(struct silofs_task_ctx  *task,
-                      struct silofs_call_args *args);
-
-int silofs_call_unlink(struct silofs_task_ctx  *task,
-                       struct silofs_call_args *args);
-
-int silofs_call_rmdir(struct silofs_task_ctx  *task,
-                      struct silofs_call_args *args);
-
-int silofs_call_rename(struct silofs_task_ctx  *task,
-                       struct silofs_call_args *args);
-
-int silofs_call_link(struct silofs_task_ctx  *task,
-                     struct silofs_call_args *args);
-
-int silofs_call_open(struct silofs_task_ctx  *task,
-                     struct silofs_call_args *args);
-
-int silofs_call_statfs(struct silofs_task_ctx  *task,
-                       struct silofs_call_args *args);
-
-int silofs_call_release(struct silofs_task_ctx  *task,
-                        struct silofs_call_args *args);
-
-int silofs_call_fsync(struct silofs_task_ctx  *task,
-                      struct silofs_call_args *args);
-
-int silofs_call_setxattr(struct silofs_task_ctx  *task,
-                         struct silofs_call_args *args);
-
-int silofs_call_getxattr(struct silofs_task_ctx  *task,
-                         struct silofs_call_args *args);
-
-int silofs_call_listxattr(struct silofs_task_ctx  *task,
-                          struct silofs_call_args *args);
-
-int silofs_call_removexattr(struct silofs_task_ctx  *task,
-                            struct silofs_call_args *args);
-
-int silofs_call_flush(struct silofs_task_ctx  *task,
-                      struct silofs_call_args *args);
-
-int silofs_call_opendir(struct silofs_task_ctx  *task,
-                        struct silofs_call_args *args);
-
-int silofs_call_readdir(struct silofs_task_ctx  *task,
-                        struct silofs_call_args *args);
-
-int silofs_call_readdirplus(struct silofs_task_ctx  *task,
-                            struct silofs_call_args *args);
-
-int silofs_call_releasedir(struct silofs_task_ctx  *task,
-                           struct silofs_call_args *args);
-
-int silofs_call_fsyncdir(struct silofs_task_ctx  *task,
-                         struct silofs_call_args *args);
-
-int silofs_call_access(struct silofs_task_ctx  *task,
-                       struct silofs_call_args *args);
-
-int silofs_call_create(struct silofs_task_ctx  *task,
-                       struct silofs_call_args *args);
-
-int silofs_call_fallocate(struct silofs_task_ctx  *task,
-                          struct silofs_call_args *args);
-
-int silofs_call_lseek(struct silofs_task_ctx  *task,
-                      struct silofs_call_args *args);
-
-int silofs_call_copy_file_range(struct silofs_task_ctx  *task,
-                                struct silofs_call_args *args);
-
-int silofs_call_read(struct silofs_task_ctx  *task,
-                     struct silofs_call_args *args);
-
-int silofs_call_write(struct silofs_task_ctx  *task,
-                      struct silofs_call_args *args);
-
-int silofs_call_syncfs(struct silofs_task_ctx  *task,
-                       struct silofs_call_args *args);
-
-int silofs_call_ioctl(struct silofs_task_ctx  *task,
-                      struct silofs_call_args *args);
+const struct silofs_call_table *silofs_call_hooks(void);
 
 #endif /* SILOFS_CALL_H_ */

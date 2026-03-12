@@ -187,7 +187,7 @@ static int post_format_ps(struct silofs_task_ctx *task)
 	return flush_destage_dirty(task);
 }
 
-int silofs_exec_format_ps(struct silofs_task_ctx *task)
+int silofs_exec_format_pv(struct silofs_task_ctx *task)
 {
 	int err;
 
@@ -195,7 +195,7 @@ int silofs_exec_format_ps(struct silofs_task_ctx *task)
 	if (err) {
 		return err;
 	}
-	err = silofs_format_ps(task);
+	err = silofs_format_pv(task);
 	if (err) {
 		return err;
 	}
@@ -495,93 +495,27 @@ static int resolve_root_uber(const struct silofs_task_ctx *task,
 	return silofs_mbi_uber_root(&mbis->fs_mbi, out_pnptr);
 }
 
-static int reload_uber(struct silofs_task_ctx *task)
-{
-	struct silofs_pnptr pnptr    = {};
-	struct silofs_uber_info *ubi = nullptr;
-	int err;
-
-	err = resolve_root_uber(task, &pnptr);
-	if (err) {
-		return err;
-	}
-	err = silofs_stage_uber(task, &pnptr, &ubi);
-	if (err) {
-		return err;
-	}
-	silofs_env_update_uber(task->env, ubi);
-	return 0;
-}
-
-static int
-stage_btree_root(struct silofs_task_ctx *task, enum silofs_vtype vtype)
-{
-	struct silofs_btnptr btnptr    = {};
-	struct silofs_btnode_info *bti = nullptr;
-	int err;
-
-	silofs_ubi_btroot_of(task->env->ubi, vtype, &btnptr);
-	if (silofs_btnptr_isnull(&btnptr)) {
-		log_dbg("missing btree root: vtype=%d", vtype);
-		return -SILOFS_ENOENT;
-	}
-	err = silofs_stage_btnode(task, &btnptr.base, &bti);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
-static int
-reload_btree_of(struct silofs_task_ctx *task, enum silofs_vtype vtype)
-{
-	int err;
-
-	err = stage_btree_root(task, vtype);
-	if (err) {
-		log_err("reload btree failed: vtype=%d err=%d", vtype, err);
-		return err;
-	}
-	log_dbg("reload btree of: vtype=%d", vtype);
-	return 0;
-}
-
-static int reload_btrees(struct silofs_task_ctx *task)
-{
-	enum silofs_vtype vtype = SILOFS_VTYPE_NONE;
-	int err;
-
-	while (++vtype < SILOFS_VTYPE_LAST) {
-		if (silofs_vtype_isvnode(vtype)) {
-			err = reload_btree_of(task, vtype);
-			if (err) {
-				return err;
-			}
-		}
-	}
-	return 0;
-}
-
 static int
 reload_mbr(struct silofs_task_ctx *task, const struct silofs_mbref *mbref)
 {
 	return silofs_env_reload_fs_mbr(task->env, mbref);
 }
 
-int silofs_exec_reload_bs(struct silofs_task_ctx *task,
+int silofs_exec_reload_pv(struct silofs_task_ctx *task,
                           const struct silofs_mbref *mbref)
 {
+	struct silofs_pnptr pnptr = {};
 	int err;
 
 	err = reload_mbr(task, mbref);
 	if (err) {
 		return err;
 	}
-	err = reload_uber(task);
+	err = resolve_root_uber(task, &pnptr);
 	if (err) {
 		return err;
 	}
-	err = reload_btrees(task);
+	err = silofs_reload_pv(task, &pnptr);
 	if (err) {
 		return err;
 	}

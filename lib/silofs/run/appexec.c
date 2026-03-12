@@ -86,7 +86,7 @@ static int appexec_reload_fs(struct silofs_task_ctx *task,
 	if (err) {
 		goto out;
 	}
-	err = silofs_exec_reload_bs(task, mbref);
+	err = silofs_exec_reload_pv(task, mbref);
 	if (err) {
 		goto out;
 	}
@@ -174,7 +174,7 @@ static int appexec_remove_fs(struct silofs_task_ctx *task,
 	if (err) {
 		return err;
 	}
-	err = silofs_exec_reload_bs(task, mbref);
+	err = silofs_exec_reload_pv(task, mbref);
 	if (err) {
 		return err;
 	}
@@ -216,7 +216,7 @@ static int appexec_preserve_fs(struct silofs_task_ctx *task,
 {
 	int err;
 
-	err = silofs_exec_reload_bs(task, fs_mbref);
+	err = silofs_exec_reload_pv(task, fs_mbref);
 	if (err) {
 		return err;
 	}
@@ -485,7 +485,7 @@ exec_format_fs(struct silofs_env *env, struct silofs_mbref *out_mbref)
 	if (err) {
 		goto out;
 	}
-	err = silofs_exec_format_ps(&task);
+	err = silofs_exec_format_pv(&task);
 	if (err) {
 		goto out;
 	}

@@ -22,8 +22,8 @@
 #include "space.h"
 #include <silofs/run.h>
 
-static void update_formatted_uber(struct silofs_task_ctx *task,
-                                  struct silofs_uber_info *ubi)
+static void
+update_active_uber(struct silofs_task_ctx *task, struct silofs_uber_info *ubi)
 {
 	log_dbg("update uber: ubi=%p", (void *)ubi);
 	silofs_env_update_uber(task->env, ubi);
@@ -44,7 +44,7 @@ static int format_uber(struct silofs_task_ctx *task)
 	if (err) {
 		return err;
 	}
-	update_formatted_uber(task, ubi);
+	update_active_uber(task, ubi);
 	return 0;
 }
 
@@ -138,7 +138,7 @@ static int format_vspaces(struct silofs_task_ctx *task)
 	return 0;
 }
 
-int silofs_format_ps(struct silofs_task_ctx *task)
+int silofs_format_pv(struct silofs_task_ctx *task)
 {
 	int err;
 
@@ -147,6 +147,88 @@ int silofs_format_ps(struct silofs_task_ctx *task)
 		return err;
 	}
 	err = format_vspaces(task);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static int
+reload_uber(struct silofs_task_ctx *task, const struct silofs_pnptr *pnptr)
+{
+	struct silofs_uber_info *ubi = nullptr;
+	int err;
+
+	err = silofs_stage_uber(task, pnptr, &ubi);
+	if (err) {
+		return err;
+	}
+	update_active_uber(task, ubi);
+	return 0;
+}
+
+static int
+reload_btroot_of(struct silofs_task_ctx *task, enum silofs_vtype vtype)
+{
+	struct silofs_btnptr btnptr    = {};
+	struct silofs_btnode_info *bti = nullptr;
+	int err;
+
+	silofs_ubi_btroot_of(task->ubi, vtype, &btnptr);
+	if (silofs_btnptr_isnull(&btnptr)) {
+		log_dbg("missing btree root: vtype=%d", vtype);
+		return -SILOFS_EFSCORRUPTED;
+	}
+	err = silofs_stage_btnode(task, &btnptr.base, &bti);
+	if (err) {
+		log_dbg("failed to reload btroot: vtype=%d", vtype);
+		return err;
+	}
+	return 0;
+}
+
+static int
+reload_vspace_of(struct silofs_task_ctx *task, enum silofs_vtype vtype)
+{
+	/* TODO: writeme */
+	(void)task;
+	(void)vtype;
+	return 0;
+}
+
+static int reload_vspaces(struct silofs_task_ctx *task)
+{
+	enum silofs_vtype vtype = SILOFS_VTYPE_NONE;
+	int err;
+
+	while (++vtype < SILOFS_VTYPE_LAST) {
+		if (!silofs_vtype_isvnode(vtype)) {
+			continue;
+		}
+		err = reload_btroot_of(task, vtype);
+		if (err) {
+			return err;
+		}
+		err = reload_vspace_of(task, vtype);
+		if (err) {
+			return err;
+		}
+	}
+	return 0;
+}
+
+int silofs_reload_pv(struct silofs_task_ctx *task,
+                     const struct silofs_pnptr *pnptr)
+{
+	int err;
+
+	err = reload_uber(task, pnptr);
+	if (err) {
+		return err;
+	}
+	err = reload_vspaces(task);
 	if (err) {
 		return err;
 	}

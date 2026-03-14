@@ -317,7 +317,7 @@ static int do_mount_and_exec(struct silofs_env *env, const char *mntdir)
 	struct silofs_fuseq *fuseq = env->fuseq;
 	int err;
 
-	err = silofs_fuseq_mount(fuseq, mntdir);
+	err = silofs_fuseq_mount(fuseq, mntdir, env->ms_flags);
 	if (!err) {
 		err = silofs_fuseq_exec(fuseq);
 	}
@@ -333,7 +333,7 @@ int silofs_exec_fs(struct silofs_env *env, const char *mntdir)
 	if (fuseq == nullptr) {
 		return -SILOFS_EINVAL;
 	}
-	err = silofs_fuseq_update(fuseq);
+	err = silofs_fuseq_update(fuseq, &env->owner_cred);
 	if (err) {
 		return err;
 	}

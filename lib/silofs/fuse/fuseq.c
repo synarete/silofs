@@ -3510,7 +3510,7 @@ fqs_check_opcode(const struct silofs_fuseq_sub *fqs, uint32_t op_code)
 
 static uid_t fq_fs_owner_uid(const struct silofs_fuseq *fq)
 {
-	return fq->fq_env->owner_cred.uid;
+	return fq->fq_fsowner.uid;
 }
 
 static int fqs_check_perm(const struct silofs_fuseq_sub *fqs, uid_t op_uid,
@@ -4524,7 +4524,7 @@ static void fqs_setup_self_task(const struct silofs_fuseq_sub *fqs,
                                 struct silofs_task_ctx *task)
 {
 	const struct silofs_fuseq *fq  = fqs_fuseq(fqs);
-	const struct silofs_cred *cred = &fq->fq_env->owner_cred;
+	const struct silofs_cred *cred = &fq->fq_fsowner;
 
 	silofs_task_init(task, fq->fq_env);
 	silofs_task_update_creds(task, cred->uid, cred->gid, cred->umask);
@@ -5007,10 +5007,18 @@ static void fuseq_fini(struct silofs_fuseq *fq)
 	fq->fq_env   = nullptr;
 }
 
-int silofs_fuseq_update(struct silofs_fuseq *fq)
+static void fuseq_update_fsowner(struct silofs_fuseq *fq,
+                                 const struct silofs_cred *fsowner)
+{
+	silofs_cred_assign(&fq->fq_fsowner, fsowner);
+}
+
+int silofs_fuseq_update(struct silofs_fuseq *fq,
+                        const struct silofs_cred *fsowner)
 {
 	int err;
 
+	fuseq_update_fsowner(fq, fsowner);
 	err = fuseq_update_conn_info(fq);
 	if (err) {
 		goto out;
@@ -5029,34 +5037,39 @@ out:
 	return err;
 }
 
-int silofs_fuseq_mount(struct silofs_fuseq *fq, const char *mntpath)
+int silofs_fuseq_mount(struct silofs_fuseq *fq, const char *mntpath,
+                       unsigned long ms_flags)
 {
-	const struct silofs_cred *fs_owner = &fq->fq_env->owner_cred;
-	const uint64_t ms_flags            = fq->fq_env->ms_flags;
-	const size_t max_read              = fq->fq_coni.max_read;
-	int fd;
-	int err;
+	int fuse_fd = -1;
+	uid_t uid;
+	gid_t gid;
+	unsigned max_read;
 	bool allow_other;
+	int err;
 
-	err = silofs_mntrpc_handshake(fs_owner->uid, fs_owner->gid);
+	uid = fq->fq_fsowner.uid;
+	gid = fq->fq_fsowner.gid;
+	err = silofs_mntrpc_handshake(uid, gid);
 	if (err) {
-		fuseq_log_err("handshake with mountd failed: sock=@%s err=%d",
-		              silofs_mntrpc_sockname(), err);
+		fuseq_log_err("handshake with mountd failed: sock=@%s "
+		              "uid=%u gid=%u err=%d",
+		              silofs_mntrpc_sockname(), uid, gid, err);
 		return err;
 	}
 	allow_other = fuseq_may(fq, SILOFS_F_ALLOWOTHER);
-	fd          = -1;
-	err = silofs_mntrpc_mount(mntpath, fs_owner->uid, fs_owner->gid,
-	                          max_read, ms_flags, allow_other, false, &fd);
+	max_read    = fq->fq_coni.max_read;
+	err = silofs_mntrpc_mount(mntpath, uid, gid, max_read, ms_flags,
+	                          allow_other, false, &fuse_fd);
 	if (err) {
-		fuseq_log_err("mount failed: path=%s max_read=%lu "
-		              "ms_flags=0x%lx allow_other=%d err=%d",
-		              mntpath, max_read, ms_flags, (int)allow_other,
-		              err);
+		fuseq_log_err("mount failed: mntpath='%s' uid=%u gid=%u "
+		              "max_read=%u ms_flags=0x%lx allow_other=%d "
+		              "err=%d",
+		              mntpath, uid, gid, max_read, ms_flags,
+		              (int)allow_other, err);
 		return err;
 	}
 
-	fq->fq_fuse_fd = fd;
+	fq->fq_fuse_fd = fuse_fd;
 	fq->fq_mount   = true;
 
 	/* TODO: Looks like kernel needs time. why? investigate more... */

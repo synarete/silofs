@@ -19,9 +19,10 @@
 
 #include <stdint.h>
 #include <silofs/infra.h>
-#include <silofs/run.h>
 
-/* high-limit for pipes in splice-mode */
+struct silofs_env;
+
+/* upper limit for number of pipes in splice-mode */
 #define SILOFS_FUSEQ_PIPES_MAX (8)
 
 /* fuse-queue machinery */
@@ -79,6 +80,7 @@ struct silofs_fuseq_subs {
 struct silofs_fuseq {
 	struct silofs_fuseq_pipe       fq_pipes[SILOFS_FUSEQ_PIPES_MAX];
 	struct silofs_fuseq_conn_info  fq_coni;
+	struct silofs_cred             fq_fsowner;
 	struct silofs_nilfd            fq_nilfd;
 	struct silofs_mutex            fq_ps_lock;
 	struct silofs_mutex            fq_ch_lock;
@@ -114,9 +116,11 @@ silofs_fuseq_new(struct silofs_alloc *alloc, enum silofs_flags mode_flags);
 
 void silofs_fuseq_del(struct silofs_fuseq *fq, struct silofs_alloc *alloc);
 
-int silofs_fuseq_update(struct silofs_fuseq *fq);
+int silofs_fuseq_update(struct silofs_fuseq      *fq,
+                        const struct silofs_cred *fsowner);
 
-int silofs_fuseq_mount(struct silofs_fuseq *fq, const char *mntpath);
+int silofs_fuseq_mount(struct silofs_fuseq *fq, const char *mntpath,
+                       unsigned long ms_flags);
 
 int silofs_fuseq_exec(struct silofs_fuseq *fq);
 

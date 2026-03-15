@@ -21,7 +21,7 @@ Analyze `prand.c` and `prand.h` for:
 - **Seeding Mechanism:** How good is state seeding.
 - **Mixing Function:** Is the complexity sufficient to prevent state recovery?
 - **Memory Safety:** Uninitialized memory reads in the mixing struct.
-- **Randomness** How strong is the final output.
+- **Randomness** Evaluate how strong is the final output.
 
 ## 4. Input Files
 - `lib/silofs/crypto/prand.c`

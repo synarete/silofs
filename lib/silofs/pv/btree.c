@@ -22,10 +22,10 @@
 
 #include <silofs/pv/repo.h>
 #include <silofs/pv/btnode.h>
+#include <silofs/pv/carve.h>
 #include <silofs/pv/stage.h>
 #include <silofs/pv/uber.h>
 #include <silofs/pv/pexec.h>
-#include <silofs/run.h>
 #include <silofs/pv/btree.h>
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -163,7 +163,7 @@ btc_init(struct silofs_btree_ctx *btc, struct silofs_pexec_ctx *pexec,
 	bpath_init(&btc->bpath);
 	silofs_vaddr_assign(&btc->vaddr, vaddr);
 	btc->pexec = pexec;
-	btc->ubi   = pexec->ubi;
+	btc->ubi   = pexec->ubref->ubi;
 }
 
 static void btc_fini(struct silofs_btree_ctx *btc)

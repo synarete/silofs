@@ -92,7 +92,7 @@ void silofs_task_init(struct silofs_task_ctx *task, struct silofs_env *env)
 	task->lcache    = env->base.lcache;
 	task->submitq   = env->base.submitq;
 	task->looseq    = nullptr;
-	task->ubi       = env->ubi;
+	task->ubref     = &env->ubref;
 	task->upper_id  = 0;
 	task->interrupt = 0;
 	task->fs_locked = false;
@@ -243,6 +243,5 @@ void silofs_make_pexec(const struct silofs_task_ctx *task,
 	out_pexec->md_hd     = &task->env->md_hd;
 	out_pexec->enc_ci_hd = &task->env->enc_ci_hd;
 	out_pexec->dec_ci_hd = &task->env->dec_ci_hd;
-	out_pexec->ubi       = task->env->ubi;
-	out_pexec->env       = task->env;
+	out_pexec->ubref     = task->ubref;
 }

@@ -15,19 +15,19 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
+#include <silofs/pv/uber.h>
+#include <silofs/pv/pexec.h>
 #include <silofs/pv/carve.h>
 #include <silofs/pv/stage.h>
 #include <silofs/pv/btnode.h>
 #include <silofs/pv/btree.h>
 #include <silofs/pv/space.h>
-#include <silofs/run.h>
 
 static void update_active_uber(struct silofs_pexec_ctx *pexec,
                                struct silofs_uber_info *ubi)
 {
 	log_dbg("update uber: ubi=%p", (void *)ubi);
-	silofs_env_update_uber(pexec->env, ubi);
-	pexec->ubi = pexec->env->ubi;
+	silofs_ubref_update(pexec->ubref, ubi);
 }
 
 static int format_uber(struct silofs_pexec_ctx *pexec)
@@ -83,7 +83,7 @@ bti_paddr(const struct silofs_btnode_info *bti)
 static void update_formatted_btroot(struct silofs_pexec_ctx *pexec,
                                     const struct silofs_btnode_info *bti)
 {
-	struct silofs_uber_info *ubi = pexec->ubi;
+	struct silofs_uber_info *ubi = pexec->ubref->ubi;
 
 	silofs_ubi_set_btroot_by(ubi, bti);
 	silofs_ubi_start_spdesc(ubi, bti_paddr(bti));
@@ -113,7 +113,7 @@ format_vspace_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
 	if (err) {
 		return err;
 	}
-	silofs_ubi_start_spdesc(pexec->ubi, &paddr);
+	silofs_ubi_start_spdesc(pexec->ubref->ubi, &paddr);
 	return 0;
 }
 
@@ -176,7 +176,7 @@ reload_btroot_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
 	struct silofs_btnode_info *bti = nullptr;
 	int err;
 
-	silofs_ubi_btroot_of(pexec->ubi, vtype, &btnptr);
+	silofs_ubi_btroot_of(pexec->ubref->ubi, vtype, &btnptr);
 	if (silofs_btnptr_isnull(&btnptr)) {
 		log_dbg("missing btree root: vtype=%d", vtype);
 		return -SILOFS_EFSCORRUPTED;

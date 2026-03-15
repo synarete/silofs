@@ -20,14 +20,14 @@
 #include <silofs/addr.h>
 #include <silofs/crypto.h>
 #include <silofs/nodes.h>
+#include <silofs/pv/pexec.h>
 #include <silofs/pv/uber.h>
 #include <silofs/pv/carve.h>
-#include <silofs/run.h>
 
 static const struct silofs_layerid *
 top_layerid(const struct silofs_pexec_ctx *pexec)
 {
-	const struct silofs_uber_info *ubi = pexec->ubi;
+	const struct silofs_uber_info *ubi = pexec->ubref->ubi;
 
 	silofs_assert_not_null(ubi);
 	return silofs_ubi_layerid(ubi);
@@ -121,7 +121,7 @@ static void carve_next_space_of(const struct silofs_pexec_ctx *pexec,
                                 struct silofs_paddr *out_paddr)
 {
 	struct silofs_spdesc spdesc[2];
-	struct silofs_uber_info *ubi = pexec->ubi;
+	struct silofs_uber_info *ubi = pexec->ubref->ubi;
 
 	silofs_ubi_spdesc_of(ubi, stype, &spdesc[0]);
 	silofs_paddr_next(&spdesc[0].end, out_paddr);

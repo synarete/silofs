@@ -184,6 +184,7 @@ static int pre_format_pv(struct silofs_task_ctx *task)
 
 static int post_format_pv(struct silofs_task_ctx *task)
 {
+	silofs_env_refresh_root(task->env);
 	return flush_destage_dirty(task);
 }
 

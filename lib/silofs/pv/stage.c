@@ -18,8 +18,12 @@
 #include <silofs/nodes.h>
 #include <silofs/pv/dstor.h>
 #include <silofs/pv/uber.h>
+#include <silofs/pv/bldesc.h>
+#include <silofs/pv/btnode.h>
+#include <silofs/pv/pexec.h>
 #include <silofs/pv/stage.h>
-#include <silofs/run.h>
+
+#include <silofs/fs.h>
 
 struct silofs_stage_ctx {
 	struct silofs_pexec_ctx *pexec;

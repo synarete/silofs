@@ -65,7 +65,7 @@ struct silofs_env {
 	struct silofs_cipher_hd        dec_ci_hd;
 	struct silofs_mdigest_hd       md_hd;
 	struct silofs_env_opstat       opstat;
-	struct silofs_uber_info       *ubi;
+	struct silofs_uber_ref         ubref;
 	struct silofs_sb_info         *sbi;
 	struct silofs_fuseq           *fuseq;
 	const struct silofs_vfs_hooks *vfs_hooks;
@@ -102,8 +102,7 @@ void silofs_env_rwlock(struct silofs_env *env, bool ex);
 
 void silofs_env_rwunlock(struct silofs_env *env);
 
-void silofs_env_update_uber(struct silofs_env       *env,
-                            struct silofs_uber_info *ubi);
+void silofs_env_refresh_root(struct silofs_env *env);
 
 int silofs_env_format_super(struct silofs_env *env, size_t capacity);
 

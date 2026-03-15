@@ -99,15 +99,14 @@ static void prandgen_refill_prandom(struct silofs_prandgen *prng)
 {
 	struct silofs_hash256 hash;
 	const size_t psz = sizeof(prng->prandom);
-	uint8_t *p       = prandgen_prandom_buf(prng);
-	size_t cnt       = 0;
+	uint8_t *p;
 
-	while (cnt < psz) {
-		const size_t k = silofs_min(sizeof(hash.hash), psz - cnt);
+	p = prandgen_prandom_buf(prng);
+	for (size_t n = 0, k = 0; n < psz; n += k) {
+		k = silofs_min(sizeof(hash.hash), psz - n);
 
 		prandgen_mkhash(prng, &hash);
-		memcpy(p + cnt, hash.hash, k);
-		cnt += k;
+		memcpy(p + n, hash.hash, k);
 
 		/* TODO: if k < sizeof(hash) use leftover bits for xseed */
 	}

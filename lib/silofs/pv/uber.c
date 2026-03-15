@@ -399,3 +399,33 @@ int silofs_validate_uber(const struct silofs_uber_info *ubi)
 	silofs_unused(ubi);
 	return 0;
 }
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+struct silofs_uber_ref {
+	struct silofs_uber_info *ubi;
+};
+
+void silofs_ubref_init(struct silofs_uber_ref *ubref)
+{
+	ubref->ubi = nullptr;
+}
+
+void silofs_ubref_fini(struct silofs_uber_ref *ubref)
+{
+	silofs_ubref_update(ubref, nullptr);
+}
+
+void silofs_ubref_update(struct silofs_uber_ref *ubref,
+                         struct silofs_uber_info *ubi_new)
+{
+	struct silofs_uber_info *ubi_cur = ubref->ubi;
+
+	if (ubi_cur != nullptr) {
+		silofs_ubi_decref(ubi_cur);
+	}
+	if (ubi_new != nullptr) {
+		silofs_ubi_incref(ubi_new);
+	}
+	ubref->ubi = ubi_new;
+}

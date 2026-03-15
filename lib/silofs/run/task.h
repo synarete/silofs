@@ -44,7 +44,7 @@ struct silofs_task_ctx {
 	struct silofs_lcache       *lcache;
 	struct silofs_submitq      *submitq;
 	struct silofs_inode_info   *looseq;
-	struct silofs_uber_info    *ubi;
+	struct silofs_uber_ref     *ubref;
 	uint64_t                    upper_id;
 	time_t                      op_start_time;
 	volatile int8_t             interrupt;

@@ -31,10 +31,7 @@ struct silofs_pexec_ctx {
 	struct silofs_mdigest_hd *md_hd;
 	struct silofs_cipher_hd  *enc_ci_hd;
 	struct silofs_cipher_hd  *dec_ci_hd;
-	struct silofs_uber_info  *ubi;
-
-	/* XXX */
-	struct silofs_env *env;
+	struct silofs_uber_ref   *ubref;
 };
 
 #endif /* SILOFS_PEXEC_H_ */

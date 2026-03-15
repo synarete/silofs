@@ -32,33 +32,14 @@ static const struct silofs_pnptr *ubi_pnptr(const struct silofs_uber_info *ubi)
 	return &ubi->ub_pni.pn_self;
 }
 
-static void
-env_bind_ubi(struct silofs_env *env, struct silofs_uber_info *ubi_new)
+void silofs_env_refresh_root(struct silofs_env *env)
 {
-	struct silofs_uber_info *ubi_cur = env->ubi;
+	const struct silofs_uber_info *ubi = env->ubref.ubi;
+	struct silofs_mbr_info *mbi        = &env->mbis.fs_mbi;
 
-	if (ubi_cur != nullptr) {
-		silofs_ubi_decref(ubi_cur);
-	}
-	if (ubi_new != nullptr) {
-		silofs_ubi_incref(ubi_new);
-	}
-	env->ubi = ubi_new;
-}
-
-static void env_update_root_uber(struct silofs_env *env,
-                                 const struct silofs_uber_info *ubi)
-{
 	if (ubi != nullptr) {
-		silofs_mbi_set_root(&env->mbis.fs_mbi, ubi_pnptr(ubi));
+		silofs_mbi_set_root(mbi, ubi_pnptr(ubi));
 	}
-}
-
-void silofs_env_update_uber(struct silofs_env *env,
-                            struct silofs_uber_info *ubi)
-{
-	env_bind_ubi(env, ubi);
-	env_update_root_uber(env, ubi);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -303,9 +284,9 @@ env_init_commons(struct silofs_env *env, struct silofs_alloc *alloc)
 	memset(&env->base, 0, sizeof(env->base));
 	silofs_strbuf_reset(&env->name);
 	silofs_cred_init(&env->owner_cred);
+	silofs_ubref_init(&env->ubref);
 	env->init_time = silofs_time_mono_now();
 	env->alloc     = alloc;
-	env->ubi       = nullptr;
 	env->sbi       = nullptr;
 	env->flags     = 0;
 	env->ms_flags  = 0;
@@ -319,7 +300,7 @@ static void env_fini_commons(struct silofs_env *env)
 {
 	memset(&env->base, 0, sizeof(env->base));
 	silofs_cred_fini(&env->owner_cred);
-	env->ubi      = nullptr;
+	silofs_ubref_fini(&env->ubref);
 	env->sbi      = nullptr;
 	env->ms_flags = 0;
 }
@@ -431,7 +412,6 @@ void silofs_env_fini(struct silofs_env *env)
 {
 	env_update_repodir(env, nullptr);
 	env_update_sb(env, nullptr);
-	silofs_env_update_uber(env, nullptr);
 	env_fini_uconv(env);
 	env_fini_crypto(env);
 	env_fini_locks(env);
@@ -627,7 +607,7 @@ int silofs_env_shut(struct silofs_env *env)
 {
 	log_dbg("shut env: op_count=%lu", env->opstat.op_count);
 	env_update_sb(env, nullptr);
-	silofs_env_update_uber(env, nullptr);
+	silofs_ubref_update(&env->ubref, nullptr);
 	return 0;
 }
 

@@ -59,4 +59,17 @@ bool silofs_ubi_onsame_layer(const struct silofs_uber_info   *ubi,
 
 int silofs_validate_uber(const struct silofs_uber_info *ubi);
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+struct silofs_uber_ref {
+	struct silofs_uber_info *ubi;
+};
+
+void silofs_ubref_init(struct silofs_uber_ref *ubref);
+
+void silofs_ubref_fini(struct silofs_uber_ref *ubref);
+
+void silofs_ubref_update(struct silofs_uber_ref  *ubref,
+                         struct silofs_uber_info *ubi);
+
 #endif /* SILOFS_UBER_H_ */

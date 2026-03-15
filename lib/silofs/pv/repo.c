@@ -21,7 +21,7 @@
 #include <fcntl.h>
 
 #include <silofs/infra.h>
-#include "repo.h"
+#include <silofs/pv/repo.h>
 
 /* repo cached element key */
 struct silofs_repo_cek {

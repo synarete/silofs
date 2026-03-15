@@ -15,36 +15,36 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include "carve.h"
-#include "stage.h"
-#include "btnode.h"
-#include "btree.h"
-#include "space.h"
+#include <silofs/pv/carve.h>
+#include <silofs/pv/stage.h>
+#include <silofs/pv/btnode.h>
+#include <silofs/pv/btree.h>
+#include <silofs/pv/space.h>
 #include <silofs/run.h>
 
-static void
-update_active_uber(struct silofs_task_ctx *task, struct silofs_uber_info *ubi)
+static void update_active_uber(struct silofs_pexec_ctx *pexec,
+                               struct silofs_uber_info *ubi)
 {
 	log_dbg("update uber: ubi=%p", (void *)ubi);
-	silofs_env_update_uber(task->env, ubi);
-	task->ubi = task->env->ubi;
+	silofs_env_update_uber(pexec->env, ubi);
+	pexec->ubi = pexec->env->ubi;
 }
 
-static int format_uber(struct silofs_task_ctx *task)
+static int format_uber(struct silofs_pexec_ctx *pexec)
 {
 	struct silofs_pnptr pnptr    = {};
 	struct silofs_uber_info *ubi = nullptr;
 	int err;
 
-	err = silofs_carve_base_ubspace(task, &pnptr);
+	err = silofs_carve_base_ubspace(pexec, &pnptr);
 	if (err) {
 		return err;
 	}
-	err = silofs_spawn_uber(task, &pnptr, &ubi);
+	err = silofs_spawn_uber(pexec, &pnptr, &ubi);
 	if (err) {
 		return err;
 	}
-	update_active_uber(task, ubi);
+	update_active_uber(pexec, ubi);
 	return 0;
 }
 
@@ -56,17 +56,17 @@ fixup_spawned_btroot(struct silofs_btnode_info *bti, enum silofs_vtype vtype)
 }
 
 static int
-spawn_btroot_of(struct silofs_task_ctx *task, enum silofs_vtype vtype,
+spawn_btroot_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype,
                 struct silofs_btnode_info **out_bti)
 {
 	struct silofs_pnptr pnptr = {};
 	int err;
 
-	err = silofs_carve_base_btspace(task, vtype, &pnptr);
+	err = silofs_carve_base_btspace(pexec, vtype, &pnptr);
 	if (err) {
 		return err;
 	}
-	err = silofs_spawn_btnode(task, &pnptr, out_bti);
+	err = silofs_spawn_btnode(pexec, &pnptr, out_bti);
 	if (err) {
 		return err;
 	}
@@ -80,44 +80,44 @@ bti_paddr(const struct silofs_btnode_info *bti)
 	return silofs_pni_paddr(&bti->btn_pni);
 }
 
-static void update_formatted_btroot(struct silofs_task_ctx *task,
+static void update_formatted_btroot(struct silofs_pexec_ctx *pexec,
                                     const struct silofs_btnode_info *bti)
 {
-	struct silofs_uber_info *ubi = task->ubi;
+	struct silofs_uber_info *ubi = pexec->ubi;
 
 	silofs_ubi_set_btroot_by(ubi, bti);
 	silofs_ubi_start_spdesc(ubi, bti_paddr(bti));
 }
 
 static int
-format_btroot_of(struct silofs_task_ctx *task, enum silofs_vtype vtype)
+format_btroot_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
 {
 	struct silofs_btnode_info *bti = nullptr;
 	int err;
 
-	err = spawn_btroot_of(task, vtype, &bti);
+	err = spawn_btroot_of(pexec, vtype, &bti);
 	if (err) {
 		return err;
 	}
-	update_formatted_btroot(task, bti);
+	update_formatted_btroot(pexec, bti);
 	return 0;
 }
 
 static int
-format_vspace_of(struct silofs_task_ctx *task, enum silofs_vtype vtype)
+format_vspace_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
 {
 	struct silofs_paddr paddr = {};
 	int err;
 
-	err = silofs_carve_base_vspace(task, vtype, &paddr);
+	err = silofs_carve_base_vspace(pexec, vtype, &paddr);
 	if (err) {
 		return err;
 	}
-	silofs_ubi_start_spdesc(task->ubi, &paddr);
+	silofs_ubi_start_spdesc(pexec->ubi, &paddr);
 	return 0;
 }
 
-static int format_vspaces(struct silofs_task_ctx *task)
+static int format_vspaces(struct silofs_pexec_ctx *pexec)
 {
 	enum silofs_vtype vtype = SILOFS_VTYPE_NONE;
 	int err;
@@ -126,11 +126,11 @@ static int format_vspaces(struct silofs_task_ctx *task)
 		if (!silofs_vtype_isvnode(vtype)) {
 			continue;
 		}
-		err = format_btroot_of(task, vtype);
+		err = format_btroot_of(pexec, vtype);
 		if (err) {
 			return err;
 		}
-		err = format_vspace_of(task, vtype);
+		err = format_vspace_of(pexec, vtype);
 		if (err) {
 			return err;
 		}
@@ -138,15 +138,15 @@ static int format_vspaces(struct silofs_task_ctx *task)
 	return 0;
 }
 
-int silofs_format_pv(struct silofs_task_ctx *task)
+int silofs_format_pv(struct silofs_pexec_ctx *pexec)
 {
 	int err;
 
-	err = format_uber(task);
+	err = format_uber(pexec);
 	if (err) {
 		return err;
 	}
-	err = format_vspaces(task);
+	err = format_vspaces(pexec);
 	if (err) {
 		return err;
 	}
@@ -156,32 +156,32 @@ int silofs_format_pv(struct silofs_task_ctx *task)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int
-reload_uber(struct silofs_task_ctx *task, const struct silofs_pnptr *pnptr)
+reload_uber(struct silofs_pexec_ctx *pexec, const struct silofs_pnptr *pnptr)
 {
 	struct silofs_uber_info *ubi = nullptr;
 	int err;
 
-	err = silofs_stage_uber(task, pnptr, &ubi);
+	err = silofs_stage_uber(pexec, pnptr, &ubi);
 	if (err) {
 		return err;
 	}
-	update_active_uber(task, ubi);
+	update_active_uber(pexec, ubi);
 	return 0;
 }
 
 static int
-reload_btroot_of(struct silofs_task_ctx *task, enum silofs_vtype vtype)
+reload_btroot_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
 {
 	struct silofs_btnptr btnptr    = {};
 	struct silofs_btnode_info *bti = nullptr;
 	int err;
 
-	silofs_ubi_btroot_of(task->ubi, vtype, &btnptr);
+	silofs_ubi_btroot_of(pexec->ubi, vtype, &btnptr);
 	if (silofs_btnptr_isnull(&btnptr)) {
 		log_dbg("missing btree root: vtype=%d", vtype);
 		return -SILOFS_EFSCORRUPTED;
 	}
-	err = silofs_stage_btnode(task, &btnptr.base, &bti);
+	err = silofs_stage_btnode(pexec, &btnptr.base, &bti);
 	if (err) {
 		log_dbg("failed to reload btroot: vtype=%d", vtype);
 		return err;
@@ -190,15 +190,15 @@ reload_btroot_of(struct silofs_task_ctx *task, enum silofs_vtype vtype)
 }
 
 static int
-reload_vspace_of(struct silofs_task_ctx *task, enum silofs_vtype vtype)
+reload_vspace_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
 {
 	/* TODO: writeme */
-	(void)task;
+	(void)pexec;
 	(void)vtype;
 	return 0;
 }
 
-static int reload_vspaces(struct silofs_task_ctx *task)
+static int reload_vspaces(struct silofs_pexec_ctx *pexec)
 {
 	enum silofs_vtype vtype = SILOFS_VTYPE_NONE;
 	int err;
@@ -207,11 +207,11 @@ static int reload_vspaces(struct silofs_task_ctx *task)
 		if (!silofs_vtype_isvnode(vtype)) {
 			continue;
 		}
-		err = reload_btroot_of(task, vtype);
+		err = reload_btroot_of(pexec, vtype);
 		if (err) {
 			return err;
 		}
-		err = reload_vspace_of(task, vtype);
+		err = reload_vspace_of(pexec, vtype);
 		if (err) {
 			return err;
 		}
@@ -219,16 +219,16 @@ static int reload_vspaces(struct silofs_task_ctx *task)
 	return 0;
 }
 
-int silofs_reload_pv(struct silofs_task_ctx *task,
+int silofs_reload_pv(struct silofs_pexec_ctx *pexec,
                      const struct silofs_pnptr *pnptr)
 {
 	int err;
 
-	err = reload_uber(task, pnptr);
+	err = reload_uber(pexec, pnptr);
 	if (err) {
 		return err;
 	}
-	err = reload_vspaces(task);
+	err = reload_vspaces(pexec);
 	if (err) {
 		return err;
 	}
@@ -237,22 +237,22 @@ int silofs_reload_pv(struct silofs_task_ctx *task,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_spawn_vnode2_at(struct silofs_task_ctx *task,
+int silofs_spawn_vnode2_at(struct silofs_pexec_ctx *pexec,
                            const struct silofs_vaddr *vaddr,
                            struct silofs_vnode_info **out_vni)
 {
 	struct silofs_pnptr pnptr;
 	int err;
 
-	err = silofs_carve_next_vspace(task, vaddr->vtype, &pnptr);
+	err = silofs_carve_next_vspace(pexec, vaddr->vtype, &pnptr);
 	if (err) {
 		return err;
 	}
-	err = silofs_spawn_vnode2(task, vaddr, &pnptr, out_vni);
+	err = silofs_spawn_vnode2(pexec, vaddr, &pnptr, out_vni);
 	if (err) {
 		return err;
 	}
-	err = silofs_insert_vtop(task, vaddr, &pnptr);
+	err = silofs_insert_vtop(pexec, vaddr, &pnptr);
 	if (err) {
 		return err;
 	}

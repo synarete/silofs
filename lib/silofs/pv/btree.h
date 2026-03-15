@@ -20,21 +20,21 @@
 #include <silofs/infra.h>
 #include <silofs/addr.h>
 
-struct silofs_task_ctx;
+struct silofs_pexec_ctx;
 
-int silofs_resolve_vtop(struct silofs_task_ctx    *task,
+int silofs_resolve_vtop(struct silofs_pexec_ctx   *pexec,
                         const struct silofs_vaddr *vaddr,
                         struct silofs_pnptr       *out_pnptr);
 
-int silofs_insert_vtop(struct silofs_task_ctx    *task,
+int silofs_insert_vtop(struct silofs_pexec_ctx   *pexec,
                        const struct silofs_vaddr *vaddr,
                        const struct silofs_pnptr *pnptr);
 
-int silofs_update_vtop(struct silofs_task_ctx    *task,
+int silofs_update_vtop(struct silofs_pexec_ctx   *pexec,
                        const struct silofs_vaddr *vaddr,
                        const struct silofs_pnptr *pnptr);
 
-int silofs_remove_vtop(struct silofs_task_ctx    *task,
+int silofs_remove_vtop(struct silofs_pexec_ctx   *pexec,
                        const struct silofs_vaddr *vaddr);
 
 #endif /* SILOFS_BTREE_H_ */

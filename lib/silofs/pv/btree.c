@@ -19,12 +19,14 @@
 #include <silofs/ondisk.h>
 #include <silofs/addr.h>
 #include <silofs/nodes.h>
-#include "repo.h"
-#include "btnode.h"
-#include "stage.h"
-#include "uber.h"
+
+#include <silofs/pv/repo.h>
+#include <silofs/pv/btnode.h>
+#include <silofs/pv/stage.h>
+#include <silofs/pv/uber.h>
+#include <silofs/pv/pexec.h>
 #include <silofs/run.h>
-#include "btree.h"
+#include <silofs/pv/btree.h>
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -148,26 +150,26 @@ bpath_at(const struct silofs_btree_path *bpath, size_t slot)
 struct silofs_btree_ctx {
 	struct silofs_btree_path bpath;
 	struct silofs_vaddr vaddr;
-	struct silofs_task_ctx *task;
+	struct silofs_pexec_ctx *pexec;
 	struct silofs_uber_info *ubi;
 	uint64_t key;
 };
 
 static void
-btc_init(struct silofs_btree_ctx *btc, struct silofs_task_ctx *task,
+btc_init(struct silofs_btree_ctx *btc, struct silofs_pexec_ctx *pexec,
          const struct silofs_vaddr *vaddr)
 {
 	silofs_memzero(btc, sizeof(*btc));
 	bpath_init(&btc->bpath);
 	silofs_vaddr_assign(&btc->vaddr, vaddr);
-	btc->task = task;
-	btc->ubi  = task->env->ubi;
+	btc->pexec = pexec;
+	btc->ubi   = pexec->ubi;
 }
 
 static void btc_fini(struct silofs_btree_ctx *btc)
 {
 	bpath_fini(&btc->bpath);
-	btc->task = nullptr;
+	btc->pexec = nullptr;
 }
 
 static uint64_t btc_key(const struct silofs_btree_ctx *btc)
@@ -245,7 +247,7 @@ static int btc_stage_btnode(const struct silofs_btree_ctx *btc,
                             const struct silofs_btnptr *btnptr,
                             struct silofs_btnode_info **out_bti)
 {
-	return silofs_stage_btnode(btc->task, &btnptr->base, out_bti);
+	return silofs_stage_btnode(btc->pexec, &btnptr->base, out_bti);
 }
 
 static void btc_resolve_btroot(const struct silofs_btree_ctx *btc,
@@ -398,14 +400,14 @@ static int btc_spawn_btnode_at(const struct silofs_btree_ctx *btc,
                                const struct silofs_pnptr *pnptr,
                                struct silofs_btnode_info **out_bti)
 {
-	return silofs_spawn_btnode(btc->task, pnptr, out_bti);
+	return silofs_spawn_btnode(btc->pexec, pnptr, out_bti);
 }
 
 static int btc_carve_btspace(const struct silofs_btree_ctx *btc,
                              struct silofs_pnptr *out_pnptr)
 {
 	/* TODO: check avail space, RDONLY etc */
-	return silofs_carve_next_btspace(btc->task, btc_vspace(btc),
+	return silofs_carve_next_btspace(btc->pexec, btc_vspace(btc),
 	                                 out_pnptr);
 }
 
@@ -841,52 +843,52 @@ static int btc_remove_vtop(struct silofs_btree_ctx *btc)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-int silofs_resolve_vtop(struct silofs_task_ctx *task,
+int silofs_resolve_vtop(struct silofs_pexec_ctx *pexec,
                         const struct silofs_vaddr *vaddr,
                         struct silofs_pnptr *out_pnptr)
 {
 	struct silofs_btree_ctx btc;
 	int err;
 
-	btc_init(&btc, task, vaddr);
+	btc_init(&btc, pexec, vaddr);
 	err = btc_resolve_vtop(&btc, out_pnptr);
 	btc_fini(&btc);
 	return err;
 }
 
-int silofs_insert_vtop(struct silofs_task_ctx *task,
+int silofs_insert_vtop(struct silofs_pexec_ctx *pexec,
                        const struct silofs_vaddr *vaddr,
                        const struct silofs_pnptr *pnptr)
 {
 	struct silofs_btree_ctx btc;
 	int err;
 
-	btc_init(&btc, task, vaddr);
+	btc_init(&btc, pexec, vaddr);
 	err = btc_insert_vtop(&btc, pnptr);
 	btc_fini(&btc);
 	return err;
 }
 
-int silofs_update_vtop(struct silofs_task_ctx *task,
+int silofs_update_vtop(struct silofs_pexec_ctx *pexec,
                        const struct silofs_vaddr *vaddr,
                        const struct silofs_pnptr *pnptr)
 {
 	struct silofs_btree_ctx btc;
 	int err;
 
-	btc_init(&btc, task, vaddr);
+	btc_init(&btc, pexec, vaddr);
 	err = btc_update_vtop(&btc, pnptr);
 	btc_fini(&btc);
 	return err;
 }
 
-int silofs_remove_vtop(struct silofs_task_ctx *task,
+int silofs_remove_vtop(struct silofs_pexec_ctx *pexec,
                        const struct silofs_vaddr *vaddr)
 {
 	struct silofs_btree_ctx btc;
 	int err;
 
-	btc_init(&btc, task, vaddr);
+	btc_init(&btc, pexec, vaddr);
 	err = btc_remove_vtop(&btc);
 	btc_fini(&btc);
 	return err;

@@ -18,8 +18,8 @@
 #include <limits.h>
 
 #include <silofs/infra.h>
-#include "view.h"
-#include "lnodes.h"
+#include <silofs/nodes/view.h>
+#include <silofs/nodes/lnodes.h>
 
 enum {
 	SILOFS_UI_MAGIC = 0xCAFEBEB,

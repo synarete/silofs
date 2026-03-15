@@ -22,6 +22,7 @@
 #include <silofs/addr.h>
 #include <silofs/flags.h>
 
+struct silofs_pexec_ctx;
 struct silofs_submitq_ent;
 
 /* execution-context authentication parameters */
@@ -89,5 +90,8 @@ void silofs_rwlock_fs_by(struct silofs_task_ctx *task);
 void silofs_rwunlock_fs_by(struct silofs_task_ctx *task);
 
 struct silofs_sb_info *silofs_get_sbi(const struct silofs_task_ctx *task);
+
+void silofs_make_pexec(const struct silofs_task_ctx *task,
+                       struct silofs_pexec_ctx      *out_pexec);
 
 #endif /* SILOFS_TASK_H_ */

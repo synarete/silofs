@@ -15,13 +15,14 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/macros.h>
 #include <unistd.h>
 #include <string.h>
 #include <xxhash.h>
-#include "utility.h"
-#include "times.h"
-#include "hashfn.h"
+
+#include <silofs/macros.h>
+#include <silofs/infra/utility.h>
+#include <silofs/infra/times.h>
+#include <silofs/infra/hashfn.h>
 
 uint64_t silofs_fnv1a(const void *buf, size_t len, uint64_t seed)
 {

@@ -21,45 +21,45 @@
 #include <silofs/addr.h>
 #include <silofs/nodes.h>
 
-struct silofs_task_ctx;
+struct silofs_pexec_ctx;
 
-int silofs_spawn_uber(struct silofs_task_ctx    *task,
+int silofs_spawn_uber(struct silofs_pexec_ctx   *pexec,
                       const struct silofs_pnptr *pnptr,
                       struct silofs_uber_info  **out_ubi);
 
-int silofs_stage_uber(struct silofs_task_ctx    *task,
+int silofs_stage_uber(struct silofs_pexec_ctx   *pexec,
                       const struct silofs_pnptr *pnptr,
                       struct silofs_uber_info  **out_ubi);
 
-int silofs_spawn_bldesc(struct silofs_task_ctx     *task,
+int silofs_spawn_bldesc(struct silofs_pexec_ctx    *pexec,
                         const struct silofs_pnptr  *pnptr,
                         struct silofs_bldesc_info **out_bdi);
 
-int silofs_stage_bldesc(struct silofs_task_ctx     *task,
+int silofs_stage_bldesc(struct silofs_pexec_ctx    *pexec,
                         const struct silofs_pnptr  *pnptr,
                         struct silofs_bldesc_info **out_bdi);
 
-int silofs_spawn_btnode(struct silofs_task_ctx     *task,
+int silofs_spawn_btnode(struct silofs_pexec_ctx    *pexec,
                         const struct silofs_pnptr  *pnptr,
                         struct silofs_btnode_info **out_bti);
 
-int silofs_stage_btnode(struct silofs_task_ctx     *task,
+int silofs_stage_btnode(struct silofs_pexec_ctx    *pexec,
                         const struct silofs_pnptr  *pnptr,
                         struct silofs_btnode_info **out_bti);
 
-int silofs_spawn_vnode2(struct silofs_task_ctx    *task,
+int silofs_spawn_vnode2(struct silofs_pexec_ctx   *pexec,
                         const struct silofs_vaddr *vaddr,
                         const struct silofs_pnptr *pnptr,
                         struct silofs_vnode_info **out_vni);
 
-int silofs_stage_vnode2(struct silofs_task_ctx    *task,
+int silofs_stage_vnode2(struct silofs_pexec_ctx   *pexec,
                         const struct silofs_vaddr *vaddr,
                         const struct silofs_pnptr *pnptr,
                         struct silofs_vnode_info **out_vni);
 
-int silofs_require_paddr(struct silofs_task_ctx    *task,
+int silofs_require_paddr(struct silofs_pexec_ctx   *pexec,
                          const struct silofs_paddr *paddr);
 
-int silofs_destage_dirty(struct silofs_task_ctx *task);
+int silofs_destage_dirty(struct silofs_pexec_ctx *pexec);
 
 #endif /* SILOFS_STAGE_H_ */

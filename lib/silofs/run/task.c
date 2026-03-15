@@ -229,3 +229,20 @@ struct silofs_sb_info *silofs_get_sbi(const struct silofs_task_ctx *task)
 {
 	return task->env->sbi;
 }
+
+void silofs_make_pexec(const struct silofs_task_ctx *task,
+                       struct silofs_pexec_ctx *out_pexec)
+{
+	silofs_memzero(out_pexec, sizeof(*out_pexec));
+
+	out_pexec->alloc     = task->env->alloc;
+	out_pexec->prng      = task->env->base.prng;
+	out_pexec->dstor     = task->env->base.dstor;
+	out_pexec->pcache    = task->env->base.pcache;
+	out_pexec->lcache    = task->env->base.lcache;
+	out_pexec->md_hd     = &task->env->md_hd;
+	out_pexec->enc_ci_hd = &task->env->enc_ci_hd;
+	out_pexec->dec_ci_hd = &task->env->dec_ci_hd;
+	out_pexec->ubi       = task->env->ubi;
+	out_pexec->env       = task->env;
+}

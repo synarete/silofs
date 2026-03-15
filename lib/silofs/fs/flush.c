@@ -1044,6 +1044,14 @@ int silofs_flush_dirty_now(struct silofs_task_ctx *task)
 	return silofs_flush_dirty(task, nullptr, SILOFS_CTLF_NOW);
 }
 
+int silofs_destage_dirty_by(struct silofs_task_ctx *task)
+{
+	struct silofs_pexec_ctx pexec;
+
+	silofs_make_pexec(task, &pexec);
+	return silofs_destage_dirty(&pexec);
+}
+
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static int

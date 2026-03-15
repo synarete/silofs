@@ -18,8 +18,8 @@
 #include <silofs/infra.h>
 #include <silofs/addr.h>
 #include <silofs/flags.h>
-#include "pnodes.h"
-#include "pcache.h"
+#include <silofs/nodes/pnodes.h>
+#include <silofs/nodes/pcache.h>
 
 static struct silofs_pnode_info *pni_unconst(const struct silofs_pnode_info *p)
 {

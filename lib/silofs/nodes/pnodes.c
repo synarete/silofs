@@ -17,8 +17,8 @@
 #include <silofs/configs.h>
 #include <silofs/infra.h>
 #include <silofs/addr.h>
-#include "view.h"
-#include "pnodes.h"
+#include <silofs/nodes/view.h>
+#include <silofs/nodes/pnodes.h>
 
 static struct silofs_pview *
 new_pview_of(struct silofs_alloc *alloc, enum silofs_ptype ptype)

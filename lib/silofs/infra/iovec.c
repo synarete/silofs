@@ -15,11 +15,12 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
+#include <string.h>
+
 #include <silofs/ccattr.h>
 #include <silofs/syscall.h>
 #include <silofs/errors.h>
-#include <string.h>
-#include "iovec.h"
+#include <silofs/infra/iovec.h>
 
 void silofs_iovec_reset(struct silofs_iovec *iov)
 {

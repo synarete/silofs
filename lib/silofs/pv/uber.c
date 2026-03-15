@@ -16,8 +16,8 @@
  */
 #include <silofs/configs.h>
 #include <silofs/addr.h>
-#include "btnode.h"
-#include "uber.h"
+#include <silofs/pv/btnode.h>
+#include <silofs/pv/uber.h>
 
 static void ubv_btroot(const struct silofs_uber_vspace *ubv,
                        struct silofs_btnptr *out_btnptr)

@@ -16,7 +16,7 @@
  */
 #include <silofs/configs.h>
 #include <silofs/infra.h>
-#include "dirtyq.h"
+#include <silofs/nodes/dirtyq.h>
 
 void silofs_dirtyq_init(struct silofs_dirtyq *dq)
 {

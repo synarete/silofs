@@ -17,16 +17,18 @@
 #ifndef SILOFS_PV_H_
 #define SILOFS_PV_H_
 
-#include "infra.h"
-#include "addr.h"
-#include "nodes.h"
-#include "pv/repo.h"
-#include "pv/bldesc.h"
-#include "pv/btnode.h"
-#include "pv/btree.h"
-#include "pv/uber.h"
-#include "pv/carve.h"
-#include "pv/stage.h"
-#include "pv/space.h"
+#include <silofs/infra.h>
+#include <silofs/addr.h>
+#include <silofs/nodes.h>
+
+#include <silofs/pv/pexec.h>
+#include <silofs/pv/repo.h>
+#include <silofs/pv/bldesc.h>
+#include <silofs/pv/btnode.h>
+#include <silofs/pv/btree.h>
+#include <silofs/pv/uber.h>
+#include <silofs/pv/carve.h>
+#include <silofs/pv/stage.h>
+#include <silofs/pv/space.h>
 
 #endif /* SILOFS_PV_H_ */

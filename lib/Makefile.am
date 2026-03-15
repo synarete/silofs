@@ -136,6 +136,7 @@ libsilofs_la_SOURCES += silofs/pv/bldesc.c
 libsilofs_la_SOURCES += silofs/pv/bldesc.h
 libsilofs_la_SOURCES += silofs/pv/dstor.c
 libsilofs_la_SOURCES += silofs/pv/dstor.h
+libsilofs_la_SOURCES += silofs/pv/pexec.h
 libsilofs_la_SOURCES += silofs/pv/btnode.c
 libsilofs_la_SOURCES += silofs/pv/btnode.h
 libsilofs_la_SOURCES += silofs/pv/btree.c

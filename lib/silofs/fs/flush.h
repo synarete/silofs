@@ -120,4 +120,6 @@ int silofs_flush_dirty(struct silofs_task_ctx   *task,
 
 int silofs_flush_dirty_now(struct silofs_task_ctx *task);
 
+int silofs_destage_dirty_by(struct silofs_task_ctx *task);
+
 #endif /* SILOFS_FLUSH_H_ */

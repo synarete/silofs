@@ -14,22 +14,27 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_SPACE_H_
-#define SILOFS_SPACE_H_
+#ifndef SILOFS_PEXEC_H_
+#define SILOFS_PEXEC_H_
 
 #include <silofs/infra.h>
 #include <silofs/addr.h>
 #include <silofs/nodes.h>
 
-struct silofs_pexec_ctx;
+/* pv-layer execution-context */
+struct silofs_pexec_ctx {
+	struct silofs_alloc      *alloc;
+	struct silofs_prandgen   *prng;
+	struct silofs_dstor      *dstor;
+	struct silofs_pcache     *pcache;
+	struct silofs_lcache     *lcache;
+	struct silofs_mdigest_hd *md_hd;
+	struct silofs_cipher_hd  *enc_ci_hd;
+	struct silofs_cipher_hd  *dec_ci_hd;
+	struct silofs_uber_info  *ubi;
 
-int silofs_format_pv(struct silofs_pexec_ctx *pexec);
+	/* XXX */
+	struct silofs_env *env;
+};
 
-int silofs_reload_pv(struct silofs_pexec_ctx   *pexec,
-                     const struct silofs_pnptr *pnptr);
-
-int silofs_spawn_vnode2_at(struct silofs_pexec_ctx   *pexec,
-                           const struct silofs_vaddr *vaddr,
-                           struct silofs_vnode_info **out_vni);
-
-#endif /* SILOFS_SPACE_H_ */
+#endif /* SILOFS_PEXEC_H_ */

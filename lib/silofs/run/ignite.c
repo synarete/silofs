@@ -52,7 +52,7 @@ static int flush_destage_dirty(struct silofs_task_ctx *task)
 		log_err("failed to flush dirty: err=%d", err);
 		return err;
 	}
-	err = silofs_destage_dirty(task);
+	err = silofs_destage_dirty_by(task);
 	if (err) {
 		log_err("failed to destage dirty: err=%d", err);
 		return err;
@@ -177,29 +177,37 @@ int silofs_exec_reload_repo(struct silofs_task_ctx *task)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static int pre_format_ps(struct silofs_task_ctx *task)
+static int pre_format_pv(struct silofs_task_ctx *task)
 {
 	return silofs_env_reinit_ciphers(task->env);
 }
 
-static int post_format_ps(struct silofs_task_ctx *task)
+static int post_format_pv(struct silofs_task_ctx *task)
 {
 	return flush_destage_dirty(task);
+}
+
+static int do_format_pv(struct silofs_task_ctx *task)
+{
+	struct silofs_pexec_ctx pexec;
+
+	silofs_make_pexec(task, &pexec);
+	return silofs_format_pv(&pexec);
 }
 
 int silofs_exec_format_pv(struct silofs_task_ctx *task)
 {
 	int err;
 
-	err = pre_format_ps(task);
+	err = pre_format_pv(task);
 	if (err) {
 		return err;
 	}
-	err = silofs_format_pv(task);
+	err = do_format_pv(task);
 	if (err) {
 		return err;
 	}
-	err = post_format_ps(task);
+	err = post_format_pv(task);
 	if (err) {
 		return err;
 	}
@@ -501,6 +509,15 @@ reload_mbr(struct silofs_task_ctx *task, const struct silofs_mbref *mbref)
 	return silofs_env_reload_fs_mbr(task->env, mbref);
 }
 
+static int
+do_reload_pv(struct silofs_task_ctx *task, const struct silofs_pnptr *pnptr)
+{
+	struct silofs_pexec_ctx pexec;
+
+	silofs_make_pexec(task, &pexec);
+	return silofs_reload_pv(&pexec, pnptr);
+}
+
 int silofs_exec_reload_pv(struct silofs_task_ctx *task,
                           const struct silofs_mbref *mbref)
 {
@@ -515,7 +532,7 @@ int silofs_exec_reload_pv(struct silofs_task_ctx *task,
 	if (err) {
 		return err;
 	}
-	err = silofs_reload_pv(task, &pnptr);
+	err = do_reload_pv(task, &pnptr);
 	if (err) {
 		return err;
 	}

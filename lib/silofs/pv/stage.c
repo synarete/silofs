@@ -16,13 +16,13 @@
  */
 #include <silofs/configs.h>
 #include <silofs/nodes.h>
-#include "dstor.h"
-#include "uber.h"
-#include "stage.h"
+#include <silofs/pv/dstor.h>
+#include <silofs/pv/uber.h>
+#include <silofs/pv/stage.h>
 #include <silofs/run.h>
 
 struct silofs_stage_ctx {
-	struct silofs_task_ctx *task;
+	struct silofs_pexec_ctx *pexec;
 	struct silofs_alloc *alloc;
 	struct silofs_dstor *dstor;
 	struct silofs_pcache *pcache;
@@ -85,16 +85,16 @@ static void stc_memfree(struct silofs_stage_ctx *st_ctx, void *p, size_t n)
 }
 
 static void
-stc_init(struct silofs_stage_ctx *st_ctx, struct silofs_task_ctx *task)
+stc_init(struct silofs_stage_ctx *st_ctx, struct silofs_pexec_ctx *pexec)
 {
-	st_ctx->task      = task;
-	st_ctx->alloc     = task->env->alloc;
-	st_ctx->dstor     = &task->env->base.repo->re_dstor;
-	st_ctx->pcache    = task->env->base.pcache;
-	st_ctx->lcache    = task->env->base.lcache;
-	st_ctx->md_hd     = &task->env->md_hd;
-	st_ctx->enc_ci_hd = &task->env->enc_ci_hd;
-	st_ctx->dec_ci_hd = &task->env->dec_ci_hd;
+	st_ctx->pexec     = pexec;
+	st_ctx->alloc     = pexec->alloc;
+	st_ctx->dstor     = pexec->dstor;
+	st_ctx->pcache    = pexec->pcache;
+	st_ctx->lcache    = pexec->lcache;
+	st_ctx->md_hd     = pexec->md_hd;
+	st_ctx->enc_ci_hd = pexec->enc_ci_hd;
+	st_ctx->dec_ci_hd = pexec->dec_ci_hd;
 	st_ctx->pview     = nullptr;
 	st_ctx->lview     = nullptr;
 }
@@ -349,14 +349,14 @@ static int stc_spawn_uber(const struct silofs_stage_ctx *st_ctx,
 	return 0;
 }
 
-int silofs_spawn_uber(struct silofs_task_ctx *task,
+int silofs_spawn_uber(struct silofs_pexec_ctx *pexec,
                       const struct silofs_pnptr *pnptr,
                       struct silofs_uber_info **out_ubi)
 {
 	struct silofs_stage_ctx st_ctx = {};
 	int err;
 
-	stc_init(&st_ctx, task);
+	stc_init(&st_ctx, pexec);
 	err = stc_spawn_uber(&st_ctx, pnptr, out_ubi);
 	stc_fini(&st_ctx);
 	return err;
@@ -383,14 +383,14 @@ static int stc_stage_uber(struct silofs_stage_ctx *st_ctx,
 	return 0;
 }
 
-int silofs_stage_uber(struct silofs_task_ctx *task,
+int silofs_stage_uber(struct silofs_pexec_ctx *pexec,
                       const struct silofs_pnptr *pnptr,
                       struct silofs_uber_info **out_ubi)
 {
 	struct silofs_stage_ctx st_ctx = {};
 	int err;
 
-	stc_init(&st_ctx, task);
+	stc_init(&st_ctx, pexec);
 	err = stc_stage_uber(&st_ctx, pnptr, out_ubi);
 	stc_fini(&st_ctx);
 	return err;
@@ -439,14 +439,14 @@ static int stc_spawn_bldesc(const struct silofs_stage_ctx *st_ctx,
 	return 0;
 }
 
-int silofs_spawn_bldesc(struct silofs_task_ctx *task,
+int silofs_spawn_bldesc(struct silofs_pexec_ctx *pexec,
                         const struct silofs_pnptr *pnptr,
                         struct silofs_bldesc_info **out_bdi)
 {
 	struct silofs_stage_ctx st_ctx = {};
 	int err;
 
-	stc_init(&st_ctx, task);
+	stc_init(&st_ctx, pexec);
 	err = stc_spawn_bldesc(&st_ctx, pnptr, out_bdi);
 	stc_fini(&st_ctx);
 	return err;
@@ -473,14 +473,14 @@ static int stc_stage_bldesc(struct silofs_stage_ctx *st_ctx,
 	return 0;
 }
 
-int silofs_stage_bldesc(struct silofs_task_ctx *task,
+int silofs_stage_bldesc(struct silofs_pexec_ctx *pexec,
                         const struct silofs_pnptr *pnptr,
                         struct silofs_bldesc_info **out_bdi)
 {
 	struct silofs_stage_ctx st_ctx = {};
 	int err;
 
-	stc_init(&st_ctx, task);
+	stc_init(&st_ctx, pexec);
 	err = stc_stage_bldesc(&st_ctx, pnptr, out_bdi);
 	stc_fini(&st_ctx);
 	return err;
@@ -529,14 +529,14 @@ static int stc_spawn_btnode(const struct silofs_stage_ctx *st_ctx,
 	return 0;
 }
 
-int silofs_spawn_btnode(struct silofs_task_ctx *task,
+int silofs_spawn_btnode(struct silofs_pexec_ctx *pexec,
                         const struct silofs_pnptr *pnptr,
                         struct silofs_btnode_info **out_bti)
 {
 	struct silofs_stage_ctx st_ctx = {};
 	int err;
 
-	stc_init(&st_ctx, task);
+	stc_init(&st_ctx, pexec);
 	err = stc_spawn_btnode(&st_ctx, pnptr, out_bti);
 	stc_fini(&st_ctx);
 	return err;
@@ -562,26 +562,26 @@ static int stc_stage_btnode(struct silofs_stage_ctx *st_ctx,
 	return 0;
 }
 
-int silofs_stage_btnode(struct silofs_task_ctx *task,
+int silofs_stage_btnode(struct silofs_pexec_ctx *pexec,
                         const struct silofs_pnptr *pnptr,
                         struct silofs_btnode_info **out_bti)
 {
 	struct silofs_stage_ctx st_ctx = {};
 	int err;
 
-	stc_init(&st_ctx, task);
+	stc_init(&st_ctx, pexec);
 	err = stc_stage_btnode(&st_ctx, pnptr, out_bti);
 	stc_fini(&st_ctx);
 	return err;
 }
 
-int silofs_require_paddr(struct silofs_task_ctx *task,
+int silofs_require_paddr(struct silofs_pexec_ctx *pexec,
                          const struct silofs_paddr *paddr)
 {
 	struct silofs_stage_ctx st_ctx = {};
 	int err;
 
-	stc_init(&st_ctx, task);
+	stc_init(&st_ctx, pexec);
 	err = stc_require_paddr(&st_ctx, paddr);
 	stc_fini(&st_ctx);
 	return err;
@@ -656,12 +656,12 @@ static int stc_destage_dirty(struct silofs_stage_ctx *st_ctx)
 	return 0;
 }
 
-int silofs_destage_dirty(struct silofs_task_ctx *task)
+int silofs_destage_dirty(struct silofs_pexec_ctx *pexec)
 {
 	struct silofs_stage_ctx st_ctx = {};
 	int err;
 
-	stc_init(&st_ctx, task);
+	stc_init(&st_ctx, pexec);
 	err = stc_destage_dirty(&st_ctx);
 	stc_fini(&st_ctx);
 	return err;
@@ -705,7 +705,7 @@ static int stc_spawn_vnode(const struct silofs_stage_ctx *st_ctx,
 	return 0;
 }
 
-int silofs_spawn_vnode2(struct silofs_task_ctx *task,
+int silofs_spawn_vnode2(struct silofs_pexec_ctx *pexec,
                         const struct silofs_vaddr *vaddr,
                         const struct silofs_pnptr *pnptr,
                         struct silofs_vnode_info **out_vni)
@@ -713,7 +713,7 @@ int silofs_spawn_vnode2(struct silofs_task_ctx *task,
 	struct silofs_stage_ctx st_ctx = {};
 	int err;
 
-	stc_init(&st_ctx, task);
+	stc_init(&st_ctx, pexec);
 	err = stc_spawn_vnode(&st_ctx, vaddr, pnptr, out_vni);
 	stc_fini(&st_ctx);
 	return err;
@@ -813,7 +813,7 @@ out_ok:
 	return 0;
 }
 
-int silofs_stage_vnode2(struct silofs_task_ctx *task,
+int silofs_stage_vnode2(struct silofs_pexec_ctx *pexec,
                         const struct silofs_vaddr *vaddr,
                         const struct silofs_pnptr *pnptr,
                         struct silofs_vnode_info **out_vni)
@@ -821,7 +821,7 @@ int silofs_stage_vnode2(struct silofs_task_ctx *task,
 	struct silofs_stage_ctx st_ctx = {};
 	int err;
 
-	stc_init(&st_ctx, task);
+	stc_init(&st_ctx, pexec);
 	err = stc_stage_vnode(&st_ctx, vaddr, pnptr, out_vni);
 	stc_fini(&st_ctx);
 	return err;

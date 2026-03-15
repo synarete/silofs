@@ -24,12 +24,11 @@
 /* pseudo random generator */
 struct silofs_prandgen {
 	uint64_t prandom[256];
-	uint32_t entropy[32];
+	uint8_t  key[32];
 	uint64_t cycle;
 	uint64_t count;
-	uint64_t xseed;
-	uint32_t slot;
-	/* produce pseudo-random via crypto hasher */
+	uint64_t slot;
+	/* SHA3-DRBG via libgcrypt */
 	struct silofs_mdigest_hd md_hd;
 };
 

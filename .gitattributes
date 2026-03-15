@@ -1,18 +1,32 @@
-# Sources
-*.c     text diff=c
-*.h     text diff=c
+# .gitattributes - Enforce line endings and formatting
 
-# Compiled Object files
+# Global default: Let git decide, but prefer LF
+* text=auto
+
+# Ensure C and Header files use LF
+*.c text eol=lf diff=c
+*.h text eol=lf diff=c
+
+# Build system files must use LF to prevent M4/Autoconf errors
+*.ac text eol=lf
+*.am text eol=lf
+*.m4 text eol=lf
+configure text eol=lf
+
+# Compiled object files
 *.lo    binary
 *.o     binary
 
-# Compiled Dynamic libraries
+# Compiled libraries
 *.so    binary
-
-# Compiled Static libraries
 *.la    binary
 *.a     binary
 *.lib   binary
 
 # Shell scripts
 *.sh    text eol=lf
+
+# Prompts as text
+.prompts/*.md text eol=lf
+
+

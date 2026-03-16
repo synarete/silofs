@@ -40,12 +40,11 @@ static size_t do_getentropy(void *buf, size_t len)
 
 static void fill_random(void *buf, size_t len)
 {
-	uint8_t *ptr = buf;
-	size_t cnt   = 0;
+	size_t cnt;
 
 	cnt = do_getentropy(buf, len);
 	if (cnt < len) {
-		do_gcry_random(ptr + cnt, len - cnt);
+		do_gcry_random(silofs_nextof(buf, cnt), len - cnt);
 	}
 }
 

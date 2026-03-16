@@ -127,6 +127,11 @@ static inline void *silofs_unconst(const void *p)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static inline void *silofs_nextof(void *p, size_t d)
+{
+	return (void *)((uintptr_t)p + d);
+}
+
 static inline void *silofs_baseof(void *p, size_t d)
 {
 	return (void *)((uintptr_t)p - d);

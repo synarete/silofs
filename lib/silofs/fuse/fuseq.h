@@ -119,10 +119,10 @@ silofs_fuseq_new(struct silofs_alloc *alloc, enum silofs_flags mode_flags);
 void silofs_fuseq_del(struct silofs_fuseq *fq, struct silofs_alloc *alloc);
 
 int silofs_fuseq_update(struct silofs_fuseq      *fq,
-			const struct silofs_cred *fsowner);
+                        const struct silofs_cred *fsowner);
 
 int silofs_fuseq_mount(struct silofs_fuseq *fq, const char *mntpath,
-		       unsigned long ms_flags);
+                       unsigned long ms_flags);
 
 int silofs_fuseq_exec(struct silofs_fuseq *fq);
 

@@ -18,8 +18,8 @@
 #include <gcrypt.h>
 
 #include <silofs/infra.h>
-#include "gcry.h"
-#include "ivkey.h"
+#include <silofs/crypto/gcry.h>
+#include <silofs/crypto/ivkey.h>
 
 static enum gcry_random_level random_level(bool strong)
 {

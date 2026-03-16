@@ -21,8 +21,8 @@
 
 #include <silofs/ondisk.h>
 #include <silofs/infra.h>
-#include "gcry.h"
-#include "prand.h"
+#include <silofs/crypto/gcry.h>
+#include <silofs/crypto/prand.h>
 
 static void do_gcry_random(void *buf, size_t len)
 {
@@ -52,16 +52,21 @@ static void fill_random(void *buf, size_t len)
 
 struct silofs_prand_in {
 	uint8_t key[32];
-	uint64_t extra;
+	uint64_t extra[4];
 };
 
 static void prandgen_fill_in(const struct silofs_prandgen *prng,
                              struct silofs_prand_in *prin)
 {
+	const uintptr_t aslr = (uintptr_t)prin;
+
 	STATICASSERT_EQ(sizeof(prin->key), sizeof(prng->key));
 
 	memcpy(prin->key, prng->key, sizeof(prin->key));
-	prin->extra = prng->count ^ (uint64_t)prng->xbits;
+	prin->extra[0] = prng->count;
+	prin->extra[1] = prng->xbits;
+	prin->extra[2] = (uint64_t)aslr;
+	prin->extra[3] = prng->slot;
 }
 
 static void prandgen_mkhash(const struct silofs_prandgen *prng,
@@ -73,26 +78,36 @@ static void prandgen_mkhash(const struct silofs_prandgen *prng,
 	silofs_sha3_256_of(&prng->md_hd, &prin, sizeof(prin), out_hash);
 }
 
-static void *prandgen_prandom_buf(struct silofs_prandgen *prng)
+static void prandgen_renew_key(struct silofs_prandgen *prng,
+                               const struct silofs_hash256 *hash)
 {
-	return prng->prandom;
+	struct silofs_hash256 xh;
+
+	STATICASSERT_EQ(sizeof(xh.hash), sizeof(prng->key));
+
+	silofs_sha256_of(&prng->md_hd, hash->hash, sizeof(hash->hash), &xh);
+	memcpy(prng->key, xh.hash, sizeof(prng->key));
 }
 
 static void prandgen_refill_prandom(struct silofs_prandgen *prng)
 {
-	struct silofs_hash256 hash;
 	size_t psz = sizeof(prng->prandom);
-	uint8_t *p = prandgen_prandom_buf(prng);
+	void *p    = prng->prandom;
 	size_t n   = 0;
 
 	while (n < psz) {
-		const size_t k = silofs_min(sizeof(hash.hash), psz - n);
+		struct silofs_hash256 hash;
+		size_t k;
 
 		prandgen_mkhash(prng, &hash);
-		memcpy(p + n, hash.hash, k);
+		prng->count++;
+
+		k = silofs_min(sizeof(hash.hash), psz - n);
+		memcpy(p, hash.hash, k);
+		p = silofs_nextof(p, k);
 		n += k;
 
-		prng->count++;
+		prandgen_renew_key(prng, &hash);
 	}
 }
 
@@ -110,11 +125,12 @@ static void prandgen_renew_prandom(struct silofs_prandgen *prng)
 static void prandgen_refresh_state(struct silofs_prandgen *prng)
 {
 	struct timespec ts;
+	const pid_t tid = gettid();
 
 	silofs_clock_gettime_mono(&ts);
-	prng->xbits = (uint32_t)ts.tv_nsec;
+	prng->xbits = silofs_twang64((uint64_t)ts.tv_nsec ^ (uint64_t)tid);
 
-	if (((prng->cycle % 31) == 0) || ((prng->key_ts + 10) < ts.tv_sec)) {
+	if (!prng->key_ts || ((prng->key_ts + 10) < ts.tv_sec)) {
 		fill_random(prng->key, sizeof(prng->key));
 		prng->key_ts = ts.tv_sec;
 	}
@@ -125,9 +141,9 @@ static void prandgen_refresh_state(struct silofs_prandgen *prng)
 int silofs_prandgen_init(struct silofs_prandgen *prng)
 {
 	memset(prng, 0, sizeof(*prng));
-	prng->cycle = 0;
-	prng->slot  = 0;
 	prng->count = 0;
+	prng->slot  = 0;
+	prandgen_refresh_state(prng);
 
 	return silofs_mdigest_init(&prng->md_hd);
 }
@@ -160,9 +176,8 @@ static bool prandgen_has_more(const struct silofs_prandgen *prng)
 static void prandgen_prepare(struct silofs_prandgen *prng)
 {
 	prandgen_refresh_state(prng);
-	if ((!prng->slot && !prng->cycle) || !prandgen_has_more(prng)) {
+	if (!prandgen_has_more(prng)) {
 		prandgen_renew_prandom(prng);
-		prng->cycle++;
 		prng->slot = 0;
 	}
 }

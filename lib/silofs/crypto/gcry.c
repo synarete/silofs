@@ -19,7 +19,7 @@
 
 #include <silofs/errors.h>
 #include <silofs/infra.h>
-#include "gcry.h"
+#include <silofs/crypto/gcry.h>
 
 enum {
 	SILOFS_SECMEM_SIZE = 64L * SILOFS_KILO,

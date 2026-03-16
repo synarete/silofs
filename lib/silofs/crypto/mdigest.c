@@ -20,8 +20,8 @@
 #include <silofs/ondisk.h>
 #include <silofs/errors.h>
 #include <silofs/infra.h>
-#include "gcry.h"
-#include "mdigest.h"
+#include <silofs/crypto/gcry.h>
+#include <silofs/crypto/mdigest.h>
 
 int silofs_mdigest_init(struct silofs_mdigest_hd *md_hd)
 {

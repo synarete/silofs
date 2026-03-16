@@ -17,11 +17,11 @@
 #include <silofs/configs.h>
 #include <silofs/ondisk.h>
 #include <silofs/errors.h>
-#include "passwd.h"
-#include "ivkey.h"
-#include "mdigest.h"
-#include "gcry.h"
-#include "kdf.h"
+#include <silofs/crypto/passwd.h>
+#include <silofs/crypto/ivkey.h>
+#include <silofs/crypto/mdigest.h>
+#include <silofs/crypto/gcry.h>
+#include <silofs/crypto/kdf.h>
 
 static int
 derive_key(const struct silofs_mdigest_hd *md_hd,

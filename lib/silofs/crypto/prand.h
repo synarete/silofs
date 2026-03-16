@@ -19,15 +19,15 @@
 
 #include <stdlib.h>
 #include <stdint.h>
+#include <time.h>
 #include <silofs/crypto/mdigest.h>
 
 /* pseudo random generator */
 struct silofs_prandgen {
-	uint64_t prandom[256];
+	uint64_t prandom[64];
 	uint8_t  key[32];
-	uint64_t cycle;
 	uint64_t count;
-	uint32_t xbits;
+	uint64_t xbits;
 	uint32_t slot;
 	time_t   key_ts;
 	/* SHA3-DRBG via libgcrypt */

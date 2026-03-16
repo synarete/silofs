@@ -21,39 +21,41 @@
 #include <silofs/errors.h>
 #include <silofs/infra.h>
 #include <silofs/str.h>
-#include "passwd.h"
+#include <silofs/crypto/passwd.h>
 
 static int check_password_len(size_t len)
 {
-	return ((len < SILOFS_PASSWORD_MIN) || //
-	        (len > SILOFS_PASSWORD_MAX)) ?
-	               -SILOFS_EILLPASS :
-	               0;
+	int ret = 0;
+
+	if ((len < SILOFS_PASSWORD_MIN) || (len > SILOFS_PASSWORD_MAX)) {
+		ret = -SILOFS_EILLPASS;
+	}
+	return ret;
 }
 
 static int check_password_char(int ch)
 {
-	return (!isascii(ch) || //
-	        iscntrl(ch) ||  //
-	        isspace(ch) ||  //
-	        !isprint(ch) || //
-	        !(isalnum(ch) || ispunct(ch))) ?
-	               -SILOFS_EILLPASS :
-	               0;
+	int ret = 0;
+
+	if (!isascii(ch) || iscntrl(ch) || isspace(ch) || //
+	    !isprint(ch) || !(isalnum(ch) || ispunct(ch))) {
+		ret = -SILOFS_EILLPASS;
+	}
+	return ret;
 }
 
 static int check_password_dat(const void *d, size_t n)
 {
 	const char *p = d;
-	int err       = 0;
+	int err;
 
 	for (size_t i = 0; i < n; ++i) {
 		err = check_password_char(p[i]);
 		if (err) {
-			break;
+			return err;
 		}
 	}
-	return err;
+	return 0;
 }
 
 void silofs_password_reset(struct silofs_password *pw)

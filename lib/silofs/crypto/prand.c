@@ -24,23 +24,34 @@
 #include "gcry.h"
 #include "prand.h"
 
+static size_t do_gcry_random(void *buf, size_t len)
+{
+	silofs_gcrypt_random(buf, len);
+	return len;
+}
+
 static size_t do_getentropy(void *buf, size_t len)
 {
 	const size_t nr = silofs_min(len, 256);
+	int ret;
 
-	if (getentropy(buf, nr) != 0) {
-		silofs_gcrypt_random(buf, nr);
-	}
-	return nr;
+	ret = getentropy(buf, nr);
+	return (ret == 0) ? nr : 0;
 }
 
-static void silofs_getentropy(void *buf, size_t len)
+static void fill_random(void *buf, size_t len)
 {
 	uint8_t *ptr = buf;
 	size_t cnt   = 0;
+	int itr      = 0;
 
 	while (cnt < len) {
-		cnt += do_getentropy(ptr + cnt, len - cnt);
+		if (itr & 1) {
+			cnt += do_gcry_random(ptr + cnt, len - cnt);
+		} else {
+			cnt += do_getentropy(ptr + cnt, len - cnt);
+		}
+		itr += 1;
 	}
 }
 
@@ -85,14 +96,14 @@ static void prandgen_regen_key(struct silofs_prandgen *prng)
 
 	STATICASSERT_EQ(sizeof(prng->key), sizeof(hash));
 
-	do_getentropy(&count, sizeof(count));
+	fill_random(&count, sizeof(count));
 	prandgen_mkhash(prng, count, &hash);
 	memcpy(prng->key, &hash, sizeof(prng->key));
 }
 
 static void prandgen_seed_key(struct silofs_prandgen *prng)
 {
-	silofs_getentropy(prng->key, sizeof(prng->key));
+	fill_random(prng->key, sizeof(prng->key));
 }
 
 static void *prandgen_prandom_buf(struct silofs_prandgen *prng)

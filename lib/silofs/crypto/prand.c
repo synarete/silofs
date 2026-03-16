@@ -76,8 +76,8 @@ static void prandgen_fill_in(const struct silofs_prandgen *prng,
 	memcpy(prin->key, prng->key, sizeof(prin->key));
 	prin->count    = count;
 	prin->extra[0] = (uint64_t)ts[0].tv_sec * (uint64_t)ts[1].tv_nsec;
-	prin->extra[1] = (uint64_t)ts[0].tv_nsec * (uint64_t)ts[1].tv_sec;
-	prin->extra[2] = prng->cycle * (uint64_t)gettid();
+	prin->extra[1] = (uint64_t)ts[0].tv_nsec * (uint64_t)gettid();
+	prin->extra[2] = (prng->cycle + 1) * (uint64_t)ts[1].tv_sec;
 }
 
 static void prandgen_mkhash(const struct silofs_prandgen *prng, uint64_t count,
@@ -96,9 +96,11 @@ static void prandgen_regen_key(struct silofs_prandgen *prng)
 
 	STATICASSERT_EQ(sizeof(prng->key), sizeof(hash));
 
+	memset(prng->key, 0, sizeof(prng->key));
 	fill_random(&count, sizeof(count));
 	prandgen_mkhash(prng, count, &hash);
 	memcpy(prng->key, &hash, sizeof(prng->key));
+	memset(&hash, 0, sizeof(hash));
 }
 
 static void prandgen_seed_key(struct silofs_prandgen *prng)
@@ -127,6 +129,11 @@ static void prandgen_refill_prandom(struct silofs_prandgen *prng)
 
 		prng->count++;
 	}
+}
+
+static void prandom_reset_prandom(struct silofs_prandgen *prng)
+{
+	memset(prng->prandom, 0, sizeof(prng->prandom));
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -170,12 +177,13 @@ static bool prandgen_has_more(const struct silofs_prandgen *prng)
 static void prandgen_prepare(struct silofs_prandgen *prng)
 {
 	if ((!prng->slot && !prng->cycle) || !prandgen_has_more(prng)) {
+		if ((prng->cycle % 31) == 0) {
+			prandgen_regen_key(prng);
+		}
+		prandom_reset_prandom(prng);
 		prandgen_refill_prandom(prng);
 		prng->cycle++;
 		prng->slot = 0;
-	}
-	if ((prng->cycle % 31) == 0) {
-		prandgen_regen_key(prng);
 	}
 }
 

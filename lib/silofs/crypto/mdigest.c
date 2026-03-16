@@ -179,7 +179,7 @@ static uint32_t digest_to_uint32(const uint8_t *digest)
 	const uint32_t d2 = digest[2];
 	const uint32_t d3 = digest[3];
 
-	return (d0 << 24) | (d1 << 16) | (d2 << 8) << d3;
+	return (d0 << 24) | (d1 << 16) | (d2 << 8) | d3;
 }
 
 void silofs_crc32_of(const struct silofs_mdigest_hd *md_hd, const void *buf,

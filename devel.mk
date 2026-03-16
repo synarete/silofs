@@ -114,7 +114,6 @@ CFLAGS += -Wcast-align
 CFLAGS += -Wcast-qual
 CFLAGS += -Wcomment
 CFLAGS += -Wconversion
-CFLAGS += -Wdeclaration-after-statement
 CFLAGS += -Wdisabled-optimization
 CFLAGS += -Wdouble-promotion
 CFLAGS += -Wendif-labels
@@ -163,14 +162,11 @@ CFLAGS += -Wvla
 CFLAGS += -Wwrite-strings
 CFLAGS += -fasynchronous-unwind-tables
 CFLAGS += -fcf-protection=full
-CFLAGS += -fPIC
 CFLAGS += -fPIE
 CFLAGS += -fsigned-char
 CFLAGS += -fstack-clash-protection
-CFLAGS += -fstack-protector-all
 CFLAGS += -fstack-protector-strong
 CFLAGS += -fstrict-aliasing
-CFLAGS += -ftrapv
 
 ifeq ($(SANITIZER), 0)
 CFLAGS += -Wframe-larger-than=4096
@@ -208,27 +204,20 @@ CFLAGS += -O0
 else ifeq ($(O), 1)
 CFLAGS += -O1 -D_FORTIFY_SOURCE=2
 else ifeq ($(O), 2)
-CFLAGS += -O2 -D_FORTIFY_SOURCE=2
+CFLAGS += -O2 -D_FORTIFY_SOURCE=3
 else ifeq ($(O), 3)
-CFLAGS += -O3 -D_FORTIFY_SOURCE=2
+CFLAGS += -O3 -D_FORTIFY_SOURCE=3
 else
 $(error Illegal O=$(O))
 endif
 
 # Compiler specific flags
 ifeq ($(CC), gcc)
-CFLAGS += -pie
 CFLAGS += -Walloc-zero
 CFLAGS += -Wbidi-chars=any
 CFLAGS += -Wduplicated-branches
 CFLAGS += -Wduplicated-cond
 CFLAGS += -Wlogical-op
-CFLAGS += -Wl,-z,nodlopen
-CFLAGS += -Wl,-z,noexecstack
-CFLAGS += -Wl,-z,now
-CFLAGS += -Wl,-z,relro
-CFLAGS += -Wl,--as-needed
-CFLAGS += -Wl,--no-copy-dt-needed-entries
 CFLAGS += -Wmaybe-uninitialized
 CFLAGS += -Wmultistatement-macros
 CFLAGS += -Wpacked-not-aligned
@@ -249,7 +238,6 @@ CFLAGS += -Wunsafe-loop-optimizations
 CFLAGS += -fasynchronous-unwind-tables
 CFLAGS += -fshort-enums
 CFLAGS += -fstack-clash-protection
-CFLAGS += -funsafe-loop-optimizations
 endif
 endif
 
@@ -268,17 +256,22 @@ endif
 # Sanitizer flags
 # (ASAN_OPTIONS=detect_leaks=1)
 ifeq ($(SANITIZER), 1)
-ifeq ($(CC), gcc)
 CFLAGS += -fsanitize=address
 CFLAGS += -fsanitize=leak
 CFLAGS += -fsanitize=undefined
-#LDFLAGS += -static-libasan
+CFLAGS += -fno-omit-frame-pointer
+# LDFLAGS += -static-libasan
 endif
-ifeq ($(CC), clang)
-CFLAGS += -fsanitize=address
-CFLAGS += -fsanitize=leak
-endif
-endif
+
+# Linker flags
+LDFLAGS += -pie
+LDFLAGS += -Wl,-z,relro
+LDFLAGS += -Wl,-z,now
+LDFLAGS += -Wl,-z,noexecstack
+LDFLAGS += -Wl,-z,nodlopen
+LDFLAGS += -Wl,--as-needed
+LDFLAGS += -Wl,--no-copy-dt-needed-entries
+
 
 # Helper functions: report action & sub-execute make in build directory
 define report
@@ -287,7 +280,7 @@ endef
 
 define submakeat
 	@+$(MAKE) $(MAKE_OPTS) V=$(V) \
-	  CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" -C $(1) $(2)
+	  CC="$(CC)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" -C $(1) $(2)
 endef
 
 define submake
@@ -296,7 +289,7 @@ define submake
 endef
 
 
-# Delegated targtes
+# Delegated targets
 .PHONY: all install clean maintainer-clean dist check
 
 all: params configure
@@ -344,8 +337,8 @@ tags:
 compdb: configure tags
 	$(call report, $@)
 	@rm -f $(TOP)/compile_commands.json
-	@(bear -- $(MAKE) $(MAKE_OPTS) V=$(V) \
-	  CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" -C $(BUILDDIR))
+	@bear -- $(MAKE) $(MAKE_OPTS) V=$(V) \
+	  CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" -C $(BUILDDIR)
 
 ifeq ($(CC), clang)
 .PHONY: tidy scan

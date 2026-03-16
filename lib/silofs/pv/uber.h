@@ -17,6 +17,7 @@
 #ifndef SILOFS_UBER_H_
 #define SILOFS_UBER_H_
 
+#include <silofs/infra.h>
 #include <silofs/addr.h>
 #include <silofs/nodes.h>
 

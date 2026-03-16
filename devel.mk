@@ -346,7 +346,7 @@ compdb: configure tags
 ifeq ($(CC), clang)
 .PHONY: tidy scan
 
-tidy: reset compdb
+tidy: compdb
 	$(call report, $@)
 	@$(TOP)/scripts/clangtidy.sh $(TOP)
 

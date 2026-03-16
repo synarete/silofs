@@ -17,9 +17,7 @@
 #ifndef SILOFS_UBER_H_
 #define SILOFS_UBER_H_
 
-#include <silofs/infra.h>
-#include <silofs/addr.h>
-#include <silofs/nodes.h>
+#include <silofs/pv/btnode.h>
 
 const struct silofs_layerid *
 silofs_ubi_layerid(const struct silofs_uber_info *ubi);

@@ -18,7 +18,7 @@
 #include <zstd.h>
 
 #include <silofs/errors.h>
-#include "zcmpr.h"
+#include <silofs/infra/zcmpr.h>
 
 #if (ZSTD_VERSION_NUMBER >= 10502)
 #define ZCOMP_ZSTD_DEFAULT_CLEVEL (ZSTD_defaultCLevel())
@@ -98,13 +98,13 @@ static int compress_level_of(int cl_in)
 	const int cl_max = ZSTD_maxCLevel();
 
 	return ((cl_in >= cl_min) && (cl_in <= cl_max)) ?
-	               cl_in :
-	               ZCOMP_ZSTD_DEFAULT_CLEVEL;
+		       cl_in :
+		       ZCOMP_ZSTD_DEFAULT_CLEVEL;
 }
 
 int silofs_zcmpr_compress(const struct silofs_zcmpr *zc, void *dst,
-                          size_t dst_cap, const void *src, size_t src_size,
-                          int cl_in, size_t *out_sz)
+			  size_t dst_cap, const void *src, size_t src_size,
+			  int cl_in, size_t *out_sz)
 {
 	size_t ret;
 	int cl;
@@ -122,8 +122,8 @@ int silofs_zcmpr_compress(const struct silofs_zcmpr *zc, void *dst,
 }
 
 int silofs_zcmpr_decompress(const struct silofs_zcmpr *zc, void *dst,
-                            size_t dst_cap, const void *src, size_t src_size,
-                            size_t *out_sz)
+			    size_t dst_cap, const void *src, size_t src_size,
+			    size_t *out_sz)
 {
 	size_t ret;
 

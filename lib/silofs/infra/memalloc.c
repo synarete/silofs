@@ -26,8 +26,8 @@
 #include <silofs/syscall.h>
 #include <silofs/memalloc.h>
 #include <silofs/panic.h>
-#include "utility.h"
-#include "atomic.h"
+#include <silofs/infra/utility.h>
+#include <silofs/infra/atomic.h>
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -131,7 +131,7 @@ stdalloc_free(struct silofs_stdalloc *stdal, void *ptr, size_t n, int flags)
 }
 
 static void stdalloc_stat(struct silofs_stdalloc *stdal,
-                          struct silofs_alloc_stat *out_stat)
+			  struct silofs_alloc_stat *out_stat)
 {
 	silofs_memzero(out_stat, sizeof(*out_stat));
 	out_stat->nbytes_max = silofs_atomic_getul(&stdal->nbytes_max);
@@ -150,7 +150,7 @@ stdal_free(struct silofs_alloc *alloc, void *ptr, size_t n, int flags)
 }
 
 static void stdal_stat(const struct silofs_alloc *alloc,
-                       struct silofs_alloc_stat *out_stat)
+		       struct silofs_alloc_stat *out_stat)
 {
 	stdalloc_stat(alloc_to_stdalloc(alloc), out_stat);
 }
@@ -228,7 +228,7 @@ silofs_memdup(struct silofs_alloc *alloc, const void *ptr, size_t n, int flags)
 }
 
 void silofs_memstat(const struct silofs_alloc *alloc,
-                    struct silofs_alloc_stat *out_stat)
+		    struct silofs_alloc_stat *out_stat)
 {
 	silofs_memzero(out_stat, sizeof(*out_stat));
 	if (alloc->stat_fn != nullptr) {

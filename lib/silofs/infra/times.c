@@ -20,12 +20,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <time.h>
 
 #include <silofs/ccattr.h>
 #include <silofs/syscall.h>
 #include <silofs/panic.h>
-#include <time.h>
-#include "times.h"
+#include <silofs/infra/times.h>
 
 static struct timespec silofs_start_ts_mono;
 

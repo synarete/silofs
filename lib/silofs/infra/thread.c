@@ -92,7 +92,7 @@ static void *silofs_thread_start(void *arg)
 }
 
 int silofs_thread_create(struct silofs_thread *th, silofs_threadexec_fn exec,
-			 void *arg, const char *name)
+                         void *arg, const char *name)
 {
 	pthread_attr_t attr;
 	size_t nlen = 0;
@@ -206,7 +206,7 @@ bool silofs_mutex_trylock(struct silofs_mutex *mutex)
 }
 
 bool silofs_mutex_timedlock(struct silofs_mutex *mutex,
-			    const struct timespec *abstime)
+                            const struct timespec *abstime)
 {
 	int err;
 	bool status = false;
@@ -282,7 +282,7 @@ void silofs_cond_wait(struct silofs_cond *cond, struct silofs_mutex *mutex)
 }
 
 int silofs_cond_timedwait(struct silofs_cond *cond, struct silofs_mutex *mutex,
-			  const struct timespec *ts)
+                          const struct timespec *ts)
 {
 	int err;
 
@@ -294,7 +294,7 @@ int silofs_cond_timedwait(struct silofs_cond *cond, struct silofs_mutex *mutex,
 }
 
 int silofs_cond_ntimedwait(struct silofs_cond *cond,
-			   struct silofs_mutex *mutex, time_t nsec)
+                           struct silofs_mutex *mutex, time_t nsec)
 {
 	struct timespec ts;
 

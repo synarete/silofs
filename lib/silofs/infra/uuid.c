@@ -29,7 +29,7 @@ void silofs_uuid_generate(struct silofs_uuid *uu)
 }
 
 void silofs_uuid_assign(struct silofs_uuid *uu,
-			const struct silofs_uuid *other)
+                        const struct silofs_uuid *other)
 {
 	silofs_uuid_assign2(uu, other->id);
 }
@@ -45,7 +45,7 @@ void silofs_uuid_copyto(const struct silofs_uuid *uu, uint8_t u[16])
 }
 
 long silofs_uuid_compare(const struct silofs_uuid *uu1,
-			 const struct silofs_uuid *uu2)
+                         const struct silofs_uuid *uu2)
 {
 	return uuid_compare(uu1->id, uu2->id);
 }

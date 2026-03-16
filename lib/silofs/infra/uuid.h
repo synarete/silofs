@@ -22,13 +22,13 @@ struct silofs_uuid;
 void silofs_uuid_generate(struct silofs_uuid *uu);
 
 void silofs_uuid_assign(struct silofs_uuid       *uu,
-			const struct silofs_uuid *other);
+                        const struct silofs_uuid *other);
 
 void silofs_uuid_assign2(struct silofs_uuid *uu, const uint8_t u[16]);
 
 void silofs_uuid_copyto(const struct silofs_uuid *uu, uint8_t u[16]);
 
 long silofs_uuid_compare(const struct silofs_uuid *uu1,
-			 const struct silofs_uuid *uu2);
+                         const struct silofs_uuid *uu2);
 
 #endif /* SILOFS_UUID_H_ */

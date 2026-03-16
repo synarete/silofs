@@ -55,25 +55,13 @@ struct silofs_prand_in {
 	uint64_t extra;
 };
 
-static uint64_t prandgen_gen_extra(const struct silofs_prandgen *prng)
-{
-	struct timespec ts;
-	uint64_t extra = prng->count;
-
-	silofs_clock_gettime_boot(&ts);
-	extra ^= silofs_twang64((uint64_t)ts.tv_nsec);
-	extra ^= silofs_twang64(prng->slot + (uint64_t)gettid());
-
-	return extra;
-}
-
 static void prandgen_fill_in(const struct silofs_prandgen *prng,
                              struct silofs_prand_in *prin)
 {
 	STATICASSERT_EQ(sizeof(prin->key), sizeof(prng->key));
 
 	memcpy(prin->key, prng->key, sizeof(prin->key));
-	prin->extra = prandgen_gen_extra(prng);
+	prin->extra = prng->count ^ (uint64_t)prng->xbits;
 }
 
 static void prandgen_mkhash(const struct silofs_prandgen *prng,
@@ -119,11 +107,13 @@ static void prandgen_renew_prandom(struct silofs_prandgen *prng)
 	prandgen_refill_prandom(prng);
 }
 
-static void prandgen_refresh_key(struct silofs_prandgen *prng)
+static void prandgen_refresh_state(struct silofs_prandgen *prng)
 {
 	struct timespec ts;
 
 	silofs_clock_gettime_mono(&ts);
+	prng->xbits = (uint32_t)ts.tv_nsec;
+
 	if (((prng->cycle % 31) == 0) || ((prng->key_ts + 10) < ts.tv_sec)) {
 		fill_random(prng->key, sizeof(prng->key));
 		prng->key_ts = ts.tv_sec;
@@ -169,7 +159,7 @@ static bool prandgen_has_more(const struct silofs_prandgen *prng)
 
 static void prandgen_prepare(struct silofs_prandgen *prng)
 {
-	prandgen_refresh_key(prng);
+	prandgen_refresh_state(prng);
 	if ((!prng->slot && !prng->cycle) || !prandgen_has_more(prng)) {
 		prandgen_renew_prandom(prng);
 		prng->cycle++;

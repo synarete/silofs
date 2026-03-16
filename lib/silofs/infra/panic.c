@@ -109,7 +109,7 @@ static int silofs_backtrace_calls(silofs_backtrace_cb bt_cb)
 			goto out;
 		}
 		err = unw_get_proc_name(&bt_ctx.cursor, bt_ctx.sym,
-					sizeof(bt_ctx.sym) - 1, &bt_ctx.off);
+		                        sizeof(bt_ctx.sym) - 1, &bt_ctx.off);
 		if (err) {
 			memset(bt_ctx.sym, '?', 8);
 		}
@@ -142,8 +142,8 @@ static bool silofs_backtrace_enabled = true;
 static int backtrace_log_err(const struct silofs_backtrace_args *bt_args)
 {
 	silofs_logf(SILOFS_LOG_ERROR, nullptr, 0,
-		    "#%-2d [<%p>] 0x%lx %s+0x%lx", bt_args->step, bt_args->ip,
-		    bt_args->sp, bt_args->sym, bt_args->off);
+	            "#%-2d [<%p>] 0x%lx %s+0x%lx", bt_args->step, bt_args->ip,
+	            bt_args->sp, bt_args->sym, bt_args->off);
 	return 0;
 }
 
@@ -185,7 +185,7 @@ static void silofs_dump_addr2line(void)
 	bt_len = unw_backtrace(bt_arr, bt_cnt);
 	backtrace_addrs_to_str(bt_addrs, sizeof(bt_addrs) - 1, bt_arr, bt_len);
 	silofs_log_error("addr2line -a -C -e %s -f -p -s %s",
-			 program_invocation_name, bt_addrs);
+	                 program_invocation_name, bt_addrs);
 }
 #else
 static void silofs_dump_addr2line(void)
@@ -242,7 +242,7 @@ silofs_fatal_by_(const struct silofs_fatal_msg *fm)
 
 silofs_attr_noreturn static void
 silofs_fatal_op(intmax_t a, const char *op, intmax_t b,
-		const struct silofs_fileline *fl)
+                const struct silofs_fileline *fl)
 {
 	struct silofs_fatal_msg fm = {
 		.fl.file = fl->file,
@@ -402,7 +402,7 @@ void silofs_expect_null_(const void *ptr, const char *file, int line)
 }
 
 void silofs_expect_eqs_(const char *s, const char *z, const char *file,
-			int line)
+                        int line)
 {
 	const int cmp = strcmp(s, z);
 
@@ -429,7 +429,7 @@ static size_t find_first_not_eq(const uint8_t *p, const uint8_t *q, size_t n)
 
 silofs_attr_noreturn static void
 silofs_die_not_eqm(const uint8_t *p, const uint8_t *q, size_t n,
-		   const char *file, int line)
+                   const char *file, int line)
 {
 	struct silofs_fatal_msg fm = {
 		.fl.file = file,
@@ -443,7 +443,7 @@ silofs_die_not_eqm(const uint8_t *p, const uint8_t *q, size_t n,
 }
 
 void silofs_expect_eqm_(const void *p, const void *q, size_t n, const char *fl,
-			int ln)
+                        int ln)
 {
 	if (n && (memcmp(p, q, n) != 0)) {
 		silofs_die_not_eqm(p, q, n, fl, ln);

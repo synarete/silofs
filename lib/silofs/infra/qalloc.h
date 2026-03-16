@@ -67,7 +67,7 @@ struct silofs_qalloc {
 
 /* quick allocator */
 int silofs_qalloc_init(struct silofs_qalloc *qal, size_t memsize,
-		       enum silofs_qallocf flags);
+                       enum silofs_qallocf flags);
 
 int silofs_qalloc_fini(struct silofs_qalloc *qal);
 
@@ -76,12 +76,12 @@ void *silofs_qalloc_malloc(struct silofs_qalloc *qal, size_t nb, int fl);
 void silofs_qalloc_free(struct silofs_qalloc *qal, void *p, size_t nb, int fl);
 
 void silofs_qalloc_stat(const struct silofs_qalloc *qal,
-			struct silofs_alloc_stat   *out_stat);
+                        struct silofs_alloc_stat   *out_stat);
 
 int silofs_qalloc_resolve(const struct silofs_qalloc *qal, void *ptr,
-			  size_t len, struct silofs_iovec *iov);
+                          size_t len, struct silofs_iovec *iov);
 
 int silofs_qalloc_mcheck(const struct silofs_qalloc *qal, const void *ptr,
-			 size_t nbytes);
+                         size_t nbytes);
 
 #endif /* SILOFS_QALLOC_H_ */

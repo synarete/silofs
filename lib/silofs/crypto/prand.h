@@ -28,6 +28,7 @@ struct silofs_prandgen {
 	uint64_t cycle;
 	uint64_t count;
 	uint64_t slot;
+	time_t   key_ts;
 	/* SHA3-DRBG via libgcrypt */
 	struct silofs_mdigest_hd md_hd;
 };

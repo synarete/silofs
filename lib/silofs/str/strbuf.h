@@ -17,7 +17,9 @@
 #ifndef SILOFS_STRBUF_H_
 #define SILOFS_STRBUF_H_
 
+#include <stdlib.h>
 #include <silofs/ccattr.h>
+
 
 struct silofs_strview;
 struct silofs_strspan;
@@ -32,27 +34,27 @@ void silofs_strbuf_init(struct silofs_strbuf *sbuf);
 void silofs_strbuf_fini(struct silofs_strbuf *sbuf);
 
 void silofs_strbuf_as_sv(const struct silofs_strbuf *sbuf,
-                         struct silofs_strview      *out_sv);
+			 struct silofs_strview      *out_sv);
 
 void silofs_strbuf_as_ss(struct silofs_strbuf  *sbuf,
-                         struct silofs_strspan *out_ss);
+			 struct silofs_strspan *out_ss);
 
 void silofs_strbuf_reset(struct silofs_strbuf *sbuf);
 
 void silofs_strbuf_bzero(struct silofs_strbuf *sbuf, size_t n);
 
 void silofs_strbuf_assign(struct silofs_strbuf       *sbuf,
-                          const struct silofs_strbuf *other);
+			  const struct silofs_strbuf *other);
 
 void silofs_strbuf_setup(struct silofs_strbuf        *sbuf,
-                         const struct silofs_strview *sv);
+			 const struct silofs_strview *sv);
 
 void silofs_strbuf_setup_by(struct silofs_strbuf *sbuf, const char *s);
 
 void silofs_strbuf_setup_by2(struct silofs_strbuf *sbuf, const char *s,
-                             size_t n);
+			     size_t n);
 
 silofs_attr_printf23 size_t silofs_strbuf_sprintf(struct silofs_strbuf *sbuf,
-                                                  const char *fmt, ...);
+						  const char *fmt, ...);
 
 #endif /* SILOFS_STRBUF_H_ */

@@ -253,6 +253,10 @@ CFLAGS += -funsafe-loop-optimizations
 endif
 endif
 
+ifeq ($(CC), clang)
+CFLAGS += -Wno-odr
+endif
+
 # Analyzer flags
 ifeq ($(ANALYZER), 1)
 ifeq ($(CC), gcc)
@@ -320,7 +324,7 @@ dist: configure
 configure: bootstrap
 	$(call report, $@, $(CONFIGURE_OPTS))
 	@if [ ! -e $(BUILDDIR)/config.status ]; then \
-	    cd $(BUILDDIR) && $(TOP)/configure $(CONFIGURE_OPTS); \
+	    cd $(BUILDDIR) && $(TOP)/configure CC=$(CC) $(CONFIGURE_OPTS); \
 	fi
 
 bootstrap:

@@ -117,6 +117,18 @@ format_vspace_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
 	return 0;
 }
 
+static int
+format_vnode_zero_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
+{
+	const struct silofs_vaddr vaddr = {
+		.off   = 0,
+		.vtype = vtype,
+	};
+	struct silofs_vnode_info *vni = nullptr;
+
+	return silofs_spawn_vnode2_at(pexec, &vaddr, &vni);
+}
+
 static int format_vspaces(struct silofs_pexec_ctx *pexec)
 {
 	enum silofs_vtype vtype = SILOFS_VTYPE_NONE;
@@ -131,6 +143,10 @@ static int format_vspaces(struct silofs_pexec_ctx *pexec)
 			return err;
 		}
 		err = format_vspace_of(pexec, vtype);
+		if (err) {
+			return err;
+		}
+		err = format_vnode_zero_of(pexec, vtype);
 		if (err) {
 			return err;
 		}

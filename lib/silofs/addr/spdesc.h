@@ -17,7 +17,7 @@
 #ifndef SILOFS_SPDESC_H_
 #define SILOFS_SPDESC_H_
 
-#include "paddr.h"
+#include <silofs/addr/paddr.h>
 
 /* space descriptor as p-addresses range */
 struct silofs_spdesc {

@@ -18,7 +18,7 @@
 #define SILOFS_UADDR_H_
 
 #include <silofs/ondisk.h>
-#include "laddr.h"
+#include <silofs/addr/laddr.h>
 
 /* logical addressing of space-mapping nodes */
 struct silofs_uaddr {

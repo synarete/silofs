@@ -20,11 +20,11 @@
 
 #include <silofs/infra.h>
 #include <silofs/str.h>
-#include "offlba.h"
-#include "htox.h"
-#include "stype.h"
-#include "blobid.h"
-#include "laddr.h"
+#include <silofs/addr/offlba.h>
+#include <silofs/addr/htox.h>
+#include <silofs/addr/stype.h>
+#include <silofs/addr/blobid.h>
+#include <silofs/addr/laddr.h>
 
 static size_t height_to_lseg_size(enum silofs_height height)
 {

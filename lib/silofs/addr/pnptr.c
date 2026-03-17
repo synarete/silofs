@@ -15,10 +15,8 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include "htox.h"
-#include "pnptr.h"
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+#include <silofs/addr/htox.h>
+#include <silofs/addr/pnptr.h>
 
 static const struct silofs_pnptr s_pnptr_none = {
 	.nmeta.ciargs.algo = SILOFS_CIPHER_NONE,

@@ -22,8 +22,8 @@
 #include <silofs/ondisk.h>
 #include <silofs/str.h>
 #include <silofs/crypto.h>
-#include "stype.h"
-#include "layerid.h"
+#include <silofs/addr/stype.h>
+#include <silofs/addr/layerid.h>
 
 struct silofs_blobid {
 	struct silofs_layerid layerid;

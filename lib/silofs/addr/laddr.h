@@ -17,8 +17,8 @@
 #ifndef SILOFS_LADDR_H_
 #define SILOFS_LADDR_H_
 
-#include "layerid.h"
-#include "blobid.h"
+#include <silofs/addr/layerid.h>
+#include <silofs/addr/blobid.h>
 
 struct silofs_strbuf;
 

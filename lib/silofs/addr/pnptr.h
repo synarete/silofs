@@ -17,7 +17,7 @@
 #ifndef SILOFS_PNPTR_H_
 #define SILOFS_PNPTR_H_
 
-#include "nmeta.h"
+#include <silofs/addr/nmeta.h>
 
 /* pnode meta pointer */
 struct silofs_pnptr {

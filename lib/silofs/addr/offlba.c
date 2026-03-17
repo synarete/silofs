@@ -17,7 +17,7 @@
 #include <silofs/configs.h>
 #include <silofs/ondisk.h>
 #include <silofs/infra.h>
-#include "offlba.h"
+#include <silofs/addr/offlba.h>
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

@@ -17,8 +17,8 @@
 #include <silofs/configs.h>
 #include <silofs/errors.h>
 #include <silofs/infra.h>
-#include "mbref.h"
-#include "fsref.h"
+#include <silofs/addr/mbref.h>
+#include <silofs/addr/fsref.h>
 
 void silofs_fsmeta_setup(struct silofs_fsmeta *fsmeta)
 {

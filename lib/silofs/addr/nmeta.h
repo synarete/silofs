@@ -18,7 +18,7 @@
 #define SILOFS_NMETA_H_
 
 #include <silofs/crypto.h>
-#include "paddr.h"
+#include <silofs/addr/paddr.h>
 
 /* nodes meta settings */
 struct silofs_nmeta {

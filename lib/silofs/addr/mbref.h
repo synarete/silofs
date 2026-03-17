@@ -18,7 +18,7 @@
 #define SILOFS_MBREF_H_
 
 #include <silofs/types.h>
-#include "paddr.h"
+#include <silofs/addr/paddr.h>
 
 /* MBR reference address */
 struct silofs_mbref {

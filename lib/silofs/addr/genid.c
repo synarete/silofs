@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include "genid.h"
+#include <silofs/addr/genid.h>
 
 static void make_prandom(struct silofs_prandgen *prng, void *p, size_t n)
 {

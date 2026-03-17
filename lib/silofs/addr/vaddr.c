@@ -16,10 +16,10 @@
  */
 #include <silofs/configs.h>
 #include <silofs/infra.h>
-#include "offlba.h"
-#include "stype.h"
-#include "htox.h"
-#include "vaddr.h"
+#include <silofs/addr/offlba.h>
+#include <silofs/addr/stype.h>
+#include <silofs/addr/htox.h>
+#include <silofs/addr/vaddr.h>
 
 static uint64_t cpu_to_off_vtype(off_t off, enum silofs_vtype vtype)
 {

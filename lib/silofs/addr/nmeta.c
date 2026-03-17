@@ -15,9 +15,9 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include "htox.h"
-#include "paddr.h"
-#include "nmeta.h"
+#include <silofs/addr/htox.h>
+#include <silofs/addr/paddr.h>
+#include <silofs/addr/nmeta.h>
 
 static const struct silofs_nmeta s_nmeta_none = {
 	.ciargs.algo = SILOFS_CIPHER_NONE,

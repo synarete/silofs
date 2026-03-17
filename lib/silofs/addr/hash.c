@@ -20,9 +20,9 @@
 
 #include <silofs/infra.h>
 #include <silofs/str.h>
-#include "htox.h"
-#include "stype.h"
-#include "hash.h"
+#include <silofs/addr/htox.h>
+#include <silofs/addr/stype.h>
+#include <silofs/addr/hash.h>
 
 bool silofs_hash256_isequal(const struct silofs_hash256 *hash,
                             const struct silofs_hash256 *other)

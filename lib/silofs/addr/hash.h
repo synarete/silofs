@@ -19,8 +19,8 @@
 
 #include <stdlib.h>
 #include <stdint.h>
-#include <silofs/ondisk.h>
 
+struct silofs_hash256;
 struct silofs_strview;
 struct silofs_strbuf;
 

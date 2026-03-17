@@ -72,6 +72,9 @@ class SubcmdExec:
                 txt = out.strip()
             except subprocess.TimeoutExpired:
                 proc.kill()
+                std_out, std_err = proc.communicate()  # drain pipes
+                out = std_err or std_out
+                txt = out.strip()
                 exp = True
             ret = proc.returncode
             if exp:
@@ -132,7 +135,7 @@ class _Shell(SubcmdExec):
     ) -> int:
         self.logcmd("SH", cmd, wdir)
         with subprocess.Popen(
-            cmd,
+            shlex.split(cmd),
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             cwd=str(wdir),

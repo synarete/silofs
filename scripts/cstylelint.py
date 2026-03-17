@@ -295,11 +295,7 @@ def _is_cfile(path: Path) -> bool:
 
 def _read_cfile(path: Path) -> str:
     """Read input C source file, line-by-line."""
-    output = ""
-    with path.open("r", encoding="UTF-8") as fh:
-        for line in fh:
-            output = output + line
-    return output
+    return path.read_text(encoding="UTF-8")
 
 
 def _reparse_cfile(txt: str) -> str:

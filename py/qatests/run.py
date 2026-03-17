@@ -31,9 +31,7 @@ class RunArgs:
 
 
 def _seed_random(args: RunArgs) -> None:
-    base = args.start_time
-    seed = base.year * base.day * base.hour * base.minute / (base.second + 1)
-    random.seed(int(seed))
+    random.seed(int(args.start_time.timestamp() * 1e6))
 
 
 def _report_host(_: RunArgs) -> None:

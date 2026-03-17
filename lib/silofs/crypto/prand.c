@@ -206,3 +206,10 @@ uint64_t silofs_prandgen_take64(struct silofs_prandgen *prng)
 	silofs_prandgen_take(prng, &u, sizeof(u));
 	return u;
 }
+
+/*
+ * TODO-0063: Extend with APIs to ingect external entropy
+ *
+ * Use the actual file-system activity as a source of entropy and inject it
+ * into PRNG state.
+ */

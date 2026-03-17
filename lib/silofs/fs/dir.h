@@ -18,7 +18,7 @@
 #define SILOFS_DIR_H_
 
 #include <silofs/infra.h>
-#include "inode.h"
+#include <silofs/fs/inode.h>
 
 struct silofs_task_ctx;
 struct silofs_readdir_ctx;

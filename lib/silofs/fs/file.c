@@ -23,9 +23,9 @@
 #include <limits.h>
 
 #include <silofs/infra.h>
-#include "vfs.h"
-#include "flush.h"
-#include "file.h"
+#include <silofs/fs/vfs.h>
+#include <silofs/fs/flush.h>
+#include <silofs/fs/file.h>
 #include <silofs/run.h>
 
 struct silofs_file_ctx {

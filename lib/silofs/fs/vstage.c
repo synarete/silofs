@@ -221,12 +221,11 @@ vstgc_lcache(const struct silofs_vstage_ctx *vstg_ctx)
 static void vstgc_log_cache_stat(const struct silofs_vstage_ctx *vstg_ctx)
 {
 	const struct silofs_lcache *lcache = vstgc_lcache(vstg_ctx);
-	const struct silofs_dirtyqs *dqs   = &lcache->lc_dirtyqs;
 
 	log_dbg("cache-stat: accum_unodes=%lu accum_inodes=%lu "
 	        "accum_vnodes=%lu ui=%lu vi=%lu",
-	        dqs->dq_unis.dq_accum, dqs->dq_iis.dq_accum,
-	        dqs->dq_vnis.dq_accum, lcache->lc_uni_hmapq.hmq_lru.sz,
+	        lcache->lc_unis_dq.dq_accum, lcache->ls_iis_dq.dq_accum,
+	        lcache->lc_vnis_dq.dq_accum, lcache->lc_uni_hmapq.hmq_lru.sz,
 	        lcache->lc_vni_hmapq.hmq_lru.sz);
 }
 

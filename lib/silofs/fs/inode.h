@@ -26,7 +26,7 @@
 #include <silofs/macros.h>
 #include <silofs/ondisk.h>
 #include <silofs/types.h>
-#include "uidgid.h"
+#include <silofs/fs/uidgid.h>
 
 struct silofs_task_ctx;
 

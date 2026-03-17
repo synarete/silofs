@@ -21,7 +21,7 @@
 #include <silofs/ioctls.h>
 #include <silofs/infra.h>
 #include <silofs/nodes.h>
-#include "super.h"
+#include <silofs/fs/super.h>
 
 /* local functions */
 static ssize_t *

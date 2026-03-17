@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include "uidgid.h"
+#include <silofs/fs/uidgid.h>
 
 /*
  * TODO-0043: Map uig/gid "nobody" to host values

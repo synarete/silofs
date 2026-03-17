@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include "flush.h"
+#include <silofs/fs/flush.h>
 #include <silofs/run.h>
 
 static bool lni_isunode(const struct silofs_lnode_info *lni)
@@ -405,18 +405,30 @@ static void flusher_add_dirty_unis_of(struct silofs_flusher *flusher,
 	}
 }
 
-static void flusher_add_dirty_alt_of(struct silofs_flusher *flusher,
-                                     struct silofs_dirtyqs *dqs)
+static struct silofs_lcache *
+flusher_lcache(const struct silofs_flusher *flusher)
 {
-	flusher_add_dirty_vnis_of(flusher, &dqs->dq_vnis);
-	flusher_add_dirty_unis_of(flusher, &dqs->dq_unis);
+	silofs_assert_not_null(flusher->task);
+	silofs_assert_not_null(flusher->task->lcache);
+
+	return flusher->task->lcache;
 }
 
-static void flusher_add_dirty_any_of(struct silofs_flusher *flusher,
-                                     struct silofs_dirtyqs *dqs)
+static void flusher_add_dirty_alt_of(struct silofs_flusher *flusher)
 {
-	flusher_add_dirty_iis_of(flusher, &dqs->dq_iis);
-	flusher_add_dirty_alt_of(flusher, dqs);
+	struct silofs_lcache *lcache = flusher_lcache(flusher);
+
+	flusher_add_dirty_vnis_of(flusher, &lcache->lc_vnis_dq);
+	flusher_add_dirty_unis_of(flusher, &lcache->lc_unis_dq);
+}
+
+static void flusher_add_dirty_any_of(struct silofs_flusher *flusher)
+{
+	struct silofs_lcache *lcache = flusher_lcache(flusher);
+
+	flusher_add_dirty_iis_of(flusher, &lcache->ls_iis_dq);
+	flusher_add_dirty_vnis_of(flusher, &lcache->lc_vnis_dq);
+	flusher_add_dirty_unis_of(flusher, &lcache->lc_unis_dq);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -463,14 +475,6 @@ static struct silofs_env *flusher_env(const struct silofs_flusher *flusher)
 	silofs_assert_not_null(flusher->task);
 
 	return flusher->task->env;
-}
-
-static struct silofs_dirtyqs *
-flusher_dirtyqs_from_task(const struct silofs_flusher *flusher)
-{
-	const struct silofs_env *env = flusher_env(flusher);
-
-	return &env->base.lcache->lc_dirtyqs;
 }
 
 static int flusher_require_mutable_llink(const struct silofs_flusher *flusher,
@@ -806,13 +810,11 @@ static int flusher_process_dset_at(struct silofs_flusher *flusher, size_t slot)
 
 static void flusher_fill_dsets(struct silofs_flusher *flusher)
 {
-	struct silofs_dirtyqs *dirtyqs = flusher_dirtyqs_from_task(flusher);
-
 	if ((flusher->ii == nullptr) || (flusher->flags & SILOFS_CTLF_NOW)) {
-		flusher_add_dirty_any_of(flusher, dirtyqs);
+		flusher_add_dirty_any_of(flusher);
 	} else {
 		flusher_add_dirty_ii(flusher, flusher->ii);
-		flusher_add_dirty_alt_of(flusher, dirtyqs);
+		flusher_add_dirty_alt_of(flusher);
 	}
 }
 
@@ -985,13 +987,12 @@ static bool need_flush_by_ii(const struct silofs_inode_info *ii, int flags)
 static bool need_flush_by_env(const struct silofs_env *env, int flags)
 {
 	const struct silofs_lcache *lcache = env->base.lcache;
-	const struct silofs_dirtyqs *dqs   = &lcache->lc_dirtyqs;
 	size_t ndirty;
 	size_t thresh;
 
 	thresh = flush_threshold_of(flags);
-	ndirty = dqs->dq_unis.dq_accum + dqs->dq_iis.dq_accum +
-	         dqs->dq_vnis.dq_accum;
+	ndirty = lcache->lc_unis_dq.dq_accum + lcache->ls_iis_dq.dq_accum +
+	         lcache->lc_vnis_dq.dq_accum;
 	return (ndirty > thresh);
 }
 

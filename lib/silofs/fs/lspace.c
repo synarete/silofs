@@ -22,9 +22,9 @@
 #include <silofs/infra.h>
 #include <silofs/addr.h>
 #include <silofs/pv.h>
-#include "lcache.h"
-#include "lsmap.h"
-#include "lspace.h"
+#include <silofs/fs/lcache.h>
+#include <silofs/fs/lsmap.h>
+#include <silofs/fs/lspace.h>
 #include <silofs/run.h>
 
 static void lsmap_vaddr_of(const struct silofs_vaddr *ref_vaddr,

@@ -24,32 +24,32 @@ static void lcache_evict_some(struct silofs_lcache *lcache);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void dirtyqs_init(struct silofs_dirtyqs *dqs)
+static void lcache_init_dqs(struct silofs_lcache *lcache)
 {
-	silofs_dirtyq_init(&dqs->dq_unis);
-	silofs_dirtyq_init(&dqs->dq_iis);
-	silofs_dirtyq_init(&dqs->dq_vnis);
+	silofs_dirtyq_init(&lcache->lc_unis_dq);
+	silofs_dirtyq_init(&lcache->ls_iis_dq);
+	silofs_dirtyq_init(&lcache->lc_vnis_dq);
 }
 
-static void dirtyqs_fini(struct silofs_dirtyqs *dqs)
+static void lcache_fini_dqs(struct silofs_lcache *lcache)
 {
-	silofs_dirtyq_fini(&dqs->dq_unis);
-	silofs_dirtyq_fini(&dqs->dq_iis);
-	silofs_dirtyq_fini(&dqs->dq_vnis);
+	silofs_dirtyq_fini(&lcache->lc_unis_dq);
+	silofs_dirtyq_fini(&lcache->ls_iis_dq);
+	silofs_dirtyq_fini(&lcache->lc_vnis_dq);
 }
 
 static struct silofs_dirtyq *
-dirtyqs_get(struct silofs_dirtyqs *dqs, enum silofs_vtype vtype)
+lcache_get_dq(struct silofs_lcache *lcache, enum silofs_vtype vtype)
 {
 	struct silofs_dirtyq *dq;
 
 	if (silofs_vtype_isinode(vtype)) {
-		dq = &dqs->dq_iis;
+		dq = &lcache->ls_iis_dq;
 	} else if (silofs_vtype_isvnode(vtype)) {
-		dq = &dqs->dq_vnis;
+		dq = &lcache->lc_vnis_dq;
 	} else {
 		silofs_assert(silofs_vtype_isunode(vtype));
-		dq = &dqs->dq_unis;
+		dq = &lcache->lc_unis_dq;
 	}
 	return dq;
 }
@@ -107,7 +107,7 @@ static bool vni_isinode(const struct silofs_vnode_info *vni)
 static struct silofs_dirtyq *
 lcache_dirtyq_by(struct silofs_lcache *lcache, enum silofs_vtype vtype)
 {
-	return dirtyqs_get(&lcache->lc_dirtyqs, vtype);
+	return lcache_get_dq(lcache, vtype);
 }
 
 static int lcache_init_uni_hmapq(struct silofs_lcache *lcache)
@@ -945,7 +945,7 @@ int silofs_lcache_init(struct silofs_lcache *lcache,
 	int err;
 
 	lcache->lc_alloc = alloc;
-	dirtyqs_init(&lcache->lc_dirtyqs);
+	lcache_init_dqs(lcache);
 
 	err = lcache_init_uamap(lcache);
 	if (err) {
@@ -963,7 +963,7 @@ out_err:
 
 void silofs_lcache_fini(struct silofs_lcache *lcache)
 {
-	dirtyqs_fini(&lcache->lc_dirtyqs);
+	lcache_fini_dqs(lcache);
 	lcache_fini_hmapqs(lcache);
 	lcache_fini_uamap(lcache);
 	lcache->lc_alloc = nullptr;

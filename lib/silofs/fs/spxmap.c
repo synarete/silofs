@@ -16,7 +16,7 @@
  */
 #include <silofs/configs.h>
 #include <silofs/nodes.h>
-#include "spxmap.h"
+#include <silofs/fs/spxmap.h>
 
 /* single entry of free space */
 struct silofs_spa_entry {

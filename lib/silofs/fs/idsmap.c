@@ -18,8 +18,8 @@
 #include <silofs/types.h>
 #include <silofs/errors.h>
 #include <silofs/infra.h>
-#include "uidgid.h"
-#include "idsmap.h"
+#include <silofs/fs/uidgid.h>
+#include <silofs/fs/idsmap.h>
 
 enum {
 	SILOFS_IDSMAP_HCAP = 509,

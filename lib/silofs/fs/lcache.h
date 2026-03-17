@@ -20,22 +20,18 @@
 #include <silofs/infra.h>
 #include <silofs/addr.h>
 #include <silofs/nodes.h>
-#include "spxmap.h"
-
-/* dirty-queues of cached-elements by owner */
-struct silofs_dirtyqs {
-	struct silofs_dirtyq dq_unis;
-	struct silofs_dirtyq dq_iis;
-	struct silofs_dirtyq dq_vnis;
-};
+#include <silofs/fs/spxmap.h>
 
 /* in-memory caching */
 struct silofs_lcache {
-	struct silofs_alloc  *lc_alloc;
-	struct silofs_hmapq   lc_uni_hmapq;
-	struct silofs_hmapq   lc_vni_hmapq;
-	struct silofs_dirtyqs lc_dirtyqs;
-	struct silofs_uamap   lc_uamap;
+	struct silofs_alloc *lc_alloc;
+	struct silofs_hmapq  lc_uni_hmapq;
+	struct silofs_uamap  lc_uamap;
+	struct silofs_dirtyq lc_unis_dq;
+
+	struct silofs_hmapq  lc_vni_hmapq;
+	struct silofs_dirtyq ls_iis_dq;
+	struct silofs_dirtyq lc_vnis_dq;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

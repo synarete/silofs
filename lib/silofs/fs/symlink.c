@@ -16,8 +16,8 @@
  */
 #include <silofs/configs.h>
 #include <silofs/nodes.h>
-#include "vfs.h"
-#include "symlink.h"
+#include <silofs/fs/vfs.h>
+#include <silofs/fs/symlink.h>
 #include <silofs/run.h>
 
 struct silofs_symval_desc {

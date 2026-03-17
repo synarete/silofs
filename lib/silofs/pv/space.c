@@ -138,7 +138,16 @@ static int format_vspaces(struct silofs_pexec_ctx *pexec)
 	return 0;
 }
 
-int silofs_format_pv(struct silofs_pexec_ctx *pexec)
+static void resolve_uber(const struct silofs_pexec_ctx *pexec,
+                         struct silofs_pnptr *out_pnptr)
+{
+	const struct silofs_uber_info *ubi = pexec->ubref->ubi;
+
+	silofs_pnptr_assign(out_pnptr, silofs_pni_self(&ubi->ub_pni));
+}
+
+int silofs_format_pv(struct silofs_pexec_ctx *pexec,
+                     struct silofs_pnptr *out_pnptr)
 {
 	int err;
 
@@ -150,6 +159,7 @@ int silofs_format_pv(struct silofs_pexec_ctx *pexec)
 	if (err) {
 		return err;
 	}
+	resolve_uber(pexec, out_pnptr);
 	return 0;
 }
 

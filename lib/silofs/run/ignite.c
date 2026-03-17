@@ -182,33 +182,36 @@ static int pre_format_pv(struct silofs_task_ctx *task)
 	return silofs_env_reinit_ciphers(task->env);
 }
 
-static int post_format_pv(struct silofs_task_ctx *task)
+static int
+post_format_pv(struct silofs_task_ctx *task, const struct silofs_pnptr *pnptr)
 {
-	silofs_env_refresh_root(task->env);
+	silofs_env_refresh_root(task->env, pnptr);
 	return flush_destage_dirty(task);
 }
 
-static int do_format_pv(struct silofs_task_ctx *task)
+static int
+do_format_pv(struct silofs_task_ctx *task, struct silofs_pnptr *out_pnptr)
 {
 	struct silofs_pexec_ctx pexec;
 
 	silofs_make_pexec(task, &pexec);
-	return silofs_format_pv(&pexec);
+	return silofs_format_pv(&pexec, out_pnptr);
 }
 
 int silofs_exec_format_pv(struct silofs_task_ctx *task)
 {
+	struct silofs_pnptr pnptr = {};
 	int err;
 
 	err = pre_format_pv(task);
 	if (err) {
 		return err;
 	}
-	err = do_format_pv(task);
+	err = do_format_pv(task, &pnptr);
 	if (err) {
 		return err;
 	}
-	err = post_format_pv(task);
+	err = post_format_pv(task, &pnptr);
 	if (err) {
 		return err;
 	}

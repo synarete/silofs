@@ -23,7 +23,8 @@
 
 struct silofs_pexec_ctx;
 
-int silofs_format_pv(struct silofs_pexec_ctx *pexec);
+int silofs_format_pv(struct silofs_pexec_ctx *pexec,
+                     struct silofs_pnptr     *out_pnptr);
 
 int silofs_reload_pv(struct silofs_pexec_ctx   *pexec,
                      const struct silofs_pnptr *pnptr);

@@ -25,21 +25,10 @@
 #include "task.h"
 #include "env.h"
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static const struct silofs_pnptr *ubi_pnptr(const struct silofs_uber_info *ubi)
+void silofs_env_refresh_root(struct silofs_env *env,
+                             const struct silofs_pnptr *pnptr)
 {
-	return &ubi->ub_pni.pn_self;
-}
-
-void silofs_env_refresh_root(struct silofs_env *env)
-{
-	const struct silofs_uber_info *ubi = env->ubref.ubi;
-	struct silofs_mbr_info *mbi        = &env->mbis.fs_mbi;
-
-	if (ubi != nullptr) {
-		silofs_mbi_set_root(mbi, ubi_pnptr(ubi));
-	}
+	silofs_mbi_set_root(&env->mbis.fs_mbi, pnptr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

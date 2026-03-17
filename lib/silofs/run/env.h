@@ -102,7 +102,8 @@ void silofs_env_rwlock(struct silofs_env *env, bool ex);
 
 void silofs_env_rwunlock(struct silofs_env *env);
 
-void silofs_env_refresh_root(struct silofs_env *env);
+void silofs_env_refresh_root(struct silofs_env         *env,
+                             const struct silofs_pnptr *pnptr);
 
 int silofs_env_format_super(struct silofs_env *env, size_t capacity);
 

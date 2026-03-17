@@ -22,15 +22,19 @@
 #include <time.h>
 #include <silofs/crypto/mdigest.h>
 
-/* pseudo random generator */
+/* prng state input */
+struct silofs_prndstate {
+	uint32_t s[8];
+};
+
+/* pseudo random generator using libgcrypt SHA3 */
 struct silofs_prandgen {
-	uint64_t prandom[64];
-	uint8_t  key[32];
-	uint64_t count;
-	uint64_t xbits;
-	uint32_t slot;
-	time_t   key_ts;
-	/* SHA3-DRBG via libgcrypt */
+	uint64_t                 prandom[128];
+	struct silofs_prndstate  state[32];
+	uint8_t                  key[32];
+	uint64_t                 count;
+	uint32_t                 nstate;
+	uint32_t                 slot;
 	struct silofs_mdigest_hd md_hd;
 };
 
@@ -39,6 +43,9 @@ struct silofs_prandgen {
 int silofs_prandgen_init(struct silofs_prandgen *prng);
 
 void silofs_prandgen_fini(struct silofs_prandgen *prng);
+
+void silofs_prandgen_feed(struct silofs_prandgen        *prng,
+                          const struct silofs_prndstate *ps);
 
 void silofs_prandgen_take(struct silofs_prandgen *prng, void *buf, size_t bsz);
 

@@ -46,7 +46,7 @@ struct silofs_task_ctx {
 	struct silofs_inode_info   *looseq;
 	struct silofs_uber_ref     *ubref;
 	uint64_t                    upper_id;
-	time_t                      op_start_time;
+	struct timespec             op_start_time;
 	volatile int8_t             interrupt;
 	volatile bool               fs_locked;
 	volatile bool               rw_locked;

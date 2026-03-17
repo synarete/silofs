@@ -44,13 +44,31 @@
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static void op_feed_prng(const struct silofs_task_ctx *task)
+{
+	const struct silofs_task_auth *ta = &task->auth;
+	const struct silofs_prndstate ps  = {
+		 .s[0] = (uint32_t)((uintptr_t)ta) >> 5,
+		 .s[1] = (uint32_t)gettid(),
+		 .s[3] = (uint32_t)silofs_twang64(ta->unique),
+		 .s[2] = ta->opcode,
+		 .s[4] = (uint32_t)ta->pid,
+		 .s[5] = (uint32_t)ta->ts.tv_nsec,
+		 .s[6] = (uint32_t)ta->creds.host_cred.uid,
+		 .s[7] = (uint32_t)ta->creds.host_cred.gid,
+	};
+
+	silofs_prandgen_feed(task->prng, &ps);
+}
+
 static int op_start(struct silofs_task_ctx *task)
 {
 	silofs_lock_fs_by(task);
 
-	task->op_start_time = silofs_time_mono_now();
+	silofs_clock_gettime_mono(&task->op_start_time);
 	if (!task->internal) {
 		task->env->opstat.op_count++;
+		op_feed_prng(task);
 	}
 	return 0;
 }
@@ -63,12 +81,18 @@ op_try_flush(struct silofs_task_ctx *task, struct silofs_inode_info *ii)
 
 static void op_probe_duration(const struct silofs_task_ctx *task, int res)
 {
-	const time_t time_dif  = silofs_time_mono_now() - task->op_start_time;
 	const uint32_t op_code = task->auth.opcode;
 
-	if (op_code && (time_dif > 30)) {
-		log_warn("slow-oper: op_count=%zu op_code=%u dif=%ld res=%d",
-		         task->env->opstat.op_count, op_code, time_dif, res);
+	if (op_code > 0) {
+		const time_t time_now = silofs_time_mono_now();
+		const time_t time_dif = time_now - task->op_start_time.tv_sec;
+
+		if (time_dif > 30) {
+			log_warn("slow-oper: op_count=%zu op_code=%u "
+			         "dif=%ld res=%d",
+			         task->env->opstat.op_count, op_code, time_dif,
+			         res);
+		}
 	}
 }
 

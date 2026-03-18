@@ -31,7 +31,9 @@ struct silofs_prndstate {
 struct silofs_prandgen {
 	struct silofs_prndstate  state[32];
 	uint64_t                 prandom[32];
-	uint64_t                 count;
+	uint64_t                 icount;
+	uint64_t                 xcount;
+	uint32_t                 cycle;
 	uint32_t                 slot;
 	struct silofs_mdigest_hd md_hd;
 };

@@ -347,12 +347,26 @@ static void iattr_setup_now(struct silofs_iattr *iattr, ino_t ino)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_ii_set_ino(struct silofs_inode_info *ii, ino_t ino)
+static const struct silofs_inode_info *
+ii_from_vni2(const struct silofs_vnode_info *vni)
+{
+	return container_of2(vni, struct silofs_inode_info, i_vni);
+}
+
+static bool ii_isevictable_as(const struct silofs_vnode_info *vni)
+{
+	const struct silofs_inode_info *ii = ii_from_vni2(vni);
+
+	return silofs_ii_isevictable(ii);
+}
+
+void silofs_ii_update_with(struct silofs_inode_info *ii, ino_t ino)
 {
 	silofs_assert_not_null(ii->i_vni.vn_lni.ln_view);
 	silofs_assert_not_null(ii->inode);
 
-	ii->i_ino = ino;
+	ii->i_ino                = ino;
+	ii->i_vni.isevictable_fn = ii_isevictable_as;
 }
 
 ino_t silofs_ii_xino_of(const struct silofs_inode_info *ii)

@@ -102,6 +102,8 @@ struct silofs_vnode_info {
 	struct silofs_llink      vn_llink;
 	uint64_t                 vn_magic;
 	int                      vn_asyncwr;
+
+	bool (*isevictable_fn)(const struct silofs_vnode_info *vni);
 };
 
 /* logical-space map */

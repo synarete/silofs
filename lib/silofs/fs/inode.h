@@ -90,7 +90,7 @@ bool silofs_user_cap_fowner(const struct silofs_cred *cred);
 
 bool silofs_user_cap_sys_admin(const struct silofs_cred *cred);
 
-void silofs_ii_set_ino(struct silofs_inode_info *ii, ino_t ino);
+void silofs_ii_update_with(struct silofs_inode_info *ii, ino_t ino);
 
 void silofs_ii_set_loose(struct silofs_inode_info *ii);
 

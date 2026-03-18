@@ -378,6 +378,8 @@ vni_init(struct silofs_vnode_info *vni, const struct silofs_vaddr *vaddr,
 	silofs_llink_reset(&vni->vn_llink);
 	vni->vn_asyncwr = 0;
 	vni->vn_magic   = SILOFS_VI_MAGIC;
+
+	vni->isevictable_fn = silofs_vni_isevictable;
 }
 
 static void vni_fini(struct silofs_vnode_info *vni)

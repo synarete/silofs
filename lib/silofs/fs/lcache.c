@@ -97,11 +97,6 @@ static enum silofs_vtype vni_vtype(const struct silofs_vnode_info *vni)
 	return silofs_vni_vtype(vni);
 }
 
-static bool vni_isinode(const struct silofs_vnode_info *vni)
-{
-	return silofs_vtype_isinode(vni_vtype(vni));
-}
-
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static struct silofs_dirtyq *
@@ -446,16 +441,8 @@ static void lcache_fini_vni_hmapq(struct silofs_lcache *lcache)
 
 static bool test_evictable_vni(const struct silofs_vnode_info *vni)
 {
-	const struct silofs_inode_info *ii = nullptr;
-	bool ret                           = false;
-
-	if (vni_isinode(vni)) {
-		ii  = silofs_ii_from_vni(vni);
-		ret = silofs_ii_isevictable(ii);
-	} else {
-		ret = silofs_vni_isevictable(vni);
-	}
-	return ret;
+	return (vni->isevictable_fn != nullptr) ? vni->isevictable_fn(vni) :
+	                                          true;
 }
 
 static int visit_evictable_vni(struct silofs_hmapq_elem *hmqe, void *arg)

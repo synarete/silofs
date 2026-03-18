@@ -2879,7 +2879,7 @@ static int stage_stable_inode_at(struct silofs_task_ctx *task,
 		return err;
 	}
 	*out_ii = silofs_ii_from_vni(vni);
-	silofs_ii_set_ino(*out_ii, vaddr_to_ino(vaddr));
+	silofs_ii_update_with(*out_ii, vaddr_to_ino(vaddr));
 	silofs_ii_refresh_atime(*out_ii, true);
 	return 0;
 }
@@ -3093,7 +3093,7 @@ claim_inode(struct silofs_task_ctx *task, struct silofs_inode_info **out_ii)
 		return err;
 	}
 	ii = silofs_ii_from_vni(vni);
-	silofs_ii_set_ino(ii, vaddr_to_ino(&vaddr));
+	silofs_ii_update_with(ii, vaddr_to_ino(&vaddr));
 	*out_ii = ii;
 	return 0;
 }

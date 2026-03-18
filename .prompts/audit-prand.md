@@ -3,10 +3,11 @@
 Number Generator (PRNG) implementation in `silofs`.
 
 ## 1. Overview
-The file `prand.c` implements a userspace PRNG `silofs_prandgen`. It mixes
-system entropy with a cryptographic hash function (SHA3-256 via `libgcrypt`)
-to produce a stream of pseudo-random bytes. A user consumes pseudo-random bints
-as `uint64_t` chunks.
+Silofs is a user-space file-system (FUSE). The file `prand.c` implements a
+userspace PRNG `silofs_prandgen`. It mixes system entropy with a cryptographic
+hash function (SHA3-256 via `libgcrypt`) to produce a stream of pseudo-random
+bytes. A user consumes pseudo-random bits as `uint64_t` chunks. File-system
+operations feeds input state bits.
 
 ## 2. Objective
 Identify weaknesses in the PRNG design that could lead to:
@@ -35,4 +36,6 @@ Please provide the analysis in the following format:
 - **Logical Errors:** Point out bugs in C implementation (e.g., off-by-one,
   type confusion, div-by-zero).
 - **Recommendations:** Propose specific code changes to improve security or
-  robustness. In particular, changes which yields strong randomness.
+  robustness, particularly changes that yield stronger randomness.
+- **Code Fixes:** Provide specific diffs or code snippets to resolve
+  identified issues.

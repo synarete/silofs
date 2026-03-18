@@ -40,86 +40,90 @@ static size_t do_getentropy(void *buf, size_t len)
 
 static void fill_random(void *buf, size_t len)
 {
-	size_t cnt;
+	void *p = buf;
+	size_t n;
 
-	cnt = do_getentropy(buf, len);
-	if (cnt < len) {
-		do_gcry_random(silofs_nextof(buf, cnt), len - cnt);
+	n = do_getentropy(p, len);
+	p = silofs_nextof(p, n);
+	while (n < len) {
+		const size_t k = do_getentropy(p, len - n);
+
+		if (k == 0) {
+			break;
+		}
+		n += k;
+		p = silofs_nextof(p, k);
+	}
+	if (n < len) {
+		/* system entropy is exhausted, fall to libgcrypt */
+		do_gcry_random(p, len - n);
 	}
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-struct silofs_prand_in {
-	uint8_t key[32];
-	uint64_t extra[2];
-};
-
-static void prandgen_fill_in(const struct silofs_prandgen *prng,
-                             struct silofs_prand_in *prin)
+static struct silofs_prndstate *
+prandgen_get_state(struct silofs_prandgen *prng, size_t idx)
 {
-	const uintptr_t aslr = (uintptr_t)prin;
+	const size_t slot = idx % ARRAY_SIZE(prng->state);
 
-	STATICASSERT_EQ(sizeof(prin->key), sizeof(prng->key));
+	return &prng->state[slot];
+}
 
-	memcpy(prin->key, prng->key, sizeof(prin->key));
-	prin->extra[0] = prng->count;
-	prin->extra[1] = (uint64_t)aslr;
+static const struct silofs_prndstate *
+prandgen_pick_state(const struct silofs_prandgen *prng)
+{
+	const size_t slot = prng->count % ARRAY_SIZE(prng->state);
+
+	return &prng->state[slot];
 }
 
 static void prandgen_mkhash(const struct silofs_prandgen *prng,
                             struct silofs_hash256 *out_hash)
 {
-	struct silofs_prand_in prin = {};
+	const struct silofs_prndstate *ps = prandgen_pick_state(prng);
 
-	prandgen_fill_in(prng, &prin);
-	silofs_sha3_256_of(&prng->md_hd, &prin, sizeof(prin), out_hash);
+	silofs_sha3_256_of(&prng->md_hd, ps, sizeof(*ps), out_hash);
 }
 
-static void prandgen_renew_key(struct silofs_prandgen *prng)
+static void
+prandgen_update_state_at(struct silofs_prandgen *prng, uint32_t idx,
+                         const struct silofs_prndstate *ps_src)
 {
-	struct silofs_hash256 xh;
-	struct silofs_prndstate *ps;
+	struct silofs_hash256 ph;
+	struct {
+		struct silofs_prndstate ps[2];
+		uint64_t s[2];
+	} s;
+	struct silofs_prndstate *ps = prandgen_get_state(prng, idx);
 
-	STATICASSERT_EQ(sizeof(xh.hash), sizeof(prng->key));
-	silofs_assert_gt(prng->nstate, 0);
+	STATICASSERT_EQ(sizeof(ph), sizeof(*ps));
 
-	ps = &prng->state[prng->nstate--];
+	memset(&s, 0, sizeof(s));
+	memcpy(&s.ps[0], ps_src, sizeof(s.ps[0]));
+	memcpy(&s.ps[1], ps, sizeof(s.ps[1]));
+	s.s[0] = silofs_twang64(prng->slot) + idx;
+	s.s[1] = prng->count;
 
-	silofs_sha256_of(&prng->md_hd, ps, sizeof(*ps), &xh);
-	memcpy(prng->key, xh.hash, sizeof(prng->key));
+	silofs_sha3_256_of(&prng->md_hd, &s, sizeof(s), &ph);
+	memcpy(ps, &ph, sizeof(*ps));
 }
 
-static bool prandgen_has_full_state(const struct silofs_prandgen *prng)
+static void
+prandgen_update_state_by(struct silofs_prandgen *prng, uint32_t idx,
+                         const struct silofs_hash256 *hash)
 {
-	return (prng->nstate == ARRAY_SIZE(prng->state));
+	struct silofs_prndstate ps;
+
+	STATICASSERT_EQ(sizeof(ps), sizeof(*hash));
+
+	memcpy(&ps, hash, sizeof(ps));
+	prandgen_update_state_at(prng, idx, &ps);
 }
 
-static void prandgen_fill_state(struct silofs_prandgen *prng,
-                                const struct silofs_prndstate *ps_src)
+static void prandgen_init_state(struct silofs_prandgen *prng)
 {
-	if (!prandgen_has_full_state(prng)) {
-		struct silofs_prndstate *ps_dst;
-
-		ps_dst = &prng->state[prng->nstate++];
-		memcpy(ps_dst, ps_src, sizeof(*ps_dst));
-	}
-}
-
-static void prandgen_fill_state_by(struct silofs_prandgen *prng,
-                                   const struct silofs_hash256 *hash)
-{
-	if (!prandgen_has_full_state(prng)) {
-		union {
-			struct silofs_prndstate ps;
-			struct silofs_hash256 h;
-		} u;
-
-		STATICASSERT_EQ(sizeof(*hash), sizeof(u));
-
-		memcpy(&u.h, hash, sizeof(u.h));
-		prandgen_fill_state(prng, &u.ps);
-	}
+	fill_random(prng->state, sizeof(prng->state));
 }
 
 static void prandgen_refill_prandom(struct silofs_prandgen *prng)
@@ -133,15 +137,13 @@ static void prandgen_refill_prandom(struct silofs_prandgen *prng)
 		size_t k;
 
 		prandgen_mkhash(prng, &hash);
+		prandgen_update_state_by(prng, (uint32_t)prng->count, &hash);
 		prng->count++;
 
 		k = silofs_min(sizeof(hash.hash), psz - n);
 		memcpy(p, hash.hash, k);
 		p = silofs_nextof(p, k);
 		n += k;
-
-		prandgen_fill_state_by(prng, &hash);
-		prandgen_renew_key(prng);
 	}
 }
 
@@ -154,25 +156,26 @@ static void prandgen_renew_prandom(struct silofs_prandgen *prng)
 {
 	prandgen_reset_prandom(prng);
 	prandgen_refill_prandom(prng);
+	prng->slot = 0;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void prandgen_init_state(struct silofs_prandgen *prng)
-{
-	fill_random(prng->state, sizeof(prng->state));
-	prng->nstate = ARRAY_SIZE(prng->state);
-}
-
 int silofs_prandgen_init(struct silofs_prandgen *prng)
 {
-	memset(prng, 0, sizeof(*prng));
-	prng->count  = 0;
-	prng->slot   = 0;
-	prng->nstate = 0;
-	prandgen_init_state(prng);
+	int err;
 
-	return silofs_mdigest_init(&prng->md_hd);
+	memset(prng, 0, sizeof(*prng));
+	prng->count = 0;
+	prng->slot  = 0;
+
+	prandgen_init_state(prng);
+	err = silofs_mdigest_init(&prng->md_hd);
+	if (err) {
+		return err;
+	}
+	prandgen_renew_prandom(prng);
+	return 0;
 }
 
 void silofs_prandgen_fini(struct silofs_prandgen *prng)
@@ -204,7 +207,6 @@ static void prandgen_prepare(struct silofs_prandgen *prng)
 {
 	if (!prandgen_has_more(prng)) {
 		prandgen_renew_prandom(prng);
-		prng->slot = 0;
 	}
 }
 
@@ -233,8 +235,12 @@ uint64_t silofs_prandgen_take64(struct silofs_prandgen *prng)
 	return u;
 }
 
-void silofs_prandgen_feed(struct silofs_prandgen *prng,
-                          const struct silofs_prndstate *ps)
+void silofs_prandgen_feed(struct silofs_prandgen *prng, const void *dat,
+                          size_t len)
 {
-	prandgen_fill_state(prng, ps);
+	struct silofs_hash256 hash;
+
+	silofs_sha3_256_of(&prng->md_hd, dat, len, &hash);
+	prandgen_update_state_by(prng, (uint32_t)prng->count, &hash);
+	prng->count++;
 }

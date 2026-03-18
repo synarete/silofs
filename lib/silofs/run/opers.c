@@ -44,21 +44,25 @@
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static uint64_t mku64(uint32_t a, uint32_t b)
+{
+	return ((uint64_t)a << 32) | (uint64_t)b;
+}
+
 static void op_feed_prng(const struct silofs_task_ctx *task)
 {
 	const struct silofs_task_auth *ta = &task->auth;
-	const struct silofs_prndstate ps  = {
-		 .s[0] = (uint32_t)((uintptr_t)ta) >> 5,
-		 .s[1] = (uint32_t)gettid(),
-		 .s[3] = (uint32_t)silofs_twang64(ta->unique),
-		 .s[2] = ta->opcode,
-		 .s[4] = (uint32_t)ta->pid,
-		 .s[5] = (uint32_t)ta->ts.tv_nsec,
-		 .s[6] = (uint32_t)ta->creds.host_cred.uid,
-		 .s[7] = (uint32_t)ta->creds.host_cred.gid,
+	const struct silofs_cred *cred    = &ta->creds.host_cred;
+	const uint64_t d[6]               = {
+                (uint64_t)((uintptr_t)cred) >> 3,
+                mku64((uint32_t)gettid(), (uint32_t)ta->pid),
+                ta->unique,
+                ta->opcode,
+                (uint64_t)ta->ts.tv_nsec,
+                mku64(cred->uid, cred->gid),
 	};
 
-	silofs_prandgen_feed(task->prng, &ps);
+	silofs_prandgen_feed(task->prng, d, sizeof(d));
 }
 
 static int op_start(struct silofs_task_ctx *task)

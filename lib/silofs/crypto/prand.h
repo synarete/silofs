@@ -29,11 +29,9 @@ struct silofs_prndstate {
 
 /* pseudo random generator using libgcrypt SHA3 */
 struct silofs_prandgen {
-	uint64_t                 prandom[128];
 	struct silofs_prndstate  state[32];
-	uint8_t                  key[32];
+	uint64_t                 prandom[32];
 	uint64_t                 count;
-	uint32_t                 nstate;
 	uint32_t                 slot;
 	struct silofs_mdigest_hd md_hd;
 };
@@ -44,8 +42,8 @@ int silofs_prandgen_init(struct silofs_prandgen *prng);
 
 void silofs_prandgen_fini(struct silofs_prandgen *prng);
 
-void silofs_prandgen_feed(struct silofs_prandgen        *prng,
-                          const struct silofs_prndstate *ps);
+void silofs_prandgen_feed(struct silofs_prandgen *prng, const void *dat,
+                          size_t len);
 
 void silofs_prandgen_take(struct silofs_prandgen *prng, void *buf, size_t bsz);
 

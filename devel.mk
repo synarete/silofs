@@ -233,6 +233,7 @@ CFLAGS += -Wunused-const-variable=2
 CFLAGS += -Wjump-misses-init
 CFLAGS += -Wold-style-declaration
 CFLAGS += -Wunsuffixed-float-constants
+CFLAGS += -fdelete-null-pointer-checks
 ifeq ($(O), 0)
 CFLAGS += -Wunsafe-loop-optimizations
 CFLAGS += -fasynchronous-unwind-tables

@@ -136,13 +136,8 @@ static void bpath_replace(struct silofs_btree_path *bpath, size_t slot,
 static struct silofs_btnode_info *
 bpath_at(const struct silofs_btree_path *bpath, size_t slot)
 {
-	struct silofs_btnode_info *bti = nullptr;
-
 	silofs_assert_lt(slot, bpath->cnt);
-	if (slot < bpath->cnt) {
-		bti = bpath->bti[slot];
-	}
-	return bti;
+	return bpath->bti[slot];
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

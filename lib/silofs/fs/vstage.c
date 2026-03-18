@@ -224,7 +224,7 @@ static void vstgc_log_cache_stat(const struct silofs_vstage_ctx *vstg_ctx)
 
 	log_dbg("cache-stat: accum_unodes=%lu accum_inodes=%lu "
 	        "accum_vnodes=%lu ui=%lu vi=%lu",
-	        lcache->lc_unis_dq.dq_accum, lcache->ls_iis_dq.dq_accum,
+	        lcache->lc_unis_dq.dq_accum, lcache->lc_iis_dq.dq_accum,
 	        lcache->lc_vnis_dq.dq_accum, lcache->lc_uni_hmapq.hmq_lru.sz,
 	        lcache->lc_vni_hmapq.hmq_lru.sz);
 }

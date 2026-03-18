@@ -30,7 +30,7 @@ struct silofs_lcache {
 	struct silofs_dirtyq lc_unis_dq;
 
 	struct silofs_hmapq  lc_vni_hmapq;
-	struct silofs_dirtyq ls_iis_dq;
+	struct silofs_dirtyq lc_iis_dq;
 	struct silofs_dirtyq lc_vnis_dq;
 };
 

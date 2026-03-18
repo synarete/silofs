@@ -426,7 +426,7 @@ static void flusher_add_dirty_any_of(struct silofs_flusher *flusher)
 {
 	struct silofs_lcache *lcache = flusher_lcache(flusher);
 
-	flusher_add_dirty_iis_of(flusher, &lcache->ls_iis_dq);
+	flusher_add_dirty_iis_of(flusher, &lcache->lc_iis_dq);
 	flusher_add_dirty_vnis_of(flusher, &lcache->lc_vnis_dq);
 	flusher_add_dirty_unis_of(flusher, &lcache->lc_unis_dq);
 }
@@ -991,7 +991,7 @@ static bool need_flush_by_env(const struct silofs_env *env, int flags)
 	size_t thresh;
 
 	thresh = flush_threshold_of(flags);
-	ndirty = lcache->lc_unis_dq.dq_accum + lcache->ls_iis_dq.dq_accum +
+	ndirty = lcache->lc_unis_dq.dq_accum + lcache->lc_iis_dq.dq_accum +
 	         lcache->lc_vnis_dq.dq_accum;
 	return (ndirty > thresh);
 }

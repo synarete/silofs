@@ -27,5 +27,6 @@
 #include <silofs/nodes/pnodes.h>
 #include <silofs/nodes/pcache.h>
 #include <silofs/nodes/lnodes.h>
+#include <silofs/nodes/vcache.h>
 
 #endif /* SILOFS_CACHE_H_ */

@@ -27,14 +27,14 @@ static void lcache_evict_some(struct silofs_lcache *lcache);
 static void lcache_init_dqs(struct silofs_lcache *lcache)
 {
 	silofs_dirtyq_init(&lcache->lc_unis_dq);
-	silofs_dirtyq_init(&lcache->ls_iis_dq);
+	silofs_dirtyq_init(&lcache->lc_iis_dq);
 	silofs_dirtyq_init(&lcache->lc_vnis_dq);
 }
 
 static void lcache_fini_dqs(struct silofs_lcache *lcache)
 {
 	silofs_dirtyq_fini(&lcache->lc_unis_dq);
-	silofs_dirtyq_fini(&lcache->ls_iis_dq);
+	silofs_dirtyq_fini(&lcache->lc_iis_dq);
 	silofs_dirtyq_fini(&lcache->lc_vnis_dq);
 }
 
@@ -44,7 +44,7 @@ lcache_get_dq(struct silofs_lcache *lcache, enum silofs_vtype vtype)
 	struct silofs_dirtyq *dq;
 
 	if (silofs_vtype_isinode(vtype)) {
-		dq = &lcache->ls_iis_dq;
+		dq = &lcache->lc_iis_dq;
 	} else if (silofs_vtype_isvnode(vtype)) {
 		dq = &lcache->lc_vnis_dq;
 	} else {
@@ -441,8 +441,12 @@ static void lcache_fini_vni_hmapq(struct silofs_lcache *lcache)
 
 static bool test_evictable_vni(const struct silofs_vnode_info *vni)
 {
-	return (vni->isevictable_fn != nullptr) ? vni->isevictable_fn(vni) :
-	                                          true;
+	int ret = true;
+
+	if (vni->isevictable_fn != nullptr) {
+		ret = vni->isevictable_fn(vni);
+	}
+	return ret;
 }
 
 static int visit_evictable_vni(struct silofs_hmapq_elem *hmqe, void *arg)

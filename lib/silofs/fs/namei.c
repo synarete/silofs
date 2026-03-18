@@ -454,7 +454,9 @@ static void inewp_set_generation(struct silofs_inew_params *inp,
 static void
 inewp_set_seed(struct silofs_inew_params *inp, struct silofs_prandgen *prng)
 {
-	inp->seed = inewp_isdir(inp) ? silofs_prandgen_take64(prng) : 0;
+	if (inewp_isdir(inp)) {
+		silofs_prandgen_take(prng, &inp->seed, sizeof(inp->seed));
+	}
 }
 
 void silofs_inew_params_of(const struct silofs_task_ctx *task,

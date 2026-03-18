@@ -42,11 +42,9 @@ int silofs_prandgen_init(struct silofs_prandgen *prng);
 
 void silofs_prandgen_fini(struct silofs_prandgen *prng);
 
-void silofs_prandgen_feed(struct silofs_prandgen *prng, const void *dat,
-                          size_t len);
+void silofs_prandgen_feed(struct silofs_prandgen *prng, const void *p,
+                          size_t n);
 
-void silofs_prandgen_take(struct silofs_prandgen *prng, void *buf, size_t bsz);
-
-uint64_t silofs_prandgen_take64(struct silofs_prandgen *prng);
+void silofs_prandgen_take(struct silofs_prandgen *prng, void *p, size_t n);
 
 #endif /* SILOFS_PRAND_H_ */

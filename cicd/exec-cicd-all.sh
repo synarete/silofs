@@ -42,7 +42,7 @@ sep "workdir OK: ${workdir}"
 ###
 msg "build from source: ${archive_file}"
 cdx "${currdir}"
-runt cp "${archive_file}" "${citests_dir}"
+exe cp "${archive_file}" "${citests_dir}"
 cdx "${citests_dir}"
 exe tar xfz "${archive_tgz}"
 cdx "${workdir}"

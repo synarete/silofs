@@ -34,8 +34,8 @@
 #include <silofs/infra.h>
 #include <silofs/fs.h>
 #include <silofs/run.h>
-#include "fuse_abi.h"
-#include "fuseq.h"
+#include <silofs/fuse/fuse_abi.h>
+#include <silofs/fuse/fuseq.h>
 
 #if FUSE_KERNEL_VERSION != 7
 #error "wrong FUSE_KERNEL_VERSION"

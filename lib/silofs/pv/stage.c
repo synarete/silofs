@@ -23,14 +23,12 @@
 #include <silofs/pv/pexec.h>
 #include <silofs/pv/stage.h>
 
-#include <silofs/fs.h>
-
 struct silofs_stage_ctx {
 	struct silofs_pexec_ctx *pexec;
 	struct silofs_alloc *alloc;
 	struct silofs_dstor *dstor;
 	struct silofs_pcache *pcache;
-	struct silofs_lcache *lcache;
+	struct silofs_vcache *vcache;
 	struct silofs_mdigest_hd *md_hd;
 	struct silofs_cipher_hd *enc_ci_hd;
 	struct silofs_cipher_hd *dec_ci_hd;
@@ -95,7 +93,7 @@ stc_init(struct silofs_stage_ctx *st_ctx, struct silofs_pexec_ctx *pexec)
 	st_ctx->alloc     = pexec->alloc;
 	st_ctx->dstor     = pexec->dstor;
 	st_ctx->pcache    = pexec->pcache;
-	st_ctx->lcache    = pexec->lcache;
+	st_ctx->vcache    = pexec->vcache;
 	st_ctx->md_hd     = pexec->md_hd;
 	st_ctx->enc_ci_hd = pexec->enc_ci_hd;
 	st_ctx->dec_ci_hd = pexec->dec_ci_hd;
@@ -677,7 +675,7 @@ static int stc_lookup_cached_vnode(const struct silofs_stage_ctx *st_ctx,
                                    const struct silofs_vaddr *vaddr,
                                    struct silofs_vnode_info **out_vni)
 {
-	*out_vni = silofs_lcache_lookup_vnode(st_ctx->lcache, vaddr);
+	*out_vni = silofs_vcache_lookup_vnode(st_ctx->vcache, vaddr);
 
 	return (*out_vni == nullptr) ? -SILOFS_ENOENT : 0;
 }
@@ -686,7 +684,7 @@ static int stc_create_cached_vnode(const struct silofs_stage_ctx *st_ctx,
                                    const struct silofs_vaddr *vaddr,
                                    struct silofs_vnode_info **out_vni)
 {
-	*out_vni = silofs_lcache_create_vnode(st_ctx->lcache, vaddr);
+	*out_vni = silofs_vcache_create_vnode(st_ctx->vcache, vaddr);
 
 	return (*out_vni == nullptr) ? -SILOFS_ENOMEM : 0;
 }

@@ -15,14 +15,13 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/ondisk.h>
-#include <silofs/ioctls.h>
-#include <linux/limits.h>
-#include <sys/types.h>
 #include <limits.h>
 #include <endian.h>
 #include <gcrypt.h>
-#include "infra.h"
+
+#include <silofs/ondisk.h>
+#include <silofs/ioctls.h>
+#include <silofs/infra.h>
 
 #ifndef LINK_MAX
 #define LINK_MAX 127

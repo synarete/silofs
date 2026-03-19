@@ -23,10 +23,10 @@
 
 /* in-memory caching */
 struct silofs_vcache {
-	struct silofs_alloc *lc_alloc;
-	struct silofs_hmapq  lc_vni_hmapq;
-	struct silofs_dirtyq ls_iis_dq;
-	struct silofs_dirtyq lc_vnis_dq;
+	struct silofs_alloc *vc_alloc;
+	struct silofs_hmapq  vc_vni_hmapq;
+	struct silofs_dirtyq vc_iis_dq;
+	struct silofs_dirtyq vc_vnis_dq;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

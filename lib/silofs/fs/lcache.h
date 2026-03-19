@@ -28,10 +28,7 @@ struct silofs_lcache {
 	struct silofs_hmapq  lc_uni_hmapq;
 	struct silofs_uamap  lc_uamap;
 	struct silofs_dirtyq lc_unis_dq;
-
-	struct silofs_hmapq  lc_vni_hmapq;
-	struct silofs_dirtyq lc_iis_dq;
-	struct silofs_dirtyq lc_vnis_dq;
+	struct silofs_vcache lc_vc;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

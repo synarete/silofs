@@ -22,36 +22,6 @@
 
 static void vcache_evict_some(struct silofs_vcache *vcache);
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static void vcache_init_dqs(struct silofs_vcache *vcache)
-{
-	silofs_dirtyq_init(&vcache->ls_iis_dq);
-	silofs_dirtyq_init(&vcache->lc_vnis_dq);
-}
-
-static void vcache_fini_dqs(struct silofs_vcache *vcache)
-{
-	silofs_dirtyq_fini(&vcache->ls_iis_dq);
-	silofs_dirtyq_fini(&vcache->lc_vnis_dq);
-}
-
-static struct silofs_dirtyq *
-vcache_get_dq(struct silofs_vcache *vcache, enum silofs_vtype vtype)
-{
-	struct silofs_dirtyq *dq;
-
-	if (silofs_vtype_isinode(vtype)) {
-		dq = &vcache->ls_iis_dq;
-	} else {
-		silofs_assert(silofs_vtype_isvnode(vtype));
-		dq = &vcache->lc_vnis_dq;
-	}
-	return dq;
-}
-
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-
 static struct silofs_vnode_info *vni_from_hmqe(struct silofs_hmapq_elem *hmqe)
 {
 	return silofs_vni_from_lni(silofs_lni_from_hmqe(hmqe));
@@ -65,6 +35,33 @@ static struct silofs_hmapq_elem *vni_to_hmqe(struct silofs_vnode_info *vni)
 static enum silofs_vtype vni_vtype(const struct silofs_vnode_info *vni)
 {
 	return silofs_vni_vtype(vni);
+}
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static void vcache_init_dqs(struct silofs_vcache *vcache)
+{
+	silofs_dirtyq_init(&vcache->vc_iis_dq);
+	silofs_dirtyq_init(&vcache->vc_vnis_dq);
+}
+
+static void vcache_fini_dqs(struct silofs_vcache *vcache)
+{
+	silofs_dirtyq_fini(&vcache->vc_iis_dq);
+	silofs_dirtyq_fini(&vcache->vc_vnis_dq);
+}
+
+static struct silofs_dirtyq *
+vcache_get_dq(struct silofs_vcache *vcache, enum silofs_vtype vtype)
+{
+	struct silofs_dirtyq *dq;
+
+	if (silofs_vtype_isinode(vtype)) {
+		dq = &vcache->vc_iis_dq;
+	} else {
+		silofs_assert(silofs_vtype_isvnode(vtype));
+		dq = &vcache->vc_vnis_dq;
+	}
+	return dq;
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -83,15 +80,15 @@ static enum silofs_allocf flags_to_allocf(int flags)
 
 static int vcache_init_vni_hmapq(struct silofs_vcache *vcache)
 {
-	struct silofs_alloc *alloc = vcache->lc_alloc;
+	struct silofs_alloc *alloc = vcache->vc_alloc;
 	const size_t nslots        = silofs_hmapq_nslots_by(alloc, 3);
 
-	return silofs_hmapq_init(&vcache->lc_vni_hmapq, alloc, nslots);
+	return silofs_hmapq_init(&vcache->vc_vni_hmapq, alloc, nslots);
 }
 
 static void vcache_fini_vni_hmapq(struct silofs_vcache *vcache)
 {
-	silofs_hmapq_fini(&vcache->lc_vni_hmapq, vcache->lc_alloc);
+	silofs_hmapq_fini(&vcache->vc_vni_hmapq, vcache->vc_alloc);
 }
 
 static bool test_evictable_vni(const struct silofs_vnode_info *vni)
@@ -118,7 +115,7 @@ static int visit_evictable_vni(struct silofs_hmapq_elem *hmqe, void *arg)
 static struct silofs_vnode_info *
 vcache_find_evictable_vni(struct silofs_vcache *vcache)
 {
-	struct silofs_hmapq *hmapq      = &vcache->lc_vni_hmapq;
+	struct silofs_hmapq *hmapq      = &vcache->vc_vni_hmapq;
 	struct silofs_vnode_info *vni   = nullptr;
 	struct silofs_vnode_info **pvni = &vni;
 
@@ -133,19 +130,19 @@ vcache_find_vni(struct silofs_vcache *vcache, const struct silofs_vaddr *vaddr)
 	struct silofs_hmapq_elem *hmqe;
 
 	silofs_hkey_by_vaddr(&hkey, vaddr);
-	hmqe = silofs_hmapq_lookup(&vcache->lc_vni_hmapq, &hkey);
+	hmqe = silofs_hmapq_lookup(&vcache->vc_vni_hmapq, &hkey);
 	return (hmqe != nullptr) ? vni_from_hmqe(hmqe) : nullptr;
 }
 
 static void vcache_promote_vni(struct silofs_vcache *vcache,
                                struct silofs_vnode_info *vni, bool now)
 {
-	silofs_hmapq_promote(&vcache->lc_vni_hmapq, vni_to_hmqe(vni), now);
+	silofs_hmapq_promote(&vcache->vc_vni_hmapq, vni_to_hmqe(vni), now);
 }
 
 static struct silofs_vnode_info *
-vcache_find_relru_vni(struct silofs_vcache *vcache,
-                      const struct silofs_vaddr *vaddr)
+vcache_search_relru_vni(struct silofs_vcache *vcache,
+                        const struct silofs_vaddr *vaddr)
 {
 	struct silofs_vnode_info *vni;
 
@@ -159,7 +156,7 @@ vcache_find_relru_vni(struct silofs_vcache *vcache,
 static void
 vcache_remove_vni(struct silofs_vcache *vcache, struct silofs_vnode_info *vni)
 {
-	silofs_lni_remove_from(&vni->vn_lni, &vcache->lc_vni_hmapq);
+	silofs_lni_remove_from(&vni->vn_lni, &vcache->vc_vni_hmapq);
 	vni->vn_lni.ln_hmqe.hme_forgot = false;
 }
 
@@ -168,13 +165,13 @@ vcache_evict_vni(struct silofs_vcache *vcache, struct silofs_vnode_info *vni,
                  enum silofs_allocf flags)
 {
 	vcache_remove_vni(vcache, vni);
-	silofs_del_vnode(vni, vcache->lc_alloc, (int)flags);
+	silofs_del_vnode(vni, vcache->vc_alloc, (int)flags);
 }
 
 static void vcache_store_vni_hmapq(struct silofs_vcache *vcache,
                                    struct silofs_vnode_info *vni)
 {
-	silofs_hmapq_store(&vcache->lc_vni_hmapq, vni_to_hmqe(vni));
+	silofs_hmapq_store(&vcache->vc_vni_hmapq, vni_to_hmqe(vni));
 }
 
 static void
@@ -189,7 +186,7 @@ vcache_get_lru_vni(struct silofs_vcache *vcache)
 {
 	struct silofs_hmapq_elem *hmqe;
 
-	hmqe = silofs_hmapq_get_lru(&vcache->lc_vni_hmapq);
+	hmqe = silofs_hmapq_get_lru(&vcache->vc_vni_hmapq);
 	return (hmqe != nullptr) ? vni_from_hmqe(hmqe) : nullptr;
 }
 
@@ -212,7 +209,7 @@ static size_t vcache_shrink_or_relru_vnis(struct silofs_vcache *vcache,
                                           size_t cnt, int flags)
 {
 	struct silofs_vnode_info *vni = nullptr;
-	const size_t n = silofs_min(cnt, vcache->lc_vni_hmapq.hmq_lru.sz);
+	const size_t n = silofs_min(cnt, vcache->vc_vni_hmapq.hmq_lru.sz);
 	size_t evicted = 0;
 	bool now;
 	bool ok;
@@ -244,7 +241,7 @@ static int try_evict_vni(struct silofs_hmapq_elem *hmqe, void *arg)
 
 static void vcache_drop_evictable_vnis(struct silofs_vcache *vcache)
 {
-	silofs_hmapq_riterate(&vcache->lc_vni_hmapq, SILOFS_HMAPQ_ITERALL,
+	silofs_hmapq_riterate(&vcache->vc_vni_hmapq, SILOFS_HMAPQ_ITERALL,
 	                      try_evict_vni, vcache);
 }
 
@@ -254,17 +251,14 @@ static struct silofs_vnode_info *
 vcache_new_vni(const struct silofs_vcache *vcache,
                const struct silofs_vaddr *vaddr)
 {
-	return silofs_new_vnode(vcache->lc_alloc, vaddr);
+	return silofs_new_vnode(vcache->vc_alloc, vaddr);
 }
 
 struct silofs_vnode_info *
 silofs_vcache_lookup_vnode(struct silofs_vcache *vcache,
                            const struct silofs_vaddr *vaddr)
 {
-	struct silofs_vnode_info *vni;
-
-	vni = vcache_find_relru_vni(vcache, vaddr);
-	return vni;
+	return vcache_search_relru_vni(vcache, vaddr);
 }
 
 static struct silofs_vnode_info *
@@ -272,9 +266,8 @@ vcache_require_vni(struct silofs_vcache *vcache,
                    const struct silofs_vaddr *vaddr)
 {
 	struct silofs_vnode_info *vni = nullptr;
-	int retry                     = 4;
 
-	while (retry-- > 0) {
+	for (int i = 0; i < 4; ++i) {
 		vni = vcache_new_vni(vcache, vaddr);
 		if (vni != nullptr) {
 			break;
@@ -287,11 +280,11 @@ vcache_require_vni(struct silofs_vcache *vcache,
 static void
 vcache_unmap_vni(struct silofs_vcache *vcache, struct silofs_vnode_info *vni)
 {
-	silofs_hmapq_unmap(&vcache->lc_vni_hmapq, vni_to_hmqe(vni));
+	silofs_hmapq_unmap(&vcache->vc_vni_hmapq, vni_to_hmqe(vni));
 }
 
-static void
-vcache_forget_vni(struct silofs_vcache *vcache, struct silofs_vnode_info *vni)
+void silofs_vcache_forget_vnode(struct silofs_vcache *vcache,
+                                struct silofs_vnode_info *vni)
 {
 	silofs_vni_undirtify(vni);
 	if (silofs_vni_refcnt(vni) > 0) {
@@ -302,12 +295,6 @@ vcache_forget_vni(struct silofs_vcache *vcache, struct silofs_vnode_info *vni)
 	}
 }
 
-void silofs_vcache_forget_vnode(struct silofs_vcache *vcache,
-                                struct silofs_vnode_info *vni)
-{
-	vcache_forget_vni(vcache, vni);
-}
-
 static void vcache_set_dq_of_vni(struct silofs_vcache *vcache,
                                  struct silofs_vnode_info *vni)
 {
@@ -316,9 +303,9 @@ static void vcache_set_dq_of_vni(struct silofs_vcache *vcache,
 	silofs_vni_set_dq(vni, dq);
 }
 
-static struct silofs_vnode_info *
-vcache_create_vni(struct silofs_vcache *vcache,
-                  const struct silofs_vaddr *vaddr)
+struct silofs_vnode_info *
+silofs_vcache_create_vnode(struct silofs_vcache *vcache,
+                           const struct silofs_vaddr *vaddr)
 {
 	struct silofs_vnode_info *vni;
 
@@ -327,16 +314,6 @@ vcache_create_vni(struct silofs_vcache *vcache,
 		vcache_set_dq_of_vni(vcache, vni);
 		vcache_store_vni(vcache, vni);
 	}
-	return vni;
-}
-
-struct silofs_vnode_info *
-silofs_vcache_create_vnode(struct silofs_vcache *vcache,
-                           const struct silofs_vaddr *vaddr)
-{
-	struct silofs_vnode_info *vni;
-
-	vni = vcache_create_vni(vcache, vaddr);
 	return vni;
 }
 
@@ -365,14 +342,11 @@ vcache_shrink_some(struct silofs_vcache *vcache, size_t count, int flags)
 static void vcache_evict_some(struct silofs_vcache *vcache)
 {
 	struct silofs_vnode_info *vni = nullptr;
-	bool evicted                  = false;
 
 	vni = vcache_find_evictable_vni(vcache);
 	if ((vni != nullptr) && test_evictable_vni(vni)) {
 		vcache_evict_vni(vcache, vni, SILOFS_ALLOCF_NONE);
-		evicted = true;
-	}
-	if (!evicted) {
+	} else {
 		vcache_shrink_some(vcache, 1, 0);
 	}
 }
@@ -384,7 +358,7 @@ static size_t vcache_memory_pressure(const struct silofs_vcache *vcache)
 	struct silofs_alloc_stat st;
 	size_t mem_press = 0;
 
-	silofs_memstat(vcache->lc_alloc, &st);
+	silofs_memstat(vcache->vc_alloc, &st);
 	if (likely(st.nbytes_max > 0)) {
 		mem_press = ((1000UL * st.nbytes_use) / st.nbytes_max);
 	}
@@ -434,7 +408,7 @@ vcache_relax_by_niter(struct silofs_vcache *vcache, size_t niter, int flags)
 
 static size_t vcache_overpop_vnis(const struct silofs_vcache *vcache)
 {
-	return silofs_hmapq_overpop(&vcache->lc_vni_hmapq);
+	return silofs_hmapq_overpop(&vcache->vc_vni_hmapq);
 }
 
 static size_t vcache_relax_by_overpop(struct silofs_vcache *vcache)
@@ -465,7 +439,7 @@ size_t silofs_vcache_relax(struct silofs_vcache *vcache, int flags)
 
 static size_t vcache_hmapq_usage_sum(const struct silofs_vcache *vcache)
 {
-	return silofs_hmapq_usage(&vcache->lc_vni_hmapq);
+	return silofs_hmapq_usage(&vcache->vc_vni_hmapq);
 }
 
 static void vcache_drop_evictables_once(struct silofs_vcache *vcache)
@@ -507,39 +481,30 @@ static int vcache_init_hmapqs(struct silofs_vcache *vcache)
 int silofs_vcache_init(struct silofs_vcache *vcache,
                        struct silofs_alloc *alloc)
 {
-	int err;
-
-	vcache->lc_alloc = alloc;
+	vcache->vc_alloc = alloc;
 	vcache_init_dqs(vcache);
 
-	err = vcache_init_hmapqs(vcache);
-	if (err) {
-		goto out_err;
-	}
-	return 0;
-out_err:
-	silofs_vcache_fini(vcache);
-	return err;
+	return vcache_init_hmapqs(vcache);
 }
 
 void silofs_vcache_fini(struct silofs_vcache *vcache)
 {
 	vcache_fini_dqs(vcache);
 	vcache_fini_hmapqs(vcache);
-	vcache->lc_alloc = nullptr;
+	vcache->vc_alloc = nullptr;
 }
 
 static size_t vcache_alloc_bytes(const struct silofs_vcache *vcache)
 {
 	struct silofs_alloc_stat as = { .nbytes_use = 0 };
 
-	silofs_memstat(vcache->lc_alloc, &as);
+	silofs_memstat(vcache->vc_alloc, &as);
 	return as.nbytes_use;
 }
 
 static size_t vcache_sum_nodes(const struct silofs_vcache *vcache)
 {
-	return vcache->lc_vni_hmapq.hmq_htbl_size;
+	return vcache->vc_vni_hmapq.hmq_htbl_size;
 }
 
 void silofs_vcache_collect_stats(const struct silofs_vcache *vcache,

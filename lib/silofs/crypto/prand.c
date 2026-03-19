@@ -70,20 +70,11 @@ prandgen_get_state(struct silofs_prandgen *prng, size_t idx)
 	return &prng->state[slot];
 }
 
-static const struct silofs_prndstate *
-prandgen_pick_state(const struct silofs_prandgen *prng)
-{
-	const size_t slot = prng->icount % ARRAY_SIZE(prng->state);
-
-	return &prng->state[slot];
-}
-
 static void prandgen_mkhash(const struct silofs_prandgen *prng,
                             struct silofs_hash256 *out_hash)
 {
-	const struct silofs_prndstate *ps = prandgen_pick_state(prng);
-
-	silofs_sha3_256_of(&prng->md_hd, ps, sizeof(*ps), out_hash);
+	silofs_sha3_256_of(&prng->md_hd, prng->state, sizeof(prng->state),
+	                   out_hash);
 }
 
 static void
@@ -95,7 +86,7 @@ prandgen_update_state_by(struct silofs_prandgen *prng, uint64_t count,
 		struct silofs_hash256 h;
 		uint64_t count;
 		struct timespec ts;
-	} s;
+	} s = {};
 	struct silofs_hash256 ph;
 	struct silofs_prndstate *ps = prandgen_get_state(prng, count);
 
@@ -125,8 +116,12 @@ static void prandgen_refill_prandom(struct silofs_prandgen *prng)
 		struct silofs_hash256 hash;
 		size_t k;
 
+		/* derive update from full pool and change state */
 		prandgen_mkhash(prng, &hash);
 		prandgen_update_state_by(prng, prng->icount++, &hash);
+
+		/* derive output using updated state */
+		prandgen_mkhash(prng, &hash);
 
 		k = silofs_min(sizeof(hash), psz - n);
 		memcpy(p, &hash, k);
@@ -220,26 +215,26 @@ static void prandgen_consume(struct silofs_prandgen *prng, void *p, size_t n)
 
 static void prandgen_reseed(struct silofs_prandgen *prng)
 {
-	uint32_t r[ARRAY_SIZE(prng->state)];
-	size_t sj = prng->icount + prng->slot;
+	uint64_t r[ARRAY_SIZE(prng->state)];
 
 	get_sys_entropy(r, sizeof(r));
 	for (size_t i = 0; i < ARRAY_SIZE(r); ++i) {
-		struct silofs_prndstate *ps = &prng->state[i];
-		const size_t j              = sj++ % ARRAY_SIZE(ps->s);
+		memcpy(prng->state[i].s, &r[i], sizeof(r[i]));
+	}
+}
 
-		ps->s[j] ^= r[i];
+static void prandgen_try_reseed(struct silofs_prandgen *prng)
+{
+	if ((prng->cycle % 8) == 0) {
+		prandgen_reseed(prng);
+		prng->cycle++;
 	}
 }
 
 void silofs_prandgen_take(struct silofs_prandgen *prng, void *p, size_t n)
 {
-	const uint32_t cycle = prng->cycle;
-
 	prandgen_consume(prng, p, n);
-	if (cycle != prng->cycle) {
-		prandgen_reseed(prng);
-	}
+	prandgen_try_reseed(prng);
 }
 
 void silofs_prandgen_feed(struct silofs_prandgen *prng, const void *p,

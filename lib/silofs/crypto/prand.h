@@ -24,12 +24,12 @@
 
 /* prng state input */
 struct silofs_prndstate {
-	uint32_t s[8];
+	uint8_t s[32];
 };
 
 /* pseudo random generator using libgcrypt SHA3 */
 struct silofs_prandgen {
-	struct silofs_prndstate  state[32];
+	struct silofs_prndstate  state[16];
 	uint64_t                 prandom[32];
 	uint64_t                 icount;
 	uint64_t                 xcount;

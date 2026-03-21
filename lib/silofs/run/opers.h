@@ -18,8 +18,8 @@
 #define SILOFS_OPERS_H_
 
 #include <silofs/ioctls.h>
-#include <silofs/run/task.h>
 
+struct silofs_task_ctx;
 struct silofs_readdir_ctx;
 struct silofs_rwiter_ctx;
 struct silofs_listxattr_ctx;
@@ -171,7 +171,7 @@ int silofs_exec_tune(struct silofs_task_ctx *task, ino_t ino, int iflags_want,
 int silofs_exec_rdwr_post(const struct silofs_task_ctx *task, int wr_mode,
                           const struct silofs_iovec *iov, size_t cnt);
 
-int silofs_exec_maintain(struct silofs_task_ctx *task, int flags);
+int silofs_exec_idle(struct silofs_task_ctx *task, int flags);
 
 int silofs_exec_walkfs(struct silofs_task_ctx            *task,
                        const struct silofs_laddr_visitor *lvis);

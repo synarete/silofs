@@ -1615,7 +1615,7 @@ int silofs_exec_rdwr_post(const struct silofs_task_ctx *task, int wr_mode,
 	return silofs_do_rdwr_post(task, wr_mode, iov, cnt);
 }
 
-int silofs_exec_maintain(struct silofs_task_ctx *task, int flags)
+int silofs_exec_idle(struct silofs_task_ctx *task, int flags)
 {
 	int err;
 

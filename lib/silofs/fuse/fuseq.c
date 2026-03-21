@@ -2742,18 +2742,11 @@ fqs_setup_rd_iter(struct silofs_fuseq_sub *fqs, struct silofs_task_ctx *task,
 	fq_rdi->rwi.actor = fq_rdi_actor;
 }
 
-static int do_rdwr_post(struct silofs_task_ctx *task, int wr_mode,
-                        const struct silofs_iovec *iov, size_t cnt)
-{
-	return silofs_exec_rdwr_post(task, wr_mode, iov, cnt);
-}
-
 static int do_read_iter(const struct silofs_fuseq_cmd_ctx *fcc)
 {
 	struct silofs_fuseq_rd_iter *fq_rdi = &fcc->fqs->fqs_rwi->u.rdi;
 	size_t len;
-	int ret;
-	int err;
+	int ret, err;
 
 	len = silofs_min(fcc->in->u.read.arg.size, fcc->fq->fq_coni.max_read);
 	fcc->args->in.read.ino     = fcc->ino;
@@ -2767,7 +2760,12 @@ static int do_read_iter(const struct silofs_fuseq_cmd_ctx *fcc)
 
 	err = fcc_exec_hook(fcc, read);
 	ret = fq_rdi_reply_read_iter(fq_rdi, err);
-	do_rdwr_post(fcc->task, 0, fq_rdi->iovec, fq_rdi->cnt);
+
+	fcc->args->in.read_post.ino = fcc->ino;
+	fcc->args->in.read_post.iov = fq_rdi->iovec;
+	fcc->args->in.read_post.cnt = fq_rdi->cnt;
+	fcc_exec_hook(fcc, read_post);
+
 	return ret;
 }
 
@@ -2998,8 +2996,7 @@ static int do_write_iter(const struct silofs_fuseq_cmd_ctx *fcc)
 	struct silofs_fuseq_wr_iter *fq_wri = &fcc->fqs->fqs_rwi->u.wri;
 	const size_t con_max_write          = fcc->fq->fq_coni.max_write;
 	size_t len                          = 0;
-	int err1                            = 0;
-	int err2                            = 0;
+	int err1, err2;
 
 	check_fh_of(fcc->task, fcc->ino, fcc->in->u.write.arg.fh);
 	len = silofs_min(fcc->in->u.write.arg.size, con_max_write);
@@ -3015,11 +3012,15 @@ static int do_write_iter(const struct silofs_fuseq_cmd_ctx *fcc)
 	fcc->args->out.write.nwr = 0;
 	fqs_setup_wr_iter(fcc->fqs, fq_wri, len, fcc->args->in.write.off);
 
-	err1 = fcc_exec_hook(fcc, write);
+	err1 = err2 = fcc_exec_hook(fcc, write);
 	if (!err1 || (err1 == -ENOSPC) || (err1 == -SILOFS_ENOSPC)) {
 		err2 = fq_wri_copy_iov(fq_wri); /* unlocked */
 	}
-	do_rdwr_post(fcc->task, 1, fq_wri->iovec, fq_wri->cnt);
+
+	fcc->args->in.write_post.ino = fcc->ino;
+	fcc->args->in.write_post.iov = fq_wri->iovec;
+	fcc->args->in.write_post.cnt = fq_wri->cnt;
+	fcc_exec_hook(fcc, write_post);
 
 	return fcc_reply_write(fcc, fq_wri->nwr, err1 ? err1 : err2);
 }
@@ -4534,27 +4535,30 @@ static void fqs_setup_self_task(const struct silofs_fuseq_sub *fqs,
 	task->internal  = true;
 }
 
-static int fqs_do_exec_maintain(struct silofs_fuseq_sub *fqs,
-                                struct silofs_task_ctx *task, int flags)
+static int fqs_do_exec_idle(struct silofs_fuseq_sub *fqs,
+                            struct silofs_task_ctx *task, int flags)
 {
-	int err1 = 0;
-	int err2 = 0;
+	const struct silofs_fuseq *fq = fqs_fuseq(fqs);
+	struct silofs_vfs_args *args  = &fqs->fqs_args;
+	int err1, err2;
 
 	silofs_rwlock_fs_by(task);
-	err1 = silofs_exec_maintain(task, flags);
+	args->in.idle.flags = flags;
+	/* TODO: find clean way to use fcc */
+	err1 = fq->fq_vfs_hooks->idle(task, args);
 	err2 = fqs_submit_by(fqs, task);
 	silofs_rwunlock_fs_by(task);
 
 	return err1 ? err1 : err2;
 }
 
-static int fqs_exec_maintain(struct silofs_fuseq_sub *fqs, int flags)
+static int fqs_exec_idle(struct silofs_fuseq_sub *fqs, int flags)
 {
 	struct silofs_task_ctx task;
 	int err;
 
 	fqs_setup_self_task(fqs, &task);
-	err = fqs_do_exec_maintain(fqs, &task, flags);
+	err = fqs_do_exec_idle(fqs, &task, flags);
 	fqs_finish_task(fqs, &task);
 	return err;
 }
@@ -4569,10 +4573,10 @@ static int fqs_exec_maintain_once(struct silofs_fuseq_sub *fqs)
 		silofs_sys_sched_yield();
 	} else if (!fqs->fqs_exec_ok) {
 		/* do flush-and-relax in idle mode */
-		ret = fqs_exec_maintain(fqs, SILOFS_CTLF_IDLE);
+		ret = fqs_exec_idle(fqs, SILOFS_CTLF_IDLE);
 	} else if (fuseq_has_memory_pressure(fq)) {
 		/* do flush-and-relax along-side other threads */
-		ret = fqs_exec_maintain(fqs, SILOFS_CTLF_INTERN);
+		ret = fqs_exec_idle(fqs, SILOFS_CTLF_INTERN);
 	}
 	return ret;
 }

@@ -19,10 +19,10 @@
 #include <silofs/infra.h>
 #include <silofs/pv.h>
 #include <silofs/fs.h>
-#include "task.h"
-#include "mbr.h"
-#include "env.h"
-#include "walk.h"
+
+#include <silofs/run/mbr.h>
+#include <silofs/run/env.h>
+#include <silofs/run/walk.h>
 
 struct silofs_delfs_ctx {
 	struct silofs_visitor vis;

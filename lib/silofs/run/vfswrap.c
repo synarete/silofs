@@ -363,6 +363,13 @@ vfswrap_read(struct silofs_task_ctx *task, struct silofs_vfs_args *args)
 }
 
 static int
+vfswrap_read_post(struct silofs_task_ctx *task, struct silofs_vfs_args *args)
+{
+	return silofs_exec_rdwr_post(task, 0, args->in.read_post.iov,
+	                             args->in.read_post.cnt);
+}
+
+static int
 vfswrap_write_buf(struct silofs_task_ctx *task, struct silofs_vfs_args *args)
 {
 	return silofs_exec_write(task, args->in.write.ino, args->in.write.buf,
@@ -387,6 +394,13 @@ vfswrap_write(struct silofs_task_ctx *task, struct silofs_vfs_args *args)
 	return (args->in.write.rwi_ctx != nullptr) ?
 	               vfswrap_write_iter(task, args) :
 	               vfswrap_write_buf(task, args);
+}
+
+static int
+vfswrap_write_post(struct silofs_task_ctx *task, struct silofs_vfs_args *args)
+{
+	return silofs_exec_rdwr_post(task, 1, args->in.read_post.iov,
+	                             args->in.read_post.cnt);
 }
 
 static int
@@ -455,6 +469,12 @@ vfswrap_ioctl(struct silofs_task_ctx *task, struct silofs_vfs_args *args)
 	return ret;
 }
 
+static int
+vfswrap_idle(struct silofs_task_ctx *task, struct silofs_vfs_args *args)
+{
+	return silofs_exec_idle(task, args->in.idle.flags);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct silofs_vfs_hooks s_vfs_hooks = {
@@ -492,9 +512,12 @@ static const struct silofs_vfs_hooks s_vfs_hooks = {
 	.lseek           = vfswrap_lseek,
 	.copy_file_range = vfswrap_copy_file_range,
 	.read            = vfswrap_read,
+	.read_post       = vfswrap_read_post,
 	.write           = vfswrap_write,
+	.write_post      = vfswrap_write_post,
 	.syncfs          = vfswrap_syncfs,
 	.ioctl           = vfswrap_ioctl,
+	.idle            = vfswrap_idle,
 };
 
 void silofs_env_bind_hooks(struct silofs_env *env)

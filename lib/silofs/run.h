@@ -18,7 +18,12 @@
 #define SILOFS_RUN_H_
 
 #include <silofs/infra.h>
-#include <silofs/run/task.h>
+#include <silofs/addr.h>
+#include <silofs/crypto.h>
+#include <silofs/nodes.h>
+#include <silofs/pv.h>
+#include <silofs/fs.h>
+
 #include <silofs/run/opers.h>
 #include <silofs/run/env.h>
 #include <silofs/run/walk.h>

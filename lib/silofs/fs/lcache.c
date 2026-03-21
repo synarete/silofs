@@ -17,7 +17,6 @@
 #include <silofs/configs.h>
 #include <silofs/infra.h>
 #include <silofs/fs.h>
-#include <silofs/run.h>
 
 static void lcache_drop_uamap(struct silofs_lcache *lcache);
 static void lcache_evict_some(struct silofs_lcache *lcache);

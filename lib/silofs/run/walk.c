@@ -17,10 +17,10 @@
 #include <silofs/configs.h>
 #include <silofs/infra.h>
 #include <silofs/fs.h>
-#include "mbr.h"
-#include "env.h"
-#include "task.h"
-#include "walk.h"
+
+#include <silofs/run/mbr.h>
+#include <silofs/run/env.h>
+#include <silofs/run/walk.h>
 
 #define check_ok_or_bailout(err_)      \
 	do {                           \

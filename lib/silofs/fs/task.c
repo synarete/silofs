@@ -17,10 +17,9 @@
 #include <silofs/configs.h>
 #include <silofs/infra.h>
 #include <silofs/pv.h>
-#include <silofs/fs.h>
-#include "opers.h"
-#include "env.h"
-#include "task.h"
+#include <silofs/fs/task.h>
+
+#include <silofs/run/env.h>
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

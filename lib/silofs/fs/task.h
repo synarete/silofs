@@ -22,6 +22,7 @@
 #include <silofs/addr.h>
 #include <silofs/flags.h>
 
+struct silofs_env;
 struct silofs_pexec_ctx;
 struct silofs_submitq_ent;
 

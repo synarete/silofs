@@ -344,6 +344,12 @@ struct silofs_read_out {
 	size_t nrd;
 };
 
+struct silofs_read_post_in {
+	ino_t                      ino;
+	const struct silofs_iovec *iov;
+	size_t                     cnt;
+};
+
 struct silofs_write_in {
 	ino_t                     ino;
 	size_t                    len;
@@ -356,6 +362,12 @@ struct silofs_write_in {
 
 struct silofs_write_out {
 	size_t nwr;
+};
+
+struct silofs_write_post_in {
+	ino_t                      ino;
+	const struct silofs_iovec *iov;
+	size_t                     cnt;
 };
 
 struct silofs_query_in {
@@ -385,6 +397,10 @@ struct silofs_tune_in {
 	ino_t ino;
 	int   iflags_want;
 	int   iflags_dont;
+};
+
+struct silofs_idle_in {
+	int flags;
 };
 
 union silofs_vfs_args_in {
@@ -421,11 +437,14 @@ union silofs_vfs_args_in {
 	struct silofs_lseek_in           lseek;
 	struct silofs_copy_file_range_in copy_file_range;
 	struct silofs_read_in            read;
+	struct silofs_read_post_in       read_post;
 	struct silofs_write_in           write;
+	struct silofs_write_post_in      write_post;
 	struct silofs_syncfs_in          syncfs;
 	struct silofs_query_in           query;
 	struct silofs_clone_in           clone;
 	struct silofs_tune_in            tune;
+	struct silofs_idle_in            idle;
 } silofs_attr_aligned64;
 
 union silofs_vfs_args_out {
@@ -497,9 +516,12 @@ struct silofs_vfs_hooks {
 	silofs_vfs_fn lseek;
 	silofs_vfs_fn copy_file_range;
 	silofs_vfs_fn read;
+	silofs_vfs_fn read_post;
 	silofs_vfs_fn write;
+	silofs_vfs_fn write_post;
 	silofs_vfs_fn syncfs;
 	silofs_vfs_fn ioctl;
+	silofs_vfs_fn idle;
 };
 
 #endif /* SILOFS_VFS_H_ */

@@ -742,7 +742,7 @@ static int ut_do_timedout(struct ut_env *ute)
 	int ret;
 
 	ut_setup_task(ute, &task);
-	ret = silofs_exec_maintain(&task, SILOFS_CTLF_IDLE);
+	ret = silofs_exec_idle(&task, SILOFS_CTLF_IDLE);
 	ut_release_task(ute, &task);
 	return sanitize_status(ret);
 }

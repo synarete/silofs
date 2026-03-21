@@ -21,9 +21,9 @@
 #include <silofs/pv.h>
 #include <silofs/fs.h>
 #include <silofs/fuse.h>
-#include "mbr.h"
-#include "task.h"
-#include "env.h"
+
+#include <silofs/run/mbr.h>
+#include <silofs/run/env.h>
 
 void silofs_env_refresh_root(struct silofs_env *env,
                              const struct silofs_pnptr *pnptr)

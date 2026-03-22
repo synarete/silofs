@@ -128,6 +128,4 @@ int silofs_fuseq_exec(struct silofs_fuseq *fq);
 
 void silofs_fuseq_term(struct silofs_fuseq *fq);
 
-void silofs_guarantee_fuse_proto(void);
-
 #endif /* SILOFS_FUSEQ_H_ */

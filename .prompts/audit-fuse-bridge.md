@@ -113,6 +113,8 @@ serialization, the splice I/O path, and shared session state.
 
 ## 4. Input Files
 - `lib/silofs/fuse/fuse_abi.h` (Kernel Interface)
+- `lib/silofs/fuse/fqtypes.h` (Internal types header)
+- `lib/silofs/fuse/fqtypes.c` (Internal types checker)
 - `lib/silofs/fuse/fuseq.c` (Implementation)
 - `lib/silofs/fuse/fuseq.h` (Internal header)
 

@@ -57,7 +57,7 @@ vni_from_lni(const struct silofs_lnode_info *lni)
 
 static bool vni_may_flush(const struct silofs_vnode_info *vni)
 {
-	const int asyncwr = silofs_atomic_get(&vni->vn_asyncwr);
+	const int asyncwr = silofs_atomic_sc_get(&vni->vn_asyncwr);
 
 	return (asyncwr == 0);
 }

@@ -101,8 +101,8 @@ struct silofs_fuseq {
 	uint32_t                       fq_nprocs;
 	int64_t                        fq_nexecs;
 	int64_t                        fq_nopers;
-	volatile int                   fq_active;
 	volatile int                   fq_fuse_fd;
+	int                            fq_active;
 	bool                           fq_init_pipes;
 	bool                           fq_init_locks;
 	bool                           fq_got_init;

@@ -2868,7 +2868,7 @@ static int fq_wri_check(const struct silofs_fuseq_wr_iter *fq_wri,
 {
 	const struct silofs_fuseq *fq = fqs_fuseq(fq_wri->fqs);
 
-	if (!fq->fq_active) {
+	if (!fuseq_is_active(fq)) {
 		return -EROFS;
 	}
 	if (!(fq_wri->cnt < ARRAY_SIZE(fq_wri->iovec))) {
@@ -4075,7 +4075,7 @@ static void fqs_deactivate_fuseq(struct silofs_fuseq_sub *fqs)
 {
 	struct silofs_fuseq *fq = fqs_fuseq2(fqs);
 
-	if (fq->fq_active) {
+	if (fuseq_is_active(fq)) {
 		fuseq_set_non_active(fq);
 		fuseq_log_info("deactivated by: %s", fqs_thread_name(fqs));
 	}
@@ -4664,20 +4664,18 @@ static bool fuseq_has_live_opers(const struct silofs_fuseq *fq)
 
 static bool fuseq_is_active(const struct silofs_fuseq *fq)
 {
-	return (fq->fq_active > 0);
+	return silofs_atomic_get(&fq->fq_active) > 0;
 }
 
 static void fuseq_set_active(struct silofs_fuseq *fq)
 {
-	if (fq->fq_active <= 0) {
-		fq->fq_active = 1;
-	}
+	silofs_atomic_set(&fq->fq_active, 1);
 }
 
 static void fuseq_set_non_active(struct silofs_fuseq *fq)
 {
-	if (fq->fq_active > 0) {
-		fq->fq_active = 0;
+	if (fuseq_is_active(fq)) {
+		silofs_atomic_set(&fq->fq_active, 0);
 		silofs_sem_post(&fq->fq_sem);
 	}
 }
@@ -4685,17 +4683,18 @@ static void fuseq_set_non_active(struct silofs_fuseq *fq)
 static int fuseq_update_pipes(struct silofs_fuseq *fq)
 {
 	int mode_flags = (int)(fq->fq_mode_flags);
-	int err        = 0;
+	int err;
 
 	if (fuseq_may_splice(fq) && fuseq_cap_splice(fq)) {
 		err = fuseq_open_pipes(fq);
 		if (err) {
 			fuseq_log_warn("failed to open pipes: err=%d", err);
 			mode_flags &= ~SILOFS_F_MAYSPLICE;
+			fq->fq_mode_flags = (enum silofs_flags)mode_flags;
+			return err;
 		}
 	}
-	fq->fq_mode_flags = (enum silofs_flags)mode_flags;
-	return err;
+	return 0;
 }
 
 static int fuseq_init_nilfd(struct silofs_fuseq *fq)

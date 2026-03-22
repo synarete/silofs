@@ -370,7 +370,7 @@ static void fli_pre_io(struct silofs_ftleaf_info *fli, bool asyncwr_mode)
 {
 	fli_incref(fli);
 	if (asyncwr_mode) {
-		silofs_atomic_add(&fli->ftl_vni.vn_asyncwr, 1);
+		silofs_atomic_sc_add(&fli->ftl_vni.vn_asyncwr, 1);
 	}
 }
 
@@ -378,7 +378,7 @@ static void fli_post_io(struct silofs_ftleaf_info *fli, bool asyncwr_mode)
 {
 	fli_decref(fli);
 	if (asyncwr_mode) {
-		silofs_atomic_sub(&fli->ftl_vni.vn_asyncwr, 1);
+		silofs_atomic_sc_sub(&fli->ftl_vni.vn_asyncwr, 1);
 	}
 }
 

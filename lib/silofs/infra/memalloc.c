@@ -115,7 +115,7 @@ stdalloc_malloc(struct silofs_stdalloc *stdal, size_t n, int flags)
 	if (err) {
 		return nullptr;
 	}
-	silofs_atomic_addul(&stdal->nbytes_use, n);
+	silofs_atomic_sc_addul(&stdal->nbytes_use, n);
 	silofs_unused(flags);
 	return ptr;
 }
@@ -126,7 +126,7 @@ stdalloc_free(struct silofs_stdalloc *stdal, void *ptr, size_t n, int flags)
 	silofs_unused(flags);
 	if ((ptr != nullptr) && (n > 0)) {
 		cstd_memfree(ptr, n);
-		silofs_atomic_subul(&stdal->nbytes_use, n);
+		silofs_atomic_sc_subul(&stdal->nbytes_use, n);
 	}
 }
 
@@ -134,8 +134,8 @@ static void stdalloc_stat(struct silofs_stdalloc *stdal,
                           struct silofs_alloc_stat *out_stat)
 {
 	silofs_memzero(out_stat, sizeof(*out_stat));
-	out_stat->nbytes_max = silofs_atomic_getul(&stdal->nbytes_max);
-	out_stat->nbytes_use = silofs_atomic_getul(&stdal->nbytes_use);
+	out_stat->nbytes_max = silofs_atomic_sc_getul(&stdal->nbytes_max);
+	out_stat->nbytes_use = silofs_atomic_sc_getul(&stdal->nbytes_use);
 }
 
 static void *stdal_malloc(struct silofs_alloc *alloc, size_t n, int flags)

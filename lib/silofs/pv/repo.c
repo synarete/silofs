@@ -436,12 +436,12 @@ static ssize_t lsegf_capacity(const struct silofs_lsegf *lsegf)
 
 static ssize_t lsegf_size(const struct silofs_lsegf *lsegf)
 {
-	return silofs_atomic_getl(&lsegf->lsf_size);
+	return silofs_atomic_sc_getl(&lsegf->lsf_size);
 }
 
 static void lsegf_set_size(struct silofs_lsegf *lsegf, ssize_t sz)
 {
-	silofs_atomic_setl(&lsegf->lsf_size, sz);
+	silofs_atomic_sc_setl(&lsegf->lsf_size, sz);
 }
 
 static void lsegf_bindto(struct silofs_lsegf *lsegf, int fd, bool rw)

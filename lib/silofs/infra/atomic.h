@@ -17,69 +17,81 @@
 #ifndef SILOFS_ATOMIC_H_
 #define SILOFS_ATOMIC_H_
 
-/* Atomic operations on integers with relaxed semantics */
-#define SILOFS_ATOMIC_MODEL __ATOMIC_SEQ_CST
+#include <stdatomic.h>
 
 static inline int silofs_atomic_get(const int *ptr)
 {
-	return __atomic_load_n(ptr, SILOFS_ATOMIC_MODEL);
+	return __atomic_load_n(ptr, memory_order_acquire);
 }
 
 static inline void silofs_atomic_set(int *ptr, int val)
 {
-	__atomic_store_n(ptr, val, SILOFS_ATOMIC_MODEL);
+	__atomic_store_n(ptr, val, memory_order_release);
 }
 
-static inline int silofs_atomic_add(int *ptr, int val)
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static inline int silofs_atomic_sc_get(const int *ptr)
 {
-	return __atomic_add_fetch(ptr, val, SILOFS_ATOMIC_MODEL);
+	return __atomic_load_n(ptr, memory_order_seq_cst);
 }
 
-static inline int silofs_atomic_sub(int *ptr, int val)
+static inline void silofs_atomic_sc_set(int *ptr, int val)
 {
-	return __atomic_sub_fetch(ptr, val, SILOFS_ATOMIC_MODEL);
+	__atomic_store_n(ptr, val, memory_order_seq_cst);
 }
 
-static inline long silofs_atomic_getl(const long *ptr)
+static inline int silofs_atomic_sc_add(int *ptr, int val)
 {
-	return __atomic_load_n(ptr, SILOFS_ATOMIC_MODEL);
+	return __atomic_add_fetch(ptr, val, memory_order_seq_cst);
 }
 
-static inline void silofs_atomic_setl(long *ptr, long val)
+static inline int silofs_atomic_sc_sub(int *ptr, int val)
 {
-	__atomic_store_n(ptr, val, SILOFS_ATOMIC_MODEL);
+	return __atomic_sub_fetch(ptr, val, memory_order_seq_cst);
 }
 
-static inline long silofs_atomic_addl(long *ptr, long val)
+static inline long silofs_atomic_sc_getl(const long *ptr)
 {
-	return __atomic_add_fetch(ptr, val, SILOFS_ATOMIC_MODEL);
+	return __atomic_load_n(ptr, memory_order_seq_cst);
 }
 
-static inline long silofs_atomic_subl(long *ptr, long val)
+static inline void silofs_atomic_sc_setl(long *ptr, long val)
 {
-	return __atomic_sub_fetch(ptr, val, SILOFS_ATOMIC_MODEL);
+	__atomic_store_n(ptr, val, memory_order_seq_cst);
 }
 
-static inline unsigned long silofs_atomic_getul(const unsigned long *ptr)
+static inline long silofs_atomic_sc_addl(long *ptr, long val)
 {
-	return __atomic_load_n(ptr, SILOFS_ATOMIC_MODEL);
+	return __atomic_add_fetch(ptr, val, memory_order_seq_cst);
 }
 
-static inline void silofs_atomic_setul(unsigned long *ptr, unsigned long val)
+static inline long silofs_atomic_sc_subl(long *ptr, long val)
 {
-	__atomic_store_n(ptr, val, SILOFS_ATOMIC_MODEL);
+	return __atomic_sub_fetch(ptr, val, memory_order_seq_cst);
+}
+
+static inline unsigned long silofs_atomic_sc_getul(const unsigned long *ptr)
+{
+	return __atomic_load_n(ptr, memory_order_seq_cst);
+}
+
+static inline void
+silofs_atomic_sc_setul(unsigned long *ptr, unsigned long val)
+{
+	__atomic_store_n(ptr, val, memory_order_seq_cst);
 }
 
 static inline unsigned long
-silofs_atomic_addul(unsigned long *ptr, unsigned long val)
+silofs_atomic_sc_addul(unsigned long *ptr, unsigned long val)
 {
-	return __atomic_add_fetch(ptr, val, SILOFS_ATOMIC_MODEL);
+	return __atomic_add_fetch(ptr, val, memory_order_seq_cst);
 }
 
 static inline unsigned long
-silofs_atomic_subul(unsigned long *ptr, unsigned long val)
+silofs_atomic_sc_subul(unsigned long *ptr, unsigned long val)
 {
-	return __atomic_sub_fetch(ptr, val, SILOFS_ATOMIC_MODEL);
+	return __atomic_sub_fetch(ptr, val, memory_order_seq_cst);
 }
 
 #endif /* SILOFS_ATOMIC_H_ */

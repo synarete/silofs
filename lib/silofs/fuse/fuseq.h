@@ -30,12 +30,12 @@ struct silofs_env;
 /* fuse-queue machinery */
 struct silofs_fuseq_conn_info {
 	size_t   buffsize;
+	uint64_t kern_cap;
+	uint64_t want_cap;
 	uint32_t kern_proto_major;
 	uint32_t kern_proto_minor;
-	uint32_t kern_cap;
 	uint32_t proto_major;
 	uint32_t proto_minor;
-	uint32_t want_cap;
 	uint32_t max_write;
 	uint32_t max_read;
 	uint32_t max_readahead;

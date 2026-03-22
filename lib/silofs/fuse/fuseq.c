@@ -1067,7 +1067,8 @@ static int fqs_reply_init_ok(struct silofs_fuseq_sub *fqs,
 		.major                = coni->proto_major,
 		.minor                = coni->proto_minor,
 		.max_readahead        = coni->max_readahead,
-		.flags                = coni->want_cap,
+		.flags                = (uint32_t)coni->want_cap,
+		.flags2               = (uint32_t)(coni->want_cap >> 32),
 		.max_background       = (uint16_t)coni->max_background,
 		.congestion_threshold = (uint16_t)coni->congestion_threshold,
 		.max_write            = (uint32_t)coni->max_write,
@@ -1761,7 +1762,7 @@ static void diter_done(struct silofs_fuseq_diter *di)
 
 #define update_cap_want(coni_, cap_) update_cap_want_(coni_, cap_, #cap_)
 
-static void update_cap_want_(struct silofs_fuseq_conn_info *coni, uint32_t cap,
+static void update_cap_want_(struct silofs_fuseq_conn_info *coni, uint64_t cap,
                              const char *cap_name)
 {
 	if (coni->kern_cap & cap) {
@@ -1809,12 +1810,19 @@ static int fqs_check_init(const struct silofs_fuseq_sub *fqs,
  *
  * Enable FUSE_POSIX_ACL (plus, "system." prefix in xattr)
  */
+static uint64_t init_kern_caps(const struct silofs_fuseq_in *in)
+{
+	const uint32_t flags  = in->u.init.arg.flags;
+	const uint32_t flags2 = in->u.init.arg.flags2;
+
+	return (uint64_t)flags | ((uint64_t)flags2 << 32);
+}
+
 static void do_init_capabilities(const struct silofs_fuseq_cmd_ctx *fcc)
 {
 	struct silofs_fuseq_conn_info *coni = &fcc->fq->fq_coni;
-	const uint32_t in_flags             = fcc->in->u.init.arg.flags;
 
-	coni->kern_cap = in_flags;
+	coni->kern_cap = init_kern_caps(fcc->in);
 	coni->want_cap |= FUSE_BIG_WRITES; /* same as in libfuse */
 	update_cap_want(coni, FUSE_ASYNC_READ);
 	update_cap_want(coni, FUSE_ATOMIC_O_TRUNC);
@@ -1844,10 +1852,10 @@ static void do_init_log_conn_info(const struct silofs_fuseq_cmd_ctx *fcc)
 
 	fuseq_log_info("init: kern_proto_major=%u kern_proto_minor=%u",
 	               coni->kern_proto_major, coni->kern_proto_minor);
-	fuseq_log_info("init: kern_cap=0x%x", coni->kern_cap);
 	fuseq_log_info("init: proto_major=%u proto_minor=%u",
 	               coni->proto_major, coni->proto_minor);
-	fuseq_log_info("init: want_cap=0x%x", coni->want_cap);
+	fuseq_log_info("init: kern_cap=0x%lx", coni->kern_cap);
+	fuseq_log_info("init: want_cap=0x%lx", coni->want_cap);
 	fuseq_log_info("init: buffsize=%zu", coni->buffsize);
 	fuseq_log_info("init: max_write=%u", coni->max_write);
 	fuseq_log_info("init: max_read=%u", coni->max_read);
@@ -1903,9 +1911,9 @@ static int do_destroy(const struct silofs_fuseq_cmd_ctx *fcc)
 	return fqs_reply_status(fcc->fqs, fcc->task, 0);
 }
 
-static bool fuseq_has_cap(const struct silofs_fuseq *fq, uint32_t cap_mask)
+static bool fuseq_has_cap(const struct silofs_fuseq *fq, uint64_t cap_mask)
 {
-	const uint32_t cap_want = fq->fq_coni.want_cap;
+	const uint64_t cap_want = fq->fq_coni.want_cap;
 
 	return fq->fq_got_init && ((cap_want & cap_mask) == cap_mask);
 }
@@ -2971,8 +2979,11 @@ static void *tail_of(const struct silofs_fuseq_in *in, size_t head_len)
 
 static int do_write_buf(const struct silofs_fuseq_cmd_ctx *fcc)
 {
-	int err;
-	int ret;
+	int err, ret;
+
+	STATICASSERT_EQ(sizeof(struct silofs_fuseq_write_in),
+	                sizeof(struct fuse_in_header) +
+	                        sizeof(struct fuse_write_in));
 
 	check_fh_of(fcc->task, fcc->ino, fcc->in->u.write.arg.fh);
 	fcc->args->in.write.ino = fcc->ino;
@@ -3411,7 +3422,7 @@ static const struct silofs_fuseq_cmd_desc fuseq_cmd_tbl[] = {
 	FUSEQ_CMD(FUSE_SETLKW, nullptr, 0),
 	FUSEQ_CMD(FUSE_ACCESS, do_access, 0),
 	FUSEQ_CMD(FUSE_CREATE, do_create, 1),
-	FUSEQ_CMD(FUSE_INTERRUPT, nullptr, 0),
+	FUSEQ_CMD(FUSE_INTERRUPT, do_interrupt, 0),
 	FUSEQ_CMD(FUSE_BMAP, nullptr, 0),
 	FUSEQ_CMD(FUSE_DESTROY, do_destroy, 1),
 	FUSEQ_CMD(FUSE_IOCTL, do_ioctl, 1),
@@ -3493,18 +3504,19 @@ static bool fqs_has_exclusive_cmd(const struct silofs_fuseq_sub *fqs)
 static int
 fqs_check_opcode(const struct silofs_fuseq_sub *fqs, uint32_t op_code)
 {
-	const struct silofs_fuseq *fq                = fqs_fuseq(fqs);
+	const struct silofs_fuseq *fq;
 	const struct silofs_fuseq_cmd_desc *cmd_desc = cmd_desc_of(op_code);
 
 	if ((cmd_desc == nullptr) || (cmd_desc->hook == nullptr)) {
 		/* TODO: handle cases of FUSE_INTERUPT properly */
-		return -SILOFS_ENOSYS;
+		return -ENOSYS;
 	}
+	fq = fqs_fuseq(fqs);
 	if (!fq->fq_got_init && (cmd_desc->code != FUSE_INIT)) {
-		return -SILOFS_EIO;
+		return -EIO;
 	}
 	if (fq->fq_got_init && (cmd_desc->code == FUSE_INIT)) {
-		return -SILOFS_EIO;
+		return -EIO;
 	}
 	return 0;
 }
@@ -3678,7 +3690,6 @@ static void fqs_interrupt_op(struct silofs_fuseq_sub *fqs, uint64_t unq)
 		/* interrupt code comes here... */
 		fuseq_unlock_op(fq);
 	}
-	silofs_unused(do_interrupt);
 }
 
 static int fcc_call_oper(const struct silofs_fuseq_cmd_ctx *fcc,
@@ -3784,25 +3795,28 @@ fqs_check_inhdr(const struct silofs_fuseq_sub *fqs, size_t nrd, bool full)
 {
 	const struct silofs_fuseq_in *in      = fqs_in_of2(fqs);
 	const struct silofs_fuseq_hdr_in *hdr = &in->u.hdr;
-	const size_t len                      = hdr->hdr.len;
-	const size_t len_min                  = sizeof(*hdr);
-	const size_t len_max                  = fqs_max_inlen(fqs);
+	size_t len, len_ext, len_min, len_max;
 
+	len_min = sizeof(*hdr);
 	if (unlikely(nrd < len_min)) {
 		fuseq_log_err("illegal in-length: "
 		              "nrd=%lu len_min=%lu ",
 		              nrd, len_min);
 		return -SILOFS_EPROTO;
 	}
-	if (unlikely(len > len_max)) {
-		fuseq_log_err("illegal header: opcode=%d len=%lu len_max=%lu",
-		              fqs_in_opcode(fqs), len, len_max);
+	len     = hdr->hdr.len;
+	len_ext = 8 * (hdr->hdr.total_extlen);
+	len_max = fqs_max_inlen(fqs);
+	if (unlikely((len + len_ext) > len_max)) {
+		fuseq_log_err("illegal header: opcode=%d len=%zu len_ext=%zu "
+		              "len_max=%zu",
+		              fqs_in_opcode(fqs), len, len_ext, len_max);
 		return -SILOFS_EPROTO;
 	}
-	if (unlikely(full && (len != nrd))) {
+	if (unlikely(full && ((len + len_ext) != nrd))) {
 		fuseq_log_err("header length mismatch: "
-		              "opcode=%d nrd=%lu len=%lu ",
-		              fqs_in_opcode(fqs), nrd, len);
+		              "opcode=%d nrd=%zu len=%zu len_ext=%zu",
+		              fqs_in_opcode(fqs), nrd, len, len_ext);
 		return -SILOFS_EIO;
 	}
 	return 0;
@@ -3864,17 +3878,14 @@ static int fqs_splice_into_pipe(struct silofs_fuseq_sub *fqs, size_t cnt)
 	silofs_assert_le(cnt, pipe->size);
 
 	err = silofs_pipe_splice_from_fd(pipe, fuse_fd, nullptr, cnt,
-	                                 SPLICE_F_MOVE);
-	if (unlikely(err)) {
-		if (err == -ENODEV) {
-			fuseq_log_dbg("fuse splice-in nodev-error: "
-			              "fuse_fd=%d cnt=%lu",
-			              fuse_fd, cnt);
-		} else {
-			fuseq_log_err("fuse splice-in failed: fuse_fd=%d "
-			              "cnt=%lu err=%d",
-			              fuse_fd, cnt, err);
-		}
+	                                 SPLICE_F_MOVE | SPLICE_F_NONBLOCK);
+	if (err == -ENODEV) {
+		fuseq_log_dbg("fuse splice-in nodev-error: fuse_fd=%d cnt=%lu",
+		              fuse_fd, cnt);
+	} else if (err && (err != -EAGAIN)) {
+		fuseq_log_err("fuse splice-in failed: fuse_fd=%d cnt=%lu "
+		              "err=%d",
+		              fuse_fd, cnt, err);
 	}
 	return err;
 }
@@ -3978,13 +3989,14 @@ static int fqs_do_recv_in(struct silofs_fuseq_sub *fqs)
 {
 	int err = -SILOFS_ENORX;
 
-	if (fqs_has_exec_mode(fqs)) {
-		err = fqs_wait_request(fqs);
-		if (!err) {
-			err = fqs_copy_or_splice_in(fqs);
-		}
+	if (!fqs_has_exec_mode(fqs)) {
+		return -SILOFS_ENORX;
 	}
-	return err;
+	err = fqs_wait_request(fqs);
+	if (err) {
+		return err;
+	}
+	return fqs_copy_or_splice_in(fqs);
 }
 
 static int fqs_check_pipe_pre(const struct silofs_fuseq_sub *fqs)
@@ -4089,7 +4101,7 @@ static void fqs_post_recv_in_locked(struct silofs_fuseq_sub *fqs, int status)
 static int fqs_recv_in_locked(struct silofs_fuseq_sub *fqs)
 {
 	struct silofs_fuseq *fq = fqs_fuseq2(fqs);
-	int err                 = 0;
+	int err;
 
 	fuseq_lock_ch(fq);
 	err = fqs_try_acquire_pipe(fqs);
@@ -4127,7 +4139,10 @@ static int fqs_recv_request_in(struct silofs_fuseq_sub *fqs)
 		/* hmmm... ok, but why? */
 		return -SILOFS_ENORX;
 	}
-	if ((err == -EINTR) || (err == -EAGAIN)) {
+	if (err == -EAGAIN) {
+		return -SILOFS_ENORX;
+	}
+	if (err == -EINTR) {
 		log_dbg("fuse no-read: err=%d", err);
 		return -SILOFS_ENORX;
 	}

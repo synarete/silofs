@@ -214,15 +214,6 @@ static void env_update_iopen_max(struct silofs_env *env)
 	env->opstat.op_iopen_max = env_calc_iopen_limit(env);
 }
 
-static void env_update_vfs_hooks(struct silofs_env *env)
-{
-	silofs_env_bind_hooks(env);
-	if (env->fuseq != nullptr) {
-		env->fuseq->fq_env       = env;
-		env->fuseq->fq_vfs_hooks = env->vfs_hooks;
-	}
-}
-
 int silofs_env_setup(struct silofs_env *env, const struct silofs_spec *spec)
 {
 	int err;
@@ -251,10 +242,19 @@ int silofs_env_setup(struct silofs_env *env, const struct silofs_spec *spec)
 	if (err) {
 		return err;
 	}
-	env_update_vfs_hooks(env);
 	env_update_iopen_max(env);
+	silofs_env_bind_hooks(env);
 	env->flags = spec->flags;
 	return 0;
+}
+
+void silofs_env_bind_fuseq(struct silofs_env *env, struct silofs_fuseq *fq)
+{
+	if (fq != nullptr) {
+		fq->fq_env       = env;
+		fq->fq_vfs_hooks = env->vfs_hooks;
+	}
+	env->fuseq = fq;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

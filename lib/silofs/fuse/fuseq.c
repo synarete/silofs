@@ -79,7 +79,7 @@ static bool fuseq_may_splice(const struct silofs_fuseq *fq);
 static void fuseq_lock_ctl(struct silofs_fuseq *fq);
 static void fuseq_unlock_ctl(struct silofs_fuseq *fq);
 static void fuseq_update_nexecs(struct silofs_fuseq *fq, int n);
-static bool fuseq_has_live_opers(const struct silofs_fuseq *fq);
+static bool fuseq_has_live_opers(struct silofs_fuseq *fq);
 static bool fuseq_is_active(const struct silofs_fuseq *fq);
 static void fuseq_set_active(struct silofs_fuseq *fq);
 static void fuseq_set_non_active(struct silofs_fuseq *fq);
@@ -1494,6 +1494,8 @@ do_init_update_proto_version(const struct silofs_fuseq_cmd_ctx *fcc,
 	} else if (k_minor != u_minor) {
 		coni->proto_minor = silofs_min_u32(k_minor, u_minor);
 	}
+	coni->kern_proto_major = k_major;
+	coni->kern_proto_minor = k_minor;
 }
 
 static void do_init_update_conn_info(const struct silofs_fuseq_cmd_ctx *fcc,
@@ -3312,7 +3314,8 @@ fqs_enq_active_op(struct silofs_fuseq_sub *fqs, struct silofs_task_ctx *task)
 
 	fuseq_lock_op(fq);
 	listq_push_front(&fq->fq_curr_opers, &fqs->fqs_lh);
-	task->interrupt = 0;
+	fqs->fqs_active_task = task;
+	task->interrupt      = 0;
 	fuseq_unlock_op(fq);
 }
 
@@ -3323,8 +3326,35 @@ fqs_dec_active_op(struct silofs_fuseq_sub *fqs, struct silofs_task_ctx *task)
 
 	fuseq_lock_op(fq);
 	listq_remove(&fq->fq_curr_opers, &fqs->fqs_lh);
-	task->interrupt = 0;
+	fqs->fqs_active_task = nullptr;
+	task->interrupt      = 0;
 	fuseq_unlock_op(fq);
+}
+
+static struct silofs_fuseq_sub *fqs_from_lh(struct silofs_list_head *lh)
+{
+	return silofs_container_of(lh, struct silofs_fuseq_sub, fqs_lh);
+}
+
+static void fqs_do_interrupt_locked(struct silofs_fuseq_sub *fqs, uint64_t unq)
+{
+	struct silofs_fuseq *fq = fqs_fuseq2(fqs);
+	struct silofs_listq *lq = &fq->fq_curr_opers;
+	struct silofs_list_head *lh;
+
+	lh = listq_front(lq);
+	while (lh != nullptr) {
+		struct silofs_fuseq_sub *fqs_sub = fqs_from_lh(lh);
+		struct silofs_task_ctx *task     = fqs_sub->fqs_active_task;
+
+		silofs_assert_not_null(task);
+
+		if (task->auth.unique == unq) {
+			task->interrupt = 1;
+			break;
+		}
+		lh = listq_next(lq, lh);
+	}
 }
 
 static void fqs_interrupt_op(struct silofs_fuseq_sub *fqs, uint64_t unq)
@@ -3342,7 +3372,7 @@ static void fqs_interrupt_op(struct silofs_fuseq_sub *fqs, uint64_t unq)
 		struct silofs_fuseq *fq = fqs_fuseq2(fqs);
 
 		fuseq_lock_op(fq);
-		/* interrupt code comes here... */
+		fqs_do_interrupt_locked(fqs, unq);
 		fuseq_unlock_op(fq);
 	}
 }
@@ -3591,26 +3621,27 @@ static int fqs_copy_pipe_in(struct silofs_fuseq_sub *fqs)
 	struct silofs_fuseq_in *in         = fqs_in_of(fqs);
 	struct silofs_fuseq_hdr_in *hdr_in = &in->u.hdr;
 	struct silofs_pipe *pipe           = fqs_cur_pipe(fqs);
-	const size_t nsp                   = (size_t)(pipe->pend);
-	const size_t cnt = silofs_min(sizeof(in->u.write), nsp);
-	size_t ncp1      = 0;
-	size_t ncp2      = 0;
-	size_t rem;
+	size_t nsp, ncp1, ncp2, rem, len, len_ext;
 	int err;
 
-	err = fqs_copy_from_pipe_in(fqs, 0, cnt, &ncp1);
+	ncp1 = 0;
+	nsp  = silofs_min(sizeof(in->u.write), (size_t)(pipe->pend));
+	err  = fqs_copy_from_pipe_in(fqs, 0, nsp, &ncp1);
 	if (err) {
 		return err;
 	}
-	rem = (size_t)hdr_in->hdr.len - ncp1;
-	err = fqs_check_inhdr(fqs, ncp1, rem == 0);
+	len     = hdr_in->hdr.len;
+	len_ext = 8 * (hdr_in->hdr.total_extlen);
+	rem     = (len + len_ext) - ncp1;
+	err     = fqs_check_inhdr(fqs, ncp1, rem == 0);
 	if (unlikely(err)) {
 		return err;
 	}
 	if (!rem || fqs_has_large_write_in(fqs)) {
 		return 0;
 	}
-	err = fqs_copy_from_pipe_in(fqs, ncp1, rem, &ncp2);
+	ncp2 = 0;
+	err  = fqs_copy_from_pipe_in(fqs, ncp1, rem, &ncp2);
 	if (unlikely(err)) {
 		return err;
 	}
@@ -3621,9 +3652,9 @@ static int fqs_copy_pipe_in(struct silofs_fuseq_sub *fqs)
 	return 0;
 }
 
-static bool fqs_has_exec_mode(const struct silofs_fuseq_sub *fqs)
+static bool fqs_has_exec_mode(struct silofs_fuseq_sub *fqs)
 {
-	const struct silofs_fuseq *fq = fqs_fuseq(fqs);
+	struct silofs_fuseq *fq = fqs_fuseq2(fqs);
 
 	return fuseq_is_active(fq) || fuseq_has_live_opers(fq);
 }
@@ -4312,9 +4343,14 @@ static uint32_t clamp(uint32_t v, uint32_t lo, uint32_t hi)
 	return silofs_clamp_u32(v, lo, hi);
 }
 
-static bool fuseq_has_live_opers(const struct silofs_fuseq *fq)
+static bool fuseq_has_live_opers(struct silofs_fuseq *fq)
 {
-	return (fq->fq_curr_opers.sz > 0);
+	bool ret;
+
+	fuseq_lock_op(fq);
+	ret = (fq->fq_curr_opers.sz > 0);
+	fuseq_unlock_op(fq);
+	return ret;
 }
 
 static bool fuseq_is_active(const struct silofs_fuseq *fq)

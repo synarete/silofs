@@ -67,6 +67,7 @@ struct silofs_fuseq_sub {
 	struct silofs_fuseq_inb     *fqs_inb;
 	struct silofs_fuseq_outb    *fqs_outb;
 	struct silofs_fuseq_rw_iter *fqs_rwi;
+	struct silofs_task_ctx      *fqs_active_task;
 	time_t                       fqs_time_stamp;
 	volatile uint64_t            fqs_req_count;
 	bool                         fqs_init_ok;

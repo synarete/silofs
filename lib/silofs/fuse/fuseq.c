@@ -723,7 +723,19 @@ static int fqs_reply_ioctl_ok(struct silofs_fuseq_sub *fqs,
 
 static bool task_interrupted(const struct silofs_task_ctx *task)
 {
-	return unlikely(task->interrupt == 2);
+	/*
+	 * TODO-0026: Enable FUSE_INTERRUPT functionality
+	 *
+	 * Using list of active operations turned out as buggy; for example, it
+	 * breaks postgresql unit-test. Need to read carefully Kernel side code
+	 * and see what can be done. Also, try to understand what the warding
+	 * in kernel's Documentation:
+	 *   fuse.rst:#interrupting-filesystem-operations
+	 *
+	 * So, current state is that we track interrupted tasks, allow halt of
+	 * long I/O operations but ignoring this state upon reply.
+	 */
+	return unlikely(task->interrupted == 2);
 }
 
 static int fqs_reply_attr(struct silofs_fuseq_sub *fqs,
@@ -1150,7 +1162,7 @@ static int fq_rdi_reply_read_iter(struct silofs_fuseq_rd_iter *fq_rdi, int err)
 	struct silofs_task_ctx *task = fq_rdi->task;
 	int ret;
 
-	if (task->interrupt) {
+	if (task->interrupted) {
 		ret = fqs_reply_intr(fqs, task);
 	} else if (unlikely(err)) {
 		ret = fqs_reply_err(fqs, task, err);
@@ -3315,7 +3327,7 @@ fqs_enq_active_op(struct silofs_fuseq_sub *fqs, struct silofs_task_ctx *task)
 	fuseq_lock_op(fq);
 	listq_push_front(&fq->fq_curr_opers, &fqs->fqs_lh);
 	fqs->fqs_active_task = task;
-	task->interrupt      = 0;
+	task->interrupted    = 0;
 	fuseq_unlock_op(fq);
 }
 
@@ -3327,7 +3339,7 @@ fqs_dec_active_op(struct silofs_fuseq_sub *fqs, struct silofs_task_ctx *task)
 	fuseq_lock_op(fq);
 	listq_remove(&fq->fq_curr_opers, &fqs->fqs_lh);
 	fqs->fqs_active_task = nullptr;
-	task->interrupt      = 0;
+	task->interrupted    = 0;
 	fuseq_unlock_op(fq);
 }
 
@@ -3350,7 +3362,7 @@ static void fqs_do_interrupt_locked(struct silofs_fuseq_sub *fqs, uint64_t unq)
 		silofs_assert_not_null(task);
 
 		if (task->auth.unique == unq) {
-			task->interrupt = 1;
+			task->interrupted = 1;
 			break;
 		}
 		lh = listq_next(lq, lh);
@@ -3359,15 +3371,6 @@ static void fqs_do_interrupt_locked(struct silofs_fuseq_sub *fqs, uint64_t unq)
 
 static void fqs_interrupt_op(struct silofs_fuseq_sub *fqs, uint64_t unq)
 {
-	/*
-	 * TODO-0026: Re-anble FUSEINTERRUPT hook
-	 *
-	 * Using list of active operations turned out as buggy; for example, it
-	 * breaks postgresql unit-test. Need to read carefully Kernel side code
-	 * and see what can be done. Also, try to understand what the warding
-	 * in kernel's Documentation:
-	 *   fuse.rst:#interrupting-filesystem-operations
-	 */
 	if (unq > 0) {
 		struct silofs_fuseq *fq = fqs_fuseq2(fqs);
 

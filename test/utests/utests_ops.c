@@ -542,7 +542,7 @@ static int ut_do_write_iter(struct ut_env *ute, ino_t ino, const void *buf,
                             size_t len, off_t off, size_t *out_len)
 {
 	struct silofs_task_ctx task = {
-		.interrupt = -1,
+		.interrupted = -1,
 	};
 	struct ut_write_iter wri = {
 		.dat       = buf,

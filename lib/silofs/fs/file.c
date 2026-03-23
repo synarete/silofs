@@ -952,7 +952,7 @@ static size_t filc_io_length(const struct silofs_file_ctx *f_ctx)
 static bool filc_has_more_io(const struct silofs_file_ctx *f_ctx)
 {
 	return (f_ctx->off < f_ctx->end) && !f_ctx->fm_stop &&
-	       !f_ctx->task->interrupt;
+	       !f_ctx->task->interrupted;
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

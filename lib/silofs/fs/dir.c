@@ -2061,6 +2061,11 @@ static bool dirc_stopped(const struct silofs_dir_ctx *d_ctx)
 	return !d_ctx->keep_iter;
 }
 
+static void dirc_update_keep_iter(struct silofs_dir_ctx *d_ctx, int err)
+{
+	d_ctx->keep_iter = (err == 0) && !d_ctx->task->interrupted;
+}
+
 static bool
 dirc_emit(struct silofs_dir_ctx *d_ctx, const char *name, size_t nlen,
           ino_t ino, mode_t dt, const struct stat *attr)
@@ -2079,8 +2084,10 @@ dirc_emit(struct silofs_dir_ctx *d_ctx, const char *name, size_t nlen,
 	if ((attr != nullptr) && d_ctx->readdir_plus) {
 		memcpy(&rdi.attr, attr, sizeof(rdi.attr));
 	}
-	err              = rd_ctx->actor(rd_ctx, &rdi);
-	d_ctx->keep_iter = (err == 0);
+
+	err = rd_ctx->actor(rd_ctx, &rdi);
+	dirc_update_keep_iter(d_ctx, err);
+
 	return d_ctx->keep_iter;
 }
 

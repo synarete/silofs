@@ -84,23 +84,23 @@ void silofs_task_init(struct silofs_task_ctx *task, struct silofs_env *env)
 	memset(task, 0, sizeof(*task));
 	silofs_cred_init(&task->auth.creds.fs_cred);
 	silofs_cred_init(&task->auth.creds.host_cred);
-	task->env       = env;
-	task->prng      = env->base.prng;
-	task->idsm      = env->base.idsmap;
-	task->repo      = env->base.repo;
-	task->lcache    = env->base.lcache;
-	task->submitq   = env->base.submitq;
-	task->looseq    = nullptr;
-	task->ubref     = &env->ubref;
-	task->upper_id  = 0;
-	task->interrupt = 0;
-	task->fs_locked = false;
-	task->rw_locked = false;
-	task->exclusive = false;
-	task->priv_op   = false;
-	task->kwrite    = false;
-	task->runnable  = true;
-	task->internal  = false;
+	task->env         = env;
+	task->prng        = env->base.prng;
+	task->idsm        = env->base.idsmap;
+	task->repo        = env->base.repo;
+	task->lcache      = env->base.lcache;
+	task->submitq     = env->base.submitq;
+	task->looseq      = nullptr;
+	task->ubref       = &env->ubref;
+	task->upper_id    = 0;
+	task->interrupted = 0;
+	task->fs_locked   = false;
+	task->rw_locked   = false;
+	task->exclusive   = false;
+	task->priv_op     = false;
+	task->kwrite      = false;
+	task->runnable    = true;
+	task->internal    = false;
 }
 
 void silofs_task_fini(struct silofs_task_ctx *task)

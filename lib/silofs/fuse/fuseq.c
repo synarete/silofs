@@ -723,7 +723,7 @@ static int fqs_reply_ioctl_ok(struct silofs_fuseq_sub *fqs,
 
 static bool task_interrupted(const struct silofs_task_ctx *task)
 {
-	return unlikely(task->interrupt > 0);
+	return unlikely(task->interrupt == 2);
 }
 
 static int fqs_reply_attr(struct silofs_fuseq_sub *fqs,

@@ -31,7 +31,7 @@ static void test_xattr_simple(struct ft_env *fte)
 	size_t sz          = 0;
 	int fd             = -1;
 
-	ft_open(path, O_CREAT | O_RDWR, 0700, &fd);
+	ft_open(path, O_CREAT | O_RDWR, 0640, &fd);
 	ft_close(fd);
 	ft_setxattr(path, name, value, valsz, 0);
 	ft_getxattr(path, name, nullptr, 0, &sz);

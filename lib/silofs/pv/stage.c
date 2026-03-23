@@ -689,6 +689,15 @@ static int stc_create_cached_vnode(const struct silofs_stage_ctx *st_ctx,
 	return (*out_vni == nullptr) ? -SILOFS_ENOMEM : 0;
 }
 
+static void stc_update_vnode_with(const struct silofs_stage_ctx *st_ctx,
+                                  struct silofs_vnode_info *vni,
+                                  const struct silofs_pnptr *pnptr)
+{
+	silofs_pnptr_assign(&vni->vn_pnptr, pnptr);
+	vni->vn_has_pn = true;
+	silofs_unused(st_ctx);
+}
+
 static int stc_spawn_vnode(const struct silofs_stage_ctx *st_ctx,
                            const struct silofs_vaddr *vaddr,
                            const struct silofs_pnptr *pnptr,
@@ -704,6 +713,7 @@ static int stc_spawn_vnode(const struct silofs_stage_ctx *st_ctx,
 	if (err) {
 		return err;
 	}
+	stc_update_vnode_with(st_ctx, *out_vni, pnptr);
 	return 0;
 }
 
@@ -810,6 +820,7 @@ static int stc_stage_vnode(struct silofs_stage_ctx *st_ctx,
 		silofs_assert_ok(err);
 		return err;
 	}
+	stc_update_vnode_with(st_ctx, vni, pnptr);
 out_ok:
 	*out_vni = vni;
 	return 0;

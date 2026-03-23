@@ -103,6 +103,9 @@ struct silofs_vnode_info {
 	uint64_t                 vn_magic;
 	int                      vn_asyncwr;
 
+	struct silofs_pnptr vn_pnptr;
+	bool                vn_has_pn;
+
 	bool (*isevictable_fn)(const struct silofs_vnode_info *vni);
 };
 

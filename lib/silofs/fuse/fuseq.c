@@ -1398,19 +1398,30 @@ static int fqs_check_init(const struct silofs_fuseq_sub *fqs,
 {
 	const struct silofs_fuseq *fq             = fqs_fuseq(fqs);
 	const struct silofs_fuseq_conn_info *coni = &fq->fq_coni;
-	const unsigned int u_major                = coni->proto_major;
-	const unsigned int u_minor                = coni->proto_minor;
+	uint32_t u_major, u_minor, k_major, k_minor;
 
-	if ((arg->major != u_major) || (arg->minor < u_minor)) {
+	k_major = arg->major;
+	k_minor = arg->minor;
+	u_major = coni->proto_major;
+	u_minor = coni->proto_minor;
+
+	if (k_major < 7) {
+		fuseq_log_err("unsupported fuse-protocol version: "
+		              "kernel=%u.%u userspace=%u.%u",
+		              k_major, k_minor, u_major, u_minor);
+		return -EPROTO;
+	}
+
+	if ((k_major != u_major) || (k_minor < u_minor)) {
 		fuseq_log_warn("version mismatch: "
 		               "kernel=%u.%u userspace=%u.%u",
-		               arg->major, arg->minor, u_major, u_minor);
+		               k_major, k_minor, u_major, u_minor);
 	}
 	/*
 	 * XXX minor __should__ be 36, but allow 34 due to fuse version on
 	 * github's ubuntu-22.04 runners (fuse-7.34).
 	 */
-	if ((arg->major != 7) || (arg->minor < 34)) {
+	if ((k_major != 7) || (arg->minor < 34)) {
 		fuseq_log_err("unsupported fuse-protocol version: %u.%u",
 		              arg->major, arg->minor);
 		return -EPROTO;
@@ -1438,7 +1449,7 @@ static uint64_t init_kern_caps(const struct silofs_fuseq_in *in)
 	return (uint64_t)flags | ((uint64_t)flags2 << 32);
 }
 
-static void do_init_capabilities(const struct silofs_fuseq_cmd_ctx *fcc)
+static void do_init_update_capabilities(const struct silofs_fuseq_cmd_ctx *fcc)
 {
 	struct silofs_fuseq_conn_info *coni = &fcc->fq->fq_coni;
 
@@ -1463,6 +1474,33 @@ static void do_init_capabilities(const struct silofs_fuseq_cmd_ctx *fcc)
 	if (fuseq_may(fcc->fq, SILOFS_F_AUTOINVAL)) {
 		update_cap_want(coni, FUSE_AUTO_INVAL_DATA);
 	}
+}
+
+static void
+do_init_update_proto_version(const struct silofs_fuseq_cmd_ctx *fcc,
+                             const struct fuse_init_in *arg)
+{
+	struct silofs_fuseq_conn_info *coni = &fcc->fq->fq_coni;
+	uint32_t u_major, u_minor, k_major, k_minor;
+
+	k_major = arg->major;
+	k_minor = arg->minor;
+	u_major = coni->proto_major;
+	u_minor = coni->proto_minor;
+
+	if (k_major != u_major) {
+		coni->proto_major = silofs_min_u32(k_major, u_major);
+		coni->proto_minor = silofs_min_u32(k_minor, u_minor);
+	} else if (k_minor != u_minor) {
+		coni->proto_minor = silofs_min_u32(k_minor, u_minor);
+	}
+}
+
+static void do_init_update_conn_info(const struct silofs_fuseq_cmd_ctx *fcc,
+                                     const struct fuse_init_in *arg)
+{
+	do_init_update_proto_version(fcc, arg);
+	do_init_update_capabilities(fcc);
 }
 
 static void do_init_log_conn_info(const struct silofs_fuseq_cmd_ctx *fcc)
@@ -1491,22 +1529,19 @@ static void do_init_log_conn_info(const struct silofs_fuseq_cmd_ctx *fcc)
 
 static int do_init(const struct silofs_fuseq_cmd_ctx *fcc)
 {
-	struct silofs_fuseq_conn_info *coni = &fcc->fq->fq_coni;
-	const uint32_t in_major             = fcc->in->u.init.arg.major;
-	const uint32_t in_minor             = fcc->in->u.init.arg.minor;
-	const uint32_t in_flags             = fcc->in->u.init.arg.flags;
-	int err;
-	int ret;
+	const struct fuse_init_in *arg = &fcc->in->u.init.arg;
+	uint32_t in_major, in_minor;
+	int err, ret;
 
-	fuseq_log_info("init: ino=%ld version=%d.%d flags=0x%x", fcc->ino,
-	               in_major, in_minor, in_flags);
+	in_major = arg->major;
+	in_minor = arg->minor;
+	fuseq_log_info("init: ino=%ld version=%u.%u flags=0x%x", fcc->ino,
+	               in_major, in_minor, arg->flags);
 
-	err = fqs_check_init(fcc->fqs, &fcc->in->u.init.arg);
+	fcc->fq->fq_got_init = true;
+	err                  = fqs_check_init(fcc->fqs, arg);
 	if (!err) {
-		coni->kern_proto_major = in_major;
-		coni->kern_proto_minor = in_minor;
-		do_init_capabilities(fcc);
-		fcc->fq->fq_got_init = true;
+		do_init_update_conn_info(fcc, arg);
 	}
 
 	do_init_log_conn_info(fcc);
@@ -1514,7 +1549,7 @@ static int do_init(const struct silofs_fuseq_cmd_ctx *fcc)
 	ret = fqs_reply_init(fcc->fqs, fcc->task, err);
 	if (!err && !ret) {
 		fcc->fq->fq_reply_init_ok = true;
-		fuseq_log_info("init-ok: version=%d.%d", in_major, in_minor);
+		fuseq_log_info("init-ok: version=%u.%u", in_major, in_minor);
 	} else {
 		fuseq_log_info("init-failure: ret=%d err=%d", ret, err);
 	}

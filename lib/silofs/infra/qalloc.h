@@ -19,6 +19,8 @@
 
 #include <stdlib.h>
 #include <stdint.h>
+
+#include <silofs/ccattr.h>
 #include <silofs/memalloc.h>
 #include <silofs/infra/iovec.h>
 #include <silofs/infra/list.h>
@@ -46,7 +48,7 @@ struct silofs_qpool {
 	size_t                  npgs_use;
 	uint32_t                unique_id;
 	enum silofs_qallocf     flags;
-};
+} silofs_attr_aligned64;
 
 struct silofs_slab {
 	struct silofs_list_head free_list;
@@ -56,14 +58,14 @@ struct silofs_slab {
 	size_t                  nused;
 	uint32_t                elemsz;
 	int32_t                 sindex;
-};
+} silofs_attr_aligned64;
 
 struct silofs_qalloc {
 	struct silofs_slab  slabs[12];
 	struct silofs_qpool qpool;
 	struct silofs_alloc alloc;
 	size_t              nbytes_use;
-};
+} silofs_attr_aligned64;
 
 /* quick allocator */
 int silofs_qalloc_init(struct silofs_qalloc *qal, size_t memsize,

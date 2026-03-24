@@ -192,23 +192,17 @@ memfd_setup(struct silofs_memfd *memfd, const char *name, size_t size)
 
 static int memfd_close(struct silofs_memfd *memfd)
 {
-	int err;
+	int err1, err2;
 
 	if (!memfd->msz) {
 		return 0;
 	}
-	err = silofs_sys_munmap(memfd->mem, memfd->msz);
-	if (err) {
-		return err;
-	}
-	err = silofs_sys_close(memfd->fd);
-	if (err) {
-		return err;
-	}
+	err1       = silofs_sys_munmap(memfd->mem, memfd->msz);
+	err2       = silofs_sys_close(memfd->fd);
 	memfd->mem = nullptr;
 	memfd->msz = 0;
 	memfd->fd  = -1;
-	return 0;
+	return err1 ? err1 : err2;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -312,15 +306,14 @@ qpool_errorf(const struct silofs_qpool *qpool, const char *file, int line,
 static int
 calc_mem_sizes(size_t npgs, size_t *out_data_msz, size_t *out_meta_msz)
 {
-	const size_t npgs_max = UINT_MAX; /* TODO: proper upper limit */
-	int ret               = -SILOFS_EINVAL;
+	const size_t npgs_max = (64ULL * SILOFS_UGIGA) / QALLOC_PAGE_SIZE;
 
-	if ((npgs > 0) && (npgs <= npgs_max)) {
-		*out_data_msz = npgs * sizeof(union silofs_qpage);
-		*out_meta_msz = npgs * sizeof(struct silofs_qpage_info);
-		ret           = 0;
+	if ((npgs == 0) || (npgs > npgs_max)) {
+		return -SILOFS_EINVAL;
 	}
-	return ret;
+	*out_data_msz = npgs * sizeof(union silofs_qpage);
+	*out_meta_msz = npgs * sizeof(struct silofs_qpage_info);
+	return 0;
 }
 
 static void *qpool_page_at(const struct silofs_qpool *qpool, size_t idx)
@@ -606,7 +599,8 @@ qpool_alloc_multi_pg(struct silofs_qpool *qpool, size_t nbytes, void **out_ptr)
 static off_t
 qpool_ptr_to_off(const struct silofs_qpool *qpool, const void *ptr)
 {
-	return (const char *)ptr - (const char *)qpool->data.mem;
+	silofs_assert_ge(ptr, qpool->data.mem);
+	return (off_t)((uintptr_t)ptr - (uintptr_t)qpool->data.mem);
 }
 
 static size_t
@@ -614,6 +608,7 @@ qpool_ptr_to_pgn(const struct silofs_qpool *qpool, const void *ptr)
 {
 	const off_t off = qpool_ptr_to_off(qpool, ptr);
 
+	silofs_assert_ge(off, 0);
 	return (size_t)off / QALLOC_PAGE_SIZE;
 }
 
@@ -685,8 +680,9 @@ static int qpool_check_by_page(const struct silofs_qpool *qpool,
 static bool qpool_punch_hole_at(const struct silofs_qpool *qpool,
                                 struct silofs_qpage_info *qpgi, size_t npgs)
 {
-	const off_t off   = npgs_to_nbytes(qpgi->qpg_index);
+	const ssize_t pos = npgs_to_nbytes(qpgi->qpg_index);
 	const ssize_t len = npgs_to_nbytes(npgs);
+	const off_t off   = (off_t)pos;
 	const int mode    = FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE;
 	const int fd      = qpool->data.fd;
 	int err;
@@ -1109,7 +1105,7 @@ static int slab_check_seg(const struct silofs_slab *slab,
 		slab_error(slab, "nbytes=%zu", nbytes);
 		return -SILOFS_EQALLOC;
 	}
-	if (nbytes >= (2 * elemsz)) {
+	if ((slab->sindex > 0) && nbytes < (elemsz / 2)) {
 		slab_error(slab, "nbytes=%zu", nbytes);
 		return -SILOFS_EQALLOC;
 	}
@@ -1472,7 +1468,7 @@ static void qalloc_pre_free(const struct silofs_qalloc *qal, void *ptr,
 
 		memset(ptr, 1, silofs_min(512, nbytes));
 		if (nbytes >= sizeof(*q)) {
-			*q = 0xBADC0DE;
+			*q = (uint64_t)(0xDEADC0DEBADC0DE0UL);
 		}
 	}
 }

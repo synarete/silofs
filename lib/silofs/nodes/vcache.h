@@ -27,6 +27,7 @@ struct silofs_vcache {
 	struct silofs_hmapq  vc_vni_hmapq;
 	struct silofs_dirtyq vc_iis_dq;
 	struct silofs_dirtyq vc_vnis_dq;
+	struct silofs_dirtyq vc_pn_vnis_dq;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -51,8 +52,8 @@ silofs_vcache_create_vnode(struct silofs_vcache      *vcache,
 void silofs_vcache_forget_vnode(struct silofs_vcache     *vcache,
                                 struct silofs_vnode_info *vni);
 
-void silofs_vcache_redirtify_vnode(struct silofs_vcache     *vcache,
-                                   struct silofs_vnode_info *vni);
+void silofs_vcache_rebind_vnode(struct silofs_vcache     *vcache,
+                                struct silofs_vnode_info *vni);
 
 void silofs_vcache_collect_stats(const struct silofs_vcache *vcache,
                                  struct silofs_cache_stats  *out_cstats);

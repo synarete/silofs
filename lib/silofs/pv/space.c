@@ -263,6 +263,22 @@ int silofs_reload_pv(struct silofs_pexec_ctx *pexec,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static int map_vnode_by_btree(struct silofs_pexec_ctx *pexec,
+                              struct silofs_vnode_info *vni)
+{
+	const struct silofs_vaddr *vaddr = silofs_vni_vaddr(vni);
+	int err;
+
+	err = silofs_insert_vtop(pexec, vaddr, &vni->vn_pnptr);
+	if (err) {
+		return err;
+	}
+	/* XXX "YOU ARE HERE"
+	silofs_vni_dirtify(vni, nullptr);
+	*/
+	return 0;
+}
+
 int silofs_spawn_vnode2_at(struct silofs_pexec_ctx *pexec,
                            const struct silofs_vaddr *vaddr,
                            struct silofs_vnode_info **out_vni)
@@ -278,7 +294,7 @@ int silofs_spawn_vnode2_at(struct silofs_pexec_ctx *pexec,
 	if (err) {
 		return err;
 	}
-	err = silofs_insert_vtop(pexec, vaddr, &pnptr);
+	err = map_vnode_by_btree(pexec, *out_vni);
 	if (err) {
 		return err;
 	}

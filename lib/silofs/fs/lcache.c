@@ -420,7 +420,7 @@ silofs_lcache_create_vnode(struct silofs_lcache *lcache,
 void silofs_lcache_redirtify_vnode(struct silofs_lcache *lcache,
                                    struct silofs_vnode_info *vni)
 {
-	silofs_vcache_redirtify_vnode(&lcache->lc_vc, vni);
+	silofs_vcache_rebind_vnode(&lcache->lc_vc, vni);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

@@ -42,34 +42,34 @@ static void vcache_init_dqs(struct silofs_vcache *vcache)
 {
 	silofs_dirtyq_init(&vcache->vc_iis_dq);
 	silofs_dirtyq_init(&vcache->vc_vnis_dq);
+	silofs_dirtyq_init(&vcache->vc_pn_vnis_dq);
 }
 
 static void vcache_fini_dqs(struct silofs_vcache *vcache)
 {
 	silofs_dirtyq_fini(&vcache->vc_iis_dq);
 	silofs_dirtyq_fini(&vcache->vc_vnis_dq);
+	silofs_dirtyq_fini(&vcache->vc_pn_vnis_dq);
 }
 
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
 static struct silofs_dirtyq *
-vcache_get_dq(struct silofs_vcache *vcache, enum silofs_vtype vtype)
+vcache_resolve_dirtyq_for(struct silofs_vcache *vcache,
+                          const struct silofs_vnode_info *vni)
 {
 	struct silofs_dirtyq *dq;
+	const enum silofs_vtype vtype = vni_vtype(vni);
 
-	if (silofs_vtype_isinode(vtype)) {
+	if (vni->vn_has_pn) {
+		dq = &vcache->vc_pn_vnis_dq;
+	} else if (silofs_vtype_isinode(vtype)) {
 		dq = &vcache->vc_iis_dq;
 	} else {
 		silofs_assert(silofs_vtype_isvnode(vtype));
 		dq = &vcache->vc_vnis_dq;
 	}
 	return dq;
-}
-
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-
-static struct silofs_dirtyq *
-vcache_dirtyq_by(struct silofs_vcache *vcache, enum silofs_vtype vtype)
-{
-	return vcache_get_dq(vcache, vtype);
 }
 
 static enum silofs_allocf flags_to_allocf(int flags)
@@ -298,8 +298,9 @@ void silofs_vcache_forget_vnode(struct silofs_vcache *vcache,
 static void vcache_set_dq_of_vni(struct silofs_vcache *vcache,
                                  struct silofs_vnode_info *vni)
 {
-	struct silofs_dirtyq *dq = vcache_dirtyq_by(vcache, vni_vtype(vni));
+	struct silofs_dirtyq *dq;
 
+	dq = vcache_resolve_dirtyq_for(vcache, vni);
 	silofs_vni_set_dq(vni, dq);
 }
 
@@ -317,12 +318,18 @@ silofs_vcache_create_vnode(struct silofs_vcache *vcache,
 	return vni;
 }
 
-void silofs_vcache_redirtify_vnode(struct silofs_vcache *vcache,
-                                   struct silofs_vnode_info *vni)
+void silofs_vcache_rebind_vnode(struct silofs_vcache *vcache,
+                                struct silofs_vnode_info *vni)
 {
-	silofs_vni_undirtify(vni);
+	const bool dirty = silofs_vni_isdirty(vni);
+
+	if (dirty) {
+		silofs_vni_undirtify(vni);
+	}
 	vcache_set_dq_of_vni(vcache, vni);
-	silofs_vni_dirtify(vni, nullptr);
+	if (dirty) {
+		silofs_vni_dirtify(vni, nullptr);
+	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

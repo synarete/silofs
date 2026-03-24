@@ -695,7 +695,8 @@ static void stc_update_vnode_with(const struct silofs_stage_ctx *st_ctx,
 {
 	silofs_pnptr_assign(&vni->vn_pnptr, pnptr);
 	vni->vn_has_pn = true;
-	silofs_unused(st_ctx);
+
+	silofs_vcache_rebind_vnode(st_ctx->vcache, vni);
 }
 
 static int stc_spawn_vnode(const struct silofs_stage_ctx *st_ctx,

@@ -24,6 +24,7 @@
 #define silofs_attr_aligned16   silofs_attr_alignedx(16)
 #define silofs_attr_aligned32   silofs_attr_alignedx(32)
 #define silofs_attr_aligned64   silofs_attr_alignedx(64)
+#define silofs_attr_aligned128   silofs_attr_alignedx(128)
 #else
 #error "missing '__attribute__ ((__aligned__))'"
 #endif

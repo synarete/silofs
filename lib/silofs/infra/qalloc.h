@@ -58,7 +58,8 @@ struct silofs_slab {
 	size_t                  nused;
 	uint32_t                elemsz;
 	int32_t                 sindex;
-} silofs_attr_aligned64;
+	uint8_t                 pad[40];
+} silofs_attr_aligned128;
 
 struct silofs_qalloc {
 	struct silofs_slab  slabs[12];
@@ -83,7 +84,7 @@ void silofs_qalloc_stat(const struct silofs_qalloc *qal,
 int silofs_qalloc_resolve(const struct silofs_qalloc *qal, void *ptr,
                           size_t len, struct silofs_iovec *iov);
 
-int silofs_qalloc_mcheck(const struct silofs_qalloc *qal, const void *ptr,
+int silofs_qalloc_mcheck(struct silofs_qalloc *qal, const void *ptr,
                          size_t nbytes);
 
 #endif /* SILOFS_QALLOC_H_ */

@@ -31,6 +31,71 @@ static inline void silofs_atomic_set(int *ptr, int val)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static inline int silofs_atomic_rx_get(const int *ptr)
+{
+	return __atomic_load_n(ptr, memory_order_relaxed);
+}
+
+static inline void silofs_atomic_rx_set(int *ptr, int val)
+{
+	__atomic_store_n(ptr, val, memory_order_relaxed);
+}
+
+static inline int silofs_atomic_rx_add(int *ptr, int val)
+{
+	return __atomic_add_fetch(ptr, val, memory_order_relaxed);
+}
+
+static inline int silofs_atomic_rx_sub(int *ptr, int val)
+{
+	return __atomic_sub_fetch(ptr, val, memory_order_relaxed);
+}
+
+static inline long silofs_atomic_rx_getl(const long *ptr)
+{
+	return __atomic_load_n(ptr, memory_order_relaxed);
+}
+
+static inline void silofs_atomic_rx_setl(long *ptr, long val)
+{
+	__atomic_store_n(ptr, val, memory_order_relaxed);
+}
+
+static inline long silofs_atomic_rx_addl(long *ptr, long val)
+{
+	return __atomic_add_fetch(ptr, val, memory_order_relaxed);
+}
+
+static inline long silofs_atomic_rx_subl(long *ptr, long val)
+{
+	return __atomic_sub_fetch(ptr, val, memory_order_relaxed);
+}
+
+static inline unsigned long silofs_atomic_rx_getul(const unsigned long *ptr)
+{
+	return __atomic_load_n(ptr, memory_order_relaxed);
+}
+
+static inline void
+silofs_atomic_rx_setul(unsigned long *ptr, unsigned long val)
+{
+	__atomic_store_n(ptr, val, memory_order_relaxed);
+}
+
+static inline unsigned long
+silofs_atomic_rx_addul(unsigned long *ptr, unsigned long val)
+{
+	return __atomic_add_fetch(ptr, val, memory_order_relaxed);
+}
+
+static inline unsigned long
+silofs_atomic_rx_subul(unsigned long *ptr, unsigned long val)
+{
+	return __atomic_sub_fetch(ptr, val, memory_order_relaxed);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 static inline int silofs_atomic_sc_get(const int *ptr)
 {
 	return __atomic_load_n(ptr, memory_order_seq_cst);

@@ -434,7 +434,7 @@ static void qpool_fini_mutex(struct silofs_qpool *qpool)
 
 static long qpool_next_unique_id(void)
 {
-	return silofs_atomic_sc_addl(&g_qpool_id, 1);
+	return silofs_atomic_rx_addl(&g_qpool_id, 1);
 }
 
 static int qpool_init(struct silofs_qpool *qpool, size_t memsize,
@@ -603,10 +603,12 @@ qpool_ptr_to_off(const struct silofs_qpool *qpool, const void *ptr)
 {
 	const void *dmem    = qpool->data.mem;
 	const ptrdiff_t dif = (const int8_t *)ptr - (const int8_t *)dmem;
-	off_t off           = -1;
+	off_t off;
 
-	if (dif >= 0) {
+	if (silofs_likely(dif >= 0)) {
 		off = (off_t)((uintptr_t)ptr - (uintptr_t)dmem);
+	} else {
+		off = -1;
 	}
 	return off;
 }
@@ -641,15 +643,19 @@ qpool_page_info_of(const struct silofs_qpool *qpool, const void *ptr)
 static struct silofs_slab_seg *
 qpool_slab_seg_of(const struct silofs_qpool *qpool, const void *ptr)
 {
-	struct silofs_slab_seg *seg;
+	struct silofs_slab_seg *seg = nullptr;
+	ssize_t msz;
 	off_t off;
-	size_t idx;
 
-	seg = qpool->data.mem;
+	msz = (ssize_t)qpool->data.msz;
 	off = qpool_ptr_to_off(qpool, ptr);
-	idx = (size_t)off / sizeof(*seg);
+	if ((off >= 0) && (off < msz)) {
+		struct silofs_slab_seg *seg_base = qpool->data.mem;
+		const size_t idx = (size_t)off / sizeof(*seg_base);
 
-	return &seg[idx];
+		seg = &seg_base[idx];
+	}
+	return seg;
 }
 
 static int qpool_do_check_by_page(const struct silofs_qpool *qpool,
@@ -673,6 +679,7 @@ static int qpool_do_check_by_page(const struct silofs_qpool *qpool,
 		            "double-free: ptr=%p nbytes=%zu "
 		            "qpg_count=%zu qpg_free=%d",
 		            ptr, nbytes, qpgi->qpg_count, (int)qpgi->qpg_free);
+		return -SILOFS_EQALLOC;
 	}
 	if (qpgi->qpg_count != npgs) {
 		qpool_error(qpool,
@@ -1107,8 +1114,9 @@ static void slab_free_and_update(struct silofs_slab *slab,
 static int slab_check_seg(const struct silofs_slab *slab,
                           const struct silofs_slab_seg *seg, size_t nbytes)
 {
-	const struct silofs_qpage_info *qpgi = nullptr;
-	const size_t elemsz                  = slab->elemsz;
+	const struct silofs_qpage_info *qpgi;
+	const size_t elemsz = slab->elemsz;
+	uintptr_t dif;
 
 	if (!slab->nused) {
 		slab_error(slab, "nbytes=%zu", nbytes);
@@ -1132,6 +1140,14 @@ static int slab_check_seg(const struct silofs_slab *slab,
 		           qpgi->qpg_slab_index, qpgi->qpg_slab_nused);
 		return -SILOFS_EQALLOC;
 	}
+	dif = (uintptr_t)seg - (uintptr_t)qpgi->qpg;
+	if (dif % slab->elemsz) {
+		slab_error(slab, "misaligned-ptr: seg=%p page=%p elemsz=%u",
+		           (const void *)seg, (const void *)(qpgi->qpg),
+		           slab->elemsz);
+		return -SILOFS_EQALLOC;
+	}
+
 	return 0;
 }
 
@@ -1342,18 +1358,18 @@ qalloc_alloc_multi_pg(struct silofs_qalloc *qal, size_t nbytes, void **out_ptr)
 
 static void qalloc_add_nbytes_use(struct silofs_qalloc *qal, size_t nbytes)
 {
-	silofs_atomic_sc_addul(&qal->nbytes_use, nbytes);
+	silofs_atomic_rx_addul(&qal->nbytes_use, nbytes);
 }
 
 static void qalloc_sub_nbytes_use(struct silofs_qalloc *qal, size_t nbytes)
 {
 	silofs_assert_ge(qal->nbytes_use, nbytes);
-	silofs_atomic_sc_subul(&qal->nbytes_use, nbytes);
+	silofs_atomic_rx_subul(&qal->nbytes_use, nbytes);
 }
 
 static size_t qalloc_get_nbytes_use(const struct silofs_qalloc *qal)
 {
-	return silofs_atomic_sc_getul(&qal->nbytes_use);
+	return silofs_atomic_rx_getul(&qal->nbytes_use);
 }
 
 static int qalloc_malloc(struct silofs_qalloc *qal, size_t nbytes, int flags,
@@ -1453,13 +1469,33 @@ qalloc_free_by_slab(struct silofs_qalloc *qal, struct silofs_slab_seg *seg,
 	return ret;
 }
 
+static int qalloc_slab_seg_of(struct silofs_qalloc *qal, const void *ptr,
+                              struct silofs_slab_seg **out_seg)
+{
+	struct silofs_slab_seg *seg;
+	const struct silofs_qpool *qpool = &qal->qpool;
+
+	seg = qpool_slab_seg_of(qpool, ptr);
+	if ((const void *)seg != ptr) {
+		qpool_error(qpool, "unaligned-ptr: ptr=%p seg=%p", ptr,
+		            (const void *)seg);
+		return -SILOFS_EINVAL;
+	}
+	*out_seg = seg;
+	return 0;
+}
+
 static int qalloc_free_sub_pg(struct silofs_qalloc *qal, void *ptr,
                               size_t nbytes, int flags)
 {
-	struct silofs_slab_seg *seg;
+	struct silofs_slab_seg *seg = nullptr;
+	int err;
 
-	seg = qpool_slab_seg_of(&qal->qpool, ptr);
-	return qalloc_free_by_slab(qal, seg, nbytes, flags);
+	err = qalloc_slab_seg_of(qal, ptr, &seg);
+	if (!err) {
+		err = qalloc_free_by_slab(qal, seg, nbytes, flags);
+	}
+	return err;
 }
 
 static int qalloc_free_multi_pg(struct silofs_qalloc *qal, void *ptr,
@@ -1468,7 +1504,7 @@ static int qalloc_free_multi_pg(struct silofs_qalloc *qal, void *ptr,
 	return qpool_free_multi_pg(&qal->qpool, ptr, nbytes, flags);
 }
 
-static bool qalloc_may_demask_on_free(const struct silofs_qalloc *qal)
+static bool qalloc_may_demask_free(const struct silofs_qalloc *qal)
 {
 	return (qal->qpool.flags & SILOFS_QALLOCF_DEMASK) > 0;
 }
@@ -1476,12 +1512,14 @@ static bool qalloc_may_demask_on_free(const struct silofs_qalloc *qal)
 static void qalloc_pre_free(const struct silofs_qalloc *qal, void *ptr,
                             size_t nbytes, int flags)
 {
-	if (!flags && qalloc_may_demask_on_free(qal)) {
-		uint64_t *q = ptr;
+	const uint64_t d = 0xDEADC0DEBADC0DE0UL;
 
-		memset(ptr, 1, silofs_min(512, nbytes));
-		if (nbytes >= sizeof(*q)) {
-			*q = (uint64_t)(0xDEADC0DEBADC0DE0UL);
+	if (!flags && (nbytes >= sizeof(d)) && qalloc_may_demask_free(qal)) {
+		const size_t n = silofs_min(512, nbytes) / sizeof(d);
+		uint64_t *p    = ptr;
+
+		for (size_t i = 0; i < n; ++i) {
+			p[i] = d ^ i;
 		}
 	}
 }

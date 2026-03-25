@@ -333,15 +333,25 @@ static int socket_checkaddr(const struct silofs_socket *sock,
 	return (sock->family == (int)(family)) ? 0 : -EINVAL;
 }
 
+void silofs_socket_reset(struct silofs_socket *sock)
+{
+	memset(sock, 0, sizeof(*sock));
+	sock->fd = -1;
+}
+
 int silofs_socket_open(struct silofs_socket *sock)
 {
-	int err = -EALREADY;
+	int err, fd = -1;
 
-	if (!socket_isopen(sock)) {
-		err = silofs_sys_socket(sock->family, sock->type, sock->proto,
-		                        &sock->fd);
+	if (socket_isopen(sock)) {
+		return -EALREADY;
 	}
-	return err;
+	err = silofs_sys_socket(sock->family, sock->type, sock->proto, &fd);
+	if (err) {
+		return err;
+	}
+	sock->fd = fd;
+	return 0;
 }
 
 static void socket_close(struct silofs_socket *sock)
@@ -413,9 +423,8 @@ int silofs_socket_accept(const struct silofs_socket *sock,
                          struct silofs_socket *acsock,
                          struct silofs_sockaddr *peer)
 {
-	int err;
-	int fd            = -1;
 	socklen_t addrlen = sizeof(*peer);
+	int err, fd = -1;
 
 	err = socket_checkopen(sock);
 	if (err) {

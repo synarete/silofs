@@ -104,6 +104,8 @@ int silofs_sockaddr_pton(struct silofs_sockaddr *sa, const char *str);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+void silofs_socket_reset(struct silofs_socket *sock);
+
 int silofs_socket_open(struct silofs_socket *sock);
 
 void silofs_socket_close(struct silofs_socket *sock);

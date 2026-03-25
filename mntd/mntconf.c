@@ -62,15 +62,19 @@ static char *read_mntconf_file(const char *path)
 	if (err) {
 		silofs_die(err, "stat failure: %s", path);
 	}
+	err = silofs_sys_open(path, O_RDONLY, 0, &fd);
+	if (err) {
+		silofs_die(err, "can not open mntconf file %s", path);
+	}
+	err = silofs_sys_fstat(fd, &st);
+	if (err) {
+		silofs_die(err, "fstat failure: %s", path);
+	}
 	if (!S_ISREG(st.st_mode)) {
 		silofs_die(0, "not a regular file: %s", path);
 	}
 	if (st.st_size > SILOFS_MEGA) {
 		silofs_die(-EFBIG, "illegal mntconf file: %s", path);
-	}
-	err = silofs_sys_open(path, O_RDONLY, 0, &fd);
-	if (err) {
-		silofs_die(err, "can not open mntconf file %s", path);
 	}
 	size = (size_t)st.st_size;
 	conf = zalloc(size + 1);

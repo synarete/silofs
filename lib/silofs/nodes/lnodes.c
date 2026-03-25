@@ -469,12 +469,6 @@ struct silofs_vnode_info *silofs_vni_from_dqe(struct silofs_dq_elem *dqe)
 	return silofs_vni_from_lni(silofs_lni_from_dqe(dqe));
 }
 
-void silofs_vni_seal_view(struct silofs_vnode_info *vni)
-{
-	silofs_assert_not_null(vni->vn_lni.ln_view);
-	silofs_seal_lview(vni->vn_lni.ln_view);
-}
-
 static bool
 vni_has_vtype(const struct silofs_vnode_info *vni, enum silofs_vtype vtype)
 {
@@ -508,15 +502,24 @@ void silofs_vni_set_rechecked(struct silofs_vnode_info *vni)
 	vni->vn_lni.ln_flags |= SILOFS_LNF_RECHECK;
 }
 
-enum silofs_vtype silofs_vni_vtype(const struct silofs_vnode_info *vni)
-{
-	return vni->vn_vaddr.vtype;
-}
-
 const struct silofs_vaddr *
 silofs_vni_vaddr(const struct silofs_vnode_info *vni)
 {
 	return &vni->vn_vaddr;
+}
+
+enum silofs_vtype silofs_vni_vtype(const struct silofs_vnode_info *vni)
+{
+	const struct silofs_vaddr *vaddr = silofs_vni_vaddr(vni);
+
+	return vaddr->vtype;
+}
+
+static bool vni_isdata(const struct silofs_vnode_info *vni)
+{
+	enum silofs_vtype vtype = silofs_vni_vtype(vni);
+
+	return silofs_vtype_isdata(vtype);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -1447,5 +1450,14 @@ void silofs_del_vnode(struct silofs_vnode_info *vni,
 	default:
 		silofs_panic("can not destroy vnode: vtype=%d", (int)vtype);
 		break;
+	}
+}
+
+void silofs_seal_vnode(struct silofs_vnode_info *vni)
+{
+	silofs_assert_not_null(vni->vn_lni.ln_view);
+
+	if (!vni_isdata(vni)) {
+		silofs_seal_lview(vni->vn_lni.ln_view);
 	}
 }

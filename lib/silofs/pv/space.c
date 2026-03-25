@@ -273,9 +273,7 @@ static int map_vnode_by_btree(struct silofs_pexec_ctx *pexec,
 	if (err) {
 		return err;
 	}
-	/* XXX "YOU ARE HERE"
 	silofs_vni_dirtify(vni, nullptr);
-	*/
 	return 0;
 }
 

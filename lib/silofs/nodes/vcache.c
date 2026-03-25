@@ -245,6 +245,15 @@ static void vcache_drop_evictable_vnis(struct silofs_vcache *vcache)
 	                      try_evict_vni, vcache);
 }
 
+struct silofs_vnode_info *
+silofs_vcache_dq_front(const struct silofs_vcache *vcache)
+{
+	struct silofs_dq_elem *dqe;
+
+	dqe = silofs_dirtyq_front(&vcache->vc_pn_vnis_dq);
+	return silofs_vni_from_dqe(dqe);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static struct silofs_vnode_info *

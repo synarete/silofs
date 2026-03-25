@@ -74,6 +74,14 @@ static size_t vni_len(const struct silofs_vnode_info *vni)
 	return vaddr_len(silofs_vni_vaddr(vni));
 }
 
+static const struct silofs_civkey *
+vni_civkey(const struct silofs_vnode_info *vni)
+{
+	silofs_assert(vni->vn_has_pn);
+
+	return &vni->vn_pnptr.nmeta.civkey;
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void *stc_memalloc(struct silofs_stage_ctx *st_ctx, size_t n)
@@ -255,12 +263,6 @@ static void stc_forget_cached_pnode(const struct silofs_stage_ctx *st_ctx,
                                     struct silofs_pnode_info *pni)
 {
 	silofs_pcache_delete_pnode(st_ctx->pcache, pni);
-}
-
-static struct silofs_pnode_info *
-stc_pcache_dqfront(struct silofs_stage_ctx *st_ctx)
-{
-	return silofs_pcache_dq_front(st_ctx->pcache);
 }
 
 static int stc_spawn_pnode(const struct silofs_stage_ctx *st_ctx,
@@ -591,6 +593,83 @@ int silofs_require_paddr(struct silofs_pexec_ctx *pexec,
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
+static int stc_write_lview_at(struct silofs_stage_ctx *st_ctx,
+                              const struct silofs_paddr *paddr, size_t len)
+{
+	return silofs_dstor_write_blob_at(st_ctx->dstor, &paddr->blobid,
+	                                  paddr->pos, st_ctx->lview, len);
+}
+
+static int stc_write_vnode(struct silofs_stage_ctx *st_ctx,
+                           const struct silofs_vnode_info *vni)
+{
+	const struct silofs_paddr *paddr = &vni->vn_pnptr.paddr;
+
+	silofs_assert(vni->vn_has_pn);
+
+	return stc_write_lview_at(st_ctx, paddr, vni_len(vni));
+}
+
+static int stc_encrypt_lview_of(struct silofs_stage_ctx *st_ctx,
+                                const struct silofs_vnode_info *vni)
+{
+	return silofs_encrypt_lview2(st_ctx->enc_ci_hd, vni_civkey(vni),
+	                             vni->vn_lni.ln_view, st_ctx->lview,
+	                             vni_len(vni));
+}
+
+static int stc_seal_encrypt_vnode(struct silofs_stage_ctx *st_ctx,
+                                  struct silofs_vnode_info *vni)
+{
+	silofs_seal_vnode(vni);
+	return stc_encrypt_lview_of(st_ctx, vni);
+}
+
+static int stc_destage_dirty_vnode(struct silofs_stage_ctx *st_ctx,
+                                   struct silofs_vnode_info *vni)
+{
+	int err;
+
+	err = stc_require_lview(st_ctx);
+	if (err) {
+		return err;
+	}
+	err = stc_seal_encrypt_vnode(st_ctx, vni);
+	if (err) {
+		return err;
+	}
+	err = stc_write_vnode(st_ctx, vni);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+static struct silofs_vnode_info *
+stc_vcache_dqfront(struct silofs_stage_ctx *st_ctx)
+{
+	return silofs_vcache_dq_front(st_ctx->vcache);
+}
+
+static int stc_destage_dirty_vnodes(struct silofs_stage_ctx *st_ctx)
+{
+	struct silofs_vnode_info *vni;
+	int err;
+
+	vni = stc_vcache_dqfront(st_ctx);
+	while (vni != nullptr) {
+		err = stc_destage_dirty_vnode(st_ctx, vni);
+		if (err) {
+			return err;
+		}
+		silofs_vni_undirtify(vni);
+		vni = stc_vcache_dqfront(st_ctx);
+	}
+	return 0;
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 static int stc_write_pview_at(struct silofs_stage_ctx *st_ctx,
                               const struct silofs_paddr *paddr, size_t len)
 {
@@ -641,7 +720,13 @@ static int stc_destage_dirty_pnode(struct silofs_stage_ctx *st_ctx,
 	return 0;
 }
 
-static int stc_destage_dirty(struct silofs_stage_ctx *st_ctx)
+static struct silofs_pnode_info *
+stc_pcache_dqfront(struct silofs_stage_ctx *st_ctx)
+{
+	return silofs_pcache_dq_front(st_ctx->pcache);
+}
+
+static int stc_destage_dirty_pnodes(struct silofs_stage_ctx *st_ctx)
 {
 	struct silofs_pnode_info *pni;
 	int err;
@@ -654,6 +739,21 @@ static int stc_destage_dirty(struct silofs_stage_ctx *st_ctx)
 		}
 		silofs_pni_undirtify(pni);
 		pni = stc_pcache_dqfront(st_ctx);
+	}
+	return 0;
+}
+
+static int stc_destage_dirty(struct silofs_stage_ctx *st_ctx)
+{
+	int err;
+
+	err = stc_destage_dirty_vnodes(st_ctx);
+	if (err) {
+		return err;
+	}
+	err = stc_destage_dirty_pnodes(st_ctx);
+	if (err) {
+		return err;
 	}
 	return 0;
 }

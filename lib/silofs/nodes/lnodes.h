@@ -244,8 +244,6 @@ void silofs_vni_undirtify(struct silofs_vnode_info *vni);
 
 bool silofs_vni_isevictable(const struct silofs_vnode_info *vni);
 
-void silofs_vni_seal_view(struct silofs_vnode_info *vni);
-
 void silofs_vni_set_dq(struct silofs_vnode_info *vni,
                        struct silofs_dirtyq     *dq);
 
@@ -304,5 +302,7 @@ silofs_new_vnode(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr);
 
 void silofs_del_vnode(struct silofs_vnode_info *vni,
                       struct silofs_alloc *alloc, int flags);
+
+void silofs_seal_vnode(struct silofs_vnode_info *vni);
 
 #endif /* SILOFS_LNODES_H_ */

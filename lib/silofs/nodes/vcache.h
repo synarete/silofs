@@ -42,6 +42,9 @@ size_t silofs_vcache_relax(struct silofs_vcache *vcache, int flags);
 void silofs_vcache_drop(struct silofs_vcache *vcache);
 
 struct silofs_vnode_info *
+silofs_vcache_dq_front(const struct silofs_vcache *vcache);
+
+struct silofs_vnode_info *
 silofs_vcache_lookup_vnode(struct silofs_vcache      *vcache,
                            const struct silofs_vaddr *vaddr);
 

@@ -52,6 +52,11 @@ int silofs_decrypt_lview(const struct silofs_cipher_hd *ci_hd,
                          const struct silofs_lview     *lview,
                          enum silofs_vtype vtype, void *ptr);
 
+int silofs_encrypt_lview2(const struct silofs_cipher_hd *ci_hd,
+                          const struct silofs_civkey    *civkey,
+                          const struct silofs_lview     *lview,
+                          struct silofs_lview *lview_enc, size_t len);
+
 int silofs_decrypt_lview2(const struct silofs_cipher_hd *ci_hd,
                           const struct silofs_civkey    *civkey,
                           const struct silofs_lview     *lview_enc,

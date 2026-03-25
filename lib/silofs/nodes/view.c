@@ -304,6 +304,14 @@ int silofs_decrypt_lview(const struct silofs_cipher_hd *ci_hd,
 	return silofs_decrypt_buf(ci_hd, civkey, view, ptr, view_len(vtype));
 }
 
+int silofs_encrypt_lview2(const struct silofs_cipher_hd *ci_hd,
+                          const struct silofs_civkey *civkey,
+                          const struct silofs_lview *lview,
+                          struct silofs_lview *lview_enc, size_t len)
+{
+	return silofs_encrypt_buf(ci_hd, civkey, lview, lview_enc, len);
+}
+
 int silofs_decrypt_lview2(const struct silofs_cipher_hd *ci_hd,
                           const struct silofs_civkey *civkey,
                           const struct silofs_lview *lview_enc,

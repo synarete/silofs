@@ -101,7 +101,7 @@ static void lni_seal_meta(struct silofs_lnode_info *lni)
 	if (lni_isunode(lni)) {
 		silofs_uni_seal_view(uni_from_lni(lni));
 	} else if (lni_isvnode(lni) && !lni_isdata(lni)) {
-		silofs_vni_seal_view(vni_from_lni(lni));
+		silofs_seal_vnode(vni_from_lni(lni));
 	}
 }
 

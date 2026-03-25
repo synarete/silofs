@@ -32,7 +32,7 @@ mechanism. Focus on:
 - Ensure path traversal protection (e.g., `..`) is robust.
 
 ### 3.3 RPC Protocol Logic
-- Review `lib/silofs/mnt` serialization/deserialization.
+- Review `lib/mnt` serialization/deserialization.
 - Check for buffer overflows or integer overflows in message parsing.
 - Verify handling of partial writes/reads on the non-blocking socket.
 
@@ -47,7 +47,9 @@ mechanism. Focus on:
 
 ## 4. Input Files
 - `mntd/`
-- `lib/silofs/mnt/`
+- `incluse/silofs/mntsvc.h`
+- `lib/mnt/`
+- `lib/include/silofs/mnt/`
 
 ## 5. Required Output
 Provide findings grouped by category:

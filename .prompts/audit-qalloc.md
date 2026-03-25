@@ -1,5 +1,5 @@
 # Role: Senior Systems Programmer (Memory Allocator Specialist)
-**Task:** Deep-dive code audit of `lib/silofs/infra/qalloc.c`.
+**Task:** Deep-dive code audit of `lib/infra/qalloc.c`.
 
 ## 1. System Overview
 `qalloc` is a custom userspace slab allocator backed by `memfd_create` and
@@ -52,8 +52,8 @@ potential heap corruption bugs.
   lines to prevent false sharing on `slab->mutex`.
 
 ## 4. Input Files
-- `lib/silofs/infra/qalloc.c`
-- `lib/silofs/infra/qalloc.h`
+- `lib/infra/qalloc.c`
+- `lib/include/silofs/infra/qalloc.h`
 
 ## 5. Required Output
 Provide findings grouped by category:

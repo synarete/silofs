@@ -26,8 +26,8 @@ Analyze `prand.c` and `prand.h` for:
 - **Randomness** Evaluate how strong is the final output.
 
 ## 4. Input Files
-- `lib/silofs/crypto/prand.c`
-- `lib/silofs/crypto/prand.h`
+- `lib/crypto/prand.c`
+- `lib/include/silofs/crypto/prand.h`
 
 ## 5. Required Output
 Please provide the analysis in the following format:

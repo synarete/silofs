@@ -435,17 +435,17 @@ hmqe_relru(struct silofs_hmapq_elem *hmqe, struct silofs_listq *lru)
 
 static int hmqe_refcnt_atomic(const struct silofs_hmapq_elem *hmqe)
 {
-	return silofs_atomic_sc_get(&hmqe->hme_refcnt);
+	return silofs_atomic_sqc_get(&hmqe->hme_refcnt);
 }
 
 static void hmqe_incref_atomic(struct silofs_hmapq_elem *hmqe)
 {
-	silofs_atomic_sc_add(&hmqe->hme_refcnt, 1);
+	silofs_atomic_sqc_add(&hmqe->hme_refcnt, 1);
 }
 
 static void hmqe_decref_atomic(struct silofs_hmapq_elem *hmqe)
 {
-	silofs_atomic_sc_sub(&hmqe->hme_refcnt, 1);
+	silofs_atomic_sqc_sub(&hmqe->hme_refcnt, 1);
 }
 
 static bool hmqe_is_dirty(const struct silofs_hmapq_elem *hmqe)

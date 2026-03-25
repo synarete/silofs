@@ -40,7 +40,7 @@ static int sanitize_status(int status)
 
 static uint64_t ut_unique_opid(struct ut_env *ute)
 {
-	return (uint64_t)silofs_atomic_sc_addl(&ute->unique_opid, 1);
+	return (uint64_t)silofs_atomic_sqc_addl(&ute->unique_opid, 1);
 }
 
 void ut_setup_task(struct ut_env *ute, struct silofs_task_ctx *task)

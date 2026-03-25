@@ -434,7 +434,7 @@ static void qpool_fini_mutex(struct silofs_qpool *qpool)
 
 static long qpool_next_unique_id(void)
 {
-	return silofs_atomic_rx_addl(&g_qpool_id, 1);
+	return silofs_atomic_rlx_addl(&g_qpool_id, 1);
 }
 
 static int qpool_init(struct silofs_qpool *qpool, size_t memsize,
@@ -1358,18 +1358,18 @@ qalloc_alloc_multi_pg(struct silofs_qalloc *qal, size_t nbytes, void **out_ptr)
 
 static void qalloc_add_nbytes_use(struct silofs_qalloc *qal, size_t nbytes)
 {
-	silofs_atomic_rx_addul(&qal->nbytes_use, nbytes);
+	silofs_atomic_rlx_addul(&qal->nbytes_use, nbytes);
 }
 
 static void qalloc_sub_nbytes_use(struct silofs_qalloc *qal, size_t nbytes)
 {
 	silofs_assert_ge(qal->nbytes_use, nbytes);
-	silofs_atomic_rx_subul(&qal->nbytes_use, nbytes);
+	silofs_atomic_rlx_subul(&qal->nbytes_use, nbytes);
 }
 
 static size_t qalloc_get_nbytes_use(const struct silofs_qalloc *qal)
 {
-	return silofs_atomic_rx_getul(&qal->nbytes_use);
+	return silofs_atomic_rlx_getul(&qal->nbytes_use);
 }
 
 static int qalloc_malloc(struct silofs_qalloc *qal, size_t nbytes, int flags,

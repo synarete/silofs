@@ -19,10 +19,7 @@
 #include <gcrypt.h>
 
 #include <silofs/infra.h>
-#include <silofs/crypto/gcry.h>
-#include <silofs/crypto/mdigest.h>
-#include <silofs/crypto/ivkey.h>
-#include <silofs/crypto/cipher.h>
+#include <silofs/crypto.h>
 
 #define SILOFS_CIPHER_ALGO_DEFAULT SILOFS_CIPHER_AES256
 #define SILOFS_CIPHER_MODE_DEFAULT SILOFS_CIPHER_MODE_GCM

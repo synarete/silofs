@@ -153,7 +153,7 @@ static int pre_reload_repo(struct silofs_task_ctx *task)
 static int open_repo(struct silofs_task_ctx *task)
 {
 	return silofs_repo_open(task->repo, task->env->repodir,
-				task->env->flags);
+	                        task->env->flags);
 }
 
 int silofs_exec_reload_repo(struct silofs_task_ctx *task)
@@ -286,14 +286,14 @@ claim_reclaim_of(struct silofs_task_ctx *task, enum silofs_vtype vtype)
 	}
 	if (vaddr.off != voff_exp) {
 		log_err("bad claim: vtype=%d exp=%ld got=%ld", vtype, voff_exp,
-			vaddr.off);
+		        vaddr.off);
 		return -SILOFS_EFSCORRUPTED;
 	}
 	drop_caches(task);
 	err = silofs_reclaim_vspace(task, &vaddr);
 	if (err) {
 		log_err("bad reclaim: vtype=%d voff=%ld err=%d", vtype,
-			vaddr.off, err);
+		        vaddr.off, err);
 	}
 	return 0;
 }
@@ -473,7 +473,7 @@ static int post_format_fs(struct silofs_task_ctx *task)
 }
 
 int silofs_exec_format_fs(struct silofs_task_ctx *task,
-			  struct silofs_mbref *out_mbref)
+                          struct silofs_mbref *out_mbref)
 {
 	int err;
 
@@ -499,7 +499,7 @@ int silofs_exec_format_fs(struct silofs_task_ctx *task,
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static int resolve_root_uber(const struct silofs_task_ctx *task,
-			     struct silofs_pnptr *out_pnptr)
+                             struct silofs_pnptr *out_pnptr)
 {
 	const struct silofs_env_mbis *mbis = &task->env->mbis;
 
@@ -522,7 +522,7 @@ do_reload_pv(struct silofs_task_ctx *task, const struct silofs_pnptr *pnptr)
 }
 
 int silofs_exec_reload_pv(struct silofs_task_ctx *task,
-			  const struct silofs_mbref *mbref)
+                          const struct silofs_mbref *mbref)
 {
 	struct silofs_pnptr pnptr = {};
 	int err;
@@ -576,7 +576,7 @@ static int reload_rootd(struct silofs_task_ctx *task)
 	}
 	if (!silofs_ii_isdir(ii)) {
 		log_err("root-inode is not-a-dir: mode=0%o",
-			silofs_ii_mode(ii));
+		        silofs_ii_mode(ii));
 		return -SILOFS_EFSCORRUPTED;
 	}
 	return 0;

@@ -15,18 +15,13 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/ondisk.h>
 #include <silofs/errors.h>
-#include <silofs/crypto/passwd.h>
-#include <silofs/crypto/ivkey.h>
-#include <silofs/crypto/mdigest.h>
-#include <silofs/crypto/gcry.h>
-#include <silofs/crypto/kdf.h>
+#include <silofs/crypto.h>
 
-static int
-derive_key(const struct silofs_mdigest_hd *md_hd,
-           const struct silofs_password *pw, const struct silofs_kdf_desc *kdf,
-           struct silofs_ckey *out_key)
+static int derive_key(const struct silofs_mdigest_hd *md_hd, //
+                      const struct silofs_password *pw,      //
+                      const struct silofs_kdf_desc *kdf,     //
+                      struct silofs_ckey *out_key)
 {
 	struct silofs_hash512 salt;
 	gpg_error_t gcry_err;

@@ -15,11 +15,8 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <gcrypt.h>
-
 #include <silofs/errors.h>
-#include <silofs/infra.h>
-#include <silofs/crypto/gcry.h>
+#include <silofs/crypto.h>
 
 enum {
 	SILOFS_SECMEM_SIZE = 64L * SILOFS_KILO,
@@ -78,13 +75,13 @@ const char *silofs_gcrypt_version(void)
 }
 
 int silofs_gcrypt_status_(gcry_error_t gcry_err, const char *fn,
-                          const char *file, int line)
+			  const char *file, int line)
 {
 	const int err = (int)gcry_err;
 
 	if (gcry_err && (fn != nullptr)) {
 		silofs_logf(SILOFS_LOG_ERROR, file, line, "%s: %s", fn,
-		            gcry_strerror(gcry_err));
+			    gcry_strerror(gcry_err));
 	}
 
 	return (err > 0) ? -err : err;

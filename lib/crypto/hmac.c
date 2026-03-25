@@ -19,8 +19,7 @@
 
 #include <silofs/errors.h>
 #include <silofs/infra.h>
-#include <silofs/crypto/gcry.h>
-#include <silofs/crypto/hmac.h>
+#include <silofs/crypto.h>
 
 static void mac_reset(struct silofs_mac *mac)
 {
@@ -28,7 +27,7 @@ static void mac_reset(struct silofs_mac *mac)
 }
 
 bool silofs_mac_isequal(const struct silofs_mac *mac,
-                        const struct silofs_mac *other)
+			const struct silofs_mac *other)
 {
 	return (memcmp(mac->mac, other->mac, sizeof(mac->mac)) == 0);
 }
@@ -63,7 +62,7 @@ hmac_set_key(struct silofs_hmac_hd *hmac_hd, const struct silofs_ckey *key)
 	keylen = gcry_mac_get_algo_keylen(hmac_hd->hm_algo);
 	if (!keylen || (keylen > sizeof(key->key))) {
 		silofs_log_warn("bad keylen: algo=%d keylen=%u",
-		                hmac_hd->hm_algo, keylen);
+				hmac_hd->hm_algo, keylen);
 		return -SILOFS_EINVAL;
 	}
 	err = gcry_mac_setkey(hmac_hd->hm_hd, key->key, keylen);
@@ -105,7 +104,7 @@ hmac_seep(struct silofs_hmac_hd *hmac_hd, struct silofs_mac *out_mac)
 	maclen = gcry_mac_get_algo_maclen(hmac_hd->hm_algo);
 	if (maclen != sizeof(out_mac->mac)) {
 		silofs_log_warn("bad maclen: algo=%d maclen=%zu",
-		                hmac_hd->hm_algo, maclen);
+				hmac_hd->hm_algo, maclen);
 		return -SILOFS_EINVAL;
 	}
 	mac_reset(out_mac);
@@ -117,8 +116,8 @@ hmac_seep(struct silofs_hmac_hd *hmac_hd, struct silofs_mac *out_mac)
 }
 
 int silofs_hmac_calc(struct silofs_hmac_hd *hmac_hd,
-                     const struct silofs_ckey *key, const void *dat,
-                     size_t dsz, struct silofs_mac *out_mac)
+		     const struct silofs_ckey *key, const void *dat,
+		     size_t dsz, struct silofs_mac *out_mac)
 {
 	int err;
 

@@ -19,10 +19,7 @@
 #include <string.h>
 #include <errno.h>
 
-#include <silofs/ondisk.h>
-#include <silofs/infra.h>
-#include <silofs/crypto/gcry.h>
-#include <silofs/crypto/prand.h>
+#include <silofs/crypto.h>
 
 static void do_gcry_random(void *buf, size_t len)
 {
@@ -71,15 +68,15 @@ prandgen_get_state(struct silofs_prandgen *prng, size_t idx)
 }
 
 static void prandgen_mkhash(const struct silofs_prandgen *prng,
-                            struct silofs_hash256 *out_hash)
+			    struct silofs_hash256 *out_hash)
 {
 	silofs_sha3_256_of(&prng->md_hd, prng->state, sizeof(prng->state),
-	                   out_hash);
+			   out_hash);
 }
 
 static void
 prandgen_update_state_by(struct silofs_prandgen *prng, uint64_t count,
-                         const struct silofs_hash256 *hash)
+			 const struct silofs_hash256 *hash)
 {
 	struct {
 		struct silofs_prndstate ps;
@@ -238,7 +235,7 @@ void silofs_prandgen_take(struct silofs_prandgen *prng, void *p, size_t n)
 }
 
 void silofs_prandgen_feed(struct silofs_prandgen *prng, const void *p,
-                          size_t n)
+			  size_t n)
 {
 	struct silofs_hash256 hash;
 

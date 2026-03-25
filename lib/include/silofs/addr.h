@@ -19,6 +19,7 @@
 
 #include <silofs/ondisk.h>
 #include <silofs/errors.h>
+
 #include <silofs/addr/offlba.h>
 #include <silofs/addr/htox.h>
 #include <silofs/addr/stype.h>

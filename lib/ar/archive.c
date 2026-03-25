@@ -32,7 +32,7 @@ struct silofs_ar_ctx {
 };
 
 static int arc_arix_nmeta(const struct silofs_ar_ctx *ar_ctx,
-			  struct silofs_nmeta *out_nmeta)
+                          struct silofs_nmeta *out_nmeta)
 {
 	const struct silofs_mbr_info *ar_mbi = &ar_ctx->env->mbis.ar_mbi;
 
@@ -42,7 +42,7 @@ static int arc_arix_nmeta(const struct silofs_ar_ctx *ar_ctx,
 }
 
 static int arc_default_arix_pnptr(const struct silofs_ar_ctx *ar_ctx,
-				  struct silofs_pnptr *out_pnptr)
+                                  struct silofs_pnptr *out_pnptr)
 {
 	int err;
 
@@ -61,7 +61,7 @@ arc_mdigest(const struct silofs_ar_ctx *ar_ctx)
 }
 
 static int arc_arix_cargs(const struct silofs_ar_ctx *ar_ctx,
-			  struct silofs_ar_cargs *out_ar_cargs)
+                          struct silofs_ar_cargs *out_ar_cargs)
 {
 	out_ar_cargs->ci_hd = &ar_ctx->env->enc_ci_hd;
 	out_ar_cargs->md_hd = arc_mdigest(ar_ctx);
@@ -124,7 +124,7 @@ static void arc_fini(struct silofs_ar_ctx *ar_ctx)
 }
 
 static int arc_stat_pack(const struct silofs_ar_ctx *ar_ctx,
-			 const struct silofs_paddr *paddr, size_t *out_sz)
+                         const struct silofs_paddr *paddr, size_t *out_sz)
 {
 	struct stat st;
 	int err;
@@ -139,7 +139,7 @@ static int arc_stat_pack(const struct silofs_ar_ctx *ar_ctx,
 
 static int
 arc_send_blob(const struct silofs_ar_ctx *ar_ctx,
-	      const struct silofs_paddr *paddr, const void *dat, size_t len)
+              const struct silofs_paddr *paddr, const void *dat, size_t len)
 {
 	int err;
 
@@ -149,7 +149,7 @@ arc_send_blob(const struct silofs_ar_ctx *ar_ctx,
 		return err;
 	}
 	err = silofs_dstor_write_blob_at(ar_ctx->dstor, &paddr->blobid,
-					 paddr->pos, dat, len);
+	                                 paddr->pos, dat, len);
 	if (err) {
 		log_err("failed to save blob: err=%d", err);
 		return err;
@@ -159,7 +159,7 @@ arc_send_blob(const struct silofs_ar_ctx *ar_ctx,
 
 static int
 arc_send_pack(const struct silofs_ar_ctx *ar_ctx,
-	      const struct silofs_paddr *paddr, const void *dat, size_t len)
+              const struct silofs_paddr *paddr, const void *dat, size_t len)
 {
 	size_t sz = 0;
 	int err;
@@ -173,22 +173,22 @@ arc_send_pack(const struct silofs_ar_ctx *ar_ctx,
 
 static int
 arc_load_seg(const struct silofs_ar_ctx *ar_ctx,
-	     const struct silofs_laddr *laddr, void *seg, size_t len)
+             const struct silofs_laddr *laddr, void *seg, size_t len)
 {
 	int err;
 
 	err = silofs_repo_read_at(ar_ctx->repo, laddr, seg, len);
 	if (err) {
 		log_err("failed to read: vtype=%d pos=%ld len=%zu err=%d",
-			silofs_laddr_vtype(laddr), laddr->pos, len, err);
+		        silofs_laddr_vtype(laddr), laddr->pos, len, err);
 	}
 	return err;
 }
 
 static void
 arc_calc_seg_desc(const struct silofs_ar_ctx *ar_ctx,
-		  const struct silofs_laddr *laddr, const void *seg,
-		  size_t seg_len, struct silofs_ar_desc *out_ard)
+                  const struct silofs_laddr *laddr, const void *seg,
+                  size_t seg_len, struct silofs_ar_desc *out_ard)
 {
 	const struct silofs_rovec rovec = {
 		.rov_base = seg,
@@ -199,8 +199,8 @@ arc_calc_seg_desc(const struct silofs_ar_ctx *ar_ctx,
 }
 
 static int arc_archive_segdata(const struct silofs_ar_ctx *ar_ctx,
-			       const struct silofs_laddr *laddr, size_t len,
-			       struct silofs_ar_desc *out_ard)
+                               const struct silofs_laddr *laddr, size_t len,
+                               struct silofs_ar_desc *out_ard)
 {
 	void *seg = nullptr;
 	int err;
@@ -229,7 +229,7 @@ static struct silofs_arix_node *arc_new_arix_node(struct silofs_ar_ctx *ar_ctx)
 	struct silofs_arix_node *arn = nullptr;
 
 	arn = silofs_memalloc(ar_ctx->alloc, sizeof(*arn),
-			      SILOFS_ALLOCF_BZERO);
+	                      SILOFS_ALLOCF_BZERO);
 	return arn;
 }
 
@@ -295,7 +295,7 @@ arc_append_desc(struct silofs_ar_ctx *ar_ctx, const struct silofs_ar_desc *ard)
 }
 
 static int arc_archive_by_laddr(struct silofs_ar_ctx *ar_ctx,
-				const struct silofs_laddr *laddr, size_t len)
+                                const struct silofs_laddr *laddr, size_t len)
 {
 	struct silofs_ar_desc ard;
 	int err;
@@ -335,7 +335,7 @@ static int arc_archive_fs(struct silofs_ar_ctx *ar_ctx)
 }
 
 static int arc_archive_head_arix(struct silofs_ar_ctx *ar_ctx,
-				 struct silofs_pnptr *out_pnptr)
+                                 struct silofs_pnptr *out_pnptr)
 {
 	int err;
 
@@ -348,20 +348,20 @@ static int arc_archive_head_arix(struct silofs_ar_ctx *ar_ctx,
 }
 
 static int arc_export_ar_mbr(const struct silofs_ar_ctx *ar_ctx,
-			     struct silofs_mbref *out_mbref,
-			     struct silofs_mbr1k *out_mbr1k)
+                             struct silofs_mbref *out_mbref,
+                             struct silofs_mbr1k *out_mbr1k)
 {
 	return silofs_env_export_ar_mbr(ar_ctx->env, out_mbref, out_mbr1k);
 }
 
 static int arc_send_mbr1k(const struct silofs_ar_ctx *ar_ctx,
-			  const struct silofs_mbref *mbref,
-			  const struct silofs_mbr1k *mbr1k)
+                          const struct silofs_mbref *mbref,
+                          const struct silofs_mbr1k *mbr1k)
 {
 	int err;
 
 	err = silofs_dstor_save_mbr(ar_ctx->dstor, mbref, mbr1k,
-				    sizeof(*mbr1k));
+	                            sizeof(*mbr1k));
 	if (err) {
 		log_err("failed to create save mbr: err=%d", err);
 		return err;
@@ -370,7 +370,7 @@ static int arc_send_mbr1k(const struct silofs_ar_ctx *ar_ctx,
 }
 
 static int arc_archive_mbr(const struct silofs_ar_ctx *ar_ctx,
-			   struct silofs_mbref *out_mbref)
+                           struct silofs_mbref *out_mbref)
 {
 	struct silofs_mbr1k mbr1k = { .mbr_magic = 0xff };
 	int err;
@@ -387,7 +387,7 @@ static int arc_archive_mbr(const struct silofs_ar_ctx *ar_ctx,
 }
 
 static int arc_set_mbr_root(struct silofs_ar_ctx *ar_ctx,
-			    const struct silofs_pnptr *pnptr)
+                            const struct silofs_pnptr *pnptr)
 {
 	struct silofs_mbr_info *ar_mbi = &ar_ctx->env->mbis.ar_mbi;
 
@@ -395,8 +395,8 @@ static int arc_set_mbr_root(struct silofs_ar_ctx *ar_ctx,
 }
 
 static int arc_archive_post(struct silofs_ar_ctx *ar_ctx,
-			    const struct silofs_pnptr *pnptr,
-			    struct silofs_mbref *out_mbref)
+                            const struct silofs_pnptr *pnptr,
+                            struct silofs_mbref *out_mbref)
 {
 	int err;
 
@@ -440,7 +440,7 @@ arc_do_archive(struct silofs_ar_ctx *ar_ctx, struct silofs_mbref *out_mbref)
 }
 
 int silofs_do_preserve_fs(struct silofs_task_ctx *task,
-			  struct silofs_mbref *out_ar_mbref)
+                          struct silofs_mbref *out_ar_mbref)
 {
 	struct silofs_ar_ctx ar_ctx;
 	int err;

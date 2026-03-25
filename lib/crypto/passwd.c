@@ -19,9 +19,11 @@
 
 #include <silofs/macros.h>
 #include <silofs/errors.h>
+#include <silofs/ondisk.h>
+#include <silofs/types.h>
 #include <silofs/infra.h>
 #include <silofs/str.h>
-#include <silofs/crypto/passwd.h>
+#include <silofs/crypto.h>
 
 static int check_password_len(size_t len)
 {

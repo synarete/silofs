@@ -144,7 +144,10 @@ static void mountd_init_process(struct mountd_ctx *ctx)
 
 static void mountd_setrlimit_nocore(void)
 {
-	struct rlimit rlim = { .rlim_cur = 0, .rlim_max = 0 };
+	struct rlimit rlim = {
+		.rlim_cur = 0,
+		.rlim_max = 0,
+	};
 	int err;
 
 	err = silofs_sys_setrlimit(RLIMIT_CORE, &rlim);
@@ -180,19 +183,22 @@ static void mountd_require_cap_sys_admin(const struct mountd_ctx *ctx)
 	cap_value_t value     = CAP_SYS_ADMIN;
 	cap_flag_value_t flag = CAP_CLEAR;
 	cap_t cap;
-	int err;
+	pid_t pid;
+	int ern, err;
 
 	errno = 0;
-	cap   = cap_get_pid(getpid());
+
+	pid = getpid();
+	cap = cap_get_pid(pid);
 	if (cap == nullptr) {
-		silofs_die(errno, "failed to get cap");
+		silofs_die(errno, "failed to get cap: pid=%d", (int)pid);
 	}
 	err = cap_get_flag(cap, value, CAP_EFFECTIVE, &flag);
-	if (err) {
-		silofs_die(errno, "failed to get capability: %d", value);
-	}
+	ern = errno;
 	cap_free(cap);
-
+	if (err) {
+		silofs_die(ern, "failed to get capability: %d", value);
+	}
 	if (flag != CAP_SET) {
 		silofs_die(0, "does not have CAP_SYS_ADMIN capability");
 	}

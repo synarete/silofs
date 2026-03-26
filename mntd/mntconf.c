@@ -55,8 +55,7 @@ static char *read_mntconf_file(const char *path)
 	struct stat st = { .st_size = -1 };
 	size_t size    = 0;
 	char *conf     = nullptr;
-	int fd         = -1;
-	int err;
+	int err, fd = -1;
 
 	err = silofs_sys_stat(path, &st);
 	if (err) {
@@ -68,18 +67,22 @@ static char *read_mntconf_file(const char *path)
 	}
 	err = silofs_sys_fstat(fd, &st);
 	if (err) {
+		silofs_sys_close(fd);
 		silofs_die(err, "fstat failure: %s", path);
 	}
 	if (!S_ISREG(st.st_mode)) {
+		silofs_sys_close(fd);
 		silofs_die(0, "not a regular file: %s", path);
 	}
 	if (st.st_size > SILOFS_MEGA) {
+		silofs_sys_close(fd);
 		silofs_die(-EFBIG, "illegal mntconf file: %s", path);
 	}
 	size = (size_t)st.st_size;
 	conf = zalloc(size + 1);
 	err  = silofs_sys_readn(fd, conf, size);
 	if (err) {
+		silofs_sys_close(fd);
 		silofs_die(err, "failed to read mntconf file %s", path);
 	}
 	silofs_sys_close(fd);

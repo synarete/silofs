@@ -251,7 +251,7 @@ static void ut_init_lib(void)
 {
 	int err;
 
-	err = silofs_init_once();
+	err = silofs_init_once(nullptr);
 	if (err) {
 		error(EXIT_FAILURE, -err, "failed to init libsilofs");
 	}

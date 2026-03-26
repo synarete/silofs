@@ -953,10 +953,9 @@ static int check_system_page_size(void)
 	return -SILOFS_EOPNOTSUPP;
 }
 
-static int check_proc_rlimits(void)
+static int check_proc_rlimits(const struct silofs_init_args *init_args)
 {
-	struct rlimit rlim;
-	const rlim_t nofiles_min = 512;
+	struct rlimit rlim = {};
 	int err;
 
 	err = silofs_sys_getrlimit(RLIMIT_AS, &rlim);
@@ -970,13 +969,13 @@ static int check_proc_rlimits(void)
 	if (err) {
 		return err;
 	}
-	if (rlim.rlim_cur < nofiles_min) {
+	if (rlim.rlim_cur < init_args->nofiles_min) {
 		return -SILOFS_ENFILE;
 	}
 	return 0;
 }
 
-static int check_pre_init_lib(void)
+static int check_pre_init_lib(const struct silofs_init_args *init_args)
 {
 	int err;
 
@@ -994,35 +993,26 @@ static int check_pre_init_lib(void)
 	if (err) {
 		return err;
 	}
-	err = check_proc_rlimits();
+	err = check_proc_rlimits(init_args);
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-static bool has_env_var(const char *name, const char *valwant)
+static int init_gcrypt(const struct silofs_init_args *init_args)
 {
-	const char *val = secure_getenv(name);
-
-	return silofs_str_isequal(val, valwant);
+	return silofs_init_gcrypt(init_args->with_fips);
 }
 
-static int init_gcrypt(void)
+static void init_panic(const struct silofs_init_args *init_args)
 {
-	const bool with_fips = has_env_var("SILOFS_FIPS", "1");
-
-	return silofs_init_gcrypt(with_fips);
-}
-
-static void init_panic(void)
-{
-	if (has_env_var("SILOFS_PANIC_MODE_WAIT", "1")) {
+	if (init_args->panic_wait) {
 		silofs_panic_mode = SILOFS_PANIC_MODE_WAIT;
 	}
 }
 
-static int do_init_lib(void)
+static int do_init_lib(const struct silofs_init_args *init_args)
 {
 	int err;
 
@@ -1030,28 +1020,36 @@ static int do_init_lib(void)
 	if (err) {
 		return err;
 	}
-	err = init_gcrypt();
+	err = init_gcrypt(init_args);
 	if (err) {
 		return err;
 	}
-	init_panic();
+	init_panic(init_args);
 	return 0;
 }
 
+static const struct silofs_init_args g_init_args_default = {
+	.nofiles_min = 512,
+	.with_fips   = false,
+	.panic_wait  = false,
+};
 static bool g_initlib_once_done;
 
-int silofs_init_once(void)
+int silofs_init_once(const struct silofs_init_args *init_args)
 {
 	int ret = 0;
 
 	if (g_initlib_once_done) {
 		goto out;
 	}
-	ret = check_pre_init_lib();
+	if (init_args == nullptr) {
+		init_args = &g_init_args_default;
+	}
+	ret = check_pre_init_lib(init_args);
 	if (ret != 0) {
 		goto out;
 	}
-	ret = do_init_lib();
+	ret = do_init_lib(init_args);
 	if (ret != 0) {
 		goto out;
 	}

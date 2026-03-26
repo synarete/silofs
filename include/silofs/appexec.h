@@ -24,7 +24,13 @@ struct silofs_env;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_init_once(void);
+struct silofs_init_args {
+	uint32_t nofiles_min;
+	bool     with_fips;
+	bool     panic_wait;
+};
+
+int silofs_init_once(const struct silofs_init_args *init_args);
 
 void silofs_getversions(struct silofs_versions *out_vers);
 

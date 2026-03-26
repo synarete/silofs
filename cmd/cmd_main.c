@@ -109,11 +109,23 @@ static void cmd_setup_globals(int argc, char *argv[])
 	error_print_progname = cmd_error_print_progname;
 }
 
+static bool cmd_has_env_var(const char *name, const char *valwant)
+{
+	const char *val = secure_getenv(name);
+
+	return (val != nullptr) && (strcmp(val, valwant) == 0);
+}
+
 static void cmd_init_libsilofs(void)
 {
+	const struct silofs_init_args init_args = {
+		.nofiles_min = 512,
+		.with_fips   = cmd_has_env_var("SILOFS_FIPS", "1"),
+		.panic_wait  = cmd_has_env_var("SILOFS_PANIC_MODE_WAIT", "1"),
+	};
 	int err;
 
-	err = silofs_init_once();
+	err = silofs_init_once(&init_args);
 	if (err) {
 		cmd_die(err, "unable to init libsilofs");
 	}

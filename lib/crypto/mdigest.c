@@ -22,7 +22,6 @@
 #include <silofs/infra.h>
 #include <silofs/crypto.h>
 
-
 int silofs_mdigest_init(struct silofs_mdigest_hd *md_hd)
 {
 	const int16_t algos[] = {
@@ -62,7 +61,7 @@ void silofs_mdigest_fini(struct silofs_mdigest_hd *md_hd)
 }
 
 static void mdigest_calc_buf(const struct silofs_mdigest_hd *md_hd,
-			     const void *buf, size_t bsz)
+                             const void *buf, size_t bsz)
 {
 	gcry_md_reset(md_hd->md_hd);
 	gcry_md_write(md_hd->md_hd, buf, bsz);
@@ -70,7 +69,7 @@ static void mdigest_calc_buf(const struct silofs_mdigest_hd *md_hd,
 }
 
 static void mdigest_calc_iov(const struct silofs_mdigest_hd *md_hd,
-			     const struct iovec *iovs, size_t cnt)
+                             const struct iovec *iovs, size_t cnt)
 {
 	const struct iovec *iov;
 
@@ -79,14 +78,14 @@ static void mdigest_calc_iov(const struct silofs_mdigest_hd *md_hd,
 		iov = &iovs[i];
 		if (iov->iov_base && iov->iov_len) {
 			gcry_md_write(md_hd->md_hd, iov->iov_base,
-				      iov->iov_len);
+			              iov->iov_len);
 		}
 	}
 	gcry_md_final(md_hd->md_hd);
 }
 
 static void mdigest_read_hval(const struct silofs_mdigest_hd *md_hd, int algo,
-			      size_t hash_len, void *out_hash_buf)
+                              size_t hash_len, void *out_hash_buf)
 {
 	const void *hval;
 
@@ -96,15 +95,15 @@ static void mdigest_read_hval(const struct silofs_mdigest_hd *md_hd, int algo,
 
 static void
 mdigest_calc(const struct silofs_mdigest_hd *md_hd, int algo, const void *buf,
-	     size_t bsz, size_t hash_len, void *out_hash_buf)
+             size_t bsz, size_t hash_len, void *out_hash_buf)
 {
 	mdigest_calc_buf(md_hd, buf, bsz);
 	mdigest_read_hval(md_hd, algo, hash_len, out_hash_buf);
 }
 
 static void mdigest_vcalc(const struct silofs_mdigest_hd *md_hd, int algo,
-			  const struct iovec *iovs, size_t cnt,
-			  size_t hash_len, void *out_hash_buf)
+                          const struct iovec *iovs, size_t cnt,
+                          size_t hash_len, void *out_hash_buf)
 {
 	mdigest_calc_iov(md_hd, iovs, cnt);
 	mdigest_read_hval(md_hd, algo, hash_len, out_hash_buf);
@@ -116,12 +115,12 @@ static void require_algo_dlen(int algo, size_t hlen)
 
 	if (dlen != hlen) {
 		silofs_panic("algo-dlen mismatch: algo=%d dlen=%lu hlen=%lu",
-			     algo, dlen, hlen);
+		             algo, dlen, hlen);
 	}
 }
 
 void silofs_sha256_of(const struct silofs_mdigest_hd *md_hd, const void *buf,
-		      size_t bsz, struct silofs_hash256 *out_hash)
+                      size_t bsz, struct silofs_hash256 *out_hash)
 {
 	const int algo    = GCRY_MD_SHA256;
 	const size_t hlen = sizeof(out_hash->hash);
@@ -131,8 +130,8 @@ void silofs_sha256_of(const struct silofs_mdigest_hd *md_hd, const void *buf,
 }
 
 void silofs_sha256_ofv(const struct silofs_mdigest_hd *md_hd,
-		       const struct iovec *iov, size_t cnt,
-		       struct silofs_hash256 *out_hash)
+                       const struct iovec *iov, size_t cnt,
+                       struct silofs_hash256 *out_hash)
 {
 	const size_t hlen = sizeof(out_hash->hash);
 	const int algo    = GCRY_MD_SHA256;
@@ -142,7 +141,7 @@ void silofs_sha256_ofv(const struct silofs_mdigest_hd *md_hd,
 }
 
 void silofs_sha3_256_of(const struct silofs_mdigest_hd *md_hd, const void *buf,
-			size_t bsz, struct silofs_hash256 *out_hash)
+                        size_t bsz, struct silofs_hash256 *out_hash)
 {
 	const size_t hlen = sizeof(out_hash->hash);
 	const int algo    = GCRY_MD_SHA3_256;
@@ -152,8 +151,8 @@ void silofs_sha3_256_of(const struct silofs_mdigest_hd *md_hd, const void *buf,
 }
 
 void silofs_sha3_256_ofv(const struct silofs_mdigest_hd *md_hd,
-			 const struct iovec *iov, size_t cnt,
-			 struct silofs_hash256 *out_hash)
+                         const struct iovec *iov, size_t cnt,
+                         struct silofs_hash256 *out_hash)
 {
 	const size_t hlen = sizeof(out_hash->hash);
 	const int algo    = GCRY_MD_SHA3_256;
@@ -163,7 +162,7 @@ void silofs_sha3_256_ofv(const struct silofs_mdigest_hd *md_hd,
 }
 
 void silofs_sha3_512_of(const struct silofs_mdigest_hd *md_hd, const void *buf,
-			size_t bsz, struct silofs_hash512 *out_hash)
+                        size_t bsz, struct silofs_hash512 *out_hash)
 {
 	const size_t hlen = sizeof(out_hash->hash);
 	const int algo    = GCRY_MD_SHA3_512;
@@ -183,7 +182,7 @@ static uint32_t digest_to_uint32(const uint8_t *digest)
 }
 
 void silofs_crc32_of(const struct silofs_mdigest_hd *md_hd, const void *buf,
-		     size_t bsz, uint32_t *out_crc32)
+                     size_t bsz, uint32_t *out_crc32)
 {
 	const int algo    = GCRY_MD_CRC32;
 	const size_t hlen = sizeof(*out_crc32);

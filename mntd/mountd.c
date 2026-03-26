@@ -128,9 +128,14 @@ int main(int argc, char *argv[])
 
 static void mountd_init_process(struct mountd_ctx *ctx)
 {
+	const struct silofs_init_args init_args = {
+		.nofiles_min = 32,
+		.with_fips   = false,
+		.panic_wait  = false,
+	};
 	int err;
 
-	err = silofs_init_once();
+	err = silofs_init_once(&init_args);
 	if (err) {
 		silofs_die(err, "unable to init lib");
 	}

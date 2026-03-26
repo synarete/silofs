@@ -384,7 +384,9 @@ static int format_mount_data(const struct silofs_mntparams *mntp, int fd,
 		return -SILOFS_EINVAL;
 	}
 	len = strlcpy(dat, ",allow_other", dsz);
-	(void)len; /* TODO: need to check again? */
+	if (len >= dsz) {
+		return -SILOFS_EINVAL;
+	}
 	return 0;
 }
 
@@ -997,7 +999,8 @@ static int mntvc_pre_mount(struct silofs_mntsvc *msvc,
 	if (st.st_uid != peer_uid) {
 		log_info("mount: not owner: '%s' uid=%d peer_uid=%d",
 		         mntp->path, (int)st.st_uid, (int)peer_uid);
-		return -SILOFS_EMOUNT;
+		err = -SILOFS_EMOUNT;
+		goto out_err;
 	}
 	silofs_strbuf_sprintf(out_sbuf, "/proc/self/fd/%d", mntd_fd);
 	msvc->ms_mntd_fd = mntd_fd;

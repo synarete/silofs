@@ -140,7 +140,8 @@ read_password_from_tty(int fd, void *buf, size_t bsz, size_t *out_len)
 	tr_new.c_lflag |= ISIG;
 	tr_new.c_cc[VMIN]  = 1;
 	tr_new.c_cc[VTIME] = 0;
-	err                = tcsetattr(fd, TCSANOW, &tr_new);
+
+	err = tcsetattr(fd, TCSANOW, &tr_new);
 	if (err) {
 		cmd_die(errno, "tcsetattr fd=%d", fd);
 	}
@@ -220,13 +221,16 @@ static void close_password_fd(int fd, const char *path)
 static char *getpass_from(const char *path)
 {
 	char buf[1024] = "";
+	char *pass     = nullptr;
 	size_t len     = 0;
 	int fd;
 
 	fd = open_password_fd(path);
 	read_password_from(fd, buf, sizeof(buf), &len);
 	close_password_fd(fd, path);
-	return parse_dup_password(buf, len);
+	pass = parse_dup_password(buf, len);
+	memset(buf, 0xff, sizeof(buf));
+	return pass;
 }
 
 static char *do_getpass(const char *path, bool with_prompt, bool repeat)

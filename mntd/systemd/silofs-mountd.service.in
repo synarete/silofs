@@ -13,6 +13,7 @@ DeviceAllow=/dev/null rw
 DeviceAllow=/dev/urandom r
 ExecStart=silofs-mountd -f @SYSCONFDIR@/silofs/mountd.conf
 IPAddressDeny=any
+LimitNOFILE=100
 LimitNPROC=1
 LimitFSIZE=0
 LockPersonality=yes

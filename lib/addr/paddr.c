@@ -17,11 +17,7 @@
 #include <silofs/configs.h>
 #include <silofs/infra.h>
 #include <silofs/str.h>
-#include <silofs/addr/htox.h>
-#include <silofs/addr/offlba.h>
-#include <silofs/addr/stype.h>
-#include <silofs/addr/blobid.h>
-#include <silofs/addr/paddr.h>
+#include <silofs/addr.h>
 
 static const struct silofs_paddr s_silofs_paddr_none = {
 	.ptype = SILOFS_PTYPE_NONE,

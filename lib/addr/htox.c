@@ -17,8 +17,11 @@
 #include <silofs/configs.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <endian.h>
+#include <time.h>
+
 #include <silofs/ondisk.h>
-#include <silofs/addr/htox.h>
+#include <silofs/addr.h>
 
 uint64_t silofs_u8b_as_u64(const uint8_t p[8])
 {
@@ -46,6 +49,68 @@ void silofs_u8b_from_u64(uint8_t p[8], uint64_t u)
 	p[5] = (uint8_t)(u >> 16);
 	p[6] = (uint8_t)(u >> 8);
 	p[7] = (uint8_t)(u);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+uint16_t silofs_cpu_to_le16(uint16_t n)
+{
+	return htole16(n);
+}
+
+uint16_t silofs_le16_to_cpu(uint16_t n)
+{
+	return le16toh(n);
+}
+
+uint32_t silofs_cpu_to_le32(uint32_t n)
+{
+	return htole32(n);
+}
+
+uint32_t silofs_le32_to_cpu(uint32_t n)
+{
+	return le32toh(n);
+}
+
+uint64_t silofs_cpu_to_le64(uint64_t n)
+{
+	return htole64(n);
+}
+
+uint64_t silofs_le64_to_cpu(uint64_t n)
+{
+	return le64toh(n);
+}
+
+uint64_t silofs_cpu_to_ino(ino_t ino)
+{
+	return silofs_cpu_to_le64(ino);
+}
+
+ino_t silofs_ino_to_cpu(uint64_t ino)
+{
+	return (ino_t)silofs_le64_to_cpu(ino);
+}
+
+int64_t silofs_cpu_to_off(off_t off)
+{
+	return (int64_t)silofs_cpu_to_le64((uint64_t)off);
+}
+
+off_t silofs_off_to_cpu(int64_t off)
+{
+	return (off_t)silofs_le64_to_cpu((uint64_t)off);
+}
+
+uint64_t silofs_cpu_to_time(time_t tm)
+{
+	return silofs_cpu_to_le64((uint64_t)tm);
+}
+
+time_t silofs_time_to_cpu(uint64_t tm)
+{
+	return (time_t)silofs_le64_to_cpu(tm);
 }
 
 void silofs_ts_to_cpu(const struct silofs_timespec *t, struct timespec *ts)

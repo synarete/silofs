@@ -15,8 +15,7 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/addr/htox.h>
-#include <silofs/addr/spdesc.h>
+#include <silofs/addr.h>
 
 static const struct silofs_spdesc s_spdesc_none = {
 	.beg.pos = SILOFS_OFF_NULL,

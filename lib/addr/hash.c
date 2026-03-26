@@ -15,14 +15,9 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <uuid/uuid.h>
-#include <errno.h>
-
 #include <silofs/infra.h>
 #include <silofs/str.h>
-#include <silofs/addr/htox.h>
-#include <silofs/addr/stype.h>
-#include <silofs/addr/hash.h>
+#include <silofs/addr.h>
 
 bool silofs_hash256_isequal(const struct silofs_hash256 *hash,
                             const struct silofs_hash256 *other)

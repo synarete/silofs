@@ -16,9 +16,7 @@
  */
 #include <silofs/configs.h>
 #include <silofs/infra.h>
-#include <silofs/addr/blobid.h>
-#include <silofs/addr/paddr.h>
-#include <silofs/addr/mbref.h>
+#include <silofs/addr.h>
 
 void silofs_mbref_reset(struct silofs_mbref *mbref)
 {

@@ -15,9 +15,7 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/addr/offlba.h>
-#include <silofs/addr/htox.h>
-#include <silofs/addr/uaddr.h>
+#include <silofs/addr.h>
 
 static const struct silofs_uaddr s_uaddr_none = {
 	.laddr.lsid.lsize = 0,

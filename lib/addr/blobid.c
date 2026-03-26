@@ -17,10 +17,7 @@
 #include <silofs/configs.h>
 #include <silofs/infra.h>
 #include <silofs/str.h>
-#include <silofs/addr/htox.h>
-#include <silofs/addr/hash.h>
-#include <silofs/addr/stype.h>
-#include <silofs/addr/blobid.h>
+#include <silofs/addr.h>
 
 static const struct silofs_blobid s_blobid_none = {
 	.stype.ptype = SILOFS_PTYPE_NONE,

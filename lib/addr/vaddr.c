@@ -37,7 +37,7 @@ static uint64_t cpu_to_off_vtype(off_t off, enum silofs_vtype vtype)
 }
 
 static void voff_vtype_to_cpu(uint64_t off_vtype, off_t *out_off,
-			      enum silofs_vtype *out_vtype)
+                              enum silofs_vtype *out_vtype)
 {
 	const uint64_t mask   = 0xFF;
 	const uint64_t uoff   = off_vtype & ~mask;
@@ -70,7 +70,7 @@ size_t silofs_vaddr_len(const struct silofs_vaddr *vaddr)
 }
 
 long silofs_vaddr_compare(const struct silofs_vaddr *vaddr1,
-			  const struct silofs_vaddr *vaddr2)
+                          const struct silofs_vaddr *vaddr2)
 {
 	long cmp;
 
@@ -86,26 +86,26 @@ long silofs_vaddr_compare(const struct silofs_vaddr *vaddr1,
 }
 
 bool silofs_vaddr_isequal(const struct silofs_vaddr *vaddr1,
-			  const struct silofs_vaddr *vaddr2)
+                          const struct silofs_vaddr *vaddr2)
 {
 	return (silofs_vaddr_compare(vaddr1, vaddr2) == 0);
 }
 
 void silofs_vaddr_setup(struct silofs_vaddr *vaddr, enum silofs_vtype vtype,
-			off_t voff)
+                        off_t voff)
 {
 	vaddr->vtype = vtype;
 	vaddr->off   = voff;
 }
 
 void silofs_vaddr_setup2(struct silofs_vaddr *vaddr, enum silofs_vtype vtype,
-			 silofs_lba_t lba)
+                         silofs_lba_t lba)
 {
 	silofs_vaddr_setup(vaddr, vtype, silofs_lba_to_off(lba));
 }
 
 void silofs_vaddr_of_lsmap(struct silofs_vaddr *vaddr,
-			   enum silofs_vtype refvtype, off_t pos)
+                           enum silofs_vtype refvtype, off_t pos)
 {
 	const ssize_t step = sizeof(struct silofs_lsmap);
 	ssize_t lseg_idx;
@@ -131,7 +131,7 @@ void silofs_vaddr_of_lsmap(struct silofs_vaddr *vaddr,
 }
 
 void silofs_vaddr_assign(struct silofs_vaddr *vaddr,
-			 const struct silofs_vaddr *other)
+                         const struct silofs_vaddr *other)
 {
 	vaddr->vtype = other->vtype;
 	vaddr->off   = other->off;
@@ -175,8 +175,8 @@ static silofs_lba_t lba_plus(silofs_lba_t lba, size_t nlbk)
 }
 
 void silofs_vaddr_by_spleaf(struct silofs_vaddr *vaddr,
-			    enum silofs_vtype vtype, off_t voff_base,
-			    size_t bn, size_t kbn)
+                            enum silofs_vtype vtype, off_t voff_base,
+                            size_t bn, size_t kbn)
 {
 	const silofs_lba_t lba_base = silofs_off_to_lba(voff_base);
 	const silofs_lba_t lba      = lba_plus(lba_base, bn);
@@ -231,13 +231,13 @@ void silofs_vaddr56_xtoh(const struct silofs_vaddr56 *vaddr56, off_t *out_off)
 }
 
 void silofs_vaddr64_htox(struct silofs_vaddr64 *vaddr64,
-			 const struct silofs_vaddr *vaddr)
+                         const struct silofs_vaddr *vaddr)
 {
 	vaddr64->off_vtype = cpu_to_off_vtype(vaddr->off, vaddr->vtype);
 }
 
 void silofs_vaddr64_xtoh(const struct silofs_vaddr64 *vaddr64,
-			 struct silofs_vaddr *vaddr)
+                         struct silofs_vaddr *vaddr)
 {
 	off_t voff;
 	enum silofs_vtype vtype;

@@ -15,8 +15,7 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/infra.h>
-#include <silofs/nodes/dirtyq.h>
+#include <silofs/nodes.h>
 
 void silofs_dirtyq_init(struct silofs_dirtyq *dq)
 {

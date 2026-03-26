@@ -17,7 +17,7 @@
 #include <silofs/configs.h>
 #include <silofs/ondisk.h>
 #include <silofs/addr.h>
-#include <silofs/nodes/view.h>
+#include <silofs/nodes.h>
 
 static size_t hdr_size_by(uint8_t stype, enum silofs_hdrf flags)
 {

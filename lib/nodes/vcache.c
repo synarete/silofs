@@ -18,7 +18,7 @@
 #include <silofs/infra.h>
 #include <silofs/addr.h>
 #include <silofs/flags.h>
-#include <silofs/nodes/vcache.h>
+#include <silofs/nodes.h>
 
 static void vcache_evict_some(struct silofs_vcache *vcache);
 

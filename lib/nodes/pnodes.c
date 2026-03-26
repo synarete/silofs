@@ -17,8 +17,7 @@
 #include <silofs/configs.h>
 #include <silofs/infra.h>
 #include <silofs/addr.h>
-#include <silofs/nodes/view.h>
-#include <silofs/nodes/pnodes.h>
+#include <silofs/nodes.h>
 
 static struct silofs_pview *
 new_pview_of(struct silofs_alloc *alloc, enum silofs_ptype ptype)
@@ -27,7 +26,7 @@ new_pview_of(struct silofs_alloc *alloc, enum silofs_ptype ptype)
 }
 
 static void del_pview_of(struct silofs_pview *pview,
-                         struct silofs_alloc *alloc, enum silofs_ptype ptype)
+			 struct silofs_alloc *alloc, enum silofs_ptype ptype)
 {
 	silofs_pview_del(pview, alloc, ptype);
 }
@@ -539,7 +538,7 @@ silofs_new_pnode(const struct silofs_pnptr *pnptr, struct silofs_alloc *alloc)
 }
 
 void silofs_del_pnode(struct silofs_pnode_info *pni,
-                      struct silofs_alloc *alloc)
+		      struct silofs_alloc *alloc)
 {
 	const enum silofs_ptype ptype = pni_ptype(pni);
 

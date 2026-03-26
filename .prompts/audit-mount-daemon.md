@@ -17,6 +17,8 @@ mechanism. Focus on:
   inputs.
 - **Resource Management:** FD leaks, socket state handling, and zombie
   processes.
+- **Systemd Integration:** Verification of service hardening, resource limits,
+  and security descriptors in the unit file.
 
 ## 3. Review Checklist
 
@@ -45,11 +47,27 @@ mechanism. Focus on:
 - Check signal handling and event loop logic in `mntd`.
 - Verify error paths ensure proper cleanup of pending connections.
 
+### 3.6 Systemd Service Hardening
+- Review `silofs-mountd.service.in` for the Principle of Least Privilege.
+- **Capabilities:** Evaluate `CapabilityBoundingSet`. Is `CAP_SYS_ADMIN`
+  strictly necessary for the entire lifecycle, or can it be dropped?
+- **Sandboxing:** Check why directives like `ProtectSystem`,
+  `ProtectKernelTunables`, and `PrivateTmp` are commented out. Assess the risk
+  of leaving these disabled.
+- **Resource Limits:** Verify if `LimitNPROC=1` and `TasksMax=1` are too
+  restrictive. If the daemon forks or uses a thread pool, these settings will
+  prevent it from functioning.
+- **Device Access:** Ensure `DeviceAllow` correctly limits access to only
+  `/dev/fuse`, `/dev/null`, and `/dev/urandom`.
+- **Filesystem Access:** Verify `UMask=0777`. This is extremely restrictive;
+  ensure it doesn't interfere with socket creation or logging.
+
 ## 4. Input Files
 - `mntd/`
 - `incluse/silofs/mntsvc.h`
 - `lib/mnt/`
 - `lib/include/silofs/mnt/`
+- `mntd/systemd/silofs-mountd.service.in`
 
 ## 5. Required Output
 Provide findings grouped by category:

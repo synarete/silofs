@@ -15,8 +15,7 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/pv/btnode.h>
-#include <silofs/pv/uber.h>
+#include <silofs/pv.h>
 
 static void ubv_btroot(const struct silofs_uber_vspace *ubv,
                        struct silofs_btnptr *out_btnptr)

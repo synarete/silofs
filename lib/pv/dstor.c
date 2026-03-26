@@ -23,7 +23,7 @@
 #include <silofs/errors.h>
 #include <silofs/syscall.h>
 #include <silofs/infra.h>
-#include <silofs/pv/dstor.h>
+#include <silofs/pv.h>
 
 /*
  * TODO-0035: Define proper upper-bound for cache limit.

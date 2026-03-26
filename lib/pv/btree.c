@@ -20,13 +20,7 @@
 #include <silofs/addr.h>
 #include <silofs/nodes.h>
 
-#include <silofs/pv/repo.h>
-#include <silofs/pv/btnode.h>
-#include <silofs/pv/carve.h>
-#include <silofs/pv/stage.h>
-#include <silofs/pv/uber.h>
-#include <silofs/pv/pexec.h>
-#include <silofs/pv/btree.h>
+#include <silofs/pv.h>
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

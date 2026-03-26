@@ -17,7 +17,7 @@
 #include <silofs/configs.h>
 #include <silofs/infra.h>
 #include <silofs/addr.h>
-#include <silofs/pv/btnode.h>
+#include <silofs/pv.h>
 
 static enum silofs_btnodef btn_flags(const struct silofs_btree_node *btn)
 {

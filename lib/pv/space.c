@@ -15,13 +15,7 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/pv/uber.h>
-#include <silofs/pv/pexec.h>
-#include <silofs/pv/carve.h>
-#include <silofs/pv/stage.h>
-#include <silofs/pv/btnode.h>
-#include <silofs/pv/btree.h>
-#include <silofs/pv/space.h>
+#include <silofs/pv.h>
 
 static void update_active_uber(struct silofs_pexec_ctx *pexec,
                                struct silofs_uber_info *ubi)

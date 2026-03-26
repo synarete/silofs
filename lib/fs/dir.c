@@ -19,7 +19,8 @@
 
 #include <silofs/infra.h>
 #include <silofs/nodes.h>
-#include <silofs/fs/vfs.h>
+#include <silofs/vfs.h>
+
 #include <silofs/fs/dir.h>
 #include <silofs/fs/namei.h>
 #include <silofs/fs/vstage.h>

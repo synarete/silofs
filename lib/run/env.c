@@ -20,7 +20,7 @@
 #include <sys/mount.h>
 #include <silofs/pv.h>
 #include <silofs/fs.h>
-#include <silofs/fuse.h>
+#include <silofs/fuseq.h>
 
 #include <silofs/run/mbr.h>
 #include <silofs/run/env.h>

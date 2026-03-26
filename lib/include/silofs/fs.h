@@ -20,7 +20,8 @@
 #include <silofs/infra.h>
 #include <silofs/addr.h>
 #include <silofs/nodes.h>
-#include <silofs/fs/vfs.h>
+#include <silofs/vfs.h>
+
 #include <silofs/fs/uidgid.h>
 #include <silofs/fs/idsmap.h>
 #include <silofs/fs/lsmap.h>

@@ -24,7 +24,7 @@
 #include <silofs/infra.h>
 #include <silofs/pv.h>
 #include <silofs/fs.h>
-#include <silofs/fuse.h>
+#include <silofs/fuseq.h>
 #include <silofs/run.h>
 
 static void relax_caches(struct silofs_task_ctx *task, bool now)

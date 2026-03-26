@@ -17,7 +17,7 @@
 #ifndef SILOFS_FQTYPES_H_
 #define SILOFS_FQTYPES_H_
 
-#include <linux/fuse_abi.h>
+#include <linux/fuse.h>
 #include <silofs/ondisk.h>
 
 #define SILOFS_CMD_TAIL_MAX \
@@ -404,6 +404,6 @@ struct silofs_fuseq_cmd_desc {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_guarantee_fuse_proto(void);
+void silofs_check_fuse_proto(void);
 
 #endif /* SILOFS_FQTYPES_H_ */

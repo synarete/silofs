@@ -32,10 +32,10 @@
 #include <silofs/ioctls.h>
 #include <silofs/mntsvc.h>
 #include <silofs/infra.h>
-#include <silofs/fs.h>
+#include <silofs/vfs.h>
 #include <silofs/run.h>
-#include <silofs/fuse/fqtypes.h>
-#include <silofs/fuse/fuseq.h>
+#include <silofs/fuseq.h>
+#include "fqtypes.h"
 
 #if FUSE_KERNEL_VERSION != 7
 #error "wrong FUSE_KERNEL_VERSION"
@@ -4667,6 +4667,8 @@ static int fuseq_init(struct silofs_fuseq *fq, struct silofs_alloc *alloc,
                       const struct silofs_fuseq_subs *subx)
 {
 	int err;
+
+	silofs_check_fuse_proto();
 
 	fuseq_init_common(fq, alloc, subx);
 	fuseq_init_conn_info(fq);

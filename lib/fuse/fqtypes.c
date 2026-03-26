@@ -17,8 +17,8 @@
 #include <silofs/configs.h>
 #include <silofs/infra.h>
 #include <silofs/str.h>
-#include <silofs/fs.h>
-#include <silofs/fuse/fqtypes.h>
+#include <silofs/vfs.h>
+#include "fqtypes.h"
 
 #define FUSEQ_HDR_IN_SIZE (40)
 
@@ -31,7 +31,7 @@
 #define REQUIRE_BASEOF(type, member) \
 	REQUIRE_OFFSET(type, member, FUSEQ_HDR_IN_SIZE)
 
-void silofs_guarantee_fuse_proto(void)
+void silofs_check_fuse_proto(void)
 {
 	REQUIRE_SIZEOF(struct fuse_in_header, 40);
 	REQUIRE_SIZEOF(struct fuse_rename_in, 8);

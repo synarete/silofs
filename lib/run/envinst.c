@@ -15,11 +15,12 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/ioctls.h>
 #include <sys/resource.h>
+
+#include <silofs/ioctls.h>
 #include <silofs/pv.h>
 #include <silofs/fs.h>
-#include <silofs/fuse.h>
+#include <silofs/fuseq.h>
 #include <silofs/run.h>
 
 /* env initialization-state flags */

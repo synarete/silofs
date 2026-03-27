@@ -210,12 +210,15 @@ reload_btroot_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
 }
 
 static int
-reload_vspace_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
+reload_vnode_zero_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
 {
-	/* TODO: writeme */
-	(void)pexec;
-	(void)vtype;
-	return 0;
+	const struct silofs_vaddr vaddr = {
+		.off   = 0,
+		.vtype = vtype,
+	};
+	struct silofs_vnode_info *vni = nullptr;
+
+	return silofs_stage_vnode2_at(pexec, &vaddr, &vni);
 }
 
 static int reload_vspaces(struct silofs_pexec_ctx *pexec)
@@ -231,7 +234,7 @@ static int reload_vspaces(struct silofs_pexec_ctx *pexec)
 		if (err) {
 			return err;
 		}
-		err = reload_vspace_of(pexec, vtype);
+		err = reload_vnode_zero_of(pexec, vtype);
 		if (err) {
 			return err;
 		}
@@ -257,25 +260,16 @@ int silofs_reload_pv(struct silofs_pexec_ctx *pexec,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int map_vnode_by_btree(struct silofs_pexec_ctx *pexec,
-                              struct silofs_vnode_info *vni)
+static void vni_dirtify(struct silofs_vnode_info *vni)
 {
-	const struct silofs_vaddr *vaddr = silofs_vni_vaddr(vni);
-	int err;
-
-	err = silofs_insert_vtop(pexec, vaddr, &vni->vn_pnptr);
-	if (err) {
-		return err;
-	}
 	silofs_vni_dirtify(vni, nullptr);
-	return 0;
 }
 
 int silofs_spawn_vnode2_at(struct silofs_pexec_ctx *pexec,
                            const struct silofs_vaddr *vaddr,
                            struct silofs_vnode_info **out_vni)
 {
-	struct silofs_pnptr pnptr;
+	struct silofs_pnptr pnptr = {};
 	int err;
 
 	err = silofs_carve_next_vspace(pexec, vaddr->vtype, &pnptr);
@@ -286,7 +280,26 @@ int silofs_spawn_vnode2_at(struct silofs_pexec_ctx *pexec,
 	if (err) {
 		return err;
 	}
-	err = map_vnode_by_btree(pexec, *out_vni);
+	err = silofs_insert_vtop(pexec, vaddr, &pnptr);
+	if (err) {
+		return err;
+	}
+	vni_dirtify(*out_vni);
+	return 0;
+}
+
+int silofs_stage_vnode2_at(struct silofs_pexec_ctx *pexec,
+                           const struct silofs_vaddr *vaddr,
+                           struct silofs_vnode_info **out_vni)
+{
+	struct silofs_pnptr pnptr;
+	int err;
+
+	err = silofs_resolve_vtop(pexec, vaddr, &pnptr);
+	if (err) {
+		return err;
+	}
+	err = silofs_stage_vnode2(pexec, vaddr, &pnptr, out_vni);
 	if (err) {
 		return err;
 	}

@@ -451,4 +451,8 @@ int silofs_spawn_vnode2_at(struct silofs_pexec_ctx   *pexec,
                            const struct silofs_vaddr *vaddr,
                            struct silofs_vnode_info **out_vni);
 
+int silofs_stage_vnode2_at(struct silofs_pexec_ctx   *pexec,
+                           const struct silofs_vaddr *vaddr,
+                           struct silofs_vnode_info **out_vni);
+
 #endif /* SILOFS_PV_H_ */

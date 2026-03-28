@@ -212,11 +212,12 @@ static void xe_squeeze(struct silofs_xattr_entry *xe,
                        const struct silofs_xattr_entry *last)
 {
 	const struct silofs_xattr_entry *next = xe_next(xe);
-	const size_t move                     = xe_diff(next, last);
-	const size_t zero                     = xe_diff(xe, next);
+	size_t nshift, nclear;
 
-	memmove(xe, next, move * sizeof(*xe));
-	memset(xe + move, 0, zero * sizeof(*xe));
+	nshift = xe_diff(next, last);
+	nclear = xe_diff(xe, next);
+	memmove(xe, next, nshift * sizeof(*xe));
+	memset(xe + nshift, 0, nclear * sizeof(*xe));
 }
 
 static void
@@ -294,7 +295,7 @@ static int xe_verify_range(const struct silofs_xattr_entry *xe,
 			return err;
 		}
 		nents = xe_nents(itr);
-		if (!nents || ((xe + nents) > end)) {
+		if (!nents || ((itr + nents) > end)) {
 			return -SILOFS_EFSCORRUPTED;
 		}
 		itr += nents;
@@ -396,7 +397,12 @@ xan_remove(struct silofs_xattr_node *xan, struct silofs_xattr_entry *xe)
 
 static int xan_verify(const struct silofs_xattr_node *xan)
 {
-	return xe_verify_range(xan_beg(xan), xan_tip(xan));
+	int err = -SILOFS_EFSCORRUPTED;
+
+	if (xan_nents(xan) <= ARRAY_SIZE(xan->xe)) {
+		err = xe_verify_range(xan_beg(xan), xan_tip(xan));
+	}
+	return err;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -510,7 +516,9 @@ xai_vaddr(const struct silofs_xanode_info *xai)
 static void
 xai_dirtify(struct silofs_xanode_info *xai, struct silofs_inode_info *ii)
 {
-	silofs_vni_dirtify(&xai->xan_vni, ii);
+	if (xai != nullptr) {
+		silofs_vni_dirtify(&xai->xan_vni, ii);
+	}
 }
 
 static void xai_incref(struct silofs_xanode_info *xai)
@@ -642,8 +650,8 @@ static bool xac_allow_acl(const struct silofs_xattr_ctx *xa_ctx)
 static int
 xac_check_xattr_name(const struct silofs_xattr_ctx *xa_ctx, int w_mode)
 {
-	const struct silofs_namestr *name     = xa_ctx->name;
-	const struct silofs_xattr_prefix *xap = nullptr;
+	const struct silofs_namestr *name = xa_ctx->name;
+	const struct silofs_xattr_prefix *xap;
 	const size_t namelen_max = silofs_min(SILOFS_NAME_MAX, NAME_MAX);
 
 	if (!name) {
@@ -653,12 +661,12 @@ xac_check_xattr_name(const struct silofs_xattr_ctx *xa_ctx, int w_mode)
 		return -SILOFS_ENAMETOOLONG;
 	}
 	xap = search_prefix(name);
-	if ((xap == nullptr) || !xap->flags || !w_mode) {
+	if (xap == nullptr)
 		return 0;
-	}
-	if (xap->flags & XATTRF_DISABLE) {
+	if (xap->flags & XATTRF_DISABLE)
 		return -SILOFS_EINVAL;
-	}
+	if (!w_mode)
+		return 0;
 	if ((xap->flags & XATTRF_ACL) && !xac_allow_acl(xa_ctx)) {
 		return -SILOFS_EINVAL;
 	}
@@ -948,7 +956,10 @@ static int xac_setxattr_create(struct silofs_xattr_ctx *xa_ctx,
 static int xac_setxattr_replace(struct silofs_xattr_ctx *xa_ctx,
                                 struct silofs_xentry_info *xei)
 {
-	struct silofs_xentry_info xei_cur = { .xai = xei->xai, .xe = xei->xe };
+	struct silofs_xentry_info xei_cur = {
+		.xai = xei->xai,
+		.xe  = xei->xe,
+	};
 	int err;
 
 	/* TODO: Try replace in-place */
@@ -956,11 +967,13 @@ static int xac_setxattr_replace(struct silofs_xattr_ctx *xa_ctx,
 		return -SILOFS_ENODATA;
 	}
 	err = xac_setxattr_create(xa_ctx, xei);
-	if (!err) {
-		xei_discard_entry(&xei_cur);
-		xai_dirtify(xei->xai, xa_ctx->ii);
+	if (err) {
+		return err;
 	}
-	return err;
+	xei_discard_entry(&xei_cur);
+	xai_dirtify(xei_cur.xai, xa_ctx->ii);
+	xai_dirtify(xei->xai, xa_ctx->ii);
+	return 0;
 }
 
 static int xac_setxattr_do_apply_on(struct silofs_xattr_ctx *xa_ctx,

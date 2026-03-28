@@ -494,11 +494,11 @@ static int sylc_do_symlink(const struct silofs_symlnk_ctx *sl_ctx)
 
 	err = sylc_check_symlnk(sl_ctx);
 	if (err) {
-		return 0;
+		return err;
 	}
 	err = sylc_assign_symval(sl_ctx);
 	if (err) {
-		return 0;
+		return err;
 	}
 	sylc_update_post_symlink(sl_ctx);
 	return 0;

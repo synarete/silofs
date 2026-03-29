@@ -39,7 +39,8 @@ struct silofs_symlnk_ctx {
 
 static const char *next_part(const char *val, size_t len)
 {
-	return (val != nullptr) ? (val + len) : nullptr;
+	silofs_assert_not_null(val);
+	return silofs_nextof2(val, len);
 }
 
 static size_t head_size(size_t len)
@@ -64,7 +65,9 @@ static int symval_desc_setup(struct silofs_symval_desc *sv_dsc,
 	sv = &sv_dsc->head;
 	silofs_strview_initn(sv, val, head_size(len));
 
-	val = next_part(val, sv->len);
+	if (val != nullptr) {
+		val = next_part(val, sv->len);
+	}
 	rem = len - sv->len;
 	while (rem > 0) {
 		if (sv_dsc->nparts == ARRAY_SIZE(sv_dsc->parts)) {
@@ -73,7 +76,9 @@ static int symval_desc_setup(struct silofs_symval_desc *sv_dsc,
 		sv = &sv_dsc->parts[sv_dsc->nparts++];
 		silofs_strview_initn(sv, val, part_size(rem));
 
-		val = next_part(val, sv->len);
+		if (val != nullptr) {
+			val = next_part(val, sv->len);
+		}
 		rem -= sv->len;
 	}
 	return 0;
@@ -279,15 +284,16 @@ static int sylc_extern_symval_head(const struct silofs_symlnk_ctx *sl_ctx,
 
 static int sylc_extern_symval_parts(const struct silofs_symlnk_ctx *sl_ctx,
                                     const struct silofs_symval_desc *sv_dsc,
-                                    struct silofs_bytebuf *buf)
+                                    struct silofs_bytebuf *bbuf)
 {
-	struct silofs_vaddr vaddr              = { .off = -1 };
-	struct silofs_symval_info *syi         = nullptr;
 	const struct silofs_inode_info *lnk_ii = sl_ctx->lnk_ii;
-	size_t len;
 	int err;
 
 	for (size_t i = 0; i < sv_dsc->nparts; ++i) {
+		struct silofs_vaddr vaddr      = { .off = -1 };
+		struct silofs_symval_info *syi = nullptr;
+		size_t len, ncp;
+
 		err = lnk_get_value_part(lnk_ii, i, &vaddr);
 		if (err) {
 			return err;
@@ -297,13 +303,16 @@ static int sylc_extern_symval_parts(const struct silofs_symlnk_ctx *sl_ctx,
 			return err;
 		}
 		len = sv_dsc->parts[i].len;
-		silofs_bytebuf_append(buf, symv_value(syi->syv), len);
+		ncp = silofs_bytebuf_append(bbuf, symv_value(syi->syv), len);
+		if (ncp != len) {
+			return -SILOFS_ERANGE;
+		}
 	}
 	return 0;
 }
 
 static int sylc_extern_symval(const struct silofs_symlnk_ctx *sl_ctx,
-                              struct silofs_bytebuf *buf)
+                              struct silofs_bytebuf *bbuf)
 {
 	struct silofs_symval_desc sv_dsc;
 	const struct silofs_inode_info *lnk_ii = sl_ctx->lnk_ii;
@@ -315,11 +324,11 @@ static int sylc_extern_symval(const struct silofs_symlnk_ctx *sl_ctx,
 	if (err) {
 		return err;
 	}
-	err = sylc_extern_symval_head(sl_ctx, &sv_dsc, buf);
+	err = sylc_extern_symval_head(sl_ctx, &sv_dsc, bbuf);
 	if (err) {
 		return err;
 	}
-	err = sylc_extern_symval_parts(sl_ctx, &sv_dsc, buf);
+	err = sylc_extern_symval_parts(sl_ctx, &sv_dsc, bbuf);
 	if (err) {
 		return err;
 	}
@@ -327,7 +336,7 @@ static int sylc_extern_symval(const struct silofs_symlnk_ctx *sl_ctx,
 }
 
 static int sylc_readlink_of(const struct silofs_symlnk_ctx *sl_ctx,
-                            struct silofs_bytebuf *buf)
+                            struct silofs_bytebuf *bbuf)
 {
 	int err;
 
@@ -335,7 +344,7 @@ static int sylc_readlink_of(const struct silofs_symlnk_ctx *sl_ctx,
 	if (err) {
 		return err;
 	}
-	err = sylc_extern_symval(sl_ctx, buf);
+	err = sylc_extern_symval(sl_ctx, bbuf);
 	if (err) {
 		return err;
 	}
@@ -352,15 +361,15 @@ int silofs_do_readlink(struct silofs_task_ctx *task,
 		.lnk_ii   = lnk_ii,
 		.stg_mode = SILOFS_STG_CUR,
 	};
-	struct silofs_bytebuf sl;
+	struct silofs_bytebuf bbuf;
 	int err;
 
-	silofs_bytebuf_init(&sl, ptr, lim);
+	silofs_bytebuf_init(&bbuf, ptr, lim);
 	silofs_ii_incref(lnk_ii);
-	err = sylc_readlink_of(&sl_ctx, &sl);
+	err = sylc_readlink_of(&sl_ctx, &bbuf);
 	silofs_ii_decref(lnk_ii);
-	*out_len = sl.len;
-	silofs_bytebuf_fini(&sl);
+	*out_len = bbuf.len;
+	silofs_bytebuf_fini(&bbuf);
 	return err;
 }
 
@@ -454,7 +463,9 @@ static int sylc_assign_symval_parts(const struct silofs_symlnk_ctx *sl_ctx,
 static int sylc_assign_symval(const struct silofs_symlnk_ctx *sl_ctx)
 {
 	const struct silofs_strview *symval = sl_ctx->symval;
-	struct silofs_symval_desc sv_dsc    = { .nparts = 0 };
+	struct silofs_symval_desc sv_dsc    = {
+		   .nparts = 0,
+	};
 	int err;
 
 	err = symval_desc_setup(&sv_dsc, symval->str, symval->len);
@@ -479,7 +490,9 @@ static ssize_t symval_length(const struct silofs_strview *symval)
 
 static void sylc_update_post_symlink(const struct silofs_symlnk_ctx *sl_ctx)
 {
-	struct silofs_iattr iattr        = { .ia_size = -1 };
+	struct silofs_iattr iattr = {
+		.ia_size = -1,
+	};
 	struct silofs_inode_info *lnk_ii = sl_ctx->lnk_ii;
 
 	silofs_ii_mkiattr(lnk_ii, &iattr);
@@ -518,11 +531,13 @@ int silofs_bind_symval(struct silofs_task_ctx *task,
                        struct silofs_inode_info *lnk_ii,
                        const struct silofs_strview *symval)
 {
-	struct silofs_symlnk_ctx sl_ctx = { .task     = task,
-		                            .sbi      = silofs_get_sbi(task),
-		                            .lnk_ii   = lnk_ii,
-		                            .symval   = symval,
-		                            .stg_mode = SILOFS_STG_COW };
+	struct silofs_symlnk_ctx sl_ctx = {
+		.task     = task,
+		.sbi      = silofs_get_sbi(task),
+		.lnk_ii   = lnk_ii,
+		.symval   = symval,
+		.stg_mode = SILOFS_STG_COW,
+	};
 
 	return sylc_symlink(&sl_ctx);
 }
@@ -549,9 +564,10 @@ int silofs_drop_symlink(struct silofs_task_ctx *task,
                         struct silofs_inode_info *lnk_ii)
 {
 	struct silofs_symlnk_ctx sl_ctx = {
-		.task   = task,
-		.sbi    = silofs_get_sbi(task),
-		.lnk_ii = lnk_ii,
+		.task     = task,
+		.sbi      = silofs_get_sbi(task),
+		.lnk_ii   = lnk_ii,
+		.stg_mode = SILOFS_STG_COW,
 	};
 	int err;
 
@@ -577,9 +593,12 @@ static int symv_verify_parent(const struct silofs_symlnk_value *symv)
 
 static int symv_verify_length(const struct silofs_symlnk_value *symv)
 {
-	const size_t length = symv_length(symv);
+	const size_t sv_len = symv_length(symv);
 
-	return (length <= SILOFS_SYMLNK_MAX) ? 0 : -SILOFS_EFSCORRUPTED;
+	if ((sv_len == 0) || (sv_len > SILOFS_SYMLNK_PART_MAX)) {
+		return -SILOFS_EFSCORRUPTED;
+	}
+	return 0;
 }
 
 int silofs_verify_symlnk_value(const struct silofs_symlnk_value *symv)

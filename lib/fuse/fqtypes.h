@@ -17,8 +17,8 @@
 #ifndef SILOFS_FQTYPES_H_
 #define SILOFS_FQTYPES_H_
 
-#include <linux/fuse.h>
 #include <silofs/ondisk.h>
+#include "fuse_abi.h"
 
 #define SILOFS_CMD_TAIL_MAX \
 	(SILOFS_IO_SIZE_MAX - sizeof(struct fuse_in_header))

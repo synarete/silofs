@@ -1,5 +1,4 @@
 noinst_HEADERS = $(NULL)
-noinst_HEADERS += linux/fuse.h
 noinst_HEADERS += silofs/flags.h
 noinst_HEADERS += silofs/infra/atomic.h
 noinst_HEADERS += silofs/infra/avl.h

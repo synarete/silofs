@@ -44,6 +44,7 @@
 #include <silofs/infra/uconv.h>
 #include <silofs/infra/zcmpr.h>
 #include <silofs/infra/thread.h>
+#include <silofs/infra/hamming.h>
 
 #ifdef SILOFS_USE_PRIVATE
 #include <silofs/infra/private.h>

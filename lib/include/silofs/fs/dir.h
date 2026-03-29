@@ -17,7 +17,7 @@
 #ifndef SILOFS_DIR_H_
 #define SILOFS_DIR_H_
 
-#include <silofs/infra.h>
+#include <silofs/base.h>
 #include <silofs/fs/inode.h>
 
 struct silofs_task_ctx;

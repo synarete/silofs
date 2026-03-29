@@ -19,7 +19,7 @@
 #include <sys/stat.h>
 #include <limits.h>
 
-#include <silofs/infra.h>
+#include <silofs/base.h>
 #include <silofs/nodes.h>
 #include <silofs/fs/spmaps.h>
 

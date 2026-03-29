@@ -21,7 +21,7 @@
 
 #include <silofs/ondisk.h>
 #include <silofs/ioctls.h>
-#include <silofs/infra.h>
+#include <silofs/base.h>
 
 #ifndef LINK_MAX
 #define LINK_MAX 127

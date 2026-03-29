@@ -17,7 +17,7 @@
 #ifndef SILOFS_FLUSH_H_
 #define SILOFS_FLUSH_H_
 
-#include <silofs/infra.h>
+#include <silofs/base.h>
 #include <silofs/addr.h>
 
 #define SILOFS_SQENT_NREFS_MAX (32)

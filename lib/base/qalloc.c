@@ -36,13 +36,13 @@
 #include <silofs/memalloc.h>
 #include <silofs/logging.h>
 #include <silofs/panic.h>
-#include <silofs/infra/list.h>
-#include <silofs/infra/utility.h>
-#include <silofs/infra/iovec.h>
-#include <silofs/infra/atomic.h>
-#include <silofs/infra/snprintf.h>
-#include <silofs/infra/thread.h>
-#include <silofs/infra/qalloc.h>
+#include <silofs/base/list.h>
+#include <silofs/base/utility.h>
+#include <silofs/base/iovec.h>
+#include <silofs/base/atomic.h>
+#include <silofs/base/snprintf.h>
+#include <silofs/base/thread.h>
+#include <silofs/base/qalloc.h>
 
 #ifndef ARRAY_SIZE
 #define ARRAY_SIZE(x_) SILOFS_ARRAY_SIZE(x_)

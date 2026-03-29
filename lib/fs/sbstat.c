@@ -19,7 +19,7 @@
 #include <limits.h>
 
 #include <silofs/ioctls.h>
-#include <silofs/infra.h>
+#include <silofs/base.h>
 #include <silofs/nodes.h>
 #include <silofs/fs/super.h>
 

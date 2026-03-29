@@ -17,7 +17,7 @@
 #ifndef SILOFS_PV_H_
 #define SILOFS_PV_H_
 
-#include <silofs/infra.h>
+#include <silofs/base.h>
 #include <silofs/crypto.h>
 #include <silofs/addr.h>
 #include <silofs/nodes.h>

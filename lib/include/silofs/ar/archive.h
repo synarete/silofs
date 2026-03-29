@@ -18,7 +18,7 @@
 #define SILOFS_ARCHIVE_H_
 
 #include <silofs/ondisk.h>
-#include <silofs/infra.h>
+#include <silofs/base.h>
 #include <silofs/addr.h>
 #include <silofs/fs.h>
 #include "index.h"

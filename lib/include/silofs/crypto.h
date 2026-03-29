@@ -21,7 +21,7 @@
 #include <stdint.h>
 #include <gcrypt.h>
 
-#include <silofs/infra.h>
+#include <silofs/base.h>
 #include <silofs/ondisk.h>
 #include <silofs/types.h>
 

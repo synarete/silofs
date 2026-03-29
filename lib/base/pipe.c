@@ -26,8 +26,8 @@
 #include <silofs/syscall.h>
 #include <silofs/errors.h>
 #include <silofs/logging.h>
-#include <silofs/infra/utility.h>
-#include <silofs/infra/pipe.h>
+#include <silofs/base/utility.h>
+#include <silofs/base/pipe.h>
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

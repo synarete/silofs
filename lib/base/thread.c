@@ -27,9 +27,9 @@
 #include <silofs/macros.h>
 #include <silofs/syscall.h>
 #include <silofs/panic.h>
-#include <silofs/infra/utility.h>
-#include <silofs/infra/times.h>
-#include <silofs/infra/thread.h>
+#include <silofs/base/utility.h>
+#include <silofs/base/times.h>
+#include <silofs/base/thread.h>
 
 #if defined(NDEBUG)
 #define SILOFS_MUTEX_KIND PTHREAD_MUTEX_NORMAL

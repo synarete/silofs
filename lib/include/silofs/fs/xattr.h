@@ -17,7 +17,7 @@
 #ifndef SILOFS_XATTR_H_
 #define SILOFS_XATTR_H_
 
-#include <silofs/infra.h>
+#include <silofs/base.h>
 
 struct silofs_task_ctx;
 struct silofs_namestr;

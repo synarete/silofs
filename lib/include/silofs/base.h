@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_INFRA_H_
-#define SILOFS_INFRA_H_
+#ifndef SILOFS_BASE_H_
+#define SILOFS_BASE_H_
 
 #include <silofs/ccattr.h>
 #include <silofs/consts.h>
@@ -27,27 +27,27 @@
 #include <silofs/panic.h>
 #include <silofs/memalloc.h>
 
-#include <silofs/infra/utility.h>
-#include <silofs/infra/atomic.h>
-#include <silofs/infra/avl.h>
-#include <silofs/infra/base64.h>
-#include <silofs/infra/bytebuf.h>
-#include <silofs/infra/hashfn.h>
-#include <silofs/infra/iovec.h>
-#include <silofs/infra/list.h>
-#include <silofs/infra/pipe.h>
-#include <silofs/infra/socket.h>
-#include <silofs/infra/snprintf.h>
-#include <silofs/infra/times.h>
-#include <silofs/infra/uuid.h>
-#include <silofs/infra/qalloc.h>
-#include <silofs/infra/uconv.h>
-#include <silofs/infra/zcmpr.h>
-#include <silofs/infra/thread.h>
-#include <silofs/infra/hamming.h>
+#include <silofs/base/utility.h>
+#include <silofs/base/atomic.h>
+#include <silofs/base/avl.h>
+#include <silofs/base/base64.h>
+#include <silofs/base/bytebuf.h>
+#include <silofs/base/hashfn.h>
+#include <silofs/base/iovec.h>
+#include <silofs/base/list.h>
+#include <silofs/base/pipe.h>
+#include <silofs/base/socket.h>
+#include <silofs/base/snprintf.h>
+#include <silofs/base/times.h>
+#include <silofs/base/uuid.h>
+#include <silofs/base/qalloc.h>
+#include <silofs/base/uconv.h>
+#include <silofs/base/zcmpr.h>
+#include <silofs/base/thread.h>
+#include <silofs/base/hamming.h>
 
 #ifdef SILOFS_USE_PRIVATE
-#include <silofs/infra/private.h>
+#include <silofs/base/private.h>
 #endif
 
-#endif /* SILOFS_INFRA_H_ */
+#endif /* SILOFS_BASE_H_ */

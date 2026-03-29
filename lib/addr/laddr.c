@@ -18,7 +18,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include <silofs/infra.h>
+#include <silofs/base.h>
 #include <silofs/str.h>
 #include <silofs/addr.h>
 

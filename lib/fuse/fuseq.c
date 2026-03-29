@@ -31,7 +31,7 @@
 
 #include <silofs/ioctls.h>
 #include <silofs/mntsvc.h>
-#include <silofs/infra.h>
+#include <silofs/base.h>
 #include <silofs/vfs.h>
 #include <silofs/run.h>
 #include <silofs/fuseq.h>

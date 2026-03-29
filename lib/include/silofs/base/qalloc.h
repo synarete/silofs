@@ -22,9 +22,8 @@
 
 #include <silofs/ccattr.h>
 #include <silofs/memalloc.h>
-#include <silofs/infra/iovec.h>
-#include <silofs/infra/list.h>
-#include <silofs/infra/thread.h>
+#include <silofs/base/list.h>
+#include <silofs/base/thread.h>
 
 /* quick memory allocator */
 enum silofs_qallocf {

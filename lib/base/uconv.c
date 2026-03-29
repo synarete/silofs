@@ -19,8 +19,8 @@
 #include <errno.h>
 
 #include <silofs/errors.h>
-#include <silofs/infra/utility.h>
-#include <silofs/infra/uconv.h>
+#include <silofs/base/utility.h>
+#include <silofs/base/uconv.h>
 
 int silofs_uconv_init(struct silofs_uconv *uconv)
 {

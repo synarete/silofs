@@ -17,7 +17,7 @@
 #include <silofs/configs.h>
 #include <gcrypt.h>
 
-#include <silofs/infra.h>
+#include <silofs/base.h>
 #include <silofs/crypto.h>
 
 static enum gcry_random_level random_level(bool strong)

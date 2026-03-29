@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/infra.h>
+#include <silofs/base.h>
 #include <silofs/fs.h>
 
 static void lcache_drop_uamap(struct silofs_lcache *lcache);

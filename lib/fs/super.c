@@ -18,7 +18,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mount.h>
-#include <silofs/infra.h>
+#include <silofs/base.h>
 #include <silofs/fs.h>
 #include <silofs/run.h>
 

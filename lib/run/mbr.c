@@ -16,7 +16,7 @@
  */
 #include <silofs/configs.h>
 #include <silofs/ondisk.h>
-#include <silofs/infra.h>
+#include <silofs/base.h>
 #include <silofs/pv.h>
 #include <silofs/fs.h>
 #include <silofs/run.h>

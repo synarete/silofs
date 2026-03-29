@@ -18,7 +18,7 @@
 #define SILOFS_TASK_H_
 
 #include <silofs/types.h>
-#include <silofs/infra.h>
+#include <silofs/base.h>
 #include <silofs/addr.h>
 #include <silofs/flags.h>
 

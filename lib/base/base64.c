@@ -23,7 +23,7 @@
 #include <limits.h>
 
 #include <silofs/macros.h>
-#include <silofs/infra/base64.h>
+#include <silofs/base/base64.h>
 
 #define BASE64_ENCODE_LEN(inlen) ((((inlen) + 2) / 3) * 4)
 #define BASE64_DECODE_ADD        64

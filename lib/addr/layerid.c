@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/infra.h>
+#include <silofs/base.h>
 #include <silofs/addr.h>
 
 static const struct silofs_layerid s_silofs_layerid_none;

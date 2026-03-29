@@ -21,7 +21,7 @@
 #include <silofs/errors.h>
 #include <silofs/ondisk.h>
 #include <silofs/types.h>
-#include <silofs/infra.h>
+#include <silofs/base.h>
 #include <silofs/str.h>
 #include <silofs/crypto.h>
 

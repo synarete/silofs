@@ -29,7 +29,7 @@
 
 #include <silofs/errors.h>
 #include <silofs/mntsvc.h>
-#include <silofs/infra.h>
+#include <silofs/base.h>
 #include <silofs/str.h>
 
 enum silofs_mntcmd {

@@ -19,7 +19,7 @@
 
 #include <silofs/errors.h>
 #include <silofs/panic.h>
-#include <silofs/infra.h>
+#include <silofs/base.h>
 #include <silofs/addr.h>
 #include <silofs/pv.h>
 #include <silofs/fs/lcache.h>

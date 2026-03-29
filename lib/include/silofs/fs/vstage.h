@@ -18,7 +18,7 @@
 #define SILOFS_VSTAGE_H_
 
 #include <silofs/macros.h>
-#include <silofs/infra.h>
+#include <silofs/base.h>
 #include <silofs/addr.h>
 
 struct silofs_env;

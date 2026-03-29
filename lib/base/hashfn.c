@@ -20,9 +20,9 @@
 #include <xxhash.h>
 
 #include <silofs/macros.h>
-#include <silofs/infra/utility.h>
-#include <silofs/infra/times.h>
-#include <silofs/infra/hashfn.h>
+#include <silofs/base/utility.h>
+#include <silofs/base/times.h>
+#include <silofs/base/hashfn.h>
 
 uint64_t silofs_fnv1a(const void *buf, size_t len, uint64_t seed)
 {

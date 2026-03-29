@@ -16,7 +16,7 @@
  */
 #include <silofs/configs.h>
 #include <silofs/errors.h>
-#include <silofs/infra.h>
+#include <silofs/base.h>
 #include <silofs/addr.h>
 
 void silofs_fsmeta_setup(struct silofs_fsmeta *fsmeta)

@@ -22,7 +22,7 @@
 #include <fcntl.h>
 #include <limits.h>
 
-#include <silofs/infra.h>
+#include <silofs/base.h>
 #include <silofs/addr.h>
 #include <silofs/nodes.h>
 #include <silofs/vfs.h>

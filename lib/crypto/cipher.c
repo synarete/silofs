@@ -18,7 +18,7 @@
 #include <silofs/errors.h>
 #include <gcrypt.h>
 
-#include <silofs/infra.h>
+#include <silofs/base.h>
 #include <silofs/crypto.h>
 
 #define SILOFS_CIPHER_ALGO_DEFAULT SILOFS_CIPHER_AES256

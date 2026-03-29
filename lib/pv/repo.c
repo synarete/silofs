@@ -20,7 +20,7 @@
 #include <sys/file.h>
 #include <fcntl.h>
 
-#include <silofs/infra.h>
+#include <silofs/base.h>
 #include <silofs/pv.h>
 
 /* repo cached element key */

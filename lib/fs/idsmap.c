@@ -17,7 +17,7 @@
 #include <silofs/configs.h>
 #include <silofs/types.h>
 #include <silofs/errors.h>
-#include <silofs/infra.h>
+#include <silofs/base.h>
 #include <silofs/fs/uidgid.h>
 #include <silofs/fs/idsmap.h>
 

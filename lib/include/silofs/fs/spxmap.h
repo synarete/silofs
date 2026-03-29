@@ -18,7 +18,7 @@
 #define SILOFS_SPXMAP_H_
 
 #include <silofs/ondisk.h>
-#include <silofs/infra.h>
+#include <silofs/base.h>
 
 /* short lifo of previously-allocated now-free space-addresses */
 struct silofs_spalifo {

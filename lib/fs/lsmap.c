@@ -20,7 +20,7 @@
 
 #include <silofs/errors.h>
 #include <silofs/panic.h>
-#include <silofs/infra.h>
+#include <silofs/base.h>
 #include <silofs/addr.h>
 #include <silofs/nodes.h>
 #include <silofs/fs/lsmap.h>

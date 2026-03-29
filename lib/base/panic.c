@@ -25,13 +25,6 @@
 #include <errno.h>
 #include <error.h>
 
-#include <silofs/ccattr.h>
-#include <silofs/macros.h>
-#include <silofs/panic.h>
-#include <silofs/logging.h>
-#include <silofs/infra/utility.h>
-#include <silofs/infra/snprintf.h>
-
 #ifdef SILOFS_WITH_LIBUNWIND
 #ifndef HAVE_LIBUNWIND_H
 #error "HAVE_LIBUNWIND_H not defined"
@@ -39,6 +32,13 @@
 #define UNW_LOCAL_ONLY 1
 #include <libunwind.h>
 #endif
+
+#include <silofs/ccattr.h>
+#include <silofs/macros.h>
+#include <silofs/panic.h>
+#include <silofs/logging.h>
+#include <silofs/base/utility.h>
+#include <silofs/base/snprintf.h>
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

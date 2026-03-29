@@ -20,7 +20,7 @@
 #include <silofs/ondisk.h>
 #include <silofs/types.h>
 #include <silofs/syscall.h>
-#include <silofs/infra.h>
+#include <silofs/base.h>
 #include <silofs/addr.h>
 #include <silofs/pv.h>
 #include <silofs/fs.h>

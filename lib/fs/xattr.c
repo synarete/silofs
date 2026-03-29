@@ -163,8 +163,12 @@ static char *xe_name(const struct silofs_xattr_entry *xe)
 static void *xe_value(const struct silofs_xattr_entry *xe)
 {
 	struct silofs_xentry_view *xeview = xe_view_of(xe);
+	size_t name_len, aligned_size;
 
-	return xeview->xe_data + xe_aligned_size(xe_name_len(xe));
+	name_len     = xe_name_len(xe);
+	aligned_size = xe_aligned_size(name_len);
+
+	return silofs_nextof(xeview->xe_data, aligned_size);
 }
 
 static bool xe_has_name(const struct silofs_xattr_entry *xe,
@@ -782,10 +786,10 @@ static int xac_do_getxattr(struct silofs_xattr_ctx *xa_ctx, size_t *out_size)
 		return err;
 	}
 	*out_size = xe_value_size(xei.xe);
-	if (!buf->cap || (buf->ptr == nullptr)) {
+	if ((buf->cap == 0) || (buf->ptr == nullptr)) {
 		return 0; /* getxattr-size only */
 	}
-	if (buf->cap < (buf->len + *out_size)) {
+	if ((buf->cap - buf->len) < *out_size) {
 		return -SILOFS_ERANGE;
 	}
 	xe_copy_value(xei.xe, buf);
@@ -934,7 +938,7 @@ static int xac_setxattr_create(struct silofs_xattr_ctx *xa_ctx,
 {
 	int err;
 
-	if ((xa_ctx->flags == XATTR_CREATE) && xei->xe) {
+	if ((xa_ctx->flags == XATTR_CREATE) && (xei->xe != nullptr)) {
 		return -SILOFS_EEXIST;
 	}
 	err = xac_try_insert_at_inode(xa_ctx, xei);
@@ -956,22 +960,24 @@ static int xac_setxattr_create(struct silofs_xattr_ctx *xa_ctx,
 static int xac_setxattr_replace(struct silofs_xattr_ctx *xa_ctx,
                                 struct silofs_xentry_info *xei)
 {
-	struct silofs_xentry_info xei_cur = {
+	const struct silofs_xentry_info xei_cur = {
 		.xai = xei->xai,
 		.xe  = xei->xe,
 	};
 	int err;
 
 	/* TODO: Try replace in-place */
-	if ((xa_ctx->flags == XATTR_REPLACE) && !xei->xe) {
+	if ((xa_ctx->flags == XATTR_REPLACE) && (xei->xe == nullptr)) {
 		return -SILOFS_ENODATA;
 	}
 	err = xac_setxattr_create(xa_ctx, xei);
 	if (err) {
 		return err;
 	}
-	xei_discard_entry(&xei_cur);
-	xai_dirtify(xei_cur.xai, xa_ctx->ii);
+	if (xei_cur.xe != nullptr) {
+		xei_discard_entry(&xei_cur);
+		xai_dirtify(xei_cur.xai, xa_ctx->ii);
+	}
 	xai_dirtify(xei->xai, xa_ctx->ii);
 	return 0;
 }

@@ -1689,10 +1689,12 @@ static int create_lnk_inode(struct silofs_task_ctx *task,
 
 static int check_symval(const struct silofs_strview *symval)
 {
+	const size_t symlnk_max = silofs_min(SILOFS_SYMLNK_MAX, PATH_MAX);
+
 	if (symval->len == 0) {
 		return -SILOFS_EINVAL;
 	}
-	if (symval->len > SILOFS_SYMLNK_MAX) {
+	if (symval->len > symlnk_max) {
 		return -SILOFS_ENAMETOOLONG;
 	}
 	return 0;

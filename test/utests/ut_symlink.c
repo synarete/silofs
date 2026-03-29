@@ -221,11 +221,6 @@ static void ut_symlink_and_io(struct ut_env *ute)
 
 static void ut_symlink_and_io2_(struct ut_env *ute, size_t cnt)
 {
-	off_t off            = -1;
-	ino_t dino           = 0;
-	ino_t fino           = 0;
-	ino_t sino           = 0;
-	char *symval         = nullptr;
 	const char *fname    = nullptr;
 	const char *sname    = nullptr;
 	const char *dname    = UT_NAME;
@@ -233,6 +228,11 @@ static void ut_symlink_and_io2_(struct ut_env *ute, size_t cnt)
 	const char *s1       = "s1";
 	const char *s2       = "s2";
 	const ino_t root_ino = UT_ROOT_INO;
+	ino_t dino           = 0;
+	ino_t fino           = 0;
+	ino_t sino           = 0;
+	char *symval         = nullptr;
+	off_t off            = -1;
 
 	ut_mkdir2(ute, root_ino, dname, &dino);
 	for (size_t i = 0; i < cnt; ++i) {

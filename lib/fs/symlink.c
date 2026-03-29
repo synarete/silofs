@@ -277,9 +277,11 @@ static int sylc_extern_symval_head(const struct silofs_symlnk_ctx *sl_ctx,
                                    struct silofs_bytebuf *buf)
 {
 	const struct silofs_inode_info *lnk_ii = sl_ctx->lnk_ii;
+	size_t len, ncp;
 
-	silofs_bytebuf_append(buf, lnk_value_head(lnk_ii), sv_dsc->head.len);
-	return 0;
+	len = sv_dsc->head.len;
+	ncp = silofs_bytebuf_append(buf, lnk_value_head(lnk_ii), len);
+	return (ncp != len) ? -SILOFS_ERANGE : 0;
 }
 
 static int sylc_extern_symval_parts(const struct silofs_symlnk_ctx *sl_ctx,

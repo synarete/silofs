@@ -66,6 +66,7 @@ static struct ut_tgroup const g_ut_tgroups[] = {
 	/* clone */
 	UT_DEFTGRP(ut_tdefs_clone_basic),
 	UT_DEFTGRP(ut_tdefs_clone_io),
+	UT_DEFTGRP(ut_tdefs_clone_reload),
 	/* re-run (post clone) */
 	UT_DEFTGRP(ut_tdefs_file_stat),
 	UT_DEFTGRP(ut_tdefs_dir_iter),

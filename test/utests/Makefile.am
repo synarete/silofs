@@ -53,6 +53,7 @@ silofs_utests_SOURCES += ut_reload.c
 silofs_utests_SOURCES += ut_rename.c
 silofs_utests_SOURCES += ut_clone_basic.c
 silofs_utests_SOURCES += ut_clone_io.c
+silofs_utests_SOURCES += ut_clone_reload.c
 silofs_utests_SOURCES += ut_statfs.c
 silofs_utests_SOURCES += ut_strings.c
 silofs_utests_SOURCES += ut_super.c

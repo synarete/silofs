@@ -224,6 +224,7 @@ extern const struct ut_testdefs ut_tdefs_reload;
 extern const struct ut_testdefs ut_tdefs_fillfs;
 extern const struct ut_testdefs ut_tdefs_clone_basic;
 extern const struct ut_testdefs ut_tdefs_clone_io;
+extern const struct ut_testdefs ut_tdefs_clone_reload;
 
 /* exec */
 void ut_execute_tests(void);

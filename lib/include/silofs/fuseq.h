@@ -96,22 +96,25 @@ struct silofs_fuseq {
 	struct silofs_listq            fq_pipes_freeq;
 	struct silofs_listq            fq_curr_opers;
 	const struct silofs_vfs_hooks *fq_vfs_hooks;
-	enum silofs_flags              fq_mode_flags;
-	uint32_t                       fq_selfsize;
-	uint32_t                       fq_pagesize;
-	uint32_t                       fq_nprocs;
-	int64_t                        fq_nexecs;
-	int64_t                        fq_nopers;
 	volatile int                   fq_fuse_fd;
-	int                            fq_active;
-	bool                           fq_init_pipes;
-	bool                           fq_init_locks;
-	bool                           fq_got_init;
-	bool                           fq_reply_init_ok;
-	bool                           fq_got_destroy;
-	bool                           fq_deny_others;
-	bool                           fq_mount;
-	bool                           fq_umount;
+
+	/* control state */
+	enum silofs_flags fq_mode_flags;
+	uint32_t          fq_selfsize;
+	uint32_t          fq_pagesize;
+	uint32_t          fq_nprocs;
+	int64_t           fq_nexecs;
+	int64_t           fq_nopers;
+	int               fq_active;
+	bool              fq_init_pipes;
+	bool              fq_init_locks;
+	bool              fq_got_init;
+	bool              fq_reply_init_ok;
+	bool              fq_got_destroy;
+	bool              fq_deny_others;
+	bool              fq_mount;
+	bool              fq_umount;
+	bool              fq_allow_interrupt;
 } silofs_attr_aligned64;
 
 struct silofs_fuseq *

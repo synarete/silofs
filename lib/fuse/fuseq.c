@@ -530,7 +530,10 @@ static int fqs_reply_err(struct silofs_fuseq_sub *fqs,
                          const struct silofs_task_ctx *task, int err)
 {
 	struct fuse_out_header hdr;
-	const struct iovec iov = { .iov_base = &hdr, .iov_len = sizeof(hdr) };
+	const struct iovec iov = {
+		.iov_base = &hdr,
+		.iov_len  = sizeof(hdr),
+	};
 
 	fill_out_header_err(&hdr, task, err);
 	return fqs_send_msg(fqs, &iov, 1);
@@ -1161,7 +1164,7 @@ static int fq_rdi_reply_read_iter(struct silofs_fuseq_rd_iter *fq_rdi, int err)
 	struct silofs_task_ctx *task = fq_rdi->task;
 	int ret;
 
-	if (task->interrupted) {
+	if (task_interrupted(task)) {
 		ret = fqs_reply_intr(fqs, task);
 	} else if (unlikely(err)) {
 		ret = fqs_reply_err(fqs, task, err);
@@ -3173,13 +3176,23 @@ static int
 fqs_check_opcode(const struct silofs_fuseq_sub *fqs, uint32_t op_code)
 {
 	const struct silofs_fuseq *fq;
-	const struct silofs_fuseq_cmd_desc *cmd_desc = cmd_desc_of(op_code);
+	const struct silofs_fuseq_cmd_desc *cmd_desc;
 
-	if ((cmd_desc == nullptr) || (cmd_desc->hook == nullptr)) {
-		/* TODO: handle cases of FUSE_INTERUPT properly */
+	fq = fqs_fuseq(fqs);
+	if ((op_code == FUSE_INTERRUPT) && !fq->fq_allow_interrupt) {
+		/*
+		 * TODO-0063: handle cases of FUSE_INTERRUPT properly.
+		 *
+		 * When enabling FUSE_INTERRUPT we get a strange failure in
+		 * postgresql `make check`: some dirs can not be removed due to
+		 * wrong nlink count. Need further investigation.
+		 */
 		return -ENOSYS;
 	}
-	fq = fqs_fuseq(fqs);
+	cmd_desc = cmd_desc_of(op_code);
+	if ((cmd_desc == nullptr) || (cmd_desc->hook == nullptr)) {
+		return -ENOSYS;
+	}
 	if (!fq->fq_got_init && (cmd_desc->code != FUSE_INIT)) {
 		return -EIO;
 	}
@@ -4478,22 +4491,23 @@ fuseq_init_common(struct silofs_fuseq *fq, struct silofs_alloc *alloc,
 	memcpy(&fq->fq_subs, subx, sizeof(fq->fq_subs));
 	fq->fq_subs.fq_nsub_run = 0;
 	listq_init(&fq->fq_curr_opers);
-	fq->fq_env           = nullptr;
-	fq->fq_vfs_hooks     = nullptr;
-	fq->fq_pagesize      = (uint32_t)silofs_sc_page_size();
-	fq->fq_nprocs        = (uint32_t)silofs_sc_nproc_onln();
-	fq->fq_alloc         = alloc;
-	fq->fq_nopers        = 0;
-	fq->fq_nexecs        = 0;
-	fq->fq_active        = 0;
-	fq->fq_fuse_fd       = -1;
-	fq->fq_got_init      = false;
-	fq->fq_reply_init_ok = false;
-	fq->fq_got_destroy   = false;
-	fq->fq_deny_others   = false;
-	fq->fq_mount         = false;
-	fq->fq_umount        = false;
-	fq->fq_mode_flags    = SILOFS_F_MAYSPLICE;
+	fq->fq_env             = nullptr;
+	fq->fq_vfs_hooks       = nullptr;
+	fq->fq_pagesize        = (uint32_t)silofs_sc_page_size();
+	fq->fq_nprocs          = (uint32_t)silofs_sc_nproc_onln();
+	fq->fq_alloc           = alloc;
+	fq->fq_nopers          = 0;
+	fq->fq_nexecs          = 0;
+	fq->fq_active          = 0;
+	fq->fq_fuse_fd         = -1;
+	fq->fq_got_init        = false;
+	fq->fq_reply_init_ok   = false;
+	fq->fq_got_destroy     = false;
+	fq->fq_deny_others     = false;
+	fq->fq_mount           = false;
+	fq->fq_umount          = false;
+	fq->fq_allow_interrupt = false;
+	fq->fq_mode_flags      = SILOFS_F_MAYSPLICE;
 }
 
 static int fuseq_init_subs(struct silofs_fuseq *fq)

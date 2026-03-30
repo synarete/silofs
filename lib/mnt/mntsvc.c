@@ -620,7 +620,9 @@ static void do_pack_fd(struct msghdr *mh, int fd)
 
 	if (fd > 0) {
 		cmh = silofs_cmsg_firsthdr(mh);
-		silofs_cmsg_pack_fd(cmh, fd);
+		if (cmh != nullptr) {
+			silofs_cmsg_pack_fd(cmh, fd);
+		}
 	}
 }
 
@@ -712,15 +714,11 @@ static int do_recvmsg(const struct silofs_socket *sock, struct msghdr *mh,
 
 static int do_unpack_fd(struct msghdr *mh, int *out_fd)
 {
-	struct cmsghdr *cmsg;
-	int err = 0;
+	struct cmsghdr *cmh;
 
 	*out_fd = -1;
-	cmsg    = silofs_cmsg_firsthdr(mh);
-	if (cmsg != nullptr) {
-		err = silofs_cmsg_unpack_fd(cmsg, out_fd);
-	}
-	return err;
+	cmh     = silofs_cmsg_firsthdr(mh);
+	return (cmh != nullptr) ? silofs_cmsg_unpack_fd(cmh, out_fd) : 0;
 }
 
 static int mntmsg_recv(const struct silofs_mntmsg *mmsg,

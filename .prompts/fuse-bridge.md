@@ -112,11 +112,12 @@ serialization, the splice I/O path, and shared session state.
   fails. The old `fqs_outb` must be freed before returning the error.
 
 ## 4. Input Files
-- `lib/include/linux/fuse_abi.h` (Kernel Interface)
-- `lib/include/silofs/fuse/fqtypes.h` (Internal types header)
-- `lib/include/silofs/fuse/fuseq.h` (Internal header)
+- `lib/include/silofs/fuseq.h` (Internal header)
 - `lib/fuse/fqtypes.c` (Internal types checker)
+- `lib/fuse/fqtypes.h` (Internal types header)
 - `lib/fuse/fuseq.c` (Implementation)
+- `lib/fuse/fuse_abi.h` (Kernel Interface)
+
 
 ## 5. Required Output
 Provide findings grouped by category, each entry containing:

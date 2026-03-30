@@ -541,6 +541,8 @@ static void xai_decref(struct silofs_xanode_info *xai)
 
 static void xai_setup_node(struct silofs_xanode_info *xai, ino_t ino)
 {
+	silofs_assert_not_null(xai);
+	silofs_assert_not_null(xai->xan);
 	xan_setup(xai->xan, ino);
 }
 
@@ -829,15 +831,17 @@ int silofs_do_getxattr(struct silofs_task_ctx *task,
 static int xac_spawn_xanode(const struct silofs_xattr_ctx *xa_ctx,
                             struct silofs_xanode_info **out_xai)
 {
+	struct silofs_inode_info *ii   = xa_ctx->ii;
 	struct silofs_vnode_info *vni  = nullptr;
 	struct silofs_xanode_info *xai = nullptr;
 	int err;
 
-	err = silofs_spawn_vnode(xa_ctx->task, xa_ctx->ii, SILOFS_VTYPE_XANODE,
-	                         &vni);
+	err = silofs_spawn_vnode(xa_ctx->task, ii, SILOFS_VTYPE_XANODE, &vni);
 	if (err) {
 		return err;
 	}
+	silofs_assert_not_null(vni);
+
 	xai = silofs_xai_from_vni(vni);
 	xai_dirtify(xai, xa_ctx->ii);
 	*out_xai = xai;
@@ -848,17 +852,25 @@ static int
 xac_spawn_bind_xanode(const struct silofs_xattr_ctx *xa_ctx, size_t slot,
                       struct silofs_xanode_info **out_xai)
 {
-	struct silofs_inode_info *ii = xa_ctx->ii;
+	struct silofs_inode_info *ii   = xa_ctx->ii;
+	struct silofs_xanode_info *xai = nullptr;
 	int err;
 
-	err = xac_spawn_xanode(xa_ctx, out_xai);
+	err = xac_spawn_xanode(xa_ctx, &xai);
 	if (err) {
 		return err;
 	}
-	xai_setup_node(*out_xai, silofs_ii_ino(ii));
+	/* TODO: check why clang-scan and rpmbuild fail here */
+	if ((xai == nullptr) || (xai->xan == nullptr)) {
+		return -SILOFS_EBUG;
+	}
 
-	ii_xa_set_at(ii, slot, xai_vaddr(*out_xai));
+	xai_setup_node(xai, silofs_ii_ino(ii));
+
+	ii_xa_set_at(ii, slot, xai_vaddr(xai));
 	silofs_ii_dirtify(ii);
+
+	*out_xai = xai;
 	return 0;
 }
 
@@ -871,9 +883,9 @@ static int xac_remove_xanode_at(const struct silofs_xattr_ctx *xa_ctx,
 static int xac_require_xanode(const struct silofs_xattr_ctx *xa_ctx,
                               size_t slot, struct silofs_xanode_info **out_xai)
 {
-	int err;
-	struct silofs_vaddr vaddr;
+	struct silofs_vaddr vaddr    = { .off = -1 };
 	struct silofs_inode_info *ii = xa_ctx->ii;
+	int err;
 
 	ii_xa_get_at(ii, slot, &vaddr);
 	if (!silofs_vaddr_isnull(&vaddr)) {
@@ -903,21 +915,22 @@ static int xac_try_insert_at(const struct silofs_xattr_ctx *xa_ctx,
 static int xac_try_insert_at_nodes(const struct silofs_xattr_ctx *xa_ctx,
                                    struct silofs_xentry_info *xei)
 {
-	struct silofs_xanode_info *xai = nullptr;
-	const size_t nslots_max        = ii_xa_nslots_max(xa_ctx->ii);
-	int err                        = -SILOFS_ENOSPC;
+	const size_t nslots_max = ii_xa_nslots_max(xa_ctx->ii);
+	int err;
 
 	for (size_t sloti = 0; sloti < nslots_max; ++sloti) {
+		struct silofs_xanode_info *xai = nullptr;
+
 		err = xac_require_xanode(xa_ctx, sloti, &xai);
 		if (err) {
-			break;
+			return err;
 		}
 		err = xac_try_insert_at(xa_ctx, xai, xei);
 		if (!err) {
-			break;
+			return 0;
 		}
 	}
-	return err;
+	return -SILOFS_ENOSPC;
 }
 
 static int xac_try_insert_at_inode(const struct silofs_xattr_ctx *xa_ctx,

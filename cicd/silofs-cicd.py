@@ -1,5 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0
 # Run minimal CI/CD pipeline over silofs' code
+import functools
+import inspect
 import os
 import shutil
 import subprocess
@@ -7,7 +9,13 @@ import sys
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, TypeVar
+
+_F = TypeVar("_F", bound=Callable[..., None])
+
+
+def _timestamp() -> str:
+    return datetime.now().strftime("%Y-%m-%dT%H:%M:%S%z")
 
 
 @dataclass
@@ -15,34 +23,57 @@ class _Ctx:
     workdir: Path
     archive_file: Path
     citests_dir: Path
-    timestamp: bool = False
+    filename: Path = Path(__file__)
+    lineno: int = 0
+    timestamp: str = _timestamp()
 
 
-def _timestamp() -> str:
-    ts_now = datetime.now().strftime("%Y-%m-%dT%H:%M:%S%z")
-    return f"[{ts_now}]"
+def _with_location(fn: _F) -> _F:
+    @functools.wraps(fn)
+    def wrapper(*args, **kwargs):  # type: ignore[misc]
+        ctx = args[0]
+        if isinstance(ctx, _Ctx):
+            frame = inspect.stack()[1]
+            ctx2 = _Ctx(
+                workdir=ctx.workdir,
+                archive_file=ctx.archive_file,
+                citests_dir=ctx.citests_dir,
+                filename=Path(frame.filename),
+                lineno=frame.lineno,
+                timestamp=_timestamp(),
+            )
+            args = (ctx2,) + args[1:]
+        return fn(*args, **kwargs)
+
+    return wrapper  # type: ignore[return-value]
 
 
 def _msgprefix(ctx: _Ctx) -> str:
-    """Script name as messages prefix."""
-    pre = str(Path(__file__).name)
+    """Common messages prefix."""
+    pre = ""
     if ctx.timestamp:
-        pre = _timestamp() + " " + pre
+        pre = f"[{ctx.timestamp}] "
+    if ctx.filename:
+        pre = pre + str(ctx.filename.name)
+        if ctx.lineno > 0:
+            pre = pre + ":" + str(ctx.lineno)
     return pre
 
 
+@_with_location
 def _msg(ctx: _Ctx, txt: str, err: bool = False) -> None:
-    """Print a message to stdout."""
+    """Print a message with context prefix."""
     if err:
         print(f"{_msgprefix(ctx)}: {txt}", file=sys.stderr)
     else:
         print(f"{_msgprefix(ctx)}: {txt}")
 
 
-def _sep(ctx: _Ctx, txt: str) -> None:
-    """Print a message followed by a separator."""
-    _msg(ctx, txt)
-    _msg(ctx, "# " * 32)
+@_with_location
+def _sep(ctx: _Ctx) -> None:
+    """Print separator between sub jobs."""
+    txt = "# " * 40
+    print(f"{_msgprefix(ctx)}: {txt}")
 
 
 def _die(ctx: _Ctx, txt: str, out: str = "", err: str = "") -> None:
@@ -55,30 +86,7 @@ def _die(ctx: _Ctx, txt: str, out: str = "", err: str = "") -> None:
     sys.exit(2)
 
 
-def _runcmd(
-    args: List[str],
-    cwd: Optional[Path] = None,
-    env: Optional[Dict[str, str]] = None,
-) -> Tuple[int, str, str]:
-    """Execute command as sub-process."""
-    sub_env = os.environ.copy()
-    if env:
-        sub_env.update(env)
-    sub_env["LC_ALL"] = "C"
-    sub_env.pop("CDPATH", None)
-    res = subprocess.run(
-        args, cwd=cwd, env=sub_env, check=True, text=True, capture_output=True
-    )
-    return (res.returncode, res.stdout, res.stderr)
-
-
-def _workdir(ctx: _Ctx, cwd: Optional[Path] = None) -> Path:
-    wd = cwd
-    if wd is None:
-        wd = ctx.workdir
-    return wd
-
-
+@_with_location
 def _run(
     ctx: _Ctx,
     args: List[str],
@@ -86,13 +94,26 @@ def _run(
     env: Optional[Dict[str, str]] = None,
 ) -> None:
     """Execute command as sub-process, die upon error"""
+    sub_env = os.environ.copy()
+    if not cwd:
+        cwd = ctx.workdir
+    if env:
+        sub_env.update(env)
+    sub_env["LC_ALL"] = "C"
+    sub_env.pop("CDPATH", None)
+
     cmd = " ".join(args)
     _msg(ctx, cmd)
-    rc, out, err = _runcmd(args, _workdir(ctx, cwd), env)
+
+    res = subprocess.run(
+        args, cwd=cwd, env=sub_env, check=False, text=True, capture_output=True
+    )
+    rc, out, err = res.returncode, res.stdout, res.stderr
     if rc != 0:
         _die(ctx, cmd, out, err)
 
 
+@_with_location
 def _rmrf(ctx: _Ctx, path: Path) -> None:
     """Wrap shutil.rmtree with logging"""
     if path.exists():
@@ -100,12 +121,14 @@ def _rmrf(ctx: _Ctx, path: Path) -> None:
         shutil.rmtree(path)
 
 
+@_with_location
 def _copy(ctx: _Ctx, src: Path, dst: Path) -> None:
     """Wrap shutil.copy with logging"""
     _msg(ctx, f"copy: {src} --> {dst}")
     shutil.copy(src, dst)
 
 
+@_with_location
 def _prepare_workdir(ctx: _Ctx) -> None:
     """Clean workdir and unpack archive."""
     _rmrf(ctx, ctx.workdir)
@@ -113,11 +136,13 @@ def _prepare_workdir(ctx: _Ctx) -> None:
     _run(ctx, ["tar", "xfz", ctx.archive_file.name], cwd=ctx.citests_dir)
 
 
+@_with_location
 def _cleanup_workdir(ctx: _Ctx) -> None:
     """Clean workdir from any leftovers."""
     _rmrf(ctx, ctx.workdir)
 
 
+@_with_location
 def _build_from_source(ctx: _Ctx) -> None:
     _msg(ctx, f"build from source: {ctx.archive_file}")
     _prepare_workdir(ctx)
@@ -131,9 +156,11 @@ def _build_from_source(ctx: _Ctx) -> None:
     _run(ctx, ["make", "distcheck"])
     _run(ctx, ["make", "clean"])
     _cleanup_workdir(ctx)
-    _sep(ctx, f"build from source OK: {ctx.archive_file}")
+    _msg(ctx, f"build from source OK: {ctx.archive_file}")
+    _sep(ctx)
 
 
+@_with_location
 def _build_devel_default(ctx: _Ctx) -> None:
     _msg(ctx, "build devel default mode")
     _run(ctx, ["make", "-f", "devel.mk"])
@@ -148,9 +175,11 @@ def _build_devel_default(ctx: _Ctx) -> None:
         env={"SILOFS_PANIC_MODE_WAIT": "1"},
     )
     _run(ctx, ["make", "-f", "devel.mk", "reset"])
-    _sep(ctx, "build devel default mode OK")
+    _msg(ctx, "build devel default mode OK")
+    _sep(ctx)
 
 
+@_with_location
 def _build_devel_clang(ctx: _Ctx) -> None:
     _msg(ctx, "build and check with clang")
     _msg(ctx, "run clang-scan")
@@ -165,9 +194,11 @@ def _build_devel_clang(ctx: _Ctx) -> None:
         ["make", "-f", "devel.mk", "CC=clang", "O=2", "tidy"],
     )
     _run(ctx, ["make", "-f", "devel.mk", "reset"])
-    _sep(ctx, "build and check with clang OK")
+    _msg(ctx, "build and check with clang OK")
+    _sep(ctx)
 
 
+@_with_location
 def _build_devel_sanitizer(ctx: _Ctx) -> None:
     _msg(ctx, "sanitizer check")
     utests_dir = ctx.workdir / "build" / "test" / "utests"
@@ -189,9 +220,11 @@ def _build_devel_sanitizer(ctx: _Ctx) -> None:
         env=san_env,
     )
     _run(ctx, ["make", "-f", "devel.mk", "reset"])
-    _sep(ctx, "sanitizer check OK")
+    _msg(ctx, "sanitizer check OK")
+    _sep(ctx)
 
 
+@_with_location
 def _build_devel_valgrind(ctx: _Ctx) -> None:
     _msg(ctx, "valgrind check")
     utests_dir = ctx.workdir / "build" / "test" / "utests"
@@ -210,9 +243,11 @@ def _build_devel_valgrind(ctx: _Ctx) -> None:
         ],
     )
     _run(ctx, ["make", "-f", "devel.mk", "reset"])
-    _sep(ctx, "valgrind check OK")
+    _msg(ctx, "valgrind check OK")
+    _sep(ctx)
 
 
+@_with_location
 def _build_with_devel_mk(ctx: _Ctx) -> None:
     _msg(ctx, "developer's checks")
     _prepare_workdir(ctx)
@@ -221,9 +256,11 @@ def _build_with_devel_mk(ctx: _Ctx) -> None:
     _build_devel_sanitizer(ctx)
     _build_devel_valgrind(ctx)
     _cleanup_workdir(ctx)
-    _sep(ctx, "developer's checks OK")
+    _msg(ctx, "developer's checks OK")
+    _sep(ctx)
 
 
+@_with_location
 def _run_heapcheck(ctx: _Ctx) -> None:
     tmpdir = ctx.workdir / "build" / "local" / "tmp"
     build_dir = ctx.workdir / "build"
@@ -260,17 +297,21 @@ def _run_heapcheck(ctx: _Ctx) -> None:
         env=heap_env,
     )
     _cleanup_workdir(ctx)
-    _sep(ctx, "memory-heap check OK")
+    _msg(ctx, "memory-heap check OK")
+    _sep(ctx)
 
 
+@_with_location
 def _run_dist_package(ctx: _Ctx) -> None:
     _msg(ctx, "dist-package")
     _prepare_workdir(ctx)
     _run(ctx, ["./dist/packagize.sh"])
     _cleanup_workdir(ctx)
-    _sep(ctx, "dist-package OK")
+    _msg(ctx, "dist-package OK")
+    _sep(ctx)
 
 
+@_with_location
 def _exec_cicd(ctx: _Ctx) -> None:
     _msg(ctx, f"execute ci/cd: {ctx.archive_file} {ctx.citests_dir}")
     _build_from_source(ctx)
@@ -280,10 +321,10 @@ def _exec_cicd(ctx: _Ctx) -> None:
     _msg(ctx, f"execute ci/cd OK: {ctx.archive_file} {ctx.citests_dir}")
 
 
+@_with_location
 def _prep_cicd(ctx: _Ctx) -> None:
     _msg(ctx, f"prepare: {ctx.archive_file} {ctx.citests_dir}")
-    if not ctx.archive_file.is_file():
-        _die(ctx, f"archive file not found: {ctx.archive_file}")
+    _run(ctx, ["ls", "-l", str(ctx.archive_file)], cwd=ctx.citests_dir)
     ctx.citests_dir.mkdir(parents=True, exist_ok=True)
     _run(ctx, ["ls", "-l", str(ctx.citests_dir)], cwd=ctx.citests_dir)
 
@@ -293,12 +334,8 @@ def _make_context(arfile, citdir) -> _Ctx:
     citests_dir = Path(citdir).resolve()
     dist_name = archive_file.name.replace(".tar.gz", "")
     workdir = citests_dir / dist_name
-    timestamp = os.environ.get("SILOFS_TIMESTAMP", "0") == "1"
     return _Ctx(
-        workdir=workdir,
-        archive_file=archive_file,
-        citests_dir=citests_dir,
-        timestamp=timestamp,
+        workdir=workdir, archive_file=archive_file, citests_dir=citests_dir
     )
 
 

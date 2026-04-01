@@ -210,13 +210,20 @@ static void prandgen_consume(struct silofs_prandgen *prng, void *p, size_t n)
 	}
 }
 
+static uint64_t *as_u64(void *s)
+{
+	return s;
+}
+
 static void prandgen_reseed(struct silofs_prandgen *prng)
 {
 	uint64_t r[ARRAY_SIZE(prng->state)];
 
 	get_sys_entropy(r, sizeof(r));
 	for (size_t i = 0; i < ARRAY_SIZE(r); ++i) {
-		memcpy(prng->state[i].s, &r[i], sizeof(r[i]));
+		uint64_t *p = as_u64(prng->state[i].s);
+
+		*p ^= r[i];
 	}
 }
 

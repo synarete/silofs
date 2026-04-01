@@ -54,7 +54,7 @@ struct silofs_mntmsg {
 	uint8_t mn_checkonly;
 	uint8_t mn_reserved2[86];
 	uint8_t mn_path[SILOFS_MNTPATH_MAX];
-};
+} silofs_attr_aligned64;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -1176,18 +1176,25 @@ static void mntsvc_send_response(struct silofs_mntsvc *msvc,
 	}
 }
 
+static void
+mntsvc_serve_once(struct silofs_mntsvc *msvc, struct silofs_mntmsg *mmsg)
+{
+	int err;
+
+	err = mntsvc_recv_request(msvc, mmsg);
+	if (!err) {
+		mntsvc_exec_request(msvc, mmsg);
+		mntsvc_fill_response(msvc, mmsg);
+		mntsvc_send_response(msvc, mmsg);
+	}
+}
+
 static void mntsvc_serve_request(struct silofs_mntsvc *msvc)
 {
 	struct silofs_mntmsg mmsg;
-	int err;
 
 	mntmsg_reset(&mmsg);
-	err = mntsvc_recv_request(msvc, &mmsg);
-	if (!err) {
-		mntsvc_exec_request(msvc, &mmsg);
-		mntsvc_fill_response(msvc, &mmsg);
-		mntsvc_send_response(msvc, &mmsg);
-	}
+	mntsvc_serve_once(msvc, &mmsg);
 	mntsvc_term_peer(msvc);
 	mntsvc_close_fds(msvc);
 }

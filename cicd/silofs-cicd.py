@@ -344,7 +344,7 @@ def main() -> None:
         print(f"usage: '{sys.argv[0]} <archive-file> <citests-dir>'")
         sys.exit(1)
     arfile, citdir = Path(sys.argv[1]), Path(sys.argv[2])
-    if not arfile.is_fifo():
+    if not arfile.is_file():
         print(f"{sys.argv[0]}: not a file {arfile}")
         sys.exit(2)
     ctx = _make_context(arfile, citdir)

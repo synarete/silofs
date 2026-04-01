@@ -79,9 +79,9 @@ def _sep(ctx: _Ctx) -> None:
 def _die(ctx: _Ctx, txt: str, out: str = "", err: str = "") -> None:
     """Print optional output of sub-process + error message and exit."""
     if err:
-        _msg(ctx, f"{err}", err=True)
+        _msg(ctx, f"\n{err}\n", err=True)
     elif out:
-        _msg(ctx, f"{out}", err=False)
+        _msg(ctx, f"\n{out}\n", err=False)
     _msg(ctx, f"failure: {txt}", err=True)
     sys.exit(3)
 

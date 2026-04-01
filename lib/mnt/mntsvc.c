@@ -31,77 +31,12 @@
 #include <silofs/mntsvc.h>
 #include <silofs/base.h>
 #include <silofs/str.h>
-
-enum silofs_mntcmd {
-	SILOFS_MNTCMD_NONE      = 0,
-	SILOFS_MNTCMD_HANDSHAKE = 1,
-	SILOFS_MNTCMD_MOUNT     = 2,
-	SILOFS_MNTCMD_UMOUNT    = 3,
-};
-
-struct silofs_mntmsg {
-	uint32_t mn_magic;
-	uint16_t mn_version_major;
-	uint16_t mn_version_minor;
-	uint32_t mn_cmd;
-	uint32_t mn_status;
-	uint64_t mn_flags;
-	uint32_t mn_user_id;
-	uint32_t mn_group_id;
-	uint32_t mn_root_mode;
-	uint32_t mn_max_read;
-	uint8_t mn_allowother;
-	uint8_t mn_checkonly;
-	uint8_t mn_reserved2[86];
-	uint8_t mn_path[SILOFS_MNTPATH_MAX];
-} silofs_attr_aligned64;
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+#include "mstypes.h"
 
 struct silofs_cmsg_buf {
 	long cms[CMSG_SPACE(sizeof(int)) / sizeof(long)];
 	long pad;
 } silofs_attr_aligned8;
-
-struct silofs_mntparams {
-	const char *path;
-	uint64_t flags;
-	uid_t user_id;
-	gid_t group_id;
-	mode_t root_mode;
-	size_t max_read;
-	bool allowother;
-	bool checkonly;
-};
-
-struct silofs_mntclnt {
-	struct silofs_socket mc_sock;
-	struct silofs_sockaddr mc_srvaddr;
-};
-
-struct silofs_mntsvc {
-	char ms_peer_ids[64];
-	struct silofs_sockaddr ms_peer;
-	struct ucred ms_peer_ucred;
-	struct silofs_mntsrv *ms_srv;
-	struct silofs_socket ms_asock;
-	uint32_t ms_page_size;
-	int ms_fuse_fd;
-	int ms_mntd_fd;
-};
-
-struct silofs_mntsrv {
-	struct silofs_ms_args ms_args;
-	const struct silofs_mntrules *ms_rules;
-	struct silofs_socket ms_lsock;
-	struct silofs_mntsvc ms_svc;
-};
-
-struct silofs_ms_env {
-	struct silofs_mntsrv *ms_srv;
-	int ms_active;
-	int ms_signum;
-};
 
 struct silofs_ms_env_obj {
 	struct silofs_mntsrv ms_srv;
@@ -1181,20 +1116,21 @@ mntsvc_serve_once(struct silofs_mntsvc *msvc, struct silofs_mntmsg *mmsg)
 {
 	int err;
 
+	mntmsg_reset(mmsg);
 	err = mntsvc_recv_request(msvc, mmsg);
 	if (!err) {
 		mntsvc_exec_request(msvc, mmsg);
 		mntsvc_fill_response(msvc, mmsg);
 		mntsvc_send_response(msvc, mmsg);
 	}
+	mntmsg_reset(mmsg);
 }
 
 static void mntsvc_serve_request(struct silofs_mntsvc *msvc)
 {
-	struct silofs_mntmsg mmsg;
+	struct silofs_mntmsg *mmsg = &msvc->ms_mmsg;
 
-	mntmsg_reset(&mmsg);
-	mntsvc_serve_once(msvc, &mmsg);
+	mntsvc_serve_once(msvc, mmsg);
 	mntsvc_term_peer(msvc);
 	mntsvc_close_fds(msvc);
 }

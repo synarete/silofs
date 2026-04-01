@@ -111,6 +111,7 @@ libsilofs_la_SOURCES += ar/archive.c
 libsilofs_la_SOURCES += ar/index.c
 libsilofs_la_SOURCES += mnt/mntconf.c
 libsilofs_la_SOURCES += mnt/mntsvc.c
+libsilofs_la_SOURCES += mnt/mstypes.h
 libsilofs_la_SOURCES += fuse/fqtypes.c
 libsilofs_la_SOURCES += fuse/fqtypes.h
 libsilofs_la_SOURCES += fuse/fuse_abi.h

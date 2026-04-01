@@ -21,7 +21,6 @@ AM_INIT_AUTOMAKE([1.11 -Wall -Werror -Wno-portability
 dnl AM_MAINTAINER_MODE
 AM_SILENT_RULES
 AC_LANG([C])
-AC_SUBST(AR_FLAGS, [cr])
 
 dnl Package needs & wants; defined buy m4 sub-macros (order is important!)
 AX_SILOFS_HAVE_ARGS

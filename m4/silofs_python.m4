@@ -23,7 +23,8 @@ AC_DEFUN([AX_SILOFS_WITH_PYTHON_SITE_PACKAGES],
   AC_ARG_WITH([python-site-packages],
     AS_HELP_STRING([--with-python-site-packages],
       [Install dir for silofs python module]),
-      [], [with_python_site_packages="${withval}"])
+      [with_python_site_packages="${withval}"],
+      [with_python_site_packages=""])
 
   AS_IF([test "x$with_python_site_packages" != "x"], [
     pythondir="${with_python_site_packages}"

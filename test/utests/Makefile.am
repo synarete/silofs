@@ -10,12 +10,12 @@ silofs_utests_CPPFLAGS += -I$(top_srcdir)/include
 silofs_utests_CPPFLAGS += -I$(top_srcdir)/lib/include
 silofs_utests_CPPFLAGS += -DSILOFS_UNITEST=1
 silofs_utests_CPPFLAGS += $(LIBGCRYPT_CFLAGS)
+silofs_utests_CPPFLAGS += $(PTHREAD_CFLAGS) $(PTHREAD_DEF)
 silofs_utests_LDFLAGS = $(NULL)
-silofs_utests_LDFLAGS += $(PTHREAD_CFLAGS) $(PTHREAD_DEF)
 silofs_utests_LDFLAGS += -L$(top_builddir)/lib
 silofs_utests_LDFLAGS += -static
 silofs_utests_LDADD = $(NULL)
-silofs_utests_LDADD += @LIBS@
+silofs_utests_LDADD += $(LIBS)
 silofs_utests_LDADD += $(top_builddir)/lib/libsilofs.la
 silofs_utests_LDADD += $(PTHREAD_LIBS)
 silofs_utests_LDADD += $(LIBGCRYPT_LIBS)

@@ -5,17 +5,17 @@ AM_CFLAGS = $(WARN_CFLAGS)
 
 libsilofsdir = $(libdir)
 libsilofs_LTLIBRARIES = libsilofs.la
-libsilofs_la_LDFLAGS = $(NULL)
-libsilofs_la_LDFLAGS += $(PTHREAD_CFLAGS) $(PTHREAD_DEF)
-libsilofs_la_LDFLAGS += -version-info 0
 libsilofs_la_CPPFLAGS = $(NULL)
 libsilofs_la_CPPFLAGS += -I$(top_srcdir)/include
 libsilofs_la_CPPFLAGS += -I$(top_builddir)/include
 libsilofs_la_CPPFLAGS += -I$(srcdir)/include
 libsilofs_la_CPPFLAGS += -DSILOFS_USE_PRIVATE=1
 libsilofs_la_CPPFLAGS += $(LIBGCRYPT_CFLAGS)
+libsilofs_la_CPPFLAGS += $(PTHREAD_CFLAGS) $(PTHREAD_DEF)
+libsilofs_la_LDFLAGS = $(NULL)
+libsilofs_la_LDFLAGS += -version-info 0
 libsilofs_la_LIBADD = $(NULL)
-libsilofs_la_LIBADD += @LIBS@
+libsilofs_la_LIBADD += $(LIBS)
 libsilofs_la_LIBADD += $(PTHREAD_LIBS)
 libsilofs_la_SOURCES = $(NULL)
 libsilofs_la_SOURCES += ondisk.c

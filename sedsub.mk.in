@@ -8,7 +8,7 @@ _silofs_sedsub = @SED@ \
   -e "s,[@]PREFIX[@],$(DESTDIR)$(prefix),g" \
   -e "s,[@]SYSCONFDIR[@],$(DESTDIR)$(sysconfdir),g" \
   -e "s,[@]DATAROOTDIR[@],$(DESTDIR)$(datarootdir),g" \
-  -e "s,[@]RUNSTATEDIR[@],$(DESTDIR)$(localstatedir)/run,g"
+  -e "s,[@]RUNSTATEDIR[@],$(DESTDIR)$(runstatedir),g"
 
 _silofs_sedsub_verbose = $(_silofs_sedsub_verbose_@AM_V@)
 _silofs_sedsub_verbose_ = $(_silofs_sedsub_verbose_@AM_DEFAULT_V@)

@@ -53,6 +53,8 @@ do_autoclean() {
 	run rm -rf "${autom4te_cachedir}"
 	run rm -f "${basedir}/configure"
 	run rm -f "${basedir}/configure~"
+	run rm -f "${basedir}/common.mk"
+	run rm -f "${basedir}/sedsub.mk"
 	run rm -f "${basedir}/aclocal.m4"
 	run rm -f "${basedir}/config.log"
 	run rm -f "${basedir}/config.status"

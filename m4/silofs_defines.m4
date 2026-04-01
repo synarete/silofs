@@ -21,7 +21,7 @@ AC_DEFUN([AX_SILOFS_NEED_POSIX_ACL_DEFINES],
   [ac_cv_ax_posix_acl_defines=no],
   [ac_cv_ax_posix_acl_defines=no])
 ])
-  if test $ac_cv_ax_type_socklen_t != yes; then
+  if test $ac_cv_ax_posix_acl_defines != yes; then
     AC_MSG_ERROR([Unable to find POSIX ACL defines])
   fi
 ])

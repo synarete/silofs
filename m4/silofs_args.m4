@@ -15,6 +15,6 @@ AC_DEFUN([AX_SILOFS_HAVE_ARGS],
        *) AC_MSG_ERROR([bad value ${enableval} for --enable-utests]) ;;
      esac], [utests="1"])
 
-  AC_SUBST(SILOFS_UNITESTS_LEVEL, $silofs_utests_level)
+  AC_SUBST([SILOFS_UNITESTS_LEVEL], [$silofs_utests_level])
   AM_CONDITIONAL([SILOFS_RUN_UNITESTS], [test "x$silofs_utests_level" != "x0"])
 ])

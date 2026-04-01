@@ -1734,10 +1734,9 @@ out:
 
 static int repo_require_lock(const struct silofs_repo *repo)
 {
-	char data[SILOFS_REPO_METAFILE_SIZE];
-	const char *name = repo->re_defs->re_lock_name;
-	int fd           = -1;
-	int err;
+	char data[SILOFS_REPO_METAFILE_SIZE] = "";
+	const char *name                     = repo->re_defs->re_lock_name;
+	int err, fd = -1;
 
 	err = do_openat(repo->re_dots_dfd, name, O_RDONLY, 0, &fd);
 	if (err) {

@@ -34,8 +34,10 @@ static void silofs_lsmap_vaddr_of2(const struct silofs_vaddr *ref_vaddr,
 	uint64_t ref_vsize, ref_vseg_size;
 	uint64_t ref_voff, lsmap_off, lsmap_vsp;
 
-	ref_voff      = (uint64_t)ref_vaddr->off;
-	ref_vsize     = silofs_vtype_size(ref_vaddr->vtype);
+	ref_voff  = (uint64_t)ref_vaddr->off;
+	ref_vsize = silofs_vtype_size(ref_vaddr->vtype);
+	silofs_assert_ge(ref_vsize, 1024);
+
 	ref_vseg_size = ref_vsize * SILOFS_SPMAP_NCHILDS;
 	lsmap_off     = (ref_voff / ref_vseg_size) * lsmap_size;
 

@@ -83,7 +83,7 @@ def _die(ctx: _Ctx, txt: str, out: str = "", err: str = "") -> None:
     elif out:
         _msg(ctx, f"{out}", err=False)
     _msg(ctx, f"failure: {txt}", err=True)
-    sys.exit(2)
+    sys.exit(3)
 
 
 @_with_location
@@ -324,12 +324,12 @@ def _exec_cicd(ctx: _Ctx) -> None:
 @_with_location
 def _prep_cicd(ctx: _Ctx) -> None:
     _msg(ctx, f"prepare: {ctx.archive_file} {ctx.citests_dir}")
-    _run(ctx, ["ls", "-l", str(ctx.archive_file)], cwd=ctx.citests_dir)
     ctx.citests_dir.mkdir(parents=True, exist_ok=True)
     _run(ctx, ["ls", "-l", str(ctx.citests_dir)], cwd=ctx.citests_dir)
+    _run(ctx, ["ls", "-l", str(ctx.archive_file)], cwd=ctx.citests_dir)
 
 
-def _make_context(arfile, citdir) -> _Ctx:
+def _make_context(arfile: Path, citdir: Path) -> _Ctx:
     archive_file = Path(arfile).resolve()
     citests_dir = Path(citdir).resolve()
     dist_name = archive_file.name.replace(".tar.gz", "")
@@ -343,7 +343,10 @@ def main() -> None:
     if len(sys.argv) != 3:
         print(f"usage: '{sys.argv[0]} <archive-file> <citests-dir>'")
         sys.exit(1)
-    arfile, citdir = sys.argv[1], sys.argv[2]
+    arfile, citdir = Path(sys.argv[1]), Path(sys.argv[2])
+    if not arfile.is_fifo():
+        print(f"{sys.argv[0]}: not a file {arfile}")
+        sys.exit(2)
     ctx = _make_context(arfile, citdir)
     _prep_cicd(ctx)
     _exec_cicd(ctx)

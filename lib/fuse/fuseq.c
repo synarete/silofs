@@ -3490,22 +3490,27 @@ static size_t fqs_max_inlen(const struct silofs_fuseq_sub *fqs)
 	return len_max;
 }
 
+static size_t total_extlen_of(const struct silofs_fuseq_hdr_in *hdr)
+{
+	return 8ul * (size_t)(hdr->hdr.total_extlen);
+}
+
 static int
 fqs_check_inhdr(const struct silofs_fuseq_sub *fqs, size_t nrd, bool full)
 {
-	const struct silofs_fuseq_in *in      = fqs_in_of2(fqs);
-	const struct silofs_fuseq_hdr_in *hdr = &in->u.hdr;
+	const struct silofs_fuseq_in *in         = fqs_in_of2(fqs);
+	const struct silofs_fuseq_hdr_in *hdr_in = &in->u.hdr;
 	size_t len, len_ext, len_min, len_max;
 
-	len_min = sizeof(*hdr);
+	len_min = sizeof(*hdr_in);
 	if (unlikely(nrd < len_min)) {
 		fuseq_log_err("illegal in-length: "
 		              "nrd=%lu len_min=%lu ",
 		              nrd, len_min);
 		return -SILOFS_EPROTO;
 	}
-	len     = hdr->hdr.len;
-	len_ext = 8 * (hdr->hdr.total_extlen);
+	len     = hdr_in->hdr.len;
+	len_ext = total_extlen_of(hdr_in);
 	len_max = fqs_max_inlen(fqs);
 	if (unlikely((len + len_ext) > len_max)) {
 		fuseq_log_err("illegal header: opcode=%d len=%zu len_ext=%zu "
@@ -3646,7 +3651,7 @@ static int fqs_copy_pipe_in(struct silofs_fuseq_sub *fqs)
 		return err;
 	}
 	len     = hdr_in->hdr.len;
-	len_ext = 8 * (hdr_in->hdr.total_extlen);
+	len_ext = total_extlen_of(hdr_in);
 	rem     = (len + len_ext) - ncp1;
 	err     = fqs_check_inhdr(fqs, ncp1, rem == 0);
 	if (unlikely(err)) {

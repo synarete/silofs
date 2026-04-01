@@ -17,7 +17,13 @@
 #ifndef SILOFS_FQTYPES_H_
 #define SILOFS_FQTYPES_H_
 
+#include <stdint.h>
+#include <stdbool.h>
+#include <unistd.h>
+
 #include <silofs/ondisk.h>
+#include <silofs/base.h>
+#include <silofs/vfs.h>
 #include "fuse_abi.h"
 
 #define SILOFS_CMD_TAIL_MAX \

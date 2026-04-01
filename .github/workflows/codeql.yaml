@@ -35,7 +35,7 @@ jobs:
           config-file: .github/codeql/codeql-config.yaml
 
       - name: Install build dependencies
-        run: sudo ./dist/deb/install-deb-deps.sh
+        run: sudo ./pkg/deb/install-deb-deps.sh
 
       - name: Build project
         if: matrix.build-mode == 'manual'

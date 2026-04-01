@@ -20,8 +20,8 @@ revision=$(run "${version_sh}" --revision)
 archive_tgz=${name}-${version}.tar.gz
 
 builddir=${rootdir}/build
-rpmdistdir=${builddir}/dist
-rpmhomedir=${rpmdistdir}/rpm
+rpmpkgdir=${builddir}/pkg
+rpmhomedir=${rpmpkgdir}/rpm
 autotoolsdir=${rpmhomedir}/autotools/
 
 rpmsourcedir=${selfdir}
@@ -61,7 +61,7 @@ unset HOME
 export HOME=${rpmhomedir}
 
 # Prepare rpm tree
-run mkdir -p "${rpmdistdir}"
+run mkdir -p "${rpmpkgdir}"
 run mkdir -p "${rpmtmpdir}"
 run mkdir -p "${rpmbuilddir}"
 run mkdir -p "${rpmbuilddir}"/BUILD
@@ -92,17 +92,17 @@ run env WITH_MYPY=0 rpmbuild -ba \
 
 # Copy rpms to dist-dir
 cd "${rootdir}"
-run mkdir -p "${rpmdistdir}"
+run mkdir -p "${rpmpkgdir}"
 run find \
 	"${rpmbuilddir}"/RPMS/ \
 	-type f -name ${name}'*.rpm' \
-	-exec cp {} "${rpmdistdir}" \;
+	-exec cp {} "${rpmpkgdir}" \;
 
 # Cleanup build staging area
 # run rm -rf "${rpmhomedir}"
 
 # Show result rpm files
-run find "${rpmdistdir}" \
+run find "${rpmpkgdir}" \
 	-depth -maxdepth 1 \
 	-type f -name ${name}'*.rpm' -exec basename {} \;
 

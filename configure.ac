@@ -68,7 +68,7 @@ AC_CONFIG_FILES([py/qatests/Makefile])
 AC_CONFIG_FILES([man/Makefile])
 AC_CONFIG_FILES([docs/Makefile])
 AC_CONFIG_FILES([scripts/Makefile])
-AC_CONFIG_FILES([dist/Makefile])
+AC_CONFIG_FILES([pkg/Makefile])
 AC_CONFIG_FILES([cicd/Makefile])
 AC_OUTPUT
 

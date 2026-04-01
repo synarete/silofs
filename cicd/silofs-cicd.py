@@ -303,11 +303,11 @@ def _run_heapcheck(ctx: _Ctx) -> None:
 
 @_with_location
 def _run_dist_package(ctx: _Ctx) -> None:
-    _msg(ctx, "dist-package")
+    _msg(ctx, "packaging")
     _prepare_workdir(ctx)
-    _run(ctx, ["./dist/packagize.sh"])
+    _run(ctx, ["./pkg/packagize.sh"])
     _cleanup_workdir(ctx)
-    _msg(ctx, "dist-package OK")
+    _msg(ctx, "packaging OK")
     _sep(ctx)
 
 

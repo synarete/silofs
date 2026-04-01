@@ -355,11 +355,11 @@ endif
 
 rpm: reset
 	$(call report, $@)
-	@$(TOP)/dist/rpm/packagize-rpm.sh
+	@$(TOP)/pkg/rpm/packagize-rpm.sh
 
 deb: reset
 	$(call report, $@)
-	@$(TOP)/dist/deb/packagize-deb.sh
+	@$(TOP)/pkg/deb/packagize-deb.sh
 
 reset:
 	$(call report, $@)

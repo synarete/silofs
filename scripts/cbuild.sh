@@ -14,7 +14,7 @@ version=$(run "${version_sh}" --version)
 tagname="silofs-build:${version}"
 
 cdx "${rootdir}"
-run cp "${rootdir}/dist/deb/install-deb-deps.sh" "${builddir}"
+run cp "${rootdir}/pkg/deb/install-deb-deps.sh" "${builddir}"
 run make -f devel.mk dist
 run podman build \
 	--build-arg=DISTNAME="silofs-${version}" \

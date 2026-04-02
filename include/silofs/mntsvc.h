@@ -17,11 +17,12 @@
 #ifndef SILOFS_MNTSVC_H_
 #define SILOFS_MNTSVC_H_
 
-#include <silofs/ondisk.h>
-#include <silofs/memalloc.h>
-#include <unistd.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <unistd.h>
+
+#include <silofs/ondisk.h>
+#include <silofs/memalloc.h>
 
 struct silofs_ms_env;
 

@@ -17,11 +17,14 @@
 #ifndef SILOFS_MSTYPES_H_
 #define SILOFS_MSTYPES_H_
 
+#define _GNU_SOURCE 1
 #include <stdint.h>
 #include <stdbool.h>
 #include <unistd.h>
+#include <sys/socket.h>
 
 #include <silofs/ondisk.h>
+#include <silofs/mntsvc.h>
 #include <silofs/base.h>
 #include <silofs/str.h>
 

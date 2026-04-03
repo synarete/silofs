@@ -27,6 +27,11 @@ enum {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static int allocf_of(const struct silofs_vaddr *vaddr)
+{
+	return silofs_vaddr_isdata(vaddr) ? SILOFS_ALLOCF_BZERO : 0;
+}
+
 static struct silofs_lview *
 view_new_by_uaddr(struct silofs_alloc *alloc, const struct silofs_uaddr *uaddr)
 {
@@ -36,7 +41,7 @@ view_new_by_uaddr(struct silofs_alloc *alloc, const struct silofs_uaddr *uaddr)
 static struct silofs_lview *
 view_new_by_vaddr(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 {
-	return silofs_lview_new(alloc, vaddr->vtype, 0);
+	return silofs_lview_new(alloc, vaddr->vtype, allocf_of(vaddr));
 }
 
 static void
@@ -50,7 +55,7 @@ static void
 view_del_by_vaddr(struct silofs_lview *view, const struct silofs_vaddr *vaddr,
                   struct silofs_alloc *alloc, int flags)
 {
-	silofs_lview_del(view, alloc, vaddr->vtype, flags);
+	silofs_lview_del(view, alloc, vaddr->vtype, flags | allocf_of(vaddr));
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

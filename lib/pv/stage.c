@@ -80,7 +80,7 @@ vni_civkey(const struct silofs_vnode_info *vni)
 
 static void *stc_memalloc(struct silofs_stage_ctx *st_ctx, size_t n)
 {
-	return silofs_memalloc(st_ctx->alloc, n, 0);
+	return silofs_memalloc(st_ctx->alloc, n, SILOFS_ALLOCF_BZERO);
 }
 
 static void stc_memfree(struct silofs_stage_ctx *st_ctx, void *p, size_t n)

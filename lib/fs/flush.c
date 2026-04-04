@@ -127,8 +127,10 @@ static void undirtify_lnode(struct silofs_lnode_info *lni)
 
 static void dset_clear_map(struct silofs_dset *dset)
 {
-	const struct silofs_avl_node_functor fn = { .fn  = lni_visit_reinit,
-		                                    .ctx = nullptr };
+	const struct silofs_avl_node_functor fn = {
+		.fn  = lni_visit_reinit,
+		.ctx = nullptr,
+	};
 
 	silofs_avl_clear(&dset->ds_avl, &fn);
 }

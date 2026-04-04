@@ -428,7 +428,7 @@ static void spamap_clear(struct silofs_spamap *spa)
 {
 	const struct silofs_avl_node_functor fn = {
 		.fn  = spamap_avl_node_delete_cb,
-		.ctx = spa
+		.ctx = spa,
 	};
 
 	silofs_avl_clear(&spa->spa_avl, &fn);

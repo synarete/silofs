@@ -36,7 +36,6 @@ enum silofs_log_flags {
 	SILOFS_LOGF_FILINE    = 0x08,
 	SILOFS_LOGF_TIMESTAMP = 0x10,
 	SILOFS_LOGF_VERBOSE   = 0x20,
-	SILOFS_LOGF_DEFAULT   = SILOFS_LOGF_STDOUT | SILOFS_LOGF_PROGNAME,
 };
 
 struct silofs_log_params {

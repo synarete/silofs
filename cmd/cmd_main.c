@@ -102,7 +102,8 @@ static void cmd_setup_globals(int argc, char *argv[])
 	cmd_global_params.dont_daemonize      = false;
 	cmd_global_params.log_params.progname = program_invocation_short_name;
 	cmd_global_params.log_params.level    = SILOFS_LOG_INFO;
-	cmd_global_params.log_params.flags    = SILOFS_LOGF_DEFAULT;
+	cmd_global_params.log_params.flags    = SILOFS_LOGF_STDOUT |
+	                                     SILOFS_LOGF_PROGNAME,
 
 	umask(0077);
 	setlocale(LC_ALL, "");

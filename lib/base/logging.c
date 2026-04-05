@@ -77,7 +77,7 @@ static void log_to_stdout(enum silofs_log_flags log_flags, const char *msg,
 
 	flockfile(fp);
 	if (log_flags & SILOFS_LOGF_TIMESTAMP) {
-		char buf[40] = { 0 };
+		char buf[24] = { 0 };
 
 		fprintf(fp, "[%s] ", log_timestamp(buf, sizeof(buf)));
 	}
@@ -139,9 +139,13 @@ log_msg(enum silofs_log_level log_level, enum silofs_log_flags log_flags,
 static enum silofs_log_flags log_ctrl_flags(void)
 {
 	const struct silofs_log_params *params = silofs_global_log_params;
-	const enum silofs_log_flags log_flags =
-		(params != nullptr) ? params->flags : SILOFS_LOG_FLAGS_DEFAULT;
+	enum silofs_log_flags log_flags;
 
+	if (params != nullptr) {
+		log_flags = params->flags;
+	} else {
+		log_flags = SILOFS_LOG_FLAGS_DEFAULT;
+	}
 	return log_flags;
 }
 
@@ -194,13 +198,11 @@ int silofs_logf(enum silofs_log_level log_level, const char *file, int line,
 	const char *filename  = nullptr;
 	const int saved_errno = errno;
 	enum silofs_log_flags log_flags;
-	int n, ret = 0;
-
-	va_start(ap, fmt);
+	int n;
 
 	if (!log_enabled_with(log_level)) {
-		ret = -1;
-		goto out;
+		errno = saved_errno;
+		return -1;
 	}
 
 	log_flags = log_ctrl_flags_by(log_level);
@@ -208,17 +210,16 @@ int silofs_logf(enum silofs_log_level log_level, const char *file, int line,
 		filename = basename_of(file);
 	}
 
+	va_start(ap, fmt);
 	n = vsnprintf(msg, sizeof(msg), fmt, ap);
+	va_end(ap);
 	if (n >= (int)sizeof(msg)) {
 		msg[sizeof(msg) - 1] = '\0';
 	}
 
 	log_msg(log_level, log_flags, msg, filename, line);
-
 	errno = saved_errno;
-out:
-	va_end(ap);
-	return ret;
+	return 0;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

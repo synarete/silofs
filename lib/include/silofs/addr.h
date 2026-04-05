@@ -654,6 +654,9 @@ void silofs_vaddr_by_spleaf(struct silofs_vaddr *vaddr,
                             enum silofs_vtype vtype, off_t voff_base,
                             size_t bn, size_t kbn);
 
+void silofs_vaddr_of_lsmap2(const struct silofs_vaddr *ref_vaddr,
+                            struct silofs_vaddr       *out_vaddr);
+
 void silofs_vaddr56_htox(struct silofs_vaddr56 *vaddr56, off_t off);
 
 void silofs_vaddr56_xtoh(const struct silofs_vaddr56 *vaddr56, off_t *out_off);

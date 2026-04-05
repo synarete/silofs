@@ -27,32 +27,6 @@
 #include <silofs/fs/lspace.h>
 #include <silofs/run.h>
 
-static void silofs_lsmap_vaddr_of2(const struct silofs_vaddr *ref_vaddr,
-                                   struct silofs_vaddr *out_vaddr)
-{
-	const uint64_t lsmap_size = sizeof(struct silofs_lsmap);
-	uint64_t ref_vsize, ref_vseg_size;
-	uint64_t ref_voff, lsmap_off, lsmap_vsp;
-
-	ref_voff  = (uint64_t)ref_vaddr->off;
-	ref_vsize = silofs_vtype_size(ref_vaddr->vtype);
-	silofs_assert_ge(ref_vsize, 1024);
-
-	ref_vseg_size = ref_vsize * SILOFS_SPMAP_NCHILDS;
-	lsmap_off     = (ref_voff / ref_vseg_size) * lsmap_size;
-
-	silofs_assert_ge(ref_vsize, SILOFS_KILO);
-	silofs_assert_ne(ref_vaddr->vtype, SILOFS_VTYPE_LSMAP);
-
-	lsmap_vsp = (uint64_t)(ref_vaddr->vtype);
-	silofs_assert_gt(lsmap_vsp, 0);
-	silofs_assert_lt(lsmap_vsp, INT8_MAX);
-	silofs_assert_eq(lsmap_off >> 56, 0);
-
-	lsmap_off |= (lsmap_vsp << 56);
-	silofs_vaddr_setup(out_vaddr, SILOFS_VTYPE_LSMAP, (off_t)lsmap_off);
-}
-
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static int fetch_cached_lsi(struct silofs_task_ctx *task,
@@ -76,7 +50,7 @@ int silofs_require_lsmap_of(struct silofs_task_ctx *task,
 	struct silofs_vaddr vaddr;
 	int err;
 
-	silofs_lsmap_vaddr_of2(ref_vaddr, &vaddr);
+	silofs_vaddr_of_lsmap2(ref_vaddr, &vaddr);
 	err = fetch_cached_lsi(task, &vaddr, out_lsi);
 	if (err) {
 		return err;

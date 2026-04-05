@@ -59,12 +59,12 @@ void silofs_list_push_back(struct silofs_list_head *lst,
 
 struct silofs_list_head *silofs_list_front(const struct silofs_list_head *lst)
 {
-	return lst->next;
+	return (lst->next != lst) ? lst->next : nullptr;
 }
 
 struct silofs_list_head *silofs_list_back(const struct silofs_list_head *lst)
 {
-	return lst->prev;
+	return (lst->prev != lst) ? lst->prev : nullptr;
 }
 
 struct silofs_list_head *silofs_list_pop_front(struct silofs_list_head *lst)

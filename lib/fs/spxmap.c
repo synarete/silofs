@@ -762,7 +762,7 @@ int silofs_uamap_init(struct silofs_uamap *uamap, struct silofs_alloc *alloc)
 	uamap->uam_alloc    = alloc;
 	uamap->uam_htbl_sz  = 0;
 	uamap->uam_htbl_cap = 0;
-	uamap->uam_htbl     = silofs_lista_new(alloc, cap);
+	uamap->uam_htbl     = silofs_new_lh_array(alloc, cap);
 	if (uamap->uam_htbl == nullptr) {
 		return -SILOFS_ENOMEM;
 	}
@@ -775,7 +775,7 @@ void silofs_uamap_fini(struct silofs_uamap *uamap)
 	struct silofs_alloc *alloc = uamap->uam_alloc;
 
 	silofs_uamap_drop_all(uamap);
-	silofs_lista_del(uamap->uam_htbl, uamap->uam_htbl_cap, alloc);
+	silofs_del_lh_array(uamap->uam_htbl, uamap->uam_htbl_cap, alloc);
 	listq_fini(&uamap->uam_lru);
 	uamap->uam_alloc    = nullptr;
 	uamap->uam_htbl_sz  = 0;

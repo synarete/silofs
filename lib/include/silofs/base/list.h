@@ -151,12 +151,4 @@ static inline void silofs_list_head_fini(struct silofs_list_head *lh)
 	silofs_list_head_set(lh, nullptr, nullptr);
 }
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-struct silofs_list_head *
-silofs_lista_new(struct silofs_alloc *alloc, size_t nelems);
-
-void silofs_lista_del(struct silofs_list_head *lista, size_t nelems,
-                      struct silofs_alloc *alloc);
-
 #endif /* SILOFS_LIST_H_ */

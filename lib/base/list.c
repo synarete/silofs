@@ -228,26 +228,3 @@ struct silofs_list_head *silofs_listq_prev(const struct silofs_listq *lsq,
 	}
 	return prv;
 }
-
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-
-struct silofs_list_head *
-silofs_lista_new(struct silofs_alloc *alloc, size_t nelems)
-{
-	struct silofs_list_head *lista;
-
-	lista = silofs_memalloc(alloc, sizeof(*lista) * nelems, 0);
-	if (lista != nullptr) {
-		silofs_list_head_initn(lista, nelems);
-	}
-	return lista;
-}
-
-void silofs_lista_del(struct silofs_list_head *lista, size_t nelems,
-                      struct silofs_alloc *alloc)
-{
-	if (lista != nullptr) {
-		silofs_list_head_finin(lista, nelems);
-		silofs_memfree(alloc, lista, sizeof(*lista) * nelems, 0);
-	}
-}

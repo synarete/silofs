@@ -412,7 +412,7 @@ static int lhq_init(struct silofs_dstor_hq *lhq, struct silofs_alloc *alloc)
 
 	silofs_listq_init(&lhq->dsq_lru);
 	lhq->dsq_htb_nelems = 0;
-	lhq->dsq_htb        = silofs_lista_new(alloc, nelems);
+	lhq->dsq_htb        = silofs_new_lh_array(alloc, nelems);
 	if (lhq->dsq_htb == nullptr) {
 		return -SILOFS_ENOMEM;
 	}
@@ -423,7 +423,7 @@ static int lhq_init(struct silofs_dstor_hq *lhq, struct silofs_alloc *alloc)
 static void lhq_fini(struct silofs_dstor_hq *lhq, struct silofs_alloc *alloc)
 {
 	silofs_listq_fini(&lhq->dsq_lru);
-	silofs_lista_del(lhq->dsq_htb, lhq->dsq_htb_nelems, alloc);
+	silofs_del_lh_array(lhq->dsq_htb, lhq->dsq_htb_nelems, alloc);
 	lhq->dsq_htb        = nullptr;
 	lhq->dsq_htb_nelems = 0;
 }

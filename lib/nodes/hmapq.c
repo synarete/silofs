@@ -505,7 +505,7 @@ int silofs_hmapq_init(struct silofs_hmapq *hmapq, struct silofs_alloc *alloc,
 {
 	struct silofs_list_head *htbl = nullptr;
 
-	htbl = silofs_lista_new(alloc, nslots);
+	htbl = silofs_new_lh_array(alloc, nslots);
 	if (htbl == nullptr) {
 		return -SILOFS_ENOMEM;
 	}
@@ -521,7 +521,7 @@ void silofs_hmapq_fini(struct silofs_hmapq *hmapq, struct silofs_alloc *alloc)
 	const size_t nslots = hmapq->hmq_htbl_nslots;
 
 	if (hmapq->hmq_htbl != nullptr) {
-		silofs_lista_del(hmapq->hmq_htbl, nslots, alloc);
+		silofs_del_lh_array(hmapq->hmq_htbl, nslots, alloc);
 	}
 	listq_fini(&hmapq->hmq_lru);
 	hmapq->hmq_htbl        = nullptr;
@@ -700,4 +700,27 @@ size_t silofs_hmapq_overpop(const struct silofs_hmapq *hmapq)
 		ovp = hmapq->hmq_lru.sz - (2 * hmapq->hmq_htbl_size);
 	}
 	return ovp;
+}
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+struct silofs_list_head *
+silofs_new_lh_array(struct silofs_alloc *alloc, size_t nelems)
+{
+	struct silofs_list_head *lh_arr;
+
+	lh_arr = silofs_memalloc(alloc, sizeof(*lh_arr) * nelems, 0);
+	if (lh_arr != nullptr) {
+		silofs_list_head_initn(lh_arr, nelems);
+	}
+	return lh_arr;
+}
+
+void silofs_del_lh_array(struct silofs_list_head *lh_arr, size_t nelems,
+                         struct silofs_alloc *alloc)
+{
+	if (lh_arr != nullptr) {
+		silofs_list_head_finin(lh_arr, nelems);
+		silofs_memfree(alloc, lh_arr, sizeof(*lh_arr) * nelems, 0);
+	}
 }

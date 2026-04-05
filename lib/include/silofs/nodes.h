@@ -182,6 +182,14 @@ size_t silofs_hmapq_overpop(const struct silofs_hmapq *hmapq);
 
 size_t silofs_hmapq_usage(const struct silofs_hmapq *hmapq);
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+struct silofs_list_head *
+silofs_new_lh_array(struct silofs_alloc *alloc, size_t nelems);
+
+void silofs_del_lh_array(struct silofs_list_head *lista, size_t nelems,
+                         struct silofs_alloc *alloc);
+
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* view */
 

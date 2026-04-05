@@ -827,7 +827,7 @@ static int repo_htbl_init(struct silofs_repo *repo)
 {
 	const size_t nelems = 4096;
 
-	repo->re_htbl.rh_arr = silofs_lista_new(repo->re_alloc, nelems);
+	repo->re_htbl.rh_arr = silofs_new_lh_array(repo->re_alloc, nelems);
 	if (repo->re_htbl.rh_arr == nullptr) {
 		return -SILOFS_ENOMEM;
 	}
@@ -839,8 +839,8 @@ static int repo_htbl_init(struct silofs_repo *repo)
 static void repo_htbl_fini(struct silofs_repo *repo)
 {
 	if (repo->re_htbl.rh_arr != nullptr) {
-		silofs_lista_del(repo->re_htbl.rh_arr, repo->re_htbl.rh_nelems,
-		                 repo->re_alloc);
+		silofs_del_lh_array(repo->re_htbl.rh_arr,
+		                    repo->re_htbl.rh_nelems, repo->re_alloc);
 		repo->re_htbl.rh_arr    = nullptr;
 		repo->re_htbl.rh_nelems = 0;
 		repo->re_htbl.rh_size   = 0;

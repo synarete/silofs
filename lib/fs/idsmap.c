@@ -18,6 +18,7 @@
 #include <silofs/types.h>
 #include <silofs/errors.h>
 #include <silofs/base.h>
+#include <silofs/nodes.h>
 #include <silofs/fs/uidgid.h>
 #include <silofs/fs/idsmap.h>
 
@@ -182,13 +183,13 @@ static int idsmap_init_uhmaps(struct silofs_idsmap *idsm)
 	idsm->idm_uhcap = 0;
 	idsm->idm_usize = 0;
 
-	uhtof = silofs_lista_new(idsm->idm_alloc, hcap);
+	uhtof = silofs_new_lh_array(idsm->idm_alloc, hcap);
 	if (uhtof == nullptr) {
 		return -SILOFS_ENOMEM;
 	}
-	uftoh = silofs_lista_new(idsm->idm_alloc, hcap);
+	uftoh = silofs_new_lh_array(idsm->idm_alloc, hcap);
 	if (uftoh == nullptr) {
-		silofs_lista_del(uhtof, hcap, idsm->idm_alloc);
+		silofs_del_lh_array(uhtof, hcap, idsm->idm_alloc);
 		return -SILOFS_ENOMEM;
 	}
 
@@ -200,8 +201,8 @@ static int idsmap_init_uhmaps(struct silofs_idsmap *idsm)
 
 static void idsmap_fini_uhmaps(struct silofs_idsmap *idsm)
 {
-	silofs_lista_del(idsm->idm_uhtof, idsm->idm_uhcap, idsm->idm_alloc);
-	silofs_lista_del(idsm->idm_uftoh, idsm->idm_uhcap, idsm->idm_alloc);
+	silofs_del_lh_array(idsm->idm_uhtof, idsm->idm_uhcap, idsm->idm_alloc);
+	silofs_del_lh_array(idsm->idm_uftoh, idsm->idm_uhcap, idsm->idm_alloc);
 	idsm->idm_uhtof = nullptr;
 	idsm->idm_uftoh = nullptr;
 	idsm->idm_uhcap = 0;
@@ -219,13 +220,13 @@ static int idsmap_init_ghmaps(struct silofs_idsmap *idsm)
 	idsm->idm_ghcap = 0;
 	idsm->idm_gsize = 0;
 
-	ghtof = silofs_lista_new(idsm->idm_alloc, hcap);
+	ghtof = silofs_new_lh_array(idsm->idm_alloc, hcap);
 	if (ghtof == nullptr) {
 		return -SILOFS_ENOMEM;
 	}
-	gftoh = silofs_lista_new(idsm->idm_alloc, hcap);
+	gftoh = silofs_new_lh_array(idsm->idm_alloc, hcap);
 	if (gftoh == nullptr) {
-		silofs_lista_del(ghtof, hcap, idsm->idm_alloc);
+		silofs_del_lh_array(ghtof, hcap, idsm->idm_alloc);
 		return -SILOFS_ENOMEM;
 	}
 
@@ -237,8 +238,8 @@ static int idsmap_init_ghmaps(struct silofs_idsmap *idsm)
 
 static void idsmap_fini_ghmaps(struct silofs_idsmap *idsm)
 {
-	silofs_lista_del(idsm->idm_ghtof, idsm->idm_ghcap, idsm->idm_alloc);
-	silofs_lista_del(idsm->idm_gftoh, idsm->idm_ghcap, idsm->idm_alloc);
+	silofs_del_lh_array(idsm->idm_ghtof, idsm->idm_ghcap, idsm->idm_alloc);
+	silofs_del_lh_array(idsm->idm_gftoh, idsm->idm_ghcap, idsm->idm_alloc);
 	idsm->idm_ghtof = nullptr;
 	idsm->idm_gftoh = nullptr;
 	idsm->idm_ghcap = 0;

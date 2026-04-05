@@ -1235,7 +1235,7 @@ silofs_avl_upper_bound(const struct silofs_avl *avl, const void *k)
 	const struct silofs_avl_node *x = nullptr;
 
 	if (avl->size > 0) {
-		x = avl_upper_bound(avl, avl_root(avl), x, k);
+		x = avl_upper_bound(avl, avl_root(avl), nullptr, k);
 	}
 	return avl_node_unconst(x);
 }

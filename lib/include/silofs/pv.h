@@ -439,7 +439,7 @@ int silofs_require_paddr(struct silofs_pexec_ctx   *pexec,
 int silofs_destage_dirty(struct silofs_pexec_ctx *pexec);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-/* space */
+/* mesh */
 
 int silofs_format_pv(struct silofs_pexec_ctx *pexec,
                      struct silofs_pnptr     *out_pnptr);

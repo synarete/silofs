@@ -259,7 +259,7 @@ static void validate_ondisk_mbr(void)
 	REQUIRE_SIZEOF(struct silofs_mbr1k, SILOFS_MBR_SIZE);
 }
 
-static void validate_ondisk_uber(void)
+static void validate_ondisk_uber_node(void)
 {
 	REQUIRE_OFFSET64(struct silofs_uber_vspace, ub_btroot, 0);
 	REQUIRE_OFFSET64(struct silofs_uber_vspace, ub_bn_spdesc, 256);
@@ -271,6 +271,44 @@ static void validate_ondisk_uber(void)
 	REQUIRE_OFFSET64(struct silofs_uber_node, ub_capacity, 72);
 	REQUIRE_OFFSET64(struct silofs_uber_node, ub_vspace, 512);
 	REQUIRE_SIZEOF_8K(struct silofs_uber_node);
+}
+
+static void validate_ondisk_btree_node(void)
+{
+	REQUIRE_OFFSET64(struct silofs_btree_node, btn_hdr, 0);
+	REQUIRE_OFFSET64(struct silofs_btree_node, btn_flags, 32);
+	REQUIRE_OFFSET32(struct silofs_btree_node, btn_vspace, 36);
+	REQUIRE_OFFSETXX(struct silofs_btree_node, btn_height, 37);
+	REQUIRE_OFFSETXX(struct silofs_btree_node, btn_nkeys, 38);
+	REQUIRE_OFFSETXX(struct silofs_btree_node, btn_nchilds, 40);
+	REQUIRE_OFFSET64(struct silofs_btree_node, btn_key, 128);
+	REQUIRE_OFFSET64(struct silofs_btree_node, btn_child, 512);
+	REQUIRE_SIZEOF(struct silofs_btree_node, SILOFS_BTREE_NODE_SIZE);
+	REQUIRE_SIZEOF_8K(struct silofs_btree_node);
+}
+
+static void validate_ondisk_blob_desc(void)
+{
+	REQUIRE_OFFSET64(struct silofs_blob_desc, bld_hdr, 0);
+	REQUIRE_OFFSET64(struct silofs_blob_desc, bld_btime, 32);
+	REQUIRE_OFFSET64(struct silofs_blob_desc, bld_ctime, 48);
+	REQUIRE_OFFSET64(struct silofs_blob_desc, bld_prev, 64);
+	REQUIRE_OFFSET64(struct silofs_blob_desc, bld_refblob, 120);
+	REQUIRE_OFFSET64(struct silofs_blob_desc, bld_blobsize, 176);
+	REQUIRE_OFFSET64(struct silofs_blob_desc, bld_objsize, 184);
+	REQUIRE_OFFSET32(struct silofs_blob_desc, bld_nobjs_max, 188);
+	REQUIRE_OFFSET32(struct silofs_blob_desc, bld_nobjs, 192);
+	REQUIRE_OFFSET32(struct silofs_blob_desc, bld_flags, 196);
+	REQUIRE_OFFSET64(struct silofs_blob_desc, bld_obj_state, 256);
+	REQUIRE_SIZEOF_8K(struct silofs_blob_desc);
+}
+
+static void validate_ondisk_space_node(void)
+{
+	REQUIRE_SIZEOF(struct silofs_space_ref, 64);
+	REQUIRE_OFFSET64(struct silofs_space_node, sp_hdr, 0);
+	REQUIRE_OFFSET64(struct silofs_space_node, sp_base_voff, 32);
+	REQUIRE_OFFSET64(struct silofs_space_node, sp_ref_vtype, 40);
 }
 
 static void validate_ondisk_super(void)
@@ -416,36 +454,6 @@ static void validate_ondisk_xattr(void)
 	REQUIRE_SIZEOF_8K(struct silofs_xattr_node);
 }
 
-static void validate_ondisk_btnode(void)
-{
-	REQUIRE_OFFSET64(struct silofs_btree_node, btn_hdr, 0);
-	REQUIRE_OFFSET64(struct silofs_btree_node, btn_flags, 32);
-	REQUIRE_OFFSET32(struct silofs_btree_node, btn_vspace, 36);
-	REQUIRE_OFFSETXX(struct silofs_btree_node, btn_height, 37);
-	REQUIRE_OFFSETXX(struct silofs_btree_node, btn_nkeys, 38);
-	REQUIRE_OFFSETXX(struct silofs_btree_node, btn_nchilds, 40);
-	REQUIRE_OFFSET64(struct silofs_btree_node, btn_key, 128);
-	REQUIRE_OFFSET64(struct silofs_btree_node, btn_child, 512);
-	REQUIRE_SIZEOF(struct silofs_btree_node, SILOFS_BTREE_NODE_SIZE);
-	REQUIRE_SIZEOF_8K(struct silofs_btree_node);
-}
-
-static void validate_ondisk_bldesc(void)
-{
-	REQUIRE_OFFSET64(struct silofs_blob_desc, bld_hdr, 0);
-	REQUIRE_OFFSET64(struct silofs_blob_desc, bld_btime, 32);
-	REQUIRE_OFFSET64(struct silofs_blob_desc, bld_ctime, 48);
-	REQUIRE_OFFSET64(struct silofs_blob_desc, bld_prev, 64);
-	REQUIRE_OFFSET64(struct silofs_blob_desc, bld_refblob, 120);
-	REQUIRE_OFFSET64(struct silofs_blob_desc, bld_blobsize, 176);
-	REQUIRE_OFFSET64(struct silofs_blob_desc, bld_objsize, 184);
-	REQUIRE_OFFSET32(struct silofs_blob_desc, bld_nobjs_max, 188);
-	REQUIRE_OFFSET32(struct silofs_blob_desc, bld_nobjs, 192);
-	REQUIRE_OFFSET32(struct silofs_blob_desc, bld_flags, 196);
-	REQUIRE_OFFSET64(struct silofs_blob_desc, bld_obj_state, 256);
-	REQUIRE_SIZEOF_8K(struct silofs_blob_desc);
-}
-
 static void validate_ondisk_archive(void)
 {
 	REQUIRE_OFFSET64(struct silofs_ar_desc256b, ard_paddr, 0);
@@ -483,7 +491,10 @@ void silofs_validate_ondisk_format(void)
 	validate_ondisk_headers();
 	validate_ondisk_spmaps();
 	validate_ondisk_mbr();
-	validate_ondisk_uber();
+	validate_ondisk_uber_node();
+	validate_ondisk_btree_node();
+	validate_ondisk_blob_desc();
+	validate_ondisk_space_node();
 	validate_ondisk_super();
 	validate_ondisk_lsmap();
 	validate_ondisk_inode();
@@ -491,8 +502,6 @@ void silofs_validate_ondisk_format(void)
 	validate_ondisk_file();
 	validate_ondisk_symlnk();
 	validate_ondisk_xattr();
-	validate_ondisk_btnode();
-	validate_ondisk_bldesc();
 	validate_ondisk_archive();
 	validate_ioctl_types();
 }

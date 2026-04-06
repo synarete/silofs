@@ -646,6 +646,20 @@ struct silofs_header {
 	uint32_t h_csum;
 } silofs_attr_aligned32;
 
+struct silofs_space_ref {
+	uint64_t spr_refcnt;
+	uint64_t spr_state;
+	uint8_t  spr_reserved[48];
+} silofs_attr_aligned16;
+
+struct silofs_space_node {
+	struct silofs_header    sp_hdr;
+	uint64_t                sp_base_voff;
+	uint8_t                 sp_ref_vtype;
+	uint8_t                 sp_reserved[23];
+	struct silofs_space_ref sp_ref[255];
+} silofs_attr_aligned64;
+
 struct silofs_sb_sproots {
 	struct silofs_uaddr128b sb_sproot_lsmap;
 	struct silofs_uaddr128b sb_sproot_inode;

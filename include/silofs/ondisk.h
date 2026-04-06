@@ -101,7 +101,7 @@
 #define SILOFS_UUID_SIZE (16)
 
 /* size of common meta-data header */
-#define SILOFS_HEADER_SIZE (32)
+#define SILOFS_HEADER_SIZE (16)
 
 /* number of pointers btree mapping-node */
 #define SILOFS_BTREE_NODE_NCHILDS (30)
@@ -638,13 +638,12 @@ struct silofs_mbr1k {
 
 struct silofs_header {
 	uint32_t h_magic;
+	uint32_t h_csum;
 	uint32_t h_size;
+	uint16_t h_flags;
 	uint8_t  h_stype;
 	uint8_t  h_reserved1;
-	uint16_t h_flags;
-	uint8_t  h_reserved2[16];
-	uint32_t h_csum;
-} silofs_attr_aligned32;
+} silofs_attr_aligned16;
 
 struct silofs_space_ref {
 	uint64_t spr_refcnt;
@@ -717,6 +716,7 @@ struct silofs_space_stats1k {
 struct silofs_super_block {
 	/* 0..512 */
 	struct silofs_header sb_hdr;
+	uint8_t              sb_reserved0[16];
 	uint64_t             sb_magic;
 	uint64_t             sb_version;
 	uint32_t             sb_flags;
@@ -751,6 +751,7 @@ struct silofs_spmap_ref {
 
 struct silofs_spmap_node {
 	struct silofs_header    sn_hdr;
+	uint8_t                 sn_reserved0[16];
 	struct silofs_lsid64b   sn_main_lsid;
 	struct silofs_lrange128 sn_lrange;
 	struct silofs_uaddr128b sn_parent;
@@ -768,6 +769,7 @@ struct silofs_lbk_ref {
 
 struct silofs_spmap_leaf {
 	struct silofs_header    sl_hdr;
+	uint8_t                 sl_reserved0[16];
 	struct silofs_lrange128 sl_lrange;
 	uint16_t                sl_refvtype;
 	uint8_t                 sl_reserved1[14];
@@ -792,6 +794,7 @@ struct silofs_lbk_meta {
 
 struct silofs_lsmap {
 	struct silofs_header    lsm_hdr;
+	uint8_t                 lsm_reserved0[16];
 	struct silofs_lrange128 lsm_lrange;
 	uint8_t                 lsm_refvtype;
 	uint8_t                 lsm_reserved1[15];
@@ -843,6 +846,7 @@ union silofs_inode_tail {
 
 struct silofs_inode {
 	struct silofs_header      i_hdr;
+	uint8_t                   i_reserved0[16];
 	uint64_t                  i_ino;
 	uint64_t                  i_parent;
 	uint32_t                  i_uid;
@@ -872,6 +876,7 @@ struct silofs_xattr_entry {
 
 struct silofs_xattr_node {
 	struct silofs_header      xa_hdr;
+	uint8_t                   xa_reserved0[16];
 	uint64_t                  xa_ino;
 	uint16_t                  xa_nents;
 	uint8_t                   xa_reserved[86];
@@ -892,6 +897,7 @@ union silofs_dtree_data {
 
 struct silofs_dtree_node {
 	struct silofs_header    dn_hdr;
+	uint8_t                 dn_reserved0[16];
 	uint64_t                dn_ino;
 	int64_t                 dn_parent;
 	uint32_t                dn_node_index;
@@ -905,6 +911,7 @@ struct silofs_dtree_node {
 
 struct silofs_ftree_node {
 	struct silofs_header  fn_hdr;
+	uint8_t               fn_reserved0[16];
 	uint64_t              fn_refcnt;
 	uint64_t              fn_ino;
 	int64_t               fn_beg;
@@ -919,6 +926,7 @@ struct silofs_ftree_node {
 
 struct silofs_symlnk_value {
 	struct silofs_header sy_hdr;
+	uint8_t              sy_reserved0[16];
 	uint64_t             sy_parent;
 	uint16_t             sy_length;
 	uint8_t              sy_reserved1[22];
@@ -986,6 +994,7 @@ enum silofs_objstatef {
 /* blob's meta descriptor */
 struct silofs_blob_desc {
 	struct silofs_header    bld_hdr;
+	uint8_t                 bld_reserved0[16];
 	struct silofs_timespec  bld_btime;
 	struct silofs_timespec  bld_ctime;
 	struct silofs_blobid56b bld_prev;
@@ -1009,6 +1018,7 @@ struct silofs_uber_vspace {
 /* uber-node */
 struct silofs_uber_node {
 	struct silofs_header      ub_hdr;
+	uint8_t                   ub_reserved0[16];
 	struct silofs_timespec    ub_btime;
 	struct silofs_timespec    ub_ctime;
 	uint64_t                  ub_generation;
@@ -1020,6 +1030,7 @@ struct silofs_uber_node {
 /* btree node of persistent volume mapping */
 struct silofs_btree_node {
 	struct silofs_header     btn_hdr;
+	uint8_t                  btn_reserved0[16];
 	uint32_t                 btn_flags;
 	uint8_t                  btn_vspace;
 	uint8_t                  btn_height;
@@ -1044,6 +1055,7 @@ struct silofs_ar_desc256b {
 /* archive-index */
 struct silofs_arix_node {
 	struct silofs_header      arn_hdr;
+	uint8_t                   arn_reserved0[16];
 	struct silofs_timespec    arn_btime;
 	uint32_t                  arn_flags;
 	uint32_t                  arn_ndescs;

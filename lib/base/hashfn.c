@@ -48,6 +48,11 @@ uint64_t silofs_xxh64(const void *buf, size_t len, uint64_t seed)
 	return XXH64(buf, len, seed);
 }
 
+uint64_t silofs_xxh3(const void *buf, size_t len)
+{
+	return XXH3_64bits(buf, len);
+}
+
 uint64_t silofs_twang64(uint64_t n)
 {
 	n = ~n + (n << 21);

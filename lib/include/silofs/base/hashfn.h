@@ -27,6 +27,8 @@ uint32_t silofs_xxh32(const void *buf, size_t len, uint32_t seed);
 
 uint64_t silofs_xxh64(const void *buf, size_t len, uint64_t seed);
 
+uint64_t silofs_xxh3(const void *buf, size_t len);
+
 uint64_t silofs_twang64(uint64_t n);
 
 #endif /* SILOFS_HASHFN_H_ */

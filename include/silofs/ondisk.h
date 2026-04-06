@@ -647,16 +647,16 @@ struct silofs_header {
 
 struct silofs_space_ref {
 	uint64_t spr_refcnt;
-	uint64_t spr_state;
-	uint8_t  spr_reserved[48];
-} silofs_attr_aligned16;
+	uint64_t spr_flags;
+	uint8_t  spr_reserved[16];
+} silofs_attr_aligned32;
 
 struct silofs_space_node {
 	struct silofs_header    sp_hdr;
 	uint64_t                sp_base_voff;
 	uint8_t                 sp_ref_vtype;
-	uint8_t                 sp_reserved[23];
-	struct silofs_space_ref sp_ref[255];
+	uint8_t                 sp_reserved[7];
+	struct silofs_space_ref sp_ref[511];
 } silofs_attr_aligned64;
 
 struct silofs_sb_sproots {

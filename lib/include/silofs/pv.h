@@ -22,19 +22,7 @@
 #include <silofs/addr.h>
 #include <silofs/nodes.h>
 
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-/* pv-layer execution-context */
-struct silofs_pexec_ctx {
-	struct silofs_alloc      *alloc;
-	struct silofs_prandgen   *prng;
-	struct silofs_dstor      *dstor;
-	struct silofs_pcache     *pcache;
-	struct silofs_vcache     *vcache;
-	struct silofs_mdigest_hd *md_hd;
-	struct silofs_cipher_hd  *enc_ci_hd;
-	struct silofs_cipher_hd  *dec_ci_hd;
-	struct silofs_uber_ref   *ubref;
-};
+struct silofs_pexec_ctx;
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* dstor */
@@ -439,7 +427,20 @@ int silofs_require_paddr(struct silofs_pexec_ctx   *pexec,
 int silofs_destage_dirty(struct silofs_pexec_ctx *pexec);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-/* mesh */
+/* pexec */
+
+/* pv-layer execution-context */
+struct silofs_pexec_ctx {
+	struct silofs_alloc      *alloc;
+	struct silofs_prandgen   *prng;
+	struct silofs_dstor      *dstor;
+	struct silofs_pcache     *pcache;
+	struct silofs_vcache     *vcache;
+	struct silofs_mdigest_hd *md_hd;
+	struct silofs_cipher_hd  *enc_ci_hd;
+	struct silofs_cipher_hd  *dec_ci_hd;
+	struct silofs_uber_ref   *ubref;
+};
 
 int silofs_format_pv(struct silofs_pexec_ctx *pexec,
                      struct silofs_pnptr     *out_pnptr);

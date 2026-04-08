@@ -105,7 +105,7 @@ static int visit_evictable_vni(struct silofs_hmapq_elem *hmqe, void *arg)
 {
 	struct silofs_vnode_info *vni = vni_from_hmqe(hmqe);
 
-	if (!test_evictable_vni(vni)) {
+	if (unlikely(vni == nullptr) || !test_evictable_vni(vni)) {
 		return 0;
 	}
 	*(struct silofs_vnode_info **)arg = vni;

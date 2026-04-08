@@ -93,7 +93,7 @@ static int visit_evictable_uni(struct silofs_hmapq_elem *hmqe, void *arg)
 {
 	struct silofs_unode_info *uni = uni_from_hmqe(hmqe);
 
-	if (!silofs_uni_isevictable(uni)) {
+	if (unlikely(uni == nullptr) || !silofs_uni_isevictable(uni)) {
 		return 0;
 	}
 	*(struct silofs_unode_info **)arg = uni;

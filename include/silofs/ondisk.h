@@ -400,6 +400,12 @@ enum silofs_btnodef {
 	SILOFS_BTNODEF_ROOT = 0x01,
 };
 
+/* space flags */
+enum silofs_spacef {
+	SILOFS_SPACEF_NONE      = 0x00,
+	SILOFS_SPACEF_UNWRITTEN = 0x01,
+};
+
 /* name-to-hash functions */
 enum silofs_namehfn {
 	SILOFS_NAMEHASH_SHA256 = 1,
@@ -647,13 +653,13 @@ struct silofs_header {
 
 struct silofs_space_ref {
 	uint64_t spr_refcnt;
-	uint64_t spr_flags;
-	uint8_t  spr_reserved[16];
+	uint32_t spr_flags;
+	uint8_t  spr_reserved[20];
 } silofs_attr_aligned32;
 
 struct silofs_space_node {
 	struct silofs_header    sp_hdr;
-	uint64_t                sp_base_voff;
+	int64_t                 sp_base_off;
 	uint8_t                 sp_ref_vtype;
 	uint8_t                 sp_reserved[7];
 	struct silofs_space_ref sp_ref[511];

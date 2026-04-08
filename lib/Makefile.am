@@ -84,6 +84,7 @@ libsilofs_la_SOURCES += pv/carve.c
 libsilofs_la_SOURCES += pv/dstor.c
 libsilofs_la_SOURCES += pv/pexec.c
 libsilofs_la_SOURCES += pv/repo.c
+libsilofs_la_SOURCES += pv/space.c
 libsilofs_la_SOURCES += pv/stage.c
 libsilofs_la_SOURCES += pv/uber.c
 libsilofs_la_SOURCES += fs/claim.c

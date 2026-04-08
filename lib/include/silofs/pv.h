@@ -363,6 +363,35 @@ void silofs_ubref_update(struct silofs_uber_ref  *ubref,
                          struct silofs_uber_info *ubi);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+/* space */
+
+struct silofs_space_info *silofs_spi_from_vni(struct silofs_space_info *spi);
+
+void silofs_spi_incref(struct silofs_space_info *spi);
+
+void silofs_spi_decref(struct silofs_space_info *spi);
+
+void silofs_spi_setup_spawned(struct silofs_space_info *spi,
+                              enum silofs_vtype ref_vtype, off_t off);
+
+void silofs_spi_setup_staged(struct silofs_space_info *spi);
+
+int silofs_spi_find_free(const struct silofs_space_info *spi,
+                         struct silofs_vaddr            *out_vaddr);
+
+void silofs_spi_inc_allocated(struct silofs_space_info  *spi,
+                              const struct silofs_vaddr *vaddr);
+
+void silofs_spi_dec_allocated(struct silofs_space_info  *spi,
+                              const struct silofs_vaddr *vaddr);
+
+bool silofs_spi_test_unwritten(const struct silofs_space_info *spi,
+                               const struct silofs_vaddr      *vaddr);
+
+void silofs_spi_clear_unwritten(struct silofs_space_info  *spi,
+                                const struct silofs_vaddr *vaddr);
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* carve */
 
 int silofs_carve_base_ubspace(const struct silofs_pexec_ctx *pexec,

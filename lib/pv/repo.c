@@ -21,6 +21,7 @@
 #include <fcntl.h>
 
 #include <silofs/base.h>
+#include <silofs/nodes.h>
 #include <silofs/pv.h>
 
 /* repo cached element key */

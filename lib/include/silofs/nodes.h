@@ -471,6 +471,14 @@ struct silofs_vnode_info {
 	bool (*isevictable_fn)(const struct silofs_vnode_info *vni);
 };
 
+/* space allocation node */
+struct silofs_space_info {
+	struct silofs_vnode_info  spn_vni;
+	struct silofs_space_node *spn;
+	/* in-memory only */
+	unsigned spn_nused_ref;
+};
+
 /* logical-space map */
 struct silofs_lsmap_info {
 	struct silofs_vnode_info ls_vni;

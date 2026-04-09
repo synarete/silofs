@@ -50,7 +50,7 @@ int silofs_require_lsmap_of(struct silofs_task_ctx *task,
 	struct silofs_vaddr vaddr;
 	int err;
 
-	silofs_vaddr_of_lsmap2(ref_vaddr, &vaddr);
+	silofs_vaddr_of_spmap(ref_vaddr, &vaddr);
 	err = fetch_cached_lsi(task, &vaddr, out_lsi);
 	if (err) {
 		return err;

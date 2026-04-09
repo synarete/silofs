@@ -84,7 +84,7 @@ static void update_formatted_btroot(struct silofs_pexec_ctx *pexec,
 }
 
 static int
-format_btroot_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
+format_btree_root_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
 {
 	struct silofs_btnode_info *bti = nullptr;
 	int err;
@@ -98,7 +98,7 @@ format_btroot_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
 }
 
 static int
-format_vspace_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
+format_vspace_root_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
 {
 	struct silofs_paddr paddr = {};
 	int err;
@@ -132,11 +132,11 @@ static int format_vspaces(struct silofs_pexec_ctx *pexec)
 		if (!silofs_vtype_isvnode(vtype)) {
 			continue;
 		}
-		err = format_btroot_of(pexec, vtype);
+		err = format_btree_root_of(pexec, vtype);
 		if (err) {
 			return err;
 		}
-		err = format_vspace_of(pexec, vtype);
+		err = format_vspace_root_of(pexec, vtype);
 		if (err) {
 			return err;
 		}
@@ -190,7 +190,7 @@ reload_uber(struct silofs_pexec_ctx *pexec, const struct silofs_pnptr *pnptr)
 }
 
 static int
-reload_btroot_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
+reload_btree_root_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
 {
 	struct silofs_btnptr btnptr    = {};
 	struct silofs_btnode_info *bti = nullptr;
@@ -230,7 +230,7 @@ static int reload_vspaces(struct silofs_pexec_ctx *pexec)
 		if (!silofs_vtype_isvnode(vtype)) {
 			continue;
 		}
-		err = reload_btroot_of(pexec, vtype);
+		err = reload_btree_root_of(pexec, vtype);
 		if (err) {
 			return err;
 		}

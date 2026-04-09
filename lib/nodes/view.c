@@ -199,88 +199,91 @@ int silofs_hdr_verify(const struct silofs_header *hdr, uint8_t stype,
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static bool view_isdata(enum silofs_vtype vtype)
+static bool lview_isdata(enum silofs_vtype vtype)
 {
 	return silofs_vtype_isdata(vtype);
 }
 
-static size_t view_len(enum silofs_vtype vtype)
+static size_t lview_len(enum silofs_vtype vtype)
 {
 	return silofs_vtype_size(vtype);
 }
 
 static struct silofs_lview *
-view_malloc(struct silofs_alloc *alloc, enum silofs_vtype vtype, int flags)
+lview_malloc(struct silofs_alloc *alloc, enum silofs_vtype vtype, int flags)
 {
-	return silofs_memalloc(alloc, view_len(vtype), flags);
+	return silofs_memalloc(alloc, lview_len(vtype), flags);
 }
 
-static void view_free(struct silofs_lview *view, struct silofs_alloc *alloc,
-                      enum silofs_vtype vtype, int flags)
+static void lview_free(struct silofs_lview *lview, struct silofs_alloc *alloc,
+                       enum silofs_vtype vtype, int flags)
 {
-	silofs_memfree(alloc, view, view_len(vtype), flags);
+	silofs_memfree(alloc, lview, lview_len(vtype), flags);
 }
 
-static void view_init_meta(struct silofs_lview *view, enum silofs_vtype vtype)
+static void
+lview_init_meta(struct silofs_lview *lview, enum silofs_vtype vtype)
 {
-	memset(view, 0, view_len(vtype));
-	silofs_hdr_setup(&view->u.hdr[0], (uint8_t)vtype, SILOFS_HDRF_VNODE);
+	memset(lview, 0, lview_len(vtype));
+	silofs_hdr_setup(&lview->u.hdr[0], (uint8_t)vtype, SILOFS_HDRF_VNODE);
 }
 
-static void view_init(struct silofs_lview *view, enum silofs_vtype vtype)
+static void lview_init(struct silofs_lview *lview, enum silofs_vtype vtype)
 {
-	if (!view_isdata(vtype)) {
-		view_init_meta(view, vtype);
+	if (!lview_isdata(vtype)) {
+		lview_init_meta(lview, vtype);
 	}
 }
 
-static void view_fini_meta(struct silofs_lview *view, enum silofs_vtype vtype)
+static void
+lview_fini_meta(struct silofs_lview *lview, enum silofs_vtype vtype)
 {
-	const size_t nz = silofs_min(view_len(vtype), sizeof(view->u.hdr[0]));
+	const size_t nz =
+		silofs_min(lview_len(vtype), sizeof(lview->u.hdr[0]));
 
-	memset(view, 0, nz);
+	memset(lview, 0, nz);
 }
 
-static void view_fini(struct silofs_lview *view, enum silofs_vtype vtype)
+static void lview_fini(struct silofs_lview *lview, enum silofs_vtype vtype)
 {
-	if (!view_isdata(vtype)) {
-		view_fini_meta(view, vtype);
+	if (!lview_isdata(vtype)) {
+		lview_fini_meta(lview, vtype);
 	}
 }
 
 struct silofs_lview *silofs_lview_new(struct silofs_alloc *alloc,
                                       enum silofs_vtype vtype, int flags)
 {
-	struct silofs_lview *view = nullptr;
+	struct silofs_lview *lview = nullptr;
 
-	view = view_malloc(alloc, vtype, flags);
-	if (view != nullptr) {
-		view_init(view, vtype);
+	lview = lview_malloc(alloc, vtype, flags);
+	if (lview != nullptr) {
+		lview_init(lview, vtype);
 	}
-	return view;
+	return lview;
 }
 
-void silofs_lview_del(struct silofs_lview *view, struct silofs_alloc *alloc,
+void silofs_lview_del(struct silofs_lview *lview, struct silofs_alloc *alloc,
                       enum silofs_vtype vtype, int flags)
 {
-	if (likely(view != nullptr)) {
-		view_fini(view, vtype);
-		view_free(view, alloc, vtype, flags);
+	if (likely(lview != nullptr)) {
+		lview_fini(lview, vtype);
+		lview_free(lview, alloc, vtype, flags);
 	}
 }
 
-void silofs_seal_lview(struct silofs_lview *view)
+void silofs_seal_lview(struct silofs_lview *lview)
 {
-	silofs_hdr_seal(&view->u.hdr[0]);
+	silofs_hdr_seal(&lview->u.hdr[0]);
 }
 
-int silofs_verify_lview(const struct silofs_lview *view,
+int silofs_verify_lview(const struct silofs_lview *lview,
                         enum silofs_vtype vtype)
 {
 	int ret = 0;
 
 	if (!silofs_vtype_isdata(vtype)) {
-		ret = silofs_hdr_verify(&view->u.hdr[0], (uint8_t)vtype,
+		ret = silofs_hdr_verify(&lview->u.hdr[0], (uint8_t)vtype,
 		                        SILOFS_HDRF_VNODE);
 	}
 	return ret;
@@ -290,18 +293,18 @@ int silofs_verify_lview(const struct silofs_lview *view,
 
 int silofs_encrypt_lview(const struct silofs_cipher_hd *ci_hd,
                          const struct silofs_civkey *civkey,
-                         const struct silofs_lview *view,
+                         const struct silofs_lview *lview,
                          enum silofs_vtype vtype, void *ptr)
 {
-	return silofs_encrypt_buf(ci_hd, civkey, view, ptr, view_len(vtype));
+	return silofs_encrypt_buf(ci_hd, civkey, lview, ptr, lview_len(vtype));
 }
 
 int silofs_decrypt_lview(const struct silofs_cipher_hd *ci_hd,
                          const struct silofs_civkey *civkey,
-                         const struct silofs_lview *view,
+                         const struct silofs_lview *lview,
                          enum silofs_vtype vtype, void *ptr)
 {
-	return silofs_decrypt_buf(ci_hd, civkey, view, ptr, view_len(vtype));
+	return silofs_decrypt_buf(ci_hd, civkey, lview, ptr, lview_len(vtype));
 }
 
 int silofs_encrypt_lview2(const struct silofs_cipher_hd *ci_hd,
@@ -322,10 +325,11 @@ int silofs_decrypt_lview2(const struct silofs_cipher_hd *ci_hd,
 
 int silofs_decrypt_view_inplace(const struct silofs_cipher_hd *ci_hd,
                                 const struct silofs_civkey *civkey,
-                                struct silofs_lview *view,
+                                struct silofs_lview *lview,
                                 enum silofs_vtype vtype)
 {
-	return silofs_decrypt_buf(ci_hd, civkey, view, view, view_len(vtype));
+	return silofs_decrypt_buf(ci_hd, civkey, lview, lview,
+	                          lview_len(vtype));
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

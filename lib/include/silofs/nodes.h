@@ -236,7 +236,7 @@ int silofs_decrypt_lview2(const struct silofs_cipher_hd *ci_hd,
 
 int silofs_decrypt_view_inplace(const struct silofs_cipher_hd *ci_hd,
                                 const struct silofs_civkey    *civkey,
-                                struct silofs_lview           *view,
+                                struct silofs_lview           *lview,
                                 enum silofs_vtype              vtype);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

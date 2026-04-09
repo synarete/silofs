@@ -117,7 +117,7 @@ static int vni_verify_sub_view(const struct silofs_vnode_info *vni)
 {
 	const struct silofs_lview *view = vni->vn_lni.ln_view;
 	const enum silofs_vtype vtype   = silofs_vni_vtype(vni);
-	int ret                         = 0;
+	int ret;
 
 	switch (vtype) {
 	case SILOFS_VTYPE_LSMAP:
@@ -138,9 +138,13 @@ static int vni_verify_sub_view(const struct silofs_vnode_info *vni)
 	case SILOFS_VTYPE_FTNODE:
 		ret = silofs_verify_ftree_node(&view->u.ftn);
 		break;
+
+	case SILOFS_VTYPE_SPNODE2:
+
 	case SILOFS_VTYPE_DATA1K:
 	case SILOFS_VTYPE_DATA4K:
 	case SILOFS_VTYPE_DATA64K:
+		ret = 0;
 		break;
 	case SILOFS_VTYPE_NONE:
 	case SILOFS_VTYPE_ARIX:

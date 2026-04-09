@@ -361,7 +361,7 @@ enum silofs_ptype {
 	SILOFS_PTYPE_LAST   = 6, /* keep last */
 };
 
-/* meta elements types */
+/* v-elements sub-types */
 enum silofs_vtype {
 	SILOFS_VTYPE_NONE    = 0,
 	SILOFS_VTYPE_ARIX    = 1,
@@ -374,10 +374,11 @@ enum silofs_vtype {
 	SILOFS_VTYPE_DTNODE  = 8,
 	SILOFS_VTYPE_SYMVAL  = 9,
 	SILOFS_VTYPE_FTNODE  = 10,
-	SILOFS_VTYPE_DATA1K  = 11,
-	SILOFS_VTYPE_DATA4K  = 12,
-	SILOFS_VTYPE_DATA64K = 13,
-	SILOFS_VTYPE_LAST    = 14, /* keep last */
+	SILOFS_VTYPE_SPNODE2 = 11,
+	SILOFS_VTYPE_DATA1K  = 12,
+	SILOFS_VTYPE_DATA4K  = 13,
+	SILOFS_VTYPE_DATA64K = 14,
+	SILOFS_VTYPE_LAST    = 15, /* keep last */
 };
 
 /* logical heights of unode mappings */
@@ -1089,6 +1090,7 @@ struct silofs_pview {
 union silofs_lview_u {
 	struct silofs_header       hdr[2];
 	struct silofs_mbr1k        mbr;
+	struct silofs_space_node   spn;
 	struct silofs_arix_node    arn;
 	struct silofs_super_block  sb;
 	struct silofs_spmap_node   sn;

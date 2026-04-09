@@ -49,6 +49,7 @@ static int ubi_verify_sub_view(const struct silofs_unode_info *uni)
 	case SILOFS_VTYPE_DATA1K:
 	case SILOFS_VTYPE_DATA4K:
 	case SILOFS_VTYPE_DATA64K:
+	case SILOFS_VTYPE_SPNODE2:
 	case SILOFS_VTYPE_NONE:
 	case SILOFS_VTYPE_LAST:
 	default:

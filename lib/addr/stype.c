@@ -101,6 +101,7 @@ bool silofs_vtype_isunode(enum silofs_vtype vtype)
 	case SILOFS_VTYPE_DATA1K:
 	case SILOFS_VTYPE_DATA4K:
 	case SILOFS_VTYPE_DATA64K:
+	case SILOFS_VTYPE_SPNODE2:
 	case SILOFS_VTYPE_NONE:
 	case SILOFS_VTYPE_LAST:
 	default:
@@ -124,6 +125,7 @@ bool silofs_vtype_isvnode(enum silofs_vtype vtype)
 	case SILOFS_VTYPE_DATA1K:
 	case SILOFS_VTYPE_DATA4K:
 	case SILOFS_VTYPE_DATA64K:
+	case SILOFS_VTYPE_SPNODE2:
 		ret = true;
 		break;
 	case SILOFS_VTYPE_ARIX:
@@ -159,6 +161,7 @@ bool silofs_vtype_isdata(enum silofs_vtype vtype)
 	case SILOFS_VTYPE_DTNODE:
 	case SILOFS_VTYPE_FTNODE:
 	case SILOFS_VTYPE_SYMVAL:
+	case SILOFS_VTYPE_SPNODE2:
 	case SILOFS_VTYPE_NONE:
 	case SILOFS_VTYPE_LAST:
 	default:
@@ -170,39 +173,58 @@ bool silofs_vtype_isdata(enum silofs_vtype vtype)
 
 size_t silofs_vtype_size(enum silofs_vtype vtype)
 {
+	size_t size;
+
 	switch (vtype) {
 	case SILOFS_VTYPE_ARIX:
-		return sizeof(struct silofs_arix_node);
+		size = sizeof(struct silofs_arix_node);
+		break;
 	case SILOFS_VTYPE_SUPER:
-		return sizeof(struct silofs_super_block);
+		size = sizeof(struct silofs_super_block);
+		break;
 	case SILOFS_VTYPE_SPNODE:
-		return sizeof(struct silofs_spmap_node);
+		size = sizeof(struct silofs_spmap_node);
+		break;
 	case SILOFS_VTYPE_SPLEAF:
-		return sizeof(struct silofs_spmap_leaf);
+		size = sizeof(struct silofs_spmap_leaf);
+		break;
 	case SILOFS_VTYPE_LSMAP:
-		return sizeof(struct silofs_lsmap);
+		size = sizeof(struct silofs_lsmap);
+		break;
 	case SILOFS_VTYPE_INODE:
-		return sizeof(struct silofs_inode);
+		size = sizeof(struct silofs_inode);
+		break;
 	case SILOFS_VTYPE_XANODE:
-		return sizeof(struct silofs_xattr_node);
+		size = sizeof(struct silofs_xattr_node);
+		break;
 	case SILOFS_VTYPE_DTNODE:
-		return sizeof(struct silofs_dtree_node);
+		size = sizeof(struct silofs_dtree_node);
+		break;
 	case SILOFS_VTYPE_FTNODE:
-		return sizeof(struct silofs_ftree_node);
+		size = sizeof(struct silofs_ftree_node);
+		break;
 	case SILOFS_VTYPE_SYMVAL:
-		return sizeof(struct silofs_symlnk_value);
+		size = sizeof(struct silofs_symlnk_value);
+		break;
 	case SILOFS_VTYPE_DATA1K:
-		return sizeof(struct silofs_data_block1);
+		size = sizeof(struct silofs_data_block1);
+		break;
 	case SILOFS_VTYPE_DATA4K:
-		return sizeof(struct silofs_data_block4);
+		size = sizeof(struct silofs_data_block4);
+		break;
 	case SILOFS_VTYPE_DATA64K:
-		return sizeof(struct silofs_data_block64);
+		size = sizeof(struct silofs_data_block64);
+		break;
+	case SILOFS_VTYPE_SPNODE2:
+		size = sizeof(struct silofs_space_node);
+		break;
 	case SILOFS_VTYPE_NONE:
 	case SILOFS_VTYPE_LAST:
 	default:
+		size = 0;
 		break;
 	}
-	return 0;
+	return size;
 }
 
 ssize_t silofs_vtype_ssize(enum silofs_vtype vtype)

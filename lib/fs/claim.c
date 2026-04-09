@@ -939,6 +939,9 @@ int silofs_reload_vspace(struct silofs_task_ctx *task)
 		    (vtype == SILOFS_VTYPE_LSMAP)) {
 			continue;
 		}
+		if (vtype == SILOFS_VTYPE_SPNODE2) {
+			continue;
+		}
 		err = rescan_vspace_of(task, vtype);
 		if (err && (err != -SILOFS_ENOENT)) {
 			log_err("failed to reload vspace: vtype=%d err=%d",

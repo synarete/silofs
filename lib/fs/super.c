@@ -206,6 +206,7 @@ sb_mainsilofs_lsid_by(const struct silofs_super_block *sb,
 		ret = &sb->sb_main_lsid.sb_silofs_lsid_data64k;
 		break;
 	case SILOFS_VTYPE_NONE:
+	case SILOFS_VTYPE_SPNODE2:
 	case SILOFS_VTYPE_ARIX:
 	case SILOFS_VTYPE_SUPER:
 	case SILOFS_VTYPE_SPNODE:
@@ -302,6 +303,7 @@ sb_sproot_by(const struct silofs_super_block *sb, enum silofs_vtype vtype)
 	case SILOFS_VTYPE_SUPER:
 	case SILOFS_VTYPE_SPNODE:
 	case SILOFS_VTYPE_SPLEAF:
+	case SILOFS_VTYPE_SPNODE2:
 	case SILOFS_VTYPE_LAST:
 	default:
 		ret = nullptr;
@@ -311,7 +313,7 @@ sb_sproot_by(const struct silofs_super_block *sb, enum silofs_vtype vtype)
 }
 
 static struct silofs_uaddr128b *
-sb_sproot_by2(struct silofs_super_block *sb, enum silofs_vtype vtype)
+sb_mut_sproot_by(struct silofs_super_block *sb, enum silofs_vtype vtype)
 {
 	const struct silofs_uaddr128b *uaddr128 = sb_sproot_by(sb, vtype);
 
@@ -335,7 +337,7 @@ static void
 sb_set_sproot_of(struct silofs_super_block *sb, enum silofs_vtype vtype,
                  const struct silofs_uaddr *uaddr)
 {
-	struct silofs_uaddr128b *uaddr128 = sb_sproot_by2(sb, vtype);
+	struct silofs_uaddr128b *uaddr128 = sb_mut_sproot_by(sb, vtype);
 
 	if (likely(uaddr128 != nullptr)) {
 		silofs_uaddr128b_htox(uaddr128, uaddr);
@@ -348,7 +350,7 @@ static void sb_reset_sproots(struct silofs_super_block *sb)
 	enum silofs_vtype vtype = SILOFS_VTYPE_NONE;
 
 	while (++vtype < SILOFS_VTYPE_LAST) {
-		uaddr128 = sb_sproot_by2(sb, vtype);
+		uaddr128 = sb_mut_sproot_by(sb, vtype);
 		if (uaddr128 != nullptr) {
 			silofs_uaddr128b_htox(uaddr128, silofs_uaddr_none());
 		}

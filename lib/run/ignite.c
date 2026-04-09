@@ -261,6 +261,9 @@ static int format_spmaps(struct silofs_task_ctx *task)
 		if (!silofs_vtype_isvnode(vtype)) {
 			continue;
 		}
+		if (vtype == SILOFS_VTYPE_SPNODE2) {
+			continue;
+		}
 		err = format_spmaps_of(task, vtype);
 		if (err) {
 			return err;
@@ -306,6 +309,9 @@ static int claim_recalim_space(struct silofs_task_ctx *task)
 	while (++vtype < SILOFS_VTYPE_LAST) {
 		if (!silofs_vtype_isvnode(vtype) ||
 		    (vtype == SILOFS_VTYPE_LSMAP)) {
+			continue;
+		}
+		if (vtype == SILOFS_VTYPE_SPNODE2) {
 			continue;
 		}
 		err = claim_reclaim_of(task, vtype);
@@ -358,6 +364,9 @@ static int format_nil_space(struct silofs_task_ctx *task)
 	while (++vtype < SILOFS_VTYPE_LAST) {
 		if (!silofs_vtype_isvnode(vtype) ||
 		    (vtype == SILOFS_VTYPE_LSMAP)) { /* TODO: revisit */
+			continue;
+		}
+		if (vtype == SILOFS_VTYPE_SPNODE2) {
 			continue;
 		}
 		err = claim_offset_zero(task, vtype);

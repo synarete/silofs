@@ -68,7 +68,7 @@ ubn_slot_of(const struct silofs_uber_node *ubn, enum silofs_vtype vtype)
 	size_t slot;
 
 	switch (vtype) {
-	case SILOFS_VTYPE_LSMAP:
+	case SILOFS_VTYPE_SPNODE2:
 		slot = 0;
 		break;
 	case SILOFS_VTYPE_INODE:
@@ -95,6 +95,10 @@ ubn_slot_of(const struct silofs_uber_node *ubn, enum silofs_vtype vtype)
 	case SILOFS_VTYPE_DATA64K:
 		slot = 8;
 		break;
+	case SILOFS_VTYPE_LSMAP:
+		slot = 9;
+		break;
+
 	case SILOFS_VTYPE_SUPER:
 	case SILOFS_VTYPE_SPNODE:
 	case SILOFS_VTYPE_SPLEAF:

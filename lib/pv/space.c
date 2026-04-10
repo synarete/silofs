@@ -23,7 +23,7 @@
 
 static off_t calc_base_offset_of(enum silofs_vtype vtype, off_t off)
 {
-	const ssize_t nrefs = SILOFS_SPNODE_NREFS + 1;
+	const ssize_t nrefs = SILOFS_SPNODE_NREFS;
 	const ssize_t vsize = silofs_vtype_ssize(vtype);
 
 	return silofs_off_align(off, nrefs * vsize);
@@ -192,7 +192,7 @@ static off_t spn_slot_to_off(const struct silofs_space_node *spn, size_t slot)
 
 	silofs_assert_lt(slot, ARRAY_SIZE(spn->sp_ref));
 
-	off = base_off + (off_t)((slot + 1) * ref_size);
+	off = base_off + (off_t)(slot * ref_size);
 	return off;
 }
 
@@ -201,21 +201,18 @@ static size_t spn_off_to_slot(const struct silofs_space_node *spn, off_t off)
 	const size_t nslots   = ARRAY_SIZE(spn->sp_ref);
 	const size_t ref_size = spn_ref_size(spn);
 	const off_t base_off  = spn_base_off(spn);
-	off_t roff, off_end;
+	off_t roff, off_end = silofs_off_end(base_off, nslots * ref_size);
 	size_t slot;
 
-	off_end = silofs_off_end(base_off, (nslots + 1) * ref_size);
-
-	silofs_assert_gt(off, base_off);
+	silofs_assert_ge(off, base_off);
 	silofs_assert_lt(off, off_end);
 	silofs_assert_eq((size_t)off % ref_size, 0);
 
 	roff = (off - base_off);
 	slot = (size_t)roff / ref_size;
-	silofs_assert_gt(slot, 0);
-	silofs_assert_le(slot, ARRAY_SIZE(spn->sp_ref));
+	silofs_assert_lt(slot, ARRAY_SIZE(spn->sp_ref));
 
-	return slot - 1;
+	return slot;
 }
 
 static size_t spn_find_free(const struct silofs_space_node *spn, size_t hint)

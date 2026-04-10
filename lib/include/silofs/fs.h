@@ -26,7 +26,6 @@
 #include <silofs/fs/idsmap.h>
 #include <silofs/fs/lsmap.h>
 #include <silofs/fs/task.h>
-#include <silofs/fs/lspace.h>
 #include <silofs/fs/inode.h>
 #include <silofs/fs/xattr.h>
 #include <silofs/fs/dir.h>

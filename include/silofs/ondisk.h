@@ -652,6 +652,8 @@ struct silofs_header {
 	uint8_t  h_reserved1;
 } silofs_attr_aligned16;
 
+#define SILOFS_SPNODE_NREFS (511)
+
 struct silofs_space_ref {
 	uint64_t spr_refcnt;
 	uint32_t spr_flags;
@@ -663,7 +665,7 @@ struct silofs_space_node {
 	int64_t                 sp_base_off;
 	uint8_t                 sp_ref_vtype;
 	uint8_t                 sp_reserved[7];
-	struct silofs_space_ref sp_ref[511];
+	struct silofs_space_ref sp_ref[SILOFS_SPNODE_NREFS];
 } silofs_attr_aligned64;
 
 struct silofs_sb_sproots {

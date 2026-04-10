@@ -39,7 +39,6 @@ noinst_HEADERS += silofs/fs/idsmap.h
 noinst_HEADERS += silofs/fs/inode.h
 noinst_HEADERS += silofs/fs/lcache.h
 noinst_HEADERS += silofs/fs/lsmap.h
-noinst_HEADERS += silofs/fs/lspace.h
 noinst_HEADERS += silofs/fs/namei.h
 noinst_HEADERS += silofs/fs/spmaps.h
 noinst_HEADERS += silofs/fs/spxmap.h

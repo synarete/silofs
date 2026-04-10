@@ -185,8 +185,8 @@ void silofs_vaddr_by_spleaf(struct silofs_vaddr *vaddr,
 	silofs_vaddr_setup(vaddr, vtype, off);
 }
 
-void silofs_vaddr_of_spmap(const struct silofs_vaddr *ref_vaddr,
-                           struct silofs_vaddr *out_vaddr)
+void silofs_vaddr_of_spnode(const struct silofs_vaddr *ref_vaddr,
+                            struct silofs_vaddr *out_vaddr)
 {
 	const uint64_t lsmap_size = sizeof(struct silofs_lsmap);
 	uint64_t ref_vsize, ref_vseg_size;
@@ -200,7 +200,6 @@ void silofs_vaddr_of_spmap(const struct silofs_vaddr *ref_vaddr,
 	lsmap_off     = (ref_voff / ref_vseg_size) * lsmap_size;
 
 	silofs_assert_ge(ref_vsize, SILOFS_KILO);
-	silofs_assert_ne(ref_vaddr->vtype, SILOFS_VTYPE_LSMAP);
 
 	lsmap_vsp = (uint64_t)(ref_vaddr->vtype);
 	silofs_assert_gt(lsmap_vsp, 0);

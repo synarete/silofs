@@ -15,6 +15,9 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
+#include <silofs/base.h>
+#include <silofs/addr.h>
+#include <silofs/nodes.h>
 #include <silofs/pv.h>
 
 static void update_active_uber(struct silofs_pexec_ctx *pexec,
@@ -112,6 +115,16 @@ format_vspace_root_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
 }
 
 static int
+format_space_node_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
+{
+	struct silofs_vaddr ref_vaddr;
+	struct silofs_space_info *spi;
+
+	silofs_vaddr_setup(&ref_vaddr, vtype, 0);
+	return silofs_spawn_spnode_of(pexec, &ref_vaddr, &spi);
+}
+
+static int
 format_vnode_zero_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
 {
 	const struct silofs_vaddr vaddr = {
@@ -137,6 +150,13 @@ static int format_vspaces(struct silofs_pexec_ctx *pexec)
 			return err;
 		}
 		err = format_vspace_root_of(pexec, vtype);
+		if (err) {
+			return err;
+		}
+		if (vtype == SILOFS_VTYPE_SPNODE2) {
+			continue;
+		}
+		err = format_space_node_of(pexec, vtype);
 		if (err) {
 			return err;
 		}
@@ -234,6 +254,9 @@ static int reload_vspaces(struct silofs_pexec_ctx *pexec)
 		if (err) {
 			return err;
 		}
+		if (vtype == SILOFS_VTYPE_SPNODE2) {
+			continue;
+		}
 		err = reload_vnode_zero_of(pexec, vtype);
 		if (err) {
 			return err;
@@ -303,5 +326,43 @@ int silofs_stage_vnode2_at(struct silofs_pexec_ctx *pexec,
 	if (err) {
 		return err;
 	}
+	return 0;
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_spawn_spnode_of(struct silofs_pexec_ctx *pexec,
+                           const struct silofs_vaddr *ref_vaddr,
+                           struct silofs_space_info **out_spi)
+{
+	struct silofs_vaddr vaddr;
+	struct silofs_vnode_info *vni = nullptr;
+	int err;
+
+	silofs_vaddr_of_spnode(ref_vaddr, &vaddr);
+	err = silofs_spawn_vnode2_at(pexec, &vaddr, &vni);
+	if (err) {
+		return err;
+	}
+	*out_spi = silofs_spi_from_vni(vni);
+	silofs_spi_setup_spawned(*out_spi, ref_vaddr);
+	return 0;
+}
+
+int silofs_stage_spnode_of(struct silofs_pexec_ctx *pexec,
+                           const struct silofs_vaddr *ref_vaddr,
+                           struct silofs_space_info **out_spi)
+{
+	struct silofs_vaddr vaddr;
+	struct silofs_vnode_info *vni = nullptr;
+	int err;
+
+	silofs_vaddr_of_spnode(ref_vaddr, &vaddr);
+	err = silofs_stage_vnode2_at(pexec, &vaddr, &vni);
+	if (err) {
+		return err;
+	}
+	*out_spi = silofs_spi_from_vni(vni);
+	silofs_spi_setup_staged(*out_spi);
 	return 0;
 }

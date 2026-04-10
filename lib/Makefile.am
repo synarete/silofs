@@ -96,7 +96,6 @@ libsilofs_la_SOURCES += fs/idsmap.c
 libsilofs_la_SOURCES += fs/inode.c
 libsilofs_la_SOURCES += fs/lcache.c
 libsilofs_la_SOURCES += fs/lsmap.c
-libsilofs_la_SOURCES += fs/lspace.c
 libsilofs_la_SOURCES += fs/namei.c
 libsilofs_la_SOURCES += fs/sbstat.c
 libsilofs_la_SOURCES += fs/spmaps.c

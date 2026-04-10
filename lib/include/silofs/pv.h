@@ -365,14 +365,14 @@ void silofs_ubref_update(struct silofs_uber_ref  *ubref,
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* space */
 
-struct silofs_space_info *silofs_spi_from_vni(struct silofs_space_info *spi);
+struct silofs_space_info *silofs_spi_from_vni(struct silofs_vnode_info *vni);
 
 void silofs_spi_incref(struct silofs_space_info *spi);
 
 void silofs_spi_decref(struct silofs_space_info *spi);
 
-void silofs_spi_setup_spawned(struct silofs_space_info *spi,
-                              enum silofs_vtype ref_vtype, off_t off);
+void silofs_spi_setup_spawned(struct silofs_space_info  *spi,
+                              const struct silofs_vaddr *ref_vaddr);
 
 void silofs_spi_setup_staged(struct silofs_space_info *spi);
 
@@ -484,5 +484,13 @@ int silofs_spawn_vnode2_at(struct silofs_pexec_ctx   *pexec,
 int silofs_stage_vnode2_at(struct silofs_pexec_ctx   *pexec,
                            const struct silofs_vaddr *vaddr,
                            struct silofs_vnode_info **out_vni);
+
+int silofs_spawn_spnode_of(struct silofs_pexec_ctx   *pexec,
+                           const struct silofs_vaddr *ref_vaddr,
+                           struct silofs_space_info **out_spi);
+
+int silofs_stage_spnode_of(struct silofs_pexec_ctx   *pexec,
+                           const struct silofs_vaddr *ref_vaddr,
+                           struct silofs_space_info **out_spi);
 
 #endif /* SILOFS_PV_H_ */

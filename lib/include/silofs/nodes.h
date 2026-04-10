@@ -382,7 +382,7 @@ void silofs_pcache_delete_pnode(struct silofs_pcache     *pcache,
                                 struct silofs_pnode_info *pni);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-/* lnodes */
+/* vnodes */
 
 enum silofs_lnflags {
 	SILOFS_LNF_RECHECK = SILOFS_BIT(0),

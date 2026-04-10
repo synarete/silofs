@@ -21,6 +21,14 @@
 #include <silofs/nodes.h>
 #include <silofs/pv.h>
 
+static off_t calc_base_offset_of(enum silofs_vtype vtype, off_t off)
+{
+	const ssize_t nrefs = SILOFS_SPNODE_NREFS + 1;
+	const ssize_t vsize = silofs_vtype_ssize(vtype);
+
+	return silofs_off_align(off, nrefs * vsize);
+}
+
 static bool isdata(const struct silofs_vaddr *vaddr)
 {
 	return silofs_vaddr_isdata(vaddr);
@@ -291,9 +299,9 @@ static void spn_reset_flags(struct silofs_space_node *spn, size_t slot)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-struct silofs_space_info *silofs_spi_from_vni(struct silofs_space_info *spi)
+struct silofs_space_info *silofs_spi_from_vni(struct silofs_vnode_info *vni)
 {
-	return container_of(spi, struct silofs_space_info, spn_vni);
+	return container_of(vni, struct silofs_space_info, spn_vni);
 }
 
 void silofs_spi_incref(struct silofs_space_info *spi)
@@ -316,9 +324,12 @@ static void spi_dirtify(struct silofs_space_info *spi)
 }
 
 void silofs_spi_setup_spawned(struct silofs_space_info *spi,
-                              enum silofs_vtype ref_vtype, off_t off)
+                              const struct silofs_vaddr *ref_vaddr)
 {
-	spn_init(spi->spn, ref_vtype, off);
+	const off_t base_off =
+		calc_base_offset_of(ref_vaddr->vtype, ref_vaddr->off);
+
+	spn_init(spi->spn, ref_vaddr->vtype, base_off);
 	spi->spn_nused_ref = 0;
 	spi_dirtify(spi);
 }

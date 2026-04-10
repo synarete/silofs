@@ -307,12 +307,12 @@ static void validate_ondisk_space_node(void)
 {
 	REQUIRE_OFFSET64(struct silofs_space_ref, spr_refcnt, 0);
 	REQUIRE_OFFSET64(struct silofs_space_ref, spr_flags, 8);
-	REQUIRE_SIZEOF(struct silofs_space_ref, 32);
+	REQUIRE_SIZEOF(struct silofs_space_ref, 24);
 	REQUIRE_OFFSET64(struct silofs_space_node, sp_hdr, 0);
 	REQUIRE_OFFSET64(struct silofs_space_node, sp_base_off, 16);
 	REQUIRE_OFFSET64(struct silofs_space_node, sp_ref_vtype, 24);
-	REQUIRE_OFFSET64(struct silofs_space_node, sp_ref, 32);
-	REQUIRE_SIZEOF_16K(struct silofs_space_node);
+	REQUIRE_OFFSET64(struct silofs_space_node, sp_ref, 64);
+	REQUIRE_SIZEOF_8K(struct silofs_space_node);
 }
 
 static void validate_ondisk_super(void)

@@ -385,6 +385,9 @@ void silofs_spi_inc_allocated(struct silofs_space_info  *spi,
 void silofs_spi_dec_allocated(struct silofs_space_info  *spi,
                               const struct silofs_vaddr *vaddr);
 
+size_t silofs_spi_get_allocated(const struct silofs_space_info *spi,
+                                const struct silofs_vaddr      *vaddr);
+
 bool silofs_spi_test_unwritten(const struct silofs_space_info *spi,
                                const struct silofs_vaddr      *vaddr);
 

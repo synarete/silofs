@@ -430,6 +430,14 @@ out:
 	spi_dirtify(spi);
 }
 
+size_t silofs_spi_get_allocated(const struct silofs_space_info *spi,
+                                const struct silofs_vaddr *vaddr)
+{
+	const size_t slot = spi_slot_of(spi, vaddr);
+
+	return spn_get_refcnt(spi->spn, slot);
+}
+
 bool silofs_spi_test_unwritten(const struct silofs_space_info *spi,
                                const struct silofs_vaddr *vaddr)
 {

@@ -485,12 +485,12 @@ int silofs_stage_vnode2_at(struct silofs_pexec_ctx   *pexec,
                            const struct silofs_vaddr *vaddr,
                            struct silofs_vnode_info **out_vni);
 
-int silofs_spawn_spnode_of(struct silofs_pexec_ctx   *pexec,
-                           const struct silofs_vaddr *ref_vaddr,
-                           struct silofs_space_info **out_spi);
+int silofs_spawn_spnode2_of(struct silofs_pexec_ctx   *pexec,
+                            const struct silofs_vaddr *ref_vaddr,
+                            struct silofs_space_info **out_spi);
 
-int silofs_stage_spnode_of(struct silofs_pexec_ctx   *pexec,
-                           const struct silofs_vaddr *ref_vaddr,
-                           struct silofs_space_info **out_spi);
+int silofs_stage_spnode2_of(struct silofs_pexec_ctx   *pexec,
+                            const struct silofs_vaddr *ref_vaddr,
+                            struct silofs_space_info **out_spi);
 
 #endif /* SILOFS_PV_H_ */

@@ -238,6 +238,10 @@ CSOURCE_EXCLUDE = [
     "longjmp",
 ]
 
+MIXED_CASE_ALLOWED = [
+    "XXH3_64bits_withSeed",
+]
+
 MAP_TO_C23 = {
     "NULL": "nullptr",
     "TRUE": "true",
@@ -523,6 +527,11 @@ def _has_mixed_case(tok: str) -> bool:
     return False
 
 
+def _allowed_mixed_case(tok: str) -> bool:
+    """Returns True is token is within list of known mixed-case."""
+    return tok in MIXED_CASE_ALLOWED
+
+
 def check_no_mixed_case(env: LintEnv, sl: SourceLine) -> None:
     """Require function/struct/union/variable names to have same case."""
     names = []
@@ -533,7 +542,7 @@ def check_no_mixed_case(env: LintEnv, sl: SourceLine) -> None:
     for t, tok in names:
         if _is_private_name(tok) or _is_lib_name(tok):
             continue
-        if _has_mixed_case(tok):
+        if _has_mixed_case(tok) and not _allowed_mixed_case(tok):
             env.lerror(sl, f"Mixed-case '{t}' of '{tok}'")
 
 

@@ -842,9 +842,10 @@ static void dtn_remove_fixup(struct silofs_dtree_node *dtn,
 	struct silofs_dir_entry *de;
 	struct silofs_dir_entry *de_beg       = dtn_de_begin(dtn);
 	const struct silofs_dir_entry *de_end = dtn_de_end(dtn);
-	size_t name_pos;
 
 	for (de = de_beg; de < de_end; ++de) {
+		size_t name_pos;
+
 		if (!de_isactive(de)) {
 			continue;
 		}
@@ -861,8 +862,9 @@ static void dtn_trim_nonactive_des(struct silofs_dtree_node *dtn)
 	struct silofs_dir_entry *de_beg = dtn_de_begin(dtn);
 	struct silofs_dir_entry *de     = dtn_de_end(dtn);
 	const size_t nde_curr           = dtn_nde(dtn);
-	size_t nde_trim                 = 0;
+	size_t nde_trim;
 
+	nde_trim = 0;
 	while (de-- > de_beg) {
 		if (de_isactive(de)) {
 			break;
@@ -1209,7 +1211,7 @@ static void dirin_setup(struct silofs_inode_dir *dirin, uint64_t seed)
 	dirin_setup_empty(dirin);
 	dirin_set_seed(dirin, seed);
 	dirin_set_flags(dirin, SILOFS_DIRF_NAME_UTF8);
-	dirin_set_hashfn(dirin, SILOFS_NAMEHASH_XXH64);
+	dirin_set_hashfn(dirin, SILOFS_NAMEHASH_XXH3);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1369,8 +1371,7 @@ static int check_utf8_name(const struct silofs_namestr *nstr,
                            const struct silofs_uconv *uconv)
 {
 	union silofs_utf32_name_buf unb = { .n = 0 };
-	size_t convlen                  = 0;
-	size_t datlen;
+	size_t datlen, convlen = 0;
 	int err;
 
 	err = silofs_uconv_convert(uconv, nstr->sv.str, nstr->sv.len, unb.dat,
@@ -1424,13 +1425,13 @@ int silofs_dir_make_hname(const struct silofs_inode_info *dir_ii,
 void silofs_ii_setup_dir(struct silofs_inode_info *dir_ii, mode_t parent_mode,
                          nlink_t nlink, uint64_t seed)
 {
-	struct silofs_iattr iattr = {
+	const struct silofs_iattr iattr = {
 		.ia_size   = SILOFS_DIR_EMPTY_SIZE,
 		.ia_nlink  = nlink,
 		.ia_blocks = 0,
 		.ia_mode   = silofs_ii_mode(dir_ii) | (parent_mode & S_ISGID),
 		.ia_flags  = SILOFS_IATTR_SIZE | SILOFS_IATTR_BLOCKS |
-		            SILOFS_IATTR_NLINK | SILOFS_IATTR_MODE
+		            SILOFS_IATTR_NLINK | SILOFS_IATTR_MODE,
 	};
 
 	dirin_setup(dirin_of(dir_ii->inode), seed);
@@ -1439,7 +1440,7 @@ void silofs_ii_setup_dir(struct silofs_inode_info *dir_ii, mode_t parent_mode,
 
 static void dir_resetup_empty(struct silofs_inode_info *dir_ii)
 {
-	struct silofs_iattr iattr = {
+	const struct silofs_iattr iattr = {
 		.ia_size   = SILOFS_DIR_EMPTY_SIZE,
 		.ia_blocks = 0,
 		.ia_flags  = SILOFS_IATTR_SIZE | SILOFS_IATTR_BLOCKS,
@@ -1468,8 +1469,7 @@ static int search_dnode(const struct silofs_dtnode_info *dni,
 static int dirc_recheck_dnode(const struct silofs_dir_ctx *d_ctx,
                               struct silofs_dtnode_info *dni)
 {
-	ino_t dnode_ino;
-	ino_t owner_ino;
+	ino_t dnode_ino, owner_ino;
 
 	if (!silofs_vni_need_recheck(&dni->dtn_vni)) {
 		return 0;
@@ -2824,8 +2824,8 @@ static int dinode_verify_hashfn(const struct silofs_inode *inode)
 	int ret;
 
 	switch (hfn) {
-	case SILOFS_NAMEHASH_SHA256:
-	case SILOFS_NAMEHASH_XXH64:
+	case SILOFS_NAMEHASH_SHA3_256:
+	case SILOFS_NAMEHASH_XXH3:
 		ret = 0;
 		break;
 	default:

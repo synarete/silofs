@@ -169,19 +169,19 @@ static uint64_t hash256_to_u64(const struct silofs_hash256 *hash)
 }
 
 static uint64_t
-namehash_by_sha256(const struct silofs_strview *sv,
-                   const struct silofs_mdigest_hd *md, uint64_t seed)
+namehash_by_sha3_256(const struct silofs_strview *sv,
+                     const struct silofs_mdigest_hd *md, uint64_t seed)
 {
 	struct silofs_hash256 sha256;
 
-	silofs_sha256_of(md, sv->str, sv->len, &sha256);
+	silofs_sha3_256_of(md, sv->str, sv->len, &sha256);
 	return seed ^ hash256_to_u64(&sha256);
 }
 
 static uint64_t
-namehash_by_xxh64(const struct silofs_strview *sv, uint64_t seed)
+namehash_by_xxh3(const struct silofs_strview *sv, uint64_t seed)
 {
-	return silofs_xxh64(sv->str, sv->len, seed);
+	return silofs_xxh3_seed(sv->str, sv->len, seed);
 }
 
 static int
@@ -190,11 +190,11 @@ namehash_of(const struct silofs_strview *sv,
             uint64_t seed, uint64_t *out_hash)
 {
 	switch (nhfn) {
-	case SILOFS_NAMEHASH_SHA256:
-		*out_hash = namehash_by_sha256(sv, md, seed);
+	case SILOFS_NAMEHASH_SHA3_256:
+		*out_hash = namehash_by_sha3_256(sv, md, seed);
 		break;
-	case SILOFS_NAMEHASH_XXH64:
-		*out_hash = namehash_by_xxh64(sv, seed);
+	case SILOFS_NAMEHASH_XXH3:
+		*out_hash = namehash_by_xxh3(sv, seed);
 		break;
 	default:
 		return -SILOFS_EINVAL;

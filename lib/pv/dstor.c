@@ -430,7 +430,7 @@ static void lhq_fini(struct silofs_dstor_hq *lhq, struct silofs_alloc *alloc)
 
 static uint64_t lhq_hash_of(const struct silofs_blobidx *blobidx)
 {
-	return silofs_xxh64(blobidx->idx.hash, sizeof(blobidx->idx.hash), 0);
+	return silofs_xxh3(blobidx->idx.hash, sizeof(blobidx->idx.hash));
 }
 
 static size_t lhq_htb_slot_of(const struct silofs_dstor_hq *lhq,

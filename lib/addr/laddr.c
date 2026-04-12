@@ -154,7 +154,7 @@ uint64_t silofs_lsid_hash64(const struct silofs_lsid *lsid)
 	struct silofs_lsid64b lsid64b = { .lsize = 0 };
 
 	silofs_lsid64b_htox(&lsid64b, lsid);
-	return silofs_xxh64(&lsid64b, sizeof(lsid64b), 0);
+	return silofs_xxh3(&lsid64b, sizeof(lsid64b));
 }
 
 void silofs_lsid_setup(struct silofs_lsid *lsid,

@@ -20,38 +20,7 @@
 #include <xxhash.h>
 
 #include <silofs/macros.h>
-#include <silofs/base/utility.h>
-#include <silofs/base/times.h>
 #include <silofs/base/hashfn.h>
-
-uint64_t silofs_fnv1a(const void *buf, size_t len, uint64_t seed)
-{
-	const uint8_t *itr       = (const uint8_t *)buf;
-	const uint8_t *end       = itr + len;
-	const uint64_t fnv_prime = 0x100000001B3UL;
-	uint64_t hval            = seed;
-
-	while (itr < end) {
-		hval *= fnv_prime;
-		hval ^= (uint64_t)(*itr++);
-	}
-	return hval;
-}
-
-uint32_t silofs_xxh32(const void *buf, size_t len, uint32_t seed)
-{
-	return XXH32(buf, len, seed);
-}
-
-uint64_t silofs_xxh64(const void *buf, size_t len, uint64_t seed)
-{
-	return XXH64(buf, len, seed);
-}
-
-uint64_t silofs_xxh3(const void *buf, size_t len)
-{
-	return XXH3_64bits(buf, len);
-}
 
 uint64_t silofs_twang64(uint64_t n)
 {
@@ -64,4 +33,14 @@ uint64_t silofs_twang64(uint64_t n)
 	n = n + (n << 31);
 
 	return n;
+}
+
+uint64_t silofs_xxh3(const void *buf, size_t len)
+{
+	return XXH3_64bits(buf, len);
+}
+
+uint64_t silofs_xxh3_seed(const void *buf, size_t len, uint64_t seed)
+{
+	return XXH3_64bits_withSeed(buf, len, seed);
 }

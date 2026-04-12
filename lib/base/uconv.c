@@ -56,14 +56,16 @@ int silofs_uconv_convert(const struct silofs_uconv *uconv, const char *src,
 	errno = 0;
 	ret   = iconv(uconv->iconv, &in, &inlen, &out, &outlen);
 	if (ret != 0) { // NOLINT
-		return errno ? -errno : -SILOFS_EINVAL;
+		goto out_err;
 	}
 	if (inlen > 0) {
-		return errno ? -errno : -SILOFS_EINVAL;
+		goto out_err;
 	}
 	if ((outlen % 4) != 0) {
-		return errno ? -errno : -SILOFS_EINVAL;
+		goto out_err;
 	}
 	*out_conv = dlen - outlen;
 	return 0;
+out_err:
+	return errno ? -errno : -SILOFS_EINVAL;
 }

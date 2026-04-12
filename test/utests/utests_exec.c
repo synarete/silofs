@@ -177,7 +177,7 @@ static uint64_t ut_prandom_u64(void)
 	silofs_clock_gettime_mono(&ts[0]);
 	silofs_clock_gettime_real(&ts[1]);
 
-	return silofs_xxh64(ts, sizeof(ts), (uint64_t)getpid());
+	return silofs_xxh3(ts, sizeof(ts));
 }
 
 static void ute_prandom(struct ut_env *ute, void *buf, size_t bsz)

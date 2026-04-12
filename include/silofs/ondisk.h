@@ -409,8 +409,8 @@ enum silofs_spacef {
 
 /* name-to-hash functions */
 enum silofs_namehfn {
-	SILOFS_NAMEHASH_SHA256 = 1,
-	SILOFS_NAMEHASH_XXH64  = 2,
+	SILOFS_NAMEHASH_SHA3_256 = 1,
+	SILOFS_NAMEHASH_XXH3     = 2,
 };
 
 /* super-block flags */

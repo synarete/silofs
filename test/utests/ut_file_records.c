@@ -24,6 +24,20 @@ struct ut_record {
 	uint64_t index;
 };
 
+static uint64_t ut_fnv1a(const void *buf, size_t len, uint64_t seed)
+{
+	const uint8_t *itr       = (const uint8_t *)buf;
+	const uint8_t *end       = itr + len;
+	const uint64_t fnv_prime = 0x100000001B3UL;
+	uint64_t hval            = seed;
+
+	while (itr < end) {
+		hval *= fnv_prime;
+		hval ^= (uint64_t)(*itr++);
+	}
+	return hval;
+}
+
 static size_t record_base_size(const struct ut_record *rec)
 {
 	return sizeof(rec->seed) + sizeof(rec->hash) + sizeof(rec->index);
@@ -69,11 +83,6 @@ static void record_decode(struct ut_record *rec)
 	memcpy(&rec->hash, ptr, sizeof(rec->hash));
 	ptr += sizeof(rec->hash);
 	memcpy(&rec->index, ptr, sizeof(rec->index));
-}
-
-static uint64_t ut_fnv1a(const void *buf, size_t len, uint64_t seed)
-{
-	return silofs_fnv1a(buf, len, seed);
 }
 
 static uint64_t record_calchash(const struct ut_record *rec)

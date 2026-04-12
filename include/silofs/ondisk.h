@@ -643,6 +643,7 @@ struct silofs_mbr1k {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+/* common header to all meta-data nodes */
 struct silofs_header {
 	uint32_t h_magic;
 	uint32_t h_csum;
@@ -652,22 +653,21 @@ struct silofs_header {
 	uint8_t  h_reserved1;
 } silofs_attr_aligned16;
 
-#define SILOFS_SPNODE_NREFS (256)
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-struct silofs_space_ref {
-	uint64_t spr_refcnt;
-	uint32_t spr_flags;
-	uint8_t  spr_reserved[12];
-} silofs_attr_aligned8;
+#define SILOFS_SPNODE_NREFS (512)
 
 struct silofs_space_node {
-	struct silofs_header    sp_hdr;
-	int64_t                 sp_base_off;
-	uint8_t                 sp_ref_vtype;
-	uint8_t                 sp_reserved[39];
-	struct silofs_space_ref sp_ref[SILOFS_SPNODE_NREFS];
-	uint8_t                 sp_reserved2[1984];
+	struct silofs_header sp_hdr;
+	int64_t              sp_base_off;
+	uint8_t              sp_ref_vtype;
+	uint8_t              sp_reserved[39];
+	uint8_t              sp_reserved2[960];
+	uint16_t             sp_flags[SILOFS_SPNODE_NREFS];
+	uint32_t             sp_refcnt[SILOFS_SPNODE_NREFS];
 } silofs_attr_aligned64;
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 struct silofs_sb_sproots {
 	struct silofs_uaddr128b sb_sproot_lsmap;

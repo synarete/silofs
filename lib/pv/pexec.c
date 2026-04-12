@@ -434,7 +434,7 @@ int silofs_spawn_spnode2_of(struct silofs_pexec_ctx *pexec,
 {
 	struct silofs_vaddr vaddr;
 
-	silofs_vaddr_of_spnode2(ref_vaddr, &vaddr);
+	silofs_resolve_spnode2_vaddr(ref_vaddr, &vaddr);
 	return silofs_spawn_spnode2(pexec, &vaddr, ref_vaddr, out_spi);
 }
 
@@ -460,6 +460,6 @@ int silofs_stage_spnode2_of(struct silofs_pexec_ctx *pexec,
 {
 	struct silofs_vaddr vaddr;
 
-	silofs_vaddr_of_spnode2(ref_vaddr, &vaddr);
+	silofs_resolve_spnode2_vaddr(ref_vaddr, &vaddr);
 	return silofs_stage_spnode2(pexec, &vaddr, out_spi);
 }

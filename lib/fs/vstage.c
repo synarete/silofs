@@ -46,32 +46,6 @@ static int vstgc_require_lsmap_of(struct silofs_vstage_ctx *vstg_ctx);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static off_t ino_to_off(ino_t ino)
-{
-	off_t off;
-
-	if (silofs_ino_isnull(ino)) {
-		off = SILOFS_OFF_NULL;
-	} else {
-		off = (off_t)(ino << SILOFS_INODE_SHIFT);
-	}
-	return off;
-}
-
-static ino_t off_to_ino(off_t off)
-{
-	ino_t ino;
-
-	if (silofs_off_isnull(off)) {
-		ino = SILOFS_INO_NULL;
-	} else {
-		ino = (ino_t)(off >> SILOFS_INODE_SHIFT);
-	}
-	return ino;
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 static bool is_low_resource_error(int err)
 {
 	bool ret;
@@ -102,7 +76,7 @@ static bool stage_cow(enum silofs_stg_mode stg_mode)
 
 static ino_t vaddr_to_ino(const struct silofs_vaddr *vaddr)
 {
-	return off_to_ino(vaddr->off);
+	return silofs_calc_ino_by_vaddr(vaddr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -2314,7 +2288,11 @@ vstgc_pre_clone_stage_inode_at(const struct silofs_vstage_ctx *vstg_ctx,
 	int err;
 
 	*out_vni = nullptr;
-	ino      = vaddr_to_ino(vaddr);
+
+	ino = vaddr_to_ino(vaddr);
+	if (ino == SILOFS_INO_NULL) {
+		return -SILOFS_EINVAL;
+	}
 	err = silofs_stage_inode(vstg_ctx->task, ino, SILOFS_STG_CUR, &ii);
 	if (err) {
 		return err;
@@ -2829,19 +2807,8 @@ fetch_cached_ii(struct silofs_task_ctx *task, const struct silofs_vaddr *vaddr,
 
 static int resolve_iaddr(ino_t ino, struct silofs_vaddr *out_vaddr)
 {
-	const ino_t ino_max  = SILOFS_INO_MAX;
-	const ino_t ino_root = SILOFS_INO_ROOT;
-	off_t voff;
-
-	if ((ino < ino_root) || (ino > ino_max)) {
-		return -SILOFS_EINVAL;
-	}
-	voff = ino_to_off(ino);
-	if (silofs_off_isnull(voff)) {
-		return -SILOFS_EINVAL;
-	}
-	silofs_vaddr_setup(out_vaddr, SILOFS_VTYPE_INODE, voff);
-	return 0;
+	silofs_calc_vaddr_of_ino(ino, out_vaddr);
+	return !silofs_vaddr_isnull(out_vaddr) ? 0 : -SILOFS_EINVAL;
 }
 
 static int check_stage_inode(const struct silofs_task_ctx *task, ino_t ino,

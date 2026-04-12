@@ -654,9 +654,6 @@ void silofs_vaddr_by_spleaf(struct silofs_vaddr *vaddr,
                             enum silofs_vtype vtype, off_t voff_base,
                             size_t bn, size_t kbn);
 
-void silofs_vaddr_of_spnode2(const struct silofs_vaddr *ref_vaddr,
-                             struct silofs_vaddr       *out_vaddr);
-
 void silofs_vaddr56_htox(struct silofs_vaddr56 *vaddr56, off_t off);
 
 void silofs_vaddr56_xtoh(const struct silofs_vaddr56 *vaddr56, off_t *out_off);
@@ -666,6 +663,15 @@ void silofs_vaddr64_htox(struct silofs_vaddr64     *vaddr64,
 
 void silofs_vaddr64_xtoh(const struct silofs_vaddr64 *vaddr64,
                          struct silofs_vaddr         *vaddr);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_resolve_spnode2_vaddr(const struct silofs_vaddr *ref_vaddr,
+                                  struct silofs_vaddr       *out_vaddr);
+
+void silofs_calc_vaddr_of_ino(ino_t ino, struct silofs_vaddr *out_vaddr);
+
+ino_t silofs_calc_ino_by_vaddr(const struct silofs_vaddr *vaddr);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* genid */

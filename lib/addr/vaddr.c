@@ -185,31 +185,6 @@ void silofs_vaddr_by_spleaf(struct silofs_vaddr *vaddr,
 	silofs_vaddr_setup(vaddr, vtype, off);
 }
 
-void silofs_vaddr_of_spnode2(const struct silofs_vaddr *ref_vaddr,
-                             struct silofs_vaddr *out_vaddr)
-{
-	const uint64_t lsmap_size = sizeof(struct silofs_lsmap);
-	uint64_t ref_vsize, ref_vseg_size;
-	uint64_t ref_voff, lsmap_off, lsmap_vsp;
-
-	ref_voff  = (uint64_t)ref_vaddr->off;
-	ref_vsize = silofs_vtype_size(ref_vaddr->vtype);
-	silofs_assert_ge(ref_vsize, 1024);
-
-	ref_vseg_size = ref_vsize * SILOFS_SPMAP_NCHILDS;
-	lsmap_off     = (ref_voff / ref_vseg_size) * lsmap_size;
-
-	silofs_assert_ge(ref_vsize, SILOFS_KILO);
-
-	lsmap_vsp = (uint64_t)(ref_vaddr->vtype);
-	silofs_assert_gt(lsmap_vsp, 0);
-	silofs_assert_lt(lsmap_vsp, INT8_MAX);
-	silofs_assert_eq(lsmap_off >> 56, 0);
-
-	lsmap_off |= (lsmap_vsp << 56);
-	silofs_vaddr_setup(out_vaddr, SILOFS_VTYPE_LSMAP, (off_t)lsmap_off);
-}
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct silofs_vaddr56 s_vaddr56_null = {
@@ -269,4 +244,80 @@ void silofs_vaddr64_xtoh(const struct silofs_vaddr64 *vaddr64,
 
 	voff_vtype_to_cpu(vaddr64->off_vtype, &voff, &vtype);
 	silofs_vaddr_setup(vaddr, vtype, voff);
+}
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+void silofs_resolve_spnode2_vaddr(const struct silofs_vaddr *ref_vaddr,
+                                  struct silofs_vaddr *out_vaddr)
+{
+	const uint64_t lsmap_size = sizeof(struct silofs_lsmap);
+	uint64_t ref_vsize, ref_vseg_size;
+	uint64_t ref_voff, lsmap_off, lsmap_vsp;
+
+	ref_voff  = (uint64_t)ref_vaddr->off;
+	ref_vsize = silofs_vtype_size(ref_vaddr->vtype);
+	silofs_assert_ge(ref_vsize, 1024);
+
+	ref_vseg_size = ref_vsize * SILOFS_SPMAP_NCHILDS;
+	lsmap_off     = (ref_voff / ref_vseg_size) * lsmap_size;
+
+	silofs_assert_ge(ref_vsize, SILOFS_KILO);
+
+	lsmap_vsp = (uint64_t)(ref_vaddr->vtype);
+	silofs_assert_gt(lsmap_vsp, 0);
+	silofs_assert_lt(lsmap_vsp, INT8_MAX);
+	silofs_assert_eq(lsmap_off >> 56, 0);
+
+	lsmap_off |= (lsmap_vsp << 56);
+	silofs_vaddr_setup(out_vaddr, SILOFS_VTYPE_LSMAP, (off_t)lsmap_off);
+}
+
+static off_t ino_to_off(ino_t ino)
+{
+	if (unlikely(ino == SILOFS_INO_NULL)) {
+		return SILOFS_OFF_NULL;
+	}
+	if (unlikely(ino > SILOFS_INO_MAX)) {
+		return SILOFS_OFF_NULL;
+	}
+	return (off_t)(ino << SILOFS_INODE_SHIFT);
+}
+
+static ino_t off_to_ino(off_t off)
+{
+	ino_t ino;
+	off_t off2;
+
+	if (unlikely(off == SILOFS_OFF_NULL)) {
+		return SILOFS_INO_NULL;
+	}
+	if (unlikely(off < 0)) {
+		return SILOFS_INO_NULL;
+	}
+	ino  = (ino_t)(off >> SILOFS_INODE_SHIFT);
+	off2 = ino_to_off(ino);
+	if (unlikely(off != off2)) {
+		return SILOFS_INO_NULL;
+	}
+	return ino;
+}
+
+void silofs_calc_vaddr_of_ino(ino_t ino, struct silofs_vaddr *out_vaddr)
+{
+	const off_t off = ino_to_off(ino);
+
+	silofs_vaddr_setup(out_vaddr, SILOFS_VTYPE_INODE, off);
+}
+
+ino_t silofs_calc_ino_by_vaddr(const struct silofs_vaddr *vaddr)
+{
+	ino_t ino;
+
+	if (silofs_vaddr_isinode(vaddr)) {
+		ino = off_to_ino(vaddr->off);
+	} else {
+		ino = SILOFS_INO_NULL;
+	}
+	return ino;
 }

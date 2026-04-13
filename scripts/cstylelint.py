@@ -149,6 +149,7 @@ COMPILER_PRIVATE = [
     "__aligned__",
     "__packed__",
     "__pure__",
+    "__noinline__",
     "__nonnull__",
     "__noreturn__",
     "__unused__",

@@ -67,8 +67,11 @@
 #define silofs_fallthrough __attribute__((__fallthrough__))
 #else
 #define silofs_fallthrough \
-	do {               \
-	} while (0) /* fallthrough */
+	do { } while (0) /* fallthrough */
+#endif
+
+#if __has_attribute(__noinline__)
+#define silofs_noinline __attribute__((__noinline__))
 #endif
 
 #endif /* SILOFS_CCATTR_H_ */

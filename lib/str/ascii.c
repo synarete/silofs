@@ -87,7 +87,6 @@ int silofs_ascii_to_byte(const char *a, uint8_t *b)
 	ret = silofs_ascii_to_nibble(a[0]);
 	if (ret == -1) {
 		return -SILOFS_EILLSTR;
-		;
 	}
 	nib[0] = (uint32_t)ret;
 

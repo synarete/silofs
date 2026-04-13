@@ -480,7 +480,7 @@ void silofs_strview_sub(const struct silofs_strview *sv, size_t i, size_t n,
                         struct silofs_strview *out_sv)
 {
 	const size_t sz = sv->len;
-	const size_t j  = strview_has_pos(sv, i) ? min(i, sz) : sz;
+	const size_t j  = min(i, sz);
 	const size_t k  = min(n, sz - j);
 
 	silofs_strview_initn(out_sv, sv->str + j, k);

@@ -135,8 +135,11 @@ silofs_str_find(const char *s1, size_t n1, const char *s2, size_t n2)
 const char *
 silofs_str_rfind(const char *s1, size_t n1, const char *s2, size_t n2)
 {
-	if (!n2 || (n1 < n2)) {
+	if (n1 < n2) {
 		return nullptr;
+	}
+	if (n2 == 0) {
+		return s1 + n1;
 	}
 	for (const char *p = s1 + (n1 - n2); p >= s1; --p) {
 		if (!silofs_str_compare(p, s2, n2)) {
@@ -232,10 +235,11 @@ const char *silofs_str_find_last_not_eq(const char *s, size_t n, char c)
 
 size_t silofs_str_common_prefix(const char *s1, const char *s2, size_t n)
 {
-	size_t k      = 0;
 	const char *p = s1;
 	const char *q = s2;
+	size_t k;
 
+	k = 0;
 	while (k != n) {
 		if (!chr_eq(*p, *q)) {
 			break;
@@ -249,10 +253,11 @@ size_t silofs_str_common_prefix(const char *s1, const char *s2, size_t n)
 
 size_t silofs_str_common_suffix(const char *s1, const char *s2, size_t n)
 {
-	size_t k      = 0;
 	const char *p = s1 + n;
 	const char *q = s2 + n;
+	size_t k;
 
+	k = 0;
 	while (k != n) {
 		--p;
 		--q;
@@ -271,7 +276,7 @@ str_overlaps(const char *s1, size_t n1, const char *s2, size_t n2)
 	const uintptr_t e1 = b1 + n1;
 	const uintptr_t b2 = (uintptr_t)s2;
 	const uintptr_t e2 = b2 + n2;
-	uintptr_t n        = 0;
+	uintptr_t n;
 
 	if ((b1 < e2) && (b2 < e1)) {
 		if (b2 > b1) {
@@ -279,6 +284,8 @@ str_overlaps(const char *s1, size_t n1, const char *s2, size_t n2)
 		} else {
 			n = (e2 - b1);
 		}
+	} else {
+		n = 0;
 	}
 	return n;
 }
@@ -360,41 +367,56 @@ str_insert_no_overlap(char *p, size_t sz, size_t n1, const char *s, size_t n2)
 }
 
 /*
- * Insert where source and destination may overlap. Using local buffer for
- * safe copy -- avoid dynamic allocation, even at the price of performance
+ * Insert where source and destination may overlap. Snapshots the source
+ * through a stack buffer to break the alias before delegating to the
+ * no-overlap path.
  */
 static size_t str_insert_with_overlap(char *p, size_t sz, size_t n1,
                                       const char *s, size_t n2)
 {
 	char buf[512];
-	const char *q;
-	size_t n, r;
+	size_t n, k, r, wr = 0;
 
-	n = n1;
-	q = s + min(n2, sz);
-	r = (size_t)(q - s);
+	/* first chunk  */
+	r = min(n2, sz);
+	k = min(r, SILOFS_ARRAY_SIZE(buf));
+
+	silofs_str_copy(buf, s, k);
+	n = str_insert_no_overlap(p, sz, n1, buf, k);
+	s += k;
+	wr += k;
+	r -= k;
+
+	/* subsequent chunks */
 	while (r > 0) {
-		const size_t k = min(r, SILOFS_ARRAY_SIZE(buf));
+		size_t rem, ncp;
 
-		silofs_str_copy(buf, s, k);
-		n = str_insert_no_overlap(p, sz, n, buf, k);
+		k   = min(r, SILOFS_ARRAY_SIZE(buf));
+		rem = (wr < sz) ? sz - wr : 0;
+		ncp = min(k, rem);
+
+		silofs_str_copy(buf, s, ncp);
+		silofs_str_copy(p + wr, buf, ncp);
 		s += k;
+		wr += ncp;
+		n += ncp;
 		r -= k;
 	}
-	return n;
+
+	return min(n, sz);
 }
 
 size_t
 silofs_str_insert(char *p, size_t sz, size_t n1, const char *s, size_t n2)
 {
-	size_t k;
 	size_t n = 0;
 
 	if (n2 >= sz) {
 		n = sz;
 		silofs_str_copy(p, s, n);
 	} else {
-		k = silofs_str_overlaps(p, sz, s, n2);
+		const size_t k = silofs_str_overlaps(p, sz, s, n2);
+
 		if (k > 0) {
 			n = str_insert_with_overlap(p, sz, n1, s, n2);
 		} else {

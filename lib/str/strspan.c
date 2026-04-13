@@ -413,11 +413,8 @@ void silofs_strspan_reverse(struct silofs_strspan *ss)
 
 void silofs_strspan_foreach(struct silofs_strspan *ss, silofs_chr_modify_fn fn)
 {
-	char *p       = ss->s;
-	const char *q = p + ss->n;
-
-	while (p < q) {
-		fn(p++);
+	for (size_t i = 0; i < ss->v.len; ++i) {
+		fn(ss->s + i);
 	}
 }
 

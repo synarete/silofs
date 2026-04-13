@@ -17,12 +17,12 @@
 #include <silofs/configs.h>
 #include <silofs/config-am.h>
 #include <linux/magic.h>
-#include <linux/un.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/statfs.h>
 #include <sys/mount.h>
 #include <sys/socket.h>
+#include <sys/un.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <limits.h>
@@ -1764,7 +1764,5 @@ int silofs_mntrpc_handshake(uid_t uid, gid_t gid)
 
 const char *silofs_mntrpc_sockname(void)
 {
-	SILOFS_STATICASSERT_LT(sizeof(SILOFS_MNTSOCK_NAME), UNIX_PATH_MAX);
-
 	return SILOFS_MNTSOCK_NAME;
 }

@@ -15,13 +15,15 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
+#include <linux/un.h>
 #include <limits.h>
 #include <endian.h>
 #include <gcrypt.h>
 
+#include <silofs/consts.h>
+#include <silofs/macros.h>
 #include <silofs/ondisk.h>
 #include <silofs/ioctls.h>
-#include <silofs/base.h>
 
 #ifndef LINK_MAX
 #define LINK_MAX 127
@@ -123,6 +125,8 @@ static void validate_external_constants(void)
 	REQUIRE_EQ(SILOFS_MD_SHA3_512, GCRY_MD_SHA3_512);
 	REQUIRE_EQ(SILOFS_KDF_PBKDF2, GCRY_KDF_PBKDF2);
 	REQUIRE_EQ(SILOFS_KDF_SCRYPT, GCRY_KDF_SCRYPT);
+
+	REQUIRE_LT(sizeof(SILOFS_MNTSOCK_NAME), UNIX_PATH_MAX);
 }
 
 static void validate_ondisk_defs(void)

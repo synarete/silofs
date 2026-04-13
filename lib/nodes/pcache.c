@@ -26,6 +26,7 @@ static struct silofs_pnode_info *pni_unconst(const struct silofs_pnode_info *p)
 		const struct silofs_pnode_info *p;
 		struct silofs_pnode_info *q;
 	} u = { .p = p };
+
 	return u.q;
 }
 
@@ -261,15 +262,15 @@ pcache_evict_by(struct silofs_pcache *pcache, struct silofs_pnode_info *pni)
 static int visit_evictable_pni(struct silofs_hmapq_elem *hmqe, void *arg)
 {
 	struct silofs_pnode_info *pni = pni_from_hmqe(hmqe);
-	struct silofs_pnode_info **out_pni;
-	int ret = 0;
 
-	if (pni_isevictable(pni)) {
-		out_pni  = (struct silofs_pnode_info **)arg;
-		*out_pni = pni; /* found candidate for eviction */
-		ret      = 1;
+	if (unlikely(pni == nullptr)) {
+		return 0;
 	}
-	return ret;
+	if (!pni_isevictable(pni)) {
+		return 0;
+	}
+	*(struct silofs_pnode_info **)arg = pni; /* candidate for eviction */
+	return 1;
 }
 
 static struct silofs_pnode_info *

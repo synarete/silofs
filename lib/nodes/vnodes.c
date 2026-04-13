@@ -158,14 +158,18 @@ void silofs_lni_incref(struct silofs_lnode_info *lni)
 {
 	silofs_assert_not_null(lni);
 
-	lni_incref(lni);
+	if (lni != nullptr) {
+		lni_incref(lni);
+	}
 }
 
 void silofs_lni_decref(struct silofs_lnode_info *lni)
 {
 	silofs_assert_not_null(lni);
 
-	lni_decref(lni);
+	if (lni != nullptr) {
+		lni_decref(lni);
+	}
 }
 
 void silofs_lni_remove_from(struct silofs_lnode_info *lni,

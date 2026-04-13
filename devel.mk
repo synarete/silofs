@@ -185,9 +185,7 @@ CFLAGS += -Wold-style-definition
 CFLAGS += -Wpointer-sign
 CFLAGS += -Wstrict-prototypes
 CFLAGS += -Wuninitialized
-CFLAGS += -std=gnu2x
-# Waiting for ubuntu 26.04 for std=gnu23
-#CFLAGS += -std=gnu23
+CFLAGS += -std=c23
 
 # Debug flags
 CFLAGS += -DDEBUG=$(D)

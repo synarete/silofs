@@ -18,13 +18,16 @@
 #define SILOFS_CMD_H_
 
 #include <silofs/configs.h>
-#include <silofs/api.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <time.h>
+#include <unistd.h>
+
+#include <silofs/api.h>
 
 typedef void (*silofs_subcmd_fn)(void);
 

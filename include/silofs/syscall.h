@@ -20,6 +20,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <sys/select.h>
 
 struct stat;
 struct statx;
@@ -107,12 +108,12 @@ int silofs_sys_fchownat(int dirfd, const char *pathname, uid_t uid, gid_t gid,
 
 int silofs_sys_utime(const char *filename, const struct utimbuf *times);
 
-int silofs_sys_utimes(const char *filename, const struct timeval times[2]);
+int silofs_sys_utimes(const char *filename, const struct timeval *times);
 
 int silofs_sys_utimensat(int dirfd, const char *pathname,
-                         const struct timespec times[2], int flags);
+                         const struct timespec *times, int flags);
 
-int silofs_sys_futimens(int fd, const struct timespec times[2]);
+int silofs_sys_futimens(int fd, const struct timespec *times);
 
 int silofs_sys_mkdir(const char *path, mode_t mode);
 

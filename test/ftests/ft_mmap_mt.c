@@ -14,8 +14,9 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <sys/mman.h>
+#define _GNU_SOURCE 1
 #include "ftests.h"
+#include <sys/mman.h>
 
 struct ft_mmap_mt_ctx {
 	struct silofs_thread th;

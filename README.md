@@ -48,10 +48,10 @@ $ git clone https://github.com/synarete/silofs
 $ cd silofs
 
 $ # on rpm-based system:
-$ sudo pgk/rpm/install-rpm-deps.sh
+$ sudo pkg/rpm/install-rpm-deps.sh
 
 $ # on deb-based system:
-$ sudo pgk/deb/install-deb-deps.sh
+$ sudo pkg/deb/install-deb-deps.sh
 ```
 
 Once all build-dependencies are installed on your local build machine,
@@ -71,12 +71,12 @@ build packages directly from source:
 
 ```console
 $ # on rpm-based system:
-$ ./pgk/rpm/packagize-rpm.sh
-$ sudo dnf install ./build/pgk/silofs-0*.rpm
+$ ./pkg/rpm/packagize-rpm.sh
+$ sudo dnf install ./build/pkg/silofs-0*.rpm
 
 $ # on deb-based system:
-$ ./pgk/rpm/packagize-deb.sh
-$ sudo apt install ./build/pgk/silofs-0*.deb
+$ ./pkg/rpm/packagize-deb.sh
+$ sudo apt install ./build/pkg/silofs-0*.deb
 
 $ # verify installation
 $ silofs --version

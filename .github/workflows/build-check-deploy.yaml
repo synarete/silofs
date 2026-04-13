@@ -26,7 +26,7 @@ jobs:
       - name: Update
         run: sudo apt-get update
       - name: Install deps
-        run: sudo ./pgk/deb/install-deb-deps.sh
+        run: sudo ./pkg/deb/install-deb-deps.sh
       - name: Require build tools
         run: ./scripts/requiredeps.sh
       - name: Require install tool
@@ -71,7 +71,7 @@ jobs:
       - name: Update
         run: sudo apt-get update
       - name: Install deps
-        run: sudo ./pgk/deb/install-deb-deps.sh
+        run: sudo ./pkg/deb/install-deb-deps.sh
       - name: Build with GCC
         run: make -f devel.mk
       - name: Re-build with Clang
@@ -96,7 +96,7 @@ jobs:
       - name: Update
         run: sudo apt-get update
       - name: Install deps
-        run: sudo ./pgk/deb/install-deb-deps.sh
+        run: sudo ./pkg/deb/install-deb-deps.sh
       - name: Bootstrap
         run: ./bootstrap
       - name: Configure
@@ -117,7 +117,7 @@ jobs:
       - name: Update
         run: sudo apt-get update
       - name: Install deps
-        run: sudo ./pgk/deb/install-deb-deps.sh --all
+        run: sudo ./pkg/deb/install-deb-deps.sh --all
       - uses: actions/setup-python@v6
         with:
           python-version: "3.10"
@@ -135,11 +135,11 @@ jobs:
       - name: Update
         run: sudo apt-get update
       - name: Install deps
-        run: sudo ./pgk/deb/install-deb-deps.sh
+        run: sudo ./pkg/deb/install-deb-deps.sh
       - name: Install rpm build tools
         run: sudo apt-get install -y rpm
       - name: Build rpm package
-        run: ./pgk/rpm/packagize-rpm.sh
+        run: ./pkg/rpm/packagize-rpm.sh
   build-install-deb-package:
     name: Build and install deb package
     runs-on: ubuntu-24.04
@@ -152,11 +152,11 @@ jobs:
       - name: Update
         run: sudo apt-get update
       - name: Install deps
-        run: sudo ./pgk/deb/install-deb-deps.sh
+        run: sudo ./pkg/deb/install-deb-deps.sh
       - name: Packagize
-        run: ./pgk/deb/packagize-deb.sh
+        run: ./pkg/deb/packagize-deb.sh
       - name: Install
-        run: sudo apt install ./build/pgk/silofs_*.deb
+        run: sudo apt install ./build/pkg/silofs_*.deb
       - name: Verify installation
         run: silofs --version
       - name: Prepare service
@@ -195,7 +195,7 @@ jobs:
       - name: Update
         run: sudo apt-get update
       - name: Install deps
-        run: sudo ./pgk/deb/install-deb-deps.sh
+        run: sudo ./pkg/deb/install-deb-deps.sh
       - name: Build and install
         run: |
           ./bootstrap
@@ -254,7 +254,7 @@ jobs:
       - name: Update
         run: sudo apt-get update
       - name: Install deps
-        run: sudo ./pgk/deb/install-deb-deps.sh
+        run: sudo ./pkg/deb/install-deb-deps.sh
       - name: Run clang static-analyzer
         run: ./scripts/clangscan.sh
   done:

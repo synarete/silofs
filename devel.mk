@@ -185,7 +185,8 @@ CFLAGS += -Wold-style-definition
 CFLAGS += -Wpointer-sign
 CFLAGS += -Wstrict-prototypes
 CFLAGS += -Wuninitialized
-CFLAGS += -std=c23
+CFLAGS += -std=c2x
+#CFLAGS += -std=c23
 
 # Debug flags
 CFLAGS += -DDEBUG=$(D)

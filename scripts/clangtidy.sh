@@ -23,4 +23,8 @@ cfiles=$(find "${rootdir}/"{lib,cmd,mntd,test} -type f -name "*.c")
 hfiles=$(find "${rootdir}/"{include,lib,cmd,mntd,test} -type f \
 	-not -name "fuse_abi.h" -not -name "config*.h" -name "*.h")
 run clang-tidy \
-	--config-file="${conf}" -p "${rootdir}" ${cfiles} ${hfiles}
+	--config-file="${conf}" \
+	-p "${rootdir}" \
+	-extra-arg=-D_GNU_SOURCE \
+	-extra-arg=-D_FILE_OFFSET_BITS=64 \
+	${cfiles} ${hfiles}

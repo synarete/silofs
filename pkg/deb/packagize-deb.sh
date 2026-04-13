@@ -19,7 +19,7 @@ archive_tgz=${name}-${version}.tar.gz
 
 builddir=${rootdir}/build
 buildauxdir=${builddir}/deb
-debdistdir=${builddir}/dist
+debdistdir=${builddir}/pkg
 autotoolsdir=${buildauxdir}/autotools/
 
 debsourcedir=${selfdir}

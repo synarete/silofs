@@ -17,5 +17,9 @@ AC_DEFUN([AX_SILOFS_WANT_COMPILER_OPTS],
   AX_CFLAGS_WARN_ALL
 
   AX_CHECK_COMPILE_FLAG([-Werror], [CFLAGS="$CFLAGS -Werror"])
-  AX_CHECK_COMPILE_FLAG([-std=c23], [CFLAGS="$CFLAGS -std=c23"])
+  AX_CHECK_COMPILE_FLAG([-std=c23], [CFLAGS="$CFLAGS -std=c23"],
+  [
+  # Fallback: Check for the experimental C2x flag (for GCC 13 and earlier)
+  AX_CHECK_COMPILE_FLAG([-std=c2x], [CFLAGS="$CFLAGS -std=c2x"])
+  ])
 ])

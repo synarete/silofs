@@ -117,7 +117,10 @@ silofs_str_find(const char *s1, size_t n1, const char *s2, size_t n2)
 {
 	const char *q;
 
-	if (!n2 || (n1 < n2)) {
+	if (n2 == 0) {
+		return s1;
+	}
+	if (n1 < n2) {
 		return nullptr;
 	}
 	q = s1 + (n1 - n2 + 1);
@@ -321,13 +324,17 @@ void silofs_str_copy(char *t, const char *s, size_t n)
 	}
 }
 
+static void str_reverse_range(char *p, char *q)
+{
+	while (p < q) {
+		chr_swap(p++, --q);
+	}
+}
+
 void silofs_str_reverse(char *s, size_t n)
 {
-	char *p = s;
-	char *q = s + n - 1;
-
-	while (p < q) {
-		chr_swap(p++, q--);
+	if (n > 1) {
+		str_reverse_range(s, s + n);
 	}
 }
 
@@ -361,18 +368,18 @@ static size_t str_insert_with_overlap(char *p, size_t sz, size_t n1,
 {
 	char buf[512];
 	const char *q;
-	size_t n;
-	size_t k;
-	size_t d;
+	size_t n, r;
 
 	n = n1;
 	q = s + min(n2, sz);
-	d = (size_t)(q - s);
-	while (d > 0) {
-		k = min(d, SILOFS_ARRAY_SIZE(buf));
-		silofs_str_copy(buf, q - k, k);
+	r = (size_t)(q - s);
+	while (r > 0) {
+		const size_t k = min(r, SILOFS_ARRAY_SIZE(buf));
+
+		silofs_str_copy(buf, s, k);
 		n = str_insert_no_overlap(p, sz, n, buf, k);
-		d -= k;
+		s += k;
+		r -= k;
 	}
 	return n;
 }
@@ -433,8 +440,7 @@ size_t silofs_str_insert_chr(char *p, size_t sz, size_t n1, size_t n2, char c)
 size_t silofs_str_replace(char *p, size_t sz, size_t len, size_t n1,
                           const char *s, size_t n2)
 {
-	size_t k;
-	size_t m;
+	size_t k, m;
 
 	if (n1 < n2) {
 		/*
@@ -507,75 +513,75 @@ static bool int_to_bool(int v)
 
 bool silofs_chr_isalnum(char c)
 {
-	return int_to_bool(isalnum(c));
+	return int_to_bool(isalnum((int)c));
 }
 
 bool silofs_chr_isalpha(char c)
 {
-	return int_to_bool(isalpha(c));
+	return int_to_bool(isalpha((int)c));
 }
 
 bool silofs_chr_isascii(char c)
 {
-	return int_to_bool(isascii(c));
+	return int_to_bool(isascii((int)c));
 }
 
 bool silofs_chr_isblank(char c)
 {
-	return int_to_bool(isblank(c));
+	return int_to_bool(isblank((int)c));
 }
 
 bool silofs_chr_iscntrl(char c)
 {
-	return int_to_bool(iscntrl(c));
+	return int_to_bool(iscntrl((int)c));
 }
 
 bool silofs_chr_isdigit(char c)
 {
-	return int_to_bool(isdigit(c));
+	return int_to_bool(isdigit((int)c));
 }
 
 bool silofs_chr_isgraph(char c)
 {
-	return int_to_bool(isgraph(c));
+	return int_to_bool(isgraph((int)c));
 }
 
 bool silofs_chr_islower(char c)
 {
-	return int_to_bool(islower(c));
+	return int_to_bool(islower((int)c));
 }
 
 bool silofs_chr_isprint(char c)
 {
-	return int_to_bool(isprint(c));
+	return int_to_bool(isprint((int)c));
 }
 
 bool silofs_chr_ispunct(char c)
 {
-	return int_to_bool(ispunct(c));
+	return int_to_bool(ispunct((int)c));
 }
 
 bool silofs_chr_isspace(char c)
 {
-	return int_to_bool(isspace(c));
+	return int_to_bool(isspace((int)c));
 }
 
 bool silofs_chr_isupper(char c)
 {
-	return int_to_bool(isupper(c));
+	return int_to_bool(isupper((int)c));
 }
 
 bool silofs_chr_isxdigit(char c)
 {
-	return int_to_bool(isxdigit(c));
+	return int_to_bool(isxdigit((int)c));
 }
 
 int silofs_chr_toupper(char c)
 {
-	return toupper(c);
+	return toupper((int)c);
 }
 
 int silofs_chr_tolower(char c)
 {
-	return tolower(c);
+	return tolower((int)c);
 }

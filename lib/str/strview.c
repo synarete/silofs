@@ -491,7 +491,7 @@ void silofs_strview_rsub(const struct silofs_strview *sv, size_t n,
 {
 	const size_t sz = sv->len;
 	const size_t k  = min(n, sz);
-	const size_t j  = sz - n;
+	const size_t j  = sz - k;
 
 	silofs_strview_initn(out_sv, sv->str + j, k);
 }

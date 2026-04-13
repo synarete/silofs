@@ -2713,6 +2713,9 @@ static int do_forkfs_and_relex(struct silofs_task_ctx *task,
 	struct silofs_sb_info *sbi_cur = silofs_get_sbi(task);
 	int err;
 
+	if (unlikely(sbi_cur == nullptr)) {
+		return -SILOFS_EPERM;
+	}
 	err = do_forkfs_of(task, sbi_cur, dir_ii, flags, out_mbrefs);
 	if (err) {
 		return err;

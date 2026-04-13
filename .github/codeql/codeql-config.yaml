@@ -10,6 +10,6 @@ paths:
   - mntd
   - test
 paths-ignore:
-  - dist
+  - pkg
   - docs
   - build-aux

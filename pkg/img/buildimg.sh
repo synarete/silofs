@@ -2,14 +2,13 @@
 export LC_ALL=C
 unset CDPATH
 
-self="$(basename "${BASH_SOURCE[0]}")"
 selfdir="$(realpath "$(dirname "${BASH_SOURCE[0]}")")"
 rootdir="$(realpath "${selfdir}"/../../)"
 source "${rootdir}/bash_functions"
 
 # Common variables
 name=silofs
-workdir="${rootdir}/build/dist/img"
+workdir="${rootdir}/build/pkg/img"
 autotoolsdir="${workdir}/autotools/"
 version_sh="${rootdir}"/version.sh
 conteng=$(command -v docker || command -v podman || echo "no-docker-or-podman")
@@ -41,7 +40,7 @@ contfile="Containerfile"
 cdx "${workdir}"
 run mv "${autotoolsdir}/${disttgz}" "${workdir}"
 run tar --extract --to-command="tee ${contfile}" \
-	--file="${disttgz}" "${distname}/dist/img/Containerfile"
+	--file="${disttgz}" "${distname}/pkg/img/Containerfile"
 
 # Build image using Containerfile and dist tar
 imagetag=${SILOFS_IMAGETAG:-"v${version}"}

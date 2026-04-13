@@ -163,7 +163,7 @@ static enum silofs_log_flags log_ctrl_flags_by(enum silofs_log_level log_level)
 
 static bool log_output_enabled(void)
 {
-	const enum silofs_log_flags log_mask =
+	constexpr enum silofs_log_flags log_mask =
 		(SILOFS_LOGF_STDOUT | SILOFS_LOGF_SYSLOG);
 
 	return (log_ctrl_flags() & log_mask) > 0;

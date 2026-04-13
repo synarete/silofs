@@ -372,7 +372,7 @@ static int mcp_parse_rule(const struct silofs_mntconf_parser *mcp,
                           const struct silofs_strview *args,
                           struct silofs_mntrules *mrules)
 {
-	const size_t max_rules         = ARRAY_SIZE(mrules->rules);
+	constexpr size_t max_rules     = ARRAY_SIZE(mrules->rules);
 	struct silofs_mntrule *mntrule = nullptr;
 	int err;
 
@@ -508,7 +508,7 @@ static bool mip_isfusesilofs_line(const struct silofs_mountinfo_parser *mip)
 static int mip_parse_mntinfo(const struct silofs_mountinfo_parser *mip,
                              struct silofs_mntinfos *minfos)
 {
-	const size_t max_infos = ARRAY_SIZE(minfos->mntd);
+	constexpr size_t max_infos = ARRAY_SIZE(minfos->mntd);
 	struct silofs_strview mntdir;
 	int err;
 

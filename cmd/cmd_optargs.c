@@ -42,10 +42,10 @@ struct cmd_getopt_info {
 
 static void getopti_pre_add(const struct cmd_getopt_info *goi)
 {
-	const char *sopt       = goi->sopts;
-	const char *send       = goi->sopts + CMD_ARRAY_SIZE(goi->sopts);
-	const size_t slen      = strlen(goi->sopts);
-	const size_t nopts_max = CMD_ARRAY_SIZE(goi->lopts);
+	const char *sopt           = goi->sopts;
+	const char *send           = goi->sopts + CMD_ARRAY_SIZE(goi->sopts);
+	const size_t slen          = strlen(goi->sopts);
+	constexpr size_t nopts_max = CMD_ARRAY_SIZE(goi->lopts);
 
 	if (((sopt + slen + 3) > send) || ((goi->nopts + 1) >= nopts_max)) {
 		cmd_diez("too many options");

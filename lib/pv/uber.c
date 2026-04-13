@@ -404,10 +404,6 @@ int silofs_validate_uber(const struct silofs_uber_info *ubi)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-struct silofs_uber_ref {
-	struct silofs_uber_info *ubi;
-};
-
 void silofs_ubref_init(struct silofs_uber_ref *ubref)
 {
 	ubref->ubi = nullptr;

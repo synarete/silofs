@@ -655,6 +655,31 @@ struct silofs_header {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+/* uber-node sub-child by vspace */
+struct silofs_uber_stat {
+	struct silofs_btnptr256b ubs_btroot;
+	struct silofs_spdesc128b ubs_bn_spdesc;
+	struct silofs_spdesc128b ubs_vn_spdesc;
+	uint64_t                 ubs_bn_count;
+	uint64_t                 ubs_vn_count;
+	uint8_t                  ubs_reserved[496];
+} silofs_attr_aligned64;
+
+/* uber-node */
+struct silofs_uber_node {
+	struct silofs_header    ub_hdr;
+	uint8_t                 ub_reserved0[16];
+	struct silofs_timespec  ub_btime;
+	struct silofs_timespec  ub_ctime;
+	uint64_t                ub_generation;
+	uint64_t                ub_capacity;
+	uint8_t                 ub_reserved1[432];
+	uint8_t                 ub_reserved2[512];
+	struct silofs_uber_stat ub_stat[15];
+} silofs_attr_aligned64;
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 #define SILOFS_SPNODE_NREFS (512)
 
 struct silofs_space_node {
@@ -1016,25 +1041,6 @@ struct silofs_blob_desc {
 	uint32_t                bld_flags;
 	uint8_t                 bld_reserved1[56];
 	uint8_t                 bld_obj_state[7936];
-} silofs_attr_aligned64;
-
-/* uber-node sub-child by vspace */
-struct silofs_uber_vspace {
-	struct silofs_btnptr256b ub_btroot;
-	struct silofs_spdesc128b ub_bn_spdesc;
-	struct silofs_spdesc128b ub_vn_spdesc;
-} silofs_attr_aligned64;
-
-/* uber-node */
-struct silofs_uber_node {
-	struct silofs_header      ub_hdr;
-	uint8_t                   ub_reserved0[16];
-	struct silofs_timespec    ub_btime;
-	struct silofs_timespec    ub_ctime;
-	uint64_t                  ub_generation;
-	uint64_t                  ub_capacity;
-	uint8_t                   ub_reserved1[432];
-	struct silofs_uber_vspace ub_vspace[15];
 } silofs_attr_aligned64;
 
 /* btree node of persistent volume mapping */

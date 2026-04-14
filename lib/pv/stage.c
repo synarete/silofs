@@ -327,7 +327,7 @@ static int stc_validate_staged_uber(struct silofs_stage_ctx *st_ctx,
 static void stc_update_spawned_uber(const struct silofs_stage_ctx *st_ctx,
                                     struct silofs_uber_info *ubi)
 {
-	silofs_ubi_ignite(ubi);
+	silofs_ubi_update_spawned(ubi);
 	silofs_unused(st_ctx);
 }
 

@@ -17,47 +17,69 @@
 #include <silofs/configs.h>
 #include <silofs/pv.h>
 
-static void ubv_btroot(const struct silofs_uber_vspace *ubv,
+static void ubs_btroot(const struct silofs_uber_stat *ubs,
                        struct silofs_btnptr *out_btnptr)
 {
-	silofs_btnptr256b_xtoh(&ubv->ub_btroot, out_btnptr);
+	silofs_btnptr256b_xtoh(&ubs->ubs_btroot, out_btnptr);
 }
 
-static void ubv_set_btroot(struct silofs_uber_vspace *ubv,
+static void ubs_set_btroot(struct silofs_uber_stat *ubs,
                            const struct silofs_btnptr *btnptr)
 {
-	silofs_btnptr256b_htox(&ubv->ub_btroot, btnptr);
+	silofs_btnptr256b_htox(&ubs->ubs_btroot, btnptr);
 }
 
-static void ubv_bn_spdesc(const struct silofs_uber_vspace *ubv,
+static void ubs_bn_spdesc(const struct silofs_uber_stat *ubs,
                           struct silofs_spdesc *out_spdesc)
 {
-	silofs_spdesc_xtoh(&ubv->ub_bn_spdesc, out_spdesc);
+	silofs_spdesc_xtoh(&ubs->ubs_bn_spdesc, out_spdesc);
 }
 
-static void ubv_set_bn_spdesc(struct silofs_uber_vspace *ubv,
+static void ubs_set_bn_spdesc(struct silofs_uber_stat *ubs,
                               const struct silofs_spdesc *spdesc)
 {
-	silofs_spdesc_htox(&ubv->ub_bn_spdesc, spdesc);
+	silofs_spdesc_htox(&ubs->ubs_bn_spdesc, spdesc);
 }
 
-static void ubv_vn_spdesc(const struct silofs_uber_vspace *ubv,
+static void ubs_vn_spdesc(const struct silofs_uber_stat *ubs,
                           struct silofs_spdesc *out_spdesc)
 {
-	silofs_spdesc_xtoh(&ubv->ub_vn_spdesc, out_spdesc);
+	silofs_spdesc_xtoh(&ubs->ubs_vn_spdesc, out_spdesc);
 }
 
-static void ubv_set_vn_spdesc(struct silofs_uber_vspace *ubv,
+static void ubs_set_vn_spdesc(struct silofs_uber_stat *ubs,
                               const struct silofs_spdesc *spdesc)
 {
-	silofs_spdesc_htox(&ubv->ub_vn_spdesc, spdesc);
+	silofs_spdesc_htox(&ubs->ubs_vn_spdesc, spdesc);
 }
 
-static void ubv_reset(struct silofs_uber_vspace *ubv)
+static uint64_t ubs_bn_count(const struct silofs_uber_stat *ubs)
 {
-	ubv_set_btroot(ubv, silofs_btnptr_none());
-	ubv_set_bn_spdesc(ubv, silofs_spdesc_none());
-	ubv_set_vn_spdesc(ubv, silofs_spdesc_none());
+	return silofs_le64_to_cpu(ubs->ubs_bn_count);
+}
+
+static void ubs_set_bn_count(struct silofs_uber_stat *ubs, uint64_t n)
+{
+	ubs->ubs_bn_count = silofs_cpu_to_le64(n);
+}
+
+static uint64_t ubs_vn_count(const struct silofs_uber_stat *ubs)
+{
+	return silofs_le64_to_cpu(ubs->ubs_vn_count);
+}
+
+static void ubs_set_vn_count(struct silofs_uber_stat *ubs, uint64_t n)
+{
+	ubs->ubs_vn_count = silofs_cpu_to_le64(n);
+}
+
+static void ubs_reset(struct silofs_uber_stat *ubs)
+{
+	ubs_set_btroot(ubs, silofs_btnptr_none());
+	ubs_set_bn_spdesc(ubs, silofs_spdesc_none());
+	ubs_set_vn_spdesc(ubs, silofs_spdesc_none());
+	ubs_set_bn_count(ubs, 0);
+	ubs_set_vn_count(ubs, 0);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -106,7 +128,7 @@ ubn_slot_of(const struct silofs_uber_node *ubn, enum silofs_vtype vtype)
 	case SILOFS_VTYPE_ARIX:
 	case SILOFS_VTYPE_LAST:
 	default:
-		slot = ARRAY_SIZE(ubn->ub_vspace) - 1;
+		slot = ARRAY_SIZE(ubn->ub_stat) - 1;
 		break;
 	}
 	silofs_assert_lt(slot, SILOFS_VTYPE_LAST);
@@ -145,26 +167,38 @@ static void ubn_inc_generation(struct silofs_uber_node *ubn)
 	ubn_set_generation(ubn, ubn_generation(ubn) + 1);
 }
 
-static const struct silofs_uber_vspace *
-ubn_vspace_at(const struct silofs_uber_node *ubn, size_t slot)
+static const struct silofs_uber_stat *
+ubn_stat_at(const struct silofs_uber_node *ubn, size_t slot)
 {
-	silofs_assert_lt(slot, ARRAY_SIZE(ubn->ub_vspace));
+	silofs_assert_lt(slot, ARRAY_SIZE(ubn->ub_stat));
 
-	return &ubn->ub_vspace[slot];
+	return &ubn->ub_stat[slot];
 }
 
-static struct silofs_uber_vspace *
-ubn_vspace_at2(struct silofs_uber_node *ubn, size_t slot)
+static const struct silofs_uber_stat *
+ubn_stat_of(const struct silofs_uber_node *ubn, enum silofs_vtype vtype)
 {
-	silofs_assert_lt(slot, ARRAY_SIZE(ubn->ub_vspace));
+	return ubn_stat_at(ubn, ubn_slot_of(ubn, vtype));
+}
 
-	return &ubn->ub_vspace[slot];
+static struct silofs_uber_stat *
+ubn_mut_stat_at(struct silofs_uber_node *ubn, size_t slot)
+{
+	silofs_assert_lt(slot, ARRAY_SIZE(ubn->ub_stat));
+
+	return &ubn->ub_stat[slot];
+}
+
+static struct silofs_uber_stat *
+ubn_mut_stat_of(struct silofs_uber_node *ubn, enum silofs_vtype vtype)
+{
+	return ubn_mut_stat_at(ubn, ubn_slot_of(ubn, vtype));
 }
 
 static void ubn_btroot(const struct silofs_uber_node *ubn, size_t slot,
                        struct silofs_btnptr *out_btnptr)
 {
-	ubv_btroot(ubn_vspace_at(ubn, slot), out_btnptr);
+	ubs_btroot(ubn_stat_at(ubn, slot), out_btnptr);
 }
 
 static void
@@ -180,9 +214,9 @@ ubn_btroot_of(const struct silofs_uber_node *ubn, enum silofs_vtype vtype,
 static void ubn_set_btroot(struct silofs_uber_node *ubn, size_t slot,
                            const struct silofs_btnptr *btnptr)
 {
-	silofs_assert_lt(slot, ARRAY_SIZE(ubn->ub_vspace));
+	silofs_assert_lt(slot, ARRAY_SIZE(ubn->ub_stat));
 
-	ubv_set_btroot(ubn_vspace_at2(ubn, slot), btnptr);
+	ubs_set_btroot(ubn_mut_stat_at(ubn, slot), btnptr);
 }
 
 static void
@@ -196,7 +230,7 @@ ubn_set_btroot_of(struct silofs_uber_node *ubn, enum silofs_vtype vtype,
 static void ubn_bn_spdesc(const struct silofs_uber_node *ubn, size_t slot,
                           struct silofs_spdesc *out_spdesc)
 {
-	ubv_bn_spdesc(ubn_vspace_at(ubn, slot), out_spdesc);
+	ubs_bn_spdesc(ubn_stat_at(ubn, slot), out_spdesc);
 }
 
 static void
@@ -209,7 +243,7 @@ ubn_bn_spdesc_of(const struct silofs_uber_node *ubn, enum silofs_vtype vtype,
 static void ubn_set_bn_spdesc(struct silofs_uber_node *ubn, size_t slot,
                               const struct silofs_spdesc *spdesc)
 {
-	ubv_set_bn_spdesc(ubn_vspace_at2(ubn, slot), spdesc);
+	ubs_set_bn_spdesc(ubn_mut_stat_at(ubn, slot), spdesc);
 }
 
 static void
@@ -225,7 +259,7 @@ ubn_set_bn_spdesc_of(struct silofs_uber_node *ubn, enum silofs_vtype vtype,
 static void ubn_vn_spdesc(const struct silofs_uber_node *ubn, size_t slot,
                           struct silofs_spdesc *out_spdesc)
 {
-	ubv_vn_spdesc(ubn_vspace_at(ubn, slot), out_spdesc);
+	ubs_vn_spdesc(ubn_stat_at(ubn, slot), out_spdesc);
 }
 
 static void
@@ -238,7 +272,7 @@ ubn_vn_spdesc_of(const struct silofs_uber_node *ubn, enum silofs_vtype vtype,
 static void ubn_set_vn_spdesc(struct silofs_uber_node *ubn, size_t slot,
                               const struct silofs_spdesc *spdesc)
 {
-	ubv_set_vn_spdesc(ubn_vspace_at2(ubn, slot), spdesc);
+	ubs_set_vn_spdesc(ubn_mut_stat_at(ubn, slot), spdesc);
 }
 
 static void
@@ -249,15 +283,63 @@ ubn_set_vn_spdesc_of(struct silofs_uber_node *ubn, enum silofs_vtype vtype,
 	ubn_set_vn_spdesc(ubn, ubn_slot_of(ubn, vtype), spdesc);
 }
 
-static void ubn_reset_vspace(struct silofs_uber_node *ubn, size_t slot)
+static uint64_t
+ubn_bn_count_of(const struct silofs_uber_node *ubn, enum silofs_vtype vtype)
 {
-	ubv_reset(ubn_vspace_at2(ubn, slot));
+	return ubs_bn_count(ubn_stat_of(ubn, vtype));
 }
 
-static void ubn_reset_vspaces(struct silofs_uber_node *ubn)
+static void
+ubn_inc_bn_count_of(struct silofs_uber_node *ubn, enum silofs_vtype vtype)
 {
-	for (size_t slot = 0; slot < ARRAY_SIZE(ubn->ub_vspace); ++slot) {
-		ubn_reset_vspace(ubn, slot);
+	const uint64_t bn_count = ubn_bn_count_of(ubn, vtype);
+
+	silofs_assert_lt(bn_count, UINT64_MAX / 2);
+	ubs_set_bn_count(ubn_mut_stat_of(ubn, vtype), bn_count + 1);
+}
+
+static void
+ubn_dec_bn_count_of(struct silofs_uber_node *ubn, enum silofs_vtype vtype)
+{
+	const uint64_t bn_count = ubn_bn_count_of(ubn, vtype);
+
+	silofs_assert_gt(bn_count, 0);
+	ubs_set_bn_count(ubn_mut_stat_of(ubn, vtype), bn_count - 1);
+}
+
+static uint64_t
+ubn_vn_count_of(const struct silofs_uber_node *ubn, enum silofs_vtype vtype)
+{
+	return ubs_vn_count(ubn_stat_of(ubn, vtype));
+}
+
+static void
+ubn_inc_vn_count_of(struct silofs_uber_node *ubn, enum silofs_vtype vtype)
+{
+	const uint64_t vn_count = ubn_vn_count_of(ubn, vtype);
+
+	silofs_assert_lt(vn_count, UINT64_MAX / 2);
+	ubs_set_vn_count(ubn_mut_stat_of(ubn, vtype), vn_count + 1);
+}
+
+static void
+ubn_dec_vn_count_of(struct silofs_uber_node *ubn, enum silofs_vtype vtype)
+{
+	const uint64_t vn_count = ubn_vn_count_of(ubn, vtype);
+
+	silofs_assert_gt(vn_count, 0);
+	ubs_set_vn_count(ubn_mut_stat_of(ubn, vtype), vn_count - 1);
+}
+
+static void ubn_reset_stat(struct silofs_uber_node *ubn, size_t slot)
+{
+	ubs_reset(ubn_mut_stat_at(ubn, slot));
+}
+
+static void ubn_reset_stats(struct silofs_uber_node *ubn)
+{
+	for (size_t slot = 0; slot < ARRAY_SIZE(ubn->ub_stat); ++slot) {
+		ubn_reset_stat(ubn, slot);
 	}
 }
 
@@ -267,7 +349,7 @@ static void ubn_setup(struct silofs_uber_node *ubn, const struct timespec *ts)
 	ubn_set_capacity(ubn, 0);
 	ubn_set_btime(ubn, ts);
 	ubn_set_ctime(ubn, ts);
-	ubn_reset_vspaces(ubn);
+	ubn_reset_stats(ubn);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -288,7 +370,7 @@ void silofs_ubi_decref(struct silofs_uber_info *ubi)
 	silofs_pni_decref(&ubi->ub_pni);
 }
 
-void silofs_ubi_ignite(struct silofs_uber_info *ubi)
+void silofs_ubi_update_spawned(struct silofs_uber_info *ubi)
 {
 	struct timespec now;
 
@@ -314,13 +396,18 @@ void silofs_ubi_btroot_of(const struct silofs_uber_info *ubi,
 	ubn_btroot_of(ubi->ubn, vtype, out_btnptr);
 }
 
-void silofs_ubi_set_btroot(struct silofs_uber_info *ubi,
-                           enum silofs_vtype vtype,
-                           const struct silofs_btnptr *btnptr)
+static void ubi_inc_generation(struct silofs_uber_info *ubi)
 {
-	ubn_set_btroot_of(ubi->ubn, vtype, btnptr);
 	ubn_inc_generation(ubi->ubn);
 	silofs_ubi_dirtify(ubi);
+}
+
+static void
+ubi_set_btroot(struct silofs_uber_info *ubi, enum silofs_vtype vtype,
+               const struct silofs_btnptr *btnptr)
+{
+	ubn_set_btroot_of(ubi->ubn, vtype, btnptr);
+	ubi_inc_generation(ubi);
 }
 
 static bool ubi_has_btroot(const struct silofs_uber_info *ubi,
@@ -340,7 +427,7 @@ void silofs_ubi_set_btroot_by(struct silofs_uber_info *ubi,
 
 	silofs_bti_self(bti, &btnptr);
 	if (!ubi_has_btroot(ubi, &btnptr.base)) {
-		silofs_ubi_set_btroot(ubi, silofs_bti_vspace(bti), &btnptr);
+		ubi_set_btroot(ubi, silofs_bti_vspace(bti), &btnptr);
 	}
 }
 
@@ -369,15 +456,43 @@ void silofs_ubi_update_spdesc(struct silofs_uber_info *ubi,
                               const struct silofs_spdesc *spdesc)
 {
 	const struct silofs_blobid *blobid = &spdesc->beg.blobid;
+	const enum silofs_vtype vtype      = blobid->stype.vtype;
 
 	if (blobid->stype.ptype == SILOFS_PTYPE_VNODE) {
-		ubn_set_vn_spdesc_of(ubi->ubn, blobid->stype.vtype, spdesc);
+		ubn_set_vn_spdesc_of(ubi->ubn, vtype, spdesc);
 	} else {
 		silofs_assert_eq(blobid->stype.ptype, SILOFS_PTYPE_BTNODE);
-		ubn_set_bn_spdesc_of(ubi->ubn, blobid->stype.vtype, spdesc);
+		ubn_set_bn_spdesc_of(ubi->ubn, vtype, spdesc);
 	}
-	ubn_inc_generation(ubi->ubn);
-	silofs_ubi_dirtify(ubi);
+	ubi_inc_generation(ubi);
+}
+
+void silofs_ubi_inc_count_by(struct silofs_uber_info *ubi,
+                             const struct silofs_blobid *blobid)
+{
+	const enum silofs_vtype vtype = blobid->stype.vtype;
+
+	if (blobid->stype.ptype == SILOFS_PTYPE_VNODE) {
+		ubn_inc_vn_count_of(ubi->ubn, vtype);
+	} else {
+		silofs_assert_eq(blobid->stype.ptype, SILOFS_PTYPE_BTNODE);
+		ubn_inc_bn_count_of(ubi->ubn, vtype);
+	}
+	ubi_inc_generation(ubi);
+}
+
+void silofs_ubi_dec_count_by(struct silofs_uber_info *ubi,
+                             const struct silofs_blobid *blobid)
+{
+	const enum silofs_vtype vtype = blobid->stype.vtype;
+
+	if (blobid->stype.ptype == SILOFS_PTYPE_VNODE) {
+		ubn_dec_vn_count_of(ubi->ubn, vtype);
+	} else {
+		silofs_assert_eq(blobid->stype.ptype, SILOFS_PTYPE_BTNODE);
+		ubn_dec_bn_count_of(ubi->ubn, vtype);
+	}
+	ubi_inc_generation(ubi);
 }
 
 static bool ubi_onsame_layer(const struct silofs_uber_info *ubi,

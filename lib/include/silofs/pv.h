@@ -321,11 +321,7 @@ void silofs_ubi_dirtify(struct silofs_uber_info *ubi);
 
 void silofs_ubi_undirtify(struct silofs_uber_info *ubi);
 
-void silofs_ubi_ignite(struct silofs_uber_info *ubi);
-
-void silofs_ubi_set_btroot(struct silofs_uber_info    *ubi,
-                           enum silofs_vtype           vtype,
-                           const struct silofs_btnptr *btnptr);
+void silofs_ubi_update_spawned(struct silofs_uber_info *ubi);
 
 void silofs_ubi_set_btroot_by(struct silofs_uber_info         *ubi,
                               const struct silofs_btnode_info *bti);
@@ -343,6 +339,12 @@ void silofs_ubi_start_spdesc(struct silofs_uber_info   *ubi,
 
 void silofs_ubi_update_spdesc(struct silofs_uber_info    *ubi,
                               const struct silofs_spdesc *spdesc);
+
+void silofs_ubi_inc_count_by(struct silofs_uber_info    *ubi,
+                             const struct silofs_blobid *blobid);
+
+void silofs_ubi_dec_count_by(struct silofs_uber_info    *ubi,
+                             const struct silofs_blobid *blobid);
 
 bool silofs_ubi_onsame_layer(const struct silofs_uber_info   *ubi,
                              const struct silofs_btnode_info *bti);

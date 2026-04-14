@@ -47,8 +47,14 @@ imagetag=${SILOFS_IMAGETAG:-"v${version}"}
 imagename=${SILOFS_IMAGENAME:-"${name}:${imagetag}"}
 cdx "${workdir}"
 run "${conteng}" build \
+	--force-rm \
 	--tag "${imagename}" \
 	--file "${contfile}" \
 	--build-arg=DISTNAME="${distname}" \
 	"${workdir}"
+
+# Post build cleanup
+run "${conteng}" image prune -f
+
+# Inspect final image
 run "${conteng}" inspect "${imagename}" --format="{{.ID}}"

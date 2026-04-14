@@ -217,8 +217,8 @@ silofs_attr_noreturn static void cmd_print_version_and_exit(void)
 {
 	FILE *fp = stdout;
 
-	fprintf(fp, "%s %s\n", //
-	        cmd_global_params.name, cmd_global_params.version);
+	fputs(cmd_global_params.version, fp);
+	fputs("\n", fp);
 	fflush(fp);
 	exit(0);
 }

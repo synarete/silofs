@@ -424,12 +424,12 @@ static void mountd_enable_signals(const struct mountd_ctx *ctx)
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static const char mountd_usage[] =
-	"[options] [-f conf]\n"
-	"\n"
-	"options:\n"
-	"  -f, --conf=CONF              Mount-rules config file\n"
-	"  -L, --loglevel=LEVEL         Logging level (rfc5424)\n"
-	"  -v, --version                Show version and exit\n";
+	"[options] [-f conf]                                    \n"
+	"                                                       \n"
+	"options:                                               \n"
+	"  -f, --conf=CONF              Mount-rules config file \n"
+	"  -L, --loglevel=LEVEL         Logging level (rfc5424) \n"
+	"  -v, --version                Show version and exit   \n";
 
 silofs_attr_noreturn static void mountd_goodbye(void)
 {
@@ -444,17 +444,12 @@ silofs_attr_noreturn static void mountd_show_usage(void)
 
 silofs_attr_noreturn static void mountd_show_version(void)
 {
-	printf("%s: %s\n", program_invocation_short_name,
-	       silofs_version.string);
+	printf("%s\n", silofs_version.string);
 	mountd_goodbye();
 }
 
 static void mountd_getopt(struct mountd_ctx *ctx)
 {
-	int opt_chr                 = 1;
-	int opt_index               = 0;
-	int argc                    = ctx->args.argc;
-	char **argv                 = ctx->args.argv;
 	const struct option lopts[] = {
 		{ "conf", required_argument, nullptr, 'f' },
 		{ "loglevel", required_argument, nullptr, 'L' },
@@ -462,6 +457,10 @@ static void mountd_getopt(struct mountd_ctx *ctx)
 		{ "help", no_argument, nullptr, 'h' },
 		{ nullptr, no_argument, nullptr, 0 },
 	};
+	int argc      = ctx->args.argc;
+	char **argv   = ctx->args.argv;
+	int opt_chr   = 1;
+	int opt_index = 0;
 
 	while (opt_chr > 0) {
 		opt_index = 0;

@@ -19,6 +19,7 @@
 #include <sys/resource.h>
 #include <string.h>
 #include <limits.h>
+#include <errno.h>
 
 #include <silofs/ccattr.h>
 #include <silofs/consts.h>
@@ -65,12 +66,27 @@ static size_t alignment_of(size_t sz)
 
 static int cstd_memalign(size_t sz, void **out_mem)
 {
-	return posix_memalign(out_mem, alignment_of(sz), sz);
+	const size_t align_size = alignment_of(sz);
+
+	errno = 0;
+	if (silofs_unlikely(sz == 0)) {
+		*out_mem = nullptr;
+	} else if ((sz % align_size) == 0) {
+		*out_mem = aligned_alloc(align_size, sz);
+	} else {
+		*out_mem = malloc(sz);
+	}
+	return silofs_unlikely(*out_mem == nullptr) ? -errno : 0;
 }
 
 static void cstd_memfree(void *mem, size_t sz)
 {
 	if ((mem != nullptr) && (sz > 0)) {
+		/*
+		 * TODO-0064: use 'free_aligned_sized' (glibc >= 2.43)
+		 *
+		 * Start using C23 sized allocations.
+		 */
 		free(mem);
 	}
 }

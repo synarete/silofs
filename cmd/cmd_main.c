@@ -87,6 +87,10 @@ static void cmd_error_print_progname(void)
 
 static void cmd_setup_globals(int argc, char *argv[])
 {
+	constexpr enum silofs_log_level log_level = SILOFS_LOG_INFO;
+	constexpr enum silofs_log_flags log_flags = SILOFS_LOGF_STDOUT |
+	                                            SILOFS_LOGF_PROGNAME;
+
 	SILOFS_STATICASSERT_LT(sizeof(cmd_global_params), 1024);
 
 	cmd_global_params.version             = silofs_version.string;
@@ -101,9 +105,8 @@ static void cmd_setup_globals(int argc, char *argv[])
 	cmd_global_params.developer_mode      = false;
 	cmd_global_params.dont_daemonize      = false;
 	cmd_global_params.log_params.progname = program_invocation_short_name;
-	cmd_global_params.log_params.level    = SILOFS_LOG_INFO;
-	cmd_global_params.log_params.flags    = SILOFS_LOGF_STDOUT |
-	                                     SILOFS_LOGF_PROGNAME,
+	cmd_global_params.log_params.level    = log_level;
+	cmd_global_params.log_params.flags    = log_flags;
 
 	umask(0077);
 	setlocale(LC_ALL, "");

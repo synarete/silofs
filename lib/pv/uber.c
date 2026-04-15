@@ -495,6 +495,17 @@ void silofs_ubi_dec_count_by(struct silofs_uber_info *ubi,
 	ubi_inc_generation(ubi);
 }
 
+void silofs_ubi_stat_of(const struct silofs_uber_info *ubi,
+                        enum silofs_vtype vtype,
+                        struct silofs_uber_stat *out_stat)
+{
+	memset(out_stat, 0, sizeof(*out_stat));
+	if (silofs_vtype_isvnode(vtype)) {
+		out_stat->bn = ubn_bn_count_of(ubi->ubn, vtype);
+		out_stat->vn = ubn_vn_count_of(ubi->ubn, vtype);
+	}
+}
+
 void silofs_ubi_collect_stats(const struct silofs_uber_info *ubi,
                               struct silofs_uber_stats *out_stats)
 {
@@ -503,11 +514,7 @@ void silofs_ubi_collect_stats(const struct silofs_uber_info *ubi,
 	silofs_memzero(out_stats, sizeof(*out_stats));
 
 	while (++vtype < SILOFS_VTYPE_LAST) {
-		if (!silofs_vtype_isvnode(vtype)) {
-			continue;
-		}
-		out_stats->st[vtype].bn = ubn_bn_count_of(ubi->ubn, vtype);
-		out_stats->st[vtype].vn = ubn_vn_count_of(ubi->ubn, vtype);
+		silofs_ubi_stat_of(ubi, vtype, &out_stats->st[vtype]);
 	}
 }
 

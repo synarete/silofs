@@ -356,6 +356,10 @@ void silofs_ubi_inc_count_by(struct silofs_uber_info    *ubi,
 void silofs_ubi_dec_count_by(struct silofs_uber_info    *ubi,
                              const struct silofs_blobid *blobid);
 
+void silofs_ubi_stat_of(const struct silofs_uber_info *ubi,
+                        enum silofs_vtype              vtype,
+                        struct silofs_uber_stat       *out_stat);
+
 void silofs_ubi_collect_stats(const struct silofs_uber_info *ubi,
                               struct silofs_uber_stats      *out_stats);
 

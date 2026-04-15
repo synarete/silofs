@@ -495,16 +495,6 @@ void silofs_ubi_dec_count_by(struct silofs_uber_info *ubi,
 	ubi_inc_generation(ubi);
 }
 
-/* uber stat per sub-type */
-struct silofs_uber_stat {
-	size_t bn;
-	size_t vn;
-};
-
-struct silofs_uber_stats {
-	struct silofs_uber_stat st[SILOFS_VTYPE_LAST];
-};
-
 void silofs_ubi_collect_stats(const struct silofs_uber_info *ubi,
                               struct silofs_uber_stats *out_stats)
 {

@@ -463,3 +463,41 @@ int silofs_stage_spnode2_of(struct silofs_pexec_ctx *pexec,
 	silofs_resolve_spnode2_vaddr(ref_vaddr, &vaddr);
 	return silofs_stage_spnode2(pexec, &vaddr, out_spi);
 }
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_detach_vnode2_at(struct silofs_pexec_ctx *pexec,
+                            const struct silofs_vaddr *vaddr)
+{
+	struct silofs_pnptr pnptr;
+	int err;
+
+	err = silofs_resolve_vtop(pexec, vaddr, &pnptr);
+	if (err) {
+		return err;
+	}
+	err = silofs_detach_vnode2(pexec, vaddr, &pnptr);
+	if (err) {
+		return err;
+	}
+	err = silofs_remove_vtop(pexec, vaddr);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+int silofs_detach_forget_vnode2(struct silofs_pexec_ctx *pexec,
+                                struct silofs_vnode_info *vni)
+{
+	const struct silofs_vaddr *vaddr;
+	int err;
+
+	vaddr = silofs_vni_vaddr(vni);
+	err   = silofs_detach_vnode2_at(pexec, vaddr);
+	if (err) {
+		return err;
+	}
+	silofs_vcache_forget_vnode(pexec->vcache, vni);
+	return 0;
+}

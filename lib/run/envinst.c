@@ -64,7 +64,7 @@ struct silofs_env_inst {
 };
 
 /* Local functions */
-static void envi_detach_fuseq(struct silofs_env_inst *envi);
+static void envi_unbind_fuseq(struct silofs_env_inst *envi);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
@@ -514,7 +514,7 @@ static void envi_fini_prandgen(struct silofs_env_inst *envi)
 
 static void envi_fini(struct silofs_env_inst *envi)
 {
-	envi_detach_fuseq(envi);
+	envi_unbind_fuseq(envi);
 	envi_fini_env(envi);
 	envi_fini_idsmap(envi);
 	envi_fini_flusher(envi);
@@ -684,7 +684,7 @@ envi_attach_fuseq(struct silofs_env_inst *envi, const struct silofs_spec *spec)
 	return 0;
 }
 
-static void envi_detach_fuseq(struct silofs_env_inst *envi)
+static void envi_unbind_fuseq(struct silofs_env_inst *envi)
 {
 	if (envi->initf & SILOFS_ENVIF_FUSEQ) {
 		silofs_fuseq_del(envi->fuseq, envi->alloc);

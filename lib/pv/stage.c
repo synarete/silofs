@@ -604,185 +604,7 @@ int silofs_require_paddr(struct silofs_pexec_ctx *pexec,
 	return err;
 }
 
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-
-static int stc_write_lview_at(struct silofs_stage_ctx *st_ctx,
-                              const struct silofs_paddr *paddr, size_t len)
-{
-	return silofs_dstor_write_blob_at(st_ctx->dstor, &paddr->blobid,
-	                                  paddr->pos, st_ctx->lview, len);
-}
-
-static int stc_write_vnode(struct silofs_stage_ctx *st_ctx,
-                           const struct silofs_vnode_info *vni)
-{
-	const struct silofs_paddr *paddr = &vni->vn_pnptr.paddr;
-
-	silofs_assert(vni->vn_has_pn);
-
-	return stc_write_lview_at(st_ctx, paddr, vni_len(vni));
-}
-
-static int stc_encrypt_lview_of(struct silofs_stage_ctx *st_ctx,
-                                const struct silofs_vnode_info *vni)
-{
-	return silofs_encrypt_lview2(st_ctx->enc_ci_hd, vni_civkey(vni),
-	                             vni->vn_lni.ln_view, st_ctx->lview,
-	                             vni_len(vni));
-}
-
-static int stc_seal_encrypt_vnode(struct silofs_stage_ctx *st_ctx,
-                                  struct silofs_vnode_info *vni)
-{
-	silofs_seal_vnode(vni);
-	return stc_encrypt_lview_of(st_ctx, vni);
-}
-
-static int stc_destage_dirty_vnode(struct silofs_stage_ctx *st_ctx,
-                                   struct silofs_vnode_info *vni)
-{
-	int err;
-
-	err = stc_require_lview(st_ctx);
-	if (err) {
-		return err;
-	}
-	err = stc_seal_encrypt_vnode(st_ctx, vni);
-	if (err) {
-		return err;
-	}
-	err = stc_write_vnode(st_ctx, vni);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
-static struct silofs_vnode_info *
-stc_vcache_dqfront(struct silofs_stage_ctx *st_ctx)
-{
-	return silofs_vcache_dq_front(st_ctx->vcache);
-}
-
-static int stc_destage_dirty_vnodes(struct silofs_stage_ctx *st_ctx)
-{
-	struct silofs_vnode_info *vni;
-	int err;
-
-	vni = stc_vcache_dqfront(st_ctx);
-	while (vni != nullptr) {
-		err = stc_destage_dirty_vnode(st_ctx, vni);
-		if (err) {
-			return err;
-		}
-		silofs_vni_undirtify(vni);
-		vni = stc_vcache_dqfront(st_ctx);
-	}
-	return 0;
-}
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static int stc_write_pview_at(struct silofs_stage_ctx *st_ctx,
-                              const struct silofs_paddr *paddr, size_t len)
-{
-	return silofs_dstor_write_blob_at(st_ctx->dstor, &paddr->blobid,
-	                                  paddr->pos, st_ctx->pview, len);
-}
-
-static int stc_write_pnode(struct silofs_stage_ctx *st_ctx,
-                           const struct silofs_pnode_info *pni)
-{
-	const struct silofs_paddr *paddr = &pni->pn_self.paddr;
-
-	return stc_write_pview_at(st_ctx, paddr, pni_len(pni));
-}
-
-static int stc_encrypt_pview_of(struct silofs_stage_ctx *st_ctx,
-                                const struct silofs_pnode_info *pni)
-{
-	return silofs_encrypt_pview(st_ctx->enc_ci_hd, pni_civkey(pni),
-	                            pni->pn_pview, st_ctx->pview,
-	                            pni_len(pni));
-}
-
-static int stc_seal_encrypt_pnode(struct silofs_stage_ctx *st_ctx,
-                                  struct silofs_pnode_info *pni)
-{
-	silofs_seal_pnode(pni);
-	return stc_encrypt_pview_of(st_ctx, pni);
-}
-
-static int stc_destage_dirty_pnode(struct silofs_stage_ctx *st_ctx,
-                                   struct silofs_pnode_info *pni)
-{
-	int err;
-
-	err = stc_require_pview(st_ctx);
-	if (err) {
-		return err;
-	}
-	err = stc_seal_encrypt_pnode(st_ctx, pni);
-	if (err) {
-		return err;
-	}
-	err = stc_write_pnode(st_ctx, pni);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
-static struct silofs_pnode_info *
-stc_pcache_dqfront(struct silofs_stage_ctx *st_ctx)
-{
-	return silofs_pcache_dq_front(st_ctx->pcache);
-}
-
-static int stc_destage_dirty_pnodes(struct silofs_stage_ctx *st_ctx)
-{
-	struct silofs_pnode_info *pni;
-	int err;
-
-	pni = stc_pcache_dqfront(st_ctx);
-	while (pni != nullptr) {
-		err = stc_destage_dirty_pnode(st_ctx, pni);
-		if (err) {
-			return err;
-		}
-		silofs_pni_undirtify(pni);
-		pni = stc_pcache_dqfront(st_ctx);
-	}
-	return 0;
-}
-
-static int stc_destage_dirty(struct silofs_stage_ctx *st_ctx)
-{
-	int err;
-
-	err = stc_destage_dirty_vnodes(st_ctx);
-	if (err) {
-		return err;
-	}
-	err = stc_destage_dirty_pnodes(st_ctx);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
-int silofs_destage_dirty(struct silofs_pexec_ctx *pexec)
-{
-	struct silofs_stage_ctx st_ctx = {};
-	int err;
-
-	stc_init(&st_ctx, pexec);
-	err = stc_destage_dirty(&st_ctx);
-	stc_fini(&st_ctx);
-	return err;
-}
-
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static int stc_lookup_cached_vnode(const struct silofs_stage_ctx *st_ctx,
                                    const struct silofs_vaddr *vaddr,
@@ -958,6 +780,237 @@ int silofs_stage_vnode2(struct silofs_pexec_ctx *pexec,
 
 	stc_init(&st_ctx, pexec);
 	err = stc_stage_vnode(&st_ctx, vaddr, pnptr, out_vni);
+	stc_fini(&st_ctx);
+	return err;
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static void stc_undirtify_cached_vnode(struct silofs_stage_ctx *st_ctx,
+                                       const struct silofs_vaddr *vaddr)
+{
+	struct silofs_vnode_info *vni = nullptr;
+	int err;
+
+	err = stc_lookup_cached_vnode(st_ctx, vaddr, &vni);
+	if (!err) {
+		silofs_vni_undirtify(vni);
+	}
+}
+
+static void stc_detach_vspace(struct silofs_stage_ctx *st_ctx,
+                              const struct silofs_pnptr *pnptr)
+{
+	const struct silofs_blobid *blobid = &pnptr->paddr.blobid;
+
+	silofs_assert_eq(blobid->stype.ptype, SILOFS_PTYPE_VNODE);
+
+	silofs_ubi_dec_count_by(stc_ubi(st_ctx), blobid);
+}
+
+static int stc_detach_vnode(struct silofs_stage_ctx *st_ctx,
+                            const struct silofs_vaddr *vaddr,
+                            const struct silofs_pnptr *pnptr)
+{
+	int err;
+
+	err = stc_access_pnode_of(st_ctx, pnptr);
+	if (err) {
+		return err;
+	}
+
+	stc_detach_vspace(st_ctx, pnptr);
+	stc_undirtify_cached_vnode(st_ctx, vaddr);
+	return 0;
+}
+
+int silofs_detach_vnode2(struct silofs_pexec_ctx *pexec,
+                         const struct silofs_vaddr *vaddr,
+                         const struct silofs_pnptr *pnptr)
+{
+	struct silofs_stage_ctx st_ctx = {};
+	int err;
+
+	stc_init(&st_ctx, pexec);
+	err = stc_detach_vnode(&st_ctx, vaddr, pnptr);
+	stc_fini(&st_ctx);
+	return err;
+}
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+static int stc_write_lview_at(struct silofs_stage_ctx *st_ctx,
+                              const struct silofs_paddr *paddr, size_t len)
+{
+	return silofs_dstor_write_blob_at(st_ctx->dstor, &paddr->blobid,
+	                                  paddr->pos, st_ctx->lview, len);
+}
+
+static int stc_write_vnode(struct silofs_stage_ctx *st_ctx,
+                           const struct silofs_vnode_info *vni)
+{
+	const struct silofs_paddr *paddr = &vni->vn_pnptr.paddr;
+
+	silofs_assert(vni->vn_has_pn);
+
+	return stc_write_lview_at(st_ctx, paddr, vni_len(vni));
+}
+
+static int stc_encrypt_lview_of(struct silofs_stage_ctx *st_ctx,
+                                const struct silofs_vnode_info *vni)
+{
+	return silofs_encrypt_lview2(st_ctx->enc_ci_hd, vni_civkey(vni),
+	                             vni->vn_lni.ln_view, st_ctx->lview,
+	                             vni_len(vni));
+}
+
+static int stc_seal_encrypt_vnode(struct silofs_stage_ctx *st_ctx,
+                                  struct silofs_vnode_info *vni)
+{
+	silofs_seal_vnode(vni);
+	return stc_encrypt_lview_of(st_ctx, vni);
+}
+
+static int stc_destage_dirty_vnode(struct silofs_stage_ctx *st_ctx,
+                                   struct silofs_vnode_info *vni)
+{
+	int err;
+
+	err = stc_require_lview(st_ctx);
+	if (err) {
+		return err;
+	}
+	err = stc_seal_encrypt_vnode(st_ctx, vni);
+	if (err) {
+		return err;
+	}
+	err = stc_write_vnode(st_ctx, vni);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+static struct silofs_vnode_info *
+stc_vcache_dqfront(struct silofs_stage_ctx *st_ctx)
+{
+	return silofs_vcache_dq_front(st_ctx->vcache);
+}
+
+static int stc_destage_dirty_vnodes(struct silofs_stage_ctx *st_ctx)
+{
+	struct silofs_vnode_info *vni;
+	int err;
+
+	vni = stc_vcache_dqfront(st_ctx);
+	while (vni != nullptr) {
+		err = stc_destage_dirty_vnode(st_ctx, vni);
+		if (err) {
+			return err;
+		}
+		silofs_vni_undirtify(vni);
+		vni = stc_vcache_dqfront(st_ctx);
+	}
+	return 0;
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static int stc_write_pview_at(struct silofs_stage_ctx *st_ctx,
+                              const struct silofs_paddr *paddr, size_t len)
+{
+	return silofs_dstor_write_blob_at(st_ctx->dstor, &paddr->blobid,
+	                                  paddr->pos, st_ctx->pview, len);
+}
+
+static int stc_write_pnode(struct silofs_stage_ctx *st_ctx,
+                           const struct silofs_pnode_info *pni)
+{
+	const struct silofs_paddr *paddr = &pni->pn_self.paddr;
+
+	return stc_write_pview_at(st_ctx, paddr, pni_len(pni));
+}
+
+static int stc_encrypt_pview_of(struct silofs_stage_ctx *st_ctx,
+                                const struct silofs_pnode_info *pni)
+{
+	return silofs_encrypt_pview(st_ctx->enc_ci_hd, pni_civkey(pni),
+	                            pni->pn_pview, st_ctx->pview,
+	                            pni_len(pni));
+}
+
+static int stc_seal_encrypt_pnode(struct silofs_stage_ctx *st_ctx,
+                                  struct silofs_pnode_info *pni)
+{
+	silofs_seal_pnode(pni);
+	return stc_encrypt_pview_of(st_ctx, pni);
+}
+
+static int stc_destage_dirty_pnode(struct silofs_stage_ctx *st_ctx,
+                                   struct silofs_pnode_info *pni)
+{
+	int err;
+
+	err = stc_require_pview(st_ctx);
+	if (err) {
+		return err;
+	}
+	err = stc_seal_encrypt_pnode(st_ctx, pni);
+	if (err) {
+		return err;
+	}
+	err = stc_write_pnode(st_ctx, pni);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+static struct silofs_pnode_info *
+stc_pcache_dqfront(struct silofs_stage_ctx *st_ctx)
+{
+	return silofs_pcache_dq_front(st_ctx->pcache);
+}
+
+static int stc_destage_dirty_pnodes(struct silofs_stage_ctx *st_ctx)
+{
+	struct silofs_pnode_info *pni;
+	int err;
+
+	pni = stc_pcache_dqfront(st_ctx);
+	while (pni != nullptr) {
+		err = stc_destage_dirty_pnode(st_ctx, pni);
+		if (err) {
+			return err;
+		}
+		silofs_pni_undirtify(pni);
+		pni = stc_pcache_dqfront(st_ctx);
+	}
+	return 0;
+}
+
+static int stc_destage_dirty(struct silofs_stage_ctx *st_ctx)
+{
+	int err;
+
+	err = stc_destage_dirty_vnodes(st_ctx);
+	if (err) {
+		return err;
+	}
+	err = stc_destage_dirty_pnodes(st_ctx);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+int silofs_destage_dirty(struct silofs_pexec_ctx *pexec)
+{
+	struct silofs_stage_ctx st_ctx = {};
+	int err;
+
+	stc_init(&st_ctx, pexec);
+	err = stc_destage_dirty(&st_ctx);
 	stc_fini(&st_ctx);
 	return err;
 }

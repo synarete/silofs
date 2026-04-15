@@ -152,7 +152,7 @@ static void
 lcache_evict_uni(struct silofs_lcache *lcache, struct silofs_unode_info *uni,
                  enum silofs_allocf flags)
 {
-	silofs_uni_undirtify(uni);
+	silofs_uni_cleardirty(uni);
 	lcache_remove_uni(lcache, uni);
 	silofs_del_unode(uni, lcache->lc_alloc, (int)flags);
 }
@@ -417,8 +417,8 @@ silofs_lcache_create_vnode(struct silofs_lcache *lcache,
 	return silofs_vcache_create_vnode(&lcache->lc_vc, vaddr);
 }
 
-void silofs_lcache_redirtify_vnode(struct silofs_lcache *lcache,
-                                   struct silofs_vnode_info *vni)
+void silofs_lcache_remarkdirty_vnode(struct silofs_lcache *lcache,
+                                     struct silofs_vnode_info *vni)
 {
 	silofs_vcache_rebind_vnode(&lcache->lc_vc, vni);
 }

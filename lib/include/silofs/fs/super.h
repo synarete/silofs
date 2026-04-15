@@ -49,7 +49,7 @@ void silofs_sbi_incref(struct silofs_sb_info *sbi);
 
 void silofs_sbi_decref(struct silofs_sb_info *sbi);
 
-void silofs_sbi_dirtify(struct silofs_sb_info *sbi);
+void silofs_sbi_markdirty(struct silofs_sb_info *sbi);
 
 void silofs_sbi_setup_spawned(struct silofs_sb_info *sbi);
 

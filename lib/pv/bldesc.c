@@ -300,17 +300,17 @@ static void bld_setup(struct silofs_blob_desc *bld)
 void silofs_bdi_ignite(struct silofs_bldesc_info *bdi)
 {
 	bld_setup(bdi->bld);
-	silofs_bdi_dirtify(bdi);
+	silofs_bdi_markdirty(bdi);
 }
 
-void silofs_bdi_dirtify(struct silofs_bldesc_info *bdi)
+void silofs_bdi_markdirty(struct silofs_bldesc_info *bdi)
 {
-	silofs_pni_dirtify(&bdi->bld_pni);
+	silofs_pni_markdirty(&bdi->bld_pni);
 }
 
-void silofs_bdi_undirtify(struct silofs_bldesc_info *bdi)
+void silofs_bdi_cleardirty(struct silofs_bldesc_info *bdi)
 {
-	silofs_pni_undirtify(&bdi->bld_pni);
+	silofs_pni_cleardirty(&bdi->bld_pni);
 }
 
 void silofs_bdi_ignite2(struct silofs_bldesc_info *bdi,
@@ -330,7 +330,7 @@ void silofs_bdi_ignite2(struct silofs_bldesc_info *bdi,
 	bld_set_nobjs_max(bdi->bld, nobjs_max);
 	bld_set_nobjs(bdi->bld, 0);
 	bld_reset_obj_state(bdi->bld);
-	silofs_bdi_dirtify(bdi);
+	silofs_bdi_markdirty(bdi);
 }
 
 int silofs_bdi_find_free(const struct silofs_bldesc_info *bdi,
@@ -392,7 +392,7 @@ int silofs_bdi_mark_free(struct silofs_bldesc_info *bdi,
 	}
 	bld_mark_used_slot_by(bdi->bld, paddr->pos);
 	bld_inc_nobjs(bdi->bld);
-	silofs_bdi_dirtify(bdi);
+	silofs_bdi_markdirty(bdi);
 	return 0;
 }
 
@@ -410,7 +410,7 @@ int silofs_bdi_mark_used(struct silofs_bldesc_info *bdi,
 	}
 	bld_mark_free_slot_by(bdi->bld, paddr->pos);
 	bld_dec_nobjs(bdi->bld);
-	silofs_bdi_dirtify(bdi);
+	silofs_bdi_markdirty(bdi);
 	return 0;
 }
 

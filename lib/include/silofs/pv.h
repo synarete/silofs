@@ -204,9 +204,9 @@ int silofs_repo_read_at(struct silofs_repo        *repo,
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* bldesc */
 
-void silofs_bdi_dirtify(struct silofs_bldesc_info *bdi);
+void silofs_bdi_markdirty(struct silofs_bldesc_info *bdi);
 
-void silofs_bdi_undirtify(struct silofs_bldesc_info *bdi);
+void silofs_bdi_cleardirty(struct silofs_bldesc_info *bdi);
 
 void silofs_bdi_ignite(struct silofs_bldesc_info *bdi);
 
@@ -239,9 +239,9 @@ void silofs_bti_incref(struct silofs_btnode_info *bti);
 
 void silofs_bti_decref(struct silofs_btnode_info *bti);
 
-void silofs_bti_dirtify(struct silofs_btnode_info *bti);
+void silofs_bti_markdirty(struct silofs_btnode_info *bti);
 
-void silofs_bti_undirtify(struct silofs_btnode_info *bti);
+void silofs_bti_cleardirty(struct silofs_btnode_info *bti);
 
 bool silofs_bti_isfull(const struct silofs_btnode_info *bti);
 
@@ -327,9 +327,9 @@ void silofs_ubi_incref(struct silofs_uber_info *ubi);
 
 void silofs_ubi_decref(struct silofs_uber_info *ubi);
 
-void silofs_ubi_dirtify(struct silofs_uber_info *ubi);
+void silofs_ubi_markdirty(struct silofs_uber_info *ubi);
 
-void silofs_ubi_undirtify(struct silofs_uber_info *ubi);
+void silofs_ubi_cleardirty(struct silofs_uber_info *ubi);
 
 void silofs_ubi_update_spawned(struct silofs_uber_info *ubi);
 

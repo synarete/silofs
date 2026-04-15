@@ -513,9 +513,9 @@ void silofs_sli_decref(struct silofs_spleaf_info *sli)
 	}
 }
 
-static void sli_dirtify(struct silofs_spleaf_info *sli)
+static void sli_markdirty(struct silofs_spleaf_info *sli)
 {
-	silofs_uni_dirtify(sli_uni(sli));
+	silofs_uni_markdirty(sli_uni(sli));
 }
 
 void silofs_sli_get_lrange(const struct silofs_spleaf_info *sli,
@@ -535,7 +535,7 @@ void silofs_sli_setup_spawned(struct silofs_spleaf_info *sli,
 	spleaf_init(sl, &lrange, refvtype);
 	spleaf_set_parent(sl, parent);
 	spleaf_set_self(sl, silofs_sli_uaddr(sli));
-	sli_dirtify(sli);
+	sli_markdirty(sli);
 }
 
 off_t silofs_sli_base_voff(const struct silofs_spleaf_info *sli)
@@ -575,14 +575,14 @@ void silofs_sli_bind_main_lseg(struct silofs_spleaf_info *sli,
                                const struct silofs_lsid *lsid)
 {
 	spleaf_set_main_lsid(sli->sl, lsid);
-	sli_dirtify(sli);
+	sli_markdirty(sli);
 }
 
 void silofs_sli_clone_from(struct silofs_spleaf_info *sli,
                            const struct silofs_spleaf_info *sli_other)
 {
 	spleaf_clone_subrefs(sli->sl, sli_other->sl);
-	sli_dirtify(sli);
+	sli_markdirty(sli);
 }
 
 int silofs_sli_resolve_main_lbk(const struct silofs_spleaf_info *sli,
@@ -648,7 +648,7 @@ int silofs_sli_require_child(struct silofs_spleaf_info *sli,
 		return 0;
 	}
 	spleaf_bind_lbk_to_main(sli->sl, vaddr->off);
-	sli_dirtify(sli);
+	sli_markdirty(sli);
 	*out_new = true;
 	return 0;
 }
@@ -657,7 +657,7 @@ void silofs_sli_bind_child(struct silofs_spleaf_info *sli, off_t voff,
                            const struct silofs_laddr *laddr)
 {
 	spleaf_set_child_of(sli->sl, voff, laddr);
-	sli_dirtify(sli);
+	sli_markdirty(sli);
 }
 
 static void lmap_append_entry(struct silofs_spmap_lmap *lmap,
@@ -756,9 +756,9 @@ static struct silofs_unode_info *sni_uni(const struct silofs_spnode_info *sni)
 	return silofs_unconst(&sni->sn_uni);
 }
 
-static void sni_dirtify(struct silofs_spnode_info *sni)
+static void sni_markdirty(struct silofs_spnode_info *sni)
 {
-	silofs_uni_dirtify(sni_uni(sni));
+	silofs_uni_markdirty(sni_uni(sni));
 }
 
 const struct silofs_uaddr *
@@ -797,7 +797,7 @@ void silofs_sni_setup_spawned(struct silofs_spnode_info *sni,
 	spnode_init(sni->sn, &lrange);
 	spnode_set_parent(sni->sn, parent);
 	spnode_set_self(sni->sn, silofs_sni_uaddr(sni));
-	sni_dirtify(sni);
+	sni_markdirty(sni);
 }
 
 void silofs_sni_update_nactive(struct silofs_spnode_info *sni)
@@ -825,7 +825,7 @@ void silofs_sni_bind_child(struct silofs_spnode_info *sni, off_t voff,
 	if (bind_new) {
 		sni->sn_nactive_subs++;
 	}
-	sni_dirtify(sni);
+	sni_markdirty(sni);
 }
 
 static bool sni_is_inrange(const struct silofs_spnode_info *sni, off_t voff)
@@ -907,7 +907,7 @@ void silofs_sni_bind_main_lseg(struct silofs_spnode_info *sni,
                                const struct silofs_lsid *lsid)
 {
 	spnode_set_main_lsid(sni->sn, lsid);
-	sni_dirtify(sni);
+	sni_markdirty(sni);
 }
 
 static off_t
@@ -949,7 +949,7 @@ void silofs_sni_clone_from(struct silofs_spnode_info *sni,
 {
 	spnode_clone_subrefs(sni->sn, sni_other->sn);
 	sni->sn_nactive_subs = sni_other->sn_nactive_subs;
-	sni_dirtify(sni);
+	sni_markdirty(sni);
 }
 
 void silofs_sni_resolve_lmap(const struct silofs_spnode_info *sni,

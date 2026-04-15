@@ -363,9 +363,9 @@ int silofs_reload_pv(struct silofs_pexec_ctx *pexec,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void vni_dirtify(struct silofs_vnode_info *vni)
+static void vni_markdirty(struct silofs_vnode_info *vni)
 {
-	silofs_vni_dirtify(vni, nullptr);
+	silofs_vni_markdirty(vni, nullptr);
 }
 
 int silofs_spawn_vnode2_at(struct silofs_pexec_ctx *pexec,
@@ -387,7 +387,7 @@ int silofs_spawn_vnode2_at(struct silofs_pexec_ctx *pexec,
 	if (err) {
 		return err;
 	}
-	vni_dirtify(*out_vni);
+	vni_markdirty(*out_vni);
 	return 0;
 }
 

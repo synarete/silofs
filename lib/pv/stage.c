@@ -786,15 +786,15 @@ int silofs_stage_vnode2(struct silofs_pexec_ctx *pexec,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void stc_undirtify_cached_vnode(struct silofs_stage_ctx *st_ctx,
-                                       const struct silofs_vaddr *vaddr)
+static void stc_cleardirty_cached_vnode(struct silofs_stage_ctx *st_ctx,
+                                        const struct silofs_vaddr *vaddr)
 {
 	struct silofs_vnode_info *vni = nullptr;
 	int err;
 
 	err = stc_lookup_cached_vnode(st_ctx, vaddr, &vni);
 	if (!err) {
-		silofs_vni_undirtify(vni);
+		silofs_vni_cleardirty(vni);
 	}
 }
 
@@ -820,7 +820,7 @@ static int stc_detach_vnode(struct silofs_stage_ctx *st_ctx,
 	}
 
 	stc_detach_vspace(st_ctx, pnptr);
-	stc_undirtify_cached_vnode(st_ctx, vaddr);
+	stc_cleardirty_cached_vnode(st_ctx, vaddr);
 	return 0;
 }
 
@@ -908,7 +908,7 @@ static int stc_destage_dirty_vnodes(struct silofs_stage_ctx *st_ctx)
 		if (err) {
 			return err;
 		}
-		silofs_vni_undirtify(vni);
+		silofs_vni_cleardirty(vni);
 		vni = stc_vcache_dqfront(st_ctx);
 	}
 	return 0;
@@ -983,7 +983,7 @@ static int stc_destage_dirty_pnodes(struct silofs_stage_ctx *st_ctx)
 		if (err) {
 			return err;
 		}
-		silofs_pni_undirtify(pni);
+		silofs_pni_cleardirty(pni);
 		pni = stc_pcache_dqfront(st_ctx);
 	}
 	return 0;

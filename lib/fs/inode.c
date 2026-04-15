@@ -476,7 +476,7 @@ void silofs_ii_fixup_as_rootdir(struct silofs_inode_info *ii)
 	inode_set_parent(inode, silofs_ii_ino(ii));
 	inode_set_nlink(inode, 2);
 	inode_add_flags(inode, SILOFS_INODEF_ROOTD);
-	silofs_ii_dirtify(ii);
+	silofs_ii_markdirty(ii);
 }
 
 static void ii_set_iflags(struct silofs_inode_info *ii, int iflags)
@@ -488,7 +488,7 @@ static void ii_set_iflags(struct silofs_inode_info *ii, int iflags)
 	iflags_set = (enum silofs_inodef)iflags & iflags_allow;
 	if (iflags_set != iflags_curr) {
 		inode_set_flags(ii->inode, iflags_set);
-		silofs_ii_dirtify(ii);
+		silofs_ii_markdirty(ii);
 	}
 }
 
@@ -555,20 +555,20 @@ bool silofs_ii_isevictable(const struct silofs_inode_info *ii)
 	return silofs_vni_isevictable(&ii->i_vni);
 }
 
-void silofs_ii_dirtify(struct silofs_inode_info *ii)
+void silofs_ii_markdirty(struct silofs_inode_info *ii)
 {
 	silofs_assert_not_null(ii);
 
 	if (!silofs_ii_isloose(ii)) {
-		silofs_vni_dirtify(silofs_ii_to_vni(ii), nullptr);
+		silofs_vni_markdirty(silofs_ii_to_vni(ii), nullptr);
 	}
 }
 
-void silofs_ii_undirtify(struct silofs_inode_info *ii)
+void silofs_ii_cleardirty(struct silofs_inode_info *ii)
 {
 	silofs_assert_not_null(ii);
 
-	silofs_vni_undirtify(silofs_ii_to_vni(ii));
+	silofs_vni_cleardirty(silofs_ii_to_vni(ii));
 }
 
 bool silofs_ii_isdirty(const struct silofs_inode_info *ii)
@@ -624,7 +624,7 @@ static void ii_setup_ispecial(struct silofs_inode_info *ii, dev_t rdev)
 	const unsigned int rdev_minor = minor(rdev);
 
 	inode_set_rdev(ii->inode, rdev_major, rdev_minor);
-	silofs_ii_dirtify(ii);
+	silofs_ii_markdirty(ii);
 }
 
 /*
@@ -677,7 +677,7 @@ static void ii_set_generation(struct silofs_inode_info *ii,
                               const struct silofs_inew_params *inp)
 {
 	inode_set_generation(ii->inode, inp->generation);
-	silofs_ii_dirtify(ii);
+	silofs_ii_markdirty(ii);
 }
 
 void silofs_ii_setup_new(struct silofs_inode_info *ii,
@@ -687,7 +687,7 @@ void silofs_ii_setup_new(struct silofs_inode_info *ii,
 	ii_setup_sub(ii, inp);
 	ii_update_itimes(ii, SILOFS_IATTR_TIMES, &inp->ts);
 	ii_set_generation(ii, inp);
-	silofs_ii_dirtify(ii);
+	silofs_ii_markdirty(ii);
 }
 
 void silofs_ii_mkiattr(const struct silofs_inode_info *ii,
@@ -761,7 +761,7 @@ static void kill_suid_sgid(struct silofs_inode_info *ii, long flags)
 	}
 	if (mode_new != mode_cur) {
 		inode_set_mode(ii->inode, (mode_t)mode_new);
-		silofs_ii_dirtify(ii);
+		silofs_ii_markdirty(ii);
 	}
 }
 
@@ -1343,7 +1343,7 @@ static void ii_update_inode_attr(struct silofs_inode_info *ii,
 		kill_suid_sgid(ii, flags);
 	}
 	inode_inc_revision(inode);
-	silofs_ii_dirtify(ii);
+	silofs_ii_markdirty(ii);
 }
 
 static void ii_update_iattrs(struct silofs_inode_info *ii,
@@ -1430,7 +1430,7 @@ static void ii_update_isize(struct silofs_inode_info *ii, ssize_t size,
 	ii_update_iattrs(ii, &iattr, ts);
 }
 
-void silofs_ii_undirtify_vnis(struct silofs_inode_info *ii)
+void silofs_ii_cleardirty_vnis(struct silofs_inode_info *ii)
 {
 	struct silofs_dq_elem *dqe;
 	struct silofs_vnode_info *vni;
@@ -1441,7 +1441,7 @@ void silofs_ii_undirtify_vnis(struct silofs_inode_info *ii)
 		silofs_assert_gt(dq->dq.sz, 0);
 		vni = silofs_vni_from_dqe(dqe);
 		if (likely(vni != nullptr)) {
-			silofs_vni_undirtify(vni);
+			silofs_vni_cleardirty(vni);
 		}
 		dqe = silofs_dirtyq_front(dq);
 	}

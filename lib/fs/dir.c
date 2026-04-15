@@ -985,9 +985,9 @@ dni_unconst(const struct silofs_dtnode_info *dni)
 }
 
 static void
-dni_dirtify(struct silofs_dtnode_info *dni, struct silofs_inode_info *ii)
+dni_markdirty(struct silofs_dtnode_info *dni, struct silofs_inode_info *ii)
 {
-	silofs_vni_dirtify(&dni->dtn_vni, ii);
+	silofs_vni_markdirty(&dni->dtn_vni, ii);
 }
 
 static void dni_incref(struct silofs_dtnode_info *dni)
@@ -1219,9 +1219,9 @@ static void dirin_setup(struct silofs_inode_dir *dirin, uint64_t seed)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void dir_ii_dirtify(struct silofs_inode_info *dir_ii)
+static void dir_ii_markdirty(struct silofs_inode_info *dir_ii)
 {
-	silofs_ii_dirtify(dir_ii);
+	silofs_ii_markdirty(dir_ii);
 }
 
 static struct silofs_inode_dir *
@@ -1238,13 +1238,13 @@ static uint64_t dir_ndents(const struct silofs_inode_info *dir_ii)
 static void dir_inc_ndents(struct silofs_inode_info *dir_ii)
 {
 	dirin_inc_ndents(dir_ispec_of(dir_ii));
-	dir_ii_dirtify(dir_ii);
+	dir_ii_markdirty(dir_ii);
 }
 
 static void dir_dec_ndents(struct silofs_inode_info *dir_ii)
 {
 	dirin_dec_ndents(dir_ispec_of(dir_ii));
-	dir_ii_dirtify(dir_ii);
+	dir_ii_markdirty(dir_ii);
 }
 
 static void dir_tree_root(const struct silofs_inode_info *dir_ii,
@@ -1296,7 +1296,7 @@ static void
 dir_set_flags(struct silofs_inode_info *dir_ii, enum silofs_dirf flags)
 {
 	dirin_set_flags(dir_ispec_of(dir_ii), flags);
-	dir_ii_dirtify(dir_ii);
+	dir_ii_markdirty(dir_ii);
 }
 
 enum silofs_dirf silofs_dir_flags(const struct silofs_inode_info *dir_ii)
@@ -1359,7 +1359,7 @@ void silofs_dir_inherit_parent(struct silofs_inode_info *dir_ii,
 
 	dirin_set_flags(dirin, parent_dirf);
 	dirin_set_hashfn(dirin, parent_hfn);
-	dir_ii_dirtify(dir_ii);
+	dir_ii_markdirty(dir_ii);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1559,7 +1559,7 @@ static int dirc_spawn_dnode(const struct silofs_dir_ctx *d_ctx,
 		return err;
 	}
 	dni = silofs_dni_from_vni(vni);
-	dni_dirtify(dni, d_ctx->dir_ii);
+	dni_markdirty(dni, d_ctx->dir_ii);
 	*out_dni = dni;
 	return 0;
 }
@@ -1659,7 +1659,7 @@ static int dirc_spawn_tree_root(const struct silofs_dir_ctx *d_ctx,
 		return err;
 	}
 	dir_set_tree_root(d_ctx->dir_ii, dni_vaddr(*out_dni));
-	dir_ii_dirtify(d_ctx->dir_ii);
+	dir_ii_markdirty(d_ctx->dir_ii);
 	return 0;
 }
 
@@ -1848,7 +1848,7 @@ dirc_spawn_child(const struct silofs_dir_ctx *d_ctx,
 	if (err) {
 		return err;
 	}
-	dni_dirtify(*out_dni, d_ctx->dir_ii);
+	dni_markdirty(*out_dni, d_ctx->dir_ii);
 	return 0;
 }
 
@@ -1868,7 +1868,7 @@ static int dirc_do_spawn_bind_child(const struct silofs_dir_ctx *d_ctx,
 		return err;
 	}
 	dni_bind_child_at(parent_dni, dni_vaddr(*out_dni), child_dtn_idx);
-	dni_dirtify(parent_dni, d_ctx->dir_ii);
+	dni_markdirty(parent_dni, d_ctx->dir_ii);
 	return 0;
 }
 
@@ -1965,7 +1965,7 @@ static int dirc_add_to_dnode(const struct silofs_dir_ctx *d_ctx,
 	}
 	dtn_insert(dni->dtn, d_ctx->name, silofs_ii_ino(ii), ii_dtype_of(ii));
 	dir_inc_ndents(d_ctx->dir_ii);
-	dni_dirtify(dni, d_ctx->dir_ii);
+	dni_markdirty(dni, d_ctx->dir_ii);
 	return 0;
 }
 
@@ -2626,7 +2626,7 @@ static void dirc_resetup_empty_dir(const struct silofs_dir_ctx *d_ctx)
 	struct silofs_inode_info *dir_ii = d_ctx->dir_ii;
 
 	dir_resetup_empty(dir_ii);
-	dir_ii_dirtify(dir_ii);
+	dir_ii_markdirty(dir_ii);
 }
 
 static int dirc_drop_tree(const struct silofs_dir_ctx *d_ctx)
@@ -2675,7 +2675,7 @@ static int dirc_erase_empty_tree(const struct silofs_dir_ctx *d_ctx)
 	int err;
 
 	err = dirc_drop_tree(d_ctx);
-	dir_ii_dirtify(d_ctx->dir_ii);
+	dir_ii_markdirty(d_ctx->dir_ii);
 	return err;
 }
 
@@ -2688,7 +2688,7 @@ static int dirc_do_erase_dentry(struct silofs_dir_ctx *d_ctx,
 	if (!dir_ndents(d_ctx->dir_ii)) {
 		return dirc_erase_empty_tree(d_ctx);
 	}
-	dni_dirtify(dei->dni, d_ctx->dir_ii);
+	dni_markdirty(dei->dni, d_ctx->dir_ii);
 	return 0;
 }
 

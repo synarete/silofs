@@ -119,14 +119,14 @@ static bool pni_isdirty(const struct silofs_pnode_info *pni)
 	return silofs_dqe_is_dirty(pni_dqe2(pni));
 }
 
-void silofs_pni_dirtify(struct silofs_pnode_info *pni)
+void silofs_pni_markdirty(struct silofs_pnode_info *pni)
 {
 	if (!pni_isdirty(pni)) {
 		silofs_dqe_enqueue(pni_dqe(pni));
 	}
 }
 
-void silofs_pni_undirtify(struct silofs_pnode_info *pni)
+void silofs_pni_cleardirty(struct silofs_pnode_info *pni)
 {
 	if (pni_isdirty(pni)) {
 		silofs_dqe_dequeue(pni_dqe(pni));

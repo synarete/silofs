@@ -295,7 +295,7 @@ vcache_unmap_vni(struct silofs_vcache *vcache, struct silofs_vnode_info *vni)
 void silofs_vcache_forget_vnode(struct silofs_vcache *vcache,
                                 struct silofs_vnode_info *vni)
 {
-	silofs_vni_undirtify(vni);
+	silofs_vni_cleardirty(vni);
 	if (silofs_vni_refcnt(vni) > 0) {
 		vcache_unmap_vni(vcache, vni);
 		vni->vn_lni.ln_hmqe.hme_forgot = true;
@@ -333,11 +333,11 @@ void silofs_vcache_rebind_vnode(struct silofs_vcache *vcache,
 	const bool dirty = silofs_vni_isdirty(vni);
 
 	if (dirty) {
-		silofs_vni_undirtify(vni);
+		silofs_vni_cleardirty(vni);
 	}
 	vcache_set_dq_of_vni(vcache, vni);
 	if (dirty) {
-		silofs_vni_dirtify(vni, nullptr);
+		silofs_vni_markdirty(vni, nullptr);
 	}
 }
 

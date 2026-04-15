@@ -210,9 +210,9 @@ syi_vaddr(const struct silofs_symval_info *syi)
 }
 
 static void
-syi_dirtify(struct silofs_symval_info *syi, struct silofs_inode_info *ii)
+syi_markdirty(struct silofs_symval_info *syi, struct silofs_inode_info *ii)
 {
-	silofs_vni_dirtify(&syi->syv_vni, ii);
+	silofs_vni_markdirty(&syi->syv_vni, ii);
 }
 
 static int syi_recheck_symval(struct silofs_symval_info *syi)
@@ -390,7 +390,7 @@ static int sylc_spawn_symval(const struct silofs_symlnk_ctx *sl_ctx,
 		return err;
 	}
 	syi = silofs_syi_from_vni(vni);
-	syi_dirtify(syi, sl_ctx->lnk_ii);
+	syi_markdirty(syi, sl_ctx->lnk_ii);
 	*out_syi = syi;
 	return 0;
 }
@@ -424,7 +424,7 @@ static int sylc_assign_symval_head(const struct silofs_symlnk_ctx *sl_ctx,
 	struct silofs_inode_info *lnk_ii = sl_ctx->lnk_ii;
 
 	lnk_assign_value_head(lnk_ii, sv_dsc->head.str, sv_dsc->head.len);
-	silofs_ii_dirtify(lnk_ii);
+	silofs_ii_markdirty(lnk_ii);
 	return 0;
 }
 

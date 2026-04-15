@@ -199,14 +199,14 @@ bool silofs_lni_isdirty(const struct silofs_lnode_info *lni)
 	return silofs_dqe_is_dirty(lni_dqe2(lni));
 }
 
-void silofs_lni_dirtify(struct silofs_lnode_info *lni)
+void silofs_lni_markdirty(struct silofs_lnode_info *lni)
 {
 	if (!silofs_lni_isdirty(lni)) {
 		silofs_dqe_enqueue(lni_dqe(lni));
 	}
 }
 
-void silofs_lni_undirtify(struct silofs_lnode_info *lni)
+void silofs_lni_cleardirty(struct silofs_lnode_info *lni)
 {
 	if (silofs_lni_isdirty(lni)) {
 		silofs_dqe_dequeue(lni_dqe(lni));
@@ -314,18 +314,18 @@ void silofs_uni_set_active(struct silofs_unode_info *uni)
 	uni->un_lni.ln_flags |= SILOFS_LNF_ACTIVE;
 }
 
-void silofs_uni_dirtify(struct silofs_unode_info *uni)
+void silofs_uni_markdirty(struct silofs_unode_info *uni)
 {
 	uni_verify(uni);
 
-	silofs_lni_dirtify(&uni->un_lni);
+	silofs_lni_markdirty(&uni->un_lni);
 }
 
-void silofs_uni_undirtify(struct silofs_unode_info *uni)
+void silofs_uni_cleardirty(struct silofs_unode_info *uni)
 {
 	uni_verify(uni);
 
-	silofs_lni_undirtify(&uni->un_lni);
+	silofs_lni_cleardirty(&uni->un_lni);
 }
 
 bool silofs_uni_isevictable(const struct silofs_unode_info *uni)
@@ -442,23 +442,23 @@ vni_update_dq_by(struct silofs_vnode_info *vni, struct silofs_inode_info *ii)
 	}
 }
 
-void silofs_vni_dirtify(struct silofs_vnode_info *vni,
-                        struct silofs_inode_info *ii)
+void silofs_vni_markdirty(struct silofs_vnode_info *vni,
+                          struct silofs_inode_info *ii)
 {
 	silofs_assert_not_null(vni);
 
 	if (!silofs_vni_isdirty(vni)) {
 		vni_update_dq_by(vni, ii);
-		silofs_lni_dirtify(&vni->vn_lni);
+		silofs_lni_markdirty(&vni->vn_lni);
 	}
 }
 
-void silofs_vni_undirtify(struct silofs_vnode_info *vni)
+void silofs_vni_cleardirty(struct silofs_vnode_info *vni)
 {
 	silofs_assert_not_null(vni);
 
 	if (silofs_vni_isdirty(vni)) {
-		silofs_lni_undirtify(&vni->vn_lni);
+		silofs_lni_cleardirty(&vni->vn_lni);
 	}
 }
 

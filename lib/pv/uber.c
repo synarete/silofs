@@ -376,17 +376,17 @@ void silofs_ubi_update_spawned(struct silofs_uber_info *ubi)
 
 	silofs_clock_gettime_real(&now);
 	ubn_setup(ubi->ubn, &now);
-	silofs_ubi_dirtify(ubi);
+	silofs_ubi_markdirty(ubi);
 }
 
-void silofs_ubi_dirtify(struct silofs_uber_info *ubi)
+void silofs_ubi_markdirty(struct silofs_uber_info *ubi)
 {
-	silofs_pni_dirtify(&ubi->ub_pni);
+	silofs_pni_markdirty(&ubi->ub_pni);
 }
 
-void silofs_ubi_undirtify(struct silofs_uber_info *ubi)
+void silofs_ubi_cleardirty(struct silofs_uber_info *ubi)
 {
-	silofs_pni_undirtify(&ubi->ub_pni);
+	silofs_pni_cleardirty(&ubi->ub_pni);
 }
 
 void silofs_ubi_btroot_of(const struct silofs_uber_info *ubi,
@@ -399,7 +399,7 @@ void silofs_ubi_btroot_of(const struct silofs_uber_info *ubi,
 static void ubi_inc_generation(struct silofs_uber_info *ubi)
 {
 	ubn_inc_generation(ubi->ubn);
-	silofs_ubi_dirtify(ubi);
+	silofs_ubi_markdirty(ubi);
 }
 
 static void

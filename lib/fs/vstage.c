@@ -2415,10 +2415,10 @@ static int vstgc_pre_clone_lbk(struct silofs_vstage_ctx *vstg_ctx,
 	return err;
 }
 
-static void vstgc_redirtify_vni(const struct silofs_vstage_ctx *vstg_ctx,
-                                struct silofs_vnode_info *vni)
+static void vstgc_remarkdirty_vni(const struct silofs_vstage_ctx *vstg_ctx,
+                                  struct silofs_vnode_info *vni)
 {
-	silofs_lcache_redirtify_vnode(vstgc_lcache(vstg_ctx), vni);
+	silofs_lcache_remarkdirty_vnode(vstgc_lcache(vstg_ctx), vni);
 }
 
 static void vstgc_post_clone_lbk(const struct silofs_vstage_ctx *vstg_ctx,
@@ -2429,7 +2429,7 @@ static void vstgc_post_clone_lbk(const struct silofs_vstage_ctx *vstg_ctx,
 	for (size_t i = 0; i < vnis->count; ++i) {
 		vni = vnis->vnis[i];
 		silofs_assert_not_null(vni);
-		vstgc_redirtify_vni(vstg_ctx, vni);
+		vstgc_remarkdirty_vni(vstg_ctx, vni);
 		silofs_vni_decref(vni);
 	}
 }
@@ -2970,7 +2970,7 @@ spawn_vnode_at(struct silofs_task_ctx *task, struct silofs_inode_info *pii,
 	if (err) {
 		return err;
 	}
-	silofs_vni_dirtify(*out_vni, pii);
+	silofs_vni_markdirty(*out_vni, pii);
 	return 0;
 }
 
@@ -3169,7 +3169,7 @@ static void forget_cached_ii(const struct silofs_task_ctx *task,
 {
 	silofs_assert_eq(ii->i_dq_vnis.dq.sz, 0);
 
-	silofs_ii_undirtify(ii);
+	silofs_ii_cleardirty(ii);
 	forget_cached_vni(task, &ii->i_vni);
 }
 

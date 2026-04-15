@@ -184,7 +184,7 @@ static bool off_is_partial_leaf(off_t off, off_t end)
 
 static off_t off_head1_end_of(size_t slot)
 {
-	const size_t leaf_size = SILOFS_FILE_HEAD1_LEAF_SIZE;
+	constexpr size_t leaf_size = SILOFS_FILE_HEAD1_LEAF_SIZE;
 
 	return silofs_off_end(0, (slot + 1) * leaf_size);
 }
@@ -196,7 +196,7 @@ static off_t off_head1_max(void)
 
 static off_t off_head2_end_of(size_t slot)
 {
-	const size_t leaf_size = (size_t)SILOFS_FILE_HEAD2_LEAF_SIZE;
+	constexpr size_t leaf_size = (size_t)SILOFS_FILE_HEAD2_LEAF_SIZE;
 
 	return silofs_off_end(off_head1_max(), (slot + 1) * leaf_size);
 }
@@ -218,7 +218,7 @@ static bool off_is_head2(off_t off)
 
 static size_t off_to_head1_slot(off_t off)
 {
-	const size_t slot_size = SILOFS_FILE_HEAD1_LEAF_SIZE;
+	constexpr size_t slot_size = SILOFS_FILE_HEAD1_LEAF_SIZE;
 	size_t slot;
 
 	silofs_assert_lt(off, 4 * SILOFS_KILO);
@@ -230,27 +230,27 @@ static size_t off_to_head1_slot(off_t off)
 
 static size_t off_to_head2_slot(off_t off)
 {
-	const size_t slot_size = (size_t)SILOFS_FILE_HEAD2_LEAF_SIZE;
+	constexpr size_t slot_size = (size_t)SILOFS_FILE_HEAD2_LEAF_SIZE;
 
 	return (size_t)(off - off_head1_max()) / slot_size;
 }
 
 static size_t off_to_leaf_slot(off_t off)
 {
-	const size_t slot_size = SILOFS_FILE_TREE_LEAF_SIZE;
-	const size_t nchilds   = SILOFS_FILE_NODE_NCHILDS;
+	constexpr size_t slot_size = SILOFS_FILE_TREE_LEAF_SIZE;
+	constexpr size_t nchilds   = SILOFS_FILE_NODE_NCHILDS;
 
 	return ((size_t)off / slot_size) % nchilds;
 }
 
 static size_t off_to_tree_height(off_t off)
 {
-	const uint64_t uoff      = (uint64_t)off;
-	const uint64_t leaf_size = SILOFS_FILE_TREE_LEAF_SIZE;
-	const int shift          = SILOFS_FILE_MAP_SHIFT;
-	size_t height;
+	constexpr uint64_t leaf_size = SILOFS_FILE_TREE_LEAF_SIZE;
+	constexpr int shift          = SILOFS_FILE_MAP_SHIFT;
+	uint64_t uoff, height;
 
 	/* TODO: count bits */
+	uoff   = (uint64_t)off;
 	height = 2;
 	if (uoff > leaf_size) {
 		uint64_t xpos = (uoff / leaf_size) >> shift;
@@ -275,7 +275,7 @@ static bool ft_height_isbottom(size_t height)
 
 static bool fl_mode_reserve_range(int fl_mode)
 {
-	const int fl_mask = FALLOC_FL_KEEP_SIZE;
+	constexpr int fl_mask = FALLOC_FL_KEEP_SIZE;
 
 	return (fl_mode & ~fl_mask) == 0;
 }
@@ -478,9 +478,8 @@ static size_t ftn_nbytes_per_slot(const struct silofs_ftree_node *ftn)
 static size_t
 ftn_slot_by_file_pos(const struct silofs_ftree_node *ftn, off_t file_pos)
 {
-	const size_t nslots = ftn_nchilds_max(ftn);
-	const int shift     = SILOFS_FILE_MAP_SHIFT;
-	uint64_t span, roff, slot;
+	uint64_t span, roff, slot, nslots;
+	constexpr int shift = SILOFS_FILE_MAP_SHIFT;
 
 	/*
 	  Basic math:
@@ -488,9 +487,10 @@ ftn_slot_by_file_pos(const struct silofs_ftree_node *ftn, off_t file_pos)
 
 	  However, need to do a right-shift to avoid integer-overflow.
 	*/
-	span = ftn_span(ftn) >> shift;
-	roff = (uint64_t)off_diff(ftn_beg(ftn), file_pos) >> shift;
-	slot = ((roff * nslots) / span);
+	nslots = ftn_nchilds_max(ftn);
+	span   = ftn_span(ftn) >> shift;
+	roff   = (uint64_t)off_diff(ftn_beg(ftn), file_pos) >> shift;
+	slot   = ((roff * nslots) / span);
 	return slot;
 }
 
@@ -573,9 +573,9 @@ ftn_child_vtype_by_height(const struct silofs_ftree_node *ftn, size_t height,
 static off_t
 ftn_span_by_height(const struct silofs_ftree_node *ftn, size_t height)
 {
-	const uint64_t bk_size    = SILOFS_FILE_TREE_LEAF_SIZE;
-	const uint64_t fm_shift   = SILOFS_FILE_MAP_SHIFT;
-	const uint64_t height_max = SILOFS_FILE_HEIGHT_MAX;
+	constexpr uint64_t bk_size    = SILOFS_FILE_TREE_LEAF_SIZE;
+	constexpr uint64_t fm_shift   = SILOFS_FILE_MAP_SHIFT;
+	constexpr uint64_t height_max = SILOFS_FILE_HEIGHT_MAX;
 	off_t span;
 
 	if (likely((height > 1) && (height <= height_max))) {
@@ -641,8 +641,7 @@ static void ftn_init(struct silofs_ftree_node *ftn, ino_t ino, off_t beg,
 static void
 ftn_init_by(struct silofs_ftree_node *ftn, ino_t ino, off_t off, size_t height)
 {
-	off_t beg;
-	off_t end;
+	off_t beg, end;
 	enum silofs_vtype child_vtype;
 
 	ftn_child_vtype_by_height(ftn, height, &child_vtype);
@@ -945,7 +944,7 @@ static int filc_require_mut_vaddr(const struct silofs_file_ctx *f_ctx,
                                   const struct silofs_vaddr *vaddr)
 {
 	struct silofs_llink llink;
-	const enum silofs_stg_mode stg_mode = SILOFS_STG_COW;
+	constexpr enum silofs_stg_mode stg_mode = SILOFS_STG_COW;
 
 	return silofs_resolve_llink_of(f_ctx->task, vaddr, stg_mode, &llink);
 }

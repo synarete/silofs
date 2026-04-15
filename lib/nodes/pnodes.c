@@ -92,12 +92,20 @@ silofs_pni_paddr(const struct silofs_pnode_info *pni)
 	return &pni->pn_self.paddr;
 }
 
-const struct silofs_layerid *
-silofs_pni_layerid(const struct silofs_pnode_info *pni)
+const struct silofs_blobid *
+silofs_pni_blobid(const struct silofs_pnode_info *pni)
 {
 	const struct silofs_paddr *paddr = silofs_pni_paddr(pni);
 
-	return &paddr->blobid.layerid;
+	return &paddr->blobid;
+}
+
+const struct silofs_layerid *
+silofs_pni_layerid(const struct silofs_pnode_info *pni)
+{
+	const struct silofs_blobid *blobid = silofs_pni_blobid(pni);
+
+	return &blobid->layerid;
 }
 
 const struct silofs_civkey *

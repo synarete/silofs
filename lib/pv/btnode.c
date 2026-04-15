@@ -834,7 +834,7 @@ bool silofs_bti_isfull(const struct silofs_btnode_info *bti)
 	return btn_nkeys(bti->btn) == btn_nkeys_max(bti->btn);
 }
 
-void silofs_bti_ignite(struct silofs_btnode_info *bti)
+void silofs_bti_update_spawned(struct silofs_btnode_info *bti)
 {
 	btn_setup(bti->btn);
 	bti_dirtify(bti);

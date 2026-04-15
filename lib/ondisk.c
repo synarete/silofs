@@ -265,18 +265,18 @@ static void validate_ondisk_mbr(void)
 
 static void validate_ondisk_uber_node(void)
 {
-	REQUIRE_OFFSET64(struct silofs_uber_stat, ubs_btroot, 0);
-	REQUIRE_OFFSET64(struct silofs_uber_stat, ubs_bn_spdesc, 256);
-	REQUIRE_OFFSET64(struct silofs_uber_stat, ubs_vn_spdesc, 384);
-	REQUIRE_OFFSET64(struct silofs_uber_stat, ubs_bn_count, 512);
-	REQUIRE_OFFSET64(struct silofs_uber_stat, ubs_vn_count, 520);
-	REQUIRE_SIZEOF(struct silofs_uber_stat, 1024);
+	REQUIRE_OFFSET64(struct silofs_uber_sub, ubs_btroot, 0);
+	REQUIRE_OFFSET64(struct silofs_uber_sub, ubs_bn_spdesc, 256);
+	REQUIRE_OFFSET64(struct silofs_uber_sub, ubs_vn_spdesc, 384);
+	REQUIRE_OFFSET64(struct silofs_uber_sub, ubs_bn_count, 512);
+	REQUIRE_OFFSET64(struct silofs_uber_sub, ubs_vn_count, 520);
+	REQUIRE_SIZEOF(struct silofs_uber_sub, 1024);
 	REQUIRE_OFFSET64(struct silofs_uber_node, ub_hdr, 0);
 	REQUIRE_OFFSET64(struct silofs_uber_node, ub_btime, 32);
 	REQUIRE_OFFSET64(struct silofs_uber_node, ub_ctime, 48);
 	REQUIRE_OFFSET64(struct silofs_uber_node, ub_generation, 64);
 	REQUIRE_OFFSET64(struct silofs_uber_node, ub_capacity, 72);
-	REQUIRE_OFFSET64(struct silofs_uber_node, ub_stat, 1024);
+	REQUIRE_OFFSET64(struct silofs_uber_node, ub_sub, 1024);
 	REQUIRE_SIZEOF_16K(struct silofs_uber_node);
 }
 

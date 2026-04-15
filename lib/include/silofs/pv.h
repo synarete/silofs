@@ -245,7 +245,7 @@ void silofs_bti_undirtify(struct silofs_btnode_info *bti);
 
 bool silofs_bti_isfull(const struct silofs_btnode_info *bti);
 
-void silofs_bti_ignite(struct silofs_btnode_info *bti);
+void silofs_bti_update_spawned(struct silofs_btnode_info *bti);
 
 enum silofs_vtype silofs_bti_vspace(const struct silofs_btnode_info *bti);
 
@@ -310,6 +310,16 @@ int silofs_remove_vtop(struct silofs_pexec_ctx   *pexec,
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* uber */
 
+/* uber stat per sub-type */
+struct silofs_uber_stat {
+	size_t bn;
+	size_t vn;
+};
+
+struct silofs_uber_stats {
+	struct silofs_uber_stat st[SILOFS_VTYPE_LAST];
+};
+
 const struct silofs_layerid *
 silofs_ubi_layerid(const struct silofs_uber_info *ubi);
 
@@ -345,6 +355,9 @@ void silofs_ubi_inc_count_by(struct silofs_uber_info    *ubi,
 
 void silofs_ubi_dec_count_by(struct silofs_uber_info    *ubi,
                              const struct silofs_blobid *blobid);
+
+void silofs_ubi_collect_stats(const struct silofs_uber_info *ubi,
+                              struct silofs_uber_stats      *out_stats);
 
 bool silofs_ubi_onsame_layer(const struct silofs_uber_info   *ubi,
                              const struct silofs_btnode_info *bti);

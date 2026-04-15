@@ -271,6 +271,7 @@ static struct silofs_dir_entry *de_unconst(const struct silofs_dir_entry *de)
 		const struct silofs_dir_entry *p;
 		struct silofs_dir_entry *q;
 	} u = { .p = de };
+
 	return u.q;
 }
 
@@ -706,21 +707,23 @@ dtn_de_at_slot(const struct silofs_dtree_node *dtn, size_t slot)
 }
 
 static const struct silofs_dir_entry *
+dtn_de_at_pos(const struct silofs_dtree_node *dtn, off_t pos)
+{
+	return dtn_de_at_slot(dtn, doff_to_slot(pos));
+}
+
+static const struct silofs_dir_entry *
 dtn_scan(const struct silofs_dtree_node *dtn, off_t pos)
 {
-	const size_t slot                      = doff_to_slot(pos);
-	const struct silofs_dir_entry *de_from = dtn_de_at_slot(dtn, slot);
+	const struct silofs_dir_entry *de_from = dtn_de_at_pos(dtn, pos);
 	const struct silofs_dir_entry *de_end  = dtn_de_end(dtn);
-	const struct silofs_dir_entry *de      = nullptr;
-	off_t doff;
+	const struct silofs_dir_entry *de;
 
 	for (de = de_from; de < de_end; ++de) {
-		if (!de_isactive(de)) {
-			continue;
-		}
-		doff = dtn_doffset_of(dtn, de);
-		if (doff >= pos) {
-			return de;
+		if (de_isactive(de)) {
+			if (dtn_doffset_of(dtn, de) >= pos) {
+				return de;
+			}
 		}
 	}
 	return nullptr;

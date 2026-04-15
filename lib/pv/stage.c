@@ -63,6 +63,11 @@ static void pni_set_staged_ok(struct silofs_pnode_info *pni)
 	pni->pn_flags |= SILOFS_PNODEF_STAGED_OK;
 }
 
+static const struct silofs_blobid *bti_blobid(struct silofs_btnode_info *bti)
+{
+	return silofs_pni_blobid(&bti->btn_pni);
+}
+
 static size_t vni_len(const struct silofs_vnode_info *vni)
 {
 	return vaddr_len(silofs_vni_vaddr(vni));
@@ -74,6 +79,13 @@ vni_civkey(const struct silofs_vnode_info *vni)
 	silofs_assert(vni->vn_has_pn);
 
 	return &vni->vn_pnptr.nmeta.civkey;
+}
+
+static const struct silofs_blobid *vni_blobid(struct silofs_vnode_info *vni)
+{
+	silofs_assert(vni->vn_has_pn);
+
+	return &vni->vn_pnptr.paddr.blobid;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -504,11 +516,18 @@ static int stc_validate_staged_btnode(struct silofs_stage_ctx *st_ctx,
 	return 0;
 }
 
+static struct silofs_uber_info *stc_ubi(const struct silofs_stage_ctx *st_ctx)
+{
+	silofs_assert_not_null(st_ctx->pexec->ubref->ubi);
+
+	return st_ctx->pexec->ubref->ubi;
+}
+
 static void stc_update_spawned_btnode(const struct silofs_stage_ctx *st_ctx,
                                       struct silofs_btnode_info *bti)
 {
-	silofs_bti_ignite(bti);
-	silofs_unused(st_ctx);
+	silofs_bti_update_spawned(bti);
+	silofs_ubi_inc_count_by(stc_ubi(st_ctx), bti_blobid(bti));
 }
 
 static int stc_spawn_btnode(const struct silofs_stage_ctx *st_ctx,
@@ -793,6 +812,14 @@ static void stc_update_vnode_with(const struct silofs_stage_ctx *st_ctx,
 	silofs_vcache_rebind_vnode(st_ctx->vcache, vni);
 }
 
+static void stc_update_spawned_vnode(const struct silofs_stage_ctx *st_ctx,
+                                     struct silofs_vnode_info *vni,
+                                     const struct silofs_pnptr *pnptr)
+{
+	stc_update_vnode_with(st_ctx, vni, pnptr);
+	silofs_ubi_inc_count_by(stc_ubi(st_ctx), vni_blobid(vni));
+}
+
 static int stc_spawn_vnode(const struct silofs_stage_ctx *st_ctx,
                            const struct silofs_vaddr *vaddr,
                            const struct silofs_pnptr *pnptr,
@@ -808,7 +835,7 @@ static int stc_spawn_vnode(const struct silofs_stage_ctx *st_ctx,
 	if (err) {
 		return err;
 	}
-	stc_update_vnode_with(st_ctx, *out_vni, pnptr);
+	stc_update_spawned_vnode(st_ctx, *out_vni, pnptr);
 	return 0;
 }
 

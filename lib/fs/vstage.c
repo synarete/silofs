@@ -1961,6 +1961,12 @@ out:
 	return err;
 }
 
+/* TODO: Remove me XXX */
+static void bzero_civkey_of(struct silofs_llink *llink)
+{
+	silofs_memzero(&llink->civkey, sizeof(llink->civkey));
+}
+
 static int vstgc_resolve_llink(struct silofs_vstage_ctx *vstg_ctx,
                                struct silofs_llink *out_llink)
 {
@@ -1978,6 +1984,7 @@ static int vstgc_resolve_llink(struct silofs_vstage_ctx *vstg_ctx,
 	if (err) {
 		return err;
 	}
+	bzero_civkey_of(out_llink);
 	return 0;
 }
 

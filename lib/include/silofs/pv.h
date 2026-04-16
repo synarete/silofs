@@ -382,7 +382,7 @@ void silofs_ubref_update(struct silofs_uber_ref  *ubref,
                          struct silofs_uber_info *ubi);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-/* space */
+/* spnode */
 
 struct silofs_space_info *silofs_spi_from_vni(struct silofs_vnode_info *vni);
 
@@ -482,6 +482,16 @@ int silofs_require_paddr(struct silofs_pexec_ctx   *pexec,
 int silofs_destage_dirty(struct silofs_pexec_ctx *pexec);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+/* vspace */
+
+int silofs_consume_free_vspace(struct silofs_pexec_ctx *pexec,
+                               enum silofs_vtype        vtype,
+                               struct silofs_vaddr     *out_vaddr);
+
+int silofs_reclaim_free_vspace(struct silofs_pexec_ctx   *pexec,
+                               const struct silofs_vaddr *vaddr);
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* pexec */
 
 /* pv-layer execution-context */
@@ -518,6 +528,10 @@ int silofs_spawn_spnode2_of(struct silofs_pexec_ctx   *pexec,
 int silofs_stage_spnode2_of(struct silofs_pexec_ctx   *pexec,
                             const struct silofs_vaddr *ref_vaddr,
                             struct silofs_space_info **out_spi);
+
+int silofs_require_spnode2_of(struct silofs_pexec_ctx   *pexec,
+                              const struct silofs_vaddr *ref_vaddr,
+                              struct silofs_space_info **out_spi);
 
 int silofs_detach_vnode2_at(struct silofs_pexec_ctx   *pexec,
                             const struct silofs_vaddr *vaddr);

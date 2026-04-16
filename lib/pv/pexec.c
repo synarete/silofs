@@ -464,6 +464,47 @@ int silofs_stage_spnode2_of(struct silofs_pexec_ctx *pexec,
 	return silofs_stage_spnode2(pexec, &vaddr, out_spi);
 }
 
+static int test_existing_spnode2_of(struct silofs_pexec_ctx *pexec,
+                                    const struct silofs_vaddr *ref_vaddr,
+                                    bool *out_exists)
+{
+	struct silofs_pnptr pnptr;
+	struct silofs_vaddr vaddr;
+	int err;
+
+	silofs_resolve_spnode2_vaddr(ref_vaddr, &vaddr);
+	err = silofs_resolve_vtop(pexec, &vaddr, &pnptr);
+	if (!err) {
+		*out_exists = true;
+	} else if (err == -SILOFS_ENOENT) {
+		*out_exists = false;
+		err         = 0;
+	} else {
+		*out_exists = false;
+	}
+	return err;
+}
+
+int silofs_require_spnode2_of(struct silofs_pexec_ctx *pexec,
+                              const struct silofs_vaddr *ref_vaddr,
+                              struct silofs_space_info **out_spi)
+{
+	struct silofs_space_info *spi = nullptr;
+	int err;
+	bool exists;
+
+	err = test_existing_spnode2_of(pexec, ref_vaddr, &exists);
+	if (!err) {
+		if (exists) {
+			err = silofs_stage_spnode2_of(pexec, ref_vaddr, &spi);
+		} else {
+			err = silofs_spawn_spnode2_of(pexec, ref_vaddr, &spi);
+		}
+	}
+	*out_spi = spi;
+	return err;
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_detach_vnode2_at(struct silofs_pexec_ctx *pexec,

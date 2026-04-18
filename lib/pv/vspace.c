@@ -50,9 +50,9 @@ static void vsc_apex_ref_vaddr(const struct silofs_vspace_ctx *vs_ctx,
 	silofs_vaddr_setup(out_ref_vaddr, vs_ctx->vtype, tip);
 }
 
-static int vsc_require_spnode_of(const struct silofs_vspace_ctx *vs_ctx,
-                                 const struct silofs_vaddr *ref_vaddr,
-                                 struct silofs_space_info **out_spi)
+static int vsc_require_spnode2_of(const struct silofs_vspace_ctx *vs_ctx,
+                                  const struct silofs_vaddr *ref_vaddr,
+                                  struct silofs_space_info **out_spi)
 {
 	return silofs_require_spnode2_of(vs_ctx->pexec, ref_vaddr, out_spi);
 }
@@ -65,7 +65,7 @@ static int vsc_consume_free_vspace(struct silofs_vspace_ctx *vs_ctx,
 	int err;
 
 	vsc_apex_ref_vaddr(vs_ctx, &ref_vaddr);
-	err = vsc_require_spnode_of(vs_ctx, &ref_vaddr, &spi);
+	err = vsc_require_spnode2_of(vs_ctx, &ref_vaddr, &spi);
 	silofs_assert_ok(err);
 	if (err) {
 		return err;

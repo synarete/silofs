@@ -507,12 +507,6 @@ struct silofs_pexec_ctx {
 	struct silofs_uber_ref   *ubref;
 };
 
-int silofs_format_pv(struct silofs_pexec_ctx *pexec,
-                     struct silofs_pnptr     *out_pnptr);
-
-int silofs_reload_pv(struct silofs_pexec_ctx   *pexec,
-                     const struct silofs_pnptr *pnptr);
-
 int silofs_spawn_vnode2_at(struct silofs_pexec_ctx   *pexec,
                            const struct silofs_vaddr *vaddr,
                            struct silofs_vnode_info **out_vni);
@@ -521,9 +515,9 @@ int silofs_stage_vnode2_at(struct silofs_pexec_ctx   *pexec,
                            const struct silofs_vaddr *vaddr,
                            struct silofs_vnode_info **out_vni);
 
-int silofs_spawn_spnode2_of(struct silofs_pexec_ctx   *pexec,
-                            const struct silofs_vaddr *ref_vaddr,
-                            struct silofs_space_info **out_spi);
+int silofs_require_vnode2_at(struct silofs_pexec_ctx   *pexec,
+                             const struct silofs_vaddr *vaddr,
+                             struct silofs_vnode_info **out_vni);
 
 int silofs_stage_spnode2_of(struct silofs_pexec_ctx   *pexec,
                             const struct silofs_vaddr *ref_vaddr,
@@ -538,5 +532,14 @@ int silofs_detach_vnode2_at(struct silofs_pexec_ctx   *pexec,
 
 int silofs_detach_forget_vnode2(struct silofs_pexec_ctx  *pexec,
                                 struct silofs_vnode_info *vni);
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+/* format */
+
+int silofs_format_pv(struct silofs_pexec_ctx *pexec,
+                     struct silofs_pnptr     *out_pnptr);
+
+int silofs_reload_pv(struct silofs_pexec_ctx   *pexec,
+                     const struct silofs_pnptr *pnptr);
 
 #endif /* SILOFS_PV_H_ */

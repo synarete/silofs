@@ -20,10 +20,10 @@
 
 static uint64_t cpu_to_off_vtype(off_t off, enum silofs_vtype vtype)
 {
-	uint64_t off_vtype;
 	const uint64_t mask   = 0xFF;
 	const uint64_t uoff   = (uint64_t)off;
 	const uint64_t uvtype = (uint64_t)vtype;
+	uint64_t off_vtype;
 
 	if (!silofs_vtype_isnone(vtype)) {
 		silofs_assert_eq(uoff & mask, 0);
@@ -107,7 +107,7 @@ void silofs_vaddr_setup2(struct silofs_vaddr *vaddr, enum silofs_vtype vtype,
 void silofs_vaddr_of_lsmap(struct silofs_vaddr *vaddr,
                            enum silofs_vtype refvtype, off_t pos)
 {
-	const ssize_t step = sizeof(struct silofs_lsmap);
+	constexpr ssize_t step = sizeof(struct silofs_lsmap);
 	ssize_t lseg_idx;
 	ssize_t refl_idx;
 	ssize_t span;
@@ -251,26 +251,24 @@ void silofs_vaddr64_xtoh(const struct silofs_vaddr64 *vaddr64,
 void silofs_resolve_spnode2_vaddr(const struct silofs_vaddr *ref_vaddr,
                                   struct silofs_vaddr *out_vaddr)
 {
-	const uint64_t lsmap_size = sizeof(struct silofs_lsmap);
-	uint64_t ref_vsize, ref_vseg_size;
-	uint64_t ref_voff, lsmap_off, lsmap_vsp;
+	constexpr uint64_t spnode_size  = sizeof(struct silofs_space_node);
+	constexpr uint64_t spnode_nrefs = SILOFS_SPNODE_NREFS;
+	uint64_t ref_vsize, ref_voff, spnode_off, spnode_vsp;
+	off_t off;
 
-	ref_voff  = (uint64_t)ref_vaddr->off;
-	ref_vsize = silofs_vtype_size(ref_vaddr->vtype);
+	ref_voff   = (uint64_t)ref_vaddr->off;
+	ref_vsize  = silofs_vtype_size(ref_vaddr->vtype);
+	spnode_off = (ref_voff * spnode_size) / (ref_vsize * spnode_nrefs);
+	spnode_vsp = (uint64_t)(ref_vaddr->vtype);
+
+	off = (off_t)((spnode_vsp << 56) | spnode_off);
+	silofs_vaddr_setup(out_vaddr, SILOFS_VTYPE_SPNODE2, off);
+
+	/* TODO: remove me XXX */
 	silofs_assert_ge(ref_vsize, 1024);
-
-	ref_vseg_size = ref_vsize * SILOFS_SPMAP_NCHILDS;
-	lsmap_off     = (ref_voff / ref_vseg_size) * lsmap_size;
-
-	silofs_assert_ge(ref_vsize, SILOFS_KILO);
-
-	lsmap_vsp = (uint64_t)(ref_vaddr->vtype);
-	silofs_assert_gt(lsmap_vsp, 0);
-	silofs_assert_lt(lsmap_vsp, INT8_MAX);
-	silofs_assert_eq(lsmap_off >> 56, 0);
-
-	lsmap_off |= (lsmap_vsp << 56);
-	silofs_vaddr_setup(out_vaddr, SILOFS_VTYPE_LSMAP, (off_t)lsmap_off);
+	silofs_assert_gt(spnode_vsp, 0);
+	silofs_assert_lt(spnode_vsp, INT8_MAX);
+	silofs_assert_eq(off >> 56, spnode_vsp);
 }
 
 static off_t ino_to_off(ino_t ino)

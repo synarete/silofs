@@ -6,6 +6,7 @@ EXTRA_DIST += clangscan.sh
 EXTRA_DIST += clangtidy.sh
 EXTRA_DIST += cstylelint.py
 EXTRA_DIST += ddreadwrite.sh
+EXTRA_DIST += find-unused-lib-syms.sh
 EXTRA_DIST += fio-exec-to-json.sh
 EXTRA_DIST += fio-json-to-plot.py
 EXTRA_DIST += fsstress.sh

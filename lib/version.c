@@ -54,3 +54,8 @@ const struct silofs_version silofs_version = {
 	.minor    = SILOFS_VERSION_MINOR,
 	.sublevel = SILOFS_VERSION_SUBLEVEL
 };
+
+const struct silofs_version *silofs_get_version1(void)
+{
+	return &silofs_version;
+}

@@ -26,4 +26,6 @@ struct silofs_version {
 
 extern const struct silofs_version silofs_version;
 
+const struct silofs_version *silofs_get_version1(void);
+
 #endif /* SILOFS_VERSION_H_ */

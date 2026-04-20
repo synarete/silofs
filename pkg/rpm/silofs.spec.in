@@ -1,22 +1,18 @@
-Name: silofs
+Name:           silofs
 Summary:        Silofs: Stored In Large Objects File-System
 Version:        @PACKAGE_VERSION@
 Release:        @PACKAGE_RELEASE@.@PACKAGE_REVISION@%{?dist}
 License:        GPLv3
-Group:          Applications/Archiving
 URL:            https://synarete.github.io/silofs
 Source:         %{name}-%{version}.tar.gz
-BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}.%{_arch}
-Requires:       libcap
-Requires:       libuuid
-Requires:       libgcrypt
-Requires:       libunwind
-%if 0%{?fedora} >= 36
 BuildRequires:  libcap-devel
 BuildRequires:  libuuid-devel
 BuildRequires:  libgcrypt-devel
 BuildRequires:  libunwind-devel
-%endif
+Requires:       libcap
+Requires:       libuuid
+Requires:       libgcrypt
+Requires:       libunwind
 
 %{?systemd_requires}
 
@@ -33,13 +29,12 @@ common Linux utilities to backup or archive the content of the
 repository into remote location without compromising the integrity of
 the underlying data.
 
-%package devel
-Summary: Silofs testing utilities and development files
-Group: Development/Tools
+%package tests
+Summary: Silofs testing utilities
 Requires: %{name}%{?_isa} = %{version}-%{release}
-Requires: python3
+Requires: python3 >= 3.6
 
-%description devel
+%description tests
 Various testing programs for silofs.
 
 %prep
@@ -50,16 +45,12 @@ Various testing programs for silofs.
 %{__make}
 
 %check
-# %{__make} check
+%{__make} check
 
 %install
 %make_install
 
-%clean
-%{__rm} -rf %{buildroot}
-
 %files
-%defattr(-, root, root)
 %{_bindir}/%{name}
 %{_sbindir}/%{name}-mountd
 %{_sbindir}/*.%{name}
@@ -77,8 +68,7 @@ Various testing programs for silofs.
 %exclude %{_prefix}/lib/systemd/system/%{name}*.*
 %endif
 
-%files devel
-%defattr(-, root, root)
+%files tests
 %{_bindir}/%{name}-utests
 %{_bindir}/%{name}-ftests
 %{_bindir}/%{name}-qatests
@@ -99,5 +89,3 @@ Various testing programs for silofs.
 %changelog
 * @RPMDATE@ Silofs <synarete@xxxxxxxx> @PACKAGE_VERSION@-@PACKAGE_RELEASE@.@PACKAGE_REVISION@
 - Release @PACKAGE_REVISION@
-
-

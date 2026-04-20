@@ -50,7 +50,7 @@ run "${rootdir}"/bootstrap
 run mkdir -p "${autotoolsdir}"
 cdx "${autotoolsdir}"
 run "${rootdir}"/configure \
-	"--enable-utests=1" "--enable-compile-warnings=error"
+	"--enable-utests=0" "--enable-compile-warnings=error"
 run make distcheck
 
 # Pre rpmbuild

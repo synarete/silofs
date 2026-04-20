@@ -317,7 +317,7 @@ reload_zero_node_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
 		return err;
 	}
 	nalloc = silofs_spi_get_allocated(spi, &vaddr);
-	if (!nalloc) {
+	if (nalloc != 1) {
 		return -SILOFS_EFSCORRUPTED;
 	}
 	err = silofs_fetch_vnode2_at(pexec, &vaddr, &vni);

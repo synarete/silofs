@@ -35,6 +35,13 @@ static void vsc_init(struct silofs_vspace_ctx *vs_ctx,
 	silofs_assert_ne(vtype, SILOFS_VTYPE_SPNODE2);
 }
 
+static void
+vsc_init_by(struct silofs_vspace_ctx *vs_ctx, struct silofs_pexec_ctx *pexec,
+            const struct silofs_vaddr *vaddr)
+{
+	vsc_init(vs_ctx, pexec, vaddr->vtype);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void vsc_apex_ref_vaddr(const struct silofs_vspace_ctx *vs_ctx,
@@ -98,8 +105,68 @@ static int vsc_stage_spnode_of(const struct silofs_vspace_ctx *vs_ctx,
 	return silofs_fetch_spnode2_of(vs_ctx->pexec, ref_vaddr, out_spi);
 }
 
-static int vsc_reclaim_free_vspace(struct silofs_vspace_ctx *vs_ctx,
+static int vsc_reclaim_used_vspace(struct silofs_vspace_ctx *vs_ctx,
                                    const struct silofs_vaddr *vaddr)
+{
+	struct silofs_space_info *spi = nullptr;
+	size_t nalloc;
+	int err;
+
+	err = vsc_stage_spnode_of(vs_ctx, vaddr, &spi);
+	silofs_assert_ok(err);
+	if (err) {
+		return err;
+	}
+	nalloc = silofs_spi_get_allocated(spi, vaddr);
+	if (!nalloc) {
+		log_err("can not reclaim unused vspace: vtype=%d off=%ld",
+		        vaddr->vtype, vaddr->off);
+		return -SILOFS_EBUG;
+	}
+	silofs_spi_dec_allocated(spi, vaddr);
+	return 0;
+}
+
+static int vsc_incref_used_vspace(struct silofs_vspace_ctx *vs_ctx,
+                                  const struct silofs_vaddr *vaddr)
+{
+	struct silofs_space_info *spi = nullptr;
+	size_t nalloc;
+	int err;
+
+	err = vsc_stage_spnode_of(vs_ctx, vaddr, &spi);
+	silofs_assert_ok(err);
+	if (err) {
+		return err;
+	}
+	nalloc = silofs_spi_get_allocated(spi, vaddr);
+	if (!nalloc) {
+		log_err("can not incref unused vspace: vtype=%d off=%ld",
+		        vaddr->vtype, vaddr->off);
+		return -SILOFS_EBUG;
+	}
+	silofs_spi_inc_allocated(spi, vaddr);
+	return 0;
+}
+
+int silofs_update_used_vspace(struct silofs_pexec_ctx *pexec,
+                              const struct silofs_vaddr *vaddr, bool reclaim)
+{
+	struct silofs_vspace_ctx vs_ctx;
+	int ret;
+
+	vsc_init_by(&vs_ctx, pexec, vaddr);
+	if (reclaim) {
+		ret = vsc_reclaim_used_vspace(&vs_ctx, vaddr);
+	} else {
+		ret = vsc_incref_used_vspace(&vs_ctx, vaddr);
+	}
+	return ret;
+}
+
+static int
+vsc_probe_used_vspace(struct silofs_vspace_ctx *vs_ctx,
+                      const struct silofs_vaddr *vaddr, size_t *out_nalloc)
 {
 	struct silofs_space_info *spi = nullptr;
 	int err;
@@ -109,15 +176,16 @@ static int vsc_reclaim_free_vspace(struct silofs_vspace_ctx *vs_ctx,
 	if (err) {
 		return err;
 	}
-	silofs_spi_dec_allocated(spi, vaddr);
+	*out_nalloc = silofs_spi_get_allocated(spi, vaddr);
 	return 0;
 }
 
-int silofs_reclaim_free_vspace(struct silofs_pexec_ctx *pexec,
-                               const struct silofs_vaddr *vaddr)
+int silofs_probe_used_vspace(struct silofs_pexec_ctx *pexec,
+                             const struct silofs_vaddr *vaddr,
+                             size_t *out_nalloc)
 {
 	struct silofs_vspace_ctx vs_ctx;
 
-	vsc_init(&vs_ctx, pexec, vaddr->vtype);
-	return vsc_reclaim_free_vspace(&vs_ctx, vaddr);
+	vsc_init_by(&vs_ctx, pexec, vaddr);
+	return vsc_probe_used_vspace(&vs_ctx, vaddr, out_nalloc);
 }

@@ -121,8 +121,16 @@ static int reclaim_vnode2_at(struct silofs_pexec_ctx *pexec,
                              const struct silofs_vaddr *vaddr)
 {
 	struct silofs_pnptr pnptr;
+	size_t nalloc = 0;
 	int err;
 
+	err = silofs_probe_used_vspace(pexec, vaddr, &nalloc);
+	if (err) {
+		return err;
+	}
+	if (nalloc > 1) {
+		goto reclaim; /* dec-ref only */
+	}
 	err = silofs_resolve_vtop(pexec, vaddr, &pnptr);
 	if (err) {
 		return err;
@@ -135,7 +143,8 @@ static int reclaim_vnode2_at(struct silofs_pexec_ctx *pexec,
 	if (err) {
 		return err;
 	}
-	err = silofs_reclaim_free_vspace(pexec, vaddr);
+reclaim:
+	err = silofs_update_used_vspace(pexec, vaddr, true);
 	if (err) {
 		return err;
 	}
@@ -158,10 +167,10 @@ int silofs_reclaim_forget_vnode2(struct silofs_pexec_ctx *pexec,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int attach_spnode2_at(struct silofs_pexec_ctx *pexec,
-                             const struct silofs_vaddr *vaddr,
-                             const struct silofs_vaddr *ref_vaddr,
-                             struct silofs_space_info **out_spi)
+static int consume_spnode2_at(struct silofs_pexec_ctx *pexec,
+                              const struct silofs_vaddr *vaddr,
+                              const struct silofs_vaddr *ref_vaddr,
+                              struct silofs_space_info **out_spi)
 {
 	struct silofs_vnode_info *vni = nullptr;
 	int err;
@@ -215,8 +224,8 @@ int silofs_require_spnode2_of(struct silofs_pexec_ctx *pexec,
 		if (exists) {
 			err = fetch_spnode2_at(pexec, &vaddr, out_spi);
 		} else {
-			err = attach_spnode2_at(pexec, &vaddr, ref_vaddr,
-			                        out_spi);
+			err = consume_spnode2_at(pexec, &vaddr, ref_vaddr,
+			                         out_spi);
 		}
 	}
 	return err;

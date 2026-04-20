@@ -22,8 +22,6 @@
 #include <silofs/addr.h>
 #include <silofs/nodes.h>
 
-struct silofs_pexec_ctx;
-
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* dstor */
 
@@ -290,6 +288,21 @@ void silofs_clone_btnode(const struct silofs_btnode_info *bti,
                          struct silofs_btnode_info       *bti_other);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+/* pv-layer execution-context */
+struct silofs_pexec_ctx {
+	struct silofs_alloc      *alloc;
+	struct silofs_prandgen   *prng;
+	struct silofs_dstor      *dstor;
+	struct silofs_pcache     *pcache;
+	struct silofs_vcache     *vcache;
+	struct silofs_mdigest_hd *md_hd;
+	struct silofs_cipher_hd  *enc_ci_hd;
+	struct silofs_cipher_hd  *dec_ci_hd;
+	struct silofs_uber_ref   *ubref;
+};
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* btree */
 
 int silofs_resolve_vtop(struct silofs_pexec_ctx   *pexec,
@@ -488,24 +501,15 @@ int silofs_consume_free_vspace(struct silofs_pexec_ctx *pexec,
                                enum silofs_vtype        vtype,
                                struct silofs_vaddr     *out_vaddr);
 
-int silofs_reclaim_free_vspace(struct silofs_pexec_ctx   *pexec,
-                               const struct silofs_vaddr *vaddr);
+int silofs_update_used_vspace(struct silofs_pexec_ctx   *pexec,
+                              const struct silofs_vaddr *vaddr, bool reclaim);
+
+int silofs_probe_used_vspace(struct silofs_pexec_ctx   *pexec,
+                             const struct silofs_vaddr *vaddr,
+                             size_t                    *out_nalloc);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-/* pexec */
-
-/* pv-layer execution-context */
-struct silofs_pexec_ctx {
-	struct silofs_alloc      *alloc;
-	struct silofs_prandgen   *prng;
-	struct silofs_dstor      *dstor;
-	struct silofs_pcache     *pcache;
-	struct silofs_vcache     *vcache;
-	struct silofs_mdigest_hd *md_hd;
-	struct silofs_cipher_hd  *enc_ci_hd;
-	struct silofs_cipher_hd  *dec_ci_hd;
-	struct silofs_uber_ref   *ubref;
-};
+/* vtop */
 
 int silofs_fetch_vnode2_at(struct silofs_pexec_ctx   *pexec,
                            const struct silofs_vaddr *vaddr,

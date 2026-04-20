@@ -1,0 +1,10 @@
+usr/bin/silofs
+usr/sbin/silofs-mountd
+usr/sbin/mount.fuse.silofs
+etc/silofs/mountd.conf
+usr/share/man/man1/silofs.1
+usr/share/man/man8/silofs-mountd.8
+usr/share/bash-completion/completions/silofs
+usr/share/doc/silofs/index.html
+usr/share/doc/silofs/silofs.html
+usr/lib/systemd/system/silofs-mountd.service

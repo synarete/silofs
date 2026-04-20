@@ -1,37 +1,25 @@
 #!/bin/bash
 
 base_deps=(
-	attr-dev
+	autoconf
 	automake
 	build-essential
-	cdbs
-	clang
-	clang-tools
 	debhelper
 	dpkg-dev
 	gcc
-	g++
+	libattr1-dev
 	libcap-dev
+	libgcrypt20-dev
 	libjansson-dev
-	libgcrypt-dev
 	libtool
 	libunwind-dev
+	uuid-dev
 	libxxhash-dev
-	libzstd1
 	libzstd-dev
 	make
 	pkg-config
-	pylint
 	python3-docutils
-	python3-flake8
-	python3-flake8-builtins
-	python3-flake8-import-order
-	python3-mypy
-	python3-mypy-extensions
 	python3-pydantic
-	python3-setproctitle
-	uuid-dev
-	xxhash
 )
 
 qatests_deps=(
@@ -63,8 +51,9 @@ qatests_deps=(
 )
 
 extra_deps=(
-	black
+	clang
 	clang-format
+	clang-tools
 	flake8
 	gdb
 	git
@@ -72,8 +61,12 @@ extra_deps=(
 	mypy
 	psmisc
 	pylint
+	python3-flake8-builtins
+	python3-flake8-import-order
+	python3-mypy-extensions
 	python3-pathspec
 	python3-pygments
+	python3-setproctitle
 	python3-typeshed
 )
 

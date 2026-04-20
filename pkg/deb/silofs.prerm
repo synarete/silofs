@@ -1,0 +1,11 @@
+#!/bin/sh
+set -e
+
+#DEBHELPER#
+
+if [ "$1" = "remove" ]; then
+    if command -v systemctl >/dev/null 2>&1; then
+        systemctl stop silofs-mountd.service || true
+        systemctl disable silofs-mountd.service || true
+    fi
+fi

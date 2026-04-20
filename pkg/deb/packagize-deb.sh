@@ -48,10 +48,13 @@ cd "${rootdir}"
 run "${rootdir}"/bootstrap
 
 # Autotools build
+py3sitedir=$(python3 -c "import site; print(site.getsitepackages()[-1])")
 run mkdir -p "${autotoolsdir}"
 cd "${autotoolsdir}"
 run "${rootdir}"/configure \
-    "--enable-utests=1" "--enable-compile-warnings=error"
+    "--enable-utests=0" \
+    "--enable-compile-warnings=error" \
+    "--with-python-site-packages=${py3sitedir}"
 run make
 run make distcheck
 
@@ -71,12 +74,19 @@ run tar xvfz "${archive_tgz}"
 cd "${rootdir}"
 run mkdir -p "${debbuild_debiandir}"/source
 run cp "${debsourcedir}"/format "${debbuild_debiandir}"/source
-run cp "${debsourcedir}"/compat "${debbuild_debiandir}"
 run cp "${debsourcedir}"/control "${debbuild_debiandir}"
 run cp "${debsourcedir}"/copyright "${debbuild_debiandir}"
 run cp "${debsourcedir}"/docs "${debbuild_debiandir}"
 run cp "${debsourcedir}"/README.Debian "${debbuild_debiandir}"
 run cp "${debsourcedir}"/rules "${debbuild_debiandir}"
+run cp "${debsourcedir}"/silofs.install "${debbuild_debiandir}"
+run cp "${debsourcedir}"/not-installed "${debbuild_debiandir}"
+run sed -e "s|usr/lib/python3/dist-packages|${py3sitedir#/}|" \
+    "${debsourcedir}"/silofs-tests.install \
+    > "${debbuild_debiandir}"/silofs-tests.install
+run cp "${debsourcedir}"/silofs.postinst "${debbuild_debiandir}"
+run cp "${debsourcedir}"/silofs.prerm "${debbuild_debiandir}"
+run cp "${debsourcedir}"/silofs.postrm "${debbuild_debiandir}"
 
 
 # Generate changelog

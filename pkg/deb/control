@@ -2,18 +2,30 @@ Source: silofs
 Section: utils
 Priority: optional
 Maintainer: Shachar Sharon <synarete@xxxxxxxx>
-Build-Depends: debhelper (>= 9),
-               autotools-dev,
-               automake (>= 1.11),
+Build-Depends: debhelper-compat (= 13),
                autoconf (>= 2.62),
+               automake (>= 1.11),
                libtool (>= 2.2.6),
-               pkg-config (>= 0.11.0)
-Standards-Version: 3.9.3
-Homepage:  https://github.com/synarete/silofs
+               pkg-config,
+               python3-docutils,
+               libattr1-dev,
+               libcap-dev,
+               uuid-dev,
+               libgcrypt20-dev,
+               libunwind-dev,
+               libxxhash-dev,
+               libzstd-dev,
+               libjansson-dev
+Standards-Version: 4.6.2
+Homepage: https://github.com/synarete/silofs
 
 Package: silofs
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends},
+         libcap2,
+         libuuid1,
+         libgcrypt20,
+         libunwind8
 Description: The Silo File-System
  Silofs is a user-space file-system for storing large volumes of data
  as encrypted blobs. It allows normal users to create an isolated
@@ -26,7 +38,11 @@ Description: The Silo File-System
  common Linux utilities to backup or archive the content of the
  repository into remote location without compromising the integrity of
  the underlying data.
- .
- This package contains silofs core and testing utilities.
 
-
+Package: silofs-tests
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends},
+         silofs (= ${binary:Version}),
+         python3 (>= 3.6)
+Description: Silofs testing utilities
+ Various testing programs for silofs.

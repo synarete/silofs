@@ -1,0 +1,4 @@
+usr/include/*
+usr/lib/*/libsilofs*
+usr/lib/libsilofs*
+var/run/silofs

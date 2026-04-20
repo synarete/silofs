@@ -5,14 +5,11 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-self="$(basename "${BASH_SOURCE[0]}")"
 selfdir="$(realpath "$(dirname "${BASH_SOURCE[0]}")")"
 rootdir="$(realpath "${selfdir}"/../../)"
 source "${rootdir}/bash_functions"
 
 name=silofs
-selfdir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
-rootdir=$(realpath "${selfdir}"/../../)
 version_sh="${rootdir}"/version.sh
 version=$(run "${version_sh}" --version)
 release=$(run "${version_sh}" --release)
@@ -22,7 +19,7 @@ archive_tgz=${name}-${version}.tar.gz
 builddir=${rootdir}/build
 rpmpkgdir=${builddir}/pkg
 rpmhomedir=${rpmpkgdir}/rpm
-autotoolsdir=${rpmhomedir}/autotools/
+autotoolsdir=${rpmhomedir}/autotools
 
 rpmsourcedir=${selfdir}
 rpmbuilddir=${RPMBUILDDIR:-${rpmhomedir}/rpmbuild}
@@ -46,12 +43,12 @@ run command -v basename
 run command -v rpmbuild
 
 # Bootstrap
-cd "${rootdir}"
+cdx "${rootdir}"
 run "${rootdir}"/bootstrap
 
 # Autotools build
 run mkdir -p "${autotoolsdir}"
-cd "${autotoolsdir}"
+cdx "${autotoolsdir}"
 run "${rootdir}"/configure \
 	"--enable-utests=1" "--enable-compile-warnings=error"
 run make distcheck
@@ -61,15 +58,9 @@ unset HOME
 export HOME=${rpmhomedir}
 
 # Prepare rpm tree
-run mkdir -p "${rpmpkgdir}"
-run mkdir -p "${rpmtmpdir}"
-run mkdir -p "${rpmbuilddir}"
-run mkdir -p "${rpmbuilddir}"/BUILD
-run mkdir -p "${rpmbuilddir}"/BUILDROOT
-run mkdir -p "${rpmbuilddir}"/RPMS
-run mkdir -p "${rpmbuilddir}"/SOURCES
-run mkdir -p "${rpmbuilddir}"/SPECS
-run mkdir -p "${rpmbuilddir}"/SRPMS
+run mkdir -p \
+	"${rpmtmpdir}" \
+	"${rpmbuilddir}"/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
 
 # Generate spec
 run sed \
@@ -84,26 +75,24 @@ run sed \
 run cp "${autotoolsdir}/${archive_tgz}" "${rpmbuilddir}/SOURCES"
 
 # Execute rpmbuild
-cd "${rpmbuilddir}"
+cdx "${rpmbuilddir}"
 run env WITH_MYPY=0 rpmbuild -ba \
 	--define "_topdir ${rpmbuilddir}" \
 	--define "_var ${rpmvardir}" \
 	"${rpmspec_out}"
 
 # Copy rpms to dist-dir
-cd "${rootdir}"
+cdx "${rootdir}"
 run mkdir -p "${rpmpkgdir}"
 run find \
 	"${rpmbuilddir}"/RPMS/ \
+	-maxdepth 2 \
 	-type f -name ${name}'*.rpm' \
 	-exec cp {} "${rpmpkgdir}" \;
 
-# Cleanup build staging area
-# run rm -rf "${rpmhomedir}"
-
 # Show result rpm files
 run find "${rpmpkgdir}" \
-	-depth -maxdepth 1 \
+	-maxdepth 1 \
 	-type f -name ${name}'*.rpm' -exec basename {} \;
 
 # Bye ;)

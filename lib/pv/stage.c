@@ -170,6 +170,12 @@ static int stc_require_paddr_of(const struct silofs_stage_ctx *st_ctx,
 	return stc_require_paddr(st_ctx, &pnptr->paddr);
 }
 
+static int stc_access_blob(const struct silofs_stage_ctx *st_ctx,
+                           const struct silofs_blobid *blobid)
+{
+	return silofs_dstor_access_blob_at(st_ctx->dstor, blobid, 0);
+}
+
 static int stc_access_pnode(const struct silofs_stage_ctx *st_ctx,
                             const struct silofs_paddr *paddr)
 {
@@ -184,6 +190,12 @@ static int stc_access_pnode_of(const struct silofs_stage_ctx *st_ctx,
                                const struct silofs_pnptr *pnptr)
 {
 	return stc_access_pnode(st_ctx, &pnptr->paddr);
+}
+
+static int stc_access_blob_of(const struct silofs_stage_ctx *st_ctx,
+                              const struct silofs_pnptr *pnptr)
+{
+	return stc_access_blob(st_ctx, &pnptr->paddr.blobid);
 }
 
 static int stc_read_pview_at(struct silofs_stage_ctx *st_ctx,
@@ -814,7 +826,7 @@ static int stc_detach_vnode(struct silofs_stage_ctx *st_ctx,
 {
 	int err;
 
-	err = stc_access_pnode_of(st_ctx, pnptr);
+	err = stc_access_blob_of(st_ctx, pnptr);
 	if (err) {
 		return err;
 	}

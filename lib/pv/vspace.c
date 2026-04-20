@@ -95,7 +95,7 @@ static int vsc_stage_spnode_of(const struct silofs_vspace_ctx *vs_ctx,
                                const struct silofs_vaddr *ref_vaddr,
                                struct silofs_space_info **out_spi)
 {
-	return silofs_stage_spnode2_of(vs_ctx->pexec, ref_vaddr, out_spi);
+	return silofs_fetch_spnode2_of(vs_ctx->pexec, ref_vaddr, out_spi);
 }
 
 static int vsc_reclaim_free_vspace(struct silofs_vspace_ctx *vs_ctx,

@@ -5,7 +5,6 @@ set -o pipefail
 export LC_ALL=C
 unset CDPATH
 
-
 self=$(basename "${BASH_SOURCE[0]}")
 basedir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
 macrodir="${basedir}/m4"
@@ -37,10 +36,6 @@ do_autogen() {
 	run mkdir -p "${builddir}"
 	do_autom4te_cfg
 	run libtoolize --automake --copy --install --force
-	run aclocal -I m4 --warnings=all
-	run autoheader --warnings=all
-	run autoconf --warnings=all
-	run automake --add-missing --copy -Woverride --warnings=all
 	run env LIBTOOLIZE=true autoreconf --install -I m4 --warnings=all
 	dec_lineno_depth
 }
@@ -48,7 +43,6 @@ do_autogen() {
 do_autoclean() {
 	inc_lineno_depth
 	cdx "${basedir}"
-	run mkdir -p "${builddir}"
 	run rm -f "${autom4te_cfg}"
 	run rm -rf "${autom4te_cachedir}"
 	run rm -f "${basedir}/configure"
@@ -76,14 +70,15 @@ do_autoclean() {
 	run rm -f "${macrodir}/libtool.m4"
 	run find "${basedir}" -type f -name Makefile.in -exec rm -f {} +
 	run find "${basedir}" -type f -name Makefile -exec rm -f {} +
-	run find "${basedir}" -type d -name __pycache__ -exec rm -rf {} +
-	run find "${basedir}" -type d -name .mypy_cache -exec rm -rf {} +
-	run find "${basedir}" -type d -name .deps -exec rm -rf {} +
-	run find "${builddir}/" -depth -mindepth 1 -exec rm -rf {} +
+	try find "${basedir}" -type d -name __pycache__ -exec rm -rf {} +
+	try find "${basedir}" -type d -name .mypy_cache -exec rm -rf {} +
+	try find "${basedir}" -type d -name .deps -exec rm -rf {} +
 	run rm -rf "${basedir}/.cache"
 	run rm -f "${basedir}/tags"
 	run rm -f "${basedir}/TAGS"
 	run rm -f "${basedir}/compile_commands.json"
+	run rm -rf "${builddir}"
+	run mkdir -p "${builddir}"
 	dec_lineno_depth
 }
 
@@ -100,7 +95,7 @@ do_version() {
 arg=${1:-}
 case "$arg" in
 	-h|--help)
-		echo "${self} [--autogen|--autoclean|--version]"
+		echo "${self} [--autogen|--autoclean|--autoregen|--version]"
 		;;
 	-c|--autoclean)
 		do_autoclean

@@ -113,7 +113,7 @@ class TestEnv:
     def make_basepath(self) -> Path:
         return self.make_path(self.name)
 
-    def make_path(self, *subs) -> Path:
+    def make_path(self, *subs: str) -> Path:
         return Path(self.mntpoint(), *subs)
 
     def make_td(self, sub: str, name: str, sz: int) -> TestData:
@@ -175,7 +175,7 @@ class TestEnv:
         gsize: int = 2,
         name: str = "",
         no_utf8_names: bool = False,
-    ):
+    ) -> None:
         gibi = 2**30
         self.subcmd.silofs.mkfs(
             repodir_name=self._repodir_name(name),

@@ -2,7 +2,6 @@
 import json
 import tomllib  # noqa
 from pathlib import Path  # noqa
-from typing import Dict, Optional
 
 import pydantic
 
@@ -55,8 +54,8 @@ class FsRef(pydantic.BaseModel):
 
 
 class FsIds(pydantic.BaseModel):
-    users: Optional[Dict[str, int]] = {}
-    groups: Optional[Dict[str, int]] = {}
+    users: dict[str, int] | None = {}
+    groups: dict[str, int] | None = {}
 
 
 class FsSpec(pydantic.BaseModel):

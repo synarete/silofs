@@ -57,7 +57,7 @@ class ProgInfo:
     def version_string(self) -> str:
         return f"{self.version}-{self.release}.{self.revision}"
 
-    def parse_args(self):
+    def parse_args(self) -> None:
         parser = argparse.ArgumentParser(
             prog=self.title,
             usage=f"{self.title} [-c config] basedir mntdir",

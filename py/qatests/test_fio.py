@@ -76,7 +76,7 @@ class FioOutput:
 
 
 class FioExec(subcmd.SubcmdExec):
-    def __init__(self, base: Path):
+    def __init__(self, base: Path) -> None:
         subcmd.SubcmdExec.__init__(self, "fio")
         self.base = base
         self.timeout = 180.0

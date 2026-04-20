@@ -18,30 +18,30 @@ class Expect:
         xmsg = self.name + ": " + msg if self.name else msg
         raise ExpectException(xmsg)
 
-    def ok(self, status) -> None:
+    def ok(self, status: int) -> None:
         if status != 0:
             self.error(f"not ok: status={status}")
 
-    def eq(self, a, b) -> None:
+    def eq(self, a: object, b: object) -> None:
         if a != b:
             sa = self._stringify(a)
             sb = self._stringify(b)
             self.error(f"expected to be equal: {sa} != {sb}")
 
-    def ne(self, a, b) -> None:
+    def ne(self, a: object, b: object) -> None:
         if a == b:
             sa = self._stringify(a)
             sb = self._stringify(b)
             self.error(f"should not be equal: {sa} == {sb}")
 
-    def gt(self, a, b) -> None:
-        if a <= b:
+    def gt(self, a: typing.SupportsFloat, b: typing.SupportsFloat) -> None:
+        if float(a) <= float(b):
             sa = self._stringify(a)
             sb = self._stringify(b)
             self.error(f"not greater-than: {sa} <= {sb}")
 
-    def within(self, elem, xset) -> None:
-        if elem not in xset:
+    def within(self, elem: object, xset: typing.Iterable[object]) -> None:
+        if elem not in list(xset):
             self.error(f"'{elem}' not found in '{xset}'")
 
     def exists(self, path: Path) -> None:
@@ -65,7 +65,7 @@ class Expect:
             self.error(f"not an empty directory: {dirpath}")
 
     @staticmethod
-    def _stringify(x):
+    def _stringify(x: object) -> str:
         s = str(x)
         if len(s) > 24:
             s = s[0:20] + "..."

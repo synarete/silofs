@@ -40,7 +40,7 @@ class SubcmdExec:
 
     def execute_sub(
         self,
-        args,
+        args: typing.Iterable[typing.Any],
         wdir: typing.Optional[Path] = None,
         indat: str = "",
         timeout: float = 5.0,
@@ -84,7 +84,10 @@ class SubcmdExec:
         return txt
 
     def execute_run(
-        self, args, wdir: typing.Optional[Path] = None, indat: str = ""
+        self,
+        args: typing.Iterable[typing.Any],
+        wdir: typing.Optional[Path] = None,
+        indat: str = "",
     ) -> None:
         """Run command as sub-process without output, raise upon failure."""
         cmd = self._make_cmdline(args)

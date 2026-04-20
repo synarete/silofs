@@ -100,7 +100,7 @@ def prandbytes(rsz: int) -> bytes:
     return rba[:rsz]
 
 
-def pformat(obj) -> str:
+def pformat(obj: object) -> str:
     """Wrapper over formatted pretty-print"""
     rep = pprint.pformat(vars(obj), indent=0)
     return rep.replace("\n", " ")

@@ -782,12 +782,6 @@ static size_t lsi_off_to_bn(const struct silofs_lsmap_info *lsi, off_t off)
 	return (size_t)silofs_off_to_lba(off - beg);
 }
 
-void silofs_lsi_get_lrange(const struct silofs_lsmap_info *lsi,
-                           struct silofs_lrange *out_lrange)
-{
-	lsi_lrange(lsi, out_lrange);
-}
-
 void silofs_lsi_setup_spawned(struct silofs_lsmap_info *lsi,
                               enum silofs_vtype refvtype, off_t beg)
 {

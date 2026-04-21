@@ -838,7 +838,7 @@ int silofs_test_shared_dbkref(struct silofs_task_ctx *task,
 {
 	struct silofs_spleaf_info *sli = nullptr;
 	struct silofs_lsmap_info *lsi  = nullptr;
-	size_t refcnt                  = 0;
+	size_t refcnt;
 	int err;
 
 	*out_res = false;

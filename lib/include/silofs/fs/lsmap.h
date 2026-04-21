@@ -27,9 +27,6 @@ void silofs_lsi_decref(struct silofs_lsmap_info *lsi);
 
 enum silofs_vtype silofs_lsi_refvtype(const struct silofs_lsmap_info *lsi);
 
-void silofs_lsi_get_lrange(const struct silofs_lsmap_info *lsi,
-                           struct silofs_lrange           *out_lrange);
-
 void silofs_lsi_setup_spawned(struct silofs_lsmap_info *lsi,
                               enum silofs_vtype refvtype, off_t beg);
 

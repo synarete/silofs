@@ -429,6 +429,9 @@ void silofs_spi_vspace_ref(const struct silofs_space_info *spi,
                            const struct silofs_vaddr      *vaddr,
                            struct silofs_vspace_ref       *out_vspref);
 
+void silofs_spi_clone_from(struct silofs_space_info       *spi,
+                           const struct silofs_space_info *spi_other);
+
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* carve */
 

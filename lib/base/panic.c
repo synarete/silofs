@@ -166,9 +166,9 @@ backtrace_addrs_to_str(char *buf, size_t bsz, void **bt_arr, int bt_len)
 {
 	size_t len;
 
-	for (int i = 1; i < bt_len - 2; ++i) {
+	for (int i = 1; i < bt_len - 1; ++i) {
 		len = strlen(buf);
-		if ((len + 8) >= bsz) {
+		if ((len + 20) >= bsz) {
 			break;
 		}
 		snprintf(buf + len, bsz - len, "%p ", bt_arr[i]);
@@ -437,8 +437,13 @@ silofs_die_not_eqm(const uint8_t *p, const uint8_t *q, size_t n,
 	};
 	const size_t pos = find_first_not_eq(p, q, n);
 
-	fmtmsg(&fm, "memory-not-equal-at: %zu (%u != %u)", pos,
-	       (uint32_t)(p[pos]), (uint32_t)(q[pos]));
+	if (pos < n) {
+		fmtmsg(&fm, "memory-not-equal-at: %zu (%u != %u)", pos,
+		       (uint32_t)(p[pos]), (uint32_t)(q[pos]));
+	} else {
+		fmtmsg(&fm, "memory-not-equal (unknown pos)");
+	}
+
 	silofs_fatal_by_(&fm);
 }
 
@@ -495,9 +500,9 @@ silofs_attr_noreturn static void silofs_panicked(void)
 
 void silofs_panicf(const char *file, int line, const char *fmt, ...)
 {
-	char msg[256]    = "";
-	va_list ap       = { 0 };
+	char msg[256];
 	const int errnum = errno;
+	va_list ap       = { 0 };
 
 	va_start(ap, fmt);
 	silofs_vsnprintf(msg, sizeof(msg), fmt, ap);

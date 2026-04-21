@@ -397,6 +397,11 @@ void silofs_ubref_update(struct silofs_uber_ref  *ubref,
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* spnode */
 
+struct silofs_vspace_ref {
+	size_t             refcnt;
+	enum silofs_spacef flags;
+};
+
 struct silofs_space_info *silofs_spi_from_vni(struct silofs_vnode_info *vni);
 
 void silofs_spi_incref(struct silofs_space_info *spi);
@@ -417,14 +422,12 @@ void silofs_spi_inc_allocated(struct silofs_space_info  *spi,
 void silofs_spi_dec_allocated(struct silofs_space_info  *spi,
                               const struct silofs_vaddr *vaddr);
 
-size_t silofs_spi_get_allocated(const struct silofs_space_info *spi,
-                                const struct silofs_vaddr      *vaddr);
-
-bool silofs_spi_test_unwritten(const struct silofs_space_info *spi,
-                               const struct silofs_vaddr      *vaddr);
-
 void silofs_spi_clear_unwritten(struct silofs_space_info  *spi,
                                 const struct silofs_vaddr *vaddr);
+
+void silofs_spi_vspace_ref(const struct silofs_space_info *spi,
+                           const struct silofs_vaddr      *vaddr,
+                           struct silofs_vspace_ref       *out_vspref);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* carve */
@@ -504,9 +507,9 @@ int silofs_consume_free_vspace(struct silofs_pexec_ctx *pexec,
 int silofs_update_used_vspace(struct silofs_pexec_ctx   *pexec,
                               const struct silofs_vaddr *vaddr, bool reclaim);
 
-int silofs_probe_used_vspace(struct silofs_pexec_ctx   *pexec,
-                             const struct silofs_vaddr *vaddr,
-                             size_t                    *out_nalloc);
+int silofs_probe_vspace_ref(struct silofs_pexec_ctx   *pexec,
+                            const struct silofs_vaddr *vaddr,
+                            struct silofs_vspace_ref  *out_vspref);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* vtop */

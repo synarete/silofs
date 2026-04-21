@@ -121,14 +121,14 @@ static int reclaim_vnode2_at(struct silofs_pexec_ctx *pexec,
                              const struct silofs_vaddr *vaddr)
 {
 	struct silofs_pnptr pnptr;
-	size_t nalloc = 0;
+	struct silofs_vspace_ref vspref;
 	int err;
 
-	err = silofs_probe_used_vspace(pexec, vaddr, &nalloc);
+	err = silofs_probe_vspace_ref(pexec, vaddr, &vspref);
 	if (err) {
 		return err;
 	}
-	if (nalloc > 1) {
+	if (vspref.refcnt > 1) {
 		goto reclaim; /* dec-ref only */
 	}
 	err = silofs_resolve_vtop(pexec, vaddr, &pnptr);

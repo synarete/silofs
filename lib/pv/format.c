@@ -306,9 +306,9 @@ static int
 reload_zero_node_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
 {
 	struct silofs_vaddr vaddr;
+	struct silofs_vspace_ref vspref;
 	struct silofs_space_info *spi = nullptr;
 	struct silofs_vnode_info *vni = nullptr;
-	size_t nalloc;
 	int err;
 
 	silofs_vaddr_setup(&vaddr, vtype, 0);
@@ -316,8 +316,8 @@ reload_zero_node_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
 	if (err) {
 		return err;
 	}
-	nalloc = silofs_spi_get_allocated(spi, &vaddr);
-	if (nalloc != 1) {
+	silofs_spi_vspace_ref(spi, &vaddr, &vspref);
+	if (vspref.refcnt != 1) {
 		return -SILOFS_EFSCORRUPTED;
 	}
 	err = silofs_fetch_vnode2_at(pexec, &vaddr, &vni);

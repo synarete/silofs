@@ -333,14 +333,14 @@ spi_test_unwritten_at(const struct silofs_space_info *spi, size_t slot)
 	return spn_test_flags_at(spi->spn, slot, SILOFS_SPACEF_UNWRITTEN);
 }
 
+static void spi_mark_unwritten_at(struct silofs_space_info *spi, size_t slot)
+{
+	spn_set_flags_at(spi->spn, slot, SILOFS_SPACEF_UNWRITTEN);
+}
+
 static void spi_clear_unwritten_at(struct silofs_space_info *spi, size_t slot)
 {
 	spn_clear_flags_at(spi->spn, slot, SILOFS_SPACEF_UNWRITTEN);
-}
-
-static void spi_set_unwritten_at(struct silofs_space_info *spi, size_t slot)
-{
-	spn_set_flags_at(spi->spn, slot, SILOFS_SPACEF_UNWRITTEN);
 }
 
 void silofs_spi_inc_allocated(struct silofs_space_info *spi,
@@ -357,7 +357,7 @@ void silofs_spi_inc_allocated(struct silofs_space_info *spi,
 	if (!isdata(vaddr)) {
 		goto out;
 	}
-	spi_set_unwritten_at(spi, slot);
+	spi_mark_unwritten_at(spi, slot);
 out:
 	spi_markdirty(spi);
 }
@@ -378,20 +378,6 @@ out:
 	spi_markdirty(spi);
 }
 
-size_t silofs_spi_get_allocated(const struct silofs_space_info *spi,
-                                const struct silofs_vaddr *vaddr)
-{
-	const size_t slot = spi_slot_of(spi, vaddr);
-
-	return spn_refcnt_at(spi->spn, slot);
-}
-
-bool silofs_spi_test_unwritten(const struct silofs_space_info *spi,
-                               const struct silofs_vaddr *vaddr)
-{
-	return spi_test_unwritten_at(spi, spi_slot_of(spi, vaddr));
-}
-
 void silofs_spi_clear_unwritten(struct silofs_space_info *spi,
                                 const struct silofs_vaddr *vaddr)
 {
@@ -401,4 +387,14 @@ void silofs_spi_clear_unwritten(struct silofs_space_info *spi,
 		spi_clear_unwritten_at(spi, slot);
 		spi_markdirty(spi);
 	}
+}
+
+void silofs_spi_vspace_ref(const struct silofs_space_info *spi,
+                           const struct silofs_vaddr *vaddr,
+                           struct silofs_vspace_ref *out_vspref)
+{
+	const size_t slot = spi_slot_of(spi, vaddr);
+
+	out_vspref->refcnt = spn_refcnt_at(spi->spn, slot);
+	out_vspref->flags  = spn_flags_at(spi->spn, slot);
 }

@@ -105,11 +105,11 @@ static int vsc_stage_spnode_of(const struct silofs_vspace_ctx *vs_ctx,
 	return silofs_fetch_spnode2_of(vs_ctx->pexec, ref_vaddr, out_spi);
 }
 
-static int vsc_reclaim_used_vspace(struct silofs_vspace_ctx *vs_ctx,
-                                   const struct silofs_vaddr *vaddr)
+static int vsc_decref_used_vspace(struct silofs_vspace_ctx *vs_ctx,
+                                  const struct silofs_vaddr *vaddr)
 {
+	struct silofs_vspace_ref vspref;
 	struct silofs_space_info *spi = nullptr;
-	size_t nalloc;
 	int err;
 
 	err = vsc_stage_spnode_of(vs_ctx, vaddr, &spi);
@@ -117,8 +117,8 @@ static int vsc_reclaim_used_vspace(struct silofs_vspace_ctx *vs_ctx,
 	if (err) {
 		return err;
 	}
-	nalloc = silofs_spi_get_allocated(spi, vaddr);
-	if (!nalloc) {
+	silofs_spi_vspace_ref(spi, vaddr, &vspref);
+	if (vspref.refcnt == 0) {
 		log_err("can not reclaim unused vspace: vtype=%d off=%ld",
 		        vaddr->vtype, vaddr->off);
 		return -SILOFS_EBUG;
@@ -130,8 +130,8 @@ static int vsc_reclaim_used_vspace(struct silofs_vspace_ctx *vs_ctx,
 static int vsc_incref_used_vspace(struct silofs_vspace_ctx *vs_ctx,
                                   const struct silofs_vaddr *vaddr)
 {
+	struct silofs_vspace_ref vspref;
 	struct silofs_space_info *spi = nullptr;
-	size_t nalloc;
 	int err;
 
 	err = vsc_stage_spnode_of(vs_ctx, vaddr, &spi);
@@ -139,8 +139,8 @@ static int vsc_incref_used_vspace(struct silofs_vspace_ctx *vs_ctx,
 	if (err) {
 		return err;
 	}
-	nalloc = silofs_spi_get_allocated(spi, vaddr);
-	if (!nalloc) {
+	silofs_spi_vspace_ref(spi, vaddr, &vspref);
+	if (vspref.refcnt == 0) {
 		log_err("can not incref unused vspace: vtype=%d off=%ld",
 		        vaddr->vtype, vaddr->off);
 		return -SILOFS_EBUG;
@@ -157,16 +157,16 @@ int silofs_update_used_vspace(struct silofs_pexec_ctx *pexec,
 
 	vsc_init_by(&vs_ctx, pexec, vaddr);
 	if (reclaim) {
-		ret = vsc_reclaim_used_vspace(&vs_ctx, vaddr);
+		ret = vsc_decref_used_vspace(&vs_ctx, vaddr);
 	} else {
 		ret = vsc_incref_used_vspace(&vs_ctx, vaddr);
 	}
 	return ret;
 }
 
-static int
-vsc_probe_used_vspace(struct silofs_vspace_ctx *vs_ctx,
-                      const struct silofs_vaddr *vaddr, size_t *out_nalloc)
+static int vsc_probe_vspace_ref(struct silofs_vspace_ctx *vs_ctx,
+                                const struct silofs_vaddr *vaddr,
+                                struct silofs_vspace_ref *out_vspref)
 {
 	struct silofs_space_info *spi = nullptr;
 	int err;
@@ -176,16 +176,16 @@ vsc_probe_used_vspace(struct silofs_vspace_ctx *vs_ctx,
 	if (err) {
 		return err;
 	}
-	*out_nalloc = silofs_spi_get_allocated(spi, vaddr);
+	silofs_spi_vspace_ref(spi, vaddr, out_vspref);
 	return 0;
 }
 
-int silofs_probe_used_vspace(struct silofs_pexec_ctx *pexec,
-                             const struct silofs_vaddr *vaddr,
-                             size_t *out_nalloc)
+int silofs_probe_vspace_ref(struct silofs_pexec_ctx *pexec,
+                            const struct silofs_vaddr *vaddr,
+                            struct silofs_vspace_ref *out_vspref)
 {
 	struct silofs_vspace_ctx vs_ctx;
 
 	vsc_init_by(&vs_ctx, pexec, vaddr);
-	return vsc_probe_used_vspace(&vs_ctx, vaddr, out_nalloc);
+	return vsc_probe_vspace_ref(&vs_ctx, vaddr, out_vspref);
 }

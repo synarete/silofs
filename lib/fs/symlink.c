@@ -405,15 +405,15 @@ static int sylc_create_symval(const struct silofs_symlnk_ctx *sl_ctx,
                               const struct silofs_strview *str,
                               struct silofs_symval_info **out_syi)
 {
-	struct silofs_symval_info *syi = nullptr;
-	const ino_t parent             = silofs_ii_ino(sl_ctx->lnk_ii);
+	struct silofs_symval_info *syi;
+	const ino_t parent_ino = sl_ctx->lnk_ii->i_ino;
 	int err;
 
 	err = sylc_spawn_symval(sl_ctx, &syi);
 	if (err) {
 		return err;
 	}
-	symv_init(syi->syv, parent, str->str, str->len);
+	symv_init(syi->syv, parent_ino, str->str, str->len);
 	*out_syi = syi;
 	return 0;
 }
@@ -497,7 +497,7 @@ static void sylc_update_post_symlink(const struct silofs_symlnk_ctx *sl_ctx)
 	};
 	struct silofs_inode_info *lnk_ii = sl_ctx->lnk_ii;
 
-	silofs_ii_mkiattr(lnk_ii, &iattr);
+	silofs_make_iattr_of(lnk_ii, &iattr);
 	iattr.ia_size  = symval_length(sl_ctx->symval);
 	iattr.ia_flags = SILOFS_IATTR_MCTIME | SILOFS_IATTR_SIZE;
 	silofs_update_iattrs_of(sl_ctx->task, lnk_ii, &iattr);

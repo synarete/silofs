@@ -91,13 +91,16 @@ bool silofs_user_cap_fowner(const struct silofs_cred *cred);
 
 bool silofs_user_cap_sys_admin(const struct silofs_cred *cred);
 
-void silofs_ii_update_with(struct silofs_inode_info *ii, ino_t ino);
+struct silofs_inode_info *
+silofs_ii_unconst(const struct silofs_inode_info *ii);
+
+struct silofs_vnode_info *silofs_ii_to_vni(const struct silofs_inode_info *ii);
+
+const struct silofs_vaddr *silofs_ii_vaddr(const struct silofs_inode_info *ii);
+
+ino_t silofs_ii_parent(const struct silofs_inode_info *ii);
 
 void silofs_ii_set_loose(struct silofs_inode_info *ii);
-
-ino_t silofs_ii_xino_of(const struct silofs_inode_info *ii);
-
-ino_t silofs_ii_ino_of(const struct silofs_inode_info *ii);
 
 uid_t silofs_ii_uid(const struct silofs_inode_info *ii);
 
@@ -143,31 +146,22 @@ void silofs_ii_kill_suidgid(struct silofs_inode_info *ii);
 
 void silofs_ii_refresh_atime(struct silofs_inode_info *ii, bool to_volatile);
 
-void silofs_ii_setup_new(struct silofs_inode_info        *ii,
-                         const struct silofs_inew_params *inp);
+void silofs_ii_update_spawned(struct silofs_inode_info        *ii,
+                              const struct silofs_inew_params *inp);
+
+void silofs_ii_update_staged(struct silofs_inode_info *ii);
 
 void silofs_ii_stat_of(const struct silofs_inode_info *ii,
                        uint32_t sx_want_mask, struct silofs_stat *st);
 
-void silofs_ii_mkiattr(const struct silofs_inode_info *ii,
-                       struct silofs_iattr            *out_iattr);
+void silofs_make_iattr_of(const struct silofs_inode_info *ii,
+                          struct silofs_iattr            *out_iattr);
 
 void silofs_ii_cleardirty_vnis(struct silofs_inode_info *ii);
 
 bool silofs_ii_isloose(const struct silofs_inode_info *ii);
 
-ino_t silofs_ii_parent(const struct silofs_inode_info *ii);
-
 enum silofs_inodef silofs_ii_flags(const struct silofs_inode_info *ii);
-
-struct silofs_inode_info *
-silofs_ii_unconst(const struct silofs_inode_info *ii);
-
-struct silofs_vnode_info *silofs_ii_to_vni(const struct silofs_inode_info *ii);
-
-ino_t silofs_ii_ino(const struct silofs_inode_info *ii);
-
-const struct silofs_vaddr *silofs_ii_vaddr(const struct silofs_inode_info *ii);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

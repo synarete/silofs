@@ -23,12 +23,19 @@
 #include <silofs/fs.h>
 #include <silofs/run.h>
 
-/* local functions forward declarations */
+static void ii_markdirty(struct silofs_inode_info *ii);
 static void ii_update_itimes(struct silofs_inode_info *ii,
                              enum silofs_iattr_flags attr_flags,
                              const struct timespec *ts);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static ino_t ino_from_vaddr(const struct silofs_vaddr *vaddr)
+{
+	silofs_assert_eq(vaddr->vtype, SILOFS_VTYPE_INODE);
+
+	return silofs_calc_ino_by_vaddr(vaddr);
+}
 
 bool silofs_ino_isnull(ino_t ino)
 {
@@ -345,6 +352,12 @@ static void iattr_setup_now(struct silofs_iattr *iattr, ino_t ino)
 	itimes_setup_now(&iattr->ia_t);
 }
 
+void silofs_make_iattr_of(const struct silofs_inode_info *ii,
+                          struct silofs_iattr *out_iattr)
+{
+	iattr_setup_now(out_iattr, ii->i_ino);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct silofs_inode_info *
@@ -358,25 +371,6 @@ static bool ii_isevictable_as(const struct silofs_vnode_info *vni)
 	const struct silofs_inode_info *ii = ii_from_vni2(vni);
 
 	return silofs_ii_isevictable(ii);
-}
-
-void silofs_ii_update_with(struct silofs_inode_info *ii, ino_t ino)
-{
-	silofs_assert_not_null(ii->i_vni.vn_lni.ln_view);
-	silofs_assert_not_null(ii->inode);
-
-	ii->i_ino                = ino;
-	ii->i_vni.isevictable_fn = ii_isevictable_as;
-}
-
-ino_t silofs_ii_xino_of(const struct silofs_inode_info *ii)
-{
-	return silofs_ii_isrootd(ii) ? SILOFS_INO_ROOT : silofs_ii_ino(ii);
-}
-
-ino_t silofs_ii_ino_of(const struct silofs_inode_info *ii)
-{
-	return silofs_inode_ino(ii->inode);
 }
 
 ino_t silofs_ii_parent(const struct silofs_inode_info *ii)
@@ -466,17 +460,17 @@ bool silofs_ii_issock(const struct silofs_inode_info *ii)
 
 bool silofs_ii_isrootd(const struct silofs_inode_info *ii)
 {
-	return silofs_ii_isdir(ii) && (silofs_ii_ino(ii) == SILOFS_INO_ROOT);
+	return silofs_ii_isdir(ii) && (ii->i_ino == SILOFS_INO_ROOT);
 }
 
 void silofs_ii_fixup_as_rootdir(struct silofs_inode_info *ii)
 {
 	struct silofs_inode *inode = ii->inode;
 
-	inode_set_parent(inode, silofs_ii_ino(ii));
+	inode_set_parent(inode, ii->i_ino);
 	inode_set_nlink(inode, 2);
 	inode_add_flags(inode, SILOFS_INODEF_ROOTD);
-	silofs_ii_markdirty(ii);
+	ii_markdirty(ii);
 }
 
 static void ii_set_iflags(struct silofs_inode_info *ii, int iflags)
@@ -496,8 +490,9 @@ void silofs_ii_update_iflags(struct silofs_inode_info *ii, int iflags_want,
                              int iflags_dont)
 {
 	const enum silofs_inodef iflags_curr = silofs_ii_flags(ii);
-	int iflags                           = (int)iflags_curr;
+	int iflags;
 
+	iflags = (int)iflags_curr;
 	if (iflags_want) {
 		iflags |= iflags_want;
 	}
@@ -555,12 +550,17 @@ bool silofs_ii_isevictable(const struct silofs_inode_info *ii)
 	return silofs_vni_isevictable(&ii->i_vni);
 }
 
+static void ii_markdirty(struct silofs_inode_info *ii)
+{
+	silofs_vni_markdirty(silofs_ii_to_vni(ii), nullptr);
+}
+
 void silofs_ii_markdirty(struct silofs_inode_info *ii)
 {
 	silofs_assert_not_null(ii);
 
 	if (!silofs_ii_isloose(ii)) {
-		silofs_vni_markdirty(silofs_ii_to_vni(ii), nullptr);
+		ii_markdirty(ii);
 	}
 }
 
@@ -598,17 +598,13 @@ struct silofs_inode_info *silofs_ii_unconst(const struct silofs_inode_info *ii)
 		const struct silofs_inode_info *p;
 		struct silofs_inode_info *q;
 	} u = { .p = ii };
+
 	return u.q;
 }
 
 struct silofs_vnode_info *silofs_ii_to_vni(const struct silofs_inode_info *ii)
 {
 	return silofs_unconst(&ii->i_vni);
-}
-
-ino_t silofs_ii_ino(const struct silofs_inode_info *ii)
-{
-	return ii->i_ino;
 }
 
 const struct silofs_vaddr *silofs_ii_vaddr(const struct silofs_inode_info *ii)
@@ -655,7 +651,7 @@ static void inode_setup_common(struct silofs_inode *inode, ino_t ino,
 static void ii_setup_inode(struct silofs_inode_info *ii,
                            const struct silofs_inew_params *inp)
 {
-	inode_setup_common(ii->inode, silofs_ii_ino(ii), inp);
+	inode_setup_common(ii->inode, ii->i_ino, inp);
 }
 
 static void ii_setup_sub(struct silofs_inode_info *ii,
@@ -680,20 +676,37 @@ static void ii_set_generation(struct silofs_inode_info *ii,
 	silofs_ii_markdirty(ii);
 }
 
-void silofs_ii_setup_new(struct silofs_inode_info *ii,
-                         const struct silofs_inew_params *inp)
+static void ii_update_ino_by_vaddr(struct silofs_inode_info *ii)
 {
+	const struct silofs_vaddr *vaddr = silofs_ii_vaddr(ii);
+
+	ii->i_ino = ino_from_vaddr(vaddr);
+}
+
+static void ii_update_self(struct silofs_inode_info *ii)
+{
+	silofs_assert_not_null(ii->i_vni.vn_lni.ln_view);
+	silofs_assert_not_null(ii->inode);
+
+	ii_update_ino_by_vaddr(ii);
+	ii->i_vni.isevictable_fn = ii_isevictable_as;
+}
+
+void silofs_ii_update_spawned(struct silofs_inode_info *ii,
+                              const struct silofs_inew_params *inp)
+{
+	ii_update_self(ii);
 	ii_setup_inode(ii, inp);
 	ii_setup_sub(ii, inp);
 	ii_update_itimes(ii, SILOFS_IATTR_TIMES, &inp->ts);
 	ii_set_generation(ii, inp);
-	silofs_ii_markdirty(ii);
+	ii_markdirty(ii);
 }
 
-void silofs_ii_mkiattr(const struct silofs_inode_info *ii,
-                       struct silofs_iattr *out_iattr)
+void silofs_ii_update_staged(struct silofs_inode_info *ii)
 {
-	iattr_setup_now(out_iattr, silofs_ii_ino(ii));
+	ii_update_self(ii);
+	silofs_ii_refresh_atime(ii, true);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -794,7 +807,7 @@ static void update_times_attr(const struct silofs_task_ctx *task,
 {
 	struct silofs_iattr iattr = { .ia_size = -1 };
 
-	silofs_ii_mkiattr(ii, &iattr);
+	silofs_make_iattr_of(ii, &iattr);
 	memcpy(&iattr.ia_t, itimes, sizeof(iattr.ia_t));
 	iattr.ia_flags = attr_flags;
 	silofs_update_iattrs_of(task, ii, &iattr);
@@ -835,7 +848,7 @@ static int do_chmod(struct silofs_task_ctx *task, struct silofs_inode_info *ii,
 		return err;
 	}
 
-	iattr_setup_with(&iattr, silofs_ii_ino(ii), itimes);
+	iattr_setup_with(&iattr, ii->i_ino, itimes);
 	iattr.ia_mode = new_mode_of(ii, mode);
 	update_post_chmod(task, ii, &iattr);
 	return 0;
@@ -927,7 +940,7 @@ static int do_chown(const struct silofs_task_ctx *task,
 	if (err) {
 		return err;
 	}
-	iattr_setup_with(&iattr, silofs_ii_ino(ii), itimes);
+	iattr_setup_with(&iattr, ii->i_ino, itimes);
 	if (chown_uid) {
 		iattr.ia_uid = uid;
 		iattr.ia_flags |= SILOFS_IATTR_UID;
@@ -1159,10 +1172,9 @@ void silofs_ii_stat_of(const struct silofs_inode_info *ii,
 {
 	struct silofs_itimes tms;
 
-	ii_times(ii, &tms);
 	silofs_memzero(st, sizeof(*st));
 
-	st->st.st_ino     = silofs_ii_xino_of(ii);
+	st->st.st_ino     = ii->i_ino;
 	st->st.st_mode    = silofs_ii_mode(ii);
 	st->st.st_nlink   = silofs_ii_nlink(ii);
 	st->st.st_uid     = silofs_ii_uid(ii);
@@ -1171,6 +1183,8 @@ void silofs_ii_stat_of(const struct silofs_inode_info *ii,
 	st->st.st_size    = silofs_ii_size(ii);
 	st->st.st_blocks  = ii_stat_blocks(ii);
 	st->st.st_blksize = ii_stat_blksize(ii);
+
+	ii_times(ii, &tms);
 	assign_ts(&st->st.st_atim, &ii->i_atime_lazy);
 	assign_ts(&st->st.st_ctim, &tms.ctime);
 	assign_ts(&st->st.st_mtim, &tms.mtime);
@@ -1377,7 +1391,7 @@ static void ii_update_itimes(struct silofs_inode_info *ii,
 	struct silofs_iattr iattr          = { .ia_size = -1 };
 	const enum silofs_iattr_flags mask = SILOFS_IATTR_TIMES;
 
-	silofs_ii_mkiattr(ii, &iattr);
+	silofs_make_iattr_of(ii, &iattr);
 	ii_update_inode_attr(ii, &iattr, attr_flags & mask, ts_now);
 }
 
@@ -1411,7 +1425,7 @@ ii_update_iblocks(struct silofs_inode_info *ii, enum silofs_vtype vtype,
 {
 	struct silofs_iattr iattr = { .ia_size = -1 };
 
-	silofs_ii_mkiattr(ii, &iattr);
+	silofs_make_iattr_of(ii, &iattr);
 	iattr.ia_blocks = recalc_iblocks(ii, vtype, dif);
 	iattr.ia_flags  = SILOFS_IATTR_BLOCKS;
 
@@ -1423,7 +1437,7 @@ static void ii_update_isize(struct silofs_inode_info *ii, ssize_t size,
 {
 	struct silofs_iattr iattr = { .ia_size = -1 };
 
-	silofs_ii_mkiattr(ii, &iattr);
+	silofs_make_iattr_of(ii, &iattr);
 	iattr.ia_size  = size;
 	iattr.ia_flags = SILOFS_IATTR_SIZE;
 
@@ -1486,7 +1500,7 @@ int silofs_verify_ino(ino_t ino)
 static int verify_inode_specific(const struct silofs_inode *inode)
 {
 	const mode_t mode = inode_mode(inode);
-	int err           = 0;
+	int err;
 
 	if (S_ISDIR(mode)) {
 		err = silofs_verify_dir_inode(inode);
@@ -1495,6 +1509,35 @@ static int verify_inode_specific(const struct silofs_inode *inode)
 		err = 0;
 	}
 	return err;
+}
+
+static int verify_inode_ino(const struct silofs_inode *inode)
+{
+	ino_t ino;
+	mode_t mode;
+	enum silofs_inodef flags;
+	int err;
+
+	ino = silofs_inode_ino(inode);
+	err = silofs_verify_ino(ino);
+	if (err) {
+		log_err("bad inode: ino=%ld", ino);
+		return err;
+	}
+	flags = inode_flags(inode);
+	if (((flags & SILOFS_INODEF_ROOTD) && (ino != SILOFS_INO_ROOT)) ||
+	    (!(flags & SILOFS_INODEF_ROOTD) && (ino == SILOFS_INO_ROOT))) {
+		log_err("bad root-dir inode flags: ino=%ld flags=0-x%x", ino,
+		        (int)flags);
+		return -SILOFS_EFSCORRUPTED;
+	}
+	mode = inode_mode(inode);
+	if (!S_ISDIR(mode) && (ino == SILOFS_INO_ROOT)) {
+		log_err("bad root-dir inode mode: ino=%ld mode=0%lo", ino,
+		        (long)mode);
+		return -SILOFS_EFSCORRUPTED;
+	}
+	return 0;
 }
 
 static int verify_inode_head(const struct silofs_inode *inode)
@@ -1506,9 +1549,8 @@ static int verify_inode_head(const struct silofs_inode *inode)
 	int err;
 
 	ino = silofs_inode_ino(inode);
-	err = silofs_verify_ino(ino);
+	err = verify_inode_ino(inode);
 	if (err) {
-		log_err("bad inode: ino=%ld", ino);
 		return err;
 	}
 	size = inode_size(inode);

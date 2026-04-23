@@ -1478,7 +1478,7 @@ static int dirc_recheck_dnode(const struct silofs_dir_ctx *d_ctx,
 		return 0;
 	}
 	dnode_ino = dtn_ino(dni->dtn);
-	owner_ino = silofs_ii_ino(d_ctx->dir_ii);
+	owner_ino = d_ctx->dir_ii->i_ino;
 	if (dnode_ino != owner_ino) {
 		log_err("bad dnode: dnode_ino=%lu owner_ino=%lu", dnode_ino,
 		        owner_ino);
@@ -1613,7 +1613,7 @@ static int dirc_spawn_setup_dnode(const struct silofs_dir_ctx *d_ctx,
                                   silofs_dtn_index_t dtn_index,
                                   struct silofs_dtnode_info **out_dni)
 {
-	const ino_t d_ino = silofs_ii_ino(d_ctx->dir_ii);
+	const ino_t d_ino = d_ctx->dir_ii->i_ino;
 	int err;
 
 	err = dirc_spawn_dnode(d_ctx, out_dni);
@@ -1935,19 +1935,19 @@ static void dirc_update_nlink(const struct silofs_dir_ctx *d_ctx, long dif)
 	struct silofs_inode_info *child_ii = d_ctx->child_ii;
 	struct silofs_inode_info *dir_ii   = d_ctx->dir_ii;
 
-	silofs_ii_mkiattr(child_ii, &iattr);
+	silofs_make_iattr_of(child_ii, &iattr);
 	iattr.ia_nlink = i_nlink_new(child_ii, dif);
 	iattr.ia_flags |= SILOFS_IATTR_NLINK;
 	if (dif > 0) {
-		iattr.ia_parent = silofs_ii_ino(dir_ii);
+		iattr.ia_parent = dir_ii->i_ino;
 		iattr.ia_flags |= SILOFS_IATTR_PARENT;
-	} else if (silofs_ii_parent(child_ii) == silofs_ii_ino(dir_ii)) {
+	} else if (silofs_ii_parent(child_ii) == dir_ii->i_ino) {
 		iattr.ia_parent = SILOFS_INO_NULL;
 		iattr.ia_flags |= SILOFS_IATTR_PARENT;
 	}
 	silofs_update_iattrs_of(d_ctx->task, child_ii, &iattr);
 
-	silofs_ii_mkiattr(dir_ii, &iattr);
+	silofs_make_iattr_of(dir_ii, &iattr);
 	if (silofs_ii_isdir(child_ii)) {
 		iattr.ia_nlink = i_nlink_new(dir_ii, dif);
 		iattr.ia_flags |= SILOFS_IATTR_NLINK;
@@ -1963,7 +1963,7 @@ static int dirc_add_to_dnode(const struct silofs_dir_ctx *d_ctx,
 	if (!dtn_may_insert(dni->dtn, d_ctx->name->sv.len)) {
 		return -SILOFS_ENOSPC;
 	}
-	dtn_insert(dni->dtn, d_ctx->name, silofs_ii_ino(ii), ii_dtype_of(ii));
+	dtn_insert(dni->dtn, d_ctx->name, ii->i_ino, ii_dtype_of(ii));
 	dir_inc_ndents(d_ctx->dir_ii);
 	dni_markdirty(dni, d_ctx->dir_ii);
 	return 0;
@@ -2168,16 +2168,20 @@ static bool dirc_emit_dirent(struct silofs_dir_ctx *d_ctx,
 	return dirc_emit(d_ctx, name, nlen, ino, dt, attr);
 }
 
+static mode_t dtype_of(const struct silofs_inode_info *ii)
+{
+	const mode_t mode = silofs_ii_mode(ii);
+
+	return IFTODT(mode);
+}
+
 static bool dirc_emit_ii(struct silofs_dir_ctx *d_ctx, const char *name,
                          size_t nlen, const struct silofs_inode_info *ii)
 {
-	struct silofs_stat st   = { .gen = 0 };
-	const ino_t xino        = silofs_ii_xino_of(ii);
-	const mode_t mode       = silofs_ii_mode(ii);
-	const struct stat *attr = &st.st;
+	struct silofs_stat st;
 
 	silofs_ii_stat_of(ii, 0, &st);
-	return dirc_emit(d_ctx, name, nlen, xino, IFTODT(mode), attr);
+	return dirc_emit(d_ctx, name, nlen, ii->i_ino, dtype_of(ii), &st.st);
 }
 
 static int dirc_stage_inode_of_de(const struct silofs_dir_ctx *d_ctx,
@@ -2450,7 +2454,7 @@ static void dirc_post_readdir(const struct silofs_dir_ctx *d_ctx)
 {
 	struct silofs_iattr iattr = { .ia_size = -1 };
 
-	silofs_ii_mkiattr(d_ctx->dir_ii, &iattr);
+	silofs_make_iattr_of(d_ctx->dir_ii, &iattr);
 	iattr.ia_flags |= SILOFS_IATTR_ATIME | SILOFS_IATTR_LAZY;
 	silofs_update_iattrs_of(d_ctx->task, d_ctx->dir_ii, &iattr);
 }

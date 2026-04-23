@@ -562,13 +562,12 @@ static void xei_discard_entry(const struct silofs_xentry_info *xei)
 static int xac_recheck_node(const struct silofs_xattr_ctx *xa_ctx,
                             struct silofs_xanode_info *xai)
 {
-	ino_t owner_ino;
+	const ino_t owner_ino = xa_ctx->ii->i_ino;
 	ino_t xanode_ino;
 
 	if (!silofs_vni_need_recheck(&xai->xan_vni)) {
 		return 0;
 	}
-	owner_ino  = silofs_ii_ino(xa_ctx->ii);
 	xanode_ino = xan_ino(xai->xan);
 	if (owner_ino != xanode_ino) {
 		log_err("bad xanode ino: owner_ino=%lu xanode_ino=%lu",
@@ -865,7 +864,7 @@ xac_spawn_bind_xanode(const struct silofs_xattr_ctx *xa_ctx, size_t slot,
 		return -SILOFS_EBUG;
 	}
 
-	xai_setup_node(xai, silofs_ii_ino(ii));
+	xai_setup_node(xai, ii->i_ino);
 
 	ii_xa_set_at(ii, slot, xai_vaddr(xai));
 	silofs_ii_markdirty(ii);
@@ -1040,7 +1039,7 @@ static void xac_update_post_setxattr(const struct silofs_xattr_ctx *xa_ctx)
 	struct silofs_iattr iattr    = { .ia_size = -1 };
 	struct silofs_inode_info *ii = xa_ctx->ii;
 
-	silofs_ii_mkiattr(ii, &iattr);
+	silofs_make_iattr_of(ii, &iattr);
 	iattr.ia_flags |= SILOFS_IATTR_CTIME;
 	iattr.ia_flags |= (xa_ctx->kill_sgid ? SILOFS_IATTR_KILL_SGID : 0);
 	silofs_update_iattrs_of(xa_ctx->task, ii, &iattr);

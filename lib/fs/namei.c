@@ -392,6 +392,15 @@ static enum silofs_inodef make_inodef(enum silofs_inodef flags, int mask)
 	return (enum silofs_inodef)((int)flags & mask);
 }
 
+static enum silofs_inodef
+derive_inodef(const struct silofs_inode_info *parent_dii)
+{
+	constexpr int default_ftype    = SILOFS_INODEF_FTYPE2;
+	const enum silofs_inodef flags = silofs_ii_flags(parent_dii);
+
+	return make_inodef(flags, default_ftype);
+}
+
 static void inewp_reset(struct silofs_inew_params *inp)
 {
 	memset(inp, 0, sizeof(*inp));
@@ -422,17 +431,13 @@ static bool inewp_isdir(const struct silofs_inew_params *inp)
 static void inewp_set_by_parent(struct silofs_inew_params *inp,
                                 const struct silofs_inode_info *parent_dii)
 {
-	const int mask = SILOFS_INODEF_FTYPE2;
-
-	if (parent_dii == nullptr) {
-		return;
+	if (parent_dii != nullptr) {
+		inp->parent_ino  = parent_dii->i_ino;
+		inp->parent_mode = silofs_ii_mode(parent_dii);
+		if (inewp_isreg(inp) || inewp_isdir(inp)) {
+			inp->flags = derive_inodef(parent_dii);
+		}
 	}
-	inp->parent_ino  = silofs_ii_ino(parent_dii);
-	inp->parent_mode = silofs_ii_mode(parent_dii);
-	if (!inewp_isreg(inp) && !inewp_isdir(inp)) {
-		return;
-	}
-	inp->flags = make_inodef(silofs_ii_flags(parent_dii), mask);
 }
 
 static struct silofs_prandgen *prng_of(const struct silofs_task_ctx *task)

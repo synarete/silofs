@@ -876,7 +876,7 @@ static void
 fni_setup(struct silofs_ftnode_info *fni, const struct silofs_inode_info *ii,
           off_t off, size_t height)
 {
-	ftn_init_by(fni->ftn, silofs_ii_ino(ii), off, height);
+	ftn_init_by(fni->ftn, ii->i_ino, off, height);
 }
 
 static void fni_resolve_child_by_slot(const struct silofs_ftnode_info *fni,
@@ -1386,7 +1386,7 @@ static void filc_update_post_io(const struct silofs_file_ctx *f_ctx)
 	const off_t end              = f_ctx->end;
 	const size_t len             = filc_io_length(f_ctx);
 
-	silofs_ii_mkiattr(ii, &iattr);
+	silofs_make_iattr_of(ii, &iattr);
 	if (f_ctx->op == SILOFS_FILE_OP_READ) {
 		iattr.ia_flags |= SILOFS_IATTR_ATIME | SILOFS_IATTR_LAZY;
 	} else if ((f_ctx->op == SILOFS_FILE_OP_WRITE) ||
@@ -1525,7 +1525,7 @@ static int filc_recheck_fni(const struct silofs_file_ctx *f_ctx,
 		return 0;
 	}
 	fnode_ino = ftn_ino(fni->ftn);
-	owner_ino = silofs_ii_ino(f_ctx->ii);
+	owner_ino = f_ctx->ii->i_ino;
 	if (fnode_ino != owner_ino) {
 		log_err("bad finode ino: fnode_ino=%lu owner_ino=%lu",
 		        fnode_ino, owner_ino);

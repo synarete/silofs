@@ -35,7 +35,7 @@ static size_t do_getentropy(void *buf, size_t len)
 	return (ret == 0) ? nr : 0;
 }
 
-static void get_sys_entropy(void *buf, size_t len)
+static void absorb_entropy(void *buf, size_t len)
 {
 	void *p = buf;
 	size_t n;
@@ -100,7 +100,7 @@ prandgen_update_state_by(struct silofs_prandgen *prng, uint64_t count,
 
 static void prandgen_init_state(struct silofs_prandgen *prng)
 {
-	get_sys_entropy(prng->state, sizeof(prng->state));
+	absorb_entropy(prng->state, sizeof(prng->state));
 }
 
 static void prandgen_refill_prandom(struct silofs_prandgen *prng)
@@ -218,18 +218,23 @@ static uint64_t *as_u64(void *s)
 static void prandgen_reseed(struct silofs_prandgen *prng)
 {
 	uint64_t r[ARRAY_SIZE(prng->state)];
+	constexpr size_t nr = ARRAY_SIZE(r);
 
-	get_sys_entropy(r, sizeof(r));
-	for (size_t i = 0; i < ARRAY_SIZE(r); ++i) {
+	absorb_entropy(r, sizeof(r));
+	for (size_t i = 0; i < nr; ++i) {
 		uint64_t *p = as_u64(prng->state[i].s);
 
-		*p ^= r[i];
+		STATICASSERT_EQ(sizeof(prng->state[i].s), 4 * sizeof(*p));
+		p[0] ^= r[i % nr];
+		p[1] ^= r[p[0] % nr];
+		p[2] ^= r[p[1] % nr];
+		p[3] ^= r[p[2] % nr];
 	}
 }
 
 static void prandgen_try_reseed(struct silofs_prandgen *prng)
 {
-	if ((prng->cycle % 8) == 0) {
+	if ((prng->cycle % 16) == 0) {
 		prandgen_reseed(prng);
 		prng->cycle++;
 	}

@@ -93,7 +93,7 @@ static void vcache_fini_vni_hmapq(struct silofs_vcache *vcache)
 
 static bool test_evictable_vni(const struct silofs_vnode_info *vni)
 {
-	int ret = true;
+	bool ret = true;
 
 	if (vni->isevictable_fn != nullptr) {
 		ret = vni->isevictable_fn(vni);

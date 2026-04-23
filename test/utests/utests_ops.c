@@ -1870,6 +1870,7 @@ void ut_drop_caches_fully(struct ut_env *ute)
 
 	ut_sync_drop(ute);
 	silofs_collect_stats(ute->env, &cstats);
+
 	ut_expect_eq(cstats.ncache_nodes, 1); /* sb not dropped */
 }
 

@@ -541,13 +541,17 @@ static size_t ii_dq_vnis_size(const struct silofs_inode_info *ii)
 
 bool silofs_ii_isevictable(const struct silofs_inode_info *ii)
 {
-	if (ii->i_nopen > 0) {
-		return false;
+	const size_t dq_vnis_sz = ii_dq_vnis_size(ii);
+	bool ret;
+
+	if (dq_vnis_sz > 0) {
+		ret = false;
+	} else if (ii->i_nopen > 0) {
+		ret = false;
+	} else {
+		ret = silofs_vni_isevictable(&ii->i_vni);
 	}
-	if (ii_dq_vnis_size(ii) > 0) {
-		return false;
-	}
-	return silofs_vni_isevictable(&ii->i_vni);
+	return ret;
 }
 
 static void ii_markdirty(struct silofs_inode_info *ii)

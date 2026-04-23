@@ -20,10 +20,10 @@
 
 static void ut_statfs_empty(struct ut_env *ute)
 {
+	struct statvfs stv = {};
 	size_t fs_size     = 0;
 	size_t used_bytes  = 0;
 	size_t used_files  = 0;
-	struct statvfs stv = { .f_bsize = 0 };
 
 	ut_statfs(ute, UT_ROOT_INO, &stv);
 	ut_expect_le(stv.f_bsize, UT_64K); /* TODO: needs to be eq one day */
@@ -48,13 +48,14 @@ static void ut_statfs_empty(struct ut_env *ute)
 
 static void ut_statfs_files_(struct ut_env *ute, size_t cnt)
 {
-	ino_t ino          = 0;
-	ino_t dino         = 0;
-	fsfilcnt_t ffree   = 0;
+	struct statvfs stv = {};
 	const char *name   = UT_NAME;
 	const char *fname  = nullptr;
-	struct statvfs stv = { .f_bsize = 0 };
+	fsfilcnt_t ffree, files[2];
+	ino_t dino, ino;
 
+	ut_statfs_rootd(ute, &stv);
+	files[0] = stv.f_files;
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_statfs(ute, dino, &stv);
 	ffree = stv.f_ffree;
@@ -77,6 +78,9 @@ static void ut_statfs_files_(struct ut_env *ute, size_t cnt)
 		ffree = stv.f_ffree;
 	}
 	ut_rmdir_at_root(ute, name);
+	ut_statfs_rootd(ute, &stv);
+	files[1] = stv.f_files;
+	silofs_assert_eq(files[0], files[1]);
 }
 
 static void ut_statfs_files(struct ut_env *ute)
@@ -91,13 +95,14 @@ static void ut_statfs_files(struct ut_env *ute)
 
 static void ut_statfs_dirs_(struct ut_env *ute, size_t cnt)
 {
-	ino_t ino          = 0;
-	ino_t dino         = 0;
-	fsfilcnt_t ffree   = 0;
+	struct statvfs stv = {};
 	const char *name   = UT_NAME;
 	const char *dname  = nullptr;
-	struct statvfs stv = { .f_bsize = 0 };
+	fsfilcnt_t ffree, files[2];
+	ino_t dino, ino;
 
+	ut_statfs_rootd(ute, &stv);
+	files[0] = stv.f_files;
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_statfs(ute, dino, &stv);
 	ffree = stv.f_ffree;
@@ -121,6 +126,10 @@ static void ut_statfs_dirs_(struct ut_env *ute, size_t cnt)
 		ffree = stv.f_ffree;
 	}
 	ut_rmdir_at_root(ute, name);
+	ut_drop_caches_fully(ute);
+	ut_statfs_rootd(ute, &stv);
+	files[1] = stv.f_files;
+	silofs_assert_eq(files[0], files[1]);
 }
 
 static void ut_statfs_dirs(struct ut_env *ute)
@@ -134,12 +143,11 @@ static void ut_statfs_dirs(struct ut_env *ute)
 
 static void ut_statfs_bfree_(struct ut_env *ute, off_t off, size_t bsz)
 {
-	ino_t ino  = 0;
-	ino_t dino = 0;
 	struct stat st[2];
 	struct statvfs stv[2];
 	const char *name = UT_NAME;
-	void *buf        = ut_randbuf(ute, bsz);
+	const void *buf  = ut_randbuf(ute, bsz);
+	ino_t dino, ino;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -178,10 +186,11 @@ static void ut_statfs_bfree(struct ut_env *ute)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ut_testdef ut_local_tests[] = {
-	UT_DEFTEST1(ut_statfs_empty),
-	UT_DEFTEST(ut_statfs_files),
-	UT_DEFTEST(ut_statfs_dirs),
-	UT_DEFTEST(ut_statfs_bfree),
+
+	UT_DEFTEST1(ut_statfs_empty), //
+	UT_DEFTEST(ut_statfs_files),  //
+	UT_DEFTEST(ut_statfs_dirs),   //
+	UT_DEFTEST(ut_statfs_bfree),  //
 };
 
 const struct ut_testdefs ut_tdefs_statfs = UT_MKTESTS(ut_local_tests);

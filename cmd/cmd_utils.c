@@ -315,9 +315,9 @@ void cmd_check_mntsrv_conn(void)
 	err = silofs_mntrpc_handshake(uid, gid);
 	if (err) {
 		cmd_die(err,
-			"failed to handshake with mountd: "
-			"sock=@%s",
-			cmd_mntsock_name());
+		        "failed to handshake with mountd: "
+		        "sock=@%s",
+		        cmd_mntsock_name());
 	}
 }
 
@@ -423,7 +423,7 @@ static void cmd_access_ok(const char *path)
 	}
 	if (err) {
 		cmd_die(err, "no access: %s uid=%d gid=%d", path, getuid(),
-			getgid());
+		        getgid());
 	}
 }
 
@@ -456,16 +456,16 @@ void cmd_check_mntdir(const char *path, bool mount)
 		fsi    = silofs_fsinfo_by_vfstype(fstype);
 		if (fsi == nullptr) {
 			cmd_diez("unknown fstype at: %s fstype=0x%lx", path,
-				 fstype);
+			         fstype);
 		}
 		if (fsi->isfuse) {
 			cmd_diez("can not mount over FUSE file-system: "
-				 "%s fstype=0x%lx",
-				 path, fstype);
+			         "%s fstype=0x%lx",
+			         path, fstype);
 		}
 		if (!fsi->allowed) {
 			cmd_diez("not allowed to mount over: %s fstype=0x%lx",
-				 path, fstype);
+			         path, fstype);
 		}
 		cmd_check_emptydir(path, true);
 	} else {
@@ -474,7 +474,7 @@ void cmd_check_mntdir(const char *path, bool mount)
 		fsi    = silofs_fsinfo_by_vfstype(fstype);
 		if (fsi == nullptr) {
 			cmd_diez("unknown fstype at: %s fstype=0x%lx", path,
-				 fstype);
+			         fstype);
 		}
 		if (!fsi->isfuse) {
 			cmd_diez("not a FUSE file-system: %s", path);
@@ -541,7 +541,7 @@ size_t cmd_parse_str_as_size(const char *str)
 		{ 'G', SILOFS_GIGA }, //
 		{ 'T', SILOFS_TERA }, //
 		{ 'P', SILOFS_PETA }, //
-		{ '\0', 1 }, //
+		{ '\0', 1 },          //
 	};
 	char *endptr = nullptr;
 	unsigned long long val;
@@ -739,9 +739,9 @@ void cmd_setup_coredump_mode(bool enable_coredump)
 	err = silofs_sys_setrlimit(RLIMIT_CORE, &rlim);
 	if (err) {
 		cmd_die(err,
-			"failed to setrlimit RLIMIT_CORE: "
-			"rlim_cur=%zu rlim_max=%zu",
-			rlim.rlim_cur, rlim.rlim_max);
+		        "failed to setrlimit RLIMIT_CORE: "
+		        "rlim_cur=%zu rlim_max=%zu",
+		        rlim.rlim_cur, rlim.rlim_max);
 	}
 	if (enable_coredump) {
 		cmd_setup_dumpable();

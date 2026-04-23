@@ -229,6 +229,7 @@ _silofs_subcmd() {
 		"fsck")    _silofs_fsck    ;;
 		"view")    _silofs_view    ;;
 		"archive") _silofs_archive ;;
+		"preserve") _silofs_preserve ;;
 	esac
 }
 
@@ -257,11 +258,17 @@ _silofs_completions() {
 
 	_init_completion || return
 
-	if [[ $cword -eq 1 ]]; then
-		_silofs_main
-	else
-		_silofs_subcmd
-	fi
+	local i
+	for (( i=1; i < cword; i++ )); do
+		if [[ ${words[i]} != -* ]]; then
+			# Dispatch specific sub-command handler
+			_silofs_subcmd
+			return
+		fi
+	done
+
+	# No sub-command
+	_silofs_main
 }
 
 complete -o filenames -o bashdefault -o default -F _silofs_completions silofs

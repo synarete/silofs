@@ -33,16 +33,16 @@ static void sigaction_info_handler(int signum)
 	silofs_log_debug("signal: %d", signum);
 }
 
+static volatile sig_atomic_t silofs_halt_signal; /* last halt signum */
+
 static void sigaction_halt_handler(int signum)
 {
 	silofs_log_info("halt-signal: %d", signum);
 	cmd_global_params.sig_halt = signum;
+	silofs_halt_signal         = signum;
 	if (silofs_signal_callback_hook != nullptr) {
 		/* Call sub-program specific logic */
 		silofs_signal_callback_hook(signum);
-	} else {
-		/* Force re-wake-up */
-		raise(SIGHUP);
 	}
 }
 
@@ -52,7 +52,7 @@ silofs_attr_noreturn static void sigaction_term_handler(int signum)
 	silofs_log_crit("term-signal: %d", signum);
 	cmd_global_params.sig_halt  = signum;
 	cmd_global_params.sig_fatal = signum;
-	exit(EXIT_FAILURE);
+	_exit(EXIT_FAILURE);
 }
 
 silofs_attr_noreturn static void sigaction_abort_handler(int signum)

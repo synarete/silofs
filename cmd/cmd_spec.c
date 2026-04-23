@@ -29,7 +29,7 @@ static size_t cmd_sysconf(int key)
 	if (ret < 0) {
 		cmd_die(errno, "sysconf error: key=%d", key);
 	}
-	return (size_t)key;
+	return (size_t)ret;
 }
 
 static size_t cmd_sysconf_getpwgr_rsize_max(void)

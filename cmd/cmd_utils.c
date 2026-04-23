@@ -315,9 +315,9 @@ void cmd_check_mntsrv_conn(void)
 	err = silofs_mntrpc_handshake(uid, gid);
 	if (err) {
 		cmd_die(err,
-		        "failed to handshake with mountd: "
-		        "sock=@%s",
-		        cmd_mntsock_name());
+			"failed to handshake with mountd: "
+			"sock=@%s",
+			cmd_mntsock_name());
 	}
 }
 
@@ -423,7 +423,7 @@ static void cmd_access_ok(const char *path)
 	}
 	if (err) {
 		cmd_die(err, "no access: %s uid=%d gid=%d", path, getuid(),
-		        getgid());
+			getgid());
 	}
 }
 
@@ -456,16 +456,16 @@ void cmd_check_mntdir(const char *path, bool mount)
 		fsi    = silofs_fsinfo_by_vfstype(fstype);
 		if (fsi == nullptr) {
 			cmd_diez("unknown fstype at: %s fstype=0x%lx", path,
-			         fstype);
+				 fstype);
 		}
 		if (fsi->isfuse) {
 			cmd_diez("can not mount over FUSE file-system: "
-			         "%s fstype=0x%lx",
-			         path, fstype);
+				 "%s fstype=0x%lx",
+				 path, fstype);
 		}
 		if (!fsi->allowed) {
 			cmd_diez("not allowed to mount over: %s fstype=0x%lx",
-			         path, fstype);
+				 path, fstype);
 		}
 		cmd_check_emptydir(path, true);
 	} else {
@@ -474,7 +474,7 @@ void cmd_check_mntdir(const char *path, bool mount)
 		fsi    = silofs_fsinfo_by_vfstype(fstype);
 		if (fsi == nullptr) {
 			cmd_diez("unknown fstype at: %s fstype=0x%lx", path,
-			         fstype);
+				 fstype);
 		}
 		if (!fsi->isfuse) {
 			cmd_diez("not a FUSE file-system: %s", path);
@@ -522,55 +522,55 @@ static char *cmd_getcwd(void)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static bool equal_ci(char c1, char c2)
+{
+	const int uc1 = (int)toupper((unsigned char)c1);
+	const int uc2 = (int)toupper((unsigned char)c2);
+
+	return uc1 == uc2;
+}
+
 size_t cmd_parse_str_as_size(const char *str)
 {
-	long mul     = 0;
+	const struct {
+		char suffix;
+		size_t mul;
+	} units[] = {
+		{ 'K', SILOFS_KILO }, //
+		{ 'M', SILOFS_MEGA }, //
+		{ 'G', SILOFS_GIGA }, //
+		{ 'T', SILOFS_TERA }, //
+		{ 'P', SILOFS_PETA }, //
+		{ '\0', 1 }, //
+	};
 	char *endptr = nullptr;
-	long double val;
-	long double iz;
-	intmax_t size;
+	unsigned long long val;
+	size_t mul = 0;
 
 	errno = 0;
-	val   = strtold(str, &endptr);
-	if ((endptr == str) || (errno == ERANGE) || isnan(val)) {
+	val   = strtoull(str, &endptr, 10);
+	if ((endptr == str) || errno == ERANGE || !endptr) {
 		goto illegal_value;
 	}
 	if (strlen(endptr) > 1) {
 		goto illegal_value;
 	}
-	switch (toupper(*endptr)) {
-	case 'K':
-		mul = SILOFS_KILO;
-		break;
-	case 'M':
-		mul = SILOFS_MEGA;
-		break;
-	case 'G':
-		mul = SILOFS_GIGA;
-		break;
-	case 'T':
-		mul = SILOFS_TERA;
-		break;
-	case 'P':
-		mul = SILOFS_PETA;
-		break;
-	case '\0':
-		mul = 1;
-		break;
-	default:
+
+	for (size_t i = 0; i < SILOFS_ARRAY_SIZE(units); ++i) {
+		if (equal_ci(*endptr, units[i].suffix)) {
+			mul = units[i].mul;
+			break;
+		}
+	}
+
+	if (!mul) {
 		goto illegal_value;
 	}
-	modfl(val, &iz);
-	if ((iz < 0.0L) || isnan(iz)) {
+	if (val > (SIZE_MAX / mul)) {
 		goto illegal_value;
 	}
 
-	size = (intmax_t)(val * (long double)mul);
-	if ((size <= 0) || (size >= (LONG_MAX / 2))) {
-		goto illegal_value;
-	}
-
-	return (size_t)size;
+	return (size_t)(val * mul);
 
 illegal_value:
 	cmd_die(0, "illegal value: %s", str);
@@ -693,7 +693,7 @@ void cmd_daemonize_process(pid_t *out_pid)
 void cmd_open_syslog(void)
 {
 	cmd_global_params.log_params.flags |= SILOFS_LOGF_SYSLOG;
-	openlog(cmd_global_params.name, LOG_CONS | LOG_NDELAY, 0);
+	openlog(cmd_global_params.name, LOG_CONS | LOG_NDELAY, LOG_DAEMON);
 }
 
 void cmd_close_syslog(void)
@@ -721,7 +721,10 @@ static void cmd_setup_dumpable(void)
 
 void cmd_setup_coredump_mode(bool enable_coredump)
 {
-	struct rlimit rlim = { .rlim_cur = 0, .rlim_max = 0 };
+	struct rlimit rlim = {
+		.rlim_cur = 0,
+		.rlim_max = 0,
+	};
 	int err;
 
 	err = silofs_sys_getrlimit(RLIMIT_CORE, &rlim);
@@ -736,9 +739,9 @@ void cmd_setup_coredump_mode(bool enable_coredump)
 	err = silofs_sys_setrlimit(RLIMIT_CORE, &rlim);
 	if (err) {
 		cmd_die(err,
-		        "failed to setrlimit RLIMIT_CORE: "
-		        "rlim_cur=%zu rlim_max=%zu",
-		        rlim.rlim_cur, rlim.rlim_max);
+			"failed to setrlimit RLIMIT_CORE: "
+			"rlim_cur=%zu rlim_max=%zu",
+			rlim.rlim_cur, rlim.rlim_max);
 	}
 	if (enable_coredump) {
 		cmd_setup_dumpable();

@@ -33,21 +33,33 @@ static void write_newline(void)
 	write_stdout("\n");
 }
 
-static void check_password_char(int ch)
+static void wipe_password(char *buf, size_t bsz)
 {
+	memset(buf, 0xff, bsz);
+}
+
+static void check_password_char(char *buf, size_t bsz, size_t idx)
+{
+	const int ch = buf[idx];
+
 	if (!isascii(ch)) {
+		wipe_password(buf, bsz);
 		cmd_die(-EINVAL, "non ASCII char in password");
 	}
 	if (iscntrl(ch)) {
+		wipe_password(buf, bsz);
 		cmd_die(-EINVAL, "control char in password");
 	}
 	if (isspace(ch)) {
+		wipe_password(buf, bsz);
 		cmd_die(-EINVAL, "space char in password");
 	}
 	if (!isprint(ch)) {
+		wipe_password(buf, bsz);
 		cmd_die(-EINVAL, "non printable char in password");
 	}
 	if (!isalnum(ch) && !ispunct(ch)) {
+		wipe_password(buf, bsz);
 		cmd_die(-EINVAL, "illegal char in password");
 	}
 }
@@ -57,7 +69,7 @@ static int isskip(int ch)
 	return !ch || isspace(ch);
 }
 
-static char *parse_dup_password(const char *buf, size_t bsz)
+static char *parse_dup_password(char *buf, size_t bsz)
 {
 	size_t len      = bsz;
 	const char *str = buf;
@@ -70,13 +82,15 @@ static char *parse_dup_password(const char *buf, size_t bsz)
 		len--;
 	}
 	if (len == 0) {
+		wipe_password(buf, bsz);
 		cmd_die(-EINVAL, "zero length password");
 	}
 	if (len > SILOFS_PASSWORD_MAX) {
+		wipe_password(buf, bsz);
 		cmd_die(-EINVAL, "password too long");
 	}
 	for (size_t i = 0; i < len; ++i) {
-		check_password_char(str[i]);
+		check_password_char(buf, bsz, i);
 	}
 	return cmd_strndup(str, len);
 }
@@ -143,6 +157,7 @@ read_password_from_tty(int fd, void *buf, size_t bsz, size_t *out_len)
 
 	err = tcsetattr(fd, TCSANOW, &tr_new);
 	if (err) {
+		wipe_password(buf, bsz);
 		cmd_die(errno, "tcsetattr fd=%d", fd);
 	}
 
@@ -151,18 +166,22 @@ read_password_from_tty(int fd, void *buf, size_t bsz, size_t *out_len)
 
 	err = tcsetattr(fd, TCSANOW, &tr_old);
 	if (err) {
+		wipe_password(buf, bsz);
 		cmd_die(errno, "tcsetattr fd=%d", fd);
 	}
 
 	err = read_err;
 	if (err) {
+		wipe_password(buf, bsz);
 		cmd_die(err, "read password error");
 	}
 	if (*out_len == 0) {
+		wipe_password(buf, bsz);
 		cmd_die(-EINVAL, "read zero-length password");
 	}
 	pass = buf;
 	if (pass[*out_len - 1] != '\n') {
+		wipe_password(buf, bsz);
 		cmd_die(-EINVAL, "password too long");
 	}
 }
@@ -222,14 +241,15 @@ static char *getpass_from(const char *path)
 {
 	char buf[1024] = "";
 	char *pass     = nullptr;
-	size_t len     = 0;
+	size_t bsz, len = 0;
 	int fd;
 
-	fd = open_password_fd(path);
-	read_password_from(fd, buf, sizeof(buf), &len);
+	bsz = sizeof(buf);
+	fd  = open_password_fd(path);
+	read_password_from(fd, buf, bsz, &len);
 	close_password_fd(fd, path);
 	pass = parse_dup_password(buf, len);
-	memset(buf, 0xff, sizeof(buf));
+	wipe_password(buf, bsz);
 	return pass;
 }
 
@@ -278,7 +298,12 @@ void cmd_getpass_simple(bool no_prompt, char **out_pass)
 
 char *cmd_duppass(const char *pass)
 {
-	return parse_dup_password(pass, strlen(pass));
+	char *str, *dpw;
+
+	str = cmd_strdup(pass);
+	dpw = parse_dup_password(str, strlen(str));
+	cmd_pstrfree(&str);
+	return dpw;
 }
 
 void cmd_delpass(char **pass)

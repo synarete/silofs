@@ -66,7 +66,7 @@ int silofs_unload_fs(struct silofs_env *env);
 
 int silofs_exec_fs(struct silofs_env *env, const char *mntdir);
 
-void silofs_halt_fs(struct silofs_env *env);
+void silofs_halt_fs(struct silofs_env *env, int signum);
 
 int silofs_post_exec_fs(struct silofs_env *env);
 

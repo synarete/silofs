@@ -341,13 +341,13 @@ int silofs_exec_fs(struct silofs_env *env, const char *mntdir)
 	return 0;
 }
 
-void silofs_halt_fs(struct silofs_env *env)
+void silofs_halt_fs(struct silofs_env *env, int halt_signal)
 {
-	silofs_env_lock(env);
+	/* _must_ not lock here: may be called from within signal handler */
 	if (env->fuseq != nullptr) {
-		env->fuseq->fq_active = 0;
+		env->fuseq->fq_active      = 0;
+		env->fuseq->fq_halt_signal = halt_signal;
 	}
-	silofs_env_unlock(env);
 }
 
 int silofs_sync_fs(struct silofs_env *env, bool drop)

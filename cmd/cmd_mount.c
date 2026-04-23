@@ -290,7 +290,7 @@ static void cmd_mount_halt_by_signal(int signum)
 	struct cmd_mount_ctx *ctx = cmd_mount_ctx_p;
 
 	if ((ctx != nullptr) && (ctx->env != nullptr)) {
-		silofs_halt_fs(ctx->env);
+		silofs_halt_fs(ctx->env, signum);
 		ctx->halt_signal = signum;
 	}
 }

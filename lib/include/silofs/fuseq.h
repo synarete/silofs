@@ -97,6 +97,7 @@ struct silofs_fuseq {
 	struct silofs_listq            fq_curr_opers;
 	const struct silofs_vfs_hooks *fq_vfs_hooks;
 	volatile int                   fq_fuse_fd;
+	volatile int                   fq_halt_signal;
 
 	/* control state */
 	enum silofs_flags fq_mode_flags;

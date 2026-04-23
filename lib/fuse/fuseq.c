@@ -4504,6 +4504,7 @@ fuseq_init_common(struct silofs_fuseq *fq, struct silofs_alloc *alloc,
 	fq->fq_nopers          = 0;
 	fq->fq_nexecs          = 0;
 	fq->fq_active          = 0;
+	fq->fq_halt_signal     = 0;
 	fq->fq_fuse_fd         = -1;
 	fq->fq_got_init        = false;
 	fq->fq_reply_init_ok   = false;

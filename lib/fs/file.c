@@ -246,6 +246,7 @@ static size_t off_to_leaf_slot(off_t off)
 static size_t off_to_tree_height(off_t off)
 {
 	constexpr uint64_t leaf_size = SILOFS_FILE_TREE_LEAF_SIZE;
+	constexpr size_t height_max  = SILOFS_FILE_HEIGHT_MAX;
 	constexpr int shift          = SILOFS_FILE_MAP_SHIFT;
 	uint64_t uoff, height;
 
@@ -255,11 +256,12 @@ static size_t off_to_tree_height(off_t off)
 	if (uoff > leaf_size) {
 		uint64_t xpos = (uoff / leaf_size) >> shift;
 
-		while (xpos > 0) {
+		while ((xpos > 0) && (height < height_max)) {
 			height += 1;
 			xpos = (xpos >> shift);
 		}
 	}
+	silofs_assert_le(height, height_max);
 	return height;
 }
 

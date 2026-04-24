@@ -76,7 +76,10 @@ static int cstd_memalign(size_t sz, void **out_mem)
 	} else {
 		*out_mem = malloc(sz);
 	}
-	return silofs_unlikely(*out_mem == nullptr) ? -errno : 0;
+	if (silofs_unlikely(*out_mem == nullptr)) {
+		return errno ? -abs(errno) : -ENOMEM;
+	}
+	return 0;
 }
 
 static void cstd_memfree(void *mem, size_t sz)

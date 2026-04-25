@@ -3,6 +3,7 @@
 import functools
 import inspect
 import os
+import shlex
 import shutil
 import subprocess
 import sys
@@ -78,12 +79,43 @@ def _sep(ctx: _Ctx) -> None:
 
 def _die(ctx: _Ctx, txt: str, out: str = "", err: str = "") -> None:
     """Print optional output of sub-process + error message and exit."""
+    if out:
+        _msg(ctx, f"\n{out}\n", err=False)
     if err:
         _msg(ctx, f"\n{err}\n", err=True)
-    elif out:
-        _msg(ctx, f"\n{out}\n", err=False)
     _msg(ctx, f"failure: {txt}", err=True)
     sys.exit(3)
+
+
+def _make_env(env: Optional[Dict[str, str]] = None) -> Dict[str, str]:
+    sub_env = os.environ.copy()
+    if env:
+        sub_env.update(env)
+    sub_env["LC_ALL"] = "C"
+    sub_env.pop("CDPATH", None)
+    return sub_env
+
+
+def _exec_sub(
+    ctx: _Ctx,
+    args: List[str],
+    cwd: Optional[Path] = None,
+    env: Optional[Dict[str, str]] = None,
+) -> None:
+    """Execute command as sub-process, die upon error"""
+    if not cwd:
+        cwd = ctx.workdir
+    res = subprocess.run(
+        args,
+        cwd=cwd,
+        env=_make_env(env),
+        check=False,
+        text=True,
+        capture_output=True,
+    )
+    rc, out, err = res.returncode, res.stdout, res.stderr
+    if rc != 0:
+        _die(ctx, " ".join(args), out, err)
 
 
 @_with_location
@@ -93,24 +125,21 @@ def _run(
     cwd: Optional[Path] = None,
     env: Optional[Dict[str, str]] = None,
 ) -> None:
-    """Execute command as sub-process, die upon error"""
-    sub_env = os.environ.copy()
-    if not cwd:
-        cwd = ctx.workdir
-    if env:
-        sub_env.update(env)
-    sub_env["LC_ALL"] = "C"
-    sub_env.pop("CDPATH", None)
+    """Execute sub-process by explicit args, die upon error"""
+    _msg(ctx, " ".join(args))
+    _exec_sub(ctx, args, cwd, env)
 
-    cmd = " ".join(args)
+
+@_with_location
+def _cmd(
+    ctx: _Ctx,
+    cmd: str,
+    cwd: Optional[Path] = None,
+    env: Optional[Dict[str, str]] = None,
+) -> None:
+    """Execute sub-process via command, die upon error"""
     _msg(ctx, cmd)
-
-    res = subprocess.run(
-        args, cwd=cwd, env=sub_env, check=False, text=True, capture_output=True
-    )
-    rc, out, err = res.returncode, res.stdout, res.stderr
-    if rc != 0:
-        _die(ctx, cmd, out, err)
+    _exec_sub(ctx, shlex.split(cmd), cwd, env)
 
 
 @_with_location
@@ -146,15 +175,13 @@ def _cleanup_workdir(ctx: _Ctx) -> None:
 def _build_from_source(ctx: _Ctx) -> None:
     _msg(ctx, f"build from source: {ctx.archive_file}")
     _prepare_workdir(ctx)
-
     _msg(ctx, f"check code style: {ctx.workdir}")
-    _run(ctx, ["./scripts/checkcodefmt.sh"])
-
+    _cmd(ctx, "./scripts/checkcodefmt.sh")
     _msg(ctx, f"check build at: {ctx.workdir}")
-    _run(ctx, ["./configure"])
-    _run(ctx, ["make"])
-    _run(ctx, ["make", "distcheck"])
-    _run(ctx, ["make", "clean"])
+    _cmd(ctx, "./configure")
+    _cmd(ctx, "make")
+    _cmd(ctx, "make distcheck")
+    _cmd(ctx, "make clean")
     _cleanup_workdir(ctx)
     _msg(ctx, f"build from source OK: {ctx.archive_file}")
     _sep(ctx)
@@ -163,18 +190,14 @@ def _build_from_source(ctx: _Ctx) -> None:
 @_with_location
 def _build_devel_default(ctx: _Ctx) -> None:
     _msg(ctx, "build devel default mode")
-    _run(ctx, ["make", "-f", "devel.mk"])
-    _run(ctx, ["make", "-f", "devel.mk", "reset"])
+    _cmd(ctx, "make -f devel.mk")
+    _cmd(ctx, "make -f devel.mk reset")
     _msg(ctx, "build with analyzer")
-    _run(ctx, ["make", "-f", "devel.mk", "O=0", "ANALYZER=1"])
-    _run(ctx, ["make", "-f", "devel.mk", "reset"])
+    _cmd(ctx, "make -f devel.mk O=0 ANALYZER=1")
+    _cmd(ctx, "make -f devel.mk reset")
     _msg(ctx, "run unit-tests")
-    _run(
-        ctx,
-        ["make", "-f", "devel.mk", "O=2", "check"],
-        env={"SILOFS_PANIC_MODE_WAIT": "1"},
-    )
-    _run(ctx, ["make", "-f", "devel.mk", "reset"])
+    _cmd(ctx, "make -f devel.mk O=2 check", env={"SILOFS_PANIC_WAIT": "1"})
+    _cmd(ctx, "make -f devel.mk reset")
     _msg(ctx, "build devel default mode OK")
     _sep(ctx)
 
@@ -183,17 +206,11 @@ def _build_devel_default(ctx: _Ctx) -> None:
 def _build_devel_clang(ctx: _Ctx) -> None:
     _msg(ctx, "build and check with clang")
     _msg(ctx, "run clang-scan")
-    _run(
-        ctx,
-        ["make", "-f", "devel.mk", "CC=clang", "V=1", "O=2", "scan"],
-    )
-    _run(ctx, ["make", "-f", "devel.mk", "reset"])
+    _cmd(ctx, "make -f devel.mk CC=clang V=1 O=2 scan")
+    _cmd(ctx, "make -f devel.mk reset")
     _msg(ctx, "run clang-tidy")
-    _run(
-        ctx,
-        ["make", "-f", "devel.mk", "CC=clang", "O=2", "tidy"],
-    )
-    _run(ctx, ["make", "-f", "devel.mk", "reset"])
+    _cmd(ctx, "make -f devel.mk CC=clang O=2 tidy")
+    _cmd(ctx, "make -f devel.mk reset")
     _msg(ctx, "build and check with clang OK")
     _sep(ctx)
 
@@ -201,9 +218,9 @@ def _build_devel_clang(ctx: _Ctx) -> None:
 @_with_location
 def _build_devel_sanitizer(ctx: _Ctx) -> None:
     _msg(ctx, "sanitizer check")
+    _cmd(ctx, "make -f devel.mk O=1 SANITIZER=1")
     utests_dir = ctx.workdir / "build" / "test" / "utests"
     lsan_supp_file = ctx.workdir / "test/utests/lsan_suppressions.txt"
-    _run(ctx, ["make", "-f", "devel.mk", "O=1", "SANITIZER=1"])
     san_env = {
         "ASAN_OPTIONS": "detect_leaks=1",
         "LSAN_OPTIONS": f"suppressions={lsan_supp_file}",
@@ -219,7 +236,7 @@ def _build_devel_sanitizer(ctx: _Ctx) -> None:
         ],
         env=san_env,
     )
-    _run(ctx, ["make", "-f", "devel.mk", "reset"])
+    _cmd(ctx, "make -f devel.mk reset")
     _msg(ctx, "sanitizer check OK")
     _sep(ctx)
 
@@ -227,8 +244,8 @@ def _build_devel_sanitizer(ctx: _Ctx) -> None:
 @_with_location
 def _build_devel_valgrind(ctx: _Ctx) -> None:
     _msg(ctx, "valgrind check")
+    _cmd(ctx, "make -f devel.mk")
     utests_dir = ctx.workdir / "build" / "test" / "utests"
-    _run(ctx, ["make", "-f", "devel.mk"])
     _run(
         ctx,
         [
@@ -242,7 +259,7 @@ def _build_devel_valgrind(ctx: _Ctx) -> None:
             "--silent",
         ],
     )
-    _run(ctx, ["make", "-f", "devel.mk", "reset"])
+    _cmd(ctx, "make -f devel.mk reset")
     _msg(ctx, "valgrind check OK")
     _sep(ctx)
 
@@ -262,14 +279,14 @@ def _build_with_devel_mk(ctx: _Ctx) -> None:
 
 @_with_location
 def _run_heapcheck(ctx: _Ctx) -> None:
-    tmpdir = ctx.workdir / "build" / "local" / "tmp"
-    build_dir = ctx.workdir / "build"
     _msg(ctx, "memory-heap check")
     _prepare_workdir(ctx)
-    _run(ctx, ["./bootstrap"])
-    tmpdir.mkdir(parents=True, exist_ok=True)
+    _cmd(ctx, "./bootstrap")
+    build_dir = ctx.workdir / "build"
     build_dir.mkdir(exist_ok=True)
-    configure_prefix = f"--prefix={ctx.workdir}/build/local"
+    tmpdir = build_dir / "local" / "tmp"
+    tmpdir.mkdir(parents=True, exist_ok=True)
+    configure_prefix = f"--prefix={build_dir}/local"
     _run(
         ctx,
         [
@@ -280,7 +297,7 @@ def _run_heapcheck(ctx: _Ctx) -> None:
         ],
         cwd=build_dir,
     )
-    _run(ctx, ["make", "install"], cwd=build_dir)
+    _cmd(ctx, "make install", cwd=build_dir)
     heap_env = {
         "HEAPCHECK": "normal",
         "HEAP_CHECK_TEST_POINTER_ALIGNMENT": "1",
@@ -305,7 +322,7 @@ def _run_heapcheck(ctx: _Ctx) -> None:
 def _run_dist_package(ctx: _Ctx) -> None:
     _msg(ctx, "packaging")
     _prepare_workdir(ctx)
-    _run(ctx, ["./pkg/packagize.sh"])
+    _cmd(ctx, "./pkg/packagize.sh")
     _cleanup_workdir(ctx)
     _msg(ctx, "packaging OK")
     _sep(ctx)

@@ -44,7 +44,7 @@ mechanism.
   mismatch position in memory buffers.
 
 ### 3.4 Fatal Flow and Global State
-- Analyze `silofs_panicked` and the `SILOFS_PANIC_MODE_WAIT` logic.
+- Analyze `silofs_panicked` and the `SILOFS_PANIC_WAIT` logic.
   Ensure the busy-wait loop is intentional and check if it interacts
   poorly with signals or multi-threaded scenarios.
 - Audit `silofs_backtrace_enabled`. Since this is a global static

@@ -488,11 +488,11 @@ silofs_dump_panic_msg(const char *file, int line, const char *msg, int errnum)
 	silofs_logf(ll, nullptr, 0, " ");
 }
 
-int silofs_panic_mode = SILOFS_PANIC_MODE_ABORT;
+int silofs_panic_mode = SILOFS_PANIC_ABORT;
 
 silofs_attr_noreturn static void silofs_panicked(void)
 {
-	while (silofs_panic_mode == SILOFS_PANIC_MODE_WAIT) {
+	while (silofs_panic_mode == SILOFS_PANIC_WAIT) {
 		sleep(1);
 	}
 	silofs_abort();

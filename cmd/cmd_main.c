@@ -125,7 +125,7 @@ static void cmd_init_libsilofs(void)
 	const struct silofs_init_args init_args = {
 		.nofiles_min = 512,
 		.with_fips   = cmd_has_env_var("SILOFS_FIPS", "1"),
-		.panic_wait  = cmd_has_env_var("SILOFS_PANIC_MODE_WAIT", "1"),
+		.panic_wait  = cmd_has_env_var("SILOFS_PANIC_WAIT", "1"),
 	};
 	int err;
 

@@ -1008,7 +1008,7 @@ static int init_gcrypt(const struct silofs_init_args *init_args)
 static void init_panic(const struct silofs_init_args *init_args)
 {
 	if (init_args->panic_wait) {
-		silofs_panic_mode = SILOFS_PANIC_MODE_WAIT;
+		silofs_panic_mode = SILOFS_PANIC_WAIT;
 	}
 }
 

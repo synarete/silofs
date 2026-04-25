@@ -125,8 +125,8 @@ void silofs_expect_noop_(intmax_t a, intmax_t b);
 #endif
 
 /* panic */
-#define SILOFS_PANIC_MODE_ABORT (1)
-#define SILOFS_PANIC_MODE_WAIT (2)
+#define SILOFS_PANIC_ABORT (1)
+#define SILOFS_PANIC_WAIT (2)
 
 #define silofs_panic(fmt_, ...) \
 	silofs_panicf(__FILE__, __LINE__, fmt_, __VA_ARGS__)

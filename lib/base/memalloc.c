@@ -94,6 +94,13 @@ static void cstd_memfree(void *mem, size_t sz)
 	}
 }
 
+static void do_memzero(void *p, size_t n)
+{
+	if ((p != nullptr) && (n > 0)) {
+		silofs_memzero(p, n);
+	}
+}
+
 int silofs_zmalloc(size_t sz, void **out_mem)
 {
 	int err;
@@ -103,13 +110,13 @@ int silofs_zmalloc(size_t sz, void **out_mem)
 	if (err) {
 		return err;
 	}
-	silofs_memzero(*out_mem, sz);
+	do_memzero(*out_mem, sz);
 	return 0;
 }
 
 void silofs_zfree(void *mem, size_t sz)
 {
-	silofs_memzero(mem, sz);
+	do_memzero(mem, sz);
 	cstd_memfree(mem, sz);
 }
 

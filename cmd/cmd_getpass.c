@@ -40,7 +40,7 @@ static void wipe_password(char *buf, size_t bsz)
 
 static void check_password_char(char *buf, size_t bsz, size_t idx)
 {
-	const int ch = buf[idx];
+	const int ch = (int)(buf[idx]);
 
 	if (!isascii(ch)) {
 		wipe_password(buf, bsz);
@@ -322,8 +322,8 @@ void cmd_checkpass(const char *pass)
 
 	if (len < min) {
 		cmd_diez("password is not FIPS 140-2 compliant "
-		         "(len=%lu minlen=%lu)",
-		         len, min);
+			 "(len=%lu minlen=%lu)",
+			 len, min);
 	}
 	if (len > max) {
 		cmd_diez("password too long (len=%lu maxlen=%lu)", len, max);

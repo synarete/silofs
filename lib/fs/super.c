@@ -224,7 +224,7 @@ sb_mainsilofs_lsid_by2(struct silofs_super_block *sb, enum silofs_vtype vtype)
 {
 	const struct silofs_lsid64b *lsid64 = sb_mainsilofs_lsid_by(sb, vtype);
 
-	return unconst(lsid64);
+	return silofs_unconst(lsid64);
 }
 
 static void sb_main_lsid(const struct silofs_super_block *sb,
@@ -317,7 +317,7 @@ sb_mut_sproot_by(struct silofs_super_block *sb, enum silofs_vtype vtype)
 {
 	const struct silofs_uaddr128b *uaddr128 = sb_sproot_by(sb, vtype);
 
-	return unconst(uaddr128);
+	return silofs_unconst(uaddr128);
 }
 
 static void

@@ -41,8 +41,8 @@
 #define ARRAY_SIZE(x)          SILOFS_ARRAY_SIZE(x)
 #define container_of(p, t, m)  silofs_container_of(p, t, m)
 #define container_of2(p, t, m) silofs_container_of2(p, t, m)
-#define unconst(p)             silofs_unconst(p)
 #define unused(x)              silofs_unused(x)
+#define unconst(x)             silofs_unconst(x)
 
 #define log_dbg(fmt, ...)  silofs_log_debug(fmt, __VA_ARGS__)
 #define log_info(fmt, ...) silofs_log_info(fmt, __VA_ARGS__)

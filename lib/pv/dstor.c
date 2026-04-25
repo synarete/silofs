@@ -177,12 +177,7 @@ struct silofs_blobfile {
 
 static struct silofs_blobfile *bf_unconst(const struct silofs_blobfile *p)
 {
-	union {
-		const struct silofs_blobfile *p;
-		struct silofs_blobfile *q;
-	} u = { .p = p };
-
-	return u.q;
+	return silofs_unconst(p);
 }
 
 static struct silofs_blobfile *

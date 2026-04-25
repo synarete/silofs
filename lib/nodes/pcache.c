@@ -22,12 +22,7 @@
 
 static struct silofs_pnode_info *pni_unconst(const struct silofs_pnode_info *p)
 {
-	union {
-		const struct silofs_pnode_info *p;
-		struct silofs_pnode_info *q;
-	} u = { .p = p };
-
-	return u.q;
+	return silofs_unconst(p);
 }
 
 static struct silofs_pnode_info *
@@ -119,7 +114,7 @@ pcache_hmapq_of2(const struct silofs_pcache *pcache,
 	const struct silofs_hmapq *hmapq;
 
 	hmapq = pcache_hmapq_of(pcache, &pni->pn_self.paddr);
-	return unconst(hmapq);
+	return silofs_unconst(hmapq);
 }
 
 static struct silofs_pnode_info *

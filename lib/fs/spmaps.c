@@ -174,7 +174,7 @@ spnode_subref_at(const struct silofs_spmap_node *spn, size_t slot)
 {
 	const struct silofs_spmap_ref *spr = &spn->sn_subrefs[slot];
 
-	return unconst(spr);
+	return silofs_unconst(spr);
 }
 
 static struct silofs_spmap_ref *
@@ -241,7 +241,7 @@ spnode_has_child_at(const struct silofs_spmap_node *spn, off_t voff)
 
 static struct silofs_lbk_ref *lbr_unconst(const struct silofs_lbk_ref *lbr)
 {
-	return unconst(lbr);
+	return silofs_unconst(lbr);
 }
 
 static void

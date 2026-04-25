@@ -85,7 +85,7 @@ avl_node_to_lni(const struct silofs_avl_node *an)
 	const struct silofs_lnode_info *lni;
 
 	lni = container_of2(an, struct silofs_lnode_info, ln_ds_avl_node);
-	return unconst(lni);
+	return silofs_unconst(lni);
 }
 
 static const void *lni_getkey(const struct silofs_avl_node *an)

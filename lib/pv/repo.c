@@ -355,11 +355,7 @@ static int do_mkdirat(int dirfd, const char *pathname, mode_t mode)
 
 static struct silofs_repo_ce *rce_unconst(const struct silofs_repo_ce *p)
 {
-	union {
-		const struct silofs_repo_ce *p;
-		struct silofs_repo_ce *q;
-	} u = { .p = p };
-	return u.q;
+	return silofs_unconst(p);
 }
 
 static struct silofs_repo_ce *
@@ -408,7 +404,7 @@ static struct silofs_lsegf *lsegf_from_rce(const struct silofs_repo_ce *rce)
 	const struct silofs_lsegf *lsegf;
 
 	lsegf = container_of2(rce, struct silofs_lsegf, lsf_rce);
-	return unconst(lsegf);
+	return silofs_unconst(lsegf);
 }
 
 static int
@@ -863,7 +859,7 @@ repo_htbl_list_at(const struct silofs_repo *repo, size_t slot)
 
 	silofs_assert_lt(slot, repo->re_htbl.rh_nelems);
 
-	return unconst(lst);
+	return silofs_unconst(lst);
 }
 
 static struct silofs_list_head *
@@ -890,7 +886,7 @@ repo_htbl_lookup_lsegf(const struct silofs_repo *repo,
 		rce = rce_from_htb_link(itr);
 		if (rce_has_lsid(rce, lsid)) {
 			lsegf = lsegf_from_rce(rce);
-			return unconst(lsegf);
+			return silofs_unconst(lsegf);
 		}
 		itr = itr->next;
 	}
@@ -2230,7 +2226,7 @@ int silofs_repo_write_at(struct silofs_repo *repo,
                          size_t len)
 {
 	const struct iovec iov = {
-		.iov_base = unconst(buf),
+		.iov_base = silofs_unconst(buf),
 		.iov_len  = len,
 	};
 

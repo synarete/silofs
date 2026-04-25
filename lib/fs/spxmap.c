@@ -85,7 +85,7 @@ avl_node_to_spe(const struct silofs_avl_node *an)
 	if (an != nullptr) {
 		spe = container_of2(an, struct silofs_spa_entry, spe_an);
 	}
-	return unconst(spe);
+	return silofs_unconst(spe);
 }
 
 static const void *spe_getkey(const struct silofs_avl_node *an)
@@ -517,7 +517,7 @@ spamaps_sub_map(struct silofs_spamaps *spam, enum silofs_vtype vtype)
 static const struct silofs_spamap *
 spamaps_sub_map2(const struct silofs_spamaps *spam, enum silofs_vtype vtype)
 {
-	return spamaps_sub_map(unconst(spam), vtype);
+	return spamaps_sub_map(silofs_unconst(spam), vtype);
 }
 
 int silofs_spamaps_store(struct silofs_spamaps *spam, enum silofs_vtype vtype,

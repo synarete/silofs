@@ -121,7 +121,7 @@ static size_t xe_diff(const struct silofs_xattr_entry *beg,
 static struct silofs_xattr_entry *
 xe_unconst(const struct silofs_xattr_entry *xe)
 {
-	return unconst(xe);
+	return silofs_unconst(xe);
 }
 
 static struct silofs_xentry_view *
@@ -130,7 +130,7 @@ xe_view_of(const struct silofs_xattr_entry *xe)
 	const struct silofs_xentry_view *xe_view =
 		container_of2(xe, struct silofs_xentry_view, xe);
 
-	return unconst(xe_view);
+	return silofs_unconst(xe_view);
 }
 
 static size_t xe_name_len(const struct silofs_xattr_entry *xe)
@@ -237,7 +237,7 @@ xe_search(const struct silofs_xattr_entry *itr,
 {
 	while (itr < end) {
 		if (xe_has_name(itr, name)) {
-			return unconst(itr);
+			return silofs_unconst(itr);
 		}
 		itr = xe_next(itr);
 	}
@@ -416,7 +416,7 @@ inode_xattr_of(const struct silofs_inode *inode)
 {
 	const struct silofs_inode_xattr *ixa = &inode->i_xa;
 
-	return unconst(ixa);
+	return silofs_unconst(ixa);
 }
 
 static struct silofs_inode_xattr *ixa_of(const struct silofs_inode_info *ii)
@@ -1080,7 +1080,7 @@ int silofs_do_setxattr(struct silofs_task_ctx *task,
 		.task      = task,
 		.ii        = ii,
 		.name      = name,
-		.value.ptr = unconst(value),
+		.value.ptr = silofs_unconst(value),
 		.value.len = size,
 		.value.cap = size,
 		.size      = size,

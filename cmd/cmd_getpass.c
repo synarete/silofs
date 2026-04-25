@@ -322,8 +322,8 @@ void cmd_checkpass(const char *pass)
 
 	if (len < min) {
 		cmd_diez("password is not FIPS 140-2 compliant "
-			 "(len=%lu minlen=%lu)",
-			 len, min);
+		         "(len=%lu minlen=%lu)",
+		         len, min);
 	}
 	if (len > max) {
 		cmd_diez("password too long (len=%lu maxlen=%lu)", len, max);

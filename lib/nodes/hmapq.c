@@ -266,11 +266,7 @@ static void hmqe_sanitize(const struct silofs_hmapq_elem *hmqe)
 static struct silofs_hmapq_elem *
 hmqe_unconst(const struct silofs_hmapq_elem *hmqe)
 {
-	union {
-		const void *p;
-		void *q;
-	} u = { .p = hmqe };
-	return u.q;
+	return silofs_unconst(hmqe);
 }
 
 static struct silofs_hmapq_elem *

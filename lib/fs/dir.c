@@ -267,12 +267,7 @@ static ssize_t dtn_index_to_isize(silofs_dtn_index_t dtn_index_last)
 
 static struct silofs_dir_entry *de_unconst(const struct silofs_dir_entry *de)
 {
-	union {
-		const struct silofs_dir_entry *p;
-		struct silofs_dir_entry *q;
-	} u = { .p = de };
-
-	return u.q;
+	return silofs_unconst(de);
 }
 
 static ino_t de_ino(const struct silofs_dir_entry *de)
@@ -592,7 +587,7 @@ static char *dtn_name_at(const struct silofs_dtree_node *dtn, size_t name_pos)
 
 	silofs_expect_gt(name_pos, 0);
 	silofs_expect_le(name_pos, ARRAY_SIZE(dtn->dn_data.nb));
-	return unconst(dat);
+	return silofs_unconst(dat);
 }
 
 static char *dtn_names_beg(const struct silofs_dtree_node *dtn)
@@ -622,7 +617,7 @@ static char *dtn_name_of(const struct silofs_dtree_node *dtn,
 	const size_t name_pos = de_name_pos(de);
 	const char *name      = dtn_name_at(dtn, name_pos);
 
-	return unconst(name);
+	return silofs_unconst(name);
 }
 
 static bool dtn_has_name_at(const struct silofs_dtree_node *dtn,
@@ -977,11 +972,7 @@ static int dtn_verify_counts(const struct silofs_dtree_node *dtn)
 static struct silofs_dtnode_info *
 dni_unconst(const struct silofs_dtnode_info *dni)
 {
-	union {
-		const struct silofs_dtnode_info *p;
-		struct silofs_dtnode_info *q;
-	} u = { .p = dni };
-	return u.q;
+	return silofs_unconst(dni);
 }
 
 static void
@@ -1101,7 +1092,7 @@ static mode_t ii_dtype_of(const struct silofs_inode_info *ii)
 
 static struct silofs_inode_dir *dirin_of(const struct silofs_inode *inode)
 {
-	struct silofs_inode *dir_inode = unconst(inode);
+	struct silofs_inode *dir_inode = silofs_unconst(inode);
 
 	return &dir_inode->i_ta.d;
 }

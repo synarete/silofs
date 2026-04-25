@@ -117,12 +117,9 @@ static inline uint64_t silofs_rrotate64(uint64_t x, unsigned int n)
 
 static inline void *silofs_unconst(const void *p)
 {
-	union {
-		const void *p;
-		void       *q;
-	} u = { .p = p };
+	const uintptr_t up = (uintptr_t)p;
 
-	return u.q;
+	return (void *)up;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

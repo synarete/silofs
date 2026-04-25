@@ -45,11 +45,7 @@ struct silofs_gmap_entry {
 static struct silofs_umap_entry *
 unconst_ume(const struct silofs_umap_entry *ume)
 {
-	union {
-		const struct silofs_umap_entry *p;
-		struct silofs_umap_entry *q;
-	} u = { .p = ume };
-	return u.q;
+	return silofs_unconst(ume);
 }
 
 static struct silofs_umap_entry *

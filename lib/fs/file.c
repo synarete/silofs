@@ -657,7 +657,7 @@ static struct silofs_inode_file *filin_of(const struct silofs_inode *inode)
 {
 	const struct silofs_inode_file *filin = &inode->i_ta.f;
 
-	return unconst(filin);
+	return silofs_unconst(filin);
 }
 
 static void filin_validate_vslots(const struct silofs_inode_file *filin)
@@ -2072,7 +2072,7 @@ read_iter_of(const struct silofs_rwiter_ctx *rwi)
 	const struct silofs_read_iter *rdi =
 		container_of2(rwi, struct silofs_read_iter, rwi);
 
-	return unconst(rdi);
+	return silofs_unconst(rdi);
 }
 
 static int read_iter_actor(struct silofs_rwiter_ctx *rwi,
@@ -2823,7 +2823,7 @@ write_iter_of(const struct silofs_rwiter_ctx *rwi)
 	const struct silofs_write_iter *wri =
 		container_of2(rwi, struct silofs_write_iter, rwi);
 
-	return unconst(wri);
+	return silofs_unconst(wri);
 }
 
 static int write_iter_actor(struct silofs_rwiter_ctx *rwi,

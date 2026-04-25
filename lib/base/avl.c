@@ -19,6 +19,7 @@
 #include <silofs/macros.h>
 #include <silofs/panic.h>
 
+#include <silofs/base/utility.h>
 #include <silofs/base/avl.h>
 
 #define AVL_MAGIC 0x6176
@@ -136,12 +137,7 @@ avl_node_swap_balance(struct silofs_avl_node *x, struct silofs_avl_node *y)
 static struct silofs_avl_node *
 avl_node_unconst(const struct silofs_avl_node *x)
 {
-	union avl_unconst_u {
-		const struct silofs_avl_node *v;
-		struct silofs_avl_node *u;
-	} uu = { .v = x };
-
-	return uu.u;
+	return (struct silofs_avl_node *)silofs_unconst(x);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

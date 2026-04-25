@@ -140,6 +140,7 @@ avl_node_unconst(const struct silofs_avl_node *x)
 		const struct silofs_avl_node *v;
 		struct silofs_avl_node *u;
 	} uu = { .v = x };
+
 	return uu.u;
 }
 
@@ -200,9 +201,8 @@ static struct silofs_avl_node *bst_predecessor(const struct silofs_avl_node *x)
 static void
 bst_rotate_left(struct silofs_avl_node *x, struct silofs_avl_node **root)
 {
-	struct silofs_avl_node *y;
+	struct silofs_avl_node *y = x->right;
 
-	y        = x->right;
 	x->right = y->left;
 	if (y->left != nullptr) {
 		y->left->parent = x;
@@ -222,9 +222,8 @@ bst_rotate_left(struct silofs_avl_node *x, struct silofs_avl_node **root)
 static void
 bst_rotate_right(struct silofs_avl_node *x, struct silofs_avl_node **root)
 {
-	struct silofs_avl_node *y;
+	struct silofs_avl_node *y = x->left;
 
-	y       = x->left;
 	x->left = y->right;
 	if (y->right != nullptr) {
 		y->right->parent = x;
@@ -828,32 +827,39 @@ avl_search_insert_pos(struct silofs_avl *avl, const struct silofs_avl_node *x,
 	return ret;
 }
 
-static struct silofs_avl_node *
+static void
 avl_insert_leaf_at(struct silofs_avl *avl, struct silofs_avl_node *x,
                    const struct silofs_avl_pos *pos)
 {
-	struct silofs_avl_node **py;
-
 	x->parent   = pos->parent;
 	*pos->pnode = x;
 
-	py = avl_leftmost_p(avl);
-	if (*py == nullptr || (avl_compare(avl, x, *py) > 0)) {
-		*py = x;
-	}
-	py = avl_rightmost_p(avl);
-	if (*py == nullptr || (avl_compare(avl, x, *py) < 0)) {
-		*py = x;
+	avl_insert_fixup(avl, x);
+}
+
+static void avl_post_insert_fixup(struct silofs_avl *avl)
+{
+	struct silofs_avl_node *prev;
+	struct silofs_avl_node *next;
+	struct silofs_avl_node **link;
+
+	link = avl_leftmost_p(avl);
+	prev = bst_predecessor(*link);
+	if (prev != nullptr) {
+		*link = prev;
 	}
 
-	avl_insert_fixup(avl, x);
-	return x;
+	link = avl_rightmost_p(avl);
+	next = bst_successor(*link);
+	if (next != nullptr) {
+		*link = next;
+	}
 }
 
 static struct silofs_avl_node *
 avl_insert_leaf(struct silofs_avl *avl, struct silofs_avl_node *x, int unique)
 {
-	struct silofs_avl_pos pos;
+	struct silofs_avl_pos pos = {};
 	int err;
 
 	err = avl_search_insert_pos(avl, x, unique, &pos);
@@ -864,6 +870,7 @@ avl_insert_leaf(struct silofs_avl *avl, struct silofs_avl_node *x, int unique)
 		avl_node_init(x);
 		avl_insert_leaf_at(avl, x, &pos);
 	}
+	avl_post_insert_fixup(avl);
 	return x;
 }
 
@@ -975,9 +982,9 @@ static struct silofs_avl_node *avl_unlinkall(struct silofs_avl *avl)
 			/* Link removed node in list */
 			avl_node_reset(x);
 			x->right = ls;
-			ls       = x;
 
-			x = y;
+			ls = x;
+			x  = y;
 		}
 	}
 	return ls;

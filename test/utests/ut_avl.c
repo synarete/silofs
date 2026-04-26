@@ -420,10 +420,14 @@ static void ut_avl_mixed(struct ut_env *ute)
 static void
 avl_populate_keys(struct silofs_avl *avl, const long *keys, size_t cnt)
 {
+	size_t size;
+
 	for (size_t i = 0; i < cnt; ++i) {
 		avl_insert_unique(avl, keys[i]);
 	}
-	ut_expect_eq(avl_size(avl), cnt);
+	size = avl_size(avl);
+	ut_expect_eq(size, cnt);
+	avl_verify_integrity(avl);
 }
 
 static long *random_keys(struct ut_env *ute, size_t cnt, long base)
@@ -523,49 +527,45 @@ static void ut_avl_remove_range(struct ut_env *ute)
 
 static void ut_avl_delete_rebalance(struct ut_env *ute)
 {
-	constexpr long keys[] = {
-		50, 25, 75, 10, 30, 60, 80, 5, 15, 27, 35,
-	};
+	constexpr long keys[] = { 50, 25, 75, 10, 30, 60, 80, 5, 15, 27 };
 	struct silofs_avl *avl;
 
 	/*
-	 * Tree structure:
+	 * Tree structure with 10 nodes for rebalancing tests during deletion.
 	 *
-	 *           50
-	 *         /    \
-	 *       25      75
-	 *      /  \    /  \
-	 *    10   30  60  80
-	 *   / \   / \
-	 *  5  15 27 35
+	 * This tests various deletion scenarios including:
+	 * - Leaf node deletions
+	 * - Internal node deletions requiring rebalancing
+	 * - Left-heavy and right-heavy subtree rebalancing
 	 */
 	avl = avl_new(ute);
 	avl_populate_keys(avl, keys, UT_ARRAY_SIZE(keys));
 
+	/* Delete leaf nodes */
 	avl_remove_exists(avl, 5);
 	avl_verify_integrity(avl);
 
 	avl_remove_exists(avl, 15);
 	avl_verify_integrity(avl);
 
+	/* Delete internal node */
 	avl_remove_exists(avl, 10);
 	avl_verify_integrity(avl);
 
 	avl_remove_exists(avl, 27);
 	avl_verify_integrity(avl);
 
-	avl_remove_exists(avl, 35);
-	avl_verify_integrity(avl);
-
 	avl_remove_exists(avl, 30);
 	avl_verify_integrity(avl);
 
+	/* Verify remaining nodes */
 	avl_find_exists(avl, 25);
 	avl_find_exists(avl, 50);
 	avl_find_exists(avl, 60);
 	avl_find_exists(avl, 75);
 	avl_find_exists(avl, 80);
 
+	/* Clean up remaining nodes */
 	avl_remove_exists(avl, 25);
 	avl_remove_exists(avl, 60);
 	avl_remove_exists(avl, 80);
@@ -687,51 +687,70 @@ static void ut_avl_alternating(struct ut_env *ute)
 static void ut_avl_zigzag_delete(struct ut_env *ute)
 {
 	constexpr long keys[] = {
-		50, 25, 75, 10, 30, 60, 80, 5, 15, 27, 35, 55, 65, 77, 85,
+		50, 25, 75, 10, 30, 60, 80, 5, 15, 27, 35, 55, 65, 77, 85, 3,
 	};
 	struct silofs_avl *avl;
 
+	/*
+	 * Zigzag deletion test with 16 nodes.
+	 * Tests various rotation patterns during deletion:
+	 * - Left-left rotations
+	 * - Right-right rotations
+	 * - Left-right (zigzag) rotations
+	 * - Right-left (zigzag) rotations
+	 */
 	avl = avl_new(ute);
 	avl_populate_keys(avl, keys, UT_ARRAY_SIZE(keys));
 
-	avl_remove_exists(avl, 5);  /* left-left */
+	/* Left-left rotation */
+	avl_remove_exists(avl, 3);
 	avl_verify_integrity(avl);
 
-	avl_remove_exists(avl, 85); /* right-right */
+	avl_remove_exists(avl, 5);
 	avl_verify_integrity(avl);
 
-	avl_remove_exists(avl, 35); /* left-right */
+	/* Right-right rotation */
+	avl_remove_exists(avl, 85);
 	avl_verify_integrity(avl);
 
-	avl_remove_exists(avl, 55); /* right-left */
+	avl_remove_exists(avl, 77);
 	avl_verify_integrity(avl);
 
-	avl_remove_exists(avl, 15); /* left-left again */
+	/* Left-right (zigzag) rotation */
+	avl_remove_exists(avl, 35);
 	avl_verify_integrity(avl);
 
-	avl_remove_exists(avl, 77); /* right-right again */
+	avl_remove_exists(avl, 27);
 	avl_verify_integrity(avl);
 
+	/* Right-left (zigzag) rotation */
+	avl_remove_exists(avl, 55);
+	avl_verify_integrity(avl);
+
+	avl_remove_exists(avl, 65);
+	avl_verify_integrity(avl);
+
+	/* Verify remaining nodes exist */
 	avl_find_exists(avl, 10);
+	avl_find_exists(avl, 15);
 	avl_find_exists(avl, 25);
-	avl_find_exists(avl, 27);
 	avl_find_exists(avl, 30);
 	avl_find_exists(avl, 50);
 	avl_find_exists(avl, 60);
-	avl_find_exists(avl, 65);
 	avl_find_exists(avl, 75);
 	avl_find_exists(avl, 80);
 
+	/* Clean up remaining nodes */
 	avl_remove_exists(avl, 10);
+	avl_remove_exists(avl, 15);
 	avl_remove_exists(avl, 25);
-	avl_remove_exists(avl, 27);
 	avl_remove_exists(avl, 30);
 	avl_remove_exists(avl, 50);
 	avl_remove_exists(avl, 60);
-	avl_remove_exists(avl, 65);
 	avl_remove_exists(avl, 75);
 	avl_remove_exists(avl, 80);
 
+	ut_expect_eq(avl_size(avl), 0);
 	avl_done(avl);
 }
 
@@ -739,29 +758,444 @@ static void ut_avl_zigzag_delete(struct ut_env *ute)
 
 static void ut_avl_root_replace(struct ut_env *ute)
 {
-	constexpr long keys[] = { 50, 25, 75, 10, 30, 60, 80 };
+	constexpr long keys[] = { 50, 25, 75, 10, 30, 60, 80, 5, 15, 27 };
+	struct silofs_avl *avl;
+
+	/*
+	 * Root replacement test with 10 nodes.
+	 * Tests root deletions and replacements to ensure
+	 * the tree maintains balance and integrity after each root change.
+	 * This exercises the successor/predecessor selection logic
+	 * and verifies proper parent-child relationship updates.
+	 */
+	avl = avl_new(ute);
+	avl_populate_keys(avl, keys, UT_ARRAY_SIZE(keys));
+
+	/* First root deletion - 50 should be replaced */
+	avl_remove_exists(avl, 50);
+	avl_verify_integrity(avl);
+
+	/* Verify tree structure after first root replacement */
+	avl_find_exists(avl, 25);
+	avl_find_exists(avl, 60); /* new root should be 60 (successor of 50) */
+	avl_find_exists(avl, 75);
+
+	/* Second root deletion */
+	avl_remove_exists(avl, 60);
+	avl_verify_integrity(avl);
+
+	/* Delete more nodes */
+	avl_remove_exists(avl, 5);
+	avl_verify_integrity(avl);
+
+	avl_remove_exists(avl, 15);
+	avl_verify_integrity(avl);
+
+	avl_remove_exists(avl, 10);
+	avl_verify_integrity(avl);
+
+	avl_remove_exists(avl, 27);
+	avl_verify_integrity(avl);
+
+	/* Clean up remaining nodes */
+	avl_remove_exists(avl, 25);
+	avl_remove_exists(avl, 30);
+	avl_remove_exists(avl, 75);
+	avl_remove_exists(avl, 80);
+
+	ut_expect_eq(avl_size(avl), 0);
+	avl_done(avl);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static void ut_avl_bounds(struct ut_env *ute)
+{
+	struct silofs_avl *avl;
+	struct silofs_avl_node *node;
+	const long keys[] = { 10, 20, 30, 40, 50, 60, 70, 80, 90, 100 };
+
+	avl = avl_new(ute);
+	avl_populate_keys(avl, keys, UT_ARRAY_SIZE(keys));
+
+	/* Test lower_bound - finds first element >= key */
+	node = silofs_avl_lower_bound(avl, &(long){ 25 });
+	check_node(node, 30);
+
+	node = silofs_avl_lower_bound(avl, &(long){ 30 });
+	check_node(node, 30);
+
+	node = silofs_avl_lower_bound(avl, &(long){ 5 });
+	check_node(node, 10);
+
+	node = silofs_avl_lower_bound(avl, &(long){ 95 });
+	check_node(node, 100);
+
+	node = silofs_avl_lower_bound(avl, &(long){ 105 });
+	ut_expect_null(node);
+
+	/* Test upper_bound - finds first element > key */
+	node = silofs_avl_upper_bound(avl, &(long){ 25 });
+	check_node(node, 30);
+
+	node = silofs_avl_upper_bound(avl, &(long){ 30 });
+	check_node(node, 40);
+
+	node = silofs_avl_upper_bound(avl, &(long){ 5 });
+	check_node(node, 10);
+
+	node = silofs_avl_upper_bound(avl, &(long){ 90 });
+	check_node(node, 100);
+
+	node = silofs_avl_upper_bound(avl, &(long){ 100 });
+	ut_expect_null(node);
+
+	/* Clean up */
+	for (size_t i = 0; i < UT_ARRAY_SIZE(keys); ++i) {
+		avl_remove_exists(avl, keys[i]);
+	}
+	avl_done(avl);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static void ut_avl_empty_operations(struct ut_env *ute)
+{
+	constexpr long keys[] = {
+		10, 20, 30, 40, 50, 60, 70, 80, 90, 100,
+	};
+	struct silofs_avl *avl;
+	struct silofs_avl_node *an;
+	const struct silofs_avl_node *end;
+	size_t size;
+
+	avl = avl_new(ute);
+
+	ut_expect(avl_isempty(avl));
+	size = avl_size(avl);
+	ut_expect_eq(size, 0);
+
+	for (size_t i = 0; i < UT_ARRAY_SIZE(keys); ++i) {
+		an = silofs_avl_find(avl, &keys[i]);
+		ut_expect_null(an);
+
+		an = silofs_avl_find_first(avl, &keys[i]);
+		ut_expect_null(an);
+
+		an = silofs_avl_lower_bound(avl, &keys[i]);
+		ut_expect_null(an);
+
+		an = silofs_avl_upper_bound(avl, &keys[i]);
+		ut_expect_null(an);
+
+		ut_expect_eq(silofs_avl_count(avl, &keys[i]), 0);
+	}
+
+	an  = avl_begin(avl);
+	end = avl_end(avl);
+	ut_expect_eq(an, end);
+
+	avl_populate_keys(avl, keys, UT_ARRAY_SIZE(keys));
+	ut_expect_eq(avl_size(avl), UT_ARRAY_SIZE(keys));
+
+	for (size_t i = 0; i < UT_ARRAY_SIZE(keys); ++i) {
+		avl_remove_exists(avl, keys[i]);
+	}
+	size = avl_size(avl);
+	ut_expect_eq(size, 0);
+
+	avl_done(avl);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static void ut_avl_single_node_(struct ut_env *ute, size_t cnt)
+{
+	struct silofs_avl *avl;
+	struct silofs_avl_node *an, *nxt;
+	const struct silofs_avl_node *end;
+	const long *keys;
+	size_t size;
+
+	keys = random_keys(ute, cnt, 0);
+	avl  = avl_new(ute);
+	for (size_t i = 0; i < cnt; ++i) {
+		avl_insert_unique(avl, keys[i]);
+		size = avl_size(avl);
+		ut_expect_eq(size, 1);
+
+		avl_find_exists(avl, keys[i]);
+		avl_find_unique(avl, keys[i]);
+
+		an = avl_begin(avl);
+		check_node(an, keys[i]);
+		nxt = avl_next(avl, an);
+		end = avl_end(avl);
+		ut_expect_eq(nxt, end);
+
+		an = silofs_avl_lower_bound(avl, &keys[i]);
+		check_node(an, keys[i]);
+
+		an = silofs_avl_upper_bound(avl, &keys[i]);
+		ut_expect_null(an);
+
+		avl_remove_exists(avl, keys[i]);
+		size = avl_size(avl);
+		ut_expect_eq(size, 0);
+	}
+	avl_done(avl);
+}
+
+static void ut_avl_single_node(struct ut_env *ute)
+{
+	ut_avl_single_node_(ute, 100);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static void ut_avl_sequential_insert_(struct ut_env *ute, size_t cnt)
+{
+	struct silofs_avl *avl = avl_new(ute);
+
+	for (size_t i = 0; i < cnt; ++i) {
+		avl_insert_unique(avl, (long)i);
+		avl_verify_integrity(avl);
+	}
+	for (size_t i = 0; i < cnt; ++i) {
+		avl_find_exists(avl, (long)i);
+	}
+	for (size_t i = cnt; i > 0; --i) {
+		avl_remove_exists(avl, (long)(i - 1));
+		avl_verify_integrity(avl);
+	}
+	avl_done(avl);
+}
+
+static void ut_avl_sequential_insert(struct ut_env *ute)
+{
+	ut_avl_sequential_insert_(ute, 100);
+	ut_avl_sequential_insert_(ute, 1000);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static void ut_avl_reverse_sequential_insert_(struct ut_env *ute, size_t cnt)
+{
+	struct silofs_avl *avl = avl_new(ute);
+
+	for (size_t i = cnt; i > 0; --i) {
+		avl_insert_unique(avl, (long)(i - 1));
+		avl_verify_integrity(avl);
+	}
+	for (size_t i = 0; i < cnt; ++i) {
+		avl_find_exists(avl, (long)i);
+	}
+	for (size_t i = 0; i < cnt; ++i) {
+		avl_remove_exists(avl, (long)i);
+		avl_verify_integrity(avl);
+	}
+	avl_done(avl);
+}
+
+static void ut_avl_reverse_sequential_insert(struct ut_env *ute)
+{
+	ut_avl_reverse_sequential_insert_(ute, 100);
+	ut_avl_reverse_sequential_insert_(ute, 1000);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static void ut_avl_insert_replace_pattern(struct ut_env *ute)
+{
+	constexpr long keys[] = { 50, 25, 75, 10, 30, 60, 80, 5, 15, 27 };
+	struct silofs_avl_node *an_old, *an_new, *an_ret;
+	struct silofs_avl *avl;
+	size_t size;
+
+	avl = avl_new(ute);
+	avl_populate_keys(avl, keys, UT_ARRAY_SIZE(keys));
+
+	for (size_t i = 0; i < UT_ARRAY_SIZE(keys); ++i) {
+		an_old = silofs_avl_find(avl, &keys[i]);
+		ut_expect_not_null(an_old);
+
+		an_new = new_node(ute, keys[i]);
+		an_ret = silofs_avl_insert_replace(avl, an_new);
+		ut_expect_eq(an_old, an_ret);
+
+		avl_verify_integrity(avl);
+		size = avl_size(avl);
+		ut_expect_eq(size, UT_ARRAY_SIZE(keys));
+	}
+	for (size_t round = 0; round < 3; ++round) {
+		for (size_t i = 0; i < UT_ARRAY_SIZE(keys); ++i) {
+			an_old = silofs_avl_find(avl, &keys[i]);
+			an_new = new_node(ute, keys[i]);
+			an_ret = silofs_avl_insert_replace(avl, an_new);
+			ut_expect_eq(an_old, an_ret);
+		}
+		avl_verify_integrity(avl);
+	}
+	for (size_t i = 0; i < UT_ARRAY_SIZE(keys); ++i) {
+		avl_remove_exists(avl, keys[i]);
+	}
+	size = avl_size(avl);
+	ut_expect_eq(size, 0);
+	avl_done(avl);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static void ut_avl_iteration_forward_backward(struct ut_env *ute)
+{
+	constexpr long keys[] = {
+		50, 25, 75, 10, 30, 60, 80, 5, 15, 27,
+	};
+	constexpr long sorted[] = {
+		5, 10, 15, 25, 27, 30, 50, 60, 75, 80,
+	};
+	const struct silofs_avl_node *an;
+	struct silofs_avl *avl;
+	size_t idx;
+
+	avl = avl_new(ute);
+	avl_populate_keys(avl, keys, UT_ARRAY_SIZE(keys));
+
+	/* forward iteration */
+	idx = 0;
+	an  = avl_begin(avl);
+	while (an != avl_end(avl)) {
+		check_node(an, sorted[idx]);
+		an = avl_next(avl, an);
+		idx++;
+	}
+	ut_expect_eq(idx, UT_ARRAY_SIZE(sorted));
+
+	/* backward iteration from end */
+	an = avl_end(avl);
+	while (an != avl_begin(avl)) {
+		idx--;
+		an = avl_prev(avl, an);
+		check_node(an, sorted[idx]);
+	}
+	ut_expect_eq(idx, 0);
+
+	/* partial forward iteration */
+	idx = 0;
+	an  = avl_begin(avl);
+	for (size_t i = 0; i < 5 && an != avl_end(avl); ++i) {
+		check_node(an, sorted[idx]);
+		an = avl_next(avl, an);
+		idx++;
+	}
+
+	/* partial backward iteration */
+	for (size_t i = 0; i < 5 && an != avl_begin(avl); ++i) {
+		idx--;
+		an = avl_prev(avl, an);
+		check_node(an, sorted[idx]);
+	}
+
+	/* cleanup */
+	for (size_t i = 0; i < UT_ARRAY_SIZE(keys); ++i) {
+		avl_remove_exists(avl, keys[i]);
+	}
+	avl_done(avl);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static void ut_avl_stress_rotations_(struct ut_env *ute, size_t cnt)
+{
+	struct silofs_avl *avl;
+	const long *keys;
+	size_t size;
+
+	keys = ut_randseq(ute, cnt, 10000);
+	avl  = avl_new(ute);
+	avl_populate_keys(avl, keys, cnt);
+
+	avl_verify_integrity(avl);
+
+	/* remove every third element */
+	for (size_t i = 0; i < cnt; i += 3) {
+		avl_remove_exists(avl, keys[i]);
+		avl_verify_integrity(avl);
+	}
+
+	/* remove every second remaining element */
+	for (size_t i = 1; i < cnt; i += 3) {
+		avl_remove_exists(avl, keys[i]);
+		avl_verify_integrity(avl);
+	}
+
+	/* remove remaining elements */
+	for (size_t i = 2; i < cnt; i += 3) {
+		avl_remove_exists(avl, keys[i]);
+		avl_verify_integrity(avl);
+	}
+
+	size = avl_size(avl);
+	ut_expect_eq(size, 0);
+	avl_done(avl);
+}
+
+static void ut_avl_stress_rotations(struct ut_env *ute)
+{
+	ut_avl_stress_rotations_(ute, 100);
+	ut_avl_stress_rotations_(ute, 1000);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static void ut_avl_min_max_operations(struct ut_env *ute)
+{
+	constexpr long keys[]   = { 50, 25, 75, 10, 30, 60, 80, 5, 15, 27 };
+	constexpr long sorted[] = { 5, 10, 15, 25, 27, 30, 50, 60, 75, 80 };
+	struct silofs_avl_node *an;
 	struct silofs_avl *avl;
 
 	avl = avl_new(ute);
 	avl_populate_keys(avl, keys, UT_ARRAY_SIZE(keys));
 
-	avl_remove_exists(avl, 50);
-	avl_verify_integrity(avl);
+	/* test minimum (leftmost) */
+	an = avl_begin(avl);
+	check_node(an, sorted[0]);
 
-	avl_find_exists(avl, 25);
-	avl_find_exists(avl, 60); /* new root should be 60 */
-	avl_find_exists(avl, 75);
+	/* remove minimum and check new minimum */
+	avl_remove_exists(avl, sorted[0]);
+	an = avl_begin(avl);
+	check_node(an, sorted[1]);
 
-	avl_remove_exists(avl, 60);
-	avl_verify_integrity(avl);
+	avl_remove_exists(avl, sorted[1]);
+	an = avl_begin(avl);
+	check_node(an, sorted[2]);
 
-	avl_remove_exists(avl, 75);
-	avl_verify_integrity(avl);
+	/* test that we can iterate to maximum */
+	while (avl_next(avl, an) != avl_end(avl)) {
+		an = avl_next(avl, an);
+	}
+	check_node(an, sorted[UT_ARRAY_SIZE(sorted) - 1]); /* maximum */
 
-	avl_remove_exists(avl, 10);
-	avl_remove_exists(avl, 25);
-	avl_remove_exists(avl, 30);
-	avl_remove_exists(avl, 80);
+	/* remove maximum and verify */
+	avl_remove_exists(avl, sorted[UT_ARRAY_SIZE(sorted) - 1]);
+	an = avl_begin(avl);
+	while (avl_next(avl, an) != avl_end(avl)) {
+		an = avl_next(avl, an);
+	}
+	check_node(an, sorted[UT_ARRAY_SIZE(sorted) - 2]); /* new maximum */
+
+	avl_remove_exists(avl, sorted[UT_ARRAY_SIZE(sorted) - 2]);
+	an = avl_begin(avl);
+	while (avl_next(avl, an) != avl_end(avl)) {
+		an = avl_next(avl, an);
+	}
+	check_node(an, sorted[UT_ARRAY_SIZE(sorted) - 3]); /* new maximum */
+
+	/* clean up remaining nodes */
+	for (size_t i = 2; i < UT_ARRAY_SIZE(sorted) - 2; ++i) {
+		avl_remove_exists(avl, sorted[i]);
+	}
 
 	avl_done(avl);
 }
@@ -779,6 +1213,15 @@ static const struct ut_testdef ut_local_tests[] = {
 	UT_DEFTEST(ut_avl_alternating),
 	UT_DEFTEST(ut_avl_zigzag_delete),
 	UT_DEFTEST(ut_avl_root_replace),
+	UT_DEFTEST(ut_avl_bounds),
+	UT_DEFTEST(ut_avl_empty_operations),
+	UT_DEFTEST(ut_avl_single_node),
+	UT_DEFTEST(ut_avl_sequential_insert),
+	UT_DEFTEST(ut_avl_reverse_sequential_insert),
+	UT_DEFTEST(ut_avl_insert_replace_pattern),
+	UT_DEFTEST(ut_avl_iteration_forward_backward),
+	UT_DEFTEST(ut_avl_stress_rotations),
+	UT_DEFTEST(ut_avl_min_max_operations),
 };
 
 const struct ut_testdefs ut_tdefs_avl = UT_MKTESTS(ut_local_tests);

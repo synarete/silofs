@@ -123,23 +123,6 @@ jobs:
           python-version: "3.10"
       - name: Run python checkers
         run: ./py/pycheck.sh ./py/qatests
-  build-rpm-package:
-    name: Build rpm package
-    runs-on: ubuntu-24.04
-    needs:
-      - build-check
-      - build-devel
-      - check-py-code
-    steps:
-      - uses: actions/checkout@v6
-      - name: Update
-        run: sudo apt-get update
-      - name: Install deps
-        run: sudo ./pkg/deb/install-deb-deps.sh -a
-      - name: Install rpm build tools
-        run: sudo apt-get install -y rpm
-      - name: Build rpm package
-        run: ./pkg/rpm/packagize-rpm.sh
   build-install-deb-package:
     name: Build and install deb package
     runs-on: ubuntu-24.04

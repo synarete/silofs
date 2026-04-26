@@ -478,11 +478,12 @@ static void avl_insert_fixup(struct silofs_avl *avl, struct silofs_avl_node *x)
 static void avl_delete_fixup(struct silofs_avl *avl, struct silofs_avl_node *x,
                              struct silofs_avl_node *x_parent)
 {
+	const struct silofs_avl_node *h = avl_head(avl);
+	struct silofs_avl_node *z       = x_parent;
 	struct silofs_avl_node **root;
-	struct silofs_avl_node *z = x_parent;
 
 	root = avl_root_p(avl);
-	while (x != *root) {
+	while (x != *root && (z != h)) {
 		avl_node_verify(z);
 
 		if (z->balance == 0) {

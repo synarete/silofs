@@ -25,14 +25,14 @@ static void vni_markdirty(struct silofs_vnode_info *vni)
 	silofs_vni_markdirty(vni, nullptr);
 }
 
-int silofs_fetch_vnode2_at(struct silofs_pexec_ctx *pexec,
-                           const struct silofs_vaddr *vaddr,
-                           struct silofs_vnode_info **out_vni)
+int silofs_resolve_stage_vnode2(struct silofs_pexec_ctx *pexec,
+                                const struct silofs_vaddr *vaddr,
+                                struct silofs_vnode_info **out_vni)
 {
 	struct silofs_pnptr pnptr;
 	int err;
 
-	err = silofs_resolve_vtop(pexec, vaddr, &pnptr);
+	err = silofs_resolve_vtop_mapping(pexec, vaddr, &pnptr);
 	if (err) {
 		return err;
 	}
@@ -43,9 +43,9 @@ int silofs_fetch_vnode2_at(struct silofs_pexec_ctx *pexec,
 	return 0;
 }
 
-static int consume_vnode2_at(struct silofs_pexec_ctx *pexec,
-                             const struct silofs_vaddr *vaddr,
-                             struct silofs_vnode_info **out_vni)
+static int claim_spawn_vnode2_at(struct silofs_pexec_ctx *pexec,
+                                 const struct silofs_vaddr *vaddr,
+                                 struct silofs_vnode_info **out_vni)
 {
 	struct silofs_pnptr pnptr = {};
 	int err;
@@ -58,7 +58,7 @@ static int consume_vnode2_at(struct silofs_pexec_ctx *pexec,
 	if (err) {
 		return err;
 	}
-	err = silofs_insert_vtop(pexec, vaddr, &pnptr);
+	err = silofs_create_vtop_mapping(pexec, vaddr, &pnptr);
 	if (err) {
 		return err;
 	}
@@ -66,9 +66,9 @@ static int consume_vnode2_at(struct silofs_pexec_ctx *pexec,
 	return 0;
 }
 
-int silofs_consume_vnode2(struct silofs_pexec_ctx *pexec,
-                          enum silofs_vtype vtype,
-                          struct silofs_vnode_info **out_vni)
+int silofs_claim_spawn_vnode2(struct silofs_pexec_ctx *pexec,
+                              enum silofs_vtype vtype,
+                              struct silofs_vnode_info **out_vni)
 {
 	struct silofs_vaddr vaddr;
 	int err;
@@ -77,42 +77,11 @@ int silofs_consume_vnode2(struct silofs_pexec_ctx *pexec,
 	if (err) {
 		return err;
 	}
-	err = consume_vnode2_at(pexec, &vaddr, out_vni);
+	err = claim_spawn_vnode2_at(pexec, &vaddr, out_vni);
 	if (err) {
 		return err;
 	}
 	return 0;
-}
-
-static int
-test_vtop_mapping(struct silofs_pexec_ctx *pexec,
-                  const struct silofs_vaddr *vaddr, bool *out_exists)
-{
-	struct silofs_pnptr pnptr;
-	int err;
-
-	err = silofs_resolve_vtop(pexec, vaddr, &pnptr);
-
-	*out_exists = (err == 0);
-	return (err == -SILOFS_ENOENT) ? 0 : err;
-}
-
-int silofs_require_vnode2_at(struct silofs_pexec_ctx *pexec,
-                             const struct silofs_vaddr *vaddr,
-                             struct silofs_vnode_info **out_vni)
-{
-	int err;
-	bool exists;
-
-	err = test_vtop_mapping(pexec, vaddr, &exists);
-	if (!err) {
-		if (exists) {
-			err = silofs_fetch_vnode2_at(pexec, vaddr, out_vni);
-		} else {
-			err = consume_vnode2_at(pexec, vaddr, out_vni);
-		}
-	}
-	return err;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -131,7 +100,7 @@ static int reclaim_vnode2_at(struct silofs_pexec_ctx *pexec,
 	if (vspref.refcnt > 1) {
 		goto reclaim; /* dec-ref only */
 	}
-	err = silofs_resolve_vtop(pexec, vaddr, &pnptr);
+	err = silofs_resolve_vtop_mapping(pexec, vaddr, &pnptr);
 	if (err) {
 		return err;
 	}
@@ -139,7 +108,7 @@ static int reclaim_vnode2_at(struct silofs_pexec_ctx *pexec,
 	if (err) {
 		return err;
 	}
-	err = silofs_remove_vtop(pexec, vaddr);
+	err = silofs_remove_vtop_mapping(pexec, vaddr);
 	if (err) {
 		return err;
 	}
@@ -167,15 +136,15 @@ int silofs_reclaim_forget_vnode2(struct silofs_pexec_ctx *pexec,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int consume_spnode2_at(struct silofs_pexec_ctx *pexec,
-                              const struct silofs_vaddr *vaddr,
-                              const struct silofs_vaddr *ref_vaddr,
-                              struct silofs_space_info **out_spi)
+static int claim_spawn_spnode2_at(struct silofs_pexec_ctx *pexec,
+                                  const struct silofs_vaddr *vaddr,
+                                  const struct silofs_vaddr *ref_vaddr,
+                                  struct silofs_space_info **out_spi)
 {
 	struct silofs_vnode_info *vni = nullptr;
 	int err;
 
-	err = consume_vnode2_at(pexec, vaddr, &vni);
+	err = claim_spawn_vnode2_at(pexec, vaddr, &vni);
 	if (err) {
 		return err;
 	}
@@ -184,14 +153,14 @@ static int consume_spnode2_at(struct silofs_pexec_ctx *pexec,
 	return 0;
 }
 
-static int fetch_spnode2_at(struct silofs_pexec_ctx *pexec,
-                            const struct silofs_vaddr *vaddr,
-                            struct silofs_space_info **out_spi)
+static int resolve_stage_spnode2_at(struct silofs_pexec_ctx *pexec,
+                                    const struct silofs_vaddr *vaddr,
+                                    struct silofs_space_info **out_spi)
 {
 	struct silofs_vnode_info *vni = nullptr;
 	int err;
 
-	err = silofs_fetch_vnode2_at(pexec, vaddr, &vni);
+	err = silofs_resolve_stage_vnode2(pexec, vaddr, &vni);
 	if (err) {
 		return err;
 	}
@@ -200,14 +169,27 @@ static int fetch_spnode2_at(struct silofs_pexec_ctx *pexec,
 	return 0;
 }
 
-int silofs_fetch_spnode2_of(struct silofs_pexec_ctx *pexec,
+int silofs_stage_spnode2_of(struct silofs_pexec_ctx *pexec,
                             const struct silofs_vaddr *ref_vaddr,
                             struct silofs_space_info **out_spi)
 {
 	struct silofs_vaddr vaddr;
 
 	silofs_resolve_spnode2_vaddr(ref_vaddr, &vaddr);
-	return fetch_spnode2_at(pexec, &vaddr, out_spi);
+	return resolve_stage_spnode2_at(pexec, &vaddr, out_spi);
+}
+
+static int
+test_vtop_mapping(struct silofs_pexec_ctx *pexec,
+                  const struct silofs_vaddr *vaddr, bool *out_exists)
+{
+	struct silofs_pnptr pnptr;
+	int err;
+
+	err = silofs_resolve_vtop_mapping(pexec, vaddr, &pnptr);
+
+	*out_exists = (err == 0);
+	return (err == -SILOFS_ENOENT) ? 0 : err;
 }
 
 int silofs_require_spnode2_of(struct silofs_pexec_ctx *pexec,
@@ -222,10 +204,10 @@ int silofs_require_spnode2_of(struct silofs_pexec_ctx *pexec,
 	err = test_vtop_mapping(pexec, &vaddr, &exists);
 	if (!err) {
 		if (exists) {
-			err = fetch_spnode2_at(pexec, &vaddr, out_spi);
+			err = resolve_stage_spnode2_at(pexec, &vaddr, out_spi);
 		} else {
-			err = consume_spnode2_at(pexec, &vaddr, ref_vaddr,
-			                         out_spi);
+			err = claim_spawn_spnode2_at(pexec, &vaddr, ref_vaddr,
+			                             out_spi);
 		}
 	}
 	return err;

@@ -832,9 +832,9 @@ static int btc_remove_vtop(struct silofs_btree_ctx *btc)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-int silofs_resolve_vtop(struct silofs_pexec_ctx *pexec,
-                        const struct silofs_vaddr *vaddr,
-                        struct silofs_pnptr *out_pnptr)
+int silofs_resolve_vtop_mapping(struct silofs_pexec_ctx *pexec,
+                                const struct silofs_vaddr *vaddr,
+                                struct silofs_pnptr *out_pnptr)
 {
 	struct silofs_btree_ctx btc;
 	int err;
@@ -845,9 +845,9 @@ int silofs_resolve_vtop(struct silofs_pexec_ctx *pexec,
 	return err;
 }
 
-int silofs_insert_vtop(struct silofs_pexec_ctx *pexec,
-                       const struct silofs_vaddr *vaddr,
-                       const struct silofs_pnptr *pnptr)
+int silofs_create_vtop_mapping(struct silofs_pexec_ctx *pexec,
+                               const struct silofs_vaddr *vaddr,
+                               const struct silofs_pnptr *pnptr)
 {
 	struct silofs_btree_ctx btc;
 	int err;
@@ -858,9 +858,9 @@ int silofs_insert_vtop(struct silofs_pexec_ctx *pexec,
 	return err;
 }
 
-int silofs_update_vtop(struct silofs_pexec_ctx *pexec,
-                       const struct silofs_vaddr *vaddr,
-                       const struct silofs_pnptr *pnptr)
+int silofs_update_vtop_mapping(struct silofs_pexec_ctx *pexec,
+                               const struct silofs_vaddr *vaddr,
+                               const struct silofs_pnptr *pnptr)
 {
 	struct silofs_btree_ctx btc;
 	int err;
@@ -871,8 +871,8 @@ int silofs_update_vtop(struct silofs_pexec_ctx *pexec,
 	return err;
 }
 
-int silofs_remove_vtop(struct silofs_pexec_ctx *pexec,
-                       const struct silofs_vaddr *vaddr)
+int silofs_remove_vtop_mapping(struct silofs_pexec_ctx *pexec,
+                               const struct silofs_vaddr *vaddr)
 {
 	struct silofs_btree_ctx btc;
 	int err;

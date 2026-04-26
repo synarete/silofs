@@ -153,7 +153,7 @@ format_zero_node_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
 	int err;
 
 	/* phase-1: attach-detach */
-	err = silofs_consume_vnode2(pexec, vtype, &vni);
+	err = silofs_claim_spawn_vnode2(pexec, vtype, &vni);
 	if (err) {
 		log_err("failed to attach zero node: vtype=%d err=%d", vtype,
 		        err);
@@ -172,7 +172,7 @@ format_zero_node_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
 		return err;
 	}
 	/* phase-1: attach forever */
-	err = silofs_consume_vnode2(pexec, vtype, &vni);
+	err = silofs_claim_spawn_vnode2(pexec, vtype, &vni);
 	if (err) {
 		log_err("failed to attach zero node: vtype=%d err=%d", vtype,
 		        err);
@@ -312,7 +312,7 @@ reload_zero_node_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
 	int err;
 
 	silofs_vaddr_setup(&vaddr, vtype, 0);
-	err = silofs_fetch_spnode2_of(pexec, &vaddr, &spi);
+	err = silofs_stage_spnode2_of(pexec, &vaddr, &spi);
 	if (err) {
 		return err;
 	}
@@ -320,7 +320,7 @@ reload_zero_node_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
 	if (vspref.refcnt != 1) {
 		return -SILOFS_EFSCORRUPTED;
 	}
-	err = silofs_fetch_vnode2_at(pexec, &vaddr, &vni);
+	err = silofs_resolve_stage_vnode2(pexec, &vaddr, &vni);
 	if (err) {
 		return err;
 	}

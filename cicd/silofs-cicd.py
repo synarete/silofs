@@ -26,6 +26,7 @@ class _Ctx:
     citests_dir: Path
     filename: Path = Path(__file__)
     lineno: int = 0
+    funcname: str = ""
     timestamp: str = _timestamp()
 
 
@@ -41,6 +42,7 @@ def _with_location(fn: _F) -> _F:
                 citests_dir=ctx.citests_dir,
                 filename=Path(frame.filename),
                 lineno=frame.lineno,
+                funcname=frame.function,
                 timestamp=_timestamp(),
             )
             args = (ctx2,) + args[1:]
@@ -58,23 +60,25 @@ def _msgprefix(ctx: _Ctx) -> str:
         pre = pre + str(ctx.filename.name)
         if ctx.lineno > 0:
             pre = pre + ":" + str(ctx.lineno)
+    if len(pre) > 0:
+        pre = pre + ": "
     return pre
 
 
-@_with_location
 def _msg(ctx: _Ctx, txt: str, err: bool = False) -> None:
     """Print a message with context prefix."""
+    pre = _msgprefix(ctx)
     if err:
-        print(f"{_msgprefix(ctx)}: {txt}", file=sys.stderr)
+        print(f"{pre}{txt}", file=sys.stderr)
     else:
-        print(f"{_msgprefix(ctx)}: {txt}")
+        print(f"{pre}{txt}")
 
 
-@_with_location
 def _sep(ctx: _Ctx) -> None:
     """Print separator between sub jobs."""
+    pre = _msgprefix(ctx)
     txt = "# " * 40
-    print(f"{_msgprefix(ctx)}: {txt}")
+    print(f"{pre}: {txt}")
 
 
 def _die(ctx: _Ctx, txt: str, out: str = "", err: str = "") -> None:

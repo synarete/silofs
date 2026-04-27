@@ -251,24 +251,26 @@ void silofs_vaddr64_xtoh(const struct silofs_vaddr64 *vaddr64,
 void silofs_resolve_spnode2_vaddr(const struct silofs_vaddr *ref_vaddr,
                                   struct silofs_vaddr *out_vaddr)
 {
-	constexpr uint64_t spnode_size  = sizeof(struct silofs_space_node);
-	constexpr uint64_t spnode_nrefs = SILOFS_SPNODE_NREFS;
-	uint64_t ref_vsize, ref_voff, spnode_off, spnode_vsp;
+	const uint64_t ref_vtype = (uint64_t)(ref_vaddr->vtype);
+	uint64_t ref_vsize, ref_voff, ref_index;
+	uint64_t spnode_vsize, spnode_index, spnode_off;
 	off_t off;
 
-	ref_voff   = (uint64_t)ref_vaddr->off;
-	ref_vsize  = silofs_vtype_size(ref_vaddr->vtype);
-	spnode_off = (ref_voff * spnode_size) / (ref_vsize * spnode_nrefs);
-	spnode_vsp = (uint64_t)(ref_vaddr->vtype);
+	ref_voff  = (uint64_t)ref_vaddr->off;
+	ref_vsize = silofs_vtype_size(ref_vaddr->vtype);
+	ref_index = ref_voff / ref_vsize;
 
-	off = (off_t)((spnode_vsp << 56) | spnode_off);
+	spnode_index = ref_index / SILOFS_SPNODE_NREFS;
+	spnode_vsize = silofs_vtype_size(SILOFS_VTYPE_SPNODE2);
+	spnode_off   = spnode_index * spnode_vsize;
+
+	off = (off_t)((ref_vtype << 56) | spnode_off);
 	silofs_vaddr_setup(out_vaddr, SILOFS_VTYPE_SPNODE2, off);
 
 	/* TODO: remove me XXX */
 	silofs_assert_ge(ref_vsize, 1024);
-	silofs_assert_gt(spnode_vsp, 0);
-	silofs_assert_lt(spnode_vsp, INT8_MAX);
-	silofs_assert_eq(off >> 56, spnode_vsp);
+	silofs_assert_gt(ref_vtype, 0);
+	silofs_assert_eq((uint64_t)off % spnode_vsize, 0);
 }
 
 static off_t ino_to_off(ino_t ino)

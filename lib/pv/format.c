@@ -146,7 +146,7 @@ format_space_node_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
 }
 
 static int
-format_zero_node_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
+format_node_zero_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
 {
 	const struct silofs_vaddr *vaddr = nullptr;
 	struct silofs_vnode_info *vni    = nullptr;
@@ -155,7 +155,7 @@ format_zero_node_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
 	/* phase-1: attach-detach */
 	err = silofs_claim_spawn_vnode2(pexec, vtype, &vni);
 	if (err) {
-		log_err("failed to attach zero node: vtype=%d err=%d", vtype,
+		log_err("failed to claim zero node: vtype=%d err=%d", vtype,
 		        err);
 		return err;
 	}
@@ -167,15 +167,15 @@ format_zero_node_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
 	}
 	err = silofs_reclaim_forget_vnode2(pexec, vni);
 	if (err) {
-		log_err("failed to detach zero node: vtype=%d err=%d", vtype,
+		log_err("failed to reclaim zero node: vtype=%d err=%d", vtype,
 		        err);
 		return err;
 	}
-	/* phase-1: attach forever */
+	/* phase-2: attach forever */
 	err = silofs_claim_spawn_vnode2(pexec, vtype, &vni);
 	if (err) {
-		log_err("failed to attach zero node: vtype=%d err=%d", vtype,
-		        err);
+		log_err("failed to claim again zero node: vtype=%d err=%d",
+		        vtype, err);
 		return err;
 	}
 	vaddr = silofs_vni_vaddr(vni);
@@ -183,6 +183,34 @@ format_zero_node_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
 		log_err("bad offset for node zero: vtype=%d off=%ld",
 		        (int)vaddr->vtype, (long)vaddr->off);
 		return -SILOFS_EBUG;
+	}
+	return 0;
+}
+
+static int
+format_node_one_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
+{
+	const struct silofs_vaddr *vaddr = nullptr;
+	struct silofs_vnode_info *vni    = nullptr;
+	ssize_t ssize;
+	int err;
+
+	err = silofs_claim_spawn_vnode2(pexec, vtype, &vni);
+	if (err) {
+		log_err("failed to claim node: vtype=%d err=%d", vtype, err);
+		return err;
+	}
+	vaddr = silofs_vni_vaddr(vni);
+	ssize = silofs_vtype_ssize(vaddr->vtype);
+	if (vaddr->off != ssize) {
+		log_err("bad offset for non-zero: vtype=%d ssize=%d off=%ld",
+		        (int)vaddr->vtype, (int)ssize, (long)vaddr->off);
+		return -SILOFS_EBUG;
+	}
+	err = silofs_reclaim_forget_vnode2(pexec, vni);
+	if (err) {
+		log_err("failed to reclaim node: vtype=%d err=%d", vtype, err);
+		return err;
 	}
 	return 0;
 }
@@ -201,7 +229,11 @@ static int format_vspace_nodes(struct silofs_pexec_ctx *pexec)
 		if (err) {
 			return err;
 		}
-		err = format_zero_node_of(pexec, vtype);
+		err = format_node_zero_of(pexec, vtype);
+		if (err) {
+			return err;
+		}
+		err = format_node_one_of(pexec, vtype);
 		if (err) {
 			return err;
 		}
@@ -303,7 +335,7 @@ static int reload_vspace_roots(struct silofs_pexec_ctx *pexec)
 }
 
 static int
-reload_zero_node_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
+reload_node_zero_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
 {
 	struct silofs_vaddr vaddr;
 	struct silofs_vspace_ref vspref;
@@ -337,7 +369,7 @@ static int reload_vspace_nodes(struct silofs_pexec_ctx *pexec)
 		    (vtype == SILOFS_VTYPE_SPNODE2)) {
 			continue;
 		}
-		err = reload_zero_node_of(pexec, vtype);
+		err = reload_node_zero_of(pexec, vtype);
 		if (err) {
 			return err;
 		}

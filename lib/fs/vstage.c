@@ -2795,6 +2795,23 @@ int silofs_stage_vnode(struct silofs_task_ctx *task,
 	return err;
 }
 
+int silofs_stage_vnode2_new(struct silofs_task_ctx *task,
+                            struct silofs_inode_info *pii,
+                            const struct silofs_vaddr *vaddr,
+                            enum silofs_stg_mode stg_mode,
+                            struct silofs_vnode_info **out_vni)
+{
+	struct silofs_pexec_ctx pexec;
+	int err;
+
+	silofs_ii_incref(pii);
+	silofs_make_pexec(task, &pexec);
+	err = silofs_resolve_stage_vnode2(&pexec, vaddr, out_vni);
+	silofs_ii_decref(pii);
+	silofs_unused(stg_mode);
+	return err;
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int

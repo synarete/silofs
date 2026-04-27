@@ -111,6 +111,12 @@ int silofs_stage_vnode(struct silofs_task_ctx    *task,
                        enum silofs_stg_mode       stg_mode,
                        struct silofs_vnode_info **out_vni);
 
+int silofs_stage_vnode2_new(struct silofs_task_ctx    *task,
+                            struct silofs_inode_info  *pii,
+                            const struct silofs_vaddr *vaddr,
+                            enum silofs_stg_mode       stg_mode,
+                            struct silofs_vnode_info **out_vni);
+
 int silofs_stage_inode(struct silofs_task_ctx *task, ino_t ino,
                        enum silofs_stg_mode       stg_mode,
                        struct silofs_inode_info **out_ii);

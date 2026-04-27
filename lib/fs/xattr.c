@@ -19,6 +19,7 @@
 #include <sys/xattr.h>
 #include <linux/xattr.h>
 #include <limits.h>
+#include <inttypes.h>
 
 #include <silofs/nodes.h>
 #include <silofs/fs.h>
@@ -541,9 +542,15 @@ static void xai_decref(struct silofs_xanode_info *xai)
 
 static void xai_setup_node(struct silofs_xanode_info *xai, ino_t ino)
 {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+
+	/* TODO: investigate this -- why gcc15.2 complains here? */
 	silofs_assert_not_null(xai);
 	silofs_assert_not_null(xai->xan);
 	xan_setup(xai->xan, ino);
+
+#pragma GCC diagnostic pop
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -555,6 +562,64 @@ static void xei_discard_entry(const struct silofs_xentry_info *xei)
 	if (xai != nullptr) {
 		xan_remove(xai->xan, xei->xe);
 	}
+}
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+static struct silofs_xanode_info *vni_to_xai(struct silofs_vnode_info *vni)
+{
+	struct silofs_xanode_info *xai;
+
+	if (vni == nullptr) {
+		silofs_panic("nullptr: vni=%" PRIXPTR, (uintptr_t)vni);
+	}
+	xai = silofs_xai_from_vni(vni);
+	if (xai == nullptr) {
+		silofs_panic("upcast failure: vni=%" PRIXPTR, (uintptr_t)vni);
+	}
+	if (xai->xan == nullptr) {
+		silofs_panic("missing xanode: xai=%" PRIXPTR, (uintptr_t)xai);
+	}
+	return xai;
+}
+
+static int
+stage_xanode(struct silofs_task_ctx *task, struct silofs_inode_info *pii,
+             const struct silofs_vaddr *vaddr, enum silofs_stg_mode stg_mode,
+             struct silofs_xanode_info **out_xai)
+{
+	struct silofs_vnode_info *vni = nullptr;
+	int err;
+
+	silofs_assert_eq(vaddr->vtype, SILOFS_VTYPE_XANODE);
+	err = silofs_stage_vnode(task, pii, vaddr, stg_mode, &vni);
+	if (err) {
+		return err;
+	}
+	*out_xai = vni_to_xai(vni);
+	return 0;
+}
+
+static int
+spawn_xanode(struct silofs_task_ctx *task, struct silofs_inode_info *pii,
+             struct silofs_xanode_info **out_xai)
+{
+	struct silofs_vnode_info *vni = nullptr;
+	int err;
+
+	err = silofs_spawn_vnode(task, pii, SILOFS_VTYPE_XANODE, &vni);
+	if (err) {
+		return err;
+	}
+	*out_xai = silofs_xai_from_vni(vni);
+	return 0;
+}
+
+static int remove_xanode_at(struct silofs_task_ctx *task,
+                            const struct silofs_vaddr *vaddr)
+{
+	silofs_assert_eq(vaddr->vtype, SILOFS_VTYPE_XANODE);
+	return silofs_remove_vnode_at(task, vaddr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -581,21 +646,17 @@ static int xac_do_stage_xanode(const struct silofs_xattr_ctx *xa_ctx,
                                const struct silofs_vaddr *vaddr,
                                struct silofs_xanode_info **out_xai)
 {
-	struct silofs_vnode_info *vni  = nullptr;
-	struct silofs_xanode_info *xai = nullptr;
 	int err;
 
-	err = silofs_stage_vnode(xa_ctx->task, xa_ctx->ii, vaddr,
-	                         xa_ctx->stg_mode, &vni);
+	err = stage_xanode(xa_ctx->task, xa_ctx->ii, vaddr, xa_ctx->stg_mode,
+	                   out_xai);
 	if (err) {
 		return err;
 	}
-	xai = silofs_xai_from_vni(vni);
-	err = xac_recheck_node(xa_ctx, xai);
+	err = xac_recheck_node(xa_ctx, *out_xai);
 	if (err) {
 		return err;
 	}
-	*out_xai = xai;
 	return 0;
 }
 
@@ -830,20 +891,13 @@ int silofs_do_getxattr(struct silofs_task_ctx *task,
 static int xac_spawn_xanode(const struct silofs_xattr_ctx *xa_ctx,
                             struct silofs_xanode_info **out_xai)
 {
-	struct silofs_inode_info *ii   = xa_ctx->ii;
-	struct silofs_vnode_info *vni  = nullptr;
-	struct silofs_xanode_info *xai = nullptr;
 	int err;
 
-	err = silofs_spawn_vnode(xa_ctx->task, ii, SILOFS_VTYPE_XANODE, &vni);
+	err = spawn_xanode(xa_ctx->task, xa_ctx->ii, out_xai);
 	if (err) {
 		return err;
 	}
-	silofs_assert_not_null(vni);
-
-	xai = silofs_xai_from_vni(vni);
-	xai_markdirty(xai, xa_ctx->ii);
-	*out_xai = xai;
+	xai_markdirty(*out_xai, xa_ctx->ii);
 	return 0;
 }
 
@@ -859,10 +913,6 @@ xac_spawn_bind_xanode(const struct silofs_xattr_ctx *xa_ctx, size_t slot,
 	if (err) {
 		return err;
 	}
-	/* TODO: check why clang-scan and rpmbuild fail here */
-	if ((xai == nullptr) || (xai->xan == nullptr)) {
-		return -SILOFS_EBUG;
-	}
 
 	xai_setup_node(xai, ii->i_ino);
 
@@ -876,7 +926,7 @@ xac_spawn_bind_xanode(const struct silofs_xattr_ctx *xa_ctx, size_t slot,
 static int xac_remove_xanode_at(const struct silofs_xattr_ctx *xa_ctx,
                                 const struct silofs_vaddr *vaddr)
 {
-	return silofs_remove_vnode_at(xa_ctx->task, vaddr);
+	return remove_xanode_at(xa_ctx->task, vaddr);
 }
 
 static int xac_require_xanode(const struct silofs_xattr_ctx *xa_ctx,

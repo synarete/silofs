@@ -37,14 +37,15 @@ static struct ut_tgroup const g_ut_tgroups[] = {
 	UT_DEFTGRP(ut_tdefs_super),
 	UT_DEFTGRP(ut_tdefs_statfs),
 	UT_DEFTGRP(ut_tdefs_ioctl),
+	/* xattr & symlink */
+	UT_DEFTGRP(ut_tdefs_xattr),
+	UT_DEFTGRP(ut_tdefs_symlink),
+	/* namespace */
 	UT_DEFTGRP(ut_tdefs_dir),
 	UT_DEFTGRP(ut_tdefs_dir_iter),
 	UT_DEFTGRP(ut_tdefs_dir_list),
 	UT_DEFTGRP(ut_tdefs_namei),
 	UT_DEFTGRP(ut_tdefs_rename),
-	/* symlink & xattr */
-	UT_DEFTGRP(ut_tdefs_symlink),
-	UT_DEFTGRP(ut_tdefs_xattr),
 	/* file */
 	UT_DEFTGRP(ut_tdefs_file_basic),
 	UT_DEFTGRP(ut_tdefs_file_stat),

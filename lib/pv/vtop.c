@@ -73,7 +73,7 @@ int silofs_claim_spawn_vnode2(struct silofs_pexec_ctx *pexec,
 	struct silofs_vaddr vaddr;
 	int err;
 
-	err = silofs_consume_free_vspace(pexec, vtype, &vaddr);
+	err = silofs_claim_free_vspace(pexec, vtype, &vaddr);
 	if (err) {
 		return err;
 	}

@@ -503,9 +503,9 @@ int silofs_destage_dirty(struct silofs_pexec_ctx *pexec);
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* vspace */
 
-int silofs_consume_free_vspace(struct silofs_pexec_ctx *pexec,
-                               enum silofs_vtype        vtype,
-                               struct silofs_vaddr     *out_vaddr);
+int silofs_claim_free_vspace(struct silofs_pexec_ctx *pexec,
+                             enum silofs_vtype        vtype,
+                             struct silofs_vaddr     *out_vaddr);
 
 int silofs_update_used_vspace(struct silofs_pexec_ctx   *pexec,
                               const struct silofs_vaddr *vaddr, bool reclaim);

@@ -44,8 +44,8 @@ vsc_init_by(struct silofs_vspace_ctx *vs_ctx, struct silofs_pexec_ctx *pexec,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void vsc_apex_ref_vaddr(const struct silofs_vspace_ctx *vs_ctx,
-                               struct silofs_vaddr *out_ref_vaddr)
+static void vsc_apex_vaddr(const struct silofs_vspace_ctx *vs_ctx,
+                           struct silofs_vaddr *out_vaddr)
 {
 	struct silofs_uber_stat ust;
 	ssize_t vsz, tip;
@@ -54,7 +54,7 @@ static void vsc_apex_ref_vaddr(const struct silofs_vspace_ctx *vs_ctx,
 	vsz = silofs_vtype_ssize(vs_ctx->vtype);
 	tip = vsz * (ssize_t)ust.vn;
 
-	silofs_vaddr_setup(out_ref_vaddr, vs_ctx->vtype, tip);
+	silofs_vaddr_setup(out_vaddr, vs_ctx->vtype, tip);
 }
 
 static int vsc_require_spnode2_of(const struct silofs_vspace_ctx *vs_ctx,
@@ -68,11 +68,11 @@ static int vsc_consume_free_vspace(struct silofs_vspace_ctx *vs_ctx,
                                    struct silofs_vaddr *out_vaddr)
 {
 	struct silofs_space_info *spi = nullptr;
-	struct silofs_vaddr ref_vaddr;
+	struct silofs_vaddr apex_vaddr;
 	int err;
 
-	vsc_apex_ref_vaddr(vs_ctx, &ref_vaddr);
-	err = vsc_require_spnode2_of(vs_ctx, &ref_vaddr, &spi);
+	vsc_apex_vaddr(vs_ctx, &apex_vaddr);
+	err = vsc_require_spnode2_of(vs_ctx, &apex_vaddr, &spi);
 	silofs_assert_ok(err);
 	if (err) {
 		return err;
@@ -86,9 +86,9 @@ static int vsc_consume_free_vspace(struct silofs_vspace_ctx *vs_ctx,
 	return 0;
 }
 
-int silofs_consume_free_vspace(struct silofs_pexec_ctx *pexec,
-                               enum silofs_vtype vtype,
-                               struct silofs_vaddr *out_vaddr)
+int silofs_claim_free_vspace(struct silofs_pexec_ctx *pexec,
+                             enum silofs_vtype vtype,
+                             struct silofs_vaddr *out_vaddr)
 {
 	struct silofs_vspace_ctx vs_ctx;
 

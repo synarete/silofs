@@ -88,6 +88,7 @@ libsilofs_la_SOURCES += pv/spnode.c
 libsilofs_la_SOURCES += pv/stage.c
 libsilofs_la_SOURCES += pv/uber.c
 libsilofs_la_SOURCES += pv/vspace.c
+libsilofs_la_SOURCES += pv/vspmap.c
 libsilofs_la_SOURCES += pv/vtop.c
 libsilofs_la_SOURCES += fs/claim.c
 libsilofs_la_SOURCES += fs/dir.c

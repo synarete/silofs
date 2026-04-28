@@ -400,6 +400,51 @@ void silofs_spi_clone_from(struct silofs_space_info       *spi,
                            const struct silofs_space_info *spi_other);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+/* vspmap */
+
+/* LIFO of previously-allocated now-free vspace addresses */
+struct silofs_vsp_lifo {
+	off_t    vsl_lifo[127];
+	uint32_t vsl_count;
+	uint32_t vsl_objsz;
+};
+
+/* vspace mapping range entry in AVL tree */
+struct silofs_vsp_entry {
+	struct silofs_avl_node vspe_an;
+	off_t                  vspe_off;
+	size_t                 vspe_len;
+};
+
+/* vspace free addresses in-memory mapping */
+struct silofs_vspmap {
+	struct silofs_vsp_lifo vspm_lifo;
+	struct silofs_avl      vspm_avl;
+	struct silofs_alloc   *vspm_alloc;
+};
+
+/* vspace free addresses by vtype */
+struct silofs_vspmaps {
+	struct silofs_vspmap vspm[SILOFS_VTYPE_LAST];
+};
+
+int silofs_vspmaps_store(struct silofs_vspmaps *vspms, enum silofs_vtype vtype,
+                         off_t voff, size_t len);
+
+int silofs_vspmaps_trypop(struct silofs_vspmaps *vspms,
+                          enum silofs_vtype vtype, size_t len, off_t *out_off);
+
+int silofs_vspmaps_base(const struct silofs_vspmaps *vspms,
+                        enum silofs_vtype vtype, off_t off, off_t *out_base);
+
+void silofs_vspmaps_drop(struct silofs_vspmaps *vspms);
+
+int silofs_vspmaps_init(struct silofs_vspmaps *vspms,
+                        struct silofs_alloc   *alloc);
+
+void silofs_vspmaps_fini(struct silofs_vspmaps *vspms);
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 /* pv-layer execution-context */
 struct silofs_pexec_ctx {

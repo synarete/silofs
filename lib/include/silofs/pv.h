@@ -408,11 +408,11 @@ struct silofs_vspan {
 	size_t len;
 };
 
-/* LIFO of previously-allocated now-free vspace addresses */
-struct silofs_vsp_lifo {
-	off_t    vsl_lifo[127];
-	uint32_t vsl_count;
-	uint32_t vsl_objsz;
+/* short queue of previously-allocated now-free vspace addresses */
+struct silofs_vsp_queue {
+	struct silofs_vspan vsq[64];
+	uint32_t            vsq_count;
+	uint32_t            vsq_objsz;
 };
 
 /* vspace mapping range entry in AVL tree */
@@ -423,9 +423,9 @@ struct silofs_vsp_entry {
 
 /* vspace free addresses in-memory mapping */
 struct silofs_vspmap {
-	struct silofs_vsp_lifo vspm_lifo;
-	struct silofs_avl      vspm_avl;
-	struct silofs_alloc   *vspm_alloc;
+	struct silofs_vsp_queue vspq;
+	struct silofs_avl       avl;
+	struct silofs_alloc    *alloc;
 };
 
 /* vspace free addresses by vtype */

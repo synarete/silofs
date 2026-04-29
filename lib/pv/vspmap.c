@@ -32,6 +32,12 @@ static uint32_t vtype_size(enum silofs_vtype vtype)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static void vspan_reset(struct silofs_vspan *vspan)
+{
+	vspan->off = 0;
+	vspan->len = 0;
+}
+
 static void vspan_init(struct silofs_vspan *vspan, off_t off, size_t len)
 {
 	vspan->off = off;
@@ -54,6 +60,13 @@ vspan_range(const struct silofs_vspan *vspan, off_t *out_beg, off_t *out_end)
 {
 	*out_beg = vspan->off;
 	*out_end = vspan_end(vspan);
+}
+
+static void vspan_expand_head(struct silofs_vspan *vspan, size_t len)
+{
+	silofs_assert_ge(vspan->off, len);
+	vspan->off -= (ssize_t)len;
+	vspan->len += len;
 }
 
 static void vspan_expand_tail(struct silofs_vspan *vspan, size_t len)
@@ -82,43 +95,93 @@ static void vspan_merge_with(struct silofs_vspan *vspan,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void vsplifo_clear(struct silofs_vsp_lifo *vspl)
+static void vspq_clear(struct silofs_vsp_queue *vspq)
 {
-	silofs_memzero(vspl->vsl_lifo, sizeof(vspl->vsl_lifo));
-	vspl->vsl_count = 0;
+	for (size_t i = 0; i < ARRAY_SIZE(vspq->vsq); ++i) {
+		vspan_reset(&vspq->vsq[i]);
+	}
+	vspq->vsq_count = 0;
 }
 
-static void vsplifo_init(struct silofs_vsp_lifo *vspl, uint32_t objsz)
+static void vspq_init(struct silofs_vsp_queue *vspq, uint32_t objsz)
 {
-	vsplifo_clear(vspl);
-	vspl->vsl_objsz = objsz;
+	vspq_clear(vspq);
+	vspq->vsq_objsz = objsz;
 }
 
-static void vsplifo_fini(struct silofs_vsp_lifo *vspl)
+static void vspq_fini(struct silofs_vsp_queue *vspq)
 {
-	vsplifo_clear(vspl);
+	vspq_clear(vspq);
 }
 
-static int
-vsplifo_pop(struct silofs_vsp_lifo *vspl, size_t len, off_t *out_off)
+static int vspq_pop(struct silofs_vsp_queue *vspq, size_t len, off_t *out_off)
 {
-	if (!vspl->vsl_count || (vspl->vsl_objsz != len)) {
+	struct silofs_vspan *vspan;
+
+	if (vspq->vsq_objsz != len) {
+		return -SILOFS_EINVAL;
+	}
+	if (!vspq->vsq_count) {
 		return -SILOFS_ENOENT;
 	}
-	*out_off = vspl->vsl_lifo[vspl->vsl_count - 1];
-	vspl->vsl_count--;
+
+	vspan    = &vspq->vsq[vspq->vsq_count - 1];
+	*out_off = vspan->off;
+
+	if (vspan->len > len) {
+		vspan_trim_head(vspan, len);
+	} else {
+		silofs_assert_eq(vspan->len, len);
+		vspan_reset(vspan);
+		vspq->vsq_count--;
+	}
 	return 0;
 }
 
-static int vsplifo_push(struct silofs_vsp_lifo *vspl, off_t off, size_t len)
+static bool
+vspq_push_merge(struct silofs_vsp_queue *vspq, off_t off, size_t len)
 {
-	constexpr size_t size_max = ARRAY_SIZE(vspl->vsl_lifo);
+	for (size_t i = vspq->vsq_count; i > 0; --i) {
+		struct silofs_vspan *vspan = &vspq->vsq[i - 1];
+		off_t end;
 
-	if (!(vspl->vsl_count < size_max) || (vspl->vsl_objsz != len)) {
+		end = vspan_end(vspan);
+		if (end == off) {
+			vspan_expand_tail(vspan, len);
+			return true;
+		}
+		end = silofs_off_end(off, len);
+		if (end == vspan->off) {
+			vspan_expand_head(vspan, len);
+			return true;
+		}
+	}
+	return false;
+}
+
+static void
+vspq_push_last(struct silofs_vsp_queue *vspq, off_t off, size_t len)
+{
+	struct silofs_vspan *vspan = &vspq->vsq[vspq->vsq_count];
+
+	vspan_init(vspan, off, len);
+	vspq->vsq_count++;
+}
+
+static int vspq_push(struct silofs_vsp_queue *vspq, off_t off, size_t len)
+{
+	constexpr size_t size_max = ARRAY_SIZE(vspq->vsq);
+
+	if (vspq->vsq_objsz != len) {
+		return -SILOFS_EINVAL;
+	}
+	if (vspq_push_merge(vspq, off, len)) {
+		return 0; /* OK -- able to push-by-merge */
+	}
+	if (!(vspq->vsq_count < size_max)) {
 		return -SILOFS_ENOSPC;
 	}
-	vspl->vsl_lifo[vspl->vsl_count] = off;
-	vspl->vsl_count++;
+	vspq_push_last(vspq, off, len);
 	return 0;
 }
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -198,21 +261,21 @@ vspmap_new_vspe(struct silofs_vspmap *vspm, off_t off, size_t len)
 {
 	struct silofs_vsp_entry *vspe;
 
-	vspe = vspe_new(off, len, vspm->vspm_alloc);
+	vspe = vspe_new(off, len, vspm->alloc);
 	return vspe;
 }
 
 static void
 vspmap_delete_vspe(struct silofs_vspmap *vspm, struct silofs_vsp_entry *vspe)
 {
-	vspe_del(vspe, vspm->vspm_alloc);
+	vspe_del(vspe, vspm->alloc);
 }
 
 static struct silofs_vsp_entry *
 vspmap_minimal_vspe(const struct silofs_vspmap *vspm)
 {
 	struct silofs_avl_node *an;
-	const struct silofs_avl *avl = &vspm->vspm_avl;
+	const struct silofs_avl *avl = &vspm->avl;
 
 	if (avl->size == 0) {
 		return nullptr;
@@ -225,7 +288,7 @@ static struct silofs_vsp_entry *
 vspmap_maximal_vspe(const struct silofs_vspmap *vspm)
 {
 	struct silofs_avl_node *an   = nullptr;
-	const struct silofs_avl *avl = &vspm->vspm_avl;
+	const struct silofs_avl *avl = &vspm->avl;
 
 	if (avl->size == 0) {
 		return nullptr;
@@ -238,7 +301,7 @@ static struct silofs_vsp_entry *
 vspmap_lower_bound_vspe(const struct silofs_vspmap *vspm, off_t off)
 {
 	const struct silofs_avl_node *an;
-	const struct silofs_avl *avl = &vspm->vspm_avl;
+	const struct silofs_avl *avl = &vspm->avl;
 
 	an = silofs_avl_lower_bound(avl, &off);
 	return avl_node_to_vspe(an);
@@ -249,7 +312,7 @@ vspmap_prev_of(const struct silofs_vspmap *vspm,
                const struct silofs_vsp_entry *vspe)
 {
 	const struct silofs_avl_node *an_prev;
-	const struct silofs_avl *avl = &vspm->vspm_avl;
+	const struct silofs_avl *avl = &vspm->avl;
 
 	an_prev = silofs_avl_prev(avl, &vspe->vspe_an);
 	if (an_prev == silofs_avl_end(avl)) {
@@ -278,7 +341,7 @@ static void
 vspmap_insert_vspe(struct silofs_vspmap *vspm, struct silofs_vsp_entry *vspe)
 {
 	struct silofs_avl_node *an = &vspe->vspe_an;
-	struct silofs_avl *avl     = &vspm->vspm_avl;
+	struct silofs_avl *avl     = &vspm->avl;
 
 	silofs_avl_insert(avl, an);
 }
@@ -287,7 +350,7 @@ static void
 vspmap_remove_vspe(struct silofs_vspmap *vspm, struct silofs_vsp_entry *vspe)
 {
 	struct silofs_avl_node *an = &vspe->vspe_an;
-	struct silofs_avl *avl     = &vspm->vspm_avl;
+	struct silofs_avl *avl     = &vspm->avl;
 
 	silofs_avl_remove(avl, an);
 }
@@ -301,7 +364,7 @@ vspmap_evict_vspe(struct silofs_vspmap *vspm, struct silofs_vsp_entry *vspe)
 
 static int vspmap_check_cap_add(const struct silofs_vspmap *vspm)
 {
-	const size_t size = vspm->vspm_avl.size;
+	const size_t size = vspm->avl.size;
 
 	return (size < 1024);
 }
@@ -311,7 +374,7 @@ static int vspmap_pull(struct silofs_vspmap *vspm, size_t len, off_t *out_off)
 	struct silofs_vsp_entry *vspe;
 	int err;
 
-	err = vsplifo_pop(&vspm->vspm_lifo, len, out_off);
+	err = vspq_pop(&vspm->vspq, len, out_off);
 	if (!err) {
 		return 0;
 	}
@@ -393,7 +456,7 @@ static int vspmap_add(struct silofs_vspmap *vspm, off_t off, size_t len)
 {
 	int err;
 
-	err = vsplifo_push(&vspm->vspm_lifo, off, len);
+	err = vspq_push(&vspm->vspq, off, len);
 	if (!err) {
 		return 0;
 	}
@@ -427,24 +490,24 @@ static void vspmap_clear(struct silofs_vspmap *vspm)
 		.ctx = vspm,
 	};
 
-	silofs_avl_clear(&vspm->vspm_avl, &fn);
-	vsplifo_clear(&vspm->vspm_lifo);
+	silofs_avl_clear(&vspm->avl, &fn);
+	vspq_clear(&vspm->vspq);
 }
 
 static void vspmap_init(struct silofs_vspmap *vspm, uint32_t objsz,
                         struct silofs_alloc *alloc)
 {
-	vsplifo_init(&vspm->vspm_lifo, objsz);
-	silofs_avl_init(&vspm->vspm_avl, vspe_getkey, off_compare, vspm);
-	vspm->vspm_alloc = alloc;
+	vspq_init(&vspm->vspq, objsz);
+	silofs_avl_init(&vspm->avl, vspe_getkey, off_compare, vspm);
+	vspm->alloc = alloc;
 }
 
 static void vspmap_fini(struct silofs_vspmap *vspm)
 {
 	vspmap_clear(vspm);
-	vsplifo_fini(&vspm->vspm_lifo);
-	silofs_avl_fini(&vspm->vspm_avl);
-	vspm->vspm_alloc = nullptr;
+	vspq_fini(&vspm->vspq);
+	silofs_avl_fini(&vspm->avl);
+	vspm->alloc = nullptr;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

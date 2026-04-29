@@ -32,6 +32,56 @@ static uint32_t vtype_size(enum silofs_vtype vtype)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static void vspan_init(struct silofs_vspan *vspan, off_t off, size_t len)
+{
+	vspan->off = off;
+	vspan->len = len;
+}
+
+static void vspan_fini(struct silofs_vspan *vspan)
+{
+	vspan->off = SILOFS_OFF_NULL;
+	vspan->len = 0;
+}
+
+static off_t vspan_end(const struct silofs_vspan *vspan)
+{
+	return silofs_off_end(vspan->off, vspan->len);
+}
+
+static void
+vspan_range(const struct silofs_vspan *vspan, off_t *out_beg, off_t *out_end)
+{
+	*out_beg = vspan->off;
+	*out_end = vspan_end(vspan);
+}
+
+static void vspan_expand_tail(struct silofs_vspan *vspan, size_t len)
+{
+	vspan->len += len;
+}
+
+static void vspan_trim_head(struct silofs_vspan *vspan, size_t len)
+{
+	silofs_assert_gt(vspan->len, len);
+	silofs_assert_ne(vspan->off, SILOFS_OFF_NULL);
+
+	vspan->off = silofs_off_end(vspan->off, len);
+	vspan->len -= len;
+}
+
+static void vspan_merge_with(struct silofs_vspan *vspan,
+                             const struct silofs_vspan *vspan_next)
+{
+	const off_t end = vspan_end(vspan);
+
+	silofs_assert_eq(end, vspan_next->off);
+
+	vspan->len += vspan_next->len;
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 static void vsplifo_clear(struct silofs_vsp_lifo *vspl)
 {
 	silofs_memzero(vspl->vsl_lifo, sizeof(vspl->vsl_lifo));
@@ -96,34 +146,29 @@ static const void *vspe_getkey(const struct silofs_avl_node *an)
 {
 	const struct silofs_vsp_entry *vspe = avl_node_to_vspe(an);
 
-	return &vspe->vspe_off;
+	return &vspe->vspe_span.off;
 }
 
 static void vspe_init(struct silofs_vsp_entry *vspe, off_t off, size_t len)
 {
 	silofs_avl_node_init(&vspe->vspe_an);
-	vspe->vspe_off = off;
-	vspe->vspe_len = len;
+	vspan_init(&vspe->vspe_span, off, len);
 }
 
 static void vspe_fini(struct silofs_vsp_entry *vspe)
 {
 	silofs_avl_node_fini(&vspe->vspe_an);
-	vspe->vspe_off = SILOFS_OFF_NULL;
-	vspe->vspe_len = 0;
+	vspan_fini(&vspe->vspe_span);
 }
 
 static off_t vspe_end(const struct silofs_vsp_entry *vspe)
 {
-	return silofs_off_end(vspe->vspe_off, vspe->vspe_len);
+	return vspan_end(&vspe->vspe_span);
 }
 
-static void vspe_chop_head(struct silofs_vsp_entry *vspe, size_t len)
+static void vspe_trim_head(struct silofs_vsp_entry *vspe, size_t len)
 {
-	silofs_assert_lt(len, vspe->vspe_len);
-
-	vspe->vspe_off = silofs_off_end(vspe->vspe_off, len);
-	vspe->vspe_len -= len;
+	vspan_trim_head(&vspe->vspe_span, len);
 }
 
 static struct silofs_vsp_entry *
@@ -274,14 +319,14 @@ static int vspmap_pull(struct silofs_vspmap *vspm, size_t len, off_t *out_off)
 	if (vspe == nullptr) {
 		return -SILOFS_ENOSPC;
 	}
-	if (len > vspe->vspe_len) {
+	if (len > vspe->vspe_span.len) {
 		return -SILOFS_ENOSPC;
 	}
-	*out_off = vspe->vspe_off;
-	if (len < vspe->vspe_len) {
+	*out_off = vspe->vspe_span.off;
+	if (len < vspe->vspe_span.len) {
 		/* its ok to modify in-place and avoid the costly remove-insert
 		 * into the tree, as this is already the minimal element */
-		vspe_chop_head(vspe, len);
+		vspe_trim_head(vspe, len);
 	} else {
 		vspmap_evict_vspe(vspm, vspe);
 	}
@@ -301,31 +346,32 @@ static int vspmap_merge(struct silofs_vspmap *vspm, off_t off, size_t len)
 	if (vspe_prev && (vspe_end(vspe_prev) == off)) {
 		/* merge range into prev */
 		vspe = vspe_prev;
-		vspe->vspe_len += len;
-		off = vspe->vspe_off;
-		end = vspe_end(vspe);
+		vspan_expand_tail(&vspe->vspe_span, len);
+		vspan_range(&vspe->vspe_span, &off, &end);
 		ret = 0;
 	}
 	if (vspe_next == nullptr) {
 		/* no next to append with */
 		return ret;
 	}
-	if (end != vspe_next->vspe_off) {
+	if (end != vspe_next->vspe_span.off) {
 		/* can not merge with next */
 		return ret;
 	}
 	end = vspe_end(vspe_next);
 	if (vspe == nullptr) {
+		const size_t new_len = silofs_off_ulen(off, end);
+
 		/* merge with next only */
 		vspmap_evict_vspe(vspm, vspe_next);
-		vspe = vspmap_new_vspe(vspm, off, silofs_off_ulen(off, end));
+		vspe = vspmap_new_vspe(vspm, off, new_len);
 		if (vspe == nullptr) {
 			return -SILOFS_ENOMEM;
 		}
 		vspmap_insert_vspe(vspm, vspe);
 	} else {
 		/* full merge (prev + next ) */
-		vspe->vspe_len += vspe_next->vspe_len;
+		vspan_merge_with(&vspe->vspe_span, &vspe_next->vspe_span);
 		vspmap_evict_vspe(vspm, vspe_next);
 	}
 	return 0;
@@ -333,25 +379,12 @@ static int vspmap_merge(struct silofs_vspmap *vspm, off_t off, size_t len)
 
 static int vspmap_insert(struct silofs_vspmap *vspm, off_t off, size_t len)
 {
-	struct silofs_vsp_entry *vspe, *vspe_max = nullptr;
+	struct silofs_vsp_entry *vspe;
 
-	vspe = vspmap_new_vspe(vspm, off, len);
-	if (vspe != nullptr) {
-		goto out_ok; /* trivial case */
-	}
-	vspe_max = vspmap_maximal_vspe(vspm);
-	if (vspe_max == nullptr) {
-		return -SILOFS_ENOMEM;
-	}
-	if (off > vspe_max->vspe_off) {
-		return -SILOFS_ENOMEM;
-	}
-	vspmap_delete_vspe(vspm, vspe_max);
 	vspe = vspmap_new_vspe(vspm, off, len);
 	if (vspe == nullptr) {
 		return -SILOFS_ENOMEM;
 	}
-out_ok:
 	vspmap_insert_vspe(vspm, vspe);
 	return 0;
 }

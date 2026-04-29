@@ -402,6 +402,12 @@ void silofs_spi_clone_from(struct silofs_space_info       *spi,
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* vspmap */
 
+/* vspace address span */
+struct silofs_vspan {
+	off_t  off;
+	size_t len;
+};
+
 /* LIFO of previously-allocated now-free vspace addresses */
 struct silofs_vsp_lifo {
 	off_t    vsl_lifo[127];
@@ -412,8 +418,7 @@ struct silofs_vsp_lifo {
 /* vspace mapping range entry in AVL tree */
 struct silofs_vsp_entry {
 	struct silofs_avl_node vspe_an;
-	off_t                  vspe_off;
-	size_t                 vspe_len;
+	struct silofs_vspan    vspe_span;
 };
 
 /* vspace free addresses in-memory mapping */

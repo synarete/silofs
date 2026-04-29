@@ -20,6 +20,18 @@
 #include <silofs/addr.h>
 #include <silofs/pv.h>
 
+static uint32_t vtype_size(enum silofs_vtype vtype)
+{
+	const size_t size = silofs_vtype_size(vtype);
+
+	silofs_assert_gt(size, 0);
+	silofs_assert_lt(size, UINT32_MAX);
+
+	return (uint32_t)size;
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 static void vsplifo_clear(struct silofs_vsp_lifo *vspl)
 {
 	silofs_memzero(vspl->vsl_lifo, sizeof(vspl->vsl_lifo));
@@ -104,11 +116,6 @@ static void vspe_fini(struct silofs_vsp_entry *vspe)
 static off_t vspe_end(const struct silofs_vsp_entry *vspe)
 {
 	return silofs_off_end(vspe->vspe_off, vspe->vspe_len);
-}
-
-static bool vspe_is_within(const struct silofs_vsp_entry *vspe, off_t off)
-{
-	return (off >= vspe->vspe_off) && (off < vspe_end(vspe));
 }
 
 static void vspe_chop_head(struct silofs_vsp_entry *vspe, size_t len)
@@ -254,7 +261,7 @@ static int vspmap_check_cap_add(const struct silofs_vspmap *vspm)
 	return (size < 1024);
 }
 
-static int vspmap_pop(struct silofs_vspmap *vspm, size_t len, off_t *out_off)
+static int vspmap_pull(struct silofs_vspmap *vspm, size_t len, off_t *out_off)
 {
 	struct silofs_vsp_entry *vspe;
 	int err;
@@ -372,26 +379,6 @@ static int vspmap_add(struct silofs_vspmap *vspm, off_t off, size_t len)
 	return 0;
 }
 
-static int vspmap_find_baseof(const struct silofs_vspmap *vspm, off_t off,
-                              off_t *out_base_off)
-{
-	struct silofs_vsp_entry *vspe;
-
-	vspe = vspmap_lower_bound_vspe(vspm, off);
-	if (vspe == nullptr) {
-		return -SILOFS_ENOENT;
-	}
-	vspe = vspmap_prev_of(vspm, vspe);
-	if (vspe == nullptr) {
-		return -SILOFS_ENOENT;
-	}
-	if (!vspe_is_within(vspe, off)) {
-		return -SILOFS_ENOENT;
-	}
-	*out_base_off = vspe->vspe_off;
-	return 0;
-}
-
 static void vspmap_avl_node_delete_cb(struct silofs_avl_node *an, void *p)
 {
 	struct silofs_vspmap *vspm    = p;
@@ -429,61 +416,58 @@ static void vspmap_fini(struct silofs_vspmap *vspm)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static const struct silofs_vspmap *
-vspmaps_sub(const struct silofs_vspmaps *vspms, enum silofs_vtype vtype)
+static size_t vspmaps_vtype_to_slot(enum silofs_vtype vtype)
 {
-	constexpr size_t nslots = ARRAY_SIZE(vspms->vspm);
-	const size_t slot       = (size_t)vtype;
+	return (size_t)(vtype - 1);
+}
 
-	return (slot < nslots) ? &vspms->vspm[slot] : nullptr;
+static enum silofs_vtype vspmaps_slot_to_vtype(size_t slot)
+{
+	return (enum silofs_vtype)(slot + 1);
 }
 
 static struct silofs_vspmap *
 vspmaps_mut_sub(struct silofs_vspmaps *vspms, enum silofs_vtype vtype)
 {
 	constexpr size_t nslots = ARRAY_SIZE(vspms->vspm);
-	const size_t slot       = (size_t)vtype;
+	const size_t slot       = vspmaps_vtype_to_slot(vtype);
 
 	return (slot < nslots) ? &vspms->vspm[slot] : nullptr;
 }
 
-int silofs_vspmaps_store(struct silofs_vspmaps *vspms, enum silofs_vtype vtype,
-                         off_t off, size_t len)
+int silofs_vspmaps_push(struct silofs_vspmaps *vspms,
+                        const struct silofs_vaddr *vaddr)
 {
 	struct silofs_vspmap *vspm;
-	int err = -SILOFS_EINVAL;
+	size_t len;
 
-	vspm = vspmaps_mut_sub(vspms, vtype);
-	if (likely(vspm != nullptr)) {
-		err = vspmap_add(vspm, off, len);
+	vspm = vspmaps_mut_sub(vspms, vaddr->vtype);
+	if (unlikely(vspm == nullptr)) {
+		return -SILOFS_EINVAL;
 	}
-	return err;
+	len = vtype_size(vaddr->vtype);
+	return vspmap_add(vspm, vaddr->off, len);
 }
 
-int silofs_vspmaps_trypop(struct silofs_vspmaps *vspms,
-                          enum silofs_vtype vtype, size_t len, off_t *out_off)
+int silofs_vspmaps_pull(struct silofs_vspmaps *vspms, enum silofs_vtype vtype,
+                        struct silofs_vaddr *out_vaddr)
 {
 	struct silofs_vspmap *vspm;
-	int err = -SILOFS_EINVAL;
+	size_t len;
+	off_t off;
+	int err;
 
 	vspm = vspmaps_mut_sub(vspms, vtype);
-	if (likely(vspm != nullptr)) {
-		err = vspmap_pop(vspm, len, out_off);
+	if (unlikely(vspm == nullptr)) {
+		return -SILOFS_EINVAL;
 	}
-	return err;
-}
-
-int silofs_vspmaps_base(const struct silofs_vspmaps *vspms,
-                        enum silofs_vtype vtype, off_t off, off_t *out_base)
-{
-	const struct silofs_vspmap *vspm;
-	int err = -SILOFS_ENOENT;
-
-	vspm = vspmaps_sub(vspms, vtype);
-	if (likely(vspm != nullptr)) {
-		err = vspmap_find_baseof(vspm, off, out_base);
+	len = vtype_size(vtype);
+	err = vspmap_pull(vspm, len, &off);
+	if (err) {
+		return err;
 	}
-	return err;
+	silofs_vaddr_setup(out_vaddr, vtype, off);
+	return 0;
 }
 
 void silofs_vspmaps_drop(struct silofs_vspmaps *vspms)
@@ -496,11 +480,11 @@ void silofs_vspmaps_drop(struct silofs_vspmaps *vspms)
 int silofs_vspmaps_init(struct silofs_vspmaps *vspms,
                         struct silofs_alloc *alloc)
 {
-	for (size_t slot = 0; slot < ARRAY_SIZE(vspms->vspm); ++slot) {
-		enum silofs_vtype vtype = (enum silofs_vtype)slot;
-		const uint32_t objsz    = (uint32_t)silofs_vtype_size(vtype);
+	enum silofs_vtype vtype;
 
-		vspmap_init(&vspms->vspm[slot], objsz, alloc);
+	for (size_t slot = 0; slot < ARRAY_SIZE(vspms->vspm); ++slot) {
+		vtype = vspmaps_slot_to_vtype(slot);
+		vspmap_init(&vspms->vspm[slot], vtype_size(vtype), alloc);
 	}
 	return 0;
 }

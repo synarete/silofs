@@ -425,24 +425,24 @@ struct silofs_vspmap {
 
 /* vspace free addresses by vtype */
 struct silofs_vspmaps {
-	struct silofs_vspmap vspm[SILOFS_VTYPE_LAST];
+	struct silofs_vspmap vspm[SILOFS_VTYPE_LAST - 1];
 };
-
-int silofs_vspmaps_store(struct silofs_vspmaps *vspms, enum silofs_vtype vtype,
-                         off_t voff, size_t len);
-
-int silofs_vspmaps_trypop(struct silofs_vspmaps *vspms,
-                          enum silofs_vtype vtype, size_t len, off_t *out_off);
-
-int silofs_vspmaps_base(const struct silofs_vspmaps *vspms,
-                        enum silofs_vtype vtype, off_t off, off_t *out_base);
-
-void silofs_vspmaps_drop(struct silofs_vspmaps *vspms);
 
 int silofs_vspmaps_init(struct silofs_vspmaps *vspms,
                         struct silofs_alloc   *alloc);
 
 void silofs_vspmaps_fini(struct silofs_vspmaps *vspms);
+
+int silofs_vspmaps_push(struct silofs_vspmaps     *vspms,
+                        const struct silofs_vaddr *vaddr);
+
+int silofs_vspmaps_pull(struct silofs_vspmaps *vspms, enum silofs_vtype vtype,
+                        struct silofs_vaddr *out_vaddr);
+
+int silofs_vspmaps_base(const struct silofs_vspmaps *vspms,
+                        enum silofs_vtype vtype, off_t off, off_t *out_base);
+
+void silofs_vspmaps_drop(struct silofs_vspmaps *vspms);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 

@@ -19,6 +19,7 @@
 
 struct silofs_vspace_ctx {
 	struct silofs_pexec_ctx *pexec;
+	struct silofs_vspmaps *vspmaps;
 	struct silofs_vcache *vcache;
 	struct silofs_uber_info *ubi;
 	enum silofs_vtype vtype;
@@ -27,10 +28,11 @@ struct silofs_vspace_ctx {
 static void vsc_init(struct silofs_vspace_ctx *vs_ctx,
                      struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
 {
-	vs_ctx->pexec  = pexec;
-	vs_ctx->vcache = pexec->vcache;
-	vs_ctx->ubi    = pexec->ubref->ubi;
-	vs_ctx->vtype  = vtype;
+	vs_ctx->pexec   = pexec;
+	vs_ctx->vspmaps = pexec->vspmaps;
+	vs_ctx->vcache  = pexec->vcache;
+	vs_ctx->ubi     = pexec->ubref->ubi;
+	vs_ctx->vtype   = vtype;
 
 	silofs_assert_ne(vtype, SILOFS_VTYPE_SPNODE2);
 }
@@ -57,6 +59,13 @@ static void vsc_apex_vaddr(const struct silofs_vspace_ctx *vs_ctx,
 	silofs_vaddr_setup(out_vaddr, vs_ctx->vtype, tip);
 }
 
+static int vsc_stage_spnode_of(const struct silofs_vspace_ctx *vs_ctx,
+                               const struct silofs_vaddr *ref_vaddr,
+                               struct silofs_space_info **out_spi)
+{
+	return silofs_stage_spnode2_of(vs_ctx->pexec, ref_vaddr, out_spi);
+}
+
 static int vsc_require_spnode2_of(const struct silofs_vspace_ctx *vs_ctx,
                                   const struct silofs_vaddr *ref_vaddr,
                                   struct silofs_space_info **out_spi)
@@ -64,8 +73,37 @@ static int vsc_require_spnode2_of(const struct silofs_vspace_ctx *vs_ctx,
 	return silofs_require_spnode2_of(vs_ctx->pexec, ref_vaddr, out_spi);
 }
 
-static int vsc_consume_free_vspace(struct silofs_vspace_ctx *vs_ctx,
-                                   struct silofs_vaddr *out_vaddr)
+static int vsc_claim_free_vspace_by_vspmaps(struct silofs_vspace_ctx *vs_ctx,
+                                            struct silofs_vaddr *out_vaddr)
+{
+	struct silofs_vspace_ref vspref;
+	struct silofs_space_info *spi = nullptr;
+	struct silofs_vspmaps *vspms  = vs_ctx->pexec->vspmaps;
+	int err;
+
+	err = silofs_vspmaps_pull(vspms, vs_ctx->vtype, out_vaddr);
+	if (err) {
+		return err;
+	}
+	err = vsc_stage_spnode_of(vs_ctx, out_vaddr, &spi);
+	if (err) {
+		log_err("failed to stage spnode of: vtype=%d off=%ld err=%d",
+		        (int)out_vaddr->vtype, out_vaddr->off, err);
+		return err;
+	}
+	silofs_spi_vspace_ref(spi, out_vaddr, &vspref);
+	if (vspref.refcnt > 0) {
+		log_err("cached free-vspace has active ref-count: "
+		        "vtype=%d off=%ld refcnt=%zu",
+		        (int)out_vaddr->vtype, out_vaddr->off, vspref.refcnt);
+		return -SILOFS_EBUG;
+	}
+	silofs_spi_inc_allocated(spi, out_vaddr);
+	return 0;
+}
+
+static int vsc_claim_free_vspace_by_spnodes(struct silofs_vspace_ctx *vs_ctx,
+                                            struct silofs_vaddr *out_vaddr)
 {
 	struct silofs_space_info *spi = nullptr;
 	struct silofs_vaddr apex_vaddr;
@@ -86,6 +124,20 @@ static int vsc_consume_free_vspace(struct silofs_vspace_ctx *vs_ctx,
 	return 0;
 }
 
+static int vsc_claim_free_vspace(struct silofs_vspace_ctx *vs_ctx,
+                                 struct silofs_vaddr *out_vaddr)
+{
+	int err;
+
+	/* fast: try to allocated from in-memory pool of free vspace */
+	err = vsc_claim_free_vspace_by_vspmaps(vs_ctx, out_vaddr);
+	if (err) {
+		/* slow: try to allocate using space-mapping nodes */
+		err = vsc_claim_free_vspace_by_spnodes(vs_ctx, out_vaddr);
+	}
+	return err;
+}
+
 int silofs_claim_free_vspace(struct silofs_pexec_ctx *pexec,
                              enum silofs_vtype vtype,
                              struct silofs_vaddr *out_vaddr)
@@ -93,17 +145,10 @@ int silofs_claim_free_vspace(struct silofs_pexec_ctx *pexec,
 	struct silofs_vspace_ctx vs_ctx;
 
 	vsc_init(&vs_ctx, pexec, vtype);
-	return vsc_consume_free_vspace(&vs_ctx, out_vaddr);
+	return vsc_claim_free_vspace(&vs_ctx, out_vaddr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static int vsc_stage_spnode_of(const struct silofs_vspace_ctx *vs_ctx,
-                               const struct silofs_vaddr *ref_vaddr,
-                               struct silofs_space_info **out_spi)
-{
-	return silofs_stage_spnode2_of(vs_ctx->pexec, ref_vaddr, out_spi);
-}
 
 static int vsc_decref_used_vspace(struct silofs_vspace_ctx *vs_ctx,
                                   const struct silofs_vaddr *vaddr)

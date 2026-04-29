@@ -86,6 +86,12 @@ int silofs_claim_spawn_vnode2(struct silofs_pexec_ctx *pexec,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static void retain_free_vspace(struct silofs_pexec_ctx *pexec,
+                               const struct silofs_vaddr *vaddr)
+{
+	silofs_vspmaps_push(pexec->vspmaps, vaddr);
+}
+
 static int reclaim_vnode2_at(struct silofs_pexec_ctx *pexec,
                              const struct silofs_vaddr *vaddr)
 {
@@ -112,6 +118,7 @@ static int reclaim_vnode2_at(struct silofs_pexec_ctx *pexec,
 	if (err) {
 		return err;
 	}
+	retain_free_vspace(pexec, vaddr);
 reclaim:
 	err = silofs_update_used_vspace(pexec, vaddr, true);
 	if (err) {

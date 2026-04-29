@@ -408,7 +408,7 @@ struct silofs_vspan {
 	size_t len;
 };
 
-/* short queue of previously-allocated now-free vspace addresses */
+/* queue of previously-allocated now-free vspace addresses */
 struct silofs_vsp_queue {
 	struct silofs_vspan vsq[64];
 	uint32_t            vsq_count;

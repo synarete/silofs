@@ -121,10 +121,141 @@ static void vspq_fini(struct silofs_vsp_queue *vspq)
 	vspq_clear(vspq);
 }
 
+static size_t vspq_lower_bound(const struct silofs_vsp_queue *vspq, off_t off)
+{
+	size_t left = 0, right = vspq->vsq_count;
+
+	while (left < right) {
+		const size_t mid = left + (right - left) / 2;
+
+		if (vspq->vsq[mid].off < off) {
+			left = mid + 1;
+		} else {
+			right = mid;
+		}
+	}
+	return left;
+}
+
+static void vspq_shift_right(struct silofs_vsp_queue *vspq, size_t pos)
+{
+	silofs_assert_lt(pos, vspq->vsq_count);
+	silofs_assert_lt(vspq->vsq_count, ARRAY_SIZE(vspq->vsq));
+
+	for (size_t i = vspq->vsq_count; i > pos; --i) {
+		vspan_assign(&vspq->vsq[i], &vspq->vsq[i - 1]);
+	}
+}
+
+static void vspq_shift_left(struct silofs_vsp_queue *vspq, size_t pos)
+{
+	silofs_assert_lt(pos, vspq->vsq_count);
+
+	for (size_t i = pos; i < vspq->vsq_count - 1; ++i) {
+		vspan_assign(&vspq->vsq[i], &vspq->vsq[i + 1]);
+	}
+	vspan_reset(&vspq->vsq[vspq->vsq_count - 1]);
+}
+
+static void vspq_insert_at(struct silofs_vsp_queue *vspq, size_t pos,
+                           off_t off, size_t len)
+{
+	silofs_assert_le(pos, vspq->vsq_count);
+	silofs_assert_lt(vspq->vsq_count, ARRAY_SIZE(vspq->vsq));
+
+	if (pos != vspq->vsq_count) {
+		vspq_shift_right(vspq, pos);
+	}
+	vspan_init(&vspq->vsq[pos], off, len);
+	vspq->vsq_count++;
+}
+
+static void vspq_remove_at(struct silofs_vsp_queue *vspq, size_t pos)
+{
+	silofs_assert_lt(pos, vspq->vsq_count);
+	silofs_assert_gt(vspq->vsq_count, 0);
+
+	vspq_shift_left(vspq, pos);
+	vspq->vsq_count--;
+}
+
+static bool vspq_try_merge_prev(struct silofs_vsp_queue *vspq, size_t pos,
+                                off_t off, size_t len)
+{
+	struct silofs_vspan *vspan_prev;
+	off_t end_prev;
+
+	if (pos == 0) {
+		return false;
+	}
+	vspan_prev = &vspq->vsq[pos - 1];
+	end_prev   = vspan_end(vspan_prev);
+	if (end_prev != off) {
+		return false;
+	}
+	vspan_expand_tail(vspan_prev, len);
+	return true;
+}
+
+static bool vspq_try_merge_next(struct silofs_vsp_queue *vspq, size_t pos,
+                                off_t off, size_t len)
+{
+	struct silofs_vspan *vspan_next;
+	const off_t end = silofs_off_end(off, len);
+
+	if (pos >= vspq->vsq_count) {
+		return false;
+	}
+	vspan_next = &vspq->vsq[pos];
+	if (end != vspan_next->off) {
+		return false;
+	}
+	vspan_expand_head(vspan_next, len);
+	return true;
+}
+
+static bool vspq_try_merge_both(struct silofs_vsp_queue *vspq, size_t pos)
+{
+	struct silofs_vspan *vspan_prev;
+	struct silofs_vspan *vspan_next;
+
+	if (pos == 0 || pos >= vspq->vsq_count) {
+		return false;
+	}
+	vspan_prev = &vspq->vsq[pos - 1];
+	vspan_next = &vspq->vsq[pos];
+	if (vspan_end(vspan_prev) != vspan_next->off) {
+		return false;
+	}
+	vspan_merge_with(vspan_prev, vspan_next);
+	vspq_remove_at(vspq, pos);
+	return true;
+}
+
+static void
+vspq_do_pop(struct silofs_vsp_queue *vspq, size_t len, off_t *out_off)
+{
+	struct silofs_vspan *vspan = &vspq->vsq[0];
+	struct silofs_vspan *vspan_last;
+
+	*out_off = vspan->off;
+
+	if (vspan->len > len) {
+		/* trivial case: chop in-place */
+		vspan_trim_head(vspan, len);
+	}
+
+	silofs_assert_eq(vspan->len, len);
+	vspan_last = &vspq->vsq[vspq->vsq_count - 1];
+	if (vspan != vspan_last) {
+		vspan_assign(vspan, vspan_last);
+	}
+	vspan_reset(vspan_last);
+	vspq->vsq_count--;
+}
+
 static int vspq_pop(struct silofs_vsp_queue *vspq, size_t len, off_t *out_off)
 {
-	struct silofs_vspan *vspan;
-
 	if (vspq->vsq_objsz != len) {
 		return -SILOFS_EINVAL;
 	}
@@ -132,106 +263,58 @@ static int vspq_pop(struct silofs_vsp_queue *vspq, size_t len, off_t *out_off)
 		return -SILOFS_ENOENT;
 	}
 
-	vspan    = &vspq->vsq[vspq->vsq_count - 1];
-	*out_off = vspan->off;
-
-	if (vspan->len > len) {
-		vspan_trim_head(vspan, len);
-	} else {
-		silofs_assert_eq(vspan->len, len);
-		vspan_reset(vspan);
-		vspq->vsq_count--;
-	}
+	vspq_do_pop(vspq, len, out_off);
 	return 0;
 }
 
-static void
-vspq_try_coalesce(struct silofs_vsp_queue *vspq, struct silofs_vspan *vspan)
-{
-	size_t idx = 0;
-
-	while (idx < vspq->vsq_count) {
-		struct silofs_vspan *other = &vspq->vsq[idx];
-
-		if (other == vspan) {
-			idx++;
-			continue;
-		}
-
-		if (vspan_end(vspan) == other->off) {
-			vspan_expand_tail(vspan, other->len);
-		} else if (vspan_end(other) == vspan->off) {
-			vspan_expand_head(vspan, other->len);
-		} else {
-			idx++;
-			continue;
-		}
-
-		vspan_assign(&vspq->vsq[idx], &vspq->vsq[vspq->vsq_count - 1]);
-		vspq->vsq_count--;
-	}
-}
-
-static struct silofs_vspan *
-vspq_try_push_merge(struct silofs_vsp_queue *vspq, off_t off, size_t len)
-{
-	const off_t end = silofs_off_end(off, len);
-
-	for (size_t i = 0; i < vspq->vsq_count; ++i) {
-		struct silofs_vspan *vspan = &vspq->vsq[i];
-
-		if (vspan_end(vspan) == off) {
-			vspan_expand_tail(vspan, len);
-			return vspan;
-		}
-
-		if (end == vspan->off) {
-			vspan_expand_head(vspan, len);
-			return vspan;
-		}
-	}
-	return nullptr;
-}
-
 static bool
-vspq_push_merge(struct silofs_vsp_queue *vspq, off_t off, size_t len)
+vspq_try_merge(struct silofs_vsp_queue *vspq, off_t off, size_t len)
 {
-	struct silofs_vspan *vspan;
-	bool ret = false;
+	const size_t pos = vspq_lower_bound(vspq, off);
+	bool merged;
 
-	vspan = vspq_try_push_merge(vspq, off, len);
-	if (vspan != nullptr) {
-		vspq_try_coalesce(vspq, vspan);
-		ret = true;
+	merged = vspq_try_merge_prev(vspq, pos, off, len);
+	if (merged) {
+		vspq_try_merge_both(vspq, pos);
+		goto out;
 	}
-	return ret;
+	merged = vspq_try_merge_next(vspq, pos, off, len);
+out:
+	return merged;
 }
 
-static void
-vspq_push_last(struct silofs_vsp_queue *vspq, off_t off, size_t len)
+static void vspq_insert(struct silofs_vsp_queue *vspq, off_t off, size_t len)
 {
-	struct silofs_vspan *vspan = &vspq->vsq[vspq->vsq_count];
+	const size_t pos = vspq_lower_bound(vspq, off);
 
-	vspan_init(vspan, off, len);
-	vspq->vsq_count++;
+	vspq_insert_at(vspq, pos, off, len);
+}
+
+static bool vspq_cap_insert(const struct silofs_vsp_queue *vspq)
+{
+	constexpr size_t size_max = ARRAY_SIZE(vspq->vsq);
+
+	return (vspq->vsq_count < size_max);
 }
 
 static int vspq_push(struct silofs_vsp_queue *vspq, off_t off, size_t len)
 {
-	constexpr size_t size_max = ARRAY_SIZE(vspq->vsq);
+	bool merged;
 
 	if (vspq->vsq_objsz != len) {
 		return -SILOFS_EINVAL;
 	}
-	if (vspq_push_merge(vspq, off, len)) {
-		return 0; /* OK -- able to push-by-merge */
+	merged = vspq_try_merge(vspq, off, len);
+	if (merged) {
+		return 0;
 	}
-	if (!(vspq->vsq_count < size_max)) {
+	if (!vspq_cap_insert(vspq)) {
 		return -SILOFS_ENOSPC;
 	}
-	vspq_push_last(vspq, off, len);
+	vspq_insert(vspq, off, len);
 	return 0;
 }
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static long off_compare(const void *x, const void *y)
@@ -410,7 +493,7 @@ vspmap_evict_vspe(struct silofs_vspmap *vspm, struct silofs_vsp_entry *vspe)
 	vspmap_delete_vspe(vspm, vspe);
 }
 
-static int vspmap_check_cap_add(const struct silofs_vspmap *vspm)
+static bool vspmap_check_cap_add(const struct silofs_vspmap *vspm)
 {
 	const size_t size = vspm->avl.size;
 
@@ -503,6 +586,7 @@ static int vspmap_insert(struct silofs_vspmap *vspm, off_t off, size_t len)
 static int vspmap_add(struct silofs_vspmap *vspm, off_t off, size_t len)
 {
 	int err;
+	bool cap_add;
 
 	err = vspq_push(&vspm->vspq, off, len);
 	if (!err) {
@@ -512,9 +596,9 @@ static int vspmap_add(struct silofs_vspmap *vspm, off_t off, size_t len)
 	if (err != -SILOFS_ENOENT) {
 		return err;
 	}
-	err = vspmap_check_cap_add(vspm);
-	if (err) {
-		return err;
+	cap_add = vspmap_check_cap_add(vspm);
+	if (!cap_add) {
+		return -SILOFS_ENOMEM;
 	}
 	err = vspmap_insert(vspm, off, len);
 	if (err) {

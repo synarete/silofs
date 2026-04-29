@@ -50,6 +50,13 @@ static void vspan_fini(struct silofs_vspan *vspan)
 	vspan->len = 0;
 }
 
+static void
+vspan_assign(struct silofs_vspan *vspan, const struct silofs_vspan *other)
+{
+	vspan->off = other->off;
+	vspan->len = other->len;
+}
+
 static off_t vspan_end(const struct silofs_vspan *vspan)
 {
 	return silofs_off_end(vspan->off, vspan->len);
@@ -138,25 +145,66 @@ static int vspq_pop(struct silofs_vsp_queue *vspq, size_t len, off_t *out_off)
 	return 0;
 }
 
+static void
+vspq_try_coalesce(struct silofs_vsp_queue *vspq, struct silofs_vspan *vspan)
+{
+	size_t idx = 0;
+
+	while (idx < vspq->vsq_count) {
+		struct silofs_vspan *other = &vspq->vsq[idx];
+
+		if (other == vspan) {
+			idx++;
+			continue;
+		}
+
+		if (vspan_end(vspan) == other->off) {
+			vspan_expand_tail(vspan, other->len);
+		} else if (vspan_end(other) == vspan->off) {
+			vspan_expand_head(vspan, other->len);
+		} else {
+			idx++;
+			continue;
+		}
+
+		vspan_assign(&vspq->vsq[idx], &vspq->vsq[vspq->vsq_count - 1]);
+		vspq->vsq_count--;
+	}
+}
+
+static struct silofs_vspan *
+vspq_try_push_merge(struct silofs_vsp_queue *vspq, off_t off, size_t len)
+{
+	const off_t end = silofs_off_end(off, len);
+
+	for (size_t i = 0; i < vspq->vsq_count; ++i) {
+		struct silofs_vspan *vspan = &vspq->vsq[i];
+
+		if (vspan_end(vspan) == off) {
+			vspan_expand_tail(vspan, len);
+			return vspan;
+		}
+
+		if (end == vspan->off) {
+			vspan_expand_head(vspan, len);
+			return vspan;
+		}
+	}
+	return nullptr;
+}
+
 static bool
 vspq_push_merge(struct silofs_vsp_queue *vspq, off_t off, size_t len)
 {
-	for (size_t i = vspq->vsq_count; i > 0; --i) {
-		struct silofs_vspan *vspan = &vspq->vsq[i - 1];
-		off_t end;
+	struct silofs_vspan *vspan;
+	bool ret = false;
 
-		end = vspan_end(vspan);
-		if (end == off) {
-			vspan_expand_tail(vspan, len);
-			return true;
-		}
-		end = silofs_off_end(off, len);
-		if (end == vspan->off) {
-			vspan_expand_head(vspan, len);
-			return true;
-		}
+	vspan = vspq_try_push_merge(vspq, off, len);
+	if (vspan != nullptr) {
+		vspq_try_coalesce(vspq, vspan);
+		ret = true;
 	}
-	return false;
+	return ret;
 }
 
 static void

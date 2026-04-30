@@ -542,15 +542,11 @@ static void xai_decref(struct silofs_xanode_info *xai)
 
 static void xai_setup_node(struct silofs_xanode_info *xai, ino_t ino)
 {
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wnull-dereference"
-
 	/* TODO: investigate this -- why gcc15.2 complains here? */
-	silofs_assert_not_null(xai);
-	silofs_assert_not_null(xai->xan);
+	if ((xai == nullptr) || (xai->xan == nullptr)) {
+		silofs_panic("null xanode: ino=%ld", (long)ino);
+	}
 	xan_setup(xai->xan, ino);
-
-#pragma GCC diagnostic pop
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

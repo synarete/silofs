@@ -19,7 +19,6 @@
 #include <silofs/errors.h>
 #include <silofs/base.h>
 #include <silofs/nodes.h>
-#include <silofs/fs/uidgid.h>
 #include <silofs/fs/idsmap.h>
 
 enum {

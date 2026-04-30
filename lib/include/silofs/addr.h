@@ -737,4 +737,37 @@ int silofs_fsref_import(const struct silofs_fsref *fsref,
 void silofs_fsrefs_export(struct silofs_fsrefs       *fsrefs,
                           const struct silofs_mbrefs *mbrefs);
 
-#endif /* SILOFS_ADDR_H_ */
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+/* uidgid */
+
+uid_t silofs_uid_null(void);
+
+uid_t silofs_uid_nobody(void);
+
+bool silofs_uid_eq(uid_t uid1, uid_t uid2);
+
+bool silofs_uid_isnull(uid_t uid);
+
+bool silofs_uid_isroot(uid_t uid);
+
+gid_t silofs_gid_null(void);
+
+gid_t silofs_gid_nobody(void);
+
+bool silofs_gid_eq(gid_t gid1, gid_t gid2);
+
+bool silofs_gid_isnull(gid_t gid);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_cred_init(struct silofs_cred *cred);
+
+void silofs_cred_fini(struct silofs_cred *cred);
+
+void silofs_cred_assign(struct silofs_cred       *cred,
+                        const struct silofs_cred *other);
+
+void silofs_cred_setup(struct silofs_cred *cred, //
+                       uid_t uid, gid_t gid, mode_t umsk);
+
+#endif                                           /* SILOFS_ADDR_H_ */

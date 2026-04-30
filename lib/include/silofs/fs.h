@@ -22,7 +22,6 @@
 #include <silofs/nodes.h>
 #include <silofs/vfs.h>
 
-#include <silofs/fs/uidgid.h>
 #include <silofs/fs/idsmap.h>
 #include <silofs/fs/lsmap.h>
 #include <silofs/fs/task.h>

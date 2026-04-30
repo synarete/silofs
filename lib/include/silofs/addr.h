@@ -631,8 +631,8 @@ bool silofs_vaddr_isequal(const struct silofs_vaddr *vaddr1,
 void silofs_vaddr_setup(struct silofs_vaddr *vaddr, enum silofs_vtype vtype,
                         off_t off);
 
-void silofs_vaddr_setup2(struct silofs_vaddr *vaddr, enum silofs_vtype vtype,
-                         silofs_lba_t lba);
+void silofs_vaddr_advance(const struct silofs_vaddr *vaddr, size_t nsteps,
+                          struct silofs_vaddr *out_vaddr);
 
 void silofs_vaddr_of_lsmap(struct silofs_vaddr *vaddr,
                            enum silofs_vtype refvtype, off_t off);

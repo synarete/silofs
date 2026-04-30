@@ -98,10 +98,13 @@ void silofs_vaddr_setup(struct silofs_vaddr *vaddr, enum silofs_vtype vtype,
 	vaddr->off   = voff;
 }
 
-void silofs_vaddr_setup2(struct silofs_vaddr *vaddr, enum silofs_vtype vtype,
-                         silofs_lba_t lba)
+void silofs_vaddr_advance(const struct silofs_vaddr *vaddr, size_t nsteps,
+                          struct silofs_vaddr *out_vaddr)
 {
-	silofs_vaddr_setup(vaddr, vtype, silofs_lba_to_off(lba));
+	const size_t len = nsteps * silofs_vtype_size(vaddr->vtype);
+	const off_t off  = silofs_off_end(vaddr->off, len);
+
+	silofs_vaddr_setup(out_vaddr, vaddr->vtype, off);
 }
 
 void silofs_vaddr_of_lsmap(struct silofs_vaddr *vaddr,

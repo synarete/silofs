@@ -102,26 +102,55 @@ static int vsc_claim_free_vspace_by_vspmaps(struct silofs_vspace_ctx *vs_ctx,
 	return 0;
 }
 
-static int vsc_claim_free_vspace_by_spnodes(struct silofs_vspace_ctx *vs_ctx,
-                                            struct silofs_vaddr *out_vaddr)
+static int vsc_claim_free_vspace_at(struct silofs_vspace_ctx *vs_ctx,
+                                    const struct silofs_vaddr *ref_vaddr,
+                                    struct silofs_vaddr *out_vaddr)
 {
 	struct silofs_space_info *spi = nullptr;
-	struct silofs_vaddr apex_vaddr;
 	int err;
 
-	vsc_apex_vaddr(vs_ctx, &apex_vaddr);
-	err = vsc_require_spnode2_of(vs_ctx, &apex_vaddr, &spi);
+	err = vsc_require_spnode2_of(vs_ctx, ref_vaddr, &spi);
 	silofs_assert_ok(err);
 	if (err) {
 		return err;
 	}
 	err = silofs_spi_find_free(spi, out_vaddr);
-	silofs_assert_ok(err);
 	if (err) {
 		return err;
 	}
 	silofs_spi_inc_allocated(spi, out_vaddr);
 	return 0;
+}
+
+/*
+ * TODO-0065: Define niter limit based on available space.
+ *
+ * Try to consume free space based of actual usage and total file-system size.
+ * Define proper formula and derive 'niter' accordingly.
+ */
+static int vsc_claim_free_vspace_by_spnodes(struct silofs_vspace_ctx *vs_ctx,
+                                            struct silofs_vaddr *out_vaddr)
+{
+	constexpr size_t niter = 1024;
+	constexpr size_t nrefs = SILOFS_SPNODE_NREFS;
+	struct silofs_vaddr ref_vaddr;
+	int err;
+
+	vsc_apex_vaddr(vs_ctx, &ref_vaddr);
+	for (size_t i = 0; i < niter; ++i) {
+		err = vsc_claim_free_vspace_at(vs_ctx, &ref_vaddr, out_vaddr);
+		if (!err) {
+			return 0;
+		}
+		if (err != -SILOFS_ENOSPC) {
+			break;
+		}
+		silofs_vaddr_advance(&ref_vaddr, nrefs, &ref_vaddr);
+	}
+
+	log_err("failed to calim free vspace: vtype=%d ref-off=%zd err=%d",
+	        ref_vaddr.vtype, ref_vaddr.off, err);
+	return err;
 }
 
 static int vsc_claim_free_vspace(struct silofs_vspace_ctx *vs_ctx,

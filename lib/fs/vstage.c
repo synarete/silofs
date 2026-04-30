@@ -2806,7 +2806,7 @@ int silofs_stage_vnode2_new(struct silofs_task_ctx *task,
 
 	silofs_ii_incref(pii);
 	silofs_make_pexec(task, &pexec);
-	err = silofs_resolve_stage_vnode2(&pexec, vaddr, out_vni);
+	err = silofs_fetch_vnode2(&pexec, vaddr, out_vni);
 	silofs_ii_decref(pii);
 	silofs_unused(stg_mode);
 	return err;

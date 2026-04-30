@@ -153,7 +153,7 @@ format_node_zero_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
 	int err;
 
 	/* phase-1: attach-detach */
-	err = silofs_claim_spawn_vnode2(pexec, vtype, &vni);
+	err = silofs_create_vnode2(pexec, vtype, &vni);
 	if (err) {
 		log_err("failed to claim zero node: vtype=%d err=%d", vtype,
 		        err);
@@ -165,14 +165,14 @@ format_node_zero_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
 		        (int)vaddr->vtype, (long)vaddr->off);
 		return -SILOFS_EBUG;
 	}
-	err = silofs_reclaim_forget_vnode2(pexec, vni);
+	err = silofs_reclaim_vnode2(pexec, vni);
 	if (err) {
 		log_err("failed to reclaim zero node: vtype=%d err=%d", vtype,
 		        err);
 		return err;
 	}
 	/* phase-2: attach forever */
-	err = silofs_claim_spawn_vnode2(pexec, vtype, &vni);
+	err = silofs_create_vnode2(pexec, vtype, &vni);
 	if (err) {
 		log_err("failed to claim again zero node: vtype=%d err=%d",
 		        vtype, err);
@@ -195,7 +195,7 @@ format_node_one_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
 	ssize_t ssize;
 	int err;
 
-	err = silofs_claim_spawn_vnode2(pexec, vtype, &vni);
+	err = silofs_create_vnode2(pexec, vtype, &vni);
 	if (err) {
 		log_err("failed to claim node: vtype=%d err=%d", vtype, err);
 		return err;
@@ -207,7 +207,7 @@ format_node_one_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
 		        (int)vaddr->vtype, (int)ssize, (long)vaddr->off);
 		return -SILOFS_EBUG;
 	}
-	err = silofs_reclaim_forget_vnode2(pexec, vni);
+	err = silofs_reclaim_vnode2(pexec, vni);
 	if (err) {
 		log_err("failed to reclaim node: vtype=%d err=%d", vtype, err);
 		return err;
@@ -344,7 +344,7 @@ reload_node_zero_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
 	int err;
 
 	silofs_vaddr_setup(&vaddr, vtype, 0);
-	err = silofs_stage_spnode2_of(pexec, &vaddr, &spi);
+	err = silofs_fetch_spnode2_of(pexec, &vaddr, &spi);
 	if (err) {
 		return err;
 	}
@@ -352,7 +352,7 @@ reload_node_zero_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
 	if (vspref.refcnt != 1) {
 		return -SILOFS_EFSCORRUPTED;
 	}
-	err = silofs_resolve_stage_vnode2(pexec, &vaddr, &vni);
+	err = silofs_fetch_vnode2(pexec, &vaddr, &vni);
 	if (err) {
 		return err;
 	}

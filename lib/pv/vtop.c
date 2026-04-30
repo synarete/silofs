@@ -25,9 +25,9 @@ static void vni_markdirty(struct silofs_vnode_info *vni)
 	silofs_vni_markdirty(vni, nullptr);
 }
 
-int silofs_resolve_stage_vnode2(struct silofs_pexec_ctx *pexec,
-                                const struct silofs_vaddr *vaddr,
-                                struct silofs_vnode_info **out_vni)
+int silofs_fetch_vnode2(struct silofs_pexec_ctx *pexec,
+                        const struct silofs_vaddr *vaddr,
+                        struct silofs_vnode_info **out_vni)
 {
 	struct silofs_pnptr pnptr;
 	int err;
@@ -66,9 +66,9 @@ static int claim_spawn_vnode2_at(struct silofs_pexec_ctx *pexec,
 	return 0;
 }
 
-int silofs_claim_spawn_vnode2(struct silofs_pexec_ctx *pexec,
-                              enum silofs_vtype vtype,
-                              struct silofs_vnode_info **out_vni)
+int silofs_create_vnode2(struct silofs_pexec_ctx *pexec,
+                         enum silofs_vtype vtype,
+                         struct silofs_vnode_info **out_vni)
 {
 	struct silofs_vaddr vaddr;
 	int err;
@@ -127,8 +127,8 @@ reclaim:
 	return 0;
 }
 
-int silofs_reclaim_forget_vnode2(struct silofs_pexec_ctx *pexec,
-                                 struct silofs_vnode_info *vni)
+int silofs_reclaim_vnode2(struct silofs_pexec_ctx *pexec,
+                          struct silofs_vnode_info *vni)
 {
 	const struct silofs_vaddr *vaddr = silofs_vni_vaddr(vni);
 	int err;
@@ -167,7 +167,7 @@ static int resolve_stage_spnode2_at(struct silofs_pexec_ctx *pexec,
 	struct silofs_vnode_info *vni = nullptr;
 	int err;
 
-	err = silofs_resolve_stage_vnode2(pexec, vaddr, &vni);
+	err = silofs_fetch_vnode2(pexec, vaddr, &vni);
 	if (err) {
 		return err;
 	}
@@ -176,7 +176,7 @@ static int resolve_stage_spnode2_at(struct silofs_pexec_ctx *pexec,
 	return 0;
 }
 
-int silofs_stage_spnode2_of(struct silofs_pexec_ctx *pexec,
+int silofs_fetch_spnode2_of(struct silofs_pexec_ctx *pexec,
                             const struct silofs_vaddr *ref_vaddr,
                             struct silofs_space_info **out_spi)
 {

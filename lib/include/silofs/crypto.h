@@ -257,6 +257,7 @@ struct silofs_prandgen {
 	uint64_t                 prandom[32];
 	uint64_t                 icount;
 	uint64_t                 xcount;
+	uint64_t                 ntake;
 	uint32_t                 cycle;
 	uint32_t                 slot;
 	struct silofs_mdigest_hd md_hd;

@@ -149,6 +149,7 @@ int silofs_prandgen_init(struct silofs_prandgen *prng)
 	silofs_memzero(prng, sizeof(*prng));
 	prng->icount = 0;
 	prng->xcount = 0;
+	prng->ntake  = 0;
 	prng->cycle  = 0;
 	prng->slot   = 0;
 
@@ -215,16 +216,39 @@ static uint64_t *as_u64(void *s)
 	return s;
 }
 
-static void prandgen_reseed(struct silofs_prandgen *prng)
+static uint64_t lcg_next(const uint64_t state)
+{
+	constexpr uint64_t lcg_a = 6364136223846793005ULL;
+	constexpr uint64_t lcg_c = 1442695040888963407ULL;
+
+	return (lcg_a * state) + lcg_c;
+}
+
+static void prandgen_reseed_by_lcg(struct silofs_prandgen *prng)
+{
+	for (size_t i = 0; i < ARRAY_SIZE(prng->state); ++i) {
+		uint64_t *p = as_u64(prng->state[i].s);
+
+		STATICASSERT_EQ(sizeof(prng->state[i].s), 4 * sizeof(*p));
+
+		p[0] = lcg_next(p[0]);
+		p[1] = lcg_next(p[1]);
+		p[2] = lcg_next(p[2]);
+		p[3] = lcg_next(p[3]);
+	}
+}
+
+static void prandgen_reseed_with_entropy(struct silofs_prandgen *prng)
 {
 	uint64_t r[ARRAY_SIZE(prng->state)];
 	constexpr size_t nr = ARRAY_SIZE(r);
 
 	absorb_entropy(r, sizeof(r));
-	for (size_t i = 0; i < nr; ++i) {
+	for (size_t i = 0; i < ARRAY_SIZE(prng->state); ++i) {
 		uint64_t *p = as_u64(prng->state[i].s);
 
 		STATICASSERT_EQ(sizeof(prng->state[i].s), 4 * sizeof(*p));
+
 		p[0] ^= r[i % nr];
 		p[1] ^= r[p[0] % nr];
 		p[2] ^= r[p[1] % nr];
@@ -234,15 +258,17 @@ static void prandgen_reseed(struct silofs_prandgen *prng)
 
 static void prandgen_try_reseed(struct silofs_prandgen *prng)
 {
-	if ((prng->cycle % 16) == 0) {
-		prandgen_reseed(prng);
-		prng->cycle++;
+	if ((prng->ntake % 11) == 0) {
+		prandgen_reseed_by_lcg(prng);
+	} else if ((prng->ntake % 31) == 0) {
+		prandgen_reseed_with_entropy(prng);
 	}
 }
 
 void silofs_prandgen_take(struct silofs_prandgen *prng, void *p, size_t n)
 {
 	prandgen_consume(prng, p, n);
+	prng->ntake++;
 	prandgen_try_reseed(prng);
 }
 

@@ -35,7 +35,6 @@ noinst_HEADERS += silofs/fs/dir.h
 noinst_HEADERS += silofs/fs/encdec.h
 noinst_HEADERS += silofs/fs/file.h
 noinst_HEADERS += silofs/fs/flush.h
-noinst_HEADERS += silofs/fs/idsmap.h
 noinst_HEADERS += silofs/fs/inode.h
 noinst_HEADERS += silofs/fs/lcache.h
 noinst_HEADERS += silofs/fs/lsmap.h

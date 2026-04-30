@@ -17,19 +17,59 @@
 #ifndef SILOFS_FS_H_
 #define SILOFS_FS_H_
 
+#include <silofs/types.h>
 #include <silofs/base.h>
 #include <silofs/addr.h>
 #include <silofs/nodes.h>
 #include <silofs/vfs.h>
 
-#include <silofs/fs/idsmap.h>
-#include <silofs/fs/lsmap.h>
-#include <silofs/fs/task.h>
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+/* idsmap */
+
+/* bi-directional id-mapping hash-table (external-internal) */
+struct silofs_idsmap {
+	struct silofs_alloc     *idm_alloc;
+	struct silofs_list_head *idm_uhtof;
+	struct silofs_list_head *idm_uftoh;
+	struct silofs_list_head *idm_ghtof;
+	struct silofs_list_head *idm_gftoh;
+	size_t                   idm_uhcap;
+	size_t                   idm_usize;
+	size_t                   idm_ghcap;
+	size_t                   idm_gsize;
+	bool                     idm_allow_hostids;
+};
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_idsmap_init(struct silofs_idsmap *idsm, struct silofs_alloc *alloc);
+
+void silofs_idsmap_fini(struct silofs_idsmap *idsm);
+
+void silofs_idsmap_clear(struct silofs_idsmap *idsm);
+
+int silofs_idsmap_populate(struct silofs_idsmap      *idsm,
+                           const struct silofs_fsids *fsids,
+                           bool                       allow_hostids);
+
+int silofs_idsmap_mapcreds(const struct silofs_idsmap *idsm, uid_t host_uid,
+                           gid_t host_gid, uid_t *out_fs_uid,
+                           gid_t *out_fs_gid);
+
+int silofs_idsmap_rmapcreds(const struct silofs_idsmap *idsm, uid_t fs_uid,
+                            gid_t fs_gid, uid_t *out_fs_uid,
+                            gid_t *out_fs_gid);
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
 #include <silofs/fs/inode.h>
-#include <silofs/fs/xattr.h>
 #include <silofs/fs/dir.h>
 #include <silofs/fs/file.h>
 #include <silofs/fs/symlink.h>
+#include <silofs/fs/xattr.h>
+
+#include <silofs/fs/lsmap.h>
+#include <silofs/fs/task.h>
 #include <silofs/fs/super.h>
 #include <silofs/fs/lcache.h>
 #include <silofs/fs/namei.h>

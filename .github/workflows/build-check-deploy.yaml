@@ -244,7 +244,6 @@ jobs:
     name: End workflow
     runs-on: ubuntu-24.04
     needs:
-      - build-rpm-package
       - build-install-deb-package
       - build-install-by-autotools
       - static-code-analysis

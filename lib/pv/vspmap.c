@@ -128,7 +128,7 @@ static size_t vspq_lower_bound(const struct silofs_vsp_queue *vspq, off_t off)
 	while (left < right) {
 		const size_t mid = left + (right - left) / 2;
 
-		if (vspq->vsq[mid].off < off) {
+		if (vspq->vsq[mid].off > off) {
 			left = mid + 1;
 		} else {
 			right = mid;
@@ -183,17 +183,15 @@ static bool vspq_try_merge_prev(struct silofs_vsp_queue *vspq, size_t pos,
                                 off_t off, size_t len)
 {
 	struct silofs_vspan *vspan_prev;
-	off_t end_prev;
 
 	if (pos == 0) {
 		return false;
 	}
 	vspan_prev = &vspq->vsq[pos - 1];
-	end_prev   = vspan_end(vspan_prev);
-	if (end_prev != off) {
+	if (off + (off_t)len != vspan_prev->off) {
 		return false;
 	}
-	vspan_expand_tail(vspan_prev, len);
+	vspan_expand_head(vspan_prev, len);
 	return true;
 }
 
@@ -201,16 +199,15 @@ static bool vspq_try_merge_next(struct silofs_vsp_queue *vspq, size_t pos,
                                 off_t off, size_t len)
 {
 	struct silofs_vspan *vspan_next;
-	const off_t end = silofs_off_end(off, len);
 
 	if (pos >= vspq->vsq_count) {
 		return false;
 	}
 	vspan_next = &vspq->vsq[pos];
-	if (end != vspan_next->off) {
+	if (vspan_next->off + (off_t)vspan_next->len != off) {
 		return false;
 	}
-	vspan_expand_head(vspan_next, len);
+	vspan_expand_tail(vspan_next, len);
 	return true;
 }
 
@@ -224,34 +221,30 @@ static bool vspq_try_merge_both(struct silofs_vsp_queue *vspq, size_t pos)
 	}
 	vspan_prev = &vspq->vsq[pos - 1];
 	vspan_next = &vspq->vsq[pos];
-	if (vspan_end(vspan_prev) != vspan_next->off) {
+	if (vspan_next->off + (off_t)vspan_next->len != vspan_prev->off) {
 		return false;
 	}
-	vspan_merge_with(vspan_prev, vspan_next);
-	vspq_remove_at(vspq, pos);
+	vspan_merge_with(vspan_next, vspan_prev);
+	vspq_remove_at(vspq, pos - 1);
 	return true;
 }
 
 static void
 vspq_do_pop(struct silofs_vsp_queue *vspq, size_t len, off_t *out_off)
 {
-	struct silofs_vspan *vspan = &vspq->vsq[0];
-	struct silofs_vspan *vspan_last;
+	struct silofs_vspan *vspan = &vspq->vsq[vspq->vsq_count - 1];
 
 	*out_off = vspan->off;
 
 	if (vspan->len > len) {
-		/* trivial case: chop in-place */
+		/* partial pop: chop in-place */
 		vspan_trim_head(vspan, len);
+	} else {
+		/* full pop */
+		silofs_assert_eq(vspan->len, len);
+		vspan_reset(vspan);
+		vspq->vsq_count--;
 	}
-
-	silofs_assert_eq(vspan->len, len);
-	vspan_last = &vspq->vsq[vspq->vsq_count - 1];
-	if (vspan != vspan_last) {
-		vspan_assign(vspan, vspan_last);
-	}
-	vspan_reset(vspan_last);
-	vspq->vsq_count--;
 }
 
 static int vspq_pop(struct silofs_vsp_queue *vspq, size_t len, off_t *out_off)

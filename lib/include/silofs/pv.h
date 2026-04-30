@@ -566,7 +566,7 @@ int silofs_probe_vspace_ref(struct silofs_pexec_ctx   *pexec,
                             struct silofs_vspace_ref  *out_vspref);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-/* vtop */
+/* trans */
 
 int silofs_fetch_vnode2(struct silofs_pexec_ctx   *pexec,
                         const struct silofs_vaddr *vaddr,

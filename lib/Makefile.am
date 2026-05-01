@@ -61,6 +61,7 @@ libsilofs_la_SOURCES += addr/hash.c
 libsilofs_la_SOURCES += addr/htox.c
 libsilofs_la_SOURCES += addr/laddr.c
 libsilofs_la_SOURCES += addr/mbref.c
+libsilofs_la_SOURCES += addr/namestr.c
 libsilofs_la_SOURCES += addr/nmeta.c
 libsilofs_la_SOURCES += addr/pnptr.c
 libsilofs_la_SOURCES += addr/offlba.c

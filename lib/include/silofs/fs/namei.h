@@ -27,25 +27,6 @@ struct silofs_inew_params;
 struct silofs_laddr_visitor;
 struct silofs_mbrefs;
 
-/* name-string: a pair of string-view and (optional) 64-bits hash */
-struct silofs_namestr {
-	struct silofs_strview sv;
-	uint64_t              hash;
-};
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-int silofs_make_namestr(struct silofs_namestr *nstr, const char *s);
-
-int silofs_make_fsnamestr(struct silofs_namestr *nstr, const char *s);
-
-int silofs_make_hnamestr(struct silofs_namestr          *nstr,
-                         const struct silofs_strview    *sv,
-                         const struct silofs_mdigest_hd *md,
-                         enum silofs_namehfn nhfn, uint64_t seed);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 int silofs_make_xattrname(struct silofs_task_ctx         *task,
                           const struct silofs_inode_info *ii, const char *s,
                           struct silofs_namestr *out_nstr);

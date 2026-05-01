@@ -136,7 +136,7 @@ static int check_baseref_refname(const struct silofs_baseref *baseref)
 	int ret = 0;
 
 	if (baseref->refname != nullptr) {
-		ret = silofs_make_namestr(&nstr, baseref->refname);
+		ret = silofs_namestr_init(&nstr, baseref->refname);
 		if (ret) {
 			log_dbg("illegal refname: %s", baseref->refname);
 		}

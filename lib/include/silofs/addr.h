@@ -770,4 +770,26 @@ void silofs_cred_assign(struct silofs_cred       *cred,
 void silofs_cred_setup(struct silofs_cred *cred, //
                        uid_t uid, gid_t gid, mode_t umsk);
 
-#endif                                           /* SILOFS_ADDR_H_ */
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+/* namestr */
+
+/* name-string: a pair of string-view and (optional) 64-bits hash */
+struct silofs_namestr {
+	struct silofs_strview sv;
+	uint64_t              hash;
+};
+
+int silofs_namestr_init(struct silofs_namestr *nstr, const char *s);
+
+int silofs_namestr_init_by(struct silofs_namestr       *nstr,
+                           const struct silofs_strview *sv);
+
+int silofs_namestr_calc_hash(struct silofs_namestr          *nstr,
+                             const struct silofs_mdigest_hd *md,
+                             enum silofs_namehfn nhfn, uint64_t seed);
+
+int silofs_check_fsname(const struct silofs_namestr *nstr);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+#endif /* SILOFS_ADDR_H_ */

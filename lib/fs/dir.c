@@ -1408,10 +1408,21 @@ int silofs_dir_make_hname(const struct silofs_inode_info *dir_ii,
                           const struct silofs_namestr *nstr,
                           struct silofs_namestr *out_nstr)
 {
-	const enum silofs_namehfn nhfn = dir_hfn(dir_ii);
-	const uint64_t seed            = dir_seed(dir_ii);
+	uint64_t seed;
+	enum silofs_namehfn nhfn;
+	int err;
 
-	return silofs_make_hnamestr(out_nstr, &nstr->sv, md_hd, nhfn, seed);
+	err = silofs_namestr_init_by(out_nstr, &nstr->sv);
+	if (err) {
+		return err;
+	}
+	nhfn = dir_hfn(dir_ii);
+	seed = dir_seed(dir_ii);
+	err  = silofs_namestr_calc_hash(out_nstr, md_hd, nhfn, seed);
+	if (err) {
+		return err;
+	}
+	return 0;
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

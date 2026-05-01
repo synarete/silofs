@@ -190,7 +190,11 @@ static int env_update_name(struct silofs_env *env, const char *fsname)
 		silofs_strbuf_reset(&env->name);
 		return 0;
 	}
-	err = silofs_make_fsnamestr(&nstr, fsname);
+	err = silofs_namestr_init(&nstr, fsname);
+	if (err) {
+		return err;
+	}
+	err = silofs_check_fsname(&nstr);
 	if (err) {
 		return err;
 	}

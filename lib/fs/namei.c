@@ -30,216 +30,6 @@
 #include <silofs/fs.h>
 #include <silofs/run.h>
 
-static int check_ascii_fs_name(const struct silofs_strview *sv)
-{
-	const char *allowed = "abcdefghijklmnopqrstuvwxyz"
-			      "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-			      "0123456789_-.+=@";
-	size_t n;
-
-	if (!silofs_strview_isprint(sv)) {
-		return -SILOFS_EILLSTR;
-	}
-	if (!silofs_strview_isascii(sv)) {
-		return -SILOFS_EILLSTR;
-	}
-	n = silofs_strview_count_if(sv, silofs_chr_isspace);
-	if (n > 0) {
-		return -SILOFS_EILLSTR;
-	}
-	n = silofs_strview_count_if(sv, silofs_chr_iscntrl);
-	if (n > 0) {
-		return -SILOFS_EILLSTR;
-	}
-	n = silofs_strview_find_first_not_of(sv, allowed);
-	if (n < sv->len) {
-		return -SILOFS_EILLSTR;
-	}
-	return 0;
-}
-
-static int check_name_len(const struct silofs_strview *sv)
-{
-	const size_t namelen_max = silofs_min(SILOFS_NAME_MAX, NAME_MAX);
-
-	if (sv->len == 0) {
-		return -SILOFS_EILLSTR;
-	}
-	if (sv->len > namelen_max) {
-		return -SILOFS_ENAMETOOLONG;
-	}
-	return 0;
-}
-
-static int check_name_dat(const struct silofs_strview *sv)
-{
-	if (sv->str == nullptr) {
-		return -SILOFS_EILLSTR;
-	}
-	if (memchr(sv->str, '/', sv->len)) {
-		return -SILOFS_EILLSTR;
-	}
-	if (sv->str[sv->len] != '\0') {
-		return -SILOFS_EILLSTR;
-	}
-	return 0;
-}
-
-static int check_name(const struct silofs_strview *sv)
-{
-	int err;
-
-	err = check_name_len(sv);
-	if (err) {
-		return err;
-	}
-	err = check_name_dat(sv);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
-static int
-make_namestr(struct silofs_namestr *nstr, const struct silofs_strview *sv)
-{
-	int err;
-
-	err = check_name(sv);
-	if (err) {
-		return err;
-	}
-	silofs_strview_init_by(&nstr->sv, sv);
-	nstr->hash = 0;
-	return 0;
-}
-
-int silofs_make_namestr(struct silofs_namestr *nstr, const char *s)
-{
-	struct silofs_strview sv;
-
-	silofs_strview_init(&sv, s);
-	return make_namestr(nstr, &sv);
-}
-
-static int check_fsname(const struct silofs_strview *sv)
-{
-	int err;
-
-	if (!sv->len || (sv->str == nullptr)) {
-		return -SILOFS_EILLSTR;
-	}
-	if (sv->str[0] == '.') {
-		return -SILOFS_EILLSTR;
-	}
-	if (sv->len > SILOFS_FSNAME_MAX) {
-		return -SILOFS_ENAMETOOLONG;
-	}
-	err = check_ascii_fs_name(sv);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
-/* TODO: use me to check fs-name upon open */
-int silofs_make_fsnamestr(struct silofs_namestr *nstr, const char *s)
-{
-	struct silofs_strview sv;
-	int err;
-
-	silofs_strview_init(&sv, s);
-	err = check_fsname(&sv);
-	if (err) {
-		return err;
-	}
-	return make_namestr(nstr, &sv);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static uint64_t hash256_to_u64(const struct silofs_hash256 *hash)
-{
-	const uint8_t *h = hash->hash;
-
-	STATICASSERT_EQ(ARRAY_SIZE(hash->hash), 4 * sizeof(uint64_t));
-
-	return silofs_u8b_as_u64(h) ^ silofs_u8b_as_u64(h + 8) ^
-	       silofs_u8b_as_u64(h + 16) ^ silofs_u8b_as_u64(h + 24);
-}
-
-static uint64_t
-namehash_by_sha3_256(const struct silofs_strview *sv,
-                     const struct silofs_mdigest_hd *md, uint64_t seed)
-{
-	struct silofs_hash256 sha256;
-
-	silofs_sha3_256_of(md, sv->str, sv->len, &sha256);
-	return seed ^ hash256_to_u64(&sha256);
-}
-
-static uint64_t
-namehash_by_xxh3(const struct silofs_strview *sv, uint64_t seed)
-{
-	return silofs_xxh3_seed(sv->str, sv->len, seed);
-}
-
-static int
-namehash_of(const struct silofs_strview *sv,
-            const struct silofs_mdigest_hd *md, enum silofs_namehfn nhfn,
-            uint64_t seed, uint64_t *out_hash)
-{
-	switch (nhfn) {
-	case SILOFS_NAMEHASH_SHA3_256:
-		*out_hash = namehash_by_sha3_256(sv, md, seed);
-		break;
-	case SILOFS_NAMEHASH_XXH3:
-		*out_hash = namehash_by_xxh3(sv, seed);
-		break;
-	default:
-		return -SILOFS_EINVAL;
-	}
-	return 0;
-}
-
-int silofs_make_hnamestr(struct silofs_namestr *nstr,
-                         const struct silofs_strview *sv,
-                         const struct silofs_mdigest_hd *md,
-                         enum silofs_namehfn nhfn, uint64_t seed)
-{
-	struct silofs_strbuf sbuf;
-	struct silofs_strview asv;
-	const size_t alen = 8 * silofs_div_round_up(sv->len, 8);
-	uint64_t hash     = 0;
-	int err;
-
-	STATICASSERT_EQ(sizeof(sbuf.str) % 8, 0);
-	STATICASSERT_EQ(sizeof(sbuf.str), SILOFS_NAME_MAX + 1);
-
-	err = check_name(sv);
-	if (err) {
-		return err;
-	}
-	if (unlikely(sv->len >= sizeof(sbuf.str))) {
-		return -SILOFS_EINVAL;
-	}
-	err = make_namestr(nstr, sv);
-	if (err) {
-		return err;
-	}
-	silofs_strbuf_bzero(&sbuf, alen);
-	silofs_strbuf_setup(&sbuf, sv);
-	silofs_strview_initn(&asv, sbuf.str, alen);
-	err = namehash_of(&asv, md, nhfn, seed, &hash);
-	if (err) {
-		return err;
-	}
-	nstr->hash = hash;
-	return 0;
-}
-
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-
 static bool ii_ispinned(const struct silofs_inode_info *ii)
 {
 	const int flags = (int)(ii->i_vni.vn_lni.ln_flags);
@@ -707,13 +497,15 @@ static int assign_namehash(const struct silofs_task_ctx *task,
                            const struct silofs_namestr *nstr,
                            struct silofs_namestr *out_nstr)
 {
+	const struct silofs_mdigest_hd *md_hd;
 	int err;
 
 	err = check_isdir(dir_ii);
 	if (err) {
 		return err;
 	}
-	err = silofs_dir_make_hname(dir_ii, get_mdigest(task), nstr, out_nstr);
+	md_hd = get_mdigest(task);
+	err   = silofs_dir_make_hname(dir_ii, md_hd, nstr, out_nstr);
 	if (err) {
 		return err;
 	}
@@ -2888,7 +2680,7 @@ int silofs_make_xattrname(struct silofs_task_ctx *task,
 {
 	int err;
 
-	err = silofs_make_namestr(out_nstr, s);
+	err = silofs_namestr_init(out_nstr, s);
 	if (err) {
 		return err;
 	}
@@ -2907,7 +2699,7 @@ int silofs_make_linkname(struct silofs_task_ctx *task,
 	if (!silofs_ii_isdir(dir_ii)) {
 		return -SILOFS_ENOTDIR;
 	}
-	err = silofs_make_namestr(out_nstr, s);
+	err = silofs_namestr_init(out_nstr, s);
 	if (err) {
 		return err;
 	}

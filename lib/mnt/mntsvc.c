@@ -551,13 +551,11 @@ do_sendmsg(const struct silofs_socket *sock, const struct msghdr *mh)
  */
 static void do_pack_fd(struct msghdr *mh, int fd)
 {
-	struct cmsghdr *cmh = nullptr;
+	struct cmsghdr *cmh;
 
-	if (fd > 0) {
-		cmh = silofs_cmsg_firsthdr(mh);
-		if (cmh != nullptr) {
-			silofs_cmsg_pack_fd(cmh, fd);
-		}
+	cmh = silofs_cmsg_firsthdr(mh);
+	if (cmh != nullptr) {
+		silofs_cmsg_pack_fd(cmh, fd);
 	}
 }
 
@@ -677,6 +675,14 @@ static int mntmsg_recv(const struct silofs_mntmsg *mmsg,
 	};
 	int err;
 	bool want_fd = (out_fd != nullptr);
+
+	if (want_fd) {
+		/* do no allow padding other then output fd */
+		const size_t fd_cmsg_len = silofs_cmsg_len(sizeof(*out_fd));
+
+		msg.msg_control    = cb.cms;
+		msg.msg_controllen = silofs_min(sizeof(cb.cms), fd_cmsg_len);
+	}
 
 	err = do_recvmsg(sock, &msg, want_fd);
 	if (!err && want_fd) {

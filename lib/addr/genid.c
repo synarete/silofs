@@ -22,23 +22,23 @@ static void make_prandom(struct silofs_prandgen *prng, void *p, size_t n)
 	silofs_prandgen_take(prng, p, n);
 }
 
-static void
-make_prandom_ckey(struct silofs_prandgen *prng, struct silofs_ckey *out_ckey)
-{
-	make_prandom(prng, out_ckey->key, sizeof(out_ckey->key));
-}
-
-static void
-make_prandom_civ(struct silofs_prandgen *prng, struct silofs_civ *out_civ)
+void silofs_generate_civ(struct silofs_prandgen *prng,
+                         struct silofs_civ *out_civ)
 {
 	make_prandom(prng, out_civ->iv, sizeof(out_civ->iv));
+}
+
+void silofs_generate_ckey(struct silofs_prandgen *prng,
+                          struct silofs_ckey *out_ckey)
+{
+	make_prandom(prng, out_ckey->key, sizeof(out_ckey->key));
 }
 
 void silofs_generate_civkey(struct silofs_prandgen *prng,
                             struct silofs_civkey *out_civkey)
 {
-	make_prandom_ckey(prng, &out_civkey->key);
-	make_prandom_civ(prng, &out_civkey->iv);
+	silofs_generate_ckey(prng, &out_civkey->key);
+	silofs_generate_civ(prng, &out_civkey->iv);
 }
 
 void silofs_generate_uniqid(struct silofs_prandgen *prng,

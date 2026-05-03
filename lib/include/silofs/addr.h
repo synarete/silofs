@@ -676,6 +676,12 @@ ino_t silofs_calc_ino_by_vaddr(const struct silofs_vaddr *vaddr);
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* genid */
 
+void silofs_generate_civ(struct silofs_prandgen *prng,
+                         struct silofs_civ      *out_civ);
+
+void silofs_generate_ckey(struct silofs_prandgen *prng,
+                          struct silofs_ckey     *out_ckey);
+
 void silofs_generate_civkey(struct silofs_prandgen *prng,
                             struct silofs_civkey   *out_civkey);
 

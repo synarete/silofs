@@ -141,6 +141,23 @@ int silofs_reclaim_vnode2(struct silofs_pexec_ctx *pexec,
 	return 0;
 }
 
+int silofs_reclaim_vnode2_at(struct silofs_pexec_ctx *pexec,
+                             const struct silofs_vaddr *vaddr)
+{
+	struct silofs_vnode_info *vni;
+	int err;
+
+	vni = silofs_vcache_lookup_vnode(pexec->vcache, vaddr);
+	err = reclaim_vnode2_at(pexec, vaddr);
+	if (err) {
+		return err;
+	}
+	if (vni != nullptr) {
+		silofs_vcache_forget_vnode(pexec->vcache, vni);
+	}
+	return 0;
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int claim_spawn_spnode2_at(struct silofs_pexec_ctx *pexec,

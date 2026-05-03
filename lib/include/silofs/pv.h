@@ -579,6 +579,9 @@ int silofs_create_vnode2(struct silofs_pexec_ctx   *pexec,
 int silofs_reclaim_vnode2(struct silofs_pexec_ctx  *pexec,
                           struct silofs_vnode_info *vni);
 
+int silofs_reclaim_vnode2_at(struct silofs_pexec_ctx   *pexec,
+                             const struct silofs_vaddr *vaddr);
+
 int silofs_fetch_spnode2_of(struct silofs_pexec_ctx   *pexec,
                             const struct silofs_vaddr *ref_vaddr,
                             struct silofs_space_info **out_spi);

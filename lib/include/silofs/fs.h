@@ -23,6 +23,13 @@
 #include <silofs/nodes.h>
 #include <silofs/vfs.h>
 
+/* stage operation control flags */
+enum silofs_stg_mode {
+	SILOFS_STG_CUR = SILOFS_BIT(0), /* stage current (normal) */
+	SILOFS_STG_COW = SILOFS_BIT(1), /* copy-on-write */
+	SILOFS_STG_RAW = SILOFS_BIT(2), /* not-set-yet */
+};
+
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* idsmap */
 
@@ -39,8 +46,6 @@ struct silofs_idsmap {
 	size_t                   idm_gsize;
 	bool                     idm_allow_hostids;
 };
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_idsmap_init(struct silofs_idsmap *idsm, struct silofs_alloc *alloc);
 
@@ -59,6 +64,22 @@ int silofs_idsmap_mapcreds(const struct silofs_idsmap *idsm, uid_t host_uid,
 int silofs_idsmap_rmapcreds(const struct silofs_idsmap *idsm, uid_t fs_uid,
                             gid_t fs_gid, uid_t *out_fs_uid,
                             gid_t *out_fs_gid);
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+/* pvglue */
+
+int silofs_stage_xanode(const struct silofs_task_ctx *task,
+                        const struct silofs_vaddr    *vaddr,
+                        struct silofs_inode_info     *pii,
+                        enum silofs_stg_mode          stg_mode,
+                        struct silofs_xanode_info   **out_xai);
+
+int silofs_spawn_xanode(struct silofs_task_ctx     *task,
+                        struct silofs_inode_info   *pii,
+                        struct silofs_xanode_info **out_xai);
+
+int silofs_remove_xanode_at(struct silofs_task_ctx    *task,
+                            const struct silofs_vaddr *vaddr);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 

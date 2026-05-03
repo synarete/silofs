@@ -306,6 +306,9 @@
 /* cryptographic IV size */
 #define SILOFS_CRYPTO_IV_SIZE (16)
 
+/* cryptographic AEAD tag size */
+#define SILOFS_CRYPTO_TAG_SIZE (16)
+
 /* cryptographic MAC size */
 #define SILOFS_CRYPTO_MAC_SIZE (32)
 
@@ -509,12 +512,18 @@ struct silofs_name {
 	uint8_t name[SILOFS_NAME_MAX + 1];
 } silofs_attr_aligned64;
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 struct silofs_ckey {
 	uint8_t key[SILOFS_CRYPTO_KEY_SIZE];
 } silofs_attr_aligned32;
 
 struct silofs_civ {
 	uint8_t iv[SILOFS_CRYPTO_IV_SIZE];
+} silofs_attr_aligned8;
+
+struct silofs_ctag {
+	uint8_t tag[SILOFS_CRYPTO_TAG_SIZE];
 } silofs_attr_aligned8;
 
 struct silofs_mac {

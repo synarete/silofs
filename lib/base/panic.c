@@ -219,11 +219,20 @@ fmtmsg(struct silofs_fatal_msg *msg, const char *fmt, ...)
 	va_end(ap);
 }
 
+silofs_attr_noreturn static void silofs_trap(void)
+{
+#if HAVE___BUILTIN_TRAP
+	__builtin_trap();
+#else
+	abort();
+#endif
+}
+
 silofs_attr_noreturn static void silofs_abort(void)
 {
 	fflush(stdout);
 	fflush(stderr);
-	abort();
+	silofs_trap();
 	silofs_unreachable();
 }
 

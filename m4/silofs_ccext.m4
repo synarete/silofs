@@ -4,6 +4,7 @@ AC_DEFUN([AX_SILOFS_NEED_BUILTIN],
   AX_GCC_BUILTIN(__builtin_expect)
   AX_GCC_BUILTIN(__builtin_popcount)
   AX_GCC_BUILTIN(__builtin_popcountl)
+  AX_GCC_BUILTIN(__builtin_trap)
   AX_GCC_BUILTIN(__builtin_unreachable)
 ])
 

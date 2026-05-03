@@ -1702,6 +1702,60 @@ int silofs_do_releasedir(struct silofs_task_ctx *task,
 	return !err ? try_prune_inode(task, dir_ii, false) : err;
 }
 
+static int check_isdir_and_open(const struct silofs_inode_info *dir_ii)
+{
+	int err;
+
+	err = check_isdir(dir_ii);
+	if (err) {
+		return err;
+	}
+	err = check_opened(dir_ii);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+static int check_readdir(const struct silofs_inode_info *dir_ii)
+{
+	return check_isdir_and_open(dir_ii);
+}
+
+int silofs_do_readdir(struct silofs_task_ctx *task,
+                      struct silofs_inode_info *dir_ii,
+                      struct silofs_readdir_ctx *rd_ctx)
+{
+	int err;
+
+	err = check_readdir(dir_ii);
+	if (err) {
+		return err;
+	}
+	err = silofs_readdir_normal(task, dir_ii, rd_ctx);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+int silofs_do_readdirplus(struct silofs_task_ctx *task,
+                          struct silofs_inode_info *dir_ii,
+                          struct silofs_readdir_ctx *rd_ctx)
+{
+	int err;
+
+	err = check_readdir(dir_ii);
+	if (err) {
+		return err;
+	}
+	err = silofs_readdir_plus(task, dir_ii, rd_ctx);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
 static int check_notdir_and_opened(const struct silofs_inode_info *ii)
 {
 	int err;
@@ -1754,17 +1808,7 @@ int silofs_do_release(struct silofs_task_ctx *task,
 
 static int check_fsyncdir(const struct silofs_inode_info *dir_ii)
 {
-	int err;
-
-	err = check_isdir(dir_ii);
-	if (err) {
-		return err;
-	}
-	err = check_opened(dir_ii);
-	if (err) {
-		return err;
-	}
-	return 0;
+	return check_isdir_and_open(dir_ii);
 }
 
 static int

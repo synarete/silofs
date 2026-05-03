@@ -58,13 +58,13 @@ int silofs_remove_dentry(struct silofs_task_ctx      *task,
                          struct silofs_inode_info    *dir_ii,
                          const struct silofs_namestr *name);
 
-int silofs_do_readdir(struct silofs_task_ctx    *task,
-                      struct silofs_inode_info  *dir_ii,
-                      struct silofs_readdir_ctx *rd_ctx);
-
-int silofs_do_readdirplus(struct silofs_task_ctx    *task,
+int silofs_readdir_normal(struct silofs_task_ctx    *task,
                           struct silofs_inode_info  *dir_ii,
                           struct silofs_readdir_ctx *rd_ctx);
+
+int silofs_readdir_plus(struct silofs_task_ctx    *task,
+                        struct silofs_inode_info  *dir_ii,
+                        struct silofs_readdir_ctx *rd_ctx);
 
 int silofs_drop_dir(struct silofs_task_ctx   *task,
                     struct silofs_inode_info *dir_ii);

@@ -103,6 +103,14 @@ int silofs_do_lookup(struct silofs_task_ctx      *task,
 int silofs_do_opendir(struct silofs_task_ctx   *task,
                       struct silofs_inode_info *dir_ii, int o_flags);
 
+int silofs_do_readdir(struct silofs_task_ctx    *task,
+                      struct silofs_inode_info  *dir_ii,
+                      struct silofs_readdir_ctx *rd_ctx);
+
+int silofs_do_readdirplus(struct silofs_task_ctx    *task,
+                          struct silofs_inode_info  *dir_ii,
+                          struct silofs_readdir_ctx *rd_ctx);
+
 int silofs_do_releasedir(struct silofs_task_ctx   *task,
                          struct silofs_inode_info *dir_ii, int o_flags,
                          bool flush);

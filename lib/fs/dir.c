@@ -2485,13 +2485,7 @@ static int dirc_check_readdir(const struct silofs_dir_ctx *d_ctx)
 {
 	const struct silofs_inode_info *ii = d_ctx->dir_ii;
 
-	if (!silofs_ii_isdir(ii)) {
-		return -SILOFS_ENOTDIR;
-	}
-	if (!ii->i_nopen) {
-		return -SILOFS_EBADF;
-	}
-	return 0;
+	return silofs_ii_isdir(ii) ? 0 : -SILOFS_ENOTDIR;
 }
 
 static int dirc_do_readdir(struct silofs_dir_ctx *d_ctx)
@@ -2528,9 +2522,9 @@ static int dirc_readdir(struct silofs_dir_ctx *d_ctx)
 	return ret;
 }
 
-int silofs_do_readdir(struct silofs_task_ctx *task,
-                      struct silofs_inode_info *dir_ii,
-                      struct silofs_readdir_ctx *rd_ctx)
+int silofs_readdir_normal(struct silofs_task_ctx *task,
+                          struct silofs_inode_info *dir_ii,
+                          struct silofs_readdir_ctx *rd_ctx)
 {
 	struct silofs_dir_ctx d_ctx = {
 		.task         = task,
@@ -2544,9 +2538,9 @@ int silofs_do_readdir(struct silofs_task_ctx *task,
 	return dirc_readdir(&d_ctx);
 }
 
-int silofs_do_readdirplus(struct silofs_task_ctx *task,
-                          struct silofs_inode_info *dir_ii,
-                          struct silofs_readdir_ctx *rd_ctx)
+int silofs_readdir_plus(struct silofs_task_ctx *task,
+                        struct silofs_inode_info *dir_ii,
+                        struct silofs_readdir_ctx *rd_ctx)
 {
 	struct silofs_dir_ctx d_ctx = {
 		.task         = task,

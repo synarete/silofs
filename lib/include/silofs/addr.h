@@ -292,6 +292,7 @@ void silofs_paddr64b_xtoh(const struct silofs_paddr64b *paddr64,
 struct silofs_nmeta {
 	struct silofs_civkey civkey;
 	struct silofs_ciargs ciargs;
+	struct silofs_ctag   ctag;
 };
 
 const struct silofs_nmeta *silofs_nmeta_none(void);

@@ -324,6 +324,9 @@ silofs_pni_blobid(const struct silofs_pnode_info *pni);
 const struct silofs_layerid *
 silofs_pni_layerid(const struct silofs_pnode_info *pni);
 
+const struct silofs_nmeta *
+silofs_pni_nmeta(const struct silofs_pnode_info *pni);
+
 const struct silofs_civkey *
 silofs_pni_civkey(const struct silofs_pnode_info *pni);
 

@@ -356,7 +356,8 @@ static int encrypt_arix_node(const struct silofs_ar_cargs *ar_cargs,
 {
 	const struct silofs_encdec_ctx ed_ctx = {
 		.ci_hd    = ar_cargs->ci_hd,
-		.civkey   = &ar_cargs->nmeta.civkey,
+		.civ      = &ar_cargs->nmeta.civkey.iv,
+		.ckey     = &ar_cargs->nmeta.civkey.key,
 		.caad     = nullptr,
 		.ctag_in  = nullptr,
 		.ctag_out = nullptr,
@@ -411,7 +412,8 @@ static int decrypt_arix_node(const struct silofs_ar_cargs *ar_cargs,
 {
 	const struct silofs_encdec_ctx ed_ctx = {
 		.ci_hd    = ar_cargs->ci_hd,
-		.civkey   = &ar_cargs->nmeta.civkey,
+		.civ      = &ar_cargs->nmeta.civkey.iv,
+		.ckey     = &ar_cargs->nmeta.civkey.key,
 		.caad     = nullptr,
 		.ctag_in  = nullptr,
 		.ctag_out = nullptr,

@@ -109,6 +109,18 @@ bool silofs_civkey_isequal(const struct silofs_civkey *civkey,
 void silofs_civkey_xor_with(struct silofs_civkey       *civkey,
                             const struct silofs_civkey *other);
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_ctag_reset(struct silofs_ctag *ctag);
+
+void silofs_ctag_init(struct silofs_ctag *ctag);
+
+void silofs_ctag_assign(struct silofs_ctag       *ctag,
+                        const struct silofs_ctag *other);
+
+bool silofs_ctag_isequal(const struct silofs_ctag *ctag,
+                         const struct silofs_ctag *other);
+
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* mdigest */
 
@@ -237,7 +249,8 @@ int silofs_cipher_check(const struct silofs_cipher_hd *ci_hd,
 
 struct silofs_encdec_ctx {
 	const struct silofs_cipher_hd *ci_hd;
-	const struct silofs_civkey    *civkey;
+	const struct silofs_ckey      *ckey;
+	const struct silofs_civ       *civ;
 	const struct silofs_caad      *caad;
 	const struct silofs_ctag      *ctag_in;
 	struct silofs_ctag            *ctag_out;

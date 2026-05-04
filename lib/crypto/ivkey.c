@@ -189,3 +189,27 @@ void silofs_civkey_xor_with(struct silofs_civkey *civkey,
 	silofs_ckey_xor_with2(&civkey->key, &other->key);
 	silofs_civ_xor_with1(&civkey->iv, &other->iv);
 }
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_ctag_reset(struct silofs_ctag *ctag)
+{
+	memset(ctag->tag, 0, sizeof(ctag->tag));
+}
+
+void silofs_ctag_init(struct silofs_ctag *ctag)
+{
+	silofs_ctag_reset(ctag);
+}
+
+void silofs_ctag_assign(struct silofs_ctag *ctag,
+                        const struct silofs_ctag *other)
+{
+	memcpy(ctag->tag, other->tag, sizeof(ctag->tag));
+}
+
+bool silofs_ctag_isequal(const struct silofs_ctag *ctag,
+                         const struct silofs_ctag *other)
+{
+	return memcmp(ctag->tag, other->tag, sizeof(ctag->tag)) == 0;
+}

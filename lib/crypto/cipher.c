@@ -204,11 +204,10 @@ int silofs_cipher_check(const struct silofs_cipher_hd *ci_hd,
 	return cipher_has_args(ci_hd, ciargs) ? 0 : -SILOFS_EOPNOTSUPP;
 }
 
-static int cipher_prepare(const struct silofs_cipher_hd *ci_hd,
-                          const struct silofs_civkey *civkey)
+static int
+cipher_prepare(const struct silofs_cipher_hd *ci_hd,
+               const struct silofs_civ *iv, const struct silofs_ckey *key)
 {
-	const struct silofs_civ *iv   = &civkey->iv;
-	const struct silofs_ckey *key = &civkey->key;
 	size_t blklen, keysz;
 	gcry_error_t err;
 
@@ -325,7 +324,7 @@ int silofs_encrypt(const struct silofs_encdec_ctx *ed_ctx)
 {
 	int err;
 
-	err = cipher_prepare(ed_ctx->ci_hd, ed_ctx->civkey);
+	err = cipher_prepare(ed_ctx->ci_hd, ed_ctx->civ, ed_ctx->ckey);
 	if (err) {
 		return err;
 	}
@@ -353,7 +352,7 @@ int silofs_decrypt(const struct silofs_encdec_ctx *ed_ctx)
 {
 	int err;
 
-	err = cipher_prepare(ed_ctx->ci_hd, ed_ctx->civkey);
+	err = cipher_prepare(ed_ctx->ci_hd, ed_ctx->civ, ed_ctx->ckey);
 	if (err) {
 		return err;
 	}

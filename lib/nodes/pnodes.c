@@ -108,6 +108,12 @@ silofs_pni_layerid(const struct silofs_pnode_info *pni)
 	return &blobid->layerid;
 }
 
+const struct silofs_nmeta *
+silofs_pni_nmeta(const struct silofs_pnode_info *pni)
+{
+	return &pni->pn_self.nmeta;
+}
+
 const struct silofs_civkey *
 silofs_pni_civkey(const struct silofs_pnode_info *pni)
 {

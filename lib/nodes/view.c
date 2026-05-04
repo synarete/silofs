@@ -298,7 +298,8 @@ int silofs_encrypt_lview(const struct silofs_cipher_hd *ci_hd,
 {
 	const struct silofs_encdec_ctx ed_ctx = {
 		.ci_hd    = ci_hd,
-		.civkey   = civkey,
+		.civ      = &civkey->iv,
+		.ckey     = &civkey->key,
 		.caad     = nullptr,
 		.ctag_in  = nullptr,
 		.ctag_out = nullptr,
@@ -317,12 +318,33 @@ int silofs_decrypt_lview(const struct silofs_cipher_hd *ci_hd,
 {
 	const struct silofs_encdec_ctx ed_ctx = {
 		.ci_hd    = ci_hd,
-		.civkey   = civkey,
+		.civ      = &civkey->iv,
+		.ckey     = &civkey->key,
 		.caad     = nullptr,
 		.ctag_in  = nullptr,
 		.ctag_out = nullptr,
 		.data_in  = lview,
 		.data_out = ptr,
+		.data_len = lview_len(vtype),
+	};
+
+	return silofs_decrypt(&ed_ctx);
+}
+
+int silofs_decrypt_view_inplace(const struct silofs_cipher_hd *ci_hd,
+                                const struct silofs_civkey *civkey,
+                                struct silofs_lview *lview,
+                                enum silofs_vtype vtype)
+{
+	const struct silofs_encdec_ctx ed_ctx = {
+		.ci_hd    = ci_hd,
+		.civ      = &civkey->iv,
+		.ckey     = &civkey->key,
+		.caad     = nullptr,
+		.ctag_in  = nullptr,
+		.ctag_out = nullptr,
+		.data_in  = lview,
+		.data_out = lview,
 		.data_len = lview_len(vtype),
 	};
 
@@ -336,7 +358,8 @@ int silofs_encrypt_lview2(const struct silofs_cipher_hd *ci_hd,
 {
 	const struct silofs_encdec_ctx ed_ctx = {
 		.ci_hd    = ci_hd,
-		.civkey   = civkey,
+		.civ      = &civkey->iv,
+		.ckey     = &civkey->key,
 		.caad     = nullptr,
 		.ctag_in  = nullptr,
 		.ctag_out = nullptr,
@@ -355,32 +378,14 @@ int silofs_decrypt_lview2(const struct silofs_cipher_hd *ci_hd,
 {
 	const struct silofs_encdec_ctx ed_ctx = {
 		.ci_hd    = ci_hd,
-		.civkey   = civkey,
+		.civ      = &civkey->iv,
+		.ckey     = &civkey->key,
 		.caad     = nullptr,
 		.ctag_in  = nullptr,
 		.ctag_out = nullptr,
 		.data_in  = lview_enc,
 		.data_out = lview,
 		.data_len = len,
-	};
-
-	return silofs_decrypt(&ed_ctx);
-}
-
-int silofs_decrypt_view_inplace(const struct silofs_cipher_hd *ci_hd,
-                                const struct silofs_civkey *civkey,
-                                struct silofs_lview *lview,
-                                enum silofs_vtype vtype)
-{
-	const struct silofs_encdec_ctx ed_ctx = {
-		.ci_hd    = ci_hd,
-		.civkey   = civkey,
-		.caad     = nullptr,
-		.ctag_in  = nullptr,
-		.ctag_out = nullptr,
-		.data_in  = lview,
-		.data_out = lview,
-		.data_len = lview_len(vtype),
 	};
 
 	return silofs_decrypt(&ed_ctx);
@@ -463,7 +468,8 @@ int silofs_encrypt_pview(const struct silofs_cipher_hd *ci_hd,
 {
 	const struct silofs_encdec_ctx ed_ctx = {
 		.ci_hd    = ci_hd,
-		.civkey   = civkey,
+		.civ      = &civkey->iv,
+		.ckey     = &civkey->key,
 		.caad     = nullptr,
 		.ctag_in  = nullptr,
 		.ctag_out = nullptr,
@@ -482,7 +488,8 @@ int silofs_decrypt_pview(const struct silofs_cipher_hd *ci_hd,
 {
 	const struct silofs_encdec_ctx ed_ctx = {
 		.ci_hd    = ci_hd,
-		.civkey   = civkey,
+		.civ      = &civkey->iv,
+		.ckey     = &civkey->key,
 		.caad     = nullptr,
 		.ctag_in  = nullptr,
 		.ctag_out = nullptr,

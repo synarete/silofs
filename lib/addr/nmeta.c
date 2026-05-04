@@ -32,12 +32,14 @@ void silofs_nmeta_setup(struct silofs_nmeta *nmeta,
 {
 	silofs_civkey_assign(&nmeta->civkey, civkey);
 	silofs_ciargs_assign(&nmeta->ciargs, silofs_ciargs_default());
+	silofs_ctag_reset(&nmeta->ctag);
 }
 
 void silofs_nmeta_reset(struct silofs_nmeta *nmeta)
 {
 	silofs_civkey_reset(&nmeta->civkey);
 	silofs_ciargs_reset(&nmeta->ciargs);
+	silofs_ctag_reset(&nmeta->ctag);
 }
 
 void silofs_nmeta_assign(struct silofs_nmeta *nmeta,
@@ -45,13 +47,15 @@ void silofs_nmeta_assign(struct silofs_nmeta *nmeta,
 {
 	silofs_civkey_assign(&nmeta->civkey, &other->civkey);
 	silofs_ciargs_assign(&nmeta->ciargs, &other->ciargs);
+	silofs_ctag_assign(&nmeta->ctag, &other->ctag);
 }
 
 bool silofs_nmeta_isequal(const struct silofs_nmeta *nmeta,
                           const struct silofs_nmeta *other)
 {
 	return silofs_ciargs_isequal(&nmeta->ciargs, &other->ciargs) &&
-	       silofs_civkey_isequal(&nmeta->civkey, &other->civkey);
+	       silofs_civkey_isequal(&nmeta->civkey, &other->civkey) &&
+	       silofs_ctag_isequal(&nmeta->ctag, &other->ctag);
 }
 
 void silofs_nmeta128b_htox(struct silofs_nmeta128b *nmeta128,
@@ -63,6 +67,7 @@ void silofs_nmeta128b_htox(struct silofs_nmeta128b *nmeta128,
 	memset(nmeta128, 0, sizeof(*nmeta128));
 	silofs_ckey_assign(&nmeta128->nm_ckey, &nmeta->civkey.key);
 	silofs_civ_assign(&nmeta128->nm_civ, &nmeta->civkey.iv);
+	silofs_ctag_assign(&nmeta128->nm_ctag, &nmeta->ctag);
 	nmeta128->nm_cipher_algo = silofs_cpu_to_le16(algo);
 	nmeta128->nm_cipher_mode = silofs_cpu_to_le16(mode);
 }
@@ -75,6 +80,7 @@ void silofs_nmeta128b_xtoh(const struct silofs_nmeta128b *nmeta128,
 
 	silofs_ckey_assign(&nmeta->civkey.key, &nmeta128->nm_ckey);
 	silofs_civ_assign(&nmeta->civkey.iv, &nmeta128->nm_civ);
+	silofs_ctag_assign(&nmeta->ctag, &nmeta128->nm_ctag);
 	nmeta->ciargs.algo = (enum silofs_cipher_algo)algo;
 	nmeta->ciargs.mode = (enum silofs_cipher_mode)mode;
 }

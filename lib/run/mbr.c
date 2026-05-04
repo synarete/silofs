@@ -284,7 +284,8 @@ static int mbr1k_encrypt(const struct silofs_mbr1k *mbr1k,
 {
 	const struct silofs_encdec_ctx ed_ctx = {
 		.ci_hd    = ci_hd,
-		.civkey   = civkey,
+		.civ      = &civkey->iv,
+		.ckey     = &civkey->key,
 		.caad     = nullptr,
 		.ctag_in  = nullptr,
 		.ctag_out = nullptr,
@@ -303,7 +304,8 @@ static int mbr1k_decrypt(const struct silofs_mbr1k *mbr1k,
 {
 	const struct silofs_encdec_ctx ed_ctx = {
 		.ci_hd    = ci_hd,
-		.civkey   = civkey,
+		.civ      = &civkey->iv,
+		.ckey     = &civkey->key,
 		.caad     = nullptr,
 		.ctag_in  = nullptr,
 		.ctag_out = nullptr,

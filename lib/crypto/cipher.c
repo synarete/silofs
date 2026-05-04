@@ -204,22 +204,12 @@ int silofs_cipher_check(const struct silofs_cipher_hd *ci_hd,
 	return cipher_has_args(ci_hd, ciargs) ? 0 : -SILOFS_EOPNOTSUPP;
 }
 
-int silofs_cipher_geniv(struct silofs_cipher_hd *ci_hd,
-                        struct silofs_civ *out_civ)
-{
-	gcry_error_t err;
-
-	err = gcry_cipher_geniv(ci_hd->ci_hd, out_civ->iv,
-	                        sizeof(out_civ->iv));
-	return silofs_gcrypt_status(err, "gcry_cipher_geniv");
-}
-
 static int cipher_prepare(const struct silofs_cipher_hd *ci_hd,
                           const struct silofs_civkey *civkey)
 {
 	const struct silofs_civ *iv   = &civkey->iv;
 	const struct silofs_ckey *key = &civkey->key;
-	size_t blklen, keysize;
+	size_t blklen, keysz;
 	gcry_error_t err;
 
 	blklen = gcry_cipher_get_algo_blklen((int)ci_hd->ci_args.algo);
@@ -232,14 +222,30 @@ static int cipher_prepare(const struct silofs_cipher_hd *ci_hd,
 	if (err) {
 		return silofs_gcrypt_status(err, "gcry_cipher_reset");
 	}
-	keysize = ciargs_keysize(&ci_hd->ci_args, sizeof(key->key));
-	err     = gcry_cipher_setkey(ci_hd->ci_hd, key->key, keysize);
+	keysz = ciargs_keysize(&ci_hd->ci_args, sizeof(key->key));
+	err   = gcry_cipher_setkey(ci_hd->ci_hd, key->key, keysz);
 	if (err) {
 		return silofs_gcrypt_status(err, "gcry_cipher_setkey");
 	}
 	err = gcry_cipher_setiv(ci_hd->ci_hd, iv->iv, blklen);
 	if (err) {
 		return silofs_gcrypt_status(err, "gcry_cipher_setiv");
+	}
+	return 0;
+}
+
+static int cipher_authenticate(const struct silofs_cipher_hd *ci_hd,
+                               const struct silofs_caad *caad)
+{
+	constexpr size_t aadsz = sizeof(caad->aad);
+	gcry_error_t err;
+
+	if (caad == nullptr) {
+		return 0;
+	}
+	err = gcry_cipher_authenticate(ci_hd->ci_hd, caad->aad, aadsz);
+	if (err) {
+		return silofs_gcrypt_status(err, "gcry_cipher_authenticate");
 	}
 	return 0;
 }
@@ -254,10 +260,6 @@ static int cipher_encrypt(const struct silofs_cipher_hd *ci_hd,
 	if (err) {
 		return silofs_gcrypt_status(err, "gcry_cipher_encrypt");
 	}
-	err = gcry_cipher_final(ci_hd->ci_hd);
-	if (err) {
-		return silofs_gcrypt_status(err, "gcry_cipher_final");
-	}
 	return 0;
 }
 
@@ -271,6 +273,45 @@ static int cipher_decrypt(const struct silofs_cipher_hd *ci_hd,
 	if (err) {
 		return silofs_gcrypt_status(err, "gcry_cipher_decrypt");
 	}
+	return 0;
+}
+
+static int cipher_gettag(const struct silofs_cipher_hd *ci_hd,
+                         struct silofs_ctag *out_ctag)
+{
+	constexpr size_t taglen = sizeof(out_ctag->tag);
+	gcry_error_t err;
+
+	if (out_ctag == nullptr) {
+		return 0;
+	}
+	err = gcry_cipher_gettag(ci_hd->ci_hd, out_ctag->tag, taglen);
+	if (err) {
+		return silofs_gcrypt_status(err, "gcry_cipher_gettag");
+	}
+	return 0;
+}
+
+static int cipher_checktag(const struct silofs_cipher_hd *ci_hd,
+                           const struct silofs_ctag *ctag)
+{
+	constexpr size_t taglen = sizeof(ctag->tag);
+	gcry_error_t err;
+
+	if (ctag == nullptr) {
+		return 0;
+	}
+	err = gcry_cipher_checktag(ci_hd->ci_hd, ctag->tag, taglen);
+	if (err) {
+		return silofs_gcrypt_status(err, "gcry_cipher_checktag");
+	}
+	return 0;
+}
+
+static int cipher_final(const struct silofs_cipher_hd *ci_hd)
+{
+	gcry_error_t err;
+
 	err = gcry_cipher_final(ci_hd->ci_hd);
 	if (err) {
 		return silofs_gcrypt_status(err, "gcry_cipher_final");
@@ -288,7 +329,19 @@ int silofs_encrypt_buf(const struct silofs_cipher_hd *ci_hd,
 	if (err) {
 		return err;
 	}
+	err = cipher_authenticate(ci_hd, nullptr);
+	if (err) {
+		return err;
+	}
 	err = cipher_encrypt(ci_hd, in_dat, out_dat, dat_len);
+	if (err) {
+		return err;
+	}
+	err = cipher_gettag(ci_hd, nullptr);
+	if (err) {
+		return err;
+	}
+	err = cipher_final(ci_hd);
 	if (err) {
 		return err;
 	}
@@ -305,7 +358,19 @@ int silofs_decrypt_buf(const struct silofs_cipher_hd *ci_hd,
 	if (err) {
 		return err;
 	}
+	err = cipher_authenticate(ci_hd, nullptr);
+	if (err) {
+		return err;
+	}
 	err = cipher_decrypt(ci_hd, in_dat, out_dat, dat_len);
+	if (err) {
+		return err;
+	}
+	err = cipher_checktag(ci_hd, nullptr);
+	if (err) {
+		return err;
+	}
+	err = cipher_final(ci_hd);
 	if (err) {
 		return err;
 	}

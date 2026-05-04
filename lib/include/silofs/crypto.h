@@ -233,9 +233,6 @@ void silofs_cipher_fini(struct silofs_cipher_hd *ci_hd);
 int silofs_cipher_check(const struct silofs_cipher_hd *ci_hd,
                         const struct silofs_ciargs    *ciargs);
 
-int silofs_cipher_geniv(struct silofs_cipher_hd *ci_hd,
-                        struct silofs_civ       *out_civ);
-
 int silofs_encrypt_buf(const struct silofs_cipher_hd *ci_hd,
                        const struct silofs_civkey *civkey, const void *in_dat,
                        void *out_dat, size_t dat_len);

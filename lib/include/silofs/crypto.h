@@ -233,13 +233,23 @@ void silofs_cipher_fini(struct silofs_cipher_hd *ci_hd);
 int silofs_cipher_check(const struct silofs_cipher_hd *ci_hd,
                         const struct silofs_ciargs    *ciargs);
 
-int silofs_encrypt_buf(const struct silofs_cipher_hd *ci_hd,
-                       const struct silofs_civkey *civkey, const void *in_dat,
-                       void *out_dat, size_t dat_len);
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_decrypt_buf(const struct silofs_cipher_hd *ci_hd,
-                       const struct silofs_civkey *civkey, const void *in_dat,
-                       void *out_dat, size_t dat_len);
+struct silofs_encdec_ctx {
+	const struct silofs_cipher_hd *ci_hd;
+	const struct silofs_civkey    *civkey;
+	const struct silofs_caad      *caad;
+	const struct silofs_ctag      *ctag_in;
+	struct silofs_ctag            *ctag_out;
+
+	const void *data_in;
+	void       *data_out;
+	size_t      data_len;
+};
+
+int silofs_encrypt(const struct silofs_encdec_ctx *ed_ctx);
+
+int silofs_decrypt(const struct silofs_encdec_ctx *ed_ctx);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* prand */

@@ -354,8 +354,18 @@ static void ari_pre_encrypt(const struct silofs_arnode_info *ari,
 static int encrypt_arix_node(const struct silofs_ar_cargs *ar_cargs,
                              struct silofs_arix_node *arn)
 {
-	return silofs_encrypt_buf(ar_cargs->ci_hd, &ar_cargs->nmeta.civkey,
-	                          arn, arn, sizeof(*arn));
+	const struct silofs_encdec_ctx ed_ctx = {
+		.ci_hd    = ar_cargs->ci_hd,
+		.civkey   = &ar_cargs->nmeta.civkey,
+		.caad     = nullptr,
+		.ctag_in  = nullptr,
+		.ctag_out = nullptr,
+		.data_in  = arn,
+		.data_out = arn,
+		.data_len = sizeof(*arn),
+	};
+
+	return silofs_encrypt(&ed_ctx);
 }
 
 int silofs_export_arix_node(const struct silofs_arnode_info *ari,
@@ -399,8 +409,18 @@ int silofs_load_arix_node(struct silofs_dstor *dstor,
 static int decrypt_arix_node(const struct silofs_ar_cargs *ar_cargs,
                              struct silofs_arix_node *arn)
 {
-	return silofs_decrypt_buf(ar_cargs->ci_hd, &ar_cargs->nmeta.civkey,
-	                          arn, arn, sizeof(*arn));
+	const struct silofs_encdec_ctx ed_ctx = {
+		.ci_hd    = ar_cargs->ci_hd,
+		.civkey   = &ar_cargs->nmeta.civkey,
+		.caad     = nullptr,
+		.ctag_in  = nullptr,
+		.ctag_out = nullptr,
+		.data_in  = arn,
+		.data_out = arn,
+		.data_len = sizeof(*arn),
+	};
+
+	return silofs_decrypt(&ed_ctx);
 }
 
 static int ari_post_decrypt(struct silofs_arnode_info *ari,

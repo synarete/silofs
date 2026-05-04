@@ -319,58 +319,58 @@ static int cipher_final(const struct silofs_cipher_hd *ci_hd)
 	return 0;
 }
 
-int silofs_encrypt_buf(const struct silofs_cipher_hd *ci_hd,
-                       const struct silofs_civkey *civkey, const void *in_dat,
-                       void *out_dat, size_t dat_len)
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_encrypt(const struct silofs_encdec_ctx *ed_ctx)
 {
 	int err;
 
-	err = cipher_prepare(ci_hd, civkey);
+	err = cipher_prepare(ed_ctx->ci_hd, ed_ctx->civkey);
 	if (err) {
 		return err;
 	}
-	err = cipher_authenticate(ci_hd, nullptr);
+	err = cipher_authenticate(ed_ctx->ci_hd, ed_ctx->caad);
 	if (err) {
 		return err;
 	}
-	err = cipher_encrypt(ci_hd, in_dat, out_dat, dat_len);
+	err = cipher_encrypt(ed_ctx->ci_hd, ed_ctx->data_in, ed_ctx->data_out,
+	                     ed_ctx->data_len);
 	if (err) {
 		return err;
 	}
-	err = cipher_gettag(ci_hd, nullptr);
+	err = cipher_gettag(ed_ctx->ci_hd, ed_ctx->ctag_out);
 	if (err) {
 		return err;
 	}
-	err = cipher_final(ci_hd);
+	err = cipher_final(ed_ctx->ci_hd);
 	if (err) {
 		return err;
 	}
 	return 0;
 }
 
-int silofs_decrypt_buf(const struct silofs_cipher_hd *ci_hd,
-                       const struct silofs_civkey *civkey, const void *in_dat,
-                       void *out_dat, size_t dat_len)
+int silofs_decrypt(const struct silofs_encdec_ctx *ed_ctx)
 {
 	int err;
 
-	err = cipher_prepare(ci_hd, civkey);
+	err = cipher_prepare(ed_ctx->ci_hd, ed_ctx->civkey);
 	if (err) {
 		return err;
 	}
-	err = cipher_authenticate(ci_hd, nullptr);
+	err = cipher_authenticate(ed_ctx->ci_hd, ed_ctx->caad);
 	if (err) {
 		return err;
 	}
-	err = cipher_decrypt(ci_hd, in_dat, out_dat, dat_len);
+	err = cipher_decrypt(ed_ctx->ci_hd, ed_ctx->data_in, ed_ctx->data_out,
+	                     ed_ctx->data_len);
 	if (err) {
 		return err;
 	}
-	err = cipher_checktag(ci_hd, nullptr);
+	err = cipher_checktag(ed_ctx->ci_hd, ed_ctx->ctag_in);
 	if (err) {
 		return err;
 	}
-	err = cipher_final(ci_hd);
+	err = cipher_final(ed_ctx->ci_hd);
 	if (err) {
 		return err;
 	}

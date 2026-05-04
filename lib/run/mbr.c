@@ -282,8 +282,18 @@ static int mbr1k_encrypt(const struct silofs_mbr1k *mbr1k,
                          const struct silofs_civkey *civkey,
                          struct silofs_mbr1k *out_mbr1k)
 {
-	return silofs_encrypt_buf(ci_hd, civkey, mbr1k, out_mbr1k,
-	                          mbr1k_enclen());
+	const struct silofs_encdec_ctx ed_ctx = {
+		.ci_hd    = ci_hd,
+		.civkey   = civkey,
+		.caad     = nullptr,
+		.ctag_in  = nullptr,
+		.ctag_out = nullptr,
+		.data_in  = mbr1k,
+		.data_out = out_mbr1k,
+		.data_len = mbr1k_enclen(),
+	};
+
+	return silofs_encrypt(&ed_ctx);
 }
 
 static int mbr1k_decrypt(const struct silofs_mbr1k *mbr1k,
@@ -291,8 +301,18 @@ static int mbr1k_decrypt(const struct silofs_mbr1k *mbr1k,
                          const struct silofs_civkey *civkey,
                          struct silofs_mbr1k *out_mbr1k)
 {
-	return silofs_decrypt_buf(ci_hd, civkey, mbr1k, out_mbr1k,
-	                          mbr1k_enclen());
+	const struct silofs_encdec_ctx ed_ctx = {
+		.ci_hd    = ci_hd,
+		.civkey   = civkey,
+		.caad     = nullptr,
+		.ctag_in  = nullptr,
+		.ctag_out = nullptr,
+		.data_in  = mbr1k,
+		.data_out = out_mbr1k,
+		.data_len = mbr1k_enclen(),
+	};
+
+	return silofs_decrypt(&ed_ctx);
 }
 
 static int

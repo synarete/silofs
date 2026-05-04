@@ -61,8 +61,8 @@ void silofs_nmeta128b_htox(struct silofs_nmeta128b *nmeta128,
 	const uint16_t mode = (uint16_t)(nmeta->ciargs.mode);
 
 	memset(nmeta128, 0, sizeof(*nmeta128));
-	silofs_ckey_assign(&nmeta128->nm_cipher_key, &nmeta->civkey.key);
-	silofs_civ_assign(&nmeta128->nm_cipher_iv, &nmeta->civkey.iv);
+	silofs_ckey_assign(&nmeta128->nm_ckey, &nmeta->civkey.key);
+	silofs_civ_assign(&nmeta128->nm_civ, &nmeta->civkey.iv);
 	nmeta128->nm_cipher_algo = silofs_cpu_to_le16(algo);
 	nmeta128->nm_cipher_mode = silofs_cpu_to_le16(mode);
 }
@@ -73,8 +73,8 @@ void silofs_nmeta128b_xtoh(const struct silofs_nmeta128b *nmeta128,
 	const uint16_t algo = silofs_le16_to_cpu(nmeta128->nm_cipher_algo);
 	const uint16_t mode = silofs_le16_to_cpu(nmeta128->nm_cipher_mode);
 
-	silofs_ckey_assign(&nmeta->civkey.key, &nmeta128->nm_cipher_key);
-	silofs_civ_assign(&nmeta->civkey.iv, &nmeta128->nm_cipher_iv);
+	silofs_ckey_assign(&nmeta->civkey.key, &nmeta128->nm_ckey);
+	silofs_civ_assign(&nmeta->civkey.iv, &nmeta128->nm_civ);
 	nmeta->ciargs.algo = (enum silofs_cipher_algo)algo;
 	nmeta->ciargs.mode = (enum silofs_cipher_mode)mode;
 }

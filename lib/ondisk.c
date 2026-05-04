@@ -189,10 +189,10 @@ static void validate_ondisk_addrs(void)
 
 static void validate_ondisk_pnptr(void)
 {
-	REQUIRE_OFFSET64(struct silofs_nmeta128b, nm_cipher_key, 0);
-	REQUIRE_OFFSET64(struct silofs_nmeta128b, nm_cipher_iv, 64);
-	REQUIRE_OFFSET64(struct silofs_nmeta128b, nm_cipher_algo, 80);
-	REQUIRE_OFFSET32(struct silofs_nmeta128b, nm_cipher_mode, 84);
+	REQUIRE_OFFSET64(struct silofs_nmeta128b, nm_ckey, 0);
+	REQUIRE_OFFSET64(struct silofs_nmeta128b, nm_civ, 64);
+	REQUIRE_OFFSET64(struct silofs_nmeta128b, nm_cipher_algo, 96);
+	REQUIRE_OFFSETXX(struct silofs_nmeta128b, nm_cipher_mode, 98);
 	REQUIRE_SIZEOF(struct silofs_nmeta128b, 128);
 	REQUIRE_OFFSET64(struct silofs_pnptr192b, np_nmeta, 0);
 	REQUIRE_OFFSET64(struct silofs_pnptr192b, np_paddr, 128);

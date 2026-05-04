@@ -517,7 +517,7 @@ struct silofs_civ {
 } silofs_attr_aligned8;
 
 /* cryptographic AEAD input size */
-#define SILOFS_CRYPTO_AAD_SIZE (16)
+#define SILOFS_CRYPTO_AAD_SIZE (32)
 
 struct silofs_caad {
 	uint8_t aad[SILOFS_CRYPTO_AAD_SIZE];
@@ -610,12 +610,12 @@ struct silofs_vaddr64 {
 
 /* nodes' crypto meta parameters */
 struct silofs_nmeta128b {
-	struct silofs_ckey nm_cipher_key;
-	struct silofs_civ  nm_cipher_iv;
+	struct silofs_ckey nm_ckey;
+	struct silofs_civ  nm_civ;
+	struct silofs_ctag nm_ctag;
 	uint16_t           nm_cipher_algo;
-	uint8_t            nm_reserved1[2];
 	uint16_t           nm_cipher_mode;
-	uint8_t            nm_reserved2[40];
+	uint8_t            nm_reserved2[26];
 } silofs_attr_aligned32;
 
 /* pnode meta-pointer */

@@ -96,8 +96,6 @@ void silofs_civkey_init(struct silofs_civkey *civkey);
 
 void silofs_civkey_reset(struct silofs_civkey *civkey);
 
-void silofs_civkey_mkrand(struct silofs_civkey *civkey);
-
 void silofs_civkey_setup(struct silofs_civkey     *civkey,
                          const struct silofs_ckey *key,
                          const struct silofs_civ  *iv);
@@ -235,6 +233,9 @@ void silofs_cipher_fini(struct silofs_cipher_hd *ci_hd);
 int silofs_cipher_check(const struct silofs_cipher_hd *ci_hd,
                         const struct silofs_ciargs    *ciargs);
 
+int silofs_cipher_geniv(struct silofs_cipher_hd *ci_hd,
+                        struct silofs_civ       *out_civ);
+
 int silofs_encrypt_buf(const struct silofs_cipher_hd *ci_hd,
                        const struct silofs_civkey *civkey, const void *in_dat,
                        void *out_dat, size_t dat_len);
@@ -279,12 +280,12 @@ const char *silofs_gcrypt_version(void);
 
 int silofs_init_gcrypt(bool with_fips);
 
+void silofs_gcrypt_random(void *ptr, size_t len);
+
 int silofs_gcrypt_status_(gcry_error_t gcry_err, const char *fn,
                           const char *file, int line);
 
 #define silofs_gcrypt_status(gcry_err_, fn_) \
 	silofs_gcrypt_status_(gcry_err_, fn_, SILOFS_FL_LN_)
-
-void silofs_gcrypt_random(void *ptr, size_t len);
 
 #endif /* SILOFS_CRYPTO_H_ */

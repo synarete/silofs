@@ -682,9 +682,6 @@ void silofs_generate_civ(struct silofs_prandgen *prng,
 void silofs_generate_ckey(struct silofs_prandgen *prng,
                           struct silofs_ckey     *out_ckey);
 
-void silofs_generate_civkey(struct silofs_prandgen *prng,
-                            struct silofs_civkey   *out_civkey);
-
 void silofs_generate_uniqid(struct silofs_prandgen *prng,
                             struct silofs_uniqid   *out_uniqid);
 

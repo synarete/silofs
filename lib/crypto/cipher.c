@@ -204,6 +204,16 @@ int silofs_cipher_check(const struct silofs_cipher_hd *ci_hd,
 	return cipher_has_args(ci_hd, ciargs) ? 0 : -SILOFS_EOPNOTSUPP;
 }
 
+int silofs_cipher_geniv(struct silofs_cipher_hd *ci_hd,
+                        struct silofs_civ *out_civ)
+{
+	gcry_error_t err;
+
+	err = gcry_cipher_geniv(ci_hd->ci_hd, out_civ->iv,
+	                        sizeof(out_civ->iv));
+	return silofs_gcrypt_status(err, "gcry_cipher_geniv");
+}
+
 static int cipher_prepare(const struct silofs_cipher_hd *ci_hd,
                           const struct silofs_civkey *civkey)
 {

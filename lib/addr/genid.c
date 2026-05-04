@@ -15,40 +15,53 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
+#include <silofs/crypto.h>
 #include <silofs/addr.h>
 
-static void make_prandom(struct silofs_prandgen *prng, void *p, size_t n)
+static void take_grandom(void *p, size_t n)
+{
+	silofs_gcrypt_random(p, n);
+}
+
+static void take_prandom(struct silofs_prandgen *prng, void *p, size_t n)
 {
 	silofs_prandgen_take(prng, p, n);
+}
+
+static void feed_prandom(struct silofs_prandgen *prng, void *p, size_t n)
+{
+	silofs_prandgen_feed(prng, p, n);
 }
 
 void silofs_generate_civ(struct silofs_prandgen *prng,
                          struct silofs_civ *out_civ)
 {
-	make_prandom(prng, out_civ->iv, sizeof(out_civ->iv));
+	take_prandom(prng, out_civ->iv, sizeof(out_civ->iv));
 }
 
 void silofs_generate_ckey(struct silofs_prandgen *prng,
                           struct silofs_ckey *out_ckey)
 {
-	make_prandom(prng, out_ckey->key, sizeof(out_ckey->key));
-}
+	uint8_t *p = out_ckey->key;
+	size_t n   = sizeof(out_ckey->key);
 
-void silofs_generate_civkey(struct silofs_prandgen *prng,
-                            struct silofs_civkey *out_civkey)
-{
-	silofs_generate_ckey(prng, &out_civkey->key);
-	silofs_generate_civ(prng, &out_civkey->iv);
+	if (likely(n > 16)) {
+		take_grandom(p, 16);
+		take_prandom(prng, p + 16, n - 16);
+		feed_prandom(prng, p, 16);
+	} else {
+		take_prandom(prng, p, n);
+	}
 }
 
 void silofs_generate_uniqid(struct silofs_prandgen *prng,
                             struct silofs_uniqid *out_uniqid)
 {
-	make_prandom(prng, out_uniqid->id, sizeof(out_uniqid->id));
+	take_prandom(prng, out_uniqid->id, sizeof(out_uniqid->id));
 }
 
 void silofs_generate_layerid(struct silofs_prandgen *prng,
                              struct silofs_layerid *out_layerid)
 {
-	make_prandom(prng, out_layerid->id, sizeof(out_layerid->id));
+	take_prandom(prng, out_layerid->id, sizeof(out_layerid->id));
 }

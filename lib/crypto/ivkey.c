@@ -35,11 +35,6 @@ static void randomize(void *ptr, size_t len, bool strong)
 	randomize_by_gcry(ptr, len, strong);
 }
 
-void silofs_gcrypt_random(void *ptr, size_t len)
-{
-	randomize_by_gcry(ptr, len, false);
-}
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_civ_reset(struct silofs_civ *iv)
@@ -165,12 +160,6 @@ void silofs_civkey_reset(struct silofs_civkey *civkey)
 {
 	silofs_ckey_reset(&civkey->key);
 	silofs_civ_reset(&civkey->iv);
-}
-
-void silofs_civkey_mkrand(struct silofs_civkey *civkey)
-{
-	silofs_ckey_mkrand(&civkey->key);
-	silofs_civ_mkrand(&civkey->iv);
 }
 
 void silofs_civkey_setup(struct silofs_civkey *civkey,

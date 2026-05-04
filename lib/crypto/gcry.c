@@ -86,3 +86,10 @@ int silofs_gcrypt_status_(gcry_error_t gcry_err, const char *fn,
 
 	return (err > 0) ? -err : err;
 }
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_gcrypt_random(void *ptr, size_t len)
+{
+	gcry_randomize(ptr, len, GCRY_STRONG_RANDOM);
+}

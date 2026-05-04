@@ -21,11 +21,6 @@
 
 #include <silofs/crypto.h>
 
-static void do_gcry_random(void *buf, size_t len)
-{
-	silofs_gcrypt_random(buf, len);
-}
-
 static size_t do_getentropy(void *buf, size_t len)
 {
 	const size_t nr = silofs_min(len, 256);
@@ -53,7 +48,7 @@ static void absorb_entropy(void *buf, size_t len)
 	}
 	if (n < len) {
 		/* system entropy is exhausted, fall to libgcrypt */
-		do_gcry_random(p, len - n);
+		silofs_gcrypt_random(p, len - n);
 	}
 }
 

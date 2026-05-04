@@ -42,7 +42,8 @@ static void gen_uniqid(const struct silofs_pexec_ctx *pexec,
 static void gen_civkey(const struct silofs_pexec_ctx *pexec,
                        struct silofs_civkey *out_civkey)
 {
-	silofs_generate_civkey(pexec->prng, out_civkey);
+	silofs_generate_ckey(pexec->prng, &out_civkey->key);
+	silofs_generate_civ(pexec->prng, &out_civkey->iv);
 }
 
 static int

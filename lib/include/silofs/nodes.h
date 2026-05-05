@@ -254,13 +254,17 @@ int silofs_verify_pview(const struct silofs_pview *pview,
 
 int silofs_encrypt_pview(const struct silofs_cipher_hd *ci_hd,
                          const struct silofs_civkey    *civkey,
-                         const struct silofs_pview     *pview,
-                         struct silofs_pview *pview_enc, size_t len);
+                         const struct silofs_caad      *caad,
+                         const struct silofs_pview     *pview_in,
+                         struct silofs_pview           *pview_out,
+                         struct silofs_ctag *ctag_out, size_t pview_len);
 
 int silofs_decrypt_pview(const struct silofs_cipher_hd *ci_hd,
                          const struct silofs_civkey    *civkey,
-                         const struct silofs_pview     *pview_enc,
-                         struct silofs_pview *pview, size_t len);
+                         const struct silofs_caad      *caad,
+                         const struct silofs_ctag      *ctag_in,
+                         const struct silofs_pview     *pview_in,
+                         struct silofs_pview *pview_out, size_t pview_len);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* pnodes */

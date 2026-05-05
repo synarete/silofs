@@ -42,15 +42,9 @@ static size_t vaddr_len(const struct silofs_vaddr *vaddr)
 	return silofs_vaddr_len(vaddr);
 }
 
-static size_t pni_len(const struct silofs_pnode_info *pni)
+static size_t pni_pview_len(const struct silofs_pnode_info *pni)
 {
 	return paddr_len(&pni->pn_self.paddr);
-}
-
-static const struct silofs_civkey *
-pni_civkey(const struct silofs_pnode_info *pni)
-{
-	return silofs_pni_civkey(pni);
 }
 
 static bool pni_staged_ok(const struct silofs_pnode_info *pni)
@@ -210,7 +204,7 @@ stc_read_pnode(struct silofs_stage_ctx *st_ctx, struct silofs_pnode_info *pni)
 {
 	const struct silofs_paddr *paddr = &pni->pn_self.paddr;
 
-	return stc_read_pview_at(st_ctx, paddr, pni_len(pni));
+	return stc_read_pview_at(st_ctx, paddr, pni_pview_len(pni));
 }
 
 static void
@@ -231,13 +225,17 @@ static int stc_decrypt_pview_of(struct silofs_stage_ctx *st_ctx,
                                 struct silofs_pnode_info *pni)
 {
 	struct silofs_caad caad;
-	const struct silofs_paddr *paddr = &pni->pn_self.paddr;
+	const struct silofs_pnptr *pnptr = &pni->pn_self;
+	const size_t pview_len           = pni_pview_len(pni);
 
-	stc_caad_of_paddr(st_ctx, paddr, &caad);
-
-	return silofs_decrypt_pview(st_ctx->dec_ci_hd, pni_civkey(pni),
-	                            st_ctx->pview, pni->pn_pview,
-	                            pni_len(pni));
+	stc_caad_of_paddr(st_ctx, &pnptr->paddr, &caad);
+	return silofs_decrypt_pview(st_ctx->dec_ci_hd,    //
+	                            &pnptr->nmeta.civkey, //
+	                            &caad,                //
+	                            &pnptr->nmeta.ctag,   //
+	                            st_ctx->pview,        //
+	                            pni->pn_pview,        //
+	                            pview_len);
 }
 
 static int stc_decrypt_verify_pnode(struct silofs_stage_ctx *st_ctx,
@@ -959,15 +957,24 @@ static int stc_write_pnode(struct silofs_stage_ctx *st_ctx,
 {
 	const struct silofs_paddr *paddr = &pni->pn_self.paddr;
 
-	return stc_write_pview_at(st_ctx, paddr, pni_len(pni));
+	return stc_write_pview_at(st_ctx, paddr, pni_pview_len(pni));
 }
 
 static int stc_encrypt_pview_of(struct silofs_stage_ctx *st_ctx,
-                                const struct silofs_pnode_info *pni)
+                                struct silofs_pnode_info *pni)
 {
-	return silofs_encrypt_pview(st_ctx->enc_ci_hd, pni_civkey(pni),
-	                            pni->pn_pview, st_ctx->pview,
-	                            pni_len(pni));
+	struct silofs_caad caad;
+	struct silofs_pnptr *pnptr = &pni->pn_self;
+	const size_t pview_len     = pni_pview_len(pni);
+
+	stc_caad_of_paddr(st_ctx, &pnptr->paddr, &caad);
+	return silofs_encrypt_pview(st_ctx->enc_ci_hd,    //
+	                            &pnptr->nmeta.civkey, //
+	                            &caad,                //
+	                            pni->pn_pview,        //
+	                            st_ctx->pview,        //
+	                            &pnptr->nmeta.ctag,   //
+	                            pview_len);
 }
 
 static int stc_seal_encrypt_pnode(struct silofs_stage_ctx *st_ctx,

@@ -463,19 +463,21 @@ int silofs_verify_pview(const struct silofs_pview *pview,
 
 int silofs_encrypt_pview(const struct silofs_cipher_hd *ci_hd,
                          const struct silofs_civkey *civkey,
-                         const struct silofs_pview *pview,
-                         struct silofs_pview *pview_enc, size_t len)
+                         const struct silofs_caad *caad,
+                         const struct silofs_pview *pview_in,
+                         struct silofs_pview *pview_out,
+                         struct silofs_ctag *ctag_out, size_t pview_len)
 {
 	const struct silofs_encdec_ctx ed_ctx = {
 		.ci_hd    = ci_hd,
 		.civ      = &civkey->iv,
 		.ckey     = &civkey->key,
-		.caad     = nullptr,
+		.caad     = caad,
 		.ctag_in  = nullptr,
-		.ctag_out = nullptr,
-		.data_in  = pview,
-		.data_out = pview_enc,
-		.data_len = len,
+		.ctag_out = ctag_out,
+		.data_in  = pview_in,
+		.data_out = pview_out,
+		.data_len = pview_len,
 	};
 
 	return silofs_encrypt(&ed_ctx);
@@ -483,20 +485,25 @@ int silofs_encrypt_pview(const struct silofs_cipher_hd *ci_hd,
 
 int silofs_decrypt_pview(const struct silofs_cipher_hd *ci_hd,
                          const struct silofs_civkey *civkey,
-                         const struct silofs_pview *pview_enc,
-                         struct silofs_pview *pview, size_t len)
+                         const struct silofs_caad *caad,
+                         const struct silofs_ctag *ctag_in,
+                         const struct silofs_pview *pview_in,
+                         struct silofs_pview *pview_out, size_t pview_len)
 {
 	const struct silofs_encdec_ctx ed_ctx = {
 		.ci_hd    = ci_hd,
 		.civ      = &civkey->iv,
 		.ckey     = &civkey->key,
-		.caad     = nullptr,
-		.ctag_in  = nullptr,
+		.caad     = caad,
+		.ctag_in  = nullptr, /* FIXME pview_out, */
 		.ctag_out = nullptr,
-		.data_in  = pview_enc,
-		.data_out = pview,
-		.data_len = len,
+		.data_in  = pview_in,
+		.data_out = pview_out,
+		.data_len = pview_len,
 	};
+
+	/* TODO: rm */
+	silofs_unused(ctag_in);
 
 	return silofs_decrypt(&ed_ctx);
 }

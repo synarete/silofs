@@ -239,9 +239,6 @@ static int cipher_authenticate(const struct silofs_cipher_hd *ci_hd,
 	constexpr size_t aadsz = sizeof(caad->aad);
 	gcry_error_t err;
 
-	if (caad == nullptr) {
-		return 0;
-	}
 	err = gcry_cipher_authenticate(ci_hd->ci_hd, caad->aad, aadsz);
 	if (err) {
 		return silofs_gcrypt_status(err, "gcry_cipher_authenticate");
@@ -281,9 +278,6 @@ static int cipher_gettag(const struct silofs_cipher_hd *ci_hd,
 	constexpr size_t taglen = sizeof(out_ctag->tag);
 	gcry_error_t err;
 
-	if (out_ctag == nullptr) {
-		return 0;
-	}
 	err = gcry_cipher_gettag(ci_hd->ci_hd, out_ctag->tag, taglen);
 	if (err) {
 		return silofs_gcrypt_status(err, "gcry_cipher_gettag");
@@ -301,6 +295,7 @@ static int cipher_checktag(const struct silofs_cipher_hd *ci_hd,
 		return 0;
 	}
 	err = gcry_cipher_checktag(ci_hd->ci_hd, ctag->tag, taglen);
+	silofs_assert_ok(err);
 	if (err) {
 		return silofs_gcrypt_status(err, "gcry_cipher_checktag");
 	}
@@ -328,18 +323,22 @@ int silofs_encrypt(const struct silofs_encdec_ctx *ed_ctx)
 	if (err) {
 		return err;
 	}
-	err = cipher_authenticate(ed_ctx->ci_hd, ed_ctx->caad);
-	if (err) {
-		return err;
+	if (ed_ctx->caad != nullptr) {
+		err = cipher_authenticate(ed_ctx->ci_hd, ed_ctx->caad);
+		if (err) {
+			return err;
+		}
 	}
 	err = cipher_encrypt(ed_ctx->ci_hd, ed_ctx->data_in, ed_ctx->data_out,
 	                     ed_ctx->data_len);
 	if (err) {
 		return err;
 	}
-	err = cipher_gettag(ed_ctx->ci_hd, ed_ctx->ctag_out);
-	if (err) {
-		return err;
+	if ((ed_ctx->caad != nullptr) && (ed_ctx->ctag_out != nullptr)) {
+		err = cipher_gettag(ed_ctx->ci_hd, ed_ctx->ctag_out);
+		if (err) {
+			return err;
+		}
 	}
 	err = cipher_final(ed_ctx->ci_hd);
 	if (err) {
@@ -356,18 +355,22 @@ int silofs_decrypt(const struct silofs_encdec_ctx *ed_ctx)
 	if (err) {
 		return err;
 	}
-	err = cipher_authenticate(ed_ctx->ci_hd, ed_ctx->caad);
-	if (err) {
-		return err;
+	if (ed_ctx->caad != nullptr) {
+		err = cipher_authenticate(ed_ctx->ci_hd, ed_ctx->caad);
+		if (err) {
+			return err;
+		}
 	}
 	err = cipher_decrypt(ed_ctx->ci_hd, ed_ctx->data_in, ed_ctx->data_out,
 	                     ed_ctx->data_len);
 	if (err) {
 		return err;
 	}
-	err = cipher_checktag(ed_ctx->ci_hd, ed_ctx->ctag_in);
-	if (err) {
-		return err;
+	if ((ed_ctx->caad != nullptr) && (ed_ctx->ctag_in != nullptr)) {
+		err = cipher_checktag(ed_ctx->ci_hd, ed_ctx->ctag_in);
+		if (err) {
+			return err;
+		}
 	}
 	err = cipher_final(ed_ctx->ci_hd);
 	if (err) {

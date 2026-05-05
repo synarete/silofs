@@ -605,24 +605,24 @@ check_post_recvmsg(struct msghdr *mh, size_t nbytes, bool allow_cmsg)
 	struct cmsghdr *cmh = nullptr;
 
 	if (nbytes < sizeof(*mh)) {
-		return -SILOFS_ECOMM;
+		return -SILOFS_EBADMSG;
 	}
 	if (nbytes != sizeof(struct silofs_mntmsg)) {
-		return -SILOFS_EPROTO;
+		return -SILOFS_EBADMSG;
 	}
 	if (mh->msg_flags & (MSG_TRUNC | MSG_CTRUNC)) {
-		return -SILOFS_ECOMM;
+		return -SILOFS_EBADMSG;
 	}
 	cmh = silofs_cmsg_firsthdr(mh);
 	if (cmh == nullptr) {
 		return 0;
 	}
 	if (!allow_cmsg) {
-		return -SILOFS_ECOMM;
+		return -SILOFS_EBADMSG;
 	}
 	cmh = silofs_cmsg_nexthdr(mh, cmh);
 	if (cmh != nullptr) {
-		return -SILOFS_ECOMM;
+		return -SILOFS_EBADMSG;
 	}
 	return 0;
 }
@@ -680,6 +680,7 @@ static int mntmsg_recv(const struct silofs_mntmsg *mmsg,
 		/* do no allow padding other then output fd */
 		const size_t fd_cmsg_len = silofs_cmsg_len(sizeof(*out_fd));
 
+		memset(cb.cms, -1, sizeof(cb.cms));
 		msg.msg_control    = cb.cms;
 		msg.msg_controllen = silofs_min(sizeof(cb.cms), fd_cmsg_len);
 	}
@@ -1594,7 +1595,8 @@ static int mntclnt_mount(const struct silofs_mntclnt *mclnt,
 
 	*out_status = -SILOFS_ECOMM;
 	*out_fd     = -1;
-	err         = mntmsg_mount(&mmsg, mntp);
+
+	err = mntmsg_mount(&mmsg, mntp);
 	if (err) {
 		return err;
 	}

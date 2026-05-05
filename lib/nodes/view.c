@@ -176,7 +176,7 @@ static int hdr_verify_checksum(const struct silofs_header *hdr)
 	}
 	csum = hdr_calc_chekcsum(hdr);
 	if (csum != hdr_csum(hdr)) {
-		return -SILOFS_EFSBADCRC;
+		return -SILOFS_EBADMSG;
 	}
 	return 0;
 }

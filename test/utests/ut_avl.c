@@ -1007,7 +1007,9 @@ static void ut_avl_reverse_sequential_insert(struct ut_env *ute)
 
 static void ut_avl_insert_replace_pattern(struct ut_env *ute)
 {
-	constexpr long keys[] = { 50, 25, 75, 10, 30, 60, 80, 5, 15, 27 };
+	constexpr long keys[] = {
+		50, 25, 75, 10, 30, 60, 80, 5, 15, 27,
+	};
 	struct silofs_avl_node *an_old, *an_new, *an_ret;
 	struct silofs_avl *avl;
 	size_t size;
@@ -1051,7 +1053,7 @@ static void ut_avl_iteration_forward_backward(struct ut_env *ute)
 	constexpr long keys[] = {
 		50, 25, 75, 10, 30, 60, 80, 5, 15, 27,
 	};
-	constexpr long sorted[] = {
+	constexpr long keys_sorted[] = {
 		5, 10, 15, 25, 27, 30, 50, 60, 75, 80,
 	};
 	const struct silofs_avl_node *an;
@@ -1065,18 +1067,20 @@ static void ut_avl_iteration_forward_backward(struct ut_env *ute)
 	idx = 0;
 	an  = avl_begin(avl);
 	while (an != avl_end(avl)) {
-		check_node(an, sorted[idx]);
+		ut_expect_lt(idx, UT_ARRAY_SIZE(keys_sorted));
+		check_node(an, keys_sorted[idx]);
 		an = avl_next(avl, an);
 		idx++;
 	}
-	ut_expect_eq(idx, UT_ARRAY_SIZE(sorted));
+	ut_expect_eq(idx, UT_ARRAY_SIZE(keys_sorted));
 
 	/* backward iteration from end */
 	an = avl_end(avl);
 	while (an != avl_begin(avl)) {
+		ut_expect_gt(idx, 0);
 		idx--;
 		an = avl_prev(avl, an);
-		check_node(an, sorted[idx]);
+		check_node(an, keys_sorted[idx]);
 	}
 	ut_expect_eq(idx, 0);
 
@@ -1084,16 +1088,18 @@ static void ut_avl_iteration_forward_backward(struct ut_env *ute)
 	idx = 0;
 	an  = avl_begin(avl);
 	for (size_t i = 0; i < 5 && an != avl_end(avl); ++i) {
-		check_node(an, sorted[idx]);
+		ut_expect_lt(idx, UT_ARRAY_SIZE(keys_sorted));
+		check_node(an, keys_sorted[idx]);
 		an = avl_next(avl, an);
 		idx++;
 	}
 
 	/* partial backward iteration */
 	for (size_t i = 0; i < 5 && an != avl_begin(avl); ++i) {
+		ut_expect_gt(idx, 0);
 		idx--;
 		an = avl_prev(avl, an);
-		check_node(an, sorted[idx]);
+		check_node(an, keys_sorted[idx]);
 	}
 
 	/* cleanup */

@@ -285,7 +285,7 @@ qpool_errorf(const struct silofs_qpool *qpool, const char *file, int line,
              const char *fmt, ...)
 {
 	char msg[256] = "";
-	va_list ap    = { 0 };
+	va_list ap;
 
 	va_start(ap, fmt);
 	silofs_vsnprintf(msg, sizeof(msg), fmt, ap);
@@ -858,7 +858,7 @@ slab_errorf(const struct silofs_slab *slab, const char *file, int line,
             const char *fmt, ...)
 {
 	char msg[256] = "";
-	va_list ap    = { 0 };
+	va_list ap;
 
 	va_start(ap, fmt);
 	silofs_vsnprintf(msg, sizeof(msg), fmt, ap);

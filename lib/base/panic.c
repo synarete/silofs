@@ -212,7 +212,7 @@ struct silofs_fatal_msg {
 fmtmsg_attr static void
 fmtmsg(struct silofs_fatal_msg *msg, const char *fmt, ...)
 {
-	va_list ap = { 0 };
+	va_list ap;
 
 	va_start(ap, fmt);
 	silofs_vsnprintf(msg->str, sizeof(msg->str), fmt, ap);
@@ -511,7 +511,7 @@ void silofs_panicf(const char *file, int line, const char *fmt, ...)
 {
 	char msg[256];
 	const int errnum = errno;
-	va_list ap       = { 0 };
+	va_list ap;
 
 	va_start(ap, fmt);
 	silofs_vsnprintf(msg, sizeof(msg), fmt, ap);
@@ -528,7 +528,7 @@ void silofs_panicf(const char *file, int line, const char *fmt, ...)
 void silofs_die(int errnum, const char *fmt, ...)
 {
 	char msg[1024] = "";
-	va_list ap     = { 0 };
+	va_list ap;
 
 	va_start(ap, fmt);
 	silofs_vsnprintf(msg, sizeof(msg), fmt, ap);
@@ -542,7 +542,7 @@ void silofs_die(int errnum, const char *fmt, ...)
 void silofs_die_at(int errnum, const char *fl, int ln, const char *fmt, ...)
 {
 	char msg[1024] = "";
-	va_list ap     = { 0 };
+	va_list ap;
 
 	va_start(ap, fmt);
 	silofs_vsnprintf(msg, sizeof(msg), fmt, ap);

@@ -103,7 +103,7 @@ void silofs_strbuf_setup_by2(struct silofs_strbuf *sbuf, const char *s,
 
 size_t silofs_strbuf_sprintf(struct silofs_strbuf *sbuf, const char *fmt, ...)
 {
-	va_list ap = { 0 };
+	va_list ap;
 	size_t k;
 	int n;
 

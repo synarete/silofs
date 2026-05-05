@@ -740,8 +740,8 @@ char *ut_randstr(struct ut_env *ute, size_t len)
 char *ut_strfmt(struct ut_env *ute, const char *fmt, ...)
 {
 	char tmp[1024] = "";
-	va_list ap     = { 0 };
-	int nb         = 0;
+	va_list ap;
+	int nb;
 
 	va_start(ap, fmt);
 	nb = vsnprintf(tmp, sizeof(tmp), fmt, ap);

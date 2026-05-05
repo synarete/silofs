@@ -145,7 +145,7 @@ cmd_report_err_and_dief(const struct silofs_env *env, int status,
                         const char *restrict fmt, ...)
 {
 	char msg[1024];
-	va_list ap = { 0 };
+	va_list ap;
 	int ret;
 
 	va_start(ap, fmt);

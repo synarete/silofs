@@ -47,7 +47,7 @@ static int cmd_errnum_of(int err)
 void cmd_vdie(int err, const char *restrict fmt, va_list ap)
 {
 	char msg[1024] = "";
-	va_list ap2    = { 0 };
+	va_list ap2;
 	int ret;
 
 	va_copy(ap2, ap);
@@ -66,7 +66,7 @@ void cmd_vdie(int err, const char *restrict fmt, va_list ap)
 
 void cmd_die(int err, const char *restrict fmt, ...)
 {
-	va_list ap = { 0 };
+	va_list ap;
 
 	va_start(ap, fmt);
 	cmd_vdie(err, fmt, ap);
@@ -76,7 +76,7 @@ void cmd_die(int err, const char *restrict fmt, ...)
 
 void cmd_diez(const char *restrict fmt, ...)
 {
-	va_list ap = { 0 };
+	va_list ap;
 
 	va_start(ap, fmt);
 	cmd_vdie(0, fmt, ap);
@@ -905,12 +905,12 @@ char *cmd_path_join(const char *dirpath, const char *name)
 
 char *cmd_path_fmt(const char *fmt, ...)
 {
-	va_list ap       = { 0 };
-	size_t path_size = PATH_MAX;
-	char *path       = cmd_zalloc(path_size);
-	char *path_dup   = nullptr;
-	int n            = 0;
+	va_list ap;
+	constexpr size_t path_size = PATH_MAX;
+	char *path_dup, *path;
+	int n;
 
+	path = cmd_zalloc(path_size);
 	va_start(ap, fmt);
 	n = vsnprintf(path, path_size, fmt, ap);
 	va_end(ap);

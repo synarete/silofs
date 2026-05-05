@@ -194,7 +194,7 @@ int silofs_logf(enum silofs_log_level log_level, const char *file, int line,
                 const char *fmt, ...)
 {
 	char msg[512];
-	va_list ap            = { 0 };
+	va_list ap;
 	const char *filename  = nullptr;
 	const int saved_errno = errno;
 	enum silofs_log_flags log_flags;

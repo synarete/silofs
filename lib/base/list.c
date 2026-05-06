@@ -205,18 +205,18 @@ static void list_rebuild_prev_links(struct silofs_list_head *lh)
 static void list_reattach_to_sentinel(struct silofs_list_head *lst,
                                       struct silofs_list_head *lh)
 {
-	struct silofs_list_head *tail;
+	struct silofs_list_head *itr;
 
 	lst->next = lh;
 	lh->prev  = lst;
 	list_rebuild_prev_links(lh);
 
-	tail = lh;
-	while (tail->next) {
-		tail = tail->next;
+	itr = lh;
+	while (itr->next != nullptr) {
+		itr = itr->next;
 	}
-	tail->next = lst;
-	lst->prev  = tail;
+	itr->next = lst;
+	lst->prev = itr;
 }
 
 /*
@@ -233,20 +233,27 @@ list_build_pending(struct silofs_list_head *lst,
 	struct silofs_list_head *lh;
 	size_t top = 0;
 
-	lh = silofs_list_pop_front(lst);
-	while (lh != nullptr) {
+	while (!silofs_list_isempty(lst)) {
+		struct silofs_list_head *nxt;
 		size_t i = 0;
 
-		lh->next = nullptr;
+		lh  = lst->next;
+		nxt = lh->next;
+
+		nxt->prev = lst;
+		lst->next = nxt;
+		lh->next  = nullptr;
+		lh->prev  = nullptr;
+
 		while (pending[i]) {
-			lh           = list_merge(pending[i], lh, cmp_fn);
+			lh = list_merge(pending[i], lh, cmp_fn);
+
 			pending[i++] = nullptr;
 		}
 		pending[i] = lh;
 		if (i == top) {
 			top++;
 		}
-		lh = silofs_list_pop_front(lst);
 	}
 	return list_merge_pending(pending, top, cmp_fn);
 }
@@ -258,7 +265,9 @@ list_sort(struct silofs_list_head *lst, silofs_list_head_cmp_fn cmp_fn)
 	struct silofs_list_head *sorted;
 
 	sorted = list_build_pending(lst, pending, cmp_fn);
-	list_reattach_to_sentinel(lst, sorted);
+	if (sorted != nullptr) {
+		list_reattach_to_sentinel(lst, sorted);
+	}
 }
 
 void silofs_list_sort(struct silofs_list_head *lst,

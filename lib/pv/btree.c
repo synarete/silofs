@@ -24,6 +24,13 @@
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static const struct silofs_paddr *ubi_paddr(const struct silofs_uber_info *ubi)
+{
+	return silofs_pni_paddr(&ubi->ub_pni);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 static void bti_incref(struct silofs_btnode_info *bti)
 {
 	if (likely(bti != nullptr)) {
@@ -36,6 +43,18 @@ static void bti_decref(struct silofs_btnode_info *bti)
 	if (likely(bti != nullptr)) {
 		silofs_pni_decref(&bti->btn_pni);
 	}
+}
+
+static const struct silofs_paddr *
+bti_paddr(const struct silofs_btnode_info *bti)
+{
+	return silofs_pni_paddr(&bti->btn_pni);
+}
+
+static void bti_set_parent(struct silofs_btnode_info *bti,
+                           const struct silofs_paddr *paddr)
+{
+	silofs_pni_set_parent(&bti->btn_pni, paddr);
 }
 
 static void bti_self(const struct silofs_btnode_info *bti,
@@ -368,6 +387,21 @@ static int btc_stage_full_path(struct silofs_btree_ctx *btc)
 	return 0;
 }
 
+static void btc_update_staged_path(const struct silofs_btree_ctx *btc)
+{
+	struct silofs_btnode_info *bti;
+
+	for (size_t slot = 1; slot < btc->bpath.cnt; ++slot) {
+		struct silofs_btnode_info *bti_parent;
+
+		bti        = btc_path_btnode_at(btc, slot);
+		bti_parent = btc_path_btnode_at(btc, slot - 1);
+		bti_set_parent(bti, bti_paddr(bti_parent));
+	}
+	bti = btc_path_front(btc);
+	bti_set_parent(bti, ubi_paddr(btc->ubi));
+}
+
 static int btc_stage_path(struct silofs_btree_ctx *btc)
 {
 	int err;
@@ -380,6 +414,7 @@ static int btc_stage_path(struct silofs_btree_ctx *btc)
 	if (err) {
 		return err;
 	}
+	btc_update_staged_path(btc);
 	return 0;
 }
 

@@ -19,20 +19,6 @@
 #include <silofs/memalloc.h>
 #include <silofs/base/list.h>
 
-void silofs_list_head_initn(struct silofs_list_head *lh_arr, size_t cnt)
-{
-	for (size_t i = 0; i < cnt; ++i) {
-		silofs_list_head_init(&lh_arr[i]);
-	}
-}
-
-void silofs_list_head_finin(struct silofs_list_head *lh_arr, size_t cnt)
-{
-	for (size_t i = 0; i < cnt; ++i) {
-		silofs_list_head_fini(&lh_arr[i]);
-	}
-}
-
 void silofs_list_head_set(struct silofs_list_head *lh,
                           struct silofs_list_head *prv,
                           struct silofs_list_head *nxt)
@@ -80,6 +66,20 @@ void silofs_list_head_init(struct silofs_list_head *lh)
 void silofs_list_head_fini(struct silofs_list_head *lh)
 {
 	silofs_list_head_set(lh, nullptr, nullptr);
+}
+
+void silofs_list_head_initn(struct silofs_list_head *lh_arr, size_t cnt)
+{
+	for (size_t i = 0; i < cnt; ++i) {
+		silofs_list_head_init(&lh_arr[i]);
+	}
+}
+
+void silofs_list_head_finin(struct silofs_list_head *lh_arr, size_t cnt)
+{
+	for (size_t i = 0; i < cnt; ++i) {
+		silofs_list_head_fini(&lh_arr[i]);
+	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

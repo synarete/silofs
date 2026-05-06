@@ -82,7 +82,7 @@ void silofs_list_head_finin(struct silofs_list_head *lh_arr, size_t cnt)
 	}
 }
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 void silofs_list_init(struct silofs_list_head *lst)
 {
@@ -148,6 +148,128 @@ bool silofs_list_isempty(const struct silofs_list_head *lst)
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+/*
+ * Merge two NULL-terminated singly-linked sublists (linked via ->next only).
+ */
+static struct silofs_list_head *
+list_merge(struct silofs_list_head *lst_a, struct silofs_list_head *lst_b,
+           silofs_list_head_cmp_fn cmp_fn)
+{
+	struct silofs_list_head result;
+	struct silofs_list_head *tail = &result;
+
+	while ((lst_a != nullptr) && (lst_b != nullptr)) {
+		if (cmp_fn(lst_a, lst_b) <= 0) {
+			tail->next = lst_a;
+			lst_a      = lst_a->next;
+		} else {
+			tail->next = lst_b;
+			lst_b      = lst_b->next;
+		}
+		tail = tail->next;
+	}
+	if (lst_a != nullptr) {
+		tail->next = lst_a;
+	} else {
+		tail->next = lst_b;
+	}
+	return result.next;
+}
+
+static struct silofs_list_head *
+list_merge_pending(struct silofs_list_head **pending, size_t top,
+                   silofs_list_head_cmp_fn cmp_fn)
+{
+	struct silofs_list_head *result = nullptr;
+
+	for (size_t i = 0; i < top; ++i) {
+		if (pending[i]) {
+			result = list_merge(pending[i], result, cmp_fn);
+		}
+	}
+	return result;
+}
+
+static void list_rebuild_prev_links(struct silofs_list_head *lh)
+{
+	struct silofs_list_head *cur = lh;
+
+	while (cur->next != nullptr) {
+		struct silofs_list_head *nxt = cur->next;
+
+		nxt->prev = cur;
+		cur       = cur->next;
+	}
+}
+
+static void list_reattach_to_sentinel(struct silofs_list_head *lst,
+                                      struct silofs_list_head *lh)
+{
+	struct silofs_list_head *tail;
+
+	lst->next = lh;
+	lh->prev  = lst;
+	list_rebuild_prev_links(lh);
+
+	tail = lh;
+	while (tail->next) {
+		tail = tail->next;
+	}
+	tail->next = lst;
+	lst->prev  = tail;
+}
+
+/*
+ * Iterative bottom-up merge sort. Uses a pending[32] array where pending[i]
+ * holds a sorted sublist of length 2^i (or NULL). Each new node is merged
+ * upward until it lands in an empty slot, doubling sorted run lengths each
+ * pass. O(n log n), no recursion, no heap allocation.
+ */
+static struct silofs_list_head *
+list_build_pending(struct silofs_list_head *lst,
+                   struct silofs_list_head **pending,
+                   silofs_list_head_cmp_fn cmp_fn)
+{
+	struct silofs_list_head *lh;
+	size_t top = 0;
+
+	lh = silofs_list_pop_front(lst);
+	while (lh != nullptr) {
+		size_t i = 0;
+
+		lh->next = nullptr;
+		while (pending[i]) {
+			lh           = list_merge(pending[i], lh, cmp_fn);
+			pending[i++] = nullptr;
+		}
+		pending[i] = lh;
+		if (i == top) {
+			top++;
+		}
+		lh = silofs_list_pop_front(lst);
+	}
+	return list_merge_pending(pending, top, cmp_fn);
+}
+
+static void
+list_sort(struct silofs_list_head *lst, silofs_list_head_cmp_fn cmp_fn)
+{
+	struct silofs_list_head *pending[32] = { nullptr };
+	struct silofs_list_head *sorted;
+
+	sorted = list_build_pending(lst, pending, cmp_fn);
+	list_reattach_to_sentinel(lst, sorted);
+}
+
+void silofs_list_sort(struct silofs_list_head *lst,
+                      silofs_list_head_cmp_fn cmp_fn)
+{
+	if (!silofs_list_isempty(lst)) {
+		list_sort(lst, cmp_fn);
+	}
+}
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 void silofs_listq_init(struct silofs_listq *lsq)
 {

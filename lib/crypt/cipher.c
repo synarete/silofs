@@ -19,7 +19,7 @@
 #include <gcrypt.h>
 
 #include <silofs/base.h>
-#include <silofs/crypto.h>
+#include <silofs/crypt.h>
 
 #define SILOFS_CIPHER_ALGO_DEFAULT SILOFS_CIPHER_AES256
 #define SILOFS_CIPHER_MODE_DEFAULT SILOFS_CIPHER_MODE_GCM

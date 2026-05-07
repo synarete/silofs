@@ -19,7 +19,7 @@
 #include <string.h>
 #include <errno.h>
 
-#include <silofs/crypto.h>
+#include <silofs/crypt.h>
 
 static size_t do_getentropy(void *buf, size_t len)
 {

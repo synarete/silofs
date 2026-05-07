@@ -23,7 +23,7 @@
 #include <silofs/types.h>
 #include <silofs/base.h>
 #include <silofs/str.h>
-#include <silofs/crypto.h>
+#include <silofs/crypt.h>
 
 static int check_password_len(size_t len)
 {

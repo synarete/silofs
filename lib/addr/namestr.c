@@ -20,7 +20,7 @@
 
 #include <silofs/base.h>
 #include <silofs/str.h>
-#include <silofs/crypto.h>
+#include <silofs/crypt.h>
 #include <silofs/addr.h>
 
 static int check_name_len(const struct silofs_strview *sv)

@@ -18,7 +18,7 @@
 #define SILOFS_PV_H_
 
 #include <silofs/base.h>
-#include <silofs/crypto.h>
+#include <silofs/crypt.h>
 #include <silofs/addr.h>
 #include <silofs/nodes.h>
 

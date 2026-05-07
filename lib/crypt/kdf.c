@@ -16,7 +16,7 @@
  */
 #include <silofs/configs.h>
 #include <silofs/errors.h>
-#include <silofs/crypto.h>
+#include <silofs/crypt.h>
 
 static int derive_key(const struct silofs_mdigest_hd *md_hd, //
                       const struct silofs_password *pw,      //

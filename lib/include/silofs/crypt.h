@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_CRYPTO_H_
-#define SILOFS_CRYPTO_H_
+#ifndef SILOFS_CRYPT_H_
+#define SILOFS_CRYPT_H_
 
 #include <stdlib.h>
 #include <stdint.h>
@@ -308,4 +308,4 @@ int silofs_gcrypt_status_(gcry_error_t gcry_err, const char *fn,
 #define silofs_gcrypt_status(gcry_err_, fn_) \
 	silofs_gcrypt_status_(gcry_err_, fn_, SILOFS_FL_LN_)
 
-#endif /* SILOFS_CRYPTO_H_ */
+#endif /* SILOFS_CRYPT_H_ */

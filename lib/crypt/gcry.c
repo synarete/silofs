@@ -16,7 +16,7 @@
  */
 #include <silofs/configs.h>
 #include <silofs/errors.h>
-#include <silofs/crypto.h>
+#include <silofs/crypt.h>
 
 enum {
 	SILOFS_SECMEM_SIZE = 64L * SILOFS_KILO,

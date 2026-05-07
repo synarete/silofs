@@ -20,7 +20,7 @@
 #include <silofs/ondisk.h>
 #include <silofs/errors.h>
 #include <silofs/base.h>
-#include <silofs/crypto.h>
+#include <silofs/crypt.h>
 
 int silofs_mdigest_init(struct silofs_mdigest_hd *md_hd)
 {

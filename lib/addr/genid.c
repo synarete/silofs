@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/crypto.h>
+#include <silofs/crypt.h>
 #include <silofs/addr.h>
 
 static void take_grandom(void *p, size_t n)

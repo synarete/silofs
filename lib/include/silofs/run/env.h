@@ -19,7 +19,7 @@
 
 #include <silofs/appexec.h>
 #include <silofs/base.h>
-#include <silofs/crypto.h>
+#include <silofs/crypt.h>
 #include <silofs/addr.h>
 #include <silofs/pv.h>
 #include <silofs/fs.h>

@@ -25,7 +25,7 @@
 #include <silofs/ondisk.h>
 #include <silofs/errors.h>
 #include <silofs/str.h>
-#include <silofs/crypto.h>
+#include <silofs/crypt.h>
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* offlba */

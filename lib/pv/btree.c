@@ -19,7 +19,6 @@
 #include <silofs/ondisk.h>
 #include <silofs/addr.h>
 #include <silofs/nodes.h>
-
 #include <silofs/pv.h>
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -387,21 +386,6 @@ static int btc_stage_full_path(struct silofs_btree_ctx *btc)
 	return 0;
 }
 
-static void btc_update_staged_path(const struct silofs_btree_ctx *btc)
-{
-	struct silofs_btnode_info *bti;
-
-	for (size_t slot = 1; slot < btc->bpath.cnt; ++slot) {
-		struct silofs_btnode_info *bti_parent;
-
-		bti        = btc_path_btnode_at(btc, slot);
-		bti_parent = btc_path_btnode_at(btc, slot - 1);
-		bti_set_parent(bti, bti_paddr(bti_parent));
-	}
-	bti = btc_path_front(btc);
-	bti_set_parent(bti, ubi_paddr(btc->ubi));
-}
-
 static int btc_stage_path(struct silofs_btree_ctx *btc)
 {
 	int err;
@@ -414,7 +398,31 @@ static int btc_stage_path(struct silofs_btree_ctx *btc)
 	if (err) {
 		return err;
 	}
-	btc_update_staged_path(btc);
+	return 0;
+}
+
+static void btc_refresh_parents(const struct silofs_btree_ctx *btc)
+{
+	struct silofs_btnode_info *bti, *bti_parent;
+
+	for (size_t slot = 1; slot < btc->bpath.cnt; ++slot) {
+		bti        = btc_path_btnode_at(btc, slot);
+		bti_parent = btc_path_btnode_at(btc, slot - 1);
+		bti_set_parent(bti, bti_paddr(bti_parent));
+	}
+	bti = btc_path_front(btc);
+	bti_set_parent(bti, ubi_paddr(btc->ubi));
+}
+
+static int btc_stage_and_refresh(struct silofs_btree_ctx *btc)
+{
+	int err;
+
+	err = btc_stage_path(btc);
+	if (err) {
+		return err;
+	}
+	btc_refresh_parents(btc);
 	return 0;
 }
 
@@ -721,7 +729,7 @@ btc_resolve_vtop(struct silofs_btree_ctx *btc, struct silofs_pnptr *out_pnptr)
 	const struct silofs_btnode_info *bti = nullptr;
 	int err;
 
-	err = btc_stage_path(btc);
+	err = btc_stage_and_refresh(btc);
 	if (err) {
 		return err;
 	}
@@ -752,6 +760,7 @@ static int btc_require_cap_insert(struct silofs_btree_ctx *btc)
 	if (err) {
 		return err;
 	}
+	btc_refresh_parents(btc);
 	return 0;
 }
 
@@ -796,6 +805,7 @@ static int btc_require_cap_update(struct silofs_btree_ctx *btc)
 	if (err) {
 		return err;
 	}
+	btc_refresh_parents(btc);
 	return 0;
 }
 
@@ -840,6 +850,7 @@ static int btc_require_cap_remove(struct silofs_btree_ctx *btc)
 	if (err) {
 		return err;
 	}
+	btc_refresh_parents(btc);
 	return 0;
 }
 

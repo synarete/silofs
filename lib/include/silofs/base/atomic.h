@@ -19,6 +19,10 @@
 
 #include <stdatomic.h>
 
+#define silofs_atomic _Atomic
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 static inline int silofs_atomic_get(const int *ptr)
 {
 	return __atomic_load_n(ptr, memory_order_acquire);

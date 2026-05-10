@@ -42,16 +42,14 @@ void silofs_generate_civ(struct silofs_prandgen *prng,
 void silofs_generate_ckey(struct silofs_prandgen *prng,
                           struct silofs_ckey *out_ckey)
 {
-	uint8_t *p = out_ckey->key;
-	size_t n   = sizeof(out_ckey->key);
+	constexpr size_t n = sizeof(out_ckey->key);
+	uint8_t *p         = out_ckey->key;
 
-	if (likely(n > 16)) {
-		take_grandom(p, 16);
-		take_prandom(prng, p + 16, n - 16);
-		feed_prandom(prng, p, 16);
-	} else {
-		take_prandom(prng, p, n);
-	}
+	STATICASSERT_GT(n, 16);
+
+	take_grandom(p, 16);
+	take_prandom(prng, p + 16, n - 16);
+	feed_prandom(prng, p, 16);
 }
 
 void silofs_generate_uniqid(struct silofs_prandgen *prng,

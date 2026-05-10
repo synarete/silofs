@@ -41,7 +41,7 @@ static struct silofs_hmapq_elem *pni_to_hmqe(struct silofs_pnode_info *pni)
 	return &pni->pn_hmqe;
 }
 
-static struct silofs_pnode_info *pni_from_dqe(const struct silofs_dq_elem *dqe)
+struct silofs_pnode_info *silofs_pni_from_dqe(const struct silofs_dq_elem *dqe)
 {
 	const struct silofs_hmapq_elem *hmqe;
 
@@ -366,5 +366,5 @@ silofs_pcache_dq_front(const struct silofs_pcache *pcache)
 	struct silofs_dq_elem *dqe;
 
 	dqe = silofs_dirtyq_front(&pcache->pc_dirtyq);
-	return pni_from_dqe(dqe);
+	return silofs_pni_from_dqe(dqe);
 }

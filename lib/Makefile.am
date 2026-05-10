@@ -83,6 +83,7 @@ libsilofs_la_SOURCES += pv/bldesc.c
 libsilofs_la_SOURCES += pv/btnode.c
 libsilofs_la_SOURCES += pv/btree.c
 libsilofs_la_SOURCES += pv/carve.c
+libsilofs_la_SOURCES += pv/dstgq.c
 libsilofs_la_SOURCES += pv/dstor.c
 libsilofs_la_SOURCES += pv/format.c
 libsilofs_la_SOURCES += pv/repo.c

@@ -49,6 +49,7 @@ pni_init(struct silofs_pnode_info *pni, const struct silofs_pnptr *pnptr)
 	silofs_pnptr_assign(&pni->pn_self, pnptr);
 	silofs_paddr_reset(&pni->pn_parent);
 	silofs_hmqe_init(&pni->pn_hmqe, pnptr_size(pnptr));
+	silofs_list_head_init(&pni->pn_dsq_lh);
 	silofs_hkey_by_paddr(&pni->pn_hmqe.hme_key, &pni->pn_self.paddr);
 	pni->pn_pview = nullptr;
 	pni->pn_flags = SILOFS_PNODEF_NONE;
@@ -58,6 +59,7 @@ static void pni_fini(struct silofs_pnode_info *pni)
 {
 	silofs_pnptr_reset(&pni->pn_self);
 	silofs_paddr_reset(&pni->pn_parent);
+	silofs_list_head_fini(&pni->pn_dsq_lh);
 	silofs_hmqe_fini(&pni->pn_hmqe);
 	pni->pn_pview = nullptr;
 }

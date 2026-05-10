@@ -280,6 +280,7 @@ struct silofs_pnode_info {
 	struct silofs_pnptr      pn_self;
 	struct silofs_paddr      pn_parent;
 	struct silofs_hmapq_elem pn_hmqe;
+	struct silofs_list_head  pn_dsq_lh;
 	struct silofs_pview     *pn_pview;
 	unsigned int             pn_flags;
 };
@@ -340,6 +341,9 @@ silofs_pni_nmeta(const struct silofs_pnode_info *pni);
 
 const struct silofs_civkey *
 silofs_pni_civkey(const struct silofs_pnode_info *pni);
+
+struct silofs_pnode_info *
+silofs_pni_from_dqe(const struct silofs_dq_elem *dqe);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

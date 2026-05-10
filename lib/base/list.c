@@ -155,8 +155,8 @@ static struct silofs_list_head *
 list_merge(struct silofs_list_head *lst_a, struct silofs_list_head *lst_b,
            silofs_list_head_cmp_fn cmp_fn)
 {
-	struct silofs_list_head result;
-	struct silofs_list_head *tail = &result;
+	struct silofs_list_head result = {};
+	struct silofs_list_head *tail  = &result;
 
 	while ((lst_a != nullptr) && (lst_b != nullptr)) {
 		if (cmp_fn(lst_a, lst_b) <= 0) {

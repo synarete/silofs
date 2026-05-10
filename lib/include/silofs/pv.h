@@ -552,6 +552,14 @@ int silofs_require_paddr(struct silofs_pexec_ctx   *pexec,
 int silofs_destage_dirty(struct silofs_pexec_ctx *pexec);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+/* dstgq */
+
+int silofs_popoulate_dsq(const struct silofs_pexec_ctx *pexec,
+                         struct silofs_listq           *dsq);
+
+void silofs_cleanup_dsq(struct silofs_listq *dsq, bool cleardirty);
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* vspace */
 
 int silofs_claim_free_vspace(struct silofs_pexec_ctx *pexec,

@@ -507,3 +507,56 @@ int silofs_decrypt_pview(const struct silofs_cipher_hd *ci_hd,
 
 	return silofs_decrypt(&ed_ctx);
 }
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+static void dsqe_init(struct silofs_dsq_elem *dsqe)
+{
+	silofs_list_head_init(&dsqe->lh);
+	dsqe->inq = false;
+}
+
+static void dsqe_fini(struct silofs_dsq_elem *dsqe)
+{
+	silofs_assert_eq(dsqe->inq, false);
+	silofs_list_head_fini(&dsqe->lh);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_ni_init(struct silofs_node_info *ni, size_t view_size)
+{
+	silofs_assert_gt(view_size, 0);
+	silofs_assert_le(view_size, 65536);
+
+	silofs_hmqe_init(&ni->hmqe, view_size);
+	dsqe_init(&ni->dsqe);
+	ni->view.opaque_view     = nullptr;
+	ni->view_enc.opaque_view = nullptr;
+}
+
+void silofs_ni_fini(struct silofs_node_info *ni)
+{
+	silofs_hmqe_fini(&ni->hmqe);
+	dsqe_fini(&ni->dsqe);
+}
+
+void silofs_ni_incref(struct silofs_node_info *ni)
+{
+	silofs_hmqe_incref(&ni->hmqe);
+}
+
+void silofs_ni_decref(struct silofs_node_info *ni)
+{
+	silofs_hmqe_decref(&ni->hmqe);
+}
+
+struct silofs_node_info *silofs_ni_from_hmqe(struct silofs_hmapq_elem *hmqe)
+{
+	struct silofs_node_info *ni = nullptr;
+
+	if (hmqe != nullptr) {
+		ni = silofs_container_of(hmqe, struct silofs_node_info, hmqe);
+	}
+	return ni;
+}

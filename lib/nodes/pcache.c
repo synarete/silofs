@@ -36,7 +36,7 @@ pni_from_hmqe(const struct silofs_hmapq_elem *hmqe)
 	return pni_unconst(pni);
 }
 
-static struct silofs_hmapq_elem *pni_to_hmqe(struct silofs_pnode_info *pni)
+static struct silofs_hmapq_elem *pni_to_mut_hmqe(struct silofs_pnode_info *pni)
 {
 	return &pni->pn_hmqe;
 }
@@ -139,7 +139,7 @@ pcache_promote(struct silofs_pcache *pcache, struct silofs_pnode_info *pni)
 	struct silofs_hmapq *hmapq = pcache_hmapq_of2(pcache, pni);
 
 	if (likely(hmapq != nullptr)) {
-		silofs_hmapq_promote(hmapq, pni_to_hmqe(pni), false);
+		silofs_hmapq_promote(hmapq, pni_to_mut_hmqe(pni), false);
 	}
 }
 
@@ -162,7 +162,7 @@ pcache_map(struct silofs_pcache *pcache, struct silofs_pnode_info *pni)
 	struct silofs_hmapq *hmapq = pcache_hmapq_of2(pcache, pni);
 
 	if (likely(hmapq != nullptr)) {
-		silofs_hmapq_store(hmapq, pni_to_hmqe(pni));
+		silofs_hmapq_store(hmapq, pni_to_mut_hmqe(pni));
 	}
 }
 
@@ -172,7 +172,7 @@ pcache_unmap(struct silofs_pcache *pcache, struct silofs_pnode_info *pni)
 	struct silofs_hmapq *hmapq = pcache_hmapq_of2(pcache, pni);
 
 	if (likely(hmapq != nullptr)) {
-		silofs_hmapq_remove(hmapq, pni_to_hmqe(pni));
+		silofs_hmapq_remove(hmapq, pni_to_mut_hmqe(pni));
 	}
 }
 

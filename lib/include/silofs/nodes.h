@@ -191,7 +191,7 @@ void silofs_del_lh_array(struct silofs_list_head *lista, size_t nelems,
                          struct silofs_alloc *alloc);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-/* view */
+/* nview */
 
 void silofs_hdr_setup(struct silofs_header *hdr, uint8_t stype,
                       enum silofs_hdrf flags);
@@ -266,6 +266,39 @@ int silofs_decrypt_pview(const struct silofs_cipher_hd *ci_hd,
                          const struct silofs_pview     *pview_in,
                          struct silofs_pview *pview_out, size_t pview_len);
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+/* union of all sub view */
+union silofs_view {
+	struct silofs_pview *pview;
+	struct silofs_lview *lview;
+	void                *opaque_view;
+};
+
+/* destage-queue elem */
+struct silofs_dsq_elem {
+	struct silofs_list_head lh;
+	bool                    inq;
+};
+
+/* base of all in-memory node representations */
+struct silofs_node_info {
+	struct silofs_hmapq_elem hmqe;
+	struct silofs_dsq_elem   dsqe;
+	union silofs_view        view;
+	union silofs_view        view_enc;
+};
+
+void silofs_ni_init(struct silofs_node_info *ni, size_t view_size);
+
+void silofs_ni_fini(struct silofs_node_info *ni);
+
+void silofs_ni_incref(struct silofs_node_info *ni);
+
+void silofs_ni_decref(struct silofs_node_info *ni);
+
+struct silofs_node_info *silofs_ni_from_hmqe(struct silofs_hmapq_elem *hmqe);
+
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* pnodes */
 
@@ -277,6 +310,7 @@ enum silofs_pnodef {
 
 /* base of all persistent nodes */
 struct silofs_pnode_info {
+	struct silofs_node_info  pn_base;
 	struct silofs_pnptr      pn_self;
 	struct silofs_paddr      pn_parent;
 	struct silofs_hmapq_elem pn_hmqe;

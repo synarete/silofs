@@ -67,21 +67,6 @@ static size_t vni_len(const struct silofs_vnode_info *vni)
 	return vaddr_len(silofs_vni_vaddr(vni));
 }
 
-static const struct silofs_civkey *
-vni_civkey(const struct silofs_vnode_info *vni)
-{
-	silofs_assert(vni->vn_has_pn);
-
-	return &vni->vn_pnptr.nmeta.civkey;
-}
-
-static const struct silofs_blobid *vni_blobid(struct silofs_vnode_info *vni)
-{
-	silofs_assert(vni->vn_has_pn);
-
-	return &vni->vn_pnptr.paddr.blobid;
-}
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void *stc_memalloc(struct silofs_stage_ctx *st_ctx, size_t n)
@@ -653,13 +638,10 @@ static int stc_create_cached_vnode(const struct silofs_stage_ctx *st_ctx,
 	return (*out_vni == nullptr) ? -SILOFS_ENOMEM : 0;
 }
 
-static void stc_update_vnode_with(const struct silofs_stage_ctx *st_ctx,
-                                  struct silofs_vnode_info *vni,
-                                  const struct silofs_pnptr *pnptr)
+static void stc_rebind_vnode(const struct silofs_stage_ctx *st_ctx,
+                             struct silofs_vnode_info *vni)
 {
-	silofs_pnptr_assign(&vni->vn_pnptr, pnptr);
 	vni->vn_has_pn = true;
-
 	silofs_vcache_rebind_vnode(st_ctx->vcache, vni);
 }
 
@@ -667,8 +649,10 @@ static void stc_update_spawned_vnode(const struct silofs_stage_ctx *st_ctx,
                                      struct silofs_vnode_info *vni,
                                      const struct silofs_pnptr *pnptr)
 {
-	stc_update_vnode_with(st_ctx, vni, pnptr);
-	silofs_ubi_inc_count_by(stc_ubi(st_ctx), vni_blobid(vni));
+	const struct silofs_blobid *blobid = &pnptr->paddr.blobid;
+
+	stc_rebind_vnode(st_ctx, vni);
+	silofs_ubi_inc_count_by(stc_ubi(st_ctx), blobid);
 }
 
 static int stc_spawn_vnode(const struct silofs_stage_ctx *st_ctx,
@@ -793,7 +777,7 @@ static int stc_stage_vnode(struct silofs_stage_ctx *st_ctx,
 		silofs_assert_ok(err);
 		return err;
 	}
-	stc_update_vnode_with(st_ctx, vni, pnptr);
+	stc_rebind_vnode(st_ctx, vni);
 out_ok:
 	*out_vni = vni;
 	return 0;
@@ -876,44 +860,59 @@ static int stc_write_lview_at(struct silofs_stage_ctx *st_ctx,
 }
 
 static int stc_write_vnode(struct silofs_stage_ctx *st_ctx,
-                           const struct silofs_vnode_info *vni)
+                           const struct silofs_vnode_info *vni,
+                           const struct silofs_pnptr *pnptr)
 {
-	const struct silofs_paddr *paddr = &vni->vn_pnptr.paddr;
-
 	silofs_assert(vni->vn_has_pn);
 
-	return stc_write_lview_at(st_ctx, paddr, vni_len(vni));
+	return stc_write_lview_at(st_ctx, &pnptr->paddr, vni_len(vni));
 }
 
 static int stc_encrypt_lview_of(struct silofs_stage_ctx *st_ctx,
-                                const struct silofs_vnode_info *vni)
+                                const struct silofs_vnode_info *vni,
+                                const struct silofs_civkey *civkey)
 {
-	return silofs_encrypt_lview2(st_ctx->enc_ci_hd, vni_civkey(vni),
+	return silofs_encrypt_lview2(st_ctx->enc_ci_hd, civkey,
 	                             vni->vn_lni.ln_view, st_ctx->lview,
 	                             vni_len(vni));
 }
 
+static int stc_resolve_pnptr_of(const struct silofs_stage_ctx *st_ctx,
+                                const struct silofs_vnode_info *vni,
+                                struct silofs_pnptr *out_pnptr)
+{
+	const struct silofs_vaddr *vaddr = silofs_vni_vaddr(vni);
+
+	return silofs_resolve_vtop_mapping(st_ctx->pexec, vaddr, out_pnptr);
+}
+
 static int stc_seal_encrypt_vnode(struct silofs_stage_ctx *st_ctx,
-                                  struct silofs_vnode_info *vni)
+                                  struct silofs_vnode_info *vni,
+                                  const struct silofs_pnptr *pnptr)
 {
 	silofs_seal_vnode(vni);
-	return stc_encrypt_lview_of(st_ctx, vni);
+	return stc_encrypt_lview_of(st_ctx, vni, &pnptr->nmeta.civkey);
 }
 
 static int stc_destage_dirty_vnode(struct silofs_stage_ctx *st_ctx,
                                    struct silofs_vnode_info *vni)
 {
+	struct silofs_pnptr pnptr;
 	int err;
 
 	err = stc_require_lview(st_ctx);
 	if (err) {
 		return err;
 	}
-	err = stc_seal_encrypt_vnode(st_ctx, vni);
+	err = stc_resolve_pnptr_of(st_ctx, vni, &pnptr);
 	if (err) {
 		return err;
 	}
-	err = stc_write_vnode(st_ctx, vni);
+	err = stc_seal_encrypt_vnode(st_ctx, vni, &pnptr);
+	if (err) {
+		return err;
+	}
+	err = stc_write_vnode(st_ctx, vni, &pnptr);
 	if (err) {
 		return err;
 	}

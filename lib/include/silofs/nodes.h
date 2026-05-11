@@ -47,6 +47,9 @@ struct silofs_destageq {
 	struct silofs_listq dsq;
 };
 
+typedef int (*silofs_dqe_compare_fn)(const struct silofs_dq_elem *dqe1,
+                                     const struct silofs_dq_elem *dqe2);
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_dqe_init(struct silofs_dq_elem *dqe, size_t sz);
@@ -83,6 +86,9 @@ void silofs_destageq_populate(struct silofs_destageq     *dsq,
                               const struct silofs_dirtyq *drq);
 
 void silofs_destageq_depopulate(struct silofs_destageq *dsq, bool cleardirty);
+
+void silofs_destageq_sort(struct silofs_destageq *dsq,
+                          silofs_dqe_compare_fn   dqe_cmp_fn);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* hmapq */

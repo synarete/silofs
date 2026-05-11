@@ -152,10 +152,10 @@ bool silofs_list_isempty(const struct silofs_list_head *lst)
  * 3-way compare of two list elements, via their list_head ref.
  */
 static int
-compare(const struct silofs_list_cmp_fn *cmp,
+compare(const struct silofs_list_functor *fn,
         const struct silofs_list_head *lh1, const struct silofs_list_head *lh2)
 {
-	return cmp->compare_fn(cmp, lh1, lh2);
+	return fn->compare_fn(fn, lh1, lh2);
 }
 
 /*
@@ -163,7 +163,7 @@ compare(const struct silofs_list_cmp_fn *cmp,
  */
 static struct silofs_list_head *
 list_merge(struct silofs_list_head *lst_a, struct silofs_list_head *lst_b,
-           const struct silofs_list_cmp_fn *cmp)
+           const struct silofs_list_functor *cmp)
 {
 	struct silofs_list_head result = {};
 	struct silofs_list_head *tail  = &result;
@@ -188,7 +188,7 @@ list_merge(struct silofs_list_head *lst_a, struct silofs_list_head *lst_b,
 
 static struct silofs_list_head *
 list_merge_pending(struct silofs_list_head **pending, size_t top,
-                   const struct silofs_list_cmp_fn *cmp)
+                   const struct silofs_list_functor *cmp)
 {
 	struct silofs_list_head *result = nullptr;
 
@@ -238,7 +238,7 @@ static void list_reattach_to_sentinel(struct silofs_list_head *lst,
 static struct silofs_list_head *
 list_build_pending(struct silofs_list_head *lst,
                    struct silofs_list_head **pending,
-                   const struct silofs_list_cmp_fn *cmp)
+                   const struct silofs_list_functor *fn)
 {
 	struct silofs_list_head *lh;
 	size_t top = 0;
@@ -256,7 +256,7 @@ list_build_pending(struct silofs_list_head *lst,
 		lh->prev  = nullptr;
 
 		while (pending[i]) {
-			lh = list_merge(pending[i], lh, cmp);
+			lh = list_merge(pending[i], lh, fn);
 
 			pending[i++] = nullptr;
 		}
@@ -265,26 +265,26 @@ list_build_pending(struct silofs_list_head *lst,
 			top++;
 		}
 	}
-	return list_merge_pending(pending, top, cmp);
+	return list_merge_pending(pending, top, fn);
 }
 
 static void
-list_sort(struct silofs_list_head *lst, const struct silofs_list_cmp_fn *cmp)
+list_sort(struct silofs_list_head *lst, const struct silofs_list_functor *fn)
 {
 	struct silofs_list_head *pending[32] = { nullptr };
 	struct silofs_list_head *sorted;
 
-	sorted = list_build_pending(lst, pending, cmp);
+	sorted = list_build_pending(lst, pending, fn);
 	if (sorted != nullptr) {
 		list_reattach_to_sentinel(lst, sorted);
 	}
 }
 
 void silofs_list_sort(struct silofs_list_head *lst,
-                      const struct silofs_list_cmp_fn *cmp)
+                      const struct silofs_list_functor *fn)
 {
 	if (!silofs_list_isempty(lst)) {
-		list_sort(lst, cmp);
+		list_sort(lst, fn);
 	}
 }
 

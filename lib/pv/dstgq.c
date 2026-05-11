@@ -78,7 +78,7 @@ fill_dstgq(const struct silofs_pexec_ctx *pexec, struct silofs_listq *dsq)
 	}
 }
 
-static int compare_pnodes(const struct silofs_list_cmp_fn *self,
+static int compare_pnodes(const struct silofs_list_functor *self,
                           const struct silofs_list_head *dsq_lh1,
                           const struct silofs_list_head *dsq_lh2)
 {
@@ -93,7 +93,7 @@ static int compare_pnodes(const struct silofs_list_cmp_fn *self,
 
 static void sort_dstgq(struct silofs_listq *dsq)
 {
-	const struct silofs_list_cmp_fn cmp = {
+	const struct silofs_list_functor cmp = {
 		.compare_fn = compare_pnodes,
 	};
 

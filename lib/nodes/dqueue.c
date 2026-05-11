@@ -89,12 +89,23 @@ static struct silofs_dq_elem *dqe_from_drq_lh(struct silofs_list_head *lh)
 	return dqe;
 }
 
-static struct silofs_dq_elem *dqe_from_dsq_lh(struct silofs_list_head *lh)
+static struct silofs_dq_elem *dqe_from_mut_dsq_lh(struct silofs_list_head *lh)
 {
 	struct silofs_dq_elem *dqe = nullptr;
 
 	if (lh != nullptr) {
 		dqe = mut_container_of(lh, struct silofs_dq_elem, dsq_lh);
+	}
+	return dqe;
+}
+
+static const struct silofs_dq_elem *
+dqe_from_dsq_lh(const struct silofs_list_head *lh)
+{
+	const struct silofs_dq_elem *dqe = nullptr;
+
+	if (lh != nullptr) {
+		dqe = container_of(lh, struct silofs_dq_elem, dsq_lh);
 	}
 	return dqe;
 }
@@ -175,7 +186,7 @@ static struct silofs_dq_elem *destageq_pop_front(struct silofs_destageq *dsq)
 
 	lh = silofs_listq_pop_front(&dsq->dsq);
 	if (lh != nullptr) {
-		dqe         = dqe_from_dsq_lh(lh);
+		dqe         = dqe_from_mut_dsq_lh(lh);
 		dqe->in_dsq = false;
 	}
 	return dqe;
@@ -204,4 +215,37 @@ void silofs_destageq_depopulate(struct silofs_destageq *dsq, bool cleardirty)
 		}
 		dqe = destageq_pop_front(dsq);
 	}
+}
+
+struct silofs_dqe_functor {
+	struct silofs_list_functor lsfn;
+	silofs_dqe_compare_fn dqe_cmp_fn;
+};
+
+static const struct silofs_dqe_functor *
+dqfn_of(const struct silofs_list_functor *lsfn)
+{
+	return container_of(lsfn, struct silofs_dqe_functor, lsfn);
+}
+
+static int dqe_compare_by(const struct silofs_list_functor *lsfn,
+                          const struct silofs_list_head *lh1,
+                          const struct silofs_list_head *lh2)
+{
+	const struct silofs_dqe_functor *dqfn = dqfn_of(lsfn);
+	const struct silofs_dq_elem *dqe1     = dqe_from_dsq_lh(lh1);
+	const struct silofs_dq_elem *dqe2     = dqe_from_dsq_lh(lh2);
+
+	return dqfn->dqe_cmp_fn(dqe1, dqe2);
+}
+
+void silofs_destageq_sort(struct silofs_destageq *dsq,
+                          silofs_dqe_compare_fn dqe_cmp_fn)
+{
+	struct silofs_dqe_functor dqfn = {
+		.lsfn.compare_fn = dqe_compare_by,
+		.dqe_cmp_fn      = dqe_cmp_fn,
+	};
+
+	silofs_list_sort(&dsq->dsq.ls, &dqfn.lsfn);
 }

@@ -20,12 +20,9 @@
 #include <silofs/addr.h>
 
 static const struct silofs_paddr s_paddr_none = {
-	.ptype   = SILOFS_PTYPE_NONE,
-	.pos     = SILOFS_OFF_NULL,
-	.uniq_id = 0,
+	.ptype = SILOFS_PTYPE_NONE,
+	.pos   = SILOFS_OFF_NULL,
 };
-
-static silofs_atomic uint64_t s_paddr_uniq_id = 1;
 
 const struct silofs_paddr *silofs_paddr_none(void)
 {
@@ -36,9 +33,8 @@ void silofs_paddr_init(struct silofs_paddr *paddr,
                        const struct silofs_blobid *blobid, off_t pos)
 {
 	silofs_blobid_assign(&paddr->blobid, blobid);
-	paddr->pos     = pos;
-	paddr->ptype   = blobid->stype.ptype;
-	paddr->uniq_id = ++s_paddr_uniq_id;
+	paddr->pos   = pos;
+	paddr->ptype = blobid->stype.ptype;
 }
 
 void silofs_paddr_fini(struct silofs_paddr *paddr)
@@ -49,20 +45,16 @@ void silofs_paddr_fini(struct silofs_paddr *paddr)
 void silofs_paddr_reset(struct silofs_paddr *paddr)
 {
 	silofs_blobid_reset(&paddr->blobid);
-	paddr->pos     = SILOFS_OFF_NULL;
-	paddr->ptype   = SILOFS_PTYPE_NONE;
-	paddr->uniq_id = 0;
+	paddr->pos   = SILOFS_OFF_NULL;
+	paddr->ptype = SILOFS_PTYPE_NONE;
 }
 
 void silofs_paddr_assign(struct silofs_paddr *paddr,
                          const struct silofs_paddr *other)
 {
-	if (paddr->uniq_id != other->uniq_id) {
-		silofs_blobid_assign(&paddr->blobid, &other->blobid);
-		paddr->pos     = other->pos;
-		paddr->ptype   = other->ptype;
-		paddr->uniq_id = other->uniq_id;
-	}
+	silofs_blobid_assign(&paddr->blobid, &other->blobid);
+	paddr->pos   = other->pos;
+	paddr->ptype = other->ptype;
 }
 
 bool silofs_paddr_isequal(const struct silofs_paddr *paddr,
@@ -70,10 +62,7 @@ bool silofs_paddr_isequal(const struct silofs_paddr *paddr,
 {
 	bool ret = false;
 
-	if (paddr->uniq_id == other->uniq_id) {
-		ret = true;
-	} else if ((paddr->ptype == other->ptype) &&
-	           (paddr->pos == other->pos)) {
+	if ((paddr->ptype == other->ptype) && (paddr->pos == other->pos)) {
 		ret = silofs_blobid_isequal(&paddr->blobid, &other->blobid);
 	}
 	return ret;
@@ -89,8 +78,9 @@ long silofs_paddr_compare(const struct silofs_paddr *paddr,
 {
 	long cmp;
 
-	if (paddr->uniq_id == other->uniq_id) {
-		return 0; /* equal */
+	cmp = (long)(paddr->ptype - other->ptype);
+	if (cmp) {
+		return cmp;
 	}
 	cmp = (long)(paddr->pos - other->pos);
 	if (cmp) {
@@ -135,6 +125,4 @@ void silofs_paddr64b_xtoh(const struct silofs_paddr64b *paddr64,
 	silofs_blobid56b_xtoh(&paddr64->blobid56b, &paddr->blobid);
 	paddr->pos   = silofs_off_to_cpu(paddr64->pos);
 	paddr->ptype = paddr->blobid.stype.ptype;
-	/* in-memory only */
-	paddr->uniq_id = ++s_paddr_uniq_id;
 }

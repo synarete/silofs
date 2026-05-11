@@ -254,8 +254,6 @@ struct silofs_paddr {
 	struct silofs_blobid blobid;
 	off_t                pos;
 	enum silofs_ptype    ptype;
-	/* global unique id to avoid costly operations */
-	uint64_t uniq_id;
 };
 
 const struct silofs_paddr *silofs_paddr_none(void);

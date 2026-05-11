@@ -413,7 +413,7 @@ ubi_set_btroot(struct silofs_uber_info *ubi, enum silofs_vtype vtype,
 static bool ubi_has_btroot(const struct silofs_uber_info *ubi,
                            const struct silofs_pnptr *pnptr)
 {
-	struct silofs_btnptr btnptr;
+	struct silofs_btnptr btnptr    = {};
 	const enum silofs_vtype vspace = pnptr->paddr.blobid.stype.vtype;
 
 	silofs_ubi_btroot_of(ubi, vspace, &btnptr);
@@ -423,7 +423,7 @@ static bool ubi_has_btroot(const struct silofs_uber_info *ubi,
 void silofs_ubi_set_btroot_by(struct silofs_uber_info *ubi,
                               const struct silofs_btnode_info *bti)
 {
-	struct silofs_btnptr btnptr;
+	struct silofs_btnptr btnptr = {};
 
 	silofs_bti_self(bti, &btnptr);
 	if (!ubi_has_btroot(ubi, &btnptr.base)) {

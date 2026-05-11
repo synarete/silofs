@@ -191,25 +191,25 @@ lni_dqe2(const struct silofs_lnode_info *lni)
 
 static void lni_set_dq(struct silofs_lnode_info *lni, struct silofs_dirtyq *dq)
 {
-	silofs_dqe_setq(lni_dqe(lni), dq);
+	silofs_dqe_set_dirtyq(lni_dqe(lni), dq);
 }
 
 bool silofs_lni_isdirty(const struct silofs_lnode_info *lni)
 {
-	return silofs_dqe_is_dirty(lni_dqe2(lni));
+	return silofs_dqe_isdirty(lni_dqe2(lni));
 }
 
 void silofs_lni_markdirty(struct silofs_lnode_info *lni)
 {
 	if (!silofs_lni_isdirty(lni)) {
-		silofs_dqe_enqueue(lni_dqe(lni));
+		silofs_dqe_markdirty(lni_dqe(lni));
 	}
 }
 
 void silofs_lni_cleardirty(struct silofs_lnode_info *lni)
 {
 	if (silofs_lni_isdirty(lni)) {
-		silofs_dqe_dequeue(lni_dqe(lni));
+		silofs_dqe_cleardirty(lni_dqe(lni));
 	}
 }
 
@@ -927,8 +927,7 @@ ii_init(struct silofs_inode_info *ii, const struct silofs_vaddr *vaddr,
 
 static void ii_fini(struct silofs_inode_info *ii)
 {
-	silofs_assert_eq(ii->i_dq_vnis.dq.sz, 0);
-	silofs_assert_eq(ii->i_dq_vnis.dq_accum, 0);
+	silofs_assert_eq(ii->i_dq_vnis.drq.sz, 0);
 	silofs_assert(!ii->i_in_looseq);
 	silofs_assert_null(ii->i_looseq_next);
 
@@ -975,7 +974,7 @@ ii_new(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 static void
 ii_del(struct silofs_inode_info *ii, struct silofs_alloc *alloc, int flags)
 {
-	silofs_assert_eq(ii->i_dq_vnis.dq.sz, 0);
+	silofs_assert_eq(ii->i_dq_vnis.drq.sz, 0);
 	silofs_assert_ge(ii->i_nopen, 0);
 
 	vni_del_lview(&ii->i_vni, alloc, flags);

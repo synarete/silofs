@@ -448,7 +448,7 @@ static void hmqe_decref_atomic(struct silofs_hmapq_elem *hmqe)
 
 static bool hmqe_is_dirty(const struct silofs_hmapq_elem *hmqe)
 {
-	return silofs_dqe_is_dirty(&hmqe->hme_dqe);
+	return silofs_dqe_isdirty(&hmqe->hme_dqe);
 }
 
 static bool hmqe_is_evictable_atomic(const struct silofs_hmapq_elem *hmqe)

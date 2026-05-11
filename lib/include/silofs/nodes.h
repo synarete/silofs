@@ -26,18 +26,25 @@
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* dirtyq */
 
-/* dirty-queue of cached-elements */
-struct silofs_dirtyq {
-	struct silofs_listq dq;
-	size_t              dq_accum;
+/* dirty/destage queue element */
+struct silofs_dq_elem {
+	struct silofs_list_head drq_lh;
+	struct silofs_list_head dsq_lh;
+	struct silofs_dirtyq   *drq;
+	uint32_t                sz;
+	bool                    in_drq;
+	bool                    in_dsq;
 };
 
-/* dirty-queue element (type-safe) */
-struct silofs_dq_elem {
-	struct silofs_list_head lh;
-	struct silofs_dirtyq   *dq;
-	uint32_t                sz;
-	bool                    inq;
+/* dirty elements' queue */
+struct silofs_dirtyq {
+	struct silofs_listq drq;
+	size_t              drq_accum;
+};
+
+/* de-stage elements' queue */
+struct silofs_destageq {
+	struct silofs_listq dsq;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -46,24 +53,36 @@ void silofs_dqe_init(struct silofs_dq_elem *dqe, size_t sz);
 
 void silofs_dqe_fini(struct silofs_dq_elem *dqe);
 
-void silofs_dqe_setq(struct silofs_dq_elem *dqe, struct silofs_dirtyq *dq);
+void silofs_dqe_set_dirtyq(struct silofs_dq_elem *dqe,
+                           struct silofs_dirtyq  *drq);
 
-void silofs_dqe_enqueue(struct silofs_dq_elem *dqe);
+void silofs_dqe_markdirty(struct silofs_dq_elem *dqe);
 
-void silofs_dqe_dequeue(struct silofs_dq_elem *dqe);
+void silofs_dqe_cleardirty(struct silofs_dq_elem *dqe);
 
-bool silofs_dqe_is_dirty(const struct silofs_dq_elem *dqe);
+bool silofs_dqe_isdirty(const struct silofs_dq_elem *dqe);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_dirtyq_init(struct silofs_dirtyq *dq);
+void silofs_dirtyq_init(struct silofs_dirtyq *drq);
 
-void silofs_dirtyq_fini(struct silofs_dirtyq *dq);
+void silofs_dirtyq_fini(struct silofs_dirtyq *drq);
 
-struct silofs_dq_elem *silofs_dirtyq_front(const struct silofs_dirtyq *dq);
+struct silofs_dq_elem *silofs_dirtyq_front(const struct silofs_dirtyq *drq);
 
-struct silofs_dq_elem *silofs_dirtyq_next_of(const struct silofs_dirtyq  *dq,
+struct silofs_dq_elem *silofs_dirtyq_next_of(const struct silofs_dirtyq  *drq,
                                              const struct silofs_dq_elem *dqe);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_destageq_init(struct silofs_destageq *dsq);
+
+void silofs_destageq_fini(struct silofs_destageq *dsq);
+
+void silofs_destageq_populate(struct silofs_destageq     *dsq,
+                              const struct silofs_dirtyq *drq);
+
+void silofs_destageq_depopulate(struct silofs_destageq *dsq, bool cleardirty);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* hmapq */
@@ -268,6 +287,11 @@ int silofs_decrypt_pview(const struct silofs_cipher_hd *ci_hd,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+/* de-stage queue */
+struct silofs_dstgq {
+	struct silofs_listq dq;
+};
+
 /* union of all sub view */
 union silofs_view {
 	struct silofs_pview *pview;
@@ -296,6 +320,10 @@ void silofs_ni_fini(struct silofs_node_info *ni);
 void silofs_ni_incref(struct silofs_node_info *ni);
 
 void silofs_ni_decref(struct silofs_node_info *ni);
+
+void silofs_ni_push_dsq(struct silofs_node_info *ni, struct silofs_listq *dsq);
+
+void silofs_ni_pop_dsq(struct silofs_node_info *ni, struct silofs_listq *dsq);
 
 const struct silofs_node_info * //
 silofs_ni_from_hmqe(const struct silofs_hmapq_elem *hmqe);
@@ -388,6 +416,12 @@ silofs_pni_civkey(const struct silofs_pnode_info *pni);
 
 struct silofs_pnode_info *
 silofs_pni_from_dqe(const struct silofs_dq_elem *dqe);
+
+struct silofs_pnode_info *       //
+silofs_pni_from_mut_ni(struct silofs_node_info *ni);
+
+const struct silofs_pnode_info * //
+silofs_pni_from_ni(const struct silofs_node_info *ni);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

@@ -202,8 +202,9 @@ static void vstgc_log_cache_stat(const struct silofs_vstage_ctx *vstg_ctx)
 
 	log_dbg("cache-stat: accum_unodes=%lu accum_inodes=%lu "
 	        "accum_vnodes=%lu ui=%lu vi=%lu",
-	        lcache->lc_unis_dq.dq_accum, lcache->lc_vc.vc_iis_dq.dq_accum,
-	        lcache->lc_vc.vc_vnis_dq.dq_accum,
+	        lcache->lc_unis_dq.drq_accum,
+	        lcache->lc_vc.vc_iis_dq.drq_accum,
+	        lcache->lc_vc.vc_vnis_dq.drq_accum,
 	        lcache->lc_uni_hmapq.hmq_lru.sz,
 	        lcache->lc_vc.vc_vni_hmapq.hmq_lru.sz);
 }
@@ -3189,7 +3190,7 @@ remove_inode_of(struct silofs_task_ctx *task, struct silofs_inode_info *ii)
 static void forget_cached_ii(const struct silofs_task_ctx *task,
                              struct silofs_inode_info *ii)
 {
-	silofs_assert_eq(ii->i_dq_vnis.dq.sz, 0);
+	silofs_assert_eq(ii->i_dq_vnis.drq.sz, 0);
 
 	silofs_ii_cleardirty(ii);
 	forget_cached_vni(task, &ii->i_vni);

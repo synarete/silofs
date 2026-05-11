@@ -25,6 +25,11 @@ static struct silofs_pnode_info *pni_unconst(const struct silofs_pnode_info *p)
 	return silofs_unconst(p);
 }
 
+static bool pni_isevictable(const struct silofs_pnode_info *pni)
+{
+	return silofs_hmqe_is_evictable(&pni->pn_hmqe);
+}
+
 static struct silofs_pnode_info *
 pni_from_hmqe(const struct silofs_hmapq_elem *hmqe)
 {
@@ -49,9 +54,15 @@ struct silofs_pnode_info *silofs_pni_from_dqe(const struct silofs_dq_elem *dqe)
 	return pni_from_hmqe(hmqe);
 }
 
-static bool pni_isevictable(const struct silofs_pnode_info *pni)
+struct silofs_pnode_info *silofs_pni_from_mut_ni(struct silofs_node_info *ni)
 {
-	return silofs_hmqe_is_evictable(&pni->pn_hmqe);
+	return mut_container_of(ni, struct silofs_pnode_info, pn);
+}
+
+const struct silofs_pnode_info *
+silofs_pni_from_ni(const struct silofs_node_info *ni)
+{
+	return container_of(ni, struct silofs_pnode_info, pn);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

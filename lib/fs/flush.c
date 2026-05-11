@@ -992,7 +992,7 @@ static bool need_flush_by_ii(const struct silofs_inode_info *ii, int flags)
 	size_t thresh;
 
 	thresh = flush_threshold_of(flags);
-	ndirty = ii->i_dq_vnis.dq_accum;
+	ndirty = ii->i_dq_vnis.drq_accum;
 	return (ndirty > thresh);
 }
 
@@ -1003,9 +1003,9 @@ static bool need_flush_by_env(const struct silofs_env *env, int flags)
 	size_t thresh;
 
 	thresh = flush_threshold_of(flags);
-	ndirty = lcache->lc_unis_dq.dq_accum +      //
-	         lcache->lc_vc.vc_iis_dq.dq_accum + //
-	         lcache->lc_vc.vc_vnis_dq.dq_accum;
+	ndirty = lcache->lc_unis_dq.drq_accum +      //
+	         lcache->lc_vc.vc_iis_dq.drq_accum + //
+	         lcache->lc_vc.vc_vnis_dq.drq_accum;
 	return (ndirty > thresh);
 }
 

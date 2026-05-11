@@ -536,7 +536,7 @@ ii_times(const struct silofs_inode_info *ii, struct silofs_itimes *tms)
 
 static size_t ii_dq_vnis_size(const struct silofs_inode_info *ii)
 {
-	return ii->i_dq_vnis.dq.sz;
+	return ii->i_dq_vnis.drq.sz;
 }
 
 bool silofs_ii_isevictable(const struct silofs_inode_info *ii)
@@ -1449,7 +1449,7 @@ void silofs_ii_cleardirty_vnis(struct silofs_inode_info *ii)
 
 	dqe = silofs_dirtyq_front(dq);
 	while (dqe != nullptr) {
-		silofs_assert_gt(dq->dq.sz, 0);
+		silofs_assert_gt(dq->drq.sz, 0);
 		vni = silofs_vni_from_dqe(dqe);
 		if (likely(vni != nullptr)) {
 			silofs_vni_cleardirty(vni);

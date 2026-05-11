@@ -83,15 +83,9 @@ static struct silofs_dq_elem *pni_dqe(struct silofs_pnode_info *pni)
 	return &pni->pn_hmqe.hme_dqe;
 }
 
-static const struct silofs_dq_elem *
-pni_dqe2(const struct silofs_pnode_info *pni)
-{
-	return &pni->pn_hmqe.hme_dqe;
-}
-
 void silofs_pni_set_dq(struct silofs_pnode_info *pni, struct silofs_dirtyq *dq)
 {
-	silofs_dqe_setq(pni_dqe(pni), dq);
+	silofs_dqe_set_dirtyq(pni_dqe(pni), dq);
 }
 
 const struct silofs_paddr *
@@ -128,23 +122,14 @@ silofs_pni_civkey(const struct silofs_pnode_info *pni)
 	return &pni->pn_self.nmeta.civkey;
 }
 
-static bool pni_isdirty(const struct silofs_pnode_info *pni)
-{
-	return silofs_dqe_is_dirty(pni_dqe2(pni));
-}
-
 void silofs_pni_markdirty(struct silofs_pnode_info *pni)
 {
-	if (!pni_isdirty(pni)) {
-		silofs_dqe_enqueue(pni_dqe(pni));
-	}
+	silofs_dqe_markdirty(pni_dqe(pni));
 }
 
 void silofs_pni_cleardirty(struct silofs_pnode_info *pni)
 {
-	if (pni_isdirty(pni)) {
-		silofs_dqe_dequeue(pni_dqe(pni));
-	}
+	silofs_dqe_cleardirty(pni_dqe(pni));
 }
 
 void silofs_pni_incref(struct silofs_pnode_info *pni)

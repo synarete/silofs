@@ -363,7 +363,7 @@ void silofs_make_iattr_of(const struct silofs_inode_info *ii,
 static const struct silofs_inode_info *
 ii_from_vni2(const struct silofs_vnode_info *vni)
 {
-	return container_of2(vni, struct silofs_inode_info, i_vni);
+	return container_of(vni, struct silofs_inode_info, i_vni);
 }
 
 static bool ii_isevictable_as(const struct silofs_vnode_info *vni)

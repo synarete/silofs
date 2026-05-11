@@ -134,7 +134,7 @@ static struct silofs_qalloc *alloc_to_qalloc(const struct silofs_alloc *alloc)
 {
 	const struct silofs_qalloc *qal;
 
-	qal = silofs_container_of2(alloc, struct silofs_qalloc, alloc);
+	qal = silofs_container_of(alloc, struct silofs_qalloc, alloc);
 	return silofs_unconst(qal);
 }
 
@@ -214,7 +214,7 @@ static struct silofs_qpage_info *
 qpgi_from_lh(const struct silofs_list_head *lh)
 {
 	const struct silofs_qpage_info *qpgi =
-		silofs_container_of2(lh, struct silofs_qpage_info, qpg_lh);
+		silofs_container_of(lh, struct silofs_qpage_info, qpg_lh);
 
 	return silofs_unconst(qpgi);
 }
@@ -883,7 +883,7 @@ static struct silofs_slab_seg *
 link_to_slab_seg(const struct silofs_list_head *link)
 {
 	const struct silofs_slab_seg *seg =
-		silofs_container_of2(link, struct silofs_slab_seg, link);
+		silofs_container_of(link, struct silofs_slab_seg, link);
 
 	return silofs_unconst(seg);
 }

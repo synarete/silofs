@@ -84,7 +84,7 @@ avl_node_to_lni(const struct silofs_avl_node *an)
 {
 	const struct silofs_lnode_info *lni;
 
-	lni = container_of2(an, struct silofs_lnode_info, ln_ds_avl_node);
+	lni = container_of(an, struct silofs_lnode_info, ln_ds_avl_node);
 	return silofs_unconst(lni);
 }
 
@@ -1281,7 +1281,7 @@ struct silofs_submitq_ent *silofs_sqe_from_qlh(struct silofs_list_head *qlh)
 	struct silofs_submitq_ent *sqe = nullptr;
 
 	if (qlh != nullptr) {
-		sqe = container_of(qlh, struct silofs_submitq_ent, qlh);
+		sqe = mut_container_of(qlh, struct silofs_submitq_ent, qlh);
 	}
 	return sqe;
 }

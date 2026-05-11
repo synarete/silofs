@@ -363,7 +363,7 @@ rce_from_htb_link(const struct silofs_list_head *lh)
 {
 	const struct silofs_repo_ce *rce;
 
-	rce = container_of2(lh, struct silofs_repo_ce, rce_htb_lh);
+	rce = container_of(lh, struct silofs_repo_ce, rce_htb_lh);
 	return rce_unconst(rce);
 }
 
@@ -372,7 +372,7 @@ rce_from_lru_link(const struct silofs_list_head *lh)
 {
 	const struct silofs_repo_ce *rce;
 
-	rce = container_of2(lh, struct silofs_repo_ce, rce_lru_lh);
+	rce = container_of(lh, struct silofs_repo_ce, rce_lru_lh);
 	return rce_unconst(rce);
 }
 
@@ -403,7 +403,7 @@ static struct silofs_lsegf *lsegf_from_rce(const struct silofs_repo_ce *rce)
 {
 	const struct silofs_lsegf *lsegf;
 
-	lsegf = container_of2(rce, struct silofs_lsegf, lsf_rce);
+	lsegf = container_of(rce, struct silofs_lsegf, lsf_rce);
 	return silofs_unconst(lsegf);
 }
 

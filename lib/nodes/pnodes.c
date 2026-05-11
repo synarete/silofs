@@ -46,9 +46,12 @@ static size_t pnptr_size(const struct silofs_pnptr *pnptr)
 static void
 pni_init(struct silofs_pnode_info *pni, const struct silofs_pnptr *pnptr)
 {
+	const size_t psize = pnptr_size(pnptr);
+
+	silofs_ni_init(&pni->pn, psize);
 	silofs_pnptr_assign(&pni->pn_self, pnptr);
 	silofs_paddr_reset(&pni->pn_parent);
-	silofs_hmqe_init(&pni->pn_hmqe, pnptr_size(pnptr));
+	silofs_hmqe_init(&pni->pn_hmqe, psize);
 	silofs_list_head_init(&pni->pn_dsq_lh);
 	silofs_hkey_by_paddr(&pni->pn_hmqe.hme_key, &pni->pn_self.paddr);
 	pni->pn_pview = nullptr;
@@ -61,6 +64,7 @@ static void pni_fini(struct silofs_pnode_info *pni)
 	silofs_paddr_reset(&pni->pn_parent);
 	silofs_list_head_fini(&pni->pn_dsq_lh);
 	silofs_hmqe_fini(&pni->pn_hmqe);
+	silofs_ni_fini(&pni->pn);
 	pni->pn_pview = nullptr;
 }
 
@@ -276,7 +280,7 @@ static struct silofs_uber_info *ubi_from_pni(struct silofs_pnode_info *pni)
 	struct silofs_uber_info *ubi = nullptr;
 
 	if (pni != nullptr) {
-		ubi = container_of(pni, struct silofs_uber_info, ub_pni);
+		ubi = mut_container_of(pni, struct silofs_uber_info, ub_pni);
 	}
 	return ubi;
 }
@@ -297,7 +301,7 @@ silofs_ubi_from_pni(const struct silofs_pnode_info *pni)
 	const struct silofs_uber_info *ubi = nullptr;
 
 	if (pni != nullptr) {
-		ubi = container_of2(pni, struct silofs_uber_info, ub_pni);
+		ubi = container_of(pni, struct silofs_uber_info, ub_pni);
 	}
 	return ubi_unconst(ubi);
 }
@@ -392,7 +396,8 @@ static struct silofs_bldesc_info *bdi_from_pni(struct silofs_pnode_info *pni)
 	struct silofs_bldesc_info *bdi = nullptr;
 
 	if (pni != nullptr) {
-		bdi = container_of(pni, struct silofs_bldesc_info, bld_pni);
+		bdi = mut_container_of(pni, struct silofs_bldesc_info,
+		                       bld_pni);
 	}
 	return bdi;
 }
@@ -414,7 +419,7 @@ silofs_bdi_from_pni(const struct silofs_pnode_info *pni)
 	const struct silofs_bldesc_info *bdi = nullptr;
 
 	if (pni != nullptr) {
-		bdi = container_of2(pni, struct silofs_bldesc_info, bld_pni);
+		bdi = container_of(pni, struct silofs_bldesc_info, bld_pni);
 	}
 	return bdi_unconst(bdi);
 }
@@ -511,7 +516,8 @@ static struct silofs_btnode_info *bti_from_pni(struct silofs_pnode_info *pni)
 	struct silofs_btnode_info *bti = nullptr;
 
 	if (pni != nullptr) {
-		bti = container_of(pni, struct silofs_btnode_info, btn_pni);
+		bti = mut_container_of(pni, struct silofs_btnode_info,
+		                       btn_pni);
 	}
 	return bti;
 }
@@ -533,7 +539,7 @@ silofs_bti_from_pni(const struct silofs_pnode_info *pni)
 	const struct silofs_btnode_info *bti = nullptr;
 
 	if (pni != nullptr) {
-		bti = container_of2(pni, struct silofs_btnode_info, btn_pni);
+		bti = container_of(pni, struct silofs_btnode_info, btn_pni);
 	}
 	return bti_unconst(bti);
 }

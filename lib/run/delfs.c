@@ -210,7 +210,7 @@ static int delfc_post_at(struct silofs_delfs_ctx *delf_ctx,
 
 static struct silofs_delfs_ctx *delf_ctx_of(struct silofs_visitor *vis)
 {
-	return silofs_container_of(vis, struct silofs_delfs_ctx, vis);
+	return silofs_mut_container_of(vis, struct silofs_delfs_ctx, vis);
 }
 
 static int delfc_visit_exec_hook(struct silofs_visitor *vis,

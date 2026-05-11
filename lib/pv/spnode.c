@@ -253,7 +253,7 @@ static size_t spn_find_free(const struct silofs_space_node *spn, size_t hint)
 
 struct silofs_space_info *silofs_spi_from_vni(struct silofs_vnode_info *vni)
 {
-	return container_of(vni, struct silofs_space_info, spn_vni);
+	return mut_container_of(vni, struct silofs_space_info, spn_vni);
 }
 
 void silofs_spi_incref(struct silofs_space_info *spi)

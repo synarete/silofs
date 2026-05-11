@@ -324,7 +324,7 @@ avl_node_to_vspe(const struct silofs_avl_node *an)
 	const struct silofs_vsp_entry *vspe = nullptr;
 
 	if (an != nullptr) {
-		vspe = container_of2(an, struct silofs_vsp_entry, vspe_an);
+		vspe = container_of(an, struct silofs_vsp_entry, vspe_an);
 	}
 	return silofs_unconst(vspe);
 }

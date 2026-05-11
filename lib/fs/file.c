@@ -2070,7 +2070,7 @@ static struct silofs_read_iter *
 read_iter_of(const struct silofs_rwiter_ctx *rwi)
 {
 	const struct silofs_read_iter *rdi =
-		container_of2(rwi, struct silofs_read_iter, rwi);
+		container_of(rwi, struct silofs_read_iter, rwi);
 
 	return silofs_unconst(rdi);
 }
@@ -2821,7 +2821,7 @@ static struct silofs_write_iter *
 write_iter_of(const struct silofs_rwiter_ctx *rwi)
 {
 	const struct silofs_write_iter *wri =
-		container_of2(rwi, struct silofs_write_iter, rwi);
+		container_of(rwi, struct silofs_write_iter, rwi);
 
 	return silofs_unconst(wri);
 }

@@ -127,7 +127,7 @@ alloc_to_stdalloc(const struct silofs_alloc *alloc)
 {
 	const struct silofs_stdalloc *stdal;
 
-	stdal = silofs_container_of2(alloc, struct silofs_stdalloc, alloc);
+	stdal = silofs_container_of(alloc, struct silofs_stdalloc, alloc);
 	return silofs_unconst(stdal);
 }
 

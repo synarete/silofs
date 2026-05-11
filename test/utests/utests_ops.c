@@ -456,12 +456,9 @@ struct ut_write_iter {
 	size_t ncp;
 };
 
-static struct ut_write_iter *write_iter_of(const struct silofs_rwiter_ctx *rwi)
+static struct ut_write_iter *write_iter_of(struct silofs_rwiter_ctx *rwi)
 {
-	const struct ut_write_iter *wri =
-		silofs_container_of2(rwi, struct ut_write_iter, rwi);
-
-	return silofs_unconst(wri);
+	return silofs_mut_container_of(rwi, struct ut_write_iter, rwi);
 }
 
 static void
@@ -576,7 +573,7 @@ static int ut_do_write_iter(struct ut_env *ute, ino_t ino, const void *buf,
 
 static struct ut_readdir_ctx *ut_readdir_ctx_of(struct silofs_readdir_ctx *ptr)
 {
-	return ut_container_of(ptr, struct ut_readdir_ctx, rd_ctx);
+	return ut_mut_container_of(ptr, struct ut_readdir_ctx, rd_ctx);
 }
 
 static int filldir(struct silofs_readdir_ctx *rd_ctx,
@@ -686,7 +683,7 @@ static int ut_do_removexattr(struct ut_env *ute, ino_t ino, const char *name)
 static struct ut_listxattr_ctx *
 ut_listxattr_ctx_of(struct silofs_listxattr_ctx *ptr)
 {
-	return ut_container_of(ptr, struct ut_listxattr_ctx, lxa_ctx);
+	return ut_mut_container_of(ptr, struct ut_listxattr_ctx, lxa_ctx);
 }
 
 static int

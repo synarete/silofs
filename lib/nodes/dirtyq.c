@@ -53,7 +53,7 @@ static struct silofs_dq_elem *dqe_from_lh(struct silofs_list_head *lh)
 	struct silofs_dq_elem *dqe = nullptr;
 
 	if (lh != nullptr) {
-		dqe = silofs_container_of(lh, struct silofs_dq_elem, lh);
+		dqe = silofs_mut_container_of(lh, struct silofs_dq_elem, lh);
 	}
 	return dqe;
 }

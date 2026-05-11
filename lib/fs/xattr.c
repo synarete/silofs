@@ -129,7 +129,7 @@ static struct silofs_xentry_view *
 xe_view_of(const struct silofs_xattr_entry *xe)
 {
 	const struct silofs_xentry_view *xe_view =
-		container_of2(xe, struct silofs_xentry_view, xe);
+		container_of(xe, struct silofs_xentry_view, xe);
 
 	return silofs_unconst(xe_view);
 }

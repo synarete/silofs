@@ -60,7 +60,7 @@ static void mrecord_check(const struct ut_mrecord *mr)
 static struct ut_mrecord *link_to_mrecord(const struct silofs_list_head *link)
 {
 	const struct ut_mrecord *mr =
-		ut_container_of2(link, struct ut_mrecord, link);
+		ut_container_of(link, struct ut_mrecord, link);
 
 	mrecord_check(mr);
 	return silofs_unconst(mr);

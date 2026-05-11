@@ -186,7 +186,7 @@ bf_from_htb_link(const struct silofs_list_head *lh)
 	const struct silofs_blobfile *bf = nullptr;
 
 	if (lh != nullptr) {
-		bf = container_of2(lh, struct silofs_blobfile, bf_htb_lh);
+		bf = container_of(lh, struct silofs_blobfile, bf_htb_lh);
 	}
 	return bf_unconst(bf);
 }
@@ -197,7 +197,7 @@ bf_from_lru_link(const struct silofs_list_head *lh)
 	const struct silofs_blobfile *bf = nullptr;
 
 	if (lh != nullptr) {
-		bf = container_of2(lh, struct silofs_blobfile, bf_lru_lh);
+		bf = container_of(lh, struct silofs_blobfile, bf_lru_lh);
 	}
 	return bf_unconst(bf);
 }

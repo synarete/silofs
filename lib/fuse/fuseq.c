@@ -246,7 +246,7 @@ static struct silofs_fuseq_pipe *fqp_from_lh(struct silofs_list_head *lh)
 	struct silofs_fuseq_pipe *fqp = nullptr;
 
 	if (lh != nullptr) {
-		fqp = container_of(lh, struct silofs_fuseq_pipe, lh);
+		fqp = mut_container_of(lh, struct silofs_fuseq_pipe, lh);
 	}
 	return fqp;
 }
@@ -1178,7 +1178,7 @@ static int fq_rdi_reply_read_iter(struct silofs_fuseq_rd_iter *fq_rdi, int err)
 
 static struct silofs_fuseq_xiter *xiter_of(struct silofs_listxattr_ctx *p)
 {
-	return container_of(p, struct silofs_fuseq_xiter, lxa);
+	return mut_container_of(p, struct silofs_fuseq_xiter, lxa);
 }
 
 static size_t xiter_avail(const struct silofs_fuseq_xiter *xi)
@@ -1343,7 +1343,7 @@ static bool has_dirent(const struct silofs_fuseq_diter *di)
 
 static struct silofs_fuseq_diter *diter_of(struct silofs_readdir_ctx *rd_ctx)
 {
-	return container_of(rd_ctx, struct silofs_fuseq_diter, rd_ctx);
+	return mut_container_of(rd_ctx, struct silofs_fuseq_diter, rd_ctx);
 }
 
 static int filldir(struct silofs_readdir_ctx *rd_ctx,
@@ -2382,7 +2382,7 @@ static struct silofs_fuseq_rd_iter *
 fq_rdi_of(const struct silofs_rwiter_ctx *rwi)
 {
 	const struct silofs_fuseq_rd_iter *fq_rdi =
-		container_of2(rwi, struct silofs_fuseq_rd_iter, rwi);
+		container_of(rwi, struct silofs_fuseq_rd_iter, rwi);
 
 	return unconst(fq_rdi);
 }
@@ -2491,7 +2491,7 @@ static struct silofs_fuseq_wr_iter *
 fq_wri_of(const struct silofs_rwiter_ctx *rwi)
 {
 	const struct silofs_fuseq_wr_iter *fq_wri =
-		container_of2(rwi, struct silofs_fuseq_wr_iter, rwi);
+		container_of(rwi, struct silofs_fuseq_wr_iter, rwi);
 
 	return unconst(fq_wri);
 }
@@ -3357,7 +3357,7 @@ fqs_dec_active_op(struct silofs_fuseq_sub *fqs, struct silofs_task_ctx *task)
 
 static struct silofs_fuseq_sub *fqs_from_lh(struct silofs_list_head *lh)
 {
-	return silofs_container_of(lh, struct silofs_fuseq_sub, fqs_lh);
+	return silofs_mut_container_of(lh, struct silofs_fuseq_sub, fqs_lh);
 }
 
 static void fqs_do_interrupt_locked(struct silofs_fuseq_sub *fqs, uint64_t unq)
@@ -4182,14 +4182,14 @@ static bool fqs_allowed_exec(const struct silofs_fuseq_sub *fqs)
 
 static struct silofs_fuseq_thread *fqt_from_th(struct silofs_thread *th)
 {
-	return container_of(th, struct silofs_fuseq_thread, th);
+	return mut_container_of(th, struct silofs_fuseq_thread, th);
 }
 
 static struct silofs_fuseq_sub *fqs_from_th(struct silofs_thread *th)
 {
 	struct silofs_fuseq_thread *fqt = fqt_from_th(th);
 
-	return container_of(fqt, struct silofs_fuseq_sub, fqs_th);
+	return mut_container_of(fqt, struct silofs_fuseq_sub, fqs_th);
 }
 
 static int fqs_post_exec_once(struct silofs_fuseq_sub *fqs, int status)

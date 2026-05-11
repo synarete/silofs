@@ -724,7 +724,7 @@ static void lsmap_clone_from(struct silofs_lsmap *lsm,
 
 struct silofs_lsmap_info *silofs_lsi_from_vni(struct silofs_vnode_info *vni)
 {
-	return container_of(vni, struct silofs_lsmap_info, ls_vni);
+	return mut_container_of(vni, struct silofs_lsmap_info, ls_vni);
 }
 
 void silofs_lsi_incref(struct silofs_lsmap_info *lsi)

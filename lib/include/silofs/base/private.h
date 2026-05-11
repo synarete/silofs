@@ -39,8 +39,8 @@
 #define STATICASSERT_SIZEOF(t_, s_) SILOFS_STATICASSERT_EQ(sizeof(t_), s_)
 
 #define ARRAY_SIZE(x)          SILOFS_ARRAY_SIZE(x)
-#define container_of(p, t, m)  silofs_container_of(p, t, m)
-#define container_of2(p, t, m) silofs_container_of2(p, t, m)
+#define mut_container_of(p, t, m)  silofs_mut_container_of(p, t, m)
+#define container_of(p, t, m) silofs_container_of(p, t, m)
 #define unused(x)              silofs_unused(x)
 #define unconst(x)             silofs_unconst(x)
 

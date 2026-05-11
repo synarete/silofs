@@ -31,7 +31,7 @@ pni_from_hmqe(const struct silofs_hmapq_elem *hmqe)
 	const struct silofs_pnode_info *pni = nullptr;
 
 	if (hmqe != nullptr) {
-		pni = container_of2(hmqe, struct silofs_pnode_info, pn_hmqe);
+		pni = container_of(hmqe, struct silofs_pnode_info, pn_hmqe);
 	}
 	return pni_unconst(pni);
 }

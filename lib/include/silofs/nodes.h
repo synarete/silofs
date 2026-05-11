@@ -297,7 +297,17 @@ void silofs_ni_incref(struct silofs_node_info *ni);
 
 void silofs_ni_decref(struct silofs_node_info *ni);
 
-struct silofs_node_info *silofs_ni_from_hmqe(struct silofs_hmapq_elem *hmqe);
+const struct silofs_node_info * //
+silofs_ni_from_hmqe(const struct silofs_hmapq_elem *hmqe);
+
+struct silofs_node_info *       //
+silofs_ni_from_mut_hmqe(struct silofs_hmapq_elem *hmqe);
+
+const struct silofs_node_info * //
+silofs_ni_from_dsqe(const struct silofs_dsq_elem *dsqe);
+
+struct silofs_node_info *       //
+silofs_ni_from_mut_dsqe(struct silofs_dsq_elem *dsqe);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* pnodes */
@@ -310,7 +320,7 @@ enum silofs_pnodef {
 
 /* base of all persistent nodes */
 struct silofs_pnode_info {
-	struct silofs_node_info  pn_base;
+	struct silofs_node_info  pn;
 	struct silofs_pnptr      pn_self;
 	struct silofs_paddr      pn_parent;
 	struct silofs_hmapq_elem pn_hmqe;

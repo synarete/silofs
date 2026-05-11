@@ -97,7 +97,7 @@ silofs_lni_from_hmqe(const struct silofs_hmapq_elem *hmqe)
 	const struct silofs_lnode_info *lni = nullptr;
 
 	if (likely(hmqe != nullptr)) {
-		lni = container_of2(hmqe, struct silofs_lnode_info, ln_hmqe);
+		lni = container_of(hmqe, struct silofs_lnode_info, ln_hmqe);
 	}
 	return lni_unconst(lni);
 }
@@ -279,7 +279,7 @@ silofs_uni_from_lni(const struct silofs_lnode_info *lni)
 
 	silofs_assert_not_null(lni);
 
-	uni = container_of2(lni, struct silofs_unode_info, un_lni);
+	uni = container_of(lni, struct silofs_unode_info, un_lni);
 	uni_verify(uni);
 
 	return uni_unconst(uni);
@@ -468,7 +468,7 @@ silofs_vni_from_lni(const struct silofs_lnode_info *lni)
 	const struct silofs_vnode_info *vni = nullptr;
 
 	if (lni != nullptr) {
-		vni = container_of2(lni, struct silofs_vnode_info, vn_lni);
+		vni = container_of(lni, struct silofs_vnode_info, vn_lni);
 		vni_dbg_check(vni);
 	}
 	return vni_unconst(vni);
@@ -541,7 +541,7 @@ static struct silofs_unode_info *sbi_to_uni(struct silofs_sb_info *sbi)
 
 static struct silofs_sb_info *sbi_from_uni(struct silofs_unode_info *uni)
 {
-	return container_of(uni, struct silofs_sb_info, sb_uni);
+	return mut_container_of(uni, struct silofs_sb_info, sb_uni);
 }
 
 static int
@@ -621,7 +621,7 @@ static struct silofs_unode_info *sni_to_uni(struct silofs_spnode_info *sni)
 
 static struct silofs_spnode_info *sni_from_uni(struct silofs_unode_info *uni)
 {
-	return container_of(uni, struct silofs_spnode_info, sn_uni);
+	return mut_container_of(uni, struct silofs_spnode_info, sn_uni);
 }
 
 static void
@@ -697,7 +697,7 @@ static struct silofs_unode_info *sli_to_uni(struct silofs_spleaf_info *sli)
 
 static struct silofs_spleaf_info *sli_from_uni(struct silofs_unode_info *uni)
 {
-	return container_of(uni, struct silofs_spleaf_info, sl_uni);
+	return mut_container_of(uni, struct silofs_spleaf_info, sl_uni);
 }
 
 static void
@@ -770,7 +770,7 @@ static struct silofs_vnode_info *spi_to_vni(struct silofs_space_info *spi)
 
 static struct silofs_space_info *spi_from_vni(struct silofs_vnode_info *vni)
 {
-	return container_of(vni, struct silofs_space_info, spn_vni);
+	return mut_container_of(vni, struct silofs_space_info, spn_vni);
 }
 
 static void
@@ -838,7 +838,7 @@ static struct silofs_vnode_info *lsi_to_vni(struct silofs_lsmap_info *lsi)
 
 static struct silofs_lsmap_info *lsi_from_vni(struct silofs_vnode_info *vni)
 {
-	return container_of(vni, struct silofs_lsmap_info, ls_vni);
+	return mut_container_of(vni, struct silofs_lsmap_info, ls_vni);
 }
 
 static void
@@ -908,7 +908,7 @@ static struct silofs_vnode_info *ii_to_vni(struct silofs_inode_info *ii)
 
 static struct silofs_inode_info *ii_from_vni(struct silofs_vnode_info *vni)
 {
-	return container_of(vni, struct silofs_inode_info, i_vni);
+	return mut_container_of(vni, struct silofs_inode_info, i_vni);
 }
 
 static void
@@ -1010,7 +1010,7 @@ static struct silofs_vnode_info *xai_to_vni(struct silofs_xanode_info *xai)
 
 static struct silofs_xanode_info *xai_from_vni(struct silofs_vnode_info *vni)
 {
-	return container_of(vni, struct silofs_xanode_info, xan_vni);
+	return mut_container_of(vni, struct silofs_xanode_info, xan_vni);
 }
 
 static void
@@ -1083,7 +1083,7 @@ static struct silofs_vnode_info *syi_to_vni(struct silofs_symval_info *syi)
 
 static struct silofs_symval_info *syi_from_vni(struct silofs_vnode_info *vni)
 {
-	return container_of(vni, struct silofs_symval_info, syv_vni);
+	return mut_container_of(vni, struct silofs_symval_info, syv_vni);
 }
 
 static void
@@ -1143,7 +1143,7 @@ syi_del(struct silofs_symval_info *syi, struct silofs_alloc *alloc, int flags)
 
 struct silofs_symval_info *silofs_syi_from_vni(struct silofs_vnode_info *vni)
 {
-	return container_of(vni, struct silofs_symval_info, syv_vni);
+	return mut_container_of(vni, struct silofs_symval_info, syv_vni);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1155,7 +1155,7 @@ static struct silofs_vnode_info *dni_to_vni(struct silofs_dtnode_info *dni)
 
 static struct silofs_dtnode_info *dni_from_vni(struct silofs_vnode_info *vni)
 {
-	return container_of(vni, struct silofs_dtnode_info, dtn_vni);
+	return mut_container_of(vni, struct silofs_dtnode_info, dtn_vni);
 }
 
 static void
@@ -1229,7 +1229,7 @@ static struct silofs_vnode_info *fni_to_vni(struct silofs_ftnode_info *fni)
 
 static struct silofs_ftnode_info *fni_from_vni(struct silofs_vnode_info *vni)
 {
-	return container_of(vni, struct silofs_ftnode_info, ftn_vni);
+	return mut_container_of(vni, struct silofs_ftnode_info, ftn_vni);
 }
 
 static void
@@ -1302,7 +1302,7 @@ static struct silofs_vnode_info *fli_to_vni(struct silofs_ftleaf_info *fli)
 
 static struct silofs_ftleaf_info *fli_from_vni(struct silofs_vnode_info *vni)
 {
-	return container_of(vni, struct silofs_ftleaf_info, ftl_vni);
+	return mut_container_of(vni, struct silofs_ftleaf_info, ftl_vni);
 }
 
 static void

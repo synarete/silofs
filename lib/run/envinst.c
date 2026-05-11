@@ -671,7 +671,7 @@ int silofs_create_env(size_t memwant, enum silofs_flags flags,
 
 static struct silofs_env_inst *env_inst_of(struct silofs_env *env)
 {
-	return container_of(env, struct silofs_env_inst, env);
+	return mut_container_of(env, struct silofs_env_inst, env);
 }
 
 void silofs_destroy_env(struct silofs_env *env)

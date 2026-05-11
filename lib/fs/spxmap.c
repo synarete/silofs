@@ -83,7 +83,7 @@ avl_node_to_spe(const struct silofs_avl_node *an)
 	const struct silofs_spa_entry *spe = nullptr;
 
 	if (an != nullptr) {
-		spe = container_of2(an, struct silofs_spa_entry, spe_an);
+		spe = container_of(an, struct silofs_spa_entry, spe_an);
 	}
 	return silofs_unconst(spe);
 }
@@ -740,7 +740,7 @@ uaent_from_htb_lh(const struct silofs_list_head *lh)
 {
 	const struct silofs_uaent *uae = nullptr;
 
-	uae = container_of2(lh, struct silofs_uaent, htb_lh);
+	uae = container_of(lh, struct silofs_uaent, htb_lh);
 	return uaent_unconst(uae);
 }
 
@@ -749,7 +749,7 @@ uaent_from_lru_lh(const struct silofs_list_head *lh)
 {
 	const struct silofs_uaent *uae = nullptr;
 
-	uae = container_of2(lh, struct silofs_uaent, lru_lh);
+	uae = container_of(lh, struct silofs_uaent, lru_lh);
 	return uaent_unconst(uae);
 }
 

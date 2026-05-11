@@ -605,11 +605,11 @@ void ut_expect_statvfs(const struct statvfs *stv1, const struct statvfs *stv2);
 #define ut_max(x, y)     silofs_max(x, y)
 #define ut_unused(x)     silofs_unused(x)
 
+#define ut_mut_container_of(ptr_, type_, member_) \
+	silofs_mut_container_of(ptr_, type_, member_)
+
 #define ut_container_of(ptr_, type_, member_) \
 	silofs_container_of(ptr_, type_, member_)
-
-#define ut_container_of2(ptr_, type_, member_) \
-	silofs_container_of2(ptr_, type_, member_)
 
 #define UT_DEFTESTF(fn_, flags_)          \
 	{                                 \

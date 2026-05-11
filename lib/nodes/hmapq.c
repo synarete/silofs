@@ -274,7 +274,7 @@ hmqe_from_htb_link(const struct silofs_list_head *htb_lh)
 {
 	const struct silofs_hmapq_elem *hmqe;
 
-	hmqe = container_of2(htb_lh, struct silofs_hmapq_elem, hme_htb_lh);
+	hmqe = container_of(htb_lh, struct silofs_hmapq_elem, hme_htb_lh);
 	hmqe_sanitize(hmqe);
 	return hmqe_unconst(hmqe);
 }
@@ -284,7 +284,7 @@ hmqe_from_lru_link(const struct silofs_list_head *lru_lh)
 {
 	const struct silofs_hmapq_elem *hmqe;
 
-	hmqe = container_of2(lru_lh, struct silofs_hmapq_elem, hme_lru_lh);
+	hmqe = container_of(lru_lh, struct silofs_hmapq_elem, hme_lru_lh);
 	hmqe_sanitize(hmqe);
 	return hmqe_unconst(hmqe);
 }
@@ -486,7 +486,7 @@ silofs_hmqe_from_dqe(const struct silofs_dq_elem *dqe)
 	const struct silofs_hmapq_elem *hmqe = nullptr;
 
 	if (dqe != nullptr) {
-		hmqe = container_of2(dqe, struct silofs_hmapq_elem, hme_dqe);
+		hmqe = container_of(dqe, struct silofs_hmapq_elem, hme_dqe);
 	}
 	return hmqe;
 }

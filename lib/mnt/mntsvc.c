@@ -1391,7 +1391,7 @@ int silofs_mse_new(const struct silofs_ms_args *ms_args,
 
 static struct silofs_ms_env_obj *mse_obj_of(struct silofs_ms_env *mse)
 {
-	return container_of(mse, struct silofs_ms_env_obj, ms_env);
+	return mut_container_of(mse, struct silofs_ms_env_obj, ms_env);
 }
 
 void silofs_mse_del(struct silofs_ms_env *mse)

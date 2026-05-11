@@ -735,7 +735,8 @@ static int readdirplus_actor(struct silofs_readdir_ctx *rd_ctx,
 {
 	struct silofs_readdir_info rdi2;
 	struct silofs_readdir_filter_ctx *rdf_ctx =
-		container_of(rd_ctx, struct silofs_readdir_filter_ctx, rd_ctx);
+		mut_container_of(rd_ctx, struct silofs_readdir_filter_ctx,
+	                         rd_ctx);
 	int ret;
 
 	if (rdi->attr.st.st_ino == 0) {

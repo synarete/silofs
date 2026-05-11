@@ -32,16 +32,16 @@
 
 /* utility macros */
 #define SILOFS_CONTAINER_OF(ptr_, type_, member_) \
-	(type_ *)silofs_baseof(ptr_, offsetof(type_, member_))
-
-#define SILOFS_CONTAINER_OF2(ptr_, type_, member_) \
 	(const type_ *)silofs_const_baseof(ptr_, offsetof(type_, member_))
+
+#define SILOFS_MUT_CONTAINER_OF(ptr_, type_, member_) \
+	(type_ *)silofs_baseof(ptr_, offsetof(type_, member_))
 
 #define silofs_container_of(ptr_, type_, member_) \
 	SILOFS_CONTAINER_OF(ptr_, type_, member_)
 
-#define silofs_container_of2(ptr_, type_, member_) \
-	SILOFS_CONTAINER_OF2(ptr_, type_, member_)
+#define silofs_mut_container_of(ptr_, type_, member_) \
+	SILOFS_MUT_CONTAINER_OF(ptr_, type_, member_)
 
 #define silofs_unused(x_) ((void)(x_))
 

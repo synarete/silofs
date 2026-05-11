@@ -30,7 +30,7 @@ static struct ut_zrecord *avl_node_to_zrecord(const struct silofs_avl_node *an)
 	const struct ut_zrecord *zr;
 
 	ut_expect_not_null(an);
-	zr = ut_container_of2(an, struct ut_zrecord, avl_node);
+	zr = ut_container_of(an, struct ut_zrecord, avl_node);
 	ut_expect_eq(zr->magic, ZMAGIC);
 
 	return silofs_unconst(zr);

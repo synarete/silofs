@@ -52,7 +52,7 @@ ume_by_htof_lh(const struct silofs_list_head *lh)
 {
 	const struct silofs_umap_entry *ume;
 
-	ume = container_of2(lh, struct silofs_umap_entry, um_htof_lh);
+	ume = container_of(lh, struct silofs_umap_entry, um_htof_lh);
 	return unconst_ume(ume);
 }
 
@@ -61,7 +61,7 @@ ume_by_ftoh_lh(const struct silofs_list_head *lh)
 {
 	const struct silofs_umap_entry *ume;
 
-	ume = container_of2(lh, struct silofs_umap_entry, um_ftoh_lh);
+	ume = container_of(lh, struct silofs_umap_entry, um_ftoh_lh);
 	return unconst_ume(ume);
 }
 
@@ -117,7 +117,7 @@ gme_by_htof_lh(const struct silofs_list_head *lh)
 {
 	const struct silofs_gmap_entry *gme;
 
-	gme = container_of2(lh, struct silofs_gmap_entry, gm_htof_lh);
+	gme = container_of(lh, struct silofs_gmap_entry, gm_htof_lh);
 	return unconst_gme(gme);
 }
 
@@ -126,7 +126,7 @@ gme_by_ftoh_lh(const struct silofs_list_head *lh)
 {
 	const struct silofs_gmap_entry *gme;
 
-	gme = container_of2(lh, struct silofs_gmap_entry, gm_ftoh_lh);
+	gme = container_of(lh, struct silofs_gmap_entry, gm_ftoh_lh);
 	return unconst_gme(gme);
 }
 

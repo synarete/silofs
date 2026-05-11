@@ -551,12 +551,47 @@ void silofs_ni_decref(struct silofs_node_info *ni)
 	silofs_hmqe_decref(&ni->hmqe);
 }
 
-struct silofs_node_info *silofs_ni_from_hmqe(struct silofs_hmapq_elem *hmqe)
+const struct silofs_node_info *
+silofs_ni_from_hmqe(const struct silofs_hmapq_elem *hmqe)
+{
+	const struct silofs_node_info *ni = nullptr;
+
+	if (hmqe != nullptr) {
+		ni = silofs_container_of(hmqe, struct silofs_node_info, hmqe);
+	}
+	return ni;
+}
+
+struct silofs_node_info *
+silofs_ni_from_mut_hmqe(struct silofs_hmapq_elem *hmqe)
 {
 	struct silofs_node_info *ni = nullptr;
 
 	if (hmqe != nullptr) {
-		ni = silofs_container_of(hmqe, struct silofs_node_info, hmqe);
+		ni = silofs_mut_container_of(hmqe, struct silofs_node_info,
+		                             hmqe);
+	}
+	return ni;
+}
+
+const struct silofs_node_info *
+silofs_ni_from_dsqe(const struct silofs_dsq_elem *dsqe)
+{
+	const struct silofs_node_info *ni = nullptr;
+
+	if (dsqe != nullptr) {
+		ni = silofs_container_of(dsqe, struct silofs_node_info, dsqe);
+	}
+	return ni;
+}
+
+struct silofs_node_info *silofs_ni_from_mut_dsqe(struct silofs_dsq_elem *dsqe)
+{
+	struct silofs_node_info *ni = nullptr;
+
+	if (dsqe != nullptr) {
+		ni = silofs_mut_container_of(dsqe, struct silofs_node_info,
+		                             dsqe);
 	}
 	return ni;
 }

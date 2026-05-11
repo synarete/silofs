@@ -816,7 +816,7 @@ static int inspc_exec_at(struct silofs_inspect_ctx *insp_ctx,
 
 static struct silofs_inspect_ctx *inspc_of(struct silofs_visitor *vis)
 {
-	return silofs_container_of(vis, struct silofs_inspect_ctx, vis);
+	return silofs_mut_container_of(vis, struct silofs_inspect_ctx, vis);
 }
 
 static int inspc_exec_hook(struct silofs_visitor *vis,

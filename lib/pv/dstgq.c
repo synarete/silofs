@@ -22,8 +22,8 @@
 static struct silofs_pnode_info *
 dsq_lh_to_mut_pni(struct silofs_list_head *dsq_lh)
 {
-	return silofs_container_of(dsq_lh, struct silofs_pnode_info,
-	                           pn_dsq_lh);
+	return silofs_mut_container_of(dsq_lh, struct silofs_pnode_info,
+	                               pn_dsq_lh);
 }
 
 static const struct silofs_pnode_info *
@@ -32,8 +32,8 @@ dsq_lh_to_pni(const struct silofs_list_head *dsq_lh)
 	const struct silofs_pnode_info *pni = nullptr;
 
 	if (dsq_lh != nullptr) {
-		pni = silofs_container_of2(dsq_lh, struct silofs_pnode_info,
-		                           pn_dsq_lh);
+		pni = silofs_container_of(dsq_lh, struct silofs_pnode_info,
+		                          pn_dsq_lh);
 	}
 	return pni;
 }

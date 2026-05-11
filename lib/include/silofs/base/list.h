@@ -33,6 +33,13 @@ struct silofs_listq {
 	size_t                  sz;
 };
 
+/* compare functor (list sort) */
+struct silofs_list_cmp_fn {
+	int (*compare_fn)(const struct silofs_list_cmp_fn *self,
+	                  const struct silofs_list_head   *lh1,
+	                  const struct silofs_list_head   *lh2);
+};
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_list_init(struct silofs_list_head *lst);
@@ -55,11 +62,8 @@ struct silofs_list_head *silofs_list_pop_back(struct silofs_list_head *lst);
 
 bool silofs_list_isempty(const struct silofs_list_head *lst);
 
-typedef int (*silofs_list_head_cmp_fn)(const struct silofs_list_head *,
-                                       const struct silofs_list_head *);
-
-void silofs_list_sort(struct silofs_list_head *lst,
-                      silofs_list_head_cmp_fn  cmp_fn);
+void silofs_list_sort(struct silofs_list_head         *lst,
+                      const struct silofs_list_cmp_fn *cmp);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

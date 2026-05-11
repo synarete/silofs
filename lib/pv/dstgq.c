@@ -78,7 +78,8 @@ fill_dstgq(const struct silofs_pexec_ctx *pexec, struct silofs_listq *dsq)
 	}
 }
 
-static int compare_pnodes(const struct silofs_list_head *dsq_lh1,
+static int compare_pnodes(const struct silofs_list_cmp_fn *self,
+                          const struct silofs_list_head *dsq_lh1,
                           const struct silofs_list_head *dsq_lh2)
 {
 	const struct silofs_paddr *paddr1 = paddr_of_dsq_lh(dsq_lh1);
@@ -86,12 +87,17 @@ static int compare_pnodes(const struct silofs_list_head *dsq_lh1,
 	long cmp;
 
 	cmp = silofs_paddr_compare(paddr1, paddr2);
+	silofs_unused(self);
 	return (cmp < 0) ? -1 : ((cmp > 0) ? 1 : 0);
 }
 
 static void sort_dstgq(struct silofs_listq *dsq)
 {
-	silofs_list_sort(&dsq->ls, compare_pnodes);
+	const struct silofs_list_cmp_fn cmp = {
+		.compare_fn = compare_pnodes,
+	};
+
+	silofs_list_sort(&dsq->ls, &cmp);
 }
 
 int silofs_popoulate_dsq(const struct silofs_pexec_ctx *pexec,

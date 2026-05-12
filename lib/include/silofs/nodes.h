@@ -73,10 +73,12 @@ void silofs_dirtyq_init(struct silofs_dirtyq *drq);
 
 void silofs_dirtyq_fini(struct silofs_dirtyq *drq);
 
-struct silofs_dq_elem *silofs_dirtyq_front(const struct silofs_dirtyq *drq);
+struct silofs_dq_elem * //
+silofs_dirtyq_front(const struct silofs_dirtyq *drq);
 
-struct silofs_dq_elem *silofs_dirtyq_next_of(const struct silofs_dirtyq  *drq,
-                                             const struct silofs_dq_elem *dqe);
+struct silofs_dq_elem * //
+silofs_dirtyq_nextof(const struct silofs_dirtyq  *drq,
+                     const struct silofs_dq_elem *dqe);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -91,6 +93,13 @@ void silofs_destageq_depopulate(struct silofs_destageq *dsq, bool cleardirty);
 
 void silofs_destageq_sort(struct silofs_destageq *dsq,
                           silofs_dqe_compare_fn   dqe_cmp_fn);
+
+struct silofs_dq_elem * //
+silofs_destageq_front(const struct silofs_destageq *dsq);
+
+struct silofs_dq_elem * //
+silofs_destageq_nextof(const struct silofs_destageq *dsq,
+                       const struct silofs_dq_elem  *dqe);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* hmapq */

@@ -152,8 +152,8 @@ struct silofs_dq_elem *silofs_dirtyq_front(const struct silofs_dirtyq *drq)
 	return dqe_from_drq_lh(lh);
 }
 
-struct silofs_dq_elem *silofs_dirtyq_next_of(const struct silofs_dirtyq *drq,
-                                             const struct silofs_dq_elem *dqe)
+struct silofs_dq_elem *silofs_dirtyq_nextof(const struct silofs_dirtyq *drq,
+                                            const struct silofs_dq_elem *dqe)
 {
 	struct silofs_list_head *lh = nullptr;
 
@@ -205,7 +205,7 @@ void silofs_destageq_populate(struct silofs_destageq *dsq,
 	dqe = silofs_dirtyq_front(drq);
 	while (dqe != nullptr) {
 		destageq_push_back(dsq, dqe);
-		dqe = silofs_dirtyq_next_of(drq, dqe);
+		dqe = silofs_dirtyq_nextof(drq, dqe);
 	}
 }
 
@@ -253,4 +253,24 @@ void silofs_destageq_sort(struct silofs_destageq *dsq,
 	};
 
 	silofs_list_sort(&dsq->dsq.ls, &dqfn.lsfn);
+}
+
+struct silofs_dq_elem *silofs_destageq_front(const struct silofs_destageq *dsq)
+{
+	struct silofs_list_head *lh;
+
+	lh = silofs_listq_front(&dsq->dsq);
+	return dqe_from_mut_dsq_lh(lh);
+}
+
+struct silofs_dq_elem *
+silofs_destageq_nextof(const struct silofs_destageq *dsq,
+                       const struct silofs_dq_elem *dqe)
+{
+	struct silofs_list_head *lh = nullptr;
+
+	if (dqe != nullptr) {
+		lh = listq_next(&dsq->dsq, &dqe->dsq_lh);
+	}
+	return dqe_from_mut_dsq_lh(lh);
 }

@@ -375,7 +375,7 @@ static void flusher_add_dirty_vnis_of(struct silofs_flusher *flusher,
 		if (vni_may_flush(vni)) {
 			flusher_add_dirty_vni(flusher, vni);
 		}
-		dqe = silofs_dirtyq_next_of(dq, dqe);
+		dqe = silofs_dirtyq_nextof(dq, dqe);
 	}
 }
 
@@ -398,7 +398,7 @@ static void flusher_add_dirty_iis_of(struct silofs_flusher *flusher,
 		if (likely(ii != nullptr)) {
 			flusher_add_dirty_ii(flusher, ii);
 		}
-		dqe = silofs_dirtyq_next_of(dq, dqe);
+		dqe = silofs_dirtyq_nextof(dq, dqe);
 	}
 }
 
@@ -412,7 +412,7 @@ static void flusher_add_dirty_unis_of(struct silofs_flusher *flusher,
 	while (dqe != nullptr) {
 		uni = uni_from_dqe(dqe);
 		flusher_add_dirty_uni(flusher, uni);
-		dqe = silofs_dirtyq_next_of(dq, dqe);
+		dqe = silofs_dirtyq_nextof(dq, dqe);
 	}
 }
 

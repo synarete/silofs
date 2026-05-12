@@ -59,7 +59,7 @@ static struct silofs_pnode_info *
 next_in_dirtyq(const struct silofs_pexec_ctx *pexec,
                const struct silofs_pnode_info *pni)
 {
-	const struct silofs_dq_elem *dqe = &pni->pn_hmqe.hme_dqe;
+	const struct silofs_dq_elem *dqe = &pni->pn.dqe;
 	struct silofs_dq_elem *dqe_next;
 
 	dqe_next = silofs_dirtyq_next_of(&pexec->pcache->pc_dirtyq, dqe);

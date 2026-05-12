@@ -20,38 +20,44 @@
 #include <silofs/flags.h>
 #include <silofs/nodes.h>
 
+const struct silofs_pnode_info *
+silofs_pni_from_ni(const struct silofs_node_info *ni)
+{
+	return container_of(ni, struct silofs_pnode_info, pn);
+}
+
 static struct silofs_pnode_info *pni_unconst(const struct silofs_pnode_info *p)
 {
 	return silofs_unconst(p);
 }
 
-static bool pni_isevictable(const struct silofs_pnode_info *pni)
+static struct silofs_pnode_info *pni_from_ni(const struct silofs_node_info *ni)
 {
-	return silofs_hmqe_is_evictable(&pni->pn_hmqe);
+	const struct silofs_pnode_info *pni = nullptr;
+
+	if (ni != nullptr) {
+		pni = silofs_pni_from_ni(ni);
+	}
+	return pni_unconst(pni);
 }
 
 static struct silofs_pnode_info *
 pni_from_hmqe(const struct silofs_hmapq_elem *hmqe)
 {
-	const struct silofs_pnode_info *pni = nullptr;
-
-	if (hmqe != nullptr) {
-		pni = container_of(hmqe, struct silofs_pnode_info, pn_hmqe);
-	}
-	return pni_unconst(pni);
+	return pni_from_ni(silofs_ni_from_hmqe(hmqe));
 }
 
 static struct silofs_hmapq_elem *pni_to_mut_hmqe(struct silofs_pnode_info *pni)
 {
-	return &pni->pn_hmqe;
+	return &pni->pn.hmqe;
 }
 
 struct silofs_pnode_info *silofs_pni_from_dqe(const struct silofs_dq_elem *dqe)
 {
-	const struct silofs_hmapq_elem *hmqe;
+	const struct silofs_node_info *ni;
 
-	hmqe = silofs_hmqe_from_dqe(dqe);
-	return pni_from_hmqe(hmqe);
+	ni = silofs_ni_from_dqe(dqe);
+	return pni_from_ni(ni);
 }
 
 struct silofs_pnode_info *silofs_pni_from_mut_ni(struct silofs_node_info *ni)
@@ -59,10 +65,9 @@ struct silofs_pnode_info *silofs_pni_from_mut_ni(struct silofs_node_info *ni)
 	return mut_container_of(ni, struct silofs_pnode_info, pn);
 }
 
-const struct silofs_pnode_info *
-silofs_pni_from_ni(const struct silofs_node_info *ni)
+static bool pni_isevictable(const struct silofs_pnode_info *pni)
 {
-	return container_of(ni, struct silofs_pnode_info, pn);
+	return !silofs_ni_ispinned(&pni->pn);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

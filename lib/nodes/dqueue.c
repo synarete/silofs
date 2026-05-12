@@ -47,6 +47,11 @@ void silofs_dqe_fini(struct silofs_dq_elem *dqe)
 	dqe->sz  = 0;
 }
 
+bool silofs_dqe_isinq(const struct silofs_dq_elem *dqe)
+{
+	return dqe->in_drq || dqe->in_dsq;
+}
+
 void silofs_dqe_set_dirtyq(struct silofs_dq_elem *dqe,
                            struct silofs_dirtyq *drq)
 {

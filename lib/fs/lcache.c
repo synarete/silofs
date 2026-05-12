@@ -316,7 +316,7 @@ lcache_require_uni(struct silofs_lcache *lcache,
 static void
 lcache_store_uni(struct silofs_lcache *lcache, struct silofs_unode_info *uni)
 {
-	silofs_hkey_by_uaddr(&uni->un_lni.ln_hmqe.hme_key, uni_uaddr(uni));
+	silofs_hkey_by_uaddr(&uni->un_lni.ln.hmqe.hme_key, uni_uaddr(uni));
 	lcache_store_uni_hmapq(lcache, uni);
 }
 

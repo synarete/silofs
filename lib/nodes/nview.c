@@ -510,43 +510,10 @@ int silofs_decrypt_pview(const struct silofs_cipher_hd *ci_hd,
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static void dsqe_init(struct silofs_dsq_elem *dsqe)
+void silofs_ni_init(struct silofs_node_info *ni, size_t sz)
 {
-	silofs_list_head_init(&dsqe->lh);
-	dsqe->inq = false;
-}
-
-static void dsqe_fini(struct silofs_dsq_elem *dsqe)
-{
-	silofs_assert_eq(dsqe->inq, false);
-	silofs_list_head_fini(&dsqe->lh);
-}
-
-static void
-dsqe_push_to(struct silofs_dsq_elem *dsqe, struct silofs_listq *dsq)
-{
-	silofs_assert_eq(dsqe->inq, false);
-	silofs_listq_push_back(dsq, &dsqe->lh);
-	dsqe->inq = true;
-}
-
-static void
-dsqe_pop_from(struct silofs_dsq_elem *dsqe, struct silofs_listq *dsq)
-{
-	silofs_assert_eq(dsqe->inq, true);
-	silofs_listq_remove(dsq, &dsqe->lh);
-	dsqe->inq = false;
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-void silofs_ni_init(struct silofs_node_info *ni, size_t view_size)
-{
-	silofs_assert_gt(view_size, 0);
-	silofs_assert_le(view_size, 65536);
-
-	silofs_hmqe_init(&ni->hmqe, view_size);
-	dsqe_init(&ni->dsqe);
+	silofs_hmqe_init(&ni->hmqe);
+	silofs_dqe_init(&ni->dqe, sz);
 	ni->view.opaque_view     = nullptr;
 	ni->view_enc.opaque_view = nullptr;
 }
@@ -554,7 +521,7 @@ void silofs_ni_init(struct silofs_node_info *ni, size_t view_size)
 void silofs_ni_fini(struct silofs_node_info *ni)
 {
 	silofs_hmqe_fini(&ni->hmqe);
-	dsqe_fini(&ni->dsqe);
+	silofs_dqe_fini(&ni->dqe);
 }
 
 void silofs_ni_incref(struct silofs_node_info *ni)
@@ -567,14 +534,19 @@ void silofs_ni_decref(struct silofs_node_info *ni)
 	silofs_hmqe_decref(&ni->hmqe);
 }
 
-void silofs_ni_push_dsq(struct silofs_node_info *ni, struct silofs_listq *dsq)
+size_t silofs_ni_refcnt(const struct silofs_node_info *ni)
 {
-	dsqe_push_to(&ni->dsqe, dsq);
+	const int refcnt = silofs_hmqe_refcnt(&ni->hmqe);
+
+	silofs_assert_ge(refcnt, 0);
+	silofs_assert_lt(refcnt, INT32_MAX);
+
+	return (size_t)refcnt;
 }
 
-void silofs_ni_pop_dsq(struct silofs_node_info *ni, struct silofs_listq *dsq)
+bool silofs_ni_ispinned(const struct silofs_node_info *ni)
 {
-	dsqe_pop_from(&ni->dsqe, dsq);
+	return silofs_dqe_isinq(&ni->dqe) || (silofs_ni_refcnt(ni) > 0);
 }
 
 const struct silofs_node_info *
@@ -600,22 +572,23 @@ silofs_ni_from_mut_hmqe(struct silofs_hmapq_elem *hmqe)
 }
 
 const struct silofs_node_info *
-silofs_ni_from_dsqe(const struct silofs_dsq_elem *dsqe)
+silofs_ni_from_dqe(const struct silofs_dq_elem *dqe)
 {
 	const struct silofs_node_info *ni = nullptr;
 
-	if (dsqe != nullptr) {
-		ni = container_of(dsqe, struct silofs_node_info, dsqe);
+	if (dqe != nullptr) {
+		ni = container_of(dqe, struct silofs_node_info, dqe);
 	}
 	return ni;
 }
 
-struct silofs_node_info *silofs_ni_from_mut_dsqe(struct silofs_dsq_elem *dsqe)
+struct silofs_node_info * //
+silofs_ni_from_mut_dqe(struct silofs_dq_elem *dqe)
 {
 	struct silofs_node_info *ni = nullptr;
 
-	if (dsqe != nullptr) {
-		ni = mut_container_of(dsqe, struct silofs_node_info, dsqe);
+	if (dqe != nullptr) {
+		ni = mut_container_of(dqe, struct silofs_node_info, dqe);
 	}
 	return ni;
 }

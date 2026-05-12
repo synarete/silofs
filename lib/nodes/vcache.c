@@ -29,7 +29,7 @@ static struct silofs_vnode_info *vni_from_hmqe(struct silofs_hmapq_elem *hmqe)
 
 static struct silofs_hmapq_elem *vni_to_hmqe(struct silofs_vnode_info *vni)
 {
-	return &vni->vn_lni.ln_hmqe;
+	return &vni->vn_lni.ln.hmqe;
 }
 
 static enum silofs_vtype vni_vtype(const struct silofs_vnode_info *vni)
@@ -157,7 +157,7 @@ static void
 vcache_remove_vni(struct silofs_vcache *vcache, struct silofs_vnode_info *vni)
 {
 	silofs_lni_remove_from(&vni->vn_lni, &vcache->vc_vni_hmapq);
-	vni->vn_lni.ln_hmqe.hme_forgot = false;
+	vni->vn_lni.ln.hmqe.hme_forgot = false;
 }
 
 static void
@@ -177,7 +177,7 @@ static void vcache_store_vni_hmapq(struct silofs_vcache *vcache,
 static void
 vcache_store_vni(struct silofs_vcache *vcache, struct silofs_vnode_info *vni)
 {
-	silofs_hkey_by_vaddr(&vni->vn_lni.ln_hmqe.hme_key, &vni->vn_vaddr);
+	silofs_hkey_by_vaddr(&vni->vn_lni.ln.hmqe.hme_key, &vni->vn_vaddr);
 	vcache_store_vni_hmapq(vcache, vni);
 }
 
@@ -298,7 +298,7 @@ void silofs_vcache_forget_vnode(struct silofs_vcache *vcache,
 	silofs_vni_cleardirty(vni);
 	if (silofs_vni_refcnt(vni) > 0) {
 		vcache_unmap_vni(vcache, vni);
-		vni->vn_lni.ln_hmqe.hme_forgot = true;
+		vni->vn_lni.ln.hmqe.hme_forgot = true;
 	} else {
 		vcache_evict_vni(vcache, vni, SILOFS_ALLOCF_NONE);
 	}

@@ -51,9 +51,8 @@ pni_init(struct silofs_pnode_info *pni, const struct silofs_pnptr *pnptr)
 	silofs_ni_init(&pni->pn, psize);
 	silofs_pnptr_assign(&pni->pn_self, pnptr);
 	silofs_paddr_reset(&pni->pn_parent);
-	silofs_hmqe_init(&pni->pn_hmqe, psize);
 	silofs_list_head_init(&pni->pn_dsq_lh);
-	silofs_hkey_by_paddr(&pni->pn_hmqe.hme_key, &pni->pn_self.paddr);
+	silofs_hkey_by_paddr(&pni->pn.hmqe.hme_key, &pni->pn_self.paddr);
 	pni->pn_pview = nullptr;
 	pni->pn_flags = SILOFS_PNODEF_NONE;
 }
@@ -63,7 +62,6 @@ static void pni_fini(struct silofs_pnode_info *pni)
 	silofs_pnptr_reset(&pni->pn_self);
 	silofs_paddr_reset(&pni->pn_parent);
 	silofs_list_head_fini(&pni->pn_dsq_lh);
-	silofs_hmqe_fini(&pni->pn_hmqe);
 	silofs_ni_fini(&pni->pn);
 	pni->pn_pview = nullptr;
 }
@@ -80,7 +78,7 @@ enum silofs_ptype silofs_pni_ptype(const struct silofs_pnode_info *pni)
 
 static struct silofs_dq_elem *pni_dqe(struct silofs_pnode_info *pni)
 {
-	return &pni->pn_hmqe.hme_dqe;
+	return &pni->pn.dqe;
 }
 
 void silofs_pni_set_dq(struct silofs_pnode_info *pni, struct silofs_dirtyq *dq)
@@ -134,12 +132,12 @@ void silofs_pni_cleardirty(struct silofs_pnode_info *pni)
 
 void silofs_pni_incref(struct silofs_pnode_info *pni)
 {
-	silofs_hmqe_incref(&pni->pn_hmqe);
+	silofs_ni_incref(&pni->pn);
 }
 
 void silofs_pni_decref(struct silofs_pnode_info *pni)
 {
-	silofs_hmqe_decref(&pni->pn_hmqe);
+	silofs_ni_decref(&pni->pn);
 }
 
 static int

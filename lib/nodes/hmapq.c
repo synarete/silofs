@@ -289,9 +289,8 @@ hmqe_from_lru_link(const struct silofs_list_head *lru_lh)
 	return hmqe_unconst(hmqe);
 }
 
-void silofs_hmqe_init(struct silofs_hmapq_elem *hmqe, size_t sz)
+void silofs_hmqe_init(struct silofs_hmapq_elem *hmqe)
 {
-	silofs_dqe_init(&hmqe->hme_dqe, sz);
 	hkey_reset(&hmqe->hme_key);
 	list_head_init(&hmqe->hme_htb_lh);
 	list_head_init(&hmqe->hme_lru_lh);
@@ -308,7 +307,6 @@ void silofs_hmqe_fini(struct silofs_hmapq_elem *hmqe)
 	hmqe_sanitize(hmqe);
 	silofs_assert_eq(hmqe->hme_refcnt, 0);
 
-	silofs_dqe_fini(&hmqe->hme_dqe);
 	hkey_reset(&hmqe->hme_key);
 	list_head_fini(&hmqe->hme_htb_lh);
 	list_head_fini(&hmqe->hme_lru_lh);
@@ -446,16 +444,6 @@ static void hmqe_decref_atomic(struct silofs_hmapq_elem *hmqe)
 	silofs_atomic_sqc_sub(&hmqe->hme_refcnt, 1);
 }
 
-static bool hmqe_is_dirty(const struct silofs_hmapq_elem *hmqe)
-{
-	return silofs_dqe_isdirty(&hmqe->hme_dqe);
-}
-
-static bool hmqe_is_evictable_atomic(const struct silofs_hmapq_elem *hmqe)
-{
-	return !hmqe_is_dirty(hmqe) && !hmqe_refcnt_atomic(hmqe);
-}
-
 int silofs_hmqe_refcnt(const struct silofs_hmapq_elem *hmqe)
 {
 	hmqe_sanitize(hmqe);
@@ -472,23 +460,6 @@ void silofs_hmqe_decref(struct silofs_hmapq_elem *hmqe)
 {
 	hmqe_sanitize(hmqe);
 	hmqe_decref_atomic(hmqe);
-}
-
-bool silofs_hmqe_is_evictable(const struct silofs_hmapq_elem *hmqe)
-{
-	hmqe_sanitize(hmqe);
-	return hmqe_is_evictable_atomic(hmqe);
-}
-
-const struct silofs_hmapq_elem *
-silofs_hmqe_from_dqe(const struct silofs_dq_elem *dqe)
-{
-	const struct silofs_hmapq_elem *hmqe = nullptr;
-
-	if (dqe != nullptr) {
-		hmqe = container_of(dqe, struct silofs_hmapq_elem, hme_dqe);
-	}
-	return hmqe;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

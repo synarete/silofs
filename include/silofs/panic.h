@@ -144,13 +144,13 @@ void silofs_expect_noop_(intmax_t a, intmax_t b);
 extern int silofs_panic_mode;
 
 silofs_attr_dief(3, 4) void silofs_panicf(const char *file, int line,
-                                          const char *restrict fmt, ...);
+                                          const char *fmt, ...);
 
 /* die */
-silofs_attr_dief(2, 3) void silofs_die(int er, const char *restrict fmt, ...);
+silofs_attr_dief(2, 3) void silofs_die(int er, const char *fmt, ...);
 
 silofs_attr_dief(4, 5) void silofs_die_at(int er, const char *fl, int ln,
-                                          const char *restrict fmt, ...);
+                                          const char *fmt, ...);
 
 /* backtrace */
 void silofs_backtrace(void);

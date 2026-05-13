@@ -44,7 +44,7 @@ static int cmd_errnum_of(int err)
 	return (abs_err < SILOFS_ERRBASE) ? abs_err : 0;
 }
 
-void cmd_vdie(int err, const char *restrict fmt, va_list ap)
+void cmd_vdie(int err, const char *fmt, va_list ap)
 {
 	char msg[1024] = "";
 	va_list ap2;
@@ -64,7 +64,7 @@ void cmd_vdie(int err, const char *restrict fmt, va_list ap)
 	exit(EXIT_FAILURE); /* never gets here, but makes clang-scan happy */
 }
 
-void cmd_die(int err, const char *restrict fmt, ...)
+void cmd_die(int err, const char *fmt, ...)
 {
 	va_list ap;
 
@@ -74,7 +74,7 @@ void cmd_die(int err, const char *restrict fmt, ...)
 	exit(EXIT_FAILURE); /* never gets here, but makes clang-scan happy */
 }
 
-void cmd_diez(const char *restrict fmt, ...)
+void cmd_diez(const char *fmt, ...)
 {
 	va_list ap;
 

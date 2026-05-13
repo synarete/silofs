@@ -31,6 +31,7 @@
 #include <stdbool.h>
 #include <dirent.h>
 
+#include <silofs/snprintf.h>
 #include <silofs/api.h>
 #include <silofs/fs.h>
 #include <silofs/ar.h>

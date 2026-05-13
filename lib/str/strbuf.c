@@ -21,6 +21,7 @@
 #include <stdarg.h>
 
 #include <silofs/macros.h>
+#include <silofs/snprintf.h>
 #include <silofs/str/strchr.h>
 #include <silofs/str/strview.h>
 #include <silofs/str/strspan.h>
@@ -104,23 +105,12 @@ void silofs_strbuf_setup_by2(struct silofs_strbuf *sbuf, const char *s,
 size_t silofs_strbuf_sprintf(struct silofs_strbuf *sbuf, const char *fmt, ...)
 {
 	va_list ap;
-	size_t k;
-	int n;
 
 	silofs_strbuf_reset(sbuf);
 
 	va_start(ap, fmt);
-	k = sizeof(sbuf->str);
-	n = vsnprintf(sbuf->str, k, fmt, ap);
+	silofs_vsnprintf(sbuf->str, sizeof(sbuf->str), fmt, ap);
 	va_end(ap);
 
-	if (n < 0) {
-		sbuf->str[0] = '\0';
-		return 0;
-	}
-	if (n < (int)k) {
-		return (size_t)n;
-	}
-	sbuf->str[k - 1] = '\0';
-	return k - 1;
+	return silofs_str_length(sbuf->str);
 }

@@ -36,11 +36,12 @@
 #include <silofs/memalloc.h>
 #include <silofs/logging.h>
 #include <silofs/panic.h>
+#include <silofs/snprintf.h>
+
 #include <silofs/base/list.h>
 #include <silofs/base/utility.h>
 #include <silofs/base/iovec.h>
 #include <silofs/base/atomic.h>
-#include <silofs/base/snprintf.h>
 #include <silofs/base/thread.h>
 #include <silofs/base/qalloc.h>
 

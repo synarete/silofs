@@ -741,12 +741,12 @@ silofs_attr_printf23 char *ut_strfmt(struct ut_env *ute, const char *fmt, ...)
 {
 	char tmp[1024] = "";
 	va_list ap;
-	int nb;
+	size_t nb;
 
 	va_start(ap, fmt);
-	nb = vsnprintf(tmp, sizeof(tmp), fmt, ap);
+	nb = silofs_vsnprintf(tmp, sizeof(tmp), fmt, ap);
 	va_end(ap);
-	ut_expect_lt(nb, sizeof(tmp));
+	ut_expect_lt(nb + 1, sizeof(tmp));
 
 	return ut_strdup(ute, tmp);
 }

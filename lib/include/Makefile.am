@@ -11,7 +11,6 @@ noinst_HEADERS += silofs/base/list.h
 noinst_HEADERS += silofs/base/pipe.h
 noinst_HEADERS += silofs/base/private.h
 noinst_HEADERS += silofs/base/qalloc.h
-noinst_HEADERS += silofs/base/snprintf.h
 noinst_HEADERS += silofs/base/socket.h
 noinst_HEADERS += silofs/base/thread.h
 noinst_HEADERS += silofs/base/times.h

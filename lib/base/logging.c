@@ -27,6 +27,7 @@
 
 #include <silofs/version.h>
 #include <silofs/ccattr.h>
+#include <silofs/snprintf.h>
 #include <silofs/logging.h>
 
 #define SILOFS_LOG_LEVEL_DEFAULT (SILOFS_LOG_ERROR)
@@ -199,7 +200,6 @@ silofs_logf(enum silofs_log_level log_level, const char *file, int line,
 	const char *filename  = nullptr;
 	const int saved_errno = errno;
 	enum silofs_log_flags log_flags;
-	int n;
 
 	if (!log_enabled_with(log_level)) {
 		errno = saved_errno;
@@ -212,11 +212,8 @@ silofs_logf(enum silofs_log_level log_level, const char *file, int line,
 	}
 
 	va_start(ap, fmt);
-	n = vsnprintf(msg, sizeof(msg), fmt, ap);
+	silofs_vsnprintf(msg, sizeof(msg), fmt, ap);
 	va_end(ap);
-	if (n >= (int)sizeof(msg)) {
-		msg[sizeof(msg) - 1] = '\0';
-	}
 
 	log_msg(log_level, log_flags, msg, filename, line);
 	errno = saved_errno;

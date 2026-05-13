@@ -35,6 +35,8 @@
 #include <math.h>
 #include <dirent.h>
 
+#include <silofs/snprintf.h>
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int cmd_errnum_of(int err)
@@ -48,17 +50,10 @@ void cmd_vdie(int err, const char *fmt, va_list ap)
 {
 	char msg[1024] = "";
 	va_list ap2;
-	int ret;
 
 	va_copy(ap2, ap);
-	ret = vsnprintf(msg, sizeof(msg), fmt, ap2);
+	silofs_vsnprintf(msg, sizeof(msg), fmt, ap2);
 	va_end(ap2);
-
-	if (ret < 0) {                           /* formatting error */
-		msg[0] = '\0';
-	} else if ((size_t)ret >= sizeof(msg)) { /* truncated */
-		msg[sizeof(msg) - 1] = '\0';
-	}
 
 	error(EXIT_FAILURE, cmd_errnum_of(err), "%s", msg);
 	exit(EXIT_FAILURE); /* never gets here, but makes clang-scan happy */
@@ -905,20 +900,20 @@ char *cmd_path_join(const char *dirpath, const char *name)
 
 char *cmd_path_fmt(const char *fmt, ...)
 {
-	va_list ap;
 	constexpr size_t path_size = PATH_MAX;
 	char *path_dup, *path;
-	int n;
+	va_list ap;
+	size_t n;
 
 	path = cmd_zalloc(path_size);
 	va_start(ap, fmt);
-	n = vsnprintf(path, path_size, fmt, ap);
+	n = silofs_vsnprintf(path, path_size, fmt, ap);
 	va_end(ap);
 
-	if (n >= (int)path_size) {
-		cmd_diez("illegal path-len %d", n);
+	if (!n || (n - 1) >= path_size) {
+		cmd_diez("illegal path-len %zu", n);
 	}
-	if ((n * 2) > (int)path_size) {
+	if ((n * 2) > path_size) {
 		goto out;
 	}
 	path_dup = cmd_strdup(path);

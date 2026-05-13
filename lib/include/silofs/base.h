@@ -24,6 +24,7 @@
 #include <silofs/syscall.h>
 #include <silofs/version.h>
 #include <silofs/logging.h>
+#include <silofs/snprintf.h>
 #include <silofs/panic.h>
 #include <silofs/memalloc.h>
 
@@ -37,7 +38,6 @@
 #include <silofs/base/list.h>
 #include <silofs/base/pipe.h>
 #include <silofs/base/socket.h>
-#include <silofs/base/snprintf.h>
 #include <silofs/base/times.h>
 #include <silofs/base/uuid.h>
 #include <silofs/base/qalloc.h>

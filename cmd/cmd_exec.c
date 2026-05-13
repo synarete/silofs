@@ -16,6 +16,7 @@
  */
 #define _GNU_SOURCE 1
 #include "cmd.h"
+#include <silofs/snprintf.h>
 #include <stdarg.h>
 
 static void cmd_env_create(enum silofs_flags flags, struct silofs_env **penv)
@@ -144,19 +145,12 @@ attr_printf34 static void
 cmd_report_err_and_dief(const struct silofs_env *env, int status,
                         const char *fmt, ...)
 {
-	char msg[1024];
+	char msg[1024] = "";
 	va_list ap;
-	int ret;
 
 	va_start(ap, fmt);
-	ret = vsnprintf(msg, sizeof(msg), fmt, ap);
+	silofs_vsnprintf(msg, sizeof(msg), fmt, ap);
 	va_end(ap);
-
-	if (ret < 0) {
-		msg[0] = '\0';
-	} else if (ret >= (int)sizeof(msg)) {
-		msg[sizeof(msg) - 1] = '\0';
-	}
 
 	cmd_report_err_and_die(env, status, msg);
 }

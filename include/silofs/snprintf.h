@@ -21,7 +21,7 @@
 #include <stdarg.h>
 #include <silofs/ccattr.h>
 
-silofs_attr_printf(3, 0) void silofs_vsnprintf(char *buf, size_t bsz,
-                                               const char *fmt, va_list ap);
+silofs_attr_printf30 size_t silofs_vsnprintf(char *buf, size_t bsz,
+                                             const char *fmt, va_list ap);
 
 #endif /* SILOFS_SNPRINTF_H_ */

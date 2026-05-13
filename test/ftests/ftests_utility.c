@@ -329,7 +329,7 @@ ft_new_namef(struct ft_env *fte, const char *fmt, ...)
 	va_list ap;
 
 	va_start(ap, fmt);
-	vsnprintf(name, sizeof(name) - 1, fmt, ap);
+	silofs_vsnprintf(name, sizeof(name), fmt, ap);
 	va_end(ap);
 	return ft_strdup(fte, name);
 }
@@ -341,7 +341,7 @@ ft_new_pathf(struct ft_env *fte, const char *p, const char *fmt, ...)
 	va_list ap;
 
 	va_start(ap, fmt);
-	vsnprintf(buf, sizeof(buf) - 1, fmt, ap);
+	silofs_vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 	return ft_new_path_nested(fte, p, buf);
 }
@@ -447,13 +447,10 @@ silofs_attr_printf23 char *ft_strfmt(struct ft_env *fte, const char *fmt, ...)
 {
 	char str[2000] = "";
 	va_list ap;
-	int len;
 
 	va_start(ap, fmt);
-	len = vsnprintf(str, sizeof(str) - 1, fmt, ap);
+	silofs_vsnprintf(str, sizeof(str), fmt, ap);
 	va_end(ap);
-
-	ft_expect_lt(len, sizeof(str));
 	return ft_strdup(fte, str);
 }
 

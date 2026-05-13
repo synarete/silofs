@@ -37,7 +37,7 @@ do_error_at_line(const char *fl, int ln, const char *fmt, ...)
 	va_list ap;
 
 	va_start(ap, fmt);
-	vsnprintf(msg, sizeof(msg), fmt, ap);
+	silofs_vsnprintf(msg, sizeof(msg), fmt, ap);
 	va_end(ap);
 
 	error_at_line(EXIT_FAILURE, 0, basename_of(fl), (uint32_t)ln,

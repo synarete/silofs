@@ -18,12 +18,11 @@
 #include <stdio.h>
 
 #include <silofs/ccattr.h>
-#include <silofs/base/snprintf.h>
+#include <silofs/snprintf.h>
 
-#define attr_printf silofs_attr_printf(3, 0)
-
-attr_printf static size_t
-safe_vsnprintf(char *buf, size_t bsz, const char *fmt, va_list ap)
+/* Safe wrapper over vsnprintf */
+silofs_attr_printf30 size_t silofs_vsnprintf(char *buf, size_t bsz,
+                                             const char *fmt, va_list ap)
 {
 	va_list ap2;
 	int ret;
@@ -47,10 +46,4 @@ safe_vsnprintf(char *buf, size_t bsz, const char *fmt, va_list ap)
 	}
 
 	return (size_t)ret;
-}
-
-silofs_attr_printf(3, 0) void silofs_vsnprintf(char *buf, size_t bsz,
-                                               const char *fmt, va_list ap)
-{
-	(void)safe_vsnprintf(buf, bsz, fmt, ap);
 }

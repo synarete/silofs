@@ -36,9 +36,9 @@
 #include <silofs/ccattr.h>
 #include <silofs/macros.h>
 #include <silofs/panic.h>
+#include <silofs/snprintf.h>
 #include <silofs/logging.h>
 #include <silofs/base/utility.h>
-#include <silofs/base/snprintf.h>
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

@@ -124,6 +124,27 @@ void silofs_expect_noop_(intmax_t a, intmax_t b);
 	silofs_expect_eqm_(m1, m2, nn, SILOFS_FL_LN_)
 #endif
 
+/* run-time assumptions (debug mode only) */
+#ifndef NDEBUG
+#define silofs_assume(cond_) \
+	silofs_assert(cond_)
+#define silofs_assume_lt(a_, b_) \
+	silofs_assert_lt(a_, b_)
+#define silofs_assume_not_null(ptr_) \
+	silofs_assert_not_null(ptr_)
+#else
+#define silofs_assume(cond_)              \
+    do {                                  \
+	    if (!(cond_)) {               \
+		    silofs_unreachable(); \
+	    }                             \
+    } while (0)
+#define silofs_assume_lt(a_, b_) \
+	silofs_assume((a_) < (b_))
+#define silofs_assum_not_null(ptr_) \
+	silofs_assume((ptr_) != nullptr)
+#endif
+
 /* panic */
 #define SILOFS_PANIC_ABORT (1)
 #define SILOFS_PANIC_WAIT (2)

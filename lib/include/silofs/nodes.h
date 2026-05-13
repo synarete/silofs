@@ -271,15 +271,11 @@ int silofs_decrypt_view_inplace(const struct silofs_cipher_hd *ci_hd,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-struct silofs_pview *
-silofs_pview_new(struct silofs_alloc *alloc, enum silofs_ptype ptype);
+void silofs_pview_setup(struct silofs_pview *pview, enum silofs_ptype ptype);
 
-void silofs_pview_del(struct silofs_pview *pview, struct silofs_alloc *alloc,
-                      enum silofs_ptype ptype);
+void silofs_pview_seal(struct silofs_pview *pview);
 
-void silofs_seal_pview(struct silofs_pview *pview);
-
-int silofs_verify_pview(const struct silofs_pview *pview,
+int silofs_pview_verify(const struct silofs_pview *pview,
                         enum silofs_ptype          ptype);
 
 int silofs_encrypt_pview(const struct silofs_cipher_hd *ci_hd,
@@ -330,6 +326,16 @@ size_t silofs_ni_refcnt(const struct silofs_node_info *ni);
 
 bool silofs_ni_ispinned(const struct silofs_node_info *ni);
 
+size_t silofs_ni_view_size(const struct silofs_node_info *ni);
+
+int silofs_ni_new_view(struct silofs_node_info *ni,
+                       struct silofs_alloc     *alloc);
+
+void silofs_ni_del_view(struct silofs_node_info *ni,
+                        struct silofs_alloc     *alloc);
+
+void silofs_ni_bzero_view(struct silofs_node_info *ni);
+
 const struct silofs_node_info * //
 silofs_ni_from_hmqe(const struct silofs_hmapq_elem *hmqe);
 
@@ -353,11 +359,10 @@ enum silofs_pnodef {
 
 /* base of all persistent nodes */
 struct silofs_pnode_info {
-	struct silofs_node_info pn;
+	struct silofs_node_info pn_base;
 	struct silofs_pnptr     pn_self;
 	struct silofs_paddr     pn_parent;
 	struct silofs_list_head pn_dsq_lh;
-	struct silofs_pview    *pn_pview;
 	unsigned int            pn_flags;
 };
 
@@ -390,8 +395,6 @@ silofs_pni_parent(const struct silofs_pnode_info *pni);
 void silofs_pni_set_parent(struct silofs_pnode_info  *pni,
                            const struct silofs_paddr *paddr);
 
-enum silofs_ptype silofs_pni_ptype(const struct silofs_pnode_info *pni);
-
 void silofs_pni_markdirty(struct silofs_pnode_info *pni);
 
 void silofs_pni_cleardirty(struct silofs_pnode_info *pni);
@@ -402,6 +405,14 @@ void silofs_pni_decref(struct silofs_pnode_info *pni);
 
 void silofs_pni_set_dq(struct silofs_pnode_info *pni,
                        struct silofs_dirtyq     *dq);
+
+size_t silofs_pni_pview_size(const struct silofs_pnode_info *pni);
+
+struct silofs_pview * //
+silofs_pni_pview(const struct silofs_pnode_info *pni);
+
+enum silofs_ptype     //
+silofs_pni_ptype(const struct silofs_pnode_info *pni);
 
 const struct silofs_paddr *
 silofs_pni_paddr(const struct silofs_pnode_info *pni);

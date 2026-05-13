@@ -142,7 +142,7 @@ static void cmd_report_err_and_die(const struct silofs_env *env, int status,
 
 attr_printf34 static void
 cmd_report_err_and_dief(const struct silofs_env *env, int status,
-                        const char *restrict fmt, ...)
+                        const char *fmt, ...)
 {
 	char msg[1024];
 	va_list ap;

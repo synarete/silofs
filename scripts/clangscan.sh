@@ -20,6 +20,7 @@ _clang_scan_enabled_checkers_args() {
 		| grep -Ev '^Check|^Warn|^Reports' \
 		| grep -Ev 'DeprecatedOrUnsafeBufferHandling' \
 		| grep -Ev 'valist\.Uninitialized' \
+		| grep -Ev 'security\.VAList' \
 		| awk '{print $1}' \
 		| sed '/^$/d' \
 		| awk '{print " -enable-checker "$1""} '

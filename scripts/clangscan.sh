@@ -14,14 +14,11 @@ source "${rootdir}/bash_functions"
 
 _clang_scan_enabled_checkers_args() {
 	clang -cc1 -analyzer-checker-help \
-		| awk '{print $1}' \
-		| grep -Ev 'OVERVIEW|USAGE|CHECKERS' \
-		| grep -Ev 'osx|fuchsia|cplusplus|optin|strcpy|webkit' \
-		| grep -Ev '^Check|^Warn|^Reports' \
+		| awk '/^  [A-Za-z0-9_.]+/{print $1}' \
+		| grep -Ev '^(osx|fuchsia|cplusplus|optin|strcpy|webkit|alpha|experimental|debug)' \
 		| grep -Ev 'DeprecatedOrUnsafeBufferHandling' \
 		| grep -Ev 'valist\.Uninitialized' \
 		| grep -Ev 'security\.VAList' \
-		| awk '{print $1}' \
 		| sed '/^$/d' \
 		| awk '{print " -enable-checker "$1""} '
 }

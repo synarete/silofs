@@ -62,6 +62,8 @@
 #endif
 
 #define silofs_attr_printf23 silofs_attr_printf(2, 3)
+#define silofs_attr_printf34 silofs_attr_printf(3, 4)
+#define silofs_attr_printf45 silofs_attr_printf(4, 5)
 
 #if __has_attribute(__fallthrough__)
 #define silofs_fallthrough __attribute__((__fallthrough__))

@@ -737,7 +737,7 @@ char *ut_randstr(struct ut_env *ute, size_t len)
 	return str;
 }
 
-char *ut_strfmt(struct ut_env *ute, const char *fmt, ...)
+silofs_attr_printf23 char *ut_strfmt(struct ut_env *ute, const char *fmt, ...)
 {
 	char tmp[1024] = "";
 	va_list ap;

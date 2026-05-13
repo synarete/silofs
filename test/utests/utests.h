@@ -253,8 +253,7 @@ long *ut_randseq(struct ut_env *, size_t len, long base);
 
 char *ut_randstr(struct ut_env *, size_t len);
 
-silofs_attr_printf(2, 3) char *ut_strfmt(struct ut_env *ute, const char *fmt,
-                                         ...);
+silofs_attr_printf23 char *ut_strfmt(struct ut_env *ute, const char *fmt, ...);
 
 struct ut_readdir_ctx *ut_new_readdir_ctx(struct ut_env *ute);
 

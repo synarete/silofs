@@ -322,7 +322,8 @@ char *ft_new_path_under(struct ft_env *fte, const char *base)
 	return ft_new_path_nested(fte, base, name);
 }
 
-char *ft_new_namef(struct ft_env *fte, const char *fmt, ...)
+silofs_attr_printf23 char *
+ft_new_namef(struct ft_env *fte, const char *fmt, ...)
 {
 	char name[NAME_MAX + 1] = "";
 	va_list ap;
@@ -333,7 +334,8 @@ char *ft_new_namef(struct ft_env *fte, const char *fmt, ...)
 	return ft_strdup(fte, name);
 }
 
-char *ft_new_pathf(struct ft_env *fte, const char *p, const char *fmt, ...)
+silofs_attr_printf34 char *
+ft_new_pathf(struct ft_env *fte, const char *p, const char *fmt, ...)
 {
 	char buf[PATH_MAX / 2] = "";
 	va_list ap;
@@ -441,7 +443,7 @@ void *ft_new_buf_nums(struct ft_env *fte, long base, size_t bsz)
 	return buf;
 }
 
-char *ft_strfmt(struct ft_env *fte, const char *fmt, ...)
+silofs_attr_printf23 char *ft_strfmt(struct ft_env *fte, const char *fmt, ...)
 {
 	char str[2000] = "";
 	va_list ap;

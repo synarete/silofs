@@ -190,8 +190,9 @@ static bool log_enabled_with(enum silofs_log_level log_level)
 	return log_output_enabled() && log_level_enabled(log_level);
 }
 
-int silofs_logf(enum silofs_log_level log_level, const char *file, int line,
-                const char *fmt, ...)
+silofs_attr_printf45 int
+silofs_logf(enum silofs_log_level log_level, const char *file, int line,
+            const char *fmt, ...)
 {
 	char msg[512];
 	va_list ap;

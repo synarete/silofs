@@ -49,7 +49,8 @@ safe_vsnprintf(char *buf, size_t bsz, const char *fmt, va_list ap)
 	return (size_t)ret;
 }
 
-void silofs_vsnprintf(char *buf, size_t bsz, const char *fmt, va_list ap)
+silofs_attr_printf(3, 0) void silofs_vsnprintf(char *buf, size_t bsz,
+                                               const char *fmt, va_list ap)
 {
 	(void)safe_vsnprintf(buf, bsz, fmt, ap);
 }

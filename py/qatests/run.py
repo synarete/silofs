@@ -20,6 +20,7 @@ class RunArgs:
         self.start_time = datetime.datetime.now()
         self.config = conf.Config()
 
+    @property
     def exec_duration(self) -> datetime.timedelta:
         """Returns the total time (in minutes) since start"""
         now = datetime.datetime.now()
@@ -57,7 +58,7 @@ def _report_done(args: RunArgs) -> None:
     prog = subcmds.silofs.xbin
     vers = subcmds.silofs.version()
     log.println(f"DONE: {prog} {vers}")
-    durs = args.exec_duration()
+    durs = args.exec_duration
     log.println(f"DURATION: {durs}")
 
 

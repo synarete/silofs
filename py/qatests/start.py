@@ -20,6 +20,7 @@ class _ProgArgs(run.RunArgs):
         super().__init__()
         self.argv = sys.argv
 
+    @property
     def progname(self) -> str:
         name = ""
         if len(self.argv) > 0:
@@ -48,12 +49,13 @@ class ProgInfo:
         self.version = version
         self.release = release
         self.revision = revision
-        self.title = self.args.progname()
+        self.title = self.args.progname
         self.version_mode = False
         self.config = ""
         self.basedir = ""
         self.mntdir = ""
 
+    @property
     def version_string(self) -> str:
         return f"{self.version}-{self.release}.{self.revision}"
 
@@ -126,7 +128,7 @@ def run_silofs_qatests(prog_info: ProgInfo = ProgInfo()) -> None:
         prog_info.update_proc_title()
         prog_info.parse_args()
         if prog_info.version_mode:
-            print(prog_info.version_string())
+            print(prog_info.version_string)
         else:
             prog_info.check_args()
             prog_info.update_config()

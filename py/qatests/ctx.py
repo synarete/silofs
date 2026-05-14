@@ -114,7 +114,7 @@ class TestEnv:
         return self.make_path(self.name)
 
     def make_path(self, *subs: str) -> Path:
-        return Path(self.mntpoint(), *subs)
+        return self.mntpoint / Path(*subs) if subs else self.mntpoint
 
     def make_td(self, sub: str, name: str, sz: int) -> TestData:
         path = self.make_path(sub, name)
@@ -151,24 +151,27 @@ class TestEnv:
         self.expect.is_dir(path)
         utils.rmtree_at(path)
 
+    @property
     def repodir(self) -> Path:
         return self.cfg.basedir / "repo"
 
+    @property
     def mntpoint(self) -> Path:
         return self.cfg.mntdir
 
     def _repodir_name(self, name: str = "") -> Path:
         if not name:
             name = self.name
-        return self.repodir() / name
+        return self.repodir / name
 
+    @property
     def _passwd(self) -> str:
         return self.cfg.params.password
 
     def exec_init(
         self, sup_groups: bool = False, allow_root: bool = False
     ) -> None:
-        self.subcmd.silofs.init(self.repodir(), sup_groups, allow_root)
+        self.subcmd.silofs.init(self.repodir, sup_groups, allow_root)
 
     def exec_mkfs(
         self,
@@ -180,7 +183,7 @@ class TestEnv:
         self.subcmd.silofs.mkfs(
             repodir_name=self._repodir_name(name),
             size=gsize * gibi,
-            password=self._passwd(),
+            password=self._passwd,
             no_utf8_names=no_utf8_names,
         )
         self._require_meta_jref(name)
@@ -200,7 +203,7 @@ class TestEnv:
         self.subcmd.silofs.mount(
             repodir_name=repodir_name,
             mntpoint=self.cfg.mntdir,
-            password=self._passwd(),
+            password=self._passwd,
             allow_hostids=allow_hostids,
             allow_xattr_acl=allow_xattr_acl,
             no_writeback_cache=no_writeback_cache,
@@ -209,7 +212,7 @@ class TestEnv:
         )
 
     def exec_umount(self) -> None:
-        self.subcmd.silofs.umount(self.mntpoint())
+        self.subcmd.silofs.umount(self.mntpoint)
 
     def exec_setup_fs(
         self,
@@ -233,12 +236,12 @@ class TestEnv:
         self.exec_rmfs()
 
     def exec_clone(self, name: str) -> None:
-        self.subcmd.silofs.clone(name, self.mntpoint(), self._passwd())
+        self.subcmd.silofs.clone(name, self.mntpoint, self._passwd)
         self._require_meta_jref(name)
 
     def exec_clone_offline(self, mainname: str, clonename: str) -> None:
         self.subcmd.silofs.clone_offline(
-            clonename, self._repodir_name(mainname), self._passwd()
+            clonename, self._repodir_name(mainname), self._passwd
         )
         self._require_meta_jref(clonename)
 
@@ -252,27 +255,26 @@ class TestEnv:
     def exec_rmfs(self, name: str = "") -> None:
         self._require_meta_jref(name)
         repodir_name = self._repodir_name(name)
-        self.subcmd.silofs.rmfs(repodir_name, self._passwd())
+        self.subcmd.silofs.rmfs(repodir_name, self._passwd)
 
     def exec_fsck(self, name: str = "") -> None:
         self._require_meta_jref(name)
         repodir_name = self._repodir_name(name)
-        self.subcmd.silofs.fsck(repodir_name, self._passwd())
+        self.subcmd.silofs.fsck(repodir_name, self._passwd)
 
     def exec_view(self, name: str = "") -> list[str]:
         self._require_meta_jref(name)
         repodir_name = self._repodir_name(name)
-        return list(self.subcmd.silofs.view(repodir_name, self._passwd()))
+        return list(self.subcmd.silofs.view(repodir_name, self._passwd))
 
     def exec_preserve(self, arname: str, name: str = "") -> None:
         self._require_meta_jref(name)
         repodir_name = self._repodir_name(name)
-        self.subcmd.silofs.preserve(repodir_name, arname, self._passwd())
+        self.subcmd.silofs.preserve(repodir_name, arname, self._passwd)
 
     def exec_lsmnt(self) -> None:
-        mntp = self.cfg.mntdir
         mnts = self.subcmd.silofs.lsmnt()
-        self.expect.within(mntp, mnts)
+        self.expect.within(self.mntpoint, mnts)
 
     def _require_meta_jref(self, name: str = "") -> None:
         conf.load_spec(self._repodir_name(name))

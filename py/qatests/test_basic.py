@@ -77,7 +77,7 @@ def _test_show(env: TestEnv) -> None:
     env.expect.gt(len(vers2), 1)
     env.expect.eq(vers2, vers1)
     repo = env.subcmd.silofs.show_repo(base)
-    env.expect.eq(repo, env.repodir())
+    env.expect.eq(repo, env.repodir)
     boot_name, boot_addr = env.subcmd.silofs.show_boot(base)
     env.expect.eq(boot_name, env.name)
     env.expect.ne(boot_addr, "")

@@ -24,7 +24,7 @@
 
 int silofs_uconv_init(struct silofs_uconv *uconv)
 {
-	/* Using UTF32LE to avoid BOM (byte-order-mark) character */
+	/* Using UTF32LE to avoid BOM (byte-order-mark) character. */
 	if (uconv->iconv_set) {
 		return -SILOFS_EALREADY;
 	}

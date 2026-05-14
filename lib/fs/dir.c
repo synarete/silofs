@@ -152,7 +152,7 @@ static silofs_dtn_depth_t dtn_index_depth(silofs_dtn_index_t dtn_index)
 {
 	silofs_dtn_depth_t depth = 0;
 
-	/* TODO: use shift operations */
+	/* TODO: Use shift operations. */
 	while (dtn_index > DTREE_INDEX_ROOT) {
 		depth++;
 		dtn_index = dtn_index_to_parent(dtn_index);

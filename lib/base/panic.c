@@ -196,7 +196,7 @@ static void silofs_dump_addr2line(void)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-/* file-line convenience pair */
+/* File-line convenience pair. */
 struct silofs_fileline {
 	const char *file;
 	int line;

@@ -20,7 +20,7 @@
 #include <silofs/ccattr.h>
 #include <silofs/snprintf.h>
 
-/* Safe wrapper over vsnprintf */
+/* Safe wrapper over vsnprintf. */
 silofs_attr_printf30 size_t silofs_vsnprintf(char *buf, size_t bsz,
                                              const char *fmt, va_list ap)
 {

@@ -1125,7 +1125,7 @@ static bool sqe_isappendable(const struct silofs_submitq_ent *sqe,
 	if (!silofs_vtype_isinode(sqe->vtype)) {
 		return true;
 	}
-	/* for inodes require alignment on commit-len boundaries */
+	/* For inodes, require alignment on commit-len boundaries. */
 	nxt = silofs_off_next(sqe_laddr->pos, len_max);
 	end = silofs_off_end(sqe_laddr->pos, len);
 	if (end > nxt) {

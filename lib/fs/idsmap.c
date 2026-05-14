@@ -25,14 +25,14 @@ enum {
 	SILOFS_IDSMAP_HCAP = 509,
 };
 
-/* in-memory host <--> silofs user-id mapping entry */
+/* In-memory host <--> silofs user-id mapping entry. */
 struct silofs_umap_entry {
 	struct silofs_list_head um_htof_lh;
 	struct silofs_list_head um_ftoh_lh;
 	struct silofs_uids um_uids;
 };
 
-/* in-memory host <--> silofs group-id mapping entry */
+/* In-memory host <--> silofs group-id mapping entry. */
 struct silofs_gmap_entry {
 	struct silofs_list_head gm_htof_lh;
 	struct silofs_list_head gm_ftoh_lh;

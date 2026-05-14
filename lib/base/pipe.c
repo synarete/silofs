@@ -31,7 +31,7 @@
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-/* Find last set bit in a non-zero 32-bit word */
+/* Find last set bit in a non-zero 32-bit word. */
 static unsigned fls32(uint32_t x)
 {
 	return 32 - (unsigned)silofs_clz_u32(x);
@@ -43,15 +43,17 @@ static long roundup_pow_of_two(long n)
 }
 
 /*
- * Linux kernel want pipe size to be power-of-2. The current limit value of
- * pipe size (on a given machine) is visible at '/proc/sys/fs/pipe-max-size'.
- * Clap pipe size to range of [2-pages, 2M], unless system's limit is below
- * two pages (should not happen on modern machines).
+ * Linux kernel wants pipe size to be a power of 2. The current limit value
+ * of pipe size (on a given machine) is visible at
+ * '/proc/sys/fs/pipe-max-size'. Clamp pipe size to range of [2-pages, 2M],
+ * unless the system's limit is below two pages (should not happen on modern
+ * machines).
  *
- * Note: the size from '/proc/sys/fs/pipe-max-size' is just a hint to pipe-size
- * limit. In real world, a user may not have enough resources to allocate
- * such size (e.g. due to low threshold in '/proc/sys/fs/pipe-user-pages-soft'
- * or when other processes cosume too many pipe pages).
+ * Note: the size from '/proc/sys/fs/pipe-max-size' is just a hint to the
+ * pipe-size limit. In real world, a user may not have enough resources to
+ * allocate such size (e.g., due to low threshold in
+ * '/proc/sys/fs/pipe-user-pages-soft' or when other processes consume too
+ * many pipe pages).
  *
  * See also 'pipe_set_size' and 'round_pipe_size' in Linux kernel.
  */
@@ -120,7 +122,8 @@ void silofs_pipe_init(struct silofs_pipe *pipe)
 	pipe->fd[0] = -1;
 	pipe->fd[1] = -1;
 	pipe->size  = 0;
-	pipe->pend  = 0; /* TODO: maybe use 'ioctl(FIONREAD)' ? */
+	pipe->pend  = 0;
+	/* TODO: Consider using 'ioctl(FIONREAD)' to track pending bytes. */
 }
 
 int silofs_pipe_open(struct silofs_pipe *pipe)

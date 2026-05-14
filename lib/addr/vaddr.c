@@ -116,7 +116,7 @@ void silofs_vaddr_of_lsmap(struct silofs_vaddr *vaddr,
 	ssize_t span;
 	off_t off;
 
-	// all sort of hidden assumptions here -- FIXME
+	// All sorts of hidden assumptions here. FIXME: document and clean up.
 	STATICASSERT_EQ(SILOFS_VTYPE_INODE, 6);
 	STATICASSERT_EQ(SILOFS_VTYPE_DATA64K - SILOFS_VTYPE_INODE + 1, 9);
 	STATICASSERT_EQ(SILOFS_VTYPE_DATA64K + 1, SILOFS_VTYPE_LAST);
@@ -270,7 +270,7 @@ void silofs_resolve_spnode2_vaddr(const struct silofs_vaddr *ref_vaddr,
 	off = (off_t)((ref_vtype << 56) | spnode_off);
 	silofs_vaddr_setup(out_vaddr, SILOFS_VTYPE_SPNODE2, off);
 
-	/* TODO: remove me XXX */
+	/* TODO: Remove debug assertions after stabilization. */
 	silofs_assert_ge(ref_vsize, 1024);
 	silofs_assert_gt(ref_vtype, 0);
 	silofs_assert_eq((uint64_t)off % spnode_vsize, 0);

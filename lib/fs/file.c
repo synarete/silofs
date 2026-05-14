@@ -76,7 +76,7 @@ struct silofs_fileaf_ref {
 	bool unwritten;
 };
 
-/* local functions forward declarations */
+/* Local functions forward declarations. */
 static int filc_unshare_leaf_by(const struct silofs_file_ctx *f_ctx,
                                 struct silofs_fileaf_ref *flref);
 
@@ -662,7 +662,7 @@ static struct silofs_inode_file *filin_of(const struct silofs_inode *inode)
 
 static void filin_validate_vslots(const struct silofs_inode_file *filin)
 {
-	/* Slot-0: root; Slots [1..4]: 1K data; Slots [5..20]: 4K */
+	/* Slot-0: root; Slots [1..4]: 1K data; Slots [5..20]: 4K. */
 	STATICASSERT_GT(ARRAY_SIZE(filin->f_slots),
 	                1 + SILOFS_FILE_HEAD1_NLEAF + SILOFS_FILE_HEAD2_NLEAF);
 }
@@ -3639,7 +3639,7 @@ int silofs_do_lseek(struct silofs_task_ctx *task, struct silofs_inode_info *ii,
 	 FALLOC_FL_UNSHARE_RANGE)
 
 /*
- * TODO-0012: Proper hanfling for FALLOC_FL_KEEP_SIZE beyond file size
+ * TODO-0012: Proper handling for FALLOC_FL_KEEP_SIZE beyond file size.
  *
  * See 'man 2 fallocate' for semantics details of FALLOC_FL_KEEP_SIZE
  * beyond end-of-file.
@@ -4623,7 +4623,7 @@ static int filc_check_copy_range(const struct silofs_file_ctx *f_ctx_src,
 	if (err) {
 		return err;
 	}
-	/* don't allow overlapped copying within the same file. */
+	/* Don't allow overlapped copying within the same file. */
 	if ((f_ctx_src->ii == f_ctx_dst->ii) && ((off_dst + len) > off_src) &&
 	    (off_dst < (off_src + len))) {
 		return -SILOFS_EINVAL;

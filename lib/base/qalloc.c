@@ -66,7 +66,7 @@ enum silofs_qalloc_consts {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-/* TODO: Use AVL/RB instead of linked-list for free-chunks? */
+/* TODO: Use AVL/RB tree instead of linked-list for free-chunks. */
 
 struct silofs_slab_seg {
 	struct silofs_list_head link;
@@ -90,7 +90,7 @@ struct silofs_qpage_info {
 	int32_t qpg_slab_nelems;
 } silofs_attr_alignedx(SILOFS_CACHELINE_SIZE_DFL);
 
-/* global qpool's unique id */
+/* Global qpool unique id. */
 static long g_qpool_id;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

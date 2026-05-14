@@ -23,7 +23,7 @@
 #include <silofs/nodes.h>
 #include <silofs/fs/super.h>
 
-/* local functions */
+/* Local functions. */
 static ssize_t *
 spgs_mut_gauge_of(struct silofs_space_gauges *spgs, enum silofs_vtype vtype);
 

@@ -20,7 +20,7 @@
 #include <silofs/fs.h>
 #include <silofs/run.h>
 
-/* space-allocation context */
+/* Space-allocation context. */
 struct silofs_spalloc_ctx {
 	struct silofs_task_ctx *task;
 	struct silofs_env *env;
@@ -31,7 +31,7 @@ struct silofs_spalloc_ctx {
 	bool incref_lsi;
 };
 
-/* local functions */
+/* Local functions. */
 static int
 require_lsmap_of(struct silofs_task_ctx *task, enum silofs_vtype refvtype,
                  off_t off, struct silofs_lsmap_info **out_lsi);
@@ -314,9 +314,9 @@ spac_require_unalloc_vspace(struct silofs_spalloc_ctx *spa_ctx, off_t hint,
 	if (err) {
 		return err;
 	}
-	/* Perhaps in-memory cache was re-popolated due to slow-path search;
-	 * if so, ensure that the newly inserted ranged is chopped-out from
-	 * in-memory cache (and dont-care if not-in-cache) */
+	/* Perhaps in-memory cache was re-populated due to slow-path search;
+	 * if so, ensure that the newly inserted range is chopped out from
+	 * in-memory cache (and don't care if not in cache). */
 	spac_claim_vspace_from_cache(spa_ctx, out_vaddr);
 	return 0;
 }
@@ -756,7 +756,6 @@ static void spac_clear_allocate_at(const struct silofs_spalloc_ctx *spa_ctx,
 {
 	silofs_assert_not_null(spa_ctx->lsi);
 
-	// silofs_sli_unref_allocated_at(spa_ctx->sli, vaddr);
 	silofs_lsi_unref_allocated_at(spa_ctx->lsi, vaddr);
 
 	if (!spac_has_dbkref_at(spa_ctx, vaddr)) {

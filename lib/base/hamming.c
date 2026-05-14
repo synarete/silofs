@@ -259,7 +259,7 @@ int silofs_hamming12_decode_buf(const void *inb, size_t inlen, void *outb,
 }
 
 /*
- * TODO-0060: Add Golay(24,12)
+ * TODO-0060: Add Golay(24,12).
  *
  * Need a better error-correction code. See reference implementation in
  * Wireshark's code base.

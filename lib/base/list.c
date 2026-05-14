@@ -159,7 +159,8 @@ compare(const struct silofs_list_functor *fn,
 }
 
 /*
- * Merge two NULL-terminated singly-linked sublists (linked via ->next only).
+ * Merge two NULL-terminated singly-linked sublists (linked via ->next
+ * only).
  */
 static struct silofs_list_head *
 list_merge(struct silofs_list_head *lst_a, struct silofs_list_head *lst_b,

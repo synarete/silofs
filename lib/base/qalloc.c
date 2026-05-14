@@ -743,8 +743,8 @@ static bool qpool_may_punch_hole_at(const struct silofs_qpool *qpool,
 		/* otherwise, require at least 2M hole size */
 		npgs_punch_hole_threshold = 32;
 	} else {
-		/* by default, require 8M hole size */
-		npgs_punch_hole_threshold = 128;
+		/* by default, require 4M hole size */
+		npgs_punch_hole_threshold = 64;
 	}
 
 	if (npgs < npgs_punch_hole_threshold) {

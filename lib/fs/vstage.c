@@ -2599,7 +2599,7 @@ out_err:
 static int fixup_cached_vni(const struct silofs_task_ctx *task,
                             struct silofs_vnode_info *vni)
 {
-	if (!vni->vn_lni.ln.hmqe.hme_forgot) {
+	if (!vni->vn_lni.ln_base.hmqe.hme_forgot) {
 		return 0;
 	}
 	if (silofs_vni_refcnt(vni)) {

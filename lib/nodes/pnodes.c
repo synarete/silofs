@@ -139,7 +139,7 @@ pni_new_pview(struct silofs_pnode_info *pni, struct silofs_alloc *alloc)
 {
 	int err;
 
-	err = silofs_ni_new_view(&pni->pn_base, alloc);
+	err = silofs_ni_new_view(&pni->pn_base, alloc, true);
 	if (err) {
 		return err;
 	}
@@ -150,8 +150,7 @@ pni_new_pview(struct silofs_pnode_info *pni, struct silofs_alloc *alloc)
 static void
 pni_del_view(struct silofs_pnode_info *pni, struct silofs_alloc *alloc)
 {
-	silofs_ni_bzero_view(&pni->pn_base);
-	silofs_ni_del_view(&pni->pn_base, alloc);
+	silofs_ni_del_view(&pni->pn_base, alloc, true);
 }
 
 const struct silofs_pnptr *silofs_pni_self(const struct silofs_pnode_info *pni)

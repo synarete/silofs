@@ -29,7 +29,7 @@ static struct silofs_vnode_info *vni_from_hmqe(struct silofs_hmapq_elem *hmqe)
 
 static struct silofs_hmapq_elem *vni_to_hmqe(struct silofs_vnode_info *vni)
 {
-	return &vni->vn_lni.ln.hmqe;
+	return &vni->vn_lni.ln_base.hmqe;
 }
 
 static enum silofs_vtype vni_vtype(const struct silofs_vnode_info *vni)
@@ -70,12 +70,6 @@ vcache_resolve_dirtyq_for(struct silofs_vcache *vcache,
 		dq = &vcache->vc_vnis_dq;
 	}
 	return dq;
-}
-
-static enum silofs_allocf flags_to_allocf(int flags)
-{
-	return (flags & SILOFS_CTLF_IDLE) ? SILOFS_ALLOCF_TRYPUNCH :
-	                                    SILOFS_ALLOCF_NONE;
 }
 
 static int vcache_init_vni_hmapq(struct silofs_vcache *vcache)
@@ -157,15 +151,14 @@ static void
 vcache_remove_vni(struct silofs_vcache *vcache, struct silofs_vnode_info *vni)
 {
 	silofs_lni_remove_from(&vni->vn_lni, &vcache->vc_vni_hmapq);
-	vni->vn_lni.ln.hmqe.hme_forgot = false;
+	vni->vn_lni.ln_base.hmqe.hme_forgot = false;
 }
 
 static void
-vcache_evict_vni(struct silofs_vcache *vcache, struct silofs_vnode_info *vni,
-                 enum silofs_allocf flags)
+vcache_evict_vni(struct silofs_vcache *vcache, struct silofs_vnode_info *vni)
 {
 	vcache_remove_vni(vcache, vni);
-	silofs_del_vnode(vni, vcache->vc_alloc, (int)flags);
+	silofs_del_vnode(vni, vcache->vc_alloc);
 }
 
 static void vcache_store_vni_hmapq(struct silofs_vcache *vcache,
@@ -177,7 +170,8 @@ static void vcache_store_vni_hmapq(struct silofs_vcache *vcache,
 static void
 vcache_store_vni(struct silofs_vcache *vcache, struct silofs_vnode_info *vni)
 {
-	silofs_hkey_by_vaddr(&vni->vn_lni.ln.hmqe.hme_key, &vni->vn_vaddr);
+	silofs_hkey_by_vaddr(&vni->vn_lni.ln_base.hmqe.hme_key,
+	                     &vni->vn_vaddr);
 	vcache_store_vni_hmapq(vcache, vni);
 }
 
@@ -191,12 +185,12 @@ vcache_get_lru_vni(struct silofs_vcache *vcache)
 }
 
 static bool vcache_evict_or_relru_vni(struct silofs_vcache *vcache,
-                                      struct silofs_vnode_info *vni, int flags)
+                                      struct silofs_vnode_info *vni)
 {
 	bool evicted;
 
 	if (test_evictable_vni(vni)) {
-		vcache_evict_vni(vcache, vni, flags_to_allocf(flags));
+		vcache_evict_vni(vcache, vni);
 		evicted = true;
 	} else {
 		vcache_promote_vni(vcache, vni, true);
@@ -220,7 +214,7 @@ static size_t vcache_shrink_or_relru_vnis(struct silofs_vcache *vcache,
 		if (vni == nullptr) {
 			break;
 		}
-		ok = vcache_evict_or_relru_vni(vcache, vni, flags);
+		ok = vcache_evict_or_relru_vni(vcache, vni);
 		if (ok) {
 			evicted++;
 		} else if (!now && (i || evicted)) {
@@ -235,7 +229,7 @@ static int try_evict_vni(struct silofs_hmapq_elem *hmqe, void *arg)
 	struct silofs_vcache *vcache  = arg;
 	struct silofs_vnode_info *vni = vni_from_hmqe(hmqe);
 
-	vcache_evict_or_relru_vni(vcache, vni, 0);
+	vcache_evict_or_relru_vni(vcache, vni);
 	return 0;
 }
 
@@ -298,9 +292,9 @@ void silofs_vcache_forget_vnode(struct silofs_vcache *vcache,
 	silofs_vni_cleardirty(vni);
 	if (silofs_vni_refcnt(vni) > 0) {
 		vcache_unmap_vni(vcache, vni);
-		vni->vn_lni.ln.hmqe.hme_forgot = true;
+		vni->vn_lni.ln_base.hmqe.hme_forgot = true;
 	} else {
-		vcache_evict_vni(vcache, vni, SILOFS_ALLOCF_NONE);
+		vcache_evict_vni(vcache, vni);
 	}
 }
 
@@ -361,7 +355,7 @@ static void vcache_evict_some(struct silofs_vcache *vcache)
 
 	vni = vcache_find_evictable_vni(vcache);
 	if ((vni != nullptr) && test_evictable_vni(vni)) {
-		vcache_evict_vni(vcache, vni, SILOFS_ALLOCF_NONE);
+		vcache_evict_vni(vcache, vni);
 	} else {
 		vcache_shrink_some(vcache, 1, 0);
 	}

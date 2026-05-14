@@ -221,7 +221,7 @@ void silofs_del_lh_array(struct silofs_list_head *lista, size_t nelems,
                          struct silofs_alloc *alloc);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-/* nview */
+/* nodeview */
 
 void silofs_hdr_setup(struct silofs_header *hdr, uint8_t stype,
                       enum silofs_hdrf flags);
@@ -233,15 +233,17 @@ void silofs_hdr_seal(struct silofs_header *hdr);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+void silofs_lview_setup(struct silofs_lview *lview, enum silofs_vtype vtype);
+
 struct silofs_lview *silofs_lview_new(struct silofs_alloc *alloc,
                                       enum silofs_vtype vtype, int flags);
 
 void silofs_lview_del(struct silofs_lview *lview, struct silofs_alloc *alloc,
                       enum silofs_vtype vtype, int flags);
 
-void silofs_seal_lview(struct silofs_lview *lview);
+void silofs_lview_seal(struct silofs_lview *lview);
 
-int silofs_verify_lview(const struct silofs_lview *lview,
+int silofs_lview_verify(const struct silofs_lview *lview,
                         enum silofs_vtype          vtype);
 
 int silofs_encrypt_lview(const struct silofs_cipher_hd *ci_hd,
@@ -328,24 +330,22 @@ bool silofs_ni_ispinned(const struct silofs_node_info *ni);
 
 size_t silofs_ni_view_size(const struct silofs_node_info *ni);
 
-int silofs_ni_new_view(struct silofs_node_info *ni,
-                       struct silofs_alloc     *alloc);
+int silofs_ni_new_view(struct silofs_node_info *ni,  //
+                       struct silofs_alloc *alloc, bool bzero);
 
-void silofs_ni_del_view(struct silofs_node_info *ni,
-                        struct silofs_alloc     *alloc);
+void silofs_ni_del_view(struct silofs_node_info *ni, //
+                        struct silofs_alloc *alloc, bool bzero);
 
-void silofs_ni_bzero_view(struct silofs_node_info *ni);
-
-const struct silofs_node_info * //
+const struct silofs_node_info *                      //
 silofs_ni_from_hmqe(const struct silofs_hmapq_elem *hmqe);
 
-struct silofs_node_info *       //
+struct silofs_node_info *                            //
 silofs_ni_from_mut_hmqe(struct silofs_hmapq_elem *hmqe);
 
-const struct silofs_node_info * //
+const struct silofs_node_info *                      //
 silofs_ni_from_dqe(const struct silofs_dq_elem *dqe);
 
-struct silofs_node_info *       //
+struct silofs_node_info *                            //
 silofs_ni_from_mut_dqe(struct silofs_dq_elem *dqe);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -507,7 +507,7 @@ enum silofs_lnflags {
 
 /* lnode: base object of all logical-nodes */
 struct silofs_lnode_info {
-	struct silofs_node_info   ln;
+	struct silofs_node_info   ln_base;
 	struct silofs_avl_node    ln_ds_avl_node;
 	struct silofs_lnode_info *ln_ds_next;
 	struct silofs_lview      *ln_view;
@@ -775,13 +775,13 @@ struct silofs_unode_info *
 silofs_new_unode(struct silofs_alloc *alloc, const struct silofs_uaddr *uaddr);
 
 void silofs_del_unode(struct silofs_unode_info *uni,
-                      struct silofs_alloc *alloc, int flags);
+                      struct silofs_alloc      *alloc);
 
 struct silofs_vnode_info *
 silofs_new_vnode(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr);
 
 void silofs_del_vnode(struct silofs_vnode_info *vni,
-                      struct silofs_alloc *alloc, int flags);
+                      struct silofs_alloc      *alloc);
 
 void silofs_seal_vnode(struct silofs_vnode_info *vni);
 

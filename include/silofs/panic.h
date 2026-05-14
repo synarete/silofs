@@ -141,7 +141,7 @@ void silofs_expect_noop_(intmax_t a, intmax_t b);
     } while (0)
 #define silofs_assume_lt(a_, b_) \
 	silofs_assume((a_) < (b_))
-#define silofs_assum_not_null(ptr_) \
+#define silofs_assume_not_null(ptr_) \
 	silofs_assume((ptr_) != nullptr)
 #endif
 

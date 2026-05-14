@@ -456,12 +456,12 @@ static int fqs_fuse_fd(const struct silofs_fuseq_sub *fqs)
 static int fqs_send_msg(struct silofs_fuseq_sub *fqs, const struct iovec *iov,
                         size_t iovcnt)
 {
-	size_t nwr = 0;
-	int fuse_fd;
+	const int fuse_fd = fqs_fuse_fd(fqs);
+	size_t nwr;
 	int err;
 
-	fuse_fd = fqs_fuse_fd(fqs);
-	err     = silofs_sys_writev(fuse_fd, iov, (int)iovcnt, &nwr);
+	nwr = 0;
+	err = silofs_sys_writev(fuse_fd, iov, (int)iovcnt, &nwr);
 	if (err && (err != -ENOENT)) {
 		fuseq_log_warn("send-to-fuse failed: fuse_fd=%d "
 		               "iovcnt=%lu err=%d",
@@ -658,7 +658,9 @@ static int fqs_reply_write_ok(struct silofs_fuseq_sub *fqs,
 static int fqs_reply_lseek_ok(struct silofs_fuseq_sub *fqs,
                               const struct silofs_task_ctx *task, off_t off)
 {
-	const struct fuse_lseek_out arg = { .offset = (uint64_t)off };
+	const struct fuse_lseek_out arg = {
+		.offset = (uint64_t)off,
+	};
 
 	return fqs_reply_arg(fqs, task, &arg, sizeof(arg));
 }
@@ -681,24 +683,44 @@ static int fqs_reply_xattr_buf(struct silofs_fuseq_sub *fqs,
 	return fqs_reply_buf(fqs, task, buf, len);
 }
 
-static int fqs_reply_init_ok(struct silofs_fuseq_sub *fqs,
-                             const struct silofs_task_ctx *task,
-                             const struct silofs_fuseq_conn_info *coni)
+static const struct silofs_fuseq_conn_info *
+fqs_conn_info(const struct silofs_fuseq_sub *fqs)
 {
-	const struct fuse_init_out arg = {
-		.major                = coni->proto_major,
-		.minor                = coni->proto_minor,
-		.max_readahead        = coni->max_readahead,
-		.flags                = (uint32_t)coni->want_cap,
-		.flags2               = (uint32_t)(coni->want_cap >> 32),
-		.max_background       = (uint16_t)coni->max_background,
-		.congestion_threshold = (uint16_t)coni->congestion_threshold,
-		.max_write            = (uint32_t)coni->max_write,
-		.time_gran            = (uint32_t)coni->time_gran,
-		.max_pages            = (coni->want_cap & FUSE_MAX_PAGES) ?
-		                                (uint16_t)coni->max_pages :
-		                                0,
-	};
+	const struct silofs_fuseq *fq = fqs_fuseq(fqs);
+
+	return &fq->fq_coni;
+}
+
+static uint16_t fqs_max_pages_want(const struct silofs_fuseq_sub *fqs)
+{
+	const struct silofs_fuseq_conn_info *coni = fqs_conn_info(fqs);
+	uint32_t max_pages;
+
+	if (coni->want_cap & FUSE_MAX_PAGES) {
+		max_pages = coni->max_pages;
+	} else {
+		max_pages = 0;
+	}
+	return (uint16_t)max_pages;
+}
+
+static int fqs_reply_init_ok(struct silofs_fuseq_sub *fqs,
+                             const struct silofs_task_ctx *task)
+{
+	struct fuse_init_out arg;
+	const struct silofs_fuseq_conn_info *coni = fqs_conn_info(fqs);
+
+	memset(&arg, 0, sizeof(arg));
+	arg.major                = coni->proto_major;
+	arg.minor                = coni->proto_minor;
+	arg.max_readahead        = coni->max_readahead;
+	arg.flags                = (uint32_t)coni->want_cap;
+	arg.flags2               = (uint32_t)(coni->want_cap >> 32);
+	arg.max_background       = (uint16_t)coni->max_background;
+	arg.congestion_threshold = (uint16_t)coni->congestion_threshold;
+	arg.max_write            = (uint32_t)coni->max_write;
+	arg.time_gran            = (uint32_t)coni->time_gran;
+	arg.max_pages            = fqs_max_pages_want(fqs);
 
 	return fqs_reply_arg(fqs, task, &arg, sizeof(arg));
 }
@@ -957,7 +979,6 @@ static int fqs_reply_copy_file_range(struct silofs_fuseq_sub *fqs,
 static int fqs_reply_init(struct silofs_fuseq_sub *fqs,
                           const struct silofs_task_ctx *task, int err)
 {
-	const struct silofs_fuseq *fq;
 	int ret;
 
 	if (task_interrupted(task)) {
@@ -965,8 +986,7 @@ static int fqs_reply_init(struct silofs_fuseq_sub *fqs,
 	} else if (unlikely(err)) {
 		ret = fqs_reply_err(fqs, task, err);
 	} else {
-		fq  = fqs_fuseq(fqs);
-		ret = fqs_reply_init_ok(fqs, task, &fq->fq_coni);
+		ret = fqs_reply_init_ok(fqs, task);
 	}
 	return ret;
 }
@@ -1034,11 +1054,15 @@ iovec_assign(struct silofs_iovec *iov, const struct silofs_iovec *other)
 	silofs_iovec_assign(iov, other);
 }
 
+static off_t iovec_end(const struct silofs_iovec *iovec)
+{
+	return silofs_off_end(iovec->iov_off, iovec->iov.iov_len);
+}
+
 static bool iovec_isfdseq(const struct silofs_iovec *iovec1,
                           const struct silofs_iovec *iovec2)
 {
-	const off_t end1 =
-		silofs_off_end(iovec1->iov_off, iovec1->iov.iov_len);
+	const off_t end1 = iovec_end(iovec1);
 	const off_t beg2 = iovec2->iov_off;
 	const int fd1    = iovec1->iov_fd;
 	const int fd2    = iovec2->iov_fd;
@@ -1078,8 +1102,7 @@ fqs_append_data_to_pipe(struct silofs_fuseq_sub *fqs,
 {
 	struct iovec iov[48];
 	struct silofs_pipe *pipe = fqs_cur_pipe(fqs);
-	size_t ncp               = 0;
-	size_t cur               = 0;
+	size_t ncp = 0, cur = 0;
 	int err;
 
 	STATICASSERT_LE(ARRAY_SIZE(iov), SILOFS_FILE_NITER_MAX);
@@ -1117,17 +1140,16 @@ static int fqs_reply_read_data(struct silofs_fuseq_sub *fqs,
 static int fq_rdi_reply_read_iov(struct silofs_fuseq_rd_iter *fq_rdi)
 {
 	const struct silofs_iovec *iov = nullptr;
-	size_t rem                     = 0;
-	int err                        = 0;
-	int ret                        = 0;
+	int err, ret = 0;
 
 	err = fqs_append_hdr_to_pipe(fq_rdi->fqs, fq_rdi->task, fq_rdi->nrd);
 	if (err) {
 		goto out;
 	}
 	if (fq_rdi->ncp < fq_rdi->cnt) {
+		const size_t rem = fq_rdi->cnt - fq_rdi->ncp;
+
 		iov = fq_rdi->iovec + fq_rdi->ncp;
-		rem = fq_rdi->cnt - fq_rdi->ncp;
 		err = fqs_append_data_to_pipe(fq_rdi->fqs, iov, rem);
 		if (err) {
 			goto out;
@@ -1243,8 +1265,7 @@ emit_direntonly(void *buf, size_t bsz, const char *name, size_t nlen,
                 ino_t ino, mode_t dt, off_t off, size_t *out_sz)
 {
 	struct fuse_dirent *fde = buf;
-	size_t entlen;
-	size_t entlen_padded;
+	size_t entlen, entlen_padded;
 
 	entlen        = FUSE_NAME_OFFSET + nlen;
 	entlen_padded = FUSE_DIRENT_ALIGN(entlen);
@@ -1269,8 +1290,7 @@ emit_direntplus(void *buf, size_t bsz, const char *name, size_t nlen,
 {
 	struct fuse_direntplus *fdp = buf;
 	struct fuse_dirent *fde     = &fdp->dirent;
-	size_t entlen;
-	size_t entlen_padded;
+	size_t entlen, entlen_padded;
 
 	entlen        = FUSE_NAME_OFFSET_DIRENTPLUS + nlen;
 	entlen_padded = FUSE_DIRENT_ALIGN(entlen);
@@ -1349,8 +1369,8 @@ static struct silofs_fuseq_diter *diter_of(struct silofs_readdir_ctx *rd_ctx)
 static int filldir(struct silofs_readdir_ctx *rd_ctx,
                    const struct silofs_readdir_info *rdi)
 {
-	int err = 0;
 	struct silofs_fuseq_diter *di;
+	int err = 0;
 
 	di = diter_of(rd_ctx);
 	if (has_dirent(di)) {
@@ -4628,9 +4648,7 @@ static int fuseq_calc_max_write(const struct silofs_fuseq *fq, size_t bufsize,
 static int fuseq_update_conn_info(struct silofs_fuseq *fq)
 {
 	struct silofs_fuseq_conn_info *coni = &fq->fq_coni;
-	size_t bufsize                      = 0;
-	size_t max_write                    = 0;
-	size_t max_pages                    = 0;
+	size_t bufsize = 0, max_write = 0, max_pages = 0;
 	int err;
 
 	err = fuseq_resolve_bufsize(fq, &bufsize);

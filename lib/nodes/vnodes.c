@@ -221,7 +221,7 @@ uni_unconst(const struct silofs_unode_info *uni)
 
 static void uni_verify(const struct silofs_unode_info *uni)
 {
-	silofs_assert_not_null(uni);
+	silofs_assume_not_null(uni);
 	silofs_assert_eq(uni->un_magic, SILOFS_UI_MAGIC);
 }
 
@@ -1688,12 +1688,13 @@ fli_fini_free(struct silofs_ftleaf_info *fli, struct silofs_alloc *alloc)
 static int
 fli_attach_lview(struct silofs_ftleaf_info *fli, struct silofs_alloc *alloc)
 {
-	struct silofs_lview *lview    = nullptr;
-	const enum silofs_vtype vtype = vni_vtype(&fli->ftl_vni);
+	struct silofs_lview *lview = nullptr;
 	int err;
 
 	err = vni_attach_lview(&fli->ftl_vni, alloc);
 	if (!err) {
+		const enum silofs_vtype vtype = vni_vtype(&fli->ftl_vni);
+
 		lview = silofs_vni_lview(&fli->ftl_vni);
 		if (vtype == SILOFS_VTYPE_DATA1K) {
 			fli->ftl.db1 = &lview->u.dbk1;

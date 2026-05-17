@@ -89,7 +89,7 @@ static void vni_update_llink(struct silofs_vnode_info *vni,
 
 static int vni_verify_sub_view(const struct silofs_vnode_info *vni)
 {
-	const struct silofs_lview *view = vni->vn_lni.ln_view;
+	const struct silofs_lview *view = silofs_vni_lview(vni);
 	const enum silofs_vtype vtype   = silofs_vni_vtype(vni);
 	int ret;
 
@@ -2184,11 +2184,11 @@ static int vstgc_require_lseg_of(const struct silofs_vstage_ctx *vstg_ctx,
 
 static int vstgc_stage_load_view(const struct silofs_vstage_ctx *vstg_ctx,
                                  const struct silofs_laddr *laddr,
-                                 struct silofs_lview *view)
+                                 struct silofs_lview *lview)
 {
 	int err;
 
-	silofs_assert_not_null(view);
+	silofs_assert_not_null(lview);
 
 	err = vstgc_require_laddr(vstg_ctx, laddr);
 	if (err) {
@@ -2198,7 +2198,7 @@ static int vstgc_stage_load_view(const struct silofs_vstage_ctx *vstg_ctx,
 	if (err) {
 		return err;
 	}
-	err = vstgc_load_view_at(vstg_ctx, laddr, view);
+	err = vstgc_load_view_at(vstg_ctx, laddr, lview);
 	if (err) {
 		return err;
 	}
@@ -2551,6 +2551,7 @@ static int vstgc_stage_vnode_at(struct silofs_vstage_ctx *vstg_ctx,
                                 struct silofs_vnode_info **out_vni)
 {
 	struct silofs_llink llink     = { .laddr.pos = -1 };
+	struct silofs_lview *lview    = nullptr;
 	struct silofs_vnode_info *vni = nullptr;
 	int err;
 
@@ -2571,8 +2572,9 @@ static int vstgc_stage_vnode_at(struct silofs_vstage_ctx *vstg_ctx,
 	if (err) {
 		goto out_err;
 	}
-	err = vstgc_stage_load_view(vstg_ctx, &llink.laddr,
-	                            vni->vn_lni.ln_view);
+	lview = silofs_vni_lview(vni);
+
+	err = vstgc_stage_load_view(vstg_ctx, &llink.laddr, lview);
 	if (err) {
 		goto out_err;
 	}

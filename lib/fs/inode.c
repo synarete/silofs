@@ -682,7 +682,6 @@ static void ii_update_ino_by_vaddr(struct silofs_inode_info *ii)
 
 static void ii_update_self(struct silofs_inode_info *ii)
 {
-	silofs_assert_not_null(ii->i_vni.vn_lni.ln_view);
 	silofs_assert_not_null(ii->inode);
 
 	ii_update_ino_by_vaddr(ii);

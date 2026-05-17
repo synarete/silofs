@@ -570,8 +570,8 @@ static enum silofs_allocf allocf_of(bool bzero)
 	return bzero ? SILOFS_ALLOCF_BZERO : SILOFS_ALLOCF_NONE;
 }
 
-int silofs_ni_new_view(struct silofs_node_info *ni, //
-                       struct silofs_alloc *alloc, bool bzero)
+int silofs_ni_attach_view(struct silofs_node_info *ni, //
+                          struct silofs_alloc *alloc, bool bzero)
 {
 	void **view = &ni->view.opaque_view;
 
@@ -591,7 +591,7 @@ static enum silofs_allocf deallocf_of(size_t view_size, bool bzero)
 {
 	enum silofs_allocf allocf = SILOFS_ALLOCF_NONE;
 
-	if (view_size > 4096) {
+	if (view_size >= 8192) {
 		allocf |= SILOFS_ALLOCF_TRYPUNCH;
 	}
 	if (bzero) {
@@ -600,8 +600,8 @@ static enum silofs_allocf deallocf_of(size_t view_size, bool bzero)
 	return allocf;
 }
 
-void silofs_ni_del_view(struct silofs_node_info *ni,
-                        struct silofs_alloc *alloc, bool bzero)
+void silofs_ni_detach_view(struct silofs_node_info *ni,
+                           struct silofs_alloc *alloc, bool bzero)
 {
 	void **view = &ni->view.opaque_view;
 

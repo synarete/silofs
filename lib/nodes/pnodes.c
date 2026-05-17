@@ -55,9 +55,15 @@ size_t silofs_pni_pview_size(const struct silofs_pnode_info *pni)
 	return silofs_ni_view_size(&pni->pn_base);
 }
 
-struct silofs_pview *silofs_pni_pview(const struct silofs_pnode_info *pni)
+static struct silofs_pview *pni_pview(const struct silofs_pnode_info *pni)
 {
 	return pni->pn_base.view.pview;
+}
+
+struct silofs_pview *silofs_pni_pview(const struct silofs_pnode_info *pni)
+{
+	silofs_assert_not_null(pni);
+	return pni_pview(pni);
 }
 
 static enum silofs_ptype pni_ptype(const struct silofs_pnode_info *pni)
@@ -135,22 +141,21 @@ void silofs_pni_decref(struct silofs_pnode_info *pni)
 }
 
 static int
-pni_new_pview(struct silofs_pnode_info *pni, struct silofs_alloc *alloc)
+pni_bind_pview(struct silofs_pnode_info *pni, struct silofs_alloc *alloc)
 {
 	int err;
 
-	err = silofs_ni_new_view(&pni->pn_base, alloc, true);
-	if (err) {
-		return err;
+	err = silofs_ni_attach_view(&pni->pn_base, alloc, true);
+	if (!err) {
+		silofs_pview_setup(pni_pview(pni), pni_ptype(pni));
 	}
-	silofs_pview_setup(pni->pn_base.view.pview, pni_ptype(pni));
-	return 0;
+	return err;
 }
 
 static void
-pni_del_view(struct silofs_pnode_info *pni, struct silofs_alloc *alloc)
+pni_unbind_pview(struct silofs_pnode_info *pni, struct silofs_alloc *alloc)
 {
-	silofs_ni_del_view(&pni->pn_base, alloc, true);
+	silofs_ni_detach_view(&pni->pn_base, alloc, true);
 }
 
 const struct silofs_pnptr *silofs_pni_self(const struct silofs_pnode_info *pni)
@@ -201,7 +206,7 @@ ubi_new_view(struct silofs_uber_info *ubi, struct silofs_alloc *alloc)
 	struct silofs_pview *pview = nullptr;
 	int err;
 
-	err = pni_new_pview(&ubi->ub_pni, alloc);
+	err = pni_bind_pview(&ubi->ub_pni, alloc);
 	if (err) {
 		return err;
 	}
@@ -234,7 +239,7 @@ ubi_new(const struct silofs_pnptr *pnptr, struct silofs_alloc *alloc)
 static void
 ubi_del_view(struct silofs_uber_info *ubi, struct silofs_alloc *alloc)
 {
-	pni_del_view(&ubi->ub_pni, alloc);
+	pni_unbind_pview(&ubi->ub_pni, alloc);
 	ubi->ubn = nullptr;
 }
 
@@ -315,7 +320,7 @@ bdi_new_view(struct silofs_bldesc_info *bdi, struct silofs_alloc *alloc)
 	struct silofs_pview *pview = nullptr;
 	int err;
 
-	err = pni_new_pview(&bdi->bld_pni, alloc);
+	err = pni_bind_pview(&bdi->bld_pni, alloc);
 	if (err) {
 		return err;
 	}
@@ -348,7 +353,7 @@ bdi_new(const struct silofs_pnptr *pnptr, struct silofs_alloc *alloc)
 static void
 bdi_del_view(struct silofs_bldesc_info *bdi, struct silofs_alloc *alloc)
 {
-	pni_del_view(&bdi->bld_pni, alloc);
+	pni_unbind_pview(&bdi->bld_pni, alloc);
 	bdi->bld = nullptr;
 }
 
@@ -438,7 +443,7 @@ bti_new_view(struct silofs_btnode_info *bti, struct silofs_alloc *alloc)
 	struct silofs_pview *pview = nullptr;
 	int err;
 
-	err = pni_new_pview(&bti->btn_pni, alloc);
+	err = pni_bind_pview(&bti->btn_pni, alloc);
 	if (err) {
 		return err;
 	}
@@ -471,7 +476,7 @@ bti_new(const struct silofs_pnptr *pnptr, struct silofs_alloc *alloc)
 static void
 bti_del_view(struct silofs_btnode_info *bti, struct silofs_alloc *alloc)
 {
-	pni_del_view(&bti->btn_pni, alloc);
+	pni_unbind_pview(&bti->btn_pni, alloc);
 	bti->btn = nullptr;
 }
 

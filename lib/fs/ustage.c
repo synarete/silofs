@@ -25,7 +25,7 @@
 
 static int ubi_verify_sub_view(const struct silofs_unode_info *uni)
 {
-	const struct silofs_lview *view = uni->un_lni.ln_view;
+	const struct silofs_lview *view = silofs_uni_lview(uni);
 	const enum silofs_vtype vtype   = silofs_uni_vtype(uni);
 	int ret                         = -1;
 
@@ -298,18 +298,18 @@ load_view_at(const struct silofs_env *env, const struct silofs_laddr *laddr,
 }
 
 static int
-stage_load_view(const struct silofs_env *env, const struct silofs_laddr *laddr,
-                struct silofs_lview *view)
+stage_load_lview(const struct silofs_env *env,
+                 const struct silofs_laddr *laddr, struct silofs_lview *lview)
 {
 	int err;
 
-	silofs_assert_not_null(view);
+	silofs_assert_not_null(lview);
 
 	err = stage_lseg(env, &laddr->lsid);
 	if (err) {
 		return err;
 	}
-	err = load_view_at(env, laddr, view);
+	err = load_view_at(env, laddr, lview);
 	if (err) {
 		return err;
 	}
@@ -388,8 +388,9 @@ decrypt_view_of_sbi(const struct silofs_env *env, struct silofs_sb_info *sbi)
 static int
 load_view_of_sbi(const struct silofs_env *env, struct silofs_sb_info *sbi)
 {
-	return stage_load_view(env, silofs_sbi_laddr(sbi),
-	                       sbi->sb_uni.un_lni.ln_view);
+	struct silofs_lview *lview = silofs_uni_lview(&sbi->sb_uni);
+
+	return stage_load_lview(env, silofs_sbi_laddr(sbi), lview);
 }
 
 static int
@@ -513,8 +514,9 @@ static int decrypt_view_of_sni(const struct silofs_env *env,
 static int
 load_view_of_sni(const struct silofs_env *env, struct silofs_spnode_info *sni)
 {
-	return stage_load_view(env, silofs_sni_laddr(sni),
-	                       sni->sn_uni.un_lni.ln_view);
+	struct silofs_lview *lview = silofs_uni_lview(&sni->sn_uni);
+
+	return stage_load_lview(env, silofs_sni_laddr(sni), lview);
 }
 
 static int
@@ -633,8 +635,9 @@ static int decrypt_view_of_sli(const struct silofs_env *env,
 static int
 load_view_of_sli(const struct silofs_env *env, struct silofs_spleaf_info *sli)
 {
-	return stage_load_view(env, silofs_sli_laddr(sli),
-	                       sli->sl_uni.un_lni.ln_view);
+	struct silofs_lview *lview = silofs_uni_lview(&sli->sl_uni);
+
+	return stage_load_lview(env, silofs_sli_laddr(sli), lview);
 }
 
 static int

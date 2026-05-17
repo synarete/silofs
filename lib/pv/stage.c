@@ -700,9 +700,10 @@ static int stc_decrypt_lview_of(struct silofs_stage_ctx *st_ctx,
                                 const struct silofs_pnptr *pnptr,
                                 struct silofs_vnode_info *vni)
 {
+	struct silofs_lview *lview = silofs_vni_lview(vni);
+
 	return silofs_decrypt_lview2(st_ctx->dec_ci_hd, &pnptr->nmeta.civkey,
-	                             st_ctx->lview, vni->vn_lni.ln_view,
-	                             vni_len(vni));
+	                             st_ctx->lview, lview, vni_len(vni));
 }
 
 static int stc_decrypt_verify_vnode(struct silofs_stage_ctx *st_ctx,
@@ -864,9 +865,10 @@ static int stc_encrypt_lview_of(struct silofs_stage_ctx *st_ctx,
                                 const struct silofs_vnode_info *vni,
                                 const struct silofs_civkey *civkey)
 {
-	return silofs_encrypt_lview2(st_ctx->enc_ci_hd, civkey,
-	                             vni->vn_lni.ln_view, st_ctx->lview,
-	                             vni_len(vni));
+	const struct silofs_lview *lview = silofs_vni_lview(vni);
+
+	return silofs_encrypt_lview2(st_ctx->enc_ci_hd, civkey, lview,
+	                             st_ctx->lview, vni_len(vni));
 }
 
 static int stc_resolve_pnptr_of(const struct silofs_stage_ctx *st_ctx,

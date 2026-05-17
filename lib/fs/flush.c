@@ -606,7 +606,7 @@ static void flusher_append_at(struct silofs_flusher *flusher, size_t pos,
 
 	silofs_assert_lt(pos, ARRAY_SIZE(flusher->sref));
 	silofs_llink_assign(&ref->llink, llink);
-	ref->view  = lni->ln_view;
+	ref->view  = silofs_lni_lview(lni);
 	ref->vtype = lni->ln_vtype;
 }
 

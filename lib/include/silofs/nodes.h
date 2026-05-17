@@ -313,7 +313,7 @@ struct silofs_node_info {
 	struct silofs_hmapq_elem hmqe;
 	struct silofs_dq_elem    dqe;
 	union silofs_view        view;
-	union silofs_view        view_enc;
+	union silofs_view        viewx;
 };
 
 void silofs_ni_init(struct silofs_node_info *ni, size_t view_size);
@@ -336,16 +336,22 @@ int silofs_ni_attach_view(struct silofs_node_info *ni,  //
 void silofs_ni_detach_view(struct silofs_node_info *ni, //
                            struct silofs_alloc *alloc, bool bzero);
 
-const struct silofs_node_info *                         //
+int silofs_ni_attach_viewx(struct silofs_node_info *ni,
+                           struct silofs_alloc     *alloc);
+
+void silofs_ni_detach_viewx(struct silofs_node_info *ni,
+                            struct silofs_alloc     *alloc);
+
+const struct silofs_node_info * //
 silofs_ni_from_hmqe(const struct silofs_hmapq_elem *hmqe);
 
-struct silofs_node_info *                               //
+struct silofs_node_info *       //
 silofs_ni_from_mut_hmqe(struct silofs_hmapq_elem *hmqe);
 
-const struct silofs_node_info *                         //
+const struct silofs_node_info * //
 silofs_ni_from_dqe(const struct silofs_dq_elem *dqe);
 
-struct silofs_node_info *                               //
+struct silofs_node_info *       //
 silofs_ni_from_mut_dqe(struct silofs_dq_elem *dqe);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

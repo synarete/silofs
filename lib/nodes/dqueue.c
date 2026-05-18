@@ -175,6 +175,26 @@ void silofs_destageq_fini(struct silofs_destageq *dsq)
 	silofs_listq_fini(&dsq->dsq);
 }
 
+static struct silofs_dq_elem *destageq_front(const struct silofs_destageq *dsq)
+{
+	struct silofs_list_head *lh;
+
+	lh = silofs_listq_front(&dsq->dsq);
+	return dqe_from_mut_dsq_lh(lh);
+}
+
+static struct silofs_dq_elem *
+destageq_nextof(const struct silofs_destageq *dsq,
+                const struct silofs_dq_elem *dqe)
+{
+	struct silofs_list_head *lh = nullptr;
+
+	if (dqe != nullptr) {
+		lh = listq_next(&dsq->dsq, &dqe->dsq_lh);
+	}
+	return dqe_from_mut_dsq_lh(lh);
+}
+
 static void
 destageq_push_back(struct silofs_destageq *dsq, struct silofs_dq_elem *dqe)
 {
@@ -209,15 +229,12 @@ void silofs_destageq_populate(struct silofs_destageq *dsq,
 	}
 }
 
-void silofs_destageq_depopulate(struct silofs_destageq *dsq, bool cleardirty)
+void silofs_destageq_depopulate(struct silofs_destageq *dsq)
 {
 	struct silofs_dq_elem *dqe;
 
 	dqe = destageq_pop_front(dsq);
 	while (dqe != nullptr) {
-		if (cleardirty) {
-			silofs_dqe_cleardirty(dqe);
-		}
 		dqe = destageq_pop_front(dsq);
 	}
 }
@@ -245,32 +262,27 @@ static int dqe_compare_by(const struct silofs_list_functor *lsfn,
 }
 
 void silofs_destageq_sort(struct silofs_destageq *dsq,
-                          silofs_dqe_compare_fn dqe_cmp_fn)
+                          silofs_dqe_compare_fn dqe_comp_fn)
 {
 	struct silofs_dqe_functor dqfn = {
 		.lsfn.compare_fn = dqe_compare_by,
-		.dqe_cmp_fn      = dqe_cmp_fn,
+		.dqe_cmp_fn      = dqe_comp_fn,
 	};
 
 	silofs_list_sort(&dsq->dsq.ls, &dqfn.lsfn);
 }
 
-struct silofs_dq_elem *silofs_destageq_front(const struct silofs_destageq *dsq)
+int silofs_destageq_foreach(const struct silofs_destageq *dsq,
+                            silofs_dqe_execute_fn dqe_exec_fn,
+                            const void *userp)
 {
-	struct silofs_list_head *lh;
+	struct silofs_dq_elem *dqe;
+	int err = 0;
 
-	lh = silofs_listq_front(&dsq->dsq);
-	return dqe_from_mut_dsq_lh(lh);
-}
-
-struct silofs_dq_elem *
-silofs_destageq_nextof(const struct silofs_destageq *dsq,
-                       const struct silofs_dq_elem *dqe)
-{
-	struct silofs_list_head *lh = nullptr;
-
-	if (dqe != nullptr) {
-		lh = listq_next(&dsq->dsq, &dqe->dsq_lh);
+	dqe = destageq_front(dsq);
+	while ((dqe != nullptr) && !err) {
+		err = dqe_exec_fn(dqe, userp);
+		dqe = destageq_nextof(dsq, dqe);
 	}
-	return dqe_from_mut_dsq_lh(lh);
+	return err;
 }

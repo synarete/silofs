@@ -50,6 +50,8 @@ struct silofs_destageq {
 typedef int (*silofs_dqe_compare_fn)(const struct silofs_dq_elem *dqe1,
                                      const struct silofs_dq_elem *dqe2);
 
+typedef int (*silofs_dqe_execute_fn)(struct silofs_dq_elem *dqe, const void *);
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_dqe_init(struct silofs_dq_elem *dqe, size_t sz);
@@ -89,17 +91,14 @@ void silofs_destageq_fini(struct silofs_destageq *dsq);
 void silofs_destageq_populate(struct silofs_destageq     *dsq,
                               const struct silofs_dirtyq *drq);
 
-void silofs_destageq_depopulate(struct silofs_destageq *dsq, bool cleardirty);
+void silofs_destageq_depopulate(struct silofs_destageq *dsq);
 
 void silofs_destageq_sort(struct silofs_destageq *dsq,
                           silofs_dqe_compare_fn   dqe_cmp_fn);
 
-struct silofs_dq_elem * //
-silofs_destageq_front(const struct silofs_destageq *dsq);
-
-struct silofs_dq_elem * //
-silofs_destageq_nextof(const struct silofs_destageq *dsq,
-                       const struct silofs_dq_elem  *dqe);
+int silofs_destageq_foreach(const struct silofs_destageq *dsq,
+                            silofs_dqe_execute_fn         dqe_exec_fn,
+                            const void                   *userp);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* hmapq */

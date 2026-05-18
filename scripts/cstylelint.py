@@ -21,7 +21,7 @@ import collections
 import curses.ascii
 import re
 import sys
-import typing
+from functools import cached_property
 from pathlib import Path
 
 # Globals:
@@ -306,9 +306,9 @@ def _read_cfile(path: Path) -> str:
 
 def _reparse_cfile(txt: str) -> str:
     """Traverse C source file and white-out comments and strings."""
-    (in_mlc, in_slc, in_str, pps) = (False, False, False, False)
-    (next_ch, prev_ch) = (" ", " ")
-    out = ""
+    in_mlc = in_slc = in_str = pps = False
+    prev_ch = " "
+    out = []
     for ch in txt:
         if prev_ch == "\n":
             pps = ch == "#"
@@ -326,21 +326,23 @@ def _reparse_cfile(txt: str) -> str:
         elif in_mlc:
             if prev_ch == "*" and ch == "/":
                 in_mlc = False
-            elif not (ch == "\n" or ch == "*"):
+                next_ch = " "  # blank the closing /
+            elif ch != "\n" and ch != "*":
                 next_ch = " "
         else:
             if ch == '"' and prev_ch != "\\":
                 in_str = True
-                in_mlc = in_slc = False
             elif ch == "/" and prev_ch == "/":
                 in_slc = True
-                in_mlc = in_str = False
+                out[-1] = " "  # blank the leading /
+                next_ch = " "
             elif ch == "*" and prev_ch == "/":
                 in_mlc = True
-                in_slc = in_str = False
-        out += next_ch
+                out[-1] = " "  # blank the leading /
+                next_ch = " "
+        out.append(next_ch)
         prev_ch = ch
-    return out
+    return "".join(out)
 
 
 # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
@@ -357,9 +359,9 @@ class SourceLine:
         self.path = path
         self.line = txt
         self.lnum = lno
-        self.toks = self._tokenize()
 
-    def _tokenize(self) -> list[str]:
+    @cached_property
+    def toks(self) -> list[str]:
         """Converts delimiters to spaces and splits line into tokens."""
         dels = SOURCE_LINE_DELIMITERS
         return "".join(c if c not in dels else " " for c in self.line).split()
@@ -373,24 +375,32 @@ class SourceFile:
     def __init__(self, path: Path, text: str) -> None:
         self.path = path
         self.text = text
-        self.lines = self._text_to_lines()
 
-    def _text_to_lines(self) -> list[SourceLine]:
-        src_lines: list[SourceLine] = []
-        lno = 0
-        for line in self.text.split("\n"):
-            lno += 1
-            src_lines.append(SourceLine(self.path, line, lno))
-        return src_lines
+    @cached_property
+    def lines(self) -> list[SourceLine]:
+        return [
+            SourceLine(self.path, line, lno)
+            for lno, line in enumerate(self.text.split("\n"), start=1)
+        ]
 
 
 class LintEnv:
     """Lint context object for accumulating checkers state."""
 
     def __init__(self) -> None:
-        self.wordir = Path.cwd()
-        self.progname = Path(sys.argv[0]).name
         self.err_count: int = 0
+
+    @cached_property
+    def wordir(self) -> Path:
+        return Path.cwd()
+
+    @cached_property
+    def progname(self) -> str:
+        return Path(sys.argv[0]).name
+
+    @property
+    def has_errors(self) -> bool:
+        return self.err_count > 0
 
     def lerror(self, sl: SourceLine, msg: str) -> None:
         rpath = self._rpath(sl.path)
@@ -402,7 +412,7 @@ class LintEnv:
 
     def _error(self, meta: str, msg: str) -> None:
         print(f"{self.progname}: {meta}{msg}")
-        self.err_count = self.err_count + 1
+        self.err_count += 1
 
     def _rpath(self, path: Path) -> Path:
         rpath = path.relative_to(self.wordir)
@@ -682,7 +692,7 @@ def check_file_lines_cnt(env: LintEnv, sf: SourceFile) -> None:
 
 def check_block_size(env: LintEnv, sf: SourceFile) -> None:
     """Require sane block-sizes within { and }."""
-    deque: typing.Deque[int] = collections.deque()
+    deque: collections.deque[int] = collections.deque()
     for ln in sf.lines:
         for c in ln.line:
             if c == "{":
@@ -726,7 +736,7 @@ def check_pps_guards(env: LintEnv, sf: SourceFile) -> None:
 
 def check_nodup_includes(env: LintEnv, sf: SourceFile) -> None:
     """Check for (no) duplicated includes."""
-    includes: typing.Dict[str, int] = {}
+    includes: dict[str, int] = {}
     for sl in sf.lines:
         line = sl.line
         if not line.strip().startswith("#include "):
@@ -822,7 +832,7 @@ def main() -> None:
     """Run various C-style checks on input source files."""
     env = LintEnv()
     _check_cstyle(env, _resolve_cfiles(sys.argv[1:]))
-    sys.exit(0 if (env.err_count == 0) else 1)
+    sys.exit(1 if env.has_errors else 0)
 
 
 if __name__ == "__main__":

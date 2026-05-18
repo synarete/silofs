@@ -118,13 +118,13 @@ static bool arn_has_room(const struct silofs_arix_node *arn)
 static void
 arn_next(const struct silofs_arix_node *arn, struct silofs_pnptr *out_pnptr)
 {
-	silofs_pnptr192b_xtoh(&arn->arn_next, out_pnptr);
+	silofs_pnptr256b_xtoh(&arn->arn_next, out_pnptr);
 }
 
 static void
 arn_set_next(struct silofs_arix_node *arn, const struct silofs_pnptr *pnptr)
 {
-	silofs_pnptr192b_htox(&arn->arn_next, pnptr);
+	silofs_pnptr256b_htox(&arn->arn_next, pnptr);
 }
 
 static void arn_reset_next(struct silofs_arix_node *arn)

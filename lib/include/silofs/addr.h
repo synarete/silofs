@@ -323,13 +323,6 @@ struct silofs_pnptr {
 	struct silofs_paddr paddr;
 };
 
-/* btnode meta pointer */
-struct silofs_btnptr {
-	struct silofs_pnptr base;
-	size_t              nsub_vobjs;
-	size_t              nsub_btnodes;
-};
-
 const struct silofs_pnptr *silofs_pnptr_none(void);
 
 void silofs_pnptr_setup(struct silofs_pnptr        *pnptr,
@@ -350,31 +343,11 @@ bool silofs_pnptr_isequal(const struct silofs_pnptr *pnptr,
 
 bool silofs_pnptr_isnull(const struct silofs_pnptr *pnptr);
 
-void silofs_pnptr192b_htox(struct silofs_pnptr192b   *pnptr192,
+void silofs_pnptr256b_htox(struct silofs_pnptr256b   *pnptr256,
                            const struct silofs_pnptr *pnptr);
 
-void silofs_pnptr192b_xtoh(const struct silofs_pnptr192b *pnptr192,
+void silofs_pnptr256b_xtoh(const struct silofs_pnptr256b *pnptr256,
                            struct silofs_pnptr           *pnptr);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-const struct silofs_btnptr *silofs_btnptr_none(void);
-
-void silofs_btnptr_setup(struct silofs_btnptr      *btnptr,
-                         const struct silofs_pnptr *pnptr);
-
-void silofs_btnptr_reset(struct silofs_btnptr *btnptr);
-
-void silofs_btnptr_assign(struct silofs_btnptr       *btnptr,
-                          const struct silofs_btnptr *other);
-
-bool silofs_btnptr_isnull(const struct silofs_btnptr *btnptr);
-
-void silofs_btnptr256b_htox(struct silofs_btnptr256b   *btnptr256,
-                            const struct silofs_btnptr *btnptr);
-
-void silofs_btnptr256b_xtoh(const struct silofs_btnptr256b *btnptr256,
-                            struct silofs_btnptr           *btnptr);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* spdesc */

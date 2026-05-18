@@ -619,17 +619,10 @@ struct silofs_nmeta128b {
 } silofs_attr_aligned32;
 
 /* pnode meta-pointer */
-struct silofs_pnptr192b {
-	struct silofs_nmeta128b np_nmeta;
-	struct silofs_paddr64b  np_paddr;
-} silofs_attr_aligned64;
-
-/* btree-node meta-pointer with sub-counters */
-struct silofs_btnptr256b {
-	struct silofs_pnptr192b btp_base;
-	uint64_t                btp_nsub_vobjs;
-	uint32_t                btp_nsub_btnodes;
-	uint8_t                 btp_reserved[52];
+struct silofs_pnptr256b {
+	struct silofs_nmeta128b pp_nmeta;
+	struct silofs_paddr64b  pp_paddr;
+	uint8_t                 pp_reserved[64];
 } silofs_attr_aligned64;
 
 /* space descriptor  */
@@ -649,8 +642,7 @@ struct silofs_mbr1k {
 	uint32_t                mbr_flags;
 	uint8_t                 mbr_reserved1[24];
 	uint8_t                 mbr_reserved2[192];
-	struct silofs_pnptr192b mbr_root;
-	uint8_t                 mbr_reserved3[64];
+	struct silofs_pnptr256b mbr_root;
 	struct silofs_uaddr128b mbr_sb_addr;
 	uint8_t                 mbr_reserved4[320];
 	struct silofs_hash256   mbr_hash;
@@ -673,7 +665,7 @@ struct silofs_header {
 
 /* uber-node sub-child by vspace */
 struct silofs_uber_sub {
-	struct silofs_btnptr256b ubs_btroot;
+	struct silofs_pnptr256b  ubs_btroot;
 	struct silofs_spdesc128b ubs_bn_spdesc;
 	struct silofs_spdesc128b ubs_vn_spdesc;
 	uint64_t                 ubs_bn_count;
@@ -1062,17 +1054,17 @@ struct silofs_blob_desc {
 
 /* btree node of persistent volume mapping */
 struct silofs_btree_node {
-	struct silofs_header     btn_hdr;
-	uint8_t                  btn_reserved0[16];
-	uint32_t                 btn_flags;
-	uint8_t                  btn_vspace;
-	uint8_t                  btn_height;
-	uint16_t                 btn_nkeys;
-	uint16_t                 btn_nchilds;
-	uint8_t                  btn_reserved2[86];
-	uint64_t                 btn_key[SILOFS_BTREE_NODE_NKEYS];
-	uint8_t                  btn_reserved3[144];
-	struct silofs_btnptr256b btn_child[SILOFS_BTREE_NODE_NCHILDS];
+	struct silofs_header    btn_hdr;
+	uint8_t                 btn_reserved0[16];
+	uint32_t                btn_flags;
+	uint8_t                 btn_vspace;
+	uint8_t                 btn_height;
+	uint16_t                btn_nkeys;
+	uint16_t                btn_nchilds;
+	uint8_t                 btn_reserved2[86];
+	uint64_t                btn_key[SILOFS_BTREE_NODE_NKEYS];
+	uint8_t                 btn_reserved3[144];
+	struct silofs_pnptr256b btn_child[SILOFS_BTREE_NODE_NCHILDS];
 } silofs_attr_aligned64;
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -1093,8 +1085,7 @@ struct silofs_arix_node {
 	uint32_t                  arn_flags;
 	uint32_t                  arn_ndescs;
 	uint8_t                   arn_reserved1[200];
-	struct silofs_pnptr192b   arn_next;
-	uint8_t                   arn_reserved2[64];
+	struct silofs_pnptr256b   arn_next;
 	struct silofs_ar_desc256b arn_descs[254];
 } silofs_attr_aligned64;
 

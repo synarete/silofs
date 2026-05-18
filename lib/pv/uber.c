@@ -18,15 +18,15 @@
 #include <silofs/pv.h>
 
 static void
-ubs_btroot(const struct silofs_uber_sub *ubs, struct silofs_btnptr *out_btnptr)
+ubs_btroot(const struct silofs_uber_sub *ubs, struct silofs_pnptr *out_pnptr)
 {
-	silofs_btnptr256b_xtoh(&ubs->ubs_btroot, out_btnptr);
+	silofs_pnptr256b_xtoh(&ubs->ubs_btroot, out_pnptr);
 }
 
 static void
-ubs_set_btroot(struct silofs_uber_sub *ubs, const struct silofs_btnptr *btnptr)
+ubs_set_btroot(struct silofs_uber_sub *ubs, const struct silofs_pnptr *pnptr)
 {
-	silofs_btnptr256b_htox(&ubs->ubs_btroot, btnptr);
+	silofs_pnptr256b_htox(&ubs->ubs_btroot, pnptr);
 }
 
 static void ubs_bn_spdesc(const struct silofs_uber_sub *ubs,
@@ -75,7 +75,7 @@ static void ubs_set_vn_count(struct silofs_uber_sub *ubs, uint64_t n)
 
 static void ubs_reset(struct silofs_uber_sub *ubs)
 {
-	ubs_set_btroot(ubs, silofs_btnptr_none());
+	ubs_set_btroot(ubs, silofs_pnptr_none());
 	ubs_set_bn_spdesc(ubs, silofs_spdesc_none());
 	ubs_set_vn_spdesc(ubs, silofs_spdesc_none());
 	ubs_set_bn_count(ubs, 0);
@@ -196,35 +196,35 @@ ubn_mut_sub_of(struct silofs_uber_node *ubn, enum silofs_vtype vtype)
 }
 
 static void ubn_btroot(const struct silofs_uber_node *ubn, size_t slot,
-                       struct silofs_btnptr *out_btnptr)
+                       struct silofs_pnptr *out_pnptr)
 {
-	ubs_btroot(ubn_sub_at(ubn, slot), out_btnptr);
+	ubs_btroot(ubn_sub_at(ubn, slot), out_pnptr);
 }
 
 static void
 ubn_btroot_of(const struct silofs_uber_node *ubn, enum silofs_vtype vtype,
-              struct silofs_btnptr *out_btnptr)
+              struct silofs_pnptr *out_pnptr)
 {
 	const size_t slot = ubn_slot_of(ubn, vtype);
 
 	silofs_assert(silofs_vtype_isvnode(vtype));
-	ubn_btroot(ubn, slot, out_btnptr);
+	ubn_btroot(ubn, slot, out_pnptr);
 }
 
 static void ubn_set_btroot(struct silofs_uber_node *ubn, size_t slot,
-                           const struct silofs_btnptr *btnptr)
+                           const struct silofs_pnptr *pnptr)
 {
 	silofs_assert_lt(slot, ARRAY_SIZE(ubn->ub_sub));
 
-	ubs_set_btroot(ubn_mut_sub_at(ubn, slot), btnptr);
+	ubs_set_btroot(ubn_mut_sub_at(ubn, slot), pnptr);
 }
 
 static void
 ubn_set_btroot_of(struct silofs_uber_node *ubn, enum silofs_vtype vtype,
-                  const struct silofs_btnptr *btnptr)
+                  const struct silofs_pnptr *pnptr)
 {
 	silofs_assert(silofs_vtype_isvnode(vtype));
-	ubn_set_btroot(ubn, ubn_slot_of(ubn, vtype), btnptr);
+	ubn_set_btroot(ubn, ubn_slot_of(ubn, vtype), pnptr);
 }
 
 static void ubn_bn_spdesc(const struct silofs_uber_node *ubn, size_t slot,
@@ -391,9 +391,9 @@ void silofs_ubi_cleardirty(struct silofs_uber_info *ubi)
 
 void silofs_ubi_btroot_of(const struct silofs_uber_info *ubi,
                           enum silofs_vtype vtype,
-                          struct silofs_btnptr *out_btnptr)
+                          struct silofs_pnptr *out_pnptr)
 {
-	ubn_btroot_of(ubi->ubn, vtype, out_btnptr);
+	ubn_btroot_of(ubi->ubn, vtype, out_pnptr);
 }
 
 static void ubi_inc_generation(struct silofs_uber_info *ubi)
@@ -404,30 +404,29 @@ static void ubi_inc_generation(struct silofs_uber_info *ubi)
 
 static void
 ubi_set_btroot(struct silofs_uber_info *ubi, enum silofs_vtype vtype,
-               const struct silofs_btnptr *btnptr)
+               const struct silofs_pnptr *pnptr)
 {
-	ubn_set_btroot_of(ubi->ubn, vtype, btnptr);
+	ubn_set_btroot_of(ubi->ubn, vtype, pnptr);
 	ubi_inc_generation(ubi);
 }
 
 static bool ubi_has_btroot(const struct silofs_uber_info *ubi,
                            const struct silofs_pnptr *pnptr)
 {
-	struct silofs_btnptr btnptr    = {};
+	struct silofs_pnptr root_pnptr = {};
 	const enum silofs_vtype vspace = pnptr->paddr.blobid.stype.vtype;
 
-	silofs_ubi_btroot_of(ubi, vspace, &btnptr);
-	return silofs_pnptr_isequal(pnptr, &btnptr.base);
+	silofs_ubi_btroot_of(ubi, vspace, &root_pnptr);
+	return silofs_pnptr_isequal(pnptr, &root_pnptr);
 }
 
 void silofs_ubi_set_btroot_by(struct silofs_uber_info *ubi,
                               const struct silofs_btnode_info *bti)
 {
-	struct silofs_btnptr btnptr = {};
+	const struct silofs_pnptr *pnptr = silofs_bti_self(bti);
 
-	silofs_bti_self(bti, &btnptr);
-	if (!ubi_has_btroot(ubi, &btnptr.base)) {
-		ubi_set_btroot(ubi, silofs_bti_vspace(bti), &btnptr);
+	if (!ubi_has_btroot(ubi, pnptr)) {
+		ubi_set_btroot(ubi, silofs_bti_vspace(bti), pnptr);
 	}
 }
 

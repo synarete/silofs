@@ -300,16 +300,16 @@ reload_uber(struct silofs_pexec_ctx *pexec, const struct silofs_pnptr *pnptr)
 static int
 reload_btree_root_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
 {
-	struct silofs_btnptr btnptr    = {};
-	struct silofs_btnode_info *bti = nullptr;
+	struct silofs_pnptr pnptr = {};
+	struct silofs_btnode_info *bti;
 	int err;
 
-	silofs_ubi_btroot_of(pexec->ubref->ubi, vtype, &btnptr);
-	if (silofs_btnptr_isnull(&btnptr)) {
+	silofs_ubi_btroot_of(pexec->ubref->ubi, vtype, &pnptr);
+	if (silofs_pnptr_isnull(&pnptr)) {
 		log_dbg("missing btree root: vtype=%d", vtype);
 		return -SILOFS_EFSCORRUPTED;
 	}
-	err = silofs_stage_btnode(pexec, &btnptr.base, &bti);
+	err = silofs_stage_btnode(pexec, &pnptr, &bti);
 	if (err) {
 		log_dbg("failed to reload btroot: vtype=%d", vtype);
 		return err;

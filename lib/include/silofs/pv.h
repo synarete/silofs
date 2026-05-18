@@ -230,8 +230,8 @@ int silofs_validate_bldesc(const struct silofs_bldesc_info *bdi);
 
 #define SILOFS_BTREE_KEY_NULL UINT64_MAX
 
-void silofs_bti_self(const struct silofs_btnode_info *bti,
-                     struct silofs_btnptr            *out_btnptr);
+const struct silofs_pnptr *
+silofs_bti_self(const struct silofs_btnode_info *bti);
 
 void silofs_bti_incref(struct silofs_btnode_info *bti);
 
@@ -259,19 +259,19 @@ size_t silofs_bti_height(const struct silofs_btnode_info *bti);
 void silofs_bti_set_height(struct silofs_btnode_info *bti, size_t height);
 
 int silofs_bti_resolve(const struct silofs_btnode_info *bti, uint64_t key,
-                       struct silofs_btnptr *out_btnptr);
+                       struct silofs_pnptr *out_pnptr);
 
 int silofs_bti_insert(struct silofs_btnode_info *bti, uint64_t key,
-                      const struct silofs_btnptr *btnptr);
+                      const struct silofs_pnptr *pnptr);
 
 int silofs_bti_update(struct silofs_btnode_info *bti, uint64_t key,
-                      const struct silofs_btnptr *btnptr);
+                      const struct silofs_pnptr *pnptr);
 
 int silofs_bti_remove(struct silofs_btnode_info *bti, uint64_t key);
 
-int silofs_bti_relink(struct silofs_btnode_info  *bti,
-                      const struct silofs_btnptr *cur,
-                      const struct silofs_btnptr *alt);
+int silofs_bti_relink(struct silofs_btnode_info *bti,
+                      const struct silofs_pnptr *cur,
+                      const struct silofs_pnptr *alt);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -280,9 +280,9 @@ int silofs_validate_btnode(const struct silofs_btnode_info *bti);
 uint64_t silofs_split_btnode(struct silofs_btnode_info *curr,
                              struct silofs_btnode_info *next);
 
-void silofs_rebind_btchilds(struct silofs_btnode_info  *parent,
-                            const struct silofs_btnptr *left,
-                            const struct silofs_btnptr *right, uint64_t key);
+void silofs_rebind_btchilds(struct silofs_btnode_info *parent,
+                            const struct silofs_pnptr *left,
+                            const struct silofs_pnptr *right, uint64_t key);
 
 void silofs_clone_btnode(const struct silofs_btnode_info *bti,
                          struct silofs_btnode_info       *bti_other);
@@ -318,7 +318,7 @@ void silofs_ubi_set_btroot_by(struct silofs_uber_info         *ubi,
 
 void silofs_ubi_btroot_of(const struct silofs_uber_info *ubi,
                           enum silofs_vtype              vtype,
-                          struct silofs_btnptr          *out_btnptr);
+                          struct silofs_pnptr           *out_pnptr);
 
 void silofs_ubi_spdesc_of(const struct silofs_uber_info *ubi,
                           const struct silofs_stype     *stype,

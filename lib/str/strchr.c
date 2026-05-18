@@ -47,12 +47,6 @@ static void chr_swap(char *p, char *q)
 	*q = c;
 }
 
-/*
-static int chr_lt(char c1, char c2)
-{
-    return c1 < c2;
-}
-*/
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static size_t str_length(const char *s)

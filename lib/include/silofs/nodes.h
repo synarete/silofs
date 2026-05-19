@@ -366,7 +366,7 @@ enum silofs_pnodef {
 struct silofs_pnode_info {
 	struct silofs_node_info pn_base;
 	struct silofs_pnptr     pn_self;
-	struct silofs_paddr     pn_parent;
+	struct silofs_pnptr     pn_parent;
 	struct silofs_list_head pn_dsq_lh;
 	unsigned int            pn_flags;
 };
@@ -394,11 +394,11 @@ struct silofs_btnode_info {
 const struct silofs_pnptr *
 silofs_pni_self(const struct silofs_pnode_info *pni);
 
-const struct silofs_paddr *
+const struct silofs_pnptr *
 silofs_pni_parent(const struct silofs_pnode_info *pni);
 
 void silofs_pni_set_parent(struct silofs_pnode_info  *pni,
-                           const struct silofs_paddr *paddr);
+                           const struct silofs_pnptr *pnptr);
 
 void silofs_pni_markdirty(struct silofs_pnode_info *pni);
 

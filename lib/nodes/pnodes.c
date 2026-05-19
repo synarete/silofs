@@ -50,7 +50,7 @@ pni_init(struct silofs_pnode_info *pni, const struct silofs_pnptr *pnptr)
 
 	silofs_ni_init(&pni->pn_base, psize);
 	silofs_pnptr_assign(&pni->pn_self, pnptr);
-	silofs_paddr_reset(&pni->pn_parent);
+	silofs_pnptr_reset(&pni->pn_parent);
 	silofs_list_head_init(&pni->pn_dsq_lh);
 	silofs_hkey_by_paddr(&pni->pn_base.hmqe.hme_key, &pni->pn_self.paddr);
 	pni->pn_flags = SILOFS_PNODEF_NONE;
@@ -59,7 +59,7 @@ pni_init(struct silofs_pnode_info *pni, const struct silofs_pnptr *pnptr)
 static void pni_fini(struct silofs_pnode_info *pni)
 {
 	silofs_pnptr_reset(&pni->pn_self);
-	silofs_paddr_reset(&pni->pn_parent);
+	silofs_pnptr_reset(&pni->pn_parent);
 	silofs_list_head_fini(&pni->pn_dsq_lh);
 	silofs_ni_fini(&pni->pn_base);
 }
@@ -177,16 +177,16 @@ const struct silofs_pnptr *silofs_pni_self(const struct silofs_pnode_info *pni)
 	return &pni->pn_self;
 }
 
-const struct silofs_paddr *
+const struct silofs_pnptr *
 silofs_pni_parent(const struct silofs_pnode_info *pni)
 {
 	return &pni->pn_parent;
 }
 
 void silofs_pni_set_parent(struct silofs_pnode_info *pni,
-                           const struct silofs_paddr *paddr)
+                           const struct silofs_pnptr *paddr)
 {
-	silofs_paddr_assign(&pni->pn_parent, paddr);
+	silofs_pnptr_assign(&pni->pn_parent, paddr);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

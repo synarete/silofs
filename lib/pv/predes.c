@@ -86,6 +86,7 @@ int silofs_pre_destage(const struct silofs_pexec_ctx *pexec,
 	if (err) {
 		goto out_err;
 	}
+
 	silofs_destageq_sort(dsq, compare_paddrs_of);
 	return 0;
 out_err:

@@ -670,6 +670,7 @@ static void rebind_btchilds(struct silofs_btree_node *btn_parent,
 const struct silofs_pnptr *
 silofs_bti_self(const struct silofs_btnode_info *bti)
 {
+	silofs_assume_not_null(bti);
 	return silofs_pni_self(&bti->btn_pni);
 }
 

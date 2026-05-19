@@ -23,12 +23,16 @@
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static const struct silofs_paddr *ubi_paddr(const struct silofs_uber_info *ubi)
+static const struct silofs_pnptr *ubi_self(const struct silofs_uber_info *ubi)
 {
-	return silofs_pni_paddr(&ubi->ub_pni);
+	return silofs_pni_self(&ubi->ub_pni);
 }
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+static const struct silofs_pnptr *
+bti_self(const struct silofs_btnode_info *bti)
+{
+	return silofs_bti_self(bti);
+}
 
 static void bti_incref(struct silofs_btnode_info *bti)
 {
@@ -44,25 +48,17 @@ static void bti_decref(struct silofs_btnode_info *bti)
 	}
 }
 
-static const struct silofs_paddr *
-bti_paddr(const struct silofs_btnode_info *bti)
-{
-	return silofs_pni_paddr(&bti->btn_pni);
-}
-
 static void bti_set_parent(struct silofs_btnode_info *bti,
-                           const struct silofs_paddr *paddr)
+                           const struct silofs_pnptr *pnptr)
 {
-	silofs_pni_set_parent(&bti->btn_pni, paddr);
+	silofs_pni_set_parent(&bti->btn_pni, pnptr);
 }
 
-static void
-bti_self(const struct silofs_btnode_info *bti, struct silofs_pnptr *out_pnptr)
+static void bti_set_parent_by(struct silofs_btnode_info *bti,
+                              const struct silofs_btnode_info *bti_parent)
 {
-	if (likely(bti != nullptr)) {
-		silofs_pnptr_assign(out_pnptr, silofs_bti_self(bti));
-	} else {
-		silofs_pnptr_reset(out_pnptr);
+	if (bti_parent != nullptr) {
+		bti_set_parent(bti, silofs_bti_self(bti_parent));
 	}
 }
 
@@ -408,10 +404,10 @@ static void btc_refresh_parents(const struct silofs_btree_ctx *btc)
 	for (size_t slot = 1; slot < btc->bpath.cnt; ++slot) {
 		bti        = btc_path_btnode_at(btc, slot);
 		bti_parent = btc_path_btnode_at(btc, slot - 1);
-		bti_set_parent(bti, bti_paddr(bti_parent));
+		bti_set_parent_by(bti, bti_parent);
 	}
 	bti = btc_path_front(btc);
-	bti_set_parent(bti, ubi_paddr(btc->ubi));
+	bti_set_parent(bti, ubi_self(btc->ubi));
 }
 
 static int btc_stage_and_refresh(struct silofs_btree_ctx *btc)
@@ -513,14 +509,12 @@ static int btc_update_parent_at(const struct silofs_btree_ctx *btc, size_t i,
                                 const struct silofs_btnode_info *bti_cur,
                                 const struct silofs_btnode_info *bti_new)
 {
-	struct silofs_pnptr pnptr_cur, pnptr_new;
+	const struct silofs_pnptr *pnptr_cur  = bti_self(bti_cur);
+	const struct silofs_pnptr *pnptr_new  = bti_self(bti_new);
 	struct silofs_btnode_info *bti_parent = nullptr;
 
-	bti_self(bti_cur, &pnptr_cur);
-	bti_self(bti_new, &pnptr_new);
-
 	bti_parent = btc_path_btnode_at(btc, i);
-	return silofs_bti_relink(bti_parent, &pnptr_cur, &pnptr_new);
+	return silofs_bti_relink(bti_parent, pnptr_cur, pnptr_new);
 }
 
 static void btc_update_btroot(const struct silofs_btree_ctx *btc,
@@ -606,12 +600,10 @@ rebind_btchilds(struct silofs_btnode_info *bti_parent,
                 const struct silofs_btnode_info *bti_left,
                 const struct silofs_btnode_info *bti_right, uint64_t key)
 {
-	struct silofs_pnptr pnptr_left;
-	struct silofs_pnptr pnptr_right;
+	const struct silofs_pnptr *pnptr_left  = bti_self(bti_left);
+	const struct silofs_pnptr *pnptr_right = bti_self(bti_right);
 
-	bti_self(bti_left, &pnptr_left);
-	bti_self(bti_right, &pnptr_right);
-	silofs_rebind_btchilds(bti_parent, &pnptr_left, &pnptr_right, key);
+	silofs_rebind_btchilds(bti_parent, pnptr_left, pnptr_right, key);
 }
 
 static int

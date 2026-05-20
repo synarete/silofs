@@ -270,7 +270,7 @@ str_overlaps(const char *s1, size_t n1, const char *s2, size_t n2)
 	const uintptr_t e1 = b1 + n1;
 	const uintptr_t b2 = (uintptr_t)s2;
 	const uintptr_t e2 = b2 + n2;
-	uintptr_t n;
+	uintptr_t n        = 0;
 
 	if ((b1 < e2) && (b2 < e1)) {
 		if (b2 > b1) {
@@ -278,8 +278,6 @@ str_overlaps(const char *s1, size_t n1, const char *s2, size_t n2)
 		} else {
 			n = (e2 - b1);
 		}
-	} else {
-		n = 0;
 	}
 	return n;
 }

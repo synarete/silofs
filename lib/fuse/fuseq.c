@@ -2351,8 +2351,7 @@ static int do_lseek(const struct silofs_fuseq_cmd_ctx *fcc)
 
 static int do_copy_file_range(const struct silofs_fuseq_cmd_ctx *fcc)
 {
-	size_t len = 0;
-	size_t ncp = 0;
+	size_t len, ncp = 0;
 	int err;
 
 	check_fh_of(fcc->task, fcc->ino, fcc->in->u.copy_file_range.arg.fh_in);
@@ -2697,7 +2696,7 @@ static int do_write_iter(const struct silofs_fuseq_cmd_ctx *fcc)
 {
 	struct silofs_fuseq_wr_iter *fq_wri = &fcc->fqs->fqs_rwi->u.wri;
 	const size_t con_max_write          = fcc->fq->fq_coni.max_write;
-	size_t len                          = 0;
+	size_t len;
 	int err1, err2;
 
 	check_fh_of(fcc->task, fcc->ino, fcc->in->u.write.arg.fh);
@@ -3173,12 +3172,13 @@ static uint32_t fqs_in_opcode(const struct silofs_fuseq_sub *fqs)
 
 static uint64_t fqs_in_ioctl_cmd(const struct silofs_fuseq_sub *fqs)
 {
-	const struct silofs_fuseq_in *in = fqs_in_of2(fqs);
-	uint64_t ioc_cmd                 = 0;
+	uint64_t ioc_cmd = 0;
 	uint32_t opcode;
 
 	opcode = fqs_in_opcode(fqs);
 	if (opcode == FUSE_IOCTL) {
+		const struct silofs_fuseq_in *in = fqs_in_of2(fqs);
+
 		ioc_cmd = in->u.ioctl.arg.cmd;
 	}
 	return ioc_cmd;
@@ -3272,13 +3272,13 @@ static bool is_large_io(off_t off, size_t size)
 
 static bool fqs_has_large_write_in(const struct silofs_fuseq_sub *fqs)
 {
-	const struct silofs_fuseq_in *in = nullptr;
-	const uint32_t opcode            = fqs_in_opcode(fqs);
-	off_t off                        = 0;
-	bool ret                         = false;
+	const uint32_t opcode = fqs_in_opcode(fqs);
+	bool ret              = false;
 
 	if (opcode == FUSE_WRITE) {
-		in  = fqs_in_of2(fqs);
+		const struct silofs_fuseq_in *in = fqs_in_of2(fqs);
+		off_t off;
+
 		off = (off_t)in->u.write.arg.offset;
 		ret = is_large_io(off, in->u.write.arg.size);
 	}
@@ -3287,13 +3287,13 @@ static bool fqs_has_large_write_in(const struct silofs_fuseq_sub *fqs)
 
 static bool fqs_has_large_read_in(const struct silofs_fuseq_sub *fqs)
 {
-	const struct silofs_fuseq_in *in = nullptr;
-	const uint32_t opcode            = fqs_in_opcode(fqs);
-	off_t off                        = 0;
-	bool ret                         = false;
+	const uint32_t opcode = fqs_in_opcode(fqs);
+	bool ret              = false;
 
 	if (opcode == FUSE_READ) {
-		in  = fqs_in_of2(fqs);
+		const struct silofs_fuseq_in *in = fqs_in_of2(fqs);
+		off_t off;
+
 		off = (off_t)in->u.read.arg.offset;
 		ret = is_large_io(off, in->u.read.arg.size);
 	}
@@ -3332,13 +3332,14 @@ static int fqs_check_task(struct silofs_fuseq_sub *fqs,
                           const struct silofs_task_ctx *task)
 {
 	const unsigned int op_code = task->auth.opcode;
-	const uid_t uid            = task->auth.creds.host_cred.uid;
+	uid_t uid;
 	int err;
 
 	err = fqs_check_opcode(fqs, op_code);
 	if (err) {
 		return err;
 	}
+	uid = task->auth.creds.host_cred.uid;
 	err = fqs_check_perm(fqs, uid, op_code);
 	if (err) {
 		return err;
@@ -3450,8 +3451,7 @@ fqs_submit_by(const struct silofs_fuseq_sub *fqs, struct silofs_task_ctx *task)
 static int
 fqs_do_exec_request(struct silofs_fuseq_sub *fqs, struct silofs_task_ctx *task)
 {
-	int err1;
-	int err2;
+	int err1, err2;
 
 	fqs_pre_exec_request(fqs);
 	silofs_rwlock_fs_by(task);

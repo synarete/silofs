@@ -102,24 +102,24 @@ static inline uint32_t silofs_popcount_u64(uint64_t n)
 
 static inline uint64_t silofs_div_round_up(uint64_t n, uint64_t d)
 {
-	return (n + d - 1) / d;
+	return d ? ((n + d - 1) / d) : 0;
 }
 
 static inline uint64_t silofs_lrotate64(uint64_t x, unsigned int n)
 {
-	return ((n > 0) && (n < 64)) ? (x << n) | (x >> (64 - n)) : x;
+	n &= 63;
+	return (x << n) | (x >> (64 - n));
 }
 
 static inline uint64_t silofs_rrotate64(uint64_t x, unsigned int n)
 {
-	return ((n > 0) && (n < 64)) ? (x >> n) | (x << (64 - n)) : x;
+	n &= 63;
+	return (x >> n) | (x << (64 - n));
 }
 
 static inline void *silofs_unconst(const void *p)
 {
-	const uintptr_t up = (uintptr_t)p;
-
-	return (void *)up;
+	return (void *)((uintptr_t)p);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

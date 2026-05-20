@@ -24,6 +24,7 @@
 
 #include <silofs/ondisk.h>
 #include <silofs/errors.h>
+#include <silofs/base.h>
 #include <silofs/str.h>
 #include <silofs/crypt.h>
 
@@ -284,6 +285,12 @@ void silofs_paddr64b_htox(struct silofs_paddr64b    *paddr64,
 
 void silofs_paddr64b_xtoh(const struct silofs_paddr64b *paddr64,
                           struct silofs_paddr          *paddr);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_calc_aad_by_paddr(const struct silofs_mdigest_hd *md_hd,
+                              const struct silofs_paddr      *paddr,
+                              struct silofs_caad             *out_caad);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* nmeta */

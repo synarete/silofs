@@ -554,10 +554,10 @@ int silofs_destage_dirty(struct silofs_pexec_ctx *pexec);
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* predes */
 
-int silofs_pre_destage(const struct silofs_pexec_ctx *pexec,
-                       struct silofs_destageq        *dsq);
+int silofs_pre_destage(struct silofs_pexec_ctx *pexec,
+                       struct silofs_destageq  *dsq);
 
-void silofs_post_destage(const struct silofs_pexec_ctx *pexec,
+void silofs_post_destage(struct silofs_pexec_ctx *pexec,
                          struct silofs_destageq *dsq, bool cleardirty);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

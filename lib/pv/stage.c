@@ -183,18 +183,11 @@ stc_read_pnode(struct silofs_stage_ctx *st_ctx, struct silofs_pnode_info *pni)
 	return stc_read_pview_at(st_ctx, paddr, pview_size);
 }
 
-static void
-stc_caad_of_paddr(struct silofs_stage_ctx *st_ctx,
-                  const struct silofs_paddr *paddr, struct silofs_caad *caad)
+static void stc_caad_of_paddr(struct silofs_stage_ctx *st_ctx,
+                              const struct silofs_paddr *paddr,
+                              struct silofs_caad *out_caad)
 {
-	struct silofs_hash256 hash;
-	struct silofs_paddr64b paddr64;
-
-	STATICASSERT_EQ(sizeof(hash.hash), sizeof(caad->aad));
-
-	silofs_paddr64b_htox(&paddr64, paddr);
-	silofs_sha3_256_of(st_ctx->md_hd, &paddr64, sizeof(paddr64), &hash);
-	memcpy(caad->aad, hash.hash, sizeof(caad->aad));
+	silofs_calc_aad_by_paddr(st_ctx->md_hd, paddr, out_caad);
 }
 
 static int stc_decrypt_pview_of(struct silofs_stage_ctx *st_ctx,

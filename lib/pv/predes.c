@@ -31,6 +31,76 @@ static const struct silofs_paddr *paddr_of(const struct silofs_dq_elem *dqe)
 	return silofs_pni_paddr(pni);
 }
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static int
+stage_uber(struct silofs_pexec_ctx *pexec, const struct silofs_pnptr *pnptr,
+           struct silofs_pnode_info **out_pni)
+{
+	struct silofs_uber_info *ubi = nullptr;
+	int err;
+
+	err = silofs_stage_uber(pexec, pnptr, &ubi);
+	if (err) {
+		return err;
+	}
+	*out_pni = &ubi->ub_pni;
+	return 0;
+}
+
+static int
+stage_btnode(struct silofs_pexec_ctx *pexec, const struct silofs_pnptr *pnptr,
+             struct silofs_pnode_info **out_pni)
+{
+	struct silofs_btnode_info *bti = nullptr;
+	int err;
+
+	err = silofs_stage_btnode(pexec, pnptr, &bti);
+	if (err) {
+		return err;
+	}
+	*out_pni = &bti->btn_pni;
+	return 0;
+}
+
+static inline int
+stage_pnode(struct silofs_pexec_ctx *pexec, const struct silofs_pnptr *pnptr,
+            struct silofs_pnode_info **out_pni)
+{
+	const enum silofs_ptype ptype = pnptr->paddr.ptype;
+	int err;
+
+	switch (ptype) {
+	case SILOFS_PTYPE_UBER:
+		err = stage_uber(pexec, pnptr, out_pni);
+		break;
+	case SILOFS_PTYPE_BTNODE:
+		err = stage_btnode(pexec, pnptr, out_pni);
+		break;
+	case SILOFS_PTYPE_NONE:
+	case SILOFS_PTYPE_MBR:
+	case SILOFS_PTYPE_BLDESC:
+	case SILOFS_PTYPE_VNODE:
+	case SILOFS_PTYPE_LAST:
+	default:
+		silofs_panic("can not stage pnode: ptype=%d", ptype);
+		err = -SILOFS_EBUG;
+		break;
+	}
+	return err;
+}
+
+static inline int stage_parent_of(struct silofs_pexec_ctx *pexec,
+                                  const struct silofs_pnode_info *pni,
+                                  struct silofs_pnode_info **out_pni)
+{
+	const struct silofs_pnptr *pnptr = silofs_pni_parent(pni);
+
+	return stage_pnode(pexec, pnptr, out_pni);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 static int compare_paddrs_of(const struct silofs_dq_elem *dqe1,
                              const struct silofs_dq_elem *dqe2)
 {
@@ -74,7 +144,28 @@ static void cleanup_viewx(const struct silofs_pexec_ctx *pexec,
 	silofs_destageq_foreach(dsq, detach_viewx_of, pexec);
 }
 
-int silofs_pre_destage(const struct silofs_pexec_ctx *pexec,
+#if 0
+static int pre_destage_pnode(struct silofs_pexec_ctx *pexec,
+			     struct silofs_pnode_info *pni)
+{
+	int err;
+
+	if (pni->pn_base.viewx.pview != nullptr) {
+		return 0;
+	}
+	err = silofs_ni_attach_viewx(&pni->pn_base, alloc_of(pexec));
+	if (err) {
+		return err;
+	}
+
+}
+
+static int pre_destage_at(struct silofs_dq_elem *dqe, const void *userp)
+{
+}
+#endif
+
+int silofs_pre_destage(struct silofs_pexec_ctx *pexec,
                        struct silofs_destageq *dsq)
 {
 	const struct silofs_dirtyq *drq = &pexec->pcache->pc_dirtyq;
@@ -90,7 +181,7 @@ int silofs_pre_destage(const struct silofs_pexec_ctx *pexec,
 	silofs_destageq_sort(dsq, compare_paddrs_of);
 	return 0;
 out_err:
-	cleanup_viewx(pexec, dsq);
+	silofs_post_destage(pexec, dsq, false);
 	return err;
 }
 
@@ -109,7 +200,7 @@ static void clear_dirty(const struct silofs_pexec_ctx *pexec,
 	silofs_destageq_foreach(dsq, cleardirty_of, pexec);
 }
 
-void silofs_post_destage(const struct silofs_pexec_ctx *pexec,
+void silofs_post_destage(struct silofs_pexec_ctx *pexec,
                          struct silofs_destageq *dsq, bool cleardirty)
 {
 	cleanup_viewx(pexec, dsq);

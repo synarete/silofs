@@ -555,13 +555,9 @@ int silofs_require_paddr(struct silofs_pexec_ctx   *pexec,
 int silofs_destage_dirty(struct silofs_pexec_ctx *pexec);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-/* predes */
+/* destage */
 
-int silofs_pre_destage(struct silofs_pexec_ctx *pexec,
-                       struct silofs_destageq  *dsq);
-
-void silofs_post_destage(struct silofs_pexec_ctx *pexec,
-                         struct silofs_destageq *dsq, bool cleardirty);
+int silofs_destage_pnodes(struct silofs_pexec_ctx *pexec);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* vspace */

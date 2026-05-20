@@ -79,8 +79,9 @@ static bool base64_ispad(int chr)
 
 static int base64_decode_sext(int chr, uint8_t *out_sext)
 {
+	constexpr size_t decode_tbl_nelems =
+		SILOFS_ARRAY_SIZE(base64_decode_tbl);
 	int sext;
-	const size_t decode_tbl_nelems = SILOFS_ARRAY_SIZE(base64_decode_tbl);
 
 	if (chr >= (int)decode_tbl_nelems) {
 		return -EINVAL;
@@ -95,8 +96,8 @@ static int base64_decode_sext(int chr, uint8_t *out_sext)
 
 static void base64_encode_head(const void *in, char *out, size_t len)
 {
-	int sext;
 	const uint8_t *inb = in;
+	int sext;
 
 	while (len) {
 		sext   = inb[0] >> 2;

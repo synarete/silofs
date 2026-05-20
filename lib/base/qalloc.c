@@ -91,7 +91,7 @@ struct silofs_qpage_info {
 } silofs_attr_alignedx(SILOFS_CACHELINE_SIZE_DFL);
 
 /* Global qpool unique id. */
-static long g_qpool_id;
+static uint32_t g_qpool_id;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -434,9 +434,9 @@ static void qpool_fini_mutex(struct silofs_qpool *qpool)
 	silofs_mutex_fini(&qpool->mutex);
 }
 
-static long qpool_next_unique_id(void)
+static uint32_t qpool_next_unique_id(void)
 {
-	return silofs_atomic_rlx_addl(&g_qpool_id, 1);
+	return ++g_qpool_id;
 }
 
 static int qpool_init(struct silofs_qpool *qpool, size_t memsize,
@@ -447,7 +447,7 @@ static int qpool_init(struct silofs_qpool *qpool, size_t memsize,
 
 	silofs_memzero(qpool, sizeof(*qpool));
 	silofs_list_init(&qpool->free_pgs);
-	qpool->unique_id = (uint32_t)qpool_next_unique_id();
+	qpool->unique_id = qpool_next_unique_id();
 
 	err = qpool_init_mutex(qpool);
 	if (err) {
@@ -603,16 +603,17 @@ qpool_alloc_multi_pg(struct silofs_qpool *qpool, size_t nbytes, void **out_ptr)
 static off_t
 qpool_ptr_to_off(const struct silofs_qpool *qpool, const void *ptr)
 {
-	const void *dmem    = qpool->data.mem;
-	const ptrdiff_t dif = (const int8_t *)ptr - (const int8_t *)dmem;
-	off_t off;
+	const size_t dmsz     = qpool->data.msz;
+	const uintptr_t udmem = (uintptr_t)qpool->data.mem;
+	const uintptr_t uptr  = (uintptr_t)ptr;
 
-	if (silofs_likely(dif >= 0)) {
-		off = (off_t)((uintptr_t)ptr - (uintptr_t)dmem);
-	} else {
-		off = -1;
+	if (silofs_unlikely(uptr < udmem)) {
+		return -1;
 	}
-	return off;
+	if (silofs_unlikely((uptr - udmem) >= dmsz)) {
+		return -1;
+	}
+	return (off_t)(uptr - udmem);
 }
 
 static size_t
@@ -1517,15 +1518,10 @@ static bool qalloc_may_demask_free(const struct silofs_qalloc *qal)
 static void qalloc_pre_free(const struct silofs_qalloc *qal, void *ptr,
                             size_t nbytes, int flags)
 {
-	const uint64_t d = 0xDEADC0DEBADC0DE0UL;
+	if (!flags && qalloc_may_demask_free(qal)) {
+		const size_t n = silofs_min(256, nbytes);
 
-	if (!flags && (nbytes >= sizeof(d)) && qalloc_may_demask_free(qal)) {
-		const size_t n = silofs_min(512, nbytes) / sizeof(d);
-		uint64_t *p    = ptr;
-
-		for (size_t i = 0; i < n; ++i) {
-			p[i] = d ^ i;
-		}
+		memset(ptr, 0xDEADC0D, n);
 	}
 }
 

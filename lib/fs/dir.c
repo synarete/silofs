@@ -209,7 +209,7 @@ hash_to_child_dtn_index(uint64_t hash, silofs_dtn_index_t parent_dtn_idx)
 static void
 encode_doffset(uint64_t dtn_index, uint64_t slot, uint64_t *out_doff)
 {
-	const uint64_t mask = (1L << DTREE_OFF_SHIFT) - 1;
+	const uint64_t mask = (UINT64_C(1) << DTREE_OFF_SHIFT) - 1;
 
 	*out_doff = (dtn_index << DTREE_OFF_SHIFT) | (slot & mask);
 }
@@ -217,7 +217,7 @@ encode_doffset(uint64_t dtn_index, uint64_t slot, uint64_t *out_doff)
 static void
 decode_doffset(uint64_t doff, uint64_t *out_dtn_index, uint64_t *out_slot)
 {
-	const uint64_t mask = (1L << DTREE_OFF_SHIFT) - 1;
+	const uint64_t mask = (UINT64_C(1) << DTREE_OFF_SHIFT) - 1;
 
 	*out_dtn_index = (doff >> DTREE_OFF_SHIFT);
 	*out_slot      = (doff & mask);

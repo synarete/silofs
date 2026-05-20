@@ -59,7 +59,7 @@ static size_t alignment_of(size_t sz)
 	} else if (sz >= al_max) {
 		al = al_max;
 	} else {
-		al = 1 << (64 - silofs_clz_u64(sz - 1));
+		al = (size_t)(UINT64_C(1) << (64 - silofs_clz_u64(sz - 1)));
 	}
 	return al;
 }
@@ -274,12 +274,17 @@ static int getmemlimit(uint64_t *out_lim)
 	return err;
 }
 
+static uint64_t calcmemsize(void)
+{
+	const uint64_t page_size  = (uint64_t)silofs_sc_page_size();
+	const uint64_t phys_pages = (uint64_t)silofs_sc_phys_pages();
+
+	return page_size * phys_pages;
+}
+
 int silofs_memlimits(uint64_t *out_phy, uint64_t *out_as)
 {
-	const long page_size  = silofs_sc_page_size();
-	const long phys_pages = silofs_sc_phys_pages();
-
-	*out_phy = (uint64_t)(page_size * phys_pages);
+	*out_phy = calcmemsize();
 	return getmemlimit(out_as);
 }
 
@@ -287,10 +292,10 @@ int silofs_memlimits(uint64_t *out_phy, uint64_t *out_as)
 
 static void burnstack_recursively(int depth, int nbytes)
 {
-	char buf[1020];
+	char buf[1024];
 	const int32_t cnt = silofs_min_i32((int)sizeof(buf), nbytes);
 
-	if (cnt > 0) {
+	if ((cnt > 0) && (depth >= 0) && (depth < 64)) {
 		memset(buf, 0xF4 ^ depth, (size_t)cnt);
 		burnstack_recursively(depth + 1, nbytes - cnt);
 	}

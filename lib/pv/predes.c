@@ -246,6 +246,12 @@ static int pdc_prepare_dsq(struct silofs_predes_ctx *pd_ctx)
 	return silofs_destageq_foreach(pd_ctx->dsq, prepare_by, pd_ctx);
 }
 
+static int pdc_populate_prepare_dsq(struct silofs_predes_ctx *pd_ctx)
+{
+	pdc_populate_dsq(pd_ctx);
+	return pdc_prepare_dsq(pd_ctx);
+}
+
 static int cleanup_by(struct silofs_dq_elem *dqe, void *userp)
 {
 	return pdc_cleanup_pnode(userp, pni_of(dqe));
@@ -282,11 +288,17 @@ static int pdc_pre_destage(struct silofs_predes_ctx *pd_ctx)
 {
 	int err;
 
-	pdc_populate_dsq(pd_ctx);
-	err = pdc_prepare_dsq(pd_ctx);
+	/* Inject de-stage queue */
+	err = pdc_populate_prepare_dsq(pd_ctx);
 	if (err) {
 		goto out_err;
 	}
+	/* Add newly introduced dirty btnodes */
+	err = pdc_populate_prepare_dsq(pd_ctx);
+	if (err) {
+		goto out_err;
+	}
+	/* Finally, sort */
 	pdc_sort_dsq(pd_ctx);
 	return 0;
 out_err:

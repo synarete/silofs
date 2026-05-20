@@ -45,7 +45,7 @@ void silofs_generate_ckey(struct silofs_prandgen *prng,
 	constexpr size_t n = sizeof(out_ckey->key);
 	uint8_t *p         = out_ckey->key;
 
-	STATICASSERT_GT(n, 16);
+	STATICASSERT_GT(sizeof(out_ckey->key), 16);
 
 	take_grandom(p, 16);
 	take_prandom(prng, p + 16, n - 16);

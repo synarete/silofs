@@ -200,6 +200,12 @@ void silofs_pni_set_parent(struct silofs_pnode_info *pni,
 	silofs_pnptr_assign(&pni->pn_parent, paddr);
 }
 
+void silofs_pni_update_ctag(struct silofs_pnode_info *pni,
+                            const struct silofs_ctag *ctag)
+{
+	silofs_nmeta_update(&pni->pn_self.nmeta, ctag);
+}
+
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static struct silofs_uber_info *ubi_malloc(struct silofs_alloc *alloc)

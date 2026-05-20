@@ -445,6 +445,9 @@ silofs_pni_from_mut_ni(struct silofs_node_info *ni);
 const struct silofs_pnode_info * //
 silofs_pni_from_ni(const struct silofs_node_info *ni);
 
+void silofs_pni_update_ctag(struct silofs_pnode_info *pni,
+                            const struct silofs_ctag *ctag);
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 struct silofs_uber_info *

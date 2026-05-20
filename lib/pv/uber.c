@@ -410,24 +410,32 @@ ubi_set_btroot(struct silofs_uber_info *ubi, enum silofs_vtype vtype,
 	ubi_inc_generation(ubi);
 }
 
+static enum silofs_vtype vspace_of(const struct silofs_pnptr *pnptr)
+{
+	return pnptr->paddr.blobid.stype.vtype;
+}
+
 static bool ubi_has_btroot(const struct silofs_uber_info *ubi,
                            const struct silofs_pnptr *pnptr)
 {
 	struct silofs_pnptr root_pnptr = {};
-	const enum silofs_vtype vspace = pnptr->paddr.blobid.stype.vtype;
 
-	silofs_ubi_btroot_of(ubi, vspace, &root_pnptr);
+	silofs_ubi_btroot_of(ubi, vspace_of(pnptr), &root_pnptr);
 	return silofs_pnptr_isequal(pnptr, &root_pnptr);
+}
+
+void silofs_ubi_set_btroot(struct silofs_uber_info *ubi,
+                           const struct silofs_pnptr *pnptr)
+{
+	if (!ubi_has_btroot(ubi, pnptr)) {
+		ubi_set_btroot(ubi, vspace_of(pnptr), pnptr);
+	}
 }
 
 void silofs_ubi_set_btroot_by(struct silofs_uber_info *ubi,
                               const struct silofs_btnode_info *bti)
 {
-	const struct silofs_pnptr *pnptr = silofs_bti_self(bti);
-
-	if (!ubi_has_btroot(ubi, pnptr)) {
-		ubi_set_btroot(ubi, silofs_bti_vspace(bti), pnptr);
-	}
+	silofs_ubi_set_btroot(ubi, silofs_bti_self(bti));
 }
 
 void silofs_ubi_spdesc_of(const struct silofs_uber_info *ubi,

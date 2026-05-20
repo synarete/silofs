@@ -26,6 +26,7 @@ struct silofs_predes_ctx {
 	struct silofs_cipher_hd *enc_ci_hd;
 	const struct silofs_dirtyq *drq;
 	struct silofs_destageq *dsq;
+	struct silofs_uber_info *ubi;
 	bool cleardirty;
 };
 
@@ -39,10 +40,12 @@ pdc_init(struct silofs_predes_ctx *pd_ctx, struct silofs_pexec_ctx *pexec,
 	pd_ctx->enc_ci_hd  = pexec->enc_ci_hd;
 	pd_ctx->drq        = &pexec->pcache->pc_dirtyq;
 	pd_ctx->dsq        = dsq;
+	pd_ctx->ubi        = pexec->ubref->ubi;
 	pd_ctx->cleardirty = cleardirty;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 static struct silofs_pnode_info *pni_of(const struct silofs_dq_elem *dqe)
 {
 	return silofs_pni_from_dqe(dqe);
@@ -55,80 +58,55 @@ static const struct silofs_paddr *paddr_of(const struct silofs_dq_elem *dqe)
 	return silofs_pni_paddr(pni);
 }
 
+static bool ptype_is_uber(enum silofs_ptype ptype)
+{
+	return (ptype == SILOFS_PTYPE_UBER);
+}
+
+static bool pni_is_uber(const struct silofs_pnode_info *pni)
+{
+	const struct silofs_paddr *paddr = silofs_pni_paddr(pni);
+
+	return ptype_is_uber(paddr->ptype);
+}
+
+static bool pni_is_parent_uber(const struct silofs_pnode_info *pni)
+{
+	const struct silofs_pnptr *parent = silofs_pni_parent(pni);
+
+	return ptype_is_uber(parent->paddr.ptype);
+}
+
 static bool pni_has_pviewx(const struct silofs_pnode_info *pni)
 {
 	return (silofs_pni_pviewx(pni) != nullptr);
 }
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static int
-stage_uber(struct silofs_pexec_ctx *pexec, const struct silofs_pnptr *pnptr,
-           struct silofs_pnode_info **out_pni)
+static size_t pni_pviewx_size(const struct silofs_pnode_info *pni)
 {
-	struct silofs_uber_info *ubi = nullptr;
-	int err;
-
-	err = silofs_stage_uber(pexec, pnptr, &ubi);
-	if (err) {
-		return err;
-	}
-	*out_pni = &ubi->ub_pni;
-	return 0;
+	return silofs_pni_pview_size(pni);
 }
 
-static int
-stage_btnode(struct silofs_pexec_ctx *pexec, const struct silofs_pnptr *pnptr,
-             struct silofs_pnode_info **out_pni)
+static void pni_get_self(const struct silofs_pnode_info *pni,
+                         struct silofs_pnptr *out_pnptr)
 {
-	struct silofs_btnode_info *bti = nullptr;
-	int err;
-
-	err = silofs_stage_btnode(pexec, pnptr, &bti);
-	if (err) {
-		return err;
-	}
-	*out_pni = &bti->btn_pni;
-	return 0;
+	silofs_pnptr_assign(out_pnptr, silofs_pni_self(pni));
 }
 
-static int
-stage_pnode(struct silofs_pexec_ctx *pexec, const struct silofs_pnptr *pnptr,
-            struct silofs_pnode_info **out_pni)
+static void pni_update_ctag_by(struct silofs_pnode_info *pni,
+                               const struct silofs_pnptr *pnptr)
 {
-	const enum silofs_ptype ptype = pnptr->paddr.ptype;
-	int err;
-
-	switch (ptype) {
-	case SILOFS_PTYPE_UBER:
-		err = stage_uber(pexec, pnptr, out_pni);
-		break;
-	case SILOFS_PTYPE_BTNODE:
-		err = stage_btnode(pexec, pnptr, out_pni);
-		break;
-	case SILOFS_PTYPE_NONE:
-	case SILOFS_PTYPE_MBR:
-	case SILOFS_PTYPE_BLDESC:
-	case SILOFS_PTYPE_VNODE:
-	case SILOFS_PTYPE_LAST:
-	default:
-		silofs_panic("can not stage pnode: ptype=%d", ptype);
-		err = -SILOFS_EBUG;
-		break;
-	}
-	return err;
-}
-
-static inline int stage_parent_of(struct silofs_pexec_ctx *pexec,
-                                  const struct silofs_pnode_info *pni,
-                                  struct silofs_pnode_info **out_pni)
-{
-	const struct silofs_pnptr *pnptr = silofs_pni_parent(pni);
-
-	return stage_pnode(pexec, pnptr, out_pni);
+	silofs_pni_update_ctag(pni, &pnptr->nmeta.ctag);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static int pdc_stage_btnode(const struct silofs_predes_ctx *pd_ctx,
+                            const struct silofs_pnptr *pnptr,
+                            struct silofs_btnode_info **out_bti)
+{
+	return silofs_stage_btnode(pd_ctx->pexec, pnptr, out_bti);
+}
 
 static void pdc_populate_dsq(struct silofs_predes_ctx *pd_ctx)
 {
@@ -152,42 +130,98 @@ static void pdc_detach_pviewx(const struct silofs_predes_ctx *pd_ctx,
 	silofs_ni_detach_viewx(&pni->pn_base, pd_ctx->alloc);
 }
 
-static int pdc_encrypt_pviewx(const struct silofs_predes_ctx *pd_ctx,
-                              struct silofs_pnode_info *pni)
+static int
+pdc_encrypt_pviewx(const struct silofs_predes_ctx *pd_ctx,
+                   struct silofs_pnode_info *pni, struct silofs_pnptr *pnptr)
 {
 	struct silofs_caad aad;
-	struct silofs_pnptr *pnptr       = &pni->pn_self;
-	const struct silofs_pview *pview = silofs_pni_pview(pni);
-	struct silofs_pview *pviewx      = silofs_pni_pviewx(pni);
-	const size_t pview_size          = silofs_pni_pview_size(pni);
+	const struct silofs_caad *caad = nullptr;
+	struct silofs_ctag *ctag       = nullptr;
 
-	silofs_calc_aad_by_paddr(pd_ctx->md_hd, &pnptr->paddr, &aad);
-	return silofs_encrypt_pview(pd_ctx->enc_ci_hd,    //
-	                            &pnptr->nmeta.civkey, //
-	                            &aad,                 //
-	                            pview,                //
-	                            pviewx,               //
-	                            &pnptr->nmeta.ctag,   //
-	                            pview_size);
+	if (!pni_is_uber(pni)) {
+		silofs_calc_aad_by_paddr(pd_ctx->md_hd, &pnptr->paddr, &aad);
+		caad = &aad;
+		ctag = &pnptr->nmeta.ctag;
+	}
+	return silofs_encrypt_pview(pd_ctx->enc_ci_hd,      //
+	                            &pnptr->nmeta.civkey,   //
+	                            caad,                   //
+	                            silofs_pni_pview(pni),  //
+	                            silofs_pni_pviewx(pni), //
+	                            ctag,                   //
+	                            pni_pviewx_size(pni));
+}
+
+static int pdc_update_parent_uber(const struct silofs_predes_ctx *pd_ctx,
+                                  const struct silofs_pnptr *pnptr)
+{
+	silofs_ubi_set_btroot(pd_ctx->ubi, pnptr);
+	return 0;
+}
+
+static int pdc_update_parent_btnode(const struct silofs_predes_ctx *pd_ctx,
+                                    const struct silofs_pnptr *parent,
+                                    const struct silofs_pnptr *cur,
+                                    const struct silofs_pnptr *alt)
+{
+	struct silofs_btnode_info *bti = nullptr;
+	int err;
+
+	err = pdc_stage_btnode(pd_ctx, parent, &bti);
+	if (err) {
+		return err;
+	}
+	err = silofs_bti_relink(bti, cur, alt);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+static int pdc_update_parent(const struct silofs_predes_ctx *pd_ctx,
+                             const struct silofs_pnode_info *pni,
+                             const struct silofs_pnptr *alt)
+{
+	const struct silofs_pnptr *parent = silofs_pni_parent(pni);
+	const struct silofs_pnptr *cur    = silofs_pni_parent(pni);
+	int err;
+
+	if (pni_is_parent_uber(pni)) {
+		err = pdc_update_parent_uber(pd_ctx, alt);
+	} else {
+		err = pdc_update_parent_btnode(pd_ctx, parent, cur, alt);
+	}
+	return err;
 }
 
 static int pdc_prepare_pnode(const struct silofs_predes_ctx *pd_ctx,
                              struct silofs_pnode_info *pni)
 {
-	int err;
+	struct silofs_pnptr pnptr;
+	int err = 0;
 
 	if (pni_has_pviewx(pni)) {
-		return 0;
+		goto out; /* OK -- already set */
 	}
 	err = pdc_attach_pviewx(pd_ctx, pni);
 	if (err) {
-		return err;
+		goto out;
 	}
-	err = pdc_encrypt_pviewx(pd_ctx, pni);
+	pni_get_self(pni, &pnptr);
+	err = pdc_encrypt_pviewx(pd_ctx, pni, &pnptr);
 	if (err) {
-		return err;
+		goto out;
 	}
-	return 0;
+	if (pni_is_uber(pni)) {
+		goto out; /* OK */
+	}
+	err = pdc_update_parent(pd_ctx, pni, &pnptr);
+	if (err) {
+		goto out;
+	}
+	pni_update_ctag_by(pni, &pnptr);
+out:
+	return err;
 }
 
 static int pdc_cleanup_pnode(const struct silofs_predes_ctx *pd_ctx,

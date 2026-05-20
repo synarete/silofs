@@ -50,6 +50,12 @@ void silofs_nmeta_assign(struct silofs_nmeta *nmeta,
 	silofs_ctag_assign(&nmeta->ctag, &other->ctag);
 }
 
+void silofs_nmeta_update(struct silofs_nmeta *nmeta,
+                         const struct silofs_ctag *ctag)
+{
+	silofs_ctag_assign(&nmeta->ctag, ctag);
+}
+
 bool silofs_nmeta_isequal(const struct silofs_nmeta *nmeta,
                           const struct silofs_nmeta *other)
 {

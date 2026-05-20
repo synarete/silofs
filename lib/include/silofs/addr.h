@@ -312,6 +312,9 @@ void silofs_nmeta_reset(struct silofs_nmeta *nmeta);
 void silofs_nmeta_assign(struct silofs_nmeta       *nmeta,
                          const struct silofs_nmeta *other);
 
+void silofs_nmeta_update(struct silofs_nmeta      *nmeta,
+                         const struct silofs_ctag *ctag);
+
 bool silofs_nmeta_isequal(const struct silofs_nmeta *nmeta,
                           const struct silofs_nmeta *other);
 

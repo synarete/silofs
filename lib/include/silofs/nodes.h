@@ -50,7 +50,7 @@ struct silofs_destageq {
 typedef int (*silofs_dqe_compare_fn)(const struct silofs_dq_elem *dqe1,
                                      const struct silofs_dq_elem *dqe2);
 
-typedef int (*silofs_dqe_execute_fn)(struct silofs_dq_elem *dqe, const void *);
+typedef int (*silofs_dqe_execute_fn)(struct silofs_dq_elem *dqe, void *userp);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -97,8 +97,7 @@ void silofs_destageq_sort(struct silofs_destageq *dsq,
                           silofs_dqe_compare_fn   dqe_cmp_fn);
 
 int silofs_destageq_foreach(const struct silofs_destageq *dsq,
-                            silofs_dqe_execute_fn         dqe_exec_fn,
-                            const void                   *userp);
+                            silofs_dqe_execute_fn dqe_exec_fn, void *usep);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* hmapq */
@@ -415,6 +414,9 @@ size_t silofs_pni_pview_size(const struct silofs_pnode_info *pni);
 
 struct silofs_pview * //
 silofs_pni_pview(const struct silofs_pnode_info *pni);
+
+struct silofs_pview * //
+silofs_pni_pviewx(const struct silofs_pnode_info *pni);
 
 enum silofs_ptype     //
 silofs_pni_ptype(const struct silofs_pnode_info *pni);

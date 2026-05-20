@@ -76,8 +76,19 @@ static struct silofs_pview *pni_pview(const struct silofs_pnode_info *pni)
 
 struct silofs_pview *silofs_pni_pview(const struct silofs_pnode_info *pni)
 {
-	silofs_assert_not_null(pni);
+	silofs_assume_not_null(pni);
 	return pni_pview(pni);
+}
+
+static struct silofs_pview *pni_pviewx(const struct silofs_pnode_info *pni)
+{
+	return pni->pn_base.viewx.pview;
+}
+
+struct silofs_pview *silofs_pni_pviewx(const struct silofs_pnode_info *pni)
+{
+	silofs_assume_not_null(pni);
+	return pni_pviewx(pni);
 }
 
 static enum silofs_ptype pni_ptype(const struct silofs_pnode_info *pni)

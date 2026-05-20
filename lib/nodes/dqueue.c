@@ -273,8 +273,7 @@ void silofs_destageq_sort(struct silofs_destageq *dsq,
 }
 
 int silofs_destageq_foreach(const struct silofs_destageq *dsq,
-                            silofs_dqe_execute_fn dqe_exec_fn,
-                            const void *userp)
+                            silofs_dqe_execute_fn dqe_exec_fn, void *userp)
 {
 	struct silofs_dq_elem *dqe;
 	int err = 0;

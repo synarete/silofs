@@ -82,11 +82,11 @@ long silofs_paddr_compare(const struct silofs_paddr *paddr,
 	if (cmp) {
 		return cmp;
 	}
-	cmp = (long)(paddr->pos - other->pos);
+	cmp = silofs_blobid_compare(&paddr->blobid, &other->blobid);
 	if (cmp) {
 		return cmp;
 	}
-	cmp = silofs_blobid_compare(&paddr->blobid, &other->blobid);
+	cmp = (long)(paddr->pos - other->pos);
 	if (cmp) {
 		return cmp;
 	}

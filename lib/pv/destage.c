@@ -315,7 +315,12 @@ static int compare_paddrs_of(const struct silofs_dq_elem *dqe1,
 	const struct silofs_paddr *paddr2 = paddr_of(dqe2);
 	long cmp;
 
-	cmp = silofs_paddr_compare(paddr1, paddr2);
+	if (paddr1->ptype != paddr2->ptype) {
+		/* Invert ordering by ptype: btnode come before uber */
+		cmp = (long)paddr2->ptype - (long)paddr1->ptype;
+	} else {
+		cmp = silofs_paddr_compare(paddr1, paddr2);
+	}
 	return (cmp < 0) ? -1 : ((cmp > 0) ? 1 : 0);
 }
 
@@ -324,7 +329,7 @@ static void dsc_sort_dsq(struct silofs_destage_ctx *ds_ctx)
 	silofs_destageq_sort(&ds_ctx->dsq, compare_paddrs_of);
 }
 
-static int dsc_pre_destage(struct silofs_destage_ctx *ds_ctx)
+static int dsc_pre_commit(struct silofs_destage_ctx *ds_ctx)
 {
 	int err;
 
@@ -371,7 +376,7 @@ int silofs_destage_pnodes(struct silofs_pexec_ctx *pexec)
 	int err;
 
 	dsc_init(&ds_ctx, pexec);
-	err = dsc_pre_destage(&ds_ctx);
+	err = dsc_pre_commit(&ds_ctx);
 	if (err) {
 		goto out;
 	}

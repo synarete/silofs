@@ -931,90 +931,6 @@ static int stc_destage_dirty_vnodes(struct silofs_stage_ctx *st_ctx)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int stc_write_pview_at(struct silofs_stage_ctx *st_ctx,
-                              const struct silofs_paddr *paddr, size_t len)
-{
-	return silofs_dstor_write_blob_at(st_ctx->dstor, &paddr->blobid,
-	                                  paddr->pos, st_ctx->pview, len);
-}
-
-static int stc_write_pnode(struct silofs_stage_ctx *st_ctx,
-                           const struct silofs_pnode_info *pni)
-{
-	const struct silofs_paddr *paddr = &pni->pn_self.paddr;
-	const size_t pview_size          = silofs_pni_pview_size(pni);
-
-	return stc_write_pview_at(st_ctx, paddr, pview_size);
-}
-
-static int stc_encrypt_pview_of(struct silofs_stage_ctx *st_ctx,
-                                struct silofs_pnode_info *pni)
-{
-	struct silofs_caad caad;
-	struct silofs_pnptr *pnptr       = &pni->pn_self;
-	const struct silofs_pview *pview = silofs_pni_pview(pni);
-	const size_t pview_size          = silofs_pni_pview_size(pni);
-
-	stc_caad_of_paddr(st_ctx, &pnptr->paddr, &caad);
-	return silofs_encrypt_pview(st_ctx->enc_ci_hd,    //
-	                            &pnptr->nmeta.civkey, //
-	                            &caad,                //
-	                            pview,                //
-	                            st_ctx->pview,        //
-	                            &pnptr->nmeta.ctag,   //
-	                            pview_size);
-}
-
-static int stc_seal_encrypt_pnode(struct silofs_stage_ctx *st_ctx,
-                                  struct silofs_pnode_info *pni)
-{
-	silofs_seal_pnode(pni);
-	return stc_encrypt_pview_of(st_ctx, pni);
-}
-
-static int stc_destage_dirty_pnode(struct silofs_stage_ctx *st_ctx,
-                                   struct silofs_pnode_info *pni)
-{
-	int err;
-
-	err = stc_require_pview(st_ctx);
-	if (err) {
-		return err;
-	}
-	err = stc_seal_encrypt_pnode(st_ctx, pni);
-	if (err) {
-		return err;
-	}
-	err = stc_write_pnode(st_ctx, pni);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
-static struct silofs_pnode_info *
-stc_pcache_dqfront(struct silofs_stage_ctx *st_ctx)
-{
-	return silofs_pcache_dq_front(st_ctx->pcache);
-}
-
-static int stc_destage_dirty_pnodes(struct silofs_stage_ctx *st_ctx)
-{
-	struct silofs_pnode_info *pni;
-	int err;
-
-	pni = stc_pcache_dqfront(st_ctx);
-	while (pni != nullptr) {
-		err = stc_destage_dirty_pnode(st_ctx, pni);
-		if (err) {
-			return err;
-		}
-		silofs_pni_cleardirty(pni);
-		pni = stc_pcache_dqfront(st_ctx);
-	}
-	return 0;
-}
-
 static int stc_destage_dirty(struct silofs_stage_ctx *st_ctx)
 {
 	int err;
@@ -1023,7 +939,7 @@ static int stc_destage_dirty(struct silofs_stage_ctx *st_ctx)
 	if (err) {
 		return err;
 	}
-	err = stc_destage_dirty_pnodes(st_ctx);
+	err = silofs_destage_pnodes(st_ctx->pexec);
 	if (err) {
 		return err;
 	}

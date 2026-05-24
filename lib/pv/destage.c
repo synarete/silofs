@@ -222,7 +222,7 @@ static int dsc_update_parent(const struct silofs_destage_ctx *ds_ctx,
                              const struct silofs_pnptr *alt)
 {
 	const struct silofs_pnptr *parent = silofs_pni_parent(pni);
-	const struct silofs_pnptr *cur    = silofs_pni_parent(pni);
+	const struct silofs_pnptr *cur    = silofs_pni_self(pni);
 	int err;
 
 	if (pni_is_parent_uber(pni)) {
@@ -331,19 +331,16 @@ static int dsc_pre_destage(struct silofs_destage_ctx *ds_ctx)
 	/* Inject de-stage queue */
 	err = dsc_populate_prepare_dsq(ds_ctx);
 	if (err) {
-		goto out_err;
+		return err;
 	}
 	/* Add newly introduced dirty btnodes */
 	err = dsc_populate_prepare_dsq(ds_ctx);
 	if (err) {
-		goto out_err;
+		return err;
 	}
 	/* Finally, sort */
 	dsc_sort_dsq(ds_ctx);
 	return 0;
-out_err:
-	dsc_cleanup_depopulate_dsq(ds_ctx);
-	return err;
 }
 
 static int dsc_commit_pnode(const struct silofs_destage_ctx *ds_ctx,

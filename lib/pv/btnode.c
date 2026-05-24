@@ -831,9 +831,22 @@ bool silofs_bti_isfull(const struct silofs_btnode_info *bti)
 	return btn_nkeys(bti->btn) == btn_nkeys_max(bti->btn);
 }
 
+static enum silofs_vtype bti_self_vspace(const struct silofs_btnode_info *bti)
+{
+	const struct silofs_pnptr *self = silofs_bti_self(bti);
+
+	return self->paddr.blobid.stype.vtype;
+}
+
+static void bti_update_vspace_by_self(struct silofs_btnode_info *bti)
+{
+	silofs_bti_set_vspace(bti, bti_self_vspace(bti));
+}
+
 void silofs_bti_update_spawned(struct silofs_btnode_info *bti)
 {
 	btn_setup(bti->btn);
+	bti_update_vspace_by_self(bti);
 	bti_markdirty(bti);
 }
 

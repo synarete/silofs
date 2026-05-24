@@ -300,6 +300,8 @@ struct silofs_uber_stats {
 	struct silofs_uber_stat st[SILOFS_VTYPE_LAST];
 };
 
+const struct silofs_pnptr *silofs_ubi_self(const struct silofs_uber_info *ubi);
+
 const struct silofs_layerid *
 silofs_ubi_layerid(const struct silofs_uber_info *ubi);
 

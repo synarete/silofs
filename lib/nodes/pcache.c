@@ -117,7 +117,7 @@ pcache_hmapq_of(const struct silofs_pcache *pcache,
 	case SILOFS_PTYPE_VNODE:
 	case SILOFS_PTYPE_LAST:
 	default:
-		silofs_panic("bad pcache: ptype=%d", (int)paddr->ptype);
+		silofs_panic("bad pcache-elem: ptype=%d", (int)paddr->ptype);
 		break;
 	}
 	return hmapq;

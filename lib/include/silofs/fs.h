@@ -54,32 +54,32 @@ void silofs_idsmap_fini(struct silofs_idsmap *idsm);
 void silofs_idsmap_clear(struct silofs_idsmap *idsm);
 
 int silofs_idsmap_populate(struct silofs_idsmap      *idsm,
-                           const struct silofs_fsids *fsids,
-                           bool                       allow_hostids);
+			   const struct silofs_fsids *fsids,
+			   bool                       allow_hostids);
 
 int silofs_idsmap_mapcreds(const struct silofs_idsmap *idsm, uid_t host_uid,
-                           gid_t host_gid, uid_t *out_fs_uid,
-                           gid_t *out_fs_gid);
+			   gid_t host_gid, uid_t *out_fs_uid,
+			   gid_t *out_fs_gid);
 
 int silofs_idsmap_rmapcreds(const struct silofs_idsmap *idsm, uid_t fs_uid,
-                            gid_t fs_gid, uid_t *out_fs_uid,
-                            gid_t *out_fs_gid);
+			    gid_t fs_gid, uid_t *out_fs_uid,
+			    gid_t *out_fs_gid);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* pvglue */
 
 int silofs_stage_xanode(const struct silofs_task_ctx *task,
-                        const struct silofs_vaddr    *vaddr,
-                        struct silofs_inode_info     *pii,
-                        enum silofs_stg_mode          stg_mode,
-                        struct silofs_xanode_info   **out_xai);
+			const struct silofs_vaddr    *vaddr,
+			struct silofs_inode_info     *pii,
+			enum silofs_stg_mode          stg_mode,
+			struct silofs_xanode_info   **out_xai);
 
 int silofs_spawn_xanode(struct silofs_task_ctx     *task,
-                        struct silofs_inode_info   *pii,
-                        struct silofs_xanode_info **out_xai);
+			struct silofs_inode_info   *pii,
+			struct silofs_xanode_info **out_xai);
 
 int silofs_remove_xanode_at(struct silofs_task_ctx    *task,
-                            const struct silofs_vaddr *vaddr);
+			    const struct silofs_vaddr *vaddr);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
@@ -95,8 +95,157 @@ int silofs_remove_xanode_at(struct silofs_task_ctx    *task,
 #include <silofs/fs/lcache.h>
 #include <silofs/fs/namei.h>
 #include <silofs/fs/spmaps.h>
-#include <silofs/fs/vstage.h>
-#include <silofs/fs/encdec.h>
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+/* vstage */
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_spawn_super(struct silofs_env         *env,
+		       const struct silofs_uaddr *uaddr,
+		       struct silofs_sb_info    **out_sbi);
+
+int silofs_stage_super(struct silofs_env         *env,
+		       const struct silofs_uaddr *uaddr,
+		       struct silofs_sb_info    **out_sbi);
+
+int silofs_spawn_spnode(struct silofs_env          *env,
+			const struct silofs_uaddr  *uaddr,
+			struct silofs_spnode_info **out_sni);
+
+int silofs_stage_spnode(struct silofs_env          *env,
+			const struct silofs_uaddr  *uaddr,
+			struct silofs_spnode_info **out_sni);
+
+int silofs_spawn_spleaf(struct silofs_env          *env,
+			const struct silofs_uaddr  *uaddr,
+			struct silofs_spleaf_info **out_sli);
+
+int silofs_stage_spleaf(struct silofs_env          *env,
+			const struct silofs_uaddr  *uaddr,
+			struct silofs_spleaf_info **out_sli);
+
+int silofs_spawn_lseg(struct silofs_env *env, const struct silofs_lsid *lsid);
+
+int silofs_stage_lseg(struct silofs_env *env, const struct silofs_lsid *lsid);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_require_lsmap_by(struct silofs_task_ctx    *task,
+			    const struct silofs_vaddr *vaddr,
+			    struct silofs_lsmap_info **out_lsi);
+
+int silofs_claim_vspace(struct silofs_task_ctx *task, enum silofs_vtype vtype,
+			struct silofs_vaddr *out_vaddr);
+
+int silofs_reclaim_vspace(struct silofs_task_ctx    *task,
+			  const struct silofs_vaddr *vaddr);
+
+int silofs_claim_ispace(struct silofs_task_ctx *task,
+			struct silofs_vaddr    *out_vaddr);
+
+int silofs_addref_vspace(struct silofs_task_ctx    *task,
+			 const struct silofs_vaddr *vaddr);
+
+int silofs_reload_vspace(struct silofs_task_ctx *task);
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+int silofs_stage_spleaf_of(struct silofs_task_ctx     *task,
+			   const struct silofs_vaddr  *vaddr,
+			   enum silofs_stg_mode        stg_mode,
+			   struct silofs_spleaf_info **out_sli);
+
+int silofs_require_spleaf_of(struct silofs_task_ctx     *task,
+			     const struct silofs_vaddr  *vaddr,
+			     enum silofs_stg_mode        stg_mode,
+			     struct silofs_spleaf_info **out_sli);
+
+int silofs_resolve_llink_of(struct silofs_task_ctx    *task,
+			    const struct silofs_vaddr *vaddr,
+			    enum silofs_stg_mode       stg_mode,
+			    struct silofs_llink       *out_llink);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_stage_vnode(struct silofs_task_ctx    *task,
+		       struct silofs_inode_info  *pii,
+		       const struct silofs_vaddr *vaddr,
+		       enum silofs_stg_mode       stg_mode,
+		       struct silofs_vnode_info **out_vni);
+
+int silofs_stage_vnode2_new(struct silofs_task_ctx    *task,
+			    struct silofs_inode_info  *pii,
+			    const struct silofs_vaddr *vaddr,
+			    enum silofs_stg_mode       stg_mode,
+			    struct silofs_vnode_info **out_vni);
+
+int silofs_stage_inode(struct silofs_task_ctx *task, ino_t ino,
+		       enum silofs_stg_mode       stg_mode,
+		       struct silofs_inode_info **out_ii);
+
+int silofs_fetch_cached_vnode(struct silofs_task_ctx    *task,
+			      const struct silofs_vaddr *vaddr,
+			      struct silofs_vnode_info **out_vni);
+
+int silofs_fetch_cached_inode(struct silofs_task_ctx *task, ino_t ino,
+			      struct silofs_inode_info **out_ii);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_spawn_vnode(struct silofs_task_ctx   *task,
+		       struct silofs_inode_info *pii, enum silofs_vtype vtype,
+		       struct silofs_vnode_info **out_vni);
+
+int silofs_spawn_inode(struct silofs_task_ctx          *task,
+		       const struct silofs_inew_params *inp,
+		       struct silofs_inode_info       **out_ii);
+
+int silofs_remove_vnode(struct silofs_task_ctx   *task,
+			struct silofs_vnode_info *vni);
+
+int silofs_remove_vnode_at(struct silofs_task_ctx    *task,
+			   const struct silofs_vaddr *vaddr);
+
+int silofs_remove_inode(struct silofs_task_ctx   *task,
+			struct silofs_inode_info *ii);
+
+
+int silofs_refresh_llink(struct silofs_task_ctx   *task,
+			 struct silofs_vnode_info *vni);
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+/* encdec */
+
+void silofs_resolve_unode_nmeta(const struct silofs_env *env,
+				struct silofs_nmeta     *out_nmeta);
+
+int silofs_encrypt_view(const struct silofs_env   *env,
+			const struct silofs_llink *llink,
+			const struct silofs_lview *view, void *ptr);
+
+int silofs_decrypt_uni_view(const struct silofs_env  *env,
+			    struct silofs_unode_info *uni);
+
+int silofs_decrypt_vni_view(const struct silofs_env  *env,
+			    struct silofs_vnode_info *vni);
+
+void silofs_llink_of_uni(const struct silofs_unode_info *uni,
+			 const struct silofs_nmeta      *nmeta,
+			 struct silofs_llink            *out_llink);
+
+void silofs_llink_of_vni(const struct silofs_vnode_info *vni,
+			 struct silofs_llink            *out_llink);
+
+void silofs_calc_cas_paddr(const struct silofs_mdigest_hd *md_hd,
+			   enum silofs_ptype ptype, enum silofs_vtype vtype,
+			   const struct iovec *iov, size_t iov_cnt,
+			   struct silofs_paddr *out_paddr);
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+
 #include <silofs/fs/flush.h>
 
 #endif /* SILOFS_FS_H_ */

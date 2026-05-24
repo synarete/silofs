@@ -20,11 +20,7 @@
 #include <silofs/base.h>
 #include <silofs/nodes.h>
 #include <silofs/vfs.h>
-
-#include <silofs/fs/dir.h>
-#include <silofs/fs/namei.h>
-#include <silofs/fs/vstage.h>
-#include <silofs/fs/task.h>
+#include <silofs/fs.h>
 
 enum silofs_dtree_consts {
 	DTREE_SHIFT      = SILOFS_DIR_NODE_SHIFT,

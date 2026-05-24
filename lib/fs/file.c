@@ -26,13 +26,7 @@
 #include <silofs/addr.h>
 #include <silofs/nodes.h>
 #include <silofs/vfs.h>
-
-#include <silofs/fs/flush.h>
-#include <silofs/fs/file.h>
-#include <silofs/fs/vstage.h>
-#include <silofs/fs/inode.h>
-#include <silofs/fs/task.h>
-
+#include <silofs/fs.h>
 #include <silofs/run.h>
 
 struct silofs_file_ctx {

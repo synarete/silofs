@@ -391,6 +391,12 @@ struct silofs_lview *silofs_vni_lview(const struct silofs_vnode_info *vni)
 	return silofs_lni_lview(&vni->vn_lni);
 }
 
+struct silofs_lview *silofs_vni_lviewx(const struct silofs_vnode_info *vni)
+{
+	silofs_assume_not_null(vni);
+	return vni->vn_lni.ln_base.viewx.lview;
+}
+
 static int
 vni_attach_lview(struct silofs_vnode_info *vni, struct silofs_alloc *alloc)
 {
@@ -474,7 +480,7 @@ silofs_vni_from_lni(const struct silofs_lnode_info *lni)
 	return vni_unconst(vni);
 }
 
-struct silofs_vnode_info *silofs_vni_from_dqe(struct silofs_dq_elem *dqe)
+struct silofs_vnode_info *silofs_vni_from_dqe(const struct silofs_dq_elem *dqe)
 {
 	return silofs_vni_from_lni(silofs_lni_from_dqe(dqe));
 }

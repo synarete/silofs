@@ -233,6 +233,9 @@ int silofs_validate_bldesc(const struct silofs_bldesc_info *bdi);
 const struct silofs_pnptr *
 silofs_bti_self(const struct silofs_btnode_info *bti);
 
+void silofs_bti_get_self(const struct silofs_btnode_info *bti,
+                         struct silofs_pnptr             *out_pnptr);
+
 void silofs_bti_incref(struct silofs_btnode_info *bti);
 
 void silofs_bti_decref(struct silofs_btnode_info *bti);
@@ -473,6 +476,10 @@ struct silofs_pexec_ctx {
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* btree (mapping) */
 
+int silofs_resolve_vtop_btleaf(struct silofs_pexec_ctx   *pexec,
+                               const struct silofs_vaddr *vaddr,
+                               struct silofs_pnptr       *out_pnptr);
+
 int silofs_resolve_vtop_mapping(struct silofs_pexec_ctx   *pexec,
                                 const struct silofs_vaddr *vaddr,
                                 struct silofs_pnptr       *out_pnptr);
@@ -560,6 +567,8 @@ int silofs_destage_dirty(struct silofs_pexec_ctx *pexec);
 /* destage */
 
 int silofs_destage_pnodes(struct silofs_pexec_ctx *pexec);
+
+int silofs_destage_vnodes(struct silofs_pexec_ctx *pexec);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* vspace */

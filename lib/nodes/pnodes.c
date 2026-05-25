@@ -64,11 +64,6 @@ static void pni_fini(struct silofs_pnode_info *pni)
 	silofs_ni_fini(&pni->pn_base);
 }
 
-size_t silofs_pni_pview_size(const struct silofs_pnode_info *pni)
-{
-	return silofs_ni_view_size(&pni->pn_base);
-}
-
 static struct silofs_pview *pni_pview(const struct silofs_pnode_info *pni)
 {
 	return pni->pn_base.view.pview;
@@ -80,15 +75,10 @@ struct silofs_pview *silofs_pni_pview(const struct silofs_pnode_info *pni)
 	return pni_pview(pni);
 }
 
-static struct silofs_pview *pni_pviewx(const struct silofs_pnode_info *pni)
-{
-	return pni->pn_base.viewx.pview;
-}
-
 struct silofs_pview *silofs_pni_pviewx(const struct silofs_pnode_info *pni)
 {
 	silofs_assume_not_null(pni);
-	return pni_pviewx(pni);
+	return pni->pn_base.viewx.pview;
 }
 
 static enum silofs_ptype pni_ptype(const struct silofs_pnode_info *pni)

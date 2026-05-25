@@ -410,8 +410,6 @@ void silofs_pni_decref(struct silofs_pnode_info *pni);
 void silofs_pni_set_dq(struct silofs_pnode_info *pni,
                        struct silofs_dirtyq     *dq);
 
-size_t silofs_pni_pview_size(const struct silofs_pnode_info *pni);
-
 struct silofs_pview * //
 silofs_pni_pview(const struct silofs_pnode_info *pni);
 
@@ -722,7 +720,11 @@ silofs_uni_from_lni(const struct silofs_lnode_info *lni);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-struct silofs_lview *silofs_vni_lview(const struct silofs_vnode_info *vni);
+struct silofs_lview * //
+silofs_vni_lview(const struct silofs_vnode_info *vni);
+
+struct silofs_lview * //
+silofs_vni_lviewx(const struct silofs_vnode_info *vni);
 
 size_t silofs_vni_refcnt(const struct silofs_vnode_info *vni);
 
@@ -751,7 +753,8 @@ enum silofs_vtype silofs_vni_vtype(const struct silofs_vnode_info *vni);
 const struct silofs_vaddr *
 silofs_vni_vaddr(const struct silofs_vnode_info *vni);
 
-struct silofs_vnode_info *silofs_vni_from_dqe(struct silofs_dq_elem *dqe);
+struct silofs_vnode_info * //
+silofs_vni_from_dqe(const struct silofs_dq_elem *dqe);
 
 struct silofs_vnode_info *
 silofs_vni_from_lni(const struct silofs_lnode_info *lni);

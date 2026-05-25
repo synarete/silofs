@@ -1050,22 +1050,20 @@ static void ut_avl_insert_replace_pattern(struct ut_env *ute)
 
 static void ut_avl_iteration_forward_backward(struct ut_env *ute)
 {
-	constexpr long keys[] = {
+	const long keys[] = {
 		50, 25, 75, 10, 30, 60, 80, 5, 15, 27,
 	};
-	constexpr long keys_sorted[] = {
+	const long keys_sorted[] = {
 		5, 10, 15, 25, 27, 30, 50, 60, 75, 80,
 	};
 	const struct silofs_avl_node *an;
 	struct silofs_avl *avl;
-	size_t idx;
+	size_t idx = 0;
 
 	avl = avl_new(ute);
 	avl_populate_keys(avl, keys, UT_ARRAY_SIZE(keys));
 
-	/* forward iteration */
-	idx = 0;
-	an  = avl_begin(avl);
+	an = avl_begin(avl);
 	while (an != avl_end(avl)) {
 		ut_expect_lt(idx, UT_ARRAY_SIZE(keys_sorted));
 		check_node(an, keys_sorted[idx]);

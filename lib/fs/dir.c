@@ -1432,7 +1432,7 @@ void silofs_ii_setup_dir(struct silofs_inode_info *dir_ii, mode_t parent_mode,
 		.ia_blocks = 0,
 		.ia_mode   = silofs_ii_mode(dir_ii) | (parent_mode & S_ISGID),
 		.ia_flags  = SILOFS_IATTR_SIZE | SILOFS_IATTR_BLOCKS |
-		            SILOFS_IATTR_NLINK | SILOFS_IATTR_MODE,
+		             SILOFS_IATTR_NLINK | SILOFS_IATTR_MODE,
 	};
 
 	dirin_setup(dirin_of(dir_ii->inode), seed);
@@ -2126,12 +2126,12 @@ dirc_emit(struct silofs_dir_ctx *d_ctx, const char *name, size_t nlen,
 {
 	struct silofs_readdir_ctx *rd_ctx = d_ctx->rd_ctx;
 	struct silofs_readdir_info rdi    = {
-		   .attr.st.st_ino = ino,
-		   .name           = name,
-		   .namelen        = nlen,
-		   .ino            = ino,
-		   .dt             = dt,
-		   .off            = rd_ctx->pos,
+		.attr.st.st_ino = ino,
+		.name           = name,
+		.namelen        = nlen,
+		.ino            = ino,
+		.dt             = dt,
+		.off            = rd_ctx->pos,
 	};
 	int err;
 

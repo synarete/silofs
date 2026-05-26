@@ -110,9 +110,9 @@ ut_file_mt_simple_(struct ut_env *ute, size_t nth, off_t off, size_t len)
 	const char *name             = UT_NAME;
 	struct silofs_thread *th_arr = ute_malloc_threads(ute, nth);
 	struct ut_thread_args args   = {
-		  .off = off,
-		  .len = len,
-		  .cnt = 1,
+		.off = off,
+		.len = len,
+		.cnt = 1,
 	};
 
 	ut_mkdir_at_root(ute, name, &args.dino);
@@ -147,9 +147,9 @@ ut_file_mt_many_(struct ut_env *ute, size_t nth, off_t off, size_t len)
 	const char *name             = UT_NAME;
 	struct silofs_thread *th_arr = ute_malloc_threads(ute, nth);
 	struct ut_thread_args args   = {
-		  .off = off,
-		  .len = len,
-		  .cnt = 20,
+		.off = off,
+		.len = len,
+		.cnt = 20,
 	};
 
 	ut_mkdir_at_root(ute, name, &args.dino);

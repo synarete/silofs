@@ -522,12 +522,10 @@ int silofs_carve_next_vspace(const struct silofs_pexec_ctx *pexec,
 
 int silofs_encrypt_pnode(const struct silofs_pexec_ctx  *pexec,
                          const struct silofs_pnode_info *pni,
-                         const struct silofs_pnptr      *pnptr,
                          struct silofs_ctag             *out_ctag);
 
 int silofs_decrypt_pnode(const struct silofs_pexec_ctx  *pexec,
                          const struct silofs_pnode_info *pni,
-                         const struct silofs_pnptr      *pnptr,
                          const struct silofs_ctag       *ctag);
 
 int silofs_encrypt_vnode(const struct silofs_pexec_ctx  *pexec,

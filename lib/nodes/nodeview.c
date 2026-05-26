@@ -626,12 +626,10 @@ int silofs_ni_attach_viewx(struct silofs_node_info *ni,
                            struct silofs_alloc *alloc)
 {
 	void **view = &ni->viewx.opaque_view;
-	int ret;
+	int ret     = 0;
 
 	if (*view == nullptr) {
 		ret = ni_attach_view_at(ni, view, alloc, false);
-	} else {
-		ret = 0;
 	}
 	return ret;
 }

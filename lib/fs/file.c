@@ -4017,7 +4017,7 @@ static int filc_check_fm_flags(const struct silofs_file_ctx *f_ctx)
 {
 	const int fm_supported = FIEMAP_FLAG_SYNC;
 	const int fm_known     = FIEMAP_FLAG_SYNC | FIEMAP_FLAG_XATTR |
-	                     FIEMAP_FLAG_CACHE;
+	                         FIEMAP_FLAG_CACHE;
 
 	if (f_ctx->fm_flags & ~fm_known) {
 		return -SILOFS_EOPNOTSUPP;

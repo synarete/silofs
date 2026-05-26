@@ -216,11 +216,11 @@ static void ut_qalloc_nbks_simple(struct ut_env *ute)
 	struct silofs_qalloc *qal;
 	struct ut_mrecord *mr = nullptr;
 	const size_t sizes[]  = {
-                UT_64K - 1,     //
-                UT_64K,         //
-                UT_64K + 1,     //
-                2 * UT_64K,     //
-                8 * UT_64K - 1, //
+		UT_64K - 1,     //
+		UT_64K,         //
+		UT_64K + 1,     //
+		2 * UT_64K,     //
+		8 * UT_64K - 1, //
 	};
 
 	silofs_list_init(&lst);

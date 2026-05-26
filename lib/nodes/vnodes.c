@@ -369,6 +369,7 @@ vni_init(struct silofs_vnode_info *vni, const struct silofs_vaddr *vaddr)
 	lni_init(&vni->vn_lni, vaddr->vtype);
 	silofs_vaddr_assign(&vni->vn_vaddr, vaddr);
 	silofs_llink_reset(&vni->vn_llink);
+	silofs_paddr_reset(&vni->vn_latest_paddr);
 	vni->vn_asyncwr = 0;
 	vni->vn_has_pn  = false;
 	vni->vn_magic   = SILOFS_VI_MAGIC;
@@ -383,6 +384,7 @@ static void vni_fini(struct silofs_vnode_info *vni)
 
 	lni_fini(&vni->vn_lni);
 	silofs_vaddr_reset(&vni->vn_vaddr);
+	silofs_paddr_reset(&vni->vn_latest_paddr);
 	vni->vn_magic = UINT64_MAX;
 }
 
@@ -1915,7 +1917,7 @@ void silofs_del_vnode(struct silofs_vnode_info *vni,
 	}
 }
 
-void silofs_seal_vnode(struct silofs_vnode_info *vni)
+void silofs_seal_vnode(const struct silofs_vnode_info *vni)
 {
 	if (!vni_isdata(vni)) {
 		silofs_lview_seal(silofs_vni_lview(vni));

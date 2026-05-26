@@ -466,7 +466,7 @@ static int sylc_assign_symval(const struct silofs_symlnk_ctx *sl_ctx)
 {
 	const struct silofs_strview *symval = sl_ctx->symval;
 	struct silofs_symval_desc sv_dsc    = {
-		   .nparts = 0,
+		.nparts = 0,
 	};
 	int err;
 

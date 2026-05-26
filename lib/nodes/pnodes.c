@@ -647,7 +647,7 @@ void silofs_del_pnode(struct silofs_pnode_info *pni,
 	}
 }
 
-void silofs_seal_pnode(struct silofs_pnode_info *pni)
+void silofs_seal_pnode(const struct silofs_pnode_info *pni)
 {
 	struct silofs_pview *pview = silofs_pni_pview(pni);
 

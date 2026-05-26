@@ -82,12 +82,18 @@ pni_mut_pviewx(const struct silofs_pnode_info *pni)
 	return pviewx;
 }
 
+static const struct silofs_pnptr * //
+pni_self(const struct silofs_pnode_info *pni)
+{
+	return silofs_pni_self(pni);
+}
+
 int silofs_encrypt_pnode(const struct silofs_pexec_ctx *pexec,
                          const struct silofs_pnode_info *pni,
-                         const struct silofs_pnptr *pnptr,
                          struct silofs_ctag *out_ctag)
 {
 	struct silofs_caad caad               = {};
+	const struct silofs_pnptr *pnptr      = pni_self(pni);
 	const struct silofs_encdec_ctx ed_ctx = {
 		.ci_hd    = pexec->enc_ci_hd,
 		.civ      = &pnptr->nmeta.civkey.iv,
@@ -105,10 +111,10 @@ int silofs_encrypt_pnode(const struct silofs_pexec_ctx *pexec,
 
 int silofs_decrypt_pnode(const struct silofs_pexec_ctx *pexec,
                          const struct silofs_pnode_info *pni,
-                         const struct silofs_pnptr *pnptr,
                          const struct silofs_ctag *ctag)
 {
 	struct silofs_caad caad               = {};
+	const struct silofs_pnptr *pnptr      = pni_self(pni);
 	const struct silofs_encdec_ctx ed_ctx = {
 		.ci_hd    = pexec->dec_ci_hd,
 		.civ      = &pnptr->nmeta.civkey.iv,

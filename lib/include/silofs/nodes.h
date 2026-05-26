@@ -467,7 +467,7 @@ void silofs_del_pnode(struct silofs_pnode_info *pni,
 
 int silofs_verify_pnode(const struct silofs_pnode_info *pni);
 
-void silofs_seal_pnode(struct silofs_pnode_info *pni);
+void silofs_seal_pnode(const struct silofs_pnode_info *pni);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* pcache */
@@ -586,6 +586,8 @@ struct silofs_vnode_info {
 	uint64_t                 vn_magic;
 	int                      vn_asyncwr;
 	bool                     vn_has_pn;
+
+	struct silofs_paddr vn_latest_paddr;
 
 	bool (*isevictable_fn)(const struct silofs_vnode_info *vni);
 };
@@ -801,7 +803,7 @@ silofs_new_vnode(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr);
 void silofs_del_vnode(struct silofs_vnode_info *vni,
                       struct silofs_alloc      *alloc);
 
-void silofs_seal_vnode(struct silofs_vnode_info *vni);
+void silofs_seal_vnode(const struct silofs_vnode_info *vni);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* vcache */

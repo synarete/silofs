@@ -20,12 +20,17 @@
 #include <stddef.h>
 #include <stdint.h>
 
-static inline uint64_t silofs_min(uint64_t x, uint64_t y)
+static inline int silofs_signof(intmax_t n)
+{
+	return (n > 0) - (n < 0);
+}
+
+static inline uintmax_t silofs_min(uintmax_t x, uintmax_t y)
 {
 	return x < y ? x : y;
 }
 
-static inline uint64_t silofs_max(uint64_t x, uint64_t y)
+static inline uintmax_t silofs_max(uintmax_t x, uintmax_t y)
 {
 	return x > y ? x : y;
 }
@@ -117,11 +122,6 @@ static inline uint64_t silofs_rrotate64(uint64_t x, unsigned int n)
 	return (x >> n) | (x << (64 - n));
 }
 
-static inline void *silofs_unconst(const void *p)
-{
-	return (void *)((uintptr_t)p);
-}
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static inline void *silofs_nextof(void *p, size_t d)
@@ -142,6 +142,11 @@ static inline void *silofs_baseof(void *p, size_t d)
 static inline const void *silofs_const_baseof(const void *p, size_t d)
 {
 	return (const void *)((uintptr_t)p - d);
+}
+
+static inline void *silofs_unconst(const void *p)
+{
+	return (void *)((uintptr_t)p);
 }
 
 #endif /* SILOFS_UTILITY_H_ */

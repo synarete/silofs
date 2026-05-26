@@ -582,14 +582,7 @@ int silofs_detach_vnode2(struct silofs_pexec_ctx   *pexec,
 int silofs_require_paddr(struct silofs_pexec_ctx   *pexec,
                          const struct silofs_paddr *paddr);
 
-int silofs_destage_dirty(struct silofs_pexec_ctx *pexec);
-
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-/* destage */
-
-int silofs_destage_pnodes(struct silofs_pexec_ctx *pexec);
-
-int silofs_destage_vnodes(struct silofs_pexec_ctx *pexec);
+int silofs_destage_dirty_nodes(struct silofs_pexec_ctx *pexec);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* vspace */

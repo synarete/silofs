@@ -144,7 +144,7 @@ static int format_vspace_roots(struct silofs_pexec_ctx *pexec)
 			return err;
 		}
 	}
-	return silofs_destage_dirty(pexec);
+	return silofs_destage_dirty_nodes(pexec);
 }
 
 static int
@@ -250,7 +250,7 @@ static int format_vspace_nodes(struct silofs_pexec_ctx *pexec)
 			return err;
 		}
 	}
-	return silofs_destage_dirty(pexec);
+	return silofs_destage_dirty_nodes(pexec);
 }
 
 static int format_vspace(struct silofs_pexec_ctx *pexec)

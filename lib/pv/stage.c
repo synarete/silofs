@@ -1279,7 +1279,7 @@ static int dsc_encrypt_vnode(const struct silofs_destage_ctx *ds_ctx,
 	struct silofs_ctag ctag = {};
 	int err;
 
-	err = silofs_encrypt_vnode(ds_ctx->pexec, vni, out_pnptr, &ctag);
+	err = silofs_encrypt_vnode(ds_ctx->pexec, vni, pnptr_cur, &ctag);
 	if (err) {
 		return err;
 	}

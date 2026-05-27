@@ -774,6 +774,16 @@ int silofs_bti_resolve(const struct silofs_btnode_info *bti, uint64_t key,
 	return btn_resolve(bti->btn, key, out_pnptr);
 }
 
+static int
+bti_require_unique(const struct silofs_btnode_info *bti, uint64_t key)
+{
+	struct silofs_pnptr pnptr;
+	int err;
+
+	err = btn_resolve(bti->btn, key, &pnptr);
+	return (err == 0) ? -SILOFS_EEXIST : 0;
+}
+
 int silofs_bti_insert(struct silofs_btnode_info *bti, uint64_t key,
                       const struct silofs_pnptr *pnptr)
 {
@@ -781,6 +791,10 @@ int silofs_bti_insert(struct silofs_btnode_info *bti, uint64_t key,
 
 	silofs_assert(btkey_isvalid(key));
 
+	err = bti_require_unique(bti, key);
+	if (err) {
+		return err;
+	}
 	err = btn_insert(bti->btn, key, pnptr);
 	if (err) {
 		return err;

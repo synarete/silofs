@@ -191,10 +191,6 @@ int silofs_encrypt_vnode(const struct silofs_pexec_ctx *pexec,
 		.data_len = vni_lview_len(vni),
 	};
 
-	/* XXX */
-	memcpy(ed_ctx.data_out, ed_ctx.data_in, ed_ctx.data_len);
-	return 0;
-
 	return silofs_encrypt(&ed_ctx);
 }
 
@@ -215,10 +211,6 @@ int silofs_decrypt_vnode(const struct silofs_pexec_ctx *pexec,
 		.data_out = vni_mut_lview(vni),
 		.data_len = vni_lview_len(vni),
 	};
-
-	/* XXX */
-	memcpy(ed_ctx.data_out, ed_ctx.data_in, ed_ctx.data_len);
-	return 0;
 
 	return silofs_decrypt(&ed_ctx);
 }

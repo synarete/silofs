@@ -63,7 +63,7 @@ bytebuf_append_cnt(const struct silofs_bytebuf *bb, size_t len_want)
 
 static uint8_t *bytebuf_at(const struct silofs_bytebuf *bb, size_t pos)
 {
-	return (uint8_t *)bb->ptr + pos;
+	return bb->ptr + pos;
 }
 
 static uint8_t *bytebuf_end(const struct silofs_bytebuf *bb)

@@ -1929,7 +1929,10 @@ static nlink_t i_nlink_new(const struct silofs_inode_info *ii, long dif)
 
 static void dirc_update_nlink(const struct silofs_dir_ctx *d_ctx, long dif)
 {
-	struct silofs_iattr iattr          = { .ia_size = -1 };
+	struct silofs_iattr iattr = {
+		.ia_flags = SILOFS_IATTR_NONE,
+		.ia_size  = -1,
+	};
 	struct silofs_inode_info *child_ii = d_ctx->child_ii;
 	struct silofs_inode_info *dir_ii   = d_ctx->dir_ii;
 
@@ -2450,7 +2453,10 @@ static int dirc_readdir_iter(struct silofs_dir_ctx *d_ctx)
 
 static void dirc_post_readdir(const struct silofs_dir_ctx *d_ctx)
 {
-	struct silofs_iattr iattr = { .ia_size = -1 };
+	struct silofs_iattr iattr = {
+		.ia_flags = SILOFS_IATTR_NONE,
+		.ia_size  = -1,
+	};
 
 	silofs_make_iattr_of(d_ctx->dir_ii, &iattr);
 	iattr.ia_flags |= SILOFS_IATTR_ATIME | SILOFS_IATTR_LAZY;

@@ -1082,7 +1082,10 @@ static int xac_setxattr_apply(struct silofs_xattr_ctx *xa_ctx)
 
 static void xac_update_post_setxattr(const struct silofs_xattr_ctx *xa_ctx)
 {
-	struct silofs_iattr iattr    = { .ia_size = -1 };
+	struct silofs_iattr iattr = {
+		.ia_flags = SILOFS_IATTR_NONE,
+		.ia_size  = -1,
+	};
 	struct silofs_inode_info *ii = xa_ctx->ii;
 
 	silofs_make_iattr_of(ii, &iattr);

@@ -75,8 +75,10 @@ int silofs_ascii_to_nibble(char a)
 
 void silofs_byte_to_ascii(uint8_t b, char *a)
 {
-	a[0] = silofs_nibble_to_ascii((int)(b >> 4));
-	a[1] = silofs_nibble_to_ascii((int)b);
+	const int ni = (int)b;
+
+	a[0] = silofs_nibble_to_ascii(ni >> 4);
+	a[1] = silofs_nibble_to_ascii(ni);
 }
 
 int silofs_ascii_to_byte(const char *a, uint8_t *b)

@@ -1374,7 +1374,10 @@ static bool filc_ismapping_boundaries(const struct silofs_file_ctx *f_ctx)
 
 static void filc_update_post_io(const struct silofs_file_ctx *f_ctx)
 {
-	struct silofs_iattr iattr    = { .ia_size = -1 };
+	struct silofs_iattr iattr = {
+		.ia_flags = SILOFS_IATTR_NONE,
+		.ia_size  = -1,
+	};
 	struct silofs_inode_info *ii = f_ctx->ii;
 	const off_t isz              = silofs_ii_size(ii);
 	const off_t isp              = silofs_ii_span(ii);
@@ -3210,6 +3213,7 @@ static int filc_drop_data_and_meta(struct silofs_file_ctx *f_ctx)
 int silofs_drop_reg(struct silofs_task_ctx *task, struct silofs_inode_info *ii)
 {
 	struct silofs_file_ctx f_ctx = {
+		.op       = SILOFS_FILE_OP_DROP,
 		.task     = task,
 		.env      = task->env,
 		.sbi      = silofs_get_sbi(task),

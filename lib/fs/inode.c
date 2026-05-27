@@ -785,6 +785,7 @@ static int check_chmod(const struct silofs_task_ctx *task,
                        struct silofs_inode_info *ii, mode_t mode)
 {
 	int ret = -SILOFS_EPERM;
+
 	if (!itype_of(mode) || has_itype(ii, mode)) {
 		const struct silofs_creds *creds = &task->auth.creds;
 
@@ -801,7 +802,10 @@ static void update_times_attr(const struct silofs_task_ctx *task,
                               enum silofs_iattr_flags attr_flags,
                               const struct silofs_itimes *itimes)
 {
-	struct silofs_iattr iattr = { .ia_size = -1 };
+	struct silofs_iattr iattr = {
+		.ia_flags = SILOFS_IATTR_NONE,
+		.ia_size  = -1,
+	};
 
 	silofs_make_iattr_of(ii, &iattr);
 	memcpy(&iattr.ia_t, itimes, sizeof(iattr.ia_t));
@@ -832,7 +836,9 @@ update_post_chmod(const struct silofs_task_ctx *task,
 static int do_chmod(struct silofs_task_ctx *task, struct silofs_inode_info *ii,
                     mode_t mode, const struct silofs_itimes *itimes)
 {
-	struct silofs_iattr iattr = { .ia_flags = 0 };
+	struct silofs_iattr iattr = {
+		.ia_flags = SILOFS_IATTR_NONE,
+	};
 	int err;
 
 	err = check_chmod(task, ii, mode);
@@ -924,9 +930,11 @@ static int do_chown(const struct silofs_task_ctx *task,
                     struct silofs_inode_info *ii, uid_t uid, gid_t gid,
                     bool kill_suidgid, const struct silofs_itimes *itimes)
 {
-	struct silofs_iattr iattr = { .ia_flags = 0 };
-	bool chown_uid            = !silofs_uid_isnull(uid);
-	bool chown_gid            = !silofs_gid_isnull(gid);
+	struct silofs_iattr iattr = {
+		.ia_flags = SILOFS_IATTR_NONE,
+	};
+	bool chown_uid = !silofs_uid_isnull(uid);
+	bool chown_gid = !silofs_gid_isnull(gid);
 	int err;
 
 	if (!chown_uid && !chown_gid) {
@@ -1384,7 +1392,10 @@ static void ii_update_itimes(struct silofs_inode_info *ii,
                              enum silofs_iattr_flags attr_flags,
                              const struct timespec *ts_now)
 {
-	struct silofs_iattr iattr          = { .ia_size = -1 };
+	struct silofs_iattr iattr = {
+		.ia_flags = SILOFS_IATTR_NONE,
+		.ia_size  = -1,
+	};
 	const enum silofs_iattr_flags mask = SILOFS_IATTR_TIMES;
 
 	silofs_make_iattr_of(ii, &iattr);
@@ -1419,7 +1430,10 @@ static void
 ii_update_iblocks(struct silofs_inode_info *ii, enum silofs_vtype vtype,
                   long dif, const struct timespec *ts)
 {
-	struct silofs_iattr iattr = { .ia_size = -1 };
+	struct silofs_iattr iattr = {
+		.ia_flags = SILOFS_IATTR_NONE,
+		.ia_size  = -1,
+	};
 
 	silofs_make_iattr_of(ii, &iattr);
 	iattr.ia_blocks = recalc_iblocks(ii, vtype, dif);

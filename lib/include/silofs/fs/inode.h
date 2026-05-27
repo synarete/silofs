@@ -31,6 +31,7 @@ struct silofs_task_ctx;
 
 /* inode's attributes masks */
 enum silofs_iattr_flags {
+	SILOFS_IATTR_NONE         = 0,
 	SILOFS_IATTR_PARENT       = SILOFS_BIT(0),
 	SILOFS_IATTR_LAZY         = SILOFS_BIT(1),
 	SILOFS_IATTR_SIZE         = SILOFS_BIT(2),

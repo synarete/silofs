@@ -718,8 +718,8 @@ static int fqs_reply_init_ok(struct silofs_fuseq_sub *fqs,
 	arg.flags2               = (uint32_t)(coni->want_cap >> 32);
 	arg.max_background       = (uint16_t)coni->max_background;
 	arg.congestion_threshold = (uint16_t)coni->congestion_threshold;
-	arg.max_write            = (uint32_t)coni->max_write;
-	arg.time_gran            = (uint32_t)coni->time_gran;
+	arg.max_write            = coni->max_write;
+	arg.time_gran            = coni->time_gran;
 	arg.max_pages            = fqs_max_pages_want(fqs);
 
 	return fqs_reply_arg(fqs, task, &arg, sizeof(arg));

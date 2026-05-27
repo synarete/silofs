@@ -519,8 +519,8 @@ static char *cmd_getcwd(void)
 
 static bool equal_ci(char c1, char c2)
 {
-	const int uc1 = (int)toupper((unsigned char)c1);
-	const int uc2 = (int)toupper((unsigned char)c2);
+	const int uc1 = toupper((unsigned char)c1);
+	const int uc2 = toupper((unsigned char)c2);
 
 	return uc1 == uc2;
 }

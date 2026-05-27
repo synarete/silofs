@@ -66,7 +66,7 @@ const struct silofs_vaddr *silofs_vaddr_none(void)
 
 size_t silofs_vaddr_len(const struct silofs_vaddr *vaddr)
 {
-	return (size_t)silofs_vtype_size(vaddr->vtype);
+	return silofs_vtype_size(vaddr->vtype);
 }
 
 long silofs_vaddr_compare(const struct silofs_vaddr *vaddr1,

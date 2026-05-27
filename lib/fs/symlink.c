@@ -493,7 +493,8 @@ static ssize_t symval_length(const struct silofs_strview *symval)
 static void sylc_update_post_symlink(const struct silofs_symlnk_ctx *sl_ctx)
 {
 	struct silofs_iattr iattr = {
-		.ia_size = -1,
+		.ia_flags = SILOFS_IATTR_NONE,
+		.ia_size  = -1,
 	};
 	struct silofs_inode_info *lnk_ii = sl_ctx->lnk_ii;
 

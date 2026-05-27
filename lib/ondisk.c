@@ -89,8 +89,6 @@
 #define REQUIRE_OFFSET64(type, member, off) \
 	SILOFS_STATICASSERT(ISOFFSET(type, member, off) && ISALIGNED64(off))
 
-void silofs_validate_ondisk_format(void);
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void validate_fundamental_types(void)
@@ -478,7 +476,7 @@ static void validate_ioctl_types(void)
 	REQUIRE_SIZEOF_LE(struct silofs_ioc_forkfs, SILOFS_IOC_SIZE_MAX);
 }
 
-void silofs_validate_ondisk_format(void)
+silofs_attr_used static void silofs_validate_ondisk_format(void)
 {
 	validate_external_constants();
 	validate_fundamental_types();

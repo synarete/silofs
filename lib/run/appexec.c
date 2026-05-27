@@ -979,8 +979,6 @@ static int check_pre_init_lib(const struct silofs_init_args *init_args)
 {
 	int err;
 
-	silofs_validate_ondisk_format();
-
 	err = check_endianess();
 	if (err) {
 		return err;

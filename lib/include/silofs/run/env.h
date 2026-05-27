@@ -82,8 +82,6 @@ struct silofs_env {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_validate_ondisk_format(void);
-
 int silofs_env_init(struct silofs_env *env, struct silofs_alloc *alloc);
 
 void silofs_env_fini(struct silofs_env *env);

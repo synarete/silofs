@@ -47,6 +47,12 @@
 #define silofs_attr_const
 #endif
 
+#if __has_attribute(__used__)
+#define silofs_attr_used __attribute__((__used__))
+#else
+#error "missing '__attribute__ ((__used__))'"
+#endif
+
 #if __has_attribute(__format__)
 #if defined(__clang__)
 #define silofs_attr_printf(x_, y_) \

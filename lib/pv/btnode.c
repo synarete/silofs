@@ -530,7 +530,7 @@ static int btn_remove(struct silofs_btree_node *btn, uint64_t key)
 
 static int
 btn_relink(struct silofs_btree_node *btn, const struct silofs_pnptr *cur,
-           const struct silofs_pnptr *alt)
+           const struct silofs_pnptr *alt, bool *out_new_child)
 {
 	size_t slot;
 
@@ -538,7 +538,10 @@ btn_relink(struct silofs_btree_node *btn, const struct silofs_pnptr *cur,
 	if (slot >= btn_nchilds(btn)) {
 		return -SILOFS_ENOENT;
 	}
-	btn_set_child_at(btn, slot, alt);
+	*out_new_child = !btn_has_child_at(btn, slot, alt);
+	if (*out_new_child) {
+		btn_set_child_at(btn, slot, alt);
+	}
 	return 0;
 }
 
@@ -805,13 +808,16 @@ int silofs_bti_relink(struct silofs_btnode_info *bti,
                       const struct silofs_pnptr *cur,
                       const struct silofs_pnptr *alt)
 {
+	bool new_child = false;
 	int err;
 
-	err = btn_relink(bti->btn, cur, alt);
+	err = btn_relink(bti->btn, cur, alt, &new_child);
 	if (err) {
 		return err;
 	}
-	bti_markdirty(bti);
+	if (new_child) {
+		bti_markdirty(bti);
+	}
 	return 0;
 }
 

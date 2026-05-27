@@ -89,7 +89,7 @@ int silofs_carve_base_btspace(const struct silofs_pexec_ctx *pexec,
 
 	silofs_blobid_init(&blobid, &stype, top_layerid(pexec), nullptr);
 	gen_uniqid(pexec, &blobid.uniqid);
-	silofs_paddr_init(&paddr, &blobid, SILOFS_LBK_SIZE);
+	silofs_paddr_init(&paddr, &blobid, 0);
 
 	return gen_pnptr_at(pexec, &paddr, out_pnptr);
 }
@@ -106,7 +106,7 @@ int silofs_carve_base_vspace(const struct silofs_pexec_ctx *pexec,
 
 	silofs_blobid_init(&blobid, &stype, top_layerid(pexec), nullptr);
 	gen_uniqid(pexec, &blobid.uniqid);
-	silofs_paddr_init(out_paddr, &blobid, SILOFS_LBK_SIZE);
+	silofs_paddr_init(out_paddr, &blobid, 0);
 
 	return 0;
 }

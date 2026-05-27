@@ -92,7 +92,7 @@ int silofs_encrypt_pnode(const struct silofs_pexec_ctx *pexec,
                          const struct silofs_pnode_info *pni,
                          struct silofs_ctag *out_ctag)
 {
-	struct silofs_caad caad               = {};
+	struct silofs_caad caad;
 	const struct silofs_pnptr *pnptr      = pni_self(pni);
 	const struct silofs_encdec_ctx ed_ctx = {
 		.ci_hd    = pexec->enc_ci_hd,
@@ -113,7 +113,7 @@ int silofs_decrypt_pnode(const struct silofs_pexec_ctx *pexec,
                          const struct silofs_pnode_info *pni,
                          const struct silofs_ctag *ctag)
 {
-	struct silofs_caad caad               = {};
+	struct silofs_caad caad;
 	const struct silofs_pnptr *pnptr      = pni_self(pni);
 	const struct silofs_encdec_ctx ed_ctx = {
 		.ci_hd    = pexec->dec_ci_hd,
@@ -178,7 +178,7 @@ int silofs_encrypt_vnode(const struct silofs_pexec_ctx *pexec,
                          const struct silofs_pnptr *pnptr,
                          struct silofs_ctag *out_ctag)
 {
-	struct silofs_caad caad         = {};
+	struct silofs_caad caad;
 	struct silofs_encdec_ctx ed_ctx = {
 		.ci_hd    = pexec->enc_ci_hd,
 		.civ      = &pnptr->nmeta.civkey.iv,
@@ -191,6 +191,10 @@ int silofs_encrypt_vnode(const struct silofs_pexec_ctx *pexec,
 		.data_len = vni_lview_len(vni),
 	};
 
+	/* XXX */
+	memcpy(ed_ctx.data_out, ed_ctx.data_in, ed_ctx.data_len);
+	return 0;
+
 	return silofs_encrypt(&ed_ctx);
 }
 
@@ -199,7 +203,7 @@ int silofs_decrypt_vnode(const struct silofs_pexec_ctx *pexec,
                          const struct silofs_pnptr *pnptr,
                          const struct silofs_ctag *ctag)
 {
-	struct silofs_caad caad               = {};
+	struct silofs_caad caad;
 	const struct silofs_encdec_ctx ed_ctx = {
 		.ci_hd    = pexec->dec_ci_hd,
 		.civ      = &pnptr->nmeta.civkey.iv,
@@ -211,6 +215,10 @@ int silofs_decrypt_vnode(const struct silofs_pexec_ctx *pexec,
 		.data_out = vni_mut_lview(vni),
 		.data_len = vni_lview_len(vni),
 	};
+
+	/* XXX */
+	memcpy(ed_ctx.data_out, ed_ctx.data_in, ed_ctx.data_len);
+	return 0;
 
 	return silofs_decrypt(&ed_ctx);
 }

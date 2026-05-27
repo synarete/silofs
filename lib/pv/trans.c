@@ -34,10 +34,12 @@ int silofs_fetch_vnode2(struct silofs_pexec_ctx *pexec,
 
 	err = silofs_resolve_vtop_mapping(pexec, vaddr, &pnptr);
 	if (err) {
+		silofs_assert_ok(err);
 		return err;
 	}
 	err = silofs_stage_vnode2(pexec, vaddr, &pnptr, out_vni);
 	if (err) {
+		silofs_assert_ok(err);
 		return err;
 	}
 	return 0;

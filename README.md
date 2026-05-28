@@ -10,21 +10,18 @@
 
 ## Overview
 
-Silofs is a fully encrypted user-space file-system designed for secure,
-long-term data preservation. It archives snapshots as immutable blobs, ensuring
-audit-grade integrity and protection against unauthorized modification.
-
-It allows normal users to create an isolated storage area, with its
-own private key, and mount it on local host. When mounted users may
-manipulate their data as they would do with any other file-system,
-while the actual data (and meta-data) is transparently encrypted and
-stored within a local repository as opaque blobs. Other processes,
-which have the appropriate UNIX credentials, may access those blobs as
-regular files, but they can not view their content. This model allows
-common Linux utilities such as [rsync](https://rsync.samba.org/) and
-[rclone](https://rclone.org/) to backup or archive the content of the
-repository into remote location, yet without compromising the integrity
-of the underlying data.
+Silofs is a private, encrypted user-space file-system -- your personal data
+silo. Just as a physical silo keeps its contents sealed and inaccessible to the
+outside world, silofs lets any ordinary user create an isolated storage area
+protected by their own private key, and mount it on a local host. Once mounted,
+files can be read and written like any other file-system, while all data and
+metadata are transparently encrypted and stored in a local repository as
+opaque blobs. Other processes -- even those with valid UNIX credentials -- can
+see those blobs, but cannot read their content. Without the correct key, the
+data cannot be decrypted, tampered with, or compromised in any way. This design
+allows common Linux tools like [rsync](https://rsync.samba.org/) and
+[rclone](https://rclone.org/) to back up or archive the repository to a remote
+location, without ever exposing or endangering the underlying private data.
 
 Silofs is implemented using Linux's FUSE bridge, and as such it trades
 performance with functionality and ease of use. It is designed to serve
@@ -33,7 +30,7 @@ for long-term archiving, but without revealing information on their
 private data, and without paying high costs and extra resources due to
 re-packing. See [Why Silofs?](#why-silofs) for more details.
 
-The name silofs is an acronym to "Secured Immutable Large Objects File System".
+The name silofs stands for "stored in large objects file-system".
 
 ## Build and Install
 

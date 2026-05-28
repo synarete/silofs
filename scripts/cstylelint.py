@@ -152,6 +152,7 @@ COMPILER_PRIVATE = [
     "__noinline__",
     "__nonnull__",
     "__noreturn__",
+    "__used__",
     "__unused__",
     "__fallthrough__",
     "__cplusplus",

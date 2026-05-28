@@ -117,10 +117,9 @@ static void kvl_random_shuffle(struct ut_kvl *kvl)
 static void
 ut_xattr_simple_(struct ut_env *ute, size_t name_len, size_t value_size)
 {
-	ino_t ino          = 0;
-	ino_t dino         = 0;
 	const char *name   = UT_NAME;
 	struct ut_kvl *kvl = nullptr;
+	ino_t dino = 0, ino = 0;
 
 	kvl = kvl_new(ute, 1);
 	kvl_populate(kvl, name_len, value_size);
@@ -161,12 +160,59 @@ static void ut_xattr_any_value(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static void
+ut_xattr_sync_(struct ut_env *ute, size_t name_len, size_t value_size)
+{
+	const char *dname  = UT_NAME;
+	const char *fname  = UT_NAME;
+	struct ut_kvl *kvl = nullptr;
+	ino_t dino = 0, ino = 0;
+
+	kvl = kvl_new(ute, 1);
+	kvl_populate(kvl, name_len, value_size);
+
+	ut_mkdir_at_root(ute, dname, &dino);
+	ut_create_only(ute, dino, fname, &ino);
+
+	for (size_t i = 0; i < kvl->count; ++i) {
+		ut_setxattr_create(ute, ino, kvl->list[i]);
+	}
+	ut_drop_caches_fully(ute);
+
+	for (size_t i = 0; i < kvl->count; ++i) {
+		ut_getxattr_value(ute, ino, kvl->list[i]);
+	}
+	ut_drop_caches_fully(ute);
+
+	ut_listxattr(ute, ino, kvl);
+	for (size_t i = 0; i < kvl->count; ++i) {
+		ut_removexattr(ute, ino, kvl->list[i]);
+	}
+	ut_drop_caches_fully(ute);
+
+	for (size_t i = 0; i < kvl->count; ++i) {
+		ut_getxattr_nodata(ute, ino, kvl->list[i]);
+	}
+
+	ut_unlink(ute, dino, fname);
+	ut_rmdir_at_root(ute, dname);
+}
+
+static void ut_xattr_sync(struct ut_env *ute)
+{
+	ut_xattr_sync_(ute, 1, 1);
+	ut_xattr_sync_(ute, NAME_MAX, 1);
+	ut_xattr_sync_(ute, 1, SILOFS_XATTR_VALUE_MAX);
+	ut_xattr_sync_(ute, NAME_MAX, SILOFS_XATTR_VALUE_MAX);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 static void ut_xattr_short_names(struct ut_env *ute)
 {
 	const char *name   = UT_NAME;
 	struct ut_kvl *kvl = nullptr;
-	ino_t dino         = 0;
-	ino_t ino          = 0;
+	ino_t dino = 0, ino = 0;
 
 	kvl = kvl_new(ute, 16);
 	kvl_populate(kvl, 7, 31);
@@ -194,10 +240,10 @@ static void ut_xattr_short_names(struct ut_env *ute)
 
 static void ut_xattr_long_names(struct ut_env *ute)
 {
-	ino_t ino            = 0;
-	const ino_t root_ino = UT_ROOT_INO;
-	const char *name     = UT_NAME;
-	struct ut_kvl *kvl   = nullptr;
+	constexpr ino_t root_ino = UT_ROOT_INO;
+	const char *name         = UT_NAME;
+	struct ut_kvl *kvl       = nullptr;
+	ino_t ino                = 0;
 
 	kvl = kvl_new(ute, 4);
 	kvl_populate(kvl, NAME_MAX, SILOFS_XATTR_VALUE_MAX);
@@ -330,14 +376,13 @@ static void ut_xattr_multi(struct ut_env *ute)
 	const char *dname  = UT_NAME;
 	const char *fname  = UT_NAME;
 	struct ut_kvl *kvl = nullptr;
-	ino_t dino         = 0;
-	ino_t ino          = 0;
+	ino_t dino = 0, ino = 0;
 
 	ut_mkdir_at_root(ute, dname, &dino);
 	ut_create_only(ute, dino, fname, &ino);
 
 	for (size_t i = 0; i < 4; ++i) {
-		const size_t nkv_sizes = UT_ARRAY_SIZE(kv_sizes_arr);
+		constexpr size_t nkv_sizes = UT_ARRAY_SIZE(kv_sizes_arr);
 
 		kvl = kvl_new(ute, nkv_sizes);
 		kvl_appendn(kvl, kv_sizes_arr, nkv_sizes);
@@ -360,6 +405,7 @@ static void ut_xattr_multi(struct ut_env *ute)
 		ut_removexattr_all(ute, ino, kvl);
 		ut_removexattr_all(ute, dino, kvl);
 	}
+
 	ut_unlink(ute, dino, fname);
 	ut_rmdir_at_root(ute, dname);
 }
@@ -368,12 +414,11 @@ static void ut_xattr_multi(struct ut_env *ute)
 
 static void ut_xattr_lookup_random(struct ut_env *ute)
 {
-	const ino_t root_ino = UT_ROOT_INO;
-	const char *dname    = UT_NAME;
-	const char *xname    = nullptr;
-	struct ut_kvl *kvl   = kvl_new(ute, 4);
-	ino_t dino           = 0;
-	ino_t ino            = 0;
+	constexpr ino_t root_ino = UT_ROOT_INO;
+	const char *dname        = UT_NAME;
+	const char *xname        = nullptr;
+	struct ut_kvl *kvl       = kvl_new(ute, 4);
+	ino_t dino = 0, ino = 0;
 
 	kvl_populate_max(kvl);
 	ut_mkdir2(ute, root_ino, dname, &dino);
@@ -407,12 +452,11 @@ static void ut_xattr_lookup_random(struct ut_env *ute)
 
 static void ut_xattr_replace(struct ut_env *ute)
 {
-	const char *dname    = UT_NAME;
-	const char *fname    = UT_NAME;
-	struct ut_kvl *kvl   = kvl_new(ute, 5);
-	const ino_t root_ino = UT_ROOT_INO;
-	ino_t dino           = 0;
-	ino_t ino            = 0;
+	constexpr ino_t root_ino = UT_ROOT_INO;
+	const char *dname        = UT_NAME;
+	const char *fname        = UT_NAME;
+	struct ut_kvl *kvl       = kvl_new(ute, 5);
+	ino_t dino = 0, ino = 0;
 
 	kvl_populate(kvl, NAME_MAX / 2, SILOFS_XATTR_VALUE_MAX / 2);
 
@@ -440,15 +484,13 @@ static void ut_xattr_replace(struct ut_env *ute)
 
 static void ut_xattr_replace_multi(struct ut_env *ute)
 {
-	ino_t ino            = 0;
-	ino_t dino           = 0;
-	size_t value_size    = 0;
-	const ino_t root_ino = UT_ROOT_INO;
-	const char *dname    = UT_NAME;
-	const char *fname    = UT_NAME;
-	struct ut_kvl *kvl   = kvl_new(ute, 3);
+	constexpr ino_t root_ino = UT_ROOT_INO;
+	const char *dname        = UT_NAME;
+	const char *fname        = UT_NAME;
+	struct ut_kvl *kvl       = kvl_new(ute, 3);
+	const size_t value_size  = SILOFS_XATTR_VALUE_MAX;
+	ino_t dino = 0, ino = 0;
 
-	value_size = SILOFS_XATTR_VALUE_MAX;
 	kvl_populate(kvl, NAME_MAX / 2, value_size);
 
 	ut_mkdir2(ute, root_ino, dname, &dino);
@@ -479,9 +521,8 @@ static void ut_xattr_with_io_(struct ut_env *ute, off_t base_off,
 	const char *name           = UT_NAME;
 	const struct ut_keyval *kv = nullptr;
 	struct ut_kvl *kvl         = kvl_new(ute, 3);
-	off_t off                  = -1;
-	ino_t dino                 = 0;
-	ino_t ino                  = 0;
+	ino_t dino = 0, ino = 0;
+	off_t off = -1;
 
 	kvl_populate(kvl, name_len, value_size);
 	ut_mkdir_at_root(ute, name, &dino);
@@ -515,6 +556,7 @@ static void ut_xattr_with_io(struct ut_env *ute)
 static const struct ut_testdef ut_local_tests[] = {
 	UT_DEFTEST1(ut_xattr_simple),       //
 	UT_DEFTEST(ut_xattr_any_value),     //
+	UT_DEFTEST(ut_xattr_sync),          //
 	UT_DEFTEST(ut_xattr_short_names),   //
 	UT_DEFTEST(ut_xattr_long_names),    //
 	UT_DEFTEST(ut_xattr_shorts),        //

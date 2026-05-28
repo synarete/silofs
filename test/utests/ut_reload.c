@@ -20,8 +20,7 @@ static void ut_reload_nfiles_(struct ut_env *ute, size_t nfiles)
 {
 	const char *dname = UT_NAME;
 	const char *fname = nullptr;
-	ino_t dino        = 0;
-	ino_t ino         = 0;
+	ino_t dino = 0, ino = 0;
 
 	ut_mkdir_at_root(ute, dname, &dino);
 	ut_unload_reload_fs_at(ute, dino);
@@ -46,21 +45,54 @@ static void ut_reload_simple(struct ut_env *ute)
 static void ut_reload_nfiles(struct ut_env *ute)
 {
 	ut_reload_nfiles_(ute, 1);
-	ut_reload_nfiles_(ute, 11);
-	ut_reload_nfiles_(ute, 1111);
+	ut_reload_nfiles_(ute, 10);
+	ut_reload_nfiles_(ute, 2 * SILOFS_BTREE_NODE_NCHILDS);
+	ut_reload_nfiles_(ute, 2 * SILOFS_SPNODE_NREFS);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static void ut_reload_xattr_(struct ut_env *ute, off_t off, size_t value_size)
+{
+	const char *name    = UT_NAME;
+	struct ut_keyval kv = {
+		.name  = name,
+		.value = ut_randbuf(ute, value_size),
+		.size  = value_size,
+	};
+	ino_t dino = 0, ino = 0;
+
+	ut_mkdir_at_root(ute, name, &dino);
+	ut_setxattr_create(ute, dino, &kv);
+	ut_create_file(ute, dino, name, &ino);
+	ut_write_read(ute, ino, kv.value, kv.size, off);
+	ut_setxattr_create(ute, ino, &kv);
+	ut_release_file(ute, ino);
+	ut_unload_reload_fs_at(ute, dino);
+	ut_getxattr_value(ute, dino, &kv);
+	ut_open_rdonly(ute, ino);
+	ut_getxattr_value(ute, ino, &kv);
+	ut_read_verify(ute, ino, kv.value, kv.size, off);
+	ut_release_file(ute, ino);
+	ut_unlink(ute, dino, name);
+	ut_rmdir_at_root(ute, name);
+}
+
+static void ut_reload_xattr(struct ut_env *ute)
+{
+	ut_reload_xattr_(ute, 0, UT_1K / 4);
+	ut_reload_xattr_(ute, UT_1G, SILOFS_XATTR_VALUE_MAX / 2);
+	ut_reload_xattr_(ute, UT_1T, SILOFS_XATTR_VALUE_MAX);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void ut_reload_mixed_(struct ut_env *ute, size_t nfiles)
 {
-	ino_t fino;
-	ino_t sino;
-	ino_t dino;
-	ino_t tino;
-	const char *name;
+	struct stat st    = {};
+	const char *name  = nullptr;
 	const char *tname = UT_NAME;
-	struct stat st;
+	ino_t dino, fino, sino, tino;
 
 	ut_mkdir_at_root(ute, tname, &tino);
 	ut_unload_reload_fs_at(ute, tino);
@@ -110,13 +142,12 @@ static off_t make_offset(size_t idx, size_t step)
 
 static void ut_reload_io_(struct ut_env *ute, size_t nfiles, size_t step)
 {
-	ino_t fino;
-	ino_t dino;
-	off_t off;
-	size_t len;
-	const char *fname;
+	struct stat st    = {};
 	const char *dname = UT_NAME;
-	struct stat st;
+	const char *fname = nullptr;
+	ino_t dino, fino;
+	size_t len;
+	off_t off;
 
 	ut_mkdir_at_root(ute, dname, &dino);
 	for (size_t i = 0; i < nfiles; ++i) {
@@ -162,13 +193,12 @@ static void ut_reload_io(struct ut_env *ute)
 
 static void ut_reload_unlinked_(struct ut_env *ute, size_t nfiles, size_t step)
 {
-	ino_t fino;
-	ino_t dino;
-	off_t off;
-	size_t len;
-	const char *fname;
+	const char *fname = nullptr;
 	const char *dname = UT_NAME;
 	ino_t *fino_arr   = ut_zalloc(ute, nfiles * sizeof(ino_t));
+	ino_t dino, fino;
+	off_t off;
+	size_t len;
 
 	ut_mkdir_at_root(ute, dname, &dino);
 	for (size_t i = 0; i < nfiles; ++i) {
@@ -200,46 +230,13 @@ static void ut_reload_unlinked(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_reload_xattr_(struct ut_env *ute, off_t off, size_t value_size)
-{
-	const char *name    = UT_NAME;
-	struct ut_keyval kv = {
-		.name  = name,
-		.value = ut_randbuf(ute, value_size),
-		.size  = value_size,
-	};
-	ino_t dino = 0;
-	ino_t ino  = 0;
-
-	ut_mkdir_at_root(ute, name, &dino);
-	ut_setxattr_create(ute, dino, &kv);
-	ut_create_file(ute, dino, name, &ino);
-	ut_write_read(ute, ino, kv.value, kv.size, off);
-	ut_setxattr_create(ute, ino, &kv);
-	ut_release_file(ute, ino);
-	ut_unload_reload_fs_at(ute, dino);
-	ut_getxattr_value(ute, dino, &kv);
-	ut_open_rdonly(ute, ino);
-	ut_getxattr_value(ute, ino, &kv);
-	ut_read_verify(ute, ino, kv.value, kv.size, off);
-	ut_release_file(ute, ino);
-	ut_unlink(ute, dino, name);
-	ut_rmdir_at_root(ute, name);
-}
-
-static void ut_reload_xattr(struct ut_env *ute)
-{
-	ut_reload_xattr_(ute, 0, UT_1K / 4);
-	ut_reload_xattr_(ute, UT_1G, SILOFS_XATTR_VALUE_MAX / 2);
-	ut_reload_xattr_(ute, UT_1T, SILOFS_XATTR_VALUE_MAX);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 static const struct ut_testdef ut_local_tests[] = {
-	UT_DEFTEST(ut_reload_simple),   UT_DEFTEST(ut_reload_nfiles),
-	UT_DEFTEST(ut_reload_mixed),    UT_DEFTEST(ut_reload_io),
-	UT_DEFTEST(ut_reload_unlinked), UT_DEFTEST(ut_reload_xattr),
+	UT_DEFTEST(ut_reload_simple),   //
+	UT_DEFTEST(ut_reload_nfiles),   //
+	UT_DEFTEST(ut_reload_xattr),    //
+	UT_DEFTEST(ut_reload_mixed),    //
+	UT_DEFTEST(ut_reload_io),       //
+	UT_DEFTEST(ut_reload_unlinked), //
 };
 
 const struct ut_testdefs ut_tdefs_reload = UT_MKTESTS(ut_local_tests);

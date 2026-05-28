@@ -445,7 +445,7 @@ bool silofs_vni_isdirty(const struct silofs_vnode_info *vni)
 static void
 vni_update_dq_by(struct silofs_vnode_info *vni, struct silofs_inode_info *ii)
 {
-	if (ii != nullptr) {
+	if (ii != nullptr && !vni->vn_has_pn) {
 		silofs_vni_set_dq(vni, &ii->i_dq_vnis);
 	}
 }

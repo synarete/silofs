@@ -1,4 +1,4 @@
-# The Silo File-System
+# Silofs -- Private encrypted file-system for GNU/Linux
 
 1. [Overview](#overview)
 2. [Build and Install](#build-and-install)

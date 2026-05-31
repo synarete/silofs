@@ -553,6 +553,59 @@ static void ut_xattr_with_io(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static void ut_xattr_nfiles_(struct ut_env *ute, size_t nfiles,
+                             size_t name_len, size_t value_size)
+{
+	const char *dname  = UT_NAME;
+	const char *fname  = nullptr;
+	struct ut_kvl *kvl = kvl_new(ute, 1);
+	ino_t dino = 0, ino = 0;
+	ino_t *ino_arr = ut_malloc(ute, nfiles * sizeof(ino_t));
+
+	kvl_populate(kvl, name_len, value_size);
+
+	ut_mkdir_at_root(ute, dname, &dino);
+	for (size_t i = 0; i < nfiles; ++i) {
+		fname = ut_make_name(ute, dname, i);
+		ut_create_only(ute, dino, fname, &ino);
+		ut_setxattr_create(ute, ino, kvl->list[0]);
+		ino_arr[i] = ino;
+	}
+	for (size_t i = 0; i < nfiles; ++i) {
+		ino = ino_arr[i];
+		ut_getxattr_value(ute, ino, kvl->list[0]);
+	}
+	ut_drop_caches_fully(ute);
+
+	for (size_t i = 0; i < nfiles; ++i) {
+		ino = ino_arr[i];
+		ut_listxattr(ute, ino, kvl);
+		ut_removexattr(ute, ino, kvl->list[0]);
+	}
+	for (size_t i = 0; i < nfiles; ++i) {
+		ino = ino_arr[i];
+		ut_getxattr_nodata(ute, ino, kvl->list[0]);
+	}
+	for (size_t i = 0; i < nfiles; ++i) {
+		fname = ut_make_name(ute, dname, i);
+		ut_unlink(ute, dino, fname);
+	}
+	ut_rmdir_at_root(ute, dname);
+}
+
+static void ut_xattr_nfiles(struct ut_env *ute)
+{
+	ut_xattr_nfiles_(ute, 10, 10, 100);
+	ut_xattr_nfiles_(ute, SILOFS_BTREE_NODE_NCHILDS, 100, 10);
+	ut_xattr_nfiles_(ute, SILOFS_BTREE_NODE_NCHILDS + 1, 101, 11);
+	ut_xattr_nfiles_(ute, 2 * SILOFS_BTREE_NODE_NCHILDS, 10, 10);
+	ut_xattr_nfiles_(ute, SILOFS_SPNODE_NREFS, 100, 10);
+	ut_xattr_nfiles_(ute, SILOFS_SPNODE_NREFS + 1, 111, 111);
+	ut_xattr_nfiles_(ute, 2 * SILOFS_SPNODE_NREFS, 100, 100);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 static const struct ut_testdef ut_local_tests[] = {
 	UT_DEFTEST1(ut_xattr_simple),       //
 	UT_DEFTEST(ut_xattr_any_value),     //
@@ -566,6 +619,7 @@ static const struct ut_testdef ut_local_tests[] = {
 	UT_DEFTEST(ut_xattr_replace),       //
 	UT_DEFTEST(ut_xattr_replace_multi), //
 	UT_DEFTEST(ut_xattr_with_io),       //
+	UT_DEFTEST(ut_xattr_nfiles),        //
 };
 
 const struct ut_testdefs ut_tdefs_xattr = UT_MKTESTS(ut_local_tests);

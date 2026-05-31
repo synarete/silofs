@@ -115,6 +115,18 @@ pni_detach_viewx(struct silofs_pnode_info *pni, struct silofs_alloc *alloc)
 	silofs_ni_detach_viewx(&pni->pn_base, alloc);
 }
 
+static void pni_mark_prepared(struct silofs_pnode_info *pni)
+{
+	pni->pn_base.dqe.epoch = UINT64_MAX / 2;
+}
+
+static bool pni_is_prepared(const struct silofs_pnode_info *pni)
+{
+	const uint64_t epoch = pni->pn_base.dqe.epoch;
+
+	return (epoch == (UINT64_MAX / 2)) && pni_has_pviewx(pni);
+}
+
 static const struct silofs_blobid *bti_blobid(struct silofs_btnode_info *bti)
 {
 	return silofs_pni_blobid(&bti->btn_pni);
@@ -984,11 +996,6 @@ static void dsc_fini(struct silofs_destage_ctx *ds_ctx)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void dsc_next_epoch(struct silofs_destage_ctx *ds_ctx)
-{
-	ds_ctx->drq->drq_epoch += 1;
-}
-
 static int dsc_stage_btnode(const struct silofs_destage_ctx *ds_ctx,
                             const struct silofs_pnptr *pnptr,
                             struct silofs_btnode_info **out_bti)
@@ -1093,28 +1100,14 @@ static int dsc_update_pnode_parent(const struct silofs_destage_ctx *ds_ctx,
 	return err;
 }
 
-static bool dsc_already_prepared_pnode(const struct silofs_destage_ctx *ds_ctx,
-                                       const struct silofs_pnode_info *pni)
-{
-	bool ret = false;
-
-	if (pni_has_pviewx(pni)) {
-		const uint64_t cur_epoch = ds_ctx->drq->drq_epoch;
-		const uint64_t pni_epoch = pni->pn_base.dqe.epoch;
-
-		ret = (pni_epoch < cur_epoch);
-	}
-	return ret;
-}
-
 static int dsc_prepare_pnode(const struct silofs_destage_ctx *ds_ctx,
                              struct silofs_pnode_info *pni)
 {
 	struct silofs_pnptr pnptr;
 	int err = 0;
 
-	if (dsc_already_prepared_pnode(ds_ctx, pni)) {
-		goto out; /* OK -- already set */
+	if (pni_is_prepared(pni)) {
+		goto out; /* OK -- already set and sealed */
 	}
 	err = dsc_attach_pviewx(ds_ctx, pni);
 	if (err) {
@@ -1132,6 +1125,7 @@ static int dsc_prepare_pnode(const struct silofs_destage_ctx *ds_ctx,
 		goto out;
 	}
 	pni_update_ctag_by(pni, &pnptr);
+	pni_mark_prepared(pni);
 out:
 	return err;
 }
@@ -1148,15 +1142,8 @@ static int dsc_prepare_pnodes(struct silofs_destage_ctx *ds_ctx)
 
 static int dsc_populate_prepare_pnodes(struct silofs_destage_ctx *ds_ctx)
 {
-	int err;
-
 	dsc_populate_dsq(ds_ctx);
-	err = dsc_prepare_pnodes(ds_ctx);
-	if (err) {
-		return err;
-	}
-	dsc_next_epoch(ds_ctx);
-	return 0;
+	return dsc_prepare_pnodes(ds_ctx);
 }
 
 static int dsc_cleanup_pnode(const struct silofs_destage_ctx *ds_ctx,
@@ -1410,15 +1397,8 @@ static int dsc_prepare_vnodes(struct silofs_destage_ctx *ds_ctx)
 
 static int dsc_populate_prepare_vnodes(struct silofs_destage_ctx *ds_ctx)
 {
-	int err;
-
 	dsc_populate_dsq(ds_ctx);
-	err = dsc_prepare_vnodes(ds_ctx);
-	if (err) {
-		return err;
-	}
-	dsc_next_epoch(ds_ctx);
-	return 0;
+	return dsc_prepare_vnodes(ds_ctx);
 }
 
 static int compare_vnodes_by_paddr(const struct silofs_dq_elem *dqe1,

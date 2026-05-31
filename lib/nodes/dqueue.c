@@ -68,7 +68,7 @@ void silofs_dqe_markdirty(struct silofs_dq_elem *dqe)
 		dirtyq_append(dqe->drq, dqe);
 		dqe->in_drq = true;
 	}
-	dqe->epoch = dqe->drq->drq_epoch;
+	dqe->epoch = silofs_min_u64(dqe->epoch + 1, UINT64_MAX / 2);
 }
 
 void silofs_dqe_cleardirty(struct silofs_dq_elem *dqe)

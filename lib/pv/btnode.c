@@ -677,10 +677,10 @@ silofs_bti_self(const struct silofs_btnode_info *bti)
 	return silofs_pni_self(&bti->btn_pni);
 }
 
-void silofs_bti_get_self(const struct silofs_btnode_info *bti,
-                         struct silofs_pnptr *out_pnptr)
+void silofs_bti_set_parent(struct silofs_btnode_info *bti,
+                           const struct silofs_pnptr *parent)
 {
-	silofs_pnptr_assign(out_pnptr, silofs_bti_self(bti));
+	silofs_pni_set_parent(&bti->btn_pni, parent);
 }
 
 void silofs_bti_incref(struct silofs_btnode_info *bti)

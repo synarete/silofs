@@ -31,6 +31,7 @@ struct silofs_dq_elem {
 	struct silofs_list_head drq_lh;
 	struct silofs_list_head dsq_lh;
 	struct silofs_dirtyq   *drq;
+	uint64_t                epoch;
 	uint32_t                sz;
 	bool                    in_drq;
 	bool                    in_dsq;
@@ -40,6 +41,7 @@ struct silofs_dq_elem {
 struct silofs_dirtyq {
 	struct silofs_listq drq;
 	size_t              drq_accum;
+	uint64_t            drq_epoch;
 };
 
 /* de-stage elements' queue */

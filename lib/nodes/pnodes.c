@@ -187,7 +187,11 @@ silofs_pni_parent(const struct silofs_pnode_info *pni)
 void silofs_pni_set_parent(struct silofs_pnode_info *pni,
                            const struct silofs_pnptr *paddr)
 {
-	silofs_pnptr_assign(&pni->pn_parent, paddr);
+	if (paddr != nullptr) {
+		silofs_pnptr_assign(&pni->pn_parent, paddr);
+	} else {
+		silofs_pnptr_reset(&pni->pn_parent);
+	}
 }
 
 void silofs_pni_update_ctag(struct silofs_pnode_info *pni,

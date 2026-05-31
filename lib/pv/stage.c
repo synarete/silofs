@@ -57,8 +57,16 @@ static bool pni_isuber(const struct silofs_pnode_info *pni)
 static bool pni_is_parent_uber(const struct silofs_pnode_info *pni)
 {
 	const struct silofs_pnptr *parent = silofs_pni_parent(pni);
+	const enum silofs_ptype ptype     = parent->paddr.ptype;
+	bool ret;
 
-	return ptype_isuber(parent->paddr.ptype);
+	if (ptype_isuber(ptype)) {
+		ret = true;
+	} else {
+		silofs_assert_eq(ptype, SILOFS_PTYPE_BTNODE);
+		ret = false;
+	}
+	return ret;
 }
 
 static const struct silofs_pview * //
@@ -932,7 +940,7 @@ struct silofs_destage_ctx {
 	struct silofs_destageq dsq;
 	struct silofs_pexec_ctx *pexec;
 	struct silofs_alloc *alloc;
-	const struct silofs_dirtyq *drq;
+	struct silofs_dirtyq *drq;
 	struct silofs_uber_info *ubi;
 	struct silofs_dstor *dstor;
 	bool cleardirty;
@@ -976,6 +984,11 @@ static void dsc_fini(struct silofs_destage_ctx *ds_ctx)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static void dsc_next_epoch(struct silofs_destage_ctx *ds_ctx)
+{
+	ds_ctx->drq->drq_epoch += 1;
+}
+
 static int dsc_stage_btnode(const struct silofs_destage_ctx *ds_ctx,
                             const struct silofs_pnptr *pnptr,
                             struct silofs_btnode_info **out_bti)
@@ -996,13 +1009,20 @@ static void dsc_depopulate_dsq(struct silofs_destage_ctx *ds_ctx)
 static int dsc_attach_pviewx(const struct silofs_destage_ctx *ds_ctx,
                              struct silofs_pnode_info *pni)
 {
-	return pni_attach_viewx(pni, ds_ctx->alloc);
+	int ret = 0;
+
+	if (!pni_has_pviewx(pni)) {
+		ret = pni_attach_viewx(pni, ds_ctx->alloc);
+	}
+	return ret;
 }
 
 static void dsc_detach_pviewx(const struct silofs_destage_ctx *ds_ctx,
                               struct silofs_pnode_info *pni)
 {
-	pni_detach_viewx(pni, ds_ctx->alloc);
+	if (pni_has_pviewx(pni)) {
+		pni_detach_viewx(pni, ds_ctx->alloc);
+	}
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1073,13 +1093,27 @@ static int dsc_update_pnode_parent(const struct silofs_destage_ctx *ds_ctx,
 	return err;
 }
 
+static bool dsc_already_prepared_pnode(const struct silofs_destage_ctx *ds_ctx,
+                                       const struct silofs_pnode_info *pni)
+{
+	bool ret = false;
+
+	if (pni_has_pviewx(pni)) {
+		const uint64_t cur_epoch = ds_ctx->drq->drq_epoch;
+		const uint64_t pni_epoch = pni->pn_base.dqe.epoch;
+
+		ret = (pni_epoch < cur_epoch);
+	}
+	return ret;
+}
+
 static int dsc_prepare_pnode(const struct silofs_destage_ctx *ds_ctx,
                              struct silofs_pnode_info *pni)
 {
 	struct silofs_pnptr pnptr;
 	int err = 0;
 
-	if (pni_has_pviewx(pni)) {
+	if (dsc_already_prepared_pnode(ds_ctx, pni)) {
 		goto out; /* OK -- already set */
 	}
 	err = dsc_attach_pviewx(ds_ctx, pni);
@@ -1114,8 +1148,15 @@ static int dsc_prepare_pnodes(struct silofs_destage_ctx *ds_ctx)
 
 static int dsc_populate_prepare_pnodes(struct silofs_destage_ctx *ds_ctx)
 {
+	int err;
+
 	dsc_populate_dsq(ds_ctx);
-	return dsc_prepare_pnodes(ds_ctx);
+	err = dsc_prepare_pnodes(ds_ctx);
+	if (err) {
+		return err;
+	}
+	dsc_next_epoch(ds_ctx);
+	return 0;
 }
 
 static int dsc_cleanup_pnode(const struct silofs_destage_ctx *ds_ctx,
@@ -1218,23 +1259,31 @@ static int dsc_commit_pnodes(struct silofs_destage_ctx *ds_ctx)
 	return silofs_destageq_foreach(&ds_ctx->dsq, commit_pnode_by, ds_ctx);
 }
 
+static int dsc_destage_pnodes(struct silofs_destage_ctx *ds_ctx)
+{
+	int err;
+
+	err = dsc_pre_commit_pnodes(ds_ctx);
+	if (err) {
+		goto out;
+	}
+	err = dsc_commit_pnodes(ds_ctx);
+	if (err) {
+		goto out;
+	}
+	ds_ctx->cleardirty = true;
+out:
+	dsc_cleanup_depopulate_pnodes(ds_ctx);
+	return err;
+}
+
 static int destage_pnodes(struct silofs_pexec_ctx *pexec)
 {
 	struct silofs_destage_ctx ds_ctx;
 	int err;
 
 	dsc_initp(&ds_ctx, pexec);
-	err = dsc_pre_commit_pnodes(&ds_ctx);
-	if (err) {
-		goto out;
-	}
-	err = dsc_commit_pnodes(&ds_ctx);
-	if (err) {
-		goto out;
-	}
-	ds_ctx.cleardirty = true;
-out:
-	dsc_cleanup_depopulate_pnodes(&ds_ctx);
+	err = dsc_destage_pnodes(&ds_ctx);
 	dsc_fini(&ds_ctx);
 	return err;
 }
@@ -1244,13 +1293,20 @@ out:
 static int dsc_attach_lviewx(const struct silofs_destage_ctx *ds_ctx,
                              struct silofs_vnode_info *vni)
 {
-	return vni_attach_viewx(vni, ds_ctx->alloc);
+	int ret = 0;
+
+	if (!vni_has_lviewx(vni)) {
+		ret = vni_attach_viewx(vni, ds_ctx->alloc);
+	}
+	return ret;
 }
 
 static void dsc_detach_lviewx(const struct silofs_destage_ctx *ds_ctx,
                               struct silofs_vnode_info *vni)
 {
-	vni_detach_viewx(vni, ds_ctx->alloc);
+	if (vni_has_lviewx(vni)) {
+		vni_detach_viewx(vni, ds_ctx->alloc);
+	}
 }
 
 static int dsc_resolve_vnode(const struct silofs_destage_ctx *ds_ctx,
@@ -1321,9 +1377,6 @@ static int dsc_prepare_vnode(const struct silofs_destage_ctx *ds_ctx,
 	struct silofs_pnptr pnptr_cur, pnptr_alt;
 	int err = 0;
 
-	if (vni_has_lviewx(vni)) {
-		goto out; /* OK -- already set */
-	}
 	err = dsc_resolve_vnode(ds_ctx, vni, &pnptr_cur);
 	if (err) {
 		goto out;
@@ -1357,8 +1410,15 @@ static int dsc_prepare_vnodes(struct silofs_destage_ctx *ds_ctx)
 
 static int dsc_populate_prepare_vnodes(struct silofs_destage_ctx *ds_ctx)
 {
+	int err;
+
 	dsc_populate_dsq(ds_ctx);
-	return dsc_prepare_vnodes(ds_ctx);
+	err = dsc_prepare_vnodes(ds_ctx);
+	if (err) {
+		return err;
+	}
+	dsc_next_epoch(ds_ctx);
+	return 0;
 }
 
 static int compare_vnodes_by_paddr(const struct silofs_dq_elem *dqe1,
@@ -1434,23 +1494,31 @@ static int dsc_commit_vnodes(struct silofs_destage_ctx *ds_ctx)
 	return silofs_destageq_foreach(&ds_ctx->dsq, commit_vnode_by, ds_ctx);
 }
 
+static int dsc_destage_vnodes(struct silofs_destage_ctx *ds_ctx)
+{
+	int err;
+
+	err = dsc_pre_commit_vnodes(ds_ctx);
+	if (err) {
+		goto out;
+	}
+	err = dsc_commit_vnodes(ds_ctx);
+	if (err) {
+		goto out;
+	}
+	ds_ctx->cleardirty = true;
+out:
+	dsc_cleanup_depopulate_vnodes(ds_ctx);
+	return err;
+}
+
 static int destage_vnodes(struct silofs_pexec_ctx *pexec)
 {
 	struct silofs_destage_ctx ds_ctx;
 	int err;
 
 	dsc_initv(&ds_ctx, pexec);
-	err = dsc_pre_commit_vnodes(&ds_ctx);
-	if (err) {
-		goto out;
-	}
-	err = dsc_commit_vnodes(&ds_ctx);
-	if (err) {
-		goto out;
-	}
-	ds_ctx.cleardirty = true;
-out:
-	dsc_cleanup_depopulate_vnodes(&ds_ctx);
+	err = dsc_destage_vnodes(&ds_ctx);
 	dsc_fini(&ds_ctx);
 	return err;
 }

@@ -51,6 +51,7 @@ pni_init(struct silofs_pnode_info *pni, const struct silofs_pnptr *pnptr)
 	silofs_ni_init(&pni->pn_base, psize);
 	silofs_pnptr_assign(&pni->pn_self, pnptr);
 	silofs_pnptr_reset(&pni->pn_parent);
+	silofs_ctag_reset(&pni->pn_ctag);
 	silofs_list_head_init(&pni->pn_dsq_lh);
 	silofs_hkey_by_paddr(&pni->pn_base.hmqe.hme_key, &pni->pn_self.paddr);
 	pni->pn_flags = SILOFS_PNODEF_NONE;
@@ -60,6 +61,7 @@ static void pni_fini(struct silofs_pnode_info *pni)
 {
 	silofs_pnptr_reset(&pni->pn_self);
 	silofs_pnptr_reset(&pni->pn_parent);
+	silofs_ctag_reset(&pni->pn_ctag);
 	silofs_list_head_fini(&pni->pn_dsq_lh);
 	silofs_ni_fini(&pni->pn_base);
 }
@@ -197,7 +199,12 @@ void silofs_pni_set_parent(struct silofs_pnode_info *pni,
 void silofs_pni_update_ctag(struct silofs_pnode_info *pni,
                             const struct silofs_ctag *ctag)
 {
-	silofs_nmeta_update(&pni->pn_self.nmeta, ctag);
+	silofs_ctag_assign(&pni->pn_ctag, ctag);
+}
+
+void silofs_pni_apply_ctag(struct silofs_pnode_info *pni)
+{
+	silofs_nmeta_update(&pni->pn_self.nmeta, &pni->pn_ctag);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

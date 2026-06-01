@@ -164,13 +164,15 @@ compare(const struct silofs_list_functor *fn,
  */
 static struct silofs_list_head *
 list_merge(struct silofs_list_head *lst_a, struct silofs_list_head *lst_b,
-           const struct silofs_list_functor *cmp)
+           const struct silofs_list_functor *cmp_fn)
 {
 	struct silofs_list_head result = {};
 	struct silofs_list_head *tail  = &result;
 
 	while ((lst_a != nullptr) && (lst_b != nullptr)) {
-		if (compare(cmp, lst_a, lst_b) <= 0) {
+		const int cmp = compare(cmp_fn, lst_a, lst_b);
+
+		if (cmp <= 0) {
 			tail->next = lst_a;
 			lst_a      = lst_a->next;
 		} else {

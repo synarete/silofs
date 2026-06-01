@@ -31,7 +31,6 @@ void silofs_dqe_init(struct silofs_dq_elem *dqe, size_t sz)
 	silofs_list_head_init(&dqe->drq_lh);
 	silofs_list_head_init(&dqe->dsq_lh);
 	dqe->drq    = nullptr;
-	dqe->epoch  = 0;
 	dqe->sz     = (uint32_t)sz;
 	dqe->in_drq = false;
 	dqe->in_dsq = false;
@@ -68,7 +67,6 @@ void silofs_dqe_markdirty(struct silofs_dq_elem *dqe)
 		dirtyq_append(dqe->drq, dqe);
 		dqe->in_drq = true;
 	}
-	dqe->epoch = silofs_min_u64(dqe->epoch + 1, UINT64_MAX / 2);
 }
 
 void silofs_dqe_cleardirty(struct silofs_dq_elem *dqe)
@@ -79,7 +77,6 @@ void silofs_dqe_cleardirty(struct silofs_dq_elem *dqe)
 		dirtyq_remove(dqe->drq, dqe);
 		dqe->in_drq = false;
 	}
-	dqe->epoch = 0;
 }
 
 bool silofs_dqe_isdirty(const struct silofs_dq_elem *dqe)

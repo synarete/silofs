@@ -31,7 +31,6 @@ struct silofs_dq_elem {
 	struct silofs_list_head drq_lh;
 	struct silofs_list_head dsq_lh;
 	struct silofs_dirtyq   *drq;
-	uint64_t                epoch;
 	uint32_t                sz;
 	bool                    in_drq;
 	bool                    in_dsq;
@@ -41,7 +40,6 @@ struct silofs_dq_elem {
 struct silofs_dirtyq {
 	struct silofs_listq drq;
 	size_t              drq_accum;
-	uint64_t            drq_epoch;
 };
 
 /* de-stage elements' queue */
@@ -368,6 +366,7 @@ struct silofs_pnode_info {
 	struct silofs_node_info pn_base;
 	struct silofs_pnptr     pn_self;
 	struct silofs_pnptr     pn_parent;
+	struct silofs_ctag      pn_ctag;
 	struct silofs_list_head pn_dsq_lh;
 	unsigned int            pn_flags;
 };
@@ -447,6 +446,8 @@ silofs_pni_from_ni(const struct silofs_node_info *ni);
 
 void silofs_pni_update_ctag(struct silofs_pnode_info *pni,
                             const struct silofs_ctag *ctag);
+
+void silofs_pni_apply_ctag(struct silofs_pnode_info *pni);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

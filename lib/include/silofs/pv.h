@@ -318,6 +318,9 @@ void silofs_ubi_cleardirty(struct silofs_uber_info *ubi);
 
 void silofs_ubi_update_spawned(struct silofs_uber_info *ubi);
 
+bool silofs_ubi_has_btroot(const struct silofs_uber_info *ubi,
+                           const struct silofs_pnptr     *pnptr);
+
 void silofs_ubi_set_btroot(struct silofs_uber_info   *ubi,
                            const struct silofs_pnptr *pnptr);
 

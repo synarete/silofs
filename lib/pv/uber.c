@@ -421,7 +421,7 @@ static enum silofs_vtype vspace_of(const struct silofs_pnptr *pnptr)
 	return pnptr->paddr.blobid.stype.vtype;
 }
 
-static bool ubi_has_btroot(const struct silofs_uber_info *ubi,
+bool silofs_ubi_has_btroot(const struct silofs_uber_info *ubi,
                            const struct silofs_pnptr *pnptr)
 {
 	struct silofs_pnptr root_pnptr = {};
@@ -433,7 +433,7 @@ static bool ubi_has_btroot(const struct silofs_uber_info *ubi,
 void silofs_ubi_set_btroot(struct silofs_uber_info *ubi,
                            const struct silofs_pnptr *pnptr)
 {
-	if (!ubi_has_btroot(ubi, pnptr)) {
+	if (!silofs_ubi_has_btroot(ubi, pnptr)) {
 		ubi_set_btroot(ubi, vspace_of(pnptr), pnptr);
 	}
 }

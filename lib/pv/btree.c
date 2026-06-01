@@ -23,9 +23,16 @@
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static const struct silofs_pnptr *ubi_self(const struct silofs_uber_info *ubi)
+static const struct silofs_pnptr * //
+ubi_self(const struct silofs_uber_info *ubi)
 {
 	return silofs_pni_self(&ubi->ub_pni);
+}
+
+static void ubi_get_self(const struct silofs_uber_info *ubi,
+                         struct silofs_pnptr *out_pnptr)
+{
+	silofs_pnptr_assign(out_pnptr, ubi_self(ubi));
 }
 
 static const struct silofs_pnptr *
@@ -34,10 +41,16 @@ bti_self(const struct silofs_btnode_info *bti)
 	return silofs_bti_self(bti);
 }
 
+static bool bti_is_self(const struct silofs_btnode_info *bti,
+                        const struct silofs_pnptr *pnptr)
+{
+	return silofs_pnptr_isequal(bti_self(bti), pnptr);
+}
+
 static void bti_get_self(const struct silofs_btnode_info *bti,
                          struct silofs_pnptr *out_pnptr)
 {
-	silofs_pnptr_assign(out_pnptr, silofs_bti_self(bti));
+	silofs_pnptr_assign(out_pnptr, bti_self(bti));
 }
 
 static void bti_incref(struct silofs_btnode_info *bti)
@@ -237,9 +250,20 @@ static void btc_path_replace_at(struct silofs_btree_ctx *btc, size_t slot,
 static struct silofs_btnode_info *
 btc_path_last(const struct silofs_btree_ctx *btc)
 {
-	silofs_assert_gt(btc->bpath.cnt, 0);
+	silofs_assert_ge(btc->bpath.cnt, 1);
 
 	return bpath_at(&btc->bpath, btc->bpath.cnt - 1);
+}
+
+static struct silofs_btnode_info *
+btc_path_prelast(const struct silofs_btree_ctx *btc)
+{
+	struct silofs_btnode_info *bti = nullptr;
+
+	if (btc->bpath.cnt >= 2) {
+		bti = bpath_at(&btc->bpath, btc->bpath.cnt - 2);
+	}
+	return bti;
 }
 
 static void
@@ -374,7 +398,7 @@ static int btc_stage_child_btnode(const struct silofs_btree_ctx *btc,
 	return 0;
 }
 
-static int btc_stage_full_path(struct silofs_btree_ctx *btc)
+static int btc_stage_path_to_leaf(struct silofs_btree_ctx *btc)
 {
 	struct silofs_btnode_info *bti = btc_path_front(btc);
 	size_t height;
@@ -392,7 +416,33 @@ static int btc_stage_full_path(struct silofs_btree_ctx *btc)
 	return 0;
 }
 
-static int btc_stage_path(struct silofs_btree_ctx *btc)
+static int btc_stage_path_to_node(struct silofs_btree_ctx *btc,
+                                  const struct silofs_pnptr *pnptr)
+{
+	struct silofs_btnode_info *bti = btc_path_front(btc);
+	size_t height;
+	int err = 0;
+
+	if (bti_is_self(bti, pnptr)) {
+		return 0;
+	}
+	height = silofs_bti_height(bti);
+	while (height > SILOFS_BTREE_HEIGHT_MIN) {
+		err = btc_stage_child_btnode(btc, bti, &bti);
+		if (err) {
+			return err;
+		}
+		btc_path_append(btc, bti);
+		if (bti_is_self(bti, pnptr)) {
+			return 0;
+		}
+		height = silofs_bti_height(bti);
+	}
+	return -SILOFS_ENOENT;
+}
+
+static int
+btc_stage_path(struct silofs_btree_ctx *btc, const struct silofs_pnptr *pnptr)
 {
 	int err;
 
@@ -400,11 +450,12 @@ static int btc_stage_path(struct silofs_btree_ctx *btc)
 	if (err) {
 		return err;
 	}
-	err = btc_stage_full_path(btc);
-	if (err) {
-		return err;
+	if (pnptr == nullptr) {
+		err = btc_stage_path_to_leaf(btc);
+	} else {
+		err = btc_stage_path_to_node(btc, pnptr);
 	}
-	return 0;
+	return err;
 }
 
 static void btc_refresh_parents(const struct silofs_btree_ctx *btc)
@@ -424,7 +475,7 @@ static int btc_stage_and_refresh(struct silofs_btree_ctx *btc)
 {
 	int err;
 
-	err = btc_stage_path(btc);
+	err = btc_stage_path(btc, nullptr);
 	if (err) {
 		return err;
 	}
@@ -432,8 +483,16 @@ static int btc_stage_and_refresh(struct silofs_btree_ctx *btc)
 	return 0;
 }
 
-static int btc_stage_btleaf(struct silofs_btree_ctx *btc,
-                            struct silofs_btnode_info **out_bti)
+static int btc_last_btnode(const struct silofs_btree_ctx *btc,
+                           struct silofs_btnode_info **out_bti)
+{
+	*out_bti = btc_path_last(btc);
+
+	return (*out_bti == nullptr) ? -SILOFS_ENOENT : 0;
+}
+
+static int btc_resolve_stage_btleaf(struct silofs_btree_ctx *btc,
+                                    struct silofs_btnode_info **out_bti)
 {
 	int err;
 
@@ -442,12 +501,20 @@ static int btc_stage_btleaf(struct silofs_btree_ctx *btc,
 		silofs_assert_ok(err);
 		return err;
 	}
+	return btc_last_btnode(btc, out_bti);
+}
 
-	*out_bti = btc_path_last(btc);
-	if (*out_bti == nullptr) {
-		return -SILOFS_ENOENT;
+static int btc_resolve_stage_btnode(struct silofs_btree_ctx *btc,
+                                    const struct silofs_pnptr *pnptr,
+                                    struct silofs_btnode_info **out_bti)
+{
+	int err;
+
+	err = btc_stage_path(btc, pnptr);
+	if (err) {
+		return err;
 	}
-	return 0;
+	return btc_last_btnode(btc, out_bti);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -761,7 +828,7 @@ btc_resolve_vtop(struct silofs_btree_ctx *btc, struct silofs_pnptr *out_pnptr)
 	struct silofs_btnode_info *bti = nullptr;
 	int err;
 
-	err = btc_stage_btleaf(btc, &bti);
+	err = btc_resolve_stage_btleaf(btc, &bti);
 	if (err) {
 		return err;
 	}
@@ -778,7 +845,7 @@ static int btc_resolve_btleaf(struct silofs_btree_ctx *btc,
 	struct silofs_btnode_info *bti = nullptr;
 	int err;
 
-	err = btc_stage_btleaf(btc, &bti);
+	err = btc_resolve_stage_btleaf(btc, &bti);
 	if (err) {
 		return err;
 	}
@@ -786,11 +853,38 @@ static int btc_resolve_btleaf(struct silofs_btree_ctx *btc,
 	return 0;
 }
 
+static void btc_parent_by_path(struct silofs_btree_ctx *btc,
+                               struct silofs_pnptr *out_pnptr)
+{
+	struct silofs_btnode_info *bti = btc_path_prelast(btc);
+
+	if (bti != nullptr) {
+		bti_get_self(bti, out_pnptr);
+	} else {
+		ubi_get_self(btc->ubi, out_pnptr);
+	}
+}
+
+static int btc_resolve_parent(struct silofs_btree_ctx *btc,
+                              const struct silofs_pnptr *pnptr,
+                              struct silofs_pnptr *out_pnptr)
+{
+	struct silofs_btnode_info *bti = nullptr;
+	int err;
+
+	err = btc_resolve_stage_btnode(btc, pnptr, &bti);
+	if (err) {
+		return err;
+	}
+	btc_parent_by_path(btc, out_pnptr);
+	return 0;
+}
+
 static int btc_require_cap_insert(struct silofs_btree_ctx *btc)
 {
 	int err;
 
-	err = btc_stage_path(btc);
+	err = btc_stage_path(btc, nullptr);
 	if (err) {
 		return err;
 	}
@@ -837,7 +931,7 @@ static int btc_require_cap_update(struct silofs_btree_ctx *btc)
 {
 	int err;
 
-	err = btc_stage_path(btc);
+	err = btc_stage_path(btc, nullptr);
 	if (err) {
 		return err;
 	}
@@ -880,7 +974,7 @@ static int btc_require_cap_remove(struct silofs_btree_ctx *btc)
 {
 	int err;
 
-	err = btc_stage_path(btc);
+	err = btc_stage_path(btc, nullptr);
 	if (err) {
 		return err;
 	}
@@ -915,6 +1009,20 @@ static int btc_remove_vtop(struct silofs_btree_ctx *btc)
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+int silofs_resolve_vtop_parent(struct silofs_pexec_ctx *pexec,
+                               const struct silofs_vaddr *vaddr,
+                               const struct silofs_pnptr *pnptr,
+                               struct silofs_pnptr *out_pnptr)
+{
+	struct silofs_btree_ctx btc;
+	int err;
+
+	btc_init(&btc, pexec, vaddr);
+	err = btc_resolve_parent(&btc, pnptr, out_pnptr);
+	btc_fini(&btc);
+	return err;
+}
 
 int silofs_resolve_vtop_btleaf(struct silofs_pexec_ctx *pexec,
                                const struct silofs_vaddr *vaddr,

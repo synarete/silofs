@@ -261,6 +261,8 @@ size_t silofs_bti_height(const struct silofs_btnode_info *bti);
 
 void silofs_bti_set_height(struct silofs_btnode_info *bti, size_t height);
 
+uint64_t silofs_bti_minkey(const struct silofs_btnode_info *bti);
+
 int silofs_bti_resolve(const struct silofs_btnode_info *bti, uint64_t key,
                        struct silofs_pnptr *out_pnptr);
 
@@ -478,6 +480,11 @@ struct silofs_pexec_ctx {
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* btree (mapping) */
+
+int silofs_resolve_vtop_parent(struct silofs_pexec_ctx   *pexec,
+                               const struct silofs_vaddr *vaddr,
+                               const struct silofs_pnptr *pnptr,
+                               struct silofs_pnptr       *out_pnptr);
 
 int silofs_resolve_vtop_btleaf(struct silofs_pexec_ctx   *pexec,
                                const struct silofs_vaddr *vaddr,

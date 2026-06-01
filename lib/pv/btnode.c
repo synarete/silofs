@@ -177,6 +177,16 @@ static void btn_remove_key_at(struct silofs_btree_node *btn, size_t slot)
 	btn_dec_nkeys(btn);
 }
 
+static uint64_t btn_minkey(const struct silofs_btree_node *btn)
+{
+	uint64_t key_min = UINT64_MAX;
+
+	if (btn_nkeys(btn) > 0) {
+		key_min = btn_key_at(btn, 0);
+	}
+	return key_min;
+}
+
 static size_t btn_nchilds(const struct silofs_btree_node *btn)
 {
 	return silofs_le16_to_cpu(btn->btn_nchilds);
@@ -764,6 +774,11 @@ void silofs_bti_set_height(struct silofs_btnode_info *bti, size_t height)
 {
 	btn_set_height(bti->btn, height);
 	bti_markdirty(bti);
+}
+
+uint64_t silofs_bti_minkey(const struct silofs_btnode_info *bti)
+{
+	return btn_minkey(bti->btn);
 }
 
 static size_t bti_nkeys(const struct silofs_btnode_info *bti)

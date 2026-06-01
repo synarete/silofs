@@ -253,7 +253,7 @@ enum silofs_vtype silofs_bti_vspace(const struct silofs_btnode_info *bti);
 void silofs_bti_set_vspace(struct silofs_btnode_info *bti,
                            enum silofs_vtype          vspace);
 
-void silofs_bti_mark_root(struct silofs_btnode_info *bti);
+void silofs_bti_mark_root(struct silofs_btnode_info *bti, bool root);
 
 bool silofs_bti_marked_root(const struct silofs_btnode_info *bti);
 

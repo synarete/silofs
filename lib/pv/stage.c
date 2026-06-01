@@ -66,21 +66,6 @@ static bool pni_isbtnode(const struct silofs_pnode_info *pni)
 	return ptype_isbtnode(paddr->ptype);
 }
 
-static bool pni_is_parent_uber(const struct silofs_pnode_info *pni)
-{
-	const struct silofs_pnptr *parent = silofs_pni_parent(pni);
-	const enum silofs_ptype ptype     = parent->paddr.ptype;
-	bool ret;
-
-	if (ptype_isuber(ptype)) {
-		ret = true;
-	} else {
-		silofs_assert_eq(ptype, SILOFS_PTYPE_BTNODE);
-		ret = false;
-	}
-	return ret;
-}
-
 static const struct silofs_pview * //
 pni_pviewx(const struct silofs_pnode_info *pni)
 {
@@ -171,6 +156,21 @@ static const struct silofs_paddr * //
 bti_paddr(const struct silofs_btnode_info *bti)
 {
 	return pni_paddr(&bti->btn_pni);
+}
+
+static bool bti_isroot(const struct silofs_btnode_info *bti)
+{
+	return silofs_bti_marked_root(bti);
+}
+
+static bool isbtroot(const struct silofs_pnode_info *pni)
+{
+	bool ret = false;
+
+	if (pni_isbtnode(pni)) {
+		ret = bti_isroot(bti_of(pni));
+	}
+	return ret;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1041,6 +1041,7 @@ static int dsc_stage_btnode(const struct silofs_destage_ctx *ds_ctx,
                             const struct silofs_pnptr *pnptr,
                             struct silofs_btnode_info **out_bti)
 {
+	silofs_assert_eq(pnptr->paddr.ptype, SILOFS_PTYPE_BTNODE);
 	return silofs_stage_btnode(ds_ctx->pexec, pnptr, out_bti);
 }
 
@@ -1148,7 +1149,7 @@ static int dsc_update_pnode_parent(const struct silofs_destage_ctx *ds_ctx,
 {
 	int err;
 
-	if (pni_is_parent_uber(pni)) {
+	if (isbtroot(pni)) {
 		err = dsc_update_parent_uber(ds_ctx, pni);
 		silofs_assert_ok(err);
 	} else {
@@ -1161,26 +1162,21 @@ static int dsc_update_pnode_parent(const struct silofs_destage_ctx *ds_ctx,
 static int dsc_prepare_pnode(const struct silofs_destage_ctx *ds_ctx,
                              struct silofs_pnode_info *pni)
 {
-	struct silofs_ctag ctag;
-	int err = 0;
+	/* XXX rm (start) */
+	if (!pni_isuber(pni)) {
+		const struct silofs_pnptr *parent = pni_parent(pni);
+		const enum silofs_ptype pptype    = parent->paddr.ptype;
+		const uint32_t height             = bti_height(bti_of(pni));
 
-	if (pni_has_pviewx(pni)) {
-		goto out; /* OK -- already set and sealed */
+		silofs_assert_gt(height, 0);
+		silofs_assert_ne(pptype, SILOFS_PTYPE_NONE);
+		if (!isbtroot(pni)) {
+			silofs_assert_eq(pptype, SILOFS_PTYPE_BTNODE);
+		}
 	}
-	err = dsc_attach_pviewx(ds_ctx, pni);
-	if (err) {
-		goto out;
-	}
-	err = dsc_seal_encrypt_pnode(ds_ctx, pni, &ctag);
-	if (err) {
-		goto out;
-	}
-	if (pni_isuber(pni)) {
-		goto out; /* OK */
-	}
-	pni_update_ctag(pni, &ctag);
-out:
-	return err;
+	/* XXX rm (end) */
+
+	return dsc_attach_pviewx(ds_ctx, pni);
 }
 
 static int prepare_pnode_by(struct silofs_dq_elem *dqe, void *userp)
@@ -1193,10 +1189,27 @@ static int dsc_prepare_pnodes(struct silofs_destage_ctx *ds_ctx)
 	return silofs_destageq_foreach(&ds_ctx->dsq, prepare_pnode_by, ds_ctx);
 }
 
-static int dsc_populate_prepare_pnodes(struct silofs_destage_ctx *ds_ctx)
+static int dsc_secure_pnode(const struct silofs_destage_ctx *ds_ctx,
+                            struct silofs_pnode_info *pni)
 {
-	dsc_populate_dsq(ds_ctx);
-	return dsc_prepare_pnodes(ds_ctx);
+	struct silofs_ctag ctag;
+	int err;
+
+	err = dsc_seal_encrypt_pnode(ds_ctx, pni, &ctag);
+	if (!err && !pni_isuber(pni)) {
+		pni_update_ctag(pni, &ctag);
+	}
+	return err;
+}
+
+static int secure_pnode_by(struct silofs_dq_elem *dqe, void *userp)
+{
+	return dsc_secure_pnode(userp, pni_of(dqe));
+}
+
+static int dsc_secure_pnodes(struct silofs_destage_ctx *ds_ctx)
+{
+	return silofs_destageq_foreach(&ds_ctx->dsq, secure_pnode_by, ds_ctx);
 }
 
 static int dsc_update_pnode(const struct silofs_destage_ctx *ds_ctx,
@@ -1275,31 +1288,34 @@ static void dsc_sort_pnodes(struct silofs_destage_ctx *ds_ctx)
 	silofs_destageq_sort(&ds_ctx->dsq, compare_pnodes);
 }
 
-static int dsc_sort_update_pnodes(struct silofs_destage_ctx *ds_ctx)
-{
-	dsc_sort_pnodes(ds_ctx);
-	return dsc_update_pnodes(ds_ctx);
-}
-
 static int dsc_pre_commit_pnodes(struct silofs_destage_ctx *ds_ctx)
 {
 	int err;
 
-	/* Inject de-stage queue */
-	err = dsc_populate_prepare_pnodes(ds_ctx);
+	/* Populate de-stage queue. */
+	dsc_populate_dsq(ds_ctx);
+
+	/* Prepare each node. */
+	err = dsc_prepare_pnodes(ds_ctx);
 	if (err) {
 		return err;
 	}
-	/* Add newly introduced dirty nodes */
-	err = dsc_populate_prepare_pnodes(ds_ctx);
+
+	/* Sort for destage. */
+	dsc_sort_pnodes(ds_ctx);
+
+	/* Seal and encrypt. */
+	err = dsc_secure_pnodes(ds_ctx);
 	if (err) {
 		return err;
 	}
-	/* Sort and update tags */
-	err = dsc_sort_update_pnodes(ds_ctx);
+
+	/* Update parents. */
+	err = dsc_update_pnodes(ds_ctx);
 	if (err) {
 		return err;
 	}
+
 	return 0;
 }
 
@@ -1617,10 +1633,17 @@ int silofs_destage_dirty_nodes(struct silofs_pexec_ctx *pexec)
 {
 	int err;
 
+	/* Leaf nodes. */
 	err = destage_vnodes(pexec);
 	if (err) {
 		return err;
 	}
+	/* B-tree nodes */
+	err = destage_pnodes(pexec);
+	if (err) {
+		return err;
+	}
+	/* B-tree nodes (internal) */
 	err = destage_pnodes(pexec);
 	if (err) {
 		return err;

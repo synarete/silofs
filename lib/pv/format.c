@@ -84,7 +84,7 @@ fixup_spawned_btroot(const struct silofs_pexec_ctx *pexec,
 
 	silofs_pni_set_parent(&bti->btn_pni, parent);
 	silofs_bti_set_vspace(bti, vtype);
-	silofs_bti_mark_root(bti);
+	silofs_bti_mark_root(bti, true);
 }
 
 static int

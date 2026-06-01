@@ -36,6 +36,16 @@ static void btn_add_flags(struct silofs_btree_node *btn, enum silofs_btnodef f)
 	btn_set_flags(btn, f | btn_flags(btn));
 }
 
+static void btn_rm_flags(struct silofs_btree_node *btn, enum silofs_btnodef f)
+{
+	const enum silofs_btnodef curf = btn_flags(btn);
+	int mask, newf;
+
+	mask = (int)f;
+	newf = (int)curf & ~mask;
+	btn_set_flags(btn, (enum silofs_btnodef)newf);
+}
+
 static enum silofs_vtype btn_vspace(const struct silofs_btree_node *btn)
 {
 	const unsigned vspace = btn->btn_vspace;
@@ -728,9 +738,13 @@ void silofs_bti_set_vspace(struct silofs_btnode_info *bti,
 	bti_markdirty(bti);
 }
 
-void silofs_bti_mark_root(struct silofs_btnode_info *bti)
+void silofs_bti_mark_root(struct silofs_btnode_info *bti, bool root)
 {
-	btn_add_flags(bti->btn, SILOFS_BTNODEF_ROOT);
+	if (root) {
+		btn_add_flags(bti->btn, SILOFS_BTNODEF_ROOT);
+	} else {
+		btn_rm_flags(bti->btn, SILOFS_BTNODEF_ROOT);
+	}
 	bti_markdirty(bti);
 }
 

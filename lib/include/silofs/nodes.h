@@ -576,12 +576,11 @@ struct silofs_spleaf_info {
 struct silofs_vnode_info {
 	struct silofs_lnode_info vn_lni;
 	struct silofs_vaddr      vn_vaddr;
+	struct silofs_paddr      vn_curr_paddr;
 	struct silofs_llink      vn_llink;
 	uint64_t                 vn_magic;
 	int                      vn_asyncwr;
 	bool                     vn_has_pn;
-
-	struct silofs_paddr vn_latest_paddr;
 
 	bool (*isevictable_fn)(const struct silofs_vnode_info *vni);
 };

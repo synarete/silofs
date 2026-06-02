@@ -478,6 +478,15 @@ struct silofs_pexec_ctx {
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* btree (mapping) */
 
+struct silofs_btree_path {
+	struct silofs_btnode_info *bti[SILOFS_BTREE_HEIGHT_MAX];
+	size_t                     cnt;
+};
+
+int silofs_resolve_vtop_bpath(struct silofs_pexec_ctx   *pexec,
+                              const struct silofs_vaddr *vaddr,
+                              struct silofs_btree_path  *out_bpath);
+
 int silofs_resolve_vtop_parent(struct silofs_pexec_ctx   *pexec,
                                const struct silofs_vaddr *vaddr,
                                const struct silofs_pnptr *pnptr,

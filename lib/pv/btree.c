@@ -91,11 +91,6 @@ static bool bti_has_same_layerid(const struct silofs_btnode_info *bti1,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-struct silofs_btree_path {
-	struct silofs_btnode_info *bti[SILOFS_BTREE_HEIGHT_MAX];
-	size_t cnt;
-};
-
 static void bpath_init(struct silofs_btree_path *bpath)
 {
 	for (size_t i = 0; i < ARRAY_SIZE(bpath->bti); ++i) {
@@ -151,6 +146,18 @@ bpath_at(const struct silofs_btree_path *bpath, size_t slot)
 {
 	silofs_assert_lt(slot, bpath->cnt);
 	return bpath->bti[slot];
+}
+
+static void bpath_dup(const struct silofs_btree_path *bpath,
+                      struct silofs_btree_path *other)
+{
+	for (size_t i = 0; i < bpath->cnt; ++i) {
+		other->bti[i] = bpath->bti[i];
+	}
+	other->cnt = bpath->cnt;
+	for (size_t j = other->cnt; j < ARRAY_SIZE(other->bti); ++j) {
+		other->bti[j] = nullptr;
+	}
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -813,6 +820,19 @@ static int btc_resolve_btleaf(struct silofs_btree_ctx *btc,
 	return 0;
 }
 
+static int btc_resolve_bpath(struct silofs_btree_ctx *btc,
+                             struct silofs_btree_path *out_bpath)
+{
+	int err;
+
+	err = btc_stage_leaf_path(btc);
+	if (err) {
+		return err;
+	}
+	bpath_dup(&btc->bpath, out_bpath);
+	return 0;
+}
+
 static void btc_parent_by_path(struct silofs_btree_ctx *btc,
                                struct silofs_pnptr *out_pnptr)
 {
@@ -966,6 +986,19 @@ static int btc_remove_vtop(struct silofs_btree_ctx *btc)
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+int silofs_resolve_vtop_bpath(struct silofs_pexec_ctx *pexec,
+                              const struct silofs_vaddr *vaddr,
+                              struct silofs_btree_path *out_bpath)
+{
+	struct silofs_btree_ctx btc;
+	int err;
+
+	btc_init(&btc, pexec, vaddr);
+	err = btc_resolve_bpath(&btc, out_bpath);
+	btc_fini(&btc);
+	return err;
+}
 
 int silofs_resolve_vtop_parent(struct silofs_pexec_ctx *pexec,
                                const struct silofs_vaddr *vaddr,

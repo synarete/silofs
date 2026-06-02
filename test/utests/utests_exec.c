@@ -26,6 +26,9 @@
 	}
 
 static struct ut_tgroup const g_ut_tgroups[] = {
+	/* XXX */
+	UT_DEFTGRP(ut_tdefs_xattr),
+
 	/* infra + basics */
 	UT_DEFTGRP(ut_tdefs_strings),
 	UT_DEFTGRP(ut_tdefs_avl),

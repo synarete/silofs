@@ -1136,35 +1136,35 @@ static int dsc_update_parent_btnode_at(const struct silofs_destage_ctx *ds_ctx,
 	return 0;
 }
 
-static int dsc_resolve_parent_of(const struct silofs_destage_ctx *ds_ctx,
-                                 const struct silofs_btnode_info *bti,
-                                 struct silofs_pnptr *out_pnptr)
+static int dsc_resolve_btnode_parent(const struct silofs_destage_ctx *ds_ctx,
+                                     const struct silofs_btnode_info *bti,
+                                     struct silofs_pnptr *out_pnptr)
 {
 	struct silofs_vaddr vaddr;
 
 	bti_base_vaddr(bti, &vaddr);
-	return silofs_resolve_vtop_parent(ds_ctx->pexec, &vaddr, bti_self(bti),
-	                                  out_pnptr);
+	return silofs_resolve_vtop_parent(ds_ctx->pexec, &vaddr, //
+	                                  bti_self(bti), out_pnptr);
 }
 
-static int dsc_update_parent_btnode(const struct silofs_destage_ctx *ds_ctx,
-                                    const struct silofs_btnode_info *bti)
+static int dsc_update_parent_of_btnode(const struct silofs_destage_ctx *ds_ctx,
+                                       const struct silofs_btnode_info *bti)
 {
 	const struct silofs_pnptr *cur = bti_self(bti);
 	struct silofs_pnptr parent, alt;
 	int err;
 
-	err = dsc_resolve_parent_of(ds_ctx, bti, &parent);
+	pni_next_self(&bti->btn_pni, &alt);
+	err = dsc_resolve_btnode_parent(ds_ctx, bti, &parent);
 	if (err) {
+		silofs_assert_ok(err);
 		return err;
 	}
-
-	pni_next_self(&bti->btn_pni, &alt);
 	err = dsc_update_parent_btnode_at(ds_ctx, &parent, cur, &alt);
 	if (err) {
+		silofs_assert_ok(err);
 		return err;
 	}
-
 	return 0;
 }
 
@@ -1177,7 +1177,7 @@ static int dsc_update_btnode_parent(const struct silofs_destage_ctx *ds_ctx,
 		err = dsc_update_parent_uber(ds_ctx, &bti->btn_pni);
 		silofs_assert_ok(err);
 	} else {
-		err = dsc_update_parent_btnode(ds_ctx, bti);
+		err = dsc_update_parent_of_btnode(ds_ctx, bti);
 		silofs_assert_ok(err);
 	}
 	return err;

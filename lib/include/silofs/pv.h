@@ -233,9 +233,6 @@ int silofs_validate_bldesc(const struct silofs_bldesc_info *bdi);
 const struct silofs_pnptr *
 silofs_bti_self(const struct silofs_btnode_info *bti);
 
-void silofs_bti_set_parent(struct silofs_btnode_info *bti,
-                           const struct silofs_pnptr *parent);
-
 void silofs_bti_incref(struct silofs_btnode_info *bti);
 
 void silofs_bti_decref(struct silofs_btnode_info *bti);

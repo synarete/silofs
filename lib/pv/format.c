@@ -68,23 +68,13 @@ static int format_uber(struct silofs_pexec_ctx *pexec)
 	return 0;
 }
 
-static const struct silofs_pnptr *
-current_uber_pnptr(const struct silofs_pexec_ctx *pexec)
-{
-	silofs_assert_not_null(pexec->ubref->ubi);
-
-	return silofs_ubi_self(pexec->ubref->ubi);
-}
-
 static void
 fixup_spawned_btroot(const struct silofs_pexec_ctx *pexec,
                      struct silofs_btnode_info *bti, enum silofs_vtype vtype)
 {
-	const struct silofs_pnptr *parent = current_uber_pnptr(pexec);
-
-	silofs_pni_set_parent(&bti->btn_pni, parent);
 	silofs_bti_set_vspace(bti, vtype);
 	silofs_bti_mark_root(bti, true);
+	silofs_unused(pexec);
 }
 
 static int

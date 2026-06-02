@@ -29,15 +29,6 @@ static void btn_set_minkey(struct silofs_btree_node *btn, uint64_t minkey)
 	btn->btn_minkey = silofs_cpu_to_le64(minkey);
 }
 
-static void btn_update_minkey(struct silofs_btree_node *btn, uint64_t minkey)
-{
-	const uint64_t minkey_cur = btn_minkey(btn);
-
-	if (minkey < minkey_cur) {
-		btn_set_minkey(btn, minkey);
-	}
-}
-
 static enum silofs_btnodef btn_flags(const struct silofs_btree_node *btn)
 {
 	const uint32_t f = silofs_le32_to_cpu(btn->btn_flags);
@@ -159,6 +150,16 @@ static void btn_reset_keys(struct silofs_btree_node *btn)
 {
 	for (size_t slot = 0; slot < ARRAY_SIZE(btn->btn_key); ++slot) {
 		btn_reset_key_at(btn, slot);
+	}
+}
+
+static void btn_update_minkey(struct silofs_btree_node *btn, uint64_t key)
+{
+	const size_t nkeys = btn_nkeys(btn);
+	const uint64_t cur = btn_minkey(btn);
+
+	if ((key < cur) || (nkeys <= 1)) {
+		btn_set_minkey(btn, key);
 	}
 }
 
@@ -707,12 +708,6 @@ silofs_bti_self(const struct silofs_btnode_info *bti)
 {
 	silofs_assume_not_null(bti);
 	return silofs_pni_self(&bti->btn_pni);
-}
-
-void silofs_bti_set_parent(struct silofs_btnode_info *bti,
-                           const struct silofs_pnptr *parent)
-{
-	silofs_pni_set_parent(&bti->btn_pni, parent);
 }
 
 void silofs_bti_incref(struct silofs_btnode_info *bti)

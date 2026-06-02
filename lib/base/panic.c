@@ -483,16 +483,15 @@ static const char *basename_of(const char *path)
 static void
 silofs_dump_panic_msg(const char *file, int line, const char *msg, int errnum)
 {
-	const char *base               = nullptr;
-	const char *tag                = "<panic>";
-	const enum silofs_log_level ll = SILOFS_LOG_CRIT;
+	constexpr enum silofs_log_level ll = SILOFS_LOG_CRIT;
+	const char *base;
 
 	silofs_logf(ll, nullptr, 0, " ");
 	base = basename_of(file);
 	if (errnum) {
-		silofs_logf(ll, base, line, "%s %s %d", tag, msg, errnum);
+		silofs_logf(ll, base, line, "[panic] %s %d", msg, errnum);
 	} else {
-		silofs_logf(ll, base, line, "%s %s", tag, msg);
+		silofs_logf(ll, base, line, "[panic] %s", msg);
 	}
 	silofs_logf(ll, nullptr, 0, " ");
 }

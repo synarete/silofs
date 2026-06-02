@@ -19,6 +19,25 @@
 #include <silofs/addr.h>
 #include <silofs/pv.h>
 
+static uint64_t btn_minkey(const struct silofs_btree_node *btn)
+{
+	return silofs_le64_to_cpu(btn->btn_minkey);
+}
+
+static void btn_set_minkey(struct silofs_btree_node *btn, uint64_t minkey)
+{
+	btn->btn_minkey = silofs_cpu_to_le64(minkey);
+}
+
+static void btn_update_minkey(struct silofs_btree_node *btn, uint64_t minkey)
+{
+	const uint64_t minkey_cur = btn_minkey(btn);
+
+	if (minkey < minkey_cur) {
+		btn_set_minkey(btn, minkey);
+	}
+}
+
 static enum silofs_btnodef btn_flags(const struct silofs_btree_node *btn)
 {
 	const uint32_t f = silofs_le32_to_cpu(btn->btn_flags);
@@ -150,6 +169,7 @@ static void btn_append_key(struct silofs_btree_node *btn, uint64_t key)
 	silofs_assert_lt(nkeys, btn_nkeys_max(btn));
 	btn_set_key_at(btn, nkeys, key);
 	btn_inc_nkeys(btn);
+	btn_update_minkey(btn, key);
 }
 
 static void
@@ -163,6 +183,7 @@ btn_insert_key_at(struct silofs_btree_node *btn, size_t slot, uint64_t key)
 	}
 	btn_set_key_at(btn, slot, key);
 	btn_inc_nkeys(btn);
+	btn_update_minkey(btn, key);
 }
 
 static void btn_remove_key_at(struct silofs_btree_node *btn, size_t slot)
@@ -175,16 +196,6 @@ static void btn_remove_key_at(struct silofs_btree_node *btn, size_t slot)
 	}
 	btn_reset_key_at(btn, nkeys - 1);
 	btn_dec_nkeys(btn);
-}
-
-static uint64_t btn_minkey(const struct silofs_btree_node *btn)
-{
-	uint64_t key_min = UINT64_MAX;
-
-	if (btn_nkeys(btn) > 0) {
-		key_min = btn_key_at(btn, 0);
-	}
-	return key_min;
 }
 
 static size_t btn_nchilds(const struct silofs_btree_node *btn)
@@ -328,6 +339,7 @@ static void btn_remove_child_at(struct silofs_btree_node *btn, size_t slot)
 
 static void btn_setup(struct silofs_btree_node *btn)
 {
+	btn_set_minkey(btn, UINT64_MAX);
 	btn_set_flags(btn, SILOFS_BTNODEF_NONE);
 	btn_set_height(btn, 1);
 	btn_set_nkeys(btn, 0);

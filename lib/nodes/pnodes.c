@@ -180,12 +180,6 @@ const struct silofs_pnptr *silofs_pni_self(const struct silofs_pnode_info *pni)
 	return &pni->pn_self;
 }
 
-const struct silofs_pnptr *
-silofs_pni_parent(const struct silofs_pnode_info *pni)
-{
-	return &pni->pn_parent;
-}
-
 void silofs_pni_set_parent(struct silofs_pnode_info *pni,
                            const struct silofs_pnptr *paddr)
 {

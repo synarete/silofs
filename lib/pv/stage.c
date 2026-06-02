@@ -94,12 +94,6 @@ pni_self(const struct silofs_pnode_info *pni)
 	return silofs_pni_self(pni);
 }
 
-static const struct silofs_pnptr * //
-pni_parent(const struct silofs_pnode_info *pni)
-{
-	return silofs_pni_parent(pni);
-}
-
 static void pni_next_self(const struct silofs_pnode_info *pni,
                           struct silofs_pnptr *out_pnptr)
 {
@@ -135,7 +129,16 @@ pni_detach_viewx(struct silofs_pnode_info *pni, struct silofs_alloc *alloc)
 static const struct silofs_btnode_info * //
 bti_of(const struct silofs_pnode_info *pni)
 {
+	silofs_assert_not_null(pni);
+	silofs_assert_eq(pni->pn_self.paddr.ptype, SILOFS_PTYPE_BTNODE);
+
 	return silofs_bti_from_pni(pni);
+}
+
+static const struct silofs_pnptr * //
+bti_self(const struct silofs_btnode_info *bti)
+{
+	return silofs_bti_self(bti);
 }
 
 static const struct silofs_blobid *bti_blobid(struct silofs_btnode_info *bti)
@@ -158,19 +161,19 @@ bti_paddr(const struct silofs_btnode_info *bti)
 	return pni_paddr(&bti->btn_pni);
 }
 
+static void bti_base_vaddr(const struct silofs_btnode_info *bti,
+                           struct silofs_vaddr *out_vaddr)
+{
+	const uint64_t minkey   = silofs_bti_minkey(bti);
+	enum silofs_vtype vtype = silofs_bti_vspace(bti);
+
+	silofs_assert_lt(minkey, (UINT64_MAX / 2));
+	silofs_vaddr_setup(out_vaddr, vtype, (off_t)minkey);
+}
+
 static bool bti_isroot(const struct silofs_btnode_info *bti)
 {
 	return silofs_bti_marked_root(bti);
-}
-
-static bool isbtroot(const struct silofs_pnode_info *pni)
-{
-	bool ret = false;
-
-	if (pni_isbtnode(pni)) {
-		ret = bti_isroot(bti_of(pni));
-	}
-	return ret;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1133,27 +1136,48 @@ static int dsc_update_parent_btnode_at(const struct silofs_destage_ctx *ds_ctx,
 	return 0;
 }
 
-static int dsc_update_parent_btnode(const struct silofs_destage_ctx *ds_ctx,
-                                    const struct silofs_pnode_info *pni)
+static int dsc_resolve_parent_of(const struct silofs_destage_ctx *ds_ctx,
+                                 const struct silofs_btnode_info *bti,
+                                 struct silofs_pnptr *out_pnptr)
 {
-	struct silofs_pnptr alt;
-	const struct silofs_pnptr *pp  = pni_parent(pni);
-	const struct silofs_pnptr *cur = pni_self(pni);
+	struct silofs_vaddr vaddr;
 
-	pni_next_self(pni, &alt);
-	return dsc_update_parent_btnode_at(ds_ctx, pp, cur, &alt);
+	bti_base_vaddr(bti, &vaddr);
+	return silofs_resolve_vtop_parent(ds_ctx->pexec, &vaddr, bti_self(bti),
+	                                  out_pnptr);
 }
 
-static int dsc_update_pnode_parent(const struct silofs_destage_ctx *ds_ctx,
-                                   const struct silofs_pnode_info *pni)
+static int dsc_update_parent_btnode(const struct silofs_destage_ctx *ds_ctx,
+                                    const struct silofs_btnode_info *bti)
+{
+	const struct silofs_pnptr *cur = bti_self(bti);
+	struct silofs_pnptr parent, alt;
+	int err;
+
+	err = dsc_resolve_parent_of(ds_ctx, bti, &parent);
+	if (err) {
+		return err;
+	}
+
+	pni_next_self(&bti->btn_pni, &alt);
+	err = dsc_update_parent_btnode_at(ds_ctx, &parent, cur, &alt);
+	if (err) {
+		return err;
+	}
+
+	return 0;
+}
+
+static int dsc_update_btnode_parent(const struct silofs_destage_ctx *ds_ctx,
+                                    const struct silofs_btnode_info *bti)
 {
 	int err;
 
-	if (isbtroot(pni)) {
-		err = dsc_update_parent_uber(ds_ctx, pni);
+	if (bti_isroot(bti)) {
+		err = dsc_update_parent_uber(ds_ctx, &bti->btn_pni);
 		silofs_assert_ok(err);
 	} else {
-		err = dsc_update_parent_btnode(ds_ctx, pni);
+		err = dsc_update_parent_btnode(ds_ctx, bti);
 		silofs_assert_ok(err);
 	}
 	return err;
@@ -1162,20 +1186,6 @@ static int dsc_update_pnode_parent(const struct silofs_destage_ctx *ds_ctx,
 static int dsc_prepare_pnode(const struct silofs_destage_ctx *ds_ctx,
                              struct silofs_pnode_info *pni)
 {
-	/* XXX rm (start) */
-	if (!pni_isuber(pni)) {
-		const struct silofs_pnptr *parent = pni_parent(pni);
-		const enum silofs_ptype pptype    = parent->paddr.ptype;
-		const uint32_t height             = bti_height(bti_of(pni));
-
-		silofs_assert_gt(height, 0);
-		silofs_assert_ne(pptype, SILOFS_PTYPE_NONE);
-		if (!isbtroot(pni)) {
-			silofs_assert_eq(pptype, SILOFS_PTYPE_BTNODE);
-		}
-	}
-	/* XXX rm (end) */
-
 	return dsc_attach_pviewx(ds_ctx, pni);
 }
 
@@ -1218,7 +1228,7 @@ static int dsc_update_pnode(const struct silofs_destage_ctx *ds_ctx,
 	int err;
 
 	if (!pni_isuber(pni)) {
-		err = dsc_update_pnode_parent(ds_ctx, pni);
+		err = dsc_update_btnode_parent(ds_ctx, bti_of(pni));
 		if (err) {
 			return err;
 		}

@@ -1056,12 +1056,13 @@ struct silofs_blob_desc {
 struct silofs_btree_node {
 	struct silofs_header    btn_hdr;
 	uint8_t                 btn_reserved0[16];
+	uint64_t                btn_minkey;
 	uint32_t                btn_flags;
 	uint8_t                 btn_vspace;
 	uint8_t                 btn_height;
 	uint16_t                btn_nkeys;
 	uint16_t                btn_nchilds;
-	uint8_t                 btn_reserved2[86];
+	uint8_t                 btn_reserved2[78];
 	uint64_t                btn_key[SILOFS_BTREE_NODE_NKEYS];
 	uint8_t                 btn_reserved3[144];
 	struct silofs_pnptr256b btn_child[SILOFS_BTREE_NODE_NCHILDS];

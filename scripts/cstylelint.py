@@ -243,6 +243,7 @@ CSOURCE_EXCLUDE = [
 MIXED_CASE_ALLOWED = [
     "XXH3_64bits_withSeed",
     "_Atomic",
+    "Dl_info",
 ]
 
 MAP_TO_C23 = {

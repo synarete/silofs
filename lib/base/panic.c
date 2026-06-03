@@ -31,6 +31,7 @@
 #endif
 #define UNW_LOCAL_ONLY 1
 #include <libunwind.h>
+#include <dlfcn.h>
 #endif
 
 #include <silofs/ccattr.h>
@@ -161,31 +162,71 @@ static void silofs_dump_backtrace(void)
 }
 
 #ifdef SILOFS_WITH_LIBUNWIND
+static bool may_append(size_t cur_len, size_t ext_len, size_t bsz)
+{
+	return (cur_len + ext_len + 40) < bsz;
+}
+
 static void
 backtrace_addrs_to_str(char *buf, size_t bsz, void **bt_arr, int bt_len)
 {
-	size_t len;
+	Dl_info dli       = {};
+	const char *fname = nullptr;
 
 	for (int i = 1; i < bt_len - 1; ++i) {
-		len = strlen(buf);
-		if ((len + 20) >= bsz) {
+		const uintptr_t addr = (uintptr_t)bt_arr[i];
+		uintptr_t base;
+		unsigned long len, raddr;
+
+		memset(&dli, 0, sizeof(dli));
+		if (dladdr(bt_arr[i], &dli) == 0) {
+			continue;
+		}
+		if ((dli.dli_fname == nullptr) || (dli.dli_fbase == nullptr)) {
+			continue;
+		}
+		base = (uintptr_t)dli.dli_fbase;
+		if (addr < base) {
+			continue;
+		}
+		if ((fname != nullptr) && strcmp(fname, dli.dli_fname)) {
 			break;
 		}
-		snprintf(buf + len, bsz - len, "%p ", bt_arr[i]);
+
+		len = strlen(buf);
+		if ((fname == nullptr)) {
+			fname = dli.dli_fname;
+			if (!may_append(len, strlen(fname), bsz)) {
+				break;
+			}
+			snprintf(buf + len, bsz - len,
+			         "addr2line -a -C -f -p -s -e %s ", fname);
+			len = strlen(buf);
+		}
+		if (!may_append(len, 0, bsz)) {
+			break;
+		}
+		raddr = (unsigned long)(addr - base);
+		snprintf(buf + len, bsz - len, "0x%lx ", raddr);
 	}
 }
 
 static void silofs_dump_addr2line(void)
 {
+	char bt_addrs[2048] = "";
 	void *bt_arr[64]    = {};
-	char bt_addrs[1024] = "";
 	int bt_cnt, bt_len;
 
 	bt_cnt = (int)(SILOFS_ARRAY_SIZE(bt_arr));
 	bt_len = unw_backtrace(bt_arr, bt_cnt);
-	backtrace_addrs_to_str(bt_addrs, sizeof(bt_addrs) - 1, bt_arr, bt_len);
-	silofs_log_error("addr2line -a -C -e %s -f -p -s %s",
-	                 program_invocation_name, bt_addrs);
+	if (bt_len <= 0) {
+		return;
+	}
+	backtrace_addrs_to_str(bt_addrs, sizeof(bt_addrs), bt_arr, bt_len);
+	if (bt_addrs[0] == '\0') {
+		return;
+	}
+	silofs_log_error("%s", bt_addrs);
 }
 #else
 static void silofs_dump_addr2line(void)

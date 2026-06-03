@@ -111,7 +111,11 @@ AC_DEFUN([AX_SILOFS_WANT_LIBS],
   AS_IF([test "x$with_libunwind" = "xyes"], [
     AC_SEARCH_LIBS([unw_backtrace], [unwind], :,
       AC_MSG_ERROR([Unable to find libunwind]))
+
     AX_SILOFS_NEED_HEADER([libunwind.h])
+    AX_SILOFS_NEED_HEADER([dlfcn.h])
+    AX_SILOFS_CHECK_FUNCS([dladdr])
+
     AC_DEFINE_UNQUOTED([SILOFS_WITH_LIBUNWIND], ["1"])
     AH_TEMPLATE([SILOFS_WITH_LIBUNWIND],
       [Use libunwind for call-stack unwinding])

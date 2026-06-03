@@ -133,7 +133,7 @@ static struct silofs_symval_info *vni_to_svi(struct silofs_vnode_info *vni)
 	if (unlikely(svi == nullptr)) {
 		silofs_panic("upcast failure: vni=%" PRIXPTR, (uintptr_t)vni);
 	}
-	if (unlikely(svi->syv == nullptr)) {
+	if (unlikely(svi->svn == nullptr)) {
 		silofs_panic("missing symval: svi=%" PRIXPTR, (uintptr_t)svi);
 	}
 	return svi;

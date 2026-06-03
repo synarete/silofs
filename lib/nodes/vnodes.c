@@ -1332,7 +1332,7 @@ syi_init(struct silofs_symval_info *syi, const struct silofs_vaddr *vaddr)
 static void syi_fini(struct silofs_symval_info *syi)
 {
 	vni_fini(&syi->syv_vni);
-	syi->syv = nullptr;
+	syi->svn = nullptr;
 }
 
 static struct silofs_symval_info *syi_malloc(struct silofs_alloc *alloc)
@@ -1377,7 +1377,7 @@ syi_attach_lview(struct silofs_symval_info *syi, struct silofs_alloc *alloc)
 	err = vni_attach_lview(&syi->syv_vni, alloc);
 	if (!err) {
 		lview    = silofs_vni_lview(&syi->syv_vni);
-		syi->syv = &lview->u.syv;
+		syi->svn = &lview->u.svn;
 	}
 	return err;
 }
@@ -1386,7 +1386,7 @@ static void
 syi_detach_lview(struct silofs_symval_info *syi, struct silofs_alloc *alloc)
 {
 	vni_detach_lview(&syi->syv_vni, alloc);
-	syi->syv = nullptr;
+	syi->svn = nullptr;
 }
 
 static struct silofs_symval_info *

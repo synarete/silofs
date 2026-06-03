@@ -86,43 +86,43 @@ static int symval_desc_setup(struct silofs_symval_desc *sv_dsc,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static ino_t symv_parent(const struct silofs_symlnk_value *symv)
+static ino_t svn_parent(const struct silofs_symval_node *svn)
 {
-	return silofs_ino_to_cpu(symv->sy_parent);
+	return silofs_ino_to_cpu(svn->svn_parent);
 }
 
-static void symv_set_parent(struct silofs_symlnk_value *symv, ino_t parent)
+static void svn_set_parent(struct silofs_symval_node *svn, ino_t parent)
 {
-	symv->sy_parent = silofs_cpu_to_ino(parent);
+	svn->svn_parent = silofs_cpu_to_ino(parent);
 }
 
-static size_t symv_length(const struct silofs_symlnk_value *symv)
+static size_t svn_length(const struct silofs_symval_node *svn)
 {
-	return silofs_le16_to_cpu(symv->sy_length);
+	return silofs_le16_to_cpu(svn->svn_length);
 }
 
-static void symv_set_length(struct silofs_symlnk_value *symv, size_t length)
+static void svn_set_length(struct silofs_symval_node *svn, size_t length)
 {
-	symv->sy_length = silofs_cpu_to_le16((uint16_t)length);
+	svn->svn_length = silofs_cpu_to_le16((uint16_t)length);
 }
 
-static const void *symv_value(const struct silofs_symlnk_value *symv)
+static const void *svn_value(const struct silofs_symval_node *svn)
 {
-	return symv->sy_value;
+	return svn->svn_value;
 }
 
-static void symv_set_value(struct silofs_symlnk_value *symv, const void *value,
-                           size_t length)
+static void svn_set_value(struct silofs_symval_node *svn, //
+                          const void *value, size_t length)
 {
-	memcpy(symv->sy_value, value, length);
+	memcpy(svn->svn_value, value, length);
 }
 
-static void symv_init(struct silofs_symlnk_value *symv, ino_t parent,
-                      const char *value, size_t length)
+static void svn_init(struct silofs_symval_node *svn, ino_t parent,
+                     const char *value, size_t length)
 {
-	symv_set_parent(symv, parent);
-	symv_set_length(symv, length);
-	symv_set_value(symv, value, length);
+	svn_set_parent(svn, parent);
+	svn_set_length(svn, length);
+	svn_set_value(svn, value, length);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -305,7 +305,7 @@ static int sylc_extern_symval_parts(const struct silofs_symlnk_ctx *sl_ctx,
 			return err;
 		}
 		len = sv_dsc->parts[i].len;
-		ncp = silofs_bytebuf_append(bbuf, symv_value(syi->syv), len);
+		ncp = silofs_bytebuf_append(bbuf, svn_value(syi->svn), len);
 		if (ncp != len) {
 			return -SILOFS_ERANGE;
 		}
@@ -413,7 +413,7 @@ static int sylc_create_symval(const struct silofs_symlnk_ctx *sl_ctx,
 	if (err) {
 		return err;
 	}
-	symv_init(syi->syv, parent_ino, str->str, str->len);
+	svn_init(syi->svn, parent_ino, str->str, str->len);
 	*out_syi = syi;
 	return 0;
 }
@@ -587,16 +587,16 @@ void silofs_ii_setup_symlnk(struct silofs_inode_info *lnk_ii)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int symv_verify_parent(const struct silofs_symlnk_value *symv)
+static int svn_verify_parent(const struct silofs_symval_node *svn)
 {
-	const ino_t parent = symv_parent(symv);
+	const ino_t parent = svn_parent(svn);
 
 	return silofs_verify_ino(parent);
 }
 
-static int symv_verify_length(const struct silofs_symlnk_value *symv)
+static int svn_verify_length(const struct silofs_symval_node *svn)
 {
-	const size_t sv_len = symv_length(symv);
+	const size_t sv_len = svn_length(svn);
 
 	if ((sv_len == 0) || (sv_len > SILOFS_SYMLNK_PART_MAX)) {
 		return -SILOFS_EFSCORRUPTED;
@@ -604,15 +604,15 @@ static int symv_verify_length(const struct silofs_symlnk_value *symv)
 	return 0;
 }
 
-int silofs_verify_symlnk_value(const struct silofs_symlnk_value *symv)
+int silofs_verify_symval_node(const struct silofs_symval_node *svn)
 {
 	int err;
 
-	err = symv_verify_parent(symv);
+	err = svn_verify_parent(svn);
 	if (err) {
 		return err;
 	}
-	err = symv_verify_length(symv);
+	err = svn_verify_length(svn);
 	if (err) {
 		return err;
 	}

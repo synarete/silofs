@@ -968,13 +968,13 @@ struct silofs_ftree_node {
 	struct silofs_vaddr56 fn_child[SILOFS_FILE_NODE_NCHILDS];
 } silofs_attr_aligned64;
 
-struct silofs_symlnk_value {
-	struct silofs_header sy_hdr;
-	uint8_t              sy_reserved0[16];
-	uint64_t             sy_parent;
-	uint16_t             sy_length;
-	uint8_t              sy_reserved1[22];
-	uint8_t              sy_value[SILOFS_SYMLNK_PART_MAX];
+struct silofs_symval_node {
+	struct silofs_header svn_hdr;
+	uint8_t              svn_reserved1[16];
+	uint64_t             svn_parent;
+	uint16_t             svn_length;
+	uint8_t              svn_reserved2[22];
+	uint8_t              svn_value[SILOFS_SYMLNK_PART_MAX];
 } silofs_attr_aligned64;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -999,8 +999,8 @@ union silofs_lblock_u {
 	uint8_t                    bk[SILOFS_LBK_SIZE];
 	struct silofs_inode        inode[SILOFS_NINODE_IN_LBK];
 	struct silofs_xattr_node   xan[SILOFS_NXANODE_IN_LBK];
+	struct silofs_symval_node  svn[SILOFS_NSYMVAL_IN_LBK];
 	struct silofs_dtree_node   dtn[SILOFS_NDTNODE_IN_LBK];
-	struct silofs_symlnk_value syv[SILOFS_NSYMVAL_IN_LBK];
 	struct silofs_ftree_node   ftn[SILOFS_NFRTNODE_IN_LBK];
 	struct silofs_data_block1  dbk1[SILOFS_NKB_IN_LBK];
 	struct silofs_data_block4  dbk4[SILOFS_NKB_IN_LBK / 4];
@@ -1118,7 +1118,7 @@ union silofs_lview_u {
 	struct silofs_dtree_node   dtn;
 	struct silofs_ftree_node   ftn;
 	struct silofs_xattr_node   xan;
-	struct silofs_symlnk_value syv;
+	struct silofs_symval_node  svn;
 	struct silofs_data_block1  dbk1;
 	struct silofs_data_block4  dbk4;
 	struct silofs_data_block64 dbk64;

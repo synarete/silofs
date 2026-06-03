@@ -104,7 +104,7 @@ static int vni_verify_sub_view(const struct silofs_vnode_info *vni)
 		ret = silofs_verify_xattr_node(&view->u.xan);
 		break;
 	case SILOFS_VTYPE_SYMVAL:
-		ret = silofs_verify_symlnk_value(&view->u.syv);
+		ret = silofs_verify_symval_node(&view->u.svn);
 		break;
 	case SILOFS_VTYPE_DTNODE:
 		ret = silofs_verify_dtree_node(&view->u.dtn);

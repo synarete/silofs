@@ -22,7 +22,7 @@
 struct silofs_strview;
 struct silofs_task_ctx;
 struct silofs_inode_info;
-struct silofs_symlnk_value;
+struct silofs_symval_node;
 
 void silofs_ii_setup_symlnk(struct silofs_inode_info *lnk_ii);
 
@@ -37,6 +37,6 @@ int silofs_bind_symval(struct silofs_task_ctx      *task,
                        struct silofs_inode_info    *lnk_ii,
                        const struct silofs_strview *symval);
 
-int silofs_verify_symlnk_value(const struct silofs_symlnk_value *symv);
+int silofs_verify_symval_node(const struct silofs_symval_node *svn);
 
 #endif /* SILOFS_SYMLINK_H_ */

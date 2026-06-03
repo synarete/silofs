@@ -624,8 +624,8 @@ struct silofs_xanode_info {
 
 /* symbolic-link value node */
 struct silofs_symval_info {
-	struct silofs_vnode_info    syv_vni;
-	struct silofs_symlnk_value *syv;
+	struct silofs_vnode_info   syv_vni;
+	struct silofs_symval_node *svn;
 };
 
 /* dir-tree node */

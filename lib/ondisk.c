@@ -439,9 +439,9 @@ static void validate_ondisk_file(void)
 
 static void validate_ondisk_symlnk(void)
 {
-	REQUIRE_OFFSET64(struct silofs_symlnk_value, sy_value, 64);
-	REQUIRE_SIZEOF(struct silofs_symlnk_value, SILOFS_SYMLNK_VAL_SIZE);
-	REQUIRE_SIZEOF_4K(struct silofs_symlnk_value);
+	REQUIRE_OFFSET64(struct silofs_symval_node, svn_value, 64);
+	REQUIRE_SIZEOF(struct silofs_symval_node, SILOFS_SYMLNK_VAL_SIZE);
+	REQUIRE_SIZEOF_4K(struct silofs_symval_node);
 }
 
 static void validate_ondisk_xattr(void)

@@ -204,7 +204,7 @@ size_t silofs_vtype_size(enum silofs_vtype vtype)
 		size = sizeof(struct silofs_ftree_node);
 		break;
 	case SILOFS_VTYPE_SYMVAL:
-		size = sizeof(struct silofs_symlnk_value);
+		size = sizeof(struct silofs_symval_node);
 		break;
 	case SILOFS_VTYPE_DATA1K:
 		size = sizeof(struct silofs_data_block1);

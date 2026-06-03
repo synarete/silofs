@@ -81,6 +81,19 @@ int silofs_spawn_xanode(struct silofs_task_ctx     *task,
 int silofs_remove_xanode_at(struct silofs_task_ctx    *task,
                             const struct silofs_vaddr *vaddr);
 
+int silofs_stage_symval(const struct silofs_task_ctx *task,
+                        const struct silofs_vaddr    *vaddr,
+                        struct silofs_inode_info     *pii,
+                        enum silofs_stg_mode          stg_mode,
+                        struct silofs_symval_info   **out_svi);
+
+int silofs_spawn_symval(struct silofs_task_ctx     *task,
+                        struct silofs_inode_info   *pii,
+                        struct silofs_symval_info **out_svi);
+
+int silofs_remove_symval_at(struct silofs_task_ctx    *task,
+                            const struct silofs_vaddr *vaddr);
+
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 #include <silofs/fs/inode.h>

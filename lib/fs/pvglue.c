@@ -65,7 +65,7 @@ static int remove_vnode_at(const struct silofs_task_ctx *task,
 
 static struct silofs_xanode_info *vni_to_xai(struct silofs_vnode_info *vni)
 {
-	struct silofs_xanode_info *xai;
+	struct silofs_xanode_info *xai = nullptr;
 
 	if (unlikely(vni == nullptr)) {
 		silofs_panic("nullptr: vni=%" PRIXPTR, (uintptr_t)vni);
@@ -117,5 +117,64 @@ int silofs_remove_xanode_at(struct silofs_task_ctx *task,
                             const struct silofs_vaddr *vaddr)
 {
 	silofs_assert_eq(vaddr->vtype, SILOFS_VTYPE_XANODE);
+	return remove_vnode_at(task, vaddr);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static struct silofs_symval_info *vni_to_svi(struct silofs_vnode_info *vni)
+{
+	struct silofs_symval_info *svi = nullptr;
+
+	if (unlikely(vni == nullptr)) {
+		silofs_panic("nullptr: vni=%" PRIXPTR, (uintptr_t)vni);
+	}
+	svi = silofs_syi_from_vni(vni);
+	if (unlikely(svi == nullptr)) {
+		silofs_panic("upcast failure: vni=%" PRIXPTR, (uintptr_t)vni);
+	}
+	if (unlikely(svi->syv == nullptr)) {
+		silofs_panic("missing symval: svi=%" PRIXPTR, (uintptr_t)svi);
+	}
+	return svi;
+}
+
+int silofs_stage_symval(const struct silofs_task_ctx *task,
+                        const struct silofs_vaddr *vaddr,
+                        struct silofs_inode_info *pii,
+                        enum silofs_stg_mode stg_mode,
+                        struct silofs_symval_info **out_svi)
+{
+	struct silofs_vnode_info *vni = nullptr;
+	int err;
+
+	silofs_assert_eq(vaddr->vtype, SILOFS_VTYPE_SYMVAL);
+	err = stage_vnode(task, vaddr, pii, stg_mode, &vni);
+	if (err) {
+		return err;
+	}
+	*out_svi = vni_to_svi(vni);
+	return 0;
+}
+
+int silofs_spawn_symval(struct silofs_task_ctx *task,
+                        struct silofs_inode_info *pii,
+                        struct silofs_symval_info **out_svi)
+{
+	struct silofs_vnode_info *vni = nullptr;
+	int err;
+
+	err = spawn_vnode(task, pii, SILOFS_VTYPE_SYMVAL, &vni);
+	if (err) {
+		return err;
+	}
+	*out_svi = vni_to_svi(vni);
+	return 0;
+}
+
+int silofs_remove_symval_at(struct silofs_task_ctx *task,
+                            const struct silofs_vaddr *vaddr)
+{
+	silofs_assert_eq(vaddr->vtype, SILOFS_VTYPE_SYMVAL);
 	return remove_vnode_at(task, vaddr);
 }

@@ -699,6 +699,7 @@ static void rebind_btchilds(struct silofs_btree_node *btn_parent,
 		btn_insert_child_at(btn_parent, slot + 1, right);
 		btn_insert_key_at(btn_parent, slot, key);
 	}
+	btn_update_minkey(btn_parent, key);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

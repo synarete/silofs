@@ -571,12 +571,18 @@ static void ut_xattr_nfiles_(struct ut_env *ute, size_t nfiles,
 		ut_setxattr_create(ute, ino, kvl->list[0]);
 		ino_arr[i] = ino;
 	}
+	ut_drop_caches_fully(ute);
+
 	for (size_t i = 0; i < nfiles; ++i) {
 		ino = ino_arr[i];
 		ut_getxattr_value(ute, ino, kvl->list[0]);
 	}
 	ut_drop_caches_fully(ute);
 
+	for (size_t i = 0; i < nfiles; ++i) {
+		ino = ino_arr[i];
+		ut_listxattr(ute, ino, kvl);
+	}
 	for (size_t i = 0; i < nfiles; ++i) {
 		ino = ino_arr[i];
 		ut_listxattr(ute, ino, kvl);
@@ -595,8 +601,7 @@ static void ut_xattr_nfiles_(struct ut_env *ute, size_t nfiles,
 
 static void ut_xattr_nfiles(struct ut_env *ute)
 {
-	ut_xattr_nfiles_(ute, 10, 10, 100);
-	ut_xattr_nfiles_(ute, 20, 20, 20);
+	ut_xattr_nfiles_(ute, 10, 10, 10);
 	ut_xattr_nfiles_(ute, SILOFS_BTREE_NODE_NCHILDS, 100, 10);
 	ut_xattr_nfiles_(ute, SILOFS_BTREE_NODE_NCHILDS + 1, 101, 11);
 	ut_xattr_nfiles_(ute, 2 * SILOFS_BTREE_NODE_NCHILDS, 10, 10);

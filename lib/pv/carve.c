@@ -115,14 +115,16 @@ static void carve_next_space_of(const struct silofs_pexec_ctx *pexec,
                                 const struct silofs_stype *stype,
                                 struct silofs_paddr *out_paddr)
 {
-	struct silofs_spdesc spdesc[2];
-	struct silofs_uber_info *ubi = pexec->ubref->ubi;
+	struct silofs_spdesc spdesc_cur, spdesc_nxt;
+	struct silofs_paddr paddr_nxt;
 
-	silofs_ubi_spdesc_of(ubi, stype, &spdesc[0]);
-	silofs_paddr_next(&spdesc[0].end, out_paddr);
+	silofs_ubi_spdesc_of(pexec->ubref->ubi, stype, &spdesc_cur);
 
-	silofs_spdesc_setup(&spdesc[1], &spdesc[0].beg, out_paddr);
-	silofs_ubi_update_spdesc(ubi, &spdesc[1]);
+	silofs_paddr_assign(out_paddr, &spdesc_cur.end);
+	silofs_paddr_next(&spdesc_cur.end, &paddr_nxt);
+
+	silofs_spdesc_setup(&spdesc_nxt, &spdesc_cur.beg, &paddr_nxt);
+	silofs_ubi_update_spdesc(pexec->ubref->ubi, &spdesc_nxt);
 }
 
 static int carve_next_pnptr_of(const struct silofs_pexec_ctx *pexec,

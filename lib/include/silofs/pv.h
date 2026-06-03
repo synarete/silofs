@@ -480,7 +480,7 @@ struct silofs_pexec_ctx {
 
 struct silofs_btree_path {
 	struct silofs_btnode_info *bti[SILOFS_BTREE_HEIGHT_MAX];
-	size_t                     cnt;
+	unsigned int               cnt;
 };
 
 int silofs_resolve_vtop_bpath(struct silofs_pexec_ctx   *pexec,

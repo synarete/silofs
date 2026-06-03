@@ -1290,29 +1290,6 @@ static void dsc_sort_pnodes(struct silofs_destage_ctx *ds_ctx)
 	silofs_destageq_sort(&ds_ctx->dsq, compare_pnodes);
 }
 
-static int dsc_pre_commit_pnodes(struct silofs_destage_ctx *ds_ctx)
-{
-	int err;
-
-	/* Populate de-stage queue. */
-	dsc_populate_dsq(ds_ctx);
-
-	/* Prepare each node. */
-	err = dsc_prepare_pnodes(ds_ctx);
-	if (err) {
-		return err;
-	}
-	/* Sort for destage. */
-	dsc_sort_pnodes(ds_ctx);
-
-	/* For-each node: seal, encrypt and update parents */
-	err = dsc_secure_pnodes(ds_ctx);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
 static int dsc_commit_node_at(const struct silofs_destage_ctx *ds_ctx,
                               const struct silofs_paddr *paddr,
                               const void *buf, size_t bufsz)
@@ -1347,6 +1324,7 @@ static int dsc_cleanup_pnode(const struct silofs_destage_ctx *ds_ctx,
 	if (ds_ctx->cleardirty) {
 		silofs_pni_cleardirty(pni);
 	}
+	pni->pn_flags &= SILOFS_PNODEF_STAINED;
 	return 0;
 }
 
@@ -1370,7 +1348,19 @@ static int dsc_destage_pnodes(struct silofs_destage_ctx *ds_ctx)
 {
 	int err;
 
-	err = dsc_pre_commit_pnodes(ds_ctx);
+	/* Populate de-stage queue. */
+	dsc_populate_dsq(ds_ctx);
+
+	/* Prepare each node. */
+	err = dsc_prepare_pnodes(ds_ctx);
+	if (err) {
+		goto out;
+	}
+	/* Sort for destage. */
+	dsc_sort_pnodes(ds_ctx);
+
+	/* For-each node: seal, encrypt and update parents */
+	err = dsc_secure_pnodes(ds_ctx);
 	if (err) {
 		goto out;
 	}
@@ -1414,23 +1404,6 @@ static void dsc_detach_lviewx(const struct silofs_destage_ctx *ds_ctx,
 	if (vni_has_lviewx(vni)) {
 		vni_detach_viewx(vni, ds_ctx->alloc);
 	}
-}
-
-static int dsc_stain_vnode_parents(const struct silofs_destage_ctx *ds_ctx,
-                                   const struct silofs_vnode_info *vni)
-{
-	struct silofs_btree_path bpath = { .cnt = 0 };
-	int err;
-
-	err = silofs_resolve_vtop_bpath(ds_ctx->pexec, vni_vaddr(vni), &bpath);
-	if (err) {
-		silofs_assert_ok(err);
-		return err;
-	}
-	for (size_t i = 0; i < bpath.cnt; ++i) {
-		silofs_bti_markdirty(bpath.bti[i]);
-	}
-	return 0;
 }
 
 static int dsc_resolve_vnode(const struct silofs_destage_ctx *ds_ctx,
@@ -1500,10 +1473,6 @@ static int dsc_prepare_vnode(const struct silofs_destage_ctx *ds_ctx,
 	struct silofs_pnptr pnptr_cur, pnptr_alt;
 	int err = 0;
 
-	err = dsc_stain_vnode_parents(ds_ctx, vni);
-	if (err) {
-		return err;
-	}
 	err = dsc_resolve_vnode(ds_ctx, vni, &pnptr_cur);
 	if (err) {
 		return err;
@@ -1534,12 +1503,6 @@ static int dsc_prepare_vnodes(struct silofs_destage_ctx *ds_ctx)
 	return silofs_destageq_foreach(&ds_ctx->dsq, prepare_vnode_by, ds_ctx);
 }
 
-static int dsc_populate_prepare_vnodes(struct silofs_destage_ctx *ds_ctx)
-{
-	dsc_populate_dsq(ds_ctx);
-	return dsc_prepare_vnodes(ds_ctx);
-}
-
 static int compare_vnodes(const struct silofs_dq_elem *dqe1,
                           const struct silofs_dq_elem *dqe2)
 {
@@ -1554,18 +1517,38 @@ static void dsc_sort_vnodes(struct silofs_destage_ctx *ds_ctx)
 	silofs_destageq_sort(&ds_ctx->dsq, compare_vnodes);
 }
 
-static int dsc_pre_commit_vnodes(struct silofs_destage_ctx *ds_ctx)
+static int dsc_stain_vnode_parents(const struct silofs_destage_ctx *ds_ctx,
+                                   const struct silofs_vnode_info *vni)
 {
+	struct silofs_btree_path bpath = { .cnt = 0 };
 	int err;
 
-	/* Fill de-stage queue with vnodes */
-	err = dsc_populate_prepare_vnodes(ds_ctx);
+	err = silofs_resolve_vtop_bpath(ds_ctx->pexec, vni_vaddr(vni), &bpath);
 	if (err) {
+		silofs_assert_ok(err);
 		return err;
 	}
-	/* Sort by latest (updated) paddr */
-	dsc_sort_vnodes(ds_ctx);
+	for (size_t i = 0; i < bpath.cnt; ++i) {
+		struct silofs_btnode_info *bti = bpath.bti[i];
+
+		if (bti->btn_pni.pn_flags & SILOFS_PNODEF_STAINED) {
+			break;
+		}
+		silofs_bti_markdirty(bti);
+		bti->btn_pni.pn_flags |= SILOFS_PNODEF_STAINED;
+	}
 	return 0;
+}
+
+static int stain_vnode_parents_by(struct silofs_dq_elem *dqe, void *userp)
+{
+	return dsc_stain_vnode_parents(userp, vni_of(dqe));
+}
+
+static int dsc_stain_vnodes_parents(struct silofs_destage_ctx *ds_ctx)
+{
+	return silofs_destageq_foreach(&ds_ctx->dsq, //
+	                               stain_vnode_parents_by, ds_ctx);
 }
 
 static int dsc_commit_vnode(const struct silofs_destage_ctx *ds_ctx,
@@ -1617,10 +1600,23 @@ static int dsc_destage_vnodes(struct silofs_destage_ctx *ds_ctx)
 {
 	int err;
 
-	err = dsc_pre_commit_vnodes(ds_ctx);
+	/* Populate de-stage queue. */
+	dsc_populate_dsq(ds_ctx);
+
+	/* Prepare each vnode. */
+	err = dsc_prepare_vnodes(ds_ctx);
 	if (err) {
 		goto out;
 	}
+	/* Sort by latest (updated) paddr. */
+	dsc_sort_vnodes(ds_ctx);
+
+	/* Stage parents and mark dirty. */
+	err = dsc_stain_vnodes_parents(ds_ctx);
+	if (err) {
+		goto out;
+	}
+	/* Commit vnodes to stable blob. */
 	err = dsc_commit_vnodes(ds_ctx);
 	if (err) {
 		goto out;

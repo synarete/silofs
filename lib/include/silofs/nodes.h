@@ -359,6 +359,7 @@ enum silofs_pnodef {
 	SILOFS_PNODEF_NONE      = 0x00,
 	SILOFS_PNODEF_STAGED_OK = 0x01,
 	SILOFS_PNODEF_RDONLY    = 0x02,
+	SILOFS_PNODEF_STAINED   = 0x04,
 };
 
 /* base of all persistent nodes */
@@ -386,6 +387,7 @@ struct silofs_bldesc_info {
 struct silofs_btnode_info {
 	struct silofs_pnode_info  btn_pni;
 	struct silofs_btree_node *btn;
+	bool                      btn_stained;
 };
 
 const struct silofs_pnptr *

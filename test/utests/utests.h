@@ -503,7 +503,7 @@ void ut_read_dvec(struct ut_env *ute, ino_t ino, const struct ut_dvec *dvec);
 
 void ut_sync_drop(struct ut_env *ute);
 
-void ut_drop_caches_fully(struct ut_env *ute);
+void ut_sync_drop_all(struct ut_env *ute);
 
 void ut_tune_ftype2(struct ut_env *ute, ino_t ino);
 

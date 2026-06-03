@@ -171,31 +171,31 @@ static void ut_mkdir_reloaded(struct ut_env *ute)
 	const ino_t parent = UT_ROOT_INO;
 	ino_t ino          = 0;
 
-	ut_drop_caches_fully(ute);
+	ut_sync_drop_all(ute);
 	ut_getattr(ute, parent, &st);
 	ut_expect(S_ISDIR(st.st_mode));
 	ut_expect_eq(st.st_nlink, 2);
 
-	ut_drop_caches_fully(ute);
+	ut_sync_drop_all(ute);
 	ut_mkdir2(ute, parent, name, &ino);
 	ut_expect_ne(ino, parent);
 	ut_getattr(ute, ino, &st);
 
-	ut_drop_caches_fully(ute);
+	ut_sync_drop_all(ute);
 	ut_getattr(ute, ino, &st);
 	ut_expect(S_ISDIR(st.st_mode));
 	ut_expect_eq(st.st_nlink, 2);
 
-	ut_drop_caches_fully(ute);
+	ut_sync_drop_all(ute);
 	ut_lookup_dir(ute, parent, name, ino);
 
-	ut_drop_caches_fully(ute);
+	ut_sync_drop_all(ute);
 	ut_mkdir_err(ute, parent, name, -EEXIST);
 
-	ut_drop_caches_fully(ute);
+	ut_sync_drop_all(ute);
 	ut_rmdir(ute, parent, name);
 
-	ut_drop_caches_fully(ute);
+	ut_sync_drop_all(ute);
 	ut_lookup_noent(ute, parent, name);
 }
 
@@ -228,7 +228,7 @@ static void ut_mkdir_multi_(struct ut_env *ute, size_t cnt)
 		ut_expect_ge(st.st_blocks, blkcnt);
 		blkcnt = st.st_blocks;
 	}
-	ut_drop_caches_fully(ute);
+	ut_sync_drop_all(ute);
 	ut_getattr(ute, dino, &st);
 	ut_expect_eq(st.st_size, size);
 	ut_expect_eq(st.st_blocks, blkcnt);
@@ -275,7 +275,7 @@ static void ut_mkdir_link_max(struct ut_env *ute)
 		ut_getattr(ute, dino, &st);
 		ut_expect_eq(st.st_nlink, i + 1);
 	}
-	ut_drop_caches_fully(ute);
+	ut_sync_drop_all(ute);
 	ut_mkdir_err(ute, dino, dname, -EMLINK);
 
 	for (size_t j = 2; j < nlink_max; ++j) {
@@ -516,7 +516,7 @@ static void ut_dir_stat_(struct ut_env *ute, size_t cnt)
 		blocks = st.st_blocks;
 		dsize  = st.st_size;
 	}
-	ut_drop_caches_fully(ute);
+	ut_sync_drop_all(ute);
 
 	ut_getattr(ute, dino, &st);
 	ut_expect_ge(st.st_size, cnt);

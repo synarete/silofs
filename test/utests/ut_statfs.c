@@ -114,7 +114,7 @@ static void ut_statfs_dirs_(struct ut_env *ute, size_t cnt)
 		ut_expect_eq(ffree, stv.f_ffree + 1);
 		ffree = stv.f_ffree;
 	}
-	ut_drop_caches_fully(ute);
+	ut_sync_drop_all(ute);
 	ut_statfs(ute, dino, &stv);
 	ffree = stv.f_ffree;
 	ut_expect_gt(ffree, 0);
@@ -126,7 +126,7 @@ static void ut_statfs_dirs_(struct ut_env *ute, size_t cnt)
 		ffree = stv.f_ffree;
 	}
 	ut_rmdir_at_root(ute, name);
-	ut_drop_caches_fully(ute);
+	ut_sync_drop_all(ute);
 	ut_statfs_rootd(ute, &stv);
 	files[1] = stv.f_files;
 	silofs_assert_eq(files[0], files[1]);

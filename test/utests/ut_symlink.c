@@ -246,7 +246,7 @@ static void ut_symlink_and_io2_(struct ut_env *ute, size_t cnt)
 		ut_write_read_str(ute, fino, symval, off);
 		ut_release_file(ute, fino);
 	}
-	ut_drop_caches_fully(ute);
+	ut_sync_drop_all(ute);
 	for (size_t j = cnt; j > 0; --j) {
 		sname  = ut_make_name(ute, s1, j - 1);
 		fname  = ut_make_name(ute, ff, j - 1);

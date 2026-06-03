@@ -177,18 +177,18 @@ ut_xattr_sync_(struct ut_env *ute, size_t name_len, size_t value_size)
 	for (size_t i = 0; i < kvl->count; ++i) {
 		ut_setxattr_create(ute, ino, kvl->list[i]);
 	}
-	ut_drop_caches_fully(ute);
+	ut_sync_drop_all(ute);
 
 	for (size_t i = 0; i < kvl->count; ++i) {
 		ut_getxattr_value(ute, ino, kvl->list[i]);
 	}
-	ut_drop_caches_fully(ute);
+	ut_sync_drop_all(ute);
 
 	ut_listxattr(ute, ino, kvl);
 	for (size_t i = 0; i < kvl->count; ++i) {
 		ut_removexattr(ute, ino, kvl->list[i]);
 	}
-	ut_drop_caches_fully(ute);
+	ut_sync_drop_all(ute);
 
 	for (size_t i = 0; i < kvl->count; ++i) {
 		ut_getxattr_nodata(ute, ino, kvl->list[i]);
@@ -395,7 +395,7 @@ static void ut_xattr_multi(struct ut_env *ute)
 		ut_listxattr(ute, dino, kvl);
 		ut_listxattr(ute, ino, kvl);
 		ut_removexattr_all(ute, ino, kvl);
-		ut_drop_caches_fully(ute);
+		ut_sync_drop_all(ute);
 		kvl_random_shuffle(kvl);
 		ut_setxattr_all(ute, ino, kvl);
 		ut_listxattr(ute, ino, kvl);
@@ -571,13 +571,13 @@ static void ut_xattr_nfiles_(struct ut_env *ute, size_t nfiles,
 		ut_setxattr_create(ute, ino, kvl->list[0]);
 		ino_arr[i] = ino;
 	}
-	ut_drop_caches_fully(ute);
+	ut_sync_drop_all(ute);
 
 	for (size_t i = 0; i < nfiles; ++i) {
 		ino = ino_arr[i];
 		ut_getxattr_value(ute, ino, kvl->list[0]);
 	}
-	ut_drop_caches_fully(ute);
+	ut_sync_drop_all(ute);
 
 	for (size_t i = 0; i < nfiles; ++i) {
 		ino = ino_arr[i];

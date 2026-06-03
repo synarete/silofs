@@ -1861,7 +1861,7 @@ void ut_sync_drop(struct ut_env *ute)
 	ut_expect_ok(err);
 }
 
-void ut_drop_caches_fully(struct ut_env *ute)
+void ut_sync_drop_all(struct ut_env *ute)
 {
 	struct silofs_cache_stats cstats;
 

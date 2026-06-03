@@ -94,11 +94,11 @@ static void ut_rename_replace_without_data(struct ut_env *ute)
 		name2 = ut_randstr(ute, name_max - i);
 		ut_create_only(ute, dino1, name1, &ino1);
 		ut_create_only(ute, dino2, name2, &ino2);
-		ut_drop_caches_fully(ute);
+		ut_sync_drop_all(ute);
 		ut_rename_replace(ute, dino1, name1, dino2, name2);
 		ut_getattr(ute, ino1, &st);
 		ut_expect_eq(st.st_nlink, 1);
-		ut_drop_caches_fully(ute);
+		ut_sync_drop_all(ute);
 		ut_unlink(ute, dino2, name2);
 	}
 	ut_rmdir(ute, base_dino, dname1);

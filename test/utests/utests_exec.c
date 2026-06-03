@@ -325,7 +325,7 @@ static void ut_probe_stats(struct ut_env *ute, bool pre_execute)
 	if (pre_execute) {
 		ut_statfs_rootd(ute, &ute->stvfs[0]);
 		ut_statsp_rootd(ute, &ute->spst[0]);
-		ut_drop_caches_fully(ute);
+		ut_sync_drop_all(ute);
 		ute->ualloc_start = ut_nalloc_bytes_now(ute);
 	} else {
 		ut_statfs_rootd(ute, &ute->stvfs[1]);
@@ -333,7 +333,7 @@ static void ut_probe_stats(struct ut_env *ute, bool pre_execute)
 		ut_check_statvfs(&ute->stvfs[0], &ute->stvfs[1]);
 		ut_check_spacestats(&ute->spst[0], &ute->spst[1]);
 
-		ut_drop_caches_fully(ute);
+		ut_sync_drop_all(ute);
 		ualloc_now = ut_nalloc_bytes_now(ute);
 		ut_expect_ge(ualloc_now, ute->ualloc_start);
 		ualloc_dif = ualloc_now - ute->ualloc_start;

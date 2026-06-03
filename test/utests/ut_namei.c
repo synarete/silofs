@@ -33,17 +33,17 @@ static void ut_create_open_release(struct ut_env *ute)
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
 	ut_release(ute, ino);
-	ut_drop_caches_fully(ute);
+	ut_sync_drop_all(ute);
 	ut_lookup_file(ute, dino, name, ino);
-	ut_drop_caches_fully(ute);
+	ut_sync_drop_all(ute);
 	ut_lookup_dir_at_root(ute, name, dino);
 	ut_open_rdonly(ute, ino);
 	ut_release(ute, ino);
-	ut_drop_caches_fully(ute);
+	ut_sync_drop_all(ute);
 	ut_lookup_dir_at_root(ute, name, dino);
 	ut_unlink(ute, dino, name);
 	ut_lookup_dir_at_root(ute, name, dino);
-	ut_drop_caches_fully(ute);
+	ut_sync_drop_all(ute);
 	ut_lookup_dir_at_root(ute, name, dino);
 	ut_rmdir_at_root(ute, name);
 }
@@ -63,9 +63,9 @@ static void ut_create_unlink_simple(struct ut_env *ute)
 	ut_expect(S_ISREG(st.st_mode));
 	ut_expect_eq(ino, st.st_ino);
 	ut_release(ute, ino);
-	ut_drop_caches_fully(ute);
+	ut_sync_drop_all(ute);
 	ut_lookup(ute, dino, name, &st);
-	ut_drop_caches_fully(ute);
+	ut_sync_drop_all(ute);
 	ut_unlink(ute, dino, name);
 	ut_lookup_noent(ute, dino, name);
 	ut_rmdir_at_root(ute, name);
@@ -251,7 +251,7 @@ static void ut_link_rand_names(struct ut_env *ute)
 		ut_link(ute, ino, dino, lname, &st);
 		links[i] = lname;
 	}
-	ut_drop_caches_fully(ute);
+	ut_sync_drop_all(ute);
 	for (size_t i = 0; i < nlinks; ++i) {
 		lname = links[i];
 		ut_unlink(ute, dino, lname);

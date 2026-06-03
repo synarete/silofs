@@ -59,7 +59,7 @@ static void ut_file_simple3_(struct ut_env *ute, off_t off, size_t bsz)
 	ut_write_read(ute, ino, buf, bsz, off);
 	ut_fsync(ute, ino, true);
 	ut_release_file(ute, ino);
-	ut_drop_caches_fully(ute);
+	ut_sync_drop_all(ute);
 	ut_open_rdonly(ute, ino);
 	ut_read_verify(ute, ino, buf, bsz, off);
 	ut_remove_file(ute, dino, name, ino);

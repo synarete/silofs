@@ -1166,7 +1166,7 @@ static int dsc_resolve_btnode_parent(const struct silofs_destage_ctx *ds_ctx,
 
 	bti_base_vaddr(bti, &vaddr);
 	return silofs_resolve_vtop_parent(ds_ctx->pexec, &vaddr, //
-	                                  bti_self(bti), out_pnptr);
+	                                  bti_paddr(bti), out_pnptr);
 }
 
 static int dsc_update_parent_of_btnode(const struct silofs_destage_ctx *ds_ctx,
@@ -1324,7 +1324,7 @@ static int dsc_cleanup_pnode(const struct silofs_destage_ctx *ds_ctx,
 	if (ds_ctx->cleardirty) {
 		silofs_pni_cleardirty(pni);
 	}
-	pni->pn_flags &= SILOFS_PNODEF_STAINED;
+	pni->pn_flags &= ~(unsigned)SILOFS_PNODEF_STAINED;
 	return 0;
 }
 
@@ -1638,6 +1638,24 @@ static int destage_vnodes(struct silofs_pexec_ctx *pexec)
 	return err;
 }
 
+static void dsc_postop_cleanup(struct silofs_destage_ctx *ds_ctx)
+{
+	/* Populate de-stage queue. */
+	dsc_populate_dsq(ds_ctx);
+
+	/* Safety cleanups: remove STAINED flag. */
+	dsc_cleanup_depopulate_pnodes(ds_ctx);
+}
+
+static void postop_cleanup(struct silofs_pexec_ctx *pexec)
+{
+	struct silofs_destage_ctx ds_ctx;
+
+	dsc_initp(&ds_ctx, pexec);
+	dsc_postop_cleanup(&ds_ctx);
+	dsc_fini(&ds_ctx);
+}
+
 int silofs_destage_dirty_nodes(struct silofs_pexec_ctx *pexec)
 {
 	int err;
@@ -1645,12 +1663,14 @@ int silofs_destage_dirty_nodes(struct silofs_pexec_ctx *pexec)
 	/* Leaf nodes. */
 	err = destage_vnodes(pexec);
 	if (err) {
-		return err;
+		goto out;
 	}
 	/* Internal mapping nodes */
 	err = destage_pnodes(pexec);
 	if (err) {
-		return err;
+		goto out;
 	}
-	return 0;
+out:
+	postop_cleanup(pexec);
+	return err;
 }

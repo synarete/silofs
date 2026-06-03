@@ -489,7 +489,7 @@ int silofs_resolve_vtop_bpath(struct silofs_pexec_ctx   *pexec,
 
 int silofs_resolve_vtop_parent(struct silofs_pexec_ctx   *pexec,
                                const struct silofs_vaddr *vaddr,
-                               const struct silofs_pnptr *pnptr,
+                               const struct silofs_paddr *paddr,
                                struct silofs_pnptr       *out_pnptr);
 
 int silofs_resolve_vtop_btleaf(struct silofs_pexec_ctx   *pexec,

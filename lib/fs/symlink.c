@@ -246,38 +246,22 @@ static int slc_check_symlnk(const struct silofs_symlnk_ctx *sl_ctx)
 	return 0;
 }
 
-static int slc_do_stage_symval(const struct silofs_symlnk_ctx *sl_ctx,
-                               const struct silofs_vaddr *vaddr,
-                               struct silofs_symval_info **out_svi)
-{
-	struct silofs_vnode_info *vni  = nullptr;
-	struct silofs_symval_info *svi = nullptr;
-	int err;
-
-	err = silofs_stage_vnode(sl_ctx->task, sl_ctx->lnk_ii, vaddr,
-	                         sl_ctx->stg_mode, &vni);
-	if (err) {
-		return err;
-	}
-	svi = silofs_svi_from_vni(vni);
-	err = svi_recheck_symval(svi);
-	if (err) {
-		return err;
-	}
-	*out_svi = svi;
-	return 0;
-}
-
 static int slc_stage_symval(const struct silofs_symlnk_ctx *sl_ctx,
                             const struct silofs_vaddr *vaddr,
                             struct silofs_symval_info **out_svi)
 {
-	int ret;
+	int err;
 
-	silofs_ii_incref(sl_ctx->lnk_ii);
-	ret = slc_do_stage_symval(sl_ctx, vaddr, out_svi);
-	silofs_ii_decref(sl_ctx->lnk_ii);
-	return ret;
+	err = silofs_stage_symval(sl_ctx->task, vaddr, sl_ctx->lnk_ii,
+	                          sl_ctx->stg_mode, out_svi);
+	if (err) {
+		return err;
+	}
+	err = svi_recheck_symval(*out_svi);
+	if (err) {
+		return err;
+	}
+	return 0;
 }
 
 static int slc_extern_symval_head(const struct silofs_symlnk_ctx *sl_ctx,
@@ -387,23 +371,13 @@ int silofs_do_readlink(struct silofs_task_ctx *task,
 static int slc_spawn_symval(const struct silofs_symlnk_ctx *sl_ctx,
                             struct silofs_symval_info **out_svi)
 {
-	struct silofs_vnode_info *vni = nullptr;
-	int err;
-
-	err = silofs_spawn_vnode(sl_ctx->task, sl_ctx->lnk_ii,
-	                         SILOFS_VTYPE_SYMVAL, &vni);
-	if (err) {
-		return err;
-	}
-	*out_svi = silofs_svi_from_vni(vni);
-	svi_markdirty(*out_svi, sl_ctx->lnk_ii);
-	return 0;
+	return silofs_spawn_symval(sl_ctx->task, sl_ctx->lnk_ii, out_svi);
 }
 
 static int slc_remove_symval_at(const struct silofs_symlnk_ctx *sl_ctx,
                                 const struct silofs_vaddr *vaddr)
 {
-	return silofs_remove_vnode_at(sl_ctx->task, vaddr);
+	return silofs_remove_symval_at(sl_ctx->task, vaddr);
 }
 
 static int slc_create_symval(const struct silofs_symlnk_ctx *sl_ctx,

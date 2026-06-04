@@ -624,7 +624,7 @@ struct silofs_xanode_info {
 
 /* symbolic-link value node */
 struct silofs_symval_info {
-	struct silofs_vnode_info   syv_vni;
+	struct silofs_vnode_info   svn_vni;
 	struct silofs_symval_node *svn;
 };
 
@@ -776,7 +776,7 @@ struct silofs_inode_info *silofs_ii_from_dqe(struct silofs_dq_elem *dqe);
 
 struct silofs_xanode_info *silofs_xai_from_vni(struct silofs_vnode_info *vni);
 
-struct silofs_symval_info *silofs_syi_from_vni(struct silofs_vnode_info *vni);
+struct silofs_symval_info *silofs_svi_from_vni(struct silofs_vnode_info *vni);
 
 struct silofs_dtnode_info *silofs_dni_from_vni(struct silofs_vnode_info *vni);
 

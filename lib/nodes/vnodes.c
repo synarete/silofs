@@ -1313,29 +1313,29 @@ struct silofs_xanode_info *silofs_xai_from_vni(struct silofs_vnode_info *vni)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct silofs_vnode_info *syi_to_vni(struct silofs_symval_info *syi)
+static struct silofs_vnode_info *svi_to_vni(struct silofs_symval_info *svi)
 {
-	return likely(syi != nullptr) ? &syi->syv_vni : nullptr;
+	return likely(svi != nullptr) ? &svi->svn_vni : nullptr;
 }
 
-static struct silofs_symval_info *syi_from_vni(struct silofs_vnode_info *vni)
+static struct silofs_symval_info *svi_from_vni(struct silofs_vnode_info *vni)
 {
-	return mut_container_of(vni, struct silofs_symval_info, syv_vni);
+	return mut_container_of(vni, struct silofs_symval_info, svn_vni);
 }
 
 static void
-syi_init(struct silofs_symval_info *syi, const struct silofs_vaddr *vaddr)
+svi_init(struct silofs_symval_info *svi, const struct silofs_vaddr *vaddr)
 {
-	vni_init(&syi->syv_vni, vaddr);
+	vni_init(&svi->svn_vni, vaddr);
 }
 
-static void syi_fini(struct silofs_symval_info *syi)
+static void svi_fini(struct silofs_symval_info *svi)
 {
-	vni_fini(&syi->syv_vni);
-	syi->svn = nullptr;
+	vni_fini(&svi->svn_vni);
+	svi->svn = nullptr;
 }
 
-static struct silofs_symval_info *syi_malloc(struct silofs_alloc *alloc)
+static struct silofs_symval_info *svi_malloc(struct silofs_alloc *alloc)
 {
 	struct silofs_symval_info *syi;
 
@@ -1344,78 +1344,78 @@ static struct silofs_symval_info *syi_malloc(struct silofs_alloc *alloc)
 }
 
 static void
-syi_free(struct silofs_symval_info *syi, struct silofs_alloc *alloc)
+svi_free(struct silofs_symval_info *svi, struct silofs_alloc *alloc)
 {
-	memfree_lni(alloc, syi, sizeof(*syi));
+	memfree_lni(alloc, svi, sizeof(*svi));
 }
 
 static void
-syi_fini_free(struct silofs_symval_info *syi, struct silofs_alloc *alloc)
+svi_fini_free(struct silofs_symval_info *svi, struct silofs_alloc *alloc)
 {
-	syi_fini(syi);
-	syi_free(syi, alloc);
+	svi_fini(svi);
+	svi_free(svi, alloc);
 }
 
 static struct silofs_symval_info *
-syi_malloc_init(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
+svi_malloc_init(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 {
-	struct silofs_symval_info *syi;
+	struct silofs_symval_info *svi;
 
-	syi = syi_malloc(alloc);
-	if (syi != nullptr) {
-		syi_init(syi, vaddr);
+	svi = svi_malloc(alloc);
+	if (svi != nullptr) {
+		svi_init(svi, vaddr);
 	}
-	return syi;
+	return svi;
 }
 
 static int
-syi_attach_lview(struct silofs_symval_info *syi, struct silofs_alloc *alloc)
+svi_attach_lview(struct silofs_symval_info *svi, struct silofs_alloc *alloc)
 {
 	struct silofs_lview *lview;
 	int err;
 
-	err = vni_attach_lview(&syi->syv_vni, alloc);
+	err = vni_attach_lview(&svi->svn_vni, alloc);
 	if (!err) {
-		lview    = silofs_vni_lview(&syi->syv_vni);
-		syi->svn = &lview->u.svn;
+		lview    = silofs_vni_lview(&svi->svn_vni);
+		svi->svn = &lview->u.svn;
 	}
 	return err;
 }
 
 static void
-syi_detach_lview(struct silofs_symval_info *syi, struct silofs_alloc *alloc)
+svi_detach_lview(struct silofs_symval_info *svi, struct silofs_alloc *alloc)
 {
-	vni_detach_lview(&syi->syv_vni, alloc);
-	syi->svn = nullptr;
+	vni_detach_lview(&svi->svn_vni, alloc);
+	svi->svn = nullptr;
 }
 
 static struct silofs_symval_info *
-syi_new(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
+svi_new(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 {
-	struct silofs_symval_info *syi;
+	struct silofs_symval_info *svi;
 	int err;
 
-	syi = syi_malloc_init(alloc, vaddr);
-	if (syi == nullptr) {
+	svi = svi_malloc_init(alloc, vaddr);
+	if (svi == nullptr) {
 		return nullptr;
 	}
-	err = syi_attach_lview(syi, alloc);
+	err = svi_attach_lview(svi, alloc);
 	if (err) {
-		syi_fini_free(syi, alloc);
+		svi_fini_free(svi, alloc);
 		return nullptr;
 	}
-	return syi;
+	return svi;
 }
 
-static void syi_del(struct silofs_symval_info *syi, struct silofs_alloc *alloc)
+static void svi_del(struct silofs_symval_info *svi, struct silofs_alloc *alloc)
 {
-	syi_detach_lview(syi, alloc);
-	syi_fini_free(syi, alloc);
+	svi_detach_lview(svi, alloc);
+	svi_fini_free(svi, alloc);
 }
 
-struct silofs_symval_info *silofs_syi_from_vni(struct silofs_vnode_info *vni)
+struct silofs_symval_info *silofs_svi_from_vni(struct silofs_vnode_info *vni)
 {
-	return mut_container_of(vni, struct silofs_symval_info, syv_vni);
+	return mut_container_of(vni, struct silofs_symval_info, svn_vni);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1847,7 +1847,7 @@ silofs_new_vnode(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 		vni = xai_to_vni(xai_new(alloc, vaddr));
 		break;
 	case SILOFS_VTYPE_SYMVAL:
-		vni = syi_to_vni(syi_new(alloc, vaddr));
+		vni = svi_to_vni(svi_new(alloc, vaddr));
 		break;
 	case SILOFS_VTYPE_DTNODE:
 		vni = dni_to_vni(dni_new(alloc, vaddr));
@@ -1892,7 +1892,7 @@ void silofs_del_vnode(struct silofs_vnode_info *vni,
 		xai_del(xai_from_vni(vni), alloc);
 		break;
 	case SILOFS_VTYPE_SYMVAL:
-		syi_del(syi_from_vni(vni), alloc);
+		svi_del(svi_from_vni(vni), alloc);
 		break;
 	case SILOFS_VTYPE_DTNODE:
 		dni_del(dni_from_vni(vni), alloc);

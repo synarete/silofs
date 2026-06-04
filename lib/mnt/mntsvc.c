@@ -871,16 +871,17 @@ static int mntsvc_check_umount_mntrule(const struct silofs_mntsvc *msvc,
 	return 0;
 }
 
+#define ALLOWED_MS_FLAGS \
+	(MS_LAZYTIME | MS_NOEXEC | MS_NOSUID | MS_NODEV | MS_RDONLY)
+
 static int mntsvc_check_mount(const struct silofs_mntsvc *msvc,
                               const struct silofs_mntparams *mntp)
 {
-	const struct ucred *peer_cred = &msvc->ms_peer_ucred;
-	const size_t page_size        = msvc->ms_page_size;
-	const uint64_t sup_mnt_mask =
-		(MS_LAZYTIME | MS_NOEXEC | MS_NOSUID | MS_NODEV | MS_RDONLY);
+	constexpr uint64_t allowed_ms_flags = ALLOWED_MS_FLAGS;
+	const struct ucred *peer_cred       = &msvc->ms_peer_ucred;
 	int err;
 
-	if (mntp->flags & ~sup_mnt_mask) {
+	if (mntp->flags & ~allowed_ms_flags) {
 		return -SILOFS_EOPNOTSUPP;
 	}
 	if ((mntp->root_mode & S_IRWXU) == 0) {
@@ -893,10 +894,10 @@ static int mntsvc_check_mount(const struct silofs_mntsvc *msvc,
 	    (mntp->group_id != peer_cred->gid)) {
 		return -SILOFS_EACCES;
 	}
-	if (mntp->max_read < (2 * page_size)) {
+	if (mntp->max_read < (2 * msvc->ms_page_size)) {
 		return -SILOFS_EINVAL;
 	}
-	if (mntp->max_read > (512 * page_size)) {
+	if (mntp->max_read > (512 * msvc->ms_page_size)) {
 		return -SILOFS_EINVAL;
 	}
 	if (mntp->path == nullptr) {

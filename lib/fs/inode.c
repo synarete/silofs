@@ -656,7 +656,7 @@ static void ii_setup_sub(struct silofs_inode_info *ii,
 {
 	silofs_ii_setup_xattr(ii);
 	if (silofs_ii_isdir(ii)) {
-		silofs_ii_setup_dir(ii, inp->parent_mode, 1, inp->seed);
+		silofs_ii_setup_dir(ii, 1, inp->seed);
 	} else if (silofs_ii_isreg(ii)) {
 		silofs_ii_setup_reg(ii);
 	} else if (silofs_ii_islnk(ii)) {

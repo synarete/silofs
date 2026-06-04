@@ -41,7 +41,7 @@ void silofs_dir_set_flag(struct silofs_inode_info *dir_ii,
 void silofs_dir_unset_flag(struct silofs_inode_info *dir_ii,
                            enum silofs_dirf          flag);
 
-void silofs_ii_setup_dir(struct silofs_inode_info *dir_ii, mode_t parent_mode,
+void silofs_ii_setup_dir(struct silofs_inode_info *dir_ii, //
                          nlink_t nlink, uint64_t seed);
 
 int silofs_lookup_dentry(struct silofs_task_ctx      *task,

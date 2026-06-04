@@ -208,25 +208,22 @@ inewp_set_ts(struct silofs_inew_params *inp, const struct timespec *ts)
 	memcpy(&inp->ts, ts, sizeof(inp->ts));
 }
 
-static bool inewp_isreg(const struct silofs_inew_params *inp)
+static void inewp_update_by_parent(struct silofs_inew_params *inp,
+                                   const struct silofs_inode_info *parent_dii)
 {
-	return S_ISREG(inp->mode);
-}
+	inp->parent_ino  = parent_dii->i_ino;
+	inp->parent_mode = silofs_ii_mode(parent_dii);
+	if (inp->parent_mode & S_ISGID) {
+		/* Inherit group from parent dir */
+		inp->creds.fs_cred.gid = silofs_ii_gid(parent_dii);
 
-static bool inewp_isdir(const struct silofs_inew_params *inp)
-{
-	return S_ISDIR(inp->mode);
-}
-
-static void inewp_set_by_parent(struct silofs_inew_params *inp,
-                                const struct silofs_inode_info *parent_dii)
-{
-	if (parent_dii != nullptr) {
-		inp->parent_ino  = parent_dii->i_ino;
-		inp->parent_mode = silofs_ii_mode(parent_dii);
-		if (inewp_isreg(inp) || inewp_isdir(inp)) {
-			inp->flags = derive_inodef(parent_dii);
+		/* When creating dir, propagate the setgid bit */
+		if (S_ISDIR(inp->mode)) {
+			inp->mode |= S_ISGID;
 		}
+	}
+	if (S_ISDIR(inp->mode) || S_ISREG(inp->mode)) {
+		inp->flags = derive_inodef(parent_dii);
 	}
 }
 
@@ -249,7 +246,7 @@ static void inewp_set_generation(struct silofs_inew_params *inp,
 static void
 inewp_set_seed(struct silofs_inew_params *inp, struct silofs_prandgen *prng)
 {
-	if (inewp_isdir(inp)) {
+	if (S_ISDIR(inp->mode)) {
 		silofs_prandgen_take(prng, &inp->seed, sizeof(inp->seed));
 	}
 }
@@ -264,9 +261,11 @@ void silofs_inew_params_of(const struct silofs_task_ctx *task,
 	out_inp->rdev = rdev;
 	inewp_set_creds(out_inp, &task->auth.creds);
 	inewp_set_ts(out_inp, &task->auth.ts);
-	inewp_set_by_parent(out_inp, parent_dii);
 	inewp_set_generation(out_inp, sbi_of(task));
 	inewp_set_seed(out_inp, prng_of(task));
+	if (parent_dii != nullptr) {
+		inewp_update_by_parent(out_inp, parent_dii);
+	}
 }
 
 static int spawn_inode(struct silofs_task_ctx *task,

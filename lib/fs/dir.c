@@ -1423,14 +1423,14 @@ int silofs_dir_make_hname(const struct silofs_inode_info *dir_ii,
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-void silofs_ii_setup_dir(struct silofs_inode_info *dir_ii, mode_t parent_mode,
-                         nlink_t nlink, uint64_t seed)
+void silofs_ii_setup_dir(struct silofs_inode_info *dir_ii, nlink_t nlink,
+                         uint64_t seed)
 {
 	const struct silofs_iattr iattr = {
 		.ia_size   = SILOFS_DIR_EMPTY_SIZE,
 		.ia_nlink  = nlink,
 		.ia_blocks = 0,
-		.ia_mode   = silofs_ii_mode(dir_ii) | (parent_mode & S_ISGID),
+		.ia_mode   = silofs_ii_mode(dir_ii),
 		.ia_flags  = SILOFS_IATTR_SIZE | SILOFS_IATTR_BLOCKS |
 		             SILOFS_IATTR_NLINK | SILOFS_IATTR_MODE,
 	};

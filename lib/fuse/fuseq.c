@@ -1502,7 +1502,7 @@ static void do_init_update_capabilities(const struct silofs_fuseq_cmd_ctx *fcc)
 	update_cap_want(coni, FUSE_ASYNC_DIO);
 	update_cap_want(coni, FUSE_HANDLE_KILLPRIV_V2);
 	update_cap_want(coni, FUSE_SETXATTR_EXT);
-	if (!fuseq_may(fcc->fq, SILOFS_F_NOWRITEBACK)) {
+	if (!fuseq_may(fcc->fq, SILOFS_F_NO_WRITEBACK)) {
 		update_cap_want(coni, FUSE_WRITEBACK_CACHE);
 	}
 	if (fuseq_may(fcc->fq, SILOFS_F_AUTOINVAL)) {
@@ -4420,7 +4420,7 @@ static int fuseq_update_pipes(struct silofs_fuseq *fq)
 		err = fuseq_open_pipes(fq);
 		if (err) {
 			fuseq_log_warn("failed to open pipes: err=%d", err);
-			mode_flags &= ~SILOFS_F_MAYSPLICE;
+			mode_flags &= ~SILOFS_F_MAY_SPLICE;
 			fq->fq_mode_flags = (enum silofs_flags)mode_flags;
 			return err;
 		}
@@ -4533,7 +4533,7 @@ fuseq_init_common(struct silofs_fuseq *fq, struct silofs_alloc *alloc,
 	fq->fq_mount           = false;
 	fq->fq_umount          = false;
 	fq->fq_allow_interrupt = false;
-	fq->fq_mode_flags      = SILOFS_F_MAYSPLICE;
+	fq->fq_mode_flags      = SILOFS_F_MAY_SPLICE;
 }
 
 static int fuseq_init_subs(struct silofs_fuseq *fq)
@@ -4568,7 +4568,7 @@ static bool fuseq_may(const struct silofs_fuseq *fq, enum silofs_flags mode)
 
 static bool fuseq_may_splice(const struct silofs_fuseq *fq)
 {
-	return fuseq_may(fq, SILOFS_F_MAYSPLICE);
+	return fuseq_may(fq, SILOFS_F_MAY_SPLICE);
 }
 
 static size_t fuseq_bufsize_max(const struct silofs_fuseq *fq)
@@ -4807,7 +4807,7 @@ int silofs_fuseq_mount(struct silofs_fuseq *fq, const char *mntpath,
 		              silofs_mntrpc_sockname(), uid, gid, err);
 		return err;
 	}
-	allow_other = fuseq_may(fq, SILOFS_F_ALLOWOTHER);
+	allow_other = fuseq_may(fq, SILOFS_F_ALLOW_OTHER);
 	max_read    = fq->fq_coni.max_read;
 	err = silofs_mntrpc_mount(mntpath, uid, gid, max_read, ms_flags,
 	                          allow_other, false, &fuse_fd);

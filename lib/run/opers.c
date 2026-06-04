@@ -180,13 +180,13 @@ static bool op_cap_sys_admin(const struct silofs_task_ctx *task)
 {
 	const struct silofs_creds *creds = &task->auth.creds;
 
-	return silofs_env_hasflag(task->env, SILOFS_F_ALLOWADMIN) &&
+	return silofs_env_hasflag(task->env, SILOFS_F_ALLOW_ADMIN) &&
 	       silofs_user_cap_sys_admin(&creds->host_cred);
 }
 
 static bool op_allow_other(const struct silofs_task_ctx *task)
 {
-	return silofs_env_hasflag(task->env, SILOFS_F_ALLOWOTHER);
+	return silofs_env_hasflag(task->env, SILOFS_F_ALLOW_OTHER);
 }
 
 static int op_authorize(const struct silofs_task_ctx *task)

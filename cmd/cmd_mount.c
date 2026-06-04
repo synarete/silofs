@@ -31,8 +31,8 @@ static const char *const cmd_mount_help_desc =
 	"options:                                                          \n"
 	"  -o, --opts=subopts           Comma-separated sub-options        \n"
 	"  -r, --rdonly                 Mount in read-only mode            \n"
-	"  -X, --noexec                 Do not allow programs execution    \n"
-	"  -S, --nosuid                 Do not honor special bits          \n"
+	"  -x, --allow-exec             Allow programs execution           \n"
+	"  -s, --allow-suid             Honor special mode bits            \n"
 	"  -i  --allow-hostids          Use local host uid/gid             \n"
 	"  -E  --allow-xattr-acl        ACLs via extended attributes       \n"
 	"  -Z  --allow-ispecial         Allow fifo and socket inodes       \n"
@@ -128,39 +128,131 @@ static void cmd_mount_getsubopts(struct cmd_mount_ctx *ctx)
 	while (*sopt != '\0') {
 		sval = nullptr;
 		skey = getsubopt(&sopt, toks, &sval);
-		if (skey == CMD_MOUNT_OPT_RO) {
+		switch (skey) {
+		case CMD_MOUNT_OPT_RO:
 			ctx->in_args.flags |= SILOFS_F_RDONLY;
-		} else if (skey == CMD_MOUNT_OPT_RW) {
+			break;
+		case CMD_MOUNT_OPT_RW:
 			ctx->in_args.flags &= ~SILOFS_F_RDONLY;
-		} else if (skey == CMD_MOUNT_OPT_DEV) {
-			ctx->in_args.flags &= ~SILOFS_F_NODEV;
-		} else if (skey == CMD_MOUNT_OPT_NODEV) {
-			ctx->in_args.flags |= SILOFS_F_NODEV;
-		} else if (skey == CMD_MOUNT_OPT_SUID) {
-			ctx->in_args.flags &= ~SILOFS_F_NOSUID;
-		} else if (skey == CMD_MOUNT_OPT_NOSUID) {
-			ctx->in_args.flags |= SILOFS_F_NOSUID;
-		} else if (skey == CMD_MOUNT_OPT_EXEC) {
-			ctx->in_args.flags &= ~SILOFS_F_NOEXEC;
-		} else if (skey == CMD_MOUNT_OPT_NOEXEC) {
-			ctx->in_args.flags |= SILOFS_F_NOEXEC;
-		} else if (skey == CMD_MOUNT_OPT_HOSTIDS) {
-			ctx->in_args.flags |= SILOFS_F_ALLOWHOSTIDS;
-		} else if (skey == CMD_MOUNT_OPT_PASSWD) {
+			break;
+		case CMD_MOUNT_OPT_DEV:
+			ctx->in_args.flags |= SILOFS_F_ALLOW_DEV;
+			break;
+		case CMD_MOUNT_OPT_NODEV:
+			ctx->in_args.flags &= ~SILOFS_F_ALLOW_DEV;
+			break;
+		case CMD_MOUNT_OPT_SUID:
+			ctx->in_args.flags |= SILOFS_F_ALLOW_SUID;
+			break;
+		case CMD_MOUNT_OPT_NOSUID:
+			ctx->in_args.flags &= ~SILOFS_F_ALLOW_SUID;
+			break;
+		case CMD_MOUNT_OPT_EXEC:
+			ctx->in_args.flags |= SILOFS_F_ALLOW_EXEC;
+			break;
+		case CMD_MOUNT_OPT_NOEXEC:
+			ctx->in_args.flags &= ~SILOFS_F_ALLOW_EXEC;
+			break;
+		case CMD_MOUNT_OPT_HOSTIDS:
+			ctx->in_args.flags |= SILOFS_F_ALLOW_HOSTIDS;
+			break;
+		case CMD_MOUNT_OPT_PASSWD:
 			ctx->in_args.password = cmd_duppass(sval);
-		} else {
+			break;
+		default:
 			cmd_die(0, "illegal sub-options: %s", optarg);
+			break;
 		}
 	}
+}
+
+static bool
+cmd_mount_parse_optarg_by(struct cmd_mount_ctx *ctx,
+                          const struct cmd_optargs *opa, int opt_chr)
+{
+	bool done = false;
+
+	switch (opt_chr) {
+	case 'o':
+		cmd_mount_getsubopts(ctx);
+		break;
+	case 'x':
+		ctx->in_args.flags |= SILOFS_F_ALLOW_EXEC;
+		break;
+	case 's':
+		ctx->in_args.flags |= SILOFS_F_ALLOW_SUID;
+		break;
+	case 'i':
+		ctx->in_args.flags |= SILOFS_F_ALLOW_HOSTIDS;
+		break;
+	case 'A':
+		ctx->in_args.flags &= ~SILOFS_F_ALLOW_OTHER;
+		break;
+	case 'e':
+		ctx->in_args.flags |= SILOFS_F_ALLOW_XACL;
+		break;
+	case 'W':
+		ctx->in_args.flags |= SILOFS_F_NO_WRITEBACK;
+		ctx->in_args.flags |= SILOFS_F_AUTOINVAL;
+		break;
+	case 'z':
+		ctx->in_args.flags |= SILOFS_F_ALLOW_IFIFO;
+		ctx->in_args.flags |= SILOFS_F_ALLOW_ISOCK;
+		break;
+	case 'B':
+		ctx->in_args.flags &= ~SILOFS_F_MAY_SPLICE;
+		break;
+	case 'D':
+		cmd_global_params.dont_daemonize = true;
+		break;
+	case 'C':
+		cmd_global_params.allow_coredump = true;
+		break;
+	case 'X':
+		cmd_global_params.developer_mode = true;
+		break;
+	case 'a':
+		if (cmd_optargs_curr_as_bool(opa)) {
+			ctx->in_args.flags |= SILOFS_F_ASYNCWR;
+		} else {
+			ctx->in_args.flags &= ~SILOFS_F_ASYNCWR;
+		}
+		break;
+	case 'M':
+		ctx->in_args.flags |= SILOFS_F_STDALLOC;
+		break;
+	case 'P':
+		ctx->in_args.no_prompt = true;
+		break;
+	case 'p':
+		ctx->in_args.password = cmd_optargs_getpass(opa);
+		break;
+	case 'L':
+		cmd_optargs_set_loglevel(opa);
+		ctx->in_args.explicit_log_level = true;
+		break;
+	case 'R':
+		ctx->in_args.systemd_run = true;
+		break;
+	case 'h':
+		cmd_print_help_and_exit(cmd_mount_help_desc);
+		break;
+	default:
+		done = true;
+		break;
+	}
+	return done;
 }
 
 static void cmd_mount_parse_optargs(struct cmd_mount_ctx *ctx)
 {
 	const struct cmd_optdesc ods[] = {
 		{ "opts", 'o', 1 },
+		{ "allow-exec", 'x', 0 },
+		{ "allow-suid", 's', 0 },
 		{ "allow-hostids", 'i', 0 },
-		{ "allow-xattr-acl", 'E', 0 },
-		{ "allow-ispecial", 'Z', 0 },
+		{ "allow-xattr-acl", 'e', 0 },
+		{ "allow-ispecial", 'z', 0 },
 		{ "no-allow-other", 'A', 0 },
 		{ "no-writeback-cache", 'W', 0 },
 		{ "buffer-copy-mode", 'B', 0 },
@@ -177,76 +269,13 @@ static void cmd_mount_parse_optargs(struct cmd_mount_ctx *ctx)
 		{ nullptr, 0, 0 },
 	};
 	struct cmd_optargs opa;
-	int opt_chr = 1;
-	bool barg;
+	int opt_chr   = 1;
+	bool opa_done = false;
 
 	cmd_optargs_init(&opa, ods);
-	while (!opa.opa_done && (opt_chr > 0)) {
-		opt_chr = cmd_optargs_parse(&opa);
-		switch (opt_chr) {
-		case 'o':
-			cmd_mount_getsubopts(ctx);
-			break;
-		case 'i':
-			ctx->in_args.flags |= SILOFS_F_ALLOWHOSTIDS;
-			break;
-		case 'A':
-			ctx->in_args.flags &= ~SILOFS_F_ALLOWOTHER;
-			break;
-		case 'E':
-			ctx->in_args.flags |= SILOFS_F_ALLOWXACL;
-			break;
-		case 'W':
-			ctx->in_args.flags |= SILOFS_F_NOWRITEBACK;
-			ctx->in_args.flags |= SILOFS_F_AUTOINVAL;
-			break;
-		case 'Z':
-			ctx->in_args.flags |= SILOFS_F_ALLOWIFIFO;
-			ctx->in_args.flags |= SILOFS_F_ALLOWISOCK;
-			break;
-		case 'B':
-			ctx->in_args.flags &= ~SILOFS_F_MAYSPLICE;
-			break;
-		case 'D':
-			cmd_global_params.dont_daemonize = true;
-			break;
-		case 'C':
-			cmd_global_params.allow_coredump = true;
-			break;
-		case 'X':
-			cmd_global_params.developer_mode = true;
-			break;
-		case 'a':
-			barg = cmd_optargs_curr_as_bool(&opa);
-			if (barg) {
-				ctx->in_args.flags |= SILOFS_F_ASYNCWR;
-			} else {
-				ctx->in_args.flags &= ~SILOFS_F_ASYNCWR;
-			}
-			break;
-		case 'M':
-			ctx->in_args.flags |= SILOFS_F_STDALLOC;
-			break;
-		case 'P':
-			ctx->in_args.no_prompt = true;
-			break;
-		case 'p':
-			ctx->in_args.password = cmd_optargs_getpass(&opa);
-			break;
-		case 'L':
-			cmd_optargs_set_loglevel(&opa);
-			ctx->in_args.explicit_log_level = true;
-			break;
-		case 'R':
-			ctx->in_args.systemd_run = true;
-			break;
-		case 'h':
-			cmd_print_help_and_exit(cmd_mount_help_desc);
-			break;
-		default:
-			opt_chr = 0;
-			break;
-		}
+	while (!opa.opa_done && !opa_done) {
+		opt_chr  = cmd_optargs_parse(&opa);
+		opa_done = cmd_mount_parse_optarg_by(ctx, &opa, opt_chr);
 	}
 
 	ctx->in_args.repodir_fsname =
@@ -347,11 +376,11 @@ static void cmd_mount_start(struct cmd_mount_ctx *ctx)
 static void cmd_mount_mkdefaults(struct cmd_mount_ctx *ctx)
 {
 	ctx->in_args.flags = 0;
-	ctx->in_args.flags |= SILOFS_F_WITHFUSE;
+	ctx->in_args.flags |= SILOFS_F_WITH_FUSE;
 	ctx->in_args.flags |= SILOFS_F_ASYNCWR;
-	ctx->in_args.flags |= SILOFS_F_ALLOWOTHER;
-	ctx->in_args.flags |= SILOFS_F_ALLOWADMIN;
-	ctx->in_args.flags |= SILOFS_F_MAYSPLICE;
+	ctx->in_args.flags |= SILOFS_F_ALLOW_OTHER;
+	ctx->in_args.flags |= SILOFS_F_ALLOW_ADMIN;
+	ctx->in_args.flags |= SILOFS_F_MAY_SPLICE;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -530,25 +559,32 @@ static void cmd_mount_log_start(const struct cmd_mount_ctx *ctx)
 	cmd_mount_log_arg("mountpoint=%s", ctx->in_args.mntpoint_real);
 	cmd_mount_log_arg("repodir=%s", ctx->in_args.repodir_real);
 	cmd_mount_log_arg("rdonly=%d", cmd_mount_testf(ctx, SILOFS_F_RDONLY));
-	cmd_mount_log_arg("noexec=%d", cmd_mount_testf(ctx, SILOFS_F_NOEXEC));
-	cmd_mount_log_arg("nosuid=%d", cmd_mount_testf(ctx, SILOFS_F_NOSUID));
-	cmd_mount_log_arg("nodev=%d", cmd_mount_testf(ctx, SILOFS_F_NODEV));
+	cmd_mount_log_arg("allow-exec=%d",
+	                  cmd_mount_testf(ctx, SILOFS_F_ALLOW_EXEC));
+	cmd_mount_log_arg("allow-suid=%d",
+	                  cmd_mount_testf(ctx, SILOFS_F_ALLOW_SUID));
+	cmd_mount_log_arg("allow-dev=%d",
+	                  cmd_mount_testf(ctx, SILOFS_F_ALLOW_DEV));
+	cmd_mount_log_arg("allow-admin=%d",
+	                  cmd_mount_testf(ctx, SILOFS_F_ALLOW_ADMIN));
+	cmd_mount_log_arg("allow-other=%d",
+	                  cmd_mount_testf(ctx, SILOFS_F_ALLOW_OTHER));
+	cmd_mount_log_arg("allow-hostids=%d",
+	                  cmd_mount_testf(ctx, SILOFS_F_ALLOW_HOSTIDS));
+	cmd_mount_log_arg("allow-xattr-acl=%d",
+	                  cmd_mount_testf(ctx, SILOFS_F_ALLOW_XACL));
+	cmd_mount_log_arg("allow-isock=%d",
+	                  cmd_mount_testf(ctx, SILOFS_F_ALLOW_ISOCK));
+	cmd_mount_log_arg("allow-ififo=%d",
+	                  cmd_mount_testf(ctx, SILOFS_F_ALLOW_IFIFO));
 	cmd_mount_log_arg("asyncwr=%d",
 	                  cmd_mount_testf(ctx, SILOFS_F_ASYNCWR));
-	cmd_mount_log_arg("allow_admin=%d",
-	                  cmd_mount_testf(ctx, SILOFS_F_ALLOWADMIN));
-	cmd_mount_log_arg("allow_other=%d",
-	                  cmd_mount_testf(ctx, SILOFS_F_ALLOWOTHER));
-	cmd_mount_log_arg("allow_hostids=%d",
-	                  cmd_mount_testf(ctx, SILOFS_F_ALLOWHOSTIDS));
-	cmd_mount_log_arg("allow_xattr_acl=%d",
-	                  cmd_mount_testf(ctx, SILOFS_F_ALLOWXACL));
-	cmd_mount_log_arg("writeback_cache=%d",
-	                  !cmd_mount_testf(ctx, SILOFS_F_NOWRITEBACK));
-	cmd_mount_log_arg("auto_inval_data=%d",
+	cmd_mount_log_arg("writeback-cache=%d",
+	                  !cmd_mount_testf(ctx, SILOFS_F_NO_WRITEBACK));
+	cmd_mount_log_arg("auto-inval-data=%d",
 	                  cmd_mount_testf(ctx, SILOFS_F_AUTOINVAL));
-	cmd_mount_log_arg("may_splice=%d",
-	                  cmd_mount_testf(ctx, SILOFS_F_MAYSPLICE));
+	cmd_mount_log_arg("may-splice=%d",
+	                  cmd_mount_testf(ctx, SILOFS_F_MAY_SPLICE));
 	cmd_mount_log_arg("lazytime=%d",
 	                  cmd_mount_testf(ctx, SILOFS_F_LAZYTIME));
 	cmd_trace_versions();

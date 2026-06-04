@@ -691,7 +691,7 @@ static int envi_populate_idsmap(struct silofs_env_inst *envi,
 	struct silofs_idsmap *idsmap = &envi->idsmap;
 	bool allow_hostids;
 
-	allow_hostids = (spec->flags & SILOFS_F_ALLOWHOSTIDS) > 0;
+	allow_hostids = (spec->flags & SILOFS_F_ALLOW_HOSTIDS) > 0;
 	return silofs_idsmap_populate(idsmap, &spec->fsids, allow_hostids);
 }
 
@@ -723,7 +723,7 @@ static void envi_unbind_fuseq(struct silofs_env_inst *envi)
 
 static bool with_fuse(const struct silofs_spec *args)
 {
-	return (args->flags & SILOFS_F_WITHFUSE) > 0;
+	return (args->flags & SILOFS_F_WITH_FUSE) > 0;
 }
 
 static int envi_update_by_spec(struct silofs_env_inst *envi,

@@ -514,8 +514,8 @@ static void ut_init_spec(struct silofs_spec *spec)
 	spec->fscap              = SILOFS_CAPACITY_SIZE_MIN;
 	spec->flags              = 0;
 
-	spec->flags |= SILOFS_F_ALLOWIFIFO;
-	spec->flags |= SILOFS_F_ALLOWISOCK;
+	spec->flags |= SILOFS_F_ALLOW_IFIFO;
+	spec->flags |= SILOFS_F_ALLOW_ISOCK;
 	spec->flags |= SILOFS_F_UTF8NAMES;
 	if (ut_globals.pedantic) {
 		spec->flags |= SILOFS_F_PEDANTIC;

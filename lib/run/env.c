@@ -156,20 +156,20 @@ static int env_setup_mntflags(struct silofs_env *env, enum silofs_flags flags)
 	} else {
 		ms_flag_dont |= MS_LAZYTIME;
 	}
-	if (flags & SILOFS_F_NOEXEC) {
-		ms_flag_with |= MS_NOEXEC;
-	} else {
+	if (flags & SILOFS_F_ALLOW_EXEC) {
 		ms_flag_dont |= MS_NOEXEC;
-	}
-	if (flags & SILOFS_F_NOSUID) {
-		ms_flag_with |= MS_NOSUID;
 	} else {
+		ms_flag_with |= MS_NOEXEC;
+	}
+	if (flags & SILOFS_F_ALLOW_SUID) {
 		ms_flag_dont |= MS_NOSUID;
-	}
-	if (flags & SILOFS_F_NODEV) {
-		ms_flag_with |= MS_NODEV;
 	} else {
+		ms_flag_with |= MS_NOSUID;
+	}
+	if (flags & SILOFS_F_ALLOW_DEV) {
 		ms_flag_dont |= MS_NODEV;
+	} else {
+		ms_flag_with |= MS_NODEV;
 	}
 	if (flags & SILOFS_F_RDONLY) {
 		ms_flag_with |= MS_RDONLY;

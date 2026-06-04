@@ -35,6 +35,8 @@ def _test_rsync(env: TestEnv) -> None:
     env.exec_mkfs(20)
     env.exec_mount(
         allow_hostids=True,
+        allow_exec=True,
+        allow_suid=True,
         allow_xattr_acl=False,
         no_writeback_cache=True,
     )
@@ -65,7 +67,8 @@ def _test_findutils(env: TestEnv) -> None:
     env.exec_mkfs(20)
     env.exec_mount(
         allow_hostids=True,
-        allow_xattr_acl=False,
+        allow_exec=True,
+        allow_suid=True,
         no_writeback_cache=True,
     )
     env.exec_lsmnt()
@@ -142,6 +145,7 @@ def _test_cpython(env: TestEnv) -> None:
     env.exec_init(sup_groups=True)
     env.exec_mkfs(50, no_utf8_names=True)
     env.exec_mount(
+        allow_exec=True,
         allow_hostids=True,
         allow_xattr_acl=True,
         no_writeback_cache=True,

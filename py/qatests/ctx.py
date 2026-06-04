@@ -192,11 +192,13 @@ class TestEnv:
     def exec_mount(
         self,
         name: str = "",
+        allow_exec: bool = False,
+        allow_suid: bool = False,
         allow_hostids: bool = False,
         allow_xattr_acl: bool = False,
+        allow_ispecial: bool = False,
         no_writeback_cache: bool = False,
         buffer_copy_mode: bool = False,
-        allow_ispecial: bool = True,
     ) -> None:
         self._require_meta_jref(name)
         repodir_name = self._repodir_name(name)
@@ -204,11 +206,13 @@ class TestEnv:
             repodir_name=repodir_name,
             mntpoint=self.cfg.mntdir,
             password=self._passwd,
+            allow_exec=allow_exec,
+            allow_suid=allow_suid,
             allow_hostids=allow_hostids,
             allow_xattr_acl=allow_xattr_acl,
+            allow_ispecial=allow_ispecial,
             no_writeback_cache=no_writeback_cache,
             buffer_copy_mode=buffer_copy_mode,
-            allow_ispecial=allow_ispecial,
         )
 
     def exec_umount(self) -> None:

@@ -178,8 +178,6 @@ class _Silofs(SubcmdExec):
         SubcmdExec.__init__(self, "silofs")
         self.use_stdalloc = use_stdalloc
         self.allow_coredump = allow_coredump
-        self.giga = 2**30
-        self.tera = 2**40
 
     def version(self) -> str:
         return self.execute_sub(["-v"])
@@ -214,15 +212,27 @@ class _Silofs(SubcmdExec):
             args = args + ["--no-utf8-names"]
         self.execute_sub(args)
 
-    def _mkfssize(self, size: int) -> str:
-        rep = str(size)
-        if (size >= self.tera) and (size % self.tera) == 0:
-            tsize = int(size / self.tera)
+    @staticmethod
+    def _mkfssize(size: int) -> str:
+        giga = 2**30
+        tera = 2**40
+        if (size >= tera) and (size % tera) == 0:
+            tsize = int(size / tera)
             rep = f"{tsize}T"
-        elif (size >= self.giga) and (size % self.giga) == 0:
-            gsize = int(size / self.giga)
+        elif (size >= giga) and (size % giga) == 0:
+            gsize = int(size / giga)
             rep = f"{gsize}G"
+        else:
+            rep = str(size)
         return rep
+
+        "  -x, --allow-exec             Allow programs execution           \n"
+        "  -s, --allow-suid             Honor special mode bits            \n"
+        "  -i  --allow-hostids          Use local host uid/gid             \n"
+        "  -E  --allow-xattr-acl        ACLs via extended attributes       \n"
+        "  -Z  --allow-ispecial         Allow fifo and socket inodes       \n"
+        "  -A  --no-allow-other         Do not allow other users           \n"
+        "  -W  --no-writeback-cache     Disable write-back cache mode      \n"
 
     # pylint: disable=R0917
     def mount(
@@ -230,27 +240,33 @@ class _Silofs(SubcmdExec):
         repodir_name: Path,
         mntpoint: Path,
         password: str,
+        allow_exec: bool = False,
+        allow_suid: bool = False,
         allow_hostids: bool = False,
         allow_xattr_acl: bool = False,
+        allow_ispecial: bool = False,
         no_writeback_cache: bool = False,
         buffer_copy_mode: bool = False,
-        allow_ispecial: bool = False,
     ) -> None:
         args = ["mount", "--no-prompt"]
         if self.allow_coredump:
             args = args + ["--coredump"]
         if self.use_stdalloc:
             args = args + ["--stdalloc"]
+        if allow_exec:
+            args = args + ["--allow-exec"]
+        if allow_suid:
+            args = args + ["--allow-suid"]
         if allow_hostids:
             args = args + ["--allow-hostids"]
         if allow_xattr_acl:
             args = args + ["--allow-xattr-acl"]
+        if allow_ispecial:
+            args = args + ["--allow-ispecial"]
         if no_writeback_cache:
             args = args + ["--no-writeback-cache"]
         if buffer_copy_mode:
             args = args + ["--buffer-copy-mode"]
-        if allow_ispecial:
-            args = args + ["--allow-ispecial"]
         args = args + [str(repodir_name), str(mntpoint)]
         self.execute_run(args, indat=password)
 

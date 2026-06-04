@@ -170,7 +170,7 @@ static bool may_append(size_t cur_len, size_t ext_len, size_t bsz)
 static void
 backtrace_addrs_to_str(char *buf, size_t bsz, void **bt_arr, int bt_len)
 {
-	Dl_info dli       = {};
+	Dl_info dli;
 	const char *fname = nullptr;
 
 	for (int i = 1; i < bt_len - 1; ++i) {
@@ -189,12 +189,8 @@ backtrace_addrs_to_str(char *buf, size_t bsz, void **bt_arr, int bt_len)
 		if (addr < base) {
 			continue;
 		}
-		if ((fname != nullptr) && strcmp(fname, dli.dli_fname)) {
-			break;
-		}
-
 		len = strlen(buf);
-		if ((fname == nullptr)) {
+		if (fname == nullptr) {
 			fname = dli.dli_fname;
 			if (!may_append(len, strlen(fname), bsz)) {
 				break;
@@ -202,6 +198,8 @@ backtrace_addrs_to_str(char *buf, size_t bsz, void **bt_arr, int bt_len)
 			snprintf(buf + len, bsz - len,
 			         "addr2line -a -C -f -p -s -e %s ", fname);
 			len = strlen(buf);
+		} else if (strcmp(fname, dli.dli_fname)) {
+			break;
 		}
 		if (!may_append(len, 0, bsz)) {
 			break;

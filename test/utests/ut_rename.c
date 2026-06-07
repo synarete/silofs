@@ -18,7 +18,6 @@
 
 static void ut_rename_within_same_dir(struct ut_env *ute)
 {
-	struct stat st        = { .st_size = -1 };
 	const char *dname     = UT_NAME;
 	const char *newname   = nullptr;
 	const size_t name_max = NAME_MAX;
@@ -28,6 +27,8 @@ static void ut_rename_within_same_dir(struct ut_env *ute)
 	ut_mkdir_at_root(ute, dname, &dino);
 	ut_create_file(ute, dino, name, &ino);
 	for (size_t i = 0; i < name_max; ++i) {
+		struct stat st = { .st_size = -1 };
+
 		newname = ut_randstr(ute, i + 1);
 		ut_rename_move(ute, dino, name, dino, newname);
 
@@ -42,20 +43,18 @@ static void ut_rename_within_same_dir(struct ut_env *ute)
 
 static void ut_rename_toggle_between_dirs(struct ut_env *ute)
 {
-	ino_t ino           = 0;
-	ino_t dino1         = 0;
-	ino_t dino2         = 0;
-	ino_t src_dino      = 0;
-	ino_t dst_dino      = 0;
 	const char *dname   = UT_NAME;
 	const char *name    = ut_randstr(ute, NAME_MAX);
 	const char *newname = nullptr;
-	struct stat st      = { .st_ino = 0 };
+	ino_t dino1 = 0, dino2 = 0, ino = 0;
+	ino_t src_dino = 0, dst_dino = 0;
 
 	ut_mkdir_at_root(ute, dname, &dino1);
 	ut_mkdir2(ute, dino1, dname, &dino2);
 	ut_create_file(ute, dino2, name, &ino);
 	for (size_t i = 0; i < NAME_MAX; ++i) {
+		struct stat st = { .st_ino = 0 };
+
 		newname  = ut_randstr(ute, i + 1);
 		src_dino = (i & 1) ? dino1 : dino2;
 		dst_dino = (i & 1) ? dino2 : dino1;
@@ -72,23 +71,21 @@ static void ut_rename_toggle_between_dirs(struct ut_env *ute)
 
 static void ut_rename_replace_without_data(struct ut_env *ute)
 {
-	ino_t ino1             = 0;
-	ino_t ino2             = 0;
-	ino_t dino1            = 0;
-	ino_t dino2            = 0;
-	ino_t base_dino        = 0;
 	const size_t name_max  = NAME_MAX;
 	const char *base_dname = UT_NAME;
 	const char *dname1     = ut_randstr(ute, name_max);
 	const char *dname2     = ut_randstr(ute, name_max);
 	const char *name1      = nullptr;
 	const char *name2      = nullptr;
-	struct stat st         = { .st_size = -1 };
+	ino_t dino0 = 0, dino1 = 0, dino2 = 0;
+	ino_t ino1 = 0, ino2 = 0;
 
-	ut_mkdir_at_root(ute, base_dname, &base_dino);
-	ut_mkdir2(ute, base_dino, dname1, &dino1);
-	ut_mkdir2(ute, base_dino, dname2, &dino2);
+	ut_mkdir_at_root(ute, base_dname, &dino0);
+	ut_mkdir2(ute, dino0, dname1, &dino1);
+	ut_mkdir2(ute, dino0, dname2, &dino2);
 	for (size_t i = 0; i < name_max; ++i) {
+		struct stat st = { .st_size = -1 };
+
 		name1 = ut_randstr(ute, i + 1);
 		name2 = ut_randstr(ute, name_max - i);
 		ut_create_only(ute, dino1, name1, &ino1);
@@ -100,38 +97,32 @@ static void ut_rename_replace_without_data(struct ut_env *ute)
 		ut_sync_drop_all(ute);
 		ut_unlink(ute, dino2, name2);
 	}
-	ut_rmdir(ute, base_dino, dname1);
-	ut_rmdir(ute, base_dino, dname2);
+	ut_rmdir(ute, dino0, dname1);
+	ut_rmdir(ute, dino0, dname2);
 	ut_rmdir_at_root(ute, base_dname);
 }
 
 static void ut_rename_replace_with_data(struct ut_env *ute)
 {
-	off_t off              = -1;
-	size_t bsz             = 0;
-	ino_t ino1             = 0;
-	ino_t ino2             = 0;
-	ino_t dino1            = 0;
-	ino_t dino2            = 0;
-	ino_t base_dino        = 0;
-	char *name1            = nullptr;
-	char *name2            = nullptr;
-	char *dname1           = nullptr;
-	char *dname2           = nullptr;
-	void *buf1             = nullptr;
-	void *buf2             = nullptr;
-	const char *base_dname = UT_NAME;
-	const size_t name_max  = NAME_MAX;
+	constexpr size_t name_max = NAME_MAX;
+	const char *base_dname    = UT_NAME;
+	void *buf1                = nullptr;
+	void *buf2                = nullptr;
+	char *name1               = nullptr;
+	char *name2               = nullptr;
+	char *dname1              = ut_randstr(ute, name_max);
+	char *dname2              = ut_randstr(ute, name_max);
+	ino_t dino0 = 0, dino1 = 0, dino2 = 0;
+	ino_t ino1 = 0, ino2 = 0;
 
-	dname1 = ut_randstr(ute, name_max);
-	dname2 = ut_randstr(ute, name_max);
-	ut_mkdir_at_root(ute, base_dname, &base_dino);
-	ut_mkdir2(ute, base_dino, dname1, &dino1);
-	ut_mkdir2(ute, base_dino, dname2, &dino2);
+	ut_mkdir_at_root(ute, base_dname, &dino0);
+	ut_mkdir2(ute, dino0, dname1, &dino1);
+	ut_mkdir2(ute, dino0, dname2, &dino2);
 
-	bsz = UT_BK_SIZE;
 	for (size_t i = 0; i < name_max; ++i) {
-		off   = (off_t)((i * bsz) + i);
+		constexpr size_t bsz = UT_BK_SIZE;
+		const off_t off      = (off_t)((i * bsz) + i);
+
 		buf1  = ut_randbuf(ute, bsz);
 		buf2  = ut_randbuf(ute, bsz);
 		name1 = ut_randstr(ute, i + 1);
@@ -147,8 +138,8 @@ static void ut_rename_replace_with_data(struct ut_env *ute)
 		ut_release_file(ute, ino1);
 		ut_unlink(ute, dino2, name2);
 	}
-	ut_rmdir(ute, base_dino, dname1);
-	ut_rmdir(ute, base_dino, dname2);
+	ut_rmdir(ute, dino0, dname1);
+	ut_rmdir(ute, dino0, dname2);
 	ut_rmdir_at_root(ute, base_dname);
 }
 
@@ -156,25 +147,22 @@ static void ut_rename_replace_with_data(struct ut_env *ute)
 
 static void ut_rename_move_multi_(struct ut_env *ute, size_t cnt)
 {
-	ino_t ino              = 0;
-	ino_t dino1            = 0;
-	ino_t dino2            = 0;
-	ino_t base_dino        = 0;
 	const char *base_dname = UT_NAME;
 	const char *name1      = nullptr;
 	const char *name2      = nullptr;
 	const char *dname1     = ut_randstr(ute, NAME_MAX);
 	const char *dname2     = ut_randstr(ute, NAME_MAX);
 	const ino_t root_ino   = UT_ROOT_INO;
+	ino_t dino0 = 0, dino1 = 0, dino2 = 0, ino = 0;
 
 	ut_getattr_dirsize(ute, root_ino, 0);
-	ut_mkdir2(ute, root_ino, base_dname, &base_dino);
-	ut_mkdir2(ute, base_dino, dname1, &dino1);
-	ut_mkdir2(ute, base_dino, dname2, &dino2);
+	ut_mkdir2(ute, root_ino, base_dname, &dino0);
+	ut_mkdir2(ute, dino0, dname1, &dino1);
+	ut_mkdir2(ute, dino0, dname2, &dino2);
 
-	ut_getattr_dirsize(ute, base_dino, 2);
-	ut_lookup_dir(ute, base_dino, dname1, dino1);
-	ut_lookup_dir(ute, base_dino, dname2, dino2);
+	ut_getattr_dirsize(ute, dino0, 2);
+	ut_lookup_dir(ute, dino0, dname1, dino1);
+	ut_lookup_dir(ute, dino0, dname2, dino2);
 
 	for (size_t i = 0; i < cnt; ++i) {
 		name1 = ut_make_name(ute, "s", i);
@@ -193,9 +181,9 @@ static void ut_rename_move_multi_(struct ut_env *ute, size_t cnt)
 		ut_unlink(ute, dino2, name2);
 	}
 
-	ut_rmdir(ute, base_dino, dname1);
-	ut_rmdir(ute, base_dino, dname2);
-	ut_getattr_dirsize(ute, base_dino, 0);
+	ut_rmdir(ute, dino0, dname1);
+	ut_rmdir(ute, dino0, dname2);
+	ut_getattr_dirsize(ute, dino0, 0);
 	ut_rmdir(ute, root_ino, base_dname);
 	ut_getattr_dirsize(ute, root_ino, 0);
 }
@@ -210,12 +198,10 @@ static void ut_rename_move_multi(struct ut_env *ute)
 
 static void ut_rename_onto_link_(struct ut_env *ute, size_t niter, size_t cnt)
 {
-	ino_t ino          = 0;
-	ino_t dino         = 0;
-	struct stat st     = { .st_size = -1 };
 	const char *tname  = UT_NAME;
 	const char *prefix = "dummy";
 	const char *name   = nullptr;
+	ino_t dino = 0, ino = 0;
 
 	ut_mkdir_at_root(ute, tname, &dino);
 	for (size_t i = 0; i < niter; ++i) {
@@ -224,6 +210,8 @@ static void ut_rename_onto_link_(struct ut_env *ute, size_t niter, size_t cnt)
 
 		ut_create_only(ute, dino, tname, &ino);
 		for (size_t j = 0; j < cnt; ++j) {
+			struct stat st = { .st_size = -1 };
+
 			name = ut_make_name(ute, tname, j);
 			ut_link(ute, ino, dino, name, &st);
 		}
@@ -255,8 +243,7 @@ static void ut_rename_exchange_aux_(struct ut_env *ute, ino_t dino1,
 	const char *name1  = nullptr;
 	const char *name2  = nullptr;
 	const char *prefix = UT_NAME;
-	ino_t ino1         = 0;
-	ino_t ino2         = 0;
+	ino_t ino1 = 0, ino2 = 0;
 
 	for (size_t i = 0; i < cnt; ++i) {
 		name1 = ut_make_name(ute, prefix, i + 1);
@@ -282,8 +269,7 @@ static void ut_rename_exchange_(struct ut_env *ute, size_t cnt)
 {
 	const char *dname1 = "dir1";
 	const char *dname2 = "dir2";
-	ino_t dino1        = 0;
-	ino_t dino2        = 0;
+	ino_t dino1 = 0, dino2 = 0;
 
 	ut_mkdir_at_root(ute, dname1, &dino1);
 	ut_mkdir_at_root(ute, dname2, &dino2);
@@ -329,10 +315,7 @@ ut_rename_override_(struct ut_env *ute, size_t cnt, off_t off_base, size_t bsz)
 	const char *name2  = nullptr;
 	const char *dname1 = ut_make_name(ute, UT_NAME, 1);
 	const char *dname2 = ut_make_name(ute, UT_NAME, 2);
-	ino_t dino1        = 0;
-	ino_t dino2        = 0;
-	ino_t ino1         = 0;
-	ino_t ino2         = 0;
+	ino_t dino1 = 0, dino2 = 0, ino1 = 0, ino2 = 0;
 
 	ut_mkdir_at_root(ute, dname1, &dino1);
 	ut_mkdir_at_root(ute, dname2, &dino2);
@@ -421,9 +404,7 @@ static void ut_rename_with_xattr_(struct ut_env *ute, size_t cnt,
 	const char *name2 = nullptr;
 	const char *name3 = nullptr;
 	const char *dname = ut_make_name(ute, UT_NAME, 0);
-	ino_t dino        = 0;
-	ino_t ino1        = 0;
-	ino_t ino2        = 0;
+	ino_t dino = 0, ino1 = 0, ino2 = 0;
 
 	ut_mkdir_at_root(ute, dname, &dino);
 	for (size_t i = 0; i < cnt; ++i) {
@@ -476,6 +457,41 @@ static void ut_rename_with_xattr(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static void ut_rename_nfiles_(struct ut_env *ute, size_t nfiles)
+{
+	const char *dname  = UT_NAME;
+	const char *fname1 = nullptr;
+	const char *fname2 = nullptr;
+	ino_t dino = 0, ino = 0;
+
+	ut_mkdir_at_root(ute, dname, &dino);
+	for (size_t i = 0; i < nfiles; ++i) {
+		fname1 = ut_make_name(ute, dname, i);
+		ut_create_only(ute, dino, fname1, &ino);
+	}
+	for (size_t i = 0; i < nfiles; ++i) {
+		fname1 = ut_make_name(ute, dname, i);
+		fname2 = ut_make_name(ute, dname, i + nfiles);
+		ut_rename_move(ute, dino, fname1, dino, fname2);
+	}
+	for (size_t i = 0; i < nfiles; ++i) {
+		fname2 = ut_make_name(ute, dname, i + nfiles);
+		ut_unlink_file(ute, dino, fname2);
+	}
+	ut_rmdir_at_root(ute, dname);
+}
+
+static void ut_rename_nfiles(struct ut_env *ute)
+{
+	ut_rename_nfiles_(ute, 10);
+	ut_rename_nfiles_(ute, SILOFS_BTREE_NODE_NCHILDS);
+	ut_rename_nfiles_(ute, 2UL * SILOFS_BTREE_NODE_NCHILDS);
+	ut_rename_nfiles_(ute, SILOFS_SPNODE_NREFS);
+	ut_rename_nfiles_(ute, 2UL * SILOFS_SPNODE_NREFS);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 static const struct ut_testdef ut_local_tests[] = {
 	UT_DEFTEST(ut_rename_within_same_dir),
 	UT_DEFTEST(ut_rename_toggle_between_dirs),
@@ -487,6 +503,7 @@ static const struct ut_testdef ut_local_tests[] = {
 	UT_DEFTEST(ut_rename_exchange_same),
 	UT_DEFTEST(ut_rename_override),
 	UT_DEFTEST(ut_rename_with_xattr),
+	UT_DEFTEST(ut_rename_nfiles),
 };
 
 const struct ut_testdefs ut_tdefs_rename = UT_MKTESTS(ut_local_tests);

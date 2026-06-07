@@ -607,7 +607,7 @@ static void ut_xattr_nfiles(struct ut_env *ute)
 	ut_xattr_nfiles_(ute, 2UL * SILOFS_BTREE_NODE_NCHILDS, 10, 10);
 	ut_xattr_nfiles_(ute, SILOFS_SPNODE_NREFS, 100, 10);
 	ut_xattr_nfiles_(ute, SILOFS_SPNODE_NREFS + 1, 111, 111);
-	ut_xattr_nfiles_(ute, 2uL * SILOFS_SPNODE_NREFS, 100, 100);
+	ut_xattr_nfiles_(ute, 2UL * SILOFS_SPNODE_NREFS, 100, 100);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

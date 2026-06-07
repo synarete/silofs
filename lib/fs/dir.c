@@ -1115,12 +1115,16 @@ static void dirin_set_ndents(struct silofs_inode_dir *dirin, size_t n)
 
 static void dirin_inc_ndents(struct silofs_inode_dir *dirin)
 {
-	dirin_set_ndents(dirin, dirin_ndents(dirin) + 1);
+	const size_t n = dirin_ndents(dirin);
+
+	dirin_set_ndents(dirin, n + 1);
 }
 
 static void dirin_dec_ndents(struct silofs_inode_dir *dirin)
 {
-	dirin_set_ndents(dirin, dirin_ndents(dirin) - 1);
+	const size_t n = dirin_ndents(dirin);
+
+	dirin_set_ndents(dirin, n - 1);
 }
 
 static silofs_dtn_index_t

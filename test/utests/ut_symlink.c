@@ -371,9 +371,9 @@ static void ut_symlink_nfiles(struct ut_env *ute)
 {
 	ut_symlink_nfiles_(ute, 10);
 	ut_symlink_nfiles_(ute, SILOFS_BTREE_NODE_NCHILDS);
-	ut_symlink_nfiles_(ute, 2 * SILOFS_BTREE_NODE_NCHILDS);
+	ut_symlink_nfiles_(ute, 2UL * SILOFS_BTREE_NODE_NCHILDS);
 	ut_symlink_nfiles_(ute, SILOFS_SPNODE_NREFS);
-	ut_symlink_nfiles_(ute, 2 * SILOFS_SPNODE_NREFS);
+	ut_symlink_nfiles_(ute, 2UL * SILOFS_SPNODE_NREFS);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

@@ -18,13 +18,12 @@
 
 static void ut_rename_within_same_dir(struct ut_env *ute)
 {
-	ino_t ino             = 0;
-	ino_t dino            = 0;
 	struct stat st        = { .st_size = -1 };
 	const char *dname     = UT_NAME;
 	const char *newname   = nullptr;
 	const size_t name_max = NAME_MAX;
 	const char *name      = ut_randstr(ute, name_max);
+	ino_t dino = 0, ino = 0;
 
 	ut_mkdir_at_root(ute, dname, &dino);
 	ut_create_file(ute, dino, name, &ino);

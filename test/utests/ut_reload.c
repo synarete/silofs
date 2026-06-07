@@ -46,8 +46,10 @@ static void ut_reload_nfiles(struct ut_env *ute)
 {
 	ut_reload_nfiles_(ute, 1);
 	ut_reload_nfiles_(ute, 10);
-	ut_reload_nfiles_(ute, 2 * SILOFS_BTREE_NODE_NCHILDS);
-	ut_reload_nfiles_(ute, 2 * SILOFS_SPNODE_NREFS);
+	ut_reload_nfiles_(ute, SILOFS_BTREE_NODE_NCHILDS);
+	ut_reload_nfiles_(ute, SILOFS_SPNODE_NREFS);
+	ut_reload_nfiles_(ute, 2UL * SILOFS_BTREE_NODE_NCHILDS);
+	ut_reload_nfiles_(ute, 2UL * SILOFS_SPNODE_NREFS);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
